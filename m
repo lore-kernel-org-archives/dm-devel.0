@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 1 of 33] DM Exception Store: generalize table args
-Date: Fri, 1 May 2009 09:16:30 -0500
-Message-ID: <200905011416.n41EGUwN028545@hydrogen.msp.redhat.com>
+Subject: [PATCH 3 of 33] DM Snapshot: shot cleanup
+Date: Fri, 1 May 2009 09:16:51 -0500
+Message-ID: <200905011416.n41EGpF6028691@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -16,205 +16,97 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-exception-store-generalize-table-args.patch
+Patch name: dm-snapshot-cleanup.patch
 
-From: Jonthan Brassow <jbrassow@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
 
-Rework 'dm_exception_store_create' arguments to make way for
-cleaner interface when new constructor table format is
-introduced.
+This patch applies on top of the previous 12 just to clean-up some
+indenting and such.
 
-[FIXME better /* comment */, don't use bad0, write full patch description, why buf[8]? ]
-Signed-off-by: Jonthan Brassow <jbrassow@redhat.com>
+ brassow
+
+Indenting and formatting fixes after a long series of patches.
+
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
 ---
- drivers/md/dm-exception-store.c |   33 +++++++++++++-----------
- drivers/md/dm-exception-store.h |    4 +--
- drivers/md/dm-snap.c            |   53 ++++++++++++++++++++++++++++++++++------
- 3 files changed, 66 insertions(+), 24 deletions(-)
+ drivers/md/dm-snap-persistent.c |    4 ++--
+ drivers/md/dm-snap.c            |   14 +++++++-------
+ 2 files changed, 9 insertions(+), 9 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-exception-store.c
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-exception-store.c
-+++ linux-2.6/drivers/md/dm-exception-store.c
-@@ -190,16 +190,15 @@ static int set_chunk_size(struct dm_exce
- 	return 0;
- }
- 
--int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
--			      unsigned *args_used,
-+int dm_exception_store_create(const char *type_name, struct dm_target *ti,
-+			      int argc, char **argv,
- 			      struct dm_exception_store **store)
- {
- 	int r = 0;
- 	struct dm_exception_store_type *type;
- 	struct dm_exception_store *tmp_store;
--	char persistent;
- 
--	if (argc < 3) {
-+	if (argc < 2) {
- 		ti->error = "Insufficient exception store arguments";
- 		return -EINVAL;
- 	}
-@@ -210,13 +209,7 @@ int dm_exception_store_create(struct dm_
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6/drivers/md/dm-snap-persistent.c
+@@ -519,7 +519,7 @@ static int persistent_read_metadata(stru
+ 	ps->exceptions_per_area = (ps->store->chunk_size << SECTOR_SHIFT) /
+ 				  sizeof(struct disk_exception);
+ 	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
+-			sizeof(*ps->callbacks));
++				   sizeof(*ps->callbacks));
+ 	if (!ps->callbacks)
  		return -ENOMEM;
- 	}
  
--	persistent = toupper(*argv[1]);
--	if (persistent != 'P' && persistent != 'N') {
--		ti->error = "Persistent flag is not P or N";
--		return -EINVAL;
--	}
--
--	type = get_type(argv[1]);
-+	type = get_type(type_name);
- 	if (!type) {
- 		ti->error = "Exception store type not recognised";
- 		r = -EINVAL;
-@@ -226,6 +219,12 @@ int dm_exception_store_create(struct dm_
- 	tmp_store->type = type;
- 	tmp_store->ti = ti;
+@@ -630,7 +630,7 @@ static void persistent_commit_exception(
+ 	 * If we completely filled the current area, then wipe the next one.
+ 	 */
+ 	if ((ps->current_committed == ps->exceptions_per_area) &&
+-	     zero_disk_area(ps, ps->current_area + 1))
++	    zero_disk_area(ps, ps->current_area + 1))
+ 		ps->valid = 0;
  
-+	/*
-+	 * COW-dev and chunk_size are common to all types of
-+	 * exception stores and are stored directly in the
-+	 * dm_exception_store and not passed on to the
-+	 * constructor for the dm_exception_store_type
-+	 */
- 	r = dm_get_device(ti, argv[0], 0, 0,
- 			  FMODE_READ | FMODE_WRITE, &tmp_store->cow);
- 	if (r) {
-@@ -233,17 +232,21 @@ int dm_exception_store_create(struct dm_
- 		goto bad_cow;
- 	}
- 
--	r = set_chunk_size(tmp_store, argv[2], &ti->error);
--	if (r)
-+	r = set_chunk_size(tmp_store, argv[1], &ti->error);
-+	if (r) {
-+		ti->error = "Unable to set chunk size";
- 		goto bad_cow;
-+	}
-+
-+	argc -= 2;
-+	argv += 2;
- 
--	r = type->ctr(tmp_store, 0, NULL);
-+	r = type->ctr(tmp_store, argc, argv);
- 	if (r) {
- 		ti->error = "Exception store type constructor failed";
- 		goto bad_ctr;
- 	}
- 
--	*args_used = 3;
- 	*store = tmp_store;
- 	return 0;
- 
-Index: linux-2.6/drivers/md/dm-exception-store.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-exception-store.h
-+++ linux-2.6/drivers/md/dm-exception-store.h
-@@ -168,8 +168,8 @@ static inline chunk_t sector_to_chunk(st
- int dm_exception_store_type_register(struct dm_exception_store_type *type);
- int dm_exception_store_type_unregister(struct dm_exception_store_type *type);
- 
--int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
--			      unsigned *args_used,
-+int dm_exception_store_create(const char *type_name, struct dm_target *ti,
-+			      int argc, char **argv,
- 			      struct dm_exception_store **store);
- void dm_exception_store_destroy(struct dm_exception_store *store);
- 
+ 	/*
 Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.c
 +++ linux-2.6/drivers/md/dm-snap.c
-@@ -7,6 +7,7 @@
-  */
- 
- #include <linux/blkdev.h>
-+#include <linux/ctype.h>
- #include <linux/device-mapper.h>
- #include <linux/delay.h>
- #include <linux/fs.h>
-@@ -570,6 +571,45 @@ static int init_hash_tables(struct dm_sn
+@@ -364,7 +364,8 @@ static int init_exception_table(struct e
+ 	return 0;
  }
  
- /*
-+ * create_exception_store
-+ * @ti
-+ * @argc
-+ * @argv
-+ * @args_used
-+ * @store: contains newly allocated dm_exception_store
-+ *
-+ * Possible formats for argv::
-+ *     <COW-dev> p/n <chunk-size>
-+ *
-+ * Returns: 0 on success, -Exxx on error
-+ */
-+static int create_exception_store(struct dm_target *ti, unsigned argc,
-+				  char **argv, unsigned *args_used,
-+				  struct dm_exception_store **store)
-+{
-+	char *tmp_argv[2];
-+	char buf[8];
-+
-+	*store = NULL;
-+
-+	if (1 /* less change patch to patch */) {
-+		if (argc < 3) {
-+			ti->error = "Insufficient exception store arguments";
-+			return -EINVAL;
-+		}
-+
-+		tmp_argv[0] = argv[0];  /* COW dev */
-+		tmp_argv[1] = argv[2];  /* chunk size */
-+
-+		*args_used = 3;
-+		buf[0] = toupper(*argv[1]);
-+		buf[1] = '\0';
-+
-+		return dm_exception_store_create(buf, ti, 2, tmp_argv, store);
-+	}
-+}
-+
-+/*
-  * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
-  */
- static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-@@ -591,12 +631,9 @@ static int snapshot_ctr(struct dm_target
- 	argv++;
- 	argc--;
+-static void exit_exception_table(struct exception_table *et, struct kmem_cache *mem)
++static void exit_exception_table(struct exception_table *et,
++				 struct kmem_cache *mem)
+ {
+ 	struct list_head *slot;
+ 	struct dm_snap_exception *ex, *next;
+@@ -668,8 +669,7 @@ static int snapshot_ctr(struct dm_target
  
--	r = dm_exception_store_create(ti, argc, argv, &args_used, &store);
--	if (r) {
--		ti->error = "Couldn't create exception store";
--		r = -EINVAL;
--		goto bad_args;
--	}
-+	r = create_exception_store(ti, argc, argv, &args_used, &store);
-+	if (r)
-+		return r;
+ 	s = kmalloc(sizeof(*s), GFP_KERNEL);
+ 	if (!s) {
+-		ti->error = "Cannot allocate snapshot context private "
+-		    "structure";
++		ti->error = "Cannot allocate snapshot private structure";
+ 		r = -ENOMEM;
+ 		goto bad_snap;
+ 	}
+@@ -959,7 +959,7 @@ static void pending_complete(struct dm_s
+ 	 */
+ 	insert_completed_exception(s, e);
  
- 	argv += args_used;
- 	argc -= args_used;
-@@ -1435,7 +1472,7 @@ static int __init dm_snapshot_init(void)
- 	r = dm_register_target(&snapshot_target);
- 	if (r) {
- 		DMERR("snapshot target register failed %d", r);
--		return r;
-+		goto bad0;
+- out:
++out:
+ 	remove_exception(&pe->e);
+ 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
+ 	origin_bios = put_pending_exception(pe);
+@@ -1022,7 +1022,7 @@ static void start_copy(struct dm_snap_pe
+ 
+ 	/* Hand over to kcopyd */
+ 	dm_kcopyd_copy(s->kcopyd_client,
+-		    &src, 1, &dest, 0, copy_callback, pe);
++		       &src, 1, &dest, 0, copy_callback, pe);
+ }
+ 
+ static struct dm_snap_pending_exception *
+@@ -1167,9 +1167,9 @@ static int snapshot_map(struct dm_target
+ 		map_context->ptr = track_chunk(s, chunk);
  	}
  
- 	r = dm_register_target(&origin_target);
-@@ -1492,6 +1529,8 @@ bad2:
- 	dm_unregister_target(&origin_target);
- bad1:
- 	dm_unregister_target(&snapshot_target);
-+bad0:
-+	dm_exception_store_exit();
+- out_unlock:
++out_unlock:
+ 	up_write(&s->lock);
+- out:
++out:
  	return r;
  }
  
