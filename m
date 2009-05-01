@@ -1,8 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 27 of 33] DM Exception Store: add arg to
-	lookup_exception
-Date: Fri, 1 May 2009 09:20:56 -0500
-Message-ID: <200905011420.n41EKuiG030451@hydrogen.msp.redhat.com>
+Subject: [PATCH 28 of 33] DM Snapshot: get rid of
+	init_hash_tables fn
+Date: Fri, 1 May 2009 09:21:06 -0500
+Message-ID: <200905011421.n41EL6cY030561@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,169 +17,106 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-exception-store-add-arg-to-lookup_exception.patch
+Patch name: dm-snap-get-rid-of-init_hash_tables-fn.patch
 
-Add the 'group' parameter to the lookup_exception function.  This
-facilitates snapshots that use the shared exception store.  When
-writing to the origin, we need to know that all snapshots have
-exception already (otherwise, we need to create a new one).  We
-could do this one at a time, but it saves us a lot if we can tell
-the shared exception store to check all the snapshots it is managing
-at once (by specifying group=1).
+init_hash_tables is an annoying function that just sets up one
+exception table... but it doesn't have a clear counterpart for tearing
+down - we simply call dm_exception_table_destroy.  So, let's just get
+rid of it and save ourselves the confusion.  [Doing so also makes
+future patches easier to read.]
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-exception-store.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-exception-store.h
-+++ linux-2.6/drivers/md/dm-exception-store.h
-@@ -15,6 +15,29 @@
- #include "dm-exception.h"
- 
- /*
-+ * Flags for lookup_exception:
-+ * DM_ES_LOOKUP_CAN_BLOCK: Allows the function to block (possibly perform I/O)
-+ * DM_ES_LOOKUP_INCLUSIVE: The exception we are looking for must exist for
-+ *                         for every user.  Only shared exception stores need
-+ *                         to worry about this flag.  If this flag is used, it
-+ *                         it doesn't make sense to ask for the 'new_chunk'.
-+ *                         For snapshots, this type of lookup would precede an
-+ *                         origin write.
-+ * DM_ES_LOOKUP_EXCLUSIVE: The exception we are looking up is not shared by any
-+ *                         anyone else.  Only shared exception stores need to
-+ *                         worry about this flag.  For snapshots, this type of
-+ *                         lookup would precede a snapshot write.
-+ * DM_ES_LOOKUP_EXISTS:    One or more of the items tracked by this exception
-+ *                         store has an exception.  Only shared exception stores
-+ *                         need to worry about this.  For snapshots, this type
-+ *                         of lookup would precede a snapshot read.
-+ */
-+#define DM_ES_LOOKUP_CAN_BLOCK 0x1
-+#define DM_ES_LOOKUP_INCLUSIVE 0x2
-+#define DM_ES_LOOKUP_EXCLUSIVE 0x4
-+#define DM_ES_LOOKUP_EXISTS    0x8
-+
-+/*
-  * Abstraction to handle the meta/layout of exception stores (the
-  * COW device).
-  */
-@@ -55,16 +78,23 @@ struct dm_exception_store_type {
- 				  void *callback_context);
- 
- 	/*
--	 * Look up an exception.  Common errors include:
--	 * -ENOENT     : exception not found
--	 * -EWOULDBLOCK: blocking op required and can_block=0
-+	 * lookup_exception - lookup an exception
-+	 * @new_chunk: if !NULL, filled with new location
-+	 * @flags: Can be a combination of the following (described above):
-+	 *      DM_ES_LOOKUP_CAN_BLOCK
-+	 *      DM_ES_LOOKUP_INCLUSIVE
-+	 *      DM_ES_LOOKUP_EXCLUSIVE
-+	 *      DM_ES_LOOKUP_EXISTS
- 	 *
--	 * If 'new_chunk' is NULL, the caller simply wants to
--	 * know if the exception exists (0) or not (-ENOENT).
-+	 * Return values should be:
-+	 * 0           : Exception found
-+	 * -ENOENT     : exception not found
-+	 * -EWOULDBLOCK: blocking op required and DM_ES_LOOKUP_CAN_BLOCK not set
-+	 * -Exxx       : Failure
- 	 */
- 	int (*lookup_exception) (struct dm_exception_store *store,
- 				 chunk_t old, chunk_t *new_chunk,
--				 int can_block);
-+				 uint32_t flags);
- 
- 	unsigned (*status) (struct dm_exception_store *store,
- 			    status_type_t status, char *result,
-Index: linux-2.6/drivers/md/dm-snap-persistent.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-persistent.c
-+++ linux-2.6/drivers/md/dm-snap-persistent.c
-@@ -710,7 +710,7 @@ static void persistent_commit_exception(
- 
- static int persistent_lookup_exception(struct dm_exception_store *store,
- 				       chunk_t old, chunk_t *new_chunk,
--				       int can_block)
-+				       uint32_t flags)
- {
- 	struct pstore *ps = get_info(store);
- 	struct dm_exception *e;
-Index: linux-2.6/drivers/md/dm-snap-transient.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-transient.c
-+++ linux-2.6/drivers/md/dm-snap-transient.c
-@@ -88,7 +88,7 @@ static void transient_commit_exception(s
- 
- static int transient_lookup_exception(struct dm_exception_store *store,
- 				      chunk_t old, chunk_t *new_chunk,
--				      int can_block)
-+				      uint32_t flags)
- {
- 	struct transient_c *tc = store->context;
- 	struct dm_exception *e;
 Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.c
 +++ linux-2.6/drivers/md/dm-snap.c
-@@ -890,6 +890,7 @@ static void remap_exception(struct dm_sn
- static int snapshot_map(struct dm_target *ti, struct bio *bio,
- 			union map_info *map_context)
+@@ -372,38 +372,6 @@ static int calc_max_buckets(void)
+ }
+ 
+ /*
+- * Allocate room for a suitable hash table.
+- */
+-static int init_hash_tables(struct dm_snapshot *s)
+-{
+-	sector_t hash_size, cow_dev_size, origin_dev_size, max_buckets;
+-
+-	/*
+-	 * Calculate based on the size of the original volume or
+-	 * the COW volume...
+-	 */
+-	cow_dev_size = get_dev_size(s->store->cow->bdev);
+-	origin_dev_size = get_dev_size(s->origin->bdev);
+-	max_buckets = calc_max_buckets();
+-
+-	hash_size = min(origin_dev_size, cow_dev_size) >> s->store->chunk_shift;
+-	hash_size = min(hash_size, max_buckets);
+-
+-	hash_size = rounddown_pow_of_two(hash_size);
+-	hash_size >>= 3;
+-	if (hash_size < 64)
+-		hash_size = 64;
+-
+-	s->pending = dm_exception_table_create(hash_size, 0,
+-					       alloc_pending_exception, s,
+-					       free_pending_exception, NULL);
+-	if (!s->pending)
+-		return -ENOMEM;
+-
+-	return 0;
+-}
+-
+-/*
+  * create_exception_store
+  * @ti
+  * @argc
+@@ -476,6 +444,7 @@ static int create_exception_store(struct
+  */
+ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  {
-+	uint32_t flags;
- 	struct dm_exception *tmp_e;
- 	struct dm_snapshot *s = ti->private;
- 	int rtn, r = DM_MAPIO_REMAPPED;
-@@ -912,8 +913,14 @@ static int snapshot_map(struct dm_target
- 		goto out_unlock;
++	sector_t hash_size, cow_dev_size, origin_dev_size, max_buckets;
+ 	struct dm_snapshot *s;
+ 	int i;
+ 	int r = -EINVAL;
+@@ -519,11 +488,29 @@ static int snapshot_ctr(struct dm_target
+ 	init_rwsem(&s->lock);
+ 	spin_lock_init(&s->pe_lock);
+ 
+-	/* Allocate hash table for COW data */
+-	if (init_hash_tables(s)) {
++	/*
++	 * Calculate based on the size of the original volume or
++	 * the COW volume...
++	 */
++	cow_dev_size = get_dev_size(store->cow->bdev);
++	origin_dev_size = get_dev_size(s->origin->bdev);
++	max_buckets = calc_max_buckets();
++
++	hash_size = min(origin_dev_size, cow_dev_size) >> store->chunk_shift;
++	hash_size = min(hash_size, max_buckets);
++
++	hash_size = rounddown_pow_of_two(hash_size);
++	hash_size >>= 3;
++	if (hash_size < 64)
++		hash_size = 64;
++
++	s->pending = dm_exception_table_create(hash_size, 0,
++					       alloc_pending_exception, s,
++					       free_pending_exception, NULL);
++	if (!s->pending) {
+ 		ti->error = "Unable to allocate hash table space";
+ 		r = -ENOMEM;
+-		goto bad_hash_tables;
++		goto bad_hash_table;
  	}
  
-+	if (bio_rw(bio) == WRITE)
-+		flags = DM_ES_LOOKUP_EXCLUSIVE | DM_ES_LOOKUP_CAN_BLOCK;
-+	else
-+		flags = DM_ES_LOOKUP_EXISTS | DM_ES_LOOKUP_CAN_BLOCK;
-+
- 	/* If the block is already remapped - use that, else remap it */
--	rtn = s->store->type->lookup_exception(s->store, chunk, &new_chunk, 0);
-+	rtn = s->store->type->lookup_exception(s->store, chunk,
-+					       &new_chunk, flags);
- 	if (!rtn) {
- 		remap_exception(s, bio, new_chunk);
- 		goto out_unlock;
-@@ -946,7 +953,8 @@ static int snapshot_map(struct dm_target
- 				goto out_unlock;
- 			}
- 			rtn = s->store->type->lookup_exception(s->store, chunk,
--							       &new_chunk, 0);
-+							       &new_chunk,
-+							       flags);
- 			if (!rtn) {
- 				dm_free_exception(s->pending, &pe->e);
- 				remap_exception(s, bio, new_chunk);
-@@ -1089,6 +1097,7 @@ static int snapshot_message(struct dm_ta
-  *---------------------------------------------------------------*/
- static int __origin_write(struct list_head *snapshots, struct bio *bio)
- {
-+	uint32_t flags = DM_ES_LOOKUP_INCLUSIVE | DM_ES_LOOKUP_CAN_BLOCK;
- 	int rtn, r = DM_MAPIO_REMAPPED, first = 0;
- 	struct dm_snapshot *snap;
- 	struct dm_exception *tmp_e;
-@@ -1124,7 +1133,7 @@ static int __origin_write(struct list_he
- 		 * won't destroy the primary_pe while we're inside this loop.
- 		 */
- 		rtn = snap->store->type->lookup_exception(snap->store, chunk,
--							  NULL, 0);
-+							  NULL, flags);
- 		if (!rtn)
- 			goto next_snapshot;
+ 	r = dm_kcopyd_client_create(SNAPSHOT_PAGES, &s->kcopyd_client);
+@@ -578,7 +565,7 @@ bad_pending_pool:
+ bad_kcopyd:
+ 	dm_exception_table_destroy(s->pending);
  
-@@ -1150,7 +1159,7 @@ static int __origin_write(struct list_he
+-bad_hash_tables:
++bad_hash_table:
+ 	dm_put_device(ti, s->origin);
  
- 			rtn = snap->store->type->lookup_exception(snap->store,
- 								  chunk, NULL,
--								  0);
-+								  flags);
- 			if (!rtn) {
- 				dm_free_exception(snap->pending, &pe->e);
- 				goto next_snapshot;
+ bad_origin:
