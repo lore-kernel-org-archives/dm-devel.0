@@ -1,11 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 0 of 33] DM Snapshot exception store API changes
-Date: Fri, 01 May 2009 09:15:36 -0500
-Message-ID: <1241187336.22347.4.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH 2 of 33] DM Snapshot: shot new ctr table format
+Date: Fri, 1 May 2009 09:16:41 -0500
+Message-ID: <200905011416.n41EGffw028618@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,46 +16,149 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I am revising the patches for 2.6.30-rc4; otherwise, nothing has changed
-since the last post.
+Patch name: dm-snapshot-new-ctr-table-format.patch
 
-Patches include:
-dm-exception-store-generalize-table-args.patch
-dm-snapshot-new-ctr-table-format.patch
-dm-snapshot-cleanup.patch
-dm-snap-rename-dm_snap_exception-to-dm_exception.patch
-dm-snap-rename-exception_table-to-dm_exception_table.patch
-dm-snap-consolidate-insert_exception-functions.patch
-dm-snap-rename-exception-functions.patch
-dm-snap-use-allocated-exception-tables.patch
-dm-snap-exception-function-changes-1.patch
-dm-snap-exception-function-changes-2.patch
-dm-snap-exception-function-changes-3.patch
-dm-snap-exception-function-changes-4.patch
-dm-snap-exception-function-changes-5.patch
-dm-snap-exception-function-changes-6.patch
-dm-snap-move-exception-code-to-new-file.patch
-dm-snap-persistent-store-minor-code-cleanup.patch
-dm-exception-store-add-resume-to-API.patch
-dm-exception-store-populate-cache-on-commit.patch
-dm-exception-store-add-lookup_exception-to-API.patch
-dm-snap-remove-completed-exception-cache.patch
-dm-snap-small-code-optimization.patch
-dm-exception-store-remove-read_metadata-from-API.patch
-dm-exception-store-add-suspend-to-API.patch
-dm-exception-store-rename-drop_snapshot.patch
-dm-exception-store-add-shared_uuid.patch
-dm-exception-store-add-arg-to-prepare_commit.patch
-dm-exception-store-add-arg-to-lookup_exception.patch
-dm-snap-get-rid-of-init_hash_tables-fn.patch
-dm-snap-get-rid-of-__free_exceptions-fn.patch
-dm-snap-split-ctr-and-dtr.patch
-dm-snap-change-parameters-to-__lookup_pending_exception.patch
-dm-snap-introduce-snapshare.patch
-dm-snap-utilize-snapshare.patch
+From: Jonathan Brassow <jbrassow@redhat.com>
 
-You can find these patches in a tarball (along with all the other
-patches that precede them in agk's tree) at
-http://www.brassow.com/patches
+Introduce the new constructor table formats for snapshots
+and exception stores.  This allows for new exception store
+types and allows for easy addition of future features to
+snapshots.
 
- brassow
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+
+---
+ drivers/md/dm-snap-persistent.c |    9 ++++++--
+ drivers/md/dm-snap-transient.c  |    9 ++++++--
+ drivers/md/dm-snap.c            |   41 +++++++++++++++++++++++++++++++++-------
+ 3 files changed, 48 insertions(+), 11 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6/drivers/md/dm-snap-persistent.c
+@@ -708,8 +708,13 @@ static unsigned persistent_status(struct
+ 	case STATUSTYPE_INFO:
+ 		break;
+ 	case STATUSTYPE_TABLE:
+-		DMEMIT(" %s P %llu", store->cow->name,
+-		       (unsigned long long)store->chunk_size);
++		if (!strcmp("P", store->type->name))
++			DMEMIT(" %s P %llu", store->cow->name,
++			       (unsigned long long)store->chunk_size);
++		else
++			DMEMIT(" %s 2 %s %llu", store->type->name,
++			       store->cow->name,
++			       (unsigned long long)store->chunk_size);
+ 	}
+ 
+ 	return sz;
+Index: linux-2.6/drivers/md/dm-snap-transient.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-transient.c
++++ linux-2.6/drivers/md/dm-snap-transient.c
+@@ -91,8 +91,13 @@ static unsigned transient_status(struct 
+ 	case STATUSTYPE_INFO:
+ 		break;
+ 	case STATUSTYPE_TABLE:
+-		DMEMIT(" %s N %llu", store->cow->name,
+-		       (unsigned long long)store->chunk_size);
++		if (!strcmp("N", store->type->name))
++			DMEMIT(" %s N %llu", store->cow->name,
++			       (unsigned long long)store->chunk_size);
++		else
++			DMEMIT(" %s 2 %s %llu", store->type->name,
++			       store->cow->name,
++			       (unsigned long long)store->chunk_size);
+ 	}
+ 
+ 	return sz;
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -579,7 +579,10 @@ static int init_hash_tables(struct dm_sn
+  * @store: contains newly allocated dm_exception_store
+  *
+  * Possible formats for argv::
++ * Backwards compatibility mode:
+  *     <COW-dev> p/n <chunk-size>
++ * Current format:
++ *     <store type> <arg count> <COW> <chunk-size> [other args]
+  *
+  * Returns: 0 on success, -Exxx on error
+  */
+@@ -587,12 +590,14 @@ static int create_exception_store(struct
+ 				  char **argv, unsigned *args_used,
+ 				  struct dm_exception_store **store)
+ {
++	unsigned param_count;
+ 	char *tmp_argv[2];
+ 	char buf[8];
+ 
+ 	*store = NULL;
+ 
+-	if (1 /* less change patch to patch */) {
++	/* Detect old-style table line with type as second arg. */
++	if (!isdigit(*argv[1])) {
+ 		if (argc < 3) {
+ 			ti->error = "Insufficient exception store arguments";
+ 			return -EINVAL;
+@@ -607,10 +612,34 @@ static int create_exception_store(struct
+ 
+ 		return dm_exception_store_create(buf, ti, 2, tmp_argv, store);
+ 	}
++
++	if (sscanf(argv[1], "%u", &param_count) != 1) {
++		ti->error = "Invalid exception store argument count";
++		return -EINVAL;
++	}
++
++	*args_used = 2 + param_count;
++
++	if (argc < *args_used) {
++		ti->error = "Insufficient exception store arguments";
++		return -EINVAL;
++	}
++
++	return dm_exception_store_create(argv[0], ti, param_count,
++					 argv + 2, store);
+ }
+ 
+ /*
+- * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
++ * snapshot_ctr
++ * @ti
++ * @argc
++ * @argv
++ *
++ * Construct a snapshot mapping.  Possible mapping tables include:
++ *     <origin_dev> <exception store args> <feature args>
++ * See 'create_exception_store' for format of <exception store args>.
++ *
++ * Returns: 0 on success, -XXX on error
+  */
+ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
+@@ -621,10 +650,9 @@ static int snapshot_ctr(struct dm_target
+ 	struct dm_exception_store *store;
+ 	unsigned args_used;
+ 
+-	if (argc != 4) {
+-		ti->error = "requires exactly 4 arguments";
+-		r = -EINVAL;
+-		goto bad_args;
++	if (argc < 4) {
++		ti->error = "too few arguments";
++		return -EINVAL;
+ 	}
+ 
+ 	origin_path = argv[0];
+@@ -740,7 +768,6 @@ bad_origin:
+ bad_snap:
+ 	dm_exception_store_destroy(store);
+ 
+-bad_args:
+ 	return r;
+ }
+ 
