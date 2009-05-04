@@ -1,57 +1,64 @@
-From: Li Zefan <lizf@cn.fujitsu.com>
-Subject: Re: [RFC PATCH dm-ioband] Added in blktrace msgs for dm-ioband
-Date: Mon, 04 May 2009 11:24:27 +0800
-Message-ID: <49FE5FEB.6040207@cn.fujitsu.com>
-References: <49F23379.4010607@hp.com> <20090427.184417.189717449.ryov@valinux.co.jp>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCHSET] block,scsi,libata: implement alt_size
+Date: Mon, 04 May 2009 17:02:47 +0900
+Message-ID: <49FEA127.1000905@kernel.org>
+References: <1233456951-992-1-git-send-email-tj@kernel.org>	
+	<49F902CF.7080307@garzik.org> <49F903DD.8040707@kernel.org>	
+	<49FA0349.3090706@garzik.org>
+	<e9c3a7c20904301415t621670a0l1bd64c7d74d369f@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751608AbZEDDXq@vger.kernel.org>
-In-Reply-To: <20090427.184417.189717449.ryov@valinux.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: Alan.Brunelle@hp.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <e9c3a7c20904301415t621670a0l1bd64c7d74d369f@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Dan Williams <dan.j.williams@gmail.com>
+Cc: Jeff Garzik <jeff@garzik.org>, linux-scsi@vger.kernel.org, Mauelshagen@redhat.com, linux-kernel@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-Ryo Tsuruta wrote:
-> Hi Alan,
-> 
->> Hi Ryo -
+Dan Williams wrote:
+> On Thu, Apr 30, 2009 at 1:00 PM, Jeff Garzik <jeff@garzik.org> wrote:
+>> Tejun Heo wrote:
+>>> Hello,
+>>>
+>>> Jeff Garzik wrote:
+>>>> <shrug>  I suppose...
+>>>>
+>>>> It just seems like a nasty hack, but unfortunately I don't see
+>>>> anyone stepping up to do it properly -- with a DM device
+>>>> automatically layered on top that splits the device into separate
+>>>> regions: one block device for the 'regular' area, and one for the
+>>>> HPA.
+>>> Isn't that more hacky?  I don't know.  All that dm needs to know is
+>>> the location of the metadata which is located w.r.t. the end of the
+>>> device which might be at a different location if BIOS tried to pull
+>>> silly stunts.  So, exporting the size BIOS might have used seems like
+>>> a straight forward solution to me.
+>> "<shrug> I suppose" is basically a reluctant ack, in the absence of other
+>> solutions :)
 >>
->> I don't know if you are taking in patches, but whilst trying to uncover
->> some odd behavior I added some blktrace messages to dm-ioband-ctl.c. If
->> you're keeping one code base for old stuff (2.6.18-ish RHEL stuff) and
->> upstream you'll have to #if around these (the blktrace message stuff
->> came in around 2.6.26 or 27 I think).
->>
->> My test case was to take a single 400GB storage device, put two 200GB
->> partitions on it and then see what the "penalty" or overhead for adding
->> dm-ioband on top. To do this I simply created an ext2 FS on each
->> partition in parallel (two processes each doing a mkfs to one of the
->> partitions). Then I put two dm-ioband devices on top of the two
->> partitions (setting the weight to 100 in both cases - thus they should
->> have equal access).
->>
->> Using default values I was seeing /very/ large differences - on the
->> order of 3X. When I bumped the number of tokens to a large number
->> (10,240) the timings got much closer (<2%). I have found that using
->> weight-iosize performs worse than weight (closer to 5% penalty).
 > 
-> I could reproduce similar results. One dm-ioband device seems to stop
-> issuing I/Os for a few seconds at times. I'll investigate more on that.
->  
->> I'll try to formalize these results as I go forward and report out on
->> them. In any event, I thought I'd share this patch with you if you are
->> interested...
-> 
-> Thanks. I'll include your patche into the next release.
->  
+> Couldn't the "fix" also just be a note to users to disable ignore_hpa
+> if they notice that there raid arrays are not assembling correctly?
 
-IMO we should use TRACE_EVENT instead of adding new blk_add_trace_msg().
+I don't know.  If it doesn't work automatically, the solution really
+isn't worth much.  People generally don't (shouldn't need to) have any
+idea what HPA is.  It basically boils down to "Linux doesn't support
+RAID".  :-)
 
->> Here's a sampling from some blktrace output (sorry for the wrapping) - I
->> should note that I'm a bit scared to see such large numbers of holds
->> going on when the token count should be >5,000 for each device...
->> Holding these back in an equal access situation is inhibiting the block
->> I/O layer to merge (most) of these (as mkfs performs lots & lots of
->> small but sequential I/Os).
+Maybe we should just put this issue to the rest and strongly advise
+people against BIOS raids.
+
+Thanks.
+
+-- 
+tejun
