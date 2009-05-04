@@ -1,16 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: rdac priority checker changing priorities
-Date: Mon, 04 May 2009 12:43:50 +0200
-Message-ID: <49FEC6E6.6070105@suse.de>
-References: <9ad205140904291534j4cc1a71aq3b4a0e308f1687bd@mail.gmail.com>	
-	<49F9443E.7040109@suse.de>
-	<1241114743.11905.13.camel@chandra-ubuntu>
+From: Andrea Righi <righi.andrea@gmail.com>
+Subject: Re: [PATCH 4/7] blkio-cgroup: The body of blkio-cgroup
+Date: Mon, 4 May 2009 14:05:45 +0200
+Message-ID: <20090504120544.GA3986@linux>
+References: <20090428.214423.193684619.ryov@valinux.co.jp>
+	<20090428.214457.226801820.ryov@valinux.co.jp>
+	<20090428.214535.71090234.ryov@valinux.co.jp>
+	<20090428.214604.104034341.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1241114743.11905.13.camel@chandra-ubuntu>
+Content-Disposition: inline
+In-Reply-To: <20090428.214604.104034341.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,80 +21,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com
-Cc: dm-devel <dm-devel@redhat.com>
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, xen-devel@lists.xensource.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-Hi Chandra,
+On Tue, Apr 28, 2009 at 09:46:04PM +0900, Ryo Tsuruta wrote:
+> The body of bio-cgroup.
+> 
+> Based on 2.6.30-rc3-git3
+> Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
+> Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
 
-Chandra Seetharaman wrote:
-> Hannes,
->=20
-> I think we need to revisit the priority value we provide for preferred
-> path(4) relative to active path (2) and non-preferred(1).
->=20
-> Consider the following scenario:
->=20
-> Access to a lun thru 2 preferred and 2 non-preferred path. Lets call
-> path group with preferred paths as pg1 and with non-preferred paths as
-> pg2.=20
->=20
-> Initially pg1 has priority of 8 and pg2 has priority of 2. pg1 is chose=
-n
-> and I/O goes thru pg1, all good.
->=20
-> Both the paths in pg1 fails, pg2 has been made the active path group an=
-d
-> I/O is sent thru that path and since it became "active", its priority
-> raises to 6 ( 2 path times (active + non-preferred)).=20
->=20
-> When one of the paths in pg1 comes back, one would expect the failback
-> to happen. It doesn't happen as pg1's priority (4) is smaller than that
-> of pg2 (6). Which is not correct.
->=20
-Is this really a valid case?
-This means we'll have a setup like this:
+Hi Ryo,
 
-rdac
- pg1
-  sda failed
-  sdb failed
- pg2
-  sdc active
-  sdd active
+few minor coding style issues reported by checkpatch.pl:
 
-Correct?
-So, given your assumptions, the proposed scenario would be represented
-like this:
+WARNING: line over 80 characters
+#138: FILE: include/linux/biotrack.h:67:
++static inline void blkio_cgroup_set_owner(struct page *page, struct mm_struct *mm)
 
-rdac
- pg1
-  sda active
-  sdb failed
- pg2
-  sdc active
-  sdd active
+WARNING: line over 80 characters
+#152: FILE: include/linux/biotrack.h:81:
++static inline void blkio_cgroup_copy_owner(struct page *page, struct page *opage)
 
-So it is really a good idea to switch paths in this case? The 'sdb'
-path would not be reachable here, so any path switch command wouldn't
-have been received, either. I'm not sure _what_ is going to happen
-when we switch paths now and sdb comes back later; but most likely
-the entire setup will be messed up then:
-  sda (pref & owned) 6
-  sdb                0
-  sdc (sec)          1
-  sdd (sec & owned)  3
-and we'll be getting the path layout thoroughly jumbled then.
-So I don't really like this idea. We should only be switching
-paths when _all_ paths of a path group become available again.
-Providing not all paths have failed in the active group, of course.
-Then we should be switching paths regardless.
+WARNING: EXPORT_SYMBOL(foo); should immediately follow its function/variable
+#513: FILE: mm/biotrack.c:265:
++EXPORT_SYMBOL(get_blkio_cgroup_id);
 
-Cheers,
+WARNING: EXPORT_SYMBOL(foo); should immediately follow its function/variable
+#514: FILE: mm/biotrack.c:266:
++EXPORT_SYMBOL(blkio_cgroup_lookup);
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+total: 0 errors, 4 warnings, 515 lines checked
+
+-Andrea
