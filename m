@@ -1,223 +1,49 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH] dm mpath: delay retry activate_path on
-	SCSI_DH_RETRY
-Date: Mon, 04 May 2009 20:18:17 -0700
-Message-ID: <1241493497.8721.60.camel@chandra-ubuntu>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCHSET] block,scsi,libata: implement alt_size
+Date: Tue, 05 May 2009 12:28:53 +0900
+Message-ID: <49FFB275.7000507@kernel.org>
+References: <1233456951-992-1-git-send-email-tj@kernel.org>	 <49F902CF.7080307@garzik.org> <49F903DD.8040707@kernel.org>	 <49FA0349.3090706@garzik.org>	 <e9c3a7c20904301415t621670a0l1bd64c7d74d369f@mail.gmail.com>	 <49FEA127.1000905@kernel.org> <e9c3a7c20905040948m572e23dj1aa197dbd20ff037@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel <dm-devel@redhat.com>
-Cc: Nikanth Karthikesan <knikanth@suse.de>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <e9c3a7c20905040948m572e23dj1aa197dbd20ff037@mail.gmail.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Dan Williams <dan.j.williams@gmail.com>
+Cc: Jeff Garzik <jeff@garzik.org>, linux-ide@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, Mauelshagen@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a modified patch of what Nikanth submitted a while back
-(http://patchwork.kernel.org/patch/8067/) to make the delay variable a
-configurable attribute.
+Hello,
 
-This applies on top the patch I sent few days back to send multiple
-activates on pg_init()
-(http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-mpath-call-activate-fn-for-each-path-in-pg_init.patch)
+Dan Williams wrote:
+> On Mon, May 4, 2009 at 1:02 AM, Tejun Heo <tj@kernel.org> wrote:
+>>> Couldn't the "fix" also just be a note to users to disable ignore_hpa
+>>> if they notice that there raid arrays are not assembling correctly?
+>> I don't know.  If it doesn't work automatically, the solution really
+>> isn't worth much.  People generally don't (shouldn't need to) have any
+>> idea what HPA is.  It basically boils down to "Linux doesn't support
+>> RAID".  :-)
+>>
+>> Maybe we should just put this issue to the rest and strongly advise
+>> people against BIOS raids.
+> 
+> That's a bit too far :-).  The real issue is that Linux is ignoring a
+> property of the platform.  To me ignoring HPA is like ignoring an e820
+> reserved memory region.  You might be able to get away with it
+> sometimes, but other times it breaks.
 
-This applies cleanly on 2.6.30-rc4 and tested there.
+Well, somewhat but not quite.  The difference is with backward
+compatibility and the fact that HPA has been used for many different
+creative ;-) purposes including working around BIOS limitations.
 
--------------------------
-From: Chandra Seetharaman <sekharan@us.ibm.com>
+> However, in the end I think having 'alt_size' available is a useful
+> mechanism for discovering and handling the ignore_hpa=1 case.   The
+> policy about when to trust it can be left to userspace.
 
-SCSI Device Handlers return SCSI_DH_IMM_RETRY if we could retry
-immediately and SCSI_DH_RETRY in cases where it is better to retry
-after some delay.
+Pushing this in the kernel without updating dm-raid is kind of
+pointless.  Who should I be poking to get the userland part moving?
 
-Currently we retry immediately irrespective of SCSI_DH_IMM_RETRY and
-SCSI_DH_RETRY. This patch adds a user configurable attribute
-pg_init_delay_secs which specifies the number of seconds to delay
-before retrying scsi_dh_activate, when it returned SCSI_DH_RETRY.
+Thanks.
 
-Default for this attribute is set to 2 seconds.
-
-Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-
----
- drivers/md/dm-mpath.c  |   41 ++++++++++++++++++++++++++++++++---------
- include/scsi/scsi_dh.h |    4 ++++
- 2 files changed, 36 insertions(+), 9 deletions(-)
-
-Index: linux-2.6.30-rc4/drivers/md/dm-mpath.c
-===================================================================
---- linux-2.6.30-rc4.orig/drivers/md/dm-mpath.c
-+++ linux-2.6.30-rc4/drivers/md/dm-mpath.c
-@@ -35,7 +35,7 @@ struct pgpath {
- 
- 	struct dm_path path;
- 	struct work_struct deactivate_path;
--	struct work_struct activate_path;
-+	struct delayed_work activate_path;
- };
- 
- #define path_to_pgpath(__pgp) container_of((__pgp), struct pgpath, path)
-@@ -69,6 +69,7 @@ struct multipath {
- 	struct list_head priority_groups;
- 	unsigned pg_init_required;	/* pg_init needs calling? */
- 	unsigned pg_init_in_progress;	/* Only one pg_init allowed at once */
-+	unsigned pg_init_delay;		/* To delay or not to delay */
- 
- 	unsigned nr_valid_paths;	/* Total number of usable paths */
- 	struct pgpath *current_pgpath;
-@@ -81,6 +82,7 @@ struct multipath {
- 	unsigned saved_queue_if_no_path;/* Saved state during suspension */
- 	unsigned pg_init_retries;	/* Number of times to retry pg_init */
- 	unsigned pg_init_count;		/* Number of times pg_init called */
-+	unsigned pg_init_delay_secs;	/* Delay in seconds before retry */
- 
- 	struct work_struct process_queued_ios;
- 	struct bio_list queued_ios;
-@@ -127,7 +129,7 @@ static struct pgpath *alloc_pgpath(void)
- 	if (pgpath) {
- 		pgpath->is_active = 1;
- 		INIT_WORK(&pgpath->deactivate_path, deactivate_path);
--		INIT_WORK(&pgpath->activate_path, activate_path);
-+		INIT_DELAYED_WORK(&pgpath->activate_path, activate_path);
- 	}
- 
- 	return pgpath;
-@@ -195,6 +197,7 @@ static struct multipath *alloc_multipath
- 		INIT_LIST_HEAD(&m->priority_groups);
- 		spin_lock_init(&m->lock);
- 		m->queue_io = 1;
-+		m->pg_init_delay_secs = SCSI_DH_RETRY_DELAY;
- 		INIT_WORK(&m->process_queued_ios, process_queued_ios);
- 		INIT_WORK(&m->trigger_event, trigger_event);
- 		m->mpio_pool = mempool_create_slab_pool(MIN_IOS, _mpio_cache);
-@@ -443,9 +446,11 @@ static void process_queued_ios(struct wo
- 		m->pg_init_count++;
- 		m->pg_init_required = 0;
- 		list_for_each_entry(tmp, &pgpath->pg->pgpaths, list) {
--			queue_work(kmpath_handlerd, &tmp->activate_path);
-+			queue_delayed_work(kmpath_handlerd, &tmp->activate_path,
-+				m->pg_init_delay ? m->pg_init_delay_secs : 0);
- 			m->pg_init_in_progress++;
- 		}
-+		m->pg_init_delay = 0;
- 	}
- out:
- 	spin_unlock_irqrestore(&m->lock, flags);
-@@ -714,8 +719,9 @@ static int parse_features(struct arg_set
- 	const char *param_name;
- 
- 	static struct param _params[] = {
--		{0, 3, "invalid number of feature args"},
-+		{0, 5, "invalid number of feature args"},
- 		{1, 50, "pg_init_retries must be between 1 and 50"},
-+		{1, 50, "pg_init_delay_secs must be between 1 and 50"},
- 	};
- 
- 	r = read_param(_params, shift(as), &argc, &ti->error);
-@@ -742,6 +748,14 @@ static int parse_features(struct arg_set
- 			continue;
- 		}
- 
-+		if (!strnicmp(param_name, MESG_STR("pg_init_delay_secs")) &&
-+		    (argc >= 1)) {
-+			r = read_param(_params + 1, shift(as),
-+				       &m->pg_init_delay_secs, &ti->error);
-+			argc--;
-+			continue;
-+		}
-+
- 		ti->error = "Unrecognised multipath feature request";
- 		r = -EINVAL;
- 	} while (argc && !r);
-@@ -919,7 +933,7 @@ static int reinstate_path(struct pgpath
- 		queue_work(kmultipathd, &m->process_queued_ios);
- 	} else if (m->hw_handler_name && (m->current_pg == pgpath->pg)) {
-  		m->pg_init_in_progress++;
--		queue_work(kmpath_handlerd, &pgpath->activate_path);
-+		queue_delayed_work(kmpath_handlerd, &pgpath->activate_path, 0);
- 	}
- 
- 	dm_path_uevent(DM_UEVENT_PATH_REINSTATED, m->ti,
-@@ -1053,6 +1067,7 @@ static void pg_init_done(struct dm_path
- 	struct priority_group *pg = pgpath->pg;
- 	struct multipath *m = pg->m;
- 	unsigned long flags;
-+	unsigned int delay = 0;
- 
- 	/* device or driver problems */
- 	switch (errors) {
-@@ -1077,8 +1092,11 @@ static void pg_init_done(struct dm_path
- 		 */
- 		bypass_pg(m, pg, 1);
- 		break;
--	/* TODO: For SCSI_DH_RETRY we should wait a couple seconds */
-+	/*
-+	 * For SCSI_DH_RETRY we wait before retrying.
-+	 */
- 	case SCSI_DH_RETRY:
-+		delay = 1;
- 	case SCSI_DH_IMM_RETRY:
- 	case SCSI_DH_RES_TEMP_UNAVAIL:
- 		if (pg_init_limit_reached(m, pgpath))
-@@ -1107,8 +1125,10 @@ static void pg_init_done(struct dm_path
- 	}
- 
- 	m->pg_init_in_progress--;
--	if (!m->pg_init_in_progress)
-+	if (!m->pg_init_in_progress) {
-+		m->pg_init_delay = delay;
- 		queue_work(kmultipathd, &m->process_queued_ios);
-+	}
- 	spin_unlock_irqrestore(&m->lock, flags);
- }
- 
-@@ -1116,7 +1136,7 @@ static void activate_path(struct work_st
- {
- 	int ret;
- 	struct pgpath *pgpath =
--		container_of(work, struct pgpath, activate_path);
-+		container_of(work, struct pgpath, activate_path.work);
- 
- 	ret = scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev));
- 	pg_init_done(&pgpath->path, ret);
-@@ -1252,11 +1272,14 @@ static int multipath_status(struct dm_ta
- 		DMEMIT("2 %u %u ", m->queue_size, m->pg_init_count);
- 	else {
- 		DMEMIT("%u ", m->queue_if_no_path +
--			      (m->pg_init_retries > 0) * 2);
-+			      (m->pg_init_retries > 0) * 2 +
-+			      (m->pg_init_delay_secs != SCSI_DH_RETRY_DELAY) * 2);
- 		if (m->queue_if_no_path)
- 			DMEMIT("queue_if_no_path ");
- 		if (m->pg_init_retries)
- 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
-+		if (m->pg_init_delay_secs != SCSI_DH_RETRY_DELAY)
-+			DMEMIT("pg_init_delay_secs %u ", m->pg_init_delay_secs);
- 	}
- 
- 	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
-Index: linux-2.6.29/include/scsi/scsi_dh.h
-===================================================================
---- linux-2.6.29.orig/include/scsi/scsi_dh.h
-+++ linux-2.6.29/include/scsi/scsi_dh.h
-@@ -55,6 +55,10 @@ enum {
- 	SCSI_DH_NOSYS,
- 	SCSI_DH_DRIVER_MAX,
- };
-+
-+/* Default time to wait before retry in case of SCSI_DH_RETRY */
-+#define SCSI_DH_RETRY_DELAY ((HZ * 2))
-+
- #if defined(CONFIG_SCSI_DH) || defined(CONFIG_SCSI_DH_MODULE)
- extern int scsi_dh_activate(struct request_queue *);
- extern int scsi_dh_handler_exist(const char *);
+-- 
+tejun
