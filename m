@@ -1,66 +1,223 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH 4/7] blkio-cgroup: The body of blkio-cgroup
-Date: Tue, 05 May 2009 07:43:58 +0900 (JST)
-Message-ID: <20090505.074358.226774631.ryov@valinux.co.jp>
-References: <20090428.214535.71090234.ryov@valinux.co.jp>
-	<20090428.214604.104034341.ryov@valinux.co.jp>
-	<20090504120544.GA3986@linux>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH] dm mpath: delay retry activate_path on
+	SCSI_DH_RETRY
+Date: Mon, 04 May 2009 20:18:17 -0700
+Message-ID: <1241493497.8721.60.camel@chandra-ubuntu>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <20090504120544.GA3986@linux>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: righi.andrea@gmail.com
-Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, xen-devel@lists.xensource.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel <dm-devel@redhat.com>
+Cc: Nikanth Karthikesan <knikanth@suse.de>
 List-Id: dm-devel.ids
 
-Hi Andrea,
+This is a modified patch of what Nikanth submitted a while back
+(http://patchwork.kernel.org/patch/8067/) to make the delay variable a
+configurable attribute.
 
-From: Andrea Righi <righi.andrea@gmail.com>
-Subject: Re: [PATCH 4/7] blkio-cgroup: The body of blkio-cgroup
-Date: Mon, 4 May 2009 14:05:45 +0200
+This applies on top the patch I sent few days back to send multiple
+activates on pg_init()
+(http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-mpath-call-activate-fn-for-each-path-in-pg_init.patch)
 
-> On Tue, Apr 28, 2009 at 09:46:04PM +0900, Ryo Tsuruta wrote:
-> > The body of bio-cgroup.
-> > 
-> > Based on 2.6.30-rc3-git3
-> > Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
-> > Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
-> 
-> Hi Ryo,
-> 
-> few minor coding style issues reported by checkpatch.pl:
+This applies cleanly on 2.6.30-rc4 and tested there.
 
-Thanks for reporting these issues. I'll fix them in the next release.
+-------------------------
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 
-> 
-> WARNING: line over 80 characters
-> #138: FILE: include/linux/biotrack.h:67:
-> +static inline void blkio_cgroup_set_owner(struct page *page, struct mm_struct *mm)
-> 
-> WARNING: line over 80 characters
-> #152: FILE: include/linux/biotrack.h:81:
-> +static inline void blkio_cgroup_copy_owner(struct page *page, struct page *opage)
-> 
-> WARNING: EXPORT_SYMBOL(foo); should immediately follow its function/variable
-> #513: FILE: mm/biotrack.c:265:
-> +EXPORT_SYMBOL(get_blkio_cgroup_id);
-> 
-> WARNING: EXPORT_SYMBOL(foo); should immediately follow its function/variable
-> #514: FILE: mm/biotrack.c:266:
-> +EXPORT_SYMBOL(blkio_cgroup_lookup);
-> 
-> total: 0 errors, 4 warnings, 515 lines checked
-> 
-> -Andrea
+SCSI Device Handlers return SCSI_DH_IMM_RETRY if we could retry
+immediately and SCSI_DH_RETRY in cases where it is better to retry
+after some delay.
 
-Thanks,
-Ryo Tsuruta
+Currently we retry immediately irrespective of SCSI_DH_IMM_RETRY and
+SCSI_DH_RETRY. This patch adds a user configurable attribute
+pg_init_delay_secs which specifies the number of seconds to delay
+before retrying scsi_dh_activate, when it returned SCSI_DH_RETRY.
+
+Default for this attribute is set to 2 seconds.
+
+Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+
+---
+ drivers/md/dm-mpath.c  |   41 ++++++++++++++++++++++++++++++++---------
+ include/scsi/scsi_dh.h |    4 ++++
+ 2 files changed, 36 insertions(+), 9 deletions(-)
+
+Index: linux-2.6.30-rc4/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.30-rc4.orig/drivers/md/dm-mpath.c
++++ linux-2.6.30-rc4/drivers/md/dm-mpath.c
+@@ -35,7 +35,7 @@ struct pgpath {
+ 
+ 	struct dm_path path;
+ 	struct work_struct deactivate_path;
+-	struct work_struct activate_path;
++	struct delayed_work activate_path;
+ };
+ 
+ #define path_to_pgpath(__pgp) container_of((__pgp), struct pgpath, path)
+@@ -69,6 +69,7 @@ struct multipath {
+ 	struct list_head priority_groups;
+ 	unsigned pg_init_required;	/* pg_init needs calling? */
+ 	unsigned pg_init_in_progress;	/* Only one pg_init allowed at once */
++	unsigned pg_init_delay;		/* To delay or not to delay */
+ 
+ 	unsigned nr_valid_paths;	/* Total number of usable paths */
+ 	struct pgpath *current_pgpath;
+@@ -81,6 +82,7 @@ struct multipath {
+ 	unsigned saved_queue_if_no_path;/* Saved state during suspension */
+ 	unsigned pg_init_retries;	/* Number of times to retry pg_init */
+ 	unsigned pg_init_count;		/* Number of times pg_init called */
++	unsigned pg_init_delay_secs;	/* Delay in seconds before retry */
+ 
+ 	struct work_struct process_queued_ios;
+ 	struct bio_list queued_ios;
+@@ -127,7 +129,7 @@ static struct pgpath *alloc_pgpath(void)
+ 	if (pgpath) {
+ 		pgpath->is_active = 1;
+ 		INIT_WORK(&pgpath->deactivate_path, deactivate_path);
+-		INIT_WORK(&pgpath->activate_path, activate_path);
++		INIT_DELAYED_WORK(&pgpath->activate_path, activate_path);
+ 	}
+ 
+ 	return pgpath;
+@@ -195,6 +197,7 @@ static struct multipath *alloc_multipath
+ 		INIT_LIST_HEAD(&m->priority_groups);
+ 		spin_lock_init(&m->lock);
+ 		m->queue_io = 1;
++		m->pg_init_delay_secs = SCSI_DH_RETRY_DELAY;
+ 		INIT_WORK(&m->process_queued_ios, process_queued_ios);
+ 		INIT_WORK(&m->trigger_event, trigger_event);
+ 		m->mpio_pool = mempool_create_slab_pool(MIN_IOS, _mpio_cache);
+@@ -443,9 +446,11 @@ static void process_queued_ios(struct wo
+ 		m->pg_init_count++;
+ 		m->pg_init_required = 0;
+ 		list_for_each_entry(tmp, &pgpath->pg->pgpaths, list) {
+-			queue_work(kmpath_handlerd, &tmp->activate_path);
++			queue_delayed_work(kmpath_handlerd, &tmp->activate_path,
++				m->pg_init_delay ? m->pg_init_delay_secs : 0);
+ 			m->pg_init_in_progress++;
+ 		}
++		m->pg_init_delay = 0;
+ 	}
+ out:
+ 	spin_unlock_irqrestore(&m->lock, flags);
+@@ -714,8 +719,9 @@ static int parse_features(struct arg_set
+ 	const char *param_name;
+ 
+ 	static struct param _params[] = {
+-		{0, 3, "invalid number of feature args"},
++		{0, 5, "invalid number of feature args"},
+ 		{1, 50, "pg_init_retries must be between 1 and 50"},
++		{1, 50, "pg_init_delay_secs must be between 1 and 50"},
+ 	};
+ 
+ 	r = read_param(_params, shift(as), &argc, &ti->error);
+@@ -742,6 +748,14 @@ static int parse_features(struct arg_set
+ 			continue;
+ 		}
+ 
++		if (!strnicmp(param_name, MESG_STR("pg_init_delay_secs")) &&
++		    (argc >= 1)) {
++			r = read_param(_params + 1, shift(as),
++				       &m->pg_init_delay_secs, &ti->error);
++			argc--;
++			continue;
++		}
++
+ 		ti->error = "Unrecognised multipath feature request";
+ 		r = -EINVAL;
+ 	} while (argc && !r);
+@@ -919,7 +933,7 @@ static int reinstate_path(struct pgpath
+ 		queue_work(kmultipathd, &m->process_queued_ios);
+ 	} else if (m->hw_handler_name && (m->current_pg == pgpath->pg)) {
+  		m->pg_init_in_progress++;
+-		queue_work(kmpath_handlerd, &pgpath->activate_path);
++		queue_delayed_work(kmpath_handlerd, &pgpath->activate_path, 0);
+ 	}
+ 
+ 	dm_path_uevent(DM_UEVENT_PATH_REINSTATED, m->ti,
+@@ -1053,6 +1067,7 @@ static void pg_init_done(struct dm_path
+ 	struct priority_group *pg = pgpath->pg;
+ 	struct multipath *m = pg->m;
+ 	unsigned long flags;
++	unsigned int delay = 0;
+ 
+ 	/* device or driver problems */
+ 	switch (errors) {
+@@ -1077,8 +1092,11 @@ static void pg_init_done(struct dm_path
+ 		 */
+ 		bypass_pg(m, pg, 1);
+ 		break;
+-	/* TODO: For SCSI_DH_RETRY we should wait a couple seconds */
++	/*
++	 * For SCSI_DH_RETRY we wait before retrying.
++	 */
+ 	case SCSI_DH_RETRY:
++		delay = 1;
+ 	case SCSI_DH_IMM_RETRY:
+ 	case SCSI_DH_RES_TEMP_UNAVAIL:
+ 		if (pg_init_limit_reached(m, pgpath))
+@@ -1107,8 +1125,10 @@ static void pg_init_done(struct dm_path
+ 	}
+ 
+ 	m->pg_init_in_progress--;
+-	if (!m->pg_init_in_progress)
++	if (!m->pg_init_in_progress) {
++		m->pg_init_delay = delay;
+ 		queue_work(kmultipathd, &m->process_queued_ios);
++	}
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ }
+ 
+@@ -1116,7 +1136,7 @@ static void activate_path(struct work_st
+ {
+ 	int ret;
+ 	struct pgpath *pgpath =
+-		container_of(work, struct pgpath, activate_path);
++		container_of(work, struct pgpath, activate_path.work);
+ 
+ 	ret = scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev));
+ 	pg_init_done(&pgpath->path, ret);
+@@ -1252,11 +1272,14 @@ static int multipath_status(struct dm_ta
+ 		DMEMIT("2 %u %u ", m->queue_size, m->pg_init_count);
+ 	else {
+ 		DMEMIT("%u ", m->queue_if_no_path +
+-			      (m->pg_init_retries > 0) * 2);
++			      (m->pg_init_retries > 0) * 2 +
++			      (m->pg_init_delay_secs != SCSI_DH_RETRY_DELAY) * 2);
+ 		if (m->queue_if_no_path)
+ 			DMEMIT("queue_if_no_path ");
+ 		if (m->pg_init_retries)
+ 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
++		if (m->pg_init_delay_secs != SCSI_DH_RETRY_DELAY)
++			DMEMIT("pg_init_delay_secs %u ", m->pg_init_delay_secs);
+ 	}
+ 
+ 	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
+Index: linux-2.6.29/include/scsi/scsi_dh.h
+===================================================================
+--- linux-2.6.29.orig/include/scsi/scsi_dh.h
++++ linux-2.6.29/include/scsi/scsi_dh.h
+@@ -55,6 +55,10 @@ enum {
+ 	SCSI_DH_NOSYS,
+ 	SCSI_DH_DRIVER_MAX,
+ };
++
++/* Default time to wait before retry in case of SCSI_DH_RETRY */
++#define SCSI_DH_RETRY_DELAY ((HZ * 2))
++
+ #if defined(CONFIG_SCSI_DH) || defined(CONFIG_SCSI_DH_MODULE)
+ extern int scsi_dh_activate(struct request_queue *);
+ extern int scsi_dh_handler_exist(const char *);
