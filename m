@@ -1,49 +1,54 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCHSET] block,scsi,libata: implement alt_size
-Date: Tue, 05 May 2009 12:28:53 +0900
-Message-ID: <49FFB275.7000507@kernel.org>
-References: <1233456951-992-1-git-send-email-tj@kernel.org>	 <49F902CF.7080307@garzik.org> <49F903DD.8040707@kernel.org>	 <49FA0349.3090706@garzik.org>	 <e9c3a7c20904301415t621670a0l1bd64c7d74d369f@mail.gmail.com>	 <49FEA127.1000905@kernel.org> <e9c3a7c20905040948m572e23dj1aa197dbd20ff037@mail.gmail.com>
+From: Flemming Frandsen <flemming.frandsen@stibo.com>
+Subject: DM vs. MD: The showdown
+Date: Tue, 5 May 2009 14:51:39 +0200
+Message-ID: <4A00365B.7030500@stibo.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <e9c3a7c20905040948m572e23dj1aa197dbd20ff037@mail.gmail.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@gmail.com>
-Cc: Jeff Garzik <jeff@garzik.org>, linux-ide@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, Mauelshagen@redhat.com, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+I've searched high and low for any info, but my google-fu has failed me, 
+so feel free to redirect me to a more appropriate mailing list or 
+documentation if this is too OT.
 
-Dan Williams wrote:
-> On Mon, May 4, 2009 at 1:02 AM, Tejun Heo <tj@kernel.org> wrote:
->>> Couldn't the "fix" also just be a note to users to disable ignore_hpa
->>> if they notice that there raid arrays are not assembling correctly?
->> I don't know.  If it doesn't work automatically, the solution really
->> isn't worth much.  People generally don't (shouldn't need to) have any
->> idea what HPA is.  It basically boils down to "Linux doesn't support
->> RAID".  :-)
->>
->> Maybe we should just put this issue to the rest and strongly advise
->> people against BIOS raids.
-> 
-> That's a bit too far :-).  The real issue is that Linux is ignoring a
-> property of the platform.  To me ignoring HPA is like ignoring an e820
-> reserved memory region.  You might be able to get away with it
-> sometimes, but other times it breaks.
+I have a box that had a working md RAID 1+0 setup, iow:
+* /dev/md1 is a mirror containing /dev/sda2 and /dev/sdc2
+* /dev/md2 is a mirror containing /dev/sdb2 and /dev/sdd2
+* /dev/md3 is a stripe set of /dev/md1 and /dev/md2
 
-Well, somewhat but not quite.  The difference is with backward
-compatibility and the fact that HPA has been used for many different
-creative ;-) purposes including working around BIOS limitations.
+The problem is that I recently had to enable multipath to hook up to the 
+SAN, that part went ok, but afterwards my /proc/mdstat shows that dm 
+seems to have renamed all my disks:
+md1 : active raid1 dm-2[0]
+       48829440 blocks [2/1] [U_]
+md2 : active raid1 dm-3[0]
+       48829440 blocks [2/1] [U_]
 
-> However, in the end I think having 'alt_size' available is a useful
-> mechanism for discovering and handling the ignore_hpa=1 case.   The
-> policy about when to trust it can be left to userspace.
+and mdadm can no longer create md3 because:
+mdadm: no devices found for /dev/md3.
 
-Pushing this in the kernel without updating dm-raid is kind of
-pointless.  Who should I be poking to get the userland part moving?
+For some reason dm has found it funny to grab the md1 and md2 mirrors 
+and use them to create the stripe set: /dev/mapper/md|md3
 
-Thanks.
+I've mounted the /dev/mapper/md|md3 device and it seems to contain my 
+file system, but I'd really like to get dm out of the way and only use 
+it to handle the multipath bits needed for the SAN.
+
+How do I tell dm to keep its paws to itself?
+
+I'm running Linux 2.6.20 (on a Ubuntu 7.04), btw.
 
 -- 
-tejun
+  Regards Flemming Frandsen - Stibo Systems - DK - STEP Release Manager
