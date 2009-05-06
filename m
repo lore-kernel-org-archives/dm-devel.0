@@ -1,142 +1,125 @@
-From: Andrea Righi <righi.andrea@gmail.com>
-Subject: Re: IO scheduler based IO Controller V2
-Date: Thu, 7 May 2009 00:35:13 +0200
-Message-ID: <20090506223512.GE4282@linux>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <20090505132441.1705bfad.akpm@linux-foundation.org> <20090506023332.GA1212@redhat.com> <20090506203228.GH8180@redhat.com> <20090506213453.GC4282@linux> <20090506215235.GJ8180@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761458AbZEFWfn@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20090506215235.GJ8180@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, peterz@infradead.org
+From: bmarzins@sourceware.org
+Subject: multipath-tools/path_priority/pp_alua Makefile ...
+Date: 6 May 2009 22:57:58 -0000
+Message-ID: <20090506225758.26249.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, May 06, 2009 at 05:52:35PM -0400, Vivek Goyal wrote:
-> On Wed, May 06, 2009 at 11:34:54PM +0200, Andrea Righi wrote:
-> > On Wed, May 06, 2009 at 04:32:28PM -0400, Vivek Goyal wrote:
-> > > Hi Andrea and others,
-> > > 
-> > > I always had this doubt in mind that any kind of 2nd level controller will
-> > > have no idea about underlying IO scheduler queues/semantics. So while it
-> > > can implement a particular cgroup policy (max bw like io-throttle or
-> > > proportional bw like dm-ioband) but there are high chances that it will
-> > > break IO scheduler's semantics in one way or other.
-> > > 
-> > > I had already sent out the results for dm-ioband in a separate thread.
-> > > 
-> > > http://linux.derkeiler.com/Mailing-Lists/Kernel/2009-04/msg07258.html
-> > > http://linux.derkeiler.com/Mailing-Lists/Kernel/2009-04/msg07573.html
-> > > http://linux.derkeiler.com/Mailing-Lists/Kernel/2009-04/msg08177.html
-> > > http://linux.derkeiler.com/Mailing-Lists/Kernel/2009-04/msg08345.html
-> > > http://linux.derkeiler.com/Mailing-Lists/Kernel/2009-04/msg08355.html
-> > > 
-> > > Here are some basic results with io-throttle. Andrea, please let me know
-> > > if you think this is procedural problem. Playing with io-throttle patches
-> > > for the first time.
-> > > 
-> > > I took V16 of your patches and trying it out with 2.6.30-rc4 with CFQ
-> > > scheduler.
-> > > 
-> > > I have got one SATA drive with one partition on it.
-> > > 
-> > > I am trying to create one cgroup and assignn 8MB/s limit to it and launch
-> > > on RT prio 0 task and one BE prio 7 task and see how this 8MB/s is divided
-> > > between these tasks. Following are the results.
-> > > 
-> > > Following is my test script.
-> > > 
-> > > *******************************************************************
-> > > #!/bin/bash
-> > > 
-> > > mount /dev/sdb1 /mnt/sdb
-> > > 
-> > > mount -t cgroup -o blockio blockio /cgroup/iot/
-> > > mkdir -p /cgroup/iot/test1 /cgroup/iot/test2
-> > > 
-> > > # Set bw limit of 8 MB/ps on sdb
-> > > echo "/dev/sdb:$((8 * 1024 * 1024)):0:0" >
-> > > /cgroup/iot/test1/blockio.bandwidth-max
-> > > 
-> > > sync
-> > > echo 3 > /proc/sys/vm/drop_caches
-> > > 
-> > > echo $$ > /cgroup/iot/test1/tasks
-> > > 
-> > > # Launch a normal prio reader.
-> > > ionice -c 2 -n 7 dd if=/mnt/sdb/zerofile1 of=/dev/zero &
-> > > pid1=$!
-> > > echo $pid1
-> > > 
-> > > # Launch an RT reader  
-> > > ionice -c 1 -n 0 dd if=/mnt/sdb/zerofile2 of=/dev/zero &
-> > > pid2=$!
-> > > echo $pid2
-> > > 
-> > > wait $pid2
-> > > echo "RT task finished"
-> > > **********************************************************************
-> > > 
-> > > Test1
-> > > =====
-> > > Test two readers (one RT class and one BE class) and see how BW is
-> > > allocated with-in cgroup
-> > > 
-> > > With io-throttle patches
-> > > ------------------------
-> > > - Two readers, first BE prio 7, second RT prio 0
-> > > 
-> > > 234179072 bytes (234 MB) copied, 55.8482 s, 4.2 MB/s
-> > > 234179072 bytes (234 MB) copied, 55.8975 s, 4.2 MB/s
-> > > RT task finished
-> > > 
-> > > Note: See, there is no difference in the performance of RT or BE task.
-> > > Looks like these got throttled equally.
-> > 
-> > OK, this is coherent with the current io-throttle implementation. IO
-> > requests are throttled without the concept of the ioprio model.
-> > 
-> > We could try to distribute the throttle using a function of each task's
-> > ioprio, but ok, the obvious drawback is that it totally breaks the logic
-> > used by the underlying layers.
-> > 
-> > BTW, I'm wondering, is it a very critical issue? I would say why not to
-> > move the RT task to a different cgroup with unlimited BW? or limited BW
-> > but with other tasks running at the same IO priority...
-> 
-> So one of hypothetical use case probably  could be following. Somebody
-> is having a hosted server and customers are going to get there
-> applications running in a particular cgroup with a limit on max bw.
-> 
-> 			root
-> 		  /      |      \
-> 	     cust1      cust2   cust3
-> 	   (20 MB/s)  (40MB/s)  (30MB/s)
-> 
-> Now all three customers will run their own applications/virtual machines
-> in their respective groups with upper limits. Will we say to these that
-> all your tasks will be considered as same class and same prio level.
-> 
-> Assume cust1 is running a hypothetical application which creates multiple
-> threads and assigns these threads different priorities based on its needs
-> at run time. How would we handle this thing?
-> 
-> You can't collect all the RT tasks from all customers and move these to a
-> single cgroup. Or ask customers to separate out their tasks based on
-> priority level and give them multiple groups of different priority.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-05-06 22:57:58
 
-Clear.
+Modified files:
+	path_priority/pp_alua: Makefile rtpg.c spc3.h 
 
-Unfortunately, I think, with absolute BW limits at a certain point, if
-we hit the limit, we need to block the IO request. That's the same
-either, when we dispatch or submit the request. And the risk is to break
-the logic of the IO priorities and fall in the classic priority
-inversion problem.
+Log message:
+	Fix for bz #474451
+	Intel wanted a variant of the mpath_prio_alua method to determine priority.
+	two binaries are now built out of the alua source. The intel one looks at
+	the preffered port bit instead of the asymetric access state bits.
 
-The difference is that probably working at the CFQ level gives a better
-control so we can handle these cases appropriately and avoid the
-priority inversion problems.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_alua/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.3&r2=1.5.2.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_alua/rtpg.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3.2.2&r2=1.3.2.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_alua/spc3.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3&r2=1.3.2.1
 
-Thanks,
--Andrea
+--- multipath-tools/path_priority/pp_alua/Makefile	2008/02/07 22:18:46	1.5.2.3
++++ multipath-tools/path_priority/pp_alua/Makefile	2009/05/06 22:57:57	1.5.2.4
+@@ -12,11 +12,12 @@
+ #
+ # This file is released under the GPL.
+ #==============================================================================
+-EXEC		= mpath_prio_alua
++ALUA		= mpath_prio_alua
++INTEL		= mpath_prio_intel
+ BUILD		= glibc
+ DEBUG		= 0
+ DEBUG_DUMPHEX	= 0
+-OBJS		= main.o rtpg.o
++FILES		= main.c rtpg.c
+ INSTALL		= install -D
+ 
+ TOPDIR	= ../..
+@@ -29,25 +30,23 @@
+ 
+ all: $(BUILD)
+ 
+-glibc:	$(OBJS)
+-	$(CC) -static -o $(EXEC).static $(OBJS) $(LDFLAGS)
+-
+-klibc:	$(OBJS)
+-	$(CC) -static -o $(EXEC) $(OBJS)
+-
+-install: $(BUILD) $(EXEC).8
+-	$(INSTALL) -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
+-	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC)
+-	$(INSTALL) -m 644 $(EXEC).8 $(DESTDIR)$(mandir)/$(EXEC).8
++glibc: $(FILES)
++	$(CC) -static -o $(ALUA).static $(FILES) $(CFLAGS) -DALUA $(LDFLAGS)
++	$(CC) -static -o $(INTEL).static $(FILES) $(CFLAGS) -DINTEL $(LDFLAGS)
++
++install: $(BUILD) $(ALUA).8
++	$(INSTALL) -m 755 $(ALUA).static $(DESTDIR)$(bindir)/$(ALUA).static
++	$(INSTALL) -m 755 $(INTEL).static $(DESTDIR)$(bindir)/$(INTEL).static
++	ln -sf $(ALUA).static $(DESTDIR)$(bindir)/$(ALUA)
++	ln -sf $(INTEL).static $(DESTDIR)$(bindir)/$(INTEL)
++	$(INSTALL) -m 644 $(ALUA).8 $(DESTDIR)$(mandir)/$(ALUA).8
+ 
+ uninstall:
+-	rm $(DESTDIR)$(bindir)/$(EXEC)
+-	rm $(DESTDIR)$(bindir)/$(EXEC).static
+-	rm $(DESTDIR)$(mandir)/$(EXEC).8
++	rm $(DESTDIR)$(bindir)/$(ALUA)
++	rm $(DESTDIR)$(bindir)/$(ALUA).static
++	rm $(DESTDIR)$(mandir)/$(ALUA).8
++	rm $(DESTDIR)$(bindir)/$(INTEL)
++	rm $(DESTDIR)$(bindir)/$(INTEL).static
+ 
+ clean:	
+-	rm -f *.o *.gz $(EXEC).static
+-
+-main.o:	main.c rtpg.h spc3.h
+-
+-rtpg.o:	rtpg.c rtpg.h spc3.h
++	rm -f *.o *.gz $(ALUA).static $(INTEL).static
+--- multipath-tools/path_priority/pp_alua/rtpg.c	2009/04/21 00:05:24	1.3.2.2
++++ multipath-tools/path_priority/pp_alua/rtpg.c	2009/05/06 22:57:58	1.3.2.3
+@@ -295,7 +295,11 @@
+ 					"group.\n");
+ 			} else {
+ 				PRINT_DEBUG("pref=%i\n", dscr->pref);
++#ifdef ALUA
+ 				rc = rtpg_tpg_dscr_get_aas(dscr);
++#else
++				rc = rtpg_tpg_dscr_get_pref(dscr);
++#endif
+ 			}
+ 		}
+ 	}
+--- multipath-tools/path_priority/pp_alua/spc3.h	2006/06/06 18:32:44	1.3
++++ multipath-tools/path_priority/pp_alua/spc3.h	2009/05/06 22:57:58	1.3.2.1
+@@ -302,6 +302,12 @@
+ 	return (d->b0 & 0x0f);
+ }
+ 
++static inline int
++rtpg_tpg_dscr_get_pref(struct rtpg_tpg_dscr *d)
++{
++	return ((d->b0 & 0x80)?0:2);
++}
++
+ struct rtpg_data {
+ 	unsigned char			length[4];		/* size-4 */
+ 	struct rtpg_tpg_dscr		data[0];
