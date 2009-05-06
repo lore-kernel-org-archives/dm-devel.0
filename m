@@ -1,59 +1,136 @@
-From: Divyesh Shah <dpshah@google.com>
+From: Andrea Righi <righi.andrea@gmail.com>
 Subject: Re: IO scheduler based IO Controller V2
-Date: Wed, 06 May 2009 11:47:15 -0700
-Message-ID: <4A01DB33.4060103@google.com>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <20090505132441.1705bfad.akpm@linux-foundation.org> <1241562049.11059.921.camel@twins> <20090506034254.GD4416@balbir.in.ibm.com>
+Date: Wed, 6 May 2009 22:07:53 +0200
+Message-ID: <20090506200751.GA4282@linux>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <20090505132441.1705bfad.akpm@linux-foundation.org> <20090506023332.GA1212@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759915AbZEFSrk@vger.kernel.org>
-In-Reply-To: <20090506034254.GD4416@balbir.in.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757295AbZEFUIT@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20090506023332.GA1212@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: balbir@linux.vnet.ibm.com
-Cc: Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Vivek Goyal <vgoyal@redhat.com>, nauman@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, peterz@infradead.org
 List-Id: dm-devel.ids
 
-Balbir Singh wrote:
-> * Peter Zijlstra <peterz@infradead.org> [2009-05-06 00:20:49]:
+On Tue, May 05, 2009 at 10:33:32PM -0400, Vivek Goyal wrote:
+> On Tue, May 05, 2009 at 01:24:41PM -0700, Andrew Morton wrote:
+> > On Tue,  5 May 2009 15:58:27 -0400
+> > Vivek Goyal <vgoyal@redhat.com> wrote:
+> > 
+> > > 
+> > > Hi All,
+> > > 
+> > > Here is the V2 of the IO controller patches generated on top of 2.6.30-rc4.
+> > > ...
+> > > Currently primarily two other IO controller proposals are out there.
+> > > 
+> > > dm-ioband
+> > > ---------
+> > > This patch set is from Ryo Tsuruta from valinux.
+> > > ...
+> > > IO-throttling
+> > > -------------
+> > > This patch set is from Andrea Righi provides max bandwidth controller.
+> > 
+> > I'm thinking we need to lock you guys in a room and come back in 15 minutes.
+> > 
+> > Seriously, how are we to resolve this?  We could lock me in a room and
+> > cmoe back in 15 days, but there's no reason to believe that I'd emerge
+> > with the best answer.
+> > 
+> > I tend to think that a cgroup-based controller is the way to go. 
+> > Anything else will need to be wired up to cgroups _anyway_, and that
+> > might end up messy.
 > 
->> On Tue, 2009-05-05 at 13:24 -0700, Andrew Morton wrote:
->>> On Tue,  5 May 2009 15:58:27 -0400
->>> Vivek Goyal <vgoyal@redhat.com> wrote:
->>>
->>>> Hi All,
->>>>
->>>> Here is the V2 of the IO controller patches generated on top of 2.6.30-rc4.
->>>> ...
->>>> Currently primarily two other IO controller proposals are out there.
->>>>
->>>> dm-ioband
->>>> ---------
->>>> This patch set is from Ryo Tsuruta from valinux.
->>>> ...
->>>> IO-throttling
->>>> -------------
->>>> This patch set is from Andrea Righi provides max bandwidth controller.
->>> I'm thinking we need to lock you guys in a room and come back in 15 minutes.
->>>
->>> Seriously, how are we to resolve this?  We could lock me in a room and
->>> cmoe back in 15 days, but there's no reason to believe that I'd emerge
->>> with the best answer.
->>>
->>> I tend to think that a cgroup-based controller is the way to go. 
->>> Anything else will need to be wired up to cgroups _anyway_, and that
->>> might end up messy.
->> FWIW I subscribe to the io-scheduler faith as opposed to the
->> device-mapper cult ;-)
->>
->> Also, I don't think a simple throttle will be very useful, a more mature
->> solution should cater to more use cases.
->>
+> Hi Andrew,
 > 
-> I tend to agree, unless Andrea can prove us wrong. I don't think
-> throttling a task (not letting it consume CPU, memory when its IO
-> quota is exceeded) is a good idea. I've asked that question to Andrea
-> a few times, but got no response.
+> Sorry, did not get what do you mean by cgroup based controller? If you
+> mean that we use cgroups for grouping tasks for controlling IO, then both
+> IO scheduler based controller as well as io throttling proposal do that.
+> dm-ioband also supports that up to some extent but it requires extra step of
+> transferring cgroup grouping information to dm-ioband device using dm-tools.
+> 
+> But if you meant that io-throttle patches, then I think it solves only
+> part of the problem and that is max bw control. It does not offer minimum
+> BW/minimum disk share gurantees as offered by proportional BW control.
+> 
+> IOW, it supports upper limit control and does not support a work conserving
+> IO controller which lets a group use the whole BW if competing groups are
+> not present. IMHO, proportional BW control is an important feature which
+> we will need and IIUC, io-throttle patches can't be easily extended to support
+> proportional BW control, OTOH, one should be able to extend IO scheduler
+> based proportional weight controller to also support max bw control. 
 
-I agree with what Balbir said about the effects of throttling on memory and cpu usage of that task.
-Nauman and I have been working on Vivek's set of patches (which also includes some patches by Nauman) and have been testing and developing on top of that. I've found this solution to be the one that takes us closest to a complete solution. This approach works well under the assumption that the queues are backlogged and in the limited testing that we've done so far doesn't fare that badly when they are not backlogged (though there is definitely room to improve there).
-With buffered writes, when the queues are not backlogged I think it might be useful to explore into vm space and see if we can do something there w/o any impact to the tasks mem or cpu usage. I don't have any brilliant ideas on this now but want to get people thinking about this.
+Well, IMHO the big concern is at which level we want to implement the
+logic of control: IO scheduler, when the IO requests are already
+submitted and need to be dispatched, or at high level when the
+applications generates IO requests (or maybe both).
+
+And, as pointed by Andrew, do everything by a cgroup-based controller.
+
+The other features, proportional BW, throttling, take the current ioprio
+model in account, etc. are implementation details and any of the
+proposed solutions can be extended to support all these features. I
+mean, io-throttle can be extended to support proportional BW (for a
+certain perspective it is already provided by the throttling water mark
+in v16), as well as the IO scheduler based controller can be extended to
+support absolute BW limits. The same for dm-ioband. I don't think
+there're huge obstacle to merge the functionalities in this sense.
+
+> 
+> Andrea, last time you were planning to have a look at my patches and see
+> if max bw controller can be implemented there. I got a feeling that it
+> should not be too difficult to implement it there. We already have the
+> hierarchical tree of io queues and groups in elevator layer and we run
+> BFQ (WF2Q+) algorithm to select next queue to dispatch the IO from. It is
+> just a matter of also keeping track of IO rate per queue/group and we should
+> be easily be able to delay the dispatch of IO from a queue if its group has
+> crossed the specified max bw.
+
+Yes, sorry for my late, I quickly tested your patchset, but I still need
+to understand many details of your solution. In the next days I'll
+re-read everything carefully and I'll try to do a detailed review of
+your patchset (just re-building the kernel with your patchset applied).
+
+> 
+> This should lead to less code and reduced complextiy (compared with the
+> case where we do max bw control with io-throttling patches and proportional
+> BW control using IO scheduler based control patches).
+
+mmmh... changing the logic at the elevator and all IO schedulers doesn't
+sound like reduced complexity and less code changed. With io-throttle we
+just need to place the cgroup_io_throttle() hook in the right functions
+where we want to apply throttling. This is a quite easy approach to
+extend the IO control also to logical devices (more in general devices
+that use their own make_request_fn) or even network-attached devices, as
+well as networking filesystems, etc.
+
+But I may be wrong. As I said I still need to review in the details your
+solution.
+
+>  
+> So do you think that it would make sense to do max BW control along with
+> proportional weight IO controller at IO scheduler? If yes, then we can
+> work together and continue to develop this patchset to also support max
+> bw control and meet your requirements and drop the io-throttling patches.
+
+It is surely worth to be explored. Honestly, I don't know if it would be
+a better solution or not. Probably comparing some results with different
+IO workloads is the best way to proceed and decide which is the right
+way to go. This is necessary IMHO, before totally dropping one solution
+or another.
+
+> 
+> The only thing which concerns me is the fact that IO scheduler does not
+> have the view of higher level logical device. So if somebody has setup a
+> software RAID and wants to put max BW limit on software raid device, this
+> solution will not work. One shall have to live with max bw limits on 
+> individual disks (where io scheduler is actually running). Do your patches
+> allow to put limit on software RAID devices also? 
+
+No, but as said above my patchset provides the interfaces to apply the
+IO control and accounting wherever we want. At the moment there's just
+one interface, cgroup_io_throttle().
+
+-Andrea
