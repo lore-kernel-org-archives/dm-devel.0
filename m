@@ -1,17 +1,9 @@
-From: Balbir Singh <balbir@linux.vnet.ibm.com>
-Subject: Re: IO scheduler based IO Controller V2
-Date: Wed, 6 May 2009 22:40:47 +0530
-Message-ID: <20090506171047.GV4416@balbir.in.ibm.com>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
-	<20090505132441.1705bfad.akpm@linux-foundation.org>
-	<20090506102030.GB20544@gandalf.sssup.it>
-Reply-To: balbir@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+From: bmarzins@sourceware.org
+Subject: multipath-tools multipath/Makefile multipathd/ ...
+Date: 6 May 2009 17:26:47 -0000
+Message-ID: <20090506172647.3636.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090506102030.GB20544@gandalf.sssup.it>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,80 +13,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Fabio Checconi <fchecconi@gmail.com>
-Cc: paolo.valente@unimore.it, dhaval@linux.vnet.ibm.com, snitzer@redhat.com, fernando@oss.ntt.co.jp, jmoyer@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com, Andrew Morton <akpm@linux-foundation.org>, containers@lists.linux-foundation.org, agk@redhat.com, righi.andrea@gmail.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-* Fabio Checconi <fchecconi@gmail.com> [2009-05-06 12:20:30]:
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-05-06 17:26:45
 
-> Hi,
-> 
-> > From: Balbir Singh <balbir@linux.vnet.ibm.com>
-> > Date: Wed, May 06, 2009 09:12:54AM +0530
-> >
-> > * Peter Zijlstra <peterz@infradead.org> [2009-05-06 00:20:49]:
-> > 
-> > > On Tue, 2009-05-05 at 13:24 -0700, Andrew Morton wrote:
-> > > > On Tue,  5 May 2009 15:58:27 -0400
-> > > > Vivek Goyal <vgoyal@redhat.com> wrote:
-> > > > 
-> > > > > 
-> > > > > Hi All,
-> > > > > 
-> > > > > Here is the V2 of the IO controller patches generated on top of 2.6.30-rc4.
-> > > > > ...
-> > > > > Currently primarily two other IO controller proposals are out there.
-> > > > > 
-> > > > > dm-ioband
-> > > > > ---------
-> > > > > This patch set is from Ryo Tsuruta from valinux.
-> > > > > ...
-> > > > > IO-throttling
-> > > > > -------------
-> > > > > This patch set is from Andrea Righi provides max bandwidth controller.
-> > > > 
-> > > > I'm thinking we need to lock you guys in a room and come back in 15 minutes.
-> > > > 
-> > > > Seriously, how are we to resolve this?  We could lock me in a room and
-> > > > cmoe back in 15 days, but there's no reason to believe that I'd emerge
-> > > > with the best answer.
-> > > > 
-> > > > I tend to think that a cgroup-based controller is the way to go. 
-> > > > Anything else will need to be wired up to cgroups _anyway_, and that
-> > > > might end up messy.
-> > > 
-> > > FWIW I subscribe to the io-scheduler faith as opposed to the
-> > > device-mapper cult ;-)
-> > > 
-> > > Also, I don't think a simple throttle will be very useful, a more mature
-> > > solution should cater to more use cases.
-> > >
-> > 
-> > I tend to agree, unless Andrea can prove us wrong. I don't think
-> > throttling a task (not letting it consume CPU, memory when its IO
-> > quota is exceeded) is a good idea. I've asked that question to Andrea
-> > a few times, but got no response.
-> >  
-> 
->   from what I can see, the principle used by io-throttling is not too
-> different to what happens when bandwidth differentiation with synchronous
-> access patterns is achieved using idling at the io scheduler level.
-> 
-> When an io scheduler anticipates requests from a task/cgroup, all the
-> other tasks with pending (synchronous) requests are in fact blocked, and
-> the fact that the task being anticipated is allowed to submit additional
-> io while they remain blocked is what creates the bandwidth differentiation
-> among them.
-> 
-> Of course there are many differences, in particular related to the
-> latencies introduced by the two mechanisms, the granularity they use to
-> allocate disk service, and to what throttling and proportional share io
-> scheduling can or cannot guarantee, but FWIK both of them rely on
-> blocking tasks to create bandwidth differentiation.
+Modified files:
+	multipath      : Makefile 
+	multipathd     : cli.c main.c uxclnt.c 
 
-My concern stems from the fact that in the case in this case we might
-throttle all the tasks in the group.. no? I'll take a closer look.
+Log message:
+	Fix for bz #484711
+	Make failed commands to multipathd -k"cmd" return exit code 1
 
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.17.2.1&r2=1.17.2.2
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.3&r2=1.5.2.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.20&r2=1.69.2.21
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/uxclnt.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7&r2=1.7.2.1
 
--- 
-	Balbir
+--- multipath-tools/multipath/Makefile	2009/05/05 22:02:31	1.17.2.1
++++ multipath-tools/multipath/Makefile	2009/05/06 17:26:43	1.17.2.2
+@@ -42,7 +42,7 @@
+ 	install -d $(DESTDIR)$(mandir)
+ 	install -m 644 $(EXEC).8 $(DESTDIR)$(mandir)
+ 	install -d $(DESTDIR)$(man5dir)
+-	install -m 644 $(EXEC).5 $(DESTDIR)$(man5dir)
++	install -m 644 $(EXEC).conf.5 $(DESTDIR)$(man5dir)
+ 	@if [ ! -e $(DESTDIR)/etc/multipath.conf ]; then \
+ 		install -m 644 multipath.conf.redhat  $(DESTDIR)/etc/multipath.conf; \
+ 	fi
+--- multipath-tools/multipathd/cli.c	2008/09/19 03:27:08	1.5.2.3
++++ multipath-tools/multipathd/cli.c	2009/05/06 17:26:44	1.5.2.4
+@@ -311,6 +311,7 @@
+ 		return NULL;
+ 
+ 	p = reply;
++	p += sprintf(p, "fail\n");
+ 	p += sprintf(p, VERSION_STRING);
+ 	p += sprintf(p, "CLI commands reference:\n");
+ 
+--- multipath-tools/multipathd/main.c	2009/04/27 21:19:41	1.69.2.20
++++ multipath-tools/multipathd/main.c	2009/05/06 17:26:45	1.69.2.21
+@@ -1756,8 +1756,8 @@
+ 			conf->verbosity = atoi(optarg);
+ 			break;
+ 		case 'k':
+-			uxclnt(optarg);
+-			exit(0);
++			err = uxclnt(optarg);
++			exit(err);
+ 		default:
+ 			;
+ 		}
+--- multipath-tools/multipathd/uxclnt.c	2006/06/06 18:32:44	1.7
++++ multipath-tools/multipathd/uxclnt.c	2009/05/06 17:26:45	1.7.2.1
+@@ -51,16 +51,21 @@
+ 	}
+ }
+ 
+-static void process_req(int fd, char * inbuf)
++static int process_req(int fd, char * inbuf)
+ {
+ 	char *reply;
+ 	size_t len;
++	int ret = 0;
+ 
+ 	send_packet(fd, inbuf, strlen(inbuf) + 1);
+ 	recv_packet(fd, &reply, &len);
+ 
++	if (strncmp(reply, "fail\n", 5) == 0)
++		ret = 1;
+ 	printf("%s", reply);
+ 	FREE(reply);
++
++	return ret;
+ }
+ 	
+ /*
+@@ -69,6 +74,7 @@
+ int uxclnt(char * inbuf)
+ {
+ 	int fd;
++	int r = 0;
+ 
+ 	fd = ux_socket_connect(DEFAULT_SOCKET);
+ 	if (fd == -1) {
+@@ -77,9 +83,9 @@
+ 	}
+ 
+ 	if (inbuf)
+-		process_req(fd, inbuf);
++		r = process_req(fd, inbuf);
+ 	else
+ 		process(fd);
+ 	
+-	return 0;
++	return r;
+ }
