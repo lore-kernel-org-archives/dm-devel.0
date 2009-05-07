@@ -1,36 +1,82 @@
 From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: IO scheduler based IO Controller V2
-Date: Thu, 07 May 2009 09:18:58 +0900 (JST)
-Message-ID: <20090507.091858.226775723.ryov@valinux.co.jp>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
-	<20090505132441.1705bfad.akpm@linux-foundation.org>
-	<20090506023332.GA1212@redhat.com>
+Subject: Re: [RFC PATCH dm-ioband] Added in blktrace msgs for
+	dm-ioband
+Date: Thu, 07 May 2009 09:23:22 +0900 (JST)
+Message-ID: <20090507.092322.71121515.ryov@valinux.co.jp>
+References: <49F23379.4010607@hp.com>
+	<20090427.184417.189717449.ryov@valinux.co.jp>
+	<49FE5FEB.6040207@cn.fujitsu.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1760614AbZEGATR@vger.kernel.org>
-In-Reply-To: <20090506023332.GA1212@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: vgoyal@redhat.com
-Cc: akpm@linux-foundation.org, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, peterz@infradead.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <49FE5FEB.6040207@cn.fujitsu.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: lizf@cn.fujitsu.com
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Vivek,
+Hi Li,
 
-> Ryo, dm-ioband breaks the notion of classes and priority of CFQ because
-> of FIFO dispatch of buffered bios. Apart from that it tries to provide
-> fairness in terms of actual IO done and that would mean a seeky workload
-> will can use disk for much longer to get equivalent IO done and slow down
-> other applications. Implementing IO controller at IO scheduler level gives
-> us tigher control. Will it not meet your requirements? If you got specific
-> concerns with IO scheduler based contol patches, please highlight these and
-> we will see how these can be addressed.
+From: Li Zefan <lizf@cn.fujitsu.com>
+Subject: Re: [RFC PATCH dm-ioband] Added in blktrace msgs for dm-ioband
+Date: Mon, 04 May 2009 11:24:27 +0800
 
-I'd like to avoid making complicated existing IO schedulers and other
-kernel codes and to give a choice to users whether or not to use it.
-I know that you chose an approach that using compile time options to
-get the same behavior as old system, but device-mapper drivers can be
-added, removed and replaced while system is running.
+> Ryo Tsuruta wrote:
+> > Hi Alan,
+> > 
+> >> Hi Ryo -
+> >>
+> >> I don't know if you are taking in patches, but whilst trying to uncover
+> >> some odd behavior I added some blktrace messages to dm-ioband-ctl.c. If
+> >> you're keeping one code base for old stuff (2.6.18-ish RHEL stuff) and
+> >> upstream you'll have to #if around these (the blktrace message stuff
+> >> came in around 2.6.26 or 27 I think).
+> >>
+> >> My test case was to take a single 400GB storage device, put two 200GB
+> >> partitions on it and then see what the "penalty" or overhead for adding
+> >> dm-ioband on top. To do this I simply created an ext2 FS on each
+> >> partition in parallel (two processes each doing a mkfs to one of the
+> >> partitions). Then I put two dm-ioband devices on top of the two
+> >> partitions (setting the weight to 100 in both cases - thus they should
+> >> have equal access).
+> >>
+> >> Using default values I was seeing /very/ large differences - on the
+> >> order of 3X. When I bumped the number of tokens to a large number
+> >> (10,240) the timings got much closer (<2%). I have found that using
+> >> weight-iosize performs worse than weight (closer to 5% penalty).
+> > 
+> > I could reproduce similar results. One dm-ioband device seems to stop
+> > issuing I/Os for a few seconds at times. I'll investigate more on that.
+> >  
+> >> I'll try to formalize these results as I go forward and report out on
+> >> them. In any event, I thought I'd share this patch with you if you are
+> >> interested...
+> > 
+> > Thanks. I'll include your patche into the next release.
+> >  
+> 
+> IMO we should use TRACE_EVENT instead of adding new blk_add_trace_msg().
+
+Thanks for your suggestion. I'll use TRACE_EVENT instead.
+
+> 
+> >> Here's a sampling from some blktrace output (sorry for the wrapping) - I
+> >> should note that I'm a bit scared to see such large numbers of holds
+> >> going on when the token count should be >5,000 for each device...
+> >> Holding these back in an equal access situation is inhibiting the block
+> >> I/O layer to merge (most) of these (as mkfs performs lots & lots of
+> >> small but sequential I/Os).
+> 
 
 Thanks,
 Ryo Tsuruta
