@@ -1,164 +1,363 @@
-From: Nauman Rafique <nauman@google.com>
-Subject: Re: [PATCH] io-controller: Add io group reference handling for
-	request
-Date: Fri, 8 May 2009 10:41:01 -0700
-Message-ID: <e98e18940905081041r386e52a5q5a2b1f13f1e8c634@mail.gmail.com>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
-	 <4A03FF3C.4020506@cn.fujitsu.com> <20090508135724.GE7293@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: IO scheduler based IO Controller V2
+Date: Fri, 8 May 2009 14:09:51 -0400
+Message-ID: <20090508180951.GG7293@redhat.com>
+References: <20090505132441.1705bfad.akpm@linux-foundation.org> <20090506023332.GA1212@redhat.com> <20090506203228.GH8180@redhat.com> <20090506213453.GC4282@linux> <20090506215235.GJ8180@redhat.com> <20090507090450.GA4613@linux> <20090507141126.GA9463@redhat.com> <20090507144501.GB9463@redhat.com> <20090507153642.GC9463@redhat.com> <20090507221900.GA29774@linux>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754455AbZEHRlY@vger.kernel.org>
-In-Reply-To: <20090508135724.GE7293@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932108AbZEHSPJ@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20090507221900.GA29774@linux>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Gui Jianfeng <guijianfeng@cn.fujitsu.com>, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
+To: Andrea Righi <righi.andrea@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, peterz@infradead.org
 List-Id: dm-devel.ids
 
-On Fri, May 8, 2009 at 6:57 AM, Vivek Goyal <vgoyal@redhat.com> wrote:
-> On Fri, May 08, 2009 at 05:45:32PM +0800, Gui Jianfeng wrote:
->> Hi Vivek,
->>
->> This patch adds io group reference handling when allocating
->> and removing a request.
->>
+On Fri, May 08, 2009 at 12:19:01AM +0200, Andrea Righi wrote:
+> On Thu, May 07, 2009 at 11:36:42AM -0400, Vivek Goyal wrote:
+> > Hmm.., my old config had "AS" as default scheduler that's why I was seeing
+> > the strange issue of RT task finishing after BE. My apologies for that. I
+> > somehow assumed that CFQ is default scheduler in my config.
+> 
+> ok.
+> 
+> > 
+> > So I have re-run the test to see if we are still seeing the issue of
+> > loosing priority and class with-in cgroup. And we still do..
+> > 
+> > 2.6.30-rc4 with io-throttle patches
+> > ===================================
+> > Test1
+> > =====
+> > - Two readers, one BE prio 0 and other BE prio 7 in a cgroup limited with
+> >   8MB/s BW.
+> > 
+> > 234179072 bytes (234 MB) copied, 55.8448 s, 4.2 MB/s
+> > prio 0 task finished
+> > 234179072 bytes (234 MB) copied, 55.8878 s, 4.2 MB/s
+> > 
+> > Test2
+> > =====
+> > - Two readers, one RT prio 0 and other BE prio 7 in a cgroup limited with
+> >   8MB/s BW.
+> > 
+> > 234179072 bytes (234 MB) copied, 55.8876 s, 4.2 MB/s
+> > 234179072 bytes (234 MB) copied, 55.8984 s, 4.2 MB/s
+> > RT task finished
+> 
+> ok, coherent with the current io-throttle implementation.
+> 
+> > 
+> > Test3
+> > =====
+> > - Reader Starvation
+> > - I created a cgroup with BW limit of 64MB/s. First I just run the reader
+> >   alone and then I run reader along with 4 writers 4 times. 
+> > 
+> > Reader alone
+> > 234179072 bytes (234 MB) copied, 3.71796 s, 63.0 MB/s
+> > 
+> > Reader with 4 writers
+> > ---------------------
+> > First run
+> > 234179072 bytes (234 MB) copied, 30.394 s, 7.7 MB/s 
+> > 
+> > Second run
+> > 234179072 bytes (234 MB) copied, 26.9607 s, 8.7 MB/s
+> > 
+> > Third run
+> > 234179072 bytes (234 MB) copied, 37.3515 s, 6.3 MB/s
+> > 
+> > Fourth run
+> > 234179072 bytes (234 MB) copied, 36.817 s, 6.4 MB/s
+> > 
+> > Note that out of 64MB/s limit of this cgroup, reader does not get even
+> > 1/5 of the BW. In normal systems, readers are advantaged and reader gets
+> > its job done much faster even in presence of multiple writers.   
+> 
+> And this is also coherent. The throttling is equally probable for read
+> and write. But this shouldn't happen if we saturate the physical disk BW
+> (doing proportional BW control or using a watermark close to 100 in
+> io-throttle). In this case IO scheduler logic shouldn't be totally
+> broken.
 >
-> Hi Gui,
->
-> Thanks for the patch. We were thinking that requests can take a refer=
-ence
-> on io queues and io queues can take a reference on io groups. That sh=
-ould
-> make sure that io groups don't go away as long as active requests are
-> present.
->
-> But there seems to be a small window while allocating the new request
-> where request gets allocated from a group first and then later it is
-> mapped to that group and queue is created. IOW, in get_request_wait()=
-,
-> we allocate a request from a particular group and set rq->rl, then
-> drop the queue lock and later call elv_set_request() which again maps
-> the request to the group saves rq->iog and creates new queue. This wi=
-ndow
-> is troublesome because request can be mapped to a particular group at=
- the
-> time of allocation and during set_request() it can go to a different
-> group as queue lock was dropped and group might have disappeared.
->
-> In this case probably it might make sense that request also takes a
-> reference on groups. At the same time it looks too much that request =
-takes
-> a reference on queue as well as group object. Ideas are welcome on ho=
-w
-> to handle it...
 
-IMHO a request being allocated on the wrong cgroup should not be a big
-problem as such. All it means is that the request descriptor was
-accounted to the wrong cgroup in this particular corner case. Please
-correct me if I am wrong.
+Can you please explain the watermark a bit more? So blockio.watermark=90
+mean 90% of what? total disk BW? But disk BW varies based on work load?
 
-We can also get rid of rq->iog pointer too. What that means is that
-request is associated with ioq (rq->ioq), and we can use
-ioq_to_io_group() function to get the io_group. So the request would
-only be indirectly associated with an io_group i.e. the request is
-associated with an io_queue and the io_group for the request is the
-io_group associated with io_queue. Do you see any problems with that
-approach?
+> Doing a very quick test with io-throttle, using a 10MB/s BW limit and
+> blockio.watermark=90:
+> 
+> Launching reader
+> 256+0 records in
+> 256+0 records out
+> 268435456 bytes (268 MB) copied, 32.2798 s, 8.3 MB/s
+> 
+> In the same time the writers wrote ~190MB, so the single reader got
+> about 1/3 of the total BW.
+> 
+> 182M testzerofile4
+> 198M testzerofile1
+> 188M testzerofile3
+> 189M testzerofile2
+> 
 
-Thanks.
---
-Nauman
+But its now more a max bw controller at all now? I seem to be getting the
+total BW of (268+182+198+188+189)/32 = 32MB/s and you set the limit to
+10MB/s?
+ 
+
+[..]
+> What are the results with your IO scheduler controller (if you already
+> have them, otherwise I'll repeat this test in my system)? It seems a
+> very interesting test to compare the advantages of the IO scheduler
+> solution respect to the io-throttle approach.
+> 
+
+I had not done any reader writer testing so far. But you forced me to run
+some now. :-) Here are the results. 
+
+Because one is max BW controller and other is proportional BW controller
+doing exact comparison is hard. Still....
+
+Test1
+=====
+Try to run lots of writers (50 random writers using fio and 4 sequential
+writers with dd if=/dev/zero) and one single reader either in root group
+or with in one cgroup to show that readers are not starved by writers
+as opposed to io-throttle controller.
+
+Run test1 with vanilla kernel with CFQ
+=====================================
+Launched 50 fio random writers, 4 sequential writers and 1 reader in root
+and noted how long it takes reader to finish. Also noted the per second output
+from iostat -d 1 -m /dev/sdb1 to monitor how disk throughput varies.
+
+***********************************************************************
+# launch 50 writers fio job
+
+fio_args="--size=64m --rw=write --numjobs=50 --group_reporting"
+fio $fio_args --name=test2 --directory=/mnt/sdb/fio2/ --output=/mnt/sdb/fio2/test2.log > /dev/null  &
+
+#launch 4 sequential writers
+ionice -c 2 -n 7 dd if=/dev/zero of=/mnt/sdb/testzerofile1 bs=4K count=524288 &
+ionice -c 2 -n 7 dd if=/dev/zero of=/mnt/sdb/testzerofile2 bs=4K count=524288 &
+ionice -c 2 -n 7 dd if=/dev/zero of=/mnt/sdb/testzerofile3 bs=4K count=524288 &
+ionice -c 2 -n 7 dd if=/dev/zero of=/mnt/sdb/testzerofile4 bs=4K count=524288 &
+
+echo "Sleeping for 5 seconds"
+sleep 5
+echo "Launching reader"
+
+ionice -c 2 -n 0 dd if=/mnt/sdb/zerofile2 of=/dev/zero &
+wait $!
+echo "Reader Finished"
+***************************************************************************
+
+Results
+-------
+234179072 bytes (234 MB) copied, 4.55047 s, 51.5 MB/s
+
+Reader finished in 4.5 seconds. Following are few lines from iostat output
+
+***********************************************************************
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            151.00         0.04        48.33          0         48
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            120.00         1.78        31.23          1         31
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            504.95        56.75         7.51         57          7
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            547.47        62.71         4.47         62          4
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            441.00        49.80         7.82         49          7
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            441.41        48.28        13.84         47         13
+
+*************************************************************************
+
+Note how, first write picks up and then suddenly reader comes in and CFQ
+allocates a huge chunk of BW to reader to give it the advantage.
+
+Run Test1 with IO scheduler based io controller patch
+=====================================================
+
+234179072 bytes (234 MB) copied, 5.23141 s, 44.8 MB/s 
+
+Reader finishes in 5.23 seconds. Why does it take more time than CFQ,
+because looks like current algorithm is not punishing writers that hard.
+This can be fixed and not an issue.
+
+Following is some output from iostat.
+
+**********************************************************************
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            139.60         0.04        43.83          0         44
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            227.72        16.88        29.05         17         29
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            349.00        35.04        16.06         35         16
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            339.00        34.16        21.07         34         21
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            343.56        36.68        12.54         37         12
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            378.00        38.68        19.47         38         19
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            532.00        59.06        10.00         59         10
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            125.00         2.62        38.82          2         38
+************************************************************************
+
+Note how read throughput goes up when reader comes in. Also note that
+writer is still getting some decent IO done and that's why reader took
+little bit more time as compared to CFQ.
 
 
->
-> Thanks
-> Vivek
->
->> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
->> ---
->> =A0elevator-fq.c | =A0 15 ++++++++++++++-
->> =A0elevator-fq.h | =A0 =A05 +++++
->> =A0elevator.c =A0 =A0| =A0 =A02 ++
->> =A03 files changed, 21 insertions(+), 1 deletion(-)
->>
->> diff --git a/block/elevator-fq.c b/block/elevator-fq.c
->> index 9500619..e6d6712 100644
->> --- a/block/elevator-fq.c
->> +++ b/block/elevator-fq.c
->> @@ -1968,11 +1968,24 @@ void elv_fq_set_request_io_group(struct requ=
-est_queue *q, struct request *rq,
->> =A0 =A0 =A0 spin_unlock_irqrestore(q->queue_lock, flags);
->> =A0 =A0 =A0 BUG_ON(!iog);
->>
->> - =A0 =A0 /* Store iog in rq. TODO: take care of referencing */
->> + =A0 =A0 elv_get_iog(iog);
->> =A0 =A0 =A0 rq->iog =3D iog;
->> =A0}
->>
->> =A0/*
->> + * This request has been serviced. Clean up iog info and drop the r=
-eference.
->> + */
->> +void elv_fq_unset_request_io_group(struct request *rq)
->> +{
->> + =A0 =A0 struct io_group *iog =3D rq->iog;
->> +
->> + =A0 =A0 if (iog) {
->> + =A0 =A0 =A0 =A0 =A0 =A0 rq->iog =3D NULL;
->> + =A0 =A0 =A0 =A0 =A0 =A0 elv_put_iog(iog);
->> + =A0 =A0 }
->> +}
->> +
->> +/*
->> =A0 * Find/Create the io queue the rq should go in. This is an optim=
-ization
->> =A0 * for the io schedulers (noop, deadline and AS) which maintain o=
-nly single
->> =A0 * io queue per cgroup. In this case common layer can just mainta=
-in a
->> diff --git a/block/elevator-fq.h b/block/elevator-fq.h
->> index db3a347..96a28e9 100644
->> --- a/block/elevator-fq.h
->> +++ b/block/elevator-fq.h
->> @@ -512,6 +512,7 @@ static inline struct io_group *ioq_to_io_group(s=
-truct io_queue *ioq)
->> =A0extern int io_group_allow_merge(struct request *rq, struct bio *b=
-io);
->> =A0extern void elv_fq_set_request_io_group(struct request_queue *q,
->> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
-=A0 =A0 struct request *rq, struct bio *bio);
->> +extern void elv_fq_unset_request_io_group(struct request *rq);
->> =A0static inline bfq_weight_t iog_weight(struct io_group *iog)
->> =A0{
->> =A0 =A0 =A0 return iog->entity.weight;
->> @@ -571,6 +572,10 @@ static inline void elv_fq_set_request_io_group(=
-struct request_queue *q,
->> =A0{
->> =A0}
->>
->> +static inline void elv_fq_unset_request_io_group(struct request *rq=
-)
->> +{
->> +}
->> +
->> =A0static inline bfq_weight_t iog_weight(struct io_group *iog)
->> =A0{
->> =A0 =A0 =A0 /* Just root group is present and weight is immaterial. =
-*/
->> diff --git a/block/elevator.c b/block/elevator.c
->> index 44c9fad..d75eec7 100644
->> --- a/block/elevator.c
->> +++ b/block/elevator.c
->> @@ -992,6 +992,8 @@ void elv_put_request(struct request_queue *q, st=
-ruct request *rq)
->> =A0{
->> =A0 =A0 =A0 struct elevator_queue *e =3D q->elevator;
->>
->> + =A0 =A0 elv_fq_unset_request_io_group(rq);
->> +
->> =A0 =A0 =A0 /*
->> =A0 =A0 =A0 =A0* Optimization for noop, deadline and AS which mainta=
-in only single
->> =A0 =A0 =A0 =A0* ioq per io group
->>
->
+Run Test1 with IO throttle patches
+==================================
+
+Now same test is run with io-throttle patches. The only difference is that
+it run the test in a cgroup with max limit of 32MB/s. That should mean 
+that effectvily we got a disk which can support at max 32MB/s of IO rate.
+If we look at above CFQ and io controller results, it looks like with
+above load we touched a peak of 70MB/s.  So one can think of same test
+being run on a disk roughly half the speed of original disk.
+
+234179072 bytes (234 MB) copied, 144.207 s, 1.6 MB/s
+
+Reader got a disk rate of 1.6MB/s (5 %) out of 32MB/s capacity, as opposed to
+the case CFQ and io scheduler controller where reader got around 70-80% of
+disk BW under similar work load.
+
+Test2
+=====
+Run test2 with io scheduler based io controller
+===============================================
+Now run almost same test with a little difference. This time I create two
+cgroups of same weight 1000. I run the 50 fio random writer in one cgroup
+and 4 sequential writers and 1 reader in second group. This test is more
+to show that proportional BW IO controller is working and because of
+reader in group1, group2 writes are not killed (providing isolation) and
+secondly, reader still gets preference over the writers which are in same
+group.
+
+				root
+			     /       \		
+			  group1     group2
+		  (50 fio writers)   ( 4 writers and one reader)
+
+234179072 bytes (234 MB) copied, 12.8546 s, 18.2 MB/s
+
+Reader finished in almost 13 seconds and got around 18MB/s. Remember when
+everything was in root group reader got around 45MB/s. This is to account
+for the fact that half of the disk is now being shared by other cgroup
+which are running 50 fio writes and reader can't steal the disk from them.
+
+Following is some portion of iostat output when reader became active
+*********************************************************************
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            103.92         0.03        40.21          0         41
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            240.00        15.78        37.40         15         37
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            206.93        13.17        28.50         13         28
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            224.75        15.39        27.89         15         28
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            270.71        16.85        25.95         16         25
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            215.84         8.81        32.40          8         32
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            216.16        19.11        20.75         18         20
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            211.11        14.67        35.77         14         35
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            208.91        15.04        26.95         15         27
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            277.23        24.30        28.53         24         28
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            202.97        12.29        34.79         12         35
+**********************************************************************
+
+Total disk throughput is varying a lot, on an average it looks like it
+is getting 45MB/s. Lets say 50% of that is going to cgroup1 (fio writers),
+then out of rest of 22 MB/s reader seems to have to 18MB/s. These are
+highly approximate numbers. I think I need to come up with some kind of 
+tool to measure per cgroup throughput (like we have for per partition
+stat) for more accurate comparision.
+
+But the point is that second cgroup got the isolation and read got
+preference with-in same cgroup. The expected behavior.
+
+Run test2 with io-throttle
+==========================
+Same setup of two groups. The only difference is that I setup two groups
+with (16MB) limit. So previous 32MB limit got divided between two cgroups
+50% each.
+
+- 234179072 bytes (234 MB) copied, 90.8055 s, 2.6 MB/s
+
+Reader took 90 seconds to finish.  It seems to have got around 16% of
+available disk BW (16MB) to it.
+
+iostat output is long. Will just paste one section.
+
+************************************************************************
+[..]
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            141.58        10.16        16.12         10         16
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            174.75         8.06        12.31          7         12
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1             47.52         0.12         6.16          0          6
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1             82.00         0.00        31.85          0         31
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1            141.00         0.00        48.07          0         48
+
+Device:            tps    MB_read/s    MB_wrtn/s    MB_read    MB_wrtn
+sdb1             72.73         0.00        26.52          0         26
+ 
+
+***************************************************************************
+
+Conclusion
+==========
+It just reaffirms that with max BW control, we are not doing a fair job
+of throttling hence no more hold the IO scheduler properties with-in
+cgroup.
+
+With proportional BW controller implemented at IO scheduler level, one
+can do very tight integration with IO controller and hence retain 
+IO scheduler behavior with-in cgroup.
+
+Thanks
+Vivek
