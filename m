@@ -1,63 +1,51 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: multipath-tools fixes
-Date: Fri, 8 May 2009 08:23:32 -0400
-Message-ID: <20090508122332.GA7097@redhat.com>
-References: <20090429201041.GB3062@redhat.com> <4A03B1B4.2080900@ct.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH 05/18] io-controller: Common hierarchical fair queuing
+	code in elevaotor layer
+Date: Fri, 8 May 2009 08:45:42 -0400
+Message-ID: <20090508124542.GC7293@redhat.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <1241553525-28095-6-git-send-email-vgoyal@redhat.com> <4A0290ED.7080506@cn.fujitsu.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751640AbZEHMsi@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4A03B1B4.2080900@ct.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <4A0290ED.7080506@cn.fujitsu.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Cc: nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Fri, May 08 2009 at 12:14am -0400,
-Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
-
-> Hi Mike,
+On Thu, May 07, 2009 at 03:42:37PM +0800, Gui Jianfeng wrote:
+> Vivek Goyal wrote:
+> > This patch enables hierarchical fair queuing in common layer. It is
+> > controlled by config option CONFIG_GROUP_IOSCHED.
+> ...
+> > +}
+> > +
+> > +void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup)
+> > +{
+> > +	struct io_cgroup *iocg = cgroup_to_io_cgroup(cgroup);
+> > +	struct hlist_node *n, *tmp;
+> > +	struct io_group *iog;
+> > +
+> > +	/*
+> > +	 * Since we are destroying the cgroup, there are no more tasks
+> > +	 * referencing it, and all the RCU grace periods that may have
+> > +	 * referenced it are ended (as the destruction of the parent
+> > +	 * cgroup is RCU-safe); bgrp->group_data will not be accessed by
+> > +	 * anything else and we don't need any synchronization.
+> > +	 */
+> > +	hlist_for_each_entry_safe(iog, n, tmp, &iocg->group_data, group_node)
+> > +		io_destroy_group(iocg, iog);
+> > +
+> > +	BUG_ON(!hlist_empty(&iocg->group_data));
+> > +
 > 
-> On 2009/04/30 5:10 +0900, Mike Snitzer wrote:
-> > Christophe,
-> > 
-> > Please feel free to pull in the following changes with:
-> > git pull http://people.redhat.com/msnitzer/multipath-tools.git +for-upstream
-> > 
-> > Mike Snitzer (6):
-> >   multipathd: add error checking to client's process_req
-> >   avoid NULL pointers in discovery code
-> >   do not allow relative path names to be added to the pathvec
-> >   cleanup various MALLOC/REALLOC callers
-> >   fix small issues in cli_handlers
-> >   multipathd: restrict /var/run/multipathd.sock permissions further
-> > 
-> >  libmultipath/config.c     |    2 +-
-> >  libmultipath/config.h     |    1 +
-> >  libmultipath/dict.c       |    8 ++++----
-> >  libmultipath/discovery.c  |   15 ++++++++++++---
-> >  libmultipath/parser.c     |   15 +++++++++------
-> >  libmultipath/prio.c       |    2 +-
-> >  libmultipath/uevent.c     |    2 +-
-> >  libmultipath/uxsock.c     |    2 ++
-> >  multipathd/cli_handlers.c |    6 +++---
-> >  multipathd/main.c         |    9 +++++++++
-> >  multipathd/uxclnt.c       |   11 ++++++-----
-> >  11 files changed, 49 insertions(+), 24 deletions(-)
+>     Hi Vivek,
 > 
-> I think it's nice if you post actual patches, too, in the future.
-> Because people can look at your patches easier.
+>     IMHO, free_css_id() needs to be called here.
+> 
 
-OK, will do.
+Thanks. Sure, will do in next version.
 
-Regards,
-Mike
+Thanks
+Vivek
