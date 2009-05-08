@@ -1,34 +1,93 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCHSET] block,scsi,libata: implement alt_size
-Date: Fri, 08 May 2009 18:13:12 +0900
-Message-ID: <4A03F7A8.9090204@kernel.org>
-References: <1233456951-992-1-git-send-email-tj@kernel.org>	 <49F902CF.7080307@garzik.org> <49F903DD.8040707@kernel.org>	 <49FA0349.3090706@garzik.org>	 <e9c3a7c20904301415t621670a0l1bd64c7d74d369f@mail.gmail.com>	 <49FEA127.1000905@kernel.org>	 <e9c3a7c20905040948m572e23dj1aa197dbd20ff037@mail.gmail.com>	 <49FFB275.7000507@kernel.org> <e9c3a7c20905050834t79a1c03dt83df288b2f38ed76@mail.gmail.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: [PATCH] io-controller: Add io group reference handling for request
+Date: Fri, 08 May 2009 17:45:32 +0800
+Message-ID: <4A03FF3C.4020506@cn.fujitsu.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <e9c3a7c20905050834t79a1c03dt83df288b2f38ed76@mail.gmail.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@gmail.com>
-Cc: Jeff Garzik <jeff@garzik.org>, linux-ide@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, Mauelshagen@redhat.com, dm-devel@redhat.com
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763056AbZEHJqf@vger.kernel.org>
+In-Reply-To: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-Dan Williams wrote:
-> On Mon, May 4, 2009 at 8:28 PM, Tejun Heo <tj@kernel.org> wrote:
->> Pushing this in the kernel without updating dm-raid is kind of
->> pointless.  Who should I be poking to get the userland part moving?
-> 
-> Dmraid is not the only potential user.  Mdadm will also care about
-> this as I have seen a report that points to a user having what looks
-> like an HPA issue with an Intel(R) Matrix array.  So, there are two
-> immediate users for this interface.  Heinz is the right person to poke
-> for dmraid updates.  I'll handle the mdadm update.
+Hi Vivek,
 
-Alright, then.  With Jeff's reluctant ack and scheduled mdadm update,
-I guess this one can go upstream.  I'll refresh the patchset and
-repost.  Umm... BTW do I have Heinz's mail address right?
+This patch adds io group reference handling when allocating
+and removing a request.
 
-Thanks.
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ elevator-fq.c |   15 ++++++++++++++-
+ elevator-fq.h |    5 +++++
+ elevator.c    |    2 ++
+ 3 files changed, 21 insertions(+), 1 deletion(-)
 
--- 
-tejun
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 9500619..e6d6712 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -1968,11 +1968,24 @@ void elv_fq_set_request_io_group(struct request_queue *q, struct request *rq,
+ 	spin_unlock_irqrestore(q->queue_lock, flags);
+ 	BUG_ON(!iog);
+ 
+-	/* Store iog in rq. TODO: take care of referencing */
++	elv_get_iog(iog);
+ 	rq->iog = iog;
+ }
+ 
+ /*
++ * This request has been serviced. Clean up iog info and drop the reference.
++ */
++void elv_fq_unset_request_io_group(struct request *rq)
++{
++	struct io_group *iog = rq->iog;
++
++	if (iog) {
++		rq->iog = NULL;
++		elv_put_iog(iog);
++	}
++}
++
++/*
+  * Find/Create the io queue the rq should go in. This is an optimization
+  * for the io schedulers (noop, deadline and AS) which maintain only single
+  * io queue per cgroup. In this case common layer can just maintain a
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index db3a347..96a28e9 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -512,6 +512,7 @@ static inline struct io_group *ioq_to_io_group(struct io_queue *ioq)
+ extern int io_group_allow_merge(struct request *rq, struct bio *bio);
+ extern void elv_fq_set_request_io_group(struct request_queue *q,
+ 					struct request *rq, struct bio *bio);
++extern void elv_fq_unset_request_io_group(struct request *rq);
+ static inline bfq_weight_t iog_weight(struct io_group *iog)
+ {
+ 	return iog->entity.weight;
+@@ -571,6 +572,10 @@ static inline void elv_fq_set_request_io_group(struct request_queue *q,
+ {
+ }
+ 
++static inline void elv_fq_unset_request_io_group(struct request *rq)
++{
++}
++
+ static inline bfq_weight_t iog_weight(struct io_group *iog)
+ {
+ 	/* Just root group is present and weight is immaterial. */
+diff --git a/block/elevator.c b/block/elevator.c
+index 44c9fad..d75eec7 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -992,6 +992,8 @@ void elv_put_request(struct request_queue *q, struct request *rq)
+ {
+ 	struct elevator_queue *e = q->elevator;
+ 
++	elv_fq_unset_request_io_group(rq);
++
+ 	/*
+ 	 * Optimization for noop, deadline and AS which maintain only single
+ 	 * ioq per io group
