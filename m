@@ -1,93 +1,63 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: [PATCH] io-controller: Add io group reference handling for request
-Date: Fri, 08 May 2009 17:45:32 +0800
-Message-ID: <4A03FF3C.4020506@cn.fujitsu.com>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] flush keventd queue in multipath destructor
+Date: Fri, 8 May 2009 08:02:22 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0905080759570.9554@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763056AbZEHJqf@vger.kernel.org>
-In-Reply-To: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Vivek,
+Hi
 
-This patch adds io group reference handling when allocating
-and removing a request.
+This fixes an upstream bug in multipath trigger_event code. I've already 
+fixed similar bug in dm-raid1.
 
-Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Mikulas
+
 ---
- elevator-fq.c |   15 ++++++++++++++-
- elevator-fq.h |    5 +++++
- elevator.c    |    2 ++
- 3 files changed, 21 insertions(+), 1 deletion(-)
 
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 9500619..e6d6712 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -1968,11 +1968,24 @@ void elv_fq_set_request_io_group(struct request_queue *q, struct request *rq,
- 	spin_unlock_irqrestore(q->queue_lock, flags);
- 	BUG_ON(!iog);
+The commit fe9cf30eb8186ef267d1868dc9f12f2d0f40835a in 2.6.29-rc1 moves
+dm table event submission from kmultipath queue to kernel kevent queue to
+avoid a deadlock.
+
+There is a possibility of race condition because kevent queue is not flushed
+in the multipath destructor. The scenario is:
+- some event happens and is queued to keventd
+- keventd thread is delayed due to scheuling latency or some other work
+- multipath device is destroyed
+- keventd now attempts to process work_struct that is residing in already
+  released memory.
+
+The patch flushes the keventd queue in multipath constructor.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@kernel.org
+
+---
+ drivers/md/dm-mpath.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+Index: linux-2.6.30-rc4-devel/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.30-rc4-devel.orig/drivers/md/dm-mpath.c	2009-05-08 13:29:33.000000000 +0200
++++ linux-2.6.30-rc4-devel/drivers/md/dm-mpath.c	2009-05-08 13:29:44.000000000 +0200
+@@ -851,6 +851,7 @@ static void multipath_dtr(struct dm_targ
  
--	/* Store iog in rq. TODO: take care of referencing */
-+	elv_get_iog(iog);
- 	rq->iog = iog;
+ 	flush_workqueue(kmpath_handlerd);
+ 	flush_workqueue(kmultipathd);
++	flush_scheduled_work();
+ 	free_multipath(m);
  }
  
- /*
-+ * This request has been serviced. Clean up iog info and drop the reference.
-+ */
-+void elv_fq_unset_request_io_group(struct request *rq)
-+{
-+	struct io_group *iog = rq->iog;
-+
-+	if (iog) {
-+		rq->iog = NULL;
-+		elv_put_iog(iog);
-+	}
-+}
-+
-+/*
-  * Find/Create the io queue the rq should go in. This is an optimization
-  * for the io schedulers (noop, deadline and AS) which maintain only single
-  * io queue per cgroup. In this case common layer can just maintain a
-diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index db3a347..96a28e9 100644
---- a/block/elevator-fq.h
-+++ b/block/elevator-fq.h
-@@ -512,6 +512,7 @@ static inline struct io_group *ioq_to_io_group(struct io_queue *ioq)
- extern int io_group_allow_merge(struct request *rq, struct bio *bio);
- extern void elv_fq_set_request_io_group(struct request_queue *q,
- 					struct request *rq, struct bio *bio);
-+extern void elv_fq_unset_request_io_group(struct request *rq);
- static inline bfq_weight_t iog_weight(struct io_group *iog)
- {
- 	return iog->entity.weight;
-@@ -571,6 +572,10 @@ static inline void elv_fq_set_request_io_group(struct request_queue *q,
- {
- }
- 
-+static inline void elv_fq_unset_request_io_group(struct request *rq)
-+{
-+}
-+
- static inline bfq_weight_t iog_weight(struct io_group *iog)
- {
- 	/* Just root group is present and weight is immaterial. */
-diff --git a/block/elevator.c b/block/elevator.c
-index 44c9fad..d75eec7 100644
---- a/block/elevator.c
-+++ b/block/elevator.c
-@@ -992,6 +992,8 @@ void elv_put_request(struct request_queue *q, struct request *rq)
- {
- 	struct elevator_queue *e = q->elevator;
- 
-+	elv_fq_unset_request_io_group(rq);
-+
- 	/*
- 	 * Optimization for noop, deadline and AS which maintain only single
- 	 * ioq per io group
