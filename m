@@ -1,36 +1,48 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: IO scheduler based IO Controller V2
-Date: Sat, 09 May 2009 11:22:52 +0200
-Message-ID: <1241860972.6316.91.camel@laptop>
-References: <20090506203228.GH8180@redhat.com> <20090506213453.GC4282@linux>
-	 <20090506215235.GJ8180@redhat.com> <20090507090450.GA4613@linux>
-	 <20090507141126.GA9463@redhat.com> <20090507144501.GB9463@redhat.com>
-	 <20090507153642.GC9463@redhat.com> <20090507221900.GA29774@linux>
-	 <20090508180951.GG7293@redhat.com> <20090508200458.GA3708@linux>
-	 <20090508215618.GJ7293@redhat.com>
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: Re: [PATCH 1/3] block: add alt_size
+Date: Sat, 9 May 2009 15:45:36 +0200
+Message-ID: <ac3eb2510905090645u5e482ffcu4b3ddc26e81247e6@mail.gmail.com>
+References: <1241828002-12742-1-git-send-email-tj@kernel.org>
+	<1241828002-12742-2-git-send-email-tj@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754415AbZEIJYg@vger.kernel.org>
-In-Reply-To: <20090508215618.GJ7293@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Andrea Righi <righi.andrea@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1241828002-12742-2-git-send-email-tj@kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: jeff@garzik.org, linux-ide@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, Mauelshagen@redhat.com, dm-devel@redhat.com, dan.j.williams@gmail.com
 List-Id: dm-devel.ids
 
-On Fri, 2009-05-08 at 17:56 -0400, Vivek Goyal wrote:
->   So, we shall have to come up with something better, I think Dhaval was
->   implementing upper limit for cpu controller. May be PeterZ and Dhaval can
->   give us some pointers how did they manage to implement both proportional
->   and max bw control with the help of a single tree while maintaining the
->   notion of prio with-in cgroup.
+On Sat, May 9, 2009 at 02:13, Tejun Heo <tj@kernel.org> wrote:
+> This patch adds alt_size to genhd and exports it via sysfs. =C2=A0alt=
+_size
+> is always smaller than the regular size. =C2=A0Being a hint, alt_size=
+ can
+> also be set from userland by writing to the sysfs node mostly for
+> debugging and testing.
 
-We don't do max bandwidth control in the SCHED_OTHER bits as I oppose to
-making it non work conserving.
+What does "alt_" stand for? I think that should be more descriptive in
+an exported interface.
 
-SCHED_FIFO/RR do constant bandwidth things and are always scheduled in
-favour of SCHED_OTHER. 
+And can we please keep the "size_*" in front of the name, so that they
+group together?
 
-That is, we provide a minimum bandwidth for real-time tasks, but since
-having a maximum higher than the minimum is useless since one cannot
-rely on it (non deterministic) we put max = min.
+Also, values with magic block counts, while there is no way to get the
+blocksize with the same interface, are pretty weird. I think the
+current "size" attribute is just a bug.
+Not sure, how that should be solved, by adding a "blocksize" attribute
+that is always in the same context as the current "size*" values, or
+by just using bytes for new attributes here.
+
+Almost all tools I've seen using these attributes, have hardcoded *
+512 in there, which may cause trouble pretty soon. And this is mostly
+a failure of the interface and not of the users, I think.
+
+Thanks,
+Kay
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
