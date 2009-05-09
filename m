@@ -1,63 +1,36 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [PATCH 2/3] scsi: add scsi_device->alt_capacity
-Date: Fri, 08 May 2009 23:23:19 -0500
-Message-ID: <1241842999.6357.2.camel@mulgrave>
-References: <1241828002-12742-1-git-send-email-tj@kernel.org>
-	 <1241828002-12742-3-git-send-email-tj@kernel.org>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: IO scheduler based IO Controller V2
+Date: Sat, 09 May 2009 11:22:52 +0200
+Message-ID: <1241860972.6316.91.camel@laptop>
+References: <20090506203228.GH8180@redhat.com> <20090506213453.GC4282@linux>
+	 <20090506215235.GJ8180@redhat.com> <20090507090450.GA4613@linux>
+	 <20090507141126.GA9463@redhat.com> <20090507144501.GB9463@redhat.com>
+	 <20090507153642.GC9463@redhat.com> <20090507221900.GA29774@linux>
+	 <20090508180951.GG7293@redhat.com> <20090508200458.GA3708@linux>
+	 <20090508215618.GJ7293@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1241828002-12742-3-git-send-email-tj@kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: jeff@garzik.org, linux-ide@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, Mauelshagen@RedHat.com, dm-devel@RedHat.com, dan.j.williams@gmail.com
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754415AbZEIJYg@vger.kernel.org>
+In-Reply-To: <20090508215618.GJ7293@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Andrea Righi <righi.andrea@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com
 List-Id: dm-devel.ids
 
-On Sat, 2009-05-09 at 09:13 +0900, Tejun Heo wrote:
-> Add scsi_device->alt_capacity and let sd pass it over to genhd.  This
-> is to allow SCSI low level drivers to configure alt_capacity via
-> slave_configure().
-> 
-> Signed-off-by: Tejun Heo <tj@kernel.org>
-> Cc: Jens Axboe <jens.axboe@oracle.com>
-> Cc: Dan Williams <dan.j.williams@gmail.com>
-> Cc: Jeff Garzik <jeff@garzik.org>
-> Cc: James Bottomley <James.Bottomley@HansenPartnership.com>
-> ---
->  drivers/scsi/sd.c          |    1 +
->  include/scsi/scsi_device.h |    1 +
->  2 files changed, 2 insertions(+), 0 deletions(-)
-> 
-> diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-> index 3fcb64b..f3448bf 100644
-> --- a/drivers/scsi/sd.c
-> +++ b/drivers/scsi/sd.c
-> @@ -1839,6 +1839,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
->  	blk_queue_ordered(sdkp->disk->queue, ordered, sd_prepare_flush);
->  
->  	set_capacity(disk, sdkp->capacity);
-> +	set_alt_capacity(disk, sdp->alt_capacity);
->  	kfree(buffer);
->  
->   out:
-> diff --git a/include/scsi/scsi_device.h b/include/scsi/scsi_device.h
-> index 3f566af..b24fdeb 100644
-> --- a/include/scsi/scsi_device.h
-> +++ b/include/scsi/scsi_device.h
-> @@ -92,6 +92,7 @@ struct scsi_device {
->  	unsigned int manufacturer;	/* Manufacturer of device, for using 
->  					 * vendor-specific cmd's */
->  	unsigned sector_size;	/* size in bytes */
-> +	size_t alt_capacity;	/* alternative capacity, used by sd */
->  
->  	void *hostdata;		/* available to low-level driver */
->  	char type;
+On Fri, 2009-05-08 at 17:56 -0400, Vivek Goyal wrote:
+>   So, we shall have to come up with something better, I think Dhaval was
+>   implementing upper limit for cpu controller. May be PeterZ and Dhaval can
+>   give us some pointers how did they manage to implement both proportional
+>   and max bw control with the help of a single tree while maintaining the
+>   notion of prio with-in cgroup.
 
-This is done at slightly the wrong level.  Capacity is actually a
-property of struct scsi_disk not struct scsi_device ... shouldn't
-alt_capacity be at the same level?
+We don't do max bandwidth control in the SCHED_OTHER bits as I oppose to
+making it non work conserving.
 
-James
+SCHED_FIFO/RR do constant bandwidth things and are always scheduled in
+favour of SCHED_OTHER. 
 
-
+That is, we provide a minimum bandwidth for real-time tasks, but since
+having a maximum higher than the minimum is useless since one cannot
+rely on it (non deterministic) we put max = min.
