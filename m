@@ -1,130 +1,65 @@
-From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: IO scheduler based IO Controller V2
-Date: Fri, 8 May 2009 17:56:18 -0400
-Message-ID: <20090508215618.GJ7293@redhat.com>
-References: <20090506203228.GH8180@redhat.com> <20090506213453.GC4282@linux>
-	<20090506215235.GJ8180@redhat.com> <20090507090450.GA4613@linux>
-	<20090507141126.GA9463@redhat.com>
-	<20090507144501.GB9463@redhat.com>
-	<20090507153642.GC9463@redhat.com> <20090507221900.GA29774@linux>
-	<20090508180951.GG7293@redhat.com> <20090508200458.GA3708@linux>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 3/3] dm-mpath: add service-time oriented
+	dynamic load balancer
+Date: Sat, 9 May 2009 01:49:59 +0100
+Message-ID: <20090509004959.GJ1320@agk-dp.fab.redhat.com>
+References: <49F1729A.1000906@ct.jp.nec.com> <49F17362.7080205@ct.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20090508200458.GA3708@linux>
-List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Andrea Righi <righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: dhaval-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, balbir-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, paolo.valente-rcYM44yAMweonA0d6jMUrA@public.gmane.org, fernando-gVGce1chcLdL9jVzuh4AOg@public.gmane.org, jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, fchecconi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+In-Reply-To: <49F17362.7080205@ct.jp.nec.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, May 08, 2009 at 10:05:01PM +0200, Andrea Righi wrote:
+On Fri, Apr 24, 2009 at 05:08:02PM +0900, Kiyoshi Ueda wrote:
+> +	struct selector *s = (struct selector *) ps->context;
+> +		     status_type_t type, char *result, unsigned int maxlen)
+> +	int sz = 0;
+> +			DMEMIT("%u %lu ", atomic_read(&pi->in_flight_size),
 
-[..]
-> > Conclusion
-> > ==========
-> > It just reaffirms that with max BW control, we are not doing a fair job
-> > of throttling hence no more hold the IO scheduler properties with-in
-> > cgroup.
-> > 
-> > With proportional BW controller implemented at IO scheduler level, one
-> > can do very tight integration with IO controller and hence retain 
-> > IO scheduler behavior with-in cgroup.
-> 
-> It is worth to bug you I would say :). Results are interesting,
-> definitely. I'll check if it's possible to merge part of the io-throttle
-> max BW control in this controller and who knows if finally we'll be able
-> to converge to a common proposal...
+(similar comments)
 
-Great, Few thoughts though.
+> +			DMEMIT("%u %lu ", pi->repeat_count, pi->perf);
 
-- What are your requirements? Do you strictly need max bw control or
-  proportional BW control will satisfy your needs? Or you need both?
+Need to handle both 32 and 64 bit archs: cast to llu.
 
-- With the current algorithm BFQ (modified WF2Q+), we should be able
-  to do proportional BW division while maintaining the properties of
-  IO scheduler with-in cgroup in hiearchical manner.
- 
-  I think it can be simply enhanced to do max bw control also. That is
-  whenever a queue is selected for dispatch (from fairness point of view)
-  also check the IO rate of that group and if IO rate exceeded, expire
-  the queue immediately and fake as if queue consumed its time slice
-  which will be equivalent to throttling.
+> +	if ((argc == 2) && (sscanf(argv[1], "%lu", &perf) != 1)) {
 
-  But in this simple scheme, I think throttling is still unfair with-in
-  the class. What I mean is following.
+Please do sscanf for size_t the same way as dm-crypt does.
+(Or scan for lu, if the intent is to impose a size limit ahead of the later
+do_div() then cast explicitly.)
 
-  if an RT task and an BE task are in same cgroup and cgroup exceeds its
-  max BW, RT task is next to be dispatched from fairness point of view and it
-  will end being throttled. This is still fine because until RT task is
-  finished, BE task will never get to run in that cgroup, so at some point
-  of time, cgroup rate will come down and RT task will get the IO done
-  meeting fairnesss and max bw constraints.
+> +/*
+> + * Returns:
+> + * < 0 : pi1 is better
+> + * 0   : no difference between pi1 and pi2
+> + * > 0 : pi2 is better
+> + */
 
-  But this simple scheme does not work with-in same class. Say prio 0
-  and prio 7 BE class readers. Now we will end up throttling the guy who
-  is scheduled to go next and there is no mechanism that prio0 and prio7
-  tasks are throttled in proportionate manner.
+Please document the parameters and algorithm.
+Nothing explains what the performance value is for and examples of anticipated values.
 
-  So, we shall have to come up with something better, I think Dhaval was
-  implementing upper limit for cpu controller. May be PeterZ and Dhaval can
-  give us some pointers how did they manage to implement both proportional
-  and max bw control with the help of a single tree while maintaining the
-  notion of prio with-in cgroup.
+> +	do_div(sz1, pi1->perf);
+> +	do_div(sz2, pi2->perf);
 
-PeterZ/Dhaval  ^^^^^^^^
+Or sector_div ?
+But what's the performance of those divisions like?
+Is there a better way of getting the same answer?
+Is there validation limiting the size of 'perf'?
 
-- We should be able to get rid of reader-writer issue even with above
-  simple throttling mechanism for schedulers like deadline and AS, because at
-  elevator we see it as a single queue (for both reads and writes) and we
-  will throttle this queue. With-in queue dispatch are taken care by io
-  scheduler. So as long as IO has been queued in the queue, scheduler
-  will take care of giving advantage to readers even if throttling is
-  taking place on the queue.
+(Also, did you check there's adequate locking & memory barriers around all the
+atomics?)
 
-Why am I thinking loud? So that we know what are we trying to achieve at the
-end of the day. So at this point of time what are the advantages/disadvantages
-of doing max bw control along with proportional bw control?
-
-Advantages
-==========
-- With a combined code base, total code should be less as compared to if
-  both of them are implemented separately. 
-
-- There can be few advantages in terms of maintaining the notion of IO
-  scheduler with-in cgroup. (like RT tasks always goes first in presence
-  of BE and IDLE task etc. But simple throttling scheme will not take
-  care of fair throttling with-in class. We need a better algorithm to
-  achive that goal).
-
-- We probably will get rid of reader writer issue for single queue
-  schedulers like deadline and AS. (Need to run tests and see).
-
-Disadvantages
-=============
-- Implementation at IO scheduler/elevator layer does not cover higher
-  level logical devices. So one can do max bw control only at leaf nodes
-  where IO scheduler is running and not at intermediate logical nodes.
-   
-I personally think that proportional BW control will meet more people's
-need as compared to max bw contorl. 
-
-So far nobody has come up with a solution where a single proposal covers
-all the cases without breaking things. So personally, I want to make
-things work at least at IO scheduler level and cover as much ground as
-possible without breaking things (hardware RAID, all the direct attached
-devices etc) and then worry about higher level software devices.
-
-Thoughts?
-
-Thanks
-Vivek
+Alasdair
