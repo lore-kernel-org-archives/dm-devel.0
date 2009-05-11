@@ -1,123 +1,64 @@
-From: Evgeniy Polyakov <johnpol@2ka.mipt.ru>
-Subject: Re: [PATCH 1 of 1]  Updated cluster log patch (take 2)
-Date: Sun, 10 May 2009 20:04:45 +0400
-Message-ID: <20090510160444.GA19360@2ka.mipt.ru>
-References: <1241725528.9774.7.camel@hydrogen.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH] io-controller: Add io group reference handling for 	request
+Date: Mon, 11 May 2009 09:33:05 +0800
+Message-ID: <4A078051.5060702@cn.fujitsu.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>	 <4A03FF3C.4020506@cn.fujitsu.com> <20090508135724.GE7293@redhat.com> <e98e18940905081041r386e52a5q5a2b1f13f1e8c634@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1241725528.9774.7.camel@hydrogen.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757549AbZEKBeS@vger.kernel.org>
+In-Reply-To: <e98e18940905081041r386e52a5q5a2b1f13f1e8c634@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nauman Rafique <nauman@google.com>
+Cc: Vivek Goyal <vgoyal@redhat.com>, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-Hi Jonathan.
-
-On Thu, May 07, 2009 at 02:45:28PM -0500, Jonathan Brassow (jbrassow@redhat.com) wrote:
-> Evgeniy, I'm copying you on this post because I am making use of your
-> 'connector' interface.
+Nauman Rafique wrote:
+> On Fri, May 8, 2009 at 6:57 AM, Vivek Goyal <vgoyal@redhat.com> wrote:
+>> On Fri, May 08, 2009 at 05:45:32PM +0800, Gui Jianfeng wrote:
+>>> Hi Vivek,
+>>>
+>>> This patch adds io group reference handling when allocating
+>>> and removing a request.
+>>>
+>> Hi Gui,
+>>
+>> Thanks for the patch. We were thinking that requests can take a reference
+>> on io queues and io queues can take a reference on io groups. That should
+>> make sure that io groups don't go away as long as active requests are
+>> present.
+>>
+>> But there seems to be a small window while allocating the new request
+>> where request gets allocated from a group first and then later it is
+>> mapped to that group and queue is created. IOW, in get_request_wait(),
+>> we allocate a request from a particular group and set rq->rl, then
+>> drop the queue lock and later call elv_set_request() which again maps
+>> the request to the group saves rq->iog and creates new queue. This window
+>> is troublesome because request can be mapped to a particular group at the
+>> time of allocation and during set_request() it can go to a different
+>> group as queue lock was dropped and group might have disappeared.
+>>
+>> In this case probably it might make sense that request also takes a
+>> reference on groups. At the same time it looks too much that request takes
+>> a reference on queue as well as group object. Ideas are welcome on how
+>> to handle it...
 > 
-> agk, I've replied to your concerns in the previous thread about this
-> patch.  This mail contains the updated patch.
+> IMHO a request being allocated on the wrong cgroup should not be a big
+> problem as such. All it means is that the request descriptor was
+> accounted to the wrong cgroup in this particular corner case. Please
+> correct me if I am wrong.
+> 
+> We can also get rid of rq->iog pointer too. What that means is that
+> request is associated with ioq (rq->ioq), and we can use
+> ioq_to_io_group() function to get the io_group. So the request would
+> only be indirectly associated with an io_group i.e. the request is
+> associated with an io_queue and the io_group for the request is the
+> io_group associated with io_queue. Do you see any problems with that
+> approach?
 
-I have some trivial issue below, otherwise it looks good, thank you.
-
-> +static int fill_pkg(struct cn_msg *msg, struct dm_clog_request *tfr)
-> +{
-> +	uint32_t rtn_seq = (msg) ? msg->seq : (tfr) ? tfr->seq : 0;
-> +	struct receiving_pkg *pkg;
-> +
-> +	list_for_each_entry(pkg, &receiving_list, list) {
-
-Here we process a list of statically allocated structures, and while for
-the kernel space it should be ok, but please write a huge comment which
-will explain that it relies on the kernel stack nature about unified
-addressing between processes.
-
-> +		if (rtn_seq != pkg->seq)
-> +			continue;
-> +
-> +		if (msg) {
-> +			pkg->error = -msg->ack;
-> +			/*
-> +			 * If we are trying again, we will need to know our
-> +			 * storage capacity.  Otherwise, along with the
-> +			 * error code, we make explicit that we have no data.
-> +			 */
-> +			if (pkg->error != -EAGAIN)
-> +				*(pkg->data_size) = 0;
-> +		} else if (tfr->data_size > *(pkg->data_size)) {
-> +			DMERR("Insufficient space to receive package [%u]::",
-> +			      tfr->request_type);
-> +			DMERR("  tfr->data_size    = %u", tfr->data_size);
-> +			DMERR("  *(pkg->data_size) = %lu", *(pkg->data_size));
-> +
-> +			*(pkg->data_size) = 0;
-> +			pkg->error = -ENOSPC;
-> +		} else {
-> +			pkg->error = tfr->error;
-> +			memcpy(pkg->data, tfr->data, tfr->data_size);
-> +			*(pkg->data_size) = tfr->data_size;
-> +		}
-> +		complete(&pkg->complete);
-> +		return 0;
-> +	}
-> +
-> +	return -ENOENT;
-> +}
-> +
-> +/*
-> + * cn_clog_callback
-> + * @data
-> + *
-
-Please also drop this kind of comment prefix, it does not really tells
-anything about function, but below part does (as well as next function's
-kerneldoc one).
-
-> + * This is the connector callback that delivers data
-> + * that was sent from userspace.
-> + */
-> +static void cn_clog_callback(void *data)
-> +{
-> +	struct cn_msg *msg = (struct cn_msg *)data;
-> +	struct dm_clog_request *tfr = (struct dm_clog_request *)(msg + 1);
-> +
-> +	spin_lock(&receiving_list_lock);
-> +	if (msg->len == 0)
-> +		fill_pkg(msg, NULL);
-> +	else if (msg->len < sizeof(*tfr))
-> +		DMERR("Incomplete message received: [%u]", msg->seq);
-> +	else
-> +		fill_pkg(NULL, tfr);
-> +	spin_unlock(&receiving_list_lock);
-> +}
-> +
-> +/*
-> + * dm_clog_consult_server
-> + * @uuid: log's uuid (must be DM_UUID_LEN in size)
-> + * @request_type:
-> + * @data: data to tx to the server
-> + * @data_size: size of data in bytes
-> + * @rdata: place to put return data from server
-> + * @rdata_size: value-result (amount of space given/amount of space used)
-> + *
-> + * Only one process at a time can communicate with the server.
-> + * rdata_size is undefined on failure.
-> + *
-> + * Returns: 0 on success, -EXXX on failure
-> + */
+  That sounds reasonable to get rid of rq->iog, and rq->rl is also dead.
+  Hope to see the patch soon. ;)
 
 -- 
-	Evgeniy Polyakov
+Regards
+Gui Jianfeng
