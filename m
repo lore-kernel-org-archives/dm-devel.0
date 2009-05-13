@@ -1,110 +1,71 @@
-From: christophe.varoqui@free.fr
-Subject: Re: Memory leak in multipathd.
-Date: Tue, 12 May 2009 23:05:08 +0200 (CEST)
-Message-ID: <1917933616.7020651242162308936.JavaMail.root@zimbra16-e3.priv.proxad.net>
-References: <4F2CC79CDB05B844AEEA72F36255835403FD4EC3@bunker.inside.abhaisystems.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Li Zefan <lizf@cn.fujitsu.com>
+Subject: Re: [RFC PATCH dm-ioband] Added in blktrace msgs for dm-ioband
+Date: Wed, 13 May 2009 08:56:13 +0800
+Message-ID: <4A0A1AAD.3090606@cn.fujitsu.com>
+References: <4A08F1B3.4060700@cn.fujitsu.com>	<20090512.151104.71103166.ryov@valinux.co.jp>	<4A092EE7.4070403@cn.fujitsu.com> <20090512.191206.226779551.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4F2CC79CDB05B844AEEA72F36255835403FD4EC3@bunker.inside.abhaisystems.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Harikrishnan Padidakul <hpadidakul@inmage.net>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756893AbZEMAz3@vger.kernel.org>
+In-Reply-To: <20090512.191206.226779551.ryov@valinux.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: Alan.Brunelle@hp.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, jens.axboe@oracle.com, mingo@elte.hu, rostedt@goodmis.org, fweisbec@gmail.com
 List-Id: dm-devel.ids
 
-Ok, to my knowledge Konrad plugged this one in December upstream :
+>>>>>> Thanks for your suggestion. I'll use TRACE_EVENT instead.
+>>>>> blk_add_trace_msg() supports both blktrace and tracepoints. I can
+>>>>> get messages from dm-ioband through debugfs. Could you expain why
+>>>>> should we use TRACE_EVENT instead?
+>>>>>
+>>>> Actually blk_add_trace_msg() has nothing to do with tracepoints..
+>>>>
+>>>> If we use blk_add_trace_msg() is dm, we can use it in md, various block
+>>>> drivers and even ext4. So the right thing is, if a subsystem wants to add
+>>>> trace facility, it should use tracepoints/TRACE_EVENT.
+>>>>
+>>>> With TRACE_EVENT, you can get output through debugfs too, and it can be used
+>>>> together with blktrace:
+>>>>
+>>>>  # echo 1 > /sys/block/dm/trace/enable
+>>>>  # echo blk > /debugfs/tracing/current_tracer
+>>>>  # echo dm-ioband-foo > /debugfs/tracing/tracing/set_event
+>>>>  # cat /deubgfs/tracing/trace_pipe
+>>>>  
+>>>> And you can enable dm-ioband-foo while disabling dm-ioband-bar, and you can
+>>>> use filter feature too.
+>>> Thanks for explaining.
+>>> The base kernel of current dm tree (2.6.30-rc4) has not supported
+>>> dm-device tracing yet. I'll consider using TRACE_EVENT when the base
+>>> kernel supports dm-device tracing.
+>>>
+>> I think we don't have any plan on dm-device tracing support, do we? And you
+>> don't need that.
+>>
+>> I downloaded dm-ioband 1.10.4, and applied it to latest tip-tree, and made
+>> a patch to convert those blktrace msgs to trace events.
+>>
+>>  # ls /debug/tracing/events/dm-ioband
+>>  enable  ioband_endio     ioband_issue_list    ioband_urgent_bio
+>>  filter  ioband_hold_bio  ioband_make_request
+>>  # echo 1 /debug/tracing/events/dm-ioband/enable
+>>  # echo blk /debug/tracing/current_tracer
+>>  ...
+> 
+> Is the following line unnecessary in the latest tip-tree?
+> 
+>    # echo 1 > /sys/block/dm/trace/enable
+> 
 
-commit d0d98bc348b69d873841b10dd9a1c73af305f0fd
-Author: Konrad Rzeszutek <konrad@virtualiron.com>
-Date:   Wed Dec 17 23:19:19 2008 +0100
+Yes, still needed. I was not giving a complete demonstration. ;)
 
-Thank you for the report Hari. But know that there are very few tarball r=
-eleases, so upstream is really the git HEAD. This is what you should chec=
-k and see if the bugs you report are already fixed.
+> How to enable/disable tracing on each device?
 
-Best regards,
-cvaroqui
+echo 1 > /sys/block/dm-0/trace/enable
+echo 1 > /sys/block/dm-1/trace/enable
 
------ Mail Original -----
-De: "Harikrishnan Padidakul" <hpadidakul@inmage.net>
-=C3=80: "christophe varoqui" <christophe.varoqui@free.fr>
-Cc: dm-devel@redhat.com
-Envoy=C3=A9: Mardi 12 Mai 2009 07h42:36 GMT +01:00 Amsterdam / Berlin / B=
-erne / Rome / Stockholm / Vienne
-Objet: RE: Memory leak in multipathd.
+Or use filter facility:
 
+echo "dev == $(( (ma0 << 20) | mi0 ))" > /debug/tracing/events/dm-ioband/filter
 
-
-I am reporting memory leak for the code multipath-tools-0.4.7.rhel5.13 do=
-wnloaded from rhel and multipath-tools-0.4.8.=20
-vector_free() will not free the mpp's allocated by dm_get_maps(). Here we=
- need to call free_multipath()=20
-Below is by fix:=20
-
-dm_get_name(char *uuid, char *type, char *name)=20
-{=20
-vector vec;=20
-struct multipath *mpp;=20
-int ret;=20
-int i;=20
-vec =3D vector_alloc();=20
-if (!vec)=20
-return 0;=20
-if (dm_get_maps(vec, type)) {=20
-vector_free(vec);=20
-return 0;=20
-}=20
-vector_foreach_slot(vec, mpp, i) {=20
-if (!strcmp(uuid, mpp->wwid)) {=20
-strcpy(name, mpp->alias);=20
-ret =3D 1;=20
-goto found;=20
-}=20
-}=20
-ret =3D 0;=20
-found:=20
-vector_foreach_slot(vec, mpp, i) {=20
-free_multipath(mpp, KEEP_PATHS);=20
-}=20
-vector_free(vec);=20
-return ret;=20
-}=20
-
-Thanks,=20
-Hari=20
-
-
-
-
-
-From: christophe.varoqui@free.fr [mailto:christophe.varoqui@free.fr]=20
-Sent: Tue 5/12/2009 3:13 AM=20
-To: Harikrishnan Padidakul=20
-Cc: dm-devel@redhat.com=20
-Subject: Re: Memory leak in multipathd.=20
-
-
-
-
-> I was testing multipath with more than 3000paths, I found multipathd us=
-ing around 2.3GB of memory.=20
-> After closely digging the code, I found In function dm_get_name() we ar=
-e calling dm_get_maps() which will allocate memory for mmp.=20
-> But we are not freeing the same after search is done.=20
-> I have made a fix by calling free_multipath() ,w ith this fix multipath=
-d is using less than 200MB of memory.=20
-
-Hi Hari,=20
-
-are you reporting on the upstream multipath-tools code ? I already see mu=
-ltipath vector freeing there ...=20
+This will filter out all events generated from dm-1, leaving those from dm-0.
