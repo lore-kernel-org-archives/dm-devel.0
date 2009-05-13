@@ -1,71 +1,389 @@
-From: Li Zefan <lizf@cn.fujitsu.com>
-Subject: Re: [RFC PATCH dm-ioband] Added in blktrace msgs for dm-ioband
-Date: Wed, 13 May 2009 08:56:13 +0800
-Message-ID: <4A0A1AAD.3090606@cn.fujitsu.com>
-References: <4A08F1B3.4060700@cn.fujitsu.com>	<20090512.151104.71103166.ryov@valinux.co.jp>	<4A092EE7.4070403@cn.fujitsu.com> <20090512.191206.226779551.ryov@valinux.co.jp>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: [PATCH] IO Controller: Add per-device weight and ioprio_class handling
+Date: Wed, 13 May 2009 10:00:21 +0800
+Message-ID: <4A0A29B5.7030109@cn.fujitsu.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756893AbZEMAz3@vger.kernel.org>
-In-Reply-To: <20090512.191206.226779551.ryov@valinux.co.jp>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752665AbZEMCBe@vger.kernel.org>
+In-Reply-To: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: Alan.Brunelle@hp.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, jens.axboe@oracle.com, mingo@elte.hu, rostedt@goodmis.org, fweisbec@gmail.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
->>>>>> Thanks for your suggestion. I'll use TRACE_EVENT instead.
->>>>> blk_add_trace_msg() supports both blktrace and tracepoints. I can
->>>>> get messages from dm-ioband through debugfs. Could you expain why
->>>>> should we use TRACE_EVENT instead?
->>>>>
->>>> Actually blk_add_trace_msg() has nothing to do with tracepoints..
->>>>
->>>> If we use blk_add_trace_msg() is dm, we can use it in md, various block
->>>> drivers and even ext4. So the right thing is, if a subsystem wants to add
->>>> trace facility, it should use tracepoints/TRACE_EVENT.
->>>>
->>>> With TRACE_EVENT, you can get output through debugfs too, and it can be used
->>>> together with blktrace:
->>>>
->>>>  # echo 1 > /sys/block/dm/trace/enable
->>>>  # echo blk > /debugfs/tracing/current_tracer
->>>>  # echo dm-ioband-foo > /debugfs/tracing/tracing/set_event
->>>>  # cat /deubgfs/tracing/trace_pipe
->>>>  
->>>> And you can enable dm-ioband-foo while disabling dm-ioband-bar, and you can
->>>> use filter feature too.
->>> Thanks for explaining.
->>> The base kernel of current dm tree (2.6.30-rc4) has not supported
->>> dm-device tracing yet. I'll consider using TRACE_EVENT when the base
->>> kernel supports dm-device tracing.
->>>
->> I think we don't have any plan on dm-device tracing support, do we? And you
->> don't need that.
->>
->> I downloaded dm-ioband 1.10.4, and applied it to latest tip-tree, and made
->> a patch to convert those blktrace msgs to trace events.
->>
->>  # ls /debug/tracing/events/dm-ioband
->>  enable  ioband_endio     ioband_issue_list    ioband_urgent_bio
->>  filter  ioband_hold_bio  ioband_make_request
->>  # echo 1 /debug/tracing/events/dm-ioband/enable
->>  # echo blk /debug/tracing/current_tracer
->>  ...
-> 
-> Is the following line unnecessary in the latest tip-tree?
-> 
->    # echo 1 > /sys/block/dm/trace/enable
-> 
+Hi Vivek,
 
-Yes, still needed. I was not giving a complete demonstration. ;)
+This patch enables per-cgroup per-device weight and ioprio_class handling.
+A new cgroup interface "policy" is introduced. You can make use of this 
+file to configure weight and ioprio_class for each device in a given cgroup.
+The original "weight" and "ioprio_class" files are still available. If you
+don't do special configuration for a particular device, "weight" and 
+"ioprio_class" are used as default values in this device.
 
-> How to enable/disable tracing on each device?
+You can use the following format to play with the new interface.
+#echo DEV:weight:ioprio_class > /patch/to/cgroup/policy
+weight=0 means removing the policy for DEV.
 
-echo 1 > /sys/block/dm-0/trace/enable
-echo 1 > /sys/block/dm-1/trace/enable
+Examples:
+Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+# echo /dev/hdb:300:2 > io.policy
+# cat io.policy
+dev weight class
+/dev/hdb 300 2
 
-Or use filter facility:
+Configure weight=500 ioprio_class=1 on /dev/hda in this cgroup
+# echo /dev/hda:500:1 > io.policy
+# cat io.policy
+dev weight class
+/dev/hda 500 1
+/dev/hdb 300 2
 
-echo "dev == $(( (ma0 << 20) | mi0 ))" > /debug/tracing/events/dm-ioband/filter
+Remove the policy for /dev/hda in this cgroup
+# echo /dev/hda:0:1 > io.policy
+# cat io.policy
+dev weight class
+/dev/hdb 300 2
 
-This will filter out all events generated from dm-1, leaving those from dm-0.
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ block/elevator-fq.c |  239 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ block/elevator-fq.h |   11 +++
+ 2 files changed, 245 insertions(+), 5 deletions(-)
+
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 69435ab..7c95d55 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -12,6 +12,9 @@
+ #include "elevator-fq.h"
+ #include <linux/blktrace_api.h>
+ #include <linux/biotrack.h>
++#include <linux/seq_file.h>
++#include <linux/genhd.h>
++
+ 
+ /* Values taken from cfq */
+ const int elv_slice_sync = HZ / 10;
+@@ -1045,12 +1048,30 @@ struct io_group *io_lookup_io_group_current(struct request_queue *q)
+ }
+ EXPORT_SYMBOL(io_lookup_io_group_current);
+ 
+-void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog)
++static struct policy_node *policy_search_node(const struct io_cgroup *iocg,
++					      void *key);
++
++void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog,
++			  void *key)
+ {
+ 	struct io_entity *entity = &iog->entity;
++	struct policy_node *pn;
++
++	spin_lock_irq(&iocg->lock);
++	pn = policy_search_node(iocg, key);
++	if (pn) {
++		entity->weight = pn->weight;
++		entity->new_weight = pn->weight;
++		entity->ioprio_class = pn->ioprio_class;
++		entity->new_ioprio_class = pn->ioprio_class;
++	} else {
++		entity->weight = iocg->weight;
++		entity->new_weight = iocg->weight;
++		entity->ioprio_class = iocg->ioprio_class;
++		entity->new_ioprio_class = iocg->ioprio_class;
++	}
++	spin_unlock_irq(&iocg->lock);
+ 
+-	entity->weight = entity->new_weight = iocg->weight;
+-	entity->ioprio_class = entity->new_ioprio_class = iocg->ioprio_class;
+ 	entity->ioprio_changed = 1;
+ 	entity->my_sched_data = &iog->sched_data;
+ }
+@@ -1263,7 +1284,7 @@ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
+ 		atomic_set(&iog->ref, 0);
+ 		iog->deleting = 0;
+ 
+-		io_group_init_entity(iocg, iog);
++		io_group_init_entity(iocg, iog, key);
+ 		iog->my_entity = &iog->entity;
+ #ifdef CONFIG_DEBUG_GROUP_IOSCHED
+ 		iog->iocg_id = css_id(&iocg->css);
+@@ -1549,8 +1570,208 @@ struct io_group *io_alloc_root_group(struct request_queue *q,
+ 	return iog;
+ }
+ 
++static int io_cgroup_policy_read(struct cgroup *cgrp, struct cftype *cft,
++				  struct seq_file *m)
++{
++	struct io_cgroup *iocg;
++	struct policy_node *pn;
++
++	iocg = cgroup_to_io_cgroup(cgrp);
++
++	if (list_empty(&iocg->list))
++		goto out;
++
++	seq_printf(m, "dev weight class\n");
++
++	spin_lock_irq(&iocg->lock);
++	list_for_each_entry(pn, &iocg->list, node) {
++		seq_printf(m, "%s %lu %lu\n", pn->dev_name,
++			   pn->weight, pn->ioprio_class);
++	}
++	spin_unlock_irq(&iocg->lock);
++out:
++	return 0;
++}
++
++static inline void policy_insert_node(struct io_cgroup *iocg,
++					  struct policy_node *pn)
++{
++	list_add(&pn->node, &iocg->list);
++}
++
++/* Must be called with iocg->lock held */
++static inline void policy_delete_node(struct policy_node *pn)
++{
++	list_del(&pn->node);
++}
++
++/* Must be called with iocg->lock held */
++static struct policy_node *policy_search_node(const struct io_cgroup *iocg,
++					      void *key)
++{
++	struct policy_node *pn;
++
++	if (list_empty(&iocg->list))
++		return NULL;
++
++	list_for_each_entry(pn, &iocg->list, node) {
++		if (pn->key == key)
++			return pn;
++	}
++
++	return NULL;
++}
++
++static void *devname_to_efqd(const char *buf)
++{
++	struct block_device *bdev;
++	void *key = NULL;
++	struct gendisk *disk;
++	int part;
++
++	bdev = lookup_bdev(buf);
++	if (IS_ERR(bdev))
++		return NULL;
++
++	disk = get_gendisk(bdev->bd_dev, &part);
++	key = (void *)&disk->queue->elevator->efqd;
++	bdput(bdev);
++
++	return key;
++}
++
++static int policy_parse_and_set(char *buf, struct policy_node *newpn)
++{
++	char *s[3];
++	char *p;
++	int ret;
++	int i = 0;
++
++	memset(s, 0, sizeof(s));
++	while (i < ARRAY_SIZE(s)) {
++		p = strsep(&buf, ":");
++		if (!p)
++			break;
++		if (!*p)
++			continue;
++		s[i++] = p;
++	}
++
++	newpn->key = devname_to_efqd(s[0]);
++	if (!newpn->key)
++		return -EINVAL;
++
++	strcpy(newpn->dev_name, s[0]);
++
++	ret = strict_strtoul(s[1], 10, &newpn->weight);
++	if (ret || newpn->weight > WEIGHT_MAX)
++		return -EINVAL;
++
++	ret = strict_strtoul(s[2], 10, &newpn->ioprio_class);
++	if (ret || newpn->ioprio_class < IOPRIO_CLASS_RT ||
++	    newpn->ioprio_class > IOPRIO_CLASS_IDLE)
++		return -EINVAL;
++
++	return 0;
++}
++
++static int io_cgroup_policy_write(struct cgroup *cgrp, struct cftype *cft,
++			    const char *buffer)
++{
++	struct io_cgroup *iocg;
++	struct policy_node *newpn, *pn;
++	char *buf;
++	int ret = 0;
++	int keep_newpn = 0;
++	struct hlist_node *n;
++	struct io_group *iog;
++
++	buf = kstrdup(buffer, GFP_KERNEL);
++	if (!buf)
++		return -ENOMEM;
++
++	newpn = kzalloc(sizeof(*newpn), GFP_KERNEL);
++	if (!newpn) {
++		ret = -ENOMEM;
++		goto free_buf;
++	}
++
++	ret = policy_parse_and_set(buf, newpn);
++	if (ret)
++		goto free_newpn;
++
++	if (!cgroup_lock_live_group(cgrp)) {
++		ret = -ENODEV;
++		goto free_newpn;
++	}
++
++	iocg = cgroup_to_io_cgroup(cgrp);
++	spin_lock_irq(&iocg->lock);
++
++	pn = policy_search_node(iocg, newpn->key);
++	if (!pn) {
++		if (newpn->weight != 0) {
++			policy_insert_node(iocg, newpn);
++			keep_newpn = 1;
++		}
++		goto update_io_group;
++	}
++
++	if (newpn->weight == 0) {
++		/* weight == 0 means deleteing a policy */
++		policy_delete_node(pn);
++		goto update_io_group;
++	}
++
++	pn->weight = newpn->weight;
++	pn->ioprio_class = newpn->ioprio_class;
++
++update_io_group:
++	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {
++		if (iog->key == newpn->key) {
++			if (newpn->weight) {
++				iog->entity.new_weight = newpn->weight;
++				iog->entity.new_ioprio_class =
++					newpn->ioprio_class;
++				/*
++				 * iog weight and ioprio_class updating
++				 * actually happens if ioprio_changed is set.
++				 * So ensure ioprio_changed is not set until
++				 * new weight and new ioprio_class are updated.
++				 */
++				smp_wmb();
++				iog->entity.ioprio_changed = 1;
++			} else {
++				iog->entity.new_weight = iocg->weight;
++				iog->entity.new_ioprio_class =
++					iocg->ioprio_class;
++
++				/* The same as above */
++				smp_wmb();
++				iog->entity.ioprio_changed = 1;
++			}
++		}
++	}
++	spin_unlock_irq(&iocg->lock);
++
++	cgroup_unlock();
++
++free_newpn:
++	if (!keep_newpn)
++		kfree(newpn);
++free_buf:
++	kfree(buf);
++	return ret;
++}
++
+ struct cftype bfqio_files[] = {
+ 	{
++		.name = "policy",
++		.read_seq_string = io_cgroup_policy_read,
++		.write_string = io_cgroup_policy_write,
++		.max_write_len = 256,
++	},
++	{
+ 		.name = "weight",
+ 		.read_u64 = io_cgroup_weight_read,
+ 		.write_u64 = io_cgroup_weight_write,
+@@ -1592,6 +1813,7 @@ struct cgroup_subsys_state *iocg_create(struct cgroup_subsys *subsys,
+ 	INIT_HLIST_HEAD(&iocg->group_data);
+ 	iocg->weight = IO_DEFAULT_GRP_WEIGHT;
+ 	iocg->ioprio_class = IO_DEFAULT_GRP_CLASS;
++	INIT_LIST_HEAD(&iocg->list);
+ 
+ 	return &iocg->css;
+ }
+@@ -1750,6 +1972,7 @@ void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup)
+ 	unsigned long flags, flags1;
+ 	int queue_lock_held = 0;
+ 	struct elv_fq_data *efqd;
++	struct policy_node *pn, *pntmp;
+ 
+ 	/*
+ 	 * io groups are linked in two lists. One list is maintained
+@@ -1823,6 +2046,12 @@ locked:
+ 	BUG_ON(!hlist_empty(&iocg->group_data));
+ 
+ 	free_css_id(&io_subsys, &iocg->css);
++
++	list_for_each_entry_safe(pn, pntmp, &iocg->list, node) {
++		policy_delete_node(pn);
++		kfree(pn);
++	}
++
+ 	kfree(iocg);
+ }
+ 
+@@ -2137,7 +2366,7 @@ void elv_fq_unset_request_ioq(struct request_queue *q, struct request *rq)
+ void bfq_init_entity(struct io_entity *entity, struct io_group *iog)
+ {
+ 	entity->ioprio = entity->new_ioprio;
+-	entity->weight = entity->new_weight;
++	entity->weight = entity->new_weigh;
+ 	entity->ioprio_class = entity->new_ioprio_class;
+ 	entity->sched_data = &iog->sched_data;
+ }
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index db3a347..0407633 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -253,6 +253,14 @@ struct io_group {
+ #endif
+ };
+ 
++struct policy_node {
++	struct list_head node;
++	char dev_name[32];
++	void *key;
++	unsigned long weight;
++	unsigned long ioprio_class;
++};
++
+ /**
+  * struct bfqio_cgroup - bfq cgroup data structure.
+  * @css: subsystem state for bfq in the containing cgroup.
+@@ -269,6 +277,9 @@ struct io_cgroup {
+ 
+ 	unsigned long weight, ioprio_class;
+ 
++	/* list of policy_node */
++	struct list_head list;
++
+ 	spinlock_t lock;
+ 	struct hlist_head group_data;
+ };
+-- 
+1.5.4.rc3
