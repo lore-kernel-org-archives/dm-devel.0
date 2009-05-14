@@ -1,260 +1,461 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 2/3] dm-mpath: add queue-length oriented
- dynamic load balancer
-Date: Thu, 14 May 2009 15:14:15 +0900
-Message-ID: <4A0BB6B7.9020503@ct.jp.nec.com>
-References: <49F1729A.1000906@ct.jp.nec.com> <49F1733E.70006@ct.jp.nec.com>
-	<20090509003136.GI1320@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH] IO Controller: Add per-device weight and ioprio_class
+ handling
+Date: Thu, 14 May 2009 15:26:35 +0800
+Message-ID: <4A0BC7AB.8030703@cn.fujitsu.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <4A0A29B5.7030109@cn.fujitsu.com> <20090513190929.GB18371@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------000803050400060401000202"
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090509003136.GI1320@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, stefan.bader@canonical.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758518AbZENH1t@vger.kernel.org>
+In-Reply-To: <20090513190929.GB18371@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------000803050400060401000202
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Hi Vivek,
 
-Hi Alasdair,
+This patch enables per-cgroup per-device weight and ioprio_class handling.
+A new cgroup interface "policy" is introduced. You can make use of this 
+file to configure weight and ioprio_class for each device in a given cgroup.
+The original "weight" and "ioprio_class" files are still available. If you
+don't do special configuration for a particular device, "weight" and 
+"ioprio_class" are used as default values in this device.
 
-Thank you for the review and comments.
-I'm totally agree with your comments.
+You can use the following format to play with the new interface.
+#echo DEV:weight:ioprio_class > /patch/to/cgroup/policy
+weight=0 means removing the policy for DEV.
 
-I found that you have already updated the patch in your editing tree, thanks.
-I attached patches for remaining parts of your comments.
+Examples:
+Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+# echo /dev/hdb:300:2 > io.policy
+# cat io.policy
+dev weight class
+/dev/hdb 300 2
 
-Please review and apply.
+Configure weight=500 ioprio_class=1 on /dev/hda in this cgroup
+# echo /dev/hda:500:1 > io.policy
+# cat io.policy
+dev weight class
+/dev/hda 500 1
+/dev/hdb 300 2
 
+Remove the policy for /dev/hda in this cgroup
+# echo /dev/hda:0:1 > io.policy
+# cat io.policy
+dev weight class
+/dev/hdb 300 2
 
-On 05/09/2009 09:31 AM +0900, Alasdair G Kergon wrote:
-> On Fri, Apr 24, 2009 at 05:07:26PM +0900, Kiyoshi Ueda wrote:
->> +	unsigned int		repeat_count;
-> 
-> Just 'unsigned repeat_count'
+Changelog (v1 -> v2)
+- Rename some structures
+- Use spin_lock_irqsave() and spin_lock_irqrestore() version to prevent
+  from enabling the interrupts unconditionally.
+- Fix policy setup bug when switching to another io scheduler.
+- If a policy is available for a specific device, don't update weight and
+  io class when writing "weight" and "iprio_class".
+- Fix a bug when parsing policy string.
 
-OK. (You have already fixed this.)
- 
-
->> +	struct selector *s = (struct selector *) ps->context;
-> 
-> Drop the cast when it's from void.
-> 
-> 	struct selector *s = ps->context;
-
-OK. (You have already fixed this.)
-
- 
->> +static int ql_status(struct path_selector *ps, struct dm_path *path,
->> +		     status_type_t type, char *result, unsigned int maxlen)
-> 
-> unsigned maxlen
-
-OK, fixed in rqdm-dlb-02-queue-length-dlb-type-fixes.patch
-
-
-> (We're doing things like this in all new patches, but only changing existing
-> code when it's touched for some other reason.)
-
-OK, I followed the style of dm-round-robin and I understand your
-preference now.
-I'll also check the request-based dm patch-set, too, when I update
-and repost it.
-
-
->> +	int sz = 0;
-> 
-> signed or unsigned sz?
-> (It's already used inconsistently, I know - but is unsigned better here?)
-
-Yes, I think unsigned is better. (You have already fixed this.)
-
- 
->> +		case STATUSTYPE_INFO:
->> +			DMEMIT("%u ", atomic_read(&pi->qlen));
-> 
-> Signed or unsigned?
-
-qlen should be always >= 0, but atomic_t is defined as signed.
-So I use signed here.
-Fixed in rqdm-dlb-02-queue-length-dlb-type-fixes.patch
-
-
->> +	/* Parse the arguments */
-> 
-> Please document parameters and selection algorithm in Documentation dir and
-> maybe in inline comments too - it's not immediately obvious exactly how it
-> behaves.
-> 
->> +static struct dm_path *ql_select_path(struct path_selector *ps,
->> +				      unsigned *repeat_count, size_t nr_bytes)
-
-OK, added comments/documentaion in
-rqdm-dlb-02-queue-length-dlb-document.patch.
-
-Thanks,
-Kiyoshi Ueda
-
---------------000803050400060401000202
-Content-Type: text/plain; name="rqdm-dlb-02-queue-length-dlb-type-fixes.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
-	filename="rqdm-dlb-02-queue-length-dlb-type-fixes.patch"
-
-o Use 'unsigned' instead of 'unsigned int' for maxlen in dm-queue-length.
-
-o Fix the print format to use %d for qlen in dm-queue-length, since
-  atomic_t is defined as 'int', not 'unsigned int'.
-
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 ---
- drivers/md/dm-queue-length.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ block/elevator-fq.c |  258 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ block/elevator-fq.h |   12 +++
+ 2 files changed, 261 insertions(+), 9 deletions(-)
 
-Index: 2.6.30-rc5/drivers/md/dm-queue-length.c
-===================================================================
---- 2.6.30-rc5.orig/drivers/md/dm-queue-length.c
-+++ 2.6.30-rc5/drivers/md/dm-queue-length.c
-@@ -82,7 +82,7 @@ static void ql_destroy(struct path_selec
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 69435ab..43b30a4 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -12,6 +12,9 @@
+ #include "elevator-fq.h"
+ #include <linux/blktrace_api.h>
+ #include <linux/biotrack.h>
++#include <linux/seq_file.h>
++#include <linux/genhd.h>
++
+ 
+ /* Values taken from cfq */
+ const int elv_slice_sync = HZ / 10;
+@@ -1045,12 +1048,31 @@ struct io_group *io_lookup_io_group_current(struct request_queue *q)
  }
+ EXPORT_SYMBOL(io_lookup_io_group_current);
  
- static int ql_status(struct path_selector *ps, struct dm_path *path,
--		     status_type_t type, char *result, unsigned int maxlen)
-+		     status_type_t type, char *result, unsigned maxlen)
+-void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog)
++static struct io_policy_node *policy_search_node(const struct io_cgroup *iocg,
++						 dev_t dev);
++
++void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog,
++			  dev_t dev)
  {
- 	unsigned sz = 0;
- 	struct path_info *pi;
-@@ -95,7 +95,7 @@ static int ql_status(struct path_selecto
+ 	struct io_entity *entity = &iog->entity;
++	struct io_policy_node *pn;
++	unsigned long flags;
++
++	spin_lock_irqsave(&iocg->lock, flags);
++	pn = policy_search_node(iocg, dev);
++	if (pn) {
++		entity->weight = pn->weight;
++		entity->new_weight = pn->weight;
++		entity->ioprio_class = pn->ioprio_class;
++		entity->new_ioprio_class = pn->ioprio_class;
++	} else {
++		entity->weight = iocg->weight;
++		entity->new_weight = iocg->weight;
++		entity->ioprio_class = iocg->ioprio_class;
++		entity->new_ioprio_class = iocg->ioprio_class;
++	}
++	spin_unlock_irqrestore(&iocg->lock, flags);
  
- 		switch (type) {
- 		case STATUSTYPE_INFO:
--			DMEMIT("%u ", atomic_read(&pi->qlen));
-+			DMEMIT("%d ", atomic_read(&pi->qlen));
- 			break;
- 		case STATUSTYPE_TABLE:
- 			DMEMIT("%u ", pi->repeat_count);
-
---------------000803050400060401000202
-Content-Type: text/plain;
- name="rqdm-dlb-02-queue-length-dlb-document.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
-	filename="rqdm-dlb-02-queue-length-dlb-document.patch"
-
-Add documents/comments for dm-queue-length.
-
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
----
- Documentation/device-mapper/dm-queue-length.txt |   39 ++++++++++++++++++++++++
- drivers/md/dm-queue-length.c                    |   12 +++++--
- 2 files changed, 48 insertions(+), 3 deletions(-)
-
-Index: 2.6.30-rc5/Documentation/device-mapper/dm-queue-length.txt
-===================================================================
---- /dev/null
-+++ 2.6.30-rc5/Documentation/device-mapper/dm-queue-length.txt
-@@ -0,0 +1,39 @@
-+dm-queue-length
-+===============
-+
-+dm-queue-length is a path selector module for device-mapper targets,
-+which selects a path having the least number of in-flight I/Os.
-+The path selector name is 'queue-length'.
-+
-+Table parameters for each path: [<repeat_count>]
-+	<repeat_count>: The number of I/Os to dispatch using the selected
-+			path before switching to the next path.
-+			If not given, internal default is used. To check
-+			the default value, see the activated table.
-+
-+Status for each path: <status> <fail-count> <in-flight>
-+	<status>: 'A' if the path is active, 'F' if the path is failed.
-+	<fail-count>: The number of path failures.
-+	<in-flight>: The number of in-flight I/Os on the path.
-+
-+
-+Algorithm
-+=========
-+
-+dm-queue-length increments/decrements 'in-flight' when an I/O is
-+dispatched/completed respectively.
-+dm-queue-length selects a path having minimum 'in-flight'.
-+
-+
-+Examples
-+========
-+In case that 2 paths (sda and sdb) are used with repeat_count == 128.
-+
-+# echo "0 10 multipath 0 0 1 1 queue-length 0 2 1 8:0 128 8:16 128" \
-+  dmsetup create test
-+#
-+# dmsetup table
-+test: 0 10 multipath 0 0 1 1 queue-length 0 2 1 8:0 128 8:16 128
-+#
-+# dmsetup status
-+test: 0 10 multipath 2 0 0 0 1 1 E 0 2 1 8:0 A 0 0 8:16 A 0 0
-Index: 2.6.30-rc5/drivers/md/dm-queue-length.c
-===================================================================
---- 2.6.30-rc5.orig/drivers/md/dm-queue-length.c
-+++ 2.6.30-rc5/drivers/md/dm-queue-length.c
-@@ -35,7 +35,7 @@ struct path_info {
- 	struct list_head	list;
- 	struct dm_path		*path;
- 	unsigned		repeat_count;
--	atomic_t		qlen;
-+	atomic_t		qlen;	/* the number of in-flight I/Os */
- };
+-	entity->weight = entity->new_weight = iocg->weight;
+-	entity->ioprio_class = entity->new_ioprio_class = iocg->ioprio_class;
+ 	entity->ioprio_changed = 1;
+ 	entity->my_sched_data = &iog->sched_data;
+ }
+@@ -1114,6 +1136,7 @@ static int io_cgroup_##__VAR##_write(struct cgroup *cgroup,		\
+ 	struct io_cgroup *iocg;					\
+ 	struct io_group *iog;						\
+ 	struct hlist_node *n;						\
++	struct io_policy_node *pn;					\
+ 									\
+ 	if (val < (__MIN) || val > (__MAX))				\
+ 		return -EINVAL;						\
+@@ -1126,6 +1149,9 @@ static int io_cgroup_##__VAR##_write(struct cgroup *cgroup,		\
+ 	spin_lock_irq(&iocg->lock);					\
+ 	iocg->__VAR = (unsigned long)val;				\
+ 	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {	\
++		pn = policy_search_node(iocg, iog->dev);		\
++		if (pn)							\
++			continue;					\
+ 		iog->entity.new_##__VAR = (unsigned long)val;		\
+ 		smp_wmb();						\
+ 		iog->entity.ioprio_changed = 1;				\
+@@ -1237,7 +1263,7 @@ static u64 io_cgroup_disk_sectors_read(struct cgroup *cgroup,
+  * to the root has already an allocated group on @bfqd.
+  */
+ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
+-					struct cgroup *cgroup)
++				      struct cgroup *cgroup, struct bio *bio)
+ {
+ 	struct io_cgroup *iocg;
+ 	struct io_group *iog, *leaf = NULL, *prev = NULL;
+@@ -1263,12 +1289,17 @@ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
+ 		atomic_set(&iog->ref, 0);
+ 		iog->deleting = 0;
  
- static struct selector *alloc_selector(void)
-@@ -113,13 +113,16 @@ static int ql_add_path(struct path_selec
- 	struct path_info *pi;
- 	unsigned repeat_count = QL_MIN_IO;
+-		io_group_init_entity(iocg, iog);
+-		iog->my_entity = &iog->entity;
+ #ifdef CONFIG_DEBUG_GROUP_IOSCHED
+ 		iog->iocg_id = css_id(&iocg->css);
++		if (bio) {
++			struct gendisk *disk = bio->bi_bdev->bd_disk;
++			iog->dev = MKDEV(disk->major, disk->first_minor);
++		}
+ #endif
  
--	/* Parse the arguments */
-+	/*
-+	 * Arguments: [<repeat_count>]
-+	 * 	<repeat_count>: The number of I/Os before switching path.
-+	 * 			If not given, default (QL_MIN_IO) is used.
-+	 */
- 	if (argc > 1) {
- 		*error = "queue-length ps: incorrect number of arguments";
- 		return -EINVAL;
++		io_group_init_entity(iocg, iog, iog->dev);
++		iog->my_entity = &iog->entity;
++
+ 		blk_init_request_list(&iog->rl);
+ 
+ 		if (leaf == NULL) {
+@@ -1379,7 +1410,7 @@ void io_group_chain_link(struct request_queue *q, void *key,
+  */
+ struct io_group *io_find_alloc_group(struct request_queue *q,
+ 			struct cgroup *cgroup, struct elv_fq_data *efqd,
+-			int create)
++			     int create, struct bio *bio)
+ {
+ 	struct io_cgroup *iocg = cgroup_to_io_cgroup(cgroup);
+ 	struct io_group *iog = NULL;
+@@ -1390,7 +1421,7 @@ struct io_group *io_find_alloc_group(struct request_queue *q,
+ 	if (iog != NULL || !create)
+ 		return iog;
+ 
+-	iog = io_group_chain_alloc(q, key, cgroup);
++	iog = io_group_chain_alloc(q, key, cgroup, bio);
+ 	if (iog != NULL)
+ 		io_group_chain_link(q, key, cgroup, iog, efqd);
+ 
+@@ -1489,7 +1520,7 @@ struct io_group *io_get_io_group_bio(struct request_queue *q, struct bio *bio,
+ 		goto out;
  	}
  
--	/* First path argument is number of I/Os before switching path. */
- 	if ((argc == 1) && (sscanf(argv[0], "%u", &repeat_count) != 1)) {
- 		*error = "queue-length ps: invalid repeat count";
- 		return -EINVAL;
-@@ -161,6 +164,9 @@ static int ql_reinstate_path(struct path
- 	return 0;
+-	iog = io_find_alloc_group(q, cgroup, efqd, create);
++	iog = io_find_alloc_group(q, cgroup, efqd, create, bio);
+ 	if (!iog) {
+ 		if (create)
+ 			iog = efqd->root_group;
+@@ -1549,8 +1580,209 @@ struct io_group *io_alloc_root_group(struct request_queue *q,
+ 	return iog;
  }
  
-+/*
-+ * Select a path having the minimum number of in-flight I/Os
-+ */
- static struct dm_path *ql_select_path(struct path_selector *ps,
- 				      unsigned *repeat_count, size_t nr_bytes)
- {
-
---------------000803050400060401000202
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------000803050400060401000202--
++static int io_cgroup_policy_read(struct cgroup *cgrp, struct cftype *cft,
++				  struct seq_file *m)
++{
++	struct io_cgroup *iocg;
++	struct io_policy_node *pn;
++
++	iocg = cgroup_to_io_cgroup(cgrp);
++
++	if (list_empty(&iocg->policy_list))
++		goto out;
++
++	seq_printf(m, "dev weight class\n");
++
++	spin_lock_irq(&iocg->lock);
++	list_for_each_entry(pn, &iocg->policy_list, node) {
++		seq_printf(m, "%s %lu %lu\n", pn->dev_name,
++			   pn->weight, pn->ioprio_class);
++	}
++	spin_unlock_irq(&iocg->lock);
++out:
++	return 0;
++}
++
++static inline void policy_insert_node(struct io_cgroup *iocg,
++					  struct io_policy_node *pn)
++{
++	list_add(&pn->node, &iocg->policy_list);
++}
++
++/* Must be called with iocg->lock held */
++static inline void policy_delete_node(struct io_policy_node *pn)
++{
++	list_del(&pn->node);
++}
++
++/* Must be called with iocg->lock held */
++static struct io_policy_node *policy_search_node(const struct io_cgroup *iocg,
++						 dev_t dev)
++{
++	struct io_policy_node *pn;
++
++	if (list_empty(&iocg->policy_list))
++		return NULL;
++
++	list_for_each_entry(pn, &iocg->policy_list, node) {
++		if (pn->dev == dev)
++			return pn;
++	}
++
++	return NULL;
++}
++
++static int devname_to_devnum(const char *buf, dev_t *dev)
++{
++	struct block_device *bdev;
++	struct gendisk *disk;
++	int part;
++
++	bdev = lookup_bdev(buf);
++	if (IS_ERR(bdev))
++		return -ENODEV;
++
++	disk = get_gendisk(bdev->bd_dev, &part);
++	*dev = MKDEV(disk->major, disk->first_minor);
++	bdput(bdev);
++
++	return 0;
++}
++
++static int policy_parse_and_set(char *buf, struct io_policy_node *newpn)
++{
++	char *s[3], *p;
++	int ret;
++	int i = 0;
++
++	memset(s, 0, sizeof(s));
++	while ((p = strsep(&buf, ":")) != NULL) {
++		if (!*p)
++			continue;
++		s[i++] = p;
++	}
++
++	ret = devname_to_devnum(s[0], &newpn->dev);
++	if (ret)
++		return ret;
++
++	strcpy(newpn->dev_name, s[0]);
++
++	if (s[1] == NULL)
++		return -EINVAL;
++
++	ret = strict_strtoul(s[1], 10, &newpn->weight);
++	if (ret || newpn->weight > WEIGHT_MAX)
++		return -EINVAL;
++
++	if (s[2] == NULL)
++		return -EINVAL;
++
++	ret = strict_strtoul(s[2], 10, &newpn->ioprio_class);
++	if (ret || newpn->ioprio_class < IOPRIO_CLASS_RT ||
++	    newpn->ioprio_class > IOPRIO_CLASS_IDLE)
++		return -EINVAL;
++
++	return 0;
++}
++
++static int io_cgroup_policy_write(struct cgroup *cgrp, struct cftype *cft,
++			    const char *buffer)
++{
++	struct io_cgroup *iocg;
++	struct io_policy_node *newpn, *pn;
++	char *buf;
++	int ret = 0;
++	int keep_newpn = 0;
++	struct hlist_node *n;
++	struct io_group *iog;
++
++	buf = kstrdup(buffer, GFP_KERNEL);
++	if (!buf)
++		return -ENOMEM;
++
++	newpn = kzalloc(sizeof(*newpn), GFP_KERNEL);
++	if (!newpn) {
++		ret = -ENOMEM;
++		goto free_buf;
++	}
++
++	ret = policy_parse_and_set(buf, newpn);
++	if (ret)
++		goto free_newpn;
++
++	if (!cgroup_lock_live_group(cgrp)) {
++		ret = -ENODEV;
++		goto free_newpn;
++	}
++
++	iocg = cgroup_to_io_cgroup(cgrp);
++	spin_lock_irq(&iocg->lock);
++
++	pn = policy_search_node(iocg, newpn->dev);
++	if (!pn) {
++		if (newpn->weight != 0) {
++			policy_insert_node(iocg, newpn);
++			keep_newpn = 1;
++		}
++		goto update_io_group;
++	}
++
++	if (newpn->weight == 0) {
++		/* weight == 0 means deleteing a policy */
++		policy_delete_node(pn);
++		goto update_io_group;
++	}
++
++	pn->weight = newpn->weight;
++	pn->ioprio_class = newpn->ioprio_class;
++
++update_io_group:
++	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {
++		if (iog->dev == newpn->dev) {
++			if (newpn->weight) {
++				iog->entity.new_weight = newpn->weight;
++				iog->entity.new_ioprio_class =
++					newpn->ioprio_class;
++				/*
++				 * iog weight and ioprio_class updating
++				 * actually happens if ioprio_changed is set.
++				 * So ensure ioprio_changed is not set until
++				 * new weight and new ioprio_class are updated.
++				 */
++				smp_wmb();
++				iog->entity.ioprio_changed = 1;
++			} else {
++				iog->entity.new_weight = iocg->weight;
++				iog->entity.new_ioprio_class =
++					iocg->ioprio_class;
++
++				/* The same as above */
++				smp_wmb();
++				iog->entity.ioprio_changed = 1;
++			}
++		}
++	}
++	spin_unlock_irq(&iocg->lock);
++
++	cgroup_unlock();
++
++free_newpn:
++	if (!keep_newpn)
++		kfree(newpn);
++free_buf:
++	kfree(buf);
++	return ret;
++}
++
+ struct cftype bfqio_files[] = {
+ 	{
++		.name = "policy",
++		.read_seq_string = io_cgroup_policy_read,
++		.write_string = io_cgroup_policy_write,
++		.max_write_len = 256,
++	},
++	{
+ 		.name = "weight",
+ 		.read_u64 = io_cgroup_weight_read,
+ 		.write_u64 = io_cgroup_weight_write,
+@@ -1592,6 +1824,7 @@ struct cgroup_subsys_state *iocg_create(struct cgroup_subsys *subsys,
+ 	INIT_HLIST_HEAD(&iocg->group_data);
+ 	iocg->weight = IO_DEFAULT_GRP_WEIGHT;
+ 	iocg->ioprio_class = IO_DEFAULT_GRP_CLASS;
++	INIT_LIST_HEAD(&iocg->policy_list);
+ 
+ 	return &iocg->css;
+ }
+@@ -1750,6 +1983,7 @@ void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup)
+ 	unsigned long flags, flags1;
+ 	int queue_lock_held = 0;
+ 	struct elv_fq_data *efqd;
++	struct io_policy_node *pn, *pntmp;
+ 
+ 	/*
+ 	 * io groups are linked in two lists. One list is maintained
+@@ -1823,6 +2057,12 @@ locked:
+ 	BUG_ON(!hlist_empty(&iocg->group_data));
+ 
+ 	free_css_id(&io_subsys, &iocg->css);
++
++	list_for_each_entry_safe(pn, pntmp, &iocg->policy_list, node) {
++		policy_delete_node(pn);
++		kfree(pn);
++	}
++
+ 	kfree(iocg);
+ }
+ 
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index db3a347..b1d97e6 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -250,9 +250,18 @@ struct io_group {
+ 
+ #ifdef CONFIG_DEBUG_GROUP_IOSCHED
+ 	unsigned short iocg_id;
++	dev_t dev;
+ #endif
+ };
+ 
++struct io_policy_node {
++	struct list_head node;
++	char dev_name[32];
++	dev_t dev;
++	unsigned long weight;
++	unsigned long ioprio_class;
++};
++
+ /**
+  * struct bfqio_cgroup - bfq cgroup data structure.
+  * @css: subsystem state for bfq in the containing cgroup.
+@@ -269,6 +278,9 @@ struct io_cgroup {
+ 
+ 	unsigned long weight, ioprio_class;
+ 
++	/* list of io_policy_node */
++	struct list_head policy_list;
++
+ 	spinlock_t lock;
+ 	struct hlist_head group_data;
+ };
+-- 
+1.5.4.rc3
