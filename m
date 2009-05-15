@@ -1,85 +1,96 @@
-From: Andrea Righi <righi.andrea@gmail.com>
-Subject: Re: [PATCH] io-controller: Add io group reference handling for
-	request
-Date: Fri, 15 May 2009 09:48:40 +0200
-Message-ID: <20090515074839.GA3340@linux>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <4A03FF3C.4020506@cn.fujitsu.com> <20090508135724.GE7293@redhat.com> <e98e18940905081041r386e52a5q5a2b1f13f1e8c634@mail.gmail.com> <4A078051.5060702@cn.fujitsu.com> <20090511154127.GD6036@redhat.com> <4A0CFA6C.3080609@cn.fujitsu.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH] io-controller: Add io group reference handling for	request
+Date: Fri, 15 May 2009 16:16:38 +0800
+Message-ID: <4A0D24E6.6010807@cn.fujitsu.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <4A03FF3C.4020506@cn.fujitsu.com> <20090508135724.GE7293@redhat.com> <e98e18940905081041r386e52a5q5a2b1f13f1e8c634@mail.gmail.com> <4A078051.5060702@cn.fujitsu.com> <20090511154127.GD6036@redhat.com> <4A0CFA6C.3080609@cn.fujitsu.com> <20090515074839.GA3340@linux>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758241AbZEOHsy@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4A0CFA6C.3080609@cn.fujitsu.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756440AbZEOIR6@vger.kernel.org>
+In-Reply-To: <20090515074839.GA3340@linux>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+To: Andrea Righi <righi.andrea@gmail.com>
 Cc: Vivek Goyal <vgoyal@redhat.com>, Nauman Rafique <nauman@google.com>, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Fri, May 15, 2009 at 01:15:24PM +0800, Gui Jianfeng wrote:
-> Vivek Goyal wrote:
-> ...
-> >  }
-> > @@ -1462,20 +1462,27 @@ struct io_cgroup *get_iocg_from_bio(stru
-> >  /*
-> >   * Find the io group bio belongs to.
-> >   * If "create" is set, io group is created if it is not already present.
-> > + * If "curr" is set, io group is information is searched for current
-> > + * task and not with the help of bio.
-> > + *
-> > + * FIXME: Can we assume that if bio is NULL then lookup group for current
-> > + * task and not create extra function parameter ?
-> >   *
-> > - * Note: There is a narrow window of race where a group is being freed
-> > - * by cgroup deletion path and some rq has slipped through in this group.
-> > - * Fix it.
-> >   */
-> > -struct io_group *io_get_io_group_bio(struct request_queue *q, struct bio *bio,
-> > -					int create)
-> > +struct io_group *io_get_io_group(struct request_queue *q, struct bio *bio,
-> > +					int create, int curr)
+Andrea Righi wrote:
+> On Fri, May 15, 2009 at 01:15:24PM +0800, Gui Jianfeng wrote:
+>> Vivek Goyal wrote:
+>> ...
+>>>  }
+>>> @@ -1462,20 +1462,27 @@ struct io_cgroup *get_iocg_from_bio(stru
+>>>  /*
+>>>   * Find the io group bio belongs to.
+>>>   * If "create" is set, io group is created if it is not already present.
+>>> + * If "curr" is set, io group is information is searched for current
+>>> + * task and not with the help of bio.
+>>> + *
+>>> + * FIXME: Can we assume that if bio is NULL then lookup group for current
+>>> + * task and not create extra function parameter ?
+>>>   *
+>>> - * Note: There is a narrow window of race where a group is being freed
+>>> - * by cgroup deletion path and some rq has slipped through in this group.
+>>> - * Fix it.
+>>>   */
+>>> -struct io_group *io_get_io_group_bio(struct request_queue *q, struct bio *bio,
+>>> -					int create)
+>>> +struct io_group *io_get_io_group(struct request_queue *q, struct bio *bio,
+>>> +					int create, int curr)
+>>   Hi Vivek,
+>>
+>>   IIUC we can get rid of curr, and just determine iog from bio. If bio is not NULL,
+>>   get iog from bio, otherwise get it from current task.
 > 
->   Hi Vivek,
+> Consider also that get_cgroup_from_bio() is much more slow than
+> task_cgroup() and need to lock/unlock_page_cgroup() in
+> get_blkio_cgroup_id(), while task_cgroup() is rcu protected.
 > 
->   IIUC we can get rid of curr, and just determine iog from bio. If bio is not NULL,
->   get iog from bio, otherwise get it from current task.
+> BTW another optimization could be to use the blkio-cgroup functionality
+> only for dirty pages and cut out some blkio_set_owner(). For all the
+> other cases IO always occurs in the same context of the current task,
+> and you can use task_cgroup().
+> 
+> However, this is true only for page cache pages, for IO generated by
+> anonymous pages (swap) you still need the page tracking functionality
+> both for reads and writes.
 
-Consider also that get_cgroup_from_bio() is much more slow than
-task_cgroup() and need to lock/unlock_page_cgroup() in
-get_blkio_cgroup_id(), while task_cgroup() is rcu protected.
+  Hi Andrea,
 
-BTW another optimization could be to use the blkio-cgroup functionality
-only for dirty pages and cut out some blkio_set_owner(). For all the
-other cases IO always occurs in the same context of the current task,
-and you can use task_cgroup().
-
-However, this is true only for page cache pages, for IO generated by
-anonymous pages (swap) you still need the page tracking functionality
-both for reads and writes.
-
--Andrea
+  Thanks for pointing this out. Yes, i think we can determine io group in
+  terms of bio->bi_rw. If bio is a READ bio, just taking io group by 
+  task_cgroup(). If it's a WRITE bio, getting it from blkio_cgroup.
 
 > 
-> >  {
-> >  	struct cgroup *cgroup;
-> >  	struct io_group *iog;
-> >  	struct elv_fq_data *efqd = &q->elevator->efqd;
-> >  
-> >  	rcu_read_lock();
-> > -	cgroup = get_cgroup_from_bio(bio);
-> > +
-> > +	if (curr)
-> > +		cgroup = task_cgroup(current, io_subsys_id);
-> > +	else
-> > +		cgroup = get_cgroup_from_bio(bio);
-> > +
-> >  	if (!cgroup) {
-> >  		if (create)
-> >  			iog = efqd->root_group;
-> > @@ -1500,7 +1507,7 @@ out:
-> >  	rcu_read_unlock();
-> >  	return iog;
-> >  }
+> -Andrea
 > 
-> -- 
-> Regards
-> Gui Jianfeng
+>>>  {
+>>>  	struct cgroup *cgroup;
+>>>  	struct io_group *iog;
+>>>  	struct elv_fq_data *efqd = &q->elevator->efqd;
+>>>  
+>>>  	rcu_read_lock();
+>>> -	cgroup = get_cgroup_from_bio(bio);
+>>> +
+>>> +	if (curr)
+>>> +		cgroup = task_cgroup(current, io_subsys_id);
+>>> +	else
+>>> +		cgroup = get_cgroup_from_bio(bio);
+>>> +
+>>>  	if (!cgroup) {
+>>>  		if (create)
+>>>  			iog = efqd->root_group;
+>>> @@ -1500,7 +1507,7 @@ out:
+>>>  	rcu_read_unlock();
+>>>  	return iog;
+>>>  }
+>> -- 
+>> Regards
+>> Gui Jianfeng
+>>
 > 
+> 
+> 
+
+-- 
+Regards
+Gui Jianfeng
