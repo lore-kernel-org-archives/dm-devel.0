@@ -1,93 +1,68 @@
-From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] io-controller: Add io group reference handling for request
-Date: Fri, 15 May 2009 10:09:30 -0400
-Message-ID: <20090515140930.GC19350@redhat.com>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
-	<4A03FF3C.4020506@cn.fujitsu.com>
-	<20090508135724.GE7293@redhat.com>
-	<e98e18940905081041r386e52a5q5a2b1f13f1e8c634@mail.gmail.com>
-	<4A078051.5060702@cn.fujitsu.com>
-	<20090511154127.GD6036@redhat.com>
-	<4A0CFA6C.3080609@cn.fujitsu.com> <20090515074839.GA3340@linux>
-	<4A0D24E6.6010807@cn.fujitsu.com>
+From: Jeff Garzik <jeff@garzik.org>
+Subject: ATA ULD (was Re: [PATCH 2/3] scsi: add scsi_device->alt_capacity)
+Date: Fri, 15 May 2009 15:44:57 -0400
+Message-ID: <4A0DC639.8060104@garzik.org>
+References: <1241828002-12742-1-git-send-email-tj@kernel.org>	 <1241828002-12742-3-git-send-email-tj@kernel.org>	 <1241842999.6357.2.camel@mulgrave>  <4A05AAA4.9010806@kernel.org> <1241886223.3542.37.camel@mulgrave.int.hansenpartnership.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <4A0D24E6.6010807-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Gui Jianfeng <guijianfeng-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
-Cc: dhaval-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, balbir-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, paolo.valente-rcYM44yAMweonA0d6jMUrA@public.gmane.org, fernando-gVGce1chcLdL9jVzuh4AOg@public.gmane.org, jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, fchecconi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, Andrea Righi <righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1241886223.3542.37.camel@mulgrave.int.hansenpartnership.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: Tejun Heo <tj@kernel.org>, linux-ide@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, Mauelshagen@RedHat.com, dm-devel@RedHat.com, dan.j.williams@gmail.com
 List-Id: dm-devel.ids
 
-On Fri, May 15, 2009 at 04:16:38PM +0800, Gui Jianfeng wrote:
-> Andrea Righi wrote:
-> > On Fri, May 15, 2009 at 01:15:24PM +0800, Gui Jianfeng wrote:
-> >> Vivek Goyal wrote:
-> >> ...
-> >>>  }
-> >>> @@ -1462,20 +1462,27 @@ struct io_cgroup *get_iocg_from_bio(stru
-> >>>  /*
-> >>>   * Find the io group bio belongs to.
-> >>>   * If "create" is set, io group is created if it is not already present.
-> >>> + * If "curr" is set, io group is information is searched for current
-> >>> + * task and not with the help of bio.
-> >>> + *
-> >>> + * FIXME: Can we assume that if bio is NULL then lookup group for current
-> >>> + * task and not create extra function parameter ?
-> >>>   *
-> >>> - * Note: There is a narrow window of race where a group is being freed
-> >>> - * by cgroup deletion path and some rq has slipped through in this group.
-> >>> - * Fix it.
-> >>>   */
-> >>> -struct io_group *io_get_io_group_bio(struct request_queue *q, struct bio *bio,
-> >>> -					int create)
-> >>> +struct io_group *io_get_io_group(struct request_queue *q, struct bio *bio,
-> >>> +					int create, int curr)
-> >>   Hi Vivek,
-> >>
-> >>   IIUC we can get rid of curr, and just determine iog from bio. If bio is not NULL,
-> >>   get iog from bio, otherwise get it from current task.
-> > 
-> > Consider also that get_cgroup_from_bio() is much more slow than
-> > task_cgroup() and need to lock/unlock_page_cgroup() in
-> > get_blkio_cgroup_id(), while task_cgroup() is rcu protected.
-> > 
-> > BTW another optimization could be to use the blkio-cgroup functionality
-> > only for dirty pages and cut out some blkio_set_owner(). For all the
-> > other cases IO always occurs in the same context of the current task,
-> > and you can use task_cgroup().
-> > 
-> > However, this is true only for page cache pages, for IO generated by
-> > anonymous pages (swap) you still need the page tracking functionality
-> > both for reads and writes.
+James Bottomley wrote:
+> On Sun, 2009-05-10 at 01:09 +0900, Tejun Heo wrote:
+>> James Bottomley wrote:
+>>> This is done at slightly the wrong level.  Capacity is actually a
+>>> property of struct scsi_disk not struct scsi_device ... shouldn't
+>>> alt_capacity be at the same level?
+>> Hmmm... I think that was my first try and then I moved it to sdev for
+>> some reason I can't rememer now.  I'll look into it again and try to
+>> move it into sdev.
 > 
->   Hi Andrea,
+> Really one of the things I was wondering is why even scsi_disk ...
+> capacity is in there, but it's also in gendisk, so I've thought
+> (admittedly never translated it to action) that we could just remove the
+> duplication in scsi_disk.
 > 
->   Thanks for pointing this out. Yes, i think we can determine io group in
->   terms of bio->bi_rw. If bio is a READ bio, just taking io group by 
->   task_cgroup(). If it's a WRITE bio, getting it from blkio_cgroup.
-> 
+> This alt_capacity looks to be a pure ATA thing ... I can't find it in
+> the SCSI specs and there doesn't seem to be a SAT equivalent of the
+> commands.  Ideally, what should be happening is that the ata ULD would
+> issue the capacity commands and just set the block alt_capacity without
+> having to worry about transporting the value up and down the stack.
+> Matthew Wilcox thought we could begin an implementation of the ATA uld
+> using the ATA_16 command to transport it through SCSI ... this might
+> provide the good reason to begin that.
 
-Gui, we are already doing it. page tracking functionality is used only
-for async IO and for all sync IO, we are using submitting tasks's group
-to determine io group bio belongs to.
+hmmmmm.  Well, ATA ULD is certainly the long term goal.  My main worry 
+would then be user impact & confusion, and increasing the difficulty of 
+separating libata from SCSI by increasing difficulty of making SCSI 
+emulation an optional piece.
 
-	if (elv_bio_sync(bio)) {
-		/* sync io. Determine cgroup from submitting task
-		 * context.*/
-                cgroup = task_cgroup(current, io_subsys_id);
-                return cgroup;
-        }
+At this point the SCSI emulation is not only a hack to get sd.c to do 
+work for us, it is also part of the ABI expected of diagnostic tools and 
+the like.  That complicates changes.
 
-Thanks
-Vivek
+It is my hope that we can separate libata-scsi.c into a separate kernel 
+module, thus at least making it _optional_, thus providing a path for 
+CONFIG_ATA + !CONFIG_SCSI.
+
+I do also agree that the ATA hacks can only go on for so long, before 
+they start infecting SCSI.   e.g. there was a patch to add DMI check in 
+sd.c for an ATA hardware special case.
+
+So far the "ATA infection" has been thankfully limited to things that sd 
+might need anyway, like suspend/resume (start/stop)
+
+A "libsd" does not seem viable, though.  Might be better to
+	cp sd.c ata-disk.c
+and then iterate from there, over time.
+
+	Jeff
+
+
+
+
