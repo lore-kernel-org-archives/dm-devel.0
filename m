@@ -1,82 +1,96 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] use i_size_read() instead of i_size
-Date: Mon, 18 May 2009 11:35:51 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0905181134570.22422@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0904281211590.22533@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0904281214120.22533@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0904290223490.9079@hs20-bc2-1.build.redhat.com>
-	<4A093417.6050007@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "IKEDA, Munehiro" <m-ikeda@ds.jp.nec.com>
+Subject: Re: [PATCH] IO Controller: Add per-device weight and ioprio_class
+ handling
+Date: Mon, 18 May 2009 18:33:40 -0400
+Message-ID: <4A11E244.2000305@ds.jp.nec.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <4A0A29B5.7030109@cn.fujitsu.com> <20090513190929.GB18371@redhat.com> <4A0BC7AB.8030703@cn.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A093417.6050007@ce.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755528AbZERWhs@vger.kernel.org>
+In-Reply-To: <4A0BC7AB.8030703@cn.fujitsu.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Cc: Vivek Goyal <vgoyal@redhat.com>, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-Use i_size_read() instead of reading i_size.
+Hi Gui,
 
-If someone changes the size of the device simultaneously, i_size_read
-is guaranteed to return a valid value (either the old one or the new one).
+Gui Jianfeng wrote:
+> Hi Vivek,
+> 
+> This patch enables per-cgroup per-device weight and ioprio_class handling.
+> A new cgroup interface "policy" is introduced. You can make use of this 
+> file to configure weight and ioprio_class for each device in a given cgroup.
+> The original "weight" and "ioprio_class" files are still available. If you
+> don't do special configuration for a particular device, "weight" and 
+> "ioprio_class" are used as default values in this device.
+> 
+> You can use the following format to play with the new interface.
+> #echo DEV:weight:ioprio_class > /patch/to/cgroup/policy
+> weight=0 means removing the policy for DEV.
+> 
+> Examples:
+> Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+> # echo /dev/hdb:300:2 > io.policy
+> # cat io.policy
+> dev weight class
+> /dev/hdb 300 2
 
-i_size can return some intermediate invalid value (on 32-bit computers
-with 64-bit i_size, the reads to both halves of i_size can be interleaved
-with updates to i_size, resulting in garbage being returned).
+Users can specify a device file of a partition for io.policy.
+In this case, io_policy_node::dev_name is set as a name of the
+partition device like /dev/sda2.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+ex)
+  # cd /mnt/cgroup
+  # cat /dev/sda2:500:2 > io.policy
+  # echo io.policy
+    dev weight class
+    /dev/sda2 500 2
 
+I believe io_policy_node::dev_name should be set a generic
+device name like /dev/sda.
+What do you think about it?
+
+Signed-off-by: Munehiro "Muuhh" Ikeda <m-ikeda@ds.jp.nec.com>
 ---
- drivers/md/dm-exception-store.h |    2 +-
- drivers/md/dm-log.c             |    2 +-
- drivers/md/dm-table.c           |    2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ block/elevator-fq.c |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
 
-Index: linux-2.6.30-rc5-fast/drivers/md/dm-exception-store.h
-===================================================================
---- linux-2.6.30-rc5-fast.orig/drivers/md/dm-exception-store.h	2009-05-18 17:29:01.000000000 +0200
-+++ linux-2.6.30-rc5-fast/drivers/md/dm-exception-store.h	2009-05-18 17:29:24.000000000 +0200
-@@ -156,7 +156,7 @@ static inline void dm_consecutive_chunk_
-  */
- static inline sector_t get_dev_size(struct block_device *bdev)
- {
--	return bdev->bd_inode->i_size >> SECTOR_SHIFT;
-+	return i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 39fa2a1..5d3d55c 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -1631,11 +1631,12 @@ static struct io_policy_node *policy_search_node(const struct io_cgroup *iocg,
+ 	return NULL;
  }
  
- static inline chunk_t sector_to_chunk(struct dm_exception_store *store,
-Index: linux-2.6.30-rc5-fast/drivers/md/dm-log.c
-===================================================================
---- linux-2.6.30-rc5-fast.orig/drivers/md/dm-log.c	2009-05-18 17:29:32.000000000 +0200
-+++ linux-2.6.30-rc5-fast/drivers/md/dm-log.c	2009-05-18 17:29:42.000000000 +0200
-@@ -431,7 +431,7 @@ static int create_log_context(struct dm_
- 		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
- 				       bitset_size, ti->limits.hardsect_size);
- 
--		if (buf_size > dev->bdev->bd_inode->i_size) {
-+		if (buf_size > i_size_read(dev->bdev->bd_inode)) {
- 			DMWARN("log device %s too small: need %llu bytes",
- 				dev->name, (unsigned long long)buf_size);
- 			kfree(lc);
-Index: linux-2.6.30-rc5-fast/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.30-rc5-fast.orig/drivers/md/dm-table.c	2009-05-18 17:29:46.000000000 +0200
-+++ linux-2.6.30-rc5-fast/drivers/md/dm-table.c	2009-05-18 17:29:57.000000000 +0200
-@@ -387,7 +387,7 @@ static void close_dev(struct dm_dev_inte
- static int device_area_is_valid(struct dm_target *ti, struct block_device *bdev,
- 			     sector_t start, sector_t len)
+-static int devname_to_devnum(const char *buf, dev_t *dev)
++static int devname_to_devnum(char *buf, dev_t *dev)
  {
--	sector_t dev_size = bdev->bd_inode->i_size >> SECTOR_SHIFT;
-+	sector_t dev_size = i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
- 	unsigned short hardsect_size_sectors = ti->limits.hardsect_size >>
- 					       SECTOR_SHIFT;
- 	char b[BDEVNAME_SIZE];
+ 	struct block_device *bdev;
+ 	struct gendisk *disk;
+ 	int part;
++	char *c;
+ 
+ 	bdev = lookup_bdev(buf);
+ 	if (IS_ERR(bdev))
+@@ -1645,6 +1646,10 @@ static int devname_to_devnum(const char *buf, dev_t *dev)
+ 	*dev = MKDEV(disk->major, disk->first_minor);
+ 	bdput(bdev);
+ 
++	c = strrchr(buf, '/');
++	if (c)
++		strcpy(c+1, disk->disk_name);
++
+ 	return 0;
+ }
+ 
+-- 
+1.5.4.3
+
+
+-- 
+IKEDA, Munehiro
+  NEC Corporation of America
+    m-ikeda@ds.jp.nec.com
