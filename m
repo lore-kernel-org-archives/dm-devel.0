@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 2/2] dm-bdev-keep-bdev-always-referenced.patch
-Date: Mon, 18 May 2009 11:34:52 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0905181127040.22422@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH] use i_size_read() instead of i_size
+Date: Mon, 18 May 2009 11:35:51 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0905181134570.22422@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.0904281211590.22533@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904281214120.22533@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904290223490.9079@hs20-bc2-1.build.redhat.com>
@@ -24,50 +24,59 @@ To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 12 May 2009, Jun'ichi Nomura wrote:
+Use i_size_read() instead of reading i_size.
 
-> Mikulas Patocka wrote:
-> > @@ -1280,8 +1284,7 @@ static int __bind(struct mapped_device *
-> >  	if (size != get_capacity(md->disk))
-> >  		memset(&md->geometry, 0, sizeof(md->geometry));
-> >  
-> > -	if (md->bdev)
-> > -		__set_size(md, size);
-> > +	__set_size(md, size);
-> >  
-> >  	if (!size) {
-> >  		dm_table_destroy(t);
-> > @@ -1523,11 +1526,6 @@ int dm_swap_table(struct mapped_device *
-> >  	if (!dm_suspended(md))
-> >  		goto out;
-> >  
-> > -	/* without bdev, the device size cannot be changed */
-> > -	if (!md->bdev)
-> > -		if (get_capacity(md->disk) != dm_table_get_size(table))
-> > -			goto out;
-> > -
-> >  	__unbind(md);
-> >  	r = __bind(md, table);
-> 
-> When the device is suspended with noflush,
-> can __set_size() wait forever on i_mutex
-> if somebody is waiting for I/O flushing with i_mutex held (e.g. fsync)?
-> 
-> md->bdev was also used as a marker to tell whether the device was
-> suspended with noflush.
-> Sorry, the original comment in the code was perhaps not adequate.
-> 
-> Thanks,
-> -- 
-> Jun'ichi Nomura, NEC Corporation
+If someone changes the size of the device simultaneously, i_size_read
+is guaranteed to return a valid value (either the old one or the new one).
 
-Hi
+i_size can return some intermediate invalid value (on 32-bit computers
+with 64-bit i_size, the reads to both halves of i_size can be interleaved
+with updates to i_size, resulting in garbage being returned).
 
-Thanks for reviewing it. Your concern is correct. But maybe that 
-mutex_lock in __set_size is not needed at all --- because no one can 
-change size simultaneously. What do you think?
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-BTW. I have found another problem --- a few places in dm don't use 
-i_size_read and read i_size directly, which is wrong, see the next patch.
+---
+ drivers/md/dm-exception-store.h |    2 +-
+ drivers/md/dm-log.c             |    2 +-
+ drivers/md/dm-table.c           |    2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
 
-Mikulas
+Index: linux-2.6.30-rc5-fast/drivers/md/dm-exception-store.h
+===================================================================
+--- linux-2.6.30-rc5-fast.orig/drivers/md/dm-exception-store.h	2009-05-18 17:29:01.000000000 +0200
++++ linux-2.6.30-rc5-fast/drivers/md/dm-exception-store.h	2009-05-18 17:29:24.000000000 +0200
+@@ -156,7 +156,7 @@ static inline void dm_consecutive_chunk_
+  */
+ static inline sector_t get_dev_size(struct block_device *bdev)
+ {
+-	return bdev->bd_inode->i_size >> SECTOR_SHIFT;
++	return i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
+ }
+ 
+ static inline chunk_t sector_to_chunk(struct dm_exception_store *store,
+Index: linux-2.6.30-rc5-fast/drivers/md/dm-log.c
+===================================================================
+--- linux-2.6.30-rc5-fast.orig/drivers/md/dm-log.c	2009-05-18 17:29:32.000000000 +0200
++++ linux-2.6.30-rc5-fast/drivers/md/dm-log.c	2009-05-18 17:29:42.000000000 +0200
+@@ -431,7 +431,7 @@ static int create_log_context(struct dm_
+ 		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
+ 				       bitset_size, ti->limits.hardsect_size);
+ 
+-		if (buf_size > dev->bdev->bd_inode->i_size) {
++		if (buf_size > i_size_read(dev->bdev->bd_inode)) {
+ 			DMWARN("log device %s too small: need %llu bytes",
+ 				dev->name, (unsigned long long)buf_size);
+ 			kfree(lc);
+Index: linux-2.6.30-rc5-fast/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.30-rc5-fast.orig/drivers/md/dm-table.c	2009-05-18 17:29:46.000000000 +0200
++++ linux-2.6.30-rc5-fast/drivers/md/dm-table.c	2009-05-18 17:29:57.000000000 +0200
+@@ -387,7 +387,7 @@ static void close_dev(struct dm_dev_inte
+ static int device_area_is_valid(struct dm_target *ti, struct block_device *bdev,
+ 			     sector_t start, sector_t len)
+ {
+-	sector_t dev_size = bdev->bd_inode->i_size >> SECTOR_SHIFT;
++	sector_t dev_size = i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
+ 	unsigned short hardsect_size_sectors = ti->limits.hardsect_size >>
+ 					       SECTOR_SHIFT;
+ 	char b[BDEVNAME_SIZE];
