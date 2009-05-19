@@ -1,18 +1,17 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 2/2] dm-bdev-keep-bdev-always-referenced.patch
-Date: Tue, 19 May 2009 10:36:08 +0900
-Message-ID: <4A120D08.2040307@ce.jp.nec.com>
-References: <Pine.LNX.4.64.0904281211590.22533@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0904281214120.22533@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0904290223490.9079@hs20-bc2-1.build.redhat.com>
-	<4A093417.6050007@ce.jp.nec.com>
-	<Pine.LNX.4.64.0905181127040.22422@hs20-bc2-1.build.redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: Re: [PATCH 3/3] dm-mpath: add service-time oriented
+	dynamic load balancer
+Date: Tue, 19 May 2009 11:59:12 +0900
+Message-ID: <4A122080.5060606@ct.jp.nec.com>
+References: <49F1729A.1000906@ct.jp.nec.com>
+	<49F17362.7080205@ct.jp.nec.com>	<20090509004959.GJ1320@agk-dp.fab.redhat.com>	<4A0CDCE1.50409@ct.jp.nec.com>
+	<20090518114607.GA5125@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0905181127040.22422@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20090518114607.GA5125@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,92 +21,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Mikulas Patocka wrote:
-> On Tue, 12 May 2009, Jun'ichi Nomura wrote:
+Hi Alasdair,
+
+On 05/18/2009 08:46 PM +0900, Alasdair G Kergon wrote:
+> On Fri, May 15, 2009 at 12:09:21PM +0900, Kiyoshi Ueda wrote:
+>> However, if I limit the 'perf' value in smaller range (e.g. 0 to 100),
+>> such overflow shouldn't happen.  So I should be able to use
+>> multiplication.  Also, I don't need to use size_t for 'perf',
+>> because 'unsinged' should be enough for such small values.
+>  
+> I think a small range would be adequate - look at the number sizes and
+> go 0-100 or 0-1000 as appropriate.
 > 
->> Mikulas Patocka wrote:
->>> @@ -1280,8 +1284,7 @@ static int __bind(struct mapped_device *
->>>  	if (size != get_capacity(md->disk))
->>>  		memset(&md->geometry, 0, sizeof(md->geometry));
->>>  
->>> -	if (md->bdev)
->>> -		__set_size(md, size);
->>> +	__set_size(md, size);
->>>  
->>>  	if (!size) {
->>>  		dm_table_destroy(t);
->>> @@ -1523,11 +1526,6 @@ int dm_swap_table(struct mapped_device *
->>>  	if (!dm_suspended(md))
->>>  		goto out;
->>>  
->>> -	/* without bdev, the device size cannot be changed */
->>> -	if (!md->bdev)
->>> -		if (get_capacity(md->disk) != dm_table_get_size(table))
->>> -			goto out;
->>> -
->>>  	__unbind(md);
->>>  	r = __bind(md, table);
->> When the device is suspended with noflush,
->> can __set_size() wait forever on i_mutex
->> if somebody is waiting for I/O flushing with i_mutex held (e.g. fsync)?
->>
->> md->bdev was also used as a marker to tell whether the device was
->> suspended with noflush.
->> Sorry, the original comment in the code was perhaps not adequate.
-> 
-> Hi
-> 
-> Thanks for reviewing it. Your concern is correct. But maybe that 
-> mutex_lock in __set_size is not needed at all --- because no one can 
-> change size simultaneously. What do you think?
+> Thinking of naming, is it 'relative_throughput' ?
 
-I think a lock is still needed.
-
-bd_set_size() can be called concurrently and overwrite
-the i_size with old capacity:
-
-  __set_size() (in dm.c)       __blkdev_get()
-  -----------------------------------------------------------
-                               get_capacity
-  set_capacity
-  i_size_write
-                               bd_set_size
+Yes, 'relative_throughput' may be better naming.  I'll take it.
 
 
-I don't think check_disk_size_change() is called for dm device
-but if somebody decides to use it on dm device, the following race is
-also possible:
+> However, is it also going to be possible to extend this target to measure the
+> the actual throughput?  If we did that, would we use a special value to 
+> indicate it or add a new table parameter and keep the 'perf' ones as a
+> manual adjustment factor applied on top of the calculated one?
 
-  __set_size() (in dm.c)       check_disk_size_change()
-  -----------------------------------------------------------
-  set_capacity
-                               get_capacity
-                               i_size_read
-  i_size_write                 i_size_write
+The older version of dm-service-time calculated the actual throughput
+dynamically using part_stat:
+    http://marc.info/?l=dm-devel&m=123321314426149&w=2
 
-and the concurrent i_size_write could break i_size_seqcount on 32bit SMP.
+But the calculated values often had some noises and it didn't work well.
+(e.g. Once the throughput value of a path was calculated so small,
+      the path was never used, and the small throughput value was never
+      updated, and the path was never used, and ...)
 
-
-Given that functions like check_disk_size_change() and bd_set_size()
-are protected by bd_mutex, using bd_mutex in __set_size() might be a fix.
-However, I suspect a holder of bd_mutex can still block on
-the I/O on the device.
-
-
-So perhaps the right solution is deferring the i_size_write
-until the process can safely wait for bd_mutex
-or introducing a new spinlock to protect the i_size_write on bd_inode.
-
-
-> BTW. I have found another problem --- a few places in dm don't use 
-> i_size_read and read i_size directly, which is wrong, see the next patch.
-
-I think those changes are ok.
+So I think doing such calculations in user-space and simplifying
+the kernel-code are better.
+For dynamically changing path's bandwidth, user-space daemon can
+measure the throughput periodically and notify the dm device.
+I've been thinking of adding a new dm message handler to update
+'relative_thoughput' in future.
+What do you think?
 
 Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation
+Kiyoshi Ueda
