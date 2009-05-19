@@ -1,151 +1,95 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH] io-controller: Add io group reference handling for
- request
-Date: Tue, 19 May 2009 21:18:15 +0900 (JST)
-Message-ID: <20090519.211815.193708825.ryov@valinux.co.jp>
-References: <20090515140643.GB19350@redhat.com>
-	<20090517102604.GA4255@linux>
-	<20090518140114.GB27080@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH 1/1] dm-ioband: I/O bandwidth controller
+Date: Tue, 19 May 2009 09:37:53 -0400
+Message-ID: <20090519133753.GA28679@redhat.com>
+References: <20090519.173928.226784958.ryov@valinux.co.jp>
+	<20090519.174352.71107893.ryov@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754189AbZESMSX@vger.kernel.org>
-In-Reply-To: <20090518140114.GB27080@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: vgoyal@redhat.com
-Cc: righi.andrea@gmail.com, guijianfeng@cn.fujitsu.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090519.174352.71107893.ryov@valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, xen-devel@lists.xensource.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH] io-controller: Add io group reference handling for request
-Date: Mon, 18 May 2009 10:01:14 -0400
+On Tue, May 19, 2009 at 05:43:52PM +0900, Ryo Tsuruta wrote:
+> Hi Vivek,
+> 
+> From: Ryo Tsuruta <ryov@valinux.co.jp>
+> Subject: [PATCH 1/1] dm-ioband: I/O bandwidth controller
+> Date: Tue, 19 May 2009 17:39:28 +0900 (JST)
+> 
+> > Hi Alasdair and all,
+> > 
+> > This is the dm-ioband version 1.11.0 release. This patch can be
+> > applied cleanly to current agk's tree. Alasdair, please give some
+> > comments and suggestions.
+> > 
+> > Changes from the previous release:
+> > - Classify IOs in sync/async instead of read/write since the IO
+> >   request allocation/congestion logic were changed to be sync/async
+> >   based.
+> > - IOs belong to the real-time class are dispatched in preference to
+> >   other IOs, regardless of the assigned bandwidth.
+> 
+> I ran your script from the following URL to see IOs belong to the
+> real-time class take precedence.
+> http://linux.derkeiler.com/Mailing-Lists/Kernel/2009-04/msg08355.html
+> 
+>     Script
+>     ======
+>     # /dev/mapper/ioband1 is mounted on /mnt1
+>     rm /mnt1/aggressivewriter
+>     sync
+>     echo 3 > /proc/sys/vm/drop_caches
+>     # launch an hostile writer
+>     ionice -c2 -n7 dd if=/dev/zero of=/mnt1/aggressivewriter \
+>        bs=4K count=524288 conv=fdatasync &
+>     # Reader
+>     ionice -c1 -n0 dd if=/mnt1/testzerofile1 of=/dev/null &
+>     wait $!
+>     echo "reader finished"
+> 
+>     old dm-ioband
+>     =============
+>     First run
+>     2147483648 bytes (2.1 GB) copied, 100.343 seconds, 21.4 MB/s (Reader)
+>     reader finished
+>     2147483648 bytes (2.1 GB) copied, 101.107 seconds, 21.2 MB/s (Writer)
+> 
+>     new dm-ioband v1.11.0
+>     =====================
+>     First run
+>     2147483648 bytes (2.1 GB) copied, 35.0623 seconds, 61.2 MB/s (Reader)
+>     reader finished
+>     2147483648 bytes (2.1 GB) copied, 87.6979 seconds, 24.5 MB/s (Writer)
+> 
+> The RT reader took precedence over the aggressive writer, regardless
+> of assigned bandwidth. However, I think that some sort of limitation
+> for RT IOs is needed. What do you think?
 
-> On Sun, May 17, 2009 at 12:26:06PM +0200, Andrea Righi wrote:
-> > On Fri, May 15, 2009 at 10:06:43AM -0400, Vivek Goyal wrote:
-> > > On Fri, May 15, 2009 at 09:48:40AM +0200, Andrea Righi wrote:
-> > > > On Fri, May 15, 2009 at 01:15:24PM +0800, Gui Jianfeng wrote:
-> > > > > Vivek Goyal wrote:
-> > > > > ...
-> > > > > >  }
-> > > > > > @@ -1462,20 +1462,27 @@ struct io_cgroup *get_iocg_from_bio(stru
-> > > > > >  /*
-> > > > > >   * Find the io group bio belongs to.
-> > > > > >   * If "create" is set, io group is created if it is not already present.
-> > > > > > + * If "curr" is set, io group is information is searched for current
-> > > > > > + * task and not with the help of bio.
-> > > > > > + *
-> > > > > > + * FIXME: Can we assume that if bio is NULL then lookup group for current
-> > > > > > + * task and not create extra function parameter ?
-> > > > > >   *
-> > > > > > - * Note: There is a narrow window of race where a group is being freed
-> > > > > > - * by cgroup deletion path and some rq has slipped through in this group.
-> > > > > > - * Fix it.
-> > > > > >   */
-> > > > > > -struct io_group *io_get_io_group_bio(struct request_queue *q, struct bio *bio,
-> > > > > > -					int create)
-> > > > > > +struct io_group *io_get_io_group(struct request_queue *q, struct bio *bio,
-> > > > > > +					int create, int curr)
-> > > > > 
-> > > > >   Hi Vivek,
-> > > > > 
-> > > > >   IIUC we can get rid of curr, and just determine iog from bio. If bio is not NULL,
-> > > > >   get iog from bio, otherwise get it from current task.
-> > > > 
-> > > > Consider also that get_cgroup_from_bio() is much more slow than
-> > > > task_cgroup() and need to lock/unlock_page_cgroup() in
-> > > > get_blkio_cgroup_id(), while task_cgroup() is rcu protected.
-> > > > 
-> > > 
-> > > True.
-> > > 
-> > > > BTW another optimization could be to use the blkio-cgroup functionality
-> > > > only for dirty pages and cut out some blkio_set_owner(). For all the
-> > > > other cases IO always occurs in the same context of the current task,
-> > > > and you can use task_cgroup().
-> > > > 
-> > > 
-> > > Yes, may be in some cases we can avoid setting page owner. I will get
-> > > to it once I have got functionality going well. In the mean time if
-> > > you have a patch for it, it will be great.
-> > > 
-> > > > However, this is true only for page cache pages, for IO generated by
-> > > > anonymous pages (swap) you still need the page tracking functionality
-> > > > both for reads and writes.
-> > > > 
-> > > 
-> > > Right now I am assuming that all the sync IO will belong to task
-> > > submitting the bio hence use task_cgroup() for that. Only for async
-> > > IO, I am trying to use page tracking functionality to determine the owner.
-> > > Look at elv_bio_sync(bio).
-> > > 
-> > > You seem to be saying that there are cases where even for sync IO, we
-> > > can't use submitting task's context and need to rely on page tracking
-> > > functionlity? In case of getting page (read) from swap, will it not happen
-> > > in the context of process who will take a page fault and initiate the
-> > > swap read?
-> > 
-> > No, for example in read_swap_cache_async():
-> > 
-> > @@ -308,6 +309,7 @@ struct page *read_swap_cache_async(swp_entry_t entry, gfp_t gfp_mask,
-> >  		 */
-> >  		__set_page_locked(new_page);
-> >  		SetPageSwapBacked(new_page);
-> > +		blkio_cgroup_set_owner(new_page, current->mm);
-> >  		err = add_to_swap_cache(new_page, entry, gfp_mask & GFP_KERNEL);
-> >  		if (likely(!err)) {
-> >  			/*
-> > 
-> > This is a read, but the current task is not always the owner of this
-> > swap cache page, because it's a readahead operation.
-> > 
-> 
-> But will this readahead be not initiated in the context of the task taking
-> the page fault?
-> 
-> handle_pte_fault()
-> 	do_swap_page()
-> 		swapin_readahead()
-> 			read_swap_cache_async()
-> 
-> If yes, then swap reads issued will still be in the context of process and
-> we should be fine?
-> 
-> > Anyway, this is a minor corner case I think. And probably it is safe to
-> > consider this like any other read IO and get rid of the
-> > blkio_cgroup_set_owner().
-> 
-> Agreed.
-> 
-> > 
-> > I wonder if it would be better to attach the blkio_cgroup to the
-> > anonymous page only when swap-out occurs.
-> 
-> Swap seems to be an interesting case in general. Somebody raised this
-> question on lwn io controller article also. A user process never asked
-> for swap activity. It is something enforced by kernel. So while doing
-> some swap outs, it does not seem too fair to charge the write out to
-> the process page belongs to and the fact of the matter may be that there
-> is some other memory hungry application which is forcing these swap outs.
-> 
-> Keeping this in mind, should swap activity be considered as system
-> activity and be charged to root group instead of to user tasks in other
-> cgroups?
->   
-> > I mean, just put the
-> > blkio_cgroup_set_owner() hook in try_to_umap() in order to keep track of
-> > the IO generated by direct reclaim of anon memory. For all the other
-> > cases we can simply use the submitting task's context.
-> > 
-> > BTW, O_DIRECT is another case that is possible to optimize, because all
-> > the bios generated by direct IO occur in the same context of the current
-> > task.
-> 
-> Agreed about the direct IO optimization.
-> 
-> Ryo, what do you think? would you like to do include these optimizations
-> by the Andrea in next version of IO tracking patches?
+I think we don't need any limitation for RT tasks. If somebody needs to
+limit RT task, then it should be put into a separate group.
 
-I'll consider whether these optimizations are reasonable.
+Looks like you have started duplicating CFQ infrastrucutre in dm-ioband to
+make sure CFQ is not broken. That will lead to interesting interaction
+with noop and other IO schedulers at the same time whenever CFQ changes 
+behavior you will find it hard to keep up with it. 
 
-Thanks,
-Ryo Tsuruta
+Anyway, how are you taking care of priorities with-in same class. How will
+you make sure that a BE prio 0 request is not hidden behind BE prio 7
+request? Same is true for prio with-in RT class.
+
+Thanks
+Vivek
