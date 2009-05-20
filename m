@@ -1,95 +1,122 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 1/1] dm-ioband: I/O bandwidth controller
-Date: Tue, 19 May 2009 09:37:53 -0400
-Message-ID: <20090519133753.GA28679@redhat.com>
-References: <20090519.173928.226784958.ryov@valinux.co.jp>
-	<20090519.174352.71107893.ryov@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH] IO Controller: Add per-device weight and ioprio_class
+ handling
+Date: Wed, 20 May 2009 09:44:48 +0800
+Message-ID: <4A136090.5090705@cn.fujitsu.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <4A0A29B5.7030109@cn.fujitsu.com> <20090513190929.GB18371@redhat.com> <4A0BC7AB.8030703@cn.fujitsu.com> <4A11E244.2000305@ds.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090519.174352.71107893.ryov@valinux.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, xen-devel@lists.xensource.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756063AbZETBqL@vger.kernel.org>
+In-Reply-To: <4A11E244.2000305@ds.jp.nec.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "IKEDA, Munehiro" <m-ikeda@ds.jp.nec.com>, Vivek Goyal <vgoyal@redhat.com>
+Cc: nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Tue, May 19, 2009 at 05:43:52PM +0900, Ryo Tsuruta wrote:
-> Hi Vivek,
+IKEDA, Munehiro wrote:
+> Hi Gui,
 > 
-> From: Ryo Tsuruta <ryov@valinux.co.jp>
-> Subject: [PATCH 1/1] dm-ioband: I/O bandwidth controller
-> Date: Tue, 19 May 2009 17:39:28 +0900 (JST)
+> Gui Jianfeng wrote:
+>> Hi Vivek,
+>>
+>> This patch enables per-cgroup per-device weight and ioprio_class
+>> handling.
+>> A new cgroup interface "policy" is introduced. You can make use of
+>> this file to configure weight and ioprio_class for each device in a
+>> given cgroup.
+>> The original "weight" and "ioprio_class" files are still available. If
+>> you
+>> don't do special configuration for a particular device, "weight" and
+>> "ioprio_class" are used as default values in this device.
+>>
+>> You can use the following format to play with the new interface.
+>> #echo DEV:weight:ioprio_class > /patch/to/cgroup/policy
+>> weight=0 means removing the policy for DEV.
+>>
+>> Examples:
+>> Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+>> # echo /dev/hdb:300:2 > io.policy
+>> # cat io.policy
+>> dev weight class
+>> /dev/hdb 300 2
 > 
-> > Hi Alasdair and all,
-> > 
-> > This is the dm-ioband version 1.11.0 release. This patch can be
-> > applied cleanly to current agk's tree. Alasdair, please give some
-> > comments and suggestions.
-> > 
-> > Changes from the previous release:
-> > - Classify IOs in sync/async instead of read/write since the IO
-> >   request allocation/congestion logic were changed to be sync/async
-> >   based.
-> > - IOs belong to the real-time class are dispatched in preference to
-> >   other IOs, regardless of the assigned bandwidth.
+> Users can specify a device file of a partition for io.policy.
+> In this case, io_policy_node::dev_name is set as a name of the
+> partition device like /dev/sda2.
 > 
-> I ran your script from the following URL to see IOs belong to the
-> real-time class take precedence.
-> http://linux.derkeiler.com/Mailing-Lists/Kernel/2009-04/msg08355.html
+> ex)
+>  # cd /mnt/cgroup
+>  # cat /dev/sda2:500:2 > io.policy
+>  # echo io.policy
+>    dev weight class
+>    /dev/sda2 500 2
 > 
->     Script
->     ======
->     # /dev/mapper/ioband1 is mounted on /mnt1
->     rm /mnt1/aggressivewriter
->     sync
->     echo 3 > /proc/sys/vm/drop_caches
->     # launch an hostile writer
->     ionice -c2 -n7 dd if=/dev/zero of=/mnt1/aggressivewriter \
->        bs=4K count=524288 conv=fdatasync &
->     # Reader
->     ionice -c1 -n0 dd if=/mnt1/testzerofile1 of=/dev/null &
->     wait $!
->     echo "reader finished"
-> 
->     old dm-ioband
->     =============
->     First run
->     2147483648 bytes (2.1 GB) copied, 100.343 seconds, 21.4 MB/s (Reader)
->     reader finished
->     2147483648 bytes (2.1 GB) copied, 101.107 seconds, 21.2 MB/s (Writer)
-> 
->     new dm-ioband v1.11.0
->     =====================
->     First run
->     2147483648 bytes (2.1 GB) copied, 35.0623 seconds, 61.2 MB/s (Reader)
->     reader finished
->     2147483648 bytes (2.1 GB) copied, 87.6979 seconds, 24.5 MB/s (Writer)
-> 
-> The RT reader took precedence over the aggressive writer, regardless
-> of assigned bandwidth. However, I think that some sort of limitation
-> for RT IOs is needed. What do you think?
+> I believe io_policy_node::dev_name should be set a generic
+> device name like /dev/sda.
+> What do you think about it?
 
-I think we don't need any limitation for RT tasks. If somebody needs to
-limit RT task, then it should be put into a separate group.
+  Hi Ikeda-san,
 
-Looks like you have started duplicating CFQ infrastrucutre in dm-ioband to
-make sure CFQ is not broken. That will lead to interesting interaction
-with noop and other IO schedulers at the same time whenever CFQ changes 
-behavior you will find it hard to keep up with it. 
+  Sorry for the late reply. Thanks for pointing this out. 
+  yes, it does the right thing but shows a wrong name. 
+  IMHO, Inputing a sigle partition should not be allowed since the
+  policy is disk basis. So how about the following patch?
 
-Anyway, how are you taking care of priorities with-in same class. How will
-you make sure that a BE prio 0 request is not hidden behind BE prio 7
-request? Same is true for prio with-in RT class.
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 1a0ca07..b620768 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -1650,6 +1650,9 @@ static int devname_to_devnum(const char *buf, dev_t *dev)
+ 		return -ENODEV;
+ 
+ 	disk = get_gendisk(bdev->bd_dev, &part);
++	if (part)
++		return -EINVAL;
++
+ 	*dev = MKDEV(disk->major, disk->first_minor);
+ 	bdput(bdev);
 
-Thanks
-Vivek
+> 
+> Signed-off-by: Munehiro "Muuhh" Ikeda <m-ikeda@ds.jp.nec.com>
+> ---
+> block/elevator-fq.c |    7 ++++++-
+> 1 files changed, 6 insertions(+), 1 deletions(-)
+> 
+> diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+> index 39fa2a1..5d3d55c 100644
+> --- a/block/elevator-fq.c
+> +++ b/block/elevator-fq.c
+> @@ -1631,11 +1631,12 @@ static struct io_policy_node
+> *policy_search_node(const struct io_cgroup *iocg,
+>     return NULL;
+> }
+> 
+> -static int devname_to_devnum(const char *buf, dev_t *dev)
+> +static int devname_to_devnum(char *buf, dev_t *dev)
+> {
+>     struct block_device *bdev;
+>     struct gendisk *disk;
+>     int part;
+> +    char *c;
+> 
+>     bdev = lookup_bdev(buf);
+>     if (IS_ERR(bdev))
+> @@ -1645,6 +1646,10 @@ static int devname_to_devnum(const char *buf,
+> dev_t *dev)
+>     *dev = MKDEV(disk->major, disk->first_minor);
+>     bdput(bdev);
+> 
+> +    c = strrchr(buf, '/');
+> +    if (c)
+> +        strcpy(c+1, disk->disk_name);
+> +
+>     return 0;
+> }
+> 
+
+-- 
+Regards
+Gui Jianfeng
