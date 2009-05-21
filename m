@@ -1,88 +1,116 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH 1/1] dm-ioband: I/O bandwidth controller
-Date: Thu, 21 May 2009 12:22:03 +0900 (JST)
-Message-ID: <20090521.122203.193689175.ryov@valinux.co.jp>
-References: <20090519.173928.226784958.ryov@valinux.co.jp>
-	<20090519.174352.71107893.ryov@valinux.co.jp>
-	<20090519133753.GA28679@redhat.com>
+From: "NeilBrown" <neilb@suse.de>
+Subject: Re: raid failure and LVM volume group availability
+Date: Thu, 21 May 2009 13:55:03 +1000 (EST)
+Message-ID: <7df2bc4ce840fbfa8d2bec357069bc5a.squirrel@neil.brown.name>
+References: <alpine.DEB.2.00.0905211232250.26077@dirac.rather.puzzling.org>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <20090519133753.GA28679@redhat.com>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: vgoyal@redhat.com
-Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, xen-devel@lists.xensource.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.00.0905211232250.26077@dirac.rather.puzzling.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Tim Connors <tconnors@rather.puzzling.org>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Vivek,
+On Thu, May 21, 2009 1:07 pm, Tim Connors wrote:
+> I had a raid device (with LVM ontop of it) that failed through the disks
+> being disconnected in a long power failure that outlasted the UPS (the
+> computer, being a laptop, had its own builtin UPS).
+>
+> While I could just reboot the computer, I don't particularly want to
+> reboot it just yet.  Unfortunately, failing a raid device like that means
+> that the volume group half disappears in a stream of I/O errors, but you
+> can't stop the raid device because it still has something accessing it
+> (LVM), but you can't make LVM stop accessing it by making the volume group
+> unavailable because it is suffering from I/O errors:
+>
+>> mdadm -S /dev/md0
+> mdadm: fail to stop array /dev/md0: Device or resource busy
+> Perhaps a running process, mounted filesystem or active volume group?
+>
+>> vgchange -an
+>   /dev/md0: read failed after 0 of 4096 at 0: Input/output error
+>   /dev/dm-5: read failed after 0 of 4096 at 0: Input/output error
+>   Can't deactivate volume group "500_lacie" with 2 open logical volume(s)
+>   Can't deactivate volume group "laptop_250gb" with 3 open logical
+> volume(s)
+>
+>> vgchange -an rotating_backup
+>   /dev/md0: read failed after 0 of 4096 at 0: Input/output error
+>   /dev/dm-5: read failed after 0 of 4096 at 0: Input/output error
+>   /dev/md0: read failed after 0 of 4096 at 1000204664832: Input/output
+> error
+>   /dev/md0: read failed after 0 of 4096 at 1000204722176: Input/output
+> error
+>   /dev/md0: read failed after 0 of 4096 at 0: Input/output error
+>   /dev/md0: read failed after 0 of 4096 at 4096: Input/output error
+>   /dev/md0: read failed after 0 of 4096 at 0: Input/output error
+>   /dev/dm-5: read failed after 0 of 4096 at 644245028864: Input/output
+> error
+>   /dev/dm-5: read failed after 0 of 4096 at 644245086208: Input/output
+> error
+>   /dev/dm-5: read failed after 0 of 4096 at 0: Input/output error
+>   /dev/dm-5: read failed after 0 of 4096 at 4096: Input/output error
+>   /dev/dm-5: read failed after 0 of 4096 at 0: Input/output error
+>   Volume group "rotating_backup" not found
+>
+> The lvm device file still exists,
+>
+>> ls -lA /dev/rotating_backup /dev/mapper/rotating_backup-rotating_backup
+> brw-rw---- 1 root disk 254, 5 May 10 09:22
+> /dev/mapper/rotating_backup-rotating_backup
+>
+> /dev/rotating_backup:
+> total 0
+> lrwxrwxrwx 1 root root 43 May 10 09:22 rotating_backup ->
+> /dev/mapper/rotating_backup-rotating_backup
+>
+> however lvdisplay, vgdisplay and pvdisplay can't access it:
+>> vgdisplay
+>   /dev/md0: read failed after 0 of 4096 at 0: Input/output error
+>   /dev/dm-5: read failed after 0 of 4096 at 0: Input/output error
+>   --- Volume group ---
+>   VG Name               500_lacie
+> ...
+>
+> but the raid device files don't exist (the drive I plugged back in later
+> was given a new device name, /dev/sda1) and obviously raid is not very
+> happy anymore:
+>
+>> cat /proc/mdstat
+> Personalities : [raid1]
+> md0 : active raid1 sdc1[0] sdb1[2](F)
+>       976762432 blocks [2/1] [U_]
+>       bitmap: 147/233 pages [588KB], 2048KB chunk
+>> ls -lA /dev/sdc1 /dev/sdb1 /dev/md0
+> ls: cannot access /dev/sdc1: No such file or directory
+> ls: cannot access /dev/sdb1: No such file or directory
+> brw-rw---- 1 root disk 9, 0 May 10 09:22 /dev/md0
+>
+>
+> Does anyone know a way out of this, sans rebooting?
+> I don't suspect I could just add /dev/sda1 back into the array because I'm
+> sure LVM would still complain about IO errors even if raid would let me (I
+> suspect raid itself will also fail to add the disk back because it is
+> still trying to be active but has no live disks so would be completely
+> inconsistent).
+>
+> Is it possible to force both lvm and md to give up on the device so I can
+> readd them without rebooting (since they're not going to be anymore
+> corrupt yet than you'd expect from an unclean shutdown, because there's
+> been no IO to them yet, so I should just be able to readd them, mount and
+> resync)?
 
-> Anyway, how are you taking care of priorities with-in same class. How will
-> you make sure that a BE prio 0 request is not hidden behind BE prio 7
-> request? Same is true for prio with-in RT class.
+For the md side, you can just assemble the drives into an array with
+a different name.
+e.g.
+  mdadm -A /dev/md1 /dev/sda1 /dev/sd....
 
-I changed io_limit parameter of dm-ioband and ran your test script
-again. io_limit is a parameter which determines how many IO requests
-can be hold in dm-ioband. Its default value is equal to nr_requests of
-the underlying device. I increased the value from 128 to 256 on this
-test, because the writer requests IOs more than nr_requests.
-The following result shows that dm-ioband does not break the notion of
-CFQ priority. I think that the impact of dm-ioband's internal queue on
-CFQ is insignificant, because the queue is not too long. The notion of
-CFQ priority is preserved within each bandwidth group.
+using whatever new names were given to the devices when you plugged them
+back in.
+Maybe you can do a similar thing with the LVM side, but I know nothing
+about that.
 
-Setting
--------
-ioband1: 0 112455000 ioband 8:18 share1 4 256 user weight 512 :40
-                                          ^^^ io_limit
+NeilBrown
 
-Script
-------
-#!/bin/bash
-rm /mnt1/aggressivewriter
-sync
-echo 3 >  /proc/sys/vm/drop_caches
-# launch an hostile writer
-ionice -c2 -n7 dd if=/dev/zero of=/mnt1/aggressivewriter bs=4K \
-        count=524288 conv=fdatasync &
-# Reader
-ionice -c2 -n0 dd if=/mnt1/testzerofile1 of=/dev/null &
-wait $!
-echo "reader finished"
-
-Without dm-ioband
------------------
-First run
-2147483648 bytes (2.1 GB) copied, 34.8201 seconds, 61.7 MB/s (Reader)
-reader finished
-2147483648 bytes (2.1 GB) copied, 68.9099 seconds, 31.2 MB/s (Writer)
-
-Second Run
-2147483648 bytes (2.1 GB) copied, 34.8201 seconds, 61.7 MB/s (Reader)
-reader finished
-2147483648 bytes (2.1 GB) copied, 68.9099 seconds, 31.2 MB/s (Writer)
-
-With dm-ioband
---------------
-First run
-2147483648 bytes (2.1 GB) copied, 35.852 seconds, 59.9 MB/s  (Reader)
-reader finished
-2147483648 bytes (2.1 GB) copied, 73.3991 seconds, 29.3 MB/s (Writer)
-
-Second Run
-2147483648 bytes (2.1 GB) copied, 36.0273 seconds, 59.6 MB/s (Reader)
-reader finished
-2147483648 bytes (2.1 GB) copied, 72.8979 seconds, 29.5 MB/s (Writer)
-
-For reference, the previous test results.
-http://linux.derkeiler.com/Mailing-Lists/Kernel/2009-04/msg08345.html
-
-Thanks,
-Ryo Tsuruta
