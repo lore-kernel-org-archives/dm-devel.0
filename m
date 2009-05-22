@@ -1,56 +1,38 @@
 From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 02/18] io-controller: Common flat fair queuing code in
- elevaotor layer
-Date: Fri, 22 May 2009 14:43:04 +0800
-Message-ID: <4A164978.1020604@cn.fujitsu.com>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <1241553525-28095-3-git-send-email-vgoyal@redhat.com>
+Subject: Re: [PATCH 04/18] io-controller: Modify cfq to make use of flat elevator
+ fair queuing
+Date: Fri, 22 May 2009 16:54:01 +0800
+Message-ID: <4A166829.6070608@cn.fujitsu.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com> <1241553525-28095-5-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751791AbZEVGod@vger.kernel.org>
-In-Reply-To: <1241553525-28095-3-git-send-email-vgoyal@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755789AbZEVIzS@vger.kernel.org>
+In-Reply-To: <1241553525-28095-5-git-send-email-vgoyal@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Vivek Goyal <vgoyal@redhat.com>
 Cc: nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, righi.andrea@gmail.com, agk@redhat.com, dm-devel@redhat.com, snitzer@redhat.com, m-ikeda@ds.jp.nec.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
-> +/* A request got completed from io_queue. Do the accounting. */
-> +void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
-> +{
-> +	const int sync = rq_is_sync(rq);
-> +	struct io_queue *ioq = rq->ioq;
-> +	struct elv_fq_data *efqd = &q->elevator->efqd;
-> +
-> +	if (!elv_iosched_fair_queuing_enabled(q->elevator))
-> +		return;
-> +
-> +	elv_log_ioq(efqd, ioq, "complete");
-> +
-> +	elv_update_hw_tag(efqd);
-> +
-> +	WARN_ON(!efqd->rq_in_driver);
-> +	WARN_ON(!ioq->dispatched);
-> +	efqd->rq_in_driver--;
-> +	ioq->dispatched--;
-> +
-> +	if (sync)
-> +		ioq->last_end_request = jiffies;
-> +
-> +	/*
-> +	 * If this is the active queue, check if it needs to be expired,
-> +	 * or if we want to idle in case it has no pending requests.
-> +	 */
-> +
-> +	if (elv_active_ioq(q->elevator) == ioq) {
-> +		if (elv_ioq_slice_new(ioq)) {
-> +			elv_ioq_set_prio_slice(q, ioq);
+Hi Vivek,
 
-  Hi Vivek,
+Since thinking time logic is moving to common layer, corresponding items
+in cic is not needed.
 
-  Would you explain a bit why slice_end should be set when first request completes.
-  Why not set it just when an ioq gets active?
-  
-  Thanks.
-  Gui Jianfeng
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+diff --git a/include/linux/iocontext.h b/include/linux/iocontext.h
+index ed52a1f..1fe9d78 100644
+--- a/include/linux/iocontext.h
++++ b/include/linux/iocontext.h
+@@ -42,10 +42,6 @@ struct cfq_io_context {
+ 	unsigned long last_end_request;
+ 	sector_t last_request_pos;
+ 
+-	unsigned long ttime_total;
+-	unsigned long ttime_samples;
+-	unsigned long ttime_mean;
+-
+ 	unsigned int seek_samples;
+ 	u64 seek_total;
+ 	sector_t seek_mean;
