@@ -1,368 +1,201 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 01/20] io-controller: Documentation
-Date: Tue, 26 May 2009 18:41:50 -0400
-Message-ID: <1243377729-2176-2-git-send-email-vgoyal@redhat.com>
-References: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759263AbZEZWoo@vger.kernel.org>
-In-Reply-To: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
+Subject: [RFC] IO scheduler based IO controller V3
+Date: Tue, 26 May 2009 18:41:49 -0400
+Message-ID: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758922AbZEZWn5@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@googl
 Cc: agk@redhat.com, snitzer@redhat.com, vgoyal@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-o Documentation for io-controller.
 
-Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
----
- Documentation/block/00-INDEX          |    2 +
- Documentation/block/io-controller.txt |  326 +++++++++++++++++++++++++++++++++
- 2 files changed, 328 insertions(+), 0 deletions(-)
- create mode 100644 Documentation/block/io-controller.txt
+Hi All,
 
-diff --git a/Documentation/block/00-INDEX b/Documentation/block/00-INDEX
-index 961a051..dc8bf95 100644
---- a/Documentation/block/00-INDEX
-+++ b/Documentation/block/00-INDEX
-@@ -10,6 +10,8 @@ capability.txt
- 	- Generic Block Device Capability (/sys/block/<disk>/capability)
- deadline-iosched.txt
- 	- Deadline IO scheduler tunables
-+io-controller.txt
-+	- IO controller for provding hierarchical IO scheduling
- ioprio.txt
- 	- Block io priorities (in CFQ scheduler)
- request.txt
-diff --git a/Documentation/block/io-controller.txt b/Documentation/block/io-controller.txt
-new file mode 100644
-index 0000000..5669b81
---- /dev/null
-+++ b/Documentation/block/io-controller.txt
-@@ -0,0 +1,326 @@
-+				IO Controller
-+				=============
-+
-+Overview
-+========
-+
-+This patchset implements a proportional weight IO controller. That is one
-+can create cgroups and assign prio/weights to those cgroups and task group
-+will get access to disk proportionate to the weight of the group.
-+
-+These patches modify elevator layer and individual IO schedulers to do
-+IO control hence this io controller works only on block devices which use
-+one of the standard io schedulers can not be used with any xyz logical block
-+device.
-+
-+The assumption/thought behind modifying IO scheduler is that resource control
-+is needed only on leaf nodes where the actual contention for resources is
-+present and not on intertermediate logical block devices.
-+
-+Consider following hypothetical scenario. Lets say there are three physical
-+disks, namely sda, sdb and sdc. Two logical volumes (lv0 and lv1) have been
-+created on top of these. Some part of sdb is in lv0 and some part is in lv1.
-+
-+			    lv0      lv1
-+			  /	\  /     \
-+			sda      sdb      sdc
-+
-+Also consider following cgroup hierarchy
-+
-+				root
-+				/   \
-+			       A     B
-+			      / \    / \
-+			     T1 T2  T3  T4
-+
-+A and B are two cgroups and T1, T2, T3 and T4 are tasks with-in those cgroups.
-+Assuming T1, T2, T3 and T4 are doing IO on lv0 and lv1. These tasks should
-+get their fair share of bandwidth on disks sda, sdb and sdc. There is no
-+IO control on intermediate logical block nodes (lv0, lv1).
-+
-+So if tasks T1 and T2 are doing IO on lv0 and T3 and T4 are doing IO on lv1
-+only, there will not be any contetion for resources between group A and B if
-+IO is going to sda or sdc. But if actual IO gets translated to disk sdb, then
-+IO scheduler associated with the sdb will distribute disk bandwidth to
-+group A and B proportionate to their weight.
-+
-+CFQ already has the notion of fairness and it provides differential disk
-+access based on priority and class of the task. Just that it is flat and
-+with cgroup stuff, it needs to be made hierarchical to achive a good
-+hierarchical control on IO.
-+
-+Rest of the IO schedulers (noop, deadline and AS) don't have any notion
-+of fairness among various threads. They maintain only one queue where all
-+the IO gets queued (internally this queue is split in read and write queue
-+for deadline and AS). With this patchset, now we maintain one queue per
-+cgropu per device and then try to do fair queuing among those queues.
-+
-+One of the concerns raised with modifying IO schedulers was that we don't
-+want to replicate the code in all the IO schedulers. These patches share
-+the fair queuing code which has been moved to a common layer (elevator
-+layer). Hence we don't end up replicating code across IO schedulers. Following
-+diagram depicts the concept.
-+
-+			--------------------------------
-+			| Elevator Layer + Fair Queuing |
-+			--------------------------------
-+			 |	     |	     |       |
-+			NOOP     DEADLINE    AS     CFQ
-+
-+Design
-+======
-+This patchset primarily uses BFQ (Budget Fair Queuing) code to provide
-+fairness among different IO queues. Fabio and Paolo implemented BFQ which uses
-+B-WF2Q+ algorithm for fair queuing.
-+
-+Why BFQ?
-+
-+- Not sure if weighted round robin logic of CFQ can be easily extended for
-+  hierarchical mode. One of the things is that we can not keep dividing
-+  the time slice of parent group among childrens. Deeper we go in hierarchy
-+  time slice will get smaller.
-+
-+  One of the ways to implement hierarchical support could be to keep track
-+  of virtual time and service provided to queue/group and select a queue/group
-+  for service based on any of the various available algoriths.
-+
-+  BFQ already had support for hierarchical scheduling, taking those patches
-+  was easier.
-+
-+- BFQ was designed to provide tighter bounds/delay w.r.t service provided
-+  to a queue. Delay/Jitter with BFQ is O(1).
-+
-+  Note: BFQ originally used amount of IO done (number of sectors) as notion
-+        of service provided. IOW, it tried to provide fairness in terms of
-+        actual IO done and not in terms of actual time disk access was
-+	given to a queue.
-+
-+	This patcheset modified BFQ to provide fairness in time domain because
-+	that's what CFQ does. So idea was try not to deviate too much from
-+	the CFQ behavior initially.
-+
-+	Providing fairness in time domain makes accounting trciky because
-+	due to command queueing, at one time there might be multiple requests
-+	from different queues and there is no easy way to find out how much
-+	disk time actually was consumed by the requests of a particular
-+	queue. More about this in comments in source code.
-+
-+We have taken BFQ code as starting point for providing fairness among groups
-+because it already contained lots of features which we required to implement
-+hierarhical IO scheduling. With this patch set, I am not trying to ensure O(1)
-+delay here as my goal is to provide fairness among groups. Most likely that
-+will mean that latencies are not worse than what cfq currently provides (if
-+not improved ones). Once fairness is ensured, one can look into  more in
-+ensuring O(1) latencies.
-+
-+From data structure point of view, one can think of a tree per device, where
-+io groups and io queues are hanging and are being scheduled using B-WF2Q+
-+algorithm. io_queue, is end queue where requests are actually stored and
-+dispatched from (like cfqq).
-+
-+These io queues are primarily created by and managed by end io schedulers
-+depending on its semantics. For example, noop, deadline and AS ioschedulers
-+keep one io queues per cgroup and cfqq keeps one io queue per io_context in
-+a cgroup (apart from async queues).
-+
-+A request is mapped to an io group by elevator layer and which io queue it
-+is mapped to with in group depends on ioscheduler. Currently "current" task
-+is used to determine the cgroup (hence io group) of the request. Down the
-+line we need to make use of bio-cgroup patches to map delayed writes to
-+right group.
-+
-+Going back to old behavior
-+==========================
-+In new scheme of things essentially we are creating hierarchical fair
-+queuing logic in elevator layer and chaning IO schedulers to make use of
-+that logic so that end IO schedulers start supporting hierarchical scheduling.
-+
-+Elevator layer continues to support the old interfaces. So even if fair queuing
-+is enabled at elevator layer, one can have both new hierchical scheduler as
-+well as old non-hierarchical scheduler operating.
-+
-+Also noop, deadline and AS have option of enabling hierarchical scheduling.
-+If it is selected, fair queuing is done in hierarchical manner. If hierarchical
-+scheduling is disabled, noop, deadline and AS should retain their existing
-+behavior.
-+
-+CFQ is the only exception where one can not disable fair queuing as it is
-+needed for provding fairness among various threads even in non-hierarchical
-+mode.
-+
-+Various user visible config options
-+===================================
-+CONFIG_IOSCHED_NOOP_HIER
-+	- Enables hierchical fair queuing in noop. Not selecting this option
-+	  leads to old behavior of noop.
-+
-+CONFIG_IOSCHED_DEADLINE_HIER
-+	- Enables hierchical fair queuing in deadline. Not selecting this
-+	  option leads to old behavior of deadline.
-+
-+CONFIG_IOSCHED_AS_HIER
-+	- Enables hierchical fair queuing in AS. Not selecting this option
-+	  leads to old behavior of AS.
-+
-+CONFIG_IOSCHED_CFQ_HIER
-+	- Enables hierarchical fair queuing in CFQ. Not selecting this option
-+	  still does fair queuing among various queus but it is flat and not
-+	  hierarchical.
-+
-+CGROUP_BLKIO
-+	- This option enables blkio-cgroup controller for IO tracking
-+	  purposes. That means, by this controller one can attribute a write
-+	  to the original cgroup and not assume that it belongs to submitting
-+	  thread.
-+
-+CONFIG_TRACK_ASYNC_CONTEXT
-+	- Currently CFQ attributes the writes to the submitting thread and
-+	  caches the async queue pointer in the io context of the process.
-+	  If this option is set, it tells cfq and elevator fair queuing logic
-+	  that for async writes make use of IO tracking patches and attribute
-+	  writes to original cgroup and not to write submitting thread.
-+
-+CONFIG_DEBUG_GROUP_IOSCHED
-+	- Throws extra debug messages in blktrace output helpful in doing
-+	  doing debugging in hierarchical setup.
-+
-+	- Also allows for export of extra debug statistics like group queue
-+	  and dequeue statistics on device through cgroup interface.
-+
-+Config options selected automatically
-+=====================================
-+These config options are not user visible and are selected/deselected
-+automatically based on IO scheduler configurations.
-+
-+CONFIG_ELV_FAIR_QUEUING
-+	- Enables/Disables the fair queuing logic at elevator layer.
-+
-+CONFIG_GROUP_IOSCHED
-+	- Enables/Disables hierarchical queuing and associated cgroup bits.
-+
-+HOWTO
-+=====
-+So far I have done very simple testing of running two dd threads in two
-+different cgroups. Here is what you can do.
-+
-+- Enable hierarchical scheduling in io scheuduler of your choice (say cfq).
-+	CONFIG_IOSCHED_CFQ_HIER=y
-+
-+- Enable IO tracking for async writes.
-+	CONFIG_TRACK_ASYNC_CONTEXT=y
-+
-+  (This will automatically select CGROUP_BLKIO)
-+
-+- Compile and boot into kernel and mount IO controller and blkio io tracking
-+  controller.
-+
-+	mount -t cgroup -o io,blkio none /cgroup
-+
-+- Create two cgroups
-+	mkdir -p /cgroup/test1/ /cgroup/test2
-+
-+- Set weights of group test1 and test2
-+	echo 1000 > /cgroup/test1/io.ioprio
-+	echo 500 > /cgroup/test2/io.ioprio
-+
-+- Set "fairness" parameter to 1 at the disk you are testing.
-+
-+  echo 1 > /sys/block/<disk>/queue/fairness
-+
-+- Create two same size files (say 512MB each) on same disk (file1, file2) and
-+  launch two dd threads in different cgroup to read those files. Make sure
-+  right io scheduler is being used for the block device where files are
-+  present (the one you compiled in hierarchical mode).
-+
-+	sync
-+	echo 3 > /proc/sys/vm/drop_caches
-+
-+	dd if=/mnt/sdb/zerofile1 of=/dev/null &
-+	echo $! > /cgroup/test1/tasks
-+	cat /cgroup/test1/tasks
-+
-+	dd if=/mnt/sdb/zerofile2 of=/dev/null &
-+	echo $! > /cgroup/test2/tasks
-+	cat /cgroup/test2/tasks
-+
-+- At macro level, first dd should finish first. To get more precise data, keep
-+  on looking at (with the help of script), at io.disk_time and io.disk_sectors
-+  files of both test1 and test2 groups. This will tell how much disk time
-+  (in milli seconds), each group got and how many secotors each group
-+  dispatched to the disk. We provide fairness in terms of disk time, so
-+  ideally io.disk_time of cgroups should be in proportion to the weight.
-+  (It is hard to achieve though :-)).
-+
-+Details of cgroup files
-+=======================
-+- io.ioprio_class
-+	- Specifies class of the cgroup (RT, BE, IDLE). This is default io
-+	  class of the group on all the devices until and unless overridden by
-+	  per device rule. (See io.policy).
-+
-+	  1 = RT; 2 = BE, 3 = IDLE
-+
-+- io.weight
-+	- Specifies per cgroup weight. This is default weight of the group
-+	  on all the devices until and unless overridden by per device rule.
-+	  (See io.policy).
-+
-+- io.disk_time
-+	- disk time allocated to cgroup per device in milliseconds. First
-+	  two fields specify the major and minor number of the device and
-+	  third field specifies the disk time allocated to group in
-+	  milliseconds.
-+
-+- io.disk_sectors
-+	- number of sectors transferred to/from disk by the group. First
-+	  two fields specify the major and minor number of the device and
-+	  third field specifies the number of sectors transferred by the
-+	  group to/from the device.
-+
-+- io.disk_queue
-+	- Debugging aid only enabled if CONFIG_DEBUG_GROUP_IOSCHED=y. This
-+	  gives the statistics about how many a times a group was queued
-+	  on service tree of the device. First two fields specify the major
-+	  and minor number of the device and third field specifies the number
-+	  of times a group was queued on a particular device.
-+
-+- io.disk_queue
-+	- Debugging aid only enabled if CONFIG_DEBUG_GROUP_IOSCHED=y. This
-+	  gives the statistics about how many a times a group was de-queued
-+	  or removed from the service tree of the device. This basically gives
-+	  and idea if we can generate enough IO to create continuously
-+	  backlogged groups. First two fields specify the major and minor
-+	  number of the device and third field specifies the number
-+	  of times a group was de-queued on a particular device.
-+
-+- io.policy
-+	- One can specify per cgroup per device rules using this interface.
-+	  These rules override the default value of group weight and class as
-+	  specified by io.weight and io.ioprio_class.
-+
-+	  Following is the format.
-+
-+	#echo DEV:weight:ioprio_class > /patch/to/cgroup/io.policy
-+
-+	weight=0 means removing a policy.
-+
-+	Examples:
-+
-+	Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
-+	# echo /dev/hdb:300:2 > io.policy
-+	# cat io.policy
-+	dev weight class
-+	/dev/hdb 300 2
-+
-+	Configure weight=500 ioprio_class=1 on /dev/hda in this cgroup
-+	# echo /dev/hda:500:1 > io.policy
-+	# cat io.policy
-+	dev weight class
-+	/dev/hda 500 1
-+	/dev/hdb 300 2
-+
-+	Remove the policy for /dev/hda in this cgroup
-+	# echo /dev/hda:0:1 > io.policy
-+	# cat io.policy
-+	dev weight class
-+	/dev/hdb 300 2
--- 
-1.6.0.1
+Here is the V3 of the IO controller patches generated on top of 2.6.30-rc7.
+
+Previous versions of the patches was posted here.
+
+http://lkml.org/lkml/2009/3/11/486
+http://lkml.org/lkml/2009/5/5/275
+
+This patchset is still work in progress but I want to keep on getting the
+snapshot of my tree out at regular intervals to get the feedback hence V3.
+
+Changes from V2
+===============
+- Now this patcheset supports per device per cgroup rules. Thanks to Gui for
+  the patch. Previously a cgroup had same weight on all the block devices
+  in the system. Now one can specify different weights on different devices
+  for same cgroup.
+
+- Made disk time and disk sector statistics per device per cgroup. 
+
+- Replaced the old io group refcounting patch with new patch from nauman.
+  Core change being that during cgroup deletion we don't try to hold
+  both io_cgroup lock and queue lock at the same time.
+
+- Fixed few bugs in per cgropup request descriptor infrastructure. There
+  were instances when a process be put to indefinite sleep after frequent
+  elevator switches.
+
+- Did some cleanups like get rid of rq->iog and rq->rl fields. Thanks to
+  the nauman and Gui for ideas and patches. Got rid of some dead code too.
+
+- Introduced some more debugging help in the form of two more cgrop files
+  "io.disk_queue" and "io.disk_dequeue". It gives the information how many
+  a times a group was queued for disk access and how many a times it got
+  out of contention.
+
+- Introduced an experimental debug patch where one can wait for new reuquest
+  on an async queue before it is expired.
+
+Limitations
+===========
+
+- This IO controller provides the bandwidth control at the IO scheduler
+  level (leaf node in stacked hiearchy of logical devices). So there can
+  be cases (depending on configuration) where application does not see
+  proportional BW division at higher logical level device.
+
+  LWN has written an article about the issue here.
+
+	http://lwn.net/Articles/332839/
+
+How to solve the issue of fairness at higher level logical devices
+==================================================================
+Couple of suggestions have come forward.
+
+- Implement IO control at IO scheduler layer and then with the help of
+  some daemon, adjust the weight on underlying devices dynamiclly, depending
+  on what kind of BW gurantees are to be achieved at higher level logical
+  block devices.
+
+- Also implement a higher level IO controller along with IO scheduler
+  based controller and let user choose one depending on his needs.
+
+  A higher level controller does not know about the assumptions/policies
+  of unerldying IO scheduler, hence it has the potential to break down
+  the IO scheduler's policy with-in cgroup. A lower level controller
+  can work with IO scheduler much more closely and efficiently.
+ 
+Other active IO controller developments
+=======================================
+
+IO throttling
+-------------
+
+  This is a max bandwidth controller and not the proportional one. Secondly
+  it is a second level controller which can break the IO scheduler's
+  policy/assumtions with-in cgroup. 
+
+dm-ioband
+---------
+
+ This is a proportional bandwidth controller implemented as device mapper
+ driver. It is also a second level controller which can break the
+ IO scheduler's policy/assumptions with-in cgroup.
+
+Testing
+=======
+
+Again, I have been able to do only very basic testing of reads and writes.
+
+Test1 (Fairness for synchronous reads)
+======================================
+- Two dd in two cgroups with cgrop weights 1000 and 500. Ran two "dd" in those
+  cgroups (With CFQ scheduler and /sys/block/<device>/queue/fairness = 1)
+
+dd if=/mnt/$BLOCKDEV/zerofile1 of=/dev/null &
+dd if=/mnt/$BLOCKDEV/zerofile2 of=/dev/null &
+
+234179072 bytes (234 MB) copied, 4.0167 s, 58.3 MB/s
+234179072 bytes (234 MB) copied, 5.21889 s, 44.9 MB/s
+
+group1 time=8 16 2483 group1 sectors=8 16 457840
+group2 time=8 16 1317 group2 sectors=8 16 242664
+
+First two fields in time and sectors statistics represent major and minor
+number of the device. Third field represents disk time in milliseconds and
+number of sectors transferred respectively.
+
+This patchset tries to provide fairness in terms of disk time received. group1
+got almost double of group2 disk time (At the time of first dd finish). These
+time and sectors statistics can be read using io.disk_time and io.disk_sector
+files in cgroup. More about it in documentation file.
+
+Test2 (Fairness for async writes)
+=================================
+Fairness for async writes is tricy and biggest reason is that async writes
+are cached in higher layers (page cahe) and are dispatched to lower layers
+not necessarily in proportional manner. For example, consider two dd threads
+reading /dev/zero as input file and doing writes of huge files. Very soon
+we will cross vm_dirty_ratio and dd thread will be forced to write out some
+pages to disk before more pages can be dirtied. But not necessarily dirty
+pages of same thread are picked. It can very well pick the inode of lesser
+priority dd thread and do some writeout. So effectively higher weight dd is
+doing writeouts of lower weight dd pages and we don't see service differentation
+
+IOW, the core problem with async write fairness is that higher weight thread
+does not throw enought IO traffic at IO controller to keep the queue
+continuously backlogged. This are many .2 to .8 second intervals where higher
+weight queue is empty and in that duration lower weight queue get lots of job
+done giving the impression that there was no service differentiation.
+
+In summary, from IO controller point of view async writes support is there. Now
+we need to do some more work in higher layers to make sure higher weight process
+is not blocked behind IO of some lower weight process. This is a TODO item.
+
+So to test async writes I generated lots of write traffic in two cgroups (50
+fio threads) and watched the disk time statistics in respective cgroups at
+the interval of 2 seconds. Thanks to ryo tsuruta for the test case.
+
+*****************************************************************
+sync
+echo 3 > /proc/sys/vm/drop_caches
+
+fio_args="--size=64m --rw=write --numjobs=50 --group_reporting"
+
+echo $$ > /cgroup/bfqio/test1/tasks
+fio $fio_args --name=test1 --directory=/mnt/sdd1/fio/ --output=/mnt/sdd1/fio/test1.log &
+
+echo $$ > /cgroup/bfqio/test2/tasks
+fio $fio_args --name=test2 --directory=/mnt/sdd2/fio/ --output=/mnt/sdd2/fio/test2.log &
+*********************************************************************** 
+
+And watched the disk time and sector statistics for the both the cgroups
+every 2 seconds using a script. How is snippet from output.
+
+test1 statistics: time=8 48 4325   sectors=8 48 226696 dq=8 48 2
+test2 statistics: time=8 48 2163   sectors=8 48 107040 dq=8 48 1
+
+test1 statistics: time=8 48 8460   sectors=8 48 489152 dq=8 48 4
+test2 statistics: time=8 48 4425   sectors=8 48 256984 dq=8 48 3
+
+test1 statistics: time=8 48 12928   sectors=8 48 792192 dq=8 48 6
+test2 statistics: time=8 48 6813   sectors=8 48 384944 dq=8 48 5
+
+test1 statistics: time=8 48 17256   sectors=8 48 1092744 dq=8 48 7
+test2 statistics: time=8 48 8980   sectors=8 48 524840 dq=8 48 6
+
+test1 statistics: time=8 48 20488   sectors=8 48 1300832 dq=8 48 8
+test2 statistics: time=8 48 10920   sectors=8 48 634864 dq=8 48 7
+
+First two fields in time and sectors statistics represent major and minor
+number of the device. Third field represents disk time in milliseconds and
+number of sectors transferred respectively.
+
+So disk time consumed by group1 is almost double of group2.
+
+TODO
+====
+- Lots of code cleanups, testing, bug fixing, optimizations, benchmarking
+  etc...
+
+- Debug and fix some of the areas like page cache where higher weight cgroup
+  async writes are stuck behind lower weight cgroup async writes.
+
+- Anticipatory code will need more work. It is not working properly currently
+  and needs more thought regarding idling etc.
+
+Thanks
+Vivek
