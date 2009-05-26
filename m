@@ -1,217 +1,414 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 20/20] io-controller: experimental debug patch for async queue wait before expiry
-Date: Tue, 26 May 2009 18:42:09 -0400
-Message-ID: <1243377729-2176-21-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 18/20] io-controller: Support per cgroup per device weights and io class
+Date: Tue, 26 May 2009 18:42:07 -0400
+Message-ID: <1243377729-2176-19-git-send-email-vgoyal@redhat.com>
 References: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759869AbZEZWro@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759977AbZEZWr5@vger.kernel.org>
 In-Reply-To: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@googl
 Cc: agk@redhat.com, snitzer@redhat.com, vgoyal@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-o A debug patch which does wait for next IO from async queue once it
-  becomes empty.
+This patch enables per-cgroup per-device weight and ioprio_class handling.
+A new cgroup interface "policy" is introduced. You can make use of this
+file to configure weight and ioprio_class for each device in a given cgroup.
+The original "weight" and "ioprio_class" files are still available. If you
+don't do special configuration for a particular device, "weight" and
+"ioprio_class" are used as default values in this device.
 
-o For async writes, traffic seen by IO scheduler is not in proportion to
-  the weight of the cgroup task/page belongs to. So if there are two processes
-  doing heavy writeouts in two cgroups with weights 1000 and 500 respectively,
-  then IO scheduler does not see more traffic/IO from higher weight cgroup
-  even if IO scheduler tries to give it higher disk time. Effectively, the
-  async queue belonging to higher weight cgroup becomes empty, and gets out
-  of contention for disk and lower weight cgroup gets to use disk giving
-  an impression in user space that higher weight cgroup did not get higher
-  time to disk.
+You can use the following format to play with the new interface.
+#echo DEV:weight:ioprio_class > /patch/to/cgroup/policy
+weight=0 means removing the policy for DEV.
 
-o This is more of a problem at page cache level where a higher weight
-  process might be writing out the pages of lower weight process etc and
-  should be fixed there.
+Examples:
+Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+# echo /dev/hdb:300:2 > io.policy
+# cat io.policy
+dev weight class
+/dev/hdb 300 2
 
-o While we fix those issues, introducing this debug patch which allows one
-  to idle on async queue (tunable via /sys/blolc/<disk>/queue/async_slice_idle)  so that once a higher weight queue becomes empty, instead of expiring it
-  we try to wait for next request to come from that queue hence giving it
-  higher disk time. A higher value of async_slice_idle, around 300ms, helps
-  me get some right numbers for my setup. Note: higher disk time would not
-  necessarily translate in more IO done as higher weight group is not pushing
-  enough IO to io scheduler. It is just a debugging aid to prove correctness
-  of IO controller by providing higher disk times to higher weight cgroup.
+Configure weight=500 ioprio_class=1 on /dev/hda in this cgroup
+# echo /dev/hda:500:1 > io.policy
+# cat io.policy
+dev weight class
+/dev/hda 500 1
+/dev/hdb 300 2
 
+Remove the policy for /dev/hda in this cgroup
+# echo /dev/hda:0:1 > io.policy
+# cat io.policy
+dev weight class
+/dev/hdb 300 2
+
+Changelog (v1 -> v2)
+- Rename some structures
+- Use spin_lock_irqsave() and spin_lock_irqrestore() version to prevent
+  from enabling the interrupts unconditionally.
+- Fix policy setup bug when switching to another io scheduler.
+- If a policy is available for a specific device, don't update weight and
+  io class when writing "weight" and "iprio_class".
+- Fix a bug when parsing policy string.
+
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/blk-sysfs.c   |    7 +++++
- block/elevator-fq.c |   67 +++++++++++++++++++++++++++++++++++++++++++++++---
- block/elevator-fq.h |    7 +++++
- 3 files changed, 77 insertions(+), 4 deletions(-)
+ block/elevator-fq.c |  245 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ block/elevator-fq.h |   11 +++
+ 2 files changed, 251 insertions(+), 5 deletions(-)
 
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index b60b76e..f245f33 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -314,6 +314,12 @@ static struct queue_sysfs_entry queue_slice_idle_entry = {
- 	.store = elv_slice_idle_store,
- };
- 
-+static struct queue_sysfs_entry queue_async_slice_idle_entry = {
-+	.attr = {.name = "async_slice_idle", .mode = S_IRUGO | S_IWUSR },
-+	.show = elv_async_slice_idle_show,
-+	.store = elv_async_slice_idle_store,
-+};
-+
- static struct queue_sysfs_entry queue_slice_sync_entry = {
- 	.attr = {.name = "slice_sync", .mode = S_IRUGO | S_IWUSR },
- 	.show = elv_slice_sync_show,
-@@ -349,6 +355,7 @@ static struct attribute *default_attrs[] = {
- 	&queue_iostats_entry.attr,
- #ifdef CONFIG_ELV_FAIR_QUEUING
- 	&queue_slice_idle_entry.attr,
-+	&queue_async_slice_idle_entry.attr,
- 	&queue_slice_sync_entry.attr,
- 	&queue_slice_async_entry.attr,
- 	&queue_fairness_entry.attr,
 diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 6dd8683..f1179aa 100644
+index 0650e03..6d97ad9 100644
 --- a/block/elevator-fq.c
 +++ b/block/elevator-fq.c
-@@ -20,6 +20,7 @@ const int elv_slice_sync = HZ / 10;
- int elv_slice_async = HZ / 25;
- const int elv_slice_async_rq = 2;
- int elv_slice_idle = HZ / 125;
-+int elv_async_slice_idle = 0;
- static struct kmem_cache *elv_ioq_pool;
+@@ -13,6 +13,7 @@
+ #include <linux/blktrace_api.h>
+ #include <linux/seq_file.h>
+ #include <linux/biotrack.h>
++#include <linux/genhd.h>
  
- /* Maximum Window length for updating average disk rate */
-@@ -2677,6 +2678,46 @@ ssize_t elv_slice_idle_store(struct request_queue *q, const char *name,
- 	return count;
+ /* Values taken from cfq */
+ const int elv_slice_sync = HZ / 10;
+@@ -1025,12 +1026,31 @@ struct io_group *io_cgroup_lookup_group(struct io_cgroup *iocg, void *key)
+ 	return NULL;
  }
  
-+/* Functions to show and store elv_idle_slice value through sysfs */
-+ssize_t elv_async_slice_idle_show(struct request_queue *q, char *name)
-+{
-+	struct elv_fq_data *efqd;
-+	unsigned int data;
-+	unsigned long flags;
+-void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog)
++static struct io_policy_node *policy_search_node(const struct io_cgroup *iocg,
++						 dev_t dev);
 +
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	efqd = &q->elevator->efqd;
-+	data = jiffies_to_msecs(efqd->elv_async_slice_idle);
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+	return sprintf(name, "%d\n", data);
-+}
-+
-+ssize_t elv_async_slice_idle_store(struct request_queue *q, const char *name,
-+			  size_t count)
-+{
-+	struct elv_fq_data *efqd;
-+	unsigned int data;
-+	unsigned long flags;
-+
-+	char *p = (char *)name;
-+
-+	data = simple_strtoul(p, &p, 10);
-+
-+	if (data < 0)
-+		data = 0;
-+	else if (data > INT_MAX)
-+		data = INT_MAX;
-+
-+	data = msecs_to_jiffies(data);
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	efqd = &q->elevator->efqd;
-+	efqd->elv_async_slice_idle = data;
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	return count;
-+}
-+
- /* Functions to show and store elv_slice_sync value through sysfs */
- ssize_t elv_slice_sync_show(struct request_queue *q, char *name)
++void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog,
++			  dev_t dev)
  {
-@@ -2930,8 +2971,10 @@ int elv_init_ioq(struct elevator_queue *eq, struct io_queue *ioq,
- 		ioq->pid = current->pid;
- 
- 	ioq->sched_queue = sched_queue;
--	if (elv_gen_idling_enabled(eq) && is_sync && !elv_ioq_class_idle(ioq))
--		elv_mark_ioq_idle_window(ioq);
-+	if (elv_gen_idling_enabled(eq) && !elv_ioq_class_idle(ioq)) {
-+		if (is_sync || efqd->fairness)
-+			elv_mark_ioq_idle_window(ioq);
-+	}
- 	bfq_init_entity(&ioq->entity, iog);
- 	ioq->entity.budget = elv_prio_to_slice(efqd, ioq);
- 	return 0;
-@@ -3563,7 +3606,12 @@ void elv_ioq_arm_slice_timer(struct request_queue *q, int wait_for_busy)
- 	/*
- 	 * idle is disabled, either manually or by past process history
- 	 */
--	if (!efqd->elv_slice_idle || !elv_ioq_idle_window(ioq))
-+	if ((elv_ioq_sync(ioq) && !efqd->elv_slice_idle) ||
-+			!elv_ioq_idle_window(ioq))
-+		return;
+ 	struct io_entity *entity = &iog->entity;
++	struct io_policy_node *pn;
++	unsigned long flags;
 +
-+	/* If this is async queue and async_slice_idle is disabled, return */
-+	if (!elv_ioq_sync(ioq) && !efqd->elv_async_slice_idle)
- 		return;
++	spin_lock_irqsave(&iocg->lock, flags);
++	pn = policy_search_node(iocg, dev);
++	if (pn) {
++		entity->weight = pn->weight;
++		entity->new_weight = pn->weight;
++		entity->ioprio_class = pn->ioprio_class;
++		entity->new_ioprio_class = pn->ioprio_class;
++	} else {
++		entity->weight = iocg->weight;
++		entity->new_weight = iocg->weight;
++		entity->ioprio_class = iocg->ioprio_class;
++		entity->new_ioprio_class = iocg->ioprio_class;
++	}
++	spin_unlock_irqrestore(&iocg->lock, flags);
  
- 	/*
-@@ -3572,7 +3620,10 @@ void elv_ioq_arm_slice_timer(struct request_queue *q, int wait_for_busy)
- 	 */
- 	if (wait_for_busy) {
- 		elv_mark_ioq_wait_busy(ioq);
--		sl = efqd->elv_slice_idle;
-+		if (elv_ioq_sync(ioq))
-+			sl = efqd->elv_slice_idle;
-+		else
-+			sl = efqd->elv_async_slice_idle;
- 		mod_timer(&efqd->idle_slice_timer, jiffies + sl);
- 		elv_log_ioq(efqd, ioq, "arm idle: %lu wait busy=1", sl);
- 		return;
-@@ -3913,6 +3964,13 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 			goto done;
+-	entity->weight = entity->new_weight = iocg->weight;
+-	entity->ioprio_class = entity->new_ioprio_class = iocg->ioprio_class;
+ 	entity->ioprio_changed = 1;
+ 	entity->my_sched_data = &iog->sched_data;
+ }
+@@ -1094,6 +1114,7 @@ static int io_cgroup_##__VAR##_write(struct cgroup *cgroup,		\
+ 	struct io_cgroup *iocg;					\
+ 	struct io_group *iog;						\
+ 	struct hlist_node *n;						\
++	struct io_policy_node *pn;					\
+ 									\
+ 	if (val < (__MIN) || val > (__MAX))				\
+ 		return -EINVAL;						\
+@@ -1106,6 +1127,9 @@ static int io_cgroup_##__VAR##_write(struct cgroup *cgroup,		\
+ 	spin_lock_irq(&iocg->lock);					\
+ 	iocg->__VAR = (unsigned long)val;				\
+ 	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {	\
++		pn = policy_search_node(iocg, iog->dev);		\
++		if (pn)							\
++			continue;					\
+ 		iog->entity.new_##__VAR = (unsigned long)val;		\
+ 		smp_wmb();						\
+ 		iog->entity.ioprio_changed = 1;				\
+@@ -1214,8 +1238,6 @@ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
+ 		if (!iog)
+ 			goto cleanup;
+ 
+-		io_group_init_entity(iocg, iog);
+-		iog->my_entity = &iog->entity;
+ 		atomic_set(&iog->ref, 0);
+ 		iog->deleting = 0;
+ 
+@@ -1233,6 +1255,8 @@ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
  		}
  
-+		/* For async queue try to do wait busy */
-+		if (efqd->fairness && !elv_ioq_sync(ioq) && !ioq->nr_queued
-+		    && (elv_iog_nr_active(iog) <= 1)) {
-+			elv_ioq_arm_slice_timer(q, 1);
-+			goto done;
-+		}
-+
- 		/*
- 		 * If there are no requests waiting in this queue, and
- 		 * there are other queues ready to issue requests, AND
-@@ -4042,6 +4100,7 @@ int elv_init_fq_data(struct request_queue *q, struct elevator_queue *e)
- 	efqd->elv_slice[0] = elv_slice_async;
- 	efqd->elv_slice[1] = elv_slice_sync;
- 	efqd->elv_slice_idle = elv_slice_idle;
-+	efqd->elv_async_slice_idle = elv_async_slice_idle;
- 	efqd->hw_tag = 1;
+ 		iog->iocg_id = css_id(&iocg->css);
++		io_group_init_entity(iocg, iog, iog->dev);
++		iog->my_entity = &iog->entity;
  
- 	/* For the time being keep fairness enabled by default */
+ 		blk_init_request_list(&iog->rl);
+ 
+@@ -1507,8 +1531,212 @@ struct io_group *io_alloc_root_group(struct request_queue *q,
+ 	return iog;
+ }
+ 
++static int io_cgroup_policy_read(struct cgroup *cgrp, struct cftype *cft,
++				  struct seq_file *m)
++{
++	struct io_cgroup *iocg;
++	struct io_policy_node *pn;
++
++	iocg = cgroup_to_io_cgroup(cgrp);
++
++	if (list_empty(&iocg->policy_list))
++		goto out;
++
++	seq_printf(m, "dev weight class\n");
++
++	spin_lock_irq(&iocg->lock);
++	list_for_each_entry(pn, &iocg->policy_list, node) {
++		seq_printf(m, "%s %lu %lu\n", pn->dev_name,
++			   pn->weight, pn->ioprio_class);
++	}
++	spin_unlock_irq(&iocg->lock);
++out:
++	return 0;
++}
++
++static inline void policy_insert_node(struct io_cgroup *iocg,
++					  struct io_policy_node *pn)
++{
++	list_add(&pn->node, &iocg->policy_list);
++}
++
++/* Must be called with iocg->lock held */
++static inline void policy_delete_node(struct io_policy_node *pn)
++{
++	list_del(&pn->node);
++}
++
++/* Must be called with iocg->lock held */
++static struct io_policy_node *policy_search_node(const struct io_cgroup *iocg,
++						 dev_t dev)
++{
++	struct io_policy_node *pn;
++
++	if (list_empty(&iocg->policy_list))
++		return NULL;
++
++	list_for_each_entry(pn, &iocg->policy_list, node) {
++		if (pn->dev == dev)
++			return pn;
++	}
++
++	return NULL;
++}
++
++static int devname_to_devnum(const char *buf, dev_t *dev)
++{
++	struct block_device *bdev;
++	struct gendisk *disk;
++	int part;
++
++	bdev = lookup_bdev(buf);
++	if (IS_ERR(bdev))
++		return -ENODEV;
++
++	disk = get_gendisk(bdev->bd_dev, &part);
++	if (part)
++		return -EINVAL;
++
++	*dev = MKDEV(disk->major, disk->first_minor);
++	bdput(bdev);
++
++	return 0;
++}
++
++static int policy_parse_and_set(char *buf, struct io_policy_node *newpn)
++{
++	char *s[3], *p;
++	int ret;
++	int i = 0;
++
++	memset(s, 0, sizeof(s));
++	while ((p = strsep(&buf, ":")) != NULL) {
++		if (!*p)
++			continue;
++		s[i++] = p;
++	}
++
++	ret = devname_to_devnum(s[0], &newpn->dev);
++	if (ret)
++		return ret;
++
++	strcpy(newpn->dev_name, s[0]);
++
++	if (s[1] == NULL)
++		return -EINVAL;
++
++	ret = strict_strtoul(s[1], 10, &newpn->weight);
++	if (ret || newpn->weight > WEIGHT_MAX)
++		return -EINVAL;
++
++	if (s[2] == NULL)
++		return -EINVAL;
++
++	ret = strict_strtoul(s[2], 10, &newpn->ioprio_class);
++	if (ret || newpn->ioprio_class < IOPRIO_CLASS_RT ||
++	    newpn->ioprio_class > IOPRIO_CLASS_IDLE)
++		return -EINVAL;
++
++	return 0;
++}
++
++static int io_cgroup_policy_write(struct cgroup *cgrp, struct cftype *cft,
++			    const char *buffer)
++{
++	struct io_cgroup *iocg;
++	struct io_policy_node *newpn, *pn;
++	char *buf;
++	int ret = 0;
++	int keep_newpn = 0;
++	struct hlist_node *n;
++	struct io_group *iog;
++
++	buf = kstrdup(buffer, GFP_KERNEL);
++	if (!buf)
++		return -ENOMEM;
++
++	newpn = kzalloc(sizeof(*newpn), GFP_KERNEL);
++	if (!newpn) {
++		ret = -ENOMEM;
++		goto free_buf;
++	}
++
++	ret = policy_parse_and_set(buf, newpn);
++	if (ret)
++		goto free_newpn;
++
++	if (!cgroup_lock_live_group(cgrp)) {
++		ret = -ENODEV;
++		goto free_newpn;
++	}
++
++	iocg = cgroup_to_io_cgroup(cgrp);
++	spin_lock_irq(&iocg->lock);
++
++	pn = policy_search_node(iocg, newpn->dev);
++	if (!pn) {
++		if (newpn->weight != 0) {
++			policy_insert_node(iocg, newpn);
++			keep_newpn = 1;
++		}
++		goto update_io_group;
++	}
++
++	if (newpn->weight == 0) {
++		/* weight == 0 means deleteing a policy */
++		policy_delete_node(pn);
++		goto update_io_group;
++	}
++
++	pn->weight = newpn->weight;
++	pn->ioprio_class = newpn->ioprio_class;
++
++update_io_group:
++	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {
++		if (iog->dev == newpn->dev) {
++			if (newpn->weight) {
++				iog->entity.new_weight = newpn->weight;
++				iog->entity.new_ioprio_class =
++					newpn->ioprio_class;
++				/*
++				 * iog weight and ioprio_class updating
++				 * actually happens if ioprio_changed is set.
++				 * So ensure ioprio_changed is not set until
++				 * new weight and new ioprio_class are updated.
++				 */
++				smp_wmb();
++				iog->entity.ioprio_changed = 1;
++			} else {
++				iog->entity.new_weight = iocg->weight;
++				iog->entity.new_ioprio_class =
++					iocg->ioprio_class;
++
++				/* The same as above */
++				smp_wmb();
++				iog->entity.ioprio_changed = 1;
++			}
++		}
++	}
++	spin_unlock_irq(&iocg->lock);
++
++	cgroup_unlock();
++
++free_newpn:
++	if (!keep_newpn)
++		kfree(newpn);
++free_buf:
++	kfree(buf);
++	return ret;
++}
++
+ struct cftype bfqio_files[] = {
+ 	{
++		.name = "policy",
++		.read_seq_string = io_cgroup_policy_read,
++		.write_string = io_cgroup_policy_write,
++		.max_write_len = 256,
++	},
++	{
+ 		.name = "weight",
+ 		.read_u64 = io_cgroup_weight_read,
+ 		.write_u64 = io_cgroup_weight_write,
+@@ -1550,6 +1778,7 @@ struct cgroup_subsys_state *iocg_create(struct cgroup_subsys *subsys,
+ 	INIT_HLIST_HEAD(&iocg->group_data);
+ 	iocg->weight = IO_DEFAULT_GRP_WEIGHT;
+ 	iocg->ioprio_class = IO_DEFAULT_GRP_CLASS;
++	INIT_LIST_HEAD(&iocg->policy_list);
+ 
+ 	return &iocg->css;
+ }
+@@ -1739,6 +1968,7 @@ void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup)
+ 	struct io_group *iog;
+ 	struct elv_fq_data *efqd;
+ 	unsigned long uninitialized_var(flags);
++	struct io_policy_node *pn, *pntmp;
+ 
+ 	/*
+ 	 * io groups are linked in two lists. One list is maintained
+@@ -1777,6 +2007,11 @@ remove_entry:
+ 	goto remove_entry;
+ 
+ done:
++	list_for_each_entry_safe(pn, pntmp, &iocg->policy_list, node) {
++		policy_delete_node(pn);
++		kfree(pn);
++	}
++
+ 	free_css_id(&io_subsys, &iocg->css);
+ 	rcu_read_unlock();
+ 	BUG_ON(!hlist_empty(&iocg->group_data));
 diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index de0f6b0..1c99e83 100644
+index 5783f33..9062bfd 100644
 --- a/block/elevator-fq.h
 +++ b/block/elevator-fq.h
-@@ -339,6 +339,8 @@ struct elv_fq_data {
- 	 * users of this functionality.
- 	 */
- 	unsigned int elv_slice_idle;
-+	/* idle slice for async queue */
-+	unsigned int elv_async_slice_idle;
- 	struct timer_list idle_slice_timer;
- 	struct work_struct unplug_work;
+@@ -251,6 +251,14 @@ struct io_group {
+ 	struct request_list rl;
+ };
  
-@@ -665,6 +667,11 @@ extern ssize_t elv_slice_idle_store(struct request_queue *q, const char *name,
- extern ssize_t elv_slice_sync_show(struct request_queue *q, char *name);
- extern ssize_t elv_slice_sync_store(struct request_queue *q, const char *name,
- 						size_t count);
++struct io_policy_node {
++	struct list_head node;
++	char dev_name[32];
++	dev_t dev;
++	unsigned long weight;
++	unsigned long ioprio_class;
++};
 +
-+extern ssize_t elv_async_slice_idle_show(struct request_queue *q, char *name);
-+extern ssize_t elv_async_slice_idle_store(struct request_queue *q,
-+					const char *name, size_t count);
+ /**
+  * struct bfqio_cgroup - bfq cgroup data structure.
+  * @css: subsystem state for bfq in the containing cgroup.
+@@ -267,6 +275,9 @@ struct io_cgroup {
+ 
+ 	unsigned long weight, ioprio_class;
+ 
++	/* list of io_policy_node */
++	struct list_head policy_list;
 +
- extern ssize_t elv_slice_async_show(struct request_queue *q, char *name);
- extern ssize_t elv_slice_async_store(struct request_queue *q, const char *name,
- 						size_t count);
+ 	spinlock_t lock;
+ 	struct hlist_head group_data;
+ };
 -- 
 1.6.0.1
