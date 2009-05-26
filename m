@@ -1,215 +1,169 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 03/20] io-controller: Charge for time slice based on average disk rate
-Date: Tue, 26 May 2009 18:41:52 -0400
-Message-ID: <1243377729-2176-4-git-send-email-vgoyal@redhat.com>
+From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 06/20] io-controller: cfq changes to use hierarchical fair
+	queuing code in elevaotor layer
+Date: Tue, 26 May 2009 18:41:55 -0400
+Message-ID: <1243377729-2176-7-git-send-email-vgoyal@redhat.com>
 References: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758203AbZEZWnZ@vger.kernel.org>
-In-Reply-To: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@googl
-Cc: agk@redhat.com, snitzer@redhat.com, vgoyal@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1243377729-2176-1-git-send-email-vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, nauman-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, dpshah-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, lizf-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-o There are situations where a queue gets expired very soon and it looks
-  as if time slice used by that queue is zero. For example, If an async
-  queue dispatches a bunch of requests and queue is expired before first
-  request completes. Another example is where a queue is expired as soon
-  as first request completes and queue has no more requests (sync queues
-  on SSD).
+Make cfq hierarhical.
 
-o Currently we just charge 25% of slice length in such cases. This patch tries
-  to improve on that approximation by keeping a track of average disk rate
-  and charging for time by nr_sectors/disk_rate.
-
-o This is still experimental, not very sure if it gives measurable improvement
-  or not.
-
-Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+Signed-off-by: Nauman Rafique <nauman-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Fabio Checconi <fabio-f9ZlEuEWxVeACYmtYXMKmw@public.gmane.org>
+Signed-off-by: Paolo Valente <paolo.valente-rcYM44yAMweonA0d6jMUrA@public.gmane.org>
+Signed-off-by: Aristeu Rozanski <aris-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 ---
- block/elevator-fq.c |   85 +++++++++++++++++++++++++++++++++++++++++++++++++-
- block/elevator-fq.h |   11 ++++++
- 2 files changed, 94 insertions(+), 2 deletions(-)
+ block/Kconfig.iosched |    8 ++++++
+ block/cfq-iosched.c   |   58 ++++++++++++++++++++++++++++++++++++++++++++++--
+ init/Kconfig          |    2 +-
+ 3 files changed, 64 insertions(+), 4 deletions(-)
 
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index c5cc080..73b997a 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -19,6 +19,9 @@ const int elv_slice_async_rq = 2;
- int elv_slice_idle = HZ / 125;
- static struct kmem_cache *elv_ioq_pool;
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index dd5224d..a91a807 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -54,6 +54,14 @@ config IOSCHED_CFQ
+ 	  working environment, suitable for desktop systems.
+ 	  This is the default I/O scheduler.
  
-+/* Maximum Window length for updating average disk rate */
-+static int elv_rate_sampling_window = HZ / 10;
++config IOSCHED_CFQ_HIER
++	bool "CFQ Hierarchical Scheduling support"
++	depends on IOSCHED_CFQ && CGROUPS
++	select GROUP_IOSCHED
++	default n
++	---help---
++	  Enable hierarhical scheduling in cfq.
 +
- #define ELV_SLICE_SCALE		(5)
- #define ELV_HW_QUEUE_MIN	(5)
- #define IO_SERVICE_TREE_INIT   ((struct io_service_tree)		\
-@@ -1022,6 +1025,47 @@ static void elv_ioq_update_io_thinktime(struct io_queue *ioq)
- 	ioq->ttime_mean = (ioq->ttime_total + 128) / ioq->ttime_samples;
+ choice
+ 	prompt "Default I/O scheduler"
+ 	default DEFAULT_CFQ
+diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
+index f90c534..f00110e 100644
+--- a/block/cfq-iosched.c
++++ b/block/cfq-iosched.c
+@@ -1229,6 +1229,50 @@ static void cfq_ioc_set_ioprio(struct io_context *ioc)
+ 	ioc->ioprio_changed = 0;
  }
  
-+static void elv_update_io_rate(struct elv_fq_data *efqd, struct request *rq)
++#ifdef CONFIG_IOSCHED_CFQ_HIER
++static void changed_cgroup(struct io_context *ioc, struct cfq_io_context *cic)
 +{
-+	long elapsed = jiffies - efqd->rate_sampling_start;
-+	unsigned long total;
++	struct cfq_queue *async_cfqq = cic_to_cfqq(cic, 0);
++	struct cfq_queue *sync_cfqq = cic_to_cfqq(cic, 1);
++	struct cfq_data *cfqd = cic->key;
++	struct io_group *iog, *__iog;
++	unsigned long flags;
++	struct request_queue *q;
 +
-+	/* sampling window is off */
-+	if (!efqd->rate_sampling_start)
++	if (unlikely(!cfqd))
 +		return;
 +
-+	efqd->rate_sectors_current += rq->nr_sectors;
++	q = cfqd->queue;
 +
-+	if (efqd->rq_in_driver && (elapsed < elv_rate_sampling_window))
-+		return;
++	spin_lock_irqsave(q->queue_lock, flags);
 +
-+	efqd->rate_sectors = (7*efqd->rate_sectors +
-+				256*efqd->rate_sectors_current) / 8;
++	iog = io_get_io_group(q, 0);
 +
-+	if (!elapsed) {
-+		/*
-+		 * updating rate before a jiffy could complete. Could be a
-+		 * problem with fast queuing/non-queuing hardware. Should we
-+		 * look at higher resolution time source?
-+		 *
-+		 * In case of non-queuing hardware we will probably not try to
-+		 * dispatch from multiple queues and will be able to account
-+		 * for disk time used and will not need this approximation
-+		 * anyway?
-+		 */
-+		elapsed = 1;
++	if (async_cfqq != NULL) {
++		__iog = cfqq_to_io_group(async_cfqq);
++
++		if (iog != __iog) {
++			cic_set_cfqq(cic, NULL, 0);
++			cfq_put_queue(async_cfqq);
++		}
 +	}
 +
-+	efqd->rate_time = (7*efqd->rate_time + 256*elapsed) / 8;
-+	total = efqd->rate_sectors + (efqd->rate_time/2);
-+	efqd->mean_rate = total/efqd->rate_time;
++	if (sync_cfqq != NULL) {
++		__iog = cfqq_to_io_group(sync_cfqq);
++		if (iog != __iog)
++			io_ioq_move(q->elevator, sync_cfqq->ioq, iog);
++	}
 +
-+	elv_log(efqd, "mean_rate=%d, t=%d s=%d", efqd->mean_rate,
-+			elapsed, efqd->rate_sectors_current);
-+	efqd->rate_sampling_start = 0;
-+	efqd->rate_sectors_current = 0;
++	spin_unlock_irqrestore(q->queue_lock, flags);
 +}
 +
- /*
-  * Disable idle window if the process thinks too long.
-  * This idle flag can also be updated by io scheduler.
-@@ -1312,6 +1356,34 @@ void elv_del_ioq_busy(struct elevator_queue *e, struct io_queue *ioq,
- }
- 
- /*
-+ * Calculate the effective disk time used by the queue based on how many
-+ * sectors queue has dispatched and what is the average disk rate
-+ * Returns disk time in ms.
-+ */
-+static inline unsigned long elv_disk_time_used(struct request_queue *q,
-+					struct io_queue *ioq)
++static void cfq_ioc_set_cgroup(struct io_context *ioc)
 +{
-+	struct elv_fq_data *efqd = &q->elevator->efqd;
-+	struct io_entity *entity = &ioq->entity;
-+	unsigned long jiffies_used = 0;
-+
-+	if (!efqd->mean_rate)
-+		return entity->budget/4;
-+
-+	/* Charge the queue based on average disk rate */
-+	jiffies_used = ioq->nr_sectors/efqd->mean_rate;
-+
-+	if (!jiffies_used)
-+		jiffies_used = 1;
-+
-+	elv_log_ioq(efqd, ioq, "disk time=%ldms sect=%ld rate=%ld",
-+				jiffies_to_msecs(jiffies_used),
-+				ioq->nr_sectors, efqd->mean_rate);
-+
-+	return jiffies_used;
++	call_for_each_cic(ioc, changed_cgroup);
++	ioc->cgroup_changed = 0;
 +}
++#endif  /* CONFIG_IOSCHED_CFQ_HIER */
 +
-+/*
-  * Do the accounting. Determine how much service (in terms of time slices)
-  * current queue used and adjust the start, finish time of queue and vtime
-  * of the tree accordingly.
-@@ -1363,7 +1435,7 @@ void __elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
- 	 * the requests to finish. But this will reduce throughput.
- 	 */
- 	if (!ioq->slice_end)
--		slice_used = entity->budget/4;
-+		slice_used = elv_disk_time_used(q, ioq);
- 	else {
- 		if (time_after(ioq->slice_end, jiffies)) {
- 			slice_unused = ioq->slice_end - jiffies;
-@@ -1373,7 +1445,7 @@ void __elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
- 				 * completing first request. Charge 25% of
- 				 * slice.
- 				 */
--				slice_used = entity->budget/4;
-+				slice_used = elv_disk_time_used(q, ioq);
- 			} else
- 				slice_used = entity->budget - slice_unused;
- 		} else {
-@@ -1391,6 +1463,8 @@ void __elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
- 	BUG_ON(ioq != efqd->active_queue);
- 	elv_reset_active_ioq(efqd);
- 
-+	/* Queue is being expired. Reset number of secotrs dispatched */
-+	ioq->nr_sectors = 0;
- 	if (!ioq->nr_queued)
- 		elv_del_ioq_busy(q->elevator, ioq, 1);
- 	else
-@@ -1725,6 +1799,7 @@ void elv_fq_dispatched_request(struct elevator_queue *e, struct request *rq)
- 
- 	BUG_ON(!ioq);
- 	elv_ioq_request_dispatched(ioq);
-+	ioq->nr_sectors += rq->nr_sectors;
- 	elv_ioq_request_removed(e, rq);
- 	elv_clear_ioq_must_dispatch(ioq);
- }
-@@ -1737,6 +1812,10 @@ void elv_fq_activate_rq(struct request_queue *q, struct request *rq)
- 		return;
- 
- 	efqd->rq_in_driver++;
+ static struct cfq_queue *
+ cfq_find_alloc_queue(struct cfq_data *cfqd, int is_sync,
+ 				struct io_context *ioc, gfp_t gfp_mask)
+@@ -1237,7 +1281,10 @@ cfq_find_alloc_queue(struct cfq_data *cfqd, int is_sync,
+ 	struct cfq_io_context *cic;
+ 	struct request_queue *q = cfqd->queue;
+ 	struct io_queue *ioq = NULL, *new_ioq = NULL;
++	struct io_group *iog = NULL;
+ retry:
++	iog = io_get_io_group(q, 1);
 +
-+	if (!efqd->rate_sampling_start)
-+		efqd->rate_sampling_start = jiffies;
-+
- 	elv_log_ioq(efqd, rq_ioq(rq), "activate rq, drv=%d",
- 						efqd->rq_in_driver);
- }
-@@ -1828,6 +1907,8 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 	efqd->rq_in_driver--;
- 	ioq->dispatched--;
+ 	cic = cfq_cic_lookup(cfqd, ioc);
+ 	/* cic always exists here */
+ 	cfqq = cic_to_cfqq(cic, is_sync);
+@@ -1304,8 +1351,9 @@ alloc_ioq:
  
-+	elv_update_io_rate(efqd, rq);
-+
- 	if (sync)
- 		ioq->last_end_request = jiffies;
+ 		cfqq->ioq = ioq;
+ 		cfq_init_prio_data(cfqq, ioc);
+-		elv_init_ioq(q->elevator, ioq, cfqq, cfqq->org_ioprio_class,
+-				cfqq->org_ioprio, is_sync);
++		elv_init_ioq(q->elevator, ioq, iog, cfqq,
++				cfqq->org_ioprio_class, cfqq->org_ioprio,
++				is_sync);
  
-diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index 3bea279..ce2d671 100644
---- a/block/elevator-fq.h
-+++ b/block/elevator-fq.h
-@@ -165,6 +165,9 @@ struct io_queue {
- 	/* Requests dispatched from this queue */
- 	int dispatched;
+ 		if (is_sync) {
+ 			if (!cfq_class_idle(cfqq))
+@@ -1335,7 +1383,7 @@ cfq_get_queue(struct cfq_data *cfqd, int is_sync, struct io_context *ioc,
+ 	const int ioprio_class = task_ioprio_class(ioc);
+ 	struct cfq_queue *async_cfqq = NULL;
+ 	struct cfq_queue *cfqq = NULL;
+-	struct io_group *iog = io_lookup_io_group_current(cfqd->queue);
++	struct io_group *iog = io_get_io_group(cfqd->queue, 1);
  
-+	/* Number of sectors dispatched in current dispatch round */
-+	int nr_sectors;
-+
- 	/* Keep a track of think time of processes in this queue */
- 	unsigned long last_end_request;
- 	unsigned long ttime_total;
-@@ -223,6 +226,14 @@ struct elv_fq_data {
- 	struct work_struct unplug_work;
+ 	if (!is_sync) {
+ 		async_cfqq = io_group_async_queue_prio(iog, ioprio_class,
+@@ -1494,6 +1542,10 @@ out:
+ 	smp_read_barrier_depends();
+ 	if (unlikely(ioc->ioprio_changed))
+ 		cfq_ioc_set_ioprio(ioc);
++#ifdef CONFIG_IOSCHED_CFQ_HIER
++	if (unlikely(ioc->cgroup_changed))
++		cfq_ioc_set_cgroup(ioc);
++#endif
+ 	return cic;
+ err_free:
+ 	cfq_cic_free(cic);
+diff --git a/init/Kconfig b/init/Kconfig
+index ab76477..1a4686d 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -607,7 +607,7 @@ config CGROUP_MEM_RES_CTLR_SWAP
+ 	  size is 4096bytes, 512k per 1Gbytes of swap.
  
- 	unsigned int elv_slice[2];
-+
-+	/* Fields for keeping track of average disk rate */
-+	unsigned long rate_sectors; /* number of sectors finished */
-+	unsigned long rate_time;   /* jiffies elapsed */
-+	unsigned long mean_rate; /* sectors per jiffy */
-+	unsigned long long rate_sampling_start; /*sampling window start jifies*/
-+	/* number of sectors finished io during current sampling window */
-+	unsigned long rate_sectors_current;
- };
- 
- extern int elv_slice_idle;
+ config GROUP_IOSCHED
+-	bool "Group IO Scheduler"
++	bool
+ 	depends on CGROUPS && ELV_FAIR_QUEUING
+ 	default n
+ 	---help---
 -- 
 1.6.0.1
