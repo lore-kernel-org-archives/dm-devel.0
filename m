@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1/3] dm table: ensure targets are aligned to
-	logical_block_size
-Date: Wed, 27 May 2009 17:06:51 -0400
-Message-ID: <1243458413-15854-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 2/3] dm table: validate device logical_block_size
+Date: Wed, 27 May 2009 17:06:52 -0400
+Message-ID: <1243458413-15854-3-git-send-email-snitzer@redhat.com>
 References: <1243458413-15854-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,104 +19,101 @@ To: dm-devel@redhat.com
 Cc: martin.petersen@oracle.com, agk@redhat.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-Ensure I/O is aligned to the logical_block_size of target devices.
-
-Rename check_device_area() to device_area_is_valid() for clarity and
-establish the device limits including the logical block size prior to
-calling it.
+Impose necessary and sufficient conditions on a devices's table such
+that any incoming bio which respects its logical_block_size can be
+processed successfully.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 
 ---
- drivers/md/dm-table.c |   57 ++++++++++++++++++++++++++++++++++++++------------
- 1 file changed, 44 insertions(+), 13 deletions(-)
+ drivers/md/dm-table.c |   69 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 69 insertions(+)
 
 Index: linux-2.6/drivers/md/dm-table.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-table.c
 +++ linux-2.6/drivers/md/dm-table.c
-@@ -385,15 +385,45 @@ static void close_dev(struct dm_dev_inte
- /*
-  * If possible, this checks an area of a destination device is valid.
-  */
--static int check_device_area(struct dm_dev_internal *dd, sector_t start,
--			     sector_t len)
-+static int device_area_is_valid(struct dm_target *ti, struct block_device *bdev,
-+			     sector_t start, sector_t len)
+@@ -726,6 +726,71 @@ static void check_for_valid_limits(struc
+ 		rs->bounce_pfn = -1;
+ }
+ 
++/*
++ * Impose necessary and sufficient conditions on a devices's table such
++ * that any incoming bio which respects its logical_block_size can be
++ * processed successfully.  If it falls across the boundary between
++ * two or more targets, the size of each piece it gets split into must
++ * be compatible with the logical_block_size of the target processing it.
++ */
++static int validate_hardware_logical_block_alignment(struct dm_table *table)
++{
++	/*
++	 * This function uses arithmetic modulo the logical_block_size
++	 * (in units of 512-byte sectors).
++	 */
++	unsigned short device_logical_block_size_sects =
++		table->limits.logical_block_size >> SECTOR_SHIFT;
++
++	/*
++	 * Offset of the start of the next table entry, mod logical_block_size.
++	 */
++	unsigned short next_target_start = 0;
++
++	/*
++	 * Given an aligned bio that extends beyond the end of a
++	 * target, how many sectors must the next target handle?
++	 */
++	unsigned short remaining = 0;
++
++	struct dm_target *uninitialized_var(ti);
++	unsigned i = 0;
++
++	/*
++	 * Check each entry in the table in turn.
++	 */
++	while (i < dm_table_get_num_targets(table)) {
++		ti = dm_table_get_target(table, i++);
++
++		/*
++		 * If the remaining sectors fall entirely within this
++		 * table entry are they compatible with its logical_block_size?
++		 */
++		if (remaining < ti->len &&
++		    remaining & ((ti->limits.logical_block_size >>
++				  SECTOR_SHIFT) - 1))
++			break;	/* Error */
++
++		next_target_start =
++		    (unsigned short) ((next_target_start + ti->len) &
++				      (device_logical_block_size_sects - 1));
++		remaining = next_target_start ?
++		    device_logical_block_size_sects - next_target_start : 0;
++	}
++
++	if (remaining) {
++		DMWARN("%s: table line %u (start sect %llu len %llu) "
++		       "not aligned to h/w logical_block_size %hu",
++		       dm_device_name(table->md), i,
++		       (unsigned long long) ti->begin,
++		       (unsigned long long) ti->len,
++		       table->limits.logical_block_size);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
+ int dm_table_add_target(struct dm_table *t, const char *type,
+ 			sector_t start, sector_t len, char *params)
  {
--	sector_t dev_size = dd->dm_dev.bdev->bd_inode->i_size >> SECTOR_SHIFT;
-+	sector_t dev_size = bdev->bd_inode->i_size >> SECTOR_SHIFT;
-+	unsigned short logical_block_size_sectors =
-+		ti->limits.logical_block_size >> SECTOR_SHIFT;
-+	char b[BDEVNAME_SIZE];
+@@ -825,6 +890,10 @@ int dm_table_complete(struct dm_table *t
  
- 	if (!dev_size)
- 		return 1;
+ 	check_for_valid_limits(&t->limits);
  
--	return ((start < dev_size) && (len <= (dev_size - start)));
-+	if ((start >= dev_size) || (start + len > dev_size)) {
-+		DMWARN("%s: %s too small for target",
-+		       dm_device_name(ti->table->md), bdevname(bdev, b));
-+		return 0;
-+	}
-+
-+	if (logical_block_size_sectors <= 1)
-+		return 1;
-+
-+	if (start & (logical_block_size_sectors - 1)) {
-+		DMWARN("%s: start=%llu not aligned to h/w "
-+		       "logical_block_size %hu of %s",
-+		       dm_device_name(ti->table->md),
-+		       (unsigned long long)start,
-+		       ti->limits.logical_block_size, bdevname(bdev, b));
-+		return 0;
-+	}
-+
-+	if (len & (logical_block_size_sectors - 1)) {
-+		DMWARN("%s: len=%llu not aligned to h/w "
-+		       "logical_block_size %hu of %s",
-+		       dm_device_name(ti->table->md),
-+		       (unsigned long long)len,
-+		       ti->limits.logical_block_size, bdevname(bdev, b));
-+		return 0;
-+	}
-+
-+	return 1;
- }
- 
- /*
-@@ -479,14 +509,7 @@ static int __table_get_device(struct dm_
- 	}
- 	atomic_inc(&dd->count);
- 
--	if (!check_device_area(dd, start, len)) {
--		DMWARN("device %s too small for target", path);
--		dm_put_device(ti, &dd->dm_dev);
--		return -EINVAL;
--	}
--
- 	*result = &dd->dm_dev;
--
- 	return 0;
- }
- 
-@@ -555,8 +578,16 @@ int dm_get_device(struct dm_target *ti, 
- 	int r = __table_get_device(ti->table, ti, path,
- 				   start, len, mode, result);
- 
--	if (!r)
--		dm_set_device_limits(ti, (*result)->bdev);
++	r = validate_hardware_logical_block_alignment(t);
 +	if (r)
 +		return r;
 +
-+	dm_set_device_limits(ti, (*result)->bdev);
-+
-+	if (!device_area_is_valid(ti, (*result)->bdev, start, len)) {
-+		dm_put_device(ti, *result);
-+		*result = NULL;
-+		return -EINVAL;
-+	}
- 
- 	return r;
- }
+ 	/* how many indexes will the btree have ? */
+ 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
+ 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
