@@ -1,56 +1,74 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: "multipath -l" not displaying all the paths if we
-	have more than 3000 paths.
-Date: Wed, 27 May 2009 21:18:25 -0400
-Message-ID: <20090528011825.GB26270@mars.virtualiron.com>
-References: <4F2CC79CDB05B844AEEA72F36255835403FD4ED5@bunker.inside.abhaisystems.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Fabio Checconi <fchecconi@gmail.com>
+Subject: Re: [PATCH 02/20] io-controller: Common flat fair queuing code in elevaotor layer
+Date: Thu, 28 May 2009 10:52:07 +0200
+Message-ID: <20090528085207.GA18909@gandalf.sssup.it>
+References: <1243377729-2176-1-git-send-email-vgoyal@redhat.com> <1243377729-2176-3-git-send-email-vgoyal@redhat.com> <e98e18940905271353kc6890dbxa1ea63026c8faec1@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762526AbZE1IwU@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4F2CC79CDB05B844AEEA72F36255835403FD4ED5@bunker.inside.abhaisystems.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <e98e18940905271353kc6890dbxa1ea63026c8faec1@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nauman Rafique <nauman@google.com>
+Cc: Vivek Goyal <vgoyal@redhat.com>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-On Thu, May 21, 2009 at 11:38:17PM -0700, Harikrishnan Padidakul wrote:
-> Hi All
+> From: Nauman Rafique <nauman@google.com>
+> Date: Wed, May 27, 2009 01:53:59PM -0700
+>
+> On Tue, May 26, 2009 at 3:41 PM, Vivek Goyal <vgoyal@redhat.com> wrote:
+> > This is common fair queuing code in elevator layer. This is controlled by
+...
+> > +/**
+> > + * __bfq_lookup_next_entity - return the first eligible entity in @st.
+> > + * @st: the service tree.
+> > + *
+> > + * Update the virtual time in @st and return the first eligible entity
+> > + * it contains.
+> > + */
+> > +static struct io_entity *__bfq_lookup_next_entity(struct io_service_tree *st)
+> > +{
+> > +	struct io_entity *entity;
+> > +
+> > +	if (RB_EMPTY_ROOT(&st->active))
+> > +		return NULL;
+> > +
+> > +	bfq_update_vtime(st);
 > 
-> I downloaded the latest multipath tool from git-clone http://kernel.org/pub/scm/linux/storage/multipath-tools/ <http://kernel.org/pub/scm/linux/storage/multipath-tools/.git> 
-> 1) Tested with around 4000 paths(1000LUN exported to four port), and I observed multipath -l is not displaying all the paths.
-
-You have to be more specific here. What kernel are you using?  If you
-are using a RHEL5 or SLES10 based there is a race-condition where the
-/sys/block devices are created without all the data entries populated
-and multipathd can't get all the data from them.
-
-And by
-"not displaying all the paths", you mean that it did not have all of the
-4 paths per LUN?? Or that you did not have 1000 multipath device maps?
-
-> 2) And when we fail a path by disabling the port, all the path which are failed are not shown in multipath.
-
-Do they show when you do "multipathd -k 'show paths'" as orphans?
-
-Or do they show up if you run 'multipath' by itself?
+> Vivek, Paolo, Fabio,
+> Over here we call bfq_update_vtime(), and this function could have
+> been called even when we are just doing a lookup (and not an extract).
+> So vtime is updated while we are not really selecting the next queue
+> for service (for an example, see elv_preempt_queue()). This can result
+> in a call to update_vtime when only an entity with small weight (say
+> weight=1) is backlogged and another entity with bigger weight (say 10)
+> is getting serviced so it is not in the tree (we extract the entity
+> which is getting service). This results in a big vtime jump to the
+> start time of the entity with weight 1 (entity of weight 1 would have
+> big start times, as it has small weight). Now when another entity with
+> bigger weight (say 90) gets backlogged, it is assigned a new vtime
+> from service tree's vtime, causing it to get a big value. In the
+> meanwhile, iog for weight 10 keeps getting service for many quantums,
+> as it was continuously backlogged.
 > 
-> Have we tested multipath with more than 3000 paths?
+> The problem happens because we extract an entity (removing it from the
+> tree) while it is getting service, and do vtime jumps based on what is
+> still in the tree. I think we need to add an extra check on the vtime
+> of the entity in service, before we take a vtime jump.
 > 
-> Thanks in advance.
+> I have actually seen this happening when trying to debug on of my
+> tests. Please let me know what you think.
 > 
-> Regards,
-> Hari
 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+IIRC this behavior is not coming from bfq, as the original code
+called __bfq_lookup_next_entity() without extraction only if there
+was no entity under service (in bfq_update_next_active() it checked
+for sd->active_entity != NULL).
+
+I've not looked at the details of what changed, thus I don't know
+why the old behavior cannot be maintained, but the virtual time jump
+should be avoided in this case (and it is not specified by the wf2q+
+algorithm).
+
+[ sorry for the excessive trimming, but due to some charset problems
+  the quotations were unreadable ]
