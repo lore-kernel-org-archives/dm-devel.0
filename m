@@ -1,56 +1,24 @@
 From: Goswin von Brederlow <goswin-v-b@web.de>
-Subject: Re: raid failure and LVM volume group availability
-Date: Thu, 28 May 2009 20:48:10 +0200
-Message-ID: <87skipysgl.fsf@frosties.localdomain>
-References: <alpine.DEB.2.00.0905211232250.26077@dirac.rather.puzzling.org>
-	<389deec70905250909h79c599b2gfd2229520f5a8ce0@mail.gmail.com>
-	<87ws84nmy0.fsf@frosties.localdomain>
-	<18971.55554.63887.457689@notabene.brown>
+Subject: Re: [RFC PATCH] dm-csum: A new device mapper target that checks data integrity
+Date: Thu, 28 May 2009 21:29:52 +0200
+Message-ID: <878wkhyqj3.fsf@frosties.localdomain>
+References: <20090521161317.GU1376@blitiri.com.ar>
+	<87my91qsn4.fsf@frosties.localdomain>
+	<20090525174630.GI1376@blitiri.com.ar>
+	<8763fop31e.fsf@frosties.localdomain>
+	<20090526125252.GL1376@blitiri.com.ar>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <18971.55554.63887.457689@notabene.brown> (Neil Brown's message
-	of "Tue, 26 May 2009 21:56:50 +1000")
+In-Reply-To: <20090526125252.GL1376@blitiri.com.ar> (Alberto Bertogli's
+	message of "Tue, 26 May 2009 09:52:52 -0300")
 Sender: linux-raid-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>
-Cc: Goswin von Brederlow <goswin-v-b@web.de>, hank peng <pengxihan@gmail.com>, Tim Connors <tconnors@rather.puzzling.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com
+To: Alberto Bertogli <albertito@blitiri.com.ar>
+Cc: Goswin von Brederlow <goswin-v-b@web.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-Neil Brown <neilb@suse.de> writes:
-
-> On Tuesday May 26, goswin-v-b@web.de wrote:
->> hank peng <pengxihan@gmail.com> writes:
->> 
->> > Only one of disks in this RAID1failed, it should continue to work with
->> > degraded state.
->> > Why LVM complained with I/O errors??
->> 
->> That is because the last drive in a raid1 can not fail:
->> 
->> md9 : active raid1 ram1[1] ram0[2](F)
->>       65472 blocks [2/1] [_U]
->> 
->> # mdadm --fail /dev/md9 /dev/ram1
->> mdadm: set /dev/ram1 faulty in /dev/md9
->> 
->> md9 : active raid1 ram1[1] ram0[2](F)
->>       65472 blocks [2/1] [_U]
->> 
->> See, still marked working.
->> 
->> MfG
->>         Goswin
->> 
->> PS: Why doesn't mdadm or kernel give a message about not failing?
->
-> -ENOPATCH :-)
->
-> You would want to rate limit any such message from the kernel, but it
-> might make sense to have it.
->
-> NeilBrown
-
-No rate risk in mdadm --fail reporting a failure to fail the device.
+Now I need to get a new harddisk so I can test this without risking
+live data. :)
 
 MfG
         Goswin
