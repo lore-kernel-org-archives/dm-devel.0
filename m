@@ -1,18 +1,17 @@
-From: Nauman Rafique <nauman@google.com>
-Subject: Re: [PATCH 02/20] io-controller: Common flat fair
-	queuing code in elevaotor layer
-Date: Thu, 28 May 2009 12:41:27 -0700
-Message-ID: <e98e18940905281241v4aa24716j91f351a828af604a@mail.gmail.com>
-References: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
-	<1243377729-2176-3-git-send-email-vgoyal@redhat.com>
-	<e98e18940905271353kc6890dbxa1ea63026c8faec1@mail.gmail.com>
-	<20090528160003.GA4335@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [PATCH 15/20] io-controller: map async requests to
+ appropriate cgroup
+Date: Fri, 29 May 2009 12:17:37 +0900 (JST)
+Message-ID: <20090529.121737.189708024.ryov@valinux.co.jp>
+References: <1243377729-2176-16-git-send-email-vgoyal@redhat.com>
+	<20090528.182740.193697101.ryov@valinux.co.jp>
+	<20090528165710.GB4335@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090528160003.GA4335@redhat.com>
+In-Reply-To: <20090528165710.GB4335@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,149 +21,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, jbaron@redhat.com
+To: vgoyal@redhat.com
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, jbaron@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, May 28, 2009 at 9:00 AM, Vivek Goyal <vgoyal@redhat.com> wrote:
-> On Wed, May 27, 2009 at 01:53:59PM -0700, Nauman Rafique wrote:
->
-> [..]
->> > +/**
->> > + * __bfq_lookup_next_entity - return the first eligible entity in @=
-st.
->> > + * @st: the service tree.
->> > + *
->> > + * Update the virtual time in @st and return the first eligible ent=
-ity
->> > + * it contains.
->> > + */
->> > +static struct io_entity *__bfq_lookup_next_entity(struct io_service=
-_tree *st)
->> > +{
->> > + =A0 =A0 =A0 struct io_entity *entity;
->> > +
->> > + =A0 =A0 =A0 if (RB_EMPTY_ROOT(&st->active))
->> > + =A0 =A0 =A0 =A0 =A0 =A0 =A0 return NULL;
->> > +
->> > + =A0 =A0 =A0 bfq_update_vtime(st);
->>
->> Vivek, Paolo, Fabio,
->> Over here we call bfq_update_vtime(), and this function could have
->> been called even when we are just doing a lookup (and not an extract).
->> So vtime is updated while we are not really selecting the next queue
->> for service (for an example, see elv_preempt_queue()). This can result
->> in a call to update_vtime when only an entity with small weight (say
->> weight=3D1) is backlogged and another entity with bigger weight (say 1=
-0)
->> is getting serviced so it is not in the tree (we extract the entity
->> which is getting service). This results in a big vtime jump to the
->> start time of the entity with weight 1 (entity of weight 1 would have
->> big start times, as it has small weight). Now when another entity with
->> bigger weight (say 90) gets backlogged, it is assigned a new vtime
->> from service tree's vtime, causing it to get a big value. In the
->> meanwhile, iog for weight 10 keeps getting service for many quantums,
->> as it was continuously backlogged.
->>
->> The problem happens because we extract an entity (removing it from the
->> tree) while it is getting service, and do vtime jumps based on what is
->> still in the tree. I think we need to add an extra check on the vtime
->> of the entity in service, before we take a vtime jump.
->>
->> I have actually seen this happening when trying to debug on of my
->> tests. Please let me know what you think.
->>
->
-> Hi Nauman,
->
-> This sounds like a problem but apart from elv_preempt_queue(), in which=
- path
-> do you see it?
->
-> Initially fabio posted the patches where preemption was allowed only if
-> the preempting queue is the next one to be served. To keep the behavior
-> same as CFQ, I have changed that logic and if we decide to preempt the
-> current queue (based on many checks like sync or async), I expire the
-> current queue and add the new queue to the front of the service tree so
-> that it is selected next. It does impact the fairness a bit but that's =
-how
-> cfq does it today and concept of preemption with-in same prio class is
-> somewhat peculiar.
->
-> So in latest patches preemption path is covered. There does not seem to=
- be
-> other paths where we do lookups while and active entity is being served=
-.
-> For example, update_next_active() does not continue with lookup if ther=
-e
-> is an active entity. So with this version of patch, you should not face
-> the issue.
->
-> In general, I think it is a good idea to fix it in update_vtime() so
-> that not to udpate vtime if there is an active entity and not rely on
-> caller who makes sure that update_vtime() is not called when there is
-> an active entity. Do you have a quick patch for that?
+Hi Vivek,
 
-Adding this extra check in update_vtime() is tricky. If we don't
-update vtime, then its possible that lookup would return no entity,
-even though there are backlogged queues, as all backlogged entities
-might be not eligible (i.e have start times bigger than vtime).
-When an entity is currently under service, we don't know what would be
-the next entity really, as it could be the current entity under
-service, depending on the actual time slice used by under service
-entity.
+Vivek Goyal <vgoyal@redhat.com> wrote:
+> On Thu, May 28, 2009 at 06:27:40PM +0900, Ryo Tsuruta wrote:
+> > Hi Vivek,
+> > 
+> > > +#ifdef CONFIG_TRACK_ASYNC_CONTEXT
+> > > +	if (elv_bio_sync(bio)) {
+> > > +		/* sync io. Determine cgroup from submitting task context. */
+> > > +		cgroup = task_cgroup(current, io_subsys_id);
+> > > +		return cgroup;
+> > > +	}
+> > > +
+> > > +	/* Async io. Determine cgroup from with cgroup id stored in page */
+> > > +	bio_cgroup_id = get_blkio_cgroup_id(bio);
+> > > +
+> > > +	if (!bio_cgroup_id)
+> > > +		return NULL;
+> > > +
+> > > +	cgroup = blkio_cgroup_lookup(bio_cgroup_id);
+> > > +#else
+> > > +	cgroup = task_cgroup(current, io_subsys_id);
+> > > +#endif
+> > > +	return cgroup;
+> > > +}
+> > 
+> > There is a case where a kernel thread (such as device-mapper drivers)
+> > submits a sync IO instead of a task which originates the IO. I think
+> > you should always use get_blkio_cgroup_id() to determine cgroup.
+> > 
+> 
+> Hi Ryo,
+> 
+> Ok. Can you give some examples of drivers which are submitting reads in
+> different context al-together. You mentioned in the past that dm-crypt
+> looks like the one. How does current CFQ takes care of that. So if a 
+> BE prio 7 or an RT prio 0, task is submitting a READ, CFQ will not know it
+> and it will put that READ in the queue of the READ submitting device
+> mapper thread (may be BE prio 3 or 4)? 
 
-You are right that the lookup (without extract) was done only in
-preemption path. And with your latest changes, even that is removed.
-In this case, just having a BUG_ON() to ensure this does not happen
-should suffice.
+In the case of READ, dm-raid1 submits read IOs in differenct context
+under some conditions. dm-ioband also does it.
 
-commit dc54ad458b907db5523e8a088786014da8c4b3b2
-Author: Nauman Rafique <nauman@google.com>
-Date:   Thu May 28 12:27:00 2009 -0700
+> Always determining the cgroup from bio, will make things slower at the 
+> same time complicated from the CFQ point of view. Right now cfq creates
+> and caches the queue pointer in the io context of the bio submitting task
+> and assumes sync requests are coming from that task/io context. Currently
+> there can only be one sync queue associated with one context. So if a single
+> thread is submitting reads (may be a worker thread) on behalf of other
+> processes, then we loose the io context information. In fact currently we
+> don't even carry ioprio and io class information in bio.
+> 
+> So looks like we need to carry task io context information also in bio
+> to be able to associate the bio to right queue at CFQ level. This makes
+> it bit more complicated. For the time being I will keep it in my TODO
+> list and handle it once other more severe problems have been taken care
+> of.
 
-    Add a BUG_ON() that should fire when we can update vtime while just
-    doing a lookup for next entity (and not extraction).
+There is a patchset which makes every bio points the iocontext of the
+process which is originally generated an IO request.
 
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index f1179aa..d512c1b 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -1036,8 +1036,11 @@ struct io_entity *bfq_lookup_next_entity(struct
-io_sched_data *sd,
-        /*
-         * One can check for which will be next selected entity without
-         * expiring the current one.
-+        * Also, we should not call lookup when an entity is active, as
-+        * we extract an active entity from tree, and doing lookup can re=
-sult
-+        * in an erroneous vtime jump when active entity is extacted from=
- tree.
-         */
--       BUG_ON(extract && sd->active_entity !=3D NULL);
-+       BUG_ON(sd->active_entity !=3D NULL);
+  Date Tue, 22 Apr 2008 22:51:31 +0900 (JST)
+  Subject [RFC][PATCH 1/10] I/O context inheritance
+  From Hirokazu Takahashi <>
+  http://lkml.org/lkml/2008/4/22/195
 
-        for (i =3D 0; i < IO_IOPRIO_CLASSES; i++, st++) {
-                entity =3D __bfq_lookup_next_entity(st);
-
-
-I have some concerns about the new preemption logic. We modify the
-start and finish time to make sure the entity gets selected next. So
-the entity which preempts others can eventually get more service than
-others (specially if it keeps preempting others). It seems that we can
-fix that by temporarily pushing the entity to the front, without
-modifying start/finish times. One way to do that is to add an extra
-flag to an entity. When the flag is set, we can ignore finish times
-and prefer the entity (in bfq_first_active_entity()). This has the
-advantage that since we are preserving start/finish times, over time,
-such an entity will be de-prioritized over others. In order to ensure
-that actually does happen, we can introduce a threshold (call it
-preempt_threshold). Then the entity with the flag set would jump to
-the front only if the difference between 'its finish time' and 'the
-finish time of other entities' is within this threshold. Let me know
-if it makes sense.
-
->
-> Thanks
-> Vivek
->
+Thanks,
+Ryo Tsuruta
