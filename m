@@ -1,18 +1,16 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 15/20] io-controller: map async requests to
-	appropriate cgroup
-Date: Fri, 29 May 2009 09:38:04 -0400
-Message-ID: <20090529133804.GA26962@redhat.com>
-References: <1243377729-2176-16-git-send-email-vgoyal@redhat.com>
-	<20090528.182740.193697101.ryov@valinux.co.jp>
-	<20090528165710.GB4335@redhat.com>
-	<20090529.121737.189708024.ryov@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Balbir Singh <balbir@linux.vnet.ibm.com>
+Subject: Re: [PATCH 01/20] io-controller: Documentation
+Date: Fri, 29 May 2009 23:42:52 +0800
+Message-ID: <20090529154252.GD5587@balbir.in.ibm.com>
+References: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
+	<1243377729-2176-2-git-send-email-vgoyal@redhat.com>
+Reply-To: balbir@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20090529.121737.189708024.ryov@valinux.co.jp>
+In-Reply-To: <1243377729-2176-2-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,79 +20,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, jbaron@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, jbaron@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, May 29, 2009 at 12:17:37PM +0900, Ryo Tsuruta wrote:
-> Hi Vivek,
-> 
-> Vivek Goyal <vgoyal@redhat.com> wrote:
-> > On Thu, May 28, 2009 at 06:27:40PM +0900, Ryo Tsuruta wrote:
-> > > Hi Vivek,
-> > > 
-> > > > +#ifdef CONFIG_TRACK_ASYNC_CONTEXT
-> > > > +	if (elv_bio_sync(bio)) {
-> > > > +		/* sync io. Determine cgroup from submitting task context. */
-> > > > +		cgroup = task_cgroup(current, io_subsys_id);
-> > > > +		return cgroup;
-> > > > +	}
-> > > > +
-> > > > +	/* Async io. Determine cgroup from with cgroup id stored in page */
-> > > > +	bio_cgroup_id = get_blkio_cgroup_id(bio);
-> > > > +
-> > > > +	if (!bio_cgroup_id)
-> > > > +		return NULL;
-> > > > +
-> > > > +	cgroup = blkio_cgroup_lookup(bio_cgroup_id);
-> > > > +#else
-> > > > +	cgroup = task_cgroup(current, io_subsys_id);
-> > > > +#endif
-> > > > +	return cgroup;
-> > > > +}
-> > > 
-> > > There is a case where a kernel thread (such as device-mapper drivers)
-> > > submits a sync IO instead of a task which originates the IO. I think
-> > > you should always use get_blkio_cgroup_id() to determine cgroup.
-> > > 
-> > 
-> > Hi Ryo,
-> > 
-> > Ok. Can you give some examples of drivers which are submitting reads in
-> > different context al-together. You mentioned in the past that dm-crypt
-> > looks like the one. How does current CFQ takes care of that. So if a 
-> > BE prio 7 or an RT prio 0, task is submitting a READ, CFQ will not know it
-> > and it will put that READ in the queue of the READ submitting device
-> > mapper thread (may be BE prio 3 or 4)? 
-> 
-> In the case of READ, dm-raid1 submits read IOs in differenct context
-> under some conditions. dm-ioband also does it.
-> 
-> > Always determining the cgroup from bio, will make things slower at the 
-> > same time complicated from the CFQ point of view. Right now cfq creates
-> > and caches the queue pointer in the io context of the bio submitting task
-> > and assumes sync requests are coming from that task/io context. Currently
-> > there can only be one sync queue associated with one context. So if a single
-> > thread is submitting reads (may be a worker thread) on behalf of other
-> > processes, then we loose the io context information. In fact currently we
-> > don't even carry ioprio and io class information in bio.
-> > 
-> > So looks like we need to carry task io context information also in bio
-> > to be able to associate the bio to right queue at CFQ level. This makes
-> > it bit more complicated. For the time being I will keep it in my TODO
-> > list and handle it once other more severe problems have been taken care
-> > of.
-> 
-> There is a patchset which makes every bio points the iocontext of the
-> process which is originally generated an IO request.
-> 
->   Date Tue, 22 Apr 2008 22:51:31 +0900 (JST)
->   Subject [RFC][PATCH 1/10] I/O context inheritance
->   From Hirokazu Takahashi <>
->   http://lkml.org/lkml/2008/4/22/195
+* Vivek Goyal <vgoyal@redhat.com> [2009-05-26 18:41:50]:
 
-Ok, Thanks. This is good. So once above patches make to upstream, I will
-just forward port my patches to make use of this infrastructure.
+> +	mount -t cgroup -o io,blkio none /cgroup
+> +
+> +- Create two cgroups
+> +	mkdir -p /cgroup/test1/ /cgroup/test2
+> +
+> +- Set weights of group test1 and test2
+> +	echo 1000 > /cgroup/test1/io.ioprio
+> +	echo 500 > /cgroup/test2/io.ioprio
+> +
 
-Thanks
-Vivek
+I am not sure if anyone has asked this before, but are the numbers
+arbitrary like shares or are they time units?
+
+-- 
+	Balbir
