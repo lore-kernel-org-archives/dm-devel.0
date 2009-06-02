@@ -1,14 +1,12 @@
-From: Evgeniy Polyakov <johnpol@2ka.mipt.ru>
-Subject: Re: Updated cluster log patch (take 4)
-Date: Wed, 3 Jun 2009 00:59:58 +0400
-Message-ID: <20090602205958.GA29702@2ka.mipt.ru>
-References: <1243972499.25515.17.camel@hydrogen.msp.redhat.com>
+From: David Strand <dpstrand@gmail.com>
+Subject: blk_abort_queue on failed paths?
+Date: Tue, 2 Jun 2009 15:55:00 -0700
+Message-ID: <448b15030906021555j4e476193kcf69e019992dc592@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1243972499.25515.17.camel@hydrogen.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,41 +16,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Jonathan.
+After updating to kernel 2.6.28 I found that when I performed some
+cable break testing during device i/o, I would get unwanted device or
+host resets. Ultimately I traced it back to this patch:
 
-On Tue, Jun 02, 2009 at 02:54:59PM -0500, Jonathan Brassow (jbrassow@redhat.com) wrote:
-> Evgeniy, I was wondering if I could get your thoughts on some of the
-> security questions I am currently investigating below...
-> 
-> This patch contains very minor changes from the last posting.
-> - Variable/Macro name changes
-> - minor changes to comments
-> 
-> I am currently exploring the security of using connector/netlink.  I am
-> being sure to clear any buffers before populating them to prevent
-> leaking any kernel memory contents to userspace.  I am also double
-> checking in-coming data length fields which are filled in from user
-> space.  I have these questions remaining:
-> 
-> 1) Can a non-root user communicate with the kernel via connector?  I saw
-> this (http://lwn.net/Articles/329266/) regarding a privilege escalation
-> (udev + netlink).  The article tells how netlink used to allow userspace
-> to both send and receive data, but now only allows data to be received.
-> I think this behavior is protocol specific, though...  So, what does
-> connector allow?
->
-> 2) If connector does allow non-root users to communicate, do I need to
-> worry about a simple user being able to perform a DOS on my daemon
-> because it somehow manages to monopolize/disrupt communication to the
-> connector address I am using?
+http://git.kernel.org/?p=linux/kernel/git/stable/linux-2.6.29.y.git;a=commit;h=224cb3e981f1b2f9f93dbd49eaef505d17d894c2
 
-Connector allows to send packets from non-root user, but only root can
-receive the responses. I believe connector should have a default mode to
-allow only root to send data to the kernel.
+The call to blk_abort_queue causes the block layer to call
+scsi_times_out for pending i/o, which can (or will) ultimately lead to
+device, and/or bus and/or host resets, which of course cause all the
+other devices significant disruption.
 
--- 
-	Evgeniy Polyakov
+What was the reason for this change? I searched through my email from
+this mailing list and could not find a discussion about it.
