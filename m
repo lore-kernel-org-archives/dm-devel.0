@@ -1,8 +1,7 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 1/5] dm core: add core functions for
-	request-based dm
-Date: Tue, 02 Jun 2009 15:59:45 +0900
-Message-ID: <4A24CDE1.3040706@ct.jp.nec.com>
+Subject: [PATCH 2/5] dm core: enable request-based dm
+Date: Tue, 02 Jun 2009 16:01:00 +0900
+Message-ID: <4A24CE2C.1080402@ct.jp.nec.com>
 References: <4A24CD74.80708@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,1068 +22,528 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds core functions for request-based dm.
+This patch enables request-based dm.
 
-When struct mapped device (md) is initialized, md->queue has
-an I/O scheduler and the following functions are used for
-request-based dm as the queue functions:
-    make_request_fn: dm_make_request()
-    pref_fn:         dm_prep_fn()
-    request_fn:      dm_request_fn()
-    softirq_done_fn: dm_softirq_done()
-    lld_busy_fn:     dm_lld_busy()
-Actual initializations are done in another patch (PATCH 2).
+o Request-based dm and bio-based dm coexist, since there are
+  some target drivers which are more fitting to bio-based dm.
+  Also, there are other bio-based devices in the kernel
+  (e.g. md, loop).
+  Since bio-based device can't receive struct request,
+  there are some limitations on device stacking between
+  bio-based and request-based.
 
-Below is a brief summary of how request-based dm behaves, including:
-  - making request from bio
-  - cloning, mapping and dispatching request
-  - completing request and bio
-  - suspending md
-  - resuming md
+                     type of underlying device
+                   bio-based      requeset-based
+   ----------------------------------------------
+    bio-based         OK                OK
+    request-based     NG                OK
 
+  The device type is recognized by the queue flag in the kernel,
+  so dm follows that.
 
-bio to request
-==============
-md->queue->make_request_fn() (dm_make_request()) calls __make_request()
-for a bio submitted to the md.
-Then, the bio is kept in the queue as a new request or merged into
-another request in the queue if possible.
+o The type of a dm device is decided at the first table binding time.
+  Once the type of a dm device is decided, the type can't be changed.
 
+o Mempool allocations are deferred to at the table loading time, since
+  mempools for request-based dm are different from those for bio-based
+  dm and needed mempool type is fixed by the type of table.
 
-Cloning and Mapping
-===================
-Cloning and mapping are done in md->queue->request_fn() (dm_request_fn()),
-when requests are dispatched after they are sorted by the I/O scheduler.
-
-dm_request_fn() checks busy state of underlying devices using
-target's busy() function and stops dispatching requests to keep them
-on the dm device's queue if busy.
-It helps better I/O merging, since no merge is done for a request
-once it is dispatched to underlying devices.
-
-Actual cloning and mapping are done in dm_prep_fn() and map_request()
-called from dm_request_fn().
-dm_prep_fn() clones not only request but also bios of the request
-so that dm can hold bio completion in error cases and prevent
-the bio submitter from noticing the error.
-(See the "Completion" section below for details.)
-
-After the cloning, the clone is mapped by target's map_rq() function
-and inserted to underlying device's queue using
-blk_insert_cloned_request().
-
-
-Completion
-==========
-Request completion can be hooked by rq->end_io(), but then, all bios
-in the request will have been completed even error cases, and the bio
-submitter will have noticed the error.
-To prevent the bio completion in error cases, request-based dm clones
-both bio and request and hooks both bio->bi_end_io() and rq->end_io():
-    bio->bi_end_io(): end_clone_bio()
-    rq->end_io():     end_clone_request()
-
-Summary of the request completion flow is below:
-blk_end_request() for a clone request
-  => blk_update_request()
-     => bio->bi_end_io() == end_clone_bio() for each clone bio
-        => Free the clone bio
-        => Success: Complete the original bio (blk_update_request())
-           Error:   Don't complete the original bio
-  => blk_finish_request()
-     => rq->end_io() == end_clone_request()
-        => blk_complete_request()
-           => dm_softirq_done()
-              => Free the clone request
-              => Success: Complete the original request (blk_end_request())
-                 Error:   Requeue the original request
-
-end_clone_bio() completes the original request on the size of
-the original bio in successful cases.
-Even if all bios in the original request are completed by that
-completion, the original request must not be completed yet to keep
-the ordering of request completion for the stacking.
-So end_clone_bio() uses blk_update_request() instead of
-blk_end_request().
-In error cases, end_clone_bio() doesn't complete the original bio.
-It just frees the cloned bio and gives over the error handling to
-end_clone_request().
-
-end_clone_request(), which is called with queue lock held, completes
-the clone request and the original request in a softirq context
-(dm_softirq_done()), which has no queue lock, to avoid a deadlock
-issue on submission of another request during the completion:
-    - The submitted request may be mapped to the same device
-    - Request submission requires queue lock, but the queue lock
-      has been held by itself and it doesn't know that
-
-The clone request has no clone bio when dm_softirq_done() is called.
-So target drivers can't resubmit it again even error cases.
-Instead, they can ask dm core for requeueing and remapping
-the original request in that cases.
-
-
-suspend
-=======
-Request-based dm uses stopping md->queue as suspend of the md.
-For noflush suspend, just stops md->queue.
-
-For flush suspend, inserts a marker request to the tail of md->queue.
-And dispatches all requests in md->queue until the marker comes to
-the front of md->queue.  Then, stops dispatching request and waits
-for the all dispatched requests to complete.
-After that, completes the marker request, stops md->queue and
-wake up the waiter on the suspend queue, md->wait.
-
-
-resume
-======
-Starts md->queue.
+o Currently, request-based dm supports only tables that have a single
+  target.  To support multiple targets, we need to support request
+  splitting or prevent bio/request from spanning multiple targets.
+  The former needs lots of changes in the block layer, and the latter
+  needs that all target drivers support merge() function.
+  Both will take a time.
 
 
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: Alasdair G Kergon <agk@redhat.com>
 ---
- drivers/md/dm-table.c         |   14 
- drivers/md/dm.c               |  759 +++++++++++++++++++++++++++++++++++++++++-
- drivers/md/dm.h               |    1 
- include/linux/device-mapper.h |    9 
- 4 files changed, 780 insertions(+), 3 deletions(-)
+ drivers/md/dm-ioctl.c |   13 ++++
+ drivers/md/dm-table.c |  111 ++++++++++++++++++++++++++++++++++
+ drivers/md/dm.c       |  162 +++++++++++++++++++++++++++++++++++++++++---------
+ drivers/md/dm.h       |   25 +++++++
+ 4 files changed, 285 insertions(+), 26 deletions(-)
 
-Index: linux-2.6-block/drivers/md/dm.c
-===================================================================
---- linux-2.6-block.orig/drivers/md/dm.c
-+++ linux-2.6-block/drivers/md/dm.c
-@@ -83,6 +83,14 @@ union map_info *dm_get_mapinfo(struct bi
- 	return NULL;
- }
- 
-+union map_info *dm_get_rq_mapinfo(struct request *rq)
-+{
-+	if (rq && rq->end_io_data)
-+		return &((struct dm_rq_target_io *)rq->end_io_data)->info;
-+	return NULL;
-+}
-+EXPORT_SYMBOL_GPL(dm_get_rq_mapinfo);
-+
- #define MINOR_ALLOCED ((void *)-1)
- 
- /*
-@@ -164,6 +172,12 @@ struct mapped_device {
- 	/* forced geometry settings */
- 	struct hd_geometry geometry;
- 
-+	/* marker of flush suspend for request-based dm */
-+	struct request suspend_rq;
-+
-+	/* For saving the address of __make_request for request based dm */
-+	make_request_fn *saved_make_request_fn;
-+
- 	/* sysfs handle */
- 	struct kobject kobj;
- 
-@@ -401,6 +415,27 @@ static void free_tio(struct mapped_devic
- 	mempool_free(tio, md->tio_pool);
- }
- 
-+static struct dm_rq_target_io *alloc_rq_tio(struct mapped_device *md)
-+{
-+	return mempool_alloc(md->tio_pool, GFP_ATOMIC);
-+}
-+
-+static void free_rq_tio(struct mapped_device *md, struct dm_rq_target_io *tio)
-+{
-+	mempool_free(tio, md->tio_pool);
-+}
-+
-+static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
-+{
-+	return mempool_alloc(md->io_pool, GFP_ATOMIC);
-+}
-+
-+static void free_bio_info(struct mapped_device *md,
-+			  struct dm_rq_clone_bio_info *info)
-+{
-+	mempool_free(info, md->io_pool);
-+}
-+
- static void start_io_acct(struct dm_io *io)
- {
- 	struct mapped_device *md = io->md;
-@@ -610,6 +645,281 @@ static void clone_endio(struct bio *bio,
- 	dec_pending(io, error);
- }
- 
-+/*
-+ * Partial completion handling for request-based dm
-+ */
-+static void end_clone_bio(struct bio *clone, int error)
-+{
-+	struct dm_rq_clone_bio_info *info = clone->bi_private;
-+	struct dm_rq_target_io *tio = info->rq->end_io_data;
-+	struct bio *bio = info->orig;
-+	unsigned int nr_bytes = info->orig->bi_size;
-+
-+	free_bio_info(tio->md, info);
-+	clone->bi_private = tio->md->bs;
-+	bio_put(clone);
-+
-+	if (tio->error) {
-+		/*
-+		 * An error has already been detected on the request.
-+		 * Once error occurred, just let clone->end_io() handle
-+		 * the remainder.
-+		 */
-+		return;
-+	} else if (error) {
-+		/*
-+		 * Don't notice the error to the upper layer yet.
-+		 * The error handling decision is made by the target driver,
-+		 * when the request is completed.
-+		 */
-+		tio->error = error;
-+		return;
-+	}
-+
-+	/*
-+	 * I/O for the bio successfully completed.
-+	 * Notice the data completion to the upper layer.
-+	 */
-+
-+	/*
-+	 * bios are processed from the head of the list.
-+	 * So the completing bio should always be rq->bio.
-+	 * If it's not, something wrong is happening.
-+	 */
-+	if (tio->orig->bio != bio)
-+		DMERR("bio completion is going in the middle of the request");
-+
-+	/*
-+	 * Update the original request.
-+	 * Do not use blk_end_request() here, because it may complete
-+	 * the original request before the clone, and break the ordering.
-+	 */
-+	blk_update_request(tio->orig, 0, nr_bytes);
-+}
-+
-+static void free_bio_clone(struct mapped_device *md, struct request *clone)
-+{
-+	struct bio *bio;
-+	struct dm_rq_clone_bio_info *info;
-+
-+	while ((bio = clone->bio) != NULL) {
-+		clone->bio = bio->bi_next;
-+
-+		info = bio->bi_private;
-+		free_bio_info(md, info);
-+
-+		bio->bi_private = md->bs;
-+		bio_put(bio);
-+	}
-+}
-+
-+/*
-+ * Don't touch any member of the md after calling this function because
-+ * the md may be freed in dm_put() at the end of this function.
-+ * Or do dm_get() before calling this function and dm_put() later.
-+ */
-+static void rq_completed(struct mapped_device *md, int run_queue)
-+{
-+	int wakeup_waiters = 0;
-+	struct request_queue *q = md->queue;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	if (!queue_in_flight(q))
-+		wakeup_waiters = 1;
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	/* nudge anyone waiting on suspend queue */
-+	if (wakeup_waiters)
-+		wake_up(&md->wait);
-+
-+	if (run_queue)
-+		blk_run_queue(q);
-+
-+	/*
-+	 * dm_put() must be at the end of this function. See the comment above
-+	 */
-+	dm_put(md);
-+}
-+
-+static void dm_unprep_request(struct request *rq)
-+{
-+	struct request *clone = rq->special;
-+	struct dm_rq_target_io *tio = clone->end_io_data;
-+	struct mapped_device *md = tio->md;
-+
-+	rq->special = NULL;
-+	rq->cmd_flags &= ~REQ_DONTPREP;
-+
-+	free_bio_clone(md, clone);
-+	free_rq_tio(md, tio);
-+}
-+
-+/*
-+ * Requeue the original request of a clone.
-+ */
-+void dm_requeue_unmapped_request(struct request *clone)
-+{
-+	struct dm_rq_target_io *tio = clone->end_io_data;
-+	struct mapped_device *md = tio->md;
-+	struct request *rq = tio->orig;
-+	struct request_queue *q = rq->q;
-+	unsigned long flags;
-+
-+	dm_unprep_request(rq);
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	if (elv_queue_empty(q))
-+		blk_plug_device(q);
-+	blk_requeue_request(q, rq);
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	rq_completed(md, 0);
-+}
-+EXPORT_SYMBOL_GPL(dm_requeue_unmapped_request);
-+
-+static void __stop_queue(struct request_queue *q)
-+{
-+	blk_stop_queue(q);
-+}
-+
-+static void stop_queue(struct request_queue *q)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	__stop_queue(q);
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+}
-+
-+static void __start_queue(struct request_queue *q)
-+{
-+	if (blk_queue_stopped(q))
-+		blk_start_queue(q);
-+}
-+
-+static void start_queue(struct request_queue *q)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	__start_queue(q);
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+}
-+
-+/*
-+ * Complete the clone and the original request.
-+ * Must be called without queue lock.
-+ */
-+static void dm_end_request(struct request *clone, int error)
-+{
-+	struct dm_rq_target_io *tio = clone->end_io_data;
-+	struct mapped_device *md = tio->md;
-+	struct request *rq = tio->orig;
-+
-+	if (blk_pc_request(rq)) {
-+		rq->errors = clone->errors;
-+		rq->resid_len = clone->resid_len;
-+
-+		if (rq->sense)
-+			/*
-+			 * We are using the sense buffer of the original
-+			 * request.
-+			 * So setting the length of the sense data is enough.
-+			 */
-+			rq->sense_len = clone->sense_len;
-+	}
-+
-+	free_bio_clone(md, clone);
-+	free_rq_tio(md, tio);
-+
-+	blk_end_request_all(rq, error);
-+
-+	rq_completed(md, 1);
-+}
-+
-+/*
-+ * Request completion handler for request-based dm
-+ */
-+static void dm_softirq_done(struct request *rq)
-+{
-+	struct request *clone = rq->completion_data;
-+	struct dm_rq_target_io *tio = clone->end_io_data;
-+	dm_request_endio_fn rq_end_io = tio->ti->type->rq_end_io;
-+	int error = tio->error;
-+
-+	if (!(rq->cmd_flags & REQ_FAILED) && rq_end_io)
-+		error = rq_end_io(tio->ti, clone, error, &tio->info);
-+
-+	if (error <= 0)
-+		/* The target wants to complete the I/O */
-+		dm_end_request(clone, error);
-+	else if (error == DM_ENDIO_INCOMPLETE)
-+		/* The target will handle the I/O */
-+		return;
-+	else if (error == DM_ENDIO_REQUEUE)
-+		/* The target wants to requeue the I/O */
-+		dm_requeue_unmapped_request(clone);
-+	else {
-+		DMWARN("unimplemented target endio return value: %d", error);
-+		BUG();
-+	}
-+}
-+
-+/*
-+ * Complete the clone and the original request with the error status
-+ * through softirq context.
-+ */
-+static void dm_complete_request(struct request *clone, int error)
-+{
-+	struct dm_rq_target_io *tio = clone->end_io_data;
-+	struct request *rq = tio->orig;
-+
-+	tio->error = error;
-+	rq->completion_data = clone;
-+	blk_complete_request(rq);
-+}
-+
-+/*
-+ * Complete the not-mapped clone and the original request with the error status
-+ * through softirq context.
-+ * Target's rq_end_io() function isn't called.
-+ * This may be used when the target's map_rq() function fails.
-+ */
-+void dm_kill_unmapped_request(struct request *clone, int error)
-+{
-+	struct dm_rq_target_io *tio = clone->end_io_data;
-+	struct request *rq = tio->orig;
-+
-+	rq->cmd_flags |= REQ_FAILED;
-+	dm_complete_request(clone, error);
-+}
-+EXPORT_SYMBOL_GPL(dm_kill_unmapped_request);
-+
-+/*
-+ * Called with the queue lock held
-+ */
-+static void end_clone_request(struct request *clone, int error)
-+{
-+	/*
-+	 * For just cleaning up the information of the queue in which
-+	 * the clone was dispatched.
-+	 * The clone is *NOT* freed actually here because it is alloced from
-+	 * dm own mempool and REQ_ALLOCED isn't set in clone->cmd_flags.
-+	 */
-+	__blk_put_request(clone->q, clone);
-+
-+	/*
-+	 * Actual request completion is done in a softirq context which doesn't
-+	 * hold the queue lock.  Otherwise, deadlock could occur because:
-+	 *     - another request may be submitted by the upper level driver
-+	 *       of the stacking during the completion
-+	 *     - the submission which requires queue lock may be done
-+	 *       against this queue
-+	 */
-+	dm_complete_request(clone, error);
-+}
-+
- static sector_t max_io_len(struct mapped_device *md,
- 			   sector_t sector, struct dm_target *ti)
- {
-@@ -993,7 +1303,7 @@ out:
-  * The request function that just remaps the bio built up by
-  * dm_merge_bvec.
-  */
--static int dm_request(struct request_queue *q, struct bio *bio)
-+static int _dm_request(struct request_queue *q, struct bio *bio)
- {
- 	int rw = bio_data_dir(bio);
- 	struct mapped_device *md = q->queuedata;
-@@ -1030,12 +1340,310 @@ static int dm_request(struct request_que
- 	return 0;
- }
- 
-+static int dm_make_request(struct request_queue *q, struct bio *bio)
-+{
-+	struct mapped_device *md = q->queuedata;
-+
-+	if (unlikely(bio_barrier(bio))) {
-+		bio_endio(bio, -EOPNOTSUPP);
-+		return 0;
-+	}
-+
-+	return md->saved_make_request_fn(q, bio); /* call __make_request() */
-+}
-+
-+static int dm_request_based(struct mapped_device *md)
-+{
-+	return blk_queue_stackable(md->queue);
-+}
-+
-+static int dm_request(struct request_queue *q, struct bio *bio)
-+{
-+	struct mapped_device *md = q->queuedata;
-+
-+	if (dm_request_based(md))
-+		return dm_make_request(q, bio);
-+
-+	return _dm_request(q, bio);
-+}
-+
-+void dm_dispatch_request(struct request *rq)
-+{
-+	int r;
-+
-+	if (blk_queue_io_stat(rq->q))
-+		rq->cmd_flags |= REQ_IO_STAT;
-+
-+	rq->start_time = jiffies;
-+	r = blk_insert_cloned_request(rq->q, rq);
-+	if (r)
-+		dm_complete_request(rq, r);
-+}
-+EXPORT_SYMBOL_GPL(dm_dispatch_request);
-+
-+static void copy_request_info(struct request *clone, struct request *rq)
-+{
-+	clone->cpu = rq->cpu;
-+	clone->cmd_flags = (rq_data_dir(rq) | REQ_NOMERGE);
-+	clone->cmd_type = rq->cmd_type;
-+	clone->__sector = blk_rq_pos(rq);
-+	clone->__data_len = blk_rq_bytes(rq);
-+	clone->nr_phys_segments = rq->nr_phys_segments;
-+	clone->ioprio = rq->ioprio;
-+	clone->buffer = rq->buffer;
-+	clone->cmd_len = rq->cmd_len;
-+	if (rq->cmd_len)
-+		clone->cmd = rq->cmd;
-+	clone->extra_len = rq->extra_len;
-+	clone->sense = rq->sense;
-+}
-+
-+static int clone_request_bios(struct request *clone, struct request *rq,
-+			      struct mapped_device *md)
-+{
-+	struct bio *bio, *clone_bio;
-+	struct dm_rq_clone_bio_info *info;
-+
-+	for (bio = rq->bio; bio; bio = bio->bi_next) {
-+		info = alloc_bio_info(md);
-+		if (!info)
-+			goto free_and_out;
-+
-+		clone_bio = bio_alloc_bioset(GFP_ATOMIC, bio->bi_max_vecs,
-+					     md->bs);
-+		if (!clone_bio) {
-+			free_bio_info(md, info);
-+			goto free_and_out;
-+		}
-+
-+		__bio_clone(clone_bio, bio);
-+
-+		if (bio_integrity(bio) &&
-+		    !bio_integrity_clone(clone_bio, bio, GFP_ATOMIC)) {
-+			bio_free(clone_bio, md->bs);
-+			free_bio_info(md, info);
-+			goto free_and_out;
-+		}
-+
-+		clone_bio->bi_destructor = dm_bio_destructor;
-+		clone_bio->bi_end_io = end_clone_bio;
-+		info->rq = clone;
-+		info->orig = bio;
-+		clone_bio->bi_private = info;
-+
-+		if (clone->bio) {
-+			clone->biotail->bi_next = clone_bio;
-+			clone->biotail = clone_bio;
-+		} else
-+			clone->bio = clone->biotail = clone_bio;
-+	}
-+
-+	return 0;
-+
-+free_and_out:
-+	free_bio_clone(md, clone);
-+
-+	return -ENOMEM;
-+}
-+
-+static int setup_clone(struct request *clone, struct request *rq,
-+		       struct dm_rq_target_io *tio)
-+{
-+	int r;
-+
-+	blk_rq_init(NULL, clone);
-+
-+	r = clone_request_bios(clone, rq, tio->md);
-+	if (r)
-+		return r;
-+
-+	copy_request_info(clone, rq);
-+	clone->end_io = end_clone_request;
-+	clone->end_io_data = tio;
-+
-+	return 0;
-+}
-+
-+static int dm_rq_flush_suspending(struct mapped_device *md)
-+{
-+	return !md->suspend_rq.special;
-+}
-+
-+/*
-+ * Called with the queue lock held.
-+ */
-+static int dm_prep_fn(struct request_queue *q, struct request *rq)
-+{
-+	struct mapped_device *md = q->queuedata;
-+	struct dm_rq_target_io *tio;
-+	struct request *clone;
-+
-+	if (unlikely(rq == &md->suspend_rq)) {
-+		if (dm_rq_flush_suspending(md))
-+			return BLKPREP_OK;
-+		else
-+			/* The flush suspend was interrupted */
-+			return BLKPREP_KILL;
-+	}
-+
-+	if (unlikely(rq->special)) {
-+		DMWARN("Already has something in rq->special.");
-+		return BLKPREP_KILL;
-+	}
-+
-+	tio = alloc_rq_tio(md); /* Only one for each original request */
-+	if (!tio)
-+		/* -ENOMEM */
-+		return BLKPREP_DEFER;
-+
-+	tio->md = md;
-+	tio->ti = NULL;
-+	tio->orig = rq;
-+	tio->error = 0;
-+	memset(&tio->info, 0, sizeof(tio->info));
-+
-+	clone = &tio->clone;
-+	if (setup_clone(clone, rq, tio)) {
-+		/* -ENOMEM */
-+		free_rq_tio(md, tio);
-+		return BLKPREP_DEFER;
-+	}
-+
-+	rq->special = clone;
-+	rq->cmd_flags |= REQ_DONTPREP;
-+
-+	return BLKPREP_OK;
-+}
-+
-+static void map_request(struct dm_target *ti, struct request *rq,
-+			struct mapped_device *md)
-+{
-+	int r;
-+	struct request *clone = rq->special;
-+	struct dm_rq_target_io *tio = clone->end_io_data;
-+
-+	/*
-+	 * Hold the md reference here for the in-flight I/O.
-+	 * We can't rely on the reference count by device opener,
-+	 * because the device may be closed during the request completion
-+	 * when all bios are completed.
-+	 * See the comment in rq_completed() too.
-+	 */
-+	dm_get(md);
-+
-+	tio->ti = ti;
-+	r = ti->type->map_rq(ti, clone, &tio->info);
-+	switch (r) {
-+	case DM_MAPIO_SUBMITTED:
-+		/* The target has taken the I/O to submit by itself later */
-+		break;
-+	case DM_MAPIO_REMAPPED:
-+		/* The target has remapped the I/O so dispatch it */
-+		dm_dispatch_request(clone);
-+		break;
-+	case DM_MAPIO_REQUEUE:
-+		/* The target wants to requeue the I/O */
-+		dm_requeue_unmapped_request(clone);
-+		break;
-+	default:
-+		if (r > 0) {
-+			DMWARN("unimplemented target map return value: %d", r);
-+			BUG();
-+		}
-+
-+		/* The target wants to complete the I/O */
-+		dm_kill_unmapped_request(clone, r);
-+		break;
-+	}
-+}
-+
-+/*
-+ * q->request_fn for request-based dm.
-+ * Called with the queue lock held.
-+ */
-+static void dm_request_fn(struct request_queue *q)
-+{
-+	struct mapped_device *md = q->queuedata;
-+	struct dm_table *map = dm_get_table(md);
-+	struct dm_target *ti;
-+	struct request *rq;
-+
-+	/*
-+	 * For noflush suspend, check blk_queue_stopped() to immediately
-+	 * quit I/O dispatching.
-+	 */
-+	while (!blk_queue_plugged(q) && !blk_queue_stopped(q)) {
-+		rq = blk_peek_request(q);
-+		if (!rq)
-+			goto plug_and_out;
-+
-+		if (unlikely(rq == &md->suspend_rq)) { /* Flush suspend maker */
-+			if (queue_in_flight(q))
-+				/* Not quiet yet.  Wait more */
-+				goto plug_and_out;
-+
-+			/* This device should be quiet now */
-+			__stop_queue(q);
-+			blk_start_request(rq);
-+			__blk_end_request_all(rq, 0);
-+			wake_up(&md->wait);
-+			goto out;
-+		}
-+
-+		ti = dm_table_find_target(map, blk_rq_pos(rq));
-+		if (ti->type->busy && ti->type->busy(ti))
-+			goto plug_and_out;
-+
-+		blk_start_request(rq);
-+		spin_unlock(q->queue_lock);
-+		map_request(ti, rq, md);
-+		spin_lock_irq(q->queue_lock);
-+	}
-+
-+	goto out;
-+
-+plug_and_out:
-+	if (!elv_queue_empty(q))
-+		/* Some requests still remain, retry later */
-+		blk_plug_device(q);
-+
-+out:
-+	dm_table_put(map);
-+
-+	return;
-+}
-+
-+int dm_underlying_device_busy(struct request_queue *q)
-+{
-+	return blk_lld_busy(q);
-+}
-+EXPORT_SYMBOL_GPL(dm_underlying_device_busy);
-+
-+static int dm_lld_busy(struct request_queue *q)
-+{
-+	int r;
-+	struct mapped_device *md = q->queuedata;
-+	struct dm_table *map = dm_get_table(md);
-+
-+	if (!map || test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags))
-+		r = 1;
-+	else
-+		r = dm_table_any_busy_target(map);
-+
-+	dm_table_put(map);
-+
-+	return r;
-+}
-+
- static void dm_unplug_all(struct request_queue *q)
- {
- 	struct mapped_device *md = q->queuedata;
- 	struct dm_table *map = dm_get_table(md);
- 
- 	if (map) {
-+		if (dm_request_based(md))
-+			generic_unplug_device(q);
-+
- 		dm_table_unplug_all(map);
- 		dm_table_put(map);
- 	}
-@@ -1050,7 +1658,16 @@ static int dm_any_congested(void *conges
- 	if (!test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)) {
- 		map = dm_get_table(md);
- 		if (map) {
--			r = dm_table_any_congested(map, bdi_bits);
-+			/*
-+			 * Request-based dm cares about only own queue for
-+			 * the query about congestion status of request_queue
-+			 */
-+			if (dm_request_based(md))
-+				r = md->queue->backing_dev_info.state &
-+				    bdi_bits;
-+			else
-+				r = dm_table_any_congested(map, bdi_bits);
-+
- 			dm_table_put(map);
- 		}
- 	}
-@@ -1452,6 +2069,8 @@ static int dm_wait_for_completion(struct
- {
- 	int r = 0;
- 	DECLARE_WAITQUEUE(wait, current);
-+	struct request_queue *q = md->queue;
-+	unsigned long flags;
- 
- 	dm_unplug_all(md->queue);
- 
-@@ -1461,7 +2080,14 @@ static int dm_wait_for_completion(struct
- 		set_current_state(interruptible);
- 
- 		smp_mb();
--		if (!atomic_read(&md->pending))
-+		if (dm_request_based(md)) {
-+			spin_lock_irqsave(q->queue_lock, flags);
-+			if (!queue_in_flight(q) && blk_queue_stopped(q)) {
-+				spin_unlock_irqrestore(q->queue_lock, flags);
-+				break;
-+			}
-+			spin_unlock_irqrestore(q->queue_lock, flags);
-+		} else if (!atomic_read(&md->pending))
- 			break;
- 
- 		if (interruptible == TASK_INTERRUPTIBLE &&
-@@ -1573,6 +2199,67 @@ out:
- 	return r;
- }
- 
-+static void dm_rq_invalidate_suspend_marker(struct mapped_device *md)
-+{
-+	md->suspend_rq.special = (void *)0x1;
-+}
-+
-+static void dm_rq_abort_suspend(struct mapped_device *md, int noflush)
-+{
-+	struct request_queue *q = md->queue;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	if (!noflush)
-+		dm_rq_invalidate_suspend_marker(md);
-+	__start_queue(q);
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+}
-+
-+static void dm_rq_start_suspend(struct mapped_device *md, int noflush)
-+{
-+	struct request *rq = &md->suspend_rq;
-+	struct request_queue *q = md->queue;
-+
-+	if (noflush)
-+		stop_queue(q);
-+	else {
-+		blk_rq_init(q, rq);
-+		blk_insert_request(q, rq, 0, NULL);
-+	}
-+}
-+
-+static int dm_rq_suspend_available(struct mapped_device *md, int noflush)
-+{
-+	int r = 1;
-+	struct request *rq = &md->suspend_rq;
-+	struct request_queue *q = md->queue;
-+	unsigned long flags;
-+
-+	if (noflush)
-+		return r;
-+
-+	/* The marker must be protected by queue lock if it is in use */
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	if (unlikely(rq->ref_count)) {
-+		/*
-+		 * This can happen, when the previous flush suspend was
-+		 * interrupted, the marker is still in the queue and
-+		 * this flush suspend has been invoked, because we don't
-+		 * remove the marker at the time of suspend interruption.
-+		 * We have only one marker per mapped_device, so we can't
-+		 * start another flush suspend while it is in use.
-+		 */
-+		BUG_ON(!rq->special); /* The marker should be invalidated */
-+		DMWARN("Invalidating the previous flush suspend is still in"
-+		       " progress.  Please retry later.");
-+		r = 0;
-+	}
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	return r;
-+}
-+
- /*
-  * Functions to lock and unlock any filesystem running on the
-  * device.
-@@ -1612,6 +2299,53 @@ static void unlock_fs(struct mapped_devi
-  * dm_bind_table, dm_suspend must be called to flush any in
-  * flight bios and ensure that any further io gets deferred.
-  */
-+/*
-+ * Suspend mechanism in request-based dm.
-+ *
-+ * After the suspend starts, further incoming requests are kept in
-+ * the request_queue and deferred.
-+ * Remaining requests in the request_queue at the start of suspend are flushed
-+ * if it is flush suspend.
-+ * The suspend completes when the following conditions have been satisfied,
-+ * so wait for it:
-+ *    1. q->in_flight is 0 (which means no in_flight request)
-+ *    2. queue has been stopped (which means no request dispatching)
-+ *
-+ *
-+ * Noflush suspend
-+ * ---------------
-+ * Noflush suspend doesn't need to dispatch remaining requests.
-+ * So stop the queue immediately.  Then, wait for all in_flight requests
-+ * to be completed or requeued.
-+ *
-+ * To abort noflush suspend, start the queue.
-+ *
-+ *
-+ * Flush suspend
-+ * -------------
-+ * Flush suspend needs to dispatch remaining requests.  So stop the queue
-+ * after the remaining requests are completed. (Requeued request must be also
-+ * re-dispatched and completed.  Until then, we can't stop the queue.)
-+ *
-+ * During flushing the remaining requests, further incoming requests are also
-+ * inserted to the same queue.  To distinguish which requests are to be
-+ * flushed, we insert a marker request to the queue at the time of starting
-+ * flush suspend, like a barrier.
-+ * The dispatching is blocked when the marker is found on the top of the queue.
-+ * And the queue is stopped when all in_flight requests are completed, since
-+ * that means the remaining requests are completely flushed.
-+ * Then, the marker is removed from the queue.
-+ *
-+ * To abort flush suspend, we also need to take care of the marker, not only
-+ * starting the queue.
-+ * We don't remove the marker forcibly from the queue since it's against
-+ * the block-layer manner.  Instead, we put a invalidated mark on the marker.
-+ * When the invalidated marker is found on the top of the queue, it is
-+ * immediately removed from the queue, so it doesn't block dispatching.
-+ * Because we have only one marker per mapped_device, we can't start another
-+ * flush suspend until the invalidated marker is removed from the queue.
-+ * So fail and return with -EBUSY in such a case.
-+ */
- int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
- {
- 	struct dm_table *map = NULL;
-@@ -1626,6 +2360,11 @@ int dm_suspend(struct mapped_device *md,
- 		goto out_unlock;
- 	}
- 
-+	if (dm_request_based(md) && !dm_rq_suspend_available(md, noflush)) {
-+		r = -EBUSY;
-+		goto out_unlock;
-+	}
-+
- 	map = dm_get_table(md);
- 
- 	/*
-@@ -1671,6 +2410,9 @@ int dm_suspend(struct mapped_device *md,
- 
- 	flush_workqueue(md->wq);
- 
-+	if (dm_request_based(md))
-+		dm_rq_start_suspend(md, noflush);
-+
- 	/*
- 	 * At this point no more requests are entering target request routines.
- 	 * We call dm_wait_for_completion to wait for all existing requests
-@@ -1687,6 +2429,9 @@ int dm_suspend(struct mapped_device *md,
- 	if (r < 0) {
- 		dm_queue_flush(md);
- 
-+		if (dm_request_based(md))
-+			dm_rq_abort_suspend(md, noflush);
-+
- 		unlock_fs(md);
- 		goto out; /* pushback list is already flushed, so skip flush */
- 	}
-@@ -1728,6 +2473,14 @@ int dm_resume(struct mapped_device *md)
- 
- 	dm_queue_flush(md);
- 
-+	/*
-+	 * Flushing deferred I/Os must be done after targets are resumed
-+	 * so that mapping of targets can work correctly.
-+	 * Request-based dm is queueing the deferred I/Os in its request_queue.
-+	 */
-+	if (dm_request_based(md))
-+		start_queue(md->queue);
-+
- 	unlock_fs(md);
- 
- 	clear_bit(DMF_SUSPENDED, &md->flags);
-Index: linux-2.6-block/drivers/md/dm.h
-===================================================================
---- linux-2.6-block.orig/drivers/md/dm.h
-+++ linux-2.6-block/drivers/md/dm.h
-@@ -47,6 +47,7 @@ void dm_table_presuspend_targets(struct 
- void dm_table_postsuspend_targets(struct dm_table *t);
- int dm_table_resume_targets(struct dm_table *t);
- int dm_table_any_congested(struct dm_table *t, int bdi_bits);
-+int dm_table_any_busy_target(struct dm_table *t);
- 
- /*
-  * To check the return value from dm_table_find_target().
 Index: linux-2.6-block/drivers/md/dm-table.c
 ===================================================================
 --- linux-2.6-block.orig/drivers/md/dm-table.c
 +++ linux-2.6-block/drivers/md/dm-table.c
-@@ -1067,6 +1067,20 @@ int dm_table_any_congested(struct dm_tab
+@@ -41,6 +41,7 @@
+ struct dm_table {
+ 	struct mapped_device *md;
+ 	atomic_t holders;
++	unsigned type;
+ 
+ 	/* btree table */
+ 	unsigned int depth;
+@@ -71,6 +72,8 @@ struct dm_table {
+ 	/* events get handed up using this callback */
+ 	void (*event_fn)(void *);
+ 	void *event_context;
++
++	struct dm_md_mempools *mempools;
+ };
+ 
+ /*
+@@ -264,6 +267,8 @@ void dm_table_destroy(struct dm_table *t
+ 	if (t->devices.next != &t->devices)
+ 		free_devices(&t->devices);
+ 
++	dm_free_md_mempools(t->mempools);
++
+ 	kfree(t);
+ }
+ 
+@@ -794,6 +799,99 @@ int dm_table_add_target(struct dm_table 
  	return r;
  }
  
-+int dm_table_any_busy_target(struct dm_table *t)
++int dm_table_set_type(struct dm_table *t)
 +{
 +	unsigned i;
-+	struct dm_target *ti;
++	unsigned bio_based = 0, request_based = 0;
++	struct dm_target *tgt;
++	struct dm_dev_internal *dd;
++	struct list_head *devices;
 +
 +	for (i = 0; i < t->num_targets; i++) {
-+		ti = t->targets + i;
-+		if (ti->type->busy && ti->type->busy(ti))
-+			return 1;
++		tgt = t->targets + i;
++		if (dm_target_request_based(tgt))
++			request_based = 1;
++		else
++			bio_based = 1;
++
++		if (bio_based && request_based) {
++			DMWARN("Inconsistent table: different target types"
++			       " can't be mixed up");
++			return -EINVAL;
++		}
 +	}
++
++	if (bio_based) {
++		/* We must use this table as bio-based */
++		t->type = DM_TYPE_BIO_BASED;
++		return 0;
++	}
++
++	BUG_ON(!request_based); /* No targets in this table */
++
++	/* Non-request-stackable devices can't be used for request-based dm */
++	devices = dm_table_get_devices(t);
++	list_for_each_entry(dd, devices, list) {
++		if (!blk_queue_stackable(bdev_get_queue(dd->dm_dev.bdev))) {
++			DMWARN("table load rejected: including"
++			       " non-request-stackable devices");
++			return -EINVAL;
++		}
++	}
++
++	/*
++	 * Request-based dm supports only tables that have a single target now.
++	 * To support multiple targets, request splitting support is needed,
++	 * and that needs lots of changes in the block-layer.
++	 * (e.g. request completion process for partial completion.)
++	 */
++	if (t->num_targets > 1) {
++		DMWARN("Request-based dm doesn't support multiple targets yet");
++		return -EINVAL;
++	}
++
++	t->type = DM_TYPE_REQUEST_BASED;
 +
 +	return 0;
 +}
 +
- void dm_table_unplug_all(struct dm_table *t)
++unsigned dm_table_get_type(struct dm_table *t)
++{
++	return t->type;
++}
++
++bool dm_table_request_based(struct dm_table *t)
++{
++	return dm_table_get_type(t) == DM_TYPE_REQUEST_BASED;
++}
++
++int dm_table_alloc_md_mempools(struct dm_table *t)
++{
++	unsigned type = dm_table_get_type(t);
++
++	if (unlikely(type == DM_TYPE_NONE)) {
++		DMWARN("no table type is set, can't allocate mempools");
++		return -EINVAL;
++	}
++
++	t->mempools = dm_alloc_md_mempools(type);
++	if (!t->mempools)
++		return -ENOMEM;
++
++	return 0;
++}
++
++void dm_table_free_md_mempools(struct dm_table *t)
++{
++	dm_free_md_mempools(t->mempools);
++	t->mempools = NULL;
++}
++
++struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t)
++{
++	return t->mempools;
++}
++
+ static int setup_indexes(struct dm_table *t)
  {
- 	struct dm_dev_internal *dd;
-Index: linux-2.6-block/include/linux/device-mapper.h
-===================================================================
---- linux-2.6-block.orig/include/linux/device-mapper.h
-+++ linux-2.6-block/include/linux/device-mapper.h
-@@ -229,6 +229,7 @@ struct gendisk *dm_disk(struct mapped_de
- int dm_suspended(struct mapped_device *md);
- int dm_noflush_suspending(struct dm_target *ti);
- union map_info *dm_get_mapinfo(struct bio *bio);
-+union map_info *dm_get_rq_mapinfo(struct request *rq);
+ 	int i;
+@@ -972,6 +1070,19 @@ void dm_table_set_restrictions(struct dm
+ 		queue_flag_set_unlocked(QUEUE_FLAG_CLUSTER, q);
  
- /*
-  * Geometry functions.
-@@ -391,4 +392,12 @@ static inline unsigned long to_bytes(sec
- 	return (n << SECTOR_SHIFT);
+ 	dm_table_set_integrity(t);
++
++	/*
++	 * QUEUE_FLAG_STACKABLE must be set after all queue settings are
++	 * visible to other CPUs because, once the flag is set, incoming bios
++	 * are processed by request-based dm, which refers to the queue
++	 * settings.
++	 * Until the flag set, bios are passed to bio-based dm and queued to
++	 * md->deferred where queue settings are not needed yet.
++	 * Those bios are passed to request-based dm at the resume time.
++	 */
++	smp_mb();
++	if (dm_table_request_based(t))
++		queue_flag_set_unlocked(QUEUE_FLAG_STACKABLE, q);
  }
  
-+/*-----------------------------------------------------------------
-+ * Helper for block layer and dm core operations
-+ *---------------------------------------------------------------*/
-+void dm_dispatch_request(struct request *rq);
-+void dm_requeue_unmapped_request(struct request *rq);
-+void dm_kill_unmapped_request(struct request *rq, int error);
-+int dm_underlying_device_busy(struct request_queue *q);
+ unsigned int dm_table_get_num_targets(struct dm_table *t)
+Index: linux-2.6-block/drivers/md/dm.c
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm.c
++++ linux-2.6-block/drivers/md/dm.c
+@@ -185,6 +185,15 @@ struct mapped_device {
+ 	struct bio barrier_bio;
+ };
+ 
++/*
++ * For mempools pre-allocation at the table loading time.
++ */
++struct dm_md_mempools {
++	mempool_t *io_pool;
++	mempool_t *tio_pool;
++	struct bio_set *bs;
++};
 +
- #endif	/* _LINUX_DEVICE_MAPPER_H */
+ #define MIN_IOS 256
+ static struct kmem_cache *_io_cache;
+ static struct kmem_cache *_tio_cache;
+@@ -1790,10 +1799,22 @@ static struct mapped_device *alloc_dev(i
+ 	INIT_LIST_HEAD(&md->uevent_list);
+ 	spin_lock_init(&md->uevent_lock);
+ 
+-	md->queue = blk_alloc_queue(GFP_KERNEL);
++	md->queue = blk_init_queue(dm_request_fn, NULL);
+ 	if (!md->queue)
+ 		goto bad_queue;
+ 
++	/*
++	 * Request-based dm devices cannot be stacked on top of bio-based dm
++	 * devices.  The type of this dm device has not been decided yet,
++	 * although we initialized the queue using blk_init_queue().
++	 * The type is decided at the first table loading time.
++	 * To prevent problematic device stacking, clear the queue flag
++	 * for request stacking support until then.
++	 *
++	 * This queue is new, so no concurrency on the queue_flags.
++	 */
++	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
++	md->saved_make_request_fn = md->queue->make_request_fn;
+ 	md->queue->queuedata = md;
+ 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
+ 	md->queue->backing_dev_info.congested_data = md;
+@@ -1802,18 +1823,9 @@ static struct mapped_device *alloc_dev(i
+ 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
+ 	md->queue->unplug_fn = dm_unplug_all;
+ 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
+-
+-	md->io_pool = mempool_create_slab_pool(MIN_IOS, _io_cache);
+-	if (!md->io_pool)
+-		goto bad_io_pool;
+-
+-	md->tio_pool = mempool_create_slab_pool(MIN_IOS, _tio_cache);
+-	if (!md->tio_pool)
+-		goto bad_tio_pool;
+-
+-	md->bs = bioset_create(16, 0);
+-	if (!md->bs)
+-		goto bad_no_bioset;
++	blk_queue_softirq_done(md->queue, dm_softirq_done);
++	blk_queue_prep_rq(md->queue, dm_prep_fn);
++	blk_queue_lld_busy(md->queue, dm_lld_busy);
+ 
+ 	md->disk = alloc_disk(1);
+ 	if (!md->disk)
+@@ -1855,12 +1867,6 @@ bad_bdev:
+ bad_thread:
+ 	put_disk(md->disk);
+ bad_disk:
+-	bioset_free(md->bs);
+-bad_no_bioset:
+-	mempool_destroy(md->tio_pool);
+-bad_tio_pool:
+-	mempool_destroy(md->io_pool);
+-bad_io_pool:
+ 	blk_cleanup_queue(md->queue);
+ bad_queue:
+ 	free_minor(minor);
+@@ -1880,9 +1886,12 @@ static void free_dev(struct mapped_devic
+ 	unlock_fs(md);
+ 	bdput(md->bdev);
+ 	destroy_workqueue(md->wq);
+-	mempool_destroy(md->tio_pool);
+-	mempool_destroy(md->io_pool);
+-	bioset_free(md->bs);
++	if (md->tio_pool)
++		mempool_destroy(md->tio_pool);
++	if (md->io_pool)
++		mempool_destroy(md->io_pool);
++	if (md->bs)
++		bioset_free(md->bs);
+ 	blk_integrity_unregister(md->disk);
+ 	del_gendisk(md->disk);
+ 	free_minor(minor);
+@@ -1897,6 +1906,29 @@ static void free_dev(struct mapped_devic
+ 	kfree(md);
+ }
+ 
++static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
++{
++	struct dm_md_mempools *p;
++
++	if (md->io_pool && md->tio_pool && md->bs)
++		/* the md already has necessary mempools */
++		goto out;
++
++	p = dm_table_get_md_mempools(t);
++	BUG_ON(!p || md->io_pool || md->tio_pool || md->bs);
++
++	md->io_pool = p->io_pool;
++	p->io_pool = NULL;
++	md->tio_pool = p->tio_pool;
++	p->tio_pool = NULL;
++	md->bs = p->bs;
++	p->bs = NULL;
++
++out:
++	/* mempool bind completed, now no need any mempools in the table */
++	dm_table_free_md_mempools(t);
++}
++
+ /*
+  * Bind a table to the device.
+  */
+@@ -1947,6 +1979,18 @@ static int __bind(struct mapped_device *
+ 
+ 	dm_table_event_callback(t, event_callback, md);
+ 
++	/*
++	 * The queue hasn't been stopped yet, if the old table type wasn't
++	 * for request-based during suspension.  So stop it to prevent
++	 * I/O mapping before resume.
++	 * This must be done before setting the queue restrictions,
++	 * because request-based dm may be run just after the setting.
++	 */
++	if (dm_table_request_based(t) && !blk_queue_stopped(q))
++		stop_queue(q);
++
++	__bind_mempools(md, t);
++
+ 	write_lock(&md->map_lock);
+ 	md->map = t;
+ 	dm_table_set_restrictions(t, q);
+@@ -2160,10 +2204,14 @@ static void dm_wq_work(struct work_struc
+ 
+ 		up_write(&md->io_lock);
+ 
+-		if (bio_barrier(c))
+-			process_barrier(md, c);
+-		else
+-			__split_and_process_bio(md, c);
++		if (dm_request_based(md))
++			generic_make_request(c);
++		else {
++			if (bio_barrier(c))
++				process_barrier(md, c);
++			else
++				__split_and_process_bio(md, c);
++		}
+ 
+ 		down_write(&md->io_lock);
+ 	}
+@@ -2191,6 +2239,13 @@ int dm_swap_table(struct mapped_device *
+ 	if (!dm_suspended(md))
+ 		goto out;
+ 
++	/* cannot change the device type, once a table is bound */
++	if (md->map &&
++	    (dm_table_get_type(md->map) != dm_table_get_type(table))) {
++		DMWARN("can't change the device type after a table is bound");
++		goto out;
++	}
++
+ 	__unbind(md);
+ 	r = __bind(md, table);
+ 
+@@ -2577,6 +2632,61 @@ int dm_noflush_suspending(struct dm_targ
+ }
+ EXPORT_SYMBOL_GPL(dm_noflush_suspending);
+ 
++struct dm_md_mempools *dm_alloc_md_mempools(unsigned type)
++{
++	struct dm_md_mempools *pools = kmalloc(sizeof(*pools), GFP_KERNEL);
++
++	if (!pools)
++		return NULL;
++
++	pools->io_pool = (type == DM_TYPE_BIO_BASED) ?
++			 mempool_create_slab_pool(MIN_IOS, _io_cache) :
++			 mempool_create_slab_pool(MIN_IOS, _rq_bio_info_cache);
++	if (!pools->io_pool)
++		goto free_pools_and_out;
++
++	pools->tio_pool = (type == DM_TYPE_BIO_BASED) ?
++			  mempool_create_slab_pool(MIN_IOS, _tio_cache) :
++			  mempool_create_slab_pool(MIN_IOS, _rq_tio_cache);
++	if (!pools->tio_pool)
++		goto free_io_pool_and_out;
++
++	pools->bs = (type == DM_TYPE_BIO_BASED) ?
++		    bioset_create(16, 0) : bioset_create(MIN_IOS, 0);
++	if (!pools->bs)
++		goto free_tio_pool_and_out;
++
++	return pools;
++
++free_tio_pool_and_out:
++	mempool_destroy(pools->tio_pool);
++
++free_io_pool_and_out:
++	mempool_destroy(pools->io_pool);
++
++free_pools_and_out:
++	kfree(pools);
++
++	return NULL;
++}
++
++void dm_free_md_mempools(struct dm_md_mempools *pools)
++{
++	if (!pools)
++		return;
++
++	if (pools->io_pool)
++		mempool_destroy(pools->io_pool);
++
++	if (pools->tio_pool)
++		mempool_destroy(pools->tio_pool);
++
++	if (pools->bs)
++		bioset_free(pools->bs);
++
++	kfree(pools);
++}
++
+ static struct block_device_operations dm_blk_dops = {
+ 	.open = dm_blk_open,
+ 	.release = dm_blk_close,
+Index: linux-2.6-block/drivers/md/dm.h
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm.h
++++ linux-2.6-block/drivers/md/dm.h
+@@ -23,6 +23,13 @@
+ #define DM_SUSPEND_NOFLUSH_FLAG		(1 << 1)
+ 
+ /*
++ * Type of table and mapped_device's mempool
++ */
++#define DM_TYPE_NONE		0
++#define DM_TYPE_BIO_BASED	1
++#define DM_TYPE_REQUEST_BASED	2
++
++/*
+  * List of devices that a metadevice uses and should open/close.
+  */
+ struct dm_dev_internal {
+@@ -32,6 +39,7 @@ struct dm_dev_internal {
+ };
+ 
+ struct dm_table;
++struct dm_md_mempools;
+ 
+ /*-----------------------------------------------------------------
+  * Internal table functions.
+@@ -48,12 +56,23 @@ void dm_table_postsuspend_targets(struct
+ int dm_table_resume_targets(struct dm_table *t);
+ int dm_table_any_congested(struct dm_table *t, int bdi_bits);
+ int dm_table_any_busy_target(struct dm_table *t);
++int dm_table_set_type(struct dm_table *t);
++unsigned dm_table_get_type(struct dm_table *t);
++bool dm_table_request_based(struct dm_table *t);
++int dm_table_alloc_md_mempools(struct dm_table *t);
++void dm_table_free_md_mempools(struct dm_table *t);
++struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+ 
+ /*
+  * To check the return value from dm_table_find_target().
+  */
+ #define dm_target_is_valid(t) ((t)->table)
+ 
++/*
++ * To check whether the target type is request-based or not (bio-based).
++ */
++#define dm_target_request_based(t) ((t)->type->map_rq != NULL)
++
+ /*-----------------------------------------------------------------
+  * A registry of target types.
+  *---------------------------------------------------------------*/
+@@ -98,4 +117,10 @@ void dm_kobject_uevent(struct mapped_dev
+ int dm_kcopyd_init(void);
+ void dm_kcopyd_exit(void);
+ 
++/*
++ * Mempool operations
++ */
++struct dm_md_mempools *dm_alloc_md_mempools(unsigned type);
++void dm_free_md_mempools(struct dm_md_mempools *pools);
++
+ #endif
+Index: linux-2.6-block/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm-ioctl.c
++++ linux-2.6-block/drivers/md/dm-ioctl.c
+@@ -1044,6 +1044,12 @@ static int populate_table(struct dm_tabl
+ 		next = spec->next;
+ 	}
+ 
++	r = dm_table_set_type(table);
++	if (r) {
++		DMWARN("unable to set table type");
++		return r;
++	}
++
+ 	return dm_table_complete(table);
+ }
+ 
+@@ -1089,6 +1095,13 @@ static int table_load(struct dm_ioctl *p
+ 		goto out;
+ 	}
+ 
++	r = dm_table_alloc_md_mempools(t);
++	if (r) {
++		DMWARN("unable to allocate mempools for this table");
++		dm_table_destroy(t);
++		goto out;
++	}
++
+ 	down_write(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
