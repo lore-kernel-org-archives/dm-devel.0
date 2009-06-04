@@ -1,15 +1,10 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: blk_abort_queue on failed paths?
-Date: Thu, 04 Jun 2009 13:09:35 -0500
-Message-ID: <4A280DDF.7070205@cs.wisc.edu>
-References: <448b15030906021555j4e476193kcf69e019992dc592@mail.gmail.com>
-	<4A26ED7D.1010203@cs.wisc.edu>
+From: Brian King <brking@linux.vnet.ibm.com>
+Subject: [PATCH 1/1] multipath_tools: Add IBM Virtual SCSI to
+	hwtable
+Date: Thu, 04 Jun 2009 13:10:38 -0500
+Message-ID: <200906041810.n54IAdAQ006547@d01av04.pok.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A26ED7D.1010203@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,31 +14,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, SCSI Mailing List <linux-scsi@vger.kernel.org>, Mike Anderson <andmike@us.ibm.com>
+To: dm-devel@redhat.com
+Cc: brking@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Mike Christie wrote:
-> adding linux-scsi and Mike Anderson
-> 
-> David Strand wrote:
->> After updating to kernel 2.6.28 I found that when I performed some
->> cable break testing during device i/o, I would get unwanted device or
->> host resets. Ultimately I traced it back to this patch:
->>
->> http://git.kernel.org/?p=linux/kernel/git/stable/linux-2.6.29.y.git;a=commit;h=224cb3e981f1b2f9f93dbd49eaef505d17d894c2 
->>
->>
->> The call to blk_abort_queue causes the block layer to call
->> scsi_times_out for pending i/o, which can (or will) ultimately lead to
->> device, and/or bus and/or host resets, which of course cause all the
->> other devices significant disruption.
->>
-> 
-> What driver were you using? 
 
-Oh yeah, I do not think this should happen in new kernels if the driver 
-is failing the IO with DID_TRANSPORT_DISRUPTED when it is deleting the 
-rport. That should cause the IO to requeue and wait for fast io fail to 
-fire.
+Add entry to the hwtable for IBM Power Virtual SCSI devices.
 
-Maybe we just need to convert some more drivers?
+Signed-off-by: Brian King <brking@linux.vnet.ibm.com>
+---
+
+ libmultipath/hwtable.c |   22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff -puN libmultipath/hwtable.c~mpath_vios libmultipath/hwtable.c
+--- multipath-tools/libmultipath/hwtable.c~mpath_vios	2009-06-03 17:40:56.000000000 -0500
++++ multipath-tools-bjking1/libmultipath/hwtable.c	2009-06-04 09:54:33.000000000 -0500
+@@ -634,6 +634,28 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = TUR,
+ 		.prio_name     = PRIO_ALUA,
+ 	},
++	/*
++	 * IBM Power Virtual SCSI Devices
++	 *
++	 * Maintainer : Brian King, IBM
++	 * Mail : brking@linux.vnet.ibm.com
++	 */
++	{
++		/* AIX VDASD */
++		.vendor        = "AIX",
++		.product       = "VDASD",
++		.getuid        = DEFAULT_GETUID,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = MULTIBUS,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = (300 / DEFAULT_CHECKINT),
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = DIRECTIO,
++		.prio_name     = DEFAULT_PRIO,
++	},
+ 	{
+ 		/* DELL MD3000 */
+ 		.vendor        = "DELL",
+_
