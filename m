@@ -1,16 +1,16 @@
 From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 10/20] io-conroller: Prepare elevator layer
- for single queue schedulers
-Date: Fri, 05 Jun 2009 17:17:07 +0800
-Message-ID: <4A28E293.90402@cn.fujitsu.com>
+Subject: Re: [PATCH 05/20] io-controller: Common hierarchical
+ fair queuing code in elevaotor layer
+Date: Fri, 05 Jun 2009 17:36:16 +0800
+Message-ID: <4A28E710.5080307@cn.fujitsu.com>
 References: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
-	<1243377729-2176-11-git-send-email-vgoyal@redhat.com>
+	<1243377729-2176-6-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1243377729-2176-11-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <1243377729-2176-6-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,35 +25,46 @@ Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-deve
 List-Id: dm-devel.ids
 
 Vivek Goyal wrote:
-> +				e->ops->elevator_free_sched_queue_fn(e,
-> +							sched_q);
-> +				sched_q = NULL;
-> +				goto queue_fail;
-> +			}
-> +		}
-> +
-> +		elv_init_ioq(e, ioq, iog, sched_q, IOPRIO_CLASS_BE, 4, 1);
+...
+> +#ifdef CONFIG_GROUP_IOSCHED
+> +extern int io_group_allow_merge(struct request *rq, struct bio *bio);
+> +extern void io_ioq_move(struct elevator_queue *e, struct io_queue *ioq,
 
-It's better to use IOPRIO_NORM here.
+io_ioq_move is not used anymore, removing the dead code.
 
-Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Singed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 ---
- block/elevator-fq.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+ block/elevator-fq.h |   11 -----------
+ 1 files changed, 0 insertions(+), 11 deletions(-)
 
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index f1179aa..3c5f9da 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -2403,7 +2403,8 @@ alloc_ioq:
- 			}
- 		}
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index 1c99e83..24a3af9 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -537,8 +537,6 @@ static inline struct io_group *ioq_to_io_group(struct io_queue *ioq)
  
--		elv_init_ioq(e, ioq, iog, sched_q, IOPRIO_CLASS_BE, 4, 1);
-+		elv_init_ioq(e, ioq, iog, sched_q, IOPRIO_CLASS_BE,
-+			     IOPRIO_NORM, 1);
- 		io_group_set_ioq(iog, ioq);
- 		elv_mark_ioq_sync(ioq);
- 		elv_get_iog(iog);
+ #ifdef CONFIG_GROUP_IOSCHED
+ extern int io_group_allow_merge(struct request *rq, struct bio *bio);
+-extern void io_ioq_move(struct elevator_queue *e, struct io_queue *ioq,
+-					struct io_group *iog);
+ static inline bfq_weight_t iog_weight(struct io_group *iog)
+ {
+ 	return iog->entity.weight;
+@@ -588,15 +586,6 @@ static inline int update_requeue(struct io_queue *ioq, int requeue)
+ }
+ 
+ #else /* !GROUP_IOSCHED */
+-/*
+- * No ioq movement is needed in case of flat setup. root io group gets cleaned
+- * up upon elevator exit and before that it has been made sure that both
+- * active and idle tree are empty.
+- */
+-static inline void io_ioq_move(struct elevator_queue *e, struct io_queue *ioq,
+-					struct io_group *iog)
+-{
+-}
+ 
+ static inline int io_group_allow_merge(struct request *rq, struct bio *bio)
+ {
 -- 
 1.5.4.rc3
