@@ -1,7 +1,8 @@
 From: Kiyoshi Ueda via agk <k-ueda@ct.jp.nec.com>
-Subject: rqdm-dlb-04-service-time-dlb-naming-change.patch
-Date: Mon, 8 Jun 2009 23:05:03 +0100
-Message-ID: <20090608220503.GD647@agk-dp.fab.redhat.com>
+Subject: FW: [PATCH 1/5] dm core: add core functions for
+	request-based dm
+Date: Mon, 8 Jun 2009 23:11:11 +0100
+Message-ID: <20090608221111.GG647@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -19,275 +20,1068 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Changed the name of the member 'perf' in the path_info structure
-to 'relative_throughput' for readability.
+This patch adds core functions for request-based dm.
 
-Also, updated the related parts of comments and documents.
+When struct mapped device (md) is initialized, md->queue has
+an I/O scheduler and the following functions are used for
+request-based dm as the queue functions:
+    make_request_fn: dm_make_request()
+    pref_fn:         dm_prep_fn()
+    request_fn:      dm_request_fn()
+    softirq_done_fn: dm_softirq_done()
+    lld_busy_fn:     dm_lld_busy()
+Actual initializations are done in another patch (PATCH 2).
 
+Below is a brief summary of how request-based dm behaves, including:
+  - making request from bio
+  - cloning, mapping and dispatching request
+  - completing request and bio
+  - suspending md
+  - resuming md
+
+
+  bio to request
+  ==============
+  md->queue->make_request_fn() (dm_make_request()) calls __make_request()
+  for a bio submitted to the md.
+  Then, the bio is kept in the queue as a new request or merged into
+  another request in the queue if possible.
+  
+  
+  Cloning and Mapping
+  ===================
+  Cloning and mapping are done in md->queue->request_fn() (dm_request_fn()),
+  when requests are dispatched after they are sorted by the I/O scheduler.
+  
+  dm_request_fn() checks busy state of underlying devices using
+  target's busy() function and stops dispatching requests to keep them
+  on the dm device's queue if busy.
+  It helps better I/O merging, since no merge is done for a request
+  once it is dispatched to underlying devices.
+  
+  Actual cloning and mapping are done in dm_prep_fn() and map_request()
+  called from dm_request_fn().
+  dm_prep_fn() clones not only request but also bios of the request
+  so that dm can hold bio completion in error cases and prevent
+  the bio submitter from noticing the error.
+  (See the "Completion" section below for details.)
+  
+  After the cloning, the clone is mapped by target's map_rq() function
+    and inserted to underlying device's queue using
+    blk_insert_cloned_request().
+  
+  
+  Completion
+  ==========
+  Request completion can be hooked by rq->end_io(), but then, all bios
+  in the request will have been completed even error cases, and the bio
+  submitter will have noticed the error.
+  To prevent the bio completion in error cases, request-based dm clones
+  both bio and request and hooks both bio->bi_end_io() and rq->end_io():
+      bio->bi_end_io(): end_clone_bio()
+      rq->end_io():     end_clone_request()
+  
+  Summary of the request completion flow is below:
+  blk_end_request() for a clone request
+    => blk_update_request()
+       => bio->bi_end_io() == end_clone_bio() for each clone bio
+          => Free the clone bio
+          => Success: Complete the original bio (blk_update_request())
+             Error:   Don't complete the original bio
+    => blk_finish_request()
+       => rq->end_io() == end_clone_request()
+          => blk_complete_request()
+             => dm_softirq_done()
+                => Free the clone request
+                => Success: Complete the original request (blk_end_request())
+                   Error:   Requeue the original request
+  
+  end_clone_bio() completes the original request on the size of
+  the original bio in successful cases.
+  Even if all bios in the original request are completed by that
+  completion, the original request must not be completed yet to keep
+  the ordering of request completion for the stacking.
+  So end_clone_bio() uses blk_update_request() instead of
+  blk_end_request().
+  In error cases, end_clone_bio() doesn't complete the original bio.
+  It just frees the cloned bio and gives over the error handling to
+  end_clone_request().
+  
+  end_clone_request(), which is called with queue lock held, completes
+  the clone request and the original request in a softirq context
+  (dm_softirq_done()), which has no queue lock, to avoid a deadlock
+  issue on submission of another request during the completion:
+      - The submitted request may be mapped to the same device
+      - Request submission requires queue lock, but the queue lock
+        has been held by itself and it doesn't know that
+  
+  The clone request has no clone bio when dm_softirq_done() is called.
+  So target drivers can't resubmit it again even error cases.
+  Instead, they can ask dm core for requeueing and remapping
+  the original request in that cases.
+  
+  
+  suspend
+  =======
+  Request-based dm uses stopping md->queue as suspend of the md.
+  For noflush suspend, just stops md->queue.
+  
+  For flush suspend, inserts a marker request to the tail of md->queue.
+  And dispatches all requests in md->queue until the marker comes to
+  the front of md->queue.  Then, stops dispatching request and waits
+  for the all dispatched requests to complete.
+  After that, completes the marker request, stops md->queue and
+  wake up the waiter on the suspend queue, md->wait.
+  
+  
+  resume
+  ======
+  Starts md->queue.
+  
+  
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
 ---
- Documentation/device-mapper/dm-service-time.txt |   43 ++++++------
- drivers/md/dm-service-time.c                    |   84 +++++++++++++-----------
- 2 files changed, 69 insertions(+), 58 deletions(-)
+ drivers/md/dm-table.c         |   14 
+ drivers/md/dm.c               |  759 +++++++++++++++++++++++++++++++++++++++++-
+ drivers/md/dm.h               |    1 
+ include/linux/device-mapper.h |    9 
+ 4 files changed, 780 insertions(+), 3 deletions(-)
 
-Index: 2.6.30-rc5/Documentation/device-mapper/dm-service-time.txt
+Index: linux-2.6-block/drivers/md/dm.c
 ===================================================================
---- 2.6.30-rc5.orig/Documentation/device-mapper/dm-service-time.txt
-+++ 2.6.30-rc5/Documentation/device-mapper/dm-service-time.txt
-@@ -12,24 +12,25 @@ in a path-group, and it can be specified
- 
- The path selector name is 'service-time'.
- 
--Table parameters for each path: [<repeat_count> [<performance>]]
-+Table parameters for each path: [<repeat_count> [<relative_throughput>]]
- 	<repeat_count>: The number of I/Os to dispatch using the selected
- 			path before switching to the next path.
- 			If not given, internal default is used.  To check
- 			the default value, see the activated table.
--	<performance>: The relative throughput value of the path
--		       among all paths in the path-group.
--		       The valid range is 0-100.
--		       If not given, minimum value '1' is used.
--		       If '0' is given, the path isn't selected while
--		       other paths having a positive value are available.
-+	<relative_throughput>: The relative throughput value of the path
-+			among all paths in the path-group.
-+			The valid range is 0-100.
-+			If not given, minimum value '1' is used.
-+			If '0' is given, the path isn't selected while
-+			other paths having a positive value are available.
- 
--Status for each path: <status> <fail-count> <in-flight-size> <performance>
-+Status for each path: <status> <fail-count> <in-flight-size> \
-+		      <relative_throughput>
- 	<status>: 'A' if the path is active, 'F' if the path is failed.
- 	<fail-count>: The number of path failures.
- 	<in-flight-size>: The size of in-flight I/Os on the path.
--	<performance>: The relative throughput value of the path
--		       among all paths in the path-group.
-+	<relative_throughput>: The relative throughput value of the path
-+			among all paths in the path-group.
- 
- 
- Algorithm
-@@ -40,31 +41,33 @@ dispatched and substracts when completed
- Basically, dm-service-time selects a path having minimum service time
- which is calculated by:
- 
--	('in-flight-size' + 'size-of-incoming-io') / 'performance'
-+	('in-flight-size' + 'size-of-incoming-io') / 'relative_throughput'
- 
- However, some optimizations below are used to reduce the calculation
- as much as possible.
- 
--	1. If the paths have the same 'performance', skip the division
--	   and just compare the 'in-flight-size'.
-+	1. If the paths have the same 'relative_throughput', skip
-+	   the division and just compare the 'in-flight-size'.
- 
- 	2. If the paths have the same 'in-flight-size', skip the division
--	   and just compare the 'performance'.
-+	   and just compare the 'relative_throughput'.
- 
--	3. If some paths have non-zero 'performance' and others have zero
--	   'performance', ignore those paths with zero 'performance'.
-+	3. If some paths have non-zero 'relative_throughput' and others
-+	   have zero 'relative_throughput', ignore those paths with zero
-+	   'relative_throughput'.
- 
- If such optimizations can't be applied, calculate service time, and
- compare service time.
--If calculated service time is equal, the path having maximum 'performance'
--may be better.  So compare 'performance' then.
-+If calculated service time is equal, the path having maximum
-+'relative_throughput' may be better.  So compare 'relative_throughput'
-+then.
- 
- 
- Examples
- ========
- In case that 2 paths (sda and sdb) are used with repeat_count == 128
--and sda has an average throughput 1GB/s and sdb has 4GB/s, 'performance'
--value may be '1' for sda and '4' for sdb.
-+and sda has an average throughput 1GB/s and sdb has 4GB/s,
-+'relative_throughput' value may be '1' for sda and '4' for sdb.
- 
- # echo "0 10 multipath 0 0 1 1 service-time 0 2 2 8:0 128 1 8:16 128 4" \
-   dmsetup create test
-Index: 2.6.30-rc5/drivers/md/dm-service-time.c
-===================================================================
---- 2.6.30-rc5.orig/drivers/md/dm-service-time.c
-+++ 2.6.30-rc5/drivers/md/dm-service-time.c
-@@ -13,9 +13,9 @@
- 
- #define DM_MSG_PREFIX	"multipath service-time"
- #define ST_MIN_IO	1
--#define ST_MAX_PERF	100
--#define ST_MAX_PERF_SHIFT	7
--#define ST_MAX_INFLIGHT_SIZE	((size_t)-1 >> ST_MAX_PERF_SHIFT)
-+#define ST_MAX_RELATIVE_THROUGHPUT	100
-+#define ST_MAX_RELATIVE_THROUGHPUT_SHIFT	7
-+#define ST_MAX_INFLIGHT_SIZE	((size_t)-1 >> ST_MAX_RELATIVE_THROUGHPUT_SHIFT)
- #define ST_VERSION	"0.2.0"
- 
- struct selector {
-@@ -27,7 +27,7 @@ struct path_info {
- 	struct list_head list;
- 	struct dm_path *path;
- 	unsigned repeat_count;
--	unsigned perf;
-+	unsigned relative_throughput;
- 	atomic_t in_flight_size;	/* Total size of in-flight I/Os */
- };
- 
-@@ -88,10 +88,11 @@ static int st_status(struct path_selecto
- 		switch (type) {
- 		case STATUSTYPE_INFO:
- 			DMEMIT("%d %u ", atomic_read(&pi->in_flight_size),
--			       pi->perf);
-+			       pi->relative_throughput);
- 			break;
- 		case STATUSTYPE_TABLE:
--			DMEMIT("%u %u ", pi->repeat_count, pi->perf);
-+			DMEMIT("%u %u ", pi->repeat_count,
-+			       pi->relative_throughput);
- 			break;
- 		}
- 	}
-@@ -105,19 +106,19 @@ static int st_add_path(struct path_selec
- 	struct selector *s = ps->context;
- 	struct path_info *pi;
- 	unsigned repeat_count = ST_MIN_IO;
--	unsigned perf = 1;
-+	unsigned relative_throughput = 1;
- 
- 	/*
--	 * Arguments: [<repeat_count> [<performance>]]
-+	 * Arguments: [<repeat_count> [<relative_throughput>]]
- 	 * 	<repeat_count>: The number of I/Os before switching path.
- 	 * 			If not given, default (ST_MIN_IO) is used.
--	 * 	<performance>: The relative throughput value of the path
--	 *		       among all paths in the path-group.
--	 * 		       The valid range: 0-<ST_MAX_PERF>
--	 *		       If not given, minimum value '1' is used.
--	 *		       If '0' is given, the path isn't selected while
--	 * 		       other paths having a positive value are
--	 * 		       available.
-+	 * 	<relative_throughput>: The relative throughput value of
-+	 *			the path among all paths in the path-group.
-+	 * 			The valid range: 0-<ST_MAX_RELATIVE_THROUGHPUT>
-+	 *			If not given, minimum value '1' is used.
-+	 *			If '0' is given, the path isn't selected while
-+	 * 			other paths having a positive value are
-+	 * 			available.
- 	 */
- 	if (argc > 2) {
- 		*error = "service-time ps: incorrect number of arguments";
-@@ -130,8 +131,9 @@ static int st_add_path(struct path_selec
- 	}
- 
- 	if ((argc == 2) &&
--	    (sscanf(argv[1], "%u", &perf) != 1 || perf > ST_MAX_PERF)) {
--		*error = "service-time ps: invalid performance value";
-+	    (sscanf(argv[1], "%u", &relative_throughput) != 1 ||
-+	     relative_throughput > ST_MAX_RELATIVE_THROUGHPUT)) {
-+		*error = "service-time ps: invalid relative_throughput value";
- 		return -EINVAL;
- 	}
- 
-@@ -144,7 +146,7 @@ static int st_add_path(struct path_selec
- 
- 	pi->path = path;
- 	pi->repeat_count = repeat_count;
--	pi->perf = perf;
-+	pi->relative_throughput = relative_throughput;
- 	atomic_set(&pi->in_flight_size, 0);
- 
- 	path->pscontext = pi;
-@@ -183,7 +185,7 @@ static int st_reinstate_path(struct path
-  *
-  * Description:
-  * Basically, the service time is estimated by:
-- *     ('pi->in-flight-size' + 'incoming') / 'pi->perf'
-+ *     ('pi->in-flight-size' + 'incoming') / 'pi->relative_throughput'
-  * To reduce the calculation, some optimizations are made.
-  * (See comments inline)
-  */
-@@ -196,29 +198,34 @@ static int st_compare_load(struct path_i
- 	sz2 = atomic_read(&pi2->in_flight_size);
- 
- 	/*
--	 * Case 1: Both have same performance value. Choose less loaded path.
-+	 * Case 1: Both have same throughput value. Choose less loaded path.
- 	 */
--	if (pi1->perf == pi2->perf)
-+	if (pi1->relative_throughput == pi2->relative_throughput)
- 		return sz1 - sz2;
- 
- 	/*
--	 * Case 2a: Both have same load. Choose higher performance path.
--	 * Case 2b: One path has no performance value. Choose the other one.
-+	 * Case 2a: Both have same load. Choose higher throughput path.
-+	 * Case 2b: One path has no throughput value. Choose the other one.
- 	 */
--	if (sz1 == sz2 || !pi1->perf || !pi2->perf)
--		return pi2->perf - pi1->perf;
-+	if (sz1 == sz2 ||
-+	    !pi1->relative_throughput || !pi2->relative_throughput)
-+		return pi2->relative_throughput - pi1->relative_throughput;
- 
- 	/*
- 	 * Case 3: Calculate service time. Choose faster path.
--	 *         Service time using pi1: st1 = (sz1 + incoming) / pi1->perf
--	 *         Service time using pi2: st2 = (sz2 + incoming) / pi2->perf
-+	 *         Service time using pi1:
-+	 *             st1 = (sz1 + incoming) / pi1->relative_throughput
-+	 *         Service time using pi2:
-+	 *             st2 = (sz2 + incoming) / pi2->relative_throughput
- 	 *
- 	 *         To avoid the division, transform the expression to use
- 	 *         multiplication.
--	 *         Because ->perf > 0 here, if st1 < st2, the expressions
--	 *         below are the same meaning:
--	 *         (sz1 + incoming) / pi1->perf < (sz2 + incoming) / pi2->perf
--	 *         (sz1 + incoming) * pi2->perf < (sz2 + incoming) * pi1->perf
-+	 *         Because ->relative_throughput > 0 here, if st1 < st2,
-+	 *         the expressions below are the same meaning:
-+	 *             (sz1 + incoming) / pi1->relative_throughput <
-+	 *                 (sz2 + incoming) / pi2->relative_throughput
-+	 *             (sz1 + incoming) * pi2->relative_throughput <
-+	 *                 (sz2 + incoming) * pi1->relative_throughput
- 	 *         So use the later one.
- 	 */
- 	sz1 += incoming;
-@@ -226,21 +233,22 @@ static int st_compare_load(struct path_i
- 	if (unlikely(sz1 >= ST_MAX_INFLIGHT_SIZE ||
- 		     sz2 >= ST_MAX_INFLIGHT_SIZE)) {
- 		/*
--		 * Size may be too big for multiplying pi->perf and overflow.
-+		 * Size may be too big for multiplying pi->relative_throughput
-+		 * and overflow.
- 		 * To avoid the overflow and mis-selection, shift down both.
- 		 */
--		sz1 >>= ST_MAX_PERF_SHIFT;
--		sz2 >>= ST_MAX_PERF_SHIFT;
-+		sz1 >>= ST_MAX_RELATIVE_THROUGHPUT_SHIFT;
-+		sz2 >>= ST_MAX_RELATIVE_THROUGHPUT_SHIFT;
- 	}
--	st1 = sz1 * pi2->perf;
--	st2 = sz2 * pi1->perf;
-+	st1 = sz1 * pi2->relative_throughput;
-+	st2 = sz2 * pi1->relative_throughput;
- 	if (st1 != st2)
- 		return st1 - st2;
- 
- 	/*
--	 * Case 4: Service time is equal. Choose higher performance path.
-+	 * Case 4: Service time is equal. Choose higher throughput path.
- 	 */
--	return pi2->perf - pi1->perf;
-+	return pi2->relative_throughput - pi1->relative_throughput;
+--- linux-2.6-block.orig/drivers/md/dm.c
++++ linux-2.6-block/drivers/md/dm.c
+@@ -83,6 +83,14 @@ union map_info *dm_get_mapinfo(struct bi
+ 	return NULL;
  }
  
- static struct dm_path *st_select_path(struct path_selector *ps,
++union map_info *dm_get_rq_mapinfo(struct request *rq)
++{
++	if (rq && rq->end_io_data)
++		return &((struct dm_rq_target_io *)rq->end_io_data)->info;
++	return NULL;
++}
++EXPORT_SYMBOL_GPL(dm_get_rq_mapinfo);
++
+ #define MINOR_ALLOCED ((void *)-1)
+ 
+ /*
+@@ -164,6 +172,12 @@ struct mapped_device {
+ 	/* forced geometry settings */
+ 	struct hd_geometry geometry;
+ 
++	/* marker of flush suspend for request-based dm */
++	struct request suspend_rq;
++
++	/* For saving the address of __make_request for request based dm */
++	make_request_fn *saved_make_request_fn;
++
+ 	/* sysfs handle */
+ 	struct kobject kobj;
+ 
+@@ -401,6 +415,27 @@ static void free_tio(struct mapped_devic
+ 	mempool_free(tio, md->tio_pool);
+ }
+ 
++static struct dm_rq_target_io *alloc_rq_tio(struct mapped_device *md)
++{
++	return mempool_alloc(md->tio_pool, GFP_ATOMIC);
++}
++
++static void free_rq_tio(struct mapped_device *md, struct dm_rq_target_io *tio)
++{
++	mempool_free(tio, md->tio_pool);
++}
++
++static struct dm_rq_clone_bio_info *alloc_bio_info(struct mapped_device *md)
++{
++	return mempool_alloc(md->io_pool, GFP_ATOMIC);
++}
++
++static void free_bio_info(struct mapped_device *md,
++			  struct dm_rq_clone_bio_info *info)
++{
++	mempool_free(info, md->io_pool);
++}
++
+ static void start_io_acct(struct dm_io *io)
+ {
+ 	struct mapped_device *md = io->md;
+@@ -610,6 +645,281 @@ static void clone_endio(struct bio *bio,
+ 	dec_pending(io, error);
+ }
+ 
++/*
++ * Partial completion handling for request-based dm
++ */
++static void end_clone_bio(struct bio *clone, int error)
++{
++	struct dm_rq_clone_bio_info *info = clone->bi_private;
++	struct dm_rq_target_io *tio = info->rq->end_io_data;
++	struct bio *bio = info->orig;
++	unsigned int nr_bytes = info->orig->bi_size;
++
++	free_bio_info(tio->md, info);
++	clone->bi_private = tio->md->bs;
++	bio_put(clone);
++
++	if (tio->error) {
++		/*
++		 * An error has already been detected on the request.
++		 * Once error occurred, just let clone->end_io() handle
++		 * the remainder.
++		 */
++		return;
++	} else if (error) {
++		/*
++		 * Don't notice the error to the upper layer yet.
++		 * The error handling decision is made by the target driver,
++		 * when the request is completed.
++		 */
++		tio->error = error;
++		return;
++	}
++
++	/*
++	 * I/O for the bio successfully completed.
++	 * Notice the data completion to the upper layer.
++	 */
++
++	/*
++	 * bios are processed from the head of the list.
++	 * So the completing bio should always be rq->bio.
++	 * If it's not, something wrong is happening.
++	 */
++	if (tio->orig->bio != bio)
++		DMERR("bio completion is going in the middle of the request");
++
++	/*
++	 * Update the original request.
++	 * Do not use blk_end_request() here, because it may complete
++	 * the original request before the clone, and break the ordering.
++	 */
++	blk_update_request(tio->orig, 0, nr_bytes);
++}
++
++static void free_bio_clone(struct mapped_device *md, struct request *clone)
++{
++	struct bio *bio;
++	struct dm_rq_clone_bio_info *info;
++
++	while ((bio = clone->bio) != NULL) {
++		clone->bio = bio->bi_next;
++
++		info = bio->bi_private;
++		free_bio_info(md, info);
++
++		bio->bi_private = md->bs;
++		bio_put(bio);
++	}
++}
++
++/*
++ * Don't touch any member of the md after calling this function because
++ * the md may be freed in dm_put() at the end of this function.
++ * Or do dm_get() before calling this function and dm_put() later.
++ */
++static void rq_completed(struct mapped_device *md, int run_queue)
++{
++	int wakeup_waiters = 0;
++	struct request_queue *q = md->queue;
++	unsigned long flags;
++
++	spin_lock_irqsave(q->queue_lock, flags);
++	if (!queue_in_flight(q))
++		wakeup_waiters = 1;
++	spin_unlock_irqrestore(q->queue_lock, flags);
++
++	/* nudge anyone waiting on suspend queue */
++	if (wakeup_waiters)
++		wake_up(&md->wait);
++
++	if (run_queue)
++		blk_run_queue(q);
++
++	/*
++	 * dm_put() must be at the end of this function. See the comment above
++	 */
++	dm_put(md);
++}
++
++static void dm_unprep_request(struct request *rq)
++{
++	struct request *clone = rq->special;
++	struct dm_rq_target_io *tio = clone->end_io_data;
++	struct mapped_device *md = tio->md;
++
++	rq->special = NULL;
++	rq->cmd_flags &= ~REQ_DONTPREP;
++
++	free_bio_clone(md, clone);
++	free_rq_tio(md, tio);
++}
++
++/*
++ * Requeue the original request of a clone.
++ */
++void dm_requeue_unmapped_request(struct request *clone)
++{
++	struct dm_rq_target_io *tio = clone->end_io_data;
++	struct mapped_device *md = tio->md;
++	struct request *rq = tio->orig;
++	struct request_queue *q = rq->q;
++	unsigned long flags;
++
++	dm_unprep_request(rq);
++
++	spin_lock_irqsave(q->queue_lock, flags);
++	if (elv_queue_empty(q))
++		blk_plug_device(q);
++	blk_requeue_request(q, rq);
++	spin_unlock_irqrestore(q->queue_lock, flags);
++
++	rq_completed(md, 0);
++}
++EXPORT_SYMBOL_GPL(dm_requeue_unmapped_request);
++
++static void __stop_queue(struct request_queue *q)
++{
++	blk_stop_queue(q);
++}
++
++static void stop_queue(struct request_queue *q)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(q->queue_lock, flags);
++	__stop_queue(q);
++	spin_unlock_irqrestore(q->queue_lock, flags);
++}
++
++static void __start_queue(struct request_queue *q)
++{
++	if (blk_queue_stopped(q))
++		blk_start_queue(q);
++}
++
++static void start_queue(struct request_queue *q)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(q->queue_lock, flags);
++	__start_queue(q);
++	spin_unlock_irqrestore(q->queue_lock, flags);
++}
++
++/*
++ * Complete the clone and the original request.
++ * Must be called without queue lock.
++ */
++static void dm_end_request(struct request *clone, int error)
++{
++	struct dm_rq_target_io *tio = clone->end_io_data;
++	struct mapped_device *md = tio->md;
++	struct request *rq = tio->orig;
++
++	if (blk_pc_request(rq)) {
++		rq->errors = clone->errors;
++		rq->resid_len = clone->resid_len;
++
++		if (rq->sense)
++			/*
++			 * We are using the sense buffer of the original
++			 * request.
++			 * So setting the length of the sense data is enough.
++			 */
++			rq->sense_len = clone->sense_len;
++	}
++
++	free_bio_clone(md, clone);
++	free_rq_tio(md, tio);
++
++	blk_end_request_all(rq, error);
++
++	rq_completed(md, 1);
++}
++
++/*
++ * Request completion handler for request-based dm
++ */
++static void dm_softirq_done(struct request *rq)
++{
++	struct request *clone = rq->completion_data;
++	struct dm_rq_target_io *tio = clone->end_io_data;
++	dm_request_endio_fn rq_end_io = tio->ti->type->rq_end_io;
++	int error = tio->error;
++
++	if (!(rq->cmd_flags & REQ_FAILED) && rq_end_io)
++		error = rq_end_io(tio->ti, clone, error, &tio->info);
++
++	if (error <= 0)
++		/* The target wants to complete the I/O */
++		dm_end_request(clone, error);
++	else if (error == DM_ENDIO_INCOMPLETE)
++		/* The target will handle the I/O */
++		return;
++	else if (error == DM_ENDIO_REQUEUE)
++		/* The target wants to requeue the I/O */
++		dm_requeue_unmapped_request(clone);
++	else {
++		DMWARN("unimplemented target endio return value: %d", error);
++		BUG();
++	}
++}
++
++/*
++ * Complete the clone and the original request with the error status
++ * through softirq context.
++ */
++static void dm_complete_request(struct request *clone, int error)
++{
++	struct dm_rq_target_io *tio = clone->end_io_data;
++	struct request *rq = tio->orig;
++
++	tio->error = error;
++	rq->completion_data = clone;
++	blk_complete_request(rq);
++}
++
++/*
++ * Complete the not-mapped clone and the original request with the error status
++ * through softirq context.
++ * Target's rq_end_io() function isn't called.
++ * This may be used when the target's map_rq() function fails.
++ */
++void dm_kill_unmapped_request(struct request *clone, int error)
++{
++	struct dm_rq_target_io *tio = clone->end_io_data;
++	struct request *rq = tio->orig;
++
++	rq->cmd_flags |= REQ_FAILED;
++	dm_complete_request(clone, error);
++}
++EXPORT_SYMBOL_GPL(dm_kill_unmapped_request);
++
++/*
++ * Called with the queue lock held
++ */
++static void end_clone_request(struct request *clone, int error)
++{
++	/*
++	 * For just cleaning up the information of the queue in which
++	 * the clone was dispatched.
++	 * The clone is *NOT* freed actually here because it is alloced from
++	 * dm own mempool and REQ_ALLOCED isn't set in clone->cmd_flags.
++	 */
++	__blk_put_request(clone->q, clone);
++
++	/*
++	 * Actual request completion is done in a softirq context which doesn't
++	 * hold the queue lock.  Otherwise, deadlock could occur because:
++	 *     - another request may be submitted by the upper level driver
++	 *       of the stacking during the completion
++	 *     - the submission which requires queue lock may be done
++	 *       against this queue
++	 */
++	dm_complete_request(clone, error);
++}
++
+ static sector_t max_io_len(struct mapped_device *md,
+ 			   sector_t sector, struct dm_target *ti)
+ {
+@@ -993,7 +1303,7 @@ out:
+  * The request function that just remaps the bio built up by
+  * dm_merge_bvec.
+  */
+-static int dm_request(struct request_queue *q, struct bio *bio)
++static int _dm_request(struct request_queue *q, struct bio *bio)
+ {
+ 	int rw = bio_data_dir(bio);
+ 	struct mapped_device *md = q->queuedata;
+@@ -1030,12 +1340,310 @@ static int dm_request(struct request_que
+ 	return 0;
+ }
+ 
++static int dm_make_request(struct request_queue *q, struct bio *bio)
++{
++	struct mapped_device *md = q->queuedata;
++
++	if (unlikely(bio_barrier(bio))) {
++		bio_endio(bio, -EOPNOTSUPP);
++		return 0;
++	}
++
++	return md->saved_make_request_fn(q, bio); /* call __make_request() */
++}
++
++static int dm_request_based(struct mapped_device *md)
++{
++	return blk_queue_stackable(md->queue);
++}
++
++static int dm_request(struct request_queue *q, struct bio *bio)
++{
++	struct mapped_device *md = q->queuedata;
++
++	if (dm_request_based(md))
++		return dm_make_request(q, bio);
++
++	return _dm_request(q, bio);
++}
++
++void dm_dispatch_request(struct request *rq)
++{
++	int r;
++
++	if (blk_queue_io_stat(rq->q))
++		rq->cmd_flags |= REQ_IO_STAT;
++
++	rq->start_time = jiffies;
++	r = blk_insert_cloned_request(rq->q, rq);
++	if (r)
++		dm_complete_request(rq, r);
++}
++EXPORT_SYMBOL_GPL(dm_dispatch_request);
++
++static void copy_request_info(struct request *clone, struct request *rq)
++{
++	clone->cpu = rq->cpu;
++	clone->cmd_flags = (rq_data_dir(rq) | REQ_NOMERGE);
++	clone->cmd_type = rq->cmd_type;
++	clone->__sector = blk_rq_pos(rq);
++	clone->__data_len = blk_rq_bytes(rq);
++	clone->nr_phys_segments = rq->nr_phys_segments;
++	clone->ioprio = rq->ioprio;
++	clone->buffer = rq->buffer;
++	clone->cmd_len = rq->cmd_len;
++	if (rq->cmd_len)
++		clone->cmd = rq->cmd;
++	clone->extra_len = rq->extra_len;
++	clone->sense = rq->sense;
++}
++
++static int clone_request_bios(struct request *clone, struct request *rq,
++			      struct mapped_device *md)
++{
++	struct bio *bio, *clone_bio;
++	struct dm_rq_clone_bio_info *info;
++
++	for (bio = rq->bio; bio; bio = bio->bi_next) {
++		info = alloc_bio_info(md);
++		if (!info)
++			goto free_and_out;
++
++		clone_bio = bio_alloc_bioset(GFP_ATOMIC, bio->bi_max_vecs,
++					     md->bs);
++		if (!clone_bio) {
++			free_bio_info(md, info);
++			goto free_and_out;
++		}
++
++		__bio_clone(clone_bio, bio);
++
++		if (bio_integrity(bio) &&
++		    !bio_integrity_clone(clone_bio, bio, GFP_ATOMIC)) {
++			bio_free(clone_bio, md->bs);
++			free_bio_info(md, info);
++			goto free_and_out;
++		}
++
++		clone_bio->bi_destructor = dm_bio_destructor;
++		clone_bio->bi_end_io = end_clone_bio;
++		info->rq = clone;
++		info->orig = bio;
++		clone_bio->bi_private = info;
++
++		if (clone->bio) {
++			clone->biotail->bi_next = clone_bio;
++			clone->biotail = clone_bio;
++		} else
++			clone->bio = clone->biotail = clone_bio;
++	}
++
++	return 0;
++
++free_and_out:
++	free_bio_clone(md, clone);
++
++	return -ENOMEM;
++}
++
++static int setup_clone(struct request *clone, struct request *rq,
++		       struct dm_rq_target_io *tio)
++{
++	int r;
++
++	blk_rq_init(NULL, clone);
++
++	r = clone_request_bios(clone, rq, tio->md);
++	if (r)
++		return r;
++
++	copy_request_info(clone, rq);
++	clone->end_io = end_clone_request;
++	clone->end_io_data = tio;
++
++	return 0;
++}
++
++static int dm_rq_flush_suspending(struct mapped_device *md)
++{
++	return !md->suspend_rq.special;
++}
++
++/*
++ * Called with the queue lock held.
++ */
++static int dm_prep_fn(struct request_queue *q, struct request *rq)
++{
++	struct mapped_device *md = q->queuedata;
++	struct dm_rq_target_io *tio;
++	struct request *clone;
++
++	if (unlikely(rq == &md->suspend_rq)) {
++		if (dm_rq_flush_suspending(md))
++			return BLKPREP_OK;
++		else
++			/* The flush suspend was interrupted */
++			return BLKPREP_KILL;
++	}
++
++	if (unlikely(rq->special)) {
++		DMWARN("Already has something in rq->special.");
++		return BLKPREP_KILL;
++	}
++
++	tio = alloc_rq_tio(md); /* Only one for each original request */
++	if (!tio)
++		/* -ENOMEM */
++		return BLKPREP_DEFER;
++
++	tio->md = md;
++	tio->ti = NULL;
++	tio->orig = rq;
++	tio->error = 0;
++	memset(&tio->info, 0, sizeof(tio->info));
++
++	clone = &tio->clone;
++	if (setup_clone(clone, rq, tio)) {
++		/* -ENOMEM */
++		free_rq_tio(md, tio);
++		return BLKPREP_DEFER;
++	}
++
++	rq->special = clone;
++	rq->cmd_flags |= REQ_DONTPREP;
++
++	return BLKPREP_OK;
++}
++
++static void map_request(struct dm_target *ti, struct request *rq,
++			struct mapped_device *md)
++{
++	int r;
++	struct request *clone = rq->special;
++	struct dm_rq_target_io *tio = clone->end_io_data;
++
++	/*
++	 * Hold the md reference here for the in-flight I/O.
++	 * We can't rely on the reference count by device opener,
++	 * because the device may be closed during the request completion
++	 * when all bios are completed.
++	 * See the comment in rq_completed() too.
++	 */
++	dm_get(md);
++
++	tio->ti = ti;
++	r = ti->type->map_rq(ti, clone, &tio->info);
++	switch (r) {
++	case DM_MAPIO_SUBMITTED:
++		/* The target has taken the I/O to submit by itself later */
++		break;
++	case DM_MAPIO_REMAPPED:
++		/* The target has remapped the I/O so dispatch it */
++		dm_dispatch_request(clone);
++		break;
++	case DM_MAPIO_REQUEUE:
++		/* The target wants to requeue the I/O */
++		dm_requeue_unmapped_request(clone);
++		break;
++	default:
++		if (r > 0) {
++			DMWARN("unimplemented target map return value: %d", r);
++			BUG();
++		}
++
++		/* The target wants to complete the I/O */
++		dm_kill_unmapped_request(clone, r);
++		break;
++	}
++}
++
++/*
++ * q->request_fn for request-based dm.
++ * Called with the queue lock held.
++ */
++static void dm_request_fn(struct request_queue *q)
++{
++	struct mapped_device *md = q->queuedata;
++	struct dm_table *map = dm_get_table(md);
++	struct dm_target *ti;
++	struct request *rq;
++
++	/*
++	 * For noflush suspend, check blk_queue_stopped() to immediately
++	 * quit I/O dispatching.
++	 */
++	while (!blk_queue_plugged(q) && !blk_queue_stopped(q)) {
++		rq = blk_peek_request(q);
++		if (!rq)
++			goto plug_and_out;
++
++		if (unlikely(rq == &md->suspend_rq)) { /* Flush suspend maker */
++			if (queue_in_flight(q))
++				/* Not quiet yet.  Wait more */
++				goto plug_and_out;
++
++			/* This device should be quiet now */
++			__stop_queue(q);
++			blk_start_request(rq);
++			__blk_end_request_all(rq, 0);
++			wake_up(&md->wait);
++			goto out;
++		}
++
++		ti = dm_table_find_target(map, blk_rq_pos(rq));
++		if (ti->type->busy && ti->type->busy(ti))
++			goto plug_and_out;
++
++		blk_start_request(rq);
++		spin_unlock(q->queue_lock);
++		map_request(ti, rq, md);
++		spin_lock_irq(q->queue_lock);
++	}
++
++	goto out;
++
++plug_and_out:
++	if (!elv_queue_empty(q))
++		/* Some requests still remain, retry later */
++		blk_plug_device(q);
++
++out:
++	dm_table_put(map);
++
++	return;
++}
++
++int dm_underlying_device_busy(struct request_queue *q)
++{
++	return blk_lld_busy(q);
++}
++EXPORT_SYMBOL_GPL(dm_underlying_device_busy);
++
++static int dm_lld_busy(struct request_queue *q)
++{
++	int r;
++	struct mapped_device *md = q->queuedata;
++	struct dm_table *map = dm_get_table(md);
++
++	if (!map || test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags))
++		r = 1;
++	else
++		r = dm_table_any_busy_target(map);
++
++	dm_table_put(map);
++
++	return r;
++}
++
+ static void dm_unplug_all(struct request_queue *q)
+ {
+ 	struct mapped_device *md = q->queuedata;
+ 	struct dm_table *map = dm_get_table(md);
+ 
+ 	if (map) {
++		if (dm_request_based(md))
++			generic_unplug_device(q);
++
+ 		dm_table_unplug_all(map);
+ 		dm_table_put(map);
+ 	}
+@@ -1050,7 +1658,16 @@ static int dm_any_congested(void *conges
+ 	if (!test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)) {
+ 		map = dm_get_table(md);
+ 		if (map) {
+-			r = dm_table_any_congested(map, bdi_bits);
++			/*
++			 * Request-based dm cares about only own queue for
++			 * the query about congestion status of request_queue
++			 */
++			if (dm_request_based(md))
++				r = md->queue->backing_dev_info.state &
++				    bdi_bits;
++			else
++				r = dm_table_any_congested(map, bdi_bits);
++
+ 			dm_table_put(map);
+ 		}
+ 	}
+@@ -1452,6 +2069,8 @@ static int dm_wait_for_completion(struct
+ {
+ 	int r = 0;
+ 	DECLARE_WAITQUEUE(wait, current);
++	struct request_queue *q = md->queue;
++	unsigned long flags;
+ 
+ 	dm_unplug_all(md->queue);
+ 
+@@ -1461,7 +2080,14 @@ static int dm_wait_for_completion(struct
+ 		set_current_state(interruptible);
+ 
+ 		smp_mb();
+-		if (!atomic_read(&md->pending))
++		if (dm_request_based(md)) {
++			spin_lock_irqsave(q->queue_lock, flags);
++			if (!queue_in_flight(q) && blk_queue_stopped(q)) {
++				spin_unlock_irqrestore(q->queue_lock, flags);
++				break;
++			}
++			spin_unlock_irqrestore(q->queue_lock, flags);
++		} else if (!atomic_read(&md->pending))
+ 			break;
+ 
+ 		if (interruptible == TASK_INTERRUPTIBLE &&
+@@ -1573,6 +2199,67 @@ out:
+ 	return r;
+ }
+ 
++static void dm_rq_invalidate_suspend_marker(struct mapped_device *md)
++{
++	md->suspend_rq.special = (void *)0x1;
++}
++
++static void dm_rq_abort_suspend(struct mapped_device *md, int noflush)
++{
++	struct request_queue *q = md->queue;
++	unsigned long flags;
++
++	spin_lock_irqsave(q->queue_lock, flags);
++	if (!noflush)
++		dm_rq_invalidate_suspend_marker(md);
++	__start_queue(q);
++	spin_unlock_irqrestore(q->queue_lock, flags);
++}
++
++static void dm_rq_start_suspend(struct mapped_device *md, int noflush)
++{
++	struct request *rq = &md->suspend_rq;
++	struct request_queue *q = md->queue;
++
++	if (noflush)
++		stop_queue(q);
++	else {
++		blk_rq_init(q, rq);
++		blk_insert_request(q, rq, 0, NULL);
++	}
++}
++
++static int dm_rq_suspend_available(struct mapped_device *md, int noflush)
++{
++	int r = 1;
++	struct request *rq = &md->suspend_rq;
++	struct request_queue *q = md->queue;
++	unsigned long flags;
++
++	if (noflush)
++		return r;
++
++	/* The marker must be protected by queue lock if it is in use */
++	spin_lock_irqsave(q->queue_lock, flags);
++	if (unlikely(rq->ref_count)) {
++		/*
++		 * This can happen, when the previous flush suspend was
++		 * interrupted, the marker is still in the queue and
++		 * this flush suspend has been invoked, because we don't
++		 * remove the marker at the time of suspend interruption.
++		 * We have only one marker per mapped_device, so we can't
++		 * start another flush suspend while it is in use.
++		 */
++		BUG_ON(!rq->special); /* The marker should be invalidated */
++		DMWARN("Invalidating the previous flush suspend is still in"
++		       " progress.  Please retry later.");
++		r = 0;
++	}
++	spin_unlock_irqrestore(q->queue_lock, flags);
++
++	return r;
++}
++
+ /*
+  * Functions to lock and unlock any filesystem running on the
+  * device.
+@@ -1612,6 +2299,53 @@ static void unlock_fs(struct mapped_devi
+  * dm_bind_table, dm_suspend must be called to flush any in
+  * flight bios and ensure that any further io gets deferred.
+  */
++/*
++ * Suspend mechanism in request-based dm.
++ *
++ * After the suspend starts, further incoming requests are kept in
++ * the request_queue and deferred.
++ * Remaining requests in the request_queue at the start of suspend are flushed
++ * if it is flush suspend.
++ * The suspend completes when the following conditions have been satisfied,
++ * so wait for it:
++ *    1. q->in_flight is 0 (which means no in_flight request)
++ *    2. queue has been stopped (which means no request dispatching)
++ *
++ *
++ * Noflush suspend
++ * ---------------
++ * Noflush suspend doesn't need to dispatch remaining requests.
++ * So stop the queue immediately.  Then, wait for all in_flight requests
++ * to be completed or requeued.
++ *
++ * To abort noflush suspend, start the queue.
++ *
++ *
++ * Flush suspend
++ * -------------
++ * Flush suspend needs to dispatch remaining requests.  So stop the queue
++ * after the remaining requests are completed. (Requeued request must be also
++ * re-dispatched and completed.  Until then, we can't stop the queue.)
++ *
++ * During flushing the remaining requests, further incoming requests are also
++ * inserted to the same queue.  To distinguish which requests are to be
++ * flushed, we insert a marker request to the queue at the time of starting
++ * flush suspend, like a barrier.
++ * The dispatching is blocked when the marker is found on the top of the queue.
++ * And the queue is stopped when all in_flight requests are completed, since
++ * that means the remaining requests are completely flushed.
++ * Then, the marker is removed from the queue.
++ *
++ * To abort flush suspend, we also need to take care of the marker, not only
++ * starting the queue.
++ * We don't remove the marker forcibly from the queue since it's against
++ * the block-layer manner.  Instead, we put a invalidated mark on the marker.
++ * When the invalidated marker is found on the top of the queue, it is
++ * immediately removed from the queue, so it doesn't block dispatching.
++ * Because we have only one marker per mapped_device, we can't start another
++ * flush suspend until the invalidated marker is removed from the queue.
++ * So fail and return with -EBUSY in such a case.
++ */
+ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ {
+ 	struct dm_table *map = NULL;
+@@ -1626,6 +2360,11 @@ int dm_suspend(struct mapped_device *md,
+ 		goto out_unlock;
+ 	}
+ 
++	if (dm_request_based(md) && !dm_rq_suspend_available(md, noflush)) {
++		r = -EBUSY;
++		goto out_unlock;
++	}
++
+ 	map = dm_get_table(md);
+ 
+ 	/*
+@@ -1671,6 +2410,9 @@ int dm_suspend(struct mapped_device *md,
+ 
+ 	flush_workqueue(md->wq);
+ 
++	if (dm_request_based(md))
++		dm_rq_start_suspend(md, noflush);
++
+ 	/*
+ 	 * At this point no more requests are entering target request routines.
+ 	 * We call dm_wait_for_completion to wait for all existing requests
+@@ -1687,6 +2429,9 @@ int dm_suspend(struct mapped_device *md,
+ 	if (r < 0) {
+ 		dm_queue_flush(md);
+ 
++		if (dm_request_based(md))
++			dm_rq_abort_suspend(md, noflush);
++
+ 		unlock_fs(md);
+ 		goto out; /* pushback list is already flushed, so skip flush */
+ 	}
+@@ -1728,6 +2473,14 @@ int dm_resume(struct mapped_device *md)
+ 
+ 	dm_queue_flush(md);
+ 
++	/*
++	 * Flushing deferred I/Os must be done after targets are resumed
++	 * so that mapping of targets can work correctly.
++	 * Request-based dm is queueing the deferred I/Os in its request_queue.
++	 */
++	if (dm_request_based(md))
++		start_queue(md->queue);
++
+ 	unlock_fs(md);
+ 
+ 	clear_bit(DMF_SUSPENDED, &md->flags);
+Index: linux-2.6-block/drivers/md/dm.h
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm.h
++++ linux-2.6-block/drivers/md/dm.h
+@@ -47,6 +47,7 @@ void dm_table_presuspend_targets(struct 
+ void dm_table_postsuspend_targets(struct dm_table *t);
+ int dm_table_resume_targets(struct dm_table *t);
+ int dm_table_any_congested(struct dm_table *t, int bdi_bits);
++int dm_table_any_busy_target(struct dm_table *t);
+ 
+ /*
+  * To check the return value from dm_table_find_target().
+Index: linux-2.6-block/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm-table.c
++++ linux-2.6-block/drivers/md/dm-table.c
+@@ -1067,6 +1067,20 @@ int dm_table_any_congested(struct dm_tab
+ 	return r;
+ }
+ 
++int dm_table_any_busy_target(struct dm_table *t)
++{
++	unsigned i;
++	struct dm_target *ti;
++
++	for (i = 0; i < t->num_targets; i++) {
++		ti = t->targets + i;
++		if (ti->type->busy && ti->type->busy(ti))
++			return 1;
++	}
++
++	return 0;
++}
++
+ void dm_table_unplug_all(struct dm_table *t)
+ {
+ 	struct dm_dev_internal *dd;
+Index: linux-2.6-block/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6-block.orig/include/linux/device-mapper.h
++++ linux-2.6-block/include/linux/device-mapper.h
+@@ -229,6 +229,7 @@ struct gendisk *dm_disk(struct mapped_de
+ int dm_suspended(struct mapped_device *md);
+ int dm_noflush_suspending(struct dm_target *ti);
+ union map_info *dm_get_mapinfo(struct bio *bio);
++union map_info *dm_get_rq_mapinfo(struct request *rq);
+ 
+ /*
+  * Geometry functions.
+@@ -391,4 +392,12 @@ static inline unsigned long to_bytes(sec
+ 	return (n << SECTOR_SHIFT);
+ }
+ 
++/*-----------------------------------------------------------------
++ * Helper for block layer and dm core operations
++ *---------------------------------------------------------------*/
++void dm_dispatch_request(struct request *rq);
++void dm_requeue_unmapped_request(struct request *rq);
++void dm_kill_unmapped_request(struct request *rq, int error);
++int dm_underlying_device_busy(struct request_queue *q);
++
+ #endif	/* _LINUX_DEVICE_MAPPER_H */
