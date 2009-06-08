@@ -1,17 +1,9 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 02/20] io-controller: Common flat fair
-	queuing code in elevaotor layer
-Date: Mon, 8 Jun 2009 09:56:52 -0400
-Message-ID: <20090608135652.GE3652@redhat.com>
-References: <1243377729-2176-1-git-send-email-vgoyal@redhat.com>
-	<1243377729-2176-3-git-send-email-vgoyal@redhat.com>
-	<4A2CC15F.2010708@cn.fujitsu.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools libcheckers/tur.c libmultipath ...
+Date: 8 Jun 2009 21:38:02 -0000
+Message-ID: <20090608213802.2788.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4A2CC15F.2010708@cn.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,68 +13,131 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jun 08, 2009 at 03:44:31PM +0800, Gui Jianfeng wrote:
-> Vivek Goyal wrote:
-> ...
-> > +
-> > +static inline pid_t elv_ioq_pid(struct io_queue *ioq)
-> > +{
-> > +	return ioq->pid;
-> > +}
-> > +
-> > +static inline unsigned long elv_ioq_ttime_mean(struct io_queue *ioq)
-> > +{
-> > +	return ioq->ttime_mean;
-> > +}
-> > +
-> > +static inline unsigned long elv_ioq_sample_valid(struct io_queue *ioq)
-> > +{
-> > +	return ioq_sample_valid(ioq->ttime_samples);
-> > +}
-> > +
-> 
-> These three functions are dead now, just remove them.
-> 
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-06-08 21:38:02
 
-Thanks Gui. queued up for next posting.
+Modified files:
+	libcheckers    : tur.c 
+	libmultipath   : discovery.c 
 
-Thanks
-Vivek
+Log message:
+	Fix for 473039. TUR checker can now return PATH_GHOST. Already upstream.
+	More work for 437588.
 
-> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-> ---
->  block/elevator-fq.h |   15 ---------------
->  1 files changed, 0 insertions(+), 15 deletions(-)
-> 
-> diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-> index 24a3af9..b2bb11a 100644
-> --- a/block/elevator-fq.h
-> +++ b/block/elevator-fq.h
-> @@ -452,21 +452,6 @@ static inline int elv_ioq_nr_queued(struct io_queue *ioq)
->  	return ioq->nr_queued;
->  }
->  
-> -static inline pid_t elv_ioq_pid(struct io_queue *ioq)
-> -{
-> -	return ioq->pid;
-> -}
-> -
-> -static inline unsigned long elv_ioq_ttime_mean(struct io_queue *ioq)
-> -{
-> -	return ioq->ttime_mean;
-> -}
-> -
-> -static inline unsigned long elv_ioq_sample_valid(struct io_queue *ioq)
-> -{
-> -	return ioq_sample_valid(ioq->ttime_samples);
-> -}
-> -
->  static inline void elv_get_ioq(struct io_queue *ioq)
->  {
->  	atomic_inc(&ioq->ref);
-> -- 
-> 1.5.4.rc3
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/tur.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.4.2.2&r2=1.4.2.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.7&r2=1.32.2.8
+
+--- multipath-tools/libcheckers/tur.c	2009/04/21 00:05:22	1.4.2.2
++++ multipath-tools/libcheckers/tur.c	2009/06/08 21:38:01	1.4.2.3
+@@ -21,6 +21,7 @@
+ #define HEAVY_CHECK_COUNT       10
+ 
+ #define MSG_TUR_UP	"tur checker reports path is up"
++#define MSG_TUR_GHOST	"tur checker reports path in standby state"
+ #define MSG_TUR_DOWN	"tur checker reports path is down"
+ 
+ /* from linux/include/scsi/scsi.h */
+@@ -91,6 +92,17 @@
+ 			if (--retry_tur)
+ 				goto retry;
+ 		}
++		else if( key == 0x2){
++			/* Not Ready */
++			
++			/*Note : Other ALUA states are either UP or DOWN*/
++			if( asc == 0x04 && ascq == 0x0b){
++			/*LOGICAL UNIT NOT ACCESSIBLE, TARGET PORT IN STANDBY STATE*/
++				MSG(c, MSG_TUR_GHOST);
++				return PATH_GHOST;
++			}
++		}
++
+ 		MSG(c, MSG_TUR_DOWN);
+ 		return PATH_DOWN;
+ 	}
+--- multipath-tools/libmultipath/discovery.c	2009/04/21 00:05:22	1.32.2.7
++++ multipath-tools/libmultipath/discovery.c	2009/06/08 21:38:02	1.32.2.8
+@@ -742,12 +742,34 @@
+ }
+ 
+ static int
++get_uid (struct path * pp)
++{
++	char buff[CALLOUT_MAX_SIZE];
++
++	if (!pp->getuid)
++		select_getuid(pp);
++
++	if (apply_format(pp->getuid, &buff[0], pp)) {
++		condlog(0, "error formatting uid callout command");
++		memset(pp->wwid, 0, WWID_SIZE);
++	} else if (execute_program(buff, pp->wwid, WWID_SIZE)) {
++		condlog(0, "error calling out %s", buff);
++		memset(pp->wwid, 0, WWID_SIZE);
++		return 1;
++	}
++	condlog(3, "%s: uid = %s (callout)", pp->dev ,pp->wwid);
++	return 0;
++}
++
++static int
+ get_prio (struct path * pp)
+ {
+ 	char buff[CALLOUT_MAX_SIZE];
+ 	char prio[16];
+ 
+ 	if (!pp->getprio_selected) {
++		if (!strlen(pp->wwid))
++			get_uid(pp);
+ 		select_getprio(pp);
+ 		pp->getprio_selected = 1;
+ 	}
+@@ -768,26 +790,6 @@
+ 	return 0;
+ }
+ 
+-static int
+-get_uid (struct path * pp)
+-{
+-	char buff[CALLOUT_MAX_SIZE];
+-
+-	if (!pp->getuid)
+-		select_getuid(pp);
+-
+-	if (apply_format(pp->getuid, &buff[0], pp)) {
+-		condlog(0, "error formatting uid callout command");
+-		memset(pp->wwid, 0, WWID_SIZE);
+-	} else if (execute_program(buff, pp->wwid, WWID_SIZE)) {
+-		condlog(0, "error calling out %s", buff);
+-		memset(pp->wwid, 0, WWID_SIZE);
+-		return 1;
+-	}
+-	condlog(3, "%s: uid = %s (callout)", pp->dev ,pp->wwid);
+-	return 0;
+-}
+-
+ extern int
+ pathinfo (struct path *pp, vector hwtable, int mask)
+ {
+@@ -815,12 +817,12 @@
+ 	if (mask & DI_CHECKER && get_state(pp))
+ 		goto blank;
+ 	
+-	if (mask & DI_PRIO && pp->state != PATH_DOWN)
+-		get_prio(pp);
+-
+ 	if (mask & DI_WWID && !strlen(pp->wwid))
+ 		get_uid(pp);
+ 
++	if (mask & DI_PRIO && pp->state != PATH_DOWN)
++		get_prio(pp);
++
+ #ifndef DAEMON
+ 	close(pp->fd);
+ 	pp->fd = -1;
