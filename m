@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 03/19] io-controller: Charge for time slice based
-	on average disk rate
-Date: Mon,  8 Jun 2009 22:08:46 -0400
-Message-ID: <1244513342-11758-4-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 17/19] io-controller: Support per cgroup per
+	device weights and io class
+Date: Mon,  8 Jun 2009 22:09:00 -0400
+Message-ID: <1244513342-11758-18-git-send-email-vgoyal@redhat.com>
 References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,206 +20,406 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: peterz@infradead.org, akpm@linux-foundation.org, snitzer@redhat.com, agk@redhat.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-o There are situations where a queue gets expired very soon and it looks
-  as if time slice used by that queue is zero. For example, If an async
-  queue dispatches a bunch of requests and queue is expired before first
-  request completes. Another example is where a queue is expired as soon
-  as first request completes and queue has no more requests (sync queues
-  on SSD).
+This patch enables per-cgroup per-device weight and ioprio_class handling.
+A new cgroup interface "policy" is introduced. You can make use of this
+file to configure weight and ioprio_class for each device in a given cgroup.
+The original "weight" and "ioprio_class" files are still available. If you
+don't do special configuration for a particular device, "weight" and
+"ioprio_class" are used as default values in this device.
 
-o Currently we just charge 25% of slice length in such cases. This patch tries
-  to improve on that approximation by keeping a track of average disk rate
-  and charging for time by nr_sectors/disk_rate.
+You can use the following format to play with the new interface.
+#echo DEV:weight:ioprio_class > /patch/to/cgroup/policy
+weight=0 means removing the policy for DEV.
 
-o This is still experimental, not very sure if it gives measurable improvement
-  or not.
+Examples:
+Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+# echo /dev/hdb:300:2 > io.policy
+# cat io.policy
+dev weight class
+/dev/hdb 300 2
 
+Configure weight=500 ioprio_class=1 on /dev/hda in this cgroup
+# echo /dev/hda:500:1 > io.policy
+# cat io.policy
+dev weight class
+/dev/hda 500 1
+/dev/hdb 300 2
+
+Remove the policy for /dev/hda in this cgroup
+# echo /dev/hda:0:1 > io.policy
+# cat io.policy
+dev weight class
+/dev/hdb 300 2
+
+Changelog (v1 -> v2)
+- Rename some structures
+- Use spin_lock_irqsave() and spin_lock_irqrestore() version to prevent
+  from enabling the interrupts unconditionally.
+- Fix policy setup bug when switching to another io scheduler.
+- If a policy is available for a specific device, don't update weight and
+  io class when writing "weight" and "iprio_class".
+- Fix a bug when parsing policy string.
+
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/elevator-fq.c |   85 +++++++++++++++++++++++++++++++++++++++++++++++++-
- block/elevator-fq.h |   11 ++++++
- 2 files changed, 94 insertions(+), 2 deletions(-)
+ block/elevator-fq.c |  246 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ block/elevator-fq.h |   11 +++
+ 2 files changed, 251 insertions(+), 6 deletions(-)
 
 diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 03bc3fb..7778701 100644
+index 68aaaa7..207664d 100644
 --- a/block/elevator-fq.c
 +++ b/block/elevator-fq.c
-@@ -21,6 +21,9 @@ const int elv_slice_async_rq = 2;
- int elv_slice_idle = HZ / 125;
- static struct kmem_cache *elv_ioq_pool;
+@@ -15,6 +15,7 @@
+ #include <linux/blktrace_api.h>
+ #include <linux/seq_file.h>
+ #include <linux/biotrack.h>
++#include <linux/genhd.h>
  
-+/* Maximum Window length for updating average disk rate */
-+static int elv_rate_sampling_window = HZ / 10;
-+
- #define ELV_SLICE_SCALE		(5)
- #define ELV_HW_QUEUE_MIN	(5)
- #define IO_SERVICE_TREE_INIT   ((struct io_service_tree)		\
-@@ -1026,6 +1029,47 @@ static void elv_ioq_update_io_thinktime(struct io_queue *ioq)
- 	ioq->ttime_mean = (ioq->ttime_total + 128) / ioq->ttime_samples;
+ /* Values taken from cfq */
+ const int elv_slice_sync = HZ / 10;
+@@ -1041,12 +1042,31 @@ struct io_group *io_cgroup_lookup_group(struct io_cgroup *iocg, void *key)
+ 	return NULL;
  }
  
-+static void elv_update_io_rate(struct elv_fq_data *efqd, struct request *rq)
+-void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog)
++static struct io_policy_node *policy_search_node(const struct io_cgroup *iocg,
++						 dev_t dev);
++
++void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog,
++			  dev_t dev)
+ {
+ 	struct io_entity *entity = &iog->entity;
++	struct io_policy_node *pn;
++	unsigned long flags;
++
++	spin_lock_irqsave(&iocg->lock, flags);
++	pn = policy_search_node(iocg, dev);
++	if (pn) {
++		entity->weight = pn->weight;
++		entity->new_weight = pn->weight;
++		entity->ioprio_class = pn->ioprio_class;
++		entity->new_ioprio_class = pn->ioprio_class;
++	} else {
++		entity->weight = iocg->weight;
++		entity->new_weight = iocg->weight;
++		entity->ioprio_class = iocg->ioprio_class;
++		entity->new_ioprio_class = iocg->ioprio_class;
++	}
++	spin_unlock_irqrestore(&iocg->lock, flags);
+ 
+-	entity->weight = entity->new_weight = iocg->weight;
+-	entity->ioprio_class = entity->new_ioprio_class = iocg->ioprio_class;
+ 	entity->ioprio_changed = 1;
+ 	entity->my_sched_data = &iog->sched_data;
+ }
+@@ -1098,6 +1118,7 @@ static int io_cgroup_##__VAR##_write(struct cgroup *cgroup,		\
+ 	struct io_cgroup *iocg;					\
+ 	struct io_group *iog;						\
+ 	struct hlist_node *n;						\
++	struct io_policy_node *pn;					\
+ 									\
+ 	if (val < (__MIN) || val > (__MAX))				\
+ 		return -EINVAL;						\
+@@ -1110,6 +1131,9 @@ static int io_cgroup_##__VAR##_write(struct cgroup *cgroup,		\
+ 	spin_lock_irq(&iocg->lock);					\
+ 	iocg->__VAR = (unsigned long)val;				\
+ 	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {	\
++		pn = policy_search_node(iocg, iog->dev);		\
++		if (pn)							\
++			continue;					\
+ 		iog->entity.new_##__VAR = (unsigned long)val;		\
+ 		smp_wmb();						\
+ 		iog->entity.ioprio_changed = 1;				\
+@@ -1218,9 +1242,6 @@ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
+ 		if (!iog)
+ 			goto cleanup;
+ 
+-		io_group_init_entity(iocg, iog);
+-		iog->my_entity = &iog->entity;
+-
+ 		atomic_set(&iog->ref, 0);
+ 		iog->deleting = 0;
+ 
+@@ -1233,6 +1254,8 @@ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
+ 		elv_get_iog(iog);
+ 
+ 		iog->iocg_id = css_id(&iocg->css);
++		io_group_init_entity(iocg, iog, iog->dev);
++		iog->my_entity = &iog->entity;
+ 
+ 		if (bio) {
+ 			struct gendisk *disk = bio->bi_bdev->bd_disk;
+@@ -1520,8 +1543,212 @@ struct io_group *io_alloc_root_group(struct request_queue *q,
+ 	return iog;
+ }
+ 
++static int io_cgroup_policy_read(struct cgroup *cgrp, struct cftype *cft,
++				  struct seq_file *m)
 +{
-+	long elapsed = jiffies - efqd->rate_sampling_start;
-+	unsigned long total;
++	struct io_cgroup *iocg;
++	struct io_policy_node *pn;
 +
-+	/* sampling window is off */
-+	if (!efqd->rate_sampling_start)
-+		return;
++	iocg = cgroup_to_io_cgroup(cgrp);
 +
-+	efqd->rate_sectors_current += rq->nr_sectors;
++	if (list_empty(&iocg->policy_list))
++		goto out;
 +
-+	if (efqd->rq_in_driver && (elapsed < elv_rate_sampling_window))
-+		return;
++	seq_printf(m, "dev weight class\n");
 +
-+	efqd->rate_sectors = (7*efqd->rate_sectors +
-+				256*efqd->rate_sectors_current) / 8;
++	spin_lock_irq(&iocg->lock);
++	list_for_each_entry(pn, &iocg->policy_list, node) {
++		seq_printf(m, "%s %lu %lu\n", pn->dev_name,
++			   pn->weight, pn->ioprio_class);
++	}
++	spin_unlock_irq(&iocg->lock);
++out:
++	return 0;
++}
 +
-+	if (!elapsed) {
-+		/*
-+		 * updating rate before a jiffy could complete. Could be a
-+		 * problem with fast queuing/non-queuing hardware. Should we
-+		 * look at higher resolution time source?
-+		 *
-+		 * In case of non-queuing hardware we will probably not try to
-+		 * dispatch from multiple queues and will be able to account
-+		 * for disk time used and will not need this approximation
-+		 * anyway?
-+		 */
-+		elapsed = 1;
++static inline void policy_insert_node(struct io_cgroup *iocg,
++					  struct io_policy_node *pn)
++{
++	list_add(&pn->node, &iocg->policy_list);
++}
++
++/* Must be called with iocg->lock held */
++static inline void policy_delete_node(struct io_policy_node *pn)
++{
++	list_del(&pn->node);
++}
++
++/* Must be called with iocg->lock held */
++static struct io_policy_node *policy_search_node(const struct io_cgroup *iocg,
++						 dev_t dev)
++{
++	struct io_policy_node *pn;
++
++	if (list_empty(&iocg->policy_list))
++		return NULL;
++
++	list_for_each_entry(pn, &iocg->policy_list, node) {
++		if (pn->dev == dev)
++			return pn;
 +	}
 +
-+	efqd->rate_time = (7*efqd->rate_time + 256*elapsed) / 8;
-+	total = efqd->rate_sectors + (efqd->rate_time/2);
-+	efqd->mean_rate = total/efqd->rate_time;
-+
-+	elv_log(efqd, "mean_rate=%d, t=%d s=%d", efqd->mean_rate,
-+			elapsed, efqd->rate_sectors_current);
-+	efqd->rate_sampling_start = 0;
-+	efqd->rate_sectors_current = 0;
++	return NULL;
 +}
 +
- /*
-  * Disable idle window if the process thinks too long.
-  * This idle flag can also be updated by io scheduler.
-@@ -1313,6 +1357,34 @@ void elv_del_ioq_busy(struct elevator_queue *e, struct io_queue *ioq,
- }
- 
- /*
-+ * Calculate the effective disk time used by the queue based on how many
-+ * sectors queue has dispatched and what is the average disk rate
-+ * Returns disk time in ms.
-+ */
-+static inline unsigned long elv_disk_time_used(struct request_queue *q,
-+					struct io_queue *ioq)
++static int devname_to_devnum(const char *buf, dev_t *dev)
 +{
-+	struct elv_fq_data *efqd = &q->elevator->efqd;
-+	struct io_entity *entity = &ioq->entity;
-+	unsigned long jiffies_used = 0;
++	struct block_device *bdev;
++	struct gendisk *disk;
++	int part;
 +
-+	if (!efqd->mean_rate)
-+		return entity->budget/4;
++	bdev = lookup_bdev(buf);
++	if (IS_ERR(bdev))
++		return -ENODEV;
 +
-+	/* Charge the queue based on average disk rate */
-+	jiffies_used = ioq->nr_sectors/efqd->mean_rate;
++	disk = get_gendisk(bdev->bd_dev, &part);
++	if (part)
++		return -EINVAL;
 +
-+	if (!jiffies_used)
-+		jiffies_used = 1;
++	*dev = MKDEV(disk->major, disk->first_minor);
++	bdput(bdev);
 +
-+	elv_log_ioq(efqd, ioq, "disk time=%ldms sect=%ld rate=%ld",
-+				jiffies_to_msecs(jiffies_used),
-+				ioq->nr_sectors, efqd->mean_rate);
-+
-+	return jiffies_used;
++	return 0;
 +}
 +
-+/*
-  * Do the accounting. Determine how much service (in terms of time slices)
-  * current queue used and adjust the start, finish time of queue and vtime
-  * of the tree accordingly.
-@@ -1364,7 +1436,7 @@ void __elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
- 	 * the requests to finish. But this will reduce throughput.
- 	 */
- 	if (!ioq->slice_end)
--		slice_used = entity->budget/4;
-+		slice_used = elv_disk_time_used(q, ioq);
- 	else {
- 		if (time_after(ioq->slice_end, jiffies)) {
- 			slice_unused = ioq->slice_end - jiffies;
-@@ -1374,7 +1446,7 @@ void __elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
- 				 * completing first request. Charge 25% of
- 				 * slice.
- 				 */
--				slice_used = entity->budget/4;
-+				slice_used = elv_disk_time_used(q, ioq);
- 			} else
- 				slice_used = entity->budget - slice_unused;
- 		} else {
-@@ -1392,6 +1464,8 @@ void __elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
- 	BUG_ON(ioq != efqd->active_queue);
- 	elv_reset_active_ioq(efqd);
++static int policy_parse_and_set(char *buf, struct io_policy_node *newpn)
++{
++	char *s[3], *p;
++	int ret;
++	int i = 0;
++
++	memset(s, 0, sizeof(s));
++	while ((p = strsep(&buf, ":")) != NULL) {
++		if (!*p)
++			continue;
++		s[i++] = p;
++	}
++
++	ret = devname_to_devnum(s[0], &newpn->dev);
++	if (ret)
++		return ret;
++
++	strcpy(newpn->dev_name, s[0]);
++
++	if (s[1] == NULL)
++		return -EINVAL;
++
++	ret = strict_strtoul(s[1], 10, &newpn->weight);
++	if (ret || newpn->weight > WEIGHT_MAX)
++		return -EINVAL;
++
++	if (s[2] == NULL)
++		return -EINVAL;
++
++	ret = strict_strtoul(s[2], 10, &newpn->ioprio_class);
++	if (ret || newpn->ioprio_class < IOPRIO_CLASS_RT ||
++	    newpn->ioprio_class > IOPRIO_CLASS_IDLE)
++		return -EINVAL;
++
++	return 0;
++}
++
++static int io_cgroup_policy_write(struct cgroup *cgrp, struct cftype *cft,
++			    const char *buffer)
++{
++	struct io_cgroup *iocg;
++	struct io_policy_node *newpn, *pn;
++	char *buf;
++	int ret = 0;
++	int keep_newpn = 0;
++	struct hlist_node *n;
++	struct io_group *iog;
++
++	buf = kstrdup(buffer, GFP_KERNEL);
++	if (!buf)
++		return -ENOMEM;
++
++	newpn = kzalloc(sizeof(*newpn), GFP_KERNEL);
++	if (!newpn) {
++		ret = -ENOMEM;
++		goto free_buf;
++	}
++
++	ret = policy_parse_and_set(buf, newpn);
++	if (ret)
++		goto free_newpn;
++
++	if (!cgroup_lock_live_group(cgrp)) {
++		ret = -ENODEV;
++		goto free_newpn;
++	}
++
++	iocg = cgroup_to_io_cgroup(cgrp);
++	spin_lock_irq(&iocg->lock);
++
++	pn = policy_search_node(iocg, newpn->dev);
++	if (!pn) {
++		if (newpn->weight != 0) {
++			policy_insert_node(iocg, newpn);
++			keep_newpn = 1;
++		}
++		goto update_io_group;
++	}
++
++	if (newpn->weight == 0) {
++		/* weight == 0 means deleteing a policy */
++		policy_delete_node(pn);
++		goto update_io_group;
++	}
++
++	pn->weight = newpn->weight;
++	pn->ioprio_class = newpn->ioprio_class;
++
++update_io_group:
++	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {
++		if (iog->dev == newpn->dev) {
++			if (newpn->weight) {
++				iog->entity.new_weight = newpn->weight;
++				iog->entity.new_ioprio_class =
++					newpn->ioprio_class;
++				/*
++				 * iog weight and ioprio_class updating
++				 * actually happens if ioprio_changed is set.
++				 * So ensure ioprio_changed is not set until
++				 * new weight and new ioprio_class are updated.
++				 */
++				smp_wmb();
++				iog->entity.ioprio_changed = 1;
++			} else {
++				iog->entity.new_weight = iocg->weight;
++				iog->entity.new_ioprio_class =
++					iocg->ioprio_class;
++
++				/* The same as above */
++				smp_wmb();
++				iog->entity.ioprio_changed = 1;
++			}
++		}
++	}
++	spin_unlock_irq(&iocg->lock);
++
++	cgroup_unlock();
++
++free_newpn:
++	if (!keep_newpn)
++		kfree(newpn);
++free_buf:
++	kfree(buf);
++	return ret;
++}
++
+ struct cftype bfqio_files[] = {
+ 	{
++		.name = "policy",
++		.read_seq_string = io_cgroup_policy_read,
++		.write_string = io_cgroup_policy_write,
++		.max_write_len = 256,
++	},
++	{
+ 		.name = "weight",
+ 		.read_u64 = io_cgroup_weight_read,
+ 		.write_u64 = io_cgroup_weight_write,
+@@ -1563,6 +1790,7 @@ struct cgroup_subsys_state *iocg_create(struct cgroup_subsys *subsys,
+ 	INIT_HLIST_HEAD(&iocg->group_data);
+ 	iocg->weight = IO_DEFAULT_GRP_WEIGHT;
+ 	iocg->ioprio_class = IO_DEFAULT_GRP_CLASS;
++	INIT_LIST_HEAD(&iocg->policy_list);
  
-+	/* Queue is being expired. Reset number of secotrs dispatched */
-+	ioq->nr_sectors = 0;
- 	if (!ioq->nr_queued)
- 		elv_del_ioq_busy(q->elevator, ioq, 1);
- 	else
-@@ -1717,6 +1791,7 @@ void elv_fq_dispatched_request(struct elevator_queue *e, struct request *rq)
- 
- 	BUG_ON(!ioq);
- 	elv_ioq_request_dispatched(ioq);
-+	ioq->nr_sectors += rq->nr_sectors;
- 	elv_ioq_request_removed(e, rq);
- 	elv_clear_ioq_must_dispatch(ioq);
+ 	return &iocg->css;
  }
-@@ -1729,6 +1804,10 @@ void elv_fq_activate_rq(struct request_queue *q, struct request *rq)
- 		return;
+@@ -1752,6 +1980,7 @@ void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup)
+ 	struct io_group *iog;
+ 	struct elv_fq_data *efqd;
+ 	unsigned long uninitialized_var(flags);
++	struct io_policy_node *pn, *pntmp;
  
- 	efqd->rq_in_driver++;
-+
-+	if (!efqd->rate_sampling_start)
-+		efqd->rate_sampling_start = jiffies;
-+
- 	elv_log_ioq(efqd, rq_ioq(rq), "activate rq, drv=%d",
- 						efqd->rq_in_driver);
- }
-@@ -1820,6 +1899,8 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 	efqd->rq_in_driver--;
- 	ioq->dispatched--;
+ 	/*
+ 	 * io groups are linked in two lists. One list is maintained
+@@ -1790,6 +2019,11 @@ remove_entry:
+ 	goto remove_entry;
  
-+	elv_update_io_rate(efqd, rq);
+ done:
++	list_for_each_entry_safe(pn, pntmp, &iocg->policy_list, node) {
++		policy_delete_node(pn);
++		kfree(pn);
++	}
 +
- 	if (sync)
- 		ioq->last_end_request = jiffies;
- 
+ 	free_css_id(&io_subsys, &iocg->css);
+ 	rcu_read_unlock();
+ 	BUG_ON(!hlist_empty(&iocg->group_data));
 diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index e90b3d3..3abcb0b 100644
+index 2655611..ff409ec 100644
 --- a/block/elevator-fq.h
 +++ b/block/elevator-fq.h
-@@ -166,6 +166,9 @@ struct io_queue {
- 	/* Requests dispatched from this queue */
- 	int dispatched;
- 
-+	/* Number of sectors dispatched in current dispatch round */
-+	int nr_sectors;
-+
- 	/* Keep a track of think time of processes in this queue */
- 	unsigned long last_end_request;
- 	unsigned long ttime_total;
-@@ -221,6 +224,14 @@ struct elv_fq_data {
- 	struct work_struct unplug_work;
- 
- 	unsigned int elv_slice[2];
-+
-+	/* Fields for keeping track of average disk rate */
-+	unsigned long rate_sectors; /* number of sectors finished */
-+	unsigned long rate_time;   /* jiffies elapsed */
-+	unsigned long mean_rate; /* sectors per jiffy */
-+	unsigned long long rate_sampling_start; /*sampling window start jifies*/
-+	/* number of sectors finished io during current sampling window */
-+	unsigned long rate_sectors_current;
+@@ -253,6 +253,14 @@ struct io_group {
+ 	struct request_list rl;
  };
  
- extern int elv_slice_idle;
++struct io_policy_node {
++	struct list_head node;
++	char dev_name[32];
++	dev_t dev;
++	unsigned long weight;
++	unsigned long ioprio_class;
++};
++
+ /**
+  * struct bfqio_cgroup - bfq cgroup data structure.
+  * @css: subsystem state for bfq in the containing cgroup.
+@@ -269,6 +277,9 @@ struct io_cgroup {
+ 
+ 	unsigned long weight, ioprio_class;
+ 
++	/* list of io_policy_node */
++	struct list_head policy_list;
++
+ 	spinlock_t lock;
+ 	struct hlist_head group_data;
+ };
 -- 
 1.6.0.6
