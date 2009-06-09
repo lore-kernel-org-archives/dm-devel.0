@@ -1,10 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: snapshot interface: messages-vs-table arguments
-Date: Tue, 9 Jun 2009 02:00:04 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0906090124580.1421@hs20-bc2-1.build.redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH block#for-2.6.31] block: add request clone
+	interface
+Date: Tue, 09 Jun 2009 16:51:44 +0900
+Message-ID: <4A2E1490.7060902@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,100 +17,189 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, k-ueda@ct.jp.nec.com, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi
+Hi Jens,
 
-These are my comments about the interface between snapshots.
+Recently, I posted an updated version of request-based dm patch-set
+(http://marc.info/?l=dm-devel&m=124392590507004&w=2) which was made
+on top of block#for-2.6.31.
+In block#for-2.6.31, __sector and __data_len of struct request are
+commented as 'internal, NEVER access directly'.
+However, since request-based dm needs to copy the latest status of
+the original request to clone, those fields are still accessed
+directly in the request-based dm patch-set.
 
-Alasdair's idea is that everything is done with table loads, that messages 
-are not needed (they may be used to avoid table reload, but the thing 
-should work without messages). Userspace lvm will submit a list of 
-snapshot IDs in the table arguments --- if the kernel has some snapshot ID 
-in its store that is not listed in the table, it deletes these snapshots. 
-If there are some new snapshot IDs, the kernel creates them.
-
-Basically, the whole interface communicates just states (not commands), 
-and the actions to be performed are inferred from the difference in the 
-states.
-
-I though about it, I think it would work if there were only snapshot 
-creations and snapshot deletions. But it would have problems with 
-snapshots-of-snapshots or with merging.
-
-- snapshots-of-snapshots
-
-If we create snapshot of snapshot, both the snapshots will be basically 
-independent. The relationship between both snapshots exists only in the 
-time when they are created, once created, they are seen as independent by 
-the user (currently there is limitation that you can't create 
-snapshot-of-snapshot-of-snapshot, but it will be likely relaxed when new 
-disk format will be developed). The user can delete either of the 
-snapshots.
-
-If we go with "everything-is-states, there are no messages" approach, we 
-have no way to represent snapshots-of-snapshots. Because both the 
-snapshots are independent, there will no relationship between them in the 
-metadata --- they will be just two snapshots with different IDs.
-
-Now, how to find out that snapshot-of-snapshot was created?
-
-Suppose that the old metadata contain origin, snap1 and snap2.
-
-New metadata contains origin, snap1, snap2 and snap3.
-
-The qustion is: how could a kernel find out how to create snap3? Was snap3 
-new snapshot of the origin? Was it clone of snap2? Was it clone of snap1? 
-We can't tell. In either of these cases, the metadata is the same!
-
-We could store the originating snapshot for snap3, for example store into 
-metadata that snap3 is the clone of snap2. But if snap2 is deleted, we 
-have problem with reference pointing nowhere.
+I'd like to solve this issue without breaking the new block-layer policy.
+If those fields should not be accessed directly, I need a helper
+function to copy the original request.
+What do you think about the following patch which adds request cloning
+interface to the block-layer?
+Please apply if you have no problem.
 
 
-What I'm arguing is that the action to be performed (make new snapshot-vs 
-clone existing snapshot) cannot be inferred from the difference in the 
-metadata. Therefore, we need messages or something like messages to tell 
-the kernel the action.
 
-- merge
+This patch adds the following 2 interfaces for request-stacking drivers:
 
-The same situation happens with merge. From user's point of view, merge is 
-similar to delete. The merged snapshot immediatelly disappears and the 
-origin will contain the content of the merged snapshot. We don't need a 
-background userspace process for merging (unlike merging non-shared 
-snapshot where it is needed), the merging will be performed by the kernel 
-on its own and space in the shared store will be progressively deleted as 
-the merge goes on.
+  - blk_rq_prep_clone(struct request *clone, struct request *orig,
+		      struct bio_set *bs, gfp_t gfp_mask,
+		      int (*bio_ctr)(struct bio *, struct bio*, void *),
+		      void *data)
+      * Clones bios in the original request to the clone request
+        (bio_ctr is called for each cloned bios.)
+      * Copies the clone-related information of the original request
+        to the clone request.
 
-So, from userspace metadata point of view, merge is just like delete, when 
-merge is initiated, the snapshot will disappear from the metadata and 
-from "lvs" command output. And we have the same problem.
+  - blk_rq_unprep_clone(struct request *clone)
+      * Frees cloned bios from the clone request.
 
-Old state: origin, snap1, snap2
-New state: origin, snap1
+Request stacking drivers (e.g. request-based dm) need to make a clone
+request for a submitted request and dispatch it to other devices.
 
---- the kernel knows that it must delete snap2. The question: should it 
-delete it or should it start merging it? Again: we need the message to 
-distinguish these two actions, the difference cannot be told from 
-metadata.
+To allocate request for the clone, request stacking drivers may not
+be able to use blk_get_request() because the allocation may be done
+in an irq-disabled context.
+So blk_rq_prep_clone() takes a request allocated by the caller
+as an argument.
 
+For each clone bio in the clone request, request stacking drivers
+should be able to set up their own completion handler.
+So blk_rq_prep_clone() takes a callback function which is called
+for each clone bio, and a pointer for private data which is passed
+to the callback.
 
-Therefore, I think that messages are not that hacky at all, they are 
-needed to tell the information that cannot be inferred from the state 
-stored in the metadata. (well, one could send the "message" on the table 
-argument line, but that is just worse than using message function 
-directly, the table argument line was meant to specify the state of the 
-target, not to send commands).
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Jens Axboe <jens.axboe@oracle.com>
+---
+ block/blk-core.c       |   98 +++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/blkdev.h |    5 ++
+ 2 files changed, 103 insertions(+)
 
-Messages can be later changed, it would be viable if we could merge 
-message and status into one function --- so that target accepts string as 
-a message and returns another string as status --- so that we wouldn't 
-have to return last-created snapshot id in the status. But I think we 
-cannot live without messages at all.
-
-If you have some other idea how to resolve above issues, write it.
-
-Mikulas
+Index: linux-2.6-block/block/blk-core.c
+===================================================================
+--- linux-2.6-block.orig/block/blk-core.c
++++ linux-2.6-block/block/blk-core.c
+@@ -2295,6 +2295,104 @@ int blk_lld_busy(struct request_queue *q
+ }
+ EXPORT_SYMBOL_GPL(blk_lld_busy);
+ 
++/**
++ * blk_rq_unprep_clone - Helper function to free all bios in a cloned request
++ * @rq: the clone request to be cleaned up
++ *
++ * Description:
++ *     Free all bios in @rq for a cloned request.
++ */
++void blk_rq_unprep_clone(struct request *rq)
++{
++	struct bio *bio;
++
++	while ((bio = rq->bio) != NULL) {
++		rq->bio = bio->bi_next;
++
++		bio_put(bio);
++	}
++}
++EXPORT_SYMBOL_GPL(blk_rq_unprep_clone);
++
++/*
++ * Copy request information of the original request to the clone request.
++ */
++static void __blk_rq_prep_clone(struct request *dst, struct request *src)
++{
++	dst->cpu = src->cpu;
++	dst->cmd_flags = (rq_data_dir(src) | REQ_NOMERGE);
++	dst->cmd_type = src->cmd_type;
++	dst->__sector = blk_rq_pos(src);
++	dst->__data_len = blk_rq_bytes(src);
++	dst->nr_phys_segments = src->nr_phys_segments;
++	dst->ioprio = src->ioprio;
++	dst->buffer = src->buffer;
++	dst->cmd_len = src->cmd_len;
++	dst->cmd = src->cmd;
++	dst->extra_len = src->extra_len;
++	dst->sense = src->sense;
++}
++
++/**
++ * blk_rq_prep_clone - Helper function to setup clone request
++ * @rq: the request to be setup
++ * @rq_src: original request to be cloned
++ * @bs: bio_set that bios for clone are allocated from
++ * @gfp_mask: memory allocation mask for bio
++ * @bio_ctr: setup function to be called for each clone bio.
++ *           Returns %0 for success, non %0 for failure.
++ * @data: private data to be passed to @bio_ctr
++ *
++ * Description:
++ *     Clones bios in @rq_src to @rq, and copies clone-related information
++ *     of @rq_src to @rq.
++ */
++int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
++		      struct bio_set *bs, gfp_t gfp_mask,
++		      int (*bio_ctr)(struct bio *, struct bio *, void *),
++		      void *data)
++{
++	struct bio *bio, *bio_src;
++
++	if (!bs)
++		bs = fs_bio_set;
++
++	blk_rq_init(NULL, rq);
++
++	__rq_for_each_bio(bio_src, rq_src) {
++		bio = bio_alloc_bioset(gfp_mask, bio_src->bi_max_vecs, bs);
++		if (!bio)
++			goto free_and_out;
++
++		__bio_clone(bio, bio_src);
++
++		if (bio_integrity(bio_src) &&
++		    bio_integrity_clone(bio, bio_src, gfp_mask))
++			goto free_and_out;
++
++		if (bio_ctr && bio_ctr(bio, bio_src, data))
++			goto free_and_out;
++
++		if (rq->bio) {
++			rq->biotail->bi_next = bio;
++			rq->biotail = bio;
++		} else
++			rq->bio = rq->biotail = bio;
++	}
++
++	__blk_rq_prep_clone(rq, rq_src);
++
++	return 0;
++
++free_and_out:
++	if (bio)
++		bio_free(bio, bs);
++	blk_rq_unprep_clone(rq);
++
++	return -ENOMEM;
++}
++EXPORT_SYMBOL_GPL(blk_rq_prep_clone);
++
+ int kblockd_schedule_work(struct request_queue *q, struct work_struct *work)
+ {
+ 	return queue_work(kblockd_workqueue, work);
+Index: linux-2.6-block/include/linux/blkdev.h
+===================================================================
+--- linux-2.6-block.orig/include/linux/blkdev.h
++++ linux-2.6-block/include/linux/blkdev.h
+@@ -765,6 +765,11 @@ extern void blk_insert_request(struct re
+ extern void blk_requeue_request(struct request_queue *, struct request *);
+ extern int blk_rq_check_limits(struct request_queue *q, struct request *rq);
+ extern int blk_lld_busy(struct request_queue *q);
++extern int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
++			     struct bio_set *bs, gfp_t gfp_mask,
++			     int (*bio_ctr)(struct bio *, struct bio *, void *),
++			     void *data);
++extern void blk_rq_unprep_clone(struct request *rq);
+ extern int blk_insert_cloned_request(struct request_queue *q,
+ 				     struct request *rq);
+ extern void blk_plug_device(struct request_queue *);
