@@ -1,92 +1,70 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [dm-devel] Re: ANNOUNCE: mdadm 3.0 - A tool for managing Soft
-	RAID under Linux
-Date: Tue, 9 Jun 2009 09:32:55 +1000
-Message-ID: <18989.40871.865610.422540@notabene.brown>
-References: <18980.48553.328662.80987@notabene.brown>
-	<4A25876A.1010901@garzik.org>
-	<18981.62579.171350.910761@notabene.brown>
-	<1244040123.6938.19.camel@o>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: message from Heinz Mauelshagen on Wednesday June 3
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
-Cc: Jeff Garzik <jeff@garzik.org>, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Alan Cox <alan@lxorguk.ukuu.org.uk>, Arjan van de Ven <arjan@infradead.org>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: [PATCH 11/19] io-controller: noop changes for
+	hierarchical fair queuing
+Date: Mon,  8 Jun 2009 22:08:54 -0400
+Message-ID: <1244513342-11758-12-git-send-email-vgoyal@redhat.com>
+References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1244513342-11758-1-git-send-email-vgoyal@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google
+Cc: peterz@infradead.org, akpm@linux-foundation.org, snitzer@redhat.com, agk@redhat.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-On Wednesday June 3, heinzm@redhat.com wrote:
-> > 
-> > I haven't spoken to them, no (except for a couple of barely-related
-> > chats with Alasdair).
-> > By and large, they live in their little walled garden, and I/we live
-> > in ours.
-> 
-> Maybe we are about to change that? ;-)
+This patch changes noop to use queue scheduling code from elevator layer.
+One can go back to old noop by deselecting CONFIG_IOSCHED_NOOP_HIER.
 
-Maybe ... what should we talk about?
+Signed-off-by: Nauman Rafique <nauman@google.com>
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ block/Kconfig.iosched |   11 +++++++++++
+ block/noop-iosched.c  |    3 +++
+ 2 files changed, 14 insertions(+), 0 deletions(-)
 
-Two areas where I think we might be able to have productive
-discussion:
-
- 1/ Making md personalities available as dm targets.
-    In one sense this is trivial as an block device can be a DM
-    target, and any md personality can be a block device.
-    However it might be more attractive if the md personality
-    responded to dm ioctls.
-    Considering specifically raid5, some aspects of plugging
-    md/raid5 underneath dm would be trivial - e.g. assembling the
-    array at the start.
-    However others are not so straight forward.
-    In particular, when a drive fails in a raid5, you need to update
-    the metadata before allowing any writes which depend on that drive
-    to complete.  Given that metadata is managed in user-space, this
-    means signalling user-space and waiting for a response.
-    md does this via a file in sysfs.  I cannot see any similar
-    mechanism in dm, but I haven't looked very hard.
-
-    Would it be useful to pursue this do you think?
-
-
- 2/ It might be useful to have a common view how virtual devices in
-    general should be managed in Linux.  Then we could independently
-    migrated md and dm towards this goal.
-
-    I imagine a block-layer level function which allows a blank
-    virtual device to be created, with an arbitrary major/minor
-    allocated.
-    e.g.
-         echo foo > /sys/block/.new
-    causes
-         /sys/devices/virtual/block/foo/
-    to be created.
-    Then a similar mechanism associates that with a particular driver.
-    That causes more attributes to appear in  ../block/foo/ which
-    can be used to flesh out the details of the device.
-
-    There would be library code that a driver could use to:
-      - accept subordinate devices
-      - manage the state of those devices
-      - maintain a write-intent bitmap
-    etc.
-
-    There would also need to be a block-layer function to 
-    suspend/resume or similar so that a block device can be changed
-    underneath a filesystem.
-
-    We currently have three structures for a block device:
-      struct block_device -> struct gendisk -> struct request_queue
-
-    I imagine allow either the "struct gendisk" or  the "struct
-    request_queue" to be swapped between two "struct block_device".
-    I'm not sure which, and the rest of the details are even more
-    fuzzy.
-
-    That sort of infrastructure would allow interesting migrations
-    without being limited to "just with dm" or "just within md".
-
-    Thoughts?
-
-NeilBrown
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index a91a807..9da6657 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -25,6 +25,17 @@ config IOSCHED_NOOP
+ 	  that do their own scheduling and require only minimal assistance from
+ 	  the kernel.
+ 
++config IOSCHED_NOOP_HIER
++	bool "Noop Hierarchical Scheduling support"
++	depends on IOSCHED_NOOP && CGROUPS
++	select ELV_FAIR_QUEUING
++	select GROUP_IOSCHED
++	default n
++	---help---
++	  Enable hierarhical scheduling in noop. In this mode noop keeps
++	  one IO queue per cgroup instead of a global queue. Elevator
++	  fair queuing logic ensures fairness among various queues.
++
+ config IOSCHED_AS
+ 	tristate "Anticipatory I/O scheduler"
+ 	default y
+diff --git a/block/noop-iosched.c b/block/noop-iosched.c
+index 731dbf2..926aed9 100644
+--- a/block/noop-iosched.c
++++ b/block/noop-iosched.c
+@@ -92,6 +92,9 @@ static struct elevator_type elevator_noop = {
+ 		.elevator_alloc_sched_queue_fn	= noop_alloc_noop_queue,
+ 		.elevator_free_sched_queue_fn	= noop_free_noop_queue,
+ 	},
++#ifdef CONFIG_IOSCHED_NOOP_HIER
++	.elevator_features = ELV_IOSCHED_NEED_FQ | ELV_IOSCHED_SINGLE_IOQ,
++#endif
+ 	.elevator_name = "noop",
+ 	.elevator_owner = THIS_MODULE,
+ };
+-- 
+1.6.0.6
