@@ -1,17 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm: add topology support
-Date: Wed, 10 Jun 2009 17:12:36 -0400
-Message-ID: <20090610211235.GF25088@redhat.com>
-References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
-	<yq1ski860ok.fsf@sermon.lab.mkp.net>
-	<20090610140028.GD25088@redhat.com>
-	<yq1ocsw55t6.fsf@sermon.lab.mkp.net>
+From: christophe.varoqui@free.fr
+Subject: do Symmetrix multipath-tools defaults need update ? or
+ scsi-to-blk errors management ?
+Date: Wed, 10 Jun 2009 23:49:59 +0200 (CEST)
+Message-ID: <1766094670.1725191244670599365.JavaMail.root@zimbra16-e3.priv.proxad.net>
+References: <2113818871.1724831244670374246.JavaMail.root@zimbra16-e3.priv.proxad.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <yq1ocsw55t6.fsf@sermon.lab.mkp.net>
+In-Reply-To: <2113818871.1724831244670374246.JavaMail.root@zimbra16-e3.priv.proxad.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,57 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
+To: Levy_Jerome@emc.com
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Jun 10 2009 at  1:58pm -0400,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+Hi Jerome,
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> Mike> So the question: is _not_ using the blk_queue_*() setters
-> Mike> perfectly fine?  Given that DM has always _not_ used them the
-> Mike> quick answer is "seems fine".
-> 
-> Mike> But I need to dig a bit more to understand if the additional logic
-> Mike> in the blk_queue_*() setters is something DM shouldn't be
-> Mike> circumventing.
-> 
-> The original intent was that drivers like DM and MD would seed their
-> limits using the blk_queue* calls before adding any component devices.
-> blk_stack_limits() would then scale accordingly for every new device
-> added.
-> 
-> Is there any reason in particular that this approach wouldn't work for
-> DM?  I.e. set defaults ahead of time instead of doing it upon table
-> completion using check_for_valid_limits()?
+EMC recently asked my/one-of-your client to active "queue_if_no_path" on Symmetrix logical units, which is not the current default setting in the upstream multipath-tools package.
 
-When a table is pushed to DM each target device in the table may have
-different limits.  There is no one-size-fits-all default.
+I'd like to know if you intent on submitting a patch to change the default setting accordingly, or if you'd rather let the no-queueing default unchanged and work on fixing the root cause of this issue.
 
-With DM, the underlying device that you're sending IO to is a function
-of offset into the DM device.  Therefore, the associated IO limits
-should really be a function of offset.
+::: Background information, root cause :::
 
-Understanding that that is a more complicated proposition we're working
-with the topology infrastructure that you've put together as best we
-can.
+The Symmetrix array proved to return scsi errors io to submitters in certains circumstances (I was told of errors on R1+R2 network link). The linux kernel lacking finesse in the SCSI->DM error reporting ends-up invalidating in turn each path of the multipath before the multipathd daemon gets a chance to revalidate. "queue_if_no_path" being disabled, the io errors ends up in the FS layer and in the userspace submitter.
 
-That means we use a device's alignment_offset in userland LVM2 to push
-down a data area whose start+size is aligned.  This gives us the
-guarantee that each device in a given DM table is aligned.  From there
-DM will use blk_stack_limits() to combine all the other topology limits
-(alignment_offset is no longer an issue; though we could get some
-warnings.. may look to silence them in dm-table.c).
+::: error log on a 2.6.9 (rhel 4.7) kernel :::
 
-But blk_stack_limits() leads to a situation where the combined limits
-(io_min, logical_block_size) are not ideal for all offsets into the
-resulting DM device (e.g. issuing larger IOs to some target devices than
-would otherwise be needed).
+SCSI error : <h b t l> return code 0x8000002
+current sday: sense key Aborted Command
+Additional sense: Internal target failure
+end_request: I/O error, dev sday, sector XXXXX
+device-mapper: dm-multipath: Failing path 67:32.
 
-This is not new for DM (historically DM stacked hardsect_size and other
-limits in the same fashion), but it doesn't mean that we aren't keeping
-in mind that limits as a function of offset would be more appropriate.
+::: unfortunate side effect of queue_if_no_path :::
 
-Mike
+Activating "queue_if_no_path" is certainly an effecient work-around for this kind of short-lived retriable errors, but this feature compromises data-protection on clusters relying on persistent reservation to fence ios from passive nodes. Ironically, the reason is quite similar : SCSI return codes for reservation conflicts also end up invalidating each path of a multipath, and worse, the io causing the conflict gets queued ! and retried ! until the poor active drops its reservation, unleashing data-corrupting ios from passive node queues on the logical unit.
+
+::: error log on a 2.6.29.x kernel for a reservation conflict :::
+
+sd h:b:t:l: reservation conflict
+sd h:b:t:l: [sdu] Unhandled error code
+sd h:b:t:l: [sdu] Result: hostbyte=DID_OK driver_byte=DRIVER_OK,SUGGEST_OK
+end_request: I/O error, dev sdu, sector XXXXX
+device-mapper: dm-multipath: Failing path 65:64.
+
+::: persistent reservation + queue_if_no_path, possible solution ? :::
+
+Seems to me scsi_lib.c::scsi_io_completion() should be able to cancel a reservation conflicting io and signal blk_end_request() with no error reported.
+
+
+Please comment.
+
+Best regards,
+cvaroqui
