@@ -1,12 +1,14 @@
-From: Lavannya <swap_project@yahoo.com>
+From: christophe.varoqui@free.fr
 Subject: Re: Question regarding multipath WWID
-Date: Wed, 10 Jun 2009 13:35:14 -0700 (PDT)
-Message-ID: <675831.69032.qm@web32006.mail.mud.yahoo.com>
+Date: Wed, 10 Jun 2009 22:39:25 +0200 (CEST)
+Message-ID: <1038061842.1712701244666365917.JavaMail.root@zimbra16-e3.priv.proxad.net>
+References: <474792.20433.qm@web32002.mail.mud.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <474792.20433.qm@web32002.mail.mud.yahoo.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,91 +18,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+>    -  what is the logic redhat is using  to create the WWID
+>       and what are the fields involved
 
-Until  and unless i know   how the WWID is being generated , it is=20
+see the multipath.conf samples coming with rpm : the "getuid_callout" keyword is there to let users change the multipath naming poilicy. By default paths are identified as part of the same multipath using the VPD page 0x83 identifier, which is a standard. This unique id is used a multipath name if "user_friendly_names" are not enabled. And you still have to choice to use the "alias" keyword to name specific multipaths.
 
-tough to relate what the document is describing. Also to identify the
+>    -  I am trying to test with the shared luns  (devices) between
+>       two nodes.  How i will identify  the device id in multipath.
 
-shared  luns , I need to know more about WWID.
+I'm assuming you're concerned with EMC hardware, because of the terms you use (device id, ...). Following response mmight be out-of-context if you're not.
 
-thanks
+There I would advise you use syminq as a getuid_callout ... but no. syminq slow, bloated, and offers no control on its output. You'd be better server by a script using syminq to generate your configlets :
 
+ multipath {
+  wwid 1234
+  alias devid
+ }
 
+>       Though  as per Redhat ,  they are telling WWID is the identifier.
+>       But how i will identify the device id in the WWID?
+>       It is very much needed specially for shared luns.  In PowerPath, 
+>       generally  all the devices  are  identified  by the 
+>       lun id  /device id  then ,
+>       I use the Pseudo name (linux), for configuring the devices.  I will
+>       assume  that WWID is similar  as Pseudoid. If not, pl. correct me.
 
---- On Wed, 6/10/09, Chandra Seetharaman <sekharan@us.ibm.com> wrote:
+wwid-based multipath names are indeed garanteed to identify the same device across a cluster accessing the same array. Beware though, replicated devices (R2) will surely have different ids and different wwids ... you's need to use "alias" to have geocluster multipath names coherency.
 
-> From: Chandra Seetharaman <sekharan@us.ibm.com>
-> Subject: Re: [dm-devel] Question regarding multipath WWID
-> To: "device-mapper development" <dm-devel@redhat.com>
-> Date: Wednesday, June 10, 2009, 3:54 PM
-> What is your purpose for needing to
-> know how WWID is generated ?
->=20
-> Do you want to identify and name them the same in both the
-> nodes ?
->=20
-> On Wed, 2009-06-10 at 12:01 -0700, Lavannya wrote:
-> > Hi,
-> >=20
-> > Recently=A0 I am trying to test few=A0 luns with
-> multipath , in two of my
-> >=20
-> > test server.=A0 I worked throughly with PowerPath.
->=20
-> >=20
-> > I have few questions on multipath:
-> >=20
-> >=A0 =A0=A0=A0-=A0 what is the logic
-> redhat is using=A0 to create the WWID
-> >=A0 =A0 =A0 =A0 and what are the fields
-> involved
-> >=20
-> >=A0 =A0=A0=A0-=A0 I am trying to test
-> with the shared luns=A0 (devices) between
-> >=A0 =A0 =A0 =A0 two nodes.=A0 How i will
-> identify=A0 the device id in multipath.
-> >=A0 =A0 =A0 =A0 Though=A0 as per Redhat
-> ,=A0 they are telling WWID is the identifier.
-> >=A0 =A0 =A0 =A0 But how i will identify the
-> device id in the WWID?
-> >=A0 =A0 =A0 =A0 It is very much needed
-> specially for shared luns.=A0 In PowerPath,=20
-> >=A0 =A0 =A0 =A0 generally=A0 all the
-> devices=A0 are=A0 identified=A0 by the=20
-> >=A0 =A0 =A0 =A0 lun id=A0 /device
-> id=A0 then ,
-> >=A0 =A0 =A0 =A0 I use the Pseudo name
-> (linux), for configuring the devices.=A0 I will
-> >=A0 =A0 =A0 =A0 assume=A0 that WWID is
-> similar=A0 as Pseudoid. If not, pl. correct me.
-> >=20
-> >=A0 =A0=A0=A0-=A0 Where can i match the
-> device id in the WWID..
-> >=20
-> > It will be really appreciated=A0 , if someone
-> clears=A0 all my questions.
-> >=20
-> > Thanks in advance.
-> >=A0 =A0=A0=A0
-> >=20
-> >=A0 =A0=A0=A0
-> >=20
-> >=20
-> >=A0 =A0 =A0=A0=A0
-> >=20
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->=20
+>    -  Where can i match the device id in the WWID..
 
+syminq
 
-     =20
+>
