@@ -1,15 +1,19 @@
-From: christophe.varoqui@free.fr
-Subject: do Symmetrix multipath-tools defaults need update ? or
- scsi-to-blk errors management ?
-Date: Wed, 10 Jun 2009 23:49:59 +0200 (CEST)
-Message-ID: <1766094670.1725191244670599365.JavaMail.root@zimbra16-e3.priv.proxad.net>
-References: <2113818871.1724831244670374246.JavaMail.root@zimbra16-e3.priv.proxad.net>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: Re: [PATCH v2] dm: add topology support
+Date: Wed, 10 Jun 2009 18:06:36 -0400
+Message-ID: <yq1k53j68wj.fsf@sermon.lab.mkp.net>
+References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
+	<yq1ski860ok.fsf@sermon.lab.mkp.net>
+	<20090610140028.GD25088@redhat.com>
+	<yq1ocsw55t6.fsf@sermon.lab.mkp.net>
+	<20090610211235.GF25088@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2113818871.1724831244670374246.JavaMail.root@zimbra16-e3.priv.proxad.net>
+In-Reply-To: <20090610211235.GF25088@redhat.com> (Mike Snitzer's message of
+	"Wed, 10 Jun 2009 17:12:36 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +23,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Levy_Jerome@emc.com
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-Hi Jerome,
+>>>>> "Mike" =3D=3D Mike Snitzer <snitzer@redhat.com> writes:
 
-EMC recently asked my/one-of-your client to active "queue_if_no_path" on Symmetrix logical units, which is not the current default setting in the upstream multipath-tools package.
+Mike> When a table is pushed to DM each target device in the table may
+Mike> have different limits.  There is no one-size-fits-all default.
 
-I'd like to know if you intent on submitting a patch to change the default setting accordingly, or if you'd rather let the no-queueing default unchanged and work on fixing the root cause of this issue.
+But incrementally finding the one size that does fit all (DM dev as well
+as targets) is the raison d'=C3=AAtre for blk_stack_limits().
 
-::: Background information, root cause :::
-
-The Symmetrix array proved to return scsi errors io to submitters in certains circumstances (I was told of errors on R1+R2 network link). The linux kernel lacking finesse in the SCSI->DM error reporting ends-up invalidating in turn each path of the multipath before the multipathd daemon gets a chance to revalidate. "queue_if_no_path" being disabled, the io errors ends up in the FS layer and in the userspace submitter.
-
-::: error log on a 2.6.9 (rhel 4.7) kernel :::
-
-SCSI error : <h b t l> return code 0x8000002
-current sday: sense key Aborted Command
-Additional sense: Internal target failure
-end_request: I/O error, dev sday, sector XXXXX
-device-mapper: dm-multipath: Failing path 67:32.
-
-::: unfortunate side effect of queue_if_no_path :::
-
-Activating "queue_if_no_path" is certainly an effecient work-around for this kind of short-lived retriable errors, but this feature compromises data-protection on clusters relying on persistent reservation to fence ios from passive nodes. Ironically, the reason is quite similar : SCSI return codes for reservation conflicts also end up invalidating each path of a multipath, and worse, the io causing the conflict gets queued ! and retried ! until the poor active drops its reservation, unleashing data-corrupting ios from passive node queues on the logical unit.
-
-::: error log on a 2.6.29.x kernel for a reservation conflict :::
-
-sd h:b:t:l: reservation conflict
-sd h:b:t:l: [sdu] Unhandled error code
-sd h:b:t:l: [sdu] Result: hostbyte=DID_OK driver_byte=DRIVER_OK,SUGGEST_OK
-end_request: I/O error, dev sdu, sector XXXXX
-device-mapper: dm-multipath: Failing path 65:64.
-
-::: persistent reservation + queue_if_no_path, possible solution ? :::
-
-Seems to me scsi_lib.c::scsi_io_completion() should be able to cancel a reservation conflicting io and signal blk_end_request() with no error reported.
+The default limits should all be set by the block layer when setting up
+the request queue.  So my reason for inquiring was to figure out whether
+check_for_valid_limits() actually makes any difference?
 
 
-Please comment.
+Mike> With DM, the underlying device that you're sending IO to is a
+Mike> function of offset into the DM device.  Therefore, the associated
+Mike> IO limits should really be a function of offset.
 
-Best regards,
-cvaroqui
+This was one of the discussion topics at the Storage and Filesystems
+workshop a couple of months ago.  My original topology code actually
+permitted a list of topologies for a block device.  With all that
+entails of nightmares splicing and dicing lists in the stacking
+function.  It was not pretty, and the general consensus at the workshop
+was that this was way too complex.  I agreed and the code was gutted.
+
+And even having a topology list failed to correctly describe some valid
+configurations.  One pathological case is having a 512-byte
+logical/physical in a mirror with a 512/4KB odd-aligned one.  How do you
+define a topology for that?  The solution is to adjust the alignment and
+scale up io_min to match the 4K drive.  I.e. to change things for the
+drive that isn't the "problem".
+
+
+Mike> That means we use a device's alignment_offset in userland LVM2 to
+Mike> push down a data area whose start+size is aligned.  This gives us
+Mike> the guarantee that each device in a given DM table is aligned.
+
+*nod*
+
+
+Mike> But blk_stack_limits() leads to a situation where the combined
+Mike> limits (io_min, logical_block_size) are not ideal for all offsets
+Mike> into the resulting DM device (e.g. issuing larger IOs to some
+Mike> target devices than would otherwise be needed).
+
+Yup.  But not smaller.  That's the whole point.  Making sure we align to
+the lowest common denominator and never incur a read-modify-write cycle
+on any storage device.
+
+--=20
+Martin K. Petersen	Oracle Linux Engineering
