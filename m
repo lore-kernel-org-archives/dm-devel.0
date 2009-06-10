@@ -1,16 +1,10 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [PATCH v2] dm: add topology support
-Date: Wed, 10 Jun 2009 15:36:24 +0100
-Message-ID: <20090610143624.GP647@agk-dp.fab.redhat.com>
-References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
-	<yq1ski860ok.fsf@sermon.lab.mkp.net>
-	<20090610140028.GD25088@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm-table: establish queue limits by copying
+	table limits
+Date: Wed, 10 Jun 2009 11:14:36 -0400
+Message-ID: <1244646876-1690-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090610140028.GD25088@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,24 +14,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
+To: dm-devel@redhat.com
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Wed, Jun 10, 2009 at 10:00:29AM -0400, Mike Snitzer wrote:
-> My v2 of the DM topology support patch does away with those and just
-> uses blk_stack_limits().  In the process we go back to _not_ using the
-> blk_queue_*() setters (note the additional checks that those setters
-> have).
+Copy the table's queue_limits to the DM device's request_queue.  This
+properly initializes the queue's topology limits and also avoids having
+to track the evolution of 'struct queue_limits' in
+dm_table_set_restrictions()
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c |   12 ++----------
+ 1 files changed, 2 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 7acf09a..17d09dc 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -958,17 +958,9 @@ no_integrity:
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q)
+ {
+ 	/*
+-	 * Make sure we obey the optimistic sub devices
+-	 * restrictions.
++	 * Copy table's limits to the DM device's request_queue
+ 	 */
+-	blk_queue_max_sectors(q, t->limits.max_sectors);
+-	blk_queue_max_phys_segments(q, t->limits.max_phys_segments);
+-	blk_queue_max_hw_segments(q, t->limits.max_hw_segments);
+-	blk_queue_logical_block_size(q, t->limits.logical_block_size);
+-	blk_queue_max_segment_size(q, t->limits.max_segment_size);
+-	blk_queue_max_hw_sectors(q, t->limits.max_hw_sectors);
+-	blk_queue_segment_boundary(q, t->limits.seg_boundary_mask);
+-	blk_queue_bounce_limit(q, t->limits.bounce_pfn);
++	q->limits = t->limits;
  
-That was a secondary point, that could be cleared up by reviewing the
-checks to ensure they all automatically hold so never need checking
-at that point.
-
-The main problem was that applying the combined limits for the table
-previously - and correctly - paid no regard to the existing queue limits
-on the dm device.  The new code seems to combine the limits between the
-live and inactive tables, which is nonsense as in dm terms they are
-totally independent.
-
-Alasdair
+ 	if (t->limits.no_cluster)
+ 		queue_flag_clear_unlocked(QUEUE_FLAG_CLUSTER, q);
