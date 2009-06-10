@@ -1,56 +1,266 @@
 From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [RFC] IO scheduler based IO controller V4
-Date: Wed, 10 Jun 2009 09:05:32 +0800
-Message-ID: <4A2F06DC.8040600@cn.fujitsu.com>
-References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com> <4A2DE381.6090205@cn.fujitsu.com> <20090609135256.GA13476@redhat.com>
+Subject: Re: [PATCH 08/18] io-controller: idle for sometime on
+ sync queue before expiring it
+Date: Wed, 10 Jun 2009 09:30:38 +0800
+Message-ID: <4A2F0CBE.8030208@cn.fujitsu.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
+	<1241553525-28095-9-git-send-email-vgoyal@redhat.com>
+	<4A2E15B6.8030001@cn.fujitsu.com>
+	<20090609175131.GB13476@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755626AbZFJBHW@vger.kernel.org>
-In-Reply-To: <20090609135256.GA13476@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090609175131.GB13476@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com
 List-Id: dm-devel.ids
 
 Vivek Goyal wrote:
-> On Tue, Jun 09, 2009 at 12:22:25PM +0800, Gui Jianfeng wrote:
+> On Tue, Jun 09, 2009 at 03:56:38PM +0800, Gui Jianfeng wrote:
 >> Vivek Goyal wrote:
->>> Hi All,
->>>
->>> Here is the V4 of the IO controller patches generated on top of 2.6=
-=2E30-rc8.
->>>
->> Hi Vivek,
+>> ...
+>>> +ssize_t elv_fairness_store(struct request_queue *q, const char *name,
+>>> +			  size_t count)
+>>> +{
+>>> +	struct elv_fq_data *efqd;
+>>> +	unsigned int data;
+>>> +	unsigned long flags;
+>>> +
+>>> +	char *p = (char *)name;
+>>> +
+>>> +	data = simple_strtoul(p, &p, 10);
+>>> +
+>>> +	if (data < 0)
+>>> +		data = 0;
+>>> +	else if (data > INT_MAX)
+>>> +		data = INT_MAX;
+>>   Hi Vivek,
 >>
->> I can't apply the patchset.
+>>   data might overflow on 64 bit systems. In addition, since "fairness" is nothing 
+>>   more than a switch, just let it be.
 >>
->> [root@localhost linux-2.6.30-rc8-Vivek-V4]# git-am ../V4/1.eml
->> Applying io-controller: Documentation
->> [root@localhost linux-2.6.30-rc8-Vivek-V4]# git-am ../V4/2.eml
->> Applying io-controller: Common flat fair queuing code in elevaotor l=
-ayer
->> error: patch failed: block/Makefile:15
->> error: block/Makefile: patch does not apply
->> Patch failed at 0001.
->> When you have resolved this problem run "git-am --resolved".
->> If you would prefer to skip this patch, instead run "git-am --skip".
->=20
+>> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+>> ---
+> 
 > Hi Gui,
->=20
-> This is strange. It seems to be applying cleanly for me. Can you plea=
-se
-> recheck your setup and also see why it is failing. In block/Makefile,
-> there is one line change and recently no change has taken to that fil=
-e
-> in git.
+> 
+> How about following patch? Currently this should apply at the end of the
+> patch series. If it looks good, I will merge the changes in higher level
+> patches.
 
-Hi Vivek=EF=BC=8C
+  This patch seems good to me. Some trivial issues comment below.
 
-I guess this patchset is still on top of 2.6.30-rc7 rather than rc8...
-I can apply it against rc7 cleanly.
+> 
+> Thanks
+> Vivek
+> 
+> o Previously common layer elevator parameters were appearing as request
+>   queue parameters in sysfs. But actually these are io scheduler parameters
+>   in hiearchical mode. Fix it.
+> 
+> o Use macros to define multiple sysfs C functions doing the same thing. Code
+>   borrowed from CFQ. Helps reduce the number of lines of by 140.
+> 
+> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+...	\
+> +}
+> +SHOW_FUNCTION(elv_fairness_show, efqd->fairness, 0);
+> +EXPORT_SYMBOL(elv_fairness_show);
+> +SHOW_FUNCTION(elv_slice_idle_show, efqd->elv_slice_idle, 1);
+> +EXPORT_SYMBOL(elv_slice_idle_show);
+> +SHOW_FUNCTION(elv_async_slice_idle_show, efqd->elv_async_slice_idle, 1);
+> +EXPORT_SYMBOL(elv_async_slice_idle_show);
+> +SHOW_FUNCTION(elv_slice_sync_show, efqd->elv_slice[1], 1);
+> +EXPORT_SYMBOL(elv_slice_sync_show);
+> +SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
+> +EXPORT_SYMBOL(elv_slice_async_show);
+> +#undef SHOW_FUNCTION
+> +
+> +#define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
+> +ssize_t __FUNC(struct elevator_queue *e, const char *page, size_t count)	\
+> +{									\
+> +	struct elv_fq_data *efqd = &e->efqd;				\
+> +	unsigned int __data;						\
+> +	int ret = elv_var_store(&__data, (page), count);		\
 
+  Since simple_strtoul returns unsigned long, it's better to make __data 
+  be that type.
 
---=20
+> +	if (__data < (MIN))						\
+> +		__data = (MIN);						\
+> +	else if (__data > (MAX))					\
+> +		__data = (MAX);						\
+> +	if (__CONV)							\
+> +		*(__PTR) = msecs_to_jiffies(__data);			\
+> +	else								\
+> +		*(__PTR) = __data;					\
+> +	return ret;							\
+> +}
+> +STORE_FUNCTION(elv_fairness_store, &efqd->fairness, 0, 1, 0);
+> +EXPORT_SYMBOL(elv_fairness_store);
+> +STORE_FUNCTION(elv_slice_idle_store, &efqd->elv_slice_idle, 0, UINT_MAX, 1);
+
+  Do we need to set an actual max limitation rather than UINT_MAX for these entries?
+
+> +EXPORT_SYMBOL(elv_slice_idle_store);
+> +STORE_FUNCTION(elv_async_slice_idle_store, &efqd->elv_async_slice_idle, 0, UINT_MAX, 1);
+> +EXPORT_SYMBOL(elv_async_slice_idle_store);
+> +STORE_FUNCTION(elv_slice_sync_store, &efqd->elv_slice[1], 1, UINT_MAX, 1);
+> +EXPORT_SYMBOL(elv_slice_sync_store);
+> +STORE_FUNCTION(elv_slice_async_store, &efqd->elv_slice[0], 1, UINT_MAX, 1);
+> +EXPORT_SYMBOL(elv_slice_async_store);
+> +#undef STORE_FUNCTION
+>  
+>  void elv_schedule_dispatch(struct request_queue *q)
+>  {
+> Index: linux18/block/blk-sysfs.c
+> ===================================================================
+> --- linux18.orig/block/blk-sysfs.c	2009-06-09 10:34:59.000000000 -0400
+> +++ linux18/block/blk-sysfs.c	2009-06-09 13:24:42.000000000 -0400
+> @@ -307,38 +307,6 @@ static struct queue_sysfs_entry queue_io
+>  	.store = queue_iostats_store,
+>  };
+>  
+> -#ifdef CONFIG_ELV_FAIR_QUEUING
+> -static struct queue_sysfs_entry queue_slice_idle_entry = {
+> -	.attr = {.name = "slice_idle", .mode = S_IRUGO | S_IWUSR },
+> -	.show = elv_slice_idle_show,
+> -	.store = elv_slice_idle_store,
+> -};
+> -
+> -static struct queue_sysfs_entry queue_async_slice_idle_entry = {
+> -	.attr = {.name = "async_slice_idle", .mode = S_IRUGO | S_IWUSR },
+> -	.show = elv_async_slice_idle_show,
+> -	.store = elv_async_slice_idle_store,
+> -};
+> -
+> -static struct queue_sysfs_entry queue_slice_sync_entry = {
+> -	.attr = {.name = "slice_sync", .mode = S_IRUGO | S_IWUSR },
+> -	.show = elv_slice_sync_show,
+> -	.store = elv_slice_sync_store,
+> -};
+> -
+> -static struct queue_sysfs_entry queue_slice_async_entry = {
+> -	.attr = {.name = "slice_async", .mode = S_IRUGO | S_IWUSR },
+> -	.show = elv_slice_async_show,
+> -	.store = elv_slice_async_store,
+> -};
+> -
+> -static struct queue_sysfs_entry queue_fairness_entry = {
+> -	.attr = {.name = "fairness", .mode = S_IRUGO | S_IWUSR },
+> -	.show = elv_fairness_show,
+> -	.store = elv_fairness_store,
+> -};
+> -#endif
+> -
+>  static struct attribute *default_attrs[] = {
+>  	&queue_requests_entry.attr,
+>  #ifdef CONFIG_GROUP_IOSCHED
+> @@ -353,13 +321,6 @@ static struct attribute *default_attrs[]
+>  	&queue_nomerges_entry.attr,
+>  	&queue_rq_affinity_entry.attr,
+>  	&queue_iostats_entry.attr,
+> -#ifdef CONFIG_ELV_FAIR_QUEUING
+> -	&queue_slice_idle_entry.attr,
+> -	&queue_async_slice_idle_entry.attr,
+> -	&queue_slice_sync_entry.attr,
+> -	&queue_slice_async_entry.attr,
+> -	&queue_fairness_entry.attr,
+> -#endif
+>  	NULL,
+>  };
+>  
+> Index: linux18/block/cfq-iosched.c
+> ===================================================================
+> --- linux18.orig/block/cfq-iosched.c	2009-06-09 10:34:55.000000000 -0400
+> +++ linux18/block/cfq-iosched.c	2009-06-09 13:25:42.000000000 -0400
+> @@ -2095,6 +2095,11 @@ static struct elv_fs_entry cfq_attrs[] =
+>  	CFQ_ATTR(back_seek_max),
+>  	CFQ_ATTR(back_seek_penalty),
+>  	CFQ_ATTR(slice_async_rq),
+> +	ELV_ATTR(fairness),
+> +	ELV_ATTR(slice_idle),
+> +	ELV_ATTR(async_slice_idle),
+> +	ELV_ATTR(slice_sync),
+> +	ELV_ATTR(slice_async),
+>  	__ATTR_NULL
+>  };
+>  
+> Index: linux18/block/as-iosched.c
+> ===================================================================
+> --- linux18.orig/block/as-iosched.c	2009-06-09 10:34:58.000000000 -0400
+> +++ linux18/block/as-iosched.c	2009-06-09 13:27:38.000000000 -0400
+> @@ -1766,6 +1766,11 @@ static struct elv_fs_entry as_attrs[] = 
+>  	AS_ATTR(antic_expire),
+>  	AS_ATTR(read_batch_expire),
+>  	AS_ATTR(write_batch_expire),
+> +#ifdef CONFIG_IOSCHED_AS_HIER
+> +	ELV_ATTR(fairness),
+> +	ELV_ATTR(slice_idle),
+> +	ELV_ATTR(slice_sync),
+> +#endif
+>  	__ATTR_NULL
+>  };
+>  
+> Index: linux18/block/deadline-iosched.c
+> ===================================================================
+> --- linux18.orig/block/deadline-iosched.c	2009-06-09 10:34:55.000000000 -0400
+> +++ linux18/block/deadline-iosched.c	2009-06-09 13:28:51.000000000 -0400
+> @@ -460,6 +460,11 @@ static struct elv_fs_entry deadline_attr
+>  	DD_ATTR(writes_starved),
+>  	DD_ATTR(front_merges),
+>  	DD_ATTR(fifo_batch),
+> +#ifdef CONFIG_IOSCHED_DEADLINE_HIER
+> +	ELV_ATTR(fairness),
+> +	ELV_ATTR(slice_idle),
+> +	ELV_ATTR(slice_sync),
+> +#endif
+>  	__ATTR_NULL
+>  };
+>  
+> Index: linux18/block/noop-iosched.c
+> ===================================================================
+> --- linux18.orig/block/noop-iosched.c	2009-06-09 10:34:52.000000000 -0400
+> +++ linux18/block/noop-iosched.c	2009-06-09 13:31:48.000000000 -0400
+> @@ -82,6 +82,15 @@ static void noop_free_noop_queue(struct 
+>  	kfree(nq);
+>  }
+>  
+> +#ifdef CONFIG_IOSCHED_NOOP_HIER
+> +static struct elv_fs_entry noop_attrs[] = {
+> +	ELV_ATTR(fairness),
+> +	ELV_ATTR(slice_idle),
+> +	ELV_ATTR(slice_sync),
+> +	__ATTR_NULL
+> +};
+> +#endif
+> +
+>  static struct elevator_type elevator_noop = {
+>  	.ops = {
+>  		.elevator_merge_req_fn		= noop_merged_requests,
+> @@ -94,6 +103,7 @@ static struct elevator_type elevator_noo
+>  	},
+>  #ifdef CONFIG_IOSCHED_NOOP_HIER
+>  	.elevator_features = ELV_IOSCHED_NEED_FQ | ELV_IOSCHED_SINGLE_IOQ,
+> +	.elevator_attrs = noop_attrs,
+>  #endif
+>  	.elevator_name = "noop",
+>  	.elevator_owner = THIS_MODULE,
+> 
+> 
+> 
+
+-- 
 Regards
 Gui Jianfeng
