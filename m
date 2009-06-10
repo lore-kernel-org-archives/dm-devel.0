@@ -1,16 +1,11 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: Re: [PATCH v2] dm: add topology support
-Date: Wed, 10 Jun 2009 13:58:45 -0400
-Message-ID: <yq1ocsw55t6.fsf@sermon.lab.mkp.net>
-References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
-	<yq1ski860ok.fsf@sermon.lab.mkp.net>
-	<20090610140028.GD25088@redhat.com>
+From: Lavannya <swap_project@yahoo.com>
+Subject: Question regarding multipath WWID
+Date: Wed, 10 Jun 2009 12:01:26 -0700 (PDT)
+Message-ID: <474792.20433.qm@web32002.mail.mud.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090610140028.GD25088@redhat.com> (Mike Snitzer's message of
-	"Wed, 10 Jun 2009 10:00:29 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,28 +15,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-Mike> So the question: is _not_ using the blk_queue_*() setters
-Mike> perfectly fine?  Given that DM has always _not_ used them the
-Mike> quick answer is "seems fine".
+Hi,
 
-Mike> But I need to dig a bit more to understand if the additional logic
-Mike> in the blk_queue_*() setters is something DM shouldn't be
-Mike> circumventing.
+Recently  I am trying to test few  luns with multipath , in two of my
 
-The original intent was that drivers like DM and MD would seed their
-limits using the blk_queue* calls before adding any component devices.
-blk_stack_limits() would then scale accordingly for every new device
-added.
+test server.  I worked throughly with PowerPath. 
 
-Is there any reason in particular that this approach wouldn't work for
-DM?  I.e. set defaults ahead of time instead of doing it upon table
-completion using check_for_valid_limits()?
+I have few questions on multipath:
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+    -  what is the logic redhat is using  to create the WWID
+       and what are the fields involved
+
+    -  I am trying to test with the shared luns  (devices) between
+       two nodes.  How i will identify  the device id in multipath.
+       Though  as per Redhat ,  they are telling WWID is the identifier.
+       But how i will identify the device id in the WWID?
+       It is very much needed specially for shared luns.  In PowerPath, 
+       generally  all the devices  are  identified  by the 
+       lun id  /device id  then ,
+       I use the Pseudo name (linux), for configuring the devices.  I will
+       assume  that WWID is similar  as Pseudoid. If not, pl. correct me.
+
+    -  Where can i match the device id in the WWID..
+
+It will be really appreciated  , if someone clears  all my questions.
+
+Thanks in advance.
+    
+
+    
+
+
+      
