@@ -1,19 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [PATCH v2] dm: add topology support
-Date: Thu, 11 Jun 2009 00:08:04 +0100
-Message-ID: <20090610230804.GR647@agk-dp.fab.redhat.com>
-References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
-	<yq1ski860ok.fsf@sermon.lab.mkp.net>
-	<20090610140028.GD25088@redhat.com>
-	<yq1ocsw55t6.fsf@sermon.lab.mkp.net>
-	<20090610211235.GF25088@redhat.com>
-	<yq1k53j68wj.fsf@sermon.lab.mkp.net>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: do Symmetrix multipath-tools defaults need update
+	? or scsi-to-blk errors management ?
+Date: Wed, 10 Jun 2009 18:34:52 -0500
+Message-ID: <4A30431C.3030809@cs.wisc.edu>
+References: <1766094670.1725191244670599365.JavaMail.root@zimbra16-e3.priv.proxad.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="------------060906060402030408040204"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <yq1k53j68wj.fsf@sermon.lab.mkp.net>
+In-Reply-To: <1766094670.1725191244670599365.JavaMail.root@zimbra16-e3.priv.proxad.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,42 +18,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, jens.axboe@oracle.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Levy_Jerome@emc.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Jun 10, 2009 at 06:06:36PM -0400, Martin K. Petersen wrote:
-> The default limits should all be set by the block layer when setting up
-> the request queue.  So my reason for inquiring was to figure out whether
-> check_for_valid_limits() actually makes any difference?
- 
-I renamed that badly-named function earlier to:
-  init_valid_queue_limits()
+This is a multi-part message in MIME format.
+--------------060906060402030408040204
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-It should also really be shared with block/.
+On 06/10/2009 04:49 PM, christophe.varoqui@free.fr wrote:
+> Hi Jerome,
+>
+> EMC recently asked my/one-of-your client to active "queue_if_no_path" on Symmetrix logical units, which is not the current default setting in the upstream multipath-tools package.
+>
+> I'd like to know if you intent on submitting a patch to change the default setting accordingly, or if you'd rather let the no-queueing default unchanged and work on fixing the root cause of this issue.
+>
+> ::: Background information, root cause :::
+>
+> The Symmetrix array proved to return scsi errors io to submitters in certains circumstances (I was told of errors on R1+R2 network link). The linux kernel lacking finesse in the SCSI->DM error reporting ends-up invalidating in turn each path of the multipath before the multipathd daemon gets a chance to revalidate. "queue_if_no_path" being disabled, the io errors ends up in the FS layer and in the userspace submitter.
+>
+> ::: error log on a 2.6.9 (rhel 4.7) kernel :::
+>
 
-What's going on is that LVM prepares the new tables it wants to
-build up a device stack in advance, then if everything has worked,
-makes them all go live.
+For RH 4.9 I did the attached patch. So this error is not fastfailed 
+(upstream does not fastfail this type of error when using dm-multipath 
+now). So now the scsi layer will retry its normal 5 times, then fail.
 
-The validation has to happen during the first phase - backing out
-the change to the device stack upon a failure is easier then as
-we have not yet reached the commit point of the transaction.
-The operation making the new stack live if at all possible must not
-fail, because that comes within the commit logic and would make recovery
-much trickier.
 
-In dm terms, this means we have two tables - called 'live' and
-'inactive'.  The first phase sets up inactive tables on all the stacked
-devices involved in the transaction and that is when all the memory
-needed is allocated and the validation occurs.  The second phase then
-makes the inactive table live and discards the previously-live table.
-The two tables are independent: the old queue limits on the dm device
-are discarded and replaced by the newly-calculated ones.
+> SCSI error :<h b t l>  return code 0x8000002
+> current sday: sense key Aborted Command
+> Additional sense: Internal target failure
+> end_request: I/O error, dev sday, sector XXXXX
+> device-mapper: dm-multipath: Failing path 67:32.
+>
+> ::: unfortunate side effect of queue_if_no_path :::
+>
+> Activating "queue_if_no_path" is certainly an effecient work-around for this kind of short-lived retriable errors, but this feature compromises data-protection on clusters relying on persistent reservation to fence ios from passive nodes. Ironically, the reason is quite similar : SCSI return codes for reservation conflicts also end up invalidating each path of a multipath, and worse, the io causing the conflict gets queued ! and retried ! until the poor active drops its reservation, unleashing data-corrupting ios from passive node queues on the logical unit.
+>
+> ::: error log on a 2.6.29.x kernel for a reservation conflict :::
+>
+> sd h:b:t:l: reservation conflict
+> sd h:b:t:l: [sdu] Unhandled error code
+> sd h:b:t:l: [sdu] Result: hostbyte=DID_OK driver_byte=DRIVER_OK,SUGGEST_OK
+> end_request: I/O error, dev sdu, sector XXXXX
+> device-mapper: dm-multipath: Failing path 65:64.
+>
+> ::: persistent reservation + queue_if_no_path, possible solution ? :::
+>
+> Seems to me scsi_lib.c::scsi_io_completion() should be able to cancel a reservation conflicting io and signal blk_end_request() with no error reported.
+>
 
-Currently those limits are calculated in phase one, but we should see
-about delaying this limit combination code (which should alway succeed)
-until phase two (which gives userspace code more freedom in its use of
-the interface).
+I was just about to post new blkerr patches. For this we just wan 
+multipath to fail this IO right away right? So have scsi return some 
+fatal error then dm-multipath will see it and not retry that IO?
 
-Alasdair
+--------------060906060402030408040204
+Content-Type: text/plain;
+ name="dont-failfast-dev-errs.patch"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="dont-failfast-dev-errs.patch"
+
+ZGlmZiAtLWdpdCBhL2RyaXZlcnMvc2NzaS9zY3NpX2Vycm9yLmMgYi9kcml2ZXJzL3Njc2kv
+c2NzaV9lcnJvci5jCmluZGV4IDczMDlmMTIuLmQ1YTMzOTAgMTAwNjQ0Ci0tLSBhL2RyaXZl
+cnMvc2NzaS9zY3NpX2Vycm9yLmMKKysrIGIvZHJpdmVycy9zY3NpL3Njc2lfZXJyb3IuYwpA
+QCAtMTM5MCw3ICsxMzkwLDcgQEAgaW50IHNjc2lfZGVjaWRlX2Rpc3Bvc2l0aW9uKHN0cnVj
+dCBzY3NpX2NtbmQgKnNjbWQpCiAJY2FzZSBDSEVDS19DT05ESVRJT046CiAJCXJ0biA9IHNj
+c2lfY2hlY2tfc2Vuc2Uoc2NtZCk7CiAJCWlmIChydG4gPT0gTkVFRFNfUkVUUlkpCi0JCQln
+b3RvIG1heWJlX3JldHJ5OworCQkJZ290byBjaGVja19yZXRyeV9jb3VudDsKIAkJLyogaWYg
+cnRuID09IEZBSUxFRCwgd2UgaGF2ZSBubyBzZW5zZSBpbmZvcm1hdGlvbjsKIAkJICogcmV0
+dXJuaW5nIEZBSUxFRCB3aWxsIHdha2UgdGhlIGVycm9yIGhhbmRsZXIgdGhyZWFkCiAJCSAq
+IHRvIGNvbGxlY3QgdGhlIHNlbnNlIGFuZCByZWRvIHRoZSBkZWNpZGUK
+--------------060906060402030408040204
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------060906060402030408040204--
