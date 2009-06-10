@@ -1,14 +1,17 @@
-From: christophe.varoqui@free.fr
-Subject: Re: Question regarding multipath WWID
-Date: Wed, 10 Jun 2009 22:39:25 +0200 (CEST)
-Message-ID: <1038061842.1712701244666365917.JavaMail.root@zimbra16-e3.priv.proxad.net>
-References: <474792.20433.qm@web32002.mail.mud.yahoo.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm: add topology support
+Date: Wed, 10 Jun 2009 17:12:36 -0400
+Message-ID: <20090610211235.GF25088@redhat.com>
+References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
+	<yq1ski860ok.fsf@sermon.lab.mkp.net>
+	<20090610140028.GD25088@redhat.com>
+	<yq1ocsw55t6.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <474792.20433.qm@web32002.mail.mud.yahoo.com>
+Content-Disposition: inline
+In-Reply-To: <yq1ocsw55t6.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,37 +22,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
->    -  what is the logic redhat is using  to create the WWID
->       and what are the fields involved
+On Wed, Jun 10 2009 at  1:58pm -0400,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
-see the multipath.conf samples coming with rpm : the "getuid_callout" keyword is there to let users change the multipath naming poilicy. By default paths are identified as part of the same multipath using the VPD page 0x83 identifier, which is a standard. This unique id is used a multipath name if "user_friendly_names" are not enabled. And you still have to choice to use the "alias" keyword to name specific multipaths.
+> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+> 
+> Mike> So the question: is _not_ using the blk_queue_*() setters
+> Mike> perfectly fine?  Given that DM has always _not_ used them the
+> Mike> quick answer is "seems fine".
+> 
+> Mike> But I need to dig a bit more to understand if the additional logic
+> Mike> in the blk_queue_*() setters is something DM shouldn't be
+> Mike> circumventing.
+> 
+> The original intent was that drivers like DM and MD would seed their
+> limits using the blk_queue* calls before adding any component devices.
+> blk_stack_limits() would then scale accordingly for every new device
+> added.
+> 
+> Is there any reason in particular that this approach wouldn't work for
+> DM?  I.e. set defaults ahead of time instead of doing it upon table
+> completion using check_for_valid_limits()?
 
->    -  I am trying to test with the shared luns  (devices) between
->       two nodes.  How i will identify  the device id in multipath.
+When a table is pushed to DM each target device in the table may have
+different limits.  There is no one-size-fits-all default.
 
-I'm assuming you're concerned with EMC hardware, because of the terms you use (device id, ...). Following response mmight be out-of-context if you're not.
+With DM, the underlying device that you're sending IO to is a function
+of offset into the DM device.  Therefore, the associated IO limits
+should really be a function of offset.
 
-There I would advise you use syminq as a getuid_callout ... but no. syminq slow, bloated, and offers no control on its output. You'd be better server by a script using syminq to generate your configlets :
+Understanding that that is a more complicated proposition we're working
+with the topology infrastructure that you've put together as best we
+can.
 
- multipath {
-  wwid 1234
-  alias devid
- }
+That means we use a device's alignment_offset in userland LVM2 to push
+down a data area whose start+size is aligned.  This gives us the
+guarantee that each device in a given DM table is aligned.  From there
+DM will use blk_stack_limits() to combine all the other topology limits
+(alignment_offset is no longer an issue; though we could get some
+warnings.. may look to silence them in dm-table.c).
 
->       Though  as per Redhat ,  they are telling WWID is the identifier.
->       But how i will identify the device id in the WWID?
->       It is very much needed specially for shared luns.  In PowerPath, 
->       generally  all the devices  are  identified  by the 
->       lun id  /device id  then ,
->       I use the Pseudo name (linux), for configuring the devices.  I will
->       assume  that WWID is similar  as Pseudoid. If not, pl. correct me.
+But blk_stack_limits() leads to a situation where the combined limits
+(io_min, logical_block_size) are not ideal for all offsets into the
+resulting DM device (e.g. issuing larger IOs to some target devices than
+would otherwise be needed).
 
-wwid-based multipath names are indeed garanteed to identify the same device across a cluster accessing the same array. Beware though, replicated devices (R2) will surely have different ids and different wwids ... you's need to use "alias" to have geocluster multipath names coherency.
+This is not new for DM (historically DM stacked hardsect_size and other
+limits in the same fashion), but it doesn't mean that we aren't keeping
+in mind that limits as a function of offset would be more appropriate.
 
->    -  Where can i match the device id in the WWID..
-
-syminq
-
->
+Mike
