@@ -1,16 +1,16 @@
-From: =?GB2312?B?0Lu42Q==?= <xiegang112@gmail.com>
-Subject: Re: Re: Can SCSI commands trigger the reinit of a disabled
-	path?
-Date: Thu, 11 Jun 2009 00:50:26 +0800
-Message-ID: <d364733c0906100950k5d05f770i9edb9c4b36e692d6@mail.gmail.com>
-References: <20090610160044.57D8B619E37@hormel.redhat.com>
-	<6416EE16C1AF1E4C86882867E4DD0FF605C111AF@CORPUSMX40B.corp.emc.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: Re: [PATCH v2] dm: add topology support
+Date: Wed, 10 Jun 2009 13:58:45 -0400
+Message-ID: <yq1ocsw55t6.fsf@sermon.lab.mkp.net>
+References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
+	<yq1ski860ok.fsf@sermon.lab.mkp.net>
+	<20090610140028.GD25088@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6416EE16C1AF1E4C86882867E4DD0FF605C111AF@CORPUSMX40B.corp.emc.com>
+In-Reply-To: <20090610140028.GD25088@redhat.com> (Mike Snitzer's message of
+	"Wed, 10 Jun 2009 10:00:29 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,34 +21,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Thu, Jun 11, 2009 at 12:35 AM, <Levy_Jerome@emc.com> wrote:
->> I went through the multipath code and found there was hardware handler
->> for specified hardware, such as emc. =A0When init path, it will use th=
-e
->> trespass command given by the handler. Does this mean it only support
->> the A/PF mode of array? When SCSI commands, =A0such as SCSI PR, are se=
-nt
->> to a disabled path, will trespass be triggered?
->
-> In A/PF mode, with failovermode set to 1 (as it should be for dm-mpio)
-> the Clariion array will only trespass LUNs on receipt of an explicit
-> trespass command, not on other I/O.
-Yes, it's what the A/PF mode. But for ALUA, how does device mapper
-mutipath driver failback the path and how to avoid Ping-pong state? I
-could not find this part of codes.
-Thanks,
->
-> Jerry Levy, EMC
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
+Mike> So the question: is _not_ using the blk_queue_*() setters
+Mike> perfectly fine?  Given that DM has always _not_ used them the
+Mike> quick answer is "seems fine".
 
+Mike> But I need to dig a bit more to understand if the additional logic
+Mike> in the blk_queue_*() setters is something DM shouldn't be
+Mike> circumventing.
 
---=20
-Xie Gang
+The original intent was that drivers like DM and MD would seed their
+limits using the blk_queue* calls before adding any component devices.
+blk_stack_limits() would then scale accordingly for every new device
+added.
+
+Is there any reason in particular that this approach wouldn't work for
+DM?  I.e. set defaults ahead of time instead of doing it upon table
+completion using check_for_valid_limits()?
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
