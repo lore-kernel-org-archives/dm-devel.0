@@ -1,16 +1,14 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [PATCH block#for-2.6.31] block: add request clone
-	interface
-Date: Wed, 10 Jun 2009 06:30:34 +0200
-Message-ID: <20090610043034.GW11363@kernel.dk>
-References: <4A2E1490.7060902@ct.jp.nec.com> <20090609180344.GQ11363@kernel.dk>
-	<4A2F1741.8090100@ct.jp.nec.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH v2] dm: add topology support
+Date: Wed, 10 Jun 2009 02:51:55 -0400
+Message-ID: <yq1ski860ok.fsf@sermon.lab.mkp.net>
+References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4A2F1741.8090100@ct.jp.nec.com>
+In-Reply-To: <1244524492-2292-1-git-send-email-snitzer@redhat.com> (Mike
+	Snitzer's message of "Tue, 9 Jun 2009 01:14:52 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,49 +18,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Boaz Harrosh <bharrosh@panasas.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 10 2009, Kiyoshi Ueda wrote:
-> Hi Jens,
-> 
-> On 06/10/2009 03:03 AM +0900, Jens Axboe wrote:
-> > On Tue, Jun 09 2009, Kiyoshi Ueda wrote:
-> >> Hi Jens,
-> >>
-> >> +/*
-> >> + * Copy request information of the original request to the clone request.
-> >> + */
-> >> +static void __blk_rq_prep_clone(struct request *dst, struct request *src)
-> >> +{
-> >> +	dst->cpu = src->cpu;
-> >> +	dst->cmd_flags = (rq_data_dir(src) | REQ_NOMERGE);
-> >> +	dst->cmd_type = src->cmd_type;
-> >> +	dst->__sector = blk_rq_pos(src);
-> >> +	dst->__data_len = blk_rq_bytes(src);
-> >> +	dst->nr_phys_segments = src->nr_phys_segments;
-> >> +	dst->ioprio = src->ioprio;
-> >> +	dst->buffer = src->buffer;
-> >> +	dst->cmd_len = src->cmd_len;
-> >> +	dst->cmd = src->cmd;
-> > 
-> > Are you making sure that 'src' always exists while 'dst' is alive?
-> 
-> Yes.
-> Request-based dm is the owner of 'src' (original) and
-> it never frees 'src' until the 'dst' (clone) are completed.
-> 
-> I avoided deep-copying __cmd/buffer/sense as it's costly
-> (additional allocation and memcpy).
-> And I don't think there are any needs for that.
-> But if anyone really wants that even with the copying cost,
-> please speak up.
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-I just worry that the interface is easy to misuse. You don't document
-the requirement that the src request may not go away while dst is used,
-yet it's an important fact. The function advertises itself as a copy,
-you would not normally expect any such restrictions.
+Mike> Use blk_stack_limits() to stack block limits (including topology)
+Mike> rather than duplicate the equivalent within Device Mapper.
+
+Great!  So how are the userland bits coming along?
 
 -- 
-Jens Axboe
+Martin K. Petersen	Oracle Linux Engineering
