@@ -1,59 +1,81 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 17/19] io-controller: Support per cgroup per device weights
- and io class
-Date: Wed, 10 Jun 2009 15:44:42 +0800
-Message-ID: <4A2F646A.8070403@cn.fujitsu.com>
-References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com> <1244513342-11758-18-git-send-email-vgoyal@redhat.com>
+From: Boaz Harrosh <bharrosh@panasas.com>
+Subject: Re: [PATCH block#for-2.6.31] block: add request clone
+	interface
+Date: Wed, 10 Jun 2009 10:55:25 +0300
+Message-ID: <4A2F66ED.80206@panasas.com>
+References: <4A2E1490.7060902@ct.jp.nec.com> <20090609180344.GQ11363@kernel.dk>
+	<4A2F1741.8090100@ct.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757163AbZFJHqc@vger.kernel.org>
-In-Reply-To: <1244513342-11758-18-git-send-email-vgoyal@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4A2F1741.8090100@ct.jp.nec.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Tejun Heo <tj@kernel.org>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
->  
-> @@ -1233,6 +1254,8 @@ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
->  		elv_get_iog(iog);
->  
->  		iog->iocg_id = css_id(&iocg->css);
-> +		io_group_init_entity(iocg, iog, iog->dev);
+On 06/10/2009 05:15 AM, Kiyoshi Ueda wrote:
+> Hi Jens,
+> 
+> On 06/10/2009 03:03 AM +0900, Jens Axboe wrote:
+>> On Tue, Jun 09 2009, Kiyoshi Ueda wrote:
+>>> Hi Jens,
+>>>
+>>> +/*
+>>> + * Copy request information of the original request to the clone request.
+>>> + */
+>>> +static void __blk_rq_prep_clone(struct request *dst, struct request *src)
+>>> +{
+>>> +	dst->cpu = src->cpu;
+>>> +	dst->cmd_flags = (rq_data_dir(src) | REQ_NOMERGE);
+>>> +	dst->cmd_type = src->cmd_type;
+>>> +	dst->__sector = blk_rq_pos(src);
+>>> +	dst->__data_len = blk_rq_bytes(src);
+>>> +	dst->nr_phys_segments = src->nr_phys_segments;
+>>> +	dst->ioprio = src->ioprio;
+>>> +	dst->buffer = src->buffer;
+>>> +	dst->cmd_len = src->cmd_len;
+>>> +	dst->cmd = src->cmd;
+>> Are you making sure that 'src' always exists while 'dst' is alive?
+> 
+> Yes.
+> Request-based dm is the owner of 'src' (original) and
+> it never frees 'src' until the 'dst' (clone) are completed.
+> 
+> I avoided deep-copying __cmd/buffer/sense as it's costly
+> (additional allocation and memcpy).
 
-Hi Vivek,
+For my needs for example dst->cmd will be different then
+src->cmd. Could be untouched. The caller will set what he
+needs.
 
-A regression occurs in io.policy handling. IO Controller completely stops working when i use 
-this interface. 
-Make sure that we initialize entity after iog->dev is setting up properly.
+dst->sense should be untouched, caller can set to src->sense
+if he wants to. Or like me he already have another buffer.
 
-Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
----
- block/elevator-fq.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+dst->buffer is always NULL in my path so I don't know
+what that is. Tejun?
 
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 6b30c36..a516dce 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -1451,7 +1451,6 @@ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
- 		elv_get_iog(iog);
- 
- 		iog->iocg_id = css_id(&iocg->css);
--		io_group_init_entity(iocg, iog, iog->dev);
- 		iog->my_entity = &iog->entity;
- 
- 		if (bio) {
-@@ -1459,6 +1458,8 @@ struct io_group *io_group_chain_alloc(struct request_queue *q, void *key,
- 			iog->dev = MKDEV(disk->major, disk->first_minor);
- 		}
- 
-+		io_group_init_entity(iocg, iog, iog->dev);
-+
- 		blk_init_request_list(&iog->rl);
- #ifdef CONFIG_DEBUG_GROUP_IOSCHED
- 		io_group_path(iog, iog->path, sizeof(iog->path));
--- 
-1.5.4.rc3
+It should only be about bios and lengths.
+
+And a big fat comment about what it does and what it
+does not.
+
+> And I don't think there are any needs for that.
+> But if anyone really wants that even with the copying cost,
+> please speak up.
+> 
+> Thanks,
+> Kiyoshi Ueda
+
+Thanks
+Boaz
