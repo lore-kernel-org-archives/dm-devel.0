@@ -1,40 +1,37 @@
-From: christophe.varoqui@free.fr
-Subject: Re: [dm-devel] do Symmetrix multipath-tools defaults need update ?
- or scsi-to-blk errors management ?
-Date: Thu, 11 Jun 2009 06:58:58 +0200 (CEST)
-Message-ID: <1614009620.1734931244696338438.JavaMail.root@zimbra16-e3.priv.proxad.net>
-References: <4A30431C.3030809@cs.wisc.edu>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: getting dm-ioband merged to upstream
+Date: Thu, 11 Jun 2009 14:03:36 +0900 (JST)
+Message-ID: <20090611.140336.193707626.ryov@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4A30431C.3030809@cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Levy Jerome <Levy_Jerome@emc.com>, linux-scsi@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi Alasdair,
 
->>
->> ::: error log on a 2.6.9 (rhel 4.7) kernel :::
->>
->
-> For RH 4.9 I did the attached patch. So this error is not fastfailed 
-> (upstream does not fastfail this type of error when using dm-multipath 
-> now). So now the scsi layer will retry its normal 5 times, then fail.
->
-Thank you for the information. This is very good news.
-Can you also advise about the rhel 5 minimum kernel version ?
+About five months have passed since dm-ioband was included in your
+'editing' tree, but the state of the patch is still 'Under Review.'
 
+I think that dm-ioband is stable and working fine, and "Tested-by"
+tag was put on the patch by a person other than the developers.
+https://www.redhat.com/archives/dm-devel/2009-March/msg00143.html
 
->>
->> ::: error log on a 2.6.29.x kernel for a reservation conflict :::
->>
-> I was just about to post new blkerr patches. For this we just wan 
-> multipath to fail this IO right away right? So have scsi return some 
-> fatal error then dm-multipath will see it and not retry that IO?
->
-Yes, that would do. Thanks you very much for your prompt response and your work on this.
+So could you consider getting dm-ioband merged to upstream?
+I think that dm-ioband is qualified to get merged to upstream.
+Please let me know your honest opinions.
 
-Regards,
-cvaroqui
+Thanks,
+Ryo Tsuruta
