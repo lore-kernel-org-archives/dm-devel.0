@@ -1,14 +1,20 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: do Symmetrix multipath-tools defaults need update
-	? or scsi-to-blk errors management ?
-Date: Wed, 10 Jun 2009 18:34:52 -0500
-Message-ID: <4A30431C.3030809@cs.wisc.edu>
-References: <1766094670.1725191244670599365.JavaMail.root@zimbra16-e3.priv.proxad.net>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH 08/18] io-controller: idle for sometime on
+ sync queue before expiring it
+Date: Thu, 11 Jun 2009 09:22:26 +0800
+Message-ID: <4A305C52.7040804@cn.fujitsu.com>
+References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
+	<1241553525-28095-9-git-send-email-vgoyal@redhat.com>
+	<4A2E15B6.8030001@cn.fujitsu.com>
+	<20090609175131.GB13476@redhat.com>
+	<4A2F0CBE.8030208@cn.fujitsu.com>
+	<20090610132638.GB19680@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------060906060402030408040204"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1766094670.1725191244670599365.JavaMail.root@zimbra16-e3.priv.proxad.net>
+In-Reply-To: <20090610132638.GB19680@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,83 +24,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Levy_Jerome@emc.com, linux-scsi@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------060906060402030408040204
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Vivek Goyal wrote:
+> On Wed, Jun 10, 2009 at 09:30:38AM +0800, Gui Jianfeng wrote:
+>> Vivek Goyal wrote:
+>>> On Tue, Jun 09, 2009 at 03:56:38PM +0800, Gui Jianfeng wrote:
+>>>> Vivek Goyal wrote:
+>>>> ...
+>>>>> +ssize_t elv_fairness_store(struct request_queue *q, const char *name,
+>>>>> +			  size_t count)
+>>>>> +{
+>>>>> +	struct elv_fq_data *efqd;
+>>>>> +	unsigned int data;
+>>>>> +	unsigned long flags;
+>>>>> +
+>>>>> +	char *p = (char *)name;
+>>>>> +
+>>>>> +	data = simple_strtoul(p, &p, 10);
+>>>>> +
+>>>>> +	if (data < 0)
+>>>>> +		data = 0;
+>>>>> +	else if (data > INT_MAX)
+>>>>> +		data = INT_MAX;
+>>>>   Hi Vivek,
+>>>>
+>>>>   data might overflow on 64 bit systems. In addition, since "fairness" is nothing 
+>>>>   more than a switch, just let it be.
+>>>>
+>>>> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+>>>> ---
+>>> Hi Gui,
+>>>
+>>> How about following patch? Currently this should apply at the end of the
+>>> patch series. If it looks good, I will merge the changes in higher level
+>>> patches.
+>>   This patch seems good to me. Some trivial issues comment below.
+>>
+>>> Thanks
+>>> Vivek
+>>>
+>>> o Previously common layer elevator parameters were appearing as request
+>>>   queue parameters in sysfs. But actually these are io scheduler parameters
+>>>   in hiearchical mode. Fix it.
+>>>
+>>> o Use macros to define multiple sysfs C functions doing the same thing. Code
+>>>   borrowed from CFQ. Helps reduce the number of lines of by 140.
+>>>
+>>> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+>> ...	\
+>>> +}
+>>> +SHOW_FUNCTION(elv_fairness_show, efqd->fairness, 0);
+>>> +EXPORT_SYMBOL(elv_fairness_show);
+>>> +SHOW_FUNCTION(elv_slice_idle_show, efqd->elv_slice_idle, 1);
+>>> +EXPORT_SYMBOL(elv_slice_idle_show);
+>>> +SHOW_FUNCTION(elv_async_slice_idle_show, efqd->elv_async_slice_idle, 1);
+>>> +EXPORT_SYMBOL(elv_async_slice_idle_show);
+>>> +SHOW_FUNCTION(elv_slice_sync_show, efqd->elv_slice[1], 1);
+>>> +EXPORT_SYMBOL(elv_slice_sync_show);
+>>> +SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
+>>> +EXPORT_SYMBOL(elv_slice_async_show);
+>>> +#undef SHOW_FUNCTION
+>>> +
+>>> +#define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
+>>> +ssize_t __FUNC(struct elevator_queue *e, const char *page, size_t count)	\
+>>> +{									\
+>>> +	struct elv_fq_data *efqd = &e->efqd;				\
+>>> +	unsigned int __data;						\
+>>> +	int ret = elv_var_store(&__data, (page), count);		\
+>>   Since simple_strtoul returns unsigned long, it's better to make __data 
+>>   be that type.
+>>
+> 
+> I just took it from CFQ. BTW, what's the harm here in truncating unsigned
+> long to int? Anyway for our variables we are not expecting any value 
+> bigger than unsigned int and if it is, we expect to truncate it?
+> 
+>>> +	if (__data < (MIN))						\
+>>> +		__data = (MIN);						\
+>>> +	else if (__data > (MAX))					\
+>>> +		__data = (MAX);						\
+>>> +	if (__CONV)							\
+>>> +		*(__PTR) = msecs_to_jiffies(__data);			\
+>>> +	else								\
+>>> +		*(__PTR) = __data;					\
+>>> +	return ret;							\
+>>> +}
+>>> +STORE_FUNCTION(elv_fairness_store, &efqd->fairness, 0, 1, 0);
+>>> +EXPORT_SYMBOL(elv_fairness_store);
+>>> +STORE_FUNCTION(elv_slice_idle_store, &efqd->elv_slice_idle, 0, UINT_MAX, 1);
+>>   Do we need to set an actual max limitation rather than UINT_MAX for these entries?
+> 
+> Again these are the same values CFQ was using.  Do you have a better upper
+> limit in mind? Until and unless there is strong objection to UINT_MAX, we
+> can stick to what CFQ has been doing so far.
 
-On 06/10/2009 04:49 PM, christophe.varoqui@free.fr wrote:
-> Hi Jerome,
->
-> EMC recently asked my/one-of-your client to active "queue_if_no_path" on Symmetrix logical units, which is not the current default setting in the upstream multipath-tools package.
->
-> I'd like to know if you intent on submitting a patch to change the default setting accordingly, or if you'd rather let the no-queueing default unchanged and work on fixing the root cause of this issue.
->
-> ::: Background information, root cause :::
->
-> The Symmetrix array proved to return scsi errors io to submitters in certains circumstances (I was told of errors on R1+R2 network link). The linux kernel lacking finesse in the SCSI->DM error reporting ends-up invalidating in turn each path of the multipath before the multipathd daemon gets a chance to revalidate. "queue_if_no_path" being disabled, the io errors ends up in the FS layer and in the userspace submitter.
->
-> ::: error log on a 2.6.9 (rhel 4.7) kernel :::
->
+  Ok, I don't have strong opinion about the above things.
 
-For RH 4.9 I did the attached patch. So this error is not fastfailed 
-(upstream does not fastfail this type of error when using dm-multipath 
-now). So now the scsi layer will retry its normal 5 times, then fail.
+> 
+> Thanks
+> Vivek
+> 
+> 
+> 
 
-
-> SCSI error :<h b t l>  return code 0x8000002
-> current sday: sense key Aborted Command
-> Additional sense: Internal target failure
-> end_request: I/O error, dev sday, sector XXXXX
-> device-mapper: dm-multipath: Failing path 67:32.
->
-> ::: unfortunate side effect of queue_if_no_path :::
->
-> Activating "queue_if_no_path" is certainly an effecient work-around for this kind of short-lived retriable errors, but this feature compromises data-protection on clusters relying on persistent reservation to fence ios from passive nodes. Ironically, the reason is quite similar : SCSI return codes for reservation conflicts also end up invalidating each path of a multipath, and worse, the io causing the conflict gets queued ! and retried ! until the poor active drops its reservation, unleashing data-corrupting ios from passive node queues on the logical unit.
->
-> ::: error log on a 2.6.29.x kernel for a reservation conflict :::
->
-> sd h:b:t:l: reservation conflict
-> sd h:b:t:l: [sdu] Unhandled error code
-> sd h:b:t:l: [sdu] Result: hostbyte=DID_OK driver_byte=DRIVER_OK,SUGGEST_OK
-> end_request: I/O error, dev sdu, sector XXXXX
-> device-mapper: dm-multipath: Failing path 65:64.
->
-> ::: persistent reservation + queue_if_no_path, possible solution ? :::
->
-> Seems to me scsi_lib.c::scsi_io_completion() should be able to cancel a reservation conflicting io and signal blk_end_request() with no error reported.
->
-
-I was just about to post new blkerr patches. For this we just wan 
-multipath to fail this IO right away right? So have scsi return some 
-fatal error then dm-multipath will see it and not retry that IO?
-
---------------060906060402030408040204
-Content-Type: text/plain;
- name="dont-failfast-dev-errs.patch"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="dont-failfast-dev-errs.patch"
-
-ZGlmZiAtLWdpdCBhL2RyaXZlcnMvc2NzaS9zY3NpX2Vycm9yLmMgYi9kcml2ZXJzL3Njc2kv
-c2NzaV9lcnJvci5jCmluZGV4IDczMDlmMTIuLmQ1YTMzOTAgMTAwNjQ0Ci0tLSBhL2RyaXZl
-cnMvc2NzaS9zY3NpX2Vycm9yLmMKKysrIGIvZHJpdmVycy9zY3NpL3Njc2lfZXJyb3IuYwpA
-QCAtMTM5MCw3ICsxMzkwLDcgQEAgaW50IHNjc2lfZGVjaWRlX2Rpc3Bvc2l0aW9uKHN0cnVj
-dCBzY3NpX2NtbmQgKnNjbWQpCiAJY2FzZSBDSEVDS19DT05ESVRJT046CiAJCXJ0biA9IHNj
-c2lfY2hlY2tfc2Vuc2Uoc2NtZCk7CiAJCWlmIChydG4gPT0gTkVFRFNfUkVUUlkpCi0JCQln
-b3RvIG1heWJlX3JldHJ5OworCQkJZ290byBjaGVja19yZXRyeV9jb3VudDsKIAkJLyogaWYg
-cnRuID09IEZBSUxFRCwgd2UgaGF2ZSBubyBzZW5zZSBpbmZvcm1hdGlvbjsKIAkJICogcmV0
-dXJuaW5nIEZBSUxFRCB3aWxsIHdha2UgdGhlIGVycm9yIGhhbmRsZXIgdGhyZWFkCiAJCSAq
-IHRvIGNvbGxlY3QgdGhlIHNlbnNlIGFuZCByZWRvIHRoZSBkZWNpZGUK
---------------060906060402030408040204
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------060906060402030408040204--
+-- 
+Regards
+Gui Jianfeng
