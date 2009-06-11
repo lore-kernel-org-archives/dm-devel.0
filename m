@@ -1,20 +1,20 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 08/18] io-controller: idle for sometime on
- sync queue before expiring it
-Date: Thu, 11 Jun 2009 09:22:26 +0800
-Message-ID: <4A305C52.7040804@cn.fujitsu.com>
-References: <1241553525-28095-1-git-send-email-vgoyal@redhat.com>
-	<1241553525-28095-9-git-send-email-vgoyal@redhat.com>
-	<4A2E15B6.8030001@cn.fujitsu.com>
-	<20090609175131.GB13476@redhat.com>
-	<4A2F0CBE.8030208@cn.fujitsu.com>
-	<20090610132638.GB19680@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: Re: [PATCH v2] dm: add topology support
+Date: Wed, 10 Jun 2009 22:21:11 -0400
+Message-ID: <yq1y6rz4ijs.fsf@sermon.lab.mkp.net>
+References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
+	<yq1ski860ok.fsf@sermon.lab.mkp.net>
+	<20090610140028.GD25088@redhat.com>
+	<yq1ocsw55t6.fsf@sermon.lab.mkp.net>
+	<20090610211235.GF25088@redhat.com>
+	<yq1k53j68wj.fsf@sermon.lab.mkp.net>
+	<20090610230804.GR647@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090610132638.GB19680@redhat.com>
+In-Reply-To: <20090610230804.GR647@agk-dp.fab.redhat.com> (Alasdair
+	G. Kergon's message of "Thu, 11 Jun 2009 00:08:04 +0100")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,112 +24,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-> On Wed, Jun 10, 2009 at 09:30:38AM +0800, Gui Jianfeng wrote:
->> Vivek Goyal wrote:
->>> On Tue, Jun 09, 2009 at 03:56:38PM +0800, Gui Jianfeng wrote:
->>>> Vivek Goyal wrote:
->>>> ...
->>>>> +ssize_t elv_fairness_store(struct request_queue *q, const char *name,
->>>>> +			  size_t count)
->>>>> +{
->>>>> +	struct elv_fq_data *efqd;
->>>>> +	unsigned int data;
->>>>> +	unsigned long flags;
->>>>> +
->>>>> +	char *p = (char *)name;
->>>>> +
->>>>> +	data = simple_strtoul(p, &p, 10);
->>>>> +
->>>>> +	if (data < 0)
->>>>> +		data = 0;
->>>>> +	else if (data > INT_MAX)
->>>>> +		data = INT_MAX;
->>>>   Hi Vivek,
->>>>
->>>>   data might overflow on 64 bit systems. In addition, since "fairness" is nothing 
->>>>   more than a switch, just let it be.
->>>>
->>>> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
->>>> ---
->>> Hi Gui,
->>>
->>> How about following patch? Currently this should apply at the end of the
->>> patch series. If it looks good, I will merge the changes in higher level
->>> patches.
->>   This patch seems good to me. Some trivial issues comment below.
->>
->>> Thanks
->>> Vivek
->>>
->>> o Previously common layer elevator parameters were appearing as request
->>>   queue parameters in sysfs. But actually these are io scheduler parameters
->>>   in hiearchical mode. Fix it.
->>>
->>> o Use macros to define multiple sysfs C functions doing the same thing. Code
->>>   borrowed from CFQ. Helps reduce the number of lines of by 140.
->>>
->>> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
->> ...	\
->>> +}
->>> +SHOW_FUNCTION(elv_fairness_show, efqd->fairness, 0);
->>> +EXPORT_SYMBOL(elv_fairness_show);
->>> +SHOW_FUNCTION(elv_slice_idle_show, efqd->elv_slice_idle, 1);
->>> +EXPORT_SYMBOL(elv_slice_idle_show);
->>> +SHOW_FUNCTION(elv_async_slice_idle_show, efqd->elv_async_slice_idle, 1);
->>> +EXPORT_SYMBOL(elv_async_slice_idle_show);
->>> +SHOW_FUNCTION(elv_slice_sync_show, efqd->elv_slice[1], 1);
->>> +EXPORT_SYMBOL(elv_slice_sync_show);
->>> +SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
->>> +EXPORT_SYMBOL(elv_slice_async_show);
->>> +#undef SHOW_FUNCTION
->>> +
->>> +#define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
->>> +ssize_t __FUNC(struct elevator_queue *e, const char *page, size_t count)	\
->>> +{									\
->>> +	struct elv_fq_data *efqd = &e->efqd;				\
->>> +	unsigned int __data;						\
->>> +	int ret = elv_var_store(&__data, (page), count);		\
->>   Since simple_strtoul returns unsigned long, it's better to make __data 
->>   be that type.
->>
-> 
-> I just took it from CFQ. BTW, what's the harm here in truncating unsigned
-> long to int? Anyway for our variables we are not expecting any value 
-> bigger than unsigned int and if it is, we expect to truncate it?
-> 
->>> +	if (__data < (MIN))						\
->>> +		__data = (MIN);						\
->>> +	else if (__data > (MAX))					\
->>> +		__data = (MAX);						\
->>> +	if (__CONV)							\
->>> +		*(__PTR) = msecs_to_jiffies(__data);			\
->>> +	else								\
->>> +		*(__PTR) = __data;					\
->>> +	return ret;							\
->>> +}
->>> +STORE_FUNCTION(elv_fairness_store, &efqd->fairness, 0, 1, 0);
->>> +EXPORT_SYMBOL(elv_fairness_store);
->>> +STORE_FUNCTION(elv_slice_idle_store, &efqd->elv_slice_idle, 0, UINT_MAX, 1);
->>   Do we need to set an actual max limitation rather than UINT_MAX for these entries?
-> 
-> Again these are the same values CFQ was using.  Do you have a better upper
-> limit in mind? Until and unless there is strong objection to UINT_MAX, we
-> can stick to what CFQ has been doing so far.
+>>>>> "agk" == Alasdair G Kergon <agk@redhat.com> writes:
 
-  Ok, I don't have strong opinion about the above things.
+agk> I renamed that badly-named function earlier to:
+agk>   init_valid_queue_limits()
 
-> 
-> Thanks
-> Vivek
-> 
-> 
-> 
+agk> It should also really be shared with block/.
 
--- 
-Regards
-Gui Jianfeng
+How about this?
+
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 1c4df9b..35e9828 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -96,6 +96,31 @@ void blk_queue_lld_busy(struct request_queue *q, lld_busy_fn *fn)
+ EXPORT_SYMBOL_GPL(blk_queue_lld_busy);
+ 
+ /**
++ * blk_set_default_limits - reset limits to default values
++ * @limits:  the queue_limits structure to reset
++ *
++ * Description:
++ *   Returns a queue_limit struct to its default state.  Can be used by
++ *   stacking drivers like DM that stage table swaps and reuse an
++ *   existing device queue.
++ */
++void blk_set_default_limits(struct queue_limits *lim)
++{
++	lim->max_phys_segments = MAX_PHYS_SEGMENTS;
++	lim->max_hw_segments = MAX_HW_SEGMENTS;
++	lim->seg_boundary_mask = BLK_SEG_BOUNDARY_MASK;
++	lim->max_segment_size = MAX_SEGMENT_SIZE;
++	lim->max_sectors = lim->max_hw_sectors = SAFE_MAX_SECTORS;
++	lim->logical_block_size = lim->physical_block_size = lim->io_min = 512;
++	lim->bounce_pfn = BLK_BOUNCE_ANY;
++	lim->alignment_offset = 0;
++	lim->io_opt = 0;
++	lim->misaligned = 0;
++	lim->no_cluster = 0;
++}
++EXPORT_SYMBOL(blk_set_default_limits);
++
++/**
+  * blk_queue_make_request - define an alternate make_request function for a device
+  * @q:  the request queue for the device to be affected
+  * @mfn: the alternate make_request function
+@@ -123,18 +148,12 @@ void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
+ 	 * set defaults
+ 	 */
+ 	q->nr_requests = BLKDEV_MAX_RQ;
+-	blk_queue_max_phys_segments(q, MAX_PHYS_SEGMENTS);
+-	blk_queue_max_hw_segments(q, MAX_HW_SEGMENTS);
+-	blk_queue_segment_boundary(q, BLK_SEG_BOUNDARY_MASK);
+-	blk_queue_max_segment_size(q, MAX_SEGMENT_SIZE);
+ 
+ 	q->make_request_fn = mfn;
+ 	q->backing_dev_info.ra_pages =
+ 			(VM_MAX_READAHEAD * 1024) / PAGE_CACHE_SIZE;
+ 	q->backing_dev_info.state = 0;
+ 	q->backing_dev_info.capabilities = BDI_CAP_MAP_COPY;
+-	blk_queue_max_sectors(q, SAFE_MAX_SECTORS);
+-	blk_queue_logical_block_size(q, 512);
+ 	blk_queue_dma_alignment(q, 511);
+ 	blk_queue_congestion_threshold(q);
+ 	q->nr_batching = BLK_BATCH_REQ;
+@@ -147,6 +166,7 @@ void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
+ 	q->unplug_timer.function = blk_unplug_timeout;
+ 	q->unplug_timer.data = (unsigned long)q;
+ 
++	blk_set_default_limits(&q->limits);
+ 	/*
+ 	 * by default assume old behaviour and bounce for any highmem page
+ 	 */
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 5e740a1..04bbc91 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -921,6 +921,7 @@ extern void blk_queue_alignment_offset(struct request_queue *q,
+ 				       unsigned int alignment);
+ extern void blk_queue_io_min(struct request_queue *q, unsigned int min);
+ extern void blk_queue_io_opt(struct request_queue *q, unsigned int opt);
++extern void blk_set_default_limits(struct queue_limits *lim);
+ extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 			    sector_t offset);
+ extern void disk_stack_limits(struct gendisk *disk, struct block_device *bdev,
