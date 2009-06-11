@@ -1,20 +1,13 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: Re: [PATCH v2] dm: add topology support
-Date: Wed, 10 Jun 2009 22:21:11 -0400
-Message-ID: <yq1y6rz4ijs.fsf@sermon.lab.mkp.net>
-References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
-	<yq1ski860ok.fsf@sermon.lab.mkp.net>
-	<20090610140028.GD25088@redhat.com>
-	<yq1ocsw55t6.fsf@sermon.lab.mkp.net>
-	<20090610211235.GF25088@redhat.com>
-	<yq1k53j68wj.fsf@sermon.lab.mkp.net>
-	<20090610230804.GR647@agk-dp.fab.redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH block#for-2.6.31] block: add request clone
+	interface (v2)
+Date: Thu, 11 Jun 2009 12:10:42 +0900
+Message-ID: <4A3075B2.9040208@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090610230804.GR647@agk-dp.fab.redhat.com> (Alasdair
-	G. Kergon's message of "Thu, 11 Jun 2009 00:08:04 +0100")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,91 +17,181 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, jens.axboe@oracle.com
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, k-ueda@ct.jp.nec.com, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Boaz Harrosh <bharrosh@panasas.com>
 List-Id: dm-devel.ids
 
->>>>> "agk" == Alasdair G Kergon <agk@redhat.com> writes:
+Hi Jens,
 
-agk> I renamed that badly-named function earlier to:
-agk>   init_valid_queue_limits()
+This patch adds the following 2 interfaces for request-stacking drivers:
 
-agk> It should also really be shared with block/.
+  - blk_rq_prep_clone(struct request *clone, struct request *orig,
+		      struct bio_set *bs, gfp_t gfp_mask,
+		      int (*bio_ctr)(struct bio *, struct bio*, void *),
+		      void *data)
+      * Clones bios in the original request to the clone request
+        (bio_ctr is called for each cloned bios.)
+      * Copies attributes of the original request to the clone request.
+        The actual data parts (e.g. ->cmd, ->buffer, ->sense) are not
+        copied.
 
-How about this?
+  - blk_rq_unprep_clone(struct request *clone)
+      * Frees cloned bios from the clone request.
 
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index 1c4df9b..35e9828 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -96,6 +96,31 @@ void blk_queue_lld_busy(struct request_queue *q, lld_busy_fn *fn)
- EXPORT_SYMBOL_GPL(blk_queue_lld_busy);
+Request stacking drivers (e.g. request-based dm) need to make a clone
+request for a submitted request and dispatch it to other devices.
+
+To allocate request for the clone, request stacking drivers may not
+be able to use blk_get_request() because the allocation may be done
+in an irq-disabled context.
+So blk_rq_prep_clone() takes a request allocated by the caller
+as an argument.
+
+For each clone bio in the clone request, request stacking drivers
+should be able to set up their own completion handler.
+So blk_rq_prep_clone() takes a callback function which is called
+for each clone bio, and a pointer for private data which is passed
+to the callback.
+
+NOTE:
+blk_rq_prep_clone() doesn't copy any actual data of the original
+request.  Pages are shared between original bios and cloned bios.
+So caller must not complete the original request before the clone
+request.
+
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Jens Axboe <jens.axboe@oracle.com>
+Cc: Boaz Harrosh <bharrosh@panasas.com>
+---
+ block/blk-core.c       |  100 +++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/blkdev.h |    5 ++
+ 2 files changed, 105 insertions(+)
+
+Index: linux-2.6-block/block/blk-core.c
+===================================================================
+--- linux-2.6-block.orig/block/blk-core.c
++++ linux-2.6-block/block/blk-core.c
+@@ -2295,6 +2295,106 @@ int blk_lld_busy(struct request_queue *q
+ }
+ EXPORT_SYMBOL_GPL(blk_lld_busy);
  
- /**
-+ * blk_set_default_limits - reset limits to default values
-+ * @limits:  the queue_limits structure to reset
++/**
++ * blk_rq_unprep_clone - Helper function to free all bios in a cloned request
++ * @rq: the clone request to be cleaned up
 + *
 + * Description:
-+ *   Returns a queue_limit struct to its default state.  Can be used by
-+ *   stacking drivers like DM that stage table swaps and reuse an
-+ *   existing device queue.
++ *     Free all bios in @rq for a cloned request.
 + */
-+void blk_set_default_limits(struct queue_limits *lim)
++void blk_rq_unprep_clone(struct request *rq)
 +{
-+	lim->max_phys_segments = MAX_PHYS_SEGMENTS;
-+	lim->max_hw_segments = MAX_HW_SEGMENTS;
-+	lim->seg_boundary_mask = BLK_SEG_BOUNDARY_MASK;
-+	lim->max_segment_size = MAX_SEGMENT_SIZE;
-+	lim->max_sectors = lim->max_hw_sectors = SAFE_MAX_SECTORS;
-+	lim->logical_block_size = lim->physical_block_size = lim->io_min = 512;
-+	lim->bounce_pfn = BLK_BOUNCE_ANY;
-+	lim->alignment_offset = 0;
-+	lim->io_opt = 0;
-+	lim->misaligned = 0;
-+	lim->no_cluster = 0;
++	struct bio *bio;
++
++	while ((bio = rq->bio) != NULL) {
++		rq->bio = bio->bi_next;
++
++		bio_put(bio);
++	}
 +}
-+EXPORT_SYMBOL(blk_set_default_limits);
++EXPORT_SYMBOL_GPL(blk_rq_unprep_clone);
++
++/*
++ * Copy attributes of the original request to the clone request.
++ * The actual data parts (e.g. ->cmd, ->buffer, ->sense) are not copied.
++ */
++static void __blk_rq_prep_clone(struct request *dst, struct request *src)
++{
++	dst->cpu = src->cpu;
++	dst->cmd_flags = (rq_data_dir(src) | REQ_NOMERGE);
++	dst->cmd_type = src->cmd_type;
++	dst->__sector = blk_rq_pos(src);
++	dst->__data_len = blk_rq_bytes(src);
++	dst->nr_phys_segments = src->nr_phys_segments;
++	dst->ioprio = src->ioprio;
++	dst->extra_len = src->extra_len;
++}
 +
 +/**
-  * blk_queue_make_request - define an alternate make_request function for a device
-  * @q:  the request queue for the device to be affected
-  * @mfn: the alternate make_request function
-@@ -123,18 +148,12 @@ void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
- 	 * set defaults
- 	 */
- 	q->nr_requests = BLKDEV_MAX_RQ;
--	blk_queue_max_phys_segments(q, MAX_PHYS_SEGMENTS);
--	blk_queue_max_hw_segments(q, MAX_HW_SEGMENTS);
--	blk_queue_segment_boundary(q, BLK_SEG_BOUNDARY_MASK);
--	blk_queue_max_segment_size(q, MAX_SEGMENT_SIZE);
- 
- 	q->make_request_fn = mfn;
- 	q->backing_dev_info.ra_pages =
- 			(VM_MAX_READAHEAD * 1024) / PAGE_CACHE_SIZE;
- 	q->backing_dev_info.state = 0;
- 	q->backing_dev_info.capabilities = BDI_CAP_MAP_COPY;
--	blk_queue_max_sectors(q, SAFE_MAX_SECTORS);
--	blk_queue_logical_block_size(q, 512);
- 	blk_queue_dma_alignment(q, 511);
- 	blk_queue_congestion_threshold(q);
- 	q->nr_batching = BLK_BATCH_REQ;
-@@ -147,6 +166,7 @@ void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
- 	q->unplug_timer.function = blk_unplug_timeout;
- 	q->unplug_timer.data = (unsigned long)q;
- 
-+	blk_set_default_limits(&q->limits);
- 	/*
- 	 * by default assume old behaviour and bounce for any highmem page
- 	 */
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 5e740a1..04bbc91 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -921,6 +921,7 @@ extern void blk_queue_alignment_offset(struct request_queue *q,
- 				       unsigned int alignment);
- extern void blk_queue_io_min(struct request_queue *q, unsigned int min);
- extern void blk_queue_io_opt(struct request_queue *q, unsigned int opt);
-+extern void blk_set_default_limits(struct queue_limits *lim);
- extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 			    sector_t offset);
- extern void disk_stack_limits(struct gendisk *disk, struct block_device *bdev,
++ * blk_rq_prep_clone - Helper function to setup clone request
++ * @rq: the request to be setup
++ * @rq_src: original request to be cloned
++ * @bs: bio_set that bios for clone are allocated from
++ * @gfp_mask: memory allocation mask for bio
++ * @bio_ctr: setup function to be called for each clone bio.
++ *           Returns %0 for success, non %0 for failure.
++ * @data: private data to be passed to @bio_ctr
++ *
++ * Description:
++ *     Clones bios in @rq_src to @rq, and copies attributes of @rq_src to @rq.
++ *     The actual data parts of @rq_src (e.g. ->cmd, ->buffer, ->sense)
++ *     are not copied, and copying such parts is the caller's responsibility.
++ *     Also, pages which the original bios are pointing to are not copied
++ *     and the cloned bios just point same pages.
++ *     So cloned bios must be completed before original bios, which means
++ *     the caller must complete @rq before @rq_src.
++ */
++int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
++		      struct bio_set *bs, gfp_t gfp_mask,
++		      int (*bio_ctr)(struct bio *, struct bio *, void *),
++		      void *data)
++{
++	struct bio *bio, *bio_src;
++
++	if (!bs)
++		bs = fs_bio_set;
++
++	blk_rq_init(NULL, rq);
++
++	__rq_for_each_bio(bio_src, rq_src) {
++		bio = bio_alloc_bioset(gfp_mask, bio_src->bi_max_vecs, bs);
++		if (!bio)
++			goto free_and_out;
++
++		__bio_clone(bio, bio_src);
++
++		if (bio_integrity(bio_src) &&
++		    bio_integrity_clone(bio, bio_src, gfp_mask))
++			goto free_and_out;
++
++		if (bio_ctr && bio_ctr(bio, bio_src, data))
++			goto free_and_out;
++
++		if (rq->bio) {
++			rq->biotail->bi_next = bio;
++			rq->biotail = bio;
++		} else
++			rq->bio = rq->biotail = bio;
++	}
++
++	__blk_rq_prep_clone(rq, rq_src);
++
++	return 0;
++
++free_and_out:
++	if (bio)
++		bio_free(bio, bs);
++	blk_rq_unprep_clone(rq);
++
++	return -ENOMEM;
++}
++EXPORT_SYMBOL_GPL(blk_rq_prep_clone);
++
+ int kblockd_schedule_work(struct request_queue *q, struct work_struct *work)
+ {
+ 	return queue_work(kblockd_workqueue, work);
+Index: linux-2.6-block/include/linux/blkdev.h
+===================================================================
+--- linux-2.6-block.orig/include/linux/blkdev.h
++++ linux-2.6-block/include/linux/blkdev.h
+@@ -765,6 +765,11 @@ extern void blk_insert_request(struct re
+ extern void blk_requeue_request(struct request_queue *, struct request *);
+ extern int blk_rq_check_limits(struct request_queue *q, struct request *rq);
+ extern int blk_lld_busy(struct request_queue *q);
++extern int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
++			     struct bio_set *bs, gfp_t gfp_mask,
++			     int (*bio_ctr)(struct bio *, struct bio *, void *),
++			     void *data);
++extern void blk_rq_unprep_clone(struct request *rq);
+ extern int blk_insert_cloned_request(struct request_queue *q,
+ 				     struct request *rq);
+ extern void blk_plug_device(struct request_queue *);
