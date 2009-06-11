@@ -1,37 +1,59 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [PATCH v2] dm: add topology support
-Date: Thu, 11 Jun 2009 10:43:11 +0100
-Message-ID: <20090611094311.GT647@agk-dp.fab.redhat.com>
-References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
-	<yq1ski860ok.fsf@sermon.lab.mkp.net>
-	<20090610140028.GD25088@redhat.com>
-	<yq1ocsw55t6.fsf@sermon.lab.mkp.net>
-	<20090610211235.GF25088@redhat.com>
-	<yq1k53j68wj.fsf@sermon.lab.mkp.net>
-	<20090610230804.GR647@agk-dp.fab.redhat.com>
-	<yq1y6rz4ijs.fsf@sermon.lab.mkp.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [PATCH block#for-2.6.31] block: add request clone interface
+	(v2)
+Date: Thu, 11 Jun 2009 13:09:03 +0200
+Message-ID: <20090611110903.GO11363@kernel.dk>
+References: <4A3075B2.9040208@ct.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762838AbZFKLJT@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <yq1y6rz4ijs.fsf@sermon.lab.mkp.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, jens.axboe@oracle.com
+In-Reply-To: <4A3075B2.9040208@ct.jp.nec.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 10, 2009 at 10:21:11PM -0400, Martin K. Petersen wrote:
->  /**
-> + * blk_set_default_limits - reset limits to default values
-> + * @limits:  the queue_limits structure to reset
+On Thu, Jun 11 2009, Kiyoshi Ueda wrote:
+> Hi Jens,
+> 
+> This patch adds the following 2 interfaces for request-stacking drivers:
+> 
+>   - blk_rq_prep_clone(struct request *clone, struct request *orig,
+> 		      struct bio_set *bs, gfp_t gfp_mask,
+> 		      int (*bio_ctr)(struct bio *, struct bio*, void *),
+> 		      void *data)
+>       * Clones bios in the original request to the clone request
+>         (bio_ctr is called for each cloned bios.)
+>       * Copies attributes of the original request to the clone request.
+>         The actual data parts (e.g. ->cmd, ->buffer, ->sense) are not
+>         copied.
+> 
+>   - blk_rq_unprep_clone(struct request *clone)
+>       * Frees cloned bios from the clone request.
+> 
+> Request stacking drivers (e.g. request-based dm) need to make a clone
+> request for a submitted request and dispatch it to other devices.
+> 
+> To allocate request for the clone, request stacking drivers may not
+> be able to use blk_get_request() because the allocation may be done
+> in an irq-disabled context.
+> So blk_rq_prep_clone() takes a request allocated by the caller
+> as an argument.
+> 
+> For each clone bio in the clone request, request stacking drivers
+> should be able to set up their own completion handler.
+> So blk_rq_prep_clone() takes a callback function which is called
+> for each clone bio, and a pointer for private data which is passed
+> to the callback.
+> 
+> NOTE:
+> blk_rq_prep_clone() doesn't copy any actual data of the original
+> request.  Pages are shared between original bios and cloned bios.
+> So caller must not complete the original request before the clone
+> request.
 
-Acked-by: Alasdair G Kergon <agk@redhat.com>
+This looks good to me now, I've applied it.
+
+-- 
+Jens Axboe
