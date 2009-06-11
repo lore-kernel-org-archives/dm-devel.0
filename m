@@ -1,64 +1,82 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH block#for-2.6.31] block: add request clone interface (v2)
-Date: Thu, 11 Jun 2009 08:53:42 -0400
-Message-ID: <x49vdn3lynd.fsf@segfault.boston.devel.redhat.com>
-References: <4A3075B2.9040208@ct.jp.nec.com>
-	<20090611110903.GO11363@kernel.dk>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH 04/19] io-controller: Modify cfq to make use
+	of flat elevator fair queuing
+Date: Thu, 11 Jun 2009 10:21:56 -0400
+Message-ID: <20090611142156.GB27892@redhat.com>
+References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com>
+	<1244513342-11758-5-git-send-email-vgoyal@redhat.com>
+	<4A30A05C.4060703@cn.fujitsu.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759944AbZFKMyG@vger.kernel.org>
-In-Reply-To: <20090611110903.GO11363@kernel.dk> (Jens Axboe's message of "Thu,
-	11 Jun 2009 13:09:03 +0200")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4A30A05C.4060703@cn.fujitsu.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-Jens Axboe <jens.axboe@oracle.com> writes:
+On Thu, Jun 11, 2009 at 02:12:44PM +0800, Gui Jianfeng wrote:
+> Vivek Goyal wrote:
+> > This patch changes cfq to use fair queuing code from elevator layer.
+> > 
+> 
+> last_end_request in cic is of no use anymore. Get rid of it.
+> 
 
-> On Thu, Jun 11 2009, Kiyoshi Ueda wrote:
->> Hi Jens,
->> 
->> This patch adds the following 2 interfaces for request-stacking drivers:
->> 
->>   - blk_rq_prep_clone(struct request *clone, struct request *orig,
->> 		      struct bio_set *bs, gfp_t gfp_mask,
->> 		      int (*bio_ctr)(struct bio *, struct bio*, void *),
->> 		      void *data)
->>       * Clones bios in the original request to the clone request
->>         (bio_ctr is called for each cloned bios.)
->>       * Copies attributes of the original request to the clone request.
->>         The actual data parts (e.g. ->cmd, ->buffer, ->sense) are not
->>         copied.
->> 
->>   - blk_rq_unprep_clone(struct request *clone)
->>       * Frees cloned bios from the clone request.
->> 
->> Request stacking drivers (e.g. request-based dm) need to make a clone
->> request for a submitted request and dispatch it to other devices.
->> 
->> To allocate request for the clone, request stacking drivers may not
->> be able to use blk_get_request() because the allocation may be done
->> in an irq-disabled context.
->> So blk_rq_prep_clone() takes a request allocated by the caller
->> as an argument.
->> 
->> For each clone bio in the clone request, request stacking drivers
->> should be able to set up their own completion handler.
->> So blk_rq_prep_clone() takes a callback function which is called
->> for each clone bio, and a pointer for private data which is passed
->> to the callback.
->> 
->> NOTE:
->> blk_rq_prep_clone() doesn't copy any actual data of the original
->> request.  Pages are shared between original bios and cloned bios.
->> So caller must not complete the original request before the clone
->> request.
->
-> This looks good to me now, I've applied it.
+Thanks Gui. Queued for next posting.
 
-Is blk_rq_unprep_clone really the best name?
-          ^^^^^^
+Vivek
 
-Cheers,
-Jeff
+> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+> ---
+>  block/cfq-iosched.c       |    4 ----
+>  include/linux/iocontext.h |    1 -
+>  2 files changed, 0 insertions(+), 5 deletions(-)
+> 
+> diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
+> index 5871568..705e7ba 100644
+> --- a/block/cfq-iosched.c
+> +++ b/block/cfq-iosched.c
+> @@ -1170,7 +1170,6 @@ cfq_alloc_io_context(struct cfq_data *cfqd, gfp_t gfp_mask)
+>  	cic = kmem_cache_alloc_node(cfq_ioc_pool, gfp_mask | __GFP_ZERO,
+>  							q->node);
+>  	if (cic) {
+> -		cic->last_end_request = jiffies;
+>  		INIT_LIST_HEAD(&cic->queue_list);
+>  		INIT_HLIST_NODE(&cic->cic_list);
+>  		cic->dtor = cfq_free_io_context;
+> @@ -1794,9 +1793,6 @@ static void cfq_completed_request(struct request_queue *q, struct request *rq)
+>  
+>  	if (!cfq_class_idle(cfqq))
+>  		cfqd->last_end_request = now;
+> -
+> -	if (sync)
+> -		RQ_CIC(rq)->last_end_request = now;
+>  }
+>  
+>  /*
+> diff --git a/include/linux/iocontext.h b/include/linux/iocontext.h
+> index 1fe9d78..9c4587b 100644
+> --- a/include/linux/iocontext.h
+> +++ b/include/linux/iocontext.h
+> @@ -39,7 +39,6 @@ struct cfq_io_context {
+>  
+>  	struct io_context *ioc;
+>  
+> -	unsigned long last_end_request;
+>  	sector_t last_request_pos;
+>  
+>  	unsigned int seek_samples;
+> -- 
+> 1.5.4.rc3
+> 
