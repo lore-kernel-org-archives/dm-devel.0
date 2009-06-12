@@ -1,21 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH v2] dm: add topology support
-Date: Fri, 12 Jun 2009 09:45:34 +0100
-Message-ID: <20090612084534.GX647@agk-dp.fab.redhat.com>
-References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
-	<yq1ski860ok.fsf@sermon.lab.mkp.net>
-	<20090610140028.GD25088@redhat.com>
-	<yq1ocsw55t6.fsf@sermon.lab.mkp.net>
-	<20090610211235.GF25088@redhat.com>
-	<yq1k53j68wj.fsf@sermon.lab.mkp.net>
-	<20090610230804.GR647@agk-dp.fab.redhat.com>
-	<20090612041757.GA19697@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [PATCH block#for-2.6.31] block: add request clone
+	interface (v2)
+Date: Fri, 12 Jun 2009 15:30:14 +0200
+Message-ID: <20090612133014.GK11363@kernel.dk>
+References: <4A3075B2.9040208@ct.jp.nec.com> <20090611110903.GO11363@kernel.dk>
+	<x49vdn3lynd.fsf@segfault.boston.devel.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20090612041757.GA19697@redhat.com>
+In-Reply-To: <x49vdn3lynd.fsf@segfault.boston.devel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,45 +20,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Boaz Harrosh <bharrosh@panasas.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 12, 2009 at 12:17:57AM -0400, Mike Snitzer wrote:
-> But the following still establishes each target device's limits during
-> stage1 (dm_set_device_limits).  I don't see a way to avoid this given
-> that we only know the table's target devices (and associated bdev and
-> request_queue) through each target's ctr():
- 
-Also available from:
-  struct list_head *dm_table_get_devices(struct dm_table *t)
-(A list of struct dm_dev_internal, defined in dm.h.)
+On Thu, Jun 11 2009, Jeff Moyer wrote:
+> Jens Axboe <jens.axboe@oracle.com> writes:
+> 
+> > On Thu, Jun 11 2009, Kiyoshi Ueda wrote:
+> >> Hi Jens,
+> >> 
+> >> This patch adds the following 2 interfaces for request-stacking drivers:
+> >> 
+> >>   - blk_rq_prep_clone(struct request *clone, struct request *orig,
+> >> 		      struct bio_set *bs, gfp_t gfp_mask,
+> >> 		      int (*bio_ctr)(struct bio *, struct bio*, void *),
+> >> 		      void *data)
+> >>       * Clones bios in the original request to the clone request
+> >>         (bio_ctr is called for each cloned bios.)
+> >>       * Copies attributes of the original request to the clone request.
+> >>         The actual data parts (e.g. ->cmd, ->buffer, ->sense) are not
+> >>         copied.
+> >> 
+> >>   - blk_rq_unprep_clone(struct request *clone)
+> >>       * Frees cloned bios from the clone request.
+> >> 
+> >> Request stacking drivers (e.g. request-based dm) need to make a clone
+> >> request for a submitted request and dispatch it to other devices.
+> >> 
+> >> To allocate request for the clone, request stacking drivers may not
+> >> be able to use blk_get_request() because the allocation may be done
+> >> in an irq-disabled context.
+> >> So blk_rq_prep_clone() takes a request allocated by the caller
+> >> as an argument.
+> >> 
+> >> For each clone bio in the clone request, request stacking drivers
+> >> should be able to set up their own completion handler.
+> >> So blk_rq_prep_clone() takes a callback function which is called
+> >> for each clone bio, and a pointer for private data which is passed
+> >> to the callback.
+> >> 
+> >> NOTE:
+> >> blk_rq_prep_clone() doesn't copy any actual data of the original
+> >> request.  Pages are shared between original bios and cloned bios.
+> >> So caller must not complete the original request before the clone
+> >> request.
+> >
+> > This looks good to me now, I've applied it.
+> 
+> Is blk_rq_unprep_clone really the best name?
+>           ^^^^^^
 
-We might need to pass the offset at which the device occurs
-within the table into dm_get_device() and, for now, only storing
-it there first time for each device and assume userspace has taken
-account of the alignment offset consistently.
+Probably not, but I'm not very good at coming up with elegant names.
+Your email should have included a new suggestion :-)
 
-> 	       	  -> blk_stack_limits(ti, bdev->q->limits)
-> 		     [NOTE: changed to: ti->limits = q->limits below]
-> 		     [NOTE: this copy can't be delayed, need
-> 		      access to target's bdev; only available through
-> 		      ctr's params]
+FWIW, I don't think the name is THAT bad...
 
-See above.
-
-> -	if (blk_stack_limits(&ti->limits, &q->limits, 0) < 0)
-> -		DMWARN("%s: target device %s is misaligned",
-> -		       dm_device_name(ti->table->md), bdevname(bdev, b));
-
-Userspace code is responsible for avoiding these cases, but we could now
-move the misalignment warnings (without failing) to dm_table_set_restrictions().
-
-> +	 * Each target device in the table has a data area that is aligned
-> +	 * (via LVM2) so the DM device's alignment_offset should be 0.
-
-There are userspace users other than LVM2:-)
-Use dm_table_get_devices() here with the offset stored earlier instead,
-removing struct queue_limits from struct dm_table.
-
-Alasdair
+-- 
+Jens Axboe
