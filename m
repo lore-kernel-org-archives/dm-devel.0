@@ -1,36 +1,46 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH block#for-2.6.31] block: add request clone interface (v2)
-Date: Fri, 12 Jun 2009 10:33:59 -0400
-Message-ID: <x49ski5v7vs.fsf@segfault.boston.devel.redhat.com>
-References: <4A3075B2.9040208@ct.jp.nec.com>
-	<20090611110903.GO11363@kernel.dk>
-	<x49vdn3lynd.fsf@segfault.boston.devel.redhat.com>
-	<20090612133014.GK11363@kernel.dk>
+From: Christof Schmitt <christof.schmitt@de.ibm.com>
+Subject: Re: Oops in dm-multipath
+Date: Fri, 12 Jun 2009 16:37:03 +0200
+Message-ID: <20090612143702.GA17037@schmichrtp.de.ibm.com>
+References: <4A2FB289.3050008@linux.vnet.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1765288AbZFLOeX@vger.kernel.org>
-In-Reply-To: <20090612133014.GK11363@kernel.dk> (Jens Axboe's message of "Fri,
-	12 Jun 2009 15:30:14 +0200")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Boaz Harrosh <bharrosh@panasas.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4A2FB289.3050008@linux.vnet.ibm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Jens Axboe <jens.axboe@oracle.com> writes:
-
-> On Thu, Jun 11 2009, Jeff Moyer wrote:
->> Jens Axboe <jens.axboe@oracle.com> writes:
->> Is blk_rq_unprep_clone really the best name?
->>           ^^^^^^
+On Wed, Jun 10, 2009 at 03:18:01PM +0200, Christian May wrote:
+> Hi,
 >
-> Probably not, but I'm not very good at coming up with elegant names.
-> Your email should have included a new suggestion :-)
+> I've setup an IBM z10 LPAR (mainframe server) with selfmade kernel.  
+> Attached to the System z10 was an IBM DS8000 storage server. 10x SCSI  
+> LUNs were assigned to LPAR via two pathes:
+> Example:
+> 36005076303ffc48e000000000000c03e dm-2 IBM,2107900
+> size=5.0G features='1 queue_if_no_path' hwhandler='0' wp=rw
+> `-+- policy='round-robin 0' prio=2 status=enabled
+>  |- 2:0:1:1077821632 sde   8:64   active ready  running
+>  `- 3:0:2:1077821632 sdf   8:80   active ready  running
+>
+> Special parameter setting: dev_loss_tmo=90sec; fast_io_fail_tmo=5sec
+[...]
+> Kernel version: 2.6.29-37.x.20090604
+[...]
 
-Fair enough.  ;)
+It might make more sense to use the 2.6.30 kernel and not an internal
+build for discussing this in public.
 
->  - blk_rq_unprep_clone(struct request *clone)
->      * Frees cloned bios from the clone request.
-
-Why not blk_rq_free_clone?
-
--Jeff
+--
+Christof Schmitt
