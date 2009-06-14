@@ -1,34 +1,36 @@
-From: Evgeniy Polyakov <zbr@ioremap.net>
-Subject: Re: [dm-devel] Updated cluster log patch (take 5)
-Date: Sun, 14 Jun 2009 20:24:06 +0400
-Message-ID: <20090614162406.GA6013@ioremap.net>
-References: <1244845317.19994.3.camel@hydrogen.msp.redhat.com> <20090613110733.GA7895@infradead.org>
+From: Lavannya <swap_project@yahoo.com>
+Subject: Re: Question regarding multipath WWID
+Date: Sun, 14 Jun 2009 11:44:37 -0700 (PDT)
+Message-ID: <220888.26799.qm@web32002.mail.mud.yahoo.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20090613110733.GA7895@infradead.org>
-Sender: netdev-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: device-mapper development <dm-devel@redhat.com>, netdev@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Jun 13, 2009 at 07:07:33AM -0400, Christoph Hellwig (hch@infradead.org) wrote:
-> On Fri, Jun 12, 2009 at 05:21:57PM -0500, Jonathan Brassow wrote:
-> > The structure used for communication between kernel and userspace are
-> > located in include/linux/dm-log-cluster.h.  Due to the frequency,
-> > diversity, and 2-way communication nature of the exchanges between
-> > kernel and userspace, 'connector' is used as the interface for
-> > communication.
-> 
-> Maye I misremember it, but isn't the connector code strongly deprecated
-> in favour of genetlink?
 
-Looks like you misremember this. Connector and genetlink are quite
-different projects - the former has very simple to use interface
-specially designed for the subsystem which are not deeply network aware,
-while genetlink has classical netlink networking interface (attributes,
-macroses and so on).
 
--- 
-	Evgeniy Polyakov
+
+--- On Wed, 6/10/09, christophe.varoqui@free.fr <christophe.varoqui@free.fr> wrote:
+
+Thanks so much for your clarifications.  Yes,  I am thorough with EMC PowerPath, now trying to check the multipath functionalities.
+
+Here is another question, when I am using "user_friendly_names" in multipath configuraiton, without using any 'alias', I am getting the "bindings'  file after executing 'multipath'.  But  when I am using "alias" in the configuration file, the bindings file is not being generated.  Though in the man page says  "alias" will update the "multipath" names.  
+
+So should I assume that when "alias" is being used bindings file will not be generated ?  Or is there something wrong I did in my configuration file?
+
+Thanks in advance again.
+
+
+
+      
