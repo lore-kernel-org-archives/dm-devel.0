@@ -1,17 +1,24 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 04/19] io-controller: Modify cfq to make use
-	of flat elevator fair queuing
-Date: Mon, 15 Jun 2009 09:02:25 -0400
-Message-ID: <20090615130225.GB5717@redhat.com>
-References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com>
-	<1244513342-11758-5-git-send-email-vgoyal@redhat.com>
-	<4A360CD2.8060707@cn.fujitsu.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: block: Introduce helper to reset queue limits to
+	default values
+Date: Mon, 15 Jun 2009 10:56:52 -0400
+Message-ID: <20090615145652.GB18527@redhat.com>
+References: <1244524492-2292-1-git-send-email-snitzer@redhat.com>
+	<yq1ski860ok.fsf@sermon.lab.mkp.net>
+	<20090610140028.GD25088@redhat.com>
+	<yq1ocsw55t6.fsf@sermon.lab.mkp.net>
+	<20090610211235.GF25088@redhat.com>
+	<yq1k53j68wj.fsf@sermon.lab.mkp.net>
+	<20090610230804.GR647@agk-dp.fab.redhat.com>
+	<yq1y6rz4ijs.fsf@sermon.lab.mkp.net>
+	<20090611094311.GT647@agk-dp.fab.redhat.com>
+	<yq1r5xqhwu7.fsf_-_@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4A360CD2.8060707@cn.fujitsu.com>
+In-Reply-To: <yq1r5xqhwu7.fsf_-_@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,49 +28,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
+To: jens.axboe@oracle.com
+Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
-On Mon, Jun 15, 2009 at 04:56:50PM +0800, Gui Jianfeng wrote:
-> > -static inline int
-> > -cfq_prio_to_slice(struct cfq_data *cfqd, struct cfq_queue *cfqq)
-> > +static inline int cfq_class_rt(struct cfq_queue *cfqq)
-> >  {
-> > -	return cfq_prio_slice(cfqd, cfq_cfqq_sync(cfqq), cfqq->ioprio);
-> > +	return elv_ioq_class_rt(cfqq->ioq);
-> >  }
-> 
-> Hi Vivek,
-> 
-> cfq_class_rt isn't needed now, clean it up.
-> 
+On Fri, Jun 12 2009 at 12:58am -0400,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
-Thanks Gui. Queued up for next posting.
-
-Vivek
-
-> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-> ---
->  block/cfq-iosched.c |    5 -----
->  1 files changed, 0 insertions(+), 5 deletions(-)
 > 
-> diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
-> index 705e7ba..23b24b9 100644
-> --- a/block/cfq-iosched.c
-> +++ b/block/cfq-iosched.c
-> @@ -234,11 +234,6 @@ static inline int cfq_class_idle(struct cfq_queue *cfqq)
->  	return elv_ioq_class_idle(cfqq->ioq);
->  }
->  
-> -static inline int cfq_class_rt(struct cfq_queue *cfqq)
-> -{
-> -	return elv_ioq_class_rt(cfqq->ioq);
-> -}
-> -
->  static inline int cfq_cfqq_sync(struct cfq_queue *cfqq)
->  {
->  	return elv_ioq_sync(cfqq->ioq);
-> -- 
-> 1.5.4.rc3
+> DM reuses the request queue when swapping in a new device table.
+> Introduce blk_set_default_limits() which can be used to reset the the
+> queue_limits prior to stacking devices.
 > 
+> Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+> Acked-by: Alasdair G Kergon <agk@redhat.com>
+
+Jens,
+
+Do you intend to provide this patch in your next push to Linus for
+2.6.31?  I have a dependency on this patch for DM topology support.
+
+Acked-by: Mike Snitzer <snitzer@redhat.com>
