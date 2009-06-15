@@ -1,8 +1,7 @@
 From: heinzm@redhat.com
-Subject: [PATCH 1/6] dm raid45 target: export region hash
- functions and add a needed one
-Date: Mon, 15 Jun 2009 19:21:05 +0200
-Message-ID: <4a368301.KBrCZcokAm87BF/S%heinzm@redhat.com>
+Subject: [PATCH 2/6] dm raid45 target: introduce memory cache
+Date: Mon, 15 Jun 2009 19:21:08 +0200
+Message-ID: <4a368304.ChlIzzc+4MKVMZmr%heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -20,143 +19,393 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
 
-this patch series introduces the raid45 target.
-Please include upstream.
-
-The raid45 target supports RAID4 mappings with a dedicated and selectable
-parity device and RAID5 mappings with rotating parity (left/right (a)symmetric).
-Initial and partial resynchronization functionality utilizes the dm
-dirty log module.
-
-A stripe cache handled by the target in order to update or reconstruct
-parity is based on memory objects being managed in a separate, sharable
-dm-memcache module, which allows for allocation of such objects with
-N chunks of page lists with M pages each.
-
-Message interface parsing is performed in the seperate, sharable
-dm-message module.
+This patch adds the dm-memcache memory cache module.
 
 Heinz
 
+ drivers/md/{dm-memcache.h.orig => dm-memcache.h} |   68 ++++++++++++++++++++++
+ 1 files changed, 68 insertions(+), 0 deletions(-)
 
-Summary of the patch-set
-========================
-  1/5: dm raid45 target: export region hash functions and add a needed one
-  2/5: dm raid45 target: introduce memory cache
-  3/5: dm raid45 target: introduce message parser
-  4/5: dm raid45 target: export dm_disk from dm.c
-  5/5: dm raid45 target: introcuce the raid45 target
-  6/5: dm raid45 target: add raid45 modules to Makefile and adjust Kconfig
-
- include/linux/dm-region-hash.h  |     4 ++++
- drivers/md/dm-region-hash.c     |    21 +++++++++++++++++--
- drivers/md/dm-memcache.h        |    68 ++++++++++++++++++++++
- drivers/md/dm-memcache.c        |   301 ++++++++++++++++++++++
- drivers/md/dm-message.h         |    91 ++++++++++++++++++++++++
- drivers/md/dm-message.c         |   183 ++++++++++++++++++++++++
- drivers/md/dm.c                 |     1 +
- drivers/md/dm-raid45.h          |    28 ++++++++++++++++++++++++++
- drivers/md/dm-raid45.c          |  4580 ++++++++++++++++++++++++++
- drivers/md/Makefile             |     3 +++
- drivers/md/Kconfig              |     9 +++++++++
-
- 11 files changed, 5286 insertions(+), 3 deletions(-)
-
-
- .../{dm-region-hash.h.orig => dm-region-hash.h}    |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
-
-diff --git a/include/linux/dm-region-hash.h.orig b/include/linux/dm-region-hash.h
-index a9e652a..bfd21cb 100644
---- a/include/linux/dm-region-hash.h.orig
-+++ b/include/linux/dm-region-hash.h
-@@ -49,6 +49,7 @@ struct dm_dirty_log *dm_rh_dirty_log(struct dm_region_hash *rh);
-  */
- region_t dm_rh_bio_to_region(struct dm_region_hash *rh, struct bio *bio);
- sector_t dm_rh_region_to_sector(struct dm_region_hash *rh, region_t region);
-+region_t dm_rh_sector_to_region(struct dm_region_hash *rh, sector_t sector);
- void *dm_rh_region_context(struct dm_region *reg);
- 
- /*
-@@ -72,11 +73,14 @@ void dm_rh_update_states(struct dm_region_hash *rh, int errors_handled);
- int dm_rh_flush(struct dm_region_hash *rh);
- 
- /* Inc/dec pending count on regions. */
-+void dm_rh_inc(struct dm_region_hash *rh, region_t region);
- void dm_rh_inc_pending(struct dm_region_hash *rh, struct bio_list *bios);
- void dm_rh_dec(struct dm_region_hash *rh, region_t region);
- 
- /* Delay bios on regions. */
- void dm_rh_delay(struct dm_region_hash *rh, struct bio *bio);
-+void dm_rh_delay_by_region(struct dm_region_hash *rh, struct bio *bio,
-+			   region_t region);
- 
- void dm_rh_mark_nosync(struct dm_region_hash *rh,
- 		       struct bio *bio, unsigned done, int error);
- .../md/{dm-region-hash.c.orig => dm-region-hash.c} |   21 +++++++++++++++++--
- 1 files changed, 18 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/md/dm-region-hash.c.orig b/drivers/md/dm-region-hash.c
-index 7b899be..47b088b 100644
---- a/drivers/md/dm-region-hash.c.orig
-+++ b/drivers/md/dm-region-hash.c
-@@ -107,10 +107,11 @@ struct dm_region {
- /*
-  * Conversion fns
-  */
--static region_t dm_rh_sector_to_region(struct dm_region_hash *rh, sector_t sector)
-+region_t dm_rh_sector_to_region(struct dm_region_hash *rh, sector_t sector)
- {
- 	return sector >> rh->region_shift;
- }
-+EXPORT_SYMBOL_GPL(dm_rh_sector_to_region);
- 
- sector_t dm_rh_region_to_sector(struct dm_region_hash *rh, region_t region)
- {
-@@ -488,7 +489,7 @@ void dm_rh_update_states(struct dm_region_hash *rh, int errors_handled)
- }
- EXPORT_SYMBOL_GPL(dm_rh_update_states);
- 
--static void rh_inc(struct dm_region_hash *rh, region_t region)
-+void dm_rh_inc(struct dm_region_hash *rh, region_t region)
- {
- 	struct dm_region *reg;
- 
-@@ -510,13 +511,14 @@ static void rh_inc(struct dm_region_hash *rh, region_t region)
- 
- 	read_unlock(&rh->hash_lock);
- }
-+EXPORT_SYMBOL_GPL(dm_rh_inc);
- 
- void dm_rh_inc_pending(struct dm_region_hash *rh, struct bio_list *bios)
- {
- 	struct bio *bio;
- 
- 	for (bio = bios->head; bio; bio = bio->bi_next)
--		rh_inc(rh, dm_rh_bio_to_region(rh, bio));
-+		dm_rh_inc(rh, dm_rh_bio_to_region(rh, bio));
- }
- EXPORT_SYMBOL_GPL(dm_rh_inc_pending);
- 
-@@ -677,6 +679,19 @@ void dm_rh_delay(struct dm_region_hash *rh, struct bio *bio)
- }
- EXPORT_SYMBOL_GPL(dm_rh_delay);
- 
-+void dm_rh_delay_by_region(struct dm_region_hash *rh,
-+			   struct bio *bio, region_t region)
+diff --git a/drivers/md/dm-memcache.h.orig b/drivers/md/dm-memcache.h
+index e69de29..87e4256 100644
+--- a/drivers/md/dm-memcache.h.orig
++++ b/drivers/md/dm-memcache.h
+@@ -0,0 +1,68 @@
++/*
++ * Copyright (C) 2006-2008 Red Hat, Inc. All rights reserved.
++ *
++ * Module Author: Heinz Mauelshagen <Mauelshagen@RedHat.com>
++ *
++ * Device-mapper memory object handling:
++ *
++ * o allocate/free total_pages in a per client page pool.
++ *
++ * o allocate/free memory objects with chunks (1..n) of
++ *   pages_per_chunk pages hanging off.
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef _DM_MEM_CACHE_H
++#define _DM_MEM_CACHE_H
++
++#define	DM_MEM_CACHE_H_VERSION	"0.1"
++
++#include "dm.h"
++#include <linux/dm-io.h>
++
++static inline struct page_list *pl_elem(struct page_list *pl, unsigned p)
 +{
-+	struct dm_region *reg;
++	while (pl && p--)
++		pl = pl->next;
 +
-+	/* FIXME: locking. */
-+	read_lock(&rh->hash_lock);
-+	reg = __rh_find(rh, region);
-+	bio_list_add(&reg->delayed_bios, bio);
-+	read_unlock(&rh->hash_lock);
++	return pl;
 +}
-+EXPORT_SYMBOL_GPL(dm_rh_delay_by_region);
 +
- void dm_rh_stop_recovery(struct dm_region_hash *rh)
- {
- 	int i;
++struct dm_mem_cache_object {
++	struct page_list *pl; /* Dynamically allocated array */
++	void *private;	      /* Caller context reference */
++};
++
++struct dm_mem_cache_client;
++
++/*
++ * Create/destroy dm memory cache client resources.
++ *
++ * On creation, a number of @objects with @chunks of
++ * @pages_per_chunk pages will be allocated.
++ */
++struct dm_mem_cache_client *
++dm_mem_cache_client_create(unsigned objects, unsigned chunks,
++			   unsigned pages_per_chunk);
++void dm_mem_cache_client_destroy(struct dm_mem_cache_client *client);
++
++/*
++ * Grow/shrink a dm memory cache client resources
++ * by @objetcs amount of objects.
++ */
++int dm_mem_cache_grow(struct dm_mem_cache_client *client, unsigned objects);
++int dm_mem_cache_shrink(struct dm_mem_cache_client *client, unsigned objects);
++
++/*
++ * Allocate/free a memory object
++ *
++ * On allocation one object with an amount of chunks and
++ * an amount of pages per chunk will be returned on success.
++ */
++struct dm_mem_cache_object *
++dm_mem_cache_alloc(struct dm_mem_cache_client *client);
++void dm_mem_cache_free(struct dm_mem_cache_client *client,
++		       struct dm_mem_cache_object *object);
++
++#endif
+ drivers/md/{dm-memcache.c.orig => dm-memcache.c} |  301 ++++++++++++++++++++++
+ 1 files changed, 301 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/md/dm-memcache.c.orig b/drivers/md/dm-memcache.c
+index e69de29..4e3731c 100644
+--- a/drivers/md/dm-memcache.c.orig
++++ b/drivers/md/dm-memcache.c
+@@ -0,0 +1,301 @@
++/*
++ * Copyright (C) 2006-2008 Red Hat, Inc. All rights reserved.
++ *
++ * Module Author: Heinz Mauelshagen <heinzm@redhat.com>
++ *
++ * Device-mapper memory object handling:
++ *
++ * o allocate/free total_pages in a per client page pool.
++ *
++ * o allocate/free memory objects with chunks (1..n) of
++ *   pages_per_chunk pages hanging off.
++ *
++ * This file is released under the GPL.
++ */
++
++#define	DM_MEM_CACHE_VERSION	"0.2"
++
++#include "dm.h"
++#include "dm-memcache.h"
++#include <linux/dm-io.h>
++
++struct dm_mem_cache_client {
++	spinlock_t lock;
++	mempool_t *objs_pool;
++	struct page_list *free_list;
++	unsigned objects;
++	unsigned chunks;
++	unsigned pages_per_chunk;
++	unsigned free_pages;
++	unsigned total_pages;
++};
++
++/*
++ * Free pages and page_list elements of client.
++ */
++static void free_cache_pages(struct page_list *list)
++{
++	while (list) {
++		struct page_list *pl = list;
++
++		list = pl->next;
++		BUG_ON(!pl->page);
++		__free_page(pl->page);
++		kfree(pl);
++	}
++}
++
++/*
++ * Alloc number of pages and page_list elements as required by client.
++ */
++static struct page_list *alloc_cache_pages(unsigned pages)
++{
++	struct page_list *pl, *ret = NULL;
++	struct page *page;
++
++	while (pages--) {
++		page = alloc_page(GFP_NOIO);
++		if (!page)
++			goto err;
++
++		pl = kmalloc(sizeof(*pl), GFP_NOIO);
++		if (!pl) {
++			__free_page(page);
++			goto err;
++		}
++
++		pl->page = page;
++		pl->next = ret;
++		ret = pl;
++	}
++
++	return ret;
++
++err:
++	free_cache_pages(ret);
++	return NULL;
++}
++
++/*
++ * Allocate page_list elements from the pool to chunks of the memory object.
++ */
++static void alloc_chunks(struct dm_mem_cache_client *cl,
++			 struct dm_mem_cache_object *obj)
++{
++	unsigned chunks = cl->chunks;
++	unsigned long flags;
++
++	local_irq_save(flags);
++	local_irq_disable();
++	while (chunks--) {
++		unsigned p = cl->pages_per_chunk;
++
++		obj[chunks].pl = NULL;
++
++		while (p--) {
++			struct page_list *pl;
++
++			/* Take next element from free list */
++			spin_lock(&cl->lock);
++			pl = cl->free_list;
++			BUG_ON(!pl);
++			cl->free_list = pl->next;
++			spin_unlock(&cl->lock);
++
++			pl->next = obj[chunks].pl;
++			obj[chunks].pl = pl;
++		}
++	}
++
++	local_irq_restore(flags);
++}
++
++/*
++ * Free page_list elements putting them back onto free list
++ */
++static void free_chunks(struct dm_mem_cache_client *cl,
++			struct dm_mem_cache_object *obj)
++{
++	unsigned chunks = cl->chunks;
++	unsigned long flags;
++	struct page_list *next, *pl;
++
++	local_irq_save(flags);
++	local_irq_disable();
++	while (chunks--) {
++		for (pl = obj[chunks].pl; pl; pl = next) {
++			next = pl->next;
++
++			spin_lock(&cl->lock);
++			pl->next = cl->free_list;
++			cl->free_list = pl;
++			cl->free_pages++;
++			spin_unlock(&cl->lock);
++		}
++	}
++
++	local_irq_restore(flags);
++}
++
++/*
++ * Create/destroy dm memory cache client resources.
++ */
++struct dm_mem_cache_client *
++dm_mem_cache_client_create(unsigned objects, unsigned chunks,
++			   unsigned pages_per_chunk)
++{
++	unsigned total_pages = objects * chunks * pages_per_chunk;
++	struct dm_mem_cache_client *client;
++
++	BUG_ON(!total_pages);
++	client = kzalloc(sizeof(*client), GFP_KERNEL);
++	if (!client)
++		return ERR_PTR(-ENOMEM);
++
++	client->objs_pool = mempool_create_kmalloc_pool(objects,
++				chunks * sizeof(struct dm_mem_cache_object));
++	if (!client->objs_pool)
++		goto err;
++
++	client->free_list = alloc_cache_pages(total_pages);
++	if (!client->free_list)
++		goto err1;
++
++	spin_lock_init(&client->lock);
++	client->objects = objects;
++	client->chunks = chunks;
++	client->pages_per_chunk = pages_per_chunk;
++	client->free_pages = client->total_pages = total_pages;
++	return client;
++
++err1:
++	mempool_destroy(client->objs_pool);
++err:
++	kfree(client);
++	return ERR_PTR(-ENOMEM);
++}
++EXPORT_SYMBOL(dm_mem_cache_client_create);
++
++void dm_mem_cache_client_destroy(struct dm_mem_cache_client *cl)
++{
++	BUG_ON(cl->free_pages != cl->total_pages);
++	free_cache_pages(cl->free_list);
++	mempool_destroy(cl->objs_pool);
++	kfree(cl);
++}
++EXPORT_SYMBOL(dm_mem_cache_client_destroy);
++
++/*
++ * Grow a clients cache by an amount of pages.
++ *
++ * Don't call from interrupt context!
++ */
++int dm_mem_cache_grow(struct dm_mem_cache_client *cl, unsigned objects)
++{
++	unsigned pages = objects * cl->chunks * cl->pages_per_chunk;
++	struct page_list *pl, *last;
++
++	BUG_ON(!pages);
++	pl = alloc_cache_pages(pages);
++	if (!pl)
++		return -ENOMEM;
++
++	last = pl;
++	while (last->next)
++		last = last->next;
++
++	spin_lock_irq(&cl->lock);
++	last->next = cl->free_list;
++	cl->free_list = pl;
++	cl->free_pages += pages;
++	cl->total_pages += pages;
++	cl->objects++;
++	spin_unlock_irq(&cl->lock);
++
++	mempool_resize(cl->objs_pool, cl->objects, GFP_NOIO);
++	return 0;
++}
++EXPORT_SYMBOL(dm_mem_cache_grow);
++
++/* Shrink a clients cache by an amount of pages */
++int dm_mem_cache_shrink(struct dm_mem_cache_client *cl, unsigned objects)
++{
++	int r;
++	unsigned pages = objects * cl->chunks * cl->pages_per_chunk, p = pages;
++	unsigned long flags;
++	struct page_list *last = NULL, *pl, *pos;
++
++	BUG_ON(!pages);
++
++	spin_lock_irqsave(&cl->lock, flags);
++	pl = pos = cl->free_list;
++	while (p-- && pos->next) {
++		last = pos;
++		pos = pos->next;
++	}
++
++	if (++p)
++		r = -ENOMEM;
++	else {
++		r = 0;
++		cl->free_list = pos;
++		cl->free_pages -= pages;
++		cl->total_pages -= pages;
++		cl->objects--;
++		last->next = NULL;
++	}
++	spin_unlock_irqrestore(&cl->lock, flags);
++
++	if (!r) {
++		free_cache_pages(pl);
++		mempool_resize(cl->objs_pool, cl->objects, GFP_NOIO);
++	}
++
++	return r;
++}
++EXPORT_SYMBOL(dm_mem_cache_shrink);
++
++/*
++ * Allocate/free a memory object
++ *
++ * Can be called from interrupt context
++ */
++struct dm_mem_cache_object *dm_mem_cache_alloc(struct dm_mem_cache_client *cl)
++{
++	int r = 0;
++	unsigned pages = cl->chunks * cl->pages_per_chunk;
++	unsigned long flags;
++	struct dm_mem_cache_object *obj;
++
++	obj = mempool_alloc(cl->objs_pool, GFP_NOIO);
++	if (!obj)
++		return ERR_PTR(-ENOMEM);
++
++	spin_lock_irqsave(&cl->lock, flags);
++	if (pages > cl->free_pages)
++		r = -ENOMEM;
++	else
++		cl->free_pages -= pages;
++	spin_unlock_irqrestore(&cl->lock, flags);
++
++	if (r) {
++		mempool_free(obj, cl->objs_pool);
++		return ERR_PTR(r);
++	}
++
++	alloc_chunks(cl, obj);
++	return obj;
++}
++EXPORT_SYMBOL(dm_mem_cache_alloc);
++
++void dm_mem_cache_free(struct dm_mem_cache_client *cl,
++		       struct dm_mem_cache_object *obj)
++{
++	free_chunks(cl, obj);
++	mempool_free(obj, cl->objs_pool);
++}
++EXPORT_SYMBOL(dm_mem_cache_free);
++
++MODULE_DESCRIPTION(DM_NAME " dm memory cache");
++MODULE_AUTHOR("Heinz Mauelshagen <hjm@redhat.com>");
++MODULE_LICENSE("GPL");
