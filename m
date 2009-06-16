@@ -1,95 +1,40 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH 1/6] dm raid45 target: export region hash
-	functions and add a needed one
-Date: Tue, 16 Jun 2009 21:11:07 +0200
-Message-ID: <1245179467.4278.11.camel@o>
-References: <4a368301.KBrCZcokAm87BF/S%heinzm@redhat.com>
-	<20090616140914.GA3348@infradead.org> <1245163906.28257.113.camel@o>
-	<e9c3a7c20906161055g6434ffd8uc7fc1ca53950556@mail.gmail.com>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Divyesh Shah <dpshah@google.com>
+Subject: Re: [PATCH 02/19] io-controller: Common flat fair queuing code in
+	elevaotor layer
+Date: Tue, 16 Jun 2009 12:44:58 -0700
+Message-ID: <af41c7c40906161244q61fd47c5u1a10243c8839938@mail.gmail.com>
+References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com>
+	<1244513342-11758-3-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e9c3a7c20906161055g6434ffd8uc7fc1ca53950556@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Ed Ciechanowski <ed.ciechanowski@intel.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761976AbZFPTph@vger.kernel.org>
+In-Reply-To: <1244513342-11758-3-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-On Tue, 2009-06-16 at 10:55 -0700, Dan Williams wrote:
-> On Tue, Jun 16, 2009 at 7:51 AM, Heinz Mauelshagen<heinzm@redhat.com> wrote:
-> > On Tue, 2009-06-16 at 10:09 -0400, Christoph Hellwig wrote:
-> >> On Mon, Jun 15, 2009 at 07:21:05PM +0200, heinzm@redhat.com wrote:
-> >> > Hi,
-> >> >
-> >> > this patch series introduces the raid45 target.
-> >> > Please include upstream.
-> >>
-> >> NACK, no need for another raid target, especially if it happens to be
-> >> as broken as the raid1 one.
-> >
-> > You didn't review it it seems ?
-> 
-> Will you be allowing time for review?  This seems a bit late for
-> 2.6.31, as your "Please include upstream" implies.
+On Mon, Jun 8, 2009 at 7:08 PM, Vivek Goyal<vgoyal@redhat.com> wrote:
+> void elv_deactivate_ioq(struct elv_fq_data *efqd, struct io_queue *io=
+q,
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
+ =A0 =A0 int requeue)
+> +{
+> + =A0 =A0 =A0 if (ioq =3D=3D efqd->active_queue)
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 elv_reset_active_ioq(efqd);
+> +
+> + =A0 =A0 =A0 bfq_deactivate_entity(&ioq->entity, requeue);
+> +}
 
-Your help is appreciated, thanks.
+The check for ioq =3D=3D efqd->active_queue and the call to
+elv_reset_active_ioq() seem to be unnecessary. This gets called from
+elv_del_ioq_busy() which has 2 callers which:
+- either explicitly check for ioq !=3D efqd->active_queue
+- or call elv_reset_active_ioq() right before invoking this function
 
-As you surely know, your colleagues (in particular in Poland) are
-familiar with these patches already, which will help quick review.
+This was needed earlier as the io_ioq_move() function didn't fall in
+one of the 2 categories above. This has been done away with the ref
+counting patch, AFAICT.
 
-> 
-> >>   Please help on making the md raid4/5 code
-> >> more useful for your purposes (whatever that may be).
-> >
-> > Supporting various ATARAID raid5 mappings via dmraid long before md got
-> > external metadata suport added.
-> 
-> This is an opportunity to investigate what technical hurdles remain to
-> allow dmraid to use md infrastructure [1] (or as Neil proposed [2] a
-> new unified virtual block device infrastructure) for activating
-> external metadata raid5 arrays.  The libata/ide situation shows that
-> there is precedence for duplicate functionality in the kernel, but my
-> personal opinion is that we exhaust the code reuse discussion before
-> heading down that path.
-
-dmraid supports 11 different metadata formats for various ATARAID vendor
-specific solutions plus DDF1:
-
-asr     : Adaptec HostRAID ASR (0,1,10)
-ddf1    : SNIA DDF1 (0,1,4,5,linear)
-hpt37x  : Highpoint HPT37X (S,0,1,10,01)
-hpt45x  : Highpoint HPT45X (S,0,1,10)
-isw     : Intel Software RAID (0,1,5,01)
-jmicron : JMicron ATARAID (S,0,1)
-lsi     : LSI Logic MegaRAID (0,1,10)
-nvidia  : NVidia RAID (S,0,1,10,5)
-pdc     : Promise FastTrack (S,0,1,10)
-sil     : Silicon Image(tm) Medley(tm) (0,1,10)
-via     : VIA Software RAID (S,0,1,10)
-
-9 of those still need porting/testing/... to/with MD external metadata
-support after the Intel IMSM MD port has settled, hence Red Hat is going
-to continue to support dmraid.
-
-That being said: once the future work on a unified virtual block device
-infrastructure is production ready, we're open to use that.
-
-Regards,
-Heinz
-
-> 
-> Regards,
-> Dan
-> 
-> [1] http://marc.info/?l=linux-raid&m=123300614013042&w=2
-> [2] http://marc.info/?l=linux-fsdevel&m=124450400028660&w=2
+-Divyesh
