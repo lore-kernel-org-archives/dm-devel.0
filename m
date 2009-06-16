@@ -1,13 +1,17 @@
-From: Petr Uzel <petr.uzel@suse.cz>
-Subject: [multipath-tools] kpartx: DELETE logic question
-Date: Tue, 16 Jun 2009 14:44:49 +0200
-Message-ID: <20090616124449.GA12404@localhost>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH 02/19] io-controller: Common flat fair
+	queuing code in elevaotor layer
+Date: Tue, 16 Jun 2009 09:02:27 -0400
+Message-ID: <20090616130227.GA10730@redhat.com>
+References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com>
+	<1244513342-11758-3-git-send-email-vgoyal@redhat.com>
+	<4A37175C.80906@cn.fujitsu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <4A37175C.80906@cn.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,61 +21,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@free.fr>
-Cc: dm-devel@redhat.com
+To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-Hi all,
+On Tue, Jun 16, 2009 at 11:54:04AM +0800, Gui Jianfeng wrote:
+> Vivek Goyal wrote:
+> ...
+> > +
+> > +int elv_nr_busy_rt_ioq(struct elevator_queue *e)
+> > +{
+> > +	return e->efqd.busy_rt_queues;
+> > +}
+> > +EXPORT_SYMBOL(elv_nr_busy_rt_ioq);
+> 
+> This function is no need now.
+> 
+> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 
-In current multipath-tools, the deletion of devmappings is
-done by following code snippet:
+Thanks Gui. Queued for next posting.
 
-405  case DELETE:
-406  for (j =3D n-1; j >=3D 0; j--) {
-407    if (safe_sprintf(partname, "%s%s%d",
-408             mapname, delim, j+1)) {
-409       fprintf(stderr, "partname too small\n");
-410       exit(1);
-411    }
-412    strip_slash(partname);
-413 =20
-414    if (!slices[j].size || !dm_map_present(partname))
-415        continue;
-416 =20
-417    if (!dm_simplecmd(DM_DEVICE_REMOVE,
-418                partname, 0)) {
-419      r++;
-420      continue;
-421     }
-422     if (verbose)
-423     printf("del devmap : %s\n", partname);
-424   }
+Thanks
+Vivek
 
-
-I wonder what's the logic behind the test on line 414. The second part
-(testing whether the mapping exists) is obvious. But what about the
-first part? Why don't we want to delete mapping for partition with
-size=3D=3D0, i.e. partition that no longer exists in the partition table?
-
-Suppose following scenario:
-- create 3 primary partitions on dm-0
-- run kpartx -a /dev/dm-0
-- delete partition #2
-- run kpartx -d /dev/dm-0
-
-The result is that mapping for partition #2 is not deleted - is this
-what is expected?
-
-
-Thanks,
-
-
---=20
-Best regards / s pozdravem
-
-Petr Uzel, Packages maintainer
----------------------------------------------------------------------
-SUSE LINUX, s.r.o.                          e-mail: puzel@suse.cz
-Lihovarsk=E1 1060/12                          http://www.suse.cz
-190 00 Prague 9                            =20
-Czech Republic                             =20
+> ---
+>  block/elevator-fq.c |    6 ------
+>  block/elevator-fq.h |    1 -
+>  2 files changed, 0 insertions(+), 7 deletions(-)
+> 
+> diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+> index f33155c..912ac6a 100644
+> --- a/block/elevator-fq.c
+> +++ b/block/elevator-fq.c
+> @@ -2553,12 +2553,6 @@ int elv_nr_busy_ioq(struct elevator_queue *e)
+>  }
+>  EXPORT_SYMBOL(elv_nr_busy_ioq);
+>  
+> -int elv_nr_busy_rt_ioq(struct elevator_queue *e)
+> -{
+> -	return e->efqd.busy_rt_queues;
+> -}
+> -EXPORT_SYMBOL(elv_nr_busy_rt_ioq);
+> -
+>  int elv_hw_tag(struct elevator_queue *e)
+>  {
+>  	return e->efqd.hw_tag;
+> diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+> index 0939735..285a1ff 100644
+> --- a/block/elevator-fq.h
+> +++ b/block/elevator-fq.h
+> @@ -711,7 +711,6 @@ extern void io_group_set_async_queue(struct io_group *iog, int ioprio_class,
+>  extern struct io_group *io_get_io_group(struct request_queue *q,
+>  					struct bio *bio, int create);
+>  extern int elv_nr_busy_ioq(struct elevator_queue *e);
+> -extern int elv_nr_busy_rt_ioq(struct elevator_queue *e);
+>  extern struct io_queue *elv_alloc_ioq(struct request_queue *q, gfp_t gfp_mask);
+>  extern void elv_free_ioq(struct io_queue *ioq);
+>  
+> -- 
+> 1.5.4.rc3
+> 
