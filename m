@@ -1,15 +1,17 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: Updated cluster log patch (take 5)
-Date: Mon, 15 Jun 2009 19:08:24 -0500
-Message-ID: <279E8D80-4F3A-4236-9869-578CC1374365@redhat.com>
-References: <1244845317.19994.3.camel@hydrogen.msp.redhat.com>
-	<20090613110733.GA7895@infradead.org>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH block#for-2.6.31] block: add request clone
+	interface (v2)
+Date: Tue, 16 Jun 2009 12:02:21 +0900
+Message-ID: <4A370B3D.4050108@ct.jp.nec.com>
+References: <4A3075B2.9040208@ct.jp.nec.com>	<20090611110903.GO11363@kernel.dk>	<x49vdn3lynd.fsf@segfault.boston.devel.redhat.com>	<20090612133014.GK11363@kernel.dk>
+	<x49ski5v7vs.fsf@segfault.boston.devel.redhat.com>
+	<4A35C0A4.20707@ct.jp.nec.com> <4A3614D1.20403@panasas.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v935.3)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090613110733.GA7895@infradead.org>
+In-Reply-To: <4A3614D1.20403@panasas.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,33 +21,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: hch@infradead.org
+To: Boaz Harrosh <bharrosh@panasas.com>, Jeff Moyer <jmoyer@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+Hi Boaz, Jeff, Jens,
 
-On Jun 13, 2009, at 6:07 AM, Christoph Hellwig wrote:
+Thank you for your ideas.
+It's time to decide now?  Please see below.
 
-> On Fri, Jun 12, 2009 at 05:21:57PM -0500, Jonathan Brassow wrote:
->> The structure used for communication between kernel and userspace are
->> located in include/linux/dm-log-cluster.h.  Due to the frequency,
->> diversity, and 2-way communication nature of the exchanges between
->> kernel and userspace, 'connector' is used as the interface for
->> communication.
->
-> Maye I misremember it, but isn't the connector code strongly  
-> deprecated
-> in favour of genetlink?
+On 2009/06/15 18:30 +0900, Boaz Harrosh wrote:
+> > On 06/15/2009 06:31 AM, Kiyoshi Ueda wrote:
+>> >> On 06/12/2009 11:33 PM +0900, Jeff Moyer wrote:
+>>> >>> Jens Axboe <jens.axboe@oracle.com> writes:
+>>>> >>>> On Thu, Jun 11 2009, Jeff Moyer wrote:
+>>>>> >>>>> Jens Axboe <jens.axboe@oracle.com> writes:
+>>>>> >>>>> Is blk_rq_unprep_clone really the best name?
+>>>>> >>>>>           ^^^^^^
+>>>> >>>> Probably not, but I'm not very good at coming up with elegant names.
+>>>> >>>> Your email should have included a new suggestion :-)
+>>> >>> Fair enough.  ;)
+>>> >>>
+>>>> >>>>  - blk_rq_unprep_clone(struct request *clone)
+>>>> >>>>      * Frees cloned bios from the clone request.
+>>> >>> Why not blk_rq_free_clone?
+>> >> Because the 'clone' is not freed in this interface.
+>> >> This interface frees only bios in the 'clone'.
+>> >> Allocating/freeing the 'clone' are the caller's work, since
+>> >> only the caller knows how to allocate/free it.
+>> >>
+>> >> 'prep' after 'alloc' and 'unprep' before 'free' is symmetric
+>> >> and I feel a good candidate for my request-stacking driver,
+>> >> so I chose it. 
+> > 
+> > I'm not a native English speaker as well, so I'm fine
+> > with blk_rq_{prep,unprep}_clone. But maybe the English
+> > people don't like it?
+> > 
+> > Perhaps
+> > blk_rq_{clone,declone} or blk_rq_{clone,declone}_bios
+> > 
+> > (Both unclone and declone are found on the net but are not
+> >  found in the free dictionary)
 
-I'm not sure.  I saw the generic netlink come in, but I didn't think  
-connector was deprecated.  In fact, I thought that 2.6.30 introduced  
-"pohmelfs" and "dst" (both written by the maintainer of 'connector').
+I had a feeling that blk_rq_{clone,declone} allocates/frees
+the clone request inside the interfaces like bio_clone(), so
+I didn't take such namings.
+And, the clone setup interface may not only make bio clones
+but also do something else (for other request members), so
+I didn't add any 'bio' namings to the interfaces.
 
-If this is a show-stopper, you should tell me, so I can change it.   
-Otherwise, I may defer the change to a later kernel (since there is  
-not much time in this merge window).  The change would require  
-userspace to change their socket and bind calls... so perhaps you  
-think it might be better to get this out of the way now?
+Jens, what do you prefer?
 
-Please inform,
-  brassow
+Thanks,
+Kiyoshi Ueda
