@@ -1,16 +1,10 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm log: fix create_log_context() to use proper
-	logical_block_size
-Date: Wed, 17 Jun 2009 12:29:33 -0400
-Message-ID: <20090617162933.GD638@redhat.com>
-References: <1245255712-5320-1-git-send-email-snitzer@redhat.com>
-	<yq14oueq11o.fsf@sermon.lab.mkp.net>
+Subject: [PATCH v2] dm log: fix create_log_context() to use
+	proper logical_block_size
+Date: Wed, 17 Jun 2009 12:34:44 -0400
+Message-ID: <1245256484-5468-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <yq14oueq11o.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +14,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jun 17 2009 at 12:26pm -0400,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+create_log_context() must use the logical_block_size from the log disk
+rather than the target's logical_block_size.
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> Mike> create_log_context() must use the logical_block_size from the log
-> Mike> disk rather than the target's logical_block_size.
-> 
-> Mike>  		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
-> Mike>  				       bitset_size,
-> Mike> - ti->limits.logical_block_size);
-> Mike> + q->limits.logical_block_size);
->  
-> Please use the accessor functions when possible.
-> 
-> bdev_logical_block_size(lc->header_location.bdev) to the rescue....
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-log.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Ah right, thanks for the reminder!
-
-v2 of the patch to follow...
-
-Mike
+Index: linux-2.6/drivers/md/dm-log.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-log.c
++++ linux-2.6/drivers/md/dm-log.c
+@@ -414,7 +414,7 @@ static int create_log_context(struct dm_
+ 		 */
+ 		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
+ 				       bitset_size,
+-				       ti->limits.logical_block_size);
++				       bdev_logical_block_size(lc->header_location.bdev));
+ 
+ 		if (buf_size > i_size_read(dev->bdev->bd_inode)) {
+ 			DMWARN("log device %s too small: need %llu bytes",
