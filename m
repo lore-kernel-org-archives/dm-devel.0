@@ -1,10 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm log: fix create_log_context() to use proper
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH] dm log: fix create_log_context() to use proper
 	logical_block_size
-Date: Wed, 17 Jun 2009 12:21:52 -0400
-Message-ID: <1245255712-5320-1-git-send-email-snitzer@redhat.com>
+Date: Wed, 17 Jun 2009 12:26:27 -0400
+Message-ID: <yq14oueq11o.fsf@sermon.lab.mkp.net>
+References: <1245255712-5320-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1245255712-5320-1-git-send-email-snitzer@redhat.com> (Mike
+	Snitzer's message of "Wed, 17 Jun 2009 12:21:52 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,39 +19,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-create_log_context() must use the logical_block_size from the log disk
-rather than the target's logical_block_size.
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-log.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+Mike> create_log_context() must use the logical_block_size from the log
+Mike> disk rather than the target's logical_block_size.
 
-Index: linux-2.6/drivers/md/dm-log.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-log.c
-+++ linux-2.6/drivers/md/dm-log.c
-@@ -404,17 +404,19 @@ static int create_log_context(struct dm_
- 		}
- 		lc->disk_header = NULL;
- 	} else {
-+		struct request_queue *q;
- 		lc->log_dev = dev;
- 		lc->log_dev_failed = 0;
- 		lc->header_location.bdev = lc->log_dev->bdev;
- 		lc->header_location.sector = 0;
-+		q = bdev_get_queue(lc->header_location.bdev);
+Mike>  		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
+Mike>  				       bitset_size,
+Mike> - ti->limits.logical_block_size);
+Mike> + q->limits.logical_block_size);
  
- 		/*
- 		 * Buffer holds both header and bitset.
- 		 */
- 		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
- 				       bitset_size,
--				       ti->limits.logical_block_size);
-+				       q->limits.logical_block_size);
- 
- 		if (buf_size > i_size_read(dev->bdev->bd_inode)) {
- 			DMWARN("log device %s too small: need %llu bytes",
+Please use the accessor functions when possible.
+
+bdev_logical_block_size(lc->header_location.bdev) to the rescue....
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
