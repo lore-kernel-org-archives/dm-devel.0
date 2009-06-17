@@ -1,18 +1,17 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 02/19] io-controller: Common flat fair
-	queuing code in elevaotor layer
-Date: Wed, 17 Jun 2009 08:59:32 -0400
-Message-ID: <20090617125932.GA15473@redhat.com>
+Subject: Re: [PATCH 04/19] io-controller: Modify cfq to make use
+	of flat elevator fair queuing
+Date: Wed, 17 Jun 2009 09:00:00 -0400
+Message-ID: <20090617130000.GB15473@redhat.com>
 References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com>
-	<1244513342-11758-3-git-send-email-vgoyal@redhat.com>
-	<af41c7c40906161244q61fd47c5u1a10243c8839938@mail.gmail.com>
+	<1244513342-11758-5-git-send-email-vgoyal@redhat.com>
+	<4A385374.7060708@cn.fujitsu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <af41c7c40906161244q61fd47c5u1a10243c8839938@mail.gmail.com>
+In-Reply-To: <4A385374.7060708@cn.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,34 +21,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Divyesh Shah <dpshah@google.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, jbaron@redhat.com
+To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-On Tue, Jun 16, 2009 at 12:44:58PM -0700, Divyesh Shah wrote:
-> On Mon, Jun 8, 2009 at 7:08 PM, Vivek Goyal<vgoyal@redhat.com> wrote:
-> > void elv_deactivate_ioq(struct elv_fq_data *efqd, struct io_queue *io=
-q,
-> > + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0 =A0 int requeue)
-> > +{
-> > + =A0 =A0 =A0 if (ioq =3D=3D efqd->active_queue)
-> > + =A0 =A0 =A0 =A0 =A0 =A0 =A0 elv_reset_active_ioq(efqd);
-> > +
-> > + =A0 =A0 =A0 bfq_deactivate_entity(&ioq->entity, requeue);
-> > +}
->=20
-> The check for ioq =3D=3D efqd->active_queue and the call to
-> elv_reset_active_ioq() seem to be unnecessary. This gets called from
-> elv_del_ioq_busy() which has 2 callers which:
-> - either explicitly check for ioq !=3D efqd->active_queue
-> - or call elv_reset_active_ioq() right before invoking this function
->=20
-> This was needed earlier as the io_ioq_move() function didn't fall in
-> one of the 2 categories above. This has been done away with the ref
-> counting patch, AFAICT.
+On Wed, Jun 17, 2009 at 10:22:44AM +0800, Gui Jianfeng wrote:
+> Vivek Goyal wrote:
+> > This patch changes cfq to use fair queuing code from elevator layer.
+> > 
+> 
+> elevator_private2 isn't used to store cfqq now.
+> 
+> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 
-True. Looks like we don't need above reset_active_ioq() call in
-deactivate_ioq(). I will get rid of it in next posting. Thanks.
+Thanks Gui. Queued up for next posting.
 
 Vivek
+
+> ---
+>  block/cfq-iosched.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> 
+> diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
+> index 23b24b9..7a9bbe6 100644
+> --- a/block/cfq-iosched.c
+> +++ b/block/cfq-iosched.c
+> @@ -1874,7 +1874,7 @@ static void cfq_put_request(struct request *rq)
+>  		put_io_context(RQ_CIC(rq)->ioc);
+>  
+>  		rq->elevator_private = NULL;
+> -		rq->elevator_private2 = NULL;
+> +		rq->ioq = NULL;
+>  
+>  		cfq_put_queue(cfqq);
+>  	}
+> -- 
+> 1.5.4.rc3
