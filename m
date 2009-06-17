@@ -1,17 +1,10 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 15/19] io-controller: map async requests to
-	appropriate cgroup
-Date: Wed, 17 Jun 2009 09:00:43 -0400
-Message-ID: <20090617130043.GC15473@redhat.com>
-References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com>
-	<1244513342-11758-16-git-send-email-vgoyal@redhat.com>
-	<4A38B4B4.7060101@cn.fujitsu.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm log: fix create_log_context() to use proper
+	logical_block_size
+Date: Wed, 17 Jun 2009 12:21:52 -0400
+Message-ID: <1245255712-5320-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4A38B4B4.7060101@cn.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,46 +14,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jun 17, 2009 at 05:17:40PM +0800, Gui Jianfeng wrote:
-> Vivek Goyal wrote:
-> ...
-> > +
-> > +struct io_group *rq_iog(struct request_queue *q, struct request *rq)
-> >  {
-> >  	return q->elevator->efqd.root_group;
-> >  }
-> 
-> There is no need for this function now.
-> 
-> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+create_log_context() must use the logical_block_size from the log disk
+rather than the target's logical_block_size.
 
-Thanks Gui. Queued up for next posting.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-log.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-Vivek
-
-> ---
->  block/elevator-fq.c |    5 -----
->  1 files changed, 0 insertions(+), 5 deletions(-)
-> 
-> diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-> index 912ac6a..bfa79c9 100644
-> --- a/block/elevator-fq.c
-> +++ b/block/elevator-fq.c
-> @@ -2522,11 +2522,6 @@ struct io_group *io_get_io_group(struct request_queue *q, struct bio *bio,
->  {
->  	return q->elevator->efqd.root_group;
->  }
-> -
-> -struct io_group *rq_iog(struct request_queue *q, struct request *rq)
-> -{
-> -	return q->elevator->efqd.root_group;
-> -}
->  EXPORT_SYMBOL(io_get_io_group);
->  #endif /* CONFIG_GROUP_IOSCHED*/
->  
-> -- 
-> 1.5.4.rc3
+Index: linux-2.6/drivers/md/dm-log.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-log.c
++++ linux-2.6/drivers/md/dm-log.c
+@@ -404,17 +404,19 @@ static int create_log_context(struct dm_
+ 		}
+ 		lc->disk_header = NULL;
+ 	} else {
++		struct request_queue *q;
+ 		lc->log_dev = dev;
+ 		lc->log_dev_failed = 0;
+ 		lc->header_location.bdev = lc->log_dev->bdev;
+ 		lc->header_location.sector = 0;
++		q = bdev_get_queue(lc->header_location.bdev);
+ 
+ 		/*
+ 		 * Buffer holds both header and bitset.
+ 		 */
+ 		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
+ 				       bitset_size,
+-				       ti->limits.logical_block_size);
++				       q->limits.logical_block_size);
+ 
+ 		if (buf_size > i_size_read(dev->bdev->bd_inode)) {
+ 			DMWARN("log device %s too small: need %llu bytes",
