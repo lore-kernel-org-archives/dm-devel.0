@@ -1,56 +1,42 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [PATCH 1/6] dm raid45 target: export region hash
-	functions and add a needed one
-Date: Wed, 17 Jun 2009 08:46:28 +1000
-Message-ID: <19000.8388.899607.749942@notabene.brown>
-References: <4a368301.KBrCZcokAm87BF/S%heinzm@redhat.com>
-	<20090616140914.GA3348@infradead.org>
-	<1245163906.28257.113.camel@o>
-	<e9c3a7c20906161055g6434ffd8uc7fc1ca53950556@mail.gmail.com>
-	<1245179467.4278.11.camel@o>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH 04/19] io-controller: Modify cfq to make use of flat elevator
+ fair queuing
+Date: Wed, 17 Jun 2009 10:22:44 +0800
+Message-ID: <4A385374.7060708@cn.fujitsu.com>
+References: <1244513342-11758-1-git-send-email-vgoyal@redhat.com> <1244513342-11758-5-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: message from Heinz Mauelshagen on Tuesday June 16
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com
-Cc: Christoph Hellwig <hch@infradead.org>, Dan Williams <dan.j.williams@intel.com>, device-mapper development <dm-devel@redhat.com>, Ed Ciechanowski <ed.ciechanowski@intel.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759806AbZFQCY5@vger.kernel.org>
+In-Reply-To: <1244513342-11758-5-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-On Tuesday June 16, heinzm@redhat.com wrote:
-> 
-> That being said: once the future work on a unified virtual block device
-> infrastructure is production ready, we're open to use that.
+Vivek Goyal wrote:
+> This patch changes cfq to use fair queuing code from elevator layer.
 > 
 
-I was kind-a hoping that you (and others) would be involved in
-developing this unified infrastructure, rather than just waiting for
-it.
+elevator_private2 isn't used to store cfqq now.
 
-I think a great first step would be to allow md/raid5 to be used
-directly as a dm target, thus turning dm-raid5 into a shim layer over
-md/raid5.  The process of doing this would very likely highlight a
-lot of the issues we would need to address in creating a unified
-framework.
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ block/cfq-iosched.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-I will try to find time to review your dm-raid5 code with a view to
-understanding how it plugs in to dm, and then how the md/raid5 engine
-can be used by dm-raid5.
-
-Part of this will be disconnecting the md/raid5 code from any specific
-knowledge of a gendisk and a request_queue as I suppose a dm-target
-doesn't own any of these.  Also I would probably want the mddev not be
-have to be on the "all_mddevs" list, as we would not want a 'dm' raid5
-to appear in /proc/mdstat.
-
-NeilBrown
+diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
+index 23b24b9..7a9bbe6 100644
+--- a/block/cfq-iosched.c
++++ b/block/cfq-iosched.c
+@@ -1874,7 +1874,7 @@ static void cfq_put_request(struct request *rq)
+ 		put_io_context(RQ_CIC(rq)->ioc);
+ 
+ 		rq->elevator_private = NULL;
+-		rq->elevator_private2 = NULL;
++		rq->ioq = NULL;
+ 
+ 		cfq_put_queue(cfqq);
+ 	}
+-- 
+1.5.4.rc3
