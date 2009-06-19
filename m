@@ -1,15 +1,12 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH -next] dm: fix dm-log-userspace printk format
-Date: Fri, 19 Jun 2009 13:32:56 -0500
-Message-ID: <63B19258-D345-472C-8923-1A7F91F466A1@redhat.com>
-References: <20090619172622.05adb236.sfr@canb.auug.org.au>
-	<4A3BD7D2.6020803@oracle.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: [PATCH 12/20] io-controller: deadline changes for
+	hierarchical fair queuing
+Date: Fri, 19 Jun 2009 16:37:30 -0400
+Message-ID: <1245443858-8487-13-git-send-email-vgoyal@redhat.com>
+References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v935.3)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A3BD7D2.6020803@oracle.com>
+In-Reply-To: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,49 +16,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: randy.dunlap@oracle.com
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, device-mapper development <dm-devel@redhat.com>, linux-next@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>
+To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google
+Cc: peterz@infradead.org, akpm@linux-foundation.org, snitzer@redhat.com, agk@redhat.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-thanks, I've pulled this into my patch as well.
+This patch changes deadline to use queue scheduling code from elevator layer.
+One can go back to old deadline by selecting CONFIG_IOSCHED_DEADLINE_HIER.
 
-  brassow
+Signed-off-by: Nauman Rafique <nauman@google.com>
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ block/Kconfig.iosched    |   11 +++++++++++
+ block/deadline-iosched.c |    8 ++++++++
+ 2 files changed, 19 insertions(+), 0 deletions(-)
 
-On Jun 19, 2009, at 1:24 PM, Randy Dunlap wrote:
-
-> From: Randy Dunlap <randy.dunlap@oracle.com>
->
-> Fix printk format warning:
->
-> drivers/md/dm-log-userspace-transfer.c:110: warning: format '%lu'  
-> expects type 'long unsigned int', but argument 4 has type 'size_t'
->
-> Signed-off-by: Randy Dunlap <randy.dunlap@oracle.com>
-> Cc: Jonathan Brassow <dm-devel@redhat.com>
-> Cc: dm-devel@redhat.com
-> ---
-> drivers/md/dm-log-userspace-transfer.c |    2 +-
-> 1 file changed, 1 insertion(+), 1 deletion(-)
->
-> --- linux-next-20090619.orig/drivers/md/dm-log-userspace-transfer.c
-> +++ linux-next-20090619/drivers/md/dm-log-userspace-transfer.c
-> @@ -108,7 +108,7 @@ static int fill_pkg(struct cn_msg *msg,
-> 				*(pkg->data_size) = 0;
-> 		} else if (tfr->data_size > *(pkg->data_size)) {
-> 			DMERR("Insufficient space to receive package [%u] "
-> -			      "(%u vs %lu)", tfr->request_type,
-> +			      "(%u vs %zu)", tfr->request_type,
-> 			      tfr->data_size, *(pkg->data_size));
->
-> 			*(pkg->data_size) = 0;
->
->
-> -- 
-> ~Randy
-> LPC 2009, Sept. 23-25, Portland, Oregon
-> http://linuxplumbersconf.org/2009/
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index 9da6657..3a9e7d7 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -55,6 +55,17 @@ config IOSCHED_DEADLINE
+ 	  a disk at any one time, its behaviour is almost identical to the
+ 	  anticipatory I/O scheduler and so is a good choice.
+ 
++config IOSCHED_DEADLINE_HIER
++	bool "Deadline Hierarchical Scheduling support"
++	depends on IOSCHED_DEADLINE && CGROUPS
++	select ELV_FAIR_QUEUING
++	select GROUP_IOSCHED
++	default n
++	---help---
++	  Enable hierarhical scheduling in deadline. In this mode deadline keeps
++	  one IO queue per cgroup instead of a global queue. Elevator
++	  fair queuing logic ensures fairness among various queues.
++
+ config IOSCHED_CFQ
+ 	tristate "CFQ I/O scheduler"
+ 	select ELV_FAIR_QUEUING
+diff --git a/block/deadline-iosched.c b/block/deadline-iosched.c
+index 3a195ce..bae8e44 100644
+--- a/block/deadline-iosched.c
++++ b/block/deadline-iosched.c
+@@ -460,6 +460,11 @@ static struct elv_fs_entry deadline_attrs[] = {
+ 	DD_ATTR(writes_starved),
+ 	DD_ATTR(front_merges),
+ 	DD_ATTR(fifo_batch),
++#ifdef CONFIG_IOSCHED_DEADLINE_HIER
++	ELV_ATTR(fairness),
++	ELV_ATTR(slice_idle),
++	ELV_ATTR(slice_sync),
++#endif
+ 	__ATTR_NULL
+ };
+ 
+@@ -477,6 +482,9 @@ static struct elevator_type iosched_deadline = {
+ 		.elevator_alloc_sched_queue_fn = deadline_alloc_deadline_queue,
+ 		.elevator_free_sched_queue_fn = deadline_free_deadline_queue,
+ 	},
++#ifdef CONFIG_IOSCHED_DEADLINE_HIER
++	.elevator_features = ELV_IOSCHED_NEED_FQ | ELV_IOSCHED_SINGLE_IOQ,
++#endif
+ 	.elevator_attrs = deadline_attrs,
+ 	.elevator_name = "deadline",
+ 	.elevator_owner = THIS_MODULE,
+-- 
+1.6.0.6
