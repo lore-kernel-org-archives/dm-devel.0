@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 20/20] io-controller: experimental debug patch
-	for async queue wait before expiry
-Date: Fri, 19 Jun 2009 16:37:38 -0400
-Message-ID: <1245443858-8487-21-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 11/20] io-controller: noop changes for
+	hierarchical fair queuing
+Date: Fri, 19 Jun 2009 16:37:29 -0400
+Message-ID: <1245443858-8487-12-git-send-email-vgoyal@redhat.com>
 References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,190 +20,68 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: peterz@infradead.org, akpm@linux-foundation.org, snitzer@redhat.com, agk@redhat.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-o A debug patch which does wait for next IO from async queue once it
-  becomes empty.
+This patch changes noop to use queue scheduling code from elevator layer.
+One can go back to old noop by deselecting CONFIG_IOSCHED_NOOP_HIER.
 
-o For async writes, traffic seen by IO scheduler is not in proportion to
-  the weight of the cgroup task/page belongs to. So if there are two processes
-  doing heavy writeouts in two cgroups with weights 1000 and 500 respectively,
-  then IO scheduler does not see more traffic/IO from higher weight cgroup
-  even if IO scheduler tries to give it higher disk time. Effectively, the
-  async queue belonging to higher weight cgroup becomes empty, and gets out
-  of contention for disk and lower weight cgroup gets to use disk giving
-  an impression in user space that higher weight cgroup did not get higher
-  time to disk.
-
-o This is more of a problem at page cache level where a higher weight
-  process might be writing out the pages of lower weight process etc and
-  should be fixed there.
-
-o While we fix those issues, introducing this debug patch which allows one
-  to idle on async queue (tunable via /sys/blolc/<disk>/queue/async_slice_idle)  so that once a higher weight queue becomes empty, instead of expiring it
-  we try to wait for next request to come from that queue hence giving it
-  higher disk time. A higher value of async_slice_idle, around 300ms, helps
-  me get some right numbers for my setup. Note: higher disk time would not
-  necessarily translate in more IO done as higher weight group is not pushing
-  enough IO to io scheduler. It is just a debugging aid to prove correctness
-  of IO controller by providing higher disk times to higher weight cgroup.
-
+Signed-off-by: Nauman Rafique <nauman@google.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/cfq-iosched.c |    1 +
- block/elevator-fq.c |   43 +++++++++++++++++++++++++++++++++++++++----
- block/elevator-fq.h |    5 +++++
- 3 files changed, 45 insertions(+), 4 deletions(-)
+ block/Kconfig.iosched |   11 +++++++++++
+ block/noop-iosched.c  |   13 +++++++++++++
+ 2 files changed, 24 insertions(+), 0 deletions(-)
 
-diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
-index b02acf2..959e10a 100644
---- a/block/cfq-iosched.c
-+++ b/block/cfq-iosched.c
-@@ -2093,6 +2093,7 @@ static struct elv_fs_entry cfq_attrs[] = {
- 	ELV_ATTR(slice_sync),
- 	ELV_ATTR(slice_async),
- 	ELV_ATTR(fairness),
-+	ELV_ATTR(async_slice_idle),
- 	__ATTR_NULL
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index a91a807..9da6657 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -25,6 +25,17 @@ config IOSCHED_NOOP
+ 	  that do their own scheduling and require only minimal assistance from
+ 	  the kernel.
+ 
++config IOSCHED_NOOP_HIER
++	bool "Noop Hierarchical Scheduling support"
++	depends on IOSCHED_NOOP && CGROUPS
++	select ELV_FAIR_QUEUING
++	select GROUP_IOSCHED
++	default n
++	---help---
++	  Enable hierarhical scheduling in noop. In this mode noop keeps
++	  one IO queue per cgroup instead of a global queue. Elevator
++	  fair queuing logic ensures fairness among various queues.
++
+ config IOSCHED_AS
+ 	tristate "Anticipatory I/O scheduler"
+ 	default y
+diff --git a/block/noop-iosched.c b/block/noop-iosched.c
+index 731dbf2..97ea41b 100644
+--- a/block/noop-iosched.c
++++ b/block/noop-iosched.c
+@@ -82,6 +82,15 @@ static void noop_free_noop_queue(struct elevator_queue *e, void *sched_queue)
+ 	kfree(nq);
+ }
+ 
++#ifdef CONFIG_IOSCHED_NOOP_HIER
++static struct elv_fs_entry noop_attrs[] = {
++	ELV_ATTR(fairness),
++	ELV_ATTR(slice_idle),
++	ELV_ATTR(slice_sync),
++	__ATTR_NULL
++};
++#endif
++
+ static struct elevator_type elevator_noop = {
+ 	.ops = {
+ 		.elevator_merge_req_fn		= noop_merged_requests,
+@@ -92,6 +101,10 @@ static struct elevator_type elevator_noop = {
+ 		.elevator_alloc_sched_queue_fn	= noop_alloc_noop_queue,
+ 		.elevator_free_sched_queue_fn	= noop_free_noop_queue,
+ 	},
++#ifdef CONFIG_IOSCHED_NOOP_HIER
++	.elevator_features = ELV_IOSCHED_NEED_FQ | ELV_IOSCHED_SINGLE_IOQ,
++	.elevator_attrs = noop_attrs,
++#endif
+ 	.elevator_name = "noop",
+ 	.elevator_owner = THIS_MODULE,
  };
- 
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index baa45c6..2ad40eb 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -22,6 +22,7 @@ const int elv_slice_sync = HZ / 10;
- int elv_slice_async = HZ / 25;
- const int elv_slice_async_rq = 2;
- int elv_slice_idle = HZ / 125;
-+int elv_async_slice_idle = 0;
- static struct kmem_cache *elv_ioq_pool;
- 
- /* Maximum Window length for updating average disk rate */
-@@ -2808,6 +2809,8 @@ SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
- EXPORT_SYMBOL(elv_slice_async_show);
- SHOW_FUNCTION(elv_fairness_show, efqd->fairness, 0);
- EXPORT_SYMBOL(elv_fairness_show);
-+SHOW_FUNCTION(elv_async_slice_idle_show, efqd->elv_async_slice_idle, 1);
-+EXPORT_SYMBOL(elv_async_slice_idle_show);
- #undef SHOW_FUNCTION
- 
- #define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
-@@ -2834,6 +2837,8 @@ STORE_FUNCTION(elv_slice_async_store, &efqd->elv_slice[0], 1, UINT_MAX, 1);
- EXPORT_SYMBOL(elv_slice_async_store);
- STORE_FUNCTION(elv_fairness_store, &efqd->fairness, 0, 1, 0);
- EXPORT_SYMBOL(elv_fairness_store);
-+STORE_FUNCTION(elv_async_slice_idle_store, &efqd->elv_async_slice_idle, 0, UINT_MAX, 1);
-+EXPORT_SYMBOL(elv_async_slice_idle_store);
- #undef STORE_FUNCTION
- 
- void elv_schedule_dispatch(struct request_queue *q)
-@@ -3008,8 +3013,8 @@ int elv_init_ioq(struct elevator_queue *eq, struct io_queue *ioq,
- 		ioq->pid = current->pid;
- 
- 	ioq->sched_queue = sched_queue;
--	if (is_sync && !elv_ioq_class_idle(ioq))
--		elv_mark_ioq_idle_window(ioq);
-+	if (!elv_ioq_class_idle(ioq) && (is_sync || efqd->fairness))
-+			elv_mark_ioq_idle_window(ioq);
- 	bfq_init_entity(&ioq->entity, iog);
- 	ioq->entity.budget = elv_prio_to_slice(efqd, ioq);
- 	if (is_sync)
-@@ -3643,7 +3648,12 @@ void elv_ioq_arm_slice_timer(struct request_queue *q, int wait_for_busy)
- 	/*
- 	 * idle is disabled, either manually or by past process history
- 	 */
--	if (!efqd->elv_slice_idle || !elv_ioq_idle_window(ioq))
-+	if ((elv_ioq_sync(ioq) && !efqd->elv_slice_idle) ||
-+			!elv_ioq_idle_window(ioq))
-+		return;
-+
-+	/* If this is async queue and async_slice_idle is disabled, return */
-+	if (!elv_ioq_sync(ioq) && !efqd->elv_async_slice_idle)
- 		return;
- 
- 	/*
-@@ -3652,7 +3662,10 @@ void elv_ioq_arm_slice_timer(struct request_queue *q, int wait_for_busy)
- 	 */
- 	if (wait_for_busy) {
- 		elv_mark_ioq_wait_busy(ioq);
--		sl = efqd->elv_slice_idle;
-+		if (elv_ioq_sync(ioq))
-+			sl = efqd->elv_slice_idle;
-+		else
-+			sl = efqd->elv_async_slice_idle;
- 		mod_timer(&efqd->idle_slice_timer, jiffies + sl);
- 		elv_log_ioq(efqd, ioq, "arm idle: %lu wait busy=1", sl);
- 		return;
-@@ -3798,6 +3811,8 @@ void *elv_fq_select_ioq(struct request_queue *q, int force)
- 	/*
- 	 * If we have a RT cfqq waiting, then we pre-empt the current non-rt
- 	 * cfqq.
-+	 *
-+	 * TODO: This does not seem right across the io groups. Fix it.
- 	 */
- 	iog = ioq_to_io_group(ioq);
- 
-@@ -3840,6 +3855,18 @@ void *elv_fq_select_ioq(struct request_queue *q, int force)
- 		goto keep_queue;
- 	}
- 
-+	/*
-+	 * If this is an async queue which has time slice left but not
-+	 * requests. Wait busy is also not on (may be because when last
-+	 * request completed, ioq was not empty). Wait for the request
-+	 * completion. May be completion will turn wait busy on.
-+	 */
-+	if (efqd->fairness && efqd->elv_async_slice_idle && !elv_ioq_sync(ioq)
-+	    && elv_ioq_nr_dispatched(ioq)) {
-+		ioq = NULL;
-+		goto keep_queue;
-+	}
-+
- 	slice_expired = 0;
- expire:
- 	if (elv_iosched_expire_ioq(q, slice_expired, force))
-@@ -4038,6 +4065,13 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 			goto done;
- 		}
- 
-+		/* For async queue try to do wait busy */
-+		if (efqd->fairness && !elv_ioq_sync(ioq) && !ioq->nr_queued
-+		    && (elv_iog_nr_active(iog) <= 1)) {
-+			elv_ioq_arm_slice_timer(q, 1);
-+			goto done;
-+		}
-+
- 		/*
- 		 * If there are no requests waiting in this queue, and
- 		 * there are other queues ready to issue requests, AND
-@@ -4166,6 +4200,7 @@ int elv_init_fq_data(struct request_queue *q, struct elevator_queue *e)
- 	efqd->elv_slice[0] = elv_slice_async;
- 	efqd->elv_slice[1] = elv_slice_sync;
- 	efqd->elv_slice_idle = elv_slice_idle;
-+	efqd->elv_async_slice_idle = elv_async_slice_idle;
- 	efqd->hw_tag = 1;
- 
- 	/* For the time being keep fairness enabled by default */
-diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index f7d6092..b3193f8 100644
---- a/block/elevator-fq.h
-+++ b/block/elevator-fq.h
-@@ -359,6 +359,8 @@ struct elv_fq_data {
- 	 * users of this functionality.
- 	 */
- 	unsigned int elv_slice_idle;
-+	/* idle slice for async queue */
-+	unsigned int elv_async_slice_idle;
- 	struct timer_list idle_slice_timer;
- 	struct work_struct unplug_work;
- 
-@@ -685,6 +687,9 @@ extern ssize_t elv_slice_async_store(struct elevator_queue *q, const char *name,
- extern ssize_t elv_fairness_show(struct elevator_queue *q, char *name);
- extern ssize_t elv_fairness_store(struct elevator_queue *q, const char *name,
- 						size_t count);
-+extern ssize_t elv_async_slice_idle_show(struct elevator_queue *q, char *name);
-+extern ssize_t elv_async_slice_idle_store(struct elevator_queue *q,
-+					const char *name, size_t count);
- 
- /* Functions used by elevator.c */
- extern int elv_init_fq_data(struct request_queue *q, struct elevator_queue *e);
 -- 
 1.6.0.6
