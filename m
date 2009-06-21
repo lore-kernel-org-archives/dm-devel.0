@@ -1,20 +1,22 @@
-From: Dan Williams <dan.j.williams@intel.com>
+From: Neil Brown <neilb@suse.de>
 Subject: Re: [PATCH 1/6] dm raid45 target: export region hash
 	functions and add a needed one
-Date: Sat, 20 Jun 2009 17:32:58 -0700
-Message-ID: <e9c3a7c20906201732h7ff22c23p26da67f300e08c2c@mail.gmail.com>
+Date: Sun, 21 Jun 2009 22:06:12 +1000
+Message-ID: <19006.8756.925105.737041@notabene.brown>
 References: <4a368301.KBrCZcokAm87BF/S%heinzm@redhat.com>
-	<20090616140914.GA3348@infradead.org> <1245163906.28257.113.camel@o>
+	<20090616140914.GA3348@infradead.org>
+	<1245163906.28257.113.camel@o>
 	<e9c3a7c20906161055g6434ffd8uc7fc1ca53950556@mail.gmail.com>
-	<1245179467.4278.11.camel@o> <19000.8388.899607.749942@notabene.brown>
+	<1245179467.4278.11.camel@o>
+	<19000.8388.899607.749942@notabene.brown>
 	<19002.60755.876186.489524@notabene.brown>
 	<1245407630.12264.66.camel@o>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1245407630.12264.66.camel@o>
+In-Reply-To: message from Heinz Mauelshagen on Friday June 19
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,164 +26,278 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Ed Ciechanowski <ed.ciechanowski@intel.com>
+To: heinzm@redhat.com
+Cc: Christoph Hellwig <hch@infradead.org>, Dan Williams <dan.j.williams@intel.com>, device-mapper development <dm-devel@redhat.com>, Ed Ciechanowski <ed.ciechanowski@intel.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 19, 2009 at 3:33 AM, Heinz Mauelshagen<heinzm@redhat.com> wro=
-te:
+On Friday June 19, heinzm@redhat.com wrote:
 > On Fri, 2009-06-19 at 11:43 +1000, Neil Brown wrote:
->> - You have your own 'xor' code against which you do a run-time test of
->> =A0 the 'xor_block' code which md/raid5 uses - then choose the fasted.
->> =A0 This really should not be necessary. =A0If you have xor code that =
-runs
->> =A0 faster than anything in xor_block, it really would be best to subm=
-it
->> =A0 it for inclusion in the common xor code base.
->
+> > On Wednesday June 17, neilb@suse.de wrote:
+> > > 
+> > > I will try to find time to review your dm-raid5 code with a view to
+> > > understanding how it plugs in to dm, and then how the md/raid5 engine
+> > > can be used by dm-raid5.
+> 
+> Hi Neil.
+> 
+> > 
+> > I've had a bit of a look through the dm-raid5 patches.
+> 
+> Thanks.
+> 
+> > 
+> > Some observations:
+> > 
+> > - You have your own 'xor' code against which you do a run-time test of
+> >   the 'xor_block' code which md/raid5 uses - then choose the fasted.
+> >   This really should not be necessary.  If you have xor code that runs
+> >   faster than anything in xor_block, it really would be best to submit
+> >   it for inclusion in the common xor code base.
+> 
 > This is in because it actually shows better performance regularly by
 > utilizing cache lines etc. more efficiently (tested on Intel, AMD and
 > Sparc).
->
+> 
 > If xor_block would always have been performed best, I'd dropped that
 > optimization already.
 
-Data please.  Especially given the claim that it improves upon the
-existing per-architecture hand-tuned assembly routines.  If it is
-faster great!  Please send patches to improve the existing code.
+I'm no expert on this I must admit - I just use the xor code that
+others have provided.
+However it is my understanding that some of the xor code options were
+chosen deliberately because they bypassed the cache.  As the xor
+operation operates on data that very probably was not in the cache,
+and only touches it once, and touches quite a lot of data, there is
+little benefit having in the cache, and a possible real cost as it
+pushes other data out of the cache.
 
->>
->> - You have introduced "dm-message" which is a frame work for sending
->> =A0 messages to dm targets.
->
+That said, the "write" process involves copying data from a buffer
+into the cache, and then using that data as a source for xor.  In that
+case the cache might be beneficial, I'm not sure.
+I've occasionally wondered if it might be good to have an xor routine
+that does "copy and xor".   This would use more registers than the
+current code so we could possibly process fewer blocks at a time, but
+we might be processing them faster.  In that case, if we could bypass
+the cache to read the data, but use the cache to store the result of
+the xor, that would be ideal.  However I have no idea if that is
+possible.
+
+The mechanism you use, which is much the same as the one used by
+xor_block, calculates speed for the hot-cache case.  It is not clear
+that this is often a relevant cache - mostly xor is calculated when
+the cache is cold.  So it isn't clear if it is generally applicable.
+That is why calibrate_xor_blocks sometimes skips the xor_speed test
+(in crypto/xor.c).
+
+However if your code performs better than the cache-agnostic code in
+xor_block, then we should replace that code with your code, rather
+than have two places that try to choose the optimal code.
+
+And I would be very interested to see a discussion about how relevant
+the cache bypassing is in real life...  It looks like it was Zach
+Brown who introduced this about 10 years ago, presumably in
+consultation with Ingo Molnar.
+
+> 
+> > 
+> > - You have introduced "dm-message" which is a frame work for sending
+> >   messages to dm targets.
+> 
 > dm-message is a parser for messages sent to a device-mapper targets
 > message interface. It aims at allowing common message parsing functions
 > to be shared between targets.
->
+> 
 > The message interface in general allows for runtime state changes of
 > targets like those you found below.
->
+> 
 > See "dmsetup message ..."
->
->> It is used for adjusting the cache size,
->> =A0 changing the bandwidth used by resync, and doing things with
->> =A0 statistics. =A0Linux already has a framework for sending messages =
-to
->> =A0 kernel objects. =A0It is called "sysfs". =A0It would be much nicer=
- if
->> =A0 you could use that.
->
-> Looks to me like heavier to program (I counted ~100 LOC of sysfs define=
-s
+> 
+> > It is used for adjusting the cache size,
+> >   changing the bandwidth used by resync, and doing things with
+> >   statistics.  Linux already has a framework for sending messages to
+> >   kernel objects.  It is called "sysfs".  It would be much nicer if
+> >   you could use that.
+> 
+> Looks to me like heavier to program (I counted ~100 LOC of sysfs defines
 > and calls in md.c) for 3 files used in md.
->
+> 
 > That needs some more discussion.
 
-Ironically the same argument can be applied to this module.  ~5000 LOC
-to re-implement raid5 seems much "heavier to program" than to write
-some dmraid ABI compatibility wrappers around the existing md-raid5
-code.
+In dm-raid45 you have 170 lines from "Message interface" to "END
+message interface", which is 4 files I think.  Am I counting the same
+things?
 
-[..]
->> =A0 The problem is that when a drive fails you allow writes to continu=
-e
->> =A0 without waiting for the metadata to be updated. =A0I.e. metadata
->> =A0 updates are asynchronous.
->> =A0 The problem scenario for raid5 is:
->> =A0 =A0 - a drive fails while a write is in process
->> =A0 =A0 - the drive is marked as faulty and user space is notified
->> =A0 =A0 - that write, and possibly several others, complete and that
->> =A0 =A0 =A0 status is potentially returned to user-space (e.g. for an =
-fsync)
->> =A0 =A0 - user space acts on that status (e.g. sends an acknowledgemen=
-t over
->> =A0 =A0 =A0 the network)
->> =A0 =A0 - the host crashes before the metadata update completes
->> =A0 =A0 - on reboot, the drive, which just had a transient failure, wo=
-rks
->> =A0 =A0 =A0 fine, and the metadata reports that all the drives are goo=
-d, but
->> =A0 =A0 =A0 that the array was active so a parity-resync is needed.
->> =A0 =A0 - All parity blocks are recalculated. =A0However that write we
->> =A0 =A0 =A0 mentioned above is only recorded in the parity block. =A0S=
-o that
->> =A0 =A0 =A0 data is lost.
->>
->
-> Yes, like in the dm raid1 scenario, blocking of writes would have to
-> occur until metadata has been updated in order to detect the failing
-> drive persistently, hence not updating parity (which contains data
-> mandatory to preserve) but recalculating chunks on the transiently
-> failing drive utilizing intact parity.
+In any case, it is certainly possible that sysfs usage could be
+improved.  We recently added strict_blocks_to_sectors() which extracted
+a common parsing task.  Once upon a time, we open coded things with
+simple_strtoull and repeated the error checking every time.
+There is always room for improvement.
 
-Another problem with dm along these lines is the mechanism for
-notifying userspace, I am assuming this is still via uevents?  The
-problem is that each notification requires a memory allocation which
-might fail under load, especially if the blocked array is in the dirty
-page write out path.  The userspace notifications and failed device
-handling in md are designed to not require memory allocations.
+But I think the uniformity across the kernel is the most important
+issue here, not the lines of code.
 
-[..]
->> =A0 Also it does not take account of IO to other partitions on a devic=
-e.
->> =A0 It is common to have a number of different arrays on the same devi=
-ce
->> =A0 set. =A0You really want to resync to back off based on IO to all o=
-f
->> =A0 the device, not just to the array.
->
+There is a bit of tension here:  your dm-message approach is similar
+in style to the way targets are created.  The sysfs approach is
+similar in style to many other parts of the kernel.  So should your
+new mechanism be consistent with dm or consistent with linux - it
+cannot easily be both.
+
+This is really a question that the dm developers as a group need to
+consider and answer.  I would like to recommend that transitioning
+towards more uniformity with the rest of linux is a good idea, and
+here is excellent opportunity to start.  But it isn't my decision.
+
+> > - Your algorithm for limiting bandwidth used by resync seems to be
+> >   based on a % concept (which is rounded to the nearest reciprocal,
+> >   so 100%, 50%, 33%, 25%, 20%, 16% etc).  If there is outstanding
+> >   IO, the amount of outstanding resync IO must not exceed the given
+> >   percentage of regular IO.   While it is hard to get resync "just
+> >   right", I think this will have some particularly poor
+> >   characteristics.
+> 
+> My ANALYZEME pointed you there ? ;-)
+> That's why it's in. I admitted with that that I'm not satisfied with the
+> characteristics yet.
+
+Fair enough.
+My concern then is that the mechanism for guiding the speed - which is
+not yet finalised - is being encoded in the command for creating the
+array.  That would make it difficult to change at a later date.
+I would suggest not specifying anything when creating the array and
+insisting that a default be chosen.
+Then you can experiment with mechanism using different dm-message or
+sysfs-files with some sort of warning that these are not part of the
+api yet.
+
+> > 
+> >   Also it does not take account of IO to other partitions on a device.
+> >   It is common to have a number of different arrays on the same device
+> >   set.  You really want to resync to back off based on IO to all of
+> >   the device, not just to the array.
+> 
 > Does MD RAID > 0 cope with that in multi-partition RAID configs ?
 > E.g.:
 > disk1:part1+disk2:part1 -> md0 and disk1:part2+disk2:part2 -> md1 with
 > global iostats for disk[12] ?
 
-By default it will hold off resync on other arrays when it notices
-that multiple arrays share disks.  A sysfs knob allows parallel
-resync.
+Yes.  'gendisk' has 'sync_io' specifically for this purpose.
+When md submits IO for the purpose of resync (or recovery) it adds a
+count of the sectors to this counter.  That can be compared with the
+regular io statistics for the genhd to see if there is an non-sync IO
+happening.  If there is the genhd is assumed to be busy and we backoff
+the resync.
 
-[..]
->> =A0 As I said, I would rather this didn't exist.
->
+This is not a perfect solution as it only goes one level down.
+If we had raid1 over raid0 over partitions, then we might not notice
+resync IO from elsewhere properly.  But I don't think I've ever had a
+complaint about that.
+
+> > 
+> > Everything else could be made available by md to dm with only a
+> > moderate amount of effort.
+> > Of the different interface routines you require:
+> > +	.ctr = raid_ctr,
+> > 
+> >   This would be quite straight forward, though it might be worth
+> >   discussing the details of the args passed in.
+> >   "recovery_bandwidth" (as I say above) I don't think is well chosen,
+> 
+> I was aware it needs further tweaking (your points above taken).
+> 
+> You mean the wording here ?
+
+The thing that I don't think was well chosen was the choice of a
+percentage to guide the speed of resync.
+
+> 
+> >   and I don't quite see the point of io_size (maybe I'm missing
+> >   something obvious)
+> 
+> Performance related. I studied read ahead/chunk size/io size pairs and
+> found examples of better performance with io_size > PAGE_SIZE <=
+> chunk_size. io_size being 2^N.
+> 
+> Do you have similar experiences to share with MD RAID ?
+
+My position has always been that it is up to lower layers to combine
+pages together.  md/raid5 does all IO in pages.  If it is more
+efficient for some device to do multiple pages as a time, it should
+combine the pages.
+
+The normal plugging mechanisms combined with the elevator should be
+enough for this.
+
+We have put more focus in to gathering write-pages into whole strips
+so that no pre-reading is needed - we can just calculate parity and
+write.  This has a significant effect on throughput.
+(A 'strip' is like a 'stripe' but it is one page wide, not one chunk
+wide).
+
+> > +	.presuspend = raid_presuspend,
+> > 
+> >   I call this 'quiesce'
+> > 
+> > +	.postsuspend = raid_postsuspend,
+> > 
+> >   I'm not sure exactly how this fits in.  Something related to the 
+> >   log...
+> 
+> We use these distinct presuspend/postsuspend methods in order to allow
+> for targets to distinguish flushing any io in flight in presuspend and
+> release/quiesce/... any resource (e.g. quiesce the dirty log) utilized
+> in the first step in postsuspend.
+> 
+> If MD RAID doesn't need that, stick with presuspend.
+
+OK, thanks.
+
+> > +	.message = raid_message,
+> > 
+> >   As I said, I would rather this didn't exist.
+> 
 > I think its better to offer options to be utilized for different
 > purposes. Tradeoff is always (some) overlap.
->
+> 
 > We don't have one filesystem for all use cases ;-)
+> 
 
-That argument does not fly in this case.  md is already suitable for
-the dmraid use case (i.e kernel raid/userspace metadata).
+No...  I find myself wearing several hats here.
 
->> But it could be
->> =A0 emulated (except for the statistics) if needed - md can already
->> =A0 adjust resync speed and cache size.
->>
->>
->> =A0What is missing is agreement on how to handle synchronous metadata
->> =A0updates. =A0md waits for the drive failure to be acknowledged. =A0I=
-t is
->> =A0automatically marked as 'Blocked' on an error, and user-space must
->> =A0clear that flag.
->
-> Yes, Mikulas already put thought into that.
-> Let's allow him /and others) to join in.
->
->
->>
->> =A0I suspect, using your model, the approach would be a 'dm-message'
->> =A0acknowledging that a given device is faulty. =A0I would, of course,
->> =A0rather this be done via sysfs.
->>
->> =A0I will try to look at factoring out the md specific part of md/raid=
-5
->> =A0over the next few days (maybe next week) and see how that looks.
->
+As a developer, I think it is great that you are writing your own
+raid5 implementation.  Doing stuff like that is lots of fun and a
+valuable learning experience.  As I read though the code there were a
+number of time when I thought "that looks rather neat".  Quite
+possibly there are ideas in dm-raid5 that I could "steal" to make
+md/raid5 better.
+dm-message certainly has its merits too (as I said, it fits the dm model).
+
+As a member of the linux kernel community, I want to see linux grow
+with a sense of unity.  Where possible, similar tasks should be
+addressed in similar ways.  This avoid duplicating mistakes, eases
+maintenance, and makes it easier for newcomers to learn.  Establishing
+Patterns and following them is a good thing.  Hence my desire to
+encourage the use of sysfs and a single xor implementation.
+
+As an employee of a company that sells support, I really don't want a
+profusion of different implementations of something that I am seen as
+an expert in, as I know I'll end up having to support all of them.
+So for very selfish reasons, I'd prefer fewer versions of NFS, fewer
+file-systems, and fewer raid5 implementations :-)
+Well... fewer that we contract to support anyway.
+
+> > 
+> >  I suspect, using your model, the approach would be a 'dm-message'
+> >  acknowledging that a given device is faulty.  I would, of course,
+> >  rather this be done via sysfs.
+> > 
+> >  I will try to look at factoring out the md specific part of md/raid5
+> >  over the next few days (maybe next week) and see how that looks.
+> 
 > That'll be interesting to see how it fits into the device-mapper
 > framework
->
+> 
+> I take it You'll port code to create an "md-raid456" target ?
 
-Yes, kernel ABI compatibility is the better [1] way to go.  I will
-also revive the ideas/patches I had along these lines.
+That's the idea.  I'll let you know when I have something credible.
 
-Regards,
-Dan
-
-[1]: ...than dm2md in userspace
+Thanks,
+NeilBrown
