@@ -1,51 +1,58 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 15/20] io-controller: map async requests to
-	appropriate cgroup
-Date: Mon, 22 Jun 2009 11:39:10 -0400
-Message-ID: <20090622153910.GB15600@redhat.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [RFC] IO scheduler based io controller (V5)
+Date: Mon, 22 Jun 2009 11:40:42 -0400
+Message-ID: <x497hz4l1j9.fsf@segfault.boston.devel.redhat.com>
 References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
-	<1245443858-8487-16-git-send-email-vgoyal@redhat.com>
-	<4A3EE245.7030409@cn.fujitsu.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<20090621152116.GC3728@balbir.in.ibm.com>
+	<20090622153030.GA15600@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4A3EE245.7030409@cn.fujitsu.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758142AbZFVPnY@vger.kernel.org>
+In-Reply-To: <20090622153030.GA15600@redhat.com> (Vivek Goyal's message of
+	"Mon, 22 Jun 2009 11:30:31 -0400")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Balbir Singh <balbir@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, dhaval@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-On Mon, Jun 22, 2009 at 09:45:41AM +0800, Gui Jianfeng wrote:
-> Vivek Goyal wrote:
-> > o So far we were assuming that a bio/rq belongs to the task who is submitting
-> >   it. It did not hold good in case of async writes. This patch makes use of
-> >   blkio_cgroup pataches to attribute the aysnc writes to right group instead
-> >   of task submitting the bio.
-> > 
-> > o For sync requests, we continue to assume that io belongs to the task
-> >   submitting it. Only in case of async requests, we make use of io tracking
-> >   patches to track the owner cgroup.
-> > 
-> > o So far cfq always caches the async queue pointer. With async requests now
-> >   not necessarily being tied to submitting task io context, caching the
-> >   pointer will not help for async queues. This patch introduces a new config
-> >   option CONFIG_TRACK_ASYNC_CONTEXT. If this option is not set, cfq retains
-> >   old behavior where async queue pointer is cached in task context. If it
-> >   is not set, async queue pointer is not cached and we take help of bio
-> 
-> Here "If it is not set" should be "If it is set".
+Vivek Goyal <vgoyal@redhat.com> writes:
 
-Yes, in last line it should be "If it is set". Thanks Gui. Will fix the
-comment.
+> On Sun, Jun 21, 2009 at 08:51:16PM +0530, Balbir Singh wrote:
+>> * Vivek Goyal <vgoyal@redhat.com> [2009-06-19 16:37:18]:
+>> 
+>> > 
+>> > Hi All,
+>> > 
+>> > Here is the V5 of the IO controller patches generated on top of 2.6.30.
+>> [snip]
+>> 
+>> > Testing
+>> > =======
+>> >
+>> 
+>> [snip]
+>> 
+>> I've not been reading through the discussions in complete detail, but
+>> I see no reference to async reads or aio. In the case of aio, aio
+>> presumes the context of the user space process. Could you elaborate on
+>> any testing you've done with these cases? 
+>> 
+>
+> Hi Balbir,
+>
+> So far I had not done any testing with AIO. I have done some just now.
+> Here are the results.
+>
+> Test1 (AIO reads)
+> ================
+> Set up two fio, AIO read jobs in two cgroup with weight 1000 and 500
+> respectively. I am using cfq scheduler. Following are some lines from my test
+> script.
+>
+> ===================================================================
+> fio_args="--ioengine=libaio --rw=read --size=512M"
 
-Vivek
+AIO doesn't make sense without O_DIRECT.
+
+Cheers,
+Jeff
