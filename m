@@ -1,39 +1,128 @@
 From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 15/20] io-controller: map async requests to appropriate
- cgroup
-Date: Mon, 22 Jun 2009 09:45:41 +0800
-Message-ID: <4A3EE245.7030409@cn.fujitsu.com>
-References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com> <1245443858-8487-16-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH] io-controller: Preempt a non-rt queue if a rt ioq is present
+ in ancestor or sibling groups
+Date: Mon, 22 Jun 2009 15:44:08 +0800
+Message-ID: <4A3F3648.7080007@cn.fujitsu.com>
+References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com> <1245443858-8487-21-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752586AbZFVBrv@vger.kernel.org>
-In-Reply-To: <1245443858-8487-16-git-send-email-vgoyal@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754452AbZFVHqW@vger.kernel.org>
+In-Reply-To: <1245443858-8487-21-git-send-email-vgoyal@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Vivek Goyal <vgoyal@redhat.com>
 Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-> o So far we were assuming that a bio/rq belongs to the task who is submitting
->   it. It did not hold good in case of async writes. This patch makes use of
->   blkio_cgroup pataches to attribute the aysnc writes to right group instead
->   of task submitting the bio.
-> 
-> o For sync requests, we continue to assume that io belongs to the task
->   submitting it. Only in case of async requests, we make use of io tracking
->   patches to track the owner cgroup.
-> 
-> o So far cfq always caches the async queue pointer. With async requests now
->   not necessarily being tied to submitting task io context, caching the
->   pointer will not help for async queues. This patch introduces a new config
->   option CONFIG_TRACK_ASYNC_CONTEXT. If this option is not set, cfq retains
->   old behavior where async queue pointer is cached in task context. If it
->   is not set, async queue pointer is not cached and we take help of bio
+Preempt the ongoing non-rt ioq if there are rt ioqs waiting for dispatching
+in ancestor or sibling groups. It will give other group's rt ioq an chance 
+to dispatch ASAP.
 
-Here "If it is not set" should be "If it is set".
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ block/elevator-fq.c |   44 +++++++++++++++++++++++++++++++++++++++-----
+ block/elevator-fq.h |    1 +
+ 2 files changed, 40 insertions(+), 5 deletions(-)
 
-
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 2ad40eb..80526fd 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -3245,8 +3245,16 @@ void elv_add_ioq_busy(struct elv_fq_data *efqd, struct io_queue *ioq)
+ 	elv_mark_ioq_busy(ioq);
+ 	efqd->busy_queues++;
+ 	if (elv_ioq_class_rt(ioq)) {
++		struct io_entity *entity;
+ 		struct io_group *iog = ioq_to_io_group(ioq);
++
+ 		iog->busy_rt_queues++;
++		entity = iog->entity.parent;
++
++		for_each_entity(entity) {
++			iog = io_entity_to_iog(entity);
++			iog->sub_busy_rt_queues++;
++		}
+ 	}
+ 
+ #ifdef CONFIG_DEBUG_GROUP_IOSCHED
+@@ -3290,9 +3298,18 @@ void elv_del_ioq_busy(struct elevator_queue *e, struct io_queue *ioq,
+ 	elv_clear_ioq_busy(ioq);
+ 	BUG_ON(efqd->busy_queues == 0);
+ 	efqd->busy_queues--;
++
+ 	if (elv_ioq_class_rt(ioq)) {
++		struct io_entity *entity;
+ 		struct io_group *iog = ioq_to_io_group(ioq);
++
+ 		iog->busy_rt_queues--;
++		entity = iog->entity.parent;
++
++		for_each_entity(entity) {
++			iog = io_entity_to_iog(entity);
++			iog->sub_busy_rt_queues--;
++		}
+ 	}
+ 
+ 	elv_deactivate_ioq(efqd, ioq, requeue);
+@@ -3735,12 +3752,32 @@ int elv_iosched_expire_ioq(struct request_queue *q, int slice_expired,
+ 	return ret;
+ }
+ 
++static int check_rt_queue(struct io_queue *ioq)
++{
++	struct io_group *iog;
++	struct io_entity *entity;
++
++	iog = ioq_to_io_group(ioq);
++
++	if (iog->busy_rt_queues)
++		return 1;
++
++	entity = iog->entity.parent;
++
++	for_each_entity(entity) {
++		iog = io_entity_to_iog(entity);
++		if (iog->sub_busy_rt_queues)
++			return 1;
++	}
++
++	return 0;
++}
++
+ /* Common layer function to select the next queue to dispatch from */
+ void *elv_fq_select_ioq(struct request_queue *q, int force)
+ {
+ 	struct elv_fq_data *efqd = &q->elevator->efqd;
+ 	struct io_queue *new_ioq = NULL, *ioq = elv_active_ioq(q->elevator);
+-	struct io_group *iog;
+ 	int slice_expired = 1;
+ 
+ 	if (!elv_nr_busy_ioq(q->elevator))
+@@ -3811,12 +3848,9 @@ void *elv_fq_select_ioq(struct request_queue *q, int force)
+ 	/*
+ 	 * If we have a RT cfqq waiting, then we pre-empt the current non-rt
+ 	 * cfqq.
+-	 *
+-	 * TODO: This does not seem right across the io groups. Fix it.
+ 	 */
+-	iog = ioq_to_io_group(ioq);
+ 
+-	if (!elv_ioq_class_rt(ioq) && iog->busy_rt_queues) {
++	if (!elv_ioq_class_rt(ioq) && check_rt_queue(ioq)) {
+ 		/*
+ 		 * We simulate this as cfqq timed out so that it gets to bank
+ 		 * the remaining of its time slice.
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index b3193f8..be6c1af 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -248,6 +248,7 @@ struct io_group {
+ 	 * non-RT cfqq in service when this value is non-zero.
+ 	 */
+ 	unsigned int busy_rt_queues;
++	unsigned int sub_busy_rt_queues;
+ 
+ 	int deleting;
+ 	unsigned short iocg_id;
 -- 
-Regards
-Gui Jianfeng
+1.5.4.rc3
