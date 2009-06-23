@@ -1,18 +1,9 @@
-From: malahal@us.ibm.com
-Subject: Re: DM-RAID1 data corruption
-Date: Tue, 23 Jun 2009 11:22:29 -0700
-Message-ID: <20090623182229.GD30667@us.ibm.com>
-References: <Pine.LNX.4.64.0904141618220.701@hs20-bc2-1.build.redhat.com>
-	<20090415031210.GA11881@us.ibm.com> <49E645DA.4010204@redhat.com>
-	<20090416024959.GB19876@us.ibm.com> <49E7B029.20906@redhat.com>
-	<Pine.LNX.4.64.0904200552590.27291@hs20-bc2-1.build.redhat.com>
-	<20090623010930.GA13392@us.ibm.com> <4A41065D.10804@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipath multipath.rules
+Date: 23 Jun 2009 18:49:13 -0000
+Message-ID: <20090623184913.906.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4A41065D.10804@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,42 +13,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Takahiro Yasui [tyasui@redhat.com] wrote:
-> >> MD-RAID1 solves this problem by having counters in superblocks on both 
-> >> legs. If some leg dies, the counter on the other devices is increased. If 
-> >> the dead disk comes online again, it is found that it has old counter and 
-> >> cannot be trusted.
-> >>
-> >> Would it be possible to extend a logical volume when converting it to a 
-> >> raid1 and use the last area of the volume as a superblock?
-> >>
-> >> Mikulas
-> > 
-> > This is an old thread, I am just trying to revitalize it! :-) How about
-> > dm-raid1 taking superblock storage as arguments in the command line,
-> > just like the log device? The superblock storage is entirely managed by
-> > the kernel, LVM just allocates it. Error handling can be instant this
-> > way. LVM can auto convert the exiting mirrors to this kind of mirrors if
-> > space is available.
-> 
-> Interesting idea. The superblock storage managed by kernel is really
-> important to handle an error quickly inside the kernel.
-> 
-> According to Mikulas's comment, superblocks are located on each legs
-> and contains a counter. Do you have an idea to separate a superblock
-> device like the log device? Or do you mean to add a parameter to
-> enable superblock like "--superblock"? It might be helpful if you
-> could describe some command line examples.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-06-23 18:49:12
 
-I was thinking something like adding {metadata-size #metadata-areas <dev offset>
-...
+Modified files:
+	multipath      : multipath.rules 
 
-echo 0 1000 mirror core 1 64 2 /dev/sda 0 /dev/sdb 0 512 2 /dev/sda 2000
-/dev/sdb 2000
+Log message:
+	Remove udev rule to make multipath run on device addition.
+	Fix for bz #506715. Not applicable upstream.
 
-The above one will create a mirror with sda and sdb and mirror metadata
-on the same disks at offset 2000 with 512 size. The kernel target can
-use that 512 bytes whatever the way it wants.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.rules.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11&r2=1.11.2.1
+
+--- multipath-tools/multipath/multipath.rules	2006/11/27 21:51:25	1.11
++++ multipath-tools/multipath/multipath.rules	2009/06/23 18:49:12	1.11.2.1
+@@ -1,7 +1,7 @@
+ # multipath wants the devmaps presented as meaninglful device names
+ # so name them after their devmap name
+ SUBSYSTEM!="block", GOTO="end_mpath"
+-KERNEL!="dm-[0-9]*", ACTION=="add", PROGRAM=="/bin/bash -c '/sbin/lsmod | /bin/grep ^dm_multipath'", RUN+="/sbin/multipath -v0 %M:%m"
++# KERNEL!="dm-[0-9]*", ACTION=="add", PROGRAM=="/bin/bash -c '/sbin/lsmod | /bin/grep ^dm_multipath'", RUN+="/sbin/multipath -v0 %M:%m"
+ KERNEL!="dm-[0-9]*", GOTO="end_mpath"
+ PROGRAM!="/sbin/mpath_wait %M %m", GOTO="end_mpath"
+ ACTION=="add", RUN+="/sbin/dmsetup ls --target multipath --exec '/sbin/kpartx -a -p p' -j %M -m %m"
