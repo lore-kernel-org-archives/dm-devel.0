@@ -1,17 +1,17 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 07/20] io-controller: Export disk time used
-	and nr sectors dipatched through cgroups
-Date: Tue, 23 Jun 2009 10:38:56 -0400
-Message-ID: <20090623143856.GB4262@redhat.com>
-References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
-	<1245443858-8487-8-git-send-email-vgoyal@redhat.com>
-	<4A40C64E.8040305@cn.fujitsu.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: Re: DM-RAID1 data corruption
+Date: Tue, 23 Jun 2009 12:44:13 -0400
+Message-ID: <4A41065D.10804@redhat.com>
+References: <Pine.LNX.4.64.0904141618220.701@hs20-bc2-1.build.redhat.com>	<20090415031210.GA11881@us.ibm.com>
+	<49E645DA.4010204@redhat.com>	<20090416024959.GB19876@us.ibm.com>
+	<49E7B029.20906@redhat.com>	<Pine.LNX.4.64.0904200552590.27291@hs20-bc2-1.build.redhat.com>
+	<20090623010930.GA13392@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4A40C64E.8040305@cn.fujitsu.com>
+In-Reply-To: <20090623010930.GA13392@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,119 +21,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
+To: malahal@us.ibm.com
+Cc: dm-devel@redhat.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jun 23, 2009 at 08:10:54PM +0800, Gui Jianfeng wrote:
-> Vivek Goyal wrote:
-> ...
-> > +
-> > +static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
-> > +				struct cftype *cftype, struct seq_file *m)
-> > +{
-> > +	struct io_cgroup *iocg;
-> > +	struct io_group *iog;
-> > +	struct hlist_node *n;
-> > +
-> > +	if (!cgroup_lock_live_group(cgroup))
-> > +		return -ENODEV;
-> > +
-> > +	iocg = cgroup_to_io_cgroup(cgroup);
-> > +
-> > +	spin_lock_irq(&iocg->lock);
+>> MD-RAID1 solves this problem by having counters in superblocks on both 
+>> legs. If some leg dies, the counter on the other devices is increased. If 
+>> the dead disk comes online again, it is found that it has old counter and 
+>> cannot be trusted.
+>>
+>> Would it be possible to extend a logical volume when converting it to a 
+>> raid1 and use the last area of the volume as a superblock?
+>>
+>> Mikulas
 > 
-> It's better to make use of rcu_read_lock instead since it's
-> a read action.
-> 
+> This is an old thread, I am just trying to revitalize it! :-) How about
+> dm-raid1 taking superblock storage as arguments in the command line,
+> just like the log device? The superblock storage is entirely managed by
+> the kernel, LVM just allocates it. Error handling can be instant this
+> way. LVM can auto convert the exiting mirrors to this kind of mirrors if
+> space is available.
 
-Thanks Gui. Queued for next posting.
+Interesting idea. The superblock storage managed by kernel is really
+important to handle an error quickly inside the kernel.
 
-Vivek
+According to Mikulas's comment, superblocks are located on each legs
+and contains a counter. Do you have an idea to separate a superblock
+device like the log device? Or do you mean to add a parameter to
+enable superblock like "--superblock"? It might be helpful if you
+could describe some command line examples.
 
-> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-> ---
->  block/elevator-fq.c |   12 ++++++------
->  1 files changed, 6 insertions(+), 6 deletions(-)
-> 
-> diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-> index 2ad40eb..d779282 100644
-> --- a/block/elevator-fq.c
-> +++ b/block/elevator-fq.c
-> @@ -1418,7 +1418,7 @@ static int io_cgroup_disk_time_read(struct cgroup *cgroup,
->  
->  	iocg = cgroup_to_io_cgroup(cgroup);
->  
-> -	spin_lock_irq(&iocg->lock);
-> +	rcu_read_lock();
->  	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
->  		/*
->  		 * There might be groups which are not functional and
-> @@ -1430,7 +1430,7 @@ static int io_cgroup_disk_time_read(struct cgroup *cgroup,
->  					iog->entity.total_service);
->  		}
->  	}
-> -	spin_unlock_irq(&iocg->lock);
-> +	rcu_read_unlock();
->  	cgroup_unlock();
->  
->  	return 0;
-> @@ -1448,7 +1448,7 @@ static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
->  
->  	iocg = cgroup_to_io_cgroup(cgroup);
->  
-> -	spin_lock_irq(&iocg->lock);
-> +	rcu_read_lock();
->  	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
->  		/*
->  		 * There might be groups which are not functional and
-> @@ -1460,7 +1460,7 @@ static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
->  					iog->entity.total_sector_service);
->  		}
->  	}
-> -	spin_unlock_irq(&iocg->lock);
-> +	rcu_read_unlock();
->  	cgroup_unlock();
->  
->  	return 0;
-> @@ -1478,7 +1478,7 @@ static int io_cgroup_disk_queue_read(struct cgroup *cgroup,
->  		return -ENODEV;
->  
->  	iocg = cgroup_to_io_cgroup(cgroup);
-> -	spin_lock_irq(&iocg->lock);
-> +	rcu_read_lock();
->  	/* Loop through all the io groups and print statistics */
->  	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
->  		/*
-> @@ -1491,7 +1491,7 @@ static int io_cgroup_disk_queue_read(struct cgroup *cgroup,
->  					iog->queue_duration);
->  		}
->  	}
-> -	spin_unlock_irq(&iocg->lock);
-> +	rcu_read_unlock();
->  	cgroup_unlock();
->  
->  	return 0;
-> -- 
-> 1.5.4.rc3
-> 
-> 
-> 
-> > +	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
-> > +		/*
-> > +		 * There might be groups which are not functional and
-> > +		 * waiting to be reclaimed upon cgoup deletion.
-> > +		 */
-> > +		if (iog->key) {
-> > +			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
-> > +					MINOR(iog->dev),
-> > +					iog->entity.total_sector_service);
-> > +		}
-> > +	}
-> > +	spin_unlock_irq(&iocg->lock);
-> > +	cgroup_unlock();
-> > +
-> > +	return 0;
-> > +}
-> > +
-> >
+Thanks,
+Taka
