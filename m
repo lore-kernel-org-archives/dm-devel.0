@@ -1,82 +1,59 @@
-From: Fabio Checconi <fchecconi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 02/20] io-controller: Common flat fair queuing code in
-	elevaotor layer
-Date: Tue, 23 Jun 2009 06:10:52 +0200
-Message-ID: <20090623041052.GS28770@gandalf.sssup.it>
-References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
-	<1245443858-8487-3-git-send-email-vgoyal@redhat.com>
-	<20090622084612.GD3728@balbir.in.ibm.com>
-	<20090622124313.GF28770@gandalf.sssup.it>
-	<20090623024337.GC3620@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: A simple, generic DM-API,
+	for codecs/transcoders to use?
+Date: Tue, 23 Jun 2009 01:30:05 -0400
+Message-ID: <yq1skhrtt42.fsf@sermon.lab.mkp.net>
+References: <49C0B79A.9010601@googlemail.com>
+	<20090622150849.GA23765@mars.virtualiron.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20090623024337.GC3620-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: dhaval-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Balbir Singh <balbir-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, paolo.valente-rcYM44yAMweonA0d6jMUrA@public.gmane.org, fernando-gVGce1chcLdL9jVzuh4AOg@public.gmane.org, jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090622150849.GA23765@mars.virtualiron.com> (Konrad Rzeszutek's
+	message of "Mon, 22 Jun 2009 11:08:49 -0400")
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> From: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Date: Mon, Jun 22, 2009 10:43:37PM -0400
->
-> On Mon, Jun 22, 2009 at 02:43:13PM +0200, Fabio Checconi wrote:
-> 
-...
-> > > Please help me understand this, we sort the tree by finish time, but
-> > > search by vtime, start_time. The worst case could easily be O(N),
-> > > right?
-> > > 
-> > 
-> > no, (again, the full answer is in the paper); the nice property of
-> > min_start is that it partitions the tree in two regions, one with
-> > eligible entities and one without any of them.  once we know that
-> > there is one eligible entity (checking the min_start at the root)
-> > we can find the node i with min(F_i) subject to S_i < V walking down
-> > a single path from the root to the leftmost eligible entity.  (we
-> > need to go to the right only if the subtree on the left contains 
-> > no eligible entities at all.)  since the RB tree is balanced this
-> > can be done in O(log N).
-> > 
-> 
-> Hi Fabio,
-> 
-> When I go thorough the paper you mentioned above, they seem to have
-> sorted the tree based on eligible time (looks like equivalent of start
-> time) and then keep track of minimum deadline on each node (equivalnet of
-> finish time).
-> 
-> We seem to be doing reverse in BFQ where we sort tree on finish time
-> and keep track of minimum start time on each node. Is there any specific
-> reason behind that?
-> 
+>>>>> "Konrad" == Konrad Rzeszutek <konrad@virtualiron.com> writes:
 
-Well... no specific reasons...  I think that our implementation is easier
-to understand than the one of the paper, because it actually uses finish
-times as the ordering key, and min_start to quickly locate eligible
-subtrees, following the definition of the algorithm.
+Konrad> I thought that the more recent patches by Oracle to support
+Konrad> DIF/DIX (Data Integrity Extensions):
 
-Moreover, if you look at the get_req() code in the paper, it needs a
-couple of loops to get to the result, while with our implementation
-we save the second loop.
+Konrad> Are addressing this by adding a checksum for each block sector
+Konrad> that is checked by each device.
 
-Our version is still correct, because it always moves to the left
-(towards smaller finish times), except when moving to the left would
-mean entering a non feasible subtree, in which case it moves to the
-right.
+The DIX/DIF checksum is a CRC, not an ECC.  It is mostly aimed at
+detecting in-flight corruption, not latent sector corruption.  Latent
+sector corruption is btrfs territory as far as I'm concerned.
 
-Unfortunately I'm not aware of any paper describing a version of the
-algorithm more similar to the one we've implemented.  Sorry for not
-having mentioned that difference in the comments nor anywhere else,
-it has been a long long time since I read the paper, and I must have
-forgotten about that.
+The problem as I see it with the proposed ECC scheme is that once a
+drive gives up on a sector you lose all of it.  It's not like only a
+portion of the sector becomes unreadable to the OS.  So the ECC scheme
+will have to be quite potent because at the very minimum it must be able
+to withstand losing 512 bytes of data.  Drives with 4KB sectors are
+right around the corner making things even more fun.
+
+Once you start working around sector atomicity issues I think it's only
+a matter of time before you end up reinventing RAID and its various
+reliability vs. space efficiency trade-offs...
+
+
+Konrad> So the firmware on the hard-drive, along with the SAS controller
+Konrad> would carry out the checksumming?
+
+We'll generate the checksum and the other protection information in the
+application if it supports it or otherwise once the I/O gets inside the
+kernel.  The HBA, the array firmware, and the drive firmware are all
+able to verify that the protection information matches the data.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
