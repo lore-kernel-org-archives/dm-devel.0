@@ -1,17 +1,18 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 5/7] dm core: reject I/O violating new queue
-	limits
-Date: Tue, 23 Jun 2009 14:46:58 +0900
-Message-ID: <4A406C52.4090304@ct.jp.nec.com>
-References: <49F17409.4060201@ct.jp.nec.com>
-	<49F17510.7010805@ct.jp.nec.com>	<49F17F74.6010307@suse.de>
-	<49F6B509.4000708@ct.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: rdac priority checker changing priorities
+Date: Tue, 23 Jun 2009 08:20:49 +0200
+Message-ID: <4A407441.2060701@suse.de>
+References: <9ad205140904291534j4cc1a71aq3b4a0e308f1687bd@mail.gmail.com>	
+	<49F9443E.7040109@suse.de>
+	<1241114743.11905.13.camel@chandra-ubuntu>	
+	<49FEC6E6.6070105@suse.de>
+	<1245718044.10657.12.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49F6B509.4000708@ct.jp.nec.com>
+In-Reply-To: <1245718044.10657.12.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,60 +22,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: sekharan@linux.vnet.ibm.com
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Hannes,
-
-I'm very sorry for the huge delay, but please see below.
-
-On 2009/04/28 16:49 +0900, Kiyoshi Ueda wrote:
+Chandra Seetharaman wrote:
 > Hi Hannes,
-> 
-> On 2009/04/24 17:59 +0900, Hannes Reinecke wrote:
->> Hi Kiyoshi,
->>
->> Kiyoshi Ueda wrote:
->>> This patch detects requests violating the queue limitations
->>> and rejects them.
->>>
->>> The same limitation checks are done when requests are submitted
->>> to the queue by blk_insert_cloned_request().
->>> However, such violation can happen if a table is swapped and
->>> the queue limitations are shrunk while some requests are
->>> in the queue.
->>>
->>> Since struct request is a reliable one in the block layer and
->>> device drivers, dispatching such requests is pretty dangerous.
->>> (e.g. it may cause kernel panic easily.)
->>> So avoid to dispatch such problematic requests in request-based dm.
->>>
->> This patch actually triggers accidentally during a no-paths scenario;
->> multipathing seems to flush all device details once all paths are gone,
->> so it'll fall back to the system defaults.
->> And then this check will trigger and kill all queued I/Os. Not good.
->>
->> So either we fix device-mapper to keep the device details even for
->> the all-paths down scenario (basically we'd have to copy the device
->> details into the target_io structures and use that for comparison)
->> or we should rather not check here.
-> 
-> Thank you for your review and the comment.
-> I haven't understood the problem correctly yet.
-> (e.g. Who flush the device details and how?  Restrictions are
->  changed when the table is swapped, but no table swapping should happen
->  even if the last path is gone while the device is in use.)
+>=20
+> Please see the attached file for the real example.
+>=20
+> Can I go ahead and generate a patch to increase the priority of the
+> preferred path to say, 50 ?
+>=20
+No. That's just wrong and we'll run into the same problem once
+someone increases the number of paths to 50.
 
-I tried to understand/reproduce your scenario, but I can't.
-I found a bug (http://marc.info/?l=dm-devel&m=124572577028515&w=2)
-during my testing (which lets all paths down at once), but it is
-an user-space bug, not a kernel bug.
+What we should do here is to modify the priority value, or
+rather the way priority is used.
 
-Could you elaborate your problem related to the patch, if you have
-detailed analisys?
-(e.g. I can't see the code-path which flushes device details
-      on an all-paths down scenario.)
+We should be splitting the current priority value into two
+fields, pg priority and number of paths in a pg.
+pg priority is the priority of a _single_ path here, and,
+by definition as we're using group_by_prio, the priority
+of each path in the pg.
 
-Thanks,
-Kiyoshi Ueda
+Then we should be modifying the algorithm to choose the
+next pg to do something like this:
+
+-> Choose the pg with the highest priority
+-> If two pgs have the same priority choose the pg
+   with the highest path count. Maybe we could
+   even use the highest _valid_ path count here,
+   depending if we have the information at that point.
+
+This algorithm would solve the problem we're having
+now once and for all.
+
+Just adding the priorities of the individual paths will
+always lead to these type of problems.
+
+I see if I can find some time to draw up a patch.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
