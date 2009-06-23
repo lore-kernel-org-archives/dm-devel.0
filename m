@@ -1,91 +1,41 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: Write barriers on MD RAID1
-Date: Wed, 24 Jun 2009 13:43:35 +1000
-Message-ID: <19009.41191.662901.179565@notabene.brown>
-References: <4A188CAD.1080009@googlemail.com>
-	<0fa4b1e19d3edb12931e0d641ce2c7d7.squirrel@neil.brown.name>
-	<4A3E3C49.7010907@googlemail.com>
+From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+Subject: RDAC path checker status change messages
+Date: Tue, 23 Jun 2009 15:50:13 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0906231548060.18687@e-smith.charlieb.ott.istop.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: message from Ken Milmore on Sunday June 21
-Sender: linux-raid-owner@vger.kernel.org
-To: Ken Milmore <ken.milmore@googlemail.com>
-Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <jens.axboe@oracle.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sunday June 21, ken.milmore@googlemail.com wrote:
-> I thought I had better bump my previous post as this regression is still 
-> present in 2.6.29.5.
 
-Thanks Ken.
+It seems to me that this patch is required, to fix a problem with "path 
+down" messages being logged when the path transitions to up (and 
+presumably ghost).
 
-> 
-> To recap, commit cec0707e40ae25794b5a2de7b7f03c51961f80d9 has broken 
-> write barriers on md raid1 block devices in 2.6.29 and later kernels. 
-> Reversing this commit appears to fix the problem.
-> 
-> Please let me know if I'm harassing the wrong maintainers here!
+--- libcheckers/rdac.c.orig     2009-06-23 15:38:05.371422000 -0400
++++ libcheckers/rdac.c  2009-06-23 15:39:28.020843000 -0400
+@@ -105,5 +105,12 @@
+                 return PATH_DOWN;
+         }
 
-Jens,
-  have you had a chance to look at this?
-
-I think the following patch is appropriate and should go in to
--stable.
-
-Thanks,
-NeilBrown
-
-
-From addd8b129835a63d6df9a38eae20caaa15de5988 Mon Sep 17 00:00:00 2001
-From: NeilBrown <neilb@suse.de>
-Date: Wed, 24 Jun 2009 13:39:15 +1000
-Subject: [PATCH] Restore barrier support for md and probably other virtual devices.
-
-The next_ordered flag is only meaningful for devices that use __make_request.
-So move the test against next_ordered out of generic code and in to
-__make_request
-
-Since this test was added, barriers have not worked on md, and (I
-think) dm and similar devices that don't use __make_request and so
-don't bother to set next_ordered.
-
-Cc: stable@kernel.org
-Cc: Ken Milmore <ken.milmore@googlemail.com>
-Signed-off-by: NeilBrown <neilb@suse.de>
----
- block/blk-core.c |   10 +++++-----
- 1 files changed, 5 insertions(+), 5 deletions(-)
-
-diff --git a/block/blk-core.c b/block/blk-core.c
-index b06cf5c..fc221aa 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1172,6 +1172,11 @@ static int __make_request(struct request_queue *q, struct bio *bio)
- 	const int unplug = bio_unplug(bio);
- 	int rw_flags;
- 
-+	if (bio_barrier(bio) && bio_has_data(bio) &&
-+	    (q->next_ordered == QUEUE_ORDERED_NONE)) {
-+		bio_endio(bio, -EOPNOTSUPP)
-+			return 0;
-+	}
- 	/*
- 	 * low level driver can indicate that it wants pages above a
- 	 * certain limit bounced to low memory (ie for highmem, or even
-@@ -1472,11 +1477,6 @@ static inline void __generic_make_request(struct bio *bio)
- 			err = -EOPNOTSUPP;
- 			goto end_io;
- 		}
--		if (bio_barrier(bio) && bio_has_data(bio) &&
--		    (q->next_ordered == QUEUE_ORDERED_NONE)) {
--			err = -EOPNOTSUPP;
--			goto end_io;
--		}
- 
- 		ret = q->make_request_fn(q, bio);
- 	} while (ret);
--- 
-1.6.3.1
-
+-       return ((inq.avtcvp & 0x1) ? PATH_UP : PATH_GHOST);
++       if (inq.avtcvp & 0x1) {
++               MSG(c, MSG_RDAC_UP);
++               return PATH_UP;
++       }
++       else {
++               MSG(c, MSG_RDAC_GHOST);
++               return PATH_GHOST;
++       }
+  }
