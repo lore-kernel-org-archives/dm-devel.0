@@ -1,21 +1,16 @@
-From: Balbir Singh <balbir@linux.vnet.ibm.com>
-Subject: Re: [PATCH 02/20] io-controller: Common flat fair
-	queuing code in elevaotor layer
-Date: Tue, 23 Jun 2009 13:02:52 +0530
-Message-ID: <20090623073252.GJ8642@balbir.in.ibm.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH 07/20] io-controller: Export disk time used
+ and nr sectors dipatched through cgroups
+Date: Tue, 23 Jun 2009 20:10:54 +0800
+Message-ID: <4A40C64E.8040305@cn.fujitsu.com>
 References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
-	<1245443858-8487-3-git-send-email-vgoyal@redhat.com>
-	<20090622084612.GD3728@balbir.in.ibm.com>
-	<20090622124313.GF28770@gandalf.sssup.it>
-	<20090623024337.GC3620@redhat.com>
-	<20090623041052.GS28770@gandalf.sssup.it>
-Reply-To: balbir@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+	<1245443858-8487-8-git-send-email-vgoyal@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090623041052.GS28770@gandalf.sssup.it>
+In-Reply-To: <1245443858-8487-8-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,70 +20,113 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Fabio Checconi <fchecconi@gmail.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, Vivek Goyal <vgoyal@redhat.com>, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, jbaron@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-* Fabio Checconi <fchecconi@gmail.com> [2009-06-23 06:10:52]:
+Vivek Goyal wrote:
+...
+> +
+> +static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
+> +				struct cftype *cftype, struct seq_file *m)
+> +{
+> +	struct io_cgroup *iocg;
+> +	struct io_group *iog;
+> +	struct hlist_node *n;
+> +
+> +	if (!cgroup_lock_live_group(cgroup))
+> +		return -ENODEV;
+> +
+> +	iocg = cgroup_to_io_cgroup(cgroup);
+> +
+> +	spin_lock_irq(&iocg->lock);
 
-> > From: Vivek Goyal <vgoyal@redhat.com>
-> > Date: Mon, Jun 22, 2009 10:43:37PM -0400
-> >
-> > On Mon, Jun 22, 2009 at 02:43:13PM +0200, Fabio Checconi wrote:
-> > 
-> ...
-> > > > Please help me understand this, we sort the tree by finish time, but
-> > > > search by vtime, start_time. The worst case could easily be O(N),
-> > > > right?
-> > > > 
-> > > 
-> > > no, (again, the full answer is in the paper); the nice property of
-> > > min_start is that it partitions the tree in two regions, one with
-> > > eligible entities and one without any of them.  once we know that
-> > > there is one eligible entity (checking the min_start at the root)
-> > > we can find the node i with min(F_i) subject to S_i < V walking down
-> > > a single path from the root to the leftmost eligible entity.  (we
-> > > need to go to the right only if the subtree on the left contains 
-> > > no eligible entities at all.)  since the RB tree is balanced this
-> > > can be done in O(log N).
-> > > 
-> > 
-> > Hi Fabio,
-> > 
-> > When I go thorough the paper you mentioned above, they seem to have
-> > sorted the tree based on eligible time (looks like equivalent of start
-> > time) and then keep track of minimum deadline on each node (equivalnet of
-> > finish time).
-> > 
-> > We seem to be doing reverse in BFQ where we sort tree on finish time
-> > and keep track of minimum start time on each node. Is there any specific
-> > reason behind that?
-> > 
-> 
-> Well... no specific reasons...  I think that our implementation is easier
-> to understand than the one of the paper, because it actually uses finish
-> times as the ordering key, and min_start to quickly locate eligible
-> subtrees, following the definition of the algorithm.
-> 
+It's better to make use of rcu_read_lock instead since it's
+a read action.
 
-Is it still O(log N)?
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ block/elevator-fq.c |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
 
-> Moreover, if you look at the get_req() code in the paper, it needs a
-> couple of loops to get to the result, while with our implementation
-> we save the second loop.
-> 
-> Our version is still correct, because it always moves to the left
-> (towards smaller finish times), except when moving to the left would
-> mean entering a non feasible subtree, in which case it moves to the
-> right.
-> 
-> Unfortunately I'm not aware of any paper describing a version of the
-> algorithm more similar to the one we've implemented.  Sorry for not
-> having mentioned that difference in the comments nor anywhere else,
-> it has been a long long time since I read the paper, and I must have
-> forgotten about that.
-
-/me needs to go read the paper in full.
-
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 2ad40eb..d779282 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -1418,7 +1418,7 @@ static int io_cgroup_disk_time_read(struct cgroup *cgroup,
+ 
+ 	iocg = cgroup_to_io_cgroup(cgroup);
+ 
+-	spin_lock_irq(&iocg->lock);
++	rcu_read_lock();
+ 	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
+ 		/*
+ 		 * There might be groups which are not functional and
+@@ -1430,7 +1430,7 @@ static int io_cgroup_disk_time_read(struct cgroup *cgroup,
+ 					iog->entity.total_service);
+ 		}
+ 	}
+-	spin_unlock_irq(&iocg->lock);
++	rcu_read_unlock();
+ 	cgroup_unlock();
+ 
+ 	return 0;
+@@ -1448,7 +1448,7 @@ static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
+ 
+ 	iocg = cgroup_to_io_cgroup(cgroup);
+ 
+-	spin_lock_irq(&iocg->lock);
++	rcu_read_lock();
+ 	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
+ 		/*
+ 		 * There might be groups which are not functional and
+@@ -1460,7 +1460,7 @@ static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
+ 					iog->entity.total_sector_service);
+ 		}
+ 	}
+-	spin_unlock_irq(&iocg->lock);
++	rcu_read_unlock();
+ 	cgroup_unlock();
+ 
+ 	return 0;
+@@ -1478,7 +1478,7 @@ static int io_cgroup_disk_queue_read(struct cgroup *cgroup,
+ 		return -ENODEV;
+ 
+ 	iocg = cgroup_to_io_cgroup(cgroup);
+-	spin_lock_irq(&iocg->lock);
++	rcu_read_lock();
+ 	/* Loop through all the io groups and print statistics */
+ 	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
+ 		/*
+@@ -1491,7 +1491,7 @@ static int io_cgroup_disk_queue_read(struct cgroup *cgroup,
+ 					iog->queue_duration);
+ 		}
+ 	}
+-	spin_unlock_irq(&iocg->lock);
++	rcu_read_unlock();
+ 	cgroup_unlock();
+ 
+ 	return 0;
 -- 
-	Balbir
+1.5.4.rc3
+
+
+
+> +	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
+> +		/*
+> +		 * There might be groups which are not functional and
+> +		 * waiting to be reclaimed upon cgoup deletion.
+> +		 */
+> +		if (iog->key) {
+> +			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
+> +					MINOR(iog->dev),
+> +					iog->entity.total_sector_service);
+> +		}
+> +	}
+> +	spin_unlock_irq(&iocg->lock);
+> +	cgroup_unlock();
+> +
+> +	return 0;
+> +}
+> +
+>
