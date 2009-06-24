@@ -1,14 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [git pull] device-mapper patches for 2.6.31-rc1
-Date: Wed, 24 Jun 2009 13:19:16 -0400
-Message-ID: <20090624171915.GA17246@redhat.com>
-References: <20090622093227.GH5744@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: RDAC path checker status change messages
+Date: Wed, 24 Jun 2009 11:15:21 -0700
+Message-ID: <1245867321.26915.13.camel@chandra-ubuntu>
+References: <Pine.LNX.4.64.0906231548060.18687@e-smith.charlieb.ott.istop.com>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090622093227.GH5744@agk-dp.fab.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0906231548060.18687@e-smith.charlieb.ott.istop.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,144 +19,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Evgeniy Polyakov <johnpol@2ka.mipt.ru>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, martin.petersen@oracle.com, Peter Rajnoha <prajnoha@redhat.com>, linux-kernel@vger.kernel.org, Stefan Bader <stefan.bader@canonical.com>, Christof Schmitt <christof.schmitt@de.ibm.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Linus,
+Hi Charlie,
 
-Given that you recently expressed your intent to release -rc1 soon:
-http://lkml.org/lkml/2009/6/23/618
+We do not want to print these messages as they will be flooding
+your /var/log/messages even when everything is good.
 
-Alasdair is at linuxtag all week, so I figured I'd point out his DM pull
-request from a couple days ago in case you missed it.
+We want to print these messages only to get User's attention.
 
-Thanks,
-Mike
+If your concern is that the last message is "down", then we should be
+having a static variable and print up or ghost message only once (when
+we toggle from down to up/ghost).
 
-On Mon, Jun 22 2009 at  5:32am -0400,
-Alasdair G Kergon <agk@redhat.com> wrote:
-
-> Please pull from:
+chandra
+On Tue, 2009-06-23 at 15:50 -0400, Charlie Brady wrote:
+> It seems to me that this patch is required, to fix a problem with "path 
+> down" messages being logged when the path transitions to up (and 
+> presumably ghost).
 > 
->   master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
+> --- libcheckers/rdac.c.orig     2009-06-23 15:38:05.371422000 -0400
+> +++ libcheckers/rdac.c  2009-06-23 15:39:28.020843000 -0400
+> @@ -105,5 +105,12 @@
+>                  return PATH_DOWN;
+>          }
 > 
-> to get the following device-mapper changes for 2.6.31-rc1:
+> -       return ((inq.avtcvp & 0x1) ? PATH_UP : PATH_GHOST);
+> +       if (inq.avtcvp & 0x1) {
+> +               MSG(c, MSG_RDAC_UP);
+> +               return PATH_UP;
+> +       }
+> +       else {
+> +               MSG(c, MSG_RDAC_GHOST);
+> +               return PATH_GHOST;
+> +       }
+>   }
 > 
-> Alasdair G Kergon (1):
->       dm: initialise tio in alloc_tio
-> 
-> Chandra Seetharaman (1):
->       dm mpath: call activate fn for each path in pg_init
-> 
-> Hannes Reinecke (1):
->       dm mpath: change attached scsi_dh
-> 
-> Jonathan Brassow (1):
->       dm exception store: fix exstore lookup to be case insensitive
-> 
-> Jonthan Brassow (2):
->       dm table: improve warning message when devices not freed before destruction
->       dm raid1: add userspace log
-> 
-> Kiyoshi Ueda (8):
->       dm mpath: add start_io and nr_bytes to path selectors
->       dm mpath: add queue length load balancer
->       dm mpath: add service time load balancer
->       dm: prepare for request based option
->       dm: enable request based option
->       dm: do not set QUEUE_ORDERED_DRAIN if request based
->       dm: disable interrupt when taking map_lock
->       dm mpath: change to be request based
-> 
-> Mike Snitzer (7):
->       dm table: ensure targets are aligned to logical_block_size
->       dm table: validate device logical_block_size
->       dm table: replace struct io_restrictions with struct queue_limits
->       dm table: establish queue limits by copying table limits
->       dm target:s introduce iterate devices fn
->       dm log: fix create_log_context to use logical_block_size of log device
->       dm: calculate queue limits during resume not load
-> 
-> Mikulas Patocka (24):
->       dm mpath: validate table argument count
->       dm mpath: validate hw_handler argument count
->       dm raid1: keep retrying alloc if mempool_alloc failed
->       dm mpath: flush keventd queue in destructor
->       dm: avoid unsupported spanning of md stripe boundaries
->       dm: use i_size_read
->       dm: rename suspended_bdev to bdev
->       dm: always hold bdev reference
->       dm: make dm_flush return void
->       dm: process requeue in dm_wq_work
->       dm: store only first barrier error
->       dm: remove EOPNOTSUPP for barriers
->       dm: remove check that prevents mapping empty bios
->       dm: introduce num_flush_requests
->       dm: send empty barriers to targets in dm_flush
->       dm: linear support flush
->       dm: stripe support flush
->       dm crypt: support flush
->       dm delay: support barriers
->       dm mpath: support barriers
->       dm snapshot: support barriers
->       dm io: record eopnotsupp
->       dm io: retry after barrier error
->       dm snapshot: use barrier when writing exception store
-> 
-> Milan Broz (2):
->       dm: sysfs skip output when device is being destroyed
->       dm ioctl: support cookies for udev
-> 
-> Peter Rajnoha (1):
->       dm: sysfs add suspended attribute
-> 
->  Documentation/device-mapper/dm-log.txt          |   54 ++
->  Documentation/device-mapper/dm-queue-length.txt |   39 +
->  Documentation/device-mapper/dm-service-time.txt |   91 ++
->  drivers/md/Kconfig                              |   30 +
->  drivers/md/Makefile                             |    5 +
->  drivers/md/dm-crypt.c                           |   19 +-
->  drivers/md/dm-delay.c                           |   26 +-
->  drivers/md/dm-exception-store.c                 |    2 +-
->  drivers/md/dm-exception-store.h                 |    2 +-
->  drivers/md/dm-io.c                              |   14 +-
->  drivers/md/dm-ioctl.c                           |   27 +-
->  drivers/md/dm-linear.c                          |   15 +-
->  drivers/md/dm-log-userspace-base.c              |  696 ++++++++++++++
->  drivers/md/dm-log-userspace-transfer.c          |  276 ++++++
->  drivers/md/dm-log-userspace-transfer.h          |   18 +
->  drivers/md/dm-log.c                             |    9 +-
->  drivers/md/dm-mpath.c                           |  334 +++++---
->  drivers/md/dm-path-selector.h                   |    8 +-
->  drivers/md/dm-queue-length.c                    |  263 ++++++
->  drivers/md/dm-raid1.c                           |   17 +-
->  drivers/md/dm-region-hash.c                     |    2 +-
->  drivers/md/dm-round-robin.c                     |    2 +-
->  drivers/md/dm-service-time.c                    |  339 +++++++
->  drivers/md/dm-snap-persistent.c                 |    2 +-
->  drivers/md/dm-snap.c                            |   11 +
->  drivers/md/dm-stripe.c                          |   33 +-
->  drivers/md/dm-sysfs.c                           |    9 +
->  drivers/md/dm-table.c                           |  465 +++++++---
->  drivers/md/dm.c                                 | 1133 ++++++++++++++++++++---
->  drivers/md/dm.h                                 |   35 +-
->  include/linux/Kbuild                            |    1 +
->  include/linux/connector.h                       |    4 +-
->  include/linux/device-mapper.h                   |   47 +-
->  include/linux/dm-ioctl.h                        |   14 +-
->  include/linux/dm-log-userspace.h                |  386 ++++++++
->  35 files changed, 3993 insertions(+), 435 deletions(-)
->  create mode 100644 Documentation/device-mapper/dm-log.txt
->  create mode 100644 Documentation/device-mapper/dm-queue-length.txt
->  create mode 100644 Documentation/device-mapper/dm-service-time.txt
->  create mode 100644 drivers/md/dm-log-userspace-base.c
->  create mode 100644 drivers/md/dm-log-userspace-transfer.c
->  create mode 100644 drivers/md/dm-log-userspace-transfer.h
->  create mode 100644 drivers/md/dm-queue-length.c
->  create mode 100644 drivers/md/dm-service-time.c
->  create mode 100644 include/linux/dm-log-userspace.h
-> 
-> Alasdair
-> -- 
-> agk@redhat.com
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
