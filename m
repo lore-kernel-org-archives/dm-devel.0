@@ -1,98 +1,127 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: Write barriers on MD RAID1
-Date: Wed, 24 Jun 2009 09:38:50 +0200
-Message-ID: <20090624073849.GG31415@kernel.dk>
-References: <4A188CAD.1080009@googlemail.com> <0fa4b1e19d3edb12931e0d641ce2c7d7.squirrel@neil.brown.name> <4A3E3C49.7010907@googlemail.com> <19009.41191.662901.179565@notabene.brown>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH] io-controller: Preempt a non-rt queue if a rt ioq is
+ present in ancestor or sibling groups
+Date: Wed, 24 Jun 2009 17:20:33 +0800
+Message-ID: <4A41EFE1.5050101@cn.fujitsu.com>
+References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com> <1245443858-8487-21-git-send-email-vgoyal@redhat.com> <4A3F3648.7080007@cn.fujitsu.com> <20090622172123.GE15600@redhat.com> <4A4079B8.4020402@cn.fujitsu.com> <20090623140250.GA4262@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <19009.41191.662901.179565@notabene.brown>
-Sender: linux-raid-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>
-Cc: Ken Milmore <ken.milmore@googlemail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754927AbZFXJU7@vger.kernel.org>
+In-Reply-To: <20090623140250.GA4262@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-On Wed, Jun 24 2009, Neil Brown wrote:
-> On Sunday June 21, ken.milmore@googlemail.com wrote:
-> > I thought I had better bump my previous post as this regression is still 
-> > present in 2.6.29.5.
-> 
-> Thanks Ken.
-> 
-> > 
-> > To recap, commit cec0707e40ae25794b5a2de7b7f03c51961f80d9 has broken 
-> > write barriers on md raid1 block devices in 2.6.29 and later kernels. 
-> > Reversing this commit appears to fix the problem.
-> > 
-> > Please let me know if I'm harassing the wrong maintainers here!
-> 
-> Jens,
->   have you had a chance to look at this?
+Vivek Goyal wrote:
+> On Tue, Jun 23, 2009 at 02:44:08PM +0800, Gui Jianfeng wrote:
+>> Vivek Goyal wrote:
+>>> On Mon, Jun 22, 2009 at 03:44:08PM +0800, Gui Jianfeng wrote:
+>>>> Preempt the ongoing non-rt ioq if there are rt ioqs waiting for di=
+spatching
+>>>> in ancestor or sibling groups. It will give other group's rt ioq a=
+n chance=20
+>>>> to dispatch ASAP.
+>>>>
+>>> Hi Gui,
+>>>
+>>> Will new preempton logic of traversing up the hiearchy so that both=
+ new
+>>> queue and old queue are at same level to take a preemption decision=
+ not
+>>> take care of above scenario?
+>> Hi Vivek,
+>>
+>> Would you explain a bit what do you mean about "both new queue and o=
+ld queue=20
+>> are at same level to take a preemption decision". I don't understand=
+ it well.
+>>
+>=20
+> Consider following hierarchy.
+>=20
+> 			root
+> 			/ |=20
+> 		       A  1  =20
+> 		       |=20
+> 		       2=20
+> In the above diagram, A is the group and "1" and "2" are two io queue=
+s=20
+> associated with tasks.
+>=20
+> Now assume that queue "1" is being served and queue "2" gets backlogg=
+ed.
+> Should queue 2 preempt queue 1 now?
+>=20
+> To take that decision, we need to do the comparision between type of
+> entity of group A and queue 1 (That is at the same level or IOW, the
+> entities in question have the same parent). If group A is of class RT=
+ and
+> queue 1 is of type BE then queue 2 should preempt queue 1 otherwise n=
+ot.
+>=20
+> Hence in hierarchical setups to take a preemption decision, compariso=
+n
+> should be done at same level.
 
-Yeah, I think it's the right way to go. I'll queue it up for .31 and we
-should put in in -stable as well.
+  So what bfq_find_matching_entity has done is going to figure out the =
+same
+  level entities=EF=BC=8C in turn, taking the decision.
 
-> 
-> I think the following patch is appropriate and should go in to
-> -stable.
-> 
-> Thanks,
-> NeilBrown
-> 
-> 
-> From addd8b129835a63d6df9a38eae20caaa15de5988 Mon Sep 17 00:00:00 2001
-> From: NeilBrown <neilb@suse.de>
-> Date: Wed, 24 Jun 2009 13:39:15 +1000
-> Subject: [PATCH] Restore barrier support for md and probably other virtual devices.
-> 
-> The next_ordered flag is only meaningful for devices that use __make_request.
-> So move the test against next_ordered out of generic code and in to
-> __make_request
-> 
-> Since this test was added, barriers have not worked on md, and (I
-> think) dm and similar devices that don't use __make_request and so
-> don't bother to set next_ordered.
-> 
-> Cc: stable@kernel.org
-> Cc: Ken Milmore <ken.milmore@googlemail.com>
-> Signed-off-by: NeilBrown <neilb@suse.de>
-> ---
->  block/blk-core.c |   10 +++++-----
->  1 files changed, 5 insertions(+), 5 deletions(-)
-> 
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index b06cf5c..fc221aa 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -1172,6 +1172,11 @@ static int __make_request(struct request_queue *q, struct bio *bio)
->  	const int unplug = bio_unplug(bio);
->  	int rw_flags;
->  
-> +	if (bio_barrier(bio) && bio_has_data(bio) &&
-> +	    (q->next_ordered == QUEUE_ORDERED_NONE)) {
-> +		bio_endio(bio, -EOPNOTSUPP)
-> +			return 0;
-> +	}
->  	/*
->  	 * low level driver can indicate that it wants pages above a
->  	 * certain limit bounced to low memory (ie for highmem, or even
-> @@ -1472,11 +1477,6 @@ static inline void __generic_make_request(struct bio *bio)
->  			err = -EOPNOTSUPP;
->  			goto end_io;
->  		}
-> -		if (bio_barrier(bio) && bio_has_data(bio) &&
-> -		    (q->next_ordered == QUEUE_ORDERED_NONE)) {
-> -			err = -EOPNOTSUPP;
-> -			goto end_io;
-> -		}
->  
->  		ret = q->make_request_fn(q, bio);
->  	} while (ret);
-> -- 
-> 1.6.3.1
-> 
+>=20
+>>> Please have a look at bfq_find_matching_entity().
+>>>
+>>> At the same time we probably don't want to preempt the non-rt queue
+>>> with an RT queue in sibling group until and unless sibling group is=
+ an
+>>> RT group.
+>>>
+>>> 		root
+>>> 		/  \
+>>> 	   BEgrpA  BEgrpB
+>>> 	      |     |=09
+>>> 	  BEioq1   RTioq2
+>>>
+>>> Above we got two BE group A and B and assume ioq in group A is bein=
+g
+>>> served and then an RT request in group B comes. Because group B is =
+an
+>>> BE class group, we should not preempt the queue in group A.
+>>   Yes, i also have this concern. So, it does not allow non-rt group =
+preempts
+>>   another group. I'll check whether there is a way to address this i=
+ssue.
+>>
+>=20
+> So here also assume ioq1 is being served and ioq2 gets backlogged. To
+> decide whether ioq2 should preempt ioq1 or not, one needs to go up th=
+e=20
+> hiearchy till two paths share the parent. That means one needs to go =
+up
+> at the BEgrpA and BEgrpB level where they have common parent "root". =
+Now
+> both the groups are of class BE hence ioq2 should not preempt ioq1.
+>=20
+> Hope it helps.
 
--- 
-Jens Axboe
+  Thanks, it's very helpful.
 
+  I have a thought now. Whether we can maintain a rt ioq list in efqd, =
+and=20
+  elv_fq_select_ioq() travels this list to take preemtion decision for =
+each
+  available rt ioqs at the same level(by using bfq_find_matching_entity=
+).
+  I'd like to try it out.
+
+>=20
+> Thanks
+> Vivek
+>=20
+>=20
+>=20
+
+--=20
+Regards
+Gui Jianfeng
