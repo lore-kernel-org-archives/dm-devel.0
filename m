@@ -1,16 +1,9 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: RDAC path checker status change messages
-Date: Wed, 24 Jun 2009 16:01:50 -0500
-Message-ID: <20090624210150.GH3172@ether.msp.redhat.com>
-References: <Pine.LNX.4.64.0906231548060.18687@e-smith.charlieb.ott.istop.com>
-	<1245867321.26915.13.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0906241615210.22601@e-smith.charlieb.ott.istop.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libcheckers rdac.c
+Date: 24 Jun 2009 21:15:53 -0000
+Message-ID: <20090624211553.21042.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0906241615210.22601@e-smith.charlieb.ott.istop.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,79 +13,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jun 24, 2009 at 04:19:00PM -0400, Charlie Brady wrote:
->
-> On Wed, 24 Jun 2009, Chandra Seetharaman wrote:
->
->> We do not want to print these messages as they will be flooding
->> your /var/log/messages even when everything is good.
->
-> Agreed.
->
->> We want to print these messages only to get User's attention.
->
-> Agreed.
->
->> If your concern is that the last message is "down", then we should be
->> having a static variable and print up or ghost message only once (when
->> we toggle from down to up/ghost).
->
-> You do have a static variable, so that messages are only printed when the 
-> status changes. However, because of the missing MSG() calls when the status 
-> is PATH_UP and PATH_GHOST, then the string printed is "path down", when it 
-> should be "path up" or "path ghost".
->
-> I believe that the patch is good. The MSG() calls will change the message 
-> string, and then the higher layer will notice the status change, and print 
-> the message.
->
-> Please check the code and correct me if I am wrong.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-06-24 21:15:52
 
-You are correct. Looks fine by me.
-I'll add this for RHEL 5.5. It will make it into Centos after that.
+Modified files:
+	libcheckers    : rdac.c 
 
--Ben
+Log message:
+	Pulled Charlie Brady's patch from dm-devel to make the rdac checker print the
+	right message on changes to PATH_UP and PATH_GHOST.
 
->
->>
->> chandra
->> On Tue, 2009-06-23 at 15:50 -0400, Charlie Brady wrote:
->>> It seems to me that this patch is required, to fix a problem with "path
->>> down" messages being logged when the path transitions to up (and
->>> presumably ghost).
->>>
->>> --- libcheckers/rdac.c.orig     2009-06-23 15:38:05.371422000 -0400
->>> +++ libcheckers/rdac.c  2009-06-23 15:39:28.020843000 -0400
->>> @@ -105,5 +105,12 @@
->>>                  return PATH_DOWN;
->>>          }
->>>
->>> -       return ((inq.avtcvp & 0x1) ? PATH_UP : PATH_GHOST);
->>> +       if (inq.avtcvp & 0x1) {
->>> +               MSG(c, MSG_RDAC_UP);
->>> +               return PATH_UP;
->>> +       }
->>> +       else {
->>> +               MSG(c, MSG_RDAC_GHOST);
->>> +               return PATH_GHOST;
->>> +       }
->>>   }
->>>
->>> --
->>> dm-devel mailing list
->>> dm-devel@redhat.com
->>> https://www.redhat.com/mailman/listinfo/dm-devel
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->>
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/rdac.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1.2.2&r2=1.1.2.3
+
+--- multipath-tools/libcheckers/Attic/rdac.c	2007/06/18 21:12:54	1.1.2.2
++++ multipath-tools/libcheckers/Attic/rdac.c	2009/06/24 21:15:52	1.1.2.3
+@@ -105,5 +105,12 @@
+ 		return PATH_DOWN;
+ 	}
+ 
+-	return ((inq.avtcvp & 0x1) ? PATH_UP : PATH_GHOST);
++	if (inq.avtcvp & 0x1) {
++		MSG(c, MSG_RDAC_UP);
++		return PATH_UP;
++	}
++	else {
++		MSG(c, MSG_RDAC_GHOST);
++		return PATH_GHOST;
++	}
+ }
