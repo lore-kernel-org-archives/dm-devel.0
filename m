@@ -1,47 +1,98 @@
-From: "NeilBrown" <neilb@suse.de>
-Subject: Re: Re: Write barriers on MD RAID1
-Date: Wed, 24 Jun 2009 17:34:50 +1000 (EST)
-Message-ID: <ee1590411620eede90e75c14fde50244.squirrel@neil.brown.name>
-References: <4A188CAD.1080009@googlemail.com>
-	<0fa4b1e19d3edb12931e0d641ce2c7d7.squirrel@neil.brown.name>
-	<4A3E3C49.7010907@googlemail.com>
-	<19009.41191.662901.179565@notabene.brown>
-	<20090624070917.GB27500@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: Write barriers on MD RAID1
+Date: Wed, 24 Jun 2009 09:38:50 +0200
+Message-ID: <20090624073849.GG31415@kernel.dk>
+References: <4A188CAD.1080009@googlemail.com> <0fa4b1e19d3edb12931e0d641ce2c7d7.squirrel@neil.brown.name> <4A3E3C49.7010907@googlemail.com> <19009.41191.662901.179565@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090624070917.GB27500@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>, device-mapper development <dm-devel@redhat.com>, Ken Milmore <ken.milmore@googlemail.com>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <19009.41191.662901.179565@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: Neil Brown <neilb@suse.de>
+Cc: Ken Milmore <ken.milmore@googlemail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, June 24, 2009 5:09 pm, Alasdair G Kergon wrote:
-> On Wed, Jun 24, 2009 at 01:43:35PM +1000, Neil Brown wrote:
->> Since this test was added, barriers have not worked on md, and (I
->> think) dm and similar devices that don't use __make_request and so
->> don't bother to set next_ordered.
->
-> In dm, we added this:
->
-> +       blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN, NULL);
->
+On Wed, Jun 24 2009, Neil Brown wrote:
+> On Sunday June 21, ken.milmore@googlemail.com wrote:
+> > I thought I had better bump my previous post as this regression is still 
+> > present in 2.6.29.5.
+> 
+> Thanks Ken.
+> 
+> > 
+> > To recap, commit cec0707e40ae25794b5a2de7b7f03c51961f80d9 has broken 
+> > write barriers on md raid1 block devices in 2.6.29 and later kernels. 
+> > Reversing this commit appears to fix the problem.
+> > 
+> > Please let me know if I'm harassing the wrong maintainers here!
+> 
+> Jens,
+>   have you had a chance to look at this?
 
-I obviously didn't grep for the right thing.
+Yeah, I think it's the right way to go. I'll queue it up for .31 and we
+should put in in -stable as well.
 
-This will obviously work, but I can't help thinking it is in the wrong
-place.  I don't even have a queue in md/raid1, so making a statement
-about how it is ordered just doesn't make sense.
+> 
+> I think the following patch is appropriate and should go in to
+> -stable.
+> 
+> Thanks,
+> NeilBrown
+> 
+> 
+> From addd8b129835a63d6df9a38eae20caaa15de5988 Mon Sep 17 00:00:00 2001
+> From: NeilBrown <neilb@suse.de>
+> Date: Wed, 24 Jun 2009 13:39:15 +1000
+> Subject: [PATCH] Restore barrier support for md and probably other virtual devices.
+> 
+> The next_ordered flag is only meaningful for devices that use __make_request.
+> So move the test against next_ordered out of generic code and in to
+> __make_request
+> 
+> Since this test was added, barriers have not worked on md, and (I
+> think) dm and similar devices that don't use __make_request and so
+> don't bother to set next_ordered.
+> 
+> Cc: stable@kernel.org
+> Cc: Ken Milmore <ken.milmore@googlemail.com>
+> Signed-off-by: NeilBrown <neilb@suse.de>
+> ---
+>  block/blk-core.c |   10 +++++-----
+>  1 files changed, 5 insertions(+), 5 deletions(-)
+> 
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index b06cf5c..fc221aa 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -1172,6 +1172,11 @@ static int __make_request(struct request_queue *q, struct bio *bio)
+>  	const int unplug = bio_unplug(bio);
+>  	int rw_flags;
+>  
+> +	if (bio_barrier(bio) && bio_has_data(bio) &&
+> +	    (q->next_ordered == QUEUE_ORDERED_NONE)) {
+> +		bio_endio(bio, -EOPNOTSUPP)
+> +			return 0;
+> +	}
+>  	/*
+>  	 * low level driver can indicate that it wants pages above a
+>  	 * certain limit bounced to low memory (ie for highmem, or even
+> @@ -1472,11 +1477,6 @@ static inline void __generic_make_request(struct bio *bio)
+>  			err = -EOPNOTSUPP;
+>  			goto end_io;
+>  		}
+> -		if (bio_barrier(bio) && bio_has_data(bio) &&
+> -		    (q->next_ordered == QUEUE_ORDERED_NONE)) {
+> -			err = -EOPNOTSUPP;
+> -			goto end_io;
+> -		}
+>  
+>  		ret = q->make_request_fn(q, bio);
+>  	} while (ret);
+> -- 
+> 1.6.3.1
+> 
 
-Jens?
+-- 
+Jens Axboe
 
-NeilBrown
