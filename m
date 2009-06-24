@@ -1,64 +1,91 @@
 From: Neil Brown <neilb@suse.de>
-Subject: Re: DM-RAID1 data corruption
-Date: Wed, 24 Jun 2009 13:03:26 +1000
-Message-ID: <19009.38782.225681.85214@notabene.brown>
-References: <Pine.LNX.4.64.0904141618220.701@hs20-bc2-1.build.redhat.com>
-	<20090415031210.GA11881@us.ibm.com> <49E645DA.4010204@redhat.com>
-	<20090416024959.GB19876@us.ibm.com> <49E7B029.20906@redhat.com>
-	<Pine.LNX.4.64.0904200552590.27291@hs20-bc2-1.build.redhat.com>
-	<20090623010930.GA13392@us.ibm.com> <4A41065D.10804@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: Write barriers on MD RAID1
+Date: Wed, 24 Jun 2009 13:43:35 +1000
+Message-ID: <19009.41191.662901.179565@notabene.brown>
+References: <4A188CAD.1080009@googlemail.com>
+	<0fa4b1e19d3edb12931e0d641ce2c7d7.squirrel@neil.brown.name>
+	<4A3E3C49.7010907@googlemail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: message from Takahiro Yasui on Tuesday June 23
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: mpatocka@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: message from Ken Milmore on Sunday June 21
+Sender: linux-raid-owner@vger.kernel.org
+To: Ken Milmore <ken.milmore@googlemail.com>
+Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-On Tuesday June 23, tyasui@redhat.com wrote:
-> >> MD-RAID1 solves this problem by having counters in superblocks on both 
-> >> legs. If some leg dies, the counter on the other devices is increased. If 
-> >> the dead disk comes online again, it is found that it has old counter and 
-> >> cannot be trusted.
-> >>
-> >> Would it be possible to extend a logical volume when converting it to a 
-> >> raid1 and use the last area of the volume as a superblock?
-> >>
-> >> Mikulas
-> > 
-> > This is an old thread, I am just trying to revitalize it! :-) How about
-> > dm-raid1 taking superblock storage as arguments in the command line,
-> > just like the log device? The superblock storage is entirely managed by
-> > the kernel, LVM just allocates it. Error handling can be instant this
-> > way. LVM can auto convert the exiting mirrors to this kind of mirrors if
-> > space is available.
+On Sunday June 21, ken.milmore@googlemail.com wrote:
+> I thought I had better bump my previous post as this regression is still 
+> present in 2.6.29.5.
+
+Thanks Ken.
+
 > 
-> Interesting idea. The superblock storage managed by kernel is really
-> important to handle an error quickly inside the kernel.
+> To recap, commit cec0707e40ae25794b5a2de7b7f03c51961f80d9 has broken 
+> write barriers on md raid1 block devices in 2.6.29 and later kernels. 
+> Reversing this commit appears to fix the problem.
+> 
+> Please let me know if I'm harassing the wrong maintainers here!
 
-I don't think that it is important to handle errors quickly - they
-really shouldn't happen often enough that speed is an issue.  All you
-need to do is handle errors correctly.
+Jens,
+  have you had a chance to look at this?
 
-I would suggest that you simply get raid1 to block any write requests
-until all drive failures have been acknowledged by userspace.
-So you would need to differentiate between an acknowledged drive
-failure and an unacknowledged failure.  Writes block when ever there
-are unacknowledged failures.
-Then you need a message that can be sent to the raid1 to acknowledge
-the failure of a particular device.
-'suspend' would need to fail if there are any unacknowledged failures
-as otherwise it would block.
+I think the following patch is appropriate and should go in to
+-stable.
 
+Thanks,
 NeilBrown
+
+
+From addd8b129835a63d6df9a38eae20caaa15de5988 Mon Sep 17 00:00:00 2001
+From: NeilBrown <neilb@suse.de>
+Date: Wed, 24 Jun 2009 13:39:15 +1000
+Subject: [PATCH] Restore barrier support for md and probably other virtual devices.
+
+The next_ordered flag is only meaningful for devices that use __make_request.
+So move the test against next_ordered out of generic code and in to
+__make_request
+
+Since this test was added, barriers have not worked on md, and (I
+think) dm and similar devices that don't use __make_request and so
+don't bother to set next_ordered.
+
+Cc: stable@kernel.org
+Cc: Ken Milmore <ken.milmore@googlemail.com>
+Signed-off-by: NeilBrown <neilb@suse.de>
+---
+ block/blk-core.c |   10 +++++-----
+ 1 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index b06cf5c..fc221aa 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1172,6 +1172,11 @@ static int __make_request(struct request_queue *q, struct bio *bio)
+ 	const int unplug = bio_unplug(bio);
+ 	int rw_flags;
+ 
++	if (bio_barrier(bio) && bio_has_data(bio) &&
++	    (q->next_ordered == QUEUE_ORDERED_NONE)) {
++		bio_endio(bio, -EOPNOTSUPP)
++			return 0;
++	}
+ 	/*
+ 	 * low level driver can indicate that it wants pages above a
+ 	 * certain limit bounced to low memory (ie for highmem, or even
+@@ -1472,11 +1477,6 @@ static inline void __generic_make_request(struct bio *bio)
+ 			err = -EOPNOTSUPP;
+ 			goto end_io;
+ 		}
+-		if (bio_barrier(bio) && bio_has_data(bio) &&
+-		    (q->next_ordered == QUEUE_ORDERED_NONE)) {
+-			err = -EOPNOTSUPP;
+-			goto end_io;
+-		}
+ 
+ 		ret = q->make_request_fn(q, bio);
+ 	} while (ret);
+-- 
+1.6.3.1
+
