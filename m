@@ -1,49 +1,47 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libcheckers rdac.c
-Date: 24 Jun 2009 21:15:53 -0000
-Message-ID: <20090624211553.21042.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: Paul Menage <menage@google.com>
+Subject: Re: [PATCH 18/20] io-controller: Support per cgroup per device
+	weights and io class
+Date: Wed, 24 Jun 2009 14:52:19 -0700
+Message-ID: <6599ad830906241452t76e64815s7d68a22a6e746a59@mail.gmail.com>
+References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
+	 <1245443858-8487-19-git-send-email-vgoyal@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753607AbZFXVwj@vger.kernel.org>
+In-Reply-To: <1245443858-8487-19-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2009-06-24 21:15:52
+On Fri, Jun 19, 2009 at 1:37 PM, Vivek Goyal<vgoyal@redhat.com> wrote:
+>
+> You can use the following format to play with the new interface.
+> #echo DEV:weight:ioprio_class > /patch/to/cgroup/policy
+> weight=0 means removing the policy for DEV.
+>
+> Examples:
+> Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+> # echo /dev/hdb:300:2 > io.policy
+> # cat io.policy
+> dev weight class
+> /dev/hdb 300 2
 
-Modified files:
-	libcheckers    : rdac.c 
+I think that the read and write should be consistent. Can you just use
+white-space separation for both, rather than colon-separation for
+writes and white-space separation for reads?
 
-Log message:
-	Pulled Charlie Brady's patch from dm-devel to make the rdac checker print the
-	right message on changes to PATH_UP and PATH_GHOST.
+Also, storing device inode paths statically as strings into the
+io_policy structure seems wrong, since it's quite possible for the
+device node that was used originally to be gone by the time that
+someone reads the io.policy file, or renamed, or even replaced with an
+inode that refers to to a different block device
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/rdac.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1.2.2&r2=1.1.2.3
+My preferred alternatives would be:
 
---- multipath-tools/libcheckers/Attic/rdac.c	2007/06/18 21:12:54	1.1.2.2
-+++ multipath-tools/libcheckers/Attic/rdac.c	2009/06/24 21:15:52	1.1.2.3
-@@ -105,5 +105,12 @@
- 		return PATH_DOWN;
- 	}
- 
--	return ((inq.avtcvp & 0x1) ? PATH_UP : PATH_GHOST);
-+	if (inq.avtcvp & 0x1) {
-+		MSG(c, MSG_RDAC_UP);
-+		return PATH_UP;
-+	}
-+	else {
-+		MSG(c, MSG_RDAC_GHOST);
-+		return PATH_GHOST;
-+	}
- }
+- read/write the value as a device number rather than a name
+- read/write the block device's actual name (e.g. hda or sda) rather
+than a path to the inode
+
+Paul
