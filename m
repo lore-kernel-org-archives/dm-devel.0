@@ -1,17 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [2.6.31-rc1] device-mapper: target device sda6 is
-	misaligned
-Date: Thu, 25 Jun 2009 13:20:42 -0400
-Message-ID: <20090625172041.GA22891@redhat.com>
-References: <200906250904.57149.elendil@planet.nl>
-	<20090625154120.GA22616@redhat.com>
-	<200906251840.07617.elendil@planet.nl>
+From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+Subject: Re: RDAC path checker status change messages
+Date: Thu, 25 Jun 2009 13:28:40 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0906251314330.4229@e-smith.charlieb.ott.istop.com>
+References: <Pine.LNX.4.64.0906231548060.18687@e-smith.charlieb.ott.istop.com>
+	<1245867321.26915.13.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0906241615210.22601@e-smith.charlieb.ott.istop.com>
+	<Pine.LNX.4.64.0906251253570.4229@e-smith.charlieb.ott.istop.com>
+	<Pine.LNX.4.64.0906251300070.4229@e-smith.charlieb.ott.istop.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <200906251840.07617.elendil@planet.nl>
+In-Reply-To: <Pine.LNX.4.64.0906251300070.4229@e-smith.charlieb.ott.istop.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,92 +21,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Frans Pop <elendil@planet.nl>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, martin.petersen@oracle.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jun 25 2009 at 12:40pm -0400,
-Frans Pop <elendil@planet.nl> wrote:
 
-> On Thursday 25 June 2009, Mike Snitzer wrote:
-> > On Thu, Jun 25 2009 at  3:04am -0400,
-> > Frans Pop <elendil@planet.nl> wrote: 
-> > > During boot of 2.6.31-rc1 on an arm EABI system I got the following
-> > > errors:
-> > > device-mapper: table: 254:0: target device sda6 is misaligned
-> > > device-mapper: table: 254:0: target device sda6 is misaligned
-> > > device-mapper: table: 254:1: target device sda6 is misaligned
-> > > device-mapper: table: 254:1: target device sda6 is misaligned
-> > >
-> > > The boot did complete successfully. A boot with 2.6.30 just
-> > > previously was clean, and when I reboot back into 2.6.30 the messages
-> > > are gone again.
-> > >
-> > > The system has a single volume group with two logical volumes.
-> >
-> > Even though the messages don't contain "warning", and probably should,
-> > they are printed via DMWARN().
-> 
-> When I first saw the messages I almost got a heart attack, especially 
-> because I also got an fsck for the file systems on them. Luckily it 
-> turned out later that the reason for that was that I'd accidentally 
-> removed the rtc driver from my config, so the fsck was triggered by the 
-> system clock not being set :-/
-> 
-> > These warnings are a function of device-mapper now being
-> > topology-aware.  This means that your LVs are likely misaligned
-> > relative to the underlying hardware.  Given that you're using
-> > partitions I'd wager they are the source of the misalignment.  But
-> > there could be a bug lurking somewhere.
-> 
-> OK. If it does turn out to be benign, then I'd suggest marking the 
-> messages "info: " instead of "warning: ". With "warning" admins would 
-> still be given the idea that something might be desperately wrong and 
-> action should be taken NOW.
-> Personally, I'd even prefer just not to know, unless it for example has a 
-> major effect on performance _and_ is easily fixable using lvm2.
-> 
-> Wouldn't it be much more logical if the userspace tools warn about 
-> alignment problems when volumes are _created_?
+On Thu, 25 Jun 2009, Charlie Brady wrote:
+
+> On Thu, 25 Jun 2009, Charlie Brady wrote:
 >
-> The volumes were all created using Debian Installer's partitioning 
-> component, which uses libparted and lvm2.
+>>  I think I need to retract that. The messages appear to be printed when the
+>>  status is not changing, at least for the "path down" messages.
+>>
+>>  I've patched scsi_dh_rdac.c so that SUN/LCSM100_I is included in
+>>  rdac_dev_list[], and restarted iscsi and multipathd. I've now provoked a
+>>  path failure via iptables. Here are the logs I see (with unpatched
+>>  multipathd) - the duplicate message suppression from the rdac path checker
+>>  is not working:
+>
+> OTOH, on path recovery, the wrong message is displayed ("path down" instead 
+> of "path up") but the message is not repeated:
 
-The device-mapper layer doesn't distinguish between the first creation
-and every activation there after.  The blk_stack_limits() method is
-called by DM when an LV's table is pushed down to the kernel.  As such,
-you'll always see the warnings.  Think of it as motivation to fix
-libparted and all the other storage tools (LVM2 included) to create
-properly aligned devices :)
- 
+From multipathd/main.c, there are three conditions where the messages are 
+printed:
 
-> > Please provide the output from the following commands:
-> >
-> > pvs -o +pe_start
-> 
->   PV         VG   Fmt  Attr PSize   PFree  1st PE
->   /dev/sda6  qnap lvm2 a-   124.50G 44.50G 192.00K
-> 
-> > cat /sys/block/sda/sda6/alignment_offset
-> > cat /sys/block/sda/queue/physical_block_size
-> > cat /sys/block/sda/queue/logical_block_size
-> 
-> I'm afraid those files don't exist on my systems (none of them: arm, s390 
-> and x86_64 notebook). Some kernel config option I'm missing maybe?
+...
+                         if (newstate != pp->state) {
+                                 int oldstate = pp->state;
+                                 pp->state = newstate;
+                                 LOG_MSG(1, checker_message(&pp->checker));
+...
+                         }
+                         else if (newstate == PATH_UP || newstate == PATH_GHOST) {
+                                 LOG_MSG(4, checker_message(&pp->checker));
+...
+                         else if (newstate == PATH_DOWN)
+                                 LOG_MSG(2, checker_message(&pp->checker));
+...
 
-OK, that is not possible; if you're seeing messages like the following:
-device-mapper: table: 254:0: target device sda6 is misaligned
+I think only the first might be required, and only the first will be seen 
+if logging verbosity < 2 (default is 2).
 
-You should definitely have the topology attributes in the associated
-device's sysfs tree.  What does the following show on your 2.6.31-rc1
-system that produced the above "target device sda6 is misaligned":
+So there are two path checker problems I can see (in 
+multipath-tools-0.4.7.rhel5.13):
 
-find /sys/block/sda/queue -type f
+- the rdac checker leaves the message set to "path down" when path
+   transitions back to up or ghost.
+- multipathd prints the message on every PATH_DOWN except the first when
+   verbosity is >= 2, and on every PATH_UP or PATH_GHOST except the first
+   when verbosity is >= 4.
 
-If you don't see attributes like the following you're collecting
-information from the wrong machine:
-
-/sys/block/sda/queue/logical_block_size
-/sys/block/sda/queue/physical_block_size
-/sys/block/sda/queue/minimum_io_size
-/sys/block/sda/queue/optimal_io_size
+---
+Charlie
