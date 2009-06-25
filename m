@@ -1,50 +1,74 @@
-From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
-Subject: [PATCH multipath-tools-0.4.7.rhel5.13 1/1] multipathd
- excessive path checker logging
-Date: Thu, 25 Jun 2009 13:50:51 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Frans Pop <elendil@planet.nl>
+Subject: Re: [2.6.31-rc1] device-mapper: target device sda6 is misaligned
+Date: Thu, 25 Jun 2009 19:53:32 +0200
+Message-ID: <200906251953.34253.elendil@planet.nl>
+References: <200906250904.57149.elendil@planet.nl> <200906251840.07617.elendil@planet.nl> <20090625172041.GA22891@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755593AbZFYRxl@vger.kernel.org>
+In-Reply-To: <20090625172041.GA22891@redhat.com>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
+On Thursday 25 June 2009, Mike Snitzer wrote:
+> > I'm afraid those files don't exist on my systems (none of them: arm,
+> > s390 and x86_64 notebook). Some kernel config option I'm missing
+> > maybe?
+>
+> You should definitely have the topology attributes in the associated
+> device's sysfs tree.
 
-multipathd logs a path checker message whenever state changes. But it also 
-logs every non-changed message when verbosity is >=4 and newstate is 
-PATH_UP or PATH_GHOST, and every non-changed message when verbosity is >= 
-2 and newstate is PATH_DOWN.
+Ah, sorry. I'd switched back to .30 for the arm system because of this.
+(And on the s390 box I looked for sda instead of dasdb; duh!)
 
-I believe that the message should only be logged, once, when state 
-changes.
+Here are the values for arm:
 
-Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
+$ cat /sys/block/sda/sda6/alignment_offset
+0
+$ cat /sys/block/sda/queue/physical_block_size
+512
+$ cat /sys/block/sda/queue/logical_block_size
+512
 
---- multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:57.248455000 -0400
-+++ mezzanine_patched_multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:12.968639000 -0400
-@@ -1041,7 +1041,6 @@
-  					enable_group(pp);
-  			}
-  			else if (newstate == PATH_UP || newstate == PATH_GHOST) {
--				LOG_MSG(4, checker_message(&pp->checker));
-  				/*
-  				 * double the next check delay.
-  				 * max at conf->max_checkint
-@@ -1055,8 +1054,6 @@
-  				condlog(4, "%s: delay next check %is",
-  						pp->dev_t, pp->tick);
-  			}
--			else if (newstate == PATH_DOWN)
--				LOG_MSG(2, checker_message(&pp->checker));
+And here's the lot for the s390 emulator:
 
-  			pp->state = newstate;
+# grep . /sys/block/dasdb/dasdb*/alignment_offset
+/sys/block/dasdb/dasdb1/alignment_offset:0
+/sys/block/dasdb/dasdb2/alignment_offset:0
+# grep . /sys/block/dasdb/queue/physical_block_size
+4096
+# grep . /sys/block/dasdb/queue/logical_block_size
+4096
+
+# pvs -o +pe_start
+  PV          VG     Fmt  Attr PSize   PFree 1st PE
+  /dev/dasdb1 mordor lvm2 a-   388.00M    0  192.00K
+  /dev/dasdb2 mordor lvm2 a-   388.00M    0  192.00K
+# dmsetup ls
+mordor-home     (254, 0)
+# dmsetup table
+mordor-home: 0 794624 linear 94:5 384
+mordor-home: 794624 794624 linear 94:6 384
+
+# fdasd -p /dev/dasdb
+reading volume label ..: VOL1
+reading vtoc ..........: ok
+
+Disk /dev/dasdb:
+  cylinders ............: 1113
+  tracks per cylinder ..: 15
+  blocks per track .....: 12
+  bytes per block ......: 4096
+  volume label .........: VOL1
+  volume serial ........: 0X0121
+  max partitions .......: 3
+
+ ------------------------------- tracks -------------------------------
+               Device      start      end   length   Id  System
+          /dev/dasdb1          2     8346     8345    1  Linux native
+          /dev/dasdb2       8347    16694     8348    2  Linux native
