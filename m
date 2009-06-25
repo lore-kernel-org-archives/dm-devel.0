@@ -1,17 +1,12 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: REQUEST for new 'topology' metrics to be moved out
-	of the 'queue' sysfs directory.
-Date: Thu, 25 Jun 2009 10:46:41 -0700 (PDT)
-Message-ID: <alpine.LFD.2.01.0906251045450.3605@localhost.localdomain>
-References: <19010.62951.886231.96622@notabene.brown>
-	<yq11vp8spxo.fsf@sermon.lab.mkp.net>
-	<125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
-	<yq1k530qkm7.fsf@sermon.lab.mkp.net>
+From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+Subject: [PATCH multipath-tools-0.4.7.rhel5.13 1/1] multipathd
+ excessive path checker logging
+Date: Thu, 25 Jun 2009 13:50:51 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <yq1k530qkm7.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,27 +16,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com, linux-fsdevel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
+multipathd logs a path checker message whenever state changes. But it also 
+logs every non-changed message when verbosity is >=4 and newstate is 
+PATH_UP or PATH_GHOST, and every non-changed message when verbosity is >= 
+2 and newstate is PATH_DOWN.
 
-On Thu, 25 Jun 2009, Martin K. Petersen wrote:
-> 
-> Neil> So I asked git why it as added, and it pointed to
-> Neil>   commit 1308835ffffe6d61ad1f48c5c381c9cc47f683ec
-> 
-> Neil> which suggests that it was added so that user space could tell the
-> Neil> kernel whether the device was rotational, rather than the other
-> Neil> way around.
-> 
-> There's an option to do it via udev for broken devices that don't report
-> it.  But both SCSI and ATA have a setting that gets queried and the
-> queue flag set accordingly.
+I believe that the message should only be logged, once, when state 
+changes.
 
-.. except few devices actually set it. 
+Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
 
-That flag is _definitely_ all about the user being able to override it.
+--- multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:57.248455000 -0400
++++ mezzanine_patched_multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:12.968639000 -0400
+@@ -1041,7 +1041,6 @@
+  					enable_group(pp);
+  			}
+  			else if (newstate == PATH_UP || newstate == PATH_GHOST) {
+-				LOG_MSG(4, checker_message(&pp->checker));
+  				/*
+  				 * double the next check delay.
+  				 * max at conf->max_checkint
+@@ -1055,8 +1054,6 @@
+  				condlog(4, "%s: delay next check %is",
+  						pp->dev_t, pp->tick);
+  			}
+-			else if (newstate == PATH_DOWN)
+-				LOG_MSG(2, checker_message(&pp->checker));
 
-		Linus
+  			pp->state = newstate;
