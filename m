@@ -1,16 +1,19 @@
-From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
-Subject: Re: RDAC path checker status change messages
-Date: Thu, 25 Jun 2009 14:40:50 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0906251439440.4229@e-smith.charlieb.ott.istop.com>
-References: <Pine.LNX.4.64.0906231548060.18687@e-smith.charlieb.ott.istop.com>
-	<1245867321.26915.13.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0906241615210.22601@e-smith.charlieb.ott.istop.com>
-	<1245954592.14164.9.camel@chandra-ubuntu>
+From: Frans Pop <elendil@planet.nl>
+Subject: Re: [2.6.31-rc1] device-mapper: target device sda6 is
+	misaligned
+Date: Thu, 25 Jun 2009 20:52:49 +0200
+Message-ID: <200906252052.50364.elendil@planet.nl>
+References: <200906250904.57149.elendil@planet.nl>
+	<200906251953.34253.elendil@planet.nl>
+	<20090625182302.GA23113@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1245954592.14164.9.camel@chandra-ubuntu>
+In-Reply-To: <20090625182302.GA23113@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,16 +23,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
+On Thursday 25 June 2009, Mike Snitzer wrote:
+> OK, I found a really stupid bug.  I was passing the data start offset
+> (pe_start) through to blk_stack_limits() in terms of sectors rather
+> than bytes.  The following should silence your warnings:
 
-On Thu, 25 Jun 2009, Chandra Seetharaman wrote:
+Yes, all clear again. So not broken userspace after all ;-)
 
-> Yes, I agree... Your patch should work as you expect.
+Reported-by: Frans Pop <elendil@planet.nl>
+Tested-by: Frans Pop <elendil@planet.nl>
 
-Thanks - bmarzins@sourceware.org has already committed the fix.
+Thanks,
+FJP
 
-Please see subsequent messages (including patch) re excessive path checker 
-message logging.
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 4899ebe..2cba557 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -495,7 +495,7 @@ int dm_set_device_limits(struct dm_target *ti,
+> struct dm_dev *dev, return 0;
+>  	}
+>
+> -	if (blk_stack_limits(limits, &q->limits, start) < 0)
+> +	if (blk_stack_limits(limits, &q->limits, start << 9) < 0)
+>  		DMWARN("%s: target device %s is misaligned",
+>  		       dm_device_name(ti->table->md), bdevname(bdev, b));
