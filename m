@@ -1,113 +1,101 @@
-From: Frans Pop <elendil@planet.nl>
-Subject: Re: [2.6.31-rc1] device-mapper: target device sda6 is misaligned
-Date: Thu, 25 Jun 2009 18:40:06 +0200
-Message-ID: <200906251840.07617.elendil@planet.nl>
-References: <200906250904.57149.elendil@planet.nl> <20090625154120.GA22616@redhat.com>
+From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+Subject: Re: RDAC path checker status change messages
+Date: Thu, 25 Jun 2009 12:57:52 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0906251253570.4229@e-smith.charlieb.ott.istop.com>
+References: <Pine.LNX.4.64.0906231548060.18687@e-smith.charlieb.ott.istop.com>
+	<1245867321.26915.13.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0906241615210.22601@e-smith.charlieb.ott.istop.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756427AbZFYQkU@vger.kernel.org>
-In-Reply-To: <20090625154120.GA22616@redhat.com>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, martin.petersen@oracle.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0906241615210.22601@e-smith.charlieb.ott.istop.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thursday 25 June 2009, Mike Snitzer wrote:
-> On Thu, Jun 25 2009 at  3:04am -0400,
-> Frans Pop <elendil@planet.nl> wrote: 
-> > During boot of 2.6.31-rc1 on an arm EABI system I got the following
-> > errors:
-> > device-mapper: table: 254:0: target device sda6 is misaligned
-> > device-mapper: table: 254:0: target device sda6 is misaligned
-> > device-mapper: table: 254:1: target device sda6 is misaligned
-> > device-mapper: table: 254:1: target device sda6 is misaligned
-> >
-> > The boot did complete successfully. A boot with 2.6.30 just
-> > previously was clean, and when I reboot back into 2.6.30 the messages
-> > are gone again.
-> >
-> > The system has a single volume group with two logical volumes.
+
+On Wed, 24 Jun 2009, Charlie Brady wrote:
+
+>>  If your concern is that the last message is "down", then we should be
+>>  having a static variable and print up or ghost message only once (when
+>>  we toggle from down to up/ghost).
 >
-> Even though the messages don't contain "warning", and probably should,
-> they are printed via DMWARN().
+> You do have a static variable, so that messages are only printed when the 
+> status changes.
 
-When I first saw the messages I almost got a heart attack, especially 
-because I also got an fsck for the file systems on them. Luckily it 
-turned out later that the reason for that was that I'd accidentally 
-removed the rtc driver from my config, so the fsck was triggered by the 
-system clock not being set :-/
+I think I need to retract that. The messages appear to be printed when the 
+status is not changing, at least for the "path down" messages.
 
-> These warnings are a function of device-mapper now being
-> topology-aware.  This means that your LVs are likely misaligned
-> relative to the underlying hardware.  Given that you're using
-> partitions I'd wager they are the source of the misalignment.  But
-> there could be a bug lurking somewhere.
+I've patched scsi_dh_rdac.c so that SUN/LCSM100_I is included in 
+rdac_dev_list[], and restarted iscsi and multipathd. I've now provoked a 
+path failure via iptables. Here are the logs I see (with unpatched 
+multipathd) - the duplicate message suppression from the rdac path 
+checker is not working:
 
-OK. If it does turn out to be benign, then I'd suggest marking the 
-messages "info: " instead of "warning: ". With "warning" admins would 
-still be given the idea that something might be desperately wrong and 
-action should be taken NOW.
-Personally, I'd even prefer just not to know, unless it for example has a 
-major effect on performance _and_ is easily fixable using lvm2.
-
-Wouldn't it be much more logical if the userspace tools warn about 
-alignment problems when volumes are _created_?
-
-The volumes were all created using Debian Installer's partitioning 
-component, which uses libparted and lvm2.
-
-> Please provide the output from the following commands:
->
-> pvs -o +pe_start
-
-  PV         VG   Fmt  Attr PSize   PFree  1st PE
-  /dev/sda6  qnap lvm2 a-   124.50G 44.50G 192.00K
-
-> cat /sys/block/sda/sda6/alignment_offset
-> cat /sys/block/sda/queue/physical_block_size
-> cat /sys/block/sda/queue/logical_block_size
-
-I'm afraid those files don't exist on my systems (none of them: arm, s390 
-and x86_64 notebook). Some kernel config option I'm missing maybe?
-
-Here's the partition layout:
-# fdisk -u -l /dev/sda
-
-Disk /dev/sda: 164.7 GB, 164696555520 bytes
-255 heads, 63 sectors/track, 20023 cylinders, total 321672960 sectors
-Units = sectors of 1 * 512 = 512 bytes
-Disk identifier: 0x00054f49
-
-   Device Boot      Start         End      Blocks   Id  System
-/dev/sda1   *          63    19535039     9767488+  83  Linux
-/dev/sda2        19535040    39070079     9767520   83  Linux
-/dev/sda3        39070080    58605119     9767520   83  Linux
-/dev/sda4        58605120   321669494   131532187+   5  Extended
-/dev/sda5        58605183    60565049      979933+  82  Linux swap
-/dev/sda6        60565113   321669494   130552191   8e  Linux LVM
-
-> If you could also provide the same info for all other PVs that are in
-> the VG that would be appreciated.
-
-There's only the one PV.
-
-On Thursday 25 June 2009, Mike Snitzer wrote:
-> In addition to the other commands I asked for in my previous mail;
-> please provide the output from the following commands on both your real
-> and emulated configs:
-
-# dmsetup ls
-qnap-home       (254, 0)
-qnap-music      (254, 1)
-
-# dmsetup table
-qnap-home: 0 83886080 linear 8:6 384
-qnap-music: 0 83886080 linear 8:6 83886464
-
-The above is all for the arm system.
-
-Thanks,
-FJP
+Jun 25 12:35:02 sun4150node1 kernel: device-mapper: multipath: Using 
+scsi_dh module scsi_dh_rdac for failover/failback and
+  device management.
+Jun 25 12:35:08 sun4150node1 multipathd: cannot open /sbin/dasd_id : No 
+such file or directory
+Jun 25 12:35:08 sun4150node1 multipathd: cannot open /sbin/gnbd_import : 
+No such file or directory
+Jun 25 12:35:08 sun4150node1 multipathd: [copy.c] cannot open 
+/sbin/dasd_id
+Jun 25 12:35:08 sun4150node1 multipathd: cannot copy /sbin/dasd_id in 
+ramfs : No such file or directory
+Jun 25 12:35:08 sun4150node1 multipathd: [copy.c] cannot open 
+/sbin/gnbd_import
+Jun 25 12:35:08 sun4150node1 multipathd: cannot copy /sbin/gnbd_import in 
+ramfs : No such file or directory
+Jun 25 12:35:08 sun4150node1 multipathd: mpath0: event checker started
+Jun 25 12:35:02 sun4150node1 kernel: device-mapper: multipath: Using 
+scsi_dh module scsi_dh_rdac for failover/failback and
+  device management.
+Jun 25 12:46:55 sun4150node1 kernel: ping timeout of 5 secs expired, last 
+rx 1703243, last ping 1708243, now 1713243
+Jun 25 12:46:55 sun4150node1 kernel:  connection3:0: iscsi: detected conn 
+error (1011)
+Jun 25 12:46:55 sun4150node1 iscsid: Kernel reported iSCSI connection 3:0 
+error (1011) state (3)
+Jun 25 12:48:55 sun4150node1 kernel:  session3: iscsi: session recovery 
+timed out after 120 secs
+Jun 25 12:48:55 sun4150node1 kernel: iscsi: cmd 0x12 is not queued (8)
+Jun 25 12:48:55 sun4150node1 multipathd: path checkers start up
+Jun 25 12:48:55 sun4150node1 multipathd: sdd: rdac checker reports path is 
+down
+Jun 25 12:48:55 sun4150node1 kernel: device-mapper: multipath: Failing 
+path 8:48.
+Jun 25 12:48:55 sun4150node1 multipathd: checker failed path 8:48 in map 
+mpath0
+Jun 25 12:48:55 sun4150node1 multipathd: mpath0: remaining active paths: 1
+Jun 25 12:48:55 sun4150node1 multipathd: dm-2: add map (uevent)
+Jun 25 12:48:55 sun4150node1 multipathd: dm-2: devmap already registered
+Jun 25 12:49:00 sun4150node1 kernel: iscsi: cmd 0x12 is not queued (8)
+Jun 25 12:49:00 sun4150node1 multipathd: sdd: rdac checker reports path is 
+down
+Jun 25 12:49:35 sun4150node1 last message repeated 7 times
+Jun 25 12:49:35 sun4150node1 last message repeated 7 times
+Jun 25 12:50:05 sun4150node1 last message repeated 6 times
+Jun 25 12:50:05 sun4150node1 kernel: iscsi: cmd 0x28 is not queued (8)
+Jun 25 12:50:05 sun4150node1 kernel: sd 14:0:0:0: SCSI error: return code 
+= 0x00010000
+Jun 25 12:50:05 sun4150node1 kernel: end_request: I/O error, dev sdd, 
+sector 0
+Jun 25 12:50:05 sun4150node1 kernel: Buffer I/O error on device sdd, 
+logical block 0
+Jun 25 12:50:05 sun4150node1 kernel: Buffer I/O error on device sdd, 
+logical block 1
+Jun 25 12:50:05 sun4150node1 kernel: Buffer I/O error on device sdd, 
+logical block 2
+Jun 25 12:50:05 sun4150node1 kernel: Buffer I/O error on device sdd, 
+logical block 3
+Jun 25 12:50:05 sun4150node1 kernel: iscsi: cmd 0x28 is not queued (8)
