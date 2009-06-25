@@ -1,15 +1,17 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: REQUEST for new 'topology' metrics to be moved out of
-	the 'queue' sysfs directory.
-Date: Thu, 25 Jun 2009 04:00:51 -0400
-Message-ID: <yq11vp8spxo.fsf@sermon.lab.mkp.net>
-References: <19010.62951.886231.96622@notabene.brown>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: [PATCH] io-controller: do some changes of io.policy
+	interface
+Date: Thu, 25 Jun 2009 18:23:52 +0800
+Message-ID: <4A435038.60406@cn.fujitsu.com>
+References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>	
+	<1245443858-8487-19-git-send-email-vgoyal@redhat.com>
+	<6599ad830906241452t76e64815s7d68a22a6e746a59@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <19010.62951.886231.96622@notabene.brown> (Neil Brown's message
-	of "Thu, 25 Jun 2009 13:58:31 +1000")
+In-Reply-To: <6599ad830906241452t76e64815s7d68a22a6e746a59@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,89 +21,184 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.de>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com, linux-fsdevel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+To: Paul Menage <menage@google.com>, Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
->>>>> "Neil" == Neil Brown <neilb@suse.de> writes:
+Paul Menage wrote:
+> On Fri, Jun 19, 2009 at 1:37 PM, Vivek Goyal<vgoyal@redhat.com> wrote:
+>> You can use the following format to play with the new interface.
+>> #echo DEV:weight:ioprio_class > /patch/to/cgroup/policy
+>> weight=0 means removing the policy for DEV.
+>>
+>> Examples:
+>> Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+>> # echo /dev/hdb:300:2 > io.policy
+>> # cat io.policy
+>> dev weight class
+>> /dev/hdb 300 2
+> 
+> I think that the read and write should be consistent. Can you just use
+> white-space separation for both, rather than colon-separation for
+> writes and white-space separation for reads?
+> 
+> Also, storing device inode paths statically as strings into the
+> io_policy structure seems wrong, since it's quite possible for the
+> device node that was used originally to be gone by the time that
+> someone reads the io.policy file, or renamed, or even replaced with an
+> inode that refers to to a different block device
+> 
+> My preferred alternatives would be:
+> 
+> - read/write the value as a device number rather than a name
+> - read/write the block device's actual name (e.g. hda or sda) rather
+> than a path to the inode
+> 
 
-Neil,
+Hi Paul, Vivek
 
-Neil>  Of these:
+Here is a patch to fix the issue Paul raised.
 
-Neil>    max_hw_sectors_kb, nr_requests, rq_affinity, iosched/,
-Neil>    max_sectors_kb scheduler nomerges rotational
+This patch achives the following goals
+1 According to Paul's comment, Modifing io.policy interface to
+  use device number for read/write directly. 
+2 Just use white-space separation for both, rather than colon-
+  separation for writes and white-space separation for reads.
+3 Do more strict checking for inputting.
 
-Neil>  are really only relevant to the elevator code and those devices
-Neil>  that used that code (ide, scsi, etc).
+old interface:
+Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+# echo "/dev/hdb:300:2" > io.policy
+# cat io.policy
+dev weight class
+/dev/hdb 300 2
 
-I'm not sure I completely agree with putting rotational in that bucket.
-It affects the choice of allocation policy in btrfs, for instance.
+new interface:
+Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+# echo "3:64 300 2" > io.policy
+# cat io.policy
+dev     weight  class
+3:64    300     2
 
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ block/elevator-fq.c |   59 ++++++++++++++++++++++++++++++++++----------------
+ block/elevator-fq.h |    1 -
+ 2 files changed, 40 insertions(+), 20 deletions(-)
 
-
-Neil>  Of the others:
-Neil>    hw_sector_size - is applicable to all block devices, and could
-Neil>                       reasonably be placed one level up in the
-Neil>                       device directory (along side 'size').
-
-hw_sector_size is deprecated.  It's now split into logical and
-physical_block_size.
-
-
-Neil>  Adding a number of extra fields such as minimum_io_size,
-Neil>  optimal_io_size etc to '/queue' seems to increase the number of
-Neil>  aberrations and enforces md and dm device to have a /queue which
-Neil>  is largely irrelevant.
-
-You seem to be hung up on the fact that you don't queue things.  I think
-that's beside the point.  You *do* have a request_queue thanks to
-calling blk_queue_make_request() in md.c.  And there is more to
-request_queue than the values you brought up.  Like the callback
-functions.  I'm not saying that all the values in request_queue apply to
-MD, but I really don't understand what all the fuss is about.  Other
-than the presence of the string "queue" in the choice of naming.
-
-Anyway.  If you look at the request_queue in the current tree you'll see
-that the very limits we are discussing are contained in a separate
-struct.  We can easily move that somewhere else at a later date if that
-is deemed the right thing to do.
-
-
-Neil>    I have suggested to Martin that 2 are enough.  
-
-I think I have covered this in a separate mail.  You are mixing up
-hardware limitations and I/O hints on the grounds that they went in as
-part of the same patch set and live in the same place.
-
-fdisk/mdadm/dmsetup need to use physical_block_size and alignment_offset
-to prevent us from misaligning when setting up partitions and virtual
-block devices.  Also, when stacking devices I need to know these values
-to ensure that the I/O hints set by MD/DM don't conflict with the
-underlying hardware limitations.  There are also special cases like
-shared disk setups and filesystem journal padding that may need to know
-details of the hardware atomicity.
-
-mkfs.* can leverage minimum_io_size and optimal_io_size hints to choose
-block sizes and to lay out data structures on stripe boundaries.  Just
-like we're doing today except using a common interface for all block
-devices instead of poking at MD and LVM internals.
-
-
-logical_block_size, physical_block_size and alignment_offset are
-hardware limits that need to be honored when creating a (virtual) block
-device or partition.
-
-The minimum/optimal write sizes are hints to the *user* of the block
-device about how to lay out things.  If you look at my MD patch you'll
-see that I only set the I/O hints.  The hardware settings are off limits
-for MD.
-
-
-I don't particularly care whether we store the values in queue/,
-topology/, metrics/, limits/ or in the device root.  Nor whether we call
-it minimum_write_size instead of minimum_io_size.  I'll be happy to roll
-up a renaming patch...
-
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index d779282..83c831b 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -1895,12 +1895,12 @@ static int io_cgroup_policy_read(struct cgroup *cgrp, struct cftype *cft,
+ 	if (list_empty(&iocg->policy_list))
+ 		goto out;
+ 
+-	seq_printf(m, "dev weight class\n");
++	seq_printf(m, "dev\tweight\tclass\n");
+ 
+ 	spin_lock_irq(&iocg->lock);
+ 	list_for_each_entry(pn, &iocg->policy_list, node) {
+-		seq_printf(m, "%s %lu %lu\n", pn->dev_name,
+-			   pn->weight, pn->ioprio_class);
++		seq_printf(m, "%u:%u\t%lu\t%lu\n", MAJOR(pn->dev),
++			   MINOR(pn->dev), pn->weight, pn->ioprio_class);
+ 	}
+ 	spin_unlock_irq(&iocg->lock);
+ out:
+@@ -1936,44 +1936,65 @@ static struct io_policy_node *policy_search_node(const struct io_cgroup *iocg,
+ 	return NULL;
+ }
+ 
+-static int devname_to_devnum(const char *buf, dev_t *dev)
++static int check_dev_num(dev_t dev)
+ {
+-	struct block_device *bdev;
++	int part = 0;
+ 	struct gendisk *disk;
+-	int part;
+ 
+-	bdev = lookup_bdev(buf);
+-	if (IS_ERR(bdev))
++	disk = get_gendisk(dev, &part);
++	if (!disk || part)
+ 		return -ENODEV;
+ 
+-	disk = get_gendisk(bdev->bd_dev, &part);
+-	if (part)
+-		return -EINVAL;
+-
+-	*dev = MKDEV(disk->major, disk->first_minor);
+-	bdput(bdev);
+-
+ 	return 0;
+ }
+ 
+ static int policy_parse_and_set(char *buf, struct io_policy_node *newpn)
+ {
+-	char *s[3], *p;
++	char *s[4], *p, *major_s = NULL, *minor_s = NULL;
+ 	int ret;
++	unsigned long major, minor;
+ 	int i = 0;
++	dev_t dev;
+ 
+ 	memset(s, 0, sizeof(s));
+-	while ((p = strsep(&buf, ":")) != NULL) {
++	while ((p = strsep(&buf, " ")) != NULL) {
+ 		if (!*p)
+ 			continue;
+ 		s[i++] = p;
++
++		/* Prevent from inputing too many things */
++		if (i == 4)
++			break;
+ 	}
+ 
+-	ret = devname_to_devnum(s[0], &newpn->dev);
++	if (i != 3)
++		return -EINVAL;
++
++	p = strsep(&s[0], ":");
++	if (p != NULL)
++		major_s = p;
++	else
++		return -EINVAL;
++
++	minor_s = s[0];
++	if (!minor_s)
++		return -EINVAL;
++
++	ret = strict_strtoul(major_s, 10, &major);
++	if (ret)
++		return -EINVAL;
++
++	ret = strict_strtoul(minor_s, 10, &minor);
++	if (ret)
++		return -EINVAL;
++
++	dev = MKDEV(major, minor);
++
++	ret = check_dev_num(dev);
+ 	if (ret)
+ 		return ret;
+ 
+-	strcpy(newpn->dev_name, s[0]);
++	newpn->dev = dev;
+ 
+ 	if (s[1] == NULL)
+ 		return -EINVAL;
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index b3193f8..7722ebe 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -286,7 +286,6 @@ struct io_group {
+ 
+ struct io_policy_node {
+ 	struct list_head node;
+-	char dev_name[32];
+ 	dev_t dev;
+ 	unsigned long weight;
+ 	unsigned long ioprio_class;
 -- 
-Martin K. Petersen	Oracle Linux Engineering
+1.5.4.rc3
