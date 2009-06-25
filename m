@@ -1,19 +1,18 @@
-From: <berthiaume_wayne@emc.com>
-Subject: RE: REQUEST for new 'topology' metrics to be moved out of
-	the 'queue' sysfs directory.
-Date: Thu, 25 Jun 2009 08:17:41 -0400
-Message-ID: <8F08A56613D77044BD153E2AC5DA0F84022BE9D1@CORPUSMX40A.corp.emc.com>
-References: <19010.62951.886231.96622@notabene.brown>
-	<yq11vp8spxo.fsf@sermon.lab.mkp.net>
-	<125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH] io-controller: do some changes of io.policy
+	interface
+Date: Thu, 25 Jun 2009 08:55:13 -0400
+Message-ID: <20090625125513.GA25439@redhat.com>
+References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
+	<1245443858-8487-19-git-send-email-vgoyal@redhat.com>
+	<6599ad830906241452t76e64815s7d68a22a6e746a59@mail.gmail.com>
+	<4A435038.60406@cn.fujitsu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
+Content-Disposition: inline
+In-Reply-To: <4A435038.60406@cn.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,223 +22,195 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: neilb@suse.de
-Cc: martin.petersen@oracle.com, linux-scsi@vger.kernel.org, snitzer@redhat.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com, linux-fsdevel@vger.kernel.org, torvalds@linux-foundation.org, agk@redhat.com
+To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, Paul Menage <menage@google.com>, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-Just my 2 cents for what its worth, but I'd have to agree with Neil that
-the location of these attributes should be somwhere logical where they
-can be easily found and the naming convention of the attributes such
-that they make sense to the common man. Afterall, not all of us are
-kernel developers. =3D;^) =20
+On Thu, Jun 25, 2009 at 06:23:52PM +0800, Gui Jianfeng wrote:
+> Paul Menage wrote:
+> > On Fri, Jun 19, 2009 at 1:37 PM, Vivek Goyal<vgoyal@redhat.com> wrote:
+> >> You can use the following format to play with the new interface.
+> >> #echo DEV:weight:ioprio_class > /patch/to/cgroup/policy
+> >> weight=0 means removing the policy for DEV.
+> >>
+> >> Examples:
+> >> Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+> >> # echo /dev/hdb:300:2 > io.policy
+> >> # cat io.policy
+> >> dev weight class
+> >> /dev/hdb 300 2
+> > 
+> > I think that the read and write should be consistent. Can you just use
+> > white-space separation for both, rather than colon-separation for
+> > writes and white-space separation for reads?
+> > 
+> > Also, storing device inode paths statically as strings into the
+> > io_policy structure seems wrong, since it's quite possible for the
+> > device node that was used originally to be gone by the time that
+> > someone reads the io.policy file, or renamed, or even replaced with an
+> > inode that refers to to a different block device
+> > 
+> > My preferred alternatives would be:
+> > 
+> > - read/write the value as a device number rather than a name
+> > - read/write the block device's actual name (e.g. hda or sda) rather
+> > than a path to the inode
+> > 
+> 
+> Hi Paul, Vivek
+> 
+> Here is a patch to fix the issue Paul raised.
+> 
+> This patch achives the following goals
+> 1 According to Paul's comment, Modifing io.policy interface to
+>   use device number for read/write directly. 
+> 2 Just use white-space separation for both, rather than colon-
+>   separation for writes and white-space separation for reads.
+> 3 Do more strict checking for inputting.
+> 
+> old interface:
+> Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+> # echo "/dev/hdb:300:2" > io.policy
+> # cat io.policy
+> dev weight class
+> /dev/hdb 300 2
+> 
+> new interface:
+> Configure weight=300 ioprio_class=2 on /dev/hdb in this cgroup
+> # echo "3:64 300 2" > io.policy
+> # cat io.policy
+> dev     weight  class
+> 3:64    300     2
+> 
+> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+> ---
+>  block/elevator-fq.c |   59 ++++++++++++++++++++++++++++++++++----------------
+>  block/elevator-fq.h |    1 -
+>  2 files changed, 40 insertions(+), 20 deletions(-)
+> 
+> diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+> index d779282..83c831b 100644
+> --- a/block/elevator-fq.c
+> +++ b/block/elevator-fq.c
+> @@ -1895,12 +1895,12 @@ static int io_cgroup_policy_read(struct cgroup *cgrp, struct cftype *cft,
+>  	if (list_empty(&iocg->policy_list))
+>  		goto out;
+>  
+> -	seq_printf(m, "dev weight class\n");
+> +	seq_printf(m, "dev\tweight\tclass\n");
+>  
+>  	spin_lock_irq(&iocg->lock);
+>  	list_for_each_entry(pn, &iocg->policy_list, node) {
+> -		seq_printf(m, "%s %lu %lu\n", pn->dev_name,
+> -			   pn->weight, pn->ioprio_class);
+> +		seq_printf(m, "%u:%u\t%lu\t%lu\n", MAJOR(pn->dev),
+> +			   MINOR(pn->dev), pn->weight, pn->ioprio_class);
+>  	}
+>  	spin_unlock_irq(&iocg->lock);
+>  out:
+> @@ -1936,44 +1936,65 @@ static struct io_policy_node *policy_search_node(const struct io_cgroup *iocg,
+>  	return NULL;
+>  }
+>  
+> -static int devname_to_devnum(const char *buf, dev_t *dev)
+> +static int check_dev_num(dev_t dev)
+>  {
+> -	struct block_device *bdev;
+> +	int part = 0;
+>  	struct gendisk *disk;
+> -	int part;
+>  
+> -	bdev = lookup_bdev(buf);
+> -	if (IS_ERR(bdev))
+> +	disk = get_gendisk(dev, &part);
+> +	if (!disk || part)
+>  		return -ENODEV;
+>  
+> -	disk = get_gendisk(bdev->bd_dev, &part);
+> -	if (part)
+> -		return -EINVAL;
+> -
+> -	*dev = MKDEV(disk->major, disk->first_minor);
+> -	bdput(bdev);
+> -
+>  	return 0;
+>  }
+>  
+>  static int policy_parse_and_set(char *buf, struct io_policy_node *newpn)
+>  {
+> -	char *s[3], *p;
+> +	char *s[4], *p, *major_s = NULL, *minor_s = NULL;
+>  	int ret;
+> +	unsigned long major, minor;
+>  	int i = 0;
+> +	dev_t dev;
+>  
+>  	memset(s, 0, sizeof(s));
+> -	while ((p = strsep(&buf, ":")) != NULL) {
+> +	while ((p = strsep(&buf, " ")) != NULL) {
+>  		if (!*p)
+>  			continue;
+>  		s[i++] = p;
+> +
+> +		/* Prevent from inputing too many things */
+> +		if (i == 4)
+> +			break;
+>  	}
+>  
+> -	ret = devname_to_devnum(s[0], &newpn->dev);
+> +	if (i != 3)
+> +		return -EINVAL;
+> +
+> +	p = strsep(&s[0], ":");
+> +	if (p != NULL)
+> +		major_s = p;
+> +	else
+> +		return -EINVAL;
+> +
+> +	minor_s = s[0];
+> +	if (!minor_s)
+> +		return -EINVAL;
+> +
+> +	ret = strict_strtoul(major_s, 10, &major);
+> +	if (ret)
+> +		return -EINVAL;
+> +
+> +	ret = strict_strtoul(minor_s, 10, &minor);
+> +	if (ret)
+> +		return -EINVAL;
+> +
+> +	dev = MKDEV(major, minor);
+> +
+> +	ret = check_dev_num(dev);
+>  	if (ret)
+>  		return ret;
+>  
+> -	strcpy(newpn->dev_name, s[0]);
+> +	newpn->dev = dev;
+>  
+>  	if (s[1] == NULL)
+>  		return -EINVAL;
+> diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+> index b3193f8..7722ebe 100644
+> --- a/block/elevator-fq.h
+> +++ b/block/elevator-fq.h
+> @@ -286,7 +286,6 @@ struct io_group {
+>  
+>  struct io_policy_node {
+>  	struct list_head node;
+> -	char dev_name[32];
+>  	dev_t dev;
+>  	unsigned long weight;
+>  	unsigned long ioprio_class;
 
------Original Message-----
-From: linux-scsi-owner@vger.kernel.org
-[mailto:linux-scsi-owner@vger.kernel.org] On Behalf Of NeilBrown
-Sent: Thursday, June 25, 2009 7:08 AM
-To: Martin K. Petersen
-Cc: Mike Snitzer; Martin K. Petersen; Linus Torvalds; Alasdair G Kergon;
-jens.axboe@oracle.com; linux-scsi@vger.kernel.org;
-linux-kernel@vger.kernel.org; linux-raid@vger.kernel.org;
-linux-ide@vger.kernel.org; linux-fsdevel@vger.kernel.org; device-mapper
-development
-Subject: Re: [dm-devel] REQUEST for new 'topology' metrics to be moved
-out of the 'queue' sysfs directory.
+Hi Gui,
 
-On Thu, June 25, 2009 6:00 pm, Martin K. Petersen wrote:
->>>>>> "Neil" =3D=3D Neil Brown <neilb@suse.de> writes:
->
-> Neil,
->
-> Neil>  Of these:
->
-> Neil>    max_hw_sectors_kb, nr_requests, rq_affinity, iosched/,
-> Neil>    max_sectors_kb scheduler nomerges rotational
->
-> Neil>  are really only relevant to the elevator code and those devices
-> Neil>  that used that code (ide, scsi, etc).
->
-> I'm not sure I completely agree with putting rotational in that
-bucket.
-> It affects the choice of allocation policy in btrfs, for instance.
->
+Thanks for the patch. "unsigned long" for ioprio_class is too big. How
+about using "unsigned short"? I noticed that in io_cgroup also we are
+using "unsigned long". I will fix that.
 
-I confess to have some uncertainty about this.  There is, as far as
-I can tell, no documentation for it.
+For storing weight now we are planning to use "unsigned int". Can you
+please switch to that.
 
-So I asked git why it as added, and it pointed to
-  commit 1308835ffffe6d61ad1f48c5c381c9cc47f683ec
-
-which suggests that it was added so that user space could tell the
-kernel whether the device was rotational, rather than the other way
-around.
-
-But yes, maybe 'rotational' doesn't belong with the others.
-
->
-> Neil>  Adding a number of extra fields such as minimum_io_size,
-> Neil>  optimal_io_size etc to '/queue' seems to increase the number of
-> Neil>  aberrations and enforces md and dm device to have a /queue
-which
-> Neil>  is largely irrelevant.
->
-> You seem to be hung up on the fact that you don't queue things.  I
-think
-> that's beside the point.  You *do* have a request_queue thanks to
-> calling blk_queue_make_request() in md.c.  And there is more to
-> request_queue than the values you brought up.  Like the callback
-> functions.  I'm not saying that all the values in request_queue apply
-to
-> MD, but I really don't understand what all the fuss is about.  Other
-> than the presence of the string "queue" in the choice of naming.
->
-
-Well names are very important.  And as I said later we could possibly
-keep
-them in 'queue' and make 'queue' a more generic directory.  I don't like
-that but it is probably better than the current situation.
-
-As you say, I do currently have a request_queue, but that is an internal
-detail, not part of the externally visible interface, and it is
-something
-that is very much in my sights as something I want to change.  I'm
-still working out the details so I'm a fair way from a concrete proposal
-and a long way from some code.  That change certainly doesn't have
-to happen in any rush.  But we should get the externally visible
-names "right" if we can.
-
-> Anyway.  If you look at the request_queue in the current tree you'll
-see
-> that the very limits we are discussing are contained in a separate
-> struct.  We can easily move that somewhere else at a later date if
-that
-> is deemed the right thing to do.
-
-Agreed.  But not relevant at the moment.  The view from user-space is
-what
-is important.
-
->
->
-> Neil>    I have suggested to Martin that 2 are enough.
->
-> I think I have covered this in a separate mail.  You are mixing up
-> hardware limitations and I/O hints on the grounds that they went in as
-> part of the same patch set and live in the same place.
-
-I think I'm actually mixing them up because they look very much the
-same.  Both say "try to make write requests at least this big" and
-I cannot see the difference being very big to the filesystem.
-
-I tend to mix them up a bit with read_ahead_kb as they are in some
-ways just the 'write' version of that.  But it didn't arrive in the
-same patch set :-)
-
-Also, I think you seem to be treating the read-modify-write behaviour
-of a 4K-sector hard drive as different-in-kind to the read-modify-write
-behaviour of raid5.  I cannot see that.  In both cases an error can
-cause
-unexpected corruption and in both cases getting the alignment right
-helps
-throughput a lot.  So the only difference between these two values
-is the size.
-If one is 4K and one is 40Meg and you have 512bytes of data that you
-want to write as safely as possibly, you might pad it to 4K, but you
-wont pad it to 40Meg.
-If you have 32Meg of data that you want to write as safely as you can,
-you may well pad it to 40Meg, rather than say  "it is a multiple of
-4K, that is enough for me".
-So: the difference is only in the size.
-
-
->
-> fdisk/mdadm/dmsetup need to use physical_block_size and
-alignment_offset
-> to prevent us from misaligning when setting up partitions and virtual
-> block devices.  Also, when stacking devices I need to know these
-values
-> to ensure that the I/O hints set by MD/DM don't conflict with the
-> underlying hardware limitations.  There are also special cases like
-> shared disk setups and filesystem journal padding that may need to
-know
-> details of the hardware atomicity.
-
-"... of the *device* atomicity." It hardly matters whether the device is
-hardware or software, it can still have atomicity issues.
-
->
-> mkfs.* can leverage minimum_io_size and optimal_io_size hints to
-choose
-> block sizes and to lay out data structures on stripe boundaries.  Just
-> like we're doing today except using a common interface for all block
-> devices instead of poking at MD and LVM internals.
-
-As we are using generic terms like "minimum" and "optimal", let's keep
-with those terms when describing filesystem behaviour and not mention
-stripes.
-"mkfs.* can leverage these values to choose the most appropriate sizes
-and alignments for various data strutures".
-What is the most appropriate size?  It depends on how much data we have
-to store, and how much wastage we can afford.  So if there are a range
-of reasonably optimal sizes, the fs can choose the best fit, without
-needing to pretend to understand why one is more optimal than another.
-
-And the "Just like we're doing today ..." is actually a bit sad.
-If you look at mkfs.ext3, it requires 3 values:
-  - block size
-  - stride-size
-  - stripe-width
-
-block size needs to be smallish and a power of 2 and at most
-PAGE_SIZE (I think).  It would be ideal if this could be stripe-size on
-a raid5, but the stripe is usually too large so the next best is
-physical_block_size (so, a size based decision).
-
-stripe-width is only really needed on raid4/5/6 as it is aimed at
-avoiding read-modify-write, so it would be the stripe size, which would
-be minimum_io_size.  Though on a SCSI device it should probably
-be "OPTIMAL TRANSFER LENGTH GRANULARITY" which I thought would be
-optimal_io_size..  so maybe we use that and make minimum_io_size and
-optimal_io_size the same on raid5 ??  Or just provide a list of useful
-sizes and let the fs choose whatever is in the right ball-park.
-
-stride-size is used for raid0 or raid4, or the "Asymmetric" raid5
-layouts.
-It allows ext3 to stagger which drive certain 'hot' data structures are
-on.  The current metrics don't allow for that at all.
-I'm not saying they should, and I'm not sure how they could.  But it
-is sad.
-
->
-> logical_block_size, physical_block_size and alignment_offset are
-> hardware limits that need to be honored when creating a (virtual)
-block
-> device or partition.
-
-logical_block_size is a firmware limit.  The others are just hints.
-Strong hints I agree.  Hints we should follow if at all possible.
-But still hints.
-
->
-> The minimum/optimal write sizes are hints to the *user* of the block
-> device about how to lay out things.  If you look at my MD patch you'll
-> see that I only set the I/O hints.  The hardware settings are off
-limits
-> for MD.
->
->
-> I don't particularly care whether we store the values in queue/,
-> topology/, metrics/, limits/ or in the device root.  Nor whether we
-call
-> it minimum_write_size instead of minimum_io_size.  I'll be happy to
-roll
-> up a renaming patch...
-
-Good, thanks..  I do strongly care that they don't go in queue/, and
-that they have a name that is as close as possible to what they mean.
-Let's see if anyone else has an opinion.
-
-Thanks,
-NeilBrown
-
-
+Thanks
+Vivek
