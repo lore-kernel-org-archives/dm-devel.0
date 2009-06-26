@@ -1,19 +1,19 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: REQUEST for new 'topology' metrics to be moved out of
-	the 'queue' sysfs directory.
-Date: Fri, 26 Jun 2009 10:48:03 -0400
-Message-ID: <yq1ws6znja4.fsf@sermon.lab.mkp.net>
-References: <19010.62951.886231.96622@notabene.brown>
-	<yq11vp8spxo.fsf@sermon.lab.mkp.net>
-	<125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
-	<yq1k530qkm7.fsf@sermon.lab.mkp.net>
-	<19012.47077.328965.919868@notabene.brown>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: RDAC path checker status change messages
+Date: Fri, 26 Jun 2009 11:07:36 -0500
+Message-ID: <20090626160736.GK3172@ether.msp.redhat.com>
+References: <Pine.LNX.4.64.0906231548060.18687@e-smith.charlieb.ott.istop.com>
+	<1245867321.26915.13.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0906241615210.22601@e-smith.charlieb.ott.istop.com>
+	<Pine.LNX.4.64.0906251253570.4229@e-smith.charlieb.ott.istop.com>
+	<Pine.LNX.4.64.0906251300070.4229@e-smith.charlieb.ott.istop.com>
+	<Pine.LNX.4.64.0906251314330.4229@e-smith.charlieb.ott.istop.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <19012.47077.328965.919868@notabene.brown> (Neil Brown's message
-	of "Fri, 26 Jun 2009 21:58:29 +1000")
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0906251314330.4229@e-smith.charlieb.ott.istop.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,79 +23,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-fsdevel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Neil" == Neil Brown <neilb@suse.de> writes:
+On Thu, Jun 25, 2009 at 01:28:40PM -0400, Charlie Brady wrote:
+>
+> On Thu, 25 Jun 2009, Charlie Brady wrote:
+>
+>> On Thu, 25 Jun 2009, Charlie Brady wrote:
+>>
+>>>  I think I need to retract that. The messages appear to be printed when the
+>>>  status is not changing, at least for the "path down" messages.
+>>>
+>>>  I've patched scsi_dh_rdac.c so that SUN/LCSM100_I is included in
+>>>  rdac_dev_list[], and restarted iscsi and multipathd. I've now provoked a
+>>>  path failure via iptables. Here are the logs I see (with unpatched
+>>>  multipathd) - the duplicate message suppression from the rdac path checker
+>>>  is not working:
+>>
+>> OTOH, on path recovery, the wrong message is displayed ("path down" 
+>> instead of "path up") but the message is not repeated:
+>
+>> From multipathd/main.c, there are three conditions where the messages are 
+> printed:
+>
+> ...
+>                         if (newstate != pp->state) {
+>                                 int oldstate = pp->state;
+>                                 pp->state = newstate;
+>                                 LOG_MSG(1, checker_message(&pp->checker));
+> ...
+>                         }
+>                         else if (newstate == PATH_UP || newstate == PATH_GHOST) {
+>                                 LOG_MSG(4, checker_message(&pp->checker));
+> ...
+>                         else if (newstate == PATH_DOWN)
+>                                 LOG_MSG(2, checker_message(&pp->checker));
+> ...
+>
+> I think only the first might be required, and only the first will be seen 
+> if logging verbosity < 2 (default is 2).
+>
+> So there are two path checker problems I can see (in 
+> multipath-tools-0.4.7.rhel5.13):
+>
+> - the rdac checker leaves the message set to "path down" when path
+>   transitions back to up or ghost.
 
-Neil> Providing the fields are clearly and unambiguously documented so
-Neil> that it I can use the documentation to verify the implementation
-Neil> (in md at least), I will be satisfied.
+Any your patch fixes that.
 
-The current sysfs documentation says:
+> - multipathd prints the message on every PATH_DOWN except the first when
+>   verbosity is >= 2, and on every PATH_UP or PATH_GHOST except the first
+>   when verbosity is >= 4.
 
-/sys/block/<disk>/queue/minimum_io_size:
-[...] For RAID arrays it is often the stripe chunk size.
+Why is this a problem? 
 
-/sys/block/<disk>/queue/optimal_io_size:
-[...] For RAID devices it is usually the stripe width or the internal
-block size.
+On verbosity = 1, you only get messages when you change states.
+On verbosity = 2, you additionally get repeated messages for failed
+paths, which are often something that the sysadmin should be doing
+something about.
+On verbosity = 4, you get a message whenever the path checker runs,
+which is helpful for debugging, which is the only time you would ever
+want verbosity = 4.
 
-The latter should be "internal track size".  But in the context of MD I
-think those two definitions are crystal clear.
+This seems sensible to me.  If you don't like the repeated path down
+messages, you can change your verbosity level to 1.  Right now that
+involves editting the init script, but in future releases, you can
+change it in /etc/multipath.conf.
 
+-Ben
 
-As far as making the application of these values more obvious I propose
-the following:
-
-What:		/sys/block/<disk>/queue/minimum_io_size
-Date:		April 2009
-Contact:	Martin K. Petersen <martin.petersen@oracle.com>
-Description:
-		Storage devices may report a granularity or minimum I/O
-		size which is the device's preferred unit of I/O.
-		Requests smaller than this may incur a significant
-		performance penalty.
-
-		For disk drives this value corresponds to the physical
-		block size. For RAID devices it is usually the stripe
-		chunk size.
-
-		A properly aligned multiple of minimum_io_size is the
-		preferred request size for workloads where a high number
-		of I/O operations is desired.
-
-
-What:		/sys/block/<disk>/queue/optimal_io_size
-Date:		April 2009
-Contact:	Martin K. Petersen <martin.petersen@oracle.com>
-Description:
-		Storage devices may report an optimal transfer length or
-		streaming I/O size which is the device's preferred unit
-		of sustained I/O.  This value is a multiple of the
-		device's minimum_io_size.
-
-		optimal_io_size is rarely reported for disk drives. For
-		RAID devices it is usually the stripe width or the
-		internal track size.
-
-		A properly aligned multiple of optimal_io_size is the
-		preferred request size for workloads where sustained
-		throughput is desired.
-
-After contemplating for a bit I think I prefer to keep them I/O
-direction agnostic.  Granted, the potential penalties mostly apply to
-writes.  But I think the application of the values apply to reads as
-well.  They will in a hw RAID context for sure.
-
-
-Neil> I'm looking forward to seeing how you justify the name
-Neil> "physical_block_size" in a way the encompasses possibilities like
-Neil> a device that stripes over a heterogeneous set of disk drives ;-)
-
-I explained that in my mails yesterday.  But that is of no concern to
-MD.
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
+>
+> ---
+> Charlie
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
