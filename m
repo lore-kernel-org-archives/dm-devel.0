@@ -1,73 +1,76 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH multipath-tools-0.4.7.rhel5.13 1/1]
-	multipathd excessive path checker logging
-Date: Fri, 26 Jun 2009 15:50:57 -0500
-Message-ID: <20090626205057.GL3172@ether.msp.redhat.com>
-References: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alberto Bertogli <albertito@blitiri.com.ar>
+Subject: Re: [RFC PATCH] dm-csum: A new device mapper target that checks
+	data integrity
+Date: Fri, 26 Jun 2009 19:36:34 -0300
+Message-ID: <20090626223634.GG5913@blitiri.com.ar>
+References: <20090521161317.GU1376@blitiri.com.ar> <87my91qsn4.fsf@frosties.localdomain> <20090525174630.GI1376@blitiri.com.ar> <8763fop31e.fsf@frosties.localdomain> <20090526125252.GL1376@blitiri.com.ar> <878wkhyqj3.fsf@frosties.localdomain> <37d33d830906260026t60ae1c71h981b6f3bc0165053@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <37d33d830906260026t60ae1c71h981b6f3bc0165053@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: SandeepKsinha <sandeepksinha@gmail.com>
+Cc: Goswin von Brederlow <goswin-v-b@web.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-On Thu, Jun 25, 2009 at 01:50:51PM -0400, Charlie Brady wrote:
->
-> multipathd logs a path checker message whenever state changes. But it also 
-> logs every non-changed message when verbosity is >=4 and newstate is 
-> PATH_UP or PATH_GHOST, and every non-changed message when verbosity is >= 2 
-> and newstate is PATH_DOWN.
->
-> I believe that the message should only be logged, once, when state changes.
+On Fri, Jun 26, 2009 at 12:56:42PM +0530, SandeepKsinha wrote:
+> Hi Alberto,
+> 
+> + * TODO: would it be better to have M1 and M2 apart, to improve the chances of
+> + * recovery in case of a failure?
+> + *
+> 
+> How do you guarantee consistency in case of any lost writes? Your
+> checksum might hold an updated value while your data block might be
+> lost or written to a wrong destination?
 
-I disagree.  If you look at the stuff that gets logged when verbosity >=
-4, you'll see that it's a whole bunch of stuff that normal users would
-never care about, but may be useful for debugging.  This clearly fits.
+The module aims to detect corruption, not prevent or recover from it. If the
+write bio returns an error, it should be properly handled and propagated to
+the upper layers.
 
-I also think that having a path down is something that shouldn't just
-blip by once in the logs.  It's something that often requires the
-sysadmin to intervene. I could see limitting it to, say, only happen
-on every tenth pass through the checker loop, so that these messages
-don't clog up the logs so bad. But since there is the option to set the
-verbosity to 1 to avoid this, I think that printing the path down
-messages repeatedly is useful.
+If it returns success but writes the wrong data to the disk, then there will
+be a mismatch between the checksum and the data at the destination, which will
+be detected when it is read.
 
--Ben
+If a write returns success but no write ever takes place on the disk, then
+dm-csum (as it is now) will not detect it; although I'm not sure if that
+qualifies as on-disk data corruption or is it a disk controller issue.
 
+
+> When implementing such integrity solutions, IMO, it is always
+> advisable to handle such error conditions else this might lead to
+> issues. Since, checksums  are very tightly coupled with the data and
+> any misleading can be quite dangerous unlike parity which can be
+> recovered.
+
+The code considers the possibility of bios failing, and propagates this
+information to the upper layers. If you see any part of the code that lacks
+error handling, please let me know so I can fix it.
+
+
+> Calculate the data's CRC, and compare it to the one found in M1. If they
+> + *    match, the reading is successful. If not, compare it to the one found in
+> + *    M2. If they match, the reading is successful;
+> 
+> Also, I hope by M1 and M2 you refer to the entry for a particular
+> block in the respective IMD sector. What kind of mechanism do you use
+
+M1 and M2 refer to whole IMD sectors.
+
+
+> to determine which is younger?
+> Is it the timestamp or some generation count?
 >
-> Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
->
-> --- multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:57.248455000 -0400
-> +++ mezzanine_patched_multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:12.968639000 -0400
-> @@ -1041,7 +1041,6 @@
->  					enable_group(pp);
->  			}
->  			else if (newstate == PATH_UP || newstate == PATH_GHOST) {
-> -				LOG_MSG(4, checker_message(&pp->checker));
->  				/*
->  				 * double the next check delay.
->  				 * max at conf->max_checkint
-> @@ -1055,8 +1054,6 @@
->  				condlog(4, "%s: delay next check %is",
->  						pp->dev_t, pp->tick);
->  			}
-> -			else if (newstate == PATH_DOWN)
-> -				LOG_MSG(2, checker_message(&pp->checker));
->
->  			pp->state = newstate;
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> I assume information is per_block_entry in the IMD sectors. Which I
+> don't see in your implementation?
+
+It's per IMD sector. More specifically, struct imd_sector_header's
+last_updated contains the generation count for the entire IMD sector, which is
+used to determine which one is younger for updating purposes.
+
+On reads, both IMD sectors are loaded and CRCs are verified against both.
+
+Thanks a lot,
+		Alberto
+
