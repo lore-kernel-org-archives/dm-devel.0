@@ -1,98 +1,73 @@
-From: Eddie Williams <Eddie.Williams@steeleye.com>
-Subject: Re: [dm-devel] mechanism for multipath to pass information to
- hardware handler
-Date: Fri, 26 Jun 2009 16:01:57 -0400
-Message-ID: <1246046517.6707.57.camel@eddie-laptop>
-References: <1245863681.8709.135.camel@eddie-laptop>
-	 <1246043447.3925.64.camel@mulgrave.site>
-	 <1246045509.14164.33.camel@chandra-ubuntu>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH multipath-tools-0.4.7.rhel5.13 1/1]
+	multipathd excessive path checker logging
+Date: Fri, 26 Jun 2009 15:50:57 -0500
+Message-ID: <20090626205057.GL3172@ether.msp.redhat.com>
+References: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1246045509.14164.33.camel@chandra-ubuntu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, SCSI development list <linux-scsi@vger.kernel.org>, asson_ronald <asson_ronald@emc.com>, "Rafael J. Wysocki" <rjw@sisk.pl>, Mike Christie <mchristi@redhat.com>, "Benoit, Arthur" <Benoit_Arthur@emc.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Thu, Jun 25, 2009 at 01:50:51PM -0400, Charlie Brady wrote:
+>
+> multipathd logs a path checker message whenever state changes. But it also 
+> logs every non-changed message when verbosity is >=4 and newstate is 
+> PATH_UP or PATH_GHOST, and every non-changed message when verbosity is >= 2 
+> and newstate is PATH_DOWN.
+>
+> I believe that the message should only be logged, once, when state changes.
 
-The problem is easy to duplicate using sg_persist to register/reserve
-paths to a Clariion array and then fail the active path.  The "enable"
-path will fail to become active when the HONOR RESERVATION flag is not
-set.  Given of course that you have a Clariion array handy...
+I disagree.  If you look at the stuff that gets logged when verbosity >=
+4, you'll see that it's a whole bunch of stuff that normal users would
+never care about, but may be useful for debugging.  This clearly fits.
 
-One question I have asked EMC is in what situations would you NOT want
-to set this bit?  
+I also think that having a path down is something that shouldn't just
+blip by once in the logs.  It's something that often requires the
+sysadmin to intervene. I could see limitting it to, say, only happen
+on every tenth pass through the checker loop, so that these messages
+don't clog up the logs so bad. But since there is the option to set the
+verbosity to 1 to avoid this, I think that printing the path down
+messages repeatedly is useful.
 
-I can test out any changes you make in my test rig and I can probably
-get the folks in the EMC lab I work with to test it as well.
+-Ben
 
-Eddie
-
-On Fri, 2009-06-26 at 12:45 -0700, Chandra Seetharaman wrote:
-> Yes, Mike Christie and I were aware of this and it was one of the issue
-> we were trying to resolve before we pushed scsi_dh interface upstream.
-> (It is little complicated as we need the parameters to be set per
-> vendor-product tuple).
-> 
-> The original code I ported to scsi_dh interface was from Ed Goggin(who
-> was working for EMC then). IIRC, he was also aware of this issue.
-> 
-> When we pushed scsi_dh interface, we did get few of the EMC folks (on
-> Cc) to review/test the code and they did, and this issue was not seen as
-> a problem. 
-> 
-> We wanted to get back to that issue sometime later, got busy with other
-> things, and it disappeared from my list of things-to-do as the
-> regression was not seen as an issue (till now :)... I will get back to
-> it.
-> 
-> chandra
-> 
-> On Fri, 2009-06-26 at 14:10 -0500, James Bottomley wrote:
-> > On Wed, 2009-06-24 at 13:14 -0400, Eddie Williams wrote:
-> > > I notice in scsi_dh_emc.c that there is a comment:
-> > > 
-> > > TODO: need some interface so we can set trespass values
-> > > 
-> > > I don't see where any such interface has been developed or even any
-> > > discussion on the different mailing lists to create such an interface.
-> > > Did I miss something?
-> > > 
-> > > As it stands now there is no way that I can see to have the emc hardware
-> > > handler support the "honor trespass" feature short of recompiling the
-> > > module forcing the flag to be set.  This leaves a feature that worked in
-> > > earlier versions of multipath not working now.
-> > 
-> > OK so as I understand it that means that the line
-> > 
-> > hardware handler "1 emc 0 1"
-> > 
-> > now fails to function correctly because dm-emc no longer exists.  That
-> > makes this a functionality regression from 2.6.26 because of this
-> > commit:
-> > 
-> > 
-> > commit cb520223d7f22c5386aff27a5856a66e2c32aaac
-> > Author: Chandra Seetharaman <sekharan@us.ibm.com>
-> > Date:   Thu May 1 14:50:34 2008 -0700
-> > 
-> >     [SCSI] scsi_dh: Remove hardware handlers from dm
-> >     
-> >     This patch removes the 3 hardware handlers that currently exist
-> >     under dm as the functionality is moved to SCSI layer in the earlier
-> >     patches.
-> > 
-> > Because we haven't actually moved all the functionality.
-> > 
-> > James
-> > 
-> > 
-> > 
-> 
+>
+> Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
+>
+> --- multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:57.248455000 -0400
+> +++ mezzanine_patched_multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:12.968639000 -0400
+> @@ -1041,7 +1041,6 @@
+>  					enable_group(pp);
+>  			}
+>  			else if (newstate == PATH_UP || newstate == PATH_GHOST) {
+> -				LOG_MSG(4, checker_message(&pp->checker));
+>  				/*
+>  				 * double the next check delay.
+>  				 * max at conf->max_checkint
+> @@ -1055,8 +1054,6 @@
+>  				condlog(4, "%s: delay next check %is",
+>  						pp->dev_t, pp->tick);
+>  			}
+> -			else if (newstate == PATH_DOWN)
+> -				LOG_MSG(2, checker_message(&pp->checker));
+>
+>  			pp->state = newstate;
+>
 > --
 > dm-devel mailing list
 > dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
-
