@@ -1,73 +1,55 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: failover does not work with rdac device handler
-Date: Fri, 26 Jun 2009 10:42:51 -0700
-Message-ID: <1246038171.14164.19.camel@chandra-ubuntu>
-References: <4A424F9E.1050403@meteo.uni-koeln.de>
-	<1245977789.14164.15.camel@chandra-ubuntu>
-	<4A4493CB.6040009@meteo.uni-koeln.de>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [dm-devel] mechanism for multipath to pass information to
+ hardware handler
+Date: Fri, 26 Jun 2009 14:10:47 -0500
+Message-ID: <1246043447.3925.64.camel@mulgrave.site>
+References: <1245863681.8709.135.camel@eddie-laptop>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A4493CB.6040009@meteo.uni-koeln.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1245863681.8709.135.camel@eddie-laptop>
+Sender: linux-scsi-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: SCSI development list <linux-scsi@vger.kernel.org>, "Rafael J. Wysocki" <rjw@sisk.pl>, Chandra Seetharaman <sekharan@us.ibm.com>
 List-Id: dm-devel.ids
 
+On Wed, 2009-06-24 at 13:14 -0400, Eddie Williams wrote:
+> I notice in scsi_dh_emc.c that there is a comment:
+> 
+> TODO: need some interface so we can set trespass values
+> 
+> I don't see where any such interface has been developed or even any
+> discussion on the different mailing lists to create such an interface.
+> Did I miss something?
+> 
+> As it stands now there is no way that I can see to have the emc hardware
+> handler support the "honor trespass" feature short of recompiling the
+> module forcing the flag to be set.  This leaves a feature that worked in
+> earlier versions of multipath not working now.
 
-On Fri, 2009-06-26 at 11:24 +0200, Mario Mech wrote:
-> Chandra Seetharaman schrieb:
-> > On Wed, 2009-06-24 at 18:09 +0200, Mario Mech wrote:
-> >> Hi,
-> >>
-> >> I need help with a similar or even the same issue as in the thread mentioned in the Subject 
-> >> (https://www.redhat.com/archives/dm-devel/2008-October/msg00130.html).
-> > 
-> > My bad. I had some issues during debug and never got back to it.
-> > 
-> > Will send couple of patches by tomorrow to fix this problem.
-> >  
-> 
-> That sounds great.
-> 
-> >> At the moment I'd like to avoid building the multipath package by myself with the patch provided in the afore mentioned thread.
-> > 
-> > The changes are in kernel code.
-> >> Do you have any ideas? Or is a different problem I have.
-> > 
-> > It is the same problem and I am afraid that you do not have a way out.
-> > 
-> > May be next version of RHEL might add your device to rdac_dev_list (if
-> > you could do that that would fix the problem).
-> > 
-> 
-> I assume it's only building new kernel modules for my running 2.6.18-128.1.14.el5. That shouldn't be a big deal.
+OK so as I understand it that means that the line
 
-Yes. MD3000i is already in mainline code, you can just cut-n-paste that
-entry for rdac_dev_list, compile the module and you are good to do.
+hardware handler "1 emc 0 1"
 
-chandra
-> 
-> >> Every help is appreciated.
-> >>
-> >> All best
-> >>
-> >> Mario
-> >>
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> 
+now fails to function correctly because dm-emc no longer exists.  That
+makes this a functionality regression from 2.6.26 because of this
+commit:
+
+
+commit cb520223d7f22c5386aff27a5856a66e2c32aaac
+Author: Chandra Seetharaman <sekharan@us.ibm.com>
+Date:   Thu May 1 14:50:34 2008 -0700
+
+    [SCSI] scsi_dh: Remove hardware handlers from dm
+    
+    This patch removes the 3 hardware handlers that currently exist
+    under dm as the functionality is moved to SCSI layer in the earlier
+    patches.
+
+Because we haven't actually moved all the functionality.
+
+James
+
+
+
