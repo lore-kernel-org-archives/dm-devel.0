@@ -1,55 +1,52 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [dm-devel] REQUEST for new 'topology' metrics to be moved out
-	of the 'queue' sysfs directory.
-Date: Thu, 25 Jun 2009 21:40:15 +0200
-Message-ID: <20090625194015.GB31415@kernel.dk>
-References: <19010.62951.886231.96622@notabene.brown> <yq11vp8spxo.fsf@sermon.lab.mkp.net> <125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH] io-controller: do some changes of io.policy
+	interface
+Date: Fri, 26 Jun 2009 08:27:22 +0800
+Message-ID: <4A4415EA.4090201@cn.fujitsu.com>
+References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
+	<1245443858-8487-19-git-send-email-vgoyal@redhat.com>
+	<6599ad830906241452t76e64815s7d68a22a6e746a59@mail.gmail.com>
+	<4A435038.60406@cn.fujitsu.com> <20090625125513.GA25439@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, linux-fsdevel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090625125513.GA25439@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, Paul Menage <menage@google.com>, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-On Thu, Jun 25 2009, NeilBrown wrote:
-> > You seem to be hung up on the fact that you don't queue things.  I think
-> > that's beside the point.  You *do* have a request_queue thanks to
-> > calling blk_queue_make_request() in md.c.  And there is more to
-> > request_queue than the values you brought up.  Like the callback
-> > functions.  I'm not saying that all the values in request_queue apply to
-> > MD, but I really don't understand what all the fuss is about.  Other
-> > than the presence of the string "queue" in the choice of naming.
-> >
+Vivek Goyal wrote:
+...
 > 
-> Well names are very important.  And as I said later we could possibly keep
-> them in 'queue' and make 'queue' a more generic directory.  I don't like
-> that but it is probably better than the current situation.
+> Hi Gui,
+> 
+> Thanks for the patch. "unsigned long" for ioprio_class is too big. How
+> about using "unsigned short"? I noticed that in io_cgroup also we are
+> using "unsigned long". I will fix that.
+> 
+> For storing weight now we are planning to use "unsigned int". Can you
+> please switch to that.
 
-Sorry to ask the obvious question, but what would the point of all this
-pain be? The existing values can't go anywhere else, so you'd have to
-add symlinks back into queue/ anyway.
+  Sure, i'll post another patch to switch to that.
 
-> As you say, I do currently have a request_queue, but that is an internal
-> detail, not part of the externally visible interface, and it is something
-> that is very much in my sights as something I want to change.  I'm
-> still working out the details so I'm a fair way from a concrete proposal
-> and a long way from some code.  That change certainly doesn't have
-> to happen in any rush.  But we should get the externally visible
-> names "right" if we can.
-
-What crack are you smoking? :-)
-
-A block device must have a request_queue, that's pretty much spread
-throughout the kernel. The fact that md/dm is only using a subset of the
-functionality is not a very good reason for re-writing large parts of
-that design. We could save some space, but whether the queue is 200
-bytes or 1400 bytes doesn't really make a whole lot of real-world
-difference. It's not like we allocate/deallocate these all the time,
-they are mostly static structures.
+> 
+> Thanks
+> Vivek
+> 
+> 
+> 
 
 -- 
-Jens Axboe
-
+Regards
+Gui Jianfeng
