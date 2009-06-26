@@ -1,47 +1,101 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [dm-devel] REQUEST for new 'topology' metrics to be moved out
-	of the 'queue' sysfs directory.
-Date: Fri, 26 Jun 2009 15:49:54 +0200
-Message-ID: <20090626134954.GS23611@kernel.dk>
-References: <19010.62951.886231.96622@notabene.brown> <yq11vp8spxo.fsf@sermon.lab.mkp.net> <125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name> <20090625194015.GB31415@kernel.dk> <19012.49673.454853.975682@notabene.brown> <20090626125037.GO23611@kernel.dk> <7c458f2470811a877dd60203b9bbb7ac.squirrel@neil.brown.name> <771af936681abb7ddc2191eb5b6b68d0.squirrel@neil.brown.name>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: REQUEST for new 'topology' metrics to be moved out of
+	the 'queue' sysfs directory.
+Date: Fri, 26 Jun 2009 10:48:03 -0400
+Message-ID: <yq1ws6znja4.fsf@sermon.lab.mkp.net>
+References: <19010.62951.886231.96622@notabene.brown>
+	<yq11vp8spxo.fsf@sermon.lab.mkp.net>
+	<125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
+	<yq1k530qkm7.fsf@sermon.lab.mkp.net>
+	<19012.47077.328965.919868@notabene.brown>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <771af936681abb7ddc2191eb5b6b68d0.squirrel@neil.brown.name>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, linux-fsdevel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <19012.47077.328965.919868@notabene.brown> (Neil Brown's message
+	of "Fri, 26 Jun 2009 21:58:29 +1000")
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Neil Brown <neilb@suse.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-fsdevel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 26 2009, NeilBrown wrote:
-> On Fri, June 26, 2009 11:16 pm, NeilBrown wrote:
-> > On Fri, June 26, 2009 10:50 pm, Jens Axboe wrote:
-> >> On Fri, Jun 26 2009, Neil Brown wrote:
-> >
-> >>> But for now, please please please can we revert the change which made
-> >>> 'queue' appear in md and dm devices, (and loop and ...) and put these
-> >>> generic values somewhere ... generic?
-> >>
-> >> No we cannot, not without a time machine. 2.6.30 is released, so it's
-> >> too late to revert things like that, even if we wanted.
-> >
-> > Drat... for some reason I was thinking that it only came in in 2.6.31-rc.
-> > However it is only documented in ABI/testing, not ABI/stable ... if there
-> > is any value in that distinction, then it should be possible to move it??
-> >
-> 
-> No, wait.  I was right.  The addition of 'queue' to md/dm devices
-> happened post-2.6.30.   So are the additions of physical_block_size etc.
-> So there is still time to put these in a properly generic place.
+>>>>> "Neil" == Neil Brown <neilb@suse.de> writes:
 
-Yes you are right, the commit date had me fooled.
+Neil> Providing the fields are clearly and unambiguously documented so
+Neil> that it I can use the documentation to verify the implementation
+Neil> (in md at least), I will be satisfied.
 
-> Do you have a good reason for them going in /queue?
+The current sysfs documentation says:
 
-Do you have a good reason for moving them? Im my opinion that makes the
-separation between ->make_request_fn and ->request_fn devices bigger.
+/sys/block/<disk>/queue/minimum_io_size:
+[...] For RAID arrays it is often the stripe chunk size.
+
+/sys/block/<disk>/queue/optimal_io_size:
+[...] For RAID devices it is usually the stripe width or the internal
+block size.
+
+The latter should be "internal track size".  But in the context of MD I
+think those two definitions are crystal clear.
+
+
+As far as making the application of these values more obvious I propose
+the following:
+
+What:		/sys/block/<disk>/queue/minimum_io_size
+Date:		April 2009
+Contact:	Martin K. Petersen <martin.petersen@oracle.com>
+Description:
+		Storage devices may report a granularity or minimum I/O
+		size which is the device's preferred unit of I/O.
+		Requests smaller than this may incur a significant
+		performance penalty.
+
+		For disk drives this value corresponds to the physical
+		block size. For RAID devices it is usually the stripe
+		chunk size.
+
+		A properly aligned multiple of minimum_io_size is the
+		preferred request size for workloads where a high number
+		of I/O operations is desired.
+
+
+What:		/sys/block/<disk>/queue/optimal_io_size
+Date:		April 2009
+Contact:	Martin K. Petersen <martin.petersen@oracle.com>
+Description:
+		Storage devices may report an optimal transfer length or
+		streaming I/O size which is the device's preferred unit
+		of sustained I/O.  This value is a multiple of the
+		device's minimum_io_size.
+
+		optimal_io_size is rarely reported for disk drives. For
+		RAID devices it is usually the stripe width or the
+		internal track size.
+
+		A properly aligned multiple of optimal_io_size is the
+		preferred request size for workloads where sustained
+		throughput is desired.
+
+After contemplating for a bit I think I prefer to keep them I/O
+direction agnostic.  Granted, the potential penalties mostly apply to
+writes.  But I think the application of the values apply to reads as
+well.  They will in a hw RAID context for sure.
+
+
+Neil> I'm looking forward to seeing how you justify the name
+Neil> "physical_block_size" in a way the encompasses possibilities like
+Neil> a device that stripes over a heterogeneous set of disk drives ;-)
+
+I explained that in my mails yesterday.  But that is of no concern to
+MD.
 
 -- 
-Jens Axboe
-
+Martin K. Petersen	Oracle Linux Engineering
