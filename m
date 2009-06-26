@@ -1,22 +1,17 @@
-From: Alan Cox <alan@lxorguk.ukuu.org.uk>
-Subject: Re: [RFC PATCH] dm-csum: A new device mapper target that
- checks data integrity
-Date: Fri, 26 Jun 2009 23:53:57 +0100
-Message-ID: <20090626235357.7bec63a8@lxorguk.ukuu.org.uk>
-References: <20090521161317.GU1376@blitiri.com.ar>
-	<87my91qsn4.fsf@frosties.localdomain>
-	<20090525174630.GI1376@blitiri.com.ar>
-	<8763fop31e.fsf@frosties.localdomain>
-	<20090526125252.GL1376@blitiri.com.ar>
-	<878wkhyqj3.fsf@frosties.localdomain>
-	<37d33d830906260026t60ae1c71h981b6f3bc0165053@mail.gmail.com>
-	<20090626223634.GG5913@blitiri.com.ar>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH multipath-tools-0.4.7.rhel5.13
+	1/1]	multipathd excessive path checker logging
+Date: Fri, 26 Jun 2009 16:54:26 -0700
+Message-ID: <1246060466.14164.36.camel@chandra-ubuntu>
+References: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
+	<20090626205057.GL3172@ether.msp.redhat.com>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090626223634.GG5913@blitiri.com.ar>
+In-Reply-To: <20090626205057.GL3172@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,42 +21,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alberto Bertogli <albertito@blitiri.com.ar>
-Cc: Goswin von Brederlow <goswin-v-b@web.de>, linux-kernel@vger.kernel.org, SandeepKsinha <sandeepksinha@gmail.com>, linux-raid@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> If it returns success but writes the wrong data to the disk, then there will
-> be a mismatch between the checksum and the data at the destination, which will
-> be detected when it is read.
+I agree with Ben. 
 
-(or to the wrong place on the disk which for pre SATA is actually
-possibly more likely as the command transfers are not CRC protected on
-the cable - just slower, while the data is CRC protected). SATA fixes
-this.
+Reducing it to every 10th pass for down would be a good compromise.
 
-> If a write returns success but no write ever takes place on the disk, then
-> dm-csum (as it is now) will not detect it; although I'm not sure if that
-> qualifies as on-disk data corruption or is it a disk controller issue.
-
-Does it matter to the poor victim ? At this point you get into putting
-mirrors on disks A & B with their integrity on the opposite pair so if
-one forgets to do I/O hopefully both won't.
-
-To be honest if you are really really paranoid you don't do link layer
-checksumming anyway (which is what this is) you checksum in the apps using
-the data set. That protects you against lots of error cases in the
-memory/cache system and on network transmissions. On big clusters
-crunching enormous amounts of data all those 1 in 10^lots bit error rates
-become such that it's worth the effort.
-
-> It's per IMD sector. More specifically, struct imd_sector_header's
-> last_updated contains the generation count for the entire IMD sector, which is
-> used to determine which one is younger for updating purposes.
+On Fri, 2009-06-26 at 15:50 -0500, Benjamin Marzinski wrote:
+> On Thu, Jun 25, 2009 at 01:50:51PM -0400, Charlie Brady wrote:
+> >
+> > multipathd logs a path checker message whenever state changes. But it also 
+> > logs every non-changed message when verbosity is >=4 and newstate is 
+> > PATH_UP or PATH_GHOST, and every non-changed message when verbosity is >= 2 
+> > and newstate is PATH_DOWN.
+> >
+> > I believe that the message should only be logged, once, when state changes.
 > 
-> On reads, both IMD sectors are loaded and CRCs are verified against both.
-
-Seems reasonably paranoid - drives will do things under you like commit
-data to disk out in a different order to the commands unless the cache
-gets flushed between them but the barrier code should do that bit.
-
-Alan
+> I disagree.  If you look at the stuff that gets logged when verbosity >=
+> 4, you'll see that it's a whole bunch of stuff that normal users would
+> never care about, but may be useful for debugging.  This clearly fits.
+> 
+> I also think that having a path down is something that shouldn't just
+> blip by once in the logs.  It's something that often requires the
+> sysadmin to intervene. I could see limitting it to, say, only happen
+> on every tenth pass through the checker loop, so that these messages
+> don't clog up the logs so bad. But since there is the option to set the
+> verbosity to 1 to avoid this, I think that printing the path down
+> messages repeatedly is useful.
+> 
+> -Ben
+> 
+> >
+> > Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
+> >
+> > --- multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:57.248455000 -0400
+> > +++ mezzanine_patched_multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:12.968639000 -0400
+> > @@ -1041,7 +1041,6 @@
+> >  					enable_group(pp);
+> >  			}
+> >  			else if (newstate == PATH_UP || newstate == PATH_GHOST) {
+> > -				LOG_MSG(4, checker_message(&pp->checker));
+> >  				/*
+> >  				 * double the next check delay.
+> >  				 * max at conf->max_checkint
+> > @@ -1055,8 +1054,6 @@
+> >  				condlog(4, "%s: delay next check %is",
+> >  						pp->dev_t, pp->tick);
+> >  			}
+> > -			else if (newstate == PATH_DOWN)
+> > -				LOG_MSG(2, checker_message(&pp->checker));
+> >
+> >  			pp->state = newstate;
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
