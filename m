@@ -1,103 +1,125 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 2/2] io-controller: make rt preemption happen
-	in the whole hierarchy
-Date: Fri, 26 Jun 2009 08:39:19 -0400
-Message-ID: <20090626123919.GA9785@redhat.com>
-References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com>
-	<1245443858-8487-21-git-send-email-vgoyal@redhat.com>
-	<4A3F3648.7080007@cn.fujitsu.com>
-	<20090622172123.GE15600@redhat.com>
-	<4A4079B8.4020402@cn.fujitsu.com>
-	<20090623140250.GA4262@redhat.com>
-	<4A41EFE1.5050101@cn.fujitsu.com> <4A44833F.8040308@cn.fujitsu.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [dm-devel] REQUEST for new 'topology' metrics to be moved out
+	of the 'queue' sysfs directory.
+Date: Fri, 26 Jun 2009 14:50:38 +0200
+Message-ID: <20090626125037.GO23611@kernel.dk>
+References: <19010.62951.886231.96622@notabene.brown> <yq11vp8spxo.fsf@sermon.lab.mkp.net> <125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name> <20090625194015.GB31415@kernel.dk> <19012.49673.454853.975682@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-ide-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4A44833F.8040308@cn.fujitsu.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
+In-Reply-To: <19012.49673.454853.975682@notabene.brown>
+Sender: linux-ide-owner@vger.kernel.org
+To: Neil Brown <neilb@suse.de>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, linux-fsdevel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 26, 2009 at 04:13:51PM +0800, Gui Jianfeng wrote:
-> let rt queue preempt non-rt queue if needed.
-> Make sure comparision happens at the same level.
+On Fri, Jun 26 2009, Neil Brown wrote:
+> On Thursday June 25, jens.axboe@oracle.com wrote:
+> > On Thu, Jun 25 2009, NeilBrown wrote:
+> > > > You seem to be hung up on the fact that you don't queue things.  I think
+> > > > that's beside the point.  You *do* have a request_queue thanks to
+> > > > calling blk_queue_make_request() in md.c.  And there is more to
+> > > > request_queue than the values you brought up.  Like the callback
+> > > > functions.  I'm not saying that all the values in request_queue apply to
+> > > > MD, but I really don't understand what all the fuss is about.  Other
+> > > > than the presence of the string "queue" in the choice of naming.
+> > > >
+> > > 
+> > > Well names are very important.  And as I said later we could possibly keep
+> > > them in 'queue' and make 'queue' a more generic directory.  I don't like
+> > > that but it is probably better than the current situation.
+> > 
+> > Sorry to ask the obvious question, but what would the point of all this
+> > pain be? The existing values can't go anywhere else, so you'd have to
+> > add symlinks back into queue/ anyway.
 > 
-> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-> ---
->  block/elevator-fq.c |   28 +++++++++++++++++++++++++++-
->  1 files changed, 27 insertions(+), 1 deletions(-)
+> Why cannot the existing values go any where else?  I don't understand
+> that assertion at all.
+
+Because it's an exported interface, we can't just move things around at
+will.
+
+> > > As you say, I do currently have a request_queue, but that is an internal
+> > > detail, not part of the externally visible interface, and it is something
+> > > that is very much in my sights as something I want to change.  I'm
+> > > still working out the details so I'm a fair way from a concrete proposal
+> > > and a long way from some code.  That change certainly doesn't have
+> > > to happen in any rush.  But we should get the externally visible
+> > > names "right" if we can.
+> > 
+> > What crack are you smoking? :-)
 > 
-> diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-> index 1d4ec1f..21d38f5 100644
-> --- a/block/elevator-fq.c
-> +++ b/block/elevator-fq.c
-> @@ -3742,6 +3742,31 @@ int elv_iosched_expire_ioq(struct request_queue *q, int slice_expired,
->  	return ret;
->  }
->  
-> +static int check_rt_preemption(struct io_queue *ioq)
-> +{
-> +	struct hlist_node *node;
-> +	struct hlist_head *hhead = &ioq->efqd->rt_ioq_list;
-> +	struct io_queue *rt_ioq;
-> +	struct io_entity *entity = &ioq->entity;
-> +	struct io_entity *new_entity;
-> +
-> +	rcu_read_lock();
-> +	hlist_for_each_entry_rcu(rt_ioq, node, hhead, rt_node) {
-> +		new_entity = &rt_ioq->entity;
-> +
-> +		bfq_find_matching_entity(&entity, &new_entity);
-> +
-> +		if (new_entity->ioprio_class == IOPRIO_CLASS_RT &&
-> +		    entity->ioprio_class != IOPRIO_CLASS_RT) {
-> +			rcu_read_unlock();
-> +			return 1;
-> +		}
-> +	}
-> +	rcu_read_unlock();
-> +
-> +	return 0;
-> +}
-> +
->  /* Common layer function to select the next queue to dispatch from */
->  void *elv_fq_select_ioq(struct request_queue *q, int force)
->  {
-> @@ -3823,7 +3848,8 @@ void *elv_fq_select_ioq(struct request_queue *q, int force)
->  	 */
->  	iog = ioq_to_io_group(ioq);
->  
-> -	if (!elv_ioq_class_rt(ioq) && iog->busy_rt_queues) {
-> +	if (!elv_ioq_class_rt(ioq) &&
-> +	    (iog->busy_rt_queues || check_rt_preemption(ioq))) {
->  		/*
+> I have a special mix of crack that helps me see Patterns everywhere,
+> even in C code.  Some patterns are bright, shiny, and elegant.  Others
+> are muddy and confused.  struct request_queue has a distinct shadow
+> over it just now.
+> 
+> > 
+> > A block device must have a request_queue, that's pretty much spread
+> > throughout the kernel. The fact that md/dm is only using a subset of the
+> > functionality is not a very good reason for re-writing large parts of
+> > that design. We could save some space, but whether the queue is 200
+> > bytes or 1400 bytes doesn't really make a whole lot of real-world
+> > difference. It's not like we allocate/deallocate these all the time,
+> > they are mostly static structures.
+> 
+> It isn't about saving space.  It is about maintainability.  To be
+> maintainable, the code must be easy to understand.  For that, it must
+> be well structured.
+> 
+> Every block device has a 'gendisk' (aka generic disk).
+> Every block device also (currently) has a request_queue.
 
-Hi Gui,
+I don't know why you keep saying currently. It has always had a queue,
+and I don't see a good reason why that should change for "special" block
+devices like md/dm/loop/whatnot.
 
-I am not able to understand why do we need above changes?
+> If I have generic data that is applicable to all disks, where should I
+> put it?  One would think "gendisk".
+> If I have data that is related to request handling (as in uses of 
+> 'struct request'), where should that go?  in request_queue I suspect.
+> But there are several fields in request_queue that are not related to
+> requests, and are generic to all disks.
 
-BFQ scheduler already takes care of selecting an RT queue for dispatch (if
-the queue is entitled to).
+It is indeed a bit of a toss-up there, since we do a queue associated
+with each gendisk.
 
-In case a new RT queue backlogged while a BE queue is being served, we
-do preemtion check to make sure RT queue gets to run as soon as possible.
+> I think "generic data goes in gendisk" is something that it would be
+> easy for people to understand.
+> The current 'topology' values are intended to be generic to all disks
+> so they should ideally go in gendisk.  I'm not pushing for that now.
+> Longer term, that would be my aim, but for now I'm just focussing on
+> restoring the 'queue' subdirectory to it's previous non-generic state.
+> 
+> i.e. revert the change that made 'queue' appear for md and dm and loop
+> and nbd and .... which have all never needed it before.
+> And find somewhere else to put the topology data - probably just the
+> top level.
+> i.e. add the names as DEVICE_ATTRs in genhd.c, and write the 'show'
+> routine to dereference ->queue carefully, just like
+> disk_alignment_offset_show.
+> (oooo... just noticed that the 'alignment_offset' attribute can
+>  contain the string '-1'.... while I have been guilty of that sort of
+>  thing myself, I would much rather it said "misaligned".)
+> 
+> 
+> As for how intrusive vs beneficial it would be to move all the generic
+> fields out of request_queue and allow md to not have a request queue,
+> that will have to be a discussion for another day.  I do hope to
+> eventually present you with a series of patches which does just that.
+> My aim would be to make sure each one was clearly beneficial.  And I
+> do have a grand vision involving this which is more than just tidying
+> up some small in-elegances.  Only time will tell how it eventuates.
+> 
+> 
+> But for now, please please please can we revert the change which made
+> 'queue' appear in md and dm devices, (and loop and ...) and put these
+> generic values somewhere ... generic?
 
-In fact I think that busy_rt_queues infrastructure is also redundant and
-I plan to get rid of it. 
+No we cannot, not without a time machine. 2.6.30 is released, so it's
+too late to revert things like that, even if we wanted.
 
-Can you please help me understand what use case are you addressing with
-above patch?
+-- 
+Jens Axboe
 
-Thanks
-Vivek
