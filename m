@@ -1,50 +1,120 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: dm-ioband RPM packages
-Date: Fri, 26 Jun 2009 17:46:39 +0900 (JST)
-Message-ID: <20090626.174639.193685940.ryov@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: SandeepKsinha <sandeepksinha@gmail.com>
+Subject: Re: [RFC PATCH] dm-csum: A new device mapper target that checks data
+	integrity
+Date: Fri, 26 Jun 2009 14:20:32 +0530
+Message-ID: <37d33d830906260150i3550db27lde3ef50c5a8aee58@mail.gmail.com>
+References: <20090521161317.GU1376@blitiri.com.ar>
+	 <87my91qsn4.fsf@frosties.localdomain>
+	 <20090525174630.GI1376@blitiri.com.ar>
+	 <8763fop31e.fsf@frosties.localdomain>
+	 <20090526125252.GL1376@blitiri.com.ar>
+	 <878wkhyqj3.fsf@frosties.localdomain>
+	 <37d33d830906260026t60ae1c71h981b6f3bc0165053@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, centos@centos.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <37d33d830906260026t60ae1c71h981b6f3bc0165053@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Goswin von Brederlow <goswin-v-b@web.de>
+Cc: Alberto Bertogli <albertito@blitiri.com.ar>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-Hi all,
+Hi,
 
-I'm pleased to announce that the new dm-ioband RPM package (v1.12.0)
-has been released at:
-  http://sourceforge.net/apps/trac/ioband/wiki/dm-ioband
+I meant sectors and not blocks.
 
-dm-ioband provides disk bandwidth control on per partition, per user,
-per process and per virtual machine (such as KVM or Xen) basis.
+On Fri, Jun 26, 2009 at 12:56 PM, SandeepKsinha<sandeepksinha@gmail.com=
+> wrote:
+> Hi Alberto,
+>
+> + * TODO: would it be better to have M1 and M2 apart, to improve the =
+chances of
+> + * recovery in case of a failure?
+> + *
+>
+> How do you guarantee consistency in case of any lost writes? Your
+> checksum might hold an updated value while your data block might be
+> lost or written to a wrong destination?
+>
 
-The RPM packages are for Red Hat Enterprise Linux 5.x and CentOS
-5.x. They were tested on RHEL 5.2 and CentOS 5.3 and will also work on
-other 5.x versions.
+sector in place of block.
 
-The major change of this release is that a new bandwidth control
-policy "range-bw" is supported. This policy is developed by Dong-Jae
-Kang, and it allows users to set a minimum and maximum I/O bandwidth
-by absolute numbers. The minimum I/O bandwidth should be guaranteed
-for stable performance or reliability of specific process groups, and
-I/O bandwidth over the maximum limit should be throttled to protect
-the limited I/O resource from over-provisioning in unnecessary usage
-or to reserve the I/O bandwidth for another use.
+> When implementing such integrity solutions, IMO, it is always
+> advisable to handle such error conditions else this might lead to
+> issues. Since, checksums =A0are very tightly coupled with the data an=
+d
+> any misleading can be quite dangerous unlike parity which can be
+> recovered.
+>
+> Calculate the data's CRC, and compare it to the one found in M1. If t=
+hey
+> + * =A0 =A0match, the reading is successful. If not, compare it to th=
+e one found in
+> + * =A0 =A0M2. If they match, the reading is successful;
+>
+> Also, I hope by M1 and M2 you refer to the entry for a particular
+> block in the respective IMD sector. What kind of mechanism do you use
+> to determine which is younger?
+> Is it the timestamp or some generation count?
+>
 
-Please visit our website for more information.
-  http://sourceforge.net/apps/trac/ioband/wiki/dm-ioband
+for a particular sector and not block.
 
-Any comments and suggestions are welcome!
+> I assume information is per_block_entry in the IMD sectors. Which I
+> don't see in your implementation?
+> =A0*
+> + * The imd structure consists of:
+> + * =A0 - 16 bit CRC (CCITT) (big endian)
+> + * =A0 - 16 bit flags (big endian)
+> + * =A0 - 32 bit tag
+>
+> Correct me If I am missing something.
+>
+> On Fri, May 29, 2009 at 12:59 AM, Goswin von Brederlow<goswin-v-b@web=
+=2Ede> wrote:
+>> Now I need to get a new harddisk so I can test this without risking
+>> live data. :)
+>>
+>> MfG
+>> =A0 =A0 =A0 =A0Goswin
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-raid=
+" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+>>
+>
+>
+>
+> --
+> Regards,
+> Sandeep.
+>
+>
+>
+>
+>
+>
+> =93To learn is to change. Education is a process that changes the lea=
+rner.=94
+>
 
-Thanks,
-Ryo Tsuruta
+
+
+--=20
+Regards,
+Sandeep.
+
+
+
+
+
+ =09
+=93To learn is to change. Education is a process that changes the learn=
+er.=94
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
