@@ -1,49 +1,106 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: [PATCH multipath-tools-0.4.7.rhel5.13 1/1]
-	multipathd excessive path checker logging
-Date: Fri, 26 Jun 2009 21:39:21 -0400
-Message-ID: <20090627013921.GA2580@mars.virtualiron.com>
-References: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
-	<20090626205057.GL3172@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH]: scsi_dh: Reference count scsi_dh_attach
+Date: Fri, 26 Jun 2009 19:30:06 -0700
+Message-ID: <1246069806.14164.49.camel@chandra-ubuntu>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090626205057.GL3172@ether.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
+Cc: dm-devel <dm-devel@redhat.com>, Mario Mech <mech@meteo.uni-koeln.de>
 List-Id: dm-devel.ids
 
-On Fri, Jun 26, 2009 at 03:50:57PM -0500, Benjamin Marzinski wrote:
-> On Thu, Jun 25, 2009 at 01:50:51PM -0400, Charlie Brady wrote:
-> >
-> > multipathd logs a path checker message whenever state changes. But it also 
-> > logs every non-changed message when verbosity is >=4 and newstate is 
-> > PATH_UP or PATH_GHOST, and every non-changed message when verbosity is >= 2 
-> > and newstate is PATH_DOWN.
-> >
-> > I believe that the message should only be logged, once, when state changes.
-> 
-> I disagree.  If you look at the stuff that gets logged when verbosity >=
-> 4, you'll see that it's a whole bunch of stuff that normal users would
-> never care about, but may be useful for debugging.  This clearly fits.
-> 
-> I also think that having a path down is something that shouldn't just
-> blip by once in the logs.  It's something that often requires the
-> sysadmin to intervene. I could see limitting it to, say, only happen
-> on every tenth pass through the checker loop, so that these messages
-> don't clog up the logs so bad. But since there is the option to set the
-> verbosity to 1 to avoid this, I think that printing the path down
-> messages repeatedly is useful.
+Problem reported: http://marc.info/?l=dm-devel&m=124585978305866&w=2
 
-Hmm.. What if you have 100 LUNs with four paths, meaning you get 400
-messages saying: "Down! Down! Pants on fire!"
+This patch fixes the problem:
+-----------------
+scsi_dh does not do a refernce count for attach/detach, and this affects
+the way it is supposed to work with multipath when a device is not
+in the dev_list of the hardware handler.
+
+This patch adds a reference count that counts each attach.
+
+Signed-Off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+
+---
+ drivers/scsi/device_handler/scsi_dh.c |   23 ++++++++++++++++-------
+ include/scsi/scsi_device.h            |    2 ++
+ 2 files changed, 18 insertions(+), 7 deletions(-)
+
+Index: linux-2.6.31-rc1/include/scsi/scsi_device.h
+===================================================================
+--- linux-2.6.31-rc1.orig/include/scsi/scsi_device.h
++++ linux-2.6.31-rc1/include/scsi/scsi_device.h
+@@ -191,6 +191,8 @@ struct scsi_device_handler {
+ 
+ struct scsi_dh_data {
+ 	struct scsi_device_handler *scsi_dh;
++	struct scsi_device *sdev;
++	struct kref kref;
+ 	char buf[0];
+ };
+ 
+Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+===================================================================
+--- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh.c
++++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+@@ -153,12 +153,24 @@ static int scsi_dh_handler_attach(struct
+ 	if (sdev->scsi_dh_data) {
+ 		if (sdev->scsi_dh_data->scsi_dh != scsi_dh)
+ 			err = -EBUSY;
+-	} else if (scsi_dh->attach)
++		else
++			kref_get(&sdev->scsi_dh_data->kref);
++	} else if (scsi_dh->attach) {
+ 		err = scsi_dh->attach(sdev);
+-
++		if (!err) {
++			kref_init(&sdev->scsi_dh_data->kref);
++			sdev->scsi_dh_data->sdev = sdev;
++		}
++	}
+ 	return err;
+ }
+ 
++static void __detach_handler (struct kref *kref)
++{
++	struct scsi_dh_data *scsi_dh_data = container_of(kref, struct scsi_dh_data, kref);
++	scsi_dh_data->scsi_dh->detach(scsi_dh_data->sdev);
++}
++
+ /*
+  * scsi_dh_handler_detach - Detach a device handler from a device
+  * @sdev - SCSI device the device handler should be detached from
+@@ -180,7 +192,7 @@ static void scsi_dh_handler_detach(struc
+ 		scsi_dh = sdev->scsi_dh_data->scsi_dh;
+ 
+ 	if (scsi_dh && scsi_dh->detach)
+-		scsi_dh->detach(sdev);
++		kref_put(&sdev->scsi_dh_data->kref, __detach_handler);
+ }
+ 
+ /*
+@@ -474,7 +486,6 @@ int scsi_dh_attach(struct request_queue
+ 
+ 	if (!err) {
+ 		err = scsi_dh_handler_attach(sdev, scsi_dh);
+-
+ 		put_device(&sdev->sdev_gendev);
+ 	}
+ 	return err;
+@@ -505,10 +516,8 @@ void scsi_dh_detach(struct request_queue
+ 		return;
+ 
+ 	if (sdev->scsi_dh_data) {
+-		/* if sdev is not on internal list, detach */
+ 		scsi_dh = sdev->scsi_dh_data->scsi_dh;
+-		if (!device_handler_match(scsi_dh, sdev))
+-			scsi_dh_handler_detach(sdev, scsi_dh);
++		scsi_dh_handler_detach(sdev, scsi_dh);
+ 	}
+ 	put_device(&sdev->sdev_gendev);
+ }
+
+
