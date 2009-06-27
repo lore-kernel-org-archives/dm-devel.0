@@ -1,85 +1,64 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH multipath-tools-0.4.7.rhel5.13
-	1/1]	multipathd excessive path checker logging
-Date: Fri, 26 Jun 2009 16:54:26 -0700
-Message-ID: <1246060466.14164.36.camel@chandra-ubuntu>
-References: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
-	<20090626205057.GL3172@ether.msp.redhat.com>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] mechanism for multipath to pass information to
+	hardware handler
+Date: Fri, 26 Jun 2009 17:03:36 -0700
+Message-ID: <1246061016.14164.45.camel@chandra-ubuntu>
+References: <1245863681.8709.135.camel@eddie-laptop>
+	 <1246043447.3925.64.camel@mulgrave.site>
+	 <1246045509.14164.33.camel@chandra-ubuntu>
+	 <1246046154.3925.80.camel@mulgrave.site>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090626205057.GL3172@ether.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1246046154.3925.80.camel@mulgrave.site>
+Sender: linux-scsi-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: SCSI development list <linux-scsi@vger.kernel.org>, asson_ronald <asson_ronald@emc.com>, "Rafael J. Wysocki" <rjw@sisk.pl>, Mike Christie <mchristi@redhat.com>, "Benoit, Arthur" <Benoit_Arthur@emc.com>
 List-Id: dm-devel.ids
 
-I agree with Ben. 
 
-Reducing it to every 10th pass for down would be a good compromise.
+On Fri, 2009-06-26 at 14:55 -0500, James Bottomley wrote:
+> On Fri, 2009-06-26 at 12:45 -0700, Chandra Seetharaman wrote:
+> > Yes, Mike Christie and I were aware of this and it was one of the issue
+> > we were trying to resolve before we pushed scsi_dh interface upstream.
+> > (It is little complicated as we need the parameters to be set per
+> > vendor-product tuple).
+> > 
+> > The original code I ported to scsi_dh interface was from Ed Goggin(who
+> > was working for EMC then). IIRC, he was also aware of this issue.
+> > 
+> > When we pushed scsi_dh interface, we did get few of the EMC folks (on
+> > Cc) to review/test the code and they did, and this issue was not seen as
+> > a problem. 
+> > 
+> > We wanted to get back to that issue sometime later, got busy with other
+> > things, and it disappeared from my list of things-to-do as the
+> > regression was not seen as an issue (till now :)... I will get back to
+> > it.
+> 
+> One way around this might simply be to make the device_handlers create a
+> sysfs interface for additional parameters.  Then the multipath command
 
-On Fri, 2009-06-26 at 15:50 -0500, Benjamin Marzinski wrote:
-> On Thu, Jun 25, 2009 at 01:50:51PM -0400, Charlie Brady wrote:
-> >
-> > multipathd logs a path checker message whenever state changes. But it also 
-> > logs every non-changed message when verbosity is >=4 and newstate is 
-> > PATH_UP or PATH_GHOST, and every non-changed message when verbosity is >= 2 
-> > and newstate is PATH_DOWN.
-> >
-> > I believe that the message should only be logged, once, when state changes.
+Yes, having a per device interface is one of the options we considered.
+Once we have that defined we can either use sysfs or a scsi_dh_8() API
+to achieve the same.
+
+But we wanted to have it per vendor-product instead of per device, I
+don't recall the problems associated with it. Mike(C), do you recall ?
+
+> can feed them (or in a pinch, users relying on the features can pass
+> them in manually).  Right at the moment having no possible work around
+> does appear to be an issue.
+
+I will try to roll up a patch soon.
 > 
-> I disagree.  If you look at the stuff that gets logged when verbosity >=
-> 4, you'll see that it's a whole bunch of stuff that normal users would
-> never care about, but may be useful for debugging.  This clearly fits.
+> James
 > 
-> I also think that having a path down is something that shouldn't just
-> blip by once in the logs.  It's something that often requires the
-> sysadmin to intervene. I could see limitting it to, say, only happen
-> on every tenth pass through the checker loop, so that these messages
-> don't clog up the logs so bad. But since there is the option to set the
-> verbosity to 1 to avoid this, I think that printing the path down
-> messages repeatedly is useful.
-> 
-> -Ben
-> 
-> >
-> > Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
-> >
-> > --- multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:57.248455000 -0400
-> > +++ mezzanine_patched_multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 13:32:12.968639000 -0400
-> > @@ -1041,7 +1041,6 @@
-> >  					enable_group(pp);
-> >  			}
-> >  			else if (newstate == PATH_UP || newstate == PATH_GHOST) {
-> > -				LOG_MSG(4, checker_message(&pp->checker));
-> >  				/*
-> >  				 * double the next check delay.
-> >  				 * max at conf->max_checkint
-> > @@ -1055,8 +1054,6 @@
-> >  				condlog(4, "%s: delay next check %is",
-> >  						pp->dev_t, pp->tick);
-> >  			}
-> > -			else if (newstate == PATH_DOWN)
-> > -				LOG_MSG(2, checker_message(&pp->checker));
-> >
-> >  			pp->state = newstate;
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
 > 
 > --
 > dm-devel mailing list
 > dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
+
