@@ -1,23 +1,19 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: REQUEST for new 'topology' metrics to be moved out
-	of the 'queue' sysfs directory.
-Date: Sat, 27 Jun 2009 22:50:05 +1000
-Message-ID: <19014.5501.31618.7897@notabene.brown>
-References: <19010.62951.886231.96622@notabene.brown>
-	<yq11vp8spxo.fsf@sermon.lab.mkp.net>
-	<125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
-	<20090625194015.GB31415@kernel.dk>
-	<19012.49673.454853.975682@notabene.brown>
-	<20090626125037.GO23611@kernel.dk>
-	<7c458f2470811a877dd60203b9bbb7ac.squirrel@neil.brown.name>
-	<771af936681abb7ddc2191eb5b6b68d0.squirrel@neil.brown.name>
-	<20090626134954.GS23611@kernel.dk>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: mechanism for multipath to pass information to	hardware
+	handler
+Date: Sat, 27 Jun 2009 12:48:26 -0500
+Message-ID: <4A465B6A.5070507@cs.wisc.edu>
+References: <1245863681.8709.135.camel@eddie-laptop>	
+	<1246043447.3925.64.camel@mulgrave.site>	
+	<1246045509.14164.33.camel@chandra-ubuntu>	
+	<1246046154.3925.80.camel@mulgrave.site>
+	<1246061016.14164.45.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: message from Jens Axboe on Friday June 26
+In-Reply-To: <1246061016.14164.45.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,55 +23,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org, linux-fsdevel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+To: sekharan@linux.vnet.ibm.com
+Cc: SCSI development list <linux-scsi@vger.kernel.org>, asson_ronald <asson_ronald@emc.com>, "Rafael J. Wysocki" <rjw@sisk.pl>, device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>, "Benoit,
+	Arthur" <Benoit_Arthur@emc.com>
 List-Id: dm-devel.ids
 
-On Friday June 26, jens.axboe@oracle.com wrote:
-> On Fri, Jun 26 2009, NeilBrown wrote:
-> > Do you have a good reason for them going in /queue?
-> 
-> Do you have a good reason for moving them? Im my opinion that makes the
-> separation between ->make_request_fn and ->request_fn devices bigger.
+On 06/26/2009 07:03 PM, Chandra Seetharaman wrote:
+> On Fri, 2009-06-26 at 14:55 -0500, James Bottomley wrote:
+>> On Fri, 2009-06-26 at 12:45 -0700, Chandra Seetharaman wrote:
+>>> Yes, Mike Christie and I were aware of this and it was one of the issue
+>>> we were trying to resolve before we pushed scsi_dh interface upstream.
+>>> (It is little complicated as we need the parameters to be set per
+>>> vendor-product tuple).
+>>>
+>>> The original code I ported to scsi_dh interface was from Ed Goggin(who
+>>> was working for EMC then). IIRC, he was also aware of this issue.
+>>>
+>>> When we pushed scsi_dh interface, we did get few of the EMC folks (on
+>>> Cc) to review/test the code and they did, and this issue was not seen as
+>>> a problem.
+>>>
+>>> We wanted to get back to that issue sometime later, got busy with other
+>>> things, and it disappeared from my list of things-to-do as the
+>>> regression was not seen as an issue (till now :)... I will get back to
+>>> it.
+>> One way around this might simply be to make the device_handlers create a
+>> sysfs interface for additional parameters.  Then the multipath command
+>
+> Yes, having a per device interface is one of the options we considered.
+> Once we have that defined we can either use sysfs or a scsi_dh_8() API
+> to achieve the same.
+>
+> But we wanted to have it per vendor-product instead of per device, I
+> don't recall the problems associated with it. Mike(C), do you recall ?
+>
 
-Yes, I have a good reason.
+I do not think you want the interface to be per vendor-product in the 
+kernel. You might want some devices with some feature on and some with 
+it off. In userspace we can decide if it is should be per vendor-product 
+or per device, and then have multipath set things up. The kernel 
+interface should probably be more generic.
 
-Put succinctly:  I have a reason for reverting the change to make
-/queue visible in md/dm devices:  It contains mostly fields that are
-irrelevant to those devices.
-Given that, I have a reason for moving the new fields:  So that can be
-visible for md/dm/loop/etc devices.
 
-More verbosely:
-Currently (i.e. 2.6.30 and earlier) every block device has a device
-directory in /sys/devices.  e.g. "sda".  It contains attributes that
-are generally applicable to any block device (size, ro etc).
-
-Some devices, which use the __make_request driver/layer, have a
-'queue' directory with attributes that are specific to the
-implementation of __make_request and related code.
-Other devices, which make use of the md_make_request driver/layer,
-have an 'md' directory with attributes that are specific to that
-implementation.
-Other devices have no such directory (relevant values are managed
-exclusively via ioctls).
-
-We are adding a number of attributes that are generally applicable to
-all block devices.
-Given the above description of the current state, it seems natural for
-the new attributes to go in the device directory -
-e.g. sda/new-attribute.
-This is exactly what has been done for 'alignment_offset'.
-The same should be done for physical_block_size, minimum_io_size, and
-optimal_io_size.
-Introducing the 'queue' directory - which mostly contains fields
-completely irrelevant to non- __make_request drivers - just to store
-some values that can easily go elsewhere doesn't seem to make sense to
-me.
-
-As for increasing the "separation between ->make_request_fn and
-->request_fn devices", I don't think that is a useful way to look at
-the devices, as I detail in my other Email.
-
-Thanks,
-NeilBrown
+>> can feed them (or in a pinch, users relying on the features can pass
+>> them in manually).  Right at the moment having no possible work around
+>> does appear to be an issue.
+>
+> I will try to roll up a patch soon.
+>> James
+>>
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
