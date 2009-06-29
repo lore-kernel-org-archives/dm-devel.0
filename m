@@ -1,115 +1,96 @@
-From: Goswin von Brederlow <goswin-v-b@web.de>
-Subject: Re: [RFC PATCH] dm-csum: A new device mapper target that checks data integrity
-Date: Mon, 29 Jun 2009 00:59:37 +0200
-Message-ID: <87ab3sars6.fsf@frosties.localdomain>
-References: <20090521161317.GU1376@blitiri.com.ar>
-	<87my91qsn4.fsf@frosties.localdomain>
-	<20090525174630.GI1376@blitiri.com.ar>
-	<8763fop31e.fsf@frosties.localdomain>
-	<20090526125252.GL1376@blitiri.com.ar>
-	<19014.47753.69063.510164@notabene.brown>
-	<20090628153025.GH5913@blitiri.com.ar>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: [PATCH] io-controller: optimization for iog deletion when elevator
+ exiting
+Date: Mon, 29 Jun 2009 13:27:47 +0800
+Message-ID: <4A4850D3.3000700@cn.fujitsu.com>
+References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com> <1245443858-8487-6-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20090628153025.GH5913@blitiri.com.ar> (Alberto Bertogli's
-	message of "Sun, 28 Jun 2009 12:30:25 -0300")
-Sender: linux-raid-owner@vger.kernel.org
-To: Alberto Bertogli <albertito@blitiri.com.ar>
-Cc: Neil Brown <neilb@suse.de>, Goswin von Brederlow <goswin-v-b@web.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, agk@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752203AbZF2F3X@vger.kernel.org>
+In-Reply-To: <1245443858-8487-6-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-Alberto Bertogli <albertito@blitiri.com.ar> writes:
+Hi Vivek,
 
-> On Sun, Jun 28, 2009 at 10:34:17AM +1000, Neil Brown wrote:
->> On Tuesday May 26, albertito@blitiri.com.ar wrote:
->> > On Tue, May 26, 2009 at 12:33:01PM +0200, Goswin von Brederlow wrote:
->> > > > This scheme assumes writes to a single sector are atomic in the presence of
->> > > > normal crashes, which I'm not sure if it's something sane to assume in
->> > > > practise. If it's not, then the scheme can be modified to cope with that.
->> > > 
->> > > What happens if you have multiple writes to the same sector? (assuming
->> > > you ment "before" above)
->> > > 
->> > > - user writes to sector
->> > > - queue up write for M1 and data1
->> > > - M1 writes
->> > > - user writes to sector
->> > > - queue up writes for M2 and data2
->> > > - data1 is thrown away as data2 overwrites it
->> > > - M2 writes
->> > > - system crashes
->> > > 
->> > > Now both M1 and M2 have a different checksum than the old data left on
->> > > disk.
->> > > 
->> > > Can this happen?
->> > 
->> > No, parallel writes that affect the same metadata sectors will not be allowed.
->> > At the moment there is a rough lock which does not allow simultaneous updates
->> > at all, I plan to make that more fine-grained in the future.
->> 
->> Can I suggest a variation on the above which, I think, can cause a
->> problem.
->> 
->>  - user writes data-A' to sector-A (which currently contains data-A)
->>  - queue up write for M1 and data-A'
->>  - M1 is written correctly.
->>  - power fails (before data-A' is written)
->> reboot
->>  - read sector-A, find data-A which matches checksum on M2, so
->>    success.
->> 
->> So everything is working perfectly so far...
->> 
->>  - write sector-B (in same 62-sector range as sector-A).
->>  - queue up write for M2 and data-B
->>  - those writes complete
->>  - read sector-A.  find data-A, which doesn't match M1 (that has
->>    data-A') and doesn't match M2 (which is mostly a copy of M1),
->>    so the read fails.
->
-> The thing is that M2 is not a copy of M1. When updating M2 for data-B, the
-> procedure is not "copy M1, update sector-B's checksum, write" but "read M2,
-> update sector-B's checksum, write". So as long as there are no writes to
-> sector-A, M1 will have the incorrect checksum and M2 will have the correct
-> one, regardless of writes to the other sectors.
->
-> However, a troubling scenario based on yours could be:
->
->  - M2 has the right checksum but is older, M1 has the wrong checksum but is
->    newer.
->  - user writes data-A'' to sector'A
->  - queue up write for M2 (chosen because it is older)
->  - M2 is written correctly
->  - power fails before data-A'' is written
->
-> At that point, data-A is written at sector-A, but both M1 and M2 have
-> incorrect checksums for it.
->
-> I'll try to come up with a better scheme that copes with this kind of
-> scenarios and post an updated patch.
->
-> Thanks a lot,
-> 		Alberto
+There's no need to travel the iocg->group_data for each iog
+when exiting a elevator, that costs too much. An alternative 
+solution is reseting iocg_id as soon as an io group unlinking 
+from a iocg. Make a decision that whether it's need to carry 
+out deleting action by checking iocg_id.
 
-When the newer block has the wrong checksum you first need to correct
-that. If you find a wrong checksum on read that is easy to do. But you
-won't detect this on writes.
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ block/elevator-fq.c |   29 ++++++++++-------------------
+ 1 files changed, 10 insertions(+), 19 deletions(-)
 
-One solution I can think of is this:
-
-- user writes to sector A
-- compare checksum of sector A in M1 and M2
-  if checksums differ:
-  - read sector A and calculate checksum
-  - if M1 has the right checksum update M2
-  - wait
-- write new checksum to M1
-- wait
-- write data to sector A
-- wait
-- write new checksum to M2
-
-MfG
-        Goswin
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index d779282..b26fe0f 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -2218,8 +2218,6 @@ void io_group_cleanup(struct io_group *iog)
+ 	BUG_ON(iog->sched_data.active_entity != NULL);
+ 	BUG_ON(entity != NULL && entity->tree != NULL);
+ 
+-	iog->iocg_id = 0;
+-
+ 	/*
+ 	 * Wait for any rcu readers to exit before freeing up the group.
+ 	 * Primarily useful when io_get_io_group() is called without queue
+@@ -2376,6 +2374,7 @@ remove_entry:
+ 			  group_node);
+ 	efqd = rcu_dereference(iog->key);
+ 	hlist_del_rcu(&iog->group_node);
++	iog->iocg_id = 0;
+ 	spin_unlock_irqrestore(&iocg->lock, flags);
+ 
+ 	spin_lock_irqsave(efqd->queue->queue_lock, flags);
+@@ -2403,35 +2402,27 @@ done:
+ void io_group_check_and_destroy(struct elv_fq_data *efqd, struct io_group *iog)
+ {
+ 	struct io_cgroup *iocg;
+-	unsigned short id = iog->iocg_id;
+-	struct hlist_node *n;
+-	struct io_group *__iog;
+ 	unsigned long flags;
+ 	struct cgroup_subsys_state *css;
+ 
+ 	rcu_read_lock();
+ 
+-	BUG_ON(!id);
+-	css = css_lookup(&io_subsys, id);
++	css = css_lookup(&io_subsys, iog->iocg_id);
+ 
+-	/* css can't go away as associated io group is still around */
+-	BUG_ON(!css);
++	if (!css)
++		goto out;
+ 
+ 	iocg = container_of(css, struct io_cgroup, css);
+ 
+ 	spin_lock_irqsave(&iocg->lock, flags);
+-	hlist_for_each_entry_rcu(__iog, n, &iocg->group_data, group_node) {
+-		/*
+-		 * Remove iog only if it is still in iocg list. Cgroup
+-		 * deletion could have deleted it already.
+-		 */
+-		if (__iog == iog) {
+-			hlist_del_rcu(&iog->group_node);
+-			__io_destroy_group(efqd, iog);
+-			break;
+-		}
++
++	if (iog->iocg_id) {
++		hlist_del_rcu(&iog->group_node);
++		__io_destroy_group(efqd, iog);
+ 	}
++
+ 	spin_unlock_irqrestore(&iocg->lock, flags);
++out:
+ 	rcu_read_unlock();
+ }
+ 
+-- 1.5.4.rc3 
