@@ -1,59 +1,70 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH multipath-tools-0.4.7.rhel5.13 1/1]	multipathd
-	excessive path checker logging
-Date: Mon, 29 Jun 2009 08:19:50 +0200
-Message-ID: <4A485D06.1030509@suse.de>
-References: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
-	<20090626205057.GL3172@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH]: create sysfs file,	dh_state for SCSI devices
+ even if they	are not in the inteernal lists
+Date: Mon, 29 Jun 2009 09:40:32 +0200
+Message-ID: <4A486FF0.7040209@suse.de>
+References: <1246069888.14164.53.camel@chandra-ubuntu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090626205057.GL3172@ether.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1246069888.14164.53.camel@chandra-ubuntu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
+Cc: linux-scsi <linux-scsi@vger.kernel.org>, Mario Mech <mech@meteo.uni-koeln.de>
 List-Id: dm-devel.ids
 
-Benjamin Marzinski wrote:
-> On Thu, Jun 25, 2009 at 01:50:51PM -0400, Charlie Brady wrote:
->> multipathd logs a path checker message whenever state changes. But it =
-also=20
->> logs every non-changed message when verbosity is >=3D4 and newstate is=
-=20
->> PATH_UP or PATH_GHOST, and every non-changed message when verbosity is=
- >=3D 2=20
->> and newstate is PATH_DOWN.
->>
->> I believe that the message should only be logged, once, when state cha=
-nges.
+Chandra Seetharaman wrote:
+> Create the sysfs file, dh_state even if the new SCSI device is not
+> in the any of the device handler's internal lists.
 >=20
-> I disagree.  If you look at the stuff that gets logged when verbosity >=
-=3D
-> 4, you'll see that it's a whole bunch of stuff that normal users would
-> never care about, but may be useful for debugging.  This clearly fits.
+> Signed-Off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+> ---
+>  drivers/scsi/device_handler/scsi_dh.c |   11 ++++-------
+>  1 file changed, 4 insertions(+), 7 deletions(-)
 >=20
-> I also think that having a path down is something that shouldn't just
-> blip by once in the logs.  It's something that often requires the
-> sysadmin to intervene. I could see limitting it to, say, only happen
-> on every tenth pass through the checker loop, so that these messages
-> don't clog up the logs so bad. But since there is the option to set the
-> verbosity to 1 to avoid this, I think that printing the path down
-> messages repeatedly is useful.
+> Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh.c
+> +++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+> @@ -304,18 +304,15 @@ static int scsi_dh_notifier(struct notif
+>  	sdev =3D to_scsi_device(dev);
+> =20
+>  	if (action =3D=3D BUS_NOTIFY_ADD_DEVICE) {
+> +		err =3D device_create_file(dev, &scsi_dh_state_attr);
+> +		/* don't care about err */
+>  		devinfo =3D device_handler_match(NULL, sdev);
+> -		if (!devinfo)
+> -			goto out;
+> -
+> -		err =3D scsi_dh_handler_attach(sdev, devinfo);
+> -		if (!err)
+> -			err =3D device_create_file(dev, &scsi_dh_state_attr);
+> +		if (devinfo)
+> +			err =3D scsi_dh_handler_attach(sdev, devinfo);
+>  	} else if (action =3D=3D BUS_NOTIFY_DEL_DEVICE) {
+>  		device_remove_file(dev, &scsi_dh_state_attr);
+>  		scsi_dh_handler_detach(sdev, NULL);
+>  	}
+> -out:
+>  	return err;
+>  }
+> =20
 >=20
-Agreed strongly. There is nothing more annoying than having 'one-sided'
-messages, like printing a path down message _without_ any accompanying
-path up message.
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+NACK.
 
-That sort of thing always messes up debugging.
+This will create sysfs attributes even if the attach()
+failed for other reason like a generic error. So we'll end
+up with device handler attributes and no device handler attached.
+
+Not a good idea.
 
 Cheers,
 
@@ -63,3 +74,8 @@ Dr. Hannes Reinecke		      zSeries & Storage
 hare@suse.de			      +49 911 74053 688
 SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
 GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
