@@ -1,63 +1,76 @@
-From: Paul Jensen <pgjensen@gmail.com>
-Subject: SMP support
-Date: Tue, 30 Jun 2009 11:21:08 -0600
-Message-ID: <3cdc53910906301021l6f7100c9y79c6246d3e97a4f5@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@gmail.com>
+Subject: Re: Massive corruption on RAID0
+Date: Tue, 30 Jun 2009 14:28:09 -0400
+Message-ID: <170fa0d20906301128x3eef7033m91126f3658eadc0c@mail.gmail.com>
+References: <298610bb0906281738u2e1ce91fnc753acc145d759bb@mail.gmail.com>
+	 <4A48355D.5040001@redhat.com>
+	 <298610bb0906290812t249c7e52l80e57af36bd0e80c@mail.gmail.com>
+	 <4A4A3065.4020202@redhat.com>
+	 <87f94c370906300942p7c5f576cgbb8c065625cf1716@mail.gmail.com>
+	 <4A4A415A.1070207@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0658724240=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-2
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <4A4A415A.1070207@redhat.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Eric Sandeen <sandeen@redhat.com>
+Cc: Greg Freemyer <greg.freemyer@gmail.com>, =?ISO-8859-2?Q?Krzysztof_Kosi=F1ski?= <tweenk.pl@gmail.com>, linux-ext4@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0658724240==
-Content-Type: multipart/alternative; boundary=0016e647548847d880046d9408d8
+2009/6/30 Eric Sandeen <sandeen@redhat.com>:
+> Greg Freemyer wrote:
+>> 2009/6/30 Eric Sandeen <sandeen@redhat.com>:
+>>> Krzysztof Kosi=F1ski wrote:
+>> <snip>
+>>>>>> By the way, is there some way to have RAID0-like functionality w=
+ith
+>>>> write barriers?
+>>> Mirrors can pass barriers, IIRC, but not stripes (IIRC...) - I don'=
+t
+>>> know if any work is being done to address this.
+>>>
+>> I'm pretty sure mdraid is not attempting to address it.
+>>
+>> The issue is that barriers with a single drive can simply be sent to
+>> the drive for it to do the heavy lifting.
+>>
+>> With raid-0, it is much more difficult.
+>>
+>> ie. you send a barrier to 2 different drives. =A0One drive takes 30
+>> milliseconds to flush the pre-barrier queue to disk and then continu=
+es
+>> working on the post barrier data . =A0The other drive takes 500
+>> milliseconds to do the same. =A0The end result is out of sync barrie=
+rs.
+>> Not at all what the filesystem expects.
+>>
+>> The only reliable solution is to disable write caching on the drives=
+=2E
+>> Of course you don't need barriers then.
+>
+> Agreed this is the best solution at least for now. =A0But, the dm fol=
+ks
+> are apparently working on some sort of barrier solution for stripes, =
+I
+> think. =A0I don't know the details, perhaps I should.... :)
 
---0016e647548847d880046d9408d8
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Yes, DM's stripe target has full barrier support in the latest
+2.6.31-rc1.  You can create a striped LV using:
+lvcreate --stripes STRIPES --stripsesize STRIPESIZE ...
 
-I am new to the mailing list and searching around has shown outdated posts
-about multi-core support for kcryptd.
+It should be noted that 2.6.31-rc1 had a small bug that causes
+"misaligned" warnings to appear when activating DM devices.  These
+warnings can be ignored and obviously have nothing to do with barriers
+(they are related to DM's new support for the topology
+infrastructure).  That warnings bug has been fixed and will likely be
+pulled in for 2.6.31-rc2.
 
-What is the current standing/ETA with adding SMP support for
-encryption/decryption with kcryptd?  Linux is severely behind Windows on
-volume encryption using only a single core.  With a quad-core CPU i am
-getting 4x the decryption (400-500MB/sec) vs 100-150MB/sec with Linux.
+Mike
 
-Thanks for all of the hard work put into this!
-
-
-Paul
-
---0016e647548847d880046d9408d8
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-I am new to the mailing list and searching around has shown outdated posts =
-about multi-core support for kcryptd.<br><br>What is the current standing/E=
-TA with adding SMP support for encryption/decryption with kcryptd?=A0 Linux=
- is severely behind Windows on volume encryption using only a single core.=
-=A0 With a quad-core CPU i am getting 4x the decryption (400-500MB/sec) vs =
-100-150MB/sec with Linux.<br>
-<br>Thanks for all of the hard work put into this!<br><br><br>Paul<br><br>
-
---0016e647548847d880046d9408d8--
-
-
---===============0658724240==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0658724240==--
+Mike
+--
+To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
