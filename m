@@ -1,53 +1,89 @@
-From: Andreas Dilger <adilger@sun.com>
-Subject: Re: [dm-devel] REQUEST for new 'topology' metrics to be moved out	of
- the 'queue' sysfs directory.
-Date: Tue, 30 Jun 2009 01:09:27 +0200
-Message-ID: <20090629230927.GU3570@webber.adilger.int>
-References: <125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
- <20090625194015.GB31415@kernel.dk> <19012.49673.454853.975682@notabene.brown>
- <20090626125037.GO23611@kernel.dk>
- <f0d53a7338e1be4e7bdcbe09223c6f73.squirrel@neil.brown.name>
- <20090626132940.GR23611@kernel.dk> <19014.4447.248248.63960@notabene.brown>
- <20090629101841.GF23611@kernel.dk>
- <b0aa07ac85efd6040501e4ea875176a3.squirrel@neil.brown.name>
- <20090629114121.GH23611@kernel.dk>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [PATCH]: create sysfs file, dh_state for SCSI	devices
+ even if they	are not in the inteernal lists
+Date: Tue, 30 Jun 2009 08:39:22 +0200
+Message-ID: <4A49B31A.1060304@suse.de>
+References: <1246069888.14164.53.camel@chandra-ubuntu>	<4A486FF0.7040209@suse.de> <1246291743.3838.13.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; CHARSET=US-ASCII
-Content-Transfer-Encoding: 7BIT
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-disposition: inline
-In-reply-to: <20090629114121.GH23611@kernel.dk>
+In-Reply-To: <1246291743.3838.13.camel@mulgrave.site>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: NeilBrown <neilb@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, linux-fsdevel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mario Mech <mech@meteo.uni-koeln.de>, linux-scsi <linux-scsi@vger.kernel.org>, sekharan@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Jun 29, 2009  13:41 +0200, Jens Axboe wrote:
-> ... externally it just makes the API worse since tools then have to know
-> which device type they are talking to.
-> 
-> So I still see absolutely zero point in making such a change, quite the
-> opposite.
+James Bottomley wrote:
+> On Mon, 2009-06-29 at 09:40 +0200, Hannes Reinecke wrote:
+>> Chandra Seetharaman wrote:
+>>> Create the sysfs file, dh_state even if the new SCSI device is not
+>>> in the any of the device handler's internal lists.
+>>>
+>>> Signed-Off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+>>> ---
+>>>  drivers/scsi/device_handler/scsi_dh.c |   11 ++++-------
+>>>  1 file changed, 4 insertions(+), 7 deletions(-)
+>>>
+>>> Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+>>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>>> --- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh.c
+>>> +++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+>>> @@ -304,18 +304,15 @@ static int scsi_dh_notifier(struct notif
+>>>  	sdev =3D to_scsi_device(dev);
+>>> =20
+>>>  	if (action =3D=3D BUS_NOTIFY_ADD_DEVICE) {
+>>> +		err =3D device_create_file(dev, &scsi_dh_state_attr);
+>>> +		/* don't care about err */
+>>>  		devinfo =3D device_handler_match(NULL, sdev);
+>>> -		if (!devinfo)
+>>> -			goto out;
+>>> -
+>>> -		err =3D scsi_dh_handler_attach(sdev, devinfo);
+>>> -		if (!err)
+>>> -			err =3D device_create_file(dev, &scsi_dh_state_attr);
+>>> +		if (devinfo)
+>>> +			err =3D scsi_dh_handler_attach(sdev, devinfo);
+>>>  	} else if (action =3D=3D BUS_NOTIFY_DEL_DEVICE) {
+>>>  		device_remove_file(dev, &scsi_dh_state_attr);
+>>>  		scsi_dh_handler_detach(sdev, NULL);
+>>>  	}
+>>> -out:
+>>>  	return err;
+>>>  }
+>>> =20
+>>>
+>>>
+>> NACK.
+>>
+>> This will create sysfs attributes even if the attach()
+>> failed for other reason like a generic error. So we'll end
+>> up with device handler attributes and no device handler attached.
+>>
+>> Not a good idea.
+>=20
+> It strikes me that what is really being reinvented here is driver
+> attachment with driver attribute files ...
+>=20
+> Now all of this could be avoided if we had multiple attachment of
+> drivers ...=20
+>=20
+I heard you.
 
-Exactly correct.  Changing these tunables just for the sake of giving
-them a slightly different name is madness.  Making all block devices
-appear more uniform to userspace (even if they don't strictly need all
-of the semantics) is very sensible.  The whole point of the kernel is
-to abstract away the underlying details so that userspace doesn't need
-to understand it all again.
+If you find someone to fix the blasted iSCSI I/O stall for me ...
 
-In order to get good throughput on RAID arrays we need to tune the
-queue/max_* values to ensure the IO requests don't get split.
+Cheers,
 
-It would be great if the MD queue/max_* values would pass these tunings
-down to the underlying disk devices as well.  As it stands now, we have
-to follow the /sys/block/*/slaves tree to set all of these ourselves,
-and before "slaves/" was introduced it was nigh impossible to automatically
-tune these values.
-
-Cheers, Andreas
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
 --
-Andreas Dilger
-Sr. Staff Engineer, Lustre Group
-Sun Microsystems of Canada, Inc.
-
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
