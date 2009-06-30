@@ -1,89 +1,64 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] [PATCH]: create sysfs file, dh_state for SCSI	devices
- even if they	are not in the inteernal lists
-Date: Tue, 30 Jun 2009 08:39:22 +0200
-Message-ID: <4A49B31A.1060304@suse.de>
-References: <1246069888.14164.53.camel@chandra-ubuntu>	<4A486FF0.7040209@suse.de> <1246291743.3838.13.camel@mulgrave.site>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH 02/20] io-controller: Common flat fair queuing code in
+ elevaotor layer
+Date: Tue, 30 Jun 2009 14:40:36 +0800
+Message-ID: <4A49B364.5000508@cn.fujitsu.com>
+References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com> <1245443858-8487-3-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1246291743.3838.13.camel@mulgrave.site>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mario Mech <mech@meteo.uni-koeln.de>, linux-scsi <linux-scsi@vger.kernel.org>, sekharan@linux.vnet.ibm.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751110AbZF3GlP@vger.kernel.org>
+In-Reply-To: <1245443858-8487-3-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-James Bottomley wrote:
-> On Mon, 2009-06-29 at 09:40 +0200, Hannes Reinecke wrote:
->> Chandra Seetharaman wrote:
->>> Create the sysfs file, dh_state even if the new SCSI device is not
->>> in the any of the device handler's internal lists.
->>>
->>> Signed-Off-by: Chandra Seetharaman <sekharan@us.ibm.com>
->>> ---
->>>  drivers/scsi/device_handler/scsi_dh.c |   11 ++++-------
->>>  1 file changed, 4 insertions(+), 7 deletions(-)
->>>
->>> Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
->>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->>> --- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh.c
->>> +++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
->>> @@ -304,18 +304,15 @@ static int scsi_dh_notifier(struct notif
->>>  	sdev =3D to_scsi_device(dev);
->>> =20
->>>  	if (action =3D=3D BUS_NOTIFY_ADD_DEVICE) {
->>> +		err =3D device_create_file(dev, &scsi_dh_state_attr);
->>> +		/* don't care about err */
->>>  		devinfo =3D device_handler_match(NULL, sdev);
->>> -		if (!devinfo)
->>> -			goto out;
->>> -
->>> -		err =3D scsi_dh_handler_attach(sdev, devinfo);
->>> -		if (!err)
->>> -			err =3D device_create_file(dev, &scsi_dh_state_attr);
->>> +		if (devinfo)
->>> +			err =3D scsi_dh_handler_attach(sdev, devinfo);
->>>  	} else if (action =3D=3D BUS_NOTIFY_DEL_DEVICE) {
->>>  		device_remove_file(dev, &scsi_dh_state_attr);
->>>  		scsi_dh_handler_detach(sdev, NULL);
->>>  	}
->>> -out:
->>>  	return err;
->>>  }
->>> =20
->>>
->>>
->> NACK.
->>
->> This will create sysfs attributes even if the attach()
->> failed for other reason like a generic error. So we'll end
->> up with device handler attributes and no device handler attached.
->>
->> Not a good idea.
->=20
-> It strikes me that what is really being reinvented here is driver
-> attachment with driver attribute files ...
->=20
-> Now all of this could be avoided if we had multiple attachment of
-> drivers ...=20
->=20
-I heard you.
+Vivek Goyal wrote:
+...
+> +
+> +/*
+> + * Do the accounting. Determine how much service (in terms of time slices)
+> + * current queue used and adjust the start, finish time of queue and vtime
+> + * of the tree accordingly.
+> + *
+> + * Determining the service used in terms of time is tricky in certain
+> + * situations. Especially when underlying device supports command queuing
+> + * and requests from multiple queues can be there at same time, then it
+> + * is not clear which queue consumed how much of disk time.
+> + *
+> + * To mitigate this problem, cfq starts the time slice of the queue only
+> + * after first request from the queue has completed. This does not work
+> + * very well if we expire the queue before we wait for first and more
+> + * request to finish from the queue. For seeky queues, we will expire the
+> + * queue after dispatching few requests without waiting and start dispatching
+> + * from next queue.
+> + *
+> + * Not sure how to determine the time consumed by queue in such scenarios.
+> + * Currently as a crude approximation, we are charging 25% of time slice
+> + * for such cases. A better mechanism is needed for accurate accounting.
+> + */
 
-If you find someone to fix the blasted iSCSI I/O stall for me ...
+  Hi Vivek,
 
-Cheers,
+  The comment is out of date, would you update it accordingly?
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> +void __elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
+> +{
+> +	struct elv_fq_data *efqd = &q->elevator->efqd;
+> +	struct io_entity *entity = &ioq->entity;
+> +	long slice_unused = 0, slice_used = 0, slice_overshoot = 0;
+> +
+> +	assert_spin_locked(q->queue_lock);
+> +	elv_log_ioq(efqd, ioq, "slice expired");
+> +
+> +	if (elv_ioq_wait_request(ioq))
+> +		del_timer(&efqd->idle_slice_timer);
+> +
+> +	elv_clear_ioq_wait_request(ioq);
+> +
+> +	/*
+
+-- 
+Regards
+Gui Jianfeng
