@@ -1,54 +1,38 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 02/20] io-controller: Common flat fair queuing code in
- elevaotor layer
-Date: Wed, 01 Jul 2009 17:24:46 +0800
-Message-ID: <4A4B2B5E.3080309@cn.fujitsu.com>
-References: <1245443858-8487-1-git-send-email-vgoyal@redhat.com> <1245443858-8487-3-git-send-email-vgoyal@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: IO controller mini-summit -- Japan, Oct 2009
+Date: Wed, 01 Jul 2009 20:44:50 +0900 (JST)
+Message-ID: <20090701.204450.104062613.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755050AbZGAJZ1@vger.kernel.org>
-In-Reply-To: <1245443858-8487-3-git-send-email-vgoyal@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Cc: ioband-devel@lists.sourceforge.net, taka@valinux.co.jp, osonoi@linux-foundation.jp, kunai@linux-foundation.jp, corsetproject@googlegroups.com
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
-> + * If ioscheduler has functionality of keeping track of close cooperator, check
-> + * with it if it has got a closely co-operating queue.
-> + */
-> +static inline struct io_queue *elv_close_cooperator(struct request_queue *q,
-> +					struct io_queue *ioq, int probe)
-> +{
-> +	struct elevator_queue *e = q->elevator;
-> +	struct io_queue *new_ioq = NULL;
-> +
-> +	/*
-> +	 * Currently this feature is supported only for flat hierarchy or
-> +	 * root group queues so that default cfq behavior is not changed.
-> +	 */
-> +	if (!is_root_group_ioq(q, ioq))
-> +		return NULL;
-> +
-> +	if (q->elevator->ops->elevator_close_cooperator_fn)
-> +		new_ioq = e->ops->elevator_close_cooperator_fn(q,
-> +						ioq->sched_queue, probe);
-> +
-> +	/* Only select co-operating queue if it belongs to root group */
-> +	if (new_ioq && !is_root_group_ioq(q, new_ioq))
-> +		return NULL;
-> +
-> +	return new_ioq;
-> +}
+Hi All,
 
-  Hi Vivek,
+We will hold a Linux IO controller Mini-Summit in Tokyo, Japan
+on Saturday, Oct. 17, 2009 -- day before the 9th Linux kernel summit.
 
-  Currently, whether we can let this feature be supported if current queue 
-  and found queue are in the same group? I guess this change won't break 
-  the default cfq behavior. Am i missing something?
+This is a good opportunity to meet face-to-face to discuss issues and
+directions for developing IO controller.
 
--- 
-Regards
-Gui Jianfeng
+Details of the summit are still sketchy, so suggestions for agenda
+topics are welcome. Please e-mail to me or post on the wiki page at
+http://apps.sourceforge.net/trac/ioband/wiki/iosummit
+(You need an account on SourceForge.net to edit this page.)
+The final agenda will be formed by consensus of the attendees.
+
+Please join the summit if you are interested.
+
+Thanks,
+Ryo Tsuruta
