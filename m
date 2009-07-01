@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm-table: pass device's length to
+Subject: [PATCH v2] dm-table: pass device's length to
 	device_area_is_valid
-Date: Wed,  1 Jul 2009 13:24:25 -0400
-Message-ID: <1246469065-10869-1-git-send-email-snitzer@redhat.com>
+Date: Wed,  1 Jul 2009 14:14:46 -0400
+Message-ID: <1246472086-10969-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -25,6 +25,9 @@ target (ti->len) was used rather than stripe_width (ti->len/#stripes).
 The resulting error was:
 device-mapper: table: 254:0: sdb too small for target
 
+The regression appeared in 2.6.31-rc1 via commit:
+754c5fc7ebb417b23601a6222a6005cc2e7f2913
+
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
  drivers/md/dm-crypt.c         |    2 +-
@@ -33,9 +36,9 @@ Signed-off-by: Mike Snitzer <snitzer@redhat.com>
  drivers/md/dm-mpath.c         |    2 +-
  drivers/md/dm-raid1.c         |    2 +-
  drivers/md/dm-stripe.c        |    3 ++-
- drivers/md/dm-table.c         |    6 +++---
+ drivers/md/dm-table.c         |   10 +++++-----
  include/linux/device-mapper.h |    4 ++--
- 8 files changed, 13 insertions(+), 12 deletions(-)
+ 8 files changed, 15 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
 index 9933eb8..c72a8dd 100644
@@ -123,7 +126,7 @@ index b240e85..22c2407 100644
  
  	return ret;
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 2cba557..08cc7fe 100644
+index 2cba557..2a57f77 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
 @@ -346,7 +346,7 @@ static void close_dev(struct dm_dev_internal *d, struct mapped_device *md)
@@ -144,6 +147,20 @@ index 2cba557..08cc7fe 100644
  		DMWARN("%s: %s too small for target",
  		       dm_device_name(ti->table->md), bdevname(bdev, b));
  		return 0;
+@@ -377,11 +377,11 @@ static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
+ 		return 0;
+ 	}
+ 
+-	if (ti->len & (logical_block_size_sectors - 1)) {
++	if (len & (logical_block_size_sectors - 1)) {
+ 		DMWARN("%s: len=%llu not aligned to h/w "
+ 		       "logical block size %hu of %s",
+ 		       dm_device_name(ti->table->md),
+-		       (unsigned long long)ti->len,
++		       (unsigned long long)len,
+ 		       limits->logical_block_size, bdevname(bdev, b));
+ 		return 0;
+ 	}
 @@ -482,7 +482,7 @@ static int __table_get_device(struct dm_table *t, struct dm_target *ti,
  #define min_not_zero(l, r) (l == 0) ? r : ((r == 0) ? l : min(l, r))
  
