@@ -1,38 +1,177 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: IO controller mini-summit -- Japan, Oct 2009
-Date: Wed, 01 Jul 2009 20:44:50 +0900 (JST)
-Message-ID: <20090701.204450.104062613.ryov@valinux.co.jp>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
-Cc: ioband-devel@lists.sourceforge.net, taka@valinux.co.jp, osonoi@linux-foundation.jp, kunai@linux-foundation.jp, corsetproject@googlegroups.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm-table: pass device's length to
+	device_area_is_valid
+Date: Wed,  1 Jul 2009 13:24:25 -0400
+Message-ID: <1246469065-10869-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi All,
+The length associated with the specified device must be passed to
+device_area_is_valid().
 
-We will hold a Linux IO controller Mini-Summit in Tokyo, Japan
-on Saturday, Oct. 17, 2009 -- day before the 9th Linux kernel summit.
+This fixes a regression in the dm-stripe target where the size of the
+target (ti->len) was used rather than stripe_width (ti->len/#stripes).
+The resulting error was:
+device-mapper: table: 254:0: sdb too small for target
 
-This is a good opportunity to meet face-to-face to discuss issues and
-directions for developing IO controller.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-crypt.c         |    2 +-
+ drivers/md/dm-delay.c         |    4 ++--
+ drivers/md/dm-linear.c        |    2 +-
+ drivers/md/dm-mpath.c         |    2 +-
+ drivers/md/dm-raid1.c         |    2 +-
+ drivers/md/dm-stripe.c        |    3 ++-
+ drivers/md/dm-table.c         |    6 +++---
+ include/linux/device-mapper.h |    4 ++--
+ 8 files changed, 13 insertions(+), 12 deletions(-)
 
-Details of the summit are still sketchy, so suggestions for agenda
-topics are welcome. Please e-mail to me or post on the wiki page at
-http://apps.sourceforge.net/trac/ioband/wiki/iosummit
-(You need an account on SourceForge.net to edit this page.)
-The final agenda will be formed by consensus of the attendees.
-
-Please join the summit if you are interested.
-
-Thanks,
-Ryo Tsuruta
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 9933eb8..c72a8dd 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1318,7 +1318,7 @@ static int crypt_iterate_devices(struct dm_target *ti,
+ {
+ 	struct crypt_config *cc = ti->private;
+ 
+-	return fn(ti, cc->dev, cc->start, data);
++	return fn(ti, cc->dev, cc->start, ti->len, data);
+ }
+ 
+ static struct target_type crypt_target = {
+diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+index 4e5b843..ebe7381 100644
+--- a/drivers/md/dm-delay.c
++++ b/drivers/md/dm-delay.c
+@@ -324,12 +324,12 @@ static int delay_iterate_devices(struct dm_target *ti,
+ 	struct delay_c *dc = ti->private;
+ 	int ret = 0;
+ 
+-	ret = fn(ti, dc->dev_read, dc->start_read, data);
++	ret = fn(ti, dc->dev_read, dc->start_read, ti->len, data);
+ 	if (ret)
+ 		goto out;
+ 
+ 	if (dc->dev_write)
+-		ret = fn(ti, dc->dev_write, dc->start_write, data);
++		ret = fn(ti, dc->dev_write, dc->start_write, ti->len, data);
+ 
+ out:
+ 	return ret;
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 9184b6d..82f7d6e 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -139,7 +139,7 @@ static int linear_iterate_devices(struct dm_target *ti,
+ {
+ 	struct linear_c *lc = ti->private;
+ 
+-	return fn(ti, lc->dev, lc->start, data);
++	return fn(ti, lc->dev, lc->start, ti->len, data);
+ }
+ 
+ static struct target_type linear_target = {
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index c70604a..6f0d90d 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1453,7 +1453,7 @@ static int multipath_iterate_devices(struct dm_target *ti,
+ 
+ 	list_for_each_entry(pg, &m->priority_groups, list) {
+ 		list_for_each_entry(p, &pg->pgpaths, list) {
+-			ret = fn(ti, p->path.dev, ti->begin, data);
++			ret = fn(ti, p->path.dev, ti->begin, ti->len, data);
+ 			if (ret)
+ 				goto out;
+ 		}
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index ce8868c..8382de3 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -1292,7 +1292,7 @@ static int mirror_iterate_devices(struct dm_target *ti,
+ 
+ 	for (i = 0; !ret && i < ms->nr_mirrors; i++)
+ 		ret = fn(ti, ms->mirror[i].dev,
+-			 ms->mirror[i].offset, data);
++			 ms->mirror[i].offset, ti->len, data);
+ 
+ 	return ret;
+ }
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index b240e85..22c2407 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -322,7 +322,8 @@ static int stripe_iterate_devices(struct dm_target *ti,
+ 
+ 	do
+ 		ret = fn(ti, sc->stripe[i].dev,
+-			 sc->stripe[i].physical_start, data);
++			 sc->stripe[i].physical_start,
++			 sc->stripe_width, data);
+ 	while (!ret && ++i < sc->stripes);
+ 
+ 	return ret;
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 2cba557..08cc7fe 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -346,7 +346,7 @@ static void close_dev(struct dm_dev_internal *d, struct mapped_device *md)
+  * If possible, this checks an area of a destination device is valid.
+  */
+ static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
+-				sector_t start, void *data)
++				sector_t start, sector_t len, void *data)
+ {
+ 	struct queue_limits *limits = data;
+ 	struct block_device *bdev = dev->bdev;
+@@ -359,7 +359,7 @@ static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
+ 	if (!dev_size)
+ 		return 1;
+ 
+-	if ((start >= dev_size) || (start + ti->len > dev_size)) {
++	if ((start >= dev_size) || (start + len > dev_size)) {
+ 		DMWARN("%s: %s too small for target",
+ 		       dm_device_name(ti->table->md), bdevname(bdev, b));
+ 		return 0;
+@@ -482,7 +482,7 @@ static int __table_get_device(struct dm_table *t, struct dm_target *ti,
+ #define min_not_zero(l, r) (l == 0) ? r : ((r == 0) ? l : min(l, r))
+ 
+ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+-			 sector_t start, void *data)
++			 sector_t start, sector_t len, void *data)
+ {
+ 	struct queue_limits *limits = data;
+ 	struct block_device *bdev = dev->bdev;
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 0d63106..655e772 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -84,7 +84,7 @@ typedef int (*dm_merge_fn) (struct dm_target *ti, struct bvec_merge_data *bvm,
+ 
+ typedef int (*iterate_devices_callout_fn) (struct dm_target *ti,
+ 					   struct dm_dev *dev,
+-					   sector_t physical_start,
++					   sector_t start, sector_t len,
+ 					   void *data);
+ 
+ typedef int (*dm_iterate_devices_fn) (struct dm_target *ti,
+@@ -104,7 +104,7 @@ void dm_error(const char *message);
+  * Combine device limits.
+  */
+ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+-			 sector_t start, void *data);
++			 sector_t start, sector_t len, void *data);
+ 
+ struct dm_dev {
+ 	struct block_device *bdev;
