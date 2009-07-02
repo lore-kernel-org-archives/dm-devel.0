@@ -1,7 +1,7 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH 1/3] scsi_dh: add the interface scsi_dh_set_params()
-Date: Wed, 01 Jul 2009 20:13:14 -0700
-Message-ID: <20090702031314.28354.41987.sendpatchset@chandra-ubuntu>
+Subject: [PATCH 2/3] scsi_dh: Provide set_params interface in emc device handler
+Date: Wed, 01 Jul 2009 20:13:20 -0700
+Message-ID: <20090702031320.28354.96958.sendpatchset@chandra-ubuntu>
 References: <20090702031308.28354.73353.sendpatchset@chandra-ubuntu>
 Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <20090702031308.28354.73353.sendpatchset@chandra-ubuntu>
@@ -10,100 +10,89 @@ To: linux-scsi@vger.kernel.org
 Cc: dm-devel@redhat.com, michaelc@cs.wisc.edu, agk@redhat.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, asson_ronald@emc.com, berthiaume_wayne@emc.com, Eddie.Williams@steeleye.com, Chandra Seetharaman <sekharan@us.ibm.com>
 List-Id: dm-devel.ids
 
-When we moved the device handler functionality from dm layer to SCSI layer
-we dropped the paramaeter functionality.
+Handle the parameters provided by user thru multipath.
 
-This path adds an interface to scsi dh layer to set device handler 
-parameters.
+This handler expects only 2 parameters and their value can either be 0 or 1.
 
-Basically, multipath layer need to create a string with all the parameters
-and call scsi_dh_set_params() after it called scsi_dh_attach() on a
-device.
-
-If a device handler provides such an interface it will handle the parameters as
-it expects them.
+This code originates from the old dm-emc.c file. Appropriate changes have
+been made to make it work in the new design.
 
 Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
 ---
- drivers/scsi/device_handler/scsi_dh.c |   33 +++++++++++++++++++++++++++++++++
- include/scsi/scsi_device.h            |    1 +
- include/scsi/scsi_dh.h                |    5 +++++
- 3 files changed, 39 insertions(+)
+ drivers/scsi/device_handler/scsi_dh_emc.c |   56 ++++++++++++++++++++++++++++++
+ 1 file changed, 56 insertions(+)
 
-Index: linux-2.6.31-rc1/include/scsi/scsi_device.h
+Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh_emc.c
 ===================================================================
---- linux-2.6.31-rc1.orig/include/scsi/scsi_device.h
-+++ linux-2.6.31-rc1/include/scsi/scsi_device.h
-@@ -187,6 +187,7 @@ struct scsi_device_handler {
- 	void (*detach)(struct scsi_device *);
- 	int (*activate)(struct scsi_device *);
- 	int (*prep_fn)(struct scsi_device *, struct request *);
-+	int (*set_params)(struct scsi_device *, const char *);
- };
+--- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh_emc.c
++++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh_emc.c
+@@ -561,6 +561,61 @@ done:
  
- struct scsi_dh_data {
-Index: linux-2.6.31-rc1/include/scsi/scsi_dh.h
-===================================================================
---- linux-2.6.31-rc1.orig/include/scsi/scsi_dh.h
-+++ linux-2.6.31-rc1/include/scsi/scsi_dh.h
-@@ -60,6 +60,7 @@ extern int scsi_dh_activate(struct reque
- extern int scsi_dh_handler_exist(const char *);
- extern int scsi_dh_attach(struct request_queue *, const char *);
- extern void scsi_dh_detach(struct request_queue *);
-+extern int scsi_dh_set_params(struct request_queue *, const char *);
- #else
- static inline int scsi_dh_activate(struct request_queue *req)
- {
-@@ -77,4 +78,8 @@ static inline void scsi_dh_detach(struct
- {
- 	return;
+ 	return result;
  }
-+static inline int scsi_dh_set_params(struct request_queue *req, const char *params)
-+{
-+	return -SCSI_DH_NOSYS;
-+}
- #endif
-Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
-===================================================================
---- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh.c
-+++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
-@@ -449,6 +449,39 @@ int scsi_dh_activate(struct request_queu
- EXPORT_SYMBOL_GPL(scsi_dh_activate);
- 
- /*
-+ * scsi_dh_set_params - set the parameters for the device as per the
-+ *      string specified in params.
-+ * @q - Request queue that is associated with the scsi_device for
-+ *      which the parameters to be set.
-+ * @params - parameters in the following format
++/*
++ * params - parameters in the following format
 + *      "no_of_params\0param1\0param2\0param3\0...\0"
 + *      for example, string for 2 parameters with value 10 and 21
 + *      is specified as "2\010\021\0".
 + */
-+int scsi_dh_set_params(struct request_queue *q, const char *params)
++static int clariion_set_params(struct scsi_device *sdev, const char *params)
 +{
-+	int err = -SCSI_DH_NOSYS;
-+	unsigned long flags;
-+	struct scsi_device *sdev;
-+	struct scsi_device_handler *scsi_dh = NULL;
++	struct clariion_dh_data *csdev = get_clariion_data(sdev);
++	unsigned int hr = 0, st = 0, argc;
++	char *p = params;
++	int result = SCSI_DH_OK;
 +
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	sdev = q->queuedata;
-+	if (sdev && sdev->scsi_dh_data)
-+		scsi_dh = sdev->scsi_dh_data->scsi_dh;
-+	if (scsi_dh && scsi_dh->set_params && get_device(&sdev->sdev_gendev))
-+		err = 0;
-+	spin_unlock_irqrestore(q->queue_lock, flags);
++	if ((sscanf(params, "%u", &argc) != 1) || (argc != 2))
++		return -EINVAL;
 +
-+	if (err)
-+		return err;
-+	err = scsi_dh->set_params(sdev, params);
-+	put_device(&sdev->sdev_gendev);
-+	return err;
++	while (*p++)
++		;
++	if ((sscanf(p, "%u", &st) != 1) || (st > 1))
++		return -EINVAL;
++
++	while (*p++)
++		;
++	if ((sscanf(p, "%u", &hr) != 1) || (hr > 1))
++		return -EINVAL;
++
++	if (st)
++		csdev->flags |= CLARIION_SHORT_TRESPASS;
++	else
++		csdev->flags &= ~CLARIION_SHORT_TRESPASS;
++
++	if (hr)
++		csdev->flags |= CLARIION_HONOR_RESERVATIONS;
++	else
++		csdev->flags &= ~CLARIION_HONOR_RESERVATIONS;
++
++	/*
++	 * If this path is owned, we have to send a trespass command
++	 * with the new parameters. If not, simply return. Next trespass
++	 * command would use the parameters.
++	 */
++	if (csdev->lun_state != CLARIION_LUN_OWNED)
++		goto done;
++
++	csdev->lun_state = CLARIION_LUN_UNINITIALIZED;
++	result = send_trespass_cmd(sdev, csdev);
++	if (result != SCSI_DH_OK)
++		goto done;
++
++	/* Update status */
++	result = clariion_send_inquiry(sdev, csdev);
++
++done:
++	return result;
 +}
-+EXPORT_SYMBOL_GPL(scsi_dh_set_params);
-+
-+/*
-  * scsi_dh_handler_exist - Return TRUE(1) if a device handler exists for
-  *	the given name. FALSE(0) otherwise.
-  * @name - name of the device handler.
+ 
+ static const struct scsi_dh_devlist clariion_dev_list[] = {
+ 	{"DGC", "RAID"},
+@@ -581,6 +636,7 @@ static struct scsi_device_handler clarii
+ 	.check_sense	= clariion_check_sense,
+ 	.activate	= clariion_activate,
+ 	.prep_fn	= clariion_prep_fn,
++	.set_params	= clariion_set_params,
+ };
+ 
+ /*
