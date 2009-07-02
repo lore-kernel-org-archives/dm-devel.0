@@ -1,106 +1,199 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH 3/3] scsi_dh: Use scsi_dh_set_params() in multipath.
-Date: Wed, 01 Jul 2009 20:13:26 -0700
-Message-ID: <20090702031326.28354.82033.sendpatchset@chandra-ubuntu>
-References: <20090702031308.28354.73353.sendpatchset@chandra-ubuntu>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20090702031308.28354.73353.sendpatchset@chandra-ubuntu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi@vger.kernel.org
-Cc: dm-devel@redhat.com, michaelc@cs.wisc.edu, agk@redhat.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, asson_ronald@emc.com, berthiaume_wayne@emc.com, Eddie.Williams@steeleye.com, Chandra Seetharaman <sekharan@us.ibm.com>
+From: Christian May <cmay@linux.vnet.ibm.com>
+Subject: Failed path will not be recovered when
+ disabling/enabling remote port
+Date: Thu, 02 Jul 2009 13:27:11 +0200
+Message-ID: <4A4C998F.7010602@linux.vnet.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use scsi_dh_set_params() set parameters provided. Save the parameters in
-parse_hw_handler() and use it in parse_path().
+Hi,
 
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
----
- drivers/md/dm-mpath.c |   42 ++++++++++++++++++++++++++++++++++++------
- 1 file changed, 36 insertions(+), 6 deletions(-)
+I've setup an IBM z10 LPAR (mainframe server) with 2.6.30-kernel. 
+Attached to the System z10 was an IBM DS8000 storage server. 10x SCSI 
+LUNs were assigned to LPAR via two pathes:
 
-Index: linux-2.6.31-rc1/drivers/md/dm-mpath.c
-===================================================================
---- linux-2.6.31-rc1.orig/drivers/md/dm-mpath.c
-+++ linux-2.6.31-rc1/drivers/md/dm-mpath.c
-@@ -64,6 +64,7 @@ struct multipath {
- 	spinlock_t lock;
- 
- 	const char *hw_handler_name;
-+	char *hw_handler_params;
- 	unsigned nr_priority_groups;
- 	struct list_head priority_groups;
- 	unsigned pg_init_required;	/* pg_init needs calling? */
-@@ -219,6 +220,7 @@ static void free_multipath(struct multip
- 	}
- 
- 	kfree(m->hw_handler_name);
-+	kfree(m->hw_handler_params);
- 	mempool_destroy(m->mpio_pool);
- 	kfree(m);
- }
-@@ -615,6 +617,17 @@ static struct pgpath *parse_path(struct
- 			dm_put_device(ti, p->path.dev);
- 			goto bad;
- 		}
-+
-+		if (m->hw_handler_params) {
-+			r = scsi_dh_set_params(q, m->hw_handler_params);
-+			if (r < 0) {
-+				ti->error = "unable to set hardware "
-+							"handler parameters";
-+				scsi_dh_detach(q);
-+				dm_put_device(ti, p->path.dev);
-+				goto bad;
-+			}
-+		}
- 	}
- 
- 	r = ps->type->add_path(ps, &p->path, as->argc, as->argv, &ti->error);
-@@ -705,6 +718,7 @@ static struct priority_group *parse_prio
- static int parse_hw_handler(struct arg_set *as, struct multipath *m)
- {
- 	unsigned hw_argc;
-+	int ret;
- 	struct dm_target *ti = m->ti;
- 
- 	static struct param _params[] = {
-@@ -726,17 +740,33 @@ static int parse_hw_handler(struct arg_s
- 	request_module("scsi_dh_%s", m->hw_handler_name);
- 	if (scsi_dh_handler_exist(m->hw_handler_name) == 0) {
- 		ti->error = "unknown hardware handler type";
--		kfree(m->hw_handler_name);
--		m->hw_handler_name = NULL;
--		return -EINVAL;
-+		ret = -EINVAL;
-+		goto fail;
- 	}
- 
--	if (hw_argc > 1)
--		DMWARN("Ignoring user-specified arguments for "
--		       "hardware handler \"%s\"", m->hw_handler_name);
-+	if (hw_argc > 1) {
-+		char *p;
-+		int i, j, len = 4;
-+
-+		for (i = 0; i <= hw_argc - 2; i++)
-+			len += strlen(as->argv[i]) + 1;
-+		p = m->hw_handler_params = kzalloc(len, GFP_KERNEL);
-+		if (!p) {
-+			ti->error = "memory allocation failed";
-+			ret = -ENOMEM;
-+			goto fail;
-+		}
-+		j = sprintf(p, "%d", hw_argc - 1);
-+		for (i = 0, p+=j+1; i <= hw_argc - 2; i++, p+=j+1)
-+			j = sprintf(p, "%s", as->argv[i]);
-+	}
- 	consume(as, hw_argc - 1);
- 
- 	return 0;
-+fail:
-+	kfree(m->hw_handler_name);
-+	m->hw_handler_name = NULL;
-+	return ret;
- }
- 
- static int parse_features(struct arg_set *as, struct multipath *m)
+Example:
+36005076303ffc1040000000000001269 dm-9 IBM,2107900
+size=1.0G features='1 queue_if_no_path' hwhandler='0' wp=rw
+`-+- policy='round-robin 0' prio=-2 status=active
+  |- 0:0:0:1080639506 sdw   65:96  active undef running
+  `- 1:0:1:1080639506 sdt   65:48  active undef running
+
+Special parameter setting: dev_loss_tmo=90sec; fast_io_fail_tmo=5sec
+
+multipath tools: multipath-tools v0.4.9 (04/04, 2009)
+device-mapper: device-mapper-1.02.27-7.fc10.s390x, 
+device-mapper-libs-1.02.27-7.fc10.s390x
+
+When removing a remote port (disabling a port on the BROCADE FC switch) 
+one path failed.
+
+root@h42lp26/ESAME:~]
+ > multipath -l
+36005076303ffc1040000000000001268 dm-8 ,
+size=1.0G features='1 queue_if_no_path' hwhandler='0' wp=rw
+`-+- policy='round-robin 0' prio=-2 status=active
+  |- #:#:#:#          -     #:#   failed undef running
+  `- 1:0:1:1080573970 sdr   65:16 active undef running
+
+After a while (>90sec) SCSI LUNs were removed from system:
+
+
+UEVENT[1246531815.619428] add      /kernel/uids/74 (uids)
+UDEV  [1246531815.621708] add      /kernel/uids/74 (uids)
+UEVENT[1246531816.725299] remove   /kernel/uids/74 (uids)
+UDEV  [1246531816.726151] remove   /kernel/uids/74 (uids)
+UEVENT[1246531929.959709] change   /devices/virtual/block/dm-0 (block)
+UEVENT[1246531929.959749] change   /devices/virtual/block/dm-3 (block)
+UEVENT[1246531929.959759] change   /devices/virtual/block/dm-4 (block)
+UEVENT[1246531929.959769] change   /devices/virtual/block/dm-5 (block)
+UEVENT[1246531929.966647] change   /devices/virtual/block/dm-7 (block)
+UDEV  [1246531930.045444] change   /devices/virtual/block/dm-4 (block)
+UDEV  [1246531930.048923] change   /devices/virtual/block/dm-7 (block)
+UDEV  [1246531930.054614] change   /devices/virtual/block/dm-0 (block)
+UDEV  [1246531930.060091] change   /devices/virtual/block/dm-3 (block)
+UDEV  [1246531930.071744] change   /devices/virtual/block/dm-5 (block)
+UEVENT[1246531949.278541] change   /devices/virtual/block/dm-9 (block)
+UDEV  [1246531949.369690] change   /devices/virtual/block/dm-9 (block)
+UEVENT[1246531950.295756] change   /devices/virtual/block/dm-8 (block)
+UEVENT[1246531950.297597] change   /devices/virtual/block/dm-6 (block)
+UEVENT[1246531950.297610] change   /devices/virtual/block/dm-2 (block)
+UEVENT[1246531950.297620] change   /devices/virtual/block/dm-1 (block)
+UDEV  [1246531950.430097] change   /devices/virtual/block/dm-8 (block)
+UDEV  [1246531950.588626] change   /devices/virtual/block/dm-2 (block)
+UDEV  [1246531950.632482] change   /devices/virtual/block/dm-1 (block)
+UDEV  [1246531950.634515] change   /devices/virtual/block/dm-6 (block)
+UEVENT[1246532034.277177] remove   
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_generic/sg0 
+(scsi_generic)
+UEVENT[1246532034.277214] remove   
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_device/0:0:0:1080377362 
+(scsi_device)
+UEVENT[1246532034.277226] remove   
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_disk/0:0:0:1080377362 
+(scsi_disk)
+UEVENT[1246532034.277236] remove   /devices/virtual/bdi/8:0 (bdi)
+UEVENT[1246532034.277247] remove   
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/block/sda 
+(block)
+UEVENT[1246532034.277258] remove   
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362 
+(scsi)
+UEVENT[1246532034.277384] remove   
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_generic/sg2 
+(scsi_generic)
+UEVENT[1246532034.277594] remove   
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_device/0:0:0:1080836114 
+(scsi_device)
+UEVENT[1246532034.277864] remove   
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_disk/0:0:0:1080836114 
+(scsi_disk)
+UEVENT[1246532034.278035] remove   /devices/virtual/bdi/8:32 (bdi)...
+
+....
+
+When re-enabling the path, SCSI LUNS were reassigned to system but path 
+didn't recover:
+
+UEVENT[1246532107.387169] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114 
+(scsi)
+  UEVENT[1246532107.387209] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_device/0:0:0:1080836114 
+(scsi_device)
+  UEVENT[1246532107.387220] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_generic/sg0 
+(scsi_generic)
+  UEVENT[1246532107.387230] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_disk/0:0:0:1080836114 
+(scsi_disk)
+  UEVENT[1246532107.388941] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362 
+(scsi)
+  UEVENT[1246532107.388952] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_device/0:0:0:1080377362 
+(scsi_device)
+  UEVENT[1246532107.388963] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_generic/sg2 
+(scsi_generic)
+  UEVENT[1246532107.397111] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/block/sdu 
+(block)
+  UEVENT[1246532107.399249] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080639506 
+(scsi)
+  UEVENT[1246532107.399261] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080639506/scsi_device/0:0:0:1080639506 
+(scsi_device)
+  UEVENT[1246532107.399272] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080639506/scsi_generic/sg4 
+(scsi_generic)
+  UEVENT[1246532107.399711] add      /devices/virtual/bdi/65:64 (bdi)
+  UEVENT[1246532107.399722] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_disk/0:0:0:1080377362 
+(scsi_disk)
+  UEVENT[1246532107.401605] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080573970 
+(scsi)
+  UEVENT[1246532107.401617] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080573970/scsi_device/0:0:0:1080573970 
+(scsi_device)
+  UEVENT[1246532107.401628] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080573970/scsi_generic/sg6 
+(scsi_generic)
+  UEVENT[1246532107.403731] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080967186 
+(scsi)
+  UEVENT[1246532107.403742] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080967186/scsi_device/0:0:0:1080967186 
+(scsi_device)
+  UEVENT[1246532107.403753] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080967186/scsi_generic/sg8 
+(scsi_generic)
+  UEVENT[1246532107.405963] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/block/sdv 
+(block)
+  UEVENT[1246532107.406168] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080901650 
+(scsi)
+  UEVENT[1246532107.407608] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080901650/scsi_device/0:0:0:1080901650 
+(scsi_device)
+  UEVENT[1246532107.407624] add      
+/devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080901650/scsi_generic/sg10 
+(scsi_generic)
+  UEVENT[1246532107.407880] add      /devices/virtual/bdi/65:80 (bdi)
+
+
+[root@h42lp26/ESAME:~]
+ > multipath -l
+36005076303ffc1040000000000001268 dm-8 ,
+size=1.0G features='1 queue_if_no_path' hwhandler='0' wp=rw
+`-+- policy='round-robin 0' prio=-2 status=active
+  |- #:#:#:#          -     #:#    failed undef running
+  `- 1:0:1:1080573970 sdr   65:16  active undef running
+
+
+Running "multipath" command will recover the failed path but that's not 
+way it should be...can somebody help to fix this? Why is the path not 
+recovered automatically?
+
+
+Regards,
+
+
+Christian May
