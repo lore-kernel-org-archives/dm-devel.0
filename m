@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 09/25] io-controller: Common hierarchical fair
-	queuing code in elevaotor layer
-Date: Thu,  2 Jul 2009 16:01:41 -0400
-Message-ID: <1246564917-19603-10-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 21/25] io-controller: Per cgroup request
+	descriptor support
+Date: Thu,  2 Jul 2009 16:01:53 -0400
+Message-ID: <1246564917-19603-22-git-send-email-vgoyal@redhat.com>
 References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,1309 +20,884 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: peterz@infradead.org, akpm@linux-foundation.org, snitzer@redhat.com, agk@redhat.com, vgoyal@redhat.com
 List-Id: dm-devel.ids
 
-o This patch enables hierarchical fair queuing in common layer. It is
-  controlled by config option CONFIG_GROUP_IOSCHED.
+o Currently a request queue has got fixed number of request descriptors for
+  sync and async requests. Once the request descriptors are consumed, new
+  processes are put to sleep and they effectively become serialized. Because
+  sync and async queues are separate, async requests don't impact sync ones
+  but if one is looking for fairness between async requests, that is not
+  achievable if request queue descriptors become bottleneck.
 
-o Requests keep a reference on ioq and ioq keeps  keep a reference
-  on groups. For async queues in CFQ, and single ioq in other
-  schedulers, io_group also keeps are reference on io_queue. This
-  reference on ioq is dropped when the queue is released
-  (elv_release_ioq). So the queue can be freed.
+o Make request descriptor's per io group so that if there is lots of IO
+  going on in one cgroup, it does not impact the IO of other group.
 
-  When a queue is released, it puts the reference to io_group and the
-  io_group is released after all the queues are released. Child groups
-  also take reference on parent groups, and release it when they are
-  destroyed.
+o This is just one relatively simple way of doing things. This patch will
+  probably change after the feedback. Folks have raised concerns that in
+  hierchical setup, child's request descriptors should be capped by parent's
+  request descriptors. May be we need to have per cgroup per device files
+  in cgroups where one can specify the upper limit of request descriptors
+  and whenever a cgroup is created one needs to assign request descritor
+  limit making sure total sum of child's request descriptor is not more than
+  of parent.
 
-o Reads of iocg->group_data are not always iocg->lock; so all the operations
-  on that list are still protected by RCU. All modifications to
-  iocg->group_data should always done under iocg->lock.
+  I guess something like memory controller. Anyway, that would be the next
+  step. For the time being, we have implemented something simpler as follows.
 
-  Whenever iocg->lock and queue_lock can both be held, queue_lock should
-  be held first. This avoids all deadlocks. In order to avoid race
-  between cgroup deletion and elevator switch the following algorithm is
-  used:
+o This patch implements the per cgroup request descriptors. request pool per
+  queue is still common but every group will have its own wait list and its
+  own count of request descriptors allocated to that group for sync and async
+  queues. So effectively request_list becomes per io group property and not a
+  global request queue feature.
 
-	- Cgroup deletion path holds iocg->lock and removes iog entry
-	  to iocg->group_data list. Then it drops iocg->lock, holds
-	  queue_lock and destroys iog. So in this path, we never hold
-	  iocg->lock and queue_lock at the same time. Also, since we
-	  remove iog from iocg->group_data under iocg->lock, we can't
-	  race with elevator switch.
-
-	- Elevator switch path does not remove iog from
-	  iocg->group_data list directly. It first hold iocg->lock,
-	  scans iocg->group_data again to see if iog is still there;
-	  it removes iog only if it finds iog there. Otherwise, cgroup
-	  deletion must have removed it from the list, and cgroup
-	  deletion is responsible for removing iog.
-
-  So the path which removes iog from iocg->group_data list does
-  the final removal of iog by calling __io_destroy_group()
-  function.
+o Currently one can define q->nr_requests to limit request descriptors
+  allocated for the queue. Now there is another tunable q->nr_group_requests
+  which controls the requests descriptr limit per group. q->nr_requests
+  supercedes q->nr_group_requests to make sure if there are lots of groups
+  present, we don't end up allocating too many request descriptors on the
+  queue.
 
 Signed-off-by: Nauman Rafique <nauman@google.com>
-Signed-off-by: Fabio Checconi <fabio@gandalf.sssup.it>
-Signed-off-by: Paolo Valente <paolo.valente@unimore.it>
-Signed-off-by: Aristeu Rozanski <aris@redhat.com>
-Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/cfq-iosched.c |    2 +
- block/elevator-fq.c |  885 ++++++++++++++++++++++++++++++++++++++++++++++-----
- block/elevator-fq.h |   93 ++++++-
- block/elevator.c    |    4 +
- 4 files changed, 906 insertions(+), 78 deletions(-)
+ block/blk-core.c       |  305 +++++++++++++++++++++++++++++++++++++----------
+ block/blk-settings.c   |    1 +
+ block/blk-sysfs.c      |   58 +++++++--
+ block/elevator-fq.c    |   14 +++
+ block/elevator-fq.h    |    5 +
+ block/elevator.c       |    7 +-
+ include/linux/blkdev.h |   87 +++++++++++++-
+ 7 files changed, 395 insertions(+), 82 deletions(-)
 
-diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
-index f852b00..6ddc882 100644
---- a/block/cfq-iosched.c
-+++ b/block/cfq-iosched.c
-@@ -1310,6 +1310,8 @@ alloc_ioq:
- 			elv_mark_ioq_sync(cfqq->ioq);
- 		}
- 		cfqq->pid = current->pid;
-+		/* ioq reference on iog */
-+		elv_get_iog(iog);
- 		cfq_log_cfqq(cfqd, cfqq, "alloced");
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 6d8b4dd..2035c20 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -460,20 +460,30 @@ void blk_cleanup_queue(struct request_queue *q)
+ }
+ EXPORT_SYMBOL(blk_cleanup_queue);
+ 
+-static int blk_init_free_list(struct request_queue *q)
++void blk_init_request_list(struct request_list *rl)
+ {
+-	struct request_list *rl = &q->rq;
+ 
+ 	rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
+-	rl->starved[BLK_RW_SYNC] = rl->starved[BLK_RW_ASYNC] = 0;
+-	rl->elvpriv = 0;
+ 	init_waitqueue_head(&rl->wait[BLK_RW_SYNC]);
+ 	init_waitqueue_head(&rl->wait[BLK_RW_ASYNC]);
++}
+ 
+-	rl->rq_pool = mempool_create_node(BLKDEV_MIN_RQ, mempool_alloc_slab,
+-				mempool_free_slab, request_cachep, q->node);
++static int blk_init_free_list(struct request_queue *q)
++{
++	/*
++	 * Initialize the queue request list in case there are non-hiearchical
++	 * io schedulers not making use of fair queuing infrastructure.
++	 *
++	 * For ioschedulers making use of fair queuing infrastructure, request
++	 * list is inside the associated group and when that group is
++	 * instanciated, it takes care of initializing the request list also.
++	 */
++	blk_init_request_list(&q->rq);
++	q->rq_data.rq_pool = mempool_create_node(BLKDEV_MIN_RQ,
++				mempool_alloc_slab, mempool_free_slab,
++				request_cachep, q->node);
+ 
+-	if (!rl->rq_pool)
++	if (!q->rq_data.rq_pool)
+ 		return -ENOMEM;
+ 
+ 	return 0;
+@@ -575,6 +585,9 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
+ 		return NULL;
  	}
  
++	/* init starved waiter wait queue */
++	init_waitqueue_head(&q->rq_data.starved_wait);
++
+ 	/*
+ 	 * if caller didn't supply a lock, they get per-queue locking with
+ 	 * our embedded lock
+@@ -624,14 +637,14 @@ static inline void blk_free_request(struct request_queue *q, struct request *rq)
+ {
+ 	if (rq->cmd_flags & REQ_ELVPRIV)
+ 		elv_put_request(q, rq);
+-	mempool_free(rq, q->rq.rq_pool);
++	mempool_free(rq, q->rq_data.rq_pool);
+ }
+ 
+ static struct request *
+ blk_alloc_request(struct request_queue *q, struct bio *bio, int flags, int priv,
+ 					gfp_t gfp_mask)
+ {
+-	struct request *rq = mempool_alloc(q->rq.rq_pool, gfp_mask);
++	struct request *rq = mempool_alloc(q->rq_data.rq_pool, gfp_mask);
+ 
+ 	if (!rq)
+ 		return NULL;
+@@ -642,7 +655,7 @@ blk_alloc_request(struct request_queue *q, struct bio *bio, int flags, int priv,
+ 
+ 	if (priv) {
+ 		if (unlikely(elv_set_request(q, rq, bio, gfp_mask))) {
+-			mempool_free(rq, q->rq.rq_pool);
++			mempool_free(rq, q->rq_data.rq_pool);
+ 			return NULL;
+ 		}
+ 		rq->cmd_flags |= REQ_ELVPRIV;
+@@ -685,18 +698,18 @@ static void ioc_set_batching(struct request_queue *q, struct io_context *ioc)
+ 	ioc->last_waited = jiffies;
+ }
+ 
+-static void __freed_request(struct request_queue *q, int sync)
++static void __freed_request(struct request_queue *q, int sync,
++					struct request_list *rl)
+ {
+-	struct request_list *rl = &q->rq;
+-
+-	if (rl->count[sync] < queue_congestion_off_threshold(q))
++	if (q->rq_data.count[sync] < queue_congestion_off_threshold(q))
+ 		blk_clear_queue_congested(q, sync);
+ 
+-	if (rl->count[sync] + 1 <= q->nr_requests) {
++	if (q->rq_data.count[sync] + 1 <= q->nr_requests)
++		blk_clear_queue_full(q, sync);
++
++	if (rl->count[sync] + 1 <= q->nr_group_requests) {
+ 		if (waitqueue_active(&rl->wait[sync]))
+ 			wake_up(&rl->wait[sync]);
+-
+-		blk_clear_queue_full(q, sync);
+ 	}
+ }
+ 
+@@ -704,63 +717,133 @@ static void __freed_request(struct request_queue *q, int sync)
+  * A request has just been released.  Account for it, update the full and
+  * congestion status, wake up any waiters.   Called under q->queue_lock.
+  */
+-static void freed_request(struct request_queue *q, int sync, int priv)
+-{
+-	struct request_list *rl = &q->rq;
++static void freed_request(struct request_queue *q, int sync, int priv,
++					struct request_list *rl)
++{
++	/* There is a window during request allocation where request is
++	 * mapped to one group but by the time a queue for the group is
++	 * allocated, it is possible that original cgroup/io group has been
++	 * deleted and now io queue is allocated in a different group (root)
++	 * altogether.
++	 *
++	 * One solution to the problem is that rq should take io group
++	 * reference. But it looks too much to do that to solve this issue.
++	 * The only side affect to the hard to hit issue seems to be that
++	 * we will try to decrement the rl->count for a request list which
++	 * did not allocate that request. Chcek for rl->count going less than
++	 * zero and do not decrement it if that's the case.
++	 */
++
++	if (priv && rl->count[sync] > 0)
++		rl->count[sync]--;
++
++	BUG_ON(!q->rq_data.count[sync]);
++	q->rq_data.count[sync]--;
+ 
+-	rl->count[sync]--;
+ 	if (priv)
+-		rl->elvpriv--;
++		q->rq_data.elvpriv--;
+ 
+-	__freed_request(q, sync);
++	__freed_request(q, sync, rl);
+ 
+ 	if (unlikely(rl->starved[sync ^ 1]))
+-		__freed_request(q, sync ^ 1);
++		__freed_request(q, sync ^ 1, rl);
++
++	/* Wake up the starved process on global list, if any */
++	if (unlikely(q->rq_data.starved)) {
++		if (waitqueue_active(&q->rq_data.starved_wait))
++			wake_up(&q->rq_data.starved_wait);
++		q->rq_data.starved--;
++	}
++}
++
++/*
++ * Returns whether one can sleep on this request list or not. There are
++ * cases (elevator switch) where request list might not have allocated
++ * any request descriptor but we deny request allocation due to gloabl
++ * limits. In that case one should sleep on global list as on this request
++ * list no wakeup will take place.
++ *
++ * Also sets the request list starved flag if there are no requests pending
++ * in the direction of rq.
++ *
++ * Return 1 --> sleep on request list, 0 --> sleep on global list
++ */
++static int can_sleep_on_request_list(struct request_list *rl, int is_sync)
++{
++	if (unlikely(rl->count[is_sync] == 0)) {
++		/*
++		 * If there is a request pending in other direction
++		 * in same io group, then set the starved flag of
++		 * the group request list. Otherwise, we need to
++		 * make this process sleep in global starved list
++		 * to make sure it will not sleep indefinitely.
++		 */
++		if (rl->count[is_sync ^ 1] != 0) {
++			rl->starved[is_sync] = 1;
++			return 1;
++		} else
++			return 0;
++	}
++
++	return 1;
+ }
+ 
+ /*
+  * Get a free request, queue_lock must be held.
+- * Returns NULL on failure, with queue_lock held.
++ * Returns NULL on failure, with queue_lock held. Also sets the "reason" field
++ * in case of failure. This reason field helps caller decide to whether sleep
++ * on per group list or global per queue list.
++ * reason = 0 sleep on per group list
++ * reason = 1 sleep on global list
++ *
+  * Returns !NULL on success, with queue_lock *not held*.
+  */
+ static struct request *get_request(struct request_queue *q, int rw_flags,
+-				   struct bio *bio, gfp_t gfp_mask)
++					struct bio *bio, gfp_t gfp_mask,
++					struct request_list *rl, int *reason)
+ {
+ 	struct request *rq = NULL;
+-	struct request_list *rl = &q->rq;
+ 	struct io_context *ioc = NULL;
+ 	const bool is_sync = rw_is_sync(rw_flags) != 0;
+ 	int may_queue, priv;
++	int sleep_on_global = 0;
+ 
+ 	may_queue = elv_may_queue(q, rw_flags);
+ 	if (may_queue == ELV_MQUEUE_NO)
+ 		goto rq_starved;
+ 
+-	if (rl->count[is_sync]+1 >= queue_congestion_on_threshold(q)) {
+-		if (rl->count[is_sync]+1 >= q->nr_requests) {
+-			ioc = current_io_context(GFP_ATOMIC, q->node);
+-			/*
+-			 * The queue will fill after this allocation, so set
+-			 * it as full, and mark this process as "batching".
+-			 * This process will be allowed to complete a batch of
+-			 * requests, others will be blocked.
+-			 */
+-			if (!blk_queue_full(q, is_sync)) {
+-				ioc_set_batching(q, ioc);
+-				blk_set_queue_full(q, is_sync);
+-			} else {
+-				if (may_queue != ELV_MQUEUE_MUST
+-						&& !ioc_batching(q, ioc)) {
+-					/*
+-					 * The queue is full and the allocating
+-					 * process is not a "batcher", and not
+-					 * exempted by the IO scheduler
+-					 */
+-					goto out;
+-				}
++	if (q->rq_data.count[is_sync]+1 >= queue_congestion_on_threshold(q))
++		blk_set_queue_congested(q, is_sync);
++
++	/*
++	 * Looks like there is no user of queue full now.
++	 * Keeping it for time being.
++	 */
++	if (q->rq_data.count[is_sync]+1 >= q->nr_requests)
++		blk_set_queue_full(q, is_sync);
++
++	if (rl->count[is_sync]+1 >= q->nr_group_requests) {
++		ioc = current_io_context(GFP_ATOMIC, q->node);
++		/*
++		 * The queue request descriptor group will fill after this
++		 * allocation, so set
++		 * it as full, and mark this process as "batching".
++		 * This process will be allowed to complete a batch of
++		 * requests, others will be blocked.
++		 */
++		if (rl->count[is_sync] <= q->nr_group_requests)
++			ioc_set_batching(q, ioc);
++		else {
++			if (may_queue != ELV_MQUEUE_MUST
++					&& !ioc_batching(q, ioc)) {
++				/*
++				 * The queue is full and the allocating
++				 * process is not a "batcher", and not
++				 * exempted by the IO scheduler
++				 */
++				goto out;
+ 			}
+ 		}
+-		blk_set_queue_congested(q, is_sync);
+ 	}
+ 
+ 	/*
+@@ -768,21 +851,60 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
+ 	 * limit of requests, otherwise we could have thousands of requests
+ 	 * allocated with any setting of ->nr_requests
+ 	 */
+-	if (rl->count[is_sync] >= (3 * q->nr_requests / 2))
++
++	if (q->rq_data.count[is_sync] >= (3 * q->nr_requests / 2)) {
++		/*
++		 * Queue is too full for allocation. On which request queue
++		 * the task should sleep? Generally it should sleep on its
++		 * request list but if elevator switch is happening, in that
++		 * window, request descriptors are allocated from global
++		 * pool and are not accounted against any particular request
++		 * list as group is going away.
++		 *
++		 * So it might happen that request list does not have any
++		 * requests allocated at all and if process sleeps on per
++		 * group request list, it will not be woken up. In such case,
++		 * make it sleep on global starved list.
++		 */
++		if (test_bit(QUEUE_FLAG_ELVSWITCH, &q->queue_flags)
++		    || !can_sleep_on_request_list(rl, is_sync))
++			sleep_on_global = 1;
++		goto out;
++	}
++
++	/*
++	 * Allocation of request is allowed from queue perspective. Now check
++	 * from per group request list
++	 */
++
++	if (rl->count[is_sync] >= (3 * q->nr_group_requests / 2))
+ 		goto out;
+ 
+-	rl->count[is_sync]++;
+ 	rl->starved[is_sync] = 0;
+ 
++	q->rq_data.count[is_sync]++;
++
+ 	priv = !test_bit(QUEUE_FLAG_ELVSWITCH, &q->queue_flags);
+-	if (priv)
+-		rl->elvpriv++;
++	if (priv) {
++		q->rq_data.elvpriv++;
++		/*
++		 * Account the request to request list only if request is
++		 * going to elevator. During elevator switch, there will
++		 * be small window where group is going away and new group
++		 * will not be allocated till elevator switch is complete.
++		 * So till then instead of slowing down the application,
++		 * we will continue to allocate request from total common
++		 * pool instead of per group limit
++		 */
++		rl->count[is_sync]++;
++	}
+ 
+ 	if (blk_queue_io_stat(q))
+ 		rw_flags |= REQ_IO_STAT;
+ 	spin_unlock_irq(q->queue_lock);
+ 
+ 	rq = blk_alloc_request(q, bio, rw_flags, priv, gfp_mask);
++
+ 	if (unlikely(!rq)) {
+ 		/*
+ 		 * Allocation failed presumably due to memory. Undo anything
+@@ -792,7 +914,7 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
+ 		 * wait queue, but this is pretty rare.
+ 		 */
+ 		spin_lock_irq(q->queue_lock);
+-		freed_request(q, is_sync, priv);
++		freed_request(q, is_sync, priv, rl);
+ 
+ 		/*
+ 		 * in the very unlikely event that allocation failed and no
+@@ -802,9 +924,8 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
+ 		 * rq mempool into READ and WRITE
+ 		 */
+ rq_starved:
+-		if (unlikely(rl->count[is_sync] == 0))
+-			rl->starved[is_sync] = 1;
+-
++		if (!can_sleep_on_request_list(rl, is_sync))
++			sleep_on_global = 1;
+ 		goto out;
+ 	}
+ 
+@@ -819,6 +940,8 @@ rq_starved:
+ 
+ 	trace_block_getrq(q, bio, rw_flags & 1);
+ out:
++	if (reason && sleep_on_global)
++		*reason = 1;
+ 	return rq;
+ }
+ 
+@@ -832,16 +955,44 @@ static struct request *get_request_wait(struct request_queue *q, int rw_flags,
+ 					struct bio *bio)
+ {
+ 	const bool is_sync = rw_is_sync(rw_flags) != 0;
++	int sleep_on_global = 0;
+ 	struct request *rq;
++	struct request_list *rl = blk_get_request_list(q, bio);
++	struct io_group *iog = NULL;
+ 
+-	rq = get_request(q, rw_flags, bio, GFP_NOIO);
++	rq = get_request(q, rw_flags, bio, GFP_NOIO, rl, &sleep_on_global);
+ 	while (!rq) {
+ 		DEFINE_WAIT(wait);
+ 		struct io_context *ioc;
+-		struct request_list *rl = &q->rq;
+ 
+-		prepare_to_wait_exclusive(&rl->wait[is_sync], &wait,
+-				TASK_UNINTERRUPTIBLE);
++		if (sleep_on_global) {
++			/*
++			 * Task failed allocation and needs to wait and
++			 * try again. There are no requests pending from
++			 * the io group hence need to sleep on global
++			 * wait queue. Most likely the allocation failed
++			 * because of memory issues.
++			 */
++
++			q->rq_data.starved++;
++			prepare_to_wait_exclusive(&q->rq_data.starved_wait,
++					&wait, TASK_UNINTERRUPTIBLE);
++		} else {
++			/*
++			 * We are about to sleep on a request list and we
++			 * drop queue lock. After waking up, we will do
++			 * finish_wait() on request list and in the mean
++			 * time group might be gone. Take a reference to
++			 * the group now.
++			 */
++			prepare_to_wait_exclusive(&rl->wait[is_sync], &wait,
++					TASK_UNINTERRUPTIBLE);
++#ifdef CONFIG_GROUP_IOSCHED
++			iog = rl_iog(rl);
++			if (iog)
++				elv_get_iog(iog);
++#endif
++		}
+ 
+ 		trace_block_sleeprq(q, bio, rw_flags & 1);
+ 
+@@ -859,9 +1010,30 @@ static struct request *get_request_wait(struct request_queue *q, int rw_flags,
+ 		ioc_set_batching(q, ioc);
+ 
+ 		spin_lock_irq(q->queue_lock);
+-		finish_wait(&rl->wait[is_sync], &wait);
+ 
+-		rq = get_request(q, rw_flags, bio, GFP_NOIO);
++		if (sleep_on_global) {
++			finish_wait(&q->rq_data.starved_wait, &wait);
++			sleep_on_global = 0;
++		} else {
++			finish_wait(&rl->wait[is_sync], &wait);
++#ifdef CONFIG_GROUP_IOSCHED
++			/*
++			 * We had taken a reference to the rl/iog.
++			 * Put that now
++			 */
++			iog = rl_iog(rl);
++			if (iog)
++				elv_put_iog(iog);
++#endif
++		}
++
++		/*
++		 * After the sleep check the rl again in case cgrop bio
++		 * belonged to is gone and it is mapped to root group now
++		 */
++		rl = blk_get_request_list(q, bio);
++		rq = get_request(q, rw_flags, bio, GFP_NOIO, rl,
++					&sleep_on_global);
+ 	};
+ 
+ 	return rq;
+@@ -870,14 +1042,16 @@ static struct request *get_request_wait(struct request_queue *q, int rw_flags,
+ struct request *blk_get_request(struct request_queue *q, int rw, gfp_t gfp_mask)
+ {
+ 	struct request *rq;
++	struct request_list *rl;
+ 
+ 	BUG_ON(rw != READ && rw != WRITE);
+ 
+ 	spin_lock_irq(q->queue_lock);
++	rl = blk_get_request_list(q, NULL);
+ 	if (gfp_mask & __GFP_WAIT) {
+ 		rq = get_request_wait(q, rw, NULL);
+ 	} else {
+-		rq = get_request(q, rw, NULL, gfp_mask);
++		rq = get_request(q, rw, NULL, gfp_mask, rl, NULL);
+ 		if (!rq)
+ 			spin_unlock_irq(q->queue_lock);
+ 	}
+@@ -1094,12 +1268,13 @@ void __blk_put_request(struct request_queue *q, struct request *req)
+ 	if (req->cmd_flags & REQ_ALLOCED) {
+ 		int is_sync = rq_is_sync(req) != 0;
+ 		int priv = req->cmd_flags & REQ_ELVPRIV;
++		struct request_list *rl = rq_rl(q, req);
+ 
+ 		BUG_ON(!list_empty(&req->queuelist));
+ 		BUG_ON(!hlist_unhashed(&req->hash));
+ 
+ 		blk_free_request(q, req);
+-		freed_request(q, is_sync, priv);
++		freed_request(q, is_sync, priv, rl);
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(__blk_put_request);
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index bd582a7..78b8aec 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -148,6 +148,7 @@ void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
+ 	 * set defaults
+ 	 */
+ 	q->nr_requests = BLKDEV_MAX_RQ;
++	q->nr_group_requests = BLKDEV_MAX_GROUP_RQ;
+ 
+ 	q->make_request_fn = mfn;
+ 	blk_queue_dma_alignment(q, 511);
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index b1cd040..577ed42 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -38,42 +38,66 @@ static ssize_t queue_requests_show(struct request_queue *q, char *page)
+ static ssize_t
+ queue_requests_store(struct request_queue *q, const char *page, size_t count)
+ {
+-	struct request_list *rl = &q->rq;
++	struct request_list *rl;
+ 	unsigned long nr;
+ 	int ret = queue_var_store(&nr, page, count);
+ 	if (nr < BLKDEV_MIN_RQ)
+ 		nr = BLKDEV_MIN_RQ;
+ 
+ 	spin_lock_irq(q->queue_lock);
++	rl = blk_get_request_list(q, NULL);
+ 	q->nr_requests = nr;
+ 	blk_queue_congestion_threshold(q);
+ 
+-	if (rl->count[BLK_RW_SYNC] >= queue_congestion_on_threshold(q))
++	if (q->rq_data.count[BLK_RW_SYNC] >= queue_congestion_on_threshold(q))
+ 		blk_set_queue_congested(q, BLK_RW_SYNC);
+-	else if (rl->count[BLK_RW_SYNC] < queue_congestion_off_threshold(q))
++	else if (q->rq_data.count[BLK_RW_SYNC] <
++				queue_congestion_off_threshold(q))
+ 		blk_clear_queue_congested(q, BLK_RW_SYNC);
+ 
+-	if (rl->count[BLK_RW_ASYNC] >= queue_congestion_on_threshold(q))
++	if (q->rq_data.count[BLK_RW_ASYNC] >= queue_congestion_on_threshold(q))
+ 		blk_set_queue_congested(q, BLK_RW_ASYNC);
+-	else if (rl->count[BLK_RW_ASYNC] < queue_congestion_off_threshold(q))
++	else if (q->rq_data.count[BLK_RW_ASYNC] <
++				queue_congestion_off_threshold(q))
+ 		blk_clear_queue_congested(q, BLK_RW_ASYNC);
+ 
+-	if (rl->count[BLK_RW_SYNC] >= q->nr_requests) {
++	if (q->rq_data.count[BLK_RW_SYNC] >= q->nr_requests) {
+ 		blk_set_queue_full(q, BLK_RW_SYNC);
+-	} else if (rl->count[BLK_RW_SYNC]+1 <= q->nr_requests) {
++	} else if (q->rq_data.count[BLK_RW_SYNC]+1 <= q->nr_requests) {
+ 		blk_clear_queue_full(q, BLK_RW_SYNC);
+ 		wake_up(&rl->wait[BLK_RW_SYNC]);
+ 	}
+ 
+-	if (rl->count[BLK_RW_ASYNC] >= q->nr_requests) {
++	if (q->rq_data.count[BLK_RW_ASYNC] >= q->nr_requests) {
+ 		blk_set_queue_full(q, BLK_RW_ASYNC);
+-	} else if (rl->count[BLK_RW_ASYNC]+1 <= q->nr_requests) {
++	} else if (q->rq_data.count[BLK_RW_ASYNC]+1 <= q->nr_requests) {
+ 		blk_clear_queue_full(q, BLK_RW_ASYNC);
+ 		wake_up(&rl->wait[BLK_RW_ASYNC]);
+ 	}
+ 	spin_unlock_irq(q->queue_lock);
+ 	return ret;
+ }
++#ifdef CONFIG_GROUP_IOSCHED
++static ssize_t queue_group_requests_show(struct request_queue *q, char *page)
++{
++	return queue_var_show(q->nr_group_requests, (page));
++}
++
++static ssize_t
++queue_group_requests_store(struct request_queue *q, const char *page,
++					size_t count)
++{
++	unsigned long nr;
++	int ret = queue_var_store(&nr, page, count);
++	if (nr < BLKDEV_MIN_RQ)
++		nr = BLKDEV_MIN_RQ;
++
++	spin_lock_irq(q->queue_lock);
++	q->nr_group_requests = nr;
++	spin_unlock_irq(q->queue_lock);
++	return ret;
++}
++#endif
+ 
+ static ssize_t queue_ra_show(struct request_queue *q, char *page)
+ {
+@@ -239,6 +263,14 @@ static struct queue_sysfs_entry queue_requests_entry = {
+ 	.store = queue_requests_store,
+ };
+ 
++#ifdef CONFIG_GROUP_IOSCHED
++static struct queue_sysfs_entry queue_group_requests_entry = {
++	.attr = {.name = "nr_group_requests", .mode = S_IRUGO | S_IWUSR },
++	.show = queue_group_requests_show,
++	.store = queue_group_requests_store,
++};
++#endif
++
+ static struct queue_sysfs_entry queue_ra_entry = {
+ 	.attr = {.name = "read_ahead_kb", .mode = S_IRUGO | S_IWUSR },
+ 	.show = queue_ra_show,
+@@ -313,6 +345,9 @@ static struct queue_sysfs_entry queue_iostats_entry = {
+ 
+ static struct attribute *default_attrs[] = {
+ 	&queue_requests_entry.attr,
++#ifdef CONFIG_GROUP_IOSCHED
++	&queue_group_requests_entry.attr,
++#endif
+ 	&queue_ra_entry.attr,
+ 	&queue_max_hw_sectors_entry.attr,
+ 	&queue_max_sectors_entry.attr,
+@@ -392,12 +427,11 @@ static void blk_release_queue(struct kobject *kobj)
+ {
+ 	struct request_queue *q =
+ 		container_of(kobj, struct request_queue, kobj);
+-	struct request_list *rl = &q->rq;
+ 
+ 	blk_sync_queue(q);
+ 
+-	if (rl->rq_pool)
+-		mempool_destroy(rl->rq_pool);
++	if (q->rq_data.rq_pool)
++		mempool_destroy(q->rq_data.rq_pool);
+ 
+ 	if (q->queue_tags)
+ 		__blk_queue_free_tags(q);
 diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 84276d5..f8d0b90 100644
+index 899972c..c4a2b1e 100644
 --- a/block/elevator-fq.c
 +++ b/block/elevator-fq.c
-@@ -45,6 +45,9 @@ static int elv_rate_sampling_window = HZ / 10;
-  */
- #define WFQ_SERVICE_SHIFT	22
- 
-+static void
-+elv_release_ioq(struct elevator_queue *eq, struct io_queue **ioq_ptr);
-+
- #ifdef CONFIG_GROUP_IOSCHED
- #define for_each_entity(entity)	\
- 	for (; entity != NULL; entity = entity->parent)
-@@ -90,6 +93,69 @@ static inline void bfq_check_next_active(struct io_sched_data *sd,
- {
- 	BUG_ON(sd->next_active != entity);
- }
-+
-+static inline int iog_deleting(struct io_group *iog)
-+{
-+	return iog->deleting;
-+}
-+
-+/* Do the two (enqueued) entities belong to the same group ? */
-+static inline int
-+is_same_group(struct io_entity *entity, struct io_entity *new_entity)
-+{
-+	if (entity->sched_data == new_entity->sched_data)
-+		return 1;
-+
-+	return 0;
-+}
-+
-+static inline struct io_entity *parent_entity(struct io_entity *entity)
-+{
-+	return entity->parent;
-+}
-+
-+/* return depth at which a io entity is present in the hierarchy */
-+static inline int depth_entity(struct io_entity *entity)
-+{
-+	int depth = 0;
-+
-+	for_each_entity(entity)
-+		depth++;
-+
-+	return depth;
-+}
-+
-+static void bfq_find_matching_entity(struct io_entity **entity,
-+			struct io_entity **new_entity)
-+{
-+	int entity_depth, new_entity_depth;
-+
-+	/*
-+	 * preemption test can be made between sibling entities who are in the
-+	 * same group i.e who have a common parent. Walk up the hierarchy of
-+	 * both entities until we find their ancestors who are siblings of
-+	 * common parent.
-+	 */
-+
-+	/* First walk up until both entities are at same depth */
-+	entity_depth = depth_entity(*entity);
-+	new_entity_depth = depth_entity(*new_entity);
-+
-+	while (entity_depth > new_entity_depth) {
-+		entity_depth--;
-+		*entity = parent_entity(*entity);
-+	}
-+
-+	while (new_entity_depth > entity_depth) {
-+		new_entity_depth--;
-+		*new_entity = parent_entity(*new_entity);
-+	}
-+
-+	while (!is_same_group(*entity, *new_entity)) {
-+		*entity = parent_entity(*entity);
-+		*new_entity = parent_entity(*new_entity);
-+	}
-+}
- #else /* GROUP_IOSCHED */
- #define for_each_entity(entity)	\
- 	for (; entity != NULL; entity = NULL)
-@@ -106,6 +172,17 @@ static inline void bfq_check_next_active(struct io_sched_data *sd,
- 					 struct io_entity *entity)
- {
- }
-+
-+static inline int iog_deleting(struct io_group *iog)
-+{
-+	/* In flat mode, root cgroup can't be deleted. */
-+	return 0;
-+}
-+
-+static void bfq_find_matching_entity(struct io_entity **entity,
-+					struct io_entity **new_entity)
-+{
-+}
- #endif /* GROUP_IOSCHED */
- 
- static inline int elv_prio_slice(struct elv_fq_data *efqd, int sync,
-@@ -363,13 +440,6 @@ static void bfq_get_entity(struct io_entity *entity)
- 		elv_get_ioq(ioq);
- }
- 
--static void bfq_init_entity(struct io_entity *entity, struct io_group *iog)
--{
--	entity->ioprio = entity->new_ioprio;
--	entity->ioprio_class = entity->new_ioprio_class;
--	entity->sched_data = &iog->sched_data;
--}
--
- /**
-  * bfq_find_deepest - find the deepest node that an extraction can modify.
-  * @node: the node being removed.
-@@ -833,8 +903,26 @@ static int __bfq_deactivate_entity(struct io_entity *entity, int requeue)
- static void bfq_deactivate_entity(struct io_entity *entity, int requeue)
- {
- 	struct io_sched_data *sd;
-+	struct io_group *iog, *__iog;
- 	struct io_entity *parent;
- 
-+	iog = container_of(entity->sched_data, struct io_group, sched_data);
-+
-+	/*
-+	 * Hold a reference to entity's iog until we are done. This function
-+	 * travels the hierarchy and we don't want to free up the group yet
-+	 * while we are traversing the hiearchy. It is possible that this
-+	 * group's cgroup has been removed hence cgroup reference is gone.
-+	 * If this entity was active entity, then its group will not be on
-+	 * any of the trees and it will be freed up the moment queue is
-+	 * freed up in __bfq_deactivate_entity().
-+	 *
-+	 * Hence, hold a reference, deactivate the hierarhcy of entities and
-+	 * then drop the reference which should free up the whole chain of
-+	 * groups.
-+	 */
-+	elv_get_iog(iog);
-+
- 	for_each_entity_safe(entity, parent) {
- 		sd = entity->sched_data;
- 
-@@ -852,6 +940,7 @@ static void bfq_deactivate_entity(struct io_entity *entity, int requeue)
- 			 * the budgets on the path towards the root
- 			 * need to be updated.
- 			 */
-+			elv_put_iog(iog);
- 			goto update;
- 		}
- 
-@@ -859,11 +948,16 @@ static void bfq_deactivate_entity(struct io_entity *entity, int requeue)
- 		 * If we reach there the parent is no more backlogged and
- 		 * we want to propagate the dequeue upwards.
- 		 *
-+		 * If entity's group has been marked for deletion, don't
-+		 * requeue the group in idle tree so that it can be freed.
- 		 */
--
--		requeue = 1;
-+		__iog = container_of(entity->sched_data, struct io_group,
-+						sched_data);
-+		if (!iog_deleting(__iog))
-+			requeue = 1;
- 	}
- 
-+	elv_put_iog(iog);
- 	return;
- 
- update:
-@@ -902,8 +996,59 @@ static void io_flush_idle_tree(struct io_service_tree *st)
- 		__bfq_deactivate_entity(entity, 0);
- }
- 
-+/*
-+ * Release all the io group references to its async queues.
-+ */
-+static void
-+io_put_io_group_queues(struct elevator_queue *e, struct io_group *iog)
-+{
-+	int i, j;
-+
-+	for (i = 0; i < 2; i++)
-+		for (j = 0; j < IOPRIO_BE_NR; j++)
-+			elv_release_ioq(e, &iog->async_queue[i][j]);
-+
-+	/* Free up async idle queue */
-+	elv_release_ioq(e, &iog->async_idle_queue);
-+}
-+
- /* Mainly hierarchical grouping code */
- #ifdef CONFIG_GROUP_IOSCHED
-+static void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup);
-+
-+static void bfq_init_entity(struct io_entity *entity, struct io_group *iog)
-+{
-+	entity->ioprio = entity->new_ioprio;
-+	entity->weight = entity->new_weight;
-+	entity->ioprio_class = entity->new_ioprio_class;
-+	entity->parent = iog->my_entity;
-+	entity->sched_data = &iog->sched_data;
-+}
-+
-+static void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog)
-+{
-+	struct io_entity *entity = &iog->entity;
-+
-+	entity->weight = entity->new_weight = iocg->weight;
-+	entity->ioprio_class = entity->new_ioprio_class = iocg->ioprio_class;
-+	entity->ioprio_changed = 1;
-+	entity->my_sched_data = &iog->sched_data;
-+}
-+
-+static void io_group_set_parent(struct io_group *iog, struct io_group *parent)
-+{
-+	struct io_entity *entity;
-+
-+	BUG_ON(parent == NULL);
-+	BUG_ON(iog == NULL);
-+
-+	entity = &iog->entity;
-+	entity->parent = parent->my_entity;
-+	entity->sched_data = &parent->sched_data;
-+	if (entity->parent)
-+		/* Child group reference on parent group. */
-+		elv_get_iog(parent);
-+}
- 
- struct io_cgroup io_root_cgroup = {
- 	.weight = IO_DEFAULT_GRP_WEIGHT,
-@@ -916,6 +1061,26 @@ static struct io_cgroup *cgroup_to_io_cgroup(struct cgroup *cgroup)
+@@ -1092,6 +1092,16 @@ static struct io_cgroup *cgroup_to_io_cgroup(struct cgroup *cgroup)
  			    struct io_cgroup, css);
  }
  
-+/*
-+ * Search the io_group for efqd into the hash table (by now only a list)
-+ * of bgrp.  Must be called under rcu_read_lock().
-+ */
-+static struct io_group *
-+io_cgroup_lookup_group(struct io_cgroup *iocg, void *key)
++struct request_list *io_group_get_request_list(struct request_queue *q,
++						struct bio *bio)
 +{
 +	struct io_group *iog;
-+	struct hlist_node *n;
-+	void *__key;
 +
-+	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
-+		__key = rcu_dereference(iog->key);
-+		if (__key == key)
-+			return iog;
-+	}
-+
-+	return NULL;
-+}
-+
- #define SHOW_FUNCTION(__VAR)						\
- static u64 io_cgroup_##__VAR##_read(struct cgroup *cgroup,		\
- 				       struct cftype *cftype)		\
-@@ -1056,12 +1221,6 @@ static void iocg_attach(struct cgroup_subsys *subsys, struct cgroup *cgroup,
- 	task_unlock(tsk);
- }
- 
--static void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup)
--{
--
--	/* Implemented in later patch */
--}
--
- struct cgroup_subsys io_subsys = {
- 	.name = "io",
- 	.create = iocg_create,
-@@ -1072,7 +1231,599 @@ struct cgroup_subsys io_subsys = {
- 	.subsys_id = io_subsys_id,
- 	.use_id = 1,
- };
-+
-+static inline unsigned int iog_weight(struct io_group *iog)
-+{
-+	return iog->entity.weight;
-+}
-+
-+/**
-+ * io_group_chain_alloc - allocate a chain of groups.
-+ * @efqd: queue descriptor.
-+ * @cgroup: the leaf cgroup this chain starts from.
-+ *
-+ * Allocate a chain of groups starting from the one belonging to
-+ * @cgroup up to the root cgroup.  Stop if a cgroup on the chain
-+ * to the root has already an allocated group on @efqd.
-+ */
-+static struct io_group *
-+io_group_chain_alloc(struct request_queue *q, void *key, struct cgroup *cgroup)
-+{
-+	struct io_cgroup *iocg;
-+	struct io_group *iog, *leaf = NULL, *prev = NULL;
-+	gfp_t flags = GFP_ATOMIC |  __GFP_ZERO;
-+
-+	for (; cgroup != NULL; cgroup = cgroup->parent) {
-+		iocg = cgroup_to_io_cgroup(cgroup);
-+
-+		iog = io_cgroup_lookup_group(iocg, key);
-+		if (iog != NULL) {
-+			/*
-+			 * All the cgroups in the path from there to the
-+			 * root must have a io_group for efqd, so we don't
-+			 * need any more allocations.
-+			 */
-+			break;
-+		}
-+
-+		iog = kzalloc_node(sizeof(*iog), flags, q->node);
-+		if (!iog)
-+			goto cleanup;
-+
-+		iog->iocg_id = css_id(&iocg->css);
-+
-+		io_group_init_entity(iocg, iog);
-+		iog->my_entity = &iog->entity;
-+
-+		atomic_set(&iog->ref, 0);
-+		iog->deleting = 0;
-+
-+		/*
-+		 * Take the initial reference that will be released on destroy
-+		 * This can be thought of a joint reference by cgroup and
-+		 * elevator which will be dropped by either elevator exit
-+		 * or cgroup deletion path depending on who is exiting first.
-+		 */
-+		elv_get_iog(iog);
-+
-+		if (leaf == NULL) {
-+			leaf = iog;
-+			prev = leaf;
-+		} else {
-+			io_group_set_parent(prev, iog);
-+			/*
-+			 * Build a list of allocated nodes using the efqd
-+			 * filed, that is still unused and will be initialized
-+			 * only after the node will be connected.
-+			 */
-+			prev->key = iog;
-+			prev = iog;
-+		}
-+	}
-+
-+	return leaf;
-+
-+cleanup:
-+	while (leaf != NULL) {
-+		prev = leaf;
-+		leaf = leaf->key;
-+		kfree(prev);
-+	}
-+
-+	return NULL;
-+}
-+
-+/**
-+ * io_group_chain_link - link an allocatd group chain to a cgroup hierarchy.
-+ * @efqd: the queue descriptor.
-+ * @cgroup: the leaf cgroup to start from.
-+ * @leaf: the leaf group (to be associated to @cgroup).
-+ *
-+ * Try to link a chain of groups to a cgroup hierarchy, connecting the
-+ * nodes bottom-up, so we can be sure that when we find a cgroup in the
-+ * hierarchy that already as a group associated to @efqd all the nodes
-+ * in the path to the root cgroup have one too.
-+ *
-+ * On locking: the queue lock protects the hierarchy (there is a hierarchy
-+ * per device) while the io_cgroup lock protects the list of groups
-+ * belonging to the same cgroup.
-+ */
-+static void io_group_chain_link(struct request_queue *q, void *key,
-+				struct cgroup *cgroup,
-+				struct io_group *leaf,
-+				struct elv_fq_data *efqd)
-+{
-+	struct io_cgroup *iocg;
-+	struct io_group *iog, *next, *prev = NULL;
-+	unsigned long flags;
-+
-+	assert_spin_locked(q->queue_lock);
-+
-+	for (; cgroup != NULL && leaf != NULL; cgroup = cgroup->parent) {
-+		iocg = cgroup_to_io_cgroup(cgroup);
-+		next = leaf->key;
-+
-+		iog = io_cgroup_lookup_group(iocg, key);
-+		BUG_ON(iog != NULL);
-+
-+		spin_lock_irqsave(&iocg->lock, flags);
-+
-+		rcu_assign_pointer(leaf->key, key);
-+		hlist_add_head_rcu(&leaf->group_node, &iocg->group_data);
-+		hlist_add_head(&leaf->elv_data_node, &efqd->group_list);
-+
-+		spin_unlock_irqrestore(&iocg->lock, flags);
-+
-+		prev = leaf;
-+		leaf = next;
-+	}
-+
-+	BUG_ON(cgroup == NULL && leaf != NULL);
-+
-+	if (cgroup != NULL && prev != NULL) {
-+		iocg = cgroup_to_io_cgroup(cgroup);
-+		iog = io_cgroup_lookup_group(iocg, key);
-+		io_group_set_parent(prev, iog);
-+	}
-+}
-+
-+/**
-+ * io_find_alloc_group - return the group associated to @efqd in @cgroup.
-+ * @fqd: queue descriptor.
-+ * @cgroup: cgroup being searched for.
-+ * @create: if set to 1, create the io group if it has not been created yet.
-+ *
-+ * Return a group associated to @fqd in @cgroup, allocating one if
-+ * necessary.  When a group is returned all the cgroups in the path
-+ * to the root have a group associated to @efqd.
-+ *
-+ * If the allocation fails, return the root group: this breaks guarantees
-+ * but is a safe fallbak.  If this loss becames a problem it can be
-+ * mitigated using the equivalent weight (given by the product of the
-+ * weights of the groups in the path from @group to the root) in the
-+ * root scheduler.
-+ *
-+ * We allocate all the missing nodes in the path from the leaf cgroup
-+ * to the root and we connect the nodes only after all the allocations
-+ * have been successful.
-+ */
-+static struct io_group *io_find_alloc_group(struct request_queue *q,
-+			struct cgroup *cgroup, struct elv_fq_data *efqd,
-+			int create)
-+{
-+	struct io_cgroup *iocg = cgroup_to_io_cgroup(cgroup);
-+	struct io_group *iog = NULL;
-+	/* Note: Use efqd as key */
-+	void *key = efqd;
-+
-+	/*
-+	 * Take a refenrece to css object. Don't want to map a bio to
-+	 * a group if it has been marked for deletion
-+	 */
-+
-+	if (!css_tryget(&iocg->css))
-+		return iog;
-+
-+	iog = io_cgroup_lookup_group(iocg, key);
-+	if (iog != NULL || !create)
-+		goto end;
-+
-+	iog = io_group_chain_alloc(q, key, cgroup);
-+	if (iog != NULL)
-+		io_group_chain_link(q, key, cgroup, iog, efqd);
-+
-+end:
-+	css_put(&iocg->css);
-+	return iog;
-+}
-+
-+/*
-+ * Search for the io group current task belongs to. If create=1, then also
-+ * create the io group if it is not already there.
-+ *
-+ * Note: This function should be called with queue lock held. It returns
-+ * a pointer to io group without taking any reference. That group will
-+ * be around as long as queue lock is not dropped (as group reclaim code
-+ * needs to get hold of queue lock). So if somebody needs to use group
-+ * pointer even after dropping queue lock, take a reference to the group
-+ * before dropping queue lock.
-+ */
-+struct io_group *io_get_io_group(struct request_queue *q, int create)
-+{
-+	struct cgroup *cgroup;
-+	struct io_group *iog;
-+	struct elv_fq_data *efqd = &q->elevator->efqd;
-+
-+	assert_spin_locked(q->queue_lock);
-+
-+	rcu_read_lock();
-+	cgroup = task_cgroup(current, io_subsys_id);
-+	iog = io_find_alloc_group(q, cgroup, efqd, create);
-+	if (!iog) {
-+		if (create)
-+			iog = efqd->root_group;
-+		else
-+			/*
-+			 * bio merge functions doing lookup don't want to
-+			 * map bio to root group by default
-+			 */
-+			iog = NULL;
-+	}
-+	rcu_read_unlock();
-+	return iog;
-+}
-+EXPORT_SYMBOL(io_get_io_group);
-+
-+static void io_free_root_group(struct elevator_queue *e)
-+{
-+	struct io_cgroup *iocg = &io_root_cgroup;
-+	struct elv_fq_data *efqd = &e->efqd;
-+	struct io_group *iog = efqd->root_group;
-+	struct io_service_tree *st;
-+	int i;
-+
++	iog = io_get_io_group_bio(q, bio, 1);
 +	BUG_ON(!iog);
-+	spin_lock_irq(&iocg->lock);
-+	hlist_del_rcu(&iog->group_node);
-+	spin_unlock_irq(&iocg->lock);
-+
-+	for (i = 0; i < IO_IOPRIO_CLASSES; i++) {
-+		st = iog->sched_data.service_tree + i;
-+		io_flush_idle_tree(st);
-+	}
-+
-+	io_put_io_group_queues(e, iog);
-+	elv_put_iog(iog);
++	return &iog->rl;
 +}
 +
-+static struct io_group *io_alloc_root_group(struct request_queue *q,
-+					struct elevator_queue *e, void *key)
-+{
-+	struct io_group *iog;
-+	struct io_cgroup *iocg;
-+	int i;
-+
-+	iog = kmalloc_node(sizeof(*iog), GFP_KERNEL | __GFP_ZERO, q->node);
-+	if (iog == NULL)
-+		return NULL;
-+
-+	elv_get_iog(iog);
-+	iog->entity.parent = NULL;
-+	for (i = 0; i < IO_IOPRIO_CLASSES; i++)
-+		iog->sched_data.service_tree[i] = IO_SERVICE_TREE_INIT;
-+
-+	iocg = &io_root_cgroup;
-+	spin_lock_irq(&iocg->lock);
-+	rcu_assign_pointer(iog->key, key);
-+	hlist_add_head_rcu(&iog->group_node, &iocg->group_data);
-+	iog->iocg_id = css_id(&iocg->css);
-+	spin_unlock_irq(&iocg->lock);
-+
-+	return iog;
-+}
-+
-+static void io_group_free_rcu(struct rcu_head *head)
-+{
-+	struct io_group *iog;
-+
-+	iog = container_of(head, struct io_group, rcu_head);
-+	kfree(iog);
-+}
-+
-+/*
-+ * This cleanup function does the last bit of things to destroy cgroup.
-+ * It should only get called after io_destroy_group has been invoked.
-+ */
-+static void io_group_cleanup(struct io_group *iog)
-+{
-+	struct io_service_tree *st;
-+	struct io_entity *entity = iog->my_entity;
-+	int i;
-+
-+	for (i = 0; i < IO_IOPRIO_CLASSES; i++) {
-+		st = iog->sched_data.service_tree + i;
-+
-+		BUG_ON(!RB_EMPTY_ROOT(&st->active));
-+		BUG_ON(!RB_EMPTY_ROOT(&st->idle));
-+		BUG_ON(st->wsum != 0);
-+	}
-+
-+	BUG_ON(iog->sched_data.next_active != NULL);
-+	BUG_ON(iog->sched_data.active_entity != NULL);
-+	BUG_ON(entity != NULL && entity->tree != NULL);
-+
-+	/*
-+	 * Wait for any rcu readers to exit before freeing up the group.
-+	 * Primarily useful when io_get_io_group() is called without queue
-+	 * lock to access some group data from bdi_congested_group() path.
-+	 */
-+	call_rcu(&iog->rcu_head, io_group_free_rcu);
-+}
-+
-+void elv_put_iog(struct io_group *iog)
-+{
-+	struct io_group *parent = NULL;
-+	struct io_entity *entity;
-+
-+	BUG_ON(!iog);
-+
-+	entity = iog->my_entity;
-+
-+	BUG_ON(atomic_read(&iog->ref) <= 0);
-+	if (!atomic_dec_and_test(&iog->ref))
-+		return;
-+
-+	if (entity)
-+		parent = container_of(iog->my_entity->parent,
-+					struct io_group, entity);
-+
-+	io_group_cleanup(iog);
-+
-+	if (parent)
-+		elv_put_iog(parent);
-+}
-+EXPORT_SYMBOL(elv_put_iog);
-+
-+/*
-+ * check whether a given group has got any active entities on any of the
-+ * service tree.
-+ */
-+static inline int io_group_has_active_entities(struct io_group *iog)
-+{
-+	int i;
-+	struct io_service_tree *st;
-+
-+	for (i = 0; i < IO_IOPRIO_CLASSES; i++) {
-+		st = iog->sched_data.service_tree + i;
-+		if (!RB_EMPTY_ROOT(&st->active))
-+			return 1;
-+	}
-+
-+	/*
-+	 * Also check there are no active entities being served which are
-+	 * not on active tree
-+	 */
-+
-+	if (iog->sched_data.active_entity)
-+		return 1;
-+
-+	return 0;
-+}
-+
-+/*
-+ * After the group is destroyed, no new sync IO should come to the group.
-+ * It might still have pending IOs in some busy queues. It should be able to
-+ * send those IOs down to the disk. The async IOs (due to dirty page writeback)
-+ * would go in the root group queues after this, as the group does not exist
-+ * anymore.
-+ */
-+static void __io_destroy_group(struct elv_fq_data *efqd, struct io_group *iog)
-+{
-+	struct elevator_queue *eq;
-+	struct io_service_tree *st;
-+	int i;
-+
-+	BUG_ON(iog->my_entity == NULL);
-+
-+	/*
-+	 * Mark io group for deletion so that no new entry goes in
-+	 * idle tree. Any active queue will be removed from active
-+	 * tree and not put in to idle tree.
-+	 */
-+	iog->deleting = 1;
-+
-+	/* We flush idle tree now, and don't put things in there any more. */
-+	for (i = 0; i < IO_IOPRIO_CLASSES; i++) {
-+		st = iog->sched_data.service_tree + i;
-+
-+		io_flush_idle_tree(st);
-+	}
-+
-+	eq = container_of(efqd, struct elevator_queue, efqd);
-+	hlist_del(&iog->elv_data_node);
-+	io_put_io_group_queues(eq, iog);
-+
-+	/*
-+	 * We can come here either through cgroup deletion path or through
-+	 * elevator exit path. If we come here through cgroup deletion path
-+	 * check if io group has any active entities or not. If not, then
-+	 * deactivate this io group to make sure it is removed from idle
-+	 * tree it might have been on. If this group was on idle tree, then
-+	 * this probably will be the last reference and group will be
-+	 * freed upon putting the reference down.
-+	 */
-+
-+	if (!io_group_has_active_entities(iog)) {
-+		/*
-+		 * io group does not have any active entites. Because this
-+		 * group has been decoupled from io_cgroup list and this
-+		 * cgroup is being deleted, this group should not receive
-+		 * any new IO. Hence it should be safe to deactivate this
-+		 * io group and remove from the scheduling tree.
-+		 */
-+		__bfq_deactivate_entity(iog->my_entity, 0);
-+	}
-+
-+	/*
-+	 * Put the reference taken at the time of creation so that when all
-+	 * queues are gone, cgroup can be destroyed.
-+	 */
-+	elv_put_iog(iog);
-+}
-+
-+static void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup)
-+{
-+	struct io_cgroup *iocg = cgroup_to_io_cgroup(cgroup);
-+	struct io_group *iog;
-+	struct elv_fq_data *efqd;
-+	unsigned long uninitialized_var(flags);
-+
-+	/*
-+	 * io groups are linked in two lists. One list is maintained
-+	 * in elevator (efqd->group_list) and other is maintained
-+	 * per cgroup structure (iocg->group_data).
-+	 *
-+	 * While a cgroup is being deleted, elevator also might be
-+	 * exiting and both might try to cleanup the same io group
-+	 * so need to be little careful.
-+	 *
-+	 * (iocg->group_data) is protected by iocg->lock. To avoid deadlock,
-+	 * we can't hold the queue lock while holding iocg->lock. So we first
-+	 * remove iog from iocg->group_data under iocg->lock. Whoever removes
-+	 * iog from iocg->group_data should call __io_destroy_group to remove
-+	 * iog.
-+	 */
-+
-+	rcu_read_lock();
-+
-+remove_entry:
-+	spin_lock_irqsave(&iocg->lock, flags);
-+
-+	if (hlist_empty(&iocg->group_data)) {
-+		spin_unlock_irqrestore(&iocg->lock, flags);
-+		goto done;
-+	}
-+	iog = hlist_entry(iocg->group_data.first, struct io_group,
-+			  group_node);
-+	efqd = rcu_dereference(iog->key);
-+	hlist_del_rcu(&iog->group_node);
-+	iog->iocg_id = 0;
-+	spin_unlock_irqrestore(&iocg->lock, flags);
-+
-+	spin_lock_irqsave(efqd->queue->queue_lock, flags);
-+	__io_destroy_group(efqd, iog);
-+	spin_unlock_irqrestore(efqd->queue->queue_lock, flags);
-+	goto remove_entry;
-+
-+done:
-+	free_css_id(&io_subsys, &iocg->css);
-+	rcu_read_unlock();
-+	BUG_ON(!hlist_empty(&iocg->group_data));
-+	kfree(iocg);
-+}
-+
-+/*
-+ * This functions checks if iog is still in iocg->group_data, and removes it.
-+ * If iog is not in that list, then cgroup destroy path has removed it, and
-+ * we do not need to remove it.
-+ */
-+static void io_group_check_and_destroy(struct elv_fq_data *efqd,
-+					struct io_group *iog)
-+{
-+	struct io_cgroup *iocg;
-+	unsigned long flags;
-+	struct cgroup_subsys_state *css;
-+
-+	rcu_read_lock();
-+
-+	css = css_lookup(&io_subsys, iog->iocg_id);
-+
-+	if (!css)
-+		goto out;
-+
-+	iocg = container_of(css, struct io_cgroup, css);
-+
-+	spin_lock_irqsave(&iocg->lock, flags);
-+
-+	if (iog->iocg_id) {
-+		hlist_del_rcu(&iog->group_node);
-+		__io_destroy_group(efqd, iog);
-+	}
-+
-+	spin_unlock_irqrestore(&iocg->lock, flags);
-+out:
-+	rcu_read_unlock();
-+}
-+
-+static void io_disconnect_groups(struct elevator_queue *e)
-+{
-+	struct hlist_node *pos, *n;
-+	struct io_group *iog;
-+	struct elv_fq_data *efqd = &e->efqd;
-+
-+	hlist_for_each_entry_safe(iog, pos, n, &efqd->group_list,
-+					elv_data_node) {
-+		io_group_check_and_destroy(efqd, iog);
-+	}
-+}
-+
-+/*
-+ * if bio sumbmitting task and rq don't belong to same io_group, it can't
-+ * be merged
-+ */
-+int io_group_allow_merge(struct request *rq, struct bio *bio)
-+{
-+	struct request_queue *q = rq->q;
-+	struct io_queue *ioq = rq->ioq;
-+	struct io_group *iog, *__iog;
-+
-+	if (!elv_iosched_fair_queuing_enabled(q->elevator))
-+		return 1;
-+
-+	/* Determine the io group of the bio submitting task */
-+	iog = io_get_io_group(q, 0);
-+	if (!iog) {
-+		/* May be task belongs to a differet cgroup for which io
-+		 * group has not been setup yet. */
-+		return 0;
-+	}
-+
-+	/* Determine the io group of the ioq, rq belongs to*/
-+	__iog = ioq_to_io_group(ioq);
-+
-+	return (iog == __iog);
-+}
-+#else /* GROUP_IOSCHED */
-+static void bfq_init_entity(struct io_entity *entity, struct io_group *iog)
-+{
-+	entity->ioprio = entity->new_ioprio;
-+	entity->weight = entity->new_weight;
-+	entity->ioprio_class = entity->new_ioprio_class;
-+	entity->sched_data = &iog->sched_data;
-+}
-+
-+static inline void io_disconnect_groups(struct elevator_queue *e) {}
-+static inline unsigned int iog_weight(struct io_group *iog) { return 0; }
-+
-+static struct io_group *io_alloc_root_group(struct request_queue *q,
-+					struct elevator_queue *e, void *key)
-+{
-+	struct io_group *iog;
-+	int i;
-+
-+	iog = kmalloc_node(sizeof(*iog), GFP_KERNEL | __GFP_ZERO, q->node);
-+	if (iog == NULL)
-+		return NULL;
-+
-+	for (i = 0; i < IO_IOPRIO_CLASSES; i++)
-+		iog->sched_data.service_tree[i] = IO_SERVICE_TREE_INIT;
-+
-+	return iog;
-+}
-+
-+static void io_free_root_group(struct elevator_queue *e)
-+{
-+	struct io_group *iog = e->efqd.root_group;
-+	struct io_service_tree *st;
-+	int i;
-+
-+	for (i = 0; i < IO_IOPRIO_CLASSES; i++) {
-+		st = iog->sched_data.service_tree + i;
-+		io_flush_idle_tree(st);
-+	}
-+
-+	io_put_io_group_queues(e, iog);
-+	kfree(iog);
-+}
-+
-+struct io_group *io_get_io_group(struct request_queue *q, int create)
-+{
-+	/* In flat mode, there is only root group */
-+	return q->elevator->efqd.root_group;
-+}
-+EXPORT_SYMBOL(io_get_io_group);
- #endif /* GROUP_IOSCHED */
-+
- /* Elevator fair queuing function */
- static inline struct io_queue *elv_active_ioq(struct elevator_queue *e)
- {
-@@ -1375,10 +2126,14 @@ void elv_put_ioq(struct io_queue *ioq)
- 	struct elv_fq_data *efqd = ioq->efqd;
- 	struct elevator_queue *e = container_of(efqd, struct elevator_queue,
- 						efqd);
-+	struct io_group *iog;
+ /*
+  * Search the io_group for efqd into the hash table (by now only a list)
+  * of bgrp.  Must be called under rcu_read_lock().
+@@ -1390,6 +1400,8 @@ io_group_chain_alloc(struct request_queue *q, void *key, struct cgroup *cgroup)
+ 		 */
+ 		elv_get_iog(iog);
  
- 	BUG_ON(atomic_read(&ioq->ref) <= 0);
- 	if (!atomic_dec_and_test(&ioq->ref))
- 		return;
++		blk_init_request_list(&iog->rl);
 +
-+	iog = ioq_to_io_group(ioq);
+ 		if (leaf == NULL) {
+ 			leaf = iog;
+ 			prev = leaf;
+@@ -1667,6 +1679,8 @@ static struct io_group *io_alloc_root_group(struct request_queue *q,
+ 	for (i = 0; i < IO_IOPRIO_CLASSES; i++)
+ 		iog->sched_data.service_tree[i] = IO_SERVICE_TREE_INIT;
+ 
++	blk_init_request_list(&iog->rl);
 +
- 	BUG_ON(ioq->nr_queued);
- 	BUG_ON(ioq->entity.tree != NULL);
- 	BUG_ON(elv_ioq_busy(ioq));
-@@ -1390,10 +2145,11 @@ void elv_put_ioq(struct io_queue *ioq)
- 	e->ops->elevator_free_sched_queue_fn(e, ioq->sched_queue);
- 	elv_log_ioq(efqd, ioq, "put_queue");
- 	elv_free_ioq(ioq);
-+	elv_put_iog(iog);
- }
- EXPORT_SYMBOL(elv_put_ioq);
- 
--void elv_release_ioq(struct elevator_queue *e, struct io_queue **ioq_ptr)
-+static void elv_release_ioq(struct elevator_queue *e, struct io_queue **ioq_ptr)
- {
- 	struct io_queue *ioq = *ioq_ptr;
- 
-@@ -1485,8 +2241,12 @@ static void __elv_set_active_ioq(struct elv_fq_data *efqd, struct io_queue *ioq,
- 	struct request_queue *q = efqd->queue;
- 
- 	if (ioq) {
--		elv_log_ioq(efqd, ioq, "set_active, busy=%d",
--							efqd->busy_queues);
-+		struct io_group *iog = ioq_to_io_group(ioq);
-+		elv_log_ioq(efqd, ioq, "set_active, busy=%d ioprio=%d"
-+				" weight=%u group_weight=%u",
-+				efqd->busy_queues,
-+				ioq->entity.ioprio, ioq->entity.weight,
-+				iog_weight(iog));
- 		ioq->slice_end = 0;
- 
- 		elv_clear_ioq_wait_request(ioq);
-@@ -1548,6 +2308,7 @@ static void elv_activate_ioq(struct io_queue *ioq, int add_front)
- static void elv_deactivate_ioq(struct elv_fq_data *efqd, struct io_queue *ioq,
- 					int requeue)
- {
-+	requeue = update_requeue(ioq, requeue);
- 	bfq_deactivate_entity(&ioq->entity, requeue);
- }
- 
-@@ -1725,6 +2486,7 @@ static int elv_should_preempt(struct request_queue *q, struct io_queue *new_ioq,
- 	struct io_queue *ioq;
- 	struct elevator_queue *eq = q->elevator;
- 	struct io_entity *entity, *new_entity;
-+	struct io_group *iog = NULL, *new_iog = NULL;
- 
- 	ioq = elv_active_ioq(eq);
- 
-@@ -1735,6 +2497,13 @@ static int elv_should_preempt(struct request_queue *q, struct io_queue *new_ioq,
- 	new_entity = &new_ioq->entity;
- 
- 	/*
-+	 * In hierarchical setup, one need to traverse up the hierarchy
-+	 * till both the queues are children of same parent to make a
-+	 * decision whether to do the preemption or not.
-+	 */
-+	bfq_find_matching_entity(&entity, &new_entity);
-+
-+	/*
- 	 * Allow an RT request to pre-empt an ongoing non-RT cfqq timeslice.
- 	 */
- 
-@@ -1750,9 +2519,17 @@ static int elv_should_preempt(struct request_queue *q, struct io_queue *new_ioq,
- 		return 1;
- 
- 	/*
--	 * Check with io scheduler if it has additional criterion based on
--	 * which it wants to preempt existing queue.
-+	 * If both the queues belong to same group, check with io scheduler
-+	 * if it has additional criterion based on which it wants to
-+	 * preempt existing queue.
- 	 */
-+	iog = ioq_to_io_group(ioq);
-+	new_iog = ioq_to_io_group(new_ioq);
-+
-+	if (iog != new_iog)
-+		return 0;
-+
-+
- 	if (eq->ops->elevator_should_preempt_fn)
- 		return eq->ops->elevator_should_preempt_fn(q,
- 						ioq_sched_queue(new_ioq), rq);
-@@ -2171,15 +2948,6 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 		elv_schedule_dispatch(q);
- }
- 
--struct io_group *io_get_io_group(struct request_queue *q)
--{
--	struct elv_fq_data *efqd = &q->elevator->efqd;
--
--	/* In flat mode, there is only root group */
--	return efqd->root_group;
--}
--EXPORT_SYMBOL(io_get_io_group);
--
- void *io_group_async_queue_prio(struct io_group *iog, int ioprio_class,
- 					int ioprio)
- {
-@@ -2230,53 +2998,6 @@ void io_group_set_async_queue(struct io_group *iog, int ioprio_class,
- }
- EXPORT_SYMBOL(io_group_set_async_queue);
- 
--/*
-- * Release all the io group references to its async queues.
-- */
--static void
--io_put_io_group_queues(struct elevator_queue *e, struct io_group *iog)
--{
--	int i, j;
--
--	for (i = 0; i < 2; i++)
--		for (j = 0; j < IOPRIO_BE_NR; j++)
--			elv_release_ioq(e, &iog->async_queue[i][j]);
--
--	/* Free up async idle queue */
--	elv_release_ioq(e, &iog->async_idle_queue);
--}
--
--static struct io_group *io_alloc_root_group(struct request_queue *q,
--					struct elevator_queue *e, void *key)
--{
--	struct io_group *iog;
--	int i;
--
--	iog = kmalloc_node(sizeof(*iog), GFP_KERNEL | __GFP_ZERO, q->node);
--	if (iog == NULL)
--		return NULL;
--
--	for (i = 0; i < IO_IOPRIO_CLASSES; i++)
--		iog->sched_data.service_tree[i] = IO_SERVICE_TREE_INIT;
--
--	return iog;
--}
--
--static void io_free_root_group(struct elevator_queue *e)
--{
--	struct io_group *iog = e->efqd.root_group;
--	struct io_service_tree *st;
--	int i;
--
--	for (i = 0; i < IO_IOPRIO_CLASSES; i++) {
--		st = iog->sched_data.service_tree + i;
--		io_flush_idle_tree(st);
--	}
--
--	io_put_io_group_queues(e, iog);
--	kfree(iog);
--}
--
- static void elv_slab_kill(void)
- {
- 	/*
-@@ -2320,6 +3041,7 @@ int elv_init_fq_data(struct request_queue *q, struct elevator_queue *e)
- 	efqd->idle_slice_timer.data = (unsigned long) efqd;
- 
- 	INIT_WORK(&efqd->unplug_work, elv_kick_queue);
-+	INIT_HLIST_HEAD(&efqd->group_list);
- 
- 	efqd->elv_slice[0] = elv_slice_async;
- 	efqd->elv_slice[1] = elv_slice_sync;
-@@ -2339,12 +3061,23 @@ int elv_init_fq_data(struct request_queue *q, struct elevator_queue *e)
- void elv_exit_fq_data(struct elevator_queue *e)
- {
- 	struct elv_fq_data *efqd = &e->efqd;
-+	struct request_queue *q = efqd->queue;
- 
- 	if (!elv_iosched_fair_queuing_enabled(e))
- 		return;
- 
- 	elv_shutdown_timer_wq(e);
- 
-+	spin_lock_irq(q->queue_lock);
-+	/* This should drop all the io group references of async queues */
-+	io_disconnect_groups(e);
-+	spin_unlock_irq(q->queue_lock);
-+
-+	elv_shutdown_timer_wq(e);
-+
-+	/* Wait for iog->key accessors to exit their grace periods. */
-+	synchronize_rcu();
-+
- 	BUG_ON(timer_pending(&efqd->idle_slice_timer));
- 	io_free_root_group(e);
- }
+ 	iocg = &io_root_cgroup;
+ 	spin_lock_irq(&iocg->lock);
+ 	rcu_assign_pointer(iog->key, key);
 diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index d9acb75..c8987c0 100644
+index bb43444..74a7393 100644
 --- a/block/elevator-fq.h
 +++ b/block/elevator-fq.h
-@@ -184,13 +184,49 @@ struct io_queue {
+@@ -258,6 +258,9 @@ struct io_group {
+ 
+ 	/* Single ioq per group, used for noop, deadline, anticipatory */
+ 	struct io_queue *ioq;
++
++	/* request list associated with the group */
++	struct request_list rl;
  };
  
- #ifdef CONFIG_GROUP_IOSCHED
-+/**
-+ * struct io_group - per (device, cgroup) data structure.
-+ * @entity: schedulable entity to insert into the parent group sched_data.
-+ * @sched_data: own sched_data, to contain child entities (they may be
-+ *              both io_queues and io_groups).
-+ * @group_node: node to be inserted into the io_cgroup->group_data
-+ *              list of the containing cgroup's io_cgroup.
-+ * @elv_data_node: node to be inserted into the @efqd->group_list list
-+ *             of the groups active on the same device; used for cleanup.
-+ * @async_queue: array of async queues for all the tasks belonging to
-+ *              the group, one queue per ioprio value per ioprio_class,
-+ *              except for the idle class that has only one queue.
-+ * @async_idle_queue: async queue for the idle class (ioprio is ignored).
-+ * @my_entity: pointer to @entity, %NULL for the toplevel group; used
-+ *             to avoid too many special cases during group creation/migration.
-+ *
-+ * Each (device, cgroup) pair has its own io_group, i.e., for each cgroup
-+ * there is a set of io_groups, each one collecting the lower-level
-+ * entities belonging to the group that are acting on the same device.
-+ *
-+ * Locking works as follows:
-+ *    o @group_node is protected by the io_cgroup lock, and is accessed
-+ *      via RCU from its readers.
-+ *    o @efqd is protected by the queue lock, RCU is used to access it
-+ *      from the readers.
-+ *    o All the other fields are protected by the @efqd queue lock.
-+ */
- struct io_group {
- 	struct io_entity entity;
-+	struct hlist_node elv_data_node;
- 	struct hlist_node group_node;
- 	struct io_sched_data sched_data;
-+	atomic_t ref;
- 	struct io_entity *my_entity;
+ /**
+@@ -526,6 +529,8 @@ extern void elv_fq_unset_request_ioq(struct request_queue *q,
+ 					struct request *rq);
+ extern struct io_queue *elv_lookup_ioq_bio(struct request_queue *q,
+ 						struct bio *bio);
++extern struct request_list *io_group_get_request_list(struct request_queue *q,
++						struct bio *bio);
  
- 	/*
-+	 * A cgroup has multiple io_groups, one for each request queue.
-+	 * to find io group belonging to a particular queue, elv_fq_data
-+	 * pointer is stored as a key.
-+	 */
-+	void *key;
-+
-+	/*
- 	 * async queue for each priority case for RT and BE class.
- 	 * Used only for cfq.
- 	 */
-@@ -198,11 +234,15 @@ struct io_group {
- 	struct io_queue *async_queue[2][IOPRIO_BE_NR];
- 	struct io_queue *async_idle_queue;
- 
-+	struct rcu_head rcu_head;
-+
- 	/*
- 	 * Used to track any pending rt requests so we can pre-empt current
- 	 * non-RT cfqq in service when this value is non-zero.
- 	 */
- 	unsigned int busy_rt_queues;
-+
-+	int deleting;
- 	unsigned short iocg_id;
- };
- 
-@@ -245,6 +285,9 @@ struct io_group {
- struct elv_fq_data {
- 	struct io_group *root_group;
- 
-+	/* List of io groups hanging on this elevator */
-+	struct hlist_head group_list;
-+
- 	struct request_queue *queue;
- 	unsigned int busy_queues;
- 
-@@ -407,7 +450,7 @@ static inline void elv_ioq_set_ioprio_class(struct io_queue *ioq,
- static inline unsigned int bfq_ioprio_to_weight(int ioprio)
- {
- 	WARN_ON(ioprio < 0 || ioprio >= IOPRIO_BE_NR);
--	return IOPRIO_BE_NR - ioprio;
-+	return ((IOPRIO_BE_NR - ioprio) * WEIGHT_MAX)/IOPRIO_BE_NR;
- }
- 
- static inline void elv_ioq_set_ioprio(struct io_queue *ioq, int ioprio)
-@@ -430,6 +473,46 @@ static inline struct io_group *ioq_to_io_group(struct io_queue *ioq)
- 						sched_data);
- }
- 
-+#ifdef CONFIG_GROUP_IOSCHED
-+extern int io_group_allow_merge(struct request *rq, struct bio *bio);
-+extern void elv_put_iog(struct io_group *iog);
-+
-+static inline void elv_get_iog(struct io_group *iog)
-+{
-+	atomic_inc(&iog->ref);
-+}
-+
-+static inline int update_requeue(struct io_queue *ioq, int requeue)
-+{
-+	struct io_group *iog = ioq_to_io_group(ioq);
-+
-+	if (iog->deleting == 1)
-+		return 0;
-+
-+	return requeue;
-+}
-+
-+#else /* !GROUP_IOSCHED */
-+static inline int io_group_allow_merge(struct request *rq, struct bio *bio)
-+{
-+	return 1;
-+}
-+
-+static inline void elv_get_iog(struct io_group *iog)
-+{
-+}
-+
-+static inline void elv_put_iog(struct io_group *iog)
-+{
-+}
-+
-+static inline int update_requeue(struct io_queue *ioq, int requeue)
-+{
-+	return requeue;
-+}
-+
-+#endif /* GROUP_IOSCHED */
-+
- extern ssize_t elv_slice_idle_show(struct elevator_queue *q, char *name);
- extern ssize_t elv_slice_idle_store(struct elevator_queue *q, const char *name,
- 						size_t count);
-@@ -477,7 +560,7 @@ extern void *io_group_async_queue_prio(struct io_group *iog, int ioprio_class,
- 					int ioprio);
- extern void io_group_set_async_queue(struct io_group *iog, int ioprio_class,
- 					int ioprio, struct io_queue *ioq);
--extern struct io_group *io_get_io_group(struct request_queue *q);
-+extern struct io_group *io_get_io_group(struct request_queue *q, int create);
- extern int elv_nr_busy_ioq(struct elevator_queue *e);
- extern struct io_queue *elv_alloc_ioq(struct request_queue *q, gfp_t gfp_mask);
- extern void elv_free_ioq(struct io_queue *ioq);
-@@ -528,5 +611,11 @@ static inline void *elv_fq_select_ioq(struct request_queue *q, int force)
- {
- 	return NULL;
- }
-+
-+static inline int io_group_allow_merge(struct request *rq, struct bio *bio)
-+
-+{
-+	return 1;
-+}
- #endif /* CONFIG_ELV_FAIR_QUEUING */
- #endif /* _BFQ_SCHED_H */
+ /* Sets the single ioq associated with the io group. (noop, deadline, AS) */
+ static inline void io_group_set_ioq(struct io_group *iog, struct io_queue *ioq)
 diff --git a/block/elevator.c b/block/elevator.c
-index 357f529..a6ef1f1 100644
+index 68d5a80..38a118b 100644
 --- a/block/elevator.c
 +++ b/block/elevator.c
-@@ -100,6 +100,10 @@ int elv_rq_merge_ok(struct request *rq, struct bio *bio)
- 	if (bio_integrity(bio) != blk_integrity_rq(rq))
- 		return 0;
+@@ -646,7 +646,7 @@ void elv_quiesce_start(struct request_queue *q)
+ 	 * make sure we don't have any requests in flight
+ 	 */
+ 	elv_drain_elevator(q);
+-	while (q->rq.elvpriv) {
++	while (q->rq_data.elvpriv) {
+ 		__blk_run_queue(q);
+ 		spin_unlock_irq(q->queue_lock);
+ 		msleep(10);
+@@ -745,8 +745,9 @@ void elv_insert(struct request_queue *q, struct request *rq, int where)
+ 	}
  
-+	/* If rq and bio belongs to different groups, dont allow merging */
-+	if (!io_group_allow_merge(rq, bio))
-+		return 0;
+ 	if (unplug_it && blk_queue_plugged(q)) {
+-		int nrq = q->rq.count[BLK_RW_SYNC] + q->rq.count[BLK_RW_ASYNC]
+-				- queue_in_flight(q);
++		int nrq = q->rq_data.count[BLK_RW_SYNC] +
++				q->rq_data.count[BLK_RW_ASYNC] -
++				queue_in_flight(q);
+ 
+ 		if (nrq >= q->unplug_thresh)
+ 			__generic_unplug_device(q);
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 551e17d..655440c 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -32,21 +32,51 @@ struct request;
+ struct sg_io_hdr;
+ 
+ #define BLKDEV_MIN_RQ	4
 +
- 	if (!elv_iosched_allow_merge(rq, bio))
- 		return 0;
++#ifdef CONFIG_GROUP_IOSCHED
++#define BLKDEV_MAX_RQ	512	/* Default maximum for queue */
++#define BLKDEV_MAX_GROUP_RQ    128      /* Default maximum per group*/
++#else
+ #define BLKDEV_MAX_RQ	128	/* Default maximum */
++/*
++ * This is eqivalent to case of only one group present (root group). Let
++ * it consume all the request descriptors available on the queue .
++ */
++#define BLKDEV_MAX_GROUP_RQ    BLKDEV_MAX_RQ      /* Default maximum */
++#endif
  
+ struct request;
+ typedef void (rq_end_io_fn)(struct request *, int);
+ 
+ struct request_list {
+ 	/*
+-	 * count[], starved[], and wait[] are indexed by
++	 * count[], starved and wait[] are indexed by
+ 	 * BLK_RW_SYNC/BLK_RW_ASYNC
+ 	 */
+ 	int count[2];
+ 	int starved[2];
++	wait_queue_head_t wait[2];
++};
++
++/*
++ * This data structures keeps track of mempool of requests for the queue
++ * and some overall statistics.
++ */
++struct request_data {
++	/*
++	 * Per queue request descriptor count. This is in addition to per
++	 * cgroup count
++	 */
++	int count[2];
+ 	int elvpriv;
+ 	mempool_t *rq_pool;
+-	wait_queue_head_t wait[2];
++	int starved;
++	/*
++	 * Global list for starved tasks. A task will be queued here if
++	 * it could not allocate request descriptor and the associated
++	 * group request list does not have any requests pending.
++	 */
++	wait_queue_head_t starved_wait;
+ };
+ 
+ /*
+@@ -355,6 +385,9 @@ struct request_queue
+ 	 */
+ 	struct request_list	rq;
+ 
++	/* Contains request pool and other data like starved data */
++	struct request_data	rq_data;
++
+ 	request_fn_proc		*request_fn;
+ 	make_request_fn		*make_request_fn;
+ 	prep_rq_fn		*prep_rq_fn;
+@@ -416,6 +449,8 @@ struct request_queue
+ 	 * queue settings
+ 	 */
+ 	unsigned long		nr_requests;	/* Max # of requests */
++	/* Max # of per io group requests */
++	unsigned long		nr_group_requests;
+ 	unsigned int		nr_congestion_on;
+ 	unsigned int		nr_congestion_off;
+ 	unsigned int		nr_batching;
+@@ -795,6 +830,54 @@ extern int scsi_cmd_ioctl(struct request_queue *, struct gendisk *, fmode_t,
+ extern int sg_scsi_ioctl(struct request_queue *, struct gendisk *, fmode_t,
+ 			 struct scsi_ioctl_command __user *);
+ 
++extern void blk_init_request_list(struct request_list *rl);
++
++static inline struct request_list *blk_get_request_list(struct request_queue *q,
++						struct bio *bio)
++{
++#ifdef CONFIG_GROUP_IOSCHED
++	if (!elv_iosched_fair_queuing_enabled(q->elevator))
++		return &q->rq;
++
++	return io_group_get_request_list(q, bio);
++#else
++	return &q->rq;
++#endif
++}
++
++static inline struct request_list *rq_rl(struct request_queue *q,
++						struct request *rq)
++{
++#ifdef CONFIG_GROUP_IOSCHED
++	struct io_group *iog;
++	int priv = rq->cmd_flags & REQ_ELVPRIV;
++
++	if (!elv_iosched_fair_queuing_enabled(q->elevator))
++		return &q->rq;
++
++	BUG_ON(priv && !rq->ioq);
++
++	if (priv)
++		iog = ioq_to_io_group(rq->ioq);
++	else
++		iog = q->elevator->efqd.root_group;
++
++	BUG_ON(!iog);
++	return &iog->rl;
++#else
++	return &q->rq;
++#endif
++}
++
++static inline struct io_group *rl_iog(struct request_list *rl)
++{
++#ifdef CONFIG_GROUP_IOSCHED
++	return container_of(rl, struct io_group, rl);
++#else
++	return NULL;
++#endif
++}
++
+ /*
+  * A queue has just exitted congestion.  Note this in the global counter of
+  * congested queues, and wake up anyone who was waiting for requests to be
 -- 
 1.6.0.6
