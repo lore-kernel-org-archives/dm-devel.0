@@ -1,16 +1,18 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Failed path will not be recovered when
-	disabling/enabling remote port
-Date: Thu, 02 Jul 2009 10:51:54 -0700
-Message-ID: <1246557114.7381.0.camel@chandra-ubuntu>
-References: <4A4C998F.7010602@linux.vnet.ibm.com>
+Subject: Re: git repo problem?
+Date: Thu, 02 Jul 2009 11:13:21 -0700
+Message-ID: <1246558401.7381.3.camel@chandra-ubuntu>
+References: <Pine.LNX.4.64.0906231512040.18393@e-smith.charlieb.ott.istop.com>
+	<1245868230.26915.22.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0906241700480.22601@e-smith.charlieb.ott.istop.com>
+	<Pine.LNX.4.64.0907021255380.1263@e-smith.charlieb.ott.istop.com>
 Reply-To: sekharan@linux.vnet.ibm.com,
 	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A4C998F.7010602@linux.vnet.ibm.com>
+In-Reply-To: <Pine.LNX.4.64.0907021255380.1263@e-smith.charlieb.ott.istop.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,198 +25,51 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-One simple question. Did you observe if multipathd is (still) running ?
-(when the port was enabled)
+Charlie,
 
-On Thu, 2009-07-02 at 13:27 +0200, Christian May wrote:
-> Hi,
+Please use 
+# git-clone git://git.kernel.org/pub/scm/linux/storage/multipath-tools
+
+Christophe, can you fix the web page with correct git link.
+
+Thanks,
+
+chandra
+On Thu, 2009-07-02 at 12:58 -0400, Charlie Brady wrote:
+> On Wed, 24 Jun 2009, Charlie Brady wrote:
 > 
-> I've setup an IBM z10 LPAR (mainframe server) with 2.6.30-kernel. 
-> Attached to the System z10 was an IBM DS8000 storage server. 10x SCSI 
-> LUNs were assigned to LPAR via two pathes:
+> > On Wed, 24 Jun 2009, Chandra Seetharaman wrote:
+> >
+> >>  I see "SUN" "LCSM100_F" in hwtable.c Christophe's tree
+> >>  (http://git.kernel.org/?p=linux/storage/multipath-tools/.git)
+> >
+> > Does Christophe's repo have a problem?
+> >
+> > bash-3.2$ git-clone 
+> > http://git.kernel.org/?p=linux/storage/multipath-tools/.git
+> > Initialized empty Git repository in 
+> > /home/speech/bradyc/WIP/multipath-tools.upstream/multipath-tools/.git/
+> > Cannot get remote repository information.
+> > Perhaps git-update-server-info needs to be run there?
+> > bash-3.2$
 > 
-> Example:
-> 36005076303ffc1040000000000001269 dm-9 IBM,2107900
-> size=1.0G features='1 queue_if_no_path' hwhandler='0' wp=rw
-> `-+- policy='round-robin 0' prio=-2 status=active
->   |- 0:0:0:1080639506 sdw   65:96  active undef running
->   `- 1:0:1:1080639506 sdt   65:48  active undef running
+> I'm still having access problems, although the symptoms have changed:
 > 
-> Special parameter setting: dev_loss_tmo=90sec; fast_io_fail_tmo=5sec
+> bash-3.2$ git-clone http://kernel.org/pub/scm/linux/storage/multipath-tools/.git
+> Initialized empty Git repository in /home/speech/bradyc/WIP/multipath-tools.upstream/multipath-tools/.git/
+> got 14df6388e07bb09302e1e79b1744414b8a94974c
+> walk 14df6388e07bb09302e1e79b1744414b8a94974c
+> got be39fd4ecfce9593ec2f7c051e8d2f7bdaa6f3f0
+> got 8f0cb7332f468ac7a5f4456ee6076e9a872384ed
+> ...
+> got 3b0e9929427d8edae611e64b9bf8e0edadea3f03
+> got a9a6c71592d4e2271a38c3d334bee7cbce963cff
+> walk a9a6c71592d4e2271a38c3d334bee7cbce963cff
+> got d4bfff0b7c4476b70b2267611ff16e53d36fc31f
+> fatal: Not a valid object name HEAD
+> bash-3.2$
 > 
-> multipath tools: multipath-tools v0.4.9 (04/04, 2009)
-> device-mapper: device-mapper-1.02.27-7.fc10.s390x, 
-> device-mapper-libs-1.02.27-7.fc10.s390x
-> 
-> When removing a remote port (disabling a port on the BROCADE FC switch) 
-> one path failed.
-> 
-> root@h42lp26/ESAME:~]
->  > multipath -l
-> 36005076303ffc1040000000000001268 dm-8 ,
-> size=1.0G features='1 queue_if_no_path' hwhandler='0' wp=rw
-> `-+- policy='round-robin 0' prio=-2 status=active
->   |- #:#:#:#          -     #:#   failed undef running
->   `- 1:0:1:1080573970 sdr   65:16 active undef running
-> 
-> After a while (>90sec) SCSI LUNs were removed from system:
-> 
-> 
-> UEVENT[1246531815.619428] add      /kernel/uids/74 (uids)
-> UDEV  [1246531815.621708] add      /kernel/uids/74 (uids)
-> UEVENT[1246531816.725299] remove   /kernel/uids/74 (uids)
-> UDEV  [1246531816.726151] remove   /kernel/uids/74 (uids)
-> UEVENT[1246531929.959709] change   /devices/virtual/block/dm-0 (block)
-> UEVENT[1246531929.959749] change   /devices/virtual/block/dm-3 (block)
-> UEVENT[1246531929.959759] change   /devices/virtual/block/dm-4 (block)
-> UEVENT[1246531929.959769] change   /devices/virtual/block/dm-5 (block)
-> UEVENT[1246531929.966647] change   /devices/virtual/block/dm-7 (block)
-> UDEV  [1246531930.045444] change   /devices/virtual/block/dm-4 (block)
-> UDEV  [1246531930.048923] change   /devices/virtual/block/dm-7 (block)
-> UDEV  [1246531930.054614] change   /devices/virtual/block/dm-0 (block)
-> UDEV  [1246531930.060091] change   /devices/virtual/block/dm-3 (block)
-> UDEV  [1246531930.071744] change   /devices/virtual/block/dm-5 (block)
-> UEVENT[1246531949.278541] change   /devices/virtual/block/dm-9 (block)
-> UDEV  [1246531949.369690] change   /devices/virtual/block/dm-9 (block)
-> UEVENT[1246531950.295756] change   /devices/virtual/block/dm-8 (block)
-> UEVENT[1246531950.297597] change   /devices/virtual/block/dm-6 (block)
-> UEVENT[1246531950.297610] change   /devices/virtual/block/dm-2 (block)
-> UEVENT[1246531950.297620] change   /devices/virtual/block/dm-1 (block)
-> UDEV  [1246531950.430097] change   /devices/virtual/block/dm-8 (block)
-> UDEV  [1246531950.588626] change   /devices/virtual/block/dm-2 (block)
-> UDEV  [1246531950.632482] change   /devices/virtual/block/dm-1 (block)
-> UDEV  [1246531950.634515] change   /devices/virtual/block/dm-6 (block)
-> UEVENT[1246532034.277177] remove   
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_generic/sg0 
-> (scsi_generic)
-> UEVENT[1246532034.277214] remove   
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_device/0:0:0:1080377362 
-> (scsi_device)
-> UEVENT[1246532034.277226] remove   
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_disk/0:0:0:1080377362 
-> (scsi_disk)
-> UEVENT[1246532034.277236] remove   /devices/virtual/bdi/8:0 (bdi)
-> UEVENT[1246532034.277247] remove   
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/block/sda 
-> (block)
-> UEVENT[1246532034.277258] remove   
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362 
-> (scsi)
-> UEVENT[1246532034.277384] remove   
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_generic/sg2 
-> (scsi_generic)
-> UEVENT[1246532034.277594] remove   
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_device/0:0:0:1080836114 
-> (scsi_device)
-> UEVENT[1246532034.277864] remove   
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_disk/0:0:0:1080836114 
-> (scsi_disk)
-> UEVENT[1246532034.278035] remove   /devices/virtual/bdi/8:32 (bdi)...
-> 
-> ....
-> 
-> When re-enabling the path, SCSI LUNS were reassigned to system but path 
-> didn't recover:
-> 
-> UEVENT[1246532107.387169] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114 
-> (scsi)
->   UEVENT[1246532107.387209] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_device/0:0:0:1080836114 
-> (scsi_device)
->   UEVENT[1246532107.387220] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_generic/sg0 
-> (scsi_generic)
->   UEVENT[1246532107.387230] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/scsi_disk/0:0:0:1080836114 
-> (scsi_disk)
->   UEVENT[1246532107.388941] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362 
-> (scsi)
->   UEVENT[1246532107.388952] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_device/0:0:0:1080377362 
-> (scsi_device)
->   UEVENT[1246532107.388963] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_generic/sg2 
-> (scsi_generic)
->   UEVENT[1246532107.397111] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080836114/block/sdu 
-> (block)
->   UEVENT[1246532107.399249] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080639506 
-> (scsi)
->   UEVENT[1246532107.399261] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080639506/scsi_device/0:0:0:1080639506 
-> (scsi_device)
->   UEVENT[1246532107.399272] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080639506/scsi_generic/sg4 
-> (scsi_generic)
->   UEVENT[1246532107.399711] add      /devices/virtual/bdi/65:64 (bdi)
->   UEVENT[1246532107.399722] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/scsi_disk/0:0:0:1080377362 
-> (scsi_disk)
->   UEVENT[1246532107.401605] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080573970 
-> (scsi)
->   UEVENT[1246532107.401617] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080573970/scsi_device/0:0:0:1080573970 
-> (scsi_device)
->   UEVENT[1246532107.401628] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080573970/scsi_generic/sg6 
-> (scsi_generic)
->   UEVENT[1246532107.403731] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080967186 
-> (scsi)
->   UEVENT[1246532107.403742] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080967186/scsi_device/0:0:0:1080967186 
-> (scsi_device)
->   UEVENT[1246532107.403753] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080967186/scsi_generic/sg8 
-> (scsi_generic)
->   UEVENT[1246532107.405963] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080377362/block/sdv 
-> (block)
->   UEVENT[1246532107.406168] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080901650 
-> (scsi)
->   UEVENT[1246532107.407608] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080901650/scsi_device/0:0:0:1080901650 
-> (scsi_device)
->   UEVENT[1246532107.407624] add      
-> /devices/css0/0.0.0330/0.0.1780/host0/rport-0:0-0/target0:0:0/0:0:0:1080901650/scsi_generic/sg10 
-> (scsi_generic)
->   UEVENT[1246532107.407880] add      /devices/virtual/bdi/65:80 (bdi)
-> 
-> 
-> [root@h42lp26/ESAME:~]
->  > multipath -l
-> 36005076303ffc1040000000000001268 dm-8 ,
-> size=1.0G features='1 queue_if_no_path' hwhandler='0' wp=rw
-> `-+- policy='round-robin 0' prio=-2 status=active
->   |- #:#:#:#          -     #:#    failed undef running
->   `- 1:0:1:1080573970 sdr   65:16  active undef running
-> 
-> 
-> Running "multipath" command will recover the failed path but that's not 
-> way it should be...can somebody help to fix this? Why is the path not 
-> recovered automatically?
-> 
-> 
-> Regards,
-> 
-> 
-> Christian May
-> 
-> 
-> 
-> 
-> 
-> 
-> 
-> 
-> 
-> 
-> 
+> Advice?
 > 
 > --
 > dm-devel mailing list
