@@ -1,15 +1,13 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] Use Average path priority value for path
-	switching
-Date: Fri, 03 Jul 2009 08:40:12 +0200
-Message-ID: <4A4DA7CC.9040902@suse.de>
-References: <1246583474.30568.2.camel@chandra-ubuntu>
+From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+Subject: Unstable isci path and confusing logging
+Date: Fri, 3 Jul 2009 12:46:52 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0907031226000.12539@e-smith.charlieb.ott.istop.com>
+References: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1246583474.30568.2.camel@chandra-ubuntu>
+In-Reply-To: <Pine.LNX.4.64.0906251344350.4229@e-smith.charlieb.ott.istop.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,159 +17,161 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com
-Cc: dm-devel <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Chandra,
 
-Chandra Seetharaman wrote:
-> Hello,
->=20
-> Few weeks back I posted some issues w.r.t the way path priorities are
-> used during path switching.
->=20
-> Here is Hannes's latest response
-> (http://marc.info/?l=3Ddm-devel&m=3D124573807907764&w=3D2) and this pat=
-ch is
-> based on his suggestion.
->=20
-Very cool! Well done there. But a few comments I have, see inline.
+On Thu, 25 Jun 2009, Charlie Brady wrote:
 
-> regards,
->=20
-> chandra
-> -----------------------------------------------------------------------=
-=20
-> Failback happens only when the sum of priorities of all paths
-> (on the higher priority path group) is greater than the sum
-> of priorities of all paths on the lower priority path group.
->=20
-> This leads into problems when there are more than one paths
-> in each of the path groups, and the sum of all paths in the
-> lower priority path group is greater than that of path priority
-> of a single high priority path.
->=20
-> This patch fixes the problem by using average priority of a
-> path group in deciding path group switch over.
->=20
-> Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-> ---
->  libmultipath/structs.h     |    1 +
->  libmultipath/switchgroup.c |   23 ++++++++++++++++++-----
->  2 files changed, 19 insertions(+), 5 deletions(-)
->=20
-> Index: multipath-tools-mainline/libmultipath/structs.h
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- multipath-tools-mainline.orig/libmultipath/structs.h
-> +++ multipath-tools-mainline/libmultipath/structs.h
-> @@ -202,6 +202,7 @@ struct pathgroup {
->  	long id;
->  	int status;
->  	int priority;
-> +	int up_paths;
+> multipathd logs a path checker message whenever state changes. But it also 
+> logs every non-changed message when verbosity is >=4 and newstate is PATH_UP 
+> or PATH_GHOST, and every non-changed message when verbosity is >= 2 and 
+> newstate is PATH_DOWN.
+>
+> I believe that the message should only be logged, once, when state changes.
 
-Maybe rename this to active_paths?
+I have a mystery related to state change logging which I hope somebody can 
+help me solve.
 
->  	vector paths;
->  	char * selector;
->  };
-> Index: multipath-tools-mainline/libmultipath/switchgroup.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- multipath-tools-mainline.orig/libmultipath/switchgroup.c
-> +++ multipath-tools-mainline/libmultipath/switchgroup.c
-> @@ -14,13 +14,16 @@ path_group_prio_update (struct pathgroup
->  	int priority =3D 0;
->  	struct path * pp;
-> =20
-> +	pgp->up_paths =3D 0;
->  	if (!pgp->paths) {
->  		pgp->priority =3D 0;
->  		return;
->  	}
->  	vector_foreach_slot (pgp->paths, pp, i) {
-> -		if (pp->state !=3D PATH_DOWN)
-> +		if (pp->state !=3D PATH_DOWN) {
->  			priority +=3D pp->priority;
-Do _not_ aggregate the path state here; just do
+I am running multipathd with the following patch applied (as well as the 
+patch from 
+https://www.redhat.com/archives/dm-devel/2009-June/msg00293.html which 
+updates that checker message with each poll):
 
-priority =3D pp->priority
+> Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
+>
+> --- multipath-tools-0.4.7.rhel5.13/multipathd/main.c	2009-06-25 
+> 13:32:57.248455000 -0400
+> +++ mezzanine_patched_multipath-tools-0.4.7.rhel5.13/multipathd/main.c 
+> 2009-06-25 13:32:12.968639000 -0400
+> @@ -1041,7 +1041,6 @@
+> 			 		enable_group(pp);
+> 			 }
+> 			 else if (newstate == PATH_UP || newstate ==
+> 			 PATH_GHOST) {
+> -				LOG_MSG(4, checker_message(&pp->checker));
+> 				 /*
+> 				  * double the next check delay.
+> 				  * max at conf->max_checkint
+> @@ -1055,8 +1054,6 @@
+> 				 condlog(4, "%s: delay next check %is",
+> 			 			pp->dev_t, pp->tick);
+> 			}
+> -			else if (newstate == PATH_DOWN)
+> -				LOG_MSG(2, checker_message(&pp->checker));
+>
+> 			pp->state = newstate;
 
-it'll save you the averaging out later on.
+Therefore, the only logging of checker_message() remaining is this:
 
-> +			pgp->up_paths++;
-> +		}
->  	}
->  	pgp->priority =3D priority;
->  }
-> @@ -29,8 +32,9 @@ extern int
->  select_path_group (struct multipath * mpp)
->  {
->  	int i;
-> -	int highest =3D 0;
-> +	int highest_avg =3D 0;
->  	int bestpg =3D 1;
-> +	int avg_priority, highest_up_paths =3D 1;
+...
+                         if (newstate != pp->state) {
+                                 int oldstate = pp->state;
+                                 pp->state = newstate;
+                                 LOG_MSG(1, checker_message(&pp->checker));
+...
 
-Again, maybe use max_active_paths and max_priority
+What I am seeing however is this:
 
->  	struct pathgroup * pgp;
-> =20
->  	if (!mpp->pg)
-> @@ -41,9 +45,18 @@ select_path_group (struct multipath * mp
->  			continue;
-> =20
->  		path_group_prio_update(pgp);
-> -		if (pgp->priority > highest) {
-> -			highest =3D pgp->priority;
-> -			bestpg =3D i + 1;
-> +		if (pgp->up_paths) {
-> +			avg_priority =3D pgp->priority / pgp->up_paths;
-You don't have to average here, if you don't aggregate the priority
-as mentioned above.
+[root@sun4150node2 ~]# grep 'rdac checker' /var/log/messages | tail -10
+Jul  3 12:29:44 sun4150node2 multipathd: sdc: rdac checker reports path is up
+Jul  3 12:29:49 sun4150node2 multipathd: sdc: rdac checker reports path is up
+Jul  3 12:29:54 sun4150node2 multipathd: sdc: rdac checker reports path is up
+Jul  3 12:29:59 sun4150node2 multipathd: sdc: rdac checker reports path is up
+Jul  3 12:30:04 sun4150node2 multipathd: sdc: rdac checker reports path is up
+Jul  3 12:30:09 sun4150node2 multipathd: sdc: rdac checker reports path is up
+Jul  3 12:30:14 sun4150node2 multipathd: sdc: rdac checker reports path is up
+Jul  3 12:30:19 sun4150node2 multipathd: sdc: rdac checker reports path is up
+Jul  3 12:30:24 sun4150node2 multipathd: sdc: rdac checker reports path is up
+Jul  3 12:30:29 sun4150node2 multipathd: sdc: rdac checker reports path is up
+[root@sun4150node2 ~]#
 
-The test would then just be
-if (pgp->priority > max_priority) {
-    max_priority =3D pgp->priority;
-    max_active_paths =3D pgp->active_paths;
-    bestpg =3D i + i;
-} else if (pgp->priority =3D=3D max_priority) {
-    if (pgp->active_paths > max_active_paths) {
-        max_active_paths =3D pgp->active_paths;
-        bestpg =3D i + 1;
-    }
-}
+So I am seeing repeated logging of 'up' state messages, although I only 
+expect to see one message per state change.
 
-> +			if (avg_priority > highest_avg) {
-> +				highest_avg =3D avg_priority;
-> +				highest_up_paths =3D pgp->up_paths;
-> +				bestpg =3D i + 1;
-> +			} else if (avg_priority =3D=3D highest_avg) {
-> +				if (pgp->up_paths > highest_up_paths) {
-> +					highest_up_paths =3D pgp->up_paths;
-> +					bestpg =3D i + 1;
-> +				}
-> +			}
->  		}
->  	}
->  	return bestpg;
->=20
->=20
+As further background, I have four iscsi paths configured to two ports on 
+two controllers on a Sun StorageTek 2510 (a bug in the Sun CAM management 
+software has also configured a non-working IPV6 session).
 
-But apart from this: Yes, this is exactly how I
-think it should be done.
+[root@sun4150node2 ~]# iscsiadm -m node -P 1
+Target: iqn.1986-03.com.sun:2510.600a0b800049afbd000000004a36468f
+         Portal: 10.37.13.101:3260,1
+                 Iface Name: default
+         Portal: [fe80:0000:0000:0000:02a0:b8ff:fe4a:1c6d]:3260,1
+                 Iface Name: default
+         Portal: 10.37.13.104:3260,2
+                 Iface Name: default
+         Portal: 10.37.13.103:3260,2
+                 Iface Name: default
+         Portal: 10.37.13.102:3260,1
+                 Iface Name: default
+[root@sun4150node2 ~]#
 
-Great job, Chandra.
+Two of the 2510's port connections are disconnected (10.37.13.103 and 
+10.37.13.104).
 
-Cheers,
+The path checker apparently finds the 8:32 path as intermittent:
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+[root@sun4150node2 ~]# echo show paths | multipathd -k
+multipathd> hcil     dev dev_t pri dm_st   chk_st   next_check
+10:0:0:0 sdd 8:48  100 [failed][faulty] XXXXXXXX.. 4/5
+11:0:0:0 sde 8:64  100 [failed][faulty] XXXXXXXX.. 4/5
+9:0:0:0  sdb 8:16  0   [active][ready]  XXXXXX.... 12/20
+12:0:0:0 sdc 8:32  0   [failed][faulty] XXXXXX.... 3/5
+multipathd> [root@sun4150node2 ~]#
+[root@sun4150node2 ~]#
+[root@sun4150node2 ~]# echo show paths | multipathd -k
+multipathd> hcil     dev dev_t pri dm_st   chk_st   next_check
+10:0:0:0 sdd 8:48  100 [failed][faulty] XX........ 1/5
+11:0:0:0 sde 8:64  100 [failed][faulty] XX........ 1/5
+9:0:0:0  sdb 8:16  0   [active][ready]  XX........ 4/20
+12:0:0:0 sdc 8:32  0   [active][ready]  XXXXXXXXXX 5/5
+multipathd> [root@sun4150node2 ~]# echo show paths | multipathd -k
+multipathd> hcil     dev dev_t pri dm_st   chk_st   next_check
+10:0:0:0 sdd 8:48  100 [failed][faulty] XXXXXX.... 3/5
+11:0:0:0 sde 8:64  100 [failed][faulty] XXXXXX.... 3/5
+9:0:0:0  sdb 8:16  0   [active][ready]  XXXXXXXX.. 16/20
+12:0:0:0 sdc 8:32  0   [failed][faulty] XXXX...... 2/5
+multipathd> [root@sun4150node2 ~]#
+
+Here is a longer excerpt from syslog:
+
+Jul  3 12:33:41 sun4150node2 iscsid: connect failed (113)
+Jul  3 12:33:44 sun4150node2 multipathd: sdc: rdac checker reports path is 
+up
+Jul  3 12:33:44 sun4150node2 multipathd: 8:32: reinstated
+Jul  3 12:33:44 sun4150node2 multipathd: mpath0: remaining active paths: 2
+Jul  3 12:33:44 sun4150node2 multipathd: mpath0: switch to path group #1
+Jul  3 12:33:44 sun4150node2 multipathd: mpath0: switch to path group #1
+Jul  3 12:33:44 sun4150node2 multipathd: dm-2: add map (uevent)
+Jul  3 12:33:44 sun4150node2 multipathd: dm-2: devmap already registered
+Jul  3 12:33:45 sun4150node2 kernel: iscsi: cmd 0x12 is not queued (8)
+Jul  3 12:33:45 sun4150node2 kernel: iscsi: cmd 0x12 is not queued (8)
+Jul  3 12:33:47 sun4150node2 kernel: device-mapper: multipath: Failing 
+path 8:32.
+Jul  3 12:33:47 sun4150node2 multipathd: dm-2: add map (uevent)
+Jul  3 12:33:47 sun4150node2 multipathd: dm-2: devmap already registered
+Jul  3 12:33:47 sun4150node2 multipathd: 8:32: mark as failed
+Jul  3 12:33:47 sun4150node2 multipathd: mpath0: remaining active paths: 1
+Jul  3 12:33:47 sun4150node2 iscsid: connect failed (113)
+Jul  3 12:33:47 sun4150node2 iscsid: connect failed (113)
+Jul  3 12:33:49 sun4150node2 multipathd: sdc: rdac checker reports path is 
+up
+Jul  3 12:33:49 sun4150node2 multipathd: 8:32: reinstated
+Jul  3 12:33:49 sun4150node2 multipathd: mpath0: remaining active paths: 2
+Jul  3 12:33:49 sun4150node2 multipathd: mpath0: switch to path group #1
+Jul  3 12:33:49 sun4150node2 multipathd: mpath0: switch to path group #1
+Jul  3 12:33:49 sun4150node2 multipathd: dm-2: add map (uevent)
+Jul  3 12:33:49 sun4150node2 multipathd: dm-2: devmap already registered
+Jul  3 12:33:50 sun4150node2 multipathd: dm-2: add map (uevent)
+Jul  3 12:33:50 sun4150node2 multipathd: dm-2: devmap already registered
+Jul  3 12:33:50 sun4150node2 kernel: device-mapper: multipath: Failing 
+path 8:32.
+Jul  3 12:33:50 sun4150node2 kernel: iscsi: cmd 0x12 is not queued (8)
+Jul  3 12:33:50 sun4150node2 multipathd: 8:32: mark as failed
+Jul  3 12:33:50 sun4150node2 multipathd: mpath0: remaining active paths: 1
+
+I'd be most grateful if someone can help me make sense of this. And 
+preferably help me find and fix the bug.
+
+multipath-tools version is 0.4.7.rhel5.13.
