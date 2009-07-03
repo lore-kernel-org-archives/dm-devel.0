@@ -1,36 +1,122 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH 0/3] scsi_dh: Add ability to set parameters for scsi
-	device handler
-Date: Thu, 02 Jul 2009 13:47:02 -0700
-Message-ID: <1246567622.7381.7.camel@chandra-ubuntu>
-References: <20090702031308.28354.73353.sendpatchset@chandra-ubuntu>
-	 <1246563299.8018.9.camel@eddie-laptop>
-	 <1246566564.8018.21.camel@eddie-laptop>
-Reply-To: sekharan@linux.vnet.ibm.com
+Subject: [PATCH] Use Average path priority value for path
+	switching
+Date: Thu, 02 Jul 2009 18:11:14 -0700
+Message-ID: <1246583474.30568.2.camel@chandra-ubuntu>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1246566564.8018.21.camel@eddie-laptop>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Eddie Williams <Eddie.Williams@steeleye.com>
-Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com, michaelc@cs.wisc.edu, agk@redhat.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, asson_ronald@emc.com, berthiaume_wayne@emc.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@free.fr>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hello,
 
-On Thu, 2009-07-02 at 16:29 -0400, Eddie Williams wrote:
-> On Thu, 2009-07-02 at 15:34 -0400, Eddie Williams wrote:
-> > I have tried to set this up but have run into a problem probably due to
-> > my error.  It has been a while since I have had to build kernels...
-> > 
-> > I pulled 2.6.31-rc1, applied the two patches below and then applied the
-> > 3 patches for the interface.  The new kernel loads fine but when a
-> > trespass command is sent I get an panic.  I am looking though how I
-> > built the kernel and perhaps build with your 3 patches to see if it
-> > happened before.  
-> 
-> I backed out the 3 patches with the same panic.
-> 
-Which version of the kernel were you originally testing with ? (when you
-found the feature was gone).
+Few weeks back I posted some issues w.r.t the way path priorities are
+used during path switching.
 
+Here is Hannes's latest response
+(http://marc.info/?l=dm-devel&m=124573807907764&w=2) and this patch is
+based on his suggestion.
+
+regards,
+
+chandra
+----------------------------------------------------------------------- 
+Failback happens only when the sum of priorities of all paths
+(on the higher priority path group) is greater than the sum
+of priorities of all paths on the lower priority path group.
+
+This leads into problems when there are more than one paths
+in each of the path groups, and the sum of all paths in the
+lower priority path group is greater than that of path priority
+of a single high priority path.
+
+This patch fixes the problem by using average priority of a
+path group in deciding path group switch over.
+
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+---
+ libmultipath/structs.h     |    1 +
+ libmultipath/switchgroup.c |   23 ++++++++++++++++++-----
+ 2 files changed, 19 insertions(+), 5 deletions(-)
+
+Index: multipath-tools-mainline/libmultipath/structs.h
+===================================================================
+--- multipath-tools-mainline.orig/libmultipath/structs.h
++++ multipath-tools-mainline/libmultipath/structs.h
+@@ -202,6 +202,7 @@ struct pathgroup {
+ 	long id;
+ 	int status;
+ 	int priority;
++	int up_paths;
+ 	vector paths;
+ 	char * selector;
+ };
+Index: multipath-tools-mainline/libmultipath/switchgroup.c
+===================================================================
+--- multipath-tools-mainline.orig/libmultipath/switchgroup.c
++++ multipath-tools-mainline/libmultipath/switchgroup.c
+@@ -14,13 +14,16 @@ path_group_prio_update (struct pathgroup
+ 	int priority = 0;
+ 	struct path * pp;
+ 
++	pgp->up_paths = 0;
+ 	if (!pgp->paths) {
+ 		pgp->priority = 0;
+ 		return;
+ 	}
+ 	vector_foreach_slot (pgp->paths, pp, i) {
+-		if (pp->state != PATH_DOWN)
++		if (pp->state != PATH_DOWN) {
+ 			priority += pp->priority;
++			pgp->up_paths++;
++		}
+ 	}
+ 	pgp->priority = priority;
+ }
+@@ -29,8 +32,9 @@ extern int
+ select_path_group (struct multipath * mpp)
+ {
+ 	int i;
+-	int highest = 0;
++	int highest_avg = 0;
+ 	int bestpg = 1;
++	int avg_priority, highest_up_paths = 1;
+ 	struct pathgroup * pgp;
+ 
+ 	if (!mpp->pg)
+@@ -41,9 +45,18 @@ select_path_group (struct multipath * mp
+ 			continue;
+ 
+ 		path_group_prio_update(pgp);
+-		if (pgp->priority > highest) {
+-			highest = pgp->priority;
+-			bestpg = i + 1;
++		if (pgp->up_paths) {
++			avg_priority = pgp->priority / pgp->up_paths;
++			if (avg_priority > highest_avg) {
++				highest_avg = avg_priority;
++				highest_up_paths = pgp->up_paths;
++				bestpg = i + 1;
++			} else if (avg_priority == highest_avg) {
++				if (pgp->up_paths > highest_up_paths) {
++					highest_up_paths = pgp->up_paths;
++					bestpg = i + 1;
++				}
++			}
+ 		}
+ 	}
+ 	return bestpg;
