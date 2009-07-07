@@ -1,14 +1,16 @@
-From: Paul Smith <paul@mad-scientist.net>
-Subject: Media failures cause Path/Device Failures in
-	dm-multipath ?
-Date: Tue, 07 Jul 2009 17:26:45 -0400
-Message-ID: <1247002005.2984.10.camel@psmith-ubeta.netezza.com>
-Reply-To: paul@mad-scientist.net,
-	device-mapper development <dm-devel@redhat.com>
+From: Bill Davidsen <davidsen@tmr.com>
+Subject: Re: REQUEST for new 'topology' metrics to be moved out
+	of the 'queue' sysfs directory.
+Date: Tue, 07 Jul 2009 18:06:53 -0400
+Message-ID: <4A53C6FD.3010603@tmr.com>
+References: <19010.62951.886231.96622@notabene.brown>	<yq11vp8spxo.fsf@sermon.lab.mkp.net>	<125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>	<yq1k530qkm7.fsf@sermon.lab.mkp.net>	<19012.47077.328965.919868@notabene.brown>	<yq1ws6znja4.fsf@sermon.lab.mkp.net>
+	<19026.43290.340555.774690@notabene.brown>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <19026.43290.340555.774690@notabene.brown>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,109 +20,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Neil Brown <neilb@suse.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-fsdevel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-I have a configuration that has raid1 mirrors (md_raid1) built on top of
-linear segments of multipath'd scsi disks (dm-multipath).  This is Linux
-2.6.27.25, FYI.  Unfortunately because this is an embedded environment
-it's not easy for us to jump to a newer kernel.
+Neil Brown wrote:
+> On Friday June 26, martin.petersen@oracle.com wrote:
+>   
+>> As far as making the application of these values more obvious I propose
+>> the following:
+>>
+>> What:		/sys/block/<disk>/queue/minimum_io_size
+>> Date:		April 2009
+>> Contact:	Martin K. Petersen <martin.petersen@oracle.com>
+>> Description:
+>> 		Storage devices may report a granularity or minimum I/O
+>> 		size which is the device's preferred unit of I/O.
+>> 		Requests smaller than this may incur a significant
+>> 		performance penalty.
+>>
+>> 		For disk drives this value corresponds to the physical
+>> 		block size. For RAID devices it is usually the stripe
+>> 		chunk size.
+>>     
+>
+> These two paragraphs are contradictory.  There is no sense in which a
+> RAID chunk size is a preferred minimum I/O size.
+>
+> To some degree it is actually a 'maximum' preferred size for random
+> IO.  If you do random IO is blocks larger than the chunk size then you
+> risk causing more 'head contention' (at least with RAID0 - with RAID5
+> the tradeoff is more complex).
+>
+>   
+Actually this is allocation unit, and the array can be assumed to be a 
+series of sets of contiguous bytes of this size. Given LBA addressing, 
+array members which are not simple whole devices, etc, this doesn't 
+(can't) promise much for the physical layout. And any read which resides 
+entirely within a chunk would not have a performance penalty, although 
+write might, if it were not a multiple of the sector size of the array 
+member(s) involved.
 
-In this configuration when a scsi disk reports a media failure (SCSI
-Sense/ASC/ASCQ: 3/11/0), I would expect that the md_raid1 would be able
-to handle the error and read the data from the other mirror and then
-re-write the failed sector on the original image.
+> If you are talking about "alignment", then yes - the chunk size is an
+> appropriate size to align on.  But so are the block size and the
+> stripe size and none is, in general, any better than any other.
+>
+>   
+I would assume that a chunk, aligned on a chunk boundary, would be 
+allocated in a contiguous series of bytes on the underlying array 
+member. And that any i/o not aligned on a chunk boundary would be more 
+likely to access multiple array members.
 
-I have tried this with the no_path_retry attribute as 'fail'  and
-observe the following... 
+Feel free to clarify my assumptions.
 
-dm-multipath reports the path failure. 
-Then it tries the request on the other path, which also gets a path
-failure.
-The failure of both paths fails the device.
+> Also, you say "may" report.  If a device does not report, what happens
+> to this file.  Is it not present, or empty, or contain a special
+> "undefined" value?
+> I think the answer is that "512" is reported.  It might be good to
+> explicitly document that.
+>   
+> I'd really like to see an example of how you expect filesystems to use
+> this.
+> I can well imagine the VM or elevator using this to assemble IO
+> requests in to properly aligned requests.  But I cannot imagine how
+> e.g mkfs would use it.
+> Or am I misunderstanding and this is for programs that use O_DIRECT on
+> the block device so they can optimise their request stream?
+>   
 
-md-raid1 gets the error and reads from the other mirror.
-When md-raid1 tries to re-write the data it encounters the failed
-device.
-
-From syslog:
-
-Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Result: hostbyte=0x00 driverbyte=0x08
-Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Sense Key : 0x3 [current]
-Jul 1 20:46:27 hostname user.warn kernel: Info fld=0x217795c
-Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] ASC=0x11 ASCQ=0x0
-Jul 1 20:46:27 hostname user.warn kernel: device-mapper: multipath: Failing path 67:48.
-Jul 1 20:46:27 hostname daemon.notice multipathd: 67:48: mark as failed
-Jul 1 20:46:27 hostname daemon.notice multipathd: encl3Slot4: remaining active paths: 1
-Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Result: hostbyte=0x00 driverbyte=0x08
-Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Sense Key : 0x3 [current]
-Jul 1 20:46:29 hostname user.warn kernel: Info fld=0x217795c
-Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] ASC=0x11 ASCQ=0x0
-Jul 1 20:46:29 hostname user.warn kernel: device-mapper: multipath: Failing path 65:176.
-Jul 1 20:46:30 hostname daemon.notice multipathd: 65:176: mark as failed
-Jul 1 20:46:30 hostname daemon.notice multipathd: encl3Slot4: remaining active paths: 0
-Jul 1 20:46:30 hostname user.err kernel: raid1: dm-36: rescheduling sector 35092739
-Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-38, disabling device.
-Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing on 1 devices.
-Jul 1 20:46:30 hostname user.warn kernel: md: super_written gets error=-5, uptodate=0
-Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-36, disabling device.
-Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing on 1 devices.
-
-When the no_path_retry attribute is set to '3' :
-
-dm-multipath reports the path failure.
-Then retries the request on the other path, which also gets a path
-failure.
-On the failure of the second path, the device queues, and enters
-recovery mode.
-On the subsequent poll of the paths they are reinstated and the IOs are
-'resumed'.....
-... and of course fail with the media error again.......
-causing a hang...
-
-From syslog:
-
-Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Result: hostbyte=0x00 driverbyte=0x08
-Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Sense Key : 0x3 [current]
-Jul  7 10:54:35 hostname user.warn kernel: Info fld=0x123c016d
-Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] ASC=0x11 ASCQ=0x0
-Jul  7 10:54:35 hostname user.warn kernel: device-mapper: multipath: Failing path 65:32.
-Jul  7 10:54:35 hostname daemon.notice multipathd: 65:32: mark as failed
-Jul  7 10:54:35 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
-Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
-Jul  7 10:54:37 hostname user.info kernel: Result: hostbyte=0x00 driverbyte=0x08
-Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm] Sense Key : 0x3
-Jul  7 10:54:37 hostname user.info kernel: [current]
-Jul  7 10:54:37 hostname user.warn kernel: Info fld=0x123c016d
-Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
-Jul  7 10:54:37 hostname user.info kernel: ASC=0x11 ASCQ=0x0
-Jul  7 10:54:37 hostname user.warn kernel: device-mapper: multipath: Failing path 69:160.
-Jul  7 10:54:37 hostname daemon.notice multipathd: 69:160: mark as failed
-Jul  7 10:54:37 hostname daemon.warn multipathd: encl2Slot7: Entering recovery mode: max_retries=3
-Jul  7 10:54:37 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 0
-Jul  7 10:54:39 hostname daemon.warn multipathd: sds: readsector0 checker reports path is up
-Jul  7 10:54:39 hostname daemon.notice multipathd: 65:32: reinstated
-Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: queue_if_no_path enabled
-Jul  7 10:54:42 hostname daemon.warn multipathd: encl2Slot7: Recovered to normal mode
-Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
-Jul  7 10:54:42 hostname daemon.warn multipathd: sdcm: readsector0 checker reports path is up
-Jul  7 10:54:42 hostname daemon.notice multipathd: 69:160: reinstated
-Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 2
-Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds] Result: hostbyte=0x00 driverbyte=0x08
-Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
-Jul  7 10:54:42 hostname user.info kernel: Sense Key : 0x3
-Jul  7 10:54:42 hostname user.info kernel: [current]
-Jul  7 10:54:42 hostname user.info kernel:
-Jul  7 10:54:42 hostname user.warn kernel: Info fld=0x123c016d
-Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
-Jul  7 10:54:42 hostname user.info kernel: ASC=0x11 ASCQ=0x0
-Jul  7 10:54:42 hostname user.warn kernel: device-mapper: multipath: Failing path 65:32.
-Jul  7 10:54:43 hostname daemon.notice multipathd: 65:32: mark as failed
-Jul  7 10:54:43 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
-
-
-Should dm-multipath distinguish media failures from actual device
-errors?
-
-Is there a different no_path_retry policy that would fail this request
-by queue subsequent requests?
+-- 
+Bill Davidsen <davidsen@tmr.com>
+  Obscure bug of 2004: BASH BUFFER OVERFLOW - if bash is being run by a
+normal user and is setuid root, with the "vi" line edit mode selected,
+and the character set is "big5," an off-by-one error occurs during
+wildcard (glob) expansion.
