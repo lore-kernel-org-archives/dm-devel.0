@@ -1,98 +1,126 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [dm-devel] [PATCH]: create sysfs file, dh_state for SCSI
-	devices even if they	are not in the inteernal lists
-Date: Tue, 07 Jul 2009 12:43:15 -0700
-Message-ID: <1246995795.9541.22.camel@chandra-ubuntu>
-References: <1246069888.14164.53.camel@chandra-ubuntu>
-	 <4A486FF0.7040209@suse.de>  <1246303830.15941.17.camel@chandra-ubuntu>
-Reply-To: sekharan@linux.vnet.ibm.com
+From: Paul Smith <paul@mad-scientist.net>
+Subject: Media failures cause Path/Device Failures in
+	dm-multipath ?
+Date: Tue, 07 Jul 2009 17:26:45 -0400
+Message-ID: <1247002005.2984.10.camel@psmith-ubeta.netezza.com>
+Reply-To: paul@mad-scientist.net,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1246303830.15941.17.camel@chandra-ubuntu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mario Mech <mech@meteo.uni-koeln.de>, linux-scsi <linux-scsi@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hannes,
+I have a configuration that has raid1 mirrors (md_raid1) built on top of
+linear segments of multipath'd scsi disks (dm-multipath).  This is Linux
+2.6.27.25, FYI.  Unfortunately because this is an embedded environment
+it's not easy for us to jump to a newer kernel.
 
-any comments ?
+In this configuration when a scsi disk reports a media failure (SCSI
+Sense/ASC/ASCQ: 3/11/0), I would expect that the md_raid1 would be able
+to handle the error and read the data from the other mirror and then
+re-write the failed sector on the original image.
 
-chandra
-On Mon, 2009-06-29 at 12:30 -0700, Chandra Seetharaman wrote:
-> On Mon, 2009-06-29 at 09:40 +0200, Hannes Reinecke wrote:
-> > Chandra Seetharaman wrote:
-> > > Create the sysfs file, dh_state even if the new SCSI device is not
-> > > in the any of the device handler's internal lists.
-> > > 
-> > > Signed-Off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-> > > ---
-> > >  drivers/scsi/device_handler/scsi_dh.c |   11 ++++-------
-> > >  1 file changed, 4 insertions(+), 7 deletions(-)
-> > > 
-> > > Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
-> > > ===================================================================
-> > > --- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh.c
-> > > +++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
-> > > @@ -304,18 +304,15 @@ static int scsi_dh_notifier(struct notif
-> > >  	sdev = to_scsi_device(dev);
-> > >  
-> > >  	if (action == BUS_NOTIFY_ADD_DEVICE) {
-> > > +		err = device_create_file(dev, &scsi_dh_state_attr);
-> > > +		/* don't care about err */
-> > >  		devinfo = device_handler_match(NULL, sdev);
-> > > -		if (!devinfo)
-> > > -			goto out;
-> > > -
-> > > -		err = scsi_dh_handler_attach(sdev, devinfo);
-> > > -		if (!err)
-> > > -			err = device_create_file(dev, &scsi_dh_state_attr);
-> > > +		if (devinfo)
-> > > +			err = scsi_dh_handler_attach(sdev, devinfo);
-> > >  	} else if (action == BUS_NOTIFY_DEL_DEVICE) {
-> > >  		device_remove_file(dev, &scsi_dh_state_attr);
-> > >  		scsi_dh_handler_detach(sdev, NULL);
-> > >  	}
-> > > -out:
-> > >  	return err;
-> > >  }
-> > >  
-> > > 
-> > > 
-> > > --
-> > > dm-devel mailing list
-> > > dm-devel@redhat.com
-> > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > NACK.
-> > 
-> > This will create sysfs attributes even if the attach()
-> > failed for other reason like a generic error. So we'll end
-> > up with device handler attributes and no device handler attached.
-> 
-> we do not have to worry about if attach failed or succeeded. We will
-> have "detached" if there is no device handler is attached to a device. 
-> 
-> Basically, existence of this file simply means that scsi_dh module is
-> active, only the contents of this file will indicate if any device
-> handler is attached or not.
-> 
-> We are just creating the file dh_state for each SCSI device that exists
-> and that is the only way non-in-built devices can be attached to a
-> handler by the end-user.
-> 
-> Do note that we do create this file for all the existing scsi devices
-> when the scsi_dh module is inserted (see scsi_dh_init()).
-> 
-> > 
-> > Not a good idea.
-> 
-> I do not agree, and we do need to have this fix for dh_state file to be
-> functionally useful.
-> 
-> > 
-> > Cheers,
-> > 
-> > Hannes
+I have tried this with the no_path_retry attribute as 'fail'  and
+observe the following... 
 
+dm-multipath reports the path failure. 
+Then it tries the request on the other path, which also gets a path
+failure.
+The failure of both paths fails the device.
+
+md-raid1 gets the error and reads from the other mirror.
+When md-raid1 tries to re-write the data it encounters the failed
+device.
+
+From syslog:
+
+Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Result: hostbyte=0x00 driverbyte=0x08
+Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Sense Key : 0x3 [current]
+Jul 1 20:46:27 hostname user.warn kernel: Info fld=0x217795c
+Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] ASC=0x11 ASCQ=0x0
+Jul 1 20:46:27 hostname user.warn kernel: device-mapper: multipath: Failing path 67:48.
+Jul 1 20:46:27 hostname daemon.notice multipathd: 67:48: mark as failed
+Jul 1 20:46:27 hostname daemon.notice multipathd: encl3Slot4: remaining active paths: 1
+Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Result: hostbyte=0x00 driverbyte=0x08
+Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Sense Key : 0x3 [current]
+Jul 1 20:46:29 hostname user.warn kernel: Info fld=0x217795c
+Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] ASC=0x11 ASCQ=0x0
+Jul 1 20:46:29 hostname user.warn kernel: device-mapper: multipath: Failing path 65:176.
+Jul 1 20:46:30 hostname daemon.notice multipathd: 65:176: mark as failed
+Jul 1 20:46:30 hostname daemon.notice multipathd: encl3Slot4: remaining active paths: 0
+Jul 1 20:46:30 hostname user.err kernel: raid1: dm-36: rescheduling sector 35092739
+Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-38, disabling device.
+Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing on 1 devices.
+Jul 1 20:46:30 hostname user.warn kernel: md: super_written gets error=-5, uptodate=0
+Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-36, disabling device.
+Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing on 1 devices.
+
+When the no_path_retry attribute is set to '3' :
+
+dm-multipath reports the path failure.
+Then retries the request on the other path, which also gets a path
+failure.
+On the failure of the second path, the device queues, and enters
+recovery mode.
+On the subsequent poll of the paths they are reinstated and the IOs are
+'resumed'.....
+... and of course fail with the media error again.......
+causing a hang...
+
+From syslog:
+
+Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Result: hostbyte=0x00 driverbyte=0x08
+Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Sense Key : 0x3 [current]
+Jul  7 10:54:35 hostname user.warn kernel: Info fld=0x123c016d
+Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] ASC=0x11 ASCQ=0x0
+Jul  7 10:54:35 hostname user.warn kernel: device-mapper: multipath: Failing path 65:32.
+Jul  7 10:54:35 hostname daemon.notice multipathd: 65:32: mark as failed
+Jul  7 10:54:35 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
+Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
+Jul  7 10:54:37 hostname user.info kernel: Result: hostbyte=0x00 driverbyte=0x08
+Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm] Sense Key : 0x3
+Jul  7 10:54:37 hostname user.info kernel: [current]
+Jul  7 10:54:37 hostname user.warn kernel: Info fld=0x123c016d
+Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
+Jul  7 10:54:37 hostname user.info kernel: ASC=0x11 ASCQ=0x0
+Jul  7 10:54:37 hostname user.warn kernel: device-mapper: multipath: Failing path 69:160.
+Jul  7 10:54:37 hostname daemon.notice multipathd: 69:160: mark as failed
+Jul  7 10:54:37 hostname daemon.warn multipathd: encl2Slot7: Entering recovery mode: max_retries=3
+Jul  7 10:54:37 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 0
+Jul  7 10:54:39 hostname daemon.warn multipathd: sds: readsector0 checker reports path is up
+Jul  7 10:54:39 hostname daemon.notice multipathd: 65:32: reinstated
+Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: queue_if_no_path enabled
+Jul  7 10:54:42 hostname daemon.warn multipathd: encl2Slot7: Recovered to normal mode
+Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
+Jul  7 10:54:42 hostname daemon.warn multipathd: sdcm: readsector0 checker reports path is up
+Jul  7 10:54:42 hostname daemon.notice multipathd: 69:160: reinstated
+Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 2
+Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds] Result: hostbyte=0x00 driverbyte=0x08
+Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
+Jul  7 10:54:42 hostname user.info kernel: Sense Key : 0x3
+Jul  7 10:54:42 hostname user.info kernel: [current]
+Jul  7 10:54:42 hostname user.info kernel:
+Jul  7 10:54:42 hostname user.warn kernel: Info fld=0x123c016d
+Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
+Jul  7 10:54:42 hostname user.info kernel: ASC=0x11 ASCQ=0x0
+Jul  7 10:54:42 hostname user.warn kernel: device-mapper: multipath: Failing path 65:32.
+Jul  7 10:54:43 hostname daemon.notice multipathd: 65:32: mark as failed
+Jul  7 10:54:43 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
+
+
+Should dm-multipath distinguish media failures from actual device
+errors?
+
+Is there a different no_path_retry policy that would fail this request
+by queue subsequent requests?
