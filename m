@@ -1,208 +1,155 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Re: [PATCH] Use Average path priority value for
-	path switching
-Date: Mon, 06 Jul 2009 11:17:05 -0700
-Message-ID: <1246904225.4685.12.camel@chandra-ubuntu>
-References: <1246583474.30568.2.camel@chandra-ubuntu>
-	<4A4DA7CC.9040902@suse.de>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Gui Jianfeng <guijianfeng-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+Subject: [PATCH] io-controller: Get rid of css id from io cgroup
+Date: Tue, 07 Jul 2009 09:40:14 +0800
+Message-ID: <4A52A77E.8050203@cn.fujitsu.com>
+References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
+	<1246564917-19603-10-git-send-email-vgoyal@redhat.com>
+	<4A51657B.7000008@cn.fujitsu.com>
+	<20090706141650.GD8279@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A4DA7CC.9040902@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20090706141650.GD8279-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: dhaval-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, snitzer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, balbir-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, paolo.valente-rcYM44yAMweonA0d6jMUrA@public.gmane.org, fernando-gVGce1chcLdL9jVzuh4AOg@public.gmane.org, jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, fchecconi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
 List-Id: dm-devel.ids
 
-Hi Hannes,
+Get rid of css id from io cgroup since it's nothing
+more than keeping track of iocg. An alternative is
+caching iocg pointer in io group, just remove the
+complexity.
 
-Thanks for your review comments. I also had similar line of thought when
-I coded this up. But, concluded the way I did due to the following
-reasoning.
+Signed-off-by: Gui Jianfeng <guijianfeng-BthXqXjhjHXQFUHtdCDX3A@public.gmane.org>
+---
+ block/elevator-fq.c |   36 ++++++++++++------------------------
+ block/elevator-fq.h |    2 +-
+ 2 files changed, 13 insertions(+), 25 deletions(-)
 
-Having a single priority instead of aggregates:
- 1. If different paths in a path group have different priorities, then
-    we would take only the last path's priority into account, which is
-    not correct.
- 2. Currently, multipath -ll displays the sum of priorities of the path
-    group. If we change it that of a single path, it will confuse users,
-    unnecessarily.
-
-up_paths Vs active paths:
- - in the generic nomenclature we use "active path" to refer to the path
-   that is currently being used for sending I/Os. But, here (when
-   calculating priorities), we do consider paths that are not "active"
-   also. So, if we use "active_paths" it will not be consistent with
-   the generic usage.
-
-Let me know what you think.
-
-chandra
-On Fri, 2009-07-03 at 08:40 +0200, Hannes Reinecke wrote:
-> Hi Chandra,
->=20
-> Chandra Seetharaman wrote:
-> > Hello,
-> >=20
-> > Few weeks back I posted some issues w.r.t the way path priorities are
-> > used during path switching.
-> >=20
-> > Here is Hannes's latest response
-> > (http://marc.info/?l=3Ddm-devel&m=3D124573807907764&w=3D2) and this p=
-atch is
-> > based on his suggestion.
-> >=20
-> Very cool! Well done there. But a few comments I have, see inline.
->=20
-> > regards,
-> >=20
-> > chandra
-> > ---------------------------------------------------------------------=
---=20
-> > Failback happens only when the sum of priorities of all paths
-> > (on the higher priority path group) is greater than the sum
-> > of priorities of all paths on the lower priority path group.
-> >=20
-> > This leads into problems when there are more than one paths
-> > in each of the path groups, and the sum of all paths in the
-> > lower priority path group is greater than that of path priority
-> > of a single high priority path.
-> >=20
-> > This patch fixes the problem by using average priority of a
-> > path group in deciding path group switch over.
-> >=20
-> > Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-> > ---
-> >  libmultipath/structs.h     |    1 +
-> >  libmultipath/switchgroup.c |   23 ++++++++++++++++++-----
-> >  2 files changed, 19 insertions(+), 5 deletions(-)
-> >=20
-> > Index: multipath-tools-mainline/libmultipath/structs.h
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > --- multipath-tools-mainline.orig/libmultipath/structs.h
-> > +++ multipath-tools-mainline/libmultipath/structs.h
-> > @@ -202,6 +202,7 @@ struct pathgroup {
-> >  	long id;
-> >  	int status;
-> >  	int priority;
-> > +	int up_paths;
->=20
-> Maybe rename this to active_paths?
->=20
-> >  	vector paths;
-> >  	char * selector;
-> >  };
-> > Index: multipath-tools-mainline/libmultipath/switchgroup.c
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > --- multipath-tools-mainline.orig/libmultipath/switchgroup.c
-> > +++ multipath-tools-mainline/libmultipath/switchgroup.c
-> > @@ -14,13 +14,16 @@ path_group_prio_update (struct pathgroup
-> >  	int priority =3D 0;
-> >  	struct path * pp;
-> > =20
-> > +	pgp->up_paths =3D 0;
-> >  	if (!pgp->paths) {
-> >  		pgp->priority =3D 0;
-> >  		return;
-> >  	}
-> >  	vector_foreach_slot (pgp->paths, pp, i) {
-> > -		if (pp->state !=3D PATH_DOWN)
-> > +		if (pp->state !=3D PATH_DOWN) {
-> >  			priority +=3D pp->priority;
-> Do _not_ aggregate the path state here; just do
->=20
-> priority =3D pp->priority
->=20
-> it'll save you the averaging out later on.
->=20
-> > +			pgp->up_paths++;
-> > +		}
-> >  	}
-> >  	pgp->priority =3D priority;
-> >  }
-> > @@ -29,8 +32,9 @@ extern int
-> >  select_path_group (struct multipath * mpp)
-> >  {
-> >  	int i;
-> > -	int highest =3D 0;
-> > +	int highest_avg =3D 0;
-> >  	int bestpg =3D 1;
-> > +	int avg_priority, highest_up_paths =3D 1;
->=20
-> Again, maybe use max_active_paths and max_priority
->=20
-> >  	struct pathgroup * pgp;
-> > =20
-> >  	if (!mpp->pg)
-> > @@ -41,9 +45,18 @@ select_path_group (struct multipath * mp
-> >  			continue;
-> > =20
-> >  		path_group_prio_update(pgp);
-> > -		if (pgp->priority > highest) {
-> > -			highest =3D pgp->priority;
-> > -			bestpg =3D i + 1;
-> > +		if (pgp->up_paths) {
-> > +			avg_priority =3D pgp->priority / pgp->up_paths;
-> You don't have to average here, if you don't aggregate the priority
-> as mentioned above.
->=20
-> The test would then just be
-> if (pgp->priority > max_priority) {
->     max_priority =3D pgp->priority;
->     max_active_paths =3D pgp->active_paths;
->     bestpg =3D i + i;
-> } else if (pgp->priority =3D=3D max_priority) {
->     if (pgp->active_paths > max_active_paths) {
->         max_active_paths =3D pgp->active_paths;
->         bestpg =3D i + 1;
->     }
-> }
->=20
-> > +			if (avg_priority > highest_avg) {
-> > +				highest_avg =3D avg_priority;
-> > +				highest_up_paths =3D pgp->up_paths;
-> > +				bestpg =3D i + 1;
-> > +			} else if (avg_priority =3D=3D highest_avg) {
-> > +				if (pgp->up_paths > highest_up_paths) {
-> > +					highest_up_paths =3D pgp->up_paths;
-> > +					bestpg =3D i + 1;
-> > +				}
-> > +			}
-> >  		}
-> >  	}
-> >  	return bestpg;
-> >=20
-> >=20
->=20
-> But apart from this: Yes, this is exactly how I
-> think it should be done.
->=20
-> Great job, Chandra.
->=20
-> Cheers,
->=20
-> Hannes
-> --=20
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
-> GF: Markus Rex, HRB 16746 (AG N=C3=BCrnberg)
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 7c83d1e..f499b54 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -191,25 +191,19 @@ static inline struct io_group *iog_parent(struct io_group *iog)
+ #ifdef CONFIG_DEBUG_GROUP_IOSCHED
+ static void io_group_path(struct io_group *iog, char *buf, int buflen)
+ {
+-	unsigned short id = iog->iocg_id;
+-	struct cgroup_subsys_state *css;
++	struct io_cgroup *iocg;
++	int ret;
+ 
+ 	rcu_read_lock();
+ 
+-	if (!id)
++	iocg = iog->iocg;
++	if (!iocg)
+ 		goto out;
+ 
+-	css = css_lookup(&io_subsys, id);
+-	if (!css)
+-		goto out;
+-
+-	if (!css_tryget(css))
++	ret = cgroup_path(iocg->css.cgroup, buf, buflen);
++	if (ret)
+ 		goto out;
+ 
+-	cgroup_path(css->cgroup, buf, buflen);
+-
+-	css_put(css);
+-
+ 	rcu_read_unlock();
+ 	return;
+ out:
+@@ -1847,7 +1841,6 @@ struct cgroup_subsys io_subsys = {
+ 	.destroy = iocg_destroy,
+ 	.populate = iocg_populate,
+ 	.subsys_id = io_subsys_id,
+-	.use_id = 1,
+ };
+ 
+ static inline unsigned int iog_weight(struct io_group *iog)
+@@ -1890,7 +1883,7 @@ io_group_chain_alloc(struct request_queue *q, void *key, struct cgroup *cgroup)
+ 		if (!iog)
+ 			goto cleanup;
+ 
+-		iog->iocg_id = css_id(&iocg->css);
++		iog->iocg = iocg;
+ 
+ 		sscanf(dev_name(bdi->dev), "%u:%u", &major, &minor);
+ 		iog->dev = MKDEV(major, minor);
+@@ -2201,7 +2194,7 @@ static struct io_group *io_alloc_root_group(struct request_queue *q,
+ 	spin_lock_irq(&iocg->lock);
+ 	rcu_assign_pointer(iog->key, key);
+ 	hlist_add_head_rcu(&iog->group_node, &iocg->group_data);
+-	iog->iocg_id = css_id(&iocg->css);
++	iog->iocg = iocg;
+ 	spin_unlock_irq(&iocg->lock);
+ 
+ #ifdef CONFIG_DEBUG_GROUP_IOSCHED
+@@ -2397,7 +2390,7 @@ remove_entry:
+ 			  group_node);
+ 	efqd = rcu_dereference(iog->key);
+ 	hlist_del_rcu(&iog->group_node);
+-	iog->iocg_id = 0;
++	iog->iocg = NULL;
+ 	spin_unlock_irqrestore(&iocg->lock, flags);
+ 
+ 	spin_lock_irqsave(efqd->queue->queue_lock, flags);
+@@ -2411,7 +2404,6 @@ done:
+ 		kfree(pn);
+ 	}
+ 
+-	free_css_id(&io_subsys, &iocg->css);
+ 	rcu_read_unlock();
+ 	BUG_ON(!hlist_empty(&iocg->group_data));
+ 	kfree(iocg);
+@@ -2427,20 +2419,16 @@ static void io_group_check_and_destroy(struct elv_fq_data *efqd,
+ {
+ 	struct io_cgroup *iocg;
+ 	unsigned long flags;
+-	struct cgroup_subsys_state *css;
+ 
+ 	rcu_read_lock();
+ 
+-	css = css_lookup(&io_subsys, iog->iocg_id);
+-
+-	if (!css)
++	iocg = iog->iocg;
++	if (!iocg)
+ 		goto out;
+ 
+-	iocg = container_of(css, struct io_cgroup, css);
+-
+ 	spin_lock_irqsave(&iocg->lock, flags);
+ 
+-	if (iog->iocg_id) {
++	if (iog->iocg) {
+ 		hlist_del_rcu(&iog->group_node);
+ 		__io_destroy_group(efqd, iog);
+ 	}
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index f089a55..75fee82 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -251,7 +251,7 @@ struct io_group {
+ 	unsigned int busy_rt_queues;
+ 
+ 	int deleting;
+-	unsigned short iocg_id;
++	struct io_cgroup *iocg;
+ 
+ 	/* The device MKDEV(major, minor), this group has been created for */
+ 	dev_t	dev;
+-- 
+1.5.4.rc3 
