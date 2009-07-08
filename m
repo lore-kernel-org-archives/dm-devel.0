@@ -1,16 +1,16 @@
 From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 11/25] io-controller: Export disk time used
- and nr sectors dipatched through cgroups
-Date: Wed, 08 Jul 2009 10:16:44 +0800
-Message-ID: <4A54018C.5090804@cn.fujitsu.com>
+Subject: Re: [PATCH 21/25] io-controller: Per cgroup request
+	descriptor support
+Date: Wed, 08 Jul 2009 11:27:25 +0800
+Message-ID: <4A54121D.5090008@cn.fujitsu.com>
 References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
-	<1246564917-19603-12-git-send-email-vgoyal@redhat.com>
+	<1246564917-19603-22-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1246564917-19603-12-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <1246564917-19603-22-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,78 +26,74 @@ List-Id: dm-devel.ids
 
 Vivek Goyal wrote:
 ...
->  
-> +static int io_cgroup_disk_time_read(struct cgroup *cgroup,
-> +				struct cftype *cftype, struct seq_file *m)
+>  }
+> +#ifdef CONFIG_GROUP_IOSCHED
+> +static ssize_t queue_group_requests_show(struct request_queue *q, char *page)
 > +{
-> +	struct io_cgroup *iocg;
-> +	struct io_group *iog;
-> +	struct hlist_node *n;
+> +	return queue_var_show(q->nr_group_requests, (page));
+> +}
 > +
-> +	if (!cgroup_lock_live_group(cgroup))
-> +		return -ENODEV;
+> +static ssize_t
+> +queue_group_requests_store(struct request_queue *q, const char *page,
+> +					size_t count)
+> +{
+> +	unsigned long nr;
+> +	int ret = queue_var_store(&nr, page, count);
+> +	if (nr < BLKDEV_MIN_RQ)
+> +		nr = BLKDEV_MIN_RQ;
 > +
-> +	iocg = cgroup_to_io_cgroup(cgroup);
-> +
-> +	rcu_read_lock();
-> +	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
-> +		/*
-> +		 * There might be groups which are not functional and
-> +		 * waiting to be reclaimed upon cgoup deletion.
-> +		 */
-> +		if (iog->key) {
-> +			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
-> +					MINOR(iog->dev),
-> +					iog->entity.total_service);
+> +	spin_lock_irq(q->queue_lock);
+> +	q->nr_group_requests = nr;
+> +	spin_unlock_irq(q->queue_lock);
+> +	return ret;
+> +}
+> +#endif
 
 Hi Vivek,
 
-Let io.disk_*'s outputs conform with io.policy's.
+Do we need to update the congestion thresholds for allocated io groups?
 
 Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 ---
- block/elevator-fq.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+ block/blk-sysfs.c |   15 +++++++++++++++
+ 1 files changed, 15 insertions(+), 0 deletions(-)
 
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 7c83d1e..29392e7 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -1631,7 +1631,7 @@ static int io_cgroup_disk_time_read(struct cgroup *cgroup,
- 		 * waiting to be reclaimed upon cgoup deletion.
- 		 */
- 		if (iog->key) {
--			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
-+			seq_printf(m, "%u:%u %lu\n", MAJOR(iog->dev),
- 					MINOR(iog->dev),
- 					iog->entity.total_service);
- 		}
-@@ -1661,7 +1661,7 @@ static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
- 		 * waiting to be reclaimed upon cgoup deletion.
- 		 */
- 		if (iog->key) {
--			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
-+			seq_printf(m, "%u:%u %lu\n", MAJOR(iog->dev),
- 					MINOR(iog->dev),
- 					iog->entity.total_sector_service);
- 		}
-@@ -1692,7 +1692,7 @@ static int io_cgroup_disk_queue_read(struct cgroup *cgroup,
- 		 * waiting to be reclaimed upon cgoup deletion.
- 		 */
- 		if (iog->key) {
--			seq_printf(m, "%u %u %lu %lu\n", MAJOR(iog->dev),
-+			seq_printf(m, "%u:%u %lu %lu\n", MAJOR(iog->dev),
- 					MINOR(iog->dev), iog->queue,
- 					iog->queue_duration);
- 		}
-@@ -1722,7 +1722,7 @@ static int io_cgroup_disk_dequeue_read(struct cgroup *cgroup,
- 		 * waiting to be reclaimed upon cgoup deletion.
- 		 */
- 		if (iog->key) {
--			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
-+			seq_printf(m, "%u:%u %lu\n", MAJOR(iog->dev),
- 					MINOR(iog->dev), iog->dequeue);
- 		}
- 	}
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index 577ed42..92b9f25 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -83,17 +83,32 @@ static ssize_t queue_group_requests_show(struct request_queue *q, char *page)
+ 	return queue_var_show(q->nr_group_requests, (page));
+ }
+ 
++extern void elv_io_group_congestion_threshold(struct request_queue *q,
++					      struct io_group *iog);
++
+ static ssize_t
+ queue_group_requests_store(struct request_queue *q, const char *page,
+ 					size_t count)
+ {
++	struct hlist_node *n;
++	struct io_group *iog;
++	struct elv_fq_data *efqd;
+ 	unsigned long nr;
+ 	int ret = queue_var_store(&nr, page, count);
++
+ 	if (nr < BLKDEV_MIN_RQ)
+ 		nr = BLKDEV_MIN_RQ;
+ 
+ 	spin_lock_irq(q->queue_lock);
++
+ 	q->nr_group_requests = nr;
++
++	efqd = &q->elevator->efqd;
++
++	hlist_for_each_entry(iog, n, &efqd->group_list, elv_data_node) {
++		elv_io_group_congestion_threshold(q, iog);
++	}
++
+ 	spin_unlock_irq(q->queue_lock);
+ 	return ret;
+ }
 -- 
-1.5.4.rc3
+1.5.4.rc3 
