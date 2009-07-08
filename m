@@ -1,15 +1,14 @@
-From: Balbir Singh <balbir@linux.vnet.ibm.com>
-Subject: Re: [RFC] IO scheduler based IO controller V6
-Date: Wed, 8 Jul 2009 09:26:21 +0530
-Message-ID: <20090708035621.GB3215@balbir.in.ibm.com>
-References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
-Reply-To: balbir@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Nikanth Karthikesan <knikanth@suse.de>
+Subject: [PATCH] Emulate BLKRRPART on device-mapper
+Date: Wed, 8 Jul 2009 14:14:50 +0530
+Message-ID: <200907081414.50698.knikanth@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,39 +18,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, jbaron@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-* Vivek Goyal <vgoyal@redhat.com> [2009-07-02 16:01:32]:
+From: Hannes Reinecke <hare@suse.de>
+Subject: Emulate BLKRRPART on device-mapper
 
-> 
-> Hi All,
-> 
-> Here is the V6 of the IO controller patches generated on top of 2.6.31-rc1.
-> 
-> Previous versions of the patches was posted here.
-> 
-> (V1) http://lkml.org/lkml/2009/3/11/486
-> (V2) http://lkml.org/lkml/2009/5/5/275
-> (V3) http://lkml.org/lkml/2009/5/26/472
-> (V4) http://lkml.org/lkml/2009/6/8/580
-> (V5) http://lkml.org/lkml/2009/6/19/279
-> 
-> This patchset is still work in progress but I want to keep on getting the
-> snapshot of my tree out at regular intervals to get the feedback hence V6.
->
+Partitions on device-mapper devices are managed by kpartx (if at
+all). So if we were just to send out a 'change' event if someone
+called BLKRRPART on these devices, kpartx will be triggered via udev
+and can manage the partitions accordingly.
 
-Hi, Vivek,
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
 
-I was able to compile and boot a 2.6.31-rc1 kernel with this patchset.
-I have a request could you fold up all patches and make one
-consolidated patch available somewhere (makes it easier to test), may
-be a git tree?
+---
 
-I did some quick tests with some io benchmarks and found in a simple
-scenario that the scheduler worked as expected, except that it took
-very long. I'll investigate further and revert back.
+Index: linux-2.6-dm/drivers/md/dm.c
+===================================================================
+--- linux-2.6-dm.orig/drivers/md/dm.c
++++ linux-2.6-dm/drivers/md/dm.c
+@@ -394,19 +394,25 @@ static int dm_blk_ioctl(struct block_dev
+ 	if (!map || !dm_table_get_size(map))
+ 		goto out;
  
--- 
-	Balbir
+-	/* We only support devices that have a single target */
+-	if (dm_table_get_num_targets(map) != 1)
+-		goto out;
+-
+-	tgt = dm_table_get_target(map, 0);
+-
+ 	if (dm_suspended(md)) {
+ 		r = -EAGAIN;
+ 		goto out;
+ 	}
+ 
+-	if (tgt->type->ioctl)
+-		r = tgt->type->ioctl(tgt, cmd, arg);
++	if (cmd == BLKRRPART) {
++		/* Emulate Re-read partitions table */
++		kobject_uevent(&disk_to_dev(md->disk)->kobj, KOBJ_CHANGE);
++		r = 0;
++	} else {
++		/* We only support devices that have a single target */
++		if (dm_table_get_num_targets(map) != 1)
++			goto out;
++
++		tgt = dm_table_get_target(map, 0);
++
++		if (tgt->type->ioctl)
++			r = tgt->type->ioctl(tgt, cmd, arg);
++	}
+ 
+ out:
+ 	dm_table_put(map);
