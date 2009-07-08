@@ -1,16 +1,15 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 21/25] io-controller: Per cgroup request
-	descriptor support
-Date: Wed, 08 Jul 2009 11:27:25 +0800
-Message-ID: <4A54121D.5090008@cn.fujitsu.com>
+From: Balbir Singh <balbir@linux.vnet.ibm.com>
+Subject: Re: [RFC] IO scheduler based IO controller V6
+Date: Wed, 8 Jul 2009 09:26:21 +0530
+Message-ID: <20090708035621.GB3215@balbir.in.ibm.com>
 References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
-	<1246564917-19603-22-git-send-email-vgoyal@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Reply-To: balbir@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1246564917-19603-22-git-send-email-vgoyal@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,79 +20,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, jbaron@redhat.com
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
->  }
-> +#ifdef CONFIG_GROUP_IOSCHED
-> +static ssize_t queue_group_requests_show(struct request_queue *q, char *page)
-> +{
-> +	return queue_var_show(q->nr_group_requests, (page));
-> +}
-> +
-> +static ssize_t
-> +queue_group_requests_store(struct request_queue *q, const char *page,
-> +					size_t count)
-> +{
-> +	unsigned long nr;
-> +	int ret = queue_var_store(&nr, page, count);
-> +	if (nr < BLKDEV_MIN_RQ)
-> +		nr = BLKDEV_MIN_RQ;
-> +
-> +	spin_lock_irq(q->queue_lock);
-> +	q->nr_group_requests = nr;
-> +	spin_unlock_irq(q->queue_lock);
-> +	return ret;
-> +}
-> +#endif
+* Vivek Goyal <vgoyal@redhat.com> [2009-07-02 16:01:32]:
 
-Hi Vivek,
+> 
+> Hi All,
+> 
+> Here is the V6 of the IO controller patches generated on top of 2.6.31-rc1.
+> 
+> Previous versions of the patches was posted here.
+> 
+> (V1) http://lkml.org/lkml/2009/3/11/486
+> (V2) http://lkml.org/lkml/2009/5/5/275
+> (V3) http://lkml.org/lkml/2009/5/26/472
+> (V4) http://lkml.org/lkml/2009/6/8/580
+> (V5) http://lkml.org/lkml/2009/6/19/279
+> 
+> This patchset is still work in progress but I want to keep on getting the
+> snapshot of my tree out at regular intervals to get the feedback hence V6.
+>
 
-Do we need to update the congestion thresholds for allocated io groups?
+Hi, Vivek,
 
-Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
----
- block/blk-sysfs.c |   15 +++++++++++++++
- 1 files changed, 15 insertions(+), 0 deletions(-)
+I was able to compile and boot a 2.6.31-rc1 kernel with this patchset.
+I have a request could you fold up all patches and make one
+consolidated patch available somewhere (makes it easier to test), may
+be a git tree?
 
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index 577ed42..92b9f25 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -83,17 +83,32 @@ static ssize_t queue_group_requests_show(struct request_queue *q, char *page)
- 	return queue_var_show(q->nr_group_requests, (page));
- }
+I did some quick tests with some io benchmarks and found in a simple
+scenario that the scheduler worked as expected, except that it took
+very long. I'll investigate further and revert back.
  
-+extern void elv_io_group_congestion_threshold(struct request_queue *q,
-+					      struct io_group *iog);
-+
- static ssize_t
- queue_group_requests_store(struct request_queue *q, const char *page,
- 					size_t count)
- {
-+	struct hlist_node *n;
-+	struct io_group *iog;
-+	struct elv_fq_data *efqd;
- 	unsigned long nr;
- 	int ret = queue_var_store(&nr, page, count);
-+
- 	if (nr < BLKDEV_MIN_RQ)
- 		nr = BLKDEV_MIN_RQ;
- 
- 	spin_lock_irq(q->queue_lock);
-+
- 	q->nr_group_requests = nr;
-+
-+	efqd = &q->elevator->efqd;
-+
-+	hlist_for_each_entry(iog, n, &efqd->group_list, elv_data_node) {
-+		elv_io_group_congestion_threshold(q, iog);
-+	}
-+
- 	spin_unlock_irq(q->queue_lock);
- 	return ret;
- }
 -- 
-1.5.4.rc3 
+	Balbir
