@@ -1,16 +1,16 @@
-From: Bill Davidsen <davidsen@tmr.com>
-Subject: Re: REQUEST for new 'topology' metrics to be moved out
-	of the 'queue' sysfs directory.
-Date: Tue, 07 Jul 2009 18:06:53 -0400
-Message-ID: <4A53C6FD.3010603@tmr.com>
-References: <19010.62951.886231.96622@notabene.brown>	<yq11vp8spxo.fsf@sermon.lab.mkp.net>	<125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>	<yq1k530qkm7.fsf@sermon.lab.mkp.net>	<19012.47077.328965.919868@notabene.brown>	<yq1ws6znja4.fsf@sermon.lab.mkp.net>
-	<19026.43290.340555.774690@notabene.brown>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH 11/25] io-controller: Export disk time used
+ and nr sectors dipatched through cgroups
+Date: Wed, 08 Jul 2009 10:16:44 +0800
+Message-ID: <4A54018C.5090804@cn.fujitsu.com>
+References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
+	<1246564917-19603-12-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <19026.43290.340555.774690@notabene.brown>
+In-Reply-To: <1246564917-19603-12-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,77 +20,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-fsdevel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-Neil Brown wrote:
-> On Friday June 26, martin.petersen@oracle.com wrote:
->   
->> As far as making the application of these values more obvious I propose
->> the following:
->>
->> What:		/sys/block/<disk>/queue/minimum_io_size
->> Date:		April 2009
->> Contact:	Martin K. Petersen <martin.petersen@oracle.com>
->> Description:
->> 		Storage devices may report a granularity or minimum I/O
->> 		size which is the device's preferred unit of I/O.
->> 		Requests smaller than this may incur a significant
->> 		performance penalty.
->>
->> 		For disk drives this value corresponds to the physical
->> 		block size. For RAID devices it is usually the stripe
->> 		chunk size.
->>     
->
-> These two paragraphs are contradictory.  There is no sense in which a
-> RAID chunk size is a preferred minimum I/O size.
->
-> To some degree it is actually a 'maximum' preferred size for random
-> IO.  If you do random IO is blocks larger than the chunk size then you
-> risk causing more 'head contention' (at least with RAID0 - with RAID5
-> the tradeoff is more complex).
->
->   
-Actually this is allocation unit, and the array can be assumed to be a 
-series of sets of contiguous bytes of this size. Given LBA addressing, 
-array members which are not simple whole devices, etc, this doesn't 
-(can't) promise much for the physical layout. And any read which resides 
-entirely within a chunk would not have a performance penalty, although 
-write might, if it were not a multiple of the sector size of the array 
-member(s) involved.
+Vivek Goyal wrote:
+...
+>  
+> +static int io_cgroup_disk_time_read(struct cgroup *cgroup,
+> +				struct cftype *cftype, struct seq_file *m)
+> +{
+> +	struct io_cgroup *iocg;
+> +	struct io_group *iog;
+> +	struct hlist_node *n;
+> +
+> +	if (!cgroup_lock_live_group(cgroup))
+> +		return -ENODEV;
+> +
+> +	iocg = cgroup_to_io_cgroup(cgroup);
+> +
+> +	rcu_read_lock();
+> +	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
+> +		/*
+> +		 * There might be groups which are not functional and
+> +		 * waiting to be reclaimed upon cgoup deletion.
+> +		 */
+> +		if (iog->key) {
+> +			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
+> +					MINOR(iog->dev),
+> +					iog->entity.total_service);
 
-> If you are talking about "alignment", then yes - the chunk size is an
-> appropriate size to align on.  But so are the block size and the
-> stripe size and none is, in general, any better than any other.
->
->   
-I would assume that a chunk, aligned on a chunk boundary, would be 
-allocated in a contiguous series of bytes on the underlying array 
-member. And that any i/o not aligned on a chunk boundary would be more 
-likely to access multiple array members.
+Hi Vivek,
 
-Feel free to clarify my assumptions.
+Let io.disk_*'s outputs conform with io.policy's.
 
-> Also, you say "may" report.  If a device does not report, what happens
-> to this file.  Is it not present, or empty, or contain a special
-> "undefined" value?
-> I think the answer is that "512" is reported.  It might be good to
-> explicitly document that.
->   
-> I'd really like to see an example of how you expect filesystems to use
-> this.
-> I can well imagine the VM or elevator using this to assemble IO
-> requests in to properly aligned requests.  But I cannot imagine how
-> e.g mkfs would use it.
-> Or am I misunderstanding and this is for programs that use O_DIRECT on
-> the block device so they can optimise their request stream?
->   
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ block/elevator-fq.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 7c83d1e..29392e7 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -1631,7 +1631,7 @@ static int io_cgroup_disk_time_read(struct cgroup *cgroup,
+ 		 * waiting to be reclaimed upon cgoup deletion.
+ 		 */
+ 		if (iog->key) {
+-			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
++			seq_printf(m, "%u:%u %lu\n", MAJOR(iog->dev),
+ 					MINOR(iog->dev),
+ 					iog->entity.total_service);
+ 		}
+@@ -1661,7 +1661,7 @@ static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
+ 		 * waiting to be reclaimed upon cgoup deletion.
+ 		 */
+ 		if (iog->key) {
+-			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
++			seq_printf(m, "%u:%u %lu\n", MAJOR(iog->dev),
+ 					MINOR(iog->dev),
+ 					iog->entity.total_sector_service);
+ 		}
+@@ -1692,7 +1692,7 @@ static int io_cgroup_disk_queue_read(struct cgroup *cgroup,
+ 		 * waiting to be reclaimed upon cgoup deletion.
+ 		 */
+ 		if (iog->key) {
+-			seq_printf(m, "%u %u %lu %lu\n", MAJOR(iog->dev),
++			seq_printf(m, "%u:%u %lu %lu\n", MAJOR(iog->dev),
+ 					MINOR(iog->dev), iog->queue,
+ 					iog->queue_duration);
+ 		}
+@@ -1722,7 +1722,7 @@ static int io_cgroup_disk_dequeue_read(struct cgroup *cgroup,
+ 		 * waiting to be reclaimed upon cgoup deletion.
+ 		 */
+ 		if (iog->key) {
+-			seq_printf(m, "%u %u %lu\n", MAJOR(iog->dev),
++			seq_printf(m, "%u:%u %lu\n", MAJOR(iog->dev),
+ 					MINOR(iog->dev), iog->dequeue);
+ 		}
+ 	}
 -- 
-Bill Davidsen <davidsen@tmr.com>
-  Obscure bug of 2004: BASH BUFFER OVERFLOW - if bash is being run by a
-normal user and is setuid root, with the "vi" line edit mode selected,
-and the character set is "big5," an off-by-one error occurs during
-wildcard (glob) expansion.
+1.5.4.rc3
