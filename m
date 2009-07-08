@@ -1,8 +1,7 @@
 From: Nikanth Karthikesan <knikanth@suse.de>
-Subject: [PATCH] Allow multipath devices to be created for
-	readonly devices
-Date: Wed, 8 Jul 2009 14:17:59 +0530
-Message-ID: <200907081417.59976.knikanth@suse.de>
+Subject: [PATCH] Allow zero paths for multipath priority groups
+Date: Wed, 8 Jul 2009 14:15:39 +0530
+Message-ID: <200907081415.39925.knikanth@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -24,96 +23,30 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 From: Hannes Reinecke <hare@suse.de>
-Subject: Allow multipath devices to be created for readonly devices
+Subject: Allow zero paths for multipath priority groups
 
-Currently we cannot create device-mapper tables for multipath devices
-whenever they are read-only.This patch modifies the device-mapper to
-set the 'READ-ONLY' flag automatically whenever a read-only is added
-to the table.
+For correct handling of the all-paths-down scenario we have to
+allow zero paths as a valid argument for priority groups.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
-Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
+Signed-off-by: Nikanth Karthikesan <hare@suse.de>
 
 ---
+ drivers/md/dm-mpath.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Index: linux-2.6-dm/drivers/md/dm.c
+Index: linux-2.6-dm/drivers/md/dm-mpath.c
 ===================================================================
---- linux-2.6-dm.orig/drivers/md/dm.c
-+++ linux-2.6-dm/drivers/md/dm.c
-@@ -322,16 +322,26 @@ static void __exit dm_exit(void)
- static int dm_blk_open(struct block_device *bdev, fmode_t mode)
+--- linux-2.6-dm.orig/drivers/md/dm-mpath.c
++++ linux-2.6-dm/drivers/md/dm-mpath.c
+@@ -787,8 +787,8 @@ static int multipath_ctr(struct dm_targe
  {
- 	struct mapped_device *md;
-+	int retval = 0;
+ 	/* target parameters */
+ 	static struct param _params[] = {
+-		{1, 1024, "invalid number of priority groups"},
+-		{1, 1024, "invalid initial priority group number"},
++		{0, 1024, "invalid number of priority groups"},
++		{0, 1024, "invalid initial priority group number"},
+ 	};
  
- 	spin_lock(&_minor_lock);
- 
- 	md = bdev->bd_disk->private_data;
--	if (!md)
-+	if (!md) {
-+		retval = -ENXIO;
- 		goto out;
-+	}
- 
- 	if (test_bit(DMF_FREEING, &md->flags) ||
- 	    test_bit(DMF_DELETING, &md->flags)) {
- 		md = NULL;
-+		retval = -ENXIO;
-+		goto out;
-+	}
-+
-+	if (bdev_read_only(bdev) && (mode & FMODE_WRITE)) {
-+		md = NULL;
-+		retval = -EROFS;
- 		goto out;
- 	}
- 
-@@ -341,7 +351,7 @@ static int dm_blk_open(struct block_devi
- out:
- 	spin_unlock(&_minor_lock);
- 
--	return md ? 0 : -ENXIO;
-+	return retval;
- }
- 
- static int dm_blk_close(struct gendisk *disk, fmode_t mode)
-@@ -1948,6 +1958,14 @@ static int __bind(struct mapped_device *
- 
- 	__bind_mempools(md, t);
- 
-+	dm_get_table(md);
-+	if (dm_table_get_mode(t) & FMODE_WRITE) {
-+		set_disk_ro(md->disk, 0);
-+	} else {
-+		set_disk_ro(md->disk, 1);
-+	}
-+	dm_table_put(md->map);
-+
- 	write_lock_irqsave(&md->map_lock, flags);
- 	md->map = t;
- 	dm_table_set_restrictions(t, q, limits);
-Index: linux-2.6-dm/drivers/md/dm-table.c
-===================================================================
---- linux-2.6-dm.orig/drivers/md/dm-table.c
-+++ linux-2.6-dm/drivers/md/dm-table.c
-@@ -455,11 +455,19 @@ static int __table_get_device(struct dm_
- 		dd->dm_dev.mode = mode;
- 		dd->dm_dev.bdev = NULL;
- 
--		if ((r = open_dev(dd, dev, t->md))) {
-+		r = open_dev(dd, dev, t->md);
-+		if (r == -EROFS) {
-+			dd->dm_dev.mode &= ~FMODE_WRITE;
-+			r = open_dev(dd, dev, t->md);
-+		}
-+		if (r) {
- 			kfree(dd);
- 			return r;
- 		}
- 
-+		if (dd->dm_dev.mode != mode)
-+			t->mode = dd->dm_dev.mode;
-+
- 		format_dev_t(dd->dm_dev.name, dev);
- 
- 		atomic_set(&dd->count, 0);
+ 	int r;
