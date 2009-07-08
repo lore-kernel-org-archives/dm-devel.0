@@ -1,23 +1,16 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH 1/6] dm raid45 target: export region hash
-	functions and add a needed one
-Date: Wed, 08 Jul 2009 20:56:20 +0200
-Message-ID: <1247079380.9206.99.camel@o>
-References: <4a368301.KBrCZcokAm87BF/S%heinzm@redhat.com>
-	<20090616140914.GA3348@infradead.org> <1245163906.28257.113.camel@o>
-	<e9c3a7c20906161055g6434ffd8uc7fc1ca53950556@mail.gmail.com>
-	<1245179467.4278.11.camel@o> <19000.8388.899607.749942@notabene.brown>
-	<19002.60755.876186.489524@notabene.brown>
-	<1245407630.12264.66.camel@o>
-	<19006.8756.925105.737041@notabene.brown> <1245697837.7390.456.camel@o>
-	<1246539130.20207.12.camel@o>
-	<19025.28110.236108.810671@notabene.brown>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Paul Smith <paul@mad-scientist.net>
+Subject: Re: Media failures cause Path/Device Failures in
+	dm-multipath ?
+Date: Wed, 8 Jul 2009 15:34:56 -0400
+Message-ID: <1247081696.2984.25.camel@psmith-ubeta.netezza.com>
+References: <1247002005.2984.10.camel@psmith-ubeta.netezza.com>
+Reply-To: paul@mad-scientist.net,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <19025.28110.236108.810671@notabene.brown>
+In-Reply-To: <1247002005.2984.10.camel@psmith-ubeta.netezza.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,184 +20,123 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>
-Cc: Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Ed Ciechanowski <ed.ciechanowski@intel.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2009-07-06 at 13:21 +1000, Neil Brown wrote:
-> On Thursday July 2, heinzm@redhat.com wrote:
-> > 
-> > Dan, Neil,
+Hi all; does anyone have any thoughts about/comments on this?
 
-Hi,
+It's kind of not so useful to be using this stuff if I can't recover
+from a media failure, after all... what am I doing wrong?
 
-back after > 4 days of Internet outage caused by lightning :-(
+Thanks!
 
-I'll respond to Neils comments here in order to have a comparable
-microbenchmark based on his recommended change
-(and one bug I fixed; see below).
-
-> > 
-> > like mentioned before I left to LinuxTag last week, here comes an initial
-> > take on dm-raid45 warm/cold CPU cache xor speed optimization metrics.
-> > 
-> > This shall give us the base to decide to keep or drop the dm-raid45
-> > internal xor optimization magic or move (part of) it into the crypto
-> > subsystem.
+On Tue, 2009-07-07 at 17:26 -0400, Paul Smith wrote:
+> I have a configuration that has raid1 mirrors (md_raid1) built on top of
+> linear segments of multipath'd scsi disks (dm-multipath).  This is Linux
+> 2.6.27.25, FYI.  Unfortunately because this is an embedded environment
+> it's not easy for us to jump to a newer kernel.
 > 
-> Thanks for doing this.
-
-You're welcome.
-
-> > 
-> > 
-> > Intel results with 128 iterations each:
-> > ---------------------------------------
-> > 
-> > 1 stripe  : NB:10 111/80 HM:118 111/82
-> > 2 stripes : NB:25 113/87 HM:103 112/91
-> > 3 stripes : NB:24 115/93 HM:104 114/93
-> > 4 stripes : NB:48 114/93 HM:80 114/93
-> > 5 stripes : NB:38 113/94 HM:90 114/94
-> > 6 stripes : NB:25 116/94 HM:103 114/94
-> > 7 stripes : NB:25 115/95 HM:103 115/95
-> > 8 stripes : NB:62 117/96 HM:66 116/95 <<<--- cold cache starts here
-> > 9 stripes : NB:66 117/96 HM:62 116/95
-> > 10 stripes: NB:73 117/96 HM:55 114/95
-> > 11 stripes: NB:63 114/96 HM:65 112/95
-> > 12 stripes: NB:51 111/96 HM:77 110/95
-> > 13 stripes: NB:65 109/96 HM:63 112/95
+> In this configuration when a scsi disk reports a media failure (SCSI
+> Sense/ASC/ASCQ: 3/11/0), I would expect that the md_raid1 would be able
+> to handle the error and read the data from the other mirror and then
+> re-write the failed sector on the original image.
 > 
-> These results seem to suggest that the two different routines provide
-> very similar results on this hardware, particularly when the cache is cold.
-> The high degree of variability might be because you have dropped this:
+> I have tried this with the no_path_retry attribute as 'fail'  and
+> observe the following... 
 > 
-> > -	/* Wait for next tick. */
-> > -	for (j = jiffies; j == jiffies; )
-> > -		;
-> ??
-> Without that, it could be running the test over anything from 4 to 5
-> jiffies.
-> I note that do_xor_speed in crypto/xor.c doesn't synchronise at the
-> start either.  I think that is a bug.
-> The variability seem to generally be close to 20%, which is consistent
-> with the difference between 4 and 5.
+> dm-multipath reports the path failure. 
+> Then it tries the request on the other path, which also gets a path
+> failure.
+> The failure of both paths fails the device.
 > 
-> Could you put that loop back in and re-test?
+> md-raid1 gets the error and reads from the other mirror.
+> When md-raid1 tries to re-write the data it encounters the failed
+> device.
 > 
-
-Reintroduced and rerun tests.
-
-In addition to that I fixed a flaw, which lead to
-dm-raid45.c:xor_optimize() running xor_speed() with chunks > raid
-devices, which ain't make sense and lead to longer test runs and
-erroneous chunk values (e.g. 7 when only 3 raid devices configured).
-Hence we could end up with an algorithm claiming it was selected
-for > raid devices.
-
-Here's the new results:
-
-Intel Core i7:
---------------
-1 stripe  : NB:54 114/94 HM:74 113/93
-2 stripes : NB:57 116/94 HM:71 115/94
-3 stripes : NB:64 115/94 HM:64 114/94
-4 stripes : NB:51 112/94 HM:77 114/94
-5 stripes : NB:77 115/94 HM:51 114/94
-6 stripes : NB:25 111/89 HM:103 105/90
-7 stripes : NB:13 105/91 HM:115 111/90
-8 stripes : NB:27 108/92 HM:101 111/93
-9 stripes : NB:29 113/92 HM:99 114/93
-10 stripes: NB:41 110/92 HM:87 112/93
-11 stripes: NB:34 105/92 HM:94 107/93
-12 stripes: NB:51 114/93 HM:77 114/93
-13 stripes: NB:54 115/94 HM:74 114/93
-14 stripes: NB:64 115/94 HM:64 114/93
-
-
-AMD Opteron:
---------
-1 stripe  : NB:0 25/17 HM:128 48/38
-2 stripes : NB:0 24/18 HM:128 46/36
-3 stripes : NB:0 25/18 HM:128 47/37
-4 stripes : NB:0 27/19 HM:128 48/41
-5 stripes : NB:0 30/18 HM:128 49/40
-6 stripes : NB:0 27/19 HM:128 49/40
-7 stripes : NB:0 29/18 HM:128 49/39
-8 stripes : NB:0 26/19 HM:128 49/40
-9 stripes : NB:0 28/19 HM:128 51/41
-10 stripes: NB:0 28/18 HM:128 50/41
-11 stripes: NB:0 31/19 HM:128 49/40
-12 stripes: NB:0 28/19 HM:128 50/40
-13 stripes: NB:0 26/19 HM:128 50/40
-14 stripes: NB:0 27/20 HM:128 49/40
-
-
-Still too much variability...
-
-
-
-> > 
-> > Opteron results with 128 iterations each:
-> > -----------------------------------------
-> > 1 stripe  : NB:0 30/20 HM:128 64/53
-> > 2 stripes : NB:0 31/21 HM:128 68/55
-> > 3 stripes : NB:0 31/22 HM:128 68/57
-> > 4 stripes : NB:0 32/22 HM:128 70/61
-> > 5 stripes : NB:0 32/22 HM:128 70/63
-> > 6 stripes : NB:0 35/22 HM:128 70/64
-> > 7 stripes : NB:0 32/23 HM:128 69/63
-> > 8 stripes : NB:0 44/23 HM:128 76/65
-> > 9 stripes : NB:0 43/23 HM:128 73/65
-> > 10 stripes: NB:0 35/23 HM:128 72/64
-> > 11 stripes: NB:0 35/24 HM:128 72/64
-> > 12 stripes: NB:0 33/24 HM:128 72/65
-> > 13 stripes: NB:0 33/23 HM:128 71/64
+> >From syslog:
 > 
-> Here your code seems to be 2-3 times faster!
-> Can you check which function xor_block is using?
-> If it is :
->   xor: automatically using best checksumming function: ....
-> then it might be worth disabling that test in calibrate_xor_blocks and
-> see if it picks one that ends up being faster.
-
-Picks the same sse one automatically/measured on both archs with
-obvious variability:
-
-[37414.875236] xor: automatically using best checksumming function:
-generic_sse
-[37414.893930]    generic_sse: 12619.000 MB/sec
-[37414.893932] xor: using function: generic_sse (12619.000 MB/sec)
-[37445.679501] xor: measuring software checksum speed
-[37445.696829]    generic_sse: 15375.000 MB/sec
-[37445.696830] xor: using function: generic_sse (15375.000 MB/sec)
-
-
-Will get to Dough's recommendation to run loaded benchmarks tomorrow...
-
-Heinz
-
+> Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Result: hostbyte=0x00 driverbyte=0x08
+> Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Sense Key : 0x3 [current]
+> Jul 1 20:46:27 hostname user.warn kernel: Info fld=0x217795c
+> Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] ASC=0x11 ASCQ=0x0
+> Jul 1 20:46:27 hostname user.warn kernel: device-mapper: multipath: Failing path 67:48.
+> Jul 1 20:46:27 hostname daemon.notice multipathd: 67:48: mark as failed
+> Jul 1 20:46:27 hostname daemon.notice multipathd: encl3Slot4: remaining active paths: 1
+> Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Result: hostbyte=0x00 driverbyte=0x08
+> Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Sense Key : 0x3 [current]
+> Jul 1 20:46:29 hostname user.warn kernel: Info fld=0x217795c
+> Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] ASC=0x11 ASCQ=0x0
+> Jul 1 20:46:29 hostname user.warn kernel: device-mapper: multipath: Failing path 65:176.
+> Jul 1 20:46:30 hostname daemon.notice multipathd: 65:176: mark as failed
+> Jul 1 20:46:30 hostname daemon.notice multipathd: encl3Slot4: remaining active paths: 0
+> Jul 1 20:46:30 hostname user.err kernel: raid1: dm-36: rescheduling sector 35092739
+> Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-38, disabling device.
+> Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing on 1 devices.
+> Jul 1 20:46:30 hostname user.warn kernel: md: super_written gets error=-5, uptodate=0
+> Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-36, disabling device.
+> Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing on 1 devices.
 > 
-> There is still the fact that by using the cache for data that will be
-> accessed once, we are potentially slowing down the rest of the system.
-> i.e. the reason to avoid the cache is not just because it won't
-> benefit the xor much, but because it will hurt other users.
-> I don't know how to measure that effect :-(
-> But if avoiding the cache makes xor 1/3 the speed of using the cache
-> even though it is cold, then it would be hard to justify not using the
-> cache I think.
+> When the no_path_retry attribute is set to '3' :
 > 
-> > 
-> > Questions/Recommendations:
-> > --------------------------
-> > Review the code changes and the data analysis please.
+> dm-multipath reports the path failure.
+> Then retries the request on the other path, which also gets a path
+> failure.
+> On the failure of the second path, the device queues, and enters
+> recovery mode.
+> On the subsequent poll of the paths they are reinstated and the IOs are
+> 'resumed'.....
+> ... and of course fail with the media error again.......
+> causing a hang...
 > 
-> It seems to mostly make sense
->  - the 'wait for next tick' should stay
->  - it would be interesting to see what the final choice of 'chunks'
->    was (i.e. how many to xor together at a time).
->   
+> >From syslog:
 > 
-> Thanks!
+> Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Result: hostbyte=0x00 driverbyte=0x08
+> Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Sense Key : 0x3 [current]
+> Jul  7 10:54:35 hostname user.warn kernel: Info fld=0x123c016d
+> Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] ASC=0x11 ASCQ=0x0
+> Jul  7 10:54:35 hostname user.warn kernel: device-mapper: multipath: Failing path 65:32.
+> Jul  7 10:54:35 hostname daemon.notice multipathd: 65:32: mark as failed
+> Jul  7 10:54:35 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
+> Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
+> Jul  7 10:54:37 hostname user.info kernel: Result: hostbyte=0x00 driverbyte=0x08
+> Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm] Sense Key : 0x3
+> Jul  7 10:54:37 hostname user.info kernel: [current]
+> Jul  7 10:54:37 hostname user.warn kernel: Info fld=0x123c016d
+> Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
+> Jul  7 10:54:37 hostname user.info kernel: ASC=0x11 ASCQ=0x0
+> Jul  7 10:54:37 hostname user.warn kernel: device-mapper: multipath: Failing path 69:160.
+> Jul  7 10:54:37 hostname daemon.notice multipathd: 69:160: mark as failed
+> Jul  7 10:54:37 hostname daemon.warn multipathd: encl2Slot7: Entering recovery mode: max_retries=3
+> Jul  7 10:54:37 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 0
+> Jul  7 10:54:39 hostname daemon.warn multipathd: sds: readsector0 checker reports path is up
+> Jul  7 10:54:39 hostname daemon.notice multipathd: 65:32: reinstated
+> Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: queue_if_no_path enabled
+> Jul  7 10:54:42 hostname daemon.warn multipathd: encl2Slot7: Recovered to normal mode
+> Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
+> Jul  7 10:54:42 hostname daemon.warn multipathd: sdcm: readsector0 checker reports path is up
+> Jul  7 10:54:42 hostname daemon.notice multipathd: 69:160: reinstated
+> Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 2
+> Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds] Result: hostbyte=0x00 driverbyte=0x08
+> Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
+> Jul  7 10:54:42 hostname user.info kernel: Sense Key : 0x3
+> Jul  7 10:54:42 hostname user.info kernel: [current]
+> Jul  7 10:54:42 hostname user.info kernel:
+> Jul  7 10:54:42 hostname user.warn kernel: Info fld=0x123c016d
+> Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
+> Jul  7 10:54:42 hostname user.info kernel: ASC=0x11 ASCQ=0x0
+> Jul  7 10:54:42 hostname user.warn kernel: device-mapper: multipath: Failing path 65:32.
+> Jul  7 10:54:43 hostname daemon.notice multipathd: 65:32: mark as failed
+> Jul  7 10:54:43 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
 > 
-> NeilBrown
+> 
+> Should dm-multipath distinguish media failures from actual device
+> errors?
+> 
+> Is there a different no_path_retry policy that would fail this request
+> by queue subsequent requests?
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
