@@ -1,17 +1,23 @@
-From: Balbir Singh <balbir@linux.vnet.ibm.com>
-Subject: Re: [RFC] IO scheduler based IO controller V6
-Date: Wed, 8 Jul 2009 20:09:25 +0530
-Message-ID: <20090708143925.GE3215@balbir.in.ibm.com>
-References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
-	<20090708035621.GB3215@balbir.in.ibm.com>
-	<20090708134114.GA24048@redhat.com>
-Reply-To: balbir@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [PATCH 1/6] dm raid45 target: export region hash
+	functions and add a needed one
+Date: Wed, 08 Jul 2009 20:56:20 +0200
+Message-ID: <1247079380.9206.99.camel@o>
+References: <4a368301.KBrCZcokAm87BF/S%heinzm@redhat.com>
+	<20090616140914.GA3348@infradead.org> <1245163906.28257.113.camel@o>
+	<e9c3a7c20906161055g6434ffd8uc7fc1ca53950556@mail.gmail.com>
+	<1245179467.4278.11.camel@o> <19000.8388.899607.749942@notabene.brown>
+	<19002.60755.876186.489524@notabene.brown>
+	<1245407630.12264.66.camel@o>
+	<19006.8756.925105.737041@notabene.brown> <1245697837.7390.456.camel@o>
+	<1246539130.20207.12.camel@o>
+	<19025.28110.236108.810671@notabene.brown>
+Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090708134114.GA24048@redhat.com>
+In-Reply-To: <19025.28110.236108.810671@notabene.brown>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,66 +27,184 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: paolo.valente@unimore.it, dhaval@linux.vnet.ibm.com, snitzer@redhat.com, fernando@oss.ntt.co.jp, jmoyer@redhat.com, linux-kernel@vger.kernel.org, fchecconi@gmail.com, dm-devel@redhat.com, jens.axboe@oracle.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, agk@redhat.com, righi.andrea@gmail.com
+To: Neil Brown <neilb@suse.de>
+Cc: Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Dan Williams <dan.j.williams@intel.com>, Ed Ciechanowski <ed.ciechanowski@intel.com>
 List-Id: dm-devel.ids
 
-* Vivek Goyal <vgoyal@redhat.com> [2009-07-08 09:41:14]:
+On Mon, 2009-07-06 at 13:21 +1000, Neil Brown wrote:
+> On Thursday July 2, heinzm@redhat.com wrote:
+> > 
+> > Dan, Neil,
 
-> On Wed, Jul 08, 2009 at 09:26:21AM +0530, Balbir Singh wrote:
-> > * Vivek Goyal <vgoyal@redhat.com> [2009-07-02 16:01:32]:
+Hi,
+
+back after > 4 days of Internet outage caused by lightning :-(
+
+I'll respond to Neils comments here in order to have a comparable
+microbenchmark based on his recommended change
+(and one bug I fixed; see below).
+
 > > 
-> > > 
-> > > Hi All,
-> > > 
-> > > Here is the V6 of the IO controller patches generated on top of 2.6.31-rc1.
-> > > 
-> > > Previous versions of the patches was posted here.
-> > > 
-> > > (V1) http://lkml.org/lkml/2009/3/11/486
-> > > (V2) http://lkml.org/lkml/2009/5/5/275
-> > > (V3) http://lkml.org/lkml/2009/5/26/472
-> > > (V4) http://lkml.org/lkml/2009/6/8/580
-> > > (V5) http://lkml.org/lkml/2009/6/19/279
-> > > 
-> > > This patchset is still work in progress but I want to keep on getting the
-> > > snapshot of my tree out at regular intervals to get the feedback hence V6.
-> > >
+> > like mentioned before I left to LinuxTag last week, here comes an initial
+> > take on dm-raid45 warm/cold CPU cache xor speed optimization metrics.
 > > 
-> > Hi, Vivek,
-> > 
-> > I was able to compile and boot a 2.6.31-rc1 kernel with this patchset.
-> > I have a request could you fold up all patches and make one
-> > consolidated patch available somewhere (makes it easier to test), may
-> > be a git tree?
-> > 
+> > This shall give us the base to decide to keep or drop the dm-raid45
+> > internal xor optimization magic or move (part of) it into the crypto
+> > subsystem.
 > 
-> Thanks for trying it out balbir. Ok, for ease of patching and testing, I 
-> will also maintain a consolidated patch. For V6 you can download the patch
-> from here.
+> Thanks for doing this.
+
+You're welcome.
+
+> > 
+> > 
+> > Intel results with 128 iterations each:
+> > ---------------------------------------
+> > 
+> > 1 stripe  : NB:10 111/80 HM:118 111/82
+> > 2 stripes : NB:25 113/87 HM:103 112/91
+> > 3 stripes : NB:24 115/93 HM:104 114/93
+> > 4 stripes : NB:48 114/93 HM:80 114/93
+> > 5 stripes : NB:38 113/94 HM:90 114/94
+> > 6 stripes : NB:25 116/94 HM:103 114/94
+> > 7 stripes : NB:25 115/95 HM:103 115/95
+> > 8 stripes : NB:62 117/96 HM:66 116/95 <<<--- cold cache starts here
+> > 9 stripes : NB:66 117/96 HM:62 116/95
+> > 10 stripes: NB:73 117/96 HM:55 114/95
+> > 11 stripes: NB:63 114/96 HM:65 112/95
+> > 12 stripes: NB:51 111/96 HM:77 110/95
+> > 13 stripes: NB:65 109/96 HM:63 112/95
 > 
-> http://people.redhat.com/~vgoyal/io-controller/io-scheduler-based-io-controller-v6.patch
->
-
-Thanks, this will definitely help me get more testing done!
- 
-> > I did some quick tests with some io benchmarks and found in a simple
-> > scenario that the scheduler worked as expected, except that it took
-> > very long. I'll investigate further and revert back.
+> These results seem to suggest that the two different routines provide
+> very similar results on this hardware, particularly when the cache is cold.
+> The high degree of variability might be because you have dropped this:
 > 
-> Thanks. I will wait for details.
->
+> > -	/* Wait for next tick. */
+> > -	for (j = jiffies; j == jiffies; )
+> > -		;
+> ??
+> Without that, it could be running the test over anything from 4 to 5
+> jiffies.
+> I note that do_xor_speed in crypto/xor.c doesn't synchronise at the
+> start either.  I think that is a bug.
+> The variability seem to generally be close to 20%, which is consistent
+> with the difference between 4 and 5.
+> 
+> Could you put that loop back in and re-test?
+> 
 
-I'll try and send something out by Friday, but for now I am not even
-very sure if it is a real problem. I ran iozone on two groups with 500
-and 1000 as weights on the same parition and set fairness to 1 in
-sysfs for the partition. I used a record size of 4 (default) and tried
-to run it on a file size of 1G.
+Reintroduced and rerun tests.
 
-BTW, I don't see anything about weights being multiple of an expected
-figure documented anywhere. I tried weights of 1024 (similar to the
-scheduler and got shouted back at :) ). Does the documentation patch
-specify the expected range for weights? 
+In addition to that I fixed a flaw, which lead to
+dm-raid45.c:xor_optimize() running xor_speed() with chunks > raid
+devices, which ain't make sense and lead to longer test runs and
+erroneous chunk values (e.g. 7 when only 3 raid devices configured).
+Hence we could end up with an algorithm claiming it was selected
+for > raid devices.
 
--- 
-	Balbir
+Here's the new results:
+
+Intel Core i7:
+--------------
+1 stripe  : NB:54 114/94 HM:74 113/93
+2 stripes : NB:57 116/94 HM:71 115/94
+3 stripes : NB:64 115/94 HM:64 114/94
+4 stripes : NB:51 112/94 HM:77 114/94
+5 stripes : NB:77 115/94 HM:51 114/94
+6 stripes : NB:25 111/89 HM:103 105/90
+7 stripes : NB:13 105/91 HM:115 111/90
+8 stripes : NB:27 108/92 HM:101 111/93
+9 stripes : NB:29 113/92 HM:99 114/93
+10 stripes: NB:41 110/92 HM:87 112/93
+11 stripes: NB:34 105/92 HM:94 107/93
+12 stripes: NB:51 114/93 HM:77 114/93
+13 stripes: NB:54 115/94 HM:74 114/93
+14 stripes: NB:64 115/94 HM:64 114/93
+
+
+AMD Opteron:
+--------
+1 stripe  : NB:0 25/17 HM:128 48/38
+2 stripes : NB:0 24/18 HM:128 46/36
+3 stripes : NB:0 25/18 HM:128 47/37
+4 stripes : NB:0 27/19 HM:128 48/41
+5 stripes : NB:0 30/18 HM:128 49/40
+6 stripes : NB:0 27/19 HM:128 49/40
+7 stripes : NB:0 29/18 HM:128 49/39
+8 stripes : NB:0 26/19 HM:128 49/40
+9 stripes : NB:0 28/19 HM:128 51/41
+10 stripes: NB:0 28/18 HM:128 50/41
+11 stripes: NB:0 31/19 HM:128 49/40
+12 stripes: NB:0 28/19 HM:128 50/40
+13 stripes: NB:0 26/19 HM:128 50/40
+14 stripes: NB:0 27/20 HM:128 49/40
+
+
+Still too much variability...
+
+
+
+> > 
+> > Opteron results with 128 iterations each:
+> > -----------------------------------------
+> > 1 stripe  : NB:0 30/20 HM:128 64/53
+> > 2 stripes : NB:0 31/21 HM:128 68/55
+> > 3 stripes : NB:0 31/22 HM:128 68/57
+> > 4 stripes : NB:0 32/22 HM:128 70/61
+> > 5 stripes : NB:0 32/22 HM:128 70/63
+> > 6 stripes : NB:0 35/22 HM:128 70/64
+> > 7 stripes : NB:0 32/23 HM:128 69/63
+> > 8 stripes : NB:0 44/23 HM:128 76/65
+> > 9 stripes : NB:0 43/23 HM:128 73/65
+> > 10 stripes: NB:0 35/23 HM:128 72/64
+> > 11 stripes: NB:0 35/24 HM:128 72/64
+> > 12 stripes: NB:0 33/24 HM:128 72/65
+> > 13 stripes: NB:0 33/23 HM:128 71/64
+> 
+> Here your code seems to be 2-3 times faster!
+> Can you check which function xor_block is using?
+> If it is :
+>   xor: automatically using best checksumming function: ....
+> then it might be worth disabling that test in calibrate_xor_blocks and
+> see if it picks one that ends up being faster.
+
+Picks the same sse one automatically/measured on both archs with
+obvious variability:
+
+[37414.875236] xor: automatically using best checksumming function:
+generic_sse
+[37414.893930]    generic_sse: 12619.000 MB/sec
+[37414.893932] xor: using function: generic_sse (12619.000 MB/sec)
+[37445.679501] xor: measuring software checksum speed
+[37445.696829]    generic_sse: 15375.000 MB/sec
+[37445.696830] xor: using function: generic_sse (15375.000 MB/sec)
+
+
+Will get to Dough's recommendation to run loaded benchmarks tomorrow...
+
+Heinz
+
+> 
+> There is still the fact that by using the cache for data that will be
+> accessed once, we are potentially slowing down the rest of the system.
+> i.e. the reason to avoid the cache is not just because it won't
+> benefit the xor much, but because it will hurt other users.
+> I don't know how to measure that effect :-(
+> But if avoiding the cache makes xor 1/3 the speed of using the cache
+> even though it is cold, then it would be hard to justify not using the
+> cache I think.
+> 
+> > 
+> > Questions/Recommendations:
+> > --------------------------
+> > Review the code changes and the data analysis please.
+> 
+> It seems to mostly make sense
+>  - the 'wait for next tick' should stay
+>  - it would be interesting to see what the final choice of 'chunks'
+>    was (i.e. how many to xor together at a time).
+>   
+> 
+> Thanks!
+> 
+> NeilBrown
