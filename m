@@ -1,17 +1,17 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [RFC] IO scheduler based IO controller V6
-Date: Wed, 8 Jul 2009 21:58:42 -0400
-Message-ID: <20090709015842.GA29117@redhat.com>
-References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
-	<20090708035621.GB3215@balbir.in.ibm.com>
-	<20090708134114.GA24048@redhat.com>
-	<20090708143925.GE3215@balbir.in.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Paul Smith <paul@mad-scientist.net>
+Subject: Re: Media failures cause Path/Device Failures in
+	dm-multipath ?
+Date: Thu, 9 Jul 2009 15:21:15 -0400
+Message-ID: <1247167275.2984.79.camel@psmith-ubeta.netezza.com>
+References: <1247002005.2984.10.camel@psmith-ubeta.netezza.com>
+	<1247081696.2984.25.camel@psmith-ubeta.netezza.com>
+Reply-To: paul@mad-scientist.net,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090708143925.GE3215@balbir.in.ibm.com>
+In-Reply-To: <1247081696.2984.25.camel@psmith-ubeta.netezza.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,87 +21,136 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Balbir Singh <balbir@linux.vnet.ibm.com>
-Cc: paolo.valente@unimore.it, dhaval@linux.vnet.ibm.com, snitzer@redhat.com, fernando@oss.ntt.co.jp, jmoyer@redhat.com, linux-kernel@vger.kernel.org, fchecconi@gmail.com, dm-devel@redhat.com, jens.axboe@oracle.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, agk@redhat.com, righi.andrea@gmail.com
+To: device-mapper development <dm-devel@redhat.com>, christophe.varoqui@free.fr
+Cc: mchristi@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jul 08, 2009 at 08:09:25PM +0530, Balbir Singh wrote:
-> * Vivek Goyal <vgoyal@redhat.com> [2009-07-08 09:41:14]:
+[[Sorry for the dup message; I used the wrong address on the last one]]
+
+On Wed, 8 Jul 2009 at 22:44:21 +0200 (CEST), Christophe Varoqui wrote:
+> Mike Christie is working on a patchset to let target errors have to
+> scsi-layer retries treatment while retaining the failfast behaviour
+> for transport errors.
 > 
-> > On Wed, Jul 08, 2009 at 09:26:21AM +0530, Balbir Singh wrote:
-> > > * Vivek Goyal <vgoyal@redhat.com> [2009-07-02 16:01:32]:
-> > > 
-> > > > 
-> > > > Hi All,
-> > > > 
-> > > > Here is the V6 of the IO controller patches generated on top of 2.6.31-rc1.
-> > > > 
-> > > > Previous versions of the patches was posted here.
-> > > > 
-> > > > (V1) http://lkml.org/lkml/2009/3/11/486
-> > > > (V2) http://lkml.org/lkml/2009/5/5/275
-> > > > (V3) http://lkml.org/lkml/2009/5/26/472
-> > > > (V4) http://lkml.org/lkml/2009/6/8/580
-> > > > (V5) http://lkml.org/lkml/2009/6/19/279
-> > > > 
-> > > > This patchset is still work in progress but I want to keep on getting the
-> > > > snapshot of my tree out at regular intervals to get the feedback hence V6.
-> > > >
-> > > 
-> > > Hi, Vivek,
-> > > 
-> > > I was able to compile and boot a 2.6.31-rc1 kernel with this patchset.
-> > > I have a request could you fold up all patches and make one
-> > > consolidated patch available somewhere (makes it easier to test), may
-> > > be a git tree?
-> > > 
+> This work should benefit to your problem too, if I'm not mistaken.
+
+Thanks for the response Christophe... just to be clear: you're saying
+that my situation is known to not work currently in Linux, and is not
+supported until this new work by Mike is ready?  IOW, this is not a bug
+but rather unimplemented functionality?
+
+> On Tue, 2009-07-07 at 17:26 -0400, Paul Smith wrote:
+> > I have a configuration that has raid1 mirrors (md_raid1) built on top of
+> > linear segments of multipath'd scsi disks (dm-multipath).  This is Linux
+> > 2.6.27.25, FYI.  Unfortunately because this is an embedded environment
+> > it's not easy for us to jump to a newer kernel.
 > > 
-> > Thanks for trying it out balbir. Ok, for ease of patching and testing, I 
-> > will also maintain a consolidated patch. For V6 you can download the patch
-> > from here.
+> > In this configuration when a scsi disk reports a media failure (SCSI
+> > Sense/ASC/ASCQ: 3/11/0), I would expect that the md_raid1 would be able
+> > to handle the error and read the data from the other mirror and then
+> > re-write the failed sector on the original image.
 > > 
-> > http://people.redhat.com/~vgoyal/io-controller/io-scheduler-based-io-controller-v6.patch
-> >
-> 
-> Thanks, this will definitely help me get more testing done!
->  
-> > > I did some quick tests with some io benchmarks and found in a simple
-> > > scenario that the scheduler worked as expected, except that it took
-> > > very long. I'll investigate further and revert back.
+> > I have tried this with the no_path_retry attribute as 'fail'  and
+> > observe the following... 
 > > 
-> > Thanks. I will wait for details.
-> >
+> > dm-multipath reports the path failure. 
+> > Then it tries the request on the other path, which also gets a path
+> > failure.
+> > The failure of both paths fails the device.
+> > 
+> > md-raid1 gets the error and reads from the other mirror.
+> > When md-raid1 tries to re-write the data it encounters the failed
+> > device.
+> > 
+> > >From syslog:
+> > 
+> > Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Result: hostbyte=0x00 driverbyte=0x08
+> > Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Sense Key : 0x3 [current]
+> > Jul 1 20:46:27 hostname user.warn kernel: Info fld=0x217795c
+> > Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] ASC=0x11 ASCQ=0x0
+> > Jul 1 20:46:27 hostname user.warn kernel: device-mapper: multipath: Failing path 67:48.
+> > Jul 1 20:46:27 hostname daemon.notice multipathd: 67:48: mark as failed
+> > Jul 1 20:46:27 hostname daemon.notice multipathd: encl3Slot4: remaining active paths: 1
+> > Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Result: hostbyte=0x00 driverbyte=0x08
+> > Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Sense Key : 0x3 [current]
+> > Jul 1 20:46:29 hostname user.warn kernel: Info fld=0x217795c
+> > Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] ASC=0x11 ASCQ=0x0
+> > Jul 1 20:46:29 hostname user.warn kernel: device-mapper: multipath: Failing path 65:176.
+> > Jul 1 20:46:30 hostname daemon.notice multipathd: 65:176: mark as failed
+> > Jul 1 20:46:30 hostname daemon.notice multipathd: encl3Slot4: remaining active paths: 0
+> > Jul 1 20:46:30 hostname user.err kernel: raid1: dm-36: rescheduling sector 35092739
+> > Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-38, disabling device.
+> > Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing on 1 devices.
+> > Jul 1 20:46:30 hostname user.warn kernel: md: super_written gets error=-5, uptodate=0
+> > Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-36, disabling device.
+> > Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing on 1 devices.
+> > 
+> > When the no_path_retry attribute is set to '3' :
+> > 
+> > dm-multipath reports the path failure.
+> > Then retries the request on the other path, which also gets a path
+> > failure.
+> > On the failure of the second path, the device queues, and enters
+> > recovery mode.
+> > On the subsequent poll of the paths they are reinstated and the IOs are
+> > 'resumed'.....
+> > ... and of course fail with the media error again.......
+> > causing a hang...
+> > 
+> > >From syslog:
+> > 
+> > Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Result: hostbyte=0x00 driverbyte=0x08
+> > Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Sense Key : 0x3 [current]
+> > Jul  7 10:54:35 hostname user.warn kernel: Info fld=0x123c016d
+> > Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] ASC=0x11 ASCQ=0x0
+> > Jul  7 10:54:35 hostname user.warn kernel: device-mapper: multipath: Failing path 65:32.
+> > Jul  7 10:54:35 hostname daemon.notice multipathd: 65:32: mark as failed
+> > Jul  7 10:54:35 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
+> > Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
+> > Jul  7 10:54:37 hostname user.info kernel: Result: hostbyte=0x00 driverbyte=0x08
+> > Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm] Sense Key : 0x3
+> > Jul  7 10:54:37 hostname user.info kernel: [current]
+> > Jul  7 10:54:37 hostname user.warn kernel: Info fld=0x123c016d
+> > Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
+> > Jul  7 10:54:37 hostname user.info kernel: ASC=0x11 ASCQ=0x0
+> > Jul  7 10:54:37 hostname user.warn kernel: device-mapper: multipath: Failing path 69:160.
+> > Jul  7 10:54:37 hostname daemon.notice multipathd: 69:160: mark as failed
+> > Jul  7 10:54:37 hostname daemon.warn multipathd: encl2Slot7: Entering recovery mode: max_retries=3
+> > Jul  7 10:54:37 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 0
+> > Jul  7 10:54:39 hostname daemon.warn multipathd: sds: readsector0 checker reports path is up
+> > Jul  7 10:54:39 hostname daemon.notice multipathd: 65:32: reinstated
+> > Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: queue_if_no_path enabled
+> > Jul  7 10:54:42 hostname daemon.warn multipathd: encl2Slot7: Recovered to normal mode
+> > Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
+> > Jul  7 10:54:42 hostname daemon.warn multipathd: sdcm: readsector0 checker reports path is up
+> > Jul  7 10:54:42 hostname daemon.notice multipathd: 69:160: reinstated
+> > Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 2
+> > Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds] Result: hostbyte=0x00 driverbyte=0x08
+> > Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
+> > Jul  7 10:54:42 hostname user.info kernel: Sense Key : 0x3
+> > Jul  7 10:54:42 hostname user.info kernel: [current]
+> > Jul  7 10:54:42 hostname user.info kernel:
+> > Jul  7 10:54:42 hostname user.warn kernel: Info fld=0x123c016d
+> > Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
+> > Jul  7 10:54:42 hostname user.info kernel: ASC=0x11 ASCQ=0x0
+> > Jul  7 10:54:42 hostname user.warn kernel: device-mapper: multipath: Failing path 65:32.
+> > Jul  7 10:54:43 hostname daemon.notice multipathd: 65:32: mark as failed
+> > Jul  7 10:54:43 hostname daemon.notice multipathd: encl2Slot7: remaining active paths: 1
+> > 
+> > 
+> > Should dm-multipath distinguish media failures from actual device
+> > errors?
+> > 
+> > Is there a different no_path_retry policy that would fail this request
+> > by queue subsequent requests?
+> > 
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
 > 
-> I'll try and send something out by Friday, but for now I am not even
-> very sure if it is a real problem. I ran iozone on two groups with 500
-> and 1000 as weights on the same parition and set fairness to 1 in
-> sysfs for the partition. I used a record size of 4 (default) and tried
-> to run it on a file size of 1G.
-> 
-
-Hi Balbir,
-
-Trying iozone might be a good idea for analyzing the performance impact
-of io controller patches but it might not be the best thing to test
-fairness.
-
-The biggest reason being that IO controller provides fairness only if
-there is constant contention between the groups. If one group goes away
-for sometime, other gets to use the disk full. Now while running above
-benchmark, there are numerous occasions where disk is not contended for
-and we don't see fairness numbers in user space.
-
-I would recommend trying out fio or small tests to begin with which
-can create continuously backlogged queues at the disk to see how 
-accurate the io-controller is.
-
-> BTW, I don't see anything about weights being multiple of an expected
-> figure documented anywhere. I tried weights of 1024 (similar to the
-> scheduler and got shouted back at :) ). Does the documentation patch
-> specify the expected range for weights? 
-> 
-
-Weight range is 1-1000. I will update documentation to reflect this.
-Thanks for pointing it out.
-
-Vivek
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
