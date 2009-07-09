@@ -1,15 +1,22 @@
-From: christophe.varoqui@free.fr
-Subject: Re: Media failures cause Path/Device Failures in
-	dm-multipath ?
-Date: Wed, 8 Jul 2009 22:44:21 +0200 (CEST)
-Message-ID: <666005175.6845321247085861255.JavaMail.root@zimbra16-e3.priv.proxad.net>
-References: <1247081696.2984.25.camel@psmith-ubeta.netezza.com>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: REQUEST for new 'topology' metrics to be moved out of
+	the 'queue' sysfs directory.
+Date: Thu, 9 Jul 2009 10:42:43 +1000
+Message-ID: <19029.15619.61976.205727@notabene.brown>
+References: <19010.62951.886231.96622@notabene.brown>
+	<yq11vp8spxo.fsf@sermon.lab.mkp.net>
+	<125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
+	<yq1k530qkm7.fsf@sermon.lab.mkp.net>
+	<19012.47077.328965.919868@notabene.brown>
+	<yq1ws6znja4.fsf@sermon.lab.mkp.net>
+	<19026.43290.340555.774690@notabene.brown>
+	<yq163e55ada.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1247081696.2984.25.camel@psmith-ubeta.netezza.com>
+In-Reply-To: message from Martin K. Petersen on Tuesday July 7
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,186 +26,154 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: paul@mad-scientist.net, device-mapper development <dm-devel@redhat.com>
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com, linux-fsdevel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Mike Christie is working on a patchset to let target errors have to scsi-=
-layer retries treatment while retaining the failfast behaviour for transp=
-ort errors.
+On Tuesday July 7, martin.petersen@oracle.com wrote:
+> >>>>> "Neil" == Neil Brown <neilb@suse.de> writes:
+> 
+> >> What: /sys/block/<disk>/queue/minimum_io_size Date: April 2009
+> >> Contact: Martin K. Petersen <martin.petersen@oracle.com> Description:
+> >> Storage devices may report a granularity or minimum I/O size which is
+> >> the device's preferred unit of I/O.  Requests smaller than this may
+> >> incur a significant performance penalty.
+> >> 
+> >> For disk drives this value corresponds to the physical block
+> >> size. For RAID devices it is usually the stripe chunk size.
+> 
+> Neil> These two paragraphs are contradictory.  There is no sense in
+> Neil> which a RAID chunk size is a preferred minimum I/O size.
+> 
+> Maybe not for MD.  This is not just about MD.
 
-This work should benefit to your problem too, if I'm not mistaken.
+I wasn't just thinking about MD.  I was thinking about the generic
+concept of RAID.
 
-Regards,
-cvaroqui
+> 
+> This is a hint that says "Please don't send me random I/Os smaller than
+> this.  And please align to a multiple of this value".
+> 
+> I agree that for MD devices the alignment portion of that is the
+> important one.  However, putting a lower boundary on the size *is* quite
+> important for 4KB disk drives.  There are also HW RAID devices that
+> choke on requests smaller than the chunk size.
 
------ Mail Original -----
-De: "Paul Smith" <paul@mad-scientist.net>
-=C3=80: "device-mapper development" <dm-devel@redhat.com>
-Envoy=C3=A9: Mercredi 8 Juillet 2009 21h34:56 GMT +01:00 Amsterdam / Berl=
-in / Berne / Rome / Stockholm / Vienne
-Objet: Re: [dm-devel] Media failures cause Path/Device Failures in dm-mul=
-tipath ?
+I certainly see that the lower boundary is important for 4KB disk
+drives, but we have that information encoded in physical_block_size,
+so duplicating here doesn't seem to be a high priority.
+I'm surprised that a HW RAID device would choke on requests smaller
+than the chunk size.  If that is the case, then I guess it could be
+useful to have this number separate from physical_block_size....
 
-Hi all; does anyone have any thoughts about/comments on this?
+> 
+> I appreciate the difficulty in filling out these hints in a way that
+> makes sense for all the supported RAID levels in MD.  However, I really
+> don't consider the hints particularly interesting in the isolated
+> context of MD.  To me the hints are conduits for characteristics of the
+> physical storage.  The question you should be asking yourself is: "What
+> do I put in these fields to help the filesystem so that we get the most
+> out of the underlying, slow hardware?".
 
-It's kind of not so useful to be using this stuff if I can't recover
-from a media failure, after all... what am I doing wrong?
+That is certainly a good approach, but to be able to answer that
+question, I would need to know how the filesystem is going to use this
+information.   You have included that below (thanks).  Maybe including
+it in the documentation would be helpful.
 
-Thanks!
+> 
+> I think it is futile to keep spending time coming up with terminology
+> that encompasses all current and future software and hardware storage
+> devices with 100% accuracy.
 
-On Tue, 2009-07-07 at 17:26 -0400, Paul Smith wrote:
-> I have a configuration that has raid1 mirrors (md_raid1) built on top o=
-f
-> linear segments of multipath'd scsi disks (dm-multipath).  This is Linu=
-x
-> 2.6.27.25, FYI.  Unfortunately because this is an embedded environment
-> it's not easy for us to jump to a newer kernel.
->=20
-> In this configuration when a scsi disk reports a media failure (SCSI
-> Sense/ASC/ASCQ: 3/11/0), I would expect that the md_raid1 would be able
-> to handle the error and read the data from the other mirror and then
-> re-write the failed sector on the original image.
->=20
-> I have tried this with the no_path_retry attribute as 'fail'  and
-> observe the following...=20
->=20
-> dm-multipath reports the path failure.=20
-> Then it tries the request on the other path, which also gets a path
-> failure.
-> The failure of both paths fails the device.
->=20
-> md-raid1 gets the error and reads from the other mirror.
-> When md-raid1 tries to re-write the data it encounters the failed
-> device.
->=20
-> >From syslog:
->=20
-> Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Result: ho=
-stbyte=3D0x00 driverbyte=3D0x08
-> Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] Sense Key =
-: 0x3 [current]
-> Jul 1 20:46:27 hostname user.warn kernel: Info fld=3D0x217795c
-> Jul 1 20:46:27 hostname user.info kernel: sd 3:0:3:0: [sdaz] ASC=3D0x11=
- ASCQ=3D0x0
-> Jul 1 20:46:27 hostname user.warn kernel: device-mapper: multipath: Fai=
-ling path 67:48.
-> Jul 1 20:46:27 hostname daemon.notice multipathd: 67:48: mark as failed
-> Jul 1 20:46:27 hostname daemon.notice multipathd: encl3Slot4: remaining=
- active paths: 1
-> Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Result: h=
-ostbyte=3D0x00 driverbyte=3D0x08
-> Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] Sense Key=
- : 0x3 [current]
-> Jul 1 20:46:29 hostname user.warn kernel: Info fld=3D0x217795c
-> Jul 1 20:46:29 hostname user.info kernel: sd 2:0:29:0: [sdab] ASC=3D0x1=
-1 ASCQ=3D0x0
-> Jul 1 20:46:29 hostname user.warn kernel: device-mapper: multipath: Fai=
-ling path 65:176.
-> Jul 1 20:46:30 hostname daemon.notice multipathd: 65:176: mark as faile=
-d
-> Jul 1 20:46:30 hostname daemon.notice multipathd: encl3Slot4: remaining=
- active paths: 0
-> Jul 1 20:46:30 hostname user.err kernel: raid1: dm-36: rescheduling sec=
-tor 35092739
-> Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-38=
-, disabling device.
-> Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing =
-on 1 devices.
-> Jul 1 20:46:30 hostname user.warn kernel: md: super_written gets error=3D=
--5, uptodate=3D0
-> Jul 1 20:46:30 hostname user.alert kernel: raid1: Disk failure on dm-36=
-, disabling device.
-> Jul 1 20:46:30 hostname user.alert kernel: raid1: Operation continuing =
-on 1 devices.
->=20
-> When the no_path_retry attribute is set to '3' :
->=20
-> dm-multipath reports the path failure.
-> Then retries the request on the other path, which also gets a path
-> failure.
-> On the failure of the second path, the device queues, and enters
-> recovery mode.
-> On the subsequent poll of the paths they are reinstated and the IOs are
-> 'resumed'.....
-> ... and of course fail with the media error again.......
-> causing a hang...
->=20
-> >From syslog:
->=20
-> Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Result: h=
-ostbyte=3D0x00 driverbyte=3D0x08
-> Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] Sense Key=
- : 0x3 [current]
-> Jul  7 10:54:35 hostname user.warn kernel: Info fld=3D0x123c016d
-> Jul  7 10:54:35 hostname user.info kernel: sd 2:0:19:0: [sds] ASC=3D0x1=
-1 ASCQ=3D0x0
-> Jul  7 10:54:35 hostname user.warn kernel: device-mapper: multipath: Fa=
-iling path 65:32.
-> Jul  7 10:54:35 hostname daemon.notice multipathd: 65:32: mark as faile=
-d
-> Jul  7 10:54:35 hostname daemon.notice multipathd: encl2Slot7: remainin=
-g active paths: 1
-> Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
-> Jul  7 10:54:37 hostname user.info kernel: Result: hostbyte=3D0x00 driv=
-erbyte=3D0x08
-> Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm] Sense Ke=
-y : 0x3
-> Jul  7 10:54:37 hostname user.info kernel: [current]
-> Jul  7 10:54:37 hostname user.warn kernel: Info fld=3D0x123c016d
-> Jul  7 10:54:37 hostname user.info kernel: sd 3:0:45:0: [sdcm]
-> Jul  7 10:54:37 hostname user.info kernel: ASC=3D0x11 ASCQ=3D0x0
-> Jul  7 10:54:37 hostname user.warn kernel: device-mapper: multipath: Fa=
-iling path 69:160.
-> Jul  7 10:54:37 hostname daemon.notice multipathd: 69:160: mark as fail=
-ed
-> Jul  7 10:54:37 hostname daemon.warn multipathd: encl2Slot7: Entering r=
-ecovery mode: max_retries=3D3
-> Jul  7 10:54:37 hostname daemon.notice multipathd: encl2Slot7: remainin=
-g active paths: 0
-> Jul  7 10:54:39 hostname daemon.warn multipathd: sds: readsector0 check=
-er reports path is up
-> Jul  7 10:54:39 hostname daemon.notice multipathd: 65:32: reinstated
-> Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: queue_if=
-_no_path enabled
-> Jul  7 10:54:42 hostname daemon.warn multipathd: encl2Slot7: Recovered =
-to normal mode
-> Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remainin=
-g active paths: 1
-> Jul  7 10:54:42 hostname daemon.warn multipathd: sdcm: readsector0 chec=
-ker reports path is up
-> Jul  7 10:54:42 hostname daemon.notice multipathd: 69:160: reinstated
-> Jul  7 10:54:42 hostname daemon.notice multipathd: encl2Slot7: remainin=
-g active paths: 2
-> Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds] Result: h=
-ostbyte=3D0x00 driverbyte=3D0x08
-> Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
-> Jul  7 10:54:42 hostname user.info kernel: Sense Key : 0x3
-> Jul  7 10:54:42 hostname user.info kernel: [current]
-> Jul  7 10:54:42 hostname user.info kernel:
-> Jul  7 10:54:42 hostname user.warn kernel: Info fld=3D0x123c016d
-> Jul  7 10:54:42 hostname user.info kernel: sd 2:0:19:0: [sds]
-> Jul  7 10:54:42 hostname user.info kernel: ASC=3D0x11 ASCQ=3D0x0
-> Jul  7 10:54:42 hostname user.warn kernel: device-mapper: multipath: Fa=
-iling path 65:32.
-> Jul  7 10:54:43 hostname daemon.notice multipathd: 65:32: mark as faile=
-d
-> Jul  7 10:54:43 hostname daemon.notice multipathd: encl2Slot7: remainin=
-g active paths: 1
->=20
->=20
-> Should dm-multipath distinguish media failures from actual device
-> errors?
->=20
-> Is there a different no_path_retry policy that would fail this request
-> by queue subsequent requests?
->=20
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+And I think it is futile to export a value with such a vague meaning.
+Concrete usage examples would help make the meaning less vague.
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
+> Neil> To some degree it is actually a 'maximum' preferred size for
+> Neil> random IO.  If you do random IO is blocks larger than the chunk
+> Neil> size then you risk causing more 'head contention' (at least with
+> Neil> RAID0 - with RAID5 the tradeoff is more complex).
+> 
+> Please elaborate.
+
+If you are performing random IO on a 4-drive RAID0 and every IO fits
+within a chunk, then you can expect to get 4 times the throughput of a
+single drive as you get 4-way parallelism on the seeks.
+If you are performing random IO on that same array but every IO
+crosses a chunk boundary, then you need 2 drives to satisfy each
+request, and you only get 2-way parallelism on the seeks.  As random
+IO tends to be seek-bound, this will probably be slower.
+
+The same is true for reading from RAID5.  For writing to RAID5, the
+parity updates confuse the numbers, so it is hard to make such general
+statements, though for largish arrays (6 or more devices) you probably
+get a similar effect.
+
+
+> 
+> 
+> Neil> Also, you say "may" report.  If a device does not report, what
+> Neil> happens to this file.  Is it not present, or empty, or contain a
+> Neil> special "undefined" value?  I think the answer is that "512" is
+> Neil> reported.
+> 
+> The answer is physical_block_size.
+> 
+> 
+> Neil> In this case, if a device does not report an optimal size, the
+> Neil> file contains "0" - correct?  Should that be explicit?
+> 
+> Now documented.
+
+Thanks.
+
+> 
+> 
+> Neil> I'd really like to see an example of how you expect filesystems to
+> Neil> use this.  I can well imagine the VM or elevator using this to
+> Neil> assemble IO requests in to properly aligned requests.  But I
+> Neil> cannot imagine how e.g mkfs would use it.  Or am I
+> Neil> misunderstanding and this is for programs that use O_DIRECT on the
+> Neil> block device so they can optimise their request stream?
+> 
+> The way it has been working so far (with the manual ioctl pokage) is
+> that mkfs will align metadata as well as data on a minimum_io_size
+> boundary.  And it will try to use the minimum_io_size as filesystem
+> block size.  On Linux that's currently limited by the fact that we can't
+> have blocks bigger than a page.  The filesystem can also report the
+> optimal I/O size in statfs.  For XFS the stripe width also affects how
+> the realtime/GRIO allocators work.
+
+Thanks for these details.
+
+It seems from these that the primary issue is alignment, while size is
+secondary (with the exception of physical_block_size, where it is very
+important).
+Yet in your documentation, alignment doesn't get mentioned until the
+last paragraph, making it seem like an afterthought.
+
+(I couldn't find an 'optimal I/O size" in statfs.  Maybe you mean
+ "st_blksize" in 'stat'??  I think that one really has to be the
+ filesystem block size.)
+
+
+I think all these numbers are probably useful numbers to export.  But
+I think that trying to give them labels like "optimal" or "minimum" or
+"physical" is trying to give them a meaning which they don't really
+possess.  It is treading a middle-ground which is less useful than
+either extreme.
+I think they should either be:
+   block_size   chunk_size  stripe_size
+or
+   align-A   align-B   align-C
+    With the uniform definition:
+      IO requests of this alignment (and possibly size) give
+      significantly better performance non-aligned requests.
+
+
+Yes, I know.  We've been here before.  You didn't understand/believe
+me before so there is no reason for me to expect to be more successful
+this time.  I'll go find some bugs that I can be successful in fixing.
+
+NeilBrown
