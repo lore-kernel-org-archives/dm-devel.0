@@ -1,22 +1,17 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: REQUEST for new 'topology' metrics to be moved out of
-	the 'queue' sysfs directory.
-Date: Thu, 9 Jul 2009 10:42:43 +1000
-Message-ID: <19029.15619.61976.205727@notabene.brown>
-References: <19010.62951.886231.96622@notabene.brown>
-	<yq11vp8spxo.fsf@sermon.lab.mkp.net>
-	<125b48b7ffc99a496fbdd512f38cada5.squirrel@neil.brown.name>
-	<yq1k530qkm7.fsf@sermon.lab.mkp.net>
-	<19012.47077.328965.919868@notabene.brown>
-	<yq1ws6znja4.fsf@sermon.lab.mkp.net>
-	<19026.43290.340555.774690@notabene.brown>
-	<yq163e55ada.fsf@sermon.lab.mkp.net>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [RFC] IO scheduler based IO controller V6
+Date: Wed, 8 Jul 2009 21:58:42 -0400
+Message-ID: <20090709015842.GA29117@redhat.com>
+References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
+	<20090708035621.GB3215@balbir.in.ibm.com>
+	<20090708134114.GA24048@redhat.com>
+	<20090708143925.GE3215@balbir.in.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: message from Martin K. Petersen on Tuesday July 7
+Content-Disposition: inline
+In-Reply-To: <20090708143925.GE3215@balbir.in.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,154 +21,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com, linux-fsdevel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+To: Balbir Singh <balbir@linux.vnet.ibm.com>
+Cc: paolo.valente@unimore.it, dhaval@linux.vnet.ibm.com, snitzer@redhat.com, fernando@oss.ntt.co.jp, jmoyer@redhat.com, linux-kernel@vger.kernel.org, fchecconi@gmail.com, dm-devel@redhat.com, jens.axboe@oracle.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, agk@redhat.com, righi.andrea@gmail.com
 List-Id: dm-devel.ids
 
-On Tuesday July 7, martin.petersen@oracle.com wrote:
-> >>>>> "Neil" == Neil Brown <neilb@suse.de> writes:
+On Wed, Jul 08, 2009 at 08:09:25PM +0530, Balbir Singh wrote:
+> * Vivek Goyal <vgoyal@redhat.com> [2009-07-08 09:41:14]:
 > 
-> >> What: /sys/block/<disk>/queue/minimum_io_size Date: April 2009
-> >> Contact: Martin K. Petersen <martin.petersen@oracle.com> Description:
-> >> Storage devices may report a granularity or minimum I/O size which is
-> >> the device's preferred unit of I/O.  Requests smaller than this may
-> >> incur a significant performance penalty.
-> >> 
-> >> For disk drives this value corresponds to the physical block
-> >> size. For RAID devices it is usually the stripe chunk size.
+> > On Wed, Jul 08, 2009 at 09:26:21AM +0530, Balbir Singh wrote:
+> > > * Vivek Goyal <vgoyal@redhat.com> [2009-07-02 16:01:32]:
+> > > 
+> > > > 
+> > > > Hi All,
+> > > > 
+> > > > Here is the V6 of the IO controller patches generated on top of 2.6.31-rc1.
+> > > > 
+> > > > Previous versions of the patches was posted here.
+> > > > 
+> > > > (V1) http://lkml.org/lkml/2009/3/11/486
+> > > > (V2) http://lkml.org/lkml/2009/5/5/275
+> > > > (V3) http://lkml.org/lkml/2009/5/26/472
+> > > > (V4) http://lkml.org/lkml/2009/6/8/580
+> > > > (V5) http://lkml.org/lkml/2009/6/19/279
+> > > > 
+> > > > This patchset is still work in progress but I want to keep on getting the
+> > > > snapshot of my tree out at regular intervals to get the feedback hence V6.
+> > > >
+> > > 
+> > > Hi, Vivek,
+> > > 
+> > > I was able to compile and boot a 2.6.31-rc1 kernel with this patchset.
+> > > I have a request could you fold up all patches and make one
+> > > consolidated patch available somewhere (makes it easier to test), may
+> > > be a git tree?
+> > > 
+> > 
+> > Thanks for trying it out balbir. Ok, for ease of patching and testing, I 
+> > will also maintain a consolidated patch. For V6 you can download the patch
+> > from here.
+> > 
+> > http://people.redhat.com/~vgoyal/io-controller/io-scheduler-based-io-controller-v6.patch
+> >
 > 
-> Neil> These two paragraphs are contradictory.  There is no sense in
-> Neil> which a RAID chunk size is a preferred minimum I/O size.
+> Thanks, this will definitely help me get more testing done!
+>  
+> > > I did some quick tests with some io benchmarks and found in a simple
+> > > scenario that the scheduler worked as expected, except that it took
+> > > very long. I'll investigate further and revert back.
+> > 
+> > Thanks. I will wait for details.
+> >
 > 
-> Maybe not for MD.  This is not just about MD.
-
-I wasn't just thinking about MD.  I was thinking about the generic
-concept of RAID.
-
+> I'll try and send something out by Friday, but for now I am not even
+> very sure if it is a real problem. I ran iozone on two groups with 500
+> and 1000 as weights on the same parition and set fairness to 1 in
+> sysfs for the partition. I used a record size of 4 (default) and tried
+> to run it on a file size of 1G.
 > 
-> This is a hint that says "Please don't send me random I/Os smaller than
-> this.  And please align to a multiple of this value".
+
+Hi Balbir,
+
+Trying iozone might be a good idea for analyzing the performance impact
+of io controller patches but it might not be the best thing to test
+fairness.
+
+The biggest reason being that IO controller provides fairness only if
+there is constant contention between the groups. If one group goes away
+for sometime, other gets to use the disk full. Now while running above
+benchmark, there are numerous occasions where disk is not contended for
+and we don't see fairness numbers in user space.
+
+I would recommend trying out fio or small tests to begin with which
+can create continuously backlogged queues at the disk to see how 
+accurate the io-controller is.
+
+> BTW, I don't see anything about weights being multiple of an expected
+> figure documented anywhere. I tried weights of 1024 (similar to the
+> scheduler and got shouted back at :) ). Does the documentation patch
+> specify the expected range for weights? 
 > 
-> I agree that for MD devices the alignment portion of that is the
-> important one.  However, putting a lower boundary on the size *is* quite
-> important for 4KB disk drives.  There are also HW RAID devices that
-> choke on requests smaller than the chunk size.
 
-I certainly see that the lower boundary is important for 4KB disk
-drives, but we have that information encoded in physical_block_size,
-so duplicating here doesn't seem to be a high priority.
-I'm surprised that a HW RAID device would choke on requests smaller
-than the chunk size.  If that is the case, then I guess it could be
-useful to have this number separate from physical_block_size....
+Weight range is 1-1000. I will update documentation to reflect this.
+Thanks for pointing it out.
 
-> 
-> I appreciate the difficulty in filling out these hints in a way that
-> makes sense for all the supported RAID levels in MD.  However, I really
-> don't consider the hints particularly interesting in the isolated
-> context of MD.  To me the hints are conduits for characteristics of the
-> physical storage.  The question you should be asking yourself is: "What
-> do I put in these fields to help the filesystem so that we get the most
-> out of the underlying, slow hardware?".
-
-That is certainly a good approach, but to be able to answer that
-question, I would need to know how the filesystem is going to use this
-information.   You have included that below (thanks).  Maybe including
-it in the documentation would be helpful.
-
-> 
-> I think it is futile to keep spending time coming up with terminology
-> that encompasses all current and future software and hardware storage
-> devices with 100% accuracy.
-
-And I think it is futile to export a value with such a vague meaning.
-Concrete usage examples would help make the meaning less vague.
-
-> 
-> 
-> Neil> To some degree it is actually a 'maximum' preferred size for
-> Neil> random IO.  If you do random IO is blocks larger than the chunk
-> Neil> size then you risk causing more 'head contention' (at least with
-> Neil> RAID0 - with RAID5 the tradeoff is more complex).
-> 
-> Please elaborate.
-
-If you are performing random IO on a 4-drive RAID0 and every IO fits
-within a chunk, then you can expect to get 4 times the throughput of a
-single drive as you get 4-way parallelism on the seeks.
-If you are performing random IO on that same array but every IO
-crosses a chunk boundary, then you need 2 drives to satisfy each
-request, and you only get 2-way parallelism on the seeks.  As random
-IO tends to be seek-bound, this will probably be slower.
-
-The same is true for reading from RAID5.  For writing to RAID5, the
-parity updates confuse the numbers, so it is hard to make such general
-statements, though for largish arrays (6 or more devices) you probably
-get a similar effect.
-
-
-> 
-> 
-> Neil> Also, you say "may" report.  If a device does not report, what
-> Neil> happens to this file.  Is it not present, or empty, or contain a
-> Neil> special "undefined" value?  I think the answer is that "512" is
-> Neil> reported.
-> 
-> The answer is physical_block_size.
-> 
-> 
-> Neil> In this case, if a device does not report an optimal size, the
-> Neil> file contains "0" - correct?  Should that be explicit?
-> 
-> Now documented.
-
-Thanks.
-
-> 
-> 
-> Neil> I'd really like to see an example of how you expect filesystems to
-> Neil> use this.  I can well imagine the VM or elevator using this to
-> Neil> assemble IO requests in to properly aligned requests.  But I
-> Neil> cannot imagine how e.g mkfs would use it.  Or am I
-> Neil> misunderstanding and this is for programs that use O_DIRECT on the
-> Neil> block device so they can optimise their request stream?
-> 
-> The way it has been working so far (with the manual ioctl pokage) is
-> that mkfs will align metadata as well as data on a minimum_io_size
-> boundary.  And it will try to use the minimum_io_size as filesystem
-> block size.  On Linux that's currently limited by the fact that we can't
-> have blocks bigger than a page.  The filesystem can also report the
-> optimal I/O size in statfs.  For XFS the stripe width also affects how
-> the realtime/GRIO allocators work.
-
-Thanks for these details.
-
-It seems from these that the primary issue is alignment, while size is
-secondary (with the exception of physical_block_size, where it is very
-important).
-Yet in your documentation, alignment doesn't get mentioned until the
-last paragraph, making it seem like an afterthought.
-
-(I couldn't find an 'optimal I/O size" in statfs.  Maybe you mean
- "st_blksize" in 'stat'??  I think that one really has to be the
- filesystem block size.)
-
-
-I think all these numbers are probably useful numbers to export.  But
-I think that trying to give them labels like "optimal" or "minimum" or
-"physical" is trying to give them a meaning which they don't really
-possess.  It is treading a middle-ground which is less useful than
-either extreme.
-I think they should either be:
-   block_size   chunk_size  stripe_size
-or
-   align-A   align-B   align-C
-    With the uniform definition:
-      IO requests of this alignment (and possibly size) give
-      significantly better performance non-aligned requests.
-
-
-Yes, I know.  We've been here before.  You didn't understand/believe
-me before so there is no reason for me to expect to be more successful
-this time.  I'll go find some bugs that I can be successful in fixing.
-
-NeilBrown
+Vivek
