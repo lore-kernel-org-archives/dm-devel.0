@@ -1,387 +1,367 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [dm-devel] Re: [PATCH 0/3] scsi_dh: Add ability to set
-	parameters for scsi device handler
-Date: Thu, 09 Jul 2009 18:59:05 -0700
-Message-ID: <1247191145.28322.10.camel@chandra-ubuntu>
-References: <20090702031308.28354.73353.sendpatchset@chandra-ubuntu>
-	 <1246563299.8018.9.camel@eddie-laptop>
-	 <1246566564.8018.21.camel@eddie-laptop>
-	 <1246567622.7381.7.camel@chandra-ubuntu>
-	 <1246970082.6646.9.camel@eddie-laptop>
-	 <1247169346.28322.0.camel@chandra-ubuntu>
-	 <1247174184.6367.237.camel@eddie-laptop>
-Reply-To: sekharan@linux.vnet.ibm.com
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: [PATCH] io-controller: implement per group request
+	allocation limitation
+Date: Fri, 10 Jul 2009 09:56:21 +0800
+Message-ID: <4A569FC5.7090801@cn.fujitsu.com>
+References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-co0K2GVJDoK4BhJxmnya"
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1247174184.6367.237.camel@eddie-laptop>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: linux-scsi@vger.kernel.org, michaelc@cs.wisc.edu, asson_ronald@emc.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, agk@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
+Hi Vivek,
 
---=-co0K2GVJDoK4BhJxmnya
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+This patch exports a cgroup based per group request limits interface.
+and removes the global one. Now we can use this interface to perform
+different request allocation limitation for different groups. 
 
-Eddie,
-
-Here is the set of patches ported to sles11.
-
-It applies cleanly on linux-2.6.27.23-0.1
-
-Anyways, you have to test the mainline version for it to be pushed
-upstream. (this patch is just for verification purposes).
-
-series:
-sles11_scsi_dh_params
-sles11_emc_parameters
-sles11_parameters_fix_for_dmmpath
-
-chandra
-On Thu, 2009-07-09 at 17:16 -0400, Eddie Williams wrote:
-> I have not tried to patch the 2.6.27-23 kernel.  Given that the patches
-> were against 31-RC1 I assumed that there would be other changes I would
-> need to pull in.  I have been looking at why the 31-RC1 was panicing as
-> well as working with my EMC contacts to see if they already had a
-> working 31-RC1 environment they could verify the patch in.
-> Unfortunately I have been mostly in meetings...
-> 
-> I will give it a try.  I should have results in the morning.
-> 
-> Eddie
-> 
-> On Thu, 2009-07-09 at 12:55 -0700, Chandra Seetharaman wrote:
-> > Did you try to port/apply my patches to the SLES11 tree and see if it
-> > works ?
-> > 
-> > On Tue, 2009-07-07 at 08:34 -0400, Eddie Williams wrote:
-> > > I was testing with the SLES 11 kernel.  Initially I was using
-> > > 2.6.27.19-5 and also verified the same issue with their errata kernel
-> > > 2.6.27.23-0.1.
-> > > 
-> > > Eddie
-> > > On Thu, 2009-07-02 at 13:47 -0700, Chandra Seetharaman wrote:
-> > > > On Thu, 2009-07-02 at 16:29 -0400, Eddie Williams wrote:
-> > > > > On Thu, 2009-07-02 at 15:34 -0400, Eddie Williams wrote:
-> > > > > > I have tried to set this up but have run into a problem probably due to
-> > > > > > my error.  It has been a while since I have had to build kernels...
-> > > > > > 
-> > > > > > I pulled 2.6.31-rc1, applied the two patches below and then applied the
-> > > > > > 3 patches for the interface.  The new kernel loads fine but when a
-> > > > > > trespass command is sent I get an panic.  I am looking though how I
-> > > > > > built the kernel and perhaps build with your 3 patches to see if it
-> > > > > > happened before.  
-> > > > > 
-> > > > > I backed out the 3 patches with the same panic.
-> > > > > 
-> > > > Which version of the kernel were you originally testing with ? (when you
-> > > > found the feature was gone).
-> > > > 
-> > > 
-> > > --
-> > > To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> > > the body of a message to majordomo@vger.kernel.org
-> > > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> > 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
---=-co0K2GVJDoK4BhJxmnya
-Content-Disposition: attachment; filename=sles11_emc_parameters
-Content-Type: text/plain; name=sles11_emc_parameters; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-
-Handle the parameters provided by user thru multipath.
-
-This handler expects only 2 parameters and their value can either be 0 or 1.
-
-This code originates from the old dm-emc.c file. Appropriate changes have
-been made to make it work in the new design.
-
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 ---
- drivers/scsi/device_handler/scsi_dh_emc.c |   56 ++++++++++++++++++++++++++++++
- 1 file changed, 56 insertions(+)
+ block/blk-core.c     |   23 ++++++++++--
+ block/blk-settings.c |    1 -
+ block/blk-sysfs.c    |   43 -----------------------
+ block/elevator-fq.c  |   94 ++++++++++++++++++++++++++++++++++++++++++++++---
+ block/elevator-fq.h  |    4 ++
+ 5 files changed, 111 insertions(+), 54 deletions(-)
 
-Index: linux/drivers/scsi/device_handler/scsi_dh_emc.c
-===================================================================
---- linux.orig/drivers/scsi/device_handler/scsi_dh_emc.c
-+++ linux/drivers/scsi/device_handler/scsi_dh_emc.c
-@@ -563,6 +563,61 @@ done:
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 79fe6a9..7010b76 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -722,13 +722,20 @@ static void ioc_set_batching(struct request_queue *q, struct io_context *ioc)
+ static void __freed_request(struct request_queue *q, int sync,
+ 					struct request_list *rl)
+ {
++	struct io_group *iog;
++	unsigned long nr_group_requests;
++
+ 	if (q->rq_data.count[sync] < queue_congestion_off_threshold(q))
+ 		blk_clear_queue_congested(q, sync);
  
- 	return result;
+ 	if (q->rq_data.count[sync] + 1 <= q->nr_requests)
+ 		blk_clear_queue_full(q, sync);
+ 
+-	if (rl->count[sync] + 1 <= q->nr_group_requests) {
++	iog = rl_iog(rl);
++
++	nr_group_requests = get_group_requests(q, iog);
++
++	if (nr_group_requests && rl->count[sync] + 1 <= nr_group_requests) {
+ 		if (waitqueue_active(&rl->wait[sync]))
+ 			wake_up(&rl->wait[sync]);
+ 	}
+@@ -828,6 +835,8 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
+ 	const bool is_sync = rw_is_sync(rw_flags) != 0;
+ 	int may_queue, priv;
+ 	int sleep_on_global = 0;
++	struct io_group *iog;
++	unsigned long nr_group_requests;
+ 
+ 	may_queue = elv_may_queue(q, rw_flags);
+ 	if (may_queue == ELV_MQUEUE_NO)
+@@ -843,7 +852,12 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
+ 	if (q->rq_data.count[is_sync]+1 >= q->nr_requests)
+ 		blk_set_queue_full(q, is_sync);
+ 
+-	if (rl->count[is_sync]+1 >= q->nr_group_requests) {
++	iog = rl_iog(rl);
++
++	nr_group_requests = get_group_requests(q, iog);
++
++	if (nr_group_requests &&
++	    rl->count[is_sync]+1 >= nr_group_requests) {
+ 		ioc = current_io_context(GFP_ATOMIC, q->node);
+ 		/*
+ 		 * The queue request descriptor group will fill after this
+@@ -852,7 +866,7 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
+ 		 * This process will be allowed to complete a batch of
+ 		 * requests, others will be blocked.
+ 		 */
+-		if (rl->count[is_sync] <= q->nr_group_requests)
++		if (rl->count[is_sync] <= nr_group_requests)
+ 			ioc_set_batching(q, ioc);
+ 		else {
+ 			if (may_queue != ELV_MQUEUE_MUST
+@@ -898,7 +912,8 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
+ 	 * from per group request list
+ 	 */
+ 
+-	if (rl->count[is_sync] >= (3 * q->nr_group_requests / 2))
++	if (nr_group_requests &&
++	    rl->count[is_sync] >= (3 * nr_group_requests / 2))
+ 		goto out;
+ 
+ 	rl->starved[is_sync] = 0;
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 78b8aec..bd582a7 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -148,7 +148,6 @@ void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
+ 	 * set defaults
+ 	 */
+ 	q->nr_requests = BLKDEV_MAX_RQ;
+-	q->nr_group_requests = BLKDEV_MAX_GROUP_RQ;
+ 
+ 	q->make_request_fn = mfn;
+ 	blk_queue_dma_alignment(q, 511);
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index 92b9f25..706d852 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -78,40 +78,8 @@ queue_requests_store(struct request_queue *q, const char *page, size_t count)
+ 	return ret;
  }
-+/*
-+ * params - parameters in the following format
-+ *      "no_of_params\0param1\0param2\0param3\0...\0"
-+ *      for example, string for 2 parameters with value 10 and 21
-+ *      is specified as "2\010\021\0".
-+ */
-+static int clariion_set_params(struct scsi_device *sdev, const char *params)
-+{
-+	struct clariion_dh_data *csdev = get_clariion_data(sdev);
-+	unsigned int hr = 0, st = 0, argc;
-+	char *p = params;
-+	int result = SCSI_DH_OK;
-+
-+	if ((sscanf(params, "%u", &argc) != 1) || (argc != 2))
-+		return -EINVAL;
-+
-+	while (*p++)
-+		;
-+	if ((sscanf(p, "%u", &st) != 1) || (st > 1))
-+		return -EINVAL;
-+
-+	while (*p++)
-+		;
-+	if ((sscanf(p, "%u", &hr) != 1) || (hr > 1))
-+		return -EINVAL;
-+
-+	if (st)
-+		csdev->flags |= CLARIION_SHORT_TRESPASS;
-+	else
-+		csdev->flags &= ~CLARIION_SHORT_TRESPASS;
-+
-+	if (hr)
-+		csdev->flags |= CLARIION_HONOR_RESERVATIONS;
-+	else
-+		csdev->flags &= ~CLARIION_HONOR_RESERVATIONS;
-+
-+	/*
-+	 * If this path is owned, we have to send a trespass command
-+	 * with the new parameters. If not, simply return. Next trespass
-+	 * command would use the parameters.
-+	 */
-+	if (csdev->lun_state != CLARIION_LUN_OWNED)
-+		goto done;
-+
-+	csdev->lun_state = CLARIION_LUN_UNINITIALIZED;
-+	result = send_trespass_cmd(sdev, csdev);
-+	if (result != SCSI_DH_OK)
-+		goto done;
-+
-+	/* Update status */
-+	result = clariion_send_inquiry(sdev, csdev);
-+
-+done:
-+	return result;
-+}
+ #ifdef CONFIG_GROUP_IOSCHED
+-static ssize_t queue_group_requests_show(struct request_queue *q, char *page)
+-{
+-	return queue_var_show(q->nr_group_requests, (page));
+-}
+-
+ extern void elv_io_group_congestion_threshold(struct request_queue *q,
+ 					      struct io_group *iog);
+-
+-static ssize_t
+-queue_group_requests_store(struct request_queue *q, const char *page,
+-					size_t count)
+-{
+-	struct hlist_node *n;
+-	struct io_group *iog;
+-	struct elv_fq_data *efqd;
+-	unsigned long nr;
+-	int ret = queue_var_store(&nr, page, count);
+-
+-	if (nr < BLKDEV_MIN_RQ)
+-		nr = BLKDEV_MIN_RQ;
+-
+-	spin_lock_irq(q->queue_lock);
+-
+-	q->nr_group_requests = nr;
+-
+-	efqd = &q->elevator->efqd;
+-
+-	hlist_for_each_entry(iog, n, &efqd->group_list, elv_data_node) {
+-		elv_io_group_congestion_threshold(q, iog);
+-	}
+-
+-	spin_unlock_irq(q->queue_lock);
+-	return ret;
+-}
+ #endif
  
- static const struct scsi_dh_devlist clariion_dev_list[] = {
- 	{"DGC", "RAID", 0},
-@@ -583,6 +638,7 @@ static struct scsi_device_handler clarii
- 	.check_sense	= clariion_check_sense,
- 	.activate	= clariion_activate,
- 	.prep_fn	= clariion_prep_fn,
-+	.set_params	= clariion_set_params,
+ static ssize_t queue_ra_show(struct request_queue *q, char *page)
+@@ -278,14 +246,6 @@ static struct queue_sysfs_entry queue_requests_entry = {
+ 	.store = queue_requests_store,
  };
  
- /*
-
---=-co0K2GVJDoK4BhJxmnya
-Content-Disposition: attachment; filename=sles11_parameters_fix_for_dmmpath
-Content-Type: text/plain; name=sles11_parameters_fix_for_dmmpath; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-
-Use scsi_dh_set_params() set parameters provided. Save the parameters in
-parse_hw_handler() and use it in parse_path().
-
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
----
- drivers/md/dm-mpath.c |   40 +++++++++++++++++++++++++++++++++++++---
- 1 file changed, 37 insertions(+), 3 deletions(-)
-
-Index: linux/drivers/md/dm-mpath.c
-===================================================================
---- linux.orig/drivers/md/dm-mpath.c
-+++ linux/drivers/md/dm-mpath.c
-@@ -63,6 +63,7 @@ struct multipath {
- 	spinlock_t lock;
+-#ifdef CONFIG_GROUP_IOSCHED
+-static struct queue_sysfs_entry queue_group_requests_entry = {
+-	.attr = {.name = "nr_group_requests", .mode = S_IRUGO | S_IWUSR },
+-	.show = queue_group_requests_show,
+-	.store = queue_group_requests_store,
+-};
+-#endif
+-
+ static struct queue_sysfs_entry queue_ra_entry = {
+ 	.attr = {.name = "read_ahead_kb", .mode = S_IRUGO | S_IWUSR },
+ 	.show = queue_ra_show,
+@@ -360,9 +320,6 @@ static struct queue_sysfs_entry queue_iostats_entry = {
  
- 	const char *hw_handler_name;
-+	char *hw_handler_params;
- 	unsigned nr_priority_groups;
- 	struct list_head priority_groups;
- 	unsigned pg_init_required;	/* pg_init needs calling? */
-@@ -216,6 +217,7 @@ static void free_multipath(struct multip
- 	}
+ static struct attribute *default_attrs[] = {
+ 	&queue_requests_entry.attr,
+-#ifdef CONFIG_GROUP_IOSCHED
+-	&queue_group_requests_entry.attr,
+-#endif
+ 	&queue_ra_entry.attr,
+ 	&queue_max_hw_sectors_entry.attr,
+ 	&queue_max_sectors_entry.attr,
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 29392e7..bfb0210 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -59,6 +59,35 @@ elv_release_ioq(struct elevator_queue *eq, struct io_queue **ioq_ptr);
+ #define for_each_entity_safe(entity, parent) \
+ 	for (; entity && ({ parent = entity->parent; 1; }); entity = parent)
  
- 	kfree(m->hw_handler_name);
-+	kfree(m->hw_handler_params);
- 	mempool_destroy(m->mpio_pool);
- 	kfree(m);
- }
-@@ -645,6 +647,17 @@ static struct pgpath *parse_path(struct
- 				goto bad;
- 			}
- 		}
++unsigned short get_group_requests(struct request_queue *q,
++				  struct io_group *iog)
++{
++	struct cgroup_subsys_state *css;
++	struct io_cgroup *iocg;
++	unsigned long nr_group_requests;
 +
-+		if (m->hw_handler_params) {
-+			r = scsi_dh_set_params(q, m->hw_handler_params);
-+			if (r < 0) {
-+				ti->error = "unable to set hardware "
-+							"handler parameters";
-+				scsi_dh_detach(q);
-+				dm_put_device(ti, p->path.dev);
-+				goto bad;
-+			}
-+		}
- 	}
- 
- 	r = ps->type->add_path(ps, &p->path, as->argc, as->argv, &ti->error);
-@@ -738,6 +751,7 @@ static struct priority_group *parse_prio
- static int parse_hw_handler(struct arg_set *as, struct multipath *m)
- {
- 	unsigned hw_argc;
-+	int ret;
- 	struct dm_target *ti = m->ti;
- 
- 	static struct param _params[] = {
-@@ -754,13 +768,33 @@ static int parse_hw_handler(struct arg_s
- 	request_module("scsi_dh_%s", m->hw_handler_name);
- 	if (scsi_dh_handler_exist(m->hw_handler_name) == 0) {
- 		ti->error = "unknown hardware handler type";
--		kfree(m->hw_handler_name);
--		m->hw_handler_name = NULL;
--		return -EINVAL;
-+		ret = -EINVAL;
-+		goto fail;
++	if (!iog)
++		return q->nr_requests;
++
++	rcu_read_lock();
++
++	if (!iog->iocg_id) {
++		nr_group_requests = 0;
++		goto out;
 +	}
 +
-+	if (hw_argc > 1) {
-+		char *p;
-+		int i, j, len = 4;
++	css = css_lookup(&io_subsys, iog->iocg_id);
++	if (!css) {
++		nr_group_requests = 0;
++		goto out;
++	}
 +
-+		for (i = 0; i <= hw_argc - 2; i++)
-+			len += strlen(as->argv[i]) + 1;
-+		p = m->hw_handler_params = kzalloc(len, GFP_KERNEL);
-+		if (!p) {
-+			ti->error = "memory allocation failed";
-+			ret = -ENOMEM;
-+			goto fail;
-+		}
-+		j = sprintf(p, "%d", hw_argc - 1);
-+		for (i = 0, p+=j+1; i <= hw_argc - 2; i++, p+=j+1)
-+			j = sprintf(p, "%s", as->argv[i]);
- 	}
- 	consume(as, hw_argc - 1);
++	iocg = container_of(css, struct io_cgroup, css);
++	nr_group_requests = iocg->nr_group_requests;
++out:
++	rcu_read_unlock();
++	return nr_group_requests;
++}
  
- 	return 0;
-+fail:
-+	kfree(m->hw_handler_name);
-+	m->hw_handler_name = NULL;
-+	return ret;
+ static struct io_entity *bfq_lookup_next_entity(struct io_sched_data *sd,
+ 						 int extract);
+@@ -1257,14 +1286,17 @@ void elv_io_group_congestion_threshold(struct request_queue *q,
+ 						struct io_group *iog)
+ {
+ 	int nr;
++	unsigned long nr_group_requests;
+ 
+-	nr = q->nr_group_requests - (q->nr_group_requests / 8) + 1;
+-	if (nr > q->nr_group_requests)
+-		nr = q->nr_group_requests;
++	nr_group_requests = get_group_requests(q, iog);
++
++	nr = nr_group_requests - (nr_group_requests / 8) + 1;
++	if (nr > nr_group_requests)
++		nr = nr_group_requests;
+ 	iog->nr_congestion_on = nr;
+ 
+-	nr = q->nr_group_requests - (q->nr_group_requests / 8)
+-			- (q->nr_group_requests / 16) - 1;
++	nr = nr_group_requests - (nr_group_requests / 8)
++			- (nr_group_requests / 16) - 1;
+ 	if (nr < 1)
+ 		nr = 1;
+ 	iog->nr_congestion_off = nr;
+@@ -1283,6 +1315,7 @@ int elv_io_group_congested(struct request_queue *q, struct page *page, int sync)
+ {
+ 	struct io_group *iog;
+ 	int ret = 0;
++	unsigned long nr_group_requests;
+ 
+ 	rcu_read_lock();
+ 
+@@ -1300,10 +1333,11 @@ int elv_io_group_congested(struct request_queue *q, struct page *page, int sync)
+ 	}
+ 
+ 	ret = elv_is_iog_congested(q, iog, sync);
++	nr_group_requests = get_group_requests(q, iog);
+ 	if (ret)
+ 		elv_log_iog(&q->elevator->efqd, iog, "iog congested=%d sync=%d"
+ 			" rl.count[sync]=%d nr_group_requests=%d",
+-			ret, sync, iog->rl.count[sync], q->nr_group_requests);
++			ret, sync, iog->rl.count[sync], nr_group_requests);
+ 	rcu_read_unlock();
+ 	return ret;
+ }
+@@ -1549,6 +1583,48 @@ free_buf:
+ 	return ret;
  }
  
- static int parse_features(struct arg_set *as, struct multipath *m)
-
---=-co0K2GVJDoK4BhJxmnya
-Content-Disposition: attachment; filename=sles11_scsi_dh_params
-Content-Type: text/plain; name=sles11_scsi_dh_params; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-
-When we moved the device handler functionality from dm layer to SCSI layer
-we dropped the paramaeter functionality.
-
-This path adds an interface to scsi dh layer to set device handler 
-parameters.
-
-Basically, multipath layer need to create a string with all the parameters
-and call scsi_dh_set_params() after it called scsi_dh_attach() on a
-device.
-
-If a device handler provides such an interface it will handle the parameters as
-it expects them.
-
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
----
- drivers/scsi/device_handler/scsi_dh.c |   33 +++++++++++++++++++++++++++++++++
- include/scsi/scsi_device.h            |    1 +
- include/scsi/scsi_dh.h                |    5 +++++
- 3 files changed, 39 insertions(+)
-
-Index: linux/include/scsi/scsi_device.h
-===================================================================
---- linux.orig/include/scsi/scsi_device.h
-+++ linux/include/scsi/scsi_device.h
-@@ -189,6 +189,7 @@ struct scsi_device_handler {
- 	void (*detach)(struct scsi_device *);
- 	int (*activate)(struct scsi_device *);
- 	int (*prep_fn)(struct scsi_device *, struct request *);
-+	int (*set_params)(struct scsi_device *, const char *);
++static u64 io_cgroup_nr_requests_read(struct cgroup *cgroup,
++				       struct cftype *cftype)
++{
++	struct io_cgroup *iocg;
++	u64 ret;
++
++	if (!cgroup_lock_live_group(cgroup))
++		return -ENODEV;
++
++	iocg = cgroup_to_io_cgroup(cgroup);
++	spin_lock_irq(&iocg->lock);
++	ret = iocg->nr_group_requests;
++	spin_unlock_irq(&iocg->lock);
++
++	cgroup_unlock();
++
++	return ret;
++}
++
++static int io_cgroup_nr_requests_write(struct cgroup *cgroup,
++					struct cftype *cftype,
++					u64 val)
++{
++	struct io_cgroup *iocg;
++
++	if (val < BLKDEV_MIN_RQ)
++		val = BLKDEV_MIN_RQ;
++
++	if (!cgroup_lock_live_group(cgroup))
++		return -ENODEV;
++
++	iocg = cgroup_to_io_cgroup(cgroup);
++
++	spin_lock_irq(&iocg->lock);
++	iocg->nr_group_requests = (unsigned long)val;
++	spin_unlock_irq(&iocg->lock);
++
++	cgroup_unlock();
++
++	return 0;
++}
++
+ #define SHOW_FUNCTION(__VAR)						\
+ static u64 io_cgroup_##__VAR##_read(struct cgroup *cgroup,		\
+ 				       struct cftype *cftype)		\
+@@ -1735,6 +1811,11 @@ static int io_cgroup_disk_dequeue_read(struct cgroup *cgroup,
+ 
+ struct cftype bfqio_files[] = {
+ 	{
++		.name = "nr_group_requests",
++		.read_u64 = io_cgroup_nr_requests_read,
++		.write_u64 = io_cgroup_nr_requests_write,
++	},
++	{
+ 		.name = "policy",
+ 		.read_seq_string = io_cgroup_policy_read,
+ 		.write_string = io_cgroup_policy_write,
+@@ -1790,6 +1871,7 @@ static struct cgroup_subsys_state *iocg_create(struct cgroup_subsys *subsys,
+ 
+ 	spin_lock_init(&iocg->lock);
+ 	INIT_HLIST_HEAD(&iocg->group_data);
++	iocg->nr_group_requests = BLKDEV_MAX_GROUP_RQ;
+ 	iocg->weight = IO_DEFAULT_GRP_WEIGHT;
+ 	iocg->ioprio_class = IO_DEFAULT_GRP_CLASS;
+ 	INIT_LIST_HEAD(&iocg->policy_list);
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index f089a55..df077d0 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -308,6 +308,7 @@ struct io_cgroup {
+ 	unsigned int weight;
+ 	unsigned short ioprio_class;
+ 
++	unsigned long nr_group_requests;
+ 	/* list of io_policy_node */
+ 	struct list_head policy_list;
+ 
+@@ -386,6 +387,9 @@ struct elv_fq_data {
+ 	unsigned int fairness;
  };
  
- struct scsi_dh_data {
-Index: linux/include/scsi/scsi_dh.h
-===================================================================
---- linux.orig/include/scsi/scsi_dh.h
-+++ linux/include/scsi/scsi_dh.h
-@@ -60,6 +60,7 @@ extern int scsi_dh_activate(struct reque
- extern int scsi_dh_handler_exist(const char *);
- extern int scsi_dh_attach(struct request_queue *, const char *);
- extern void scsi_dh_detach(struct request_queue *);
-+extern int scsi_dh_set_params(struct request_queue *, const char *);
- #else
- static inline int scsi_dh_activate(struct request_queue *req)
- {
-@@ -77,4 +78,8 @@ static inline void scsi_dh_detach(struct
- {
- 	return;
- }
-+static inline int scsi_dh_set_params(struct request_queue *req, const char *params)
-+{
-+	return -SCSI_DH_NOSYS;
-+}
- #endif
-Index: linux/drivers/scsi/device_handler/scsi_dh.c
-===================================================================
---- linux.orig/drivers/scsi/device_handler/scsi_dh.c
-+++ linux/drivers/scsi/device_handler/scsi_dh.c
-@@ -445,6 +445,39 @@ int scsi_dh_activate(struct request_queu
- EXPORT_SYMBOL_GPL(scsi_dh_activate);
- 
- /*
-+ * scsi_dh_set_params - set the parameters for the device as per the
-+ *      string specified in params.
-+ * @q - Request queue that is associated with the scsi_device for
-+ *      which the parameters to be set.
-+ * @params - parameters in the following format
-+ *      "no_of_params\0param1\0param2\0param3\0...\0"
-+ *      for example, string for 2 parameters with value 10 and 21
-+ *      is specified as "2\010\021\0".
-+ */
-+int scsi_dh_set_params(struct request_queue *q, const char *params)
-+{
-+	int err = -SCSI_DH_NOSYS;
-+	unsigned long flags;
-+	struct scsi_device *sdev;
-+	struct scsi_device_handler *scsi_dh = NULL;
++extern unsigned short get_group_requests(struct request_queue *q,
++					 struct io_group *iog);
 +
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	sdev = q->queuedata;
-+	if (sdev && sdev->scsi_dh_data)
-+		scsi_dh = sdev->scsi_dh_data->scsi_dh;
-+	if (scsi_dh && scsi_dh->set_params && get_device(&sdev->sdev_gendev))
-+		err = 0;
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	if (err)
-+		return err;
-+	err = scsi_dh->set_params(sdev, params);
-+	put_device(&sdev->sdev_gendev);
-+	return err;
-+}
-+EXPORT_SYMBOL_GPL(scsi_dh_set_params);
-+
-+/*
-  * scsi_dh_handler_exist - Return TRUE(1) if a device handler exists for
-  *	the given name. FALSE(0) otherwise.
-  * @name - name of the device handler.
-
---=-co0K2GVJDoK4BhJxmnya--
-
+ /* Logging facilities. */
+ #ifdef CONFIG_DEBUG_GROUP_IOSCHED
+ #define elv_log_ioq(efqd, ioq, fmt, args...) \
+-- 
+1.5.4.rc3 
