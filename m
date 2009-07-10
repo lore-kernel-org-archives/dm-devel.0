@@ -1,9 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: remove all 'next_ordered' work-arounds
-Date: Fri, 10 Jul 2009 14:08:08 -0400
-Message-ID: <1247249288-7704-1-git-send-email-snitzer@redhat.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: Re: [RFC][PATCH] dm-mirror: fix data corruption
+Date: Fri, 10 Jul 2009 15:04:37 -0400
+Message-ID: <4A5790C5.90508@redhat.com>
+References: <4A568333.6090901@redhat.com>
+	<Pine.LNX.4.64.0907100939060.568@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0907100947320.2450@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0907100947320.2450@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,80 +20,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mikulas Patocka <mpatocka@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-bio-based DM was changed to work-around the previously misplaced
-next_ordered check with this commit:
-99360b4c18f7675b50d283301d46d755affe75fd
+On 07/10/09 09:49, Mikulas Patocka wrote:
+> patch to hold back bios --- untested (and not quite optimal because it 
+> scans the "failures" list in fixed intervals), but it shows the approach.
+> 
+> ---
+>  drivers/md/dm-raid1.c          |   10 +++++++---
+>  drivers/md/dm-region-hash.c    |    6 +-----
+>  include/linux/dm-region-hash.h |    3 +--
+>  3 files changed, 9 insertions(+), 10 deletions(-)
+> 
+> Index: linux-2.6.31-rc2-devel/drivers/md/dm-raid1.c
+> ===================================================================
+> --- linux-2.6.31-rc2-devel.orig/drivers/md/dm-raid1.c	2009-07-10 14:48:19.000000000 +0200
+> +++ linux-2.6.31-rc2-devel/drivers/md/dm-raid1.c	2009-07-10 15:46:11.000000000 +0200
+> @@ -535,11 +535,11 @@ static void write_callback(unsigned long
+>  		else
+>  			uptodate = 1;
+>  
+> -	if (unlikely(!uptodate)) {
+> +	if (unlikely(!uptodate) || !errors_handled(ms)) {
+>  		DMERR("All replicated volumes dead, failing I/O");
+>  		/* None of the writes succeeded, fail the I/O. */
+>  		ret = -EIO;
+> -	} else if (errors_handled(ms)) {
+> +	} else {
+>  		/*
+>  		 * Need to raise event.  Since raising
+>  		 * events can block, we need to do it in
+> @@ -687,8 +687,12 @@ static void do_failures(struct mirror_se
+>  	if (!ms->log_failure) {
+>  		while ((bio = bio_list_pop(failures))) {
+>  			ms->in_sync = 0;
+> -			dm_rh_mark_nosync(ms->rh, bio, bio->bi_size, 0);
+> +			dm_rh_mark_nosync(ms->rh, bio);
+> +			spin_lock_irq(&ms->lock);
+> +			bio_list_add(&ms->failures, bio);
+> +			spin_unlock_irq(&ms->lock);
+>  		}
+> +		delayed_wake(ms);
+>  		return;
+>  	}
+>  
+> Index: linux-2.6.31-rc2-devel/drivers/md/dm-region-hash.c
+> ===================================================================
+> --- linux-2.6.31-rc2-devel.orig/drivers/md/dm-region-hash.c	2009-07-10 14:54:07.000000000 +0200
+> +++ linux-2.6.31-rc2-devel/drivers/md/dm-region-hash.c	2009-07-10 15:45:07.000000000 +0200
+> @@ -392,8 +392,6 @@ static void complete_resync_work(struct 
+>  /* dm_rh_mark_nosync
+>   * @ms
+>   * @bio
+> - * @done
+> - * @error
+>   *
+>   * The bio was written on some mirror(s) but failed on other mirror(s).
+>   * We can successfully endio the bio but should avoid the region being
+> @@ -401,8 +399,7 @@ static void complete_resync_work(struct 
+>   *
+>   * This function is _not_ safe in interrupt context!
+>   */
+> -void dm_rh_mark_nosync(struct dm_region_hash *rh,
+> -		       struct bio *bio, unsigned done, int error)
+> +void dm_rh_mark_nosync(struct dm_region_hash *rh, struct bio *bio)
+>  {
+>  	unsigned long flags;
+>  	struct dm_dirty_log *log = rh->log;
+> @@ -439,7 +436,6 @@ void dm_rh_mark_nosync(struct dm_region_
+>  	BUG_ON(!list_empty(&reg->list));
+>  	spin_unlock_irqrestore(&rh->region_lock, flags);
+>  
+> -	bio_endio(bio, error);
 
-request-based DM does not yet support barriers but reacted to the above
-bio-based DM change with this commit:
-5d67aa2366ccb8257d103d0b43df855605c3c086
+How do bios queued in ms->failures are processed later? It seems that
+the bios stay in ms->failures forever, and the upper layer can not
+receive "success" for those bios. Don't we need a mechanism to block/unblock
+write bios to fix this issue?
 
-The above changes are no longer needed given Neil Brown's recent fix to
-put the next_ordered check in the __make_request path:
-db64f680ba4b5c56c4be59f0698000df89ff0281
-
-This patch removes DM's bio-based vs request-based conditional setting
-of next_ordered.  For bio-based DM the next_ordered check is no longer a
-concern (as that check is now in the __make_request path).  For
-request-based DM the default of QUEUE_ORDERED_NONE is appropriate.
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com> 
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: NeilBrown <neilb@suse.de>
----
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 2cba557..5d16d06 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -830,11 +830,6 @@ unsigned dm_table_get_type(struct dm_table *t)
- 	return t->type;
- }
- 
--bool dm_table_bio_based(struct dm_table *t)
--{
--	return dm_table_get_type(t) == DM_TYPE_BIO_BASED;
--}
--
- bool dm_table_request_based(struct dm_table *t)
- {
- 	return dm_table_get_type(t) == DM_TYPE_REQUEST_BASED;
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 9acd54a..8a311ea 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2203,16 +2203,6 @@ int dm_swap_table(struct mapped_device *md, struct dm_table *table)
- 		goto out;
- 	}
- 
--	/*
--	 * It is enought that blk_queue_ordered() is called only once when
--	 * the first bio-based table is bound.
--	 *
--	 * This setting should be moved to alloc_dev() when request-based dm
--	 * supports barrier.
--	 */
--	if (!md->map && dm_table_bio_based(table))
--		blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN, NULL);
--
- 	__unbind(md);
- 	r = __bind(md, table, &limits);
- 
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 23278ae..a7663eb 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -61,7 +61,6 @@ int dm_table_any_congested(struct dm_table *t, int bdi_bits);
- int dm_table_any_busy_target(struct dm_table *t);
- int dm_table_set_type(struct dm_table *t);
- unsigned dm_table_get_type(struct dm_table *t);
--bool dm_table_bio_based(struct dm_table *t);
- bool dm_table_request_based(struct dm_table *t);
- int dm_table_alloc_md_mempools(struct dm_table *t);
- void dm_table_free_md_mempools(struct dm_table *t);
+>  	if (recovering)
+>  		complete_resync_work(reg, 0);
+>  }
+> Index: linux-2.6.31-rc2-devel/include/linux/dm-region-hash.h
+> ===================================================================
+> --- linux-2.6.31-rc2-devel.orig/include/linux/dm-region-hash.h	2009-07-10 15:45:26.000000000 +0200
+> +++ linux-2.6.31-rc2-devel/include/linux/dm-region-hash.h	2009-07-10 15:45:36.000000000 +0200
+> @@ -78,8 +78,7 @@ void dm_rh_dec(struct dm_region_hash *rh
+>  /* Delay bios on regions. */
+>  void dm_rh_delay(struct dm_region_hash *rh, struct bio *bio);
+>  
+> -void dm_rh_mark_nosync(struct dm_region_hash *rh,
+> -		       struct bio *bio, unsigned done, int error);
+> +void dm_rh_mark_nosync(struct dm_region_hash *rh, struct bio *bio);
+>  
+>  /*
+>   * Region recovery control.
