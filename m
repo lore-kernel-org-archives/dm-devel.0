@@ -1,17 +1,9 @@
-From: malahal@us.ibm.com
-Subject: Re: [RFC][PATCH] dm-mirror: fix data corruption
-Date: Fri, 10 Jul 2009 12:45:16 -0700
-Message-ID: <20090710194516.GA10646@us.ibm.com>
-References: <4A568333.6090901@redhat.com>
-	<Pine.LNX.4.64.0907100939060.568@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0907100947320.2450@hs20-bc2-1.build.redhat.com>
-	<4A5790C5.90508@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] expose dm-stripe target's topology I/O hints
+Date: Fri, 10 Jul 2009 17:33:12 -0400
+Message-ID: <1247261592-9803-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4A5790C5.90508@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,85 +13,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-Takahiro Yasui [tyasui@redhat.com] wrote:
-> On 07/10/09 09:49, Mikulas Patocka wrote:
-> > patch to hold back bios --- untested (and not quite optimal because it 
-> > scans the "failures" list in fixed intervals), but it shows the approach.
-> > 
-> > ---
-> >  drivers/md/dm-raid1.c          |   10 +++++++---
-> >  drivers/md/dm-region-hash.c    |    6 +-----
-> >  include/linux/dm-region-hash.h |    3 +--
-> >  3 files changed, 9 insertions(+), 10 deletions(-)
-> > 
-> > Index: linux-2.6.31-rc2-devel/drivers/md/dm-raid1.c
-> > ===================================================================
-> > --- linux-2.6.31-rc2-devel.orig/drivers/md/dm-raid1.c	2009-07-10 14:48:19.000000000 +0200
-> > +++ linux-2.6.31-rc2-devel/drivers/md/dm-raid1.c	2009-07-10 15:46:11.000000000 +0200
-> > @@ -535,11 +535,11 @@ static void write_callback(unsigned long
-> >  		else
-> >  			uptodate = 1;
-> >  
-> > -	if (unlikely(!uptodate)) {
-> > +	if (unlikely(!uptodate) || !errors_handled(ms)) {
-> >  		DMERR("All replicated volumes dead, failing I/O");
-> >  		/* None of the writes succeeded, fail the I/O. */
-> >  		ret = -EIO;
-> > -	} else if (errors_handled(ms)) {
-> > +	} else {
-> >  		/*
-> >  		 * Need to raise event.  Since raising
-> >  		 * events can block, we need to do it in
-> > @@ -687,8 +687,12 @@ static void do_failures(struct mirror_se
-> >  	if (!ms->log_failure) {
-> >  		while ((bio = bio_list_pop(failures))) {
-> >  			ms->in_sync = 0;
-> > -			dm_rh_mark_nosync(ms->rh, bio, bio->bi_size, 0);
-> > +			dm_rh_mark_nosync(ms->rh, bio);
-> > +			spin_lock_irq(&ms->lock);
-> > +			bio_list_add(&ms->failures, bio);
-> > +			spin_unlock_irq(&ms->lock);
-> >  		}
-> > +		delayed_wake(ms);
-> >  		return;
-> >  	}
-> >  
-> > Index: linux-2.6.31-rc2-devel/drivers/md/dm-region-hash.c
-> > ===================================================================
-> > --- linux-2.6.31-rc2-devel.orig/drivers/md/dm-region-hash.c	2009-07-10 14:54:07.000000000 +0200
-> > +++ linux-2.6.31-rc2-devel/drivers/md/dm-region-hash.c	2009-07-10 15:45:07.000000000 +0200
-> > @@ -392,8 +392,6 @@ static void complete_resync_work(struct 
-> >  /* dm_rh_mark_nosync
-> >   * @ms
-> >   * @bio
-> > - * @done
-> > - * @error
-> >   *
-> >   * The bio was written on some mirror(s) but failed on other mirror(s).
-> >   * We can successfully endio the bio but should avoid the region being
-> > @@ -401,8 +399,7 @@ static void complete_resync_work(struct 
-> >   *
-> >   * This function is _not_ safe in interrupt context!
-> >   */
-> > -void dm_rh_mark_nosync(struct dm_region_hash *rh,
-> > -		       struct bio *bio, unsigned done, int error)
-> > +void dm_rh_mark_nosync(struct dm_region_hash *rh, struct bio *bio)
-> >  {
-> >  	unsigned long flags;
-> >  	struct dm_dirty_log *log = rh->log;
-> > @@ -439,7 +436,6 @@ void dm_rh_mark_nosync(struct dm_region_
-> >  	BUG_ON(!list_empty(&reg->list));
-> >  	spin_unlock_irqrestore(&rh->region_lock, flags);
-> >  
-> > -	bio_endio(bio, error);
-> 
-> How do bios queued in ms->failures are processed later? It seems that
-> the bios stay in ms->failures forever, and the upper layer can not
-> receive "success" for those bios. Don't we need a mechanism to block/unblock
-> write bios to fix this issue?
+Add .io_hints to 'struct target_type' to allow the I/O hints portion of
+the 'struct queue_limits' to be set by each target.  Expose dm-stripe
+target's topology I/O hints.
 
-A user level program, dmeventd, may reconfigure the mirror resulting in
-submitting the queued I/O's after the reconfiguration.
+NOTE: This patch makes use of blk_limits_io_min(); which will be
+upstream, via the block tree, in the near future.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index b240e85..9350566 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -328,6 +328,16 @@ static int stripe_iterate_devices(struct dm_target *ti,
+ 	return ret;
+ }
+ 
++static void stripe_io_hints(struct dm_target *ti,
++			    struct queue_limits *limits)
++{
++	struct stripe_c *sc = ti->private;
++	unsigned chunk_size = (sc->chunk_mask + 1) << 9;
++
++	blk_limits_io_min(chunk_size);
++	limits->io_opt = chunk_size * sc->stripes;
++}
++
+ static struct target_type stripe_target = {
+ 	.name   = "striped",
+ 	.version = {1, 2, 0},
+@@ -338,6 +348,7 @@ static struct target_type stripe_target = {
+ 	.end_io = stripe_end_io,
+ 	.status = stripe_status,
+ 	.iterate_devices = stripe_iterate_devices,
++	.io_hints = stripe_io_hints,
+ };
+ 
+ int __init dm_stripe_init(void)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 5d16d06..5dcdcfe 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -996,6 +996,10 @@ int dm_calculate_queue_limits(struct dm_table *table,
+ 		ti->type->iterate_devices(ti, dm_set_device_limits,
+ 					  &ti_limits);
+ 
++		/* Set I/O hints portion of queue limits */
++		if (ti->type->io_hints)
++			ti->type->io_hints(ti, &ti_limits);
++
+ 		/*
+ 		 * Check each device area is consistent with the target's
+ 		 * overall queue limits.
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 0d63106..e2b4865 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -91,6 +91,9 @@ typedef int (*dm_iterate_devices_fn) (struct dm_target *ti,
+ 				      iterate_devices_callout_fn fn,
+ 				      void *data);
+ 
++typedef void (*dm_io_hints_fn) (struct dm_target *ti,
++				struct queue_limits *limits);
++
+ /*
+  * Returns:
+  *    0: The target can handle the next I/O immediately.
+@@ -151,6 +154,7 @@ struct target_type {
+ 	dm_merge_fn merge;
+ 	dm_busy_fn busy;
+ 	dm_iterate_devices_fn iterate_devices;
++	dm_io_hints_fn io_hints;
+ 
+ 	/* For internal device-mapper use. */
+ 	struct list_head list;
