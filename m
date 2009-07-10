@@ -1,14 +1,17 @@
-From: Takahiro Yasui <tyasui@redhat.com>
+From: malahal@us.ibm.com
 Subject: Re: [RFC][PATCH] dm-mirror: fix data corruption
-Date: Fri, 10 Jul 2009 15:14:40 -0400
-Message-ID: <4A579320.1040709@redhat.com>
-References: <4A568333.6090901@redhat.com> <4A572313.1050402@ce.jp.nec.com>
+Date: Fri, 10 Jul 2009 12:45:16 -0700
+Message-ID: <20090710194516.GA10646@us.ibm.com>
+References: <4A568333.6090901@redhat.com>
+	<Pine.LNX.4.64.0907100939060.568@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0907100947320.2450@hs20-bc2-1.build.redhat.com>
+	<4A5790C5.90508@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A572313.1050402@ce.jp.nec.com>
+Content-Disposition: inline
+In-Reply-To: <4A5790C5.90508@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,39 +21,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: j-nomura@ce.jp.nec.com
-Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Nomura-san,
-
-On 07/10/09 07:16, Jun'ichi Nomura wrote:
-> Hi Yasui-san,
+Takahiro Yasui [tyasui@redhat.com] wrote:
+> On 07/10/09 09:49, Mikulas Patocka wrote:
+> > patch to hold back bios --- untested (and not quite optimal because it 
+> > scans the "failures" list in fixed intervals), but it shows the approach.
+> > 
+> > ---
+> >  drivers/md/dm-raid1.c          |   10 +++++++---
+> >  drivers/md/dm-region-hash.c    |    6 +-----
+> >  include/linux/dm-region-hash.h |    3 +--
+> >  3 files changed, 9 insertions(+), 10 deletions(-)
+> > 
+> > Index: linux-2.6.31-rc2-devel/drivers/md/dm-raid1.c
+> > ===================================================================
+> > --- linux-2.6.31-rc2-devel.orig/drivers/md/dm-raid1.c	2009-07-10 14:48:19.000000000 +0200
+> > +++ linux-2.6.31-rc2-devel/drivers/md/dm-raid1.c	2009-07-10 15:46:11.000000000 +0200
+> > @@ -535,11 +535,11 @@ static void write_callback(unsigned long
+> >  		else
+> >  			uptodate = 1;
+> >  
+> > -	if (unlikely(!uptodate)) {
+> > +	if (unlikely(!uptodate) || !errors_handled(ms)) {
+> >  		DMERR("All replicated volumes dead, failing I/O");
+> >  		/* None of the writes succeeded, fail the I/O. */
+> >  		ret = -EIO;
+> > -	} else if (errors_handled(ms)) {
+> > +	} else {
+> >  		/*
+> >  		 * Need to raise event.  Since raising
+> >  		 * events can block, we need to do it in
+> > @@ -687,8 +687,12 @@ static void do_failures(struct mirror_se
+> >  	if (!ms->log_failure) {
+> >  		while ((bio = bio_list_pop(failures))) {
+> >  			ms->in_sync = 0;
+> > -			dm_rh_mark_nosync(ms->rh, bio, bio->bi_size, 0);
+> > +			dm_rh_mark_nosync(ms->rh, bio);
+> > +			spin_lock_irq(&ms->lock);
+> > +			bio_list_add(&ms->failures, bio);
+> > +			spin_unlock_irq(&ms->lock);
+> >  		}
+> > +		delayed_wake(ms);
+> >  		return;
+> >  	}
+> >  
+> > Index: linux-2.6.31-rc2-devel/drivers/md/dm-region-hash.c
+> > ===================================================================
+> > --- linux-2.6.31-rc2-devel.orig/drivers/md/dm-region-hash.c	2009-07-10 14:54:07.000000000 +0200
+> > +++ linux-2.6.31-rc2-devel/drivers/md/dm-region-hash.c	2009-07-10 15:45:07.000000000 +0200
+> > @@ -392,8 +392,6 @@ static void complete_resync_work(struct 
+> >  /* dm_rh_mark_nosync
+> >   * @ms
+> >   * @bio
+> > - * @done
+> > - * @error
+> >   *
+> >   * The bio was written on some mirror(s) but failed on other mirror(s).
+> >   * We can successfully endio the bio but should avoid the region being
+> > @@ -401,8 +399,7 @@ static void complete_resync_work(struct 
+> >   *
+> >   * This function is _not_ safe in interrupt context!
+> >   */
+> > -void dm_rh_mark_nosync(struct dm_region_hash *rh,
+> > -		       struct bio *bio, unsigned done, int error)
+> > +void dm_rh_mark_nosync(struct dm_region_hash *rh, struct bio *bio)
+> >  {
+> >  	unsigned long flags;
+> >  	struct dm_dirty_log *log = rh->log;
+> > @@ -439,7 +436,6 @@ void dm_rh_mark_nosync(struct dm_region_
+> >  	BUG_ON(!list_empty(&reg->list));
+> >  	spin_unlock_irqrestore(&rh->region_lock, flags);
+> >  
+> > -	bio_endio(bio, error);
 > 
-> Takahiro Yasui wrote:
->> This is a prototype patch to fix data corruption issue on dm-raid1.
->> It is just a draft patch and is not tested well, but let me post it
->> to review and discuss this in-kernel superblock approach.
->>
->> I appreciate your comments and suggestions.
-> <snip>
->>   * Introduce superblock area
->>
->>     A superblock area is related to a mirror leg on a one-to-one basis and
->>     keeps a sequential number to decide the default mirror when the mirror
->>     is resumed.
-> 
-> If you are to introduce kernel-managed RAID1 superblock,
-> isn't it possible to use the on-disk format compatible to md's?
-> Then the kernel code to handle the superblock may be shared between
-> md and dm in future, which I think is even better and would help
-> dm/md convergence.
+> How do bios queued in ms->failures are processed later? It seems that
+> the bios stay in ms->failures forever, and the upper layer can not
+> receive "success" for those bios. Don't we need a mechanism to block/unblock
+> write bios to fix this issue?
 
-Thank you for the comment. You are right and sharing the kernel code to
-handle superblock between md and dm would be better toward merging dm/md.
-I would like to introduce this in-kernel superblock approach, but userspace
-approach handled by dmeventd seems to be preferred. I try to check the
-possibility to reduce overhead of error handling in userspace.
-
-Thanks,
-Taka
+A user level program, dmeventd, may reconfigure the mirror resulting in
+submitting the queued I/O's after the reconfiguration.
