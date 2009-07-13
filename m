@@ -1,23 +1,15 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCH 1/6] dm raid45 target: export region hash
-	functions and add a needed one
-Date: Sat, 11 Jul 2009 19:56:52 -0700
-Message-ID: <e9c3a7c20907111956s6cc5d643s6007670a4b86a67@mail.gmail.com>
-References: <4a368301.KBrCZcokAm87BF/S%heinzm@redhat.com>
-	<19002.60755.876186.489524@notabene.brown>
-	<1245407630.12264.66.camel@o>
-	<19006.8756.925105.737041@notabene.brown>
-	<1245697837.7390.456.camel@o> <1246539130.20207.12.camel@o>
-	<19025.28110.236108.810671@notabene.brown>
-	<83EE3995-729F-47B6-A03E-768A97D8031E@redhat.com>
-	<1247239403.27788.28.camel@o>
-	<4E23AE19-2E8A-460D-8DE6-7E23A06775BC@redhat.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: Re: Re: [RFC][PATCH] dm-mirror: fix data corruption
+Date: Sun, 12 Jul 2009 21:07:58 -0400
+Message-ID: <4A5A88EE.8090707@redhat.com>
+References: <4A568333.6090901@redhat.com>	<Pine.LNX.4.64.0907100939060.568@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0907100947320.2450@hs20-bc2-1.build.redhat.com>	<4A5790C5.90508@redhat.com>
+	<20090710194516.GA10646@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4E23AE19-2E8A-460D-8DE6-7E23A06775BC@redhat.com>
+In-Reply-To: <20090710194516.GA10646@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,43 +20,95 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, heinzm@redhat.com, Ed Ciechanowski <ed.ciechanowski@intel.com>
 List-Id: dm-devel.ids
 
-On Sat, Jul 11, 2009 at 5:44 AM, Doug Ledford<dledford@redhat.com> wrote:
-> Thanks. =A0This isn't too far off from what I would expect. =A0I would =
-say that
-> real world loads fall all along a spectrum from "create lots of writes,=
- but
-> do little to no work" to "does lots of work, and only sporadically writ=
-es".
-> =A0It's the later end of this spectrum that is most likely to be helped=
- by the
-> cache avoiding routines, while the former is not. =A0So, one of the tes=
-ts I
-> had in mind was to use something like timing a complete kernel build, o=
-r
-> doing a database load/report cycle, or some other things like that. =A0=
-Things
-> that do actual work in the foreground while the raid is kept busy in th=
-e
-> background. =A0Of course, testing all the various points along the spec=
-trum is
-> needed, so this test gets us the first.
+malahal@us.ibm.com wrote:
+> Takahiro Yasui [tyasui@redhat.com] wrote:
+>> On 07/10/09 09:49, Mikulas Patocka wrote:
+>>> patch to hold back bios --- untested (and not quite optimal because it 
+>>> scans the "failures" list in fixed intervals), but it shows the approach.
+>>>
+>>> ---
+>>>  drivers/md/dm-raid1.c          |   10 +++++++---
+>>>  drivers/md/dm-region-hash.c    |    6 +-----
+>>>  include/linux/dm-region-hash.h |    3 +--
+>>>  3 files changed, 9 insertions(+), 10 deletions(-)
+>>>
+>>> Index: linux-2.6.31-rc2-devel/drivers/md/dm-raid1.c
+>>> ===================================================================
+>>> --- linux-2.6.31-rc2-devel.orig/drivers/md/dm-raid1.c	2009-07-10 14:48:19.000000000 +0200
+>>> +++ linux-2.6.31-rc2-devel/drivers/md/dm-raid1.c	2009-07-10 15:46:11.000000000 +0200
+>>> @@ -535,11 +535,11 @@ static void write_callback(unsigned long
+>>>  		else
+>>>  			uptodate = 1;
+>>>  
+>>> -	if (unlikely(!uptodate)) {
+>>> +	if (unlikely(!uptodate) || !errors_handled(ms)) {
+>>>  		DMERR("All replicated volumes dead, failing I/O");
+>>>  		/* None of the writes succeeded, fail the I/O. */
+>>>  		ret = -EIO;
+>>> -	} else if (errors_handled(ms)) {
+>>> +	} else {
+>>>  		/*
+>>>  		 * Need to raise event.  Since raising
+>>>  		 * events can block, we need to do it in
+>>> @@ -687,8 +687,12 @@ static void do_failures(struct mirror_se
+>>>  	if (!ms->log_failure) {
+>>>  		while ((bio = bio_list_pop(failures))) {
+>>>  			ms->in_sync = 0;
+>>> -			dm_rh_mark_nosync(ms->rh, bio, bio->bi_size, 0);
+>>> +			dm_rh_mark_nosync(ms->rh, bio);
+>>> +			spin_lock_irq(&ms->lock);
+>>> +			bio_list_add(&ms->failures, bio);
+>>> +			spin_unlock_irq(&ms->lock);
+>>>  		}
+>>> +		delayed_wake(ms);
+>>>  		return;
+>>>  	}
+>>>  
+>>> Index: linux-2.6.31-rc2-devel/drivers/md/dm-region-hash.c
+>>> ===================================================================
+>>> --- linux-2.6.31-rc2-devel.orig/drivers/md/dm-region-hash.c	2009-07-10 14:54:07.000000000 +0200
+>>> +++ linux-2.6.31-rc2-devel/drivers/md/dm-region-hash.c	2009-07-10 15:45:07.000000000 +0200
+>>> @@ -392,8 +392,6 @@ static void complete_resync_work(struct 
+>>>  /* dm_rh_mark_nosync
+>>>   * @ms
+>>>   * @bio
+>>> - * @done
+>>> - * @error
+>>>   *
+>>>   * The bio was written on some mirror(s) but failed on other mirror(s).
+>>>   * We can successfully endio the bio but should avoid the region being
+>>> @@ -401,8 +399,7 @@ static void complete_resync_work(struct 
+>>>   *
+>>>   * This function is _not_ safe in interrupt context!
+>>>   */
+>>> -void dm_rh_mark_nosync(struct dm_region_hash *rh,
+>>> -		       struct bio *bio, unsigned done, int error)
+>>> +void dm_rh_mark_nosync(struct dm_region_hash *rh, struct bio *bio)
+>>>  {
+>>>  	unsigned long flags;
+>>>  	struct dm_dirty_log *log = rh->log;
+>>> @@ -439,7 +436,6 @@ void dm_rh_mark_nosync(struct dm_region_
+>>>  	BUG_ON(!list_empty(&reg->list));
+>>>  	spin_unlock_irqrestore(&rh->region_lock, flags);
+>>>  
+>>> -	bio_endio(bio, error);
+>> How do bios queued in ms->failures are processed later? It seems that
+>> the bios stay in ms->failures forever, and the upper layer can not
+>> receive "success" for those bios. Don't we need a mechanism to block/unblock
+>> write bios to fix this issue?
+> 
+> A user level program, dmeventd, may reconfigure the mirror resulting in
+> submitting the queued I/O's after the reconfiguration.
 
-This reminds of the testing I did when quantifying the benefit of
-hardware accelerated raid5.  I played with kernel builds while
-resyncing to show the cache and cpu-utilization savings, but never got
-that to settle on a solid number.  I took a look at Con Kolivas'
-"contest" benchmark [1], but ultimately just published plain iozone
-data [2].  The interesting bit is that cpu limited random writes saw
-more throughput improvement than streaming writes because the i/o
-processing did not need to compete with management of the stripe
-cache.
+In that case, don't we need codes to release bios when the mirror is
+destroyed?
 
---
-Dan
+In addition, not only bios for failed write I/Os but also bios sent to
+out-of-sync regions need to be blocked. Bios sent to out-of-sync regions
+are processed by generic_make_request() and would return the "success"
+to upper layer without dm-raid1 notices it.
 
-[1]: http://users.on.net/~ckolivas/contest/
-[2]: http://sourceforge.net/projects/xscaleiop/files/MD RAID
-Acceleration/iop-iozone-graphs-20061010.tar.bz2/download
+Thanks,
+Taka
