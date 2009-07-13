@@ -1,12 +1,11 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH] dm: remove all 'next_ordered' work-arounds
-Date: Mon, 13 Jul 2009 16:22:50 +0900
-Message-ID: <4A5AE0CA.509@ct.jp.nec.com>
+Date: Mon, 13 Jul 2009 05:47:25 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0907130546150.27968@hs20-bc2-1.build.redhat.com>
 References: <1247249288-7704-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1247249288-7704-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,12 +18,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Thank you for this, Mike.
 
-On 2009/07/11 3:08 +0900, Mike Snitzer wrote:
+
+On Fri, 10 Jul 2009, Mike Snitzer wrote:
+
 > bio-based DM was changed to work-around the previously misplaced
 > next_ordered check with this commit:
 > 99360b4c18f7675b50d283301d46d755affe75fd
@@ -99,4 +99,6 @@ On 2009/07/11 3:08 +0900, Mike Snitzer wrote:
 >  int dm_table_alloc_md_mempools(struct dm_table *t);
 >  void dm_table_free_md_mempools(struct dm_table *t);
 
-Acked-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Ack.
+
+Mikulas
