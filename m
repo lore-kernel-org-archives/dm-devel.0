@@ -1,13 +1,14 @@
-From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 1/2] Add genhd flag requesting notification of
- partition changes only.
-Date: Wed, 22 Jul 2009 10:01:24 +0200
-Message-ID: <20090722080124.AD304D340B@pentland.suse.de>
+From: Roel Kluin <roel.kluin@gmail.com>
+Subject: [PATCH] dm: strncpy does not null terminate string
+Date: Fri, 17 Jul 2009 17:35:59 +0200
+Message-ID: <4A609A5F.70900@gmail.com>
+References: <4A607185.6020302@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4A607185.6020302@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,98 +18,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, jens.axboe@oracle.com
+Cc: dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
+strlcpy() will always null terminate the string.
 
-This patch provides notification mechanism which allows handle partition
-code in userspace.
-
-If the BLKRRPART ioctl arrives and GENHD_FL_USERSPACE_PARTITIONS
-is set, just send uevent and ignore in-kernel partitioning code.
-
-This is useful e.g. for device-mapper devices, which can use kpartx
-or similar tool in udev rules.
-
-Signed-off-by: Milan Broz <mbroz@redhat.com>
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Roel Kluin <roel.kluin@gmail.com>
 ---
- block/ioctl.c         |    3 ++-
- drivers/md/dm.c       |    1 +
- fs/partitions/check.c |    7 +++++++
- include/linux/genhd.h |    8 ++++++++
- 4 files changed, 18 insertions(+), 1 deletions(-)
-
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 500e4c7..bce793f 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -101,7 +101,8 @@ static int blkdev_reread_part(struct block_device *bdev)
- 	struct gendisk *disk = bdev->bd_disk;
- 	int res;
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 7f77f18..8208b3a 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -634,9 +634,9 @@ static struct mapped_device *find_device(struct dm_ioctl *param)
+ 		 * Sneakily write in both the name and the uuid
+ 		 * while we have the cell.
+ 		 */
+-		strncpy(param->name, hc->name, sizeof(param->name));
++		strlcpy(param->name, hc->name, sizeof(param->name));
+ 		if (hc->uuid)
+-			strncpy(param->uuid, hc->uuid, sizeof(param->uuid)-1);
++			strlcpy(param->uuid, hc->uuid, sizeof(param->uuid));
+ 		else
+ 			param->uuid[0] = '\0';
  
--	if (!disk_partitionable(disk) || bdev != bdev->bd_contains)
-+	if (!disk_userspace_partitions(disk) &&
-+	    (!disk_partitionable(disk) || bdev != bdev->bd_contains))
- 		return -EINVAL;
- 	if (!capable(CAP_SYS_ADMIN))
- 		return -EACCES;
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 3c6d4ee..df3332d 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1791,6 +1791,7 @@ static struct mapped_device *alloc_dev(int minor)
- 	md->disk->queue = md->queue;
- 	md->disk->private_data = md;
- 	sprintf(md->disk->disk_name, "dm-%d", minor);
-+	md->disk->flags |= GENHD_FL_USERSPACE_PARTITIONS;
- 	add_disk(md->disk);
- 	format_dev_t(md->name, MKDEV(_major, minor));
- 
-diff --git a/fs/partitions/check.c b/fs/partitions/check.c
-index 1a9c787..01f97dd 100644
---- a/fs/partitions/check.c
-+++ b/fs/partitions/check.c
-@@ -536,6 +536,13 @@ int rescan_partitions(struct gendisk *disk, struct block_device *bdev)
- 		disk->fops->revalidate_disk(disk);
- 	check_disk_size_change(disk, bdev);
- 	bdev->bd_invalidated = 0;
-+
-+	/* partitions handled in userspace, just send change event */
-+	if (disk_userspace_partitions(disk)) {
-+		kobject_uevent(&disk_to_dev(disk)->kobj, KOBJ_CHANGE);
-+		return 0;
-+	}
-+
- 	if (!get_capacity(disk) || !(state = check_partition(disk, bdev)))
- 		return 0;
- 	if (IS_ERR(state))	/* I/O error reading the partition table */
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 45fc320..a5ee079 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -116,6 +116,9 @@ struct hd_struct {
- #define GENHD_FL_EXT_DEVT			64 /* allow extended devt */
- #define GENHD_FL_NATIVE_CAPACITY		128
- 
-+/* notify udev instead of use in-kernel partitioning */
-+#define GENHD_FL_USERSPACE_PARTITIONS		256
-+
- #define BLK_SCSI_MAX_CMDS	(256)
- #define BLK_SCSI_CMD_PER_LONG	(BLK_SCSI_MAX_CMDS / (sizeof(long) * 8))
- 
-@@ -180,6 +183,11 @@ static inline struct gendisk *part_to_disk(struct hd_struct *part)
- 	return NULL;
- }
- 
-+static inline bool disk_userspace_partitions(struct gendisk *disk)
-+{
-+	return (disk->flags & GENHD_FL_USERSPACE_PARTITIONS) ? 1 : 0;
-+}
-+
- static inline int disk_max_parts(struct gendisk *disk)
- {
- 	if (disk->flags & GENHD_FL_EXT_DEVT)
--- 
-1.5.3.2
