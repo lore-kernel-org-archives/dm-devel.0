@@ -1,15 +1,14 @@
-From: Andreas Dilger <adilger@sun.com>
+From: Andi Kleen <andi@firstfloor.org>
 Subject: Re: How to handle >16TB devices on 32 bit hosts ??
-Date: Sat, 18 Jul 2009 00:31:55 -0400
-Message-ID: <20090718043155.GI4231@webber.adilger.int>
+Date: Sat, 18 Jul 2009 08:09:33 +0200
+Message-ID: <8763dqwmhu.fsf@basil.nowhere.org>
 References: <19041.4714.686158.130252@notabene.brown>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; CHARSET=US-ASCII
-Content-Transfer-Encoding: 7BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-disposition: inline
-In-reply-to: <19041.4714.686158.130252@notabene.brown>
+In-Reply-To: <19041.4714.686158.130252@notabene.brown> (Neil Brown's message
+	of "Sat, 18 Jul 2009 10:08:10 +1000")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,32 +22,15 @@ To: Neil Brown <neilb@suse.de>
 Cc: linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Jul 18, 2009  10:08 +1000, Neil Brown wrote:
->  It has recently come to by attention that Linux on a 32 bit host does
->  not handle devices beyond 16TB particularly well.
-> 
->  In particular, any access that goes through the page cache for the
->  block device is limited to a pgoff_t number of pages.
->  As pgoff_t is "unsigned long" and hence 32bit, and as page size is
->  4096, this comes to 16TB total.
-:
-:
->  I suppose we could add a CONFIG option to make pgoff_t be 
->  "unsigned long long".  Would the cost/benefit of that be acceptable?
+Neil Brown <neilb@suse.de> writes:
+>
+>  With 2TB drives easily available, more people will probably try
+>  building arrays this big and we cannot just assume they will only do
+>  it on 64bit hosts.
 
-I think the point is that for those people who want to use > 16TB
-devices on 32-bit platforms (e.g. embedded/appliance systems) the
-choice is between "completely non-functional" and "uses a bit more
-memory per page", and the answer is pretty obvious.
+They should -- no 32bit fsck has any chance running on a 16TB volume.
 
-For users who don't want to support this, they don't have to (just
-like CONFIG_LBD or whatever), and for 64-bit systems it is irrelevant.
-I think years ago we had the idea that it would be 64-bit everywhere
-by now, and while that is true for many systems, embedded/appliance
-systems will probably continue to be 32-bit for as long as they can.
+-Andi
 
-Cheers, Andreas
---
-Andreas Dilger
-Sr. Staff Engineer, Lustre Group
-Sun Microsystems of Canada, Inc.
+-- 
+ak@linux.intel.com -- Speaking for myself only.
