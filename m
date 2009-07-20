@@ -1,31 +1,55 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm-raid1: wake the thread after adding bios
-	to the queue
-Date: Mon, 20 Jul 2009 13:52:46 +0100
-Message-ID: <20090720125246.GB32330@agk-dp.fab.redhat.com>
-References: <Pine.LNX.4.64.0907130931550.6498@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Eddie Williams <Eddie.Williams@steeleye.com>
+Subject: Re: [PATCH 2/3] scsi_dh: Provide set_params interface in emc
+ device handler
+Date: Mon, 20 Jul 2009 09:00:13 -0400
+Message-ID: <1248094813.6307.10.camel@eddie-laptop>
+References: <20090702031308.28354.73353.sendpatchset@chandra-ubuntu>
+	 <20090702031320.28354.96958.sendpatchset@chandra-ubuntu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0907130931550.6498@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20090702031320.28354.96958.sendpatchset@chandra-ubuntu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Chandra Seetharaman <sekharan@us.ibm.com>
+Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com, michaelc@cs.wisc.edu, agk@redhat.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, asson_ronald@emc.com, berthiaume_wayne@emc.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 13, 2009 at 09:33:06AM -0400, Mikulas Patocka wrote:
-> Recent dm-raid1 clustering patch violate this rule.
- 
-Upstream git commit id?
+On Wed, 2009-07-01 at 20:13 -0700, Chandra Seetharaman wrote:
+> Handle the parameters provided by user thru multipath.
+> 
+> This handler expects only 2 parameters and their value can either be 0 or 1.
+> 
+> This code originates from the old dm-emc.c file. Appropriate changes have
+> been made to make it work in the new design.
+> 
+> Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+> ---
+>  drivers/scsi/device_handler/scsi_dh_emc.c |   56 ++++++++++++++++++++++++++++++
+>  1 file changed, 56 insertions(+)
+> 
+> Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh_emc.c
+> ===================================================================
+> --- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh_emc.c
+> +++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh_emc.c
+> @@ -561,6 +561,61 @@ done:
+>  
+>  	return result;
+>  }
+> +/*
+> + * params - parameters in the following format
+> + *      "no_of_params\0param1\0param2\0param3\0...\0"
+> + *      for example, string for 2 parameters with value 10 and 21
+> + *      is specified as "2\010\021\0".
+> + */
+> +static int clariion_set_params(struct scsi_device *sdev, const char *params)
+> +{
+> +	struct clariion_dh_data *csdev = get_clariion_data(sdev);
+> +	unsigned int hr = 0, st = 0, argc;
+> +	char *p = params;
 
-Alasdair
+This throws a compiler warning resolved with a type cast:
+	char *p = (char *)params;
+
+
+
