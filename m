@@ -1,171 +1,61 @@
-From: Asim Zia <ziajee2k@gmail.com>
-Subject: Re: Re: [PATCH 2/3] scsi_dh: Provide set_params interface
-	in emc device handler
-Date: Tue, 21 Jul 2009 09:02:39 +0500
-Message-ID: <1c02af620907202102x555a4239k1b751a6f764f10b4@mail.gmail.com>
-References: <20090702031308.28354.73353.sendpatchset@chandra-ubuntu>
-	<20090702031320.28354.96958.sendpatchset@chandra-ubuntu>
-	<1248094813.6307.10.camel@eddie-laptop>
-	<1248138120.10481.37.camel@chandra-ubuntu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH 21/25] io-controller: Per cgroup request descriptor support
+Date: Tue, 21 Jul 2009 13:37:56 +0800
+Message-ID: <4A655434.5060404@cn.fujitsu.com>
+References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com> <1246564917-19603-22-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1322244915=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1248138120.10481.37.camel@chandra-ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753694AbZGUFiz@vger.kernel.org>
+In-Reply-To: <1246564917-19603-22-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
---===============1322244915==
-Content-Type: multipart/alternative; boundary=000e0cd32f625ac297046f2f5352
+Vivek Goyal wrote:
+> o Currently a request queue has got fixed number of request descriptors for
+>   sync and async requests. Once the request descriptors are consumed, new
+>   processes are put to sleep and they effectively become serialized. Because
+>   sync and async queues are separate, async requests don't impact sync ones
+>   but if one is looking for fairness between async requests, that is not
+>   achievable if request queue descriptors become bottleneck.
+> 
+> o Make request descriptor's per io group so that if there is lots of IO
+>   going on in one cgroup, it does not impact the IO of other group.
+> 
+> o This is just one relatively simple way of doing things. This patch will
+>   probably change after the feedback. Folks have raised concerns that in
+>   hierchical setup, child's request descriptors should be capped by parent's
+>   request descriptors. May be we need to have per cgroup per device files
+>   in cgroups where one can specify the upper limit of request descriptors
+>   and whenever a cgroup is created one needs to assign request descritor
+>   limit making sure total sum of child's request descriptor is not more than
+>   of parent.
+> 
+>   I guess something like memory controller. Anyway, that would be the next
+>   step. For the time being, we have implemented something simpler as follows.
+> 
+> o This patch implements the per cgroup request descriptors. request pool per
+>   queue is still common but every group will have its own wait list and its
+>   own count of request descriptors allocated to that group for sync and async
+>   queues. So effectively request_list becomes per io group property and not a
+>   global request queue feature.
+> 
+> o Currently one can define q->nr_requests to limit request descriptors
+>   allocated for the queue. Now there is another tunable q->nr_group_requests
+>   which controls the requests descriptr limit per group. q->nr_requests
+>   supercedes q->nr_group_requests to make sure if there are lots of groups
+>   present, we don't end up allocating too many request descriptors on the
+>   queue.
+> 
 
---000e0cd32f625ac297046f2f5352
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+  Hi Vivek,
 
-unsubscribe linux-scsi
+  In order to prevent q->nr_requests from becoming the bottle-neck of allocating
+  requests, whether we can update nr_requests accordingly when allocating or removing
+  a cgroup?
 
-
-
-
-
-On Tue, Jul 21, 2009 at 6:02 AM, Chandra Seetharaman <sekharan@us.ibm.com>wrote:
-
->
-> I will reroll the patch with this fix and ported to the latest RC.
->  On Mon, 2009-07-20 at 09:00 -0400, Eddie Williams wrote:
-> > On Wed, 2009-07-01 at 20:13 -0700, Chandra Seetharaman wrote:
-> > > Handle the parameters provided by user thru multipath.
-> > >
-> > > This handler expects only 2 parameters and their value can either be 0
-> or 1.
-> > >
-> > > This code originates from the old dm-emc.c file. Appropriate changes
-> have
-> > > been made to make it work in the new design.
-> > >
-> > > Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-> > > ---
-> > >  drivers/scsi/device_handler/scsi_dh_emc.c |   56
-> ++++++++++++++++++++++++++++++
-> > >  1 file changed, 56 insertions(+)
-> > >
-> > > Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh_emc.c
-> > > ===================================================================
-> > > --- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh_emc.c
-> > > +++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh_emc.c
-> > > @@ -561,6 +561,61 @@ done:
-> > >
-> > >     return result;
-> > >  }
-> > > +/*
-> > > + * params - parameters in the following format
-> > > + *      "no_of_params\0param1\0param2\0param3\0...\0"
-> > > + *      for example, string for 2 parameters with value 10 and 21
-> > > + *      is specified as "2\010\021\0".
-> > > + */
-> > > +static int clariion_set_params(struct scsi_device *sdev, const char
-> *params)
-> > > +{
-> > > +   struct clariion_dh_data *csdev = get_clariion_data(sdev);
-> > > +   unsigned int hr = 0, st = 0, argc;
-> > > +   char *p = params;
-> >
-> > This throws a compiler warning resolved with a type cast:
-> >       char *p = (char *)params;
-> >
-> >
-> >
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---000e0cd32f625ac297046f2f5352
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div>unsubscribe linux-scsi</div>
-<div>=A0</div>
-<div>=A0</div>
-<div><br><br>=A0</div>
-<div class=3D"gmail_quote">On Tue, Jul 21, 2009 at 6:02 AM, Chandra Seethar=
-aman <span dir=3D"ltr">&lt;<a href=3D"mailto:sekharan@us.ibm.com">sekharan@=
-us.ibm.com</a>&gt;</span> wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
-px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid"><br>I will reroll the patch with=
- this fix and ported to the latest RC.<br>
-<div>
-<div></div>
-<div class=3D"h5">On Mon, 2009-07-20 at 09:00 -0400, Eddie Williams wrote:<=
-br>&gt; On Wed, 2009-07-01 at 20:13 -0700, Chandra Seetharaman wrote:<br>&g=
-t; &gt; Handle the parameters provided by user thru multipath.<br>&gt; &gt;=
-<br>
-&gt; &gt; This handler expects only 2 parameters and their value can either=
- be 0 or 1.<br>&gt; &gt;<br>&gt; &gt; This code originates from the old dm-=
-emc.c file. Appropriate changes have<br>&gt; &gt; been made to make it work=
- in the new design.<br>
-&gt; &gt;<br>&gt; &gt; Signed-off-by: Chandra Seetharaman &lt;<a href=3D"ma=
-ilto:sekharan@us.ibm.com">sekharan@us.ibm.com</a>&gt;<br>&gt; &gt; ---<br>&=
-gt; &gt; =A0drivers/scsi/device_handler/scsi_dh_emc.c | =A0 56 ++++++++++++=
-++++++++++++++++++<br>
-&gt; &gt; =A01 file changed, 56 insertions(+)<br>&gt; &gt;<br>&gt; &gt; Ind=
-ex: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh_emc.c<br>&gt; &gt;=
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<br>&gt; &gt; --- lin=
-ux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh_emc.c<br>
-&gt; &gt; +++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh_emc.c<br=
->&gt; &gt; @@ -561,6 +561,61 @@ done:<br>&gt; &gt;<br>&gt; &gt; =A0 =A0 ret=
-urn result;<br>&gt; &gt; =A0}<br>&gt; &gt; +/*<br>&gt; &gt; + * params - pa=
-rameters in the following format<br>
-&gt; &gt; + * =A0 =A0 =A0&quot;no_of_params\0param1\0param2\0param3\0...\0&=
-quot;<br>&gt; &gt; + * =A0 =A0 =A0for example, string for 2 parameters with=
- value 10 and 21<br>&gt; &gt; + * =A0 =A0 =A0is specified as &quot;2\010\02=
-1\0&quot;.<br>
-&gt; &gt; + */<br>&gt; &gt; +static int clariion_set_params(struct scsi_dev=
-ice *sdev, const char *params)<br>&gt; &gt; +{<br>&gt; &gt; + =A0 struct cl=
-ariion_dh_data *csdev =3D get_clariion_data(sdev);<br>&gt; &gt; + =A0 unsig=
-ned int hr =3D 0, st =3D 0, argc;<br>
-&gt; &gt; + =A0 char *p =3D params;<br>&gt;<br>&gt; This throws a compiler =
-warning resolved with a type cast:<br>&gt; =A0 =A0 =A0 char *p =3D (char *)=
-params;<br>&gt;<br>&gt;<br>&gt;<br>&gt; --<br></div></div>&gt; To unsubscri=
-be from this list: send the line &quot;unsubscribe linux-scsi&quot; in<br>
-&gt; the body of a message to <a href=3D"mailto:majordomo@vger.kernel.org">=
-majordomo@vger.kernel.org</a><br>&gt; More majordomo info at =A0<a href=3D"=
-http://vger.kernel.org/majordomo-info.html" target=3D"_blank">http://vger.k=
-ernel.org/majordomo-info.html</a><br>
-
-<div>
-<div></div>
-<div class=3D"h5"><br>--<br>dm-devel mailing list<br><a href=3D"mailto:dm-d=
-evel@redhat.com">dm-devel@redhat.com</a><br><a href=3D"https://www.redhat.c=
-om/mailman/listinfo/dm-devel" target=3D"_blank">https://www.redhat.com/mail=
-man/listinfo/dm-devel</a><br>
-</div></div></blockquote></div><br>
-
---000e0cd32f625ac297046f2f5352--
-
-
---===============1322244915==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1322244915==--
+-- 
+Regards
+Gui Jianfeng
