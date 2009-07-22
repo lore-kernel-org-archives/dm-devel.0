@@ -1,16 +1,15 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: How to handle >16TB devices on 32 bit hosts ??
-Date: Wed, 22 Jul 2009 11:51:55 -0700
-Message-ID: <20090722115155.f99dcf76.akpm@linux-foundation.org>
-References: <19041.4714.686158.130252@notabene.brown>
-	<20090721235904.42e6cd35.akpm@linux-foundation.org>
-	<20090722183244.GO4231@webber.adilger.int>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: Multipath path ready but not active
+Date: Wed, 22 Jul 2009 12:33:31 -0700
+Message-ID: <1248291211.9724.17.camel@chandra-ubuntu>
+References: <6E9F6DF8BB260247A551EB65F5D86EDC90B59749@shandy.Beer.Town>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090722183244.GO4231@webber.adilger.int>
+In-Reply-To: <6E9F6DF8BB260247A551EB65F5D86EDC90B59749@shandy.Beer.Town>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,31 +19,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andreas Dilger <adilger@sun.com>
-Cc: linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 22 Jul 2009 12:32:44 -0600
-Andreas Dilger <adilger@sun.com> wrote:
 
-> On Jul 21, 2009  23:59 -0700, Andrew Morton wrote:
-> > On Sat, 18 Jul 2009 10:08:10 +1000 Neil Brown <neilb@suse.de> wrote:
-> > I expect that the VFS could be made to work with 64-bit pgoff_t fairly
-> > easily.  The generated code will be pretty damn sad.
-> > 
-> > radix-trees use a ulong index, so we would need a new
-> > lib/radix_tree64.c or some other means of fixing that up.
-> > 
-> > The bigger problem is filesystems - they'll each need to be checked,
-> > tested, fixed and enabled.  It's probably not too bad for the
-> > mainstream filesystems which mostly bounce their operations into VFS
-> > libarary functions anyway.
+On Wed, 2009-07-22 at 13:34 -0500, Jim Lester wrote:
+> We were doing some testing today with SLES, multipathing and iSCSI. During the test we fail
+> our port on the storage controller which causes the target to move to a new port. The iSCSI
+> initiator on the SLES box comes back just fine, but multipath doesn't re-activate the path,
+> causing IO to hold. 
 > 
-> I don't think this is a primary concern for most filesystems even today.
-> Filesystems that work correctly > 16TB on 64-bit platforms should continue
-> to work correctly on 32-bit platforms.
+> mpatha (36000d3100003d5000000000000000013) dm-7 COMPELNT,Compellent Vol
+> [size=30G][features=1 queue_if_no_path][hwhandler=0]
+> \_ round-robin 0 [prio=1][enabled]
+>  \_ 5:0:0:5 sdm 8:192 [failed][ready]
+> 
+> If we run 'multipath' from the command line the path becomes active again and everything resumes.
+> The failback parameter isn't set, so it should be doing the default behavior of immediate, but 
+> even when we set it, it didn't work correctly. 
 
-Not if they use an unsigned long to hold a pagecache index anywhere.
+default is "manual"
 
-akpm:/usr/src/25> grep 'unsigned long' fs/*/*.c | wc -l
-3465
+you mean to say you have set "failback" to "immediate" and it still
+didn't recover ?
+
+Can you confirm if multipathd was running when you had the failback ?
+> 
+> Below is our multipath.conf file as well as all the version involved. Does anybody have any input?
+> 
+> defaults {
+>         user_friendly_names             yes
+>         path_grouping_policy            multibus
+> }
+> 
+> blacklist {
+>         devnode         "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+>         devnode         "^hd[a-z][[0-9]*]"
+>         vendor          "*"
+> }
+> 
+> blacklist_exceptions {
+>         vendor  "COMPELNT"
+> }
+> 
+> devices {
+>         device {
+>                 vendor                          COMPELNT
+>                 product                         "Compellent Vol"
+>                 path_checker                    tur
+>                 polling_interval                10
+>                 no_path_retry                   queue
+>         }
+> }
+> 
+> 
+> Linux manns 2.6.16.60-0.21-smp #1 SMP Tue May 6 12:41:02 UTC 2008 x86_64 x86_64 x86_64 GNU/Linux
+> multipath-tools v0.4.8 (08/02, 2007)
+> iscsid version 2.0-868
+> 
+> ---
+> Jim Lester | Linux/Mac Product Specialist
+> Jim.Lester@Compellent.com
+> (o) 952.294.2802
+> (c) 763.218.6012
+> Compellent Technologies | www.compellent.com
+> 
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
