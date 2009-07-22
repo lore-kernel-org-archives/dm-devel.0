@@ -1,58 +1,55 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: [PATCH 2/2] Disable partition scan
-Date: Wed, 22 Jul 2009 17:53:17 +0100
-Message-ID: <1248281597.14407.171.camel@breeves.fab.redhat.com>
-References: <20090722080129.E9393D340B@pentland.suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andreas Dilger <adilger@sun.com>
+Subject: Re: How to handle >16TB devices on 32 bit hosts ??
+Date: Wed, 22 Jul 2009 12:32:44 -0600
+Message-ID: <20090722183244.GO4231@webber.adilger.int>
+References: <19041.4714.686158.130252@notabene.brown>
+ <20090721235904.42e6cd35.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090722080129.E9393D340B@pentland.suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, jens.axboe@oracle.com
+Content-Type: text/plain; CHARSET=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-disposition: inline
+In-reply-to: <20090721235904.42e6cd35.akpm@linux-foundation.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2009-07-22 at 10:01 +0200, Hannes Reinecke wrote:
-> Worse, it might trigger I/O errors as the partition table might not
-> be accessible (eg for the passive path of a multipath device) or
-> even invalid (eg for RAID0 dmraid).
+On Jul 21, 2009  23:59 -0700, Andrew Morton wrote:
+> On Sat, 18 Jul 2009 10:08:10 +1000 Neil Brown <neilb@suse.de> wrote:
+> I expect that the VFS could be made to work with 64-bit pgoff_t fairly
+> easily.  The generated code will be pretty damn sad.
+> 
+> radix-trees use a ulong index, so we would need a new
+> lib/radix_tree64.c or some other means of fixing that up.
+> 
+> The bigger problem is filesystems - they'll each need to be checked,
+> tested, fixed and enabled.  It's probably not too bad for the
+> mainstream filesystems which mostly bounce their operations into VFS
+> libarary functions anyway.
 
-Not that it removes the need or motivation for this patch but the case
-of an array partition table being mis-interpreted by the kernel for a
-RAID member device should no longer trigger I/O errors. Kernels since
-2.6.27 should truncate any over-size partitions to the size of the
-device:
+I don't think this is a primary concern for most filesystems even today.
+Filesystems that work correctly > 16TB on 64-bit platforms should continue
+to work correctly on 32-bit platforms.  ext4 and XFS will be fine, and
+we can slap a "refuse to mount > 16TB filesystem on 32-bit" check in
+*_fill_super() for the other filesystems, ext3 included.  Maintainers can
+veto that if they think it will work, and for the rest I don't think
+anyone will even notice.
 
-commit ac0d86f5809598ddcd6bfa0ea8245ccc910e9eac
-Author: Kay Sievers <kay.sievers@vrfy.org>
-Date:   Wed Oct 15 22:04:21 2008 -0700
+> There's perhaps a middle ground - support >16TB devices, but not >16TB
+> partitions.  That way everything remains 32-bit and we just have to get
+> the offsetting right (probably already the case).
+> 
+> So now /dev/sda1, /dev/sda2 etc are all <16TB.  The remaining problem
+> is that /dev/sda is >16TB.  I expect that we could arrange for the
+> kernel to error out if userspace tries to access /dev/sda beyond the
+> 16TB point, and those very very few applications which want to touch
+> that part of the disk will need to be written using direct-io, (or
+> perhaps sgio) or run on 64-bit machines.
 
-    block: sanitize invalid partition table entries
-    
-    We currently follow blindly what the partition table lies about the
-    disk, and let the kernel create block devices which can not be
-    accessed.
-    Trying to identify the device leads to kernel logs full of:
-      sdb: rw=0, want=73392, limit=28800
-      attempt to access beyond end of device
-[snip]
+Cheers, Andreas
+--
+Andreas Dilger
+Sr. Staff Engineer, Lustre Group
+Sun Microsystems of Canada, Inc.
 
-I've tested this patch with a few dmraid setups that previously spat I/O
-errors whenever something probed a member device. Although this isn't
-exactly a solution it does quiet down the log noise (I'd thought about
-submitting a patch to dmraid to issue a BLKPG_DEL_PARTITION for each
-partition on each member device that it discovers but didn't get around
-to doing anything about it yet).
-
-Regards,
-Bryn.
