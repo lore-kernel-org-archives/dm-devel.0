@@ -1,55 +1,78 @@
-From: Andreas Dilger <adilger@sun.com>
-Subject: Re: How to handle >16TB devices on 32 bit hosts ??
-Date: Wed, 22 Jul 2009 12:32:44 -0600
-Message-ID: <20090722183244.GO4231@webber.adilger.int>
-References: <19041.4714.686158.130252@notabene.brown>
- <20090721235904.42e6cd35.akpm@linux-foundation.org>
+From: Jim Lester <Jim.Lester@compellent.com>
+Subject: Multipath path ready but not active
+Date: Wed, 22 Jul 2009 13:34:32 -0500
+Message-ID: <6E9F6DF8BB260247A551EB65F5D86EDC90B59749@shandy.Beer.Town>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; CHARSET=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-disposition: inline
-In-reply-to: <20090721235904.42e6cd35.akpm@linux-foundation.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Jul 21, 2009  23:59 -0700, Andrew Morton wrote:
-> On Sat, 18 Jul 2009 10:08:10 +1000 Neil Brown <neilb@suse.de> wrote:
-> I expect that the VFS could be made to work with 64-bit pgoff_t fairly
-> easily.  The generated code will be pretty damn sad.
-> 
-> radix-trees use a ulong index, so we would need a new
-> lib/radix_tree64.c or some other means of fixing that up.
-> 
-> The bigger problem is filesystems - they'll each need to be checked,
-> tested, fixed and enabled.  It's probably not too bad for the
-> mainstream filesystems which mostly bounce their operations into VFS
-> libarary functions anyway.
+We were doing some testing today with SLES, multipathing and iSCSI. Durin=
+g the test we fail our port on the storage controller which causes the ta=
+rget to move to a new port. The iSCSI initiator on the SLES box comes bac=
+k just fine, but multipath doesn't re-activate the path, causing IO to ho=
+ld.=20
 
-I don't think this is a primary concern for most filesystems even today.
-Filesystems that work correctly > 16TB on 64-bit platforms should continue
-to work correctly on 32-bit platforms.  ext4 and XFS will be fine, and
-we can slap a "refuse to mount > 16TB filesystem on 32-bit" check in
-*_fill_super() for the other filesystems, ext3 included.  Maintainers can
-veto that if they think it will work, and for the rest I don't think
-anyone will even notice.
+mpatha (36000d3100003d5000000000000000013) dm-7 COMPELNT,Compellent Vol
+[size=3D30G][features=3D1 queue_if_no_path][hwhandler=3D0]
+\_ round-robin 0 [prio=3D1][enabled]
+ \_ 5:0:0:5 sdm 8:192 [failed][ready]
 
-> There's perhaps a middle ground - support >16TB devices, but not >16TB
-> partitions.  That way everything remains 32-bit and we just have to get
-> the offsetting right (probably already the case).
-> 
-> So now /dev/sda1, /dev/sda2 etc are all <16TB.  The remaining problem
-> is that /dev/sda is >16TB.  I expect that we could arrange for the
-> kernel to error out if userspace tries to access /dev/sda beyond the
-> 16TB point, and those very very few applications which want to touch
-> that part of the disk will need to be written using direct-io, (or
-> perhaps sgio) or run on 64-bit machines.
+If we run 'multipath' from the command line the path becomes active again=
+ and everything resumes. The failback parameter isn't set, so it should b=
+e doing the default behavior of immediate, but even when we set it, it di=
+dn't work correctly.=20
 
-Cheers, Andreas
---
-Andreas Dilger
-Sr. Staff Engineer, Lustre Group
-Sun Microsystems of Canada, Inc.
+Below is our multipath.conf file as well as all the version involved. Doe=
+s anybody have any input?
 
+defaults {
+        user_friendly_names             yes
+        path_grouping_policy            multibus
+}
+
+blacklist {
+        devnode         "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+        devnode         "^hd[a-z][[0-9]*]"
+        vendor          "*"
+}
+
+blacklist_exceptions {
+        vendor  "COMPELNT"
+}
+
+devices {
+        device {
+                vendor                          COMPELNT
+                product                         "Compellent Vol"
+                path_checker                    tur
+                polling_interval                10
+                no_path_retry                   queue
+        }
+}
+
+
+Linux manns 2.6.16.60-0.21-smp #1 SMP Tue May 6 12:41:02 UTC 2008 x86_64 =
+x86_64 x86_64 GNU/Linux
+multipath-tools v0.4.8 (08/02, 2007)
+iscsid version 2.0-868
+
+---
+Jim Lester | Linux/Mac Product Specialist
+Jim.Lester@Compellent.com
+(o) 952.294.2802
+(c) 763.218.6012
+Compellent Technologies | www.compellent.com
