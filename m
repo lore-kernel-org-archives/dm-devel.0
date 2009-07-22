@@ -1,11 +1,12 @@
-From: Hannes Reinecke <hare@suse.de>
+From: hare@suse.de (Hannes Reinecke)
 Subject: [PATCH 1/2] Add genhd flag requesting notification of
  partition changes only.
-Date: Wed, 22 Jul 2009 12:17:47 +0200
-Message-ID: <4A66E74B.7080805@suse.de>
+Date: Wed, 22 Jul 2009 10:01:24 +0200
+Message-ID: <20090722080124.AD304D340B@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------040103020900020206060004"
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,37 +17,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------040103020900020206060004
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-Resend patch 1/2; seems to be stuck in the mailqueue somewhere.
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
-
---------------040103020900020206060004
-Content-Type: text/x-patch;
-	name="Add-genhd-flag-requesting-notification-of-partition.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
-	filename*0="Add-genhd-flag-requesting-notification-of-partition.patch"
-
-From 1aeec7a3141af62456576baf16978738c7bf4152 Mon Sep 17 00:00:00 2001
-From: Hannes Reinecke <hare@suse.de>
-Date: Wed, 22 Jul 2009 08:18:18 +0200
-Subject: [PATCH 1/2] Add genhd flag requesting notification of partition changes only.
 
 This patch provides notification mechanism which allows handle partition
 code in userspace.
@@ -138,13 +112,3 @@ index 45fc320..a5ee079 100644
  	if (disk->flags & GENHD_FL_EXT_DEVT)
 -- 
 1.5.3.2
-
-
---------------040103020900020206060004
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------040103020900020206060004--
