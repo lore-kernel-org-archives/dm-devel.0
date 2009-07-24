@@ -1,9 +1,12 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [RFC] IO scheduler based IO controller V7
-Date: Fri, 24 Jul 2009 16:27:30 -0400
-Message-ID: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 11/24] io-controller: Debug hierarchical IO
+	scheduling
+Date: Fri, 24 Jul 2009 16:27:41 -0400
+Message-ID: <1248467274-32073-12-git-send-email-vgoyal@redhat.com>
+References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,403 +20,566 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: paolo.valente@unimore.it, dhaval@linux.vnet.ibm.com, peterz@infradead.org, fernando@oss.ntt.co.jp, lizf@cn.fujitsu.com, jmoyer@redhat.com, mikew@google.com, fchecconi@gmail.com, vgoyal@redhat.com, s-uchida@ap.jp.nec.com, akpm@linux-foundation.org, agk@redhat.com, m-ikeda@ds.jp.nec.com
 List-Id: dm-devel.ids
 
+o Littile debugging aid for hierarchical IO scheduling.
 
-Hi All,
+o Enabled under CONFIG_DEBUG_GROUP_IOSCHED
 
-Here is the V7 of the IO controller patches generated on top of 2.6.31-rc4.
+o Currently it outputs more debug messages in blktrace output which helps
+  a great deal in debugging in hierarchical setup. It also creates additional
+  cgroup interfaces io.disk_queue and io.disk_dequeue to output some more
+  debugging data.
 
-For ease of patching, a consolidated patch is available here.
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ block/Kconfig.iosched |    8 ++
+ block/elevator-fq.c   |  300 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ block/elevator-fq.h   |   38 ++++++-
+ 3 files changed, 339 insertions(+), 7 deletions(-)
 
-http://people.redhat.com/~vgoyal/io-controller/io-scheduler-based-io-controller-v7.patch
-
-Previous versions of the patches was posted here.
-
-(V1) http://lkml.org/lkml/2009/3/11/486
-(V2) http://lkml.org/lkml/2009/5/5/275
-(V3) http://lkml.org/lkml/2009/5/26/472
-(V4) http://lkml.org/lkml/2009/6/8/580
-(V5) http://lkml.org/lkml/2009/6/19/279
-(V6) http://lkml.org/lkml/2009/7/2/369
-
-Changes from V6
-===============
-- Introduced the notion of group_idling where we idle for next request to
-  come from the same group before we expire it. It is along the lines of
-  cfq's slice_idle thing to provide fairness. Switching to group idling
-  now helps in the sense that we don't have to rely whether queue idling
-  was turned on or not by CFQ. It becomes too much of debugging pain with
-  different work loads and different kind of storage media. Introduction
-  of group_idle should help.
-
-- Moved some of the code like dynamic queue idling update, arming queue
-  idling timer, keeping track of average think time etc back to CFQ. With
-  group idling we don't need it now. Reduce the amount of change.
-
-- Enabled cfq's close cooperator functionality in groups. So far this worked
-  only in root group. Now it should work in non-root groups also.
-
-- Got rid of the patch where we calculated disk time based on average disk
-  rate in some circumstances. It was giving bad numbers in early queue
-  deletion cases. Also did not think that it was helping a lot. Remvoed it
-  for the time being.
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index a91a807..a7d0bf8 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -90,6 +90,14 @@ config DEFAULT_IOSCHED
+ 	default "cfq" if DEFAULT_CFQ
+ 	default "noop" if DEFAULT_NOOP
  
-- Added an experimental patch to map sync requests using bio tracking info and
-  not task context. This is only for noop, deadline and AS.
-
-- Got rid of experimental patch of idling for async queues. Don't think it
-  was helping.
-
-- Got rid of wait_busy and wait_busy_done logic from queue. Instead
-  implemented it for groups.
-
-- Introduced oom_ioq to accomodate oom_cfqq change recently.
-
-- Broke-up elv_init_ioq() fn into smaller functions. It had 7 arguments and
-  looked complicated.
-
-- Fixed a bug in blk_queue_io_group_congested(). Thanks to Munehiro Ikeda.
-
-- Merged gui's patch to fix the cgroup file format issue.
-
-- Merged gui's patch to update per group congestion limit when
-  q->nr_group_requests is updated.
-
-- Fixed a bug where close cooperation will not work if we wait for all the
-  requests to finish from previous queue.
-
-- Fixed group deletion accouting where deletion from idle tree were also
-  appearing in the log.
-
-- Got rid of busy_rt_queues infrastructure.
-
-- Got rid of elv_ioq_request_dispatched(). An helper function just to
-  increment a variable.
-  
-Limitations
-===========
-
-- This IO controller provides the bandwidth control at the IO scheduler
-  level (leaf node in stacked hiearchy of logical devices). So there can
-  be cases (depending on configuration) where application does not see
-  proportional BW division at higher logical level device.
-
-  LWN has written an article about the issue here.
-
-	http://lwn.net/Articles/332839/
-
-How to solve the issue of fairness at higher level logical devices
-==================================================================
-(Do we really need it? That's not where the contention for resources is.)
-
-Couple of suggestions have come forward.
-
-- Implement IO control at IO scheduler layer and then with the help of
-  some daemon, adjust the weight on underlying devices dynamiclly, depending
-  on what kind of BW gurantees are to be achieved at higher level logical
-  block devices.
-
-- Also implement a higher level IO controller along with IO scheduler
-  based controller and let user choose one depending on his needs.
-
-  A higher level controller does not know about the assumptions/policies
-  of unerldying IO scheduler, hence it has the potential to break down
-  the IO scheduler's policy with-in cgroup. A lower level controller
-  can work with IO scheduler much more closely and efficiently.
++config DEBUG_GROUP_IOSCHED
++	bool "Debug Hierarchical Scheduling support"
++	depends on CGROUPS && GROUP_IOSCHED
++	default n
++	---help---
++	  Enable some debugging hooks for hierarchical scheduling support.
++	  Currently it just outputs more information in blktrace output.
++
+ endmenu
  
-Other active IO controller developments
-=======================================
-
-IO throttling
--------------
-
-  This is a max bandwidth controller and not the proportional one. Secondly
-  it is a second level controller which can break the IO scheduler's
-  policy/assumtions with-in cgroup. 
-
-dm-ioband
----------
-
- This is a proportional bandwidth controller implemented as device mapper
- driver. It is also a second level controller which can break the
- IO scheduler's policy/assumptions with-in cgroup.
-
-TODO
-====
-- code cleanups, testing, bug fixing, optimizations, benchmarking etc...
-
-Testing
-=======
-
-I have been able to do some testing as follows. All my testing is with ext3
-file system with a SATA drive which supports queue depth of 31.
-
-Test1 (Isolation between two KVM virtual machines)
-==================================================
-Created two KVM virtual machines. Partitioned a disk on host in two partitions
-and gave one partition to each virtual machine. Put both the virtual machines
-in two different cgroup of weight 1000 and 500 each. Virtual machines created
-ext3 file system on the partitions exported from host and did buffered writes.
-Host seems writes as synchronous and virtual machine with higher weight gets
-double the disk time of virtual machine of lower weight. Used deadline
-scheduler in this test case.
-
-Some more details about configuration are in documentation patch.
-
-Test2 (Fairness for synchronous reads)
-======================================
-- Two dd in two cgroups with cgrop weights 1000 and 500. Ran two "dd" in those
-  cgroups (With CFQ scheduler and /sys/block/<device>/queue/fairness = 1)
-
-  Higher weight dd finishes first and at that point of time my script takes
-  care of reading cgroup files io.disk_time and io.disk_sectors for both the
-  groups and display the results.
-
-  dd if=/mnt/$BLOCKDEV/zerofile1 of=/dev/null &
-  dd if=/mnt/$BLOCKDEV/zerofile2 of=/dev/null &
-
-  234179072 bytes (234 MB) copied, 3.9065 s, 59.9 MB/s
-  234179072 bytes (234 MB) copied, 5.19232 s, 45.1 MB/s
-
-  group1 time=8 16 2471 group1 sectors=8 16 457840
-  group2 time=8 16 1220 group2 sectors=8 16 225736
-
-First two fields in time and sectors statistics represent major and minor
-number of the device. Third field represents disk time in milliseconds and
-number of sectors transferred respectively.
-
-This patchset tries to provide fairness in terms of disk time received. group1
-got almost double of group2 disk time (At the time of first dd finish). These
-time and sectors statistics can be read using io.disk_time and io.disk_sector
-files in cgroup. More about it in documentation file.
-
-Test3 (Reader Vs Buffered Writes)
-================================
-Buffered writes can be problematic and can overwhelm readers, especially with
-noop and deadline. IO controller can provide isolation between readers and
-buffered (async) writers.
-
-First I ran the test without io controller to see the severity of the issue.
-Ran a hostile writer and then after 10 seconds started a reader and then
-monitored the completion time of reader. Reader reads a 256 MB file. Tested
-this with noop scheduler.
-
-sample script
-------------
-sync
-echo 3 > /proc/sys/vm/drop_caches
-time dd if=/dev/zero of=/mnt/sdb/reader-writer-zerofile bs=4K count=2097152
-conv=fdatasync &
-sleep 10
-time dd if=/mnt/sdb/256M-file of=/dev/null &
-
-Results
--------
-8589934592 bytes (8.6 GB) copied, 106.045 s, 81.0 MB/s (Writer)
-268435456 bytes (268 MB) copied, 96.5237 s, 2.8 MB/s (Reader)
-
-Now it was time to test io controller whether it can provide isolation between
-readers and writers with noop. I created two cgroups of weight 1000 each and
-put reader in group1 and writer in group 2 and ran the test again. Upon
-comletion of reader, my scripts read io.dis_time and io.disk_group cgroup
-files to get an estimate how much disk time each group got and how many
-sectors each group did IO for. 
-
-For more accurate accounting of disk time for buffered writes with queuing
-hardware I had to set /sys/block/<disk>/queue/iosched/fairness to "1".
-
-sample script
--------------
-echo $$ > /cgroup/bfqio/test2/tasks
-dd if=/dev/zero of=/mnt/$BLOCKDEV/testzerofile bs=4K count=2097152 &
-sleep 10
-echo noop > /sys/block/$BLOCKDEV/queue/scheduler
-echo  1 > /sys/block/$BLOCKDEV/queue/iosched/fairness
-echo $$ > /cgroup/bfqio/test1/tasks
-dd if=/mnt/$BLOCKDEV/256M-file of=/dev/null &
-wait $!
-# Some code for reading cgroup files upon completion of reader.
--------------------------
-
-Results
-=======
-268435456 bytes (268 MB) copied, 6.65819 s, 40.3 MB/s (Reader) 
-
-group1 time=8 16 3063	group1 sectors=8 16 524808
-group2 time=8 16 3071	group2 sectors=8 16 441752
-
-Note, reader finishes now much lesser time and both group1 and group2
-got almost 3 seconds of disk time. Hence io-controller provides isolation
-from buffered writes.
-
-Test4 (AIO)
-===========
-
-AIO reads
------------
-Set up two fio, AIO read jobs in two cgroup with weight 1000 and 500
-respectively. I am using cfq scheduler. Following are some lines from my test
-script.
-
----------------------------------------------------------------
-echo 1000 > /cgroup/bfqio/test1/io.weight
-echo 500 > /cgroup/bfqio/test2/io.weight
-
-fio_args="--ioengine=libaio --rw=read --size=512M --direct=1"
-echo 1 > /sys/block/$BLOCKDEV/queue/iosched/fairness
-
-echo $$ > /cgroup/bfqio/test1/tasks
-fio $fio_args --name=test1 --directory=/mnt/$BLOCKDEV/fio1/
---output=/mnt/$BLOCKDEV/fio1/test1.log
---exec_postrun="../read-and-display-group-stats.sh $maj_dev $minor_dev" &
-
-echo $$ > /cgroup/bfqio/test2/tasks
-fio $fio_args --name=test2 --directory=/mnt/$BLOCKDEV/fio2/
---output=/mnt/$BLOCKDEV/fio2/test2.log &
-----------------------------------------------------------------
-
-test1 and test2 are two groups with weight 1000 and 500 respectively.
-"read-and-display-group-stats.sh" is one small script which reads the
-test1 and test2 cgroup files to determine how much disk time each group
-got till first fio job finished.
-
-Results
-------
-test1 statistics: time=8 16 22403   sectors=8 16 1049640
-test2 statistics: time=8 16 11400   sectors=8 16 552864
-
-Above shows that by the time first fio (higher weight), finished, group
-test1 got 22403 ms of disk time and group test2 got 11400 ms of disk time.
-similarly the statistics for number of sectors transferred are also shown.
-
-Note that disk time given to group test1 is almost double of group2 disk
-time.
-
-AIO writes
-----------
-Set up two fio, AIO direct write jobs in two cgroup with weight 1000 and 500
-respectively. I am using cfq scheduler. Following are some lines from my test
-script.
-
-------------------------------------------------
-echo 1000 > /cgroup/bfqio/test1/io.weight
-echo 500 > /cgroup/bfqio/test2/io.weight
-fio_args="--ioengine=libaio --rw=write --size=512M --direct=1"
-
-echo 1 > /sys/block/$BLOCKDEV/queue/iosched/fairness
-
-echo $$ > /cgroup/bfqio/test1/tasks
-fio $fio_args --name=test1 --directory=/mnt/$BLOCKDEV/fio1/
---output=/mnt/$BLOCKDEV/fio1/test1.log
---exec_postrun="../read-and-display-group-stats.sh $maj_dev $minor_dev" &
-
-echo $$ > /cgroup/bfqio/test2/tasks
-fio $fio_args --name=test2 --directory=/mnt/$BLOCKDEV/fio2/
---output=/mnt/$BLOCKDEV/fio2/test2.log &
--------------------------------------------------
-
-test1 and test2 are two groups with weight 1000 and 500 respectively.
-"read-and-display-group-stats.sh" is one small script which reads the
-test1 and test2 cgroup files to determine how much disk time each group
-got till first fio job finished.
-
-Following are the results.
-
-test1 statistics: time=8 16 29085   sectors=8 16 1049656
-test2 statistics: time=8 16 14652   sectors=8 16 516728
-
-Above shows that by the time first fio (higher weight), finished, group
-test1 got 28085 ms of disk time and group test2 got 14652 ms of disk time.
-similarly the statistics for number of sectors transferred are also shown.
-
-Note that disk time given to group test1 is almost double of group2 disk
-time.
-
-Test5 (Fairness for async writes, Buffered Write Vs Buffered Write)
-===================================================================
-Fairness for async writes is tricky and biggest reason is that async writes
-are cached in higher layers (page cahe) as well as possibly in file system
-layer also (btrfs, xfs etc), and are dispatched to lower layers not necessarily
-in proportional manner.
-
-For example, consider two dd threads reading /dev/zero as input file and doing
-writes of huge files. Very soon we will cross vm_dirty_ratio and dd thread will
-be forced to write out some pages to disk before more pages can be dirtied. But
-not necessarily dirty pages of same thread are picked. It can very well pick
-the inode of lesser priority dd thread and do some writeout. So effectively
-higher weight dd is doing writeouts of lower weight dd pages and we don't see
-service differentation.
-
-IOW, the core problem with async write fairness is that higher weight thread
-does not throw enought IO traffic at IO controller to keep the queue
-continuously backlogged. In my testing, there are many .2 to .8 second
-intervals where higher weight queue is empty and in that duration lower weight
-queue get lots of job done giving the impression that there was no service
-differentiation.
-
-In summary, from IO controller point of view async writes support is there.
-Because page cache has not been designed in such a manner that higher 
-prio/weight writer can do more write out as compared to lower prio/weight
-writer, gettting service differentiation is hard and it is visible in some
-cases and not visible in some cases.
-
-Do we really care that much for fairness among two writer cgroups? One can
-choose to do direct writes or sync writes if fairness for writes really
-matters for him.
-
-Following is the only case where it is hard to ensure fairness between cgroups.
-
-- Buffered writes Vs Buffered Writes.
-
-So to test async writes I created two partitions on a disk and created ext3
-file systems on both the partitions.  Also created two cgroups and generated
-lots of write traffic in two cgroups (50 fio threads) and watched the disk
-time statistics in respective cgroups at the interval of 2 seconds. Thanks to
-ryo tsuruta for the test case.
-
-*****************************************************************
-sync
-echo 3 > /proc/sys/vm/drop_caches
-
-fio_args="--size=64m --rw=write --numjobs=50 --group_reporting"
-
-echo $$ > /cgroup/bfqio/test1/tasks
-fio $fio_args --name=test1 --directory=/mnt/sdd1/fio/ --output=/mnt/sdd1/fio/test1.log &
-
-echo $$ > /cgroup/bfqio/test2/tasks
-fio $fio_args --name=test2 --directory=/mnt/sdd2/fio/ --output=/mnt/sdd2/fio/test2.log &
-*********************************************************************** 
-
-And watched the disk time and sector statistics for the both the cgroups
-every 2 seconds using a script. How is snippet from output.
-
-test1 statistics: time=8 48 1315   sectors=8 48 55776 dq=8 48 1
-test2 statistics: time=8 48 633   sectors=8 48 14720 dq=8 48 2
-
-test1 statistics: time=8 48 5586   sectors=8 48 339064 dq=8 48 2
-test2 statistics: time=8 48 2985   sectors=8 48 146656 dq=8 48 3
-
-test1 statistics: time=8 48 9935   sectors=8 48 628728 dq=8 48 3
-test2 statistics: time=8 48 5265   sectors=8 48 278688 dq=8 48 4
-
-test1 statistics: time=8 48 14156   sectors=8 48 932488 dq=8 48 6
-test2 statistics: time=8 48 7646   sectors=8 48 412704 dq=8 48 7
-
-test1 statistics: time=8 48 18141   sectors=8 48 1231488 dq=8 48 10
-test2 statistics: time=8 48 9820   sectors=8 48 548400 dq=8 48 8
-
-test1 statistics: time=8 48 21953   sectors=8 48 1485632 dq=8 48 13
-test2 statistics: time=8 48 12394   sectors=8 48 698288 dq=8 48 10
-
-test1 statistics: time=8 48 25167   sectors=8 48 1705264 dq=8 48 13
-test2 statistics: time=8 48 14042   sectors=8 48 817808 dq=8 48 10
-
-First two fields in time and sectors statistics represent major and minor
-number of the device. Third field represents disk time in milliseconds and
-number of sectors transferred respectively.
-
-So disk time consumed by group1 is almost double of group2 in this case.
-
-Your feedback is welcome.
-
-Thanks
-Vivek
+ endif
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index c546962..ca26960 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -153,6 +153,119 @@ static void bfq_find_matching_entity(struct io_entity **entity,
+ 		*new_entity = parent_entity(*new_entity);
+ 	}
+ }
++
++static inline struct io_group *io_entity_to_iog(struct io_entity *entity)
++{
++	struct io_group *iog = NULL;
++
++	BUG_ON(entity == NULL);
++	if (entity->my_sched_data != NULL)
++		iog = container_of(entity, struct io_group, entity);
++	return iog;
++}
++
++/* Returns parent group of io group */
++static inline struct io_group *iog_parent(struct io_group *iog)
++{
++	struct io_group *piog;
++
++	if (!iog->entity.sched_data)
++		return NULL;
++
++	/*
++	 * Not following entity->parent pointer as for top level groups
++	 * this pointer is NULL.
++	 */
++	piog = container_of(iog->entity.sched_data, struct io_group,
++					sched_data);
++	return piog;
++}
++
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++static void io_group_path(struct io_group *iog, char *buf, int buflen)
++{
++	unsigned short id = iog->iocg_id;
++	struct cgroup_subsys_state *css;
++
++	rcu_read_lock();
++
++	if (!id)
++		goto out;
++
++	css = css_lookup(&io_subsys, id);
++	if (!css)
++		goto out;
++
++	if (!css_tryget(css))
++		goto out;
++
++	cgroup_path(css->cgroup, buf, buflen);
++
++	css_put(css);
++
++	rcu_read_unlock();
++	return;
++out:
++	rcu_read_unlock();
++	buf[0] = '\0';
++	return;
++}
++
++/*
++ * An entity has been freshly added to active tree. Either it came from
++ * idle tree or it was not on any of the trees. Do the accounting.
++ */
++static inline void bfq_account_for_entity_addition(struct io_entity *entity)
++{
++	struct io_group *iog = io_entity_to_iog(entity);
++
++	if (iog) {
++		struct elv_fq_data *efqd;
++
++		/*
++		 * Keep track of how many times a group has been added
++		 * to active tree.
++		 */
++		iog->queue++;
++		iog->queue_start = jiffies;
++
++		/* Log group addition event */
++		rcu_read_lock();
++		efqd = rcu_dereference(iog->key);
++		if (efqd)
++			elv_log_iog(efqd, iog, "add group weight=%u",
++					iog->entity.weight);
++		rcu_read_unlock();
++	}
++}
++
++/*
++ * An entity got removed from active tree and either went to idle tree or
++ * not is on any of the tree. Do the accouting
++ */
++static inline void bfq_account_for_entity_deletion(struct io_entity *entity)
++{
++	struct io_group *iog = io_entity_to_iog(entity);
++
++	if (iog) {
++		struct elv_fq_data *efqd;
++
++		iog->dequeue++;
++		/* Keep a track of how long group was on active tree */
++		iog->queue_duration += jiffies_to_msecs(jiffies -
++						iog->queue_start);
++		iog->queue_start = 0;
++
++		/* Log group deletion event */
++		rcu_read_lock();
++		efqd = rcu_dereference(iog->key);
++		if (efqd)
++			elv_log_iog(efqd, iog, "del group weight=%u",
++					iog->entity.weight);
++		rcu_read_unlock();
++	}
++}
++#endif /* DEBUG_GROUP_IOSCHED */
+ #else /* GROUP_IOSCHED */
+ #define for_each_entity(entity)	\
+ 	for (; entity != NULL; entity = NULL)
+@@ -186,6 +299,11 @@ is_same_group(struct io_entity *entity, struct io_entity *new_entity)
+ {
+ 	return 1;
+ }
++
++static inline struct io_group *io_entity_to_iog(struct io_entity *entity)
++{
++	return NULL;
++}
+ #endif /* GROUP_IOSCHED */
+ 
+ static inline int elv_prio_slice(struct elv_fq_data *efqd, int sync,
+@@ -426,6 +544,7 @@ static void bfq_active_insert(struct io_service_tree *st,
+ 	struct rb_node *node = &entity->rb_node;
+ 
+ 	bfq_insert(&st->active, entity);
++	entity->sched_data->nr_active++;
+ 
+ 	if (node->rb_left != NULL)
+ 		node = node->rb_left;
+@@ -485,6 +604,7 @@ static void bfq_active_remove(struct io_service_tree *st,
+ 
+ 	node = bfq_find_deepest(&entity->rb_node);
+ 	bfq_remove(&st->active, entity);
++	entity->sched_data->nr_active--;
+ 
+ 	if (node != NULL)
+ 		bfq_update_active_tree(node);
+@@ -571,6 +691,21 @@ static void bfq_forget_idle(struct io_service_tree *st)
+ 		bfq_put_idle_entity(st, first_idle);
+ }
+ 
++/*
++ * Returns the number of active entities a particular io group has. This
++ * includes number of active entities on service tree as well as the active
++ * entity which is being served currently, if any.
++ */
++
++static inline int elv_iog_nr_active(struct io_group *iog)
++{
++	struct io_sched_data *sd = &iog->sched_data;
++
++	if (sd->active_entity)
++		return sd->nr_active + 1;
++	else
++		return sd->nr_active;
++}
+ 
+ static struct io_service_tree *
+ __bfq_entity_update_prio(struct io_service_tree *old_st,
+@@ -752,6 +887,7 @@ static void __bfq_activate_entity(struct io_entity *entity, int add_front)
+ {
+ 	struct io_sched_data *sd = entity->sched_data;
+ 	struct io_service_tree *st = io_entity_service_tree(entity);
++	int newly_added = 0;
+ 
+ 	if (entity == sd->active_entity) {
+ 		BUG_ON(entity->tree != NULL);
+@@ -778,6 +914,7 @@ static void __bfq_activate_entity(struct io_entity *entity, int add_front)
+ 		bfq_idle_remove(st, entity);
+ 		entity->start = bfq_gt(st->vtime, entity->finish) ?
+ 				       st->vtime : entity->finish;
++		newly_added = 1;
+ 	} else {
+ 		/*
+ 		 * The finish time of the entity may be invalid, and
+@@ -790,6 +927,7 @@ static void __bfq_activate_entity(struct io_entity *entity, int add_front)
+ 
+ 		BUG_ON(entity->on_st);
+ 		entity->on_st = 1;
++		newly_added = 1;
+ 	}
+ 
+ 	st = __bfq_entity_update_prio(st, entity);
+@@ -831,6 +969,11 @@ static void __bfq_activate_entity(struct io_entity *entity, int add_front)
+ 		bfq_calc_finish(entity, entity->budget);
+ 	}
+ 	bfq_active_insert(st, entity);
++
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++	if (newly_added)
++		bfq_account_for_entity_addition(entity);
++#endif
+ }
+ 
+ /**
+@@ -872,7 +1015,7 @@ static int __bfq_deactivate_entity(struct io_entity *entity, int requeue)
+ 	struct io_sched_data *sd = entity->sched_data;
+ 	struct io_service_tree *st = io_entity_service_tree(entity);
+ 	int was_active = entity == sd->active_entity;
+-	int ret = 0;
++	int ret = 0, active_removed = 0;
+ 
+ 	if (!entity->on_st)
+ 		return 0;
+@@ -882,9 +1025,11 @@ static int __bfq_deactivate_entity(struct io_entity *entity, int requeue)
+ 	if (was_active) {
+ 		bfq_calc_finish(entity, entity->service);
+ 		sd->active_entity = NULL;
+-	} else if (entity->tree == &st->active)
++		active_removed = 1;
++	} else if (entity->tree == &st->active) {
+ 		bfq_active_remove(st, entity);
+-	else if (entity->tree == &st->idle)
++		active_removed = 1;
++	} else if (entity->tree == &st->idle)
+ 		bfq_idle_remove(st, entity);
+ 	else if (entity->tree != NULL)
+ 		BUG();
+@@ -899,6 +1044,10 @@ static int __bfq_deactivate_entity(struct io_entity *entity, int requeue)
+ 	BUG_ON(sd->active_entity == entity);
+ 	BUG_ON(sd->next_active == entity);
+ 
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++	if (active_removed)
++		bfq_account_for_entity_deletion(entity);
++#endif
+ 	return ret;
+ }
+ 
+@@ -1208,6 +1357,67 @@ static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++static int io_cgroup_disk_queue_read(struct cgroup *cgroup,
++			struct cftype *cftype, struct seq_file *m)
++{
++	struct io_cgroup *iocg = NULL;
++	struct io_group *iog = NULL;
++	struct hlist_node *n;
++
++	if (!cgroup_lock_live_group(cgroup))
++		return -ENODEV;
++
++	iocg = cgroup_to_io_cgroup(cgroup);
++	rcu_read_lock();
++	/* Loop through all the io groups and print statistics */
++	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
++		/*
++		 * There might be groups which are not functional and
++		 * waiting to be reclaimed upon cgoup deletion.
++		 */
++		if (iog->key) {
++			seq_printf(m, "%u:%u %lu %lu\n", MAJOR(iog->dev),
++					MINOR(iog->dev), iog->queue,
++					iog->queue_duration);
++		}
++	}
++	rcu_read_unlock();
++	cgroup_unlock();
++
++	return 0;
++}
++
++static int io_cgroup_disk_dequeue_read(struct cgroup *cgroup,
++			struct cftype *cftype, struct seq_file *m)
++{
++	struct io_cgroup *iocg = NULL;
++	struct io_group *iog = NULL;
++	struct hlist_node *n;
++
++	if (!cgroup_lock_live_group(cgroup))
++		return -ENODEV;
++
++	iocg = cgroup_to_io_cgroup(cgroup);
++	spin_lock_irq(&iocg->lock);
++	/* Loop through all the io groups and print statistics */
++	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
++		/*
++		 * There might be groups which are not functional and
++		 * waiting to be reclaimed upon cgoup deletion.
++		 */
++		if (iog->key) {
++			seq_printf(m, "%u:%u %lu\n", MAJOR(iog->dev),
++					MINOR(iog->dev), iog->dequeue);
++		}
++	}
++	spin_unlock_irq(&iocg->lock);
++	cgroup_unlock();
++
++	return 0;
++}
++#endif
++
+ struct cftype bfqio_files[] = {
+ 	{
+ 		.name = "weight",
+@@ -1227,6 +1437,16 @@ struct cftype bfqio_files[] = {
+ 		.name = "disk_sectors",
+ 		.read_seq_string = io_cgroup_disk_sectors_read,
+ 	},
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++	{
++		.name = "disk_queue",
++		.read_seq_string = io_cgroup_disk_queue_read,
++	},
++	{
++		.name = "disk_dequeue",
++		.read_seq_string = io_cgroup_disk_dequeue_read,
++	},
++#endif
+ };
+ 
+ static int iocg_populate(struct cgroup_subsys *subsys, struct cgroup *cgroup)
+@@ -1367,6 +1587,11 @@ io_group_chain_alloc(struct request_queue *q, void *key, struct cgroup *cgroup)
+ 		 */
+ 		elv_get_iog(iog);
+ 
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++		io_group_path(iog, iog->path, sizeof(iog->path));
++#endif
++
++
+ 		if (leaf == NULL) {
+ 			leaf = iog;
+ 			prev = leaf;
+@@ -1947,6 +2172,22 @@ EXPORT_SYMBOL(elv_del_idle_slice_timer);
+ static void elv_ioq_served(struct io_queue *ioq, unsigned long served)
+ {
+ 	entity_served(&ioq->entity, served, ioq->nr_sectors);
++
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++		{
++			struct elv_fq_data *efqd = ioq->efqd;
++			struct io_group *iog = ioq_to_io_group(ioq);
++			elv_log_ioq(efqd, ioq, "ioq served: QSt=0x%lx QSs=0x%lx"
++				" QTt=0x%lx QTs=0x%lx GTt=0x%lx "
++				" GTs=0x%lx rq_queued=%d",
++				served, ioq->nr_sectors,
++				ioq->entity.total_service,
++				ioq->entity.total_sector_service,
++				iog->entity.total_service,
++				iog->entity.total_sector_service,
++				ioq->nr_queued);
++		}
++#endif
+ }
+ 
+ /*
+@@ -2238,10 +2479,29 @@ static void __elv_set_active_ioq(struct elv_fq_data *efqd, struct io_queue *ioq,
+ 	if (ioq) {
+ 		struct io_group *iog = ioq_to_io_group(ioq);
+ 		elv_log_ioq(efqd, ioq, "set_active, busy=%d ioprio=%d"
+-				" weight=%u group_weight=%u",
++				" weight=%u rq_queued=%d group_weight=%u",
+ 				efqd->busy_queues,
+ 				ioq->entity.ioprio, ioq->entity.weight,
+-				iog_weight(iog));
++				ioq->nr_queued, iog_weight(iog));
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++			{
++				int nr_active = 0;
++				struct io_group *parent = NULL;
++
++				parent = iog_parent(iog);
++				if (parent)
++					nr_active = elv_iog_nr_active(parent);
++
++				elv_log_ioq(efqd, ioq, "set_active, ioq"
++				" nrgrps=%d QTt=0x%lx QTs=0x%lx GTt=0x%lx "
++				" GTs=0x%lx rq_queued=%d", nr_active,
++				ioq->entity.total_service,
++				ioq->entity.total_sector_service,
++				iog->entity.total_service,
++				iog->entity.total_sector_service,
++				ioq->nr_queued);
++			}
++#endif
+ 		ioq->slice_end = 0;
+ 		ioq->slice_start = jiffies;
+ 
+@@ -2301,10 +2561,23 @@ static void elv_add_ioq_busy(struct elv_fq_data *efqd, struct io_queue *ioq)
+ {
+ 	BUG_ON(elv_ioq_busy(ioq));
+ 	BUG_ON(ioq == efqd->active_queue);
+-	elv_log_ioq(efqd, ioq, "add to busy");
+ 	elv_activate_ioq(ioq, 0);
+ 	elv_mark_ioq_busy(ioq);
+ 	efqd->busy_queues++;
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++	{
++		struct io_group *iog = ioq_to_io_group(ioq);
++		elv_log_ioq(efqd, ioq, "add to busy: QTt=0x%lx QTs=0x%lx"
++			" GTt=0x%lx GTs=0x%lx rq_queued=%d",
++			ioq->entity.total_service,
++			ioq->entity.total_sector_service,
++			iog->entity.total_service,
++			iog->entity.total_sector_service,
++			ioq->nr_queued);
++	}
++#else
++	elv_log_ioq(efqd, ioq, "add to busy");
++#endif
+ }
+ 
+ static void elv_del_ioq_busy(struct elevator_queue *e, struct io_queue *ioq,
+@@ -2314,7 +2587,21 @@ static void elv_del_ioq_busy(struct elevator_queue *e, struct io_queue *ioq,
+ 
+ 	BUG_ON(!elv_ioq_busy(ioq));
+ 	BUG_ON(ioq->nr_queued);
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++	{
++		struct io_group *iog = ioq_to_io_group(ioq);
++		elv_log_ioq(efqd, ioq, "del from busy: QTt=0x%lx "
++			"QTs=0x%lx ioq GTt=0x%lx GTs=0x%lx "
++			"rq_queued=%d",
++			ioq->entity.total_service,
++			ioq->entity.total_sector_service,
++			iog->entity.total_service,
++			iog->entity.total_sector_service,
++			ioq->nr_queued);
++	}
++#else
+ 	elv_log_ioq(efqd, ioq, "del from busy");
++#endif
+ 	elv_clear_ioq_busy(ioq);
+ 	BUG_ON(efqd->busy_queues == 0);
+ 	efqd->busy_queues--;
+@@ -2503,6 +2790,7 @@ void elv_ioq_request_add(struct request_queue *q, struct request *rq)
+ 	BUG_ON(!efqd);
+ 	BUG_ON(!ioq);
+ 	ioq->nr_queued++;
++	elv_log_ioq(efqd, ioq, "add rq: rq_queued=%d", ioq->nr_queued);
+ 
+ 	if (!elv_ioq_busy(ioq))
+ 		elv_add_ioq_busy(efqd, ioq);
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index b7f9f82..1da7ecc 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -75,6 +75,7 @@ struct io_service_tree {
+ struct io_sched_data {
+ 	struct io_entity *active_entity;
+ 	struct io_entity *next_active;
++	int nr_active;
+ 	struct io_service_tree service_tree[IO_IOPRIO_CLASSES];
+ };
+ 
+@@ -243,6 +244,23 @@ struct io_group {
+ 
+ 	/* The device MKDEV(major, minor), this group has been created for */
+ 	dev_t	dev;
++
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++	/* How many times this group has been added to active tree */
++	unsigned long queue;
++
++	/* How long this group remained on active tree, in ms */
++	unsigned long queue_duration;
++
++	/* When was this group added to active tree */
++	unsigned long queue_start;
++
++	/* How many times this group has been removed from active tree */
++	unsigned long dequeue;
++
++	/* Store cgroup path */
++	char path[128];
++#endif
+ };
+ 
+ /**
+@@ -303,10 +321,29 @@ struct elv_fq_data {
+ };
+ 
+ /* Logging facilities. */
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++#define elv_log_ioq(efqd, ioq, fmt, args...) \
++{								\
++	blk_add_trace_msg((efqd)->queue, "elv%d%c %s " fmt, (ioq)->pid,	\
++			elv_ioq_sync(ioq) ? 'S' : 'A', \
++			ioq_to_io_group(ioq)->path, ##args); \
++}
++
++#define elv_log_iog(efqd, iog, fmt, args...) \
++{                                                                      \
++	blk_add_trace_msg((efqd)->queue, "elv %s " fmt, (iog)->path, ##args); \
++}
++
++#else
+ #define elv_log_ioq(efqd, ioq, fmt, args...) \
+ 	blk_add_trace_msg((efqd)->queue, "elv%d%c " fmt, (ioq)->pid,	\
+ 				elv_ioq_sync(ioq) ? 'S' : 'A', ##args)
+ 
++#define elv_log_iog(efqd, iog, fmt, args...) \
++	blk_add_trace_msg((efqd)->queue, "elv " fmt, ##args)
++
++#endif
++
+ #define elv_log(efqd, fmt, args...) \
+ 	blk_add_trace_msg((efqd)->queue, "elv " fmt, ##args)
+ 
+@@ -443,7 +480,6 @@ static inline struct io_group *ioq_to_io_group(struct io_queue *ioq)
+ #ifdef CONFIG_GROUP_IOSCHED
+ extern int io_group_allow_merge(struct request *rq, struct bio *bio);
+ extern void elv_put_iog(struct io_group *iog);
+-
+ static inline void elv_get_iog(struct io_group *iog)
+ {
+ 	atomic_inc(&iog->ref);
+-- 
+1.6.0.6
