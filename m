@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 09/24] io-controller: cfq changes to use
-	hierarchical fair queuing code in elevaotor layer
-Date: Fri, 24 Jul 2009 16:27:39 -0400
-Message-ID: <1248467274-32073-10-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 07/24] io-controller: cgroup related changes for
+	hierarchical group support
+Date: Fri, 24 Jul 2009 16:27:37 -0400
+Message-ID: <1248467274-32073-8-git-send-email-vgoyal@redhat.com>
 References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,144 +20,335 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: paolo.valente@unimore.it, dhaval@linux.vnet.ibm.com, peterz@infradead.org, fernando@oss.ntt.co.jp, lizf@cn.fujitsu.com, jmoyer@redhat.com, mikew@google.com, fchecconi@gmail.com, vgoyal@redhat.com, s-uchida@ap.jp.nec.com, akpm@linux-foundation.org, agk@redhat.com, m-ikeda@ds.jp.nec.com
 List-Id: dm-devel.ids
 
-Make cfq hierarhical.
+o This patch introduces some of the cgroup related code for io controller.
 
-Signed-off-by: Nauman Rafique <nauman@google.com>
 Signed-off-by: Fabio Checconi <fabio@gandalf.sssup.it>
 Signed-off-by: Paolo Valente <paolo.valente@unimore.it>
-Signed-off-by: Aristeu Rozanski <aris@redhat.com>
+Signed-off-by: Nauman Rafique <nauman@google.com>
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/Kconfig.iosched |    8 ++++++
- block/cfq-iosched.c   |   62 +++++++++++++++++++++++++++++++++++++++++++++++-
- init/Kconfig          |    2 +-
- 3 files changed, 69 insertions(+), 3 deletions(-)
+ block/blk-ioc.c               |    3 +
+ block/elevator-fq.c           |  174 +++++++++++++++++++++++++++++++++++++++++
+ block/elevator-fq.h           |   38 +++++++++-
+ include/linux/cgroup_subsys.h |    6 ++
+ include/linux/iocontext.h     |    5 +
+ 5 files changed, 225 insertions(+), 1 deletions(-)
 
-diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
-index dd5224d..a91a807 100644
---- a/block/Kconfig.iosched
-+++ b/block/Kconfig.iosched
-@@ -54,6 +54,14 @@ config IOSCHED_CFQ
- 	  working environment, suitable for desktop systems.
- 	  This is the default I/O scheduler.
+diff --git a/block/blk-ioc.c b/block/blk-ioc.c
+index d4ed600..0d56336 100644
+--- a/block/blk-ioc.c
++++ b/block/blk-ioc.c
+@@ -95,6 +95,9 @@ struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
+ 		spin_lock_init(&ret->lock);
+ 		ret->ioprio_changed = 0;
+ 		ret->ioprio = 0;
++#ifdef CONFIG_GROUP_IOSCHED
++		ret->cgroup_changed = 0;
++#endif
+ 		ret->last_waited = jiffies; /* doesn't matter... */
+ 		ret->nr_batch_requests = 0; /* because this is 0 */
+ 		ret->aic = NULL;
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 8f8fe9a..d72e697 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -25,6 +25,9 @@ static struct kmem_cache *elv_ioq_pool;
+ #define ELV_SLICE_SCALE		(5)
+ #define ELV_HW_QUEUE_MIN	(5)
  
-+config IOSCHED_CFQ_HIER
-+	bool "CFQ Hierarchical Scheduling support"
-+	depends on IOSCHED_CFQ && CGROUPS
-+	select GROUP_IOSCHED
-+	default n
-+	---help---
-+	  Enable hierarhical scheduling in cfq.
++#define IO_DEFAULT_GRP_WEIGHT  500
++#define IO_DEFAULT_GRP_CLASS   IOPRIO_CLASS_BE
 +
- choice
- 	prompt "Default I/O scheduler"
- 	default DEFAULT_CFQ
-diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
-index 98fd508..a362ce1 100644
---- a/block/cfq-iosched.c
-+++ b/block/cfq-iosched.c
-@@ -1283,6 +1283,60 @@ static void cfq_init_cfqq(struct cfq_data *cfqd, struct cfq_queue *cfqq,
- 	cfqq->pid = pid;
+ #define IO_SERVICE_TREE_INIT   ((struct io_service_tree)		\
+ 				{ RB_ROOT, RB_ROOT, NULL, NULL, 0, 0 })
+ 
+@@ -898,6 +901,177 @@ static void io_flush_idle_tree(struct io_service_tree *st)
+ 		__bfq_deactivate_entity(entity, 0);
  }
  
-+#ifdef CONFIG_IOSCHED_CFQ_HIER
-+static void changed_cgroup(struct io_context *ioc, struct cfq_io_context *cic)
++/* Mainly hierarchical grouping code */
++#ifdef CONFIG_GROUP_IOSCHED
++
++struct io_cgroup io_root_cgroup = {
++	.weight = IO_DEFAULT_GRP_WEIGHT,
++	.ioprio_class = IO_DEFAULT_GRP_CLASS,
++};
++
++static struct io_cgroup *cgroup_to_io_cgroup(struct cgroup *cgroup)
 +{
-+	struct cfq_queue *async_cfqq = cic_to_cfqq(cic, 0);
-+	struct cfq_queue *sync_cfqq = cic_to_cfqq(cic, 1);
-+	struct cfq_data *cfqd = cic->key;
-+	struct io_group *iog, *__iog;
-+	unsigned long flags;
-+	struct request_queue *q;
++	return container_of(cgroup_subsys_state(cgroup, io_subsys_id),
++			    struct io_cgroup, css);
++}
 +
-+	if (unlikely(!cfqd))
-+		return;
++#define SHOW_FUNCTION(__VAR)						\
++static u64 io_cgroup_##__VAR##_read(struct cgroup *cgroup,		\
++				       struct cftype *cftype)		\
++{									\
++	struct io_cgroup *iocg;					\
++	u64 ret;							\
++									\
++	if (!cgroup_lock_live_group(cgroup))				\
++		return -ENODEV;						\
++									\
++	iocg = cgroup_to_io_cgroup(cgroup);				\
++	spin_lock_irq(&iocg->lock);					\
++	ret = iocg->__VAR;						\
++	spin_unlock_irq(&iocg->lock);					\
++									\
++	cgroup_unlock();						\
++									\
++	return ret;							\
++}
 +
-+	q = cfqd->queue;
++SHOW_FUNCTION(weight);
++SHOW_FUNCTION(ioprio_class);
++#undef SHOW_FUNCTION
 +
-+	spin_lock_irqsave(q->queue_lock, flags);
++#define STORE_FUNCTION(__VAR, __MIN, __MAX)				\
++static int io_cgroup_##__VAR##_write(struct cgroup *cgroup,		\
++					struct cftype *cftype,		\
++					u64 val)			\
++{									\
++	struct io_cgroup *iocg;					\
++	struct io_group *iog;						\
++	struct hlist_node *n;						\
++									\
++	if (val < (__MIN) || val > (__MAX))				\
++		return -EINVAL;						\
++									\
++	if (!cgroup_lock_live_group(cgroup))				\
++		return -ENODEV;						\
++									\
++	iocg = cgroup_to_io_cgroup(cgroup);				\
++									\
++	spin_lock_irq(&iocg->lock);					\
++	iocg->__VAR = (unsigned long)val;				\
++	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {	\
++		iog->entity.new_##__VAR = (unsigned long)val;		\
++		smp_wmb();						\
++		iog->entity.ioprio_changed = 1;				\
++	}								\
++	spin_unlock_irq(&iocg->lock);					\
++									\
++	cgroup_unlock();						\
++									\
++	return 0;							\
++}
 +
-+	iog = io_get_io_group(q, 0);
++STORE_FUNCTION(weight, 1, WEIGHT_MAX);
++STORE_FUNCTION(ioprio_class, IOPRIO_CLASS_RT, IOPRIO_CLASS_IDLE);
++#undef STORE_FUNCTION
 +
-+	if (async_cfqq != NULL) {
-+		__iog = cfqq_to_io_group(async_cfqq);
-+		if (iog != __iog) {
-+			/* cgroup changed, drop the reference to async queue */
-+			cic_set_cfqq(cic, NULL, 0);
-+			cfq_put_queue(async_cfqq);
-+		}
-+	}
++struct cftype bfqio_files[] = {
++	{
++		.name = "weight",
++		.read_u64 = io_cgroup_weight_read,
++		.write_u64 = io_cgroup_weight_write,
++	},
++	{
++		.name = "ioprio_class",
++		.read_u64 = io_cgroup_ioprio_class_read,
++		.write_u64 = io_cgroup_ioprio_class_write,
++	},
++};
 +
-+	if (sync_cfqq != NULL) {
-+		__iog = cfqq_to_io_group(sync_cfqq);
++static int iocg_populate(struct cgroup_subsys *subsys, struct cgroup *cgroup)
++{
++	return cgroup_add_files(cgroup, subsys, bfqio_files,
++				ARRAY_SIZE(bfqio_files));
++}
 +
++static struct cgroup_subsys_state *iocg_create(struct cgroup_subsys *subsys,
++						struct cgroup *cgroup)
++{
++	struct io_cgroup *iocg;
++
++	if (cgroup->parent != NULL) {
++		iocg = kzalloc(sizeof(*iocg), GFP_KERNEL);
++		if (iocg == NULL)
++			return ERR_PTR(-ENOMEM);
++	} else
++		iocg = &io_root_cgroup;
++
++	spin_lock_init(&iocg->lock);
++	INIT_HLIST_HEAD(&iocg->group_data);
++	iocg->weight = IO_DEFAULT_GRP_WEIGHT;
++	iocg->ioprio_class = IO_DEFAULT_GRP_CLASS;
++
++	return &iocg->css;
++}
++
++/*
++ * We cannot support shared io contexts, as we have no mean to support
++ * two tasks with the same ioc in two different groups without major rework
++ * of the main cic/bfqq data structures.  By now we allow a task to change
++ * its cgroup only if it's the only owner of its ioc; the drawback of this
++ * behavior is that a group containing a task that forked using CLONE_IO
++ * will not be destroyed until the tasks sharing the ioc die.
++ */
++static int iocg_can_attach(struct cgroup_subsys *subsys, struct cgroup *cgroup,
++			    struct task_struct *tsk)
++{
++	struct io_context *ioc;
++	int ret = 0;
++
++	/* task_lock() is needed to avoid races with exit_io_context() */
++	task_lock(tsk);
++	ioc = tsk->io_context;
++	if (ioc != NULL && atomic_read(&ioc->nr_tasks) > 1)
 +		/*
-+		 * Drop reference to sync queue. A new sync queue will
-+		 * be assigned in new group upon arrival of a fresh request.
-+		 * If old queue has got requests, those reuests will be
-+		 * dispatched over a period of time and queue will be freed
-+		 * automatically.
++		 * ioc == NULL means that the task is either too young or
++		 * exiting: if it has still no ioc the ioc can't be shared,
++		 * if the task is exiting the attach will fail anyway, no
++		 * matter what we return here.
 +		 */
-+		if (iog != __iog) {
-+			cic_set_cfqq(cic, NULL, 1);
-+			cfq_put_queue(sync_cfqq);
-+		}
-+	}
++		ret = -EINVAL;
++	task_unlock(tsk);
 +
-+	spin_unlock_irqrestore(q->queue_lock, flags);
++	return ret;
 +}
 +
-+static void cfq_ioc_set_cgroup(struct io_context *ioc)
++static void iocg_attach(struct cgroup_subsys *subsys, struct cgroup *cgroup,
++			 struct cgroup *prev, struct task_struct *tsk)
 +{
-+	call_for_each_cic(ioc, changed_cgroup);
-+	ioc->cgroup_changed = 0;
-+}
-+#endif  /* CONFIG_IOSCHED_CFQ_HIER */
++	struct io_context *ioc;
 +
- static struct cfq_queue *
- cfq_find_alloc_queue(struct cfq_data *cfqd, int is_sync,
- 		     struct io_context *ioc, gfp_t gfp_mask)
-@@ -1294,7 +1348,7 @@ cfq_find_alloc_queue(struct cfq_data *cfqd, int is_sync,
- 	struct io_group *iog = NULL;
++	task_lock(tsk);
++	ioc = tsk->io_context;
++	if (ioc != NULL)
++		ioc->cgroup_changed = 1;
++	task_unlock(tsk);
++}
++
++static void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup)
++{
++
++	/* Implemented in later patch */
++}
++
++struct cgroup_subsys io_subsys = {
++	.name = "io",
++	.create = iocg_create,
++	.can_attach = iocg_can_attach,
++	.attach = iocg_attach,
++	.destroy = iocg_destroy,
++	.populate = iocg_populate,
++	.subsys_id = io_subsys_id,
++	.use_id = 1,
++};
++#endif /* GROUP_IOSCHED */
+ /* Elevator fair queuing function */
+ static inline struct io_queue *elv_active_ioq(struct elevator_queue *e)
+ {
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index ed65a87..6711c85 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -13,11 +13,13 @@
+  */
  
- retry:
--	iog = io_get_io_group(q);
-+	iog = io_get_io_group(q, 1);
+ #include <linux/blkdev.h>
++#include <linux/cgroup.h>
  
- 	cic = cfq_cic_lookup(cfqd, ioc);
- 	/* cic always exists here */
-@@ -1384,7 +1438,7 @@ cfq_get_queue(struct cfq_data *cfqd, int is_sync, struct io_context *ioc,
- 	const int ioprio_class = task_ioprio_class(ioc);
- 	struct cfq_queue *async_cfqq = NULL;
- 	struct cfq_queue *cfqq = NULL;
--	struct io_group *iog = io_get_io_group(cfqd->queue);
-+	struct io_group *iog = io_get_io_group(cfqd->queue, 1);
+ #ifndef _BFQ_SCHED_H
+ #define _BFQ_SCHED_H
  
- 	if (!is_sync) {
- 		async_cfqq = io_group_async_queue_prio(iog, ioprio_class,
-@@ -1540,6 +1594,10 @@ out:
- 	smp_read_barrier_depends();
- 	if (unlikely(ioc->ioprio_changed))
- 		cfq_ioc_set_ioprio(ioc);
-+#ifdef CONFIG_IOSCHED_CFQ_HIER
-+	if (unlikely(ioc->cgroup_changed))
-+		cfq_ioc_set_cgroup(ioc);
+ #define IO_IOPRIO_CLASSES	3
++#define WEIGHT_MAX             1000
+ 
+ struct io_entity;
+ struct io_queue;
+@@ -88,7 +90,7 @@ struct io_sched_data {
+  *             this entity; used for O(log N) lookups into active trees.
+  * @service: service received during the last round of service.
+  * @budget: budget used to calculate F_i; F_i = S_i + @budget / @weight.
+- * @weight: weight of the queue, calculated as IOPRIO_BE_NR - @ioprio.
++ * @weight: the weight in use.
+  * @new_weight: when a weight change is requested, the new weight value
+  * @parent: parent entity, for hierarchical scheduling.
+  * @my_sched_data: for non-leaf nodes in the cgroup hierarchy, the
+@@ -178,8 +180,10 @@ struct io_queue {
+ 	void *sched_queue;
+ };
+ 
++#ifdef CONFIG_GROUP_IOSCHED
+ struct io_group {
+ 	struct io_entity entity;
++	struct hlist_node group_node;
+ 	struct io_sched_data sched_data;
+ 	struct io_entity *my_entity;
+ 
+@@ -190,8 +194,40 @@ struct io_group {
+ 
+ 	struct io_queue *async_queue[2][IOPRIO_BE_NR];
+ 	struct io_queue *async_idle_queue;
++	unsigned short iocg_id;
+ };
+ 
++/**
++ * struct io_cgroup - io cgroup data structure.
++ * @css: subsystem state for io in the containing cgroup.
++ * @weight: cgroup weight.
++ * @ioprio_class: cgroup ioprio_class.
++ * @lock: spinlock that protects @weight, @ioprio_class and @group_data.
++ * @group_data: list containing the io_group belonging to this cgroup.
++ *
++ * @group_data is accessed using RCU, with @lock protecting the updates,
++ * @weight and @ioprio_class are protected by @lock.
++ */
++struct io_cgroup {
++	struct cgroup_subsys_state css;
++
++	unsigned int weight;
++	unsigned short ioprio_class;
++
++	spinlock_t lock;
++	struct hlist_head group_data;
++};
++#else
++struct io_group {
++	struct io_sched_data sched_data;
++
++	/* async_queue and idle_queue are used only for cfq */
++	struct io_queue *async_queue[2][IOPRIO_BE_NR];
++	struct io_queue *async_idle_queue;
++};
++#endif /* CONFIG_GROUP_IOSCHED */
++
++
+ struct elv_fq_data {
+ 	struct io_group *root_group;
+ 
+diff --git a/include/linux/cgroup_subsys.h b/include/linux/cgroup_subsys.h
+index 9c8d31b..baf544f 100644
+--- a/include/linux/cgroup_subsys.h
++++ b/include/linux/cgroup_subsys.h
+@@ -60,3 +60,9 @@ SUBSYS(net_cls)
+ #endif
+ 
+ /* */
++
++#ifdef CONFIG_GROUP_IOSCHED
++SUBSYS(io)
 +#endif
- 	return cic;
- err_free:
- 	cfq_cic_free(cic);
-diff --git a/init/Kconfig b/init/Kconfig
-index fa3edd6..7a368d8 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -613,7 +613,7 @@ config CGROUP_MEM_RES_CTLR_SWAP
- 	  size is 4096bytes, 512k per 1Gbytes of swap.
++
++/* */
+diff --git a/include/linux/iocontext.h b/include/linux/iocontext.h
+index dd05434..0c8eebf 100644
+--- a/include/linux/iocontext.h
++++ b/include/linux/iocontext.h
+@@ -73,6 +73,11 @@ struct io_context {
+ 	unsigned short ioprio;
+ 	unsigned short ioprio_changed;
  
- config GROUP_IOSCHED
--	bool "Group IO Scheduler"
-+	bool
- 	depends on CGROUPS && ELV_FAIR_QUEUING
- 	default n
- 	---help---
++#ifdef CONFIG_GROUP_IOSCHED
++	/* If task changes the cgroup, elevator processes it asynchronously */
++	unsigned short cgroup_changed;
++#endif
++
+ 	/*
+ 	 * For request batching
+ 	 */
 -- 
 1.6.0.6
