@@ -1,50 +1,99 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper fixes for 2.6.31-rc5
-Date: Thu, 23 Jul 2009 22:23:10 +0100
-Message-ID: <20090723212310.GA31998@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: Re: [PATCH 7/9] blkio-cgroup-v9: Page tracking hooks
+Date: Fri, 24 Jul 2009 14:44:16 +0900 (JST)
+Message-ID: <20090724.144416.71112906.ryov@valinux.co.jp>
+References: <20090723164935.e97a3ccf.kamezawa.hiroyu@jp.fujitsu.com>
+	<20090723.190253.226783703.ryov@valinux.co.jp>
+	<5971c26b399a97f51dd10ea497617733.squirrel@webmail-b.css.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Christian =?iso-8859-1?Q?Borntr=E4ger?= <borntraeger@de.ibm.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <5971c26b399a97f51dd10ea497617733.squirrel@webmail-b.css.fujitsu.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: kamezawa.hiroyu@jp.fujitsu.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Please pull from:
+"KAMEZAWA Hiroyuki" <kamezawa.hiroyu@jp.fujitsu.com> wrote:
+> Ryo Tsuruta wrote:
+> > KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com> wrote:
+> 
+> >> > dm-ioband gives high priority to I/O for swap-out by checking whethe=
+> r
+> >> > PG_swapcache flag is set on the I/O page, regardless of the assigned
+> >> > I/O bandwidth, and the bandwidth consumed for swap-out is charged to
+> >> > the owner of the pages as a debt.
+> >> > How about this approach?
+> >>
+> >> I don't think it's reasonable. Why I/O device, scheduler should know
+> >> about
+> >> such mm-related information ? I think layering is wrong.
+> >
+> > I think that urgent I/O requests such as swap-out should be notified
+> > by setting a special flag in the struct bio, but there is no such
+> > mechanism at this time. That is why dm-ioband uses this approach.
+> >
+> >> And your approatch cannot be a workaround.
+> >>
+> >> In follwing _typical_ case,
+> >>
+> >>   - A process does small logging to /var/log/mylog, once in a sec.
+> >>     but it uses some amount of cold memory or shmem.
+> >>
+> >> This process's logging will be delayed _unexpectedly_ by some buggy
+> >> process
+> >> which does memory leak.
+> >
+> > Do you mean that the delay in logging is caused since the small process
+> > is swapped out unexpectedly by the buggy processes?
+> I don't write "small process", "small logging".
+> Buggy process does swap-out and cosumes someone else's bandwidth, then,
+> loggind will be delayed. Important here is throttle bandwidth consumed by
+> buggy prorcess, not other's.
 
-  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
+Thank you for explaining it.
 
-to get the following device-mapper fixes for 2.6.31-rc5:
+> > How about using memory cgroup to prevent the small process from swap-ou=
+> t?
+> It never be help if memcg is not configured.
 
-Mike Snitzer (2):
-      dm: remove queue next_ordered workaround for barriers
-      dm table: pass correct dev area size to device_area_is_valid
+blkio-cgroup is recommended to use with memcg. I think that it can be
+a good solution to resolve such problem.
 
-Mikulas Patocka (1):
-      dm raid1: wake kmirrord when requeueing delayed bios after remote recovery
+> My point is "don't allow anyone to use bandwidth of others."
+> Considering job isolation, a thread who requests swap-out should be charg=
+> ed
+> against bandwidth.
 
- drivers/md/dm-crypt.c         |    2 +-
- drivers/md/dm-delay.c         |    4 ++--
- drivers/md/dm-linear.c        |    2 +-
- drivers/md/dm-mpath.c         |    2 +-
- drivers/md/dm-raid1.c         |    3 ++-
- drivers/md/dm-stripe.c        |    7 ++++---
- drivers/md/dm-table.c         |   15 +++++----------
- drivers/md/dm.c               |   10 ----------
- drivers/md/dm.h               |    1 -
- include/linux/device-mapper.h |    4 ++--
- 10 files changed, 18 insertions(+), 32 deletions(-)
+From another perspective, the swap-out is caused since the buggy
+process uses a large amount of memory, so it can be considered as 
+the bandwidth of logging process is used due to the buggy process.
 
-Alasdair
--- 
-agk@redhat.com
+Please consider the following case. If a thread who requests swap-out
+is charged, the thread is charged other threads' I/O.
+
+   (1)                          --------      (2)
+   Process A                   |        |     Process B
+   mmaps a large area in   --> | memory | <-- tries to allocate a page.
+   the memory and writes       |        |
+   data to there.               --------     (3)
+                                   |         To get a free page,
+                                   |         the data written by Proc.A
+                                   |         is written out to the disk.
+                                   V         The I/O is done by using
+                                ---------    Proc.B's bandwidth.
+                               |  disk   |   
+                                ---------
+
+Thus I think that page owners should be charged against bandwidth.
+
+Thanks,
+Ryo Tsuruta
