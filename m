@@ -1,156 +1,136 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 13/24] io-controller: Wait for requests to complete from last queue before new queue is scheduled
-Date: Fri, 24 Jul 2009 16:27:43 -0400
-Message-ID: <1248467274-32073-14-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 24/24] map sync requests to group using bio tracking info
+Date: Fri, 24 Jul 2009 16:27:54 -0400
+Message-ID: <1248467274-32073-25-git-send-email-vgoyal@redhat.com>
 References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754262AbZGXU24@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754185AbZGXU2u@vger.kernel.org>
 In-Reply-To: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, ryov@valinux.co.jp, guijianfeng@
 Cc: lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, vgoyal@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-o Currently one can dispatch requests from multiple queues to the disk. This
-  is true for hardware which supports queuing. So if a disk support queue
-  depth of 31 it is possible that 20 requests are dispatched from queue 1
-  and then next queue is scheduled in which dispatches more requests.
+o sync requests are mapped to the cgroup submitting tasks belongs to. This
+  is an experimental patch where sync requets can be mapped to the group
+  using bio tracking information and not submitting task's context.
 
-o This multiple queue dispatch introduces issues for accurate accounting of
-  disk time consumed by a particular queue. For example, if one async queue
-  is scheduled in, it can dispatch 31 requests to the disk and then it will
-  be expired and a new sync queue might get scheduled in. These 31 requests
-  might take a long time to finish but this time is never accounted to the
-  async queue which dispatched these requests.
+o This patch implements this functionality only for noop, deadline and AS.
 
-o This patch introduces the functionality where we wait for all the requests
-  to finish from previous queue before next queue is scheduled in. That way
-  a queue is more accurately accounted for disk time it has consumed. Note
-  this still does not take care of errors introduced by disk write caching.
+o Introducing this patch for experimental purposes to see if it is really
+  meaningful or not.
 
-o Because above behavior can result in reduced throughput, this behavior will
-  be enabled only if user sets "fairness" tunable to 1.
-
-o This patch helps in achieving more isolation between reads and buffered
-  writes in different cgroups. buffered writes typically utilize full queue
-  depth and then expire the queue. On the contarary, sequential reads
-  typicaly driver queue depth of 1. So despite the fact that writes are
-  using more disk time it is never accounted to write queue because we don't
-  wait for requests to finish after dispatching these. This patch helps
-  do more accurate accounting of disk time, especially for buffered writes
-  hence providing better fairness hence better isolation between two cgroups
-  running read and write workloads.
+o This behavior is turned on by setting /sys/block/<disk>/queue/iosched/map_sync  varibale.
 
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/cfq-iosched.c |    1 +
- block/elevator-fq.c |   33 +++++++++++++++++++++++++++++++++
- block/elevator-fq.h |   10 +++++++++-
- 3 files changed, 43 insertions(+), 1 deletions(-)
+ block/as-iosched.c       |    1 +
+ block/deadline-iosched.c |    1 +
+ block/elevator-fq.c      |    7 ++++++-
+ block/elevator-fq.h      |    9 +++++++++
+ block/noop-iosched.c     |    1 +
+ 5 files changed, 18 insertions(+), 1 deletions(-)
 
-diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
-index 6238567..5cc3292 100644
---- a/block/cfq-iosched.c
-+++ b/block/cfq-iosched.c
-@@ -2126,6 +2126,7 @@ static struct elv_fs_entry cfq_attrs[] = {
- 	ELV_ATTR(slice_async),
- #ifdef CONFIG_GROUP_IOSCHED
+diff --git a/block/as-iosched.c b/block/as-iosched.c
+index 1282a78..d412e36 100644
+--- a/block/as-iosched.c
++++ b/block/as-iosched.c
+@@ -1768,6 +1768,7 @@ static struct elv_fs_entry as_attrs[] = {
+ 	ELV_ATTR(fairness),
+ 	ELV_ATTR(slice_sync),
  	ELV_ATTR(group_idle),
-+	ELV_ATTR(fairness),
++	ELV_ATTR(map_sync),
+ #endif
+ 	__ATTR_NULL
+ };
+diff --git a/block/deadline-iosched.c b/block/deadline-iosched.c
+index 9811a0e..b69c29f 100644
+--- a/block/deadline-iosched.c
++++ b/block/deadline-iosched.c
+@@ -465,6 +465,7 @@ static struct elv_fs_entry deadline_attrs[] = {
+ 	ELV_ATTR(fairness),
+ 	ELV_ATTR(slice_sync),
+ 	ELV_ATTR(group_idle),
++	ELV_ATTR(map_sync),
  #endif
  	__ATTR_NULL
  };
 diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 396bdcd..f207524 100644
+index 746c548..66b10eb 100644
 --- a/block/elevator-fq.c
 +++ b/block/elevator-fq.c
-@@ -2224,6 +2224,8 @@ SHOW_FUNCTION(elv_slice_sync_show, efqd->elv_slice[1], 1);
- EXPORT_SYMBOL(elv_slice_sync_show);
- SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
+@@ -2073,6 +2073,7 @@ struct io_group *io_get_io_group_bio(struct request_queue *q, struct bio *bio,
+ 					int create)
+ {
+ 	struct page *page = NULL;
++	struct elv_fq_data *efqd = &q->elevator->efqd;
+ 
+ 	/*
+ 	 * Determine the group from task context. Even calls from
+@@ -2091,7 +2092,7 @@ struct io_group *io_get_io_group_bio(struct request_queue *q, struct bio *bio,
+ 	}
+ 
+ 	/* Map the sync bio to the right group using task context */
+-	if (elv_bio_sync(bio))
++	if (elv_bio_sync(bio) && !efqd->map_sync)
+ 		goto sync;
+ 
+ #ifdef CONFIG_TRACK_ASYNC_CONTEXT
+@@ -2812,6 +2813,8 @@ SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
  EXPORT_SYMBOL(elv_slice_async_show);
-+SHOW_FUNCTION(elv_fairness_show, efqd->fairness, 0);
-+EXPORT_SYMBOL(elv_fairness_show);
+ SHOW_FUNCTION(elv_fairness_show, efqd->fairness, 0);
+ EXPORT_SYMBOL(elv_fairness_show);
++SHOW_FUNCTION(elv_map_sync_show, efqd->map_sync, 0);
++EXPORT_SYMBOL(elv_map_sync_show);
  #undef SHOW_FUNCTION
  
  #define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
-@@ -2248,6 +2250,8 @@ STORE_FUNCTION(elv_slice_sync_store, &efqd->elv_slice[1], 1, UINT_MAX, 1);
- EXPORT_SYMBOL(elv_slice_sync_store);
- STORE_FUNCTION(elv_slice_async_store, &efqd->elv_slice[0], 1, UINT_MAX, 1);
+@@ -2838,6 +2841,8 @@ STORE_FUNCTION(elv_slice_async_store, &efqd->elv_slice[0], 1, UINT_MAX, 1);
  EXPORT_SYMBOL(elv_slice_async_store);
-+STORE_FUNCTION(elv_fairness_store, &efqd->fairness, 0, 1, 0);
-+EXPORT_SYMBOL(elv_fairness_store);
+ STORE_FUNCTION(elv_fairness_store, &efqd->fairness, 0, 1, 0);
+ EXPORT_SYMBOL(elv_fairness_store);
++STORE_FUNCTION(elv_map_sync_store, &efqd->map_sync, 0, 1, 0);
++EXPORT_SYMBOL(elv_map_sync_store);
  #undef STORE_FUNCTION
  
  void elv_schedule_dispatch(struct request_queue *q)
-@@ -3093,6 +3097,24 @@ void *elv_fq_select_ioq(struct request_queue *q, int force)
- 	}
- 
- expire:
-+	if (efqd->fairness && !force && ioq && ioq->dispatched) {
-+		/*
-+		 * If there are request dispatched from this queue, don't
-+		 * dispatch requests from new queue till all the requests from
-+		 * this queue have completed.
-+		 *
-+		 * This helps in attributing right amount of disk time consumed
-+		 * by a particular queue when hardware allows queuing.
-+		 *
-+		 * Set ioq = NULL so that no more requests are dispatched from
-+		 * this queue.
-+		 */
-+		elv_log_ioq(efqd, ioq, "select: wait for requests to finish"
-+				" disp=%lu", ioq->dispatched);
-+		ioq = NULL;
-+		goto keep_queue;
-+	}
-+
- 	elv_ioq_slice_expired(q);
- new_queue:
- 	ioq = elv_set_active_ioq(q, new_ioq);
-@@ -3216,6 +3238,17 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 				goto done;
- 			}
- 
-+			/* If fairness is set and there are requests
-+			 * dispatched from this queue, don't dispatch
-+			 * new requests from a different queue till
-+			 * all requests from this queue have finished.
-+			 * This helps in attributing right disk time
-+			 * to a queue when hardware supports queuing.
-+			 */
-+
-+			if (efqd->fairness && ioq->dispatched)
-+				goto done;
-+
- 			/* Expire the queue */
- 			elv_ioq_slice_expired(q);
- 		} else if (!ioq->nr_queued && !elv_close_cooperator(q, ioq)
 diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index 95c1d94..106d6fd 100644
+index 185550e..0581e55 100644
 --- a/block/elevator-fq.h
 +++ b/block/elevator-fq.h
-@@ -321,6 +321,12 @@ struct elv_fq_data {
- 	 * Fallback dummy ioq for extreme OOM conditions
+@@ -347,6 +347,12 @@ struct elv_fq_data {
+ 	 * queue before new queue is scheduled in
  	 */
- 	struct io_queue oom_ioq;
+ 	unsigned int fairness;
 +
 +	/*
-+	 * If set to 1, waits for all request completions from current
-+	 * queue before new queue is scheduled in
++	 * Get io group bio belongs to from bio and not from submitting task
++	 * context
 +	 */
-+	unsigned int fairness;
++	unsigned int map_sync;
  };
  
  /* Logging facilities. */
-@@ -564,7 +570,9 @@ extern ssize_t elv_slice_sync_store(struct elevator_queue *q, const char *name,
- extern ssize_t elv_slice_async_show(struct elevator_queue *q, char *name);
- extern ssize_t elv_slice_async_store(struct elevator_queue *q, const char *name,
- 						size_t count);
--
-+extern ssize_t elv_fairness_show(struct elevator_queue *q, char *name);
-+extern ssize_t elv_fairness_store(struct elevator_queue *q, const char *name,
+@@ -551,6 +557,9 @@ extern void elv_put_iog(struct io_group *iog);
+ extern ssize_t elv_group_idle_show(struct elevator_queue *q, char *name);
+ extern ssize_t elv_group_idle_store(struct elevator_queue *q, const char *name,
+ 					size_t count);
++extern ssize_t elv_map_sync_show(struct elevator_queue *q, char *name);
++extern ssize_t elv_map_sync_store(struct elevator_queue *q, const char *name,
 +					size_t count);
- /* Functions used by elevator.c */
- extern int elv_init_fq_data(struct request_queue *q, struct elevator_queue *e);
- extern void elv_exit_fq_data(struct elevator_queue *e);
+ static inline void elv_get_iog(struct io_group *iog)
+ {
+ 	atomic_inc(&iog->ref);
+diff --git a/block/noop-iosched.c b/block/noop-iosched.c
+index 5811ea2..190f37b 100644
+--- a/block/noop-iosched.c
++++ b/block/noop-iosched.c
+@@ -87,6 +87,7 @@ static struct elv_fs_entry noop_attrs[] = {
+ 	ELV_ATTR(fairness),
+ 	ELV_ATTR(slice_sync),
+ 	ELV_ATTR(group_idle),
++	ELV_ATTR(map_sync),
+ 	__ATTR_NULL
+ };
+ #endif
 -- 
 1.6.0.6
