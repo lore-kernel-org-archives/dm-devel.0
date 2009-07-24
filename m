@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 22/24] io-controller: Per io group bdi congestion
-	interface
-Date: Fri, 24 Jul 2009 16:27:52 -0400
-Message-ID: <1248467274-32073-23-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 20/24] io-controller: map async requests to
+	appropriate cgroup
+Date: Fri, 24 Jul 2009 16:27:50 -0400
+Message-ID: <1248467274-32073-21-git-send-email-vgoyal@redhat.com>
 References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,844 +20,779 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: paolo.valente@unimore.it, dhaval@linux.vnet.ibm.com, peterz@infradead.org, fernando@oss.ntt.co.jp, lizf@cn.fujitsu.com, jmoyer@redhat.com, mikew@google.com, fchecconi@gmail.com, vgoyal@redhat.com, s-uchida@ap.jp.nec.com, akpm@linux-foundation.org, agk@redhat.com, m-ikeda@ds.jp.nec.com
 List-Id: dm-devel.ids
 
-o So far there used to be only one pair or queue  of request descriptors
-  (one for sync and one for async) per device and number of requests allocated
-  used to decide whether associated bdi is congested or not.
+o So far we were assuming that a bio/rq belongs to the task who is submitting
+  it. It did not hold good in case of async writes. This patch makes use of
+  blkio_cgroup pataches to attribute the aysnc writes to right group instead
+  of task submitting the bio.
 
-  Now with per io group request descriptor infrastructure, there is a pair
-  of request descriptor queue per io group per device. So it might happen
-  that overall request queue is not congested but a particular io group
-  bio belongs to is congested.
+o For sync requests, we continue to assume that io belongs to the task
+  submitting it. Only in case of async requests, we make use of io tracking
+  patches to track the owner cgroup.
 
-  Or, it could be otherwise that group is not congested but overall queue
-  is congested. This can happen if user has not properly set the request
-  descriptors limits for queue and groups.
-  (q->nr_requests < nr_groups * q->nr_group_requests)
+o So far cfq always caches the async queue pointer. With async requests now
+  not necessarily being tied to submitting task io context, caching the
+  pointer will not help for async queues. This patch introduces a new config
+  option CONFIG_TRACK_ASYNC_CONTEXT. If this option is not set, cfq retains
+  old behavior where async queue pointer is cached in task context. If it
+  is set, async queue pointer is not cached and we take help of bio
+  tracking patches to determine group bio belongs to and then map it to
+  async queue of that group.
 
-  Hence there is a need for new interface which can query deivce congestion
-  status per group. This group is determined by the "struct page" IO will be
-  done for. If page is null, then group is determined from the current task
-  context.
-
-o This patch introduces new set of function bdi_*_congested_group(), which
-  take "struct page" as addition argument. These functions will call the
-  block layer and in trun elevator to find out if the io group the page will
-  go into is congested or not.
-
-o Currently I have introduced the core functions and migrated most of the users.
-  But there might be still some left. This is an ongoing TODO item.
-
-o There are some io_get_io_group() related changes which should be pushed into
-  higher patches. Still testing this patch. Will push these changes up in next
-  posting.
-
+Signed-off-by: Nauman Rafique <nauman@google.com>
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/blk-core.c            |   21 ++++++++++++++
- block/elevator-fq.c         |   62 +++++++++++++++++++++++++++++++++++++++++++
- block/elevator-fq.h         |    6 ++++
- drivers/md/dm-table.c       |   11 +++++---
- drivers/md/dm.c             |    7 +++--
- drivers/md/dm.h             |    3 +-
- drivers/md/linear.c         |    7 +++-
- drivers/md/multipath.c      |    7 +++-
- drivers/md/raid0.c          |    6 +++-
- drivers/md/raid1.c          |    9 ++++--
- drivers/md/raid10.c         |    6 +++-
- drivers/md/raid5.c          |    2 +-
- fs/afs/write.c              |    8 +++++-
- fs/btrfs/disk-io.c          |    6 +++-
- fs/btrfs/extent_io.c        |   12 ++++++++
- fs/btrfs/volumes.c          |    8 ++++-
- fs/cifs/file.c              |   11 +++++++
- fs/ext2/ialloc.c            |    2 +-
- fs/gfs2/aops.c              |   12 ++++++++
- fs/nilfs2/segbuf.c          |    3 +-
- fs/xfs/linux-2.6/xfs_aops.c |    2 +-
- fs/xfs/linux-2.6/xfs_buf.c  |    2 +-
- include/linux/backing-dev.h |   61 ++++++++++++++++++++++++++++++++++++++++-
- include/linux/blkdev.h      |    5 +++
- mm/backing-dev.c            |   62 +++++++++++++++++++++++++++++++++++++++++++
- mm/page-writeback.c         |   11 +++++++
- mm/readahead.c              |    2 +-
- 27 files changed, 322 insertions(+), 32 deletions(-)
+ block/Kconfig.iosched    |   16 +++++
+ block/as-iosched.c       |    2 +-
+ block/blk-core.c         |    7 +-
+ block/cfq-iosched.c      |  151 ++++++++++++++++++++++++++++++++++++----------
+ block/deadline-iosched.c |    2 +-
+ block/elevator-fq.c      |  119 +++++++++++++++++++++++++++++++-----
+ block/elevator-fq.h      |   20 ++++--
+ block/elevator.c         |   15 +++--
+ include/linux/elevator.h |   22 ++++++-
+ 9 files changed, 284 insertions(+), 70 deletions(-)
 
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index 8ab08da..8b507c4 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -132,6 +132,22 @@ config DEBUG_GROUP_IOSCHED
+ 	  Enable some debugging hooks for hierarchical scheduling support.
+ 	  Currently it just outputs more information in blktrace output.
+ 
++config TRACK_ASYNC_CONTEXT
++	bool "Determine async request context from bio"
++	depends on GROUP_IOSCHED
++	select CGROUP_BLKIO
++	default n
++	---help---
++	  Normally async request is attributed to the task submitting the
++	  request. With group ioscheduling, for accurate accounting of
++	  async writes, one needs to map the request to original task/cgroup
++	  which originated the request and not the submitter of the request.
++
++	  Currently there are generic io tracking patches to provide facility
++	  to map bio to original owner. If this option is set, for async
++	  request, original owner of the bio is decided by using io tracking
++	  patches otherwise we continue to attribute the request to the
++	  submitting thread.
+ endmenu
+ 
+ endif
+diff --git a/block/as-iosched.c b/block/as-iosched.c
+index 2f68d5b..1282a78 100644
+--- a/block/as-iosched.c
++++ b/block/as-iosched.c
+@@ -1514,7 +1514,7 @@ as_merge(struct request_queue *q, struct request **req, struct bio *bio)
+ {
+ 	sector_t rb_key = bio->bi_sector + bio_sectors(bio);
+ 	struct request *__rq;
+-	struct as_queue *asq = elv_get_sched_queue_current(q);
++	struct as_queue *asq = elv_get_sched_queue_bio(q, bio);
+ 
+ 	if (!asq)
+ 		return ELEVATOR_NO_MERGE;
 diff --git a/block/blk-core.c b/block/blk-core.c
-index 10ab42a..6edf71d 100644
+index 4b45435..f046c1d 100644
 --- a/block/blk-core.c
 +++ b/block/blk-core.c
-@@ -90,6 +90,27 @@ void blk_queue_congestion_threshold(struct request_queue *q)
- 	q->nr_congestion_off = nr;
+@@ -626,7 +626,8 @@ static inline void blk_free_request(struct request_queue *q, struct request *rq)
  }
  
-+#ifdef CONFIG_GROUP_IOSCHED
-+int blk_queue_io_group_congested(struct backing_dev_info *bdi, int bdi_bits,
-+					struct page *page)
-+{
-+	int ret = 0;
-+	struct request_queue *q = bdi->unplug_io_data;
+ static struct request *
+-blk_alloc_request(struct request_queue *q, int flags, int priv, gfp_t gfp_mask)
++blk_alloc_request(struct request_queue *q, struct bio *bio, int flags, int priv,
++					gfp_t gfp_mask)
+ {
+ 	struct request *rq = mempool_alloc(q->rq.rq_pool, gfp_mask);
+ 
+@@ -638,7 +639,7 @@ blk_alloc_request(struct request_queue *q, int flags, int priv, gfp_t gfp_mask)
+ 	rq->cmd_flags = flags | REQ_ALLOCED;
+ 
+ 	if (priv) {
+-		if (unlikely(elv_set_request(q, rq, gfp_mask))) {
++		if (unlikely(elv_set_request(q, rq, bio, gfp_mask))) {
+ 			mempool_free(rq, q->rq.rq_pool);
+ 			return NULL;
+ 		}
+@@ -779,7 +780,7 @@ static struct request *get_request(struct request_queue *q, int rw_flags,
+ 		rw_flags |= REQ_IO_STAT;
+ 	spin_unlock_irq(q->queue_lock);
+ 
+-	rq = blk_alloc_request(q, rw_flags, priv, gfp_mask);
++	rq = blk_alloc_request(q, bio, rw_flags, priv, gfp_mask);
+ 	if (unlikely(!rq)) {
+ 		/*
+ 		 * Allocation failed presumably due to memory. Undo anything
+diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
+index 5cc3292..9527f46 100644
+--- a/block/cfq-iosched.c
++++ b/block/cfq-iosched.c
+@@ -174,8 +174,8 @@ CFQ_CFQQ_FNS(coop);
+ 	blk_add_trace_msg((cfqd)->queue, "cfq " fmt, ##args)
+ 
+ static void cfq_dispatch_insert(struct request_queue *, struct request *);
+-static struct cfq_queue *cfq_get_queue(struct cfq_data *, int,
+-				       struct io_context *, gfp_t);
++static struct cfq_queue *cfq_get_queue(struct cfq_data *, struct bio *bio,
++					int, struct io_context *, gfp_t);
+ static struct cfq_io_context *cfq_cic_lookup(struct cfq_data *,
+ 						struct io_context *);
+ 
+@@ -185,22 +185,56 @@ static inline struct cfq_queue *cic_to_cfqq(struct cfq_io_context *cic,
+ 	return cic->cfqq[!!is_sync];
+ }
+ 
+-static inline void cic_set_cfqq(struct cfq_io_context *cic,
+-				struct cfq_queue *cfqq, int is_sync)
+-{
+-	cic->cfqq[!!is_sync] = cfqq;
+-}
+-
+ /*
+- * We regard a request as SYNC, if it's either a read or has the SYNC bit
+- * set (in which case it could also be direct WRITE).
++ * Determine the cfq queue bio should go in. This is primarily used by
++ * front merge and allow merge functions.
++ *
++ * Currently this function takes the ioprio and iprio_class from task
++ * submitting async bio. Later save the task information in the page_cgroup
++ * and retrieve task's ioprio and class from there.
+  */
+-static inline int cfq_bio_sync(struct bio *bio)
++static struct cfq_queue *cic_bio_to_cfqq(struct cfq_data *cfqd,
++		struct cfq_io_context *cic, struct bio *bio, int is_sync)
+ {
+-	if (bio_data_dir(bio) == READ || bio_sync(bio))
+-		return 1;
++	struct cfq_queue *cfqq = NULL;
+ 
+-	return 0;
++	cfqq = cic_to_cfqq(cic, is_sync);
 +
-+	if (!q || !q->elevator)
-+		return bdi_congested(bdi, bdi_bits);
-+
-+	/* Do we need to hold queue lock? */
-+	if (bdi_bits & (1 << BDI_sync_congested))
-+		ret |= elv_io_group_congested(q, page, 1);
-+
-+	if (bdi_bits & (1 << BDI_async_congested))
-+		ret |= elv_io_group_congested(q, page, 0);
-+
-+	return ret;
++#ifdef CONFIG_TRACK_ASYNC_CONTEXT
++	if (!cfqq && !is_sync) {
++		const int ioprio = task_ioprio(cic->ioc);
++		const int ioprio_class = task_ioprio_class(cic->ioc);
++		struct io_group *iog;
++		/*
++		 * async bio tracking is enabled and we are not caching
++		 * async queue pointer in cic.
++		 */
++		iog = io_get_io_group_bio(cfqd->queue, bio, 0);
++		if (!iog) {
++			/*
++			 * May be this is first rq/bio and io group has not
++			 * been setup yet.
++			 */
++			return NULL;
++		}
++		return io_group_async_queue_prio(iog, ioprio_class, ioprio);
++	}
++#endif
++	return cfqq;
 +}
++
++static inline void cic_set_cfqq(struct cfq_io_context *cic,
++				struct cfq_queue *cfqq, int is_sync)
++{
++#ifdef CONFIG_TRACK_ASYNC_CONTEXT
++	/*
++	 * Don't cache async queue pointer as now one io context might
++	 * be submitting async io for various different async queues
++	 */
++	if (!is_sync)
++		return;
++#endif
++	cic->cfqq[!!is_sync] = cfqq;
+ }
+ 
+ static inline struct io_group *cfqq_to_io_group(struct cfq_queue *cfqq)
+@@ -522,7 +556,7 @@ cfq_find_rq_fmerge(struct cfq_data *cfqd, struct bio *bio)
+ 	if (!cic)
+ 		return NULL;
+ 
+-	cfqq = cic_to_cfqq(cic, cfq_bio_sync(bio));
++	cfqq = cic_bio_to_cfqq(cfqd, cic, bio, elv_bio_sync(bio));
+ 	if (cfqq) {
+ 		sector_t sector = bio->bi_sector + bio_sectors(bio);
+ 
+@@ -605,7 +639,7 @@ static int cfq_allow_merge(struct request_queue *q, struct request *rq,
+ 	/*
+ 	 * Disallow merge of a sync bio into an async request.
+ 	 */
+-	if (cfq_bio_sync(bio) && !rq_is_sync(rq))
++	if (elv_bio_sync(bio) && !rq_is_sync(rq))
+ 		return 0;
+ 
+ 	/*
+@@ -616,7 +650,7 @@ static int cfq_allow_merge(struct request_queue *q, struct request *rq,
+ 	if (!cic)
+ 		return 0;
+ 
+-	cfqq = cic_to_cfqq(cic, cfq_bio_sync(bio));
++	cfqq = cic_bio_to_cfqq(cfqd, cic, bio, elv_bio_sync(bio));
+ 	if (cfqq == RQ_CFQQ(rq))
+ 		return 1;
+ 
+@@ -1242,14 +1276,28 @@ static void changed_ioprio(struct io_context *ioc, struct cfq_io_context *cic)
+ 	spin_lock_irqsave(q->queue_lock, flags);
+ 
+ 	cfqq = cic->cfqq[BLK_RW_ASYNC];
++
+ 	if (cfqq) {
+ 		struct cfq_queue *new_cfqq;
+-		new_cfqq = cfq_get_queue(cfqd, BLK_RW_ASYNC, cic->ioc,
++
++		/*
++		 * Drop the reference to old queue unconditionally. Don't
++		 * worry whether new async prio queue has been allocated
++		 * or not.
++		 */
++		cic_set_cfqq(cic, NULL, BLK_RW_ASYNC);
++		cfq_put_queue(cfqq);
++
++		/*
++		 * Why to allocate new queue now? Will it not be automatically
++		 * allocated whenever another async request from same context
++		 * comes? Keeping it for the time being because existing cfq
++		 * code allocates the new queue immediately upon prio change
++		 */
++		new_cfqq = cfq_get_queue(cfqd, NULL, BLK_RW_ASYNC, cic->ioc,
+ 						GFP_ATOMIC);
+-		if (new_cfqq) {
+-			cic->cfqq[BLK_RW_ASYNC] = new_cfqq;
+-			cfq_put_queue(cfqq);
+-		}
++		if (new_cfqq)
++			cic_set_cfqq(cic, new_cfqq, BLK_RW_ASYNC);
+ 	}
+ 
+ 	cfqq = cic->cfqq[BLK_RW_SYNC];
+@@ -1300,7 +1348,7 @@ static void changed_cgroup(struct io_context *ioc, struct cfq_io_context *cic)
+ 
+ 	spin_lock_irqsave(q->queue_lock, flags);
+ 
+-	iog = io_get_io_group(q, 0);
++	iog = io_get_io_group(q, NULL, 0);
+ 
+ 	if (async_cfqq != NULL) {
+ 		__iog = cfqq_to_io_group(async_cfqq);
+@@ -1338,7 +1386,7 @@ static void cfq_ioc_set_cgroup(struct io_context *ioc)
+ #endif  /* CONFIG_IOSCHED_CFQ_HIER */
+ 
+ static struct cfq_queue *
+-cfq_find_alloc_queue(struct cfq_data *cfqd, int is_sync,
++cfq_find_alloc_queue(struct cfq_data *cfqd, struct bio *bio, int is_sync,
+ 		     struct io_context *ioc, gfp_t gfp_mask)
+ {
+ 	struct cfq_queue *cfqq, *new_cfqq = NULL;
+@@ -1348,12 +1396,28 @@ cfq_find_alloc_queue(struct cfq_data *cfqd, int is_sync,
+ 	struct io_group *iog = NULL;
+ 
+ retry:
+-	iog = io_get_io_group(q, 1);
++	iog = io_get_io_group_bio(q, bio, 1);
+ 
+ 	cic = cfq_cic_lookup(cfqd, ioc);
+ 	/* cic always exists here */
+ 	cfqq = cic_to_cfqq(cic, is_sync);
+ 
++#ifdef CONFIG_TRACK_ASYNC_CONTEXT
++	if (!cfqq && !is_sync) {
++		const int ioprio = task_ioprio(cic->ioc);
++		const int ioprio_class = task_ioprio_class(cic->ioc);
++
++		/*
++		 * We have not cached async queue pointer as bio tracking
++		 * is enabled. Look into group async queue array using ioc
++		 * class and prio to see if somebody already allocated the
++		 * queue.
++		 */
++
++		cfqq = io_group_async_queue_prio(iog, ioprio_class, ioprio);
++	}
 +#endif
 +
- /**
-  * blk_get_backing_dev_info - get the address of a queue's backing_dev_info
-  * @bdev:	device
+ 	/*
+ 	 * Always try a new alloc if we fell back to the OOM cfqq
+ 	 * originally, since it should just be a temporary situation.
+@@ -1431,14 +1495,14 @@ out:
+ }
+ 
+ static struct cfq_queue *
+-cfq_get_queue(struct cfq_data *cfqd, int is_sync, struct io_context *ioc,
+-	      gfp_t gfp_mask)
++cfq_get_queue(struct cfq_data *cfqd, struct bio *bio, int is_sync,
++		struct io_context *ioc, gfp_t gfp_mask)
+ {
+ 	const int ioprio = task_ioprio(ioc);
+ 	const int ioprio_class = task_ioprio_class(ioc);
+ 	struct cfq_queue *async_cfqq = NULL;
+ 	struct cfq_queue *cfqq = NULL;
+-	struct io_group *iog = io_get_io_group(cfqd->queue, 1);
++	struct io_group *iog = io_get_io_group_bio(cfqd->queue, bio, 1);
+ 
+ 	if (!is_sync) {
+ 		async_cfqq = io_group_async_queue_prio(iog, ioprio_class,
+@@ -1447,13 +1511,35 @@ cfq_get_queue(struct cfq_data *cfqd, int is_sync, struct io_context *ioc,
+ 	}
+ 
+ 	if (!cfqq)
+-		cfqq = cfq_find_alloc_queue(cfqd, is_sync, ioc, gfp_mask);
++		cfqq = cfq_find_alloc_queue(cfqd, bio, is_sync, ioc, gfp_mask);
+ 
+ 	if (!is_sync && !async_cfqq)
+ 		io_group_set_async_queue(iog, ioprio_class, ioprio, cfqq->ioq);
+ 
+-	/* ioc reference */
++#ifdef CONFIG_TRACK_ASYNC_CONTEXT
++	/*
++	 * ioc reference. If async request queue/group is determined from the
++	 * original task/cgroup and not from submitter task, io context can
++	 * not cache the pointer to async queue and everytime a request comes,
++	 * it will be determined by going through the async queue array.
++	 *
++	 * This comes from the fact that we might be getting async requests
++	 * which belong to a different cgroup altogether than the cgroup
++	 * iocontext belongs to. And this thread might be submitting bios
++	 * from various cgroups. So every time async queue will be different
++	 * based on the cgroup of the bio/rq. Can't cache the async cfqq
++	 * pointer in cic.
++	 */
++	if (is_sync)
++		elv_get_ioq(cfqq->ioq);
++#else
++	/*
++	 * async requests are being attributed to task submitting
++	 * it, hence cic can cache async cfqq pointer. Take the
++	 * queue reference even for async queue.
++	 */
+ 	elv_get_ioq(cfqq->ioq);
++#endif
+ 	return cfqq;
+ }
+ 
+@@ -1912,7 +1998,8 @@ static void cfq_put_request(struct request *rq)
+  * Allocate cfq data structures associated with this request.
+  */
+ static int
+-cfq_set_request(struct request_queue *q, struct request *rq, gfp_t gfp_mask)
++cfq_set_request(struct request_queue *q, struct request *rq, struct bio *bio,
++				gfp_t gfp_mask)
+ {
+ 	struct cfq_data *cfqd = q->elevator->elevator_data;
+ 	struct cfq_io_context *cic;
+@@ -1932,7 +2019,7 @@ cfq_set_request(struct request_queue *q, struct request *rq, gfp_t gfp_mask)
+ 
+ 	cfqq = cic_to_cfqq(cic, is_sync);
+ 	if (!cfqq || cfqq == &cfqd->oom_cfqq) {
+-		cfqq = cfq_get_queue(cfqd, is_sync, cic->ioc, gfp_mask);
++		cfqq = cfq_get_queue(cfqd, bio, is_sync, cic->ioc, gfp_mask);
+ 		cic_set_cfqq(cic, cfqq, is_sync);
+ 	}
+ 
+diff --git a/block/deadline-iosched.c b/block/deadline-iosched.c
+index 73cd98f..9811a0e 100644
+--- a/block/deadline-iosched.c
++++ b/block/deadline-iosched.c
+@@ -133,7 +133,7 @@ deadline_merge(struct request_queue *q, struct request **req, struct bio *bio)
+ 	int ret;
+ 	struct deadline_queue *dq;
+ 
+-	dq = elv_get_sched_queue_current(q);
++	dq = elv_get_sched_queue_bio(q, bio);
+ 	if (!dq)
+ 		return ELEVATOR_NO_MERGE;
+ 
 diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 0bc78ac..c41e84e 100644
+index 0849bb1..4042e16 100644
 --- a/block/elevator-fq.c
 +++ b/block/elevator-fq.c
-@@ -1238,6 +1238,62 @@ struct request_list *io_group_get_request_list(struct request_queue *q,
- 	return &iog->rl;
+@@ -16,6 +16,7 @@
+ #include "elevator-fq.h"
+ #include <linux/blktrace_api.h>
+ #include <linux/seq_file.h>
++#include <linux/biotrack.h>
+ 
+ /* Values taken from cfq */
+ const int elv_slice_sync = HZ / 10;
+@@ -1220,6 +1221,9 @@ struct io_cgroup io_root_cgroup = {
+ 
+ static struct io_cgroup *cgroup_to_io_cgroup(struct cgroup *cgroup)
+ {
++	if (!cgroup)
++		return &io_root_cgroup;
++
+ 	return container_of(cgroup_subsys_state(cgroup, io_subsys_id),
+ 			    struct io_cgroup, css);
  }
- 
-+/* Set io group congestion on and off thresholds */
-+void elv_io_group_congestion_threshold(struct request_queue *q,
-+						struct io_group *iog)
-+{
-+	int nr;
-+
-+	nr = q->nr_group_requests - (q->nr_group_requests / 8) + 1;
-+	if (nr > q->nr_group_requests)
-+		nr = q->nr_group_requests;
-+	iog->nr_congestion_on = nr;
-+
-+	nr = q->nr_group_requests - (q->nr_group_requests / 8)
-+			- (q->nr_group_requests / 16) - 1;
-+	if (nr < 1)
-+		nr = 1;
-+	iog->nr_congestion_off = nr;
-+}
-+
-+static inline int elv_is_iog_congested(struct request_queue *q,
-+					struct io_group *iog, int sync)
-+{
-+	if (iog->rl.count[sync] >= iog->nr_congestion_on)
-+		return 1;
-+	return 0;
-+}
-+
-+/* Determine if io group page maps to is congested or not */
-+int elv_io_group_congested(struct request_queue *q, struct page *page, int sync)
-+{
-+	struct io_group *iog;
-+	int ret = 0;
-+
-+	rcu_read_lock();
-+
-+	iog = io_get_io_group(q, page, 0);
-+
-+	if (!iog) {
-+		/*
-+		 * Either cgroup got deleted or this is first request in the
-+		 * group and associated io group object has not been created
-+		 * yet. Map it to root group.
-+		 *
-+		 * TODO: Fix the case of group not created yet.
-+		 */
-+		iog = q->elevator->efqd.root_group;
-+	}
-+
-+	ret = elv_is_iog_congested(q, iog, sync);
-+	if (ret)
-+		elv_log_iog(&q->elevator->efqd, iog, "iog congested=%d sync=%d"
-+			" rl.count[sync]=%d nr_group_requests=%d",
-+			ret, sync, iog->rl.count[sync], q->nr_group_requests);
-+	rcu_read_unlock();
-+	return ret;
-+}
-+
- /*
-  * Search the io_group for efqd into the hash table (by now only a list)
-  * of bgrp.  Must be called under rcu_read_lock().
-@@ -1614,6 +1670,7 @@ io_group_chain_alloc(struct request_queue *q, void *key, struct cgroup *cgroup)
- 
- 
- 		blk_init_request_list(&iog->rl);
-+		elv_io_group_congestion_threshold(q, iog);
- 
- 		if (leaf == NULL) {
- 			leaf = iog;
-@@ -1893,6 +1950,7 @@ static struct io_group *io_alloc_root_group(struct request_queue *q,
- 		iog->sched_data.service_tree[i] = IO_SERVICE_TREE_INIT;
- 
- 	blk_init_request_list(&iog->rl);
-+	elv_io_group_congestion_threshold(q, iog);
- 
- 	iocg = &io_root_cgroup;
- 	spin_lock_irq(&iocg->lock);
-@@ -1901,6 +1959,10 @@ static struct io_group *io_alloc_root_group(struct request_queue *q,
- 	iog->iocg_id = css_id(&iocg->css);
- 	spin_unlock_irq(&iocg->lock);
- 
-+#ifdef CONFIG_DEBUG_GROUP_IOSCHED
-+	io_group_path(iog, iog->path, sizeof(iog->path));
-+#endif
-+
+@@ -1730,9 +1734,60 @@ end:
  	return iog;
  }
  
++/* Map a page to respective cgroup. Null return means, map it to root cgroup */
++static inline struct cgroup *get_cgroup_from_page(struct page *page)
++{
++	unsigned long bio_cgroup_id;
++	struct cgroup *cgroup;
++
++	bio_cgroup_id = get_blkio_cgroup_id_page(page);
++
++	if (!bio_cgroup_id)
++		return NULL;
++
++	cgroup = blkio_cgroup_lookup(bio_cgroup_id);
++	return cgroup;
++}
++
++struct io_group *io_get_io_group_bio(struct request_queue *q, struct bio *bio,
++					int create)
++{
++	struct page *page = NULL;
++
++	/*
++	 * Determine the group from task context. Even calls from
++	 * blk_get_request() which don't have any bio info will be mapped
++	 * to the task's group
++	 */
++	if (!bio)
++		goto sync;
++
++	if (bio_barrier(bio)) {
++		/*
++		 * Map barrier requests to root group. May be more special
++		 * bio cases should come here
++		 */
++		return q->elevator->efqd.root_group;
++	}
++
++	/* Map the sync bio to the right group using task context */
++	if (elv_bio_sync(bio))
++		goto sync;
++
++#ifdef CONFIG_TRACK_ASYNC_CONTEXT
++	/* Determine the group from info stored in page */
++	page = bio_iovec_idx(bio, 0)->bv_page;
++	return io_get_io_group(q, page, create);
++#endif
++
++sync:
++	return io_get_io_group(q, NULL, create);
++}
++EXPORT_SYMBOL(io_get_io_group_bio);
++
+ /*
+- * Search for the io group current task belongs to. If create=1, then also
+- * create the io group if it is not already there.
++ * Find the io group page belongs to.
++ * If "create" is set, io group is created if it is not already present.
+  *
+  * Note: This function should be called with queue lock held. It returns
+  * a pointer to io group without taking any reference. That group will
+@@ -1740,28 +1795,48 @@ end:
+  * needs to get hold of queue lock). So if somebody needs to use group
+  * pointer even after dropping queue lock, take a reference to the group
+  * before dropping queue lock.
++ *
++ * One can call it without queue lock with rcu read lock held for browsing
++ * through the groups.
+  */
+-struct io_group *io_get_io_group(struct request_queue *q, int create)
++struct io_group *io_get_io_group(struct request_queue *q, struct page *page,
++					int create)
+ {
+ 	struct cgroup *cgroup;
+ 	struct io_group *iog;
+ 	struct elv_fq_data *efqd = &q->elevator->efqd;
+ 
+-	assert_spin_locked(q->queue_lock);
++	if (create)
++		assert_spin_locked(q->queue_lock);
+ 
+ 	rcu_read_lock();
+-	cgroup = task_cgroup(current, io_subsys_id);
+-	iog = io_find_alloc_group(q, cgroup, efqd, create);
+-	if (!iog) {
++
++	if (!page)
++		cgroup = task_cgroup(current, io_subsys_id);
++	else
++		cgroup = get_cgroup_from_page(page);
++
++	if (!cgroup) {
+ 		if (create)
+ 			iog = efqd->root_group;
+-		else
++		else {
+ 			/*
+ 			 * bio merge functions doing lookup don't want to
+ 			 * map bio to root group by default
+ 			 */
+ 			iog = NULL;
++		}
++		goto out;
+ 	}
++
++	iog = io_find_alloc_group(q, cgroup, efqd, create);
++	if (!iog) {
++		if (create)
++			iog = efqd->root_group;
++		else
++			iog = NULL;
++	}
++out:
+ 	rcu_read_unlock();
+ 	return iog;
+ }
+@@ -2074,7 +2149,7 @@ int io_group_allow_merge(struct request *rq, struct bio *bio)
+ 		return 1;
+ 
+ 	/* Determine the io group of the bio submitting task */
+-	iog = io_get_io_group(q, 0);
++	iog = io_get_io_group_bio(q, bio, 0);
+ 	if (!iog) {
+ 		/* May be task belongs to a differet cgroup for which io
+ 		 * group has not been setup yet. */
+@@ -2098,7 +2173,7 @@ int io_group_allow_merge(struct request *rq, struct bio *bio)
+  * function is not invoked.
+  */
+ int elv_fq_set_request_ioq(struct request_queue *q, struct request *rq,
+-					gfp_t gfp_mask)
++				struct bio *bio, gfp_t gfp_mask)
+ {
+ 	struct elevator_queue *e = q->elevator;
+ 	unsigned long flags;
+@@ -2114,7 +2189,7 @@ int elv_fq_set_request_ioq(struct request_queue *q, struct request *rq,
+ 
+ retry:
+ 	/* Determine the io group request belongs to */
+-	iog = io_get_io_group(q, 1);
++	iog = io_get_io_group_bio(q, bio, 1);
+ 	BUG_ON(!iog);
+ 
+ 	/* Get the iosched queue */
+@@ -2202,17 +2277,17 @@ queue_fail:
+ }
+ 
+ /*
+- * Find out the io queue of current task. Optimization for single ioq
++ * Find out the io queue of bio belongs to. Optimization for single ioq
+  * per io group io schedulers.
+  */
+-struct io_queue *elv_lookup_ioq_current(struct request_queue *q)
++struct io_queue *elv_lookup_ioq_bio(struct request_queue *q, struct bio *bio)
+ {
+ 	struct io_group *iog;
+ 
+ 	/* Determine the io group and io queue of the bio submitting task */
+-	iog = io_get_io_group(q, 0);
++	iog = io_get_io_group_bio(q, bio, 0);
+ 	if (!iog) {
+-		/* May be task belongs to a cgroup for which io group has
++		/* May be bio belongs to a cgroup for which io group has
+ 		 * not been setup yet. */
+ 		return NULL;
+ 	}
+@@ -2286,13 +2361,21 @@ static void io_free_root_group(struct elevator_queue *e)
+ 	kfree(iog);
+ }
+ 
+-struct io_group *io_get_io_group(struct request_queue *q, int create)
++struct io_group *io_get_io_group(struct request_queue *q, struct page *page,
++						int create)
+ {
+ 	/* In flat mode, there is only root group */
+ 	return q->elevator->efqd.root_group;
+ }
+ EXPORT_SYMBOL(io_get_io_group);
+ 
++struct io_group *io_get_io_group_bio(struct request_queue *q, struct bio *bio,
++						int create)
++{
++	return q->elevator->efqd.root_group;
++}
++EXPORT_SYMBOL(io_get_io_group_bio);
++
+ static inline int is_only_root_group(void)
+ {
+ 	return 1;
+@@ -3379,6 +3462,10 @@ expire:
+ new_queue:
+ 	ioq = elv_set_active_ioq(q, new_ioq);
+ keep_queue:
++	if (ioq)
++		elv_log_ioq(efqd, ioq, "select busy=%d qued=%d disp=%d",
++				elv_nr_busy_ioq(q->elevator), ioq->nr_queued,
++				elv_ioq_nr_dispatched(ioq));
+ 	return ioq;
+ }
+ 
 diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index ad08946..44e9255 100644
+index 9715fc5..639f89a 100644
 --- a/block/elevator-fq.h
 +++ b/block/elevator-fq.h
-@@ -266,6 +266,10 @@ struct io_group {
- 	/* Single ioq per group, used for noop, deadline, anticipatory */
- 	struct io_queue *ioq;
+@@ -550,10 +550,11 @@ static inline int update_requeue(struct io_queue *ioq, int requeue)
+ }
  
-+	/* io group congestion on and off threshold for request descriptors */
-+	unsigned int nr_congestion_on;
-+	unsigned int nr_congestion_off;
-+
- 	/* request list associated with the group */
- 	struct request_list rl;
- };
-@@ -560,6 +564,8 @@ extern struct io_queue *elv_lookup_ioq_bio(struct request_queue *q,
- 						struct bio *bio);
- extern struct request_list *io_group_get_request_list(struct request_queue *q,
- 						struct bio *bio);
-+extern int elv_io_group_congested(struct request_queue *q, struct page *page,
-+					int sync);
+ extern int elv_fq_set_request_ioq(struct request_queue *q, struct request *rq,
+-					gfp_t gfp_mask);
++					struct bio *bio, gfp_t gfp_mask);
+ extern void elv_fq_unset_request_ioq(struct request_queue *q,
+ 					struct request *rq);
+-extern struct io_queue *elv_lookup_ioq_current(struct request_queue *q);
++extern struct io_queue *elv_lookup_ioq_bio(struct request_queue *q,
++						struct bio *bio);
  
  /* Sets the single ioq associated with the io group. (noop, deadline, AS) */
  static inline void io_group_set_ioq(struct io_group *iog, struct io_queue *ioq)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 2cba557..2dc0e4f 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1175,7 +1175,8 @@ int dm_table_resume_targets(struct dm_table *t)
+@@ -588,7 +589,7 @@ static inline void io_group_set_ioq(struct io_group *iog, struct io_queue *ioq)
+ }
+ 
+ static inline int elv_fq_set_request_ioq(struct request_queue *q,
+-					struct request *rq, gfp_t gfp_mask)
++			struct request *rq, struct bio *bio, gfp_t gfp_mask)
+ {
  	return 0;
  }
- 
--int dm_table_any_congested(struct dm_table *t, int bdi_bits)
-+int dm_table_any_congested(struct dm_table *t, int bdi_bits, struct page *page,
-+				int group)
+@@ -598,7 +599,8 @@ static inline void elv_fq_unset_request_ioq(struct request_queue *q,
  {
- 	struct dm_dev_internal *dd;
- 	struct list_head *devices = dm_table_get_devices(t);
-@@ -1185,9 +1186,11 @@ int dm_table_any_congested(struct dm_table *t, int bdi_bits)
- 		struct request_queue *q = bdev_get_queue(dd->dm_dev.bdev);
- 		char b[BDEVNAME_SIZE];
- 
--		if (likely(q))
--			r |= bdi_congested(&q->backing_dev_info, bdi_bits);
--		else
-+		if (likely(q)) {
-+			struct backing_dev_info *bdi = &q->backing_dev_info;
-+			r |= group ? bdi_congested_group(bdi, bdi_bits, page)
-+				: bdi_congested(bdi, bdi_bits);
-+		} else
- 			DMWARN_LIMIT("%s: any_congested: nonexistent device %s",
- 				     dm_device_name(t->md),
- 				     bdevname(dd->dm_dev.bdev, b));
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 9acd54a..f5d490b 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1608,7 +1608,8 @@ static void dm_unplug_all(struct request_queue *q)
- 	}
  }
  
--static int dm_any_congested(void *congested_data, int bdi_bits)
-+static int dm_any_congested(void *congested_data, int bdi_bits,
-+					struct page *page, int group)
+-static inline struct io_queue *elv_lookup_ioq_current(struct request_queue *q)
++static inline struct io_queue *elv_lookup_ioq_bio(struct request_queue *q,
++						struct bio *bio)
  {
- 	int r = bdi_bits;
- 	struct mapped_device *md = congested_data;
-@@ -1625,8 +1626,8 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
- 				r = md->queue->backing_dev_info.state &
- 				    bdi_bits;
- 			else
--				r = dm_table_any_congested(map, bdi_bits);
--
-+				r = dm_table_any_congested(map, bdi_bits, page,
-+								 group);
- 			dm_table_put(map);
- 		}
- 	}
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 23278ae..9c4c5a5 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -57,7 +57,8 @@ struct list_head *dm_table_get_devices(struct dm_table *t);
- void dm_table_presuspend_targets(struct dm_table *t);
- void dm_table_postsuspend_targets(struct dm_table *t);
- int dm_table_resume_targets(struct dm_table *t);
--int dm_table_any_congested(struct dm_table *t, int bdi_bits);
-+int dm_table_any_congested(struct dm_table *t, int bdi_bits, struct page *page,
-+				int group);
- int dm_table_any_busy_target(struct dm_table *t);
- int dm_table_set_type(struct dm_table *t);
- unsigned dm_table_get_type(struct dm_table *t);
-diff --git a/drivers/md/linear.c b/drivers/md/linear.c
-index 5810fa9..ec3acc2 100644
---- a/drivers/md/linear.c
-+++ b/drivers/md/linear.c
-@@ -102,7 +102,7 @@ static void linear_unplug(struct request_queue *q)
- 	rcu_read_unlock();
+ 	return NULL;
  }
- 
--static int linear_congested(void *data, int bits)
-+static int linear_congested(void *data, int bits, struct page *page, int group)
+@@ -655,7 +657,10 @@ extern void *io_group_async_queue_prio(struct io_group *iog, int ioprio_class,
+ 					int ioprio);
+ extern void io_group_set_async_queue(struct io_group *iog, int ioprio_class,
+ 					int ioprio, struct io_queue *ioq);
+-extern struct io_group *io_get_io_group(struct request_queue *q, int create);
++extern struct io_group *io_get_io_group(struct request_queue *q,
++					struct page *page, int create);
++extern struct io_group *io_get_io_group_bio(struct request_queue *q,
++					struct bio *bio, int create);
+ extern int elv_nr_busy_ioq(struct elevator_queue *e);
+ extern int elv_rq_in_driver(struct elevator_queue *e);
+ extern struct io_queue *elv_alloc_ioq(struct request_queue *q, gfp_t gfp_mask);
+@@ -714,7 +719,7 @@ static inline int io_group_allow_merge(struct request *rq, struct bio *bio)
+ 	return 1;
+ }
+ static inline int elv_fq_set_request_ioq(struct request_queue *q,
+-					struct request *rq, gfp_t gfp_mask)
++			struct request *rq, struct bio *bio, gfp_t gfp_mask)
  {
- 	mddev_t *mddev = data;
- 	linear_conf_t *conf;
-@@ -113,7 +113,10 @@ static int linear_congested(void *data, int bits)
- 
- 	for (i = 0; i < mddev->raid_disks && !ret ; i++) {
- 		struct request_queue *q = bdev_get_queue(conf->disks[i].rdev->bdev);
--		ret |= bdi_congested(&q->backing_dev_info, bits);
-+		struct backing_dev_info *bdi = &q->backing_dev_info;
-+
-+		ret |= group ? bdi_congested_group(bdi, bits, page) :
-+			bdi_congested(bdi, bits);
- 	}
- 
- 	rcu_read_unlock();
-diff --git a/drivers/md/multipath.c b/drivers/md/multipath.c
-index 237fe3f..ab96712 100644
---- a/drivers/md/multipath.c
-+++ b/drivers/md/multipath.c
-@@ -192,7 +192,8 @@ static void multipath_status (struct seq_file *seq, mddev_t *mddev)
- 	seq_printf (seq, "]");
+ 	return 0;
  }
- 
--static int multipath_congested(void *data, int bits)
-+static int multipath_congested(void *data, int bits, struct page *page,
-+					int group)
+@@ -724,7 +729,8 @@ static inline void elv_fq_unset_request_ioq(struct request_queue *q,
  {
- 	mddev_t *mddev = data;
- 	multipath_conf_t *conf = mddev->private;
-@@ -203,8 +204,10 @@ static int multipath_congested(void *data, int bits)
- 		mdk_rdev_t *rdev = rcu_dereference(conf->multipaths[i].rdev);
- 		if (rdev && !test_bit(Faulty, &rdev->flags)) {
- 			struct request_queue *q = bdev_get_queue(rdev->bdev);
-+			struct backing_dev_info *bdi = &q->backing_dev_info;
- 
--			ret |= bdi_congested(&q->backing_dev_info, bits);
-+			ret |= group ? bdi_congested_group(bdi, bits, page)
-+				: bdi_congested(bdi, bits);
- 			/* Just like multipath_map, we just check the
- 			 * first available device
- 			 */
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index 335f490..b50c11b 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -37,7 +37,7 @@ static void raid0_unplug(struct request_queue *q)
- 	}
  }
  
--static int raid0_congested(void *data, int bits)
-+static int raid0_congested(void *data, int bits, struct page *page, int group)
+-static inline struct io_queue *elv_lookup_ioq_current(struct request_queue *q)
++static inline struct io_queue *elv_lookup_ioq_bio(struct request_queue *q,
++						struct bio *bio)
  {
- 	mddev_t *mddev = data;
- 	raid0_conf_t *conf = mddev->private;
-@@ -46,8 +46,10 @@ static int raid0_congested(void *data, int bits)
- 
- 	for (i = 0; i < mddev->raid_disks && !ret ; i++) {
- 		struct request_queue *q = bdev_get_queue(devlist[i]->bdev);
-+		struct backing_dev_info *bdi = &q->backing_dev_info;
- 
--		ret |= bdi_congested(&q->backing_dev_info, bits);
-+		ret |= group ? bdi_congested_group(bdi, bits, page)
-+				: bdi_congested(bdi, bits);
- 	}
- 	return ret;
+ 	return NULL;
  }
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 0569efb..3f30375 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -570,7 +570,7 @@ static void raid1_unplug(struct request_queue *q)
- 	md_wakeup_thread(mddev->thread);
+diff --git a/block/elevator.c b/block/elevator.c
+index 11a15ac..b2850cf 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -846,7 +846,8 @@ struct request *elv_former_request(struct request_queue *q, struct request *rq)
+ 	return NULL;
  }
  
--static int raid1_congested(void *data, int bits)
-+static int raid1_congested(void *data, int bits, struct page *page, int group)
+-int elv_set_request(struct request_queue *q, struct request *rq, gfp_t gfp_mask)
++int elv_set_request(struct request_queue *q, struct request *rq,
++			struct bio *bio, gfp_t gfp_mask)
  {
- 	mddev_t *mddev = data;
- 	conf_t *conf = mddev->private;
-@@ -581,14 +581,17 @@ static int raid1_congested(void *data, int bits)
- 		mdk_rdev_t *rdev = rcu_dereference(conf->mirrors[i].rdev);
- 		if (rdev && !test_bit(Faulty, &rdev->flags)) {
- 			struct request_queue *q = bdev_get_queue(rdev->bdev);
-+			struct backing_dev_info *bdi = &q->backing_dev_info;
+ 	struct elevator_queue *e = q->elevator;
  
- 			/* Note the '|| 1' - when read_balance prefers
- 			 * non-congested targets, it can be removed
- 			 */
- 			if ((bits & (1<<BDI_async_congested)) || 1)
--				ret |= bdi_congested(&q->backing_dev_info, bits);
-+				ret |= group ? bdi_congested_group(bdi, bits,
-+					page) : bdi_congested(bdi, bits);
- 			else
--				ret &= bdi_congested(&q->backing_dev_info, bits);
-+				ret &= group ? bdi_congested_group(bdi, bits,
-+					page) : bdi_congested(bdi, bits);
- 		}
- 	}
- 	rcu_read_unlock();
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 7298a5e..895f5fb 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -625,7 +625,7 @@ static void raid10_unplug(struct request_queue *q)
- 	md_wakeup_thread(mddev->thread);
- }
- 
--static int raid10_congested(void *data, int bits)
-+static int raid10_congested(void *data, int bits, struct page *page, int group)
- {
- 	mddev_t *mddev = data;
- 	conf_t *conf = mddev->private;
-@@ -636,8 +636,10 @@ static int raid10_congested(void *data, int bits)
- 		mdk_rdev_t *rdev = rcu_dereference(conf->mirrors[i].rdev);
- 		if (rdev && !test_bit(Faulty, &rdev->flags)) {
- 			struct request_queue *q = bdev_get_queue(rdev->bdev);
-+			struct backing_dev_info *bdi = &q->backing_dev_info;
- 
--			ret |= bdi_congested(&q->backing_dev_info, bits);
-+			ret |= group ? bdi_congested_group(bdi, bits, page)
-+				: bdi_congested(bdi, bits);
- 		}
- 	}
- 	rcu_read_unlock();
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 3783553..a19937c 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -3323,7 +3323,7 @@ static void raid5_unplug_device(struct request_queue *q)
- 	unplug_slaves(mddev);
- }
- 
--static int raid5_congested(void *data, int bits)
-+static int raid5_congested(void *data, int bits, struct page *page, int group)
- {
- 	mddev_t *mddev = data;
- 	raid5_conf_t *conf = mddev->private;
-diff --git a/fs/afs/write.c b/fs/afs/write.c
-index c2e7a7f..aa8b359 100644
---- a/fs/afs/write.c
-+++ b/fs/afs/write.c
-@@ -455,7 +455,7 @@ int afs_writepage(struct page *page, struct writeback_control *wbc)
- 	}
- 
- 	wbc->nr_to_write -= ret;
--	if (wbc->nonblocking && bdi_write_congested(bdi))
-+	if (wbc->nonblocking && bdi_or_group_write_congested(bdi, page))
- 		wbc->encountered_congestion = 1;
- 
- 	_leave(" = 0");
-@@ -491,6 +491,12 @@ static int afs_writepages_region(struct address_space *mapping,
- 			return 0;
- 		}
- 
-+		if (wbc->nonblocking && bdi_write_congested_group(bdi, page)) {
-+			wbc->encountered_congestion = 1;
-+			page_cache_release(page);
-+			break;
-+		}
-+
- 		/* at this point we hold neither mapping->tree_lock nor lock on
- 		 * the page itself: the page may be truncated or invalidated
- 		 * (changing page->mapping to NULL), or even swizzled back from
-diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-index d28d29c..cd7cf6c 100644
---- a/fs/btrfs/disk-io.c
-+++ b/fs/btrfs/disk-io.c
-@@ -1249,7 +1249,8 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
- 	return root;
- }
- 
--static int btrfs_congested_fn(void *congested_data, int bdi_bits)
-+static int btrfs_congested_fn(void *congested_data, int bdi_bits,
-+					struct page *page, int group)
- {
- 	struct btrfs_fs_info *info = (struct btrfs_fs_info *)congested_data;
- 	int ret = 0;
-@@ -1260,7 +1261,8 @@ static int btrfs_congested_fn(void *congested_data, int bdi_bits)
- 		if (!device->bdev)
- 			continue;
- 		bdi = blk_get_backing_dev_info(device->bdev);
--		if (bdi && bdi_congested(bdi, bdi_bits)) {
-+		if (bdi && (group ? bdi_congested_group(bdi, bdi_bits, page) :
-+		    bdi_congested(bdi, bdi_bits))) {
- 			ret = 1;
- 			break;
- 		}
-diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
-index 6826018..fd7d53f 100644
---- a/fs/btrfs/extent_io.c
-+++ b/fs/btrfs/extent_io.c
-@@ -2368,6 +2368,18 @@ retry:
- 		unsigned i;
- 
- 		scanned = 1;
-+
-+		/*
-+		 * If the io group page will go into is congested, bail out.
-+		 */
-+		if (wbc->nonblocking
-+		    && bdi_write_congested_group(bdi, pvec.pages[0])) {
-+			wbc->encountered_congestion = 1;
-+			done = 1;
-+			pagevec_release(&pvec);
-+			break;
-+		}
-+
- 		for (i = 0; i < nr_pages; i++) {
- 			struct page *page = pvec.pages[i];
- 
-diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index 3ab80e9..7ab5dea 100644
---- a/fs/btrfs/volumes.c
-+++ b/fs/btrfs/volumes.c
-@@ -165,6 +165,7 @@ static noinline int run_scheduled_bios(struct btrfs_device *device)
- 	unsigned long limit;
- 	unsigned long last_waited = 0;
- 	int force_reg = 0;
-+	struct page *page;
- 
- 	bdi = blk_get_backing_dev_info(device->bdev);
- 	fs_info = device->dev_root->fs_info;
-@@ -276,8 +277,11 @@ loop_lock:
- 		 * is now congested.  Back off and let other work structs
- 		 * run instead
- 		 */
--		if (pending && bdi_write_congested(bdi) && batch_run > 32 &&
--		    fs_info->fs_devices->open_devices > 1) {
-+		if (pending)
-+			page = bio_iovec_idx(pending, 0)->bv_page;
-+
-+		if (pending && bdi_or_group_write_congested(bdi, page) &&
-+		    num_run > 32 && fs_info->fs_devices->open_devices > 1) {
- 			struct io_context *ioc;
- 
- 			ioc = current->io_context;
-diff --git a/fs/cifs/file.c b/fs/cifs/file.c
-index c34b7f8..33d0339 100644
---- a/fs/cifs/file.c
-+++ b/fs/cifs/file.c
-@@ -1470,6 +1470,17 @@ retry:
- 		n_iov = 0;
- 		bytes_to_write = 0;
- 
-+		/*
-+		 * If the io group page will go into is congested, bail out.
-+		 */
-+		if (wbc->nonblocking &&
-+		    bdi_write_congested_group(bdi, pvec.pages[0])) {
-+			wbc->encountered_congestion = 1;
-+			done = 1;
-+			pagevec_release(&pvec);
-+			break;
-+		}
-+
- 		for (i = 0; i < nr_pages; i++) {
- 			page = pvec.pages[i];
- 			/*
-diff --git a/fs/ext2/ialloc.c b/fs/ext2/ialloc.c
-index 15387c9..090a961 100644
---- a/fs/ext2/ialloc.c
-+++ b/fs/ext2/ialloc.c
-@@ -179,7 +179,7 @@ static void ext2_preread_inode(struct inode *inode)
- 	struct backing_dev_info *bdi;
- 
- 	bdi = inode->i_mapping->backing_dev_info;
--	if (bdi_read_congested(bdi))
-+	if (bdi_or_group_read_congested(bdi, NULL))
- 		return;
- 	if (bdi_write_congested(bdi))
- 		return;
-diff --git a/fs/gfs2/aops.c b/fs/gfs2/aops.c
-index 03ebb43..5b9c93b 100644
---- a/fs/gfs2/aops.c
-+++ b/fs/gfs2/aops.c
-@@ -371,6 +371,18 @@ retry:
- 					       PAGECACHE_TAG_DIRTY,
- 					       min(end - index, (pgoff_t)PAGEVEC_SIZE-1) + 1))) {
- 		scanned = 1;
-+
-+		/*
-+		 * If io group page belongs to is congested. bail out.
-+		 */
-+		if (wbc->nonblocking
-+		    && bdi_write_congested_group(bdi, pvec.pages[0])) {
-+			wbc->encountered_congestion = 1;
-+			done = 1;
-+			pagevec_release(&pvec);
-+			break;
-+		}
-+
- 		ret = gfs2_write_jdata_pagevec(mapping, wbc, &pvec, nr_pages, end);
- 		if (ret)
- 			done = 1;
-diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-index 9e3fe17..aa29612 100644
---- a/fs/nilfs2/segbuf.c
-+++ b/fs/nilfs2/segbuf.c
-@@ -266,8 +266,9 @@ static int nilfs_submit_seg_bio(struct nilfs_write_info *wi, int mode)
- {
- 	struct bio *bio = wi->bio;
- 	int err;
-+	struct page *page = bio_iovec_idx(bio, 0)->bv_page;
- 
--	if (wi->nbio > 0 && bdi_write_congested(wi->bdi)) {
-+	if (wi->nbio > 0 && bdi_or_group_write_congested(wi->bdi, page)) {
- 		wait_for_completion(&wi->bio_event);
- 		wi->nbio--;
- 		if (unlikely(atomic_read(&wi->err))) {
-diff --git a/fs/xfs/linux-2.6/xfs_aops.c b/fs/xfs/linux-2.6/xfs_aops.c
-index 7ec89fc..2a515ab 100644
---- a/fs/xfs/linux-2.6/xfs_aops.c
-+++ b/fs/xfs/linux-2.6/xfs_aops.c
-@@ -891,7 +891,7 @@ xfs_convert_page(
- 
- 			bdi = inode->i_mapping->backing_dev_info;
- 			wbc->nr_to_write--;
--			if (bdi_write_congested(bdi)) {
-+			if (bdi_or_group_write_congested(bdi, page)) {
- 				wbc->encountered_congestion = 1;
- 				done = 1;
- 			} else if (wbc->nr_to_write <= 0) {
-diff --git a/fs/xfs/linux-2.6/xfs_buf.c b/fs/xfs/linux-2.6/xfs_buf.c
-index 0c93c7e..74d8776 100644
---- a/fs/xfs/linux-2.6/xfs_buf.c
-+++ b/fs/xfs/linux-2.6/xfs_buf.c
-@@ -714,7 +714,7 @@ xfs_buf_readahead(
- 	struct backing_dev_info *bdi;
- 
- 	bdi = target->bt_mapping->backing_dev_info;
--	if (bdi_read_congested(bdi))
-+	if (bdi_or_group_read_congested(bdi, NULL))
- 		return;
- 
- 	flags |= (XBF_TRYLOCK|XBF_ASYNC|XBF_READ_AHEAD);
-diff --git a/include/linux/backing-dev.h b/include/linux/backing-dev.h
-index 1d52425..d7916f3 100644
---- a/include/linux/backing-dev.h
-+++ b/include/linux/backing-dev.h
-@@ -29,7 +29,7 @@ enum bdi_state {
- 	BDI_unused,		/* Available bits start here */
- };
- 
--typedef int (congested_fn)(void *, int);
-+typedef int (congested_fn)(void *, int, struct page *, int);
- 
- enum bdi_stat_item {
- 	BDI_RECLAIMABLE,
-@@ -209,7 +209,7 @@ int writeback_in_progress(struct backing_dev_info *bdi);
- static inline int bdi_congested(struct backing_dev_info *bdi, int bdi_bits)
- {
- 	if (bdi->congested_fn)
--		return bdi->congested_fn(bdi->congested_data, bdi_bits);
-+		return bdi->congested_fn(bdi->congested_data, bdi_bits, NULL, 0);
- 	return (bdi->state & bdi_bits);
- }
- 
-@@ -229,6 +229,63 @@ static inline int bdi_rw_congested(struct backing_dev_info *bdi)
- 				  (1 << BDI_async_congested));
- }
- 
-+#ifdef CONFIG_GROUP_IOSCHED
-+extern int bdi_congested_group(struct backing_dev_info *bdi, int bdi_bits,
-+				struct page *page);
-+
-+extern int bdi_read_congested_group(struct backing_dev_info *bdi,
-+						struct page *page);
-+
-+extern int bdi_or_group_read_congested(struct backing_dev_info *bdi,
-+					struct page *page);
-+
-+extern int bdi_write_congested_group(struct backing_dev_info *bdi,
-+					struct page *page);
-+
-+extern int bdi_or_group_write_congested(struct backing_dev_info *bdi,
-+					struct page *page);
-+
-+extern int bdi_rw_congested_group(struct backing_dev_info *bdi,
-+					struct page *page);
-+#else /* CONFIG_GROUP_IOSCHED */
-+static inline int bdi_congested_group(struct backing_dev_info *bdi,
-+					int bdi_bits, struct page *page)
-+{
-+	return bdi_congested(bdi, bdi_bits);
-+}
-+
-+static inline int bdi_read_congested_group(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_read_congested(bdi);
-+}
-+
-+static inline int bdi_or_group_read_congested(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_read_congested(bdi);
-+}
-+
-+static inline int bdi_write_congested_group(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_write_congested(bdi);
-+}
-+
-+static inline int bdi_or_group_write_congested(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_write_congested(bdi);
-+}
-+
-+static inline int bdi_rw_congested_group(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_rw_congested(bdi);
-+}
-+
-+#endif /* CONFIG_GROUP_IOSCHED */
-+
- enum {
- 	BLK_RW_ASYNC	= 0,
- 	BLK_RW_SYNC	= 1,
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 8e441dd..8b4370a 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -886,6 +886,11 @@ static inline void blk_set_queue_congested(struct request_queue *q, int sync)
- 	set_bdi_congested(&q->backing_dev_info, sync);
- }
- 
-+#ifdef CONFIG_GROUP_IOSCHED
-+extern int blk_queue_io_group_congested(struct backing_dev_info *bdi,
-+					int bdi_bits, struct page *page);
-+#endif
-+
- extern void blk_start_queue(struct request_queue *q);
- extern void blk_stop_queue(struct request_queue *q);
- extern void blk_sync_queue(struct request_queue *q);
-diff --git a/mm/backing-dev.c b/mm/backing-dev.c
-index c86edd2..2f77b90 100644
---- a/mm/backing-dev.c
-+++ b/mm/backing-dev.c
-@@ -7,6 +7,7 @@
- #include <linux/module.h>
- #include <linux/writeback.h>
- #include <linux/device.h>
-+#include "../block/elevator-fq.h"
- 
- void default_unplug_io_fn(struct backing_dev_info *bdi, struct page *page)
- {
-@@ -327,3 +328,64 @@ long congestion_wait(int sync, long timeout)
- }
- EXPORT_SYMBOL(congestion_wait);
- 
-+/*
-+ * With group IO scheduling, there are request descriptors per io group per
-+ * queue. So generic notion of whether queue is congested or not is not
-+ * very accurate. Queue might not be congested but the io group in which
-+ * request will go might actually be congested.
-+ *
-+ * Hence to get the correct idea about congestion level, one should query
-+ * the io group congestion status on the queue. Pass in the page information
-+ * which can be used to determine the io group of the page and congestion
-+ * status can be determined accordingly.
-+ *
-+ * If page info is not passed, io group is determined from the current task
-+ * context.
-+ */
-+#ifdef CONFIG_GROUP_IOSCHED
-+int bdi_congested_group(struct backing_dev_info *bdi, int bdi_bits,
-+				struct page *page)
-+{
-+	if (bdi->congested_fn)
-+		return bdi->congested_fn(bdi->congested_data, bdi_bits, page, 1);
-+
-+	return blk_queue_io_group_congested(bdi, bdi_bits, page);
-+}
-+EXPORT_SYMBOL(bdi_congested_group);
-+
-+int bdi_read_congested_group(struct backing_dev_info *bdi, struct page *page)
-+{
-+	return bdi_congested_group(bdi, 1 << BDI_sync_congested, page);
-+}
-+EXPORT_SYMBOL(bdi_read_congested_group);
-+
-+/* Checks if either bdi or associated group is read congested */
-+int bdi_or_group_read_congested(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_read_congested(bdi) || bdi_read_congested_group(bdi, page);
-+}
-+EXPORT_SYMBOL(bdi_or_group_read_congested);
-+
-+int bdi_write_congested_group(struct backing_dev_info *bdi, struct page *page)
-+{
-+	return bdi_congested_group(bdi, 1 << BDI_async_congested, page);
-+}
-+EXPORT_SYMBOL(bdi_write_congested_group);
-+
-+/* Checks if either bdi or associated group is write congested */
-+int bdi_or_group_write_congested(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_write_congested(bdi) || bdi_write_congested_group(bdi, page);
-+}
-+EXPORT_SYMBOL(bdi_or_group_write_congested);
-+
-+int bdi_rw_congested_group(struct backing_dev_info *bdi, struct page *page)
-+{
-+	return bdi_congested_group(bdi, (1 << BDI_sync_congested) |
-+				  (1 << BDI_async_congested), page);
-+}
-+EXPORT_SYMBOL(bdi_rw_congested_group);
-+
-+#endif /* CONFIG_GROUP_IOSCHED */
-diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index 1df421b..f924e05 100644
---- a/mm/page-writeback.c
-+++ b/mm/page-writeback.c
-@@ -985,6 +985,17 @@ retry:
- 		if (nr_pages == 0)
- 			break;
- 
-+		/*
-+		 * If the io group page will go into is congested, bail out.
-+		 */
-+		if (wbc->nonblocking
-+		    && bdi_write_congested_group(bdi, pvec.pages[0])) {
-+			wbc->encountered_congestion = 1;
-+			done = 1;
-+			pagevec_release(&pvec);
-+			break;
-+		}
-+
- 		for (i = 0; i < nr_pages; i++) {
- 			struct page *page = pvec.pages[i];
- 
-diff --git a/mm/readahead.c b/mm/readahead.c
-index aa1aa23..22e0639 100644
---- a/mm/readahead.c
-+++ b/mm/readahead.c
-@@ -542,7 +542,7 @@ page_cache_async_readahead(struct address_space *mapping,
- 	/*
- 	 * Defer asynchronous read-ahead on IO congestion.
+@@ -855,10 +856,10 @@ int elv_set_request(struct request_queue *q, struct request *rq, gfp_t gfp_mask)
+ 	 * ioq per io group
  	 */
--	if (bdi_read_congested(mapping->backing_dev_info))
-+	if (bdi_or_group_read_congested(mapping->backing_dev_info, NULL))
- 		return;
+ 	if (elv_iosched_single_ioq(e))
+-		return elv_fq_set_request_ioq(q, rq, gfp_mask);
++		return elv_fq_set_request_ioq(q, rq, bio, gfp_mask);
  
- 	/* do read-ahead */
+ 	if (e->ops->elevator_set_req_fn)
+-		return e->ops->elevator_set_req_fn(q, rq, gfp_mask);
++		return e->ops->elevator_set_req_fn(q, rq, bio, gfp_mask);
+ 
+ 	rq->elevator_private = NULL;
+ 	return 0;
+@@ -1260,19 +1261,19 @@ void *elv_select_sched_queue(struct request_queue *q, int force)
+ EXPORT_SYMBOL(elv_select_sched_queue);
+ 
+ /*
+- * Get the io scheduler queue pointer for current task.
++ * Get the io scheduler queue pointer for the group bio belongs to.
+  *
+  * If fair queuing is enabled, determine the io group of task and retrieve
+  * the ioq pointer from that. This is used by only single queue ioschedulers
+  * for retrieving the queue associated with the group to decide whether the
+  * new bio can do a front merge or not.
+  */
+-void *elv_get_sched_queue_current(struct request_queue *q)
++void *elv_get_sched_queue_bio(struct request_queue *q, struct bio *bio)
+ {
+ 	/* Fair queuing is not enabled. There is only one queue. */
+ 	if (!elv_iosched_fair_queuing_enabled(q->elevator))
+ 		return q->elevator->sched_queue;
+ 
+-	return ioq_sched_queue(elv_lookup_ioq_current(q));
++	return ioq_sched_queue(elv_lookup_ioq_bio(q, bio));
+ }
+-EXPORT_SYMBOL(elv_get_sched_queue_current);
++EXPORT_SYMBOL(elv_get_sched_queue_bio);
+diff --git a/include/linux/elevator.h b/include/linux/elevator.h
+index d944c24..e98c098 100644
+--- a/include/linux/elevator.h
++++ b/include/linux/elevator.h
+@@ -23,7 +23,8 @@ typedef struct request *(elevator_request_list_fn) (struct request_queue *, stru
+ typedef void (elevator_completed_req_fn) (struct request_queue *, struct request *);
+ typedef int (elevator_may_queue_fn) (struct request_queue *, int);
+ 
+-typedef int (elevator_set_req_fn) (struct request_queue *, struct request *, gfp_t);
++typedef int (elevator_set_req_fn) (struct request_queue *, struct request *,
++					struct bio *bio, gfp_t);
+ typedef void (elevator_put_req_fn) (struct request *);
+ typedef void (elevator_activate_req_fn) (struct request_queue *, struct request *);
+ typedef void (elevator_deactivate_req_fn) (struct request_queue *, struct request *);
+@@ -147,7 +148,8 @@ extern void elv_unregister_queue(struct request_queue *q);
+ extern int elv_may_queue(struct request_queue *, int);
+ extern void elv_abort_queue(struct request_queue *);
+ extern void elv_completed_request(struct request_queue *, struct request *);
+-extern int elv_set_request(struct request_queue *, struct request *, gfp_t);
++extern int elv_set_request(struct request_queue *, struct request *,
++					struct bio *bio, gfp_t);
+ extern void elv_put_request(struct request_queue *, struct request *);
+ extern void elv_drain_elevator(struct request_queue *);
+ 
+@@ -276,6 +278,20 @@ static inline int elv_iosched_single_ioq(struct elevator_queue *e)
+ #endif /* ELV_IOSCHED_FAIR_QUEUING */
+ extern void *elv_get_sched_queue(struct request_queue *q, struct request *rq);
+ extern void *elv_select_sched_queue(struct request_queue *q, int force);
+-extern void *elv_get_sched_queue_current(struct request_queue *q);
++extern void *elv_get_sched_queue_bio(struct request_queue *q, struct bio *bio);
++
++/*
++ * This is equivalent of rq_is_sync()/cfq_bio_sync() function where we
++ * determine whether an rq/bio is sync or not. There are cases like during
++ * merging and during * request allocation, where we don't have rq but bio
++ * and needs to find out * if this bio will be considered as sync or async by
++ * elevator/iosched. This function is useful in such cases.
++ */
++static inline int elv_bio_sync(struct bio *bio)
++{
++	if ((bio_data_dir(bio) == READ) || bio_sync(bio))
++		return 1;
++	return 0;
++}
+ #endif /* CONFIG_BLOCK */
+ #endif
 -- 
 1.6.0.6
