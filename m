@@ -1,174 +1,55 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] Rename device_area_is_valid and reverse logic
-	accordingly
-Date: Tue, 28 Jul 2009 08:07:05 -0400
-Message-ID: <20090728120705.GA10878@redhat.com>
-References: <Pine.LNX.4.64.0907270913170.25437@hs20-bc2-1.build.redhat.com>
-	<20090727141506.GA4964@redhat.com>
-	<Pine.LNX.4.64.0907271022490.3823@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 1/7] blkio-cgroup-v10: Introduction
+Date: Tue, 28 Jul 2009 21:09:34 +0900 (JST)
+Message-ID: <20090728.210934.193696111.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0907271022490.3823@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 27 2009 at 10:23am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+Hi all,
 
-> On Mon, 27 Jul 2009, Mike Snitzer wrote:
-> 
-> > On Mon, Jul 27 2009 at  9:21am -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > Hi
-> > > 
-> > > This patch fixes a bug introduced in 2.6.31-rc1. Targets that define 
-> > > iterate_devices and don't contain any devices (such as dm-loop in fsio) 
-> > > don't work.
-> > > 
-> > > Mikulas
-> > > 
-> > > ---
-> > > 
-> > > Fix reverse logic in device_area_is_valid
-> > > 
-> > > ->iterate_devices method calls the callback for every underlying device
-> > > in the target. If the callback returns non-zero, iterate_devices exits
-> > > and returns this value. If the callback returns zero for all the devices,
-> > > iterate_devices returns zero.
-> > > 
-> > > The logic to check for invalid device areas was reversed.
-> > > device_area_is_valid returned 0 on error and 1 on success.
-> > > 
-> > > Thus:
-> > > - error was returned only if all the devices vere errorneous. If some of them
-> > >   returned 1 (success), dm_calculate_queue_limits understood this as success.
-> > > - if the target had no device (the example is dm-loop target in FSIO mode),
-> > >   iterate_devices returned error straight away and dm_calculate_queue_limits
-> > >   understood this as an error.
-> > > 
-> > > This patch reverses the logic so that 0 means success and 1 means error.
-> > > 
-> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > 
-> > Nice catch, interesting that this was somehow missed.  All targets do
-> > treat a non-zero return from .iterate_devices as an error.
-> > 
-> > We should probably rename device_area_is_valid to device_area_invalid.
-> > 
-> > Mike
-> 
-> Yes, you can rename it to that.
->
-> Mikulas
+This is a new release of blkio-cgroup v10. This release reduces
+IO tracking overhead and fixes an issue that could cause a deadlock
+since lock_page_cgroup() is no longer used.
+Thank you KAMEZAWA-san for your suggestions and pointing out the issue.
 
----
+This patch can be applied to 2.6.31-rc3-mmotm0716 and 2.6.31-rc4.
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+The list of the patches:
+  [PATCH 1/7] blkio-cgroup-v10: Introduction
+  [PATCH 2/7] blkio-cgroup-v10: The new page_cgroup framework
+  [PATCH 3/7] blkio-cgroup-v10: Refactoring io-context initialization
+  [PATCH 4/7] blkio-cgroup-v10: The body of blkio-cgroup
+  [PATCH 5/7] blkio-cgroup-v10: The document of blkio-cgroup
+  [PATCH 6/7] blkio-cgroup-v10: Page tracking hooks
+  [PATCH 7/7] blkio-cgroup-v10: Add a cgroup support to dm-ioband
 
-Rename device_area_is_valid and reverse logic accordingly
+About blkio-cgroup:
+blkio-cgroup is a block I/O tracking mechanism implemented on the
+cgroup memory subsystem. Using this feature the owners of any type of
+I/O can be determined. This allows dm-ioband to control block I/O
+bandwidth even when it is accepting delayed write requests. dm-ioband
+can find the cgroup of each request. It is also for possible that
+others working on I/O bandwidth throttling to use this functionality
+to control asynchronous I/O with a little enhancement.
 
-->iterate_devices method calls the callback for every underlying device
-in the target.  If the callback returns non-zero iterate_devices exits
-immediately and the caller should understand that an error occurred.
+Please visit our website, the patches and more information are available.
+  Linux Block I/O Bandwidth Control Project
+  http://sourceforge.net/apps/trac/ioband/
 
-The logic to check for valid device areas was reversed relative to
-proper use with iterate_devices.  device_area_is_valid returned 0 on
-error and 1 on success.  Thus error (from iterate_devices) was returned
-only if all the devices were invalid.
+I'd like to get some feedbacks from the list. Any comments are
+appreciated.
 
-This patch renames device_area_is_valid to device_area_is_invalid and
-reverses the logic so that 0 means valid and 1 means invalid (to match
-iterate_devices).
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-
----
- drivers/md/dm-table.c |   22 +++++++++++-----------
- 1 files changed, 11 insertions(+), 11 deletions(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index d952b34..aa60526 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -343,10 +343,10 @@ static void close_dev(struct dm_dev_internal *d, struct mapped_device *md)
- }
- 
- /*
-- * If possible, this checks an area of a destination device is valid.
-+ * If possible, this checks an area of a destination device is invalid.
-  */
--static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
--				sector_t start, sector_t len, void *data)
-+static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
-+				  sector_t start, sector_t len, void *data)
- {
- 	struct queue_limits *limits = data;
- 	struct block_device *bdev = dev->bdev;
-@@ -357,16 +357,16 @@ static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
- 	char b[BDEVNAME_SIZE];
- 
- 	if (!dev_size)
--		return 1;
-+		return 0;
- 
- 	if ((start >= dev_size) || (start + len > dev_size)) {
- 		DMWARN("%s: %s too small for target",
- 		       dm_device_name(ti->table->md), bdevname(bdev, b));
--		return 0;
-+		return 1;
- 	}
- 
- 	if (logical_block_size_sectors <= 1)
--		return 1;
-+		return 0;
- 
- 	if (start & (logical_block_size_sectors - 1)) {
- 		DMWARN("%s: start=%llu not aligned to h/w "
-@@ -374,7 +374,7 @@ static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
- 		       dm_device_name(ti->table->md),
- 		       (unsigned long long)start,
- 		       limits->logical_block_size, bdevname(bdev, b));
--		return 0;
-+		return 1;
- 	}
- 
- 	if (len & (logical_block_size_sectors - 1)) {
-@@ -383,10 +383,10 @@ static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
- 		       dm_device_name(ti->table->md),
- 		       (unsigned long long)len,
- 		       limits->logical_block_size, bdevname(bdev, b));
--		return 0;
-+		return 1;
- 	}
- 
--	return 1;
-+	return 0;
- }
- 
- /*
-@@ -1000,8 +1000,8 @@ int dm_calculate_queue_limits(struct dm_table *table,
- 		 * Check each device area is consistent with the target's
- 		 * overall queue limits.
- 		 */
--		if (!ti->type->iterate_devices(ti, device_area_is_valid,
--					       &ti_limits))
-+		if (ti->type->iterate_devices(ti, device_area_is_invalid,
-+					      &ti_limits))
- 			return -EINVAL;
- 
- combine_limits:
+Thanks,
+Ryo Tsuruta
