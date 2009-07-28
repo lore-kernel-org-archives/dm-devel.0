@@ -1,7 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 2] dm log userspace, fix table status output
-Date: Tue, 28 Jul 2009 10:41:04 -0500
-Message-ID: <1248795664.25220.5.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH] dm raid1,
+	do not allow 'log_failure' variable to unset after being set
+Date: Tue, 28 Jul 2009 10:43:31 -0500
+Message-ID: <1248795811.25220.7.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,57 +20,52 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch fixes up the arguments that get printed when a
-STATUSTYPE_TABLE request is issued.
+This patch fixes a bug which was triggering a case where
+the primary leg could not be changed (even when the mirror was
+in-sync) on failure.
 
-We keep a copy of the arguments passed to userspace for
-creating a log, just in case we need to resend them.  These
-are the same arguments that are desired in the
-STATUSTYPE_TABLE request, except for one.  When creating
-the userspace log, the userspace daemon must know the size
-of the mirror, so that is appended onto the arguments given
-in the constructor table.  We were printing this extra
-argument out as well, which is a mistake.
+The case involves the failure of the primary device along with
+the transient failure of the log device.  The problem is that
+bios can be put on the 'failures' list (due to log failure)
+before 'fail_mirror' is called due to the primary device failure.
+Normally, this is fine, but if the log device failure is transient,
+a subsequent iteration of the work thread, 'do_mirror', will
+reset 'log_failure'.  The 'do_failures' function then resets
+the 'in_sync' variable when processing bios on the failures list.
+The 'in_sync' variable is what is used to determine if the
+primary device can be switched in the event of a failure.  Since
+this has been reset, the primary device is incorrectly assumed
+to be not switchable.
+
+The case has been seen in the cluster mirror context, where one
+machine realizes the log device is dead before the other machines.
+As the responsibilities of the server migrate from one node to
+another (because the mirror is being reconfigured due to the failure),
+the new server may think for a moment that the log device is fine -
+thus resetting the 'log_failure' variable.
+
+In any case, it is inappropiate for us to reset the 'log_failure'
+variable.  The above bug simply illustrates that it can actually
+hurt us.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-log-userspace-base.c
+Index: linux-2.6/drivers/md/dm-raid1.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-log-userspace-base.c
-+++ linux-2.6/drivers/md/dm-log-userspace-base.c
-@@ -561,6 +561,7 @@ static int userspace_status(struct dm_di
- 			    char *result, unsigned maxlen)
- {
- 	int r = 0;
-+	char *index;
- 	size_t sz = (size_t)maxlen;
- 	struct log_c *lc = log->context;
+--- linux-2.6.orig/drivers/md/dm-raid1.c
++++ linux-2.6/drivers/md/dm-raid1.c
+@@ -647,7 +647,13 @@ static void do_writes(struct mirror_set 
+ 	 */
+ 	dm_rh_inc_pending(ms->rh, &sync);
+ 	dm_rh_inc_pending(ms->rh, &nosync);
+-	ms->log_failure = dm_rh_flush(ms->rh) ? 1 : 0;
++
++	/*
++	 * If the flush fails on a previous call and succeeds here,
++	 * we must not reset the log_failure variable.  We need
++	 * userspace interaction to do that.
++	 */
++	ms->log_failure = dm_rh_flush(ms->rh) ? 1 : ms->log_failure;
  
-@@ -577,8 +578,25 @@ static int userspace_status(struct dm_di
- 		break;
- 	case STATUSTYPE_TABLE:
- 		sz = 0;
--		DMEMIT("%s %u %s %s ", log->type->name, lc->usr_argc + 1,
--		       lc->uuid, lc->usr_argv_str);
-+		DMEMIT("%s %u %s ", log->type->name, lc->usr_argc, lc->uuid);
-+
-+		/*
-+		 * The usr_argv that we keep has an extra 'mirror device
-+		 * length' field appended to the original given arguments.
-+		 * We should not include that field in our output.
-+		 */
-+		index = strrchr(lc->usr_argv_str, ' ');
-+		BUG_ON(!index); /* There will always be a ' ' */
-+		index += 2;  /* I want the space and 1 more for NULL */
-+
-+		/*
-+		 * Make DMEMIT behave the way we want.  Only allow
-+		 * the amount of the string we need plus what has
-+		 * already been written (if there is sufficient space).
-+		 */
-+		if (maxlen > (index - lc->usr_argv_str + sz))
-+			maxlen = index - lc->usr_argv_str + sz;
-+		DMEMIT("%s ", lc->usr_argv_str);
- 		break;
- 	}
- 	return (r) ? 0 : (int)sz;
+ 	/*
+ 	 * Dispatch io.
