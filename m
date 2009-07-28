@@ -1,100 +1,174 @@
-From: Jerome Marchand <jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 03/24] io-controller: bfq support of in-class preemption
-Date: Tue, 28 Jul 2009 13:44:32 +0200
-Message-ID: <4A6EE4A0.6080700@redhat.com>
-References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
-	<1248467274-32073-4-git-send-email-vgoyal@redhat.com>
-	<4A6DDBDE.8020608@redhat.com> <20090727224138.GA3702@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] Rename device_area_is_valid and reverse logic
+	accordingly
+Date: Tue, 28 Jul 2009 08:07:05 -0400
+Message-ID: <20090728120705.GA10878@redhat.com>
+References: <Pine.LNX.4.64.0907270913170.25437@hs20-bc2-1.build.redhat.com>
+	<20090727141506.GA4964@redhat.com>
+	<Pine.LNX.4.64.0907271022490.3823@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20090727224138.GA3702-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: dhaval-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, balbir-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, paolo.valente-rcYM44yAMweonA0d6jMUrA@public.gmane.org, fernando-gVGce1chcLdL9jVzuh4AOg@public.gmane.org, jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, fchecconi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0907271022490.3823@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-> Hi Jerome,
-> 
-> Thanks for testing it out. I could also reproduce the issue.
-> 
-> I had assumed that RT queue will always preempt non-RT queue and hence if
-> there is an RT ioq/request pending, the sd->next_entity will point to
-> itself and any queue which is preempting it has to be on same service
-> tree.
-> 
-> But in your test case it looks like that RT async queue is pending and 
-> there is some sync BE class IO going on. It looks like that CFQ allows
-> sync queue preempting async queue irrespective of class, so in this case
-> sync BE class reader will preempt async RT queue and that's where my
-> assumption is broken and we see BUG_ON() hitting.
-> 
-> Can you please tryout following patch. It is a quick patch and requires
-> more testing. It solves the crash but still does not solve the issue of
-> sync queue always preempting async queues irrespective of class. In
-> current scheduler we always schedule the RT queue first (whether it be
-> sync or async). This problem requires little more thought.
+On Mon, Jul 27 2009 at 10:23am -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-I've tried it: I can't reproduce the issue anymore and I haven't seen any
-other problem so far.
-By the way, what is the expected result regarding fairness among different
-groups when IO from different classes are run on each group? For instance,
-if we have RT IO going on on one group, BE IO on an other and Idle IO on a
-third group, what is the expected result: should the IO time been shared
-fairly between the groups or should RT IO have priority? As it is now, the
-time is shared fairly between BE and RT groups and the last group running
-Idle IO hardly get any time.
-
-Jerome
-
+> On Mon, 27 Jul 2009, Mike Snitzer wrote:
 > 
-> In this patch, we just check next entity on same class service tree and
-> if one is present, stick new queue in front of it. We don't rely on
-> sd->next_active, which could be pointing to a queue of different class
-> in same group (scheduling_data).
->  
-> ---
->  block/elevator-fq.c |   16 +++++-----------
->  1 file changed, 5 insertions(+), 11 deletions(-)
+> > On Mon, Jul 27 2009 at  9:21am -0400,
+> > Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > 
+> > > Hi
+> > > 
+> > > This patch fixes a bug introduced in 2.6.31-rc1. Targets that define 
+> > > iterate_devices and don't contain any devices (such as dm-loop in fsio) 
+> > > don't work.
+> > > 
+> > > Mikulas
+> > > 
+> > > ---
+> > > 
+> > > Fix reverse logic in device_area_is_valid
+> > > 
+> > > ->iterate_devices method calls the callback for every underlying device
+> > > in the target. If the callback returns non-zero, iterate_devices exits
+> > > and returns this value. If the callback returns zero for all the devices,
+> > > iterate_devices returns zero.
+> > > 
+> > > The logic to check for invalid device areas was reversed.
+> > > device_area_is_valid returned 0 on error and 1 on success.
+> > > 
+> > > Thus:
+> > > - error was returned only if all the devices vere errorneous. If some of them
+> > >   returned 1 (success), dm_calculate_queue_limits understood this as success.
+> > > - if the target had no device (the example is dm-loop target in FSIO mode),
+> > >   iterate_devices returned error straight away and dm_calculate_queue_limits
+> > >   understood this as an error.
+> > > 
+> > > This patch reverses the logic so that 0 means success and 1 means error.
+> > > 
+> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > 
+> > Nice catch, interesting that this was somehow missed.  All targets do
+> > treat a non-zero return from .iterate_devices as an error.
+> > 
+> > We should probably rename device_area_is_valid to device_area_invalid.
+> > 
+> > Mike
 > 
-> Index: linux8/block/elevator-fq.c
-> ===================================================================
-> --- linux8.orig/block/elevator-fq.c	2009-07-27 18:13:34.000000000 -0400
-> +++ linux8/block/elevator-fq.c	2009-07-27 18:18:49.000000000 -0400
-> @@ -946,21 +946,15 @@ static void __bfq_activate_entity(struct
->  	if (add_front) {
->  		struct io_entity *next_entity;
->  
-> -		/* Determine the entity which will be dispatched next */
-> -		next_entity = sd->next_active;
-> +		/*
-> +		 * Determine the entity which will be dispatched next on
-> +		 * same service tree.
-> +		 */
-> +		next_entity = __bfq_lookup_next_entity(st);
->  
->  		if (next_entity && next_entity != entity) {
-> -			struct io_service_tree *new_st;
->  			u64 delta;
->  
-> -			new_st = io_entity_service_tree(next_entity);
-> -
-> -			/*
-> -			 * At this point, both entities should belong to
-> -			 * same service tree as cross service tree preemption
-> -			 * is automatically taken care by algorithm
-> -			 */
-> -			BUG_ON(new_st != st);
->  			entity->finish = next_entity->finish - 1;
->  			delta = bfq_delta(entity->budget, entity->weight);
->  			entity->start = entity->finish - delta;
+> Yes, you can rename it to that.
+>
+> Mikulas
+
+---
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+Rename device_area_is_valid and reverse logic accordingly
+
+->iterate_devices method calls the callback for every underlying device
+in the target.  If the callback returns non-zero iterate_devices exits
+immediately and the caller should understand that an error occurred.
+
+The logic to check for valid device areas was reversed relative to
+proper use with iterate_devices.  device_area_is_valid returned 0 on
+error and 1 on success.  Thus error (from iterate_devices) was returned
+only if all the devices were invalid.
+
+This patch renames device_area_is_valid to device_area_is_invalid and
+reverses the logic so that 0 means valid and 1 means invalid (to match
+iterate_devices).
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+
+---
+ drivers/md/dm-table.c |   22 +++++++++++-----------
+ 1 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index d952b34..aa60526 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -343,10 +343,10 @@ static void close_dev(struct dm_dev_internal *d, struct mapped_device *md)
+ }
+ 
+ /*
+- * If possible, this checks an area of a destination device is valid.
++ * If possible, this checks an area of a destination device is invalid.
+  */
+-static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
+-				sector_t start, sector_t len, void *data)
++static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
++				  sector_t start, sector_t len, void *data)
+ {
+ 	struct queue_limits *limits = data;
+ 	struct block_device *bdev = dev->bdev;
+@@ -357,16 +357,16 @@ static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
+ 	char b[BDEVNAME_SIZE];
+ 
+ 	if (!dev_size)
+-		return 1;
++		return 0;
+ 
+ 	if ((start >= dev_size) || (start + len > dev_size)) {
+ 		DMWARN("%s: %s too small for target",
+ 		       dm_device_name(ti->table->md), bdevname(bdev, b));
+-		return 0;
++		return 1;
+ 	}
+ 
+ 	if (logical_block_size_sectors <= 1)
+-		return 1;
++		return 0;
+ 
+ 	if (start & (logical_block_size_sectors - 1)) {
+ 		DMWARN("%s: start=%llu not aligned to h/w "
+@@ -374,7 +374,7 @@ static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
+ 		       dm_device_name(ti->table->md),
+ 		       (unsigned long long)start,
+ 		       limits->logical_block_size, bdevname(bdev, b));
+-		return 0;
++		return 1;
+ 	}
+ 
+ 	if (len & (logical_block_size_sectors - 1)) {
+@@ -383,10 +383,10 @@ static int device_area_is_valid(struct dm_target *ti, struct dm_dev *dev,
+ 		       dm_device_name(ti->table->md),
+ 		       (unsigned long long)len,
+ 		       limits->logical_block_size, bdevname(bdev, b));
+-		return 0;
++		return 1;
+ 	}
+ 
+-	return 1;
++	return 0;
+ }
+ 
+ /*
+@@ -1000,8 +1000,8 @@ int dm_calculate_queue_limits(struct dm_table *table,
+ 		 * Check each device area is consistent with the target's
+ 		 * overall queue limits.
+ 		 */
+-		if (!ti->type->iterate_devices(ti, device_area_is_valid,
+-					       &ti_limits))
++		if (ti->type->iterate_devices(ti, device_area_is_invalid,
++					      &ti_limits))
+ 			return -EINVAL;
+ 
+ combine_limits:
