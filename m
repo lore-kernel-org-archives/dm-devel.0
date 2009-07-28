@@ -1,80 +1,56 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [RESEND][PATCH] Send uevents for disk write_protect changes
-Date: Tue, 28 Jul 2009 09:12:56 +0200
-Message-ID: <20090728071256.GQ4148@kernel.dk>
-References: <200907211128.07252.knikanth@suse.de>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [RFC] IO scheduler based IO controller V6
+Date: Tue, 28 Jul 2009 19:36:31 +0800
+Message-ID: <4A6EE2BF.9040803@cn.fujitsu.com>
+References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com> <4A6D0C9A.3080600@cn.fujitsu.com> <20090727125503.GA24449@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753447AbZG1HM7@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <200907211128.07252.knikanth@suse.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753051AbZG1Lh5@vger.kernel.org>
+In-Reply-To: <20090727125503.GA24449@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Nikanth Karthikesan <knikanth@suse.de>
-Cc: Hannes Reinecke <hare@suse.de>, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>, device-mapper development <dm-devel@redhat.com>
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, jbaron@redhat.com, agk@redhat.com, snitzer@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-On Tue, Jul 21 2009, Nikanth Karthikesan wrote:
-> Hi
-> 
-> This patch is needed for the dm-multipath, so that the daemon can capture the 
-> event and reload the dm table when the read-only setting of the disk changes. 
-> Can this be merged?
+Vivek Goyal wrote:
+> On Mon, Jul 27, 2009 at 10:10:34AM +0800, Gui Jianfeng wrote:
+>> Hi=EF=BC=8C
+>>
+>> Here are some fio test results for IO Controller V6 built and not bu=
+ilt.
+>> Iozone test results are also attached.
+>>
+>=20
+> Hi Gui,
+>=20
+> Thanks a lot for some performance numbers. It seems to be a mixed cha=
+rt.
+> Performance gains at some places and loss at others. I am curious abo=
+ut
+> that -7.0% for normal writes. Not sure what can contribute to that.
+>=20
+> What was the value of "fairness" parameter when you ran those tests? =
+Can you
+> please set fairness =3D 0 and re-run the tests (if you have already n=
+ot done so).
+>=20
+> By default fairness is set to 1 in V6. With fairness =3D 0, we should=
+ be very
+> close to existing CFQ behavior. If not, then we need to dive deeper a=
+nd
+> see why variations are happening.
 
-Looks fine to me, merged for 2.6.32.
+  Hi Vivek,
 
-> 
-> Thanks
-> Nikanth
-> 
-> From: Hannes Reinecke <hare@suse.de>
-> Subject: Send uevents for write_protect changes
-> 
-> Whenever a block device changes it's read-only attribute
-> notify the userspace about it.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
-> 
-> ---
-> 
-> diff --git a/block/genhd.c b/block/genhd.c
-> index f4c64c2..b89328e 100644
-> --- a/block/genhd.c
-> +++ b/block/genhd.c
-> @@ -1215,6 +1215,16 @@ void put_disk(struct gendisk *disk)
->  
->  EXPORT_SYMBOL(put_disk);
->  
-> +static void set_disk_ro_uevent(struct gendisk *gd, int ro)
-> +{
-> +	char event[] = "DISK_RO=1";
-> +	char *envp[] = { event, NULL };
-> +
-> +	if (!ro)
-> +		event[8] = '0';
-> +	kobject_uevent_env(&disk_to_dev(gd)->kobj, KOBJ_CHANGE, envp);
-> +}
-> +
->  void set_device_ro(struct block_device *bdev, int flag)
->  {
->  	bdev->bd_part->policy = flag;
-> @@ -1227,8 +1237,12 @@ void set_disk_ro(struct gendisk *disk, int flag)
->  	struct disk_part_iter piter;
->  	struct hd_struct *part;
->  
-> -	disk_part_iter_init(&piter, disk,
-> -			    DISK_PITER_INCL_EMPTY | DISK_PITER_INCL_PART0);
-> +	if (disk->part0.policy != flag) {
-> +		set_disk_ro_uevent(disk, flag);
-> +		disk->part0.policy = flag;
-> +	}
-> +
-> +	disk_part_iter_init(&piter, disk, DISK_PITER_INCL_EMPTY);
->  	while ((part = disk_part_iter_next(&piter)))
->  		part->policy = flag;
->  	disk_part_iter_exit(&piter);
-> 
-> 
+  I tested with default fairness value, i'll re-test it when fairness i=
+s set to 0.
 
--- 
-Jens Axboe
+>=20
+> Is it also possible to run the same tests with V7.=20
+
+  Sure.
+
+--=20
+Regards
+Gui Jianfeng
