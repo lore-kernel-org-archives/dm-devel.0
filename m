@@ -1,157 +1,80 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [RFC] IO scheduler based IO controller V6
-Date: Tue, 28 Jul 2009 11:36:51 +0800
-Message-ID: <4A6E7253.9050906@cn.fujitsu.com>
-References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
-	<4A6D0C9A.3080600@cn.fujitsu.com>
-	<20090727125503.GA24449@redhat.com>
-	<20090728032712.GC3620@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [RESEND][PATCH] Send uevents for disk write_protect changes
+Date: Tue, 28 Jul 2009 09:12:56 +0200
+Message-ID: <20090728071256.GQ4148@kernel.dk>
+References: <200907211128.07252.knikanth@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090728032712.GC3620@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753447AbZG1HM7@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <200907211128.07252.knikanth@suse.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nikanth Karthikesan <knikanth@suse.de>
+Cc: Hannes Reinecke <hare@suse.de>, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-> On Mon, Jul 27, 2009 at 08:55:03AM -0400, Vivek Goyal wrote:
->> On Mon, Jul 27, 2009 at 10:10:34AM +0800, Gui Jianfeng wrote:
->>> Hi=EF=BC=8C
->>>
->>> Here are some fio test results for IO Controller V6 built and not bui=
-lt.
->>> Iozone test results are also attached.
->>>
->> Hi Gui,
->>
->> Thanks a lot for some performance numbers. It seems to be a mixed char=
-t.
->> Performance gains at some places and loss at others. I am curious abou=
-t
->> that -7.0% for normal writes. Not sure what can contribute to that.
->>
->=20
-> Gui, can you also try with CONFIG_TRACK_ASYNC_CONTEXT=3Dn and see if it=
- improves
-> buffered write performance.
+On Tue, Jul 21 2009, Nikanth Karthikesan wrote:
+> Hi
+> 
+> This patch is needed for the dm-multipath, so that the daemon can capture the 
+> event and reload the dm table when the read-only setting of the disk changes. 
+> Can this be merged?
 
-  Hi Vivek,
+Looks fine to me, merged for 2.6.32.
 
-  Ok, I'll do it, and i'll do the performance test for IO Controller V7, =
-and post
-  the results as soon as i get them.
-
->=20
+> 
 > Thanks
-> Vivek
->=20
->> What was the value of "fairness" parameter when you ran those tests? C=
-an you
->> please set fairness =3D 0 and re-run the tests (if you have already no=
-t done so).
->>
->> By default fairness is set to 1 in V6. With fairness =3D 0, we should =
-be very
->> close to existing CFQ behavior. If not, then we need to dive deeper an=
-d
->> see why variations are happening.
->>
->> Is it also possible to run the same tests with V7.=20
->>
->> Thanks
->> Vivek
->>
->>> Arch: X86
->>> Mem:  1G
->>> Disk: 320G
->>> IO Scheduler: CFQ
->>>
->>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->>> By normal read and write syscall.
->>>
->>> Block Size:32K
->>> File Size: 1G * 10
->>>
->>> Mode                    Normal read   |   Random read   |   Normal wr=
-ite   |   Random write | Direct read | Direct write
->>>
->>> 2.6.31-rc1              47,932KiB/s       3,566KiB/s        45,693KiB=
-/s        8,501KiB/s     50,088KiB/s   43,473KiB/s
->>>
->>> 2.6.31-rc1-Vivek-V6     47,231KiB/s       3,411KiB/s        42,451KiB=
-/s        8,714KiB/s     51,284KiB/s   42,341KiB/s
->>>
->>> Performance             -1.5%             -4.4%             -7.0%    =
-          +2.5%          +2.4%         -2.6%
->>>
->>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->>>
->>> By mmap.
->>>
->>> Block Size:32K
->>> File Size: 500M
->>>
->>> Mode                    Normal read   |   Random read   |   Normal wr=
-ite   |   Random write
->>>
->>> 2.6.31-rc1              49,951KiB/s       3,245KiB/s        21,950KiB=
-/s        2,771KiB/s
->>>
->>> 2.6.31-rc1-Vivek-V6     49,951KiB/s       3,154KiB/s        22,593KiB=
-/s        2,648KiB/s
->>>
->>> Performance             0%                -2.8%             +2.9%    =
-          -4.4%
->>>
->>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->>> =20
->>> By libaio calls
->>>
->>> Block Size:32K
->>> File Size: 500M
->>>
->>> Mode                    Normal read   |  Random read   |   Normal wri=
-te   |   Random write
->>>
->>> 2.6.31-rc1              49,447KiB/s       3,296KiB/s        57,519KiB=
-/s        21,093KiB/s
->>>
->>> 2.6.31-rc1-Vivek-V6     50,142KiB/s       3,238KiB/s        57,791KiB=
-/s        21,283KiB/s
->>>
->>> Performance             +1.4%             -1.8%             0%       =
-          +0.1%
->>>
->>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->>>
->>>
->>>
->>>
->>>
->>>
->>>
->>>
->>>
->>>
->>>
->>
->>
->=20
->=20
->=20
+> Nikanth
+> 
+> From: Hannes Reinecke <hare@suse.de>
+> Subject: Send uevents for write_protect changes
+> 
+> Whenever a block device changes it's read-only attribute
+> notify the userspace about it.
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
+> 
+> ---
+> 
+> diff --git a/block/genhd.c b/block/genhd.c
+> index f4c64c2..b89328e 100644
+> --- a/block/genhd.c
+> +++ b/block/genhd.c
+> @@ -1215,6 +1215,16 @@ void put_disk(struct gendisk *disk)
+>  
+>  EXPORT_SYMBOL(put_disk);
+>  
+> +static void set_disk_ro_uevent(struct gendisk *gd, int ro)
+> +{
+> +	char event[] = "DISK_RO=1";
+> +	char *envp[] = { event, NULL };
+> +
+> +	if (!ro)
+> +		event[8] = '0';
+> +	kobject_uevent_env(&disk_to_dev(gd)->kobj, KOBJ_CHANGE, envp);
+> +}
+> +
+>  void set_device_ro(struct block_device *bdev, int flag)
+>  {
+>  	bdev->bd_part->policy = flag;
+> @@ -1227,8 +1237,12 @@ void set_disk_ro(struct gendisk *disk, int flag)
+>  	struct disk_part_iter piter;
+>  	struct hd_struct *part;
+>  
+> -	disk_part_iter_init(&piter, disk,
+> -			    DISK_PITER_INCL_EMPTY | DISK_PITER_INCL_PART0);
+> +	if (disk->part0.policy != flag) {
+> +		set_disk_ro_uevent(disk, flag);
+> +		disk->part0.policy = flag;
+> +	}
+> +
+> +	disk_part_iter_init(&piter, disk, DISK_PITER_INCL_EMPTY);
+>  	while ((part = disk_part_iter_next(&piter)))
+>  		part->policy = flag;
+>  	disk_part_iter_exit(&piter);
+> 
+> 
 
---=20
-Regards
-Gui Jianfeng
+-- 
+Jens Axboe
