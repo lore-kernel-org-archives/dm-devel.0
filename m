@@ -1,46 +1,43 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH] dm mpath: Skip calling activate_path if the path
- is already failed
-Date: Wed, 29 Jul 2009 09:46:48 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF46F2BA886@cosmail01.lsi.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Lars Ellenberg <lars.ellenberg@linbit.com>
+Subject: Why does __do_page_cache_readahead submit READ, not READA?
+Date: Wed, 29 Jul 2009 18:14:56 +0200
+Message-ID: <20090729161456.GB8059@barkeeper1-xen.linbit>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-This patch adds a check to skip failed paths while calling activate_path.=
- If the path is already failed then activate_path will fail for sure. We =
-don't have to call in that case.   =20
+I naively assumed, from the "readahead" in the name, that readahead
+would be submitting READA bios. It does not.
 
-Signed-off-by: Babu Moger <babu.moger@lsi.com>
----
+I recently did some statistics on how many READ and READA requests
+we actually see on the block device level.
+I was suprised that READA is basically only used for file system
+internal meta data (and not even for all file systems),
+but _never_ for file data.
+
+A simple
+	dd if=bigfile of=/dev/null bs=4k count=1
+will absolutely cause readahead of the configured amount, no problem.
+But on the block device level, these are READ requests, where I'd
+expected them to be READA requests, based on the name.
+
+This is because __do_page_cache_readahead() calls read_pages(),
+which in turn is mapping->a_ops->readpages(), or, as fallback,
+mapping->a_ops->readpage().
+
+On that level, all variants end up submitting as READ.
+
+This may even be intentional.
+But if so, I'd like to understand that.
+
+Please, anyone in the know, enlighten me ;)
 
 
---- linux-2.6.31-rc3/drivers/md/dm-mpath.c.orig	2009-07-27 10:30:39.00000=
-0000 -0500
-+++ linux-2.6.31-rc3/drivers/md/dm-mpath.c	2009-07-27 10:35:50.000000000 =
--0500
-@@ -454,6 +454,10 @@ static void process_queued_ios(struct wo
- 		m->pg_init_count++;
- 		m->pg_init_required =3D 0;
- 		list_for_each_entry(tmp, &pgpath->pg->pgpaths, list) {
-+			/* Skip failed paths */
-+			if (!tmp->is_active)
-+				continue;
-+		=09
- 			if (queue_work(kmpath_handlerd, &tmp->activate_path))
- 				m->pg_init_in_progress++;
- 		}
+	Lars
+
+Annecdotical: I've seen an oracle being killed by OOM, because someone
+did a grep -r . while accidentally having a bogusly huge readahead set.
