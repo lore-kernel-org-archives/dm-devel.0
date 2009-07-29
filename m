@@ -1,81 +1,53 @@
-From: "Rafael J. Wysocki" <rjw@sisk.pl>
-Subject: Re: 2.6.31-rc4 oops in fsnotify extending logical volume
-Date: Wed, 29 Jul 2009 23:13:47 +0200
-Message-ID: <200907292313.47762.rjw@sisk.pl>
-References: <4A7068C9.40802@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: Why does __do_page_cache_readahead submit READ, not READA?
+Date: Wed, 29 Jul 2009 23:18:45 +0200
+Message-ID: <20090729211845.GB4148@kernel.dk>
+References: <20090729161456.GB8059@barkeeper1-xen.linbit>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754119AbZG2VNP@vger.kernel.org>
-In-Reply-To: <4A7068C9.40802@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Avi Kivity <avi@redhat.com>
-Cc: dm-devel@redhat.com, linux-kernel <linux-kernel@vger.kernel.org>
+In-Reply-To: <20090729161456.GB8059@barkeeper1-xen.linbit>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Lars Ellenberg <lars.ellenberg@linbit.com>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-On Wednesday 29 July 2009, Avi Kivity wrote:
-> # lvextend -L +50G /dev/vg0/images
-
-I guess this is a regression?
-
-> [ 6818.345369] BUG: unable to handle kernel NULL pointer dereference at 
-> (null)
-> [ 6818.345408] IP: [<ffffffff811156fc>] fsnotify+0xd8/0x11a
-> [ 6818.345441] PGD 3a71dd067 PUD 3dfc49067 PMD 0
-> [ 6818.345475] Oops: 0000 [#1] PREEMPT SMP
-> [ 6818.345508] last sysfs file: /sys/devices/virtual/block/ram9/uevent
-> [ 6818.345530] CPU 4
-> [ 6818.345547] Modules linked in: kvm_intel nfs lockd nfs_acl autofs4 
-> sunrpc cpufreq_ondemand acpi_cpufreq freq_table kvm bnx2 shpchp [last 
-> unloaded: kvm_intel]
-> [ 6818.345667] Pid: 5005, comm: lvextend Not tainted 2.6.31-rc4 #45 IBM 
-> System x -[794622G]-
-> [ 6818.345694] RIP: 0010:[<ffffffff811156fc>]  [<ffffffff811156fc>] 
-> fsnotify+0xd8/0x11a
-> [ 6818.345727] RSP: 0018:ffff8803a71b9e58  EFLAGS: 00010246
-> [ 6818.345746] RAX: 0000000000000000 RBX: 0000000000000000 RCX: 
-> ffff880351450270
-> [ 6818.345770] RDX: 0000000000000000 RSI: ffffffff81117e3f RDI: 
-> ffff8803a71b8000
-> [ 6818.345793] RBP: ffff8803a71b9eb8 R08: ffff8803a71b9e08 R09: 
-> ffff880351450270
-> [ 6818.345817] R10: 00000037c8811140 R11: ffff8803a71b9d58 R12: 
-> 0000000000000008
-> [ 6818.345840] R13: ffff88027c38dec8 R14: 0000000000000008 R15: 
-> 0000000000000000
-> [ 6818.345864] FS:  00007f7bbf907790(0000) GS:ffffc90000800000(0000) 
-> knlGS:0000000000000000
-> [ 6818.346199] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> [ 6818.346524] CR2: 0000000000000000 CR3: 000000021bf13000 CR4: 
-> 00000000000026e0
-> [ 6818.346852] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 
-> 0000000000000000
-> [ 6818.347185] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 
-> 0000000000000400
-> [ 6818.347514] Process lvextend (pid: 5005, threadinfo ffff8803a71b8000, 
-> task ffff88047f102e60)
-> [ 6818.348215] Stack:
-> [ 6818.348531]  0000000000001000 ffff880351450270 0000000000000000 
-> 0000000300000000
-> [ 6818.348876] <0> ffff88039488a900 000000007ef22600 ffff88027c38dec8 
-> ffff88039488a900
-> [ 6818.349533] <0> 0000000000000008 ffff88027c38dec8 ffff88027ef22600 
-> ffff88027c38dec8
-> [ 6818.350498] Call Trace:
-> [ 6818.350820]  [<ffffffff810eec08>] __fput+0xc4/0x1c5
-> [ 6818.351147]  [<ffffffff810eed23>] fput+0x1a/0x1c
-> [ 6818.351473]  [<ffffffff810ebde5>] filp_close+0x68/0x72
-> [ 6818.351797]  [<ffffffff810ebe9c>] sys_close+0xad/0xe7
-> [ 6818.352142]  [<ffffffff8100bd32>] system_call_fastpath+0x16/0x1b
-> [ 6818.352469] Code: 44 89 f6 4c 89 ef e8 bf 02 00 00 48 85 c0 48 89 c1 
-> 74 27 48 8b 43 20 48 89 ce 48 89 4d a8 48 89 df ff 50 08 48 8b 4d a8 48 
-> 8b 1b <48> 8b 03 48 81 fb 80 fc 55 81 0f 18 08 75 92 8b 75 cc 48 c7 c7
+On Wed, Jul 29 2009, Lars Ellenberg wrote:
+> I naively assumed, from the "readahead" in the name, that readahead
+> would be submitting READA bios. It does not.
 > 
+> I recently did some statistics on how many READ and READA requests
+> we actually see on the block device level.
+> I was suprised that READA is basically only used for file system
+> internal meta data (and not even for all file systems),
+> but _never_ for file data.
+> 
+> A simple
+> 	dd if=bigfile of=/dev/null bs=4k count=1
+> will absolutely cause readahead of the configured amount, no problem.
+> But on the block device level, these are READ requests, where I'd
+> expected them to be READA requests, based on the name.
+> 
+> This is because __do_page_cache_readahead() calls read_pages(),
+> which in turn is mapping->a_ops->readpages(), or, as fallback,
+> mapping->a_ops->readpage().
+> 
+> On that level, all variants end up submitting as READ.
+> 
+> This may even be intentional.
+> But if so, I'd like to understand that.
 
+I don't think it's intentional, and if memory serves, we used to use
+READA when submitting read-ahead. Not sure how best to improve the
+situation, since (as you describe), we lose the read-ahead vs normal
+read at that level. I did some experimentation some time ago for
+flagging this, see:
+
+http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=16cfe64e3568cda412b3cf6b7b891331946b595e
+
+which should pass down READA properly.
 
 -- 
-Everyone knows that debugging is twice as hard as writing a program
-in the first place.  So if you're as clever as you can be when you write it,
-how will you ever debug it? --- Brian Kernighan
+Jens Axboe
+
