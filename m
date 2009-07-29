@@ -1,43 +1,105 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Why does __do_page_cache_readahead submit READ, not READA?
-Date: Wed, 29 Jul 2009 18:14:56 +0200
-Message-ID: <20090729161456.GB8059@barkeeper1-xen.linbit>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] LVM, fix mirror ctr table arguments
+Date: Wed, 29 Jul 2009 14:34:15 -0500
+Message-ID: <1248896055.532.4.camel@hydrogen.msp.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <lvm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: lvm-devel@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I naively assumed, from the "readahead" in the name, that readahead
-would be submitting READA bios. It does not.
+The device-mapper table is being constructed incorrectly WRT
+the upstream kernel.  "block_on_error" is no longer an argument
+to the log module, but rather the "features" section of the
+mirror CTR table.
 
-I recently did some statistics on how many READ and READA requests
-we actually see on the block device level.
-I was suprised that READA is basically only used for file system
-internal meta data (and not even for all file systems),
-but _never_ for file data.
+Also in this patch are the changes necessary to construct the
+mapping tables for cluster mirroring - given the recent inclusion
+of dm-log-userspace.
 
-A simple
-	dd if=bigfile of=/dev/null bs=4k count=1
-will absolutely cause readahead of the configured amount, no problem.
-But on the block device level, these are READ requests, where I'd
-expected them to be READA requests, based on the name.
+(Patch is '-p0' not '-p1'.)
 
-This is because __do_page_cache_readahead() calls read_pages(),
-which in turn is mapping->a_ops->readpages(), or, as fallback,
-mapping->a_ops->readpage().
+ brassow
 
-On that level, all variants end up submitting as READ.
+Index: libdm/libdm-deptree.c
+===================================================================
+RCS file: /cvs/lvm2/LVM2/libdm/libdm-deptree.c,v
+retrieving revision 1.53
+diff -p -u -r1.53 libdm-deptree.c
+--- libdm/libdm-deptree.c	7 Jul 2009 16:36:05 -0000	1.53
++++ libdm/libdm-deptree.c	29 Jul 2009 19:28:17 -0000
+@@ -1291,12 +1291,6 @@ static int _emit_segment_line(struct dm_
+ 		if (seg->flags & DM_CORELOG)
+ 			log_parm_count--;   /* DM_CORELOG does not count in the param list */
+ 
+-		if (seg->clustered) {
+-			if (seg->uuid)
+-				log_parm_count++;
+-			EMIT_PARAMS(pos, "clustered-");
+-		}
+-
+ 		if (!seg->log)
+ 			logtype = "core";
+ 		else {
+@@ -1306,24 +1300,25 @@ static int _emit_segment_line(struct dm_
+ 				return_0;
+ 		}
+ 
+-		EMIT_PARAMS(pos, "%s %u", logtype, log_parm_count);
++		if (seg->clustered) {
++			if (!seg->uuid)
++				return_0;
++			log_parm_count++;
++			EMIT_PARAMS(pos, "userspace %u %s clustered-%s",
++				    log_parm_count, seg->uuid, logtype);
++		} else
++			EMIT_PARAMS(pos, "%s %u", logtype, log_parm_count);
+ 
+ 		if (seg->log)
+ 			EMIT_PARAMS(pos, " %s", logbuf);
+ 
+ 		EMIT_PARAMS(pos, " %u", seg->region_size);
+ 
+-		if (seg->clustered && seg->uuid)
+-			EMIT_PARAMS(pos, " %s", seg->uuid);
+-
+ 		if ((seg->flags & DM_NOSYNC))
+ 			EMIT_PARAMS(pos, " nosync");
+ 		else if ((seg->flags & DM_FORCESYNC))
+ 			EMIT_PARAMS(pos, " sync");
+ 
+-		if ((seg->flags & DM_BLOCK_ON_ERROR))
+-			EMIT_PARAMS(pos, " block_on_error");
+-
+ 		EMIT_PARAMS(pos, " %u ", seg->mirror_area_count);
+ 
+ 		break;
+@@ -1369,6 +1364,10 @@ static int _emit_segment_line(struct dm_
+ 		break;
+ 	}
+ 
++	if ((seg->type == SEG_MIRRORED) &&
++	    (seg->flags & DM_BLOCK_ON_ERROR))
++		EMIT_PARAMS(pos, " 1 handle_errors");
++
+ 	log_debug("Adding target to (%" PRIu32 ":%" PRIu32 "): %" PRIu64
+ 		  " %" PRIu64 " %s %s", major, minor,
+ 		  *seg_start, seg->size, dm_segtypes[seg->type].target, params);
 
-This may even be intentional.
-But if so, I'd like to understand that.
 
-Please, anyone in the know, enlighten me ;)
-
-
-	Lars
-
-Annecdotical: I've seen an oracle being killed by OOM, because someone
-did a grep -r . while accidentally having a bogusly huge readahead set.
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
