@@ -1,119 +1,82 @@
-From: Chris Mason <chris.mason@oracle.com>
-Subject: Re: Why does __do_page_cache_readahead submit READ, not READA?
-Date: Thu, 30 Jul 2009 12:56:16 -0400
-Message-ID: <20090730165616.GB5021@think>
-References: <20090729161456.GB8059@barkeeper1-xen.linbit>
- <20090729211845.GB4148@kernel.dk>
- <20090729225501.GH24801@think>
- <20090730060649.GC4148@kernel.dk>
- <20090730143409.GJ24801@think>
- <x49fxcedso6.fsf@segfault.boston.devel.redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH 05/24] io-controller: Modify cfq to make use
+	of flat elevator fair queuing
+Date: Thu, 30 Jul 2009 14:30:14 -0400
+Message-ID: <20090730183014.GA6067@redhat.com>
+References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
+	<1248467274-32073-6-git-send-email-vgoyal@redhat.com>
+	<4A71BF76.6040709@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <x49fxcedso6.fsf@segfault.boston.devel.redhat.com>
-Sender: owner-linux-mm@kvack.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
+In-Reply-To: <4A71BF76.6040709@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jerome Marchand <jmarchan@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com
 List-Id: dm-devel.ids
 
-On Thu, Jul 30, 2009 at 12:47:21PM -0400, Jeff Moyer wrote:
-> Chris Mason <chris.mason@oracle.com> writes:
+On Thu, Jul 30, 2009 at 05:42:46PM +0200, Jerome Marchand wrote:
+> Vivek Goyal wrote:
+> > @@ -1616,11 +1234,12 @@ static void changed_ioprio(struct io_context *ioc, struct cfq_io_context *cic)
+> >  	struct cfq_data *cfqd = cic->key;
+> >  	struct cfq_queue *cfqq;
+> >  	unsigned long flags;
+> > +	struct request_queue *q = cfqd->queue;
 > 
-> > On Thu, Jul 30, 2009 at 08:06:49AM +0200, Jens Axboe wrote:
-> >> On Wed, Jul 29 2009, Chris Mason wrote:
-> >> > On Wed, Jul 29, 2009 at 11:18:45PM +0200, Jens Axboe wrote:
-> >> > > On Wed, Jul 29 2009, Lars Ellenberg wrote:
-> >> > > > I naively assumed, from the "readahead" in the name, that readahead
-> >> > > > would be submitting READA bios. It does not.
-> >> > > > 
-> >> > > > I recently did some statistics on how many READ and READA requests
-> >> > > > we actually see on the block device level.
-> >> > > > I was suprised that READA is basically only used for file system
-> >> > > > internal meta data (and not even for all file systems),
-> >> > > > but _never_ for file data.
-> >> > > > 
-> >> > > > A simple
-> >> > > > 	dd if=bigfile of=/dev/null bs=4k count=1
-> >> > > > will absolutely cause readahead of the configured amount, no problem.
-> >> > > > But on the block device level, these are READ requests, where I'd
-> >> > > > expected them to be READA requests, based on the name.
-> >> > > > 
-> >> > > > This is because __do_page_cache_readahead() calls read_pages(),
-> >> > > > which in turn is mapping->a_ops->readpages(), or, as fallback,
-> >> > > > mapping->a_ops->readpage().
-> >> > > > 
-> >> > > > On that level, all variants end up submitting as READ.
-> >> > > > 
-> >> > > > This may even be intentional.
-> >> > > > But if so, I'd like to understand that.
-> >> > > 
-> >> > > I don't think it's intentional, and if memory serves, we used to use
-> >> > > READA when submitting read-ahead. Not sure how best to improve the
-> >> > > situation, since (as you describe), we lose the read-ahead vs normal
-> >> > > read at that level. I did some experimentation some time ago for
-> >> > > flagging this, see:
-> >> > > 
-> >> > > http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=16cfe64e3568cda412b3cf6b7b891331946b595e
-> >> > > 
-> >> > > which should pass down READA properly.
-> >> > 
-> >> > One of the problems in the past was that reada would fail if there
-> >> > wasn't a free request when we actually wanted it to go ahead and wait.
-> >> > Or something.  We've switched it around a few times I think.
-> >> 
-> >> Yes, we did used to do that, whether it was 2.2 or 2.4 I
-> >> don't recall :-)
-> >> 
-> >> It should be safe to enable know, whether there's a prettier way
-> >> than the above, I don't know. It works by detecting the read-ahead
-> >> marker, but it's a bit of a fragile design.
-> >
-> > I dug through my old email and found this fun bug w/buffer heads and
-> > reada.
-> >
-> > 1) submit reada ll_rw_block on ext3 directory block
-> > 2) decide that we really really need to wait on this block
-> > 3) wait_on_buffer(bh) ; check up to date bit when done
-> >
-> > The problem in the bugzilla was that reada was returning EAGAIN or
-> > EWOULDBLOCK, and the whole filesystem world expects that if we
-> > wait_on_buffer and don't find the buffer up to date, its time
-> > set things read only and run around screaming.
-> >
-> > The expectations in the code at the time were that the caller needs to
-> > be aware the request may fail with EAGAIN/EWOULDBLOCK, but the reality
-> > was that everyone who found that locked buffer also needed to be able to
-> > check for it.  This one bugzilla had a teeny window where the reada
-> > buffer head was leaked to the world.
-> >
-> > So, I think we can start using it again if it is just a hint to the
-> > elevator about what to do with the IO, and we never actually turn the
-> > READA into a transient failure (which I think is mostly true today, there
-> > weren't many READA tests in the code I could see).
+> cfqd may be NULL here. We'd better test it before using it.
 > 
-> Well, is it a hint to the elevator or to the driver (or both)?
 
-I would say both as long as they don't fail it.  IOW a priority decision
-instead of a discard this request at will decision.
+Thanks Jerome. 
 
-> The one
-> bug I remember regarding READA failing was due to the FAILFAST bit
-> getting set for READA I/O, and the powerpath driver returning a failure.
-> Is that the bug to which you are referring?
+Actually I will drop this chage altogether. This is not required. I don't
+know why did I change original code to introduce another local variable. 
 
-This was a rhel bug with ext3 and (both dm and powerpath ) multipath, but in
-theory it could be triggered on regular drives.  I don't think we ever
-managed to, but removing READA definitely fixed it.
+Thanks
+Vivek
 
-It was bug 213921 in the RH bugzilla, and I think it had been fixed in
-other ways in mainline by the time we found it.
-
--chris
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> >  
+> >  	if (unlikely(!cfqd))
+> >  		return;
+> >  
+> > -	spin_lock_irqsave(cfqd->queue->queue_lock, flags);
+> > +	spin_lock_irqsave(q->queue_lock, flags);
+> >  
+> >  	cfqq = cic->cfqq[BLK_RW_ASYNC];
+> >  	if (cfqq) {
+> > @@ -1637,7 +1256,7 @@ static void changed_ioprio(struct io_context *ioc, struct cfq_io_context *cic)
+> >  	if (cfqq)
+> >  		cfq_mark_cfqq_prio_changed(cfqq);
+> >  
+> > -	spin_unlock_irqrestore(cfqd->queue->queue_lock, flags);
+> > +	spin_unlock_irqrestore(q->queue_lock, flags);
+> >  }
+> >  
+> >  static void cfq_ioc_set_ioprio(struct io_context *ioc)
+> 
+> 
+> --- block/cfq-iosched.c.orig	2009-07-29 10:22:08.000000000 +0200
+> +++ block/cfq-iosched.c	2009-07-30 17:25:05.000000000 +0200
+> @@ -1271,11 +1271,12 @@ static void changed_ioprio(struct io_con
+>  	struct cfq_data *cfqd = cic->key;
+>  	struct cfq_queue *cfqq;
+>  	unsigned long flags;
+> -	struct request_queue *q = cfqd->queue;
+> +	struct request_queue *q;
+>  
+>  	if (unlikely(!cfqd))
+>  		return;
+>  
+> +	q = cfqd->queue;
+>  	spin_lock_irqsave(q->queue_lock, flags);
+>  
+>  	cfqq = cic->cfqq[BLK_RW_ASYNC];
