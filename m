@@ -1,17 +1,16 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH 05/24] io-controller: Modify cfq to make use
-	of flat elevator fair queuing
-Date: Thu, 30 Jul 2009 14:30:14 -0400
-Message-ID: <20090730183014.GA6067@redhat.com>
-References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com>
-	<1248467274-32073-6-git-send-email-vgoyal@redhat.com>
-	<4A71BF76.6040709@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [RESEND] [PATCH] Use Average path priority value for
+	path switching
+Date: Thu, 30 Jul 2009 13:13:55 -0700
+Message-ID: <1248984835.18243.5.camel@chandra-ubuntu>
+References: <1246583474.30568.2.camel@chandra-ubuntu>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4A71BF76.6040709@redhat.com>
+In-Reply-To: <1246583474.30568.2.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,62 +20,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jerome Marchand <jmarchan@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com
+To: Christophe Varoqui <christophe.varoqui@free.fr>, Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 30, 2009 at 05:42:46PM +0200, Jerome Marchand wrote:
-> Vivek Goyal wrote:
-> > @@ -1616,11 +1234,12 @@ static void changed_ioprio(struct io_context *ioc, struct cfq_io_context *cic)
-> >  	struct cfq_data *cfqd = cic->key;
-> >  	struct cfq_queue *cfqq;
-> >  	unsigned long flags;
-> > +	struct request_queue *q = cfqd->queue;
-> 
-> cfqd may be NULL here. We'd better test it before using it.
-> 
+Hi Christophe,
 
-Thanks Jerome. 
+I submitted this patch on Jul 2
+(http://marc.info/?l=dm-devel&m=124658334721911&w=2). Resending it.
 
-Actually I will drop this chage altogether. This is not required. I don't
-know why did I change original code to introduce another local variable. 
+Only change is a field name from up_paths to enabled_paths.
 
-Thanks
-Vivek
+Hi Hannes,
 
-> >  
-> >  	if (unlikely(!cfqd))
-> >  		return;
-> >  
-> > -	spin_lock_irqsave(cfqd->queue->queue_lock, flags);
-> > +	spin_lock_irqsave(q->queue_lock, flags);
-> >  
-> >  	cfqq = cic->cfqq[BLK_RW_ASYNC];
-> >  	if (cfqq) {
-> > @@ -1637,7 +1256,7 @@ static void changed_ioprio(struct io_context *ioc, struct cfq_io_context *cic)
-> >  	if (cfqq)
-> >  		cfq_mark_cfqq_prio_changed(cfqq);
-> >  
-> > -	spin_unlock_irqrestore(cfqd->queue->queue_lock, flags);
-> > +	spin_unlock_irqrestore(q->queue_lock, flags);
-> >  }
-> >  
-> >  static void cfq_ioc_set_ioprio(struct io_context *ioc)
-> 
-> 
-> --- block/cfq-iosched.c.orig	2009-07-29 10:22:08.000000000 +0200
-> +++ block/cfq-iosched.c	2009-07-30 17:25:05.000000000 +0200
-> @@ -1271,11 +1271,12 @@ static void changed_ioprio(struct io_con
->  	struct cfq_data *cfqd = cic->key;
->  	struct cfq_queue *cfqq;
->  	unsigned long flags;
-> -	struct request_queue *q = cfqd->queue;
-> +	struct request_queue *q;
->  
->  	if (unlikely(!cfqd))
->  		return;
->  
-> +	q = cfqd->queue;
->  	spin_lock_irqsave(q->queue_lock, flags);
->  
->  	cfqq = cic->cfqq[BLK_RW_ASYNC];
+Need an ACK from you :-).
+
+regards,
+
+chandra
+
+----------------------------------------------------------------------- 
+Failback happens only when the sum of priorities of all paths
+(on the higher priority path group) is greater than the sum
+of priorities of all paths on the lower priority path group.
+
+This leads into problems when there are more than one paths
+in each of the path groups, and the sum of all paths in the
+lower priority path group is greater than that of path priority
+of a single high priority path.
+
+This patch fixes the problem by using average priority of 
+the path group to decide on which path group to switch over.
+
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+---
+ libmultipath/structs.h     |    1 +
+ libmultipath/switchgroup.c |   23 ++++++++++++++++++-----
+ 2 files changed, 19 insertions(+), 5 deletions(-)
+
+Index: multipath-tools-mainline/libmultipath/structs.h
+===================================================================
+--- multipath-tools-mainline.orig/libmultipath/structs.h
++++ multipath-tools-mainline/libmultipath/structs.h
+@@ -202,6 +202,7 @@ struct pathgroup {
+ 	long id;
+ 	int status;
+ 	int priority;
++	int enabled_paths;
+ 	vector paths;
+ 	char * selector;
+ };
+Index: multipath-tools-mainline/libmultipath/switchgroup.c
+===================================================================
+--- multipath-tools-mainline.orig/libmultipath/switchgroup.c
++++ multipath-tools-mainline/libmultipath/switchgroup.c
+@@ -14,13 +14,16 @@ path_group_prio_update (struct pathgroup
+ 	int priority = 0;
+ 	struct path * pp;
+ 
++ 	pgp->enabled_paths = 0;
+ 	if (!pgp->paths) {
+ 		pgp->priority = 0;
+ 		return;
+ 	}
+ 	vector_foreach_slot (pgp->paths, pp, i) {
+-		if (pp->state != PATH_DOWN)
++		if (pp->state != PATH_DOWN) {
+ 			priority += pp->priority;
++ 			pgp->enabled_paths++;
++		}
+ 	}
+ 	pgp->priority = priority;
+ }
+@@ -29,8 +32,9 @@ extern int
+ select_path_group (struct multipath * mpp)
+ {
+ 	int i;
+-	int highest = 0;
++	int max_priority = 0, avg_priority;
+ 	int bestpg = 1;
++	int max_enabled_paths = 1;
+ 	struct pathgroup * pgp;
+ 
+ 	if (!mpp->pg)
+@@ -41,9 +45,18 @@ select_path_group (struct multipath * mp
+ 			continue;
+ 
+ 		path_group_prio_update(pgp);
+-		if (pgp->priority > highest) {
+-			highest = pgp->priority;
+-			bestpg = i + 1;
++		if (pgp->enabled_paths) {
++			avg_priority = pgp->priority / pgp->enabled_paths;
++			if (avg_priority > max_priority) {
++				max_priority = avg_priority;
++				max_enabled_paths = pgp->enabled_paths;
++				bestpg = i + 1;
++			} else if (avg_priority == max_priority) {
++				if (pgp->enabled_paths > max_enabled_paths) {
++					max_enabled_paths = pgp->enabled_paths;
++					bestpg = i + 1;
++				}
++			}
+ 		}
+ 	}
+ 	return bestpg;
