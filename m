@@ -1,66 +1,70 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: Why does __do_page_cache_readahead submit READ, not READA?
-Date: Thu, 30 Jul 2009 08:06:49 +0200
-Message-ID: <20090730060649.GC4148@kernel.dk>
-References: <20090729161456.GB8059@barkeeper1-xen.linbit> <20090729211845.GB4148@kernel.dk> <20090729225501.GH24801@think>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH 05/24] io-controller: Modify cfq to make use of flat elevator
+ fair queuing
+Date: Thu, 30 Jul 2009 14:30:40 +0800
+Message-ID: <4A713E10.2030204@cn.fujitsu.com>
+References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com> <1248467274-32073-6-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20090729225501.GH24801@think>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Chris Mason <chris.mason@oracle.com>
-Cc: Lars Ellenberg <lars.ellenberg@linbit.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752182AbZG3GcM@vger.kernel.org>
+In-Reply-To: <1248467274-32073-6-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, ryov@valinux.co.jp, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-On Wed, Jul 29 2009, Chris Mason wrote:
-> On Wed, Jul 29, 2009 at 11:18:45PM +0200, Jens Axboe wrote:
-> > On Wed, Jul 29 2009, Lars Ellenberg wrote:
-> > > I naively assumed, from the "readahead" in the name, that readahead
-> > > would be submitting READA bios. It does not.
-> > > 
-> > > I recently did some statistics on how many READ and READA requests
-> > > we actually see on the block device level.
-> > > I was suprised that READA is basically only used for file system
-> > > internal meta data (and not even for all file systems),
-> > > but _never_ for file data.
-> > > 
-> > > A simple
-> > > 	dd if=bigfile of=/dev/null bs=4k count=1
-> > > will absolutely cause readahead of the configured amount, no problem.
-> > > But on the block device level, these are READ requests, where I'd
-> > > expected them to be READA requests, based on the name.
-> > > 
-> > > This is because __do_page_cache_readahead() calls read_pages(),
-> > > which in turn is mapping->a_ops->readpages(), or, as fallback,
-> > > mapping->a_ops->readpage().
-> > > 
-> > > On that level, all variants end up submitting as READ.
-> > > 
-> > > This may even be intentional.
-> > > But if so, I'd like to understand that.
-> > 
-> > I don't think it's intentional, and if memory serves, we used to use
-> > READA when submitting read-ahead. Not sure how best to improve the
-> > situation, since (as you describe), we lose the read-ahead vs normal
-> > read at that level. I did some experimentation some time ago for
-> > flagging this, see:
-> > 
-> > http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=16cfe64e3568cda412b3cf6b7b891331946b595e
-> > 
-> > which should pass down READA properly.
-> 
-> One of the problems in the past was that reada would fail if there
-> wasn't a free request when we actually wanted it to go ahead and wait.
-> Or something.  We've switched it around a few times I think.
+Vivek Goyal wrote:
+...
+>  /*
+>   * Check if new_cfqq should preempt the currently active queue. Return 0 for
+> - * no or if we aren't sure, a 1 will cause a preempt.
+> + * no or if we aren't sure, a 1 will cause a preemption attempt.
+> + * Some of the preemption logic has been moved to common layer. Only cfq
+> + * specific parts are left here.
+>   */
+>  static int
+> -cfq_should_preempt(struct cfq_data *cfqd, struct cfq_queue *new_cfqq,
+> -		   struct request *rq)
+> +cfq_should_preempt(struct request_queue *q, void *new_cfqq, struct request *rq)
+>  {
+> -	struct cfq_queue *cfqq;
+> +	struct cfq_data *cfqd = q->elevator->elevator_data;
+> +	struct cfq_queue *cfqq = elv_active_sched_queue(q->elevator);
+>  
+> -	cfqq = cfqd->active_queue;
+>  	if (!cfqq)
+>  		return 0;
+>  
+> -	if (cfq_slice_used(cfqq))
+> +	if (elv_ioq_slice_used(cfqq->ioq))
+>  		return 1;
+>  
+>  	if (cfq_class_idle(new_cfqq))
+> @@ -2018,13 +1661,7 @@ cfq_should_preempt(struct cfq_data *cfqd, struct cfq_queue *new_cfqq,
+>  	if (rq_is_meta(rq) && !cfqq->meta_pending)
+>  		return 1;
+>  
+> -	/*
+> -	 * Allow an RT request to pre-empt an ongoing non-RT cfqq timeslice.
+> -	 */
+> -	if (cfq_class_rt(new_cfqq) && !cfq_class_rt(cfqq))
+> -		return 1;
+> -
+> -	if (!cfqd->active_cic || !cfq_cfqq_wait_request(cfqq))
+> +	if (!cfqd->active_cic || !elv_ioq_wait_request(cfqq->ioq))
+>  		return 0;
+>  
+>  	/*
 
-Yes, we did used to do that, whether it was 2.2 or 2.4 I
-don't recall :-)
+Hi Vivek,
 
-It should be safe to enable know, whether there's a prettier way
-than the above, I don't know. It works by detecting the read-ahead
-marker, but it's a bit of a fragile design.
+cfq_should_preempt() will do the check "if (cfq_rq_close(cfqd, rq)) to see whether
+it should preempt the current cfqq. From fairness point of view,  should we also 
+check "fairness" value, if it's set fairness == 1, don't allow to preempt the current
+cfqq?
+
 
 -- 
-Jens Axboe
-
+Regards
+Gui Jianfeng
