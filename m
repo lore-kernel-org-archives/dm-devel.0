@@ -1,70 +1,57 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 05/24] io-controller: Modify cfq to make use of flat elevator
- fair queuing
-Date: Thu, 30 Jul 2009 14:30:40 +0800
-Message-ID: <4A713E10.2030204@cn.fujitsu.com>
-References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com> <1248467274-32073-6-git-send-email-vgoyal@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [PATCH] dm-ioband-v1.12.2: I/O bandwidth controller
+Date: Thu, 30 Jul 2009 17:53:21 +0900 (JST)
+Message-ID: <20090730.175321.193708040.ryov@valinux.co.jp>
+References: <20090730.115454.226775179.ryov@valinux.co.jp>
+	<20090730054204.GA11291@verge.net.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752182AbZG3GcM@vger.kernel.org>
-In-Reply-To: <1248467274-32073-6-git-send-email-vgoyal@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, ryov@valinux.co.jp, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <20090730054204.GA11291@verge.net.au>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: horms@verge.net.au
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
->  /*
->   * Check if new_cfqq should preempt the currently active queue. Return 0 for
-> - * no or if we aren't sure, a 1 will cause a preempt.
-> + * no or if we aren't sure, a 1 will cause a preemption attempt.
-> + * Some of the preemption logic has been moved to common layer. Only cfq
-> + * specific parts are left here.
->   */
->  static int
-> -cfq_should_preempt(struct cfq_data *cfqd, struct cfq_queue *new_cfqq,
-> -		   struct request *rq)
-> +cfq_should_preempt(struct request_queue *q, void *new_cfqq, struct request *rq)
->  {
-> -	struct cfq_queue *cfqq;
-> +	struct cfq_data *cfqd = q->elevator->elevator_data;
-> +	struct cfq_queue *cfqq = elv_active_sched_queue(q->elevator);
->  
-> -	cfqq = cfqd->active_queue;
->  	if (!cfqq)
->  		return 0;
->  
-> -	if (cfq_slice_used(cfqq))
-> +	if (elv_ioq_slice_used(cfqq->ioq))
->  		return 1;
->  
->  	if (cfq_class_idle(new_cfqq))
-> @@ -2018,13 +1661,7 @@ cfq_should_preempt(struct cfq_data *cfqd, struct cfq_queue *new_cfqq,
->  	if (rq_is_meta(rq) && !cfqq->meta_pending)
->  		return 1;
->  
-> -	/*
-> -	 * Allow an RT request to pre-empt an ongoing non-RT cfqq timeslice.
-> -	 */
-> -	if (cfq_class_rt(new_cfqq) && !cfq_class_rt(cfqq))
-> -		return 1;
-> -
-> -	if (!cfqd->active_cic || !cfq_cfqq_wait_request(cfqq))
-> +	if (!cfqd->active_cic || !elv_ioq_wait_request(cfqq->ioq))
->  		return 0;
->  
->  	/*
+Hi Simon,
 
-Hi Vivek,
+> Hi Tsuruta-san,
+> 
+> have you run sparse over this code? There seem to be a few interesting
+> warnings generated (and some at the top noise too).
 
-cfq_should_preempt() will do the check "if (cfq_rq_close(cfqd, rq)) to see whether
-it should preempt the current cfqq. From fairness point of view,  should we also 
-check "fairness" value, if it's set fairness == 1, don't allow to preempt the current
-cfqq?
+Thank you for your comment.
+I'll do sparse every time from now on.
+ 
+> $ make C=1 CF="-D__CHECK_ENDIAN__"
+> [snip]
+> include/trace/events/dm-ioband.h:9:1: warning: symbol 'ftrace_raw_output_ioband_hold_urgent_bio' was not declared. Should it be static?
+[snip ftrace warnings]
 
+> drivers/md/dm-ioband-ctl.c:178:2: warning: context problem in 'suspend_ioband_device': '_spin_unlock_irqrestore' expected different context
+> drivers/md/dm-ioband-ctl.c:178:2:    context 'lock': wanted >= 1, got 0
+> drivers/md/dm-ioband-ctl.c:600:3: warning: context imbalance in 'prevent_burst_bios': unexpected unlock
+> drivers/md/dm-ioband-ctl.c:600:3:    context '<noident>': wanted 0, got -1
+> drivers/md/dm-ioband-ctl.c:816:3: warning: context imbalance in 'ioband_map': __context__ statement expected different context
+> drivers/md/dm-ioband-ctl.c:816:3:    context '<noident>': wanted >= 0, got -1
+> drivers/md/dm-ioband-rangebw.c:287:4: warning: context imbalance in 'range_bw_queue_full': __context__ statement expected different context
+> drivers/md/dm-ioband-rangebw.c:287:4:    context '<noident>': wanted >= 0, got -1
 
--- 
-Regards
-Gui Jianfeng
+These imbalances are not warned by the latest sparse command retrieved
+from the git repository, and actually they are not imbalanced.
+
+> drivers/md/dm-ioband-rangebw.c:592:6: warning: symbol 'range_bw_timeover' was not declared. Should it be static?
+> drivers/md/dm-ioband-rangebw.c:210: warning: 'io_mode' may be used uninitialized in this function
+
+I'll fix these warnings and post the update soon.
+
+Thanks,
+Ryo Tsuruta
