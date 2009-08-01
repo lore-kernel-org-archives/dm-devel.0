@@ -1,11 +1,15 @@
-From: Julia Lawall <julia@diku.dk>
-Subject: [PATCH 8/10] drivers/md: introduce missing kfree
-Date: Sat, 1 Aug 2009 10:55:04 +0200 (CEST)
-Message-ID: <Pine.LNX.4.64.0908011054440.23408@ask.diku.dk>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: Re: NULL data pointer dereference in kcryptd
+Date: Sat, 01 Aug 2009 11:04:11 +0200
+Message-ID: <4A74050B.6080608@redhat.com>
+References: <200907312254.45630.mb@bu3sch.de>
+	<20090801002708.GA6292@gondor.apana.org.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090801002708.GA6292@gondor.apana.org.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,69 +19,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
+To: Michael Buesch <mb@bu3sch.de>
+Cc: device-mapper development <dm-devel@redhat.com>, davem@davemloft.net, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Julia Lawall <julia@diku.dk>
+Herbert Xu wrote:
+> On Fri, Jul 31, 2009 at 10:54:45PM +0200, Michael Buesch wrote:
+>> [15577.988608] NIP [c0000000000b8034] .mempool_alloc+0x74/0x1a0
+>> [15577.988614] LR [c000000000139bdc] .bio_alloc_bioset+0x4c/0x130
+>> [15577.988616] Call Trace:
+>> [15577.988619] [c0000001f022fb60] [c0000001f022fbf0] 0xc0000001f022fbf0 (unreliable)
+>> [15577.988625] [c0000001f022fc40] [c000000000139bdc] .bio_alloc_bioset+0x4c/0x130
+>> [15577.988632] [c0000001f022fcf0] [c0000000005334a0] .kcryptd_crypt+0x210/0x520
+>> [15577.988637] [c0000001f022fde0] [c000000000068018] .worker_thread+0x248/0x3e0
+>> [15577.988642] [c0000001f022ff00] [c00000000006e1e4] .kthread+0x84/0xe0
+>> [15577.988648] [c0000001f022ff90] [c000000000021830] .kernel_thread+0x54/0x70
 
-Error handling code following a kmalloc should free the allocated data.
+That seems like mempool is NULL in bio_alloc_bioset. That mempool/bioset is destroyed only
+when crypt mapping is destroyed, after workqueue is flushed, so it should not happen...
 
-The semantic match that finds the problem is as follows:
-(http://www.emn.fr/x-info/coccinelle/)
+Which command did you exactly run to trigger this? only sync & mkfs on existing
+LUKS device or there was also some cryptsetup luksClose (or something removing
+mapping) before?
 
-// <smpl>
-@r exists@
-local idexpression x;
-statement S;
-expression E;
-identifier f,f1,l;
-position p1,p2;
-expression *ptr != NULL;
-@@
+> kcryptd actually belongs to drivers/md/dm-crypt.c.  So please post
+> to the DM list.
 
-x@p1 = \(kmalloc\|kzalloc\|kcalloc\)(...);
-...
-if (x == NULL) S
-<... when != x
-     when != if (...) { <+...x...+> }
-(
-x->f1 = E
-|
- (x->f1 == NULL || ...)
-|
- f(...,x->f1,...)
-)
-...>
-(
- return \(0\|<+...x...+>\|ptr\);
-|
- return@p2 ...;
-)
+yes, this is dm-crypt or block layer problem. But I read linux-crypto list too:-)
 
-@script:python@
-p1 << r.p1;
-p2 << r.p2;
-@@
-
-print "* file: %s kmalloc %s return %s" % (p1[0].file,p1[0].line,p2[0].line)
-// </smpl>
-
-Signed-off-by: Julia Lawall <julia@diku.dk>
----
- drivers/md/dm-exception-store.c     |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
-
-diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
-index 3710ff8..ee68d17 100644
---- a/drivers/md/dm-exception-store.c
-+++ b/drivers/md/dm-exception-store.c
-@@ -217,7 +217,8 @@ int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
- 		type = get_type("N");
- 	else {
- 		ti->error = "Persistent flag is not P or N";
--		return -EINVAL;
-+		r = -EINVAL;
-+		goto bad_type;
- 	}
- 
- 	if (!type) {
+Milan
+--
+mbroz@redhat.com
