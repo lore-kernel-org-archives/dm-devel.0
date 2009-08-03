@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 3/5] multipath-tools: uninstall libraries
-	correctly
-Date: Mon, 3 Aug 2009 17:01:33 -0500
-Message-ID: <20090803220133.GT15326@ether.msp.redhat.com>
+Subject: [PATCH 4/5] multipath-tools: install libraries to /lib64
+	where appriopriate
+Date: Mon, 3 Aug 2009 17:02:29 -0500
+Message-ID: <20090803220229.GU15326@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -20,40 +20,63 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The unistall action for checker libraries doesn't work. Also, the uninstall
-action for the prioritizer libraries runs the risk of uninstalling something
-that we didn't install.  This patch changes them to correctly uninstall the
-files listed in LIBS.
+Multipath currently installs all of it's libraries to /lib, even on 64-bit
+machines with a /lib64 directory.  With this patch, multipath will install
+the libraries under /lib64 if it exists.  This can be overridden by running
+# make LIB=<lib>
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers/Makefile     |    2 +-
- libmultipath/prioritizers/Makefile |    2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ Makefile.inc            |   14 +++++++++++---
+ libmultipath/defaults.h |    2 +-
+ 2 files changed, 12 insertions(+), 4 deletions(-)
 
-Index: multipath-tools/libmultipath/checkers/Makefile
+Index: multipath-tools/libmultipath/defaults.h
 ===================================================================
---- multipath-tools.orig/libmultipath/checkers/Makefile
-+++ multipath-tools/libmultipath/checkers/Makefile
-@@ -27,7 +27,7 @@ install:
- 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(libdir)
- 
- uninstall:
--	rm -f $(DESTDIR)$(libdir)/$(LIBS)
-+	for file in $(LIBS); do rm -f $(DESTDIR)$(libdir)/$$file; done
- 
- clean:
- 	rm -f core *.a *.o *.gz *.so
-Index: multipath-tools/libmultipath/prioritizers/Makefile
+--- multipath-tools.orig/libmultipath/defaults.h
++++ multipath-tools/libmultipath/defaults.h
+@@ -1,6 +1,6 @@
+ #define DEFAULT_GETUID		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+ #define DEFAULT_UDEVDIR		"/dev"
+-#define DEFAULT_MULTIPATHDIR	"/lib/multipath"
++#define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
+ #define DEFAULT_SELECTOR	"round-robin 0"
+ #define DEFAULT_FEATURES	"0"
+ #define DEFAULT_HWHANDLER	"0"
+Index: multipath-tools/Makefile.inc
 ===================================================================
---- multipath-tools.orig/libmultipath/prioritizers/Makefile
-+++ multipath-tools/libmultipath/prioritizers/Makefile
-@@ -28,7 +28,7 @@ install: $(LIBS)
- 	$(INSTALL_PROGRAM) -m 755 libprio*.so $(DESTDIR)$(libdir)
+--- multipath-tools.orig/Makefile.inc
++++ multipath-tools/Makefile.inc
+@@ -13,6 +13,14 @@ ifeq ($(TOPDIR),)
+ 	TOPDIR	= ..
+ endif
  
- uninstall:
--	rm -f $(DESTDIR)$(libdir)/libprio*.so
-+	for file in $(LIBS); do rm -f $(DESTDIR)$(libdir)/$$file; done
++ifndef LIB
++	ifeq ($(shell test -d /lib64 && echo 1),1)
++		LIB=lib64
++	else
++		LIB=lib
++	endif
++endif
++
+ prefix      = 
+ exec_prefix = $(prefix)
+ bindir      = $(exec_prefix)/sbin
+@@ -21,14 +29,14 @@ multipathdir = $(TOPDIR)/libmultipath
+ mandir      = $(prefix)/usr/share/man/man8
+ man5dir     = $(prefix)/usr/share/man/man5
+ rcdir	    = $(prefix)/etc/init.d
+-syslibdir   = $(prefix)/lib
+-libdir	    = $(prefix)/lib/multipath
++syslibdir   = $(prefix)/$(LIB)
++libdir	    = $(prefix)/$(LIB)/multipath
  
- clean:
- 	rm -f core *.a *.o *.gz *.so
+ GZIP        = /bin/gzip -9 -c
+ INSTALL_PROGRAM = install
+ 
+ OPTFLAGS     = -pipe -g -Wall -Wunused -Wstrict-prototypes
+-CFLAGS	     = $(OPTFLAGS) -fPIC
++CFLAGS	     = $(OPTFLAGS) -fPIC -DLIB_STRING=\"${LIB}\"
+ SHARED_FLAGS = -shared
+ 
+ %.o:	%.c
