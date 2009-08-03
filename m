@@ -1,76 +1,102 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: about multipath path group
-Date: Mon, 3 Aug 2009 14:31:41 -0500
-Message-ID: <20090803193141.GQ15326@ether.msp.redhat.com>
-References: <2005566d0907212349i13c7d5aft7af3506dc572b8e7@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [dm-devel] [PATCH]: create sysfs file, dh_state for SCSI
+	devices even if they	are not in the inteernal lists
+Date: Mon, 03 Aug 2009 12:51:39 -0700
+Message-ID: <1249329099.31433.23.camel@chandra-ubuntu>
+References: <1246069888.14164.53.camel@chandra-ubuntu>
+	 <4A486FF0.7040209@suse.de>  <1246303830.15941.17.camel@chandra-ubuntu>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <2005566d0907212349i13c7d5aft7af3506dc572b8e7@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1246303830.15941.17.camel@chandra-ubuntu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Mario Mech <mech@meteo.uni-koeln.de>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Jul 22, 2009 at 02:49:39PM +0800, =E6=9D=A8=E4=BC=9F wrote:
->    Dear all:
->=20
->    Q1: In RHEL 5.2, make and make install multipath-tools-0.4.8, why do=
-es not
->    command "multipath -p" work well?
+Hi Hannes,
 
-Are you using the upstream or the RHEL code.  multipath -p does work in
-the RHEL code, although, if you run multipath again, or reconfigure
-multipathd, it will notice that your devices aren't set up the way the
-config says they should be, and it will change them back.  In general,
-multipath -p is pretty worthless, you should change the configuration to
-use the path grouping policy you want.
+Can you comment on this please.
 
->=20
->    Q2: In RHEL 5.2, configure path group policy as failover or group_by=
-_prio,
->    and then create path-prio.sh to set the priority of paths. however, =
-the
->    path group with the highest priority is not always active, if I don'=
-t
->    recreate the multipath devices. why is that? how I make the path gro=
-up
->    with the highest priority is active on-line?
+If you are convinced with my justification, please send an ACK.
 
-By default, multipath is configured for manual failback.  This means
-that multipathd won't switch from the current active pathgroup to a
-higher priority one, unless you manually force it to do so. The
-easiest way to do this is by running
+Thanks & Regards,
 
-# service multipathd reload  or
-# multipathd -k"reconfigure"
+chandra
+On Mon, 2009-06-29 at 12:30 -0700, Chandra Seetharaman wrote:
+> On Mon, 2009-06-29 at 09:40 +0200, Hannes Reinecke wrote:
+> > Chandra Seetharaman wrote:
+> > > Create the sysfs file, dh_state even if the new SCSI device is not
+> > > in the any of the device handler's internal lists.
+> > > 
+> > > Signed-Off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+> > > ---
+> > >  drivers/scsi/device_handler/scsi_dh.c |   11 ++++-------
+> > >  1 file changed, 4 insertions(+), 7 deletions(-)
+> > > 
+> > > Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+> > > ===================================================================
+> > > --- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh.c
+> > > +++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+> > > @@ -304,18 +304,15 @@ static int scsi_dh_notifier(struct notif
+> > >  	sdev = to_scsi_device(dev);
+> > >  
+> > >  	if (action == BUS_NOTIFY_ADD_DEVICE) {
+> > > +		err = device_create_file(dev, &scsi_dh_state_attr);
+> > > +		/* don't care about err */
+> > >  		devinfo = device_handler_match(NULL, sdev);
+> > > -		if (!devinfo)
+> > > -			goto out;
+> > > -
+> > > -		err = scsi_dh_handler_attach(sdev, devinfo);
+> > > -		if (!err)
+> > > -			err = device_create_file(dev, &scsi_dh_state_attr);
+> > > +		if (devinfo)
+> > > +			err = scsi_dh_handler_attach(sdev, devinfo);
+> > >  	} else if (action == BUS_NOTIFY_DEL_DEVICE) {
+> > >  		device_remove_file(dev, &scsi_dh_state_attr);
+> > >  		scsi_dh_handler_detach(sdev, NULL);
+> > >  	}
+> > > -out:
+> > >  	return err;
+> > >  }
+> > >  
+> > > 
+> > > 
+> > > --
+> > > dm-devel mailing list
+> > > dm-devel@redhat.com
+> > > https://www.redhat.com/mailman/listinfo/dm-devel
+> > NACK.
+> > 
+> > This will create sysfs attributes even if the attach()
+> > failed for other reason like a generic error. So we'll end
+> > up with device handler attributes and no device handler attached.
+> 
+> we do not have to worry about if attach failed or succeeded. We will
+> have "detached" if there is no device handler is attached to a device. 
+> 
+> Basically, existence of this file simply means that scsi_dh module is
+> active, only the contents of this file will indicate if any device
+> handler is attached or not.
+> 
+> We are just creating the file dh_state for each SCSI device that exists
+> and that is the only way non-in-built devices can be attached to a
+> handler by the end-user.
+> 
+> Do note that we do create this file for all the existing scsi devices
+> when the scsi_dh module is inserted (see scsi_dh_init()).
+> 
+> > 
+> > Not a good idea.
+> 
+> I do not agree, and we do need to have this fix for dh_state file to be
+> functionally useful.
+> 
+> > 
+> > Cheers,
+> > 
+> > Hannes
 
-adding=20
-
-defaults {
-	<other_defaults>
-	failback immediate
-}
-
-to /etc/multipath.conf will make multipath immdiately switch to the
-highest priority path group.
-
--Ben
-
->=20
->    William
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
