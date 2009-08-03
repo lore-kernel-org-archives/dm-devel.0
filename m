@@ -1,93 +1,87 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 20/25] io-controller: map async requests to
- appropriate cgroup
-Date: Mon, 03 Aug 2009 10:13:46 +0800
-Message-ID: <4A7647DA.5050607@cn.fujitsu.com>
-References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
-	<1246564917-19603-21-git-send-email-vgoyal@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Wu Fengguang <fengguang.wu@intel.com>
+Subject: Re: Why does __do_page_cache_readahead submit READ, not READA?
+Date: Mon, 3 Aug 2009 15:52:02 +0800
+Message-ID: <20090803075202.GA13485@localhost>
+References: <20090729161456.GB8059@barkeeper1-xen.linbit> <20090729211845.GB4148@kernel.dk> <20090729225501.GH24801@think> <20090730060649.GC4148@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1246564917-19603-21-git-send-email-vgoyal@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, snitzer@redhat.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, jbaron@redhat.com, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, containers@lists.linux-foundation.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20090730060649.GC4148@kernel.dk>
+Sender: owner-linux-mm@kvack.org
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Chris Mason <chris.mason@oracle.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
-> +
-> +struct io_group *io_get_io_group_bio(struct request_queue *q, struct b=
-io *bio,
-> +					int create)
-> +{
-> +	struct page *page =3D NULL;
-> +
-> +	/*
-> +	 * Determine the group from task context. Even calls from
-> +	 * blk_get_request() which don't have any bio info will be mapped
-> +	 * to the task's group
-> +	 */
-> +	if (!bio)
-> +		goto sync;
-> +
-> +	if (bio_barrier(bio)) {
-> +		/*
-> +		 * Map barrier requests to root group. May be more special
-> +		 * bio cases should come here
-> +		 */
-> +		return q->elevator->efqd.root_group;
-> +	}
-> +
-> +	/* Map the sync bio to the right group using task context */
-> +	if (elv_bio_sync(bio))
-> +		goto sync;
-> +
-> +#ifdef CONFIG_TRACK_ASYNC_CONTEXT
-> +	/* Determine the group from info stored in page */
-> +	page =3D bio_iovec_idx(bio, 0)->bv_page;
-> +	return io_get_io_group(q, page, create);
-> +#endif
-> +
-> +sync:
-> +	return io_get_io_group(q, NULL, create);
+On Thu, Jul 30, 2009 at 08:06:49AM +0200, Jens Axboe wrote:
+> On Wed, Jul 29 2009, Chris Mason wrote:
+> > On Wed, Jul 29, 2009 at 11:18:45PM +0200, Jens Axboe wrote:
+> > > On Wed, Jul 29 2009, Lars Ellenberg wrote:
+> > > > I naively assumed, from the "readahead" in the name, that readahead
+> > > > would be submitting READA bios. It does not.
+> > > > 
+> > > > I recently did some statistics on how many READ and READA requests
+> > > > we actually see on the block device level.
+> > > > I was suprised that READA is basically only used for file system
+> > > > internal meta data (and not even for all file systems),
+> > > > but _never_ for file data.
+> > > > 
+> > > > A simple
+> > > > 	dd if=bigfile of=/dev/null bs=4k count=1
+> > > > will absolutely cause readahead of the configured amount, no problem.
+> > > > But on the block device level, these are READ requests, where I'd
+> > > > expected them to be READA requests, based on the name.
+> > > > 
+> > > > This is because __do_page_cache_readahead() calls read_pages(),
+> > > > which in turn is mapping->a_ops->readpages(), or, as fallback,
+> > > > mapping->a_ops->readpage().
+> > > > 
+> > > > On that level, all variants end up submitting as READ.
+> > > > 
+> > > > This may even be intentional.
+> > > > But if so, I'd like to understand that.
+> > > 
+> > > I don't think it's intentional, and if memory serves, we used to use
+> > > READA when submitting read-ahead. Not sure how best to improve the
+> > > situation, since (as you describe), we lose the read-ahead vs normal
+> > > read at that level. I did some experimentation some time ago for
+> > > flagging this, see:
+> > > 
+> > > http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=16cfe64e3568cda412b3cf6b7b891331946b595e
+> > > 
+> > > which should pass down READA properly.
+> > 
+> > One of the problems in the past was that reada would fail if there
+> > wasn't a free request when we actually wanted it to go ahead and wait.
+> > Or something.  We've switched it around a few times I think.
+> 
+> Yes, we did used to do that, whether it was 2.2 or 2.4 I
+> don't recall :-)
+> 
+> It should be safe to enable know, whether there's a prettier way
+> than the above, I don't know. It works by detecting the read-ahead
+> marker, but it's a bit of a fragile design.
 
-Fix build warning.
+Another consideration is io-priority reversion and the overheads
+required to avoid it:
 
-block/elevator-fq.c: In function =E2=80=98io_get_io_group_bio=E2=80=99:
-block/elevator-fq.c:2075: warning: unused variable =E2=80=98page=E2=80=99
+        readahead(pages A-Z)    => READA IO for pages A-Z
+        <short time later>
+        read(page A) => blocked => find the request that contains page A
+                                   and requeue/kick it as READ IO
 
----
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 66b10eb..d304f79 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -2102,7 +2102,7 @@ struct io_group *io_get_io_group_bio(struct request=
-_queue *q, struct bio *bio,
- #endif
-=20
- sync:
--	return io_get_io_group(q, NULL, create);
-+	return io_get_io_group(q, page, create);
- }
- EXPORT_SYMBOL(io_get_io_group_bio);
+The page-to-request lookups are not always required but nevertheless
+the complexity and overheads won't be trivial.
 
+The page-to-request lookup feature would be also useful for "advanced"
+features like io-canceling (if implemented, hwpoison could be its
+first user ;)
 
-> +}
-> +EXPORT_SYMBOL(io_get_io_group_bio);
-> +
+Thanks,
+Fengguang
 
-
---=20
-Regards
-Gui Jianfeng
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
