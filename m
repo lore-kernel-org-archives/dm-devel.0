@@ -1,8 +1,8 @@
 From: Munehiro Ikeda <m-ikeda@ds.jp.nec.com>
 Subject: Re: [PATCH] io-controller: implement per group request
  allocation limitation
-Date: Mon, 03 Aug 2009 22:02:58 -0400
-Message-ID: <4A7796D2.4030104@ds.jp.nec.com>
+Date: Mon, 03 Aug 2009 22:04:09 -0400
+Message-ID: <4A779719.1070900@ds.jp.nec.com>
 References: <1246564917-19603-1-git-send-email-vgoyal@redhat.com>
 	<4A569FC5.7090801@cn.fujitsu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -32,51 +32,52 @@ Gui Jianfeng wrote, on 07/09/2009 09:56 PM:
 > different request allocation limitation for different groups.
 >
 > Signed-off-by: Gui Jianfeng<guijianfeng@cn.fujitsu.com>
-> ---
 (snip)
 
 Hi Jianfeng,
 
-If this helps.
+If this helps, again.
 
-If calling elv_io_group_congestion_threshold() before
-setting iog->iocg_id, iocg->nr_group_requests cannot be
-referred.  As a result of it, iog->nr_congestion_on is
-always misculculated as 0.
-This patch moves the calling of
-elv_io_group_congestion_threshold() after setting
-iog->iocg_id.
+A patch posted from Gui Jianfeng on 2009/07/09 adds per-cgroup
+nr_requests control by io.nr_group_requests.  The patch missed to update
+iog->nr_congestion_{on|off} and this patch adds the missing-link.
 
 Signed-off-by: Munehiro "Muuhh" Ikeda <m-ikeda@ds.jp.nec.com>
 ---
-  block/elevator-fq.c |    3 ++-
-  1 files changed, 2 insertions(+), 1 deletions(-)
+  block/elevator-fq.c |   11 +++++++++++
+  1 files changed, 11 insertions(+), 0 deletions(-)
 
 diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 7c83d1e..3368a7f 100644
+index 673e490..316bd8d 100644
 --- a/block/elevator-fq.c
 +++ b/block/elevator-fq.c
-@@ -2195,7 +2195,6 @@ static struct io_group *io_alloc_root_group(struct request_queue *q,
-  		iog->sched_data.service_tree[i] = IO_SERVICE_TREE_INIT;
+@@ -1607,6 +1607,10 @@ static int io_cgroup_nr_requests_write(struct cgroup *cgroup,
+  					u64 val)
+  {
+  	struct io_cgroup *iocg;
++	struct io_group *iog;
++	struct elv_fq_data *efqd;
++	struct request_queue *q;
++	struct hlist_node *n;
   
-  	blk_init_request_list(&iog->rl);
--	elv_io_group_congestion_threshold(q, iog);
+  	if (val < BLKDEV_MIN_RQ)
+  		val = BLKDEV_MIN_RQ;
+@@ -1618,6 +1622,13 @@ static int io_cgroup_nr_requests_write(struct cgroup *cgroup,
   
-  	iocg = &io_root_cgroup;
   	spin_lock_irq(&iocg->lock);
-@@ -2204,6 +2203,8 @@ static struct io_group *io_alloc_root_group(struct request_queue *q,
-  	iog->iocg_id = css_id(&iocg->css);
+  	iocg->nr_group_requests = (unsigned long)val;
++	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {
++		rcu_read_lock();
++		efqd = rcu_dereference(iog->key);
++		q = efqd->queue;
++		rcu_read_unlock();
++		elv_io_group_congestion_threshold(q, iog);
++	}
   	spin_unlock_irq(&iocg->lock);
   
-+	elv_io_group_congestion_threshold(q, iog);
-+
-  #ifdef CONFIG_DEBUG_GROUP_IOSCHED
-  	io_group_path(iog, iog->path, sizeof(iog->path));
-  #endif
+  	cgroup_unlock();
 -- 
 1.6.2.5
-
-
 
 
 -- 
