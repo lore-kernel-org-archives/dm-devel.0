@@ -1,15 +1,12 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH 2/2] Disable partition scan
-Date: Wed, 05 Aug 2009 15:17:05 +0200
-Message-ID: <1249478225.17021.48.camel@o>
-References: <20090722080129.E9393D340B@pentland.suse.de>
-	<1248281597.14407.171.camel@breeves.fab.redhat.com>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] Fix clvmd segfault
+Date: Wed, 05 Aug 2009 12:28:14 -0500
+Message-ID: <1249493294.15327.9.camel@hydrogen.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1248281597.14407.171.camel@breeves.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,54 +16,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: lvm-devel@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2009-07-22 at 17:53 +0100, Bryn M. Reeves wrote:
-> On Wed, 2009-07-22 at 10:01 +0200, Hannes Reinecke wrote:
-> > Worse, it might trigger I/O errors as the partition table might not
-> > be accessible (eg for the passive path of a multipath device) or
-> > even invalid (eg for RAID0 dmraid).
-> 
-> Not that it removes the need or motivation for this patch but the case
-> of an array partition table being mis-interpreted by the kernel for a
-> RAID member device should no longer trigger I/O errors. Kernels since
-> 2.6.27 should truncate any over-size partitions to the size of the
-> device:
-> 
-> commit ac0d86f5809598ddcd6bfa0ea8245ccc910e9eac
-> Author: Kay Sievers <kay.sievers@vrfy.org>
-> Date:   Wed Oct 15 22:04:21 2008 -0700
-> 
->     block: sanitize invalid partition table entries
->     
->     We currently follow blindly what the partition table lies about the
->     disk, and let the kernel create block devices which can not be
->     accessed.
->     Trying to identify the device leads to kernel logs full of:
->       sdb: rw=0, want=73392, limit=28800
->       attempt to access beyond end of device
-> [snip]
-> 
-> I've tested this patch with a few dmraid setups that previously spat I/O
-> errors whenever something probed a member device. Although this isn't
-> exactly a solution it does quiet down the log noise (I'd thought about
-> submitting a patch to dmraid to issue a BLKPG_DEL_PARTITION for each
-> partition on each member device that it discovers but didn't get around
-> to doing anything about it yet).
+bug 506986
 
-We've got that in RHEL/Fedora dmraid already with option
-"--rm_partitions".
+ brassow
 
-Regards,
-Heinz
+clvmd: Fix segfault.
 
-> 
-> Regards,
-> Bryn.
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+I don't know /why/ it is failing... and I don't even know
+exactly where the problem gets started, but here is what
+I've found so far...
+
+From the core dump:
+Program terminated with signal 11, Segmentation fault.
+#0  persistent_filter_wipe (f=0x0) at filters/filter-persistent.c:54
+54              struct pfilter *pf = (struct pfilter *) f->private;
+(gdb) bt
+#0  persistent_filter_wipe (f=0x0) at filters/filter-persistent.c:54
+#1  0x000000000041d83a in dev_iter_create (f=0x0, dev_scan=1) at device/dev-cache.c:740
+#2  0x0000000000416b85 in lvmcache_label_scan (cmd=0x112aacd0, full_scan=2) at cache/lvmcache.c:463
+#3  0x0000000000410ad0 in do_refresh_cache () at lvm-functions.c:606
+#4  0x000000000040d3ea in do_command (client=0x11441fd0, msg=<value optimized out>, msglen=30,
+    buf=0x4296a0c0, buflen=1481, retlen=0x4296a0cc) at clvmd-command.c:127
+#5  0x000000000040e973 in lvm_thread_fn (arg=<value optimized out>) at clvmd.c:1554
+#6  0x0000003992a064a7 in start_thread () from /lib64/libpthread.so.0
+#7  0x00000039922d3c2d in clone () from /lib64/libc.so.6
+
+'f' is being dereferenced in persistent_filter_wipe - initially provided by
+lvmcache_label_scan, here:
+
+463             if (!(iter = dev_iter_create(cmd->filter, (full_scan == 2) ? 1 : 0))) {
+464                     log_error("dev_iter creation failed");
+465                     goto out;
+466             }
+
+'cmd->filter' isn't set because 'refresh_toolcontext' failed in
+do_refresh_cache:
+
+604             ret = refresh_toolcontext(cmd);
+605             init_full_scan_done(0);
+606             lvmcache_label_scan(cmd, 2);
+(gdb) p ret
+$2 = 0
+
+'refresh_toolcontext' failed at 
+_init_lvm_conf->_load_config_file->read_config_file->read_config_fd'
+
+client=0x114f6090, msg=(nil), len=0, csid=(nil), xid=10574
+  /etc/lvm/lvm.conf: mmap failed: Bad file descriptor
+  /etc/lvm/lvm.conf: munmap failed: Invalid argument
+  /etc/lvm/lvm.conf: close failed: Bad file descriptor
+  Failed to load config file /etc/lvm/lvm.conf
+
+Is the file descriptor being lost, corrupted, etc?
+
+This patch is a band-aid for the problem.
+
+Index: LVM2/daemons/clvmd/lvm-functions.c
+===================================================================
+--- LVM2.orig/daemons/clvmd/lvm-functions.c
++++ LVM2/daemons/clvmd/lvm-functions.c
+@@ -593,20 +593,21 @@ int do_check_lvm1(const char *vgname)
+ 
+ int do_refresh_cache()
+ {
+-	int ret;
+ 	DEBUGLOG("Refreshing context\n");
+ 	log_notice("Refreshing context");
+ 
+ 	pthread_mutex_lock(&lvm_lock);
+ 
+-	ret = refresh_toolcontext(cmd);
++	if (!refresh_toolcontext(cmd))
++		return -1;
++
+ 	init_full_scan_done(0);
+ 	lvmcache_label_scan(cmd, 2);
+ 	dm_pool_empty(cmd->mem);
+ 
+ 	pthread_mutex_unlock(&lvm_lock);
+ 
+-	return ret==1?0:-1;
++	return 0;
+ }
+ 
+ 
