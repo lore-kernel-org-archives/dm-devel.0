@@ -1,14 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: expose dm-stripe target's topology I/O hints
-Date: Wed, 5 Aug 2009 09:07:51 -0400
-Message-ID: <20090805130751.GA20921@redhat.com>
-References: <1247261592-9803-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [PATCH 2/2] Disable partition scan
+Date: Wed, 05 Aug 2009 15:17:05 +0200
+Message-ID: <1249478225.17021.48.camel@o>
+References: <20090722080129.E9393D340B@pentland.suse.de>
+	<1248281597.14407.171.camel@breeves.fab.redhat.com>
+Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1247261592-9803-1-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1248281597.14407.171.camel@breeves.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,25 +19,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 10 2009 at  5:33pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
-
-> Add .io_hints to 'struct target_type' to allow the I/O hints portion of
-> the 'struct queue_limits' to be set by each target.  Expose dm-stripe
-> target's topology I/O hints.
+On Wed, 2009-07-22 at 17:53 +0100, Bryn M. Reeves wrote:
+> On Wed, 2009-07-22 at 10:01 +0200, Hannes Reinecke wrote:
+> > Worse, it might trigger I/O errors as the partition table might not
+> > be accessible (eg for the passive path of a multipath device) or
+> > even invalid (eg for RAID0 dmraid).
 > 
-> NOTE: This patch makes use of blk_limits_io_min(); which will be
-> upstream, via the block tree, in the near future.
+> Not that it removes the need or motivation for this patch but the case
+> of an array partition table being mis-interpreted by the kernel for a
+> RAID member device should no longer trigger I/O errors. Kernels since
+> 2.6.27 should truncate any over-size partitions to the size of the
+> device:
+> 
+> commit ac0d86f5809598ddcd6bfa0ea8245ccc910e9eac
+> Author: Kay Sievers <kay.sievers@vrfy.org>
+> Date:   Wed Oct 15 22:04:21 2008 -0700
+> 
+>     block: sanitize invalid partition table entries
+>     
+>     We currently follow blindly what the partition table lies about the
+>     disk, and let the kernel create block devices which can not be
+>     accessed.
+>     Trying to identify the device leads to kernel logs full of:
+>       sdb: rw=0, want=73392, limit=28800
+>       attempt to access beyond end of device
+> [snip]
+> 
+> I've tested this patch with a few dmraid setups that previously spat I/O
+> errors whenever something probed a member device. Although this isn't
+> exactly a solution it does quiet down the log noise (I'd thought about
+> submitting a patch to dmraid to issue a BLKPG_DEL_PARTITION for each
+> partition on each member device that it discovers but didn't get around
+> to doing anything about it yet).
 
-Linus has pulled in the block changes that this patch depends on; see
-linux-2.6 commits:
-7c958e32649e0c35801762878fb0b6da8c55a515
-70dd5bf3b99964d52862ad2810c24cc32a553535
+We've got that in RHEL/Fedora dmraid already with option
+"--rm_partitions".
 
-So this .io_hints patch is good to go upstream now.
+Regards,
+Heinz
 
-Mike
+> 
+> Regards,
+> Bryn.
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
