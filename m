@@ -1,26 +1,26 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] Fix clvmd segfault
-Date: Wed, 05 Aug 2009 12:28:14 -0500
-Message-ID: <1249493294.15327.9.camel@hydrogen.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: PATCH REPOST] Fix clvmd segfault
+Date: Wed, 05 Aug 2009 13:17:59 -0500
+Message-ID: <1249496279.15327.12.camel@hydrogen.msp.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <lvm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
 To: lvm-devel@redhat.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-bug 506986
+My last patch failed to include the pthread unlock.
 
  brassow
 
@@ -73,13 +73,13 @@ client=0x114f6090, msg=(nil), len=0, csid=(nil), xid=10574
 
 Is the file descriptor being lost, corrupted, etc?
 
-This patch is a band-aid for the problem.
+This patch is a bandaid for the problem.
 
 Index: LVM2/daemons/clvmd/lvm-functions.c
 ===================================================================
 --- LVM2.orig/daemons/clvmd/lvm-functions.c
 +++ LVM2/daemons/clvmd/lvm-functions.c
-@@ -593,20 +593,21 @@ int do_check_lvm1(const char *vgname)
+@@ -593,20 +593,23 @@ int do_check_lvm1(const char *vgname)
  
  int do_refresh_cache()
  {
@@ -90,8 +90,10 @@ Index: LVM2/daemons/clvmd/lvm-functions.c
  	pthread_mutex_lock(&lvm_lock);
  
 -	ret = refresh_toolcontext(cmd);
-+	if (!refresh_toolcontext(cmd))
++	if (!refresh_toolcontext(cmd)) {
++		pthread_mutex_unlock(&lvm_lock);
 +		return -1;
++	}
 +
  	init_full_scan_done(0);
  	lvmcache_label_scan(cmd, 2);
@@ -104,3 +106,9 @@ Index: LVM2/daemons/clvmd/lvm-functions.c
  }
  
  
+
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
