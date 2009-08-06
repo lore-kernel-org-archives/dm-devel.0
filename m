@@ -1,114 +1,37 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: PATCH REPOST] Fix clvmd segfault
-Date: Wed, 05 Aug 2009 13:17:59 -0500
-Message-ID: <1249496279.15327.12.camel@hydrogen.msp.redhat.com>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+From: =?UTF-8?B?7ZmN7IugIHNoaW4gaG9uZw==?= <hongshin@gmail.com>
+Subject: BUG? a suspected race condition at dm_get_md()
+Date: Thu, 6 Aug 2009 15:30:00 +0900
+Message-ID: <2014bcab0908052330u5e53e01eu83f76b5dda86e421@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <lvm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: lvm-devel@redhat.com
-Cc: dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-My last patch failed to include the pthread unlock.
+Hi. I am reporting a suspected race bug
+while I read md device driver in recent Linux code.
 
- brassow
+Please examine the code and let me know your opinion.
 
-clvmd: Fix segfault.
+At dm_put(), the decrement of md->holders is synchronized by _minor_lock.
+But in dm_get_md(), the increment of md->holders is not.
+Therefore,  race condition between dm_get_md() and dm_put()
+might be possible when md->holders == 1.
 
-I don't know /why/ it is failing... and I don't even know
-exactly where the problem gets started, but here is what
-I've found so far...
+Since I do not have much background, I am not sure whether
+it is real bug or not. But, please examine the code and let me
+know your opinion. Thank you.
 
-From the core dump:
-Program terminated with signal 11, Segmentation fault.
-#0  persistent_filter_wipe (f=0x0) at filters/filter-persistent.c:54
-54              struct pfilter *pf = (struct pfilter *) f->private;
-(gdb) bt
-#0  persistent_filter_wipe (f=0x0) at filters/filter-persistent.c:54
-#1  0x000000000041d83a in dev_iter_create (f=0x0, dev_scan=1) at device/dev-cache.c:740
-#2  0x0000000000416b85 in lvmcache_label_scan (cmd=0x112aacd0, full_scan=2) at cache/lvmcache.c:463
-#3  0x0000000000410ad0 in do_refresh_cache () at lvm-functions.c:606
-#4  0x000000000040d3ea in do_command (client=0x11441fd0, msg=<value optimized out>, msglen=30,
-    buf=0x4296a0c0, buflen=1481, retlen=0x4296a0cc) at clvmd-command.c:127
-#5  0x000000000040e973 in lvm_thread_fn (arg=<value optimized out>) at clvmd.c:1554
-#6  0x0000003992a064a7 in start_thread () from /lib64/libpthread.so.0
-#7  0x00000039922d3c2d in clone () from /lib64/libc.so.6
-
-'f' is being dereferenced in persistent_filter_wipe - initially provided by
-lvmcache_label_scan, here:
-
-463             if (!(iter = dev_iter_create(cmd->filter, (full_scan == 2) ? 1 : 0))) {
-464                     log_error("dev_iter creation failed");
-465                     goto out;
-466             }
-
-'cmd->filter' isn't set because 'refresh_toolcontext' failed in
-do_refresh_cache:
-
-604             ret = refresh_toolcontext(cmd);
-605             init_full_scan_done(0);
-606             lvmcache_label_scan(cmd, 2);
-(gdb) p ret
-$2 = 0
-
-'refresh_toolcontext' failed at 
-_init_lvm_conf->_load_config_file->read_config_file->read_config_fd'
-
-client=0x114f6090, msg=(nil), len=0, csid=(nil), xid=10574
-  /etc/lvm/lvm.conf: mmap failed: Bad file descriptor
-  /etc/lvm/lvm.conf: munmap failed: Invalid argument
-  /etc/lvm/lvm.conf: close failed: Bad file descriptor
-  Failed to load config file /etc/lvm/lvm.conf
-
-Is the file descriptor being lost, corrupted, etc?
-
-This patch is a bandaid for the problem.
-
-Index: LVM2/daemons/clvmd/lvm-functions.c
-===================================================================
---- LVM2.orig/daemons/clvmd/lvm-functions.c
-+++ LVM2/daemons/clvmd/lvm-functions.c
-@@ -593,20 +593,23 @@ int do_check_lvm1(const char *vgname)
- 
- int do_refresh_cache()
- {
--	int ret;
- 	DEBUGLOG("Refreshing context\n");
- 	log_notice("Refreshing context");
- 
- 	pthread_mutex_lock(&lvm_lock);
- 
--	ret = refresh_toolcontext(cmd);
-+	if (!refresh_toolcontext(cmd)) {
-+		pthread_mutex_unlock(&lvm_lock);
-+		return -1;
-+	}
-+
- 	init_full_scan_done(0);
- 	lvmcache_label_scan(cmd, 2);
- 	dm_pool_empty(cmd->mem);
- 
- 	pthread_mutex_unlock(&lvm_lock);
- 
--	return ret==1?0:-1;
-+	return 0;
- }
- 
- 
-
-
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+Sincerely
+Shin Hong
