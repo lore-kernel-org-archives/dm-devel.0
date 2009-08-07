@@ -1,42 +1,42 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH] dm-ioband-v1.12.3: I/O bandwidth controller
-Date: Fri, 07 Aug 2009 10:36:40 +0900 (JST)
-Message-ID: <20090807.103640.104065157.ryov@valinux.co.jp>
-References: <20090731.130333.104034609.ryov@valinux.co.jp>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] block: silently error unsupported empty
+	barriers too
+Date: Thu, 6 Aug 2009 21:50:49 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0908062148060.8764@hs20-bc2-1.build.redhat.com>
+References: <1249557257.3721.55.camel@blaa>
+	<20090806114550.GL29899@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <20090731.130333.104034609.ryov@valinux.co.jp>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: agk@redhat.com
-Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, xen-devel@lists.xensource.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090806114550.GL29899@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Mark McLoughlin <markmc@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, linux-kernel <linux-kernel@vger.kernel.org>, virtualization <virtualization@lists.linux-foundation.org>, device-mapper development <dm-devel@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+On Thu, 6 Aug 2009, Alasdair G Kergon wrote:
 
-Ryo Tsuruta <ryov@valinux.co.jp> wrote:
-> Hi Alasdair,
+> On Thu, Aug 06, 2009 at 12:14:17PM +0100, Mark McLoughlin wrote:
+> > We should error all barriers, even empty barriers, on devices like
+> > virtio_blk which don't support them.
+>  
+> Have you considered whether or not virtio_blk actually needs to
+> support empty barriers?
 > 
-> This is dm-ioband v1.12.3 release that is a minor update to avoid
-> sparse warnings other than related to the event tracing. (I used
-> sparse-2009-07-29.)
-> 
-> This patch can be applied to the current dm-devel tree and 2.6.31-rc4,
-> so could you please replace dm-add-ioband.patch in your tree with this?
-> And I would appreciate it if you would let me know your thoughts about
-> merging dm-ioband to upstream.
+> Alasdair
 
-The dm-ioband patch in the dm-devel tree is still older. Could you
-please update it with the new patch? And could you please let me know
-your thoughts about dm-ioband?
+This is only for request-based drivers, where it is the responsibility of 
+blk-core to translate barriers. I think the empty barrier request anyway 
+in blk_do_ordered, but with an error message. So the patch changes it to 
+discard it early and queitly. It seems ok.
 
-Thanks,
-Ryo Tsuruta
+Mikulas
