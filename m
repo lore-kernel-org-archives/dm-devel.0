@@ -1,8 +1,8 @@
 From: Nikanth Karthikesan <knikanth@suse.de>
-Subject: [PATCH 1/2] Allow delaying initialization of queue after
-	allocation
-Date: Sat, 8 Aug 2009 10:25:58 +0530
-Message-ID: <200908081025.58865.knikanth@suse.de>
+Subject: [PATCH 2/2] Initialize mempool and elevator only for
+	request-based dm devices
+Date: Sat, 8 Aug 2009 10:26:00 +0530
+Message-ID: <200908081026.01097.knikanth@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -23,97 +23,81 @@ To: Jens Axboe <jens.axboe@oracle.com>, Alasdair G Kergon <agk@redhat.com>
 Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Export a way to delay initializing a request_queue after allocating it. This
-is needed by device-mapper devices, as they create the queue on device
-creation time, but they decide whether it would use the elevator and requests
-only after first successful table load. Only request-based dm-devices use the
-elevator and requests. Without this either one needs to initialize and free
-the mempool and elevator, if it was a bio-based dm-device or leave it
-allocated, as it is currently done.
+Intialize the request_queue and elevator only when the device is marked as
+a request-based device. This avoids unnecessary creation of mempool for
+requests. Also we wrongly initialize the elevator even for bio-based devices.
+As the /sys/block/dm-*/queue/scheduler is exported for device-mapper devices,
+it is possible to confuse with scheduler options for bio-based devices where
+scheduler is not at all used.
 
 Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
 
 ---
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 4b45435..5db0772 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -495,6 +495,8 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- 	if (!q)
- 		return NULL;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8a311ea..b01dfbe 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1749,22 +1749,21 @@ static struct mapped_device *alloc_dev(int minor)
+ 	INIT_LIST_HEAD(&md->uevent_list);
+ 	spin_lock_init(&md->uevent_lock);
  
-+	q->node = node_id;
-+
- 	q->backing_dev_info.unplug_io_fn = blk_backing_dev_unplug;
- 	q->backing_dev_info.unplug_io_data = q;
- 	q->backing_dev_info.ra_pages =
-@@ -569,12 +571,25 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
- 	if (!q)
- 		return NULL;
+-	md->queue = blk_init_queue(dm_request_fn, NULL);
++	md->queue = blk_alloc_queue(GFP_KERNEL);
+ 	if (!md->queue)
+ 		goto bad_queue;
  
--	q->node = node_id;
--	if (blk_init_free_list(q)) {
-+	if (blk_init_allocated_queue(q, rfn, lock)) {
-+		blk_put_queue(q);
- 		kmem_cache_free(blk_requestq_cachep, q);
- 		return NULL;
+ 	/*
+ 	 * Request-based dm devices cannot be stacked on top of bio-based dm
+-	 * devices.  The type of this dm device has not been decided yet,
+-	 * although we initialized the queue using blk_init_queue().
++	 * devices. The type of this dm device has not been decided yet.
+ 	 * The type is decided at the first table loading time.
+ 	 * To prevent problematic device stacking, clear the queue flag
+ 	 * for request stacking support until then.
+ 	 *
+ 	 * This queue is new, so no concurrency on the queue_flags.
+ 	 */
++	md->queue->queue_flags = QUEUE_FLAG_DEFAULT;
+ 	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
+-	md->saved_make_request_fn = md->queue->make_request_fn;
+ 	md->queue->queuedata = md;
+ 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
+ 	md->queue->backing_dev_info.congested_data = md;
+@@ -1772,9 +1771,6 @@ static struct mapped_device *alloc_dev(int minor)
+ 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
+ 	md->queue->unplug_fn = dm_unplug_all;
+ 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
+-	blk_queue_softirq_done(md->queue, dm_softirq_done);
+-	blk_queue_prep_rq(md->queue, dm_prep_fn);
+-	blk_queue_lld_busy(md->queue, dm_lld_busy);
+ 
+ 	md->disk = alloc_disk(1);
+ 	if (!md->disk)
+@@ -2203,7 +2199,25 @@ int dm_swap_table(struct mapped_device *md, struct dm_table *table)
+ 		goto out;
  	}
  
-+	return q;
-+}
-+EXPORT_SYMBOL(blk_init_queue_node);
+-	__unbind(md);
++	if (md->map)
++		__unbind(md);
++	else {
++	/* new device is being marked as either request-based or bio-based */
++		if (dm_table_request_based(table)) {
++			/* Initialize queue for request-based dm */
++			r = blk_init_allocated_queue(md->queue, dm_request_fn,
++								 NULL);
++			if (r)
++				goto out;
++			md->saved_make_request_fn = md->queue->make_request_fn;
++			blk_queue_make_request(md->queue, dm_request);
++			blk_queue_softirq_done(md->queue, dm_softirq_done);
++			blk_queue_prep_rq(md->queue, dm_prep_fn);
++			blk_queue_lld_busy(md->queue, dm_lld_busy);
 +
-+int blk_init_allocated_queue(struct request_queue *q, request_fn_proc *rfn,
-+							 spinlock_t *lock)
-+{
-+	int err = 0;
++		}
++	}
 +
-+	err = blk_init_free_list(q);
-+	if (err)
-+		goto out;
-+
- 	/*
- 	 * if caller didn't supply a lock, they get per-queue locking with
- 	 * our embedded lock
-@@ -598,15 +613,20 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
- 	/*
- 	 * all done
- 	 */
--	if (!elevator_init(q, NULL)) {
--		blk_queue_congestion_threshold(q);
--		return q;
--	}
-+	err = elevator_init(q, NULL);
-+	if (err)
-+		goto free_and_out;
+ 	r = __bind(md, table, &limits);
  
--	blk_put_queue(q);
--	return NULL;
-+	blk_queue_congestion_threshold(q);
-+
-+	return 0;
-+
-+free_and_out:
-+	mempool_destroy(q->rq.rq_pool);
-+out:
-+	return err;
- }
--EXPORT_SYMBOL(blk_init_queue_node);
-+EXPORT_SYMBOL(blk_init_allocated_queue);
- 
- int blk_get_queue(struct request_queue *q)
- {
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index e7cb5db..9552961 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -901,6 +901,8 @@ extern void blk_abort_queue(struct request_queue *);
- extern struct request_queue *blk_init_queue_node(request_fn_proc *rfn,
- 					spinlock_t *lock, int node_id);
- extern struct request_queue *blk_init_queue(request_fn_proc *, spinlock_t *);
-+extern int blk_init_allocated_queue(struct request_queue *q,
-+				request_fn_proc *rfn, spinlock_t *lock);
- extern void blk_cleanup_queue(struct request_queue *);
- extern void blk_queue_make_request(struct request_queue *, make_request_fn *);
- extern void blk_queue_bounce_limit(struct request_queue *, u64);
+ out:
