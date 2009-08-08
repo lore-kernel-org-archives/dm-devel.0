@@ -1,103 +1,79 @@
-From: Nikanth Karthikesan <knikanth@suse.de>
-Subject: [PATCH 2/2] Initialize mempool and elevator only for
-	request-based dm devices
-Date: Sat, 8 Aug 2009 10:26:00 +0530
-Message-ID: <200908081026.01097.knikanth@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH 22/24] io-controller: Per io group bdi congestion interface
+Date: Sat, 08 Aug 2009 16:14:51 +0800
+Message-ID: <4A7D33FB.6090207@cn.fujitsu.com>
+References: <1248467274-32073-1-git-send-email-vgoyal@redhat.com> <1248467274-32073-23-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jens.axboe@oracle.com>, Alasdair G Kergon <agk@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754039AbZHHIQv@vger.kernel.org>
+In-Reply-To: <1248467274-32073-23-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, dpshah@google.com, ryov@valinux.co.jp, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
 List-Id: dm-devel.ids
 
-Intialize the request_queue and elevator only when the device is marked as
-a request-based device. This avoids unnecessary creation of mempool for
-requests. Also we wrongly initialize the elevator even for bio-based devices.
-As the /sys/block/dm-*/queue/scheduler is exported for device-mapper devices,
-it is possible to confuse with scheduler options for bio-based devices where
-scheduler is not at all used.
+Vivek Goyal wrote:
+...
+> +/* Set io group congestion on and off thresholds */
+> +void elv_io_group_congestion_threshold(struct request_queue *q,
+> +						struct io_group *iog)
+> +{
+> +	int nr;
+> +
+> +	nr = q->nr_group_requests - (q->nr_group_requests / 8) + 1;
+> +	if (nr > q->nr_group_requests)
+> +		nr = q->nr_group_requests;
+> +	iog->nr_congestion_on = nr;
+> +
+> +	nr = q->nr_group_requests - (q->nr_group_requests / 8)
+> +			- (q->nr_group_requests / 16) - 1;
+> +	if (nr < 1)
+> +		nr = 1;
+> +	iog->nr_congestion_off = nr;
 
-Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
+Vivek,
 
+Since we determine whether io group is congenssed or not just by checking 
+iog->nr_congestion_on, we can get rid of iog->nr_congestion_off here.
+
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 ---
+ block/elevator-fq.c |    6 ------
+ block/elevator-fq.h |    3 +--
+ 2 files changed, 1 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8a311ea..b01dfbe 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1749,22 +1749,21 @@ static struct mapped_device *alloc_dev(int minor)
- 	INIT_LIST_HEAD(&md->uevent_list);
- 	spin_lock_init(&md->uevent_lock);
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 66b10eb..e73da31 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -1267,12 +1267,6 @@ void elv_io_group_congestion_threshold(struct request_queue *q,
+ 	if (nr > q->nr_group_requests)
+ 		nr = q->nr_group_requests;
+ 	iog->nr_congestion_on = nr;
+-
+-	nr = q->nr_group_requests - (q->nr_group_requests / 8)
+-			- (q->nr_group_requests / 16) - 1;
+-	if (nr < 1)
+-		nr = 1;
+-	iog->nr_congestion_off = nr;
+ }
  
--	md->queue = blk_init_queue(dm_request_fn, NULL);
-+	md->queue = blk_alloc_queue(GFP_KERNEL);
- 	if (!md->queue)
- 		goto bad_queue;
+ static inline int elv_is_iog_congested(struct request_queue *q,
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index 0581e55..2815279 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -266,9 +266,8 @@ struct io_group {
+ 	/* Single ioq per group, used for noop, deadline, anticipatory */
+ 	struct io_queue *ioq;
  
- 	/*
- 	 * Request-based dm devices cannot be stacked on top of bio-based dm
--	 * devices.  The type of this dm device has not been decided yet,
--	 * although we initialized the queue using blk_init_queue().
-+	 * devices. The type of this dm device has not been decided yet.
- 	 * The type is decided at the first table loading time.
- 	 * To prevent problematic device stacking, clear the queue flag
- 	 * for request stacking support until then.
- 	 *
- 	 * This queue is new, so no concurrency on the queue_flags.
- 	 */
-+	md->queue->queue_flags = QUEUE_FLAG_DEFAULT;
- 	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
--	md->saved_make_request_fn = md->queue->make_request_fn;
- 	md->queue->queuedata = md;
- 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
- 	md->queue->backing_dev_info.congested_data = md;
-@@ -1772,9 +1771,6 @@ static struct mapped_device *alloc_dev(int minor)
- 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
- 	md->queue->unplug_fn = dm_unplug_all;
- 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
--	blk_queue_softirq_done(md->queue, dm_softirq_done);
--	blk_queue_prep_rq(md->queue, dm_prep_fn);
--	blk_queue_lld_busy(md->queue, dm_lld_busy);
+-	/* io group congestion on and off threshold for request descriptors */
++	/* io group congestion on threshold for request descriptors */
+ 	unsigned int nr_congestion_on;
+-	unsigned int nr_congestion_off;
  
- 	md->disk = alloc_disk(1);
- 	if (!md->disk)
-@@ -2203,7 +2199,25 @@ int dm_swap_table(struct mapped_device *md, struct dm_table *table)
- 		goto out;
- 	}
- 
--	__unbind(md);
-+	if (md->map)
-+		__unbind(md);
-+	else {
-+	/* new device is being marked as either request-based or bio-based */
-+		if (dm_table_request_based(table)) {
-+			/* Initialize queue for request-based dm */
-+			r = blk_init_allocated_queue(md->queue, dm_request_fn,
-+								 NULL);
-+			if (r)
-+				goto out;
-+			md->saved_make_request_fn = md->queue->make_request_fn;
-+			blk_queue_make_request(md->queue, dm_request);
-+			blk_queue_softirq_done(md->queue, dm_softirq_done);
-+			blk_queue_prep_rq(md->queue, dm_prep_fn);
-+			blk_queue_lld_busy(md->queue, dm_lld_busy);
-+
-+		}
-+	}
-+
- 	r = __bind(md, table, &limits);
- 
- out:
+ 	/* request list associated with the group */
+ 	struct request_list rl;
+-- 
+1.5.4.rc3
