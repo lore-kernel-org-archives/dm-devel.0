@@ -1,117 +1,144 @@
 From: Nikanth Karthikesan <knikanth@suse.de>
-Subject: Re: [PATCH 2/2] Initialize mempool and elevator only for request-based dm devices
-Date: Mon, 10 Aug 2009 15:51:11 +0530
-Message-ID: <200908101551.12047.knikanth@suse.de>
-References: <200908081026.01097.knikanth@suse.de> <20090808162156.GA7432@redhat.com>
+Subject: Re: [PATCH 1/2] Allow delaying initialization of queue
+	after allocation
+Date: Mon, 10 Aug 2009 15:51:07 +0530
+Message-ID: <200908101551.08605.knikanth@suse.de>
+References: <200908081025.58865.knikanth@suse.de>
+	<20090808154240.GA7036@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-  charset="iso-8859-1"
+  charset="iso-8859-15"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753668AbZHJKT1@vger.kernel.org>
-In-Reply-To: <20090808162156.GA7432@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090808154240.GA7036@redhat.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>, Alasdair G Kergon <agk@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-On Saturday 08 August 2009 21:51:59 Mike Snitzer wrote:
-> On Sat, Aug 08 2009 at 12:56am -0400,
+On Saturday 08 August 2009 21:12:40 Mike Snitzer wrote:
+> On Sat, Aug 08 2009 at 12:55am -0400,
 >
 > Nikanth Karthikesan <knikanth@suse.de> wrote:
-> > Intialize the request_queue and elevator only when the device is marked
-> > as a request-based device. This avoids unnecessary creation of mempool
-> > for requests. Also we wrongly initialize the elevator even for bio-based
-> > devices. As the /sys/block/dm-*/queue/scheduler is exported for
-> > device-mapper devices, it is possible to confuse with scheduler options
-> > for bio-based devices where scheduler is not at all used.
+> > Export a way to delay initializing a request_queue after allocating it.
+> > This is needed by device-mapper devices, as they create the queue on
+> > device creation time, but they decide whether it would use the elevator
+> > and requests only after first successful table load. Only request-based
+> > dm-devices use the elevator and requests. Without this either one needs
+> > to initialize and free the mempool and elevator, if it was a bio-based
+> > dm-device or leave it allocated, as it is currently done.
 > >
 > > Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
 >
-> I like how this clearly splits out request-based DM queue initialization.
+> This patch needed to be refreshed to account for the changes from this
+> recent commit: a4e7d46407d73f35d217013b363b79a8f8eafcaa
+>
+> I've attached a refreshed patch.
 >
 
 Thanks.
 
-> More comments below.
+> Though I still have questions/feedback below.
 >
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index 8a311ea..b01dfbe 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -2203,7 +2199,25 @@ int dm_swap_table(struct mapped_device *md, struct
-> > dm_table *table) goto out;
+> > diff --git a/block/blk-core.c b/block/blk-core.c
+> > index 4b45435..5db0772 100644
+> > --- a/block/blk-core.c
+> > +++ b/block/blk-core.c
+> > @@ -569,12 +571,25 @@ blk_init_queue_node(request_fn_proc *rfn,
+> > spinlock_t *lock, int node_id) if (!q)
+> >  		return NULL;
+> >
+> > -	q->node = node_id;
+> > -	if (blk_init_free_list(q)) {
+> > +	if (blk_init_allocated_queue(q, rfn, lock)) {
+> > +		blk_put_queue(q);
+> >  		kmem_cache_free(blk_requestq_cachep, q);
+> >  		return NULL;
 > >  	}
 > >
-> > -	__unbind(md);
-> > +	if (md->map)
-> > +		__unbind(md);
-> > +	else {
-> > +	/* new device is being marked as either request-based or bio-based */
-> > +		if (dm_table_request_based(table)) {
-> > +			/* Initialize queue for request-based dm */
-> > +			r = blk_init_allocated_queue(md->queue, dm_request_fn,
-> > +								 NULL);
-> > +			if (r)
-> > +				goto out;
-> > +			md->saved_make_request_fn = md->queue->make_request_fn;
-> > +			blk_queue_make_request(md->queue, dm_request);
+> > +	return q;
+> > +}
+> > +EXPORT_SYMBOL(blk_init_queue_node);
+> > +
+> > +int blk_init_allocated_queue(struct request_queue *q, request_fn_proc
+> > *rfn, +							 spinlock_t *lock)
+> > +{
+> > +	int err = 0;
+> > +
+> > +	err = blk_init_free_list(q);
+> > +	if (err)
+> > +		goto out;
+> > +
+> >  	/*
+> >  	 * if caller didn't supply a lock, they get per-queue locking with
+> >  	 * our embedded lock
+> > @@ -598,15 +613,20 @@ blk_init_queue_node(request_fn_proc *rfn,
+> > spinlock_t *lock, int node_id) /*
+> >  	 * all done
+> >  	 */
+> > -	if (!elevator_init(q, NULL)) {
+> > -		blk_queue_congestion_threshold(q);
+> > -		return q;
+> > -	}
+> > +	err = elevator_init(q, NULL);
+> > +	if (err)
+> > +		goto free_and_out;
+> >
+> > -	blk_put_queue(q);
+> > -	return NULL;
+> > +	blk_queue_congestion_threshold(q);
+> > +
+> > +	return 0;
+> > +
+> > +free_and_out:
+> > +	mempool_destroy(q->rq.rq_pool);
+> > +out:
+> > +	return err;
+> >  }
+> > -EXPORT_SYMBOL(blk_init_queue_node);
+> > +EXPORT_SYMBOL(blk_init_allocated_queue);
+> >
+> >  int blk_get_queue(struct request_queue *q)
+> >  {
 >
-> This blk_queue_make_request() is redundant as it was already established
-> in alloc_dev().  The fact that its behavior is now altered as a result
-> of the md->saved_make_request_fn assignment doesn't change the fact that
-> the queue will be using dm_request().  Am I missing something?
+> In the previous code blk_init_queue_node() only called blk_put_queue()
+> iff elevator_init() failed.
+>
+> Why is blk_init_queue_node() now always calling blk_put_queue() on an
+> error from blk_init_allocated_queue()?  It could be that
+> blk_init_free_list() was what failed and not elevator_init().
 >
 
-blk_init_allocated_queue() would reset it to __make_request(). So we need to 
-initialize it again. I would add a comment in v2 of the patch.
+I think, it was a bug on not calling blk_put_queue() even when 
+blk_init_free_list() failed which would be fixed now.
 
-> Also, I think the code should be cleaned up as follows:
->
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index b01dfbe..1b8aa43 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -2199,25 +2199,18 @@ int dm_swap_table(struct mapped_device *md, struct
-> dm_table *table) goto out;
->  	}
->
-> -	if (md->map)
-> -		__unbind(md);
-> -	else {
-> -	/* new device is being marked as either request-based or bio-based */
-> -		if (dm_table_request_based(table)) {
-> -			/* Initialize queue for request-based dm */
-> -			r = blk_init_allocated_queue(md->queue, dm_request_fn,
-> -								 NULL);
-> -			if (r)
-> -				goto out;
-> -			md->saved_make_request_fn = md->queue->make_request_fn;
-> -			blk_queue_make_request(md->queue, dm_request);
-> -			blk_queue_softirq_done(md->queue, dm_softirq_done);
-> -			blk_queue_prep_rq(md->queue, dm_prep_fn);
-> -			blk_queue_lld_busy(md->queue, dm_lld_busy);
-> -
-> -		}
-> +	if (!md->map && dm_table_request_based(table)) {
-> +		/* Initialize queue for request-based dm */
-> +		r = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
-> +		if (r)
-> +			goto out;
-> +		md->saved_make_request_fn = md->queue->make_request_fn;
-> +		blk_queue_softirq_done(md->queue, dm_softirq_done);
-> +		blk_queue_prep_rq(md->queue, dm_prep_fn);
-> +		blk_queue_lld_busy(md->queue, dm_lld_busy);
->  	}
->
-> +	__unbind(md);
->  	r = __bind(md, table, &limits);
->
->  out:
 
-I thought of this. But personally, I did not prefer this, as this makes it 
-clear that we do __unbind() only on not new devices. But, yes it needs more 
-level of nesting and looks ugly. Changed in v2 of the patch.
+> I'd imagine it is because some callers of blk_init_allocated_queue(),
+> e.g. DM, must not have the queue's refcount dropped on failure?  A
+> comment on _why_ would really help set the caller's expectations.  Maybe
+> at the top of blk_init_allocated_queue()? E.g.:
+>
+> "It is up to the caller to manage the allocated queue's lifecycle
+> relative to blk_init_allocated_queue() failure".  I guess that is
+> obvious after having reviewed this but...
+>
+> Also, a comment that blk_init_allocated_queue()'s mempool_destroy() is
+> to "cleanup the mempool allocated via blk_init_free_list()" would help.
+>
+
+Will add the comment when I resend the patch.
+
+Thanks for reviewing.
 
 Thanks
 Nikanth
