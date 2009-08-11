@@ -1,18 +1,18 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH-v2 2/2] Initialize mempool and elevator only
- for request-based dm devices
-Date: Tue, 11 Aug 2009 17:06:24 +0900
-Message-ID: <4A812680.7040804@ct.jp.nec.com>
-References: <200908081026.01097.knikanth@suse.de>
-	<20090808162156.GA7432@redhat.com>
-	<200908101551.12047.knikanth@suse.de>
-	<200908101618.21060.knikanth@suse.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH]: create sysfs file, dh_state for SCSI	devices
+	even if they	are not in the inteernal lists
+Date: Tue, 11 Aug 2009 10:54:12 +0200
+Message-ID: <4A8131B4.6000605@suse.de>
+References: <1246069888.14164.53.camel@chandra-ubuntu>	
+	<4A486FF0.7040209@suse.de>
+	<1246303830.15941.17.camel@chandra-ubuntu>
+	<1249329099.31433.23.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200908101618.21060.knikanth@suse.de>
+In-Reply-To: <1249329099.31433.23.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,67 +22,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikanth Karthikesan <knikanth@suse.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <jens.axboe@oracle.com>, Alasdair G Kergon <agk@redhat.com>
+To: sekharan@linux.vnet.ibm.com
+Cc: Mario Mech <mech@meteo.uni-koeln.de>, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Nikanth,
+Chandra Seetharaman wrote:
+> Hi Hannes,
+>=20
+> Can you comment on this please.
+>=20
+> If you are convinced with my justification, please send an ACK.
+>=20
+> Thanks & Regards,
+>=20
+> chandra
+> On Mon, 2009-06-29 at 12:30 -0700, Chandra Seetharaman wrote:
+>> On Mon, 2009-06-29 at 09:40 +0200, Hannes Reinecke wrote:
+>>> Chandra Seetharaman wrote:
+>>>> Create the sysfs file, dh_state even if the new SCSI device is not
+>>>> in the any of the device handler's internal lists.
+>>>>
+>>>> Signed-Off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+>>>> ---
+>>>>  drivers/scsi/device_handler/scsi_dh.c |   11 ++++-------
+>>>>  1 file changed, 4 insertions(+), 7 deletions(-)
+>>>>
+>>>> Index: linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+>>>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>>>> --- linux-2.6.31-rc1.orig/drivers/scsi/device_handler/scsi_dh.c
+>>>> +++ linux-2.6.31-rc1/drivers/scsi/device_handler/scsi_dh.c
+>>>> @@ -304,18 +304,15 @@ static int scsi_dh_notifier(struct notif
+>>>>  	sdev =3D to_scsi_device(dev);
+>>>> =20
+>>>>  	if (action =3D=3D BUS_NOTIFY_ADD_DEVICE) {
+>>>> +		err =3D device_create_file(dev, &scsi_dh_state_attr);
+>>>> +		/* don't care about err */
+>>>>  		devinfo =3D device_handler_match(NULL, sdev);
+>>>> -		if (!devinfo)
+>>>> -			goto out;
+>>>> -
+>>>> -		err =3D scsi_dh_handler_attach(sdev, devinfo);
+>>>> -		if (!err)
+>>>> -			err =3D device_create_file(dev, &scsi_dh_state_attr);
+>>>> +		if (devinfo)
+>>>> +			err =3D scsi_dh_handler_attach(sdev, devinfo);
+>>>>  	} else if (action =3D=3D BUS_NOTIFY_DEL_DEVICE) {
+>>>>  		device_remove_file(dev, &scsi_dh_state_attr);
+>>>>  		scsi_dh_handler_detach(sdev, NULL);
+>>>>  	}
+>>>> -out:
+>>>>  	return err;
+>>>>  }
+>>>> =20
+>>>>
+>>>>
+>>>> --
+>>>> dm-devel mailing list
+>>>> dm-devel@redhat.com
+>>>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>> NACK.
+>>>
+>>> This will create sysfs attributes even if the attach()
+>>> failed for other reason like a generic error. So we'll end
+>>> up with device handler attributes and no device handler attached.
+>> we do not have to worry about if attach failed or succeeded. We will
+>> have "detached" if there is no device handler is attached to a device.=
+=20
+>>
+>> Basically, existence of this file simply means that scsi_dh module is
+>> active, only the contents of this file will indicate if any device
+>> handler is attached or not.
+>>
+>> We are just creating the file dh_state for each SCSI device that exist=
+s
+>> and that is the only way non-in-built devices can be attached to a
+>> handler by the end-user.
+>>
+>> Do note that we do create this file for all the existing scsi devices
+>> when the scsi_dh module is inserted (see scsi_dh_init()).
+>>
+Right. So you're changing the semantics from the 'dh_state' attribute
+to mean 'scsi_dh' is active, not 'a scsi_dh module has been attached'.
 
-On 08/10/2009 07:48 PM +0900, Nikanth Karthikesan wrote:
-> Intialize the request_queue and elevator only when the device is marked as
-> a request-based device. This avoids unnecessary creation of mempool for
-> requests. Also we wrongly initialize the elevator even for bio-based devices.
-> As the /sys/block/dm-*/queue/scheduler is exported for device-mapper devices,
-> it is possible to confuse with scheduler options for bio-based devices where
-> scheduler is not at all used.
+Ok, that seems reasonable.
 
-Thank you for working on this.
-Actually, I had tried this delayed allocation thing before,
-but I chose the current implementation since I couldn't solve
-some problems, which your patch also has.
-Please see my comment below.
+Acked-by: Hannes Reinecke <hare@suse.de>
 
+Cheers,
 
-> @@ -2203,6 +2199,25 @@ int dm_swap_table(struct mapped_device *md, struct dm_table *table)
->  		goto out;
->  	}
->  
-> +	/* new device is being marked as request-based */
-> +	if (!md->map && dm_table_request_based(table)) {
-> +		/* initialize queue for request-based dm */
-> +		r = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
-> +		if (r)
-> +			goto out;
-
-Generally, dm must not allocate memory during resume because
-it may cause a deadlock in no memory situation.
-However, there is no I/O on this device at this point,
-so the allocation should be ok for this special case.
-I think some comments are needed here to describe that.
-
-
-> +
-> +		/*
-> +		 * reinitialize make_request_fn as it was reset to the
-> +		 * default __make_request by blk_init_allocate_queue
-> +		 */
-> +		md->saved_make_request_fn = md->queue->make_request_fn;
-> +		blk_queue_make_request(md->queue, dm_request);
-> +
-> +		blk_queue_softirq_done(md->queue, dm_softirq_done);
-> +		blk_queue_prep_rq(md->queue, dm_prep_fn);
-> +		blk_queue_lld_busy(md->queue, dm_lld_busy);
-> +	}
-> +
->  	__unbind(md);
->  	r = __bind(md, table, &limits);
-
-The queue has been registered at the device creation time by
-add_disk() in alloc_dev().
-Since the queue is reconfigured (elevator is attached), you have to
-update the queue registration (e.g. unregister, then re-register).
-But it may not be easy.  At least, there is no exported interface to
-unregister/re-register queue.
-
-Thanks,
-Kiyoshi Ueda
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
