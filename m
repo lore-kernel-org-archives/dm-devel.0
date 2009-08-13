@@ -1,18 +1,12 @@
-From: Nikanth Karthikesan <knikanth@suse.de>
-Subject: Re: [PATCH-v2 2/2] Initialize mempool and elevator only
-	for request-based dm devices
-Date: Wed, 12 Aug 2009 14:17:28 +0530
-Message-ID: <200908121417.28760.knikanth@suse.de>
-References: <200908081026.01097.knikanth@suse.de>
-	<200908111435.12020.knikanth@suse.de>
-	<4A8225DC.1060200@ct.jp.nec.com>
+From: Stewart Smith <stew@cleepdar.com>
+Subject: rdac path failure - Sun 6140
+Date: Thu, 13 Aug 2009 11:50:44 -0700
+Message-ID: <f7500f4e0908131150r54b21a0dr9cb7d4a8456e69e8@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A8225DC.1060200@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,104 +16,160 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <jens.axboe@oracle.com>, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Kiyoshi Ueda,
+Hello All,
 
-On Wednesday 12 August 2009 07:45:56 Kiyoshi Ueda wrote:
-> Hi Nikanth,
->
-> On 08/11/2009 06:05 PM +0900, Nikanth Karthikesan wrote:
-> > On Tuesday 11 August 2009 13:36:24 Kiyoshi Ueda wrote:
-> >> On 08/10/2009 07:48 PM +0900, Nikanth Karthikesan wrote:
-> >>> +
-> >>> +		/*
-> >>> +		 * reinitialize make_request_fn as it was reset to the
-> >>> +		 * default __make_request by blk_init_allocate_queue
-> >>> +		 */
-> >>> +		md->saved_make_request_fn = md->queue->make_request_fn;
-> >>> +		blk_queue_make_request(md->queue, dm_request);
-> >>> +
-> >>> +		blk_queue_softirq_done(md->queue, dm_softirq_done);
-> >>> +		blk_queue_prep_rq(md->queue, dm_prep_fn);
-> >>> +		blk_queue_lld_busy(md->queue, dm_lld_busy);
-> >>> +	}
-> >>> +
-> >>>  	__unbind(md);
-> >>>  	r = __bind(md, table, &limits);
-> >>
-> >> The queue has been registered at the device creation time by
-> >> add_disk() in alloc_dev().
-> >> Since the queue is reconfigured (elevator is attached), you have to
-> >> update the queue registration (e.g. unregister, then re-register).
-> >> But it may not be easy.  At least, there is no exported interface to
-> >> unregister/re-register queue.
-> >
-> > Ah, yes. The scheduler attributes will not be exported in
-> > /sys/block/dm*/queue/iosched. Exporting elv_register_queue() and calling
-> > it here solves it. Something like..
-> >
-> > @@ -2203,6 +2199,29 @@ int dm_swap_table(struct mapped_device *md, struct
-> > dm_table *table)
-> >  		goto out;
-> >  	}
-> >
-> > +	/* new device is being marked as request-based */
-> > +	if (!md->map && dm_table_request_based(table)) {
-> > +		/* initialize queue for request-based dm */
-> > +		r = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
-> > +		if (r)
-> > +			goto out;
-> > +
-> > +		r = elv_register_queue(md->queue);
-> > +		/* if (r)
-> > +		 *	 goto out; Better to ignore, just like add_disk does ;-)
-> > +		 */
-> > +		/*
-> > +		 * reinitialize make_request_fn as it was reset to the
-> > +		 * default __make_request by blk_init_allocate_queue
-> > +		 */
-> > +		md->saved_make_request_fn = md->queue->make_request_fn;
-> > +		blk_queue_make_request(md->queue, dm_request);
-> > +
-> > +		blk_queue_softirq_done(md->queue, dm_softirq_done);
-> > +		blk_queue_prep_rq(md->queue, dm_prep_fn);
-> > +		blk_queue_lld_busy(md->queue, dm_lld_busy);
-> > +	}
-> > +
-> >  	__unbind(md);
-> >  	r = __bind(md, table, &limits);
-> >
-> > I would post the v3 of the patches with this change. Do you see any
-> > problems in this?
->
-> Humm, it might work for now, but I disagree with that.
->
-> Since elevator is block internal and dm doesn't really care
-> (its initialization is actually hidden in blk_init_allocated_queue()),
-> directly calling elv_register_queue() from dm seems not right.
-> It will likely introduce a bug by future changes in block layer.
->
-> I think the right approach is to define a proper block layer interface
-> to reflect the queue configuration change.
-> That's why I said "Updating the queue registration may not be easy".
->
+I am seeing many of these messages when my Sun 6140 array is under heavy =
+I/O
+device-mapper: multipath: Failing path 8:208.
+device-mapper: multipath: Failing path 8:208.
+device-mapper: multipath: Failing path 8:208.
+device-mapper: multipath: Failing path 8:208.
+device-mapper: multipath: Failing path 8:208.
 
-I do not see too much of overhead in the future with this approach, atleast no 
-more than "proper block layer interface". IMHO, unregistering the queue and 
-registering the queue again with the elevator, is basically wasting CPU cycles 
-and possibly would confuse the user-space, which may be watching the sysfs... 
-Or asking block layer to recheck and find what we have changed in the 
-request_queue. It does not sound like the best solution.
 
-It is better to tell the block-layer that we have added a q->request_fn 
-function, so initialize the elevator.
+I am running a Fedora 10 server, with two fiber connections to two
+different switches.=A0=A0Both=A0controllers on the 6140 have one connecti=
+on
+to each switch as well. =A0The end result is that I see four paths to
+each LUN.
 
-If block layer, exports elv_register_queue() and document it, it would become 
-a proper block layer interface, right? Device-mapper would always depend on 
-internals of block-layer to some extent. ;-)
+When the volume is mounted and under significant load I see the
+messages above every few seconds.  They seem to appear every
+"no_path_retry" seconds.
 
-Thanks
-Nikanth
+The 6140 controller firmware is up to date at version 07.50.08.10 and
+I have installed the latest firmware for my Emulex LPe11002 cards.  I
+have reproduced the problem using both Cisco MDS and Brocade fiber
+channel switches as well.
+
+Using CAM, I have set the initiator Host Type to "Linux" at the
+moment.  I have tried other options as well without success.
+
+I have NOT installed the RDAC drivers from either Sun or LSI -
+primarily because they do not seem to build on my Fedora 10 kernel.
+
+Any ideas would be greatly appreciated!!!
+
+configs and debugging multipathd output is below.
+
+
+
+
+
+Kernel: 2.6.27.24-170.2.68.fc10.x86_64
+
+# multipath -lll
+vol1 (3600a0b800048335200001e5d48b68a9b) dm-1 SUN,CSM200_R
+[size=3D12T][features=3D1 queue_if_no_path][hwhandler=3D1 rdac][rw]
+\_ round-robin 0 [prio=3D6][active]
+=A0\_ 5:0:1:2 sdj 8:144 [active][ready]
+=A0\_ 2:0:1:2 sdn 8:208 [active][ready]
+\_ round-robin 0 [prio=3D0][enabled]
+=A0\_ 2:0:0:2 sdb 8:16 =A0[active][ghost]
+=A0\_ 5:0:0:2 sdd 8:48 =A0[active][ghost]
+
+
+# cat /etc/multipath.conf
+
+blacklist {
+        devnode "^sd[a-z][[0-9]*]"
+        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+        devnode "^hd[a-z][0-9]*"
+        devnode "^cciss!c[0-9]d[0-9](p[0-9]*)*"
+}
+
+defaults {
+        udev_dir                /dev
+        polling_interval        10
+        selector                "round-robin 0"
+        path_grouping_policy    multibus
+        getuid_callout          "/sbin/scsi_id --whitelisted /dev/%n"
+        prio                    alua
+        path_checker            readsector0
+        rr_min_io               100
+        max_fds                 8192
+        rr_weight               priorities
+        failback                immediate
+        no_path_retry           fail
+        user_friendly_names     yes
+}
+devices {
+        device {
+                vendor                  "SUN"
+                product                 "CSM200_R"
+                product_blacklist       "Universal Xport"
+                getuid_callout          "/sbin/scsi_id --whitelisted /dev=
+/%n"
+                features                "0"
+                hardware_handler        "1 rdac"
+                path_selector           "round-robin 0"
+                path_grouping_policy    group_by_prio
+                failback                immediate
+                rr_weight               uniform
+                no_path_retry           queue
+                rr_min_io               1000
+                path_checker            rdac
+                prio                    rdac
+        }
+}
+
+multipaths {
+        multipath {
+                wwid                    3600a0b800048335200001e5d48b68a9b
+                alias                   vol1
+                rr_weight               priorities
+                no_path_retry           5
+                rr_min_io               100
+        }
+}
+
+
+
+# multipathd -d v3
+
+
+Aug 13 14:48:53 | sdb: ownership set to vol1
+Aug 13 14:48:53 | sdb: not found in pathvec
+Aug 13 14:48:53 | sdb: mask =3D 0xc
+Aug 13 14:48:53 | sdb: path checker =3D rdac (controller setting)
+Aug 13 14:48:53 | sdb: state =3D 4
+Aug 13 14:48:53 | sdb: rdac prio =3D 0
+Aug 13 14:48:53 | sdd: ownership set to vol1
+Aug 13 14:48:53 | sdd: not found in pathvec
+Aug 13 14:48:53 | sdd: mask =3D 0xc
+Aug 13 14:48:53 | sdd: path checker =3D rdac (controller setting)
+Aug 13 14:48:53 | sdd: state =3D 4
+Aug 13 14:48:53 | sdd: rdac prio =3D 0
+Aug 13 14:48:53 | sdj: ownership set to vol1
+Aug 13 14:48:53 | sdj: not found in pathvec
+Aug 13 14:48:53 | sdj: mask =3D 0xc
+Aug 13 14:48:53 | sdj: path checker =3D rdac (controller setting)
+Aug 13 14:48:53 | sdj: state =3D 2
+Aug 13 14:48:53 | sdj: rdac prio =3D 3
+Aug 13 14:48:53 | sdn: ownership set to vol1
+Aug 13 14:48:53 | sdn: not found in pathvec
+Aug 13 14:48:53 | sdn: mask =3D 0xc
+Aug 13 14:48:53 | sdn: path checker =3D rdac (controller setting)
+Aug 13 14:48:53 | sdn: state =3D 2
+Aug 13 14:48:53 | sdn: rdac prio =3D 3
+Aug 13 14:48:53 | vol1: pgfailback =3D -2 (controller setting)
+Aug 13 14:48:53 | vol1: pgpolicy =3D group_by_prio (controller setting)
+Aug 13 14:48:53 | vol1: selector =3D round-robin 0 (controller setting)
+Aug 13 14:48:53 | vol1: features =3D 0 (controller setting)
+Aug 13 14:48:53 | vol1: hwhandler =3D 1 rdac (controller setting)
+Aug 13 14:48:53 | vol1: rr_weight =3D 2 (LUN setting)
+Aug 13 14:48:53 | vol1: minio =3D 100 (LUN setting)
+Aug 13 14:48:53 | vol1: no_path_retry =3D 5 (multipath setting)
+Aug 13 14:48:53 | pg_timeout =3D NONE (internal default)
+Aug 13 14:48:53 | vol1: set ACT_CREATE (map does not exist)
+create: vol1 (3600a0b800048335200001e5d48b68a9b) n/a SUN,CSM200_R
+[size=3D12T][features=3D0][hwhandler=3D1 rdac][n/a]
+\_ round-robin 0 [prio=3D6][undef]
+ \_ 5:0:1:2 sdj 8:144 [undef][ready]
+ \_ 2:0:1:2 sdn 8:208 [undef][ready]
+\_ round-robin 0 [prio=3D0][undef]
+ \_ 2:0:0:2 sdb 8:16 [undef][ghost]
+ \_ 5:0:0:2 sdd 8:48 [undef][ghost]
