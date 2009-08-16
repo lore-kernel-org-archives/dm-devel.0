@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 21/24] io-controller: Per io group bdi congestion
-	interface
-Date: Sun, 16 Aug 2009 15:30:43 -0400
-Message-ID: <1250451046-9966-22-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 17/24] io-controller: anticipatory changes for
+	hierarchical fair queuing
+Date: Sun, 16 Aug 2009 15:30:39 -0400
+Message-ID: <1250451046-9966-18-git-send-email-vgoyal@redhat.com>
 References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,869 +20,798 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: paolo.valente@unimore.it, jmarchan@redhat.com, dhaval@linux.vnet.ibm.com, peterz@infradead.org, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, lizf@cn.fujitsu.com, jmoyer@redhat.com, mikew@google.com, fchecconi@gmail.com, dpshah@google.com, vgoyal@redhat.com, nauman@google.com, s-uchida@ap.jp.nec.com, akpm@linux-foundation.org, agk@redhat.com, m-ikeda@ds.jp.nec.com
 List-Id: dm-devel.ids
 
-o So far there used to be only one pair or queue  of request descriptors
-  (one for sync and one for async) per device and number of requests allocated
-  used to decide whether associated bdi is congested or not.
+This patch changes anticipatory scheduler to use queue scheduling code from
+elevator layer.  One can go back to old as by deselecting
+CONFIG_IOSCHED_AS_HIER. Even with CONFIG_IOSCHED_AS_HIER=y, with-out any
+other cgroup created, AS behavior should remain the same as old.
 
-  Now with per io group request descriptor infrastructure, there is a pair
-  of request descriptor queue per io group per device. So it might happen
-  that overall request queue is not congested but a particular io group
-  bio belongs to is congested.
+o AS is a single queue ioschduler, that means there is one AS queue per group.
 
-  Or, it could be otherwise that group is not congested but overall queue
-  is congested. This can happen if user has not properly set the request
-  descriptors limits for queue and groups.
-  (q->nr_requests < nr_groups * q->nr_group_requests)
+o common layer code select the queue to dispatch from based on fairness, and
+  then AS code selects the request with-in group.
 
-  Hence there is a need for new interface which can query deivce congestion
-  status per group. This group is determined by the "struct page" IO will be
-  done for. If page is null, then group is determined from the current task
-  context.
+o AS runs reads and writes batches with-in group. So common layer runs timed
+  group queues and with-in group time, AS runs timed batches of reads and
+  writes.
 
-o This patch introduces new set of function bdi_*_congested_group(), which
-  take "struct page" as addition argument. These functions will call the
-  block layer and in trun elevator to find out if the io group the page will
-  go into is congested or not.
+o Note: Previously AS write batch length was adjusted synamically whenever
+  a W->R batch data direction took place and when first request from the
+  read batch completed.
 
-o Currently I have introduced the core functions and migrated most of the users.
-  But there might be still some left. This is an ongoing TODO item.
+  Now write batch updation takes place when last request from the write
+  batch has finished during W->R transition.
 
-o There are some io_get_io_group() related changes which should be pushed into
-  higher patches. Still testing this patch. Will push these changes up in next
-  posting.
+o AS runs its own anticipation logic to anticipate on reads. common layer also
+  does the anticipation on the group if think time of the group is with-in
+  slice_idle.
 
+o Introduced few debugging messages in AS.
+
+Signed-off-by: Nauman Rafique <nauman@google.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/blk-core.c            |   21 ++++++++++++++
- block/blk-sysfs.c           |    7 +++++
- block/elevator-fq.c         |   58 ++++++++++++++++++++++++++++++++++++++++
- block/elevator-fq.h         |    9 ++++++
- drivers/md/dm-table.c       |   11 +++++---
- drivers/md/dm.c             |    7 +++--
- drivers/md/dm.h             |    3 +-
- drivers/md/linear.c         |    7 +++-
- drivers/md/multipath.c      |    7 +++-
- drivers/md/raid0.c          |    6 +++-
- drivers/md/raid1.c          |    9 ++++--
- drivers/md/raid10.c         |    6 +++-
- drivers/md/raid5.c          |    2 +-
- fs/afs/write.c              |    8 +++++-
- fs/btrfs/disk-io.c          |    6 +++-
- fs/btrfs/extent_io.c        |   12 ++++++++
- fs/btrfs/volumes.c          |    8 ++++-
- fs/cifs/file.c              |   11 +++++++
- fs/ext2/ialloc.c            |    2 +-
- fs/gfs2/aops.c              |   12 ++++++++
- fs/nilfs2/segbuf.c          |    3 +-
- fs/xfs/linux-2.6/xfs_aops.c |    2 +-
- fs/xfs/linux-2.6/xfs_buf.c  |    2 +-
- include/linux/backing-dev.h |   61 ++++++++++++++++++++++++++++++++++++++++-
- include/linux/blkdev.h      |    5 +++
- mm/backing-dev.c            |   62 +++++++++++++++++++++++++++++++++++++++++++
- mm/page-writeback.c         |   11 +++++++
- mm/readahead.c              |    2 +-
- 28 files changed, 328 insertions(+), 32 deletions(-)
+ block/Kconfig.iosched    |   12 ++
+ block/as-iosched.c       |  295 +++++++++++++++++++++++++++++++++++++++++++++-
+ block/elevator-fq.c      |   89 ++++++++++++--
+ block/elevator-fq.h      |    2 +
+ include/linux/elevator.h |    2 +
+ 5 files changed, 382 insertions(+), 18 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 2e540f4..8ef1608 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -90,6 +90,27 @@ void blk_queue_congestion_threshold(struct request_queue *q)
- 	q->nr_congestion_off = nr;
- }
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index cc87c87..8ab08da 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -45,6 +45,18 @@ config IOSCHED_AS
+ 	  deadline I/O scheduler, it can also be slower in some cases
+ 	  especially some database loads.
  
-+#ifdef CONFIG_GROUP_IOSCHED
-+int blk_queue_io_group_congested(struct backing_dev_info *bdi, int bdi_bits,
-+					struct page *page)
-+{
-+	int ret = 0;
-+	struct request_queue *q = bdi->unplug_io_data;
++config IOSCHED_AS_HIER
++	bool "Anticipatory Hierarchical Scheduling support"
++	depends on IOSCHED_AS && CGROUPS
++	select ELV_FAIR_QUEUING
++	select GROUP_IOSCHED
++	default n
++	---help---
++	  Enable hierarhical scheduling in anticipatory. In this mode
++	  anticipatory keeps one IO queue per cgroup instead of a global
++	  queue. Elevator fair queuing logic ensures fairness among various
++	  queues.
 +
-+	if (!q || !q->elevator)
-+		return bdi_congested(bdi, bdi_bits);
+ config IOSCHED_DEADLINE
+ 	tristate "Deadline I/O scheduler"
+ 	default y
+diff --git a/block/as-iosched.c b/block/as-iosched.c
+index 6d2468b..2a9cd06 100644
+--- a/block/as-iosched.c
++++ b/block/as-iosched.c
+@@ -16,6 +16,8 @@
+ #include <linux/compiler.h>
+ #include <linux/rbtree.h>
+ #include <linux/interrupt.h>
++#include <linux/blktrace_api.h>
++#include "elevator-fq.h"
+ 
+ /*
+  * See Documentation/block/as-iosched.txt
+@@ -77,6 +79,7 @@ enum anticipation_status {
+ };
+ 
+ struct as_queue {
++	struct io_queue *ioq;
+ 	/*
+ 	 * requests (as_rq s) are present on both sort_list and fifo_list
+ 	 */
+@@ -84,10 +87,24 @@ struct as_queue {
+ 	struct list_head fifo_list[2];
+ 
+ 	struct request *next_rq[2];	/* next in sort order */
 +
-+	/* Do we need to hold queue lock? */
-+	if (bdi_bits & (1 << BDI_sync_congested))
-+		ret |= elv_io_group_congested(q, page, 1);
++	/*
++	 * If an as_queue is switched while a batch is running, then we
++	 * store the time left before current batch will expire
++	 */
++	long current_batch_time_left;
 +
-+	if (bdi_bits & (1 << BDI_async_congested))
-+		ret |= elv_io_group_congested(q, page, 0);
++	/*
++	 * batch data dir when queue was scheduled out. This will be used
++	 * to setup ad->batch_data_dir when queue is scheduled in.
++	 */
++	int saved_batch_data_dir;
 +
-+	return ret;
+ 	unsigned long last_check_fifo[2];
+ 	int write_batch_count;		/* max # of reqs in a write batch */
+ 	int current_write_count;	/* how many requests left this batch */
+ 	int write_batch_idled;		/* has the write batch gone idle? */
++	int nr_queued[2];
+ };
+ 
+ struct as_data {
+@@ -123,6 +140,9 @@ struct as_data {
+ 	unsigned long fifo_expire[2];
+ 	unsigned long batch_expire[2];
+ 	unsigned long antic_expire;
++
++	/* elevator requested a queue switch. */
++	int switch_queue;
+ };
+ 
+ /*
+@@ -144,12 +164,185 @@ enum arq_state {
+ #define RQ_STATE(rq)	((enum arq_state)(rq)->elevator_private2)
+ #define RQ_SET_STATE(rq, state)	((rq)->elevator_private2 = (void *) state)
+ 
++#ifdef CONFIG_DEBUG_GROUP_IOSCHED
++#define as_log_asq(ad, asq, fmt, args...)				\
++{									\
++	blk_add_trace_msg((ad)->q, "as %s " fmt,			\
++			ioq_to_io_group((asq)->ioq)->path, ##args);	\
 +}
++#else
++#define as_log_asq(ad, asq, fmt, args...) \
++	blk_add_trace_msg((ad)->q, "as " fmt, ##args)
 +#endif
 +
- /**
-  * blk_get_backing_dev_info - get the address of a queue's backing_dev_info
-  * @bdev:	device
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index f3db7f0..a01f691 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -87,6 +87,9 @@ static ssize_t
- queue_group_requests_store(struct request_queue *q, const char *page,
- 					size_t count)
- {
-+	struct hlist_node *n;
-+	struct io_group *iog;
-+	struct elv_fq_data *efqd;
- 	unsigned long nr;
- 	int ret = queue_var_store(&nr, page, count);
++#define as_log(ad, fmt, args...)        \
++	blk_add_trace_msg((ad)->q, "as " fmt, ##args)
++
+ static DEFINE_PER_CPU(unsigned long, ioc_count);
+ static struct completion *ioc_gone;
+ static DEFINE_SPINLOCK(ioc_gone_lock);
  
-@@ -95,6 +98,10 @@ queue_group_requests_store(struct request_queue *q, const char *page,
- 
- 	spin_lock_irq(q->queue_lock);
- 	q->nr_group_requests = nr;
-+	efqd = q->elevator->efqd;
-+	hlist_for_each_entry(iog, n, &efqd->group_list, elv_data_node) {
-+		elv_io_group_congestion_threshold(q, iog);
-+	}
- 	spin_unlock_irq(q->queue_lock);
- 	return ret;
- }
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index f300b38..e2600a5 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -931,6 +931,62 @@ struct request_list *elv_io_group_get_request_list(struct request_queue *q,
- 	return &iog->rl;
- }
- 
-+/* Set io group congestion on and off thresholds */
-+void elv_io_group_congestion_threshold(struct request_queue *q,
-+						struct io_group *iog)
+ static void as_move_to_dispatch(struct as_data *ad, struct request *rq);
+ static void as_antic_stop(struct as_data *ad);
++static inline int as_batch_expired(struct as_data *ad, struct as_queue *asq);
++
++#ifdef CONFIG_IOSCHED_AS_HIER
++static void as_save_batch_context(struct as_data *ad, struct as_queue *asq)
 +{
-+	int nr;
++	/* Save batch data dir */
++	asq->saved_batch_data_dir = ad->batch_data_dir;
 +
-+	nr = q->nr_group_requests - (q->nr_group_requests / 8) + 1;
-+	if (nr > q->nr_group_requests)
-+		nr = q->nr_group_requests;
-+	iog->nr_congestion_on = nr;
++	if (ad->changed_batch) {
++		/*
++		 * In case of force expire, we come here. Batch changeover
++		 * has been signalled but we are waiting for all the
++		 * request to finish from previous batch and then start
++		 * the new batch. Can't wait now. Mark that full batch time
++		 * needs to be allocated when this queue is scheduled again.
++		 */
++		asq->current_batch_time_left =
++				ad->batch_expire[ad->batch_data_dir];
++		ad->changed_batch = 0;
++		goto out;
++	}
 +
-+	nr = q->nr_group_requests - (q->nr_group_requests / 8)
-+			- (q->nr_group_requests / 16) - 1;
-+	if (nr < 1)
-+		nr = 1;
-+	iog->nr_congestion_off = nr;
++	if (ad->new_batch) {
++		/*
++		 * We should come here only when new_batch has been set
++		 * but no read request has been issued or if it is a forced
++		 * expiry.
++		 *
++		 * In both the cases, new batch has not started yet so
++		 * allocate full batch length for next scheduling opportunity.
++		 * We don't do write batch size adjustment in hierarchical
++		 * AS so that should not be an issue.
++		 */
++		asq->current_batch_time_left =
++				ad->batch_expire[ad->batch_data_dir];
++		ad->new_batch = 0;
++		goto out;
++	}
++
++	/* Save how much time is left before current batch expires */
++	if (as_batch_expired(ad, asq))
++		asq->current_batch_time_left = 0;
++	else {
++		asq->current_batch_time_left = ad->current_batch_expires
++							- jiffies;
++		BUG_ON((asq->current_batch_time_left) < 0);
++	}
++
++	if (ad->io_context) {
++		put_io_context(ad->io_context);
++		ad->io_context = NULL;
++	}
++
++out:
++	as_log_asq(ad, asq, "save batch: dir=%c time_left=%d changed_batch=%d"
++			" new_batch=%d, antic_status=%d",
++			ad->batch_data_dir ? 'R' : 'W',
++			asq->current_batch_time_left,
++			ad->changed_batch, ad->new_batch, ad->antic_status);
++	return;
 +}
 +
-+static inline int elv_is_iog_congested(struct request_queue *q,
-+					struct io_group *iog, int sync)
++/*
++ * FIXME: In original AS, read batch's time account started only after when
++ * first request had completed (if last batch was a write batch). But here
++ * we might be rescheduling a read batch right away irrespective of the fact
++ * of disk cache state.
++ */
++static void as_restore_batch_context(struct as_data *ad, struct as_queue *asq)
 +{
-+	if (iog->rl.count[sync] >= iog->nr_congestion_on)
++	/* Adjust the batch expire time */
++	if (asq->current_batch_time_left)
++		ad->current_batch_expires = jiffies +
++						asq->current_batch_time_left;
++	/* restore asq batch_data_dir info */
++	ad->batch_data_dir = asq->saved_batch_data_dir;
++	as_log_asq(ad, asq, "restore batch: dir=%c time=%d reads_q=%d"
++			" writes_q=%d ad->antic_status=%d",
++			ad->batch_data_dir ? 'R' : 'W',
++			asq->current_batch_time_left,
++			asq->nr_queued[1], asq->nr_queued[0],
++			ad->antic_status);
++}
++
++/* ioq has been set. */
++static void as_active_ioq_set(struct request_queue *q, void *sched_queue,
++				int coop)
++{
++	struct as_queue *asq = sched_queue;
++	struct as_data *ad = q->elevator->elevator_data;
++
++	as_restore_batch_context(ad, asq);
++}
++
++/*
++ * This is a notification from common layer that it wishes to expire this
++ * io queue. AS decides whether queue can be expired, if yes, it also
++ * saves the batch context.
++ */
++static int as_expire_ioq(struct request_queue *q, void *sched_queue,
++				int slice_expired, int force)
++{
++	struct as_data *ad = q->elevator->elevator_data;
++	int status = ad->antic_status;
++	struct as_queue *asq = sched_queue;
++
++	as_log_asq(ad, asq, "as_expire_ioq slice_expired=%d, force=%d",
++			slice_expired, force);
++
++	/* Forced expiry. We don't have a choice */
++	if (force) {
++		as_antic_stop(ad);
++		/*
++		 * antic_stop() sets antic_status to FINISHED which signifies
++		 * that either we timed out or we found a close request but
++		 * that's not the case here. Start from scratch.
++		 */
++		ad->antic_status = ANTIC_OFF;
++		as_save_batch_context(ad, asq);
++		ad->switch_queue = 0;
 +		return 1;
++	}
++
++	/*
++	 * We are waiting for requests to finish from last
++	 * batch. Don't expire the queue now
++	 */
++	if (ad->changed_batch)
++		goto keep_queue;
++
++	/*
++	 * Wait for all requests from existing batch to finish before we
++	 * switch the queue. New queue might change the batch direction
++	 * and this is to be consistent with AS philosophy of not dispatching
++	 * new requests to underlying drive till requests from requests
++	 * from previous batch are completed.
++	 */
++	if (ad->nr_dispatched)
++		goto keep_queue;
++
++	/*
++	 * If AS anticipation is ON, wait for it to finish.
++	 */
++	BUG_ON(status == ANTIC_WAIT_REQ);
++
++	if (status == ANTIC_WAIT_NEXT)
++		goto keep_queue;
++
++	/* We are good to expire the queue. Save batch context */
++	as_save_batch_context(ad, asq);
++	ad->switch_queue = 0;
++	return 1;
++
++keep_queue:
++	/* Mark that elevator requested for queue switch whenever possible */
++	ad->switch_queue = 1;
 +	return 0;
 +}
++#endif
+ 
+ /*
+  * IO Context helper functions
+@@ -429,6 +622,7 @@ static void as_antic_waitnext(struct as_data *ad)
+ 	mod_timer(&ad->antic_timer, timeout);
+ 
+ 	ad->antic_status = ANTIC_WAIT_NEXT;
++	as_log(ad, "antic_waitnext set");
+ }
+ 
+ /*
+@@ -442,8 +636,10 @@ static void as_antic_waitreq(struct as_data *ad)
+ 	if (ad->antic_status == ANTIC_OFF) {
+ 		if (!ad->io_context || ad->ioc_finished)
+ 			as_antic_waitnext(ad);
+-		else
++		else {
+ 			ad->antic_status = ANTIC_WAIT_REQ;
++			as_log(ad, "antic_waitreq set");
++		}
+ 	}
+ }
+ 
+@@ -455,6 +651,8 @@ static void as_antic_stop(struct as_data *ad)
+ {
+ 	int status = ad->antic_status;
+ 
++	as_log(ad, "as_antic_stop antic_status=%d", ad->antic_status);
 +
-+/* Determine if io group page maps to is congested or not */
-+int elv_io_group_congested(struct request_queue *q, struct page *page, int sync)
-+{
-+	struct io_group *iog;
-+	int ret = 0;
+ 	if (status == ANTIC_WAIT_REQ || status == ANTIC_WAIT_NEXT) {
+ 		if (status == ANTIC_WAIT_NEXT)
+ 			del_timer(&ad->antic_timer);
+@@ -474,6 +672,7 @@ static void as_antic_timeout(unsigned long data)
+ 	unsigned long flags;
+ 
+ 	spin_lock_irqsave(q->queue_lock, flags);
++	as_log(ad, "as_antic_timeout");
+ 	if (ad->antic_status == ANTIC_WAIT_REQ
+ 			|| ad->antic_status == ANTIC_WAIT_NEXT) {
+ 		struct as_io_context *aic;
+@@ -652,6 +851,21 @@ static int as_can_break_anticipation(struct as_data *ad, struct request *rq)
+ 	struct io_context *ioc;
+ 	struct as_io_context *aic;
+ 
++#ifdef CONFIG_IOSCHED_AS_HIER
++	/*
++	 * If the active asq and rq's asq are not same, then one can not
++	 * break the anticipation. This primarily becomes useful when a
++	 * request is added to a queue which is not being served currently.
++	 */
++	if (rq) {
++		struct as_queue *asq = elv_get_sched_queue(ad->q, rq);
++		struct as_queue *curr_asq =
++				elv_active_sched_queue(ad->q->elevator);
 +
-+	rcu_read_lock();
++		if (asq != curr_asq)
++			return 0;
++	}
++#endif
+ 	ioc = ad->io_context;
+ 	BUG_ON(!ioc);
+ 	spin_lock(&ioc->lock);
+@@ -810,16 +1024,21 @@ static void as_update_rq(struct as_data *ad, struct request *rq)
+ /*
+  * Gathers timings and resizes the write batch automatically
+  */
+-static void update_write_batch(struct as_data *ad)
++static void update_write_batch(struct as_data *ad, struct request *rq)
+ {
+ 	unsigned long batch = ad->batch_expire[BLK_RW_ASYNC];
+ 	long write_time;
+-	struct as_queue *asq = elv_get_sched_queue(ad->q, NULL);
++	struct as_queue *asq = elv_get_sched_queue(ad->q, rq);
+ 
+ 	write_time = (jiffies - ad->current_batch_expires) + batch;
+ 	if (write_time < 0)
+ 		write_time = 0;
+ 
++	as_log_asq(ad, asq, "upd write: write_time=%d batch=%d"
++			" write_batch_idled=%d current_write_count=%d",
++			write_time, batch, asq->write_batch_idled,
++			asq->current_write_count);
 +
-+	iog = elv_io_get_io_group(q, page, 0);
+ 	if (write_time > batch && !asq->write_batch_idled) {
+ 		if (write_time > batch * 3)
+ 			asq->write_batch_count /= 2;
+@@ -834,6 +1053,8 @@ static void update_write_batch(struct as_data *ad)
+ 
+ 	if (asq->write_batch_count < 1)
+ 		asq->write_batch_count = 1;
 +
-+	if (!iog) {
++	as_log_asq(ad, asq, "upd write count=%d", asq->write_batch_count);
+ }
+ 
+ /*
+@@ -843,6 +1064,7 @@ static void update_write_batch(struct as_data *ad)
+ static void as_completed_request(struct request_queue *q, struct request *rq)
+ {
+ 	struct as_data *ad = q->elevator->elevator_data;
++	struct as_queue *asq = elv_get_sched_queue(q, rq);
+ 
+ 	WARN_ON(!list_empty(&rq->queuelist));
+ 
+@@ -851,7 +1073,24 @@ static void as_completed_request(struct request_queue *q, struct request *rq)
+ 		goto out;
+ 	}
+ 
++	as_log_asq(ad, asq, "complete: reads_q=%d writes_q=%d changed_batch=%d"
++		" new_batch=%d switch_queue=%d, dir=%c",
++		asq->nr_queued[1], asq->nr_queued[0], ad->changed_batch,
++		ad->new_batch, ad->switch_queue,
++		ad->batch_data_dir ? 'R' : 'W');
++
+ 	if (ad->changed_batch && ad->nr_dispatched == 1) {
 +		/*
-+		 * Either cgroup got deleted or this is first request in the
-+		 * group and associated io group object has not been created
-+		 * yet. Map it to root group.
++		 * If this was write batch finishing, adjust the write batch
++		 * length.
 +		 *
-+		 * TODO: Fix the case of group not created yet.
++		 * Note, write batch length is being calculated upon completion
++		 * of last write request finished and not completion of first
++		 * read request finished in the next batch.
 +		 */
-+		iog = q->elevator->efqd->root_group;
++		if (ad->batch_data_dir == BLK_RW_SYNC)
++			update_write_batch(ad, rq);
++
+ 		ad->current_batch_expires = jiffies +
+ 					ad->batch_expire[ad->batch_data_dir];
+ 		kblockd_schedule_work(q, &ad->antic_work);
+@@ -869,7 +1108,6 @@ static void as_completed_request(struct request_queue *q, struct request *rq)
+ 	 * and writeback caches
+ 	 */
+ 	if (ad->new_batch && ad->batch_data_dir == rq_is_sync(rq)) {
+-		update_write_batch(ad);
+ 		ad->current_batch_expires = jiffies +
+ 				ad->batch_expire[BLK_RW_SYNC];
+ 		ad->new_batch = 0;
+@@ -888,6 +1126,13 @@ static void as_completed_request(struct request_queue *q, struct request *rq)
+ 	}
+ 
+ 	as_put_io_context(rq);
++
++	/*
++	 * If elevator requested a queue switch, kick the queue in the
++	 * hope that this is right time for switch.
++	 */
++	if (ad->switch_queue)
++		kblockd_schedule_work(q, &ad->antic_work);
+ out:
+ 	RQ_SET_STATE(rq, AS_RQ_POSTSCHED);
+ }
+@@ -908,6 +1153,9 @@ static void as_remove_queued_request(struct request_queue *q,
+ 
+ 	WARN_ON(RQ_STATE(rq) != AS_RQ_QUEUED);
+ 
++	BUG_ON(asq->nr_queued[data_dir] <= 0);
++	asq->nr_queued[data_dir]--;
++
+ 	ioc = RQ_IOC(rq);
+ 	if (ioc && ioc->aic) {
+ 		BUG_ON(!atomic_read(&ioc->aic->nr_queued));
+@@ -1019,6 +1267,8 @@ static void as_move_to_dispatch(struct as_data *ad, struct request *rq)
+ 	if (RQ_IOC(rq) && RQ_IOC(rq)->aic)
+ 		atomic_inc(&RQ_IOC(rq)->aic->nr_dispatched);
+ 	ad->nr_dispatched++;
++	as_log_asq(ad, asq, "dispatch req dir=%c nr_dispatched = %d",
++			data_dir ? 'R' : 'W', ad->nr_dispatched);
+ }
+ 
+ /*
+@@ -1066,6 +1316,7 @@ static int as_dispatch_request(struct request_queue *q, int force)
+ 		}
+ 		asq->last_check_fifo[BLK_RW_ASYNC] = jiffies;
+ 
++		as_log_asq(ad, asq, "forced dispatch");
+ 		return dispatched;
+ 	}
+ 
+@@ -1078,8 +1329,14 @@ static int as_dispatch_request(struct request_queue *q, int force)
+ 	if (!(reads || writes)
+ 		|| ad->antic_status == ANTIC_WAIT_REQ
+ 		|| ad->antic_status == ANTIC_WAIT_NEXT
+-		|| ad->changed_batch)
++		|| ad->changed_batch) {
++		as_log_asq(ad, asq, "no dispatch. read_q=%d, writes_q=%d"
++			" ad->antic_status=%d, changed_batch=%d,"
++			" switch_queue=%d new_batch=%d", asq->nr_queued[1],
++			asq->nr_queued[0], ad->antic_status, ad->changed_batch,
++			ad->switch_queue, ad->new_batch);
+ 		return 0;
++	}
+ 
+ 	if (!(reads && writes && as_batch_expired(ad, asq))) {
+ 		/*
+@@ -1092,6 +1349,7 @@ static int as_dispatch_request(struct request_queue *q, int force)
+ 				goto fifo_expired;
+ 
+ 			if (as_can_anticipate(ad, rq)) {
++				as_log_asq(ad, asq, "can_anticipate = 1");
+ 				as_antic_waitreq(ad);
+ 				return 0;
+ 			}
+@@ -1111,6 +1369,8 @@ static int as_dispatch_request(struct request_queue *q, int force)
+ 	 * data direction (read / write)
+ 	 */
+ 
++	as_log_asq(ad, asq, "select a fresh batch and request");
++
+ 	if (reads) {
+ 		BUG_ON(RB_EMPTY_ROOT(&asq->sort_list[BLK_RW_SYNC]));
+ 
+@@ -1125,6 +1385,7 @@ static int as_dispatch_request(struct request_queue *q, int force)
+ 			ad->changed_batch = 1;
+ 		}
+ 		ad->batch_data_dir = BLK_RW_SYNC;
++		as_log_asq(ad, asq, "new batch dir is sync");
+ 		rq = rq_entry_fifo(asq->fifo_list[BLK_RW_SYNC].next);
+ 		asq->last_check_fifo[ad->batch_data_dir] = jiffies;
+ 		goto dispatch_request;
+@@ -1149,6 +1410,7 @@ dispatch_writes:
+ 			ad->new_batch = 0;
+ 		}
+ 		ad->batch_data_dir = BLK_RW_ASYNC;
++		as_log_asq(ad, asq, "new batch dir is async");
+ 		asq->current_write_count = asq->write_batch_count;
+ 		asq->write_batch_idled = 0;
+ 		rq = rq_entry_fifo(asq->fifo_list[BLK_RW_ASYNC].next);
+@@ -1184,6 +1446,9 @@ fifo_expired:
+ 		ad->changed_batch = 0;
+ 	}
+ 
++	if (ad->switch_queue)
++		return 0;
++
+ 	/*
+ 	 * rq is the selected appropriate request.
+ 	 */
+@@ -1207,6 +1472,11 @@ static void as_add_request(struct request_queue *q, struct request *rq)
+ 
+ 	rq->elevator_private = as_get_io_context(q->node);
+ 
++	asq->nr_queued[data_dir]++;
++	as_log_asq(ad, asq, "add a %c request read_q=%d write_q=%d",
++			data_dir ? 'R' : 'W', asq->nr_queued[1],
++			asq->nr_queued[0]);
++
+ 	if (RQ_IOC(rq)) {
+ 		as_update_iohist(ad, RQ_IOC(rq)->aic, rq);
+ 		atomic_inc(&RQ_IOC(rq)->aic->nr_queued);
+@@ -1358,6 +1628,7 @@ static void *as_alloc_as_queue(struct request_queue *q,
+ 
+ 	if (asq->write_batch_count < 2)
+ 		asq->write_batch_count = 2;
++	asq->ioq = ioq;
+ out:
+ 	return asq;
+ }
+@@ -1408,6 +1679,7 @@ static void *as_init_queue(struct request_queue *q, struct elevator_queue *eq)
+ 	ad->batch_expire[BLK_RW_ASYNC] = default_write_batch_expire;
+ 
+ 	ad->current_batch_expires = jiffies + ad->batch_expire[BLK_RW_SYNC];
++	ad->switch_queue = 0;
+ 
+ 	return ad;
+ }
+@@ -1493,6 +1765,11 @@ static struct elv_fs_entry as_attrs[] = {
+ 	AS_ATTR(antic_expire),
+ 	AS_ATTR(read_batch_expire),
+ 	AS_ATTR(write_batch_expire),
++#ifdef CONFIG_IOSCHED_AS_HIER
++	ELV_ATTR(fairness),
++	ELV_ATTR(slice_sync),
++	ELV_ATTR(group_idle),
++#endif
+ 	__ATTR_NULL
+ };
+ 
+@@ -1514,8 +1791,14 @@ static struct elevator_type iosched_as = {
+ 		.trim =				as_trim,
+ 		.elevator_alloc_sched_queue_fn = as_alloc_as_queue,
+ 		.elevator_free_sched_queue_fn = as_free_as_queue,
++#ifdef CONFIG_IOSCHED_AS_HIER
++		.elevator_expire_ioq_fn =       as_expire_ioq,
++		.elevator_active_ioq_set_fn =   as_active_ioq_set,
+ 	},
+-
++	.elevator_features = ELV_IOSCHED_NEED_FQ | ELV_IOSCHED_SINGLE_IOQ,
++#else
++	},
++#endif
+ 	.elevator_attrs = as_attrs,
+ 	.elevator_name = "anticipatory",
+ 	.elevator_owner = THIS_MODULE,
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index ab7573a..7959325 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -1918,6 +1918,7 @@ __elv_set_active_ioq(struct elv_fq_data *efqd, struct io_queue *ioq, int coop)
+ 		elv_clear_ioq_must_dispatch(ioq);
+ 		elv_clear_iog_wait_busy_done(iog);
+ 		elv_mark_ioq_slice_new(ioq);
++		elv_clear_ioq_must_expire(ioq);
+ 
+ 		del_timer(&efqd->idle_slice_timer);
+ 	}
+@@ -1991,6 +1992,46 @@ static void elv_del_ioq_busy(struct elevator_queue *e, struct io_queue *ioq)
+ }
+ 
+ /*
++ * Call iosched to let that elevator wants to expire the queue. This gives
++ * iosched like AS to say no (if it is in the middle of batch changeover or
++ * it is anticipating). it also allows iosched to do some house keeping
++ *
++ * if force = 1, it is force dispatch and iosched must clean up its state.
++ * This is useful when elevator wants to drain iosched and wants to expire
++ * currnent active queue.
++ * if slice_expired = 1, ioq slice expired hence elevator fair queuing logic
++ * wants to switch the queue. iosched should allow that until and unless
++ * necessary. Currently AS can deny the switch if in the middle of batch switch.
++ *
++ * if slice_expired = 0, time slice is still remaining. It is up to the iosched
++ * whether it wants to wait on this queue or just want to expire it and move
++ * on to next queue.
++ */
++static int
++elv_iosched_expire_ioq(struct request_queue *q, int slice_expired, int force)
++{
++	struct elevator_queue *e = q->elevator;
++	struct io_queue *ioq = elv_active_ioq(q->elevator);
++	int ret = 1;
++
++	if (e->ops->elevator_expire_ioq_fn) {
++		ret = e->ops->elevator_expire_ioq_fn(q, ioq->sched_queue,
++							slice_expired, force);
++		/*
++		 * AS denied expiration of queue right now. Mark that elevator
++		 * layer has requested ioscheduler (as) to expire this queue.
++		 * Now as will try to expire this queue as soon as it can.
++		 * Now don't try to dispatch from this queue even if we get
++		 * a new request and if time slice is left. Do expire it once.
++		 */
++		if (!ret)
++			elv_mark_ioq_must_expire(ioq);
 +	}
 +
-+	ret = elv_is_iog_congested(q, iog, sync);
-+	if (ret)
-+		elv_log_iog(q->elevator->efqd, iog, "iog congested=%d sync=%d"
-+			" rl.count[sync]=%d nr_group_requests=%d",
-+			ret, sync, iog->rl.count[sync], q->nr_group_requests);
-+	rcu_read_unlock();
 +	return ret;
 +}
 +
- /*
-  * Search the io_group for efqd into the hash table (by now only a list)
-  * of bgrp.  Must be called under rcu_read_lock().
-@@ -1288,6 +1344,7 @@ io_group_chain_alloc(struct request_queue *q, void *key, struct cgroup *cgroup)
- 		io_group_path(iog);
++/*
+  * Do the accounting. Determine how much service (in terms of time slices)
+  * current queue used and adjust the start, finish time of queue and vtime
+  * of the tree accordingly.
+@@ -2028,6 +2069,7 @@ void elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
+ 	elv_clear_iog_wait_request(iog);
+ 	elv_clear_iog_wait_busy(iog);
+ 	elv_clear_iog_wait_busy_done(iog);
++	elv_clear_ioq_must_expire(ioq);
  
- 		blk_init_request_list(&iog->rl);
-+		elv_io_group_congestion_threshold(q, iog);
+ 	/*
+ 	 * Queue got expired before even a single request completed or
+@@ -2146,16 +2188,18 @@ static int elv_should_preempt(struct request_queue *q, struct io_queue *new_ioq,
+ static void elv_preempt_queue(struct request_queue *q, struct io_queue *ioq)
+ {
+ 	elv_log_ioq(q->elevator->efqd, ioq, "preempt");
+-	elv_slice_expired(q);
++	if (elv_iosched_expire_ioq(q, 0, 1)) {
++		elv_slice_expired(q);
  
- 		if (leaf == NULL) {
- 			leaf = iog;
-@@ -1529,6 +1586,7 @@ static struct io_group *io_alloc_root_group(struct request_queue *q,
- 		iog->sched_data.service_tree[i] = ELV_SERVICE_TREE_INIT;
+-	/*
+-	 * Put the new queue at the front of the of the current list,
+-	 * so we know that it will be selected next.
+-	 */
++		/*
++		 * Put the new queue at the front of the of the current list,
++		 * so we know that it will be selected next.
++		 */
  
- 	blk_init_request_list(&iog->rl);
-+	elv_io_group_congestion_threshold(q, iog);
- 	spin_lock_irq(&iocg->lock);
- 	rcu_assign_pointer(iog->key, key);
- 	hlist_add_head_rcu(&iog->group_node, &iocg->group_data);
+-	requeue_ioq(ioq);
+-	ioq->slice_start = ioq->slice_end = 0;
+-	elv_mark_ioq_slice_new(ioq);
++		requeue_ioq(ioq);
++		ioq->slice_start = ioq->slice_end = 0;
++		elv_mark_ioq_slice_new(ioq);
++	}
+ }
+ 
+ void elv_ioq_request_add(struct request_queue *q, struct request *rq)
+@@ -2353,6 +2397,8 @@ void *elv_select_ioq(struct request_queue *q, int force)
+ 	struct elv_fq_data *efqd = q->elevator->efqd;
+ 	struct io_queue *new_ioq = NULL, *ioq = elv_active_ioq(q->elevator);
+ 	struct io_group *iog;
++	struct elevator_type *e = q->elevator->elevator_type;
++	int slice_expired = 1;
+ 
+ 	if (!elv_nr_busy_ioq(q->elevator))
+ 		return NULL;
+@@ -2373,6 +2419,10 @@ void *elv_select_ioq(struct request_queue *q, int force)
+ 			goto expire;
+ 	}
+ 
++	/* This queue has been marked for expiry. Try to expire it */
++	if (elv_ioq_must_expire(ioq))
++		goto expire;
++
+ 	/*
+ 	 * If there is only root group present, don't expire the queue for
+ 	 * single queue ioschedulers (noop, deadline, AS).
+@@ -2459,19 +2509,32 @@ void *elv_select_ioq(struct request_queue *q, int force)
+ 		goto keep_queue;
+ 	}
+ 
++	slice_expired = 0;
+ expire:
+-	if (efqd->fairness && !force && ioq && ioq->dispatched) {
++	if (efqd->fairness && !force && ioq && ioq->dispatched
++	    && strcmp(e->elevator_name, "anticipatory")) {
+ 		/*
+ 		 * If there are request dispatched from this queue, don't
+ 		 * dispatch requests from new queue till all the requests from
+ 		 * this queue have completed.
++		 *
++		 * Anticipatory does not allow queue switch until requests
++		 * from previous queue have finished.
+ 		 */
+ 		elv_log_ioq(efqd, ioq, "select: wait for requests to finish"
+ 				" disp=%lu", ioq->dispatched);
+ 		ioq = NULL;
+ 		goto keep_queue;
+ 	}
+-	elv_slice_expired(q);
++
++	if (elv_iosched_expire_ioq(q, slice_expired, force))
++		elv_slice_expired(q);
++	else
++		/*
++		 * Not making ioq = NULL, as AS can deny queue expiration and
++		 * continue to dispatch from same queue
++		 */
++		goto keep_queue;
+ new_queue:
+ 	ioq = elv_set_active_ioq(q, new_ioq);
+ keep_queue:
+@@ -2604,8 +2667,10 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
+ 				goto done;
+ 
+ 			/* Expire the queue */
+-			elv_slice_expired(q);
+-			goto done;
++			if (elv_iosched_expire_ioq(q, 1, 0)) {
++				elv_slice_expired(q);
++				goto done;
++			}
+ 		} else if (!ioq->nr_queued && !elv_close_cooperator(q, ioq)
+ 			 && sync && !rq_noidle(rq))
+ 			elv_ioq_arm_slice_timer(q);
 diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index 9c43329..f8e46f7 100644
+index ee242b7..74a485f 100644
 --- a/block/elevator-fq.h
 +++ b/block/elevator-fq.h
-@@ -128,6 +128,10 @@ struct io_group {
- 	/* Single ioq per group, used for noop, deadline, anticipatory */
- 	struct io_queue *ioq;
- 
-+	/* io group congestion on and off threshold for request descriptors */
-+	unsigned int nr_congestion_on;
-+	unsigned int nr_congestion_off;
-+
- 	/* request list associated with the group */
- 	struct request_list rl;
- };
-@@ -422,6 +426,8 @@ extern struct io_group *elv_io_get_io_group_bio(struct request_queue *q,
- extern ssize_t elv_group_idle_show(struct elevator_queue *q, char *name);
- extern ssize_t elv_group_idle_store(struct elevator_queue *q, const char *name,
- 					size_t count);
-+extern void elv_io_group_congestion_threshold(struct request_queue *q,
-+						struct io_group *iog);
- static inline void elv_get_iog(struct io_group *iog)
- {
- 	atomic_inc(&iog->ref);
-@@ -435,6 +441,9 @@ extern struct io_queue *elv_lookup_ioq_bio(struct request_queue *q,
- extern struct request_list *
- elv_io_group_get_request_list(struct request_queue *q, struct bio *bio);
- 
-+extern int
-+elv_io_group_congested(struct request_queue *q, struct page *page, int sync);
-+
- #else /* !GROUP_IOSCHED */
- 
- static inline int elv_io_group_allow_merge(struct request *rq, struct bio *bio)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index d952b34..224d5a8 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1170,7 +1170,8 @@ int dm_table_resume_targets(struct dm_table *t)
- 	return 0;
- }
- 
--int dm_table_any_congested(struct dm_table *t, int bdi_bits)
-+int dm_table_any_congested(struct dm_table *t, int bdi_bits, struct page *page,
-+				int group)
- {
- 	struct dm_dev_internal *dd;
- 	struct list_head *devices = dm_table_get_devices(t);
-@@ -1180,9 +1181,11 @@ int dm_table_any_congested(struct dm_table *t, int bdi_bits)
- 		struct request_queue *q = bdev_get_queue(dd->dm_dev.bdev);
- 		char b[BDEVNAME_SIZE];
- 
--		if (likely(q))
--			r |= bdi_congested(&q->backing_dev_info, bdi_bits);
--		else
-+		if (likely(q)) {
-+			struct backing_dev_info *bdi = &q->backing_dev_info;
-+			r |= group ? bdi_congested_group(bdi, bdi_bits, page)
-+				: bdi_congested(bdi, bdi_bits);
-+		} else
- 			DMWARN_LIMIT("%s: any_congested: nonexistent device %s",
- 				     dm_device_name(t->md),
- 				     bdevname(dd->dm_dev.bdev, b));
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 8a311ea..00a7d94 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1608,7 +1608,8 @@ static void dm_unplug_all(struct request_queue *q)
- 	}
- }
- 
--static int dm_any_congested(void *congested_data, int bdi_bits)
-+static int dm_any_congested(void *congested_data, int bdi_bits,
-+					struct page *page, int group)
- {
- 	int r = bdi_bits;
- 	struct mapped_device *md = congested_data;
-@@ -1625,8 +1626,8 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
- 				r = md->queue->backing_dev_info.state &
- 				    bdi_bits;
- 			else
--				r = dm_table_any_congested(map, bdi_bits);
--
-+				r = dm_table_any_congested(map, bdi_bits, page,
-+								 group);
- 			dm_table_put(map);
- 		}
- 	}
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index a7663eb..bf533a9 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -57,7 +57,8 @@ struct list_head *dm_table_get_devices(struct dm_table *t);
- void dm_table_presuspend_targets(struct dm_table *t);
- void dm_table_postsuspend_targets(struct dm_table *t);
- int dm_table_resume_targets(struct dm_table *t);
--int dm_table_any_congested(struct dm_table *t, int bdi_bits);
-+int dm_table_any_congested(struct dm_table *t, int bdi_bits, struct page *page,
-+				int group);
- int dm_table_any_busy_target(struct dm_table *t);
- int dm_table_set_type(struct dm_table *t);
- unsigned dm_table_get_type(struct dm_table *t);
-diff --git a/drivers/md/linear.c b/drivers/md/linear.c
-index 5fe39c2..10765da 100644
---- a/drivers/md/linear.c
-+++ b/drivers/md/linear.c
-@@ -102,7 +102,7 @@ static void linear_unplug(struct request_queue *q)
- 	rcu_read_unlock();
- }
- 
--static int linear_congested(void *data, int bits)
-+static int linear_congested(void *data, int bits, struct page *page, int group)
- {
- 	mddev_t *mddev = data;
- 	linear_conf_t *conf;
-@@ -113,7 +113,10 @@ static int linear_congested(void *data, int bits)
- 
- 	for (i = 0; i < mddev->raid_disks && !ret ; i++) {
- 		struct request_queue *q = bdev_get_queue(conf->disks[i].rdev->bdev);
--		ret |= bdi_congested(&q->backing_dev_info, bits);
-+		struct backing_dev_info *bdi = &q->backing_dev_info;
-+
-+		ret |= group ? bdi_congested_group(bdi, bits, page) :
-+			bdi_congested(bdi, bits);
- 	}
- 
- 	rcu_read_unlock();
-diff --git a/drivers/md/multipath.c b/drivers/md/multipath.c
-index 7140909..52a54c7 100644
---- a/drivers/md/multipath.c
-+++ b/drivers/md/multipath.c
-@@ -192,7 +192,8 @@ static void multipath_status (struct seq_file *seq, mddev_t *mddev)
- 	seq_printf (seq, "]");
- }
- 
--static int multipath_congested(void *data, int bits)
-+static int multipath_congested(void *data, int bits, struct page *page,
-+					int group)
- {
- 	mddev_t *mddev = data;
- 	multipath_conf_t *conf = mddev->private;
-@@ -203,8 +204,10 @@ static int multipath_congested(void *data, int bits)
- 		mdk_rdev_t *rdev = rcu_dereference(conf->multipaths[i].rdev);
- 		if (rdev && !test_bit(Faulty, &rdev->flags)) {
- 			struct request_queue *q = bdev_get_queue(rdev->bdev);
-+			struct backing_dev_info *bdi = &q->backing_dev_info;
- 
--			ret |= bdi_congested(&q->backing_dev_info, bits);
-+			ret |= group ? bdi_congested_group(bdi, bits, page)
-+				: bdi_congested(bdi, bits);
- 			/* Just like multipath_map, we just check the
- 			 * first available device
- 			 */
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index 898e2bd..915a95f 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -37,7 +37,7 @@ static void raid0_unplug(struct request_queue *q)
- 	}
- }
- 
--static int raid0_congested(void *data, int bits)
-+static int raid0_congested(void *data, int bits, struct page *page, int group)
- {
- 	mddev_t *mddev = data;
- 	raid0_conf_t *conf = mddev->private;
-@@ -46,8 +46,10 @@ static int raid0_congested(void *data, int bits)
- 
- 	for (i = 0; i < mddev->raid_disks && !ret ; i++) {
- 		struct request_queue *q = bdev_get_queue(devlist[i]->bdev);
-+		struct backing_dev_info *bdi = &q->backing_dev_info;
- 
--		ret |= bdi_congested(&q->backing_dev_info, bits);
-+		ret |= group ? bdi_congested_group(bdi, bits, page)
-+				: bdi_congested(bdi, bits);
- 	}
- 	return ret;
- }
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index 8726fd7..0f0c6ac 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -570,7 +570,7 @@ static void raid1_unplug(struct request_queue *q)
- 	md_wakeup_thread(mddev->thread);
- }
- 
--static int raid1_congested(void *data, int bits)
-+static int raid1_congested(void *data, int bits, struct page *page, int group)
- {
- 	mddev_t *mddev = data;
- 	conf_t *conf = mddev->private;
-@@ -581,14 +581,17 @@ static int raid1_congested(void *data, int bits)
- 		mdk_rdev_t *rdev = rcu_dereference(conf->mirrors[i].rdev);
- 		if (rdev && !test_bit(Faulty, &rdev->flags)) {
- 			struct request_queue *q = bdev_get_queue(rdev->bdev);
-+			struct backing_dev_info *bdi = &q->backing_dev_info;
- 
- 			/* Note the '|| 1' - when read_balance prefers
- 			 * non-congested targets, it can be removed
- 			 */
- 			if ((bits & (1<<BDI_async_congested)) || 1)
--				ret |= bdi_congested(&q->backing_dev_info, bits);
-+				ret |= group ? bdi_congested_group(bdi, bits,
-+					page) : bdi_congested(bdi, bits);
- 			else
--				ret &= bdi_congested(&q->backing_dev_info, bits);
-+				ret &= group ? bdi_congested_group(bdi, bits,
-+					page) : bdi_congested(bdi, bits);
- 		}
- 	}
- 	rcu_read_unlock();
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 3d9020c..d85351f 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -625,7 +625,7 @@ static void raid10_unplug(struct request_queue *q)
- 	md_wakeup_thread(mddev->thread);
- }
- 
--static int raid10_congested(void *data, int bits)
-+static int raid10_congested(void *data, int bits, struct page *page, int group)
- {
- 	mddev_t *mddev = data;
- 	conf_t *conf = mddev->private;
-@@ -636,8 +636,10 @@ static int raid10_congested(void *data, int bits)
- 		mdk_rdev_t *rdev = rcu_dereference(conf->mirrors[i].rdev);
- 		if (rdev && !test_bit(Faulty, &rdev->flags)) {
- 			struct request_queue *q = bdev_get_queue(rdev->bdev);
-+			struct backing_dev_info *bdi = &q->backing_dev_info;
- 
--			ret |= bdi_congested(&q->backing_dev_info, bits);
-+			ret |= group ? bdi_congested_group(bdi, bits, page)
-+				: bdi_congested(bdi, bits);
- 		}
- 	}
- 	rcu_read_unlock();
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index b8a2c5d..b6cc455 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -3323,7 +3323,7 @@ static void raid5_unplug_device(struct request_queue *q)
- 	unplug_slaves(mddev);
- }
- 
--static int raid5_congested(void *data, int bits)
-+static int raid5_congested(void *data, int bits, struct page *page, int group)
- {
- 	mddev_t *mddev = data;
- 	raid5_conf_t *conf = mddev->private;
-diff --git a/fs/afs/write.c b/fs/afs/write.c
-index c2e7a7f..aa8b359 100644
---- a/fs/afs/write.c
-+++ b/fs/afs/write.c
-@@ -455,7 +455,7 @@ int afs_writepage(struct page *page, struct writeback_control *wbc)
- 	}
- 
- 	wbc->nr_to_write -= ret;
--	if (wbc->nonblocking && bdi_write_congested(bdi))
-+	if (wbc->nonblocking && bdi_or_group_write_congested(bdi, page))
- 		wbc->encountered_congestion = 1;
- 
- 	_leave(" = 0");
-@@ -491,6 +491,12 @@ static int afs_writepages_region(struct address_space *mapping,
- 			return 0;
- 		}
- 
-+		if (wbc->nonblocking && bdi_write_congested_group(bdi, page)) {
-+			wbc->encountered_congestion = 1;
-+			page_cache_release(page);
-+			break;
-+		}
-+
- 		/* at this point we hold neither mapping->tree_lock nor lock on
- 		 * the page itself: the page may be truncated or invalidated
- 		 * (changing page->mapping to NULL), or even swizzled back from
-diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-index e83be2e..35cd95a 100644
---- a/fs/btrfs/disk-io.c
-+++ b/fs/btrfs/disk-io.c
-@@ -1249,7 +1249,8 @@ struct btrfs_root *btrfs_read_fs_root(struct btrfs_fs_info *fs_info,
- 	return root;
- }
- 
--static int btrfs_congested_fn(void *congested_data, int bdi_bits)
-+static int btrfs_congested_fn(void *congested_data, int bdi_bits,
-+					struct page *page, int group)
- {
- 	struct btrfs_fs_info *info = (struct btrfs_fs_info *)congested_data;
- 	int ret = 0;
-@@ -1260,7 +1261,8 @@ static int btrfs_congested_fn(void *congested_data, int bdi_bits)
- 		if (!device->bdev)
- 			continue;
- 		bdi = blk_get_backing_dev_info(device->bdev);
--		if (bdi && bdi_congested(bdi, bdi_bits)) {
-+		if (bdi && (group ? bdi_congested_group(bdi, bdi_bits, page) :
-+		    bdi_congested(bdi, bdi_bits))) {
- 			ret = 1;
- 			break;
- 		}
-diff --git a/fs/btrfs/extent_io.c b/fs/btrfs/extent_io.c
-index 6826018..fd7d53f 100644
---- a/fs/btrfs/extent_io.c
-+++ b/fs/btrfs/extent_io.c
-@@ -2368,6 +2368,18 @@ retry:
- 		unsigned i;
- 
- 		scanned = 1;
-+
-+		/*
-+		 * If the io group page will go into is congested, bail out.
-+		 */
-+		if (wbc->nonblocking
-+		    && bdi_write_congested_group(bdi, pvec.pages[0])) {
-+			wbc->encountered_congestion = 1;
-+			done = 1;
-+			pagevec_release(&pvec);
-+			break;
-+		}
-+
- 		for (i = 0; i < nr_pages; i++) {
- 			struct page *page = pvec.pages[i];
- 
-diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index 5dbefd1..ed2d100 100644
---- a/fs/btrfs/volumes.c
-+++ b/fs/btrfs/volumes.c
-@@ -165,6 +165,7 @@ static noinline int run_scheduled_bios(struct btrfs_device *device)
- 	unsigned long limit;
- 	unsigned long last_waited = 0;
- 	int force_reg = 0;
-+	struct page *page;
- 
- 	bdi = blk_get_backing_dev_info(device->bdev);
- 	fs_info = device->dev_root->fs_info;
-@@ -276,8 +277,11 @@ loop_lock:
- 		 * is now congested.  Back off and let other work structs
- 		 * run instead
- 		 */
--		if (pending && bdi_write_congested(bdi) && batch_run > 32 &&
--		    fs_info->fs_devices->open_devices > 1) {
-+		if (pending)
-+			page = bio_iovec_idx(pending, 0)->bv_page;
-+
-+		if (pending && bdi_or_group_write_congested(bdi, page) &&
-+		    num_run > 32 && fs_info->fs_devices->open_devices > 1) {
- 			struct io_context *ioc;
- 
- 			ioc = current->io_context;
-diff --git a/fs/cifs/file.c b/fs/cifs/file.c
-index c34b7f8..33d0339 100644
---- a/fs/cifs/file.c
-+++ b/fs/cifs/file.c
-@@ -1470,6 +1470,17 @@ retry:
- 		n_iov = 0;
- 		bytes_to_write = 0;
- 
-+		/*
-+		 * If the io group page will go into is congested, bail out.
-+		 */
-+		if (wbc->nonblocking &&
-+		    bdi_write_congested_group(bdi, pvec.pages[0])) {
-+			wbc->encountered_congestion = 1;
-+			done = 1;
-+			pagevec_release(&pvec);
-+			break;
-+		}
-+
- 		for (i = 0; i < nr_pages; i++) {
- 			page = pvec.pages[i];
- 			/*
-diff --git a/fs/ext2/ialloc.c b/fs/ext2/ialloc.c
-index 15387c9..090a961 100644
---- a/fs/ext2/ialloc.c
-+++ b/fs/ext2/ialloc.c
-@@ -179,7 +179,7 @@ static void ext2_preread_inode(struct inode *inode)
- 	struct backing_dev_info *bdi;
- 
- 	bdi = inode->i_mapping->backing_dev_info;
--	if (bdi_read_congested(bdi))
-+	if (bdi_or_group_read_congested(bdi, NULL))
- 		return;
- 	if (bdi_write_congested(bdi))
- 		return;
-diff --git a/fs/gfs2/aops.c b/fs/gfs2/aops.c
-index 7ebae9a..f5fba6c 100644
---- a/fs/gfs2/aops.c
-+++ b/fs/gfs2/aops.c
-@@ -371,6 +371,18 @@ retry:
- 					       PAGECACHE_TAG_DIRTY,
- 					       min(end - index, (pgoff_t)PAGEVEC_SIZE-1) + 1))) {
- 		scanned = 1;
-+
-+		/*
-+		 * If io group page belongs to is congested. bail out.
-+		 */
-+		if (wbc->nonblocking
-+		    && bdi_write_congested_group(bdi, pvec.pages[0])) {
-+			wbc->encountered_congestion = 1;
-+			done = 1;
-+			pagevec_release(&pvec);
-+			break;
-+		}
-+
- 		ret = gfs2_write_jdata_pagevec(mapping, wbc, &pvec, nr_pages, end);
- 		if (ret)
- 			done = 1;
-diff --git a/fs/nilfs2/segbuf.c b/fs/nilfs2/segbuf.c
-index 9e3fe17..aa29612 100644
---- a/fs/nilfs2/segbuf.c
-+++ b/fs/nilfs2/segbuf.c
-@@ -266,8 +266,9 @@ static int nilfs_submit_seg_bio(struct nilfs_write_info *wi, int mode)
- {
- 	struct bio *bio = wi->bio;
- 	int err;
-+	struct page *page = bio_iovec_idx(bio, 0)->bv_page;
- 
--	if (wi->nbio > 0 && bdi_write_congested(wi->bdi)) {
-+	if (wi->nbio > 0 && bdi_or_group_write_congested(wi->bdi, page)) {
- 		wait_for_completion(&wi->bio_event);
- 		wi->nbio--;
- 		if (unlikely(atomic_read(&wi->err))) {
-diff --git a/fs/xfs/linux-2.6/xfs_aops.c b/fs/xfs/linux-2.6/xfs_aops.c
-index aecf251..5835a2e 100644
---- a/fs/xfs/linux-2.6/xfs_aops.c
-+++ b/fs/xfs/linux-2.6/xfs_aops.c
-@@ -891,7 +891,7 @@ xfs_convert_page(
- 
- 			bdi = inode->i_mapping->backing_dev_info;
- 			wbc->nr_to_write--;
--			if (bdi_write_congested(bdi)) {
-+			if (bdi_or_group_write_congested(bdi, page)) {
- 				wbc->encountered_congestion = 1;
- 				done = 1;
- 			} else if (wbc->nr_to_write <= 0) {
-diff --git a/fs/xfs/linux-2.6/xfs_buf.c b/fs/xfs/linux-2.6/xfs_buf.c
-index 965df12..473223a 100644
---- a/fs/xfs/linux-2.6/xfs_buf.c
-+++ b/fs/xfs/linux-2.6/xfs_buf.c
-@@ -714,7 +714,7 @@ xfs_buf_readahead(
- 	struct backing_dev_info *bdi;
- 
- 	bdi = target->bt_mapping->backing_dev_info;
--	if (bdi_read_congested(bdi))
-+	if (bdi_or_group_read_congested(bdi, NULL))
- 		return;
- 
- 	flags |= (XBF_TRYLOCK|XBF_ASYNC|XBF_READ_AHEAD);
-diff --git a/include/linux/backing-dev.h b/include/linux/backing-dev.h
-index 1d52425..d7916f3 100644
---- a/include/linux/backing-dev.h
-+++ b/include/linux/backing-dev.h
-@@ -29,7 +29,7 @@ enum bdi_state {
- 	BDI_unused,		/* Available bits start here */
+@@ -228,6 +228,7 @@ enum elv_queue_state_flags {
+ 	ELV_QUEUE_FLAG_idle_window,       /* elevator slice idling enabled */
+ 	ELV_QUEUE_FLAG_slice_new,	  /* no requests dispatched in slice */
+ 	ELV_QUEUE_FLAG_sync,              /* synchronous queue */
++	ELV_QUEUE_FLAG_must_expire,       /* expire queue even slice is left */
  };
  
--typedef int (congested_fn)(void *, int);
-+typedef int (congested_fn)(void *, int, struct page *, int);
+ #define ELV_IO_QUEUE_FLAG_FNS(name)					\
+@@ -250,6 +251,7 @@ ELV_IO_QUEUE_FLAG_FNS(must_dispatch)
+ ELV_IO_QUEUE_FLAG_FNS(idle_window)
+ ELV_IO_QUEUE_FLAG_FNS(slice_new)
+ ELV_IO_QUEUE_FLAG_FNS(sync)
++ELV_IO_QUEUE_FLAG_FNS(must_expire)
  
- enum bdi_stat_item {
- 	BDI_RECLAIMABLE,
-@@ -209,7 +209,7 @@ int writeback_in_progress(struct backing_dev_info *bdi);
- static inline int bdi_congested(struct backing_dev_info *bdi, int bdi_bits)
- {
- 	if (bdi->congested_fn)
--		return bdi->congested_fn(bdi->congested_data, bdi_bits);
-+		return bdi->congested_fn(bdi->congested_data, bdi_bits, NULL, 0);
- 	return (bdi->state & bdi_bits);
- }
+ #ifdef CONFIG_GROUP_IOSCHED
  
-@@ -229,6 +229,63 @@ static inline int bdi_rw_congested(struct backing_dev_info *bdi)
- 				  (1 << BDI_async_congested));
- }
+diff --git a/include/linux/elevator.h b/include/linux/elevator.h
+index 77c1fa5..3d4e31c 100644
+--- a/include/linux/elevator.h
++++ b/include/linux/elevator.h
+@@ -41,6 +41,7 @@ typedef int (elevator_should_preempt_fn) (struct request_queue*, void*,
+ 						struct request*);
+ typedef struct io_queue* (elevator_close_cooperator_fn) (struct request_queue*,
+ 						void*);
++typedef int (elevator_expire_ioq_fn) (struct request_queue*, void *, int, int);
+ #endif
  
-+#ifdef CONFIG_GROUP_IOSCHED
-+extern int bdi_congested_group(struct backing_dev_info *bdi, int bdi_bits,
-+				struct page *page);
-+
-+extern int bdi_read_congested_group(struct backing_dev_info *bdi,
-+						struct page *page);
-+
-+extern int bdi_or_group_read_congested(struct backing_dev_info *bdi,
-+					struct page *page);
-+
-+extern int bdi_write_congested_group(struct backing_dev_info *bdi,
-+					struct page *page);
-+
-+extern int bdi_or_group_write_congested(struct backing_dev_info *bdi,
-+					struct page *page);
-+
-+extern int bdi_rw_congested_group(struct backing_dev_info *bdi,
-+					struct page *page);
-+#else /* CONFIG_GROUP_IOSCHED */
-+static inline int bdi_congested_group(struct backing_dev_info *bdi,
-+					int bdi_bits, struct page *page)
-+{
-+	return bdi_congested(bdi, bdi_bits);
-+}
-+
-+static inline int bdi_read_congested_group(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_read_congested(bdi);
-+}
-+
-+static inline int bdi_or_group_read_congested(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_read_congested(bdi);
-+}
-+
-+static inline int bdi_write_congested_group(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_write_congested(bdi);
-+}
-+
-+static inline int bdi_or_group_write_congested(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_write_congested(bdi);
-+}
-+
-+static inline int bdi_rw_congested_group(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_rw_congested(bdi);
-+}
-+
-+#endif /* CONFIG_GROUP_IOSCHED */
-+
- enum {
- 	BLK_RW_ASYNC	= 0,
- 	BLK_RW_SYNC	= 1,
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index b6643a5..35ed76b 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -842,6 +842,11 @@ static inline void blk_set_queue_congested(struct request_queue *q, int sync)
- 	set_bdi_congested(&q->backing_dev_info, sync);
- }
+ struct elevator_ops
+@@ -79,6 +80,7 @@ struct elevator_ops
+ 	elevator_arm_slice_timer_fn *elevator_arm_slice_timer_fn;
+ 	elevator_should_preempt_fn *elevator_should_preempt_fn;
+ 	elevator_close_cooperator_fn *elevator_close_cooperator_fn;
++	elevator_expire_ioq_fn  *elevator_expire_ioq_fn;
+ #endif
+ };
  
-+#ifdef CONFIG_GROUP_IOSCHED
-+extern int blk_queue_io_group_congested(struct backing_dev_info *bdi,
-+					int bdi_bits, struct page *page);
-+#endif
-+
- extern void blk_start_queue(struct request_queue *q);
- extern void blk_stop_queue(struct request_queue *q);
- extern void blk_sync_queue(struct request_queue *q);
-diff --git a/mm/backing-dev.c b/mm/backing-dev.c
-index c86edd2..2f77b90 100644
---- a/mm/backing-dev.c
-+++ b/mm/backing-dev.c
-@@ -7,6 +7,7 @@
- #include <linux/module.h>
- #include <linux/writeback.h>
- #include <linux/device.h>
-+#include "../block/elevator-fq.h"
- 
- void default_unplug_io_fn(struct backing_dev_info *bdi, struct page *page)
- {
-@@ -327,3 +328,64 @@ long congestion_wait(int sync, long timeout)
- }
- EXPORT_SYMBOL(congestion_wait);
- 
-+/*
-+ * With group IO scheduling, there are request descriptors per io group per
-+ * queue. So generic notion of whether queue is congested or not is not
-+ * very accurate. Queue might not be congested but the io group in which
-+ * request will go might actually be congested.
-+ *
-+ * Hence to get the correct idea about congestion level, one should query
-+ * the io group congestion status on the queue. Pass in the page information
-+ * which can be used to determine the io group of the page and congestion
-+ * status can be determined accordingly.
-+ *
-+ * If page info is not passed, io group is determined from the current task
-+ * context.
-+ */
-+#ifdef CONFIG_GROUP_IOSCHED
-+int bdi_congested_group(struct backing_dev_info *bdi, int bdi_bits,
-+				struct page *page)
-+{
-+	if (bdi->congested_fn)
-+		return bdi->congested_fn(bdi->congested_data, bdi_bits, page, 1);
-+
-+	return blk_queue_io_group_congested(bdi, bdi_bits, page);
-+}
-+EXPORT_SYMBOL(bdi_congested_group);
-+
-+int bdi_read_congested_group(struct backing_dev_info *bdi, struct page *page)
-+{
-+	return bdi_congested_group(bdi, 1 << BDI_sync_congested, page);
-+}
-+EXPORT_SYMBOL(bdi_read_congested_group);
-+
-+/* Checks if either bdi or associated group is read congested */
-+int bdi_or_group_read_congested(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_read_congested(bdi) || bdi_read_congested_group(bdi, page);
-+}
-+EXPORT_SYMBOL(bdi_or_group_read_congested);
-+
-+int bdi_write_congested_group(struct backing_dev_info *bdi, struct page *page)
-+{
-+	return bdi_congested_group(bdi, 1 << BDI_async_congested, page);
-+}
-+EXPORT_SYMBOL(bdi_write_congested_group);
-+
-+/* Checks if either bdi or associated group is write congested */
-+int bdi_or_group_write_congested(struct backing_dev_info *bdi,
-+						struct page *page)
-+{
-+	return bdi_write_congested(bdi) || bdi_write_congested_group(bdi, page);
-+}
-+EXPORT_SYMBOL(bdi_or_group_write_congested);
-+
-+int bdi_rw_congested_group(struct backing_dev_info *bdi, struct page *page)
-+{
-+	return bdi_congested_group(bdi, (1 << BDI_sync_congested) |
-+				  (1 << BDI_async_congested), page);
-+}
-+EXPORT_SYMBOL(bdi_rw_congested_group);
-+
-+#endif /* CONFIG_GROUP_IOSCHED */
-diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index 1df421b..f924e05 100644
---- a/mm/page-writeback.c
-+++ b/mm/page-writeback.c
-@@ -985,6 +985,17 @@ retry:
- 		if (nr_pages == 0)
- 			break;
- 
-+		/*
-+		 * If the io group page will go into is congested, bail out.
-+		 */
-+		if (wbc->nonblocking
-+		    && bdi_write_congested_group(bdi, pvec.pages[0])) {
-+			wbc->encountered_congestion = 1;
-+			done = 1;
-+			pagevec_release(&pvec);
-+			break;
-+		}
-+
- 		for (i = 0; i < nr_pages; i++) {
- 			struct page *page = pvec.pages[i];
- 
-diff --git a/mm/readahead.c b/mm/readahead.c
-index aa1aa23..22e0639 100644
---- a/mm/readahead.c
-+++ b/mm/readahead.c
-@@ -542,7 +542,7 @@ page_cache_async_readahead(struct address_space *mapping,
- 	/*
- 	 * Defer asynchronous read-ahead on IO congestion.
- 	 */
--	if (bdi_read_congested(mapping->backing_dev_info))
-+	if (bdi_or_group_read_congested(mapping->backing_dev_info, NULL))
- 		return;
- 
- 	/* do read-ahead */
 -- 
 1.6.0.6
