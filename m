@@ -1,11 +1,9 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 11/24] io-controller: Introduce group idling
-Date: Sun, 16 Aug 2009 15:30:33 -0400
-Message-ID: <1250451046-9966-12-git-send-email-vgoyal@redhat.com>
-References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com>
+Subject: [RFC] IO scheduler based IO controller V8
+Date: Sun, 16 Aug 2009 15:30:22 -0400
+Message-ID: <1250451046-9966-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1250451046-9966-1-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,521 +17,363 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: paolo.valente@unimore.it, jmarchan@redhat.com, dhaval@linux.vnet.ibm.com, peterz@infradead.org, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, lizf@cn.fujitsu.com, jmoyer@redhat.com, mikew@google.com, fchecconi@gmail.com, dpshah@google.com, vgoyal@redhat.com, nauman@google.com, s-uchida@ap.jp.nec.com, akpm@linux-foundation.org, agk@redhat.com, m-ikeda@ds.jp.nec.com
 List-Id: dm-devel.ids
 
-o It is not always that IO from a process or group is continuous. There are
-  cases of dependent reads where next read is not issued till previous read
-  has finished. For such cases, CFQ introduced the notion of slice_idle,
-  where we idle on the queue for sometime hoping next request will come
-  and that's how fairness is provided otherwise queue will be deleted
-  immediately from the service tree and this process will not get the
-  fair share.
 
-o This patch introduces the similar concept at group level. Idle on the group
-  for a period of "group_idle" which is tunable through sysfs interface. So
-  if a group is empty and about to be deleted, we idle for the next request.
+Hi All,
 
-o This patch also introduces the notion of wait busy where we wait for one
-  extra group_idle period even if queue has consumed its time slice. The
-  reason being that group will loose its share upon removal from service
-  tree as some other entity will be picked for dispatch and vtime jump will
-  take place.
+Here is the V8 of the IO controller patches generated on top of 2.6.31-rc6.
 
-Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
----
- block/cfq-iosched.c |    5 +-
- block/elevator-fq.c |  207 +++++++++++++++++++++++++++++++++++++++++++++++++--
- block/elevator-fq.h |   44 +++++++++++-
- 3 files changed, 247 insertions(+), 9 deletions(-)
+Previous versions of the patches was posted here.
 
-diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
-index 6c1f87a..11ae473 100644
---- a/block/cfq-iosched.c
-+++ b/block/cfq-iosched.c
-@@ -980,7 +980,7 @@ static int cfq_dispatch_requests(struct request_queue *q, int force)
- 	 */
- 	if (elv_nr_busy_ioq(q->elevator) > 1 && ((!cfq_cfqq_sync(cfqq) &&
- 	    cfqq->slice_dispatch >= cfq_prio_to_maxrq(cfqd, cfqq)) ||
--	    cfq_class_idle(cfqq))) {
-+	    (cfq_class_idle(cfqq) && !elv_iog_should_idle(cfqq->ioq)))) {
- 		cfq_slice_expired(cfqd);
- 	}
+(V1) http://lkml.org/lkml/2009/3/11/486
+(V2) http://lkml.org/lkml/2009/5/5/275
+(V3) http://lkml.org/lkml/2009/5/26/472
+(V4) http://lkml.org/lkml/2009/6/8/580
+(V5) http://lkml.org/lkml/2009/6/19/279
+(V6) http://lkml.org/lkml/2009/7/2/369
+(V7) http://lkml.org/lkml/2009/7/24/253
+
+Changes from V7
+===============
+- Replaced BFQ with CFS+CFQ like hierarchical scheduler.
+
+  Moving to time domain as service parameter had broken BFQ's assumptions
+  about how long a queue runs (queue can run more than budget) and that in
+  turn has potential to break the O(1) gurantees of BFQ.
+
+  In addition, BFQ was relatively complex and not sure if benefits were
+  proportionate in time domain setup. Hence for the time being trying to
+  replace BFQ with a simpler scheduler and see how well does it perform.
+
+  This scheduler borrows the ideas from CFS and CFQ. Time slices to queues are
+  allocated based on their priority (like CFQ). These disk times are converted
+  to virtual disk time and we keep track of each queue's vdisktime and each
+  service tree's min_vdisktime to determine who has consumed how much disk
+  time and who should run next (like CFS).
+
+- Fixed few issues reported by Jerome Marchand.
+
+  Apart from this there are miscellaneous cleaups like getting rid of not so
+  necessary comments, function renames, debug code re-organization etc.
  
-@@ -2121,6 +2121,9 @@ static struct elv_fs_entry cfq_attrs[] = {
- 	CFQ_ATTR(slice_idle),
- 	ELV_ATTR(slice_sync),
- 	ELV_ATTR(slice_async),
-+#ifdef CONFIG_GROUP_IOSCHED
-+	ELV_ATTR(group_idle),
-+#endif
- 	__ATTR_NULL
- };
+Limitations
+===========
+
+- This IO controller provides the bandwidth control at the IO scheduler
+  level (leaf node in stacked hiearchy of logical devices). So there can
+  be cases (depending on configuration) where application does not see
+  proportional BW division at higher logical level device.
+
+  LWN has written an article about the issue here.
+
+	http://lwn.net/Articles/332839/
+
+How to solve the issue of fairness at higher level logical devices
+==================================================================
+(Do we really need it? That's not where the contention for resources is.)
+
+Couple of suggestions have come forward.
+
+- Implement IO control at IO scheduler layer and then with the help of
+  some daemon, adjust the weight on underlying devices dynamiclly, depending
+  on what kind of BW gurantees are to be achieved at higher level logical
+  block devices.
+
+- Also implement a higher level IO controller along with IO scheduler
+  based controller and let user choose one depending on his needs.
+
+  A higher level controller does not know about the assumptions/policies
+  of unerldying IO scheduler, hence it has the potential to break down
+  the IO scheduler's policy with-in cgroup. A lower level controller
+  can work with IO scheduler much more closely and efficiently.
  
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 051a8c9..09377d0 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -19,6 +19,7 @@
- const int elv_slice_sync = HZ / 10;
- int elv_slice_async = HZ / 25;
- const int elv_slice_async_rq = 2;
-+int elv_group_idle = HZ / 125;
- static struct kmem_cache *elv_ioq_pool;
- 
- /*
-@@ -251,6 +252,17 @@ init_io_entity_service_tree(struct io_entity *entity, struct io_entity *parent)
- 	entity->st = &parent_iog->sched_data.service_tree[idx];
- }
- 
-+/*
-+ * Returns the number of active entities a particular io group has. This
-+ * includes number of active entities on service trees as well as the active
-+ * entity which is being served currently, if any.
-+ */
-+
-+static inline int elv_iog_nr_active(struct io_group *iog)
-+{
-+	return iog->sched_data.nr_active;
-+}
-+
- #ifdef CONFIG_DEBUG_GROUP_IOSCHED
- static void io_group_path(struct io_group *iog)
- {
-@@ -659,6 +671,8 @@ ssize_t __FUNC(struct elevator_queue *e, char *page)		\
- 		__data = jiffies_to_msecs(__data);			\
- 	return elv_var_show(__data, (page));				\
- }
-+SHOW_FUNCTION(elv_group_idle_show, efqd->elv_group_idle, 1);
-+EXPORT_SYMBOL(elv_group_idle_show);
- SHOW_FUNCTION(elv_slice_sync_show, efqd->elv_slice[1], 1);
- EXPORT_SYMBOL(elv_slice_sync_show);
- SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
-@@ -681,6 +695,8 @@ ssize_t __FUNC(struct elevator_queue *e, const char *page, size_t count)\
- 		*(__PTR) = __data;					\
- 	return ret;							\
- }
-+STORE_FUNCTION(elv_group_idle_store, &efqd->elv_group_idle, 0, UINT_MAX, 1);
-+EXPORT_SYMBOL(elv_group_idle_store);
- STORE_FUNCTION(elv_slice_sync_store, &efqd->elv_slice[1], 1, UINT_MAX, 1);
- EXPORT_SYMBOL(elv_slice_sync_store);
- STORE_FUNCTION(elv_slice_async_store, &efqd->elv_slice[0], 1, UINT_MAX, 1);
-@@ -842,6 +858,31 @@ static void io_group_init_entity(struct io_cgroup *iocg, struct io_group *iog)
- 	entity->my_sd = &iog->sched_data;
- }
- 
-+/* Check if we plan to idle on the group associated with this queue or not */
-+int elv_iog_should_idle(struct io_queue *ioq)
-+{
-+	struct io_group *iog = ioq_to_io_group(ioq);
-+	struct elv_fq_data *efqd = ioq->efqd;
-+
-+	/*
-+	 * No idling on group if group idle is disabled or idling is disabled
-+	 * for this group. Currently for root group idling is disabled.
-+	 */
-+	if (!efqd->elv_group_idle || !elv_iog_idle_window(iog))
-+		return 0;
-+
-+	/*
-+	 * If this is last active queue in group with no request queued, we
-+	 * need to idle on group before expiring the queue to make sure group
-+	 * does not loose its share.
-+	 */
-+	if ((elv_iog_nr_active(iog) <= 1) && !ioq->nr_queued)
-+		return 1;
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL(elv_iog_should_idle);
-+
- static void io_group_set_parent(struct io_group *iog, struct io_group *parent)
- {
- 	struct io_entity *entity = &iog->entity;
-@@ -1209,6 +1250,7 @@ io_group_chain_alloc(struct request_queue *q, void *key, struct cgroup *cgroup)
- 
- 		atomic_set(&iog->ref, 0);
- 
-+		elv_mark_iog_idle_window(iog);
- 		/*
- 		 * Take the initial reference that will be released on destroy
- 		 * This can be thought of a joint reference by cgroup and
-@@ -1624,6 +1666,10 @@ static void io_free_root_group(struct elevator_queue *e)
- 	kfree(iog);
- }
- 
-+/* No group idling in flat mode */
-+int elv_iog_should_idle(struct io_queue *ioq) { return 0; }
-+EXPORT_SYMBOL(elv_iog_should_idle);
-+
- #endif /* CONFIG_GROUP_IOSCHED */
- 
- /*
-@@ -1684,7 +1730,9 @@ __elv_set_active_ioq(struct elv_fq_data *efqd, struct io_queue *ioq, int coop)
- 		ioq->dispatch_start = jiffies;
- 
- 		elv_clear_ioq_wait_request(ioq);
-+		elv_clear_iog_wait_request(iog);
- 		elv_clear_ioq_must_dispatch(ioq);
-+		elv_clear_iog_wait_busy_done(iog);
- 		elv_mark_ioq_slice_new(ioq);
- 
- 		del_timer(&efqd->idle_slice_timer);
-@@ -1783,14 +1831,19 @@ void elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
- {
- 	struct elv_fq_data *efqd = q->elevator->efqd;
- 	long slice_used = 0, slice_overshoot = 0;
-+	struct io_group *iog = ioq_to_io_group(ioq);
- 
- 	assert_spin_locked(q->queue_lock);
- 	elv_log_ioq(efqd, ioq, "slice expired");
- 
--	if (elv_ioq_wait_request(ioq))
-+	if (elv_ioq_wait_request(ioq) || elv_iog_wait_request(iog)
-+	    || elv_iog_wait_busy(iog))
- 		del_timer(&efqd->idle_slice_timer);
- 
- 	elv_clear_ioq_wait_request(ioq);
-+	elv_clear_iog_wait_request(iog);
-+	elv_clear_iog_wait_busy(iog);
-+	elv_clear_iog_wait_busy_done(iog);
- 
- 	/*
- 	 * Queue got expired before even a single request completed or
-@@ -1917,6 +1970,8 @@ void elv_ioq_request_add(struct request_queue *q, struct request *rq)
- {
- 	struct elv_fq_data *efqd = q->elevator->efqd;
- 	struct io_queue *ioq = rq->ioq;
-+	struct io_group *iog = ioq_to_io_group(ioq);
-+	int group_wait = 0;
- 
- 	if (!elv_iosched_fair_queuing_enabled(q->elevator))
- 		return;
-@@ -1929,6 +1984,24 @@ void elv_ioq_request_add(struct request_queue *q, struct request *rq)
- 	if (!elv_ioq_busy(ioq))
- 		elv_add_ioq_busy(efqd, ioq);
- 
-+	if (elv_iog_wait_request(iog)) {
-+		del_timer(&efqd->idle_slice_timer);
-+		elv_clear_iog_wait_request(iog);
-+		group_wait = 1;
-+	}
-+
-+	/*
-+	 * If we were waiting for a request on this group, wait is
-+	 * done. Schedule the next dispatch
-+	 */
-+	if (elv_iog_wait_busy(iog)) {
-+		del_timer(&efqd->idle_slice_timer);
-+		elv_clear_iog_wait_busy(iog);
-+		elv_mark_iog_wait_busy_done(iog);
-+		elv_schedule_dispatch(q);
-+		return;
-+	}
-+
- 	if (ioq == elv_active_ioq(q->elevator)) {
- 		/*
- 		 * Remember that we saw a request from this process, but
-@@ -1940,7 +2013,7 @@ void elv_ioq_request_add(struct request_queue *q, struct request *rq)
- 		 * has other work pending, don't risk delaying until the
- 		 * idle timer unplug to continue working.
- 		 */
--		if (elv_ioq_wait_request(ioq)) {
-+		if (group_wait || elv_ioq_wait_request(ioq)) {
- 			del_timer(&efqd->idle_slice_timer);
- 			if (blk_rq_bytes(rq) > PAGE_CACHE_SIZE ||
- 			    efqd->busy_queues > 1 || !blk_queue_plugged(q))
-@@ -1957,6 +2030,13 @@ void elv_ioq_request_add(struct request_queue *q, struct request *rq)
- 		 */
- 		elv_preempt_queue(q, ioq);
- 		__blk_run_queue(q);
-+	} else if (group_wait) {
-+		/*
-+		 * Got a request in the group we were waiting for. Request
-+		 * does not belong to active queue and we have not decided
-+		 * to preempt the current active queue. Schedule the dispatch.
-+		 */
-+		elv_schedule_dispatch(q);
- 	}
- }
- 
-@@ -1974,6 +2054,14 @@ static void elv_idle_slice_timer(unsigned long data)
- 	ioq = efqd->active_queue;
- 
- 	if (ioq) {
-+		struct io_group *iog = ioq_to_io_group(ioq);
-+
-+		elv_clear_iog_wait_request(iog);
-+
-+		if (elv_iog_wait_busy(iog)) {
-+			elv_clear_iog_wait_busy(iog);
-+			goto expire;
-+		}
- 
- 		/*
- 		 * We saw a request before the queue expired, let it through
-@@ -2017,6 +2105,32 @@ static void elv_ioq_arm_slice_timer(struct request_queue *q)
- 		eq->ops->elevator_arm_slice_timer_fn(q, ioq->sched_queue);
- }
- 
-+static void elv_iog_arm_slice_timer(struct request_queue *q,
-+				struct io_group *iog, int wait_for_busy)
-+{
-+	struct elv_fq_data *efqd = q->elevator->efqd;
-+	unsigned long sl;
-+
-+	if (!efqd->elv_group_idle || !elv_iog_idle_window(iog))
-+		return;
-+	/*
-+	 * This queue has consumed its time slice. We are waiting only for
-+	 * it to become busy before we select next queue for dispatch.
-+	 */
-+	if (wait_for_busy) {
-+		elv_mark_iog_wait_busy(iog);
-+		sl = efqd->elv_group_idle;
-+		mod_timer(&efqd->idle_slice_timer, jiffies + sl);
-+		elv_log_iog(efqd, iog, "arm idle group: %lu wait busy=1", sl);
-+		return;
-+	}
-+
-+	elv_mark_iog_wait_request(iog);
-+	sl = efqd->elv_group_idle;
-+	mod_timer(&efqd->idle_slice_timer, jiffies + sl);
-+	elv_log_iog(efqd, iog, "arm_idle group: %lu", sl);
-+}
-+
- /*
-  * If io scheduler has functionality of keeping track of close cooperator, check
-  * with it if it has got a closely co-operating queue.
-@@ -2046,6 +2160,7 @@ void *elv_select_ioq(struct request_queue *q, int force)
- {
- 	struct elv_fq_data *efqd = q->elevator->efqd;
- 	struct io_queue *new_ioq = NULL, *ioq = elv_active_ioq(q->elevator);
-+	struct io_group *iog;
- 
- 	if (!elv_nr_busy_ioq(q->elevator))
- 		return NULL;
-@@ -2053,6 +2168,8 @@ void *elv_select_ioq(struct request_queue *q, int force)
- 	if (ioq == NULL)
- 		goto new_queue;
- 
-+	iog = ioq_to_io_group(ioq);
-+
- 	/*
- 	 * Force dispatch. Continue to dispatch from current queue as long
- 	 * as it has requests.
-@@ -2064,11 +2181,47 @@ void *elv_select_ioq(struct request_queue *q, int force)
- 			goto expire;
- 	}
- 
-+	/* We are waiting for this group to become busy before it expires.*/
-+	if (elv_iog_wait_busy(iog)) {
-+		ioq = NULL;
-+		goto keep_queue;
-+	}
-+
- 	/*
- 	 * The active queue has run out of time, expire it and select new.
- 	 */
--	if (elv_ioq_slice_used(ioq) && !elv_ioq_must_dispatch(ioq))
--		goto expire;
-+	if ((elv_ioq_slice_used(ioq) || elv_ioq_class_idle(ioq))
-+	     && !elv_ioq_must_dispatch(ioq)) {
-+		/*
-+		 * Queue has used up its slice. Wait busy is not on otherwise
-+		 * we wouldn't have been here. If this group will be deleted
-+		 * after the queue expiry, then make sure we have onece
-+		 * done wait busy on the group in an attempt to make it
-+		 * backlogged.
-+		 *
-+		 * Following check helps in two conditions.
-+		 * - If there are requests dispatched from the queue and
-+		 *   select_ioq() comes before a request completed from the
-+		 *   queue and got a chance to arm any of the idle timers.
-+		 *
-+		 * - If at request completion time slice had not expired and
-+		 *   we armed either a ioq timer or group timer but when
-+		 *   select_ioq() hits, slice has expired and it will expire
-+		 *   the queue without doing busy wait on group.
-+		 *
-+		 * In similar situations cfq lets delte the queue even if
-+		 * idle timer is armed. That does not impact fairness in non
-+		 * hierarhical setup due to weighted slice lengths. But in
-+		 * hierarchical setup where group slice lengths are derived
-+		 * from queue and is not proportional to group's weight, it
-+		 * harms the fairness of the group.
-+		 */
-+		if (elv_iog_should_idle(ioq) && !elv_iog_wait_busy_done(iog)) {
-+			ioq = NULL;
-+			goto keep_queue;
-+		} else
-+			goto expire;
-+	}
- 
- 	/*
- 	 * The active queue has requests and isn't expired, allow it to
-@@ -2100,6 +2253,12 @@ void *elv_select_ioq(struct request_queue *q, int force)
- 		goto keep_queue;
- 	}
- 
-+	/* Check for group idling */
-+	if (elv_iog_should_idle(ioq) && elv_ioq_nr_dispatched(ioq)) {
-+		ioq = NULL;
-+		goto keep_queue;
-+	}
-+
- expire:
- 	elv_slice_expired(q);
- new_queue:
-@@ -2171,11 +2330,13 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 	const int sync = rq_is_sync(rq);
- 	struct io_queue *ioq;
- 	struct elv_fq_data *efqd = q->elevator->efqd;
-+	struct io_group *iog;
- 
- 	if (!elv_iosched_fair_queuing_enabled(q->elevator))
- 		return;
- 
- 	ioq = rq->ioq;
-+	iog = ioq_to_io_group(ioq);
- 	WARN_ON(!efqd->rq_in_driver);
- 	WARN_ON(!ioq->dispatched);
- 	efqd->rq_in_driver--;
-@@ -2201,13 +2362,44 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 		 * mean seek distance, give them a chance to run instead
- 		 * of idling.
- 		 */
--		if (elv_ioq_slice_used(ioq) || elv_ioq_class_idle(ioq))
-+		if (elv_ioq_slice_used(ioq) || elv_ioq_class_idle(ioq)) {
-+			/*
-+			 * This is the last empty queue in the group and it
-+			 * has consumed its slice. If we expire it right away
-+			 * group might loose its share. Wait for an extra
-+			 * group_idle period for a request before queue
-+			 * expires.
-+			 */
-+			if (elv_iog_should_idle(ioq)) {
-+				elv_iog_arm_slice_timer(q, iog, 1);
-+				goto done;
-+			}
-+
-+			/* Expire the queue */
- 			elv_slice_expired(q);
--		else if (!ioq->nr_queued && !elv_close_cooperator(q, ioq)
-+			goto done;
-+		} else if (!ioq->nr_queued && !elv_close_cooperator(q, ioq)
- 			 && sync && !rq_noidle(rq))
- 			elv_ioq_arm_slice_timer(q);
-+		/*
-+		 * If this is the last queue in the group and we did not
-+		 * decide to idle on queue, idle on group.
-+		 */
-+		if (elv_iog_should_idle(ioq) && !ioq->dispatched
-+		    && !timer_pending(&efqd->idle_slice_timer)) {
-+			/*
-+			 * If queue has used up its slice, wait for the
-+			 * one extra group_idle period to let the group
-+			 * backlogged again. This is to avoid a group loosing
-+			 * its fair share.
-+			 */
-+			if (elv_ioq_slice_used(ioq))
-+				elv_iog_arm_slice_timer(q, iog, 1);
-+			else
-+				elv_iog_arm_slice_timer(q, iog, 0);
-+		}
- 	}
--
-+done:
- 	if (!efqd->rq_in_driver)
- 		elv_schedule_dispatch(q);
- }
-@@ -2284,6 +2476,7 @@ int elv_init_fq_data(struct request_queue *q, struct elevator_queue *e)
- 
- 	efqd->elv_slice[0] = elv_slice_async;
- 	efqd->elv_slice[1] = elv_slice_sync;
-+	efqd->elv_group_idle = elv_group_idle;
- 
- 	return 0;
- }
-diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index 0b6ecf5..5f2cb8b 100644
---- a/block/elevator-fq.h
-+++ b/block/elevator-fq.h
-@@ -97,6 +97,7 @@ struct io_queue {
- struct io_group {
- 	struct io_entity entity;
- 	atomic_t ref;
-+	unsigned int flags;
- 	struct io_sched_data sched_data;
- 	struct hlist_node group_node;
- 	struct hlist_node elv_data_node;
-@@ -171,6 +172,8 @@ struct elv_fq_data {
- 	struct timer_list idle_slice_timer;
- 	struct work_struct unplug_work;
- 
-+	unsigned int elv_group_idle;
-+
- 	/* Base slice length for sync and async queues */
- 	unsigned int elv_slice[2];
- 
-@@ -239,6 +242,42 @@ ELV_IO_QUEUE_FLAG_FNS(idle_window)
- ELV_IO_QUEUE_FLAG_FNS(slice_new)
- ELV_IO_QUEUE_FLAG_FNS(sync)
- 
-+#ifdef CONFIG_GROUP_IOSCHED
-+
-+enum elv_group_state_flags {
-+	ELV_GROUP_FLAG_idle_window,	  /* elevator group idling enabled */
-+	ELV_GROUP_FLAG_wait_request,	  /* waiting for a request */
-+	ELV_GROUP_FLAG_wait_busy,	  /* wait for this queue to get busy */
-+	ELV_GROUP_FLAG_wait_busy_done,	  /* Have already waited on this group*/
-+};
-+
-+#define ELV_IO_GROUP_FLAG_FNS(name)					\
-+static inline void elv_mark_iog_##name(struct io_group *iog)		\
-+{                                                                       \
-+	(iog)->flags |= (1 << ELV_GROUP_FLAG_##name);			\
-+}                                                                       \
-+static inline void elv_clear_iog_##name(struct io_group *iog)		\
-+{                                                                       \
-+	(iog)->flags &= ~(1 << ELV_GROUP_FLAG_##name);			\
-+}                                                                       \
-+static inline int elv_iog_##name(struct io_group *iog)         		\
-+{                                                                       \
-+	return ((iog)->flags & (1 << ELV_GROUP_FLAG_##name)) != 0;	\
-+}
-+
-+#else /* GROUP_IOSCHED */
-+
-+#define ELV_IO_GROUP_FLAG_FNS(name)					\
-+static inline void elv_mark_iog_##name(struct io_group *iog) {}		\
-+static inline void elv_clear_iog_##name(struct io_group *iog) {}	\
-+static inline int elv_iog_##name(struct io_group *iog) { return 0; }
-+#endif /* GROUP_IOSCHED */
-+
-+ELV_IO_GROUP_FLAG_FNS(idle_window)
-+ELV_IO_GROUP_FLAG_FNS(wait_request)
-+ELV_IO_GROUP_FLAG_FNS(wait_busy)
-+ELV_IO_GROUP_FLAG_FNS(wait_busy_done)
-+
- static inline void elv_get_ioq(struct io_queue *ioq)
- {
- 	atomic_inc(&ioq->ref);
-@@ -364,7 +403,9 @@ extern int elv_io_group_allow_merge(struct request *rq, struct bio *bio);
- extern void elv_put_iog(struct io_group *iog);
- extern struct io_group *elv_io_get_io_group(struct request_queue *q,
- 						int create);
--
-+extern ssize_t elv_group_idle_show(struct elevator_queue *q, char *name);
-+extern ssize_t elv_group_idle_store(struct elevator_queue *q, const char *name,
-+					size_t count);
- static inline void elv_get_iog(struct io_group *iog)
- {
- 	atomic_inc(&iog->ref);
-@@ -432,6 +473,7 @@ extern void elv_io_group_set_async_queue(struct io_group *iog, int ioprio_class,
- extern struct io_queue *elv_alloc_ioq(struct request_queue *q, gfp_t gfp_mask);
- extern void elv_free_ioq(struct io_queue *ioq);
- extern struct io_group *ioq_to_io_group(struct io_queue *ioq);
-+extern int elv_iog_should_idle(struct io_queue *ioq);
- 
- #else /* CONFIG_ELV_FAIR_QUEUING */
- static inline struct elv_fq_data *
--- 
-1.6.0.6
+Other active IO controller developments
+=======================================
+
+IO throttling
+-------------
+
+  This is a max bandwidth controller and not the proportional one. Secondly
+  it is a second level controller which can break the IO scheduler's
+  policy/assumtions with-in cgroup. 
+
+dm-ioband
+---------
+
+ This is a proportional bandwidth controller implemented as device mapper
+ driver. It is also a second level controller which can break the
+ IO scheduler's policy/assumptions with-in cgroup.
+
+TODO
+====
+- code cleanups, testing, bug fixing, optimizations, benchmarking etc...
+
+Testing
+=======
+
+I have been able to do some testing as follows. All my testing is with ext3
+file system with a SATA drive which supports queue depth of 31.
+
+Test1 (Isolation between two KVM virtual machines)
+==================================================
+Created two KVM virtual machines. Partitioned a disk on host in two partitions
+and gave one partition to each virtual machine. Put both the virtual machines
+in two different cgroup of weight 1000 and 500 each. Virtual machines created
+ext3 file system on the partitions exported from host and did buffered writes.
+Host seems writes as synchronous and virtual machine with higher weight gets
+double the disk time of virtual machine of lower weight. Used deadline
+scheduler in this test case.
+
+Some more details about configuration are in documentation patch.
+
+Test2 (Fairness for synchronous reads)
+======================================
+- Two dd in two cgroups with cgrop weights 1000 and 500. Ran two "dd" in those
+  cgroups (With CFQ scheduler and /sys/block/<device>/queue/fairness = 1)
+
+  Higher weight dd finishes first and at that point of time my script takes
+  care of reading cgroup files io.disk_time and io.disk_sectors for both the
+  groups and display the results.
+
+  dd if=/mnt/$BLOCKDEV/zerofile1 of=/dev/null &
+  dd if=/mnt/$BLOCKDEV/zerofile2 of=/dev/null &
+
+  group1 time=8:16 2452 group1 sectors=8:16 457856
+  group2 time=8:16 1317 group2 sectors=8:16 247008
+
+  234179072 bytes (234 MB) copied, 3.90912 s, 59.9 MB/s
+  234179072 bytes (234 MB) copied, 5.15548 s, 45.4 MB/s
+
+First two fields in time and sectors statistics represent major and minor
+number of the device. Third field represents disk time in milliseconds and
+number of sectors transferred respectively.
+
+This patchset tries to provide fairness in terms of disk time received. group1
+got almost double of group2 disk time (At the time of first dd finish). These
+time and sectors statistics can be read using io.disk_time and io.disk_sector
+files in cgroup. More about it in documentation file.
+
+Test3 (Reader Vs Buffered Writes)
+================================
+Buffered writes can be problematic and can overwhelm readers, especially with
+noop and deadline. IO controller can provide isolation between readers and
+buffered (async) writers.
+
+First I ran the test without io controller to see the severity of the issue.
+Ran a hostile writer and then after 10 seconds started a reader and then
+monitored the completion time of reader. Reader reads a 256 MB file. Tested
+this with noop scheduler.
+
+sample script
+------------
+sync
+echo 3 > /proc/sys/vm/drop_caches
+time dd if=/dev/zero of=/mnt/sdb/reader-writer-zerofile bs=4K count=2097152
+conv=fdatasync &
+sleep 10
+time dd if=/mnt/sdb/256M-file of=/dev/null &
+
+Results
+-------
+8589934592 bytes (8.6 GB) copied, 106.045 s, 81.0 MB/s (Writer)
+268435456 bytes (268 MB) copied, 96.5237 s, 2.8 MB/s (Reader)
+
+Now it was time to test io controller whether it can provide isolation between
+readers and writers with noop. I created two cgroups of weight 1000 each and
+put reader in group1 and writer in group 2 and ran the test again. Upon
+comletion of reader, my scripts read io.disk_time and io.disk_sectors cgroup
+files to get an estimate how much disk time each group got and how many
+sectors each group did IO for. 
+
+For more accurate accounting of disk time for buffered writes with queuing
+hardware I had to set /sys/block/<disk>/queue/iosched/fairness to "1".
+
+sample script
+-------------
+echo $$ > /cgroup/bfqio/test2/tasks
+dd if=/dev/zero of=/mnt/$BLOCKDEV/testzerofile bs=4K count=2097152 &
+sleep 10
+echo noop > /sys/block/$BLOCKDEV/queue/scheduler
+echo  1 > /sys/block/$BLOCKDEV/queue/iosched/fairness
+echo $$ > /cgroup/bfqio/test1/tasks
+dd if=/mnt/$BLOCKDEV/256M-file of=/dev/null &
+wait $!
+# Some code for reading cgroup files upon completion of reader.
+-------------------------
+
+Results
+=======
+68435456 bytes (268 MB) copied, 6.87668 s, 39.0 MB/s
+
+group1 time=8:16 3719 group1 sectors=8:16 524816
+group2 time=8:16 3659 group2 sectors=8:16 638712
+
+Note, reader finishes now much lesser time and both group1 and group2
+got almost 3 seconds of disk time. Hence io-controller provides isolation
+from buffered writes.
+
+Test4 (AIO)
+===========
+
+AIO reads
+-----------
+Set up two fio, AIO read jobs in two cgroup with weight 1000 and 500
+respectively. I am using cfq scheduler. Following are some lines from my test
+script.
+
+---------------------------------------------------------------
+echo 1000 > /cgroup/bfqio/test1/io.weight
+echo 500 > /cgroup/bfqio/test2/io.weight
+
+fio_args="--ioengine=libaio --rw=read --size=512M --direct=1"
+echo 1 > /sys/block/$BLOCKDEV/queue/iosched/fairness
+
+echo $$ > /cgroup/bfqio/test1/tasks
+fio $fio_args --name=test1 --directory=/mnt/$BLOCKDEV/fio1/
+--output=/mnt/$BLOCKDEV/fio1/test1.log
+--exec_postrun="../read-and-display-group-stats.sh $maj_dev $minor_dev" &
+
+echo $$ > /cgroup/bfqio/test2/tasks
+fio $fio_args --name=test2 --directory=/mnt/$BLOCKDEV/fio2/
+--output=/mnt/$BLOCKDEV/fio2/test2.log &
+----------------------------------------------------------------
+
+test1 and test2 are two groups with weight 1000 and 500 respectively.
+"read-and-display-group-stats.sh" is one small script which reads the
+test1 and test2 cgroup files to determine how much disk time each group
+got till first fio job finished.
+
+Results
+------
+test1 statistics: time=8:16 17686   sectors=8:16 1049664
+test2 statistics: time=8:16 9036   sectors=8:16 585152
+
+Above shows that by the time first fio (higher weight), finished, group
+test1 got 17686 ms of disk time and group test2 got 9036 ms of disk time.
+similarly the statistics for number of sectors transferred are also shown.
+
+Note that disk time given to group test1 is almost double of group2 disk
+time.
+
+AIO writes
+----------
+Set up two fio, AIO direct write jobs in two cgroup with weight 1000 and 500
+respectively. I am using cfq scheduler. Following are some lines from my test
+script.
+
+------------------------------------------------
+echo 1000 > /cgroup/bfqio/test1/io.weight
+echo 500 > /cgroup/bfqio/test2/io.weight
+fio_args="--ioengine=libaio --rw=write --size=512M --direct=1"
+
+echo 1 > /sys/block/$BLOCKDEV/queue/iosched/fairness
+
+echo $$ > /cgroup/bfqio/test1/tasks
+fio $fio_args --name=test1 --directory=/mnt/$BLOCKDEV/fio1/
+--output=/mnt/$BLOCKDEV/fio1/test1.log
+--exec_postrun="../read-and-display-group-stats.sh $maj_dev $minor_dev" &
+
+echo $$ > /cgroup/bfqio/test2/tasks
+fio $fio_args --name=test2 --directory=/mnt/$BLOCKDEV/fio2/
+--output=/mnt/$BLOCKDEV/fio2/test2.log &
+-------------------------------------------------
+
+test1 and test2 are two groups with weight 1000 and 500 respectively.
+"read-and-display-group-stats.sh" is one small script which reads the
+test1 and test2 cgroup files to determine how much disk time each group
+got till first fio job finished.
+
+Following are the results.
+
+test1 statistics: time=8:16 25509   sectors=8:16 1049688
+test2 statistics: time=8:16 12863   sectors=8:16 527104
+
+Above shows that by the time first fio (higher weight), finished, group
+test1 got almost double the disk time of group test2.
+
+Test5 (Fairness for async writes, Buffered Write Vs Buffered Write)
+===================================================================
+Fairness for async writes is tricky and biggest reason is that async writes
+are cached in higher layers (page cahe) as well as possibly in file system
+layer also (btrfs, xfs etc), and are dispatched to lower layers not necessarily
+in proportional manner.
+
+For example, consider two dd threads reading /dev/zero as input file and doing
+writes of huge files. Very soon we will cross vm_dirty_ratio and dd thread will
+be forced to write out some pages to disk before more pages can be dirtied. But
+not necessarily dirty pages of same thread are picked. It can very well pick
+the inode of lesser priority dd thread and do some writeout. So effectively
+higher weight dd is doing writeouts of lower weight dd pages and we don't see
+service differentation.
+
+IOW, the core problem with async write fairness is that higher weight thread
+does not throw enought IO traffic at IO controller to keep the queue
+continuously backlogged. In my testing, there are many .2 to .8 second
+intervals where higher weight queue is empty and in that duration lower weight
+queue get lots of job done giving the impression that there was no service
+differentiation.
+
+In summary, from IO controller point of view async writes support is there.
+Because page cache has not been designed in such a manner that higher 
+prio/weight writer can do more write out as compared to lower prio/weight
+writer, gettting service differentiation is hard and it is visible in some
+cases and not visible in some cases.
+
+Do we really care that much for fairness among two writer cgroups? One can
+choose to do direct writes or sync writes if fairness for writes really
+matters for him.
+
+Following is the only case where it is hard to ensure fairness between cgroups.
+
+- Buffered writes Vs Buffered Writes.
+
+So to test async writes I created two partitions on a disk and created ext3
+file systems on both the partitions.  Also created two cgroups and generated
+lots of write traffic in two cgroups (50 fio threads) and watched the disk
+time statistics in respective cgroups at the interval of 2 seconds. Thanks to
+ryo tsuruta for the test case.
+
+*****************************************************************
+sync
+echo 3 > /proc/sys/vm/drop_caches
+
+fio_args="--size=64m --rw=write --numjobs=50 --group_reporting"
+
+echo $$ > /cgroup/bfqio/test1/tasks
+fio $fio_args --name=test1 --directory=/mnt/sdd1/fio/ --output=/mnt/sdd1/fio/test1.log &
+
+echo $$ > /cgroup/bfqio/test2/tasks
+fio $fio_args --name=test2 --directory=/mnt/sdd2/fio/ --output=/mnt/sdd2/fio/test2.log &
+*********************************************************************** 
+
+And watched the disk time and sector statistics for the both the cgroups
+every 2 seconds using a script. How is snippet from output.
+
+test1 statistics: time=8:16 1631   sectors=8:16 1680 dq=8:16 2
+test2 statistics: time=8:16 896   sectors=8:16 976 dq=8:16 1
+
+test1 statistics: time=8:16 6031   sectors=8:16 88536 dq=8:16 5
+test2 statistics: time=8:16 3192   sectors=8:16 4080 dq=8:16 1
+
+test1 statistics: time=8:16 10425   sectors=8:16 390496 dq=8:16 5
+test2 statistics: time=8:16 5272   sectors=8:16 77896 dq=8:16 4
+
+test1 statistics: time=8:16 15396   sectors=8:16 747256 dq=8:16 5
+test2 statistics: time=8:16 7852   sectors=8:16 235648 dq=8:16 4
+
+test1 statistics: time=8:16 20302   sectors=8:16 1180168 dq=8:16 5
+test2 statistics: time=8:16 10297   sectors=8:16 391208 dq=8:16 4
+
+test1 statistics: time=8:16 25244   sectors=8:16 1579928 dq=8:16 6
+test2 statistics: time=8:16 12748   sectors=8:16 613096 dq=8:16 4
+
+test1 statistics: time=8:16 30095   sectors=8:16 1927848 dq=8:16 6
+test2 statistics: time=8:16 15135   sectors=8:16 806112 dq=8:16 4
+
+First two fields in time and sectors statistics represent major and minor
+number of the device. Third field represents disk time in milliseconds and
+number of sectors transferred respectively.
+
+So disk time consumed by group1 is almost double of group2 in this case.
+
+Thanks
+Vivek
