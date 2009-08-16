@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 23/24] io-controller: map sync requests to group
-	using bio tracking info
-Date: Sun, 16 Aug 2009 15:30:45 -0400
-Message-ID: <1250451046-9966-24-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 24/24] io-controller: debug elevator fair queuing
+	support
+Date: Sun, 16 Aug 2009 15:30:46 -0400
+Message-ID: <1250451046-9966-25-git-send-email-vgoyal@redhat.com>
 References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,127 +20,115 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: paolo.valente@unimore.it, jmarchan@redhat.com, dhaval@linux.vnet.ibm.com, peterz@infradead.org, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, lizf@cn.fujitsu.com, jmoyer@redhat.com, mikew@google.com, fchecconi@gmail.com, dpshah@google.com, vgoyal@redhat.com, nauman@google.com, s-uchida@ap.jp.nec.com, akpm@linux-foundation.org, agk@redhat.com, m-ikeda@ds.jp.nec.com
 List-Id: dm-devel.ids
 
-o sync requests are mapped to the cgroup submitting tasks belongs to. This
-  is an experimental patch where sync requets can be mapped to the group
-  using bio tracking information and not submitting task's context.
-
-o This patch implements this functionality only for noop, deadline and AS.
-
-o Introducing this patch for experimental purposes to see if it is really
-  meaningful or not.
-
-o This behavior is turned on by setting /sys/block/<disk>/queue/iosched/map_sync  varibale.
+o More debugging help to debug elevator fair queuing support. Enabled under
+  CONFIG_DEBUG_ELV_FAIR_QUEUING. Currently it prints vdisktime related
+  trace messages in blktrace.
 
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/as-iosched.c       |    1 +
- block/deadline-iosched.c |    1 +
- block/elevator-fq.c      |    7 ++++++-
- block/elevator-fq.h      |    9 +++++++++
- block/noop-iosched.c     |    1 +
- 5 files changed, 18 insertions(+), 1 deletions(-)
+ block/Kconfig.iosched |    9 +++++++++
+ block/elevator-fq.c   |   47 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 55 insertions(+), 1 deletions(-)
 
-diff --git a/block/as-iosched.c b/block/as-iosched.c
-index 8ea9398..2a72da1 100644
---- a/block/as-iosched.c
-+++ b/block/as-iosched.c
-@@ -1769,6 +1769,7 @@ static struct elv_fs_entry as_attrs[] = {
- 	ELV_ATTR(fairness),
- 	ELV_ATTR(slice_sync),
- 	ELV_ATTR(group_idle),
-+	ELV_ATTR(map_sync),
- #endif
- 	__ATTR_NULL
- };
-diff --git a/block/deadline-iosched.c b/block/deadline-iosched.c
-index cc9c8c3..80377a9 100644
---- a/block/deadline-iosched.c
-+++ b/block/deadline-iosched.c
-@@ -466,6 +466,7 @@ static struct elv_fs_entry deadline_attrs[] = {
- 	ELV_ATTR(fairness),
- 	ELV_ATTR(slice_sync),
- 	ELV_ATTR(group_idle),
-+	ELV_ATTR(map_sync),
- #endif
- 	__ATTR_NULL
- };
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index 8b507c4..edcd317 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -15,6 +15,15 @@ config ELV_FAIR_QUEUING
+ 	  other ioschedulers can make use of it.
+ 	  If unsure, say N.
+ 
++config DEBUG_ELV_FAIR_QUEUING
++	bool "Debug elevator fair queuing"
++	depends on ELV_FAIR_QUEUING
++	default n
++	---help---
++	  Enable some debugging hooks for elevator fair queuing support.
++	  Currently it just outputs more information about vdisktime in
++	  blktrace output .
++
+ config IOSCHED_NOOP
+ 	bool
+ 	default y
 diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 70d0ecf..2f7a419 100644
+index 2f7a419..d04e925 100644
 --- a/block/elevator-fq.c
 +++ b/block/elevator-fq.c
-@@ -681,6 +681,8 @@ SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
- EXPORT_SYMBOL(elv_slice_async_show);
- SHOW_FUNCTION(elv_fairness_show, efqd->fairness, 0);
- EXPORT_SYMBOL(elv_fairness_show);
-+SHOW_FUNCTION(elv_map_sync_show, efqd->map_sync, 0);
-+EXPORT_SYMBOL(elv_map_sync_show);
- #undef SHOW_FUNCTION
+@@ -34,6 +34,24 @@ static struct kmem_cache *elv_ioq_pool;
+ #define ELV_SERVICE_TREE_INIT   ((struct io_service_tree)	\
+ 				{ RB_ROOT, NULL, 0, NULL, 0})
  
- #define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
-@@ -707,6 +709,8 @@ STORE_FUNCTION(elv_slice_async_store, &efqd->elv_slice[0], 1, UINT_MAX, 1);
- EXPORT_SYMBOL(elv_slice_async_store);
- STORE_FUNCTION(elv_fairness_store, &efqd->fairness, 0, 1, 0);
- EXPORT_SYMBOL(elv_fairness_store);
-+STORE_FUNCTION(elv_map_sync_store, &efqd->map_sync, 0, 1, 0);
-+EXPORT_SYMBOL(elv_map_sync_store);
- #undef STORE_FUNCTION
- 
- void elv_schedule_dispatch(struct request_queue *q)
-@@ -1713,6 +1717,7 @@ struct io_group *elv_io_get_io_group_bio(struct request_queue *q,
- 						struct bio *bio, int create)
- {
- 	struct page *page = NULL;
-+	struct elv_fq_data *efqd = q->elevator->efqd;
- 
- 	/*
- 	 * Determine the group from task context. Even calls from
-@@ -1731,7 +1736,7 @@ struct io_group *elv_io_get_io_group_bio(struct request_queue *q,
- 	}
- 
- 	/* Map the sync bio to the right group using task context */
--	if (elv_bio_sync(bio))
-+	if (elv_bio_sync(bio) && !efqd->map_sync)
- 		goto sync;
- 
- #ifdef CONFIG_TRACK_ASYNC_CONTEXT
-diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index 53e5a03..57ff85f 100644
---- a/block/elevator-fq.h
-+++ b/block/elevator-fq.h
-@@ -205,6 +205,12 @@ struct elv_fq_data {
- 	 * queue before new queue is scheduled in
- 	 */
- 	unsigned int fairness;
++#ifdef CONFIG_DEBUG_ELV_FAIR_QUEUING
++#define elv_log_entity(entity, fmt, args...) 			\
++{                                                               \
++{								\
++	struct io_queue *ioq = ioq_of(entity);			\
++	struct io_group *iog = iog_of(entity);			\
++								\
++	if (ioq) {						\
++		elv_log_ioq(ioq->efqd, ioq, fmt, ##args);	\
++	} else	{						\
++		elv_log_iog((struct elv_fq_data *)iog->key, iog, fmt, ##args);\
++	}							\
++}								\
++}
++#else
++#define elv_log_entity(entity, fmt, args...)
++#endif
 +
-+	/*
-+	 * Get io group bio belongs to from bio and not from submitting task
-+	 * context
-+	 */
-+	unsigned int map_sync;
- };
+ static inline struct io_queue *ioq_of(struct io_entity *entity)
+ {
+ 	if (entity->my_sd == NULL)
+@@ -350,15 +368,39 @@ static inline void debug_update_stats_enqueue(struct io_entity *entity) {}
+ static inline void debug_update_stats_dequeue(struct io_entity *entity) {}
+ #endif /* DEBUG_GROUP_IOSCHED */
  
- /* Logging facilities. */
-@@ -436,6 +442,9 @@ extern struct io_group *elv_io_get_io_group_bio(struct request_queue *q,
- extern ssize_t elv_group_idle_show(struct elevator_queue *q, char *name);
- extern ssize_t elv_group_idle_store(struct elevator_queue *q, const char *name,
- 					size_t count);
-+extern ssize_t elv_map_sync_show(struct elevator_queue *q, char *name);
-+extern ssize_t elv_map_sync_store(struct elevator_queue *q, const char *name,
-+					size_t count);
- extern void elv_io_group_congestion_threshold(struct request_queue *q,
- 						struct io_group *iog);
- static inline void elv_get_iog(struct io_group *iog)
-diff --git a/block/noop-iosched.c b/block/noop-iosched.c
-index 4ba496f..887bba1 100644
---- a/block/noop-iosched.c
-+++ b/block/noop-iosched.c
-@@ -88,6 +88,7 @@ static struct elv_fs_entry noop_attrs[] = {
- 	ELV_ATTR(fairness),
- 	ELV_ATTR(slice_sync),
- 	ELV_ATTR(group_idle),
-+	ELV_ATTR(map_sync),
- 	__ATTR_NULL
- };
- #endif
++#ifdef CONFIG_DEBUG_ELV_FAIR_QUEUING
++static inline void debug_entity_vdisktime(struct io_entity *entity,
++					unsigned long served, u64 delta)
++{
++	struct elv_fq_data *efqd;
++	struct io_group *iog;
++
++	elv_log_entity(entity, "vdisktime=%llu service=%lu delta=%llu"
++				" entity->weight=%u", entity->vdisktime,
++				served, delta, entity->weight);
++
++	iog = iog_of(parent_entity(entity));
++	efqd = iog->key;
++	elv_log_iog(efqd, iog, "min_vdisktime=%llu", entity->st->min_vdisktime);
++}
++#else /* DEBUG_ELV_FAIR_QUEUING */
++static inline void debug_entity_vdisktime(struct io_entity *entity,
++					unsigned long served, u64 delta) {}
++#endif /* DEBUG_ELV_FAIR_QUEUING */
++
+ static void
+ entity_served(struct io_entity *entity, unsigned long served,
+ 				unsigned long nr_sectors)
+ {
+ 	for_each_entity(entity) {
+-		entity->vdisktime += elv_delta_fair(served, entity);
++		u64 delta;
++
++		delta = elv_delta_fair(served, entity);
++		entity->vdisktime += delta;
+ 		update_min_vdisktime(entity->st);
+ 		entity->total_time += served;
+ 		entity->total_sectors += nr_sectors;
++		debug_entity_vdisktime(entity, served, delta);
+ 	}
+ }
+ 
+@@ -391,6 +433,9 @@ static void place_entity(struct io_service_tree *st, struct io_entity *entity,
+ 		vdisktime = st->min_vdisktime;
+ 
+ 	entity->vdisktime = max_vdisktime(st->min_vdisktime, vdisktime);
++	elv_log_entity(entity, "place_entity: vdisktime=%llu"
++			" min_vdisktime=%llu", entity->vdisktime,
++			st->min_vdisktime);
+ }
+ 
+ static inline void io_entity_update_prio(struct io_entity *entity)
 -- 
 1.6.0.6
