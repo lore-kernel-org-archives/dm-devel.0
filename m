@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 16/24] io-controller: deadline changes for
-	hierarchical fair queuing
-Date: Sun, 16 Aug 2009 15:30:38 -0400
-Message-ID: <1250451046-9966-17-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 23/24] io-controller: map sync requests to group
+	using bio tracking info
+Date: Sun, 16 Aug 2009 15:30:45 -0400
+Message-ID: <1250451046-9966-24-git-send-email-vgoyal@redhat.com>
 References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,71 +20,127 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-deve
 Cc: paolo.valente@unimore.it, jmarchan@redhat.com, dhaval@linux.vnet.ibm.com, peterz@infradead.org, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, lizf@cn.fujitsu.com, jmoyer@redhat.com, mikew@google.com, fchecconi@gmail.com, dpshah@google.com, vgoyal@redhat.com, nauman@google.com, s-uchida@ap.jp.nec.com, akpm@linux-foundation.org, agk@redhat.com, m-ikeda@ds.jp.nec.com
 List-Id: dm-devel.ids
 
-This patch changes deadline to use queue scheduling code from elevator layer.
-One can go back to old deadline by selecting CONFIG_IOSCHED_DEADLINE_HIER.
+o sync requests are mapped to the cgroup submitting tasks belongs to. This
+  is an experimental patch where sync requets can be mapped to the group
+  using bio tracking information and not submitting task's context.
 
-Signed-off-by: Nauman Rafique <nauman@google.com>
+o This patch implements this functionality only for noop, deadline and AS.
+
+o Introducing this patch for experimental purposes to see if it is really
+  meaningful or not.
+
+o This behavior is turned on by setting /sys/block/<disk>/queue/iosched/map_sync  varibale.
+
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/Kconfig.iosched    |   11 +++++++++++
- block/deadline-iosched.c |    9 +++++++++
- 2 files changed, 20 insertions(+), 0 deletions(-)
+ block/as-iosched.c       |    1 +
+ block/deadline-iosched.c |    1 +
+ block/elevator-fq.c      |    7 ++++++-
+ block/elevator-fq.h      |    9 +++++++++
+ block/noop-iosched.c     |    1 +
+ 5 files changed, 18 insertions(+), 1 deletions(-)
 
-diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
-index 28cd500..cc87c87 100644
---- a/block/Kconfig.iosched
-+++ b/block/Kconfig.iosched
-@@ -55,6 +55,17 @@ config IOSCHED_DEADLINE
- 	  a disk at any one time, its behaviour is almost identical to the
- 	  anticipatory I/O scheduler and so is a good choice.
- 
-+config IOSCHED_DEADLINE_HIER
-+	bool "Deadline Hierarchical Scheduling support"
-+	depends on IOSCHED_DEADLINE && CGROUPS
-+	select ELV_FAIR_QUEUING
-+	select GROUP_IOSCHED
-+	default n
-+	---help---
-+	  Enable hierarhical scheduling in deadline. In this mode deadline keeps
-+	  one IO queue per cgroup instead of a global queue. Elevator
-+	  fair queuing logic ensures fairness among various queues.
-+
- config IOSCHED_CFQ
- 	tristate "CFQ I/O scheduler"
- 	select ELV_FAIR_QUEUING
-diff --git a/block/deadline-iosched.c b/block/deadline-iosched.c
-index 6e69ea3..e5bc823 100644
---- a/block/deadline-iosched.c
-+++ b/block/deadline-iosched.c
-@@ -13,6 +13,7 @@
- #include <linux/init.h>
- #include <linux/compiler.h>
- #include <linux/rbtree.h>
-+#include "elevator-fq.h"
- 
- /*
-  * See Documentation/block/deadline-iosched.txt
-@@ -461,6 +462,11 @@ static struct elv_fs_entry deadline_attrs[] = {
- 	DD_ATTR(writes_starved),
- 	DD_ATTR(front_merges),
- 	DD_ATTR(fifo_batch),
-+#ifdef CONFIG_IOSCHED_DEADLINE_HIER
-+	ELV_ATTR(fairness),
-+	ELV_ATTR(slice_sync),
-+	ELV_ATTR(group_idle),
-+#endif
+diff --git a/block/as-iosched.c b/block/as-iosched.c
+index 8ea9398..2a72da1 100644
+--- a/block/as-iosched.c
++++ b/block/as-iosched.c
+@@ -1769,6 +1769,7 @@ static struct elv_fs_entry as_attrs[] = {
+ 	ELV_ATTR(fairness),
+ 	ELV_ATTR(slice_sync),
+ 	ELV_ATTR(group_idle),
++	ELV_ATTR(map_sync),
+ #endif
  	__ATTR_NULL
  };
+diff --git a/block/deadline-iosched.c b/block/deadline-iosched.c
+index cc9c8c3..80377a9 100644
+--- a/block/deadline-iosched.c
++++ b/block/deadline-iosched.c
+@@ -466,6 +466,7 @@ static struct elv_fs_entry deadline_attrs[] = {
+ 	ELV_ATTR(fairness),
+ 	ELV_ATTR(slice_sync),
+ 	ELV_ATTR(group_idle),
++	ELV_ATTR(map_sync),
+ #endif
+ 	__ATTR_NULL
+ };
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 70d0ecf..2f7a419 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -681,6 +681,8 @@ SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
+ EXPORT_SYMBOL(elv_slice_async_show);
+ SHOW_FUNCTION(elv_fairness_show, efqd->fairness, 0);
+ EXPORT_SYMBOL(elv_fairness_show);
++SHOW_FUNCTION(elv_map_sync_show, efqd->map_sync, 0);
++EXPORT_SYMBOL(elv_map_sync_show);
+ #undef SHOW_FUNCTION
  
-@@ -478,6 +484,9 @@ static struct elevator_type iosched_deadline = {
- 		.elevator_alloc_sched_queue_fn = deadline_alloc_deadline_queue,
- 		.elevator_free_sched_queue_fn = deadline_free_deadline_queue,
- 	},
-+#ifdef CONFIG_IOSCHED_DEADLINE_HIER
-+	.elevator_features = ELV_IOSCHED_NEED_FQ | ELV_IOSCHED_SINGLE_IOQ,
-+#endif
- 	.elevator_attrs = deadline_attrs,
- 	.elevator_name = "deadline",
- 	.elevator_owner = THIS_MODULE,
+ #define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
+@@ -707,6 +709,8 @@ STORE_FUNCTION(elv_slice_async_store, &efqd->elv_slice[0], 1, UINT_MAX, 1);
+ EXPORT_SYMBOL(elv_slice_async_store);
+ STORE_FUNCTION(elv_fairness_store, &efqd->fairness, 0, 1, 0);
+ EXPORT_SYMBOL(elv_fairness_store);
++STORE_FUNCTION(elv_map_sync_store, &efqd->map_sync, 0, 1, 0);
++EXPORT_SYMBOL(elv_map_sync_store);
+ #undef STORE_FUNCTION
+ 
+ void elv_schedule_dispatch(struct request_queue *q)
+@@ -1713,6 +1717,7 @@ struct io_group *elv_io_get_io_group_bio(struct request_queue *q,
+ 						struct bio *bio, int create)
+ {
+ 	struct page *page = NULL;
++	struct elv_fq_data *efqd = q->elevator->efqd;
+ 
+ 	/*
+ 	 * Determine the group from task context. Even calls from
+@@ -1731,7 +1736,7 @@ struct io_group *elv_io_get_io_group_bio(struct request_queue *q,
+ 	}
+ 
+ 	/* Map the sync bio to the right group using task context */
+-	if (elv_bio_sync(bio))
++	if (elv_bio_sync(bio) && !efqd->map_sync)
+ 		goto sync;
+ 
+ #ifdef CONFIG_TRACK_ASYNC_CONTEXT
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index 53e5a03..57ff85f 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -205,6 +205,12 @@ struct elv_fq_data {
+ 	 * queue before new queue is scheduled in
+ 	 */
+ 	unsigned int fairness;
++
++	/*
++	 * Get io group bio belongs to from bio and not from submitting task
++	 * context
++	 */
++	unsigned int map_sync;
+ };
+ 
+ /* Logging facilities. */
+@@ -436,6 +442,9 @@ extern struct io_group *elv_io_get_io_group_bio(struct request_queue *q,
+ extern ssize_t elv_group_idle_show(struct elevator_queue *q, char *name);
+ extern ssize_t elv_group_idle_store(struct elevator_queue *q, const char *name,
+ 					size_t count);
++extern ssize_t elv_map_sync_show(struct elevator_queue *q, char *name);
++extern ssize_t elv_map_sync_store(struct elevator_queue *q, const char *name,
++					size_t count);
+ extern void elv_io_group_congestion_threshold(struct request_queue *q,
+ 						struct io_group *iog);
+ static inline void elv_get_iog(struct io_group *iog)
+diff --git a/block/noop-iosched.c b/block/noop-iosched.c
+index 4ba496f..887bba1 100644
+--- a/block/noop-iosched.c
++++ b/block/noop-iosched.c
+@@ -88,6 +88,7 @@ static struct elv_fs_entry noop_attrs[] = {
+ 	ELV_ATTR(fairness),
+ 	ELV_ATTR(slice_sync),
+ 	ELV_ATTR(group_idle),
++	ELV_ATTR(map_sync),
+ 	__ATTR_NULL
+ };
+ #endif
 -- 
 1.6.0.6
