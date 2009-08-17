@@ -1,16 +1,16 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 02/24] io-controller: Core of the elevator
-	fair queuing
-Date: Mon, 17 Aug 2009 13:29:48 +0800
-Message-ID: <4A88EACC.6010805@cn.fujitsu.com>
-References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com>
-	<1250451046-9966-3-git-send-email-vgoyal@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] dm mpath: Skip calling activate_path if the
+	path is already failed
+Date: Mon, 17 Aug 2009 08:20:09 +0200
+Message-ID: <4A88F699.3040109@suse.de>
+References: <E463DF2B2E584B4A82673F53D62C2EF46F2BA886@cosmail01.lsi.com>
+	<E463DF2B2E584B4A82673F53D62C2EF474B7A064@cosmail01.lsi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1250451046-9966-3-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474B7A064@cosmail01.lsi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,63 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
-> +static void place_entity(struct io_service_tree *st, struct io_entity *entity,
-> +				int add_front)
-> +{
-> +	u64 vdisktime = st->min_vdisktime;
-> +	struct rb_node *parent;
-> +	struct io_entity *entry;
-> +	int nr_active = st->nr_active - 1;
-> +
-> +	/*
-> +	 * Currently put entity at the end of last entity. This probably will
-> +	 * require adjustments as we move along
-> +	 */
-> +	if (io_entity_class_idle(entity)) {
-> +		vdisktime = elv_delta_fair(ELV_IDLE_DELAY, entity);
-> +		parent = rb_last(&st->active);
-> +		if (parent) {
-> +			entry = rb_entry(parent, struct io_entity, rb_node);
-> +			vdisktime += entry->vdisktime;
-> +		}
-> +	} else if (!add_front && nr_active) {
-> +		parent = rb_last(&st->active);
-> +		if (parent) {
-> +			entry = rb_entry(parent, struct io_entity, rb_node);
-> +			vdisktime = entry->vdisktime;
-> +		}
-> +	} else
-> +		vdisktime = st->min_vdisktime;
+Moger, Babu wrote:
+> Alasdair, Can you please pick up this patch in your next update..
+>=20
+> Hannes, Any comments from you? I know you have already reviewed this in=
+ another thread.
+>=20
+> Thanks
+> Babu Moger=20
+>=20
+>> -----Original Message-----
+>> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]=
+ On
+>> Behalf Of Moger, Babu
+>> Sent: Wednesday, July 29, 2009 10:47 AM
+>> To: dm-devel@redhat.com
+>> Subject: [dm-devel] [PATCH] dm mpath: Skip calling activate_path if th=
+e
+>> path is already failed
+>>
+>> This patch adds a check to skip failed paths while calling activate_pa=
+th.
+>> If the path is already failed then activate_path will fail for sure. W=
+e
+>> don't have to call in that case.
+>>
+>> Signed-off-by: Babu Moger <babu.moger@lsi.com>
+>> ---
+>>
+>>
+>> --- linux-2.6.31-rc3/drivers/md/dm-mpath.c.orig	2009-07-27
+>> 10:30:39.000000000 -0500
+>> +++ linux-2.6.31-rc3/drivers/md/dm-mpath.c	2009-07-27
+>> 10:35:50.000000000 -0500
+>> @@ -454,6 +454,10 @@ static void process_queued_ios(struct wo
+>>  		m->pg_init_count++;
+>>  		m->pg_init_required =3D 0;
+>>  		list_for_each_entry(tmp, &pgpath->pg->pgpaths, list) {
+>> +			/* Skip failed paths */
+>> +			if (!tmp->is_active)
+>> +				continue;
+>> +
+>>  			if (queue_work(kmpath_handlerd, &tmp->activate_path))
+>>  				m->pg_init_in_progress++;
+>>  		}
+>>
+>>
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+Patch is fine. And, indeed, we really should be adding it.
 
-Hi Vivek,
+Acked-by: Hannes Reinecke <hare@suse.de>
 
-Should we set vdisktime a little small than st->min_vdisktime to ensure putting
-this entity at the left-most position when add_front is set?
+Cheers,
 
-> +
-> +	entity->vdisktime = max_vdisktime(st->min_vdisktime, vdisktime);
-> +}
-> +
-> +static inline void io_entity_update_prio(struct io_entity *entity)
-> +{
-> +	if (unlikely(entity->ioprio_changed)) {
-> +		/*
-> +		 * Re-initialize the service tree as ioprio class of the
-> +		 * entity might have changed.
-> +		 */
-> +		init_io_entity_service_tree(entity, parent_entity(entity));
-> +		entity->ioprio_changed = 0;
-> +	}
-> +}
-> +
-
-
--- 
-Regards
-Gui Jianfeng
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
