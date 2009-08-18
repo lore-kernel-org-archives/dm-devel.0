@@ -1,29 +1,24 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH] add support for next generation of Dell PV array
-Date: Mon, 17 Aug 2009 15:39:13 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474B7A5E4@cosmail01.lsi.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH] add support for next generation of Dell PV array
+Date: Mon, 17 Aug 2009 17:13:15 -0700
+Message-ID: <1250554395.355.15.camel@chandra-ubuntu>
 References: <D00AA2C108EC0346B503219C7565A66F9E2969@ausx3mpc138.aus.amer.dell.com>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <D00AA2C108EC0346B503219C7565A66F9E2969@ausx3mpc138.aus.amer.dell.com>
-Content-Language: en-US
 Sender: linux-scsi-owner@vger.kernel.org
-To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Yanqing_Liu@Dell.com
+Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch Looks good..
+Looks good to me and Moger Babu verified the vendor/product IDs
 
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of Yanqing_Liu@Dell.com
-> Sent: Monday, August 17, 2009 2:32 PM
-> To: linux-scsi@vger.kernel.org; dm-devel@redhat.com
-> Subject: [dm-devel] [PATCH] add support for next generation of Dell PV
-> array
-> 
+Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
+
+On Mon, 2009-08-17 at 14:31 -0500, Yanqing_Liu@Dell.com wrote:
 > Hello,
 > 
 > 
@@ -32,7 +27,6 @@ Patch Looks good..
 > 
 > 
 > Signed-off-by: Yanqing Liu <Yanqing_Liu@Dell.com>
-  Reviewed by  : Babu Moger <babu.moger@lsi.com>
 > 
 > --- linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig
 > 2009-08-05 16:30:51.000000000 -0500
@@ -50,8 +44,8 @@ Patch Looks good..
 > 
 > Thanks,
 > Yanqing
-> 
 > --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
