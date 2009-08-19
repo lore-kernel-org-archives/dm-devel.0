@@ -1,59 +1,280 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH 18/24] blkio_cgroup patches from Ryo to track async
- bios.
-Date: Wed, 19 Aug 2009 10:43:11 +0900 (JST)
-Message-ID: <20090819.104311.71088788.ryov@valinux.co.jp>
-References: <1250451046-9966-19-git-send-email-vgoyal@redhat.com>
-	<20090818.204212.59676649.ryov@valinux.co.jp>
-	<20090818142636.GA7367@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH] scsi_dh: Adding more debug options for scsi rdac
+	handler
+Date: Tue, 18 Aug 2009 19:09:35 -0700
+Message-ID: <1250647775.30799.36.camel@chandra-ubuntu>
+References: <E463DF2B2E584B4A82673F53D62C2EF474B7A493@cosmail01.lsi.com>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751438AbZHSBoO@vger.kernel.org>
-In-Reply-To: <20090818142636.GA7367@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: vgoyal@redhat.com
-Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474B7A493@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
 List-Id: dm-devel.ids
 
-Hi Vivek,
+Hi Babu,
 
-Vivek Goyal <vgoyal@redhat.com> wrote:
-> On Tue, Aug 18, 2009 at 08:42:12PM +0900, Ryo Tsuruta wrote:
-> > Hi Vivek,
-> > 
-> > Vivek Goyal <vgoyal@redhat.com> wrote:
-> > > o blkio_cgroup patches from Ryo to track async bios.
-> > > 
-> > > o Fernando is also working on another IO tracking mechanism. We are not
-> > >   particular about any IO tracking mechanism. This patchset can make use
-> > >   of any mechanism which makes it to upstream. For the time being making
-> > >   use of Ryo's posting.
-> > 
-> > The patch attached with your mail is obsolete and it may potentially
-> > cause a deadlock when lock_page_cgroup() is called under radix_tree->lock.
-> > http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=e767e0561d7fd2333df1921f1ab4176211f9036b
-> > 
-> > The latest blkio-cgroup fixes the above issue and reduces IO tracking
-> > overhead since lock_page_cgroup() is no longer used. I would recommend
-> > to update to the latest version.
-> > 
-> 
-> Hi Ryo,
-> 
-> Thanks. In next posting I will move to latest version of io tracking
-> patches.
-> 
-> > And I have a suggestion, how about moving get_cgroup_from_page() to
-> > biotrack.c, I think this function would be useful for people who
-> > want to make use of the IO tracking mechanism.
-> > 
-> > Please let me know your opinion.
-> 
-> Makes sense. In next posting, will move get_cgroup_from_page() to biotrack.c.
+Code looks good. But I have few comments...
 
-Thank you for your reply. I'll post the new blkio-cgroup reflected in
-this change by the end of this week. Please use it if you would like to.
+Generic:
+ - Is that all the debug stuff you want to add ?
+ - I would split this into few patches (since they
+     are can be independent and not related to
+     configurable logging, IMO)
+   1. Add the array_name and index and acquiring it.
+   2. Moving the initialization code to attach()
+   3. removal of SCSI_DH_OK in check_ownership() (more below).
+   4. Logging stuff.
+   (1) and (4) have dependency, but (2) and (3) are
+   totally independent of all this.
 
-Thanks,
-Ryo Tsuruta
+Specific comments inline...
+
+On Mon, 2009-08-17 at 11:46 -0600, Moger, Babu wrote:
+> From: Babu Moger <babu.moger@lsi.com>
+> 
+> Hi All,
+> This patch adds more debugging options to scsi rdac device handler. This patch can considerably reduce the time taken to debug issues in big configurations also very helpful in addressing the support issues.
+> Here are the summary of changes. 
+>  - Added a bit mask "module parameter" rdac_logging with 2 bits for each type of logging.
+
+Why 2 bits ? isn't 1 bit sufficient ?
+
+>  - currently defined only two types of logging(failover and sense logging). Can be enhanced later if required.
+>  - Only failover logging is enabled for now which is equivalent of current logging.
+by default.
+
+> 
+> Signed-off-by: Babu Moger <babu.moger@lsi.com>
+> Reviewed-by: Vijay Chauhan <vijay.chauhan@lsi.com>
+> Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
+> 
+> ---
+> --- linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-08-05 16:30:51.000000000 -0500
+> +++ linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-08-17 09:15:03.000000000 -0500
+> @@ -135,6 +135,8 @@ struct rdac_controller {
+>  		struct rdac_pg_legacy legacy;
+>  		struct rdac_pg_expanded expanded;
+>  	} mode_select;
+> +	u8			index;
+> +	u8			array_name[31];
+
+Can use a #define ?
+
+>  };
+>  struct c8_inquiry {
+>  	u8	peripheral_info;
+> @@ -198,6 +200,31 @@ static const char *lun_state[] =
+>  static LIST_HEAD(ctlr_list);
+>  static DEFINE_SPINLOCK(list_lock);
+> 
+> +/* 
+> + * module parameter to enable rdac debug logging.
+> + * 2 bits for each type of logging, only two types defined for now 
+> + * Can be enhanced if required at later point
+> + */
+> +static int rdac_logging = 1;
+> +module_param(rdac_logging, int, S_IRUGO|S_IWUSR);
+> +MODULE_PARM_DESC(rdac_logging, "A bit mask of rdac logging levels, "
+> +		"Default is 1 - failover logging enabled, "
+> +		"set it to 0xF to enable all the logs");
+> +
+> +#define RDAC_LOG_FAILOVER	0
+> +#define RDAC_LOG_SENSE		2
+> +
+> +#define RDAC_LOG_BITS		2
+> +
+> +#define RDAC_LOG_LEVEL(SHIFT)  \
+> +        ((rdac_logging >> (SHIFT)) & ((1 << (RDAC_LOG_BITS)) - 1))
+> +
+> +#define RDAC_DEBUG(SHIFT, sdev, f, arg...) \
+
+instead of RDAC_DEBUG, we can say RDAC_LOG ?!
+
+> +do { \
+> +	if (unlikely(RDAC_LOG_LEVEL(SHIFT))) \
+> +		sdev_printk(KERN_INFO, sdev, RDAC_NAME ": " f "\n", ## arg); \
+> +} while (0);
+> +
+>  static inline struct rdac_dh_data *get_rdac_data(struct scsi_device *sdev)
+>  {
+>  	struct scsi_dh_data *scsi_dh_data = sdev->scsi_dh_data;
+> @@ -324,6 +351,13 @@ static struct rdac_controller *get_contr
+>  	/* initialize fields of controller */
+>  	memcpy(ctlr->subsys_id, subsys_id, SUBSYS_ID_LEN);
+>  	memcpy(ctlr->slot_id, slot_id, SLOT_ID_LEN);
+> +
+> +	/* update the controller index */
+> +	if (slot_id[1] == 0x31)
+> +		ctlr->index = 0;
+> +	else
+> +		ctlr->index = 1;
+> +
+>  	kref_init(&ctlr->kref);
+>  	ctlr->use_ms10 = -1;
+>  	list_add(&ctlr->node, &ctlr_list);
+> @@ -381,6 +415,26 @@ static int get_lun(struct scsi_device *s
+>  	return err;
+>  }
+> 
+> +static int get_array_name(struct scsi_device *sdev, struct rdac_dh_data *h)
+> +{
+> +	int err, i;
+> +	struct c8_inquiry *inqp;
+> +
+> +	err = submit_inquiry(sdev, 0xC8, sizeof(struct c8_inquiry), h);
+> +	if (err == SCSI_DH_OK) {
+> +		inqp = &h->inq.c8;
+> +		if (inqp->page_code != 0xc8)
+> +			return SCSI_DH_NOSYS;
+> +
+> +		for(i=0; i<30; ++i) {
+> +			h->ctlr->array_name[i] = inqp->array_user_label[(2*i)+1];
+> +		}
+
+do not have to have { } for a single line loop.
+
+> +		h->ctlr->array_name[30] = '\0';
+> +	}
+> +			
+> +	return err;
+> +}
+> +
+>  static int check_ownership(struct scsi_device *sdev, struct rdac_dh_data *h)
+>  {
+>  	int err;
+> @@ -450,13 +504,12 @@ static int mode_select_handle_sense(stru
+>  {
+>  	struct scsi_sense_hdr sense_hdr;
+>  	int err = SCSI_DH_IO, ret;
+> +	struct rdac_dh_data *h = get_rdac_data(sdev);
+> 
+>  	ret = scsi_normalize_sense(sensebuf, SCSI_SENSE_BUFFERSIZE, &sense_hdr);
+>  	if (!ret)
+>  		goto done;
+> 
+> -	err = SCSI_DH_OK;
+> -
+
+This is a change in behavior.
+
+Why is this needed ?
+
+>  	switch (sense_hdr.sense_key) {
+>  	case NO_SENSE:
+>  	case ABORTED_COMMAND:
+> @@ -478,12 +531,15 @@ static int mode_select_handle_sense(stru
+>  			err = SCSI_DH_RETRY;
+>  		break;
+>  	default:
+> -		sdev_printk(KERN_INFO, sdev,
+> -			    "MODE_SELECT failed with sense %02x/%02x/%02x.\n",
+> -			    sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
+> +		break;
+>  	}
+> 
+>  done:
+> +	RDAC_DEBUG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
+> +		"MODE_SELECT returned with sense %02x/%02x/%02x",
+> +		(char *) h->ctlr->array_name, h->ctlr->index,
+> +		sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
+> +
+
+May need to be moved above "done:", as the control comes to done when
+scsi_normalize_sense() fails.
+
+> 		
+>  	return err;
+>  }
+> 
+> @@ -499,7 +555,9 @@ retry:
+>  	if (!rq)
+>  		goto done;
+> 
+> -	sdev_printk(KERN_INFO, sdev, "%s MODE_SELECT command.\n",
+> +	RDAC_DEBUG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
+> +		"%s MODE_SELECT command",
+> +		(char *) h->ctlr->array_name, h->ctlr->index,
+>  		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
+> 
+>  	err = blk_execute_rq(q, NULL, rq, 1);
+> @@ -509,8 +567,12 @@ retry:
+>  		if (err == SCSI_DH_RETRY && retry_cnt--)
+>  			goto retry;
+>  	}
+> -	if (err == SCSI_DH_OK)
+> +	if (err == SCSI_DH_OK) {
+>  		h->state = RDAC_STATE_ACTIVE;
+> +		RDAC_DEBUG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
+> +				"MODE_SELECT completed",
+> +				(char *) h->ctlr->array_name, h->ctlr->index);
+> +	}
+Don;t you think we need to have failure also reported ?
+
+> 
+>  done:
+>  	return err;
+> @@ -525,12 +587,6 @@ static int rdac_activate(struct scsi_dev
+>  	if (err != SCSI_DH_OK)
+>  		goto done;
+> 
+> -	if (!h->ctlr) {
+> -		err = initialize_controller(sdev, h);
+> -		if (err != SCSI_DH_OK)
+> -			goto done;
+> -	}
+> -
+
+You can also move the set_mode_select block below.
+
+>  	if (h->ctlr->use_ms10 == -1) {
+>  		err = set_mode_select(sdev, h);
+>  		if (err != SCSI_DH_OK)
+> @@ -559,6 +615,12 @@ static int rdac_check_sense(struct scsi_
+>  				struct scsi_sense_hdr *sense_hdr)
+>  {
+>  	struct rdac_dh_data *h = get_rdac_data(sdev);
+> +		
+> +	RDAC_DEBUG(RDAC_LOG_SENSE, sdev, "array %s, ctlr %d, "
+> +			"command returned with sense %02x/%02x/%02x",
+> +			(char *) h->ctlr->array_name, h->ctlr->index,
+> +			sense_hdr->sense_key, sense_hdr->asc, sense_hdr->ascq);
+> +
+
+It is not a "command", right ? Code comes here for any I/O failure.
+cut-n-paste problem :)
+
+
+>  	switch (sense_hdr->sense_key) {
+>  	case NOT_READY:
+>  		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
+> @@ -678,6 +740,16 @@ static int rdac_bus_attach(struct scsi_d
+>  	if (err != SCSI_DH_OK)
+>  		goto failed;
+> 
+> +	if (!h->ctlr) {
+
+I do not think we need this check here.
+> +		err = initialize_controller(sdev, h);
+> +		if (err != SCSI_DH_OK)
+> +			goto failed;
+> +		
+> +		err = get_array_name(sdev, h);
+> +		if (err != SCSI_DH_OK)
+> +			goto failed;
+> +	}
+> +
+>  	if (!try_module_get(THIS_MODULE))
+>  		goto failed;
+> 
+> 
+> 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
