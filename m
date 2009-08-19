@@ -1,55 +1,91 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 03/24] io-controller: Common flat fair queuing code in
- elevaotor layer
-Date: Wed, 19 Aug 2009 11:36:22 +0800
-Message-ID: <4A8B7336.7010800@cn.fujitsu.com>
-References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com> <1250451046-9966-4-git-send-email-vgoyal@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: New kernel shared snapshots
+Date: Wed, 19 Aug 2009 09:31:29 -0500
+Message-ID: <805301CC-A5EA-4905-9867-0B4762B63D8E@redhat.com>
+References: <Pine.LNX.4.64.0907270657080.527@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v935.3)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751624AbZHSDhP@vger.kernel.org>
-In-Reply-To: <1250451046-9966-4-git-send-email-vgoyal@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, ryov@valinux.co.jp, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0907270657080.527@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
+Thanks for the recent repost (18-Aug-2009) of your patches at:
+http://people.redhat.com/mpatocka/patches/kernel/new-snapshot/devel
 
-> +
-> +static void elv_preempt_queue(struct request_queue *q, struct io_queue *ioq)
-> +{
-> +	elv_log_ioq(q->elevator->efqd, ioq, "preempt");
-> +	elv_slice_expired(q);
-> +
-> +	/*
-> +	 * Put the new queue at the front of the of the current list,
-> +	 * so we know that it will be selected next.
-> +	 */
-> +
-> +	requeue_ioq(ioq);
-> +	ioq->slice_start = ioq->slice_end = 0;
+The interface seems to be in-line with what we want.  I noticed that  
+you can't have dm-snapshot and dm-multisnapshot loaded in the kernel  
+at the same time (kmem_cache_create: duplicate cache  
+dm_snap_tracked_chunk -- in the module init function).  You will also  
+want to run your patches through 'linux/scripts/checkpatch.pl'.  It  
+mostly gets angry about the 80 characters / line breakage, but there  
+is some other things it catches.
 
-I think this assignment is redundant because these two members will be reset
-when this ioq is scheduled.
+  brassow
 
-Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
----
- block/elevator-fq.c |    1 -
- 1 files changed, 0 insertions(+), 1 deletions(-)
+On Jul 27, 2009, at 6:24 AM, Mikulas Patocka wrote:
 
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index d04e925..b3c387d 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -2650,7 +2650,6 @@ static void elv_preempt_queue(struct request_queue *q, struct io_queue *ioq)
- 		 */
- 
- 		requeue_ioq(ioq);
--		ioq->slice_start = ioq->slice_end = 0;
- 		elv_mark_ioq_slice_new(ioq);
- 	}
- }
--- 
-1.5.4.rc3
+> Hi
+>
+> The new release of shared snapshots can be found here:
+> http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
+>
+> It has the interface we talked about on Linux Tag.
+> So look at it as a last chance to review the interface. And also  
+> test it.
+>
+>
+> To create a snapshot, you have to:
+> - send a message
+> - ask for status, get the snapshot id
+> - suspend (this creates the snapshot, when the filesystem is  
+> quiescent)
+> - resume
+>
+> Then, you can attach the snapshots by loading "multisnap-snap" target.
+>
+> If the table line contains argument "sync-snapshots", it  
+> synchronizes the
+> snapshot list against what is given on the table --- i.e. creates
+> snapshots that are on the table but are not in the store and deletes  
+> those
+> that are not in the store but are on the table.
+>
+> Other changes:
+> - make more structures private (move them to dm-multisnap- 
+> private.h), so
+>  that ABI doesn't change if these are chaged.
+> - snapshot IDs are treated as strings, not numbers.
+> - metadata cache size can be specified as an argument to the "mikulas"
+>  exception store.
+> - an argument "preserve-on-error" that says that on error or overflow,
+>  writes to the origin should be disabled.
+> 	- if you don't specify this, the origin continues operation, but
+> 	snapshots are irreversibly damaged by this (use for non-important
+> 	snapshots such as backups)
+> 	- if you specify this, the data are always preserved, the whole
+> 	thing just halts on error (user when snapshots contain some
+> 	important data.
+> - fixed two bad bugs in dm-bufio.
+>
+>
+> Known bugs:
+> - that read-vs-realloc race (that I already fixed in the old  
+> snapshots a
+> year ago) is present there. I'll fix it, but it isn't so trivial as in
+> unshared snapshots.
+>
+>
+> Mikulas
