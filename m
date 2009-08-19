@@ -1,90 +1,59 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools multipathd/copy.c multipathd/m ...
-Date: 18 Aug 2009 21:12:03 -0000
-Message-ID: <20090818211203.28562.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [PATCH 18/24] blkio_cgroup patches from Ryo to track async
+ bios.
+Date: Wed, 19 Aug 2009 10:43:11 +0900 (JST)
+Message-ID: <20090819.104311.71088788.ryov@valinux.co.jp>
+References: <1250451046-9966-19-git-send-email-vgoyal@redhat.com>
+	<20090818.204212.59676649.ryov@valinux.co.jp>
+	<20090818142636.GA7367@redhat.com>
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751438AbZHSBoO@vger.kernel.org>
+In-Reply-To: <20090818142636.GA7367@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: vgoyal@redhat.com
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2009-08-18 21:12:02
+Hi Vivek,
 
-Modified files:
-	multipathd     : copy.c main.c 
-	path_priority/pp_alua: rtpg.c 
+Vivek Goyal <vgoyal@redhat.com> wrote:
+> On Tue, Aug 18, 2009 at 08:42:12PM +0900, Ryo Tsuruta wrote:
+> > Hi Vivek,
+> > 
+> > Vivek Goyal <vgoyal@redhat.com> wrote:
+> > > o blkio_cgroup patches from Ryo to track async bios.
+> > > 
+> > > o Fernando is also working on another IO tracking mechanism. We are not
+> > >   particular about any IO tracking mechanism. This patchset can make use
+> > >   of any mechanism which makes it to upstream. For the time being making
+> > >   use of Ryo's posting.
+> > 
+> > The patch attached with your mail is obsolete and it may potentially
+> > cause a deadlock when lock_page_cgroup() is called under radix_tree->lock.
+> > http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=e767e0561d7fd2333df1921f1ab4176211f9036b
+> > 
+> > The latest blkio-cgroup fixes the above issue and reduces IO tracking
+> > overhead since lock_page_cgroup() is no longer used. I would recommend
+> > to update to the latest version.
+> > 
+> 
+> Hi Ryo,
+> 
+> Thanks. In next posting I will move to latest version of io tracking
+> patches.
+> 
+> > And I have a suggestion, how about moving get_cgroup_from_page() to
+> > biotrack.c, I think this function would be useful for people who
+> > want to make use of the IO tracking mechanism.
+> > 
+> > Please let me know your opinion.
+> 
+> Makes sense. In next posting, will move get_cgroup_from_page() to biotrack.c.
 
-Log message:
-	Change warning messages when creating the private multipathd namespace, so that they don't scare users who don't have unneeded callouts installed.  Not
-	applicable upstream.
+Thank you for your reply. I'll post the new blkio-cgroup reflected in
+this change by the end of this week. Please use it if you would like to.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/copy.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.1&r2=1.5.2.2
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.21&r2=1.69.2.22
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_alua/rtpg.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3.2.4&r2=1.3.2.5
-
---- multipath-tools/multipathd/Attic/copy.c	2007/12/15 00:27:40	1.5.2.1
-+++ multipath-tools/multipathd/Attic/copy.c	2009/08/18 21:12:01	1.5.2.2
-@@ -24,7 +24,10 @@
- 	fdin = open (src, O_RDONLY);
- 
- 	if (fdin < 0) {
--		condlog(0, "[copy.c] cannot open %s", src);
-+		if (errno == ENOENT)
-+			condlog(3, "callout %s does not exist, ignoring");
-+		else
-+			condlog(0, "[copy.c] cannot open %s", src);
- 		return -1;
- 	}
- 	/*
---- multipath-tools/multipathd/main.c	2009/05/06 17:26:45	1.69.2.21
-+++ multipath-tools/multipathd/main.c	2009/08/18 21:12:01	1.69.2.22
-@@ -1338,8 +1338,11 @@
- 	 */
- 	vector_foreach_slot (conf->binvec, bin,i) {
- 		if ((fd = open(bin, O_RDONLY)) < 0) {
--			condlog(0, "cannot open %s : %s\n", bin,
--				strerror(errno));
-+			if (errno == ENOENT)
-+				condlog(3, "callout %s does not exist, ignoring");
-+			else
-+				condlog(0, "cannot open %s : %s", bin,
-+					strerror(errno));
- 			continue;
- 		}
- 		if (fstat(fd, &statbuf) < 0) {
-@@ -1368,11 +1371,8 @@
- 	 * populate the ramfs with callout binaries
- 	 */
- 	vector_foreach_slot (conf->binvec, bin,i) {
--		if (copytodir(bin, CALLOUT_DIR) < 0) {
--			condlog(0, "cannot copy %s in ramfs : %s", bin,
--				strerror(errno));
-+		if (copytodir(bin, CALLOUT_DIR) < 0)
- 			continue;
--		}
- 		condlog(4, "cp %s in ramfs", bin);
- 	}
- 	free_strvec(conf->binvec);
---- multipath-tools/path_priority/pp_alua/rtpg.c	2009/07/07 18:44:11	1.3.2.4
-+++ multipath-tools/path_priority/pp_alua/rtpg.c	2009/08/18 21:12:02	1.3.2.5
-@@ -269,7 +269,7 @@
- 	rc = do_rtpg(fd, buf, buflen);
- 	if (rc < 0)
- 		goto out;
--	scsi_buflen = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3] + 4;
-+	scsi_buflen = (buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3]) + 4;
- 	if (buflen < scsi_buflen) {
- 		free(buf);
- 		buf = (unsigned char *)malloc(scsi_buflen);
+Thanks,
+Ryo Tsuruta
