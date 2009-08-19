@@ -1,78 +1,64 @@
-From: Guilherme Moro <guilherme.moro@gmail.com>
-Subject: Chunk size, mask and shift
-Date: Wed, 19 Aug 2009 11:58:48 -0300
-Message-ID: <59a2a3420908190758r3fed0190w41a9e7ceb65d01a5@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jerome Marchand <jmarchan@redhat.com>
+Subject: Re: [PATCH 02/24] io-controller: Core of the elevator fair queuing
+Date: Wed, 19 Aug 2009 18:01:34 +0200
+Message-ID: <4A8C21DE.1080001@redhat.com>
+References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com> <1250451046-9966-3-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0211008861=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-List-Id: dm-devel.ids
-
---===============0211008861==
-Content-Type: multipart/alternative; boundary=0016362848ee57038b04717fdf0e
-
---0016362848ee57038b04717fdf0e
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1750974AbZHSQCl@vger.kernel.org>
+In-Reply-To: <1250451046-9966-3-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, ryov@valinux.co.jp, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org
+List-Id: dm-devel.ids
 
-hello,
+Hi Vivek,
 
-Im trying to understand the dm-snapshot target, but Im not sure how it uses
-the size, mask and shift of the chunks, not sure if I understand it
-correctly.
+Vivek Goyal wrote:
+> o This is core of the io scheduler implemented at elevator layer. This is a mix
+>   of cpu CFS scheduler and CFQ IO scheduler. Some of the bits from CFS have
+>   to be derived so that we can support hierarchical scheduling. Without
+>   cgroups or with-in group, we should essentially get same behavior as CFQ.
+> 
+> o This patch only shows non-hierarchical bits. Hierarhical code comes in later
+>   patches.
+> 
+> o This code is the building base of introducing fair queuing logic in common
+>   elevator layer so that it can be used by all the four IO schedulers.
 
-Can anyone give an overall idea of why they are initialized this way
+> +static void enqueue_io_entity(struct io_entity *entity)
+> +{
+> +	struct io_service_tree *st = entity->st;
+> +	struct io_sched_data *sd = io_entity_sched_data(entity);
+> +
+> +	/* In case task ioprio class changed while entity was off tree */
+> +	io_entity_update_prio(entity);
+> +	st->nr_active++;
+> +	sd->nr_active++;
+> +	entity->on_st = 1;
+> +	place_entity(st, entity, 0);
+> +	__enqueue_io_entity(st, entity);
+> +}
 
-store->chunk_size = chunk_size_ulong;
-store->chunk_mask = chunk_size_ulong - 1;
-store->chunk_shift = ffs(chunk_size_ulong) - 1;
+> +static void put_prev_io_entity(struct io_entity *entity)
+> +{
+> +	struct io_service_tree *st = entity->st;
+> +	struct io_sched_data *sd = io_entity_sched_data(entity);
+> +
+> +	st->active_entity = NULL;
+> +	sd->active_entity = NULL;
+> +
+> +	if (unlikely(entity->ioprio_changed)) {
+> +		dequeue_io_entity(entity);
+> +		io_entity_update_prio(entity);
 
-and why use this to translate sector to chunks
+That call to io_entity_update_prio() looks redundant with the one in
+enqueue_io_entity().
 
-static inline chunk_t sector_to_chunk(struct dm_exception_store *store,
-                      sector_t sector)
-{
-    return (sector & ~store->chunk_mask) >> store->chunk_shift;
-}
+> +		enqueue_io_entity(entity);
+> +	} else
+> +		__enqueue_io_entity(st, entity);
+> +}
 
-thanks,
-
-Guilherme Moro
-
---0016362848ee57038b04717fdf0e
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-hello,<br><br>Im trying to understand the dm-snapshot target, but Im not su=
-re how it uses the size, mask and shift of the chunks, not sure if I unders=
-tand it correctly.<br><br>Can anyone give an overall idea of why they are i=
-nitialized this way <br>
-<br>store-&gt;chunk_size =3D chunk_size_ulong;<br>store-&gt;chunk_mask =3D =
-chunk_size_ulong - 1;<br>store-&gt;chunk_shift =3D ffs(chunk_size_ulong) - =
-1;<br><br>and why use this to translate sector to chunks <br><br>static inl=
-ine chunk_t sector_to_chunk(struct dm_exception_store *store,<br>
-=A0=A0=A0 =A0=A0=A0 =A0=A0=A0 =A0=A0=A0 =A0=A0=A0=A0=A0 sector_t sector)<br=
->{<br>=A0=A0=A0 return (sector &amp; ~store-&gt;chunk_mask) &gt;&gt; store-=
-&gt;chunk_shift;<br>}<br><br>thanks,<br><br>Guilherme Moro<br>
-
---0016362848ee57038b04717fdf0e--
-
-
---===============0211008861==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0211008861==--
+Jerome
