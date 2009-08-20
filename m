@@ -1,54 +1,46 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: [PATCH] IO-Controller: clear ioq wait flag if a request goes into
- that ioq
-Date: Thu, 20 Aug 2009 09:46:10 +0800
-Message-ID: <4A8CAAE2.1030804@cn.fujitsu.com>
-References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com> <1250451046-9966-12-git-send-email-vgoyal@redhat.com>
+From: Simon Horman <horms@verge.net.au>
+Subject: Re: [PATCH] dm-ioband-v1.12.3: I/O bandwidth controller
+Date: Thu, 20 Aug 2009 12:37:41 +1000
+Message-ID: <20090820023740.GA12528@verge.net.au>
+References: <20090731.130333.104034609.ryov@valinux.co.jp>
+	<20090807.103640.104065157.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751869AbZHTBrC@vger.kernel.org>
-In-Reply-To: <1250451046-9966-12-git-send-email-vgoyal@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, ryov@valinux.co.jp, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <xen-devel-bounces@lists.xensource.com>
+Content-Disposition: inline
+In-Reply-To: <20090807.103640.104065157.ryov@valinux.co.jp>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
->  		/*
->  		 * Remember that we saw a request from this process, but
-> @@ -1940,7 +2013,7 @@ void elv_ioq_request_add(struct request_queue *q, struct request *rq)
->  		 * has other work pending, don't risk delaying until the
->  		 * idle timer unplug to continue working.
->  		 */
-> -		if (elv_ioq_wait_request(ioq)) {
-> +		if (group_wait || elv_ioq_wait_request(ioq)) {
+On Fri, Aug 07, 2009 at 10:36:40AM +0900, Ryo Tsuruta wrote:
+> Hi Alasdair,
+> 
+> Ryo Tsuruta <ryov@valinux.co.jp> wrote:
+> > Hi Alasdair,
+> > 
+> > This is dm-ioband v1.12.3 release that is a minor update to avoid
+> > sparse warnings other than related to the event tracing. (I used
+> > sparse-2009-07-29.)
+> > 
+> > This patch can be applied to the current dm-devel tree and 2.6.31-rc4,
+> > so could you please replace dm-add-ioband.patch in your tree with this?
+> > And I would appreciate it if you would let me know your thoughts about
+> > merging dm-ioband to upstream.
+> 
+> The dm-ioband patch in the dm-devel tree is still older. Could you
+> please update it with the new patch? And could you please let me know
+> your thoughts about dm-ioband?
 
-Hi Vivek,
+Hi Alasdiar,
 
-I guess we need to clear ioq_wait_request flags if there are requests to 
-go in this ioq. Otherwise, once waitting request on ioq, it will go into
-this path every time when a request is enqueued.
-
-Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
----
- block/elevator-fq.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
-
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index b3c387d..201543e 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -2708,6 +2708,9 @@ void elv_ioq_request_add(struct request_queue *q, struct request *rq)
- 				__blk_run_queue(q);
- 			else
- 				elv_mark_ioq_must_dispatch(ioq);
-+
-+			if (elv_ioq_wait_request(ioq))
-+				elv_clear_ioq_wait_request(ioq);
- 		}
- 	} else if (elv_should_preempt(q, ioq, rq)) {
- 		/*
--- 
-1.5.4.rc3
+I'm wondering if you see any problems with merging dm-ioband at this time.
+I'm eager to address any such concerns.
