@@ -1,14 +1,15 @@
 From: "Bryn M. Reeves" <bmr@redhat.com>
 Subject: Re: Issue with setting uid/gid/mode in multipath.conf
-Date: Fri, 21 Aug 2009 10:14:27 +0100
-Message-ID: <1250846067.2720.194.camel@breeves.fab.redhat.com>
+Date: Fri, 21 Aug 2009 10:25:13 +0100
+Message-ID: <1250846713.2720.203.camel@breeves.fab.redhat.com>
 References: <1250796306.746.6.camel@chandra-ubuntu>
+	<1250846067.2720.194.camel@breeves.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1250796306.746.6.camel@chandra-ubuntu>
+In-Reply-To: <1250846067.2720.194.camel@breeves.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,31 +19,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: sekharan@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Thu, 2009-08-20 at 12:25 -0700, Chandra Seetharaman wrote:
-> After adding this, I do a "multipath -F" following by "multipath" (or
-> multipath -F followed by /etc/init.d/multipathd restart), I see the
-> attributes are set properly on the device.
+On Fri, 2009-08-21 at 10:14 +0100, Bryn M. Reeves wrote:
+> On Thu, 2009-08-20 at 12:25 -0700, Chandra Seetharaman wrote:
+> > After adding this, I do a "multipath -F" following by "multipath" (or
+> > multipath -F followed by /etc/init.d/multipathd restart), I see the
+> > attributes are set properly on the device.
+> > 
+> > I reboot the system, the device is created (under /dev/mapper) but
+> > attributes are not set as defined in the multipath.conf file.
+> > 
+> > Have you seen this issue ? 
+> > 
+> > I am using RHEL 5.3 ga version (kernel and tools).
+> > 
+> > I am not booting from a multipath device (IOW, there is no
+> > multipath.conf in initrd).
 > 
-> I reboot the system, the device is created (under /dev/mapper) but
-> attributes are not set as defined in the multipath.conf file.
+> Hi Chandra,
 > 
-> Have you seen this issue ? 
+> I've seen problems with this as well. In my testing the setting of the
+> UID/GID is unreliable - in around one of five runs the uid/gid take the
+> default instead of the configured value.
 > 
-> I am using RHEL 5.3 ga version (kernel and tools).
-> 
-> I am not booting from a multipath device (IOW, there is no
-> multipath.conf in initrd).
+> I'm intending to open a Red Hat BZ for this problem today.
 
-Hi Chandra,
+Marc got there first:
 
-I've seen problems with this as well. In my testing the setting of the
-UID/GID is unreliable - in around one of five runs the uid/gid take the
-default instead of the configured value.
+https://bugzilla.redhat.com/show_bug.cgi?id=518575
 
-I'm intending to open a Red Hat BZ for this problem today.
-
-Regards,
+Cheers,
 Bryn.
