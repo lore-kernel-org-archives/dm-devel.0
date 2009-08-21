@@ -1,11 +1,11 @@
-From: Mark Goodwin <mgoodwin@redhat.com>
+From: "Bryn M. Reeves" <bmr@redhat.com>
 Subject: Re: Issue with setting uid/gid/mode in multipath.conf
-Date: Fri, 21 Aug 2009 12:30:46 +1000
-Message-ID: <4A8E06D6.70606@redhat.com>
+Date: Fri, 21 Aug 2009 10:14:27 +0100
+Message-ID: <1250846067.2720.194.camel@breeves.fab.redhat.com>
 References: <1250796306.746.6.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1250796306.746.6.camel@chandra-ubuntu>
@@ -21,24 +21,7 @@ Errors-To: dm-devel-bounces@redhat.com
 To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Chandra Seetharaman wrote:
-> Hi Benjamin,
-> 
-> I have a small issue with setting the uid/gid/mode with multipath tools.
-> 
-> I have the following in my /etc/mulitpath.conf file
-> ------------------
-> multipaths {
->         multipath {
->                 wwid 3600a0b800011a1ee00003f834a3f7a65
->                 alias dev4
->                 mode    0666
->                 uid     1001
->                 gid     1001
->         }
-> }
-> -------------------
-> 
+On Thu, 2009-08-20 at 12:25 -0700, Chandra Seetharaman wrote:
 > After adding this, I do a "multipath -F" following by "multipath" (or
 > multipath -F followed by /etc/init.d/multipathd restart), I see the
 > attributes are set properly on the device.
@@ -50,11 +33,16 @@ Chandra Seetharaman wrote:
 > 
 > I am using RHEL 5.3 ga version (kernel and tools).
 > 
+> I am not booting from a multipath device (IOW, there is no
+> multipath.conf in initrd).
 
-yes we've recently also seen this issue and can reproduce it without
-any need for a reboot, see https://bugzilla.redhat.com/518575
+Hi Chandra,
 
-It seems to be a racy interaction of some kind between udevd and multipathd.
+I've seen problems with this as well. In my testing the setting of the
+UID/GID is unreliable - in around one of five runs the uid/gid take the
+default instead of the configured value.
 
-Cheers
--- Mark
+I'm intending to open a Red Hat BZ for this problem today.
+
+Regards,
+Bryn.
