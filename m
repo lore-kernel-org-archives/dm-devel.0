@@ -1,9 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2] expose dm-stripe target's topology I/O hints
-Date: Fri, 21 Aug 2009 10:17:18 -0400
-Message-ID: <1250864238-4093-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: Issue with setting uid/gid/mode in multipath.conf
+Date: Fri, 21 Aug 2009 10:29:58 -0700
+Message-ID: <1250875798.9085.0.camel@chandra-ubuntu>
+References: <1250796306.746.6.camel@chandra-ubuntu> <4A8E06D6.70606@redhat.com>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4A8E06D6.70606@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,83 +19,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Add .io_hints to 'struct target_type' to allow the I/O hints portion of
-the 'struct queue_limits' to be set by each target.  Expose dm-stripe
-target's topology I/O hints.
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-stripe.c        |   11 +++++++++++
- drivers/md/dm-table.c         |    4 ++++
- include/linux/device-mapper.h |    4 ++++
- 3 files changed, 19 insertions(+)
-
-Index: linux-2.6/drivers/md/dm-stripe.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-stripe.c
-+++ linux-2.6/drivers/md/dm-stripe.c
-@@ -329,6 +329,16 @@ static int stripe_iterate_devices(struct
- 	return ret;
- }
- 
-+static void stripe_io_hints(struct dm_target *ti,
-+			    struct queue_limits *limits)
-+{
-+	struct stripe_c *sc = ti->private;
-+	unsigned chunk_size = (sc->chunk_mask + 1) << 9;
-+
-+	blk_limits_io_min(limits, chunk_size);
-+	limits->io_opt = chunk_size * sc->stripes;
-+}
-+
- static struct target_type stripe_target = {
- 	.name   = "striped",
- 	.version = {1, 2, 0},
-@@ -339,6 +349,7 @@ static struct target_type stripe_target 
- 	.end_io = stripe_end_io,
- 	.status = stripe_status,
- 	.iterate_devices = stripe_iterate_devices,
-+	.io_hints = stripe_io_hints,
- };
- 
- int __init dm_stripe_init(void)
-Index: linux-2.6/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c
-+++ linux-2.6/drivers/md/dm-table.c
-@@ -996,6 +996,10 @@ int dm_calculate_queue_limits(struct dm_
- 		ti->type->iterate_devices(ti, dm_set_device_limits,
- 					  &ti_limits);
- 
-+		/* Set I/O hints portion of queue limits */
-+		if (ti->type->io_hints)
-+			ti->type->io_hints(ti, &ti_limits);
-+
- 		/*
- 		 * Check each device area is consistent with the target's
- 		 * overall queue limits.
-Index: linux-2.6/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.orig/include/linux/device-mapper.h
-+++ linux-2.6/include/linux/device-mapper.h
-@@ -91,6 +91,9 @@ typedef int (*dm_iterate_devices_fn) (st
- 				      iterate_devices_callout_fn fn,
- 				      void *data);
- 
-+typedef void (*dm_io_hints_fn) (struct dm_target *ti,
-+				struct queue_limits *limits);
-+
- /*
-  * Returns:
-  *    0: The target can handle the next I/O immediately.
-@@ -151,6 +154,7 @@ struct target_type {
- 	dm_merge_fn merge;
- 	dm_busy_fn busy;
- 	dm_iterate_devices_fn iterate_devices;
-+	dm_io_hints_fn io_hints;
- 
- 	/* For internal device-mapper use. */
- 	struct list_head list;
+Thanks for the info, Mark.
+On Fri, 2009-08-21 at 12:30 +1000, Mark Goodwin wrote:
+> Chandra Seetharaman wrote:
+> > Hi Benjamin,
+> > 
+> > I have a small issue with setting the uid/gid/mode with multipath tools.
+> > 
+> > I have the following in my /etc/mulitpath.conf file
+> > ------------------
+> > multipaths {
+> >         multipath {
+> >                 wwid 3600a0b800011a1ee00003f834a3f7a65
+> >                 alias dev4
+> >                 mode    0666
+> >                 uid     1001
+> >                 gid     1001
+> >         }
+> > }
+> > -------------------
+> > 
+> > After adding this, I do a "multipath -F" following by "multipath" (or
+> > multipath -F followed by /etc/init.d/multipathd restart), I see the
+> > attributes are set properly on the device.
+> > 
+> > I reboot the system, the device is created (under /dev/mapper) but
+> > attributes are not set as defined in the multipath.conf file.
+> > 
+> > Have you seen this issue ? 
+> > 
+> > I am using RHEL 5.3 ga version (kernel and tools).
+> > 
+> 
+> yes we've recently also seen this issue and can reproduce it without
+> any need for a reboot, see https://bugzilla.redhat.com/518575
+> 
+> It seems to be a racy interaction of some kind between udevd and multipathd.
+> 
+> Cheers
+> -- Mark
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
