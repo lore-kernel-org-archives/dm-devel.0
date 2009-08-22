@@ -1,68 +1,42 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Issue with setting uid/gid/mode in multipath.conf
-Date: Fri, 21 Aug 2009 10:29:58 -0700
-Message-ID: <1250875798.9085.0.camel@chandra-ubuntu>
-References: <1250796306.746.6.camel@chandra-ubuntu> <4A8E06D6.70606@redhat.com>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A8E06D6.70606@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Jiri Slaby <jirislaby@gmail.com>
+Subject: [PATCH 1/1] MD: dm-log, fix cn_ulog_callback declaration
+Date: Sat, 22 Aug 2009 20:51:41 +0200
+Message-ID: <1250967101-29728-1-git-send-email-jirislaby@gmail.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933271AbZHVSvl@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: akpm@linux-foundation.org
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jiri Slaby <jirislaby@gmail.com>, Mike Frysinger <vapier@gentoo.org>, "David S. Miller" <davem@davemloft.net>
 List-Id: dm-devel.ids
 
-Thanks for the info, Mark.
-On Fri, 2009-08-21 at 12:30 +1000, Mark Goodwin wrote:
-> Chandra Seetharaman wrote:
-> > Hi Benjamin,
-> > 
-> > I have a small issue with setting the uid/gid/mode with multipath tools.
-> > 
-> > I have the following in my /etc/mulitpath.conf file
-> > ------------------
-> > multipaths {
-> >         multipath {
-> >                 wwid 3600a0b800011a1ee00003f834a3f7a65
-> >                 alias dev4
-> >                 mode    0666
-> >                 uid     1001
-> >                 gid     1001
-> >         }
-> > }
-> > -------------------
-> > 
-> > After adding this, I do a "multipath -F" following by "multipath" (or
-> > multipath -F followed by /etc/init.d/multipathd restart), I see the
-> > attributes are set properly on the device.
-> > 
-> > I reboot the system, the device is created (under /dev/mapper) but
-> > attributes are not set as defined in the multipath.conf file.
-> > 
-> > Have you seen this issue ? 
-> > 
-> > I am using RHEL 5.3 ga version (kernel and tools).
-> > 
-> 
-> yes we've recently also seen this issue and can reproduce it without
-> any need for a reboot, see https://bugzilla.redhat.com/518575
-> 
-> It seems to be a racy interaction of some kind between udevd and multipathd.
-> 
-> Cheers
-> -- Mark
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+The third parameter of cn_add_callback accepts functions with
+void *()(struct cn_msg *)
+prototype. Change cn_ulog_callback to match it by removing void *
+and adding struct cn_msg * directly.
+
+It's introduced by commit:
+connector: make callback argument type explicit
+
+Signed-off-by: Jiri Slaby <jirislaby@gmail.com>
+Cc: Mike Frysinger <vapier@gentoo.org>
+Cc: David S. Miller <davem@davemloft.net>
+---
+ drivers/md/dm-log-userspace-transfer.c |    3 +--
+ 1 files changed, 1 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-log-userspace-transfer.c b/drivers/md/dm-log-userspace-transfer.c
+index 8ce74d9..d945388 100644
+--- a/drivers/md/dm-log-userspace-transfer.c
++++ b/drivers/md/dm-log-userspace-transfer.c
+@@ -129,9 +129,8 @@ static int fill_pkg(struct cn_msg *msg, struct dm_ulog_request *tfr)
+  * This is the connector callback that delivers data
+  * that was sent from userspace.
+  */
+-static void cn_ulog_callback(void *data)
++static void cn_ulog_callback(struct cn_msg *msg)
+ {
+-	struct cn_msg *msg = (struct cn_msg *)data;
+ 	struct dm_ulog_request *tfr = (struct dm_ulog_request *)(msg + 1);
+ 
+ 	spin_lock(&receiving_list_lock);
+-- 
+1.6.3.3
