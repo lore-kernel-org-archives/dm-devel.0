@@ -1,42 +1,93 @@
-From: Jiri Slaby <jirislaby@gmail.com>
-Subject: [PATCH 1/1] MD: dm-log, fix cn_ulog_callback declaration
-Date: Sat, 22 Aug 2009 20:51:41 +0200
-Message-ID: <1250967101-29728-1-git-send-email-jirislaby@gmail.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933271AbZHVSvl@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jiri Slaby <jirislaby@gmail.com>, Mike Frysinger <vapier@gentoo.org>, "David S. Miller" <davem@davemloft.net>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: implement .iterate_devices
+Date: Sun, 23 Aug 2009 02:11:07 -0400
+Message-ID: <1251007867-13004-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-The third parameter of cn_add_callback accepts functions with
-void *()(struct cn_msg *)
-prototype. Change cn_ulog_callback to match it by removing void *
-and adding struct cn_msg * directly.
+This patch implements .iterate_devices for the origin and snapshot
+targets.  dm-snapshot's lack of .iterate_devices resulted in the
+inability to properly establish queue_limits for both targets.  
 
-It's introduced by commit:
-connector: make callback argument type explicit
+With 4K sector drives: an unfortunate side-effect of not establishing
+proper limits in either targets' DM device was that IO to the devices
+would fail even though both had been created without error.
 
-Signed-off-by: Jiri Slaby <jirislaby@gmail.com>
-Cc: Mike Frysinger <vapier@gentoo.org>
-Cc: David S. Miller <davem@davemloft.net>
+Commit af4874e03ed82f050d5872d8c39ce64bf16b5c38 should have implemented
+.iterate_devices for dm-snap.c's origin and snapshot targets.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+
 ---
- drivers/md/dm-log-userspace-transfer.c |    3 +--
- 1 files changed, 1 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-log-userspace-transfer.c b/drivers/md/dm-log-userspace-transfer.c
-index 8ce74d9..d945388 100644
---- a/drivers/md/dm-log-userspace-transfer.c
-+++ b/drivers/md/dm-log-userspace-transfer.c
-@@ -129,9 +129,8 @@ static int fill_pkg(struct cn_msg *msg, struct dm_ulog_request *tfr)
-  * This is the connector callback that delivers data
-  * that was sent from userspace.
-  */
--static void cn_ulog_callback(void *data)
-+static void cn_ulog_callback(struct cn_msg *msg)
- {
--	struct cn_msg *msg = (struct cn_msg *)data;
- 	struct dm_ulog_request *tfr = (struct dm_ulog_request *)(msg + 1);
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index d573165..57f1bf7 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1176,6 +1176,15 @@ static int snapshot_status(struct dm_target *ti, status_type_t type,
+ 	return 0;
+ }
  
- 	spin_lock(&receiving_list_lock);
--- 
-1.6.3.3
++static int snapshot_iterate_devices(struct dm_target *ti,
++				    iterate_devices_callout_fn fn, void *data)
++{
++	struct dm_snapshot *snap = ti->private;
++
++	return fn(ti, snap->origin, 0, ti->len, data);
++}
++
++
+ /*-----------------------------------------------------------------
+  * Origin methods
+  *---------------------------------------------------------------*/
+@@ -1410,20 +1419,29 @@ static int origin_status(struct dm_target *ti, status_type_t type, char *result,
+ 	return 0;
+ }
+ 
++static int origin_iterate_devices(struct dm_target *ti,
++				  iterate_devices_callout_fn fn, void *data)
++{
++	struct dm_dev *dev = ti->private;
++
++	return fn(ti, dev, 0, ti->len, data);
++}
++
+ static struct target_type origin_target = {
+ 	.name    = "snapshot-origin",
+-	.version = {1, 6, 0},
++	.version = {1, 7, 0},
+ 	.module  = THIS_MODULE,
+ 	.ctr     = origin_ctr,
+ 	.dtr     = origin_dtr,
+ 	.map     = origin_map,
+ 	.resume  = origin_resume,
+ 	.status  = origin_status,
++	.iterate_devices = origin_iterate_devices,
+ };
+ 
+ static struct target_type snapshot_target = {
+ 	.name    = "snapshot",
+-	.version = {1, 6, 0},
++	.version = {1, 7, 0},
+ 	.module  = THIS_MODULE,
+ 	.ctr     = snapshot_ctr,
+ 	.dtr     = snapshot_dtr,
+@@ -1431,6 +1449,7 @@ static struct target_type snapshot_target = {
+ 	.end_io  = snapshot_end_io,
+ 	.resume  = snapshot_resume,
+ 	.status  = snapshot_status,
++	.iterate_devices = snapshot_iterate_devices,
+ };
+ 
+ static int __init dm_snapshot_init(void)
