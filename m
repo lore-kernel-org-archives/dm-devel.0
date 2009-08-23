@@ -1,8 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm snapshot: implement .iterate_devices
-Date: Sun, 23 Aug 2009 02:11:07 -0400
-Message-ID: <1251007867-13004-1-git-send-email-snitzer@redhat.com>
+From: Jakov Sosic <jakov.sosic@srce.hr>
+Subject: Sun StorageTek 2530 and dm?
+Date: Sun, 23 Aug 2009 21:05:36 +0200
+Message-ID: <20090823210536.4730636d@nb-jsosic>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -14,80 +17,119 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-This patch implements .iterate_devices for the origin and snapshot
-targets.  dm-snapshot's lack of .iterate_devices resulted in the
-inability to properly establish queue_limits for both targets.  
+Hi!
 
-With 4K sector drives: an unfortunate side-effect of not establishing
-proper limits in either targets' DM device was that IO to the devices
-would fail even though both had been created without error.
+I have StorageTek 2530 storage, which has two controllers. On host side
+I have LSI LOGIC two SAS port cards. I've connected one cable from
+LSI port1 to StorageTek ControllerA, and second SAS cable from LSI
+port2 to StorageTek ControllerB.
 
-Commit af4874e03ed82f050d5872d8c39ce64bf16b5c38 should have implemented
-.iterate_devices for dm-snap.c's origin and snapshot targets.
+On storage, I've set up initiators type to Linux.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+But, I just can't get multipath working. For example:
 
----
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index d573165..57f1bf7 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1176,6 +1176,15 @@ static int snapshot_status(struct dm_target *ti, status_type_t type,
- 	return 0;
- }
- 
-+static int snapshot_iterate_devices(struct dm_target *ti,
-+				    iterate_devices_callout_fn fn, void *data)
-+{
-+	struct dm_snapshot *snap = ti->private;
-+
-+	return fn(ti, snap->origin, 0, ti->len, data);
-+}
-+
-+
- /*-----------------------------------------------------------------
-  * Origin methods
-  *---------------------------------------------------------------*/
-@@ -1410,20 +1419,29 @@ static int origin_status(struct dm_target *ti, status_type_t type, char *result,
- 	return 0;
- }
- 
-+static int origin_iterate_devices(struct dm_target *ti,
-+				  iterate_devices_callout_fn fn, void *data)
-+{
-+	struct dm_dev *dev = ti->private;
-+
-+	return fn(ti, dev, 0, ti->len, data);
-+}
-+
- static struct target_type origin_target = {
- 	.name    = "snapshot-origin",
--	.version = {1, 6, 0},
-+	.version = {1, 7, 0},
- 	.module  = THIS_MODULE,
- 	.ctr     = origin_ctr,
- 	.dtr     = origin_dtr,
- 	.map     = origin_map,
- 	.resume  = origin_resume,
- 	.status  = origin_status,
-+	.iterate_devices = origin_iterate_devices,
- };
- 
- static struct target_type snapshot_target = {
- 	.name    = "snapshot",
--	.version = {1, 6, 0},
-+	.version = {1, 7, 0},
- 	.module  = THIS_MODULE,
- 	.ctr     = snapshot_ctr,
- 	.dtr     = snapshot_dtr,
-@@ -1431,6 +1449,7 @@ static struct target_type snapshot_target = {
- 	.end_io  = snapshot_end_io,
- 	.resume  = snapshot_resume,
- 	.status  = snapshot_status,
-+	.iterate_devices = snapshot_iterate_devices,
- };
- 
- static int __init dm_snapshot_init(void)
+# multipath -ll
+sdc: checker msg is "readsector0 checker reports path is down"
+sde: checker msg is "readsector0 checker reports path is down"
+sdg: checker msg is "readsector0 checker reports path is down"
+sas-mysql (3600a0b80003abc5c00000b654a916617) dm-1 SUN,LCSM100_S
+[size=115G][features=0][hwhandler=0][rw]
+\_ round-robin 0 [prio=0][active]
+ \_ 1:0:0:1 sdc 8:32  [failed][faulty]
+ \_ 1:0:1:1 sdf 8:80  [active][ready] 
+sas-xen (3600a0b80002fcd18000014544a9166fb) dm-2 SUN,LCSM100_S
+[size=21G][features=0][hwhandler=0][rw]
+\_ round-robin 0 [prio=0][active]
+ \_ 1:0:0:2 sdd 8:48  [active][ready] 
+ \_ 1:0:1:2 sdg 8:96  [failed][faulty]
+quorum (3600a0b80002fcd18000014514a9165b4) dm-0 SUN,LCSM100_S
+[size=100M][features=0][hwhandler=0][rw]
+\_ round-robin 0 [prio=0][active]
+ \_ 1:0:0:0 sdb 8:16  [active][ready] 
+ \_ 1:0:1:0 sde 8:64  [failed][faulty]
+
+So, all paths on my second controller are failed/faulty....
+
+Here is my multipath.conf:
+
+defaults {
+	udev_dir		/dev
+	polling_interval 	10
+	selector		"round-robin 0"
+	path_grouping_policy	multibus
+	getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
+	prio_callout		/bin/true
+	path_checker		readsector0
+	rr_min_io		100
+	max_fds			8192
+	rr_weight		priorities
+	failback		immediate
+	no_path_retry		fail
+	user_friendly_names	yes
+}
+blacklist {
+	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+	devnode "^hd[a-z]"
+}
+multipaths {
+	multipath {
+		wwid
+3600a0b80002fcd18000014544a9166fb
+		alias			sas-xen
+		path_grouping_policy	group_by_prio
+		path_checker		tur
+		prio_callout		"/sbin/mpath_prio_tpc.static /dev/%n"
+	}
+	multipath {
+		wwid
+3600a0b80003abc5c00000b654a916617
+		alias			sas-mysql
+		path_grouping_policy	group_by_prio
+		path_checker		tur
+		prio_callout		"/sbin/mpath_prio_tpc.static /dev/%n"
+	}	
+	multipath {
+		wwid
+3600a0b80002fcd18000014514a9165b4
+		alias			quorum
+		path_grouping_policy	group_by_prio
+		path_checker		tur
+		prio_callout		"/sbin/mpath_prio_tpc.static /dev/%n"
+	}
+}
+
+
+
+I've also tried:
+	multipath {
+		wwid
+		alias
+		path_grouping_policy	failover
+		path_checker		readsector0
+		path_selector		"round-robin 0"
+		failback		immediate
+		no_path_retry		queue
+	}
+
+for those 3 wwid's...
+
+
+
+I'm kinda lost... I've found this, but it is for FC storage, and mine
+is SAS type...
+http://osdir.com/ml/linux.kernel.device-mapper.devel/2007-02/msg00033.html
+
+Thank you...
+
+
+
+
+
+
+
+-- 
+|    Jakov Sosic    |    ICQ: 28410271    |   PGP: 0x965CAE2D   |
+=================================================================
+| start fighting cancer -> http://www.worldcommunitygrid.org/   |
