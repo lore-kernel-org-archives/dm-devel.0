@@ -1,46 +1,75 @@
-From: Jakov Sosic <jakov.sosic@srce.hr>
-Subject: Re: Sun StorageTek 2530 and dm?
-Date: Sun, 23 Aug 2009 21:34:48 +0200
-Message-ID: <20090823213448.154d6cff@nb-jsosic>
-References: <20090823210536.4730636d@nb-jsosic>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH 12/24] io-controller: Wait for requests to complete from
+ last queue before new queue is scheduled
+Date: Mon, 24 Aug 2009 11:30:34 +0800
+Message-ID: <4A92095A.4070804@cn.fujitsu.com>
+References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com> <1250451046-9966-13-git-send-email-vgoyal@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090823210536.4730636d@nb-jsosic>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751409AbZHXDbc@vger.kernel.org>
+In-Reply-To: <1250451046-9966-13-git-send-email-vgoyal@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, ryov@valinux.co.jp, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, 23 Aug 2009 21:05:36 +0200
-Jakov Sosic <jakov.sosic@srce.hr> wrote:
+Vivek Goyal wrote:
+...
+>  void elv_schedule_dispatch(struct request_queue *q)
+> @@ -2260,6 +2264,17 @@ void *elv_select_ioq(struct request_queue *q, int force)
+>  	}
+>  
+>  expire:
+> +	if (efqd->fairness && !force && ioq && ioq->dispatched) {
+> +		/*
+> +		 * If there are request dispatched from this queue, don't
+> +		 * dispatch requests from new queue till all the requests from
+> +		 * this queue have completed.
+> +		 */
+> +		elv_log_ioq(efqd, ioq, "select: wait for requests to finish"
+> +				" disp=%lu", ioq->dispatched);
+> +		ioq = NULL;
+> +		goto keep_queue;
+> +	}
+>  	elv_slice_expired(q);
+>  new_queue:
+>  	ioq = elv_set_active_ioq(q, new_ioq);
+> @@ -2375,6 +2390,10 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
+>  				goto done;
+>  			}
+>  
+> +			/* Wait for requests to finish from this queue */
+> +			if (efqd->fairness && ioq->dispatched)
 
-> Hi!
-> 
-> I have StorageTek 2530 storage, which has two controllers. On host
-> side I have LSI LOGIC two SAS port cards. I've connected one cable
-> from LSI port1 to StorageTek ControllerA, and second SAS cable from
-> LSI port2 to StorageTek ControllerB.
+Since we have the routing to access to ioq->dispatched, why not to use it.
 
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ block/elevator-fq.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-OK. I've solved it - it seems that Linux host type in initiator
-configuration is not turning on AVT on controllers. Instead, I had to
-choose "Solaris (with Veritas DMP or other)", and now everything works!
-
-
-
-Thank you, and hope this helps to others too.
-
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index d04e925..f1e0de5 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -3120,7 +3120,7 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
+ 			}
+ 
+ 			/* Wait for requests to finish from this queue */
+-			if (efqd->fairness && ioq->dispatched)
++			if (efqd->fairness && elv_ioq_nr_dispatched(ioq))
+ 				goto done;
+ 
+ 			/* Expire the queue */
+@@ -3135,7 +3135,7 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
+ 		 * If this is the last queue in the group and we did not
+ 		 * decide to idle on queue, idle on group.
+ 		 */
+-		if (elv_iog_should_idle(ioq) && !ioq->dispatched
++		if (elv_iog_should_idle(ioq) && !elv_ioq_nr_dispatched(ioq)
+ 		    && !timer_pending(&efqd->idle_slice_timer)) {
+ 			/*
+ 			 * If queue has used up its slice, wait for the
 -- 
-|    Jakov Sosic    |    ICQ: 28410271    |   PGP: 0x965CAE2D   |
-=================================================================
-| start fighting cancer -> http://www.worldcommunitygrid.org/   |
+1.5.4.rc3
