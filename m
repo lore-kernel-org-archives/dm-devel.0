@@ -1,7 +1,7 @@
-From: Jakov Sosic <jakov.sosic@srce.hr>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 Subject: Re: Sun StorageTek 2530 and dm?
-Date: Tue, 25 Aug 2009 01:09:48 +0200
-Message-ID: <20090825010948.0b7fa554@pc-jsosic.srce.hr>
+Date: Mon, 24 Aug 2009 16:11:35 -0700
+Message-ID: <1251155495.24406.62.camel@chandra-ubuntu>
 References: <20090823210536.4730636d@nb-jsosic>
 	<20090823213448.154d6cff@nb-jsosic>
 	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
@@ -14,9 +14,10 @@ References: <20090823210536.4730636d@nb-jsosic>
 	<1251146674.24406.20.camel@chandra-ubuntu>
 	<20090824225324.1ee86d9f@pc-jsosic.srce.hr>
 	<Pine.LNX.4.64.0908241852270.21130@e-smith.charlieb.ott.istop.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <Pine.LNX.4.64.0908241852270.21130@e-smith.charlieb.ott.istop.com>
@@ -29,61 +30,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 24 Aug 2009 18:58:24 -0400 (EDT)
-Charlie Brady <charlieb-dm-devel@budge.apana.org.au> wrote:
 
-> Chandra says that the patch won't help you. Perhaps he can clarify.
-> My understanding is that if you configure multipath to use RDAC that
-> the driver does have to be patched so that the RDAC handler will be
-> used. I did find that to be the case with the StorageTek 2510
-> "LCMS100_I").
+On Mon, 2009-08-24 at 18:58 -0400, Charlie Brady wrote:
+> On Mon, 24 Aug 2009, Jakov Sosic wrote:
 > 
-> My understanding also is that RDAC is superior, so RDAC hander
-> support is desirable.
+> > On Mon, 24 Aug 2009 13:44:34 -0700
+> > Chandra Seetharaman <sekharan@us.ibm.com> wrote:
+> >
+> >> ok.. simple words; That patch won't help you.
+> >
+> > hm :( so defining "SUN" "LCMS100_S" won't help? Although in
+> > scsi_dh_rdac only "SUN" "LCMS100_F" is defined. And that stands for
+> > Fiber, while mine is SAS cabling...
+> 
+> Chandra says that the patch won't help you. Perhaps he can clarify. My 
+> understanding is that if you configure multipath to use RDAC that the 
+> driver does have to be patched so that the RDAC handler will be used. I 
+> did find that to be the case with the StorageTek 2510 "LCMS100_I").
 
-Is it enough to just add a new line to the list of the devices? For
-example:
+I didn't mean that scsi_dh_rdac module won't help him. It would.
 
-const struct scsi_dh_devlist rdac_dev_list[] = {
-        {"IBM", "1722"},
-        {"IBM", "1724"},
-        {"IBM", "1726"},
-        {"IBM", "1742"},
-        {"IBM", "1814"},
-        {"IBM", "1815"},
-        {"IBM", "1818"},
-        {"IBM", "3526"},
-        {"SGI", "TP9400"},
-        {"SGI", "TP9500"},
-        {"SGI", "IS"},
-        {"STK", "OPENstorage D280"},
-        {"SUN", "CSM200_R"},
-        {"SUN", "LCSM100_F"},
-        {"SUN", "LCSM100_I"},
-        {"SUN", "LCSM100_S"},
-        {NULL, NULL},
-};
+His device is being handled by the scsi_dh_rdac module once he added the
+stanza to /etc/multipath.conf file.
 
-?
+But, the problem he is seeing is different and adding this device to the
+devlist in scsi_dh_rdac wouldn't solve his problem.
 
+Hope it is clear now.
 
+> 
+> My understanding also is that RDAC is superior, so RDAC hander support is 
+> desirable.
+> 
+> > I've recompiled RPM with added patch, then extracted single module
+> > (scsi_dh_rdac.ko), and put it in place of the original module...
+> >
+> > FATAL: Error inserting scsi_dh_rdac
+> > (/lib/modules/2.6.18-128.4.1.el5xen/kernel/drivers/scsi/device_handler/scsi_dh_rdac.ko):
+> > Invalid module format
+> >
+> > I guess I'll have to build the whole kernel just because of this :(
+> 
+> No, it is certainly possible to build an RPM which contains just the 
+> module that you need. But you do need to build correctly.
+> 
+> I did make the suggestion earlier that it would be useful if the module 
+> could take load-time parameters to add support for additional devices. I 
+> think it was Chandra who agreed that was a good idea and he would add it 
+> to the TODO list, but neither he nor I has done that yet.
+> 
+> >> This is uncalled for!!
+> >
 > > Sorry, I'm easily flammable...
 > 
-> You would be wise to control your urges, if you wish people to help
-> you.
-
-Well you misunderstood me both - I was just bashing around, and nothing
-was said at neither yours neither his account. It was just because this
-project I'm working on is taking so so so long :( This is like 10th
-problem I've encountered that is out of my order, and the amount of
-user-hours has already 3-4x exceeded the amount of money project
-brings :( So I'm really really... angry :-/
-
-
--- 
-|    Jakov Sosic    |    ICQ: 28410271    |   PGP: 0x965CAE2D   |
-=================================================================
-| start fighting cancer -> http://www.worldcommunitygrid.org/   |
+> You would be wise to control your urges, if you wish people to help you.
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
