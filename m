@@ -1,75 +1,29 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH 12/24] io-controller: Wait for requests to complete from
- last queue before new queue is scheduled
-Date: Mon, 24 Aug 2009 11:30:34 +0800
-Message-ID: <4A92095A.4070804@cn.fujitsu.com>
-References: <1250451046-9966-1-git-send-email-vgoyal@redhat.com> <1250451046-9966-13-git-send-email-vgoyal@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [PATCH] Seperate read and write statistics of in_flight
+	requests
+Date: Mon, 24 Aug 2009 13:07:36 +0200
+Message-ID: <20090824110735.GI12579@kernel.dk>
+References: <200908241603.15158.knikanth@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751409AbZHXDbc@vger.kernel.org>
-In-Reply-To: <1250451046-9966-13-git-send-email-vgoyal@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752244AbZHXLHg@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <200908241603.15158.knikanth@suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, jens.axboe@oracle.com, ryov@valinux.co.jp, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com
+To: Nikanth Karthikesan <knikanth@suse.de>
+Cc: Mark Landis <mark.landis@teradata.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-...
->  void elv_schedule_dispatch(struct request_queue *q)
-> @@ -2260,6 +2264,17 @@ void *elv_select_ioq(struct request_queue *q, int force)
->  	}
->  
->  expire:
-> +	if (efqd->fairness && !force && ioq && ioq->dispatched) {
-> +		/*
-> +		 * If there are request dispatched from this queue, don't
-> +		 * dispatch requests from new queue till all the requests from
-> +		 * this queue have completed.
-> +		 */
-> +		elv_log_ioq(efqd, ioq, "select: wait for requests to finish"
-> +				" disp=%lu", ioq->dispatched);
-> +		ioq = NULL;
-> +		goto keep_queue;
-> +	}
->  	elv_slice_expired(q);
->  new_queue:
->  	ioq = elv_set_active_ioq(q, new_ioq);
-> @@ -2375,6 +2390,10 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
->  				goto done;
->  			}
->  
-> +			/* Wait for requests to finish from this queue */
-> +			if (efqd->fairness && ioq->dispatched)
+On Mon, Aug 24 2009, Nikanth Karthikesan wrote:
+> Currently, there is a single in_flight counter measuring the number of
+> requests in the request_queue. But some monitoring tools would like to know
+> how many read requests and write requests are in progress. Split the current
+> in_flight counter into two seperate counters for read and write.
+> 
+> This patch is based on a patch from Mark Landis <mark.landis@teradata.com>
 
-Since we have the routing to access to ioq->dispatched, why not to use it.
+With fear of stating the obvious, this changes the output format of the
+exported stat files. This can/will break existing tools.
 
-Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
----
- block/elevator-fq.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index d04e925..f1e0de5 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -3120,7 +3120,7 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 			}
- 
- 			/* Wait for requests to finish from this queue */
--			if (efqd->fairness && ioq->dispatched)
-+			if (efqd->fairness && elv_ioq_nr_dispatched(ioq))
- 				goto done;
- 
- 			/* Expire the queue */
-@@ -3135,7 +3135,7 @@ void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
- 		 * If this is the last queue in the group and we did not
- 		 * decide to idle on queue, idle on group.
- 		 */
--		if (elv_iog_should_idle(ioq) && !ioq->dispatched
-+		if (elv_iog_should_idle(ioq) && !elv_ioq_nr_dispatched(ioq)
- 		    && !timer_pending(&efqd->idle_slice_timer)) {
- 			/*
- 			 * If queue has used up its slice, wait for the
 -- 
-1.5.4.rc3
+Jens Axboe
