@@ -1,64 +1,68 @@
-From: Jakov Sosic <jakov.sosic@srce.hr>
-Subject: Re: Sun StorageTek 2530 and dm?
-Date: Mon, 24 Aug 2009 18:00:58 +0200
-Message-ID: <20090824180058.7cc4edcb@pc-jsosic.srce.hr>
-References: <20090823210536.4730636d@nb-jsosic>
-	<20090823213448.154d6cff@nb-jsosic>
-	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
-	<20090824174834.35a7038f@pc-jsosic.srce.hr>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: <Yanqing_Liu@Dell.com>
+Subject: [Patch] multipathing-tools: Add Dell 32xx/i support into hardware table
+Date: Mon, 24 Aug 2009 11:08:59 -0500
+Message-ID: <D00AA2C108EC0346B503219C7565A66FA2A926@ausx3mpc138.aus.amer.dell.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090824174834.35a7038f@pc-jsosic.srce.hr>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-class: urn:content-classes:message
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: Babu.Moger@lsi.com
 List-Id: dm-devel.ids
 
-On Mon, 24 Aug 2009 17:48:34 +0200
-Jakov Sosic <jakov.sosic@srce.hr> wrote:
+Hello all,
 
-I have this occuring in logs, I presume it is ok?
+This patch adds Dell MD32xx/i atorage arrays into hardwarae table for
+multipathing tool.
 
-Aug 24 17:58:43 node01 multipathd: sdc: readsector0 checker reports
-path is down
-Aug 24 17:58:43 node01 multipathd: checker failed path 8:32 in map
-sas-mysql
-Aug 24 17:58:43 node01 multipathd: sas-mysql: remaining active paths: 1
-Aug 24 17:58:43 node01 kernel: device-mapper: multipath: Failing path
-8:32.
-Aug 24 17:58:43 node01 multipathd: dm-1: add map (uevent)
-Aug 24 17:58:43 node01 multipathd: dm-1: devmap already registered
-Aug 24 17:58:53 node01 multipathd: sdc: readsector0 checker reports
-path is up
-Aug 24 17:58:53 node01 multipathd: 8:32: reinstated
-Aug 24 17:58:53 node01 multipathd: sas-mysql: remaining active paths: 2
-Aug 24 17:58:53 node01 multipathd: dm-1: add map (uevent)
-Aug 24 17:58:53 node01 multipathd: dm-1: devmap already registered 
+Signed-off-by: Yanqing Liu <Yanqing_Liu@Dell.com>
+Signed-off-by: Babu Moger  <Babu.Moger@lsi.com>
 
+---
 
-Because multipath -ll says:
-
-# multipath -ll sas-mysql
-sas-mysql (3600a0b80003abc5c00000b654a916617) dm-1 SUN,LCSM100_S
-[size=115G][features=0][hwhandler=0][rw]
-\_ round-robin 0 [prio=0][active]
- \_ 1:0:0:1  sdc 8:32  [active][ready]
- \_ 1:0:1:1  sdf 8:80  [active][ready]
-
-
-
-
--- 
-|    Jakov Sosic    |    ICQ: 28410271    |   PGP: 0x965CAE2D   |
-=================================================================
-| start fighting cancer -> http://www.worldcommunitygrid.org/   |
+--- multipath-tools/libmultipath/hwtable.c.orig	2009-08-05
+17:47:43.000000000 -0500
++++ multipath-tools/libmultipath/hwtable.c	2009-08-05
+17:54:11.000000000 -0500
+@@ -686,6 +686,38 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+ 	},
++	{
++		/* DELL MD32xx */
++		.vendor        = "DELL",
++		.product       = "MD32xx",
++		.getuid        = DEFAULT_GETUID,
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 15,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
++	{
++		/* DELL MD32xxi */
++		.vendor        = "DELL",
++		.product       = "MD32xxi",
++		.getuid        = DEFAULT_GETUID,
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 15,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
+ 	/*
+ 	 * NETAPP controller family
+ 	 *
