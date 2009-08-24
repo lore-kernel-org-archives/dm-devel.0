@@ -1,20 +1,21 @@
 From: Jakov Sosic <jakov.sosic@srce.hr>
 Subject: Re: Sun StorageTek 2530 and dm?
-Date: Mon, 24 Aug 2009 22:36:27 +0200
-Message-ID: <20090824223627.6e1a918c@pc-jsosic.srce.hr>
+Date: Mon, 24 Aug 2009 22:37:45 +0200
+Message-ID: <20090824223745.33425c32@pc-jsosic.srce.hr>
 References: <20090823210536.4730636d@nb-jsosic>
 	<20090823213448.154d6cff@nb-jsosic>
 	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
-	<20090824202915.27815959@pc-jsosic.srce.hr>
-	<1251139716.24406.4.camel@chandra-ubuntu>
-	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
-	<1251145497.24406.18.camel@chandra-ubuntu>
+	<20090824174834.35a7038f@pc-jsosic.srce.hr>
+	<20090824180058.7cc4edcb@pc-jsosic.srce.hr>
+	<1251139098.24406.1.camel@chandra-ubuntu>
+	<20090824205529.6b78aa3a@pc-jsosic.srce.hr>
+	<1251145456.24406.16.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251145497.24406.18.camel@chandra-ubuntu>
+In-Reply-To: <1251145456.24406.16.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,14 +28,16 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 24 Aug 2009 13:24:57 -0700
+On Mon, 24 Aug 2009 13:24:16 -0700
 Chandra Seetharaman <sekharan@us.ibm.com> wrote:
 
-> Have you verified there is no physical issues with the path ?
+> I do not think adding that patch would not resolve the=problem you are
+> seeing.
 
-Yes, because both paths are flopping, and other LUN's on the same
-path's are not flopping as much - but are not written as much. This is
-a quorum disk for RHEL cluster that is flopping constantly.
+Too many negations in one sentence - you got me scratching my head on
+this one :)
+
+Anyway, I'm building the f*** module :( I'm really pissed of :(
 
 
 
