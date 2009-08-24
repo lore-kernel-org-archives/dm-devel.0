@@ -1,7 +1,7 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
+From: Jakov Sosic <jakov.sosic@srce.hr>
 Subject: Re: Sun StorageTek 2530 and dm?
-Date: Mon, 24 Aug 2009 13:44:34 -0700
-Message-ID: <1251146674.24406.20.camel@chandra-ubuntu>
+Date: Mon, 24 Aug 2009 22:53:24 +0200
+Message-ID: <20090824225324.1ee86d9f@pc-jsosic.srce.hr>
 References: <20090823210536.4730636d@nb-jsosic>
 	<20090823213448.154d6cff@nb-jsosic>
 	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
@@ -11,13 +11,13 @@ References: <20090823210536.4730636d@nb-jsosic>
 	<20090824205529.6b78aa3a@pc-jsosic.srce.hr>
 	<1251145456.24406.16.camel@chandra-ubuntu>
 	<20090824223745.33425c32@pc-jsosic.srce.hr>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+	<1251146674.24406.20.camel@chandra-ubuntu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090824223745.33425c32@pc-jsosic.srce.hr>
+In-Reply-To: <1251146674.24406.20.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,26 +27,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Mon, 24 Aug 2009 13:44:34 -0700
+Chandra Seetharaman <sekharan@us.ibm.com> wrote:
 
-On Mon, 2009-08-24 at 22:37 +0200, Jakov Sosic wrote:
-> On Mon, 24 Aug 2009 13:24:16 -0700
-> Chandra Seetharaman <sekharan@us.ibm.com> wrote:
-> 
-> > I do not think adding that patch would not resolve the=problem you are
-> > seeing.
-> 
-> Too many negations in one sentence - you got me scratching my head on
-> this one :)
+> ok.. simple words; That patch won't help you.
 
-ok.. simple words; That patch won't help you.
-> 
-> Anyway, I'm building the f*** module :( I'm really pissed of :(
+hm :( so defining "SUN" "LCMS100_S" won't help? Although in
+scsi_dh_rdac only "SUN" "LCMS100_F" is defined. And that stands for
+Fiber, while mine is SAS cabling...
 
-This is uncalled for!!
+I've recompiled RPM with added patch, then extracted single module
+(scsi_dh_rdac.ko), and put it in place of the original module...
 
-> 
-> 
-> 
+FATAL: Error inserting scsi_dh_rdac
+(/lib/modules/2.6.18-128.4.1.el5xen/kernel/drivers/scsi/device_handler/scsi_dh_rdac.ko):
+Invalid module format
+
+I guess I'll have to build the whole kernel just because of this :(
+
+
+
+> This is uncalled for!!
+
+Sorry, I'm easily flammable...
+
+
+
+
+-- 
+|    Jakov Sosic    |    ICQ: 28410271    |   PGP: 0x965CAE2D   |
+=================================================================
+| start fighting cancer -> http://www.worldcommunitygrid.org/   |
