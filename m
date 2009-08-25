@@ -1,14 +1,30 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: New kernel shared snapshots
-Date: Tue, 25 Aug 2009 10:43:33 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0908251026430.19589@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0907270657080.527@hs20-bc2-1.build.redhat.com>
-	<805301CC-A5EA-4905-9867-0B4762B63D8E@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: Sun StorageTek 2530 and dm?
+Date: Tue, 25 Aug 2009 11:07:15 -0700
+Message-ID: <1251223635.2166.7.camel@chandra-ubuntu>
+References: <20090823210536.4730636d@nb-jsosic>
+	<20090823213448.154d6cff@nb-jsosic>
+	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
+	<20090824202915.27815959@pc-jsosic.srce.hr>
+	<1251139716.24406.4.camel@chandra-ubuntu>
+	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
+	<1251145497.24406.18.camel@chandra-ubuntu>
+	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
+	<1251147451.24406.28.camel@chandra-ubuntu>
+	<20090824231416.598ecc11@pc-jsosic.srce.hr>
+	<1251150116.24406.37.camel@chandra-ubuntu>
+	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
+	<1251155242.24406.57.camel@chandra-ubuntu>
+	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
+	<1251159536.2166.3.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908242335310.1267@e-smith.charlieb.ott.istop.com>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <805301CC-A5EA-4905-9867-0B4762B63D8E@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0908242335310.1267@e-smith.charlieb.ott.istop.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,106 +34,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Hopefully not :)... it has been fixed for a while.
 
-Thanks for review.
+Jacov, Can you send me the scsi_dh_rdac.c file. I want to make sure you
+are running the latest code.
 
-I fixed the "duplicate cache" thing (I use slub and it doesn't give this 
-error; slab does) and uploaded it on the same address 
-(http://people.redhat.com/mpatocka/patches/kernel/new-snapshot/devel/).
-
-I also fixed most of checkpatch.pl warnings, but not the one for 80-column 
-lines. I find it very unconvenient to constantly realign text for 80 
-columns, so I use unlimited line size --- if I am the person who will do 
-most development on the code, it is reasonable to code it the way that is 
-convenient for me.
-
-
-How do other people deal with this "80-column" requirement?
-
-I mean, if I have function
-static struct some_structure *some_function(int a, int b, int c,
-                                            int d, long long e,
-                                            struct blablabla *p)
-... and now I decide that I want to add "int x" before "int a" --- so 
-I have to realign all arguments ... and if I delete something, than again, 
-realign --- I find it very annoying, much more annoying than writing 
-everything just on one line and reading words split from the right to the 
-left.
-
-What the other developers do with it? Is there some vim editor option that 
-aligns it automatically? (set textwidth= auto-aligns text, but to the 
-left, it is unsuitable for C code, it also doesn't autorealign multiple 
-lines). Or do others developers align code manually and not find it 
-annoying?
-
-Mikulas
-
-
-
-On Wed, 19 Aug 2009, Jonathan Brassow wrote:
-
-> Thanks for the recent repost (18-Aug-2009) of your patches at:
-> http://people.redhat.com/mpatocka/patches/kernel/new-snapshot/devel
+On Mon, 2009-08-24 at 23:36 -0400, Charlie Brady wrote:
+> On Mon, 24 Aug 2009, Chandra Seetharaman wrote:
 > 
-> The interface seems to be in-line with what we want.  I noticed that you can't
-> have dm-snapshot and dm-multisnapshot loaded in the kernel at the same time
-> (kmem_cache_create: duplicate cache dm_snap_tracked_chunk -- in the module
-> init function).  You will also want to run your patches through
-> 'linux/scripts/checkpatch.pl'.  It mostly gets angry about the 80 characters /
-> line breakage, but there is some other things it catches.
+> > On Tue, 2009-08-25 at 01:13 +0200, Jakov Sosic wrote:
+> >> On Mon, 24 Aug 2009 16:07:22 -0700
+> >> Chandra Seetharaman <sekharan@us.ibm.com> wrote:
+> >>
+> >>> scsi_dh_rdac modules is insmodded by multipath when multipathd is
+> >>> started (by virtue of you having hardware_handler "1 rdac" in
+> >>> your /etc/muliutpath.conf file.
+> >>>
+> >>> So, it is effective when multipath starts.
+> >>
+> >> If it is effective, I don't need to patch it... Thank you very much.
+> >>
+> >> You were saying that you could provide some debugging code if I'm
+> >> interested? Well it seems that I don't have a choice... So please do
+> >> so :)
+> >>
+> > Basically I want to find out if we are getting and sense codes that we
+> > are not handling. To that effect, andd the following line at the top of
+> > the function rdac_check_sense()
+> > --------
+> > sdev_printk(KERN_ERR, sdev, "I/O returned with sense %02x/%02x/%02x",
+> >                      sense_hdr->sense_key, sense_hdr->asc, sense_hdr->ascq);
+> > ---------
+> >
+> > compile the module, run your tests and get me /var/log/messages.
 > 
-> brassow
+> Might this be the same issue as you worked through with Babu last October?
 > 
-> On Jul 27, 2009, at 6:24 AM, Mikulas Patocka wrote:
+> http://kerneltrap.org/mailarchive/linux-scsi/2008/10/24/3803244
 > 
-> > Hi
-> > 
-> > The new release of shared snapshots can be found here:
-> > http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
-> > 
-> > It has the interface we talked about on Linux Tag.
-> > So look at it as a last chance to review the interface. And also test it.
-> > 
-> > 
-> > To create a snapshot, you have to:
-> > - send a message
-> > - ask for status, get the snapshot id
-> > - suspend (this creates the snapshot, when the filesystem is quiescent)
-> > - resume
-> > 
-> > Then, you can attach the snapshots by loading "multisnap-snap" target.
-> > 
-> > If the table line contains argument "sync-snapshots", it synchronizes the
-> > snapshot list against what is given on the table --- i.e. creates
-> > snapshots that are on the table but are not in the store and deletes those
-> > that are not in the store but are on the table.
-> > 
-> > Other changes:
-> > - make more structures private (move them to dm-multisnap-private.h), so
-> > that ABI doesn't change if these are chaged.
-> > - snapshot IDs are treated as strings, not numbers.
-> > - metadata cache size can be specified as an argument to the "mikulas"
-> > exception store.
-> > - an argument "preserve-on-error" that says that on error or overflow,
-> > writes to the origin should be disabled.
-> > 	- if you don't specify this, the origin continues operation, but
-> > 	snapshots are irreversibly damaged by this (use for non-important
-> > 	snapshots such as backups)
-> > 	- if you specify this, the data are always preserved, the whole
-> > 	thing just halts on error (user when snapshots contain some
-> > 	important data.
-> > - fixed two bad bugs in dm-bufio.
-> > 
-> > 
-> > Known bugs:
-> > - that read-vs-realloc race (that I already fixed in the old snapshots a
-> > year ago) is present there. I'll fix it, but it isn't so trivial as in
-> > unshared snapshots.
-> > 
-> > 
-> > Mikulas
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
