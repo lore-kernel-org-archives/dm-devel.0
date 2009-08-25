@@ -1,68 +1,44 @@
-From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
-Subject: Re: Sun StorageTek 2530 and dm?
-Date: Mon, 24 Aug 2009 23:36:27 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0908242335310.1267@e-smith.charlieb.ott.istop.com>
-References: <20090823210536.4730636d@nb-jsosic>
-	<20090823213448.154d6cff@nb-jsosic>
-	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
-	<20090824202915.27815959@pc-jsosic.srce.hr>
-	<1251139716.24406.4.camel@chandra-ubuntu>
-	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
-	<1251145497.24406.18.camel@chandra-ubuntu>
-	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
-	<1251147451.24406.28.camel@chandra-ubuntu>
-	<20090824231416.598ecc11@pc-jsosic.srce.hr>
-	<1251150116.24406.37.camel@chandra-ubuntu>
-	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
-	<1251155242.24406.57.camel@chandra-ubuntu>
-	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
-	<1251159536.2166.3.camel@chandra-ubuntu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: [PATCH 0/3] scsi_dh_rdac: Adding more debug options for scsi
+ rdac handler
+Date: Tue, 25 Aug 2009 07:59:39 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474BFD9EB@cosmail01.lsi.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF474BFD90A@cosmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251159536.2166.3.camel@chandra-ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474BFD90A@cosmail01.lsi.com>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
+Cc: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, Chandra Seetharaman <sekharan@us.ibm.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-On Mon, 24 Aug 2009, Chandra Seetharaman wrote:
-
-> On Tue, 2009-08-25 at 01:13 +0200, Jakov Sosic wrote:
->> On Mon, 24 Aug 2009 16:07:22 -0700
->> Chandra Seetharaman <sekharan@us.ibm.com> wrote:
->>
->>> scsi_dh_rdac modules is insmodded by multipath when multipathd is
->>> started (by virtue of you having hardware_handler "1 rdac" in
->>> your /etc/muliutpath.conf file.
->>>
->>> So, it is effective when multipath starts.
->>
->> If it is effective, I don't need to patch it... Thank you very much.
->>
->> You were saying that you could provide some debugging code if I'm
->> interested? Well it seems that I don't have a choice... So please do
->> so :)
->>
-> Basically I want to find out if we are getting and sense codes that we
-> are not handling. To that effect, andd the following line at the top of
-> the function rdac_check_sense()
-> --------
-> sdev_printk(KERN_ERR, sdev, "I/O returned with sense %02x/%02x/%02x",
->                      sense_hdr->sense_key, sense_hdr->asc, sense_hdr->ascq);
-> ---------
->
-> compile the module, run your tests and get me /var/log/messages.
-
-Might this be the same issue as you worked through with Babu last October?
-
-http://kerneltrap.org/mailarchive/linux-scsi/2008/10/24/3803244
+Q29ycmVjdGluZyB0aGUgdHlwby4uIFRoaXMgY29kZSBoYXMgYmVlbiB0ZXN0ZWQgb24gMi42LjMx
+LXJjNS4NCg0KVGhhbmtzDQpCYWJ1IE1vZ2VyIA0KDQo+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0t
+LS0tDQo+IEZyb206IGxpbnV4LXNjc2ktb3duZXJAdmdlci5rZXJuZWwub3JnIFttYWlsdG86bGlu
+dXgtc2NzaS0NCj4gb3duZXJAdmdlci5rZXJuZWwub3JnXSBPbiBCZWhhbGYgT2YgTW9nZXIsIEJh
+YnUNCj4gU2VudDogTW9uZGF5LCBBdWd1c3QgMjQsIDIwMDkgNzowOSBQTQ0KPiBUbzogTGludXgg
+U0NTSSBNYWlsaW5nIGxpc3QNCj4gQ2M6IENoYXVoYW4sIFZpamF5OyBDaGFuZHJhIFNlZXRoYXJh
+bWFuOyBTdGFua2V5LCBSb2JlcnQ7IGRldmljZS1tYXBwZXINCj4gZGV2ZWxvcG1lbnQNCj4gU3Vi
+amVjdDogW1BBVENIIDAvM10gc2NzaV9kaF9yZGFjOiBBZGRpbmcgbW9yZSBkZWJ1ZyBvcHRpb25z
+IGZvciBzY3NpDQo+IHJkYWMgaGFuZGxlcg0KPiANCj4gSGkgQWxsLA0KPiBUaGVzZSBwYXRjaGVz
+IGFkZCBtb3JlIGRlYnVnZ2luZyBvcHRpb25zIHRvIHNjc2kgcmRhYyBkZXZpY2UgaGFuZGxlci4N
+Cj4gVGhpcyBjYW4gY29uc2lkZXJhYmx5IHJlZHVjZSB0aGUgdGltZSB0YWtlbiB0byBkZWJ1ZyBp
+c3N1ZXMgaW4gYmlnDQo+IGNvbmZpZ3VyYXRpb25zIGFuZCBhbHNvIHZlcnkgaGVscGZ1bCBpbiBh
+ZGRyZXNzaW5nIHRoZSBzdXBwb3J0IGlzc3Vlcy4NCj4gSGVyZSBhcmUgdGhlIHN1bW1hcnkgb2Yg
+Y2hhbmdlcy4NCj4gIC0gQWRkZWQgYSBiaXQgbWFzayAibW9kdWxlIHBhcmFtZXRlciIgcmRhY19s
+b2dnaW5nIHdpdGggMiBiaXRzIGZvcg0KPiAgICBlYWNoIHR5cGUgb2YgbG9nZ2luZy4NCj4gIC0g
+Y3VycmVudGx5IGRlZmluZWQgb25seSB0d28gdHlwZXMgb2YgbG9nZ2luZyhmYWlsb3ZlciBhbmQg
+c2Vuc2UNCj4gbG9nZ2luZykuDQo+ICAgIENhbiBiZSBlbmhhbmNlZCBsYXRlciBpZiByZXF1aXJl
+ZC4NCj4gIC0gQnkgZGVmYXVsdCBvbmx5IGZhaWxvdmVyIGxvZ2dpbmcgaXMgZW5hYmxlZCB3aGlj
+aCBpcyBlcXVpdmFsZW50IG9mDQo+ICAgIGN1cnJlbnQgbG9nZ2luZy4NCj4gDQo+ICBUaGFua3Mg
+dG8gQ2hhbmRyYSBTZWV0aGFyYW1hbiwgVmlqYXkgQ2hhdWhhbiBhbmQgQm9iIFN0YW5rZXkgZm9y
+IHRoZWlyDQo+IHVzZWZ1bCBjb21tZW50cy4NCj4gIFRoaXMgY29kZSBoYXMgYmVlbiB0ZXN0ZWQg
+b24gMi42LjI3LXJjNS4NCj4gDQo+IC1UaGFua3MNCj4gQmFidSBNb2dlcg0KPiANCj4gTu+/ve+/
+ve+/ve+/ve+/vXLvv73vv71577+977+977+9Yu+/vVjvv73vv73Hp3bvv71e77+9Kd66ey5u77+9
+K++/ve+/ve+/ve+/vXvvv73vv73vv70i77+9e2F577+9HcqH2pnvv70sag3vv73vv71m77+977+9
+77+9aO+/ve+/ve+/vXrvv70e77+9d++/ve+/ve+/vQ0KPiANCj4g77+977+977+9ajordu+/ve+/
+ve+/vXfvv71q77+9be+/ve+/ve+/ve+/vQ3vv73vv73vv73vv716Wivvv73vv73vv73vv73vv73d
+omoi77+977+9Ie+/vWkNCg==
