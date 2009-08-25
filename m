@@ -1,81 +1,65 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH 3/3] scsi_dh_rdac: Adding more debug options for scsi rdac
- handler
-Date: Mon, 24 Aug 2009 18:13:03 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474BFD910@cosmail01.lsi.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: Sun StorageTek 2530 and dm?
+Date: Mon, 24 Aug 2009 17:18:56 -0700
+Message-ID: <1251159536.2166.3.camel@chandra-ubuntu>
+References: <20090823210536.4730636d@nb-jsosic>
+	<20090823213448.154d6cff@nb-jsosic>
+	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
+	<20090824202915.27815959@pc-jsosic.srce.hr>
+	<1251139716.24406.4.camel@chandra-ubuntu>
+	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
+	<1251145497.24406.18.camel@chandra-ubuntu>
+	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
+	<1251147451.24406.28.camel@chandra-ubuntu>
+	<20090824231416.598ecc11@pc-jsosic.srce.hr>
+	<1251150116.24406.37.camel@chandra-ubuntu>
+	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
+	<1251155242.24406.57.camel@chandra-ubuntu>
+	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
-Cc: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, Chandra Seetharaman <sekharan@us.ibm.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, device-mapper development <dm-devel@redhat.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090825011340.423e3cf6@pc-jsosic.srce.hr>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-UGF0Y2ggdG8gYWRkIGRlYnVnZ2luZyBzdHVmZi4gDQotIEFkZGVkIGEgYml0IG1hc2sgIm1vZHVs
-ZSBwYXJhbWV0ZXIiIHJkYWNfbG9nZ2luZyB3aXRoIDIgYml0cyBmb3IgDQogICBlYWNoIHR5cGUg
-b2YgbG9nZ2luZy4NCi0gY3VycmVudGx5IGRlZmluZWQgb25seSB0d28gdHlwZXMgb2YgbG9nZ2lu
-ZyhmYWlsb3ZlciBhbmQgc2Vuc2UgbG9nZ2luZykuDQogICBDYW4gYmUgZW5oYW5jZWQgbGF0ZXIg
-aWYgcmVxdWlyZWQuDQotIEJ5IGRlZmF1bHQgb25seSBmYWlsb3ZlciBsb2dnaW5nIGlzIGVuYWJs
-ZWQgd2hpY2ggaXMgZXF1aXZhbGVudCBvZiANCiAgIGN1cnJlbnQgbG9nZ2luZy4NCg0KU2lnbmVk
-LW9mZi1ieTogQmFidSBNb2dlciA8YmFidS5tb2dlckBsc2kuY29tPg0KDQotLS0NCg0KLS0tIGxp
-bnV4LTIuNi4zMS1yYzUvZHJpdmVycy9zY3NpL2RldmljZV9oYW5kbGVyL3Njc2lfZGhfcmRhYy5j
-Lm9yaWcJMjAwOS0wOC0yNCAxMjozMzozNC4wMDAwMDAwMDAgLTA1MDANCisrKyBsaW51eC0yLjYu
-MzEtcmM1L2RyaXZlcnMvc2NzaS9kZXZpY2VfaGFuZGxlci9zY3NpX2RoX3JkYWMuYwkyMDA5LTA4
-LTI0IDEyOjM1OjQ5LjAwMDAwMDAwMCAtMDUwMA0KQEAgLTIwMSw2ICsyMDEsMzEgQEAgc3RhdGlj
-IGNvbnN0IGNoYXIgKmx1bl9zdGF0ZVtdID0NCiBzdGF0aWMgTElTVF9IRUFEKGN0bHJfbGlzdCk7
-DQogc3RhdGljIERFRklORV9TUElOTE9DSyhsaXN0X2xvY2spOw0KIA0KKy8qIA0KKyAqIG1vZHVs
-ZSBwYXJhbWV0ZXIgdG8gZW5hYmxlIHJkYWMgZGVidWcgbG9nZ2luZy4NCisgKiAyIGJpdHMgZm9y
-IGVhY2ggdHlwZSBvZiBsb2dnaW5nLCBvbmx5IHR3byB0eXBlcyBkZWZpbmVkIGZvciBub3cgDQor
-ICogQ2FuIGJlIGVuaGFuY2VkIGlmIHJlcXVpcmVkIGF0IGxhdGVyIHBvaW50DQorICovDQorc3Rh
-dGljIGludCByZGFjX2xvZ2dpbmcgPSAxOw0KK21vZHVsZV9wYXJhbShyZGFjX2xvZ2dpbmcsIGlu
-dCwgU19JUlVHT3xTX0lXVVNSKTsNCitNT0RVTEVfUEFSTV9ERVNDKHJkYWNfbG9nZ2luZywgIkEg
-Yml0IG1hc2sgb2YgcmRhYyBsb2dnaW5nIGxldmVscywgIg0KKwkJIkRlZmF1bHQgaXMgMSAtIGZh
-aWxvdmVyIGxvZ2dpbmcgZW5hYmxlZCwgIg0KKwkJInNldCBpdCB0byAweEYgdG8gZW5hYmxlIGFs
-bCB0aGUgbG9ncyIpOw0KKw0KKyNkZWZpbmUgUkRBQ19MT0dfRkFJTE9WRVIJMA0KKyNkZWZpbmUg
-UkRBQ19MT0dfU0VOU0UJCTINCisNCisjZGVmaW5lIFJEQUNfTE9HX0JJVFMJCTINCisNCisjZGVm
-aW5lIFJEQUNfTE9HX0xFVkVMKFNISUZUKSAgXA0KKyAgICAgICAgKChyZGFjX2xvZ2dpbmcgPj4g
-KFNISUZUKSkgJiAoKDEgPDwgKFJEQUNfTE9HX0JJVFMpKSAtIDEpKQ0KKw0KKyNkZWZpbmUgUkRB
-Q19MT0coU0hJRlQsIHNkZXYsIGYsIGFyZy4uLikgXA0KK2RvIHsgXA0KKwlpZiAodW5saWtlbHko
-UkRBQ19MT0dfTEVWRUwoU0hJRlQpKSkgXA0KKwkJc2Rldl9wcmludGsoS0VSTl9JTkZPLCBzZGV2
-LCBSREFDX05BTUUgIjogIiBmICJcbiIsICMjIGFyZyk7IFwNCit9IHdoaWxlICgwKTsNCisNCiBz
-dGF0aWMgaW5saW5lIHN0cnVjdCByZGFjX2RoX2RhdGEgKmdldF9yZGFjX2RhdGEoc3RydWN0IHNj
-c2lfZGV2aWNlICpzZGV2KQ0KIHsNCiAJc3RydWN0IHNjc2lfZGhfZGF0YSAqc2NzaV9kaF9kYXRh
-ID0gc2Rldi0+c2NzaV9kaF9kYXRhOw0KQEAgLTQ4MCw2ICs1MDUsNyBAQCBzdGF0aWMgaW50IG1v
-ZGVfc2VsZWN0X2hhbmRsZV9zZW5zZShzdHJ1DQogew0KIAlzdHJ1Y3Qgc2NzaV9zZW5zZV9oZHIg
-c2Vuc2VfaGRyOw0KIAlpbnQgZXJyID0gU0NTSV9ESF9JTywgcmV0Ow0KKwlzdHJ1Y3QgcmRhY19k
-aF9kYXRhICpoID0gZ2V0X3JkYWNfZGF0YShzZGV2KTsNCiANCiAJcmV0ID0gc2NzaV9ub3JtYWxp
-emVfc2Vuc2Uoc2Vuc2VidWYsIFNDU0lfU0VOU0VfQlVGRkVSU0laRSwgJnNlbnNlX2hkcik7DQog
-CWlmICghcmV0KQ0KQEAgLTUwOCwxMSArNTM0LDE0IEBAIHN0YXRpYyBpbnQgbW9kZV9zZWxlY3Rf
-aGFuZGxlX3NlbnNlKHN0cnUNCiAJCQllcnIgPSBTQ1NJX0RIX1JFVFJZOw0KIAkJYnJlYWs7DQog
-CWRlZmF1bHQ6DQotCQlzZGV2X3ByaW50ayhLRVJOX0lORk8sIHNkZXYsDQotCQkJICAgICJNT0RF
-X1NFTEVDVCBmYWlsZWQgd2l0aCBzZW5zZSAlMDJ4LyUwMngvJTAyeC5cbiIsDQotCQkJICAgIHNl
-bnNlX2hkci5zZW5zZV9rZXksIHNlbnNlX2hkci5hc2MsIHNlbnNlX2hkci5hc2NxKTsNCisJCWJy
-ZWFrOw0KIAl9DQogDQorCVJEQUNfTE9HKFJEQUNfTE9HX0ZBSUxPVkVSLCBzZGV2LCAiYXJyYXkg
-JXMsIGN0bHIgJWQsICINCisJCSJNT0RFX1NFTEVDVCByZXR1cm5lZCB3aXRoIHNlbnNlICUwMngv
-JTAyeC8lMDJ4IiwNCisJCShjaGFyICopIGgtPmN0bHItPmFycmF5X25hbWUsIGgtPmN0bHItPmlu
-ZGV4LA0KKwkJc2Vuc2VfaGRyLnNlbnNlX2tleSwgc2Vuc2VfaGRyLmFzYywgc2Vuc2VfaGRyLmFz
-Y3EpOw0KKw0KIGRvbmU6DQogCXJldHVybiBlcnI7DQogfQ0KQEAgLTUyOSw3ICs1NTgsOSBAQCBy
-ZXRyeToNCiAJaWYgKCFycSkNCiAJCWdvdG8gZG9uZTsNCiANCi0Jc2Rldl9wcmludGsoS0VSTl9J
-TkZPLCBzZGV2LCAiJXMgTU9ERV9TRUxFQ1QgY29tbWFuZC5cbiIsDQorCVJEQUNfTE9HKFJEQUNf
-TE9HX0ZBSUxPVkVSLCBzZGV2LCAiYXJyYXkgJXMsIGN0bHIgJWQsICINCisJCSIlcyBNT0RFX1NF
-TEVDVCBjb21tYW5kIiwNCisJCShjaGFyICopIGgtPmN0bHItPmFycmF5X25hbWUsIGgtPmN0bHIt
-PmluZGV4LA0KIAkJKHJldHJ5X2NudCA9PSBSREFDX1JFVFJZX0NPVU5UKSA/ICJxdWV1ZWluZyIg
-OiAicmV0cnlpbmciKTsNCiANCiAJZXJyID0gYmxrX2V4ZWN1dGVfcnEocSwgTlVMTCwgcnEsIDEp
-Ow0KQEAgLTUzOSw4ICs1NzAsMTIgQEAgcmV0cnk6DQogCQlpZiAoZXJyID09IFNDU0lfREhfUkVU
-UlkgJiYgcmV0cnlfY250LS0pDQogCQkJZ290byByZXRyeTsNCiAJfQ0KLQlpZiAoZXJyID09IFND
-U0lfREhfT0spDQorCWlmIChlcnIgPT0gU0NTSV9ESF9PSykgew0KIAkJaC0+c3RhdGUgPSBSREFD
-X1NUQVRFX0FDVElWRTsNCisJCVJEQUNfTE9HKFJEQUNfTE9HX0ZBSUxPVkVSLCBzZGV2LCAiYXJy
-YXkgJXMsIGN0bHIgJWQsICINCisJCQkJIk1PREVfU0VMRUNUIGNvbXBsZXRlZCIsDQorCQkJCShj
-aGFyICopIGgtPmN0bHItPmFycmF5X25hbWUsIGgtPmN0bHItPmluZGV4KTsNCisJfQ0KIA0KIGRv
-bmU6DQogCXJldHVybiBlcnI7DQpAQCAtNTc4LDYgKzYxMywxMiBAQCBzdGF0aWMgaW50IHJkYWNf
-Y2hlY2tfc2Vuc2Uoc3RydWN0IHNjc2lfDQogCQkJCXN0cnVjdCBzY3NpX3NlbnNlX2hkciAqc2Vu
-c2VfaGRyKQ0KIHsNCiAJc3RydWN0IHJkYWNfZGhfZGF0YSAqaCA9IGdldF9yZGFjX2RhdGEoc2Rl
-dik7DQorCQkNCisJUkRBQ19MT0coUkRBQ19MT0dfU0VOU0UsIHNkZXYsICJhcnJheSAlcywgY3Rs
-ciAlZCwgIg0KKwkJCSJJL08gcmV0dXJuZWQgd2l0aCBzZW5zZSAlMDJ4LyUwMngvJTAyeCIsDQor
-CQkJKGNoYXIgKikgaC0+Y3Rsci0+YXJyYXlfbmFtZSwgaC0+Y3Rsci0+aW5kZXgsDQorCQkJc2Vu
-c2VfaGRyLT5zZW5zZV9rZXksIHNlbnNlX2hkci0+YXNjLCBzZW5zZV9oZHItPmFzY3EpOw0KKw0K
-IAlzd2l0Y2ggKHNlbnNlX2hkci0+c2Vuc2Vfa2V5KSB7DQogCWNhc2UgTk9UX1JFQURZOg0KIAkJ
-aWYgKHNlbnNlX2hkci0+YXNjID09IDB4MDQgJiYgc2Vuc2VfaGRyLT5hc2NxID09IDB4MDEpDQoN
-Cg0K
+
+On Tue, 2009-08-25 at 01:13 +0200, Jakov Sosic wrote:
+> On Mon, 24 Aug 2009 16:07:22 -0700
+> Chandra Seetharaman <sekharan@us.ibm.com> wrote:
+> 
+> > scsi_dh_rdac modules is insmodded by multipath when multipathd is
+> > started (by virtue of you having hardware_handler "1 rdac" in
+> > your /etc/muliutpath.conf file.
+> > 
+> > So, it is effective when multipath starts.
+> 
+> If it is effective, I don't need to patch it... Thank you very much.
+> 
+> You were saying that you could provide some debugging code if I'm
+> interested? Well it seems that I don't have a choice... So please do
+> so :)
+> 
+Basically I want to find out if we are getting and sense codes that we
+are not handling. To that effect, andd the following line at the top of
+the function rdac_check_sense()
+--------
+sdev_printk(KERN_ERR, sdev, "I/O returned with sense %02x/%02x/%02x",
+                      sense_hdr->sense_key, sense_hdr->asc, sense_hdr->ascq);
+---------
+
+compile the module, run your tests and get me /var/log/messages.
+> 
+> 
