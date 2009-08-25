@@ -1,44 +1,123 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH 0/3] scsi_dh_rdac: Adding more debug options for scsi
- rdac handler
-Date: Tue, 25 Aug 2009 07:59:39 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474BFD9EB@cosmail01.lsi.com>
-References: <E463DF2B2E584B4A82673F53D62C2EF474BFD90A@cosmail01.lsi.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: New kernel shared snapshots
+Date: Tue, 25 Aug 2009 10:43:33 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0908251026430.19589@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0907270657080.527@hs20-bc2-1.build.redhat.com>
+	<805301CC-A5EA-4905-9867-0B4762B63D8E@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474BFD90A@cosmail01.lsi.com>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
-Cc: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, Chandra Seetharaman <sekharan@us.ibm.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <805301CC-A5EA-4905-9867-0B4762B63D8E@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jonathan Brassow <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Q29ycmVjdGluZyB0aGUgdHlwby4uIFRoaXMgY29kZSBoYXMgYmVlbiB0ZXN0ZWQgb24gMi42LjMx
-LXJjNS4NCg0KVGhhbmtzDQpCYWJ1IE1vZ2VyIA0KDQo+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0t
-LS0tDQo+IEZyb206IGxpbnV4LXNjc2ktb3duZXJAdmdlci5rZXJuZWwub3JnIFttYWlsdG86bGlu
-dXgtc2NzaS0NCj4gb3duZXJAdmdlci5rZXJuZWwub3JnXSBPbiBCZWhhbGYgT2YgTW9nZXIsIEJh
-YnUNCj4gU2VudDogTW9uZGF5LCBBdWd1c3QgMjQsIDIwMDkgNzowOSBQTQ0KPiBUbzogTGludXgg
-U0NTSSBNYWlsaW5nIGxpc3QNCj4gQ2M6IENoYXVoYW4sIFZpamF5OyBDaGFuZHJhIFNlZXRoYXJh
-bWFuOyBTdGFua2V5LCBSb2JlcnQ7IGRldmljZS1tYXBwZXINCj4gZGV2ZWxvcG1lbnQNCj4gU3Vi
-amVjdDogW1BBVENIIDAvM10gc2NzaV9kaF9yZGFjOiBBZGRpbmcgbW9yZSBkZWJ1ZyBvcHRpb25z
-IGZvciBzY3NpDQo+IHJkYWMgaGFuZGxlcg0KPiANCj4gSGkgQWxsLA0KPiBUaGVzZSBwYXRjaGVz
-IGFkZCBtb3JlIGRlYnVnZ2luZyBvcHRpb25zIHRvIHNjc2kgcmRhYyBkZXZpY2UgaGFuZGxlci4N
-Cj4gVGhpcyBjYW4gY29uc2lkZXJhYmx5IHJlZHVjZSB0aGUgdGltZSB0YWtlbiB0byBkZWJ1ZyBp
-c3N1ZXMgaW4gYmlnDQo+IGNvbmZpZ3VyYXRpb25zIGFuZCBhbHNvIHZlcnkgaGVscGZ1bCBpbiBh
-ZGRyZXNzaW5nIHRoZSBzdXBwb3J0IGlzc3Vlcy4NCj4gSGVyZSBhcmUgdGhlIHN1bW1hcnkgb2Yg
-Y2hhbmdlcy4NCj4gIC0gQWRkZWQgYSBiaXQgbWFzayAibW9kdWxlIHBhcmFtZXRlciIgcmRhY19s
-b2dnaW5nIHdpdGggMiBiaXRzIGZvcg0KPiAgICBlYWNoIHR5cGUgb2YgbG9nZ2luZy4NCj4gIC0g
-Y3VycmVudGx5IGRlZmluZWQgb25seSB0d28gdHlwZXMgb2YgbG9nZ2luZyhmYWlsb3ZlciBhbmQg
-c2Vuc2UNCj4gbG9nZ2luZykuDQo+ICAgIENhbiBiZSBlbmhhbmNlZCBsYXRlciBpZiByZXF1aXJl
-ZC4NCj4gIC0gQnkgZGVmYXVsdCBvbmx5IGZhaWxvdmVyIGxvZ2dpbmcgaXMgZW5hYmxlZCB3aGlj
-aCBpcyBlcXVpdmFsZW50IG9mDQo+ICAgIGN1cnJlbnQgbG9nZ2luZy4NCj4gDQo+ICBUaGFua3Mg
-dG8gQ2hhbmRyYSBTZWV0aGFyYW1hbiwgVmlqYXkgQ2hhdWhhbiBhbmQgQm9iIFN0YW5rZXkgZm9y
-IHRoZWlyDQo+IHVzZWZ1bCBjb21tZW50cy4NCj4gIFRoaXMgY29kZSBoYXMgYmVlbiB0ZXN0ZWQg
-b24gMi42LjI3LXJjNS4NCj4gDQo+IC1UaGFua3MNCj4gQmFidSBNb2dlcg0KPiANCj4gTu+/ve+/
-ve+/ve+/ve+/vXLvv73vv71577+977+977+9Yu+/vVjvv73vv73Hp3bvv71e77+9Kd66ey5u77+9
-K++/ve+/ve+/ve+/vXvvv73vv73vv70i77+9e2F577+9HcqH2pnvv70sag3vv73vv71m77+977+9
-77+9aO+/ve+/ve+/vXrvv70e77+9d++/ve+/ve+/vQ0KPiANCj4g77+977+977+9ajordu+/ve+/
-ve+/vXfvv71q77+9be+/ve+/ve+/ve+/vQ3vv73vv73vv73vv716Wivvv73vv73vv73vv73vv73d
-omoi77+977+9Ie+/vWkNCg==
+Hi
+
+Thanks for review.
+
+I fixed the "duplicate cache" thing (I use slub and it doesn't give this 
+error; slab does) and uploaded it on the same address 
+(http://people.redhat.com/mpatocka/patches/kernel/new-snapshot/devel/).
+
+I also fixed most of checkpatch.pl warnings, but not the one for 80-column 
+lines. I find it very unconvenient to constantly realign text for 80 
+columns, so I use unlimited line size --- if I am the person who will do 
+most development on the code, it is reasonable to code it the way that is 
+convenient for me.
+
+
+How do other people deal with this "80-column" requirement?
+
+I mean, if I have function
+static struct some_structure *some_function(int a, int b, int c,
+                                            int d, long long e,
+                                            struct blablabla *p)
+... and now I decide that I want to add "int x" before "int a" --- so 
+I have to realign all arguments ... and if I delete something, than again, 
+realign --- I find it very annoying, much more annoying than writing 
+everything just on one line and reading words split from the right to the 
+left.
+
+What the other developers do with it? Is there some vim editor option that 
+aligns it automatically? (set textwidth= auto-aligns text, but to the 
+left, it is unsuitable for C code, it also doesn't autorealign multiple 
+lines). Or do others developers align code manually and not find it 
+annoying?
+
+Mikulas
+
+
+
+On Wed, 19 Aug 2009, Jonathan Brassow wrote:
+
+> Thanks for the recent repost (18-Aug-2009) of your patches at:
+> http://people.redhat.com/mpatocka/patches/kernel/new-snapshot/devel
+> 
+> The interface seems to be in-line with what we want.  I noticed that you can't
+> have dm-snapshot and dm-multisnapshot loaded in the kernel at the same time
+> (kmem_cache_create: duplicate cache dm_snap_tracked_chunk -- in the module
+> init function).  You will also want to run your patches through
+> 'linux/scripts/checkpatch.pl'.  It mostly gets angry about the 80 characters /
+> line breakage, but there is some other things it catches.
+> 
+> brassow
+> 
+> On Jul 27, 2009, at 6:24 AM, Mikulas Patocka wrote:
+> 
+> > Hi
+> > 
+> > The new release of shared snapshots can be found here:
+> > http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
+> > 
+> > It has the interface we talked about on Linux Tag.
+> > So look at it as a last chance to review the interface. And also test it.
+> > 
+> > 
+> > To create a snapshot, you have to:
+> > - send a message
+> > - ask for status, get the snapshot id
+> > - suspend (this creates the snapshot, when the filesystem is quiescent)
+> > - resume
+> > 
+> > Then, you can attach the snapshots by loading "multisnap-snap" target.
+> > 
+> > If the table line contains argument "sync-snapshots", it synchronizes the
+> > snapshot list against what is given on the table --- i.e. creates
+> > snapshots that are on the table but are not in the store and deletes those
+> > that are not in the store but are on the table.
+> > 
+> > Other changes:
+> > - make more structures private (move them to dm-multisnap-private.h), so
+> > that ABI doesn't change if these are chaged.
+> > - snapshot IDs are treated as strings, not numbers.
+> > - metadata cache size can be specified as an argument to the "mikulas"
+> > exception store.
+> > - an argument "preserve-on-error" that says that on error or overflow,
+> > writes to the origin should be disabled.
+> > 	- if you don't specify this, the origin continues operation, but
+> > 	snapshots are irreversibly damaged by this (use for non-important
+> > 	snapshots such as backups)
+> > 	- if you specify this, the data are always preserved, the whole
+> > 	thing just halts on error (user when snapshots contain some
+> > 	important data.
+> > - fixed two bad bugs in dm-bufio.
+> > 
+> > 
+> > Known bugs:
+> > - that read-vs-realloc race (that I already fixed in the old snapshots a
+> > year ago) is present there. I'll fix it, but it isn't so trivial as in
+> > unshared snapshots.
+> > 
+> > 
+> > Mikulas
