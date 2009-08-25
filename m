@@ -1,27 +1,27 @@
 From: Jakov Sosic <jakov.sosic@srce.hr>
 Subject: Re: Sun StorageTek 2530 and dm?
-Date: Tue, 25 Aug 2009 01:22:03 +0200
-Message-ID: <20090825012203.07a1be4f@pc-jsosic.srce.hr>
+Date: Tue, 25 Aug 2009 02:06:19 +0200
+Message-ID: <20090825020619.654f7fce@pc-jsosic.srce.hr>
 References: <20090823210536.4730636d@nb-jsosic>
 	<20090823213448.154d6cff@nb-jsosic>
 	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
-	<20090824174834.35a7038f@pc-jsosic.srce.hr>
-	<20090824180058.7cc4edcb@pc-jsosic.srce.hr>
-	<1251139098.24406.1.camel@chandra-ubuntu>
-	<20090824205529.6b78aa3a@pc-jsosic.srce.hr>
-	<1251145456.24406.16.camel@chandra-ubuntu>
-	<20090824223745.33425c32@pc-jsosic.srce.hr>
-	<1251146674.24406.20.camel@chandra-ubuntu>
-	<20090824225324.1ee86d9f@pc-jsosic.srce.hr>
-	<Pine.LNX.4.64.0908241852270.21130@e-smith.charlieb.ott.istop.com>
-	<20090825010948.0b7fa554@pc-jsosic.srce.hr>
-	<1251155895.24406.63.camel@chandra-ubuntu>
+	<20090824202915.27815959@pc-jsosic.srce.hr>
+	<1251139716.24406.4.camel@chandra-ubuntu>
+	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
+	<1251145497.24406.18.camel@chandra-ubuntu>
+	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
+	<1251147451.24406.28.camel@chandra-ubuntu>
+	<20090824231416.598ecc11@pc-jsosic.srce.hr>
+	<1251150116.24406.37.camel@chandra-ubuntu>
+	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
+	<1251155242.24406.57.camel@chandra-ubuntu>
+	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251155895.24406.63.camel@chandra-ubuntu>
+In-Reply-To: <20090825011340.423e3cf6@pc-jsosic.srce.hr>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -34,23 +34,24 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 24 Aug 2009 16:18:15 -0700
-Chandra Seetharaman <sekharan@us.ibm.com> wrote:
+On Tue, 25 Aug 2009 01:13:40 +0200
+Jakov Sosic <jakov.sosic@srce.hr> wrote:
 
-> yup. But, I mentioned earlier, this _won't_ solve the problem you are
-> seeing.
+> You were saying that you could provide some debugging code if I'm
+> interested? Well it seems that I don't have a choice... So please do
+> so :)
 
-Thank you... I'll try other things then.
+Also, I've found that Sun provides RDAC driver for 2.6 kernels... I
+brings whole framework, with config files and additional commands...
 
-The interesting part is, while I was connected only to one controller,
-and didn't have the multipath, there wasn't any dropouts of that single
-path.
+I don't like the idea, but because neither the AVT neither the RDAC on
+dm-multipath are working correctly, I'll try the Sun RDAC solution
+tommorow and post the results.
 
-Now, with multipath, being AVT or RDAC, it works much worse... I just
-don't get it, why all those flopping is going around :(
+Here is the explanation (and link to source is within the document):
+http://dlc.sun.com/pdf/820-4738-12/820-4738-12.pdf
 
-And I waited a month to get new SAS cables shipped in - so that a
-SAS controler would't be a SPOF in my RHCS installation :)
+
 
 
 -- 
