@@ -1,84 +1,119 @@
-From: Jakov Sosic <jakov.sosic@srce.hr>
-Subject: Re: Sun StorageTek 2530 and dm?
-Date: Tue, 25 Aug 2009 23:09:40 +0200
-Message-ID: <20090825230940.4bf67ba0@nb-jsosic>
-References: <20090823210536.4730636d@nb-jsosic>
-	<20090823213448.154d6cff@nb-jsosic>
-	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
-	<20090824202915.27815959@pc-jsosic.srce.hr>
-	<1251139716.24406.4.camel@chandra-ubuntu>
-	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
-	<1251145497.24406.18.camel@chandra-ubuntu>
-	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
-	<1251147451.24406.28.camel@chandra-ubuntu>
-	<20090824231416.598ecc11@pc-jsosic.srce.hr>
-	<1251150116.24406.37.camel@chandra-ubuntu>
-	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
-	<1251155242.24406.57.camel@chandra-ubuntu>
-	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
-	<1251159536.2166.3.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908242335310.1267@e-smith.charlieb.ott.istop.com>
-	<1251223635.2166.7.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908251421010.21130@e-smith.charlieb.ott.istop.com>
-	<1251230131.2166.13.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908251634110.21130@e-smith.charlieb.ott.istop.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH 1/3] scsi_dh_rdac: Adding more debug options for scsi
+	rdac handler
+Date: Tue, 25 Aug 2009 16:50:19 -0700
+Message-ID: <1251244219.2166.26.camel@chandra-ubuntu>
+References: <E463DF2B2E584B4A82673F53D62C2EF474BFD90E@cosmail01.lsi.com>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0908251634110.21130@e-smith.charlieb.ott.istop.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474BFD90E@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 25 Aug 2009 16:51:34 -0400 (EDT)
-Charlie Brady <charlieb-dm-devel@budge.apana.org.au> wrote:
 
-> I did look at the RHEL 5.4 beta, and there are other updates
-> mentioned in changelog there:
-> 
-> * Wed May 20 2009 Don Zickus <dzickus@redhat.com> [2.6.18-150.el5]
-> ...
-> - [scsi] Retry mode select in rdac device handler (Jesse Larrew )
-> [489582] ...
-> * Fri May 01 2009 Don Zickus <dzickus@redhat.com> [2.6.18-143.el5]
-> ...
-> - [scsi] add md3000 and md3000i entries to rdac_dev_list (John
-> Feeney ) [487293]
-> ...
-> 
-> https://bugzilla.redhat.com/show_bug.cgi?id=487293
-> 
-> Jacov, you might want to look at the above bugzilla. There is some 
-> discussion of failover behaviour which might be useful to you.
+On Mon, 2009-08-24 at 18:11 -0600, Moger, Babu wrote:
+> Adding the code to read the debug information during activate. This p=
+atch collects
+>  the information about storage and controllers during rdac_activate.
+> =20
+> Signed-off-by: Babu Moger <babu.moger@lsi.com>
+>=20
+> ---
+> --- linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	=
+2009-08-24 11:54:41.000000000 -0500
+> +++ linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-=
+08-24 12:08:33.000000000 -0500
+> @@ -112,6 +112,7 @@ struct c9_inquiry {
+> =20
+>  #define SUBSYS_ID_LEN	16
+>  #define SLOT_ID_LEN	2
+> +#define ARRAY_LABEL_LEN	31
+> =20
+>  struct c4_inquiry {
+>  	u8	peripheral_info;
+> @@ -135,6 +136,8 @@ struct rdac_controller {
+>  		struct rdac_pg_legacy legacy;
+>  		struct rdac_pg_expanded expanded;
+>  	} mode_select;
+> +	u8			index;
+> +	u8			array_name[ARRAY_LABEL_LEN];
+cosmetic... align with the above code (peripheral_info)
 
-Thank you, I'll take a look...
+>  };
+>  struct c8_inquiry {
+>  	u8	peripheral_info;
+> @@ -324,6 +327,13 @@ static struct rdac_controller *get_contr
+>  	/* initialize fields of controller */
+>  	memcpy(ctlr->subsys_id, subsys_id, SUBSYS_ID_LEN);
+>  	memcpy(ctlr->slot_id, slot_id, SLOT_ID_LEN);
+> +
+> +	/* update the controller index */
+> +	if (slot_id[1] =3D=3D 0x31)
+> +		ctlr->index =3D 0;
+> +	else
+> +		ctlr->index =3D 1;
+> +
+>  	kref_init(&ctlr->kref);
+>  	ctlr->use_ms10 =3D -1;
+>  	list_add(&ctlr->node, &ctlr_list);
+> @@ -381,6 +391,26 @@ static int get_lun(struct scsi_device *s
+>  	return err;
+>  }
+> =20
+> +static int get_array_name(struct scsi_device *sdev, struct rdac_dh_d=
+ata *h)
+> +{
+> +	int err, i;
+> +	struct c8_inquiry *inqp;
+> +
+> +	err =3D submit_inquiry(sdev, 0xC8, sizeof(struct c8_inquiry), h);
+> +	if (err =3D=3D SCSI_DH_OK) {
+> +		inqp =3D &h->inq.c8;
+> +		if (inqp->page_code !=3D 0xc8)
+> +			return SCSI_DH_NOSYS;
+> +
+> +		for(i=3D0; i<30; ++i)
 
+Use the macro name above instead of literal "30"
 
-OK, I've noticed the following:
+> +			h->ctlr->array_name[i] =3D inqp->array_user_label[(2*i)+1];
+> +
+> +		h->ctlr->array_name[30] =3D '\0';
 
-Feb 25 11:29:55 rhel5r300 multipathd: 8:16: reinstated
-Feb 25 11:29:55 rhel5r300 multipathd: 8:32: reinstated
-Feb 25 11:29:55 rhel5r300 multipathd: 8:48: reinstated
-Feb 25 11:29:55 rhel5r300 multipathd: 8:64: reinstated
+Use the macro name above instead of literal "30"
 
+> +	}
+> +		=09
+> +	return err;
+> +}
+> +
+>  static int check_ownership(struct scsi_device *sdev, struct rdac_dh_=
+data *h)
+>  {
+>  	int err;
+> @@ -529,6 +559,10 @@ static int rdac_activate(struct scsi_dev
+>  		err =3D initialize_controller(sdev, h);
+>  		if (err !=3D SCSI_DH_OK)
+>  			goto done;
+> +
+> +		err =3D get_array_name(sdev, h);
+> +		if (err !=3D SCSI_DH_OK)
+> +			goto done;
+>  	}
+> =20
+>  	if (h->ctlr->use_ms10 =3D=3D -1) {
+>=20
+>=20
+> &#0;NrybX=C7=A7v^)=DE=BA{.n+{"{ay=1D=CA=87=DA=99,j=07fhz=1Ew=0Cj:+vwj=
+m=07zZ+=DD=A2j"!
 
-How often are these messages supposed to repeat? Because I've succeded
-with one combination of HostType in StorageTek 2530 configuration for
-initiators, and RDAC on the Linux side. But I had messages like these
-every few minutes in /var/log/messages.
-
-
--- 
-|    Jakov Sosic    |    ICQ: 28410271    |   PGP: 0x965CAE2D   |
-=================================================================
-| start fighting cancer -> http://www.worldcommunitygrid.org/   |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
