@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] DM Snapshot - minor style fixes
-Date: Wed, 26 Aug 2009 10:16:52 -0500
-Message-ID: <1251299812.19258.3.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH] DM snapshot missing failure condition back-out
+Date: Wed, 26 Aug 2009 10:19:38 -0500
+Message-ID: <1251299978.19258.6.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,83 +19,32 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Style fixes only.
+While initializing the snapshot module, if we fail to register
+the snapshot target then we must back-out the exception store
+module initialization.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-snap-persistent.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-persistent.c
-+++ linux-2.6/drivers/md/dm-snap-persistent.c
-@@ -519,7 +519,7 @@ static int persistent_read_metadata(stru
- 	ps->exceptions_per_area = (ps->store->chunk_size << SECTOR_SHIFT) /
- 				  sizeof(struct disk_exception);
- 	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
--			sizeof(*ps->callbacks));
-+				   sizeof(*ps->callbacks));
- 	if (!ps->callbacks)
- 		return -ENOMEM;
- 
-@@ -630,7 +630,7 @@ static void persistent_commit_exception(
- 	 * If we completely filled the current area, then wipe the next one.
- 	 */
- 	if ((ps->current_committed == ps->exceptions_per_area) &&
--	     zero_disk_area(ps, ps->current_area + 1))
-+	    zero_disk_area(ps, ps->current_area + 1))
- 		ps->valid = 0;
- 
- 	/*
 Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.c
 +++ linux-2.6/drivers/md/dm-snap.c
-@@ -364,7 +364,8 @@ static int init_exception_table(struct e
- 	return 0;
- }
- 
--static void exit_exception_table(struct exception_table *et, struct kmem_cache *mem)
-+static void exit_exception_table(struct exception_table *et,
-+				 struct kmem_cache *mem)
- {
- 	struct list_head *slot;
- 	struct dm_snap_exception *ex, *next;
-@@ -668,8 +669,7 @@ static int snapshot_ctr(struct dm_target
- 
- 	s = kmalloc(sizeof(*s), GFP_KERNEL);
- 	if (!s) {
--		ti->error = "Cannot allocate snapshot context private "
--		    "structure";
-+		ti->error = "Cannot allocate snapshot private structure";
- 		r = -ENOMEM;
- 		goto bad_snap;
- 	}
-@@ -960,7 +960,7 @@ static void pending_complete(struct dm_s
- 	 */
- 	insert_completed_exception(s, e);
- 
-- out:
-+out:
- 	remove_exception(&pe->e);
- 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
- 	origin_bios = put_pending_exception(pe);
-@@ -1023,7 +1023,7 @@ static void start_copy(struct dm_snap_pe
- 
- 	/* Hand over to kcopyd */
- 	dm_kcopyd_copy(s->kcopyd_client,
--		    &src, 1, &dest, 0, copy_callback, pe);
-+		       &src, 1, &dest, 0, copy_callback, pe);
- }
- 
- static struct dm_snap_pending_exception *
-@@ -1173,9 +1173,9 @@ static int snapshot_map(struct dm_target
- 		map_context->ptr = track_chunk(s, chunk);
+@@ -1446,7 +1446,7 @@ static int __init dm_snapshot_init(void)
+ 	r = dm_register_target(&snapshot_target);
+ 	if (r) {
+ 		DMERR("snapshot target register failed %d", r);
+-		return r;
++		goto bad_register_target;
  	}
  
-- out_unlock:
-+out_unlock:
- 	up_write(&s->lock);
-- out:
-+out:
+ 	r = dm_register_target(&origin_target);
+@@ -1503,6 +1503,9 @@ bad2:
+ 	dm_unregister_target(&origin_target);
+ bad1:
+ 	dm_unregister_target(&snapshot_target);
++
++bad_register_target:
++	dm_exception_store_exit();
  	return r;
  }
  
