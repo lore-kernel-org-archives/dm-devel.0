@@ -1,12 +1,12 @@
-From: Florian Zumbiehl <florz@florz.de>
-Subject: [PATCH] umask in device node creation error handling
-Date: Wed, 26 Aug 2009 17:51:17 +0200
-Message-ID: <20090826155117.GU2717@florz.florz.dyndns.org>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] dm snapshot: remove redundant function
+Date: Wed, 26 Aug 2009 11:01:17 -0500
+Message-ID: <1251302477.19258.9.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,21 +19,58 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+Consolidate the insert_*exception functions.  'insert_completed_exception'
+already contains all the logic to handle 'insert_exception', so remove
+redundant function.
 
-I guess that the diff is pretty much self-explaining ...
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-diff --git a/libdm/libdm-common.c b/libdm/libdm-common.c
-index b7782a7..554c1a4 100644
---- a/libdm/libdm-common.c
-+++ b/libdm/libdm-common.c
-@@ -360,6 +360,7 @@ static int _add_dev_node(const char *dev_name, uint32_t major, uint32_t minor,
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -386,13 +386,6 @@ static uint32_t exception_hash(struct ex
+ 	return (chunk >> et->hash_shift) & et->hash_mask;
+ }
  
- 	old_mask = umask(0);
- 	if (mknod(path, S_IFBLK | mode, dev) < 0) {
-+		umask(old_mask);
- 		log_error("Unable to make device node for '%s'", dev_name);
- 		return 0;
- 	}
-
-Florian
+-static void insert_exception(struct exception_table *eh,
+-			     struct dm_snap_exception *e)
+-{
+-	struct list_head *l = &eh->table[exception_hash(eh, e->old_chunk)];
+-	list_add(&e->hash_list, l);
+-}
+-
+ static void remove_exception(struct dm_snap_exception *e)
+ {
+ 	list_del(&e->hash_list);
+@@ -453,10 +446,9 @@ static void free_pending_exception(struc
+ 	atomic_dec(&s->pending_exceptions_count);
+ }
+ 
+-static void insert_completed_exception(struct dm_snapshot *s,
+-				       struct dm_snap_exception *new_e)
++static void insert_exception(struct exception_table *eh,
++			     struct dm_snap_exception *new_e)
+ {
+-	struct exception_table *eh = &s->complete;
+ 	struct list_head *l;
+ 	struct dm_snap_exception *e = NULL;
+ 
+@@ -514,7 +506,7 @@ static int dm_add_exception(void *contex
+ 	/* Consecutive_count is implicitly initialised to zero */
+ 	e->new_chunk = new;
+ 
+-	insert_completed_exception(s, e);
++	insert_exception(&s->complete, e);
+ 
+ 	return 0;
+ }
+@@ -894,7 +886,7 @@ static void pending_complete(struct dm_s
+ 	 * Add a proper exception, and remove the
+ 	 * in-flight exception from the list.
+ 	 */
+-	insert_completed_exception(s, e);
++	insert_exception(&s->complete, e);
+ 
+ out:
+ 	remove_exception(&pe->e);
