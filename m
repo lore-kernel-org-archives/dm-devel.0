@@ -1,12 +1,12 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] DM snapshot missing failure condition back-out
-Date: Wed, 26 Aug 2009 10:19:38 -0500
-Message-ID: <1251299978.19258.6.camel@hydrogen.msp.redhat.com>
+From: Florian Zumbiehl <florz@florz.de>
+Subject: [PATCH] umask in device node creation error handling
+Date: Wed, 26 Aug 2009 17:51:17 +0200
+Message-ID: <20090826155117.GU2717@florz.florz.dyndns.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +19,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-While initializing the snapshot module, if we fail to register
-the snapshot target then we must back-out the exception store
-module initialization.
+Hi,
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+I guess that the diff is pretty much self-explaining ...
 
-Index: linux-2.6/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -1446,7 +1446,7 @@ static int __init dm_snapshot_init(void)
- 	r = dm_register_target(&snapshot_target);
- 	if (r) {
- 		DMERR("snapshot target register failed %d", r);
--		return r;
-+		goto bad_register_target;
+diff --git a/libdm/libdm-common.c b/libdm/libdm-common.c
+index b7782a7..554c1a4 100644
+--- a/libdm/libdm-common.c
++++ b/libdm/libdm-common.c
+@@ -360,6 +360,7 @@ static int _add_dev_node(const char *dev_name, uint32_t major, uint32_t minor,
+ 
+ 	old_mask = umask(0);
+ 	if (mknod(path, S_IFBLK | mode, dev) < 0) {
++		umask(old_mask);
+ 		log_error("Unable to make device node for '%s'", dev_name);
+ 		return 0;
  	}
- 
- 	r = dm_register_target(&origin_target);
-@@ -1503,6 +1503,9 @@ bad2:
- 	dm_unregister_target(&origin_target);
- bad1:
- 	dm_unregister_target(&snapshot_target);
-+
-+bad_register_target:
-+	dm_exception_store_exit();
- 	return r;
- }
- 
+
+Florian
