@@ -1,14 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm snapshot: implement .iterate_devices
-Date: Wed, 26 Aug 2009 15:50:45 +0100
-Message-ID: <20090826145045.GH643@agk-dp.fab.redhat.com>
-References: <1251007867-13004-1-git-send-email-snitzer@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] DM Snapshot - minor style fixes
+Date: Wed, 26 Aug 2009 10:16:52 -0500
+Message-ID: <1251299812.19258.3.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1251007867-13004-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,37 +16,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Aug 23, 2009 at 02:11:07AM -0400, Mike Snitzer wrote:
-> This patch implements .iterate_devices for the origin and snapshot
-> targets.  dm-snapshot's lack of .iterate_devices resulted in the
-> inability to properly establish queue_limits for both targets.  
-> With 4K sector drives: an unfortunate side-effect of not establishing
-> proper limits in either targets' DM device was that IO to the devices
-> would fail even though both had been created without error.
-> Commit af4874e03ed82f050d5872d8c39ce64bf16b5c38 should have implemented
-> .iterate_devices for dm-snap.c's origin and snapshot targets.
+Style fixes only.
+
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6/drivers/md/dm-snap-persistent.c
+@@ -519,7 +519,7 @@ static int persistent_read_metadata(stru
+ 	ps->exceptions_per_area = (ps->store->chunk_size << SECTOR_SHIFT) /
+ 				  sizeof(struct disk_exception);
+ 	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
+-			sizeof(*ps->callbacks));
++				   sizeof(*ps->callbacks));
+ 	if (!ps->callbacks)
+ 		return -ENOMEM;
  
-> +static int snapshot_iterate_devices(struct dm_target *ti,
-> +				    iterate_devices_callout_fn fn, void *data)
-> +{
-> +	struct dm_snapshot *snap = ti->private;
-> +
-> +	return fn(ti, snap->origin, 0, ti->len, data);
-> +}
-
-> +static int origin_iterate_devices(struct dm_target *ti,
-> +				  iterate_devices_callout_fn fn, void *data)
-> +{
-> +	struct dm_dev *dev = ti->private;
-> +
-> +	return fn(ti, dev, 0, ti->len, data);
-> +}
-
-Why are these both seemingly the same?  Is one sufficient?
-And where are the characteristics of the 'cow' device taken into account?
-
-Alasdair
+@@ -630,7 +630,7 @@ static void persistent_commit_exception(
+ 	 * If we completely filled the current area, then wipe the next one.
+ 	 */
+ 	if ((ps->current_committed == ps->exceptions_per_area) &&
+-	     zero_disk_area(ps, ps->current_area + 1))
++	    zero_disk_area(ps, ps->current_area + 1))
+ 		ps->valid = 0;
+ 
+ 	/*
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -364,7 +364,8 @@ static int init_exception_table(struct e
+ 	return 0;
+ }
+ 
+-static void exit_exception_table(struct exception_table *et, struct kmem_cache *mem)
++static void exit_exception_table(struct exception_table *et,
++				 struct kmem_cache *mem)
+ {
+ 	struct list_head *slot;
+ 	struct dm_snap_exception *ex, *next;
+@@ -668,8 +669,7 @@ static int snapshot_ctr(struct dm_target
+ 
+ 	s = kmalloc(sizeof(*s), GFP_KERNEL);
+ 	if (!s) {
+-		ti->error = "Cannot allocate snapshot context private "
+-		    "structure";
++		ti->error = "Cannot allocate snapshot private structure";
+ 		r = -ENOMEM;
+ 		goto bad_snap;
+ 	}
+@@ -960,7 +960,7 @@ static void pending_complete(struct dm_s
+ 	 */
+ 	insert_completed_exception(s, e);
+ 
+- out:
++out:
+ 	remove_exception(&pe->e);
+ 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
+ 	origin_bios = put_pending_exception(pe);
+@@ -1023,7 +1023,7 @@ static void start_copy(struct dm_snap_pe
+ 
+ 	/* Hand over to kcopyd */
+ 	dm_kcopyd_copy(s->kcopyd_client,
+-		    &src, 1, &dest, 0, copy_callback, pe);
++		       &src, 1, &dest, 0, copy_callback, pe);
+ }
+ 
+ static struct dm_snap_pending_exception *
+@@ -1173,9 +1173,9 @@ static int snapshot_map(struct dm_target
+ 		map_context->ptr = track_chunk(s, chunk);
+ 	}
+ 
+- out_unlock:
++out_unlock:
+ 	up_write(&s->lock);
+- out:
++out:
+ 	return r;
+ }
+ 
