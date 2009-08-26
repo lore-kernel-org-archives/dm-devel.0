@@ -1,7 +1,7 @@
-From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 Subject: Re: Sun StorageTek 2530 and dm?
-Date: Wed, 26 Aug 2009 17:57:56 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0908261752230.21130@e-smith.charlieb.ott.istop.com>
+Date: Wed, 26 Aug 2009 15:31:01 -0700
+Message-ID: <1251325861.14423.8.camel@chandra-ubuntu>
 References: <20090823210536.4730636d@nb-jsosic>
 	<20090823213448.154d6cff@nb-jsosic>
 	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
@@ -21,11 +21,14 @@ References: <20090823210536.4730636d@nb-jsosic>
 	<1251223635.2166.7.camel@chandra-ubuntu>
 	<Pine.LNX.4.64.0908251421010.21130@e-smith.charlieb.ott.istop.com>
 	<1251230131.2166.13.camel@chandra-ubuntu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<Pine.LNX.4.64.0908261752230.21130@e-smith.charlieb.ott.istop.com>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251230131.2166.13.camel@chandra-ubuntu>
+In-Reply-To: <Pine.LNX.4.64.0908261752230.21130@e-smith.charlieb.ott.istop.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -35,32 +38,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
+To: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
+On Wed, 2009-08-26 at 17:57 -0400, Charlie Brady wrote:
+> 
+> On Tue, 25 Aug 2009, Chandra Seetharaman wrote:
+> 
+> > I try to keep the latest releases of RHEL and SLES by porting and test
+> > them.
+> >
+> > These changes are ported to RHEL 5.4, and will be available.
+> >
+> > Do you still want to know which of these you might need (for your
+> > system)
+> 
+> I notice that this patch doesn't seem to have been merged by Red Hat:
+> 
+> http://kerneltrap.org/mailarchive/linux-scsi/2008/10/30/3873414
 
-On Tue, 25 Aug 2009, Chandra Seetharaman wrote:
+Hmm, I see it in my RHEL 5.4. 
 
-> I try to keep the latest releases of RHEL and SLES by porting and test
-> them.
->
-> These changes are ported to RHEL 5.4, and will be available.
->
-> Do you still want to know which of these you might need (for your
-> system)
+what is the RedHat kernel version you are looking at (in RHEL 5.4) ?
 
-I notice that this patch doesn't seem to have been merged by Red Hat:
-
-http://kerneltrap.org/mailarchive/linux-scsi/2008/10/30/3873414
-
-That's this one:
-
->> @@ -390,6 +387,7 @@
->>   	struct c9_inquiry *inqp;
->>
->>   	h->lun_state = RDAC_LUN_UNOWNED;
->> +	h->state = RDAC_STATE_ACTIVE;
->>   	err = submit_inquiry(sdev, 0xC9, sizeof(struct c9_inquiry), h);
->>   	if (err == SCSI_DH_OK) {
->>   		inqp = &h->inq.c9;
+> 
+> That's this one:
+> 
+> >> @@ -390,6 +387,7 @@
+> >>   	struct c9_inquiry *inqp;
+> >>
+> >>   	h->lun_state = RDAC_LUN_UNOWNED;
+> >> +	h->state = RDAC_STATE_ACTIVE;
+> >>   	err = submit_inquiry(sdev, 0xC9, sizeof(struct c9_inquiry), h);
+> >>   	if (err == SCSI_DH_OK) {
+> >>   		inqp = &h->inq.c9;
+> 
