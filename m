@@ -1,50 +1,60 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH] scsi_dh_rdac: Add support for Sun StorageTek ST2500,
-	ST2510 and ST2530
-Date: Wed, 26 Aug 2009 15:56:48 -0700
-Message-ID: <1251327408.14423.14.camel@chandra-ubuntu>
-References: <Pine.LNX.4.64.0908261411370.13027@e-smith.charlieb.ott.istop.com>
-Reply-To: sekharan@linux.vnet.ibm.com
+From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+Subject: Re: Sun StorageTek 2530 and dm?
+Date: Wed, 26 Aug 2009 19:01:36 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0908261852530.21130@e-smith.charlieb.ott.istop.com>
+References: <20090823210536.4730636d@nb-jsosic>
+	<20090823213448.154d6cff@nb-jsosic>
+	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
+	<20090824202915.27815959@pc-jsosic.srce.hr>
+	<1251139716.24406.4.camel@chandra-ubuntu>
+	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
+	<1251145497.24406.18.camel@chandra-ubuntu>
+	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
+	<1251147451.24406.28.camel@chandra-ubuntu>
+	<20090824231416.598ecc11@pc-jsosic.srce.hr>
+	<1251150116.24406.37.camel@chandra-ubuntu>
+	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
+	<1251155242.24406.57.camel@chandra-ubuntu>
+	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
+	<1251159536.2166.3.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908242335310.1267@e-smith.charlieb.ott.istop.com>
+	<1251223635.2166.7.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908251421010.21130@e-smith.charlieb.ott.istop.com>
+	<1251230131.2166.13.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908261752230.21130@e-smith.charlieb.ott.istop.com>
+	<1251325861.14423.8.camel@chandra-ubuntu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.0908261411370.13027@e-smith.charlieb.ott.istop.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
-Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1251325861.14423.8.camel@chandra-ubuntu>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: sekharan@linux.vnet.ibm.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Reviewed-by: Chandra Seetharaman <sekharan@us.ibm.com>
 
-On Wed, 2009-08-26 at 14:16 -0400, Charlie Brady wrote:
-> [Re-submit - ST2500 added.]
-> 
-> These storage arrays can use RDAC when configured with 'linux' as the 
-> initiator.
-> 
-> http://www.sun.com/storage/disk_systems/workgroup/2500/
-> http://www.sun.com/storage/disk_systems/workgroup/2510/
-> http://www.sun.com/storage/disk_systems/workgroup/2530/
-> 
-> Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
-> 
-> --- linux-2.6/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-08-25 14:56:42.000000000 -0400
-> +++ linux-2.6/drivers/scsi/device_handler/scsi_dh_rdac.c.sun	2009-08-26 14:11:53.000000000 -0400
-> @@ -628,6 +628,9 @@
->   	{"SGI", "IS"},
->   	{"STK", "OPENstorage D280"},
->   	{"SUN", "CSM200_R"},
-> +	{"SUN", "LCSM100_I"},
-> +	{"SUN", "LCSM100_S"},
-> +	{"SUN", "LCSM100_E"},
->   	{"SUN", "LCSM100_F"},
->   	{"DELL", "MD3000"},
->   	{"DELL", "MD3000i"},
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+On Wed, 26 Aug 2009, Chandra Seetharaman wrote:
 
+>> I notice that this patch doesn't seem to have been merged by Red Hat:
+>>
+>> http://kerneltrap.org/mailarchive/linux-scsi/2008/10/30/3873414
+>
+> Hmm, I see it in my RHEL 5.4.
+>
+> what is the RedHat kernel version you are looking at (in RHEL 5.4) ?
+
+My mistake, sorry. I was looking at 5.3.
+
+RHEL 5.4 does contain these:
+
+1219949016-15055-5-git-send-email-mchristi@redhat.com
+20090514045648.10947.8280.sendpatchset@squad5-lp1.lab.bos.redhat.com
