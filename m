@@ -1,38 +1,77 @@
-From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
-Subject: [PATCH] scsi_dh_rdac: Add support for Sun StorageTek ST2500, ST2510
- and ST2530
-Date: Wed, 26 Aug 2009 14:16:57 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0908261411370.13027@e-smith.charlieb.ott.istop.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm snapshot: implement .iterate_devices
+Date: Wed, 26 Aug 2009 14:19:08 -0400
+Message-ID: <20090826181908.GB26018@redhat.com>
+References: <1251007867-13004-1-git-send-email-snitzer@redhat.com>
+	<20090826145045.GH643@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090826145045.GH643@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Wed, Aug 26 2009 at 10:50am -0400,
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-[Re-submit - ST2500 added.]
+> On Sun, Aug 23, 2009 at 02:11:07AM -0400, Mike Snitzer wrote:
+> > This patch implements .iterate_devices for the origin and snapshot
+> > targets.  dm-snapshot's lack of .iterate_devices resulted in the
+> > inability to properly establish queue_limits for both targets.  
+> > With 4K sector drives: an unfortunate side-effect of not establishing
+> > proper limits in either targets' DM device was that IO to the devices
+> > would fail even though both had been created without error.
+> > Commit af4874e03ed82f050d5872d8c39ce64bf16b5c38 should have implemented
+> > .iterate_devices for dm-snap.c's origin and snapshot targets.
+>  
+> > +static int snapshot_iterate_devices(struct dm_target *ti,
+> > +				    iterate_devices_callout_fn fn, void *data)
+> > +{
+> > +	struct dm_snapshot *snap = ti->private;
+> > +
+> > +	return fn(ti, snap->origin, 0, ti->len, data);
+> > +}
+> 
+> > +static int origin_iterate_devices(struct dm_target *ti,
+> > +				  iterate_devices_callout_fn fn, void *data)
+> > +{
+> > +	struct dm_dev *dev = ti->private;
+> > +
+> > +	return fn(ti, dev, 0, ti->len, data);
+> > +}
+> 
+> Why are these both seemingly the same?  Is one sufficient?
 
-These storage arrays can use RDAC when configured with 'linux' as the 
-initiator.
+One is not sufficient.  If snapshot_iterate_devices() isn't provided the
+snapshot fails IO on 4K drives; e.g. an ext3 mount in my test case:
+sd 13:0:0:0: [sdc] Bad block number requested
+EXT3-fs: unable to read superblock
 
-http://www.sun.com/storage/disk_systems/workgroup/2500/
-http://www.sun.com/storage/disk_systems/workgroup/2510/
-http://www.sun.com/storage/disk_systems/workgroup/2530/
+> And where are the characteristics of the 'cow' device taken into account?
 
-Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
+As we discussed, the snapshot_iterate_devices() needs more intelligence.
 
---- linux-2.6/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-08-25 14:56:42.000000000 -0400
-+++ linux-2.6/drivers/scsi/device_handler/scsi_dh_rdac.c.sun	2009-08-26 14:11:53.000000000 -0400
-@@ -628,6 +628,9 @@
-  	{"SGI", "IS"},
-  	{"STK", "OPENstorage D280"},
-  	{"SUN", "CSM200_R"},
-+	{"SUN", "LCSM100_I"},
-+	{"SUN", "LCSM100_S"},
-+	{"SUN", "LCSM100_E"},
-  	{"SUN", "LCSM100_F"},
-  	{"DELL", "MD3000"},
-  	{"DELL", "MD3000i"},
+For now the current snapshot_iterate_devices() is a means to establish
+more reasonable limits based on the origin.  So in my 4K drive case it
+was a means to an end but it was naively incomplete.  One _could_ have a
+cow with different logical_block_size, etc. (e.g. 512B origin + 4K cow).
+So stacking the cow limits is clearly needed.
 
+I'll work on a proper solution for snapshot_iterate_devices() and get
+that to you ASAP.
 
+Thanks for the review.
+
+Mike
