@@ -1,16 +1,31 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: dm snapshot: implement .iterate_devices
-Date: Wed, 26 Aug 2009 20:32:02 +0100
-Message-ID: <20090826193202.GI643@agk-dp.fab.redhat.com>
-References: <1251007867-13004-1-git-send-email-snitzer@redhat.com>
-	<20090826145045.GH643@agk-dp.fab.redhat.com>
-	<20090826181908.GB26018@redhat.com>
+From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+Subject: Re: Sun StorageTek 2530 and dm?
+Date: Wed, 26 Aug 2009 17:57:56 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0908261752230.21130@e-smith.charlieb.ott.istop.com>
+References: <20090823210536.4730636d@nb-jsosic>
+	<20090823213448.154d6cff@nb-jsosic>
+	<Pine.LNX.4.64.0908241128370.27199@e-smith.charlieb.ott.istop.com>
+	<20090824202915.27815959@pc-jsosic.srce.hr>
+	<1251139716.24406.4.camel@chandra-ubuntu>
+	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
+	<1251145497.24406.18.camel@chandra-ubuntu>
+	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
+	<1251147451.24406.28.camel@chandra-ubuntu>
+	<20090824231416.598ecc11@pc-jsosic.srce.hr>
+	<1251150116.24406.37.camel@chandra-ubuntu>
+	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
+	<1251155242.24406.57.camel@chandra-ubuntu>
+	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
+	<1251159536.2166.3.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908242335310.1267@e-smith.charlieb.ott.istop.com>
+	<1251223635.2166.7.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908251421010.21130@e-smith.charlieb.ott.istop.com>
+	<1251230131.2166.13.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090826181908.GB26018@redhat.com>
+In-Reply-To: <1251230131.2166.13.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,16 +35,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Aug 26, 2009 at 02:19:08PM -0400, Mike Snitzer wrote:
-> I'll work on a proper solution for snapshot_iterate_devices() and get
-> that to you ASAP.
- 
-So let's push this patch as-is for 2.6.31 as it clearly fixes one problem,
-and determine the right way of handling the characteristics of the 'cow'
-device in a supplementary patch.
 
-Alasdair
+
+On Tue, 25 Aug 2009, Chandra Seetharaman wrote:
+
+> I try to keep the latest releases of RHEL and SLES by porting and test
+> them.
+>
+> These changes are ported to RHEL 5.4, and will be available.
+>
+> Do you still want to know which of these you might need (for your
+> system)
+
+I notice that this patch doesn't seem to have been merged by Red Hat:
+
+http://kerneltrap.org/mailarchive/linux-scsi/2008/10/30/3873414
+
+That's this one:
+
+>> @@ -390,6 +387,7 @@
+>>   	struct c9_inquiry *inqp;
+>>
+>>   	h->lun_state = RDAC_LUN_UNOWNED;
+>> +	h->state = RDAC_STATE_ACTIVE;
+>>   	err = submit_inquiry(sdev, 0xC9, sizeof(struct c9_inquiry), h);
+>>   	if (err == SCSI_DH_OK) {
+>>   		inqp = &h->inq.c9;
