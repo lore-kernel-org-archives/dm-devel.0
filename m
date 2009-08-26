@@ -1,50 +1,50 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH] libmultipath/twable.c: Add default config
-	for Sun StorageTek 2500 and 2530
-Date: Wed, 26 Aug 2009 15:55:57 -0700
-Message-ID: <1251327357.14423.11.camel@chandra-ubuntu>
-References: <Pine.LNX.4.64.0908261844200.21130@e-smith.charlieb.ott.istop.com>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH] scsi_dh_rdac: Add support for Sun StorageTek ST2500,
+	ST2510 and ST2530
+Date: Wed, 26 Aug 2009 15:56:48 -0700
+Message-ID: <1251327408.14423.14.camel@chandra-ubuntu>
+References: <Pine.LNX.4.64.0908261411370.13027@e-smith.charlieb.ott.istop.com>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0908261844200.21130@e-smith.charlieb.ott.istop.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.0908261411370.13027@e-smith.charlieb.ott.istop.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
+Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Reviewed-by: Chandra Seetharaman <sekharan@us.ibm.com>
 
-On Wed, 2009-08-26 at 18:45 -0400, Charlie Brady wrote:
+On Wed, 2009-08-26 at 14:16 -0400, Charlie Brady wrote:
+> [Re-submit - ST2500 added.]
+> 
+> These storage arrays can use RDAC when configured with 'linux' as the 
+> initiator.
+> 
+> http://www.sun.com/storage/disk_systems/workgroup/2500/
+> http://www.sun.com/storage/disk_systems/workgroup/2510/
+> http://www.sun.com/storage/disk_systems/workgroup/2530/
+> 
 > Signed-off-by: Charlie Brady <charlieb@budge.apana.org.au>
 > 
-> --- libmultipath/hwtable.c.orig	2009-08-26 18:30:55.000000000 -0400
-> +++ libmultipath/hwtable.c	2009-08-26 18:31:52.000000000 -0400
-> @@ -878,10 +878,10 @@
->   		.checker_name  = RDAC,
->   		.prio_name     = PRIO_RDAC,
->   	},
-> -	/* SUN/LSI 2510, 2540 */
-> +	/* SUN/LSI 2500, 2510, 2530, 2540 */
->   	{
->   		.vendor        = "SUN",
-> -		.product       = "LCSM100_[IF]",
-> +		.product       = "LCSM100_[IEFS]",
->   		.getuid        = DEFAULT_GETUID,
->   		.features      = DEFAULT_FEATURES,
->   		.hwhandler     = "1 rdac",
+> --- linux-2.6/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-08-25 14:56:42.000000000 -0400
+> +++ linux-2.6/drivers/scsi/device_handler/scsi_dh_rdac.c.sun	2009-08-26 14:11:53.000000000 -0400
+> @@ -628,6 +628,9 @@
+>   	{"SGI", "IS"},
+>   	{"STK", "OPENstorage D280"},
+>   	{"SUN", "CSM200_R"},
+> +	{"SUN", "LCSM100_I"},
+> +	{"SUN", "LCSM100_S"},
+> +	{"SUN", "LCSM100_E"},
+>   	{"SUN", "LCSM100_F"},
+>   	{"DELL", "MD3000"},
+>   	{"DELL", "MD3000i"},
+> 
 > 
 > --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
