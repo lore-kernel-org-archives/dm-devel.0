@@ -1,7 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] dm snapshot: remove redundant function
-Date: Wed, 26 Aug 2009 11:01:17 -0500
-Message-ID: <1251302477.19258.9.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH] dm persistent exception store: Minor code
+	clean-up
+Date: Wed, 26 Aug 2009 11:27:43 -0500
+Message-ID: <1251304063.19258.11.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,58 +20,69 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Consolidate the insert_*exception functions.  'insert_completed_exception'
-already contains all the logic to handle 'insert_exception', so remove
-redundant function.
+Minor code touch-up.  We don't need the 'else'.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-snap.c
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -386,13 +386,6 @@ static uint32_t exception_hash(struct ex
- 	return (chunk >> et->hash_shift) & et->hash_mask;
- }
- 
--static void insert_exception(struct exception_table *eh,
--			     struct dm_snap_exception *e)
--{
--	struct list_head *l = &eh->table[exception_hash(eh, e->old_chunk)];
--	list_add(&e->hash_list, l);
--}
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6/drivers/md/dm-snap-persistent.c
+@@ -536,35 +536,31 @@ static int persistent_read_metadata(stru
+ 		ps->current_area = 0;
+ 		zero_memory_area(ps);
+ 		r = zero_disk_area(ps, 0);
+-		if (r) {
+-			DMWARN("zero_disk_area(0) failed");
+-			return r;
+-		}
+-	} else {
+-		/*
+-		 * Sanity checks.
+-		 */
+-		if (ps->version != SNAPSHOT_DISK_VERSION) {
+-			DMWARN("unable to handle snapshot disk version %d",
+-			       ps->version);
+-			return -EINVAL;
+-		}
 -
- static void remove_exception(struct dm_snap_exception *e)
- {
- 	list_del(&e->hash_list);
-@@ -453,10 +446,9 @@ static void free_pending_exception(struc
- 	atomic_dec(&s->pending_exceptions_count);
+-		/*
+-		 * Metadata are valid, but snapshot is invalidated
+-		 */
+-		if (!ps->valid)
+-			return 1;
+-
+-		/*
+-		 * Read the metadata.
+-		 */
+-		r = read_exceptions(ps, callback, callback_context);
+ 		if (r)
+-			return r;
++			DMWARN("zero_disk_area(0) failed");
++		return r;
++	}
++	/*
++	 * Sanity checks.
++	 */
++	if (ps->version != SNAPSHOT_DISK_VERSION) {
++		DMWARN("unable to handle snapshot disk version %d",
++		       ps->version);
++		return -EINVAL;
+ 	}
+ 
+-	return 0;
++	/*
++	 * Metadata are valid, but snapshot is invalidated
++	 */
++	if (!ps->valid)
++		return 1;
++
++	/*
++	 * Read the metadata.
++	 */
++	r = read_exceptions(ps, callback, callback_context);
++
++	return r;
  }
  
--static void insert_completed_exception(struct dm_snapshot *s,
--				       struct dm_snap_exception *new_e)
-+static void insert_exception(struct exception_table *eh,
-+			     struct dm_snap_exception *new_e)
- {
--	struct exception_table *eh = &s->complete;
- 	struct list_head *l;
- 	struct dm_snap_exception *e = NULL;
- 
-@@ -514,7 +506,7 @@ static int dm_add_exception(void *contex
- 	/* Consecutive_count is implicitly initialised to zero */
- 	e->new_chunk = new;
- 
--	insert_completed_exception(s, e);
-+	insert_exception(&s->complete, e);
- 
- 	return 0;
- }
-@@ -894,7 +886,7 @@ static void pending_complete(struct dm_s
- 	 * Add a proper exception, and remove the
- 	 * in-flight exception from the list.
- 	 */
--	insert_completed_exception(s, e);
-+	insert_exception(&s->complete, e);
- 
- out:
- 	remove_exception(&pe->e);
+ static int persistent_prepare_exception(struct dm_exception_store *store,
