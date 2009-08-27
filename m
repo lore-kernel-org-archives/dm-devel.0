@@ -1,14 +1,35 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 5/5] dm-mpath: convert to request-based
-Date: Thu, 27 Aug 2009 18:54:19 +0100
-Message-ID: <20090827175419.GQ643@agk-dp.fab.redhat.com>
-References: <4A24CD74.80708@ct.jp.nec.com> <4A24CEBD.8010807@ct.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: Sun StorageTek 2530 and dm?
+Date: Thu, 27 Aug 2009 12:11:42 -0700
+Message-ID: <1251400302.20333.1.camel@chandra-ubuntu>
+References: <20090823210536.4730636d@nb-jsosic>
+	<20090824202915.27815959@pc-jsosic.srce.hr>
+	<1251139716.24406.4.camel@chandra-ubuntu>
+	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
+	<1251145497.24406.18.camel@chandra-ubuntu>
+	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
+	<1251147451.24406.28.camel@chandra-ubuntu>
+	<20090824231416.598ecc11@pc-jsosic.srce.hr>
+	<1251150116.24406.37.camel@chandra-ubuntu>
+	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
+	<1251155242.24406.57.camel@chandra-ubuntu>
+	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
+	<1251159536.2166.3.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908242335310.1267@e-smith.charlieb.ott.istop.com>
+	<1251223635.2166.7.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908251421010.21130@e-smith.charlieb.ott.istop.com>
+	<1251230131.2166.13.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908261752230.21130@e-smith.charlieb.ott.istop.com>
+	<1251325861.14423.8.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0908261852530.21130@e-smith.charlieb.ott.istop.com>
+	<20090827103016.3da5c0b0@nb-jsosic>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4A24CEBD.8010807@ct.jp.nec.com>
+In-Reply-To: <20090827103016.3da5c0b0@nb-jsosic>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,25 +39,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jun 02, 2009 at 04:03:25PM +0900, Kiyoshi Ueda wrote:
-> This patch converts dm-multipath target to request-based from bio-based.
- 
-How much effort would it be to retain the old mpath implementation
-in parallel?
 
-I'm rather concerned that we're losing some useful functionality in
-2.6.31 with this patch - stacking over bio-based devices (test beds use
-this and it's helpful for debugging), barrier support - and supporting
-both would make it easier for people to compare the two implementations
-and stick to the old one if in their particular circumstances it worked
-better.
+On Thu, 2009-08-27 at 10:30 +0200, Jakov Sosic wrote:
+> On Wed, 26 Aug 2009 19:01:36 -0400 (EDT)
+> Charlie Brady <charlieb-dm-devel@budge.apana.org.au> wrote:
+> 
+> > My mistake, sorry. I was looking at 5.3.
+> > 
+> > RHEL 5.4 does contain these:
+> > 
+> > 1219949016-15055-5-git-send-email-mchristi@redhat.com
+> > 20090514045648.10947.8280.sendpatchset@squad5-lp1.lab.bos.redhat.com
+> 
+> Can I just try the multipath with kernel from 5.4 beta on 5.3? Is there
+> a need to upgrade the device-mapper-multipath too, or are these kernel
+> patches enough to test if this is going to work in my case?
 
-Perhaps, dm-mpath could just register two targets (like snapshot does),
-one bio-based, and one rq-based, sharing most of the functions with
-wrappers to indicate which is which where necessary?
-
-Alasdair
+If it is a production system I would suggest you to update the tools
+also.
+> 
+> 
