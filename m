@@ -1,17 +1,14 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: Re: [PATCH v2] expose dm-stripe target's topology I/O
-	hints
-Date: Thu, 27 Aug 2009 13:26:28 -0400
-Message-ID: <yq11vmx88xn.fsf@sermon.lab.mkp.net>
-References: <1250864238-4093-1-git-send-email-snitzer@redhat.com>
-	<20090827131220.GN643@agk-dp.fab.redhat.com>
-	<20090827141939.GB29894@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 5/5] dm-mpath: convert to request-based
+Date: Thu, 27 Aug 2009 18:54:19 +0100
+Message-ID: <20090827175419.GQ643@agk-dp.fab.redhat.com>
+References: <4A24CD74.80708@ct.jp.nec.com> <4A24CEBD.8010807@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090827141939.GB29894@redhat.com> (Mike Snitzer's message of
-	"Thu, 27 Aug 2009 10:19:39 -0400")
+Content-Disposition: inline
+In-Reply-To: <4A24CEBD.8010807@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,27 +18,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: martin.petersen@oracle.com, Alasdair G Kergon <agk@redhat.com>
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+On Tue, Jun 02, 2009 at 04:03:25PM +0900, Kiyoshi Ueda wrote:
+> This patch converts dm-multipath target to request-based from bio-based.
+ 
+How much effort would it be to retain the old mpath implementation
+in parallel?
 
-Mike> Martin didn't expose such an interface because all existing code
-Mike> (both DM and MD) does not require anything beyond a simple
-Mike> assignment.  I worked with Martin to establish the
-Mike> blk_queue_io_min() precisely because DM needed to avoid
-Mike> duplicating the block layer's logic.  I think Martin stopped short
-Mike> of adding a symmetric wrapper for setting io_opt because he felt
-Mike> it was unnecessary.
+I'm rather concerned that we're losing some useful functionality in
+2.6.31 with this patch - stacking over bio-based devices (test beds use
+this and it's helpful for debugging), barrier support - and supporting
+both would make it easier for people to compare the two implementations
+and stick to the old one if in their particular circumstances it worked
+better.
 
-Jens is a hardliner and refuses unused functions and wrappers in block.
-Even when they are trivial/obvious/symmetric.
+Perhaps, dm-mpath could just register two targets (like snapshot does),
+one bio-based, and one rq-based, sharing most of the functions with
+wrappers to indicate which is which where necessary?
 
-At the time I submitted the topology code there were no users of a
-blk_limits_io_opt() call so I didn't wire it up.
-
-If you need it now, then great.  Let's add it to be consistent.
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
+Alasdair
