@@ -1,13 +1,17 @@
-From: Ric Wheeler <rwheeler@redhat.com>
-Subject: Fwd: MD/DM and barriers (was Re: [patch] ext2/3:
- document conditions when reliable operation is possible)
-Date: Thu, 27 Aug 2009 13:13:18 -0400
-Message-ID: <4A96BEAE.5000504@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: Re: [PATCH v2] expose dm-stripe target's topology I/O
+	hints
+Date: Thu, 27 Aug 2009 13:26:28 -0400
+Message-ID: <yq11vmx88xn.fsf@sermon.lab.mkp.net>
+References: <1250864238-4093-1-git-send-email-snitzer@redhat.com>
+	<20090827131220.GN643@agk-dp.fab.redhat.com>
+	<20090827141939.GB29894@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090827141939.GB29894@redhat.com> (Mike Snitzer's message of
+	"Thu, 27 Aug 2009 10:19:39 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,56 +22,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: martin.petersen@oracle.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-fyi - end of a very long thread, but I thought that dm had this fixed...
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-ric
+Mike> Martin didn't expose such an interface because all existing code
+Mike> (both DM and MD) does not require anything beyond a simple
+Mike> assignment.  I worked with Martin to establish the
+Mike> blk_queue_io_min() precisely because DM needed to avoid
+Mike> duplicating the block layer's logic.  I think Martin stopped short
+Mike> of adding a symmetric wrapper for setting io_opt because he felt
+Mike> it was unnecessary.
 
+Jens is a hardliner and refuses unused functions and wrappers in block.
+Even when they are trivial/obvious/symmetric.
 
--------- Original Message --------
-Subject: 	MD/DM and barriers (was Re: [patch] ext2/3: document 
-conditions when reliable operation is possible)
-Date: 	Thu, 27 Aug 2009 12:54:05 -0400
-From: 	Jeff Garzik <jeff@garzik.org>
-To: 	Ric Wheeler <rwheeler@redhat.com>
-CC: 	Theodore Tso <tytso@mit.edu>, Rob Landley <rob@landley.net>, Pavel 
-Machek <pavel@ucw.cz>, Florian Weimer <fweimer@bfk.de>, Goswin von 
-Brederlow <goswin-v-b@web.de>, kernel list 
-<linux-kernel@vger.kernel.org>, Andrew Morton <akpm@osdl.org>, 
-mtk.manpages@gmail.com, rdunlap@xenotime.net, linux-doc@vger.kernel.org, 
-linux-ext4@vger.kernel.org, corbet@lwn.net
+At the time I submitted the topology code there were no users of a
+blk_limits_io_opt() call so I didn't wire it up.
 
+If you need it now, then great.  Let's add it to be consistent.
 
-
-On 08/27/2009 09:10 AM, Ric Wheeler wrote:
->  One thing that does need fixing for some MD configurations is to stress
->  again that we need to make sure that barrier operations are properly
->  supported or users will need to disable the write cache on devices with
->  volatile write caches.
-
-Agreed; chime in on Christoph's linux-vfs thread if people have input.
-
-I quickly glanced at MD and DM.  Currently, upstream, we see a lot of
-
-         if (unlikely(bio_barrier(bio))) {
-                 bio_endio(bio, -EOPNOTSUPP);
-                 return 0;
-         }
-
-in DM and MD make_request functions.
-
-Only md/raid1 supports barriers at present, it seems.  None of the other
-MD drivers support barriers.
-
-DM has some barrier code...  but the above code was pasted from DM's
-make_request function, so I am guessing that DM's barrier stuff is
-incomplete and disabled at present.
-
-I've been mentioning this issue for years... glad some people finally
-noticed :)
-
-	Jeff
-
-
-
+-- 
+Martin K. Petersen	Oracle Linux Engineering
