@@ -1,32 +1,13 @@
-From: Charlie Brady <charlieb-dm-devel@budge.apana.org.au>
-Subject: Re: Sun StorageTek 2530 and dm?
-Date: Thu, 27 Aug 2009 12:02:25 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0908271155140.21751@e-smith.charlieb.ott.istop.com>
-References: <20090823210536.4730636d@nb-jsosic>
-	<1251139716.24406.4.camel@chandra-ubuntu>
-	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
-	<1251145497.24406.18.camel@chandra-ubuntu>
-	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
-	<1251147451.24406.28.camel@chandra-ubuntu>
-	<20090824231416.598ecc11@pc-jsosic.srce.hr>
-	<1251150116.24406.37.camel@chandra-ubuntu>
-	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
-	<1251155242.24406.57.camel@chandra-ubuntu>
-	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
-	<1251159536.2166.3.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908242335310.1267@e-smith.charlieb.ott.istop.com>
-	<1251223635.2166.7.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908251421010.21130@e-smith.charlieb.ott.istop.com>
-	<1251230131.2166.13.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908261752230.21130@e-smith.charlieb.ott.istop.com>
-	<1251325861.14423.8.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908261852530.21130@e-smith.charlieb.ott.istop.com>
-	<20090827103016.3da5c0b0@nb-jsosic>
+From: Ric Wheeler <rwheeler@redhat.com>
+Subject: Fwd: MD/DM and barriers (was Re: [patch] ext2/3:
+ document conditions when reliable operation is possible)
+Date: Thu, 27 Aug 2009 13:13:18 -0400
+Message-ID: <4A96BEAE.5000504@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090827103016.3da5c0b0@nb-jsosic>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -39,34 +20,54 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+fyi - end of a very long thread, but I thought that dm had this fixed...
 
-On Thu, 27 Aug 2009, Jakov Sosic wrote:
+ric
 
-> On Wed, 26 Aug 2009 19:01:36 -0400 (EDT)
-> Charlie Brady <charlieb-dm-devel@budge.apana.org.au> wrote:
->
->> My mistake, sorry. I was looking at 5.3.
->>
->> RHEL 5.4 does contain these:
->>
->> 1219949016-15055-5-git-send-email-mchristi@redhat.com
->> 20090514045648.10947.8280.sendpatchset@squad5-lp1.lab.bos.redhat.com
->
-> Can I just try the multipath with kernel from 5.4 beta on 5.3?
 
-You can use the 5.4beta kernel with 5.3. However, that kernel does not 
-contain support for the 2530 in the scsi_dh_rdac module. You would need to 
-patch the module. However, I have a src rpm which updates just that 
-module. I will send it to you, with rebuild instructions.
+-------- Original Message --------
+Subject: 	MD/DM and barriers (was Re: [patch] ext2/3: document 
+conditions when reliable operation is possible)
+Date: 	Thu, 27 Aug 2009 12:54:05 -0400
+From: 	Jeff Garzik <jeff@garzik.org>
+To: 	Ric Wheeler <rwheeler@redhat.com>
+CC: 	Theodore Tso <tytso@mit.edu>, Rob Landley <rob@landley.net>, Pavel 
+Machek <pavel@ucw.cz>, Florian Weimer <fweimer@bfk.de>, Goswin von 
+Brederlow <goswin-v-b@web.de>, kernel list 
+<linux-kernel@vger.kernel.org>, Andrew Morton <akpm@osdl.org>, 
+mtk.manpages@gmail.com, rdunlap@xenotime.net, linux-doc@vger.kernel.org, 
+linux-ext4@vger.kernel.org, corbet@lwn.net
 
-> Is there a need to upgrade the device-mapper-multipath too, or are these 
-> kernel patches enough to test if this is going to work in my case?
 
-You don't need to upgrade device-mapper-multipath to include a default 
-configuration for the 2530, but you would need to add a device stanza in 
-multipath.conf. There might be other reasons to upgrade 
-device-mapper-multipath to the RH5.4 version - I haven't checked the 
-changelog.
 
----
-Charlie
+On 08/27/2009 09:10 AM, Ric Wheeler wrote:
+>  One thing that does need fixing for some MD configurations is to stress
+>  again that we need to make sure that barrier operations are properly
+>  supported or users will need to disable the write cache on devices with
+>  volatile write caches.
+
+Agreed; chime in on Christoph's linux-vfs thread if people have input.
+
+I quickly glanced at MD and DM.  Currently, upstream, we see a lot of
+
+         if (unlikely(bio_barrier(bio))) {
+                 bio_endio(bio, -EOPNOTSUPP);
+                 return 0;
+         }
+
+in DM and MD make_request functions.
+
+Only md/raid1 supports barriers at present, it seems.  None of the other
+MD drivers support barriers.
+
+DM has some barrier code...  but the above code was pasted from DM's
+make_request function, so I am guessing that DM's barrier stuff is
+incomplete and disabled at present.
+
+I've been mentioning this issue for years... glad some people finally
+noticed :)
+
+	Jeff
+
+
+
