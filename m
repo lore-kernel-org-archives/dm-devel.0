@@ -1,33 +1,15 @@
-From: Jakov Sosic <jakov.sosic@srce.hr>
-Subject: Re: Sun StorageTek 2530 and dm?
-Date: Thu, 27 Aug 2009 10:30:16 +0200
-Message-ID: <20090827103016.3da5c0b0@nb-jsosic>
-References: <20090823210536.4730636d@nb-jsosic>
-	<20090824202915.27815959@pc-jsosic.srce.hr>
-	<1251139716.24406.4.camel@chandra-ubuntu>
-	<20090824205933.4b4c8456@pc-jsosic.srce.hr>
-	<1251145497.24406.18.camel@chandra-ubuntu>
-	<20090824223627.6e1a918c@pc-jsosic.srce.hr>
-	<1251147451.24406.28.camel@chandra-ubuntu>
-	<20090824231416.598ecc11@pc-jsosic.srce.hr>
-	<1251150116.24406.37.camel@chandra-ubuntu>
-	<20090824235347.4b8cbd8a@pc-jsosic.srce.hr>
-	<1251155242.24406.57.camel@chandra-ubuntu>
-	<20090825011340.423e3cf6@pc-jsosic.srce.hr>
-	<1251159536.2166.3.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908242335310.1267@e-smith.charlieb.ott.istop.com>
-	<1251223635.2166.7.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908251421010.21130@e-smith.charlieb.ott.istop.com>
-	<1251230131.2166.13.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908261752230.21130@e-smith.charlieb.ott.istop.com>
-	<1251325861.14423.8.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0908261852530.21130@e-smith.charlieb.ott.istop.com>
+From: Dong-Jae Kang <baramsori72@gmail.com>
+Subject: Re: [Test Result] I/O bandwidth Control by dm-ioband -
+	partition-based environment
+Date: Thu, 27 Aug 2009 20:03:56 +0900
+Message-ID: <2891419e0908270403kd439d29gedeea6fcae753d6d@mail.gmail.com>
+References: <2891419e0908261846v4fa19791q4552975f10dd64e5@mail.gmail.com>
+	<20090827.152042.104028330.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1812370655=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0908261852530.21130@e-smith.charlieb.ott.istop.com>
+In-Reply-To: <20090827.152042.104028330.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -37,25 +19,134 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: ioband-devel@lists.sourceforge.net, containers@lists.linux-foundation.org, dm-devel@redhat.com, corsetproject@googlegroups.com
 List-Id: dm-devel.ids
 
-On Wed, 26 Aug 2009 19:01:36 -0400 (EDT)
-Charlie Brady <charlieb-dm-devel@budge.apana.org.au> wrote:
+--===============1812370655==
+Content-Type: multipart/alternative; boundary=0022152d5cf918749c04721d86b1
 
-> My mistake, sorry. I was looking at 5.3.
-> 
-> RHEL 5.4 does contain these:
-> 
-> 1219949016-15055-5-git-send-email-mchristi@redhat.com
-> 20090514045648.10947.8280.sendpatchset@squad5-lp1.lab.bos.redhat.com
+--0022152d5cf918749c04721d86b1
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-Can I just try the multipath with kernel from 5.4 beta on 5.3? Is there
-a need to upgrade the device-mapper-multipath too, or are these kernel
-patches enough to test if this is going to work in my case?
+Hi Ryo
 
+2009/8/27 Ryo Tsuruta <ryov@valinux.co.jp>
+
+> Hi Dong-Jae,
+>
+> # I've added dm-devel to Cc:.
+>
+> Dong-Jae Kang <baramsori72@gmail.com> wrote:
+> > Hi Ryo
+> >
+> > I attached new test result file(ioband-partition-based-evaluation.xls)in
+> > this mail.
+>
+> Thanks for your great job.
+>
+> > In this time, it is not virtualization environment.
+> > I evaluated partition-based use cases before I do it in vitualization
+> > environment.
+> > because I think the two cases are smilar each other.
+> >
+> > The detailed information about the evaluation can be referred in attached
+> > file.
+> >
+> > If you have any questions or comments after examine it,
+> > please give me your opinion.
+>
+> I would like to know the throughput without dm-ioband in your
+> environment. Because the total throughput of range-bw policy is
+> 8000KB/s, which means the device has a capability to perform over
+> 8000KB/s, but the total throughput of weight policy is lower than
+> the range-bw policy. In my environment, there is no significant
+> difference in average throughput between with and without dm-ioband.
+> I ran fio in the way described in your result file. Here are the
+> results of my environment. The throughputs were calculated from
+> "iostat -k 1" outputs.
+>
+>            buffered write test
+>           Avg. throughput [KB/s]
+>        w/o ioband     w/ioband
+> sdb2         14485         5788
+> sdb3         12494        22295
+> total        26979        28030
+>
+
+OK, good comments.
+I omitted the total bandwidth of the evaluation system.
+
+I will reply to you about it tomorrow after I check and re-test it again.
+
+>
+> Thanks,
+> Ryo Tsuruta
+>
+
+Thank you for comments.
 
 -- 
-|    Jakov Sosic    |    ICQ: 28410271    |   PGP: 0x965CAE2D   |
-=================================================================
-| start fighting cancer -> http://www.worldcommunitygrid.org/   |
+Best Regards,
+Dong-Jae Kang
+
+--0022152d5cf918749c04721d86b1
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hi Ryo<br><br>
+<div class=3D"gmail_quote">2009/8/27 Ryo Tsuruta <span dir=3D"ltr">&lt;<a h=
+ref=3D"mailto:ryov@valinux.co.jp">ryov@valinux.co.jp</a>&gt;</span><br>
+<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
+px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid">Hi Dong-Jae,<br><br># I&#39;ve a=
+dded dm-devel to Cc:.<br>
+<div class=3D"im"><br>Dong-Jae Kang &lt;<a href=3D"mailto:baramsori72@gmail=
+.com">baramsori72@gmail.com</a>&gt; wrote:<br>&gt; Hi Ryo<br>&gt;<br>&gt; I=
+ attached new test result file(ioband-partition-based-evaluation.xls)in<br>
+&gt; this mail.<br><br></div>Thanks for your great job.<br>
+<div class=3D"im"><br>&gt; In this time, it is not virtualization environme=
+nt.<br>&gt; I evaluated partition-based use cases before I do it in vituali=
+zation<br>&gt; environment.<br>&gt; because I think the two cases are smila=
+r each other.<br>
+&gt;<br>&gt; The detailed information about the evaluation can be referred =
+in attached<br>&gt; file.<br>&gt;<br>&gt; If you have any questions or comm=
+ents after examine it,<br>&gt; please give me your opinion.<br><br></div>
+I would like to know the throughput without dm-ioband in your<br>environmen=
+t. Because the total throughput of range-bw policy is<br>8000KB/s, which me=
+ans the device has a capability to perform over<br>8000KB/s, but the total =
+throughput of weight policy is lower than<br>
+the range-bw policy. In my environment, there is no significant<br>differen=
+ce in average throughput between with and without dm-ioband.<br>I ran fio i=
+n the way described in your result file. Here are the<br>results of my envi=
+ronment. The throughputs were calculated from<br>
+&quot;iostat -k 1&quot; outputs.<br><br>=A0 =A0 =A0 =A0 =A0 =A0buffered wri=
+te test<br>=A0 =A0 =A0 =A0 =A0 Avg. throughput [KB/s]<br>=A0 =A0 =A0 =A0w/o=
+ ioband =A0 =A0 w/ioband<br>sdb2 =A0 =A0 =A0 =A0 14485 =A0 =A0 =A0 =A0 5788=
+<br>sdb3 =A0 =A0 =A0 =A0 12494 =A0 =A0 =A0 =A022295<br>total =A0 =A0 =A0 =
+=A026979 =A0 =A0 =A0 =A028030<br>
+</blockquote>
+<div>=A0</div>
+<div>OK, good comments.</div>
+<div>I omitted the total bandwidth of the evaluation system.</div>
+<div>=A0</div>
+<div>I will reply to you about it tomorrow after I check=A0and re-test it a=
+gain.</div>
+<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
+px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid"><span id=3D""></span><br>Thanks,=
+<br><font color=3D"#888888">Ryo Tsuruta<br></font></blockquote></div><br>Th=
+ank you for comments.<br clear=3D"all">
+
+<div></div><br>-- <br>Best Regards,<br>Dong-Jae Kang<br>
+
+--0022152d5cf918749c04721d86b1--
+
+
+--===============1812370655==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1812370655==--
