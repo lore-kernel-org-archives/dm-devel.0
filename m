@@ -1,108 +1,95 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH 1/3][RESUBMIT] scsi_dh_rdac: changes to collect the
-	debug information during rdac_activate
-Date: Fri, 28 Aug 2009 10:57:08 -0700
-Message-ID: <1251482228.20333.9.camel@chandra-ubuntu>
-References: <E463DF2B2E584B4A82673F53D62C2EF474C65F3D@cosmail01.lsi.com>
-Reply-To: sekharan@linux.vnet.ibm.com
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474C65F3D@cosmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: "'linux-scsi@vger.kernel.org'" <linux-scsi@vger.kernel.org>, 'device mapper development' <dm-devel@redhat.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: [PATCH 15/23] io-controller: noop changes for
+	hierarchical fair queuing
+Date: Fri, 28 Aug 2009 17:31:04 -0400
+Message-ID: <1251495072-7780-16-git-send-email-vgoyal@redhat.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-kernel@vger.kernel.org, jens.axboe@oracle.com
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, vgoyal@redhat.com, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-Hi Babu,
+This patch changes noop to use queue scheduling code from elevator layer.
+One can go back to old noop by deselecting CONFIG_IOSCHED_NOOP_HIER.
 
-Sorry about this comment after few iterations. I just realized it.
+Signed-off-by: Nauman Rafique <nauman@google.com>
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+---
+ block/Kconfig.iosched |   11 +++++++++++
+ block/noop-iosched.c  |   14 ++++++++++++++
+ 2 files changed, 25 insertions(+), 0 deletions(-)
 
-We already do a C8 inquiry (get_lun()), why can't we just piggy back on
-that to fill the array name also. You can change the name of the
-function to be get_lun_and_array_name() or some such.
-
-chandra
-On Fri, 2009-08-28 at 08:22 -0600, Moger, Babu wrote:
-> Adding the code to read the debug information during activate. This patch collects the information about storage and controllers during rdac_activate.
-> 
-> Signed-off-by: Babu Moger <babu.moger@lsi.com>
-> Reviewed-by: Vijay Chauhan <vijay.chauhan@lsi.com>
-> Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
-> 
-> ---
-> --- linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-08-27 18:17:23.000000000 -0500
-> +++ linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-08-27 18:27:23.000000000 -0500
-> @@ -112,6 +112,7 @@ struct c9_inquiry {
->  
->  #define SUBSYS_ID_LEN	16
->  #define SLOT_ID_LEN	2
-> +#define ARRAY_LABEL_LEN	31
->  
->  struct c4_inquiry {
->  	u8	peripheral_info;
-> @@ -135,6 +136,8 @@ struct rdac_controller {
->  		struct rdac_pg_legacy legacy;
->  		struct rdac_pg_expanded expanded;
->  	} mode_select;
-> +	u8	index;
-> +	u8	array_name[ARRAY_LABEL_LEN];
->  };
->  struct c8_inquiry {
->  	u8	peripheral_info;
-> @@ -324,6 +327,13 @@ static struct rdac_controller *get_contr
->  	/* initialize fields of controller */
->  	memcpy(ctlr->subsys_id, subsys_id, SUBSYS_ID_LEN);
->  	memcpy(ctlr->slot_id, slot_id, SLOT_ID_LEN);
-> +
-> +	/* update the controller index */
-> +	if (slot_id[1] == 0x31)
-> +		ctlr->index = 0;
-> +	else
-> +		ctlr->index = 1;
-> +
->  	kref_init(&ctlr->kref);
->  	ctlr->use_ms10 = -1;
->  	list_add(&ctlr->node, &ctlr_list);
-> @@ -381,6 +391,26 @@ static int get_lun(struct scsi_device *s
->  	return err;
->  }
->  
-> +static int get_array_name(struct scsi_device *sdev, struct rdac_dh_data *h)
-> +{
-> +	int err, i;
-> +	struct c8_inquiry *inqp;
-> +
-> +	err = submit_inquiry(sdev, 0xC8, sizeof(struct c8_inquiry), h);
-> +	if (err == SCSI_DH_OK) {
-> +		inqp = &h->inq.c8;
-> +		if (inqp->page_code != 0xc8)
-> +			return SCSI_DH_NOSYS;
-> +
-> +		for(i=0; i<ARRAY_LABEL_LEN-1; ++i)
-> +			h->ctlr->array_name[i] = inqp->array_user_label[(2*i)+1];
-> +
-> +		h->ctlr->array_name[ARRAY_LABEL_LEN-1] = '\0';
-> +	}
-> +			
-> +	return err;
-> +}
-> +
->  static int check_ownership(struct scsi_device *sdev, struct rdac_dh_data *h)
->  {
->  	int err;
-> @@ -529,6 +559,10 @@ static int rdac_activate(struct scsi_dev
->  		err = initialize_controller(sdev, h);
->  		if (err != SCSI_DH_OK)
->  			goto done;
-> +
-> +		err = get_array_name(sdev, h);
-> +		if (err != SCSI_DH_OK)
-> +			goto done;
->  	}
->  
->  	if (h->ctlr->use_ms10 == -1) {
-> 
-> 
-
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index a7d0bf8..28cd500 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -25,6 +25,17 @@ config IOSCHED_NOOP
+ 	  that do their own scheduling and require only minimal assistance from
+ 	  the kernel.
+ 
++config IOSCHED_NOOP_HIER
++	bool "Noop Hierarchical Scheduling support"
++	depends on IOSCHED_NOOP && CGROUPS
++	select ELV_FAIR_QUEUING
++	select GROUP_IOSCHED
++	default n
++	---help---
++	  Enable hierarhical scheduling in noop. In this mode noop keeps
++	  one IO queue per cgroup instead of a global queue. Elevator
++	  fair queuing logic ensures fairness among various queues.
++
+ config IOSCHED_AS
+ 	tristate "Anticipatory I/O scheduler"
+ 	default y
+diff --git a/block/noop-iosched.c b/block/noop-iosched.c
+index 731dbf2..4ba496f 100644
+--- a/block/noop-iosched.c
++++ b/block/noop-iosched.c
+@@ -6,6 +6,7 @@
+ #include <linux/bio.h>
+ #include <linux/module.h>
+ #include <linux/init.h>
++#include "elevator-fq.h"
+ 
+ struct noop_queue {
+ 	struct list_head queue;
+@@ -82,6 +83,15 @@ static void noop_free_noop_queue(struct elevator_queue *e, void *sched_queue)
+ 	kfree(nq);
+ }
+ 
++#ifdef CONFIG_IOSCHED_NOOP_HIER
++static struct elv_fs_entry noop_attrs[] = {
++	ELV_ATTR(fairness),
++	ELV_ATTR(slice_sync),
++	ELV_ATTR(group_idle),
++	__ATTR_NULL
++};
++#endif
++
+ static struct elevator_type elevator_noop = {
+ 	.ops = {
+ 		.elevator_merge_req_fn		= noop_merged_requests,
+@@ -92,6 +102,10 @@ static struct elevator_type elevator_noop = {
+ 		.elevator_alloc_sched_queue_fn	= noop_alloc_noop_queue,
+ 		.elevator_free_sched_queue_fn	= noop_free_noop_queue,
+ 	},
++#ifdef CONFIG_IOSCHED_NOOP_HIER
++	.elevator_features = ELV_IOSCHED_NEED_FQ | ELV_IOSCHED_SINGLE_IOQ,
++	.elevator_attrs = noop_attrs,
++#endif
+ 	.elevator_name = "noop",
+ 	.elevator_owner = THIS_MODULE,
+ };
+-- 
+1.6.0.6
