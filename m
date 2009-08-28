@@ -1,13 +1,16 @@
-From: "Diedrich Ehlerding" <diedrich.ehlerding@ts.fujitsu.com>
-Subject: [multipath] meaning of "no_path_retry nn"
-Date: Fri, 28 Aug 2009 15:16:17 +0200
-Message-ID: <7ujn84$746nl@dgate20u.abg.fsc.net>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 5/5] dm-mpath: convert to request-based
+Date: Fri, 28 Aug 2009 09:36:38 -0400
+Message-ID: <20090828133638.GA8377@redhat.com>
+References: <4A24CD74.80708@ct.jp.nec.com> <4A24CEBD.8010807@ct.jp.nec.com>
+	<20090827175419.GQ643@agk-dp.fab.redhat.com>
+	<4A97646D.1000201@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-description: Mail message body
+Content-Disposition: inline
+In-Reply-To: <4A97646D.1000201@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,40 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-I would appreciate an explanation of "no_path_retry nn" parameter in 
-multipath.conf. Probably I misunderstood it as a number of seconds. 
+On Fri, Aug 28 2009 at  1:00am -0400,
+Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
 
-I am setting up  a software mirror (mdadm) on top of an EMC Clariion 
-configuration for desaster protection. The Clariions are recognized by 
-multipath properly; it seems to be set up with "no_path_retry 60" 
-(according to multipath -t). I had no further settings in 
-multipath.conf; this seems to be hardcoded into multipath. 
+> Hi Alasdair,
+> 
+> On 08/28/2009 02:54 AM +0900, Alasdair G Kergon wrote:
+> > On Tue, Jun 02, 2009 at 04:03:25PM +0900, Kiyoshi Ueda wrote:
+> >> This patch converts dm-multipath target to request-based from bio-based.
+> >  
+> > How much effort would it be to retain the old mpath implementation
+> > in parallel?
+> > 
+> > I'm rather concerned that we're losing some useful functionality in
+> > 2.6.31 with this patch - stacking over bio-based devices (test beds use
+> > this and it's helpful for debugging), barrier support - and supporting
+> > both would make it easier for people to compare the two implementations
+> > and stick to the old one if in their particular circumstances it worked
+> > better.
+> > 
+> > Perhaps, dm-mpath could just register two targets (like snapshot does),
+> > one bio-based, and one rq-based, sharing most of the functions with
+> > wrappers to indicate which is which where necessary?
+> 
+> Such wrappers need to be made very well to share codes as much as
+> possible.  Otherwise, we won't be able to maintain the non-default
+> (bio-based?) code, then people won't be able to use it even for
+> testing/debugging.
+> Also we need to consider the user interface so that user-space tools
+> won't be confused.
+> 
+> I'll look into this when I finish the barrier implementation of
+> request-based dm. (hopefully 2.6.32 timeframe, maybe 2.6.33)
+> 
+> By the way, only for testing/debugging purposes, making request-based
+> error/linear targets (e.g. named like error_rq/linear_rq) may be an
+> alternative.
 
-However, If I disconnect one Clariion, th mirror doesnt break - 
-multipath detects that all paths are failed and tells me that it will 
-now wait for 60 retries. These 60 retries seem to last very long; 
-atfter 5 minutes, it didnt complete. 
+As a stop-gap I'd imagine Linux's 'scsi_debug' could be used for testing
+and debugging purposes.
 
-Evertyhing works fine if I set up a multipath.conf containing the 
-Clariion settings from multipath -t and modify them to 
-"no_path_retry fail" and "features 0 fail_if_no_path".  But even if I 
-just reduce the default settings to no_path_retry 2 the mirror doesnt 
-break - the IOs seem to hang indefinitely (well, I lost patience after 
-~5 minutes).
-
-Probably I misunderstood "no_path_retry 60" - does that mean seconds, 
-or minutes, or what else? Is anything except "fail" a useful setting in 
-mirrored configurations? 
-
-system is a Suse  with multipath-tools-0.4.7-34.43
-
-Thanks 
-Diedrich
--- 
-Diedrich Ehlerding, Fujitsu Technology Solutions GmbH, R GE TIS N IC2 
-Hildesheimer Str 25, D-30880 Laatzen
-Fon +49 511 8489-1806, Fax -251806, Mobil +49 173 2464758
-Firmenangaben: http://de.ts.fujitsu.com/imprint.html
+Mike
