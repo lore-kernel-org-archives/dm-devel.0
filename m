@@ -1,8 +1,8 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 09/23] io-controller: Export disk time used and
-	nr sectors dipatched through cgroups
-Date: Fri, 28 Aug 2009 17:30:58 -0400
-Message-ID: <1251495072-7780-10-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 06/23] io-controller: cgroup related changes for
+	hierarchical group support
+Date: Fri, 28 Aug 2009 17:30:55 -0400
+Message-ID: <1251495072-7780-7-git-send-email-vgoyal@redhat.com>
 References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,166 +20,281 @@ To: linux-kernel@vger.kernel.org, jens.axboe@oracle.com
 Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, vgoyal@redhat.com, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-o This patch exports some statistics through cgroup interface. Two of the
-  statistics currently exported are actual disk time assigned to the cgroup
-  and actual number of sectors dispatched to disk on behalf of this cgroup.
+o This patch introduces some of the cgroup related code for io controller.
 
+Signed-off-by: Fabio Checconi <fabio@gandalf.sssup.it>
+Signed-off-by: Paolo Valente <paolo.valente@unimore.it>
+Signed-off-by: Nauman Rafique <nauman@google.com>
 Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 ---
- block/elevator-fq.c |   76 +++++++++++++++++++++++++++++++++++++++++++++++++++
- block/elevator-fq.h |   10 +++++++
- 2 files changed, 86 insertions(+), 0 deletions(-)
+ block/blk-ioc.c               |    3 +
+ block/elevator-fq.c           |  167 +++++++++++++++++++++++++++++++++++++++++
+ block/elevator-fq.h           |   14 ++++
+ include/linux/cgroup_subsys.h |    6 ++
+ include/linux/iocontext.h     |    5 +
+ 5 files changed, 195 insertions(+), 0 deletions(-)
 
+diff --git a/block/blk-ioc.c b/block/blk-ioc.c
+index d4ed600..0d56336 100644
+--- a/block/blk-ioc.c
++++ b/block/blk-ioc.c
+@@ -95,6 +95,9 @@ struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
+ 		spin_lock_init(&ret->lock);
+ 		ret->ioprio_changed = 0;
+ 		ret->ioprio = 0;
++#ifdef CONFIG_GROUP_IOSCHED
++		ret->cgroup_changed = 0;
++#endif
+ 		ret->last_waited = jiffies; /* doesn't matter... */
+ 		ret->nr_batch_requests = 0; /* because this is 0 */
+ 		ret->aic = NULL;
 diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 8e40b64..563db2d 100644
+index 6546df0..d0f341e 100644
 --- a/block/elevator-fq.c
 +++ b/block/elevator-fq.c
-@@ -13,6 +13,7 @@
+@@ -739,6 +739,173 @@ EXPORT_SYMBOL(elv_io_group_set_async_queue);
  
- #include <linux/blkdev.h>
- #include <linux/blktrace_api.h>
-+#include <linux/seq_file.h>
- #include "elevator-fq.h"
+ #ifdef CONFIG_GROUP_IOSCHED
  
- const int elv_slice_sync = HZ / 10;
-@@ -257,6 +258,8 @@ entity_served(struct io_entity *entity, unsigned long served,
- 	for_each_entity(entity) {
- 		entity->vdisktime += elv_delta_fair(served, entity);
- 		update_min_vdisktime(entity->st);
-+		entity->total_time += served;
-+		entity->total_sectors += nr_sectors;
- 	}
- }
- 
-@@ -854,6 +857,66 @@ STORE_FUNCTION(weight, IO_WEIGHT_MIN, IO_WEIGHT_MAX);
- STORE_FUNCTION(ioprio_class, IOPRIO_CLASS_RT, IOPRIO_CLASS_IDLE);
- #undef STORE_FUNCTION
- 
-+static int io_cgroup_disk_time_read(struct cgroup *cgroup,
-+				struct cftype *cftype, struct seq_file *m)
++struct io_cgroup io_root_cgroup = {
++	.weight = IO_WEIGHT_DEFAULT,
++	.ioprio_class = IOPRIO_CLASS_BE,
++};
++
++static struct io_cgroup *cgroup_to_io_cgroup(struct cgroup *cgroup)
 +{
-+	struct io_cgroup *iocg;
-+	struct io_group *iog;
-+	struct hlist_node *n;
-+
-+	if (!cgroup_lock_live_group(cgroup))
-+		return -ENODEV;
-+
-+	iocg = cgroup_to_io_cgroup(cgroup);
-+
-+	rcu_read_lock();
-+	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
-+		/*
-+		 * There might be groups which are not functional and
-+		 * waiting to be reclaimed upon cgoup deletion.
-+		 */
-+		if (iog->key) {
-+			seq_printf(m, "%u:%u %lu\n", MAJOR(iog->dev),
-+					MINOR(iog->dev),
-+					iog->entity.total_time);
-+		}
-+	}
-+	rcu_read_unlock();
-+	cgroup_unlock();
-+
-+	return 0;
++	return container_of(cgroup_subsys_state(cgroup, io_subsys_id),
++			    struct io_cgroup, css);
 +}
 +
-+static int io_cgroup_disk_sectors_read(struct cgroup *cgroup,
-+				struct cftype *cftype, struct seq_file *m)
-+{
-+	struct io_cgroup *iocg;
-+	struct io_group *iog;
-+	struct hlist_node *n;
-+
-+	if (!cgroup_lock_live_group(cgroup))
-+		return -ENODEV;
-+
-+	iocg = cgroup_to_io_cgroup(cgroup);
-+
-+	rcu_read_lock();
-+	hlist_for_each_entry_rcu(iog, n, &iocg->group_data, group_node) {
-+		/*
-+		 * There might be groups which are not functional and
-+		 * waiting to be reclaimed upon cgoup deletion.
-+		 */
-+		if (iog->key) {
-+			seq_printf(m, "%u:%u %lu\n", MAJOR(iog->dev),
-+					MINOR(iog->dev),
-+					iog->entity.total_sectors);
-+		}
-+	}
-+	rcu_read_unlock();
-+	cgroup_unlock();
-+
-+	return 0;
++#define SHOW_FUNCTION(__VAR)						\
++static u64 io_cgroup_##__VAR##_read(struct cgroup *cgroup,		\
++				       struct cftype *cftype)		\
++{									\
++	struct io_cgroup *iocg;					\
++	u64 ret;							\
++									\
++	if (!cgroup_lock_live_group(cgroup))				\
++		return -ENODEV;						\
++									\
++	iocg = cgroup_to_io_cgroup(cgroup);				\
++	spin_lock_irq(&iocg->lock);					\
++	ret = iocg->__VAR;						\
++	spin_unlock_irq(&iocg->lock);					\
++									\
++	cgroup_unlock();						\
++									\
++	return ret;							\
 +}
 +
- struct cftype io_files[] = {
- 	{
- 		.name = "weight",
-@@ -865,6 +928,14 @@ struct cftype io_files[] = {
- 		.read_u64 = io_cgroup_ioprio_class_read,
- 		.write_u64 = io_cgroup_ioprio_class_write,
- 	},
-+	{
-+		.name = "disk_time",
-+		.read_seq_string = io_cgroup_disk_time_read,
-+	},
-+	{
-+		.name = "disk_sectors",
-+		.read_seq_string = io_cgroup_disk_sectors_read,
-+	},
- };
- 
- static int iocg_populate(struct cgroup_subsys *subsys, struct cgroup *cgroup)
-@@ -956,6 +1027,8 @@ io_group_chain_alloc(struct request_queue *q, void *key, struct cgroup *cgroup)
- 	struct io_cgroup *iocg;
- 	struct io_group *iog, *leaf = NULL, *prev = NULL;
- 	gfp_t flags = GFP_ATOMIC |  __GFP_ZERO;
-+	unsigned int major, minor;
-+	struct backing_dev_info *bdi = &q->backing_dev_info;
- 
- 	for (; cgroup != NULL; cgroup = cgroup->parent) {
- 		iocg = cgroup_to_io_cgroup(cgroup);
-@@ -976,6 +1049,9 @@ io_group_chain_alloc(struct request_queue *q, void *key, struct cgroup *cgroup)
- 
- 		iog->iocg_id = css_id(&iocg->css);
- 
-+		sscanf(dev_name(bdi->dev), "%u:%u", &major, &minor);
-+		iog->dev = MKDEV(major, minor);
++SHOW_FUNCTION(weight);
++SHOW_FUNCTION(ioprio_class);
++#undef SHOW_FUNCTION
 +
- 		io_group_init_entity(iocg, iog);
- 
- 		atomic_set(&iog->ref, 0);
++#define STORE_FUNCTION(__VAR, __MIN, __MAX)				\
++static int io_cgroup_##__VAR##_write(struct cgroup *cgroup,		\
++					struct cftype *cftype,		\
++					u64 val)			\
++{									\
++	struct io_cgroup *iocg;					\
++	struct io_group *iog;						\
++	struct hlist_node *n;						\
++									\
++	if (val < (__MIN) || val > (__MAX))				\
++		return -EINVAL;						\
++									\
++	if (!cgroup_lock_live_group(cgroup))				\
++		return -ENODEV;						\
++									\
++	iocg = cgroup_to_io_cgroup(cgroup);				\
++									\
++	spin_lock_irq(&iocg->lock);					\
++	iocg->__VAR = (unsigned long)val;				\
++	hlist_for_each_entry(iog, n, &iocg->group_data, group_node) {	\
++		iog->entity.__VAR = (unsigned long)val;		\
++		smp_wmb();						\
++		iog->entity.ioprio_changed = 1;				\
++	}								\
++	spin_unlock_irq(&iocg->lock);					\
++									\
++	cgroup_unlock();						\
++									\
++	return 0;							\
++}
++
++STORE_FUNCTION(weight, IO_WEIGHT_MIN, IO_WEIGHT_MAX);
++STORE_FUNCTION(ioprio_class, IOPRIO_CLASS_RT, IOPRIO_CLASS_IDLE);
++#undef STORE_FUNCTION
++
++struct cftype io_files[] = {
++	{
++		.name = "weight",
++		.read_u64 = io_cgroup_weight_read,
++		.write_u64 = io_cgroup_weight_write,
++	},
++	{
++		.name = "ioprio_class",
++		.read_u64 = io_cgroup_ioprio_class_read,
++		.write_u64 = io_cgroup_ioprio_class_write,
++	},
++};
++
++static int iocg_populate(struct cgroup_subsys *subsys, struct cgroup *cgroup)
++{
++	return cgroup_add_files(cgroup, subsys, io_files, ARRAY_SIZE(io_files));
++}
++
++static struct cgroup_subsys_state *iocg_create(struct cgroup_subsys *subsys,
++						struct cgroup *cgroup)
++{
++	struct io_cgroup *iocg;
++
++	if (cgroup->parent != NULL) {
++		iocg = kzalloc(sizeof(*iocg), GFP_KERNEL);
++		if (iocg == NULL)
++			return ERR_PTR(-ENOMEM);
++	} else
++		iocg = &io_root_cgroup;
++
++	spin_lock_init(&iocg->lock);
++	INIT_HLIST_HEAD(&iocg->group_data);
++	iocg->weight = IO_WEIGHT_DEFAULT;
++	iocg->ioprio_class = IOPRIO_CLASS_BE;
++
++	return &iocg->css;
++}
++
++/*
++ * We cannot support shared io contexts, as we have no mean to support
++ * two tasks with the same ioc in two different groups without major rework
++ * of the main cic data structures.  By now we allow a task to change
++ * its cgroup only if it's the only owner of its ioc; the drawback of this
++ * behavior is that a group containing a task that forked using CLONE_IO
++ * will not be destroyed until the tasks sharing the ioc die.
++ */
++static int iocg_can_attach(struct cgroup_subsys *subsys, struct cgroup *cgroup,
++			    struct task_struct *tsk)
++{
++	struct io_context *ioc;
++	int ret = 0;
++
++	/* task_lock() is needed to avoid races with exit_io_context() */
++	task_lock(tsk);
++	ioc = tsk->io_context;
++	if (ioc != NULL && atomic_read(&ioc->nr_tasks) > 1)
++		/*
++		 * ioc == NULL means that the task is either too young or
++		 * exiting: if it has still no ioc the ioc can't be shared,
++		 * if the task is exiting the attach will fail anyway, no
++		 * matter what we return here.
++		 */
++		ret = -EINVAL;
++	task_unlock(tsk);
++
++	return ret;
++}
++
++static void iocg_attach(struct cgroup_subsys *subsys, struct cgroup *cgroup,
++			 struct cgroup *prev, struct task_struct *tsk)
++{
++	struct io_context *ioc;
++
++	task_lock(tsk);
++	ioc = tsk->io_context;
++	if (ioc != NULL)
++		ioc->cgroup_changed = 1;
++	task_unlock(tsk);
++}
++
++static void iocg_destroy(struct cgroup_subsys *subsys, struct cgroup *cgroup)
++{
++
++	/* Implemented in later patch */
++}
++
++struct cgroup_subsys io_subsys = {
++	.name = "io",
++	.create = iocg_create,
++	.can_attach = iocg_can_attach,
++	.attach = iocg_attach,
++	.destroy = iocg_destroy,
++	.populate = iocg_populate,
++	.subsys_id = io_subsys_id,
++	.use_id = 1,
++};
++
+ static void io_free_root_group(struct elevator_queue *e)
+ {
+ 	struct io_group *iog = e->efqd->root_group;
 diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index 56d0bfc..9757e39 100644
+index 776f429..f92afac 100644
 --- a/block/elevator-fq.h
 +++ b/block/elevator-fq.h
-@@ -53,6 +53,13 @@ struct io_entity {
+@@ -13,6 +13,7 @@
  
- 	unsigned short ioprio, ioprio_class;
- 	int ioprio_changed;
-+
-+	/*
-+	 * Keep track of total service received by this entity. Keep the
-+	 * stats both for time slices and number of sectors dispatched
-+	 */
-+	unsigned long total_time;
-+	unsigned long total_sectors;
- };
+ #ifdef CONFIG_BLOCK
+ #include <linux/blkdev.h>
++#include <linux/cgroup.h>
  
- /*
-@@ -104,6 +111,9 @@ struct io_group {
- 	struct io_queue *async_idle_queue;
+ #ifndef _ELV_SCHED_H
+ #define _ELV_SCHED_H
+@@ -91,6 +92,8 @@ struct io_group {
+ 	struct io_entity entity;
+ 	atomic_t ref;
+ 	struct io_sched_data sched_data;
++	struct hlist_node group_node;
++	unsigned short iocg_id;
+ 	/*
+ 	 * async queue for each priority case for RT and BE class.
+ 	 * Used only for cfq.
+@@ -101,6 +104,17 @@ struct io_group {
  	void *key;
- 	struct rcu_head rcu_head;
-+
-+	/* The device MKDEV(major, minor), this group has been created for */
-+	dev_t	dev;
  };
  
- struct io_cgroup {
++struct io_cgroup {
++	struct cgroup_subsys_state css;
++
++	unsigned int weight;
++	unsigned short ioprio_class;
++
++	spinlock_t lock;
++	struct hlist_head group_data;
++};
++
++
+ #else /* CONFIG_GROUP_IOSCHED */
+ 
+ struct io_group {
+diff --git a/include/linux/cgroup_subsys.h b/include/linux/cgroup_subsys.h
+index 9c8d31b..baf544f 100644
+--- a/include/linux/cgroup_subsys.h
++++ b/include/linux/cgroup_subsys.h
+@@ -60,3 +60,9 @@ SUBSYS(net_cls)
+ #endif
+ 
+ /* */
++
++#ifdef CONFIG_GROUP_IOSCHED
++SUBSYS(io)
++#endif
++
++/* */
+diff --git a/include/linux/iocontext.h b/include/linux/iocontext.h
+index 4da4a75..b343594 100644
+--- a/include/linux/iocontext.h
++++ b/include/linux/iocontext.h
+@@ -73,6 +73,11 @@ struct io_context {
+ 	unsigned short ioprio;
+ 	unsigned short ioprio_changed;
+ 
++#ifdef CONFIG_GROUP_IOSCHED
++	/* If task changes the cgroup, elevator processes it asynchronously */
++	unsigned short cgroup_changed;
++#endif
++
+ 	/*
+ 	 * For request batching
+ 	 */
 -- 
 1.6.0.6
