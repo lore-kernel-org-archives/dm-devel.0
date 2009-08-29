@@ -1,29 +1,49 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: RE: [PATCH 1/3][RESUBMIT] scsi_dh_rdac: changes to collect
-	the	debug information during rdac_activate
-Date: Fri, 28 Aug 2009 18:06:04 -0700
-Message-ID: <1251507964.26079.6.camel@chandra-ubuntu>
-References: <E463DF2B2E584B4A82673F53D62C2EF474C65F3D@cosmail01.lsi.com>
-	 <1251482228.20333.9.camel@chandra-ubuntu>
-	 <E463DF2B2E584B4A82673F53D62C2EF474C66194@cosmail01.lsi.com>
-Reply-To: sekharan@linux.vnet.ibm.com
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: [PATCH 03/23] io-controller: Common flat fair
+ queuing code in elevaotor layer
+Date: Fri, 28 Aug 2009 21:29:23 -0400
+Message-ID: <4A988473.7010208@redhat.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-4-git-send-email-vgoyal@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474C66194@cosmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>, 'device mapper development' <dm-devel@redhat.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1251495072-7780-4-git-send-email-vgoyal@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-Looks good, except for this one line
-> +		h->ctlr->array_name[ARRAY_LABEL_LEN-1] = '\0';
+Vivek Goyal wrote:
+> This is common fair queuing code in elevator layer. This is controlled by
+> config option CONFIG_ELV_FAIR_QUEUING. This patch initially only introduces
+> flat fair queuing support where there is only one group, "root group" and all
+> the tasks belong to root group.
+> 
+> This elevator layer changes are backward compatible. That means any ioscheduler
+> using old interfaces will continue to work.
+> 
+> This is essentially a lot of CFQ logic moved into common layer so that other
+> IO schedulers can make use of that in hierarhical scheduling setup.
+> 
+> Signed-off-by: Nauman Rafique <nauman@google.com>
+> Signed-off-by: Fabio Checconi <fabio@gandalf.sssup.it>
+> Signed-off-by: Paolo Valente <paolo.valente@unimore.it>
+> Signed-off-by: Aristeu Rozanski <aris@redhat.com>
+> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 
-should be array_name instead.
+Acked-by: Rik van Riel <riel@redhat.com>
 
-Thanks
-
-chandra
-<snip>
-
+-- 
+All rights reversed.
