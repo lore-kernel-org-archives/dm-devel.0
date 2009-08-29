@@ -1,15 +1,16 @@
-From: Mike Snitzer <snitzer@gmail.com>
-Subject: Re: Re: [PATCH 5/5] dm-mpath: convert to request-based
-Date: Sat, 29 Aug 2009 14:23:31 -0400
-Message-ID: <170fa0d20908291123p1d1bafe2t30a5f03f08086025@mail.gmail.com>
-References: <4A24CD74.80708@ct.jp.nec.com> <4A24CEBD.8010807@ct.jp.nec.com>
-	<20090827175419.GQ643@agk-dp.fab.redhat.com>
-	<4A97646D.1000201@ct.jp.nec.com> <20090828133638.GA8377@redhat.com>
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: [PATCH 07/23] io-controller: Common hierarchical
+ fair queuing code in elevaotor layer
+Date: Sat, 29 Aug 2009 19:04:38 -0400
+Message-ID: <4A99B406.2060209@redhat.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-8-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090828133638.GA8377@redhat.com>
+In-Reply-To: <1251495072-7780-8-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,53 +20,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On 8/28/09, Mike Snitzer <snitzer@redhat.com> wrote:
-> On Fri, Aug 28 2009 at  1:00am -0400,
-> Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
->
->> Hi Alasdair,
->>
->> On 08/28/2009 02:54 AM +0900, Alasdair G Kergon wrote:
->> > On Tue, Jun 02, 2009 at 04:03:25PM +0900, Kiyoshi Ueda wrote:
->> >> This patch converts dm-multipath target to request-based from
->> >> bio-based.
->> >
->> > How much effort would it be to retain the old mpath implementation
->> > in parallel?
->> >
->> > I'm rather concerned that we're losing some useful functionality in
->> > 2.6.31 with this patch - stacking over bio-based devices (test beds use
->> > this and it's helpful for debugging), barrier support - and supporting
->> > both would make it easier for people to compare the two implementations
->> > and stick to the old one if in their particular circumstances it worked
->> > better.
->> >
->> > Perhaps, dm-mpath could just register two targets (like snapshot does),
->> > one bio-based, and one rq-based, sharing most of the functions with
->> > wrappers to indicate which is which where necessary?
->>
->> Such wrappers need to be made very well to share codes as much as
->> possible.  Otherwise, we won't be able to maintain the non-default
->> (bio-based?) code, then people won't be able to use it even for
->> testing/debugging.
->> Also we need to consider the user interface so that user-space tools
->> won't be confused.
->>
->> I'll look into this when I finish the barrier implementation of
->> request-based dm. (hopefully 2.6.32 timeframe, maybe 2.6.33)
->>
->> By the way, only for testing/debugging purposes, making request-based
->> error/linear targets (e.g. named like error_rq/linear_rq) may be an
->> alternative.
->
-> As a stop-gap I'd imagine Linux's 'scsi_debug' could be used for testing
-> and debugging purposes.
+Vivek Goyal wrote:
+> o This patch enables hierarchical fair queuing in common layer. It is
+>   controlled by config option CONFIG_GROUP_IOSCHED.
 
-I looked closer at scsi_debug and it doesn't have the ability to
-establish a shared WWID for N SCSI targets.  That aside, it still
-wouldn't offer anywhere near as much utility as supporting the various
-bio-based DM targets for mpath testing purposes.
+Acked-by: Rik van Riel <riel@redhat.com>
+
+-- 
+All rights reversed.
