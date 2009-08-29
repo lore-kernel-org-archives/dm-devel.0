@@ -1,16 +1,16 @@
 From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH 08/23] io-controller: cfq changes to use
- hierarchical fair queuing code in elevaotor layer
-Date: Sat, 29 Aug 2009 19:11:36 -0400
-Message-ID: <4A99B5A8.9050201@redhat.com>
+Subject: Re: [PATCH 09/23] io-controller: Export disk time used
+ and nr sectors dipatched through cgroups
+Date: Sat, 29 Aug 2009 19:12:24 -0400
+Message-ID: <4A99B5D8.8020100@redhat.com>
 References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<1251495072-7780-9-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-10-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251495072-7780-9-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <1251495072-7780-10-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,12 +25,11 @@ Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah
 List-Id: dm-devel.ids
 
 Vivek Goyal wrote:
-> Make cfq hierarhical.
+> o This patch exports some statistics through cgroup interface. Two of the
+>   statistics currently exported are actual disk time assigned to the cgroup
+>   and actual number of sectors dispatched to disk on behalf of this cgroup.
 > 
-> Signed-off-by: Nauman Rafique <nauman@google.com>
-> Signed-off-by: Fabio Checconi <fabio@gandalf.sssup.it>
-> Signed-off-by: Paolo Valente <paolo.valente@unimore.it>
-> Signed-off-by: Aristeu Rozanski <aris@redhat.com>
+> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 > Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 
 Acked-by: Rik van Riel <riel@redhat.com>
