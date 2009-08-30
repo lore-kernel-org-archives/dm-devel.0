@@ -1,16 +1,15 @@
 From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH 10/23] io-controller: Debug hierarchical IO
-	scheduling
-Date: Sat, 29 Aug 2009 20:10:34 -0400
-Message-ID: <4A99C37A.1020809@redhat.com>
+Subject: Re: [PATCH 11/23] io-controller: Introduce group idling
+Date: Sat, 29 Aug 2009 20:38:20 -0400
+Message-ID: <4A99C9FC.2010004@redhat.com>
 References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<1251495072-7780-11-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-12-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251495072-7780-11-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <1251495072-7780-12-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,16 +24,24 @@ Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah
 List-Id: dm-devel.ids
 
 Vivek Goyal wrote:
-> o Littile debugging aid for hierarchical IO scheduling.
+> o It is not always that IO from a process or group is continuous. There are
+>   cases of dependent reads where next read is not issued till previous read
+>   has finished. For such cases, CFQ introduced the notion of slice_idle,
+>   where we idle on the queue for sometime hoping next request will come
+>   and that's how fairness is provided otherwise queue will be deleted
+>   immediately from the service tree and this process will not get the
+>   fair share.
 > 
-> o Enabled under CONFIG_DEBUG_GROUP_IOSCHED
+> o This patch introduces the similar concept at group level. Idle on the group
+>   for a period of "group_idle" which is tunable through sysfs interface. So
+>   if a group is empty and about to be deleted, we idle for the next request.
 > 
-> o Currently it outputs more debug messages in blktrace output which helps
->   a great deal in debugging in hierarchical setup. It also creates additional
->   cgroup interfaces io.disk_queue and io.disk_dequeue to output some more
->   debugging data.
+> o This patch also introduces the notion of wait busy where we wait for one
+>   extra group_idle period even if queue has consumed its time slice. The
+>   reason being that group will loose its share upon removal from service
+>   tree as some other entity will be picked for dispatch and vtime jump will
+>   take place.
 > 
-> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 > Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 
 Acked-by: Rik van Riel <riel@redhat.com>
