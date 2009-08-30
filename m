@@ -1,15 +1,16 @@
 From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH 11/23] io-controller: Introduce group idling
-Date: Sat, 29 Aug 2009 20:38:20 -0400
-Message-ID: <4A99C9FC.2010004@redhat.com>
+Subject: Re: [PATCH 12/23] io-controller: Wait for requests to
+ complete from last queue before new queue is scheduled
+Date: Sat, 29 Aug 2009 20:40:04 -0400
+Message-ID: <4A99CA64.9090807@redhat.com>
 References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<1251495072-7780-12-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-13-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251495072-7780-12-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <1251495072-7780-13-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,24 +25,15 @@ Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah
 List-Id: dm-devel.ids
 
 Vivek Goyal wrote:
-> o It is not always that IO from a process or group is continuous. There are
->   cases of dependent reads where next read is not issued till previous read
->   has finished. For such cases, CFQ introduced the notion of slice_idle,
->   where we idle on the queue for sometime hoping next request will come
->   and that's how fairness is provided otherwise queue will be deleted
->   immediately from the service tree and this process will not get the
->   fair share.
+
+> o Because above behavior can result in reduced throughput, this behavior will
+>   be enabled only if user sets "fairness" tunable to 1.
 > 
-> o This patch introduces the similar concept at group level. Idle on the group
->   for a period of "group_idle" which is tunable through sysfs interface. So
->   if a group is empty and about to be deleted, we idle for the next request.
-> 
-> o This patch also introduces the notion of wait busy where we wait for one
->   extra group_idle period even if queue has consumed its time slice. The
->   reason being that group will loose its share upon removal from service
->   tree as some other entity will be picked for dispatch and vtime jump will
->   take place.
-> 
+> o This patch helps in achieving more isolation between reads and buffered
+>   writes in different cgroups. 
+
+Could be a nice help against SATA NCQ request starvation.
+
 > Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 
 Acked-by: Rik van Riel <riel@redhat.com>
