@@ -1,16 +1,16 @@
 From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH 09/23] io-controller: Export disk time used
- and nr sectors dipatched through cgroups
-Date: Sat, 29 Aug 2009 19:12:24 -0400
-Message-ID: <4A99B5D8.8020100@redhat.com>
+Subject: Re: [PATCH 10/23] io-controller: Debug hierarchical IO
+	scheduling
+Date: Sat, 29 Aug 2009 20:10:34 -0400
+Message-ID: <4A99C37A.1020809@redhat.com>
 References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<1251495072-7780-10-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-11-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251495072-7780-10-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <1251495072-7780-11-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,9 +25,14 @@ Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah
 List-Id: dm-devel.ids
 
 Vivek Goyal wrote:
-> o This patch exports some statistics through cgroup interface. Two of the
->   statistics currently exported are actual disk time assigned to the cgroup
->   and actual number of sectors dispatched to disk on behalf of this cgroup.
+> o Littile debugging aid for hierarchical IO scheduling.
+> 
+> o Enabled under CONFIG_DEBUG_GROUP_IOSCHED
+> 
+> o Currently it outputs more debug messages in blktrace output which helps
+>   a great deal in debugging in hierarchical setup. It also creates additional
+>   cgroup interfaces io.disk_queue and io.disk_dequeue to output some more
+>   debugging data.
 > 
 > Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 > Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
