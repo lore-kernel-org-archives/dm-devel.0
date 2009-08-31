@@ -1,9 +1,16 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath hwtable.c
-Date: 31 Aug 2009 17:17:11 -0000
-Message-ID: <20090831171711.29021.qmail@sourceware.org>
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: [PATCH 17/23] io-controller: anticipatory changes
+ for hierarchical fair queuing
+Date: Mon, 31 Aug 2009 13:21:16 -0400
+Message-ID: <4A9C068C.2020008@redhat.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-18-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1251495072-7780-18-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,61 +20,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2009-08-31 17:17:11
+Vivek Goyal wrote:
+> This patch changes anticipatory scheduler to use queue scheduling code from
+> elevator layer.  One can go back to old as by deselecting
+> CONFIG_IOSCHED_AS_HIER. Even with CONFIG_IOSCHED_AS_HIER=y, with-out any
+> other cgroup created, AS behavior should remain the same as old.
+> 
+> o AS is a single queue ioschduler, that means there is one AS queue per group.
+> 
+> o common layer code select the queue to dispatch from based on fairness, and
+>   then AS code selects the request with-in group.
+> 
+> o AS runs reads and writes batches with-in group. So common layer runs timed
+>   group queues and with-in group time, AS runs timed batches of reads and
+>   writes.
+> 
+> o Note: Previously AS write batch length was adjusted synamically whenever
+>   a W->R batch data direction took place and when first request from the
+>   read batch completed.
+> 
+>   Now write batch updation takes place when last request from the write
+>   batch has finished during W->R transition.
+> 
+> o AS runs its own anticipation logic to anticipate on reads. common layer also
+>   does the anticipation on the group if think time of the group is with-in
+>   slice_idle.
+> 
+> o Introduced few debugging messages in AS.
+> 
+> Signed-off-by: Nauman Rafique <nauman@google.com>
+> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 
-Modified files:
-	libmultipath   : hwtable.c 
-
-Log message:
-	Updated HP MSA configuration. Already Upstream.
-
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.20&r2=1.20.2.21
-
---- multipath-tools/libmultipath/hwtable.c	2009/08/19 21:52:40	1.20.2.20
-+++ multipath-tools/libmultipath/hwtable.c	2009/08/31 17:17:10	1.20.2.21
-@@ -63,11 +63,11 @@
- 		.vendor        = "DEC",
- 		.product       = "HSG80",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
--		.features      = "2 pg_init_retries 10",
-+		.getprio       = "/sbin/mpath_prio_hp_sw /dev/%n",
-+		.features      = "1 queue_if_no_path",
- 		.hwhandler     = "1 hp-sw",
- 		.selector      = DEFAULT_SELECTOR,
--		.pgpolicy      = GROUP_BY_SERIAL,
-+		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = FAILBACK_UNDEF,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
-@@ -77,17 +77,17 @@
- 	{
- 		/* MSA 1000/MSA1500, EVA 3000/5000 with old firmware */
- 		.vendor        = "COMPAQ",
--		.product       = "MSA|HSV1.0.*",
-+		.product       = "(MSA|HSV)1.0.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
--		.features      = "2 pg_init_retries 10",
-+		.getprio       = "/sbin/mpath_prio_hp_sw /dev/%n",
-+		.features      = "1 queue_if_no_path",
- 		.hwhandler     = "1 hp-sw",
- 		.selector      = DEFAULT_SELECTOR,
--		.pgpolicy      = MULTIBUS,
-+		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = FAILBACK_UNDEF,
- 		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = NO_PATH_RETRY_UNDEF,
--		.minio         = DEFAULT_MINIO,
-+		.no_path_retry = 12,
-+		.minio         = 100,
- 		.checker_name  = HP_SW,
- 	},
- 	{
+Acked-by: Rik van Riel <riel@redhat.com>
