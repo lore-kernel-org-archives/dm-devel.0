@@ -1,13 +1,13 @@
-From: malahal@us.ibm.com
+From: "Alan D. Brunelle" <Alan.Brunelle@hp.com>
 Subject: Re: Removing a failed device from LVM2/DM
-Date: Mon, 31 Aug 2009 09:24:45 -0700
-Message-ID: <20090831162445.GA20418@us.ibm.com>
-References: <1251731770.6817.31.camel@cail> <4A9BF425.2090502@redhat.com>
+Date: Mon, 31 Aug 2009 12:55:17 -0400
+Message-ID: <1251737717.6817.36.camel@cail>
+References: <1251731770.6817.31.camel@cail>  <4A9BF425.2090502@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 In-Reply-To: <4A9BF425.2090502@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,10 +18,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Takahiro Yasui [tyasui@redhat.com] wrote:
+On Mon, 2009-08-31 at 12:02 -0400, Takahiro Yasui wrote:
 > On 08/31/09 11:16, Alan D. Brunelle wrote:
 > > I constructed a 1-copy mirror with the following commands:
 > > 
@@ -116,6 +116,21 @@ Takahiro Yasui [tyasui@redhat.com] wrote:
 > http://www.redhat.com/docs/manuals/enterprise/RHEL-5-manual/Cluster_Logical_Volume_Manager/lost_PV_remove_from_VG.html
 > 
 > I think "vgreduce --removemissing vg" will remove "/dev/sdfj."
+
+
+I guess this is an interesting problem:
+
+
+> > > # vgreduce -a vg
+> > >   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
+> > >   Physical volume "/dev/sdcn" still in use
+> > >   Removed "/dev/sdfa" from volume group "vg"
+> > 
+
+So, /dev/sdfa was removed from the volume group instead of /dev/sdfj (Why? /dev/sdfa was being used for the mirror log - but since the volume group was downgraded to a linear array, it was no longer needed? Doesn't sound like the right thing to do - hence I should have used the --test and worked it out from that). I'll go retry the experiment and do the "removemissing" command.
+
+And since /dev/sdfa was removed & /dev/sdfj was failed that left only a single physical disk in the VG, then when I added in /dev/sdp it only brought the volume group to two devices. <sigh>
+
 > 
 > > or an explanation as to
 > > why the 'alloc anywhere' is needed for the lvconvert would be muchly
@@ -125,5 +140,13 @@ Takahiro Yasui [tyasui@redhat.com] wrote:
 > to allocate two mirror legs and one mirror log. But in this case, the "vg"
 > contains only two valid PVs (/dev/sdcn and /dev/sdp), and '--alloc anywhere'
 > options is necessary to allocate a mirror log on the same disk as mirror legs.
-
-Or add /dev/sdfa back to your vg (you removed it, right?)
+> 
+> I hope this would be help.
+> 
+> Thanks,
+> Taka
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
