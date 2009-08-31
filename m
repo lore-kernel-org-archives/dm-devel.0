@@ -1,16 +1,14 @@
-From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH 13/23] io-controller: Separate out queue and
-	data
-Date: Mon, 31 Aug 2009 11:27:11 -0400
-Message-ID: <4A9BEBCF.7000808@redhat.com>
-References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<1251495072-7780-14-git-send-email-vgoyal@redhat.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: Re: Removing a failed device from LVM2/DM
+Date: Mon, 31 Aug 2009 12:02:45 -0400
+Message-ID: <4A9BF425.2090502@redhat.com>
+References: <1251731770.6817.31.camel@cail>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251495072-7780-14-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <1251731770.6817.31.camel@cail>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,27 +18,114 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-> o So far noop, deadline and AS had one common structure called *_data which
->   contained both the queue information where requests are queued and also
->   common data used for scheduling. This patch breaks down this common
->   structure in two parts, *_queue and *_data. This is along the lines of
->   cfq where all the reuquests are queued in queue and common data and tunables
->   are part of data.
+On 08/31/09 11:16, Alan D. Brunelle wrote:
+> I constructed a 1-copy mirror with the following commands:
 > 
-> o It does not change the functionality but this re-organization helps once
->   noop, deadline and AS are changed to use hierarchical fair queuing.
+> # pvcreate --metadatasize 192k /dev/sdcn /dev/sdfj /dev/sdfa
+>   Physical volume "/dev/sdcn" successfully created
+>   Physical volume "/dev/sdfj" successfully created
+>   Physical volume "/dev/sdfa" successfully created
+> # vgcreate vg /dev/sdcn /dev/sdfj /dev/sdfa
+>   Volume group "vg" successfully created
+> # lvcreate -L 32g -m 1 -n lv vg
+>   Logical volume "lv" created
 > 
-> o looks like queue_empty function is not required and we can check for
->   q->nr_sorted in elevator layer to see if ioscheduler queues are empty or
->   not.
+> The status showed:
 > 
-> Signed-off-by: Nauman Rafique <nauman@google.com>
-> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+> # lvs -a -o +devices
+>   LV            VG   Attr   LSize  Origin Snap%  Move Log     Copy%
+> Convert Devices                      
+>   lv            vg   mwi-a- 32.00G                    lv_mlog  29.72
+> lv_mimage_0(0),lv_mimage_1(0)
+>   [lv_mimage_0] vg   Iwi-ao
+> 32.00G                                           /dev/sdcn(0)                 
+>   [lv_mimage_1] vg   Iwi-ao
+> 32.00G                                           /dev/sdfj(0)                 
+>   [lv_mlog]     vg   lwi-ao
+> 4.00M                                           /dev/sdfa(0)                 
+> 
+> Then I forced /dev/sdfj to fail (removing the unit from the FC SAN), and
+> the state of the mirror went to:
+> 
+> # lvs
+>   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
+>   LV   VG   Attr   LSize  Origin Snap%  Move Log Copy%  Convert
+>   lv   vg   -wi-a- 32.00G           
+> 
+> At this point I know I can do:
+> 
+> # vgreduce -a vg
+>   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
+>   Physical volume "/dev/sdcn" still in use
+>   Removed "/dev/sdfa" from volume group "vg"
+> 
+> But I run into two problems:
+> 
+> (1) I'd like to be able to live without the constant errors
+> about /dev/sdfj, and tried:
+> 
+> # pvremove -f /dev/sdfj
+>   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
+>   No physical volume label read from /dev/sdfj
+>   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
+>   Labels on physical volume "/dev/sdfj" successfully wiped
+> 
+> but that didn't stop it. 
+> 
+> and:
+> 
+> (2) I'd like to be able to recreate the 1-copy mirror from the currently
+> linear volume, but can't (easily):
+> 
+> # pvcreate --metadatasize 192k /dev/sdp
+>   Physical volume "/dev/sdp" successfully created
+> # vgextend vg /dev/sdp
+>   ... errors from sdfj omitted...
+>   Volume group "vg" successfully extended
+> # vgs
+>   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
+>   VG   #PV #LV #SN Attr   VSize   VFree  
+>   vg     2   1   0 wz--n- 542.67G 510.67G
+> # lvconvert -m 1 /dev/vg/lv
+>   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
+>   Insufficient suitable allocatable extents for logical volume : 8192
+> more required
+>   Unable to allocate extents for mirror(s).
+> 
+> I can use the alloc anywhere options, but I'm at a loss as to why that's
+> needed:
+> 
+> # lvconvert -m1 --alloc anywhere /dev/vg/lv
+>   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
+>   /dev/vg/lv: Converted: 1.3%
+>   /dev/vg/lv: Converted: 2.6%
+>   /dev/vg/lv: Converted: 3.8%
+> ...
+> 
+> 
+> Any pointers on how to remove /dev/sdfj from the scan (other than, I
+> guess, updated /etc/lvm.conf to filter it out)
 
-Acked-by: Rik van Riel <riel@redhat.com>
+The following URL explains how to remove lost PVs from VG.
+
+6.6. Removing Lost Physical Volumes from a Volume Group
+http://www.redhat.com/docs/manuals/enterprise/RHEL-5-manual/Cluster_Logical_Volume_Manager/lost_PV_remove_from_VG.html
+
+I think "vgreduce --removemissing vg" will remove "/dev/sdfj."
+
+> or an explanation as to
+> why the 'alloc anywhere' is needed for the lvconvert would be muchly
+> appreciated.
+
+To create a mirror volume with disk log, three PVs are required in the VG
+to allocate two mirror legs and one mirror log. But in this case, the "vg"
+contains only two valid PVs (/dev/sdcn and /dev/sdp), and '--alloc anywhere'
+options is necessary to allocate a mirror log on the same disk as mirror legs.
+
+I hope this would be help.
+
+Thanks,
+Taka
