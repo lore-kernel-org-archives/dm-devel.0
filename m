@@ -1,16 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: script to capture support data for Device mapper
-	Multipath
-Date: Mon, 31 Aug 2009 22:55:50 +0200
-Message-ID: <1251752150.4672.5.camel@zezette>
-References: <0D1E8821739E724A86F4D16902CE275C1C8EAE02A2@inbmail01.lsi.com>
-Reply-To: christophe.varoqui@free.fr,
-	device-mapper development <dm-devel@redhat.com>
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: [PATCH 22/23] io-controller: Support per cgroup per
+ device weights and io class
+Date: Mon, 31 Aug 2009 16:56:16 -0400
+Message-ID: <4A9C38F0.3070206@redhat.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-23-git-send-email-vgoyal@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0D1E8821739E724A86F4D16902CE275C1C8EAE02A2@inbmail01.lsi.com>
+In-Reply-To: <1251495072-7780-23-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,26 +20,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Cc: "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "Stankey,
-	Robert" <Robert.Stankey@lsi.com>, "Moger, Babu" <Babu.Moger@lsi.com>
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On lun., 2009-08-31 at 11:23 +0530, Chauhan, Vijay wrote:
-> Hi Christophe and all, 
-> 
-> Attached is the script which captures Device Mapper Multipath support data. We have been using this script for capturing data and has been helpful in analysing dm related issues. These support data can be useful in analysing issues offline or remotely. Thought of posting it into this forum if it benefits everyone.  I still feel we can add something more. Waiting for your feedback.
-> 
-> In my opinion, as this script is meant to provide support to dm multipath it would be good if we can have this script as part multipath-tools. Please give your comment. 
-> 
-Vijay,
+Vivek Goyal wrote:
+> This patch enables per-cgroup per-device weight and ioprio_class handling.
+> A new cgroup interface "policy" is introduced. You can make use of this
+> file to configure weight and ioprio_class for each device in a given cgroup.
+> The original "weight" and "ioprio_class" files are still available. If you
+> don't do special configuration for a particular device, "weight" and
+> "ioprio_class" are used as default values in this device.
 
-this script indeed grabs a lot of useful information, but 1/ people
-wouldn't post that on a public mailing list 2/ distributors and
-apparently some hardware vendors already have this kind of tools
-(sosreport, ...)
-
-So I'm not sure. Can distributors voice their opinion ?
-
-Thanks anyway for posting your work.
-cvaroqui
+Acked-by: Rik van Riel <riel@redhat.com>
