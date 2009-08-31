@@ -1,12 +1,14 @@
-From: Andras Korn <korn-dmdevel@elan.rulez.org>
-Subject: Reverting/merging an LVM snapshot - possible?
-Date: Sun, 30 Aug 2009 21:47:16 +0200
-Message-ID: <20090830194716.GN25876@hellgate.intra.guy>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [RFC] IO scheduler based IO controller V9
+Date: Mon, 31 Aug 2009 09:09:19 +0800
+Message-ID: <4A9B22BF.6010707@cn.fujitsu.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,49 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: mingo@elte.hu
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-Hi,
+Vivek Goyal wrote:
+> Hi All,
+> 
+> Here is the V9 of the IO controller patches generated on top of 2.6.31-rc7.
+> 
+> For ease of patching, a consolidated patch is available here.
+> 
+> http://people.redhat.com/~vgoyal/io-controller/io-scheduler-based-io-controller-v9.patch
+> 
+> Changes from V8
+> ===============
+> - Implemented bdi like congestion semantics for io group also. Now once an
+>   io group gets congested, we don't clear the congestion flag until number
+>   of requests goes below nr_congestion_off.
+> 
+>   This helps in getting rid of Buffered write performance regression we
+>   were observing with io controller patches.
+> 
+>   Gui, can you please test it and see if this version is better in terms
+>   of your buffered write tests.
 
-this has already been brought up earlier and elsewhere, but afaict nothing
-conclusive came of it.
-
-Is there a good, efficient way to "revert" an origin volume to the state
-reflected by a snapshot? (I put "revert" in quotes because the snapshot
-might have been modified since it was taken; maybe "merge" would be a more
-correct term.)
-
-Traditional wisdom seems to hold that if you expect the need to revert,
-don't write to the origin volume at all; write to the snapshot instead. This
-is mostly well and good if you do expect the need to revert.
-
-However, imagine for example a scenario where you're testing a complex-ish
-software upgrade. It might work, or it might not. You can either first try
-on a snapshot, or on the origin volume. If you try on a snapshot and it
-works, you want to "revert" (or, in this case, apply the changes to) the
-origin volume. Otoh, if you test on the origin volume and the upgrade fails,
-you want to restore it to the state it was in when the snapshot was taken.
-
-Just copying the files, or dd'ing from the snapshot to the origin volume is
-inefficient and will even fail if the snapshot is not somewhat larger than
-the origin volume (if the snapshot has exactly the same amount of physical
-extents as the origin volume, then it still doesn't have space for all
-sectors of the origin volume because it also needs to store quite a bit of
-metadata).
-
-Ideally, reverting the origin volume would also free up space in the
-snapshot.
-
-So, I believe what is missing is a clever user-space tool that does the
-reverting/merging and some kernel functionality to mark all relevant areas
-in all relevant snapshots as "free" again.
-
-Am I missing something? Is this functionality, perhaps, already there?
-
-Andras
+Ok, will do.
 
 -- 
- Andras Korn <korn at elan.rulez.org> - <http://chardonnay.math.bme.hu/~korn/>
-           Contrary to popular opinion, God's last name isn't Damn.
+Regards
+Gui Jianfeng
