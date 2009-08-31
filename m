@@ -1,50 +1,77 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/multipathd multipathd.init.redhat
-Date: 31 Aug 2009 21:58:53 -0000
-Message-ID: <20090831215853.8873.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: rebased snapshot-merge patches
+Date: Mon, 31 Aug 2009 18:08:35 -0400
+Message-ID: <20090831220834.GA15126@redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <lvm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2009-08-31 21:58:52
+I've updated both the DM and LVM2 snapshot-merge patches to the latest
+upstream Linux and LVM2.
 
-Modified files:
-	multipathd     : multipathd.init.redhat 
+All patches (both Linux and LVM2) have been tested to pass the LVM2
+testsuite.  There is more work to be done on these patches but I wanted
+to make others aware of them sooner rather than later.
 
-Log message:
-	Fix for bz#502128.  multipathd.init only checks if the root device is multipathed, if the
-	root device is a device-mapper device.
+The basis for the DM snapshot-merge patches is Linux 2.6.31-rc8 + the
+remaining DM fixes that Alasdair should be pushing to Linus this week:
+http://people.redhat.com/msnitzer/patches/dm-2.6.31-rc-fixes/
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/multipathd.init.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.4.5&r2=1.2.4.6
+The DM snapshot-merge patches are here:
+http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel/2.6.31/
 
---- multipath-tools/multipathd/multipathd.init.redhat	2009/05/15 21:01:27	1.2.4.5
-+++ multipath-tools/multipathd/multipathd.init.redhat	2009/08/31 21:58:52	1.2.4.6
-@@ -72,9 +72,11 @@
- 
- stop() {
-         root_dev=$(awk '{ if ($1 !~ /^[ \t]*#/ && $2 == "/") { print $1; }}' /etc/mtab)
--	dm_num=`dmsetup info -c --noheadings -o minor $root_dev`
--	root_dm_device="dm-$dm_num"
--	[ -d $syspath/$root_dm_device ] && teardown_slaves $syspath/$root_dm_device
-+	dm_num=`dmsetup info -c --noheadings -o minor $root_dev 2> /dev/null`
-+	if [ $? -eq 0 ]; then
-+		root_dm_device="dm-$dm_num"
-+		[ -d $syspath/$root_dm_device ] && teardown_slaves $syspath/$root_dm_device
-+	fi
- 
- 	echo -n $"Stopping $prog daemon: "
- 	killproc $DAEMON
+The LVM2 snapshot-merge patches are here:
+http://people.redhat.com/msnitzer/patches/snapshot-merge/lvm2/LVM2-2.02.52-cvs/
+
+I threw some real work at snapshot-merge by taking a snap _before_
+formatting a 100G LV with ext3.  Then merged all the exceptions.  One
+observation is that the merge process is _quite_ slow in comparison to
+how long it took to format the LV (with associated snapshot exception
+copy-out).  Will need to look at this further shortly... it's likely a
+function of using minimal system resources during the merge via kcopyd;
+whereas the ext3 format puts excessive pressure on the system's page
+cache to queue work for mkfs's immediate writeback.
+
+# lvcreate -n testlv -L 100G test
+# lvcreate -n testlv_snap -s -L 20G test/testlv
+# lvs
+  LV          VG   Attr   LSize   Origin Snap%  Move Log Copy%  Convert
+  testlv      test owi-a- 100.00G
+  testlv_snap test swi-a-  20.00G testlv   0.00
+# mkfs.ext3 /dev/test/testlv
+# lvs
+  LV          VG   Attr   LSize   Origin Snap%  Move Log Copy%  Convert
+  testlv      test owi-a- 100.00G
+  testlv_snap test swi-a-  20.00G testlv   8.52
+# lvconvert -M test/testlv_snap
+  Merging of volume testlv_snap started.
+  testlv: Merged: 8.5%
+  testlv: Merged: 8.4%
+  testlv: Merged: 8.4%
+  testlv: Merged: 8.3%
+  ...
+  testlv: Merged: 7.2%
+  ...
+  testlv: Merged: 0.0%
+  testlv: Merged: 0.0%
+  testlv: Merged: 0.0%
+  Merge into logical volume testlv finished.
+  Logical volume "snapshot1" successfully removed
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
