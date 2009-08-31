@@ -1,16 +1,16 @@
 From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH 15/23] io-controller: noop changes for
+Subject: Re: [PATCH 16/23] io-controller: deadline changes for
  hierarchical fair queuing
-Date: Sun, 30 Aug 2009 22:52:59 -0400
-Message-ID: <4A9B3B0B.9090009@redhat.com>
+Date: Sun, 30 Aug 2009 23:13:23 -0400
+Message-ID: <4A9B3FD3.6000407@redhat.com>
 References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<1251495072-7780-16-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-17-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251495072-7780-16-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <1251495072-7780-17-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,15 +25,12 @@ Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah
 List-Id: dm-devel.ids
 
 Vivek Goyal wrote:
-> This patch changes noop to use queue scheduling code from elevator layer.
-> One can go back to old noop by deselecting CONFIG_IOSCHED_NOOP_HIER.
-> 
+> This patch changes deadline to use queue scheduling code from elevator layer.
+> One can go back to old deadline by selecting CONFIG_IOSCHED_DEADLINE_HIER.
+                                     ^ deselecting ?
+
 > Signed-off-by: Nauman Rafique <nauman@google.com>
 > Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
-
-Not sure why noop needs hierarchical fair queueing
-support, but this patch is so small we might as well
-take it to keep things consistent between schedulers.
 
 Acked-by: Rik van Riel <riel@redhat.com>
 
