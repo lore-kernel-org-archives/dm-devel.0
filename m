@@ -1,14 +1,9 @@
-From: "Alan D. Brunelle" <Alan.Brunelle@hp.com>
-Subject: Re: Removing a failed device from LVM2/DM
-Date: Mon, 31 Aug 2009 12:55:17 -0400
-Message-ID: <1251737717.6817.36.camel@cail>
-References: <1251731770.6817.31.camel@cail>  <4A9BF425.2090502@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath hwtable.c
+Date: 31 Aug 2009 17:17:11 -0000
+Message-ID: <20090831171711.29021.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4A9BF425.2090502@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,135 +13,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2009-08-31 at 12:02 -0400, Takahiro Yasui wrote:
-> On 08/31/09 11:16, Alan D. Brunelle wrote:
-> > I constructed a 1-copy mirror with the following commands:
-> > 
-> > # pvcreate --metadatasize 192k /dev/sdcn /dev/sdfj /dev/sdfa
-> >   Physical volume "/dev/sdcn" successfully created
-> >   Physical volume "/dev/sdfj" successfully created
-> >   Physical volume "/dev/sdfa" successfully created
-> > # vgcreate vg /dev/sdcn /dev/sdfj /dev/sdfa
-> >   Volume group "vg" successfully created
-> > # lvcreate -L 32g -m 1 -n lv vg
-> >   Logical volume "lv" created
-> > 
-> > The status showed:
-> > 
-> > # lvs -a -o +devices
-> >   LV            VG   Attr   LSize  Origin Snap%  Move Log     Copy%
-> > Convert Devices                      
-> >   lv            vg   mwi-a- 32.00G                    lv_mlog  29.72
-> > lv_mimage_0(0),lv_mimage_1(0)
-> >   [lv_mimage_0] vg   Iwi-ao
-> > 32.00G                                           /dev/sdcn(0)                 
-> >   [lv_mimage_1] vg   Iwi-ao
-> > 32.00G                                           /dev/sdfj(0)                 
-> >   [lv_mlog]     vg   lwi-ao
-> > 4.00M                                           /dev/sdfa(0)                 
-> > 
-> > Then I forced /dev/sdfj to fail (removing the unit from the FC SAN), and
-> > the state of the mirror went to:
-> > 
-> > # lvs
-> >   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
-> >   LV   VG   Attr   LSize  Origin Snap%  Move Log Copy%  Convert
-> >   lv   vg   -wi-a- 32.00G           
-> > 
-> > At this point I know I can do:
-> > 
-> > # vgreduce -a vg
-> >   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
-> >   Physical volume "/dev/sdcn" still in use
-> >   Removed "/dev/sdfa" from volume group "vg"
-> > 
-> > But I run into two problems:
-> > 
-> > (1) I'd like to be able to live without the constant errors
-> > about /dev/sdfj, and tried:
-> > 
-> > # pvremove -f /dev/sdfj
-> >   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
-> >   No physical volume label read from /dev/sdfj
-> >   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
-> >   Labels on physical volume "/dev/sdfj" successfully wiped
-> > 
-> > but that didn't stop it. 
-> > 
-> > and:
-> > 
-> > (2) I'd like to be able to recreate the 1-copy mirror from the currently
-> > linear volume, but can't (easily):
-> > 
-> > # pvcreate --metadatasize 192k /dev/sdp
-> >   Physical volume "/dev/sdp" successfully created
-> > # vgextend vg /dev/sdp
-> >   ... errors from sdfj omitted...
-> >   Volume group "vg" successfully extended
-> > # vgs
-> >   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
-> >   VG   #PV #LV #SN Attr   VSize   VFree  
-> >   vg     2   1   0 wz--n- 542.67G 510.67G
-> > # lvconvert -m 1 /dev/vg/lv
-> >   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
-> >   Insufficient suitable allocatable extents for logical volume : 8192
-> > more required
-> >   Unable to allocate extents for mirror(s).
-> > 
-> > I can use the alloc anywhere options, but I'm at a loss as to why that's
-> > needed:
-> > 
-> > # lvconvert -m1 --alloc anywhere /dev/vg/lv
-> >   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
-> >   /dev/vg/lv: Converted: 1.3%
-> >   /dev/vg/lv: Converted: 2.6%
-> >   /dev/vg/lv: Converted: 3.8%
-> > ...
-> > 
-> > 
-> > Any pointers on how to remove /dev/sdfj from the scan (other than, I
-> > guess, updated /etc/lvm.conf to filter it out)
-> 
-> The following URL explains how to remove lost PVs from VG.
-> 
-> 6.6. Removing Lost Physical Volumes from a Volume Group
-> http://www.redhat.com/docs/manuals/enterprise/RHEL-5-manual/Cluster_Logical_Volume_Manager/lost_PV_remove_from_VG.html
-> 
-> I think "vgreduce --removemissing vg" will remove "/dev/sdfj."
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-08-31 17:17:11
 
+Modified files:
+	libmultipath   : hwtable.c 
 
-I guess this is an interesting problem:
+Log message:
+	Updated HP MSA configuration. Already Upstream.
 
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.20&r2=1.20.2.21
 
-> > > # vgreduce -a vg
-> > >   /dev/sdfj: read failed after 0 of 2048 at 0: Input/output error
-> > >   Physical volume "/dev/sdcn" still in use
-> > >   Removed "/dev/sdfa" from volume group "vg"
-> > 
-
-So, /dev/sdfa was removed from the volume group instead of /dev/sdfj (Why? /dev/sdfa was being used for the mirror log - but since the volume group was downgraded to a linear array, it was no longer needed? Doesn't sound like the right thing to do - hence I should have used the --test and worked it out from that). I'll go retry the experiment and do the "removemissing" command.
-
-And since /dev/sdfa was removed & /dev/sdfj was failed that left only a single physical disk in the VG, then when I added in /dev/sdp it only brought the volume group to two devices. <sigh>
-
-> 
-> > or an explanation as to
-> > why the 'alloc anywhere' is needed for the lvconvert would be muchly
-> > appreciated.
-> 
-> To create a mirror volume with disk log, three PVs are required in the VG
-> to allocate two mirror legs and one mirror log. But in this case, the "vg"
-> contains only two valid PVs (/dev/sdcn and /dev/sdp), and '--alloc anywhere'
-> options is necessary to allocate a mirror log on the same disk as mirror legs.
-> 
-> I hope this would be help.
-> 
-> Thanks,
-> Taka
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--- multipath-tools/libmultipath/hwtable.c	2009/08/19 21:52:40	1.20.2.20
++++ multipath-tools/libmultipath/hwtable.c	2009/08/31 17:17:10	1.20.2.21
+@@ -63,11 +63,11 @@
+ 		.vendor        = "DEC",
+ 		.product       = "HSG80",
+ 		.getuid        = DEFAULT_GETUID,
+-		.getprio       = NULL,
+-		.features      = "2 pg_init_retries 10",
++		.getprio       = "/sbin/mpath_prio_hp_sw /dev/%n",
++		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 hp-sw",
+ 		.selector      = DEFAULT_SELECTOR,
+-		.pgpolicy      = GROUP_BY_SERIAL,
++		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+ 		.no_path_retry = NO_PATH_RETRY_UNDEF,
+@@ -77,17 +77,17 @@
+ 	{
+ 		/* MSA 1000/MSA1500, EVA 3000/5000 with old firmware */
+ 		.vendor        = "COMPAQ",
+-		.product       = "MSA|HSV1.0.*",
++		.product       = "(MSA|HSV)1.0.*",
+ 		.getuid        = DEFAULT_GETUID,
+-		.getprio       = NULL,
+-		.features      = "2 pg_init_retries 10",
++		.getprio       = "/sbin/mpath_prio_hp_sw /dev/%n",
++		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 hp-sw",
+ 		.selector      = DEFAULT_SELECTOR,
+-		.pgpolicy      = MULTIBUS,
++		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_UNDEF,
+-		.minio         = DEFAULT_MINIO,
++		.no_path_retry = 12,
++		.minio         = 100,
+ 		.checker_name  = HP_SW,
+ 	},
+ 	{
