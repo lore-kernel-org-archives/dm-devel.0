@@ -1,9 +1,15 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/multipathd log_pthread.c log_p ...
-Date: 1 Sep 2009 20:38:41 -0000
-Message-ID: <20090901203841.4863.qmail@sourceware.org>
+From: "Alan D. Brunelle" <Alan.Brunelle@hp.com>
+Subject: Re: Removing a failed device from LVM2/DM
+Date: Tue, 01 Sep 2009 16:57:59 -0400
+Message-ID: <1251838679.5459.148.camel@cail>
+References: <1251731770.6817.31.camel@cail> <1251821775.5459.21.camel@cail>
+	<20090901162537.GA15197@us.ibm.com> <1251830539.5459.135.camel@cail>
+	<20090901190843.GA18641@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="=-8og1EDjnP7/P/esrHmcU"
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090901190843.GA18641@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,188 +19,684 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2009-09-01 20:38:40
 
-Modified files:
-	multipathd     : log_pthread.c log_pthread.h main.c 
+--=-8og1EDjnP7/P/esrHmcU
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 
-Log message:
-	Fix for bz #516253. Port pthread stacksize fix from upstream to RHEL4.
+On Tue, 2009-09-01 at 12:08 -0700, malahal@us.ibm.com wrote:
+> Alan D. Brunelle [Alan.Brunelle@hp.com] wrote:
+> > #device/dev-cache.c:245         /dev/sdab: Already in device cache
+> > 
+> > How does one remove the cache? I tried remove /etc/lvm/cache/.cache &
+> > running vgscan, but no difference.
+> > 
+> > Alan
+> 
+> I think removing that file should help. What is your cache_dir setting
+> in /etc/lvm.conf file? You can completely remove that dir. On my
+> machine, cache_dir is set to /etc/lvm/cache and doing "rm -rf
+> /etc/lvm/cache" or "rm -f /etc/lvm/cache/.cache" should help.
+> 
+> BTW, the .cache file is just a text file, see what is there.
+> 
+> Thanks, Malahal.
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/log_pthread.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5&r2=1.5.2.1
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/log_pthread.h.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.2&r2=1.2.2.1
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.66.2.6&r2=1.66.2.7
+Unfortunately:
 
---- multipath-tools/multipathd/Attic/log_pthread.c	2005/11/16 20:24:58	1.5
-+++ multipath-tools/multipathd/Attic/log_pthread.c	2009/09/01 20:38:40	1.5.2.1
-@@ -51,10 +51,8 @@
- 	}
- }
- 
--void log_thread_start (void)
-+void log_thread_start (pthread_attr_t *attr)
- {
--	pthread_attr_t attr;
--	
- 	logdbg(stderr,"enter log_thread_start\n");
- 
- 	logq_lock = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
-@@ -65,14 +63,11 @@
- 	pthread_mutex_init(logev_lock, NULL);
- 	pthread_cond_init(logev_cond, NULL);
- 	
--	pthread_attr_init(&attr);
--	pthread_attr_setstacksize(&attr, 64 * 1024);
--
- 	if (log_init("multipathd", 0)) {
- 		fprintf(stderr,"can't initialize log buffer\n");
- 		exit(1);
- 	}
--	pthread_create(&log_thr, &attr, log_thread, NULL);
-+	pthread_create(&log_thr, attr, log_thread, NULL);
- 
- 	return;
- }
---- multipath-tools/multipathd/Attic/log_pthread.h	2005/06/08 19:40:10	1.2
-+++ multipath-tools/multipathd/Attic/log_pthread.h	2009/09/01 20:38:40	1.2.2.1
-@@ -1,6 +1,8 @@
- #ifndef _LOG_PTHREAD_H
- #define _LOG_PTHREAD_H
- 
-+#include <pthread.h>
-+
- pthread_t log_thr;
- 
- pthread_mutex_t *logq_lock;
-@@ -8,7 +10,7 @@
- pthread_cond_t *logev_cond;
- 
- void log_safe(int prio, char * fmt, va_list ap);
--void log_thread_start(void);
-+void log_thread_start(pthread_attr_t *attr);
- void log_thread_stop(void);
- 
- #endif /* _LOG_PTHREAD_H */
---- multipath-tools/multipathd/main.c	2009/01/17 00:46:52	1.66.2.6
-+++ multipath-tools/multipathd/main.c	2009/09/01 20:38:40	1.66.2.7
-@@ -14,6 +14,7 @@
- #include <errno.h>
- #include <sys/time.h>
- #include <sys/resource.h>
-+#include <limits.h>
- 
- /*
-  * libsysfs
-@@ -85,6 +86,7 @@
- 
- pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
- pthread_mutex_t exit_mutex = PTHREAD_MUTEX_INITIALIZER;
-+pthread_attr_t waiter_attr;
- 
- /*
-  * structs
-@@ -646,18 +648,11 @@
- static int
- start_waiter_thread (struct multipath * mpp, struct vectors * vecs)
- {
--	pthread_attr_t attr;
- 	struct event_thread * wp;
- 
- 	if (!mpp)
- 		return 0;
- 
--	if (pthread_attr_init(&attr))
--		goto out;
--
--	pthread_attr_setstacksize(&attr, 32 * 1024);
--	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
--
- 	wp = alloc_waiter();
- 
- 	if (!wp)
-@@ -667,7 +662,7 @@
- 	strncpy(wp->mapname, mpp->alias, WWID_SIZE);
- 	wp->vecs = vecs;
- 
--	if (pthread_create(&wp->thread, &attr, waitevent, wp)) {
-+	if (pthread_create(&wp->thread, &waiter_attr, waitevent, wp)) {
- 		condlog(0, "%s: cannot create event checker", wp->mapname);
- 		goto out1;
- 	}
-@@ -1594,18 +1589,48 @@
- 	fprintf(fp, "%i", val);
- 	fclose(fp);
- }
-+
-+void
-+setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
-+{
-+	if (pthread_attr_init(attr)) {
-+		fprintf(stderr, "can't initialize thread attr: %s\n",
-+			strerror(errno));
-+		exit(1);
-+	}
-+	if (stacksize < PTHREAD_STACK_MIN)
-+		stacksize = PTHREAD_STACK_MIN;
-+
-+	if (pthread_attr_setstacksize(attr, stacksize)) {
-+		fprintf(stderr, "can't set thread stack size to %lu: %s\n",
-+			(unsigned long)stacksize, strerror(errno));
-+		exit(1);
-+	}
-+	if (detached && pthread_attr_setdetachstate(attr,
-+						    PTHREAD_CREATE_DETACHED)) {
-+		fprintf(stderr, "can't set thread to detached: %s\n",
-+			strerror(errno));
-+		exit(1);
-+	}
-+}
- 	
- static int
- child (void * param)
- {
- 	pthread_t check_thr, uevent_thr, uxlsnr_thr;
--	pthread_attr_t attr;
-+	pthread_attr_t log_attr, misc_attr;
- 	struct vectors * vecs;
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 
--	if (logsink)
--		log_thread_start();
-+	setup_thread_attr(&misc_attr, 64 * 1024, 1);
-+	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
-+	
-+	if (logsink){
-+		setup_thread_attr(&log_attr, 64 * 1024, 0);
-+		log_thread_start(&log_attr);
-+		pthread_attr_destroy(&log_attr);
-+	}
- 
- 	condlog(2, "--------start up--------");
- 	condlog(2, "read " DEFAULT_CONFIGFILE);
-@@ -1665,13 +1690,10 @@
- 	/*
- 	 * start threads
- 	 */
--	pthread_attr_init(&attr);
--	pthread_attr_setstacksize(&attr, 64 * 1024);
--	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
--	
--	pthread_create(&check_thr, &attr, checkerloop, vecs);
--	pthread_create(&uevent_thr, &attr, ueventloop, vecs);
--	pthread_create(&uxlsnr_thr, &attr, uxlsnrloop, vecs);
-+	pthread_create(&check_thr, &misc_attr, checkerloop, vecs);
-+	pthread_create(&uevent_thr, &misc_attr, ueventloop, vecs);
-+	pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
-+	pthread_attr_destroy(&misc_attr);
- 
- 	pthread_cond_wait(&exit_cond, &exit_mutex);
- 
+# rm -rf /etc/lvm/cache
+
+# vgscan
+  Reading all physical volumes.  This may take a while...
+  /dev/disk/by-id/scsi-360060b0000837a508c01035ef0d00033: read failed
+after 0 of 512 at 0: Input/output error
+  /dev/disk/by-id/scsi-360060b0000837a508c01035ef0d00033: read failed
+after 0 of 512 at 291347562496: Input/output error
+  /dev/disk/by-id/scsi-360060b0000837a508c01035ef0d00033: read failed
+after 0 of 512 at 291347632128: Input/output error
+  /dev/disk/by-id/scsi-360060b0000837a508c01035ef0d00033: read failed
+after 0 of 512 at 0: Input/output error
+  /dev/disk/by-id/scsi-360060b0000837a508c01035ef0d00033: read failed
+after 0 of 512 at 4096: Input/output error
+  /dev/disk/by-id/scsi-360060b0000837a508c01035ef0d00033: read failed
+after 0 of 2048 at 0: Input/output error
+  Found volume group "vg" using metadata type lvm2
+
+# pvs
+  /dev/sdab: read failed after 0 of 2048 at 0: Input/output error
+  PV         VG   Fmt  Attr PSize   PFree  
+  /dev/sda   vg   lvm2 a-   271.34G 239.34G
+  /dev/sdad  vg   lvm2 a-   271.34G 239.34G
+  /dev/sdfi  vg   lvm2 a-   271.34G 271.33G
+
+The .cache file is attached
+
+Alan
+
+
+--=-8og1EDjnP7/P/esrHmcU
+Content-Disposition: attachment; filename="cache.txt"
+Content-Type: text/plain; name="cache.txt"; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+
+# This file is automatically maintained by lvm.
+
+persistent_filter_cache {
+	valid_devices=[
+		"/dev/disk/by-label/boot1",
+		"/dev/disk/by-id/scsi-360014380000846009225d792139b0033",
+		"/dev/disk/by-id/scsi-360060b00008483c0148c0725bc790044",
+		"/dev/disk/by-path/pci-0000:0a:00.1-fc-0x50060b000083eed1:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:47:00.1-fc-0x50060b000084a961:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:44:00.0-fc-0x50060b00008381d1:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b00008441c0bc6dea826cd50036",
+		"/dev/disk/by-id/scsi-360060b0000840620428d9d82bd230033",
+		"/dev/disk/by-id/scsi-36001438000084600b59c9d833ec60030",
+		"/dev/disk/by-id/scsi-360060b0000848200b6ace0fe959d0044",
+		"/dev/disk/by-id/scsi-360014380000844309c5edddb1578002a",
+		"/dev/disk/by-path/pci-0000:c1:00.1-fc-0x50060b0000848141:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:81:00.1-fc-0x50060b00008480f1:0x0003000000000000",
+		"/dev/disk/by-id/scsi-36001438000080040cf34fee3f72b001f",
+		"/dev/disk/by-id/scsi-360060b00008482808214a37b95c7003b",
+		"/dev/mapper/vg-lv",
+		"/dev/disk/by-id/scsi-360014380000803608413229db5ab0026",
+		"/dev/disk/by-path/pci-0000:0a:00.0-fc-0x50060b00008381e1:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360014380000847304539bf3b177d001d",
+		"/dev/ram11",
+		"/dev/disk/by-id/scsi-360060b00008441c0a86b0e8df5180038",
+		"/dev/disk/by-id/scsi-360060b00008474d0eb296301f5300036",
+		"/dev/disk/by-path/pci-0000:84:00.1-fc-0x50060b0000848261:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b00008381f0dd81a844bbd70044",
+		"/dev/disk/by-path/pci-0000:c4:00.0-fc-0x50060b0000847511:0x0005000000000000",
+		"/dev/sdh",
+		"/dev/disk/by-id/scsi-360060b0000840e10fd2f3f55d3f20033",
+		"/dev/disk/by-id/scsi-360060b0000840620d5a38b7d79010032",
+		"/dev/disk/by-id/scsi-360014380000845908b88df3cfa110014",
+		"/dev/sdo",
+		"/dev/disk/by-path/pci-0000:04:00.1-fc-0x50060b00008441c1:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b00008410a05abba43deea3003e",
+		"/dev/disk/by-id/scsi-360060b00008441207d37344b0e4b004d-part3",
+		"/dev/disk/by-id/scsi-360060b00008441207d37344b0e4b004d-part4",
+		"/dev/disk/by-path/pci-0000:07:00.0-fc-0x50060b00008410a1:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b0000848530c508ecfac76c004e",
+		"/dev/disk/by-id/scsi-360060b00008379e0633268092c640037",
+		"/dev/disk/by-id/scsi-360060b00008482807273ca85ff73003d",
+		"/dev/disk/by-id/scsi-360014380000803608fd9fd922d650024",
+		"/dev/disk/by-path/pci-0000:44:00.1-fc-0x50060b00008381f1:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b0000840f7020e8880a398b0035",
+		"/dev/disk/by-id/scsi-360060b000084853015a0d9f57ae1004d",
+		"/dev/disk/by-id/scsi-360060b00008325a00086dc1003c40050",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b00008325a1:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b0000837a50574b18633d5a0034",
+		"/dev/disk/by-id/scsi-360060b00008482803ef4218b91b8003e",
+		"/dev/disk/by-id/scsi-360060b0000840f706f0fad149b150037",
+		"/dev/disk/by-path/pci-0000:81:00.0-fc-0x50060b0000837f31:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:04:00.1-fc-0x50060b0000844221:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b00008482802728b580bb32003c",
+		"/dev/sdag",
+		"/dev/disk/by-path/pci-0000:81:00.1-fc-0x50060b00008483d1:0x0005000000000000",
+		"/dev/sdai1",
+		"/dev/sdaj",
+		"/dev/sdak",
+		"/dev/sdcg",
+		"/dev/disk/by-id/scsi-360060b00008441c0470dd57d217b0035",
+		"/dev/sdcj",
+		"/dev/disk/by-id/scsi-360060b00008381e01f9c73e7f745003b",
+		"/dev/sdck",
+		"/dev/sdbg",
+		"/dev/sdbj",
+		"/dev/sdbk",
+		"/dev/sddj",
+		"/dev/sddk",
+		"/dev/sdfg",
+		"/dev/sdfj",
+		"/dev/sdfk",
+		"/dev/sdeg",
+		"/dev/disk/by-path/pci-0000:44:00.1-fc-0x50060b00008379e1:0x0004000000000000",
+		"/dev/sdej",
+		"/dev/disk/by-path/pci-0000:c1:00.1-fc-0x50060b0000848141:0x0004000000000000",
+		"/dev/sdek",
+		"/dev/sddg",
+		"/dev/disk/by-id/scsi-360060b00008441207d37344b0e4b004d",
+		"/dev/disk/by-id/scsi-360060b000081ecb0c5dca8676e390038",
+		"/dev/disk/by-path/pci-0000:47:00.1-fc-0x50060b000084a961:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:c1:00.0-fc-0x50060b0000848531:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b0000840fb0583a95e7beae0033",
+		"/dev/disk/by-path/pci-0000:81:00.1-fc-0x50060b00008483d1:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:47:00.0-fc-0x50060b000084ac21:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:47:00.1-fc-0x50060b0000840f71:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008474d008be51fcb10c0035",
+		"/dev/disk/by-id/scsi-360014380000843505b31dc6950e5001f",
+		"/dev/disk/by-id/scsi-360060b00008410a0fce0c84776e90040",
+		"/dev/disk/by-id/scsi-360014380000803609291e88de0dc0023",
+		"/dev/disk/by-path/pci-0000:47:00.0-fc-0x50060b000083f091:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b0000837e70c090424f5d1b0036",
+		"/dev/disk/by-uuid/3366c250-26a5-4282-bf74-1360b76742bf",
+		"/dev/disk/by-path/pci-0000:0d:00.0-fc-0x5001438000080361:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:41:00.1-fc-0x5001438000084431:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:07:00.1-fc-0x50060b0000840e11:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:0d:00.1-fc-0x5001438000080041:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:c4:00.1-fc-0x50060b000081ecb1:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:c1:00.1-fc-0x50060b00008483c1:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:c1:00.0-fc-0x50060b00008481f1:0x0005000000000000",
+		"/dev/ram10",
+		"/dev/disk/by-id/scsi-360060b00008381d058b922720d61002e",
+		"/dev/disk/by-id/scsi-360060b00008380b09431e4dbbe92003a",
+		"/dev/disk/by-path/pci-0000:0d:00.1-fc-0x5001438000084111:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:81:00.1-fc-0x50060b00008480f1:0x0004000000000000",
+		"/dev/ram",
+		"/dev/disk/by-path/pci-0000:44:00.0-fc-0x50060b00008382d1:0x0002000000000000",
+		"/dev/sdv",
+		"/dev/disk/by-id/scsi-360060b00008441207d37344b0e4b004d-part2",
+		"/dev/disk/by-path/pci-0000:c1:00.0-fc-0x50060b00008481f1:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:07:00.0-fc-0x50060b0000840fb1:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008325a08c89ca0bb86d004f",
+		"/dev/disk/by-id/scsi-360060b0000848200c445e903b29f0045",
+		"/dev/disk/by-path/pci-0000:c1:00.1-fc-0x50060b00008483c1:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:c1:00.0-fc-0x50060b0000848531:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:81:00.1-fc-0x50060b00008480f1:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b00008443a02778e6474d70002e",
+		"/dev/disk/by-id/scsi-360060b00008380b003c74ccdd4820037",
+		"/dev/disk/by-path/pci-0000:84:00.1-fc-0x50060b0000848151:0x0004000000000000",
+		"/dev/sdcc",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b0000844121:0x0005000000000000",
+		"/dev/sdaz",
+		"/dev/disk/by-id/scsi-360060b00008442203224b0750fa20031",
+		"/dev/sdbq",
+		"/dev/sdbc",
+		"/dev/sdcz",
+		"/dev/sdaq",
+		"/dev/disk/by-id/scsi-360060b00008480f0328e443581de0045",
+		"/dev/sdac",
+		"/dev/sdbz",
+		"/dev/sdcq",
+		"/dev/sdfc",
+		"/dev/disk/by-id/scsi-360060b0000840e106858635f35180035",
+		"/dev/sddz",
+		"/dev/disk/by-path/pci-0000:07:00.0-fc-0x50060b0000840fb1:0x0005000000000000",
+		"/dev/sdeq",
+		"/dev/sdec",
+		"/dev/disk/by-path/pci-0000:c4:00.0-fc-0x50060b00008474d1:0x0003000000000000",
+		"/dev/sddq",
+		"/dev/sddc",
+		"/dev/sdez",
+		"/dev/sdfq",
+		"/dev/mapper/vg-lv_mlog",
+		"/dev/disk/by-path/pci-0000:84:00.0-fc-0x50060b0000848201:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:04:00.1-fc-0x50060b0000844221:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360014380000841100b54a04d9906001c",
+		"/dev/disk/by-path/pci-0000:44:00.1-fc-0x50060b00008381f1:0x0003000000000000",
+		"/dev/disk/by-label/boot2",
+		"/dev/disk/by-path/pci-0000:47:00.1-fc-0x50060b000084a961:0x0003000000000000",
+		"/dev/disk/by-id/scsi-3600143800008473067db9731adef001b",
+		"/dev/disk/by-id/scsi-360060b00008443a07189f84c99fb002f",
+		"/dev/disk/by-id/scsi-360060b00008443a0f30c205722420031",
+		"/dev/disk/by-path/pci-0000:0a:00.1-fc-0x50060b000083eed1:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360014380000841108e1f8b484c7f001b",
+		"/dev/disk/by-id/scsi-360060b000084a9602699ad38ebe60035",
+		"/dev/disk/by-id/scsi-360060b00008481f098864c1200a70024",
+		"/dev/disk/by-id/scsi-360060b00008480f05f8e32303dba0044",
+		"/dev/disk/by-path/pci-0000:c1:00.1-fc-0x50060b0000848141:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008410a009728f387b16003d",
+		"/dev/disk/by-id/scsi-360060b00008381e0fd35adf6cc17003e",
+		"/dev/disk/by-id/scsi-360060b00008381d0708a986d5d57002d",
+		"/dev/disk/by-path/pci-0000:81:00.0-fc-0x50060b0000837a51:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008441c04cacfc87b0f50037",
+		"/dev/disk/by-id/scsi-360060b00008474d036a129f2205f0033",
+		"/dev/disk/by-id/scsi-360060b000081ecb0ab78815ddd8c0036",
+		"/dev/disk/by-label/1",
+		"/dev/disk/by-path/pci-0000:0a:00.0-fc-0x50060b00008381e1:0x0005000000000000",
+		"/dev/ram12",
+		"/dev/disk/by-id/scsi-360060b00008474d082d63ef76ce90034",
+		"/dev/disk/by-path/pci-0000:81:00.0-fc-0x50060b0000837a51:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b000083eed0b3afe1899a990030",
+		"/dev/disk/by-id/scsi-360060b0000840f70bd259b0f7dcc0036",
+		"/dev/disk/by-path/pci-0000:84:00.1-fc-0x50060b0000848261:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:c4:00.0-fc-0x50060b0000847511:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b00008441209d25836f1ccb0051",
+		"/dev/sdb",
+		"/dev/disk/by-path/pci-0000:04:00.1-fc-0x50060b00008441c1:0x0005000000000000",
+		"/dev/sdt",
+		"/dev/sdn",
+		"/dev/disk/by-id/scsi-360060b0000837a509d882a68817d0035",
+		"/dev/disk/by-id/scsi-360060b0000840fb029eedcf6937f0036",
+		"/dev/disk/by-path/pci-0000:44:00.1-fc-0x50060b00008381f1:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:84:00.0-fc-0x50060b0000848281:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b0000837f302d6456b166530036",
+		"/dev/disk/by-id/scsi-360060b000083f0907733a3cfc1ac0034",
+		"/dev/disk/by-id/scsi-360060b0000837f3067c37dbbf7700038",
+		"/dev/disk/by-path/pci-0000:81:00.0-fc-0x50060b0000837f31:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:04:00.1-fc-0x50060b0000844221:0x0005000000000000",
+		"/dev/sdaw",
+		"/dev/sdbm",
+		"/dev/ram6",
+		"/dev/sdai",
+		"/dev/sdcu",
+		"/dev/sdai2",
+		"/dev/sdcw",
+		"/dev/sdam",
+		"/dev/sdci",
+		"/dev/sdbu",
+		"/dev/disk/by-id/scsi-360060b0000837f302b7768b6b34d0037",
+		"/dev/sdbw",
+		"/dev/sdcm",
+		"/dev/sdbi",
+		"/dev/sdau",
+		"/dev/sddi",
+		"/dev/sddm",
+		"/dev/sdfi",
+		"/dev/disk/by-path/pci-0000:44:00.1-fc-0x50060b00008379e1:0x0005000000000000",
+		"/dev/sdeu",
+		"/dev/sdew",
+		"/dev/sdfm",
+		"/dev/sdei",
+		"/dev/sddu",
+		"/dev/sddw",
+		"/dev/sdem",
+		"/dev/disk/by-path/pci-0000:c1:00.0-fc-0x50060b0000848531:0x0002000000000000",
+		"/dev/disk/by-label/usex-tmp",
+		"/dev/disk/by-id/scsi-36001438000084590b5b1f1413e350015",
+		"/dev/disk/by-path/pci-0000:07:00.1-fc-0x50060b0000837e71:0x0003000000000000",
+		"/dev/disk/by-uuid/56e8aa12-6ba8-4205-a908-c37f4d4a649a",
+		"/dev/disk/by-id/scsi-360014380000841106278c457fa2c001e",
+		"/dev/disk/by-id/scsi-360060b00008443a0bed10d52de3d0030",
+		"/dev/disk/by-path/pci-0000:c4:00.1-fc-0x50060b00008443a1:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:47:00.1-fc-0x50060b0000840f71:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:84:00.0-fc-0x50060b0000848201:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b000083eed09683f38edebc0031",
+		"/dev/disk/by-path/pci-0000:0a:00.1-fc-0x50060b0000840621:0x0002000000000000",
+		"/dev/disk/by-id/scsi-36001438000084600aed2c48dcf740032",
+		"/dev/disk/by-path/pci-0000:47:00.0-fc-0x50060b000084ac21:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b00008483c06e41f21f6fef0043",
+		"/dev/disk/by-path/pci-0000:41:00.1-fc-0x5001438000084431:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:c4:00.0-fc-0x50060b00008474d1:0x0004000000000000",
+		"/dev/disk/by-id/scsi-36001438000084730ce02aa36d35a001c",
+		"/dev/disk/by-path/pci-0000:0d:00.1-fc-0x5001438000080041:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:07:00.1-fc-0x50060b0000840e11:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008475108f6faf754ae4002f",
+		"/dev/disk/by-path/pci-0000:47:00.0-fc-0x50060b000083f091:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008379e002e75204e8410036",
+		"/dev/disk/by-path/pci-0000:84:00.0-fc-0x50060b0000848281:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b0000848140a004c8c2bbaa0027",
+		"/dev/disk/by-id/scsi-360060b0000848260b671bf1bef870042",
+		"/dev/disk/by-id/scsi-360060b0000848140a738ddc708340028",
+		"/dev/disk/by-path/pci-0000:c1:00.1-fc-0x50060b00008483c1:0x0003000000000000",
+		"/dev/ram13",
+		"/dev/ram14",
+		"/dev/disk/by-id/scsi-360060b0000847510bbe1d67fd32a0031",
+		"/dev/disk/by-path/pci-0000:0d:00.1-fc-0x5001438000084111:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:84:00.0-fc-0x50060b0000848281:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b00008382d0464d3d3bf8cd0030",
+		"/dev/sdf",
+		"/dev/sdy",
+		"/dev/disk/by-path/pci-0000:07:00.0-fc-0x50060b0000840fb1:0x0002000000000000",
+		"/dev/sdp",
+		"/dev/disk/by-path/pci-0000:44:00.0-fc-0x50060b00008382d1:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008441207d37344b0e4b004d-part1",
+		"/dev/disk/by-id/scsi-360060b000083eed08627ba7f09eb002e",
+		"/dev/disk/by-path/pci-0000:81:00.0-fc-0x50060b0000837a51:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b0000848140764eefcc4c570029",
+		"/dev/disk/by-path/pci-0000:c1:00.0-fc-0x50060b0000848531:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b000084a96002d7bf3d30090036",
+		"/dev/disk/by-path/pci-0000:41:00.0-fc-0x5001438000084601:0x0005000000000000",
+		"/dev/sdcs",
+		"/dev/ram5",
+		"/dev/sdax",
+		"/dev/sdcd",
+		"/dev/sdce",
+		"/dev/disk/by-id/scsi-360060b000084815034ba092250a0003d",
+		"/dev/disk/by-path/pci-0000:84:00.1-fc-0x50060b0000848151:0x0005000000000000",
+		"/dev/sdai3",
+		"/dev/sdai4",
+		"/dev/disk/by-path/pci-0000:41:00.1-fc-0x5001438000084431:0x0002000000000000",
+		"/dev/disk/by-label/RHEL53LTS",
+		"/dev/sdba",
+		"/dev/sdal",
+		"/dev/sdbr",
+		"/dev/sdcx",
+		"/dev/disk/by-path/pci-0000:c4:00.0-fc-0x50060b00008474d1:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:0a:00.1-fc-0x50060b0000840621:0x0003000000000000",
+		"/dev/sdbs",
+		"/dev/sdbd",
+		"/dev/disk/by-label/kbuild-test",
+		"/dev/sdbe",
+		"/dev/sdcl",
+		"/dev/sdaa",
+		"/dev/sdar",
+		"/dev/sdbx",
+		"/dev/sdas",
+		"/dev/sdfa",
+		"/dev/sdad",
+		"/dev/sdae",
+		"/dev/sdca",
+		"/dev/sdbl",
+		"/dev/sdcr",
+		"/dev/sdfe",
+		"/dev/sdea",
+		"/dev/sddl",
+		"/dev/sder",
+		"/dev/sdes",
+		"/dev/sded",
+		"/dev/sdee",
+		"/dev/sdfl",
+		"/dev/disk/by-id/scsi-360060b00008382d09bdb9045a8330032",
+		"/dev/sdda",
+		"/dev/sddr",
+		"/dev/sdex",
+		"/dev/sdds",
+		"/dev/sddd",
+		"/dev/sdde",
+		"/dev/sdel",
+		"/dev/sdfr",
+		"/dev/disk/by-path/pci-0000:07:00.0-fc-0x50060b0000840fb1:0x0004000000000000",
+		"/dev/sdfs",
+		"/dev/sddx",
+		"/dev/sdfd",
+		"/dev/disk/by-path/pci-0000:47:00.1-fc-0x50060b0000840f71:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:44:00.0-fc-0x50060b00008381d1:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:44:00.1-fc-0x50060b00008381f1:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b0000848530173f01000b8f004f",
+		"/dev/disk/by-id/scsi-360060b0000837e70376c1e45fc120034",
+		"/dev/disk/by-path/pci-0000:84:00.0-fc-0x50060b0000848201:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:04:00.1-fc-0x50060b0000844221:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b00008481f0ed703a0dbc840023",
+		"/dev/disk/by-path/pci-0000:84:00.1-fc-0x50060b0000848151:0x0003000000000000",
+		"/dev/cciss/c0d0p1",
+		"/dev/disk/by-id/scsi-360060b0000840f7096b17305ed000034",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b00008325a1:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b0000837f30300190c03b930039",
+		"/dev/cciss/c0d4p1",
+		"/dev/disk/by-uuid/af65d1dc-7f5f-45cd-a0ed-f415c0eb74b0",
+		"/dev/disk/by-path/pci-0000:0a:00.0-fc-0x50060b00008381e1:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:04:00.1-fc-0x50060b00008441c1:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b000084ac205afd411829960036",
+		"/dev/disk/by-id/scsi-360060b00008475102cacc17a8f070030",
+		"/dev/disk/by-id/scsi-360060b00008381e0184d9bf18811003d",
+		"/dev/cciss/c0d3p1",
+		"/dev/disk/by-id/scsi-360060b00008325a05ed9ee1547e70051",
+		"/dev/disk/by-path/pci-0000:07:00.1-fc-0x50060b0000837e71:0x0005000000000000",
+		"/dev/disk/by-id/scsi-3600143800008435033bfa25a7c14001c",
+		"/dev/disk/by-path/pci-0000:0d:00.0-fc-0x5001438000084351:0x0004000000000000",
+		"/dev/cciss/c0d6p1",
+		"/dev/cciss/c0d7p1",
+		"/dev/disk/by-path/pci-0000:81:00.1-fc-0x50060b00008480f1:0x0002000000000000",
+		"/dev/cciss/c0d2p1",
+		"/dev/disk/by-id/scsi-360060b0000848260d0f91995e05e003f",
+		"/dev/disk/by-path/pci-0000:81:00.1-fc-0x50060b00008483d1:0x0002000000000000",
+		"/dev/disk/by-uuid/ad3c6f6e-12db-4239-a958-46172d981987",
+		"/dev/disk/by-uuid/4e8f0ab1-7380-493c-b77c-4f5dba7c1465",
+		"/dev/sdg",
+		"/dev/sdj",
+		"/dev/sdk",
+		"/dev/disk/by-uuid/56792aed-d7fa-469f-bd25-4c749bf9a4e5",
+		"/dev/disk/by-id/scsi-360060b00008480f0f6411d2bf9970043",
+		"/dev/disk/by-path/pci-0000:c1:00.1-fc-0x50060b0000848141:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:41:00.1-fc-0x5001438000084591:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:41:00.0-fc-0x5001438000084731:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:07:00.0-fc-0x50060b00008410a1:0x0002000000000000",
+		"/dev/vg/lv",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b0000844121:0x0002000000000000-part3",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b0000844121:0x0002000000000000-part4",
+		"/dev/disk/by-id/scsi-360014380000841102890b252b609001d",
+		"/dev/disk/by-path/pci-0000:47:00.1-fc-0x50060b000084a961:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:0a:00.0-fc-0x50060b00008380b1:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b0000847510be5b9d70fe5a002e",
+		"/dev/disk/by-path/pci-0000:0d:00.1-fc-0x5001438000084111:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b0000848140246201d2907a002a",
+		"/dev/ram1",
+		"/dev/sdah",
+		"/dev/sdbo",
+		"/dev/sdch",
+		"/dev/disk/by-id/scsi-360060b00008381f088f8803a2b2d0042",
+		"/dev/sdao",
+		"/dev/disk/by-id/scsi-360060b0000848260141c2f9a24810040",
+		"/dev/sdbh",
+		"/dev/disk/by-path/pci-0000:41:00.1-fc-0x5001438000084591:0x0004000000000000",
+		"/dev/sdco",
+		"/dev/sdeo",
+		"/dev/cciss/c0d1p1",
+		"/dev/sdfh",
+		"/dev/disk/by-uuid/37510659-d23a-4ab1-985b-7cc10cff1422",
+		"/dev/disk/by-id/scsi-360060b000084a9603d3b862e82590033",
+		"/dev/sddo",
+		"/dev/disk/by-id/scsi-360060b000084422063612e82867b0032",
+		"/dev/disk/by-path/pci-0000:07:00.0-fc-0x50060b00008410a1:0x0005000000000000",
+		"/dev/sdeh",
+		"/dev/sdfo",
+		"/dev/disk/by-path/pci-0000:47:00.0-fc-0x50060b000084ac21:0x0004000000000000",
+		"/dev/sddh",
+		"/dev/disk/by-path/pci-0000:41:00.0-fc-0x5001438000084601:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:0a:00.0-fc-0x50060b00008380b1:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:44:00.0-fc-0x50060b00008382d1:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:04:00.1-fc-0x50060b00008441c1:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:c4:00.1-fc-0x50060b000081ecb1:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:07:00.1-fc-0x50060b0000840e11:0x0005000000000000",
+		"/dev/ramdisk",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b00008325a1:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b000084ac2073c6080954c90033",
+		"/dev/disk/by-path/pci-0000:0d:00.1-fc-0x5001438000080041:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:0d:00.0-fc-0x5001438000084351:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008442204bc3ae8ecf000033",
+		"/dev/disk/by-path/pci-0000:44:00.1-fc-0x50060b00008379e1:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:41:00.0-fc-0x5001438000084601:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:44:00.0-fc-0x50060b00008382d1:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b00008483c09ab42b2f44c00046",
+		"/dev/disk/by-id/scsi-360014380000847303a77d1405ba0001e",
+		"/dev/disk/by-id/scsi-360060b000083f09097d17bc5304b0032",
+		"/dev/disk/by-id/scsi-360060b00008481503c91f71c0c7c003c",
+		"/dev/disk/by-path/pci-0000:07:00.0-fc-0x50060b00008410a1:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:47:00.0-fc-0x50060b000083f091:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:c4:00.0-fc-0x50060b0000847511:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b000081ecb0fa9fba6cb25c0039",
+		"/dev/disk/by-path/pci-0000:44:00.0-fc-0x50060b00008381d1:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:0d:00.0-fc-0x5001438000080361:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b0000844121:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b00008410a097f8b64232c5003f",
+		"/dev/disk/by-id/scsi-360060b000084a96075639833cee30034",
+		"/dev/disk/by-id/scsi-360060b00008483c05adc1a2a009c0045",
+		"/dev/disk/by-id/scsi-360060b00008382d0fc894f403cf00031",
+		"/dev/disk/by-path/pci-0000:81:00.0-fc-0x50060b0000837f31:0x0002000000000000",
+		"/dev/cciss/c0d5",
+		"/dev/disk/by-path/pci-0000:0a:00.1-fc-0x50060b0000840621:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:c4:00.1-fc-0x50060b000081ecb1:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:0d:00.0-fc-0x5001438000080361:0x0002000000000000",
+		"/dev/sdq",
+		"/dev/sdc",
+		"/dev/disk/by-path/pci-0000:47:00.0-fc-0x50060b000083f091:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b00008381d0788adf76dc2b002f",
+		"/dev/sdz",
+		"/dev/disk/by-id/scsi-36001438000080040498e26ee88730021",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b0000844121:0x0004000000000000",
+		"/dev/disk/by-uuid/7705c653-1b71-4537-8752-544345a24635",
+		"/dev/disk/by-id/scsi-360060b0000837a50194e7350394c0037",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b0000844121:0x0002000000000000-part2",
+		"/dev/disk/by-path/pci-0000:84:00.1-fc-0x50060b0000848261:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b000083f090a0fb8dca7d8a0033",
+		"/dev/disk/by-uuid/8a45e97b-ec46-4aa8-b070-a63eb599048e",
+		"/dev/ram0",
+		"/dev/disk/by-id/scsi-360060b00008381f0d14ccd49fffa0045",
+		"/dev/sdcv",
+		"/dev/sdbv",
+		"/dev/sdav",
+		"/dev/disk/by-path/pci-0000:0a:00.1-fc-0x50060b000083eed1:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b0000840620131d6473e8520030",
+		"/dev/disk/by-path/pci-0000:41:00.0-fc-0x5001438000084731:0x0002000000000000",
+		"/dev/sdev",
+		"/dev/disk/by-id/scsi-360060b0000840e10bcf92950876b0032",
+		"/dev/sddv",
+		"/dev/disk/by-path/pci-0000:c1:00.1-fc-0x50060b00008483c1:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:c1:00.0-fc-0x50060b00008481f1:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:84:00.1-fc-0x50060b0000848151:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b00008379e0020140ff9bb70035",
+		"/dev/disk/by-id/scsi-360060b0000840fb074d0a5ec0b390034",
+		"/dev/disk/by-id/scsi-360060b000084ac206da92f13e5740035",
+		"/dev/cciss/c0d0p2",
+		"/dev/disk/by-id/scsi-360060b0000848200399499f516d00042",
+		"/dev/disk/by-id/scsi-360060b000081ecb0bf7993622a160037",
+		"/dev/disk/by-id/scsi-360060b00008381f08d2e963f77b40043",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b00008325a1:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b00008483d0922eb856da93003e",
+		"/dev/disk/by-id/scsi-3600143800008459082bd164782760016",
+		"/dev/disk/by-path/pci-0000:0a:00.0-fc-0x50060b00008381e1:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008441205c6d495059a2004e",
+		"/dev/cciss/c0d4p2",
+		"/dev/disk/by-id/scsi-360060b0000844120317e5c559dc5004f",
+		"/dev/cciss/c0d3p2",
+		"/dev/disk/by-id/scsi-360060b00008380b0ecd4f4d6c8af0039",
+		"/dev/disk/by-path/pci-0000:07:00.1-fc-0x50060b0000837e71:0x0004000000000000",
+		"/dev/disk/by-uuid/9547de54-c0f7-4b9f-9740-bd2dc40672a8",
+		"/dev/root",
+		"/dev/disk/by-uuid/73172a46-6f90-4526-896f-36b19c841ad2",
+		"/dev/disk/by-path/pci-0000:0d:00.0-fc-0x5001438000084351:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:81:00.0-fc-0x50060b0000837a51:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:81:00.1-fc-0x50060b00008483d1:0x0003000000000000",
+		"/dev/mapper/vg-lv_mimage_0",
+		"/dev/sdu",
+		"/dev/disk/by-path/pci-0000:41:00.1-fc-0x5001438000084591:0x0002000000000000",
+		"/dev/sdw",
+		"/dev/sdi",
+		"/dev/sdm",
+		"/dev/disk/by-path/pci-0000:41:00.0-fc-0x5001438000084731:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b00008406205865797834dd0031",
+		"/dev/disk/by-path/pci-0000:0d:00.1-fc-0x5001438000084111:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:c4:00.1-fc-0x50060b00008443a1:0x0003000000000000",
+		"/dev/disk/by-id/scsi-36001438000080040b38e37f3cc960022",
+		"/dev/disk/by-path/pci-0000:0a:00.0-fc-0x50060b00008380b1:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b000084826094d1079093d4003e",
+		"/dev/disk/by-path/pci-0000:07:00.1-fc-0x50060b0000837e71:0x0002000000000000",
+		"/dev/disk/by-label/boot",
+		"/dev/ram2",
+		"/dev/ram8",
+		"/dev/ram9",
+		"/dev/sdbn",
+		"/dev/sdct",
+		"/dev/disk/by-path/pci-0000:41:00.1-fc-0x5001438000084591:0x0005000000000000",
+		"/dev/disk/by-id/scsi-360060b00008380b09a1838d2d2cd0038",
+		"/dev/sdbb",
+		"/dev/sdan",
+		"/dev/sdbt",
+		"/dev/disk/by-id/scsi-360060b00008381e0efed85ec43cf003c",
+		"/dev/sdab",
+		"/dev/sdcn",
+		"/dev/sdat",
+		"/dev/sdfb",
+		"/dev/disk/by-id/scsi-360060b00008483d03b3a00d81ca7003b",
+		"/dev/sdcb",
+		"/dev/cciss/c0d1p2",
+		"/dev/sdeb",
+		"/dev/sddn",
+		"/dev/sdet",
+		"/dev/sddb",
+		"/dev/sdfn",
+		"/dev/sddt",
+		"/dev/disk/by-path/pci-0000:47:00.0-fc-0x50060b000084ac21:0x0005000000000000",
+		"/dev/sden",
+		"/dev/sdft",
+		"/dev/disk/by-path/pci-0000:0d:00.1-fc-0x5001438000080041:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b00008442209cd62c9b3ea50034",
+		"/dev/disk/by-path/pci-0000:07:00.1-fc-0x50060b0000840e11:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b00008480f041ed0a26ad0c0042",
+		"/dev/disk/by-id/scsi-360060b000083f0902b72b5d405cf0035",
+		"/dev/disk/by-path/pci-0000:0a:00.0-fc-0x50060b00008380b1:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b0000837a508c01035ef0d00033",
+		"/dev/disk/by-id/scsi-360060b00008381d0e968c67bd2080030",
+		"/dev/disk/by-id/scsi-360060b00008325a024534c3c3c110054",
+		"/dev/disk/by-id/scsi-360014380000843503448ca640cdf001e",
+		"/dev/cciss/c0d0p3",
+		"/dev/disk/by-uuid/97e8cbbb-1093-40d3-bfb8-039de966e4cd",
+		"/dev/disk/by-path/pci-0000:0d:00.0-fc-0x5001438000084351:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:44:00.1-fc-0x50060b00008379e1:0x0002000000000000",
+		"/dev/disk/by-path/pci-0000:41:00.0-fc-0x5001438000084601:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b0000848150c77ce517c85c003b",
+		"/dev/disk/by-id/scsi-360060b00008382d0bf3b2b36ac43002f",
+		"/dev/disk/by-id/scsi-360060b00008379e065f2980e97a80038",
+		"/dev/disk/by-path/pci-0000:c4:00.1-fc-0x50060b000081ecb1:0x0002000000000000",
+		"/dev/cciss/c0d4p3",
+		"/dev/disk/by-uuid/f7f1a198-010e-4bb4-802c-5127d2555f50",
+		"/dev/disk/by-path/pci-0000:c4:00.1-fc-0x50060b00008443a1:0x0005000000000000",
+		"/dev/disk/by-id/scsi-3600143800008443060deeee059b9002b",
+		"/dev/disk/by-id/scsi-360060b00008481f0f9c55e1744ca0025",
+		"/dev/disk/by-id/scsi-360060b000084ac20da711a0ea1500034",
+		"/dev/disk/by-path/pci-0000:44:00.0-fc-0x50060b00008381d1:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:c4:00.0-fc-0x50060b0000847511:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:84:00.0-fc-0x50060b0000848201:0x0003000000000000",
+		"/dev/ram15",
+		"/dev/disk/by-path/pci-0000:c4:00.0-fc-0x50060b00008474d1:0x0005000000000000",
+		"/dev/disk/by-path/pci-0000:81:00.0-fc-0x50060b0000837f31:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008483d00b29eed2d01c003a",
+		"/dev/disk/by-id/scsi-360060b0000837e70ee240940af690033",
+		"/dev/disk/by-path/pci-0000:84:00.0-fc-0x50060b0000848281:0x0002000000000000",
+		"/dev/disk/by-id/scsi-360060b0000840fb0b7b8c7f14f5c0035",
+		"/dev/disk/by-id/scsi-360060b0000837e7093a8304a19150035",
+		"/dev/disk/by-id/scsi-36001438000084590dc51ca37ad870013",
+		"/dev/disk/by-path/pci-0000:0a:00.1-fc-0x50060b0000840621:0x0004000000000000",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b0000844121:0x0003000000000000",
+		"/dev/sda",
+		"/dev/mapper/vg-lv_mimage_1",
+		"/dev/sdr",
+		"/dev/sds",
+		"/dev/sdd",
+		"/dev/disk/by-id/scsi-360014380000844302982b5d184cb0028",
+		"/dev/sde",
+		"/dev/sdx",
+		"/dev/sdl",
+		"/dev/disk/by-id/scsi-360014380000846009a86af888b510031",
+		"/dev/disk/by-path/pci-0000:0d:00.0-fc-0x5001438000080361:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360014380000803606dfe109871880025",
+		"/dev/disk/by-path/pci-0000:41:00.1-fc-0x5001438000084431:0x0003000000000000",
+		"/dev/disk/by-id/scsi-360060b00008481f02a2425086ffa0022",
+		"/dev/disk/by-id/scsi-360060b00008481505931d0127bce003a",
+		"/dev/disk/by-path/pci-0000:04:00.0-fc-0x50060b0000844121:0x0002000000000000-part1",
+		"/dev/disk/by-path/pci-0000:47:00.1-fc-0x50060b0000840f71:0x0005000000000000",
+		"/dev/disk/by-id/scsi-36001438000084350d2fcb45fc89e001d",
+		"/dev/disk/by-path/pci-0000:84:00.1-fc-0x50060b0000848261:0x0004000000000000",
+		"/dev/disk/by-id/scsi-36001438000084430b429c8d6d1550029",
+		"/dev/ram3",
+		"/dev/ram4",
+		"/dev/ram7",
+		"/dev/sday",
+		"/dev/sdbp",
+		"/dev/sdcf",
+		"/dev/sdcy",
+		"/dev/sdap",
+		"/dev/sdbf",
+		"/dev/disk/by-path/pci-0000:41:00.0-fc-0x5001438000084731:0x0003000000000000",
+		"/dev/sdby",
+		"/dev/sdcp",
+		"/dev/sdaf",
+		"/dev/disk/by-path/pci-0000:0a:00.1-fc-0x50060b000083eed1:0x0004000000000000",
+		"/dev/sddy",
+		"/dev/disk/by-id/scsi-360060b00008483d0d96f15dd60ca003c",
+		"/dev/disk/by-id/scsi-360060b000083eed0797acc845676002f",
+		"/dev/sdep",
+		"/dev/sdff",
+		"/dev/sddp",
+		"/dev/sdef",
+		"/dev/sdey",
+		"/dev/sdfp",
+		"/dev/disk/by-id/scsi-36001438000080040e56813e944500020",
+		"/dev/disk/by-id/scsi-360060b0000840e108356525af0f50034",
+		"/dev/sddf",
+		"/dev/disk/by-id/scsi-360060b000084820017da23fac6da0043",
+		"/dev/disk/by-path/pci-0000:c1:00.0-fc-0x50060b00008481f1:0x0003000000000000",
+		"/dev/disk/by-path/pci-0000:c4:00.1-fc-0x50060b00008443a1:0x0004000000000000",
+		"/dev/disk/by-id/scsi-360060b0000848530cc3d13054fb20050"
+	]
+}
+
+--=-8og1EDjnP7/P/esrHmcU
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=-8og1EDjnP7/P/esrHmcU--
