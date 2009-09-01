@@ -1,14 +1,18 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: Regarding dm-ioband tests
-Date: Tue, 1 Sep 2009 13:47:24 -0400
-Message-ID: <20090901174724.GC3753@redhat.com>
-References: <20090901165011.GB3753@redhat.com>
+From: Nauman Rafique <nauman@google.com>
+Subject: Re: [PATCH 18/23] io-controller: blkio_cgroup patches
+	from Ryo to track async bios.
+Date: Tue, 1 Sep 2009 11:02:22 -0700
+Message-ID: <e98e18940909011102p7af308d5n9733b12d0a693b77@mail.gmail.com>
+References: <4A9C09BE.4060404@redhat.com> <20090831185640.GF3758@redhat.com>
+	<e98e18940908311651s26de5b70ye6f4a82402956309@mail.gmail.com>
+	<20090901.160004.226800357.ryov@valinux.co.jp>
+	<20090901141142.GA13709@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090901165011.GB3753@redhat.com>
+In-Reply-To: <20090901141142.GA13709@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,189 +22,210 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: dm-devel@redhat.com, linux kernel mailing list <linux-kernel@vger.kernel.org>
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Tue, Sep 01, 2009 at 12:50:11PM -0400, Vivek Goyal wrote:
-> Hi Ryo,
-> 
-> I decided to play a bit more with dm-ioband and started doing some
-> testing. I am doing a simple two dd threads doing reads and don't seem
-> to be gettting the fairness. So thought will ask you what's the issue
-> here. Is there an issue with my testing procedure.
-> 
-> I got one 40G SATA drive (no hardware queuing). I have created two
-> partitions on that disk /dev/sdd1 and /dev/sdd2 and created two ioband
-> devices ioband1 and ioband2 on partitions sdd1 and sdd2 respectively. The
-> weights of ioband1 and ioband2 devices are 200 and 100 respectively. 
-> 
-> I am assuming that this setup will create two default groups and IO
-> going to partition sdd1 should get double the BW of partition sdd2.
-> 
-> But it looks like I am not gettting that behavior. Following is the output
-> of "dmsetup table" command. This snapshot has been taken every 2 seconds
-> while IO was going on. Column 9 seems to be containing how many sectors
-> of IO has been done on a particular io band device and group. Looking at
-> the snapshot, it does not look like that ioband1 default group got double
-> the BW of ioband2 default group.  
-> 
-> Am I doing something wrong here?
-> 
+On Tue, Sep 1, 2009 at 7:11 AM, Vivek Goyal<vgoyal@redhat.com> wrote:
+> On Tue, Sep 01, 2009 at 04:00:04PM +0900, Ryo Tsuruta wrote:
+>> Hi,
+>>
+>> > > Hi Rik,
+>> > >
+>> > > Thanks for reviewing the patches. I wanted to have better understa=
+nding of
+>> > > where all does it help to associate a bio to the group of process =
+who
+>> > > created/owned the page. Hence few thoughts.
+>> > >
+>> > > When a bio is submitted to IO scheduler, it needs to determine the=
+ group
+>> > > bio belongs to and group which should be charged to. There seem to=
+ be two
+>> > > methods.
+>> > >
+>> > > - Attribute the bio to cgroup submitting process belongs to.
+>> > > - For async requests, track the original owner hence cgroup of the=
+ page
+>> > > =E1and charge that group for the bio.
+>> > >
+>> > > One can think of pros/cons of both the approaches.
+>> > >
+>> > > - The primary use case of tracking async context seems be that if =
+a
+>> > > =E1process T1 in group G1 mmaps a big file and then another proces=
+s T2 in
+>> > > =E1group G2, asks for memory and triggers reclaim and generates wr=
+ites of
+>> > > =E1the file pages mapped by T1, then these writes should not be ch=
+arged to
+>> > > =E1T2, hence blkio_cgroup pages.
+>> > >
+>> > > =E1But the flip side of this might be that group G2 is a low weigh=
+t group
+>> > > =E1and probably too busy also right now, which will delay the writ=
+e out
+>> > > =E1and possibly T2 will wait longer for memory to be allocated.
+>>
+>> In order to avoid this wait, dm-ioband issues IO which has a page with
+>> PG_Reclaim as early as possible.
+>>
+>
+> So in above case IO is still charged to G2 but you keep a track if page=
+ is
+> PG_Reclaim then releae the this bio before other bios queued up in the
+> group?
+>
+>> > > - At one point of time Andrew mentioned that buffered writes are g=
+enerally a
+>> > > =E1big problem and one needs to map these to owner's group. Though=
+ I am not
+>> > > =E1very sure what specific problem he was referring to. Can we att=
+ribute
+>> > > =E1buffered writes to pdflush threads and move all pdflush threads=
+ in a
+>> > > =E1cgroup to limit system wide write out activity?
+>>
+>> I think that buffered writes also should be controlled per cgroup as
+>> well as synchronous writes.
+>>
+>
+> But it is hard to achieve fairness for buffered writes becase we don't
+> create complete parallel IO paths and not necessarily higher weight
+> process dispatches more buffered writes to IO scheduler. (Due to page
+> cache buffered write logic).
+>
+> So in some cases we might see buffered write fairness and in other case=
+s
+> not. For example, run two dd processes in two groups doing buffered wri=
+tes
+> and it is hard to achieve fairness between these.
 
-I tried another variant of test. This time I also created two additional
-groups on ioband1 devices and linked these to cgroups test1 and test2 and
-launched two dd threads in two cgroups on device ioband1. There also I
-don't seem to be getting the right fairness numbers for cgroup test1 and
-test2.
+If something is broken, we don't necessarily have to break it further.
+Instead, we should be thinking about why its hard to achieve fairness
+with buffered write back. Is there a way to change the writeback path
+to send down a constant stream of IO, instead of sending down bursts?
 
-Script to create ioband devices and additional groups
------------------------------------------------------
-echo "0 $(blockdev --getsize /dev/sdd1) ioband /dev/sdd1 1 0 0 none"
-"weight 0 :200" | dmsetup create ioband1
-echo "0 $(blockdev --getsize /dev/sdd2) ioband /dev/sdd2 1 0 0 none"
-"weight 0 :100" | dmsetup create ioband2
-
-# Some code to mount and create cgroups.
-# Read group id
-test1_id=`cat /cgroup/ioband/test1/blkio.id`
-test2_id=`cat /cgroup/ioband/test2/blkio.id`
-
-test1_weight=200
-test2_weight=100
-
-dmsetup message ioband1 0 type cgroup 
-dmsetup message ioband1 0 attach $test1_id
-dmsetup message ioband1 0 attach $test2_id
-dmsetup message ioband1 0 weight $test1_id:$test1_weight
-dmsetup message ioband1 0 weight $test2_id:$test2_weight
-
-mount /dev/mapper/ioband1 /mnt/sdd1
-mount /dev/mapper/ioband2 /mnt/sdd2
------------------------------------------------------------------
-
-Following are two dd jobs
--------------------------
-dd if=/mnt/sdd1/testzerofile1 of=/dev/null &
-echo $! > /cgroup/ioband/test1/tasks
-
-dd if=/mnt/sdd1/testzerofile2 of=/dev/null &
-echo $! > /cgroup/ioband/test2/tasks
-
-
-Following are "dmsetup status" results every 2 seconds
-======================================================
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 0 0 0 0 0 0 3 0 0 0 0 0 0
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 0 0 0 0 0 0 3 0 0 0 0 0 0
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 689 0 86336 0 0 0 3 650 3
-81472 0 0 0
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 1725 0 217024 0 0 0 3 1270
-11 158912 0 0 0
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 2690 0 338744 0 0 0 3 1978
-15 247856 0 0 0
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 3762 0 474040 0 0 0 3 2583
-21 323736 0 0 0
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 4745 0 598064 0 0 0 3 3275
-27 410392 0 0 0
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 5737 0 723120 0 0 0 3 3985
-31 499592 0 0 0
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 6815 0 859184 0 0 0 3 4594
-37 575864 0 0 0
-
-ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0 2 7823 0 986288 0 0 0 3 5276
-43 661360 0 0 0
-
-"dmsetup table" output
-======================
-ioband2: 0 40355280 ioband 8:50 1 4 192 none weight 768 :100
-ioband1: 0 37768752 ioband 8:49 1 4 192 cgroup weight 768 :200 2:200 3:100
-
-Because I am using "weight" policy, I thought that test1 cgroup with id
-"2" will issue double the number of requests of cgroup test2 with id "3".
-But that does not seem to be happening here. Is there an issue with my
-testing method.
-
-Thanks
-Vivek
- 
-> ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 96 0 11528 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 82 0 9736 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 748 2 93032 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 896 0 112232 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 1326 5 165816 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 1816 0 228312 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 1943 6 243712 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 2692 0 338760 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 2461 10 308576 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 3618 0 455608 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 3118 11 391352 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 4406 0 555032 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 3734 15 468760 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 5273 0 664328 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 4307 17 540784 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 6181 0 778992 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 4930 19 619208 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 7028 0 885728 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 5599 22 703280 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 7815 0 985024 0 0 0
-> 
-> ioband2: 0 40355280 ioband 1 -1 6586 27 827456 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 8327 0 1049624 0 0 0
-> 
-> Following are details of my test setup.
-> ---------------------------------------
-> I took dm-ioband patch version 1.12.3 and applied on 2.6.31-rc6.
-> 
-> Created ioband devices using following command.
-> ----------------------------------------------
-> echo "0 $(blockdev --getsize /dev/sdd1) ioband /dev/sdd1 1 0 0 none"
-> "weight 0 :200" | dmsetup create ioband1
-> echo "0 $(blockdev --getsize /dev/sdd2) ioband /dev/sdd2 1 0 0 none"
-> "weight 0 :100" | dmsetup create ioband2
-> 
-> mount /dev/mapper/ioband1 /mnt/sdd1
-> mount /dev/mapper/ioband2 /mnt/sdd2
-> 
-> Started two dd threads
-> ======================
-> dd if=/mnt/sdd1/testzerofile1 of=/dev/null &
-> dd if=/mnt/sdd2/testzerofile1 of=/dev/null &
-> 
-> Output of dmsetup table command
-> ================================
-> ioband2: 0 40355280 ioband 8:50 1 4 192 none weight 768 :100
-> ioband1: 0 37768752 ioband 8:49 1 4 192 none weight 768 :200
-> 
+>
+> That's why the idea that if we can't ensure Buffered write vs Buffered
+> write fairness in all the cases, then does it make sense to attribute
+> buffered writes to pdflush and put pdflush threads into a separate grou=
+p
+> to limit system wide write out activity.
+>
+>> > > - Somebody also gave an example where there is a memory hogging pr=
+ocess and
+>> > > =E1possibly pushes out some processes to swap. It does not sound f=
+air to
+>> > > =E1charge those proccess for that swap writeout. These processes n=
+ever
+>> > > =E1requested swap IO.
+>>
+>> I think that swap writeouts should be charged to the memory hogging
+>> process, because the process consumes more resources and it should get
+>> a penalty.
+>>
+>
+> A process requesting memory gets IO penalty? IMHO, swapping is a kernel
+> mechanism and kernel's way of providing extended RAM. If we want to sol=
+ve
+> the issue of memory hogging by a process then right way to solve is to =
+use
+> memory controller and not by charging the process for IO activity.
+> Instead, proabably a more suitable way is to charge swap activity to ro=
+ot
+> group (where by default all the kernel related activity goes).
+>
+>> > > - If there are multiple buffered writers in the system, then those=
+ writers
+>> > > =E1can also be forced to writeout some pages to disk before they a=
+re
+>> > > =E1allowed to dirty more pages. As per the page cache design, any =
+writer
+>> > > =E1can pick any inode and start writing out pages. So it can happe=
+n a
+>> > > =E1weight group task is writting out pages dirtied by a lower weig=
+ht group
+>> > > =E1task. If, async bio is mapped to owner's group, it might happen=
+ that
+>> > > =E1higher weight group task might be made to sleep on lower weight=
+ group
+>> > > =E1task because request descriptors are all consumed up.
+>>
+>> As mentioned above, in dm-ioband, the bio is charged to the page owner
+>> and issued immediately.
+>
+> But you are doing it only for selected pages and not for all buffered
+> writes?
+>
+>>
+>> > > It looks like there does not seem to be a clean way which covers a=
+ll the
+>> > > cases without issues. I am just trying to think, what is a simple =
+way
+>> > > which covers most of the cases. Can we just stick to using submitt=
+ing task
+>> > > context to determine a bio's group (as cfq does). Which can result=
+ in
+>> > > following.
+>> > >
+>> > > - Less code and reduced complexity.
+>> > >
+>> > > - Buffered writes will be charged to pdflush and its group. If one=
+ wish to
+>> > > =E1limit buffered write activity for pdflush, one can move all the=
+ pdflush
+>> > > =E1threads into a group and assign desired weight. Writes submitte=
+d in
+>> > > =E1process context will continue to be charged to that process irr=
+espective
+>> > > =E1of the fact who dirtied that page.
+>> >
+>> > What if we wanted to control buffered write activity per group? If a
+>> > group keeps dirtying pages, we wouldn't want it to dominate the disk
+>> > IO capacity at the expense of other cgroups (by dominating the write=
+s
+>> > sent down by pdflush).
+>>
+>> Yes, I think that is true.
+>>
+>
+> But anyway we are not able to gurantee this isolation in all the cases.
+> Again I go back to example of two dd threads doing buffered writes in t=
+wo
+> groups.
+>
+> I don't mind keeping it. Just wanted to make sure that we agree and
+> understand that keeping it does not mean that we get buffered write vs
+> buffered write isolation/fairness in all the cases.
+>
+>> > > - swap activity will be charged to kswapd and its group. If swap w=
+rites
+>> > > =E1are coming from process context, it gets charged to process and=
+ its
+>> > > =E1group.
+>> > >
+>> > > - If one is worried about the case of one process being charged fo=
+r write
+>> > > =E1out of file mapped by another process during reclaim, then we c=
+an
+>> > > =E1probably make use of memory controller and mount memory control=
+ler and
+>> > > =E1io controller together on same hierarchy. I am told that with m=
+emory
+>> > > =E1controller, group's memory will be reclaimed by the process req=
+uesting
+>> > > =E1more memory. If that's the case, then IO will automatically be =
+charged
+>> > > =E1to right group if we use submitting task context.
+>> > >
+>> > > I just wanted to bring this point forward for more discussions to =
+know
+>> > > what is the right thing to do? Use bio tracking or not.
+>>
+>> Thanks for bringing it forward.
+>>
+>
 > Thanks
 > Vivek
+>
