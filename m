@@ -1,14 +1,12 @@
-From: malahal@us.ibm.com
-Subject: Re: Removing a failed device from LVM2/DM
-Date: Tue, 1 Sep 2009 09:25:37 -0700
-Message-ID: <20090901162537.GA15197@us.ibm.com>
-References: <1251731770.6817.31.camel@cail> <1251821775.5459.21.camel@cail>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Regarding dm-ioband tests
+Date: Tue, 1 Sep 2009 12:50:11 -0400
+Message-ID: <20090901165011.GB3753@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1251821775.5459.21.camel@cail>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,59 +16,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: dm-devel@redhat.com, linux kernel mailing list <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Alan D. Brunelle [Alan.Brunelle@hp.com] wrote:
-> The vgreduce --removemissing helped a lot, thanks! But I still remain
-> with all these error messages about the removed device. I tried
-> everything again - using devices sda, sdab & sdad (failing sdab), and
-> now every time I issue an LVM2/DM command I get all sorts of error
-> messages about /dev/sdab failures. The 'pvs -a -o +devices' command not
-> only puts out a ton - but also has a messed up display about the devices
-> left working:
-> 
-> # pvs -a -o +devices
->   /dev/sdab: read failed after 0 of 2048 at 0: Input/output error
->   Volume group name (null) has invalid characters
->   Skipping volume group (null)
-> ...
->   Volume group name (null) has invalid characters
->   Skipping volume group (null)
->   Volume group name (null) has invalid characters
->   Skipping volume group (null)
->   PV         VG   Fmt  Attr PSize   PFree   Devices    
->   /dev/sda   vg   lvm2 a-   271.34G 239.34G /dev/sda(0)
->   /dev/sda   vg   lvm2 a-   271.34G 239.34G            
->   /dev/sda   vg   lvm2 a-   271.34G 239.34G            
->   /dev/sdad  vg   lvm2 a-   271.34G 271.34G            
->   /dev/sdad  vg   lvm2 a-   271.34G 271.34G
-> 
-> Why the 5 lines for 2 devices?
-> 
-> I've attached a log of commands & results.
-> 
-> I have tried adding in "/dev/sdab" as being filtered out
-> in /etc/lvm/lvm.conf but that doesn't change things. Here is first part
-> of the output from lvm dumpconfig:
-> 
-> # lvm dumpconfig
->   devices {
->   	dir="/dev"
->   	scan="/dev"
->   	preferred_names=[]
->   	filter=["r|sdab|", "a/.*/"]
->   	cache_dir="/etc/lvm/cache"
->   	cache_file_prefix=""
->   	write_cache_state=1
->   	sysfs_scan=1
->   	md_component_detection=1
->   	md_chunk_alignment=1
->   	ignore_suspended_devices=0
->   }
-> 
-> but commands still error on /dev/sdab:
+Hi Ryo,
 
-Did you remove the cache or ran vgscan?
-/etc/lvm/lvm.conf recommends running 'vgscan -vvvv' to see what is going
-on with filters.
+I decided to play a bit more with dm-ioband and started doing some
+testing. I am doing a simple two dd threads doing reads and don't seem
+to be gettting the fairness. So thought will ask you what's the issue
+here. Is there an issue with my testing procedure.
+
+I got one 40G SATA drive (no hardware queuing). I have created two
+partitions on that disk /dev/sdd1 and /dev/sdd2 and created two ioband
+devices ioband1 and ioband2 on partitions sdd1 and sdd2 respectively. The
+weights of ioband1 and ioband2 devices are 200 and 100 respectively. 
+
+I am assuming that this setup will create two default groups and IO
+going to partition sdd1 should get double the BW of partition sdd2.
+
+But it looks like I am not gettting that behavior. Following is the output
+of "dmsetup table" command. This snapshot has been taken every 2 seconds
+while IO was going on. Column 9 seems to be containing how many sectors
+of IO has been done on a particular io band device and group. Looking at
+the snapshot, it does not look like that ioband1 default group got double
+the BW of ioband2 default group.  
+
+Am I doing something wrong here?
+
+ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
+ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 96 0 11528 0 0 0
+ioband1: 0 37768752 ioband 1 -1 82 0 9736 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 748 2 93032 0 0 0
+ioband1: 0 37768752 ioband 1 -1 896 0 112232 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 1326 5 165816 0 0 0
+ioband1: 0 37768752 ioband 1 -1 1816 0 228312 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 1943 6 243712 0 0 0
+ioband1: 0 37768752 ioband 1 -1 2692 0 338760 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 2461 10 308576 0 0 0
+ioband1: 0 37768752 ioband 1 -1 3618 0 455608 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 3118 11 391352 0 0 0
+ioband1: 0 37768752 ioband 1 -1 4406 0 555032 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 3734 15 468760 0 0 0
+ioband1: 0 37768752 ioband 1 -1 5273 0 664328 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 4307 17 540784 0 0 0
+ioband1: 0 37768752 ioband 1 -1 6181 0 778992 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 4930 19 619208 0 0 0
+ioband1: 0 37768752 ioband 1 -1 7028 0 885728 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 5599 22 703280 0 0 0
+ioband1: 0 37768752 ioband 1 -1 7815 0 985024 0 0 0
+
+ioband2: 0 40355280 ioband 1 -1 6586 27 827456 0 0 0
+ioband1: 0 37768752 ioband 1 -1 8327 0 1049624 0 0 0
+
+Following are details of my test setup.
+---------------------------------------
+I took dm-ioband patch version 1.12.3 and applied on 2.6.31-rc6.
+
+Created ioband devices using following command.
+----------------------------------------------
+echo "0 $(blockdev --getsize /dev/sdd1) ioband /dev/sdd1 1 0 0 none"
+"weight 0 :200" | dmsetup create ioband1
+echo "0 $(blockdev --getsize /dev/sdd2) ioband /dev/sdd2 1 0 0 none"
+"weight 0 :100" | dmsetup create ioband2
+
+mount /dev/mapper/ioband1 /mnt/sdd1
+mount /dev/mapper/ioband2 /mnt/sdd2
+
+Started two dd threads
+======================
+dd if=/mnt/sdd1/testzerofile1 of=/dev/null &
+dd if=/mnt/sdd2/testzerofile1 of=/dev/null &
+
+Output of dmsetup table command
+================================
+ioband2: 0 40355280 ioband 8:50 1 4 192 none weight 768 :100
+ioband1: 0 37768752 ioband 8:49 1 4 192 none weight 768 :200
+
+Thanks
+Vivek
