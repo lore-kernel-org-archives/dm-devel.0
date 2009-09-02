@@ -1,48 +1,44 @@
-From: Balbir Singh <balbir@linux.vnet.ibm.com>
-Subject: Re: a room for blkio-cgroup in struct page_cgroup
-Date: Thu, 3 Sep 2009 01:32:24 +0530
-Message-ID: <661de9470909021302ge86d01s5d107dc2b5cffbc5@mail.gmail.com>
-References: <20090902.205137.71100180.ryov@valinux.co.jp>
-	 <ff13736137802f78cf492d13c43c1af1.squirrel@webmail-b.css.fujitsu.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: [PATCH 0/3][RESUBMIT] scsi_dh_rdac: Adding more debug
+ options for scsi rdac handler
+Date: Wed, 2 Sep 2009 17:12:21 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474CCCE66@cosmail01.lsi.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <ff13736137802f78cf492d13c43c1af1.squirrel@webmail-b.css.fujitsu.com>
-Sender: owner-linux-mm@kvack.org
-To: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
-Cc: Ryo Tsuruta <ryov@valinux.co.jp>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, linux-mm@kvack.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "'linux-scsi@vger.kernel.org'" <linux-scsi@vger.kernel.org>
+Cc: "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "Chauhan,
+	Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "'sekharan@linux.vnet.ibm.com'" <sekharan@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-2009/9/2 KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>:
-> Ryo Tsuruta wrote:
->> Hi Kamezawa-san,
->>
->> As you wrote before (http://lkml.org/lkml/2009/7/22/65)
->>> To be honest, what I expected in these days for people of blockio
->>> cgroup is like following for getting room for themselves.
->> <<snip>>
->>> --- mmotm-2.6.31-Jul16.orig/include/linux/page_cgroup.h
->>> +++ mmotm-2.6.31-Jul16/include/linux/page_cgroup.h
->>> @@ -13,7 +13,7 @@
->>> =A0struct page_cgroup {
->>> =A0 =A0 =A0 unsigned long flags;
->>> =A0 =A0 =A0 struct mem_cgroup *mem_cgroup;
->>> - =A0 =A0 struct page *page;
->>> + =A0 =A0 /* block io tracking will use extra unsigned long bytes */
->>> =A0 =A0 =A0 struct list_head lru; =A0 =A0 =A0 /* per cgroup LRU list */
->>> };
->>
->> Have you already added a room for blkio_cgroup in struct page_cgroup?
-> No.
->
+Hi All,
+These patches add more debugging options to scsi rdac device handler. Thi=
+s can considerably reduce the time taken to=20
+debug issues in big configurations and also very helpful in addressing th=
+e support issues.
+Here is the summary of changes.=20
+- Added a bit mask "module parameter" rdac_logging with 2 bits for each t=
+ype of logging.
+- currently defined only two types of logging(failover and sense logging)=
+. Can be enhanced later if required.
+- By default only failover logging is enabled which is equivalent of curr=
+ent logging.
 
-The diff above is unclear, are you removing struct page from page_cgroup?
+Thanks to Chandra, Vijay and Bob for their useful comments. This code has=
+ been tested on 2.6.31-rc5.
 
-Balbir Singh
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Signed-off-by: Babu Moger <babu.moger@lsi.com>
+Reviewed-by: Vijay Chauhan <vijay.chauhan@lsi.com>
+Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
