@@ -1,47 +1,48 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: multipath-tools: Fix rtpg buffer length calculation
-Date: Wed, 2 Sep 2009 14:40:17 -0500
-Message-ID: <20090902194016.GG15326@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Balbir Singh <balbir@linux.vnet.ibm.com>
+Subject: Re: a room for blkio-cgroup in struct page_cgroup
+Date: Thu, 3 Sep 2009 01:32:24 +0530
+Message-ID: <661de9470909021302ge86d01s5d107dc2b5cffbc5@mail.gmail.com>
+References: <20090902.205137.71100180.ryov@valinux.co.jp>
+	 <ff13736137802f78cf492d13c43c1af1.squirrel@webmail-b.css.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <ff13736137802f78cf492d13c43c1af1.squirrel@webmail-b.css.fujitsu.com>
+Sender: owner-linux-mm@kvack.org
+To: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+Cc: Ryo Tsuruta <ryov@valinux.co.jp>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-Since you use scsi_buflen to allocate the correct size for the
-SCSI RTPG request buffer, You need to have the "+4" in its
-calculation, not just in the check to see if the request buffer is
-already big enough, otherwise, you'll fail the check, but you
-won't allocate a new buffer that is big enough.
+2009/9/2 KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>:
+> Ryo Tsuruta wrote:
+>> Hi Kamezawa-san,
+>>
+>> As you wrote before (http://lkml.org/lkml/2009/7/22/65)
+>>> To be honest, what I expected in these days for people of blockio
+>>> cgroup is like following for getting room for themselves.
+>> <<snip>>
+>>> --- mmotm-2.6.31-Jul16.orig/include/linux/page_cgroup.h
+>>> +++ mmotm-2.6.31-Jul16/include/linux/page_cgroup.h
+>>> @@ -13,7 +13,7 @@
+>>> =A0struct page_cgroup {
+>>> =A0 =A0 =A0 unsigned long flags;
+>>> =A0 =A0 =A0 struct mem_cgroup *mem_cgroup;
+>>> - =A0 =A0 struct page *page;
+>>> + =A0 =A0 /* block io tracking will use extra unsigned long bytes */
+>>> =A0 =A0 =A0 struct list_head lru; =A0 =A0 =A0 /* per cgroup LRU list */
+>>> };
+>>
+>> Have you already added a room for blkio_cgroup in struct page_cgroup?
+> No.
+>
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/prioritizers/alua_rtpg.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+The diff above is unclear, are you removing struct page from page_cgroup?
 
-Index: multipath-tools-090902/libmultipath/prioritizers/alua_rtpg.c
-===================================================================
---- multipath-tools-090902.orig/libmultipath/prioritizers/alua_rtpg.c
-+++ multipath-tools-090902/libmultipath/prioritizers/alua_rtpg.c
-@@ -267,8 +267,8 @@ get_asymmetric_access_state(int fd, unsi
- 	rc = do_rtpg(fd, buf, buflen);
- 	if (rc < 0)
- 		return rc;
--	scsi_buflen = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
--	if (buflen < (scsi_buflen + 4)) {
-+	scsi_buflen = (buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3]) + 4;
-+	if (buflen < scsi_buflen) {
- 		free(buf);
- 		buf = (unsigned char *)malloc(scsi_buflen);
- 		if (!buf) {
+Balbir Singh
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
