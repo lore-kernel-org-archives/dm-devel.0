@@ -1,63 +1,45 @@
 From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [Test Result] I/O bandwidth Control by dm-ioband -
- partition-based environment
-Date: Wed, 02 Sep 2009 20:18:40 +0900 (JST)
-Message-ID: <20090902.201840.226792198.ryov@valinux.co.jp>
-References: <2891419e0908280324v32e7ba3fq88eb754052cbf094@mail.gmail.com>
-	<20090831.111233.226777940.ryov@valinux.co.jp>
-	<2891419e0908310308w31c46180nce72d271cd947c98@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: a room for blkio-cgroup in struct page_cgroup
+Date: Wed, 02 Sep 2009 20:51:37 +0900 (JST)
+Message-ID: <20090902.205137.71100180.ryov@valinux.co.jp>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2891419e0908310308w31c46180nce72d271cd947c98@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: baramsori72@gmail.com
-Cc: ioband-devel@lists.sourceforge.net, containers@lists.linux-foundation.org, dm-devel@redhat.com, corsetproject@googlegroups.com
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: kamezawa.hiroyu@jp.fujitsu.com
+Cc: balbir@linux.vnet.ibm.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-Hi Dong-Jae,
+Hi Kamezawa-san,
 
-Dong-Jae Kang <baramsori72@gmail.com> wrote:
-> Hi Ryo
-> Sorry for late reply.
-> 
-> Mr Lee and I tested total bandwidth as you requested and the result is like
-> attached file.
+As you wrote before (http://lkml.org/lkml/2009/7/22/65)
+> To be honest, what I expected in these days for people of blockio
+> cgroup is like following for getting room for themselves.
+<<snip>>
+> --- mmotm-2.6.31-Jul16.orig/include/linux/page_cgroup.h
+> +++ mmotm-2.6.31-Jul16/include/linux/page_cgroup.h
+> @@ -13,7 +13,7 @@
+>  struct page_cgroup {
+>       unsigned long flags;
+>       struct mem_cgroup *mem_cgroup;
+> -     struct page *page;
+> +     /* block io tracking will use extra unsigned long bytes */
+>       struct list_head lru;       /* per cgroup LRU list */
+> };
 
-Thank you for your work.
+Have you already added a room for blkio_cgroup in struct page_cgroup?
+If not, I would like you to apply the above change to mmotm.
 
-> I know file attaching is not proper in mailing list,
-> but I selected it for efficient and easy communication. sorry :)
-> 
-> And Buffed-Device case can be some strange,
-> it has too much variation in total bandwidth, So you had better to see as
-> only reference.
-> The rests didn't have big fluctuation such like Buffered-Device case.
-> 
-> if you have another request about the result,
-> reply to me about that.
+The latest blkio-cgroup has reflected the comments you pointed out.
+I would also like you to give me any comments on it and consider
+merging blkio-cgroup to mmotm.
 
-Could you try the test on the weight policy with increaing token to
-1280? I guess that the throughput difference between without and with
-dm-ioband is caused since the token is a little small against the disk
-speed.
-
-> Additionally, I will try to inform the test results in cgroup environment of
-> you in case by case.
-> What do you think about it?
-
-I would like to know the reason for the diffirence between debug patch
-and iostat in the prvious test you did (total_bandwidth_result.xls).
-
-Thanks,
+Thank you for your help in advance.
 Ryo Tsuruta
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
