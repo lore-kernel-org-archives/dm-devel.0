@@ -1,124 +1,66 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH 3/3][RESUBMIT] scsi_dh_rdac: changes for rdac debug logging
-Date: Wed, 2 Sep 2009 17:13:20 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474CCCE69@cosmail01.lsi.com>
+From: "KAMEZAWA Hiroyuki" <kamezawa.hiroyu@jp.fujitsu.com>
+Subject: Re: a room for blkio-cgroup in struct page_cgroup
+Date: Thu, 3 Sep 2009 09:30:05 +0900 (JST)
+Message-ID: <fa721014d75b6e193623349bfde28124.squirrel@webmail-b.css.fujitsu.com>
+References: <20090902.205137.71100180.ryov@valinux.co.jp>
+    <ff13736137802f78cf492d13c43c1af1.squirrel@webmail-b.css.fujitsu.com>
+    <661de9470909021302ge86d01s5d107dc2b5cffbc5@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "'linux-scsi@vger.kernel.org'" <linux-scsi@vger.kernel.org>
-Cc: 'device mapper development' <dm-devel@redhat.com>, "'sekharan@linux.vnet.ibm.com'" <sekharan@linux.vnet.ibm.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
+Content-Type: text/plain;charset=iso-2022-jp
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <661de9470909021302ge86d01s5d107dc2b5cffbc5@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Balbir Singh <balbir@linux.vnet.ibm.com>
+Cc: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>, Ryo Tsuruta <ryov@valinux.co.jp>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, linux-mm@kvack.org
 List-Id: dm-devel.ids
 
-Patch to add debugging stuff for rdac device handler. 
-- Added a bit mask "module parameter" rdac_logging with 2 bits for each type of logging.
-- currently defined only two types of logging(failover and sense logging). Can be enhanced later if required.
-- By default only failover logging is enabled which is equivalent of current logging.
+Balbir Singh wrote:
+> 2009/9/2 KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>:
+>> Ryo Tsuruta wrote:
+>>> Hi Kamezawa-san,
+>>>
+>>> As you wrote before (http://lkml.org/lkml/2009/7/22/65)
+>>>> To be honest, what I expected in these days for people of blockio
+>>>> cgroup is like following for getting room for themselves.
+>>> <<snip>>
+>>>> --- mmotm-2.6.31-Jul16.orig/include/linux/page_cgroup.h
+>>>> +++ mmotm-2.6.31-Jul16/include/linux/page_cgroup.h
+>>>> @@ -13,7 +13,7 @@
+>>>> &#160;struct page_cgroup {
+>>>> &#160; &#160; &#160; unsigned long flags;
+>>>> &#160; &#160; &#160; struct mem_cgroup *mem_cgroup;
+>>>> - &#160; &#160; struct page *page;
+>>>> + &#160; &#160; /* block io tracking will use extra unsigned long
+bytes */
+>>>> &#160; &#160; &#160; struct list_head lru; &#160; &#160; &#160; /*
+per cgroup LRU list */
+>>>> };
+>>>
+>>> Have you already added a room for blkio_cgroup in struct page_cgroup?
+>> No.
+>>
+>
+> The diff above is unclear, are you removing struct page from page_cgrou=
+p?
+>
+I said him "if you want a room, plz get by youself, consider more"
+And offered this change.
+ http://lkml.org/lkml/2009/7/22/65
+you were CC'd.
+Because page_cgroup's layout is same to memmap, we can use similar functi=
+on
+as
+  page_cgroup_to_pfn(), pfn_to_page_cgroup().
+And, we don't access page_cgroup->page in fast path. (maybe)
+But as I wrote, we're busy. I'll not do this until all performance fixes
+go ahead.
 
-Signed-off-by: Babu Moger <babu.moger@lsi.com>
-Reviewed-by: Vijay Chauhan <vijay.chauhan@lsi.com>
-Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
+Thanks,
+-Kame
 
----
---- linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-08-31 15:16:54.000000000 -0500
-+++ linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-08-31 15:18:31.000000000 -0500
-@@ -201,6 +201,31 @@ static const char *lun_state[] =
- static LIST_HEAD(ctlr_list);
- static DEFINE_SPINLOCK(list_lock);
- 
-+/* 
-+ * module parameter to enable rdac debug logging.
-+ * 2 bits for each type of logging, only two types defined for now 
-+ * Can be enhanced if required at later point
-+ */
-+static int rdac_logging = 1;
-+module_param(rdac_logging, int, S_IRUGO|S_IWUSR);
-+MODULE_PARM_DESC(rdac_logging, "A bit mask of rdac logging levels, "
-+		"Default is 1 - failover logging enabled, "
-+		"set it to 0xF to enable all the logs");
-+
-+#define RDAC_LOG_FAILOVER	0
-+#define RDAC_LOG_SENSE		2
-+
-+#define RDAC_LOG_BITS		2
-+
-+#define RDAC_LOG_LEVEL(SHIFT)  \
-+        ((rdac_logging >> (SHIFT)) & ((1 << (RDAC_LOG_BITS)) - 1))
-+
-+#define RDAC_LOG(SHIFT, sdev, f, arg...) \
-+do { \
-+	if (unlikely(RDAC_LOG_LEVEL(SHIFT))) \
-+		sdev_printk(KERN_INFO, sdev, RDAC_NAME ": " f "\n", ## arg); \
-+} while (0);
-+
- static inline struct rdac_dh_data *get_rdac_data(struct scsi_device *sdev)
- {
- 	struct scsi_dh_data *scsi_dh_data = sdev->scsi_dh_data;
-@@ -469,6 +494,7 @@ static int mode_select_handle_sense(stru
- {
- 	struct scsi_sense_hdr sense_hdr;
- 	int err = SCSI_DH_IO, ret;
-+	struct rdac_dh_data *h = get_rdac_data(sdev);
- 
- 	ret = scsi_normalize_sense(sensebuf, SCSI_SENSE_BUFFERSIZE, &sense_hdr);
- 	if (!ret)
-@@ -497,11 +523,14 @@ static int mode_select_handle_sense(stru
- 			err = SCSI_DH_RETRY;
- 		break;
- 	default:
--		sdev_printk(KERN_INFO, sdev,
--			    "MODE_SELECT failed with sense %02x/%02x/%02x.\n",
--			    sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
-+		break;
- 	}
- 
-+	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
-+		"MODE_SELECT returned with sense %02x/%02x/%02x",
-+		(char *) h->ctlr->array_name, h->ctlr->index,
-+		sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
-+
- done:
- 	return err;
- }
-@@ -518,7 +547,9 @@ retry:
- 	if (!rq)
- 		goto done;
- 
--	sdev_printk(KERN_INFO, sdev, "%s MODE_SELECT command.\n",
-+	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
-+		"%s MODE_SELECT command",
-+		(char *) h->ctlr->array_name, h->ctlr->index,
- 		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
- 
- 	err = blk_execute_rq(q, NULL, rq, 1);
-@@ -528,8 +559,12 @@ retry:
- 		if (err == SCSI_DH_RETRY && retry_cnt--)
- 			goto retry;
- 	}
--	if (err == SCSI_DH_OK)
-+	if (err == SCSI_DH_OK) {
- 		h->state = RDAC_STATE_ACTIVE;
-+		RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
-+				"MODE_SELECT completed",
-+				(char *) h->ctlr->array_name, h->ctlr->index);
-+	}
- 
- done:
- 	return err;
-@@ -567,6 +602,12 @@ static int rdac_check_sense(struct scsi_
- 				struct scsi_sense_hdr *sense_hdr)
- {
- 	struct rdac_dh_data *h = get_rdac_data(sdev);
-+		
-+	RDAC_LOG(RDAC_LOG_SENSE, sdev, "array %s, ctlr %d, "
-+			"I/O returned with sense %02x/%02x/%02x",
-+			(char *) h->ctlr->array_name, h->ctlr->index,
-+			sense_hdr->sense_key, sense_hdr->asc, sense_hdr->ascq);
-+
- 	switch (sense_hdr->sense_key) {
- 	case NOT_READY:
- 		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
-
-
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
