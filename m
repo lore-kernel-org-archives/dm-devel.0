@@ -1,66 +1,85 @@
-From: "KAMEZAWA Hiroyuki" <kamezawa.hiroyu@jp.fujitsu.com>
-Subject: Re: a room for blkio-cgroup in struct page_cgroup
-Date: Thu, 3 Sep 2009 09:30:05 +0900 (JST)
-Message-ID: <fa721014d75b6e193623349bfde28124.squirrel@webmail-b.css.fujitsu.com>
-References: <20090902.205137.71100180.ryov@valinux.co.jp>
-    <ff13736137802f78cf492d13c43c1af1.squirrel@webmail-b.css.fujitsu.com>
-    <661de9470909021302ge86d01s5d107dc2b5cffbc5@mail.gmail.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [PATCH 18/23] io-controller: blkio_cgroup patches from Ryo to
+ track async bios.
+Date: Thu, 03 Sep 2009 11:24:23 +0900 (JST)
+Message-ID: <20090903.112423.226782505.ryov@valinux.co.jp>
+References: <20090901141142.GA13709@redhat.com>
+	<20090902.185251.193693849.ryov@valinux.co.jp>
+	<20090902135821.GB5012@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=iso-2022-jp
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <661de9470909021302ge86d01s5d107dc2b5cffbc5@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-To: Balbir Singh <balbir@linux.vnet.ibm.com>
-Cc: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>, Ryo Tsuruta <ryov@valinux.co.jp>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, linux-mm@kvack.org
+Content-Type: Text/Plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754094AbZICCYW@vger.kernel.org>
+In-Reply-To: <20090902135821.GB5012@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: vgoyal@redhat.com
+Cc: nauman@google.com, riel@redhat.com, linux-kernel@vger.kernel.org, jens.axboe@oracle.com, containers@lists.linux-foundation.org, dm-devel@redhat.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu
 List-Id: dm-devel.ids
 
-Balbir Singh wrote:
-> 2009/9/2 KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>:
->> Ryo Tsuruta wrote:
->>> Hi Kamezawa-san,
->>>
->>> As you wrote before (http://lkml.org/lkml/2009/7/22/65)
->>>> To be honest, what I expected in these days for people of blockio
->>>> cgroup is like following for getting room for themselves.
->>> <<snip>>
->>>> --- mmotm-2.6.31-Jul16.orig/include/linux/page_cgroup.h
->>>> +++ mmotm-2.6.31-Jul16/include/linux/page_cgroup.h
->>>> @@ -13,7 +13,7 @@
->>>> &#160;struct page_cgroup {
->>>> &#160; &#160; &#160; unsigned long flags;
->>>> &#160; &#160; &#160; struct mem_cgroup *mem_cgroup;
->>>> - &#160; &#160; struct page *page;
->>>> + &#160; &#160; /* block io tracking will use extra unsigned long
-bytes */
->>>> &#160; &#160; &#160; struct list_head lru; &#160; &#160; &#160; /*
-per cgroup LRU list */
->>>> };
->>>
->>> Have you already added a room for blkio_cgroup in struct page_cgroup?
->> No.
->>
->
-> The diff above is unclear, are you removing struct page from page_cgrou=
-p?
->
-I said him "if you want a room, plz get by youself, consider more"
-And offered this change.
- http://lkml.org/lkml/2009/7/22/65
-you were CC'd.
-Because page_cgroup's layout is same to memmap, we can use similar functi=
-on
-as
-  page_cgroup_to_pfn(), pfn_to_page_cgroup().
-And, we don't access page_cgroup->page in fast path. (maybe)
-But as I wrote, we're busy. I'll not do this until all performance fixes
-go ahead.
+Hi Vivek,
+
+Vivek Goyal <vgoyal@redhat.com> wrote:
+> > > > > > - Somebody also gave an example where there is a memory hog=
+ging process and
+> > > > > > =A0possibly pushes out some processes to swap. It does not =
+sound fair to
+> > > > > > =A0charge those proccess for that swap writeout. These proc=
+esses never
+> > > > > > =A0requested swap IO.
+> > > >=20
+> > > > I think that swap writeouts should be charged to the memory hog=
+ging
+> > > > process, because the process consumes more resources and it sho=
+uld get
+> > > > a penalty.
+> > > >=20
+> > >=20
+> > > A process requesting memory gets IO penalty? IMHO, swapping is a =
+kernel=20
+> > > mechanism and kernel's way of providing extended RAM. If we want =
+to solve
+> > > the issue of memory hogging by a process then right way to solve =
+is to use
+> > > memory controller and not by charging the process for IO activity=
+=2E
+> > > Instead, proabably a more suitable way is to charge swap activity=
+ to root
+> > > group (where by default all the kernel related activity goes).  =20
+> >=20
+> > No. In the current blkio-cgroup, a process which uses a large amoun=
+t
+> > of memory gets penalty, not a memory requester.
+> >=20
+>=20
+> At ioband level you just get to see bio and page. How do you decide w=
+heter
+> this bio is being issued by a process which is a memory hog?
+>=20
+> In fact requester of memory could be anybody. It could be memory hog =
+or a
+> different process. So are you saying that you got a mechanism where y=
+ou=20
+> can detect that a process is memory hog and charge swap activity to i=
+t.
+> IOW, if there are two processes A and B and assume A is the memory ho=
+g and
+> then B requests for memory which triggers lot of swap IO, then you ca=
+n
+> charge all that IO to memory hog A?
+
+When an annoymou page is allocated, blkio-cgroup sets an ID to the
+page. And then when the page is going to swap out, dm-ioband can know
+who the owner of the page is by retrieving ID from the page.
+
+In the above case, since the pages of the process A are swapped-out,=20
+dm-ioband charges swap IO to the process A.
+
+> Can you please point me to the relevant code in dm-ioband?
+>=20
+> IMHO, to keep things simple, all swapping activity should be charged =
+to
+> root group and be considered as kernel activity and user space not be
+> charged for that.
 
 Thanks,
--Kame
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=3Dmailto:"dont@kvack.org"> email@kvack.org </a>
+Ryo Tsuruta
