@@ -1,19 +1,14 @@
-From: malahal@us.ibm.com
-Subject: Re: Removing a failed device from LVM2/DM
-Date: Thu, 3 Sep 2009 08:15:47 -0700
-Message-ID: <20090903151547.GA31143@us.ibm.com>
-References: <1251731770.6817.31.camel@cail> <1251821775.5459.21.camel@cail>
-	<20090901162537.GA15197@us.ibm.com>
-	<1251830539.5459.135.camel@cail>
-	<20090901190843.GA18641@us.ibm.com>
-	<1251838679.5459.148.camel@cail>
-	<20090901224704.GA23179@us.ibm.com> <1251989638.9319.1.camel@cail>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mark McLoughlin <markmc@redhat.com>
+Subject: [PATCH resend] block: silently error unsupported empty
+	barriers too
+Date: Thu, 03 Sep 2009 16:47:50 +0100
+Message-ID: <1251992870.3084.125.camel@blaa>
+Reply-To: Mark McLoughlin <markmc@redhat.com>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1251989638.9319.1.camel@cail>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,16 +18,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>, linux-kernel <linux-kernel@vger.kernel.org>, virtualization <virtualization@lists.linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, dm-devel <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Alan D. Brunelle [Alan.Brunelle@hp.com] wrote:
-> On Tue, 2009-09-01 at 15:47 -0700, malahal@us.ibm.com wrote:
-> > filter = [ "r|sdab|", a|/dev/sd|", "r|.*|" ]
-> 
-> Other than adding in the missing " ("a|/dev/sd|") this seems to have
-> fixed the problem. Thanks!
+With 2.6.31-rc5 in a KVM guest using dm and virtio_blk, we see the
+following errors:
 
-You are welcome!
+  end_request: I/O error, dev vda, sector 0
+  end_request: I/O error, dev vda, sector 0
 
-Thanks, Malahal.
+The errors go away if dm stops submitting empty barriers, by reverting:
+
+  commit 52b1fd5a27c625c78373e024bf570af3c9d44a79
+  Author: Mikulas Patocka <mpatocka@redhat.com>
+    dm: send empty barriers to targets in dm_flush
+
+We should error all barriers, even empty barriers, on devices like
+virtio_blk which don't support them.
+
+See also:
+
+  https://bugzilla.redhat.com/514901
+
+Signed-off-by: Mark McLoughlin <markmc@redhat.com>
+Cc: Rusty Russell <rusty@rustcorp.com.au>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: Neil Brown <neilb@suse.de>
+Cc: Christoph Hellwig <hch@infradead.org>
+---
+ block/blk-core.c |    3 +--
+ 1 files changed, 1 insertions(+), 2 deletions(-)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index e3299a7..35ad2bb 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1163,8 +1163,7 @@ static int __make_request(struct request_queue *q, struct bio *bio)
+ 	const int unplug = bio_unplug(bio);
+ 	int rw_flags;
+ 
+-	if (bio_barrier(bio) && bio_has_data(bio) &&
+-	    (q->next_ordered == QUEUE_ORDERED_NONE)) {
++	if (bio_barrier(bio) && (q->next_ordered == QUEUE_ORDERED_NONE)) {
+ 		bio_endio(bio, -EOPNOTSUPP);
+ 		return 0;
+ 	}
+-- 
+1.6.4
