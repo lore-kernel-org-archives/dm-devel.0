@@ -1,14 +1,12 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: Regarding dm-ioband tests
-Date: Fri, 04 Sep 2009 13:02:28 +0900 (JST)
-Message-ID: <20090904.130228.104054439.ryov@valinux.co.jp>
-References: <20090901165011.GB3753@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper fixes for 2.6.31
+Date: Fri, 4 Sep 2009 20:52:01 +0100
+Message-ID: <20090904195201.GP31998@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090901165011.GB3753@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,60 +16,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: vgoyal@redhat.com
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Vivek,
+Very late in the release cycle I know (due to holidays), sorry, but please
+would you pull the following device-mapper fixes from
 
-Vivek Goyal <vgoyal@redhat.com> wrote:
-> Hi Ryo,
-> 
-> I decided to play a bit more with dm-ioband and started doing some
-> testing. I am doing a simple two dd threads doing reads and don't seem
-> to be gettting the fairness. So thought will ask you what's the issue
-> here. Is there an issue with my testing procedure.
+  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
 
-Thank you for testing dm-ioband. dm-ioband is designed to start
-throttling bandwidth when multiple IO requests are issued to devices
-simultaneously, IOW, to start throttling when IO load exceeds a
-certain level.
+into 2.6.31 if you get this in time?
 
-Here is my test script that runs multiple dd threads on each
-directory. Each directory stores 20 files of 2GB.
+Jonathan Brassow (4):
+      dm log: fix userspace status output
+      dm log: remove incorrect field from userspace table output
+      dm raid1: do not allow log_failure variable to unset after being set
+      dm log: userspace add luid to distinguish between concurrent log instances
 
-    #!/bin/sh
-    tmout=60
+Kiyoshi Ueda (1):
+      dm multipath: fix oops when request based io fails when no paths
 
-    for nr_threads in 1 4 8 12 16 20; do
-            sync; echo 3 > /proc/sys/vm/drop_caches
+Mike Snitzer (3):
+      dm snapshot: implement iterate devices
+      dm table: add more context to terse warning messages
+      dm stripe: expose correct io hints
 
-            for i in $(seq $nr_threads); do
-                    dd if=/mnt1/ioband1.${i}.0 of=/dev/null &
-                    dd if=/mnt2/ioband2.${i}.0 of=/dev/null &
-            done
-            iostat -k 1 $tmout > ${nr_threads}.log
-            killall -ws TERM dd
-    done
-    exit 0
+Mikulas Patocka (5):
+      dm table: fix queue_limit checking device iterator
+      dm snapshot: refactor zero_disk_area to use chunk_io
+      dm snapshot: fix header corruption race on invalidation
+      dm exception store: split set_chunk_size
+      dm snapshot: fix on disk chunk size validation
 
-Here is the result. The average throughputs of each device are
-according to the proportion of the weight settings when the number of
-thread is over four.
-
-              Average thoughput in 60 seconds [KB/s]
-
-              ioband1           ioband2
-  threads    weight 200        weight 100       total
-        1   26642 (54.9%)     21925 (45.1%)     48568
-        4   33974 (67.7%)     16181 (32.3%)     50156
-        8   31952 (66.2%)     16297 (33.8%)     48249
-       12   32062 (67.8%)     15236 (32.2%)     47299
-       16   31780 (67.7%)     15165 (32.3%)     46946
-       20   29955 (66.3%)     15239 (33.7%)     45195
-
-Please try to run the above script on your envirionment and I would be
-glad if you let me know the result.
+ drivers/md/dm-exception-store.c        |   13 +++++
+ drivers/md/dm-exception-store.h        |    4 ++
+ drivers/md/dm-log-userspace-base.c     |   39 +++++++++-----
+ drivers/md/dm-log-userspace-transfer.c |    6 ++-
+ drivers/md/dm-log-userspace-transfer.h |    2 +-
+ drivers/md/dm-raid1.c                  |    8 +++-
+ drivers/md/dm-snap-persistent.c        |   88 +++++++++++++++++++-------------
+ drivers/md/dm-snap.c                   |   23 ++++++++-
+ drivers/md/dm-stripe.c                 |   13 ++++-
+ drivers/md/dm-table.c                  |   51 ++++++++++++-------
+ drivers/md/dm.c                        |   15 ++++--
+ include/linux/device-mapper.h          |    4 ++
+ include/linux/dm-log-userspace.h       |   13 ++++-
+ 13 files changed, 198 insertions(+), 81 deletions(-)
 
 Thanks,
-Ryo Tsuruta
+Alasdair
+-- 
+agk@redhat.com
