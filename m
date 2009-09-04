@@ -1,57 +1,29 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: Regarding dm-ioband tests
-Date: Fri, 04 Sep 2009 10:12:22 +0900 (JST)
-Message-ID: <20090904.101222.226781140.ryov@valinux.co.jp>
-References: <20090901165011.GB3753@redhat.com>
-	<20090901174724.GC3753@redhat.com>
-	<20090903131146.GA12041@redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: [PATCH 0/3][RESUBMIT] scsi_dh_rdac: Adding more debug options for
+ scsi rdac handler
+Date: Thu, 3 Sep 2009 21:42:10 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474CCD1B9@cosmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754559AbZIDBMW@vger.kernel.org>
-In-Reply-To: <20090903131146.GA12041@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: vgoyal@redhat.com
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "'linux-scsi@vger.kernel.org'" <linux-scsi@vger.kernel.org>
+Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "'sekharan@linux.vnet.ibm.com'" <sekharan@linux.vnet.ibm.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
 List-Id: dm-devel.ids
 
-Hi Vivek,
+Hi All,
+These patches add more debugging options to scsi rdac device handler. This can considerably reduce the time taken to 
+debug issues in big configurations and also very helpful in addressing the support issues.
+Here is the summary of changes. 
+- Added a bit mask "module parameter" rdac_logging with 2 bits for each type of logging.
+- currently defined only two types of logging(failover and sense logging). Can be enhanced later if required.
+- By default only failover logging is enabled which is equivalent of current logging.
 
-Vivek Goyal <vgoyal@redhat.com> wrote:
-> On Tue, Sep 01, 2009 at 01:47:24PM -0400, Vivek Goyal wrote:
-> > On Tue, Sep 01, 2009 at 12:50:11PM -0400, Vivek Goyal wrote:
-> > > Hi Ryo,
-> > > 
-> > > I decided to play a bit more with dm-ioband and started doing some
-> > > testing. I am doing a simple two dd threads doing reads and don't seem
-> > > to be gettting the fairness. So thought will ask you what's the issue
-> > > here. Is there an issue with my testing procedure.
-> > > 
-> > > I got one 40G SATA drive (no hardware queuing). I have created two
-> > > partitions on that disk /dev/sdd1 and /dev/sdd2 and created two ioband
-> > > devices ioband1 and ioband2 on partitions sdd1 and sdd2 respectively. The
-> > > weights of ioband1 and ioband2 devices are 200 and 100 respectively. 
-> > > 
-> > > I am assuming that this setup will create two default groups and IO
-> > > going to partition sdd1 should get double the BW of partition sdd2.
-> > > 
-> > > But it looks like I am not gettting that behavior. Following is the output
-> > > of "dmsetup table" command. This snapshot has been taken every 2 seconds
-> > > while IO was going on. Column 9 seems to be containing how many sectors
-> > > of IO has been done on a particular io band device and group. Looking at
-> > > the snapshot, it does not look like that ioband1 default group got double
-> > > the BW of ioband2 default group.  
-> > > 
-> > > Am I doing something wrong here?
-> > > 
-> > 
-> 
-> Hi Ryo,
-> 
-> Did you get a chance to look into it? Am I doing something wrong or it is
-> an issue with dm-ioband.
+Thanks to Chandra, Vijay and Bob for their useful comments. This code has been tested on 2.6.31-rc5.
 
-Sorry, I missed it. I'll look into it and report back to you.
+Signed-off-by: Babu Moger <babu.moger@lsi.com>
+Reviewed-by: Vijay Chauhan <vijay.chauhan@lsi.com>
+Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
 
-Thanks,
-Ryo Tsuruta
