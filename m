@@ -1,124 +1,77 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH 3/3][RESUBMIT] scsi_dh_rdac: changes for rdac debug logging
-Date: Thu, 3 Sep 2009 21:42:28 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474CCD1BC@cosmail01.lsi.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: Regarding dm-ioband tests
+Date: Fri, 04 Sep 2009 13:02:28 +0900 (JST)
+Message-ID: <20090904.130228.104054439.ryov@valinux.co.jp>
+References: <20090901165011.GB3753@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "'linux-scsi@vger.kernel.org'" <linux-scsi@vger.kernel.org>
-Cc: 'device mapper development' <dm-devel@redhat.com>, "'sekharan@linux.vnet.ibm.com'" <sekharan@linux.vnet.ibm.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090901165011.GB3753@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: vgoyal@redhat.com
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Patch to add debugging stuff for rdac device handler. 
-- Added a bit mask "module parameter" rdac_logging with 2 bits for each type of logging.
-- currently defined only two types of logging(failover and sense logging). Can be enhanced later if required.
-- By default only failover logging is enabled which is equivalent of current logging.
+Hi Vivek,
 
-Signed-off-by: Babu Moger <babu.moger@lsi.com>
-Reviewed-by: Vijay Chauhan <vijay.chauhan@lsi.com>
-Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
+Vivek Goyal <vgoyal@redhat.com> wrote:
+> Hi Ryo,
+> 
+> I decided to play a bit more with dm-ioband and started doing some
+> testing. I am doing a simple two dd threads doing reads and don't seem
+> to be gettting the fairness. So thought will ask you what's the issue
+> here. Is there an issue with my testing procedure.
 
----
---- linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-09-03 14:52:46.000000000 -0500
-+++ linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-09-03 14:53:06.000000000 -0500
-@@ -201,6 +201,31 @@ static const char *lun_state[] =
- static LIST_HEAD(ctlr_list);
- static DEFINE_SPINLOCK(list_lock);
- 
-+/* 
-+ * module parameter to enable rdac debug logging.
-+ * 2 bits for each type of logging, only two types defined for now 
-+ * Can be enhanced if required at later point
-+ */
-+static int rdac_logging = 1;
-+module_param(rdac_logging, int, S_IRUGO|S_IWUSR);
-+MODULE_PARM_DESC(rdac_logging, "A bit mask of rdac logging levels, "
-+		"Default is 1 - failover logging enabled, "
-+		"set it to 0xF to enable all the logs");
-+
-+#define RDAC_LOG_FAILOVER	0
-+#define RDAC_LOG_SENSE		2
-+
-+#define RDAC_LOG_BITS		2
-+
-+#define RDAC_LOG_LEVEL(SHIFT)  \
-+        ((rdac_logging >> (SHIFT)) & ((1 << (RDAC_LOG_BITS)) - 1))
-+
-+#define RDAC_LOG(SHIFT, sdev, f, arg...) \
-+do { \
-+	if (unlikely(RDAC_LOG_LEVEL(SHIFT))) \
-+		sdev_printk(KERN_INFO, sdev, RDAC_NAME ": " f "\n", ## arg); \
-+} while (0);
-+
- static inline struct rdac_dh_data *get_rdac_data(struct scsi_device *sdev)
- {
- 	struct scsi_dh_data *scsi_dh_data = sdev->scsi_dh_data;
-@@ -469,6 +494,7 @@ static int mode_select_handle_sense(stru
- {
- 	struct scsi_sense_hdr sense_hdr;
- 	int err = SCSI_DH_IO, ret;
-+	struct rdac_dh_data *h = get_rdac_data(sdev);
- 
- 	ret = scsi_normalize_sense(sensebuf, SCSI_SENSE_BUFFERSIZE, &sense_hdr);
- 	if (!ret)
-@@ -497,11 +523,14 @@ static int mode_select_handle_sense(stru
- 			err = SCSI_DH_RETRY;
- 		break;
- 	default:
--		sdev_printk(KERN_INFO, sdev,
--			    "MODE_SELECT failed with sense %02x/%02x/%02x.\n",
--			    sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
-+		break;
- 	}
- 
-+	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
-+		"MODE_SELECT returned with sense %02x/%02x/%02x",
-+		(char *) h->ctlr->array_name, h->ctlr->index,
-+		sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
-+
- done:
- 	return err;
- }
-@@ -518,7 +547,9 @@ retry:
- 	if (!rq)
- 		goto done;
- 
--	sdev_printk(KERN_INFO, sdev, "%s MODE_SELECT command.\n",
-+	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
-+		"%s MODE_SELECT command",
-+		(char *) h->ctlr->array_name, h->ctlr->index,
- 		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
- 
- 	err = blk_execute_rq(q, NULL, rq, 1);
-@@ -528,8 +559,12 @@ retry:
- 		if (err == SCSI_DH_RETRY && retry_cnt--)
- 			goto retry;
- 	}
--	if (err == SCSI_DH_OK)
-+	if (err == SCSI_DH_OK) {
- 		h->state = RDAC_STATE_ACTIVE;
-+		RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
-+				"MODE_SELECT completed",
-+				(char *) h->ctlr->array_name, h->ctlr->index);
-+	}
- 
- done:
- 	return err;
-@@ -567,6 +602,12 @@ static int rdac_check_sense(struct scsi_
- 				struct scsi_sense_hdr *sense_hdr)
- {
- 	struct rdac_dh_data *h = get_rdac_data(sdev);
-+		
-+	RDAC_LOG(RDAC_LOG_SENSE, sdev, "array %s, ctlr %d, "
-+			"I/O returned with sense %02x/%02x/%02x",
-+			(char *) h->ctlr->array_name, h->ctlr->index,
-+			sense_hdr->sense_key, sense_hdr->asc, sense_hdr->ascq);
-+
- 	switch (sense_hdr->sense_key) {
- 	case NOT_READY:
- 		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
+Thank you for testing dm-ioband. dm-ioband is designed to start
+throttling bandwidth when multiple IO requests are issued to devices
+simultaneously, IOW, to start throttling when IO load exceeds a
+certain level.
 
+Here is my test script that runs multiple dd threads on each
+directory. Each directory stores 20 files of 2GB.
 
+    #!/bin/sh
+    tmout=60
+
+    for nr_threads in 1 4 8 12 16 20; do
+            sync; echo 3 > /proc/sys/vm/drop_caches
+
+            for i in $(seq $nr_threads); do
+                    dd if=/mnt1/ioband1.${i}.0 of=/dev/null &
+                    dd if=/mnt2/ioband2.${i}.0 of=/dev/null &
+            done
+            iostat -k 1 $tmout > ${nr_threads}.log
+            killall -ws TERM dd
+    done
+    exit 0
+
+Here is the result. The average throughputs of each device are
+according to the proportion of the weight settings when the number of
+thread is over four.
+
+              Average thoughput in 60 seconds [KB/s]
+
+              ioband1           ioband2
+  threads    weight 200        weight 100       total
+        1   26642 (54.9%)     21925 (45.1%)     48568
+        4   33974 (67.7%)     16181 (32.3%)     50156
+        8   31952 (66.2%)     16297 (33.8%)     48249
+       12   32062 (67.8%)     15236 (32.2%)     47299
+       16   31780 (67.7%)     15165 (32.3%)     46946
+       20   29955 (66.3%)     15239 (33.7%)     45195
+
+Please try to run the above script on your envirionment and I would be
+glad if you let me know the result.
+
+Thanks,
+Ryo Tsuruta
