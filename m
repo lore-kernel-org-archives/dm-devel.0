@@ -1,14 +1,16 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [RFC] IO scheduler based IO controller V9
-Date: Mon, 07 Sep 2009 15:40:53 +0800
-Message-ID: <4AA4B905.8010801@cn.fujitsu.com>
-References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: Regarding dm-ioband tests
+Date: Mon, 07 Sep 2009 20:02:22 +0900 (JST)
+Message-ID: <20090907.200222.193693062.ryov@valinux.co.jp>
+References: <20090901165011.GB3753@redhat.com>
+	<20090904.130228.104054439.ryov@valinux.co.jp>
+	<20090904231129.GA3689@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+In-Reply-To: <20090904231129.GA3689@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,88 +20,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: vgoyal@redhat.com
+Cc: riel@redhat.com, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
 Hi Vivek,
 
-I happened to encount a bug when i test IO Controller V9.
-When there are three tasks to run concurrently in three group,
-that is, one is parent group, and other two tasks are running 
-in two different child groups respectively to read or write 
-files in some disk, say disk "hdb", The task may hang up, and 
-other tasks which access into "hdb" will also hang up.
+Vivek Goyal <vgoyal@redhat.com> wrote:
+> > Thank you for testing dm-ioband. dm-ioband is designed to start
+> > throttling bandwidth when multiple IO requests are issued to devices
+> > simultaneously, IOW, to start throttling when IO load exceeds a
+> > certain level.
+> > 
+> 
+> What is that certain level? Secondly what's the advantage of this?
+> 
+> I can see disadvantages though. So unless a group is really busy "up to
+> that certain level" it will not get fairness? I breaks the isolation
+> between groups.
 
-The bug only happens when using AS io scheduler.
-The following scirpt can reproduce this bug in my box.
+In your test case, at least more than one dd thread have to run
+simultaneously in the higher weight group. The reason is that
+if there is an IO group which does not issue a certain number of IO
+requests, dm-ioband assumes the IO group is inactive and assign its
+spare bandwidth to active IO groups. Then whole bandwidth of the
+device can be efficiently used. Please run two dd threads in the
+higher group, it will work as you expect.
 
-===========
-#!/bin/sh
+However, if you want to get fairness in a case like this, a new
+bandwidth control policy which controls accurately according to
+assigned weights can be added to dm-ioband.
 
-mkdir /cgroup
-mount -t cgroup -o io,blkio io  /cgroup
+> I also ran your test of doing heavy IO in two groups. This time I am
+> running 4 dd threads in both the ioband devices. Following is the snapshot
+> of "dmsetup table" output.
+>
+> Fri Sep  4 17:45:27 EDT 2009
+> ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
+> ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0
+> 
+> Fri Sep  4 17:45:29 EDT 2009
+> ioband2: 0 40355280 ioband 1 -1 41 0 4184 0 0 0
+> ioband1: 0 37768752 ioband 1 -1 173 0 20096 0 0 0
+> 
+> Fri Sep  4 17:45:37 EDT 2009
+> ioband2: 0 40355280 ioband 1 -1 1605 23 197976 0 0 0
+> ioband1: 0 37768752 ioband 1 -1 4640 1 583168 0 0 0
+> 
+> Fri Sep  4 17:45:45 EDT 2009
+> ioband2: 0 40355280 ioband 1 -1 3650 47 453488 0 0 0
+> ioband1: 0 37768752 ioband 1 -1 8572 1 1079144 0 0 0
+> 
+> Fri Sep  4 17:45:51 EDT 2009
+> ioband2: 0 40355280 ioband 1 -1 5111 68 635696 0 0 0
+> ioband1: 0 37768752 ioband 1 -1 11587 1 1459544 0 0 0
+> 
+> Fri Sep  4 17:45:53 EDT 2009
+> ioband2: 0 40355280 ioband 1 -1 5698 73 709272 0 0 0
+> ioband1: 0 37768752 ioband 1 -1 12503 1 1575112 0 0 0
+> 
+> Fri Sep  4 17:45:57 EDT 2009
+> ioband2: 0 40355280 ioband 1 -1 6790 87 845808 0 0 0
+> ioband1: 0 37768752 ioband 1 -1 14395 2 1813680 0 0 0
+> 
+> Note, it took me more than 20 seconds (since I started the threds) to
+> reach close to desired fairness level. That's too long a duration.
 
-echo anticipatory > /sys/block/hdb/queue/scheduler
+We regarded reducing throughput loss rather than reducing duration
+as the design of dm-ioband. Of course, it is possible to make a new
+policy which reduces duration.
 
-mkdir /cgroup/test1
-echo 100 > /cgroup/test1/io.weight
+Thanks,
+Ryo Tsuruta
 
-mkdir /cgroup/test2
-echo 400 > /cgroup/test2/io.weight
-
-mkdir /cgroup/test2/test3
-echo 400 > /cgroup/test2/test3/io.weight
-
-mkdir /cgroup/test2/test4
-echo 400 > /cgroup/test2/test4/io.weight
-
-#./rwio -r -f /hdb2/2000M.3 &
-dd if=/hdb2/2000M.3 of=/dev/null &
-pid4=$!
-echo $pid4 > /cgroup/test2/test3/tasks
-echo "pid4: $pid4"
-
-#./rwio -r -f /hdb2/2000M.1 &
-dd if=/hdb2/2000M.1 of=/dev/null &
-pid1=$!
-echo $pid1 > /cgroup/test1/tasks
-echo "pid1 $pid1"
-
-#./rwio -r -f /hdb2/2000M.2 &
-dd if=/hdb2/2000M.2 of=/dev/null &
-pid2=$!
-echo $pid2 > /cgroup/test2/test4/tasks
-echo "pid2 $pid2"
-
-sleep 20
-
-for ((;1;))
-{
-        ps -p $pid1 > /dev/null 2>&1
-        if [ $? -ne 0 ]; then
-                break
-        fi
-
-        kill -9 $pid1 > /dev/null 2>&1
-}
-for ((;1;))
-{
-        ps -p $pid2 > /dev/null 2>&1
-        if [ $? -ne 0 ]; then
-                break
-        fi
-
-        kill -9 $pid2 > /dev/null 2>&1
-}
-
-
-kill -9 $pid4 > /dev/null 2>&1
-
-rmdir /cgroup/test2/test3
-rmdir /cgroup/test2/test4
-rmdir /cgroup/test2
-rmdir /cgroup/test1
-
-umount /cgroup
-rmdir /cgroup
+> Again random readers or small file readers are compeltely out of picture for
+> any kind of fairness or are not protected at all with dm-ioband
+> controller.
+> 
+> I think there are serious issues with the notion of fairness and what kind of
+> isolation dm-ioband provide between groups and it should be looked into.
+> 
+> Thanks
+> Vivek
