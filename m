@@ -1,14 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [multipath] meaning of "no_path_retry nn"
-Date: Mon, 07 Sep 2009 16:43:19 +0200
-Message-ID: <4AA51C07.4080104@suse.de>
-References: <7ujn84$746nl@dgate20u.abg.fsc.net>
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: Regarding dm-ioband tests
+Date: Mon, 07 Sep 2009 09:53:41 -0400
+Message-ID: <4AA51065.6050000@redhat.com>
+References: <20090901165011.GB3753@redhat.com>	<20090904.130228.104054439.ryov@valinux.co.jp>	<20090904231129.GA3689@redhat.com>
+	<20090907.200222.193693062.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <7ujn84$746nl@dgate20u.abg.fsc.net>
+In-Reply-To: <20090907.200222.193693062.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,48 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, vgoyal@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Diedrich Ehlerding wrote:
-> I would appreciate an explanation of "no_path_retry nn" parameter in=20
-> multipath.conf. Probably I misunderstood it as a number of seconds.=20
->=20
-> I am setting up  a software mirror (mdadm) on top of an EMC Clariion=20
-> configuration for desaster protection. The Clariions are recognized by=20
-> multipath properly; it seems to be set up with "no_path_retry 60"=20
-> (according to multipath -t). I had no further settings in=20
-> multipath.conf; this seems to be hardcoded into multipath.=20
->=20
-> However, If I disconnect one Clariion, th mirror doesnt break -=20
-> multipath detects that all paths are failed and tells me that it will=20
-> now wait for 60 retries. These 60 retries seem to last very long;=20
-> atfter 5 minutes, it didnt complete.=20
->=20
-> Evertyhing works fine if I set up a multipath.conf containing the=20
-> Clariion settings from multipath -t and modify them to=20
-> "no_path_retry fail" and "features 0 fail_if_no_path".  But even if I=20
-> just reduce the default settings to no_path_retry 2 the mirror doesnt=20
-> break - the IOs seem to hang indefinitely (well, I lost patience after=20
-> ~5 minutes).
->=20
-> Probably I misunderstood "no_path_retry 60" - does that mean seconds,=20
-> or minutes, or what else? Is anything except "fail" a useful setting in=
-=20
-> mirrored configurations?=20
->=20
-> system is a Suse  with multipath-tools-0.4.7-34.43
->=20
-Please note that there is a bug in the multipath-tools on suse which
-prevents the no_path_retry option from working correctly.
+Ryo Tsuruta wrote:
 
-Please install the latest maintenance update.
+> However, if you want to get fairness in a case like this, a new
+> bandwidth control policy which controls accurately according to
+> assigned weights can be added to dm-ioband.
 
-Cheers,
+Are you saying that dm-ioband is purposely unfair,
+until a certain load level is reached?
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+> We regarded reducing throughput loss rather than reducing duration
+> as the design of dm-ioband. Of course, it is possible to make a new
+> policy which reduces duration.
+
+... while also reducing overall system throughput
+by design?
+
+Why are you even bothering to submit this to the
+linux-kernel mailing list, when there is a codebase
+available that has no throughput or fairness regressions?
+(Vivek's io scheduler based io controler)
+
+-- 
+All rights reversed.
