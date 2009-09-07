@@ -1,16 +1,14 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: Regarding dm-ioband tests
-Date: Mon, 07 Sep 2009 20:02:22 +0900 (JST)
-Message-ID: <20090907.200222.193693062.ryov@valinux.co.jp>
-References: <20090901165011.GB3753@redhat.com>
-	<20090904.130228.104054439.ryov@valinux.co.jp>
-	<20090904231129.GA3689@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [multipath] meaning of "no_path_retry nn"
+Date: Mon, 07 Sep 2009 16:43:19 +0200
+Message-ID: <4AA51C07.4080104@suse.de>
+References: <7ujn84$746nl@dgate20u.abg.fsc.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090904231129.GA3689@redhat.com>
+In-Reply-To: <7ujn84$746nl@dgate20u.abg.fsc.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,85 +18,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: vgoyal@redhat.com
-Cc: riel@redhat.com, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Vivek,
+Diedrich Ehlerding wrote:
+> I would appreciate an explanation of "no_path_retry nn" parameter in=20
+> multipath.conf. Probably I misunderstood it as a number of seconds.=20
+>=20
+> I am setting up  a software mirror (mdadm) on top of an EMC Clariion=20
+> configuration for desaster protection. The Clariions are recognized by=20
+> multipath properly; it seems to be set up with "no_path_retry 60"=20
+> (according to multipath -t). I had no further settings in=20
+> multipath.conf; this seems to be hardcoded into multipath.=20
+>=20
+> However, If I disconnect one Clariion, th mirror doesnt break -=20
+> multipath detects that all paths are failed and tells me that it will=20
+> now wait for 60 retries. These 60 retries seem to last very long;=20
+> atfter 5 minutes, it didnt complete.=20
+>=20
+> Evertyhing works fine if I set up a multipath.conf containing the=20
+> Clariion settings from multipath -t and modify them to=20
+> "no_path_retry fail" and "features 0 fail_if_no_path".  But even if I=20
+> just reduce the default settings to no_path_retry 2 the mirror doesnt=20
+> break - the IOs seem to hang indefinitely (well, I lost patience after=20
+> ~5 minutes).
+>=20
+> Probably I misunderstood "no_path_retry 60" - does that mean seconds,=20
+> or minutes, or what else? Is anything except "fail" a useful setting in=
+=20
+> mirrored configurations?=20
+>=20
+> system is a Suse  with multipath-tools-0.4.7-34.43
+>=20
+Please note that there is a bug in the multipath-tools on suse which
+prevents the no_path_retry option from working correctly.
 
-Vivek Goyal <vgoyal@redhat.com> wrote:
-> > Thank you for testing dm-ioband. dm-ioband is designed to start
-> > throttling bandwidth when multiple IO requests are issued to devices
-> > simultaneously, IOW, to start throttling when IO load exceeds a
-> > certain level.
-> > 
-> 
-> What is that certain level? Secondly what's the advantage of this?
-> 
-> I can see disadvantages though. So unless a group is really busy "up to
-> that certain level" it will not get fairness? I breaks the isolation
-> between groups.
+Please install the latest maintenance update.
 
-In your test case, at least more than one dd thread have to run
-simultaneously in the higher weight group. The reason is that
-if there is an IO group which does not issue a certain number of IO
-requests, dm-ioband assumes the IO group is inactive and assign its
-spare bandwidth to active IO groups. Then whole bandwidth of the
-device can be efficiently used. Please run two dd threads in the
-higher group, it will work as you expect.
+Cheers,
 
-However, if you want to get fairness in a case like this, a new
-bandwidth control policy which controls accurately according to
-assigned weights can be added to dm-ioband.
-
-> I also ran your test of doing heavy IO in two groups. This time I am
-> running 4 dd threads in both the ioband devices. Following is the snapshot
-> of "dmsetup table" output.
->
-> Fri Sep  4 17:45:27 EDT 2009
-> ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0
-> 
-> Fri Sep  4 17:45:29 EDT 2009
-> ioband2: 0 40355280 ioband 1 -1 41 0 4184 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 173 0 20096 0 0 0
-> 
-> Fri Sep  4 17:45:37 EDT 2009
-> ioband2: 0 40355280 ioband 1 -1 1605 23 197976 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 4640 1 583168 0 0 0
-> 
-> Fri Sep  4 17:45:45 EDT 2009
-> ioband2: 0 40355280 ioband 1 -1 3650 47 453488 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 8572 1 1079144 0 0 0
-> 
-> Fri Sep  4 17:45:51 EDT 2009
-> ioband2: 0 40355280 ioband 1 -1 5111 68 635696 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 11587 1 1459544 0 0 0
-> 
-> Fri Sep  4 17:45:53 EDT 2009
-> ioband2: 0 40355280 ioband 1 -1 5698 73 709272 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 12503 1 1575112 0 0 0
-> 
-> Fri Sep  4 17:45:57 EDT 2009
-> ioband2: 0 40355280 ioband 1 -1 6790 87 845808 0 0 0
-> ioband1: 0 37768752 ioband 1 -1 14395 2 1813680 0 0 0
-> 
-> Note, it took me more than 20 seconds (since I started the threds) to
-> reach close to desired fairness level. That's too long a duration.
-
-We regarded reducing throughput loss rather than reducing duration
-as the design of dm-ioband. Of course, it is possible to make a new
-policy which reduces duration.
-
-Thanks,
-Ryo Tsuruta
-
-> Again random readers or small file readers are compeltely out of picture for
-> any kind of fairness or are not protected at all with dm-ioband
-> controller.
-> 
-> I think there are serious issues with the notion of fairness and what kind of
-> isolation dm-ioband provide between groups and it should be looked into.
-> 
-> Thanks
-> Vivek
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
