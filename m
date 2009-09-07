@@ -1,14 +1,15 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [RFC] New  Logging approach for Device Mapper
-Date: Sun, 6 Sep 2009 00:33:31 +0100
-Message-ID: <20090905233331.GB2518@agk-dp.fab.redhat.com>
-References: <0D1E8821739E724A86F4D16902CE275C1C8EAE093B@inbmail01.lsi.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [RFC] IO scheduler based IO controller V9
+Date: Mon, 07 Sep 2009 10:14:06 +0800
+Message-ID: <4AA46C6E.4010109@cn.fujitsu.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+	<4A9DC33E.6000408@cn.fujitsu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <0D1E8821739E724A86F4D16902CE275C1C8EAE093B@inbmail01.lsi.com>
+In-Reply-To: <4A9DC33E.6000408@cn.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,24 +19,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Cc: "Stankey, Robert" <Robert.Stankey@lsi.com>, "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "agk@redhat.com" <agk@redhat.com>, "Moger, Babu" <Babu.Moger@lsi.com>
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Sun, Sep 06, 2009 at 12:36:02AM +0530, Chauhan, Vijay wrote:
-> Each logging type is represented with 2 bits in dm_logging_level. Following are the logging types currently defined :
+Hi Vivek,
 
-Does that mean there's a limit we'll soon exceed?
+Here is the vanilla kernel and V9 comparision.
 
-> Sep  5 18:32:02 localhost kernel: device-mapper: core: DEBUG: dm_resume: Unsetting DMF_SUSPENDED flag for 253:1
+                           Normal Read  |  Random Read  |  Normal Write  |  Random Write
 
-I was hoping the next extension to the macro code would somehow add info
-like '253:1' (and maybe corresponding device name) automatically to
-every message related to a device.
+vanilla(Avg of 3 times)   67580 KiB/s     3540 KiB/s      61964 KiB/s      9823 KiB/s
 
+V9(Avg of 3 times)        68954 KiB/s     3567 KiB/s      60654 KiB/s      9858 KiB/s
 
-But do we really need this level of runtime debugging configurability?
-I can't say I've come across problems where I'd have needed it: Can 
-anyone else offer examples where it would have helped them?
-
-Alasdair
+Performance                +2.0%           +0.7%          -2.1%             +0.3%
