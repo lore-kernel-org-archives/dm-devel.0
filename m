@@ -1,131 +1,166 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH 3/3][RESUBMIT] scsi_dh_rdac: changes for rdac debug
-	logging
-Date: Tue, 08 Sep 2009 08:36:34 -0700
-Message-ID: <1252424194.13253.4.camel@chandra-ubuntu>
-References: <E463DF2B2E584B4A82673F53D62C2EF474CCD1BC@cosmail01.lsi.com>
-Reply-To: sekharan@linux.vnet.ibm.com
+From: Nauman Rafique <nauman@google.com>
+Subject: Re: Regarding dm-ioband tests
+Date: Tue, 8 Sep 2009 09:30:53 -0700
+Message-ID: <e98e18940909080930o40008d5dnc823db96687654af@mail.gmail.com>
+References: <20090904231129.GA3689@redhat.com>
+	<20090907.200222.193693062.ryov@valinux.co.jp>
+	<4AA51065.6050000@redhat.com>
+	<20090908.120119.71095369.ryov@valinux.co.jp>
+	<20090908134244.GA15974@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474CCD1BC@cosmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: "'linux-scsi@vger.kernel.org'" <linux-scsi@vger.kernel.org>, 'device mapper development' <dm-devel@redhat.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>"Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090908134244.GA15974@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: riel@redhat.com, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
+On Tue, Sep 8, 2009 at 6:42 AM, Vivek Goyal<vgoyal@redhat.com> wrote:
+> On Tue, Sep 08, 2009 at 12:01:19PM +0900, Ryo Tsuruta wrote:
+>> Hi Rik,
+>>
+>> Rik van Riel <riel@redhat.com> wrote:
+>> > Ryo Tsuruta wrote:
+>> >
+>> > > However, if you want to get fairness in a case like this, a new
+>> > > bandwidth control policy which controls accurately according to
+>> > > assigned weights can be added to dm-ioband.
+>> >
+>> > Are you saying that dm-ioband is purposely unfair,
+>> > until a certain load level is reached?
+>>
+>> Not unfair, dm-ioband(weight policy) is intentionally designed to
+>> use bandwidth efficiently, weight policy tries to give spare bandwidth
+>> of inactive groups to active groups.
+>>
+>
+> This group is running a sequential reader. How can you call it an inact=
+ive
+> group?
+>
+> I think that whole problem is that like CFQ you have not taken care of
+> idling into account.
 
-On Thu, 2009-09-03 at 21:42 -0600, Moger, Babu wrote:
-> Patch to add debugging stuff for rdac device handler. 
-> - Added a bit mask "module parameter" rdac_logging with 2 bits for each type of logging.
-> - currently defined only two types of logging(failover and sense logging). Can be enhanced later if required.
-> - By default only failover logging is enabled which is equivalent of current logging.
-> 
-> Signed-off-by: Babu Moger <babu.moger@lsi.com>
-> Reviewed-by: Vijay Chauhan <vijay.chauhan@lsi.com>
-> Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
-> 
-> ---
-> --- linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-09-03 14:52:46.000000000 -0500
-> +++ linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-09-03 14:53:06.000000000 -0500
-> @@ -201,6 +201,31 @@ static const char *lun_state[] =
->  static LIST_HEAD(ctlr_list);
->  static DEFINE_SPINLOCK(list_lock);
->  
-> +/* 
-> + * module parameter to enable rdac debug logging.
-> + * 2 bits for each type of logging, only two types defined for now 
-> + * Can be enhanced if required at later point
-> + */
-> +static int rdac_logging = 1;
-> +module_param(rdac_logging, int, S_IRUGO|S_IWUSR);
-> +MODULE_PARM_DESC(rdac_logging, "A bit mask of rdac logging levels, "
-> +		"Default is 1 - failover logging enabled, "
-> +		"set it to 0xF to enable all the logs");
-> +
-> +#define RDAC_LOG_FAILOVER	0
-> +#define RDAC_LOG_SENSE		2
-> +
-> +#define RDAC_LOG_BITS		2
-> +
-> +#define RDAC_LOG_LEVEL(SHIFT)  \
-> +        ((rdac_logging >> (SHIFT)) & ((1 << (RDAC_LOG_BITS)) - 1))
-> +
-> +#define RDAC_LOG(SHIFT, sdev, f, arg...) \
-> +do { \
-> +	if (unlikely(RDAC_LOG_LEVEL(SHIFT))) \
-> +		sdev_printk(KERN_INFO, sdev, RDAC_NAME ": " f "\n", ## arg); \
-> +} while (0);
-> +
->  static inline struct rdac_dh_data *get_rdac_data(struct scsi_device *sdev)
->  {
->  	struct scsi_dh_data *scsi_dh_data = sdev->scsi_dh_data;
-> @@ -469,6 +494,7 @@ static int mode_select_handle_sense(stru
->  {
->  	struct scsi_sense_hdr sense_hdr;
->  	int err = SCSI_DH_IO, ret;
-> +	struct rdac_dh_data *h = get_rdac_data(sdev);
->  
->  	ret = scsi_normalize_sense(sensebuf, SCSI_SENSE_BUFFERSIZE, &sense_hdr);
->  	if (!ret)
-> @@ -497,11 +523,14 @@ static int mode_select_handle_sense(stru
->  			err = SCSI_DH_RETRY;
->  		break;
->  	default:
-> -		sdev_printk(KERN_INFO, sdev,
-> -			    "MODE_SELECT failed with sense %02x/%02x/%02x.\n",
-> -			    sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
-> +		break;
->  	}
->  
-> +	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
-> +		"MODE_SELECT returned with sense %02x/%02x/%02x",
-> +		(char *) h->ctlr->array_name, h->ctlr->index,
-> +		sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
-> +
->  done:
->  	return err;
->  }
-> @@ -518,7 +547,9 @@ retry:
->  	if (!rq)
->  		goto done;
->  
-> -	sdev_printk(KERN_INFO, sdev, "%s MODE_SELECT command.\n",
-> +	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
-> +		"%s MODE_SELECT command",
-> +		(char *) h->ctlr->array_name, h->ctlr->index,
->  		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
->  
->  	err = blk_execute_rq(q, NULL, rq, 1);
-> @@ -528,8 +559,12 @@ retry:
->  		if (err == SCSI_DH_RETRY && retry_cnt--)
->  			goto retry;
->  	}
-> -	if (err == SCSI_DH_OK)
-> +	if (err == SCSI_DH_OK) {
->  		h->state = RDAC_STATE_ACTIVE;
-> +		RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
-> +				"MODE_SELECT completed",
-> +				(char *) h->ctlr->array_name, h->ctlr->index);
-> +	}
->  
->  done:
->  	return err;
-> @@ -567,6 +602,12 @@ static int rdac_check_sense(struct scsi_
->  				struct scsi_sense_hdr *sense_hdr)
->  {
->  	struct rdac_dh_data *h = get_rdac_data(sdev);
-> +		
-> +	RDAC_LOG(RDAC_LOG_SENSE, sdev, "array %s, ctlr %d, "
-> +			"I/O returned with sense %02x/%02x/%02x",
-> +			(char *) h->ctlr->array_name, h->ctlr->index,
-> +			sense_hdr->sense_key, sense_hdr->asc, sense_hdr->ascq);
-> +
->  	switch (sense_hdr->sense_key) {
->  	case NOT_READY:
->  		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
-> 
-> 
+I think this is probably the key deal breaker. dm-ioband has no
+mechanism to anticipate or idle for a reader task. Without such a
+mechanism, a proportional division scheme cannot work for tasks doing
+reads. Most readers do not send down more than one IO at a time, and
+they do not send another until the previous one is complete.
+Anticipation helps in this case, as we would wait for the task to send
+down a new IO, before we expire its timeslice. Without anticipation,
+we would serve the one IO from reader and then go on to serve IOs from
+other tasks. When the reader would finally get around to sending next
+IO, it would have to wait behind other IOs that have sent down in the
+meanwhile.
 
+IO schedulers in block layer have anticipation built into them, so a
+proportional scheduling scheduling at that layer does not have to
+repeat the logic or data structures for anticipation.
+
+In fact, a rate limiting mechanism like dm-ioband can potentially
+break the anticipation logic at IO schedulers, by queuing up the IOs
+at an upper layer, while scheduler in block layer could have been
+anticipating for it.
+
+>
+> Your solution seems to be designed only for processes doing bulk IO ove=
+r
+> a very long period of time. I think it limits the usefulness of solutio=
+n
+> severely.
+>
+>> > > We regarded reducing throughput loss rather than reducing duration
+>> > > as the design of dm-ioband. Of course, it is possible to make a ne=
+w
+>> > > policy which reduces duration.
+>> >
+>> > ... while also reducing overall system throughput
+>> > by design?
+>>
+>> I think it reduces system throughput compared to the current
+>> implementation, because it causes more overhead to do fine grained
+>> control.
+>>
+>> > Why are you even bothering to submit this to the
+>> > linux-kernel mailing list, when there is a codebase
+>> > available that has no throughput or fairness regressions?
+>> > (Vivek's io scheduler based io controler)
+>>
+>> I think there are some advantages to dm-ioband. That's why I post
+>> dm-ioband to the mailing list.
+>>
+>> - dm-ioband supports not only proportional weight policy but also rate
+>> =A0 limiting policy. Besides, new policies can be added to dm-ioband i=
+f
+>> =A0 a user wants to control bandwidth by his or her own policy.
+>
+> I think we can easily extent io scheduler based controller to also supp=
+ort
+> max rate per group policy also. That should not be too hard. It is a
+> matter of only keeping track of io rate per group and if a group is
+> exceeding the rate, then schedule it out and move on to next group.
+
+At Google, we have implemented a rate limiting mechanism on top of
+Vivek's patches, and have been testing it. But I feel like the patch
+set maintained by Vivek is pretty big already. Once we have those
+patches merged, we can introduce more functionality.
+
+>
+> I can do that once proportional weight solution is stablized and gets
+> merged.
+>
+> So its not an advantage of dm-ioband.
+>
+>> - The dm-ioband driver can be replaced without stopping the system by
+>> =A0 using device-mapper's facility. It's easy to maintain.
+>
+> We talked about this point in the past also. In io scheduler based
+> controller, just move all the tasks to root group and you got a system
+> not doing any io control.
+>
+> By the way why would one like to do that?
+>
+> So this is also not an advantage.
+>
+>> - dm-ioband can use without cgroup. (I remember Vivek said it's not an
+>> =A0 advantage.)
+>
+> I think this is more of a disadvantage than advantage. We have a very w=
+ell
+> defined functionality of cgroup in kernel to group the tasks. Now you a=
+re
+> coming up with your own method of grouping the tasks which will make li=
+fe
+> even more confusing for users and application writers.
+>
+> I don't understand what is that core requirement of yours which is not =
+met
+> by io scheduler based io controller. range policy control you have
+> implemented recently. I don't think that removing dm-ioband module
+> dynamically is core requirement. Also whatever you can do with addition=
+al
+> grouping mechanism, you can do with cgroup also.
+>
+> So if there is any of your core functionality which is not fulfilled by
+> io scheduler based controller, please let me know. I will be happy to l=
+ook
+> into it and try to provide that feature. But looking at above list, I a=
+m
+> not convinced that any of the above is a compelling argument for dm-iob=
+and
+> inclusion.
+>
+> Thanks
+> Vivek
+>
