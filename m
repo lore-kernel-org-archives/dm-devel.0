@@ -1,76 +1,55 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] rebased snapshot-merge patches
-Date: Tue, 8 Sep 2009 10:17:45 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0909081002540.26574@hs20-bc2-1.build.redhat.com>
-References: <20090831220834.GA15126@redhat.com>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+Subject: Re: [PATCH] shared snapshots
+Date: Tue, 8 Sep 2009 11:10:41 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0909081055570.24837@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0909071505070.6165@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0909072313050.26479@hs20-bc2-1.build.redhat.com>
+	<20090908133514.GA8054@infradead.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <lvm-devel-bounces@redhat.com>
-In-Reply-To: <20090831220834.GA15126@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090908133514.GA8054@infradead.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, lvm-devel@redhat.com
+Cc: Christoph Hellwig <hch@infradead.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
 
-> The DM snapshot-merge patches are here:
-> http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel/2.6.31/
+
+On Tue, 8 Sep 2009, Christoph Hellwig wrote:
+
+> On Mon, Sep 07, 2009 at 11:15:18PM -0400, Mikulas Patocka wrote:
+> > [ the previous message was eaten by mailing-list server, probably because 
+> > it was too long, so I am reposting it without the patch. The patch is at 
+> > the URL below. ]
+> > 
+> > Hi
+> > 
+> > This is patch for shared snapshots to be included in the next merge 
+> > window. The patch only adds new modules dm_multisnapshot and 
+> > dm_store_mikulas, it doesn't modify any existing code.
 > 
-> The LVM2 snapshot-merge patches are here:
-> http://people.redhat.com/msnitzer/patches/snapshot-merge/lvm2/LVM2-2.02.52-cvs/
-> 
-> I threw some real work at snapshot-merge by taking a snap _before_
-> formatting a 100G LV with ext3.  Then merged all the exceptions.  One
-> observation is that the merge process is _quite_ slow in comparison to
-> how long it took to format the LV (with associated snapshot exception
-> copy-out).  Will need to look at this further shortly... it's likely a
-> function of using minimal system resources during the merge via kcopyd;
-> whereas the ext3 format puts excessive pressure on the system's page
-> cache to queue work for mkfs's immediate writeback.
+> Not that I have anything against people advertising their names, but
+> wouldn't a descriptive module name telling what this store is useful be
+> better?
 
-I thought about this, see the comment:
-/* TODO: use larger I/O size once we verify that kcopyd handles it */
+Well, I doubt it would be useful if someone renamed for example "xfs.ko" 
+to "a_btree_based_journaled_filesystem.ko" --- and it would be less 
+descriptive too because there are several other btree-based journaled 
+filesystems.
 
-There was some bug that kcopyd didn't handle larget I/O but it is already 
-fixed, so it is possible to extend it.
-
-s->store->type->prepare_merge returns the number of chunks that can be 
-linearly copied starting from the returned chunk numbers backward. (but 
-the caller is allowed to copy less, and the caller puts the number of 
-copied chunks to s->store->type->commit_merge)
-
-I.e. if returned chunk numbers are old_chunk == 10 and new_chunk == 20 and 
-returned value is 3, then chunk 20 can be copied to 10, chunk 19 to 9 and 
-18 to 8.
-
-There is a variable, s->merge_write_interlock_n, that is now always one, 
-but can hold larger number --- the number of chunks that is being copied.
-
-So it can be trivialy extended to copy more chunks at once.
-
-
-On the other hand, if the snapshot doesn't contain consecutive chunks (it 
-was created as a result of random writes, not as a result of one big 
-write), larger I/O can't be done and its merging will be slow by design. 
-It could be improved by spawning several concurrent kcopyd jobs, but I 
-wouldn't do it because it would complicate code too much and it would 
-damage interactive performance. (in a desktop or server environment, the 
-user typically cares more about interactive latency than about copy 
-throughput).
+Currently, there are two exception stores for these shared snapshots, they 
+both use btrees and they have different format which has different pros 
+and cons --- so I named them according to their designers, "mikulas" and 
+"fujita-daniel". With what other names they should be differentiated?
 
 Mikulas
-
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
