@@ -1,15 +1,14 @@
-From: Rik van Riel <riel@redhat.com>
-Subject: Re: Regarding dm-ioband tests
-Date: Tue, 08 Sep 2009 15:24:08 -0400
-Message-ID: <4AA6AF58.3050501@redhat.com>
-References: <20090904231129.GA3689@redhat.com>	<20090907.200222.193693062.ryov@valinux.co.jp>	<4AA51065.6050000@redhat.com>
-	<20090908.120119.71095369.ryov@valinux.co.jp>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [RFC] IO scheduler based IO controller V9
+Date: Tue, 8 Sep 2009 18:28:14 -0400
+Message-ID: <20090908222814.GA3558@redhat.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090908.120119.71095369.ryov@valinux.co.jp>
+Content-Disposition: inline
+In-Reply-To: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,47 +18,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, vgoyal@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
+To: linux-kernel@vger.kernel.org, jens.axboe@oracle.com
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-Ryo Tsuruta wrote:
-> Rik van Riel <riel@redhat.com> wrote:
-
->> Are you saying that dm-ioband is purposely unfair,
->> until a certain load level is reached?
+On Fri, Aug 28, 2009 at 05:30:49PM -0400, Vivek Goyal wrote:
 > 
-> Not unfair, dm-ioband(weight policy) is intentionally designed to
-> use bandwidth efficiently, weight policy tries to give spare bandwidth
-> of inactive groups to active groups.
-
-This sounds good, except that the lack of anticipation
-means that a group with just one task doing reads will
-be considered "inactive" in-between reads.
-
-This means writes can always get in-between two reads,
-sometimes multiple writes at a time, really disadvantaging
-a group that is doing just disk reads.
-
-This is a problem, because reads are generally more time
-sensitive than writes.
-
->>> We regarded reducing throughput loss rather than reducing duration
->>> as the design of dm-ioband. Of course, it is possible to make a new
->>> policy which reduces duration.
->> ... while also reducing overall system throughput
->> by design?
+> Hi All,
 > 
-> I think it reduces system throughput compared to the current
-> implementation, because it causes more overhead to do fine grained
-> control. 
+> Here is the V9 of the IO controller patches generated on top of 2.6.31-rc7.
+> 
+> For ease of patching, a consolidated patch is available here.
+> 
+> http://people.redhat.com/~vgoyal/io-controller/io-scheduler-based-io-controller-v9.patch
+> 
 
-Except that the io scheduler based io controller seems
-to be able to enforce fairness while not reducing
-throughput.
+Found few issues during testing. Sending 3 more patches for this series.
+After some more testing, will merge these patches in higher level patches
+and post V10.
 
-Dm-ioband would have to address these issues to be a
-serious contender, IMHO.
-
--- 
-All rights reversed.
+Thanks
+Vivek
