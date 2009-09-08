@@ -1,45 +1,35 @@
-From: Rik van Riel <riel@redhat.com>
+From: Dhaval Giani <dhaval@linux.vnet.ibm.com>
 Subject: Re: Regarding dm-ioband tests
-Date: Tue, 08 Sep 2009 12:47:33 -0400
-Message-ID: <4AA68AA5.10505@redhat.com>
-References: <20090904231129.GA3689@redhat.com>	
-	<20090907.200222.193693062.ryov@valinux.co.jp>	
-	<4AA51065.6050000@redhat.com>	
-	<20090908.120119.71095369.ryov@valinux.co.jp>	
-	<20090908134244.GA15974@redhat.com>
-	<e98e18940909080930o40008d5dnc823db96687654af@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Date: Tue, 8 Sep 2009 22:36:49 +0530
+Message-ID: <20090908170649.GC8828@linux.vnet.ibm.com>
+References: <20090904231129.GA3689@redhat.com> <20090907.200222.193693062.ryov@valinux.co.jp> <4AA51065.6050000@redhat.com> <20090908.120119.71095369.ryov@valinux.co.jp> <20090908134244.GA15974@redhat.com>
+Reply-To: Dhaval Giani <dhaval@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e98e18940909080930o40008d5dnc823db96687654af@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Nauman Rafique <nauman@google.com>
-Cc: guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, Vivek Goyal <vgoyal@redhat.com>, jens.axboe@oracle.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751822AbZIHRHr@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20090908134244.GA15974@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Ryo Tsuruta <ryov@valinux.co.jp>, riel@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com, agk@redhat.com, akpm@linux-foundation.org, nauman@google.com, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Nauman Rafique wrote:
+> > - dm-ioband can use without cgroup. (I remember Vivek said it's not an
+> >   advantage.)
+> 
+> I think this is more of a disadvantage than advantage. We have a very well
+> defined functionality of cgroup in kernel to group the tasks. Now you are
+> coming up with your own method of grouping the tasks which will make life
+> even more confusing for users and application writers.
+> 
 
-> I think this is probably the key deal breaker. dm-ioband has no
-> mechanism to anticipate or idle for a reader task. Without such a
-> mechanism, a proportional division scheme cannot work for tasks doing
-> reads. 
+I would tend to agree with this. With other resource management
+controllers using cgroups, having dm-ioband use something different will
+require a different set of userspace tools/libraries to be used.
+Something that will severly limit its usefulness froma programmer's
+perspective.
 
-That is a really big issue, since most reads tend to be synchronous
-(the application is waiting for the read), while many writes are not
-(the application is doing something else while the data is written).
-
-Having writes take precedence over reads will really screw over the
-readers, while not benefitting the writers all that much.
-
+thanks,
 -- 
-All rights reversed.
+regards,
+Dhaval
