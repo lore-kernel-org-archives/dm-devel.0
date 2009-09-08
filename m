@@ -1,55 +1,83 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] shared snapshots
-Date: Tue, 8 Sep 2009 11:10:41 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0909081055570.24837@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0909071505070.6165@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0909072313050.26479@hs20-bc2-1.build.redhat.com>
-	<20090908133514.GA8054@infradead.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH 1/3][RESUBMIT] scsi_dh_rdac: move the init code from
+	rdac_activate to rdac_bus_attach
+Date: Tue, 08 Sep 2009 08:35:30 -0700
+Message-ID: <1252424130.13253.0.camel@chandra-ubuntu>
+References: <E463DF2B2E584B4A82673F53D62C2EF474CCD1BA@cosmail01.lsi.com>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090908133514.GA8054@infradead.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474CCD1BA@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: "'linux-scsi@vger.kernel.org'" <linux-scsi@vger.kernel.org>, 'device mapper development' <dm-devel@redhat.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
 List-Id: dm-devel.ids
 
-
-
-On Tue, 8 Sep 2009, Christoph Hellwig wrote:
-
-> On Mon, Sep 07, 2009 at 11:15:18PM -0400, Mikulas Patocka wrote:
-> > [ the previous message was eaten by mailing-list server, probably because 
-> > it was too long, so I am reposting it without the patch. The patch is at 
-> > the URL below. ]
-> > 
-> > Hi
-> > 
-> > This is patch for shared snapshots to be included in the next merge 
-> > window. The patch only adds new modules dm_multisnapshot and 
-> > dm_store_mikulas, it doesn't modify any existing code.
+Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
+On Thu, 2009-09-03 at 21:42 -0600, Moger, Babu wrote:
+> Moving the initialization code from rdac_activate to rdac_bus_attach which is more efficient.
+> We don't have to collect all the information during every activate. 
 > 
-> Not that I have anything against people advertising their names, but
-> wouldn't a descriptive module name telling what this store is useful be
-> better?
+> Signed-off-by: Babu Moger <babu.moger@lsi.com>
+> Reviewed-by: Vijay Chauhan <vijay.chauhan@lsi.com>
+> Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
+> 
+> ---
+> --- linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-09-03 13:39:52.000000000 -0500
+> +++ linux-2.6.31-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-09-03 14:10:40.000000000 -0500
+> @@ -525,17 +525,6 @@ static int rdac_activate(struct scsi_dev
+>  	if (err != SCSI_DH_OK)
+>  		goto done;
+>  
+> -	if (!h->ctlr) {
+> -		err = initialize_controller(sdev, h);
+> -		if (err != SCSI_DH_OK)
+> -			goto done;
+> -	}
+> -
+> -	if (h->ctlr->use_ms10 == -1) {
+> -		err = set_mode_select(sdev, h);
+> -		if (err != SCSI_DH_OK)
+> -			goto done;
+> -	}
+>  	if (h->lun_state == RDAC_LUN_UNOWNED)
+>  		err = send_mode_select(sdev, h);
+>  done:
+> @@ -674,12 +663,20 @@ static int rdac_bus_attach(struct scsi_d
+>  	if (err != SCSI_DH_OK)
+>  		goto failed;
+>  
+> -	err = check_ownership(sdev, h);
+> +	err = initialize_controller(sdev, h);
+>  	if (err != SCSI_DH_OK)
+>  		goto failed;
+>  
+> +	err = check_ownership(sdev, h);
+> +	if (err != SCSI_DH_OK)
+> +		goto clean_ctlr;
+> +
+> +	err = set_mode_select(sdev, h);
+> +	if (err != SCSI_DH_OK)
+> +		goto clean_ctlr;
+> +
+>  	if (!try_module_get(THIS_MODULE))
+> -		goto failed;
+> +		goto clean_ctlr;
+>  
+>  	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
+>  	sdev->scsi_dh_data = scsi_dh_data;
+> @@ -691,6 +688,9 @@ static int rdac_bus_attach(struct scsi_d
+>  
+>  	return 0;
+>  
+> +clean_ctlr:
+> +	kref_put(&h->ctlr->kref, release_controller);
+> +
+>  failed:
+>  	kfree(scsi_dh_data);
+>  	sdev_printk(KERN_ERR, sdev, "%s: not attached\n",
+> 
+> 
 
-Well, I doubt it would be useful if someone renamed for example "xfs.ko" 
-to "a_btree_based_journaled_filesystem.ko" --- and it would be less 
-descriptive too because there are several other btree-based journaled 
-filesystems.
-
-Currently, there are two exception stores for these shared snapshots, they 
-both use btrees and they have different format which has different pros 
-and cons --- so I named them according to their designers, "mikulas" and 
-"fujita-daniel". With what other names they should be differentiated?
-
-Mikulas
