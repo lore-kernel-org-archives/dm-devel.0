@@ -1,20 +1,15 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: Regarding dm-ioband tests
-Date: Tue, 8 Sep 2009 13:54:00 -0400
-Message-ID: <20090908175400.GE15974@redhat.com>
-References: <20090904231129.GA3689@redhat.com>
-	<20090907.200222.193693062.ryov@valinux.co.jp>
-	<4AA51065.6050000@redhat.com>
-	<20090908.120119.71095369.ryov@valinux.co.jp>
-	<20090908134244.GA15974@redhat.com>
-	<e98e18940909080930o40008d5dnc823db96687654af@mail.gmail.com>
-	<4AA68AA5.10505@redhat.com>
+Subject: Re: [RFC] IO scheduler based IO controller V9
+Date: Tue, 8 Sep 2009 15:19:41 -0400
+Message-ID: <20090908191941.GF15974@redhat.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+	<4AA4B905.8010801@cn.fujitsu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4AA68AA5.10505@redhat.com>
+In-Reply-To: <4AA4B905.8010801@cn.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,68 +19,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Rik van Riel <riel@redhat.com>
-Cc: guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, Nauman Rafique <nauman@google.com>, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
+To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Tue, Sep 08, 2009 at 12:47:33PM -0400, Rik van Riel wrote:
-> Nauman Rafique wrote:
->
->> I think this is probably the key deal breaker. dm-ioband has no
->> mechanism to anticipate or idle for a reader task. Without such a
->> mechanism, a proportional division scheme cannot work for tasks doing
->> reads. 
->
-> That is a really big issue, since most reads tend to be synchronous
-> (the application is waiting for the read), while many writes are not
-> (the application is doing something else while the data is written).
->
-> Having writes take precedence over reads will really screw over the
-> readers, while not benefitting the writers all that much.
->
+On Mon, Sep 07, 2009 at 03:40:53PM +0800, Gui Jianfeng wrote:
+> Hi Vivek,
+> 
+> I happened to encount a bug when i test IO Controller V9.
+> When there are three tasks to run concurrently in three group,
+> that is, one is parent group, and other two tasks are running 
+> in two different child groups respectively to read or write 
+> files in some disk, say disk "hdb", The task may hang up, and 
+> other tasks which access into "hdb" will also hang up.
+> 
+> The bug only happens when using AS io scheduler.
+> The following scirpt can reproduce this bug in my box.
+> 
 
-I ran a test to show how readers can be starved in certain cases. I launched
-one reader and three writers. I ran this test twice. First without dm-ioband
-and then with dm-ioband.
+Hi Gui,
 
-Following are few lines from the script to launch readers and writers.
+I tried reproducing this on my system and can't reproduce it. All the
+three processes get killed and system does not hang.
 
-**************************************************************
-sync
-echo 3 > /proc/sys/vm/drop_caches
+Can you please dig deeper a bit into it. 
 
-# Launch writers on sdd2
-dd if=/dev/zero of=/mnt/sdd2/writezerofile1 bs=4K count=262144 &
-
-# Launch  writers on sdd1
-dd if=/dev/zero of=/mnt/sdd1/writezerofile1 bs=4K count=262144 &
-dd if=/dev/zero of=/mnt/sdd1/writezerofile2 bs=4K count=262144 &
-
-echo "sleeping for 5 seconds"
-sleep 5
-
-# launch reader on sdd1
-time dd if=/mnt/sdd1/testzerofile1 of=/dev/zero &
-echo "launched reader $!"
-*********************************************************************
-
-Without dm-ioband, reader finished in roughly 5 seconds.
-
-289533952 bytes (290 MB) copied, 5.16765 s, 56.0 MB/s
-real	0m5.300s
-user	0m0.098s
-sys	0m0.492s
-
-With dm-ioband, reader took, more than 2 minutes to finish.
-
-289533952 bytes (290 MB) copied, 122.386 s, 2.4 MB/s
-
-real	2m2.569s
-user	0m0.107s
-sys	0m0.548s
-
-I had created ioband1 on /dev/sdd1 and ioband2 on /dev/sdd2 with weights
-200 and 100 respectively.
+- If whole system hangs or it is just IO to disk seems to be hung.
+- Does io scheduler switch on the device work
+- If the system is not hung, can you capture the blktrace on the device.
+  Trace might give some idea, what's happening.
 
 Thanks
 Vivek
+ 
+> ===========
+> #!/bin/sh
+> 
+> mkdir /cgroup
+> mount -t cgroup -o io,blkio io  /cgroup
+> 
+> echo anticipatory > /sys/block/hdb/queue/scheduler
+> 
+> mkdir /cgroup/test1
+> echo 100 > /cgroup/test1/io.weight
+> 
+> mkdir /cgroup/test2
+> echo 400 > /cgroup/test2/io.weight
+> 
+> mkdir /cgroup/test2/test3
+> echo 400 > /cgroup/test2/test3/io.weight
+> 
+> mkdir /cgroup/test2/test4
+> echo 400 > /cgroup/test2/test4/io.weight
+> 
+> #./rwio -r -f /hdb2/2000M.3 &
+> dd if=/hdb2/2000M.3 of=/dev/null &
+> pid4=$!
+> echo $pid4 > /cgroup/test2/test3/tasks
+> echo "pid4: $pid4"
+> 
+> #./rwio -r -f /hdb2/2000M.1 &
+> dd if=/hdb2/2000M.1 of=/dev/null &
+> pid1=$!
+> echo $pid1 > /cgroup/test1/tasks
+> echo "pid1 $pid1"
+> 
+> #./rwio -r -f /hdb2/2000M.2 &
+> dd if=/hdb2/2000M.2 of=/dev/null &
+> pid2=$!
+> echo $pid2 > /cgroup/test2/test4/tasks
+> echo "pid2 $pid2"
+> 
+> sleep 20
+> 
+> for ((;1;))
+> {
+>         ps -p $pid1 > /dev/null 2>&1
+>         if [ $? -ne 0 ]; then
+>                 break
+>         fi
+> 
+>         kill -9 $pid1 > /dev/null 2>&1
+> }
+> for ((;1;))
+> {
+>         ps -p $pid2 > /dev/null 2>&1
+>         if [ $? -ne 0 ]; then
+>                 break
+>         fi
+> 
+>         kill -9 $pid2 > /dev/null 2>&1
+> }
+> 
+> 
+> kill -9 $pid4 > /dev/null 2>&1
+> 
+> rmdir /cgroup/test2/test3
+> rmdir /cgroup/test2/test4
+> rmdir /cgroup/test2
+> rmdir /cgroup/test1
+> 
+> umount /cgroup
+> rmdir /cgroup
