@@ -1,15 +1,15 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [RFC] IO scheduler based IO controller V9
-Date: Tue, 8 Sep 2009 15:19:41 -0400
-Message-ID: <20090908191941.GF15974@redhat.com>
-References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<4AA4B905.8010801@cn.fujitsu.com>
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: Regarding dm-ioband tests
+Date: Tue, 08 Sep 2009 15:24:08 -0400
+Message-ID: <4AA6AF58.3050501@redhat.com>
+References: <20090904231129.GA3689@redhat.com>	<20090907.200222.193693062.ryov@valinux.co.jp>	<4AA51065.6050000@redhat.com>
+	<20090908.120119.71095369.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4AA4B905.8010801@cn.fujitsu.com>
+In-Reply-To: <20090908.120119.71095369.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,105 +19,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, vgoyal@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Mon, Sep 07, 2009 at 03:40:53PM +0800, Gui Jianfeng wrote:
-> Hi Vivek,
-> 
-> I happened to encount a bug when i test IO Controller V9.
-> When there are three tasks to run concurrently in three group,
-> that is, one is parent group, and other two tasks are running 
-> in two different child groups respectively to read or write 
-> files in some disk, say disk "hdb", The task may hang up, and 
-> other tasks which access into "hdb" will also hang up.
-> 
-> The bug only happens when using AS io scheduler.
-> The following scirpt can reproduce this bug in my box.
-> 
+Ryo Tsuruta wrote:
+> Rik van Riel <riel@redhat.com> wrote:
 
-Hi Gui,
+>> Are you saying that dm-ioband is purposely unfair,
+>> until a certain load level is reached?
+> 
+> Not unfair, dm-ioband(weight policy) is intentionally designed to
+> use bandwidth efficiently, weight policy tries to give spare bandwidth
+> of inactive groups to active groups.
 
-I tried reproducing this on my system and can't reproduce it. All the
-three processes get killed and system does not hang.
+This sounds good, except that the lack of anticipation
+means that a group with just one task doing reads will
+be considered "inactive" in-between reads.
 
-Can you please dig deeper a bit into it. 
+This means writes can always get in-between two reads,
+sometimes multiple writes at a time, really disadvantaging
+a group that is doing just disk reads.
 
-- If whole system hangs or it is just IO to disk seems to be hung.
-- Does io scheduler switch on the device work
-- If the system is not hung, can you capture the blktrace on the device.
-  Trace might give some idea, what's happening.
+This is a problem, because reads are generally more time
+sensitive than writes.
 
-Thanks
-Vivek
- 
-> ===========
-> #!/bin/sh
+>>> We regarded reducing throughput loss rather than reducing duration
+>>> as the design of dm-ioband. Of course, it is possible to make a new
+>>> policy which reduces duration.
+>> ... while also reducing overall system throughput
+>> by design?
 > 
-> mkdir /cgroup
-> mount -t cgroup -o io,blkio io  /cgroup
-> 
-> echo anticipatory > /sys/block/hdb/queue/scheduler
-> 
-> mkdir /cgroup/test1
-> echo 100 > /cgroup/test1/io.weight
-> 
-> mkdir /cgroup/test2
-> echo 400 > /cgroup/test2/io.weight
-> 
-> mkdir /cgroup/test2/test3
-> echo 400 > /cgroup/test2/test3/io.weight
-> 
-> mkdir /cgroup/test2/test4
-> echo 400 > /cgroup/test2/test4/io.weight
-> 
-> #./rwio -r -f /hdb2/2000M.3 &
-> dd if=/hdb2/2000M.3 of=/dev/null &
-> pid4=$!
-> echo $pid4 > /cgroup/test2/test3/tasks
-> echo "pid4: $pid4"
-> 
-> #./rwio -r -f /hdb2/2000M.1 &
-> dd if=/hdb2/2000M.1 of=/dev/null &
-> pid1=$!
-> echo $pid1 > /cgroup/test1/tasks
-> echo "pid1 $pid1"
-> 
-> #./rwio -r -f /hdb2/2000M.2 &
-> dd if=/hdb2/2000M.2 of=/dev/null &
-> pid2=$!
-> echo $pid2 > /cgroup/test2/test4/tasks
-> echo "pid2 $pid2"
-> 
-> sleep 20
-> 
-> for ((;1;))
-> {
->         ps -p $pid1 > /dev/null 2>&1
->         if [ $? -ne 0 ]; then
->                 break
->         fi
-> 
->         kill -9 $pid1 > /dev/null 2>&1
-> }
-> for ((;1;))
-> {
->         ps -p $pid2 > /dev/null 2>&1
->         if [ $? -ne 0 ]; then
->                 break
->         fi
-> 
->         kill -9 $pid2 > /dev/null 2>&1
-> }
-> 
-> 
-> kill -9 $pid4 > /dev/null 2>&1
-> 
-> rmdir /cgroup/test2/test3
-> rmdir /cgroup/test2/test4
-> rmdir /cgroup/test2
-> rmdir /cgroup/test1
-> 
-> umount /cgroup
-> rmdir /cgroup
+> I think it reduces system throughput compared to the current
+> implementation, because it causes more overhead to do fine grained
+> control. 
+
+Except that the io scheduler based io controller seems
+to be able to enforce fairness while not reducing
+throughput.
+
+Dm-ioband would have to address these issues to be a
+serious contender, IMHO.
+
+-- 
+All rights reversed.
