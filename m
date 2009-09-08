@@ -1,44 +1,76 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [RFC] IO scheduler based IO controller V9
-Date: Tue, 8 Sep 2009 09:55:36 -0400
-Message-ID: <20090908135536.GD15974@redhat.com>
-References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<4A9DC33E.6000408@cn.fujitsu.com> <4AA46C6E.4010109@cn.fujitsu.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] rebased snapshot-merge patches
+Date: Tue, 8 Sep 2009 10:17:45 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0909081002540.26574@hs20-bc2-1.build.redhat.com>
+References: <20090831220834.GA15126@redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4AA46C6E.4010109@cn.fujitsu.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <lvm-devel-bounces@redhat.com>
+In-Reply-To: <20090831220834.GA15126@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Sep 07, 2009 at 10:14:06AM +0800, Gui Jianfeng wrote:
-> Hi Vivek,
-> 
-> Here is the vanilla kernel and V9 comparision.
-> 
->                            Normal Read  |  Random Read  |  Normal Write  |  Random Write
-> 
-> vanilla(Avg of 3 times)   67580 KiB/s     3540 KiB/s      61964 KiB/s      9823 KiB/s
-> 
-> V9(Avg of 3 times)        68954 KiB/s     3567 KiB/s      60654 KiB/s      9858 KiB/s
-> 
-> Performance                +2.0%           +0.7%          -2.1%             +0.3%
-> 
+Hi
 
-Thanks Gui. So that's lot of improvements from previous versions. I remember
-you were noticing 7% regressions in buffered write performance.
+> The DM snapshot-merge patches are here:
+> http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel/2.6.31/
+> 
+> The LVM2 snapshot-merge patches are here:
+> http://people.redhat.com/msnitzer/patches/snapshot-merge/lvm2/LVM2-2.02.52-cvs/
+> 
+> I threw some real work at snapshot-merge by taking a snap _before_
+> formatting a 100G LV with ext3.  Then merged all the exceptions.  One
+> observation is that the merge process is _quite_ slow in comparison to
+> how long it took to format the LV (with associated snapshot exception
+> copy-out).  Will need to look at this further shortly... it's likely a
+> function of using minimal system resources during the merge via kcopyd;
+> whereas the ext3 format puts excessive pressure on the system's page
+> cache to queue work for mkfs's immediate writeback.
 
-Thanks
-Vivek
+I thought about this, see the comment:
+/* TODO: use larger I/O size once we verify that kcopyd handles it */
+
+There was some bug that kcopyd didn't handle larget I/O but it is already 
+fixed, so it is possible to extend it.
+
+s->store->type->prepare_merge returns the number of chunks that can be 
+linearly copied starting from the returned chunk numbers backward. (but 
+the caller is allowed to copy less, and the caller puts the number of 
+copied chunks to s->store->type->commit_merge)
+
+I.e. if returned chunk numbers are old_chunk == 10 and new_chunk == 20 and 
+returned value is 3, then chunk 20 can be copied to 10, chunk 19 to 9 and 
+18 to 8.
+
+There is a variable, s->merge_write_interlock_n, that is now always one, 
+but can hold larger number --- the number of chunks that is being copied.
+
+So it can be trivialy extended to copy more chunks at once.
+
+
+On the other hand, if the snapshot doesn't contain consecutive chunks (it 
+was created as a result of random writes, not as a result of one big 
+write), larger I/O can't be done and its merging will be slow by design. 
+It could be improved by spawning several concurrent kcopyd jobs, but I 
+wouldn't do it because it would complicate code too much and it would 
+damage interactive performance. (in a desktop or server environment, the 
+user typically cares more about interactive latency than about copy 
+throughput).
+
+Mikulas
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
