@@ -1,16 +1,16 @@
 From: Ryo Tsuruta <ryov@valinux.co.jp>
 Subject: Re: Regarding dm-ioband tests
-Date: Wed, 09 Sep 2009 14:17:48 +0900 (JST)
-Message-ID: <20090909.141748.189706141.ryov@valinux.co.jp>
-References: <20090908032254.GJ8315@balbir.in.ibm.com>
-	<20090908.140516.104049366.ryov@valinux.co.jp>
-	<20090908134915.GB15974@redhat.com>
+Date: Wed, 09 Sep 2009 15:05:11 +0900 (JST)
+Message-ID: <20090909.150511.112608142.ryov@valinux.co.jp>
+References: <20090908.120119.71095369.ryov@valinux.co.jp>
+	<20090908134244.GA15974@redhat.com>
+	<20090908170649.GC8828@linux.vnet.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090908134915.GB15974@redhat.com>
+In-Reply-To: <20090908170649.GC8828@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +20,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: vgoyal@redhat.com
-Cc: riel@redhat.com, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
+To: dhaval@linux.vnet.ibm.com
+Cc: riel@redhat.com, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, vgoyal@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Hi Vivek,
+Hi,
 
-Vivek Goyal <vgoyal@redhat.com> wrote:
-> > It is not necessary when controlling bandwidth on a per partition
-> > basis or on a IO thread basis like Xen blkback kernel thread.
+Dhaval Giani <dhaval@linux.vnet.ibm.com> wrote:
+> > > - dm-ioband can use without cgroup. (I remember Vivek said it's not an
+> > >   advantage.)
 > > 
-> > Here are configration examples.
-> > http://sourceforge.net/apps/trac/ioband/wiki/dm-ioband/man/examples
-> > 
-> 
-> For partition based control, where a thread or group of threads is doing
-> IO to a specific parition, why can't you simply create different cgroups
-> for each partition and move threads in those partitions.
-> 
-> 
-> 			root
-> 		 	/ | \
-> 		    sda1 sda2 sda3
->
-> Above are three groups and move threads doing IO into those groups and
-> problem is solved. In fact that's what one will do for KVM virtual
-> machines. Move all the qemu helper threds doing IO for a virtual machine
-> instance into a specific group and control the IO.
-> 
-> Why do you have to come up with additional complicated grouping mechanism?
+> > I think this is more of a disadvantage than advantage. We have a very well
+> > defined functionality of cgroup in kernel to group the tasks. Now you are
+> > coming up with your own method of grouping the tasks which will make life
+> > even more confusing for users and application writers.
 
-I don't get why you think it's complicated, your io-controller also
-provides the same grouping machanism which assigns bandwidth per
-device by io.policy file. What's the difference? The thread grouping
-machianism is also not special, it is the same concept as cgroup.
-These mechanisms are necessary to make use of dm-ioband on the systems
-which doesn't support cgroup such as RHEL 5.x. As you know, dm-ioband
-also supports cgroup, the configurations you mentioned above can apply
-to the system by dm-ioband. I think it's not bad to have several ways
-to setup.
+I know that cgroup is a very well defined functionality, that is why
+dm-ioband also supports throttling per cgroup. But how are we supposed
+to do throttling on the system which doesn't support cgroup?
+As I wrote in another mail to Vivek, I would like to make use of
+dm-ioband on RHEL 5.x. 
+And I don't think that the grouping methods are not complicated, just
+stack a new device on the existing device and assign bandwidth to it,
+that is the same method as other device-mapper targets, if you would
+like to assign bandwidth per thread, then register the thread's ID to
+the device and assign bandwidth to it as well. I don't think it makes
+users confused.
+
+> I would tend to agree with this. With other resource management
+> controllers using cgroups, having dm-ioband use something different will
+> require a different set of userspace tools/libraries to be used.
+> Something that will severly limit its usefulness froma programmer's
+> perspective.
+
+Once we create a dm-ioband device, the device can be configured
+through the cgroup interface. I think it will not severly limit its
+usefulness.
 
 Thanks,
 Ryo Tsuruta
