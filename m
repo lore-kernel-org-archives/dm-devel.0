@@ -1,75 +1,63 @@
-From: Fabio Checconi <fchecconi@gmail.com>
-Subject: Re: Regarding dm-ioband tests
-Date: Wed, 9 Sep 2009 21:01:42 +0200
-Message-ID: <20090909190142.GI17468@gandalf.sssup.it>
-References: <20090904231129.GA3689@redhat.com> <20090907.200222.193693062.ryov@valinux.co.jp> <4AA51065.6050000@redhat.com> <20090908.120119.71095369.ryov@valinux.co.jp> <4AA6AF58.3050501@redhat.com> <20090909000900.GK17468@gandalf.sssup.it> <20090909020620.GC3594@redhat.com> <20090909154126.GG17468@gandalf.sssup.it> <20090909173003.GE8256@redhat.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: Re: Re: [RFC][PATCH] dm-mirror: fix data corruption
+Date: Wed, 09 Sep 2009 16:18:45 -0400
+Message-ID: <4AA80DA5.7080709@redhat.com>
+References: <4A568333.6090901@redhat.com>	<Pine.LNX.4.64.0907100939060.568@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0907100947320.2450@hs20-bc2-1.build.redhat.com>	<4A5790C5.90508@redhat.com>	<Pine.LNX.4.64.0907130547530.27968@hs20-bc2-1.build.redhat.com>	<20090830192441.GA641@us.ibm.com>
+	<Pine.LNX.4.64.0908311737090.16318@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752815AbZIIS60@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20090909173003.GE8256@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Rik van Riel <riel@redhat.com>, Ryo Tsuruta <ryov@valinux.co.jp>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com, agk@redhat.com, akpm@linux-foundation.org, nauman@google.com, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, balbir@linux.vnet.ibm.com
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0908311737090.16318@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> From: Vivek Goyal <vgoyal@redhat.com>
-> Date: Wed, Sep 09, 2009 01:30:03PM -0400
->
-> On Wed, Sep 09, 2009 at 05:41:26PM +0200, Fabio Checconi wrote:
-> > > From: Vivek Goyal <vgoyal@redhat.com>
-> > > Date: Tue, Sep 08, 2009 10:06:20PM -0400
-> > >
-...
-> > This is good, however tuning will not be an easy task (at least, in my
-> > experience with BFQ it has been a problem): while for throughput usually
-> > there are tradeoffs, as soon as a queue/group idles and then timeouts,
-> > from the fairness perspective the results soon become almost random
-> > (i.e., depending on the rate of successful anticipations, but in the
-> > common case they are unpredictable)...
-> 
-> I am lost in last few lines. I guess you are suggesting that static tuning
-> is hard and dynamically adjusting idling has limitations that it might not
-> be accurate all the time?
-> 
+Hi Mikulas,
 
-Yes, this was the problem, at least for me.  As soon as there were
-unsuccessful anticipations there was no graceful degradation of
-fairness, and bandwidth distribution became almost random.  In
-this situation all the complexity of CFQ/BFQ/io-controller seems
-overkill; NCQ+SSD is or will be quite a common usage scenario
-triggering it.
+On 08/31/09 17:39, Mikulas Patocka wrote:
+> I uploaded patches for this bug at: 
+> http://people.redhat.com/mpatocka/patches/kernel/mirror-race/
+> 
+> But note! They were never tried. When I wanted to try them, I found out 
+> that dmeventd is totally nonworking in upstream code (it doesn't pass 
+> "handle_errors" argument and has some crashes and signal errors), so I 
+> didn't test them with dmeventd. Dmeventd must be fixed first, then we can 
+> work on this bug.
 
+Thank you for posting the patch set. I roughly looked at your patch and
+have several comments.
 
-> I will explain how things are working in current set of io scheduler
-> patches.
-> 
-> Currently on top of queue idling, I have implemented group idling also.
-> Queue idling is dynamic and io scheduler like CFQ keeps track of
-> traffic pattern on the queue and disables/enables idling dynamically. So
-> in this case fairness depends on rate of successful anticipations by the
-> io scheduler.
-> 
-> Group idling currently is static in nature and purely implemented in
-> elevator fair queuing layer. Group idling kicks in only when a group is
-> empty at the time of queue expiration and underlying ioscheduler has not
-> chosen to enable idling on the queue. This provides us the gurantee that
-> group will keep on getting its fair share of disk as long as a new request
-> comes in the group with-in that idling period.
-> 
-> Implementing group idling ensures that it does not bog down the io scheduler
-> and with-in group queue switching can still be very fast (no idling on many of
-> the queues by cfq).
-> 
-> Now in case of SSD if group idling is really hurting somebody, I would
-> expect him to set it to either 1 or 0. You might get better throughput
-> but then expect fairness for the group only if the group is continuously
-> backlogged. (Something what dm-ioband guys seem to be doing).
-> 
-> So do you think that adjusting this "group_idling" tunable is too
-> complicated and there are better ways to handle it in case of SSD+NCQ?
-> 
+ - The flag, "handle_errors," won't be passed to dm-raid1 by dmeventd. lvm
+   commands (e.g. vgchange) or dmsetup pass "handle_errors" when new mirror
+   mapping is created.
 
-Unfortunately I am not aware of any reasonable and working method to
-properly handle this issue; anyway adjusting the tunable is something
-that needs a lot of care.
+ - As I mentioned before, bios which are sent to out-of-sync regions also
+   need to be blocked because bios to out-of-sync regions are processed by
+   generic_make_request() and would return the "success" to upper layer
+   without dm-raid1 notices it. This might cause data corruption.
+   https://www.redhat.com/archives/dm-devel/2009-July/msg00118.html
+
+ - The modification of write_callback() looks a little confusing to me.
+   Do all bios need to be blocked? When all legs returns error, the bio
+   should be returned with -EIO to upper layer without being blocked as
+   original code using uptodate flag.
+
+I appreciate your comments.
+
+Thanks,
+Taka
+
+-- 
+Takahiro Yasui
+Hitachi Computer Products (America), Inc.
