@@ -1,16 +1,16 @@
-From: Rik van Riel <riel@redhat.com>
-Subject: Re: [PATCH 26/23] io-controller: fix writer preemption
- with in a group
-Date: Wed, 09 Sep 2009 00:59:30 -0400
-Message-ID: <4AA73632.2020309@redhat.com>
-References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<20090908222835.GD3558@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: Regarding dm-ioband tests
+Date: Wed, 09 Sep 2009 14:17:48 +0900 (JST)
+Message-ID: <20090909.141748.189706141.ryov@valinux.co.jp>
+References: <20090908032254.GJ8315@balbir.in.ibm.com>
+	<20090908.140516.104049366.ryov@valinux.co.jp>
+	<20090908134915.GB15974@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090908222835.GD3558@redhat.com>
+In-Reply-To: <20090908134915.GB15974@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: vgoyal@redhat.com
+Cc: riel@redhat.com, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-> o Found another issue during testing. Consider following hierarchy.
+Hi Vivek,
+
+Vivek Goyal <vgoyal@redhat.com> wrote:
+> > It is not necessary when controlling bandwidth on a per partition
+> > basis or on a IO thread basis like Xen blkback kernel thread.
+> > 
+> > Here are configration examples.
+> > http://sourceforge.net/apps/trac/ioband/wiki/dm-ioband/man/examples
+> > 
+> 
+> For partition based control, where a thread or group of threads is doing
+> IO to a specific parition, why can't you simply create different cgroups
+> for each partition and move threads in those partitions.
+> 
 > 
 > 			root
-> 			/ \
-> 		       R1  G1
-> 			  /\
-> 			 R2 W
+> 		 	/ | \
+> 		    sda1 sda2 sda3
+>
+> Above are three groups and move threads doing IO into those groups and
+> problem is solved. In fact that's what one will do for KVM virtual
+> machines. Move all the qemu helper threds doing IO for a virtual machine
+> instance into a specific group and control the IO.
 > 
->   Generally in CFQ when readers and writers are running, reader immediately
->   preempts writers and hence reader gets the better bandwidth. In case of
->   hierarchical setup, it becomes little more tricky. In above diagram, G1
->   is a group and R1, R2 are readers and W is writer tasks.
-> 
->   Now assume W runs and then R1 runs and then R2 runs. After R2 has used its
->   time slice, if R1 is schedule in, after couple of ms, R1 will get backlogged
->   again in group G1, (streaming reader). But it will not preempt R1 as R1 is
->   also a reader and also because preemption across group is not allowed for
->   isolation reasons. Hence R2 will get backlogged in G1 and will get a 
->   vdisktime much higher than W. So when G2 gets scheduled again, W will get
->   to run its full slice length despite the fact R2 is queue on same service
->   tree.
-> 
->   The core issue here is that apart from regular preemptions (preemption 
->   across classes), CFQ also has this special notion of preemption with-in
->   class and that can lead to issues active task is running in a differnt
->   group than where new queue gets backlogged.
-> 
->   To solve the issue keep a track of this event (I am calling it late
->   preemption). When a group becomes eligible to run again, if late_preemption
->   is set, check if there are sync readers backlogged, and if yes, expire the
->   writer after one round of dispatch.
-> 
->   This solves the issue of reader not getting enough bandwidth in hierarchical
->   setups.
-> 
-> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+> Why do you have to come up with additional complicated grouping mechanism?
 
-Conceptually a nice solution.  The code gets a little tricky,
-but I guess any code dealing with these situations would end
-up that way :)
+I don't get why you think it's complicated, your io-controller also
+provides the same grouping machanism which assigns bandwidth per
+device by io.policy file. What's the difference? The thread grouping
+machianism is also not special, it is the same concept as cgroup.
+These mechanisms are necessary to make use of dm-ioband on the systems
+which doesn't support cgroup such as RHEL 5.x. As you know, dm-ioband
+also supports cgroup, the configurations you mentioned above can apply
+to the system by dm-ioband. I think it's not bad to have several ways
+to setup.
 
-Acked-by: Rik van Riel <riel@redhat.com>
-
--- 
-All rights reversed.
+Thanks,
+Ryo Tsuruta
