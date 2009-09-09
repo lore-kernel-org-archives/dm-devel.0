@@ -1,15 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: Snapshot merging
-Date: Wed, 9 Sep 2009 11:47:27 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0909091142190.2960@hs20-bc2-1.build.redhat.com>
+Date: Wed, 9 Sep 2009 11:56:43 -0400
+Message-ID: <20090909155642.GB15981@redhat.com>
 References: <4A97A035.9010604@redhat.com>
 	<Pine.LNX.4.64.0908311740160.16318@hs20-bc2-1.build.redhat.com>
 	<20090831221149.GB15126@redhat.com>
+	<Pine.LNX.4.64.0909091142190.2960@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090831221149.GB15126@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0909091142190.2960@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,30 +21,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+On Wed, Sep 09 2009 at 11:47am -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-I found one bug in the userspace code --- start merging, then from the 
-other console deactivate the origin volume with lvchange -an, then wait 
-next 15 seconds for the next poll interval:
+> Hi
+> 
+> I found one bug in the userspace code --- start merging, then from the 
+> other console deactivate the origin volume with lvchange -an, then wait 
+> next 15 seconds for the next poll interval:
+> 
+> the poll process will think that the merging finished, removing the 
+> snapshot, leaving partially merged origin and causing data corruption:
+> 
+> [slunicko:~]# lvconvert -M vg1/lv2_snap1
+>   Merging of volume lv2_snap1 started.
+>   lv2: Merged: 13.1%
+> ( .... deactivate the volume from the other console ....)
+>   lv2: Merged: -1.0%
+>   Merge into logical volume lv2 finished.
+>   Logical volume "snapshot4" successfully removed
+> 
+> Maybe this bug was in my code too, I don't remember.
 
-the poll process will think that the merging finished, removing the 
-snapshot, leaving partially merged origin and causing data corruption:
+Likely, considering I merely ported your LVM2 patches to the latest
+version.  That said, I could've introduced this issue by missing
+something in the port.  Regardless, I'll have a look at preventing the
+origin LV from being deactivated during a merge.
 
-[slunicko:~]# lvconvert -M vg1/lv2_snap1
-  Merging of volume lv2_snap1 started.
-  lv2: Merged: 13.1%
-( .... deactivate the volume from the other console ....)
-  lv2: Merged: -1.0%
-  Merge into logical volume lv2 finished.
-  Logical volume "snapshot4" successfully removed
+> Otherwise, the code seems stable, I didn't see anything wrong, I tried to 
+> crash it while merging and it resumed without data corruption.
 
-Maybe this bug was in my code too, I don't remember.
+Great, thanks for the feedback and testing!
 
-Otherwise, the code seems stable, I didn't see anything wrong, I tried to 
-crash it while merging and it resumed without data corruption.
-
-Mikulas
+Mike
