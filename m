@@ -1,17 +1,17 @@
 From: Vivek Goyal <vgoyal@redhat.com>
 Subject: Re: Regarding dm-ioband tests
-Date: Wed, 9 Sep 2009 09:34:27 -0400
-Message-ID: <20090909133427.GA8256@redhat.com>
-References: <20090908032254.GJ8315@balbir.in.ibm.com>
-	<20090908.140516.104049366.ryov@valinux.co.jp>
-	<20090908134915.GB15974@redhat.com>
-	<20090909.141748.189706141.ryov@valinux.co.jp>
+Date: Wed, 9 Sep 2009 09:57:26 -0400
+Message-ID: <20090909135726.GB8256@redhat.com>
+References: <20090908.120119.71095369.ryov@valinux.co.jp>
+	<20090908134244.GA15974@redhat.com>
+	<20090908170649.GC8828@linux.vnet.ibm.com>
+	<20090909.150511.112608142.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20090909.141748.189706141.ryov@valinux.co.jp>
+In-Reply-To: <20090909.150511.112608142.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,97 +22,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: riel@redhat.com, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
+Cc: riel@redhat.com, dhaval@linux.vnet.ibm.com, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 09, 2009 at 02:17:48PM +0900, Ryo Tsuruta wrote:
-> Hi Vivek,
+On Wed, Sep 09, 2009 at 03:05:11PM +0900, Ryo Tsuruta wrote:
+> Hi,
 > 
-> Vivek Goyal <vgoyal@redhat.com> wrote:
-> > > It is not necessary when controlling bandwidth on a per partition
-> > > basis or on a IO thread basis like Xen blkback kernel thread.
+> Dhaval Giani <dhaval@linux.vnet.ibm.com> wrote:
+> > > > - dm-ioband can use without cgroup. (I remember Vivek said it's not an
+> > > >   advantage.)
 > > > 
-> > > Here are configration examples.
-> > > http://sourceforge.net/apps/trac/ioband/wiki/dm-ioband/man/examples
-> > > 
-> > 
-> > For partition based control, where a thread or group of threads is doing
-> > IO to a specific parition, why can't you simply create different cgroups
-> > for each partition and move threads in those partitions.
-> > 
-> > 
-> > 			root
-> > 		 	/ | \
-> > 		    sda1 sda2 sda3
-> >
-> > Above are three groups and move threads doing IO into those groups and
-> > problem is solved. In fact that's what one will do for KVM virtual
-> > machines. Move all the qemu helper threds doing IO for a virtual machine
-> > instance into a specific group and control the IO.
-> > 
-> > Why do you have to come up with additional complicated grouping mechanism?
+> > > I think this is more of a disadvantage than advantage. We have a very well
+> > > defined functionality of cgroup in kernel to group the tasks. Now you are
+> > > coming up with your own method of grouping the tasks which will make life
+> > > even more confusing for users and application writers.
 > 
-> I don't get why you think it's complicated, your io-controller also
-> provides the same grouping machanism which assigns bandwidth per
-> device by io.policy file. What's the difference?
+> I know that cgroup is a very well defined functionality, that is why
+> dm-ioband also supports throttling per cgroup. But how are we supposed
+> to do throttling on the system which doesn't support cgroup?
+> As I wrote in another mail to Vivek, I would like to make use of
+> dm-ioband on RHEL 5.x. 
 
-I am using purely cgroup based interface. This makes life easier for user
-space tools and libraries like libcgroup and should also help libvirt. Now
-they can treat all the resource controllers in kernel in a uniform way
-(through cgroup interface).
+I think you need to maintain and support this module out of the kernel tree for
+older kernels. Does not make much sense to introduce new interfaces to support
+a functionality in older kernels.
 
-With-in cgroups, there are controller specific files and libcgroup is
-aware of that. So libcgroup can be modified to take care of special
-syntax of io.policy file. But this is not too big a deviation in overall
-picture.
+> And I don't think that the grouping methods are not complicated, just
+> stack a new device on the existing device and assign bandwidth to it,
+> that is the same method as other device-mapper targets, if you would
+> like to assign bandwidth per thread, then register the thread's ID to
+> the device and assign bandwidth to it as well. I don't think it makes
+> users confused.
 
-dm-ioband is coming up with a whole new way of configuring and managing
-groups and now these user space tools shall have to be modified to take
-care of this new way only for io controller.
+- First of all it is more about doing things a new way and not the standard
+  way. Moreover upstream does not benefit from this new interface. It just
+  stands to loose because of maintenance overhead and need of chaning user
+  space tools to make use of this new interface.
 
-The point is there is no need. You seem to be introducing this new
-interface because you want to use this module with RHEL5 which does not
-have cgroup support. 
+- Secondly, personally I think it more twisted also. Following is the
+  small code to setup two ioband devices ioband1 and ioband2 and two
+  additional groups on ioband1 device using cgroup interface.
 
-I think this is hard to sell argument that upstream should also introduce
-a new interface just because one wants to use the module with older
-releases of kernel which did not have cgroup support.
+***********************************************************************
+echo "0 $(blockdev --getsize /dev/sdd1) ioband /dev/sdd1 1 0 0 none"
+"weight 0 :200" | dmsetup create ioband1
+echo "0 $(blockdev --getsize /dev/sdd2) ioband /dev/sdd2 1 0 0 none"
+"weight 0 :100" | dmsetup create ioband2
 
-Taking this new interface solves your case but will make life harder for user
-space tools, libraries and applications making use of cgroups and various
-resource controllers.
+mount -t cgroup -o blkio hier1 /cgroup/ioband
+mkdir /cgroup/ioband/test1 /cgroup/ioband/test2
 
-> The thread grouping
-> machianism is also not special, it is the same concept as cgroup.
-> These mechanisms are necessary to make use of dm-ioband on the systems
-> which doesn't support cgroup such as RHEL 5.x. As you know, dm-ioband
-> also supports cgroup, the configurations you mentioned above can apply
-> to the system by dm-ioband.
+test1_id=`cat /cgroup/ioband/test1/blkio.id`
+test2_id=`cat /cgroup/ioband/test2/blkio.id`
 
-dm-ioband also supports cgroup but there is additional step required and
-that is passing all the cgroup ids to various ioband devices. This
-requires knowledge of all the ioband devices and how these have been
-created and usage of dm tools. 
+test1_weight=200
+test2_weight=100
 
-The only place where it helps a bit is that once the configuration is
-done, one can move the tasks in groups to arbitrarily group them instead
-of grouping these on pid, gid etc....
+dmsetup message ioband1 0 type cgroup
+dmsetup message ioband1 0 attach $test1_id
+dmsetup message ioband1 0 attach $test2_id
+dmsetup message ioband1 0 weight $test1_id:$test1_weight
+dmsetup message ioband1 0 weight $test2_id:$test2_weight
 
-So it still does not solve the issue of dm-ioband being so different from
-rest of the controllers and introducing a new interface for creation and
-management of groups.
+mount /dev/mapper/ioband1 /mnt/sdd1
+mount /dev/mapper/ioband2 /mnt/sdd2
+************************************************************************* 
 
-> I think it's not bad to have several ways
-> to setup.
+For status of various settings one needs to use "dmsetup status" and
+"dmsetup table" commands. Look at the output of these commands with just
+two groups. Output for all the groups is on a single line. Think of the
+situation when there are 7-8 groups and how bad it will look.
 
-It is not bad if there is a proper justification for new interface and why
-existing standard mechanism does not meet that requirement.
+#dmsetup status
+ioband2: 0 40355280 ioband 1 -1 105 0 834 1 0 8
+ioband1: 0 37768752 ioband 1 -1 105 0 834 1 0 8 2 0 0 0 0 0 0 3 0 0 0 0 0 0
 
-In this case you are saying that in general cgroup mechanism is sufficient
-to take care of grouping of tasks but it is not available in older kernels
-hence let us introduce a new interface in upstream kernels. I think this does
-not work. This brings in unnecessary overhead of maintaining anohter interface
-for upstream and upstream does not benefit from this interface.
+#dmsetup table
+ioband2: 0 40355280 ioband 8:50 1 4 192 none weight 768 :100
+ioband1: 0 37768752 ioband 8:49 1 4 192 cgroup weight 768 :200 2:200 3:100
+
+I find it so hard to interpre those numbers. Everything about a device is
+exported in a single line.
+
+In cgroup based interface, things are deviced nicely among different
+files. Also one group shows statistics about that group only and not about
+all the groups present in the system. It is easier to parse and
+comprehend.
+
+> 
+> > I would tend to agree with this. With other resource management
+> > controllers using cgroups, having dm-ioband use something different will
+> > require a different set of userspace tools/libraries to be used.
+> > Something that will severly limit its usefulness froma programmer's
+> > perspective.
+> 
+> Once we create a dm-ioband device, the device can be configured
+> through the cgroup interface. I think it will not severly limit its
+> usefulness.
+
+To create the device once you need dm-tools and libcgroup needs to learn 
+how to make various use of various dm commands. It also needs to learn how
+to parse outputs of "dmsetup table" and "dmsetup status" commands and
+consolidate that information.
+
+This is despite the fact that it is using cgroup interface finally to
+group the task. But libcgroup still need to propagate cgroup id to
+individual ioband devices.
 
 Thanks
 Vivek
