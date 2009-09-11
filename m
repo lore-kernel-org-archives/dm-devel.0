@@ -1,41 +1,45 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [RESEND] [PATCH linux-2.6-block#for-2.6.32] Seperate
-	read and write statistics of in_flight requests
-Date: Fri, 11 Sep 2009 09:17:53 +0200
-Message-ID: <20090911071753.GC18599@kernel.dk>
-References: <200908241603.15158.knikanth@suse.de>
-	<20090824110735.GI12579@kernel.dk>
-	<200908241754.08592.knikanth@suse.de>
-	<200909110913.46769.knikanth@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dhaval Giani <dhaval@linux.vnet.ibm.com>
+Subject: Re: Regarding dm-ioband tests
+Date: Fri, 11 Sep 2009 15:23:48 +0530
+Message-ID: <20090911095347.GD4474@linux.vnet.ibm.com>
+References: <20090908170649.GC8828@linux.vnet.ibm.com> <20090909.150511.112608142.ryov@valinux.co.jp> <20090909105122.GF8828@linux.vnet.ibm.com> <20090910.165849.104059407.ryov@valinux.co.jp>
+Reply-To: Dhaval Giani <dhaval@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754380AbZIKJyi@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <200909110913.46769.knikanth@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Nikanth Karthikesan <knikanth@suse.de>
-Cc: dm-devel@redhat.com, Mark Landis <mark.landis@teradata.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+In-Reply-To: <20090910.165849.104059407.ryov@valinux.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: vgoyal@redhat.com, riel@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com, agk@redhat.com, akpm@linux-foundation.org, nauman@google.com, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 11 2009, Nikanth Karthikesan wrote:
-> Currently, there is a single in_flight counter measuring the number of
-> requests in the request_queue. But some monitoring tools would like to
-> know how many read requests and write requests are in progress. Split the
-> current in_flight counter into two seperate counters for read and write.
+On Thu, Sep 10, 2009 at 04:58:49PM +0900, Ryo Tsuruta wrote:
+> Hi,
 > 
-> This information is exported as a sysfs attribute, as changing the
-> currently available stat files would break the existing tools.
+> Dhaval Giani <dhaval@linux.vnet.ibm.com> wrote:
+> > > I know that cgroup is a very well defined functionality, that is why
+> > > dm-ioband also supports throttling per cgroup. But how are we supposed
+> > > to do throttling on the system which doesn't support cgroup?
+> > > As I wrote in another mail to Vivek, I would like to make use of
+> > > dm-ioband on RHEL 5.x. 
+> > 
+> > Hi Ryo,
+> > 
+> > I am not sure that upstream should really be worrying about RHEL 5.x.
+> > cgroups is a relatively mature solution and is available in most (if not
+> > all) community distros today. We really should not be looking at another
+> > grouping solution if the sole reason is that then dm-ioband can be used
+> > on RHEL 5.x. The correct solution would be to maintain a separate patch
+> > for RHEL 5.x then and not to burden the upstream kernel.
+> 
+> RHEL 5.x is not the sole reason for that.
+> 
 
-Applied, this is better than breaking existing stat exports.
+Could you please enumerate the other reasons for pushing in another
+grouping mechanism then? (Why can we not resolve them via cgroups?)
 
+Thanks,
 -- 
-Jens Axboe
+regards,
+Dhaval
