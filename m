@@ -1,18 +1,9 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [RFC] IO scheduler based IO controller V9
-Date: Fri, 11 Sep 2009 11:01:35 -0400
-Message-ID: <20090911150135.GA10297@redhat.com>
-References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<4AA918C1.6070907@redhat.com> <20090910205227.GB3617@redhat.com>
-	<20090910205657.GD3617@redhat.com> <4AAA4DA7.8010909@redhat.com>
-	<20090911143040.GB6758@redhat.com>
-	<20090911144341.GC6758@redhat.com> <4AAA64F6.2050800@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools ./multipath.conf.defaults libm ...
+Date: 11 Sep 2009 15:19:51 -0000
+Message-ID: <20090911151951.16467.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4AAA64F6.2050800@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,124 +13,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jerome Marchand <jmarchan@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 11, 2009 at 04:55:50PM +0200, Jerome Marchand wrote:
-> Vivek Goyal wrote:
-> > On Fri, Sep 11, 2009 at 10:30:40AM -0400, Vivek Goyal wrote:
-> >> On Fri, Sep 11, 2009 at 03:16:23PM +0200, Jerome Marchand wrote:
-> >>> Vivek Goyal wrote:
-> >>>> On Thu, Sep 10, 2009 at 04:52:27PM -0400, Vivek Goyal wrote:
-> >>>>> On Thu, Sep 10, 2009 at 05:18:25PM +0200, Jerome Marchand wrote:
-> >>>>>> Vivek Goyal wrote:
-> >>>>>>> Hi All,
-> >>>>>>>
-> >>>>>>> Here is the V9 of the IO controller patches generated on top of 2.6.31-rc7.
-> >>>>>>  
-> >>>>>> Hi Vivek,
-> >>>>>>
-> >>>>>> I've run some postgresql benchmarks for io-controller. Tests have been
-> >>>>>> made with 2.6.31-rc6 kernel, without io-controller patches (when
-> >>>>>> relevant) and with io-controller v8 and v9 patches.
-> >>>>>> I set up two instances of the TPC-H database, each running in their
-> >>>>>> own io-cgroup. I ran two clients to these databases and tested on each
-> >>>>>> that simple request:
-> >>>>>> $ select count(*) from LINEITEM;
-> >>>>>> where LINEITEM is the biggest table of TPC-H (6001215 entries,
-> >>>>>> 720MB). That request generates a steady stream of IOs.
-> >>>>>>
-> >>>>>> Time is measure by psql (\timing switched on). Each test is run twice
-> >>>>>> or more if there is any significant difference between the first two
-> >>>>>> runs. Before each run, the cache is flush:
-> >>>>>> $ echo 3 > /proc/sys/vm/drop_caches
-> >>>>>>
-> >>>>>>
-> >>>>>> Results with 2 groups of same io policy (BE) and same io weight (1000):
-> >>>>>>
-> >>>>>> 	w/o io-scheduler	io-scheduler v8		io-scheduler v9
-> >>>>>> 	first	second		first	second		first	second
-> >>>>>> 	DB	DB		DB	DB		DB	DB
-> >>>>>>
-> >>>>>> CFQ	48.4s	48.4s		48.2s	48.2s		48.1s	48.5s
-> >>>>>> Noop	138.0s	138.0s		48.3s	48.4s		48.5s	48.8s
-> >>>>>> AS	46.3s	47.0s		48.5s	48.7s		48.3s	48.5s
-> >>>>>> Deadl.	137.1s	137.1s		48.2s	48.3s		48.3s	48.5s
-> >>>>>>
-> >>>>>> As you can see, there is no significant difference for CFQ
-> >>>>>> scheduler.
-> >>>>> Thanks Jerome.  
-> >>>>>
-> >>>>>> There is big improvement for noop and deadline schedulers
-> >>>>>> (why is that happening?).
-> >>>>> I think because now related IO is in a single queue and it gets to run
-> >>>>> for 100ms or so (like CFQ). So previously, IO from both the instances
-> >>>>> will go into a single queue which should lead to more seeks as requests
-> >>>>> from two groups will kind of get interleaved.
-> >>>>>
-> >>>>> With io controller, both groups have separate queues so requests from
-> >>>>> both the data based instances will not get interleaved (This almost
-> >>>>> becomes like CFQ where ther are separate queues for each io context
-> >>>>> and for sequential reader, one io context gets to run nicely for certain
-> >>>>> ms based on its priority).
-> >>>>>
-> >>>>>> The performance with anticipatory scheduler
-> >>>>>> is a bit lower (~4%).
-> >>>>>>
-> >>>> Hi Jerome, 
-> >>>>
-> >>>> Can you also run the AS test with io controller patches and both the
-> >>>> database in root group (basically don't put them in to separate group). I 
-> >>>> suspect that this regression might come from that fact that we now have
-> >>>> to switch between queues and in AS we wait for request to finish from
-> >>>> previous queue before next queue is scheduled in and probably that is
-> >>>> slowing down things a bit.., just a wild guess..
-> >>>>
-> >>> Hi Vivek,
-> >>>
-> >>> I guess that's not the reason. I got 46.6s for both DB in root group with
-> >>> io-controller v9 patches. I also rerun the test with DB in different groups
-> >>> and found about the same result as above (48.3s and 48.6s).
-> >>>
-> >> Hi Jerome,
-> >>
-> >> Ok, so when both the DB's are in root group (with io-controller V9
-> >> patches), then you get 46.6 seconds time for both the DBs. That means there
-> >> is no regression in this case. In this case there is only one queue of 
-> >> root group and AS is running timed read/write batches on this queue.
-> >>
-> >> But when both the DBs are put in separate groups then you get 48.3 and
-> >> 48.6 seconds respectively and we see regression. In this case there are
-> >> two queues belonging to each group. Elevator layer takes care of queue
-> >> group queue switch and AS runs timed read/write batches on these queues.
-> >>
-> >> If it is correct, then it does not exclude the possiblity that it is queue
-> >> switching overhead between groups?
-> >>  
-> > 
-> > Does your hard drive support command queuing? May be we are driving deeper
-> > queue depths for reads and during queue switch we will wait for requests
-> > to finish from last queue to finish before next queue is scheduled in (for
-> > AS) and that probably will cause more delay if we are driving deeper queue
-> > depth.
-> > 
-> > Can you please set queue depth to "1" (/sys/block/<disk>/device/queue_depth) on
-> > this disk and see time consumed in two cases are same or different. I think
-> > setting depth to "1" will bring down overall throughput but if times are same
-> > in two cases, at least we will know where the delay is coming from.
-> > 
-> > Thanks
-> > Vivek
-> 
-> It looks like command queuing is supported but disabled. Queue depth is already 1
-> and the file /sys/block/<disk>/device/queue_depth is read-only.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	bmarzins@sourceware.org	2009-09-11 15:19:51
 
-Hmm..., time to run blktraces and in both the cases and compare the two
-cases and see what's the issue.
+Modified files:
+	.              : multipath.conf.defaults 
+	libmultipath   : hwtable.c 
+	multipathd     : main.c 
+	path_priority/pp_netapp: Makefile 
 
-Would be great if you can capture and look at traces. Otherwise I will try
-to do it sometime soon..
+Log message:
+	Fix for bz #452340, #469845, and #493400
+	
+	Fix makefile install issue, multipathd umask, and update default configuration.
 
-Thanks
-Vivek
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5.2.12&r2=1.5.2.13
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.16.2.16&r2=1.16.2.17
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.66.2.7&r2=1.66.2.8
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_netapp/Makefile.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.1.2.2&r2=1.1.2.3
+
+--- multipath-tools/multipath.conf.defaults	2009/01/17 00:46:51	1.5.2.12
++++ multipath-tools/multipath.conf.defaults	2009/09/11 15:19:50	1.5.2.13
+@@ -56,7 +56,7 @@
+ #       }
+ #       device {
+ #               vendor                  "(COMPAQ|HP)"
+-#               product                 "HSV1[01]1|HSV2[01]0|HSV300"
++#               product                 "HSV1[01]1|HSV2[01]0|HSV300|HSV4[05]0"
+ #               path_grouping_policy    group_by_prio
+ #               prio_callout            "/sbin/mpath_prio_alua /dev/%n"
+ #               path_checker            "tur"
+--- multipath-tools/libmultipath/hwtable.c	2009/01/17 00:46:51	1.16.2.16
++++ multipath-tools/libmultipath/hwtable.c	2009/09/11 15:19:50	1.16.2.17
+@@ -35,14 +35,14 @@
+ 	                   DEFAULT_GETUID, "/sbin/mpath_prio_alua /dev/%n",
+ 	                   "0", "0", "tur", -FAILBACK_IMMEDIATE, NULL, 12, 0,
+ 	                   100);
+-	r += store_hwe_ext(hw, "COMPAQ", "MSA|HSV1.0.*", GROUP_BY_PRIO,
+-	                   DEFAULT_GETUID, "/sbin/mpath_prio_hp_sw /dev/%n",
+-	                   "1 hp-sw", "0", "hp_sw", FAILBACK_UNDEF, NULL, 12, 0,
+-	                   100);
+-	r += store_hwe_ext(hw, "(COMPAQ|HP)", "HSV1[01]1|HSV2[01]0|HSV300",
++	r += store_hwe_ext(hw, "(COMPAQ|HP)", "HSV1[01]1|HSV2[01]0|HSV300|HSV4[05]0",
+ 			   GROUP_BY_PRIO, DEFAULT_GETUID,
+ 			   "/sbin/mpath_prio_alua /dev/%n", "0", "0", "tur",
+ 			   -FAILBACK_IMMEDIATE, NULL, 12, 0, 100);
++	r += store_hwe_ext(hw, "COMPAQ", "MSA|HSV1.0.*", GROUP_BY_PRIO,
++                           DEFAULT_GETUID, "/sbin/mpath_prio_hp_sw /dev/%n",
++                           "1 hp-sw", "0", "hp_sw", FAILBACK_UNDEF, NULL, 12, 0,
++                           100);
+ 	r += store_hwe_ext(hw, "HP", "MSA2[02]12fc|MSA2012i", MULTIBUS, DEFAULT_GETUID,
+ 			   NULL, "0", "0", "tur", -FAILBACK_IMMEDIATE, NULL, 18,
+ 			   0, 100);
+--- multipath-tools/multipathd/main.c	2009/09/01 20:38:40	1.66.2.7
++++ multipath-tools/multipathd/main.c	2009/09/11 15:19:50	1.66.2.8
+@@ -1181,6 +1181,7 @@
+ 	add_handler(DISABLEQ+MAP, cli_disable_queueing);
+ 	add_handler(RESTOREQ+MAP, cli_restore_queueing);
+ 
++	umask(077);
+ 	uxsock_listen(&uxsock_trigger, ap);
+ 
+ 	return NULL;
+@@ -1781,7 +1782,6 @@
+ 	close(in_fd);
+ 	close(out_fd);
+ 	chdir("/");
+-	umask(0);
+ 	return 0;
+ }
+ 
+--- multipath-tools/path_priority/pp_netapp/Makefile	2009/01/13 22:26:37	1.1.2.2
++++ multipath-tools/path_priority/pp_netapp/Makefile	2009/09/11 15:19:51	1.1.2.3
+@@ -18,7 +18,7 @@
+ 
+ install: $(EXEC)
+ 	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
+-	ln -sf $(DESTDIR)$(bindir)/$(EXEC) $(DESTDIR)$(bindir)/$(LINK)
++	ln -sf $(EXEC) $(DESTDIR)$(bindir)/$(LINK)
+ 
+ uninstall:
+ 	rm $(DESTDIR)$(bindir)/$(EXEC)
