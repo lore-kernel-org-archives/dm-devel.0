@@ -1,16 +1,12 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [RESEND] [PATCH]: scsi_dh: create sysfs file,
-	dh_state for SCSI devices even if they are not in the internal lists
-Date: Fri, 11 Sep 2009 10:20:35 -0700
-Message-ID: <1252689635.2541.4.camel@chandra-ubuntu>
-References: <1246069888.14164.53.camel@chandra-ubuntu>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath-tools: Add preferred TPG prioritizer
+Date: Fri, 11 Sep 2009 13:23:09 -0500
+Message-ID: <20090911182308.GN15326@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1246069888.14164.53.camel@chandra-ubuntu>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,56 +16,121 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: James Bottomley <James.Bottomley@suse.de>
-Cc: Mario Mech <mech@meteo.uni-koeln.de>, dm-devel <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Instead of using the Target port's Asymmetric Access State to determine
+priority, some users what to use the preferred port bit.  This patch makes
+a new prioritizer, based off the ALUA prioritizer, but using the preferred
+port bit instead.
 
-Hi James,
-
-This patch was sent to the list long back and was Acked by Hannes on Aug
-11.
-
-Please consider for inclusion. Let me know if you see any issues with
-the patch.
-
-regards,
-
-chandra
--------------------------
-Create the sysfs file, dh_state even if the new SCSI device is not
-in the any of the device handler's internal lists.
-
-Signed-Off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-Acked-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- drivers/scsi/device_handler/scsi_dh.c |   11 ++++-------
- 1 file changed, 4 insertions(+), 7 deletions(-)
+ libmultipath/prio.h                   |    1 +
+ libmultipath/prioritizers/Makefile    |   10 ++++++++++
+ libmultipath/prioritizers/alua.c      |    7 +++++++
+ libmultipath/prioritizers/alua_rtpg.c |    4 ++++
+ libmultipath/prioritizers/alua_spc3.h |    6 ++++++
+ 5 files changed, 28 insertions(+)
 
-Index: linux-2.6.31/drivers/scsi/device_handler/scsi_dh.c
+Index: multipath-tools-090902/libmultipath/prio.h
 ===================================================================
---- linux-2.6.31.orig/drivers/scsi/device_handler/scsi_dh.c
-+++ linux-2.6.31/drivers/scsi/device_handler/scsi_dh.c
-@@ -292,18 +292,15 @@ static int scsi_dh_notifier(struct notif
- 	sdev = to_scsi_device(dev);
+--- multipath-tools-090902.orig/libmultipath/prio.h
++++ multipath-tools-090902/libmultipath/prio.h
+@@ -16,6 +16,7 @@
+  * Known prioritizers for use in hwtable.c
+  */
+ #define PRIO_ALUA "alua"
++#define PRIO_TPG_PREF "tpg_pref"
+ #define PRIO_CONST "const"
+ #define PRIO_EMC "emc"
+ #define PRIO_HDS "hds"
+Index: multipath-tools-090902/libmultipath/prioritizers/alua.c
+===================================================================
+--- multipath-tools-090902.orig/libmultipath/prioritizers/alua.c
++++ multipath-tools-090902/libmultipath/prioritizers/alua.c
+@@ -28,6 +28,12 @@
+ int
+ get_alua_info(int fd)
+ {
++#ifdef TPG_PREF
++	char * aas_string[] = {
++		[AAS_OPTIMIZED]		= "preferred",
++		[AAS_STANDBY]		= "non-preferred",
++	};
++#else
+ 	char *	aas_string[] = {
+ 		[AAS_OPTIMIZED]		= "active/optimized",
+ 		[AAS_NON_OPTIMIZED]	= "active/non-optimized",
+@@ -35,6 +41,7 @@ get_alua_info(int fd)
+ 		[AAS_UNAVAILABLE]	= "unavailable",
+ 		[AAS_TRANSITIONING]	= "transitioning between states",
+ 	};
++#endif
+ 	int	rc;
+ 	int	tpg;
  
- 	if (action == BUS_NOTIFY_ADD_DEVICE) {
-+		err = device_create_file(dev, &scsi_dh_state_attr);
-+		/* don't care about err */
- 		devinfo = device_handler_match(NULL, sdev);
--		if (!devinfo)
--			goto out;
--
--		err = scsi_dh_handler_attach(sdev, devinfo);
--		if (!err)
--			err = device_create_file(dev, &scsi_dh_state_attr);
-+		if (devinfo)
-+			err = scsi_dh_handler_attach(sdev, devinfo);
- 	} else if (action == BUS_NOTIFY_DEL_DEVICE) {
- 		device_remove_file(dev, &scsi_dh_state_attr);
- 		scsi_dh_handler_detach(sdev, NULL);
+Index: multipath-tools-090902/libmultipath/prioritizers/alua_rtpg.c
+===================================================================
+--- multipath-tools-090902.orig/libmultipath/prioritizers/alua_rtpg.c
++++ multipath-tools-090902/libmultipath/prioritizers/alua_rtpg.c
+@@ -293,7 +293,11 @@ get_asymmetric_access_state(int fd, unsi
+ 					"group.\n");
+ 			} else {
+ 				PRINT_DEBUG("pref=%i\n", dscr->b0);
++#ifdef TPG_PREF
++				rc = rtpg_tpg_dscr_get_pref(dscr);
++#else
+ 				rc = rtpg_tpg_dscr_get_aas(dscr);
++#endif
+ 			}
+ 		}
  	}
--out:
- 	return err;
+Index: multipath-tools-090902/libmultipath/prioritizers/alua_spc3.h
+===================================================================
+--- multipath-tools-090902.orig/libmultipath/prioritizers/alua_spc3.h
++++ multipath-tools-090902/libmultipath/prioritizers/alua_spc3.h
+@@ -302,6 +302,12 @@ rtpg_tpg_dscr_get_aas(struct rtpg_tpg_ds
+ 	return (d->b0 & 0x0f);
  }
+ 
++static inline int
++rtpg_tpg_dscr_get_pref(struct rtpg_tpg_dscr *d)
++{
++	return ((d->b0 & 0x80)?AAS_OPTIMIZED:AAS_STANDBY);
++}
++
+ struct rtpg_data {
+ 	unsigned char			length[4];		/* size-4 */
+ 	struct rtpg_tpg_dscr		data[0];
+Index: multipath-tools-090902/libmultipath/prioritizers/Makefile
+===================================================================
+--- multipath-tools-090902.orig/libmultipath/prioritizers/Makefile
++++ multipath-tools-090902/libmultipath/prioritizers/Makefile
+@@ -11,6 +11,7 @@ LIBS = \
+ 	libprioemc.so \
+ 	libpriordac.so \
+ 	libprioalua.so \
++	libpriotpg_pref.so \
+ 	libprionetapp.so \
+ 	libpriohds.so
+ 
+@@ -21,9 +22,18 @@ all: $(LIBS)
+ libprioalua.so: alua.o alua_rtpg.o
+ 	$(CC) $(SHARED_FLAGS) -o $@ $^
+ 
++libpriotpg_pref.so: pref.o pref_rtpg.o
++	$(CC) $(SHARED_FLAGS) -o $@ $^
++
+ libprio%.so: %.o
+ 	$(CC) $(SHARED_FLAGS) -o $@ $^
+ 
++pref.o: alua.c
++	$(CC) $(CFLAGS) -DTPG_PREF -c -o $@ $<
++
++pref_rtpg.o: alua_rtpg.c
++	$(CC) $(CFLAGS) -DTPG_PREF -c -o $@ $<
++
+ install: $(LIBS)
+ 	$(INSTALL_PROGRAM) -m 755 libprio*.so $(DESTDIR)$(libdir)
  
