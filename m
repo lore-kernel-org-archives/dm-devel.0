@@ -1,267 +1,309 @@
-From: Nikanth Karthikesan <knikanth@suse.de>
-Subject: [RESEND] [PATCH linux-2.6-block#for-2.6.32] Seperate
-	read and write statistics of in_flight requests
-Date: Fri, 11 Sep 2009 09:13:46 +0530
-Message-ID: <200909110913.46769.knikanth@suse.de>
-References: <200908241603.15158.knikanth@suse.de>
-	<20090824110735.GI12579@kernel.dk>
-	<200908241754.08592.knikanth@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: rebased snapshot-merge patches
+Date: Fri, 11 Sep 2009 02:51:35 -0400
+Message-ID: <20090911065135.GA3210@redhat.com>
+References: <20090831220834.GA15126@redhat.com>
+	<Pine.LNX.4.64.0909081002540.26574@hs20-bc2-1.build.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200908241754.08592.knikanth@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: dm-devel@redhat.com, Mark Landis <mark.landis@teradata.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <lvm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0909081002540.26574@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Currently, there is a single in_flight counter measuring the number of
-requests in the request_queue. But some monitoring tools would like to
-know how many read requests and write requests are in progress. Split the
-current in_flight counter into two seperate counters for read and write.
+On Tue, Sep 08 2009 at 10:17am -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-This information is exported as a sysfs attribute, as changing the
-currently available stat files would break the existing tools.
+> Hi
+> 
+> > The DM snapshot-merge patches are here:
+> > http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel/2.6.31/
+> > 
+> > The LVM2 snapshot-merge patches are here:
+> > http://people.redhat.com/msnitzer/patches/snapshot-merge/lvm2/LVM2-2.02.52-cvs/
+> > 
+> > I threw some real work at snapshot-merge by taking a snap _before_
+> > formatting a 100G LV with ext3.  Then merged all the exceptions.  One
+> > observation is that the merge process is _quite_ slow in comparison to
+> > how long it took to format the LV (with associated snapshot exception
+> > copy-out).  Will need to look at this further shortly... it's likely a
+> > function of using minimal system resources during the merge via kcopyd;
+> > whereas the ext3 format puts excessive pressure on the system's page
+> > cache to queue work for mkfs's immediate writeback.
+> 
+> I thought about this, see the comment:
+> /* TODO: use larger I/O size once we verify that kcopyd handles it */
+> 
+> There was some bug that kcopyd didn't handle larget I/O but it is already 
+> fixed, so it is possible to extend it.
+> 
+> s->store->type->prepare_merge returns the number of chunks that can be 
+> linearly copied starting from the returned chunk numbers backward. (but 
+> the caller is allowed to copy less, and the caller puts the number of 
+> copied chunks to s->store->type->commit_merge)
+> 
+> I.e. if returned chunk numbers are old_chunk == 10 and new_chunk == 20 and 
+> returned value is 3, then chunk 20 can be copied to 10, chunk 19 to 9 and 
+> 18 to 8.
+> 
+> There is a variable, s->merge_write_interlock_n, that is now always one, 
+> but can hold larger number --- the number of chunks that is being copied.
+> 
+> So it can be trivialy extended to copy more chunks at once.
+> 
+> 
+> On the other hand, if the snapshot doesn't contain consecutive chunks (it 
+> was created as a result of random writes, not as a result of one big 
+> write), larger I/O can't be done and its merging will be slow by design. 
+> It could be improved by spawning several concurrent kcopyd jobs, but I 
+> wouldn't do it because it would complicate code too much and it would 
+> damage interactive performance. (in a desktop or server environment, the 
+> user typically cares more about interactive latency than about copy 
+> throughput).
 
-Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
+Mikulas,
+
+I ran with your suggestion and it works quite well (results below).  It
+proved a bit more involved to get working because I needed to:
+1) Fix the fact that I was _always_ seeing a return from
+   persistent_prepare_merge() that was equal to ps->current_committed
+2) Fix areas that needed to properly use s->merge_write_interlock_n
+   - assumption of only 1 chunk per dm_kcopyd_copy() was somewhat
+     wide-spread
+
+The changes are detailed at the end of this mail.  I still have a "TODO"
+that you'll see in the patch that speaks to needing to have
+snapshot_merge_process() check all origin chunks via __chunk_is_tracked()
+rather than just the one check of the first chunk.  Your feedback here
+would be much appreciated.  I'm not completely clear on the intent of
+the __chunk_is_tracked() check there and what it now needs to do.
+
+Here are performance results from some mkfs-based testing:
+
+# lvcreate -n testlv -L 32G test
+# lvcreate -n testlv_snap -s -L 7G test/testlv
+
+# time mkfs.ext3 /dev/test/testlv
+...
+real    1m7.827s
+user    0m0.116s
+sys     0m11.017s
+
+# lvs
+  LV          VG   Attr   LSize  Origin Snap%  Move Log Copy%  Convert
+  testlv      test owi-a- 32.00G
+  testlv_snap test swi-a-  7.00G testlv   9.05
+
+before:
+-------
+# time lvconvert -M test/testlv_snap
+  Merging of volume testlv_snap started.
+  ...
+  Merge into logical volume testlv finished.
+  Logical volume "snapshot1" successfully removed
+
+real    22m33.100s
+user    0m0.045s
+sys     0m0.711s
+
+
+after:
+------
+# time lvconvert -M test/testlv_snap
+  Merging of volume testlv_snap started.
+  testlv: Merged: 6.4%
+  testlv: Merged: 3.5%
+  testlv: Merged: 0.9%
+  testlv: Merged: 0.0%
+  Merge into logical volume testlv finished.
+  Logical volume "snapshot1" successfully removed
+
+real    1m0.881s [NOTE: we could be ~15 sec faster than reported]
+user    0m0.015s
+sys     0m0.560s
+
+
+So we're now seeing _very_ respectible snapshot-merge performance; but
+please review the following patch in case I'm somehow cheating, thanks!
+
+Mike
 
 ---
+ drivers/md/dm-snap-persistent.c |    6 ++--
+ drivers/md/dm-snap.c            |   71 +++++++++++++++++++++++---------------
+ 2 files changed, 46 insertions(+), 31 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 982d634..182ebe3 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -69,7 +69,7 @@ static void drive_stat_acct(struct request *rq, int new_io)
- 		part_stat_inc(cpu, part, merges[rw]);
- 	else {
- 		part_round_stats(cpu, part);
--		part_inc_in_flight(part);
-+		part_inc_in_flight(part, rw);
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index 23c3a48..27405a0 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -723,9 +723,9 @@ static int persistent_prepare_merge(struct dm_exception_store *store,
+ 
+ 	for (i = 1; i < ps->current_committed; i++) {
+ 		read_exception(ps, ps->current_committed - 1 - i, &de);
+-		if (de.old_chunk == *old_chunk - i &&
+-		    de.new_chunk == *new_chunk - i)
+-			continue;
++		if (de.old_chunk != *old_chunk - i ||
++		    de.new_chunk != *new_chunk - i)
++			break;
  	}
  
- 	part_stat_unlock();
-@@ -1030,7 +1030,7 @@ static void part_round_stats_single(int cpu, struct hd_struct *part,
+ 	return i;
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index c7252b2..98bcbb6 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -653,12 +653,13 @@ static void merge_callback(int read_err, unsigned long write_err,
  
- 	if (part->in_flight) {
- 		__part_stat_add(cpu, part, time_in_queue,
--				part->in_flight * (now - part->stamp));
-+				part_in_flight(part) * (now - part->stamp));
- 		__part_stat_add(cpu, part, io_ticks, (now - part->stamp));
- 	}
- 	part->stamp = now;
-@@ -1737,7 +1737,7 @@ static void blk_account_io_done(struct request *req)
- 		part_stat_inc(cpu, part, ios[rw]);
- 		part_stat_add(cpu, part, ticks[rw], duration);
- 		part_round_stats(cpu, part);
--		part_dec_in_flight(part);
-+		part_dec_in_flight(part, rw);
- 
- 		part_stat_unlock();
- 	}
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index b0de857..99cb5cf 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -351,7 +351,7 @@ static void blk_account_io_merge(struct request *req)
- 		part = disk_map_sector_rcu(req->rq_disk, blk_rq_pos(req));
- 
- 		part_round_stats(cpu, part);
--		part_dec_in_flight(part);
-+		part_dec_in_flight(part, rq_data_dir(req));
- 
- 		part_stat_unlock();
- 	}
-diff --git a/block/genhd.c b/block/genhd.c
-index b89328e..5b76bf5 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -869,6 +869,7 @@ static DEVICE_ATTR(size, S_IRUGO, part_size_show, NULL);
- static DEVICE_ATTR(alignment_offset, S_IRUGO, disk_alignment_offset_show, NULL);
- static DEVICE_ATTR(capability, S_IRUGO, disk_capability_show, NULL);
- static DEVICE_ATTR(stat, S_IRUGO, part_stat_show, NULL);
-+static DEVICE_ATTR(inflight, S_IRUGO, part_inflight_show, NULL);
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- static struct device_attribute dev_attr_fail =
- 	__ATTR(make-it-fail, S_IRUGO|S_IWUSR, part_fail_show, part_fail_store);
-@@ -888,6 +889,7 @@ static struct attribute *disk_attrs[] = {
- 	&dev_attr_alignment_offset.attr,
- 	&dev_attr_capability.attr,
- 	&dev_attr_stat.attr,
-+	&dev_attr_inflight.attr,
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- 	&dev_attr_fail.attr,
- #endif
-@@ -1053,7 +1055,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
- 			   part_stat_read(hd, merges[1]),
- 			   (unsigned long long)part_stat_read(hd, sectors[1]),
- 			   jiffies_to_msecs(part_stat_read(hd, ticks[1])),
--			   hd->in_flight,
-+			   part_in_flight(hd),
- 			   jiffies_to_msecs(part_stat_read(hd, io_ticks)),
- 			   jiffies_to_msecs(part_stat_read(hd, time_in_queue))
- 			);
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 82350f5..2dc57d2 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -130,7 +130,7 @@ struct mapped_device {
- 	/*
- 	 * A list of ios that arrived while we were suspended.
- 	 */
--	atomic_t pending;
-+	atomic_t pending[2];
- 	wait_queue_head_t wait;
- 	struct work_struct work;
- 	struct bio_list deferred;
-@@ -453,13 +453,14 @@ static void start_io_acct(struct dm_io *io)
+ static void snapshot_merge_process(struct dm_snapshot *s)
  {
- 	struct mapped_device *md = io->md;
- 	int cpu;
-+	int rw = bio_data_dir(io->bio);
+-	int r;
++	int r, linear_chunks;
+ 	chunk_t old_chunk, new_chunk;
+ 	struct origin *o;
+ 	chunk_t min_chunksize;
+ 	int must_wait;
+ 	struct dm_io_region src, dest;
++	sector_t io_size;
  
- 	io->start_time = jiffies;
+ 	BUG_ON(!s->merge_running);
+ 	if (s->merge_shutdown)
+@@ -674,34 +675,37 @@ static void snapshot_merge_process(struct dm_snapshot *s)
+ 		DMERR("target store does not support merging");
+ 		goto shut;
+ 	}
+-	r = s->store->type->prepare_merge(s->store, &old_chunk, &new_chunk);
+-	if (r <= 0) {
+-		if (r < 0)
++	linear_chunks = s->store->type->prepare_merge(s->store,
++						      &old_chunk, &new_chunk);
++	if (linear_chunks <= 0) {
++		if (linear_chunks < 0)
+ 			DMERR("Read error in exception store, "
+ 			      "shutting down merge");
+ 		goto shut;
+ 	}
  
- 	cpu = part_stat_lock();
- 	part_round_stats(cpu, &dm_disk(md)->part0);
- 	part_stat_unlock();
--	dm_disk(md)->part0.in_flight = atomic_inc_return(&md->pending);
-+	dm_disk(md)->part0.in_flight[rw] = atomic_inc_return(&md->pending[rw]);
- }
+-	/* TODO: use larger I/O size once we verify that kcopyd handles it */
+-
++	/*
++	 * Use one (potentially large) I/O to copy all 'linear_chunks'
++	 * from the exception store to the origin
++	 */
++	io_size = linear_chunks * s->store->chunk_size;
+ 	dest.bdev = s->origin->bdev;
+-	dest.sector = chunk_to_sector(s->store, old_chunk);
+-	dest.count = min((sector_t)s->store->chunk_size,
+-			 get_dev_size(dest.bdev) - dest.sector);
++	dest.sector = chunk_to_sector(s->store, old_chunk + 1 - linear_chunks);
++	dest.count = min(io_size, get_dev_size(dest.bdev) - dest.sector);
  
- static void end_io_acct(struct dm_io *io)
-@@ -479,8 +480,9 @@ static void end_io_acct(struct dm_io *io)
- 	 * After this is decremented the bio must not be touched if it is
- 	 * a barrier.
- 	 */
--	dm_disk(md)->part0.in_flight = pending =
--		atomic_dec_return(&md->pending);
-+	dm_disk(md)->part0.in_flight[rw] = pending =
-+		atomic_dec_return(&md->pending[rw]);
-+	pending += atomic_read(&md->pending[rw^0x1]);
+ 	src.bdev = s->cow->bdev;
+-	src.sector = chunk_to_sector(s->store, new_chunk);
++	src.sector = chunk_to_sector(s->store, new_chunk + 1 - linear_chunks);
+ 	src.count = dest.count;
  
- 	/* nudge anyone waiting on suspend queue */
- 	if (!pending)
-@@ -1780,7 +1782,8 @@ static struct mapped_device *alloc_dev(int minor)
- 	if (!md->disk)
- 		goto bad_disk;
+ test_again:
+-	/* Reallocate other snapshots */
++	/* Reallocate other snapshots; must account for all 'linear_chunks' */
+ 	down_read(&_origins_lock);
+ 	o = __lookup_origin(s->origin->bdev);
+ 	must_wait = 0;
+ 	min_chunksize = minimum_chunk_size(o);
+ 	if (min_chunksize) {
+ 		chunk_t n;
+-		for (n = 0; n < s->store->chunk_size; n += min_chunksize) {
++		for (n = 0; n < io_size; n += min_chunksize) {
+ 			r = __origin_write(&o->snapshots, dest.sector + n,
+ 					   NULL);
+ 			if (r == DM_MAPIO_SUBMITTED)
+@@ -715,10 +719,12 @@ test_again:
+ 	}
  
--	atomic_set(&md->pending, 0);
-+	atomic_set(&md->pending[0], 0);
-+	atomic_set(&md->pending[1], 0);
- 	init_waitqueue_head(&md->wait);
- 	INIT_WORK(&md->work, dm_wq_work);
- 	init_waitqueue_head(&md->eventq);
-@@ -2083,7 +2086,8 @@ static int dm_wait_for_completion(struct mapped_device *md, int interruptible)
- 				break;
- 			}
- 			spin_unlock_irqrestore(q->queue_lock, flags);
--		} else if (!atomic_read(&md->pending))
-+		} else if (!atomic_read(&md->pending[0]) &&
-+					!atomic_read(&md->pending[1]))
- 			break;
+ 	down_write(&s->lock);
+-	s->merge_write_interlock = old_chunk;
+-	s->merge_write_interlock_n = 1;
++	s->merge_write_interlock = old_chunk + 1 - linear_chunks;
++	s->merge_write_interlock_n = linear_chunks;
+ 	up_write(&s->lock);
  
- 		if (interruptible == TASK_INTERRUPTIBLE &&
-diff --git a/fs/partitions/check.c b/fs/partitions/check.c
-index ea4e6cb..619ba99 100644
---- a/fs/partitions/check.c
-+++ b/fs/partitions/check.c
-@@ -248,11 +248,19 @@ ssize_t part_stat_show(struct device *dev,
- 		part_stat_read(p, merges[WRITE]),
- 		(unsigned long long)part_stat_read(p, sectors[WRITE]),
- 		jiffies_to_msecs(part_stat_read(p, ticks[WRITE])),
--		p->in_flight,
-+		part_in_flight(p),
- 		jiffies_to_msecs(part_stat_read(p, io_ticks)),
- 		jiffies_to_msecs(part_stat_read(p, time_in_queue)));
- }
++	/* TODO: rather than only checking if the first chunk has a conflicting
++	   read; do all 'linear_chunks' need to be checked? */
+ 	while (__chunk_is_tracked(s, old_chunk))
+ 		msleep(1);
  
-+ssize_t part_inflight_show(struct device *dev,
-+			struct device_attribute *attr, char *buf)
-+{
-+	struct hd_struct *p = dev_to_part(dev);
-+
-+	return sprintf(buf, "%8u %8u\n", p->in_flight[0], p->in_flight[1]);
-+}
-+
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- ssize_t part_fail_show(struct device *dev,
- 		       struct device_attribute *attr, char *buf)
-@@ -281,6 +289,7 @@ static DEVICE_ATTR(start, S_IRUGO, part_start_show, NULL);
- static DEVICE_ATTR(size, S_IRUGO, part_size_show, NULL);
- static DEVICE_ATTR(alignment_offset, S_IRUGO, part_alignment_offset_show, NULL);
- static DEVICE_ATTR(stat, S_IRUGO, part_stat_show, NULL);
-+static DEVICE_ATTR(inflight, S_IRUGO, part_inflight_show, NULL);
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- static struct device_attribute dev_attr_fail =
- 	__ATTR(make-it-fail, S_IRUGO|S_IWUSR, part_fail_show, part_fail_store);
-@@ -292,6 +301,7 @@ static struct attribute *part_attrs[] = {
- 	&dev_attr_size.attr,
- 	&dev_attr_alignment_offset.attr,
- 	&dev_attr_stat.attr,
-+	&dev_attr_inflight.attr,
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- 	&dev_attr_fail.attr,
- #endif
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 45fc320..44263cb 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -98,7 +98,7 @@ struct hd_struct {
- 	int make_it_fail;
- #endif
- 	unsigned long stamp;
--	int in_flight;
-+	int in_flight[2];
- #ifdef	CONFIG_SMP
- 	struct disk_stats *dkstats;
- #else
-@@ -322,18 +322,23 @@ static inline void free_part_stats(struct hd_struct *part)
- #define part_stat_sub(cpu, gendiskp, field, subnd)			\
- 	part_stat_add(cpu, gendiskp, field, -subnd)
+@@ -745,7 +751,7 @@ static inline void release_write_interlock(struct dm_snapshot *s, int err)
  
--static inline void part_inc_in_flight(struct hd_struct *part)
-+static inline void part_inc_in_flight(struct hd_struct *part, int rw)
+ static void merge_callback(int read_err, unsigned long write_err, void *context)
  {
--	part->in_flight++;
-+	part->in_flight[rw]++;
- 	if (part->partno)
--		part_to_disk(part)->part0.in_flight++;
-+		part_to_disk(part)->part0.in_flight[rw]++;
- }
+-	int r;
++	int r, i;
+ 	struct dm_snapshot *s = context;
+ 	struct dm_snap_exception *e;
  
--static inline void part_dec_in_flight(struct hd_struct *part)
-+static inline void part_dec_in_flight(struct hd_struct *part, int rw)
- {
--	part->in_flight--;
-+	part->in_flight[rw]--;
- 	if (part->partno)
--		part_to_disk(part)->part0.in_flight--;
-+		part_to_disk(part)->part0.in_flight[rw]--;
-+}
-+
-+static inline int part_in_flight(struct hd_struct *part)
-+{
-+	return part->in_flight[0] + part->in_flight[1];
- }
+@@ -757,25 +763,34 @@ static void merge_callback(int read_err, unsigned long write_err, void *context)
+ 		goto shut;
+ 	}
  
- /* block/blk-core.c */
-@@ -546,6 +551,8 @@ extern ssize_t part_size_show(struct device *dev,
- 			      struct device_attribute *attr, char *buf);
- extern ssize_t part_stat_show(struct device *dev,
- 			      struct device_attribute *attr, char *buf);
-+extern ssize_t part_inflight_show(struct device *dev,
-+			      struct device_attribute *attr, char *buf);
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- extern ssize_t part_fail_show(struct device *dev,
- 			      struct device_attribute *attr, char *buf);
+-	r = s->store->type->commit_merge(s->store, 1);
++	r = s->store->type->commit_merge(s->store, s->merge_write_interlock_n);
+ 	if (r < 0) {
+ 		DMERR("Write error in exception store, shutting down merge");
+ 		goto shut;
+ 	}
+ 
+ 	down_write(&s->lock);
+-	e = lookup_exception(&s->complete, s->merge_write_interlock);
+-	if (!e) {
+-		DMERR("exception for block %llu is on disk but not in memory",
+-		      (unsigned long long)s->merge_write_interlock);
+-		up_write(&s->lock);
+-		goto shut;
+-	}
+-	if (dm_consecutive_chunk_count(e)) {
+-		dm_consecutive_chunk_count_dec(e);
+-	} else {
+-		remove_exception(e);
+-		free_exception(e);
++	/*
++	 * Must process chunks (and associated exceptions) in reverse
++	 * so that dm_consecutive_chunk_count_dec() accounting works
++	 */
++	for (i = s->merge_write_interlock_n - 1; i >= 0; i--) {
++		e = lookup_exception(&s->complete,
++				     s->merge_write_interlock + i);
++		if (!e) {
++			DMERR("exception for block %llu is on "
++			      "disk but not in memory",
++			      (unsigned long long)
++			      s->merge_write_interlock + i);
++			up_write(&s->lock);
++			goto shut;
++		}
++		if (dm_consecutive_chunk_count(e)) {
++			dm_consecutive_chunk_count_dec(e);
++		} else {
++			remove_exception(e);
++			free_exception(e);
++		}
+ 	}
+ 	release_write_interlock(s, 0);
+ 
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
