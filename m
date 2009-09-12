@@ -1,55 +1,57 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: rebased snapshot-merge patches
-Date: Sat, 12 Sep 2009 02:56:08 -0400
-Message-ID: <20090912065608.GA1864@redhat.com>
+Date: Sat, 12 Sep 2009 03:54:36 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0909120350300.22286@hs20-bc2-1.build.redhat.com>
 References: <20090831220834.GA15126@redhat.com>
 	<Pine.LNX.4.64.0909081002540.26574@hs20-bc2-1.build.redhat.com>
-	<20090911065135.GA3210@redhat.com>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+	<20090911065135.GA3210@redhat.com> <20090912065608.GA1864@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <lvm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090911065135.GA3210@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090912065608.GA1864@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 11 2009 at  2:51am -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Sat, 12 Sep 2009, Mike Snitzer wrote:
 
-> Mikulas,
+> On Fri, Sep 11 2009 at  2:51am -0400,
+> Mike Snitzer <snitzer@redhat.com> wrote:
 > 
-> I ran with your suggestion and it works quite well (results below).
-...
-> The changes are detailed at the end of this mail.  I still have a "TODO"
-> that you'll see in the patch that speaks to needing to have
-> snapshot_merge_process() check all origin chunks via __chunk_is_tracked()
-> rather than just the one check of the first chunk.  Your feedback here
-> would be much appreciated.  I'm not completely clear on the intent of
-> the __chunk_is_tracked() check there and what it now needs to do.
+> > Mikulas,
+> > 
+> > I ran with your suggestion and it works quite well (results below).
+> ...
+> > The changes are detailed at the end of this mail.  I still have a "TODO"
+> > that you'll see in the patch that speaks to needing to have
+> > snapshot_merge_process() check all origin chunks via __chunk_is_tracked()
+> > rather than just the one check of the first chunk.  Your feedback here
+> > would be much appreciated.  I'm not completely clear on the intent of
+> > the __chunk_is_tracked() check there and what it now needs to do.
+> 
+> I believe I've sorted this out.  The TODO should've read something like:
+> snapshot_merge_process() should delay the merging of _all_ chunks
+> that have in-progress writes; not just the first chunk in the region
+> that is to be merged.
+> 
+> The revised patch (relative to Jon's unified snapshot tree) is here:
+> http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/dm-snapshot-merge-use-larger-io-when-merging.patch
+> 
+> Pretty sure it _should_ work; but can't test until we get this unified
+> snapshot patchset working properly.
 
-I believe I've sorted this out.  The TODO should've read something like:
-snapshot_merge_process() should delay the merging of _all_ chunks
-that have in-progress writes; not just the first chunk in the region
-that is to be merged.
+Yes, that's right. The purpose of the tracking while merging is to exclude 
+pending writes to the region that is being merged --- so we must wait for 
+writes on all chunks. The patch seems fine.
 
-The revised patch (relative to Jon's unified snapshot tree) is here:
-http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/dm-snapshot-merge-use-larger-io-when-merging.patch
-
-Pretty sure it _should_ work; but can't test until we get this unified
-snapshot patchset working properly.
-
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+Mikulas
