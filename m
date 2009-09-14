@@ -1,367 +1,55 @@
 From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: [PATCH 9/9] blkio-cgroup-v12: The document of a cgroup
- support for dm-ioband
-Date: Mon, 14 Sep 2009 21:32:03 +0900 (JST)
-Message-ID: <20090914.213203.59660671.ryov@valinux.co.jp>
-References: <20090914.213047.112618086.ryov@valinux.co.jp>
-	<20090914.213118.183028978.ryov@valinux.co.jp>
-	<20090914.213143.39162487.ryov@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] Re: IO controller Mini-Summit 2009
+Date: Mon, 14 Sep 2009 21:47:42 +0900 (JST)
+Message-ID: <20090914.214742.115912456.ryov@valinux.co.jp>
+References: <20090826.203251.260094379.ryov@valinux.co.jp>
+	<20090914021509.GB4070@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090914.213143.39162487.ryov@valinux.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, agk@redhat.com
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <20090914021509.GB4070@redhat.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: dm-devel@redhat.com, snitzer@redhat.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, ioband-devel@lists.sourceforge.net, corsetproject@googlegroups.com, kunai@linux-foundation.jp, osonoi@linux-foundation.jp
 List-Id: dm-devel.ids
 
-The document of a cgroup support for dm-ioband.
+Hi Mike,
 
-Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
-Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
+Mike Snitzer <snitzer@redhat.com> wrote:
+> On Wed, Aug 26 2009 at  7:32am -0400,
+> Ryo Tsuruta <ryov@valinux.co.jp> wrote:
+> 
+> > Hi All,
+> > 
+> > As I have notified before, The 1st Linux IO controller Mini-Summit
+> > will be held in Tokyo Japan on Oct 17 -- day before the 9th Linux
+> > kernel summit. So I would like to propose the following topics for 
+> > the mini-summit and discuss about them.
+> > 
+> > - Multiple IO controller development projects
+> >   - There are two activities for the development of IO controller,
+> >     Vivek's io-controller and dm-ioband. Do we have to pick one of
+> >     them to put into the mainline? How to advance the development?
+> 
+> This has been said by others before but: there is no reason the above
+> line of discussion can't happen on LKML et. al. (preferably now).
+> Deferring the discussion until Oct 17 guarantees that no solution would
+> be merged into 2.6.32.  This would be quite unfortunate considering how
+> far Vivek's IO Controller has come.   Aren't there also doubts about
+> whether the appropriate upstream people will be able to attend this
+> mini-summit?
 
----
- Documentation/cgroups/blkio.txt |  314 +++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 313 insertions(+), 1 deletion(-)
+I don't mean to defer the discussion until the mini-summit. I would
+like to discuss about the above topic anytime in mailing lists and
+hear opinions from the upstream people.
 
-Index: linux-2.6.31/Documentation/cgroups/blkio.txt
-===================================================================
---- linux-2.6.31.orig/Documentation/cgroups/blkio.txt
-+++ linux-2.6.31/Documentation/cgroups/blkio.txt
-@@ -11,6 +11,9 @@ I/O with a little enhancement.
- 
- 2. Setting up blkio-cgroup
- 
-+Note: If dm-ioband is to be used with blkio-cgroup, then the dm-ioband
-+patch needs to be applied first.
-+
- The following kernel config options are required.
- 
- CONFIG_CGROUPS=y
-@@ -43,7 +46,316 @@ determined by retrieving the ID number f
- the page cgroup is associated with the page which is involved in the
- I/O.
- 
--4. Contact
-+If the dm-ioband support patch was applied then the blkio.devices and
-+blkio.settings files will also be present.
-+
-+4. Using dm-ioband and blkio-cgroup
-+
-+This section describes how to set up dm-ioband and blkio-cgroup in
-+order to control bandwidth on a per cgroup per logical volume basis.
-+The example used in this section assumes that there are two LVM volume
-+groups on individual hard disks and two logical volumes on each volume
-+group.
-+
-+                         Table. LVM configurations
-+
-+     --------------------------------------------------------------
-+    |   LVM volume group   |  vg0 on /dev/sda  |  vg1 on /dev/sdb  |
-+    |----------------------+-------------------+-------------------|
-+    |  LVM logical volume  |   lv0   |   lv1   |   lv0   |   lv1   |
-+     --------------------------------------------------------------
-+
-+4.1. Creating a dm-ioband logical device
-+
-+A dm-ioband logical device needs to be created and stacked on the
-+device that is to bandwidth controlled. In this example the dm-ioband
-+logical devices are stacked on each of the existing LVM logical
-+volumes. By using the LVM facilities there is no need to unmount any
-+logical volumes, even in the case of a volume being used as the root
-+device. The following script is an example of how to stack and remove
-+dm-ioband devices.
-+
-+==================== cut here (ioband.sh) ====================
-+#!/bin/sh
-+#
-+# NOTE: You must run "ioband.sh stop" to restore the device-mapper
-+# settings before changing logical volume settings, such as activate,
-+# rename, resize and so on. These constraints would be eliminated by
-+# enhancing LVM tools to support dm-ioband.
-+
-+logvols="vg0-lv0 vg0-lv1 vg1-lv0 vg1-lv1"
-+
-+start()
-+{
-+	for lv in $logvols; do
-+		volgrp=${lv%%-*}
-+		orig=${lv}-orig
-+
-+		# clone an existing logical volume.
-+		/sbin/dmsetup table $lv | /sbin/dmsetup create $orig
-+
-+		# stack a dm-ioband device on the clone.
-+		size=$(/sbin/blockdev --getsize /dev/mapper/$orig)
-+		cat<<-EOM | /sbin/dmsetup load ${lv}
-+	0 $size ioband /dev/mapper/${orig} ${volgrp} 0 0 cgroup weight 0 :100
-+		EOM
-+
-+		# activate the new setting.
-+		/sbin/dmsetup resume $lv
-+	done
-+}
-+
-+stop()
-+{
-+	for lv in $logvols; do
-+		orig=${lv}-orig
-+
-+		# restore the original setting.
-+		/sbin/dmsetup table $orig | /sbin/dmsetup load $lv
-+
-+		# activate the new setting.
-+		/sbin/dmsetup resume $lv
-+
-+		# remove the clone.
-+		/sbin/dmsetup remove $orig
-+	done
-+}
-+
-+case "$1" in
-+	start)
-+		start
-+        ;;
-+	stop)
-+		stop
-+        ;;
-+esac
-+exit 0
-+==================== cut here (ioband.sh) ====================
-+
-+The following diagram shows how dm-ioband devices are stacked on and
-+removed from the logical volumes.
-+
-+           Figure. stacking and removing dm-ioband devices
-+
-+                     run "ioband.sh start"
-+                              ===>
-+
-+     -----------------------        -----------------------
-+    |    lv0    |    lv1    |      |    lv0    |    lv1    |
-+    |(dm-linear)|(dm-linear)|      |(dm-ioband)|(dm-ioband)|
-+    |-----------------------|      |-----------+-----------|
-+    |         vg0           |      | lv0-orig  | lv1-orig  |
-+     -----------------------       |(dm-linear)|(dm-linear)|
-+                                   |-----------------------|
-+                                   |          vg0          |
-+                                    -----------------------
-+                              <===
-+                      run "ioband.sh stop"
-+
-+After creating the dm-ioband devices, the settings can be observed by
-+reading the blkio.devices file.
-+
-+# cat /cgroup/blkio.devices
-+vg0 policy=weight io_throttle=4 io_limit=192 token=768 carryover=2
-+  vg0-lv0
-+  vg0-lv1
-+vg1 policy=weight io_throttle=4 io_limit=192 token=768 carryover=2
-+  vg1-lv0
-+  vg1-lv1
-+
-+The first field in the first line is the symbolic name for an ioband
-+device group, and the subsequent fields are settings for the ioband
-+device group. The settings can be changed by writing to the
-+blkio.devices, for example:
-+
-+# echo vg1 policy range-bw > /cgroup/blkio.devices
-+
-+Please refer to Document/device-mapper/ioband.txt which describes the
-+details of the ioband device group settings.
-+
-+The second and the third indented lines "vg0-lv0" and "vg0-lv1" are
-+the names of the dm-ioband devices that belong to the ioband device
-+group. Typically, dm-ioband devices that reside on the same hard disk
-+should belong to the same ioband device group in order to share the
-+bandwidth of the hard disk.
-+
-+dm-ioband is not restricted to working with LVM, it may work in
-+conjunction with any type of block device. Please refer to
-+Documentation/device-mapper/ioband.txt for more details.
-+
-+4.2 Setting up dm-ioband through the blkio-cgroup interface
-+
-+The following table shows the given settings for this example. The
-+bandwidth will be assigned on a per cgroup per logical volume basis.
-+
-+                   Table. Settings for each cgroup
-+
-+     --------------------------------------------------------------
-+    |   LVM volume group   |  vg0 on /dev/sda  |  vg1 on /dev/sdb  |
-+    |----------------------+-------------------+-------------------|
-+    |  LVM logical volume  |   lv0   |   lv1   |   lv0   |   lv1   |
-+    |----------------------+-------------------+-------------------|
-+    |   bandwidth control  |     relative      |     absolute      |
-+    |        policy        |      weight       |  bandwidth limit  |
-+    |----------------------+-------------------+-------------------|
-+    |         unit         |     weight [%]    | throughput [KB/s] |
-+    |----------------------+-------------------+-------------------|
-+    | settings for cgroup1 |    30   |    50   |   400   |   900   |
-+    |----------------------+---------+---------+---------+---------|
-+    | settings for cgroup2 |    60   |    20   |   200   |   600   |
-+    |----------------------+---------+---------+---------+---------|
-+    |    for root cgroup   |    70   |    30   |   100   |   300   |
-+     --------------------------------------------------------------
-+
-+The set-up is described step-by-step below.
-+
-+1) Create new cgroups using the mkdir command
-+
-+# mkdir /cgroup/1
-+# mkdir /cgroup/2
-+
-+2) Set bandwidth control policy on each ioband device group
-+
-+The set-up of bandwidth control policy is done by writing to
-+blkio.devices file.
-+
-+# echo vg0 policy weight > /cgroup/blkio.devices
-+# echo vg1 policy range-bw > /cgroup/blkio.devices
-+
-+3) Set up the root cgroup
-+
-+The root cgroup represents the default blkio-cgroup. If an I/O is
-+performed by a process in a cgroup and the cgroup is not set up by
-+blkio-cgroup, the I/O is charged to the root cgroup.
-+
-+The set-up of the root cgroup is done by writing to blkio.settings
-+file in the cgroup's root directory. The following commands write
-+the settings of each logical volume to that file.
-+
-+# echo vg0-lv0 70 > /cgroup/bklio.settings
-+# echo vg0-lv1 30 > /cgroup/bklio.settings
-+# echo vg1-lv0 100:100 > /cgroup/blkio.settings
-+# echo vg1-lv1 300:300 > /cgroup/blkio.settings
-+
-+The settings can be verified by reading the blkio.settings file. The
-+first field is the symbolic name for an ioband device group, and the
-+second field is an ioband device name. The following example shows
-+that vg0-lv0 and vg0-lv1 belong to the same ioband device group and
-+share the bandwidth of sda according to their weights.
-+
-+# cat /cgroup/blkio.settings
-+sda vg0-lv0 weight=70%
-+sda vg0-lv1 weight=30%
-+sdb vg1-lv0 range-bw=100:100
-+sdb vg1-lv1 range-bw=300:300
-+
-+4) Set up cgroup1 and cgroup2
-+
-+New cgroups are set up in the same manner as the root cgroup.
-+
-+Settings for cgroup1
-+# echo vg0-lv0 30 > /cgroup/1/blkio.settings
-+# echo vg0-lv1 50 > /cgroup/1/bklio.settings
-+# echo vg1-lv0 400:400 > /cgroup/1/blkio.settings
-+# echo vg1-lv1 900:900 > /cgroup/1/bklio.settings
-+
-+Settings for cgroup2
-+# echo vg0-lv0 60 > /cgroup/2/blkio.settings
-+# echo vg0-lv1 20 > /cgroup/2/bklio.settings
-+# echo vg1-lv0 200:200 > /cgroup/2/blkio.settings
-+# echo vg1-lv1 600:600 > /cgroup/2/bklio.settings
-+
-+Again, the settings can be verified by reading the appropriate
-+blkio.settings file.
-+
-+# cat /cgroup/1/blkio.settings
-+vg0-lv0 weight=30%
-+vg0-lv1 weight=50%
-+vg1-lv0 range-bw=400:400
-+vg1-lv1 range-bw=900:900
-+
-+If only the logical volume name is specified, the entry for the
-+logical volume is removed.
-+
-+# echo vg0-lv1 > /cgroup/1/vlkio.setting
-+# cat /cgroup/1/blkio.settings
-+vg0-lv0 weight=30%
-+vg0-lv1 weight=50%
-+vg1-lv0 range-bw=400:400
-+
-+4.3 How bandwidth is distributed in the weight policy.
-+
-+The weight policy assigns bandwidth proportional to the weight of each
-+cgroup in a hierarchical manner. The bandwidth assigned to a parent
-+cgroup is distributed among the parent and its children according to
-+their weight. For example, if there are two child cgroups under the
-+parent cgroup, cgroup1 is assigned 60% of the parent bandwidth, and
-+cgroup2 is assigned 30%, then 10% (100% - 60% + 30%) remains for the
-+parent cgroup.
-+
-+        Figure. bandwidth distribution among a parent and children
-+
-+                    (100% - 30% - 60% = 10%)
-+                            parent
-+                           /      \
-+                       cgroup1    cgroup2
-+                        (30%)      (60%)
-+
-+The followings show how the bandwidth is calculated ans assigned to
-+each cgroup in the given settings which are shown above.
-+
-+           Figure. hierarchical settings by the weight policy
-+
-+                (70%)  ---  /dev/sda ---  (30%) 
-+
-+               vg0/lv0                   vg0/lv1
-+
-+                (10%)                     (30%)
-+             root(parent)              root(parent)
-+              /      \                  /      \
-+          cgroup1    cgroup2        cgroup1    cgroup2
-+           (30%)      (60%)          (50%)      (20%)
-+
-+
-+             Table. actual bandwidth assigned to each cgroup
-+
-+        ------------------------------------------------------------
-+       |          |         | weight     | actual bandwidth         |
-+       | shared   | logical | for a root | assigned to each cgroup  |
-+       | device   | volume  | group      | against /dev/sda         |
-+       |----------+---------+------------+--------------------------|
-+       |          |         |            | parent   70% * 10% =  7% |
-+       |          | vg0/lv0 |     70%    | cgroup1  70% * 30% = 21% |
-+       |          |         |            | cgroup2  70% * 60% = 42% |	
-+       | /dev/sda |---------+------------+--------------------------|
-+       |          |         |            | parent   30% * 30% =  9% |
-+       |          | vg1/lv1 |     30%    | cgroup1  30% * 50% = 15% |
-+       |          |         |            | cgruop2  30% * 20% =  6% |
-+        ------------------------------------------------------------
-+
-+4.4 Getting IO statistics per cgroup.
-+
-+The blkio.stats file provides IO statistics per dm-ioband per cgroup.
-+This file consists of 12 fields separated by whitespace. The format is
-+almost the same as /proc/diskstats and /sys/block/dev/stat files, but
-+some fields are reserved for future use and they always return 0.
-+
-+Field #   Name            units         description
-+-------   ----            -----         -----------
-+1         device name                   name of dm-ioband device
-+2         read I/Os       requests      number of read I/Os processed
-+3                                       *reserved*
-+4         read sectors    sectors       number of sectors read
-+5                                       *reserved*
-+6         write I/Os      requests      number of write I/Os processed
-+7                                       *reserved*
-+8         write sectors   sectors       number of sectors written
-+9                                       *reserved*
-+10        in_flight       requests      number of I/Os currently in flight
-+11                                      *reserved*
-+12                                      *reserved*
-+
-+5. Contact
- 
- Linux Block I/O Bandwidth Control Project
- http://sourceforge.net/projects/ioband/
+Thanks,
+Ryo Tsuruta
