@@ -1,16 +1,11 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipath-tools: Add preferred TPG prioritizer
-Date: Mon, 14 Sep 2009 10:59:00 -0500
-Message-ID: <20090914155859.GO15326@ether.msp.redhat.com>
-References: <20090911182308.GN15326@ether.msp.redhat.com>
-	<4AADE1A7.1080008@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: a bug in --namesnapshot merge
+Date: Mon, 14 Sep 2009 13:21:35 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0909141225570.18131@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4AADE1A7.1080008@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,55 +15,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <msnitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Sep 14, 2009 at 08:24:39AM +0200, Hannes Reinecke wrote:
-> Benjamin Marzinski wrote:
->> Instead of using the Target port's Asymmetric Access State to determin=
-e
->> priority, some users what to use the preferred port bit.  This patch m=
-akes
->> a new prioritizer, based off the ALUA prioritizer, but using the prefe=
-rred
->> port bit instead.
->>
-> Please, no.
->
-> This would mean that 'tpg_pref' would evaluate the PREF bit _only_,
-> with total disregard to the other settings.
->
+Hi
 
-The PREF bit isn't static.  It can change whenever the AAS status
-changes.  I'd like to think that most devices do something sane like
-removing the PREF bit from offline and unavailable ports. Perhaps that
-is hoping for too much.  So making sure that the preferred port
-is a sane choice makes sense.  I'm not sure what you patch does, but I
-got the feeling that people wanted to choose, for instance, a preferred
-standby port over a non-preferred active port.  If you have a patch that
-does that, I'm all for it.  Otherwise, I can add some logic to make sure
-that the preferred port is a reasonable one (not unavailable or offline).
+When lvconvert -M --namesnapshot is invoked, there is a bug, it ends up 
+with a message like
+device-mapper: snapshots: exception for block 0 is on disk but not in 
+memory
 
-How does that sound?
+The bug is not in the kernel but in the lvm. It loads -real and -cow 
+devices badly, so that the kernel treats the origin volume as the 
+snapshot.
 
--Ben
+The --namesnapshot option causes that the snapshot becomes the origin and 
+mergin starts, if we have
+lv-origin   owi-a- origin
+lv-snapshot swi--- snapshot
+, after lvconvert -M --namesnapshot vg/lv-snapshot, we'll have
+lv-snapshot Owi-a- mergin snapshot, containing the previous content of 
+lv-snapshot
 
-> We should be updating the existing 'alua' prioritizer to evaluate
-> the PREF bit together with the existing AAS status; then we could
-> be using it for all scenarios.
->
-> I think I got a patch somewhere ...
->
-> Cheers,
->
-> Hannes
-> --=20
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+The trick that needs to be done is to preserve the logical volume 
+structure and the device, but move it from one storage to another. Sadly, 
+LVM2 is not designed to do it. That --pivotorigin option that Alasdair 
+implemented needed the same trick and it was buggy too.
+
+I'd suggest to remove --namesnapshot option at all (and remove patches
+lvm-merge-swap-uuid.patch and 
+lvm-merge-swap-lvid-of-underlying-devices.patch that do most of this 
+stuff) and leave only --nameorigin and --onactivate.
+
+The implementation of --namesnapshot is very dirty. I was writing that 
+option --namesnapshot for a month, implemented it three times before 
+getting it right. And now some other changes to lvm made it nonworking 
+again. It is unmaintainable over the long term. It is not worth fixing, 
+because it would be beroken again.
+
+Other that that, I think that snapshot merging could be applied to the 
+kernel and lvm.
+
+Mikulas
