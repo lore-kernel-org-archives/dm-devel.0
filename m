@@ -1,14 +1,19 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath-tools: Add preferred TPG prioritizer
-Date: Mon, 14 Sep 2009 08:24:39 +0200
-Message-ID: <4AADE1A7.1080008@suse.de>
-References: <20090911182308.GN15326@ether.msp.redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: recent bdi changes result in WARN_ON on luksClose /
+	dm
+Date: Mon, 14 Sep 2009 11:05:33 +0200
+Message-ID: <20090914090533.GU14984@kernel.dk>
+References: <20090912111928.GA8013@Chamillionaire.breakpoint.cc>
+	<20090912195212.GF14984@kernel.dk>
+	<20090912195839.GG14984@kernel.dk>
+	<20090913091337.GA21969@Chamillionaire.breakpoint.cc>
+	<20090913175717.GO14984@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090911182308.GN15326@ether.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090913175717.GO14984@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,33 +23,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Benjamin Marzinski wrote:
-> Instead of using the Target port's Asymmetric Access State to determine
-> priority, some users what to use the preferred port bit.  This patch ma=
-kes
-> a new prioritizer, based off the ALUA prioritizer, but using the prefer=
-red
-> port bit instead.
->=20
-Please, no.
+On Sun, Sep 13 2009, Jens Axboe wrote:
+> On Sun, Sep 13 2009, Sebastian Andrzej Siewior wrote:
+> > * Jens Axboe | 2009-09-12 21:58:40 [+0200]:
+> > 
+> > >Don't count this as a real fix, I'll investigate closer on monday. Does
+> > >the warning go away with this hack? It'll ensure that pending dirty
+> > >inodes are flushed.
+> > 
+> > That warning goes away but another pops up:
+> 
+> Oh right, just goes to show that it's doing this backwards. We need the
+> umount rwsem for WB_SYNC_ALL. I'll look at this tomorrow.
 
-This would mean that 'tpg_pref' would evaluate the PREF bit _only_,
-with total disregard to the other settings.
+I think the safest option is to ensure that we just move these entries
+to our default bdi, which doesn't go away. This should fix the warning,
+can you test whether it works as well?
 
-We should be updating the existing 'alua' prioritizer to evaluate
-the PREF bit together with the existing AAS status; then we could
-be using it for all scenarios.
+diff --git a/mm/backing-dev.c b/mm/backing-dev.c
+index fd93566..27f82dc 100644
+--- a/mm/backing-dev.c
++++ b/mm/backing-dev.c
+@@ -668,7 +668,17 @@ void bdi_destroy(struct backing_dev_info *bdi)
+ {
+ 	int i;
+ 
+-	WARN_ON(bdi_has_dirty_io(bdi));
++	/*
++	 * Splice our entries to the default_backing_dev_info, if this
++	 * bdi disappears
++	 */
++	if (bdi_has_dirty_io(bdi)) {
++		struct bdi_writeback *dst = &default_backing_dev_info.wb;
++
++		list_splice(&bdi->wb.b_dirty, &dst->b_dirty);
++		list_splice(&bdi->wb.b_io, &dst->b_io);
++		list_splice(&bdi->wb.b_more_io, &dst->b_more_io);
++	}
+ 
+ 	bdi_unregister(bdi);
+ 
 
-I think I got a patch somewhere ...
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+-- 
+Jens Axboe
