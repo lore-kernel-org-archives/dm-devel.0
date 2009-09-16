@@ -1,7 +1,7 @@
 From: heinzm@sourceware.org
-Subject: dmraid/lib/register
-Date: 16 Sep 2009 11:43:17 -0000
-Message-ID: <20090916114317.32474.qmail@sourceware.org>
+Subject: dmraid/lib Makefile.in
+Date: 16 Sep 2009 11:51:33 -0000
+Message-ID: <20090916115133.17515.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,12 +18,34 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2009-09-16 11:43:17
+Changes by:	heinzm@sourceware.org	2009-09-16 11:51:32
 
-dmraid/lib/register
+Modified files:
+	lib            : Makefile.in 
 
-Update of /cvs/dm/dmraid/lib/register
-In directory sourceware.org:/tmp/cvs-serv32352/register
+Log message:
+	Avoid building dmreg.o
 
-Log Message:
-Directory /cvs/dm/dmraid/lib/register added to the repository
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.3&r2=1.4
+
+--- dmraid/lib/Makefile.in	2009/09/16 11:45:12	1.3
++++ dmraid/lib/Makefile.in	2009/09/16 11:51:32	1.4
+@@ -8,7 +8,7 @@
+ top_srcdir = @top_srcdir@
+ VPATH = @srcdir@
+ 
+-SOURCES=\
++SOURCES  = \
+ 	activate/activate.c \
+ 	activate/devmapper.c \
+ 	device/ata.c \
+@@ -45,7 +45,7 @@
+ 	format/ddf/ddf1_dump.c \
+ 	format/partition/dos.c
+ 
+-ifeq ( "@STATIC_LINK", "no")
++ifeq ("@STATIC_LINK@", "no")
+ 	SOURCES += register/dmreg.c
+ endif
+ 
