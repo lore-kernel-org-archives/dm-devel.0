@@ -1,202 +1,264 @@
-From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH] io-controller: Fix task hanging when there are more	than
- one groups
-Date: Wed, 16 Sep 2009 10:58:10 +0800
-Message-ID: <4AB05442.6080004@cn.fujitsu.com>
-References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com> <4AA4B905.8010801@cn.fujitsu.com> <20090908191941.GF15974@redhat.com> <4AA75B71.5060109@cn.fujitsu.com> <20090909150537.GD8256@redhat.com> <4AA9A4BE.30005@cn.fujitsu.com> <20090915033739.GA4054@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: ioband: Limited fairness and weak isolation between
+	groups (Was: Re: Regarding dm-ioband tests)
+Date: Wed, 16 Sep 2009 00:45:01 -0400
+Message-ID: <20090916044501.GB3736@redhat.com>
+References: <20090901165011.GB3753@redhat.com>
+	<20090904.130228.104054439.ryov@valinux.co.jp>
+	<20090904231129.GA3689@redhat.com>
+	<20090907.200222.193693062.ryov@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754868AbZIPDAK@vger.kernel.org>
-In-Reply-To: <20090915033739.GA4054@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: jens.axboe@oracle.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090907.200222.193693062.ryov@valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: riel@redhat.com, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-> On Fri, Sep 11, 2009 at 09:15:42AM +0800, Gui Jianfeng wrote:
->> Vivek Goyal wrote:
->>> On Wed, Sep 09, 2009 at 03:38:25PM +0800, Gui Jianfeng wrote:
->>>> Vivek Goyal wrote:
->>>>> On Mon, Sep 07, 2009 at 03:40:53PM +0800, Gui Jianfeng wrote:
->>>>>> Hi Vivek,
->>>>>>
->>>>>> I happened to encount a bug when i test IO Controller V9.
->>>>>> When there are three tasks to run concurrently in three group,
->>>>>> that is, one is parent group, and other two tasks are running 
->>>>>> in two different child groups respectively to read or write 
->>>>>> files in some disk, say disk "hdb", The task may hang up, and 
->>>>>> other tasks which access into "hdb" will also hang up.
->>>>>>
->>>>>> The bug only happens when using AS io scheduler.
->>>>>> The following scirpt can reproduce this bug in my box.
->>>>>>
->>>>> Hi Gui,
->>>>>
->>>>> I tried reproducing this on my system and can't reproduce it. All the
->>>>> three processes get killed and system does not hang.
->>>>>
->>>>> Can you please dig deeper a bit into it. 
->>>>>
->>>>> - If whole system hangs or it is just IO to disk seems to be hung.
->>>>     Only when the task is trying do IO to disk it will hang up.
->>>>
->>>>> - Does io scheduler switch on the device work
->>>>     yes, io scheduler can be switched, and the hung task will be resumed.
->>>>
->>>>> - If the system is not hung, can you capture the blktrace on the device.
->>>>>   Trace might give some idea, what's happening.
->>>> I run a "find" task to do some io on that disk, it seems that task hangs 
->>>> when it is issuing getdents() syscall.
->>>> kernel generates the following message:
->>>>
->>>> INFO: task find:3260 blocked for more than 120 seconds.
->>>> "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
->>>> find          D a1e95787  1912  3260   2897 0x00000004
->>>>  f6af2db8 00000096 f660075c a1e95787 00000032 f6600270 f6600508 c2037820
->>>>  00000000 c09e0820 f655f0c0 f6af2d8c fffebbf1 00000000 c0447323 f7152a1c
->>>>  0006a144 f7152a1c 0006a144 f6af2e04 f6af2db0 c04438df c2037820 c2037820
->>>> Call Trace:
->>>>  [<c0447323>] ? getnstimeofday+0x57/0xe0
->>>>  [<c04438df>] ? ktime_get_ts+0x4a/0x4e
->>>>  [<c068ab68>] io_schedule+0x47/0x79
->>>>  [<c04c12ee>] sync_buffer+0x36/0x3a
->>>>  [<c068ae14>] __wait_on_bit+0x36/0x5d
->>>>  [<c04c12b8>] ? sync_buffer+0x0/0x3a
->>>>  [<c068ae93>] out_of_line_wait_on_bit+0x58/0x60
->>>>  [<c04c12b8>] ? sync_buffer+0x0/0x3a
->>>>  [<c0440fa4>] ? wake_bit_function+0x0/0x43
->>>>  [<c04c1249>] __wait_on_buffer+0x19/0x1c
->>>>  [<f81e4186>] ext3_bread+0x5e/0x79 [ext3]
->>>>  [<f81e77a8>] htree_dirblock_to_tree+0x1f/0x120 [ext3]
->>>>  [<f81e7923>] ext3_htree_fill_tree+0x7a/0x1bb [ext3]
->>>>  [<c04a01f9>] ? kmem_cache_alloc+0x86/0xf3
->>>>  [<c044c428>] ? trace_hardirqs_on_caller+0x107/0x12f
->>>>  [<c044c45b>] ? trace_hardirqs_on+0xb/0xd
->>>>  [<f81e09e4>] ? ext3_readdir+0x9e/0x692 [ext3]
->>>>  [<f81e0b34>] ext3_readdir+0x1ee/0x692 [ext3]
->>>>  [<c04b1100>] ? filldir64+0x0/0xcd
->>>>  [<c068b86a>] ? mutex_lock_killable_nested+0x2b1/0x2c5
->>>>  [<c068b874>] ? mutex_lock_killable_nested+0x2bb/0x2c5
->>>>  [<c04b12db>] ? vfs_readdir+0x46/0x94
->>>>  [<c04b12fd>] vfs_readdir+0x68/0x94
->>>>  [<c04b1100>] ? filldir64+0x0/0xcd
->>>>  [<c04b1387>] sys_getdents64+0x5e/0x9f
->>>>  [<c04028b4>] sysenter_do_call+0x12/0x32
->>>> 1 lock held by find/3260:
->>>>  #0:  (&sb->s_type->i_mutex_key#7){+.+.+.}, at: [<c04b12db>] vfs_readdir+0x46/0x94
->>>>
->>>> ext3 calls wait_on_buffer() to wait buffer, and schedule the task out in TASK_UNINTERRUPTIBLE
->>>> state, and I found this task will be resumed after a quite long period(more than 10 mins).
->>> Thanks Gui. As Jens said, it does look like a case of missing queue
->>> restart somewhere and now we are stuck, no requests are being dispatched
->>> to the disk and queue is already unplugged.
->>>
->>> Can you please also try capturing the trace of events at io scheduler
->>> (blktrace) to see how did we get into that situation.
->>>
->>> Are you using ide drivers and not libata? As jens said, I will try to make
->>> use of ide drivers and see if I can reproduce it.
->>>
->> Hi Vivek, Jens,
->>
->> Currently, If there's only the root cgroup and no other child cgroup available, io-controller will
->> optimize to stop expiring the current ioq, and we thought the current ioq belongs to root group. But
->> in some cases, this assumption is not true. Consider the following scenario, if there is a child cgroup
->> located in root cgroup, and task A is running in the child cgroup, and task A issues some IOs. Then we
->> kill task A and remove the child cgroup, at this time, there is only root cgroup available. But the ioq
->> is still under service, and from now on, this ioq won't expire because "only root" optimization.
->> The following patch ensures the ioq do belongs to the root group if there's only root group existing.
->>
->> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+On Mon, Sep 07, 2009 at 08:02:22PM +0900, Ryo Tsuruta wrote:
+> Hi Vivek,
 > 
-> Hi Gui,
+> Vivek Goyal <vgoyal@redhat.com> wrote:
+> > > Thank you for testing dm-ioband. dm-ioband is designed to start
+> > > throttling bandwidth when multiple IO requests are issued to devices
+> > > simultaneously, IOW, to start throttling when IO load exceeds a
+> > > certain level.
+> > > 
+> > 
+> > What is that certain level? Secondly what's the advantage of this?
+> > 
+> > I can see disadvantages though. So unless a group is really busy "up to
+> > that certain level" it will not get fairness? I breaks the isolation
+> > between groups.
 > 
-> I have modified your patch a bit to improve readability. Looking at the
-> issue closely I realized that this optimization of not expiring the 
-> queue can lead to other issues like high vdisktime in certain scenarios.
-> While fixing that also noticed the issue of high rate of as queue
-> expiration in certain cases which could have been avoided. 
+> In your test case, at least more than one dd thread have to run
+> simultaneously in the higher weight group. The reason is that
+> if there is an IO group which does not issue a certain number of IO
+> requests, dm-ioband assumes the IO group is inactive and assign its
+> spare bandwidth to active IO groups. Then whole bandwidth of the
+> device can be efficiently used. Please run two dd threads in the
+> higher group, it will work as you expect.
 > 
-> Here is a patch which should fix all that. I am still testing this patch
-> to make sure that something is not obiviously broken. Will merge it if
-> there are no issues.
+> However, if you want to get fairness in a case like this, a new
+> bandwidth control policy which controls accurately according to
+> assigned weights can be added to dm-ioband.
 > 
-> Thanks
-> Vivek
+> > I also ran your test of doing heavy IO in two groups. This time I am
+> > running 4 dd threads in both the ioband devices. Following is the snapshot
+> > of "dmsetup table" output.
+> >
+> > Fri Sep  4 17:45:27 EDT 2009
+> > ioband2: 0 40355280 ioband 1 -1 0 0 0 0 0 0
+> > ioband1: 0 37768752 ioband 1 -1 0 0 0 0 0 0
+> > 
+> > Fri Sep  4 17:45:29 EDT 2009
+> > ioband2: 0 40355280 ioband 1 -1 41 0 4184 0 0 0
+> > ioband1: 0 37768752 ioband 1 -1 173 0 20096 0 0 0
+> > 
+> > Fri Sep  4 17:45:37 EDT 2009
+> > ioband2: 0 40355280 ioband 1 -1 1605 23 197976 0 0 0
+> > ioband1: 0 37768752 ioband 1 -1 4640 1 583168 0 0 0
+> > 
+> > Fri Sep  4 17:45:45 EDT 2009
+> > ioband2: 0 40355280 ioband 1 -1 3650 47 453488 0 0 0
+> > ioband1: 0 37768752 ioband 1 -1 8572 1 1079144 0 0 0
+> > 
+> > Fri Sep  4 17:45:51 EDT 2009
+> > ioband2: 0 40355280 ioband 1 -1 5111 68 635696 0 0 0
+> > ioband1: 0 37768752 ioband 1 -1 11587 1 1459544 0 0 0
+> > 
+> > Fri Sep  4 17:45:53 EDT 2009
+> > ioband2: 0 40355280 ioband 1 -1 5698 73 709272 0 0 0
+> > ioband1: 0 37768752 ioband 1 -1 12503 1 1575112 0 0 0
+> > 
+> > Fri Sep  4 17:45:57 EDT 2009
+> > ioband2: 0 40355280 ioband 1 -1 6790 87 845808 0 0 0
+> > ioband1: 0 37768752 ioband 1 -1 14395 2 1813680 0 0 0
+> > 
+> > Note, it took me more than 20 seconds (since I started the threds) to
+> > reach close to desired fairness level. That's too long a duration.
 > 
-> o Fixed the issue of not expiring the queue for single ioq schedulers. Reported
->   and fixed by Gui.
-> 
-> o If an AS queue is not expired for a long time and suddenly somebody
->   decides to create a group and launch a job there, in that case old AS
->   queue will be expired with a very high value of slice used and will get
->   a very high disk time. Fix it by marking the queue as "charge_one_slice"
->   and charge the queue only for a single time slice and not for whole
->   of the duration when queue was running.
-> 
-> o There are cases where in case of AS, excessive queue expiration will take
->   place by elevator fair queuing layer because of few reasons.
-> 	- AS does not anticipate on a queue if there are no competing requests.
-> 	  So if only a single reader is present in a group, anticipation does
-> 	  not get turn on.
-> 
-> 	- elevator layer does not know that As is anticipating hence initiates
-> 	  expiry requests in select_ioq() thinking queue is empty.
-> 
-> 	- elevaotr layer tries to aggressively expire last empty queue. This
-> 	  can lead to lof of queue expiry
-> 
-> o This patch now starts ANITC_WAIT_NEXT anticipation if last request in the
->   queue completed and associated io context is eligible to anticipate. Also
->   AS lets elevatory layer know that it is anticipating (elv_ioq_wait_request())
->   . This solves above mentioned issues.
->  
-> o Moved some of the code in separate functions to improve readability.
-> 
-...
+> We regarded reducing throughput loss rather than reducing duration
+> as the design of dm-ioband. Of course, it is possible to make a new
+> policy which reduces duration.
 
->  /* A request got completed from io_queue. Do the accounting. */
->  void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
->  {
-> @@ -3470,16 +3572,16 @@ void elv_ioq_completed_request(struct re
->  			elv_set_prio_slice(q->elevator->efqd, ioq);
->  			elv_clear_ioq_slice_new(ioq);
->  		}
-> +
->  		/*
->  		 * If there is only root group present, don't expire the queue
->  		 * for single queue ioschedulers (noop, deadline, AS). It is
->  		 * unnecessary overhead.
->  		 */
->  
-> -		if (is_only_root_group() &&
-> -			elv_iosched_single_ioq(q->elevator)) {
-> -			elv_log_ioq(efqd, ioq, "select: only root group,"
-> -					" no expiry");
-> +		if (single_ioq_no_timed_expiry(q)) {
+Not anticipating on rotation media and letting other group do the dispatch
+is not only bad for fairness of random readers but it seems to be bad for
+overall throughput also. So letting other group dispatching thinking it
+will boost throughput is not necessarily right on rotational media.
 
-  Hi Vivek,
+I ran following test. Created two groups of weight 100 each and put a 
+sequential dd reader in first group and put buffered writers in second
+group and let it run for 20 seconds and observed at the end of 20 seconds
+which group got how much work done. I ran this test multiple time, while
+increasing the number of writers by one each time. Did test this with
+dm-ioband and with io scheduler based io controller patches.
 
-  So we make use of single_ioq_no_timed_expiry() to decide whether there is only
-  root ioq to be busy, right? But single_ioq_no_timed_expiry() only checks if
-  the root cgroup is the only group and if there is only one busy_ioq there. As
-  I explained in previous mail, these two checks are not sufficient to say the
-  current active ioq comes from root group. Because when the child cgroup is just
-  removed, and the ioq which belongs to child group is still there(maybe some
-  requests are in flight). In this case, only root cgroup and only one active ioq
-  (child ioq) checks are satisfied. So IMHO, in single_ioq_no_timed_expiry() we 
-  still need to check "efqd->root_group->ioq" is already created to ensure the only
-  ioq comes from root group. Am i missing something?
+With dm-ioband
+==============
+launched reader 3176
+launched 1 writers
+waiting for 20 seconds
+ioband2: 0 40355280 ioband 1 -1 159 0 1272 0 0 0
+ioband1: 0 37768752 ioband 1 -1 13282 23 1673656 0 0 0
+Total sectors transferred: 1674928
 
+launched reader 3194
+launched 2 writers
+waiting for 20 seconds
+ioband2: 0 40355280 ioband 1 -1 138 0 1104 54538 54081 436304
+ioband1: 0 37768752 ioband 1 -1 4247 1 535056 0 0 0
+Total sectors transferred: 972464
 
-> +			elv_mark_ioq_charge_one_slice(ioq);
-> +			elv_log_ioq(efqd, ioq, "single ioq no timed expiry");
->  			goto done;
->  		}
->  
+launched reader 3203
+launched 3 writers
+waiting for 20 seconds
+ioband2: 0 40355280 ioband 1 -1 189 0 1512 44956 44572 359648
+ioband1: 0 37768752 ioband 1 -1 3546 0 447128 0 0 0
+Total sectors transferred: 808288
 
--- 
-Regards
-Gui Jianfeng
+launched reader 3213
+launched 4 writers
+waiting for 20 seconds
+ioband2: 0 40355280 ioband 1 -1 83 0 664 55937 55810 447496
+ioband1: 0 37768752 ioband 1 -1 2243 0 282624 0 0 0
+Total sectors transferred: 730784
+
+launched reader 3224
+launched 5 writers
+waiting for 20 seconds
+ioband2: 0 40355280 ioband 1 -1 179 0 1432 46544 46146 372352
+ioband1: 0 37768752 ioband 1 -1 3348 0 422744 0 0 0
+Total sectors transferred: 796528
+
+launched reader 3236
+launched 6 writers
+waiting for 20 seconds
+ioband2: 0 40355280 ioband 1 -1 176 0 1408 44499 44115 355992
+ioband1: 0 37768752 ioband 1 -1 3998 0 504504 0 0 0
+Total sectors transferred: 861904
+
+launched reader 3250
+launched 7 writers
+waiting for 20 seconds
+ioband2: 0 40355280 ioband 1 -1 451 0 3608 42267 42115 338136
+ioband1: 0 37768752 ioband 1 -1 2682 0 337976 0 0 0
+Total sectors transferred: 679720
+
+With io scheduler based io controller
+=====================================
+launched reader 3026
+launched 1 writers
+waiting for 20 seconds
+test1 statistics: time=8:48 8657   sectors=8:48 886112 dq=8:48 0
+test2 statistics: time=8:48 7685   sectors=8:48 473384 dq=8:48 4
+Total sectors transferred: 1359496
+
+launched reader 3064
+launched 2 writers
+waiting for 20 seconds
+test1 statistics: time=8:48 7429   sectors=8:48 856664 dq=8:48 0
+test2 statistics: time=8:48 7431   sectors=8:48 376528 dq=8:48 0
+Total sectors transferred: 1233192
+
+launched reader 3094
+launched 3 writers
+waiting for 20 seconds
+test1 statistics: time=8:48 7279   sectors=8:48 832840 dq=8:48 0
+test2 statistics: time=8:48 7302   sectors=8:48 372120 dq=8:48 0
+Total sectors transferred: 1204960
+
+launched reader 3122
+launched 4 writers
+waiting for 20 seconds
+test1 statistics: time=8:48 7291   sectors=8:48 846024 dq=8:48 0
+test2 statistics: time=8:48 7314   sectors=8:48 361280 dq=8:48 0
+Total sectors transferred: 1207304
+
+launched reader 3151
+launched 5 writers
+waiting for 20 seconds
+test1 statistics: time=8:48 7077   sectors=8:48 815184 dq=8:48 0
+test2 statistics: time=8:48 7090   sectors=8:48 398472 dq=8:48 0
+Total sectors transferred: 1213656
+
+launched reader 3179
+launched 6 writers
+waiting for 20 seconds
+test1 statistics: time=8:48 7494   sectors=8:48 873304 dq=8:48 1
+test2 statistics: time=8:48 7034   sectors=8:48 316312 dq=8:48 2
+Total sectors transferred: 1189616
+
+launched reader 3209
+launched 7 writers
+waiting for 20 seconds
+test1 statistics: time=8:48 6809   sectors=8:48 795528 dq=8:48 0
+test2 statistics: time=8:48 6850   sectors=8:48 380008 dq=8:48 1
+Total sectors transferred: 1175536
+
+Few things stand out.
+====================
+- With dm-ioband, as number of writers increased, in group 2, it gave
+  BW to those writes over reads running in group 1. It had two bad
+  effects. First of all read throughput went down secondly overall disk
+  throughput also went down.
+
+  So reader did not get fairness at the same time overall throughput went
+  down. Hence probably it is not a very good idea to not anticipate and
+  always let other groups dispatch on rotational media.
+
+  In contrast, io scheduler based controller seems to be steady and reader
+  doest not suffer as number of writers increase in the second group and
+  overall disk throughput also remains stable.
+
+Follwoing is the sample script I used for above test.
+
+*******************************************************************
+launch_writers() {
+        nr_writers=$1
+        for ((j=1;j<=$nr_writers;j++)); do
+                dd if=/dev/zero of=/mnt/sdd2/writefile$j bs=4K &
+        #       echo "launched writer $!"
+        done
+}
+
+do_test () {
+        nr_writers=$1
+        sync
+        echo 3 > /proc/sys/vm/drop_caches
+
+        echo noop > /sys/block/sdd/queue/scheduler
+        echo cfq > /sys/block/sdd/queue/scheduler
+
+        dmsetup message ioband1 0 reset
+        dmsetup message ioband2 0 reset
+
+        #launch a sequential reader in sdd1
+        dd if=/mnt/sdd1/4G-file of=/dev/null &
+        echo "launched reader $!"
+
+        launch_writers $nr_writers
+        echo "launched $nr_writers writers"
+        echo "waiting for 20 seconds"
+        sleep 20
+        dmsetup status
+        killall dd > /dev/null 2>&1
+}
+
+for ((i=1;i<8;i++)); do
+        do_test $i
+        echo
+done
+
+*********************************************************************
