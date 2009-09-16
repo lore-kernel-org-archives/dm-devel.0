@@ -1,33 +1,42 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: ioband: Writer starves reader even without competitors
-Date: Wed, 16 Sep 2009 21:08:35 +0900 (JST)
-Message-ID: <20090916.210835.104036814.ryov@valinux.co.jp>
-References: <4AA68AA5.10505@redhat.com>
-	<20090908175400.GE15974@redhat.com>
-	<20090915233706.GA3770@redhat.com>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758787AbZIPMIg@vger.kernel.org>
-In-Reply-To: <20090915233706.GA3770@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: vgoyal@redhat.com
-Cc: nauman@google.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com, agk@redhat.com, akpm@linux-foundation.org, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, balbir@linux.vnet.ibm.com, riel@redhat.com
+From: heinzm@sourceware.org
+Subject: dmraid dmraid.spec
+Date: 16 Sep 2009 13:17:09 -0000
+Message-ID: <20090916131709.9740.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Vivek,
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2009-09-16 13:17:09
 
-Vivek Goyal <vgoyal@redhat.com> wrote:
-> Hi Ryo,
-> 
-> I notice that with-in a single ioband device, a single writer starves the
-> reader even without any competitor groups being present.
-> 
-> I ran following two tests with and without dm-ioband devices
+Modified files:
+	.              : dmraid.spec 
 
-Thank you again for testing dm-ioband.
-I got the similar results and am investigating it now.
-I'll let you know if I find something.
+Log message:
+	device-mapper-devel build requirement
 
-Thanks,
-Ryo Tsuruta
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/dmraid.spec.diff?cvsroot=dm&r1=1.6&r2=1.7
+
+--- dmraid/dmraid.spec	2009/09/16 11:45:11	1.6
++++ dmraid/dmraid.spec	2009/09/16 13:17:09	1.7
+@@ -12,7 +12,7 @@
+ Group: System Environment/Base
+ URL: http://people.redhat.com/heinzm/sw/dmraid
+ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+-BuildRequires: device-mapper >= 1.02.02-2, libselinux-devel, libsepol-devel
++BuildRequires: device-mapper >= 1.02.02-2, device-mapper-devel, libselinux-devel, libsepol-devel
+ Requires: dmraid-events kpartx
+ Requires(postun): ldconfig
+ Requires(post): ldconfig
