@@ -1,31 +1,17 @@
 From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Subject: Re: [PATCH] io-controller: Fix task hanging when there
- are more	than one groups
-Date: Wed, 16 Sep 2009 08:05:41 +0800
-Message-ID: <4AB02BD5.4050107@cn.fujitsu.com>
-References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<4AA4B905.8010801@cn.fujitsu.com>
-	<20090908191941.GF15974@redhat.com>
-	<4AA75B71.5060109@cn.fujitsu.com>
-	<20090909150537.GD8256@redhat.com> <4AA9A4BE.30005@cn.fujitsu.com>
-	<20090915033739.GA4054@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH] io-controller: Fix task hanging when there are more	than
+ one groups
+Date: Wed, 16 Sep 2009 10:58:10 +0800
+Message-ID: <4AB05442.6080004@cn.fujitsu.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com> <4AA4B905.8010801@cn.fujitsu.com> <20090908191941.GF15974@redhat.com> <4AA75B71.5060109@cn.fujitsu.com> <20090909150537.GD8256@redhat.com> <4AA9A4BE.30005@cn.fujitsu.com> <20090915033739.GA4054@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754868AbZIPDAK@vger.kernel.org>
 In-Reply-To: <20090915033739.GA4054@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+Cc: jens.axboe@oracle.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
 List-Id: dm-devel.ids
 
 Vivek Goyal wrote:
@@ -169,9 +155,47 @@ Vivek Goyal wrote:
 >  
 > o Moved some of the code in separate functions to improve readability.
 > 
-> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+...
 
-  I'd like to have a try this patch :)
+>  /* A request got completed from io_queue. Do the accounting. */
+>  void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
+>  {
+> @@ -3470,16 +3572,16 @@ void elv_ioq_completed_request(struct re
+>  			elv_set_prio_slice(q->elevator->efqd, ioq);
+>  			elv_clear_ioq_slice_new(ioq);
+>  		}
+> +
+>  		/*
+>  		 * If there is only root group present, don't expire the queue
+>  		 * for single queue ioschedulers (noop, deadline, AS). It is
+>  		 * unnecessary overhead.
+>  		 */
+>  
+> -		if (is_only_root_group() &&
+> -			elv_iosched_single_ioq(q->elevator)) {
+> -			elv_log_ioq(efqd, ioq, "select: only root group,"
+> -					" no expiry");
+> +		if (single_ioq_no_timed_expiry(q)) {
+
+  Hi Vivek,
+
+  So we make use of single_ioq_no_timed_expiry() to decide whether there is only
+  root ioq to be busy, right? But single_ioq_no_timed_expiry() only checks if
+  the root cgroup is the only group and if there is only one busy_ioq there. As
+  I explained in previous mail, these two checks are not sufficient to say the
+  current active ioq comes from root group. Because when the child cgroup is just
+  removed, and the ioq which belongs to child group is still there(maybe some
+  requests are in flight). In this case, only root cgroup and only one active ioq
+  (child ioq) checks are satisfied. So IMHO, in single_ioq_no_timed_expiry() we 
+  still need to check "efqd->root_group->ioq" is already created to ensure the only
+  ioq comes from root group. Am i missing something?
+
+
+> +			elv_mark_ioq_charge_one_slice(ioq);
+> +			elv_log_ioq(efqd, ioq, "single ioq no timed expiry");
+>  			goto done;
+>  		}
+>  
 
 -- 
 Regards
