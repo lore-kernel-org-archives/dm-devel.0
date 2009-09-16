@@ -1,8 +1,10 @@
-From: heinzm@sourceware.org
-Subject: dmraid dmraid.spec
-Date: 16 Sep 2009 13:17:09 -0000
-Message-ID: <20090916131709.9740.qmail@sourceware.org>
+From: David Strand <dpstrand@gmail.com>
+Subject: fragmented i/o with 2.6.31?
+Date: Wed, 16 Sep 2009 08:34:35 -0700
+Message-ID: <448b15030909160834j2b127c83jab163e1860fc9aa1@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,30 +15,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2009-09-16 13:17:09
+I am issuing 512 Kbyte reads through the device mapper device node to
+a fibre channel disk. With 2.6.30 one read command for the entire 512
+Kbyte length is placed on the wire. With 2.6.31 this is being broken
+up into 5 smaller read commands placed on the wire, decreasing
+performance.
 
-Modified files:
-	.              : dmraid.spec 
-
-Log message:
-	device-mapper-devel build requirement
-
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/dmraid.spec.diff?cvsroot=dm&r1=1.6&r2=1.7
-
---- dmraid/dmraid.spec	2009/09/16 11:45:11	1.6
-+++ dmraid/dmraid.spec	2009/09/16 13:17:09	1.7
-@@ -12,7 +12,7 @@
- Group: System Environment/Base
- URL: http://people.redhat.com/heinzm/sw/dmraid
- BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
--BuildRequires: device-mapper >= 1.02.02-2, libselinux-devel, libsepol-devel
-+BuildRequires: device-mapper >= 1.02.02-2, device-mapper-devel, libselinux-devel, libsepol-devel
- Requires: dmraid-events kpartx
- Requires(postun): ldconfig
- Requires(post): ldconfig
+This is especially penalizing on some disks where we have prefetch
+turned off via the scsi mode page. Is there any easy way (through
+configuration or sysfs) to restore the single read per i/o behavior
+that I used to get?
