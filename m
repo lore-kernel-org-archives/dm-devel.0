@@ -1,7 +1,7 @@
 From: heinzm@sourceware.org
-Subject: dmraid/lib/events
-Date: 16 Sep 2009 11:44:35 -0000
-Message-ID: <20090916114435.6134.qmail@sourceware.org>
+Subject: dmraid/lib/register
+Date: 16 Sep 2009 11:43:17 -0000
+Message-ID: <20090916114317.32474.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,12 +18,12 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2009-09-16 11:44:35
+Changes by:	heinzm@sourceware.org	2009-09-16 11:43:17
 
-dmraid/lib/events
+dmraid/lib/register
 
-Update of /cvs/dm/dmraid/lib/events
-In directory sourceware.org:/tmp/cvs-serv6065/lib/events
+Update of /cvs/dm/dmraid/lib/register
+In directory sourceware.org:/tmp/cvs-serv32352/register
 
 Log Message:
-Directory /cvs/dm/dmraid/lib/events added to the repository
+Directory /cvs/dm/dmraid/lib/register added to the repository
