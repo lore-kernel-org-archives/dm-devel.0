@@ -1,21 +1,20 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: ioband: Writer starves reader even without competitors
-	(Re: Regarding dm-ioband tests)
-Date: Tue, 15 Sep 2009 19:37:07 -0400
-Message-ID: <20090915233706.GA3770@redhat.com>
-References: <20090904231129.GA3689@redhat.com>
-	<20090907.200222.193693062.ryov@valinux.co.jp>
-	<4AA51065.6050000@redhat.com>
-	<20090908.120119.71095369.ryov@valinux.co.jp>
-	<20090908134244.GA15974@redhat.com>
-	<e98e18940909080930o40008d5dnc823db96687654af@mail.gmail.com>
-	<4AA68AA5.10505@redhat.com> <20090908175400.GE15974@redhat.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH] io-controller: Fix task hanging when there
+ are more	than one groups
+Date: Wed, 16 Sep 2009 08:05:41 +0800
+Message-ID: <4AB02BD5.4050107@cn.fujitsu.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+	<4AA4B905.8010801@cn.fujitsu.com>
+	<20090908191941.GF15974@redhat.com>
+	<4AA75B71.5060109@cn.fujitsu.com>
+	<20090909150537.GD8256@redhat.com> <4AA9A4BE.30005@cn.fujitsu.com>
+	<20090915033739.GA4054@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090908175400.GE15974@redhat.com>
+In-Reply-To: <20090915033739.GA4054@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,151 +24,155 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: Rik Van Riel <riel@redhat.com>, guijianfeng@cn.fujitsu.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, Nauman Rafique <nauman@google.com>, akpm@linux-foundation.org, agk@redhat.com, balbir@linux.vnet.ibm.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Tue, Sep 08, 2009 at 01:54:00PM -0400, Vivek Goyal wrote:
-
-[..]
-> I ran a test to show how readers can be starved in certain cases. I launched
-> one reader and three writers. I ran this test twice. First without dm-ioband
-> and then with dm-ioband.
+Vivek Goyal wrote:
+> On Fri, Sep 11, 2009 at 09:15:42AM +0800, Gui Jianfeng wrote:
+>> Vivek Goyal wrote:
+>>> On Wed, Sep 09, 2009 at 03:38:25PM +0800, Gui Jianfeng wrote:
+>>>> Vivek Goyal wrote:
+>>>>> On Mon, Sep 07, 2009 at 03:40:53PM +0800, Gui Jianfeng wrote:
+>>>>>> Hi Vivek,
+>>>>>>
+>>>>>> I happened to encount a bug when i test IO Controller V9.
+>>>>>> When there are three tasks to run concurrently in three group,
+>>>>>> that is, one is parent group, and other two tasks are running 
+>>>>>> in two different child groups respectively to read or write 
+>>>>>> files in some disk, say disk "hdb", The task may hang up, and 
+>>>>>> other tasks which access into "hdb" will also hang up.
+>>>>>>
+>>>>>> The bug only happens when using AS io scheduler.
+>>>>>> The following scirpt can reproduce this bug in my box.
+>>>>>>
+>>>>> Hi Gui,
+>>>>>
+>>>>> I tried reproducing this on my system and can't reproduce it. All the
+>>>>> three processes get killed and system does not hang.
+>>>>>
+>>>>> Can you please dig deeper a bit into it. 
+>>>>>
+>>>>> - If whole system hangs or it is just IO to disk seems to be hung.
+>>>>     Only when the task is trying do IO to disk it will hang up.
+>>>>
+>>>>> - Does io scheduler switch on the device work
+>>>>     yes, io scheduler can be switched, and the hung task will be resumed.
+>>>>
+>>>>> - If the system is not hung, can you capture the blktrace on the device.
+>>>>>   Trace might give some idea, what's happening.
+>>>> I run a "find" task to do some io on that disk, it seems that task hangs 
+>>>> when it is issuing getdents() syscall.
+>>>> kernel generates the following message:
+>>>>
+>>>> INFO: task find:3260 blocked for more than 120 seconds.
+>>>> "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+>>>> find          D a1e95787  1912  3260   2897 0x00000004
+>>>>  f6af2db8 00000096 f660075c a1e95787 00000032 f6600270 f6600508 c2037820
+>>>>  00000000 c09e0820 f655f0c0 f6af2d8c fffebbf1 00000000 c0447323 f7152a1c
+>>>>  0006a144 f7152a1c 0006a144 f6af2e04 f6af2db0 c04438df c2037820 c2037820
+>>>> Call Trace:
+>>>>  [<c0447323>] ? getnstimeofday+0x57/0xe0
+>>>>  [<c04438df>] ? ktime_get_ts+0x4a/0x4e
+>>>>  [<c068ab68>] io_schedule+0x47/0x79
+>>>>  [<c04c12ee>] sync_buffer+0x36/0x3a
+>>>>  [<c068ae14>] __wait_on_bit+0x36/0x5d
+>>>>  [<c04c12b8>] ? sync_buffer+0x0/0x3a
+>>>>  [<c068ae93>] out_of_line_wait_on_bit+0x58/0x60
+>>>>  [<c04c12b8>] ? sync_buffer+0x0/0x3a
+>>>>  [<c0440fa4>] ? wake_bit_function+0x0/0x43
+>>>>  [<c04c1249>] __wait_on_buffer+0x19/0x1c
+>>>>  [<f81e4186>] ext3_bread+0x5e/0x79 [ext3]
+>>>>  [<f81e77a8>] htree_dirblock_to_tree+0x1f/0x120 [ext3]
+>>>>  [<f81e7923>] ext3_htree_fill_tree+0x7a/0x1bb [ext3]
+>>>>  [<c04a01f9>] ? kmem_cache_alloc+0x86/0xf3
+>>>>  [<c044c428>] ? trace_hardirqs_on_caller+0x107/0x12f
+>>>>  [<c044c45b>] ? trace_hardirqs_on+0xb/0xd
+>>>>  [<f81e09e4>] ? ext3_readdir+0x9e/0x692 [ext3]
+>>>>  [<f81e0b34>] ext3_readdir+0x1ee/0x692 [ext3]
+>>>>  [<c04b1100>] ? filldir64+0x0/0xcd
+>>>>  [<c068b86a>] ? mutex_lock_killable_nested+0x2b1/0x2c5
+>>>>  [<c068b874>] ? mutex_lock_killable_nested+0x2bb/0x2c5
+>>>>  [<c04b12db>] ? vfs_readdir+0x46/0x94
+>>>>  [<c04b12fd>] vfs_readdir+0x68/0x94
+>>>>  [<c04b1100>] ? filldir64+0x0/0xcd
+>>>>  [<c04b1387>] sys_getdents64+0x5e/0x9f
+>>>>  [<c04028b4>] sysenter_do_call+0x12/0x32
+>>>> 1 lock held by find/3260:
+>>>>  #0:  (&sb->s_type->i_mutex_key#7){+.+.+.}, at: [<c04b12db>] vfs_readdir+0x46/0x94
+>>>>
+>>>> ext3 calls wait_on_buffer() to wait buffer, and schedule the task out in TASK_UNINTERRUPTIBLE
+>>>> state, and I found this task will be resumed after a quite long period(more than 10 mins).
+>>> Thanks Gui. As Jens said, it does look like a case of missing queue
+>>> restart somewhere and now we are stuck, no requests are being dispatched
+>>> to the disk and queue is already unplugged.
+>>>
+>>> Can you please also try capturing the trace of events at io scheduler
+>>> (blktrace) to see how did we get into that situation.
+>>>
+>>> Are you using ide drivers and not libata? As jens said, I will try to make
+>>> use of ide drivers and see if I can reproduce it.
+>>>
+>> Hi Vivek, Jens,
+>>
+>> Currently, If there's only the root cgroup and no other child cgroup available, io-controller will
+>> optimize to stop expiring the current ioq, and we thought the current ioq belongs to root group. But
+>> in some cases, this assumption is not true. Consider the following scenario, if there is a child cgroup
+>> located in root cgroup, and task A is running in the child cgroup, and task A issues some IOs. Then we
+>> kill task A and remove the child cgroup, at this time, there is only root cgroup available. But the ioq
+>> is still under service, and from now on, this ioq won't expire because "only root" optimization.
+>> The following patch ensures the ioq do belongs to the root group if there's only root group existing.
+>>
+>> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
 > 
-> Following are few lines from the script to launch readers and writers.
+> Hi Gui,
 > 
-> **************************************************************
-> sync
-> echo 3 > /proc/sys/vm/drop_caches
+> I have modified your patch a bit to improve readability. Looking at the
+> issue closely I realized that this optimization of not expiring the 
+> queue can lead to other issues like high vdisktime in certain scenarios.
+> While fixing that also noticed the issue of high rate of as queue
+> expiration in certain cases which could have been avoided. 
 > 
-> # Launch writers on sdd2
-> dd if=/dev/zero of=/mnt/sdd2/writezerofile1 bs=4K count=262144 &
+> Here is a patch which should fix all that. I am still testing this patch
+> to make sure that something is not obiviously broken. Will merge it if
+> there are no issues.
 > 
-> # Launch  writers on sdd1
-> dd if=/dev/zero of=/mnt/sdd1/writezerofile1 bs=4K count=262144 &
-> dd if=/dev/zero of=/mnt/sdd1/writezerofile2 bs=4K count=262144 &
+> Thanks
+> Vivek
 > 
-> echo "sleeping for 5 seconds"
-> sleep 5
+> o Fixed the issue of not expiring the queue for single ioq schedulers. Reported
+>   and fixed by Gui.
 > 
-> # launch reader on sdd1
-> time dd if=/mnt/sdd1/testzerofile1 of=/dev/zero &
-> echo "launched reader $!"
-> *********************************************************************
+> o If an AS queue is not expired for a long time and suddenly somebody
+>   decides to create a group and launch a job there, in that case old AS
+>   queue will be expired with a very high value of slice used and will get
+>   a very high disk time. Fix it by marking the queue as "charge_one_slice"
+>   and charge the queue only for a single time slice and not for whole
+>   of the duration when queue was running.
 > 
-> Without dm-ioband, reader finished in roughly 5 seconds.
+> o There are cases where in case of AS, excessive queue expiration will take
+>   place by elevator fair queuing layer because of few reasons.
+> 	- AS does not anticipate on a queue if there are no competing requests.
+> 	  So if only a single reader is present in a group, anticipation does
+> 	  not get turn on.
 > 
-> 289533952 bytes (290 MB) copied, 5.16765 s, 56.0 MB/s
-> real	0m5.300s
-> user	0m0.098s
-> sys	0m0.492s
+> 	- elevator layer does not know that As is anticipating hence initiates
+> 	  expiry requests in select_ioq() thinking queue is empty.
 > 
-> With dm-ioband, reader took, more than 2 minutes to finish.
+> 	- elevaotr layer tries to aggressively expire last empty queue. This
+> 	  can lead to lof of queue expiry
 > 
-> 289533952 bytes (290 MB) copied, 122.386 s, 2.4 MB/s
+> o This patch now starts ANITC_WAIT_NEXT anticipation if last request in the
+>   queue completed and associated io context is eligible to anticipate. Also
+>   AS lets elevatory layer know that it is anticipating (elv_ioq_wait_request())
+>   . This solves above mentioned issues.
+>  
+> o Moved some of the code in separate functions to improve readability.
 > 
-> real	2m2.569s
-> user	0m0.107s
-> sys	0m0.548s
-> 
-> I had created ioband1 on /dev/sdd1 and ioband2 on /dev/sdd2 with weights
-> 200 and 100 respectively.
+> Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 
-Hi Ryo,
+  I'd like to have a try this patch :)
 
-I notice that with-in a single ioband device, a single writer starves the
-reader even without any competitor groups being present.
-
-I ran following two tests with and without dm-ioband devices
-
-Test1
-====
-Try to use fio for a sequential reader job. First fio will lay out the
-file and do write operation. While those writes are going on, try to do
-ls on that partition and observe latency of ls operation.
-
-with dm-ioband (ls test)
-------------------------
-# cd /mnt/sdd2
-# time ls
-
-real    0m9.483s
-user    0m0.000s
-sys     0m0.002s
-
-without dm-ioband (ls test)
----------------------------
-# cd /mnt/sdd2
-# time ls
-
-256M-file1  256M-file5  2G-file1  2G-file5    writefile1  writezerofile
-256M-file2  256M-file6  2G-file2  files       writefile2
-256M-file3  256M-file7  2G-file3  fio         writefile3
-256M-file4  256M-file8  2G-file4  lost+found  writefile4
-
-real    0m0.067s
-user    0m0.000s
-sys     0m0.002s
-
-Notice the time simle "ls" operation took in two cases.
-
-
-Test2
-=====
-Same case where fio is laying out a file and then try to read some small
-files on that partition at the interval of 1 second.
-
-small file read with dm-ioband
-------------------------------
-[root@chilli fairness-tests]# ./small-file-read.sh
-file #   0, plain reading it took: 0.24 seconds
-file #   1, plain reading it took: 13.40 seconds
-file #   2, plain reading it took: 6.27 seconds
-file #   3, plain reading it took: 13.84 seconds
-file #   4, plain reading it took: 5.63 seconds
-
-
-small file read with-out dm-ioband
-==================================
-[root@chilli fairness-tests]# ./small-file-read.sh
-file #   0, plain reading it took: 0.04 seconds
-file #   1, plain reading it took: 0.03 seconds
-file #   2, plain reading it took: 0.04 seconds
-file #   3, plain reading it took: 0.03 seconds
-file #   4, plain reading it took: 0.03 seconds
-
-Notice how small file read latencies have shot up.
-
-Looks like a single writer is completely starving a reader even without
-any IO going in any of the other groups.
-
-setup
-=====
-I created an two ioband device of weight 100 each on partition /dev/sdd1
-and /dev/sdd2 respectively. I am doing IO only on partition /dev/sdd2
-(ioband2).
-
-Following is fio job script.
-
-[seqread]
-runtime=60
-rw=read
-size=2G
-directory=/mnt/sdd2/fio/
-numjobs=1
-group_reporting
-
-
-Following is small file read script.
-
-echo 3 > /proc/sys/vm/drop_caches
-
-for ((i=0;i<5;i++)); do
-        printf "file #%4d, plain reading it took: " $i
-        /usr/bin/time -f "%e seconds"  cat /mnt/sdd2/files/$i >/dev/null
-        sleep 1
-done
-
-
-Thanks
-Vivek
+-- 
+Regards
+Gui Jianfeng
