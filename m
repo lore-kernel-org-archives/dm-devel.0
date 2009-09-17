@@ -1,13 +1,22 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH] dm: dec_pending() needs locking to save error
-	value
-Date: Thu, 17 Sep 2009 10:12:41 +0900
-Message-ID: <4AB18D09.9090300@ct.jp.nec.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: Re: [PATCH] io-controller: Fix task hanging when there
+ are more	than one groups
+Date: Thu, 17 Sep 2009 14:08:18 +0800
+Message-ID: <4AB1D252.8060406@cn.fujitsu.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+	<4AA4B905.8010801@cn.fujitsu.com>
+	<20090908191941.GF15974@redhat.com>
+	<4AA75B71.5060109@cn.fujitsu.com>
+	<20090909150537.GD8256@redhat.com> <4AA9A4BE.30005@cn.fujitsu.com>
+	<20090915033739.GA4054@redhat.com>
+	<4AB05442.6080004@cn.fujitsu.com>
+	<20090916180915.GE5221@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090916180915.GE5221@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,79 +26,109 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+Vivek Goyal wrote:
+> On Wed, Sep 16, 2009 at 10:58:10AM +0800, Gui Jianfeng wrote:
+> 
+> [..]
+>>> o Fixed the issue of not expiring the queue for single ioq schedulers. Reported
+>>>   and fixed by Gui.
+>>>
+>>> o If an AS queue is not expired for a long time and suddenly somebody
+>>>   decides to create a group and launch a job there, in that case old AS
+>>>   queue will be expired with a very high value of slice used and will get
+>>>   a very high disk time. Fix it by marking the queue as "charge_one_slice"
+>>>   and charge the queue only for a single time slice and not for whole
+>>>   of the duration when queue was running.
+>>>
+>>> o There are cases where in case of AS, excessive queue expiration will take
+>>>   place by elevator fair queuing layer because of few reasons.
+>>> 	- AS does not anticipate on a queue if there are no competing requests.
+>>> 	  So if only a single reader is present in a group, anticipation does
+>>> 	  not get turn on.
+>>>
+>>> 	- elevator layer does not know that As is anticipating hence initiates
+>>> 	  expiry requests in select_ioq() thinking queue is empty.
+>>>
+>>> 	- elevaotr layer tries to aggressively expire last empty queue. This
+>>> 	  can lead to lof of queue expiry
+>>>
+>>> o This patch now starts ANITC_WAIT_NEXT anticipation if last request in the
+>>>   queue completed and associated io context is eligible to anticipate. Also
+>>>   AS lets elevatory layer know that it is anticipating (elv_ioq_wait_request())
+>>>   . This solves above mentioned issues.
+>>>  
+>>> o Moved some of the code in separate functions to improve readability.
+>>>
+>> ...
+>>
+>>>  /* A request got completed from io_queue. Do the accounting. */
+>>>  void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
+>>>  {
+>>> @@ -3470,16 +3572,16 @@ void elv_ioq_completed_request(struct re
+>>>  			elv_set_prio_slice(q->elevator->efqd, ioq);
+>>>  			elv_clear_ioq_slice_new(ioq);
+>>>  		}
+>>> +
+>>>  		/*
+>>>  		 * If there is only root group present, don't expire the queue
+>>>  		 * for single queue ioschedulers (noop, deadline, AS). It is
+>>>  		 * unnecessary overhead.
+>>>  		 */
+>>>  
+>>> -		if (is_only_root_group() &&
+>>> -			elv_iosched_single_ioq(q->elevator)) {
+>>> -			elv_log_ioq(efqd, ioq, "select: only root group,"
+>>> -					" no expiry");
+>>> +		if (single_ioq_no_timed_expiry(q)) {
+>>   Hi Vivek,
+>>
+>>   So we make use of single_ioq_no_timed_expiry() to decide whether there is only
+>>   root ioq to be busy, right? But single_ioq_no_timed_expiry() only checks if
+>>   the root cgroup is the only group and if there is only one busy_ioq there. As
+>>   I explained in previous mail, these two checks are not sufficient to say the
+>>   current active ioq comes from root group. Because when the child cgroup is just
+>>   removed, and the ioq which belongs to child group is still there(maybe some
+>>   requests are in flight). In this case, only root cgroup and only one active ioq
+>>   (child ioq) checks are satisfied. So IMHO, in single_ioq_no_timed_expiry() we 
+>>   still need to check "efqd->root_group->ioq" is already created to ensure the only
+>>   ioq comes from root group. Am i missing something?
+>>
+> 
+> Hi Gui,
+> 
+> The only side effect of not checking for "efqd->root_group->ioq" seems to
+> be that this ioq hence io group of the child will not be freed immediately
+> and release will be delayed until a some other queue in the system gets
+> backlogged or ioscheduler exits. At that point of time, this child queue will
+> be expired and ioq and iog will be freed.
+> 
+> The advantage is that if there is IO happening only in child group in that
+> case we can avoid expiring that queue.
+> 
+> So may be keeping the queue around for sometime is not a very idea. 
+> 
+> Am I missing something?
 
-While implementing the barrier support patch for request-based dm,
-I found a possible bug in bio-based dm.
+  Hi Vivek,
 
-In the patch posted here:
-    http://patchwork.kernel.org/patch/48189/
-I added 'barrier_error_lock' to struct mapped_device to save error
-values from multiple barrier I/Os safely like below:
-	if (error) {
-		spin_lock_irqsave(&md->barrier_error_lock, flags);
-		if (!md->barrier_error || error == -EOPNOTSUPP ||
-		    (md->barrier_error != -EOPNOTSUPP &&
-		     error == DM_ENDIO_REQUEUE))
-			md->barrier_error = error;
-		spin_unlock_irqrestore(&md->barrier_error_lock, flags);
-	}
+  I think you're right.
+  A thought comes to my mind, whether can we extend optimization for not expiring
+  an ioq not only for root group, but for single ioq case? IOW, if there is only
+  one ioq in hierarchy, we don't exipre it until another ioq gets backlogged, and
+  we just charge only one time slice for that ioq when it schedule out. This might
+  help if IO only happens in child group.
 
-On the other hand, bio-based dm has been doing the same thing
-in dec_pending() without any lock:
-        if (error && !(io->error > 0 && __noflush_suspending(md)))
-                io->error = error;
+> 
+> Thanks
+> Vivek
+> 
+> 
+> 
 
-Though I have never experienced actual problem without locking and
-just found this during code inspection, I believe it needs locking
-here, too.
-
-This patch adds the locking.
-I've done compile, boot and basic I/O testings.
-
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
----
- drivers/md/dm.c |   10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
-
-Index: 2.6.31/drivers/md/dm.c
-===================================================================
---- 2.6.31.orig/drivers/md/dm.c
-+++ 2.6.31/drivers/md/dm.c
-@@ -47,6 +47,7 @@ struct dm_io {
- 	atomic_t io_count;
- 	struct bio *bio;
- 	unsigned long start_time;
-+	spinlock_t endio_lock;
- };
- 
- /*
-@@ -590,8 +591,12 @@ static void dec_pending(struct dm_io *io
- 	struct mapped_device *md = io->md;
- 
- 	/* Push-back supersedes any I/O errors */
--	if (error && !(io->error > 0 && __noflush_suspending(md)))
--		io->error = error;
-+	if (unlikely(error)) {
-+		spin_lock_irqsave(&io->endio_lock, flags);
-+		if (!(io->error > 0 && __noflush_suspending(md)))
-+			io->error = error;
-+		spin_unlock_irqrestore(&io->endio_lock, flags);
-+	}
- 
- 	if (atomic_dec_and_test(&io->io_count)) {
- 		if (io->error == DM_ENDIO_REQUEUE) {
-@@ -1300,6 +1305,7 @@ static void __split_and_process_bio(stru
- 	atomic_set(&ci.io->io_count, 1);
- 	ci.io->bio = bio;
- 	ci.io->md = md;
-+	spin_lock_init(&ci.io->endio_lock);
- 	ci.sector = bio->bi_sector;
- 	ci.sector_count = bio_sectors(bio);
- 	if (unlikely(bio_empty_barrier(bio)))
+-- 
+Regards
+Gui Jianfeng
