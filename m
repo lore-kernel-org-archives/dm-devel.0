@@ -1,7 +1,7 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Subject: [PATCH] dm: barrier support for request-based dm
-Date: Thu, 17 Sep 2009 09:55:25 +0900
-Message-ID: <4AB188FD.1030601@ct.jp.nec.com>
+Date: Thu, 17 Sep 2009 10:05:45 +0900
+Message-ID: <4AB18B69.6030409@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-2022-JP
@@ -21,6 +21,8 @@ Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@r
 List-Id: dm-devel.ids
 
 Hi Alasdair,
+
+(Resending since the patchwork mis-catched this patch.)
 
 This patch adds barrier support for request-based dm.
 The patch depends on 2.6.31 + the 2 patches below:
@@ -43,7 +45,7 @@ I'll follow up with clean-up patches based on this patch.
 See below for the patch description.
 
 CORE DESIGN
-===========
+
 The design is basically same as bio-based dm, which emulates barrier
 by mapping empty barrier bios before/after a barrier I/O.
 But request-based dm has been using struct request_queue for I/O
@@ -86,8 +88,9 @@ o dm-core
   the request_queue has been stopped.  Otherwise, the next flush work
   can be kicked even after the suspend completes.
 
+
 TARGET INTERFACE
-================
+
 No new interface is added.
 Just use the existing num_flush_requests in struct target_type
 as same as bio-based dm.
