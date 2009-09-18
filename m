@@ -1,7 +1,7 @@
 From: akpm@linux-foundation.org
-Subject: [patch 1/3] dm: strncpy does not null terminate string
-Date: Fri, 18 Sep 2009 12:45:07 -0700
-Message-ID: <200909181945.n8IJj7X4010399@imap1.linux-foundation.org>
+Subject: [patch 2/3] md: dm-log: fix cn_ulog_callback declaration
+Date: Fri, 18 Sep 2009 12:45:08 -0700
+Message-ID: <200909181945.n8IJj8rN010429@imap1.linux-foundation.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ANSI_X3.4-1968
@@ -17,35 +17,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: agk@redhat.com
-Cc: dm-devel@redhat.com, roel.kluin@gmail.com, akpm@linux-foundation.org
+Cc: dm-devel@redhat.com, davem@davemloft.net, vapier@gentoo.org, akpm@linux-foundation.org, jirislaby@gmail.com
 List-Id: dm-devel.ids
 
-From: Roel Kluin <roel.kluin@gmail.com>
+From: Jiri Slaby <jirislaby@gmail.com>
 
-strlcpy() will always null terminate the string.
+The third parameter of cn_add_callback accepts functions with void
+*()(struct cn_msg *) prototype.  Change cn_ulog_callback to match it by
+removing void * and adding struct cn_msg * directly.
 
-Signed-off-by: Roel Kluin <roel.kluin@gmail.com>
+It's introduced by commit:
+connector: make callback argument type explicit
+
+Signed-off-by: Jiri Slaby <jirislaby@gmail.com>
+Cc: Mike Frysinger <vapier@gentoo.org>
+Cc: David S. Miller <davem@davemloft.net>
 Cc: Alasdair G Kergon <agk@redhat.com>
 Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
 
- drivers/md/dm-ioctl.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-log-userspace-transfer.c |    3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff -puN drivers/md/dm-ioctl.c~dm-strncpy-does-not-null-terminate-string=
- drivers/md/dm-ioctl.c
---- a/drivers/md/dm-ioctl.c~dm-strncpy-does-not-null-terminate-string
-+++ a/drivers/md/dm-ioctl.c
-@@ -634,9 +634,9 @@ static struct mapped_device *find_device
- 		 * Sneakily write in both the name and the uuid
- 		 * while we have the cell.
- 		 */
--		strncpy(param->name, hc->name, sizeof(param->name));
-+		strlcpy(param->name, hc->name, sizeof(param->name));
- 		if (hc->uuid)
--			strncpy(param->uuid, hc->uuid, sizeof(param->uuid)-1);
-+			strlcpy(param->uuid, hc->uuid, sizeof(param->uuid));
- 		else
- 			param->uuid[0] =3D '\0';
+diff -puN drivers/md/dm-log-userspace-transfer.c~md-dm-log-fix-cn_ulog_ca=
+llback-declaration drivers/md/dm-log-userspace-transfer.c
+--- a/drivers/md/dm-log-userspace-transfer.c~md-dm-log-fix-cn_ulog_callba=
+ck-declaration
++++ a/drivers/md/dm-log-userspace-transfer.c
+@@ -129,9 +129,8 @@ static int fill_pkg(struct cn_msg *msg,=20
+  * This is the connector callback that delivers data
+  * that was sent from userspace.
+  */
+-static void cn_ulog_callback(void *data)
++static void cn_ulog_callback(struct cn_msg *msg)
+ {
+-	struct cn_msg *msg =3D (struct cn_msg *)data;
+ 	struct dm_ulog_request *tfr =3D (struct dm_ulog_request *)(msg + 1);
 =20
+ 	spin_lock(&receiving_list_lock);
 _
