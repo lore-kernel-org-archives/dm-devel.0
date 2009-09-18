@@ -1,15 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
 Subject: Re: [PATCH 1/3] block: Add blk_queue_copy_limits()
-Date: Fri, 18 Sep 2009 16:30:40 -0400
-Message-ID: <20090918203040.GA6031@redhat.com>
+Date: Fri, 18 Sep 2009 22:33:28 +0200
+Message-ID: <20090918203328.GT23126@kernel.dk>
 References: <4AB3B43D.9000802@ce.jp.nec.com>
-	<yq1eiq46ohz.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <yq1eiq46ohz.fsf@sermon.lab.mkp.net>
+In-Reply-To: <4AB3B43D.9000802@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +18,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 18 2009 at  3:28pm -0400,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+On Sat, Sep 19 2009, Jun'ichi Nomura wrote:
+> This patch is a preparation for the last patch in this patchset
+> which changes blk_set_default_limits() to set 0 to max_sectors.
+> 
+> dm uses blk_stack_limits() to merge limits of underlying devices
+> and copy the end result to the queue.
+> But if there's no underlying device (like 'zero' target),
+> max_sectors/max_hw_sectors are left unchanged from the default 0
+> and just copying it to the queue causes problems.
+> 
+> Provide blk_queue_copy_limits() to get a safe copy with
+> invalid values fixed-up.
 
-> >>>>> "Jun'ichi" == Jun'ichi Nomura <j-nomura@ce.jp.nec.com> writes:
-> 
-> +	if (q->limits.max_sectors == 0 || q->limits.max_hw_sectors == 0)
-> +		blk_queue_max_sectors(q, SAFE_MAX_SECTORS);
-> 
-> I'm really not keen on perpetuating SAFE_MAX_SECTORS for something that
-> was written in this millennium.
-> 
-> I'd much rather we just do this, then:
-> 
-> block: Set max_sectors correctly for stacking devices
-> 
-> The topology changes unintentionally caused SAFE_MAX_SECTORS to be set
-> for stacking devices.  Set the default limit to BLK_DEF_MAX_SECTORS and
-> provide SAFE_MAX_SECTORS in blk_queue_make_request() for legacy hw
-> drivers that depend on the old behavior.
-> 
-> Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Added for 2.6.32.
 
-Nice.  Avoids the need for a safe queue_limits copy and associated naunce.
-
-Acked-by: Mike Snitzer <snitzer@redhat.com>
+-- 
+Jens Axboe
