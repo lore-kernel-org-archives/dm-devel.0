@@ -1,7 +1,8 @@
 From: akpm@linux-foundation.org
-Subject: [patch 2/3] md: dm-log: fix cn_ulog_callback declaration
-Date: Fri, 18 Sep 2009 12:45:08 -0700
-Message-ID: <200909181945.n8IJj8rN010429@imap1.linux-foundation.org>
+Subject: [patch 3/3] drivers/md/dm-log-userspace-base.c: fix
+	warning
+Date: Fri, 18 Sep 2009 12:45:09 -0700
+Message-ID: <200909181945.n8IJj9cE010432@imap1.linux-foundation.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ANSI_X3.4-1968
@@ -17,42 +18,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: agk@redhat.com
-Cc: dm-devel@redhat.com, davem@davemloft.net, vapier@gentoo.org, akpm@linux-foundation.org, jirislaby@gmail.com
+Cc: dm-devel@redhat.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-From: Jiri Slaby <jirislaby@gmail.com>
+From: Andrew Morton <akpm@linux-foundation.org>
 
-The third parameter of cn_add_callback accepts functions with void
-*()(struct cn_msg *) prototype.  Change cn_ulog_callback to match it by
-removing void * and adding struct cn_msg * directly.
+mips:
 
-It's introduced by commit:
-connector: make callback argument type explicit
+drivers/md/dm-log-userspace-base.c: In function `userspace_ctr':
+drivers/md/dm-log-userspace-base.c:159: warning: cast from pointer to int=
+eger of different size
 
-Signed-off-by: Jiri Slaby <jirislaby@gmail.com>
-Cc: Mike Frysinger <vapier@gentoo.org>
-Cc: David S. Miller <davem@davemloft.net>
+Cc: Neil Brown <neilb@suse.de>
+Cc: Jonathan Brassow <jbrassow@redhat.com>
 Cc: Alasdair G Kergon <agk@redhat.com>
 Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
 
- drivers/md/dm-log-userspace-transfer.c |    3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ drivers/md/dm-log-userspace-base.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff -puN drivers/md/dm-log-userspace-transfer.c~md-dm-log-fix-cn_ulog_ca=
-llback-declaration drivers/md/dm-log-userspace-transfer.c
---- a/drivers/md/dm-log-userspace-transfer.c~md-dm-log-fix-cn_ulog_callba=
-ck-declaration
-+++ a/drivers/md/dm-log-userspace-transfer.c
-@@ -129,9 +129,8 @@ static int fill_pkg(struct cn_msg *msg,=20
-  * This is the connector callback that delivers data
-  * that was sent from userspace.
-  */
--static void cn_ulog_callback(void *data)
-+static void cn_ulog_callback(struct cn_msg *msg)
- {
--	struct cn_msg *msg =3D (struct cn_msg *)data;
- 	struct dm_ulog_request *tfr =3D (struct dm_ulog_request *)(msg + 1);
+diff -puN drivers/md/dm-log-userspace-base.c~drivers-md-dm-log-userspace-=
+basec-fix-warning drivers/md/dm-log-userspace-base.c
+--- a/drivers/md/dm-log-userspace-base.c~drivers-md-dm-log-userspace-base=
+c-fix-warning
++++ a/drivers/md/dm-log-userspace-base.c
+@@ -156,7 +156,7 @@ static int userspace_ctr(struct dm_dirty
+ 	}
 =20
- 	spin_lock(&receiving_list_lock);
+ 	/* The ptr value is sufficient for local unique id */
+-	lc->luid =3D (uint64_t)lc;
++	lc->luid =3D (unsigned long)lc;
+=20
+ 	lc->ti =3D ti;
+=20
 _
