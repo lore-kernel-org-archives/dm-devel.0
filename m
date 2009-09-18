@@ -1,168 +1,122 @@
-From: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
-Subject: Re: [PATCH] Add a tracepoint for block request remapping
-Date: Fri, 18 Sep 2009 11:02:50 +0900 (JST)
-Message-ID: <20090918110026.2251.A69D9226@jp.fujitsu.com>
-References: <4AB2E57B.2090101@ce.jp.nec.com>
+From: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Subject: [PATCH] io-controller: Fix another bug that causing
+	system hanging
+Date: Fri, 18 Sep 2009 11:56:56 +0800
+Message-ID: <4AB30508.6010206@cn.fujitsu.com>
+References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
+	<1251495072-7780-12-git-send-email-vgoyal@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754578AbZIRCCx@vger.kernel.org>
-In-Reply-To: <4AB2E57B.2090101@ce.jp.nec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: kosaki.motohiro@jp.fujitsu.com, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, Alasdair G Kergon <agk@redhat.com>, Li Zefan <lizf@cn.fujitsu.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1251495072-7780-12-git-send-email-vgoyal@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-CC to Li
+Vivek Goyal wrote:
+...
 
-Li, What do you think?
-
-
-> Since 2.6.31 now has request-based device-mapper, it's useful to have
-> a tracepoint for request-remapping as well as bio-remapping.
-> 
-> This patch adds a tracepoint for request-remapping, trace_block_rq_remap().
-> Existing trace_block_remap() is left unchanged but it might be better to
-> rename it to trace_block_bio_remap().
-> 
-> Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Cc: Jens Axboe <jens.axboe@oracle.com>
-> Cc: Alasdair G Kergon <agk@redhat.com>
-> ---
->  block/blk-core.c             |   11 +++++-----
->  drivers/md/dm.c              |    6 +++--
->  include/trace/events/block.h |   35 +++++++++++++++++++++++++++++++++-
->  kernel/trace/blktrace.c      |   44 ++++++++++++++++++++++++++++++++++++++-----
->  4 files changed, 83 insertions(+), 13 deletions(-)
-> 
-> Index: linux-2.6.31/block/blk-core.c
-> ===================================================================
-> --- linux-2.6.31.orig/block/blk-core.c
-> +++ linux-2.6.31/block/blk-core.c
-> @@ -34,6 +34,7 @@
->  #include "blk.h"
->  
->  EXPORT_TRACEPOINT_SYMBOL_GPL(block_remap);
-> +EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
->  EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
->  
->  static int __make_request(struct request_queue *q, struct bio *bio);
-> Index: linux-2.6.31/drivers/md/dm.c
-> ===================================================================
-> --- linux-2.6.31.orig/drivers/md/dm.c
-> +++ linux-2.6.31/drivers/md/dm.c
-> @@ -1503,6 +1503,8 @@ static void map_request(struct dm_target
->  		break;
->  	case DM_MAPIO_REMAPPED:
->  		/* The target has remapped the I/O so dispatch it */
-> +		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
-> +				     blk_rq_pos(tio->orig));
->  		dm_dispatch_request(clone);
->  		break;
->  	case DM_MAPIO_REQUEUE:
-> Index: linux-2.6.31/include/trace/events/block.h
-> ===================================================================
-> --- linux-2.6.31.orig/include/trace/events/block.h
-> +++ linux-2.6.31/include/trace/events/block.h
-> @@ -486,6 +486,39 @@ TRACE_EVENT(block_remap,
->  		  (unsigned long long)__entry->old_sector)
->  );
->  
-> +TRACE_EVENT(block_rq_remap,
-> +
-> +	TP_PROTO(struct request_queue *q, struct request *rq, dev_t dev,
-> +		 sector_t from),
-> +
-> +	TP_ARGS(q, rq, dev, from),
-> +
-> +	TP_STRUCT__entry(
-> +		__field( dev_t,		dev		)
-> +		__field( sector_t,	sector		)
-> +		__field( unsigned int,	nr_sector	)
-> +		__field( dev_t,		old_dev		)
-> +		__field( sector_t,	old_sector	)
-> +		__array( char,		rwbs,	6	)
-> +	),
-> +
-> +	TP_fast_assign(
-> +		__entry->dev		= disk_devt(rq->rq_disk);
-> +		__entry->sector		= blk_rq_pos(rq);
-> +		__entry->nr_sector	= blk_rq_sectors(rq);
-> +		__entry->old_dev	= dev;
-> +		__entry->old_sector	= from;
-> +		blk_fill_rwbs_rq(__entry->rwbs, rq);
-> +	),
-> +
-> +	TP_printk("%d,%d %s %llu + %u <- (%d,%d) %llu",
-> +		  MAJOR(__entry->dev), MINOR(__entry->dev), __entry->rwbs,
-> +		  (unsigned long long)__entry->sector,
-> +		  __entry->nr_sector,
-> +		  MAJOR(__entry->old_dev), MINOR(__entry->old_dev),
-> +		  (unsigned long long)__entry->old_sector)
-> +);
-> +
->  #endif /* _TRACE_BLOCK_H */
->  
->  /* This part must be outside protection */
-> Index: linux-2.6.31/kernel/trace/blktrace.c
-> ===================================================================
-> --- linux-2.6.31.orig/kernel/trace/blktrace.c
-> +++ linux-2.6.31/kernel/trace/blktrace.c
-> @@ -852,6 +852,37 @@ static void blk_add_trace_remap(struct r
->  }
->  
->  /**
-> + * blk_add_trace_rq_remap - Add a trace for a request-remap operation
-> + * @q:		queue the io is for
-> + * @rq:		the source request
-> + * @dev:	target device
-> + * @from:	source sector
-> + *
-> + * Description:
-> + *     Device mapper remaps request to other devices.
-> + *     Add a trace for that action.
-> + *
-> + **/
-> +static void blk_add_trace_rq_remap(struct request_queue *q,
-> +				   struct request *rq, dev_t dev,
-> +				   sector_t from)
-> +{
-> +	struct blk_trace *bt = q->blk_trace;
-> +	struct blk_io_trace_remap r;
-> +
-> +	if (likely(!bt))
-> +		return;
-> +
-> +	r.device_from = cpu_to_be32(dev);
-> +	r.device_to   = disk_devt(rq->rq_disk);
-> +	r.sector_from = cpu_to_be64(from);
-> +
-> +	__blk_add_trace(bt, blk_rq_pos(rq), blk_rq_bytes(rq),
-> +			rq_data_dir(rq), BLK_TA_REMAP, !!rq->errors,
-> +			sizeof(r), &r);
-> +}
-> +
-> +/**
->   * blk_add_driver_data - Add binary message with driver-specific data
->   * @q:		queue the io is for
->   * @rq:		io request
-> @@ -918,10 +949,13 @@ static void blk_register_tracepoints(voi
->  	WARN_ON(ret);
->  	ret = register_trace_block_remap(blk_add_trace_remap);
->  	WARN_ON(ret);
-> +	ret = register_trace_block_rq_remap(blk_add_trace_rq_remap);
-> +	WARN_ON(ret);
->  }
->  
->  static void blk_unregister_tracepoints(void)
+>   * If io scheduler has functionality of keeping track of close cooperator, check
+>   * with it if it has got a closely co-operating queue.
+> @@ -2057,6 +2171,7 @@ void *elv_select_ioq(struct request_queue *q, int force)
 >  {
-> +	unregister_trace_block_rq_remap(blk_add_trace_rq_remap);
->  	unregister_trace_block_remap(blk_add_trace_remap);
->  	unregister_trace_block_split(blk_add_trace_split);
->  	unregister_trace_block_unplug_io(blk_add_trace_unplug_io);
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+>  	struct elv_fq_data *efqd = q->elevator->efqd;
+>  	struct io_queue *new_ioq = NULL, *ioq = elv_active_ioq(q->elevator);
+> +	struct io_group *iog;
+>  
+>  	if (!elv_nr_busy_ioq(q->elevator))
+>  		return NULL;
+> @@ -2064,6 +2179,8 @@ void *elv_select_ioq(struct request_queue *q, int force)
+>  	if (ioq == NULL)
+>  		goto new_queue;
+>  
+> +	iog = ioq_to_io_group(ioq);
+> +
+>  	/*
+>  	 * Force dispatch. Continue to dispatch from current queue as long
+>  	 * as it has requests.
+> @@ -2075,11 +2192,47 @@ void *elv_select_ioq(struct request_queue *q, int force)
+>  			goto expire;
+>  	}
+>  
+> +	/* We are waiting for this group to become busy before it expires.*/
+> +	if (elv_iog_wait_busy(iog)) {
+> +		ioq = NULL;
+> +		goto keep_queue;
+> +	}
+> +
+>  	/*
+>  	 * The active queue has run out of time, expire it and select new.
+>  	 */
+> -	if (elv_ioq_slice_used(ioq) && !elv_ioq_must_dispatch(ioq))
+> -		goto expire;
+> +	if ((elv_ioq_slice_used(ioq) || elv_ioq_class_idle(ioq))
+> +	     && !elv_ioq_must_dispatch(ioq)) {
+> +		/*
+> +		 * Queue has used up its slice. Wait busy is not on otherwise
+> +		 * we wouldn't have been here. If this group will be deleted
+> +		 * after the queue expiry, then make sure we have onece
+> +		 * done wait busy on the group in an attempt to make it
+> +		 * backlogged.
+> +		 *
+> +		 * Following check helps in two conditions.
+> +		 * - If there are requests dispatched from the queue and
+> +		 *   select_ioq() comes before a request completed from the
+> +		 *   queue and got a chance to arm any of the idle timers.
+> +		 *
+> +		 * - If at request completion time slice had not expired and
+> +		 *   we armed either a ioq timer or group timer but when
+> +		 *   select_ioq() hits, slice has expired and it will expire
+> +		 *   the queue without doing busy wait on group.
+> +		 *
+> +		 * In similar situations cfq lets delte the queue even if
+> +		 * idle timer is armed. That does not impact fairness in non
+> +		 * hierarhical setup due to weighted slice lengths. But in
+> +		 * hierarchical setup where group slice lengths are derived
+> +		 * from queue and is not proportional to group's weight, it
+> +		 * harms the fairness of the group.
+> +		 */
+> +		if (elv_iog_should_idle(ioq) && !elv_iog_wait_busy_done(iog)) {
+
+Hi Vivek,
+
+Here is another bug which will cause task hanging when accessing into a certain disk.
+For the moment, last ioq(corresponding CGroup has been removed) is optimized not to 
+expire unitl another ioq get backlogged. Here just checking "iog_wait_busy_done" flag
+is not sufficient, because idle timer can be inactive at that moment. This will cause
+the ioq keeping service all the time and won't stop, causing the whole system hanging. 
+This patch adds extra check for "iog_wait_busy" to make sure that the idle timer is 
+pending, and this ioq will be expired after timer is up.
+
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+---
+ block/elevator-fq.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 40d0eb5..c039ba2 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -3364,7 +3364,8 @@ void *elv_select_ioq(struct request_queue *q, int force)
+ 		 * harms the fairness of the group.
+ 		 */
+ 		slice_expired = 1;
+-		if (elv_iog_should_idle(ioq) && !elv_iog_wait_busy_done(iog)) {
++		if (elv_iog_should_idle(ioq) && !elv_iog_wait_busy_done(iog) &&
++		    elv_iog_wait_busy(iog)) {
+ 			ioq = NULL;
+ 			goto keep_queue;
+ 		} else
+-- 
+1.5.4.rc3
