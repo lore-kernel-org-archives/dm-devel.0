@@ -1,16 +1,14 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: Re: fragmented i/o with 2.6.31?
-Date: Fri, 18 Sep 2009 23:30:45 +0900
-Message-ID: <4AB39995.6000409@ce.jp.nec.com>
-References: <448b15030909160834j2b127c83jab163e1860fc9aa1@mail.gmail.com>	<448b15030909160922o84c2d6gc8ead8226dd8777a@mail.gmail.com>	<4AB1ED1F.1010203@ct.jp.nec.com>
-	<4AB1FDEE.5020500@ce.jp.nec.com>	<20090917131113.GA8163@redhat.com>
-	<yq1skek94hw.fsf@sermon.lab.mkp.net>
+Subject: Re: [PATCH] Add a tracepoint for block request remapping
+Date: Fri, 18 Sep 2009 23:34:48 +0900
+Message-ID: <4AB39A88.3040106@ce.jp.nec.com>
+References: <4AB2E57B.2090101@ce.jp.nec.com> <4AB32148.3010004@cn.fujitsu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <yq1skek94hw.fsf@sermon.lab.mkp.net>
+In-Reply-To: <4AB32148.3010004@cn.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +18,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
+To: Li Zefan <lizf@cn.fujitsu.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-Martin K. Petersen wrote:
->>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+Li Zefan wrote:
+> Jun'ichi Nomura wrote:
+>> Since 2.6.31 now has request-based device-mapper, it's useful to have
+>> a tracepoint for request-remapping as well as bio-remapping.
+>>
+>> This patch adds a tracepoint for request-remapping, trace_block_rq_remap().
 > 
->>>>  	blk_set_default_limits(limits);
->>>> + limits->max_sectors = 0;
->>>> + limits->max_hw_sectors = 0;
-> Mike> Seems like we may want some common variant in block even though
-> Mike> I'm not aware of other block drivers that would benefit...
+>> Existing trace_block_remap() is left unchanged but it might be better to
+>> rename it to trace_block_bio_remap().
 > 
-> Mike> But I'll defer to Martin and/or Jens on whether these helpers are
-> Mike> fine to stay in dm-table.c or should be worked into blk-settings.c
-> 
-> In the pre-topology days we set max_sectors to SAFE_MAX_SECTORS upon
-> creation of a queue.  This is an old ATA-ism that's been around for a
-> ages.
-> 
-> Ideally we'd simply nuke it and drivers that really needed to lower the
-> bar would explicitly call blk_queue_max_sectors().  However, I'm afraid
-> to change the default because I'm sure there are legacy drivers lurking
-> somewhere that depend on it.
-> 
-> Seeing as blk_set_default_limits() is mostly aimed at stacking drivers I
-> think I'd prefer moving SAFE_MAX_SECTORS back to blk_queue_make_request
-> and then set max_sectors and max_hw_sectors to 0 in default_limits.
-> 
-> Would that work for you guys?
+> Why not. ;)
 
-Yes, that should work.
+OK, I'll add a renaming patch.
 
-I'll split the patch into 2, one for changing blk_set_default_limits
-and the other for dm to set the safe default if 'max_sectors == 0'.
+>> +static void blk_add_trace_rq_remap(struct request_queue *q,
+>> +				   struct request *rq, dev_t dev,
+>> +				   sector_t from)
+>> +{
+>> +	struct blk_trace *bt = q->blk_trace;
+>> +	struct blk_io_trace_remap r;
+>> +
+>> +	if (likely(!bt))
+>> +		return;
+>> +
+>> +	r.device_from = cpu_to_be32(dev);
+>> +	r.device_to   = disk_devt(rq->rq_disk);
+> 
+> cpu_to_be32(dis_devt(...))
 
-Thanks,
+Thank you! I'll fix that.
+
+>> +	r.sector_from = cpu_to_be64(from);
+>> +
+>> +	__blk_add_trace(bt, blk_rq_pos(rq), blk_rq_bytes(rq),
+>> +			rq_data_dir(rq), BLK_TA_REMAP, !!rq->errors,
+>> +			sizeof(r), &r);
+>> +}
+
 -- 
 Jun'ichi Nomura, NEC Corporation
