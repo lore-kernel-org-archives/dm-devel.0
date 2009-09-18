@@ -1,13 +1,15 @@
-From: akpm@linux-foundation.org
-Subject: [patch 3/3] drivers/md/dm-log-userspace-base.c: fix
-	warning
-Date: Fri, 18 Sep 2009 12:45:09 -0700
-Message-ID: <200909181945.n8IJj9cE010432@imap1.linux-foundation.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/3] block: Add blk_queue_copy_limits()
+Date: Fri, 18 Sep 2009 16:30:40 -0400
+Message-ID: <20090918203040.GA6031@redhat.com>
+References: <4AB3B43D.9000802@ce.jp.nec.com>
+	<yq1eiq46ohz.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ANSI_X3.4-1968
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <yq1eiq46ohz.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,39 +19,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com, akpm@linux-foundation.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-From: Andrew Morton <akpm@linux-foundation.org>
+On Fri, Sep 18 2009 at  3:28pm -0400,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
-mips:
+> >>>>> "Jun'ichi" == Jun'ichi Nomura <j-nomura@ce.jp.nec.com> writes:
+> 
+> +	if (q->limits.max_sectors == 0 || q->limits.max_hw_sectors == 0)
+> +		blk_queue_max_sectors(q, SAFE_MAX_SECTORS);
+> 
+> I'm really not keen on perpetuating SAFE_MAX_SECTORS for something that
+> was written in this millennium.
+> 
+> I'd much rather we just do this, then:
+> 
+> block: Set max_sectors correctly for stacking devices
+> 
+> The topology changes unintentionally caused SAFE_MAX_SECTORS to be set
+> for stacking devices.  Set the default limit to BLK_DEF_MAX_SECTORS and
+> provide SAFE_MAX_SECTORS in blk_queue_make_request() for legacy hw
+> drivers that depend on the old behavior.
+> 
+> Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
 
-drivers/md/dm-log-userspace-base.c: In function `userspace_ctr':
-drivers/md/dm-log-userspace-base.c:159: warning: cast from pointer to int=
-eger of different size
+Nice.  Avoids the need for a safe queue_limits copy and associated naunce.
 
-Cc: Neil Brown <neilb@suse.de>
-Cc: Jonathan Brassow <jbrassow@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
----
-
- drivers/md/dm-log-userspace-base.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff -puN drivers/md/dm-log-userspace-base.c~drivers-md-dm-log-userspace-=
-basec-fix-warning drivers/md/dm-log-userspace-base.c
---- a/drivers/md/dm-log-userspace-base.c~drivers-md-dm-log-userspace-base=
-c-fix-warning
-+++ a/drivers/md/dm-log-userspace-base.c
-@@ -156,7 +156,7 @@ static int userspace_ctr(struct dm_dirty
- 	}
-=20
- 	/* The ptr value is sufficient for local unique id */
--	lc->luid =3D (uint64_t)lc;
-+	lc->luid =3D (unsigned long)lc;
-=20
- 	lc->ti =3D ti;
-=20
-_
+Acked-by: Mike Snitzer <snitzer@redhat.com>
