@@ -1,17 +1,16 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH] io-controller: Fix another bug that causing
-	system hanging
-Date: Fri, 18 Sep 2009 10:47:07 -0400
-Message-ID: <20090918144707.GA11338@redhat.com>
-References: <1251495072-7780-1-git-send-email-vgoyal@redhat.com>
-	<1251495072-7780-12-git-send-email-vgoyal@redhat.com>
-	<4AB30508.6010206@cn.fujitsu.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: Re: fragmented i/o with 2.6.31?
+Date: Fri, 18 Sep 2009 23:30:45 +0900
+Message-ID: <4AB39995.6000409@ce.jp.nec.com>
+References: <448b15030909160834j2b127c83jab163e1860fc9aa1@mail.gmail.com>	<448b15030909160922o84c2d6gc8ead8226dd8777a@mail.gmail.com>	<4AB1ED1F.1010203@ct.jp.nec.com>
+	<4AB1FDEE.5020500@ce.jp.nec.com>	<20090917131113.GA8163@redhat.com>
+	<yq1skek94hw.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4AB30508.6010206@cn.fujitsu.com>
+In-Reply-To: <yq1skek94hw.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,121 +20,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 18, 2009 at 11:56:56AM +0800, Gui Jianfeng wrote:
-> Vivek Goyal wrote:
-> ...
+Martin K. Petersen wrote:
+>>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 > 
-> >   * If io scheduler has functionality of keeping track of close cooperator, check
-> >   * with it if it has got a closely co-operating queue.
-> > @@ -2057,6 +2171,7 @@ void *elv_select_ioq(struct request_queue *q, int force)
-> >  {
-> >  	struct elv_fq_data *efqd = q->elevator->efqd;
-> >  	struct io_queue *new_ioq = NULL, *ioq = elv_active_ioq(q->elevator);
-> > +	struct io_group *iog;
-> >  
-> >  	if (!elv_nr_busy_ioq(q->elevator))
-> >  		return NULL;
-> > @@ -2064,6 +2179,8 @@ void *elv_select_ioq(struct request_queue *q, int force)
-> >  	if (ioq == NULL)
-> >  		goto new_queue;
-> >  
-> > +	iog = ioq_to_io_group(ioq);
-> > +
-> >  	/*
-> >  	 * Force dispatch. Continue to dispatch from current queue as long
-> >  	 * as it has requests.
-> > @@ -2075,11 +2192,47 @@ void *elv_select_ioq(struct request_queue *q, int force)
-> >  			goto expire;
-> >  	}
-> >  
-> > +	/* We are waiting for this group to become busy before it expires.*/
-> > +	if (elv_iog_wait_busy(iog)) {
-> > +		ioq = NULL;
-> > +		goto keep_queue;
-> > +	}
-> > +
-> >  	/*
-> >  	 * The active queue has run out of time, expire it and select new.
-> >  	 */
-> > -	if (elv_ioq_slice_used(ioq) && !elv_ioq_must_dispatch(ioq))
-> > -		goto expire;
-> > +	if ((elv_ioq_slice_used(ioq) || elv_ioq_class_idle(ioq))
-> > +	     && !elv_ioq_must_dispatch(ioq)) {
-> > +		/*
-> > +		 * Queue has used up its slice. Wait busy is not on otherwise
-> > +		 * we wouldn't have been here. If this group will be deleted
-> > +		 * after the queue expiry, then make sure we have onece
-> > +		 * done wait busy on the group in an attempt to make it
-> > +		 * backlogged.
-> > +		 *
-> > +		 * Following check helps in two conditions.
-> > +		 * - If there are requests dispatched from the queue and
-> > +		 *   select_ioq() comes before a request completed from the
-> > +		 *   queue and got a chance to arm any of the idle timers.
-> > +		 *
-> > +		 * - If at request completion time slice had not expired and
-> > +		 *   we armed either a ioq timer or group timer but when
-> > +		 *   select_ioq() hits, slice has expired and it will expire
-> > +		 *   the queue without doing busy wait on group.
-> > +		 *
-> > +		 * In similar situations cfq lets delte the queue even if
-> > +		 * idle timer is armed. That does not impact fairness in non
-> > +		 * hierarhical setup due to weighted slice lengths. But in
-> > +		 * hierarchical setup where group slice lengths are derived
-> > +		 * from queue and is not proportional to group's weight, it
-> > +		 * harms the fairness of the group.
-> > +		 */
-> > +		if (elv_iog_should_idle(ioq) && !elv_iog_wait_busy_done(iog)) {
+>>>>  	blk_set_default_limits(limits);
+>>>> + limits->max_sectors = 0;
+>>>> + limits->max_hw_sectors = 0;
+> Mike> Seems like we may want some common variant in block even though
+> Mike> I'm not aware of other block drivers that would benefit...
 > 
-> Hi Vivek,
+> Mike> But I'll defer to Martin and/or Jens on whether these helpers are
+> Mike> fine to stay in dm-table.c or should be worked into blk-settings.c
 > 
-> Here is another bug which will cause task hanging when accessing into a certain disk.
-> For the moment, last ioq(corresponding CGroup has been removed) is optimized not to 
-> expire unitl another ioq get backlogged. Here just checking "iog_wait_busy_done" flag
-> is not sufficient, because idle timer can be inactive at that moment. This will cause
-> the ioq keeping service all the time and won't stop, causing the whole system hanging. 
-> This patch adds extra check for "iog_wait_busy" to make sure that the idle timer is 
-> pending, and this ioq will be expired after timer is up.
+> In the pre-topology days we set max_sectors to SAFE_MAX_SECTORS upon
+> creation of a queue.  This is an old ATA-ism that's been around for a
+> ages.
 > 
-> Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+> Ideally we'd simply nuke it and drivers that really needed to lower the
+> bar would explicitly call blk_queue_max_sectors().  However, I'm afraid
+> to change the default because I'm sure there are legacy drivers lurking
+> somewhere that depend on it.
+> 
+> Seeing as blk_set_default_limits() is mostly aimed at stacking drivers I
+> think I'd prefer moving SAFE_MAX_SECTORS back to blk_queue_make_request
+> and then set max_sectors and max_hw_sectors to 0 in default_limits.
+> 
+> Would that work for you guys?
 
-Good point. I think keeping the signle queue around with-in child group is
-getting complicated.
+Yes, that should work.
 
-For the time being I will continue to expire the single ioq of child group
-even if other competing queues are not present. (Bring back the check of
-efqd->root_group->ioq).
+I'll split the patch into 2, one for changing blk_set_default_limits
+and the other for dm to set the safe default if 'max_sectors == 0'.
 
-Once rest of the things stablize, we can revisit this optimzation later
-that don't expire the single queue in child groups also.
-
-Thanks
-Vivek
-
-> ---
->  block/elevator-fq.c |    3 ++-
->  1 files changed, 2 insertions(+), 1 deletions(-)
-> 
-> diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-> index 40d0eb5..c039ba2 100644
-> --- a/block/elevator-fq.c
-> +++ b/block/elevator-fq.c
-> @@ -3364,7 +3364,8 @@ void *elv_select_ioq(struct request_queue *q, int force)
->  		 * harms the fairness of the group.
->  		 */
->  		slice_expired = 1;
-> -		if (elv_iog_should_idle(ioq) && !elv_iog_wait_busy_done(iog)) {
-> +		if (elv_iog_should_idle(ioq) && !elv_iog_wait_busy_done(iog) &&
-> +		    elv_iog_wait_busy(iog)) {
->  			ioq = NULL;
->  			goto keep_queue;
->  		} else
-> -- 
-> 1.5.4.rc3
-> 
-> 
-> 
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation
