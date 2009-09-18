@@ -1,14 +1,17 @@
-From: Li Zefan <lizf@cn.fujitsu.com>
-Subject: Re: [PATCH] Add a tracepoint for block request remapping
-Date: Fri, 18 Sep 2009 13:57:28 +0800
-Message-ID: <4AB32148.3010004@cn.fujitsu.com>
-References: <4AB2E57B.2090101@ce.jp.nec.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: Re: fragmented i/o with 2.6.31?
+Date: Fri, 18 Sep 2009 02:00:27 -0400
+Message-ID: <yq1skek94hw.fsf@sermon.lab.mkp.net>
+References: <448b15030909160834j2b127c83jab163e1860fc9aa1@mail.gmail.com>
+	<448b15030909160922o84c2d6gc8ead8226dd8777a@mail.gmail.com>
+	<4AB1ED1F.1010203@ct.jp.nec.com> <4AB1FDEE.5020500@ce.jp.nec.com>
+	<20090917131113.GA8163@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4AB2E57B.2090101@ce.jp.nec.com>
+In-Reply-To: <20090917131113.GA8163@redhat.com> (Mike Snitzer's message of
+	"Thu, 17 Sep 2009 09:11:14 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,39 +21,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Alasdair Kergon <agk@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-Jun'ichi Nomura wrote:
-> Since 2.6.31 now has request-based device-mapper, it's useful to have
-> a tracepoint for request-remapping as well as bio-remapping.
-> 
-> This patch adds a tracepoint for request-remapping, trace_block_rq_remap().
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-> Existing trace_block_remap() is left unchanged but it might be better to
-> rename it to trace_block_bio_remap().
+>> >  	blk_set_default_limits(limits);
+>> > + limits->max_sectors = 0;
+>> > + limits->max_hw_sectors = 0;
+>> 
+Mike> Seems like we may want some common variant in block even though
+Mike> I'm not aware of other block drivers that would benefit...
 
-Why not. ;)
+Mike> But I'll defer to Martin and/or Jens on whether these helpers are
+Mike> fine to stay in dm-table.c or should be worked into blk-settings.c
 
-> +static void blk_add_trace_rq_remap(struct request_queue *q,
-> +				   struct request *rq, dev_t dev,
-> +				   sector_t from)
-> +{
-> +	struct blk_trace *bt = q->blk_trace;
-> +	struct blk_io_trace_remap r;
-> +
-> +	if (likely(!bt))
-> +		return;
-> +
-> +	r.device_from = cpu_to_be32(dev);
-> +	r.device_to   = disk_devt(rq->rq_disk);
+In the pre-topology days we set max_sectors to SAFE_MAX_SECTORS upon
+creation of a queue.  This is an old ATA-ism that's been around for a
+ages.
 
-cpu_to_be32(dis_devt(...))
+Ideally we'd simply nuke it and drivers that really needed to lower the
+bar would explicitly call blk_queue_max_sectors().  However, I'm afraid
+to change the default because I'm sure there are legacy drivers lurking
+somewhere that depend on it.
 
-> +	r.sector_from = cpu_to_be64(from);
-> +
-> +	__blk_add_trace(bt, blk_rq_pos(rq), blk_rq_bytes(rq),
-> +			rq_data_dir(rq), BLK_TA_REMAP, !!rq->errors,
-> +			sizeof(r), &r);
-> +}
+Seeing as blk_set_default_limits() is mostly aimed at stacking drivers I
+think I'd prefer moving SAFE_MAX_SECTORS back to blk_queue_make_request
+and then set max_sectors and max_hw_sectors to 0 in default_limits.
+
+Would that work for you guys?
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
