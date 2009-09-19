@@ -1,15 +1,15 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 2/3] block: Rename trace_block_remap to
-	trace_block_bio_remap
-Date: Sun, 20 Sep 2009 00:30:16 +0900
-Message-ID: <4AB4F908.60307@ce.jp.nec.com>
-References: <4AB3A393.5000709@ce.jp.nec.com>
+Subject: Re: [PATCH 1/3] block: Add blk_queue_copy_limits()
+Date: Sun, 20 Sep 2009 00:35:28 +0900
+Message-ID: <4AB4FA40.70700@ce.jp.nec.com>
+References: <4AB3B43D.9000802@ce.jp.nec.com> <20090918203328.GT23126@kernel.dk>
+	<20090918203533.GU23126@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4AB3A393.5000709@ce.jp.nec.com>
+In-Reply-To: <20090918203533.GU23126@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,130 +19,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jens.axboe@oracle.com>, Alasdair G Kergon <agk@redhat.com>, Li Zefan <lizf@cn.fujitsu.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Sorry, the previous mail has line-wrapped.
-Re-sending the patch.
+Jens Axboe wrote:
+> On Fri, Sep 18 2009, Jens Axboe wrote:
+>> On Sat, Sep 19 2009, Jun'ichi Nomura wrote:
+>>> This patch is a preparation for the last patch in this patchset
+>>> which changes blk_set_default_limits() to set 0 to max_sectors.
+>>>
+>>> dm uses blk_stack_limits() to merge limits of underlying devices
+>>> and copy the end result to the queue.
+>>> But if there's no underlying device (like 'zero' target),
+>>> max_sectors/max_hw_sectors are left unchanged from the default 0
+>>> and just copying it to the queue causes problems.
+>>>
+>>> Provide blk_queue_copy_limits() to get a safe copy with
+>>> invalid values fixed-up.
+>> Added for 2.6.32.
+> 
+> And removed, it's white space damaged and doesn't apply to the current
+> tree.
 
-Rename "block_remap" tracepoint to "block_bio_remap" to clarify the event.
-No functional change.
+Sorry... I forgot to disable line-wrapping and broke the patch.
+Re-sending with Mike's correction to English applied.
+
+
+This patch is a preparation for the last patch in this patchset
+which changes blk_set_default_limits() to set max_sectors to 0.
+
+dm uses blk_stack_limits() to merge limits of underlying devices
+and copy the end result to the queue.
+But if there's no underlying device (like 'zero' target),
+max_sectors/max_hw_sectors are left unchanged from the default 0
+and just copying it to the queue causes problems.
+
+Provide blk_queue_copy_limits() to get a safe copy with
+invalid values fixed-up.
 
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>
+Cc: David Strand <dpstrand@gmail.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
 Cc: Alasdair G Kergon <agk@redhat.com>
-Cc: Li Zefan <lizf@cn.fujitsu.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: Jens Axboe <jens.axboe@oracle.com>
 ---
- block/blk-core.c             |   10 +++++-----
- drivers/md/dm.c              |    4 ++--
- include/trace/events/block.h |    2 +-
- kernel/trace/blktrace.c      |   10 +++++-----
- 4 files changed, 13 insertions(+), 13 deletions(-)
+ block/blk-settings.c   |   28 ++++++++++++++++++++++++++++
+ include/linux/blkdev.h |    1 +
+ 2 files changed, 29 insertions(+)
 
-Index: linux-2.6.31.work/include/trace/events/block.h
+Index: linux-2.6.31.work/block/blk-settings.c
 ===================================================================
---- linux-2.6.31.work.orig/include/trace/events/block.h
-+++ linux-2.6.31.work/include/trace/events/block.h
-@@ -453,7 +453,7 @@ TRACE_EVENT(block_split,
- 		  __entry->comm)
- );
-
--TRACE_EVENT(block_remap,
-+TRACE_EVENT(block_bio_remap,
-
- 	TP_PROTO(struct request_queue *q, struct bio *bio, dev_t dev,
- 		 sector_t from),
-Index: linux-2.6.31.work/block/blk-core.c
-===================================================================
---- linux-2.6.31.work.orig/block/blk-core.c
-+++ linux-2.6.31.work/block/blk-core.c
-@@ -33,7 +33,7 @@
-
- #include "blk.h"
-
--EXPORT_TRACEPOINT_SYMBOL_GPL(block_remap);
-+EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
- EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
- EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
-
-@@ -1285,9 +1285,9 @@ static inline void blk_partition_remap(s
- 		bio->bi_sector += p->start_sect;
- 		bio->bi_bdev = bdev->bd_contains;
-
--		trace_block_remap(bdev_get_queue(bio->bi_bdev), bio,
--				    bdev->bd_dev,
--				    bio->bi_sector - p->start_sect);
-+		trace_block_bio_remap(bdev_get_queue(bio->bi_bdev), bio,
-+				      bdev->bd_dev,
-+				      bio->bi_sector - p->start_sect);
- 	}
- }
-
-@@ -1455,7 +1455,7 @@ static inline void __generic_make_reques
- 			goto end_io;
-
- 		if (old_sector != -1)
--			trace_block_remap(q, bio, old_dev, old_sector);
-+			trace_block_bio_remap(q, bio, old_dev, old_sector);
-
- 		trace_block_bio_queue(q, bio);
-
-Index: linux-2.6.31.work/kernel/trace/blktrace.c
-===================================================================
---- linux-2.6.31.work.orig/kernel/trace/blktrace.c
-+++ linux-2.6.31.work/kernel/trace/blktrace.c
-@@ -822,7 +822,7 @@ static void blk_add_trace_split(struct r
- }
+--- linux-2.6.31.work.orig/block/blk-settings.c
++++ linux-2.6.31.work/block/blk-settings.c
+@@ -122,6 +122,34 @@ void blk_set_default_limits(struct queue
+ EXPORT_SYMBOL(blk_set_default_limits);
 
  /**
-- * blk_add_trace_remap - Add a trace for a remap operation
-+ * blk_add_trace_bio_remap - Add a trace for a bio-remap operation
-  * @q:		queue the io is for
-  * @bio:	the source bio
-  * @dev:	target device
-@@ -833,8 +833,8 @@ static void blk_add_trace_split(struct r
-  *     it spans a stripe (or similar). Add a trace for that action.
-  *
-  **/
--static void blk_add_trace_remap(struct request_queue *q, struct bio *bio,
--				       dev_t dev, sector_t from)
-+static void blk_add_trace_bio_remap(struct request_queue *q, struct bio *bio,
-+				    dev_t dev, sector_t from)
- {
- 	struct blk_trace *bt = q->blk_trace;
- 	struct blk_io_trace_remap r;
-@@ -947,7 +947,7 @@ static void blk_register_tracepoints(voi
- 	WARN_ON(ret);
- 	ret = register_trace_block_split(blk_add_trace_split);
- 	WARN_ON(ret);
--	ret = register_trace_block_remap(blk_add_trace_remap);
-+	ret = register_trace_block_bio_remap(blk_add_trace_bio_remap);
- 	WARN_ON(ret);
- 	ret = register_trace_block_rq_remap(blk_add_trace_rq_remap);
- 	WARN_ON(ret);
-@@ -956,7 +956,7 @@ static void blk_register_tracepoints(voi
- static void blk_unregister_tracepoints(void)
- {
- 	unregister_trace_block_rq_remap(blk_add_trace_rq_remap);
--	unregister_trace_block_remap(blk_add_trace_remap);
-+	unregister_trace_block_bio_remap(blk_add_trace_bio_remap);
- 	unregister_trace_block_split(blk_add_trace_split);
- 	unregister_trace_block_unplug_io(blk_add_trace_unplug_io);
- 	unregister_trace_block_unplug_timer(blk_add_trace_unplug_timer);
-Index: linux-2.6.31.work/drivers/md/dm.c
++ * blk_queue_copy_limits - copy limits to queue
++ * @q:  the request queue whose limits as a copy destination
++ * @lim:  the queue_limits structure as a copy source
++ *
++ * Description:
++ *   Copies a queue_limit struct contents to @q with fix-ups to
++ *   invalid values.
++ */
++void blk_queue_copy_limits(struct request_queue *q, struct queue_limits *lim)
++{
++	q->limits = *lim;
++
++	/*
++	 * blk_set_default_limits() sets max_sectors/max_hw_sectors to 0
++	 * so that blk_stack_limits() appropriately propagate the values
++	 * of lower-stack by min_not_zero().
++	 * However, if the default value 0 is unchanged (e.g. the stacking
++	 * device is virtual and has no underlying device), it results
++	 * in unusable device.
++	 * Check if max_sectors/max_hw_sectors have non-zero values,
++	 * and set SAFE_MAX_SECTORS if they do.
++	 */
++	if (q->limits.max_sectors == 0 || q->limits.max_hw_sectors == 0)
++		blk_queue_max_sectors(q, SAFE_MAX_SECTORS);
++}
++EXPORT_SYMBOL(blk_queue_copy_limits);
++
++/**
+  * blk_queue_make_request - define an alternate make_request function for a device
+  * @q:  the request queue for the device to be affected
+  * @mfn: the alternate make_request function
+Index: linux-2.6.31.work/include/linux/blkdev.h
 ===================================================================
---- linux-2.6.31.work.orig/drivers/md/dm.c
-+++ linux-2.6.31.work/drivers/md/dm.c
-@@ -961,8 +961,8 @@ static void __map_bio(struct dm_target *
- 	if (r == DM_MAPIO_REMAPPED) {
- 		/* the bio has been remapped so dispatch it */
-
--		trace_block_remap(bdev_get_queue(clone->bi_bdev), clone,
--				    tio->io->bio->bi_bdev->bd_dev, sector);
-+		trace_block_bio_remap(bdev_get_queue(clone->bi_bdev), clone,
-+				      tio->io->bio->bi_bdev->bd_dev, sector);
-
- 		generic_make_request(clone);
- 	} else if (r < 0 || r == DM_MAPIO_REQUEUE) {
+--- linux-2.6.31.work.orig/include/linux/blkdev.h
++++ linux-2.6.31.work/include/linux/blkdev.h
+@@ -917,6 +917,7 @@ extern void blk_limits_io_min(struct que
+ extern void blk_queue_io_min(struct request_queue *q, unsigned int min);
+ extern void blk_queue_io_opt(struct request_queue *q, unsigned int opt);
+ extern void blk_set_default_limits(struct queue_limits *lim);
++extern void blk_queue_copy_limits(struct request_queue *q, struct queue_limits *lim);
+ extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 			    sector_t offset);
+ extern void disk_stack_limits(struct gendisk *disk, struct block_device *bdev,
