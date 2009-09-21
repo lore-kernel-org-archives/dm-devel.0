@@ -1,16 +1,16 @@
-From: "Alan D. Brunelle" <Alan.Brunelle@hp.com>
-Subject: Re: lvmcreate -i 128 limitation
-Date: Mon, 21 Sep 2009 09:37:42 -0400
-Message-ID: <1253540262.4612.29.camel@cail>
-References: <1253536631.4612.13.camel@cail>
-	<20090921125601.GD1210@agk-dp.fab.redhat.com>
-	<20090921125824.GE1210@agk-dp.fab.redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH 1/3] block: Add blk_queue_copy_limits()
+Date: Tue, 22 Sep 2009 01:33:38 +0900
+Message-ID: <4AB7AAE2.8000404@ce.jp.nec.com>
+References: <4AB3B43D.9000802@ce.jp.nec.com>	<yq1eiq46ohz.fsf@sermon.lab.mkp.net>
+	<4AB4F74E.7000908@ce.jp.nec.com>
+	<yq1k4zt5o2f.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090921125824.GE1210@agk-dp.fab.redhat.com>
+In-Reply-To: <yq1k4zt5o2f.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,25 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Jens Axboe <jens.axboe@oracle.com>, "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, 2009-09-21 at 13:58 +0100, Alasdair G Kergon wrote:
-> On Mon, Sep 21, 2009 at 01:56:01PM +0100, Alasdair G Kergon wrote:
-> > What error message do you get?
->  
-> Found it.
+Martin K. Petersen wrote:
+>>>>>> "Jun'ichi" == Jun'ichi Nomura <j-nomura@ce.jp.nec.com> writes:
 > 
-> There's no kernel-side limitation and no lvm2-format metadata limitation
-> I can think of.
+> Jun'ichi> Umm, with this, BLK_DEF_MAX_SECTORS becomes upper bound of
+> Jun'ichi> max_hw_sectors and the values of underlying devices are not
+> Jun'ichi> propagated to the stacking devices.  
 > 
-> Just a restriction inherited from LVM1 that we've never had cause to remove.
+> Well, max_sectors is already bounded by this.  max_hw_sectors only
+> really matters for PC commands, so I'm not sure it's a big deal for
+> DM. But I guess we could set the default max_hw_sectors to -1.
 > 
-> Alasdair
+> I'm just trying to avoid these scattered if-0-set-it-to-something-else
+> cases.  I'd much rather have the defaults do the right thing.
 
-Thanks Alasdair - 
+I agree with that.
+I had to do the if-0-set-it-to-something-else to avoid putting unnecessary
+cap on max_hw_sectors.
 
-Yeah, I noticed the kernel-side looked like it didn't care. Hadn't
-thought about LVM1 being the cause...
+If we aren't sure, shouldn't we set its default to -1 or putting comments
+in blk_set_default_limits() at least to avoid possible confusion in future?
 
-Alan
+Thanks,
+--
+Jun'ichi Nomura, NEC Corporation 
