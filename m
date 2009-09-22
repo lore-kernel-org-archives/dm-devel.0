@@ -1,17 +1,18 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: A BUG in snapshot merging
-Date: Tue, 22 Sep 2009 13:00:00 -0400
-Message-ID: <20090922170000.GA1806@redhat.com>
+Date: Tue, 22 Sep 2009 15:20:40 -0400
+Message-ID: <20090922192039.GA13465@redhat.com>
 References: <Pine.LNX.4.64.0909211349480.16230@hs20-bc2-1.build.redhat.com>
 	<20090921175655.GA28074@redhat.com>
 	<Pine.LNX.4.64.0909211815580.31653@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0909221130590.24935@hs20-bc2-1.build.redhat.com>
+	<20090922170000.GA1806@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0909221130590.24935@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20090922170000.GA1806@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,38 +26,63 @@ To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 22 2009 at 12:37pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Tue, Sep 22 2009 at  1:00pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> I got this BUG when attempting to use merged patchset of Mike's and Jon's 
-> patches (from 
-> http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/)
+> On Tue, Sep 22 2009 at 12:37pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
 > 
-> I think we shouldn't join these two patchsets together. I mean, before 
-> clustered patches, merging was stable (I reviewed and tested it and except 
-> for one userspace bug (already fixed) there were no flaws) ... now it 
-> doesn't work.
+> > I got this BUG when attempting to use merged patchset of Mike's and Jon's 
+> > patches (from 
+> > http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/)
+> > 
+> > I think we shouldn't join these two patchsets together. I mean, before 
+> > clustered patches, merging was stable (I reviewed and tested it and except 
+> > for one userspace bug (already fixed) there were no flaws) ... now it 
+> > doesn't work.
+> > 
+> > I would recommend to leave merging as it was (i.e. stable, apply only 
+> > little patches on it) and develop Jon's clustering on the top of merging 
+> > and not interleave it with merging, so that the clustering patches could 
+> > be rolled back if problems were found. When clustering will be stable and 
+> > reviewed, it could be added to the kernel --- but it may happen later than 
+> > merging, so don't mix it.
 > 
-> I would recommend to leave merging as it was (i.e. stable, apply only 
-> little patches on it) and develop Jon's clustering on the top of merging 
-> and not interleave it with merging, so that the clustering patches could 
-> be rolled back if problems were found. When clustering will be stable and 
-> reviewed, it could be added to the kernel --- but it may happen later than 
-> merging, so don't mix it.
+> 
+> When did you pull in the patches on my people page?
+> 
+> As of yesterday evening (Boston) I uploaded patches that are broken
+> (based on Jon's reworked handover).  I'm now combining your handover
+> with Jon's handover (in hopes of avoiding refactoring associations).
+> 
+> The patches are in flux... I'm working to resolve the issues that are
+> rooted at the handover mechanism.
+> 
+> As for patch ordering.  I'm not opposed to what you suggested (merge
+> first then clusterized).  But that is a secondary concern right now.  We
+> have enough time between now and the next merge window to get them both
+> working.
 
+Mikulas,
 
-When did you pull in the patches on my people page?
+I've fixed the handover mechanism.  It now reflects the combination of
+both your handover and Jon's (whereby avoiding refactoring
+associations in dm_exception_store and dm_snapshot).
 
-As of yesterday evening (Boston) I uploaded patches that are broken
-(based on Jon's reworked handover).  I'm now combining your handover
-with Jon's handover (in hopes of avoiding refactoring associations).
+I've uploaded the updated quilt series to the usual place:
+http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/
 
-The patches are in flux... I'm working to resolve the issues that are
-rooted at the handover mechanism.
+I not sure which BUG() you hit in dm-snap-persistent.c (because my line
+numbers have changed).. but given that it was in merge_callback() I'd
+imagine it is the BUG_ON() that Jon added to clear_exception().
 
-As for patch ordering.  I'm not opposed to what you suggested (merge
-first then clusterized).  But that is a secondary concern right now.  We
-have enough time between now and the next merge window to get them both
-working.
+That BUG_ON() is actually useful.  If you can reproduce it with these
+updated patches it bears further investigation.
+
+In general, I think snapshot-merge is stronger for having combined with
+Jon's clusterized patches.  I actually prefer the final result more so
+than if the merge patches were to try to stand on their own (Jon's
+refactoring of the exception-store et al has had a positive side-effect
+on snapshot-merge).
 
 Mike
