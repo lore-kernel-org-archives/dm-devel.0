@@ -1,18 +1,9 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: A BUG in snapshot merging
-Date: Tue, 22 Sep 2009 15:20:40 -0400
-Message-ID: <20090922192039.GA13465@redhat.com>
-References: <Pine.LNX.4.64.0909211349480.16230@hs20-bc2-1.build.redhat.com>
-	<20090921175655.GA28074@redhat.com>
-	<Pine.LNX.4.64.0909211815580.31653@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0909221130590.24935@hs20-bc2-1.build.redhat.com>
-	<20090922170000.GA1806@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH 1 of 2] DM Snapshot:  minor style fixes
+Date: Tue, 22 Sep 2009 16:17:21 -0500
+Message-ID: <200909222117.n8MLHLf5008935@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090922170000.GA1806@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,67 +13,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Sep 22 2009 at  1:00pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Patch name: dm-snap-minor-style-fixes.patch
 
-> On Tue, Sep 22 2009 at 12:37pm -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > I got this BUG when attempting to use merged patchset of Mike's and Jon's 
-> > patches (from 
-> > http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/)
-> > 
-> > I think we shouldn't join these two patchsets together. I mean, before 
-> > clustered patches, merging was stable (I reviewed and tested it and except 
-> > for one userspace bug (already fixed) there were no flaws) ... now it 
-> > doesn't work.
-> > 
-> > I would recommend to leave merging as it was (i.e. stable, apply only 
-> > little patches on it) and develop Jon's clustering on the top of merging 
-> > and not interleave it with merging, so that the clustering patches could 
-> > be rolled back if problems were found. When clustering will be stable and 
-> > reviewed, it could be added to the kernel --- but it may happen later than 
-> > merging, so don't mix it.
-> 
-> 
-> When did you pull in the patches on my people page?
-> 
-> As of yesterday evening (Boston) I uploaded patches that are broken
-> (based on Jon's reworked handover).  I'm now combining your handover
-> with Jon's handover (in hopes of avoiding refactoring associations).
-> 
-> The patches are in flux... I'm working to resolve the issues that are
-> rooted at the handover mechanism.
-> 
-> As for patch ordering.  I'm not opposed to what you suggested (merge
-> first then clusterized).  But that is a secondary concern right now.  We
-> have enough time between now and the next merge window to get them both
-> working.
+Coding style fixes only to dm-snap[-persistent].c
 
-Mikulas,
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 
-I've fixed the handover mechanism.  It now reflects the combination of
-both your handover and Jon's (whereby avoiding refactoring
-associations in dm_exception_store and dm_snapshot).
-
-I've uploaded the updated quilt series to the usual place:
-http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/
-
-I not sure which BUG() you hit in dm-snap-persistent.c (because my line
-numbers have changed).. but given that it was in merge_callback() I'd
-imagine it is the BUG_ON() that Jon added to clear_exception().
-
-That BUG_ON() is actually useful.  If you can reproduce it with these
-updated patches it bears further investigation.
-
-In general, I think snapshot-merge is stronger for having combined with
-Jon's clusterized patches.  I actually prefer the final result more so
-than if the merge patches were to try to stand on their own (Jon's
-refactoring of the exception-store et al has had a positive side-effect
-on snapshot-merge).
-
-Mike
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6/drivers/md/dm-snap-persistent.c
+@@ -535,7 +535,7 @@ static int persistent_read_metadata(stru
+ 	ps->exceptions_per_area = (ps->store->chunk_size << SECTOR_SHIFT) /
+ 				  sizeof(struct disk_exception);
+ 	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
+-			sizeof(*ps->callbacks));
++				   sizeof(*ps->callbacks));
+ 	if (!ps->callbacks)
+ 		return -ENOMEM;
+ 
+@@ -646,7 +646,7 @@ static void persistent_commit_exception(
+ 	 * If we completely filled the current area, then wipe the next one.
+ 	 */
+ 	if ((ps->current_committed == ps->exceptions_per_area) &&
+-	     zero_disk_area(ps, ps->current_area + 1))
++	    zero_disk_area(ps, ps->current_area + 1))
+ 		ps->valid = 0;
+ 
+ 	/*
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -363,7 +363,8 @@ static int init_exception_table(struct e
+ 	return 0;
+ }
+ 
+-static void exit_exception_table(struct exception_table *et, struct kmem_cache *mem)
++static void exit_exception_table(struct exception_table *et,
++				 struct kmem_cache *mem)
+ {
+ 	struct list_head *slot;
+ 	struct dm_snap_exception *ex, *next;
+@@ -603,8 +604,7 @@ static int snapshot_ctr(struct dm_target
+ 
+ 	s = kmalloc(sizeof(*s), GFP_KERNEL);
+ 	if (!s) {
+-		ti->error = "Cannot allocate snapshot context private "
+-		    "structure";
++		ti->error = "Cannot allocate snapshot private structure";
+ 		r = -ENOMEM;
+ 		goto bad_snap;
+ 	}
+@@ -896,7 +896,7 @@ static void pending_complete(struct dm_s
+ 	 */
+ 	insert_completed_exception(s, e);
+ 
+- out:
++out:
+ 	remove_exception(&pe->e);
+ 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
+ 	origin_bios = put_pending_exception(pe);
+@@ -959,7 +959,7 @@ static void start_copy(struct dm_snap_pe
+ 
+ 	/* Hand over to kcopyd */
+ 	dm_kcopyd_copy(s->kcopyd_client,
+-		    &src, 1, &dest, 0, copy_callback, pe);
++		       &src, 1, &dest, 0, copy_callback, pe);
+ }
+ 
+ static struct dm_snap_pending_exception *
+@@ -1109,9 +1109,9 @@ static int snapshot_map(struct dm_target
+ 		map_context->ptr = track_chunk(s, chunk);
+ 	}
+ 
+- out_unlock:
++out_unlock:
+ 	up_write(&s->lock);
+- out:
++out:
+ 	return r;
+ }
+ 
