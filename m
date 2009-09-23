@@ -1,8 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 1 of 2] DM Snapshot: allow chunksize smaller than
-	pagesize
-Date: Wed, 23 Sep 2009 09:57:58 -0500
-Message-ID: <200909231457.n8NEvwDn027102@hydrogen.msp.redhat.com>
+Subject: [PATCH 2 of 2] DM Snapshot:  drop unneeded and
+Date: Wed, 23 Sep 2009 09:58:09 -0500
+Message-ID: <200909231458.n8NEw9NZ027175@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,56 +17,28 @@ To: dm-devel@redhat.com
 Cc: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snapshot-allow-chunksize-smaller-than-pagesize.patch
+Patch name: dm-snapshot-drop-unneeded-and.patch
 
-Allow chunksize smaller than pagesize.
+Removed unneeded 'and' masking --- right shift discards the lower bits anyway,
+so there is no need to clear them.
 
-There is no such restriction that page_size <= chunk_size. Page size
-varies between computers (and sometimes varies between different kernels
-on the same computer), so it isn't sensible to make the storage format
-dependent on the computer.
-
-When reading on-disk structure, the kernel allows pagesize >= chunksize.
-There used to be some bugs when creating a snapshot on x86 and moving it
-to ppc64 with 64k page size caused crashes, but it was fixed long time
-ago.  So there is no need to check the user-supplied chunk_size relative
-to page_size.
+This is also needed for the correctness of the following patch
+dm-snapshot-32bit-chunk-size.patch, that makes chunk_mask 32-bit.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-exception-store.c
+Index: linux-2.6/drivers/md/dm-exception-store.h
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-exception-store.c
-+++ linux-2.6/drivers/md/dm-exception-store.c
-@@ -138,16 +138,6 @@ int dm_exception_store_type_unregister(s
- }
- EXPORT_SYMBOL(dm_exception_store_type_unregister);
- 
--/*
-- * Round a number up to the nearest 'size' boundary.  size must
-- * be a power of 2.
-- */
--static ulong round_up(ulong n, ulong size)
--{
--	size--;
--	return (n + size) & ~size;
--}
--
- static int set_chunk_size(struct dm_exception_store *store,
- 			  const char *chunk_size_arg, char **error)
+--- linux-2.6.orig/drivers/md/dm-exception-store.h
++++ linux-2.6/drivers/md/dm-exception-store.h
+@@ -162,7 +162,7 @@ static inline sector_t get_dev_size(stru
+ static inline chunk_t sector_to_chunk(struct dm_exception_store *store,
+ 				      sector_t sector)
  {
-@@ -165,12 +155,6 @@ static int set_chunk_size(struct dm_exce
- 		return 0;
- 	}
- 
--	/*
--	 * Chunk size must be multiple of page size.  Silently
--	 * round up if it's not.
--	 */
--	chunk_size_ulong = round_up(chunk_size_ulong, PAGE_SIZE >> 9);
--
- 	return dm_exception_store_set_chunk_size(store, chunk_size_ulong,
- 						 error);
+-	return (sector & ~store->chunk_mask) >> store->chunk_shift;
++	return sector >> store->chunk_shift;
  }
+ 
+ int dm_exception_store_type_register(struct dm_exception_store_type *type);
