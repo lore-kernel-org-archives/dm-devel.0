@@ -1,16 +1,12 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] shared snapshots
-Date: Wed, 23 Sep 2009 21:11:22 +0900
-Message-ID: <20090923211002B.fujita.tomonori@lab.ntt.co.jp>
-References: <Pine.LNX.4.64.0909072313050.26479@hs20-bc2-1.build.redhat.com>
-	<20090908133514.GA8054@infradead.org>
-	<Pine.LNX.4.64.0909081055570.24837@hs20-bc2-1.build.redhat.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: [PATCH] Add missing del_gendisk to error path
+Date: Wed, 23 Sep 2009 14:37:26 +0200
+Message-ID: <4ABA1686.1000906@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-2
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0909081055570.24837@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,47 +16,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: hch@infradead.org, agk@redhat.com
+To: dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 8 Sep 2009 11:10:41 -0400 (EDT)
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+Add missing del_gendisk() to error path when creation of workqueue fails.
+Otherwice there is a resource leak and following warning is shown:
 
-> 
-> 
-> On Tue, 8 Sep 2009, Christoph Hellwig wrote:
-> 
-> > On Mon, Sep 07, 2009 at 11:15:18PM -0400, Mikulas Patocka wrote:
-> > > [ the previous message was eaten by mailing-list server, probably because 
-> > > it was too long, so I am reposting it without the patch. The patch is at 
-> > > the URL below. ]
-> > > 
-> > > Hi
-> > > 
-> > > This is patch for shared snapshots to be included in the next merge 
-> > > window. The patch only adds new modules dm_multisnapshot and 
-> > > dm_store_mikulas, it doesn't modify any existing code.
-> > 
-> > Not that I have anything against people advertising their names, but
-> > wouldn't a descriptive module name telling what this store is useful be
-> > better?
-> 
-> Well, I doubt it would be useful if someone renamed for example "xfs.ko" 
-> to "a_btree_based_journaled_filesystem.ko" --- and it would be less 
-> descriptive too because there are several other btree-based journaled 
-> filesystems.
-> 
-> Currently, there are two exception stores for these shared snapshots, they 
-> both use btrees and they have different format which has different pros 
-> and cons --- so I named them according to their designers, "mikulas" and 
-> "fujita-daniel". With what other names they should be differentiated?
+WARNING: at fs/sysfs/dir.c:487 sysfs_add_one+0xc5/0x160()
+sysfs: cannot create duplicate filename '/devices/virtual/block/dm-0'
 
-Is anyone plan to push the zumastor-based implementation into
-mainline? I'm not because seems that you push your implementation; I
-don't think that potential user base is large enough for maintaining
-two dm snapshot implementations though there are pros and cons about
-two implementations.
+Signed-off-by: Zdenek Kabelac <zkabelac@redhat.com>
 
-Anyway, please don't use my name for zumastor code. I don't do much
-for that code (and I don't like to leave my name in such way).
+---
+ drivers/md/dm.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index b4845b1..bf5961d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1819,6 +1819,7 @@ static struct mapped_device *alloc_dev(int minor)
+ bad_bdev:
+ 	destroy_workqueue(md->wq);
+ bad_thread:
++	del_gendisk(md->disk);
+ 	put_disk(md->disk);
+ bad_disk:
+ 	blk_cleanup_queue(md->queue);
