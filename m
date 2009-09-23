@@ -1,7 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 1 of 2] DM Exception Store: return zero when empty
-Date: Wed, 23 Sep 2009 10:24:58 -0500
-Message-ID: <200909231524.n8NFOw03029884@hydrogen.msp.redhat.com>
+Subject: [PATCH 2 of 2] DM Snapshot: dont insert before existing
+	chunk
+Date: Wed, 23 Sep 2009 10:25:08 -0500
+Message-ID: <200909231525.n8NFP87C029957@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,30 +18,40 @@ To: dm-devel@redhat.com
 Cc: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-exception-store-return-zero-when-empty.patch
+Patch name: dm-snapshot-dont-insert-before-existing-chunk.patch
 
-When the snapshot is empty, return 0 as the number of allocated sectors.
-This will be needed to properly notify userspace that merging is finished.
+Don't insert into hash before an existing chunk.
+
+Most inserts are after an existing extent anyway so this code is used
+very rarely.
+
+The snapshot merge code always pulls the chunk from the end of the
+range.  Without introducing unnecessary complexity, snapshot merge can't
+pull the exception from the middle of a range --- i.e. if you have range
+1-10 and you merge chunk 5, you'd have to split the range into two.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
-Index: linux-2.6/drivers/md/dm-snap-persistent.c
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+
+Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-persistent.c
-+++ linux-2.6/drivers/md/dm-snap-persistent.c
-@@ -492,8 +492,12 @@ static struct pstore *get_info(struct dm
- static void persistent_fraction_full(struct dm_exception_store *store,
- 				     sector_t *numerator, sector_t *denominator)
- {
--	*numerator = get_info(store)->next_free * store->chunk_size;
--	*denominator = get_dev_size(store->cow->bdev);
-+	/*
-+	 * Compensate for the first two chunks that are always allocated.
-+	 * Make sure that we return 0 when there are no exceptions.
-+	 */
-+	*numerator = (get_info(store)->next_free - 2) * store->chunk_size;
-+	*denominator = get_dev_size(store->cow->bdev) - 2 * store->chunk_size;
- }
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -478,16 +478,6 @@ static void insert_completed_exception(s
+ 			return;
+ 		}
  
- static void persistent_dtr(struct dm_exception_store *store)
+-		/* Insert before an existing chunk? */
+-		if (new_e->old_chunk == (e->old_chunk - 1) &&
+-		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) - 1)) {
+-			dm_consecutive_chunk_count_inc(e);
+-			e->old_chunk--;
+-			e->new_chunk--;
+-			free_exception(new_e);
+-			return;
+-		}
+-
+ 		if (new_e->old_chunk > e->old_chunk)
+ 			break;
+ 	}
