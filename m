@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 1 of 2] DM Snapshot: remove redundant valid test
-Date: Wed, 23 Sep 2009 10:19:08 -0500
-Message-ID: <200909231519.n8NFJ8K3028667@hydrogen.msp.redhat.com>
+Subject: [PATCH 2 of 2] DM Snapshot: find min chunksize function
+Date: Wed, 23 Sep 2009 10:19:18 -0500
+Message-ID: <200909231519.n8NFJIWT028740@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,33 +17,75 @@ To: dm-devel@redhat.com
 Cc: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snapshot-remove-redundant-valid-test.patch
+Patch name: dm-snapshot-find-min-chunksize-function.patch
 
-There is another valid test when we take the lock, the previous test can
-be dropped.
+The origin needs to find minimum chunksize of all snapshots.
+This logic is moved to separate function because it will be used at other place
+in snapshot merge.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
 
 Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.c
 +++ linux-2.6/drivers/md/dm-snap.c
-@@ -1043,15 +1043,11 @@ static int snapshot_map(struct dm_target
+@@ -519,6 +519,25 @@ static int dm_add_exception(void *contex
+ 	return 0;
+ }
  
- 	chunk = sector_to_chunk(s->store, bio->bi_sector);
++#define min_not_zero(l, r) (((l) == 0) ? (r) : (((r) == 0) ? (l) : min(l, r)))
++
++/*
++ * Return a minimum chunk size of all snapshots that have the specified origin.
++ * Return zero if the origin has no snapshots.
++ */
++static sector_t minimum_chunk_size(struct origin *o)
++{
++	struct dm_snapshot *snap;
++	sector_t chunk_size = 0;
++
++	if (o)
++		list_for_each_entry(snap, &o->snapshots, list)
++			chunk_size = min_not_zero(chunk_size,
++						  snap->store->chunk_size);
++
++	return chunk_size;
++}
++
+ /*
+  * Hard coded magic.
+  */
+@@ -1378,8 +1397,6 @@ static int origin_map(struct dm_target *
+ 	return (bio_rw(bio) == WRITE) ? do_origin(dev, bio) : DM_MAPIO_REMAPPED;
+ }
  
--	/* Full snapshots are not usable */
--	/* To get here the table must be live so s->active is always set. */
--	if (!s->valid)
--		return -EIO;
+-#define min_not_zero(l, r) (l == 0) ? r : ((r == 0) ? l : min(l, r))
 -
- 	/* FIXME: should only take write lock if we need
- 	 * to copy an exception */
- 	down_write(&s->lock);
+ /*
+  * Set the target "split_io" field to the minimum of all the snapshots'
+  * chunk sizes.
+@@ -1387,19 +1404,14 @@ static int origin_map(struct dm_target *
+ static void origin_resume(struct dm_target *ti)
+ {
+ 	struct dm_dev *dev = ti->private;
+-	struct dm_snapshot *snap;
+ 	struct origin *o;
+-	chunk_t chunk_size = 0;
  
-+	/* Full snapshots are not usable */
- 	if (!s->valid) {
- 		r = -EIO;
- 		goto out_unlock;
+ 	down_read(&_origins_lock);
++
+ 	o = __lookup_origin(dev->bdev);
+-	if (o)
+-		list_for_each_entry (snap, &o->snapshots, list)
+-			chunk_size = min_not_zero(chunk_size,
+-						  snap->store->chunk_size);
+-	up_read(&_origins_lock);
++	ti->split_io = minimum_chunk_size(o);
+ 
+-	ti->split_io = chunk_size;
++	up_read(&_origins_lock);
+ }
+ 
+ static int origin_status(struct dm_target *ti, status_type_t type, char *result,
