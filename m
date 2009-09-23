@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 2] DM Snapshot:  drop unneeded and
-Date: Wed, 23 Sep 2009 09:58:09 -0500
-Message-ID: <200909231458.n8NEw9NZ027175@hydrogen.msp.redhat.com>
+Subject: [PATCH 1 of 2] DM Snapshot: remove redundant valid test
+Date: Wed, 23 Sep 2009 10:19:08 -0500
+Message-ID: <200909231519.n8NFJ8K3028667@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,28 +17,33 @@ To: dm-devel@redhat.com
 Cc: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snapshot-drop-unneeded-and.patch
+Patch name: dm-snapshot-remove-redundant-valid-test.patch
 
-Removed unneeded 'and' masking --- right shift discards the lower bits anyway,
-so there is no need to clear them.
-
-This is also needed for the correctness of the following patch
-dm-snapshot-32bit-chunk-size.patch, that makes chunk_mask 32-bit.
+There is another valid test when we take the lock, the previous test can
+be dropped.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-exception-store.h
+Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-exception-store.h
-+++ linux-2.6/drivers/md/dm-exception-store.h
-@@ -162,7 +162,7 @@ static inline sector_t get_dev_size(stru
- static inline chunk_t sector_to_chunk(struct dm_exception_store *store,
- 				      sector_t sector)
- {
--	return (sector & ~store->chunk_mask) >> store->chunk_shift;
-+	return sector >> store->chunk_shift;
- }
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -1043,15 +1043,11 @@ static int snapshot_map(struct dm_target
  
- int dm_exception_store_type_register(struct dm_exception_store_type *type);
+ 	chunk = sector_to_chunk(s->store, bio->bi_sector);
+ 
+-	/* Full snapshots are not usable */
+-	/* To get here the table must be live so s->active is always set. */
+-	if (!s->valid)
+-		return -EIO;
+-
+ 	/* FIXME: should only take write lock if we need
+ 	 * to copy an exception */
+ 	down_write(&s->lock);
+ 
++	/* Full snapshots are not usable */
+ 	if (!s->valid) {
+ 		r = -EIO;
+ 		goto out_unlock;
