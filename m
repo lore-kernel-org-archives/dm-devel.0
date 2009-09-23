@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 2] DM Snapshot: find min chunksize function
-Date: Wed, 23 Sep 2009 10:19:18 -0500
-Message-ID: <200909231519.n8NFJIWT028740@hydrogen.msp.redhat.com>
+Subject: [PATCH 1 of 2] DM Exception Store: return zero when empty
+Date: Wed, 23 Sep 2009 10:24:58 -0500
+Message-ID: <200909231524.n8NFOw03029884@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,75 +17,30 @@ To: dm-devel@redhat.com
 Cc: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snapshot-find-min-chunksize-function.patch
+Patch name: dm-exception-store-return-zero-when-empty.patch
 
-The origin needs to find minimum chunksize of all snapshots.
-This logic is moved to separate function because it will be used at other place
-in snapshot merge.
+When the snapshot is empty, return 0 as the number of allocated sectors.
+This will be needed to properly notify userspace that merging is finished.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
-
-Index: linux-2.6/drivers/md/dm-snap.c
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -519,6 +519,25 @@ static int dm_add_exception(void *contex
- 	return 0;
- }
- 
-+#define min_not_zero(l, r) (((l) == 0) ? (r) : (((r) == 0) ? (l) : min(l, r)))
-+
-+/*
-+ * Return a minimum chunk size of all snapshots that have the specified origin.
-+ * Return zero if the origin has no snapshots.
-+ */
-+static sector_t minimum_chunk_size(struct origin *o)
-+{
-+	struct dm_snapshot *snap;
-+	sector_t chunk_size = 0;
-+
-+	if (o)
-+		list_for_each_entry(snap, &o->snapshots, list)
-+			chunk_size = min_not_zero(chunk_size,
-+						  snap->store->chunk_size);
-+
-+	return chunk_size;
-+}
-+
- /*
-  * Hard coded magic.
-  */
-@@ -1378,8 +1397,6 @@ static int origin_map(struct dm_target *
- 	return (bio_rw(bio) == WRITE) ? do_origin(dev, bio) : DM_MAPIO_REMAPPED;
- }
- 
--#define min_not_zero(l, r) (l == 0) ? r : ((r == 0) ? l : min(l, r))
--
- /*
-  * Set the target "split_io" field to the minimum of all the snapshots'
-  * chunk sizes.
-@@ -1387,19 +1404,14 @@ static int origin_map(struct dm_target *
- static void origin_resume(struct dm_target *ti)
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6/drivers/md/dm-snap-persistent.c
+@@ -492,8 +492,12 @@ static struct pstore *get_info(struct dm
+ static void persistent_fraction_full(struct dm_exception_store *store,
+ 				     sector_t *numerator, sector_t *denominator)
  {
- 	struct dm_dev *dev = ti->private;
--	struct dm_snapshot *snap;
- 	struct origin *o;
--	chunk_t chunk_size = 0;
- 
- 	down_read(&_origins_lock);
-+
- 	o = __lookup_origin(dev->bdev);
--	if (o)
--		list_for_each_entry (snap, &o->snapshots, list)
--			chunk_size = min_not_zero(chunk_size,
--						  snap->store->chunk_size);
--	up_read(&_origins_lock);
-+	ti->split_io = minimum_chunk_size(o);
- 
--	ti->split_io = chunk_size;
-+	up_read(&_origins_lock);
+-	*numerator = get_info(store)->next_free * store->chunk_size;
+-	*denominator = get_dev_size(store->cow->bdev);
++	/*
++	 * Compensate for the first two chunks that are always allocated.
++	 * Make sure that we return 0 when there are no exceptions.
++	 */
++	*numerator = (get_info(store)->next_free - 2) * store->chunk_size;
++	*denominator = get_dev_size(store->cow->bdev) - 2 * store->chunk_size;
  }
  
- static int origin_status(struct dm_target *ti, status_type_t type, char *result,
+ static void persistent_dtr(struct dm_exception_store *store)
