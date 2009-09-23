@@ -1,10 +1,14 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 2] DM Snapshot: dont insert before existing
-	chunk
-Date: Wed, 23 Sep 2009 10:25:08 -0500
-Message-ID: <200909231525.n8NFP87C029957@hydrogen.msp.redhat.com>
+Subject: Re: [PATCH] Add missing del_gendisk to error path
+Date: Wed, 23 Sep 2009 11:41:38 -0500
+Message-ID: <2A187566-B84E-48F4-BED8-C562AE7FF9CB@redhat.com>
+References: <4ABA1686.1000906@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v936)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4ABA1686.1000906@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,44 +18,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: mpatocka@redhat.com, snitzer@redhat.com, agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Patch name: dm-snapshot-dont-insert-before-existing-chunk.patch
-
-Don't insert into hash before an existing chunk.
-
-Most inserts are after an existing extent anyway so this code is used
-very rarely.
-
-The snapshot merge code always pulls the chunk from the end of the
-range.  Without introducing unnecessary complexity, snapshot merge can't
-pull the exception from the middle of a range --- i.e. if you have range
-1-10 and you merge chunk 5, you'd have to split the range into two.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -478,16 +478,6 @@ static void insert_completed_exception(s
- 			return;
- 		}
- 
--		/* Insert before an existing chunk? */
--		if (new_e->old_chunk == (e->old_chunk - 1) &&
--		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) - 1)) {
--			dm_consecutive_chunk_count_inc(e);
--			e->old_chunk--;
--			e->new_chunk--;
--			free_exception(new_e);
--			return;
--		}
--
- 		if (new_e->old_chunk > e->old_chunk)
- 			break;
- 	}
+  brassow
+On Sep 23, 2009, at 7:37 AM, Zdenek Kabelac wrote:
+
+> Add missing del_gendisk() to error path when creation of workqueue  
+> fails.
+> Otherwice there is a resource leak and following warning is shown:
+>
+> WARNING: at fs/sysfs/dir.c:487 sysfs_add_one+0xc5/0x160()
+> sysfs: cannot create duplicate filename '/devices/virtual/block/dm-0'
+>
+> Signed-off-by: Zdenek Kabelac <zkabelac@redhat.com>
+>
+> ---
+> drivers/md/dm.c |    1 +
+> 1 files changed, 1 insertions(+), 0 deletions(-)
+>
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index b4845b1..bf5961d 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1819,6 +1819,7 @@ static struct mapped_device *alloc_dev(int  
+> minor)
+> bad_bdev:
+> 	destroy_workqueue(md->wq);
+> bad_thread:
+> +	del_gendisk(md->disk);
+> 	put_disk(md->disk);
+> bad_disk:
+> 	blk_cleanup_queue(md->queue);
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
