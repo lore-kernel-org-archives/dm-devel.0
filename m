@@ -1,362 +1,507 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 06/28] io-controller: Core scheduler changes to support hierarhical scheduling
-Date: Thu, 24 Sep 2009 15:25:10 -0400
-Message-ID: <1253820332-10246-7-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 01/28] io-controller: Documentation
+Date: Thu, 24 Sep 2009 15:25:05 -0400
+Message-ID: <1253820332-10246-2-git-send-email-vgoyal@redhat.com>
 References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754021AbZIXTcu@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754253AbZIXTcw@vger.kernel.org>
 In-Reply-To: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, jens.axboe@oracle.com
 Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, vgoyal@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
 List-Id: dm-devel.ids
 
-o This patch introduces core changes in fair queuing scheduler to support
-  hierarhical/group scheduling. It is enabled by CONFIG_GROUP_IOSCHED.
+o Documentation for io-controller.
 
-Signed-off-by: Fabio Checconi <fabio@gandalf.sssup.it>
-Signed-off-by: Paolo Valente <paolo.valente@unimore.it>
-Signed-off-by: Nauman Rafique <nauman@google.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 Acked-by: Rik van Riel <riel@redhat.com>
 ---
- block/elevator-fq.c |  190 +++++++++++++++++++++++++++++++++++++++++++++++----
- block/elevator-fq.h |   19 +++++
- init/Kconfig        |    8 ++
- 3 files changed, 204 insertions(+), 13 deletions(-)
+ Documentation/block/00-INDEX          |    2 +
+ Documentation/block/io-controller.txt |  464 +++++++++++++++++++++++++++++++++
+ 2 files changed, 466 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/block/io-controller.txt
 
-diff --git a/block/elevator-fq.c b/block/elevator-fq.c
-index 629ddaa..0e3d58c 100644
---- a/block/elevator-fq.c
-+++ b/block/elevator-fq.c
-@@ -145,6 +145,88 @@ static inline struct io_group *iog_of(struct io_entity *entity)
- 	return NULL;
- }
- 
-+#ifdef CONFIG_GROUP_IOSCHED
-+/* check for entity->parent so that loop is not executed for root entity. */
-+#define for_each_entity(entity)	\
-+	for (; entity && entity->parent; entity = entity->parent)
+diff --git a/Documentation/block/00-INDEX b/Documentation/block/00-INDEX
+index 961a051..dc8bf95 100644
+--- a/Documentation/block/00-INDEX
++++ b/Documentation/block/00-INDEX
+@@ -10,6 +10,8 @@ capability.txt
+ 	- Generic Block Device Capability (/sys/block/<disk>/capability)
+ deadline-iosched.txt
+ 	- Deadline IO scheduler tunables
++io-controller.txt
++	- IO controller for provding hierarchical IO scheduling
+ ioprio.txt
+ 	- Block io priorities (in CFQ scheduler)
+ request.txt
+diff --git a/Documentation/block/io-controller.txt b/Documentation/block/io-controller.txt
+new file mode 100644
+index 0000000..f2bfce6
+--- /dev/null
++++ b/Documentation/block/io-controller.txt
+@@ -0,0 +1,464 @@
++				IO Controller
++				=============
 +
-+/* Do the two (enqueued) entities belong to the same group ? */
-+static inline int
-+is_same_group(struct io_entity *entity, struct io_entity *new_entity)
-+{
-+	if (parent_entity(entity) == parent_entity(new_entity))
-+		return 1;
++Overview
++========
 +
-+	return 0;
-+}
++This patchset implements a proportional weight IO controller. That is one
++can create cgroups and assign prio/weights to those cgroups and task group
++will get access to disk proportionate to the weight of the group.
 +
-+/* return depth at which a io entity is present in the hierarchy */
-+static inline int depth_entity(struct io_entity *entity)
-+{
-+	int depth = 0;
++These patches modify elevator layer and individual IO schedulers to do
++IO control hence this io controller works only on block devices which use
++one of the standard io schedulers can not be used with any xyz logical block
++device.
 +
-+	for_each_entity(entity)
-+		depth++;
++The assumption/thought behind modifying IO scheduler is that resource control
++is primarily needed on leaf nodes where the actual contention for resources is
++present and not on intertermediate logical block devices.
 +
-+	return depth;
-+}
++Consider following hypothetical scenario. Lets say there are three physical
++disks, namely sda, sdb and sdc. Two logical volumes (lv0 and lv1) have been
++created on top of these. Some part of sdb is in lv0 and some part is in lv1.
 +
-+static void find_matching_io_entity(struct io_entity **entity,
-+			struct io_entity **new_entity)
-+{
-+	int entity_depth, new_entity_depth;
++			    lv0      lv1
++			  /	\  /     \
++			sda      sdb      sdc
 +
-+	/*
-+	 * preemption test can be made between sibling entities who are in the
-+	 * same group i.e who have a common parent. Walk up the hierarchy of
-+	 * both entities until we find their ancestors who are siblings of
-+	 * common parent.
-+	 */
++Also consider following cgroup hierarchy
 +
-+	/* First walk up until both entities are at same depth */
-+	entity_depth = depth_entity(*entity);
-+	new_entity_depth = depth_entity(*new_entity);
++				root
++				/   \
++			       A     B
++			      / \    / \
++			     T1 T2  T3  T4
 +
-+	while (entity_depth > new_entity_depth) {
-+		entity_depth--;
-+		*entity = parent_entity(*entity);
-+	}
++A and B are two cgroups and T1, T2, T3 and T4 are tasks with-in those cgroups.
++Assuming T1, T2, T3 and T4 are doing IO on lv0 and lv1. These tasks should
++get their fair share of bandwidth on disks sda, sdb and sdc. There is no
++IO control on intermediate logical block nodes (lv0, lv1).
 +
-+	while (new_entity_depth > entity_depth) {
-+		new_entity_depth--;
-+		*new_entity = parent_entity(*new_entity);
-+	}
++So if tasks T1 and T2 are doing IO on lv0 and T3 and T4 are doing IO on lv1
++only, there will not be any contetion for resources between group A and B if
++IO is going to sda or sdc. But if actual IO gets translated to disk sdb, then
++IO scheduler associated with the sdb will distribute disk bandwidth to
++group A and B proportionate to their weight.
 +
-+	while (!is_same_group(*entity, *new_entity)) {
-+		*entity = parent_entity(*entity);
-+		*new_entity = parent_entity(*new_entity);
-+	}
-+}
-+struct io_group *ioq_to_io_group(struct io_queue *ioq)
-+{
-+	return iog_of(parent_entity(&ioq->entity));
-+}
-+EXPORT_SYMBOL(ioq_to_io_group);
++CFQ already has the notion of fairness and it provides differential disk
++access based on priority and class of the task. Just that it is flat and
++with cgroup stuff, it needs to be made hierarchical to achive a good
++hierarchical control on IO.
 +
-+static inline struct io_sched_data *
-+io_entity_sched_data(struct io_entity *entity)
-+{
-+	return &iog_of(parent_entity(entity))->sched_data;
-+}
++Rest of the IO schedulers (noop, deadline and AS) don't have any notion
++of fairness among various threads. They maintain only one queue where all
++the IO gets queued (internally this queue is split in read and write queue
++for deadline and AS). With this patchset, now we maintain one queue per
++cgropu per device and then try to do fair queuing among those queues.
 +
-+#else /* GROUP_IOSCHED */
-+#define for_each_entity(entity)	\
-+	for (; entity != NULL; entity = NULL)
++One of the concerns raised with modifying IO schedulers was that we don't
++want to replicate the code in all the IO schedulers. These patches share
++the fair queuing code which has been moved to a common layer (elevator
++layer). Hence we don't end up replicating code across IO schedulers. Following
++diagram depicts the concept.
 +
-+static void find_matching_io_entity(struct io_entity **entity,
-+			struct io_entity **new_entity) { }
++			--------------------------------
++			| Elevator Layer + Fair Queuing |
++			--------------------------------
++			 |	     |	     |       |
++			NOOP     DEADLINE    AS     CFQ
 +
-+static inline int
-+is_same_group(struct io_entity *entity, struct io_entity *new_entity)
-+{
-+	return 1;
-+}
++Design
++======
++This patchset takes the inspiration from CFS cpu scheduler, CFQ and BFQ to
++come up with core of hierarchical scheduling. Like CFQ we give time slices to
++every queue based on their priority. Like CFS, this disktime given to a
++queue is converted to virtual disk time based on queue's weight (vdisktime)
++and based on this vdisktime we decide which is the queue next to be
++dispatched. And like BFQ we maintain a cache of recently served queues and
++derive new vdisktime of the queue from the cache if queue was recently served.
 +
- static inline struct elv_fq_data *efqd_of(struct io_entity *entity)
- {
- 	return ioq_of(entity)->efqd;
-@@ -163,6 +245,7 @@ io_entity_sched_data(struct io_entity *entity)
- 
- 	return &efqd->root_group->sched_data;
- }
-+#endif /* GROUP_IOSCHED */
- 
- static inline void
- init_io_entity_service_tree(struct io_entity *entity, struct io_entity *parent)
-@@ -175,12 +258,18 @@ init_io_entity_service_tree(struct io_entity *entity, struct io_entity *parent)
- 	entity->st = &parent_iog->sched_data.service_tree[idx];
- }
- 
--static void
--entity_served(struct io_entity *entity, unsigned long served,
--		unsigned long queue_charge, unsigned long nr_sectors)
-+static void entity_served(struct io_entity *entity, unsigned long served,
-+		unsigned long queue_charge, unsigned long group_charge,
-+		unsigned long nr_sectors)
- {
--	entity->vdisktime += elv_delta_fair(queue_charge, entity);
--	update_min_vdisktime(entity->st);
-+	unsigned long charge = queue_charge;
++From data structure point of view, one can think of a tree per device, where
++io groups and io queues are hanging and are being scheduled. io_queue, is end
++queue where requests are actually stored and dispatched from (like cfqq).
 +
-+	for_each_entity(entity) {
-+		entity->vdisktime += elv_delta_fair(queue_charge, entity);
-+		update_min_vdisktime(entity->st);
-+		/* Group charge can be different from queue charge */
-+		charge = group_charge;
-+	}
- }
- 
- static void place_entity(struct io_service_tree *st, struct io_entity *entity,
-@@ -542,14 +631,23 @@ static void put_prev_ioq(struct io_queue *ioq)
- {
- 	struct io_entity *entity = &ioq->entity;
- 
--	put_prev_io_entity(entity);
-+	for_each_entity(entity) {
-+		put_prev_io_entity(entity);
-+	}
- }
- 
- static void dequeue_ioq(struct io_queue *ioq)
- {
- 	struct io_entity *entity = &ioq->entity;
- 
--	dequeue_io_entity(entity);
-+	for_each_entity(entity) {
-+		struct io_sched_data *sd = io_entity_sched_data(entity);
++These io queues are primarily created by and managed by end io schedulers
++depending on its semantics. For example, noop, deadline and AS ioschedulers
++keep one io queues per cgroup and cfqq keeps one io queue per io_context in
++a cgroup (apart from async queues).
 +
-+		dequeue_io_entity(entity);
-+		/* Don't dequeue parent if it has other entities besides us */
-+		if (sd->nr_active)
-+			break;
-+	}
- 	elv_put_ioq(ioq);
- 	return;
- }
-@@ -560,7 +658,12 @@ static void enqueue_ioq(struct io_queue *ioq)
- 	struct io_entity *entity = &ioq->entity;
- 
- 	elv_get_ioq(ioq);
--	enqueue_io_entity(entity);
++A request is mapped to an io group by elevator layer and which io queue it
++is mapped to with in group depends on ioscheduler. Noop, deadline and AS don't
++maintain separate queues per task, hence ther is only one io_queue per group.
++So once we can find right group, we also found right queue. CFQ maintains
++multiple io queues with-in group based on task context and maps the request
++to right queue in the group.
 +
-+	for_each_entity(entity) {
-+		if (entity->on_st)
-+			break;
-+		enqueue_io_entity(entity);
-+	}
- }
- 
- static inline void
-@@ -592,7 +695,7 @@ EXPORT_SYMBOL(elv_put_ioq);
- 
- static void elv_ioq_served(struct io_queue *ioq, unsigned long served)
- {
--	unsigned long allocated_slice, queue_charge;
-+	unsigned long allocated_slice, queue_charge, group_charge;
- 
- 	allocated_slice = elv_prio_to_slice(ioq->efqd, ioq);
- 
-@@ -604,7 +707,18 @@ static void elv_ioq_served(struct io_queue *ioq, unsigned long served)
- 	 * use the slice and moves to the back of service tree (almost).
- 	 */
- 	queue_charge = allocated_slice;
--	entity_served(&ioq->entity, served, queue_charge, ioq->nr_sectors);
++sync requests are mapped to right group and queue based on the "current" task.
++Async requests can be mapped using either "current" task or based on owner of
++the page. (blkio cgroup subsystem provides this bio/page tracking mechanism).
++This option is controlled by config option "CONFIG_TRACK_ASYNC_CONTEXT"
 +
-+	/*
-+	 * Group is charged the real time consumed so that it does not loose
-+	 * fair share.
-+	 */
-+	if (served > allocated_slice)
-+		group_charge = allocated_slice;
-+	else
-+		group_charge = served;
++Going back to old behavior
++==========================
++In new scheme of things essentially we are creating hierarchical fair
++queuing logic in elevator layer and changing IO schedulers to make use of
++that logic so that end IO schedulers start supporting hierarchical scheduling.
 +
-+	entity_served(&ioq->entity, served, queue_charge, group_charge,
-+			ioq->nr_sectors);
- }
- 
- /*
-@@ -804,6 +918,45 @@ void elv_io_group_set_async_queue(struct io_group *iog, int ioprio_class,
- }
- EXPORT_SYMBOL(elv_io_group_set_async_queue);
- 
-+#ifdef CONFIG_GROUP_IOSCHED
++Elevator layer continues to support the old interfaces. So even if fair queuing
++is enabled at elevator layer, one can have both new hierchical scheduler as
++well as old non-hierarchical scheduler operating.
 +
-+static void io_free_root_group(struct elevator_queue *e)
-+{
-+	struct io_group *iog = e->efqd->root_group;
-+	struct io_service_tree *st;
-+	int i;
++Also noop, deadline and AS have option of enabling hierarchical scheduling.
++If it is selected, fair queuing is done in hierarchical manner. If hierarchical
++scheduling is disabled, noop, deadline and AS should retain their existing
++behavior.
 +
-+	for (i = 0; i < IO_IOPRIO_CLASSES; i++) {
-+		st = iog->sched_data.service_tree + i;
-+		flush_idle_tree(st);
-+	}
++CFQ is the only exception where one can not disable fair queuing as it is
++needed for provding fairness among various threads even in non-hierarchical
++mode. So CFQ has to use fair queuing logic from common layer but it can choose
++to enable only flat support and not enable hierarchical (group scheduling)
++support.
 +
-+	put_io_group_queues(e, iog);
-+	kfree(iog);
-+}
++Various user visible config options
++===================================
++CONFIG_IOSCHED_NOOP_HIER
++	- Enables hierchical fair queuing in noop. Not selecting this option
++	  leads to old behavior of noop.
 +
-+static struct io_group *io_alloc_root_group(struct request_queue *q,
-+					struct elevator_queue *e, void *key)
-+{
-+	struct io_group *iog;
-+	int i;
++CONFIG_IOSCHED_DEADLINE_HIER
++	- Enables hierchical fair queuing in deadline. Not selecting this
++	  option leads to old behavior of deadline.
 +
-+	iog = kmalloc_node(sizeof(*iog), GFP_KERNEL | __GFP_ZERO, q->node);
-+	if (iog == NULL)
-+		return NULL;
++CONFIG_IOSCHED_AS_HIER
++	- Enables hierchical fair queuing in AS. Not selecting this option
++	  leads to old behavior of AS.
 +
-+	iog->entity.parent = NULL;
-+	iog->entity.my_sd = &iog->sched_data;
-+	iog->key = key;
++CONFIG_IOSCHED_CFQ_HIER
++	- Enables hierarchical fair queuing in CFQ. Not selecting this option
++	  still does fair queuing among various queus but it is flat and not
++	  hierarchical.
 +
-+	for (i = 0; i < IO_IOPRIO_CLASSES; i++)
-+		iog->sched_data.service_tree[i] = ELV_SERVICE_TREE_INIT;
++CGROUP_BLKIO
++	- This option enables blkio-cgroup controller for IO tracking
++	  purposes. That means, by this controller one can attribute a write
++	  to the original cgroup and not assume that it belongs to submitting
++	  thread.
 +
-+	return iog;
-+}
++CONFIG_TRACK_ASYNC_CONTEXT
++	- Currently CFQ attributes the writes to the submitting thread and
++	  caches the async queue pointer in the io context of the process.
++	  If this option is set, it tells cfq and elevator fair queuing logic
++	  that for async writes make use of IO tracking patches and attribute
++	  writes to original cgroup and not to write submitting thread.
 +
-+#else /* CONFIG_GROUP_IOSCHED */
++	  This should be primarily useful when lots of asynchronous writes
++	  are being submitted by pdflush threads and we need to assign the
++	  writes to right group.
 +
- static struct io_group *io_alloc_root_group(struct request_queue *q,
- 					struct elevator_queue *e, void *key)
- {
-@@ -839,6 +992,8 @@ static void io_free_root_group(struct elevator_queue *e)
- 	kfree(iog);
- }
- 
-+#endif /* CONFIG_GROUP_IOSCHED */
++CONFIG_DEBUG_GROUP_IOSCHED
++	- Throws extra debug messages in blktrace output helpful in doing
++	  doing debugging in hierarchical setup.
 +
- /*
-  * Should be called after ioq prio and class has been initialized as prio
-  * class data will be used to determine which service tree in the group
-@@ -864,9 +1019,11 @@ static struct io_queue *elv_get_next_ioq(struct request_queue *q)
- 		return NULL;
- 
- 	sd = &efqd->root_group->sched_data;
--	entity = lookup_next_io_entity(sd);
--	if (!entity)
--		return NULL;
-+	for (; sd != NULL; sd = entity->my_sd) {
-+		entity = lookup_next_io_entity(sd);
-+		if (!entity)
-+			return NULL;
-+	}
- 
- 	ioq = ioq_of(entity);
- 	return ioq;
-@@ -1073,6 +1230,13 @@ static int elv_should_preempt(struct request_queue *q, struct io_queue *new_ioq,
- 	new_entity = &new_ioq->entity;
- 
- 	/*
-+	 * In hierarchical setup, one need to traverse up the hierarchy
-+	 * till both the queues are children of same parent to make a
-+	 * decision whether to do the preemption or not.
-+	 */
-+	find_matching_io_entity(&entity, &new_entity);
++	- Also allows for export of extra debug statistics like group queue
++	  and dequeue statistics on device through cgroup interface.
 +
-+	/*
- 	 * Allow an RT request to pre-empt an ongoing non-RT cfqq timeslice.
- 	 */
- 
-diff --git a/block/elevator-fq.h b/block/elevator-fq.h
-index 6ea0d18..068f240 100644
---- a/block/elevator-fq.h
-+++ b/block/elevator-fq.h
-@@ -93,6 +93,23 @@ struct io_queue {
- 	void *sched_queue;
- };
- 
-+#ifdef CONFIG_GROUP_IOSCHED /* CONFIG_GROUP_IOSCHED */
-+struct io_group {
-+	struct io_entity entity;
-+	atomic_t ref;
-+	struct io_sched_data sched_data;
-+	/*
-+	 * async queue for each priority case for RT and BE class.
-+	 * Used only for cfq.
-+	 */
++CONFIG_DEBUG_ELV_FAIR_QUEUING
++	- Enables some vdisktime related debugging messages.
 +
-+	struct io_queue *async_queue[2][IOPRIO_BE_NR];
-+	struct io_queue *async_idle_queue;
-+	void *key;
-+};
++Config options selected automatically
++=====================================
++These config options are not user visible and are selected/deselected
++automatically based on IO scheduler configurations.
 +
-+#else /* CONFIG_GROUP_IOSCHED */
++CONFIG_ELV_FAIR_QUEUING
++	- Enables/Disables the fair queuing logic at elevator layer.
 +
- struct io_group {
- 	struct io_entity entity;
- 	struct io_sched_data sched_data;
-@@ -106,6 +123,8 @@ struct io_group {
- 	void *key;
- };
- 
-+#endif /* CONFIG_GROUP_IOSCHED */
++CONFIG_GROUP_IOSCHED
++	- Enables/Disables hierarchical queuing and associated cgroup bits.
 +
- struct elv_fq_data {
- 	struct io_group *root_group;
- 
-diff --git a/init/Kconfig b/init/Kconfig
-index 3f7e609..29f701d 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -612,6 +612,14 @@ config CGROUP_MEM_RES_CTLR_SWAP
- 	  Now, memory usage of swap_cgroup is 2 bytes per entry. If swap page
- 	  size is 4096bytes, 512k per 1Gbytes of swap.
- 
-+config GROUP_IOSCHED
-+	bool "Group IO Scheduler"
-+	depends on CGROUPS && ELV_FAIR_QUEUING
-+	default n
-+	---help---
-+	  This feature lets IO scheduler recognize task groups and control
-+	  disk bandwidth allocation to such task groups.
++HOWTO
++=====
++You can do a very simple testing of running two dd threads in two different
++cgroups. Here is what you can do.
 +
- endif # CGROUPS
- 
- config MM_OWNER
++- Enable hierarchical scheduling in io scheuduler of your choice (say cfq).
++	CONFIG_IOSCHED_CFQ_HIER=y
++
++- Enable IO tracking for async writes.
++	CONFIG_TRACK_ASYNC_CONTEXT=y
++
++  (This will automatically select CGROUP_BLKIO)
++
++- Compile and boot into kernel and mount IO controller and blkio io tracking
++  controller.
++
++	mount -t cgroup -o io,blkio none /cgroup
++
++- Create two cgroups
++	mkdir -p /cgroup/test1/ /cgroup/test2
++
++- Set weights of group test1 and test2
++	echo 1000 > /cgroup/test1/io.weight
++	echo 500 > /cgroup/test2/io.weight
++
++- Set "fairness" parameter to 1 at the disk you are testing.
++
++  echo 1 > /sys/block/<disk>/queue/iosched/fairness
++
++- Create two same size files (say 512MB each) on same disk (file1, file2) and
++  launch two dd threads in different cgroup to read those files. Make sure
++  right io scheduler is being used for the block device where files are
++  present (the one you compiled in hierarchical mode).
++
++	sync
++	echo 3 > /proc/sys/vm/drop_caches
++
++	dd if=/mnt/sdb/zerofile1 of=/dev/null &
++	echo $! > /cgroup/test1/tasks
++	cat /cgroup/test1/tasks
++
++	dd if=/mnt/sdb/zerofile2 of=/dev/null &
++	echo $! > /cgroup/test2/tasks
++	cat /cgroup/test2/tasks
++
++- At macro level, first dd should finish first. To get more precise data, keep
++  on looking at (with the help of script), at io.disk_time and io.disk_sectors
++  files of both test1 and test2 groups. This will tell how much disk time
++  (in milli seconds), each group got and how many secotors each group
++  dispatched to the disk. We provide fairness in terms of disk time, so
++  ideally io.disk_time of cgroups should be in proportion to the weight.
++
++What Works and What Does not
++============================
++Service differentiation at application level can be noticed only if completely
++parallel IO paths are created from application to IO scheduler and there
++are no serializations introduced by any intermediate layer. For example,
++in some cases file system and page cache layer introduce serialization and
++we don't see service difference between higher weight and lower weight
++process groups.
++
++For example, when I start an O_SYNC write out on an ext3 file system (file
++is being created newly), I see lots of activity from kjournald. I have not
++gone into details yet, but my understanding is that there are lot more
++journal commits and kjournald kind of introduces serialization between two
++processes. So even if you put these two processes in two different cgroups
++with different weights, higher weight process will not see more IO done.
++
++It does work very well when we bypass filesystem layer and IO is raw. For
++example in above virtual machine case, host sees raw synchronous writes
++coming from two guest machines and filesystem layer at host is not introducing
++any kind of serialization hence we can see the service difference.
++
++It also works very well for reads even on the same file system as for reads
++file system journalling activity does not kick in and we can create parallel
++IO paths from application to all the way down to IO scheduler and get more
++IO done on the IO path with higher weight.
++
++Details of new ioscheduler tunables
++===================================
++
++group_idle
++-----------
++
++"group_idle" specifies the duration one should wait for new request before
++group is expired. This is very similiar to "slice_idle" parameter of cfq. The
++difference is that slice_idle specifies queue idling period and group_idle
++specifies group idling period. Another difference is that cfq idling is
++dynamically updated based on traffic pattern. group idling is currently
++static.
++
++group idling takes place when a group is empty when it is being expired. If
++an empty group is expired and later it gets a request (say 1 ms), it looses
++its fair share as upon expiry it will be deleted from the service tree and
++a new queue will be selected to run and min_vdisktime will be udpated on
++service tree.
++
++There are both advantages and disadvantates of enabling group_idle. If
++enabled, it ensures that a group gets its fair share of disk time (as long
++as a group gets a new request with-in group_idle period). So even if a
++single sequential reader is running in a group, it will get the disk time
++depending on the group weight. IOW, enabling it provides very strong isolation
++between groups.
++
++The flip side is that it makes the group a heavier entity with slow switching
++between groups. There are many cases where CFQ disables the idling on the
++queue and hence queue gets expired as soon as requests are over in the queue
++and CFQ moves to new queue. This way it achieves faster switching and in many
++cases better throughput (most of the time seeky processes will not have idling
++enabled and will get very limited access to disk).
++
++If group idling is disabled, a group will get fairness only if it is
++continuously backlogged. So this weakens the fairness gurantees and isolation
++between the groups but can help achieve faster switching between queues/groups
++and better throughput.
++
++So one should set "group_idle" depending on one's use case and based on need.
++
++For the time being it is enabled by default.
++
++"fairness"
++----------
++IO controller has introduced a "fairness" tunable for every io scheduler.
++Currently this tunable can assume values 0, 1.
++
++If fairness is set to 1, then IO controller waits for requests to finish from
++previous queue before requests from new queue are dispatched. This helps in
++doing better accouting of disk time consumed by a queue. If this is not done
++then on a queuing hardware, there can be requests from multiple queues and
++we will not have any idea which queue consumed how much of disk time.
++
++So if "fairness" is set, it can help achive better time accounting. But the
++flip side is that it can slow down switching between queues and also lower the
++throughput.
++
++Again, this parameter should be set/reset based on the need. For the time
++being it is disabled by default.
++
++Details of cgroup files
++=======================
++- io.ioprio_class
++	- Specifies class of the cgroup (RT, BE, IDLE). This is default io
++	  class of the group on all the devices until and unless overridden by
++	  per device rule. (See io.policy).
++
++	  1 = RT; 2 = BE, 3 = IDLE
++
++- io.weight
++	- Specifies per cgroup weight. This is default weight of the group
++	  on all the devices until and unless overridden by per device rule.
++	  (See io.policy).
++
++	  Currently allowed range of weights is from 100 to 1000.
++
++- io.disk_time
++	- disk time allocated to cgroup per device in milliseconds. First
++	  two fields specify the major and minor number of the device and
++	  third field specifies the disk time allocated to group in
++	  milliseconds.
++
++- io.disk_sectors
++	- number of sectors transferred to/from disk by the group. First
++	  two fields specify the major and minor number of the device and
++	  third field specifies the number of sectors transferred by the
++	  group to/from the device.
++
++- io.disk_queue
++	- Debugging aid only enabled if CONFIG_DEBUG_GROUP_IOSCHED=y. This
++	  gives the statistics about how many a times a group was queued
++	  on service tree of the device. First two fields specify the major
++	  and minor number of the device and third field specifies the number
++	  of times a group was queued on a particular device.
++
++- io.disk_queue
++	- Debugging aid only enabled if CONFIG_DEBUG_GROUP_IOSCHED=y. This
++	  gives the statistics about how many a times a group was de-queued
++	  or removed from the service tree of the device. This basically gives
++	  and idea if we can generate enough IO to create continuously
++	  backlogged groups. First two fields specify the major and minor
++	  number of the device and third field specifies the number
++	  of times a group was de-queued on a particular device.
++
++- io.policy
++	- One can specify per cgroup per device rules using this interface.
++	  These rules override the default value of group weight and class as
++	  specified by io.weight and io.ioprio_class.
++
++	  Following is the format.
++
++	#echo dev_maj:dev_minor weight ioprio_class > /patch/to/cgroup/io.policy
++
++	weight=0 means removing a policy.
++
++	Examples:
++
++	Configure weight=300 ioprio_class=2 on /dev/hdb (8:16) in this cgroup
++	# echo 8:16 300 2 > io.policy
++	# cat io.policy
++	dev	weight	class
++	8:16	300	2
++
++	Configure weight=500 ioprio_class=1 on /dev/hda (8:0) in this cgroup
++	# echo 8:0 500 1 > io.policy
++	# cat io.policy
++	dev	weight	class
++	8:0	500	1
++	8:16	300	2
++
++	Remove the policy for /dev/hda in this cgroup
++	# echo 8:0 0 1 > io.policy
++	# cat io.policy
++	dev	weight	class
++	8:16	300	2
++
++About configuring request desriptors
++====================================
++Traditionally there are 128 request desriptors allocated per request queue
++where io scheduler is operating (/sys/block/<disk>/queue/nr_requests). If these
++request descriptors are exhausted, processes will put to sleep and woken
++up once request descriptors are available.
++
++With io controller and cgroup stuff, one can not afford to allocate requests
++from single pool as one group might allocate lots of requests and then tasks
++from other groups might be put to sleep and this other group might be a
++higher weight group. Hence to make sure that a group always can get the
++request descriptors it is entitled to, one needs to make request descriptor
++limit per group on every queue.
++
++A new parameter /sys/block/<disk>/queue/nr_group_requests has been introduced
++and this parameter controlls the maximum number of requests per group.
++nr_requests still continues to control total number of request descriptors
++on the queue.
++
++Ideally one should set nr_requests to be following.
++
++nr_requests = number_of_cgroups * nr_group_requests
++
++This will make sure that at any point of time nr_group_requests number of
++request descriptors will be available for any of the cgroups.
++
++Currently default nr_requests=512 and nr_group_requests=128. This will make
++sure that apart from root group one can create 3 more group without running
++into any issues. If one decides to create more cgorus, nr_requests and
++nr_group_requests should be adjusted accordingly.
++
++Some High Level Test setups
++===========================
++One of the use cases of IO controller is to provide some kind of IO isolation
++between multiple virtual machines on the same host. Following is one
++example setup which worked for me.
++
++
++			     KVM	     KVM
++			    Guest1	    Guest2
++			   ---------      ----------
++			  |  -----  |    |  ------  |
++			  | | vdb | |    | | vdb  | |
++			  |  -----  |    |   ------ |
++			   ---------      ----------
++
++			   ---------------------------
++			  | Host		      |
++			  |         -------------     |
++			  |        | sdb1 | sdb2 |    |
++			  |         -------------     |
++			   ---------------------------
++
++On host machine, I had a spare SATA disk. I created two partitions sdb1
++and sdb2 and gave this partitions as additional storage to kvm guests. sdb1
++to KVM guest1 and sdb2 KVM guest2. These storage appeared as /dev/vdb in
++both the guests. Formatted the /dev/vdb and created ext3 file system and
++started a 1G file writeout in both the guests. Before writeout I had created
++two cgroups of weight 1000 and 500 and put virtual machines in two different
++groups.
++
++Following is write I started in both the guests.
++
++dd if=/dev/zero of=/mnt/vdc/zerofile1 bs=4K count=262144 conv=fdatasync
++
++Following are the results on host with "deadline" scheduler.
++
++group1 time=8:16 17254 group1 sectors=8:16 2104288
++group2 time=8:16 8498  group2 sectors=8:16 1007040
++
++Virtual machine with cgroup weight 1000 got almost double the time of virtual
++machine with weight 500.
 -- 
 1.6.0.6
