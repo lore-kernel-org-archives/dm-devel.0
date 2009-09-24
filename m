@@ -1,20 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: A BUG in snapshot merging
-Date: Thu, 24 Sep 2009 02:33:07 -0400
-Message-ID: <20090924063306.GB4266@redhat.com>
-References: <Pine.LNX.4.64.0909211349480.16230@hs20-bc2-1.build.redhat.com>
-	<20090921175655.GA28074@redhat.com>
-	<Pine.LNX.4.64.0909211815580.31653@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0909221130590.24935@hs20-bc2-1.build.redhat.com>
-	<20090922170000.GA1806@redhat.com>
-	<20090922192039.GA13465@redhat.com>
-	<20090924000707.GA29085@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH] dm: Add a remapping trace to request-based dm
+Date: Thu, 24 Sep 2009 16:24:22 +0900
+Message-ID: <4ABB1EA6.2070805@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090924000707.GA29085@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,78 +16,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: lizf@cn.fujitsu.com, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 23 2009 at  8:07pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+# Re-sending just the dm part.
 
-> Mikulas,
-> 
-> I can easily reproduce the BUG you reported (you were running on
-> sparc64) if I take the following patch out of the quilt series:
-> http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/dm-exstore-persistent-allow-metadata-reread.patch
-> 
-> I've made an adjusted quilt series available here:
-> http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified_no_reread/2.6.31/
-> 
-> I'll be working to sort this out but I wanted to give you a heads up
-> that I can now easily reproduce the BUG on x86.  Don't even need to stop
-> the merge and restart; just a normal merge triggers the BUG after the
-> first extent of chunks is merged.
+Hi Alasdair,
 
-Turns out the BUG doesn't occur immediately after processing the first
-extent of chunks (via merge_callback).
+This patch adds a remapping trace to request-based dm.
+BIO-based dm already has the equivalent tracepoint.
 
-It occurs IFF the chunks are _not_ processed in descending order, e.g.:
+For example, under this dm stack (linear LV on multipath):
+  # dmsetup ls --tree -o ascii
+  vg-lv0 (253:1)
+   `-mpath0 (253:0)
+      |- (8:160)
+      |- (66:80)
+      |- (65:176)
+      `- (65:160)
 
-...
-start  merge chunk=29939 linear_chunks=160
-finish merge chunk=29939
-finish merge chunk=29938
-finish merge chunk=29937
-finish merge chunk=29936
-...
-finish merge chunk=29784
-finish merge chunk=29783
-finish merge chunk=29782
-finish merge chunk=29781
-finish merge chunk=29780
-start  merge chunk=29736 linear_chunks=3
-finish merge chunk=29736
-finish merge chunk=29735
-finish merge chunk=29734
-start  merge chunk=29779 linear_chunks=43
-finish merge chunk=29779
-------------[ cut here ]------------
-kernel BUG at drivers/md/dm-snap-persistent.c:456!
-...
+Trace of 'dd of=/dev/vg/lv0 bs=128k count=1 oflag=direct' looks like this:
 
-So in the above you see chunks 29734-29736 gets interleaved between
-29779 and 29780.
+without the patch:
+  dd-6674  [000]   539.727384: block_bio_queue: 253,1 WS 0 + 256 [dd]
+  dd-6674  [000]   539.727392: block_remap: 253,0 WS 384 + 256 <- (253,1) 0
+  dd-6674  [000]   539.727394: block_bio_queue: 253,0 WS 384 + 256 [dd]
+  dd-6674  [000]   539.727405: block_getrq: 253,0 WS 384 + 256 [dd]
+  dd-6674  [000]   539.727409: block_plug: [dd]
+  dd-6674  [000]   539.727410: block_rq_insert: 253,0 W 0 () 384 + 256 [dd]
+  dd-6674  [000]   539.727416: block_rq_issue: 253,0 W 0 () 384 + 256 [dd]
+  dd-6674  [000]   539.727426: block_rq_insert: 65,176 W 0 () 384 + 256 [dd]
+  dd-6674  [000]   539.727427: block_rq_issue: 65,176 W 0 () 384 + 256 [dd]
+  ...
 
-This provided the hint I needed to fix the fact that when we moved
-dm-snapshot-dont-insert-before-existing-chunk.patch to the beginning of
-the series  we neglected to adjust
-dm-snapshot-move-exception-code-to-new-file.patch accordingly.
+and with the patch: (the line with '**' is the trace added by this patch)
+  dd-6617  [002]   162.914301: block_bio_queue: 253,1 WS 0 + 256 [dd]
+  dd-6617  [002]   162.914314: block_remap: 253,0 WS 384 + 256 <- (253,1) 0
+  dd-6617  [002]   162.914316: block_bio_queue: 253,0 WS 384 + 256 [dd]
+  dd-6617  [002]   162.914331: block_getrq: 253,0 WS 384 + 256 [dd]
+  dd-6617  [002]   162.914335: block_plug: [dd]
+  dd-6617  [002]   162.914337: block_rq_insert: 253,0 W 0 () 384 + 256 [dd]
+  dd-6617  [002]   162.914347: block_rq_issue: 253,0 W 0 () 384 + 256 [dd]
+**dd-6617  [002]   162.914356: block_rq_remap: 65,176 W 384 + 256 <- (253,0) 384
+  dd-6617  [002]   162.914358: block_rq_insert: 65,176 W 0 () 384 + 256 [dd]
+  dd-6617  [002]   162.914359: block_rq_issue: 65,176 W 0 () 384 + 256 [dd]
+  ...
 
-As a result dm-snapshot-move-exception-code-to-new-file.patch had
-reintroduced inserting the exceptions into the hash_table before other
-exceptions..
 
-Mikulas/Jon, I'd really appreciate it if you could test the following
-updated quilt tree(s):
+The patch depends on the following commit, which is currently
+in Jens' for-linus tree (for 2.6.32).
+   commit 0dcaf5b406a5e09ecbb80ad25434694457117e50
+   Author: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+   Date:   Mon Sep 21 21:04:03 2009 +0200
+      Add a tracepoint for block request remapping
 
-http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/
-http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified_no_reread/2.6.31/
+The patch can apply either with or without the patch series
+for -next in your editing tree.
 
-Mikulas, the 'kernel_unified_no_reread' quilt tree is slightly more
-minimalist (avoids adding re-read support to dm-snap-persistent.c) so it
-is worth a shot if 'kernel_unified' still fails for you.
+If you are ok, please pull this patch to your tree for 2.6.32.
 
-Both work for me on x86_64.  But we may not be out of the woods on
-sparc64.
 
-Thanks,
-Mike
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Jens Axboe <jens.axboe@oracle.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: Li Zefan <lizf@cn.fujitsu.com>
+
+---
+ drivers/md/dm.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+Index: block-for-linus-2.6.32/drivers/md/dm.c
+===================================================================
+--- block-for-linus-2.6.32.orig/drivers/md/dm.c
++++ block-for-linus-2.6.32/drivers/md/dm.c
+@@ -1505,6 +1505,8 @@ static void map_request(struct dm_target
+ 		break;
+ 	case DM_MAPIO_REMAPPED:
+ 		/* The target has remapped the I/O so dispatch it */
++		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
++				     blk_rq_pos(tio->orig));
+ 		dm_dispatch_request(clone);
+ 		break;
+ 	case DM_MAPIO_REQUEUE:
