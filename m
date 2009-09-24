@@ -1,583 +1,1800 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: IO scheduler based IO controller V10
-Date: Thu, 24 Sep 2009 15:25:04 -0400
-Message-ID: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754333AbZIXT1w@vger.kernel.org>
+Subject: [PATCH 04/28] io-controller: Common flat fair queuing code in elevaotor layer
+Date: Thu, 24 Sep 2009 15:25:08 -0400
+Message-ID: <1253820332-10246-5-git-send-email-vgoyal@redhat.com>
+References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754327AbZIXT1r@vger.kernel.org>
+In-Reply-To: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, jens.axboe@oracle.com
 Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, vgoyal@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
 List-Id: dm-devel.ids
 
+This is common fair queuing code in elevator layer. This is controlled by
+config option CONFIG_ELV_FAIR_QUEUING. This patch initially only introduces
+flat fair queuing support where there is only one group, "root group" and all
+the tasks belong to root group.
 
-Hi All,
+This elevator layer changes are backward compatible. That means any ioscheduler
+using old interfaces will continue to work.
 
-Here is the V10 of the IO controller patches generated on top of 2.6.31.
+This is essentially a lot of CFQ logic moved into common layer so that other
+IO schedulers can make use of that in hierarhical scheduling setup.
 
-For ease of patching, a consolidated patch is available here.
+Signed-off-by: Nauman Rafique <nauman@google.com>
+Signed-off-by: Fabio Checconi <fabio@gandalf.sssup.it>
+Signed-off-by: Paolo Valente <paolo.valente@unimore.it>
+Signed-off-by: Aristeu Rozanski <aris@redhat.com>
+Signed-off-by: Gui Jianfeng <guijianfeng@cn.fujitsu.com>
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+Acked-by: Rik van Riel <riel@redhat.com>
+---
+ block/Kconfig.iosched    |   13 +
+ block/Makefile           |    3 +-
+ block/as-iosched.c       |    2 +-
+ block/blk.h              |    6 +
+ block/cfq-iosched.c      |    2 +-
+ block/deadline-iosched.c |    3 +-
+ block/elevator-fq.c      | 1025 +++++++++++++++++++++++++++++++++++++++++++++-
+ block/elevator-fq.h      |  230 +++++++++++
+ block/elevator.c         |   63 +++-
+ block/noop-iosched.c     |    2 +-
+ include/linux/blkdev.h   |   14 +
+ include/linux/elevator.h |   50 +++-
+ 12 files changed, 1394 insertions(+), 19 deletions(-)
 
-http://people.redhat.com/~vgoyal/io-controller/io-scheduler-based-io-controller-v10.patch
-
-Changes from V9
-===============
-- Brought back the mechanism of idle trees (cache of recently served io
-  queues). BFQ had originally implemented it and I had got rid of it. Later
-  I realized that it helps providing fairness when io queue and io groups are
-  running at same level. Hence brought the mechanism back.
-
-  This cache helps in determining whether a task getting back into tree
-  is a streaming reader who just consumed full slice legth or a new process
-  (if not in cache) or a random reader who just got a small slice lenth and
-  now got backlogged again. 
-
-- Implemented "wait busy" for sequential reader queues. So we wait for one
-  extra idle period for these queues to become busy so that group does not
-  loose fairness. This works even if group_idle=0.
-
-- Fixed an issue where readers don't preempt writers with-in a group when
-  readers get backlogged. (implemented late preemption).
-
-- Fixed the issue reported by Gui where Anticipatory was not expiring the
-  queue.
-
-- Did more modification to AS so that it lets common layer know that it is
-  anticipation on next requeust and common fair queuing layer does not try
-  to do excessive queue expiratrions.
-
-- Started charging the queue only for allocated slice length (if fairness
-  is not set) if it consumed more than allocated slice. Otherwise that
-  queue can miss a dispatch round doubling the max latencies. This idea
-  also borrowed from BFQ.
-
-- Allowed preemption where a reader can preempt other writer running in 
-  sibling groups or a meta data reader can preempt other non metadata
-  reader in sibling group.
-
-- Fixed freed_request() issue pointed out by Nauman.
+diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
+index 7e803fc..3398134 100644
+--- a/block/Kconfig.iosched
++++ b/block/Kconfig.iosched
+@@ -2,6 +2,19 @@ if BLOCK
  
-What problem are we trying to solve
-===================================
-Provide group IO scheduling feature in Linux along the lines of other resource
-controllers like cpu.
-
-IOW, provide facility so that a user can group applications using cgroups and
-control the amount of disk time/bandwidth received by a group based on its
-weight. 
-
-How to solve the problem
-=========================
-
-Different people have solved the issue differetnly. So far looks it looks
-like we seem to have following two core requirements when it comes to
-fairness at group level.
-
-- Control bandwidth seen by groups.
-- Control on latencies when a request gets backlogged in group.
-
-At least there are now three patchsets available (including this one).
-
-IO throttling
--------------
-This is a bandwidth controller which keeps track of IO rate of a group and
-throttles the process in the group if it exceeds the user specified limit.
-
-dm-ioband
----------
-This is a proportional bandwidth controller implemented as device mapper
-driver and provides fair access in terms of amount of IO done (not in terms
-of disk time as CFQ does).
-
-So one will setup one or more dm-ioband devices on top of physical/logical
-block device, configure the ioband device and pass information like grouping
-etc. Now this device will keep track of bios flowing through it and control
-the flow of bios based on group policies.
-
-IO scheduler based IO controller
---------------------------------
-Here we have viewed the problem of IO contoller as hierarchical group
-scheduling (along the lines of CFS group scheduling) issue. Currently one can
-view linux IO schedulers as flat where there is one root group and all the IO
-belongs to that group.
-
-This patchset basically modifies IO schedulers to also support hierarchical
-group scheduling. CFQ already provides fairness among different processes. I 
-have extended it support group IO schduling. Also took some of the code out
-of CFQ and put in a common layer so that same group scheduling code can be
-used by noop, deadline and AS to support group scheduling. 
-
-Pros/Cons
-=========
-There are pros and cons to each of the approach. Following are some of the
-thoughts.
-
-Max bandwidth vs proportional bandwidth
----------------------------------------
-IO throttling is a max bandwidth controller and not a proportional one.
-Additionaly it provides fairness in terms of amount of IO done (and not in
-terms of disk time as CFQ does).
-
-Personally, I think that proportional weight controller is useful to more
-people than just max bandwidth controller. In addition, IO scheduler based
-controller can also be enhanced to do max bandwidth control. So it can 
-satisfy wider set of requirements.
-
-Fairness in terms of disk time vs size of IO
----------------------------------------------
-An higher level controller will most likely be limited to providing fairness
-in terms of size/number of IO done and will find it hard to provide fairness
-in terms of disk time used (as CFQ provides between various prio levels). This
-is because only IO scheduler knows how much disk time a queue has used and
-information about queues and disk time used is not exported to higher
-layers.
-
-So a seeky application will still run away with lot of disk time and bring
-down the overall throughput of the the disk.
-
-Currently dm-ioband provides fairness in terms of number/size of IO.
-
-Latencies and isolation between groups
---------------------------------------
-An higher level controller is generally implementing a bandwidth throttling
-solution where if a group exceeds either the max bandwidth or the proportional
-share then throttle that group.
-
-This kind of approach will probably not help in controlling latencies as it
-will depend on underlying IO scheduler. Consider following scenario. 
-
-Assume there are two groups. One group is running multiple sequential readers
-and other group has a random reader. sequential readers will get a nice 100ms
-slice each and then a random reader from group2 will get to dispatch the
-request. So latency of this random reader will depend on how many sequential
-readers are running in other group and that is a weak isolation between groups.
-
-When we control things at IO scheduler level, we assign one time slice to one
-group and then pick next entity to run. So effectively after one time slice
-(max 180ms, if prio 0 sequential reader is running), random reader in other
-group will get to run. Hence we achieve better isolation between groups as
-response time of process in a differnt group is generally not dependent on
-number of processes running in competing group.  
-
-So a higher level solution is most likely limited to only shaping bandwidth
-without any control on latencies.
-
-Stacking group scheduler on top of CFQ can lead to issues
----------------------------------------------------------
-IO throttling and dm-ioband both are second level controller. That is these
-controllers are implemented in higher layers than io schedulers. So they
-control the IO at higher layer based on group policies and later IO
-schedulers take care of dispatching these bios to disk.
-
-Implementing a second level controller has the advantage of being able to
-provide bandwidth control even on logical block devices in the IO stack
-which don't have any IO schedulers attached to these. But they can also 
-interefere with IO scheduling policy of underlying IO scheduler and change
-the effective behavior. Following are some of the issues which I think
-should be visible in second level controller in one form or other.
-
-  Prio with-in group
-  ------------------
-  A second level controller can potentially interefere with behavior of
-  different prio processes with-in a group. bios are buffered at higher layer
-  in single queue and release of bios is FIFO and not proportionate to the
-  ioprio of the process. This can result in a particular prio level not
-  getting fair share.
-
-  Buffering at higher layer can delay read requests for more than slice idle
-  period of CFQ (default 8 ms). That means, it is possible that we are waiting
-  for a request from the queue but it is buffered at higher layer and then idle
-  timer will fire. It means that queue will losse its share at the same time
-  overall throughput will be impacted as we lost those 8 ms.
-  
-  Read Vs Write
-  -------------
-  Writes can overwhelm readers hence second level controller FIFO release
-  will run into issue here. If there is a single queue maintained then reads
-  will suffer large latencies. If there separate queues for reads and writes
-  then it will be hard to decide in what ratio to dispatch reads and writes as
-  it is IO scheduler's decision to decide when and how much read/write to
-  dispatch. This is another place where higher level controller will not be in
-  sync with lower level io scheduler and can change the effective policies of
-  underlying io scheduler.
-
-  CFQ IO context Issues
-  ---------------------
-  Buffering at higher layer means submission of bios later with the help of
-  a worker thread. This changes the io context information at CFQ layer which
-  assigns the request to submitting thread. Change of io context info again
-  leads to issues of idle timer expiry and issue of a process not getting fair
-  share and reduced throughput.
-
-  Throughput with noop, deadline and AS
-  ---------------------------------------------
-  I think an higher level controller will result in reduced overall throughput
-  (as compared to io scheduler based io controller) and more seeks with noop,
-  deadline and AS.
-
-  The reason being, that it is likely that IO with-in a group will be related
-  and will be relatively close as compared to IO across the groups. For example,
-  thread pool of kvm-qemu doing IO for virtual machine. In case of higher level
-  control, IO from various groups will go into a single queue at lower level
-  controller and it might happen that IO is now interleaved (G1, G2, G1, G3,
-  G4....) causing more seeks and reduced throughput. (Agreed that merging will
-  help up to some extent but still....).
-
-  Instead, in case of lower level controller, IO scheduler maintains one queue
-  per group hence there is no interleaving of IO between groups. And if IO is
-  related with-in group, then we shoud get reduced number/amount of seek and
-  higher throughput.
-
-  Latency can be a concern but that can be controlled by reducing the time
-  slice length of the queue.
-
-Fairness at logical device level vs at physical device level
-------------------------------------------------------------
-
-IO scheduler based controller has the limitation that it works only with the
-bottom most devices in the IO stack where IO scheduler is attached.
-
-For example, assume a user has created a logical device lv0 using three
-underlying disks sda, sdb and sdc. Also assume there are two tasks T1 and T2
-in two groups doing IO on lv0. Also assume that weights of groups are in the
-ratio of 2:1 so T1 should get double the BW of T2 on lv0 device.
-
-			     T1    T2
-			       \   /
-			        lv0
-			      /  |  \
-			    sda sdb  sdc
-
-
-Now resource control will take place only on devices sda, sdb and sdc and
-not at lv0 level. So if IO from two tasks is relatively uniformly
-distributed across the disks then T1 and T2 will see the throughput ratio
-in proportion to weight specified. But if IO from T1 and T2 is going to
-different disks and there is no contention then at higher level they both
-will see same BW.
-
-Here a second level controller can produce better fairness numbers at
-logical device but most likely at redued overall throughput of the system,
-because it will try to control IO even if there is no contention at phsical
-possibly leaving diksks unused in the system.
-
-Hence, question comes that how important it is to control bandwidth at
-higher level logical devices also. The actual contention for resources is
-at the leaf block device so it probably makes sense to do any kind of
-control there and not at the intermediate devices. Secondly probably it
-also means better use of available resources.
-
-Limited Fairness
-----------------
-Currently CFQ idles on a sequential reader queue to make sure it gets its
-fair share. A second level controller will find it tricky to anticipate.
-Either it will not have any anticipation logic and in that case it will not
-provide fairness to single readers in a group (as dm-ioband does) or if it
-starts anticipating then we should run into these strange situations where
-second level controller is anticipating on one queue/group and underlying
-IO scheduler might be anticipating on something else.
-
-Need of device mapper tools
----------------------------
-A device mapper based solution will require creation of a ioband device
-on each physical/logical device one wants to control. So it requires usage
-of device mapper tools even for the people who are not using device mapper.
-At the same time creation of ioband device on each partition in the system to 
-control the IO can be cumbersome and overwhelming if system has got lots of
-disks and partitions with-in.
-
-
-IMHO, IO scheduler based IO controller is a reasonable approach to solve the
-problem of group bandwidth control, and can do hierarchical IO scheduling
-more tightly and efficiently.
-
-But I am all ears to alternative approaches and suggestions how doing things
-can be done better and will be glad to implement it.
-
-TODO
-====
-- code cleanups, testing, bug fixing, optimizations, benchmarking etc...
-- More testing to make sure there are no regressions in CFQ.
-
-Testing
-=======
-
-Environment
-==========
-A 7200 RPM SATA drive with queue depth of 31. Ext3 filesystem. I am mostly
-running fio jobs which have been limited to 30 seconds run and then monitored
-the throughput and latency.
+ menu "IO Schedulers"
  
-Test1: Random Reader Vs Random Writers
-======================================
-Launched a random reader and then increasing number of random writers to see
-the effect on random reader BW and max lantecies.
-
-[fio --rw=randwrite --bs=64K --size=2G --runtime=30 --direct=1 --ioengine=libaio --iodepth=4 --numjobs= <1 to 32> ]
-[fio --rw=randread --bs=4K --size=2G --runtime=30 --direct=1]
-
-[Vanilla CFQ, No groups]
-<--------------random writers-------------------->  <------random reader-->
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
-1   5737KiB/s   5737KiB/s   5737KiB/s   164K usec   503KiB/s    159K usec   
-2   2055KiB/s   1984KiB/s   4039KiB/s   1459K usec  150KiB/s    170K usec   
-4   1238KiB/s   932KiB/s    4419KiB/s   4332K usec  153KiB/s    225K usec   
-8   1059KiB/s   929KiB/s    7901KiB/s   1260K usec  118KiB/s    377K usec   
-16  604KiB/s    483KiB/s    8519KiB/s   3081K usec  47KiB/s     756K usec   
-32  367KiB/s    222KiB/s    9643KiB/s   5940K usec  22KiB/s     923K usec   
-
-Created two cgroups group1 and group2 of weights 500 each.  Launched increasing
-number of random writers in group1 and one random reader in group2 using fio.
-
-[IO controller CFQ; group_idle=8; group1 weight=500; group2 weight=500]
-<--------------random writers(group1)-------------> <-random reader(group2)->
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
-1   18115KiB/s  18115KiB/s  18115KiB/s  604K usec   345KiB/s    176K usec   
-2   3752KiB/s   3676KiB/s   7427KiB/s   4367K usec  402KiB/s    187K usec   
-4   1951KiB/s   1863KiB/s   7642KiB/s   1989K usec  384KiB/s    181K usec   
-8   755KiB/s    629KiB/s    5683KiB/s   2133K usec  366KiB/s    319K usec   
-16  418KiB/s    369KiB/s    6276KiB/s   1323K usec  352KiB/s    287K usec   
-32  236KiB/s    191KiB/s    6518KiB/s   1910K usec  337KiB/s    273K usec   
-
-Also ran the same test with IO controller CFQ in flat mode to see if there
-are any major deviations from Vanilla CFQ. Does not look like any.
-
-[IO controller CFQ; No groups ]
-<--------------random writers-------------------->  <------random reader-->
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
-1   5696KiB/s   5696KiB/s   5696KiB/s   259K usec   500KiB/s    194K usec   
-2   2483KiB/s   2197KiB/s   4680KiB/s   887K usec   150KiB/s    159K usec   
-4   1471KiB/s   1433KiB/s   5817KiB/s   962K usec   126KiB/s    189K usec   
-8   691KiB/s    580KiB/s    5159KiB/s   2752K usec  197KiB/s    246K usec   
-16  781KiB/s    698KiB/s    11892KiB/s  943K usec   61KiB/s     529K usec   
-32  415KiB/s    324KiB/s    12461KiB/s  4614K usec  17KiB/s     737K usec   
-
-Notes:
-- With vanilla CFQ, random writers can overwhelm a random reader. Bring down
-  its throughput and bump up latencies significantly.
-
-- With IO controller, one can provide isolation to the random reader group and
-  maintain consitent view of bandwidth and latencies. 
-
-Test2: Random Reader Vs Sequential Reader
-========================================
-Launched a random reader and then increasing number of sequential readers to
-see the effect on BW and latencies of random reader.
-
-[fio --rw=read --bs=4K --size=2G --runtime=30 --direct=1 --numjobs= <1 to 16> ]
-[fio --rw=randread --bs=4K --size=2G --runtime=30 --direct=1]
-
-[ Vanilla CFQ, No groups ]
-<---------------seq readers---------------------->  <------random reader-->
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
-1   23318KiB/s  23318KiB/s  23318KiB/s  55940 usec  36KiB/s     247K usec   
-2   14732KiB/s  11406KiB/s  26126KiB/s  142K usec   20KiB/s     446K usec   
-4   9417KiB/s   5169KiB/s   27338KiB/s  404K usec   10KiB/s     993K usec   
-8   3360KiB/s   3041KiB/s   25850KiB/s  954K usec   60KiB/s     956K usec   
-16  1888KiB/s   1457KiB/s   26763KiB/s  1871K usec  28KiB/s     1868K usec  
-
-Created two cgroups group1 and group2 of weights 500 each.  Launched increasing
-number of sequential readers in group1 and one random reader in group2 using
-fio.
-
-[IO controller CFQ; group_idle=1; group1 weight=500; group2 weight=500]
-<---------------group1--------------------------->  <------group2--------->
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
-1   13733KiB/s  13733KiB/s  13733KiB/s  247K usec   330KiB/s    154K usec   
-2   8553KiB/s   4963KiB/s   13514KiB/s  472K usec   322KiB/s    174K usec   
-4   5045KiB/s   1367KiB/s   13134KiB/s  947K usec   318KiB/s    178K usec   
-8   1774KiB/s   1420KiB/s   13035KiB/s  1871K usec  323KiB/s    233K usec   
-16  959KiB/s    518KiB/s    12691KiB/s  3809K usec  324KiB/s    208K usec   
-
-Also ran the same test with IO controller CFQ in flat mode to see if there
-are any major deviations from Vanilla CFQ. Does not look like any.
-
-[IO controller CFQ; No groups ]
-<---------------seq readers---------------------->  <------random reader-->
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
-1   23028KiB/s  23028KiB/s  23028KiB/s  47460 usec  36KiB/s     253K usec   
-2   14452KiB/s  11176KiB/s  25628KiB/s  145K usec   20KiB/s     447K usec   
-4   8815KiB/s   5720KiB/s   27121KiB/s  396K usec   10KiB/s     968K usec   
-8   3335KiB/s   2827KiB/s   24866KiB/s  960K usec   62KiB/s     955K usec   
-16  1784KiB/s   1311KiB/s   26537KiB/s  1883K usec  26KiB/s     1866K usec  
-
-Notes:
-- The BW and latencies of random reader in group 2 seems to be stable and
-  bounded and does not get impacted much as number of sequential readers
-  increase in group1. Hence provding good isolation.
-
-- Throughput of sequential readers comes down and latencies go up as half
-  of disk bandwidth (in terms of time) has been reserved for random reader
-  group.
-
-Test3: Sequential Reader Vs Sequential Reader
-============================================
-Created two cgroups group1 and group2 of weights 500 and 1000 respectively.
-Launched increasing number of sequential readers in group1 and one sequential
-reader in group2 using fio and monitored how bandwidth is being distributed
-between two groups.
-
-First 5 columns give stats about job in group1 and last two columns give
-stats about job in group2.
-
-<---------------group1--------------------------->  <------group2--------->
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
-1   8970KiB/s   8970KiB/s   8970KiB/s   230K usec   20681KiB/s  124K usec   
-2   6783KiB/s   3202KiB/s   9984KiB/s   546K usec   19682KiB/s  139K usec   
-4   4641KiB/s   1029KiB/s   9280KiB/s   1185K usec  19235KiB/s  172K usec   
-8   1435KiB/s   1079KiB/s   9926KiB/s   2461K usec  19501KiB/s  153K usec   
-16  764KiB/s    398KiB/s    9395KiB/s   4986K usec  19367KiB/s  172K usec   
-
-Note: group2 is getting double the bandwidth of group1 even in the face
-of increasing number of readers in group1.
-
-Test4 (Isolation between two KVM virtual machines)
-==================================================
-Created two KVM virtual machines. Partitioned a disk on host in two partitions
-and gave one partition to each virtual machine. Put both the virtual machines
-in two different cgroup of weight 1000 and 500 each. Virtual machines created
-ext3 file system on the partitions exported from host and did buffered writes.
-Host seems writes as synchronous and virtual machine with higher weight gets
-double the disk time of virtual machine of lower weight. Used deadline
-scheduler in this test case.
-
-Some more details about configuration are in documentation patch.
-
-Test5 (Fairness for async writes, Buffered Write Vs Buffered Write)
-===================================================================
-Fairness for async writes is tricky and biggest reason is that async writes
-are cached in higher layers (page cahe) as well as possibly in file system
-layer also (btrfs, xfs etc), and are dispatched to lower layers not necessarily
-in proportional manner.
-
-For example, consider two dd threads reading /dev/zero as input file and doing
-writes of huge files. Very soon we will cross vm_dirty_ratio and dd thread will
-be forced to write out some pages to disk before more pages can be dirtied. But
-not necessarily dirty pages of same thread are picked. It can very well pick
-the inode of lesser priority dd thread and do some writeout. So effectively
-higher weight dd is doing writeouts of lower weight dd pages and we don't see
-service differentation.
-
-IOW, the core problem with buffered write fairness is that higher weight thread
-does not throw enought IO traffic at IO controller to keep the queue
-continuously backlogged. In my testing, there are many .2 to .8 second
-intervals where higher weight queue is empty and in that duration lower weight
-queue get lots of job done giving the impression that there was no service
-differentiation.
-
-In summary, from IO controller point of view async writes support is there.
-Because page cache has not been designed in such a manner that higher 
-prio/weight writer can do more write out as compared to lower prio/weight
-writer, gettting service differentiation is hard and it is visible in some
-cases and not visible in some cases.
-
-Vanilla CFQ Vs IO Controller CFQ
-================================
-We have not fundamentally changed CFQ, instead enhanced it to also support
-hierarchical io scheduling. In the process invariably there are small changes
-here and there as new scenarios come up. Running some tests here and comparing
-both the CFQ's to see if there is any major deviation in behavior.
-
-Test1: Sequential Readers
-=========================
-[fio --rw=read --bs=4K --size=2G --runtime=30 --direct=1 --numjobs=<1 to 16> ]
-
-IO scheduler: Vanilla CFQ
-
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
-1   35499KiB/s  35499KiB/s  35499KiB/s  19195 usec  
-2   17089KiB/s  13600KiB/s  30690KiB/s  118K usec   
-4   9165KiB/s   5421KiB/s   29411KiB/s  380K usec   
-8   3815KiB/s   3423KiB/s   29312KiB/s  830K usec   
-16  1911KiB/s   1554KiB/s   28921KiB/s  1756K usec  
-
-IO scheduler: IO controller CFQ
-
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
-1   34494KiB/s  34494KiB/s  34494KiB/s  14482 usec  
-2   16983KiB/s  13632KiB/s  30616KiB/s  123K usec   
-4   9237KiB/s   5809KiB/s   29631KiB/s  372K usec   
-8   3901KiB/s   3505KiB/s   29162KiB/s  822K usec   
-16  1895KiB/s   1653KiB/s   28945KiB/s  1778K usec  
-
-Test2: Sequential Writers
-=========================
-[fio --rw=write --bs=4K --size=2G --runtime=30 --direct=1 --numjobs=<1 to 16> ]
-
-IO scheduler: Vanilla CFQ
-
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
-1   22669KiB/s  22669KiB/s  22669KiB/s  401K usec   
-2   14760KiB/s  7419KiB/s   22179KiB/s  571K usec   
-4   5862KiB/s   5746KiB/s   23174KiB/s  444K usec   
-8   3377KiB/s   2199KiB/s   22427KiB/s  1057K usec  
-16  2229KiB/s   556KiB/s    20601KiB/s  5099K usec  
-
-IO scheduler: IO Controller CFQ
-
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
-1   22911KiB/s  22911KiB/s  22911KiB/s  37319 usec  
-2   11752KiB/s  11632KiB/s  23383KiB/s  245K usec   
-4   6663KiB/s   5409KiB/s   23207KiB/s  384K usec   
-8   3161KiB/s   2460KiB/s   22566KiB/s  935K usec   
-16  1888KiB/s   795KiB/s    21349KiB/s  3009K usec  
-
-Test3: Random Readers
-=========================
-[fio --rw=randread --bs=4K --size=2G --runtime=30 --direct=1 --numjobs=1 to 16]
-
-IO scheduler: Vanilla CFQ
-
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
-1   484KiB/s    484KiB/s    484KiB/s    22596 usec  
-2   229KiB/s    196KiB/s    425KiB/s    51111 usec  
-4   119KiB/s    73KiB/s     405KiB/s    2344 msec   
-8   93KiB/s     23KiB/s     399KiB/s    2246 msec   
-16  38KiB/s     8KiB/s      328KiB/s    3965 msec   
-
-IO scheduler: IO Controller CFQ
-
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
-1   483KiB/s    483KiB/s    483KiB/s    29391 usec  
-2   229KiB/s    196KiB/s    426KiB/s    51625 usec  
-4   132KiB/s    88KiB/s     417KiB/s    2313 msec   
-8   79KiB/s     18KiB/s     389KiB/s    2298 msec   
-16  43KiB/s     9KiB/s      327KiB/s    3905 msec   
-
-Test4: Random Writers
-=====================
-[fio --rw=randwrite --bs=4K --size=2G --runtime=30 --direct=1 --numjobs=1 to 16]
-
-IO scheduler: Vanilla CFQ
-
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
-1   14641KiB/s  14641KiB/s  14641KiB/s  93045 usec  
-2   7896KiB/s   1348KiB/s   9245KiB/s   82778 usec  
-4   2657KiB/s   265KiB/s    6025KiB/s   216K usec   
-8   951KiB/s    122KiB/s    3386KiB/s   1148K usec  
-16  66KiB/s     22KiB/s     829KiB/s    1308 msec   
-
-IO scheduler: IO Controller CFQ
-
-nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
-1   14454KiB/s  14454KiB/s  14454KiB/s  74623 usec  
-2   4595KiB/s   4104KiB/s   8699KiB/s   135K usec   
-4   3113KiB/s   334KiB/s    5782KiB/s   200K usec   
-8   1146KiB/s   95KiB/s     3832KiB/s   593K usec   
-16  71KiB/s     29KiB/s     814KiB/s    1457 msec   
-
-Notes:
- - Does not look like that anything has changed significantly.
-
-Previous versions of the patches were posted here.
-------------------------------------------------
-
-(V1) http://lkml.org/lkml/2009/3/11/486
-(V2) http://lkml.org/lkml/2009/5/5/275
-(V3) http://lkml.org/lkml/2009/5/26/472
-(V4) http://lkml.org/lkml/2009/6/8/580
-(V5) http://lkml.org/lkml/2009/6/19/279
-(V6) http://lkml.org/lkml/2009/7/2/369
-(V7) http://lkml.org/lkml/2009/7/24/253
-(V8) http://lkml.org/lkml/2009/8/16/204
-(V9) http://lkml.org/lkml/2009/8/28/327
-
-Thanks
-Vivek
++config ELV_FAIR_QUEUING
++	bool "Elevator Fair Queuing Support"
++	default n
++	---help---
++	  Traditionally only cfq had notion of multiple queues and it did
++	  fair queuing at its own. With the cgroups and need of controlling
++	  IO, now even the simple io schedulers like noop, deadline, as will
++	  have one queue per cgroup and will need hierarchical fair queuing.
++	  Instead of every io scheduler implementing its own fair queuing
++	  logic, this option enables fair queuing in elevator layer so that
++	  other ioschedulers can make use of it.
++	  If unsure, say N.
++
+ config IOSCHED_NOOP
+ 	bool
+ 	default y
+diff --git a/block/Makefile b/block/Makefile
+index 19ff1e8..d545323 100644
+--- a/block/Makefile
++++ b/block/Makefile
+@@ -5,7 +5,7 @@
+ obj-$(CONFIG_BLOCK) := elevator.o blk-core.o blk-tag.o blk-sysfs.o \
+ 			blk-barrier.o blk-settings.o blk-ioc.o blk-map.o \
+ 			blk-exec.o blk-merge.o blk-softirq.o blk-timeout.o \
+-			ioctl.o genhd.o scsi_ioctl.o elevator-fq.o
++			ioctl.o genhd.o scsi_ioctl.o
+ 
+ obj-$(CONFIG_BLK_DEV_BSG)	+= bsg.o
+ obj-$(CONFIG_IOSCHED_NOOP)	+= noop-iosched.o
+@@ -15,3 +15,4 @@ obj-$(CONFIG_IOSCHED_CFQ)	+= cfq-iosched.o
+ 
+ obj-$(CONFIG_BLOCK_COMPAT)	+= compat_ioctl.o
+ obj-$(CONFIG_BLK_DEV_INTEGRITY)	+= blk-integrity.o
++obj-$(CONFIG_ELV_FAIR_QUEUING)	+= elevator-fq.o
+diff --git a/block/as-iosched.c b/block/as-iosched.c
+index 7a12cf6..b90acbe 100644
+--- a/block/as-iosched.c
++++ b/block/as-iosched.c
+@@ -1351,7 +1351,7 @@ static void as_exit_queue(struct elevator_queue *e)
+ /*
+  * initialize elevator private data (as_data).
+  */
+-static void *as_init_queue(struct request_queue *q)
++static void *as_init_queue(struct request_queue *q, struct elevator_queue *eq)
+ {
+ 	struct as_data *ad;
+ 
+diff --git a/block/blk.h b/block/blk.h
+index 3fae6ad..d05b4cf 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -1,6 +1,8 @@
+ #ifndef BLK_INTERNAL_H
+ #define BLK_INTERNAL_H
+ 
++#include "elevator-fq.h"
++
+ /* Amount of time in which a process may batch requests */
+ #define BLK_BATCH_TIME	(HZ/50UL)
+ 
+@@ -71,6 +73,8 @@ static inline void elv_activate_rq(struct request_queue *q, struct request *rq)
+ {
+ 	struct elevator_queue *e = q->elevator;
+ 
++	elv_activate_rq_fair(q, rq);
++
+ 	if (e->ops->elevator_activate_req_fn)
+ 		e->ops->elevator_activate_req_fn(q, rq);
+ }
+@@ -79,6 +83,8 @@ static inline void elv_deactivate_rq(struct request_queue *q, struct request *rq
+ {
+ 	struct elevator_queue *e = q->elevator;
+ 
++	elv_deactivate_rq_fair(q, rq);
++
+ 	if (e->ops->elevator_deactivate_req_fn)
+ 		e->ops->elevator_deactivate_req_fn(q, rq);
+ }
+diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
+index fd7080e..5a67ec0 100644
+--- a/block/cfq-iosched.c
++++ b/block/cfq-iosched.c
+@@ -2448,7 +2448,7 @@ static void cfq_exit_queue(struct elevator_queue *e)
+ 	kfree(cfqd);
+ }
+ 
+-static void *cfq_init_queue(struct request_queue *q)
++static void *cfq_init_queue(struct request_queue *q, struct elevator_queue *eq)
+ {
+ 	struct cfq_data *cfqd;
+ 	int i;
+diff --git a/block/deadline-iosched.c b/block/deadline-iosched.c
+index b547cbc..25af8b9 100644
+--- a/block/deadline-iosched.c
++++ b/block/deadline-iosched.c
+@@ -347,7 +347,8 @@ static void deadline_exit_queue(struct elevator_queue *e)
+ /*
+  * initialize elevator private data (deadline_data).
+  */
+-static void *deadline_init_queue(struct request_queue *q)
++static void *
++deadline_init_queue(struct request_queue *q, struct elevator_queue *eq)
+ {
+ 	struct deadline_data *dd;
+ 
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index 8343397..629ddaa 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -12,14 +12,23 @@
+  */
+ 
+ #include <linux/blkdev.h>
++#include <linux/blktrace_api.h>
+ #include "elevator-fq.h"
+ 
++const int elv_slice_sync = HZ / 10;
++int elv_slice_async = HZ / 25;
++const int elv_slice_async_rq = 2;
++static struct kmem_cache *elv_ioq_pool;
++
+ /*
+  * offset from end of service tree
+  */
+ #define ELV_IDLE_DELAY		(HZ / 5)
+ #define ELV_SLICE_SCALE		(500)
+ #define ELV_SERVICE_SHIFT	20
++#define ELV_HW_QUEUE_MIN	(5)
++#define ELV_SERVICE_TREE_INIT   ((struct io_service_tree)	\
++				{ RB_ROOT, NULL, 0, NULL, 0})
+ 
+ static void check_idle_tree_release(struct io_service_tree *st);
+ 
+@@ -105,7 +114,7 @@ static inline u64 min_vdisktime(u64 min_vdisktime, u64 vdisktime)
+ 
+ static void update_min_vdisktime(struct io_service_tree *st)
+ {
+-	u64 vdisktime;
++	u64 vdisktime = st->min_vdisktime;
+ 
+ 	if (st->active_entity)
+ 		vdisktime = st->active_entity->vdisktime;
+@@ -141,6 +150,12 @@ static inline struct elv_fq_data *efqd_of(struct io_entity *entity)
+ 	return ioq_of(entity)->efqd;
+ }
+ 
++struct io_group *ioq_to_io_group(struct io_queue *ioq)
++{
++	return ioq->efqd->root_group;
++}
++EXPORT_SYMBOL(ioq_to_io_group);
++
+ static inline struct io_sched_data *
+ io_entity_sched_data(struct io_entity *entity)
+ {
+@@ -468,6 +483,7 @@ static struct io_entity *lookup_next_io_entity(struct io_sched_data *sd)
+ 			__dequeue_io_entity(st, entity);
+ 			st->active_entity = entity;
+ 			sd->active_entity = entity;
++			update_min_vdisktime(entity->st);
+ 			break;
+ 		}
+ 	}
+@@ -556,7 +572,1014 @@ init_io_entity_parent(struct io_entity *entity, struct io_entity *parent)
+ 
+ void elv_put_ioq(struct io_queue *ioq)
+ {
++	struct elv_fq_data *efqd = ioq->efqd;
++	struct elevator_queue *e = efqd->eq;
++
+ 	BUG_ON(atomic_read(&ioq->ref) <= 0);
+ 	if (!atomic_dec_and_test(&ioq->ref))
+ 		return;
++	BUG_ON(ioq->nr_queued);
++	BUG_ON(elv_ioq_busy(ioq));
++	BUG_ON(efqd->active_queue == ioq);
++
++	/* Can be called by outgoing elevator. Don't use q */
++	BUG_ON(!e->ops->elevator_free_sched_queue_fn);
++	e->ops->elevator_free_sched_queue_fn(e, ioq->sched_queue);
++	elv_log_ioq(efqd, ioq, "put_queue");
++	elv_free_ioq(ioq);
++}
++EXPORT_SYMBOL(elv_put_ioq);
++
++static void elv_ioq_served(struct io_queue *ioq, unsigned long served)
++{
++	unsigned long allocated_slice, queue_charge;
++
++	allocated_slice = elv_prio_to_slice(ioq->efqd, ioq);
++
++	/*
++	 * We don't want to charge more than allocated slice otherwise this
++	 * queue can miss one dispatch round doubling max latencies. On the
++	 * other hand we don't want to charge less than allocated slice as
++	 * we stick to CFQ theme of queue loosing its share if it does not
++	 * use the slice and moves to the back of service tree (almost).
++	 */
++	queue_charge = allocated_slice;
++	entity_served(&ioq->entity, served, queue_charge, ioq->nr_sectors);
++}
++
++/*
++ * sysfs parts below -->
++ */
++static ssize_t
++elv_var_show(unsigned int var, char *page)
++{
++	return sprintf(page, "%d\n", var);
++}
++
++static ssize_t
++elv_var_store(unsigned int *var, const char *page, size_t count)
++{
++	char *p = (char *) page;
++
++	*var = simple_strtoul(p, &p, 10);
++	return count;
++}
++
++#define SHOW_FUNCTION(__FUNC, __VAR, __CONV)				\
++ssize_t __FUNC(struct elevator_queue *e, char *page)		\
++{									\
++	struct elv_fq_data *efqd = e->efqd;				\
++	unsigned int __data = __VAR;					\
++	if (__CONV)							\
++		__data = jiffies_to_msecs(__data);			\
++	return elv_var_show(__data, (page));				\
++}
++SHOW_FUNCTION(elv_slice_sync_show, efqd->elv_slice[1], 1);
++EXPORT_SYMBOL(elv_slice_sync_show);
++SHOW_FUNCTION(elv_slice_async_show, efqd->elv_slice[0], 1);
++EXPORT_SYMBOL(elv_slice_async_show);
++#undef SHOW_FUNCTION
++
++#define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
++ssize_t __FUNC(struct elevator_queue *e, const char *page, size_t count)\
++{									\
++	struct elv_fq_data *efqd = e->efqd;				\
++	unsigned int __data;						\
++	int ret = elv_var_store(&__data, (page), count);		\
++	if (__data < (MIN))						\
++		__data = (MIN);						\
++	else if (__data > (MAX))					\
++		__data = (MAX);						\
++	if (__CONV)							\
++		*(__PTR) = msecs_to_jiffies(__data);			\
++	else								\
++		*(__PTR) = __data;					\
++	return ret;							\
++}
++STORE_FUNCTION(elv_slice_sync_store, &efqd->elv_slice[1], 1, UINT_MAX, 1);
++EXPORT_SYMBOL(elv_slice_sync_store);
++STORE_FUNCTION(elv_slice_async_store, &efqd->elv_slice[0], 1, UINT_MAX, 1);
++EXPORT_SYMBOL(elv_slice_async_store);
++#undef STORE_FUNCTION
++
++void elv_schedule_dispatch(struct request_queue *q)
++{
++	struct elv_fq_data *efqd = q->elevator->efqd;
++
++	if (elv_nr_busy_ioq(q->elevator)) {
++		elv_log(efqd, "schedule dispatch");
++		kblockd_schedule_work(q, &efqd->unplug_work);
++	}
++}
++EXPORT_SYMBOL(elv_schedule_dispatch);
++
++static void elv_kick_queue(struct work_struct *work)
++{
++	struct elv_fq_data *efqd =
++		container_of(work, struct elv_fq_data, unplug_work);
++	struct request_queue *q = efqd->queue;
++
++	spin_lock_irq(q->queue_lock);
++	__blk_run_queue(q);
++	spin_unlock_irq(q->queue_lock);
++}
++
++static void elv_shutdown_timer_wq(struct elevator_queue *e)
++{
++	del_timer_sync(&e->efqd->idle_slice_timer);
++	cancel_work_sync(&e->efqd->unplug_work);
++}
++
++static void elv_set_prio_slice(struct elv_fq_data *efqd, struct io_queue *ioq)
++{
++	ioq->slice_start = jiffies;
++	ioq->slice_end = elv_prio_to_slice(efqd, ioq) + jiffies;
++	elv_log_ioq(efqd, ioq, "set_slice=%lu", ioq->slice_end - jiffies);
++}
++
++struct io_queue *elv_alloc_ioq(struct request_queue *q, gfp_t gfp_mask)
++{
++	struct io_queue *ioq = NULL;
++
++	ioq = kmem_cache_alloc_node(elv_ioq_pool, gfp_mask, q->node);
++	return ioq;
++}
++EXPORT_SYMBOL(elv_alloc_ioq);
++
++void elv_free_ioq(struct io_queue *ioq)
++{
++	kmem_cache_free(elv_ioq_pool, ioq);
++}
++EXPORT_SYMBOL(elv_free_ioq);
++
++int elv_init_ioq(struct elevator_queue *eq, struct io_queue *ioq, pid_t pid,
++		int is_sync)
++{
++	RB_CLEAR_NODE(&ioq->entity.rb_node);
++	atomic_set(&ioq->ref, 0);
++	ioq->efqd = eq->efqd;
++	ioq->pid = pid;
++
++	elv_ioq_set_ioprio_class(ioq, IOPRIO_CLASS_BE);
++	elv_ioq_set_ioprio(ioq, IOPRIO_NORM);
++
++	return 0;
++}
++EXPORT_SYMBOL(elv_init_ioq);
++
++static void elv_release_ioq(struct elevator_queue *e, struct io_queue **ioq_ptr)
++{
++	struct io_queue *ioq = *ioq_ptr;
++
++	if (ioq != NULL) {
++		/* Drop the reference taken by the io group */
++		elv_put_ioq(ioq);
++		*ioq_ptr = NULL;
++	}
++}
++
++/*
++ * Release all the io group references to its async queues.
++ */
++static void
++put_io_group_queues(struct elevator_queue *e, struct io_group *iog)
++{
++	int i, j;
++
++	for (i = 0; i < 2; i++)
++		for (j = 0; j < IOPRIO_BE_NR; j++)
++			elv_release_ioq(e, &iog->async_queue[i][j]);
++
++	/* Free up async idle queue */
++	elv_release_ioq(e, &iog->async_idle_queue);
++}
++
++void *elv_io_group_async_queue_prio(struct io_group *iog, int ioprio_class,
++						int ioprio)
++{
++	struct io_queue *ioq = NULL;
++
++	switch (ioprio_class) {
++	case IOPRIO_CLASS_RT:
++		ioq = iog->async_queue[0][ioprio];
++		break;
++	case IOPRIO_CLASS_BE:
++		ioq = iog->async_queue[1][ioprio];
++		break;
++	case IOPRIO_CLASS_IDLE:
++		ioq = iog->async_idle_queue;
++		break;
++	default:
++		BUG();
++	}
++
++	if (ioq)
++		return ioq->sched_queue;
++	return NULL;
++}
++EXPORT_SYMBOL(elv_io_group_async_queue_prio);
++
++void elv_io_group_set_async_queue(struct io_group *iog, int ioprio_class,
++					int ioprio, struct io_queue *ioq)
++{
++	switch (ioprio_class) {
++	case IOPRIO_CLASS_RT:
++		iog->async_queue[0][ioprio] = ioq;
++		break;
++	case IOPRIO_CLASS_BE:
++		iog->async_queue[1][ioprio] = ioq;
++		break;
++	case IOPRIO_CLASS_IDLE:
++		iog->async_idle_queue = ioq;
++		break;
++	default:
++		BUG();
++	}
++
++	/*
++	 * Take the group reference and pin the queue. Group exit will
++	 * clean it up
++	 */
++	elv_get_ioq(ioq);
++}
++EXPORT_SYMBOL(elv_io_group_set_async_queue);
++
++static struct io_group *io_alloc_root_group(struct request_queue *q,
++					struct elevator_queue *e, void *key)
++{
++	struct io_group *iog;
++	int i;
++
++	iog = kmalloc_node(sizeof(*iog), GFP_KERNEL | __GFP_ZERO, q->node);
++	if (iog == NULL)
++		return NULL;
++
++	iog->entity.parent = NULL;
++	iog->entity.my_sd = &iog->sched_data;
++	iog->key = key;
++
++	for (i = 0; i < IO_IOPRIO_CLASSES; i++)
++		iog->sched_data.service_tree[i] = ELV_SERVICE_TREE_INIT;
++
++	return iog;
++}
++
++static void io_free_root_group(struct elevator_queue *e)
++{
++	struct io_group *iog = e->efqd->root_group;
++	struct io_service_tree *st;
++	int i;
++
++	for (i = 0; i < IO_IOPRIO_CLASSES; i++) {
++		st = iog->sched_data.service_tree + i;
++		flush_idle_tree(st);
++	}
++
++	put_io_group_queues(e, iog);
++	kfree(iog);
++}
++
++/*
++ * Should be called after ioq prio and class has been initialized as prio
++ * class data will be used to determine which service tree in the group
++ * entity should be attached to.
++ */
++void elv_init_ioq_io_group(struct io_queue *ioq, struct io_group *iog)
++{
++	init_io_entity_parent(&ioq->entity, &iog->entity);
++}
++EXPORT_SYMBOL(elv_init_ioq_io_group);
++
++/* Get next queue for service. */
++static struct io_queue *elv_get_next_ioq(struct request_queue *q)
++{
++	struct elv_fq_data *efqd = q->elevator->efqd;
++	struct io_entity *entity = NULL;
++	struct io_queue *ioq = NULL;
++	struct io_sched_data *sd;
++
++	BUG_ON(efqd->active_queue != NULL);
++
++	if (!efqd->busy_queues)
++		return NULL;
++
++	sd = &efqd->root_group->sched_data;
++	entity = lookup_next_io_entity(sd);
++	if (!entity)
++		return NULL;
++
++	ioq = ioq_of(entity);
++	return ioq;
++}
++
++/*
++ * coop (cooperating queue) tells that io scheduler selected a queue for us
++ * and we did not select the next queue based on fairness.
++ */
++static void
++__elv_set_active_ioq(struct elv_fq_data *efqd, struct io_queue *ioq, int coop)
++{
++	struct request_queue *q = efqd->queue;
++	struct elevator_queue *eq = q->elevator;
++
++	if (ioq) {
++		elv_log_ioq(efqd, ioq, "set_active, busy=%d",
++						efqd->busy_queues);
++		ioq->slice_start = ioq->slice_end = 0;
++		ioq->dispatch_start = jiffies;
++
++		elv_clear_ioq_wait_request(ioq);
++		elv_clear_ioq_must_dispatch(ioq);
++		elv_mark_ioq_slice_new(ioq);
++
++		del_timer(&efqd->idle_slice_timer);
++	}
++
++	efqd->active_queue = ioq;
++
++	/* Let iosched know if it wants to take some action */
++	if (ioq && eq->ops->elevator_active_ioq_set_fn)
++		eq->ops->elevator_active_ioq_set_fn(q, ioq->sched_queue, coop);
++}
++
++static inline int ioq_is_idling(struct io_queue *ioq)
++{
++	return (elv_ioq_wait_request(ioq) ||
++			timer_pending(&ioq->efqd->idle_slice_timer));
++}
++
++/* Get and set a new active queue for service. */
++static struct
++io_queue *elv_set_active_ioq(struct request_queue *q, struct io_queue *ioq)
++{
++	struct elv_fq_data *efqd = q->elevator->efqd;
++	int coop = 0;
++
++	if (ioq) {
++		requeue_ioq(ioq, 1);
++		/*
++		 * io scheduler selected the next queue for us. Pass this
++		 * this info back to io scheudler. cfq currently uses it
++		 * to reset coop flag on the queue.
++		 */
++		coop = 1;
++	}
++
++	ioq = elv_get_next_ioq(q);
++	__elv_set_active_ioq(efqd, ioq, coop);
++	return ioq;
++}
++
++static void elv_reset_active_ioq(struct elv_fq_data *efqd)
++{
++	struct request_queue *q = efqd->queue;
++	struct elevator_queue *eq = q->elevator;
++	struct io_queue *ioq = elv_active_ioq(eq);
++
++	if (eq->ops->elevator_active_ioq_reset_fn)
++		eq->ops->elevator_active_ioq_reset_fn(q, ioq->sched_queue);
++
++	efqd->active_queue = NULL;
++	del_timer(&efqd->idle_slice_timer);
++}
++
++/* Called when an inactive queue receives a new request. */
++static void elv_add_ioq_busy(struct elv_fq_data *efqd, struct io_queue *ioq)
++{
++	BUG_ON(elv_ioq_busy(ioq));
++	BUG_ON(ioq == efqd->active_queue);
++	elv_log_ioq(efqd, ioq, "add to busy");
++	enqueue_ioq(ioq);
++	elv_mark_ioq_busy(ioq);
++	efqd->busy_queues++;
++}
++
++static void elv_del_ioq_busy(struct elevator_queue *e, struct io_queue *ioq)
++{
++	struct elv_fq_data *efqd = e->efqd;
++
++	BUG_ON(!elv_ioq_busy(ioq));
++	BUG_ON(ioq->nr_queued);
++	elv_log_ioq(efqd, ioq, "del from busy");
++	elv_clear_ioq_busy(ioq);
++	BUG_ON(efqd->busy_queues == 0);
++	efqd->busy_queues--;
++	dequeue_ioq(ioq);
++}
++
++/*
++ * Do the accounting. Determine how much service (in terms of time slices)
++ * current queue used and adjust the start, finish time of queue and vtime
++ * of the tree accordingly.
++ *
++ * Determining the service used in terms of time is tricky in certain
++ * situations. Especially when underlying device supports command queuing
++ * and requests from multiple queues can be there at same time, then it
++ * is not clear which queue consumed how much of disk time.
++ *
++ * To mitigate this problem, cfq starts the time slice of the queue only
++ * after first request from the queue has completed. This does not work
++ * very well if we expire the queue before we wait for first and more
++ * request to finish from the queue. For seeky queues, we will expire the
++ * queue after dispatching few requests without waiting and start dispatching
++ * from next queue.
++ *
++ * Currently one should set fairness = 1 to force completion of requests
++ * from queue before dispatch from next queue starts. This should help in
++ * better time accounting at the expense of throughput.
++ */
++void elv_ioq_slice_expired(struct request_queue *q, struct io_queue *ioq)
++{
++	struct elv_fq_data *efqd = q->elevator->efqd;
++	long slice_used = 0, slice_overshoot = 0;
++
++	assert_spin_locked(q->queue_lock);
++	elv_log_ioq(efqd, ioq, "slice expired");
++
++	if (elv_ioq_wait_request(ioq))
++		del_timer(&efqd->idle_slice_timer);
++
++	elv_clear_ioq_wait_request(ioq);
++
++	/*
++	 * Queue got expired before even a single request completed or
++	 * got expired immediately after first request completion. Use
++	 * the time elapsed since queue was scheduled in.
++	 */
++	if (!ioq->slice_end || ioq->slice_start == jiffies) {
++		slice_used = jiffies - ioq->dispatch_start;
++		if (!slice_used)
++			slice_used = 1;
++		goto done;
++	}
++
++	slice_used = jiffies - ioq->slice_start;
++	if (time_after(jiffies, ioq->slice_end))
++		slice_overshoot = jiffies - ioq->slice_end;
++
++done:
++	elv_log_ioq(efqd, ioq, "disp_start = %lu sl_start= %lu sl_end=%lu,"
++			" jiffies=%lu", ioq->dispatch_start, ioq->slice_start,
++			ioq->slice_end, jiffies);
++	elv_log_ioq(efqd, ioq, "sl_used=%ld, overshoot=%ld sect=%lu",
++				slice_used, slice_overshoot, ioq->nr_sectors);
++	elv_ioq_served(ioq, slice_used);
++
++	BUG_ON(ioq != efqd->active_queue);
++	elv_reset_active_ioq(efqd);
++	/* Queue is being expired. Reset number of secotrs dispatched */
++	ioq->nr_sectors = 0;
++
++	put_prev_ioq(ioq);
++
++	if (!ioq->nr_queued)
++		elv_del_ioq_busy(q->elevator, ioq);
++	else if (!elv_ioq_sync(ioq)) {
++		/*
++		 * Requeue async ioq so that these will be again placed at
++		 * the end of service tree giving a chance to sync queues.
++		 */
++		requeue_ioq(ioq, 0);
++	}
++}
++EXPORT_SYMBOL(elv_ioq_slice_expired);
++
++/* Expire the ioq. */
++void elv_slice_expired(struct request_queue *q)
++{
++	struct io_queue *ioq = elv_active_ioq(q->elevator);
++
++	if (ioq)
++		elv_ioq_slice_expired(q, ioq);
++}
++
++/*
++ * Check if new_cfqq should preempt the currently active queue. Return 0 for
++ * no or if we aren't sure, a 1 will cause a preemption attempt.
++ */
++static int elv_should_preempt(struct request_queue *q, struct io_queue *new_ioq,
++			struct request *rq)
++{
++	struct io_queue *active_ioq;
++	struct elevator_queue *eq = q->elevator;
++	struct io_entity *entity, *new_entity;
++
++	active_ioq = elv_active_ioq(eq);
++
++	if (!active_ioq)
++		return 0;
++
++	entity = &active_ioq->entity;
++	new_entity = &new_ioq->entity;
++
++	/*
++	 * Allow an RT request to pre-empt an ongoing non-RT cfqq timeslice.
++	 */
++
++	if (new_entity->ioprio_class == IOPRIO_CLASS_RT
++	    && entity->ioprio_class != IOPRIO_CLASS_RT)
++		return 1;
++	/*
++	 * Allow an BE request to pre-empt an ongoing IDLE clas timeslice.
++	 */
++
++	if (new_entity->ioprio_class == IOPRIO_CLASS_BE
++	    && entity->ioprio_class == IOPRIO_CLASS_IDLE)
++		return 1;
++
++	/*
++	 * Check with io scheduler if it has additional criterion based on
++	 * which it wants to preempt existing queue.
++	 */
++	if (eq->ops->elevator_should_preempt_fn) {
++		void *sched_queue = elv_ioq_sched_queue(new_ioq);
++
++		return eq->ops->elevator_should_preempt_fn(q, sched_queue, rq);
++	}
++
++	return 0;
++}
++
++static void elv_preempt_queue(struct request_queue *q, struct io_queue *ioq)
++{
++	elv_log_ioq(q->elevator->efqd, ioq, "preempt");
++	elv_slice_expired(q);
++
++	/*
++	 * Put the new queue at the front of the of the current list,
++	 * so we know that it will be selected next.
++	 */
++
++	requeue_ioq(ioq, 1);
++	elv_mark_ioq_slice_new(ioq);
++}
++
++void elv_ioq_request_add(struct request_queue *q, struct request *rq)
++{
++	struct elv_fq_data *efqd = q->elevator->efqd;
++	struct io_queue *ioq = rq->ioq;
++
++	if (!elv_iosched_fair_queuing_enabled(q->elevator))
++		return;
++
++	BUG_ON(!efqd);
++	BUG_ON(!ioq);
++	ioq->nr_queued++;
++	elv_log_ioq(efqd, ioq, "add rq: rq_queued=%d", ioq->nr_queued);
++
++	if (!elv_ioq_busy(ioq))
++		elv_add_ioq_busy(efqd, ioq);
++
++	if (ioq == elv_active_ioq(q->elevator)) {
++		/*
++		 * Remember that we saw a request from this process, but
++		 * don't start queuing just yet. Otherwise we risk seeing lots
++		 * of tiny requests, because we disrupt the normal plugging
++		 * and merging. If the request is already larger than a single
++		 * page, let it rip immediately. For that case we assume that
++		 * merging is already done. Ditto for a busy system that
++		 * has other work pending, don't risk delaying until the
++		 * idle timer unplug to continue working.
++		 */
++		if (elv_ioq_wait_request(ioq)) {
++			del_timer(&efqd->idle_slice_timer);
++			elv_clear_ioq_wait_request(ioq);
++			if (blk_rq_bytes(rq) > PAGE_CACHE_SIZE ||
++			    efqd->busy_queues > 1 || !blk_queue_plugged(q))
++				__blk_run_queue(q);
++			else
++				elv_mark_ioq_must_dispatch(ioq);
++		}
++	} else if (elv_should_preempt(q, ioq, rq)) {
++		/*
++		 * not the active queue - expire current slice if it is
++		 * idle and has expired it's mean thinktime or this new queue
++		 * has some old slice time left and is of higher priority or
++		 * this new queue is RT and the current one is BE
++		 */
++		elv_preempt_queue(q, ioq);
++		__blk_run_queue(q);
++	}
++}
++
++static void elv_idle_slice_timer(unsigned long data)
++{
++	struct elv_fq_data *efqd = (struct elv_fq_data *)data;
++	struct io_queue *ioq;
++	unsigned long flags;
++	struct request_queue *q = efqd->queue;
++
++	elv_log(efqd, "idle timer fired");
++
++	spin_lock_irqsave(q->queue_lock, flags);
++
++	ioq = efqd->active_queue;
++
++	if (ioq) {
++
++		elv_clear_ioq_wait_request(ioq);
++
++		/*
++		 * We saw a request before the queue expired, let it through
++		 */
++		if (elv_ioq_must_dispatch(ioq))
++			goto out_kick;
++
++		/*
++		 * expired
++		 */
++		if (elv_ioq_slice_used(ioq))
++			goto expire;
++
++		/*
++		 * only expire and reinvoke request handler, if there are
++		 * other queues with pending requests
++		 */
++		if (!elv_nr_busy_ioq(q->elevator))
++			goto out_cont;
++
++		/*
++		 * not expired and it has a request pending, let it dispatch
++		 */
++		if (ioq->nr_queued)
++			goto out_kick;
++	}
++expire:
++	elv_slice_expired(q);
++out_kick:
++	elv_schedule_dispatch(q);
++out_cont:
++	spin_unlock_irqrestore(q->queue_lock, flags);
++}
++
++static void elv_ioq_arm_slice_timer(struct request_queue *q)
++{
++	struct elevator_queue *eq = q->elevator;
++	struct io_queue *ioq = elv_active_ioq(eq);
++
++	if (eq->ops->elevator_arm_slice_timer_fn)
++		eq->ops->elevator_arm_slice_timer_fn(q, ioq->sched_queue);
++}
++
++/*
++ * If io scheduler has functionality of keeping track of close cooperator, check
++ * with it if it has got a closely co-operating queue.
++ */
++static inline struct io_queue *elv_close_cooperator(struct request_queue *q,
++					struct io_queue *ioq)
++{
++	struct elevator_queue *e = q->elevator;
++	struct io_queue *new_ioq = NULL;
++	void *sched_queue = ioq->sched_queue;
++
++	if (q->elevator->ops->elevator_close_cooperator_fn)
++		new_ioq = e->ops->elevator_close_cooperator_fn(q, sched_queue);
++
++	if (new_ioq)
++		elv_log_ioq(e->efqd, ioq, "cooperating ioq=%d", new_ioq->pid);
++
++	return new_ioq;
++}
++
++/* Common layer function to select the next queue to dispatch from */
++void *elv_select_ioq(struct request_queue *q, int force)
++{
++	struct io_queue *new_ioq = NULL, *ioq = elv_active_ioq(q->elevator);
++
++	if (!elv_nr_busy_ioq(q->elevator))
++		return NULL;
++
++	if (ioq == NULL)
++		goto new_queue;
++
++	/* There is only one active queue which is empty. Nothing to dispatch */
++	if (elv_nr_busy_ioq(q->elevator) == 1 && !ioq->nr_queued)
++		return NULL;
++
++	/*
++	 * Force dispatch. Continue to dispatch from current queue as long
++	 * as it has requests.
++	 */
++	if (unlikely(force)) {
++		if (ioq->nr_queued)
++			goto keep_queue;
++		else
++			goto expire;
++	}
++
++	/*
++	 * The active queue has run out of time, expire it and select new.
++	 */
++	if (elv_ioq_slice_used(ioq) && !elv_ioq_must_dispatch(ioq))
++		goto expire;
++
++	/*
++	 * The active queue has requests and isn't expired, allow it to
++	 * dispatch.
++	 */
++
++	if (ioq->nr_queued)
++		goto keep_queue;
++
++	/*
++	 * If another queue has a request waiting within our mean seek
++	 * distance, let it run.  The expire code will check for close
++	 * cooperators and put the close queue at the front of the service
++	 * tree.
++	 */
++	new_ioq = elv_close_cooperator(q, ioq);
++	if (new_ioq)
++		goto expire;
++
++	/*
++	 * No requests pending. If the active queue still has requests in
++	 * flight or is idling for a new request, allow either of these
++	 * conditions to happen (or time out) before selecting a new queue.
++	 */
++
++	if (ioq_is_idling(ioq) ||
++	    (elv_ioq_nr_dispatched(ioq) && elv_ioq_idle_window(ioq))) {
++		ioq = NULL;
++		goto keep_queue;
++	}
++
++expire:
++	elv_slice_expired(q);
++new_queue:
++	ioq = elv_set_active_ioq(q, new_ioq);
++keep_queue:
++	return ioq;
++}
++
++/* A request got removed from io_queue. Do the accounting */
++void elv_ioq_request_removed(struct elevator_queue *e, struct request *rq)
++{
++	struct io_queue *ioq;
++
++	if (!elv_iosched_fair_queuing_enabled(e))
++		return;
++
++	ioq = rq->ioq;
++	BUG_ON(!ioq);
++	ioq->nr_queued--;
++}
++
++/* A request got dispatched. Do the accounting. */
++void elv_dispatched_request_fair(struct elevator_queue *e, struct request *rq)
++{
++	struct io_queue *ioq = rq->ioq;
++
++	if (!elv_iosched_fair_queuing_enabled(e))
++		return;
++
++	BUG_ON(!ioq);
++	ioq->dispatched++;
++	ioq->nr_sectors += blk_rq_sectors(rq);
++	elv_ioq_request_removed(e, rq);
++	elv_clear_ioq_must_dispatch(ioq);
++}
++
++void elv_activate_rq_fair(struct request_queue *q, struct request *rq)
++{
++	struct elv_fq_data *efqd = q->elevator->efqd;
++
++	if (!elv_iosched_fair_queuing_enabled(q->elevator))
++		return;
++
++	efqd->rq_in_driver++;
++	elv_log_ioq(efqd, rq->ioq, "activate rq, drv=%d",
++						efqd->rq_in_driver);
++}
++
++void elv_deactivate_rq_fair(struct request_queue *q, struct request *rq)
++{
++	struct elv_fq_data *efqd = q->elevator->efqd;
++
++	if (!elv_iosched_fair_queuing_enabled(q->elevator))
++		return;
++
++	WARN_ON(!efqd->rq_in_driver);
++	efqd->rq_in_driver--;
++	elv_log_ioq(efqd, rq->ioq, "deactivate rq, drv=%d",
++						efqd->rq_in_driver);
++}
++
++/*
++ * if this is only queue and it has completed all its requests and has nothing
++ * to dispatch, expire it. We don't want to keep it around idle otherwise later
++ * when it is expired, all this idle time will be added to queue's disk time
++ * used and queue might not get a chance to run for a long time.
++ */
++static inline void
++check_expire_last_empty_queue(struct request_queue *q, struct io_queue *ioq)
++{
++	struct elv_fq_data *efqd = q->elevator->efqd;
++
++	if (efqd->busy_queues != 1)
++		return;
++
++	if (ioq->dispatched || ioq->nr_queued)
++		return;
++
++	/*
++	 * Anticipation is on. Don't expire queue. Either a new request will
++	 * come or it is up to io scheduler to expire the queue once idle
++	 * timer fires
++	 */
++
++	if (ioq_is_idling(ioq))
++		return;
++
++	elv_log_ioq(efqd, ioq, "expire last empty queue");
++	elv_slice_expired(q);
++}
++
++/* A request got completed from io_queue. Do the accounting. */
++void elv_ioq_completed_request(struct request_queue *q, struct request *rq)
++{
++	const int sync = rq_is_sync(rq);
++	struct io_queue *ioq;
++	struct elv_fq_data *efqd = q->elevator->efqd;
++
++	if (!elv_iosched_fair_queuing_enabled(q->elevator))
++		return;
++
++	ioq = rq->ioq;
++	WARN_ON(!efqd->rq_in_driver);
++	WARN_ON(!ioq->dispatched);
++	efqd->rq_in_driver--;
++	ioq->dispatched--;
++
++	elv_log_ioq(efqd, ioq, "complete rq_queued=%d drv=%d disp=%d",
++			ioq->nr_queued, efqd->rq_in_driver,
++			elv_ioq_nr_dispatched(ioq));
++	/*
++	 * If this is the active queue, check if it needs to be expired,
++	 * or if we want to idle in case it has no pending requests.
++	 */
++
++	if (elv_active_ioq(q->elevator) == ioq) {
++		if (elv_ioq_slice_new(ioq)) {
++			elv_set_prio_slice(q->elevator->efqd, ioq);
++			elv_clear_ioq_slice_new(ioq);
++		}
++
++		/*
++		 * If there are no requests waiting in this queue, and
++		 * there are other queues ready to issue requests, AND
++		 * those other queues are issuing requests within our
++		 * mean seek distance, give them a chance to run instead
++		 * of idling.
++		 */
++		if (elv_ioq_slice_used(ioq) || elv_ioq_class_idle(ioq))
++			elv_slice_expired(q);
++		else if (!ioq->nr_queued && !elv_close_cooperator(q, ioq)
++			 && sync && !rq_noidle(rq))
++			elv_ioq_arm_slice_timer(q);
++
++		check_expire_last_empty_queue(q, ioq);
++	}
++
++	if (!efqd->rq_in_driver)
++		elv_schedule_dispatch(q);
+ }
++
++/*
++ * The process associted with ioq (in case of cfq), is going away. Mark it
++ * for deletion.
++ */
++void elv_exit_ioq(struct io_queue *ioq)
++{
++	struct io_entity *entity = &ioq->entity;
++
++	/*
++	 * Async ioq's belong to io group and are cleaned up once group is
++	 * being deleted. Not need to do any cleanup here even if cfq has
++	 * dropped the reference to the queue
++	 */
++	if (!elv_ioq_sync(ioq))
++		return;
++
++	/*
++	 * This queue is still under service. Just mark it so that once all
++	 * the IO from queue is done, it is not put back in idle tree.
++	 */
++	if (entity->on_st) {
++		entity->exiting = 1;
++		return;
++	} else if (entity->on_idle_st) {
++		/* Remove ioq from idle tree */
++		dequeue_io_entity_idle(entity);
++	}
++}
++EXPORT_SYMBOL(elv_exit_ioq);
++
++static void elv_slab_kill(void)
++{
++	/*
++	 * Caller already ensured that pending RCU callbacks are completed,
++	 * so we should have no busy allocations at this point.
++	 */
++	if (elv_ioq_pool)
++		kmem_cache_destroy(elv_ioq_pool);
++}
++
++static int __init elv_slab_setup(void)
++{
++	elv_ioq_pool = KMEM_CACHE(io_queue, 0);
++	if (!elv_ioq_pool)
++		goto fail;
++
++	return 0;
++fail:
++	elv_slab_kill();
++	return -ENOMEM;
++}
++
++struct elv_fq_data *
++elv_alloc_fq_data(struct request_queue *q, struct elevator_queue *e)
++{
++	struct elv_fq_data *efqd = NULL;
++
++	efqd = kmalloc_node(sizeof(*efqd), GFP_KERNEL | __GFP_ZERO, q->node);
++	return efqd;
++}
++
++void elv_release_fq_data(struct elv_fq_data *efqd)
++{
++	kfree(efqd);
++}
++
++/* Initialize fair queueing data associated with elevator */
++int elv_init_fq_data(struct request_queue *q, struct elevator_queue *e)
++{
++	struct io_group *iog;
++	struct elv_fq_data *efqd = e->efqd;
++
++	if (!elv_iosched_fair_queuing_enabled(e))
++		return 0;
++
++	iog = io_alloc_root_group(q, e, efqd);
++	if (iog == NULL)
++		return 1;
++
++	efqd->root_group = iog;
++
++	/*
++	 * Our fallback ioq if elv_alloc_ioq() runs into OOM issues.
++	 * Grab a permanent reference to it, so that the normal code flow
++	 * will not attempt to free it.
++	 */
++	elv_init_ioq(e, &efqd->oom_ioq, 1, 0);
++	elv_get_ioq(&efqd->oom_ioq);
++	elv_init_ioq_io_group(&efqd->oom_ioq, iog);
++
++	efqd->queue = q;
++	efqd->eq = e;
++
++	init_timer(&efqd->idle_slice_timer);
++	efqd->idle_slice_timer.function = elv_idle_slice_timer;
++	efqd->idle_slice_timer.data = (unsigned long) efqd;
++
++	INIT_WORK(&efqd->unplug_work, elv_kick_queue);
++
++	efqd->elv_slice[0] = elv_slice_async;
++	efqd->elv_slice[1] = elv_slice_sync;
++
++	return 0;
++}
++
++/*
++ * elv_exit_fq_data is called before we call elevator_exit_fn. Before
++ * we ask elevator to cleanup its queues, we do the cleanup here so
++ * that all the group and idle tree references to ioq are dropped. Later
++ * during elevator cleanup, ioc reference will be dropped which will lead
++ * to removal of ioscheduler queue as well as associated ioq object.
++ */
++void elv_exit_fq_data(struct elevator_queue *e)
++{
++	struct elv_fq_data *efqd = e->efqd;
++
++	if (!elv_iosched_fair_queuing_enabled(e))
++		return;
++
++	elv_shutdown_timer_wq(e);
++
++	BUG_ON(timer_pending(&efqd->idle_slice_timer));
++	io_free_root_group(e);
++}
++
++static int __init elv_fq_init(void)
++{
++	if (elv_slab_setup())
++		return -ENOMEM;
++
++	/* could be 0 on HZ < 1000 setups */
++
++	if (!elv_slice_async)
++		elv_slice_async = 1;
++
++	return 0;
++}
++
++module_init(elv_fq_init);
+diff --git a/block/elevator-fq.h b/block/elevator-fq.h
+index ee46a47..6ea0d18 100644
+--- a/block/elevator-fq.h
++++ b/block/elevator-fq.h
+@@ -22,6 +22,10 @@
+ #define IO_WEIGHT_DEFAULT	500
+ #define IO_IOPRIO_CLASSES	3
+ 
++#ifdef CONFIG_ELV_FAIR_QUEUING
++#define ELV_ATTR(name) \
++	__ATTR(name, S_IRUGO|S_IWUSR, elv_##name##_show, elv_##name##_store)
++
+ struct io_service_tree {
+ 	struct rb_root active;
+ 	struct io_entity *active_entity;
+@@ -68,23 +72,80 @@ struct io_queue {
+ 
+ 	/* Pointer to generic elevator fair queuing data structure */
+ 	struct elv_fq_data *efqd;
++	pid_t pid;
++
++	/* Number of requests queued on this io queue */
++	unsigned long nr_queued;
++
++	/* Requests dispatched from this queue */
++	int dispatched;
++
++	/* Number of sectors dispatched in current dispatch round */
++	unsigned long nr_sectors;
++
++	/* time when dispatch from the queue was started */
++	unsigned long dispatch_start;
++	/* time when first request from queue completed and slice started. */
++	unsigned long slice_start;
++	unsigned long slice_end;
++
++	/* Pointer to io scheduler's queue */
++	void *sched_queue;
+ };
+ 
+ struct io_group {
+ 	struct io_entity entity;
+ 	struct io_sched_data sched_data;
++	/*
++	 * async queue for each priority case for RT and BE class.
++	 * Used only for cfq.
++	 */
++
++	struct io_queue *async_queue[2][IOPRIO_BE_NR];
++	struct io_queue *async_idle_queue;
++	void *key;
+ };
+ 
+ struct elv_fq_data {
+ 	struct io_group *root_group;
+ 
++	struct request_queue *queue;
++	struct elevator_queue *eq;
++	unsigned int busy_queues;
++
++	/* Pointer to the ioscheduler queue being served */
++	void *active_queue;
++
++	int rq_in_driver;
++
++	struct timer_list idle_slice_timer;
++	struct work_struct unplug_work;
++
+ 	/* Base slice length for sync and async queues */
+ 	unsigned int elv_slice[2];
++
++	/* Fallback dummy ioq for extreme OOM conditions */
++	struct io_queue oom_ioq;
+ };
+ 
++/* Logging facilities. */
++#define elv_log_ioq(efqd, ioq, fmt, args...) \
++	blk_add_trace_msg((efqd)->queue, "elv%d%c " fmt, (ioq)->pid,	\
++				elv_ioq_sync(ioq) ? 'S' : 'A', ##args)
++
++#define elv_log(efqd, fmt, args...) \
++	blk_add_trace_msg((efqd)->queue, "elv " fmt, ##args)
++
++#define ioq_sample_valid(samples)   ((samples) > 80)
++
+ /* Some shared queue flag manipulation functions among elevators */
+ 
+ enum elv_queue_state_flags {
++	ELV_QUEUE_FLAG_busy,          /* has requests or is under service */
++	ELV_QUEUE_FLAG_wait_request,	  /* waiting for a request */
++	ELV_QUEUE_FLAG_must_dispatch,	  /* must be allowed a dispatch */
++	ELV_QUEUE_FLAG_idle_window,       /* elevator slice idling enabled */
++	ELV_QUEUE_FLAG_slice_new,	  /* no requests dispatched in slice */
+ 	ELV_QUEUE_FLAG_sync,              /* synchronous queue */
+ };
+ 
+@@ -102,6 +163,11 @@ static inline int elv_ioq_##name(struct io_queue *ioq)         		\
+ 	return ((ioq)->flags & (1 << ELV_QUEUE_FLAG_##name)) != 0;	\
+ }
+ 
++ELV_IO_QUEUE_FLAG_FNS(busy)
++ELV_IO_QUEUE_FLAG_FNS(wait_request)
++ELV_IO_QUEUE_FLAG_FNS(must_dispatch)
++ELV_IO_QUEUE_FLAG_FNS(idle_window)
++ELV_IO_QUEUE_FLAG_FNS(slice_new)
+ ELV_IO_QUEUE_FLAG_FNS(sync)
+ 
+ static inline void elv_get_ioq(struct io_queue *ioq)
+@@ -150,6 +216,170 @@ static inline int elv_ioq_ioprio(struct io_queue *ioq)
+ 	return ioq->entity.ioprio;
+ }
+ 
++static inline int elv_ioq_slice_used(struct io_queue *ioq)
++{
++	if (elv_ioq_slice_new(ioq))
++		return 0;
++	if (time_before(jiffies, ioq->slice_end))
++		return 0;
++
++	return 1;
++}
++
++/* How many request are currently dispatched from the queue */
++static inline int elv_ioq_nr_dispatched(struct io_queue *ioq)
++{
++	return ioq->dispatched;
++}
++
++/* How many request are currently queued in the queue */
++static inline int elv_ioq_nr_queued(struct io_queue *ioq)
++{
++	return ioq->nr_queued;
++}
++
++static inline void *elv_ioq_sched_queue(struct io_queue *ioq)
++{
++	if (ioq)
++		return ioq->sched_queue;
++	return NULL;
++}
++
++static inline struct io_queue *elv_active_ioq(struct elevator_queue *e)
++{
++	return e->efqd->active_queue;
++}
++
++static inline void *elv_active_sched_queue(struct elevator_queue *e)
++{
++	return elv_ioq_sched_queue(elv_active_ioq(e));
++}
++
++static inline int elv_rq_in_driver(struct elevator_queue *e)
++{
++	return e->efqd->rq_in_driver;
++}
++
++static inline int elv_nr_busy_ioq(struct elevator_queue *e)
++{
++	return e->efqd->busy_queues;
++}
++
++/* Helper functions for operating on elevator idle slice timer */
++static inline int
++elv_mod_idle_slice_timer(struct elevator_queue *eq, unsigned long expires)
++{
++	return mod_timer(&eq->efqd->idle_slice_timer, expires);
++}
++
++static inline int elv_del_idle_slice_timer(struct elevator_queue *eq)
++{
++	return del_timer(&eq->efqd->idle_slice_timer);
++}
++
++static inline void
++elv_init_ioq_sched_queue(struct elevator_queue *eq, struct io_queue *ioq,
++					void *sched_queue)
++{
++	ioq->sched_queue = sched_queue;
++}
++
++static inline struct io_queue *elv_get_oom_ioq(struct elevator_queue *eq)
++{
++	return &eq->efqd->oom_ioq;
++}
++
++static inline struct io_group *
++elv_io_get_io_group(struct request_queue *q, int create)
++{
++	/* In flat mode, there is only root group */
++	return q->elevator->efqd->root_group;
++}
++
++extern ssize_t elv_slice_sync_show(struct elevator_queue *q, char *name);
++extern ssize_t elv_slice_sync_store(struct elevator_queue *q, const char *name,
++						size_t count);
++extern ssize_t elv_slice_async_show(struct elevator_queue *q, char *name);
++extern ssize_t elv_slice_async_store(struct elevator_queue *q, const char *name,
++						size_t count);
++
++/* Functions used by elevator.c */
++extern struct elv_fq_data *elv_alloc_fq_data(struct request_queue *q,
++					struct elevator_queue *e);
++extern void elv_release_fq_data(struct elv_fq_data *efqd);
++extern int elv_init_fq_data(struct request_queue *q, struct elevator_queue *e);
++extern void elv_exit_fq_data(struct elevator_queue *e);
++
++extern void elv_ioq_request_add(struct request_queue *q, struct request *rq);
++extern void elv_ioq_request_removed(struct elevator_queue *e,
++					struct request *rq);
++extern void elv_dispatched_request_fair(struct elevator_queue *e,
++					struct request *rq);
++
++extern void elv_activate_rq_fair(struct request_queue *q, struct request *rq);
++extern void elv_deactivate_rq_fair(struct request_queue *q, struct request *rq);
++
++extern void elv_ioq_completed_request(struct request_queue *q,
++				struct request *rq);
++
++extern void *elv_select_ioq(struct request_queue *q, int force);
++
++/* Functions used by io schedulers */
+ extern void elv_put_ioq(struct io_queue *ioq);
++extern void elv_ioq_slice_expired(struct request_queue *q,
++					struct io_queue *ioq);
++extern int elv_init_ioq(struct elevator_queue *eq, struct io_queue *ioq,
++				pid_t pid, int is_sync);
++extern void elv_init_ioq_io_group(struct io_queue *ioq, struct io_group *iog);
++extern void elv_schedule_dispatch(struct request_queue *q);
++extern void *elv_io_group_async_queue_prio(struct io_group *iog,
++						int ioprio_class, int ioprio);
++extern void elv_io_group_set_async_queue(struct io_group *iog, int ioprio_class,
++					int ioprio, struct io_queue *ioq);
++extern struct io_queue *elv_alloc_ioq(struct request_queue *q, gfp_t gfp_mask);
++extern void elv_free_ioq(struct io_queue *ioq);
++extern struct io_group *ioq_to_io_group(struct io_queue *ioq);
++extern void elv_exit_ioq(struct io_queue *ioq);
++
++#else /* CONFIG_ELV_FAIR_QUEUING */
++static inline struct elv_fq_data *
++elv_alloc_fq_data(struct request_queue *q, struct elevator_queue *e)
++{
++	return 0;
++}
++static inline void elv_release_fq_data(struct elv_fq_data *efqd) {}
++
++static inline int
++elv_init_fq_data(struct request_queue *q, struct elevator_queue *e)
++{
++	return 0;
++}
++
++static inline void elv_exit_fq_data(struct elevator_queue *e) {}
++
++static inline void
++elv_activate_rq_fair(struct request_queue *q, struct request *rq) {}
++
++static inline void
++elv_deactivate_rq_fair(struct request_queue *q, struct request *rq) {}
++
++static inline void
++elv_dispatched_request_fair(struct elevator_queue *e, struct request *rq) {}
++
++static inline void
++elv_ioq_request_removed(struct elevator_queue *e, struct request *rq) {}
++
++static inline void
++elv_ioq_request_add(struct request_queue *q, struct request *rq) {}
++
++static inline void
++elv_ioq_completed_request(struct request_queue *q, struct request *rq) {}
++
++static inline void *elv_ioq_sched_queue(struct io_queue *ioq) { return NULL; }
++static inline void *elv_select_ioq(struct request_queue *q, int force)
++{
++	return NULL;
++}
++#endif /* CONFIG_ELV_FAIR_QUEUING */
+ #endif /* _ELV_SCHED_H */
+ #endif /* CONFIG_BLOCK */
+diff --git a/block/elevator.c b/block/elevator.c
+index 2d511f9..ea4042e 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -53,6 +53,15 @@ static const int elv_hash_shift = 6;
+ #define ELV_HASH_ENTRIES	(1 << elv_hash_shift)
+ #define rq_hash_key(rq)		(blk_rq_pos(rq) + blk_rq_sectors(rq))
+ 
++static inline struct elv_fq_data *elv_efqd(struct elevator_queue *eq)
++{
++#ifdef CONFIG_ELV_FAIR_QUEUING
++	return eq->efqd;
++#else
++	return NULL;
++#endif
++}
++
+ /*
+  * Query io scheduler to see if the current process issuing bio may be
+  * merged with rq.
+@@ -187,7 +196,7 @@ static struct elevator_type *elevator_get(const char *name)
+ static void *elevator_init_queue(struct request_queue *q,
+ 				 struct elevator_queue *eq)
+ {
+-	return eq->ops->elevator_init_fn(q);
++	return eq->ops->elevator_init_fn(q, eq);
+ }
+ 
+ static void elevator_attach(struct request_queue *q, struct elevator_queue *eq,
+@@ -239,8 +248,21 @@ static struct elevator_queue *elevator_alloc(struct request_queue *q,
+ 	for (i = 0; i < ELV_HASH_ENTRIES; i++)
+ 		INIT_HLIST_HEAD(&eq->hash[i]);
+ 
++#ifdef CONFIG_ELV_FAIR_QUEUING
++	eq->efqd = elv_alloc_fq_data(q, eq);
++
++	if (!eq->efqd)
++		goto err;
++
++	if (elv_init_fq_data(q, eq))
++		goto err;
++#endif
+ 	return eq;
+ err:
++	if (elv_efqd(eq))
++		elv_release_fq_data(elv_efqd(eq));
++	if (eq->hash)
++		kfree(eq->hash);
+ 	kfree(eq);
+ 	elevator_put(e);
+ 	return NULL;
+@@ -252,6 +274,7 @@ static void elevator_release(struct kobject *kobj)
+ 
+ 	e = container_of(kobj, struct elevator_queue, kobj);
+ 	elevator_put(e->elevator_type);
++	elv_release_fq_data(elv_efqd(e));
+ 	kfree(e->hash);
+ 	kfree(e);
+ }
+@@ -309,6 +332,7 @@ EXPORT_SYMBOL(elevator_init);
+ void elevator_exit(struct elevator_queue *e)
+ {
+ 	mutex_lock(&e->sysfs_lock);
++	elv_exit_fq_data(e);
+ 	if (e->ops->elevator_exit_fn)
+ 		e->ops->elevator_exit_fn(e);
+ 	e->ops = NULL;
+@@ -438,6 +462,7 @@ void elv_dispatch_sort(struct request_queue *q, struct request *rq)
+ 	elv_rqhash_del(q, rq);
+ 
+ 	q->nr_sorted--;
++	elv_dispatched_request_fair(q->elevator, rq);
+ 
+ 	boundary = q->end_sector;
+ 	stop_flags = REQ_SOFTBARRIER | REQ_HARDBARRIER | REQ_STARTED;
+@@ -478,6 +503,7 @@ void elv_dispatch_add_tail(struct request_queue *q, struct request *rq)
+ 	elv_rqhash_del(q, rq);
+ 
+ 	q->nr_sorted--;
++	elv_dispatched_request_fair(q->elevator, rq);
+ 
+ 	q->end_sector = rq_end_sector(rq);
+ 	q->boundary_rq = rq;
+@@ -545,6 +571,7 @@ void elv_merge_requests(struct request_queue *q, struct request *rq,
+ 	elv_rqhash_del(q, next);
+ 
+ 	q->nr_sorted--;
++	elv_ioq_request_removed(e, next);
+ 	q->last_merge = rq;
+ }
+ 
+@@ -651,12 +678,8 @@ void elv_insert(struct request_queue *q, struct request *rq, int where)
+ 				q->last_merge = rq;
+ 		}
+ 
+-		/*
+-		 * Some ioscheds (cfq) run q->request_fn directly, so
+-		 * rq cannot be accessed after calling
+-		 * elevator_add_req_fn.
+-		 */
+ 		q->elevator->ops->elevator_add_req_fn(q, rq);
++		elv_ioq_request_add(q, rq);
+ 		break;
+ 
+ 	case ELEVATOR_INSERT_REQUEUE:
+@@ -755,13 +778,12 @@ EXPORT_SYMBOL(elv_add_request);
+ 
+ int elv_queue_empty(struct request_queue *q)
+ {
+-	struct elevator_queue *e = q->elevator;
+-
+ 	if (!list_empty(&q->queue_head))
+ 		return 0;
+ 
+-	if (e->ops->elevator_queue_empty_fn)
+-		return e->ops->elevator_queue_empty_fn(q);
++	/* Hopefully nr_sorted works and no need to call queue_empty_fn */
++	if (q->nr_sorted)
++		return 0;
+ 
+ 	return 1;
+ }
+@@ -841,8 +863,11 @@ void elv_completed_request(struct request_queue *q, struct request *rq)
+ 	 */
+ 	if (blk_account_rq(rq)) {
+ 		q->in_flight[rq_is_sync(rq)]--;
+-		if (blk_sorted_rq(rq) && e->ops->elevator_completed_req_fn)
+-			e->ops->elevator_completed_req_fn(q, rq);
++		if (blk_sorted_rq(rq)) {
++			if (e->ops->elevator_completed_req_fn)
++				e->ops->elevator_completed_req_fn(q, rq);
++			elv_ioq_completed_request(q, rq);
++		}
+ 	}
+ 
+ 	/*
+@@ -1138,3 +1163,17 @@ struct request *elv_rb_latter_request(struct request_queue *q,
+ 	return NULL;
+ }
+ EXPORT_SYMBOL(elv_rb_latter_request);
++
++/* Get the io scheduler queue pointer. For cfq, it is stored in rq->ioq*/
++void *elv_get_sched_queue(struct request_queue *q, struct request *rq)
++{
++	return elv_ioq_sched_queue(req_ioq(rq));
++}
++EXPORT_SYMBOL(elv_get_sched_queue);
++
++/* Select an ioscheduler queue to dispatch request from. */
++void *elv_select_sched_queue(struct request_queue *q, int force)
++{
++	return elv_ioq_sched_queue(elv_select_ioq(q, force));
++}
++EXPORT_SYMBOL(elv_select_sched_queue);
+diff --git a/block/noop-iosched.c b/block/noop-iosched.c
+index 3a0d369..36fc210 100644
+--- a/block/noop-iosched.c
++++ b/block/noop-iosched.c
+@@ -65,7 +65,7 @@ noop_latter_request(struct request_queue *q, struct request *rq)
+ 	return list_entry(rq->queuelist.next, struct request, queuelist);
+ }
+ 
+-static void *noop_init_queue(struct request_queue *q)
++static void *noop_init_queue(struct request_queue *q, struct elevator_queue *eq)
+ {
+ 	struct noop_data *nd;
+ 
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 69103e0..7cff5f2 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -229,6 +229,11 @@ struct request {
+ 
+ 	/* for bidi */
+ 	struct request *next_rq;
++
++#ifdef CONFIG_ELV_FAIR_QUEUING
++	/* io queue request belongs to */
++	struct io_queue *ioq;
++#endif
+ };
+ 
+ static inline unsigned short req_get_ioprio(struct request *req)
+@@ -236,6 +241,15 @@ static inline unsigned short req_get_ioprio(struct request *req)
+ 	return req->ioprio;
+ }
+ 
++static inline struct io_queue *req_ioq(struct request *req)
++{
++#ifdef CONFIG_ELV_FAIR_QUEUING
++	return req->ioq;
++#else
++	return NULL;
++#endif
++}
++
+ /*
+  * State information carried for REQ_TYPE_PM_SUSPEND and REQ_TYPE_PM_RESUME
+  * requests. Some step values could eventually be made generic.
+diff --git a/include/linux/elevator.h b/include/linux/elevator.h
+index 1cb3372..4414a61 100644
+--- a/include/linux/elevator.h
++++ b/include/linux/elevator.h
+@@ -27,8 +27,19 @@ typedef void (elevator_put_req_fn) (struct request *);
+ typedef void (elevator_activate_req_fn) (struct request_queue *, struct request *);
+ typedef void (elevator_deactivate_req_fn) (struct request_queue *, struct request *);
+ 
+-typedef void *(elevator_init_fn) (struct request_queue *);
++typedef void *(elevator_init_fn) (struct request_queue *,
++					struct elevator_queue *);
+ typedef void (elevator_exit_fn) (struct elevator_queue *);
++#ifdef CONFIG_ELV_FAIR_QUEUING
++typedef void (elevator_free_sched_queue_fn) (struct elevator_queue*, void *);
++typedef void (elevator_active_ioq_set_fn) (struct request_queue*, void *, int);
++typedef void (elevator_active_ioq_reset_fn) (struct request_queue *, void*);
++typedef void (elevator_arm_slice_timer_fn) (struct request_queue*, void*);
++typedef int (elevator_should_preempt_fn) (struct request_queue*, void*,
++						struct request*);
++typedef struct io_queue* (elevator_close_cooperator_fn) (struct request_queue*,
++						void*);
++#endif
+ 
+ struct elevator_ops
+ {
+@@ -56,6 +67,16 @@ struct elevator_ops
+ 	elevator_init_fn *elevator_init_fn;
+ 	elevator_exit_fn *elevator_exit_fn;
+ 	void (*trim)(struct io_context *);
++
++#ifdef CONFIG_ELV_FAIR_QUEUING
++	elevator_free_sched_queue_fn *elevator_free_sched_queue_fn;
++	elevator_active_ioq_set_fn *elevator_active_ioq_set_fn;
++	elevator_active_ioq_reset_fn *elevator_active_ioq_reset_fn;
++
++	elevator_arm_slice_timer_fn *elevator_arm_slice_timer_fn;
++	elevator_should_preempt_fn *elevator_should_preempt_fn;
++	elevator_close_cooperator_fn *elevator_close_cooperator_fn;
++#endif
+ };
+ 
+ #define ELV_NAME_MAX	(16)
+@@ -76,6 +97,9 @@ struct elevator_type
+ 	struct elv_fs_entry *elevator_attrs;
+ 	char elevator_name[ELV_NAME_MAX];
+ 	struct module *elevator_owner;
++#ifdef CONFIG_ELV_FAIR_QUEUING
++	int elevator_features;
++#endif
+ };
+ 
+ /*
+@@ -89,6 +113,10 @@ struct elevator_queue
+ 	struct elevator_type *elevator_type;
+ 	struct mutex sysfs_lock;
+ 	struct hlist_head *hash;
++#ifdef CONFIG_ELV_FAIR_QUEUING
++	/* fair queuing data */
++	struct elv_fq_data *efqd;
++#endif
+ };
+ 
+ /*
+@@ -207,5 +235,25 @@ enum {
+ 	__val;							\
+ })
+ 
++/* iosched can let elevator know their feature set/capability */
++#ifdef CONFIG_ELV_FAIR_QUEUING
++
++/* iosched wants to use fair queuing logic of elevator layer */
++#define	ELV_IOSCHED_NEED_FQ	1
++
++static inline int elv_iosched_fair_queuing_enabled(struct elevator_queue *e)
++{
++	return (e->elevator_type->elevator_features) & ELV_IOSCHED_NEED_FQ;
++}
++
++#else /* ELV_IOSCHED_FAIR_QUEUING */
++
++static inline int elv_iosched_fair_queuing_enabled(struct elevator_queue *e)
++{
++	return 0;
++}
++#endif /* ELV_IOSCHED_FAIR_QUEUING */
++extern void *elv_get_sched_queue(struct request_queue *q, struct request *rq);
++extern void *elv_select_sched_queue(struct request_queue *q, int force);
+ #endif /* CONFIG_BLOCK */
+ #endif
+-- 
+1.6.0.6
