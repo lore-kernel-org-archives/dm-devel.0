@@ -1,14 +1,15 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1 of 2] DM Snapshot: remove redundant valid test
-Date: Thu, 24 Sep 2009 13:41:19 +0100
-Message-ID: <20090924124119.GH3866@agk-dp.fab.redhat.com>
-References: <200909231519.n8NFJ8K3028667@hydrogen.msp.redhat.com>
+Subject: Re: [PATCH 2 of 2] DM Snapshot: dont insert before
+	existing chunk
+Date: Thu, 24 Sep 2009 13:48:42 +0100
+Message-ID: <20090924124841.GI3866@agk-dp.fab.redhat.com>
+References: <200909231525.n8NFP87C029957@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <200909231519.n8NFJ8K3028667@hydrogen.msp.redhat.com>
+In-Reply-To: <200909231525.n8NFP87C029957@hydrogen.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,15 +23,15 @@ To: Jonathan Brassow <jbrassow@redhat.com>
 Cc: dm-devel@redhat.com, mpatocka@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 23, 2009 at 10:19:08AM -0500, Jon Brassow wrote:
-> Patch name: dm-snapshot-remove-redundant-valid-test.patch
-> There is another valid test when we take the lock, the previous test can
-> be dropped.
+On Wed, Sep 23, 2009 at 10:25:08AM -0500, Jon Brassow wrote:
+> Don't insert into hash before an existing chunk.
+> Most inserts are after an existing extent anyway so this code is used
+> very rarely.
  
-I'm going to leave this one for now, until I've seen the performance analysis.
-- Is the argument here that the gain from not checking it twice while the snapshot
-is valid outweighs the cost of the extra locking when the snapshot is full and
-pending I/O is being failed as rapidly as possible and by that time there'll be
-no other threads fighting for that lock?
+Again, I'm not particularly keen on taking this one.  Some systems are very
+short of memory and everything we can save matters and we have no statistics
+about how "rare" this actually is.
+
+Is it really that difficult to split into two when removing?
 
 Alasdair
