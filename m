@@ -1,507 +1,674 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 01/28] io-controller: Documentation
-Date: Thu, 24 Sep 2009 15:25:05 -0400
-Message-ID: <1253820332-10246-2-git-send-email-vgoyal@redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: IO scheduler based IO controller V10
+Date: Thu, 24 Sep 2009 14:33:15 -0700
+Message-ID: <20090924143315.781cd0ac.akpm@linux-foundation.org>
 References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754253AbZIXTcw@vger.kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, jens.axboe@oracle.com
-Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, vgoyal@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, vgoyal@redhat.com, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-o Documentation for io-controller.
+On Thu, 24 Sep 2009 15:25:04 -0400
+Vivek Goyal <vgoyal@redhat.com> wrote:
 
-Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
-Acked-by: Rik van Riel <riel@redhat.com>
----
- Documentation/block/00-INDEX          |    2 +
- Documentation/block/io-controller.txt |  464 +++++++++++++++++++++++++++++++++
- 2 files changed, 466 insertions(+), 0 deletions(-)
- create mode 100644 Documentation/block/io-controller.txt
+> 
+> Hi All,
+> 
+> Here is the V10 of the IO controller patches generated on top of 2.6.31.
+> 
 
-diff --git a/Documentation/block/00-INDEX b/Documentation/block/00-INDEX
-index 961a051..dc8bf95 100644
---- a/Documentation/block/00-INDEX
-+++ b/Documentation/block/00-INDEX
-@@ -10,6 +10,8 @@ capability.txt
- 	- Generic Block Device Capability (/sys/block/<disk>/capability)
- deadline-iosched.txt
- 	- Deadline IO scheduler tunables
-+io-controller.txt
-+	- IO controller for provding hierarchical IO scheduling
- ioprio.txt
- 	- Block io priorities (in CFQ scheduler)
- request.txt
-diff --git a/Documentation/block/io-controller.txt b/Documentation/block/io-controller.txt
-new file mode 100644
-index 0000000..f2bfce6
---- /dev/null
-+++ b/Documentation/block/io-controller.txt
-@@ -0,0 +1,464 @@
-+				IO Controller
-+				=============
-+
-+Overview
-+========
-+
-+This patchset implements a proportional weight IO controller. That is one
-+can create cgroups and assign prio/weights to those cgroups and task group
-+will get access to disk proportionate to the weight of the group.
-+
-+These patches modify elevator layer and individual IO schedulers to do
-+IO control hence this io controller works only on block devices which use
-+one of the standard io schedulers can not be used with any xyz logical block
-+device.
-+
-+The assumption/thought behind modifying IO scheduler is that resource control
-+is primarily needed on leaf nodes where the actual contention for resources is
-+present and not on intertermediate logical block devices.
-+
-+Consider following hypothetical scenario. Lets say there are three physical
-+disks, namely sda, sdb and sdc. Two logical volumes (lv0 and lv1) have been
-+created on top of these. Some part of sdb is in lv0 and some part is in lv1.
-+
-+			    lv0      lv1
-+			  /	\  /     \
-+			sda      sdb      sdc
-+
-+Also consider following cgroup hierarchy
-+
-+				root
-+				/   \
-+			       A     B
-+			      / \    / \
-+			     T1 T2  T3  T4
-+
-+A and B are two cgroups and T1, T2, T3 and T4 are tasks with-in those cgroups.
-+Assuming T1, T2, T3 and T4 are doing IO on lv0 and lv1. These tasks should
-+get their fair share of bandwidth on disks sda, sdb and sdc. There is no
-+IO control on intermediate logical block nodes (lv0, lv1).
-+
-+So if tasks T1 and T2 are doing IO on lv0 and T3 and T4 are doing IO on lv1
-+only, there will not be any contetion for resources between group A and B if
-+IO is going to sda or sdc. But if actual IO gets translated to disk sdb, then
-+IO scheduler associated with the sdb will distribute disk bandwidth to
-+group A and B proportionate to their weight.
-+
-+CFQ already has the notion of fairness and it provides differential disk
-+access based on priority and class of the task. Just that it is flat and
-+with cgroup stuff, it needs to be made hierarchical to achive a good
-+hierarchical control on IO.
-+
-+Rest of the IO schedulers (noop, deadline and AS) don't have any notion
-+of fairness among various threads. They maintain only one queue where all
-+the IO gets queued (internally this queue is split in read and write queue
-+for deadline and AS). With this patchset, now we maintain one queue per
-+cgropu per device and then try to do fair queuing among those queues.
-+
-+One of the concerns raised with modifying IO schedulers was that we don't
-+want to replicate the code in all the IO schedulers. These patches share
-+the fair queuing code which has been moved to a common layer (elevator
-+layer). Hence we don't end up replicating code across IO schedulers. Following
-+diagram depicts the concept.
-+
-+			--------------------------------
-+			| Elevator Layer + Fair Queuing |
-+			--------------------------------
-+			 |	     |	     |       |
-+			NOOP     DEADLINE    AS     CFQ
-+
-+Design
-+======
-+This patchset takes the inspiration from CFS cpu scheduler, CFQ and BFQ to
-+come up with core of hierarchical scheduling. Like CFQ we give time slices to
-+every queue based on their priority. Like CFS, this disktime given to a
-+queue is converted to virtual disk time based on queue's weight (vdisktime)
-+and based on this vdisktime we decide which is the queue next to be
-+dispatched. And like BFQ we maintain a cache of recently served queues and
-+derive new vdisktime of the queue from the cache if queue was recently served.
-+
-+From data structure point of view, one can think of a tree per device, where
-+io groups and io queues are hanging and are being scheduled. io_queue, is end
-+queue where requests are actually stored and dispatched from (like cfqq).
-+
-+These io queues are primarily created by and managed by end io schedulers
-+depending on its semantics. For example, noop, deadline and AS ioschedulers
-+keep one io queues per cgroup and cfqq keeps one io queue per io_context in
-+a cgroup (apart from async queues).
-+
-+A request is mapped to an io group by elevator layer and which io queue it
-+is mapped to with in group depends on ioscheduler. Noop, deadline and AS don't
-+maintain separate queues per task, hence ther is only one io_queue per group.
-+So once we can find right group, we also found right queue. CFQ maintains
-+multiple io queues with-in group based on task context and maps the request
-+to right queue in the group.
-+
-+sync requests are mapped to right group and queue based on the "current" task.
-+Async requests can be mapped using either "current" task or based on owner of
-+the page. (blkio cgroup subsystem provides this bio/page tracking mechanism).
-+This option is controlled by config option "CONFIG_TRACK_ASYNC_CONTEXT"
-+
-+Going back to old behavior
-+==========================
-+In new scheme of things essentially we are creating hierarchical fair
-+queuing logic in elevator layer and changing IO schedulers to make use of
-+that logic so that end IO schedulers start supporting hierarchical scheduling.
-+
-+Elevator layer continues to support the old interfaces. So even if fair queuing
-+is enabled at elevator layer, one can have both new hierchical scheduler as
-+well as old non-hierarchical scheduler operating.
-+
-+Also noop, deadline and AS have option of enabling hierarchical scheduling.
-+If it is selected, fair queuing is done in hierarchical manner. If hierarchical
-+scheduling is disabled, noop, deadline and AS should retain their existing
-+behavior.
-+
-+CFQ is the only exception where one can not disable fair queuing as it is
-+needed for provding fairness among various threads even in non-hierarchical
-+mode. So CFQ has to use fair queuing logic from common layer but it can choose
-+to enable only flat support and not enable hierarchical (group scheduling)
-+support.
-+
-+Various user visible config options
-+===================================
-+CONFIG_IOSCHED_NOOP_HIER
-+	- Enables hierchical fair queuing in noop. Not selecting this option
-+	  leads to old behavior of noop.
-+
-+CONFIG_IOSCHED_DEADLINE_HIER
-+	- Enables hierchical fair queuing in deadline. Not selecting this
-+	  option leads to old behavior of deadline.
-+
-+CONFIG_IOSCHED_AS_HIER
-+	- Enables hierchical fair queuing in AS. Not selecting this option
-+	  leads to old behavior of AS.
-+
-+CONFIG_IOSCHED_CFQ_HIER
-+	- Enables hierarchical fair queuing in CFQ. Not selecting this option
-+	  still does fair queuing among various queus but it is flat and not
-+	  hierarchical.
-+
-+CGROUP_BLKIO
-+	- This option enables blkio-cgroup controller for IO tracking
-+	  purposes. That means, by this controller one can attribute a write
-+	  to the original cgroup and not assume that it belongs to submitting
-+	  thread.
-+
-+CONFIG_TRACK_ASYNC_CONTEXT
-+	- Currently CFQ attributes the writes to the submitting thread and
-+	  caches the async queue pointer in the io context of the process.
-+	  If this option is set, it tells cfq and elevator fair queuing logic
-+	  that for async writes make use of IO tracking patches and attribute
-+	  writes to original cgroup and not to write submitting thread.
-+
-+	  This should be primarily useful when lots of asynchronous writes
-+	  are being submitted by pdflush threads and we need to assign the
-+	  writes to right group.
-+
-+CONFIG_DEBUG_GROUP_IOSCHED
-+	- Throws extra debug messages in blktrace output helpful in doing
-+	  doing debugging in hierarchical setup.
-+
-+	- Also allows for export of extra debug statistics like group queue
-+	  and dequeue statistics on device through cgroup interface.
-+
-+CONFIG_DEBUG_ELV_FAIR_QUEUING
-+	- Enables some vdisktime related debugging messages.
-+
-+Config options selected automatically
-+=====================================
-+These config options are not user visible and are selected/deselected
-+automatically based on IO scheduler configurations.
-+
-+CONFIG_ELV_FAIR_QUEUING
-+	- Enables/Disables the fair queuing logic at elevator layer.
-+
-+CONFIG_GROUP_IOSCHED
-+	- Enables/Disables hierarchical queuing and associated cgroup bits.
-+
-+HOWTO
-+=====
-+You can do a very simple testing of running two dd threads in two different
-+cgroups. Here is what you can do.
-+
-+- Enable hierarchical scheduling in io scheuduler of your choice (say cfq).
-+	CONFIG_IOSCHED_CFQ_HIER=y
-+
-+- Enable IO tracking for async writes.
-+	CONFIG_TRACK_ASYNC_CONTEXT=y
-+
-+  (This will automatically select CGROUP_BLKIO)
-+
-+- Compile and boot into kernel and mount IO controller and blkio io tracking
-+  controller.
-+
-+	mount -t cgroup -o io,blkio none /cgroup
-+
-+- Create two cgroups
-+	mkdir -p /cgroup/test1/ /cgroup/test2
-+
-+- Set weights of group test1 and test2
-+	echo 1000 > /cgroup/test1/io.weight
-+	echo 500 > /cgroup/test2/io.weight
-+
-+- Set "fairness" parameter to 1 at the disk you are testing.
-+
-+  echo 1 > /sys/block/<disk>/queue/iosched/fairness
-+
-+- Create two same size files (say 512MB each) on same disk (file1, file2) and
-+  launch two dd threads in different cgroup to read those files. Make sure
-+  right io scheduler is being used for the block device where files are
-+  present (the one you compiled in hierarchical mode).
-+
-+	sync
-+	echo 3 > /proc/sys/vm/drop_caches
-+
-+	dd if=/mnt/sdb/zerofile1 of=/dev/null &
-+	echo $! > /cgroup/test1/tasks
-+	cat /cgroup/test1/tasks
-+
-+	dd if=/mnt/sdb/zerofile2 of=/dev/null &
-+	echo $! > /cgroup/test2/tasks
-+	cat /cgroup/test2/tasks
-+
-+- At macro level, first dd should finish first. To get more precise data, keep
-+  on looking at (with the help of script), at io.disk_time and io.disk_sectors
-+  files of both test1 and test2 groups. This will tell how much disk time
-+  (in milli seconds), each group got and how many secotors each group
-+  dispatched to the disk. We provide fairness in terms of disk time, so
-+  ideally io.disk_time of cgroups should be in proportion to the weight.
-+
-+What Works and What Does not
-+============================
-+Service differentiation at application level can be noticed only if completely
-+parallel IO paths are created from application to IO scheduler and there
-+are no serializations introduced by any intermediate layer. For example,
-+in some cases file system and page cache layer introduce serialization and
-+we don't see service difference between higher weight and lower weight
-+process groups.
-+
-+For example, when I start an O_SYNC write out on an ext3 file system (file
-+is being created newly), I see lots of activity from kjournald. I have not
-+gone into details yet, but my understanding is that there are lot more
-+journal commits and kjournald kind of introduces serialization between two
-+processes. So even if you put these two processes in two different cgroups
-+with different weights, higher weight process will not see more IO done.
-+
-+It does work very well when we bypass filesystem layer and IO is raw. For
-+example in above virtual machine case, host sees raw synchronous writes
-+coming from two guest machines and filesystem layer at host is not introducing
-+any kind of serialization hence we can see the service difference.
-+
-+It also works very well for reads even on the same file system as for reads
-+file system journalling activity does not kick in and we can create parallel
-+IO paths from application to all the way down to IO scheduler and get more
-+IO done on the IO path with higher weight.
-+
-+Details of new ioscheduler tunables
-+===================================
-+
-+group_idle
-+-----------
-+
-+"group_idle" specifies the duration one should wait for new request before
-+group is expired. This is very similiar to "slice_idle" parameter of cfq. The
-+difference is that slice_idle specifies queue idling period and group_idle
-+specifies group idling period. Another difference is that cfq idling is
-+dynamically updated based on traffic pattern. group idling is currently
-+static.
-+
-+group idling takes place when a group is empty when it is being expired. If
-+an empty group is expired and later it gets a request (say 1 ms), it looses
-+its fair share as upon expiry it will be deleted from the service tree and
-+a new queue will be selected to run and min_vdisktime will be udpated on
-+service tree.
-+
-+There are both advantages and disadvantates of enabling group_idle. If
-+enabled, it ensures that a group gets its fair share of disk time (as long
-+as a group gets a new request with-in group_idle period). So even if a
-+single sequential reader is running in a group, it will get the disk time
-+depending on the group weight. IOW, enabling it provides very strong isolation
-+between groups.
-+
-+The flip side is that it makes the group a heavier entity with slow switching
-+between groups. There are many cases where CFQ disables the idling on the
-+queue and hence queue gets expired as soon as requests are over in the queue
-+and CFQ moves to new queue. This way it achieves faster switching and in many
-+cases better throughput (most of the time seeky processes will not have idling
-+enabled and will get very limited access to disk).
-+
-+If group idling is disabled, a group will get fairness only if it is
-+continuously backlogged. So this weakens the fairness gurantees and isolation
-+between the groups but can help achieve faster switching between queues/groups
-+and better throughput.
-+
-+So one should set "group_idle" depending on one's use case and based on need.
-+
-+For the time being it is enabled by default.
-+
-+"fairness"
-+----------
-+IO controller has introduced a "fairness" tunable for every io scheduler.
-+Currently this tunable can assume values 0, 1.
-+
-+If fairness is set to 1, then IO controller waits for requests to finish from
-+previous queue before requests from new queue are dispatched. This helps in
-+doing better accouting of disk time consumed by a queue. If this is not done
-+then on a queuing hardware, there can be requests from multiple queues and
-+we will not have any idea which queue consumed how much of disk time.
-+
-+So if "fairness" is set, it can help achive better time accounting. But the
-+flip side is that it can slow down switching between queues and also lower the
-+throughput.
-+
-+Again, this parameter should be set/reset based on the need. For the time
-+being it is disabled by default.
-+
-+Details of cgroup files
-+=======================
-+- io.ioprio_class
-+	- Specifies class of the cgroup (RT, BE, IDLE). This is default io
-+	  class of the group on all the devices until and unless overridden by
-+	  per device rule. (See io.policy).
-+
-+	  1 = RT; 2 = BE, 3 = IDLE
-+
-+- io.weight
-+	- Specifies per cgroup weight. This is default weight of the group
-+	  on all the devices until and unless overridden by per device rule.
-+	  (See io.policy).
-+
-+	  Currently allowed range of weights is from 100 to 1000.
-+
-+- io.disk_time
-+	- disk time allocated to cgroup per device in milliseconds. First
-+	  two fields specify the major and minor number of the device and
-+	  third field specifies the disk time allocated to group in
-+	  milliseconds.
-+
-+- io.disk_sectors
-+	- number of sectors transferred to/from disk by the group. First
-+	  two fields specify the major and minor number of the device and
-+	  third field specifies the number of sectors transferred by the
-+	  group to/from the device.
-+
-+- io.disk_queue
-+	- Debugging aid only enabled if CONFIG_DEBUG_GROUP_IOSCHED=y. This
-+	  gives the statistics about how many a times a group was queued
-+	  on service tree of the device. First two fields specify the major
-+	  and minor number of the device and third field specifies the number
-+	  of times a group was queued on a particular device.
-+
-+- io.disk_queue
-+	- Debugging aid only enabled if CONFIG_DEBUG_GROUP_IOSCHED=y. This
-+	  gives the statistics about how many a times a group was de-queued
-+	  or removed from the service tree of the device. This basically gives
-+	  and idea if we can generate enough IO to create continuously
-+	  backlogged groups. First two fields specify the major and minor
-+	  number of the device and third field specifies the number
-+	  of times a group was de-queued on a particular device.
-+
-+- io.policy
-+	- One can specify per cgroup per device rules using this interface.
-+	  These rules override the default value of group weight and class as
-+	  specified by io.weight and io.ioprio_class.
-+
-+	  Following is the format.
-+
-+	#echo dev_maj:dev_minor weight ioprio_class > /patch/to/cgroup/io.policy
-+
-+	weight=0 means removing a policy.
-+
-+	Examples:
-+
-+	Configure weight=300 ioprio_class=2 on /dev/hdb (8:16) in this cgroup
-+	# echo 8:16 300 2 > io.policy
-+	# cat io.policy
-+	dev	weight	class
-+	8:16	300	2
-+
-+	Configure weight=500 ioprio_class=1 on /dev/hda (8:0) in this cgroup
-+	# echo 8:0 500 1 > io.policy
-+	# cat io.policy
-+	dev	weight	class
-+	8:0	500	1
-+	8:16	300	2
-+
-+	Remove the policy for /dev/hda in this cgroup
-+	# echo 8:0 0 1 > io.policy
-+	# cat io.policy
-+	dev	weight	class
-+	8:16	300	2
-+
-+About configuring request desriptors
-+====================================
-+Traditionally there are 128 request desriptors allocated per request queue
-+where io scheduler is operating (/sys/block/<disk>/queue/nr_requests). If these
-+request descriptors are exhausted, processes will put to sleep and woken
-+up once request descriptors are available.
-+
-+With io controller and cgroup stuff, one can not afford to allocate requests
-+from single pool as one group might allocate lots of requests and then tasks
-+from other groups might be put to sleep and this other group might be a
-+higher weight group. Hence to make sure that a group always can get the
-+request descriptors it is entitled to, one needs to make request descriptor
-+limit per group on every queue.
-+
-+A new parameter /sys/block/<disk>/queue/nr_group_requests has been introduced
-+and this parameter controlls the maximum number of requests per group.
-+nr_requests still continues to control total number of request descriptors
-+on the queue.
-+
-+Ideally one should set nr_requests to be following.
-+
-+nr_requests = number_of_cgroups * nr_group_requests
-+
-+This will make sure that at any point of time nr_group_requests number of
-+request descriptors will be available for any of the cgroups.
-+
-+Currently default nr_requests=512 and nr_group_requests=128. This will make
-+sure that apart from root group one can create 3 more group without running
-+into any issues. If one decides to create more cgorus, nr_requests and
-+nr_group_requests should be adjusted accordingly.
-+
-+Some High Level Test setups
-+===========================
-+One of the use cases of IO controller is to provide some kind of IO isolation
-+between multiple virtual machines on the same host. Following is one
-+example setup which worked for me.
-+
-+
-+			     KVM	     KVM
-+			    Guest1	    Guest2
-+			   ---------      ----------
-+			  |  -----  |    |  ------  |
-+			  | | vdb | |    | | vdb  | |
-+			  |  -----  |    |   ------ |
-+			   ---------      ----------
-+
-+			   ---------------------------
-+			  | Host		      |
-+			  |         -------------     |
-+			  |        | sdb1 | sdb2 |    |
-+			  |         -------------     |
-+			   ---------------------------
-+
-+On host machine, I had a spare SATA disk. I created two partitions sdb1
-+and sdb2 and gave this partitions as additional storage to kvm guests. sdb1
-+to KVM guest1 and sdb2 KVM guest2. These storage appeared as /dev/vdb in
-+both the guests. Formatted the /dev/vdb and created ext3 file system and
-+started a 1G file writeout in both the guests. Before writeout I had created
-+two cgroups of weight 1000 and 500 and put virtual machines in two different
-+groups.
-+
-+Following is write I started in both the guests.
-+
-+dd if=/dev/zero of=/mnt/vdc/zerofile1 bs=4K count=262144 conv=fdatasync
-+
-+Following are the results on host with "deadline" scheduler.
-+
-+group1 time=8:16 17254 group1 sectors=8:16 2104288
-+group2 time=8:16 8498  group2 sectors=8:16 1007040
-+
-+Virtual machine with cgroup weight 1000 got almost double the time of virtual
-+machine with weight 500.
--- 
-1.6.0.6
+Thanks for the writeup.  It really helps and is most worthwhile for a
+project of this importance, size and complexity.
+
+
+>  
+> What problem are we trying to solve
+> ===================================
+> Provide group IO scheduling feature in Linux along the lines of other resource
+> controllers like cpu.
+> 
+> IOW, provide facility so that a user can group applications using cgroups and
+> control the amount of disk time/bandwidth received by a group based on its
+> weight. 
+> 
+> How to solve the problem
+> =========================
+> 
+> Different people have solved the issue differetnly. So far looks it looks
+> like we seem to have following two core requirements when it comes to
+> fairness at group level.
+> 
+> - Control bandwidth seen by groups.
+> - Control on latencies when a request gets backlogged in group.
+> 
+> At least there are now three patchsets available (including this one).
+> 
+> IO throttling
+> -------------
+> This is a bandwidth controller which keeps track of IO rate of a group and
+> throttles the process in the group if it exceeds the user specified limit.
+> 
+> dm-ioband
+> ---------
+> This is a proportional bandwidth controller implemented as device mapper
+> driver and provides fair access in terms of amount of IO done (not in terms
+> of disk time as CFQ does).
+> 
+> So one will setup one or more dm-ioband devices on top of physical/logical
+> block device, configure the ioband device and pass information like grouping
+> etc. Now this device will keep track of bios flowing through it and control
+> the flow of bios based on group policies.
+> 
+> IO scheduler based IO controller
+> --------------------------------
+> Here we have viewed the problem of IO contoller as hierarchical group
+> scheduling (along the lines of CFS group scheduling) issue. Currently one can
+> view linux IO schedulers as flat where there is one root group and all the IO
+> belongs to that group.
+> 
+> This patchset basically modifies IO schedulers to also support hierarchical
+> group scheduling. CFQ already provides fairness among different processes. I 
+> have extended it support group IO schduling. Also took some of the code out
+> of CFQ and put in a common layer so that same group scheduling code can be
+> used by noop, deadline and AS to support group scheduling. 
+> 
+> Pros/Cons
+> =========
+> There are pros and cons to each of the approach. Following are some of the
+> thoughts.
+> 
+> Max bandwidth vs proportional bandwidth
+> ---------------------------------------
+> IO throttling is a max bandwidth controller and not a proportional one.
+> Additionaly it provides fairness in terms of amount of IO done (and not in
+> terms of disk time as CFQ does).
+> 
+> Personally, I think that proportional weight controller is useful to more
+> people than just max bandwidth controller. In addition, IO scheduler based
+> controller can also be enhanced to do max bandwidth control. So it can 
+> satisfy wider set of requirements.
+> 
+> Fairness in terms of disk time vs size of IO
+> ---------------------------------------------
+> An higher level controller will most likely be limited to providing fairness
+> in terms of size/number of IO done and will find it hard to provide fairness
+> in terms of disk time used (as CFQ provides between various prio levels). This
+> is because only IO scheduler knows how much disk time a queue has used and
+> information about queues and disk time used is not exported to higher
+> layers.
+> 
+> So a seeky application will still run away with lot of disk time and bring
+> down the overall throughput of the the disk.
+
+But that's only true if the thing is poorly implemented.
+
+A high-level controller will need some view of the busyness of the
+underlying device(s).  That could be "proportion of idle time", or
+"average length of queue" or "average request latency" or some mix of
+these or something else altogether.
+
+But these things are simple to calculate, and are simple to feed back
+to the higher-level controller and probably don't require any changes
+to to IO scheduler at all, which is a great advantage.
+
+
+And I must say that high-level throttling based upon feedback from
+lower layers seems like a much better model to me than hacking away in
+the IO scheduler layer.  Both from an implementation point of view and
+from a "we can get it to work on things other than block devices" point
+of view.
+
+> Currently dm-ioband provides fairness in terms of number/size of IO.
+> 
+> Latencies and isolation between groups
+> --------------------------------------
+> An higher level controller is generally implementing a bandwidth throttling
+> solution where if a group exceeds either the max bandwidth or the proportional
+> share then throttle that group.
+> 
+> This kind of approach will probably not help in controlling latencies as it
+> will depend on underlying IO scheduler. Consider following scenario. 
+> 
+> Assume there are two groups. One group is running multiple sequential readers
+> and other group has a random reader. sequential readers will get a nice 100ms
+> slice
+
+Do you refer to each reader within group1, or to all readers?  It would be
+daft if each reader in group1 were to get 100ms.
+
+> each and then a random reader from group2 will get to dispatch the
+> request. So latency of this random reader will depend on how many sequential
+> readers are running in other group and that is a weak isolation between groups.
+
+And yet that is what you appear to mean.
+
+But surely nobody would do that - the 100ms would be assigned to and
+distributed amongst all readers in group1?
+
+> When we control things at IO scheduler level, we assign one time slice to one
+> group and then pick next entity to run. So effectively after one time slice
+> (max 180ms, if prio 0 sequential reader is running), random reader in other
+> group will get to run. Hence we achieve better isolation between groups as
+> response time of process in a differnt group is generally not dependent on
+> number of processes running in competing group.  
+
+I don't understand why you're comparing this implementation with such
+an obviously dumb competing design!
+
+> So a higher level solution is most likely limited to only shaping bandwidth
+> without any control on latencies.
+> 
+> Stacking group scheduler on top of CFQ can lead to issues
+> ---------------------------------------------------------
+> IO throttling and dm-ioband both are second level controller. That is these
+> controllers are implemented in higher layers than io schedulers. So they
+> control the IO at higher layer based on group policies and later IO
+> schedulers take care of dispatching these bios to disk.
+> 
+> Implementing a second level controller has the advantage of being able to
+> provide bandwidth control even on logical block devices in the IO stack
+> which don't have any IO schedulers attached to these. But they can also 
+> interefere with IO scheduling policy of underlying IO scheduler and change
+> the effective behavior. Following are some of the issues which I think
+> should be visible in second level controller in one form or other.
+> 
+>   Prio with-in group
+>   ------------------
+>   A second level controller can potentially interefere with behavior of
+>   different prio processes with-in a group. bios are buffered at higher layer
+>   in single queue and release of bios is FIFO and not proportionate to the
+>   ioprio of the process. This can result in a particular prio level not
+>   getting fair share.
+
+That's an administrator error, isn't it?  Should have put the
+different-priority processes into different groups.
+
+>   Buffering at higher layer can delay read requests for more than slice idle
+>   period of CFQ (default 8 ms). That means, it is possible that we are waiting
+>   for a request from the queue but it is buffered at higher layer and then idle
+>   timer will fire. It means that queue will losse its share at the same time
+>   overall throughput will be impacted as we lost those 8 ms.
+
+That sounds like a bug.
+
+>   Read Vs Write
+>   -------------
+>   Writes can overwhelm readers hence second level controller FIFO release
+>   will run into issue here. If there is a single queue maintained then reads
+>   will suffer large latencies. If there separate queues for reads and writes
+>   then it will be hard to decide in what ratio to dispatch reads and writes as
+>   it is IO scheduler's decision to decide when and how much read/write to
+>   dispatch. This is another place where higher level controller will not be in
+>   sync with lower level io scheduler and can change the effective policies of
+>   underlying io scheduler.
+
+The IO schedulers already take care of read-vs-write and already take
+care of preventing large writes-starve-reads latencies (or at least,
+they're supposed to).
+
+>   CFQ IO context Issues
+>   ---------------------
+>   Buffering at higher layer means submission of bios later with the help of
+>   a worker thread.
+
+Why?
+
+If it's a read, we just block the userspace process.
+
+If it's a delayed write, the IO submission already happens in a kernel thread.
+
+If it's a synchronous write, we have to block the userspace caller
+anyway.
+
+Async reads might be an issue, dunno.
+
+> This changes the io context information at CFQ layer which
+>   assigns the request to submitting thread. Change of io context info again
+>   leads to issues of idle timer expiry and issue of a process not getting fair
+>   share and reduced throughput.
+
+But we already have that problem with delayed writeback, which is a
+huge thing - often it's the majority of IO.
+
+>   Throughput with noop, deadline and AS
+>   ---------------------------------------------
+>   I think an higher level controller will result in reduced overall throughput
+>   (as compared to io scheduler based io controller) and more seeks with noop,
+>   deadline and AS.
+> 
+>   The reason being, that it is likely that IO with-in a group will be related
+>   and will be relatively close as compared to IO across the groups. For example,
+>   thread pool of kvm-qemu doing IO for virtual machine. In case of higher level
+>   control, IO from various groups will go into a single queue at lower level
+>   controller and it might happen that IO is now interleaved (G1, G2, G1, G3,
+>   G4....) causing more seeks and reduced throughput. (Agreed that merging will
+>   help up to some extent but still....).
+> 
+>   Instead, in case of lower level controller, IO scheduler maintains one queue
+>   per group hence there is no interleaving of IO between groups. And if IO is
+>   related with-in group, then we shoud get reduced number/amount of seek and
+>   higher throughput.
+> 
+>   Latency can be a concern but that can be controlled by reducing the time
+>   slice length of the queue.
+
+Well maybe, maybe not.  If a group is throttled, it isn't submitting
+new IO.  The unthrottled group is doing the IO submitting and that IO
+will have decent locality.
+
+> Fairness at logical device level vs at physical device level
+> ------------------------------------------------------------
+> 
+> IO scheduler based controller has the limitation that it works only with the
+> bottom most devices in the IO stack where IO scheduler is attached.
+> 
+> For example, assume a user has created a logical device lv0 using three
+> underlying disks sda, sdb and sdc. Also assume there are two tasks T1 and T2
+> in two groups doing IO on lv0. Also assume that weights of groups are in the
+> ratio of 2:1 so T1 should get double the BW of T2 on lv0 device.
+> 
+> 			     T1    T2
+> 			       \   /
+> 			        lv0
+> 			      /  |  \
+> 			    sda sdb  sdc
+> 
+> 
+> Now resource control will take place only on devices sda, sdb and sdc and
+> not at lv0 level. So if IO from two tasks is relatively uniformly
+> distributed across the disks then T1 and T2 will see the throughput ratio
+> in proportion to weight specified. But if IO from T1 and T2 is going to
+> different disks and there is no contention then at higher level they both
+> will see same BW.
+> 
+> Here a second level controller can produce better fairness numbers at
+> logical device but most likely at redued overall throughput of the system,
+> because it will try to control IO even if there is no contention at phsical
+> possibly leaving diksks unused in the system.
+> 
+> Hence, question comes that how important it is to control bandwidth at
+> higher level logical devices also. The actual contention for resources is
+> at the leaf block device so it probably makes sense to do any kind of
+> control there and not at the intermediate devices. Secondly probably it
+> also means better use of available resources.
+
+hm.  What will be the effects of this limitation in real-world use?
+
+> Limited Fairness
+> ----------------
+> Currently CFQ idles on a sequential reader queue to make sure it gets its
+> fair share. A second level controller will find it tricky to anticipate.
+> Either it will not have any anticipation logic and in that case it will not
+> provide fairness to single readers in a group (as dm-ioband does) or if it
+> starts anticipating then we should run into these strange situations where
+> second level controller is anticipating on one queue/group and underlying
+> IO scheduler might be anticipating on something else.
+
+It depends on the size of the inter-group timeslices.  If the amount of
+time for which a group is unthrottled is "large" comapred to the
+typical anticipation times, this issue fades away.
+
+And those timeslices _should_ be large.  Because as you mentioned
+above, different groups are probably working different parts of the
+disk.
+
+> Need of device mapper tools
+> ---------------------------
+> A device mapper based solution will require creation of a ioband device
+> on each physical/logical device one wants to control. So it requires usage
+> of device mapper tools even for the people who are not using device mapper.
+> At the same time creation of ioband device on each partition in the system to 
+> control the IO can be cumbersome and overwhelming if system has got lots of
+> disks and partitions with-in.
+> 
+> 
+> IMHO, IO scheduler based IO controller is a reasonable approach to solve the
+> problem of group bandwidth control, and can do hierarchical IO scheduling
+> more tightly and efficiently.
+> 
+> But I am all ears to alternative approaches and suggestions how doing things
+> can be done better and will be glad to implement it.
+> 
+> TODO
+> ====
+> - code cleanups, testing, bug fixing, optimizations, benchmarking etc...
+> - More testing to make sure there are no regressions in CFQ.
+> 
+> Testing
+> =======
+> 
+> Environment
+> ==========
+> A 7200 RPM SATA drive with queue depth of 31. Ext3 filesystem.
+
+That's a bit of a toy.
+
+Do we have testing results for more enterprisey hardware?  Big storage
+arrays?  SSD?  Infiniband?  iscsi?  nfs? (lol, gotcha)
+
+
+> I am mostly
+> running fio jobs which have been limited to 30 seconds run and then monitored
+> the throughput and latency.
+>  
+> Test1: Random Reader Vs Random Writers
+> ======================================
+> Launched a random reader and then increasing number of random writers to see
+> the effect on random reader BW and max lantecies.
+> 
+> [fio --rw=randwrite --bs=64K --size=2G --runtime=30 --direct=1 --ioengine=libaio --iodepth=4 --numjobs= <1 to 32> ]
+> [fio --rw=randread --bs=4K --size=2G --runtime=30 --direct=1]
+> 
+> [Vanilla CFQ, No groups]
+> <--------------random writers-------------------->  <------random reader-->
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
+> 1   5737KiB/s   5737KiB/s   5737KiB/s   164K usec   503KiB/s    159K usec   
+> 2   2055KiB/s   1984KiB/s   4039KiB/s   1459K usec  150KiB/s    170K usec   
+> 4   1238KiB/s   932KiB/s    4419KiB/s   4332K usec  153KiB/s    225K usec   
+> 8   1059KiB/s   929KiB/s    7901KiB/s   1260K usec  118KiB/s    377K usec   
+> 16  604KiB/s    483KiB/s    8519KiB/s   3081K usec  47KiB/s     756K usec   
+> 32  367KiB/s    222KiB/s    9643KiB/s   5940K usec  22KiB/s     923K usec   
+> 
+> Created two cgroups group1 and group2 of weights 500 each.  Launched increasing
+> number of random writers in group1 and one random reader in group2 using fio.
+> 
+> [IO controller CFQ; group_idle=8; group1 weight=500; group2 weight=500]
+> <--------------random writers(group1)-------------> <-random reader(group2)->
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
+> 1   18115KiB/s  18115KiB/s  18115KiB/s  604K usec   345KiB/s    176K usec   
+> 2   3752KiB/s   3676KiB/s   7427KiB/s   4367K usec  402KiB/s    187K usec   
+> 4   1951KiB/s   1863KiB/s   7642KiB/s   1989K usec  384KiB/s    181K usec   
+> 8   755KiB/s    629KiB/s    5683KiB/s   2133K usec  366KiB/s    319K usec   
+> 16  418KiB/s    369KiB/s    6276KiB/s   1323K usec  352KiB/s    287K usec   
+> 32  236KiB/s    191KiB/s    6518KiB/s   1910K usec  337KiB/s    273K usec   
+
+That's a good result.
+
+> Also ran the same test with IO controller CFQ in flat mode to see if there
+> are any major deviations from Vanilla CFQ. Does not look like any.
+> 
+> [IO controller CFQ; No groups ]
+> <--------------random writers-------------------->  <------random reader-->
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
+> 1   5696KiB/s   5696KiB/s   5696KiB/s   259K usec   500KiB/s    194K usec   
+> 2   2483KiB/s   2197KiB/s   4680KiB/s   887K usec   150KiB/s    159K usec   
+> 4   1471KiB/s   1433KiB/s   5817KiB/s   962K usec   126KiB/s    189K usec   
+> 8   691KiB/s    580KiB/s    5159KiB/s   2752K usec  197KiB/s    246K usec   
+> 16  781KiB/s    698KiB/s    11892KiB/s  943K usec   61KiB/s     529K usec   
+> 32  415KiB/s    324KiB/s    12461KiB/s  4614K usec  17KiB/s     737K usec   
+> 
+> Notes:
+> - With vanilla CFQ, random writers can overwhelm a random reader. Bring down
+>   its throughput and bump up latencies significantly.
+
+Isn't that a CFQ shortcoming which we should address separately?  If
+so, the comparisons aren't presently valid because we're comparing with
+a CFQ which has known, should-be-fixed problems.
+
+> - With IO controller, one can provide isolation to the random reader group and
+>   maintain consitent view of bandwidth and latencies. 
+> 
+> Test2: Random Reader Vs Sequential Reader
+> ========================================
+> Launched a random reader and then increasing number of sequential readers to
+> see the effect on BW and latencies of random reader.
+> 
+> [fio --rw=read --bs=4K --size=2G --runtime=30 --direct=1 --numjobs= <1 to 16> ]
+> [fio --rw=randread --bs=4K --size=2G --runtime=30 --direct=1]
+> 
+> [ Vanilla CFQ, No groups ]
+> <---------------seq readers---------------------->  <------random reader-->
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
+> 1   23318KiB/s  23318KiB/s  23318KiB/s  55940 usec  36KiB/s     247K usec   
+> 2   14732KiB/s  11406KiB/s  26126KiB/s  142K usec   20KiB/s     446K usec   
+> 4   9417KiB/s   5169KiB/s   27338KiB/s  404K usec   10KiB/s     993K usec   
+> 8   3360KiB/s   3041KiB/s   25850KiB/s  954K usec   60KiB/s     956K usec   
+> 16  1888KiB/s   1457KiB/s   26763KiB/s  1871K usec  28KiB/s     1868K usec  
+> 
+> Created two cgroups group1 and group2 of weights 500 each.  Launched increasing
+> number of sequential readers in group1 and one random reader in group2 using
+> fio.
+> 
+> [IO controller CFQ; group_idle=1; group1 weight=500; group2 weight=500]
+> <---------------group1--------------------------->  <------group2--------->
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
+> 1   13733KiB/s  13733KiB/s  13733KiB/s  247K usec   330KiB/s    154K usec   
+> 2   8553KiB/s   4963KiB/s   13514KiB/s  472K usec   322KiB/s    174K usec   
+> 4   5045KiB/s   1367KiB/s   13134KiB/s  947K usec   318KiB/s    178K usec   
+> 8   1774KiB/s   1420KiB/s   13035KiB/s  1871K usec  323KiB/s    233K usec   
+> 16  959KiB/s    518KiB/s    12691KiB/s  3809K usec  324KiB/s    208K usec   
+> 
+> Also ran the same test with IO controller CFQ in flat mode to see if there
+> are any major deviations from Vanilla CFQ. Does not look like any.
+> 
+> [IO controller CFQ; No groups ]
+> <---------------seq readers---------------------->  <------random reader-->
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
+> 1   23028KiB/s  23028KiB/s  23028KiB/s  47460 usec  36KiB/s     253K usec   
+> 2   14452KiB/s  11176KiB/s  25628KiB/s  145K usec   20KiB/s     447K usec   
+> 4   8815KiB/s   5720KiB/s   27121KiB/s  396K usec   10KiB/s     968K usec   
+> 8   3335KiB/s   2827KiB/s   24866KiB/s  960K usec   62KiB/s     955K usec   
+> 16  1784KiB/s   1311KiB/s   26537KiB/s  1883K usec  26KiB/s     1866K usec  
+> 
+> Notes:
+> - The BW and latencies of random reader in group 2 seems to be stable and
+>   bounded and does not get impacted much as number of sequential readers
+>   increase in group1. Hence provding good isolation.
+> 
+> - Throughput of sequential readers comes down and latencies go up as half
+>   of disk bandwidth (in terms of time) has been reserved for random reader
+>   group.
+> 
+> Test3: Sequential Reader Vs Sequential Reader
+> ============================================
+> Created two cgroups group1 and group2 of weights 500 and 1000 respectively.
+> Launched increasing number of sequential readers in group1 and one sequential
+> reader in group2 using fio and monitored how bandwidth is being distributed
+> between two groups.
+> 
+> First 5 columns give stats about job in group1 and last two columns give
+> stats about job in group2.
+> 
+> <---------------group1--------------------------->  <------group2--------->
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
+> 1   8970KiB/s   8970KiB/s   8970KiB/s   230K usec   20681KiB/s  124K usec   
+> 2   6783KiB/s   3202KiB/s   9984KiB/s   546K usec   19682KiB/s  139K usec   
+> 4   4641KiB/s   1029KiB/s   9280KiB/s   1185K usec  19235KiB/s  172K usec   
+> 8   1435KiB/s   1079KiB/s   9926KiB/s   2461K usec  19501KiB/s  153K usec   
+> 16  764KiB/s    398KiB/s    9395KiB/s   4986K usec  19367KiB/s  172K usec   
+> 
+> Note: group2 is getting double the bandwidth of group1 even in the face
+> of increasing number of readers in group1.
+> 
+> Test4 (Isolation between two KVM virtual machines)
+> ==================================================
+> Created two KVM virtual machines. Partitioned a disk on host in two partitions
+> and gave one partition to each virtual machine. Put both the virtual machines
+> in two different cgroup of weight 1000 and 500 each. Virtual machines created
+> ext3 file system on the partitions exported from host and did buffered writes.
+> Host seems writes as synchronous and virtual machine with higher weight gets
+> double the disk time of virtual machine of lower weight. Used deadline
+> scheduler in this test case.
+> 
+> Some more details about configuration are in documentation patch.
+> 
+> Test5 (Fairness for async writes, Buffered Write Vs Buffered Write)
+> ===================================================================
+> Fairness for async writes is tricky and biggest reason is that async writes
+> are cached in higher layers (page cahe) as well as possibly in file system
+> layer also (btrfs, xfs etc), and are dispatched to lower layers not necessarily
+> in proportional manner.
+> 
+> For example, consider two dd threads reading /dev/zero as input file and doing
+> writes of huge files. Very soon we will cross vm_dirty_ratio and dd thread will
+> be forced to write out some pages to disk before more pages can be dirtied. But
+> not necessarily dirty pages of same thread are picked. It can very well pick
+> the inode of lesser priority dd thread and do some writeout. So effectively
+> higher weight dd is doing writeouts of lower weight dd pages and we don't see
+> service differentation.
+> 
+> IOW, the core problem with buffered write fairness is that higher weight thread
+> does not throw enought IO traffic at IO controller to keep the queue
+> continuously backlogged. In my testing, there are many .2 to .8 second
+> intervals where higher weight queue is empty and in that duration lower weight
+> queue get lots of job done giving the impression that there was no service
+> differentiation.
+> 
+> In summary, from IO controller point of view async writes support is there.
+> Because page cache has not been designed in such a manner that higher 
+> prio/weight writer can do more write out as compared to lower prio/weight
+> writer, gettting service differentiation is hard and it is visible in some
+> cases and not visible in some cases.
+
+Here's where it all falls to pieces.
+
+For async writeback we just don't care about IO priorities.  Because
+from the point of view of the userspace task, the write was async!  It
+occurred at memory bandwidth speed.
+
+It's only when the kernel's dirty memory thresholds start to get
+exceeded that we start to care about prioritisation.  And at that time,
+all dirty memory (within a memcg?) is equal - a high-ioprio dirty page
+consumes just as much memory as a low-ioprio dirty page.
+
+So when balance_dirty_pages() hits, what do we want to do?
+
+I suppose that all we can do is to block low-ioprio processes more
+agressively at the VFS layer, to reduce the rate at which they're
+dirtying memory so as to give high-ioprio processes more of the disk
+bandwidth.
+
+But you've gone and implemented all of this stuff at the io-controller
+level and not at the VFS level so you're, umm, screwed.
+
+Importantly screwed!  It's a very common workload pattern, and one
+which causes tremendous amounts of IO to be generated very quickly,
+traditionally causing bad latency effects all over the place.  And we
+have no answer to this.
+
+> Vanilla CFQ Vs IO Controller CFQ
+> ================================
+> We have not fundamentally changed CFQ, instead enhanced it to also support
+> hierarchical io scheduling. In the process invariably there are small changes
+> here and there as new scenarios come up. Running some tests here and comparing
+> both the CFQ's to see if there is any major deviation in behavior.
+> 
+> Test1: Sequential Readers
+> =========================
+> [fio --rw=read --bs=4K --size=2G --runtime=30 --direct=1 --numjobs=<1 to 16> ]
+> 
+> IO scheduler: Vanilla CFQ
+> 
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
+> 1   35499KiB/s  35499KiB/s  35499KiB/s  19195 usec  
+> 2   17089KiB/s  13600KiB/s  30690KiB/s  118K usec   
+> 4   9165KiB/s   5421KiB/s   29411KiB/s  380K usec   
+> 8   3815KiB/s   3423KiB/s   29312KiB/s  830K usec   
+> 16  1911KiB/s   1554KiB/s   28921KiB/s  1756K usec  
+> 
+> IO scheduler: IO controller CFQ
+> 
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
+> 1   34494KiB/s  34494KiB/s  34494KiB/s  14482 usec  
+> 2   16983KiB/s  13632KiB/s  30616KiB/s  123K usec   
+> 4   9237KiB/s   5809KiB/s   29631KiB/s  372K usec   
+> 8   3901KiB/s   3505KiB/s   29162KiB/s  822K usec   
+> 16  1895KiB/s   1653KiB/s   28945KiB/s  1778K usec  
+> 
+> Test2: Sequential Writers
+> =========================
+> [fio --rw=write --bs=4K --size=2G --runtime=30 --direct=1 --numjobs=<1 to 16> ]
+> 
+> IO scheduler: Vanilla CFQ
+> 
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
+> 1   22669KiB/s  22669KiB/s  22669KiB/s  401K usec   
+> 2   14760KiB/s  7419KiB/s   22179KiB/s  571K usec   
+> 4   5862KiB/s   5746KiB/s   23174KiB/s  444K usec   
+> 8   3377KiB/s   2199KiB/s   22427KiB/s  1057K usec  
+> 16  2229KiB/s   556KiB/s    20601KiB/s  5099K usec  
+> 
+> IO scheduler: IO Controller CFQ
+> 
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
+> 1   22911KiB/s  22911KiB/s  22911KiB/s  37319 usec  
+> 2   11752KiB/s  11632KiB/s  23383KiB/s  245K usec   
+> 4   6663KiB/s   5409KiB/s   23207KiB/s  384K usec   
+> 8   3161KiB/s   2460KiB/s   22566KiB/s  935K usec   
+> 16  1888KiB/s   795KiB/s    21349KiB/s  3009K usec  
+> 
+> Test3: Random Readers
+> =========================
+> [fio --rw=randread --bs=4K --size=2G --runtime=30 --direct=1 --numjobs=1 to 16]
+> 
+> IO scheduler: Vanilla CFQ
+> 
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
+> 1   484KiB/s    484KiB/s    484KiB/s    22596 usec  
+> 2   229KiB/s    196KiB/s    425KiB/s    51111 usec  
+> 4   119KiB/s    73KiB/s     405KiB/s    2344 msec   
+> 8   93KiB/s     23KiB/s     399KiB/s    2246 msec   
+> 16  38KiB/s     8KiB/s      328KiB/s    3965 msec   
+> 
+> IO scheduler: IO Controller CFQ
+> 
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
+> 1   483KiB/s    483KiB/s    483KiB/s    29391 usec  
+> 2   229KiB/s    196KiB/s    426KiB/s    51625 usec  
+> 4   132KiB/s    88KiB/s     417KiB/s    2313 msec   
+> 8   79KiB/s     18KiB/s     389KiB/s    2298 msec   
+> 16  43KiB/s     9KiB/s      327KiB/s    3905 msec   
+> 
+> Test4: Random Writers
+> =====================
+> [fio --rw=randwrite --bs=4K --size=2G --runtime=30 --direct=1 --numjobs=1 to 16]
+> 
+> IO scheduler: Vanilla CFQ
+> 
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
+> 1   14641KiB/s  14641KiB/s  14641KiB/s  93045 usec  
+> 2   7896KiB/s   1348KiB/s   9245KiB/s   82778 usec  
+> 4   2657KiB/s   265KiB/s    6025KiB/s   216K usec   
+> 8   951KiB/s    122KiB/s    3386KiB/s   1148K usec  
+> 16  66KiB/s     22KiB/s     829KiB/s    1308 msec   
+> 
+> IO scheduler: IO Controller CFQ
+> 
+> nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency 
+> 1   14454KiB/s  14454KiB/s  14454KiB/s  74623 usec  
+> 2   4595KiB/s   4104KiB/s   8699KiB/s   135K usec   
+> 4   3113KiB/s   334KiB/s    5782KiB/s   200K usec   
+> 8   1146KiB/s   95KiB/s     3832KiB/s   593K usec   
+> 16  71KiB/s     29KiB/s     814KiB/s    1457 msec   
+> 
+> Notes:
+>  - Does not look like that anything has changed significantly.
+> 
+> Previous versions of the patches were posted here.
+> ------------------------------------------------
+> 
+> (V1) http://lkml.org/lkml/2009/3/11/486
+> (V2) http://lkml.org/lkml/2009/5/5/275
+> (V3) http://lkml.org/lkml/2009/5/26/472
+> (V4) http://lkml.org/lkml/2009/6/8/580
+> (V5) http://lkml.org/lkml/2009/6/19/279
+> (V6) http://lkml.org/lkml/2009/7/2/369
+> (V7) http://lkml.org/lkml/2009/7/24/253
+> (V8) http://lkml.org/lkml/2009/8/16/204
+> (V9) http://lkml.org/lkml/2009/8/28/327
+> 
+> Thanks
+> Vivek
