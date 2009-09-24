@@ -1,86 +1,127 @@
 From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [PATCH 20/28] io-controller: noop changes for hierarchical fair queuing
-Date: Thu, 24 Sep 2009 15:25:24 -0400
-Message-ID: <1253820332-10246-21-git-send-email-vgoyal@redhat.com>
+Subject: [PATCH 28/28] io-controller: debug elevator fair queuing support
+Date: Thu, 24 Sep 2009 15:25:32 -0400
+Message-ID: <1253820332-10246-29-git-send-email-vgoyal@redhat.com>
 References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754283AbZIXTcS@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754387AbZIXTc5@vger.kernel.org>
 In-Reply-To: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, jens.axboe@oracle.com
 Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, vgoyal@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
 List-Id: dm-devel.ids
 
-This patch changes noop to use queue scheduling code from elevator layer.
-One can go back to old noop by deselecting CONFIG_IOSCHED_NOOP_HIER.
+o More debugging help to debug elevator fair queuing support. Enabled under
+  CONFIG_DEBUG_ELV_FAIR_QUEUING. Currently it prints vdisktime related
+  trace messages in blktrace.
 
-Signed-off-by: Nauman Rafique <nauman@google.com>
 Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
 Acked-by: Rik van Riel <riel@redhat.com>
 ---
- block/Kconfig.iosched |   11 +++++++++++
- block/noop-iosched.c  |   14 ++++++++++++++
- 2 files changed, 25 insertions(+), 0 deletions(-)
+ block/Kconfig.iosched |    9 +++++++++
+ block/elevator-fq.c   |   47 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 55 insertions(+), 1 deletions(-)
 
 diff --git a/block/Kconfig.iosched b/block/Kconfig.iosched
-index a7d0bf8..28cd500 100644
+index 8b507c4..edcd317 100644
 --- a/block/Kconfig.iosched
 +++ b/block/Kconfig.iosched
-@@ -25,6 +25,17 @@ config IOSCHED_NOOP
- 	  that do their own scheduling and require only minimal assistance from
- 	  the kernel.
+@@ -15,6 +15,15 @@ config ELV_FAIR_QUEUING
+ 	  other ioschedulers can make use of it.
+ 	  If unsure, say N.
  
-+config IOSCHED_NOOP_HIER
-+	bool "Noop Hierarchical Scheduling support"
-+	depends on IOSCHED_NOOP && CGROUPS
-+	select ELV_FAIR_QUEUING
-+	select GROUP_IOSCHED
++config DEBUG_ELV_FAIR_QUEUING
++	bool "Debug elevator fair queuing"
++	depends on ELV_FAIR_QUEUING
 +	default n
 +	---help---
-+	  Enable hierarhical scheduling in noop. In this mode noop keeps
-+	  one IO queue per cgroup instead of a global queue. Elevator
-+	  fair queuing logic ensures fairness among various queues.
++	  Enable some debugging hooks for elevator fair queuing support.
++	  Currently it just outputs more information about vdisktime in
++	  blktrace output .
 +
- config IOSCHED_AS
- 	tristate "Anticipatory I/O scheduler"
+ config IOSCHED_NOOP
+ 	bool
  	default y
-diff --git a/block/noop-iosched.c b/block/noop-iosched.c
-index 731dbf2..4ba496f 100644
---- a/block/noop-iosched.c
-+++ b/block/noop-iosched.c
-@@ -6,6 +6,7 @@
- #include <linux/bio.h>
- #include <linux/module.h>
- #include <linux/init.h>
-+#include "elevator-fq.h"
+diff --git a/block/elevator-fq.c b/block/elevator-fq.c
+index e69de98..62691c6 100644
+--- a/block/elevator-fq.c
++++ b/block/elevator-fq.c
+@@ -37,6 +37,24 @@ static int elv_ioq_wait_busy = HZ / 125;
  
- struct noop_queue {
- 	struct list_head queue;
-@@ -82,6 +83,15 @@ static void noop_free_noop_queue(struct elevator_queue *e, void *sched_queue)
- 	kfree(nq);
+ static void check_idle_tree_release(struct io_service_tree *st);
+ 
++#ifdef CONFIG_DEBUG_ELV_FAIR_QUEUING
++#define elv_log_entity(entity, fmt, args...) 			\
++{                                                               \
++{								\
++	struct io_queue *ioq = ioq_of(entity);			\
++	struct io_group *iog = iog_of(entity);			\
++								\
++	if (ioq) {						\
++		elv_log_ioq(ioq->efqd, ioq, fmt, ##args);	\
++	} else	{						\
++		elv_log_iog((struct elv_fq_data *)iog->key, iog, fmt, ##args);\
++	}							\
++}								\
++}
++#else
++#define elv_log_entity(entity, fmt, args...)
++#endif
++
+ static inline struct io_queue *ioq_of(struct io_entity *entity)
+ {
+ 	if (entity->my_sd == NULL)
+@@ -435,6 +453,26 @@ static inline void debug_update_stats_enqueue(struct io_entity *entity) {}
+ static inline void debug_update_stats_dequeue(struct io_entity *entity) {}
+ #endif /* DEBUG_GROUP_IOSCHED */
+ 
++#ifdef CONFIG_DEBUG_ELV_FAIR_QUEUING
++static inline void debug_entity_vdisktime(struct io_entity *entity,
++					unsigned long served, u64 delta)
++{
++	struct elv_fq_data *efqd;
++	struct io_group *iog;
++
++	elv_log_entity(entity, "vdisktime=%llu service=%lu delta=%llu"
++				" entity->weight=%u", entity->vdisktime,
++				served, delta, entity->weight);
++
++	iog = iog_of(parent_entity(entity));
++	efqd = iog->key;
++	elv_log_iog(efqd, iog, "min_vdisktime=%llu", entity->st->min_vdisktime);
++}
++#else /* DEBUG_ELV_FAIR_QUEUING */
++static inline void debug_entity_vdisktime(struct io_entity *entity,
++					unsigned long served, u64 delta) {}
++#endif /* DEBUG_ELV_FAIR_QUEUING */
++
+ static void entity_served(struct io_entity *entity, unsigned long served,
+ 		unsigned long queue_charge, unsigned long group_charge,
+ 		unsigned long nr_sectors)
+@@ -442,10 +480,14 @@ static void entity_served(struct io_entity *entity, unsigned long served,
+ 	unsigned long charge = queue_charge;
+ 
+ 	for_each_entity(entity) {
+-		entity->vdisktime += elv_delta_fair(charge, entity);
++		u64 delta;
++
++		delta = elv_delta_fair(charge, entity);
++		entity->vdisktime += delta;
+ 		update_min_vdisktime(entity->st);
+ 		entity->total_time += served;
+ 		entity->total_sectors += nr_sectors;
++		debug_entity_vdisktime(entity, charge, delta);
+ 		/* Group charge can be different from queue charge */
+ 		charge = group_charge;
+ 	}
+@@ -499,6 +541,9 @@ static void place_entity(struct io_service_tree *st, struct io_entity *entity,
+ 		vdisktime = st->min_vdisktime;
+ done:
+ 	entity->vdisktime = max_vdisktime(st->min_vdisktime, vdisktime);
++	elv_log_entity(entity, "place_entity: vdisktime=%llu"
++			" min_vdisktime=%llu", entity->vdisktime,
++			st->min_vdisktime);
  }
  
-+#ifdef CONFIG_IOSCHED_NOOP_HIER
-+static struct elv_fs_entry noop_attrs[] = {
-+	ELV_ATTR(fairness),
-+	ELV_ATTR(slice_sync),
-+	ELV_ATTR(group_idle),
-+	__ATTR_NULL
-+};
-+#endif
-+
- static struct elevator_type elevator_noop = {
- 	.ops = {
- 		.elevator_merge_req_fn		= noop_merged_requests,
-@@ -92,6 +102,10 @@ static struct elevator_type elevator_noop = {
- 		.elevator_alloc_sched_queue_fn	= noop_alloc_noop_queue,
- 		.elevator_free_sched_queue_fn	= noop_free_noop_queue,
- 	},
-+#ifdef CONFIG_IOSCHED_NOOP_HIER
-+	.elevator_features = ELV_IOSCHED_NEED_FQ | ELV_IOSCHED_SINGLE_IOQ,
-+	.elevator_attrs = noop_attrs,
-+#endif
- 	.elevator_name = "noop",
- 	.elevator_owner = THIS_MODULE,
- };
+ static inline void io_entity_update_prio(struct io_entity *entity)
 -- 
 1.6.0.6
