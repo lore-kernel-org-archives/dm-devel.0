@@ -1,16 +1,13 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 25 Sep 2009 18:07:24 +0900 (JST)
-Message-ID: <20090925.180724.104041942.ryov@valinux.co.jp>
-References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-	<20090924143315.781cd0ac.akpm@linux-foundation.org>
-	<20090925050429.GB12555@redhat.com>
+From: John Hughes <john@Calva.COM>
+Subject: Dell MD3000/multipath - huge numbers of I/O errors on
+	boot
+Date: Fri, 25 Sep 2009 15:45:20 +0200
+Message-ID: <4ABCC970.70603@Calva.COM>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090925050429.GB12555@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,79 +17,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: vgoyal@redhat.com
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, akpm@linux-foundation.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Vivek,
+I've got a Dell MD3000 SAS cabinet, connected with two SAS cables using 
+multipathd/dm-multipath.
 
-Vivek Goyal <vgoyal@redhat.com> wrote:
-> Higher level solutions are not keeping track of time slices. Time slices will
-> be allocated by CFQ which does not have any idea about grouping. Higher
-> level controller just keeps track of size of IO done at group level and
-> then run either a leaky bucket or token bucket algorithm.
-> 
-> IO throttling is a max BW controller, so it will not even care about what is
-> happening in other group. It will just be concerned with rate of IO in one
-> particular group and if we exceed specified limit, throttle it. So until and
-> unless sequential reader group hits it max bw limit, it will keep sending
-> reads down to CFQ, and CFQ will happily assign 100ms slices to readers.
-> 
-> dm-ioband will not try to choke the high throughput sequential reader group
-> for the slow random reader group because that would just kill the throughput
-> of rotational media. Every sequential reader will run for few ms and then 
-> be throttled and this goes on. Disk will soon be seek bound.
+Most things work fine, but one problem I have is that the MD3000 wants 
+to do failover, it gets very shirty if I access the "ghost" path to a 
+LUN without doing some RDAC fancyness.
 
-Because dm-ioband provides faireness in terms of how many IO requests
-are issued or how many bytes are transferred, so this behaviour is to
-be expected. Do you think fairness in terms of IO requests and size is
-not fair?
+The problem is that when the kernel discovers each LUN it tries to read 
+the partition table, which produces insane numbers of read failures on 
+boot.  How can I silence them?
 
-> > >   Buffering at higher layer can delay read requests for more than slice idle
-> > >   period of CFQ (default 8 ms). That means, it is possible that we are waiting
-> > >   for a request from the queue but it is buffered at higher layer and then idle
-> > >   timer will fire. It means that queue will losse its share at the same time
-> > >   overall throughput will be impacted as we lost those 8 ms.
-> > 
-> > That sounds like a bug.
-> > 
-> 
-> Actually this probably is a limitation of higher level controller. It most
-> likely is sitting so high in IO stack that it has no idea what underlying
-> IO scheduler is and what are IO scheduler's policies. So it can't keep up
-> with IO scheduler's policies. Secondly, it might be a low weight group and
-> tokens might not be available fast enough to release the request.
->
-> > >   Read Vs Write
-> > >   -------------
-> > >   Writes can overwhelm readers hence second level controller FIFO release
-> > >   will run into issue here. If there is a single queue maintained then reads
-> > >   will suffer large latencies. If there separate queues for reads and writes
-> > >   then it will be hard to decide in what ratio to dispatch reads and writes as
-> > >   it is IO scheduler's decision to decide when and how much read/write to
-> > >   dispatch. This is another place where higher level controller will not be in
-> > >   sync with lower level io scheduler and can change the effective policies of
-> > >   underlying io scheduler.
-> > 
-> > The IO schedulers already take care of read-vs-write and already take
-> > care of preventing large writes-starve-reads latencies (or at least,
-> > they're supposed to).
-> 
-> True. Actually this is a limitation of higher level controller. A higher
-> level controller will most likely implement some of kind of queuing/buffering
-> mechanism where it will buffer requeuests when it decides to throttle the
-> group. Now once a fair number read and requests are buffered, and if
-> controller is ready to dispatch some requests from the group, which
-> requests/bio should it dispatch? reads first or writes first or reads and
-> writes in certain ratio?
+[  236.136435] scsi 4:0:0:14: Direct-Access     DELL     MD3000           0735 PQ: 0 ANSI: 5
+[  236.158631] sd 4:0:0:14: [sdav] 142323712 512-byte hardware sectors: (72.8 GB/67.8 GiB)
+[  236.158950] sd 4:0:0:14: [sdav] Write Protect is off
+[  236.159035] sd 4:0:0:14: [sdav] Mode Sense: 77 00 10 08
+[  236.159456] sd 4:0:0:14: [sdav] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[  236.159888] sd 4:0:0:14: [sdav] 142323712 512-byte hardware sectors: (72.8 GB/67.8 GiB)
+[  236.160199] sd 4:0:0:14: [sdav] Write Protect is off
+[  236.160285] sd 4:0:0:14: [sdav] Mode Sense: 77 00 10 08
+[  236.160679] sd 4:0:0:14: [sdav] Write cache: enabled, read cache: enabled, supports DPO and FUA
+[  236.161450] sd 4:0:0:14: [sdav] Attached SCSI disk
+[  236.161546] sd 4:0:0:14: Embedded Enclosure Device
+[  236.368374] sd 4:0:0:14: Attached scsi generic sg49 type 0
+...
+[  240.579148] sd 3:0:1:14: [sdaf] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE,SUGGEST_OK
+[  240.579323] sd 3:0:1:14: [sdaf] Sense Key : Illegal Request [current] 
+[  243.792964] sd 3:0:1:14: [sdaf] <<vendor>> ASC=0x94 ASCQ=0x1ASC=0x94 ASCQ=0x1
+[  245.265769] sd 3:0:1:14: [sdaf] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE,SUGGEST_OK
+[  245.265940] sd 3:0:1:14: [sdaf] Sense Key : Illegal Request [current] 
+[  245.266215] sd 3:0:1:14: [sdaf] <<vendor>> ASC=0x94 ASCQ=0x1ASC=0x94 ASCQ=0x1
+[  245.825586] sd 3:0:1:14: [sdaf] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE,SUGGEST_OK
+[  245.825752] sd 3:0:1:14: [sdaf] Sense Key : Illegal Request [current] 
+[  245.826017] sd 3:0:1:14: [sdaf] <<vendor>> ASC=0x94 ASCQ=0x1ASC=0x94 ASCQ=0x1
+... [ MANY MANY ERRORS REMOVED ]
+[  303.486849] sd 3:0:1:14: rdac: LUN 14 (unowned)
+[  303.494695] sd 4:0:0:14: rdac: LUN 14 (owned)
 
-The write-starve-reads on dm-ioband, that you pointed out before, was
-not caused by FIFO release, it was caused by IO flow control in
-dm-ioband. When I turned off the flow control, then the read
-throughput was quite improved.
-
-Now I'm considering separating dm-ioband's internal queue into sync
-and async and giving a certain priority of dispatch to async IOs.
-
-Thanks,
-Ryo Tsuruta
+# multipath -ll 
+...
+mpath43 (360024e80005b3b23000001b94ab0587f) dm-30 DELL    ,MD3000        
+[size=68G][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=3][active]
+ \_ 4:0:0:14 sdav 66:240 [active][ready]
+\_ round-robin 0 [prio=0][enabled]
+ \_ 3:0:1:14 sdaf 65:240 [active][ghost]
+...
