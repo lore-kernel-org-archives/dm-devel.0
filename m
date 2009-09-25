@@ -1,16 +1,17 @@
-From: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
-Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 25 Sep 2009 10:18:21 +0900
-Message-ID: <20090925101821.1de8091a.kamezawa.hiroyu@jp.fujitsu.com>
-References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-	<20090924143315.781cd0ac.akpm@linux-foundation.org>
-	<20090925100952.55c2dd7a.kamezawa.hiroyu@jp.fujitsu.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 2 of 2] DM Snapshot: dont insert before
+	existing chunk
+Date: Thu, 24 Sep 2009 23:40:52 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0909242329280.28511@hs20-bc2-1.build.redhat.com>
+References: <200909231525.n8NFP87C029957@hydrogen.msp.redhat.com>
+	<20090924124841.GI3866@agk-dp.fab.redhat.com>
+	<Pine.LNX.4.64.0909241007440.18846@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0909241014500.18846@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090925100952.55c2dd7a.kamezawa.hiroyu@jp.fujitsu.com>
+In-Reply-To: <Pine.LNX.4.64.0909241014500.18846@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,77 +21,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, Vivek Goyal <vgoyal@redhat.com>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, Andrew Morton <akpm@linux-foundation.org>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, s-uchida@ap.jp.nec.com, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 25 Sep 2009 10:09:52 +0900
-KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com> wrote:
 
-> On Thu, 24 Sep 2009 14:33:15 -0700
-> Andrew Morton <akpm@linux-foundation.org> wrote:
-> > > Test5 (Fairness for async writes, Buffered Write Vs Buffered Write)
-> > > ===================================================================
-> > > Fairness for async writes is tricky and biggest reason is that async writes
-> > > are cached in higher layers (page cahe) as well as possibly in file system
-> > > layer also (btrfs, xfs etc), and are dispatched to lower layers not necessarily
-> > > in proportional manner.
-> > > 
-> > > For example, consider two dd threads reading /dev/zero as input file and doing
-> > > writes of huge files. Very soon we will cross vm_dirty_ratio and dd thread will
-> > > be forced to write out some pages to disk before more pages can be dirtied. But
-> > > not necessarily dirty pages of same thread are picked. It can very well pick
-> > > the inode of lesser priority dd thread and do some writeout. So effectively
-> > > higher weight dd is doing writeouts of lower weight dd pages and we don't see
-> > > service differentation.
-> > > 
-> > > IOW, the core problem with buffered write fairness is that higher weight thread
-> > > does not throw enought IO traffic at IO controller to keep the queue
-> > > continuously backlogged. In my testing, there are many .2 to .8 second
-> > > intervals where higher weight queue is empty and in that duration lower weight
-> > > queue get lots of job done giving the impression that there was no service
-> > > differentiation.
-> > > 
-> > > In summary, from IO controller point of view async writes support is there.
-> > > Because page cache has not been designed in such a manner that higher 
-> > > prio/weight writer can do more write out as compared to lower prio/weight
-> > > writer, gettting service differentiation is hard and it is visible in some
-> > > cases and not visible in some cases.
-> > 
-> > Here's where it all falls to pieces.
-> > 
-> > For async writeback we just don't care about IO priorities.  Because
-> > from the point of view of the userspace task, the write was async!  It
-> > occurred at memory bandwidth speed.
-> > 
-> > It's only when the kernel's dirty memory thresholds start to get
-> > exceeded that we start to care about prioritisation.  And at that time,
-> > all dirty memory (within a memcg?) is equal - a high-ioprio dirty page
-> > consumes just as much memory as a low-ioprio dirty page.
-> > 
-> > So when balance_dirty_pages() hits, what do we want to do?
-> > 
-> > I suppose that all we can do is to block low-ioprio processes more
-> > agressively at the VFS layer, to reduce the rate at which they're
-> > dirtying memory so as to give high-ioprio processes more of the disk
-> > bandwidth.
-> > 
-> > But you've gone and implemented all of this stuff at the io-controller
-> > level and not at the VFS level so you're, umm, screwed.
-> > 
+
+On Thu, 24 Sep 2009, Mikulas Patocka wrote:
+
+> On Thu, 24 Sep 2009, Mikulas Patocka wrote:
 > 
-> I think I must support dirty-ratio in memcg layer. But not yet.
+> > On Thu, 24 Sep 2009, Alasdair G Kergon wrote:
+> > 
+> > > On Wed, Sep 23, 2009 at 10:25:08AM -0500, Jon Brassow wrote:
+> > > > Don't insert into hash before an existing chunk.
+> > > > Most inserts are after an existing extent anyway so this code is used
+> > > > very rarely.
+> > >  
+> > > Again, I'm not particularly keen on taking this one.  Some systems are very
+> > > short of memory and everything we can save matters and we have no statistics
+> > > about how "rare" this actually is.
+> > > 
+> > > Is it really that difficult to split into two when removing?
+> > 
+> > It is code bloat --- it would increase coding/reviewing/testing time (the 
+> > splitting would have to be simulated because it happens rarely).
+> > 
+> > Also, it could lead to the situation that memory consumption starts 
+> > growing when merging.
+> > 
+> > Mikulas
+> 
+> These backmerges happen if someone writes to the logical volume backwards. 
+> Do you know any common usage scenario that does it?
+> 
+> Mikulas
 
-OR...I'll add a bufferred-write-cgroup to track bufferred writebacks.
-And add a control knob as
-  bufferred_write.nr_dirty_thresh
-to limit the number of dirty pages generetad via a cgroup.
+I was wrong about this.
 
-Because memcg just records a owner of pages but not records who makes them
-dirty, this may be better. Maybe I can reuse page_cgroup and Ryo's blockio
-cgroup code.
+If someone writes backwards, (from chunk 100 to 97), it will be allocated 
+100->2, 99->3, 98->4, 97->5 and no back-merge will happen.
 
-But I'm not sure how I should treat I/Os generated out by kswapd.
+The backmerge will happen if the disk driver finishes the writes 
+backwards: if someone writes to chunks 100-103, they get reallocated to 
+2-5 and copying starts. If the disk driver finishes the copies backwards 
+(it first finishes 103->5, then 102->4, then 101->3 and finally 100->2), 
+the exceptions will be added in this order to the table and they'll be 
+back-merged.
 
-Thanks,
--Kame
+I think that disk shuffling writes is unlikely.
+
+There was already a fix to make kcopyd not reorder writes 
+(b673c3a8192e28f13e2050a4b82c1986be92cc15, 2.6.28).
+
+On the other hand, merging could be implemented even without splitting 
+(because the merge comes either from the beginning or from the end of the 
+range), so we can go with backmerges.
+
+Mikulas
