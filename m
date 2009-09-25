@@ -1,17 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH 2 of 2] DM Snapshot: dont insert before
 	existing chunk
-Date: Thu, 24 Sep 2009 23:40:52 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0909242329280.28511@hs20-bc2-1.build.redhat.com>
+Date: Thu, 24 Sep 2009 23:43:36 -0400
+Message-ID: <20090925034336.GA12204@redhat.com>
 References: <200909231525.n8NFP87C029957@hydrogen.msp.redhat.com>
 	<20090924124841.GI3866@agk-dp.fab.redhat.com>
-	<Pine.LNX.4.64.0909241007440.18846@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0909241014500.18846@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0909241014500.18846@hs20-bc2-1.build.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090924124841.GI3866@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,60 +21,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, snitzer@redhat.com
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
+On Thu, Sep 24 2009 at  8:48am -0400,
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-
-On Thu, 24 Sep 2009, Mikulas Patocka wrote:
-
-> On Thu, 24 Sep 2009, Mikulas Patocka wrote:
+> On Wed, Sep 23, 2009 at 10:25:08AM -0500, Jon Brassow wrote:
+> > Don't insert into hash before an existing chunk.
+> > Most inserts are after an existing extent anyway so this code is used
+> > very rarely.
+>  
+> Again, I'm not particularly keen on taking this one.  Some systems are very
+> short of memory and everything we can save matters and we have no statistics
+> about how "rare" this actually is.
 > 
-> > On Thu, 24 Sep 2009, Alasdair G Kergon wrote:
-> > 
-> > > On Wed, Sep 23, 2009 at 10:25:08AM -0500, Jon Brassow wrote:
-> > > > Don't insert into hash before an existing chunk.
-> > > > Most inserts are after an existing extent anyway so this code is used
-> > > > very rarely.
-> > >  
-> > > Again, I'm not particularly keen on taking this one.  Some systems are very
-> > > short of memory and everything we can save matters and we have no statistics
-> > > about how "rare" this actually is.
-> > > 
-> > > Is it really that difficult to split into two when removing?
-> > 
-> > It is code bloat --- it would increase coding/reviewing/testing time (the 
-> > splitting would have to be simulated because it happens rarely).
-> > 
-> > Also, it could lead to the situation that memory consumption starts 
-> > growing when merging.
-> > 
-> > Mikulas
-> 
-> These backmerges happen if someone writes to the logical volume backwards. 
-> Do you know any common usage scenario that does it?
-> 
-> Mikulas
+> Is it really that difficult to split into two when removing?
 
-I was wrong about this.
+Jon, Mikulas and I examined/discussed this in detail today.  We had a
+nice break-through: snapshot-merge no longer needs to avoid inserting
+before an existing chunk.  As such snapshot-merge no longer imposes less
+efficient packing of the exception cache.
 
-If someone writes backwards, (from chunk 100 to 97), it will be allocated 
-100->2, 99->3, 98->4, 97->5 and no back-merge will happen.
+We needed a small change to the snapshot-merge clear_exception() code so
+that it increments e->old_chunk and e->new_chunk when it makes its call
+to dm_consecutive_chunk_count_dec(), e.g.:
 
-The backmerge will happen if the disk driver finishes the writes 
-backwards: if someone writes to chunks 100-103, they get reallocated to 
-2-5 and copying starts. If the disk driver finishes the copies backwards 
-(it first finishes 103->5, then 102->4, then 101->3 and finally 100->2), 
-the exceptions will be added in this order to the table and they'll be 
-back-merged.
+        if (dm_consecutive_chunk_count(e)) {
+                if ((de->old_chunk == e->old_chunk) &&
+                    (de->new_chunk == dm_chunk_number(e->new_chunk))) {
+                        e->old_chunk++;
+                        e->new_chunk++;
+                }
+                dm_consecutive_chunk_count_dec(e);
+        }
 
-I think that disk shuffling writes is unlikely.
+This is the inverse of what is done in dm_insert_exception():
 
-There was already a fix to make kcopyd not reorder writes 
-(b673c3a8192e28f13e2050a4b82c1986be92cc15, 2.6.28).
+        /* Insert before an existing chunk? */
+        if (new_e->old_chunk == (e->old_chunk - 1) &&
+            new_e->new_chunk == (dm_chunk_number(e->new_chunk) - 1)) {
+                dm_consecutive_chunk_count_inc(e);
+                e->old_chunk--;
+                e->new_chunk--;
+                dm_free_exception(eh, new_e);
+                return;
+        }
 
-On the other hand, merging could be implemented even without splitting 
-(because the merge comes either from the beginning or from the end of the 
-range), so we can go with backmerges.
-
-Mikulas
+Updated DM snapshot-merge patches are available here:
+http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel_unified/2.6.31/
