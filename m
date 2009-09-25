@@ -1,16 +1,15 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: Dell MD3000/multipath - huge numbers of I/O errors
-	on	boot
-Date: Fri, 25 Sep 2009 11:55:02 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474E032F1@cosmail01.lsi.com>
-References: <4ABCC970.70603@Calva.COM>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: IO scheduler based IO controller V10
+Date: Fri, 25 Sep 2009 16:26:36 -0400
+Message-ID: <20090925202636.GC15007@redhat.com>
+References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
+	<4ABC28DE.7050809@datenparkplatz.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4ABCC970.70603@Calva.COM>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <4ABC28DE.7050809@datenparkplatz.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,90 +19,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-This is a know problem.. As far as I know these errors mostly come during=
- the boot-up if the scsi rdac handler is not there in the initrd image. Y=
-ou might want to try building scsi_dh_rdac into the initrd image.  =20
+On Fri, Sep 25, 2009 at 04:20:14AM +0200, Ulrich Lukas wrote:
+> Vivek Goyal wrote:
+> > Notes:
+> > - With vanilla CFQ, random writers can overwhelm a random reader.
+> >   Bring down its throughput and bump up latencies significantly.
+> 
+> 
+> IIRC, with vanilla CFQ, sequential writing can overwhelm random readers,
+> too.
+> 
+> I'm basing this assumption on the observations I made on both OpenSuse
+> 11.1 and Ubuntu 9.10 alpha6 which I described in my posting on LKML
+> titled: "Poor desktop responsiveness with background I/O-operations" of
+> 2009-09-20.
+> (Message ID: 4AB59CBB.8090907@datenparkplatz.de)
+> 
+> 
+> Thus, I'm posting this to show that your work is greatly appreciated,
+> given the rather disappointig status quo of Linux's fairness when it
+> comes to disk IO time.
+> 
+> I hope that your efforts lead to a change in performance of current
+> userland applications, the sooner, the better.
+> 
+[Please don't remove people from original CC list. I am putting them back.]
+
+Hi Ulrich,
+
+I quicky went through that mail thread and I tried following on my
+desktop.
+
+##########################################
+dd if=/home/vgoyal/4G-file of=/dev/null &
+sleep 5
+time firefox
+# close firefox once gui pops up.
+##########################################
+
+It was taking close to 1 minute 30 seconds to launch firefox and dd got 
+following.
+
+4294967296 bytes (4.3 GB) copied, 100.602 s, 42.7 MB/s
+
+(Results do vary across runs, especially if system is booted fresh. Don't
+ know why...).
+
+
+Then I tried putting both the applications in separate groups and assign
+them weights 200 each.
+
+##########################################
+dd if=/home/vgoyal/4G-file of=/dev/null &
+echo $! > /cgroup/io/test1/tasks
+sleep 5
+echo $$ > /cgroup/io/test2/tasks
+time firefox
+# close firefox once gui pops up.
+##########################################
+
+Now I firefox pops up in 27 seconds. So it cut down the time by 2/3.
+
+4294967296 bytes (4.3 GB) copied, 84.6138 s, 50.8 MB/s
+
+Notice that throughput of dd also improved.
+
+I ran the block trace and noticed in many a cases firefox threads
+immediately preempted the "dd". Probably because it was a file system
+request. So in this case latency will arise from seek time.
+
+In some other cases, threads had to wait for up to 100ms because dd was
+not preempted. In this case latency will arise both from waiting on queue
+as well as seek time.
+
+With cgroup thing, We will run 100ms slice for the group in which firefox
+is being launched and then give 100ms uninterrupted time slice to dd. So
+it should cut down on number of seeks happening and that's why we probably
+see this improvement.
+
+So grouping can help in such cases. May be you can move your X session in
+one group and launch the big IO in other group. Most likely you should
+have better desktop experience without compromising on dd thread output.
 
 Thanks
-Babu Moger=20
-
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of John Hughes
-> Sent: Friday, September 25, 2009 8:45 AM
-> To: dm-devel@redhat.com
-> Subject: [dm-devel] Dell MD3000/multipath - huge numbers of I/O errors
-> on boot
->=20
-> I've got a Dell MD3000 SAS cabinet, connected with two SAS cables using
-> multipathd/dm-multipath.
->=20
-> Most things work fine, but one problem I have is that the MD3000 wants
-> to do failover, it gets very shirty if I access the "ghost" path to a
-> LUN without doing some RDAC fancyness.
->=20
-> The problem is that when the kernel discovers each LUN it tries to read
-> the partition table, which produces insane numbers of read failures on
-> boot.  How can I silence them?
->=20
-> [  236.136435] scsi 4:0:0:14: Direct-Access     DELL     MD3000
-> 0735 PQ: 0 ANSI: 5
-> [  236.158631] sd 4:0:0:14: [sdav] 142323712 512-byte hardware sectors:
-> (72.8 GB/67.8 GiB)
-> [  236.158950] sd 4:0:0:14: [sdav] Write Protect is off
-> [  236.159035] sd 4:0:0:14: [sdav] Mode Sense: 77 00 10 08
-> [  236.159456] sd 4:0:0:14: [sdav] Write cache: enabled, read cache:
-> enabled, supports DPO and FUA
-> [  236.159888] sd 4:0:0:14: [sdav] 142323712 512-byte hardware sectors:
-> (72.8 GB/67.8 GiB)
-> [  236.160199] sd 4:0:0:14: [sdav] Write Protect is off
-> [  236.160285] sd 4:0:0:14: [sdav] Mode Sense: 77 00 10 08
-> [  236.160679] sd 4:0:0:14: [sdav] Write cache: enabled, read cache:
-> enabled, supports DPO and FUA
-> [  236.161450] sd 4:0:0:14: [sdav] Attached SCSI disk
-> [  236.161546] sd 4:0:0:14: Embedded Enclosure Device
-> [  236.368374] sd 4:0:0:14: Attached scsi generic sg49 type 0
-> ...
-> [  240.579148] sd 3:0:1:14: [sdaf] Result: hostbyte=3DDID_OK
-> driverbyte=3DDRIVER_SENSE,SUGGEST_OK
-> [  240.579323] sd 3:0:1:14: [sdaf] Sense Key : Illegal Request
-> [current]
-> [  243.792964] sd 3:0:1:14: [sdaf] <<vendor>> ASC=3D0x94 ASCQ=3D0x1ASC=3D=
-0x94
-> ASCQ=3D0x1
-> [  245.265769] sd 3:0:1:14: [sdaf] Result: hostbyte=3DDID_OK
-> driverbyte=3DDRIVER_SENSE,SUGGEST_OK
-> [  245.265940] sd 3:0:1:14: [sdaf] Sense Key : Illegal Request
-> [current]
-> [  245.266215] sd 3:0:1:14: [sdaf] <<vendor>> ASC=3D0x94 ASCQ=3D0x1ASC=3D=
-0x94
-> ASCQ=3D0x1
-> [  245.825586] sd 3:0:1:14: [sdaf] Result: hostbyte=3DDID_OK
-> driverbyte=3DDRIVER_SENSE,SUGGEST_OK
-> [  245.825752] sd 3:0:1:14: [sdaf] Sense Key : Illegal Request
-> [current]
-> [  245.826017] sd 3:0:1:14: [sdaf] <<vendor>> ASC=3D0x94 ASCQ=3D0x1ASC=3D=
-0x94
-> ASCQ=3D0x1
-> ... [ MANY MANY ERRORS REMOVED ]
-> [  303.486849] sd 3:0:1:14: rdac: LUN 14 (unowned)
-> [  303.494695] sd 4:0:0:14: rdac: LUN 14 (owned)
->=20
-> # multipath -ll
-> ...
-> mpath43 (360024e80005b3b23000001b94ab0587f) dm-30 DELL    ,MD3000
-> [size=3D68G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]
-> \_ round-robin 0 [prio=3D3][active]
->  \_ 4:0:0:14 sdav 66:240 [active][ready]
-> \_ round-robin 0 [prio=3D0][enabled]
->  \_ 3:0:1:14 sdaf 65:240 [active][ghost]
-> ...
->=20
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Vivek
