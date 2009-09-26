@@ -1,109 +1,164 @@
-From: Vivek Goyal <vgoyal@redhat.com>
+From: Mike Galbraith <efault@gmx.de>
 Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 25 Sep 2009 16:26:36 -0400
-Message-ID: <20090925202636.GC15007@redhat.com>
+Date: Sat, 26 Sep 2009 16:51:16 +0200
+Message-ID: <1253976676.7005.40.camel@marge.simson.net>
 References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-	<4ABC28DE.7050809@datenparkplatz.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	 <4ABC28DE.7050809@datenparkplatz.de>  <20090925202636.GC15007@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4ABC28DE.7050809@datenparkplatz.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752689AbZIZOvZ@vger.kernel.org>
+In-Reply-To: <20090925202636.GC15007@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 25, 2009 at 04:20:14AM +0200, Ulrich Lukas wrote:
-> Vivek Goyal wrote:
-> > Notes:
-> > - With vanilla CFQ, random writers can overwhelm a random reader.
-> >   Bring down its throughput and bump up latencies significantly.
+On Fri, 2009-09-25 at 16:26 -0400, Vivek Goyal wrote:
+> On Fri, Sep 25, 2009 at 04:20:14AM +0200, Ulrich Lukas wrote:
+> > Vivek Goyal wrote:
+> > > Notes:
+> > > - With vanilla CFQ, random writers can overwhelm a random reader.
+> > >   Bring down its throughput and bump up latencies significantly.
+> > 
+> > 
+> > IIRC, with vanilla CFQ, sequential writing can overwhelm random readers,
+> > too.
+> > 
+> > I'm basing this assumption on the observations I made on both OpenSuse
+> > 11.1 and Ubuntu 9.10 alpha6 which I described in my posting on LKML
+> > titled: "Poor desktop responsiveness with background I/O-operations" of
+> > 2009-09-20.
+> > (Message ID: 4AB59CBB.8090907@datenparkplatz.de)
+> > 
+> > 
+> > Thus, I'm posting this to show that your work is greatly appreciated,
+> > given the rather disappointig status quo of Linux's fairness when it
+> > comes to disk IO time.
+> > 
+> > I hope that your efforts lead to a change in performance of current
+> > userland applications, the sooner, the better.
+> > 
+> [Please don't remove people from original CC list. I am putting them back.]
+> 
+> Hi Ulrich,
+> 
+> I quicky went through that mail thread and I tried following on my
+> desktop.
+> 
+> ##########################################
+> dd if=/home/vgoyal/4G-file of=/dev/null &
+> sleep 5
+> time firefox
+> # close firefox once gui pops up.
+> ##########################################
+> 
+> It was taking close to 1 minute 30 seconds to launch firefox and dd got 
+> following.
+> 
+> 4294967296 bytes (4.3 GB) copied, 100.602 s, 42.7 MB/s
+> 
+> (Results do vary across runs, especially if system is booted fresh. Don't
+>  know why...).
 > 
 > 
-> IIRC, with vanilla CFQ, sequential writing can overwhelm random readers,
-> too.
+> Then I tried putting both the applications in separate groups and assign
+> them weights 200 each.
 > 
-> I'm basing this assumption on the observations I made on both OpenSuse
-> 11.1 and Ubuntu 9.10 alpha6 which I described in my posting on LKML
-> titled: "Poor desktop responsiveness with background I/O-operations" of
-> 2009-09-20.
-> (Message ID: 4AB59CBB.8090907@datenparkplatz.de)
+> ##########################################
+> dd if=/home/vgoyal/4G-file of=/dev/null &
+> echo $! > /cgroup/io/test1/tasks
+> sleep 5
+> echo $$ > /cgroup/io/test2/tasks
+> time firefox
+> # close firefox once gui pops up.
+> ##########################################
 > 
+> Now I firefox pops up in 27 seconds. So it cut down the time by 2/3.
 > 
-> Thus, I'm posting this to show that your work is greatly appreciated,
-> given the rather disappointig status quo of Linux's fairness when it
-> comes to disk IO time.
+> 4294967296 bytes (4.3 GB) copied, 84.6138 s, 50.8 MB/s
 > 
-> I hope that your efforts lead to a change in performance of current
-> userland applications, the sooner, the better.
+> Notice that throughput of dd also improved.
 > 
-[Please don't remove people from original CC list. I am putting them back.]
+> I ran the block trace and noticed in many a cases firefox threads
+> immediately preempted the "dd". Probably because it was a file system
+> request. So in this case latency will arise from seek time.
+> 
+> In some other cases, threads had to wait for up to 100ms because dd was
+> not preempted. In this case latency will arise both from waiting on queue
+> as well as seek time.
 
-Hi Ulrich,
+Hm, with tip, I see ~10ms max wakeup latency running scriptlet below.
 
-I quicky went through that mail thread and I tried following on my
-desktop.
+> With cgroup thing, We will run 100ms slice for the group in which firefox
+> is being launched and then give 100ms uninterrupted time slice to dd. So
+> it should cut down on number of seeks happening and that's why we probably
+> see this improvement.
 
-##########################################
-dd if=/home/vgoyal/4G-file of=/dev/null &
-sleep 5
-time firefox
-# close firefox once gui pops up.
-##########################################
+I'm not testing with group IO/CPU, but my numbers kinda agree that it's
+seek latency that's THE killer.  What the compiled numbers below from
+the cheezy script below that _seem_ to be telling me is that the default
+setting of CFQ quantum is allowing too many write requests through,
+inflicting too much read latency... for the disk where my binaries live.
+The longer the seeky burst, the more it hurts both reader/writer, so
+cutting down the max requests queueable helps the reader (which i think
+can't queue anything near per unit time that the writer can) finish and
+get out of the writer's way sooner.
 
-It was taking close to 1 minute 30 seconds to launch firefox and dd got 
-following.
+'nuff possibly useless words, onward to possibly useless numbers :)
 
-4294967296 bytes (4.3 GB) copied, 100.602 s, 42.7 MB/s
+dd pre == number dd emits upon receiving USR1 before execing perf.
+perf stat == time to load/execute perf stat konsole -e exit.
+dd post == same after dd number, after perf finishes.
 
-(Results do vary across runs, especially if system is booted fresh. Don't
- know why...).
+quantum = 1                                                  Avg
+dd pre         58.4     52.5     56.1     61.6     52.3     56.1  MB/s
+perf stat      2.87     0.91     1.64     1.41     0.90      1.5  Sec
+dd post        56.6     61.0     66.3     64.7     60.9     61.9
 
+quantum = 2
+dd pre         59.7     62.4     58.9     65.3     60.3     61.3
+perf stat      5.81     6.09     6.24    10.13     6.21      6.8
+dd post        64.0     62.6     64.2     60.4     61.1     62.4
 
-Then I tried putting both the applications in separate groups and assign
-them weights 200 each.
+quantum = 3
+dd pre         65.5     57.7     54.5     51.1     56.3     57.0
+perf stat     14.01    13.71     8.35     5.35     8.57      9.9
+dd post        59.2     49.1     58.8     62.3     62.1     58.3
 
-##########################################
-dd if=/home/vgoyal/4G-file of=/dev/null &
-echo $! > /cgroup/io/test1/tasks
-sleep 5
-echo $$ > /cgroup/io/test2/tasks
-time firefox
-# close firefox once gui pops up.
-##########################################
+quantum = 4
+dd pre         57.2     52.1     56.8     55.2     61.6     56.5
+perf stat     11.98     1.61     9.63    16.21    11.13     10.1
+dd post        57.2     52.6     62.2     49.3     50.2     54.3
 
-Now I firefox pops up in 27 seconds. So it cut down the time by 2/3.
+Nothing pinned btw, 4 cores available, but only 1 drive.
 
-4294967296 bytes (4.3 GB) copied, 84.6138 s, 50.8 MB/s
+#!/bin/sh
 
-Notice that throughput of dd also improved.
+DISK=sdb
+QUANTUM=/sys/block/$DISK/queue/iosched/quantum
+END=$(cat $QUANTUM)
 
-I ran the block trace and noticed in many a cases firefox threads
-immediately preempted the "dd". Probably because it was a file system
-request. So in this case latency will arise from seek time.
-
-In some other cases, threads had to wait for up to 100ms because dd was
-not preempted. In this case latency will arise both from waiting on queue
-as well as seek time.
-
-With cgroup thing, We will run 100ms slice for the group in which firefox
-is being launched and then give 100ms uninterrupted time slice to dd. So
-it should cut down on number of seeks happening and that's why we probably
-see this improvement.
-
-So grouping can help in such cases. May be you can move your X session in
-one group and launch the big IO in other group. Most likely you should
-have better desktop experience without compromising on dd thread output.
-
-Thanks
-Vivek
+for q in `seq 1 $END`; do
+	echo $q > $QUANTUM
+	LOGFILE=quantum_log_$q
+	rm -f $LOGFILE
+	for i in `seq 1 5`; do
+		echo 2 > /proc/sys/vm/drop_caches
+		sh -c "dd if=/dev/zero of=./deleteme.dd 2>&1|tee -a $LOGFILE" &
+		sleep 30
+		sh -c "echo quantum $(cat $QUANTUM) loop $i" 2>&1|tee -a $LOGFILE
+		perf stat -- killlall -q get_stuf_into_ram >/dev/null 2>&1
+		sleep 1
+		killall -q -USR1 dd &
+		sleep 1
+		sh -c "perf stat -- konsole -e exit" 2>&1|tee -a $LOGFILE
+		sleep 1
+		killall -q -USR1 dd &
+		sleep 5
+		killall -qw dd
+		rm -f ./deleteme.dd
+		sync
+		sh -c "echo" 2>&1|tee -a $LOGFILE
+	done;
+done;
