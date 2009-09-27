@@ -1,70 +1,156 @@
-From: Jens Axboe <jens.axboe@oracle.com>
+From: Corrado Zoccolo <czoccolo@gmail.com>
 Subject: Re: IO scheduler based IO controller V10
-Date: Sun, 27 Sep 2009 18:42:36 +0200
-Message-ID: <20090927164235.GA23126@kernel.dk>
-References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com> <4ABC28DE.7050809@datenparkplatz.de> <20090925202636.GC15007@redhat.com> <1253976676.7005.40.camel@marge.simson.net> <1254034500.7933.6.camel@marge.simson.net>
+Date: Sun, 27 Sep 2009 19:00:08 +0200
+Message-ID: <4e5e476b0909271000u69d79346s27cccad219e49902@mail.gmail.com>
+References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
+	 <4ABC28DE.7050809@datenparkplatz.de>
+	 <20090925202636.GC15007@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751814AbZI0Qme@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1254034500.7933.6.camel@marge.simson.net>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753406AbZI0RAH@vger.kernel.org>
+In-Reply-To: <20090925202636.GC15007@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Galbraith <efault@gmx.de>
-Cc: Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Sun, Sep 27 2009, Mike Galbraith wrote:
-> My dd vs load non-cached binary woes seem to be coming from backmerge.
-> 
-> #if 0 /*MIKEDIDIT sand in gearbox?*/
->         /*
->          * See if our hash lookup can find a potential backmerge.
->          */
->         __rq = elv_rqhash_find(q, bio->bi_sector);
->         if (__rq && elv_rq_merge_ok(__rq, bio)) {
->                 *req = __rq;
->                 return ELEVATOR_BACK_MERGE;
->         }
-> #endif
+Hi Vivek,
+On Fri, Sep 25, 2009 at 10:26 PM, Vivek Goyal <vgoyal@redhat.com> wrote=
+:
+> On Fri, Sep 25, 2009 at 04:20:14AM +0200, Ulrich Lukas wrote:
+>> Vivek Goyal wrote:
+>> > Notes:
+>> > - With vanilla CFQ, random writers can overwhelm a random reader.
+>> > =C2=A0 Bring down its throughput and bump up latencies significant=
+ly.
+>>
+>>
+>> IIRC, with vanilla CFQ, sequential writing can overwhelm random read=
+ers,
+>> too.
+>>
+>> I'm basing this assumption on the observations I made on both OpenSu=
+se
+>> 11.1 and Ubuntu 9.10 alpha6 which I described in my posting on LKML
+>> titled: "Poor desktop responsiveness with background I/O-operations"=
+ of
+>> 2009-09-20.
+>> (Message ID: 4AB59CBB.8090907@datenparkplatz.de)
+>>
+>>
+>> Thus, I'm posting this to show that your work is greatly appreciated=
+,
+>> given the rather disappointig status quo of Linux's fairness when it
+>> comes to disk IO time.
+>>
+>> I hope that your efforts lead to a change in performance of current
+>> userland applications, the sooner, the better.
+>>
+> [Please don't remove people from original CC list. I am putting them =
+back.]
+>
+> Hi Ulrich,
+>
+> I quicky went through that mail thread and I tried following on my
+> desktop.
+>
+> ##########################################
+> dd if=3D/home/vgoyal/4G-file of=3D/dev/null &
+> sleep 5
+> time firefox
+> # close firefox once gui pops up.
+> ##########################################
+>
+> It was taking close to 1 minute 30 seconds to launch firefox and dd g=
+ot
+> following.
+>
+> 4294967296 bytes (4.3 GB) copied, 100.602 s, 42.7 MB/s
+>
+> (Results do vary across runs, especially if system is booted fresh. D=
+on't
+> =C2=A0know why...).
+>
+>
+> Then I tried putting both the applications in separate groups and ass=
+ign
+> them weights 200 each.
+>
+> ##########################################
+> dd if=3D/home/vgoyal/4G-file of=3D/dev/null &
+> echo $! > /cgroup/io/test1/tasks
+> sleep 5
+> echo $$ > /cgroup/io/test2/tasks
+> time firefox
+> # close firefox once gui pops up.
+> ##########################################
+>
+> Now I firefox pops up in 27 seconds. So it cut down the time by 2/3.
+>
+> 4294967296 bytes (4.3 GB) copied, 84.6138 s, 50.8 MB/s
+>
+> Notice that throughput of dd also improved.
+>
+> I ran the block trace and noticed in many a cases firefox threads
+> immediately preempted the "dd". Probably because it was a file system
+> request. So in this case latency will arise from seek time.
+>
+> In some other cases, threads had to wait for up to 100ms because dd w=
+as
+> not preempted. In this case latency will arise both from waiting on q=
+ueue
+> as well as seek time.
 
-It's a given that not merging will provide better latency. We can't
-disable that or performance will suffer A LOT on some systems. There are
-ways to make it better, though. One would be to make the max request
-size smaller, but that would also hurt for streamed workloads. Can you
-try whether the below patch makes a difference? It will basically
-disallow merges to a request that isn't the last one.
+I think cfq should already be doing something similar, i.e. giving
+100ms slices to firefox, that alternate with dd, unless:
+* firefox is too seeky (in this case, the idle window will be too small=
+)
+* firefox has too much think time.
 
-We should probably make the merging logic a bit more clever, since the
-below wont work well for two (or more) streamed cases. I'll think a bit
-about that.
+To rule out the first case, what happens if you run the test with your
+"fairness for seeky processes" patch?
+To rule out the second case, what happens if you increase the slice_idl=
+e?
 
-Note this is totally untested!
+Thanks,
+Corrado
 
-diff --git a/block/elevator.c b/block/elevator.c
-index 1975b61..d00a72b 100644
---- a/block/elevator.c
-+++ b/block/elevator.c
-@@ -497,9 +497,17 @@ int elv_merge(struct request_queue *q, struct request **req, struct bio *bio)
- 	 * See if our hash lookup can find a potential backmerge.
- 	 */
- 	__rq = elv_rqhash_find(q, bio->bi_sector);
--	if (__rq && elv_rq_merge_ok(__rq, bio)) {
--		*req = __rq;
--		return ELEVATOR_BACK_MERGE;
-+	if (__rq) {
-+		/*
-+		 * If requests are queued behind this one, disallow merge. This
-+		 * prevents streaming IO from continually passing new IO.
-+		 */
-+		if (elv_latter_request(q, __rq))
-+			return ELEVATOR_NO_MERGE;
-+		if (elv_rq_merge_ok(__rq, bio)) {
-+			*req = __rq;
-+			return ELEVATOR_BACK_MERGE;
-+		}
- 	}
- 
- 	if (e->ops->elevator_merge_fn)
+>
+> With cgroup thing, We will run 100ms slice for the group in which fir=
+efox
+> is being launched and then give 100ms uninterrupted time slice to dd.=
+ So
+> it should cut down on number of seeks happening and that's why we pro=
+bably
+> see this improvement.
+>
+> So grouping can help in such cases. May be you can move your X sessio=
+n in
+> one group and launch the big IO in other group. Most likely you shoul=
+d
+> have better desktop experience without compromising on dd thread outp=
+ut.
 
--- 
-Jens Axboe
+> Thanks
+> Vivek
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
+ml
+> Please read the FAQ at =C2=A0http://www.tux.org/lkml/
+>
+
+
+
+--=20
+_______________________________________________________________________=
+___
+
+dott. Corrado Zoccolo                          mailto:czoccolo@gmail.co=
+m
+PhD - Department of Computer Science - University of Pisa, Italy
+-----------------------------------------------------------------------=
+---
