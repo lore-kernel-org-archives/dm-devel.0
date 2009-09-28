@@ -1,18 +1,18 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: multipath-tools and queue-length/service-time path
-	selectors oops
-Date: Mon, 28 Sep 2009 16:41:48 +0900
-Message-ID: <4AC068BC.7040301@ct.jp.nec.com>
-References: <20090911213435.GA1590@thumper2> <4AADA753.6000205@ct.jp.nec.com>
-	<20090914151251.GA17421@thumper2> <4AAEF795.9060301@ct.jp.nec.com>
-	<20090915143509.GA22993@thumper2> <4AB2E471.9010802@ct.jp.nec.com>
-	<20090924192859.GA14887@thumper2>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: IO scheduler based IO controller V10
+Date: Mon, 28 Sep 2009 10:56:55 -0400
+Message-ID: <20090928145655.GB8192@redhat.com>
+References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
+	<4ABC28DE.7050809@datenparkplatz.de>
+	<20090925202636.GC15007@redhat.com>
+	<4e5e476b0909271000u69d79346s27cccad219e49902@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090924192859.GA14887@thumper2>
+Content-Disposition: inline
+In-Reply-To: <4e5e476b0909271000u69d79346s27cccad219e49902@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,79 +22,170 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andy <genanr@emsphone.com>, Christophe Varoqui <christophe.varoqui@free.fr>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Corrado Zoccolo <czoccolo@gmail.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-Hi Andy and Christophe,
+On Sun, Sep 27, 2009 at 07:00:08PM +0200, Corrado Zoccolo wrote:
+> Hi Vivek,
+> On Fri, Sep 25, 2009 at 10:26 PM, Vivek Goyal <vgoyal@redhat.com> wrote=
+:
+> > On Fri, Sep 25, 2009 at 04:20:14AM +0200, Ulrich Lukas wrote:
+> >> Vivek Goyal wrote:
+> >> > Notes:
+> >> > - With vanilla CFQ, random writers can overwhelm a random reader.
+> >> > =A0 Bring down its throughput and bump up latencies significantly.
+> >>
+> >>
+> >> IIRC, with vanilla CFQ, sequential writing can overwhelm random read=
+ers,
+> >> too.
+> >>
+> >> I'm basing this assumption on the observations I made on both OpenSu=
+se
+> >> 11.1 and Ubuntu 9.10 alpha6 which I described in my posting on LKML
+> >> titled: "Poor desktop responsiveness with background I/O-operations"=
+ of
+> >> 2009-09-20.
+> >> (Message ID: 4AB59CBB.8090907@datenparkplatz.de)
+> >>
+> >>
+> >> Thus, I'm posting this to show that your work is greatly appreciated=
+,
+> >> given the rather disappointig status quo of Linux's fairness when it
+> >> comes to disk IO time.
+> >>
+> >> I hope that your efforts lead to a change in performance of current
+> >> userland applications, the sooner, the better.
+> >>
+> > [Please don't remove people from original CC list. I am putting them =
+back.]
+> >
+> > Hi Ulrich,
+> >
+> > I quicky went through that mail thread and I tried following on my
+> > desktop.
+> >
+> > ##########################################
+> > dd if=3D/home/vgoyal/4G-file of=3D/dev/null &
+> > sleep 5
+> > time firefox
+> > # close firefox once gui pops up.
+> > ##########################################
+> >
+> > It was taking close to 1 minute 30 seconds to launch firefox and dd g=
+ot
+> > following.
+> >
+> > 4294967296 bytes (4.3 GB) copied, 100.602 s, 42.7 MB/s
+> >
+> > (Results do vary across runs, especially if system is booted fresh. D=
+on't
+> > =A0know why...).
+> >
+> >
+> > Then I tried putting both the applications in separate groups and ass=
+ign
+> > them weights 200 each.
+> >
+> > ##########################################
+> > dd if=3D/home/vgoyal/4G-file of=3D/dev/null &
+> > echo $! > /cgroup/io/test1/tasks
+> > sleep 5
+> > echo $$ > /cgroup/io/test2/tasks
+> > time firefox
+> > # close firefox once gui pops up.
+> > ##########################################
+> >
+> > Now I firefox pops up in 27 seconds. So it cut down the time by 2/3.
+> >
+> > 4294967296 bytes (4.3 GB) copied, 84.6138 s, 50.8 MB/s
+> >
+> > Notice that throughput of dd also improved.
+> >
+> > I ran the block trace and noticed in many a cases firefox threads
+> > immediately preempted the "dd". Probably because it was a file system
+> > request. So in this case latency will arise from seek time.
+> >
+> > In some other cases, threads had to wait for up to 100ms because dd w=
+as
+> > not preempted. In this case latency will arise both from waiting on q=
+ueue
+> > as well as seek time.
+>=20
+> I think cfq should already be doing something similar, i.e. giving
+> 100ms slices to firefox, that alternate with dd, unless:
+> * firefox is too seeky (in this case, the idle window will be too small=
+)
+> * firefox has too much think time.
+>=20
 
-On 09/25/2009 04:29 AM +0900, Andy wrote:
-> On Fri, Sep 18, 2009 at 10:37:53AM +0900, Kiyoshi Ueda wrote:
->> Hi Andy,
->>
->> Sorry for the late reply.
->>
->> On 09/15/2009 11:35 PM +0900, Andy wrote:
->>> Now, I have another question. Why does the queue-length selector not use all
->>> my paths?
->>>
->>> Sep 15 09:25:44 | loop0: device node name blacklisted
->>> Sep 15 09:25:44 | loop1: device node name blacklisted
->> <snip>
->>> Sep 15 09:25:44 | params = 0 0 1 1 queue-length 0 4 1 8:64 8 8:144 8 8:224 8 65:48 8 
->>> Sep 15 09:25:44 | status = 2 0 0 0 1 1 A 0 4 1 8:64 A 0 0 8:144 A 0 0 8:224 A 0 0 65:48 A 0 0 
->>> Sep 15 09:25:44 | 8: not found in pathvec
->>> Sep 15 09:25:44 | Invalid device number 8
->>> Sep 15 09:25:44 | Invalid device number 8
->> <snip>
->>> reload: u02 (350002ac000020246) undef 3PARdata,VV
->>> size=100G features='0' hwhandler='0' wp=undef
->>> `-+- policy='queue-length 0' prio=4 status=undef
->>>   |- 1:0:0:3 sde 8:64  active ready running
->>>   |- 1:0:1:3 sdj 8:144 active ready running
->>>   |- 2:0:0:3 sdo 8:224 undef ready running
->>>   `- 2:0:1:3 sdt 65:48 undef ready running
->>> Sep 15 09:25:49 | Invalid device number 8
->>> Sep 15 09:25:49 | Invalid device number 8
->>>
->>>
->>> u02 (350002ac000020246) dm-3 3PARdata,VV
->>> size=100G features='0' hwhandler='0' wp=rw
->>> `-+- policy='queue-length 0' prio=2 status=active
->>>   |- 1:0:0:3 sde 8:64  active ready running
->>>   |- #:#:#:# -   #:#   active faulty running
->>>   |- 1:0:1:3 sdj 8:144 active ready running
->>>   `- #:#:#:# -   #:#   active faulty running
->> Actual device configuration seems to be working fine, but the getting
->> information from the configured device seems to be failing due to
->> table parsing problem in disassemble_map().
->> (The RHEL5's device-mapper-multipath package works fine.
->>  So the problem seems to be introduced during upstream development.)
->>
->> I guess the attached patch works around the problem. Please try it.
->> Please note that this patch may *NOT* be a complete fix.
->> Some more codes for new dynamic load balancers may be needed.
->>
->> By the way, unfortunatelly, I can't work on this next week.
->> I'll look at this more after that.  Sorry for the inconvenience.
->>
-> 
-> I've been busy myself.  But, I did want to let you know that your patches
-> worked.
+Hi Corrado,
 
-Thank you for your testing, Andy.
+"firefox" is the shell script to setup the environment and launch the
+broser. It seems to be a group of threads. Some of them run in parallel
+and some of these seems to be running one after the other (once previous
+process or threads finished).
 
 
-Christophe,
-I found that you have already applied the patch:
-    http://git.kernel.org/?p=linux/storage/multipath-tools/.git;a=commit;h=6a3b111e5e1fb6661a6fe4ff5a44397128279a10
+> To rule out the first case, what happens if you run the test with your
+> "fairness for seeky processes" patch?
 
-Although the patch is not related to the new dynamic load balancers
-directly, it definitely fixes a bug of the table parser.
-Thank you very much.
+I applied that patch and it helps a lot.
 
-As for the actual parsers of the new load balancers, I'll investigate
-the needs and post as separate patches.
+http://lwn.net/Articles/341032/
 
-Thanks,
-Kiyoshi Ueda
+With above patchset applied, and fairness=3D1, firefox pops up in 27-28
+seconds.
+
+So it looks like if we don't disable idle window for seeky processes on=20
+hardware supporting command queuing, it helps in this particular case.
+
+Thanks
+Vivek
+
+
+=20
+> To rule out the second case, what happens if you increase the slice_idl=
+e?
+>=20
+> Thanks,
+> Corrado
+>=20
+> >
+> > With cgroup thing, We will run 100ms slice for the group in which fir=
+efox
+> > is being launched and then give 100ms uninterrupted time slice to dd.=
+ So
+> > it should cut down on number of seeks happening and that's why we pro=
+bably
+> > see this improvement.
+> >
+> > So grouping can help in such cases. May be you can move your X sessio=
+n in
+> > one group and launch the big IO in other group. Most likely you shoul=
+d
+> > have better desktop experience without compromising on dd thread outp=
+ut.
+>=20
+> > Thanks
+> > Vivek
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+> > Please read the FAQ at =A0http://www.tux.org/lkml/
+> >
+>=20
+>=20
+>=20
+> --=20
+> _______________________________________________________________________=
+___
+>=20
+> dott. Corrado Zoccolo                          mailto:czoccolo@gmail.co=
+m
+> PhD - Department of Computer Science - University of Pisa, Italy
+> -----------------------------------------------------------------------=
+---
