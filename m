@@ -1,8 +1,10 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults libm ...
-Date: 28 Sep 2009 18:41:20 -0000
-Message-ID: <20090928184120.22090.qmail@sourceware.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: lockspace interface
+Date: Mon, 28 Sep 2009 14:53:53 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0909281445570.3880@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,62 +15,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: Jonathan Brassow <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2009-09-28 18:41:20
+Hi
 
-Modified files:
-	.              : multipath.conf.defaults 
-	libmultipath   : hwtable.c 
+What's the purpose of two-level uuid-locking?
+I.e. you call
+lockspace_handle = dm_cluster_lock_init(char *uuid1)
+and then
+dm_cluster_lock_by_str(void *lockspace_handle, char *uuid2, ...)
 
-Log message:
-	Fix for bz #517896. Add default configurations for HP devices.
+Why not use just one uuid?
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.16&r2=1.5.4.17
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.22&r2=1.20.2.23
+Also think that locking will be heavily repeated (at least on a single 
+node), so it is needed to make lock as fast as possible --- without any 
+string operations, hashing, searching, associated spinlocks.
 
---- multipath-tools/multipath.conf.defaults	2009/09/28 18:28:48	1.5.4.16
-+++ multipath-tools/multipath.conf.defaults	2009/09/28 18:41:20	1.5.4.17
-@@ -58,7 +58,7 @@
- #       }
- #       device {
- #               vendor                  "(COMPAQ|HP)"
--#               product                 "HSV1[01]1|HSV2[01]0|HSV300"
-+#               product                 "HSV1[01]1|HSV2[01]0|HSV300|HSV4[05]0"
- #		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
- #               prio_callout            "/sbin/mpath_prio_alua /dev/%n"	
- #		features		"0"
-@@ -100,7 +100,7 @@
- #        }
- #       device {
- #               vendor                  "HP"
--#               product                 "MSA2012sa|MSA23(12|24)(fc|i|sa)"
-+#               product                 "MSA2012sa|MSA23(12|24)(fc|i|sa)|MSA2000s VOLUME"
- #               getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
- #               prio_callout            "/sbin/mpath_prio_alua /dev/%n"
- #               features                "0"
---- multipath-tools/libmultipath/hwtable.c	2009/09/28 18:28:48	1.20.2.22
-+++ multipath-tools/libmultipath/hwtable.c	2009/09/28 18:41:20	1.20.2.23
-@@ -93,7 +93,7 @@
- 	{
- 		/* EVA 3000/5000 with new firmware, EVA 4000/6000/8000, EVA 4400 */
- 		.vendor        = "(COMPAQ|HP)",
--		.product       = "HSV1[01]1|HSV2[01]0|HSV300",
-+		.product       = "HSV1[01]1|HSV2[01]0|HSV300|HSV4[05]|HSV4[05]0",
- 		.getuid        = DEFAULT_GETUID,
- 		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = DEFAULT_FEATURES,
-@@ -141,7 +141,7 @@
- 	{
-                  /* HP MSA2000 product family with new firmware */
-                 .vendor        = "HP",
--                .product       = "MSA2012sa|MSA23(12|24)(fc|i|sa)",
-+                .product       = "MSA2012sa|MSA23(12|24)(fc|i|sa)|MSA2000s VOLUME",
-                 .getuid        = DEFAULT_GETUID,
-                 .getprio       = "/sbin/mpath_prio_alua /dev/%n",
-                 .features      = DEFAULT_FEATURES,
+I'd propose to change the interface to
+
+lockspace_handle = dm_cluster_lock_init(char *uuid)
+dm_cluster_lock_by_str(void *lockspace_handle, ...)
+
+--- assume that "uuid" already uniquely identifies the snapshot --- and 
+that second uuid is unnecessary. You can then get rid of "find_dcl" 
+function and its complexities (spinlock, list walking, strlen, strcmp) --- 
+so that they won't be executed on the fast path --- and lockspace_handle 
+could be a single pointer to struct dm_cluster_lock.
+
+Mikulas
