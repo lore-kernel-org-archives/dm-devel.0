@@ -1,14 +1,18 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: circular locking dependency in dm
-Date: Mon, 28 Sep 2009 16:39:17 +0900
-Message-ID: <4AC06825.2050101@ct.jp.nec.com>
-References: <20090924081127.GA6387@schmichrtp.de.ibm.com>
+Subject: Re: multipath-tools and queue-length/service-time path
+	selectors oops
+Date: Mon, 28 Sep 2009 16:41:48 +0900
+Message-ID: <4AC068BC.7040301@ct.jp.nec.com>
+References: <20090911213435.GA1590@thumper2> <4AADA753.6000205@ct.jp.nec.com>
+	<20090914151251.GA17421@thumper2> <4AAEF795.9060301@ct.jp.nec.com>
+	<20090915143509.GA22993@thumper2> <4AB2E471.9010802@ct.jp.nec.com>
+	<20090924192859.GA14887@thumper2>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090924081127.GA6387@schmichrtp.de.ibm.com>
+In-Reply-To: <20090924192859.GA14887@thumper2>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,112 +22,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christof Schmitt <christof.schmitt@de.ibm.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Anderson <andmike@linux.vnet.ibm.com>
+To: Andy <genanr@emsphone.com>, Christophe Varoqui <christophe.varoqui@free.fr>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Christof, Mike and all,
+Hi Andy and Christophe,
 
-This is just an information for all dm developers.
-Please see below.
+On 09/25/2009 04:29 AM +0900, Andy wrote:
+> On Fri, Sep 18, 2009 at 10:37:53AM +0900, Kiyoshi Ueda wrote:
+>> Hi Andy,
+>>
+>> Sorry for the late reply.
+>>
+>> On 09/15/2009 11:35 PM +0900, Andy wrote:
+>>> Now, I have another question. Why does the queue-length selector not use all
+>>> my paths?
+>>>
+>>> Sep 15 09:25:44 | loop0: device node name blacklisted
+>>> Sep 15 09:25:44 | loop1: device node name blacklisted
+>> <snip>
+>>> Sep 15 09:25:44 | params = 0 0 1 1 queue-length 0 4 1 8:64 8 8:144 8 8:224 8 65:48 8 
+>>> Sep 15 09:25:44 | status = 2 0 0 0 1 1 A 0 4 1 8:64 A 0 0 8:144 A 0 0 8:224 A 0 0 65:48 A 0 0 
+>>> Sep 15 09:25:44 | 8: not found in pathvec
+>>> Sep 15 09:25:44 | Invalid device number 8
+>>> Sep 15 09:25:44 | Invalid device number 8
+>> <snip>
+>>> reload: u02 (350002ac000020246) undef 3PARdata,VV
+>>> size=100G features='0' hwhandler='0' wp=undef
+>>> `-+- policy='queue-length 0' prio=4 status=undef
+>>>   |- 1:0:0:3 sde 8:64  active ready running
+>>>   |- 1:0:1:3 sdj 8:144 active ready running
+>>>   |- 2:0:0:3 sdo 8:224 undef ready running
+>>>   `- 2:0:1:3 sdt 65:48 undef ready running
+>>> Sep 15 09:25:49 | Invalid device number 8
+>>> Sep 15 09:25:49 | Invalid device number 8
+>>>
+>>>
+>>> u02 (350002ac000020246) dm-3 3PARdata,VV
+>>> size=100G features='0' hwhandler='0' wp=rw
+>>> `-+- policy='queue-length 0' prio=2 status=active
+>>>   |- 1:0:0:3 sde 8:64  active ready running
+>>>   |- #:#:#:# -   #:#   active faulty running
+>>>   |- 1:0:1:3 sdj 8:144 active ready running
+>>>   `- #:#:#:# -   #:#   active faulty running
+>> Actual device configuration seems to be working fine, but the getting
+>> information from the configured device seems to be failing due to
+>> table parsing problem in disassemble_map().
+>> (The RHEL5's device-mapper-multipath package works fine.
+>>  So the problem seems to be introduced during upstream development.)
+>>
+>> I guess the attached patch works around the problem. Please try it.
+>> Please note that this patch may *NOT* be a complete fix.
+>> Some more codes for new dynamic load balancers may be needed.
+>>
+>> By the way, unfortunatelly, I can't work on this next week.
+>> I'll look at this more after that.  Sorry for the inconvenience.
+>>
+> 
+> I've been busy myself.  But, I did want to let you know that your patches
+> worked.
 
-On 09/24/2009 05:11 PM +0900, Christof Schmitt wrote:
-> While testing some zfcp patches with the current linux-2.6 git
-> checkout i got this:
-> 
-> =======================================================
-> [ INFO: possible circular locking dependency detected ]
-> 2.6.31-08358-g94a8d5c-dirty #2
-> -------------------------------------------------------
-> multipathd/2409 is trying to acquire lock:
->  (_event_lock){+.+.+.}, at: [<00000000002e5efc>] dm_table_event+0x50/0x80
-> 
-> but task is already holding lock:
->  (_hash_lock){++++..}, at: [<00000000002e9d84>] dev_remove+0x2c/0xf0
-> 
-> which lock already depends on the new lock.
-> 
-> 
-> the existing dependency chain (in reverse order) is:
-> 
-> -> #1 (_hash_lock){++++..}:
->        [<0000000000086d92>] __lock_acquire+0xe2e/0x19cc
->        [<00000000000879a0>] lock_acquire+0x70/0x98
->        [<00000000004eb486>] down_read+0x5e/0x9c
->        [<00000000002e81ba>] dm_copy_name_and_uuid+0x3e/0xec
->        [<00000000002e131a>] dm_send_uevents+0x9a/0x180
->        [<00000000002e1eee>] event_callback+0xae/0xf8
->        [<00000000002e5f12>] dm_table_event+0x66/0x80
->        [<000000000006b0a4>] worker_thread+0x24c/0x308
->        [<0000000000071302>] kthread+0x9a/0xa4
->        [<000000000001c5de>] kernel_thread_starter+0x6/0xc
->        [<000000000001c5d8>] kernel_thread_starter+0x0/0xc
-> 
-> -> #0 (_event_lock){+.+.+.}:
->        [<00000000000877e2>] __lock_acquire+0x187e/0x19cc
->        [<00000000000879a0>] lock_acquire+0x70/0x98
->        [<00000000004ea7a0>] mutex_lock_nested+0x78/0x3f0
->        [<00000000002e5efc>] dm_table_event+0x50/0x80
->        [<00000000002e9d1a>] __hash_remove+0xaa/0xe8
->        [<00000000002e9db6>] dev_remove+0x5e/0xf0
->        [<00000000002ea5e4>] ctl_ioctl+0x20c/0x288
->        [<00000000002ea68a>] dm_ctl_ioctl+0x2a/0x38
->        [<00000000000fc6cc>] vfs_ioctl+0x4c/0xdc
->        [<00000000000fcbdc>] do_vfs_ioctl+0x3a8/0x5c8
->        [<00000000000fce4c>] SyS_ioctl+0x50/0x8c
->        [<0000000000029cf6>] sysc_noemu+0x10/0x16
->        [<0000020000264286>] 0x20000264286
-> 
-> other info that might help us debug this:
-> 
-> 1 lock held by multipathd/2409:
->  #0:  (_hash_lock){++++..}, at: [<00000000002e9d84>] dev_remove+0x2c/0xf0
-> 
-> stack backtrace:
-> CPU: 0 Not tainted 2.6.31-08358-g94a8d5c-dirty #2
-> Process multipathd (pid: 2409, task: 000000002f6c6038, ksp: 000000002c8c7aa8)
->        0000000000000000 000000002c8c7998 0000000000000002 0000000000000000 
->        000000002c8c7a38 000000002c8c79b0 000000002c8c79b0 00000000004e8582 
->        0000000000000000 0000000000000001 0000000000000000 0000000000000000 
->        000000000000000d 0000000000000000 000000002c8c7a00 000000000000000e 
->        00000000004faf90 00000000000179e0 000000002c8c7998 000000002c8c79e0 
-> Call Trace:
-> ([<00000000000178e2>] show_trace+0xee/0x144)
->  [<00000000000858ca>] print_circular_bug+0x112/0x124
->  [<00000000000877e2>] __lock_acquire+0x187e/0x19cc
->  [<00000000000879a0>] lock_acquire+0x70/0x98
->  [<00000000004ea7a0>] mutex_lock_nested+0x78/0x3f0
->  [<00000000002e5efc>] dm_table_event+0x50/0x80
->  [<00000000002e9d1a>] __hash_remove+0xaa/0xe8
->  [<00000000002e9db6>] dev_remove+0x5e/0xf0
->  [<00000000002ea5e4>] ctl_ioctl+0x20c/0x288
->  [<00000000002ea68a>] dm_ctl_ioctl+0x2a/0x38
->  [<00000000000fc6cc>] vfs_ioctl+0x4c/0xdc
->  [<00000000000fcbdc>] do_vfs_ioctl+0x3a8/0x5c8
->  [<00000000000fce4c>] SyS_ioctl+0x50/0x8c
->  [<0000000000029cf6>] sysc_noemu+0x10/0x16
->  [<0000020000264286>] 0x20000264286
-> INFO: lockdep is turned off.
-
-I think this is not a regression in the recent kernel and this is
-a known AB-BA deadlock issue which was introduced by this commit:
----------------------------------------------------------------------
-    commit 7a8c3d3b92883798e4ead21dd48c16db0ec0ff6f
-    Author: Mike Anderson <andmike@linux.vnet.ibm.com>
-    Date:   Fri Oct 19 22:48:01 2007 +0100
-
-        dm: uevent generate events
-
-        This patch adds support for the dm_path_event dm_send_event
-        functions which create and send udev events.
----------------------------------------------------------------------
+Thank you for your testing, Andy.
 
 
-Other similar deadlock possibilities which are caused by the patch
-were pointed out here:
-    http://marc.info/?l=dm-devel&m=123130584210651&w=2
+Christophe,
+I found that you have already applied the patch:
+    http://git.kernel.org/?p=linux/storage/multipath-tools/.git;a=commit;h=6a3b111e5e1fb6661a6fe4ff5a44397128279a10
 
-But all problems above haven't been fixed yet.
+Although the patch is not related to the new dynamic load balancers
+directly, it definitely fixes a bug of the table parser.
+Thank you very much.
+
+As for the actual parsers of the new load balancers, I'll investigate
+the needs and post as separate patches.
 
 Thanks,
 Kiyoshi Ueda
