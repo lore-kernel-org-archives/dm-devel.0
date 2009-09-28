@@ -1,42 +1,57 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: IO scheduler based IO controller V10
-Date: Mon, 28 Sep 2009 20:24:57 +0200
-Message-ID: <1254162297.9820.54.camel@marge.simson.net>
-References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-	 <4ABC28DE.7050809@datenparkplatz.de> <20090925202636.GC15007@redhat.com>
-	 <1253976676.7005.40.camel@marge.simson.net>
-	 <1254034500.7933.6.camel@marge.simson.net>
-	 <20090927164235.GA23126@kernel.dk>
-	 <1254075359.7354.66.camel@marge.simson.net>
-	 <1254110648.7683.3.camel@marge.simson.net>
-	 <20090928174809.GB3643@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752830AbZI1SZM@vger.kernel.org>
-In-Reply-To: <20090928174809.GB3643@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
+From: bmarzins@sourceware.org
+Subject: multipath-tools ./multipath.conf.defaults libm ...
+Date: 28 Sep 2009 18:28:49 -0000
+Message-ID: <20090928182849.11617.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2009-09-28 at 13:48 -0400, Vivek Goyal wrote:
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-09-28 18:28:48
 
-> Hmm.., so close to 25% reduction on average in completion time of konsole.
-> But this is in presece of writer. Does this help even in presence of 1 or
-> more sequential readers going?
+Modified files:
+	.              : multipath.conf.defaults 
+	libmultipath   : hwtable.c 
 
-Dunno, I've only tested sequential writer.
+Log message:
+	Fix for bz #504619.  MSA 1000s with new firmware can't list the vendor as HP or COMPAQ, same as with the old firmware.  Updated the default configuration to
+	match this.
 
-> So here latency seems to be coming from three sources.
-> 
-> - Wait in CFQ before request is dispatched (only in case of competing seq readers).
-> - seek latencies
-> - latencies because of bigger requests are already dispatched to disk.
-> 
-> So limiting the size of request will help with third factor but not with first  
-> two factors and here seek latencies seem to be the biggest contributor.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.15&r2=1.5.4.16
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.21&r2=1.20.2.22
 
-Yeah, seek latency seems to dominate.
-
-	-Mike
+--- multipath-tools/multipath.conf.defaults	2009/08/19 21:52:40	1.5.4.15
++++ multipath-tools/multipath.conf.defaults	2009/09/28 18:28:48	1.5.4.16
+@@ -71,7 +71,7 @@
+ #               path_checker            tur
+ #        }
+ #       device {
+-#               vendor                  "HP"
++#               vendor                  "(COMPAQ|HP)"
+ #               product                 "MSA VOLUME"
+ #		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
+ #               prio_callout            "/sbin/mpath_prio_alua %n"	
+--- multipath-tools/libmultipath/hwtable.c	2009/08/31 17:17:10	1.20.2.21
++++ multipath-tools/libmultipath/hwtable.c	2009/09/28 18:28:48	1.20.2.22
+@@ -108,7 +108,7 @@
+ 	},
+ 	{
+ 		/* MSA 1000/1500 with new firmware */
+-		.vendor        = "HP",
++		.vendor        = "(COMPAQ|HP)",
+ 		.product       = "MSA VOLUME",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
