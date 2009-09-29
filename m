@@ -1,18 +1,9 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: Dell MD3000/multipath - huge numbers of I/O errors
-	on	boot
-Date: Tue, 29 Sep 2009 11:22:37 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474E77D19@cosmail01.lsi.com>
-References: <4ABCC970.70603@Calva.COM>
-	<E463DF2B2E584B4A82673F53D62C2EF474E032F1@cosmail01.lsi.com>
-	<4AC23C03.4000405@Calva.COM>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipath multipath.rules
+Date: 29 Sep 2009 17:52:28 -0000
+Message-ID: <20090929175228.32761.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4AC23C03.4000405@Calva.COM>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,81 +13,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Good.. Good.. Thanks for the update...
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-09-29 17:52:28
 
---Babu Moger=20
+Modified files:
+	multipath      : multipath.rules 
 
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of John Hughes
-> Sent: Tuesday, September 29, 2009 11:56 AM
-> To: device-mapper development
-> Subject: Re: [dm-devel] Dell MD3000/multipath - huge numbers of I/O
-> errors on boot
->=20
-> Moger, Babu wrote:
-> > This is a know problem.. As far as I know these errors mostly come
-> during the boot-up if the scsi rdac handler is not there in the initrd
-> image. You might want to try building scsi_dh_rdac into the initrd
-> image.
-> Yay!  that works.  Now I get a nice quiet(ish) boot:
->=20
-> [    0.000000] Initializing cgroup subsys cpuset
-> ...
-> [    1.292136] SCSI subsystem initialized
-> [    1.294173] rdac: device handler registered
-> ...
-> [   30.781404] scsi3 : ioc0: LSISAS1068 B0, FwRev=3D000a3300h, Ports=3D=
-1,
-> MaxQ=3D366, IRQ=3D38
-> [   30.820324] scsi 3:0:0:0: Direct-Access     DELL     MD3000
-> 0735 PQ: 0 ANSI: 5
-> [   30.843415] scsi 3:0:0:0: rdac: LUN 0 (owned)
-> [   30.843838] sd 3:0:0:0: [sdb] 142323712 512-byte hardware sectors:
-> (72.8 GB/67.8 GiB)
-> [   30.844158] sd 3:0:0:0: [sdb] Write Protect is off
-> [   30.844251] sd 3:0:0:0: [sdb] Mode Sense: 77 00 10 08
-> [   30.844929] sd 3:0:0:0: [sdb] Write cache: enabled, read cache:
-> enabled, supports DPO and FUA
-> [   30.845678] sd 3:0:0:0: [sdb] 142323712 512-byte hardware sectors:
-> (72.8 GB/67.8 GiB)
-> [   30.846020] sd 3:0:0:0: [sdb] Write Protect is off
-> [   30.846114] sd 3:0:0:0: [sdb] Mode Sense: 77 00 10 08
-> [   30.846532] sd 3:0:0:0: [sdb] Write cache: enabled, read cache:
-> enabled, supports DPO and FUA
-> [   30.846649]  sdb: unknown partition table
-> [   30.857018] sd 3:0:0:0: [sdb] Attached SCSI disk
-> [   30.857114] sd 3:0:0:0: Embedded Enclosure Device
-> [   31.229896] sd 3:0:0:0: Attached scsi generic sg3 type 0
-> [   31.234390] scsi 3:0:0:1: Direct-Access     DELL     MD3000
-> 0735 PQ: 0 ANSI: 5
-> [   31.256709] scsi 3:0:0:1: rdac: LUN 1 (unowned)
-> [   31.257125] sd 3:0:0:1: [sdc] 142323712 512-byte hardware sectors:
-> (72.8 GB/67.8 GiB)
-> [   31.257444] sd 3:0:0:1: [sdc] Write Protect is off
-> [   31.257539] sd 3:0:0:1: [sdc] Mode Sense: 77 00 10 08
-> [   31.257909] sd 3:0:0:1: [sdc] Write cache: enabled, read cache:
-> enabled, supports DPO and FUA
-> [   31.258338] sd 3:0:0:1: [sdc] 142323712 512-byte hardware sectors:
-> (72.8 GB/67.8 GiB)
-> [   31.258651] sd 3:0:0:1: [sdc] Write Protect is off
-> [   31.258744] sd 3:0:0:1: [sdc] Mode Sense: 77 00 10 08
-> [   31.259108] sd 3:0:0:1: [sdc] Write cache: enabled, read cache:
-> enabled, supports DPO and FUA
-> [   31.259223]  sdc:<2>ldm_validate_partition_table(): Disk read
-> failed.
-> [   31.264296] Dev sdc: unable to read RDB block 0
-> [   31.264389]  unable to read partition table
-> [   31.264521] sd 3:0:0:1: [sdc] Attached SCSI disk
-> [   31.264614] sd 3:0:0:1: Embedded Enclosure Device
-> [   31.528977] sd 3:0:0:1: Attached scsi generic sg4 type 0
->=20
->=20
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Log message:
+	Fix for bz #518575.  running "dmsetup ls --exec" creates devnodes for dm devices
+	that don't have them, if you run this in a udev rule, it can race with removing
+	a dm-device, and end up creating a device node for it, even though the device is
+	removed. This was causing devices created with specific UIDs, GIDs, and modes to
+	occassionally get created with the default UID, GID, mode.  This removes all
+	'dmsetup ls --exec' calls from the multipath udev rules.
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.rules.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.1&r2=1.11.2.2
+
+--- multipath-tools/multipath/multipath.rules	2009/06/23 18:49:12	1.11.2.1
++++ multipath-tools/multipath/multipath.rules	2009/09/29 17:52:27	1.11.2.2
+@@ -4,8 +4,12 @@
+ # KERNEL!="dm-[0-9]*", ACTION=="add", PROGRAM=="/bin/bash -c '/sbin/lsmod | /bin/grep ^dm_multipath'", RUN+="/sbin/multipath -v0 %M:%m"
+ KERNEL!="dm-[0-9]*", GOTO="end_mpath"
+ PROGRAM!="/sbin/mpath_wait %M %m", GOTO="end_mpath"
+-ACTION=="add", RUN+="/sbin/dmsetup ls --target multipath --exec '/sbin/kpartx -a -p p' -j %M -m %m"
+-PROGRAM=="/sbin/dmsetup ls --target multipath --exec /bin/basename -j %M -m %m", RESULT=="?*", NAME="%k", SYMLINK="mpath/%c", OPTIONS="last_rule"
+-PROGRAM!="/bin/bash -c '/sbin/dmsetup info -c --noheadings -j %M -m %m | /bin/grep -q .*:.*:.*:.*:.*:.*:.*:part[0-9]*-mpath-'", GOTO="end_mpath"
+-PROGRAM=="/sbin/dmsetup ls --target linear --exec /bin/basename -j %M -m %m", NAME="%k", RESULT=="?*", SYMLINK="mpath/%c", OPTIONS="last_rule"
++PROGRAM!="/sbin/dmsetup info -c --noheadings -j %M -m %m", GOTO="end_mpath"
++RESULT!="*:*:*:*:*:*:*:mpath-*", GOTO="kpartx_check"
++PROGRAM=="/sbin/dmsetup info -c --noheadings -o name -j %M -m %m", RESULT=="?*", NAME="%k", SYMLINK="mpath/%c", RUN+="/sbin/kpartx -a -p p /dev/mapper/%c"
++OPTIONS="last_rule"
++LABEL="kpartx_check"
++RESULT!="*:*:*:*:*:*:*:part*-mpath-*", GOTO="end_mpath"
++PROGRAM=="/sbin/dmsetup info -c --noheadings -o name -j %M -m %m", RESULT=="?*", NAME="%k", SYMLINK="mpath/%c"
++OPTIONS="last_rule"
+ LABEL="end_mpath"
