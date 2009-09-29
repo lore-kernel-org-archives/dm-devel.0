@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 15/18]
-	dm-exception-store-create-local-exception-caches
-Date: Tue, 29 Sep 2009 18:53:40 -0400
-Message-ID: <1254264823-11538-16-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 16/18]
+	dm-exception-store-add-lookup_exception-to-API
+Date: Tue, 29 Sep 2009 18:53:41 -0400
+Message-ID: <1254264823-11538-17-git-send-email-snitzer@redhat.com>
 References: <1254264823-11538-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -21,277 +21,254 @@ List-Id: dm-devel.ids
 
 From: Jon Brassow <jbrassow@redhat.com>
 
-This patch puts the cache for the completed exceptions into the
-exception store implementations.  This will allow us to remove
-the exception cache from dm-snap.c giving flexibility to the
-exception store implementations and providing a cleaner lookup
-interface in up-coming patches.
+Now that the exception store implementations are capable of
+caching the exceptions on their own, we need a new function
+added to the API to allow us to lookup the exceptions.
+
+Adding 'lookup_exception' to the exception store API.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap-persistent.c |   87 ++++++++++++++++++++++++++++++++++++++-
- drivers/md/dm-snap-transient.c  |   51 ++++++++++++++++++++++-
- 2 files changed, 136 insertions(+), 2 deletions(-)
+ drivers/md/dm-exception-store.h |   12 +++++++
+ drivers/md/dm-snap-persistent.c |   19 ++++++++++++
+ drivers/md/dm-snap-transient.c  |   19 ++++++++++++
+ drivers/md/dm-snap.c            |   61 ++++++++++++++++++++++++--------------
+ 4 files changed, 88 insertions(+), 23 deletions(-)
 
+diff --git a/drivers/md/dm-exception-store.h b/drivers/md/dm-exception-store.h
+index db22284..d3e6a58 100644
+--- a/drivers/md/dm-exception-store.h
++++ b/drivers/md/dm-exception-store.h
+@@ -56,6 +56,18 @@ struct dm_exception_store_type {
+ 				  void *callback_context);
+ 
+ 	/*
++	 * Look up an exception.  Common errors include:
++	 * -ENOENT     : exception not found
++	 * -EWOULDBLOCK: blocking op required and can_block=0
++	 *
++	 * If 'new_chunk' is NULL, the caller simply wants to
++	 * know if the exception exists (0) or not (-ENOENT).
++	 */
++	int (*lookup_exception) (struct dm_exception_store *store,
++				 chunk_t old, chunk_t *new_chunk,
++				 int can_block);
++
++	/*
+ 	 * The snapshot is invalid, note this in the metadata.
+ 	 */
+ 	void (*drop_snapshot) (struct dm_exception_store *store);
 diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index d181957..03b1b6e 100644
+index 03b1b6e..fe05bc8 100644
 --- a/drivers/md/dm-snap-persistent.c
 +++ b/drivers/md/dm-snap-persistent.c
-@@ -89,6 +89,7 @@ struct commit_callback {
-  */
- struct pstore {
- 	struct dm_exception_store *store;
-+	struct dm_exception_table *table;
- 	int version;
- 	int valid;
- 	uint32_t exceptions_per_area;
-@@ -137,6 +138,24 @@ struct pstore {
- 	struct workqueue_struct *metadata_wq;
- };
- 
-+static struct kmem_cache *exception_cache;
-+
-+static struct dm_exception *alloc_exception(void *unused)
-+{
-+	struct dm_exception *e;
-+
-+	e = kmem_cache_alloc(exception_cache, GFP_NOIO);
-+	if (!e)
-+		e = kmem_cache_alloc(exception_cache, GFP_ATOMIC);
-+
-+	return e;
-+}
-+
-+static void free_exception(struct dm_exception *e, void *unused)
-+{
-+	kmem_cache_free(exception_cache, e);
-+}
-+
- static unsigned sectors_to_pages(unsigned sectors)
- {
- 	return DIV_ROUND_UP(sectors, PAGE_SIZE >> 9);
-@@ -408,6 +427,22 @@ static void write_exception(struct pstore *ps,
- 	e->new_chunk = cpu_to_le64(de->new_chunk);
+@@ -722,6 +722,23 @@ static void persistent_commit_exception(struct dm_exception_store *store,
+ 	ps->callback_count = 0;
  }
  
-+static int add_exception(struct pstore *ps, chunk_t old, chunk_t new)
++static int persistent_lookup_exception(struct dm_exception_store *store,
++				       chunk_t old, chunk_t *new_chunk,
++				       int can_block)
 +{
++	struct pstore *ps = get_info(store);
 +	struct dm_exception *e;
 +
-+	e = dm_alloc_exception(ps->table);
++	e = dm_lookup_exception(ps->table, old);
 +	if (!e)
-+		return -ENOMEM;
++		return -ENOENT;
 +
-+	e->old_chunk = old;
-+	e->new_chunk = new;
-+
-+	dm_insert_exception(ps->table, e);
++	if (new_chunk)
++		*new_chunk = e->new_chunk + (old - e->old_chunk);
 +
 +	return 0;
 +}
 +
- /*
-  * Registers the exceptions that are present in the current area.
-  * 'full' is filled in to indicate if the area has been
-@@ -448,7 +483,16 @@ static int insert_exceptions(struct pstore *ps,
- 			ps->next_free = de.new_chunk + 1;
- 
- 		/*
--		 * Otherwise we add the exception to the snapshot.
-+		 * Add the exception to our local cache
-+		 */
-+		r = add_exception(ps, de.old_chunk, de.new_chunk);
-+		if (r)
-+			return r;
-+
-+		/*
-+		 * Redundant until a follow-up patch pulls this out
-+		 * (We leave this in for this patch to maintain working
-+		 * version between patches.)
- 		 */
- 		r = callback(callback_context, de.old_chunk, de.new_chunk);
- 		if (r)
-@@ -511,6 +555,7 @@ static void persistent_dtr(struct dm_exception_store *store)
- 	if (ps->callbacks)
- 		vfree(ps->callbacks);
- 
-+	dm_exception_table_destroy(ps->table);
- 	kfree(ps);
- }
- 
-@@ -621,6 +666,15 @@ static void persistent_commit_exception(struct dm_exception_store *store,
- 	write_exception(ps, ps->current_committed++, &de);
- 
- 	/*
-+	 * We are safe to add the exception to our cache before we
-+	 * issue the callbacks.  If we fail to allocate the memory
-+	 * to put it in the cache though, the callbacks will have to
-+	 * report the failure.
-+	 */
-+	if (add_exception(ps, de.old_chunk, de.new_chunk))
-+		ps->valid = 0;
-+
-+	/*
- 	 * Add the callback to the back of the array.  This code
- 	 * is the only place where the callback array is
- 	 * manipulated, and we know that it will never be called
-@@ -681,6 +735,7 @@ static int persistent_ctr(struct dm_exception_store *store,
- 			  unsigned argc, char **argv)
+ static void persistent_drop_snapshot(struct dm_exception_store *store)
  {
- 	struct pstore *ps;
-+	sector_t hash_size, cow_dev_size, max_buckets;
- 
- 	/* allocate the pstore */
- 	ps = kzalloc(sizeof(*ps), GFP_KERNEL);
-@@ -700,8 +755,26 @@ static int persistent_ctr(struct dm_exception_store *store,
- 	atomic_set(&ps->pending_count, 0);
- 	ps->callbacks = NULL;
- 
-+	cow_dev_size = get_dev_size(store->cow->bdev);
-+	max_buckets = (2 * 1024 * 1024)/sizeof(struct list_head);
-+
-+	hash_size = cow_dev_size >> store->chunk_shift;
-+	hash_size = min(hash_size, max_buckets);
-+
-+	hash_size = rounddown_pow_of_two(hash_size);
-+
-+	ps->table = dm_exception_table_create(hash_size,
-+					      DM_CHUNK_CONSECUTIVE_BITS,
-+					      alloc_exception, NULL,
-+					      free_exception, NULL);
-+	if (!ps->table) {
-+		kfree(ps);
-+		return -ENOMEM;
-+	}
-+
- 	ps->metadata_wq = create_singlethread_workqueue("ksnaphd");
- 	if (!ps->metadata_wq) {
-+		dm_exception_table_destroy(ps->table);
- 		kfree(ps);
- 		DMERR("couldn't start header metadata update thread");
- 		return -ENOMEM;
-@@ -764,9 +837,19 @@ int dm_persistent_snapshot_init(void)
- {
- 	int r;
- 
-+	exception_cache = kmem_cache_create("persistent_exception_cache",
-+					    sizeof(struct dm_exception),
-+					    __alignof__(struct dm_exception),
-+					    0, NULL);
-+	if (!exception_cache) {
-+		DMERR("Couldn't create persistent exception cache.");
-+		return -ENOMEM;
-+	}
-+
- 	r = dm_exception_store_type_register(&_persistent_type);
- 	if (r) {
- 		DMERR("Unable to register persistent exception store type");
-+		kmem_cache_destroy(exception_cache);
- 		return r;
- 	}
- 
-@@ -775,6 +858,7 @@ int dm_persistent_snapshot_init(void)
- 		DMERR("Unable to register old-style persistent exception "
- 		      "store type");
- 		dm_exception_store_type_unregister(&_persistent_type);
-+		kmem_cache_destroy(exception_cache);
- 		return r;
- 	}
- 
-@@ -785,4 +869,5 @@ void dm_persistent_snapshot_exit(void)
- {
- 	dm_exception_store_type_unregister(&_persistent_type);
- 	dm_exception_store_type_unregister(&_persistent_compat_type);
-+	kmem_cache_destroy(exception_cache);
- }
+ 	struct pstore *ps = get_info(store);
+@@ -815,6 +832,7 @@ static struct dm_exception_store_type _persistent_type = {
+ 	.read_metadata = persistent_read_metadata,
+ 	.prepare_exception = persistent_prepare_exception,
+ 	.commit_exception = persistent_commit_exception,
++	.lookup_exception = persistent_lookup_exception,
+ 	.drop_snapshot = persistent_drop_snapshot,
+ 	.fraction_full = persistent_fraction_full,
+ 	.status = persistent_status,
+@@ -828,6 +846,7 @@ static struct dm_exception_store_type _persistent_compat_type = {
+ 	.read_metadata = persistent_read_metadata,
+ 	.prepare_exception = persistent_prepare_exception,
+ 	.commit_exception = persistent_commit_exception,
++	.lookup_exception = persistent_lookup_exception,
+ 	.drop_snapshot = persistent_drop_snapshot,
+ 	.fraction_full = persistent_fraction_full,
+ 	.status = persistent_status,
 diff --git a/drivers/md/dm-snap-transient.c b/drivers/md/dm-snap-transient.c
-index f2ec79c..d499083 100644
+index d499083..eabdcc1 100644
 --- a/drivers/md/dm-snap-transient.c
 +++ b/drivers/md/dm-snap-transient.c
-@@ -19,12 +19,29 @@
-  * Implementation of the store for non-persistent snapshots.
-  *---------------------------------------------------------------*/
- struct transient_c {
-+	struct dm_exception_table *table;
-+
- 	sector_t next_free;
- };
- 
-+/* Could use better allocation policies - like in dm-snap-persistent.c */
-+static struct dm_exception *alloc_exception(void *unused)
-+{
-+	return kmalloc(sizeof(struct dm_exception), GFP_KERNEL);
-+}
-+
-+static void free_exception(struct dm_exception *e, void *unused)
-+{
-+	kfree(e);
-+}
-+
- static void transient_dtr(struct dm_exception_store *store)
- {
--	kfree(store->context);
-+	struct transient_c *tc = store->context;
-+
-+	dm_exception_table_destroy(tc->table);
-+
-+	kfree(tc);
- }
- 
- static int transient_read_metadata(struct dm_exception_store *store,
-@@ -55,6 +72,20 @@ static void transient_commit_exception(struct dm_exception_store *store,
- 				       void (*callback) (void *, int success),
- 				       void *callback_context)
- {
-+	struct transient_c *tc = store->context;
-+	struct dm_exception *new;
-+
-+	new = dm_alloc_exception(tc->table);
-+	if (!new) {
-+		callback(callback_context, 0);
-+		return;
-+	}
-+
-+	new->old_chunk = e->old_chunk;
-+	new->new_chunk = e->new_chunk;
-+
-+	dm_insert_exception(tc->table, new);
-+
- 	/* Just succeed */
+@@ -90,6 +90,23 @@ static void transient_commit_exception(struct dm_exception_store *store,
  	callback(callback_context, 1);
  }
-@@ -70,6 +101,7 @@ static int transient_ctr(struct dm_exception_store *store,
- 			 unsigned argc, char **argv)
+ 
++static int transient_lookup_exception(struct dm_exception_store *store,
++				      chunk_t old, chunk_t *new_chunk,
++				      int can_block)
++{
++	struct transient_c *tc = store->context;
++	struct dm_exception *e;
++
++	e = dm_lookup_exception(tc->table, old);
++	if (!e)
++		return -ENOENT;
++
++	if (new_chunk)
++		*new_chunk = e->new_chunk + (old - e->old_chunk);
++
++	return 0;
++}
++
+ static void transient_fraction_full(struct dm_exception_store *store,
+ 				    sector_t *numerator, sector_t *denominator)
  {
- 	struct transient_c *tc;
-+	sector_t hash_size, cow_dev_size, max_buckets;
- 
- 	tc = kmalloc(sizeof(struct transient_c), GFP_KERNEL);
- 	if (!tc)
-@@ -78,6 +110,23 @@ static int transient_ctr(struct dm_exception_store *store,
- 	tc->next_free = 0;
- 	store->context = tc;
- 
-+	cow_dev_size = get_dev_size(store->cow->bdev);
-+	max_buckets = (2 * 1024 * 1024)/sizeof(struct list_head);
-+
-+	hash_size = cow_dev_size >> store->chunk_shift;
-+	hash_size = min(hash_size, max_buckets);
-+
-+	hash_size = rounddown_pow_of_two(hash_size);
-+
-+	tc->table = dm_exception_table_create(hash_size,
-+					      DM_CHUNK_CONSECUTIVE_BITS,
-+					      alloc_exception, NULL,
-+					      free_exception, NULL);
-+	if (!tc->table) {
-+		kfree(tc);
-+		return -ENOMEM;
-+	}
-+
- 	return 0;
+@@ -160,6 +177,8 @@ static struct dm_exception_store_type _transient_type = {
+ 	.read_metadata = transient_read_metadata,
+ 	.prepare_exception = transient_prepare_exception,
+ 	.commit_exception = transient_commit_exception,
++	.lookup_exception = transient_lookup_exception,
++	.lookup_exception = transient_lookup_exception,
+ 	.fraction_full = transient_fraction_full,
+ 	.status = transient_status,
+ };
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 3b8ae1e..cb92d8f 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -981,24 +981,21 @@ __find_pending_exception(struct dm_snapshot *s,
+ 	return pe;
  }
  
+-static void remap_exception(struct dm_snapshot *s, struct dm_exception *e,
+-			    struct bio *bio, chunk_t chunk)
++static void remap_exception(struct dm_snapshot *s, struct bio *bio,
++			    chunk_t chunk)
+ {
+ 	bio->bi_bdev = s->store->cow->bdev;
+-	bio->bi_sector = chunk_to_sector(s->store,
+-					 dm_chunk_number(e->new_chunk) +
+-					 (chunk - e->old_chunk)) +
+-					 (bio->bi_sector &
+-					  s->store->chunk_mask);
++	bio->bi_sector = chunk_to_sector(s->store, dm_chunk_number(chunk)) +
++		(bio->bi_sector & s->store->chunk_mask);
+ }
+ 
+ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ 			union map_info *map_context)
+ {
+-	struct dm_exception *e, *tmp_e;
++	struct dm_exception *tmp_e;
+ 	struct dm_snapshot *s = ti->private;
+-	int r = DM_MAPIO_REMAPPED;
+-	chunk_t chunk;
++	int rtn, r = DM_MAPIO_REMAPPED;
++	chunk_t chunk, new_chunk;
+ 	struct dm_snap_pending_exception *pe = NULL;
+ 
+ 	if (unlikely(bio_empty_barrier(bio))) {
+@@ -1023,13 +1020,20 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ 	}
+ 
+ 	/* If the block is already remapped - use that, else remap it */
+-	e = dm_lookup_exception(s->complete, chunk);
+-	if (e) {
+-		remap_exception(s, e, bio, chunk);
++	rtn = s->store->type->lookup_exception(s->store, chunk, &new_chunk, 1);
++	if (!rtn) {
++		remap_exception(s, bio, new_chunk);
+ 		goto out_unlock;
+ 	}
+ 
+ 	/*
++	 * Could be -EWOULDBLOCK, but we don't handle that yet
++	 * and there are currently no exception store
++	 * implementations that would require us to.
++	 */
++	BUG_ON(rtn != -ENOENT);
++
++	/*
+ 	 * Write to snapshot - higher level takes care of RW/RO
+ 	 * flags so we should only get this if we are
+ 	 * writeable.
+@@ -1049,10 +1053,11 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ 				goto out_unlock;
+ 			}
+ 
+-			e = dm_lookup_exception(s->complete, chunk);
+-			if (e) {
++			rtn = s->store->type->lookup_exception(s->store, chunk,
++							       &new_chunk, 1);
++			if (!rtn) {
+ 				dm_free_exception(s->pending, &pe->e);
+-				remap_exception(s, e, bio, chunk);
++				remap_exception(s, bio, new_chunk);
+ 				goto out_unlock;
+ 			}
+ 
+@@ -1064,7 +1069,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ 			}
+ 		}
+ 
+-		remap_exception(s, &pe->e, bio, chunk);
++		remap_exception(s, bio, pe->e.new_chunk);
+ 		bio_list_add(&pe->snapshot_bios, bio);
+ 
+ 		r = DM_MAPIO_SUBMITTED;
+@@ -1162,9 +1167,9 @@ static int snapshot_iterate_devices(struct dm_target *ti,
+  *---------------------------------------------------------------*/
+ static int __origin_write(struct list_head *snapshots, struct bio *bio)
+ {
+-	int r = DM_MAPIO_REMAPPED, first = 0;
++	int rtn, r = DM_MAPIO_REMAPPED, first = 0;
+ 	struct dm_snapshot *snap;
+-	struct dm_exception *e, *tmp_e;
++	struct dm_exception *tmp_e;
+ 	struct dm_snap_pending_exception *pe, *next_pe, *primary_pe = NULL;
+ 	chunk_t chunk;
+ 	LIST_HEAD(pe_queue);
+@@ -1196,10 +1201,18 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
+ 		 * ref_count is initialised to 1 so pending_complete()
+ 		 * won't destroy the primary_pe while we're inside this loop.
+ 		 */
+-		e = dm_lookup_exception(snap->complete, chunk);
+-		if (e)
++		rtn = snap->store->type->lookup_exception(snap->store, chunk,
++							  NULL, 1);
++		if (!rtn)
+ 			goto next_snapshot;
+ 
++		/*
++		 * 'rtn' could be -EWOULDBLOCK, but we don't handle that yet
++		 * and there are currently no exception store implementations
++		 * that would require us to.
++		 */
++		BUG_ON(rtn != -ENOENT);
++
+ 		pe = __lookup_pending_exception(snap, chunk);
+ 		if (!pe) {
+ 			up_write(&snap->lock);
+@@ -1213,8 +1226,10 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
+ 				goto next_snapshot;
+ 			}
+ 
+-			e = dm_lookup_exception(snap->complete, chunk);
+-			if (e) {
++			rtn = snap->store->type->lookup_exception(snap->store,
++								  chunk, NULL,
++								  1);
++			if (!rtn) {
+ 				dm_free_exception(snap->pending, &pe->e);
+ 				goto next_snapshot;
+ 			}
 -- 
 1.6.2.5
