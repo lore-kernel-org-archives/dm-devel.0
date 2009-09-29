@@ -1,13 +1,9 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: clustered snapshots
-Date: Tue, 29 Sep 2009 17:39:15 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0909291734020.12870@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0909281906510.16904@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 00/18] Clusterized exception store preparation
+Date: Tue, 29 Sep 2009 18:53:25 -0400
+Message-ID: <1254264823-11538-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0909281906510.16904@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,55 +13,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+This patch series provides Jon Brassow's refactored DM exceptions,
+exception tables and more.  These patches form the basis upon which
+Jon's clusterized exception store is built.
 
-I uploaded a new version there. It has selective re-read and it has 
-optimized locking --- it does no remote communication if the chunk already 
-exists, so it should be as efficient as Jon's approach.
+Given the fundamental nature of these changes, relative to code movement
+and abstractions, the snapshot-merge patches must follow these patches
+(particularly because of the way the hadnover snapshot exception table
+handover mechanism changes relative to these patches).
 
-Jon, please look at it and review the patches, if you find out that this 
-approach can't work at all, we can drop it and go with your approach. If 
-it is OK, we can consider adopting it, it looks simpler than making 
-clustered-exception-store.
+Jon Brassow (18):
+  dm-snap-consolidate-insert_exception-functions
+  dm-exception-store-generalize-table-args
+  dm-snapshot-new-ctr-table-format
+  dm-snapshot-rename-dm_snap_exception-to-dm_exception
+  dm-snapshot-rename-exception_table-to-dm_exception_table
+  dm-snapshot-rename-exception-functions
+  dm-snapshot-use-allocated-exception-tables
+  dm-snapshot-exception-function-changes-1
+  dm-snapshot-exception-function-changes-2
+  dm-snapshot-exception-function-changes-3
+  dm-snapshot-exception-function-changes-4
+  dm-snapshot-exception-function-changes-5
+  dm-snapshot-exception-function-changes-6
+  dm-snapshot-move-exception-code-to-new-file
+  dm-exception-store-create-local-exception-caches
+  dm-exception-store-add-lookup_exception-to-API
+  dm-snapshot-remove-completed-exception-cache
+  dm-exstore-persistent-allow-metadata-reread
 
-Mikulas
-
-
-On Mon, 28 Sep 2009, Mikulas Patocka wrote:
-
-> Hi
-> 
-> I uploaded my test clustered snapshots to 
-> http://people.redhat.com/mpatocka/patches/kernel/clustered-snapshots-preview/
-> 
-> My patches take different approach from Jon's patches. My patches 
-> basically replace down_write(&s->lock) and up_write(&s->lock) with 
-> clusterized locking.
-> 
-> If there are pending exceptions, the cluster lock must be held while the 
-> local lock is unlocked. The cluster lock is droppen when all pending 
-> exceptions are reallocated and the local lock is dropped.
-> 
-> The patches are based on my & Mike's merging.
-> 
-> These patches are less invasive than Jon's, they area small, they don't 
-> change so much logic and most importantly, they leave merging as it is.
-> 
-> Note that it was never tried in a cluster because I don't have a cluster!! 
-> So there may be a silly bug that makes it not work at all. The purpose of 
-> the patches is to show different simpler approach to clustering. You 
-> should test it and debug it.
-> 
-> TODO:
-> - implement lock caching (Jon's task for his dm-lock module)
-> - once we implement it, we can implement selective re-read --- i.e. don't 
-> reread the exceptions if the cluster lock was not taken by any other node
-> - in a few cases we could optimize it to use readlock or only local lock
-> - implemented cluster merging
-> 
-> Mikulas
-> 
+ drivers/md/Makefile             |    4 +-
+ drivers/md/dm-exception-store.c |   36 ++--
+ drivers/md/dm-exception-store.h |   92 ++-------
+ drivers/md/dm-exception.c       |  163 +++++++++++++++
+ drivers/md/dm-exception.h       |  104 ++++++++++
+ drivers/md/dm-snap-persistent.c |  259 ++++++++++++++++++++----
+ drivers/md/dm-snap-transient.c  |   88 ++++++++-
+ drivers/md/dm-snap.c            |  415 ++++++++++++++-------------------------
+ 8 files changed, 748 insertions(+), 413 deletions(-)
+ create mode 100644 drivers/md/dm-exception.c
+ create mode 100644 drivers/md/dm-exception.h
