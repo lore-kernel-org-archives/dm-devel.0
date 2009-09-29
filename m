@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 03/18] dm-snapshot-new-ctr-table-format
-Date: Tue, 29 Sep 2009 18:53:28 -0400
-Message-ID: <1254264823-11538-4-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 02/18] dm-exception-store-generalize-table-args
+Date: Tue, 29 Sep 2009 18:53:27 -0400
+Message-ID: <1254264823-11538-3-git-send-email-snitzer@redhat.com>
 References: <1254264823-11538-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,141 +20,188 @@ List-Id: dm-devel.ids
 
 From: Jon Brassow <jbrassow@redhat.com>
 
-This patch introduces the new constructor table formats for snapshots
-and exception stores.  This allows for new exception store types and
-allows for easy addition of future features to snapshots.
+This patch is part of the work to generalize the dm-snapshot/
+exception store API - necessary for future exception store
+implementations.
+
+This patch reworks 'dm_exception_store_create' arguments to make way for
+cleaner interface when new constructor table format is introduced.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap-persistent.c |    9 +++++++--
- drivers/md/dm-snap-transient.c  |    9 +++++++--
- drivers/md/dm-snap.c            |   36 +++++++++++++++++++++++++++++-------
- 3 files changed, 43 insertions(+), 11 deletions(-)
+ drivers/md/dm-exception-store.c |   36 +++++++++++++++---------------
+ drivers/md/dm-exception-store.h |    4 +-
+ drivers/md/dm-snap.c            |   47 ++++++++++++++++++++++++++++++++++-----
+ 3 files changed, 61 insertions(+), 26 deletions(-)
 
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index e69d632..7887e25 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -722,8 +722,13 @@ static unsigned persistent_status(struct dm_exception_store *store,
- 	case STATUSTYPE_INFO:
- 		break;
- 	case STATUSTYPE_TABLE:
--		DMEMIT(" %s P %llu", store->cow->name,
--		       (unsigned long long)store->chunk_size);
-+		if (!strcmp("P", store->type->name))
-+			DMEMIT(" %s P %llu", store->cow->name,
-+			       (unsigned long long)store->chunk_size);
-+		else
-+			DMEMIT(" %s 2 %s %llu", store->type->name,
-+			       store->cow->name,
-+			       (unsigned long long)store->chunk_size);
+diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
+index 8f49f27..674b49b 100644
+--- a/drivers/md/dm-exception-store.c
++++ b/drivers/md/dm-exception-store.c
+@@ -187,16 +187,15 @@ int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
+ 	return 0;
+ }
+ 
+-int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
+-			      unsigned *args_used,
++int dm_exception_store_create(const char *type_name, struct dm_target *ti,
++			      int argc, char **argv,
+ 			      struct dm_exception_store **store)
+ {
+ 	int r = 0;
+ 	struct dm_exception_store_type *type = NULL;
+ 	struct dm_exception_store *tmp_store;
+-	char persistent;
+ 
+-	if (argc < 3) {
++	if (argc < 2) {
+ 		ti->error = "Insufficient exception store arguments";
+ 		return -EINVAL;
+ 	}
+@@ -207,16 +206,7 @@ int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
+ 		return -ENOMEM;
  	}
  
- 	return sz;
-diff --git a/drivers/md/dm-snap-transient.c b/drivers/md/dm-snap-transient.c
-index cde5aa5..786d96d 100644
---- a/drivers/md/dm-snap-transient.c
-+++ b/drivers/md/dm-snap-transient.c
-@@ -91,8 +91,13 @@ static unsigned transient_status(struct dm_exception_store *store,
- 	case STATUSTYPE_INFO:
- 		break;
- 	case STATUSTYPE_TABLE:
--		DMEMIT(" %s N %llu", store->cow->name,
--		       (unsigned long long)store->chunk_size);
-+		if (!strcmp("N", store->type->name))
-+			DMEMIT(" %s N %llu", store->cow->name,
-+			       (unsigned long long)store->chunk_size);
-+		else
-+			DMEMIT(" %s 2 %s %llu", store->type->name,
-+			       store->cow->name,
-+			       (unsigned long long)store->chunk_size);
+-	persistent = toupper(*argv[1]);
+-	if (persistent == 'P')
+-		type = get_type("P");
+-	else if (persistent == 'N')
+-		type = get_type("N");
+-	else {
+-		ti->error = "Persistent flag is not P or N";
+-		return -EINVAL;
+-	}
+-
++	type = get_type(type_name);
+ 	if (!type) {
+ 		ti->error = "Exception store type not recognised";
+ 		r = -EINVAL;
+@@ -226,6 +216,12 @@ int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
+ 	tmp_store->type = type;
+ 	tmp_store->ti = ti;
+ 
++	/*
++	 * COW-dev and chunk_size are common to all types of
++	 * exception stores and are stored directly in the
++	 * dm_exception_store and not passed on to the
++	 * constructor for the dm_exception_store_type
++	 */
+ 	r = dm_get_device(ti, argv[0], 0, 0,
+ 			  FMODE_READ | FMODE_WRITE, &tmp_store->cow);
+ 	if (r) {
+@@ -233,17 +229,21 @@ int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
+ 		goto bad_cow;
  	}
  
- 	return sz;
+-	r = set_chunk_size(tmp_store, argv[2], &ti->error);
+-	if (r)
++	r = set_chunk_size(tmp_store, argv[1], &ti->error);
++	if (r) {
++		ti->error = "Unable to set chunk size";
+ 		goto bad_cow;
++	}
++
++	argc -= 2;
++	argv += 2;
+ 
+-	r = type->ctr(tmp_store, 0, NULL);
++	r = type->ctr(tmp_store, argc, argv);
+ 	if (r) {
+ 		ti->error = "Exception store type constructor failed";
+ 		goto bad_ctr;
+ 	}
+ 
+-	*args_used = 3;
+ 	*store = tmp_store;
+ 	return 0;
+ 
+diff --git a/drivers/md/dm-exception-store.h b/drivers/md/dm-exception-store.h
+index 3e8fa02..2110e3b 100644
+--- a/drivers/md/dm-exception-store.h
++++ b/drivers/md/dm-exception-store.h
+@@ -172,8 +172,8 @@ int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
+ 				      unsigned long chunk_size_ulong,
+ 				      char **error);
+ 
+-int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
+-			      unsigned *args_used,
++int dm_exception_store_create(const char *type_name, struct dm_target *ti,
++			      int argc, char **argv,
+ 			      struct dm_exception_store **store);
+ void dm_exception_store_destroy(struct dm_exception_store *store);
+ 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 109fbea..b3cb063 100644
+index 3734289..109fbea 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -587,7 +587,10 @@ static int init_hash_tables(struct dm_snapshot *s)
-  * @store: contains newly allocated dm_exception_store
-  *
-  * Possible formats for argv::
-+ * Backwards compatibility mode:
-  *     <COW-dev> p/n <chunk-size>
-+ * Current format:
-+ *     <store type> <arg count> <COW> <chunk-size> [other args]
-  *
-  * Returns: 0 on success, -Exxx on error
+@@ -7,6 +7,7 @@
   */
-@@ -595,12 +598,14 @@ static int create_exception_store(struct dm_target *ti, unsigned argc,
- 				  char **argv, unsigned *args_used,
- 				  struct dm_exception_store **store)
- {
-+	unsigned param_count;
- 	char *tmp_argv[2];
- 	char old_type_name[2];
  
- 	*store = NULL;
- 
--	if (1 /* less change patch to patch */) {
-+	/* Detect old-style table line with type as second arg. */
-+	if (!isdigit(*argv[1])) {
- 		if (argc < 3) {
- 			ti->error = "Insufficient exception store arguments";
- 			return -EINVAL;
-@@ -616,10 +621,29 @@ static int create_exception_store(struct dm_target *ti, unsigned argc,
- 		return dm_exception_store_create(old_type_name, ti, 2,
- 						 tmp_argv, store);
- 	}
-+
-+	if (sscanf(argv[1], "%u", &param_count) != 1) {
-+		ti->error = "Invalid exception store argument count";
-+		return -EINVAL;
-+	}
-+
-+	*args_used = 2 + param_count;
-+
-+	if (argc < *args_used) {
-+		ti->error = "Insufficient exception store arguments";
-+		return -EINVAL;
-+	}
-+
-+	return dm_exception_store_create(argv[0], ti, param_count,
-+					 argv + 2, store);
+ #include <linux/blkdev.h>
++#include <linux/ctype.h>
+ #include <linux/device-mapper.h>
+ #include <linux/delay.h>
+ #include <linux/fs.h>
+@@ -581,6 +582,43 @@ static int init_hash_tables(struct dm_snapshot *s)
  }
  
  /*
-- * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
-+ * Construct a snapshot mapping.  Possible mapping tables include:
-+ *     <origin_dev> <exception store args> <feature args>
-+ * See 'create_exception_store' for format of <exception store args>.
++ * create_exception_store
++ * @args_used: returned value enables snapshot_ctr 'feature args' processing
++ * @store: contains newly allocated dm_exception_store
 + *
-+ * Returns: 0 on success, -XXX on error
++ * Possible formats for argv::
++ *     <COW-dev> p/n <chunk-size>
++ *
++ * Returns: 0 on success, -Exxx on error
++ */
++static int create_exception_store(struct dm_target *ti, unsigned argc,
++				  char **argv, unsigned *args_used,
++				  struct dm_exception_store **store)
++{
++	char *tmp_argv[2];
++	char old_type_name[2];
++
++	*store = NULL;
++
++	if (1 /* less change patch to patch */) {
++		if (argc < 3) {
++			ti->error = "Insufficient exception store arguments";
++			return -EINVAL;
++		}
++
++		tmp_argv[0] = argv[0];  /* COW dev */
++		tmp_argv[1] = argv[2];  /* chunk size */
++
++		*args_used = 3;
++		old_type_name[0] = toupper(*argv[1]);
++		old_type_name[1] = '\0';
++
++		return dm_exception_store_create(old_type_name, ti, 2,
++						 tmp_argv, store);
++	}
++}
++
++/*
+  * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
   */
  static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
-@@ -630,10 +654,9 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	struct dm_exception_store *store;
- 	unsigned args_used;
+@@ -602,12 +640,9 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	argv++;
+ 	argc--;
  
--	if (argc != 4) {
--		ti->error = "requires exactly 4 arguments";
+-	r = dm_exception_store_create(ti, argc, argv, &args_used, &store);
+-	if (r) {
+-		ti->error = "Couldn't create exception store";
 -		r = -EINVAL;
 -		goto bad_args;
-+	if (argc < 4) {
-+		ti->error = "too few arguments";
-+		return -EINVAL;
- 	}
+-	}
++	r = create_exception_store(ti, argc, argv, &args_used, &store);
++	if (r)
++		return r;
  
- 	origin_path = argv[0];
-@@ -755,7 +778,6 @@ bad_origin:
- bad_snap:
- 	dm_exception_store_destroy(store);
- 
--bad_args:
- 	return r;
- }
- 
+ 	argv += args_used;
+ 	argc -= args_used;
 -- 
 1.6.2.5
