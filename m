@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 01/18]
-	dm-snap-consolidate-insert_exception-functions
-Date: Tue, 29 Sep 2009 18:53:26 -0400
-Message-ID: <1254264823-11538-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 03/18] dm-snapshot-new-ctr-table-format
+Date: Tue, 29 Sep 2009 18:53:28 -0400
+Message-ID: <1254264823-11538-4-git-send-email-snitzer@redhat.com>
 References: <1254264823-11538-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -21,64 +20,141 @@ List-Id: dm-devel.ids
 
 From: Jon Brassow <jbrassow@redhat.com>
 
-Consolidate the insert_*exception functions.  'insert_completed_exception'
-already contains all the logic to handle 'insert_exception' (via
-check for a hash_shift of 0), so remove redundant function.
+This patch introduces the new constructor table formats for snapshots
+and exception stores.  This allows for new exception store types and
+allows for easy addition of future features to snapshots.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   16 ++++------------
- 1 files changed, 4 insertions(+), 12 deletions(-)
+ drivers/md/dm-snap-persistent.c |    9 +++++++--
+ drivers/md/dm-snap-transient.c  |    9 +++++++--
+ drivers/md/dm-snap.c            |   36 +++++++++++++++++++++++++++++-------
+ 3 files changed, 43 insertions(+), 11 deletions(-)
 
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index e69d632..7887e25 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -722,8 +722,13 @@ static unsigned persistent_status(struct dm_exception_store *store,
+ 	case STATUSTYPE_INFO:
+ 		break;
+ 	case STATUSTYPE_TABLE:
+-		DMEMIT(" %s P %llu", store->cow->name,
+-		       (unsigned long long)store->chunk_size);
++		if (!strcmp("P", store->type->name))
++			DMEMIT(" %s P %llu", store->cow->name,
++			       (unsigned long long)store->chunk_size);
++		else
++			DMEMIT(" %s 2 %s %llu", store->type->name,
++			       store->cow->name,
++			       (unsigned long long)store->chunk_size);
+ 	}
+ 
+ 	return sz;
+diff --git a/drivers/md/dm-snap-transient.c b/drivers/md/dm-snap-transient.c
+index cde5aa5..786d96d 100644
+--- a/drivers/md/dm-snap-transient.c
++++ b/drivers/md/dm-snap-transient.c
+@@ -91,8 +91,13 @@ static unsigned transient_status(struct dm_exception_store *store,
+ 	case STATUSTYPE_INFO:
+ 		break;
+ 	case STATUSTYPE_TABLE:
+-		DMEMIT(" %s N %llu", store->cow->name,
+-		       (unsigned long long)store->chunk_size);
++		if (!strcmp("N", store->type->name))
++			DMEMIT(" %s N %llu", store->cow->name,
++			       (unsigned long long)store->chunk_size);
++		else
++			DMEMIT(" %s 2 %s %llu", store->type->name,
++			       store->cow->name,
++			       (unsigned long long)store->chunk_size);
+ 	}
+ 
+ 	return sz;
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index f3473e8..3734289 100644
+index 109fbea..b3cb063 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -385,13 +385,6 @@ static uint32_t exception_hash(struct exception_table *et, chunk_t chunk)
- 	return (chunk >> et->hash_shift) & et->hash_mask;
- }
- 
--static void insert_exception(struct exception_table *eh,
--			     struct dm_snap_exception *e)
--{
--	struct list_head *l = &eh->table[exception_hash(eh, e->old_chunk)];
--	list_add(&e->hash_list, l);
--}
--
- static void remove_exception(struct dm_snap_exception *e)
+@@ -587,7 +587,10 @@ static int init_hash_tables(struct dm_snapshot *s)
+  * @store: contains newly allocated dm_exception_store
+  *
+  * Possible formats for argv::
++ * Backwards compatibility mode:
+  *     <COW-dev> p/n <chunk-size>
++ * Current format:
++ *     <store type> <arg count> <COW> <chunk-size> [other args]
+  *
+  * Returns: 0 on success, -Exxx on error
+  */
+@@ -595,12 +598,14 @@ static int create_exception_store(struct dm_target *ti, unsigned argc,
+ 				  char **argv, unsigned *args_used,
+ 				  struct dm_exception_store **store)
  {
- 	list_del(&e->hash_list);
-@@ -452,10 +445,9 @@ static void free_pending_exception(struct dm_snap_pending_exception *pe)
- 	atomic_dec(&s->pending_exceptions_count);
++	unsigned param_count;
+ 	char *tmp_argv[2];
+ 	char old_type_name[2];
+ 
+ 	*store = NULL;
+ 
+-	if (1 /* less change patch to patch */) {
++	/* Detect old-style table line with type as second arg. */
++	if (!isdigit(*argv[1])) {
+ 		if (argc < 3) {
+ 			ti->error = "Insufficient exception store arguments";
+ 			return -EINVAL;
+@@ -616,10 +621,29 @@ static int create_exception_store(struct dm_target *ti, unsigned argc,
+ 		return dm_exception_store_create(old_type_name, ti, 2,
+ 						 tmp_argv, store);
+ 	}
++
++	if (sscanf(argv[1], "%u", &param_count) != 1) {
++		ti->error = "Invalid exception store argument count";
++		return -EINVAL;
++	}
++
++	*args_used = 2 + param_count;
++
++	if (argc < *args_used) {
++		ti->error = "Insufficient exception store arguments";
++		return -EINVAL;
++	}
++
++	return dm_exception_store_create(argv[0], ti, param_count,
++					 argv + 2, store);
  }
  
--static void insert_completed_exception(struct dm_snapshot *s,
--				       struct dm_snap_exception *new_e)
-+static void insert_exception(struct exception_table *eh,
-+			     struct dm_snap_exception *new_e)
+ /*
+- * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
++ * Construct a snapshot mapping.  Possible mapping tables include:
++ *     <origin_dev> <exception store args> <feature args>
++ * See 'create_exception_store' for format of <exception store args>.
++ *
++ * Returns: 0 on success, -XXX on error
+  */
+ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  {
--	struct exception_table *eh = &s->complete;
- 	struct list_head *l;
- 	struct dm_snap_exception *e = NULL;
+@@ -630,10 +654,9 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	struct dm_exception_store *store;
+ 	unsigned args_used;
  
-@@ -513,7 +505,7 @@ static int dm_add_exception(void *context, chunk_t old, chunk_t new)
- 	/* Consecutive_count is implicitly initialised to zero */
- 	e->new_chunk = new;
+-	if (argc != 4) {
+-		ti->error = "requires exactly 4 arguments";
+-		r = -EINVAL;
+-		goto bad_args;
++	if (argc < 4) {
++		ti->error = "too few arguments";
++		return -EINVAL;
+ 	}
  
--	insert_completed_exception(s, e);
-+	insert_exception(&s->complete, e);
+ 	origin_path = argv[0];
+@@ -755,7 +778,6 @@ bad_origin:
+ bad_snap:
+ 	dm_exception_store_destroy(store);
  
- 	return 0;
+-bad_args:
+ 	return r;
  }
-@@ -918,7 +910,7 @@ static void pending_complete(struct dm_snap_pending_exception *pe, int success)
- 	 * Add a proper exception, and remove the
- 	 * in-flight exception from the list.
- 	 */
--	insert_completed_exception(s, e);
-+	insert_exception(&s->complete, e);
  
-  out:
- 	remove_exception(&pe->e);
 -- 
 1.6.2.5
