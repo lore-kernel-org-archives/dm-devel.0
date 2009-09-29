@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 09/18] dm-snapshot-exception-function-changes-2
-Date: Tue, 29 Sep 2009 18:53:34 -0400
-Message-ID: <1254264823-11538-10-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 10/18] dm-snapshot-exception-function-changes-3
+Date: Tue, 29 Sep 2009 18:53:35 -0400
+Message-ID: <1254264823-11538-11-git-send-email-snitzer@redhat.com>
 References: <1254264823-11538-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,158 +20,78 @@ List-Id: dm-devel.ids
 
 From: Jon Brassow <jbrassow@redhat.com>
 
-This patch makes exception [de]allocation functions deal specifically
-with the dm_exception type.
+This patch adds the 'dm_exception_table_internal' structure.  It is used
+to track the [de]allocation functions used for dm_exception's.  This is
+necessary because some functions, like dm_insert_exception and
+dm_exception_table_destroy must access them to do the right thing when
+freeing exceptions.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   43 +++++++++++++++++++++++++------------------
- 1 files changed, 25 insertions(+), 18 deletions(-)
+ drivers/md/dm-snap.c |   22 +++++++++++++++++++---
+ 1 files changed, 19 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 807447e..df8cb32 100644
+index df8cb32..1a664ec 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -435,7 +435,7 @@ static void free_completed_exception(struct dm_exception *e, void *unused)
- 	kmem_cache_free(exception_cache, e);
+@@ -342,6 +342,16 @@ static void unregister_snapshot(struct dm_snapshot *s)
+ 	up_write(&_origins_lock);
  }
  
--static struct dm_snap_pending_exception *alloc_pending_exception(void *context)
-+static struct dm_exception *alloc_pending_exception(void *context)
- {
- 	struct dm_snapshot *s = context;
- 	struct dm_snap_pending_exception *pe = mempool_alloc(s->pending_pool,
-@@ -444,13 +444,16 @@ static struct dm_snap_pending_exception *alloc_pending_exception(void *context)
- 	atomic_inc(&s->pending_exceptions_count);
- 	pe->snap = s;
- 
--	return pe;
-+	return &pe->e;
- }
- 
--static void free_pending_exception(struct dm_snap_pending_exception *pe,
--				   void *unused)
-+static void free_pending_exception(struct dm_exception *e, void *unused)
- {
--	struct dm_snapshot *s = pe->snap;
-+	struct dm_snap_pending_exception *pe;
-+	struct dm_snapshot *s;
++struct dm_exception_table_internal {
++	struct dm_exception_table et;
 +
-+	pe = container_of(e, struct dm_snap_pending_exception, e);
-+	s = pe->snap;
++	struct dm_exception *(*alloc_exception)(void *context);
++	void *alloc_context;
++
++	void (*free_exception)(struct dm_exception *e, void *context);
++	void *free_context;
++};
++
+ /*
+  * Implementation of the exception hash tables.
+  * The lowest hash_shift bits of the chunk number are ignored, allowing
+@@ -351,12 +361,15 @@ static struct dm_exception_table *
+ dm_exception_table_create(uint32_t size, unsigned hash_shift)
+ {
+ 	unsigned int i;
++	struct dm_exception_table_internal *eti;
+ 	struct dm_exception_table *et;
  
- 	mempool_free(pe, s->pending_pool);
- 	smp_mb__before_atomic_dec();
-@@ -925,7 +928,7 @@ static struct bio *put_pending_exception(struct dm_snap_pending_exception *pe)
- 	if (primary_pe &&
- 	    atomic_dec_and_test(&primary_pe->ref_count)) {
- 		origin_bios = bio_list_get(&primary_pe->origin_bios);
--		free_pending_exception(primary_pe, NULL);
-+		free_pending_exception(&primary_pe->e, NULL);
- 	}
- 
- 	/*
-@@ -933,7 +936,7 @@ static struct bio *put_pending_exception(struct dm_snap_pending_exception *pe)
- 	 * it's not itself a primary pe.
- 	 */
- 	if (!primary_pe || primary_pe != pe)
--		free_pending_exception(pe, NULL);
-+		free_pending_exception(&pe->e, NULL);
- 
- 	return origin_bios;
- }
-@@ -1076,7 +1079,7 @@ __find_pending_exception(struct dm_snapshot *s,
- 
- 	pe2 = __lookup_pending_exception(s, chunk);
- 	if (pe2) {
--		free_pending_exception(pe, NULL);
-+		free_pending_exception(&pe->e, NULL);
- 		return pe2;
- 	}
- 
-@@ -1088,7 +1091,7 @@ __find_pending_exception(struct dm_snapshot *s,
- 	pe->started = 0;
- 
- 	if (s->store->type->prepare_exception(s->store, &pe->e)) {
--		free_pending_exception(pe, NULL);
-+		free_pending_exception(&pe->e, NULL);
+-	et = kmalloc(sizeof(*et), GFP_KERNEL);
+-	if (!et)
++	eti = kmalloc(sizeof(*eti), GFP_KERNEL);
++	if (!eti)
  		return NULL;
+ 
++	et = &eti->et;
++
+ 	et->hash_shift = hash_shift;
+ 	et->hash_mask = size - 1;
+ 	et->table = dm_vcalloc(size, sizeof(struct list_head));
+@@ -374,10 +387,13 @@ dm_exception_table_create(uint32_t size, unsigned hash_shift)
+ static void dm_exception_table_destroy(struct dm_exception_table *et,
+ 				       struct kmem_cache *mem)
+ {
++	struct dm_exception_table_internal *eti;
+ 	struct list_head *slot;
+ 	struct dm_exception *ex, *next;
+ 	int i, size;
+ 
++	eti = container_of(et, struct dm_exception_table_internal, et);
++
+ 	size = et->hash_mask + 1;
+ 	for (i = 0; i < size; i++) {
+ 		slot = et->table + i;
+@@ -387,7 +403,7 @@ static void dm_exception_table_destroy(struct dm_exception_table *et,
  	}
  
-@@ -1112,7 +1115,7 @@ static void remap_exception(struct dm_snapshot *s, struct dm_exception *e,
- static int snapshot_map(struct dm_target *ti, struct bio *bio,
- 			union map_info *map_context)
- {
--	struct dm_exception *e;
-+	struct dm_exception *e, *tmp_e;
- 	struct dm_snapshot *s = ti->private;
- 	int r = DM_MAPIO_REMAPPED;
- 	chunk_t chunk;
-@@ -1155,18 +1158,20 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
- 		pe = __lookup_pending_exception(s, chunk);
- 		if (!pe) {
- 			up_write(&s->lock);
--			pe = alloc_pending_exception(s);
-+			tmp_e = alloc_pending_exception(s);
-+			pe = container_of(tmp_e,
-+					  struct dm_snap_pending_exception, e);
- 			down_write(&s->lock);
+ 	vfree(et->table);
+-	kfree(et);
++	kfree(eti);
+ }
  
- 			if (!s->valid) {
--				free_pending_exception(pe, NULL);
-+				free_pending_exception(&pe->e, NULL);
- 				r = -EIO;
- 				goto out_unlock;
- 			}
- 
- 			e = dm_lookup_exception(s->complete, chunk);
- 			if (e) {
--				free_pending_exception(pe, NULL);
-+				free_pending_exception(&pe->e, NULL);
- 				remap_exception(s, e, bio, chunk);
- 				goto out_unlock;
- 			}
-@@ -1279,7 +1284,7 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
- {
- 	int r = DM_MAPIO_REMAPPED, first = 0;
- 	struct dm_snapshot *snap;
--	struct dm_exception *e;
-+	struct dm_exception *e, *tmp_e;
- 	struct dm_snap_pending_exception *pe, *next_pe, *primary_pe = NULL;
- 	chunk_t chunk;
- 	LIST_HEAD(pe_queue);
-@@ -1318,17 +1323,19 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
- 		pe = __lookup_pending_exception(snap, chunk);
- 		if (!pe) {
- 			up_write(&snap->lock);
--			pe = alloc_pending_exception(snap);
-+			tmp_e = alloc_pending_exception(snap);
-+			pe = container_of(tmp_e,
-+					  struct dm_snap_pending_exception, e);
- 			down_write(&snap->lock);
- 
- 			if (!snap->valid) {
--				free_pending_exception(pe, NULL);
-+				free_pending_exception(&pe->e, NULL);
- 				goto next_snapshot;
- 			}
- 
- 			e = dm_lookup_exception(snap->complete, chunk);
- 			if (e) {
--				free_pending_exception(pe, NULL);
-+				free_pending_exception(&pe->e, NULL);
- 				goto next_snapshot;
- 			}
- 
-@@ -1382,7 +1389,7 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
- 
- 	if (first && atomic_dec_and_test(&primary_pe->ref_count)) {
- 		flush_bios(bio_list_get(&primary_pe->origin_bios));
--		free_pending_exception(primary_pe, NULL);
-+		free_pending_exception(&primary_pe->e, NULL);
- 		/* If we got here, pe_queue is necessarily empty. */
- 		return r;
- 	}
+ static uint32_t exception_hash(struct dm_exception_table *et, chunk_t chunk)
 -- 
 1.6.2.5
