@@ -1,21 +1,17 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: IO scheduler based IO controller V10
-Date: Wed, 30 Sep 2009 16:24:47 -0400
-Message-ID: <20090930202447.GA28236@redhat.com>
-References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-	<4ABC28DE.7050809@datenparkplatz.de>
-	<20090925202636.GC15007@redhat.com>
-	<1253976676.7005.40.camel@marge.simson.net>
-	<1254034500.7933.6.camel@marge.simson.net>
-	<20090927164235.GA23126@kernel.dk>
-	<1254340730.7695.32.camel@marge.simson.net>
-	<1254341139.7695.36.camel@marge.simson.net>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [RFC] [PATCH] lvm2: mirroredlog support
+Date: Wed, 30 Sep 2009 22:18:26 +0100
+Message-ID: <20090930211826.GW5351@agk-dp.fab.redhat.com>
+References: <20090923030331.GA26449@us.ibm.com>
+	<F5472B5D-59E5-4A38-948B-6055886E75A8@redhat.com>
+	<20090930163519.GV5351@agk-dp.fab.redhat.com>
+	<61B37279-E0E3-4AF6-81AB-82EEE65C1A09@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1254341139.7695.36.camel@marge.simson.net>
+In-Reply-To: <61B37279-E0E3-4AF6-81AB-82EEE65C1A09@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,27 +21,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Galbraith <efault@gmx.de>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 30, 2009 at 10:05:39PM +0200, Mike Galbraith wrote:
-> 
->  
-> >  		/*
-> > +		 * We may have seeky queues, don't throttle up just yet.
-> > +		 */
-> > +		if (time_before(jiffies, cfqd->last_seeker + CIC_SEEK_THR))
-> > +			return 0;
-> > +
-> 
-> bzzzt.  Window too large, but the though is to let them overload, but
-> not instantly.
-> 
+On Wed, Sep 30, 2009 at 02:48:22PM -0500, Jon Brassow wrote:
+> Inserting a new allocation level is a possibility.  I don't think it's  
+> necessary to solve (what I see as) the problem.  Do you have a reason  
+> for this?  
 
-CIC_SEEK_THR is 8K jiffies so that would be 8seconds on 1000HZ system. Try
-using one "slice_idle" period of 8 ms. But it might turn out to be too
-short depending on the disk speed.
+It doesn't actually fit into the existing hierarchy very well at all - it's
+pretty much an independent property (which the existing allocation routines
+do not support).  E.g. consider if you require 'cling' with the log on the
+same disk as some of the mirror's data.  Falling through to 'Normal' or
+'anywhere' and allowing the log to share a disk could give you a wrong
+layout.  But you want to give priority to arrangements with the log on a
+different disk where possible.  So do you have to try all the policies twice,
+first with the existing find_parallel_areas, and then with a new flag which
+allows some specified areas to be 'anywhere' (almost doubling the number of
+policies), or perhaps break it into two independent allocations at that point,
+one for the data and then one for the log?
 
-Thanks
-Vivek
+Alasdair
