@@ -1,220 +1,327 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH 4/4] scsi_dh: rdac handler: Make alua hardware handler async
-Date: Tue, 29 Sep 2009 19:08:35 -0700
-Message-ID: <20090930020835.11455.79360.sendpatchset@chandra-ubuntu>
-References: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi@vger.kernel.org
-Cc: dm-devel@redhat.com, babu.moger@lsi.com, michaelc@cs.wisc.edu, Benoit_Arthur@emc.com, Eddie.Williams@steeleye.com, berthiaume_wayne@emc.com, Chandra Seetharaman <sekharan@us.ibm.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: IO scheduler based IO controller V10
+Date: Tue, 29 Sep 2009 23:11:25 -0400
+Message-ID: <20090930031125.GA24756@redhat.com>
+References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
+	<e98e18940909281737q142c788dpd20b8bdc05dd0eff@mail.gmail.com>
+	<20090929032255.GA10664@redhat.com>
+	<20090929.185653.183056711.ryov@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090929.185653.183056711.ryov@valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, yoshikawa.takuya@oss.ntt.co.jp, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-Make the activate function asynchronous by using blk_execute_rq_nowait()
+On Tue, Sep 29, 2009 at 06:56:53PM +0900, Ryo Tsuruta wrote:
+> Hi Vivek and all,
+> 
+> Vivek Goyal <vgoyal@redhat.com> wrote:
+> > On Mon, Sep 28, 2009 at 05:37:28PM -0700, Nauman Rafique wrote:
+> 
+> > > We are starting from a point where there is no cgroup based IO
+> > > scheduling in the kernel. And it is probably not reasonable to satisfy
+> > > all IO scheduling related requirements in one patch set. We can start
+> > > with something simple, and build on top of that. So a very simple
+> > > patch set that enables cgroup based proportional scheduling for CFQ
+> > > seems like the way to go at this point.
+> > 
+> > Sure, we can start with CFQ only. But a bigger question we need to answer
+> > is that is CFQ the right place to solve the issue? Jens, do you think 
+> > that CFQ is the right place to solve the problem?
+> > 
+> > Andrew seems to favor a high level approach so that IO schedulers are less
+> > complex and we can provide fairness at high level logical devices also. 
+> 
+> I'm not in favor of expansion of CFQ, because some enterprise storages
+> are better performed with NOOP rather than CFQ, and I think bandwidth
+> control is needed much more for such storage system. Is it easy to
+> support other IO schedulers even if a new IO scheduler is introduced?
+> I would like to know a bit more specific about Namuman's scheduler design.
+> 
+> > I will again try to summarize my understanding so far about the pros/cons
+> > of each approach and then we can take the discussion forward.
+> 
+> Good summary. Thanks for your work.
+> 
+> > Fairness in terms of size of IO or disk time used
+> > =================================================
+> > On a seeky media, fairness in terms of disk time can get us better results
+> > instead fairness interms of size of IO or number of IO.
+> > 
+> > If we implement some kind of time based solution at higher layer, then 
+> > that higher layer should know who used how much of time each group used. We
+> > can probably do some kind of timestamping in bio to get a sense when did it
+> > get into disk and when did it finish. But on a multi queue hardware there
+> > can be multiple requests in the disk either from same queue or from differnet
+> > queues and with pure timestamping based apparoch, so far I could not think
+> > how at high level we will get an idea who used how much of time.
+> 
+> IIUC, could the overlap time be calculated from time-stamp on a multi
+> queue hardware?
+>  
+> > So this is the first point of contention that how do we want to provide
+> > fairness. In terms of disk time used or in terms of size of IO/number of
+> > IO.
+> >
+> > Max bandwidth Controller or Proportional bandwidth controller
+> > =============================================================
+> > What is our primary requirement here? A weight based proportional
+> > bandwidth controller where we can use the resources optimally and any
+> > kind of throttling kicks in only if there is contention for the disk.
+> > 
+> > Or we want max bandwidth control where a group is not allowed to use the
+> > disk even if disk is free. 
+> > 
+> > Or we need both? I would think that at some point of time we will need
+> > both but we can start with proportional bandwidth control first.
+> 
+> How about making throttling policy be user selectable like the IO
+> scheduler and putting it in the higher layer? So we could support
+> all of policies (time-based, size-based and rate limiting). There
+> seems not to only one solution which satisfies all users. But I agree
+> with starting with proportional bandwidth control first. 
+> 
+> BTW, I will start to reimplement dm-ioband into block layer.
+> 
+> > Fairness for higher level logical devices
+> > =========================================
+> > Do we want good fairness numbers for higher level logical devices also
+> > or it is sufficient to provide fairness at leaf nodes. Providing fairness
+> > at leaf nodes can help us use the resources optimally and in the process
+> > we can get fairness at higher level also in many of the cases.
+> 
+> We should also take care of block devices which provide their own
+> make_request_fn() and not use a IO scheduler. We can't use the leaf
+> nodes approach to such devices.
+> 
+> > But do we want strict fairness numbers on higher level logical devices
+> > even if it means sub-optimal usage of unerlying phsical devices?
+> > 
+> > I think that for proportinal bandwidth control, it should be ok to provide
+> > fairness at higher level logical device but for max bandwidth control it
+> > might make more sense to provide fairness at higher level. Consider a
+> > case where from a striped device a customer wants to limit a group to
+> > 30MB/s and in case of leaf node control, if every leaf node provides
+> > 30MB/s, it might accumulate to much more than specified rate at logical
+> > device.
+> >
+> > Latency Control and strong isolation between groups
+> > ===================================================
+> > Do we want a good isolation between groups and better latencies and
+> > stronger isolation between groups?
+> > 
+> > I think if problem is solved at IO scheduler level, we can achieve better
+> > latency control and hence stronger isolation between groups.
+> > 
+> > Higher level solutions should find it hard to provide same kind of latency
+> > control and isolation between groups as IO scheduler based solution.
+> 
+> Why do you think that the higher level solution is hard to provide it? 
+> I think that it is a matter of how to implement throttling policy.
+> 
+> > Fairness for buffered writes
+> > ============================
+> > Doing io control at any place below page cache has disadvantage that page
+> > cache might not dispatch more writes from higher weight group hence higher
+> > weight group might not see more IO done. Andrew says that we don't have
+> > a solution to this problem in kernel and he would like to see it handled
+> > properly.
+> > 
+> > Only way to solve this seems to be to slow down the writers before they
+> > write into page cache. IO throttling patch handled it by slowing down 
+> > writer if it crossed max specified rate. Other suggestions have come in
+> > the form of dirty_ratio per memory cgroup or a separate cgroup controller
+> > al-together where some kind of per group write limit can be specified.
+> > 
+> > So if solution is implemented at IO scheduler layer or at device mapper
+> > layer, both shall have to rely on another controller to be co-mounted
+> > to handle buffered writes properly.
+> >
+> > Fairness with-in group
+> > ======================
+> > One of the issues with higher level controller is that how to do fair
+> > throttling so that fairness with-in group is not impacted. Especially
+> > the case of making sure that we don't break the notion of ioprio of the
+> > processes with-in group.
+> 
+> I ran your test script to confirm that the notion of ioprio was not
+> broken by dm-ioband. Here is the results of the test.
+> https://lists.linux-foundation.org/pipermail/containers/2009-May/017834.html
+> 
+> I think that the time period during which dm-ioband holds IO requests
+> for throttling would be too short to break the notion of ioprio.
+> 
 
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
----
- drivers/scsi/device_handler/scsi_dh_alua.c |  132 ++++++++++++++++-------------
- 1 file changed, 73 insertions(+), 59 deletions(-)
+Hi Ryo,
 
-Index: linux-2.6.31/drivers/scsi/device_handler/scsi_dh_alua.c
-===================================================================
---- linux-2.6.31.orig/drivers/scsi/device_handler/scsi_dh_alua.c
-+++ linux-2.6.31/drivers/scsi/device_handler/scsi_dh_alua.c
-@@ -60,11 +60,17 @@ struct alua_dh_data {
- 	int			bufflen;
- 	unsigned char		sense[SCSI_SENSE_BUFFERSIZE];
- 	int			senselen;
-+	struct scsi_device	*sdev;
-+	activate_complete	callback_fn;
-+	void			*callback_data;
- };
- 
- #define ALUA_POLICY_SWITCH_CURRENT	0
- #define ALUA_POLICY_SWITCH_ALL		1
- 
-+static char print_alua_state(int);
-+static int alua_check_sense(struct scsi_device *, struct scsi_sense_hdr *);
-+
- static inline struct alua_dh_data *get_alua_data(struct scsi_device *sdev)
- {
- 	struct scsi_dh_data *scsi_dh_data = sdev->scsi_dh_data;
-@@ -231,18 +237,71 @@ done:
- }
- 
- /*
-+ * alua_stpg - Evaluate SET TARGET GROUP STATES
-+ * @sdev: the device to be evaluated
-+ * @state: the new target group state
-+ *
-+ * Send a SET TARGET GROUP STATES command to the device.
-+ * We only have to test here if we should resubmit the command;
-+ * any other error is assumed as a failure.
-+ */
-+static void stpg_endio(struct request *req, int error)
-+{
-+	struct alua_dh_data *h = req->end_io_data;
-+	struct scsi_sense_hdr sense_hdr;
-+	unsigned err = SCSI_DH_IO;
-+
-+	if (error || host_byte(req->errors) != DID_OK ||
-+			msg_byte(req->errors) != COMMAND_COMPLETE)
-+		goto done;
-+
-+	if (err == SCSI_DH_IO && h->senselen > 0) {
-+		err = scsi_normalize_sense(h->sense, SCSI_SENSE_BUFFERSIZE,
-+					   &sense_hdr);
-+		if (!err) {
-+			err = SCSI_DH_IO;
-+			goto done;
-+		}
-+		err = alua_check_sense(h->sdev, &sense_hdr);
-+		if (err == ADD_TO_MLQUEUE) {
-+			err = SCSI_DH_RETRY;
-+			goto done;
-+		}
-+		sdev_printk(KERN_INFO, h->sdev,
-+			    "%s: stpg sense code: %02x/%02x/%02x\n",
-+			    ALUA_DH_NAME, sense_hdr.sense_key,
-+			    sense_hdr.asc, sense_hdr.ascq);
-+		err = SCSI_DH_IO;
-+	}
-+	if (err == SCSI_DH_OK) {
-+		h->state = TPGS_STATE_OPTIMIZED;
-+		sdev_printk(KERN_INFO, h->sdev,
-+			    "%s: port group %02x switched to state %c\n",
-+			    ALUA_DH_NAME, h->group_id,
-+			    print_alua_state(h->state) );
-+	}
-+done:
-+	blk_put_request(req);
-+	if (h->callback_fn) {
-+		h->callback_fn(h->callback_data, err);
-+		h->callback_fn = h->callback_data = NULL;
-+	}
-+	return;
-+}
-+
-+/*
-  * submit_stpg - Issue a SET TARGET GROUP STATES command
-- * @sdev: sdev the command should be sent to
-  *
-  * Currently we're only setting the current target port group state
-  * to 'active/optimized' and let the array firmware figure out
-  * the states of the remaining groups.
-  */
--static unsigned submit_stpg(struct scsi_device *sdev, struct alua_dh_data *h)
-+static unsigned submit_stpg(struct alua_dh_data *h)
- {
- 	struct request *rq;
- 	int err = SCSI_DH_RES_TEMP_UNAVAIL;
- 	int stpg_len = 8;
-+	struct scsi_device *sdev = h->sdev;
- 
- 	/* Prepare the data buffer */
- 	memset(h->buff, 0, stpg_len);
-@@ -252,7 +311,7 @@ static unsigned submit_stpg(struct scsi_
- 
- 	rq = get_alua_req(sdev, h->buff, stpg_len, WRITE);
- 	if (!rq)
--		goto done;
-+		return SCSI_DH_RES_TEMP_UNAVAIL;
- 
- 	/* Prepare the command. */
- 	rq->cmd[0] = MAINTENANCE_OUT;
-@@ -266,17 +325,9 @@ static unsigned submit_stpg(struct scsi_
- 	rq->sense = h->sense;
- 	memset(rq->sense, 0, SCSI_SENSE_BUFFERSIZE);
- 	rq->sense_len = h->senselen = 0;
-+	rq->end_io_data = h;
- 
--	err = blk_execute_rq(rq->q, NULL, rq, 1);
--	if (err == -EIO) {
--		sdev_printk(KERN_INFO, sdev,
--			    "%s: stpg failed with %x\n",
--			    ALUA_DH_NAME, rq->errors);
--		h->senselen = rq->sense_len;
--		err = SCSI_DH_IO;
--	}
--	blk_put_request(rq);
--done:
-+	blk_execute_rq_nowait(rq->q, NULL, rq, 1, stpg_endio);
- 	return err;
- }
- 
-@@ -477,50 +528,6 @@ static int alua_check_sense(struct scsi_
- }
- 
- /*
-- * alua_stpg - Evaluate SET TARGET GROUP STATES
-- * @sdev: the device to be evaluated
-- * @state: the new target group state
-- *
-- * Send a SET TARGET GROUP STATES command to the device.
-- * We only have to test here if we should resubmit the command;
-- * any other error is assumed as a failure.
-- */
--static int alua_stpg(struct scsi_device *sdev, int state,
--		     struct alua_dh_data *h)
--{
--	struct scsi_sense_hdr sense_hdr;
--	unsigned err;
--	int retry = ALUA_FAILOVER_RETRIES;
--
-- retry:
--	err = submit_stpg(sdev, h);
--	if (err == SCSI_DH_IO && h->senselen > 0) {
--		err = scsi_normalize_sense(h->sense, SCSI_SENSE_BUFFERSIZE,
--					   &sense_hdr);
--		if (!err)
--			return SCSI_DH_IO;
--		err = alua_check_sense(sdev, &sense_hdr);
--		if (retry > 0 && err == ADD_TO_MLQUEUE) {
--			retry--;
--			goto retry;
--		}
--		sdev_printk(KERN_INFO, sdev,
--			    "%s: stpg sense code: %02x/%02x/%02x\n",
--			    ALUA_DH_NAME, sense_hdr.sense_key,
--			    sense_hdr.asc, sense_hdr.ascq);
--		err = SCSI_DH_IO;
--	}
--	if (err == SCSI_DH_OK) {
--		h->state = state;
--		sdev_printk(KERN_INFO, sdev,
--			    "%s: port group %02x switched to state %c\n",
--			    ALUA_DH_NAME, h->group_id,
--			    print_alua_state(h->state) );
--	}
--	return err;
--}
--
--/*
-  * alua_rtpg - Evaluate REPORT TARGET GROUP STATES
-  * @sdev: the device to be evaluated.
-  *
-@@ -663,8 +670,14 @@ static int alua_activate(struct scsi_dev
- 			goto out;
- 	}
- 
--	if (h->tpgs == TPGS_MODE_EXPLICIT && h->state != TPGS_STATE_OPTIMIZED)
--		err = alua_stpg(sdev, TPGS_STATE_OPTIMIZED, h);
-+	if (h->tpgs == TPGS_MODE_EXPLICIT && h->state != TPGS_STATE_OPTIMIZED) {
-+		h->callback_fn = fn;
-+		h->callback_data = data;
-+		err = submit_stpg(h);
-+		if (err == SCSI_DH_OK)
-+			return 0;
-+		h->callback_fn = h->callback_data = NULL;
-+	}
- 
- out:
- 	if (fn)
-@@ -747,6 +760,7 @@ static int alua_bus_attach(struct scsi_d
- 	h->rel_port = -1;
- 	h->buff = h->inq;
- 	h->bufflen = ALUA_INQUIRY_SIZE;
-+	h->sdev = sdev;
- 
- 	err = alua_initialize(sdev, h);
- 	if (err != SCSI_DH_OK)
+I am doing some more tests to see how do we maintain notion of prio
+with-in group.
+
+I have created two ioband devies ioband1 and ioband2 of weight 100 each on
+two disk partitions. On one partition/device (ioband1) a buffered writer is
+doing writeout and on other partition I launch one prio0 reader and
+increasing number of prio4 readers using fio and let it run for 30 
+seconds and see how BW got distributed between prio0 and prio4 processes.
+
+Note, here readers are doing direct IO.
+
+I did this test with vanilla CFQ and with dm-ioband + cfq.
+
+With vanilla CFQ
+----------------
+<---------prio4 readers --------------------------> <---prio0 reader--->
+nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
+1   12892KiB/s  12892KiB/s  12892KiB/s  409K usec   14705KiB/s  252K usec   
+2   5667KiB/s   5637KiB/s   11302KiB/s  717K usec   17555KiB/s  339K usec   
+4   4395KiB/s   4173KiB/s   17027KiB/s  933K usec   12437KiB/s  553K usec   
+8   2652KiB/s   2391KiB/s   20268KiB/s  1410K usec  9482KiB/s   685K usec   
+16  1653KiB/s   1413KiB/s   24035KiB/s  2418K usec  5860KiB/s   1027K usec  
+
+Note, as we increase number of prio4 readers, prio0 processes aggregate
+bandwidth goes down (nr=2 seems to be only exception) but it still
+maintains more BW than prio4 process.
+
+Also note that as we increase number of prio4 readers, their aggreagate
+bandwidth goes up which is expected. 
+
+With dm-ioband
+--------------
+<---------prio4 readers --------------------------> <---prio0 reader--->
+nr  Max-bdwidth Min-bdwidth Agg-bdwidth Max-latency Agg-bdwidth Max-latency 
+1   11242KiB/s  11242KiB/s  11242KiB/s  415K usec   3884KiB/s   244K usec   
+2   8110KiB/s   6236KiB/s   14345KiB/s  304K usec   320KiB/s    125K usec   
+4   6898KiB/s   622KiB/s    11059KiB/s  206K usec   503KiB/s    201K usec   
+8   345KiB/s    47KiB/s     850KiB/s    342K usec   8350KiB/s   164K usec   
+16  28KiB/s     28KiB/s     451KiB/s    688 msec    5092KiB/s   306K usec   
+
+Looking at the output with dm-ioband, it seems to be all over the place.
+Look at aggregate bandwidth of prio0 reader and how wildly it is swinging.
+It first goes down and then suddenly jumps up way high.
+
+Similiarly look at aggregate bandwidth of prio4 readers and the moment we
+hit 8 readers, it suddenly tanks.
+
+Look at prio4 reader and prio 7 reader BW with 16 prio4 processes running.
+prio4 process gets 28Kb/s and prio 0 process gets 5MB/s.
+
+Can you please look into it? It looks like we got serious issues w.r.t
+to fairness and bandwidth distribution with-in group.
+
+Thanks
+Vivek
+
+
+> > Especially io throttling patch was very bad in terms of prio with-in 
+> > group where throttling treated everyone equally and difference between
+> > process prio disappeared.
+> >
+> > Reads Vs Writes
+> > ===============
+> > A higher level control most likely will change the ratio in which reads
+> > and writes are dispatched to disk with-in group. It used to be decided
+> > by IO scheduler so far but with higher level groups doing throttling and
+> > possibly buffering the bios and releasing them later, they will have to
+> > come up with their own policy on in what proportion reads and writes
+> > should be dispatched. In case of IO scheduler based control, all the
+> > queuing takes place at IO scheduler and it still retains control of
+> > in what ration reads and writes should be dispatched.
+> 
+> I don't think it is a concern. The current implementation of dm-ioband
+> is that sync/async IO requests are handled separately and the
+> backlogged IOs are released according to the order of arrival if both
+> sync and async requests are backlogged.
+> 
+> > Summary
+> > =======
+> > 
+> > - An io scheduler based io controller can provide better latencies,
+> >   stronger isolation between groups, time based fairness and will not
+> >   interfere with io schedulers policies like class, ioprio and
+> >   reader vs writer issues.
+> > 
+> >   But it can gunrantee fairness at higher logical level devices.
+> >   Especially in case of max bw control, leaf node control does not sound
+> >   to be the most appropriate thing.
+> > 
+> > - IO throttling provides max bw control in terms of absolute rate. It has
+> >   the advantage that it can provide control at higher level logical device
+> >   and also control buffered writes without need of additional controller
+> >   co-mounted.
+> > 
+> >   But it does only max bw control and not proportion control so one might
+> >   not be using resources optimally. It looses sense of task prio and class
+> >   with-in group as any of the task can be throttled with-in group. Because
+> >   throttling does not kick in till you hit the max bw limit, it should find
+> >   it hard to provide same latencies as io scheduler based control.
+> > 
+> > - dm-ioband also has the advantage that it can provide fairness at higher
+> >   level logical devices.
+> > 
+> >   But, fairness is provided only in terms of size of IO or number of IO.
+> >   No time based fairness. It is very throughput oriented and does not 
+> >   throttle high speed group if other group is running slow random reader.
+> >   This results in bad latnecies for random reader group and weaker
+> >   isolation between groups.
+> 
+> A new policy can be added to dm-ioband. Actually, range-bw policy,
+> which provides min and max bandwidth control, does time-based
+> throttling. Moreover there is room for improvement for existing
+> policies. The write-starve-read issue you pointed out will be solved
+> soon.
+> 
+> >   Also it does not provide fairness if a group is not continuously
+> >   backlogged. So if one is running 1-2 dd/sequential readers in the group,
+> >   one does not get fairness until workload is increased to a point where
+> >   group becomes continuously backlogged. This also results in poor
+> >   latencies and limited fairness.
+> 
+> This is intended to efficiently use bandwidth of underlying devices
+> when IO load is low.
+>  
+> > At this point of time it does not look like a single IO controller all
+> > the scenarios/requirements. This means few things to me.
+> > 
+> > - Drop some of the requirements and go with one implementation which meets
+> >   those reduced set of requirements.
+> >
+> > - Have more than one IO controller implementation in kenrel. One for lower
+> >   level control for better latencies, stronger isolation and optimal resource
+> >   usage and other one for fairness at higher level logical devices and max
+> >   bandwidth control. 
+> > 
+> >   And let user decide which one to use based on his/her needs. 
+> > 
+> > - Come up with more intelligent way of doing IO control where single
+> >   controller covers all the cases.
+> > 
+> > At this point of time, I am more inclined towards option 2 of having more
+> > than one implementation in kernel. :-) (Until and unless we can brainstrom
+> > and come up with ideas to make option 3 happen).
+> >
+> > > It would be great if we discuss our plans on the mailing list, so we
+> > > can get early feedback from everyone.
+> >  
+> > This is what comes to my mind so far. Please add to the list if I have missed
+> > some points. Also correct me if I am wrong about the pros/cons of the
+> > approaches.
+> >
+> > Thoughts/ideas/opinions are welcome...
+> > 
+> > Thanks
+> > Vivek
+> 
+> Thanks,
+> Ryo Tsuruta
