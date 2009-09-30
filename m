@@ -1,12 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm snapshot: use unsigned integer chunk size
-Date: Wed, 30 Sep 2009 10:41:10 -0400
-Message-ID: <20090930144110.GA16605@redhat.com>
+Subject: [PATCH v2 02/18] dm-exception-store-generalize-table-args
+Date: Wed, 30 Sep 2009 10:44:24 -0400
+Message-ID: <20090930144423.GB16605@redhat.com>
+References: <1254264823-11538-1-git-send-email-snitzer@redhat.com>
+	<1254264823-11538-3-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <1254264823-11538-3-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,182 +22,188 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use unsigned integer chunk size.
+This patch is part of the work to generalize the dm-snapshot/
+exception store API - necessary for future exception store
+implementations.
 
-Maximum chunk size is 512kB, there won't ever be need to use 4GB chunk size,
-so the number can be 32-bit. This fixes compiler failure on 32-bit systems
-with large block devices.
+This patch reworks 'dm_exception_store_create' arguments to make way for
+cleaner interface when new constructor table format is introduced.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
-
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
-NOTE: this patch was made to go _before_ the snapshot exception
-patchset; I'll be sending [v2] of 2 patches from that series.  They
-needed small adjustments now that this chunk_size patch comes before
-them.
+v2: adjusted slightly to account for dm-snapshot-32bit-chunk-size.patch
 ---
- drivers/md/dm-exception-store.c |   23 +++++++++++------------
- drivers/md/dm-exception-store.h |    8 ++++----
- drivers/md/dm-snap-persistent.c |   16 ++++++++--------
- drivers/md/dm-snap.c            |    4 ++--
- 4 files changed, 25 insertions(+), 26 deletions(-)
+ drivers/md/dm-exception-store.c |   36 +++++++++++++++---------------
+ drivers/md/dm-exception-store.h |    4 +--
+ drivers/md/dm-snap.c            |   47 ++++++++++++++++++++++++++++++++++------
+ 3 files changed, 61 insertions(+), 26 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -527,7 +527,7 @@ static int dm_add_exception(void *contex
- static sector_t __minimum_chunk_size(struct origin *o)
- {
- 	struct dm_snapshot *snap;
--	sector_t chunk_size = 0;
-+	unsigned chunk_size = 0;
- 
- 	if (o)
- 		list_for_each_entry(snap, &o->snapshots, list)
-@@ -975,7 +975,7 @@ static void start_copy(struct dm_snap_pe
- 
- 	src.bdev = bdev;
- 	src.sector = chunk_to_sector(s->store, pe->e.old_chunk);
--	src.count = min(s->store->chunk_size, dev_size - src.sector);
-+	src.count = min((sector_t)s->store->chunk_size, dev_size - src.sector);
- 
- 	dest.bdev = s->store->cow->bdev;
- 	dest.sector = chunk_to_sector(s->store, pe->e.new_chunk);
 Index: linux-2.6/drivers/md/dm-exception-store.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-exception-store.c
 +++ linux-2.6/drivers/md/dm-exception-store.c
-@@ -141,48 +141,47 @@ EXPORT_SYMBOL(dm_exception_store_type_un
- static int set_chunk_size(struct dm_exception_store *store,
- 			  const char *chunk_size_arg, char **error)
- {
--	unsigned long chunk_size_ulong;
-+	unsigned chunk_size;
- 	char *value;
- 
--	chunk_size_ulong = simple_strtoul(chunk_size_arg, &value, 10);
-+	chunk_size = simple_strtoul(chunk_size_arg, &value, 10);
- 	if (*chunk_size_arg == '\0' || *value != '\0') {
- 		*error = "Invalid chunk size";
- 		return -EINVAL;
- 	}
- 
--	if (!chunk_size_ulong) {
-+	if (!chunk_size) {
- 		store->chunk_size = store->chunk_mask = store->chunk_shift = 0;
- 		return 0;
- 	}
- 
--	return dm_exception_store_set_chunk_size(store, chunk_size_ulong,
--						 error);
-+	return dm_exception_store_set_chunk_size(store, chunk_size, error);
- }
- 
- int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
--				      unsigned long chunk_size_ulong,
-+				      unsigned chunk_size,
- 				      char **error)
- {
- 	/* Check chunk_size is a power of 2 */
--	if (!is_power_of_2(chunk_size_ulong)) {
-+	if (!is_power_of_2(chunk_size)) {
- 		*error = "Chunk size is not a power of 2";
- 		return -EINVAL;
- 	}
- 
- 	/* Validate the chunk size against the device block size */
--	if (chunk_size_ulong % (bdev_logical_block_size(store->cow->bdev) >> 9)) {
-+	if (chunk_size % (bdev_logical_block_size(store->cow->bdev) >> 9)) {
- 		*error = "Chunk size is not a multiple of device blocksize";
- 		return -EINVAL;
- 	}
- 
--	if (chunk_size_ulong > INT_MAX >> SECTOR_SHIFT) {
-+	if (chunk_size > INT_MAX >> SECTOR_SHIFT) {
- 		*error = "Chunk size is too high";
- 		return -EINVAL;
- 	}
- 
--	store->chunk_size = chunk_size_ulong;
--	store->chunk_mask = chunk_size_ulong - 1;
--	store->chunk_shift = ffs(chunk_size_ulong) - 1;
-+	store->chunk_size = chunk_size;
-+	store->chunk_mask = chunk_size - 1;
-+	store->chunk_shift = ffs(chunk_size) - 1;
- 
+@@ -186,16 +186,15 @@ int dm_exception_store_set_chunk_size(st
  	return 0;
  }
+ 
+-int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
+-			      unsigned *args_used,
++int dm_exception_store_create(const char *type_name, struct dm_target *ti,
++			      int argc, char **argv,
+ 			      struct dm_exception_store **store)
+ {
+ 	int r = 0;
+ 	struct dm_exception_store_type *type = NULL;
+ 	struct dm_exception_store *tmp_store;
+-	char persistent;
+ 
+-	if (argc < 3) {
++	if (argc < 2) {
+ 		ti->error = "Insufficient exception store arguments";
+ 		return -EINVAL;
+ 	}
+@@ -206,16 +205,7 @@ int dm_exception_store_create(struct dm_
+ 		return -ENOMEM;
+ 	}
+ 
+-	persistent = toupper(*argv[1]);
+-	if (persistent == 'P')
+-		type = get_type("P");
+-	else if (persistent == 'N')
+-		type = get_type("N");
+-	else {
+-		ti->error = "Persistent flag is not P or N";
+-		return -EINVAL;
+-	}
+-
++	type = get_type(type_name);
+ 	if (!type) {
+ 		ti->error = "Exception store type not recognised";
+ 		r = -EINVAL;
+@@ -225,6 +215,12 @@ int dm_exception_store_create(struct dm_
+ 	tmp_store->type = type;
+ 	tmp_store->ti = ti;
+ 
++	/*
++	 * COW-dev and chunk_size are common to all types of
++	 * exception stores and are stored directly in the
++	 * dm_exception_store and not passed on to the
++	 * constructor for the dm_exception_store_type
++	 */
+ 	r = dm_get_device(ti, argv[0], 0, 0,
+ 			  FMODE_READ | FMODE_WRITE, &tmp_store->cow);
+ 	if (r) {
+@@ -232,17 +228,21 @@ int dm_exception_store_create(struct dm_
+ 		goto bad_cow;
+ 	}
+ 
+-	r = set_chunk_size(tmp_store, argv[2], &ti->error);
+-	if (r)
++	r = set_chunk_size(tmp_store, argv[1], &ti->error);
++	if (r) {
++		ti->error = "Unable to set chunk size";
+ 		goto bad_cow;
++	}
++
++	argc -= 2;
++	argv += 2;
+ 
+-	r = type->ctr(tmp_store, 0, NULL);
++	r = type->ctr(tmp_store, argc, argv);
+ 	if (r) {
+ 		ti->error = "Exception store type constructor failed";
+ 		goto bad_ctr;
+ 	}
+ 
+-	*args_used = 3;
+ 	*store = tmp_store;
+ 	return 0;
+ 
 Index: linux-2.6/drivers/md/dm-exception-store.h
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-exception-store.h
 +++ linux-2.6/drivers/md/dm-exception-store.h
-@@ -101,9 +101,9 @@ struct dm_exception_store {
- 	struct dm_dev *cow;
- 
- 	/* Size of data blocks saved - must be a power of 2 */
--	chunk_t chunk_size;
--	chunk_t chunk_mask;
--	chunk_t chunk_shift;
-+	unsigned chunk_size;
-+	unsigned chunk_mask;
-+	unsigned chunk_shift;
- 
- 	void *context;
- };
-@@ -169,7 +169,7 @@ int dm_exception_store_type_register(str
- int dm_exception_store_type_unregister(struct dm_exception_store_type *type);
- 
- int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
--				      unsigned long chunk_size_ulong,
-+				      unsigned chunk_size,
+@@ -172,8 +172,8 @@ int dm_exception_store_set_chunk_size(st
+ 				      unsigned chunk_size,
  				      char **error);
  
- int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
-Index: linux-2.6/drivers/md/dm-snap-persistent.c
+-int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
+-			      unsigned *args_used,
++int dm_exception_store_create(const char *type_name, struct dm_target *ti,
++			      int argc, char **argv,
+ 			      struct dm_exception_store **store);
+ void dm_exception_store_destroy(struct dm_exception_store *store);
+ 
+Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-persistent.c
-+++ linux-2.6/drivers/md/dm-snap-persistent.c
-@@ -284,12 +284,13 @@ static int read_header(struct pstore *ps
- {
- 	int r;
- 	struct disk_header *dh;
--	chunk_t chunk_size;
-+	unsigned chunk_size;
- 	int chunk_size_supplied = 1;
- 	char *chunk_err;
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -7,6 +7,7 @@
+  */
  
- 	/*
--	 * Use default chunk size (or hardsect_size, if larger) if none supplied
-+	 * Use default chunk size (or logical_block_size, if larger)
-+	 * if none supplied
- 	 */
- 	if (!ps->store->chunk_size) {
- 		ps->store->chunk_size = max(DM_CHUNK_SIZE_DEFAULT_SECTORS,
-@@ -334,10 +335,9 @@ static int read_header(struct pstore *ps
- 		return 0;
+ #include <linux/blkdev.h>
++#include <linux/ctype.h>
+ #include <linux/device-mapper.h>
+ #include <linux/delay.h>
+ #include <linux/fs.h>
+@@ -581,6 +582,43 @@ static int init_hash_tables(struct dm_sn
+ }
  
- 	if (chunk_size_supplied)
--		DMWARN("chunk size %llu in device metadata overrides "
--		       "table chunk size of %llu.",
--		       (unsigned long long)chunk_size,
--		       (unsigned long long)ps->store->chunk_size);
-+		DMWARN("chunk size %u in device metadata overrides "
-+		       "table chunk size of %u.",
-+		       chunk_size, ps->store->chunk_size);
+ /*
++ * create_exception_store
++ * @args_used: returned value enables snapshot_ctr 'feature args' processing
++ * @store: contains newly allocated dm_exception_store
++ *
++ * Possible formats for argv::
++ *     <COW-dev> p/n <chunk-size>
++ *
++ * Returns: 0 on success, -Exxx on error
++ */
++static int create_exception_store(struct dm_target *ti, unsigned argc,
++				  char **argv, unsigned *args_used,
++				  struct dm_exception_store **store)
++{
++	char *tmp_argv[2];
++	char old_type_name[2];
++
++	*store = NULL;
++
++	if (1 /* less change patch to patch */) {
++		if (argc < 3) {
++			ti->error = "Insufficient exception store arguments";
++			return -EINVAL;
++		}
++
++		tmp_argv[0] = argv[0];  /* COW dev */
++		tmp_argv[1] = argv[2];  /* chunk size */
++
++		*args_used = 3;
++		old_type_name[0] = toupper(*argv[1]);
++		old_type_name[1] = '\0';
++
++		return dm_exception_store_create(old_type_name, ti, 2,
++						 tmp_argv, store);
++	}
++}
++
++/*
+  * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
+  */
+ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+@@ -602,12 +640,9 @@ static int snapshot_ctr(struct dm_target
+ 	argv++;
+ 	argc--;
  
- 	/* We had a bogus chunk_size. Fix stuff up. */
- 	free_area(ps);
-@@ -345,8 +345,8 @@ static int read_header(struct pstore *ps
- 	r = dm_exception_store_set_chunk_size(ps->store, chunk_size,
- 					      &chunk_err);
- 	if (r) {
--		DMERR("invalid on-disk chunk size %llu: %s.",
--		      (unsigned long long)chunk_size, chunk_err);
-+		DMERR("invalid on-disk chunk size %u: %s.",
-+		      chunk_size, chunk_err);
- 		return r;
- 	}
+-	r = dm_exception_store_create(ti, argc, argv, &args_used, &store);
+-	if (r) {
+-		ti->error = "Couldn't create exception store";
+-		r = -EINVAL;
+-		goto bad_args;
+-	}
++	r = create_exception_store(ti, argc, argv, &args_used, &store);
++	if (r)
++		return r;
  
+ 	argv += args_used;
+ 	argc -= args_used;
