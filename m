@@ -1,16 +1,15 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: multipath - AAArgh! How do I turn "features=1
-	queue_if_no_path" off?
-Date: Wed, 30 Sep 2009 10:22:29 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474E780A7@cosmail01.lsi.com>
-References: <4AC333E2.9090005@Calva.COM>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [RFC] [PATCH] lvm2: mirroredlog support
+Date: Wed, 30 Sep 2009 17:35:20 +0100
+Message-ID: <20090930163519.GV5351@agk-dp.fab.redhat.com>
+References: <20090923030331.GA26449@us.ibm.com>
+	<F5472B5D-59E5-4A38-948B-6055886E75A8@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4AC333E2.9090005@Calva.COM>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <F5472B5D-59E5-4A38-948B-6055886E75A8@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,56 +22,19 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-You will see "features=3D1 queue_if_no_path" if you have one of the follo=
-wing entry in your multipath.conf.
+On Wed, Sep 30, 2009 at 10:50:06AM -0500, Jon Brassow wrote:
+> As long as we are on the topic of mirror logs (and this is unrelated to 
+> your patch), I'd like to complain about the current behavior of log  
+> allocation vs the log policy.  I don't think it should take  
+> 'alloc_anywhere' for a log to be placed on the same disk as one of the  
+> mirror legs... that should be 'alloc_normal'.
 
-1. Features		"1 queue_if_no_path"
+It was assumed that performance would be better this way, but I have
+never seen any tests to prove or disprove that.  Maybe someone could run
+some?
 
-  Or
+One way we could handle this is by creating a new policy between
+NORMAL and ANYWHERE that does this, then renaming the old NORMAL
+to something else and the new policy to NORMAL.
 
-2. no_path_retry           5
-
-
-The first option will queue the i/o forever. The second option will queue=
- the i/o only for 5 polling intervals. But, queue_if_no_path will show up=
- as enabled if one of the above is true.
-
-Try "no_path_retry    fail"  then you will not see this feature in your m=
-ultipath.conf.
-
-Thanks
-Babu Moger=20
-
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of John Hughes
-> Sent: Wednesday, September 30, 2009 5:33 AM
-> To: device-mapper development
-> Subject: [dm-devel] multipath - AAArgh! How do I turn "features=3D1
-> queue_if_no_path" off?
->=20
-> I want to turn queue_if_no_path off and use
->=20
->                 polling_interval        5
->                 no_path_retry           5
->=20
-> because I've had problems with things hanging when a lun "vanishes" (I
-> deleted it from my external raid box).
->=20
-> But whatever I put in /etc/multipath.conf when I do a "multipath -l" or
-> "multipath-ll" it shows:
->=20
-> 360024e80005b3add000001b64ab05c87dm-28 DELL    ,MD3000
-> [size=3D68G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]
-> \_ round-robin 0 [prio=3D3][active]
->  \_ 3:0:1:13 sdad 65:208 [active][ready]
-> \_ round-robin 0 [prio=3D0][enabled]
->  \_ 4:0:0:13 sdas 66:192 [active][ghost]
->=20
->=20
-> How on earth do I turn this damn thing off?
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Alasdair
