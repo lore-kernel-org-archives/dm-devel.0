@@ -1,17 +1,12 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: IO scheduler based IO controller V10
-Date: Wed, 30 Sep 2009 07:05:00 -0400
-Message-ID: <20090930110500.GA26631@redhat.com>
-References: <20090929032255.GA10664@redhat.com>
-	<20090929.185653.183056711.ryov@valinux.co.jp>
-	<20090929141049.GA12141@redhat.com>
-	<20090930.174319.183036386.ryov@valinux.co.jp>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: use unsigned integer chunk size
+Date: Wed, 30 Sep 2009 10:41:10 -0400
+Message-ID: <20090930144110.GA16605@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20090930.174319.183036386.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,215 +16,185 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, yoshikawa.takuya@oss.ntt.co.jp, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 30, 2009 at 05:43:19PM +0900, Ryo Tsuruta wrote:
-> Hi Vivek,
-> 
-> Vivek Goyal <vgoyal@redhat.com> wrote:
-> > I was thinking that elevator layer will do the merge of bios. So IO
-> > scheduler/elevator can time stamp the first bio in the request as it goes
-> > into the disk and again timestamp with finish time once request finishes.
-> > 
-> > This way higher layer can get an idea how much disk time a group of bios
-> > used. But on multi queue, if we dispatch say 4 requests from same queue,
-> > then time accounting becomes an issue.
-> > 
-> > Consider following where four requests rq1, rq2, rq3 and rq4 are
-> > dispatched to disk at time t0, t1, t2 and t3 respectively and these
-> > requests finish at time t4, t5, t6 and t7. For sake of simlicity assume
-> > time elapsed between each of milestones is t. Also assume that all these
-> > requests are from same queue/group.
-> > 
-> >         t0   t1   t2   t3  t4   t5   t6   t7
-> >         rq1  rq2  rq3 rq4  rq1  rq2  rq3 rq4
-> > 
-> > Now higher layer will think that time consumed by group is:
-> > 
-> > (t4-t0) + (t5-t1) + (t6-t2) + (t7-t3) = 16t
-> > 
-> > But the time elapsed is only 7t.
-> 
-> IO controller can know how many requests are issued and still in
-> progress. Is it not enough to accumulate the time while in-flight IOs
-> exist?
-> 
+Use unsigned integer chunk size.
 
-That time would not reflect disk time used. It will be follwoing.
+Maximum chunk size is 512kB, there won't ever be need to use 4GB chunk size,
+so the number can be 32-bit. This fixes compiler failure on 32-bit systems
+with large block devices.
 
-(time spent waiting in CFQ queues) + (time spent in dispatch queue) +
-(time spent in disk)
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
 
-> > Secondly if a different group is running only single sequential reader,
-> > there CFQ will be driving queue depth of 1 and time will not be running
-> > faster and this inaccuracy in accounting will lead to unfair share between
-> > groups.
-> >
-> > So we need something better to get a sense which group used how much of
-> > disk time.
-> 
-> It could be solved by implementing the way to pass on such information
-> from IO scheduler to higher layer controller.
-> 
+---
+NOTE: this patch was made to go _before_ the snapshot exception
+patchset; I'll be sending [v2] of 2 patches from that series.  They
+needed small adjustments now that this chunk_size patch comes before
+them.
+---
+ drivers/md/dm-exception-store.c |   23 +++++++++++------------
+ drivers/md/dm-exception-store.h |    8 ++++----
+ drivers/md/dm-snap-persistent.c |   16 ++++++++--------
+ drivers/md/dm-snap.c            |    4 ++--
+ 4 files changed, 25 insertions(+), 26 deletions(-)
 
-How would you do that? Can you give some details exactly how and what
-information IO scheduler will pass to higher level IO controller so that IO
-controller can attribute right time to the group.
-
-> > > How about making throttling policy be user selectable like the IO
-> > > scheduler and putting it in the higher layer? So we could support
-> > > all of policies (time-based, size-based and rate limiting). There
-> > > seems not to only one solution which satisfies all users. But I agree
-> > > with starting with proportional bandwidth control first. 
-> > > 
-> > 
-> > What are the cases where time based policy does not work and size based
-> > policy works better and user would choose size based policy and not timed
-> > based one?
-> 
-> I think that disk time is not simply proportional to IO size. If there
-> are two groups whose wights are equally assigned and they issue
-> different sized IOs repsectively, the bandwidth of each group would
-> not distributed equally as expected. 
-> 
-
-If we are providing fairness in terms of time, it is fair. If we provide
-equal time slots to two processes and if one got more IO done because it
-was not wasting time seeking or it issued bigger size IO, it deserves that
-higher BW. IO controller will make sure that process gets fair share in
-terms of time and exactly how much BW one got will depend on the workload.
-
-That's the precise reason that fairness in terms of time is better on
-seeky media.
-
-> > I am not against implementing things in higher layer as long as we can
-> > ensure tight control on latencies, strong isolation between groups and
-> > not break CFQ's class and ioprio model with-in group.
-> > 
-> > > BTW, I will start to reimplement dm-ioband into block layer.
-> > 
-> > Can you elaborate little bit on this?
-> 
-> bio is grabbed in generic_make_request() and throttled as well as
-> dm-ioband's mechanism. dmsetup command is not necessary any longer.
-> 
-
-Ok, so one would not need dm-ioband device now, but same dm-ioband
-throttling policies will apply. So until and unless we figure out a
-better way, the issues I have pointed out will still exists even in
-new implementation.
-
-> > > > Fairness for higher level logical devices
-> > > > =========================================
-> > > > Do we want good fairness numbers for higher level logical devices also
-> > > > or it is sufficient to provide fairness at leaf nodes. Providing fairness
-> > > > at leaf nodes can help us use the resources optimally and in the process
-> > > > we can get fairness at higher level also in many of the cases.
-> > > 
-> > > We should also take care of block devices which provide their own
-> > > make_request_fn() and not use a IO scheduler. We can't use the leaf
-> > > nodes approach to such devices.
-> > > 
-> > 
-> > I am not sure how big an issue is this. This can be easily solved by
-> > making use of NOOP scheduler by these devices. What are the reasons for
-> > these devices to not use even noop? 
-> 
-> I'm not sure why the developers of the device driver choose their own
-> way, and the driver is provided in binary form, so we can't modify it.
-> 
-> > > > Fairness with-in group
-> > > > ======================
-> > > > One of the issues with higher level controller is that how to do fair
-> > > > throttling so that fairness with-in group is not impacted. Especially
-> > > > the case of making sure that we don't break the notion of ioprio of the
-> > > > processes with-in group.
-> > > 
-> > > I ran your test script to confirm that the notion of ioprio was not
-> > > broken by dm-ioband. Here is the results of the test.
-> > > https://lists.linux-foundation.org/pipermail/containers/2009-May/017834.html
-> > > 
-> > > I think that the time period during which dm-ioband holds IO requests
-> > > for throttling would be too short to break the notion of ioprio.
-> > 
-> > Ok, I re-ran that test. Previously default io_limit value was 192 and now
-> 
-> The default value of io_limit on the previous test was 128 (not 192)
-> which is equall to the default value of nr_request.
-
-Hm..., I used following commands to create two ioband devices.
-
-echo "0 $(blockdev --getsize /dev/sdb2) ioband /dev/sdb2 1 0 0 none"
-"weight 0 :100" | dmsetup create ioband1
-echo "0 $(blockdev --getsize /dev/sdb3) ioband /dev/sdb3 1 0 0 none"
-"weight 0 :100" | dmsetup create ioband2
-
-Here io_limit value is zero so it should pick default value. Following is
-output of "dmsetup table" command.
-
-ioband2: 0 89899740 ioband 8:19 1 4 192 none weight 768 :100
-ioband1: 0 41961780 ioband 8:18 1 4 192 none weight 768 :100
-                                    ^^^^
-IIUC, above number 192 is reflecting io_limit? If yes, then default seems
-to be 192?
-
-> 
-> > I set it up to 256 as you suggested. I still see writer starving reader. I
-> > have removed "conv=fdatasync" from writer so that a writer is pure buffered
-> > writes.
-> 
-> O.K. You removed "conv=fdatasync", the new dm-ioband handles
-> sync/async requests separately, and it solves this
-> buffered-write-starves-read problem. I would like to post it soon
-> after doing some more test.
-> 
-> > On top of that can you please give some details how increasing the
-> > buffered queue length reduces the impact of writers?
-> 
-> When the number of in-flight IOs exceeds io_limit, processes which are
-> going to issue IOs are made sleep by dm-ioband until all the in-flight
-> IOs are finished. But IO scheduler layer can accept IO requests more
-> than the value of io_limit, so it was a bottleneck of the throughput.
-> 
-
-Ok, so it should have been throughput bottleneck but how did it solve the
-issue of writer starving the reader as you had mentioned in the mail.
-
-Secondly, you mentioned that processes are made to sleep once we cross 
-io_limit. This sounds like request descriptor facility on requeust queue
-where processes are made to sleep.
-
-There are threads in kernel which don't want to sleep while submitting
-bios. For example, btrfs has bio submitting thread which does not want
-to sleep hence it checks with device if it is congested or not and not
-submit the bio if it is congested.  How would you handle such cases. Have
-you implemented any per group congestion kind of interface to make sure
-such IO's don't sleep if group is congested.
-
-Or this limit is per ioband device which every group on the device is
-sharing. If yes, then how would you provide isolation between groups 
-because if one groups consumes io_limit tokens, then other will simply
-be serialized on that device?
-
-> > IO Prio issue
-> > --------------
-> > I ran another test where two ioband devices were created of weight 100 
-> > each on two partitions. In first group 4 readers were launched. Three
-> > readers are of class BE and prio 7, fourth one is of class BE prio 0. In
-> > group2, I launched a buffered writer.
-> > 
-> > One would expect that prio0 reader gets more bandwidth as compared to
-> > prio 4 readers and prio 7 readers will get more or less same bw. Looks like
-> > that is not happening. Look how vanilla CFQ provides much more bandwidth
-> > to prio0 reader as compared to prio7 reader and how putting them in the
-> > group reduces the difference betweej prio0 and prio7 readers.
-> > 
-> > Following are the results.
-> 
-> O.K. I'll try to do more test with dm-ioband according to your
-> comments especially working with CFQ. Thanks for pointing out.
-> 
-> Thanks,
-> Ryo Tsuruta
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -527,7 +527,7 @@ static int dm_add_exception(void *contex
+ static sector_t __minimum_chunk_size(struct origin *o)
+ {
+ 	struct dm_snapshot *snap;
+-	sector_t chunk_size = 0;
++	unsigned chunk_size = 0;
+ 
+ 	if (o)
+ 		list_for_each_entry(snap, &o->snapshots, list)
+@@ -975,7 +975,7 @@ static void start_copy(struct dm_snap_pe
+ 
+ 	src.bdev = bdev;
+ 	src.sector = chunk_to_sector(s->store, pe->e.old_chunk);
+-	src.count = min(s->store->chunk_size, dev_size - src.sector);
++	src.count = min((sector_t)s->store->chunk_size, dev_size - src.sector);
+ 
+ 	dest.bdev = s->store->cow->bdev;
+ 	dest.sector = chunk_to_sector(s->store, pe->e.new_chunk);
+Index: linux-2.6/drivers/md/dm-exception-store.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-exception-store.c
++++ linux-2.6/drivers/md/dm-exception-store.c
+@@ -141,48 +141,47 @@ EXPORT_SYMBOL(dm_exception_store_type_un
+ static int set_chunk_size(struct dm_exception_store *store,
+ 			  const char *chunk_size_arg, char **error)
+ {
+-	unsigned long chunk_size_ulong;
++	unsigned chunk_size;
+ 	char *value;
+ 
+-	chunk_size_ulong = simple_strtoul(chunk_size_arg, &value, 10);
++	chunk_size = simple_strtoul(chunk_size_arg, &value, 10);
+ 	if (*chunk_size_arg == '\0' || *value != '\0') {
+ 		*error = "Invalid chunk size";
+ 		return -EINVAL;
+ 	}
+ 
+-	if (!chunk_size_ulong) {
++	if (!chunk_size) {
+ 		store->chunk_size = store->chunk_mask = store->chunk_shift = 0;
+ 		return 0;
+ 	}
+ 
+-	return dm_exception_store_set_chunk_size(store, chunk_size_ulong,
+-						 error);
++	return dm_exception_store_set_chunk_size(store, chunk_size, error);
+ }
+ 
+ int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
+-				      unsigned long chunk_size_ulong,
++				      unsigned chunk_size,
+ 				      char **error)
+ {
+ 	/* Check chunk_size is a power of 2 */
+-	if (!is_power_of_2(chunk_size_ulong)) {
++	if (!is_power_of_2(chunk_size)) {
+ 		*error = "Chunk size is not a power of 2";
+ 		return -EINVAL;
+ 	}
+ 
+ 	/* Validate the chunk size against the device block size */
+-	if (chunk_size_ulong % (bdev_logical_block_size(store->cow->bdev) >> 9)) {
++	if (chunk_size % (bdev_logical_block_size(store->cow->bdev) >> 9)) {
+ 		*error = "Chunk size is not a multiple of device blocksize";
+ 		return -EINVAL;
+ 	}
+ 
+-	if (chunk_size_ulong > INT_MAX >> SECTOR_SHIFT) {
++	if (chunk_size > INT_MAX >> SECTOR_SHIFT) {
+ 		*error = "Chunk size is too high";
+ 		return -EINVAL;
+ 	}
+ 
+-	store->chunk_size = chunk_size_ulong;
+-	store->chunk_mask = chunk_size_ulong - 1;
+-	store->chunk_shift = ffs(chunk_size_ulong) - 1;
++	store->chunk_size = chunk_size;
++	store->chunk_mask = chunk_size - 1;
++	store->chunk_shift = ffs(chunk_size) - 1;
+ 
+ 	return 0;
+ }
+Index: linux-2.6/drivers/md/dm-exception-store.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-exception-store.h
++++ linux-2.6/drivers/md/dm-exception-store.h
+@@ -101,9 +101,9 @@ struct dm_exception_store {
+ 	struct dm_dev *cow;
+ 
+ 	/* Size of data blocks saved - must be a power of 2 */
+-	chunk_t chunk_size;
+-	chunk_t chunk_mask;
+-	chunk_t chunk_shift;
++	unsigned chunk_size;
++	unsigned chunk_mask;
++	unsigned chunk_shift;
+ 
+ 	void *context;
+ };
+@@ -169,7 +169,7 @@ int dm_exception_store_type_register(str
+ int dm_exception_store_type_unregister(struct dm_exception_store_type *type);
+ 
+ int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
+-				      unsigned long chunk_size_ulong,
++				      unsigned chunk_size,
+ 				      char **error);
+ 
+ int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6/drivers/md/dm-snap-persistent.c
+@@ -284,12 +284,13 @@ static int read_header(struct pstore *ps
+ {
+ 	int r;
+ 	struct disk_header *dh;
+-	chunk_t chunk_size;
++	unsigned chunk_size;
+ 	int chunk_size_supplied = 1;
+ 	char *chunk_err;
+ 
+ 	/*
+-	 * Use default chunk size (or hardsect_size, if larger) if none supplied
++	 * Use default chunk size (or logical_block_size, if larger)
++	 * if none supplied
+ 	 */
+ 	if (!ps->store->chunk_size) {
+ 		ps->store->chunk_size = max(DM_CHUNK_SIZE_DEFAULT_SECTORS,
+@@ -334,10 +335,9 @@ static int read_header(struct pstore *ps
+ 		return 0;
+ 
+ 	if (chunk_size_supplied)
+-		DMWARN("chunk size %llu in device metadata overrides "
+-		       "table chunk size of %llu.",
+-		       (unsigned long long)chunk_size,
+-		       (unsigned long long)ps->store->chunk_size);
++		DMWARN("chunk size %u in device metadata overrides "
++		       "table chunk size of %u.",
++		       chunk_size, ps->store->chunk_size);
+ 
+ 	/* We had a bogus chunk_size. Fix stuff up. */
+ 	free_area(ps);
+@@ -345,8 +345,8 @@ static int read_header(struct pstore *ps
+ 	r = dm_exception_store_set_chunk_size(ps->store, chunk_size,
+ 					      &chunk_err);
+ 	if (r) {
+-		DMERR("invalid on-disk chunk size %llu: %s.",
+-		      (unsigned long long)chunk_size, chunk_err);
++		DMERR("invalid on-disk chunk size %u: %s.",
++		      chunk_size, chunk_err);
+ 		return r;
+ 	}
+ 
