@@ -1,15 +1,16 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: clustered snapshots
-Date: Wed, 30 Sep 2009 11:17:13 -0500
-Message-ID: <8CF64616-6BC3-484D-BE4B-9E4B80D35E3F@redhat.com>
-References: <Pine.LNX.4.64.0909281906510.16904@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0909291734020.12870@hs20-bc2-1.build.redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: multipath - AAArgh! How do I turn "features=1
+	queue_if_no_path" off?
+Date: Wed, 30 Sep 2009 10:22:29 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474E780A7@cosmail01.lsi.com>
+References: <4AC333E2.9090005@Calva.COM>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v936)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0909291734020.12870@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <4AC333E2.9090005@Calva.COM>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,87 +20,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I've just looked at the last group of patches briefly.  So far, I like  
-what I see.  I especially like the concept of locking locally first,  
-and then switching to cluster.  If I add cluster lock caching - this  
-will further speed things up.
+You will see "features=3D1 queue_if_no_path" if you have one of the follo=
+wing entry in your multipath.conf.
 
-I'd prefer to have the UUID that is passed in on the CTR line be more  
-general - leaving the possibility for future features/flags, rather  
-than just plopping an extra argument on the end.  I also need to look  
-over the 'reread_exceptions' stuff, as this seems a little light...  I  
-assume you didn't just take my patch to allow rereads because by  
-adding an additional function to the API, you simplify some of the  
-logic?
+1. Features		"1 queue_if_no_path"
 
-Also, any progress on adding the cluster locking to the your shared  
-snapshots?
+  Or
 
-  brassow
+2. no_path_retry           5
 
 
-On Sep 29, 2009, at 4:39 PM, Mikulas Patocka wrote:
+The first option will queue the i/o forever. The second option will queue=
+ the i/o only for 5 polling intervals. But, queue_if_no_path will show up=
+ as enabled if one of the above is true.
 
-> Hi
->
-> I uploaded a new version there. It has selective re-read and it has
-> optimized locking --- it does no remote communication if the chunk  
-> already
-> exists, so it should be as efficient as Jon's approach.
->
-> Jon, please look at it and review the patches, if you find out that  
-> this
-> approach can't work at all, we can drop it and go with your  
-> approach. If
-> it is OK, we can consider adopting it, it looks simpler than making
-> clustered-exception-store.
->
-> Mikulas
->
->
-> On Mon, 28 Sep 2009, Mikulas Patocka wrote:
->
->> Hi
->>
->> I uploaded my test clustered snapshots to
->> http://people.redhat.com/mpatocka/patches/kernel/clustered-snapshots-preview/
->>
->> My patches take different approach from Jon's patches. My patches
->> basically replace down_write(&s->lock) and up_write(&s->lock) with
->> clusterized locking.
->>
->> If there are pending exceptions, the cluster lock must be held  
->> while the
->> local lock is unlocked. The cluster lock is droppen when all pending
->> exceptions are reallocated and the local lock is dropped.
->>
->> The patches are based on my & Mike's merging.
->>
->> These patches are less invasive than Jon's, they area small, they  
->> don't
->> change so much logic and most importantly, they leave merging as it  
->> is.
->>
->> Note that it was never tried in a cluster because I don't have a  
->> cluster!!
->> So there may be a silly bug that makes it not work at all. The  
->> purpose of
->> the patches is to show different simpler approach to clustering. You
->> should test it and debug it.
->>
->> TODO:
->> - implement lock caching (Jon's task for his dm-lock module)
->> - once we implement it, we can implement selective re-read --- i.e.  
->> don't
->> reread the exceptions if the cluster lock was not taken by any  
->> other node
->> - in a few cases we could optimize it to use readlock or only local  
->> lock
->> - implemented cluster merging
->>
->> Mikulas
->>
+Try "no_path_retry    fail"  then you will not see this feature in your m=
+ultipath.conf.
+
+Thanks
+Babu Moger=20
+
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+> On Behalf Of John Hughes
+> Sent: Wednesday, September 30, 2009 5:33 AM
+> To: device-mapper development
+> Subject: [dm-devel] multipath - AAArgh! How do I turn "features=3D1
+> queue_if_no_path" off?
+>=20
+> I want to turn queue_if_no_path off and use
+>=20
+>                 polling_interval        5
+>                 no_path_retry           5
+>=20
+> because I've had problems with things hanging when a lun "vanishes" (I
+> deleted it from my external raid box).
+>=20
+> But whatever I put in /etc/multipath.conf when I do a "multipath -l" or
+> "multipath-ll" it shows:
+>=20
+> 360024e80005b3add000001b64ab05c87dm-28 DELL    ,MD3000
+> [size=3D68G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]
+> \_ round-robin 0 [prio=3D3][active]
+>  \_ 3:0:1:13 sdad 65:208 [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 4:0:0:13 sdas 66:192 [active][ghost]
+>=20
+>=20
+> How on earth do I turn this damn thing off?
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
