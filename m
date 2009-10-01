@@ -1,61 +1,91 @@
-From: Jens Axboe <jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: IO scheduler based IO controller V10
-Date: Thu, 1 Oct 2009 20:58:16 +0200
-Message-ID: <20091001185816.GU14918@kernel.dk>
-References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-	<4ABC28DE.7050809@datenparkplatz.de>
-	<20090925202636.GC15007@redhat.com>
-	<1253976676.7005.40.camel@marge.simson.net>
-	<1254034500.7933.6.camel@marge.simson.net>
-	<20090927164235.GA23126@kernel.dk>
-	<1254340730.7695.32.camel@marge.simson.net>
-	<1254341139.7695.36.camel@marge.simson.net>
-	<20090930202447.GA28236@redhat.com>
-	<1254382405.7595.9.camel@marge.simson.net>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: RE: [PATCH 0/4] scsi_dh: Make scsi_dh_activate asynchronous
+Date: Thu, 01 Oct 2009 13:54:03 -0700
+Message-ID: <1254430443.24692.4.camel@chandra-ubuntu>
+References: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF474E78371@cosmail01.lsi.com>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1254382405.7595.9.camel-YqMYhexLQo1vAv1Ojkdn7Q@public.gmane.org>
-List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Mike Galbraith <efault-Mmb7MZpHnFY@public.gmane.org>
-Cc: dhaval-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, balbir-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org, paolo.valente-rcYM44yAMweonA0d6jMUrA@public.gmane.org, jmarchan-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, fernando-gVGce1chcLdL9jVzuh4AOg@public.gmane.org, Ulrich Lukas <stellplatz-nr.13a-7vBoImwI/YtIVYojq0lqJrNAH6kLmebB@public.gmane.org>, jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, fchecconi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474E78371@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "michaelc@cs.wisc.edu" <michaelc@cs.wisc.edu>, "Benoit_Arthur@emc.com" <Benoit_Arthur@emc.com>, "Eddie.Williams@steeleye.com" <Eddie.Williams@steeleye.com>, "berthiaume_wayne@emc.com" <berthiaume_wayne@emc.com>
 List-Id: dm-devel.ids
 
-On Thu, Oct 01 2009, Mike Galbraith wrote:
-> > CIC_SEEK_THR is 8K jiffies so that would be 8seconds on 1000HZ system. Try
-> > using one "slice_idle" period of 8 ms. But it might turn out to be too
-> > short depending on the disk speed.
+Thanks Babu,
+
+I will fix the issues you pointed.
+
+Let me know how the testing goes.
+
+It will be nice if you could also review the code :)
+
+chandra
+On Wed, 2009-09-30 at 22:19 -0600, Moger, Babu wrote:
+> Hi Chandra,
+>    Thanks for the patches. Patches applied cleanly on 2.6.31. I am testing the patches right now. Will post the with test results tomorrow.
+> These are my initial comments. 
+> 1. Patches do not apply on 2.6.32. You may have to regenerate it on 2.6.32.
+> 2. Also, I noticed few errors and warnings while running checkpatch.pl script.  
+> 3. Subject line for patch 3 and 4 may need to be modified. It still says "rdac handler". It should be hp and alua handler. 
 > 
-> Yeah, it is too short, as is even _400_ ms.  Trouble is, by the time
-> some new task is determined to be seeky, the damage is already done.
+> Thanks..
 > 
-> The below does better, though not as well as "just say no to overload"
-> of course ;-)
+> > -----Original Message-----
+> > From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-
+> > owner@vger.kernel.org] On Behalf Of Chandra Seetharaman
+> > Sent: Tuesday, September 29, 2009 9:08 PM
+> > To: linux-scsi@vger.kernel.org
+> > Cc: dm-devel@redhat.com; Moger, Babu; michaelc@cs.wisc.edu;
+> > Benoit_Arthur@emc.com; Eddie.Williams@steeleye.com;
+> > berthiaume_wayne@emc.com; Chandra Seetharaman
+> > Subject: [PATCH 0/4] scsi_dh: Make scsi_dh_activate asynchronous
+> > 
+> > Hello All,
+> > 
+> > Currently, device handlers process path activation in series. This leads
+> > to a lot of time delay when more than 100 luns are involved. For example,
+> > with lsi rdac 100+ luns take about 12-15 minutes. This was found by Moger
+> > Babu of LSI.
+> > 
+> > This time delay can be avoided if we can do the activations
+> > asynchronously.
+> > By making scsi_dh_activate() async, we can give the device handlers an
+> > oppurtunity to decide on how to send the device activation down the wire
+> > to make the turn around time faster. They can send the commands
+> > asynchronously or send them in batches.
+> > 
+> > I brought up this issue on the mailing list
+> > (http://marc.info/?l=linux-scsi&m=123888063818755&w=2) and provided a
+> > set of patch a loooong while back http://marc.info/?l=linux-
+> > scsi&m=124088712709821&w=2
+> > 
+> > This set of patches applies cleanly on 2.6.31 and I tested the rdac
+> > handler
+> > on the same.
+> > 
+> > Please review and provide comments.
+> > 
+> > This set of patched adds asynchronous support for rdac, hp, and alua
+> > handlers.
+> > 
+> > Didn't add async support for EMC for the following reasons:
+> >  - EMC handler is getting more hairy (when I try to move to _nowait())
+> >  - I do not know if EMC has a special command to group them (like rdac).
+> >  - I wasn't sure if EMC has this problem in the first place ( I did not
+> > get
+> >    any response from EMC).
+> > Can somebody from EMC comment, please.
+> > 
+> > Thanks & Regards,
+> > 
+> > chandra
+> > 
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-So this essentially takes the "avoid impact from previous slice" to a
-new extreme, but idling even before dispatching requests from the new
-queue. We basically do two things to prevent this already - one is to
-only set the slice when the first request is actually serviced, and the
-other is to drain async requests completely before starting sync ones.
-I'm a bit surprised that the former doesn't solve the problem fully, I
-guess what happens is that if the drive has been flooded with writes, it
-may service the new read immediately and then return to finish emptying
-its writeback cache. This will cause an impact for any sync IO until
-that cache is flushed, and then cause that sync queue to not get as much
-service as it should have.
-
-Perhaps the "set slice on first complete" isn't working correctly? Or
-perhaps we just need to be more extreme.
-
--- 
-Jens Axboe
