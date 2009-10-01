@@ -1,15 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: clustered snapshots
-Date: Thu, 1 Oct 2009 01:43:21 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0910010137550.10043@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0909281906510.16904@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0909291734020.12870@hs20-bc2-1.build.redhat.com>
-	<8CF64616-6BC3-484D-BE4B-9E4B80D35E3F@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: multipath - AAArgh! How do I turn
+	"features=1	queue_if_no_path" off?
+Date: Thu, 01 Oct 2009 08:24:30 +0200
+Message-ID: <4AC44B1E.7020509@suse.de>
+References: <4AC333E2.9090005@Calva.COM> <20090930154212.GA8507@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8CF64616-6BC3-484D-BE4B-9E4B80D35E3F@redhat.com>
+In-Reply-To: <20090930154212.GA8507@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +19,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+malahal@us.ibm.com wrote:
+> John Hughes [john@Calva.COM] wrote:
+>> I want to turn queue_if_no_path off and use
+>>
+>>                polling_interval        5
+>>                no_path_retry           5
+>>
+>> because I've had problems with things hanging when a lun "vanishes" (I=
+=20
+>> deleted it from my external raid box).
+>>
+>> But whatever I put in /etc/multipath.conf when I do a "multipath -l" o=
+r=20
+>> "multipath-ll" it shows:
+>=20
+> Did you reload the mapper table?
+>=20
+>> 360024e80005b3add000001b64ab05c87dm-28 DELL    ,MD3000       =20
+>> [size=3D68G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]
+>> \_ round-robin 0 [prio=3D3][active]
+>> \_ 3:0:1:13 sdad 65:208 [active][ready]
+>> \_ round-robin 0 [prio=3D0][enabled]
+>> \_ 4:0:0:13 sdas 66:192 [active][ghost]
+>>
+Which is entirely correct. The 'queue_if_no_path' flag _has_ to
+be set here as we do want to retry failed paths, if only for
+a limited amount of retries.
 
-> I've just looked at the last group of patches briefly.  So far, I like what I
-> see.  I especially like the concept of locking locally first, and then
-> switching to cluster.  If I add cluster lock caching - this will further speed
-> things up.
-> 
-> I'd prefer to have the UUID that is passed in on the CTR line be more general
-> - leaving the possibility for future features/flags, rather than just plopping
-> an extra argument on the end.
+The in-kernel dm-multipath module should handle the situation correctly
+and switch off the queue_if_no_path flag (=3D pass I/O errors upwards)
+when the amount of retries is exhausted.
 
-OK, so propose some command line syntax.
+You can only switch the flag off by setting 'no_path_retry failed'.
 
-> I also need to look over the
-> 'reread_exceptions' stuff, as this seems a little light...  I assume you
-> didn't just take my patch to allow rereads because by adding an additional
-> function to the API, you simplify some of the logic?
+Cheers,
 
-I actually tested reread (in no-cluster situation). The trick is that we 
-must pass the requests to a thread because if we invoke request from a 
-request routine, it gets queued and never finished until the request 
-routine finishes. The code is already there to handle dropped snapshot, so 
-I just reused it.
-
-For the actual reread I resuse most of existing code.
-
-> Also, any progress on adding the cluster locking to the your shared 
-> snapshots?
-> 
-> brassow
-
-I haven't started with it, but I'll do it the same way, it doesn't seem 
-hard. I am more scared of the userspace support for clustering (do you 
-have any?)
-
-Mikulas
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
