@@ -1,156 +1,61 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: IO scheduler based IO controller V10
-Date: Thu, 01 Oct 2009 09:33:25 +0200
-Message-ID: <1254382405.7595.9.camel@marge.simson.net>
-References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-	 <4ABC28DE.7050809@datenparkplatz.de> <20090925202636.GC15007@redhat.com>
-	 <1253976676.7005.40.camel@marge.simson.net>
-	 <1254034500.7933.6.camel@marge.simson.net>
-	 <20090927164235.GA23126@kernel.dk>
-	 <1254340730.7695.32.camel@marge.simson.net>
-	 <1254341139.7695.36.camel@marge.simson.net>
-	 <20090930202447.GA28236@redhat.com>
+From: John Hughes <john@Calva.COM>
+Subject: Re: multipath - AAArgh! How do I
+	turn	"features=1	queue_if_no_path" off?
+Date: Thu, 01 Oct 2009 10:55:12 +0200
+Message-ID: <4AC46E70.9060509@Calva.COM>
+References: <4AC333E2.9090005@Calva.COM> <20090930154212.GA8507@us.ibm.com>
+	<4AC44B1E.7020509@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755666AbZJAHdc@vger.kernel.org>
-In-Reply-To: <20090930202447.GA28236@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4AC44B1E.7020509@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2009-09-30 at 16:24 -0400, Vivek Goyal wrote:
-> On Wed, Sep 30, 2009 at 10:05:39PM +0200, Mike Galbraith wrote:
-> > 
-> >  
-> > >  		/*
-> > > +		 * We may have seeky queues, don't throttle up just yet.
-> > > +		 */
-> > > +		if (time_before(jiffies, cfqd->last_seeker + CIC_SEEK_THR))
-> > > +			return 0;
-> > > +
-> > 
-> > bzzzt.  Window too large, but the though is to let them overload, but
-> > not instantly.
-> > 
-> 
-> CIC_SEEK_THR is 8K jiffies so that would be 8seconds on 1000HZ system. Try
-> using one "slice_idle" period of 8 ms. But it might turn out to be too
-> short depending on the disk speed.
+Hannes Reinecke wrote:
+> malahal@us.ibm.com wrote:
+>> John Hughes [john@Calva.COM] wrote:
+>>> I want to turn queue_if_no_path off and use
+>>>
+>>>                polling_interval        5
+>>>                no_path_retry           5
+>>>
+>>> because I've had problems with things hanging when a lun "vanishes" 
+>>> (I deleted it from my external raid box).
+>>>
+>>> But whatever I put in /etc/multipath.conf when I do a "multipath -l" 
+>>> or "multipath-ll" it shows:
+>>
+>> Did you reload the mapper table?
+>>
+>>> 360024e80005b3add000001b64ab05c87dm-28 DELL    ,MD3000        
+>>> [size=68G][features=1 queue_if_no_path][hwhandler=1 rdac]
+>>> \_ round-robin 0 [prio=3][active]
+>>> \_ 3:0:1:13 sdad 65:208 [active][ready]
+>>> \_ round-robin 0 [prio=0][enabled]
+>>> \_ 4:0:0:13 sdas 66:192 [active][ghost]
+>>>
+> Which is entirely correct. The 'queue_if_no_path' flag _has_ to
+> be set here as we do want to retry failed paths, if only for
+> a limited amount of retries.
+>
+> The in-kernel dm-multipath module should handle the situation correctly
+> and switch off the queue_if_no_path flag (= pass I/O errors upwards)
+> when the amount of retries is exhausted.
+As far as I can tell it retries forever (even with polling_interval 5 
+and no_path_retry 5).   The mdadm raid10 built on top of the multipath 
+devices hangs, even /proc/mdstat hangs.
 
-Yeah, it is too short, as is even _400_ ms.  Trouble is, by the time
-some new task is determined to be seeky, the damage is already done.
-
-The below does better, though not as well as "just say no to overload"
-of course ;-)
-
-I have a patchlet from Corrado to test, likely better time investment
-than poking this darn thing with sharp sticks.
-
-	-Mike
-
-grep elapsed testo.log
-    0.894345911  seconds time elapsed <== solo seeky test measurement
-    3.732472877  seconds time elapsed
-    3.208443735  seconds time elapsed
-    4.249776673  seconds time elapsed
-    2.763449260  seconds time elapsed
-    4.235271019  seconds time elapsed
-
-(3.73 + 3.20 + 4.24 + 2.76 + 4.23) / 5 / 0.89 = 4... darn.
-
-diff --git a/block/cfq-iosched.c b/block/cfq-iosched.c
-index e2a9b92..44a888d 100644
---- a/block/cfq-iosched.c
-+++ b/block/cfq-iosched.c
-@@ -174,6 +174,8 @@ struct cfq_data {
- 	unsigned int cfq_slice_async_rq;
- 	unsigned int cfq_slice_idle;
- 
-+	unsigned long od_stamp;
-+
- 	struct list_head cic_list;
- 
- 	/*
-@@ -1296,19 +1298,26 @@ static int cfq_dispatch_requests(struct request_queue *q, int force)
- 	/*
- 	 * Drain async requests before we start sync IO
- 	 */
--	if (cfq_cfqq_idle_window(cfqq) && cfqd->rq_in_driver[BLK_RW_ASYNC])
-+	if (cfq_cfqq_idle_window(cfqq) && cfqd->rq_in_driver[BLK_RW_ASYNC]) {
-+		cfqd->od_stamp = jiffies;
- 		return 0;
-+	}
- 
- 	/*
- 	 * If this is an async queue and we have sync IO in flight, let it wait
- 	 */
--	if (cfqd->sync_flight && !cfq_cfqq_sync(cfqq))
-+	if (cfqd->sync_flight && !cfq_cfqq_sync(cfqq)) {
-+		cfqd->od_stamp = jiffies;
- 		return 0;
-+	}
- 
- 	max_dispatch = cfqd->cfq_quantum;
- 	if (cfq_class_idle(cfqq))
- 		max_dispatch = 1;
- 
-+	if (cfqd->busy_queues > 1)
-+		cfqd->od_stamp = jiffies;
-+
- 	/*
- 	 * Does this cfqq already have too much IO in flight?
- 	 */
-@@ -1326,6 +1335,12 @@ static int cfq_dispatch_requests(struct request_queue *q, int force)
- 			return 0;
- 
- 		/*
-+		 * Don't start overloading until we've been alone for a bit.
-+		 */
-+		if (time_before(jiffies, cfqd->od_stamp + cfq_slice_sync))
-+			return 0;
-+
-+		/*
- 		 * we are the only queue, allow up to 4 times of 'quantum'
- 		 */
- 		if (cfqq->dispatched >= 4 * max_dispatch)
-@@ -1941,7 +1956,7 @@ static void
- cfq_update_idle_window(struct cfq_data *cfqd, struct cfq_queue *cfqq,
- 		       struct cfq_io_context *cic)
- {
--	int old_idle, enable_idle;
-+	int old_idle, enable_idle, seeky = 0;
- 
- 	/*
- 	 * Don't idle for async or idle io prio class
-@@ -1949,10 +1964,19 @@ cfq_update_idle_window(struct cfq_data *cfqd, struct cfq_queue *cfqq,
- 	if (!cfq_cfqq_sync(cfqq) || cfq_class_idle(cfqq))
- 		return;
- 
-+	if (cfqd->hw_tag) {
-+		if (CIC_SEEKY(cic))
-+			seeky = 1;
-+		/*
-+		 * If known or incalculable seekiness, delay.
-+		 */
-+		if (seeky || !sample_valid(cic->seek_samples))
-+			cfqd->od_stamp = jiffies;
-+	}
-+
- 	enable_idle = old_idle = cfq_cfqq_idle_window(cfqq);
- 
--	if (!atomic_read(&cic->ioc->nr_tasks) || !cfqd->cfq_slice_idle ||
--	    (cfqd->hw_tag && CIC_SEEKY(cic)))
-+	if (!atomic_read(&cic->ioc->nr_tasks) || !cfqd->cfq_slice_idle || seeky)
- 		enable_idle = 0;
- 	else if (sample_valid(cic->ttime_samples)) {
- 		if (cic->ttime_mean > cfqd->cfq_slice_idle)
-@@ -2482,6 +2506,7 @@ static void *cfq_init_queue(struct request_queue *q)
- 	cfqd->cfq_slice_async_rq = cfq_slice_async_rq;
- 	cfqd->cfq_slice_idle = cfq_slice_idle;
- 	cfqd->hw_tag = 1;
-+	cfqd->od_stamp = INITIAL_JIFFIES;
- 
- 	return cfqd;
- }
+You're saying that without queue_if_no_path multipath basicly won't work 
+- mdadm will see I/O errors on multipath devices if a path fails?
