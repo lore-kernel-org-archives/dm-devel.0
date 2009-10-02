@@ -1,18 +1,16 @@
-From: Valdis.Kletnieks@vt.edu
-Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 02 Oct 2009 12:50:17 -0400
-Message-ID: <12774.1254502217@turing-police.cc.vt.edu>
-References: <200910021255.27689.czoccolo@gmail.com>
-	<20091002124921.GA4494@redhat.com>
-	<4e5e476b0910020827s23e827b1n847c64e355999d4a@mail.gmail.com>
-	<1254497520.10392.11.camel@marge.simson.net>
-	<20091002154020.GC4494@redhat.com>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH 0/8] SECURITY ISSUE with connector
+Date: Fri, 02 Oct 2009 09:57:24 -0700 (PDT)
+Message-ID: <20091002.095724.12562070.davem@davemloft.net>
+References: <1254487211-11810-1-git-send-email-philipp.reisner@linbit.com>
+	<20091002135859.GA9383@kroah.com>
+	<200910021754.12940.philipp.reisner@linbit.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2081582937=="
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: Your message of "Fri, 02 Oct 2009 11:40:20 EDT."
-	<20091002154020.GC4494@redhat.com>
+In-Reply-To: <200910021754.12940.philipp.reisner@linbit.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,51 +20,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, Corrado Zoccolo <czoccolo@gmail.com>, dm-devel@redhat.com, dpshah@google.com, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, Ingo Molnar <mingo@elte.hu>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, Mike Galbraith <efault@gmx.de>, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: philipp.reisner@linbit.com
+Cc: linux-fbdev-devel@lists.sourceforge.net, greg@kroah.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, netdev@vger.kernel.org, zbr@ioremap.net, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
---===============2081582937==
-Content-Type: multipart/signed; boundary="==_Exmh_1254502217_3334P";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
-Content-Transfer-Encoding: 7bit
+From: Philipp Reisner <philipp.reisner@linbit.com>
+Date: Fri, 2 Oct 2009 17:54:12 +0200
 
---==_Exmh_1254502217_3334P
-Content-Type: text/plain; charset=us-ascii
+> Think of the connector as a layer on top of netlink that allows more
+> than a hard coded number of subsystems to use netlink.
 
-On Fri, 02 Oct 2009 11:40:20 EDT, Vivek Goyal said:
+There are no such limits in netlink, we have 'genetlink' which allows
+an arbitrary number of subsystems to use netlink.
 
-> In that case, Corrado's suggestion of refining it further and disabling idling
-> for seeky process only on non-rotational media (SSD and hardware RAID), makes
-> sense to me.
-
-Umm... I got petabytes of hardware RAID across the hall that very definitely
-*is* rotating.  Did you mean "SSD and disk systems with big honking caches
-that cover up the rotation"?  Because "RAID" and "big honking caches" are
-not *quite* the same thing, and I can just see that corner case coming out
-to bite somebody on the ass...
-
-
---==_Exmh_1254502217_3334P
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.10 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
-
-iD8DBQFKxi9JcC3lWbTT17ARApP2AJ4i2rJ5d8WCfE9DU/OfTmNPSD1P/ACg1mVC
-KmoukBpnPxlD7yD8IMZMXw0=
-=qKY6
------END PGP SIGNATURE-----
-
---==_Exmh_1254502217_3334P--
-
-
---===============2081582937==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2081582937==--
+What connector provides over netlink/genetlink is something different
+altogether.
