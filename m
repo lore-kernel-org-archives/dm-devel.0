@@ -1,102 +1,33 @@
-From: Jens Axboe <jens.axboe@oracle.com>
+From: Mike Galbraith <efault@gmx.de>
 Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 2 Oct 2009 20:19:03 +0200
-Message-ID: <20091002181903.GN31616@kernel.dk>
-References: <20091002092839.GA26962@kernel.dk> <alpine.LFD.2.01.0910020715160.6996@localhost.localdomain> <20091002145610.GD31616@kernel.dk> <alpine.LFD.2.01.0910020811490.6996@localhost.localdomain> <20091002171129.GG31616@kernel.dk> <20091002172046.GA2376@elte.hu> <20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu> <20091002173732.GK31616@kernel.dk> <1254507215.8667.7.camel@marge.simson.net>
+Date: Fri, 02 Oct 2009 20:22:34 +0200
+Message-ID: <1254507754.8667.15.camel@marge.simson.net>
+References: <20091002092839.GA26962@kernel.dk>
+	 <alpine.LFD.2.01.0910020715160.6996@localhost.localdomain>
+	 <20091002145610.GD31616@kernel.dk>
+	 <alpine.LFD.2.01.0910020811490.6996@localhost.localdomain>
+	 <20091002171129.GG31616@kernel.dk> <20091002172046.GA2376@elte.hu>
+	 <20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu>
+	 <20091002173732.GK31616@kernel.dk> <20091002175629.GA14860@elte.hu>
+	 <20091002180437.GL31616@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758026AbZJBSTB@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1254507215.8667.7.camel@marge.simson.net>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758029AbZJBSWi@vger.kernel.org>
+In-Reply-To: <20091002180437.GL31616@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Galbraith <efault@gmx.de>
+To: Jens Axboe <jens.axboe@oracle.com>
 Cc: Ingo Molnar <mingo@elte.hu>, Linus Torvalds <torvalds@linux-foundation.org>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 02 2009, Mike Galbraith wrote:
-> On Fri, 2009-10-02 at 19:37 +0200, Jens Axboe wrote:
-> > On Fri, Oct 02 2009, Ingo Molnar wrote:
-> > > 
-> > > * Jens Axboe <jens.axboe@oracle.com> wrote:
-> > > 
-> > > > On Fri, Oct 02 2009, Ingo Molnar wrote:
-> > > > > 
-> > > > > * Jens Axboe <jens.axboe@oracle.com> wrote:
-> > > > > 
-> > > > > > It's not _that_ easy, it depends a lot on the access patterns. A 
-> > > > > > good example of that is actually the idling that we already do. 
-> > > > > > Say you have two applications, each starting up. If you start them 
-> > > > > > both at the same time and just care for the dumb low latency, then 
-> > > > > > you'll do one IO from each of them in turn. Latency will be good, 
-> > > > > > but throughput will be aweful. And this means that in 20s they are 
-> > > > > > both started, while with the slice idling and priority disk access 
-> > > > > > that CFQ does, you'd hopefully have both up and running in 2s.
-> > > > > > 
-> > > > > > So latency is good, definitely, but sometimes you have to worry 
-> > > > > > about the bigger picture too. Latency is more than single IOs, 
-> > > > > > it's often for complete operation which may involve lots of IOs. 
-> > > > > > Single IO latency is a benchmark thing, it's not a real life 
-> > > > > > issue. And that's where it becomes complex and not so black and 
-> > > > > > white. Mike's test is a really good example of that.
-> > > > > 
-> > > > > To the extent of you arguing that Mike's test is artificial (i'm not 
-> > > > > sure you are arguing that) - Mike certainly did not do an artificial 
-> > > > > test - he tested 'konsole' cache-cold startup latency, such as:
-> > > > 
-> > > > [snip]
-> > > > 
-> > > > I was saying the exact opposite, that Mike's test is a good example of 
-> > > > a valid test. It's not measuring single IO latencies, it's doing a 
-> > > > sequence of valid events and looking at the latency for those. It's 
-> > > > benchmarking the bigger picture, not a microbenchmark.
-> > > 
-> > > Good, so we are in violent agreement :-)
-> > 
-> > Yes, perhaps that last sentence didn't provide enough evidence of which
-> > category I put Mike's test into :-)
-> > 
-> > So to kick things off, I added an 'interactive' knob to CFQ and
-> > defaulted it to on, along with re-enabling slice idling for hardware
-> > that does tagged command queuing. This is almost completely identical to
-> > what Vivek Goyal originally posted, it's just combined into one and uses
-> > the term 'interactive' instead of 'fairness'. I think the former is a
-> > better umbrella under which to add further tweaks that may sacrifice
-> > throughput slightly, in the quest for better latency.
-> > 
-> > It's queued up in the for-linus branch.
-> 
-> FWIW, I did a matrix of Vivek's patch combined with my hack.  Seems we
-> do lose a bit of dd throughput over stock with either or both.
-> 
-> dd pre         65.1     65.4     67.5     64.8     65.1   65.5     fairness=1 overload_delay=1
-> perf stat      1.70     1.94     1.32     1.89     1.87    1.7
-> dd post        69.4     62.3     69.7     70.3     69.6   68.2
-> 
-> dd pre         67.0     67.8     64.7     64.7     64.9   65.8     fairness=1 overload_delay=0
-> perf stat      4.89     3.13     2.98     2.71     2.17    3.1
-> dd post        67.2     63.3     62.6     62.8     63.1   63.8
-> 
-> dd pre         65.0     66.0     66.9     64.6     67.0   65.9     fairness=0 overload_delay=1
-> perf stat      4.66     3.81     4.23     2.98     4.23    3.9
-> dd post        62.0     60.8     62.4     61.4     62.2   61.7
-> 
-> dd pre         65.3     65.6     64.9     69.5     65.8   66.2     fairness=0 overload_delay=0
-> perf stat     14.79     9.11    14.16     8.44    13.67   12.0
-> dd post        64.1     66.5     64.0     66.5     64.4   65.1
+On Fri, 2009-10-02 at 20:04 +0200, Jens Axboe wrote:
 
-I'm not too worried about the "single IO producer" scenarios, and it
-looks like (from a quick look) that most of your numbers are within some
-expected noise levels. It's the more complex mixes that are likely to
-cause a bit of a stink, but lets worry about that later. One quick thing
-would be to read eg 2 or more files sequentially from disk and see how
-that performs.
+> I'm not too crazy about it either. How about just using 'desktop' since
+> this is obviously what we are really targetting? 'latency' isn't fully
+> descriptive either, since it may not necessarily provide the best single
+> IO latency (noop would).
 
-If you could do a cleaned up version of your overload patch based on
-this:
-
-http://git.kernel.dk/?p=linux-2.6-block.git;a=commit;h=1d2235152dc745c6d94bedb550fea84cffdbf768
-
-then lets take it from there.
-
--- 
-Jens Axboe
+Grin. "Perfect is the enemy of good" :)
+                                                  Avg
+     16.24   175.82   154.38   228.97   147.16  144.5     noop
+     43.23    57.39    96.13   148.25   180.09  105.0     deadline
