@@ -1,22 +1,19 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 2 Oct 2009 18:37:07 +0200
-Message-ID: <20091002163707.GB12546@elte.hu>
-References: <20090927164235.GA23126@kernel.dk>
-	<1254340730.7695.32.camel@marge.simson.net>
-	<1254341139.7695.36.camel@marge.simson.net>
-	<20090930202447.GA28236@redhat.com>
-	<1254382405.7595.9.camel@marge.simson.net>
-	<20091001185816.GU14918@kernel.dk>
-	<1254464628.7158.101.camel@marge.simson.net>
-	<20091002080417.GG14918@kernel.dk> <20091002092409.GA19529@elte.hu>
-	<1254476214.11022.8.camel@marge.simson.net>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: [PATCH 5/8] dm/connector: Only process connector
+	packages from privileged processes
+Date: Fri, 2 Oct 2009 11:40:10 -0500
+Message-ID: <8D9D8D38-82E2-41A9-96A1-EF026B7ADE49@redhat.com>
+References: <1254487211-11810-1-git-send-email-philipp.reisner@linbit.com>
+	<1254487211-11810-2-git-send-email-philipp.reisner@linbit.com>
+	<1254487211-11810-3-git-send-email-philipp.reisner@linbit.com>
+	<1254487211-11810-4-git-send-email-philipp.reisner@linbit.com>
+	<1254487211-11810-5-git-send-email-philipp.reisner@linbit.com>
+	<1254487211-11810-6-git-send-email-philipp.reisner@linbit.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Mime-Version: 1.0 (Apple Message framework v936)
+Content-Type: multipart/mixed; boundary="===============1303743914=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1254476214.11022.8.camel@marge.simson.net>
+In-Reply-To: <1254487211-11810-6-git-send-email-philipp.reisner@linbit.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,44 +23,147 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Galbraith <efault@gmx.de>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, Vivek Goyal <vgoyal@redhat.com>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: linux-fbdev-devel@lists.sourceforge.net, netdev@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Philipp Reisner <philipp.reisner@linbit.com>, Greg KH <greg@kroah.com>, Evgeniy Polyakov <zbr@ioremap.net>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
 
-* Mike Galbraith <efault@gmx.de> wrote:
+--===============1303743914==
+Content-Type: multipart/alternative; boundary=Apple-Mail-1--830980382
 
-> On Fri, 2009-10-02 at 11:24 +0200, Ingo Molnar wrote:
-> > * Jens Axboe <jens.axboe@oracle.com> wrote:
-> > 
-> > > It's not hard to make the latency good, the hard bit is making sure we 
-> > > also perform well for all other scenarios.
-> > 
-> > Looking at the numbers from Mike:
-> > 
-> >  | dd competing against perf stat -- konsole -e exec timings, 5 back to 
-> >  | back runs
-> >  |                                                         Avg
-> >  | before         9.15    14.51     9.39    15.06     9.90   11.6
-> >  | after [+patch] 1.76     1.54     1.93     1.88     1.56    1.7
-> > 
-> > _PLEASE_ make read latencies this good - the numbers are _vastly_ 
-> > better. We'll worry about the 'other' things _after_ we've reached good 
-> > latencies.
-> > 
-> > I thought this principle was a well established basic rule of Linux 
-> > IO scheduling. Why do we have to have a 'latency vs. bandwidth' 
-> > discussion again and again? I thought latency won hands down.
-> 
-> Just a note: In the testing I've done so far, we're better off today 
-> than ever, [...]
 
-Definitely so, and a couple of months ago i've sung praises of that 
-progress on the IO/fs latencies front:
+--Apple-Mail-1--830980382
+Content-Type: text/plain;
+	charset=US-ASCII;
+	format=flowed;
+	delsp=yes
+Content-Transfer-Encoding: 7bit
 
-   http://lkml.org/lkml/2009/4/9/461
+This patch (and "[dm-devel] [PATCH 3/8] connector/dm: Fixed a  
+compilation warning") will likely collide with an earlier patch (which  
+agk is pushing) to fix the compilation warning (https://www.redhat.com/archives/dm-devel/2009-September/msg00218.html 
+), but the fix-up will be trivial.
 
-... but we are greedy bastards and dont define excellence by how far 
-down we have come from but by how high we can still climb ;-)
+The dm-log-userspace code checks that incoming messages correspond to  
+requests that were sent to userspace by way of a sequence number.  If  
+they don't correspond, they are dropped.  So, you must be able to  
+receive the messages from this kernel module (be root) in order to be  
+able respond with a message that will be accepted.  I can't completely  
+rule out the ability to guess a sequence number, and be able to beat  
+the log daemon in responding while the window of that sequence  
+number's validity is open though...  If someone could manage to pull  
+this off with accuracy, they could disrupt the creation of a device,  
+mimic a log device failure, or cause mirror resynchronization to occur  
+to a different area that may simultaneously be performing a write  
+(potential data corruption of a mirror).  It would be an impressive  
+feat to accomplish this, but I very much welcome the patch rather than  
+test fate.
 
-	Ingo
+Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
+
+  brassow
+
+On Oct 2, 2009, at 7:40 AM, Philipp Reisner wrote:
+
+> Signed-off-by: Philipp Reisner <philipp.reisner@linbit.com>
+> ---
+> drivers/md/dm-log-userspace-transfer.c |    3 +++
+> 1 files changed, 3 insertions(+), 0 deletions(-)
+>
+> diff --git a/drivers/md/dm-log-userspace-transfer.c b/drivers/md/dm- 
+> log-userspace-transfer.c
+> index 1327e1a..54abf9e 100644
+> --- a/drivers/md/dm-log-userspace-transfer.c
+> +++ b/drivers/md/dm-log-userspace-transfer.c
+> @@ -133,6 +133,9 @@ static void cn_ulog_callback(struct cn_msg *msg,  
+> struct netlink_skb_parms *nsp)
+> {
+> 	struct dm_ulog_request *tfr = (struct dm_ulog_request *)(msg + 1);
+>
+> +	if (!cap_raised(nsp->eff_cap, CAP_SYS_ADMIN))
+> +		return;
+> +
+> 	spin_lock(&receiving_list_lock);
+> 	if (msg->len == 0)
+> 		fill_pkg(msg, NULL);
+> -- 
+> 1.6.0.4
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+
+--Apple-Mail-1--830980382
+Content-Type: text/html;
+	charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
+
+<html><body style=3D"word-wrap: break-word; -webkit-nbsp-mode: space; =
+-webkit-line-break: after-white-space; "><div>This patch (and "<span =
+class=3D"Apple-style-span" style=3D"font-size: 12px; font-weight: bold; =
+">[dm-devel] [PATCH 3/8] connector/dm: Fixed a compilation warning<span =
+class=3D"Apple-style-span" style=3D"font-size: medium; font-weight: =
+normal; ">") will likely collide with an earlier patch (which agk is =
+pushing) to fix the compilation warning (<a =
+href=3D"https://www.redhat.com/archives/dm-devel/2009-September/msg00218.h=
+tml)">https://www.redhat.com/archives/dm-devel/2009-September/msg00218.htm=
+l)</a>, but the fix-up will be =
+trivial.</span></span></div><div><br></div><div>The dm-log-userspace =
+code checks that incoming messages correspond to requests that were sent =
+to userspace by way of a sequence number. &nbsp;If they don't =
+correspond, they are dropped. &nbsp;So, you must be able to receive the =
+messages from this kernel module (be root) in order to be able respond =
+with a message that will be accepted. &nbsp;I can't completely rule out =
+the ability to guess a sequence number, and be able to beat the log =
+daemon in responding while the window of that sequence number's validity =
+is open though... &nbsp;If someone could manage to pull this off with =
+accuracy, they could disrupt the creation of a device, mimic a log =
+device failure, or cause mirror resynchronization to occur to a =
+different area that may simultaneously be performing a write (potential =
+data corruption of a mirror). &nbsp;It would be an impressive feat to =
+accomplish this, but I very much welcome the patch rather than test =
+fate.</div><div><br></div>Reviewed-by: Jonathan Brassow &lt;<a =
+href=3D"mailto:jbrassow@redhat.com">jbrassow@redhat.com</a>&gt;<br><div><d=
+iv><br></div><div>&nbsp;brassow</div><div><br></div><div>On Oct 2, 2009, =
+at 7:40 AM, Philipp Reisner wrote:</div><br =
+class=3D"Apple-interchange-newline"><blockquote =
+type=3D"cite"><div>Signed-off-by: Philipp Reisner &lt;<a =
+href=3D"mailto:philipp.reisner@linbit.com">philipp.reisner@linbit.com</a>&=
+gt;<br>---<br> drivers/md/dm-log-userspace-transfer.c | =
+&nbsp;&nbsp;&nbsp;3 +++<br> 1 files changed, 3 insertions(+), 0 =
+deletions(-)<br><br>diff --git a/drivers/md/dm-log-userspace-transfer.c =
+b/drivers/md/dm-log-userspace-transfer.c<br>index 1327e1a..54abf9e =
+100644<br>--- a/drivers/md/dm-log-userspace-transfer.c<br>+++ =
+b/drivers/md/dm-log-userspace-transfer.c<br>@@ -133,6 +133,9 @@ static =
+void cn_ulog_callback(struct cn_msg *msg, struct netlink_skb_parms =
+*nsp)<br> {<br> <span class=3D"Apple-tab-span" style=3D"white-space:pre">	=
+</span>struct dm_ulog_request *tfr =3D (struct dm_ulog_request *)(msg + =
+1);<br><br>+<span class=3D"Apple-tab-span" style=3D"white-space:pre">	=
+</span>if (!cap_raised(nsp-&gt;eff_cap, CAP_SYS_ADMIN))<br>+<span =
+class=3D"Apple-tab-span" style=3D"white-space:pre">	</span><span =
+class=3D"Apple-tab-span" style=3D"white-space:pre">	=
+</span>return;<br>+<br> <span class=3D"Apple-tab-span" =
+style=3D"white-space:pre">	=
+</span>spin_lock(&amp;receiving_list_lock);<br> <span =
+class=3D"Apple-tab-span" style=3D"white-space:pre">	</span>if =
+(msg-&gt;len =3D=3D 0)<br> <span class=3D"Apple-tab-span" =
+style=3D"white-space:pre">	</span><span class=3D"Apple-tab-span" =
+style=3D"white-space:pre">	</span>fill_pkg(msg, NULL);<br>-- =
+<br>1.6.0.4<br><br>--<br>dm-devel mailing list<br><a =
+href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>https://www=
+.redhat.com/mailman/listinfo/dm-devel<br></div></blockquote></div><br></bo=
+dy></html>=
+
+--Apple-Mail-1--830980382--
+
+
+--===============1303743914==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1303743914==--
