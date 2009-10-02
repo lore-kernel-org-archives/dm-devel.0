@@ -1,48 +1,66 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 02 Oct 2009 18:03:29 +0200
-Message-ID: <1254499409.20436.3.camel@marge.simson.net>
-References: <200910021255.27689.czoccolo@gmail.com>
-	 <20091002124921.GA4494@redhat.com>
-	 <4e5e476b0910020827s23e827b1n847c64e355999d4a@mail.gmail.com>
-	 <1254497520.10392.11.camel@marge.simson.net>
-	 <20091002154020.GC4494@redhat.com>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [PATCH 0/8] SECURITY ISSUE with connector
+Date: Fri, 2 Oct 2009 09:10:49 -0700
+Message-ID: <20091002161048.GA23044@kroah.com>
+References: <1254487211-11810-1-git-send-email-philipp.reisner@linbit.com>
+	<20091002135859.GA9383@kroah.com>
+	<200910021754.12940.philipp.reisner@linbit.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755653AbZJBQDe@vger.kernel.org>
-In-Reply-To: <20091002154020.GC4494@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Corrado Zoccolo <czoccolo@gmail.com>, Jens Axboe <jens.axboe@oracle.com>, Ingo Molnar <mingo@elte.hu>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, riel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <200910021754.12940.philipp.reisner@linbit.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Philipp Reisner <philipp.reisner@linbit.com>
+Cc: linux-fbdev-devel@lists.sourceforge.net, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Evgeniy Polyakov <zbr@ioremap.net>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>
 List-Id: dm-devel.ids
 
-On Fri, 2009-10-02 at 11:40 -0400, Vivek Goyal wrote:
-> On Fri, Oct 02, 2009 at 05:32:00PM +0200, Mike Galbraith wrote:
-> > On Fri, 2009-10-02 at 17:27 +0200, Corrado Zoccolo wrote:
-> > > On Fri, Oct 2, 2009 at 2:49 PM, Vivek Goyal <vgoyal@redhat.com> wrote:
-> > > > On Fri, Oct 02, 2009 at 12:55:25PM +0200, Corrado Zoccolo wrote:
-> > > >
-> > > > Actually I am not touching this code. Looking at the V10, I have not
-> > > > changed anything here in idling code.
-> > > 
-> > > I based my analisys on the original patch:
-> > > http://lkml.indiana.edu/hypermail/linux/kernel/0907.1/01793.html
-> > > 
-> > > Mike, can you confirm which version of the fairness patch did you use
-> > > in your tests?
-> > 
-> > That would be this one-liner.
-> > 
+On Fri, Oct 02, 2009 at 05:54:12PM +0200, Philipp Reisner wrote:
+> > On Fri, Oct 02, 2009 at 02:40:03PM +0200, Philipp Reisner wrote:
+> > > Affected: All code that uses connector, in kernel and out of mainline
+> > >
+> > > The connector, as it is today, does not allow the in kernel receiving
+> > > parts to do any checks on privileges of a message's sender.
+> >
+> > So, assume I know nothing about the connector architecture, what does
+> > this mean in a security context?
+> >
 > 
-> Ok. Thanks. Sorry, I got confused and thought that you are using "io
-> controller patches" with fairness=1.
+> Think of the connector as a layer on top of netlink that allows more
+> than a hard coded number of subsystems to use netlink.
 > 
-> In that case, Corrado's suggestion of refining it further and disabling idling
-> for seeky process only on non-rotational media (SSD and hardware RAID), makes
-> sense to me.
+> Netlink is used e.g. to modify routing tables in the kernel.
+> 
+> As it is today, subsystem utilising the connector can not examine
+> the capabilities of the user/program that sent the netlink message.
+> 
+> If the same would be true for netlink, than every unprivileged user
+> could change the routing tables on your box.
+> 
+> > > I know, there are not many out there that like connector, but as
+> > > long as it is in the kernel, we have to fix the security issues it has!
+> >
+> > And what specifically are the security issues?
+> >
+> 
+> unprivileged users can trigger operations that are supposed to be only
+> accessible to users having CAP_SYS_ADMIN (or some other CAP_XXX)
 
-One thing that might help with that is to have new tasks start out life
-meeting the seeky criteria.  If there's anything going on, they will be.
+Ok, but it doesn't look like there are that many connector operations
+right now, right?
 
-	-Mike
+Anyway, I have no objection to the patches, and figure they should go
+through David's network tree.
+
+thanks,
+
+greg k-h
