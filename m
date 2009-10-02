@@ -1,40 +1,30 @@
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH 0/8] SECURITY ISSUE with connector
-Date: Fri, 02 Oct 2009 11:05:04 -0700 (PDT)
-Message-ID: <20091002.110504.08207839.davem@davemloft.net>
-References: <1254487211-11810-1-git-send-email-philipp.reisner@linbit.com>
-	<20091002.105659.102583702.davem@davemloft.net>
-	<20091002180022.GA22229@kroah.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: IO scheduler based IO controller V10
+Date: Fri, 2 Oct 2009 20:08:57 +0200
+Message-ID: <20091002180857.GM31616@kernel.dk>
+References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com> <4ABC28DE.7050809@datenparkplatz.de> <20090925202636.GC15007@redhat.com> <1253976676.7005.40.camel@marge.simson.net> <1254034500.7933.6.camel@marge.simson.net> <20090927164235.GA23126@kernel.dk> <1254340730.7695.32.camel@marge.simson.net> <1254341139.7695.36.camel@marge.simson.net> <20090930202447.GA28236@redhat.com> <1254382405.7595.9.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091002180022.GA22229@kroah.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: greg@kroah.com
-Cc: linux-fbdev-devel@lists.sourceforge.net, netdev@vger.kernel.org, philipp.reisner@linbit.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, zbr@ioremap.net, akpm@linux-foundation.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757878AbZJBSI4@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1254382405.7595.9.camel@marge.simson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Galbraith <efault@gmx.de>
+Cc: Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
 List-Id: dm-devel.ids
 
-From: Greg KH <greg@kroah.com>
-Date: Fri, 2 Oct 2009 11:00:22 -0700
+On Thu, Oct 01 2009, Mike Galbraith wrote:
+>  	max_dispatch = cfqd->cfq_quantum;
+>  	if (cfq_class_idle(cfqq))
+>  		max_dispatch = 1;
+>  
+> +	if (cfqd->busy_queues > 1)
+> +		cfqd->od_stamp = jiffies;
+> +
 
-> On Fri, Oct 02, 2009 at 10:56:59AM -0700, David Miller wrote:
->> All applied to net-2.6, I'll push this out to Linus later
->> today.
-> 
-> Should it also go to -stable?  If so, I can pick it up once it hits
-> Linus's tree.
+->busy_queues > 1 just means that they have requests ready for dispatch,
+not that they are dispatched.
 
-Yes, please take it into -stable.
 
-Greg, I'll also send you a batch of other networking bits
-for -stable later this afternoon as well, just FYI...
+-- 
+Jens Axboe
