@@ -1,19 +1,19 @@
-From: Vivek Goyal <vgoyal@redhat.com>
+From: Munehiro Ikeda <m-ikeda@ds.jp.nec.com>
 Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 2 Oct 2009 15:58:15 -0400
-Message-ID: <20091002195815.GE4494@redhat.com>
-References: <200910021255.27689.czoccolo@gmail.com>
-	<20091002124921.GA4494@redhat.com>
-	<4e5e476b0910020827s23e827b1n847c64e355999d4a@mail.gmail.com>
-	<1254497520.10392.11.camel@marge.simson.net>
-	<20091002154020.GC4494@redhat.com>
-	<12774.1254502217@turing-police.cc.vt.edu>
+Date: Fri, 02 Oct 2009 16:27:43 -0400
+Message-ID: <4AC6623F.70600@ds.jp.nec.com>
+References: <20090929141049.GA12141@redhat.com>
+	<20090930.174319.183036386.ryov@valinux.co.jp>
+	<20090930110500.GA26631@redhat.com>
+	<20091001.154125.104044685.ryov@valinux.co.jp>
+	<20091001133109.GA4058@redhat.com>
+	<20091002025731.GA2738@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <12774.1254502217@turing-police.cc.vt.edu>
+In-Reply-To: <20091002025731.GA2738@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,29 +23,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Valdis.Kletnieks@vt.edu
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, Corrado Zoccolo <czoccolo@gmail.com>, dm-devel@redhat.com, dpshah@google.com, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, Ingo Molnar <mingo@elte.hu>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, Mike Galbraith <efault@gmx.de>, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, yoshikawa.takuya@oss.ntt.co.jp, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, righi.andrea@gmail.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Fri, Oct 02, 2009 at 12:50:17PM -0400, Valdis.Kletnieks@vt.edu wrote:
-> On Fri, 02 Oct 2009 11:40:20 EDT, Vivek Goyal said:
-> 
-> > In that case, Corrado's suggestion of refining it further and disabling idling
-> > for seeky process only on non-rotational media (SSD and hardware RAID), makes
-> > sense to me.
-> 
-> Umm... I got petabytes of hardware RAID across the hall that very definitely
-> *is* rotating.  Did you mean "SSD and disk systems with big honking caches
-> that cover up the rotation"?  Because "RAID" and "big honking caches" are
-> not *quite* the same thing, and I can just see that corner case coming out
-> to bite somebody on the ass...
+Vivek Goyal wrote, on 10/01/2009 10:57 PM:
+> Before finishing this mail, will throw a whacky idea in the ring. I was
+> going through the request based dm-multipath paper. Will it make sense
+> to implement request based dm-ioband? So basically we implement all the
+> group scheduling in CFQ and let dm-ioband implement a request function
+> to take the request and break it back into bios. This way we can keep
+> all the group control at one place and also meet most of the requirements.
 >
+> So request based dm-ioband will have a request in hand once that request
+> has passed group control and prio control. Because dm-ioband is a device
+> mapper target, one can put it on higher level devices (practically taking
+> CFQ at higher level device), and provide fairness there. One can also
+> put it on those SSDs which don't use IO scheduler (this is kind of forcing
+> them to use the IO scheduler.)
+>
+> I am sure that will be many issues but one big issue I could think of that
+> CFQ thinks that there is one device beneath it and dipsatches requests
+> from one queue (in case of idling) and that would kill parallelism at
+> higher layer and throughput will suffer on many of the dm/md configurations.
+>
+> Thanks
+> Vivek
 
-I guess both. The systems which have big caches and cover up for rotation,
-we probably need not idle for seeky process. An in case of big hardware
-RAID, having multiple rotating disks, instead of idling and keeping rest
-of the disks free, we probably are better off dispatching requests from
-next queue (hoping it is going to a different disk altogether).
+As long as using CFQ, your idea is reasonable for me.  But how about for
+other IO schedulers?  In my understanding, one of the keys to guarantee
+group isolation in your patch is to have per-group IO scheduler internal
+queue even with as, deadline, and noop scheduler.  I think this is
+great idea, and to implement generic code for all IO schedulers was
+concluded when we had so many IO scheduler specific proposals.
+If we will still need per-group IO scheduler internal queues with
+request-based dm-ioband, we have to modify elevator layer.  It seems
+out of scope of dm.
+I might miss something...
 
-Thanks
-Vivek
+
+
+-- 
+IKEDA, Munehiro
+   NEC Corporation of America
+     m-ikeda@ds.jp.nec.com
