@@ -1,31 +1,69 @@
-From: Ray Lee <ray-lk@madrabbit.org>
+From: Ingo Molnar <mingo@elte.hu>
 Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 2 Oct 2009 09:33:44 -0700
-Message-ID: <2c0942db0910020933l6d312c6ahae0e00619f598b39@mail.gmail.com>
-References: <1254340730.7695.32.camel@marge.simson.net> <20090930202447.GA28236@redhat.com>
-	<1254382405.7595.9.camel@marge.simson.net> <20091001185816.GU14918@kernel.dk>
-	<1254464628.7158.101.camel@marge.simson.net> <20091002080417.GG14918@kernel.dk>
-	<20091002092409.GA19529@elte.hu> <20091002092839.GA26962@kernel.dk>
-	<alpine.LFD.2.01.0910020715160.6996@localhost.localdomain>
-	<20091002145610.GD31616@kernel.dk>
+Date: Fri, 2 Oct 2009 18:37:07 +0200
+Message-ID: <20091002163707.GB12546@elte.hu>
+References: <20090927164235.GA23126@kernel.dk>
+	<1254340730.7695.32.camel@marge.simson.net>
+	<1254341139.7695.36.camel@marge.simson.net>
+	<20090930202447.GA28236@redhat.com>
+	<1254382405.7595.9.camel@marge.simson.net>
+	<20091001185816.GU14918@kernel.dk>
+	<1254464628.7158.101.camel@marge.simson.net>
+	<20091002080417.GG14918@kernel.dk> <20091002092409.GA19529@elte.hu>
+	<1254476214.11022.8.camel@marge.simson.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756641AbZJBQeC@vger.kernel.org>
-In-Reply-To: <20091002145610.GD31616@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Ingo Molnar <mingo@elte.hu>, Mike Galbraith <efault@gmx.de>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1254476214.11022.8.camel@marge.simson.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Galbraith <efault@gmx.de>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, Vivek Goyal <vgoyal@redhat.com>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Fri, Oct 2, 2009 at 7:56 AM, Jens Axboe <jens.axboe@oracle.com> wrote:
-> In some cases I wish we had a server vs desktop switch, since it would
-> decisions on this easier. I know you say that servers care about
-> latency, but not at all to the extent that desktops do. Most desktop
-> users would gladly give away the top of the performance for latency,
-> that's not true of most server users. Depends on what the server does,
-> of course.
 
-If most of the I/O on a system exhibits seeky tendencies, couldn't the
-schedulers notice that and use that as the hint for what to optimize?
+* Mike Galbraith <efault@gmx.de> wrote:
 
-I mean, there's no switch better than the actual I/O behavior itself.
+> On Fri, 2009-10-02 at 11:24 +0200, Ingo Molnar wrote:
+> > * Jens Axboe <jens.axboe@oracle.com> wrote:
+> > 
+> > > It's not hard to make the latency good, the hard bit is making sure we 
+> > > also perform well for all other scenarios.
+> > 
+> > Looking at the numbers from Mike:
+> > 
+> >  | dd competing against perf stat -- konsole -e exec timings, 5 back to 
+> >  | back runs
+> >  |                                                         Avg
+> >  | before         9.15    14.51     9.39    15.06     9.90   11.6
+> >  | after [+patch] 1.76     1.54     1.93     1.88     1.56    1.7
+> > 
+> > _PLEASE_ make read latencies this good - the numbers are _vastly_ 
+> > better. We'll worry about the 'other' things _after_ we've reached good 
+> > latencies.
+> > 
+> > I thought this principle was a well established basic rule of Linux 
+> > IO scheduling. Why do we have to have a 'latency vs. bandwidth' 
+> > discussion again and again? I thought latency won hands down.
+> 
+> Just a note: In the testing I've done so far, we're better off today 
+> than ever, [...]
+
+Definitely so, and a couple of months ago i've sung praises of that 
+progress on the IO/fs latencies front:
+
+   http://lkml.org/lkml/2009/4/9/461
+
+... but we are greedy bastards and dont define excellence by how far 
+down we have come from but by how high we can still climb ;-)
+
+	Ingo
