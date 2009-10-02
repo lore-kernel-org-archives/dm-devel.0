@@ -1,67 +1,73 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 2 Oct 2009 19:37:32 +0200
-Message-ID: <20091002173732.GK31616@kernel.dk>
-References: <20091002080417.GG14918@kernel.dk> <20091002092409.GA19529@elte.hu> <20091002092839.GA26962@kernel.dk> <alpine.LFD.2.01.0910020715160.6996@localhost.localdomain> <20091002145610.GD31616@kernel.dk> <alpine.LFD.2.01.0910020811490.6996@localhost.localdomain> <20091002171129.GG31616@kernel.dk> <20091002172046.GA2376@elte.hu> <20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: clustered snapshots
+Date: Fri, 2 Oct 2009 13:55:57 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0910021351100.14067@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0909281906510.16904@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0909291734020.12870@hs20-bc2-1.build.redhat.com>
+	<20091002172656.GA13491@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757969AbZJBRhb@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20091002172842.GA4884@elte.hu>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Mike Galbraith <efault@gmx.de>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20091002172656.GA13491@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 02 2009, Ingo Molnar wrote:
+> I have done some light snapshot-merge testing to verify that this
+> updated snapshot-merge quilt tree builds and works as expected.  I'll be
+> testing more extensively shortly (particularly back-merge).
 > 
-> * Jens Axboe <jens.axboe@oracle.com> wrote:
+> I have also updated the LVM2 snapshot-merge patches to work on 2.02.54-cvs:
+> http://people.redhat.com/msnitzer/patches/snapshot-merge/lvm2/LVM2-2.02.54/
 > 
-> > On Fri, Oct 02 2009, Ingo Molnar wrote:
-> > > 
-> > > * Jens Axboe <jens.axboe@oracle.com> wrote:
-> > > 
-> > > > It's not _that_ easy, it depends a lot on the access patterns. A 
-> > > > good example of that is actually the idling that we already do. 
-> > > > Say you have two applications, each starting up. If you start them 
-> > > > both at the same time and just care for the dumb low latency, then 
-> > > > you'll do one IO from each of them in turn. Latency will be good, 
-> > > > but throughput will be aweful. And this means that in 20s they are 
-> > > > both started, while with the slice idling and priority disk access 
-> > > > that CFQ does, you'd hopefully have both up and running in 2s.
-> > > > 
-> > > > So latency is good, definitely, but sometimes you have to worry 
-> > > > about the bigger picture too. Latency is more than single IOs, 
-> > > > it's often for complete operation which may involve lots of IOs. 
-> > > > Single IO latency is a benchmark thing, it's not a real life 
-> > > > issue. And that's where it becomes complex and not so black and 
-> > > > white. Mike's test is a really good example of that.
-> > > 
-> > > To the extent of you arguing that Mike's test is artificial (i'm not 
-> > > sure you are arguing that) - Mike certainly did not do an artificial 
-> > > test - he tested 'konsole' cache-cold startup latency, such as:
-> > 
-> > [snip]
-> > 
-> > I was saying the exact opposite, that Mike's test is a good example of 
-> > a valid test. It's not measuring single IO latencies, it's doing a 
-> > sequence of valid events and looking at the latency for those. It's 
-> > benchmarking the bigger picture, not a microbenchmark.
+> One thing to note is dm-snapshot now depends on dm_cluster_locking; when I
+> tried to insmod dm-snapshot.ko I got:
+> dm_snapshot: Unknown symbol dm_cluster_lock_exit
+> dm_snapshot: Unknown symbol dm_cluster_lock_by_str
+> dm_snapshot: Unknown symbol dm_cluster_lock_init
+
+That is expected and it shouldn't make problems (modprobe handles 
+dependences, just insmod doesn't). If you compile the kernel without 
+dm_cluster_locking, it would not use it and it would have clustering 
+disabled.
+
+> I'm also seeing:
+> DLM (built Sep 11 2009 23:48:05) installed
+> dlm: no local IP address has been set
+> dlm: cannot start dlm lowcomms -107
+> device-mapper: dm-cluster-locking: Failed to create lockspace: dm-snap
 > 
-> Good, so we are in violent agreement :-)
+> Am I just missing the relevant LVM2 bits to push down proper args to the
+> snapshot_ctr()?  Seems to me that we could do better about defaulting to
+> _not_ triggering DLM/clustered calls...
 
-Yes, perhaps that last sentence didn't provide enough evidence of which
-category I put Mike's test into :-)
+That just means that you can't use clustering because you didn't configure 
+DLM, otherwise it is harmless. I will redo the patch so that it tries to 
+initialized dlm only if cluster arguments are supplied --- so that the 
+message won't scare people.
 
-So to kick things off, I added an 'interactive' knob to CFQ and
-defaulted it to on, along with re-enabling slice idling for hardware
-that does tagged command queuing. This is almost completely identical to
-what Vivek Goyal originally posted, it's just combined into one and uses
-the term 'interactive' instead of 'fairness'. I think the former is a
-better umbrella under which to add further tweaks that may sacrifice
-throughput slightly, in the quest for better latency.
+> Also, I have no idea if I somehow messed up the clustered-locking
+> patches when I refreshed them to work with my quilt tree.  I had a quick
+> review of the patch changes I made and the only one that needs a closer
+> look was dm-snapshot-clustered-locking-optimize.patch.
 
-It's queued up in the for-linus branch.
+You didn't mess it, I get the same message too. But it is harmless.
 
--- 
-Jens Axboe
+> Mikulas please review/rebase your tree using my updated quilt tree and
+> let me know if you see any issues.  Maybe you have newer patches at this
+> point?
+> 
+> Thanks,
+> Mike
+
+Mikulas
