@@ -1,59 +1,31 @@
-From: Ingo Molnar <mingo@elte.hu>
+From: Ray Lee <ray-lk@madrabbit.org>
 Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 2 Oct 2009 18:22:40 +0200
-Message-ID: <20091002162240.GA12546@elte.hu>
-References: <1254340730.7695.32.camel@marge.simson.net>
-	<1254341139.7695.36.camel@marge.simson.net>
-	<20090930202447.GA28236@redhat.com>
-	<1254382405.7595.9.camel@marge.simson.net>
-	<20091001185816.GU14918@kernel.dk>
-	<1254464628.7158.101.camel@marge.simson.net>
-	<20091002080417.GG14918@kernel.dk> <20091002092409.GA19529@elte.hu>
-	<20091002092839.GA26962@kernel.dk>
+Date: Fri, 2 Oct 2009 09:33:44 -0700
+Message-ID: <2c0942db0910020933l6d312c6ahae0e00619f598b39@mail.gmail.com>
+References: <1254340730.7695.32.camel@marge.simson.net> <20090930202447.GA28236@redhat.com>
+	<1254382405.7595.9.camel@marge.simson.net> <20091001185816.GU14918@kernel.dk>
+	<1254464628.7158.101.camel@marge.simson.net> <20091002080417.GG14918@kernel.dk>
+	<20091002092409.GA19529@elte.hu> <20091002092839.GA26962@kernel.dk>
 	<alpine.LFD.2.01.0910020715160.6996@localhost.localdomain>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<20091002145610.GD31616@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.01.0910020715160.6996@localhost.localdomain>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, Vivek Goyal <vgoyal@redhat.com>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, Mike Galbraith <efault@gmx.de>, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com
+Content-Type: text/plain; charset=UTF-8
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756641AbZJBQeC@vger.kernel.org>
+In-Reply-To: <20091002145610.GD31616@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Ingo Molnar <mingo@elte.hu>, Mike Galbraith <efault@gmx.de>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
 List-Id: dm-devel.ids
 
+On Fri, Oct 2, 2009 at 7:56 AM, Jens Axboe <jens.axboe@oracle.com> wrote:
+> In some cases I wish we had a server vs desktop switch, since it would
+> decisions on this easier. I know you say that servers care about
+> latency, but not at all to the extent that desktops do. Most desktop
+> users would gladly give away the top of the performance for latency,
+> that's not true of most server users. Depends on what the server does,
+> of course.
 
-* Linus Torvalds <torvalds@linux-foundation.org> wrote:
+If most of the I/O on a system exhibits seeky tendencies, couldn't the
+schedulers notice that and use that as the hint for what to optimize?
 
-> On Fri, 2 Oct 2009, Jens Axboe wrote:
-> > 
-> > It's really not that simple, if we go and do easy latency bits, then 
-> > throughput drops 30% or more.
-> 
-> Well, if we're talking 500-950% improvement vs 30% deprovement, I 
-> think it's pretty clear, though. Even the server people do care about 
-> latencies.
-> 
-> Often they care quite a bit, in fact.
-
-The other thing is that latency is basically a given property in any 
-system - as an app writer you have to live with it, there's not much you 
-can do to improve it.
-
-Bandwidth on the other hand is a lot more engineerable, as it tends to 
-be about batching things and you can batch in user-space too. Batching 
-is often easier to do than getting good latencies.
-
-Then there's also the fact that the range of apps that care about 
-bandwidth is a lot smaller than the range of apps which care about 
-latencies. The default should help more apps - i.e. latencies.
-
-	Ingo
+I mean, there's no switch better than the actual I/O behavior itself.
