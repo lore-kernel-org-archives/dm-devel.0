@@ -1,322 +1,215 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: RE: [PATCH 2/4] scsi_dh: rdac handler: Make rdac hardware handler
-	async
-Date: Thu, 01 Oct 2009 17:29:20 -0700
-Message-ID: <1254443360.24692.21.camel@chandra-ubuntu>
-References: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
-	 <20090930020823.11455.23935.sendpatchset@chandra-ubuntu>
-	 <E463DF2B2E584B4A82673F53D62C2EF474E786BE@cosmail01.lsi.com>
-Reply-To: sekharan@linux.vnet.ibm.com
+From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
+Subject: Re: Question regarding failback option in multipath.conf
+Date: Thu, 01 Oct 2009 20:39:12 -0400
+Message-ID: <1254443952.6539.11.camel@jaspav.missionsit.net.missionsit.net>
+References: <5A70833B-9208-470E-88B7-7C351EED2122@aclue.com>
+	<4AC3AC88.9020404@redhat.com>
+	<06F122DE-B7E5-4721-BA08-D0453D10581C@aclue.com>
+	<4AC3B084.4060700@redhat.com>
+	<B38A0B62-A47C-4400-B113-5D46D13453D6@aclue.com>
+	<3f5a695c0910011416i6d87dcbcr94a04dfd825fba04@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF474E786BE@cosmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "michaelc@cs.wisc.edu" <michaelc@cs.wisc.edu>, "Benoit_Arthur@emc.com" <Benoit_Arthur@emc.com>, "Eddie.Williams@steeleye.com" <Eddie.Williams@steeleye.com>, "berthiaume_wayne@emc.com" <berthiaume_wayne@emc.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <3f5a695c0910011416i6d87dcbcr94a04dfd825fba04@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks Babu,
+I don't have the expertise to help very much but did you address the
+previous comment about duplicate default blocks? Good luck - John
 
-It matches with what I was seeing too.
+On Thu, 2009-10-01 at 15:16 -0600, Eli Klein wrote:
+> Any ideas on this? Not sure if this e-mail made it out to the list.
+> 
+> 
+> Thanks!
+> 
+> 
+> -Eli
+> 
+> On Wed, Sep 30, 2009 at 1:36 PM, Eli Klein <elijah@aclue.com> wrote:
+>         
+>         On Sep 30, 2009, at 1:24 PM, John Brier wrote:
+>         
+>         > On 09/30/2009 03:16 PM, Eli Klein wrote:
+>         > > 
+>         > > Here's the abbreviated output from multipath -v3:
+>         > > 
+>         > > mpath1: pgfailback = 120 (config file default)
+>         > > mpath1: pgpolicy = multibus (config file default)
+>         > > mpath1: selector = round-robin 0 (internal default)
+>         > > mpath1: features = 1 queue_if_no_path (internal default)
+>         > > mpath1: hwhandler = 0 (internal default)
+>         > > mpath1: rr_weight = 2 (config file default)
+>         > > mpath1: minio = 10 (config file default)
+>         > > mpath1: no_path_retry = 1 (config file default)
+>         > > pg_timeout = NONE (internal default)
+>         > > mpath1: set ACT_NOTHING (map unchanged)
+>         > > 
+>         > > It's definitely picking up the settings correctly from
+>         > > multipath.conf,
+>         > > but the paths are still reinstated immediately once
+>         > > they're reconnected
+>         > > (even if it's just for a split second).
+>         > > 
+>         > 
+>         > What does /var/log/messages look like when this happens?
+>         > Since you changed failback to 120 did you restart multipathd
+>         > or restart the box?
+>         > 
+>         > John Brier
+>         > 
+>         > --
+>         > dm-devel mailing list
+>         > dm-devel@redhat.com
+>         > https://www.redhat.com/mailman/listinfo/dm-devel
+>         > 
+>         
+>         
+>         I've tried rebooting, restarting multipath (and iscsid),
+>         flushing multipath (-F), removing all the iscsi targets
+>         completely and then reinitializing the targets.  Nothing
+>         changes the behavior.  Here's output from /var/log/messages..
+>         note the time between when the link becomes active (13:31:08)
+>         to when the path is reinstated (13:31:15):
+>         
+>         
+>         Sep 30 13:30:28 testbox kernel:  connection7:0: ping timeout
+>         of 5 secs expired, recv timeout 5, last rx 4470061909, last
+>         ping 4470066909, now 4470071909
+>         Sep 30 13:30:28 testbox kernel:  connection7:0: detected conn
+>         error (1011)
+>         Sep 30 13:30:28 testbox multipathd: sdf: readsector0 checker
+>         reports path is down
+>         Sep 30 13:30:28 testbox multipathd: checker failed path 8:80
+>         in map mpath0
+>         Sep 30 13:30:28 testbox multipathd: mpath0: remaining active
+>         paths: 1
+>         Sep 30 13:30:28 testbox kernel: device-mapper: multipath:
+>         Failing path 8:80.
+>         Sep 30 13:30:28 testbox iscsid: Kernel reported iSCSI
+>         connection 7:0 error (1011) state (3)
+>         Sep 30 13:30:29 testbox kernel:  connection9:0: ping timeout
+>         of 5 secs expired, recv timeout 5, last rx 4470063232, last
+>         ping 4470068232, now 4470073232
+>         Sep 30 13:30:29 testbox kernel:  connection9:0: detected conn
+>         error (1011)
+>         Sep 30 13:30:29 testbox multipathd: sdg: readsector0 checker
+>         reports path is down
+>         Sep 30 13:30:29 testbox multipathd: checker failed path 8:96
+>         in map mpath1
+>         Sep 30 13:30:29 testbox multipathd: mpath1: remaining active
+>         paths: 1
+>         Sep 30 13:30:29 testbox kernel: device-mapper: multipath:
+>         Failing path 8:96.
+>         Sep 30 13:30:30 testbox kernel:  connection11:0: ping timeout
+>         of 5 secs expired, recv timeout 5, last rx 4470064373, last
+>         ping 4470069373, now 4470074373
+>         Sep 30 13:30:30 testbox kernel:  connection11:0: detected conn
+>         error (1011)
+>         Sep 30 13:30:30 testbox iscsid: Kernel reported iSCSI
+>         connection 9:0 error (1011) state (3)
+>         Sep 30 13:30:30 testbox multipathd: sdh: readsector0 checker
+>         reports path is down
+>         Sep 30 13:30:30 testbox multipathd: checker failed path 8:112
+>         in map mpath2
+>         Sep 30 13:30:30 testbox kernel: device-mapper: multipath:
+>         Failing path 8:112.
+>         Sep 30 13:30:30 testbox multipathd: mpath2: remaining active
+>         paths: 1
+>         Sep 30 13:30:30 testbox multipathd: dm-4: add map (uevent)
+>         Sep 30 13:30:30 testbox multipathd: dm-4: devmap already
+>         registered
+>         Sep 30 13:30:30 testbox multipathd: dm-2: add map (uevent)
+>         Sep 30 13:30:30 testbox multipathd: dm-2: devmap already
+>         registered
+>         Sep 30 13:30:30 testbox multipathd: dm-3: add map (uevent)
+>         Sep 30 13:30:30 testbox multipathd: dm-3: devmap already
+>         registered
+>         Sep 30 13:30:31 testbox iscsid: Kernel reported iSCSI
+>         connection 11:0 error (1011) state (3)
+>         Sep 30 13:30:43 testbox kernel:  session7: session recovery
+>         timed out after 15 secs
+>         Sep 30 13:30:43 testbox multipathd: sdf: readsector0 checker
+>         reports path is down
+>         Sep 30 13:30:44 testbox kernel:  session9: session recovery
+>         timed out after 15 secs
+>         Sep 30 13:30:44 testbox multipathd: sdg: readsector0 checker
+>         reports path is down
+>         Sep 30 13:30:45 testbox kernel:  session11: session recovery
+>         timed out after 15 secs
+>         Sep 30 13:30:45 testbox kernel: sd 13:0:0:0: SCSI error:
+>         return code = 0x000f0000
+>         Sep 30 13:30:45 testbox kernel: end_request: I/O error, dev
+>         sdh, sector 407978223
+>         Sep 30 13:30:45 testbox multipathd: sdh: readsector0 checker
+>         reports path is down
+>         Sep 30 13:30:55 testbox multipathd: sdf: readsector0 checker
+>         reports path is down
+>         Sep 30 13:31:05 testbox multipathd: sdg: readsector0 checker
+>         reports path is down
+>         Sep 30 13:31:05 testbox multipathd: sdh: readsector0 checker
+>         reports path is down
+>         Sep 30 13:31:05 testbox multipathd: sdf: readsector0 checker
+>         reports path is down
+>         Sep 30 13:31:05 testbox multipathd: sdg: readsector0 checker
+>         reports path is down
+>         Sep 30 13:31:05 testbox multipathd: sdh: readsector0 checker
+>         reports path is down
+>         Sep 30 13:31:08 testbox iscsid: connection9:0 is operational
+>         after recovery (3 attempts)
+>         Sep 30 13:31:08 testbox iscsid: connection11:0 is operational
+>         after recovery (3 attempts)
+>         Sep 30 13:31:11 testbox iscsid: connection7:0 is operational
+>         after recovery (3 attempts)
+>         Sep 30 13:31:15 testbox multipathd: sdf: readsector0 checker
+>         reports path is up
+>         Sep 30 13:31:15 testbox multipathd: 8:80: reinstated
+>         Sep 30 13:31:15 testbox multipathd: mpath0: remaining active
+>         paths: 2
+>         Sep 30 13:31:15 testbox multipathd: sdg: readsector0 checker
+>         reports path is up
+>         Sep 30 13:31:15 testbox multipathd: 8:96: reinstated
+>         Sep 30 13:31:15 testbox multipathd: mpath1: remaining active
+>         paths: 2
+>         Sep 30 13:31:15 testbox multipathd: sdh: readsector0 checker
+>         reports path is up
+>         Sep 30 13:31:15 testbox multipathd: 8:112: reinstated
+>         Sep 30 13:31:15 testbox multipathd: mpath2: remaining active
+>         paths: 2
+>         Sep 30 13:31:15 testbox multipathd: dm-4: add map (uevent)
+>         Sep 30 13:31:15 testbox multipathd: dm-4: devmap already
+>         registered
+>         Sep 30 13:31:15 testbox multipathd: dm-2: add map (uevent)
+>         Sep 30 13:31:15 testbox multipathd: dm-2: devmap already
+>         registered
+>         Sep 30 13:31:15 testbox multipathd: dm-3: add map (uevent)
+>         Sep 30 13:31:15 testbox multipathd: dm-3: devmap already
+>         registered
+>         
+>         
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+John A. Sullivan III
+Open Source Development Corporation
++1 207-985-7880
+jsullivan@opensourcedevel.com
 
-On Thu, 2009-10-01 at 18:03 -0600, Moger, Babu wrote:
-> Hi Chandra,
-> I have tested these patches on 2.6.31 kernel with LSI storage.
-> My configuration had 234 Luns with two paths to each lun(one active, one  passive) and luns were evenly distributed. 
-> Here are the results.
-> 
-> Results with the patches
-> Failover takes about 1 minute to complete 117 mode selects. Failovers are completed in two sets(1 mode select first and then 116 mode selects together).
-> Failback takes about 2 and Half minutes.. 
-> 
-> 
-> Results without the patches on same configuration
-> failover takes about 12 minutes to complete 117 mode selects. 
-> Failback takes about 15 minutes.
-> 
-> Thanks
-> Babu Moger 
-> 
-> > -----Original Message-----
-> > From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-
-> > owner@vger.kernel.org] On Behalf Of Chandra Seetharaman
-> > Sent: Tuesday, September 29, 2009 9:08 PM
-> > To: linux-scsi@vger.kernel.org
-> > Cc: dm-devel@redhat.com; Moger, Babu; michaelc@cs.wisc.edu;
-> > Benoit_Arthur@emc.com; Eddie.Williams@steeleye.com;
-> > berthiaume_wayne@emc.com; Chandra Seetharaman
-> > Subject: [PATCH 2/4] scsi_dh: rdac handler: Make rdac hardware handler
-> > async
-> > 
-> > Batch up MODE_SELECT in rdac device handler.
-> > 
-> > LSI RDAC storage has the capability of handling mode selects for
-> > multiple luns in a same command. Make use of that ability to send
-> > as few MODE SELECTs as possible to the storage controller as possible.
-> > 
-> > This patch creates a work queue and queues up activate requests
-> > when a MODE SELECT is sent down the wire. When that MODE SELECT
-> > completes, it compiles queued up activate requests for multiple
-> > luns into a single MODE SELECT.
-> > 
-> > This reduces the time to do failover/failback of large number of LUNS.
-> > 
-> > Signed-off-by: Babu Moger <babu.moger@lsi.com>
-> > Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-> > 
-> > ---
-> >  drivers/scsi/device_handler/scsi_dh_rdac.c |  117
-> > ++++++++++++++++++++++++++---
-> >  1 file changed, 104 insertions(+), 13 deletions(-)
-> > 
-> > Index: linux-2.6.31/drivers/scsi/device_handler/scsi_dh_rdac.c
-> > ===================================================================
-> > --- linux-2.6.31.orig/drivers/scsi/device_handler/scsi_dh_rdac.c
-> > +++ linux-2.6.31/drivers/scsi/device_handler/scsi_dh_rdac.c
-> > @@ -22,6 +22,7 @@
-> >  #include <scsi/scsi.h>
-> >  #include <scsi/scsi_eh.h>
-> >  #include <scsi/scsi_dh.h>
-> > +#include <linux/workqueue.h>
-> > 
-> >  #define RDAC_NAME "rdac"
-> >  #define RDAC_RETRY_COUNT 5
-> > @@ -135,6 +136,11 @@ struct rdac_controller {
-> >  		struct rdac_pg_legacy legacy;
-> >  		struct rdac_pg_expanded expanded;
-> >  	} mode_select;
-> > +	spinlock_t		ms_lock;
-> > +	int			ms_queued;
-> > +	struct work_struct	ms_work;
-> > +	struct scsi_device	*ms_sdev;
-> > +	struct list_head	ms_head;
-> >  };
-> >  struct c8_inquiry {
-> >  	u8	peripheral_info;
-> > @@ -195,8 +201,17 @@ static const char *lun_state[] =
-> >  	"owned (AVT mode)",
-> >  };
-> > 
-> > +struct rdac_queue_data {
-> > +	struct list_head	entry;
-> > +	struct rdac_dh_data	*h;
-> > +	activate_complete	callback_fn;
-> > +	void			*callback_data;
-> > +};
-> > +
-> >  static LIST_HEAD(ctlr_list);
-> >  static DEFINE_SPINLOCK(list_lock);
-> > +static struct workqueue_struct *kmpath_rdacd;
-> > +static void send_mode_select(struct work_struct *work);
-> > 
-> >  static inline struct rdac_dh_data *get_rdac_data(struct scsi_device
-> > *sdev)
-> >  {
-> > @@ -253,7 +268,6 @@ static struct request *rdac_failover_get
-> >  		rdac_pg->subpage_code = 0x1;
-> >  		rdac_pg->page_len[0] = 0x01;
-> >  		rdac_pg->page_len[1] = 0x28;
-> > -		rdac_pg->lun_table[h->lun] = 0x81;
-> >  	} else {
-> >  		struct rdac_pg_legacy *rdac_pg;
-> > 
-> > @@ -263,7 +277,6 @@ static struct request *rdac_failover_get
-> >  		common = &rdac_pg->common;
-> >  		rdac_pg->page_code = RDAC_PAGE_CODE_REDUNDANT_CONTROLLER;
-> >  		rdac_pg->page_len = 0x68;
-> > -		rdac_pg->lun_table[h->lun] = 0x81;
-> >  	}
-> >  	common->rdac_mode[1] = RDAC_MODE_TRANSFER_SPECIFIED_LUNS;
-> >  	common->quiescence_timeout = RDAC_QUIESCENCE_TIME;
-> > @@ -297,6 +310,7 @@ static void release_controller(struct kr
-> >  	struct rdac_controller *ctlr;
-> >  	ctlr = container_of(kref, struct rdac_controller, kref);
-> > 
-> > +	flush_workqueue(kmpath_rdacd);
-> >  	spin_lock(&list_lock);
-> >  	list_del(&ctlr->node);
-> >  	spin_unlock(&list_lock);
-> > @@ -326,6 +340,11 @@ static struct rdac_controller *get_contr
-> >  	memcpy(ctlr->slot_id, slot_id, SLOT_ID_LEN);
-> >  	kref_init(&ctlr->kref);
-> >  	ctlr->use_ms10 = -1;
-> > +	ctlr->ms_queued = 0;
-> > +	ctlr->ms_sdev = NULL;
-> > +	spin_lock_init(&ctlr->ms_lock);
-> > +	INIT_WORK(&ctlr->ms_work, send_mode_select);
-> > +	INIT_LIST_HEAD(&ctlr->ms_head);
-> >  	list_add(&ctlr->node, &ctlr_list);
-> >  done:
-> >  	spin_unlock(&list_lock);
-> > @@ -445,8 +464,7 @@ static int set_mode_select(struct scsi_d
-> >  	return err;
-> >  }
-> > 
-> > -static int mode_select_handle_sense(struct scsi_device *sdev,
-> > -				    unsigned char *sensebuf)
-> > +static int mode_select_handle_sense(unsigned char *sensebuf)
-> >  {
-> >  	struct scsi_sense_hdr sense_hdr;
-> >  	int err = SCSI_DH_IO, ret;
-> > @@ -478,7 +496,7 @@ static int mode_select_handle_sense(stru
-> >  			err = SCSI_DH_RETRY;
-> >  		break;
-> >  	default:
-> > -		sdev_printk(KERN_INFO, sdev,
-> > +		printk(KERN_INFO
-> >  			    "MODE_SELECT failed with sense
-> > %02x/%02x/%02x.\n",
-> >  			    sense_hdr.sense_key, sense_hdr.asc,
-> > sense_hdr.ascq);
-> >  	}
-> > @@ -487,11 +505,29 @@ done:
-> >  	return err;
-> >  }
-> > 
-> > -static int send_mode_select(struct scsi_device *sdev, struct
-> > rdac_dh_data *h)
-> > +static void send_mode_select(struct work_struct *work)
-> >  {
-> > +	struct rdac_controller *ctlr =
-> > +		container_of(work, struct rdac_controller, ms_work);
-> >  	struct request *rq;
-> > +	struct scsi_device *sdev = ctlr->ms_sdev;
-> > +	struct rdac_dh_data *h = get_rdac_data(sdev);
-> >  	struct request_queue *q = sdev->request_queue;
-> >  	int err, retry_cnt = RDAC_RETRY_COUNT;
-> > +	struct rdac_queue_data *tmp, *qdata;
-> > +	LIST_HEAD(list);
-> > +	u8 *lun_table;
-> > +
-> > +	spin_lock(&ctlr->ms_lock);
-> > +	list_splice_init(&ctlr->ms_head, &list);
-> > +	ctlr->ms_queued = 0;
-> > +	ctlr->ms_sdev = NULL;
-> > +	spin_unlock(&ctlr->ms_lock);
-> > +
-> > +	if (ctlr->use_ms10)
-> > +		lun_table = ctlr->mode_select.expanded.lun_table;
-> > +	else
-> > +		lun_table = ctlr->mode_select.legacy.lun_table;
-> > 
-> >  retry:
-> >  	err = SCSI_DH_RES_TEMP_UNAVAIL;
-> > @@ -499,13 +535,17 @@ retry:
-> >  	if (!rq)
-> >  		goto done;
-> > 
-> > -	sdev_printk(KERN_INFO, sdev, "%s MODE_SELECT command.\n",
-> > + 	list_for_each_entry(qdata, &list, entry) {
-> > +		lun_table[qdata->h->lun] = 0x81;
-> > +	}
-> > +
-> > +	printk(KERN_INFO "%s MODE_SELECT command.\n",
-> >  		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
-> > 
-> >  	err = blk_execute_rq(q, NULL, rq, 1);
-> >  	blk_put_request(rq);
-> >  	if (err != SCSI_DH_OK) {
-> > -		err = mode_select_handle_sense(sdev, h->sense);
-> > +		err = mode_select_handle_sense(h->sense);
-> >  		if (err == SCSI_DH_RETRY && retry_cnt--)
-> >  			goto retry;
-> >  	}
-> > @@ -513,10 +553,45 @@ retry:
-> >  		h->state = RDAC_STATE_ACTIVE;
-> > 
-> >  done:
-> > -	return err;
-> > +	list_for_each_entry_safe(qdata, tmp, &list, entry) {
-> > +		list_del(&qdata->entry);
-> > +		if (err == SCSI_DH_OK)
-> > +			qdata->h->state = RDAC_STATE_ACTIVE;
-> > +		if (qdata->callback_fn)
-> > +			qdata->callback_fn(qdata->callback_data, err);
-> > +		kfree(qdata);
-> > +	}
-> > +	return;
-> >  }
-> > 
-> > -static int rdac_activate(struct scsi_device *sdev, activate_complete
-> > fn, void *data)
-> > +static int queue_mode_select(struct scsi_device *sdev,
-> > +				activate_complete fn, void *data)
-> > +{
-> > +	struct rdac_queue_data *qdata;
-> > +	struct rdac_controller *ctlr;
-> > +
-> > +	qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
-> > +	if (!qdata)
-> > +		return SCSI_DH_RETRY;
-> > +
-> > + 	qdata->h = get_rdac_data(sdev);
-> > +	qdata->callback_fn = fn;
-> > +	qdata->callback_data = data;
-> > +
-> > +	ctlr = qdata->h->ctlr;
-> > +	spin_lock(&ctlr->ms_lock);
-> > +	list_add_tail(&qdata->entry, &ctlr->ms_head);
-> > +	if (!ctlr->ms_queued) {
-> > +		ctlr->ms_queued = 1;
-> > +		ctlr->ms_sdev = sdev;
-> > +		queue_work(kmpath_rdacd, &ctlr->ms_work);
-> > +	}
-> > +	spin_unlock(&ctlr->ms_lock);
-> > +	return SCSI_DH_OK;
-> > +}
-> > +
-> > +static int rdac_activate(struct scsi_device *sdev,
-> > +				activate_complete fn, void *data)
-> >  {
-> >  	struct rdac_dh_data *h = get_rdac_data(sdev);
-> >  	int err = SCSI_DH_OK;
-> > @@ -536,8 +611,11 @@ static int rdac_activate(struct scsi_dev
-> >  		if (err != SCSI_DH_OK)
-> >  			goto done;
-> >  	}
-> > -	if (h->lun_state == RDAC_LUN_UNOWNED)
-> > -		err = send_mode_select(sdev, h);
-> > +	if (h->lun_state == RDAC_LUN_UNOWNED) {
-> > +		err = queue_mode_select(sdev, fn, data);
-> > +		if (err == SCSI_DH_OK)
-> > +			return 0;
-> > +	}
-> >  done:
-> >  	if (fn)
-> >  		fn(data, err);
-> > @@ -726,13 +804,26 @@ static int __init rdac_init(void)
-> >  	int r;
-> > 
-> >  	r = scsi_register_device_handler(&rdac_dh);
-> > -	if (r != 0)
-> > +	if (r != 0) {
-> >  		printk(KERN_ERR "Failed to register scsi device handler.");
-> > +		goto done;
-> > +	}
-> > +
-> > +	/*
-> > +	 * Create workqueue to handle mode selects for rdac
-> > +	 */
-> > +	kmpath_rdacd = create_singlethread_workqueue("kmpath_rdacd");
-> > +	if (!kmpath_rdacd) {
-> > +		scsi_unregister_device_handler(&rdac_dh);
-> > +		printk(KERN_ERR "kmpath_rdacd creation failed.\n");
-> > +	}
-> > +done:
-> >  	return r;
-> >  }
-> > 
-> >  static void __exit rdac_exit(void)
-> >  {
-> > +	destroy_workqueue(kmpath_rdacd);
-> >  	scsi_unregister_device_handler(&rdac_dh);
-> >  }
-> > 
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-scsi"
-> > in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+http://www.spiritualoutreach.com
+Making Christianity intelligible to secular society
