@@ -1,43 +1,45 @@
 From: Mike Galbraith <efault@gmx.de>
 Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 02 Oct 2009 20:29:57 +0200
-Message-ID: <1254508197.8667.22.camel@marge.simson.net>
-References: <1253820332-10246-1-git-send-email-vgoyal@redhat.com>
-	 <4ABC28DE.7050809@datenparkplatz.de> <20090925202636.GC15007@redhat.com>
-	 <1253976676.7005.40.camel@marge.simson.net>
-	 <1254034500.7933.6.camel@marge.simson.net>
-	 <20090927164235.GA23126@kernel.dk>
-	 <1254340730.7695.32.camel@marge.simson.net>
-	 <1254341139.7695.36.camel@marge.simson.net>
-	 <20090930202447.GA28236@redhat.com>
-	 <1254382405.7595.9.camel@marge.simson.net>
-	 <20091002180857.GM31616@kernel.dk>
+Date: Fri, 02 Oct 2009 20:33:17 +0200
+Message-ID: <1254508397.8667.24.camel@marge.simson.net>
+References: <20091002145610.GD31616@kernel.dk>
+	 <alpine.LFD.2.01.0910020811490.6996@localhost.localdomain>
+	 <20091002171129.GG31616@kernel.dk> <20091002172046.GA2376@elte.hu>
+	 <20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu>
+	 <20091002173732.GK31616@kernel.dk> <20091002175629.GA14860@elte.hu>
+	 <20091002180437.GL31616@kernel.dk>
+	 <1254507754.8667.15.camel@marge.simson.net>
+	 <20091002182608.GO31616@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758064AbZJBSaB@vger.kernel.org>
-In-Reply-To: <20091002180857.GM31616@kernel.dk>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758084AbZJBSdU@vger.kernel.org>
+In-Reply-To: <20091002182608.GO31616@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, torvalds@linux-foundation.org, mingo@elte.hu, riel@redhat.com
+Cc: Ingo Molnar <mingo@elte.hu>, Linus Torvalds <torvalds@linux-foundation.org>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 2009-10-02 at 20:08 +0200, Jens Axboe wrote:
-> On Thu, Oct 01 2009, Mike Galbraith wrote:
-> >  	max_dispatch = cfqd->cfq_quantum;
-> >  	if (cfq_class_idle(cfqq))
-> >  		max_dispatch = 1;
-> >  
-> > +	if (cfqd->busy_queues > 1)
-> > +		cfqd->od_stamp = jiffies;
-> > +
+On Fri, 2009-10-02 at 20:26 +0200, Jens Axboe wrote:
+> On Fri, Oct 02 2009, Mike Galbraith wrote:
+> > On Fri, 2009-10-02 at 20:04 +0200, Jens Axboe wrote:
+> > 
+> > > I'm not too crazy about it either. How about just using 'desktop' since
+> > > this is obviously what we are really targetting? 'latency' isn't fully
+> > > descriptive either, since it may not necessarily provide the best single
+> > > IO latency (noop would).
+> > 
+> > Grin. "Perfect is the enemy of good" :)
+> >                                                   Avg
+> >      16.24   175.82   154.38   228.97   147.16  144.5     noop
+> >      43.23    57.39    96.13   148.25   180.09  105.0     deadline
 > 
-> ->busy_queues > 1 just means that they have requests ready for dispatch,
-> not that they are dispatched.
+> Yep, that's where it falls down. Noop basically fails here because it
+> treats all IO as equal, which obviously isn't true for most people. But
+> even for pure read workloads (is the above the mixed read/write, or just
+> read?), latency would be excellent with noop but the desktop experience
+> would not.
 
-But we're not alone, somebody else is using disk.  I'm trying to make
-sure we don't have someone _about_ to come back.. like a reader, so when
-there's another player, stamp to give him some time to wake up/submit
-before putting the pedal to the metal.
+Yeah, it's the dd vs konsole -e exit.
 
 	-Mike
