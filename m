@@ -1,87 +1,179 @@
 From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: [PATCH 1/9] I/O bandwidth controller and BIO tracking
-Date: Fri, 02 Oct 2009 20:56:07 +0900 (JST)
-Message-ID: <20091002.205607.193712402.ryov@valinux.co.jp>
+Subject: [PATCH 3/9] blkio-cgroup-v13: The new page_cgroup
+	framework
+Date: Fri, 02 Oct 2009 20:57:01 +0900 (JST)
+Message-ID: <20091002.205701.71114259.ryov@valinux.co.jp>
+References: <20091002.205607.193712402.ryov@valinux.co.jp>
+	<20091002.205635.226776464.ryov@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20091002.205635.226776464.ryov@valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
 List-Id: dm-devel.ids
 
-Hi all,
+This patch makes the page_cgroup framework be able to be used even if
+the compile option of the cgroup memory controller is off.
+So blkio-cgroup can use this framework without the memory controller.
 
-These are new releases of dm-ioband and blkio-cgroup. The major change
-of these releases is that dm-ioband handles sync/async IO requests
-separately and it solves write-startve-read issue pointed out by Vivek.
-Thank you Vivek for your pointing out the issue.
+Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
+Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
 
-  Subject: ioband: Writer starves reader even without competitors
-  http://lkml.org/lkml/2009/9/15/478
+---
+ include/linux/memcontrol.h  |    6 ++++++
+ include/linux/mmzone.h      |    4 ++--
+ include/linux/page_cgroup.h |    5 +++--
+ init/Kconfig                |    4 ++++
+ mm/Makefile                 |    3 ++-
+ mm/memcontrol.c             |    6 ++++++
+ mm/page_cgroup.c            |    3 +--
+ 7 files changed, 24 insertions(+), 7 deletions(-)
 
-Here is the test result. I did the same test as Vivek did, it reads
-32MB files four times during a bufferd writer is running.
-
-dm-ioband v1.14.0
-file #   1, plain reading it took: 0.73 seconds
-file #   2, plain reading it took: 0.78 seconds
-file #   3, plain reading it took: 0.78 seconds
-file #   4, plain reading it took: 0.94 seconds
-
-dm-ioband v1.13.0
-file #   1, plain reading it took: 14.27 seconds
-file #   2, plain reading it took: 22.17 seconds
-file #   3, plain reading it took: 12.31 seconds
-file #   4, plain reading it took: 17.69 seconds
-
-The summary of the changes are below:
-dm-ioband v1.14.0
-  - Handle sync/async IO requests separetely, it solves write-starve-read
-    issue.
-  - Allow it to compile against 2.6.32-rc1.
-blkio-cgroup v13
-  - Fix style issues caught by checkpatch.pl.
-  - Allow it to compile against 2.6.32-rc1.
-
-The list of the patches:
-  [PATCH 1/9] I/O bandwidth controller and BIO tracking
-  [PATCH 2/9] dm-ioband-1.14.0: All-in-one patch
-  [PATCH 3/9] blkio-cgroup-v13: The new page_cgroup framework
-  [PATCH 4/9] blkio-cgroup-v13: Refactoring io-context initialization
-  [PATCH 5/9] blkio-cgroup-v13: The body of blkio-cgroup
-  [PATCH 6/9] blkio-cgroup-v13: Page tracking hooks
-  [PATCH 7/9] blkio-cgroup-v13: The document of blkio-cgroup
-  [PATCH 8/9] blkio-cgroup-v13: Add a cgroup support to dm-ioband
-  [PATCH 9/9] blkio-cgroup-v13: The document of a cgroup support for dm-ioband
-
-About dm-ioband
-  dm-ioband is an I/O bandwidth controller implemented as a
-  device-mapper driver and can control bandwidth on per partition, per
-  user, per process, per virtual machine (such as KVM or Xen) basis.
-
-About blkio-cgruop
-  blkio-cgroup is a block I/O tracking mechanism implemented on the
-  cgroup memory subsystem. Using this feature the owners of any type
-  of I/O can be determined. This allows dm-ioband to control block I/O
-  bandwidth even when it is accepting delayed write requests.
-  dm-ioband can find the cgroup of each request. It is also for
-  possible that others working on I/O bandwidth throttling to use this
-  functionality to control asynchronous I/O with a little enhancement.
-
-Please visit our website, the patches and more information are available.
-  Linux Block I/O Bandwidth Control Project
-  http://sourceforge.net/apps/trac/ioband/
-
-I'd like to get some feedbacks from the list. Any comments are
-appreciated.
-
-Thanks,
-Ryo Tsuruta
+Index: linux-2.6.32-rc1/include/linux/memcontrol.h
+===================================================================
+--- linux-2.6.32-rc1.orig/include/linux/memcontrol.h
++++ linux-2.6.32-rc1/include/linux/memcontrol.h
+@@ -37,6 +37,8 @@ struct mm_struct;
+  * (Of course, if memcg does memory allocation in future, GFP_KERNEL is sane.)
+  */
+ 
++extern void __init_mem_page_cgroup(struct page_cgroup *pc);
++
+ extern int mem_cgroup_newpage_charge(struct page *page, struct mm_struct *mm,
+ 				gfp_t gfp_mask);
+ /* for swap handling */
+@@ -124,6 +126,10 @@ unsigned long mem_cgroup_soft_limit_recl
+ #else /* CONFIG_CGROUP_MEM_RES_CTLR */
+ struct mem_cgroup;
+ 
++static inline void __init_mem_page_cgroup(struct page_cgroup *pc)
++{
++}
++
+ static inline int mem_cgroup_newpage_charge(struct page *page,
+ 					struct mm_struct *mm, gfp_t gfp_mask)
+ {
+Index: linux-2.6.32-rc1/include/linux/mmzone.h
+===================================================================
+--- linux-2.6.32-rc1.orig/include/linux/mmzone.h
++++ linux-2.6.32-rc1/include/linux/mmzone.h
+@@ -616,7 +616,7 @@ typedef struct pglist_data {
+ 	int nr_zones;
+ #ifdef CONFIG_FLAT_NODE_MEM_MAP	/* means !SPARSEMEM */
+ 	struct page *node_mem_map;
+-#ifdef CONFIG_CGROUP_MEM_RES_CTLR
++#ifdef CONFIG_CGROUP_PAGE
+ 	struct page_cgroup *node_page_cgroup;
+ #endif
+ #endif
+@@ -966,7 +966,7 @@ struct mem_section {
+ 
+ 	/* See declaration of similar field in struct zone */
+ 	unsigned long *pageblock_flags;
+-#ifdef CONFIG_CGROUP_MEM_RES_CTLR
++#ifdef CONFIG_CGROUP_PAGE
+ 	/*
+ 	 * If !SPARSEMEM, pgdat doesn't have page_cgroup pointer. We use
+ 	 * section. (see memcontrol.h/page_cgroup.h about this.)
+Index: linux-2.6.32-rc1/include/linux/page_cgroup.h
+===================================================================
+--- linux-2.6.32-rc1.orig/include/linux/page_cgroup.h
++++ linux-2.6.32-rc1/include/linux/page_cgroup.h
+@@ -1,7 +1,7 @@
+ #ifndef __LINUX_PAGE_CGROUP_H
+ #define __LINUX_PAGE_CGROUP_H
+ 
+-#ifdef CONFIG_CGROUP_MEM_RES_CTLR
++#ifdef CONFIG_CGROUP_PAGE
+ #include <linux/bit_spinlock.h>
+ /*
+  * Page Cgroup can be considered as an extended mem_map.
+@@ -14,6 +14,7 @@ struct page_cgroup {
+ 	unsigned long flags;
+ 	struct mem_cgroup *mem_cgroup;
+ 	struct page *page;
++	unsigned long blkio_cgroup_id;
+ 	struct list_head lru;		/* per cgroup LRU list */
+ };
+ 
+@@ -96,7 +97,7 @@ static inline void unlock_page_cgroup(st
+ 	bit_spin_unlock(PCG_LOCK, &pc->flags);
+ }
+ 
+-#else /* CONFIG_CGROUP_MEM_RES_CTLR */
++#else /* CONFIG_CGROUP_PAGE */
+ struct page_cgroup;
+ 
+ static inline void __meminit pgdat_page_cgroup_init(struct pglist_data *pgdat)
+Index: linux-2.6.32-rc1/init/Kconfig
+===================================================================
+--- linux-2.6.32-rc1.orig/init/Kconfig
++++ linux-2.6.32-rc1/init/Kconfig
+@@ -599,6 +599,10 @@ config CGROUP_MEM_RES_CTLR_SWAP
+ 
+ endif # CGROUPS
+ 
++config CGROUP_PAGE
++	def_bool y
++	depends on CGROUP_MEM_RES_CTLR
++
+ config MM_OWNER
+ 	bool
+ 
+Index: linux-2.6.32-rc1/mm/Makefile
+===================================================================
+--- linux-2.6.32-rc1.orig/mm/Makefile
++++ linux-2.6.32-rc1/mm/Makefile
+@@ -40,7 +40,8 @@ else
+ obj-$(CONFIG_SMP) += allocpercpu.o
+ endif
+ obj-$(CONFIG_QUICKLIST) += quicklist.o
+-obj-$(CONFIG_CGROUP_MEM_RES_CTLR) += memcontrol.o page_cgroup.o
++obj-$(CONFIG_CGROUP_MEM_RES_CTLR) += memcontrol.o
++obj-$(CONFIG_CGROUP_PAGE) += page_cgroup.o
+ obj-$(CONFIG_MEMORY_FAILURE) += memory-failure.o
+ obj-$(CONFIG_HWPOISON_INJECT) += hwpoison-inject.o
+ obj-$(CONFIG_DEBUG_KMEMLEAK) += kmemleak.o
+Index: linux-2.6.32-rc1/mm/memcontrol.c
+===================================================================
+--- linux-2.6.32-rc1.orig/mm/memcontrol.c
++++ linux-2.6.32-rc1/mm/memcontrol.c
+@@ -125,6 +125,12 @@ static s64 mem_cgroup_local_usage(struct
+ 	return ret;
+ }
+ 
++void __meminit __init_mem_page_cgroup(struct page_cgroup *pc)
++{
++	pc->mem_cgroup = NULL;
++	INIT_LIST_HEAD(&pc->lru);
++}
++
+ /*
+  * per-zone information in memory controller.
+  */
+Index: linux-2.6.32-rc1/mm/page_cgroup.c
+===================================================================
+--- linux-2.6.32-rc1.orig/mm/page_cgroup.c
++++ linux-2.6.32-rc1/mm/page_cgroup.c
+@@ -14,9 +14,8 @@ static void __meminit
+ __init_page_cgroup(struct page_cgroup *pc, unsigned long pfn)
+ {
+ 	pc->flags = 0;
+-	pc->mem_cgroup = NULL;
+ 	pc->page = pfn_to_page(pfn);
+-	INIT_LIST_HEAD(&pc->lru);
++	__init_mem_page_cgroup(pc);
+ }
+ static unsigned long total_usage;
+ 
