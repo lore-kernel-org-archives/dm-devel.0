@@ -1,19 +1,18 @@
-From: Eli Klein <elijah@aclue.com>
-Subject: Re: Question regarding failback option in multipath.conf
-Date: Thu, 1 Oct 2009 19:01:15 -0600
-Message-ID: <3f5a695c0910011801r607e0890t45802be2bbb52a26@mail.gmail.com>
-References: <5A70833B-9208-470E-88B7-7C351EED2122@aclue.com>
-	<4AC3AC88.9020404@redhat.com>
-	<06F122DE-B7E5-4721-BA08-D0453D10581C@aclue.com>
-	<4AC3B084.4060700@redhat.com>
-	<B38A0B62-A47C-4400-B113-5D46D13453D6@aclue.com>
-	<3f5a695c0910011416i6d87dcbcr94a04dfd825fba04@mail.gmail.com>
-	<1254443952.6539.11.camel@jaspav.missionsit.net.missionsit.net>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: IO scheduler based IO controller V10
+Date: Thu, 1 Oct 2009 22:57:31 -0400
+Message-ID: <20091002025731.GA2738@redhat.com>
+References: <20090929141049.GA12141@redhat.com>
+	<20090930.174319.183036386.ryov@valinux.co.jp>
+	<20090930110500.GA26631@redhat.com>
+	<20091001.154125.104044685.ryov@valinux.co.jp>
+	<20091001133109.GA4058@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1253991545=="
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1254443952.6539.11.camel@jaspav.missionsit.net.missionsit.net>
+Content-Disposition: inline
+In-Reply-To: <20091001133109.GA4058@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,526 +22,338 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, yoshikawa.takuya@oss.ntt.co.jp, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
---===============1253991545==
-Content-Type: multipart/alternative; boundary=00504502da6c35a9a30474e94e61
+On Thu, Oct 01, 2009 at 09:31:09AM -0400, Vivek Goyal wrote:
+> On Thu, Oct 01, 2009 at 03:41:25PM +0900, Ryo Tsuruta wrote:
+> > Hi Vivek,
+> > 
+> > Vivek Goyal <vgoyal@redhat.com> wrote:
+> > > On Wed, Sep 30, 2009 at 05:43:19PM +0900, Ryo Tsuruta wrote:
+> > > > Hi Vivek,
+> > > > 
+> > > > Vivek Goyal <vgoyal@redhat.com> wrote:
+> > > > > I was thinking that elevator layer will do the merge of bios. So IO
+> > > > > scheduler/elevator can time stamp the first bio in the request as it goes
+> > > > > into the disk and again timestamp with finish time once request finishes.
+> > > > > 
+> > > > > This way higher layer can get an idea how much disk time a group of bios
+> > > > > used. But on multi queue, if we dispatch say 4 requests from same queue,
+> > > > > then time accounting becomes an issue.
+> > > > > 
+> > > > > Consider following where four requests rq1, rq2, rq3 and rq4 are
+> > > > > dispatched to disk at time t0, t1, t2 and t3 respectively and these
+> > > > > requests finish at time t4, t5, t6 and t7. For sake of simlicity assume
+> > > > > time elapsed between each of milestones is t. Also assume that all these
+> > > > > requests are from same queue/group.
+> > > > > 
+> > > > >         t0   t1   t2   t3  t4   t5   t6   t7
+> > > > >         rq1  rq2  rq3 rq4  rq1  rq2  rq3 rq4
+> > > > > 
+> > > > > Now higher layer will think that time consumed by group is:
+> > > > > 
+> > > > > (t4-t0) + (t5-t1) + (t6-t2) + (t7-t3) = 16t
+> > > > > 
+> > > > > But the time elapsed is only 7t.
+> > > > 
+> > > > IO controller can know how many requests are issued and still in
+> > > > progress. Is it not enough to accumulate the time while in-flight IOs
+> > > > exist?
+> > > > 
+> > > 
+> > > That time would not reflect disk time used. It will be follwoing.
+> > > 
+> > > (time spent waiting in CFQ queues) + (time spent in dispatch queue) +
+> > > (time spent in disk)
+> > 
+> > In the case where multiple IO requests are issued from IO controller,
+> > that time measurement is the time from when the first IO request is
+> > issued until when the endio is called for the last IO request. Does
+> > not it reflect disk time?
+> > 
+> 
+> Not accurately as it will be including the time spent in CFQ queues as
+> well as dispatch queue. I will not worry much about dispatch queue time
+> but time spent CFQ queues can be significant.
+> 
+> This is assuming that you are using token based scheme and will be
+> dispatching requests from multiple groups at the same time.
+> 
 
---00504502da6c35a9a30474e94e61
-Content-Type: text/plain; charset=ISO-8859-1
+Thinking more about it...
 
-Sorry, I forgot to mention that I did.. it didn't help.
-In addition, from the output of multipath -v3, multipathd is picking up all
-of the correct settings, even with the two separate default sections.
+Does time based fairness make sense at higher level logical devices?
 
--Eli
+- Time based fairness generally helps with rotational devices which have
+  high seek costs. At higher level we don't even know what is the nature
+  of underlying device where IO will ultimately go.
 
-On Thu, Oct 1, 2009 at 6:39 PM, John A. Sullivan III <
-jsullivan@opensourcedevel.com> wrote:
+- For time based fairness to work accurately at higher level, most likely
+  it will require dispatch from the single group at a time and wait for
+  requests to complete from that group and then dispatch from next. 
+  Something like CFQ model of queue.  
 
-> I don't have the expertise to help very much but did you address the
-> previous comment about duplicate default blocks? Good luck - John
->
-> On Thu, 2009-10-01 at 15:16 -0600, Eli Klein wrote:
-> > Any ideas on this? Not sure if this e-mail made it out to the list.
-> >
-> >
-> > Thanks!
-> >
-> >
-> > -Eli
-> >
-> > On Wed, Sep 30, 2009 at 1:36 PM, Eli Klein <elijah@aclue.com> wrote:
-> >
-> >         On Sep 30, 2009, at 1:24 PM, John Brier wrote:
-> >
-> >         > On 09/30/2009 03:16 PM, Eli Klein wrote:
-> >         > >
-> >         > > Here's the abbreviated output from multipath -v3:
-> >         > >
-> >         > > mpath1: pgfailback = 120 (config file default)
-> >         > > mpath1: pgpolicy = multibus (config file default)
-> >         > > mpath1: selector = round-robin 0 (internal default)
-> >         > > mpath1: features = 1 queue_if_no_path (internal default)
-> >         > > mpath1: hwhandler = 0 (internal default)
-> >         > > mpath1: rr_weight = 2 (config file default)
-> >         > > mpath1: minio = 10 (config file default)
-> >         > > mpath1: no_path_retry = 1 (config file default)
-> >         > > pg_timeout = NONE (internal default)
-> >         > > mpath1: set ACT_NOTHING (map unchanged)
-> >         > >
-> >         > > It's definitely picking up the settings correctly from
-> >         > > multipath.conf,
-> >         > > but the paths are still reinstated immediately once
-> >         > > they're reconnected
-> >         > > (even if it's just for a split second).
-> >         > >
-> >         >
-> >         > What does /var/log/messages look like when this happens?
-> >         > Since you changed failback to 120 did you restart multipathd
-> >         > or restart the box?
-> >         >
-> >         > John Brier
-> >         >
-> >         > --
-> >         > dm-devel mailing list
-> >         > dm-devel@redhat.com
-> >         > https://www.redhat.com/mailman/listinfo/dm-devel
-> >         >
-> >
-> >
-> >         I've tried rebooting, restarting multipath (and iscsid),
-> >         flushing multipath (-F), removing all the iscsi targets
-> >         completely and then reinitializing the targets.  Nothing
-> >         changes the behavior.  Here's output from /var/log/messages..
-> >         note the time between when the link becomes active (13:31:08)
-> >         to when the path is reinstated (13:31:15):
-> >
-> >
-> >         Sep 30 13:30:28 testbox kernel:  connection7:0: ping timeout
-> >         of 5 secs expired, recv timeout 5, last rx 4470061909, last
-> >         ping 4470066909, now 4470071909
-> >         Sep 30 13:30:28 testbox kernel:  connection7:0: detected conn
-> >         error (1011)
-> >         Sep 30 13:30:28 testbox multipathd: sdf: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:30:28 testbox multipathd: checker failed path 8:80
-> >         in map mpath0
-> >         Sep 30 13:30:28 testbox multipathd: mpath0: remaining active
-> >         paths: 1
-> >         Sep 30 13:30:28 testbox kernel: device-mapper: multipath:
-> >         Failing path 8:80.
-> >         Sep 30 13:30:28 testbox iscsid: Kernel reported iSCSI
-> >         connection 7:0 error (1011) state (3)
-> >         Sep 30 13:30:29 testbox kernel:  connection9:0: ping timeout
-> >         of 5 secs expired, recv timeout 5, last rx 4470063232, last
-> >         ping 4470068232, now 4470073232
-> >         Sep 30 13:30:29 testbox kernel:  connection9:0: detected conn
-> >         error (1011)
-> >         Sep 30 13:30:29 testbox multipathd: sdg: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:30:29 testbox multipathd: checker failed path 8:96
-> >         in map mpath1
-> >         Sep 30 13:30:29 testbox multipathd: mpath1: remaining active
-> >         paths: 1
-> >         Sep 30 13:30:29 testbox kernel: device-mapper: multipath:
-> >         Failing path 8:96.
-> >         Sep 30 13:30:30 testbox kernel:  connection11:0: ping timeout
-> >         of 5 secs expired, recv timeout 5, last rx 4470064373, last
-> >         ping 4470069373, now 4470074373
-> >         Sep 30 13:30:30 testbox kernel:  connection11:0: detected conn
-> >         error (1011)
-> >         Sep 30 13:30:30 testbox iscsid: Kernel reported iSCSI
-> >         connection 9:0 error (1011) state (3)
-> >         Sep 30 13:30:30 testbox multipathd: sdh: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:30:30 testbox multipathd: checker failed path 8:112
-> >         in map mpath2
-> >         Sep 30 13:30:30 testbox kernel: device-mapper: multipath:
-> >         Failing path 8:112.
-> >         Sep 30 13:30:30 testbox multipathd: mpath2: remaining active
-> >         paths: 1
-> >         Sep 30 13:30:30 testbox multipathd: dm-4: add map (uevent)
-> >         Sep 30 13:30:30 testbox multipathd: dm-4: devmap already
-> >         registered
-> >         Sep 30 13:30:30 testbox multipathd: dm-2: add map (uevent)
-> >         Sep 30 13:30:30 testbox multipathd: dm-2: devmap already
-> >         registered
-> >         Sep 30 13:30:30 testbox multipathd: dm-3: add map (uevent)
-> >         Sep 30 13:30:30 testbox multipathd: dm-3: devmap already
-> >         registered
-> >         Sep 30 13:30:31 testbox iscsid: Kernel reported iSCSI
-> >         connection 11:0 error (1011) state (3)
-> >         Sep 30 13:30:43 testbox kernel:  session7: session recovery
-> >         timed out after 15 secs
-> >         Sep 30 13:30:43 testbox multipathd: sdf: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:30:44 testbox kernel:  session9: session recovery
-> >         timed out after 15 secs
-> >         Sep 30 13:30:44 testbox multipathd: sdg: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:30:45 testbox kernel:  session11: session recovery
-> >         timed out after 15 secs
-> >         Sep 30 13:30:45 testbox kernel: sd 13:0:0:0: SCSI error:
-> >         return code = 0x000f0000
-> >         Sep 30 13:30:45 testbox kernel: end_request: I/O error, dev
-> >         sdh, sector 407978223
-> >         Sep 30 13:30:45 testbox multipathd: sdh: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:30:55 testbox multipathd: sdf: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:31:05 testbox multipathd: sdg: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:31:05 testbox multipathd: sdh: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:31:05 testbox multipathd: sdf: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:31:05 testbox multipathd: sdg: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:31:05 testbox multipathd: sdh: readsector0 checker
-> >         reports path is down
-> >         Sep 30 13:31:08 testbox iscsid: connection9:0 is operational
-> >         after recovery (3 attempts)
-> >         Sep 30 13:31:08 testbox iscsid: connection11:0 is operational
-> >         after recovery (3 attempts)
-> >         Sep 30 13:31:11 testbox iscsid: connection7:0 is operational
-> >         after recovery (3 attempts)
-> >         Sep 30 13:31:15 testbox multipathd: sdf: readsector0 checker
-> >         reports path is up
-> >         Sep 30 13:31:15 testbox multipathd: 8:80: reinstated
-> >         Sep 30 13:31:15 testbox multipathd: mpath0: remaining active
-> >         paths: 2
-> >         Sep 30 13:31:15 testbox multipathd: sdg: readsector0 checker
-> >         reports path is up
-> >         Sep 30 13:31:15 testbox multipathd: 8:96: reinstated
-> >         Sep 30 13:31:15 testbox multipathd: mpath1: remaining active
-> >         paths: 2
-> >         Sep 30 13:31:15 testbox multipathd: sdh: readsector0 checker
-> >         reports path is up
-> >         Sep 30 13:31:15 testbox multipathd: 8:112: reinstated
-> >         Sep 30 13:31:15 testbox multipathd: mpath2: remaining active
-> >         paths: 2
-> >         Sep 30 13:31:15 testbox multipathd: dm-4: add map (uevent)
-> >         Sep 30 13:31:15 testbox multipathd: dm-4: devmap already
-> >         registered
-> >         Sep 30 13:31:15 testbox multipathd: dm-2: add map (uevent)
-> >         Sep 30 13:31:15 testbox multipathd: dm-2: devmap already
-> >         registered
-> >         Sep 30 13:31:15 testbox multipathd: dm-3: add map (uevent)
-> >         Sep 30 13:31:15 testbox multipathd: dm-3: devmap already
-> >         registered
-> >
-> >
-> >
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> --
-> John A. Sullivan III
-> Open Source Development Corporation
-> +1 207-985-7880
-> jsullivan@opensourcedevel.com
->
-> http://www.spiritualoutreach.com
-> Making Christianity intelligible to secular society
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+  Dispatching from single queue/group works well in case of a single
+  underlying device where CFQ is operating but at higher level devices
+  where typically there will be multiple physical devices under it, it
+  might not make sense as it made things more linear and reduced
+  parallel processing further. So dispatching from single group at a time
+  and waiting before we dispatch from next group will most likely be
+  killer for throughput in higher level devices and might not make sense.
 
---00504502da6c35a9a30474e94e61
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+  If we don't adopt the policy of dispatch from single group, then we run
+  into all the issues of weak isolation between groups, higher latencies,
+  preemptions across groups etc.
 
-Sorry, I forgot to mention that I did.. it didn&#39;t help.<div><br></div><=
-div>In addition, from the output of multipath -v3, multipathd is picking up=
- all of the correct settings, even with the two separate default sections.<=
-/div>
+More I think about the whole issue and desired set of requirements, more
+I am convinced that we probably need two io controlling mechanisms. One
+which focusses purely on providing bandwidth fairness numbers on high
+level devices and the other which works at low level devices with CFQ
+and provides good bandwidth shaping, strong isolation, preserves fairness
+with-in group and good control on latencies.
 
-<div><br></div><div>-Eli</div><div><br><div class=3D"gmail_quote">On Thu, O=
-ct 1, 2009 at 6:39 PM, John A. Sullivan III <span dir=3D"ltr">&lt;<a href=
-=3D"mailto:jsullivan@opensourcedevel.com">jsullivan@opensourcedevel.com</a>=
-&gt;</span> wrote:<br>
+Higher level controller will not worry about time based policies. It can
+implemente max bw and proportional bw control based on size of IO and
+number of IO. 
 
-<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
-x #ccc solid;padding-left:1ex;">I don&#39;t have the expertise to help very=
- much but did you address the<br>
-previous comment about duplicate default blocks? Good luck - John<br>
-<div><div></div><div class=3D"h5"><br>
-On Thu, 2009-10-01 at 15:16 -0600, Eli Klein wrote:<br>
-&gt; Any ideas on this? Not sure if this e-mail made it out to the list.<br=
->
-&gt;<br>
-&gt;<br>
-&gt; Thanks!<br>
-&gt;<br>
-&gt;<br>
-&gt; -Eli<br>
-&gt;<br>
-&gt; On Wed, Sep 30, 2009 at 1:36 PM, Eli Klein &lt;<a href=3D"mailto:elija=
-h@aclue.com">elijah@aclue.com</a>&gt; wrote:<br>
-&gt;<br>
-&gt; =A0 =A0 =A0 =A0 On Sep 30, 2009, at 1:24 PM, John Brier wrote:<br>
-&gt;<br>
-&gt; =A0 =A0 =A0 =A0 &gt; On 09/30/2009 03:16 PM, Eli Klein wrote:<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt;<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; Here&#39;s the abbreviated output from multi=
-path -v3:<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt;<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; mpath1: pgfailback =3D 120 (config file defa=
-ult)<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; mpath1: pgpolicy =3D multibus (config file d=
-efault)<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; mpath1: selector =3D round-robin 0 (internal=
- default)<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; mpath1: features =3D 1 queue_if_no_path (int=
-ernal default)<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; mpath1: hwhandler =3D 0 (internal default)<b=
-r>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; mpath1: rr_weight =3D 2 (config file default=
-)<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; mpath1: minio =3D 10 (config file default)<b=
-r>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; mpath1: no_path_retry =3D 1 (config file def=
-ault)<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; pg_timeout =3D NONE (internal default)<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; mpath1: set ACT_NOTHING (map unchanged)<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt;<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; It&#39;s definitely picking up the settings =
-correctly from<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; multipath.conf,<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; but the paths are still reinstated immediate=
-ly once<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; they&#39;re reconnected<br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt; (even if it&#39;s just for a split second).<=
-br>
-&gt; =A0 =A0 =A0 =A0 &gt; &gt;<br>
-&gt; =A0 =A0 =A0 =A0 &gt;<br>
-&gt; =A0 =A0 =A0 =A0 &gt; What does /var/log/messages look like when this h=
-appens?<br>
-&gt; =A0 =A0 =A0 =A0 &gt; Since you changed failback to 120 did you restart=
- multipathd<br>
-&gt; =A0 =A0 =A0 =A0 &gt; or restart the box?<br>
-&gt; =A0 =A0 =A0 =A0 &gt;<br>
-&gt; =A0 =A0 =A0 =A0 &gt; John Brier<br>
-&gt; =A0 =A0 =A0 =A0 &gt;<br>
-&gt; =A0 =A0 =A0 =A0 &gt; --<br>
-&gt; =A0 =A0 =A0 =A0 &gt; dm-devel mailing list<br>
-&gt; =A0 =A0 =A0 =A0 &gt; <a href=3D"mailto:dm-devel@redhat.com">dm-devel@r=
-edhat.com</a><br>
-&gt; =A0 =A0 =A0 =A0 &gt; <a href=3D"https://www.redhat.com/mailman/listinf=
-o/dm-devel" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-de=
-vel</a><br>
-&gt; =A0 =A0 =A0 =A0 &gt;<br>
-&gt;<br>
-&gt;<br>
-&gt; =A0 =A0 =A0 =A0 I&#39;ve tried rebooting, restarting multipath (and is=
-csid),<br>
-&gt; =A0 =A0 =A0 =A0 flushing multipath (-F), removing all the iscsi target=
-s<br>
-&gt; =A0 =A0 =A0 =A0 completely and then reinitializing the targets. =A0Not=
-hing<br>
-&gt; =A0 =A0 =A0 =A0 changes the behavior. =A0Here&#39;s output from /var/l=
-og/messages..<br>
-&gt; =A0 =A0 =A0 =A0 note the time between when the link becomes active (13=
-:31:08)<br>
-&gt; =A0 =A0 =A0 =A0 to when the path is reinstated (13:31:15):<br>
-&gt;<br>
-&gt;<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:28 testbox kernel: =A0connection7:0: ping=
- timeout<br>
-&gt; =A0 =A0 =A0 =A0 of 5 secs expired, recv timeout 5, last rx 4470061909,=
- last<br>
-&gt; =A0 =A0 =A0 =A0 ping 4470066909, now 4470071909<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:28 testbox kernel: =A0connection7:0: dete=
-cted conn<br>
-&gt; =A0 =A0 =A0 =A0 error (1011)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:28 testbox multipathd: sdf: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:28 testbox multipathd: checker failed pat=
-h 8:80<br>
-&gt; =A0 =A0 =A0 =A0 in map mpath0<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:28 testbox multipathd: mpath0: remaining =
-active<br>
-&gt; =A0 =A0 =A0 =A0 paths: 1<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:28 testbox kernel: device-mapper: multipa=
-th:<br>
-&gt; =A0 =A0 =A0 =A0 Failing path 8:80.<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:28 testbox iscsid: Kernel reported iSCSI<=
-br>
-&gt; =A0 =A0 =A0 =A0 connection 7:0 error (1011) state (3)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:29 testbox kernel: =A0connection9:0: ping=
- timeout<br>
-&gt; =A0 =A0 =A0 =A0 of 5 secs expired, recv timeout 5, last rx 4470063232,=
- last<br>
-&gt; =A0 =A0 =A0 =A0 ping 4470068232, now 4470073232<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:29 testbox kernel: =A0connection9:0: dete=
-cted conn<br>
-&gt; =A0 =A0 =A0 =A0 error (1011)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:29 testbox multipathd: sdg: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:29 testbox multipathd: checker failed pat=
-h 8:96<br>
-&gt; =A0 =A0 =A0 =A0 in map mpath1<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:29 testbox multipathd: mpath1: remaining =
-active<br>
-&gt; =A0 =A0 =A0 =A0 paths: 1<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:29 testbox kernel: device-mapper: multipa=
-th:<br>
-&gt; =A0 =A0 =A0 =A0 Failing path 8:96.<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox kernel: =A0connection11:0: pin=
-g timeout<br>
-&gt; =A0 =A0 =A0 =A0 of 5 secs expired, recv timeout 5, last rx 4470064373,=
- last<br>
-&gt; =A0 =A0 =A0 =A0 ping 4470069373, now 4470074373<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox kernel: =A0connection11:0: det=
-ected conn<br>
-&gt; =A0 =A0 =A0 =A0 error (1011)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox iscsid: Kernel reported iSCSI<=
-br>
-&gt; =A0 =A0 =A0 =A0 connection 9:0 error (1011) state (3)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox multipathd: sdh: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox multipathd: checker failed pat=
-h 8:112<br>
-&gt; =A0 =A0 =A0 =A0 in map mpath2<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox kernel: device-mapper: multipa=
-th:<br>
-&gt; =A0 =A0 =A0 =A0 Failing path 8:112.<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox multipathd: mpath2: remaining =
-active<br>
-&gt; =A0 =A0 =A0 =A0 paths: 1<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox multipathd: dm-4: add map (uev=
-ent)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox multipathd: dm-4: devmap alrea=
-dy<br>
-&gt; =A0 =A0 =A0 =A0 registered<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox multipathd: dm-2: add map (uev=
-ent)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox multipathd: dm-2: devmap alrea=
-dy<br>
-&gt; =A0 =A0 =A0 =A0 registered<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox multipathd: dm-3: add map (uev=
-ent)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:30 testbox multipathd: dm-3: devmap alrea=
-dy<br>
-&gt; =A0 =A0 =A0 =A0 registered<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:31 testbox iscsid: Kernel reported iSCSI<=
-br>
-&gt; =A0 =A0 =A0 =A0 connection 11:0 error (1011) state (3)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:43 testbox kernel: =A0session7: session r=
-ecovery<br>
-&gt; =A0 =A0 =A0 =A0 timed out after 15 secs<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:43 testbox multipathd: sdf: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:44 testbox kernel: =A0session9: session r=
-ecovery<br>
-&gt; =A0 =A0 =A0 =A0 timed out after 15 secs<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:44 testbox multipathd: sdg: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:45 testbox kernel: =A0session11: session =
-recovery<br>
-&gt; =A0 =A0 =A0 =A0 timed out after 15 secs<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:45 testbox kernel: sd 13:0:0:0: SCSI erro=
-r:<br>
-&gt; =A0 =A0 =A0 =A0 return code =3D 0x000f0000<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:45 testbox kernel: end_request: I/O error=
-, dev<br>
-&gt; =A0 =A0 =A0 =A0 sdh, sector 407978223<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:45 testbox multipathd: sdh: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:30:55 testbox multipathd: sdf: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:05 testbox multipathd: sdg: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:05 testbox multipathd: sdh: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:05 testbox multipathd: sdf: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:05 testbox multipathd: sdg: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:05 testbox multipathd: sdh: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is down<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:08 testbox iscsid: connection9:0 is opera=
-tional<br>
-&gt; =A0 =A0 =A0 =A0 after recovery (3 attempts)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:08 testbox iscsid: connection11:0 is oper=
-ational<br>
-&gt; =A0 =A0 =A0 =A0 after recovery (3 attempts)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:11 testbox iscsid: connection7:0 is opera=
-tional<br>
-&gt; =A0 =A0 =A0 =A0 after recovery (3 attempts)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: sdf: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is up<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: 8:80: reinstated<b=
-r>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: mpath0: remaining =
-active<br>
-&gt; =A0 =A0 =A0 =A0 paths: 2<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: sdg: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is up<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: 8:96: reinstated<b=
-r>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: mpath1: remaining =
-active<br>
-&gt; =A0 =A0 =A0 =A0 paths: 2<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: sdh: readsector0 c=
-hecker<br>
-&gt; =A0 =A0 =A0 =A0 reports path is up<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: 8:112: reinstated<=
-br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: mpath2: remaining =
-active<br>
-&gt; =A0 =A0 =A0 =A0 paths: 2<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: dm-4: add map (uev=
-ent)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: dm-4: devmap alrea=
-dy<br>
-&gt; =A0 =A0 =A0 =A0 registered<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: dm-2: add map (uev=
-ent)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: dm-2: devmap alrea=
-dy<br>
-&gt; =A0 =A0 =A0 =A0 registered<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: dm-3: add map (uev=
-ent)<br>
-&gt; =A0 =A0 =A0 =A0 Sep 30 13:31:15 testbox multipathd: dm-3: devmap alrea=
-dy<br>
-&gt; =A0 =A0 =A0 =A0 registered<br>
-&gt;<br>
-&gt;<br>
-&gt;<br>
-&gt;<br>
-&gt; --<br>
-&gt; dm-devel mailing list<br>
-&gt; <a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-&gt; <a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D=
-"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
-</div></div><font color=3D"#888888">--<br>
-John A. Sullivan III<br>
-Open Source Development Corporation<br>
-+1 207-985-7880<br>
-<a href=3D"mailto:jsullivan@opensourcedevel.com">jsullivan@opensourcedevel.=
-com</a><br>
-<br>
-<a href=3D"http://www.spiritualoutreach.com" target=3D"_blank">http://www.s=
-piritualoutreach.com</a><br>
-Making Christianity intelligible to secular society<br>
-</font><div><div></div><div class=3D"h5"><br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
-nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
-</div></div></blockquote></div><br></div>
+Lower level controller at CFQ level will implement time based group
+scheduling. Keeping it at low level will have the advantage of better
+utitlization of hardware in various dm/md configurations (as no throttling
+takes place at higher level) but at the cost of not so strict fairness numbers
+at higher level. So those who want strict fairness number policies at higher
+level devices irrespective of shortcomings, can use that. Others can stick to
+lower level controller.
 
---00504502da6c35a9a30474e94e61--
+For buffered write control we anyway have to do either something in memory
+controller or come up with another cgroup controller which throttles IO
+before it goes into cache. Or, in fact we can have a re-look at Andrea
+Righi's controller which provided max BW and throttled buffered writes
+before they got into page cache and try to provide proportional BW also
+there.
 
+Basically I see the space for two IO controllers. At the moment can't
+think of a way of coming up with single controller which satisfies all
+the requirements. So instead provide two and let user choose one based on
+his need.
 
---===============1253991545==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Any thoughts?
 
+Before finishing this mail, will throw a whacky idea in the ring. I was
+going through the request based dm-multipath paper. Will it make sense
+to implement request based dm-ioband? So basically we implement all the
+group scheduling in CFQ and let dm-ioband implement a request function
+to take the request and break it back into bios. This way we can keep
+all the group control at one place and also meet most of the requirements.
 
---===============1253991545==--
+So request based dm-ioband will have a request in hand once that request
+has passed group control and prio control. Because dm-ioband is a device
+mapper target, one can put it on higher level devices (practically taking
+CFQ at higher level device), and provide fairness there. One can also 
+put it on those SSDs which don't use IO scheduler (this is kind of forcing
+them to use the IO scheduler.)
+
+I am sure that will be many issues but one big issue I could think of that
+CFQ thinks that there is one device beneath it and dipsatches requests
+from one queue (in case of idling) and that would kill parallelism at
+higher layer and throughput will suffer on many of the dm/md configurations.
+
+Thanks
+Vivek
+
+> But if you figure out a way that you dispatch requests from one group only
+> at one time and wait for all requests to finish and then let next group
+> go, then above can work fairly accurately. In that case it will become
+> like CFQ with the only difference that effectively we have one queue per
+> group instread of per process.
+> 
+> > > > > Secondly if a different group is running only single sequential reader,
+> > > > > there CFQ will be driving queue depth of 1 and time will not be running
+> > > > > faster and this inaccuracy in accounting will lead to unfair share between
+> > > > > groups.
+> > > > >
+> > > > > So we need something better to get a sense which group used how much of
+> > > > > disk time.
+> > > > 
+> > > > It could be solved by implementing the way to pass on such information
+> > > > from IO scheduler to higher layer controller.
+> > > > 
+> > > 
+> > > How would you do that? Can you give some details exactly how and what
+> > > information IO scheduler will pass to higher level IO controller so that IO
+> > > controller can attribute right time to the group.
+> > 
+> > If you would like to know when the idle timer is expired, how about
+> > adding a function to IO controller to be notified it from IO
+> > scheduler? IO scheduler calls the function when the timer is expired.
+> > 
+> 
+> This probably can be done. So this is like syncing between lower layers
+> and higher layers about when do we start idling and when do we stop it and
+> both the layers should be in sync.
+> 
+> This is something my common layer approach does. Becuase it is so close to
+> IO scheuler, I can do it relatively easily.
+> 
+> One probably can create interfaces to even propogate this information up.
+> But this all will probably come into the picture only if we don't use
+> token based schemes and come up with something where at one point of time
+> dispatch are from one group only.
+> 
+> > > > > > How about making throttling policy be user selectable like the IO
+> > > > > > scheduler and putting it in the higher layer? So we could support
+> > > > > > all of policies (time-based, size-based and rate limiting). There
+> > > > > > seems not to only one solution which satisfies all users. But I agree
+> > > > > > with starting with proportional bandwidth control first. 
+> > > > > > 
+> > > > > 
+> > > > > What are the cases where time based policy does not work and size based
+> > > > > policy works better and user would choose size based policy and not timed
+> > > > > based one?
+> > > > 
+> > > > I think that disk time is not simply proportional to IO size. If there
+> > > > are two groups whose wights are equally assigned and they issue
+> > > > different sized IOs repsectively, the bandwidth of each group would
+> > > > not distributed equally as expected. 
+> > > > 
+> > > 
+> > > If we are providing fairness in terms of time, it is fair. If we provide
+> > > equal time slots to two processes and if one got more IO done because it
+> > > was not wasting time seeking or it issued bigger size IO, it deserves that
+> > > higher BW. IO controller will make sure that process gets fair share in
+> > > terms of time and exactly how much BW one got will depend on the workload.
+> > > 
+> > > That's the precise reason that fairness in terms of time is better on
+> > > seeky media.
+> > 
+> > If the seek time is negligible, the bandwidth would not be distributed 
+> > according to a proportion of weight settings. I think that it would be
+> > unclear for users to understand how bandwidth is distributed. And I
+> > also think that seeky media would gradually become obsolete,
+> > 
+> 
+> I can understand that if lesser the seek cost game starts changing and
+> probably a size based policy also work decently.
+> 
+> In that case at some point of time probably CFQ will also need to support
+> another mode/policy where fairness is provided in terms of size of IO, if
+> it detects a SSD with hardware queuing. Currently it seem to be disabling
+> the idling in that case. But this is not very good from fairness point of
+> view. I guess if CFQ wants to provide fairness in such cases, it needs to
+> dynamically change the shape and start thinking in terms of size of IO.
+> 
+> So far my testing has been very limited to hard disks connected to my
+> computer. I will do some testing on high end enterprise storage and see
+> how much do seek matter and how well both the implementations work.
+> 
+> > > > > I am not against implementing things in higher layer as long as we can
+> > > > > ensure tight control on latencies, strong isolation between groups and
+> > > > > not break CFQ's class and ioprio model with-in group.
+> > > > > 
+> > > > > > BTW, I will start to reimplement dm-ioband into block layer.
+> > > > > 
+> > > > > Can you elaborate little bit on this?
+> > > > 
+> > > > bio is grabbed in generic_make_request() and throttled as well as
+> > > > dm-ioband's mechanism. dmsetup command is not necessary any longer.
+> > > > 
+> > > 
+> > > Ok, so one would not need dm-ioband device now, but same dm-ioband
+> > > throttling policies will apply. So until and unless we figure out a
+> > > better way, the issues I have pointed out will still exists even in
+> > > new implementation.
+> > 
+> > Yes, those still exist, but somehow I would like to try to solve them.
+> > 
+> > > > The default value of io_limit on the previous test was 128 (not 192)
+> > > > which is equall to the default value of nr_request.
+> > > 
+> > > Hm..., I used following commands to create two ioband devices.
+> > > 
+> > > echo "0 $(blockdev --getsize /dev/sdb2) ioband /dev/sdb2 1 0 0 none"
+> > > "weight 0 :100" | dmsetup create ioband1
+> > > echo "0 $(blockdev --getsize /dev/sdb3) ioband /dev/sdb3 1 0 0 none"
+> > > "weight 0 :100" | dmsetup create ioband2
+> > > 
+> > > Here io_limit value is zero so it should pick default value. Following is
+> > > output of "dmsetup table" command.
+> > > 
+> > > ioband2: 0 89899740 ioband 8:19 1 4 192 none weight 768 :100
+> > > ioband1: 0 41961780 ioband 8:18 1 4 192 none weight 768 :100
+> > >                                     ^^^^
+> > > IIUC, above number 192 is reflecting io_limit? If yes, then default seems
+> > > to be 192?
+> > 
+> > The default vaule has changed since v1.12.0 and increased from 128 to 192.
+> > 
+> > > > > I set it up to 256 as you suggested. I still see writer starving reader. I
+> > > > > have removed "conv=fdatasync" from writer so that a writer is pure buffered
+> > > > > writes.
+> > > > 
+> > > > O.K. You removed "conv=fdatasync", the new dm-ioband handles
+> > > > sync/async requests separately, and it solves this
+> > > > buffered-write-starves-read problem. I would like to post it soon
+> > > > after doing some more test.
+> > > > 
+> > > > > On top of that can you please give some details how increasing the
+> > > > > buffered queue length reduces the impact of writers?
+> > > > 
+> > > > When the number of in-flight IOs exceeds io_limit, processes which are
+> > > > going to issue IOs are made sleep by dm-ioband until all the in-flight
+> > > > IOs are finished. But IO scheduler layer can accept IO requests more
+> > > > than the value of io_limit, so it was a bottleneck of the throughput.
+> > > > 
+> > > 
+> > > Ok, so it should have been throughput bottleneck but how did it solve the
+> > > issue of writer starving the reader as you had mentioned in the mail.
+> > 
+> > As wrote above, I modified dm-ioband to handle sync/async requests
+> > separately, so even if writers do a lot of buffered IOs, readers can
+> > issue IOs regardless writers' busyness. Once the IOs are backlogged
+> > for throttling, the both sync and async requests are issued according
+> > to the other of arrival.
+> > 
+> 
+> Ok, so if both the readers and writers are buffered and some tokens become
+> available then these tokens will be divided half and half between readers
+> or writer queues?
+> 
+> > > Secondly, you mentioned that processes are made to sleep once we cross 
+> > > io_limit. This sounds like request descriptor facility on requeust queue
+> > > where processes are made to sleep.
+> > >
+> > > There are threads in kernel which don't want to sleep while submitting
+> > > bios. For example, btrfs has bio submitting thread which does not want
+> > > to sleep hence it checks with device if it is congested or not and not
+> > > submit the bio if it is congested.  How would you handle such cases. Have
+> > > you implemented any per group congestion kind of interface to make sure
+> > > such IO's don't sleep if group is congested.
+> > >
+> > > Or this limit is per ioband device which every group on the device is
+> > > sharing. If yes, then how would you provide isolation between groups 
+> > > because if one groups consumes io_limit tokens, then other will simply
+> > > be serialized on that device?
+> > 
+> > There are two kind of limit and both limit the number of IO requests
+> > which can be issued simultaneously, but one is for per ioband device, 
+> > the other is for per ioband group. The per group limit assigned to
+> > each group is calculated by dividing io_limit according to their
+> > proportion of weight.
+> > 
+> > The kernel thread is not made to sleep by the per group limit, because
+> > several kinds of kernel threads submit IOs from multiple groups and
+> > for multiple devices in a single thread. At this time, the kernel
+> > thread is made to sleep by the per device limit only.
+> > 
+> 
+> Interesting. Actually not blocking kernel threads on per group limit
+> and instead blocking it only on per device limts sounds like a good idea.
+> 
+> I can also do something similar and that will take away the need of
+> exporting per group congestion interface to higher layers and reduce
+> complexity. If some kernel thread does not want to block, these will
+> continue to use existing per device/bdi congestion interface.
+> 
+> Thanks
+> Vivek
