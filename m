@@ -1,30 +1,42 @@
-From: Theodore Tso <tytso@mit.edu>
-Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 2 Oct 2009 14:36:49 -0400
-Message-ID: <20091002183649.GE8161@mit.edu>
-References: <alpine.LFD.2.01.0910020715160.6996@localhost.localdomain> <20091002145610.GD31616@kernel.dk> <alpine.LFD.2.01.0910020811490.6996@localhost.localdomain> <20091002171129.GG31616@kernel.dk> <20091002172046.GA2376@elte.hu> <20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu> <20091002173732.GK31616@kernel.dk> <20091002175629.GA14860@elte.hu> <20091002180437.GL31616@kernel.dk>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [PATCH 0/8] SECURITY ISSUE with connector
+Date: Fri, 2 Oct 2009 11:15:05 -0700
+Message-ID: <20091002181505.GA27118@kroah.com>
+References: <1254487211-11810-1-git-send-email-philipp.reisner@linbit.com>
+ <20091002.105659.102583702.davem@davemloft.net>
+ <20091002180022.GA22229@kroah.com>
+ <20091002.110504.08207839.davem@davemloft.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758088AbZJBShG@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20091002180437.GL31616@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Ingo Molnar <mingo@elte.hu>, Linus Torvalds <torvalds@linux-foundation.org>, Mike Galbraith <efault@gmx.de>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
+In-Reply-To: <20091002.110504.08207839.davem@davemloft.net>
+Sender: netdev-owner@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Cc: philipp.reisner@linbit.com, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, akpm@linux-foundation.org, dm-devel@redhat.com, zbr@ioremap.net, linux-fbdev-devel@lists.sourceforge.net
 List-Id: dm-devel.ids
 
-On Fri, Oct 02, 2009 at 08:04:37PM +0200, Jens Axboe wrote:
-> > i'd say 'latency' describes it even better. 'interactivity' as a term is 
-> > a bit overladen.
+On Fri, Oct 02, 2009 at 11:05:04AM -0700, David Miller wrote:
+> From: Greg KH <greg@kroah.com>
+> Date: Fri, 2 Oct 2009 11:00:22 -0700
 > 
-> I'm not too crazy about it either. How about just using 'desktop' since
-> this is obviously what we are really targetting? 'latency' isn't fully
-> descriptive either, since it may not necessarily provide the best single
-> IO latency (noop would).
+> > On Fri, Oct 02, 2009 at 10:56:59AM -0700, David Miller wrote:
+> >> All applied to net-2.6, I'll push this out to Linus later
+> >> today.
+> > 
+> > Should it also go to -stable?  If so, I can pick it up once it hits
+> > Linus's tree.
+> 
+> Yes, please take it into -stable.
 
-As Linus has already pointed out, it's not necessarily "desktop"
-versus "server".  There will be certain high frequency transaction
-database workloads (for example) that will very much care about
-latency.  I think "low_latency" may be the best term to use.
+Will do.
 
-	    	  		       	   - Ted
+> Greg, I'll also send you a batch of other networking bits
+> for -stable later this afternoon as well, just FYI...
+
+Great, I'll queue it up for the next -stable releases, these are full
+enough as it is already :)
+
+thanks,
+
+greg k-h
