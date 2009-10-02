@@ -1,69 +1,65 @@
-From: Munehiro Ikeda <m-ikeda@ds.jp.nec.com>
+From: Mike Galbraith <efault@gmx.de>
 Subject: Re: IO scheduler based IO controller V10
-Date: Fri, 02 Oct 2009 16:27:43 -0400
-Message-ID: <4AC6623F.70600@ds.jp.nec.com>
-References: <20090929141049.GA12141@redhat.com>
-	<20090930.174319.183036386.ryov@valinux.co.jp>
-	<20090930110500.GA26631@redhat.com>
-	<20091001.154125.104044685.ryov@valinux.co.jp>
-	<20091001133109.GA4058@redhat.com>
-	<20091002025731.GA2738@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Date: Fri, 02 Oct 2009 22:47:27 +0200
+Message-ID: <1254516447.11265.5.camel@marge.simson.net>
+References: <20091002092839.GA26962@kernel.dk>
+	 <alpine.LFD.2.01.0910020715160.6996@localhost.localdomain>
+	 <20091002145610.GD31616@kernel.dk>
+	 <alpine.LFD.2.01.0910020811490.6996@localhost.localdomain>
+	 <20091002171129.GG31616@kernel.dk> <20091002172046.GA2376@elte.hu>
+	 <20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu>
+	 <20091002173732.GK31616@kernel.dk>
+	 <1254507215.8667.7.camel@marge.simson.net>
+	 <20091002181903.GN31616@kernel.dk>
+	 <1254509838.8667.30.camel@marge.simson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091002025731.GA2738@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, yoshikawa.takuya@oss.ntt.co.jp, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, righi.andrea@gmail.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, torvalds@linux-foundation.org
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932097AbZJBUrd@vger.kernel.org>
+In-Reply-To: <1254509838.8667.30.camel@marge.simson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Ingo Molnar <mingo@elte.hu>, Linus Torvalds <torvalds@linux-foundation.org>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote, on 10/01/2009 10:57 PM:
-> Before finishing this mail, will throw a whacky idea in the ring. I was
-> going through the request based dm-multipath paper. Will it make sense
-> to implement request based dm-ioband? So basically we implement all the
-> group scheduling in CFQ and let dm-ioband implement a request function
-> to take the request and break it back into bios. This way we can keep
-> all the group control at one place and also meet most of the requirements.
->
-> So request based dm-ioband will have a request in hand once that request
-> has passed group control and prio control. Because dm-ioband is a device
-> mapper target, one can put it on higher level devices (practically taking
-> CFQ at higher level device), and provide fairness there. One can also
-> put it on those SSDs which don't use IO scheduler (this is kind of forcing
-> them to use the IO scheduler.)
->
-> I am sure that will be many issues but one big issue I could think of that
-> CFQ thinks that there is one device beneath it and dipsatches requests
-> from one queue (in case of idling) and that would kill parallelism at
-> higher layer and throughput will suffer on many of the dm/md configurations.
->
-> Thanks
-> Vivek
+On Fri, 2009-10-02 at 20:57 +0200, Mike Galbraith wrote:
+> On Fri, 2009-10-02 at 20:19 +0200, Jens Axboe wrote:
+> 
+> > I'm not too worried about the "single IO producer" scenarios, and it
+> > looks like (from a quick look) that most of your numbers are within some
+> > expected noise levels. It's the more complex mixes that are likely to
+> > cause a bit of a stink, but lets worry about that later. One quick thing
+> > would be to read eg 2 or more files sequentially from disk and see how
+> > that performs.
+> 
+> Hm.  git(s) should be good for a nice repeatable load.  Suggestions?
+> 
+> > If you could do a cleaned up version of your overload patch based on
+> > this:
+> > 
+> > http://git.kernel.dk/?p=linux-2.6-block.git;a=commit;h=1d2235152dc745c6d94bedb550fea84cffdbf768
+> > 
+> > then lets take it from there.
+> 
+> I'll try to find a good repeatable git beater first.  At this point, I
+> only know it helps with one load.
 
-As long as using CFQ, your idea is reasonable for me.  But how about for
-other IO schedulers?  In my understanding, one of the keys to guarantee
-group isolation in your patch is to have per-group IO scheduler internal
-queue even with as, deadline, and noop scheduler.  I think this is
-great idea, and to implement generic code for all IO schedulers was
-concluded when we had so many IO scheduler specific proposals.
-If we will still need per-group IO scheduler internal queues with
-request-based dm-ioband, we have to modify elevator layer.  It seems
-out of scope of dm.
-I might miss something...
+Seems to help mixed concurrent read/write a bit too.
 
+perf stat testo.sh                               Avg
+108.12   106.33    106.34    97.00    106.52   104.8  1.000 fairness=0 overload_delay=0
+ 93.98   102.44     94.47    97.70     98.90    97.4   .929 fairness=0 overload_delay=1
+ 90.87    95.40     95.79    93.09     94.25    93.8   .895 fairness=1 overload_delay=0
+ 89.93    90.57     89.13    93.43     93.72    91.3   .871 fairness=1 overload_delay=1
 
+#!/bin/sh
 
--- 
-IKEDA, Munehiro
-   NEC Corporation of America
-     m-ikeda@ds.jp.nec.com
+LOGFILE=testo.log
+rm -f $LOGFILE
+
+echo 3 > /proc/sys/vm/drop_caches
+sh -c "(cd linux-2.6.23; perf stat -- git checkout -f; git archive --format=tar HEAD > ../linux-2.6.23.tar)" 2>&1|tee -a $LOGFILE &
+sh -c "(cd linux-2.6.24; perf stat -- git archive --format=tar HEAD > ../linux-2.6.24.tar; git checkout -f)" 2>&1|tee -a $LOGFILE &
+sh -c "(cd linux-2.6.25; perf stat -- git checkout -f; git archive --format=tar HEAD > ../linux-2.6.25.tar)" 2>&1|tee -a $LOGFILE &
+sh -c "(cd linux-2.6.26; perf stat -- git archive --format=tar HEAD > ../linux-2.6.26.tar; git checkout -f)" 2>&1|tee -a $LOGFILE &
+wait
