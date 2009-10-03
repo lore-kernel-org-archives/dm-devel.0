@@ -1,42 +1,193 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH 1/4] scsi_dh: Change the scsidh_activate interface to	be
- asynchronous
-Date: Fri, 2 Oct 2009 17:02:51 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474ED8912@cosmail01.lsi.com>
-References: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
-	 <20090930020817.11455.52042.sendpatchset@chandra-ubuntu>
-	 <E463DF2B2E584B4A82673F53D62C2EF474ED88E7@cosmail01.lsi.com>
- <1254522985.747.3.camel@chandra-ubuntu>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: IO scheduler based IO controller V10
+Date: Sat, 03 Oct 2009 07:48:51 +0200
+Message-ID: <1254548931.8299.18.camel@marge.simson.net>
+References: <20091002092839.GA26962@kernel.dk>
+	 <alpine.LFD.2.01.0910020715160.6996@localhost.localdomain>
+	 <20091002145610.GD31616@kernel.dk>
+	 <alpine.LFD.2.01.0910020811490.6996@localhost.localdomain>
+	 <20091002171129.GG31616@kernel.dk> <20091002172046.GA2376@elte.hu>
+	 <20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu>
+	 <20091002173732.GK31616@kernel.dk>
+	 <1254507215.8667.7.camel@marge.simson.net>
+	 <20091002181903.GN31616@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1254522985.747.3.camel@chandra-ubuntu>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "michaelc@cs.wisc.edu" <michaelc@cs.wisc.edu>, "Benoit_Arthur@emc.com" <Benoit_Arthur@emc.com>, "Eddie.Williams@steeleye.com" <Eddie.Williams@steeleye.com>, "berthiaume_wayne@emc.com" <berthiaume_wayne@emc.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753339AbZJCFtB@vger.kernel.org>
+In-Reply-To: <20091002181903.GN31616@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Ingo Molnar <mingo@elte.hu>, Linus Torvalds <torvalds@linux-foundation.org>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
 List-Id: dm-devel.ids
 
-DQo+IE9uIEZyaSwgMjAwOS0xMC0wMiBhdCAxNjowNCAtMDYwMCwgTW9nZXIsIEJhYnUgd3JvdGU6
-DQo+ID4gQ2hhbmRyYSwgSSBoYXZlIG9uZSBjb21tZW50IG9uIHRoaXMgcGF0Y2guLg0KPiA+DQo+
-ID4gPiAgc3RhdGljIGlubGluZSBpbnQgc2NzaV9kaF9oYW5kbGVyX2V4aXN0KGNvbnN0IGNoYXIg
-Km5hbWUpDQo+ID4gPiBJbmRleDogbGludXgtMi42LjMxL2RyaXZlcnMvc2NzaS9kZXZpY2VfaGFu
-ZGxlci9zY3NpX2RoLmMNCj4gPiA+ID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0NCj4gPiA+IC0tLSBsaW51eC0yLjYuMzEu
-b3JpZy9kcml2ZXJzL3Njc2kvZGV2aWNlX2hhbmRsZXIvc2NzaV9kaC5jDQo+ID4gPiArKysgbGlu
-dXgtMi42LjMxL2RyaXZlcnMvc2NzaS9kZXZpY2VfaGFuZGxlci9zY3NpX2RoLmMNCj4gPiA+IEBA
-IC0yMTQsNyArMjE0LDcgQEAgc3RvcmVfZGhfc3RhdGUoc3RydWN0IGRldmljZSAqZGV2LCBzdHJ1
-Yw0KPiA+ID4gIAkJCSAqIEFjdGl2YXRlIGEgZGV2aWNlIGhhbmRsZXINCj4gPiA+ICAJCQkgKi8N
-Cj4gPiA+ICAJCQlpZiAoc2NzaV9kaC0+YWN0aXZhdGUpDQo+ID4gPiAtCQkJCWVyciA9IHNjc2lf
-ZGgtPmFjdGl2YXRlKHNkZXYpOw0KPiA+ID4gKwkJCQllcnIgPSBzY3NpX2RoLT5hY3RpdmF0ZShz
-ZGV2LCBOVUxMLCBOVUxMKTsNCj4gPg0KPiA+DQo+ID4gVGhpcyBtaWdodCBjYXVzZSBwcm9ibGVt
-cyBpbiBoYW5kbGVycy4gIFdlIGRvbuKAmXQgZG8gTlVMTCBjaGVjayBpbg0KPiBhdHRhY2ggcm91
-dGluZS4NCj4gDQo+IEkgYXNzdW1lIHlvdSBtZWFudCBhY3RpdmF0ZSgpLCB3aGVuIHlvdSBtZW50
-aW9uICJhdHRhY2giIGFib3ZlLg0KPiANCj4gQXQgZXZlcnkgcGxhY2Ugd2hlcmUgdGhlIGNhbGxi
-YWNrIGZ1bmN0aW9uIGlzIGNhbGxlZCwgd2UgZmlyc3QgY2hlY2sNCj4gdGhhdCB0aGUgY2FsbGJh
-Y2sgZnVuY3Rpb24gaXMgbm90IE5VTEwuDQo+IA0KPiBDYW4geW91IHBvaW50IG1lIGlmIEkgbWlz
-c2VkIHNvbWUgcGxhY2UuDQo+IA0KDQpTb3JyeSBmb3IgdGhlIGNvbmZ1c2lvbi4uIFllcywgSSBt
-ZWFudCBhY3RpdmF0ZS4gDQpZb3UgYXJlIHJpZ2h0LiBBbGwgdGhlIGhhbmRsZXJzIGNoZWNrIGZv
-ciBOVUxMIGJlZm9yZSBjYWxsaW5nLiBXZSBhcmUgZ29vZCBoZXJlLi4NCkkgbWlzcmVhZCB0aGUg
-Y29kZS4uDQo=
+On Fri, 2009-10-02 at 20:19 +0200, Jens Axboe wrote:
+
+> If you could do a cleaned up version of your overload patch based on
+> this:
+> 
+> http://git.kernel.dk/?p=linux-2.6-block.git;a=commit;h=1d2235152dc745c6d94bedb550fea84cffdbf768
+> 
+> then lets take it from there.
+
+If take it from there ends up meaning apply, and see who squeaks, feel
+free to delete the "Not", and my somewhat defective sense of humor.
+
+Block:  Delay overloading of CFQ queues to improve read latency.
+
+Introduce a delay maximum dispatch timestamp, and stamp it when:
+	1. we encounter a known seeky or possibly new sync IO queue.
+	2. the current queue may go idle and we're draining async IO.
+	3. we have sync IO in flight and are servicing an async queue.
+	4  we are not the sole user of disk.
+Disallow exceeding quantum if any of these events have occurred recently.
+
+Protect this behavioral change with a "desktop_dispatch" knob and default
+it to "on".. providing an easy means of regression verification prior to
+hate-mail dispatch :) to CC list.
+
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Cc: Jens Axboe <jens.axboe@oracle.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+... others who let somewhat hacky tweak slip by
+
+LKML-Reference: <new-submission>
+
+---
+ block/cfq-iosched.c |   45 +++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 41 insertions(+), 4 deletions(-)
+
+Index: linux-2.6/block/cfq-iosched.c
+===================================================================
+--- linux-2.6.orig/block/cfq-iosched.c
++++ linux-2.6/block/cfq-iosched.c
+@@ -174,6 +174,9 @@ struct cfq_data {
+ 	unsigned int cfq_slice_async_rq;
+ 	unsigned int cfq_slice_idle;
+ 	unsigned int cfq_desktop;
++	unsigned int cfq_desktop_dispatch;
++
++	unsigned long desktop_dispatch_ts;
+ 
+ 	struct list_head cic_list;
+ 
+@@ -1283,6 +1286,7 @@ static int cfq_dispatch_requests(struct
+ 	struct cfq_data *cfqd = q->elevator->elevator_data;
+ 	struct cfq_queue *cfqq;
+ 	unsigned int max_dispatch;
++	unsigned long delay;
+ 
+ 	if (!cfqd->busy_queues)
+ 		return 0;
+@@ -1297,19 +1301,26 @@ static int cfq_dispatch_requests(struct
+ 	/*
+ 	 * Drain async requests before we start sync IO
+ 	 */
+-	if (cfq_cfqq_idle_window(cfqq) && cfqd->rq_in_driver[BLK_RW_ASYNC])
++	if (cfq_cfqq_idle_window(cfqq) && cfqd->rq_in_driver[BLK_RW_ASYNC]) {
++		cfqd->desktop_dispatch_ts = jiffies;
+ 		return 0;
++	}
+ 
+ 	/*
+ 	 * If this is an async queue and we have sync IO in flight, let it wait
+ 	 */
+-	if (cfqd->sync_flight && !cfq_cfqq_sync(cfqq))
++	if (cfqd->sync_flight && !cfq_cfqq_sync(cfqq)) {
++		cfqd->desktop_dispatch_ts = jiffies;
+ 		return 0;
++	}
+ 
+ 	max_dispatch = cfqd->cfq_quantum;
+ 	if (cfq_class_idle(cfqq))
+ 		max_dispatch = 1;
+ 
++	if (cfqd->busy_queues > 1)
++		cfqd->desktop_dispatch_ts = jiffies;
++
+ 	/*
+ 	 * Does this cfqq already have too much IO in flight?
+ 	 */
+@@ -1327,6 +1338,16 @@ static int cfq_dispatch_requests(struct
+ 			return 0;
+ 
+ 		/*
++		 * Don't start overloading until we've been alone for a bit.
++		 */
++		if (cfqd->cfq_desktop_dispatch) {
++			delay = cfqd->desktop_dispatch_ts + cfq_slice_sync;
++
++			if (time_before(jiffies, max_delay))
++				return 0;
++		}
++
++		/*
+ 		 * we are the only queue, allow up to 4 times of 'quantum'
+ 		 */
+ 		if (cfqq->dispatched >= 4 * max_dispatch)
+@@ -1942,7 +1963,7 @@ static void
+ cfq_update_idle_window(struct cfq_data *cfqd, struct cfq_queue *cfqq,
+ 		       struct cfq_io_context *cic)
+ {
+-	int old_idle, enable_idle;
++	int old_idle, enable_idle, seeky = 0;
+ 
+ 	/*
+ 	 * Don't idle for async or idle io prio class
+@@ -1950,10 +1971,20 @@ cfq_update_idle_window(struct cfq_data *
+ 	if (!cfq_cfqq_sync(cfqq) || cfq_class_idle(cfqq))
+ 		return;
+ 
++	if (cfqd->hw_tag) {
++		if (CIC_SEEKY(cic))
++			seeky = 1;
++		/*
++		 * If seeky or incalculable seekiness, delay overloading.
++		 */
++		if (seeky || !sample_valid(cic->seek_samples))
++			cfqd->desktop_dispatch_ts = jiffies;
++	}
++
+ 	enable_idle = old_idle = cfq_cfqq_idle_window(cfqq);
+ 
+ 	if (!atomic_read(&cic->ioc->nr_tasks) || !cfqd->cfq_slice_idle ||
+-	    (!cfqd->cfq_desktop && cfqd->hw_tag && CIC_SEEKY(cic)))
++	    (!cfqd->cfq_desktop && seeky))
+ 		enable_idle = 0;
+ 	else if (sample_valid(cic->ttime_samples)) {
+ 		if (cic->ttime_mean > cfqd->cfq_slice_idle)
+@@ -2483,6 +2514,9 @@ static void *cfq_init_queue(struct reque
+ 	cfqd->cfq_slice_async_rq = cfq_slice_async_rq;
+ 	cfqd->cfq_slice_idle = cfq_slice_idle;
+ 	cfqd->cfq_desktop = 1;
++	cfqd->cfq_desktop_dispatch = 1;
++
++	cfqd->desktop_dispatch_ts = INITIAL_JIFFIES;
+ 	cfqd->hw_tag = 1;
+ 
+ 	return cfqd;
+@@ -2553,6 +2587,7 @@ SHOW_FUNCTION(cfq_slice_sync_show, cfqd-
+ SHOW_FUNCTION(cfq_slice_async_show, cfqd->cfq_slice[0], 1);
+ SHOW_FUNCTION(cfq_slice_async_rq_show, cfqd->cfq_slice_async_rq, 0);
+ SHOW_FUNCTION(cfq_desktop_show, cfqd->cfq_desktop, 0);
++SHOW_FUNCTION(cfq_desktop_dispatch_show, cfqd->cfq_desktop_dispatch, 0);
+ #undef SHOW_FUNCTION
+ 
+ #define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
+@@ -2585,6 +2620,7 @@ STORE_FUNCTION(cfq_slice_async_store, &c
+ STORE_FUNCTION(cfq_slice_async_rq_store, &cfqd->cfq_slice_async_rq, 1,
+ 		UINT_MAX, 0);
+ STORE_FUNCTION(cfq_desktop_store, &cfqd->cfq_desktop, 0, 1, 0);
++STORE_FUNCTION(cfq_desktop_dispatch_store, &cfqd->cfq_desktop_dispatch, 0, 1, 0);
+ #undef STORE_FUNCTION
+ 
+ #define CFQ_ATTR(name) \
+@@ -2601,6 +2637,7 @@ static struct elv_fs_entry cfq_attrs[] =
+ 	CFQ_ATTR(slice_async_rq),
+ 	CFQ_ATTR(slice_idle),
+ 	CFQ_ATTR(desktop),
++	CFQ_ATTR(desktop_dispatch),
+ 	__ATTR_NULL
+ };
+ 
