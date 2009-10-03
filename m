@@ -1,80 +1,87 @@
 From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: IO scheduler based IO controller V10
-Date: Sat, 3 Oct 2009 15:18:26 +0200
-Message-ID: <20091003131826.GA31616@kernel.dk>
-References: <20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu>
-	<20091002173732.GK31616@kernel.dk>
-	<1254507215.8667.7.camel@marge.simson.net>
-	<20091002181903.GN31616@kernel.dk>
-	<1254548931.8299.18.camel@marge.simson.net>
-	<1254549378.8299.21.camel@marge.simson.net>
-	<20091003072401.GV31616@kernel.dk>
-	<1254560434.17052.14.camel@marge.simson.net>
-	<4e5e476b0910030212y50f97d97nc2e17c35d855cc63@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: Do not overload dispatch queue (Was: Re: IO scheduler based IO
+	controller V10)
+Date: Sat, 3 Oct 2009 15:21:15 +0200
+Message-ID: <20091003132115.GB31616@kernel.dk>
+References: <20091002172046.GA2376@elte.hu> <20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu> <20091002173732.GK31616@kernel.dk> <1254507215.8667.7.camel@marge.simson.net> <20091002181903.GN31616@kernel.dk> <1254548931.8299.18.camel@marge.simson.net> <1254549378.8299.21.camel@marge.simson.net> <20091003112915.GA12925@redhat.com> <20091003124049.GB12925@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756271AbZJCNVN@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4e5e476b0910030212y50f97d97nc2e17c35d855cc63@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Corrado Zoccolo <czoccolo@gmail.com>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, Ingo Molnar <mingo@elte.hu>, Vivek Goyal <vgoyal@redhat.com>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, Mike Galbraith <efault@gmx.de>, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, Linus Torvalds <torvalds@linux-foundation.org>
+In-Reply-To: <20091003124049.GB12925@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Mike Galbraith <efault@gmx.de>, Ingo Molnar <mingo@elte.hu>, Linus Torvalds <torvalds@linux-foundation.org>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Oct 03 2009, Corrado Zoccolo wrote:
-> Hi,
-> On Sat, Oct 3, 2009 at 11:00 AM, Mike Galbraith <efault@gmx.de> wrote:
-> > On Sat, 2009-10-03 at 09:24 +0200, Jens Axboe wrote:
-> >
-> >> After shutting down the computer yesterday, I was thinking a bit abo=
-ut
-> >> this issue and how to solve it without incurring too much delay. If =
-we
-> >> add a stricter control of the depth, that may help. So instead of
-> >> allowing up to max_quantum (or larger) depths, only allow gradual bu=
-ild
-> >> up of that the farther we get away from a dispatch from the sync IO
-> >> queues. For example, when switching to an async or seeky sync queue,
-> >> initially allow just 1 in flight. For the next round, if there still
-> >> hasn't been sync activity, allow 2, then 4, etc. If we see sync IO q=
-ueue
-> >> again, immediately drop to 1.
-> >>
->=20
-> I would limit just async I/O. Seeky sync queues are automatically
-> throttled by being sync, and have already high latency, so we
-> shouldn't increase it artificially. I think, instead, that we should
-> send multiple seeky requests (possibly coming from different queues)
-> at once. They will help especially with raid devices, where the seeks
-> for requests going to different disks will happen in parallel.
->=20
-Async is the prime offendor, definitely.
+On Sat, Oct 03 2009, Vivek Goyal wrote:
+> On Sat, Oct 03, 2009 at 07:29:15AM -0400, Vivek Goyal wrote:
+> > On Sat, Oct 03, 2009 at 07:56:18AM +0200, Mike Galbraith wrote:
+> > > On Sat, 2009-10-03 at 07:49 +0200, Mike Galbraith wrote:
+> > > > On Fri, 2009-10-02 at 20:19 +0200, Jens Axboe wrote:
+> > > > 
+> > > > > If you could do a cleaned up version of your overload patch based on
+> > > > > this:
+> > > > > 
+> > > > > http://git.kernel.dk/?p=linux-2.6-block.git;a=commit;h=1d2235152dc745c6d94bedb550fea84cffdbf768
+> > > > > 
+> > > > > then lets take it from there.
+> > > 
+> > 
+> > > Note to self: build the darn thing after last minute changes.
+> > > 
+> > > Block:  Delay overloading of CFQ queues to improve read latency.
+> > > 
+> > > Introduce a delay maximum dispatch timestamp, and stamp it when:
+> > >         1. we encounter a known seeky or possibly new sync IO queue.
+> > >         2. the current queue may go idle and we're draining async IO.
+> > >         3. we have sync IO in flight and are servicing an async queue.
+> > >         4  we are not the sole user of disk.
+> > > Disallow exceeding quantum if any of these events have occurred recently.
+> > > 
+> > 
+> > So it looks like primarily the issue seems to be that we done lot of
+> > dispatch from async queue and if some sync queue comes in now, it will
+> > experience latencies.
+> > 
+> > For a ongoing seeky sync queue issue will be solved up to some extent
+> > because previously we did not choose to idle for that queue now we will
+> > idle, hence async queue will not get a chance to overload the dispatch
+> > queue.
+> > 
+> > For the sync queues where we choose not to enable idle, we still will see
+> > the latencies. Instead of time stamping on all the above events, can we 
+> > just keep track of last sync request completed in the system and don't
+> > allow async queue to flood/overload the dispatch queue with-in certain 
+> > time limit of that last sync request completion. This just gives a buffer
+> > period to that sync queue to come back and submit more requests and
+> > still not suffer large latencies?
+> > 
+> > Thanks
+> > Vivek
+> > 
+> 
+> Hi Mike,
+> 
+> Following is a quick hack patch for the above idea. It is just compile and
+> boot tested. Can you please see if it helps in your scenario.
+> 
+> Thanks
+> Vivek
+> 
+> 
+> o Do not allow more than max_dispatch requests from an async queue, if some
+>   sync request has finished recently. This is in the hope that sync activity
+>   is still going on in the system and we might receive a sync request soon.
+>   Most likely from a sync queue which finished a request and we did not enable
+>   idling on it.
 
-> >> It could tie in with (or partly replace) the overload feature. The k=
-ey
-> >> to good latency and decent throughput is knowing when to allow queue
-> >> build up and when not to.
-> >
-> > Hm. =A0Starting at 1 sounds a bit thin (like IDLE), multiple iteratio=
-ns to
-> > build/unleash any sizable IO, but that's just my gut talking.
-> >
-> On the other hand, sending 1 write first and then waiting it to
-> complete before submitting new ones, will help performing more merges,
-> so the subsequent requests will be bigger and thus more efficient.
+This is pretty much identical to the scheme I described, except for the
+ramping of queue depth. I've applied it, it's nice and simple and I
+believe this will get rid of the worst of the problem.
 
-Usually async writes stack up very quickly, so as long as you don't
-drain completely, the merging will happen automagically anyway.
+Things probably end up being a bit simplistic, but we can always tweak
+around later.
 
---=20
+-- 
 Jens Axboe
