@@ -1,7 +1,7 @@
 From: Mike Galbraith <efault@gmx.de>
 Subject: Re: IO scheduler based IO controller V10
-Date: Sat, 03 Oct 2009 07:48:51 +0200
-Message-ID: <1254548931.8299.18.camel@marge.simson.net>
+Date: Sat, 03 Oct 2009 07:56:18 +0200
+Message-ID: <1254549378.8299.21.camel@marge.simson.net>
 References: <20091002092839.GA26962@kernel.dk>
 	 <alpine.LFD.2.01.0910020715160.6996@localhost.localdomain>
 	 <20091002145610.GD31616@kernel.dk>
@@ -11,35 +11,36 @@ References: <20091002092839.GA26962@kernel.dk>
 	 <20091002173732.GK31616@kernel.dk>
 	 <1254507215.8667.7.camel@marge.simson.net>
 	 <20091002181903.GN31616@kernel.dk>
+	 <1254548931.8299.18.camel@marge.simson.net>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753339AbZJCFtB@vger.kernel.org>
-In-Reply-To: <20091002181903.GN31616@kernel.dk>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753713AbZJCF4X@vger.kernel.org>
+In-Reply-To: <1254548931.8299.18.camel@marge.simson.net>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Jens Axboe <jens.axboe@oracle.com>
 Cc: Ingo Molnar <mingo@elte.hu>, Linus Torvalds <torvalds@linux-foundation.org>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 2009-10-02 at 20:19 +0200, Jens Axboe wrote:
-
-> If you could do a cleaned up version of your overload patch based on
-> this:
+On Sat, 2009-10-03 at 07:49 +0200, Mike Galbraith wrote:
+> On Fri, 2009-10-02 at 20:19 +0200, Jens Axboe wrote:
 > 
-> http://git.kernel.dk/?p=linux-2.6-block.git;a=commit;h=1d2235152dc745c6d94bedb550fea84cffdbf768
-> 
-> then lets take it from there.
+> > If you could do a cleaned up version of your overload patch based on
+> > this:
+> > 
+> > http://git.kernel.dk/?p=linux-2.6-block.git;a=commit;h=1d2235152dc745c6d94bedb550fea84cffdbf768
+> > 
+> > then lets take it from there.
 
-If take it from there ends up meaning apply, and see who squeaks, feel
-free to delete the "Not", and my somewhat defective sense of humor.
+Note to self: build the darn thing after last minute changes.
 
 Block:  Delay overloading of CFQ queues to improve read latency.
 
 Introduce a delay maximum dispatch timestamp, and stamp it when:
-	1. we encounter a known seeky or possibly new sync IO queue.
-	2. the current queue may go idle and we're draining async IO.
-	3. we have sync IO in flight and are servicing an async queue.
-	4  we are not the sole user of disk.
+        1. we encounter a known seeky or possibly new sync IO queue.
+        2. the current queue may go idle and we're draining async IO.
+        3. we have sync IO in flight and are servicing an async queue.
+        4  we are not the sole user of disk.
 Disallow exceeding quantum if any of these events have occurred recently.
 
 Protect this behavioral change with a "desktop_dispatch" knob and default
@@ -51,8 +52,6 @@ Cc: Jens Axboe <jens.axboe@oracle.com>
 Cc: Linus Torvalds <torvalds@linux-foundation.org>
 Cc: Andrew Morton <akpm@linux-foundation.org>
 ... others who let somewhat hacky tweak slip by
-
-LKML-Reference: <new-submission>
 
 ---
  block/cfq-iosched.c |   45 +++++++++++++++++++++++++++++++++++++++++----
