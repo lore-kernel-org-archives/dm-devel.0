@@ -1,87 +1,90 @@
 From: Corrado Zoccolo <czoccolo@gmail.com>
 Subject: Re: IO scheduler based IO controller V10
-Date: Sat, 3 Oct 2009 11:01:35 +0200
-Message-ID: <4e5e476b0910030201k23760da4ke7d6d08662382cf1@mail.gmail.com>
+Date: Sat, 3 Oct 2009 11:12:45 +0200
+Message-ID: <4e5e476b0910030212y50f97d97nc2e17c35d855cc63@mail.gmail.com>
 References: <alpine.LFD.2.01.0910020811490.6996@localhost.localdomain>
-	 <20091002172046.GA2376@elte.hu> <20091002172554.GJ31616@kernel.dk>
-	 <20091002172842.GA4884@elte.hu> <20091002173732.GK31616@kernel.dk>
-	 <1254507215.8667.7.camel@marge.simson.net>
-	 <20091002181903.GN31616@kernel.dk>
-	 <1254548931.8299.18.camel@marge.simson.net>
-	 <20091003072021.GB21407@elte.hu> <20091003072540.GW31616@kernel.dk>
+	<20091002172554.GJ31616@kernel.dk> <20091002172842.GA4884@elte.hu>
+	<20091002173732.GK31616@kernel.dk>
+	<1254507215.8667.7.camel@marge.simson.net>
+	<20091002181903.GN31616@kernel.dk>
+	<1254548931.8299.18.camel@marge.simson.net>
+	<1254549378.8299.21.camel@marge.simson.net>
+	<20091003072401.GV31616@kernel.dk>
+	<1254560434.17052.14.camel@marge.simson.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754261AbZJCJBd@vger.kernel.org>
-In-Reply-To: <20091003072540.GW31616@kernel.dk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Ingo Molnar <mingo@elte.hu>, Mike Galbraith <efault@gmx.de>, Linus Torvalds <torvalds@linux-foundation.org>, Vivek Goyal <vgoyal@redhat.com>, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, dm-devel@redhat.com, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, ryov@valinux.co.jp, fernando@oss.ntt.co.jp, jmoyer@redhat.com, dhaval@linux.vnet.ibm.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com, m-ikeda@ds.jp.nec.com, agk@redhat.com, akpm@linux-foundation.org, peterz@infradead.org, jmarchan@redhat.com, riel@redhat.com
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1254560434.17052.14.camel@marge.simson.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Galbraith <efault@gmx.de>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, Ingo Molnar <mingo@elte.hu>, Vivek Goyal <vgoyal@redhat.com>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: dm-devel.ids
 
-Hi Jens,
-On Sat, Oct 3, 2009 at 9:25 AM, Jens Axboe <jens.axboe@oracle.com> wrot=
-e:
-> On Sat, Oct 03 2009, Ingo Molnar wrote:
->>
->> * Mike Galbraith <efault@gmx.de> wrote:
->>
->> > =C2=A0 =C2=A0 unsigned int cfq_desktop;
->> > + =C2=A0 unsigned int cfq_desktop_dispatch;
->>
->> > - =C2=A0 if (cfq_cfqq_idle_window(cfqq) && cfqd->rq_in_driver[BLK_=
-RW_ASYNC])
->> > + =C2=A0 if (cfq_cfqq_idle_window(cfqq) && cfqd->rq_in_driver[BLK_=
-RW_ASYNC]) {
->> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 cfqd->desktop_dispatch_ts =3D=
- jiffies;
->> > =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return 0;
->> > + =C2=A0 }
->>
->> btw., i hope all those desktop_ things will be named latency_ pretty
->> soon as the consensus seems to be - the word 'desktop' feels so wron=
-g in
->> this context.
->>
->> 'desktop' is a form of use of computers and the implication of good
->> latencies goes far beyond that category of systems.
+Hi,
+On Sat, Oct 3, 2009 at 11:00 AM, Mike Galbraith <efault@gmx.de> wrote:
+> On Sat, 2009-10-03 at 09:24 +0200, Jens Axboe wrote:
 >
-> I will rename it, for now it doesn't matter (lets not get bogged down=
- in
-> bike shed colors, please).
+>> After shutting down the computer yesterday, I was thinking a bit about
+>> this issue and how to solve it without incurring too much delay. If we
+>> add a stricter control of the depth, that may help. So instead of
+>> allowing up to max_quantum (or larger) depths, only allow gradual buil=
+d
+>> up of that the farther we get away from a dispatch from the sync IO
+>> queues. For example, when switching to an async or seeky sync queue,
+>> initially allow just 1 in flight. For the next round, if there still
+>> hasn't been sync activity, allow 2, then 4, etc. If we see sync IO que=
+ue
+>> again, immediately drop to 1.
+>>
+
+I would limit just async I/O. Seeky sync queues are automatically
+throttled by being sync, and have already high latency, so we
+shouldn't increase it artificially. I think, instead, that we should
+send multiple seeky requests (possibly coming from different queues)
+at once. They will help especially with raid devices, where the seeks
+for requests going to different disks will happen in parallel.
+
+>> It could tie in with (or partly replace) the overload feature. The key
+>> to good latency and decent throughput is knowing when to allow queue
+>> build up and when not to.
 >
-> Oh and Mike, I forgot to mention this in the previous email - no more
-> tunables, please. We'll keep this under a single knob.
-
-Did you have a look at my http://patchwork.kernel.org/patch/47750/ ?
-It already introduces a 'target_latency' tunable, expressed in ms.
-
-If we can quantify the benefits of each technique, we could enable
-them based on the target latency requested by that single tunable.
+> Hm. =C2=A0Starting at 1 sounds a bit thin (like IDLE), multiple iterati=
+ons to
+> build/unleash any sizable IO, but that's just my gut talking.
+>
+On the other hand, sending 1 write first and then waiting it to
+complete before submitting new ones, will help performing more merges,
+so the subsequent requests will be bigger and thus more efficient.
 
 Corrado
 
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0-Mike
 >
 > --
-> Jens Axboe
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
-l" in
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
+ in
 > the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.ht=
-ml
+> More majordomo info at =C2=A0http://vger.kernel.org/majordomo-info.html
 > Please read the FAQ at =C2=A0http://www.tux.org/lkml/
 >
 
 
 
 --=20
-_______________________________________________________________________=
-___
+_________________________________________________________________________=
+_
 
-dott. Corrado Zoccolo                          mailto:czoccolo@gmail.co=
-m
+dott. Corrado Zoccolo                          mailto:czoccolo@gmail.com
 PhD - Department of Computer Science - University of Pisa, Italy
------------------------------------------------------------------------=
----
+-------------------------------------------------------------------------=
+-
