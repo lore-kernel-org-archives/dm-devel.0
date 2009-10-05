@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 09/12]
-	dm-snapshot-merge-make-exceptions-in-other-snapshots-when-merging
-Date: Mon,  5 Oct 2009 15:02:44 -0400
-Message-ID: <1254769367-12111-10-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 08/12] dm-snapshot-merge-track-writes
+Date: Mon,  5 Oct 2009 15:02:43 -0400
+Message-ID: <1254769367-12111-9-git-send-email-snitzer@redhat.com>
 References: <1254769367-12111-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -22,87 +21,40 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-When there is one merging snapshot and other non-merging snapshots, make
-exceptions in non-merging snapshots while merging.
-
-This is not yet complete (the exception is not made when remapping directly to
-the origin), another patch fixes that.
+Track in-progress writes on the merging snapshot device and delay merging
+the chunk until all writes to that chunk finish.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   31 +++++++++++++++++++++++++++++++
- 1 files changed, 31 insertions(+), 0 deletions(-)
+ drivers/md/dm-snap.c |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 6a55d75..3be57ba 100644
+index 91c80b7..6a55d75 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -255,6 +255,8 @@ struct origin {
- static struct list_head *_origins;
- static struct rw_semaphore _origins_lock;
- 
-+static DECLARE_WAIT_QUEUE_HEAD(_pending_exception_done);
-+
- static int init_origin_hash(void)
- {
- 	int i;
-@@ -653,6 +655,9 @@ static int init_hash_tables(struct dm_snapshot *s)
- static void flush_bios(struct bio *bio);
- static void error_bios(struct bio *bio);
- 
-+static int __origin_write(struct list_head *snapshots,
-+			  sector_t sector, struct bio *bio);
-+
- static void merge_callback(int read_err, unsigned long write_err,
- 			   void *context);
- 
-@@ -660,6 +665,9 @@ static void snapshot_merge_process(struct dm_snapshot *s)
- {
- 	int r;
- 	chunk_t old_chunk, new_chunk;
-+	struct origin *o;
-+	chunk_t min_chunksize;
-+	int must_wait;
- 	struct dm_io_region src, dest;
- 
- 	BUG_ON(!s->merge_running);
-@@ -695,6 +703,27 @@ static void snapshot_merge_process(struct dm_snapshot *s)
- 	src.sector = chunk_to_sector(s->store, new_chunk);
- 	src.count = dest.count;
- 
-+test_again:
-+	/* Reallocate other snapshots */
-+	down_read(&_origins_lock);
-+	o = __lookup_origin(s->origin->bdev);
-+	must_wait = 0;
-+	min_chunksize = __minimum_chunk_size(o);
-+	if (min_chunksize) {
-+		chunk_t n;
-+		for (n = 0; n < s->store->chunk_size; n += min_chunksize) {
-+			r = __origin_write(&o->snapshots, dest.sector + n,
-+					   NULL);
-+			if (r == DM_MAPIO_SUBMITTED)
-+				must_wait = 1;
-+		}
-+	}
-+	up_read(&_origins_lock);
-+	if (must_wait) {
-+		sleep_on_timeout(&_pending_exception_done, HZ / 100 + 1);
-+		goto test_again;
-+	}
-+
- 	down_write(&s->lock);
- 	s->merge_write_interlock = old_chunk;
+@@ -700,7 +700,8 @@ static void snapshot_merge_process(struct dm_snapshot *s)
  	s->merge_write_interlock_n = 1;
-@@ -1204,6 +1233,8 @@ static void pending_complete(struct dm_snap_pending_exception *pe, int success)
- 	origin_bios = bio_list_get(&pe->origin_bios);
- 	free_pending_exception(pe);
- 
-+	wake_up_all(&_pending_exception_done);
-+
  	up_write(&s->lock);
  
- 	/* Submit any pending write bios */
+-	/* !!! FIXME: wait until writes to this chunk drain */
++	while (__chunk_is_tracked(s, old_chunk))
++		msleep(1);
+ 
+ 	dm_kcopyd_copy(s->kcopyd_client, &src, 1, &dest, 0, merge_callback, s);
+ 	return;
+@@ -1446,7 +1447,11 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
+ 			r = DM_MAPIO_SUBMITTED;
+ 			goto out_unlock;
+ 		}
++
+ 		remap_exception(s, e, bio, chunk);
++
++		if (bio_rw(bio) == WRITE)
++			map_context->ptr = track_chunk(s, chunk);
+ 		goto out_unlock;
+ 	}
+ 
 -- 
 1.6.2.5
