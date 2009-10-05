@@ -1,16 +1,15 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: IO scheduler based IO controller V10
-Date: Mon, 5 Oct 2009 08:31:48 -0400
-Message-ID: <20091005123148.GB22143@redhat.com>
-References: <20091001133109.GA4058@redhat.com>
-	<20091002025731.GA2738@redhat.com> <4AC6623F.70600@ds.jp.nec.com>
-	<20091005.193808.104033719.ryov@valinux.co.jp>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 0/4] scsi_dh: Make scsi_dh_activate
+	asynchronous
+Date: Mon, 05 Oct 2009 15:01:15 +0200
+Message-ID: <4AC9EE1B.7030702@suse.de>
+References: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20091005.193808.104033719.ryov@valinux.co.jp>
+In-Reply-To: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,94 +19,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, yoshikawa.takuya@oss.ntt.co.jp, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, righi.andrea@gmail.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, m-ikeda@ds.jp.nec.com, torvalds@linux-foundation.org
+To: Chandra Seetharaman <sekharan@us.ibm.com>
+Cc: michaelc@cs.wisc.edu, linux-scsi@vger.kernel.org, dm-devel@redhat.com, Benoit_Arthur@emc.com, Eddie.Williams@steeleye.com
 List-Id: dm-devel.ids
 
-On Mon, Oct 05, 2009 at 07:38:08PM +0900, Ryo Tsuruta wrote:
-> Hi,
-> 
-> Munehiro Ikeda <m-ikeda@ds.jp.nec.com> wrote:
-> > Vivek Goyal wrote, on 10/01/2009 10:57 PM:
-> > > Before finishing this mail, will throw a whacky idea in the ring. I was
-> > > going through the request based dm-multipath paper. Will it make sense
-> > > to implement request based dm-ioband? So basically we implement all the
-> > > group scheduling in CFQ and let dm-ioband implement a request function
-> > > to take the request and break it back into bios. This way we can keep
-> > > all the group control at one place and also meet most of the requirements.
-> > >
-> > > So request based dm-ioband will have a request in hand once that request
-> > > has passed group control and prio control. Because dm-ioband is a device
-> > > mapper target, one can put it on higher level devices (practically taking
-> > > CFQ at higher level device), and provide fairness there. One can also
-> > > put it on those SSDs which don't use IO scheduler (this is kind of forcing
-> > > them to use the IO scheduler.)
-> > >
-> > > I am sure that will be many issues but one big issue I could think of that
-> > > CFQ thinks that there is one device beneath it and dipsatches requests
-> > > from one queue (in case of idling) and that would kill parallelism at
-> > > higher layer and throughput will suffer on many of the dm/md configurations.
-> > >
-> > > Thanks
-> > > Vivek
-> > 
-> > As long as using CFQ, your idea is reasonable for me.  But how about for
-> > other IO schedulers?  In my understanding, one of the keys to guarantee
-> > group isolation in your patch is to have per-group IO scheduler internal
-> > queue even with as, deadline, and noop scheduler.  I think this is
-> > great idea, and to implement generic code for all IO schedulers was
-> > concluded when we had so many IO scheduler specific proposals.
-> > If we will still need per-group IO scheduler internal queues with
-> > request-based dm-ioband, we have to modify elevator layer.  It seems
-> > out of scope of dm.
-> > I might miss something...
-> 
-> IIUC, the request based device-mapper could not break back a request
-> into bio, so it could not work with block devices which don't use the
-> IO scheduler.
-> 
+Chandra Seetharaman wrote:
+> Hello All,
+>=20
+> Currently, device handlers process path activation in series. This lead=
+s
+> to a lot of time delay when more than 100 luns are involved. For exampl=
+e,
+> with lsi rdac 100+ luns take about 12-15 minutes. This was found by Mog=
+er
+> Babu of LSI.
+>=20
+> This time delay can be avoided if we can do the activations asynchronou=
+sly.
+> By making scsi_dh_activate() async, we can give the device handlers an
+> oppurtunity to decide on how to send the device activation down the wir=
+e
+> to make the turn around time faster. They can send the commands
+> asynchronously or send them in batches.
+>=20
+> I brought up this issue on the mailing list
+> (http://marc.info/?l=3Dlinux-scsi&m=3D123888063818755&w=3D2) and provid=
+ed a
+> set of patch a loooong while back http://marc.info/?l=3Dlinux-scsi&m=3D=
+124088712709821&w=3D2
+>=20
+> This set of patches applies cleanly on 2.6.31 and I tested the rdac han=
+dler
+> on the same.
+>=20
+> Please review and provide comments.
+>=20
+> This set of patched adds asynchronous support for rdac, hp, and alua ha=
+ndlers.
+>=20
+Hmm. IIRC we added the synchronous mode by request of LSI/IBM, as the RDA=
+C
+handler could only support on MODE SELECT command at a time.
+If LSI checked this, okay, no objections.
 
-I think current request based multipath drvier does not do it but can't it
-be implemented that requests are broken back into bio?
+However: The main reason why we're getting flooded with MODE SELECT comma=
+nds
+is that the RDAC handler switches _each LUN_, not the entire controller.
+Seeing that the controller simply cannot cope with the resulting MODE SEL=
+ECT
+flood wouldn't it be more sensible to switch the entire controller here?
 
-Anyway, I don't feel too strongly about this approach as it might
-introduce more serialization at higher layer.
+After all, we're trying to address a communication failure between the
+HBA and the controller, not a failure between the controller and the LUN.
+And by that reasoning switching individual LUNs is quite pointless as we
+have to switch _all_ LUNs handled by this controller eventually.
 
-> How about adding a callback function to the higher level controller?
-> CFQ calls it when the active queue runs out of time, then the higer
-> level controller use it as a trigger or a hint to move IO group, so
-> I think a time-based controller could be implemented at higher level.
-> 
+So I would suggest to first issue a MODE SENSE command to check which LUN=
+s
+are currently handled by this controller and then switch those LUNs in
+one go. This way we would be sending quite a few MODE SENSE commands,
+but I was under the impression that those do not have any restriction.
 
-Adding a call back should not be a big issue. But that means you are
-planning to run only one group at higher layer at one time and I think
-that's the problem because than we are introducing serialization at higher
-layer. So any higher level device mapper target which has multiple
-physical disks under it, we might be underutilizing these even more and
-take a big hit on overall throughput.
+I will see to draw up a patch.
 
-The whole design of doing proportional weight at lower layer is optimial 
-usage of system.
+Cheers,
 
-> My requirements for IO controller are:
-> - Implement s a higher level controller, which is located at block
->   layer and bio is grabbed in generic_make_request().
-
-How are you planning to handle the issue of buffered writes Andrew raised?
-
-> - Can work with any type of IO scheduler.
-> - Can work with any type of block devices.
-> - Support multiple policies, proportional wegiht, max rate, time
->   based, ans so on.
-> 
-> The IO controller mini-summit will be held in next week, and I'm
-> looking forard to meet you all and discuss about IO controller.
-> https://sourceforge.net/apps/trac/ioband/wiki/iosummit
-
-Is there a new version of dm-ioband now where you have solved the issue of
-sync/async dispatch with-in group? Before meeting at mini-summit, I am
-trying to run some tests and come up with numbers so that we have more
-clear picture of pros/cons.
-
-Thanks
-Vivek
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
