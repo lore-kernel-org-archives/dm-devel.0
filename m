@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 08/12] dm-snapshot-merge-track-writes
-Date: Mon,  5 Oct 2009 15:02:43 -0400
-Message-ID: <1254769367-12111-9-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 11/12]
+	dm-snapshot-merge-redirect-to-origin-if-invalidated
+Date: Mon,  5 Oct 2009 15:02:46 -0400
+Message-ID: <1254769367-12111-12-git-send-email-snitzer@redhat.com>
 References: <1254769367-12111-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -21,40 +22,45 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-Track in-progress writes on the merging snapshot device and delay merging
-the chunk until all writes to that chunk finish.
+If we are merging invalidated snapshot, redirect all accesses to the origin
+device.
+
+Userspace code will remove the invalidated snapshot anyway after a few seconds,
+but during this period, the origin device must be active (it may for example
+contain root filesystem and having unbootable computer is not desirable).
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |    7 ++++++-
- 1 files changed, 6 insertions(+), 1 deletions(-)
+ drivers/md/dm-snap.c |    9 ++++-----
+ 1 files changed, 4 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 91c80b7..6a55d75 100644
+index 8060fe3..e0d0c30 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -700,7 +700,8 @@ static void snapshot_merge_process(struct dm_snapshot *s)
- 	s->merge_write_interlock_n = 1;
- 	up_write(&s->lock);
+@@ -1458,11 +1458,9 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
  
--	/* !!! FIXME: wait until writes to this chunk drain */
-+	while (__chunk_is_tracked(s, old_chunk))
-+		msleep(1);
+ 	down_write(&s->lock);
  
- 	dm_kcopyd_copy(s->kcopyd_client, &src, 1, &dest, 0, merge_callback, s);
- 	return;
-@@ -1446,7 +1447,11 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
- 			r = DM_MAPIO_SUBMITTED;
- 			goto out_unlock;
- 		}
-+
- 		remap_exception(s, e, bio, chunk);
-+
-+		if (bio_rw(bio) == WRITE)
-+			map_context->ptr = track_chunk(s, chunk);
+-	/* Full snapshots are not usable */
+-	if (!s->valid) {
+-		r = -EIO;
+-		goto out_unlock;
+-	}
++	/* Full merging snapshots are redirected to the origin */
++	if (!s->valid)
++		goto redirect_to_origin;
+ 
+ 	/* If the block is already remapped - use that */
+ 	e = lookup_exception(&s->complete, chunk);
+@@ -1486,6 +1484,7 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
  		goto out_unlock;
  	}
  
++ redirect_to_origin:
+ 	bio->bi_bdev = s->origin->bdev;
+ 
+ 	if (bio_rw(bio) == WRITE) {
 -- 
 1.6.2.5
