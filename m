@@ -1,20 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: clustered snapshots
-Date: Mon, 5 Oct 2009 12:24:09 -0400
-Message-ID: <20091005162409.GA4391@redhat.com>
-References: <Pine.LNX.4.64.0909281906510.16904@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0909291734020.12870@hs20-bc2-1.build.redhat.com>
-	<20091002172656.GA13491@redhat.com>
-	<20091004034843.GC25374@redhat.com>
-	<Pine.LNX.4.64.0910042214530.12074@hs20-bc2-1.build.redhat.com>
-	<20091005043334.GA27758@redhat.com>
-	<Pine.LNX.4.64.0910050948540.11735@hs20-bc2-1.build.redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: IO scheduler based IO controller V10
+Date: Mon, 5 Oct 2009 13:10:23 -0400
+Message-ID: <20091005171023.GG22143@redhat.com>
+References: <4AC6623F.70600@ds.jp.nec.com>
+	<20091005.193808.104033719.ryov@valinux.co.jp>
+	<20091005123148.GB22143@redhat.com>
+	<20091005.235535.193690928.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0910050948540.11735@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20091005.235535.193690928.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,74 +21,165 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, yoshikawa.takuya@oss.ntt.co.jp, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, righi.andrea@gmail.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, m-ikeda@ds.jp.nec.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Mon, Oct 05 2009 at 11:57am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
-
+On Mon, Oct 05, 2009 at 11:55:35PM +0900, Ryo Tsuruta wrote:
+> Hi Vivek,
 > 
-> 
-> On Mon, 5 Oct 2009, Mike Snitzer wrote:
-...
-> > Lesson I learned is that the in-core dm_snap_exception's consecutive
-> > chunk accounting is _really_ subtle.  And while I agree there should be
-> > no relation between the proper cleanup of on-disk and in-core
-> > exceptions; doing the cleanup of each in lock-step appears to be the
-> > only way forward (that I found).
-> 
-> Looking closer at it, all that the patch changes is that before the patch, 
-> exceptions were cleaned last-to-first and after the patch they are cleaned 
-> first-to-last. This is likely a reason that the patch works around a real 
-> bug somewhere else. Not the callback.
-
-Callback aside; the code didn't change the processing order.  You're
-reading the code wrong.  persistent_commit_merge() processes the on-disk
-exceptions in reverse with the following loop:
-
-	   for (i = 0; i < n; i++)
-	       clear_exception(ps, ps->current_committed - 1 - i);
-
-The in-core exception cleanup in merge_callback() also cleans up in
-reverse:
-
-	  /*
-	   * Must process chunks (and associated exceptions) in reverse
-	   * so that dm_consecutive_chunk_count_dec() accounting works
-	   */
-	   for (i = s->merge_write_interlock_n - 1; i >= 0; i--) {
-	   ...
-
-So the fact that I added a callback from persistent_commit_merge()
-did _not_ change the last-to-first exception cleanup ordering (for
-either on-disk or in-core).
-
-Regardless, I'm not using the callback.. I have simpler code to handle
-back-merges within the merge_callback() for-loop.  I emailed that patch
-in my previous reply to this thread...
-
-> > > I think this patch just hides other bug that you have made. Do you set and 
-> > > test the interlock correctly? If yes, it will block any I/Os to the chunks 
-> > > being merged.
+> Vivek Goyal <vgoyal@redhat.com> wrote:
+> > On Mon, Oct 05, 2009 at 07:38:08PM +0900, Ryo Tsuruta wrote:
+> > > Hi,
+> > > 
+> > > Munehiro Ikeda <m-ikeda@ds.jp.nec.com> wrote:
+> > > > Vivek Goyal wrote, on 10/01/2009 10:57 PM:
+> > > > > Before finishing this mail, will throw a whacky idea in the ring. I was
+> > > > > going through the request based dm-multipath paper. Will it make sense
+> > > > > to implement request based dm-ioband? So basically we implement all the
+> > > > > group scheduling in CFQ and let dm-ioband implement a request function
+> > > > > to take the request and break it back into bios. This way we can keep
+> > > > > all the group control at one place and also meet most of the requirements.
+> > > > >
+> > > > > So request based dm-ioband will have a request in hand once that request
+> > > > > has passed group control and prio control. Because dm-ioband is a device
+> > > > > mapper target, one can put it on higher level devices (practically taking
+> > > > > CFQ at higher level device), and provide fairness there. One can also
+> > > > > put it on those SSDs which don't use IO scheduler (this is kind of forcing
+> > > > > them to use the IO scheduler.)
+> > > > >
+> > > > > I am sure that will be many issues but one big issue I could think of that
+> > > > > CFQ thinks that there is one device beneath it and dipsatches requests
+> > > > > from one queue (in case of idling) and that would kill parallelism at
+> > > > > higher layer and throughput will suffer on many of the dm/md configurations.
+> > > > >
+> > > > > Thanks
+> > > > > Vivek
+> > > > 
+> > > > As long as using CFQ, your idea is reasonable for me.  But how about for
+> > > > other IO schedulers?  In my understanding, one of the keys to guarantee
+> > > > group isolation in your patch is to have per-group IO scheduler internal
+> > > > queue even with as, deadline, and noop scheduler.  I think this is
+> > > > great idea, and to implement generic code for all IO schedulers was
+> > > > concluded when we had so many IO scheduler specific proposals.
+> > > > If we will still need per-group IO scheduler internal queues with
+> > > > request-based dm-ioband, we have to modify elevator layer.  It seems
+> > > > out of scope of dm.
+> > > > I might miss something...
+> > > 
+> > > IIUC, the request based device-mapper could not break back a request
+> > > into bio, so it could not work with block devices which don't use the
+> > > IO scheduler.
+> > > 
 > > 
-> > What bug have I made?  Pretty bold assertion only to back it up with
-> > hand-waving and bravado.  I've worked hard to preserve your original work
-> > as closely as possible; yet add the ability to support insertion of
-> > chunks before existing chunks.
+> > I think current request based multipath drvier does not do it but can't it
+> > be implemented that requests are broken back into bio?
 > 
-> If it worked before without this patch and stopped working after you've 
-> made some changes, than you have likely made a bug. So find it.
+> I guess it would be hard to implement it, and we need to hold requests
+> and throttle them at there and it would break the ordering by CFQ.
+> 
+> > Anyway, I don't feel too strongly about this approach as it might
+> > introduce more serialization at higher layer.
+> 
+> Yes, I know it.
+> 
+> > > How about adding a callback function to the higher level controller?
+> > > CFQ calls it when the active queue runs out of time, then the higer
+> > > level controller use it as a trigger or a hint to move IO group, so
+> > > I think a time-based controller could be implemented at higher level.
+> > > 
+> > 
+> > Adding a call back should not be a big issue. But that means you are
+> > planning to run only one group at higher layer at one time and I think
+> > that's the problem because than we are introducing serialization at higher
+> > layer. So any higher level device mapper target which has multiple
+> > physical disks under it, we might be underutilizing these even more and
+> > take a big hit on overall throughput.
+> > 
+> > The whole design of doing proportional weight at lower layer is optimial 
+> > usage of system.
+> 
+> But I think that the higher level approch makes easy to configure
+> against striped software raid devices.
 
-I'm not going to go round and round on this.  Backmerges never worked
-with your snapshot-merge because you never took them into account (you
-disabled them!).
+How does it make easier to configure in case of higher level controller?
 
-In the interest of moving forward please test that the following code
-works on your sparc64 system:
-http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel/2.6.31/
+In case of lower level design, one just have to create cgroups and assign
+weights to cgroups. This mininum step will be required in higher level
+controller also. (Even if you get rid of dm-ioband device setup step).
 
-You'll also need to update LVM2 2.02-54-cvs to use these patches:
-http://people.redhat.com/msnitzer/patches/snapshot-merge/lvm2/LVM2-2.02.54/
+> If one would like to
+> combine some physical disks into one logical device like a dm-linear,
+> I think one should map the IO controller on each physical device and
+> combine them into one logical device.
+> 
 
-Mike
+In fact this sounds like a more complicated step where one has to setup
+one dm-ioband device on top of each physical device. But I am assuming 
+that this will go away once you move to per reuqest queue like implementation.
+
+I think it should be same in principal as my initial implementation of IO
+controller on request queue and I stopped development on it because of FIFO
+dispatch. 
+
+So you seem to be suggesting that you will move dm-ioband to request queue
+so that setting up additional device setup is gone. You will also enable
+it to do time based groups policy, so that we don't run into issues on
+seeky media. Will also enable dispatch from one group only at a time so
+that we don't run into isolation issues and can do time accounting
+accruately.
+
+If yes, then that has the potential to solve the issue. At higher layer one
+can think of enabling size of IO/number of IO policy both for proportional
+BW and max BW type of control. At lower level one can enable pure time
+based control on seeky media.
+
+I think this will still left with the issue of prio with-in group as group
+control is separate and you will not be maintatinig separate queues for
+each process. Similarly you will also have isseus with read vs write
+ratios as IO schedulers underneath change.
+
+So I will be curious to see that implementation. 
+
+> > > My requirements for IO controller are:
+> > > - Implement s a higher level controller, which is located at block
+> > >   layer and bio is grabbed in generic_make_request().
+> > 
+> > How are you planning to handle the issue of buffered writes Andrew raised?
+> 
+> I think that it would be better to use the higher-level controller
+> along with the memory controller and have limits memory usage for each
+> cgroup. And as Kamezawa-san said, having limits of dirty pages would
+> be better, too.
+> 
+
+Ok. So if we plan to co-mount memory controller with per memory group
+dirty_ratio implemented, that can work with both higher level as well as
+low level controller. Not sure if we also require some kind of a per
+memory group flusher thread infrastructure also to make sure higher weight
+group gets more job done.
+
+> > > - Can work with any type of IO scheduler.
+> > > - Can work with any type of block devices.
+> > > - Support multiple policies, proportional wegiht, max rate, time
+> > >   based, ans so on.
+> > > 
+> > > The IO controller mini-summit will be held in next week, and I'm
+> > > looking forard to meet you all and discuss about IO controller.
+> > > https://sourceforge.net/apps/trac/ioband/wiki/iosummit
+> > 
+> > Is there a new version of dm-ioband now where you have solved the issue of
+> > sync/async dispatch with-in group? Before meeting at mini-summit, I am
+> > trying to run some tests and come up with numbers so that we have more
+> > clear picture of pros/cons.
+> 
+> Yes, I've released new versions of dm-ioband and blkio-cgroup. The new
+> dm-ioband handles sync/async IO requests separately and
+> the write-starve-read issue you pointed out is fixed. I would
+> appreciate it if you would try them.
+> http://sourceforge.net/projects/ioband/files/ 
+
+Cool. Will get to testing it.
+
+Thanks
+Vivek
