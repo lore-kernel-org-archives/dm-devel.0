@@ -1,15 +1,19 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 0/4] scsi_dh: Make scsi_dh_activate
-	asynchronous
-Date: Mon, 05 Oct 2009 15:01:15 +0200
-Message-ID: <4AC9EE1B.7030702@suse.de>
-References: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: clustered snapshots
+Date: Mon, 5 Oct 2009 09:38:41 -0400
+Message-ID: <20091005133841.GA30122@redhat.com>
+References: <Pine.LNX.4.64.0909281906510.16904@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0909291734020.12870@hs20-bc2-1.build.redhat.com>
+	<20091002172656.GA13491@redhat.com>
+	<20091004034843.GC25374@redhat.com>
+	<Pine.LNX.4.64.0910042214530.12074@hs20-bc2-1.build.redhat.com>
+	<20091005043334.GA27758@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
+Content-Disposition: inline
+In-Reply-To: <20091005043334.GA27758@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,74 +23,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Chandra Seetharaman <sekharan@us.ibm.com>
-Cc: michaelc@cs.wisc.edu, linux-scsi@vger.kernel.org, dm-devel@redhat.com, Benoit_Arthur@emc.com, Eddie.Williams@steeleye.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Chandra Seetharaman wrote:
-> Hello All,
->=20
-> Currently, device handlers process path activation in series. This lead=
-s
-> to a lot of time delay when more than 100 luns are involved. For exampl=
-e,
-> with lsi rdac 100+ luns take about 12-15 minutes. This was found by Mog=
-er
-> Babu of LSI.
->=20
-> This time delay can be avoided if we can do the activations asynchronou=
-sly.
-> By making scsi_dh_activate() async, we can give the device handlers an
-> oppurtunity to decide on how to send the device activation down the wir=
-e
-> to make the turn around time faster. They can send the commands
-> asynchronously or send them in batches.
->=20
-> I brought up this issue on the mailing list
-> (http://marc.info/?l=3Dlinux-scsi&m=3D123888063818755&w=3D2) and provid=
-ed a
-> set of patch a loooong while back http://marc.info/?l=3Dlinux-scsi&m=3D=
-124088712709821&w=3D2
->=20
-> This set of patches applies cleanly on 2.6.31 and I tested the rdac han=
-dler
-> on the same.
->=20
-> Please review and provide comments.
->=20
-> This set of patched adds asynchronous support for rdac, hp, and alua ha=
-ndlers.
->=20
-Hmm. IIRC we added the synchronous mode by request of LSI/IBM, as the RDA=
-C
-handler could only support on MODE SELECT command at a time.
-If LSI checked this, okay, no objections.
+On Mon, Oct 05 2009 at 12:33am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-However: The main reason why we're getting flooded with MODE SELECT comma=
-nds
-is that the RDAC handler switches _each LUN_, not the entire controller.
-Seeing that the controller simply cannot cope with the resulting MODE SEL=
-ECT
-flood wouldn't it be more sensible to switch the entire controller here?
+> On Sun, Oct 04 2009 at 10:25pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> > Hi
+> > 
+> > I don't understand the purpose of this patch. I think it's useless.
+> 
+> You don't understand it, so you think it's useless.. nice to know where
+> I'm starting.
+> 
+> > - during merge, nothing except the merge process reads the on-disk 
+> > exceptions. So it doesn't matter when you clean them. You must clean them 
+> > before dropping the interlock, but the order is not important.
+> 
+> Sure, I thought the same but quickly realized that in practice order
+> does matter if you'd like to avoid failing the in-core exception cleanup
+> (IFF we allow chunks to be inserted before existing chunks; aka
+> "back-merges").
+> 
+> Your original approach to cleaning all on-disk exceptions then all
+> in-core has no hope of working for "back-merges".  Your original
+> snapshot-merge completely eliminated insertions before existing chunks.
 
-After all, we're trying to address a communication failure between the
-HBA and the controller, not a failure between the controller and the LUN.
-And by that reasoning switching individual LUNs is quite pointless as we
-have to switch _all_ LUNs handled by this controller eventually.
+<snip - my long-winded defensiveness>
 
-So I would suggest to first issue a MODE SENSE command to check which LUN=
-s
-are currently handled by this controller and then switch those LUNs in
-one go. This way we would be sending quite a few MODE SENSE commands,
-but I was under the impression that those do not have any restriction.
+> Lesson I learned is that the in-core dm_snap_exception's consecutive
+> chunk accounting is _really_ subtle.  And while I agree there should be
+> no relation between the proper cleanup of on-disk and in-core
+> exceptions; doing the cleanup of each in lock-step appears to be the
+> only way forward (that I found).
 
-I will see to draw up a patch.
+If I just judge the location of the chunk within the in-core exception
+support for back-merges works just as well.  Here is a minimalist patch
+the accomplishes the same:
 
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index bcfbe85..b271f56 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -790,17 +790,25 @@ static void merge_callback(int read_err, unsigned long write_err, void *context)
+         * so that dm_consecutive_chunk_count_dec() accounting works
+         */
+        for (i = s->merge_write_interlock_n - 1; i >= 0; i--) {
+-               e = lookup_exception(&s->complete,
+-                                    s->merge_write_interlock + i);
++               chunk_t old_chunk = s->merge_write_interlock + i;
++               e = lookup_exception(&s->complete, old_chunk);
+                if (!e) {
+                        DMERR("exception for block %llu is on "
+                              "disk but not in memory",
+-                             (unsigned long long)
+-                             s->merge_write_interlock + i);
++                             (unsigned long long)old_chunk);
+                        up_write(&s->lock);
+                        goto shut;
+                }
+                if (dm_consecutive_chunk_count(e)) {
++                       if (old_chunk == e->old_chunk) {
++                               e->old_chunk++;
++                               e->new_chunk++;
++                       } else if (old_chunk != e->old_chunk +
++                                  dm_consecutive_chunk_count(e)) {
++                               DMERR("merge from the middle of a chunk range");
++                               up_write(&s->lock);
++                               goto shut;
++                       }
+                        dm_consecutive_chunk_count_dec(e);
+                } else {
+                        remove_exception(e);
