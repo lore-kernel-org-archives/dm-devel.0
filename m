@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/4] dm-snapshot-refactor-associations
-Date: Mon,  5 Oct 2009 15:00:29 -0400
-Message-ID: <1254769231-12053-3-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 3/4] dm-snapshot-exception-handover
+Date: Mon,  5 Oct 2009 15:00:30 -0400
+Message-ID: <1254769231-12053-4-git-send-email-snitzer@redhat.com>
 References: <1254769231-12053-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -19,421 +19,176 @@ To: dm-devel@redhat.com
 Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Refactor associations between dm_snapshot and dm_exception_store
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-Commit 71fab00a6bef7fb53119271a8abdbaf40970d28a ("dm snapshot: remove
-dm_snap header use") reflects the  direction Jon Brassow refactored the
-dm-exception-store.c code most recently.
+Handover of the exception store. This is needed for merging (to allow reload of
+the table) and it also enables origin or snapshot resize.
 
-Unfortunately that refactoring prevented the handover of snapshot
-exceptions from being possible.  Exception handover's purpose is to move
-the exception store from one target to the other.  During exception
-handover (via snapshot-merge) the user calls contructor on the new
-target, then suspends the old target, than resumes the new target and
-then destroys the old target.
+The supported call sequences are:
 
-So the exception store MUST NOT have pointers to things that are
-target-specific.  So struct dm_exception_store shouldn't reference these
-two: 'struct dm_target *ti' and 'struct dm_dev *cow'
+new_snapshot->ctr
+old_snapshot->suspend
+old_snapshot->dtr
+new_snapshot->resume
 
-Because both change during table reload.
+and
 
-Changes include:
-- pulls the dm_get_device/dm_put_device for the cow device out of
-  dm-exception-store.c and in to dm-snap.c
-- readds 'struct dm_snapshot' to 'struct dm_exception_store'
-- 'struct dm_snapshot' now has the 'cow' and 'ti' members that
-  'struct dm_exception_store' did.
-- adds dm_snapshot as an arg to the dm_exception_store_create() ABI
-- exports dm_snap_get_cow() from dm-snap.c
+new_snapshot->ctr
+old_snapshot->suspend
+new_snapshot->resume
+old_snapshot->dtr
 
+There may not be more than two instances of a given snapshot. LVM always creates
+at most two; if there are more, the user misuses dmsetup.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: Jonathan Brassow <jbrassow@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
 ---
- drivers/md/dm-exception-store.c |   31 ++++++----------
- drivers/md/dm-exception-store.h |    8 +++--
- drivers/md/dm-snap-persistent.c |   11 +++---
- drivers/md/dm-snap-transient.c  |    6 ++--
- drivers/md/dm-snap.c            |   72 ++++++++++++++++++++++++++-------------
- 5 files changed, 74 insertions(+), 54 deletions(-)
+ drivers/md/dm-snap.c |   85 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 85 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
-index 4cbf319..37596d9 100644
---- a/drivers/md/dm-exception-store.c
-+++ b/drivers/md/dm-exception-store.c
-@@ -172,7 +172,9 @@ int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
- 	}
- 
- 	/* Validate the chunk size against the device block size */
--	if (chunk_size % (bdev_logical_block_size(store->cow->bdev) >> 9)) {
-+	if (chunk_size %
-+	    (bdev_logical_block_size(dm_snap_get_cow(store->snap)->
-+				     bdev) >> 9)) {
- 		*error = "Chunk size is not a multiple of device blocksize";
- 		return -EINVAL;
- 	}
-@@ -190,6 +192,7 @@ int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
- }
- 
- int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
-+			      struct dm_snapshot *snap,
- 			      unsigned *args_used,
- 			      struct dm_exception_store **store)
- {
-@@ -198,7 +201,7 @@ int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
- 	struct dm_exception_store *tmp_store;
- 	char persistent;
- 
--	if (argc < 3) {
-+	if (argc < 2) {
- 		ti->error = "Insufficient exception store arguments";
- 		return -EINVAL;
- 	}
-@@ -209,7 +212,7 @@ int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
- 		return -ENOMEM;
- 	}
- 
--	persistent = toupper(*argv[1]);
-+	persistent = toupper(*argv[0]);
- 	if (persistent == 'P')
- 		type = get_type("P");
- 	else if (persistent == 'N')
-@@ -226,32 +229,23 @@ int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
- 	}
- 
- 	tmp_store->type = type;
--	tmp_store->ti = ti;
-+	tmp_store->snap = snap;
- 
--	r = dm_get_device(ti, argv[0], 0, 0,
--			  FMODE_READ | FMODE_WRITE, &tmp_store->cow);
--	if (r) {
--		ti->error = "Cannot get COW device";
--		goto bad_cow;
--	}
--
--	r = set_chunk_size(tmp_store, argv[2], &ti->error);
-+	r = set_chunk_size(tmp_store, argv[1], &ti->error);
- 	if (r)
--		goto bad_cow;
-+		goto bad;
- 
- 	r = type->ctr(tmp_store, 0, NULL);
- 	if (r) {
- 		ti->error = "Exception store type constructor failed";
--		goto bad_ctr;
-+		goto bad;
- 	}
- 
--	*args_used = 3;
-+	*args_used = 2;
- 	*store = tmp_store;
- 	return 0;
- 
--bad_ctr:
--	dm_put_device(ti, tmp_store->cow);
--bad_cow:
-+bad:
- 	put_type(type);
- bad_type:
- 	kfree(tmp_store);
-@@ -262,7 +256,6 @@ EXPORT_SYMBOL(dm_exception_store_create);
- void dm_exception_store_destroy(struct dm_exception_store *store)
- {
- 	store->type->dtr(store);
--	dm_put_device(store->ti, store->cow);
- 	put_type(store->type);
- 	kfree(store);
- }
-diff --git a/drivers/md/dm-exception-store.h b/drivers/md/dm-exception-store.h
-index 5f9315b..4e8086f 100644
---- a/drivers/md/dm-exception-store.h
-+++ b/drivers/md/dm-exception-store.h
-@@ -94,11 +94,12 @@ struct dm_exception_store_type {
- 	struct list_head list;
- };
- 
-+struct dm_snapshot;
-+struct dm_dev *dm_snap_get_cow(struct dm_snapshot *);
-+
- struct dm_exception_store {
- 	struct dm_exception_store_type *type;
--	struct dm_target *ti;
--
--	struct dm_dev *cow;
-+	struct dm_snapshot *snap;
- 
- 	/* Size of data blocks saved - must be a power of 2 */
- 	unsigned chunk_size;
-@@ -173,6 +174,7 @@ int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
- 				      char **error);
- 
- int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
-+			      struct dm_snapshot *snap,
- 			      unsigned *args_used,
- 			      struct dm_exception_store **store);
- void dm_exception_store_destroy(struct dm_exception_store *store);
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index 7e855fb..746602b 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -214,7 +214,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, int rw,
- 		    int metadata)
- {
- 	struct dm_io_region where = {
--		.bdev = ps->store->cow->bdev,
-+		.bdev = dm_snap_get_cow(ps->store->snap)->bdev,
- 		.sector = ps->store->chunk_size * chunk,
- 		.count = ps->store->chunk_size,
- 	};
-@@ -294,7 +294,8 @@ static int read_header(struct pstore *ps, int *new_snapshot)
- 	 */
- 	if (!ps->store->chunk_size) {
- 		ps->store->chunk_size = max(DM_CHUNK_SIZE_DEFAULT_SECTORS,
--		    bdev_logical_block_size(ps->store->cow->bdev) >> 9);
-+		    bdev_logical_block_size(dm_snap_get_cow(ps->store->snap)->
-+					    bdev) >> 9);
- 		ps->store->chunk_mask = ps->store->chunk_size - 1;
- 		ps->store->chunk_shift = ffs(ps->store->chunk_size) - 1;
- 		chunk_size_supplied = 0;
-@@ -493,7 +494,7 @@ static void persistent_fraction_full(struct dm_exception_store *store,
- 				     sector_t *numerator, sector_t *denominator)
- {
- 	*numerator = get_info(store)->next_free * store->chunk_size;
--	*denominator = get_dev_size(store->cow->bdev);
-+	*denominator = get_dev_size(dm_snap_get_cow(store->snap)->bdev);
- }
- 
- static void persistent_dtr(struct dm_exception_store *store)
-@@ -585,7 +586,7 @@ static int persistent_prepare_exception(struct dm_exception_store *store,
- 	struct pstore *ps = get_info(store);
- 	uint32_t stride;
- 	chunk_t next_free;
--	sector_t size = get_dev_size(store->cow->bdev);
-+	sector_t size = get_dev_size(dm_snap_get_cow(store->snap)->bdev);
- 
- 	/* Is there enough room ? */
- 	if (size < ((ps->next_free + 1) * store->chunk_size))
-@@ -722,7 +723,7 @@ static unsigned persistent_status(struct dm_exception_store *store,
- 	case STATUSTYPE_INFO:
- 		break;
- 	case STATUSTYPE_TABLE:
--		DMEMIT(" %s P %llu", store->cow->name,
-+		DMEMIT(" %s P %llu", dm_snap_get_cow(store->snap)->name,
- 		       (unsigned long long)store->chunk_size);
- 	}
- 
-diff --git a/drivers/md/dm-snap-transient.c b/drivers/md/dm-snap-transient.c
-index cde5aa5..3d9fd91 100644
---- a/drivers/md/dm-snap-transient.c
-+++ b/drivers/md/dm-snap-transient.c
-@@ -39,7 +39,7 @@ static int transient_prepare_exception(struct dm_exception_store *store,
- 				       struct dm_snap_exception *e)
- {
- 	struct transient_c *tc = store->context;
--	sector_t size = get_dev_size(store->cow->bdev);
-+	sector_t size = get_dev_size(dm_snap_get_cow(store->snap)->bdev);
- 
- 	if (size < (tc->next_free + store->chunk_size))
- 		return -1;
-@@ -63,7 +63,7 @@ static void transient_fraction_full(struct dm_exception_store *store,
- 				    sector_t *numerator, sector_t *denominator)
- {
- 	*numerator = ((struct transient_c *) store->context)->next_free;
--	*denominator = get_dev_size(store->cow->bdev);
-+	*denominator = get_dev_size(dm_snap_get_cow(store->snap)->bdev);
- }
- 
- static int transient_ctr(struct dm_exception_store *store,
-@@ -91,7 +91,7 @@ static unsigned transient_status(struct dm_exception_store *store,
- 	case STATUSTYPE_INFO:
- 		break;
- 	case STATUSTYPE_TABLE:
--		DMEMIT(" %s N %llu", store->cow->name,
-+		DMEMIT(" %s N %llu", dm_snap_get_cow(store->snap)->name,
- 		       (unsigned long long)store->chunk_size);
- 	}
- 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index b23decb..bdcbfc8 100644
+index bdcbfc8..8d3efa0 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -59,6 +59,9 @@ struct dm_snapshot {
- 	struct rw_semaphore lock;
+@@ -72,6 +72,9 @@ struct dm_snapshot {
+ 	/* Origin writes don't trigger exceptions until this is set */
+ 	int active;
  
- 	struct dm_dev *origin;
-+	struct dm_dev *cow;
++	/* Exception store will be handed over from another snapshot */
++	int handover;
 +
-+	struct dm_target *ti;
+ 	mempool_t *pending_pool;
  
- 	/* List of snapshots per Origin */
- 	struct list_head list;
-@@ -97,6 +100,12 @@ struct dm_snapshot {
- 	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
- };
+ 	atomic_t pending_exceptions_count;
+@@ -505,6 +508,33 @@ static int dm_add_exception(void *context, chunk_t old, chunk_t new)
+ 	return 0;
+ }
  
-+struct dm_dev *dm_snap_get_cow(struct dm_snapshot *s)
++/* _origins_lock must be held */
++static struct dm_snapshot *find_duplicate(struct dm_snapshot *snap)
 +{
-+	return s->cow;
++	struct dm_snapshot *dup;
++	struct dm_snapshot *l;
++	struct origin *o;
++
++	o = __lookup_origin(snap->origin->bdev);
++	if (!o)
++		return NULL;
++
++	dup = NULL;
++	list_for_each_entry(l, &o->snapshots, list)
++		if (l != snap && bdev_equal(l->cow->bdev,
++					    snap->cow->bdev)) {
++			if (!dup) {
++				dup = l;
++			} else {
++				DMERR("Multiple active duplicates, "
++				      "user misuses dmsetup.");
++				return NULL;
++			}
++		}
++
++	return dup;
 +}
-+EXPORT_SYMBOL(dm_snap_get_cow);
 +
- static struct workqueue_struct *ksnapd;
- static void flush_queued_bios(struct work_struct *work);
+ #define min_not_zero(l, r) (((l) == 0) ? (r) : (((r) == 0) ? (l) : min(l, r)))
  
-@@ -538,7 +547,7 @@ static int init_hash_tables(struct dm_snapshot *s)
- 	 * Calculate based on the size of the original volume or
- 	 * the COW volume...
- 	 */
--	cow_dev_size = get_dev_size(s->store->cow->bdev);
-+	cow_dev_size = get_dev_size(s->cow->bdev);
- 	origin_dev_size = get_dev_size(s->origin->bdev);
- 	max_buckets = calc_max_buckets();
- 
-@@ -574,45 +583,55 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	struct dm_snapshot *s;
- 	int i;
- 	int r = -EINVAL;
--	char *origin_path;
--	struct dm_exception_store *store;
-+	char *origin_path, *cow_path;
- 	unsigned args_used;
- 
- 	if (argc != 4) {
- 		ti->error = "requires exactly 4 arguments";
- 		r = -EINVAL;
--		goto bad_args;
-+		goto bad;
- 	}
- 
- 	origin_path = argv[0];
- 	argv++;
- 	argc--;
- 
--	r = dm_exception_store_create(ti, argc, argv, &args_used, &store);
-+	s = kmalloc(sizeof(*s), GFP_KERNEL);
-+	if (!s) {
-+		ti->error = "Cannot allocate snapshot context private "
-+		    "structure";
-+		r = -ENOMEM;
-+		goto bad;
-+	}
-+
-+	cow_path = argv[0];
-+	argv++;
-+	argc--;
-+
-+	r = dm_get_device(ti, cow_path, 0, 0,
-+			  FMODE_READ | FMODE_WRITE, &s->cow);
-+	if (r) {
-+		ti->error = "Cannot get COW device";
-+		goto bad_cow;
-+	}
-+
-+	r = dm_exception_store_create(ti, argc, argv, s, &args_used, &s->store);
- 	if (r) {
- 		ti->error = "Couldn't create exception store";
- 		r = -EINVAL;
--		goto bad_args;
-+		goto bad_store;
- 	}
- 
- 	argv += args_used;
- 	argc -= args_used;
- 
--	s = kmalloc(sizeof(*s), GFP_KERNEL);
--	if (!s) {
--		ti->error = "Cannot allocate snapshot context private "
--		    "structure";
--		r = -ENOMEM;
--		goto bad_snap;
--	}
--
- 	r = dm_get_device(ti, origin_path, 0, ti->len, FMODE_READ, &s->origin);
- 	if (r) {
- 		ti->error = "Cannot get origin device";
- 		goto bad_origin;
- 	}
- 
--	s->store = store;
-+	s->ti = ti;
+ /*
+@@ -635,6 +665,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  	s->valid = 1;
  	s->active = 0;
  	atomic_set(&s->pending_exceptions_count, 0);
-@@ -701,12 +720,15 @@ bad_hash_tables:
- 	dm_put_device(ti, s->origin);
++	s->handover = 0;
+ 	init_rwsem(&s->lock);
+ 	spin_lock_init(&s->pe_lock);
  
- bad_origin:
--	kfree(s);
-+	dm_exception_store_destroy(s->store);
+@@ -670,6 +701,11 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  
--bad_snap:
--	dm_exception_store_destroy(store);
-+bad_store:
-+	dm_put_device(ti, s->cow);
+ 	spin_lock_init(&s->tracked_chunk_lock);
  
--bad_args:
-+bad_cow:
-+	kfree(s);
++	down_read(&_origins_lock);
++	if (find_duplicate(s))
++		s->handover = 1;
++	up_read(&_origins_lock);
 +
-+bad:
- 	return r;
+ 	/* Metadata must only be loaded into one table at once */
+ 	r = s->store->type->read_metadata(s->store, dm_add_exception,
+ 					  (void *)s);
+@@ -741,15 +777,49 @@ static void __free_exceptions(struct dm_snapshot *s)
+ 	exit_exception_table(&s->complete, exception_cache);
  }
  
-@@ -755,6 +777,8 @@ static void snapshot_dtr(struct dm_target *ti)
- 
- 	dm_exception_store_destroy(s->store);
- 
-+	dm_put_device(ti, s->cow);
++static void handover_exceptions(struct dm_snapshot *old,
++				struct dm_snapshot *new)
++{
++	union {
++		struct exception_table table_swap;
++		struct dm_exception_store *store_swap;
++	} u;
 +
- 	kfree(s);
- }
- 
-@@ -839,7 +863,7 @@ static void __invalidate_snapshot(struct dm_snapshot *s, int err)
- 
- 	s->valid = 0;
- 
--	dm_table_event(s->store->ti->table);
-+	dm_table_event(s->ti->table);
- }
- 
- static void pending_complete(struct dm_snap_pending_exception *pe, int success)
-@@ -945,7 +969,7 @@ static void start_copy(struct dm_snap_pending_exception *pe)
- 	src.sector = chunk_to_sector(s->store, pe->e.old_chunk);
- 	src.count = min((sector_t)s->store->chunk_size, dev_size - src.sector);
- 
--	dest.bdev = s->store->cow->bdev;
-+	dest.bdev = s->cow->bdev;
- 	dest.sector = chunk_to_sector(s->store, pe->e.new_chunk);
- 	dest.count = src.count;
- 
-@@ -1003,7 +1027,7 @@ __find_pending_exception(struct dm_snapshot *s,
- static void remap_exception(struct dm_snapshot *s, struct dm_snap_exception *e,
- 			    struct bio *bio, chunk_t chunk)
++	u.table_swap = new->complete;
++	new->complete = old->complete;
++	old->complete = u.table_swap;
++	u.store_swap = new->store;
++	new->store = old->store;
++	old->store = u.store_swap;
++
++	new->store->snap = new;
++	old->store->snap = old;
++
++	old->active = 0;
++	new->handover = 0;
++}
++
+ static void snapshot_dtr(struct dm_target *ti)
  {
--	bio->bi_bdev = s->store->cow->bdev;
-+	bio->bi_bdev = s->cow->bdev;
- 	bio->bi_sector = chunk_to_sector(s->store,
- 					 dm_chunk_number(e->new_chunk) +
- 					 (chunk - e->old_chunk)) +
-@@ -1021,7 +1045,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
- 	struct dm_snap_pending_exception *pe = NULL;
+ #ifdef CONFIG_DM_DEBUG
+ 	int i;
+ #endif
+ 	struct dm_snapshot *s = ti->private;
++	struct dm_snapshot *dup;
  
- 	if (unlikely(bio_empty_barrier(bio))) {
--		bio->bi_bdev = s->store->cow->bdev;
-+		bio->bi_bdev = s->cow->bdev;
- 		return DM_MAPIO_REMAPPED;
- 	}
+ 	flush_workqueue(ksnapd);
  
-@@ -1203,7 +1227,7 @@ static int __origin_write(struct list_head *snapshots,
- 			goto next_snapshot;
++	down_write(&_origins_lock);
++	down_write(&s->lock);
++	dup = find_duplicate(s);
++	if (dup && dup->handover) {
++		down_write_nested(&dup->lock, SINGLE_DEPTH_NESTING);
++		handover_exceptions(s, dup);
++		up_write(&dup->lock);
++	}
++	up_write(&s->lock);
++	up_write(&_origins_lock);
++
+ 	/* Prevent further origin writes from using this snapshot. */
+ 	/* After this returns there can be no new kcopyd jobs. */
+ 	unregister_snapshot(s);
+@@ -1144,9 +1214,24 @@ static void snapshot_resume(struct dm_target *ti)
+ {
+ 	struct dm_snapshot *s = ti->private;
  
- 		/* Nothing to do if writing beyond end of snapshot */
--		if (sector >= dm_table_get_size(snap->store->ti->table))
-+		if (sector >= dm_table_get_size(snap->ti->table))
- 			goto next_snapshot;
++	down_write(&_origins_lock);
+ 	down_write(&s->lock);
++	if (s->handover) {
++		struct dm_snapshot *dup;
++		dup = find_duplicate(s);
++		if (!dup) {
++			DMERR("duplicate not found");
++			s->valid = 0;
++			goto ret;
++		}
++		down_write_nested(&dup->lock, SINGLE_DEPTH_NESTING);
++		handover_exceptions(dup, s);
++		up_write(&dup->lock);
++	}
+ 	s->active = 1;
++ ret:
+ 	up_write(&s->lock);
++	up_write(&_origins_lock);
+ }
  
- 		/*
+ static int snapshot_status(struct dm_target *ti, status_type_t type,
 -- 
 1.6.2.5
