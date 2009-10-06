@@ -1,15 +1,25 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 3/4] dm-snapshot-exception-handover
-Date: Tue, 6 Oct 2009 10:38:05 -0400
-Message-ID: <20091006143805.GB19024@redhat.com>
-References: <1254769231-12053-1-git-send-email-snitzer@redhat.com>
-	<1254769231-12053-4-git-send-email-snitzer@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: Do we support ioprio on SSDs with NCQ (Was: Re: IO
+	scheduler based IO controller V10)
+Date: Tue, 6 Oct 2009 20:53:42 +0200
+Message-ID: <20091006185341.GD5216@kernel.dk>
+References: <20091002222756.GG4494@redhat.com>
+	<4e5e476b0910030543o776fb505ka0ce38da9d83b33c@mail.gmail.com>
+	<20091003133810.GC12925@redhat.com>
+	<4e5e476b0910040215m35af5c99pf2c3a463a5cb61dd@mail.gmail.com>
+	<20091004121122.GB18778@redhat.com>
+	<4e5e476b0910040546h5f77cd1fo3172fe5c229eb579@mail.gmail.com>
+	<x49my457uef.fsf@segfault.boston.devel.redhat.com>
+	<4e5e476b0910051409x33f8365flf32e8e7548d72e79@mail.gmail.com>
+	<20091006084120.GJ5216@kernel.dk>
+	<4e5e476b0910060200i7c028b3fr4c235bf5f18c3aa1@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1254769231-12053-4-git-send-email-snitzer@redhat.com>
+In-Reply-To: <4e5e476b0910060200i7c028b3fr4c235bf5f18c3aa1@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,218 +29,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>
+To: Corrado Zoccolo <czoccolo@gmail.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, Jeff Moyer <jmoyer@redhat.com>, nauman@google.com, Ingo Molnar <mingo@elte.hu>, Vivek Goyal <vgoyal@redhat.com>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, Valdis.Kletnieks@vt.edu, containers@lists.linux-foundation.org, Mike Galbraith <efault@gmx.de>, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Mon, Oct 05 2009 at  3:00pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Tue, Oct 06 2009, Corrado Zoccolo wrote:
+> On Tue, Oct 6, 2009 at 10:41 AM, Jens Axboe <jens.axboe@oracle.com> wro=
+te:
+> > On Mon, Oct 05 2009, Corrado Zoccolo wrote:
+> >> On Mon, Oct 5, 2009 at 5:06 PM, Jeff Moyer <jmoyer@redhat.com> wrote=
+:
+> >> > It stands for residual, not residency. =A0Make more sense?
+> >> It makes sense when computed, but not when used in rb_key computatio=
+n.
+> >> Why should we postpone queues that where preempted, instead of givin=
+g
+> >> them a boost?
+> >
+> > We should not, if it is/was working correctly, it should allow both f=
+or
+> > increase/descrease of tree position (hence it's a long and can go
+> > negative) to account for both over and under time.
+>=20
+> I'm doing some tests with and without it.
+> How it is working now is:
+> definition:
+>         if (timed_out && !cfq_cfqq_slice_new(cfqq)) {
+>                 cfqq->slice_resid =3D cfqq->slice_end - jiffies;
+>                 cfq_log_cfqq(cfqd, cfqq, "resid=3D%ld",
+> cfqq->slice_resid);
+>         }
+> * here resid is > 0 if there was residual time, and < 0 if the queue
+> overrun its slice.
+> use:
+>                 rb_key =3D cfq_slice_offset(cfqd, cfqq) + jiffies;
+>                 rb_key +=3D cfqq->slice_resid;
+>                 cfqq->slice_resid =3D 0;
+> * here if residual is > 0, we postpone, i.e. penalize.  If residual is
+> < 0 (i.e. the queue overrun), we anticipate it, i.e. we boost it.
+>=20
+> So this is likely not what we want.
 
-> From: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> Handover of the exception store. This is needed for merging (to allow reload of
-> the table) and it also enables origin or snapshot resize.
-> 
-> The supported call sequences are:
-> 
-> new_snapshot->ctr
-> old_snapshot->suspend
-> old_snapshot->dtr
-> new_snapshot->resume
-> 
-> and
-> 
-> new_snapshot->ctr
-> old_snapshot->suspend
-> new_snapshot->resume
-> old_snapshot->dtr
-> 
-> There may not be more than two instances of a given snapshot. LVM always creates
-> at most two; if there are more, the user misuses dmsetup.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Indeed, that should be -=3D cfqq->slice_resid.
 
-...
-> +/* _origins_lock must be held */
-> +static struct dm_snapshot *find_duplicate(struct dm_snapshot *snap)
-> +{
-...
+> I did some tests with and without it, or changing the sign, and it
+> doesn't matter at all for pure sync workloads.
 
-I just noticed that find_duplicate should be renamed to __find_duplicate
-to use the convention of a '__' prefix on all dm-snap.c functions that
-require the _origins_lock.
+For most cases it will not change things a lot, but it should be
+technically correct.
 
-Here is an updated patch (doesn't change any snapshot-merge patches that
-follow):
+> The only case in which it matters a little, from my experiments, is
+> for sync vs async workload. Here, since async queues are preempted,
+> the current form of the code penalizes them, so they get larger
+> delays, and we get more bandwidth for sync.
 
-Handover of the exception store. This is needed for merging (to allow reload of
-the table) and it also enables origin or snapshot resize.
+Right
 
-The supported call sequences are:
+> This is, btw, the only positive outcome (I can think of) from the
+> current form of the code, and I think we could obtain it more easily
+> by unconditionally adding a delay for async queues:
+>                 rb_key =3D cfq_slice_offset(cfqd, cfqq) + jiffies;
+> 		if (!cfq_cfqq_sync(cfqq)) {
+>                         rb_key +=3D CFQ_ASYNC_DELAY;
+> 	        }
+>=20
+> removing completely the resid stuff (or at least leaving us with the
+> ability of using it with the proper sign).
 
-new_snapshot->ctr
-old_snapshot->suspend
-old_snapshot->dtr
-new_snapshot->resume
+It's more likely for the async queue to overrun, but it can happen for
+others as well. I'm keeping the residual count, but making the sign
+change of course.
 
-and
-
-new_snapshot->ctr
-old_snapshot->suspend
-new_snapshot->resume
-old_snapshot->dtr
-
-There may not be more than two instances of a given snapshot. LVM always creates
-at most two; if there are more, the user misuses dmsetup.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-
----
- drivers/md/dm-snap.c |   85 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 85 insertions(+)
-
-Index: linux-2.6/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -72,6 +72,9 @@ struct dm_snapshot {
- 	/* Origin writes don't trigger exceptions until this is set */
- 	int active;
- 
-+	/* Exception store will be handed over from another snapshot */
-+	int handover;
-+
- 	mempool_t *pending_pool;
- 
- 	atomic_t pending_exceptions_count;
-@@ -505,6 +508,33 @@ static int dm_add_exception(void *contex
- 	return 0;
- }
- 
-+/* _origins_lock must be held */
-+static struct dm_snapshot *__find_duplicate(struct dm_snapshot *snap)
-+{
-+	struct dm_snapshot *dup;
-+	struct dm_snapshot *l;
-+	struct origin *o;
-+
-+	o = __lookup_origin(snap->origin->bdev);
-+	if (!o)
-+		return NULL;
-+
-+	dup = NULL;
-+	list_for_each_entry(l, &o->snapshots, list)
-+		if (l != snap && bdev_equal(l->cow->bdev,
-+					    snap->cow->bdev)) {
-+			if (!dup) {
-+				dup = l;
-+			} else {
-+				DMERR("Multiple active duplicates, "
-+				      "user misuses dmsetup.");
-+				return NULL;
-+			}
-+		}
-+
-+	return dup;
-+}
-+
- #define min_not_zero(l, r) (((l) == 0) ? (r) : (((r) == 0) ? (l) : min(l, r)))
- 
- /*
-@@ -635,6 +665,7 @@ static int snapshot_ctr(struct dm_target
- 	s->valid = 1;
- 	s->active = 0;
- 	atomic_set(&s->pending_exceptions_count, 0);
-+	s->handover = 0;
- 	init_rwsem(&s->lock);
- 	spin_lock_init(&s->pe_lock);
- 
-@@ -670,6 +701,11 @@ static int snapshot_ctr(struct dm_target
- 
- 	spin_lock_init(&s->tracked_chunk_lock);
- 
-+	down_read(&_origins_lock);
-+	if (__find_duplicate(s))
-+		s->handover = 1;
-+	up_read(&_origins_lock);
-+
- 	/* Metadata must only be loaded into one table at once */
- 	r = s->store->type->read_metadata(s->store, dm_add_exception,
- 					  (void *)s);
-@@ -741,15 +777,49 @@ static void __free_exceptions(struct dm_
- 	exit_exception_table(&s->complete, exception_cache);
- }
- 
-+static void handover_exceptions(struct dm_snapshot *old,
-+				struct dm_snapshot *new)
-+{
-+	union {
-+		struct exception_table table_swap;
-+		struct dm_exception_store *store_swap;
-+	} u;
-+
-+	u.table_swap = new->complete;
-+	new->complete = old->complete;
-+	old->complete = u.table_swap;
-+	u.store_swap = new->store;
-+	new->store = old->store;
-+	old->store = u.store_swap;
-+
-+	new->store->snap = new;
-+	old->store->snap = old;
-+
-+	old->active = 0;
-+	new->handover = 0;
-+}
-+
- static void snapshot_dtr(struct dm_target *ti)
- {
- #ifdef CONFIG_DM_DEBUG
- 	int i;
- #endif
- 	struct dm_snapshot *s = ti->private;
-+	struct dm_snapshot *dup;
- 
- 	flush_workqueue(ksnapd);
- 
-+	down_write(&_origins_lock);
-+	down_write(&s->lock);
-+	dup = __find_duplicate(s);
-+	if (dup && dup->handover) {
-+		down_write_nested(&dup->lock, SINGLE_DEPTH_NESTING);
-+		handover_exceptions(s, dup);
-+		up_write(&dup->lock);
-+	}
-+	up_write(&s->lock);
-+	up_write(&_origins_lock);
-+
- 	/* Prevent further origin writes from using this snapshot. */
- 	/* After this returns there can be no new kcopyd jobs. */
- 	unregister_snapshot(s);
-@@ -1144,9 +1214,24 @@ static void snapshot_resume(struct dm_ta
- {
- 	struct dm_snapshot *s = ti->private;
- 
-+	down_write(&_origins_lock);
- 	down_write(&s->lock);
-+	if (s->handover) {
-+		struct dm_snapshot *dup;
-+		dup = __find_duplicate(s);
-+		if (!dup) {
-+			DMERR("duplicate not found");
-+			s->valid = 0;
-+			goto ret;
-+		}
-+		down_write_nested(&dup->lock, SINGLE_DEPTH_NESTING);
-+		handover_exceptions(dup, s);
-+		up_write(&dup->lock);
-+	}
- 	s->active = 1;
-+ ret:
- 	up_write(&s->lock);
-+	up_write(&_origins_lock);
- }
- 
- static int snapshot_status(struct dm_target *ti, status_type_t type,
+--=20
+Jens Axboe
