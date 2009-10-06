@@ -1,18 +1,25 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH 0/4] scsi_dh: Make scsi_dh_activate
-	asynchronous
-Date: Tue, 6 Oct 2009 13:46:19 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474ED90C7@cosmail01.lsi.com>
-References: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
-	<4AC9EE1B.7030702@suse.de> <1254785154.15826.18.camel@chandra-ubuntu>
-	<4ACAFAF5.5000805@suse.de>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: Do we support ioprio on SSDs with NCQ (Was: Re: IO
+	scheduler based IO controller V10)
+Date: Tue, 6 Oct 2009 17:36:40 -0400
+Message-ID: <20091006213640.GC30131@redhat.com>
+References: <20091002154020.GC4494@redhat.com>
+	<12774.1254502217@turing-police.cc.vt.edu>
+	<20091002195815.GE4494@redhat.com>
+	<4e5e476b0910021514i1b461229t667bed94fd67f140@mail.gmail.com>
+	<20091002222756.GG4494@redhat.com>
+	<4e5e476b0910030543o776fb505ka0ce38da9d83b33c@mail.gmail.com>
+	<20091003133810.GC12925@redhat.com>
+	<4e5e476b0910040215m35af5c99pf2c3a463a5cb61dd@mail.gmail.com>
+	<20091004121122.GB18778@redhat.com>
+	<4e5e476b0910040546h5f77cd1fo3172fe5c229eb579@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4ACAFAF5.5000805@suse.de>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <4e5e476b0910040546h5f77cd1fo3172fe5c229eb579@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,98 +29,133 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>, "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>
-Cc: "michaelc@cs.wisc.edu" <michaelc@cs.wisc.edu>, "Stankey,
-	Robert" <Robert.Stankey@lsi.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "Chauhan,
-	Vijay" <Vijay.Chauhan@lsi.com>, "Benoit_Arthur@emc.com" <Benoit_Arthur@emc.com>, "Qi,
-	Yanling" <Yanling.Qi@lsi.com>, "Eddie.Williams@steeleye.com" <Eddie.Williams@steeleye.com>
+To: Corrado Zoccolo <czoccolo@gmail.com>
+Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, fernando@oss.ntt.co.jp, Ulrich Lukas <stellplatz-nr.13a@datenparkplatz.de>, mikew@google.com, jmoyer@redhat.com, nauman@google.com, Ingo Molnar <mingo@elte.hu>, m-ikeda@ds.jp.nec.com, riel@redhat.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, Valdis.Kletnieks@vt.edu, containers@lists.linux-foundation.org, Mike Galbraith <efault@gmx.de>, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, righi.andrea@gmail.com, torvalds@linux-foundation.org
 List-Id: dm-devel.ids
 
-Thanks Hannes and Chandra for your patches and feedback.  Right now we ar=
-e internally discussing the pros and cons of both these approaches. We wi=
-ll respond to all your question once we arrive at the conclusion.
+On Sun, Oct 04, 2009 at 02:46:44PM +0200, Corrado Zoccolo wrote:
+> Hi Vivek,
+> On Sun, Oct 4, 2009 at 2:11 PM, Vivek Goyal <vgoyal@redhat.com> wrote:
+> > On Sun, Oct 04, 2009 at 11:15:24AM +0200, Corrado Zoccolo wrote:
+> >> Hi Vivek,
+> >> My guess is that the formula that is used to handle this case is not
+> >> very stable.
+> >
+> > In general I agree that formula to calculate the slice offset is very
+> > puzzling as busy_queues varies and that changes the position of the t=
+ask
+> > sometimes.
+> >
+> > I am not sure what's the intent here by removing busy_queues stuff. I=
+ have
+> > got two questions though.
+>=20
+> In the ideal case steady state, busy_queues will be a constant. Since
+> we are just comparing the values between themselves, we can just
+> remove this constant completely.
+>=20
+> Whenever it is not constant, it seems to me that it can cause wrong
+> behaviour, i.e. when the number of processes with ready I/O reduces, a
+> later coming request can jump before older requests.
+> So it seems it does more harm than good, hence I suggest to remove it.
+>=20
 
-Also adding our Team (Bob Stankey, Sudhir, Yanling, Vijay ) in the respon=
-se.
+I agree here. busy_queues can vary, especially given the fact that CFQ
+removes the queue from service tree immediately after the dispatch, if th=
+e
+queue is empty, and then it waits for request completion from the queue
+and idles on the queue.
+
+So consider following scenration where two thinking readers and one write=
+r
+are executing. Readers preempt the writers and writers gets back into the
+tree. When writer gets backlogged, at that point of time busy_queues=3D2=20
+and when a readers gets backlogged, busy_queues=3D1 (most of the time,
+because a reader is idling), and hence many a time readers gets placed ah=
+ead
+of writer.
+
+This is so subtle, that I am not sure it was the designed that way.
+
+So dependence on busy_queues can change queue ordering in unpredicatable
+ways.
+
+
+> Moreover, I suggest removing also the slice_resid part, since its
+> semantics doesn't seem consistent.
+> When computed, it is not the residency, but the remaining time slice.
+> Then it is used to postpone, instead of anticipate, the position of
+> the queue in the RR, that seems counterintuitive (it would be
+> intuitive, though, if it was actually a residency, not a remaining
+> slice, i.e. you already got your full share, so you can wait longer to
+> be serviced again).
+>=20
+> >
+> > - Why don't we keep it simple round robin where a task is simply plac=
+ed at
+> > =A0the end of service tree.
+>=20
+> This should work for the idling case, since we provide service
+> differentiation by means of time slice.
+> For non-idling case, though, the appropriate placement of queues in
+> the tree (as given by my formula) can still provide it.
+>=20
+
+So for non-idling case, instead of providing service differentiation by=20
+number of times queue is scheduled to run then by providing a bigger slic=
+e
+to the queue?
+
+This will work only to an extent and depends on size of IO being
+dispatched from each queue. If some queue is having bigger requests size
+and some smaller size (can be easily driven by changing block size), then
+again you will not see fairness numbers? In that case it might make sense
+to provide fairness in terms of size of IO/number of IO.=20
+
+So to me it boils down to what is the seek cose of the underlying media.
+If seek cost is high, provide fairness in terms of time slice and if seek
+cost is really low, one can afford to faster switching of queues without
+loosing too much on throughput side and in that case fairness in terms of
+size of IO should be good.
+
+Now if on good SSDs with NCQ, seek cost is low, I am wondering if it will
+make sense to tweak CFQ to change mode dynamically and start providing
+fairness in terms of size of IO/number of IO?
+
+> >
+> > - Secondly, CFQ provides full slice length to queues only which are
+> > =A0idling (in case of sequenatial reader). If we do not enable idling=
+, as
+> > =A0in case of NCQ enabled SSDs, then CFQ will expire the queue almost
+> > =A0immediately and put the queue at the end of service tree (almost).
+> >
+> > So if we don't enable idling, at max we can provide fairness, we
+> > esseitially just let every queue dispatch one request and put =A0at t=
+he end
+> > of the end of service tree. Hence no fairness....
+>=20
+> We should distinguish the two terms fairness and service
+> differentiation. Fairness is when every queue gets the same amount of
+> service share.
+
+Will it not be "proportionate amount of service share" instead of "same
+amount of service share"
+
+> This is not what we want when priorities are different
+> (we want the service differentiation, instead), but is what we get if
+> we do just round robin without idling.
+>=20
+> To fix this, we can alter the placement in the tree, so that if we
+> have Q1 with slice S1, and Q2 with slice S2, always ready to perform
+> I/O, we get that Q1 is in front of the three with probability
+> S1/(S1+S2), and Q2 is in front with probability S2/(S1+S2).
+> This is what my formula should achieve.
+
+I have yet to get into details but as I said, this sounds like fairness=20
+by frequency or by number of times a queue is scheduled to dispatch. So i=
+t
+will help up to some extent on NCQ enabled SSDs but will become unfair is
+size of IO each queue dispatches is very different.
 
 Thanks
-Babu Moger=20
-
-> -----Original Message-----
-> From: Hannes Reinecke [mailto:hare@suse.de]
-> Sent: Tuesday, October 06, 2009 3:08 AM
-> To: sekharan@linux.vnet.ibm.com
-> Cc: linux-scsi@vger.kernel.org; dm-devel@redhat.com; Moger, Babu;
-> michaelc@cs.wisc.edu; Benoit_Arthur@emc.com;
-> Eddie.Williams@steeleye.com; berthiaume_wayne@emc.com
-> Subject: Re: [PATCH 0/4] scsi_dh: Make scsi_dh_activate asynchronous
->=20
-> Chandra Seetharaman wrote:
-> > On Mon, 2009-10-05 at 15:01 +0200, Hannes Reinecke wrote:
-> >
-> > Thanks for the comment and the patch. I will try the patch.
-> >
-> >> Hmm. IIRC we added the synchronous mode by request of LSI/IBM, as
-> the RDAC
-> >> handler could only support on MODE SELECT command at a time.
-> >> If LSI checked this, okay, no objections.
-> >
-> > The original patch (for rdac) came from LSI (Moger Babu), I made
-> changes
-> > to the infrastructure and to the code to fit them together.
-> >
-> >> However: The main reason why we're getting flooded with MODE SELECT
-> commands
-> >> is that the RDAC handler switches _each LUN_, not the entire
-> controller.
-> >> Seeing that the controller simply cannot cope with the resulting
-> MODE SELECT
-> >> flood wouldn't it be more sensible to switch the entire controller
-> here?
-> >
-> > I see your point of view.... but here is the rationale...
-> >
-> > When we originally added the rdac support (as dm_rdac), we decided
-> this
-> > way consciously for the following reasons:
-> >  1. we do not know which link is broken (hba-ctlr or ctlr-lun).
-> >     The way it is currently implemented, both these cases are
-> handled.
-> Quite. But if the ctlr-lun link is broken, we really should receive
-> and appropriate error code, which then could be handled in dm-rdac
-> appropriately. After all, the controller is still accessible and
-> so we don't have to guess what happened (which is all what multipath
-> is about). So I doubt we need to worry about this.
->=20
-> >  2. multipath layer to decide what to do and this module to just do
-> >     what it was told.
-> Yep.
->=20
-> >  3. since multipath sends pg_init only if there is any IO sent to the
-> >     lun, (with the current implementation) we don't have to change
-> >     ownership (back and forth) of all the luns if the user is using
-> only
-> >     a handful.
-> Well, yes. But if the implementation is such that changing ownership
-> for all LUNs is about as efficient as changing an individual LUN (or,
-> as the case might be, as _inefficient_ :-), surely it's better to
-> save us some coding here.
->=20
-> >  4. to be consistent with LSI's original driver (which does one lun
-> at a
-> >     time).
-> :-/ That's unfair.
-> But it still has the drawback that it doesn't scale; given enough LUNs
-> and
-> access patterns you _inevitably_ have to send MODE SELECT commands for
-> each LUN, ie you only delay this issue.
-> Only by switching all LUNs you can avoid this.
->=20
-> Cheers,
->=20
-> Hannes
-> --
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+Vivek
