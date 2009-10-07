@@ -1,15 +1,15 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH 2/4] dm-snapshot-refactor-associations
-Date: Wed, 7 Oct 2009 12:38:25 -0500
-Message-ID: <F284D478-E4DA-4410-AF2B-5343FC4246BB@redhat.com>
+Subject: Re: [PATCH 1/4] dm-snapshot-rework-origin-write
+Date: Wed, 7 Oct 2009 12:39:02 -0500
+Message-ID: <457F9F77-9E47-4C8F-9748-437C928166F4@redhat.com>
 References: <1254769231-12053-1-git-send-email-snitzer@redhat.com>
-	<1254769231-12053-3-git-send-email-snitzer@redhat.com>
+	<1254769231-12053-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Apple Message framework v936)
 Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1254769231-12053-3-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1254769231-12053-2-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,471 +19,334 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-If this is really something that we have to do, then fine.  However,  
-it appears that you are doing this to pull out 'ti' and 'cow'...  
-things that are separate by structure from the underlying exception  
-store... which is ultimately what you want to hand over.  It seems to  
-me that there is probably a better/cleaner way to do this, while  
-simultaneously leaving 'ti' and 'cow' in their current place.
+Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
 
   brassow
 
 On Oct 5, 2009, at 2:00 PM, Mike Snitzer wrote:
 
-> Refactor associations between dm_snapshot and dm_exception_store
+> From: Mikulas Patocka <mpatocka@redhat.com>
 >
-> Commit 71fab00a6bef7fb53119271a8abdbaf40970d28a ("dm snapshot: remove
-> dm_snap header use") reflects the  direction Jon Brassow refactored  
-> the
-> dm-exception-store.c code most recently.
+> Rework writing to snapshot origin.
 >
-> Unfortunately that refactoring prevented the handover of snapshot
-> exceptions from being possible.  Exception handover's purpose is to  
-> move
-> the exception store from one target to the other.  During exception
-> handover (via snapshot-merge) the user calls contructor on the new
-> target, then suspends the old target, than resumes the new target and
-> then destroys the old target.
+> The previous code selected one exception as "primary_pe", linked all  
+> other
+> exceptions on it and used reference counting to wait until all  
+> exceptions are
+> reallocated. This didn't work with exceptions with different chunk  
+> sizes:
+> https://bugzilla.redhat.com/show_bug.cgi?id=182659
 >
-> So the exception store MUST NOT have pointers to things that are
-> target-specific.  So struct dm_exception_store shouldn't reference  
-> these
-> two: 'struct dm_target *ti' and 'struct dm_dev *cow'
+> I removed all the complexity with exceptions linking and reference  
+> counting.
+> Currently, bio is linked on one exception and when that exception is
+> reallocated, the bio is retried to possibly wait for other exceptions.
 >
-> Because both change during table reload.
->
-> Changes include:
-> - pulls the dm_get_device/dm_put_device for the cow device out of
->  dm-exception-store.c and in to dm-snap.c
-> - readds 'struct dm_snapshot' to 'struct dm_exception_store'
-> - 'struct dm_snapshot' now has the 'cow' and 'ti' members that
->  'struct dm_exception_store' did.
-> - adds dm_snapshot as an arg to the dm_exception_store_create() ABI
-> - exports dm_snap_get_cow() from dm-snap.c
->
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> Cc: Jonathan Brassow <jbrassow@redhat.com>
-> Cc: Mikulas Patocka <mpatocka@redhat.com>
 > ---
-> drivers/md/dm-exception-store.c |   31 ++++++----------
-> drivers/md/dm-exception-store.h |    8 +++--
-> drivers/md/dm-snap-persistent.c |   11 +++---
-> drivers/md/dm-snap-transient.c  |    6 ++--
-> drivers/md/dm-snap.c            |   72 +++++++++++++++++++++++++ 
-> +-------------
-> 5 files changed, 74 insertions(+), 54 deletions(-)
->
-> diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm- 
-> exception-store.c
-> index 4cbf319..37596d9 100644
-> --- a/drivers/md/dm-exception-store.c
-> +++ b/drivers/md/dm-exception-store.c
-> @@ -172,7 +172,9 @@ int dm_exception_store_set_chunk_size(struct  
-> dm_exception_store *store,
-> 	}
->
-> 	/* Validate the chunk size against the device block size */
-> -	if (chunk_size % (bdev_logical_block_size(store->cow->bdev) >> 9)) {
-> +	if (chunk_size %
-> +	    (bdev_logical_block_size(dm_snap_get_cow(store->snap)->
-> +				     bdev) >> 9)) {
-> 		*error = "Chunk size is not a multiple of device blocksize";
-> 		return -EINVAL;
-> 	}
-> @@ -190,6 +192,7 @@ int dm_exception_store_set_chunk_size(struct  
-> dm_exception_store *store,
-> }
->
-> int dm_exception_store_create(struct dm_target *ti, int argc, char  
-> **argv,
-> +			      struct dm_snapshot *snap,
-> 			      unsigned *args_used,
-> 			      struct dm_exception_store **store)
-> {
-> @@ -198,7 +201,7 @@ int dm_exception_store_create(struct dm_target  
-> *ti, int argc, char **argv,
-> 	struct dm_exception_store *tmp_store;
-> 	char persistent;
->
-> -	if (argc < 3) {
-> +	if (argc < 2) {
-> 		ti->error = "Insufficient exception store arguments";
-> 		return -EINVAL;
-> 	}
-> @@ -209,7 +212,7 @@ int dm_exception_store_create(struct dm_target  
-> *ti, int argc, char **argv,
-> 		return -ENOMEM;
-> 	}
->
-> -	persistent = toupper(*argv[1]);
-> +	persistent = toupper(*argv[0]);
-> 	if (persistent == 'P')
-> 		type = get_type("P");
-> 	else if (persistent == 'N')
-> @@ -226,32 +229,23 @@ int dm_exception_store_create(struct dm_target  
-> *ti, int argc, char **argv,
-> 	}
->
-> 	tmp_store->type = type;
-> -	tmp_store->ti = ti;
-> +	tmp_store->snap = snap;
->
-> -	r = dm_get_device(ti, argv[0], 0, 0,
-> -			  FMODE_READ | FMODE_WRITE, &tmp_store->cow);
-> -	if (r) {
-> -		ti->error = "Cannot get COW device";
-> -		goto bad_cow;
-> -	}
-> -
-> -	r = set_chunk_size(tmp_store, argv[2], &ti->error);
-> +	r = set_chunk_size(tmp_store, argv[1], &ti->error);
-> 	if (r)
-> -		goto bad_cow;
-> +		goto bad;
->
-> 	r = type->ctr(tmp_store, 0, NULL);
-> 	if (r) {
-> 		ti->error = "Exception store type constructor failed";
-> -		goto bad_ctr;
-> +		goto bad;
-> 	}
->
-> -	*args_used = 3;
-> +	*args_used = 2;
-> 	*store = tmp_store;
-> 	return 0;
->
-> -bad_ctr:
-> -	dm_put_device(ti, tmp_store->cow);
-> -bad_cow:
-> +bad:
-> 	put_type(type);
-> bad_type:
-> 	kfree(tmp_store);
-> @@ -262,7 +256,6 @@ EXPORT_SYMBOL(dm_exception_store_create);
-> void dm_exception_store_destroy(struct dm_exception_store *store)
-> {
-> 	store->type->dtr(store);
-> -	dm_put_device(store->ti, store->cow);
-> 	put_type(store->type);
-> 	kfree(store);
-> }
-> diff --git a/drivers/md/dm-exception-store.h b/drivers/md/dm- 
-> exception-store.h
-> index 5f9315b..4e8086f 100644
-> --- a/drivers/md/dm-exception-store.h
-> +++ b/drivers/md/dm-exception-store.h
-> @@ -94,11 +94,12 @@ struct dm_exception_store_type {
-> 	struct list_head list;
-> };
->
-> +struct dm_snapshot;
-> +struct dm_dev *dm_snap_get_cow(struct dm_snapshot *);
-> +
-> struct dm_exception_store {
-> 	struct dm_exception_store_type *type;
-> -	struct dm_target *ti;
-> -
-> -	struct dm_dev *cow;
-> +	struct dm_snapshot *snap;
->
-> 	/* Size of data blocks saved - must be a power of 2 */
-> 	unsigned chunk_size;
-> @@ -173,6 +174,7 @@ int dm_exception_store_set_chunk_size(struct  
-> dm_exception_store *store,
-> 				      char **error);
->
-> int dm_exception_store_create(struct dm_target *ti, int argc, char  
-> **argv,
-> +			      struct dm_snapshot *snap,
-> 			      unsigned *args_used,
-> 			      struct dm_exception_store **store);
-> void dm_exception_store_destroy(struct dm_exception_store *store);
-> diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap- 
-> persistent.c
-> index 7e855fb..746602b 100644
-> --- a/drivers/md/dm-snap-persistent.c
-> +++ b/drivers/md/dm-snap-persistent.c
-> @@ -214,7 +214,7 @@ static int chunk_io(struct pstore *ps, void  
-> *area, chunk_t chunk, int rw,
-> 		    int metadata)
-> {
-> 	struct dm_io_region where = {
-> -		.bdev = ps->store->cow->bdev,
-> +		.bdev = dm_snap_get_cow(ps->store->snap)->bdev,
-> 		.sector = ps->store->chunk_size * chunk,
-> 		.count = ps->store->chunk_size,
-> 	};
-> @@ -294,7 +294,8 @@ static int read_header(struct pstore *ps, int  
-> *new_snapshot)
-> 	 */
-> 	if (!ps->store->chunk_size) {
-> 		ps->store->chunk_size = max(DM_CHUNK_SIZE_DEFAULT_SECTORS,
-> -		    bdev_logical_block_size(ps->store->cow->bdev) >> 9);
-> +		    bdev_logical_block_size(dm_snap_get_cow(ps->store->snap)->
-> +					    bdev) >> 9);
-> 		ps->store->chunk_mask = ps->store->chunk_size - 1;
-> 		ps->store->chunk_shift = ffs(ps->store->chunk_size) - 1;
-> 		chunk_size_supplied = 0;
-> @@ -493,7 +494,7 @@ static void persistent_fraction_full(struct  
-> dm_exception_store *store,
-> 				     sector_t *numerator, sector_t *denominator)
-> {
-> 	*numerator = get_info(store)->next_free * store->chunk_size;
-> -	*denominator = get_dev_size(store->cow->bdev);
-> +	*denominator = get_dev_size(dm_snap_get_cow(store->snap)->bdev);
-> }
->
-> static void persistent_dtr(struct dm_exception_store *store)
-> @@ -585,7 +586,7 @@ static int persistent_prepare_exception(struct  
-> dm_exception_store *store,
-> 	struct pstore *ps = get_info(store);
-> 	uint32_t stride;
-> 	chunk_t next_free;
-> -	sector_t size = get_dev_size(store->cow->bdev);
-> +	sector_t size = get_dev_size(dm_snap_get_cow(store->snap)->bdev);
->
-> 	/* Is there enough room ? */
-> 	if (size < ((ps->next_free + 1) * store->chunk_size))
-> @@ -722,7 +723,7 @@ static unsigned persistent_status(struct  
-> dm_exception_store *store,
-> 	case STATUSTYPE_INFO:
-> 		break;
-> 	case STATUSTYPE_TABLE:
-> -		DMEMIT(" %s P %llu", store->cow->name,
-> +		DMEMIT(" %s P %llu", dm_snap_get_cow(store->snap)->name,
-> 		       (unsigned long long)store->chunk_size);
-> 	}
->
-> diff --git a/drivers/md/dm-snap-transient.c b/drivers/md/dm-snap- 
-> transient.c
-> index cde5aa5..3d9fd91 100644
-> --- a/drivers/md/dm-snap-transient.c
-> +++ b/drivers/md/dm-snap-transient.c
-> @@ -39,7 +39,7 @@ static int transient_prepare_exception(struct  
-> dm_exception_store *store,
-> 				       struct dm_snap_exception *e)
-> {
-> 	struct transient_c *tc = store->context;
-> -	sector_t size = get_dev_size(store->cow->bdev);
-> +	sector_t size = get_dev_size(dm_snap_get_cow(store->snap)->bdev);
->
-> 	if (size < (tc->next_free + store->chunk_size))
-> 		return -1;
-> @@ -63,7 +63,7 @@ static void transient_fraction_full(struct  
-> dm_exception_store *store,
-> 				    sector_t *numerator, sector_t *denominator)
-> {
-> 	*numerator = ((struct transient_c *) store->context)->next_free;
-> -	*denominator = get_dev_size(store->cow->bdev);
-> +	*denominator = get_dev_size(dm_snap_get_cow(store->snap)->bdev);
-> }
->
-> static int transient_ctr(struct dm_exception_store *store,
-> @@ -91,7 +91,7 @@ static unsigned transient_status(struct  
-> dm_exception_store *store,
-> 	case STATUSTYPE_INFO:
-> 		break;
-> 	case STATUSTYPE_TABLE:
-> -		DMEMIT(" %s N %llu", store->cow->name,
-> +		DMEMIT(" %s N %llu", dm_snap_get_cow(store->snap)->name,
-> 		       (unsigned long long)store->chunk_size);
-> 	}
+> drivers/md/dm-snap.c |  165 ++++++++++++++++ 
+> +--------------------------------
+> 1 files changed, 57 insertions(+), 108 deletions(-)
 >
 > diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-> index b23decb..bdcbfc8 100644
+> index 668457f..b23decb 100644
 > --- a/drivers/md/dm-snap.c
 > +++ b/drivers/md/dm-snap.c
-> @@ -59,6 +59,9 @@ struct dm_snapshot {
-> 	struct rw_semaphore lock;
+> @@ -125,28 +125,6 @@ struct dm_snap_pending_exception {
+> 	struct bio_list origin_bios;
+> 	struct bio_list snapshot_bios;
 >
-> 	struct dm_dev *origin;
-> +	struct dm_dev *cow;
+> -	/*
+> -	 * Short-term queue of pending exceptions prior to submission.
+> -	 */
+> -	struct list_head list;
+> -
+> -	/*
+> -	 * The primary pending_exception is the one that holds
+> -	 * the ref_count and the list of origin_bios for a
+> -	 * group of pending_exceptions.  It is always last to get freed.
+> -	 * These fields get set up when writing to the origin.
+> -	 */
+> -	struct dm_snap_pending_exception *primary_pe;
+> -
+> -	/*
+> -	 * Number of pending_exceptions processing this chunk.
+> -	 * When this drops to zero we must complete the origin bios.
+> -	 * If incrementing or decrementing this, hold pe->snap->lock for
+> -	 * the sibling concerned and not pe->primary_pe->snap->lock unless
+> -	 * they are the same.
+> -	 */
+> -	atomic_t ref_count;
+> -
+> 	/* Pointer back to snapshot context */
+> 	struct dm_snapshot *snap;
+>
+> @@ -809,6 +787,28 @@ static void flush_queued_bios(struct  
+> work_struct *work)
+> 	flush_bios(queued_bios);
+> }
+>
+> +static int do_origin(struct dm_dev *origin, struct bio *bio);
 > +
-> +	struct dm_target *ti;
->
-> 	/* List of snapshots per Origin */
-> 	struct list_head list;
-> @@ -97,6 +100,12 @@ struct dm_snapshot {
-> 	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
-> };
->
-> +struct dm_dev *dm_snap_get_cow(struct dm_snapshot *s)
+> +/*
+> + * Flush a list of buffers.
+> + */
+> +static void retry_origin_bios(struct dm_snapshot *s, struct bio *bio)
 > +{
-> +	return s->cow;
+> +	struct bio *n;
+> +	int r;
+> +
+> +	while (bio) {
+> +		n = bio->bi_next;
+> +		bio->bi_next = NULL;
+> +		r = do_origin(s->origin, bio);
+> +		if (r == DM_MAPIO_REMAPPED)
+> +			generic_make_request(bio);
+> +		else
+> +			BUG_ON(r != DM_MAPIO_SUBMITTED);
+> +		bio = n;
+> +	}
 > +}
-> +EXPORT_SYMBOL(dm_snap_get_cow);
 > +
-> static struct workqueue_struct *ksnapd;
-> static void flush_queued_bios(struct work_struct *work);
+> /*
+>  * Error a list of buffers.
+>  */
+> @@ -842,39 +842,6 @@ static void __invalidate_snapshot(struct  
+> dm_snapshot *s, int err)
+> 	dm_table_event(s->store->ti->table);
+> }
 >
-> @@ -538,7 +547,7 @@ static int init_hash_tables(struct dm_snapshot *s)
-> 	 * Calculate based on the size of the original volume or
-> 	 * the COW volume...
-> 	 */
-> -	cow_dev_size = get_dev_size(s->store->cow->bdev);
-> +	cow_dev_size = get_dev_size(s->cow->bdev);
-> 	origin_dev_size = get_dev_size(s->origin->bdev);
-> 	max_buckets = calc_max_buckets();
->
-> @@ -574,45 +583,55 @@ static int snapshot_ctr(struct dm_target *ti,  
-> unsigned int argc, char **argv)
-> 	struct dm_snapshot *s;
-> 	int i;
-> 	int r = -EINVAL;
-> -	char *origin_path;
-> -	struct dm_exception_store *store;
-> +	char *origin_path, *cow_path;
-> 	unsigned args_used;
->
-> 	if (argc != 4) {
-> 		ti->error = "requires exactly 4 arguments";
-> 		r = -EINVAL;
-> -		goto bad_args;
-> +		goto bad;
-> 	}
->
-> 	origin_path = argv[0];
-> 	argv++;
-> 	argc--;
->
-> -	r = dm_exception_store_create(ti, argc, argv, &args_used, &store);
-> +	s = kmalloc(sizeof(*s), GFP_KERNEL);
-> +	if (!s) {
-> +		ti->error = "Cannot allocate snapshot context private "
-> +		    "structure";
-> +		r = -ENOMEM;
-> +		goto bad;
-> +	}
-> +
-> +	cow_path = argv[0];
-> +	argv++;
-> +	argc--;
-> +
-> +	r = dm_get_device(ti, cow_path, 0, 0,
-> +			  FMODE_READ | FMODE_WRITE, &s->cow);
-> +	if (r) {
-> +		ti->error = "Cannot get COW device";
-> +		goto bad_cow;
-> +	}
-> +
-> +	r = dm_exception_store_create(ti, argc, argv, s, &args_used, &s- 
-> >store);
-> 	if (r) {
-> 		ti->error = "Couldn't create exception store";
-> 		r = -EINVAL;
-> -		goto bad_args;
-> +		goto bad_store;
-> 	}
->
-> 	argv += args_used;
-> 	argc -= args_used;
->
-> -	s = kmalloc(sizeof(*s), GFP_KERNEL);
-> -	if (!s) {
-> -		ti->error = "Cannot allocate snapshot context private "
-> -		    "structure";
-> -		r = -ENOMEM;
-> -		goto bad_snap;
+> -static void get_pending_exception(struct dm_snap_pending_exception  
+> *pe)
+> -{
+> -	atomic_inc(&pe->ref_count);
+> -}
+> -
+> -static struct bio *put_pending_exception(struct  
+> dm_snap_pending_exception *pe)
+> -{
+> -	struct dm_snap_pending_exception *primary_pe;
+> -	struct bio *origin_bios = NULL;
+> -
+> -	primary_pe = pe->primary_pe;
+> -
+> -	/*
+> -	 * If this pe is involved in a write to the origin and
+> -	 * it is the last sibling to complete then release
+> -	 * the bios for the original write to the origin.
+> -	 */
+> -	if (primary_pe &&
+> -	    atomic_dec_and_test(&primary_pe->ref_count)) {
+> -		origin_bios = bio_list_get(&primary_pe->origin_bios);
+> -		free_pending_exception(primary_pe);
 > -	}
 > -
-> 	r = dm_get_device(ti, origin_path, 0, ti->len, FMODE_READ, &s- 
-> >origin);
-> 	if (r) {
-> 		ti->error = "Cannot get origin device";
-> 		goto bad_origin;
-> 	}
->
-> -	s->store = store;
-> +	s->ti = ti;
-> 	s->valid = 1;
-> 	s->active = 0;
-> 	atomic_set(&s->pending_exceptions_count, 0);
-> @@ -701,12 +720,15 @@ bad_hash_tables:
-> 	dm_put_device(ti, s->origin);
->
-> bad_origin:
-> -	kfree(s);
-> +	dm_exception_store_destroy(s->store);
->
-> -bad_snap:
-> -	dm_exception_store_destroy(store);
-> +bad_store:
-> +	dm_put_device(ti, s->cow);
->
-> -bad_args:
-> +bad_cow:
-> +	kfree(s);
-> +
-> +bad:
-> 	return r;
-> }
->
-> @@ -755,6 +777,8 @@ static void snapshot_dtr(struct dm_target *ti)
->
-> 	dm_exception_store_destroy(s->store);
->
-> +	dm_put_device(ti, s->cow);
-> +
-> 	kfree(s);
-> }
->
-> @@ -839,7 +863,7 @@ static void __invalidate_snapshot(struct  
-> dm_snapshot *s, int err)
->
-> 	s->valid = 0;
->
-> -	dm_table_event(s->store->ti->table);
-> +	dm_table_event(s->ti->table);
-> }
->
+> -	/*
+> -	 * Free the pe if it's not linked to an origin write or if
+> -	 * it's not itself a primary pe.
+> -	 */
+> -	if (!primary_pe || primary_pe != pe)
+> -		free_pending_exception(pe);
+> -
+> -	return origin_bios;
+> -}
+> -
 > static void pending_complete(struct dm_snap_pending_exception *pe,  
 > int success)
-> @@ -945,7 +969,7 @@ static void start_copy(struct  
-> dm_snap_pending_exception *pe)
-> 	src.sector = chunk_to_sector(s->store, pe->e.old_chunk);
-> 	src.count = min((sector_t)s->store->chunk_size, dev_size -  
-> src.sector);
->
-> -	dest.bdev = s->store->cow->bdev;
-> +	dest.bdev = s->cow->bdev;
-> 	dest.sector = chunk_to_sector(s->store, pe->e.new_chunk);
-> 	dest.count = src.count;
->
-> @@ -1003,7 +1027,7 @@ __find_pending_exception(struct dm_snapshot *s,
-> static void remap_exception(struct dm_snapshot *s, struct  
-> dm_snap_exception *e,
-> 			    struct bio *bio, chunk_t chunk)
 > {
-> -	bio->bi_bdev = s->store->cow->bdev;
-> +	bio->bi_bdev = s->cow->bdev;
-> 	bio->bi_sector = chunk_to_sector(s->store,
-> 					 dm_chunk_number(e->new_chunk) +
-> 					 (chunk - e->old_chunk)) +
-> @@ -1021,7 +1045,7 @@ static int snapshot_map(struct dm_target *ti,  
-> struct bio *bio,
-> 	struct dm_snap_pending_exception *pe = NULL;
+> 	struct dm_snap_exception *e;
+> @@ -923,7 +890,8 @@ static void pending_complete(struct  
+> dm_snap_pending_exception *pe, int success)
+>  out:
+> 	remove_exception(&pe->e);
+> 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
+> -	origin_bios = put_pending_exception(pe);
+> +	origin_bios = bio_list_get(&pe->origin_bios);
+> +	free_pending_exception(pe);
 >
-> 	if (unlikely(bio_empty_barrier(bio))) {
-> -		bio->bi_bdev = s->store->cow->bdev;
-> +		bio->bi_bdev = s->cow->bdev;
-> 		return DM_MAPIO_REMAPPED;
+> 	up_write(&s->lock);
+>
+> @@ -933,7 +901,7 @@ static void pending_complete(struct  
+> dm_snap_pending_exception *pe, int success)
+> 	else
+> 		flush_bios(snapshot_bios);
+>
+> -	flush_bios(origin_bios);
+> +	retry_origin_bios(s, origin_bios);
+> }
+>
+> static void commit_callback(void *context, int success)
+> @@ -1020,8 +988,6 @@ __find_pending_exception(struct dm_snapshot *s,
+> 	pe->e.old_chunk = chunk;
+> 	bio_list_init(&pe->origin_bios);
+> 	bio_list_init(&pe->snapshot_bios);
+> -	pe->primary_pe = NULL;
+> -	atomic_set(&pe->ref_count, 0);
+> 	pe->started = 0;
+>
+> 	if (s->store->type->prepare_exception(s->store, &pe->e)) {
+> @@ -1029,7 +995,6 @@ __find_pending_exception(struct dm_snapshot *s,
+> 		return NULL;
 > 	}
 >
-> @@ -1203,7 +1227,7 @@ static int __origin_write(struct list_head  
-> *snapshots,
+> -	get_pending_exception(pe);
+> 	insert_exception(&s->pending, &pe->e);
+>
+> 	return pe;
+> @@ -1212,14 +1177,21 @@ static int snapshot_iterate_devices(struct  
+> dm_target *ti,
+> /*-----------------------------------------------------------------
+>  * Origin methods
+>  *---------------------------------------------------------------*/
+> -static int __origin_write(struct list_head *snapshots, struct bio  
+> *bio)
+> +
+> +/*
+> + * Returns:
+> + *	DM_MAPIO_REMAPPED: bio may be submitted to origin device
+> + *	DM_MAPIO_SUBMITTED: bio was queued on queue on one of exceptions
+> + */
+> +
+> +static int __origin_write(struct list_head *snapshots,
+> +			  sector_t sector, struct bio *bio)
+> {
+> -	int r = DM_MAPIO_REMAPPED, first = 0;
+> +	int r = DM_MAPIO_REMAPPED;
+> 	struct dm_snapshot *snap;
+> 	struct dm_snap_exception *e;
+> -	struct dm_snap_pending_exception *pe, *next_pe, *primary_pe = NULL;
+> +	struct dm_snap_pending_exception *pe, *pe_to_start = NULL;
+> 	chunk_t chunk;
+> -	LIST_HEAD(pe_queue);
+>
+> 	/* Do all the snapshots on this origin */
+> 	list_for_each_entry (snap, snapshots, list) {
+> @@ -1231,22 +1203,19 @@ static int __origin_write(struct list_head  
+> *snapshots, struct bio *bio)
 > 			goto next_snapshot;
 >
 > 		/* Nothing to do if writing beyond end of snapshot */
-> -		if (sector >= dm_table_get_size(snap->store->ti->table))
-> +		if (sector >= dm_table_get_size(snap->ti->table))
+> -		if (bio->bi_sector >= dm_table_get_size(snap->store->ti->table))
+> +		if (sector >= dm_table_get_size(snap->store->ti->table))
 > 			goto next_snapshot;
 >
 > 		/*
+> 		 * Remember, different snapshots can have
+> 		 * different chunk sizes.
+> 		 */
+> -		chunk = sector_to_chunk(snap->store, bio->bi_sector);
+> +		chunk = sector_to_chunk(snap->store, sector);
+>
+> 		/*
+> 		 * Check exception table to see if block
+> 		 * is already remapped in this snapshot
+> 		 * and trigger an exception if not.
+> -		 *
+> -		 * ref_count is initialised to 1 so pending_complete()
+> -		 * won't destroy the primary_pe while we're inside this loop.
+> 		 */
+> 		e = lookup_exception(&snap->complete, chunk);
+> 		if (e)
+> @@ -1276,59 +1245,39 @@ static int __origin_write(struct list_head  
+> *snapshots, struct bio *bio)
+> 			}
+> 		}
+>
+> -		if (!primary_pe) {
+> -			/*
+> -			 * Either every pe here has same
+> -			 * primary_pe or none has one yet.
+> -			 */
+> -			if (pe->primary_pe)
+> -				primary_pe = pe->primary_pe;
+> -			else {
+> -				primary_pe = pe;
+> -				first = 1;
+> -			}
+> -
+> -			bio_list_add(&primary_pe->origin_bios, bio);
+> +		r = DM_MAPIO_SUBMITTED;
+>
+> -			r = DM_MAPIO_SUBMITTED;
+> -		}
+> +		if (bio) {
+> +			bio_list_add(&pe->origin_bios, bio);
+> +			bio = NULL;
+>
+> -		if (!pe->primary_pe) {
+> -			pe->primary_pe = primary_pe;
+> -			get_pending_exception(primary_pe);
+> +			if (!pe->started) {
+> +				pe->started = 1;
+> +				pe_to_start = pe;
+> +			}
+> 		}
+>
+> 		if (!pe->started) {
+> 			pe->started = 1;
+> -			list_add_tail(&pe->list, &pe_queue);
+> +			start_copy(pe);
+> 		}
+>
+>  next_snapshot:
+> 		up_write(&snap->lock);
+> 	}
+>
+> -	if (!primary_pe)
+> -		return r;
+> -
+> 	/*
+> -	 * If this is the first time we're processing this chunk and
+> -	 * ref_count is now 1 it means all the pending exceptions
+> -	 * got completed while we were in the loop above, so it falls to
+> -	 * us here to remove the primary_pe and submit any origin_bios.
+> +	 * pe_to_start is a small performance improvement:
+> +	 * To avoid calling __origin_write N times for N snapshots, we start
+> +	 * the snapshot where we queued the bio as the last one.
+> +	 *
+> +	 * If we start it as the last one, it finishes most likely as the  
+> last
+> +	 * one and exceptions in other snapshots will be already finished  
+> when
+> +	 * the bio will be retried.
+> 	 */
+>
+> -	if (first && atomic_dec_and_test(&primary_pe->ref_count)) {
+> -		flush_bios(bio_list_get(&primary_pe->origin_bios));
+> -		free_pending_exception(primary_pe);
+> -		/* If we got here, pe_queue is necessarily empty. */
+> -		return r;
+> -	}
+> -
+> -	/*
+> -	 * Now that we have a complete pe list we can start the copying.
+> -	 */
+> -	list_for_each_entry_safe(pe, next_pe, &pe_queue, list)
+> -		start_copy(pe);
+> +	if (pe_to_start)
+> +		start_copy(pe_to_start);
+>
+> 	return r;
+> }
+> @@ -1344,7 +1293,7 @@ static int do_origin(struct dm_dev *origin,  
+> struct bio *bio)
+> 	down_read(&_origins_lock);
+> 	o = __lookup_origin(origin->bdev);
+> 	if (o)
+> -		r = __origin_write(&o->snapshots, bio);
+> +		r = __origin_write(&o->snapshots, bio->bi_sector, bio);
+> 	up_read(&_origins_lock);
+>
+> 	return r;
 > -- 
 > 1.6.2.5
 >
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
