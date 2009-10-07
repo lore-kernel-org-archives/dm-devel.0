@@ -1,15 +1,16 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH 1/4] dm-snapshot-rework-origin-write
-Date: Wed, 7 Oct 2009 12:39:02 -0500
-Message-ID: <457F9F77-9E47-4C8F-9748-437C928166F4@redhat.com>
+Subject: Re: Re: [PATCH 3/4] dm-snapshot-exception-handover
+Date: Wed, 7 Oct 2009 12:42:50 -0500
+Message-ID: <3A1A4ADF-8279-4858-AE4D-1479043D98B2@redhat.com>
 References: <1254769231-12053-1-git-send-email-snitzer@redhat.com>
-	<1254769231-12053-2-git-send-email-snitzer@redhat.com>
+	<1254769231-12053-4-git-send-email-snitzer@redhat.com>
+	<20091006143805.GB19024@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Apple Message framework v936)
 Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1254769231-12053-2-git-send-email-snitzer@redhat.com>
+In-Reply-To: <20091006143805.GB19024@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,328 +24,235 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
+If you were going to take the time to clean-up patch 2 of 4 "refactor- 
+associations", then obviously, 'handover_exceptions' would have to  
+change in this patch as well.
+
 Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
 
   brassow
 
-On Oct 5, 2009, at 2:00 PM, Mike Snitzer wrote:
+On Oct 6, 2009, at 9:38 AM, Mike Snitzer wrote:
 
-> From: Mikulas Patocka <mpatocka@redhat.com>
+> On Mon, Oct 05 2009 at  3:00pm -0400,
+> Mike Snitzer <snitzer@redhat.com> wrote:
 >
-> Rework writing to snapshot origin.
+>> From: Mikulas Patocka <mpatocka@redhat.com>
+>>
+>> Handover of the exception store. This is needed for merging (to  
+>> allow reload of
+>> the table) and it also enables origin or snapshot resize.
+>>
+>> The supported call sequences are:
+>>
+>> new_snapshot->ctr
+>> old_snapshot->suspend
+>> old_snapshot->dtr
+>> new_snapshot->resume
+>>
+>> and
+>>
+>> new_snapshot->ctr
+>> old_snapshot->suspend
+>> new_snapshot->resume
+>> old_snapshot->dtr
+>>
+>> There may not be more than two instances of a given snapshot. LVM  
+>> always creates
+>> at most two; if there are more, the user misuses dmsetup.
+>>
+>> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 >
-> The previous code selected one exception as "primary_pe", linked all  
-> other
-> exceptions on it and used reference counting to wait until all  
-> exceptions are
-> reallocated. This didn't work with exceptions with different chunk  
-> sizes:
-> https://bugzilla.redhat.com/show_bug.cgi?id=182659
+> ...
+>> +/* _origins_lock must be held */
+>> +static struct dm_snapshot *find_duplicate(struct dm_snapshot *snap)
+>> +{
+> ...
 >
-> I removed all the complexity with exceptions linking and reference  
-> counting.
-> Currently, bio is linked on one exception and when that exception is
-> reallocated, the bio is retried to possibly wait for other exceptions.
+> I just noticed that find_duplicate should be renamed to  
+> __find_duplicate
+> to use the convention of a '__' prefix on all dm-snap.c functions that
+> require the _origins_lock.
+>
+> Here is an updated patch (doesn't change any snapshot-merge patches  
+> that
+> follow):
+>
+> Handover of the exception store. This is needed for merging (to  
+> allow reload of
+> the table) and it also enables origin or snapshot resize.
+>
+> The supported call sequences are:
+>
+> new_snapshot->ctr
+> old_snapshot->suspend
+> old_snapshot->dtr
+> new_snapshot->resume
+>
+> and
+>
+> new_snapshot->ctr
+> old_snapshot->suspend
+> new_snapshot->resume
+> old_snapshot->dtr
+>
+> There may not be more than two instances of a given snapshot. LVM  
+> always creates
+> at most two; if there are more, the user misuses dmsetup.
 >
 > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+>
 > ---
-> drivers/md/dm-snap.c |  165 ++++++++++++++++ 
-> +--------------------------------
-> 1 files changed, 57 insertions(+), 108 deletions(-)
+> drivers/md/dm-snap.c |   85 +++++++++++++++++++++++++++++++++++++++++ 
+> ++++++++++
+> 1 file changed, 85 insertions(+)
 >
-> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-> index 668457f..b23decb 100644
-> --- a/drivers/md/dm-snap.c
-> +++ b/drivers/md/dm-snap.c
-> @@ -125,28 +125,6 @@ struct dm_snap_pending_exception {
-> 	struct bio_list origin_bios;
-> 	struct bio_list snapshot_bios;
+> Index: linux-2.6/drivers/md/dm-snap.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-snap.c
+> +++ linux-2.6/drivers/md/dm-snap.c
+> @@ -72,6 +72,9 @@ struct dm_snapshot {
+> 	/* Origin writes don't trigger exceptions until this is set */
+> 	int active;
 >
-> -	/*
-> -	 * Short-term queue of pending exceptions prior to submission.
-> -	 */
-> -	struct list_head list;
-> -
-> -	/*
-> -	 * The primary pending_exception is the one that holds
-> -	 * the ref_count and the list of origin_bios for a
-> -	 * group of pending_exceptions.  It is always last to get freed.
-> -	 * These fields get set up when writing to the origin.
-> -	 */
-> -	struct dm_snap_pending_exception *primary_pe;
-> -
-> -	/*
-> -	 * Number of pending_exceptions processing this chunk.
-> -	 * When this drops to zero we must complete the origin bios.
-> -	 * If incrementing or decrementing this, hold pe->snap->lock for
-> -	 * the sibling concerned and not pe->primary_pe->snap->lock unless
-> -	 * they are the same.
-> -	 */
-> -	atomic_t ref_count;
-> -
-> 	/* Pointer back to snapshot context */
-> 	struct dm_snapshot *snap;
+> +	/* Exception store will be handed over from another snapshot */
+> +	int handover;
+> +
+> 	mempool_t *pending_pool;
 >
-> @@ -809,6 +787,28 @@ static void flush_queued_bios(struct  
-> work_struct *work)
-> 	flush_bios(queued_bios);
+> 	atomic_t pending_exceptions_count;
+> @@ -505,6 +508,33 @@ static int dm_add_exception(void *contex
+> 	return 0;
 > }
 >
-> +static int do_origin(struct dm_dev *origin, struct bio *bio);
-> +
-> +/*
-> + * Flush a list of buffers.
-> + */
-> +static void retry_origin_bios(struct dm_snapshot *s, struct bio *bio)
+> +/* _origins_lock must be held */
+> +static struct dm_snapshot *__find_duplicate(struct dm_snapshot *snap)
 > +{
-> +	struct bio *n;
-> +	int r;
+> +	struct dm_snapshot *dup;
+> +	struct dm_snapshot *l;
+> +	struct origin *o;
 > +
-> +	while (bio) {
-> +		n = bio->bi_next;
-> +		bio->bi_next = NULL;
-> +		r = do_origin(s->origin, bio);
-> +		if (r == DM_MAPIO_REMAPPED)
-> +			generic_make_request(bio);
-> +		else
-> +			BUG_ON(r != DM_MAPIO_SUBMITTED);
-> +		bio = n;
-> +	}
+> +	o = __lookup_origin(snap->origin->bdev);
+> +	if (!o)
+> +		return NULL;
+> +
+> +	dup = NULL;
+> +	list_for_each_entry(l, &o->snapshots, list)
+> +		if (l != snap && bdev_equal(l->cow->bdev,
+> +					    snap->cow->bdev)) {
+> +			if (!dup) {
+> +				dup = l;
+> +			} else {
+> +				DMERR("Multiple active duplicates, "
+> +				      "user misuses dmsetup.");
+> +				return NULL;
+> +			}
+> +		}
+> +
+> +	return dup;
 > +}
 > +
+> #define min_not_zero(l, r) (((l) == 0) ? (r) : (((r) == 0) ? (l) :  
+> min(l, r)))
+>
 > /*
->  * Error a list of buffers.
->  */
-> @@ -842,39 +842,6 @@ static void __invalidate_snapshot(struct  
-> dm_snapshot *s, int err)
-> 	dm_table_event(s->store->ti->table);
+> @@ -635,6 +665,7 @@ static int snapshot_ctr(struct dm_target
+> 	s->valid = 1;
+> 	s->active = 0;
+> 	atomic_set(&s->pending_exceptions_count, 0);
+> +	s->handover = 0;
+> 	init_rwsem(&s->lock);
+> 	spin_lock_init(&s->pe_lock);
+>
+> @@ -670,6 +701,11 @@ static int snapshot_ctr(struct dm_target
+>
+> 	spin_lock_init(&s->tracked_chunk_lock);
+>
+> +	down_read(&_origins_lock);
+> +	if (__find_duplicate(s))
+> +		s->handover = 1;
+> +	up_read(&_origins_lock);
+> +
+> 	/* Metadata must only be loaded into one table at once */
+> 	r = s->store->type->read_metadata(s->store, dm_add_exception,
+> 					  (void *)s);
+> @@ -741,15 +777,49 @@ static void __free_exceptions(struct dm_
+> 	exit_exception_table(&s->complete, exception_cache);
 > }
 >
-> -static void get_pending_exception(struct dm_snap_pending_exception  
-> *pe)
-> -{
-> -	atomic_inc(&pe->ref_count);
-> -}
-> -
-> -static struct bio *put_pending_exception(struct  
-> dm_snap_pending_exception *pe)
-> -{
-> -	struct dm_snap_pending_exception *primary_pe;
-> -	struct bio *origin_bios = NULL;
-> -
-> -	primary_pe = pe->primary_pe;
-> -
-> -	/*
-> -	 * If this pe is involved in a write to the origin and
-> -	 * it is the last sibling to complete then release
-> -	 * the bios for the original write to the origin.
-> -	 */
-> -	if (primary_pe &&
-> -	    atomic_dec_and_test(&primary_pe->ref_count)) {
-> -		origin_bios = bio_list_get(&primary_pe->origin_bios);
-> -		free_pending_exception(primary_pe);
-> -	}
-> -
-> -	/*
-> -	 * Free the pe if it's not linked to an origin write or if
-> -	 * it's not itself a primary pe.
-> -	 */
-> -	if (!primary_pe || primary_pe != pe)
-> -		free_pending_exception(pe);
-> -
-> -	return origin_bios;
-> -}
-> -
-> static void pending_complete(struct dm_snap_pending_exception *pe,  
-> int success)
+> +static void handover_exceptions(struct dm_snapshot *old,
+> +				struct dm_snapshot *new)
+> +{
+> +	union {
+> +		struct exception_table table_swap;
+> +		struct dm_exception_store *store_swap;
+> +	} u;
+> +
+> +	u.table_swap = new->complete;
+> +	new->complete = old->complete;
+> +	old->complete = u.table_swap;
+> +	u.store_swap = new->store;
+> +	new->store = old->store;
+> +	old->store = u.store_swap;
+> +
+> +	new->store->snap = new;
+> +	old->store->snap = old;
+> +
+> +	old->active = 0;
+> +	new->handover = 0;
+> +}
+> +
+> static void snapshot_dtr(struct dm_target *ti)
 > {
-> 	struct dm_snap_exception *e;
-> @@ -923,7 +890,8 @@ static void pending_complete(struct  
-> dm_snap_pending_exception *pe, int success)
->  out:
-> 	remove_exception(&pe->e);
-> 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
-> -	origin_bios = put_pending_exception(pe);
-> +	origin_bios = bio_list_get(&pe->origin_bios);
-> +	free_pending_exception(pe);
+> #ifdef CONFIG_DM_DEBUG
+> 	int i;
+> #endif
+> 	struct dm_snapshot *s = ti->private;
+> +	struct dm_snapshot *dup;
 >
+> 	flush_workqueue(ksnapd);
+>
+> +	down_write(&_origins_lock);
+> +	down_write(&s->lock);
+> +	dup = __find_duplicate(s);
+> +	if (dup && dup->handover) {
+> +		down_write_nested(&dup->lock, SINGLE_DEPTH_NESTING);
+> +		handover_exceptions(s, dup);
+> +		up_write(&dup->lock);
+> +	}
+> +	up_write(&s->lock);
+> +	up_write(&_origins_lock);
+> +
+> 	/* Prevent further origin writes from using this snapshot. */
+> 	/* After this returns there can be no new kcopyd jobs. */
+> 	unregister_snapshot(s);
+> @@ -1144,9 +1214,24 @@ static void snapshot_resume(struct dm_ta
+> {
+> 	struct dm_snapshot *s = ti->private;
+>
+> +	down_write(&_origins_lock);
+> 	down_write(&s->lock);
+> +	if (s->handover) {
+> +		struct dm_snapshot *dup;
+> +		dup = __find_duplicate(s);
+> +		if (!dup) {
+> +			DMERR("duplicate not found");
+> +			s->valid = 0;
+> +			goto ret;
+> +		}
+> +		down_write_nested(&dup->lock, SINGLE_DEPTH_NESTING);
+> +		handover_exceptions(dup, s);
+> +		up_write(&dup->lock);
+> +	}
+> 	s->active = 1;
+> + ret:
 > 	up_write(&s->lock);
->
-> @@ -933,7 +901,7 @@ static void pending_complete(struct  
-> dm_snap_pending_exception *pe, int success)
-> 	else
-> 		flush_bios(snapshot_bios);
->
-> -	flush_bios(origin_bios);
-> +	retry_origin_bios(s, origin_bios);
+> +	up_write(&_origins_lock);
 > }
 >
-> static void commit_callback(void *context, int success)
-> @@ -1020,8 +988,6 @@ __find_pending_exception(struct dm_snapshot *s,
-> 	pe->e.old_chunk = chunk;
-> 	bio_list_init(&pe->origin_bios);
-> 	bio_list_init(&pe->snapshot_bios);
-> -	pe->primary_pe = NULL;
-> -	atomic_set(&pe->ref_count, 0);
-> 	pe->started = 0;
->
-> 	if (s->store->type->prepare_exception(s->store, &pe->e)) {
-> @@ -1029,7 +995,6 @@ __find_pending_exception(struct dm_snapshot *s,
-> 		return NULL;
-> 	}
->
-> -	get_pending_exception(pe);
-> 	insert_exception(&s->pending, &pe->e);
->
-> 	return pe;
-> @@ -1212,14 +1177,21 @@ static int snapshot_iterate_devices(struct  
-> dm_target *ti,
-> /*-----------------------------------------------------------------
->  * Origin methods
->  *---------------------------------------------------------------*/
-> -static int __origin_write(struct list_head *snapshots, struct bio  
-> *bio)
-> +
-> +/*
-> + * Returns:
-> + *	DM_MAPIO_REMAPPED: bio may be submitted to origin device
-> + *	DM_MAPIO_SUBMITTED: bio was queued on queue on one of exceptions
-> + */
-> +
-> +static int __origin_write(struct list_head *snapshots,
-> +			  sector_t sector, struct bio *bio)
-> {
-> -	int r = DM_MAPIO_REMAPPED, first = 0;
-> +	int r = DM_MAPIO_REMAPPED;
-> 	struct dm_snapshot *snap;
-> 	struct dm_snap_exception *e;
-> -	struct dm_snap_pending_exception *pe, *next_pe, *primary_pe = NULL;
-> +	struct dm_snap_pending_exception *pe, *pe_to_start = NULL;
-> 	chunk_t chunk;
-> -	LIST_HEAD(pe_queue);
->
-> 	/* Do all the snapshots on this origin */
-> 	list_for_each_entry (snap, snapshots, list) {
-> @@ -1231,22 +1203,19 @@ static int __origin_write(struct list_head  
-> *snapshots, struct bio *bio)
-> 			goto next_snapshot;
->
-> 		/* Nothing to do if writing beyond end of snapshot */
-> -		if (bio->bi_sector >= dm_table_get_size(snap->store->ti->table))
-> +		if (sector >= dm_table_get_size(snap->store->ti->table))
-> 			goto next_snapshot;
->
-> 		/*
-> 		 * Remember, different snapshots can have
-> 		 * different chunk sizes.
-> 		 */
-> -		chunk = sector_to_chunk(snap->store, bio->bi_sector);
-> +		chunk = sector_to_chunk(snap->store, sector);
->
-> 		/*
-> 		 * Check exception table to see if block
-> 		 * is already remapped in this snapshot
-> 		 * and trigger an exception if not.
-> -		 *
-> -		 * ref_count is initialised to 1 so pending_complete()
-> -		 * won't destroy the primary_pe while we're inside this loop.
-> 		 */
-> 		e = lookup_exception(&snap->complete, chunk);
-> 		if (e)
-> @@ -1276,59 +1245,39 @@ static int __origin_write(struct list_head  
-> *snapshots, struct bio *bio)
-> 			}
-> 		}
->
-> -		if (!primary_pe) {
-> -			/*
-> -			 * Either every pe here has same
-> -			 * primary_pe or none has one yet.
-> -			 */
-> -			if (pe->primary_pe)
-> -				primary_pe = pe->primary_pe;
-> -			else {
-> -				primary_pe = pe;
-> -				first = 1;
-> -			}
-> -
-> -			bio_list_add(&primary_pe->origin_bios, bio);
-> +		r = DM_MAPIO_SUBMITTED;
->
-> -			r = DM_MAPIO_SUBMITTED;
-> -		}
-> +		if (bio) {
-> +			bio_list_add(&pe->origin_bios, bio);
-> +			bio = NULL;
->
-> -		if (!pe->primary_pe) {
-> -			pe->primary_pe = primary_pe;
-> -			get_pending_exception(primary_pe);
-> +			if (!pe->started) {
-> +				pe->started = 1;
-> +				pe_to_start = pe;
-> +			}
-> 		}
->
-> 		if (!pe->started) {
-> 			pe->started = 1;
-> -			list_add_tail(&pe->list, &pe_queue);
-> +			start_copy(pe);
-> 		}
->
->  next_snapshot:
-> 		up_write(&snap->lock);
-> 	}
->
-> -	if (!primary_pe)
-> -		return r;
-> -
-> 	/*
-> -	 * If this is the first time we're processing this chunk and
-> -	 * ref_count is now 1 it means all the pending exceptions
-> -	 * got completed while we were in the loop above, so it falls to
-> -	 * us here to remove the primary_pe and submit any origin_bios.
-> +	 * pe_to_start is a small performance improvement:
-> +	 * To avoid calling __origin_write N times for N snapshots, we start
-> +	 * the snapshot where we queued the bio as the last one.
-> +	 *
-> +	 * If we start it as the last one, it finishes most likely as the  
-> last
-> +	 * one and exceptions in other snapshots will be already finished  
-> when
-> +	 * the bio will be retried.
-> 	 */
->
-> -	if (first && atomic_dec_and_test(&primary_pe->ref_count)) {
-> -		flush_bios(bio_list_get(&primary_pe->origin_bios));
-> -		free_pending_exception(primary_pe);
-> -		/* If we got here, pe_queue is necessarily empty. */
-> -		return r;
-> -	}
-> -
-> -	/*
-> -	 * Now that we have a complete pe list we can start the copying.
-> -	 */
-> -	list_for_each_entry_safe(pe, next_pe, &pe_queue, list)
-> -		start_copy(pe);
-> +	if (pe_to_start)
-> +		start_copy(pe_to_start);
->
-> 	return r;
-> }
-> @@ -1344,7 +1293,7 @@ static int do_origin(struct dm_dev *origin,  
-> struct bio *bio)
-> 	down_read(&_origins_lock);
-> 	o = __lookup_origin(origin->bdev);
-> 	if (o)
-> -		r = __origin_write(&o->snapshots, bio);
-> +		r = __origin_write(&o->snapshots, bio->bi_sector, bio);
-> 	up_read(&_origins_lock);
->
-> 	return r;
-> -- 
-> 1.6.2.5
+> static int snapshot_status(struct dm_target *ti, status_type_t type,
 >
 > --
 > dm-devel mailing list
