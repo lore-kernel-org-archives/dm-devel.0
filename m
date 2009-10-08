@@ -1,17 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/4] dm-snapshot-refactor-associations
-Date: Thu, 8 Oct 2009 13:32:18 -0400
-Message-ID: <20091008173217.GA11142@redhat.com>
-References: <1254769231-12053-1-git-send-email-snitzer@redhat.com>
-	<1254769231-12053-3-git-send-email-snitzer@redhat.com>
-	<F284D478-E4DA-4410-AF2B-5343FC4246BB@redhat.com>
-	<20091007182433.GB29197@redhat.com>
+Subject: Re: retry:snapshots: COW drive capacity and monitoring
+	space usage
+Date: Thu, 8 Oct 2009 13:53:22 -0400
+Message-ID: <20091008175321.GB11142@redhat.com>
+References: <4ACD61A3.3020407@bfn.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20091007182433.GB29197@redhat.com>
+In-Reply-To: <4ACD61A3.3020407@bfn.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,80 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: af804@bfn.org, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Oct 07 2009 at  2:24pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Wed, Oct 07 2009 at 11:50pm -0400,
+J. Hart <af804@bfn.org> wrote:
 
-> On Wed, Oct 07 2009 at  1:38pm -0400,
-> Jonathan Brassow <jbrassow@redhat.com> wrote:
+> Greetings All,
 > 
-> > If this is really something that we have to do, then fine.  However, it 
-> > appears that you are doing this to pull out 'ti' and 'cow'... things that 
-> > are separate by structure from the underlying exception store... which is 
-> > ultimately what you want to hand over.  It seems to me that there is 
-> > probably a better/cleaner way to do this, while simultaneously leaving 
-> > 'ti' and 'cow' in their current place.
+> I didn't see anything come back, so I'm giving it one last try.  I
+> apologize if this is a duplicate.
 > 
-> Yes, both 'ti' and 'cow' are seperate structures within the exception store.
-> Yes, we want to handover the exception store itself (but keeping 'ti' and
-> 'cow' fixed).
-> 
-> So you're saying have the handover be:
-> 1) swap the 'complete' exception_table
-> 2) swap the 'cow' and 'ti' in the 2 exception stores
-> 3) swap the exception stores
-> 
-> Something like the following?:
-> 
-> static void handover_exceptions(struct dm_snapshot *old,
->                                 struct dm_snapshot *new)
-> {
->         union {
->                 struct exception_table table_swap;
->                 struct dm_target *ti_swap;
->                 struct dm_dev *cow_swap;
->                 struct dm_exception_store *store_swap;
->         } u;
-> 
->         u.table_swap = new->complete;
->         new->complete = old->complete;
->         old->complete = u.table_swap;
-> 
->         u.ti_swap = new->store->ti;
->         new->store->ti = old->store->ti;
->         old->store->ti = u.ti_swap;
-> 
->         u.cow_swap = new->store->cow;
->         new->store->cow = old->store->cow;
->         old->store->cow = u.cow_swap;
-> 
->         u.store_swap = new->store;
->         new->store = old->store;
->         old->store = u.store_swap;
-> 
->         old->active = 0;
->         new->handover = 0;
-> }
+> After having built my own distro up from source code (just to see if I
+> could), I've got snapshotting set up successfully on my system using the
+> kernel device mapping facility, dmsetup, and a COW drive.  I understand
+> from my reading that it is possible for the COW drive to run out of
+> space while it is in use.  Since it is not mounted and does not use a
+> filesystem as far as I know, I am wondering how one might go about
+> deciding on how big a drive to use, and monitoring space usage.
 
-Jon,
+You need to size your snapshot proportional to the rate of change you
+expect during the life of the snapshot.  This change can happen to
+either the origin device or directly to the snapshot device.  Regardless
+of which one; if you expect excessive change you want to size the
+snapshot larger, or vice-versa if you expect little change.
 
-I discussed this with Mikulas and he agreed that the above would work.
-But he raised the fact that reverting dm-snapshot-refactor-associations
-leaves the dm_snapshot and  dm_exception_store structures muddled with
-regard to where per-target members are located.  I'm inclined to agree
-with him.
+As for monitoring, LVM2 provides dmeventd-based snapshot usage
+monitoring that is enabled by default as of LVM2 2.02.53.
 
-The dm-snapshot-refactor-associations patch offers cleanup so that:
-1) dm_exception_store only contains exception store-specific members
-2) dm_snapshot is the structure that contains per-target members
+When you're low on space you'll see messages like the following in
+/var/log/messages:
 
-So while this dm-snapshot-refactor-associations patch could be viewed as
-"avoidable churn" it actually takes the data structures in a more
-controlled direction.
-
-I would rather dm-snapshot-refactor-associations be applied.
+Sep 16 21:15:05 really-raw dmeventd[12522]: dmeventd ready for processing.
+Sep 16 21:15:11 really-raw lvm[12522]: Monitoring snapshot test-testlv_snap
+Sep 16 21:15:15 really-raw lvm[12522]: Snapshot test-testlv_snap is now 92% full.
 
 Mike
