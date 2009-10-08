@@ -1,56 +1,61 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH 2/4] dm-snapshot-refactor-associations
-Date: Thu, 8 Oct 2009 16:14:03 -0500
-Message-ID: <491440B6-876B-49BD-B347-4B928FD12F7E@redhat.com>
-References: <1254769231-12053-1-git-send-email-snitzer@redhat.com>
-	<1254769231-12053-3-git-send-email-snitzer@redhat.com>
-	<F284D478-E4DA-4410-AF2B-5343FC4246BB@redhat.com>
-	<20091007182433.GB29197@redhat.com>
-	<20091008173217.GA11142@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v936)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091008173217.GA11142@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1 of 10] LVM: mirrored log remove prevention
+	checks
+Date: Thu, 8 Oct 2009 16:18:25 -0500
+Message-ID: <200910082118.n98LIPqF014214@hydrogen.msp.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
+Return-path: <lvm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Patch name: lvm-mirrored-log-remove-prevention-checks.patch
 
-On Oct 8, 2009, at 12:32 PM, Mike Snitzer wrote:
+In preparation for redundant (mirrored) mirror logs, remove the
+checks that prevent this sort of processing.
 
-> Jon,
->
-> I discussed this with Mikulas and he agreed that the above would work.
-> But he raised the fact that reverting dm-snapshot-refactor- 
-> associations
-> leaves the dm_snapshot and  dm_exception_store structures muddled with
-> regard to where per-target members are located.  I'm inclined to agree
-> with him.
->
-> The dm-snapshot-refactor-associations patch offers cleanup so that:
-> 1) dm_exception_store only contains exception store-specific members
-> 2) dm_snapshot is the structure that contains per-target members
->
-> So while this dm-snapshot-refactor-associations patch could be  
-> viewed as
-> "avoidable churn" it actually takes the data structures in a more
-> controlled direction.
->
-> I would rather dm-snapshot-refactor-associations be applied.
+RFC: Jonathan Brassow <jbrassow@redhat.com>
 
-Ok, Mike.  Thanks for looking into it.
+Index: LVM2/lib/metadata/mirror.c
+===================================================================
+--- LVM2.orig/lib/metadata/mirror.c
++++ LVM2/lib/metadata/mirror.c
+@@ -1301,11 +1301,6 @@ static struct logical_volume *_set_up_mi
+ 
+ 	init_mirror_in_sync(in_sync);
+ 
+-	if (log_count != 1) {
+-		log_error("log_count != 1 is not supported.");
+-		return NULL;
+-	}
+-
+ 	/* Mirror log name is lv_name + suffix, determined as the following:
+ 	 *   1. suffix is:
+ 	 *        o "_mlog" for the original mirror LV.
+@@ -1368,12 +1363,6 @@ int add_mirror_log(struct cmd_context *c
+ 	struct lvinfo info;
+ 	int r = 0;
+ 
+-	/* Unimplemented features */
+-	if (log_count > 1) {
+-		log_error("log_count > 1 is not supported");
+-		return 0;
+-	}
+-
+ 	if (dm_list_size(&lv->segments) != 1) {
+ 		log_error("Multiple-segment mirror is not supported");
+ 		return 0;
 
-Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
-
-  brassow
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
