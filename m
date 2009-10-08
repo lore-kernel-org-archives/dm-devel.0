@@ -1,12 +1,18 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 0 of 10] LVM: Mirrored log support
-Date: Thu, 08 Oct 2009 16:14:34 -0500
-Message-ID: <1255036474.12319.16.camel@hydrogen.msp.redhat.com>
+Subject: Re: [PATCH 2/4] dm-snapshot-refactor-associations
+Date: Thu, 8 Oct 2009 16:14:03 -0500
+Message-ID: <491440B6-876B-49BD-B347-4B928FD12F7E@redhat.com>
+References: <1254769231-12053-1-git-send-email-snitzer@redhat.com>
+	<1254769231-12053-3-git-send-email-snitzer@redhat.com>
+	<F284D478-E4DA-4410-AF2B-5343FC4246BB@redhat.com>
+	<20091007182433.GB29197@redhat.com>
+	<20091008173217.GA11142@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
+Mime-Version: 1.0 (Apple Message framework v936)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20091008173217.GA11142@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,32 +22,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, lvm-devel@redhat.com, malahal@us.ibm.com, tyasui@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-I spent the last few days looking over the mirror allocation code.  I
-wanted to understand why 'log_count' was being treated generically in
-most places... as if the idea of mirrored logs were already thought of.
-I mostly discovered that it was possible to push what looked like
-incomplete code towards completion.  The following patches represent
-where I would like the mirrored log support to start from.
 
-These patches are a replacement to the proposed patches - a fresh start.
-They address a couple problems that I saw with the old patches: 1)
-Allocation policies are respected and behave the same as today for other
-log types.
-2) The on-disk layout of the previous version - when given only two
-disks to allocate from - would put the log on the front of one device
-and the back of another.  This virtually ensures a performance hit.
-These patches put the logs in the same place WRT the images.
-3) The new patches reduce parameter bloat.  I think the previous patches
-required the extra parameters because they were using functions deep in
-the code that were from higher levels... adding parameters and
-"spaghettifying" the code.
+On Oct 8, 2009, at 12:32 PM, Mike Snitzer wrote:
 
-These patches should be considered a starting point.  While 'lvcreate'
-works, 'lvconvert' does not handle all transitions.  In fact,
-'lvconvert' will only handle 'core' -> 'disk/redundant' and
-'disk/redundant' -> 'core'.  It will not handle 'disk' <-> 'redundant'.
+> Jon,
+>
+> I discussed this with Mikulas and he agreed that the above would work.
+> But he raised the fact that reverting dm-snapshot-refactor- 
+> associations
+> leaves the dm_snapshot and  dm_exception_store structures muddled with
+> regard to where per-target members are located.  I'm inclined to agree
+> with him.
+>
+> The dm-snapshot-refactor-associations patch offers cleanup so that:
+> 1) dm_exception_store only contains exception store-specific members
+> 2) dm_snapshot is the structure that contains per-target members
+>
+> So while this dm-snapshot-refactor-associations patch could be  
+> viewed as
+> "avoidable churn" it actually takes the data structures in a more
+> controlled direction.
+>
+> I would rather dm-snapshot-refactor-associations be applied.
 
- brassow
+Ok, Mike.  Thanks for looking into it.
+
+Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
+
+  brassow
