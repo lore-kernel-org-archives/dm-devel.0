@@ -1,16 +1,10 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: IO scheduler based IO controller V10
-Date: Thu, 08 Oct 2009 19:22:42 +0900 (JST)
-Message-ID: <20091008.192242.39182274.ryov@valinux.co.jp>
-References: <20091006112201.GA27866@redhat.com>
-	<20091007.233805.183040347.ryov@valinux.co.jp>
-	<4ACCC4B7.4050805@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: add allocated metadata to snapshot
+	status
+Date: Thu,  8 Oct 2009 11:54:29 -0400
+Message-ID: <1255017269-4429-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4ACCC4B7.4050805@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,40 +14,146 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: riel@redhat.com
-Cc: dhaval@linux.vnet.ibm.com, peterz@infradead.org, dm-devel@redhat.com, dpshah@google.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, paolo.valente@unimore.it, jmarchan@redhat.com, guijianfeng@cn.fujitsu.com, fernando@oss.ntt.co.jp, mikew@google.com, yoshikawa.takuya@oss.ntt.co.jp, jmoyer@redhat.com, nauman@google.com, mingo@elte.hu, vgoyal@redhat.com, righi.andrea@gmail.com, lizf@cn.fujitsu.com, fchecconi@gmail.com, s-uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, m-ikeda@ds.jp.nec.com, torvalds@linux-foundation.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Rik,
+Add metadata usage to the end of the snapshot's status output.
 
-Rik van Riel <riel@redhat.com> wrote:
-> Ryo Tsuruta wrote:
-> 
-> > If once dm-ioband is integrated into the LVM tools and bandwidth can
-> > be assigned per device by lvcreate, the use of dm-tools is no longer
-> > required for users.
-> 
-> A lot of large data center users have a SAN, with volume management
-> handled SAN-side and dedicated LUNs for different applications or
-> groups of applications.
-> 
-> Because of alignment issues, they typically use filesystems directly
-> on top of the LUNs, without partitions or LVM layers.  We cannot rely
-> on LVM for these systems, because people prefer not to use that.
+Renamed dm_exception_store_type's 'fraction_full' to 'usage'.  Renamed
+arguments to be clearer about what is being returned.  Also added
+'metadata_allocated'.
 
-Thank you for your explanation. So I have a plan to reimplement
-dm-ioband into the block layer to make dm-tools no longer required.
-My opinion I wrote above assumes if dm-ioband is used for a logical
-volume which consists of multiple physical devices. If dm-ioband is
-integrated into the LVM tools, then the use of the dm-tools is not
-required and the underlying physical devices can be automatically
-deteced and configured to use dm-ioband.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-exception-store.h |    6 +++---
+ drivers/md/dm-snap-persistent.c |   15 +++++++++------
+ drivers/md/dm-snap-transient.c  |   14 ++++++++------
+ drivers/md/dm-snap.c            |   17 +++++++++--------
+ 4 files changed, 29 insertions(+), 23 deletions(-)
 
-Thanks,
-Ryo Tsuruta
-
-> Besides ... isn't the goal of the cgroups io bandwidth controller
-> to control the IO used by PROCESSES?
->
-> If we want to control processes, why would we want the configuration
-> to be applied to any other kind of object in the system?
+Index: linux-2.6/drivers/md/dm-exception-store.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-exception-store.h
++++ linux-2.6/drivers/md/dm-exception-store.h
+@@ -86,9 +86,9 @@ struct dm_exception_store_type {
+ 	/*
+ 	 * Return how full the snapshot is.
+ 	 */
+-	void (*fraction_full) (struct dm_exception_store *store,
+-			       sector_t *numerator,
+-			       sector_t *denominator);
++	void (*usage) (struct dm_exception_store *store,
++		       sector_t *total, sector_t *total_allocated,
++		       sector_t *metadata_allocated);
+ 
+ 	/* For internal device-mapper use only. */
+ 	struct list_head list;
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6/drivers/md/dm-snap-persistent.c
+@@ -489,11 +489,14 @@ static struct pstore *get_info(struct dm
+ 	return (struct pstore *) store->context;
+ }
+ 
+-static void persistent_fraction_full(struct dm_exception_store *store,
+-				     sector_t *numerator, sector_t *denominator)
++static void persistent_usage(struct dm_exception_store *store,
++			     sector_t *total, sector_t *total_allocated,
++			     sector_t *metadata_allocated)
+ {
+-	*numerator = get_info(store)->next_free * store->chunk_size;
+-	*denominator = get_dev_size(store->cow->bdev);
++	struct pstore *ps = get_info(store);
++	*total_allocated = ps->next_free * store->chunk_size;
++	*total = get_dev_size(store->cow->bdev);
++	*metadata_allocated = (ps->current_area + 2) * store->chunk_size;
+ }
+ 
+ static void persistent_dtr(struct dm_exception_store *store)
+@@ -738,7 +741,7 @@ static struct dm_exception_store_type _p
+ 	.prepare_exception = persistent_prepare_exception,
+ 	.commit_exception = persistent_commit_exception,
+ 	.drop_snapshot = persistent_drop_snapshot,
+-	.fraction_full = persistent_fraction_full,
++	.usage = persistent_usage,
+ 	.status = persistent_status,
+ };
+ 
+@@ -751,7 +754,7 @@ static struct dm_exception_store_type _p
+ 	.prepare_exception = persistent_prepare_exception,
+ 	.commit_exception = persistent_commit_exception,
+ 	.drop_snapshot = persistent_drop_snapshot,
+-	.fraction_full = persistent_fraction_full,
++	.usage = persistent_usage,
+ 	.status = persistent_status,
+ };
+ 
+Index: linux-2.6/drivers/md/dm-snap-transient.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-transient.c
++++ linux-2.6/drivers/md/dm-snap-transient.c
+@@ -59,11 +59,13 @@ static void transient_commit_exception(s
+ 	callback(callback_context, 1);
+ }
+ 
+-static void transient_fraction_full(struct dm_exception_store *store,
+-				    sector_t *numerator, sector_t *denominator)
++static void transient_usage(struct dm_exception_store *store,
++			    sector_t *total, sector_t *total_allocated,
++			    sector_t *metadata_allocated)
+ {
+-	*numerator = ((struct transient_c *) store->context)->next_free;
+-	*denominator = get_dev_size(store->cow->bdev);
++	*total_allocated = ((struct transient_c *) store->context)->next_free;
++	*total = get_dev_size(store->cow->bdev);
++	*metadata_allocated = 0;
+ }
+ 
+ static int transient_ctr(struct dm_exception_store *store,
+@@ -106,7 +108,7 @@ static struct dm_exception_store_type _t
+ 	.read_metadata = transient_read_metadata,
+ 	.prepare_exception = transient_prepare_exception,
+ 	.commit_exception = transient_commit_exception,
+-	.fraction_full = transient_fraction_full,
++	.usage = transient_usage,
+ 	.status = transient_status,
+ };
+ 
+@@ -118,7 +120,7 @@ static struct dm_exception_store_type _t
+ 	.read_metadata = transient_read_metadata,
+ 	.prepare_exception = transient_prepare_exception,
+ 	.commit_exception = transient_commit_exception,
+-	.fraction_full = transient_fraction_full,
++	.usage = transient_usage,
+ 	.status = transient_status,
+ };
+ 
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -1171,14 +1171,15 @@ static int snapshot_status(struct dm_tar
+ 		if (!snap->valid)
+ 			DMEMIT("Invalid");
+ 		else {
+-			if (snap->store->type->fraction_full) {
+-				sector_t numerator, denominator;
+-				snap->store->type->fraction_full(snap->store,
+-								 &numerator,
+-								 &denominator);
+-				DMEMIT("%llu/%llu",
+-				       (unsigned long long)numerator,
+-				       (unsigned long long)denominator);
++			if (snap->store->type->usage) {
++				sector_t total, total_allocated, metadata_allocated;
++				snap->store->type->usage(snap->store,
++							 &total, &total_allocated,
++							 &metadata_allocated);
++				DMEMIT("%llu/%llu %llu",
++				       (unsigned long long)total_allocated,
++				       (unsigned long long)total,
++				       (unsigned long long)metadata_allocated);
+ 			}
+ 			else
+ 				DMEMIT("Unknown");
