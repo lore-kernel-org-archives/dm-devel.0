@@ -1,77 +1,82 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 7 of 10] LVM:  add needed params
-Date: Thu, 8 Oct 2009 16:19:27 -0500
-Message-ID: <200910082119.n98LJRvb014652@hydrogen.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Subject: [PATCH 10 of 10] LVM:  add redundant log type
+Date: Thu, 8 Oct 2009 16:19:58 -0500
+Message-ID: <200910082119.n98LJwSn014873@hydrogen.msp.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
+Return-path: <lvm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 Cc: lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: lvm-add-needed-params.patch
+Patch name: lvm-add-redundant-log-type.patch
 
-Here we add a couple necessary parameters to functions so
-that we can distinguish between when we are allocating
-from log_areas or alloced_areas
+Now it is trivial to add the 'redundant' mirror log.
 
 RFC: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: LVM2/lib/metadata/mirror.c
+Index: LVM2/tools/commands.h
 ===================================================================
---- LVM2.orig/lib/metadata/mirror.c
-+++ LVM2/lib/metadata/mirror.c
-@@ -909,7 +909,8 @@ int reconfigure_mirror_images(struct lv_
- static int _create_mimage_lvs(struct alloc_handle *ah,
- 			      uint32_t num_mirrors,
- 			      struct logical_volume *lv,
--			      struct logical_volume **img_lvs)
-+			      struct logical_volume **img_lvs,
-+			      int for_log)
- {
- 	uint32_t m;
- 	char *img_name;
-@@ -940,7 +941,7 @@ static int _create_mimage_lvs(struct all
- 		if (!lv_add_segment(ah, m, 1, img_lvs[m],
- 				    get_segtype_from_string(lv->vg->cmd,
- 							    "striped"),
--				    0, 0, 0, NULL)) {
-+				    0, 0, 0, for_log ? lv : NULL)) {
- 			log_error("Aborting. Failed to add mirror image segment "
- 				  "to %s. Remove new LV and retry.",
- 				  img_lvs[m]->name);
-@@ -1290,7 +1291,7 @@ static struct logical_volume *_create_mi
-  */
- static int _form_mirror(struct cmd_context *cmd, struct alloc_handle *ah,
- 			struct logical_volume *lv,
--			uint32_t mirrors, uint32_t region_size)
-+			uint32_t mirrors, uint32_t region_size, int for_log)
- {
- 	struct logical_volume **img_lvs;
+--- LVM2.orig/tools/commands.h
++++ LVM2/tools/commands.h
+@@ -95,7 +95,7 @@ xx(lvconvert,
+    "Change logical volume layout",
+    0,
+    "lvconvert "
+-   "[-m|--mirrors Mirrors [{--mirrorlog {disk|core}|--corelog}]]\n"
++   "[-m|--mirrors Mirrors [{--mirrorlog {disk|core|redundant}|--corelog}]]\n"
+    "\t[--repair [--use-policies]]\n"
+    "\t[-R|--regionsize MirrorLogRegionSize]\n"
+    "\t[--alloc AllocationPolicy]\n"
+@@ -139,7 +139,7 @@ xx(lvcreate,
+    "\t{-l|--extents LogicalExtentsNumber |\n"
+    "\t -L|--size LogicalVolumeSize[bBsSkKmMgGtTpPeE]}\n"
+    "\t[-M|--persistent {y|n}] [--major major] [--minor minor]\n"
+-   "\t[-m|--mirrors Mirrors [--nosync] [{--mirrorlog {disk|core}|--corelog}]]\n"
++   "\t[-m|--mirrors Mirrors [--nosync] [{--mirrorlog {disk|core|redundant}|--corelog}]]\n"
+    "\t[-n|--name LogicalVolumeName]\n"
+    "\t[--noudevsync]\n"
+    "\t[-p|--permission {r|rw}]\n"
+Index: LVM2/tools/lvconvert.c
+===================================================================
+--- LVM2.orig/tools/lvconvert.c
++++ LVM2/tools/lvconvert.c
+@@ -624,7 +624,9 @@ static int _lvconvert_mirrors(struct cmd
+ 			return 0;
+ 		}
  
-@@ -1311,7 +1312,7 @@ static int _form_mirror(struct cmd_conte
+-		if (!strcmp("disk", mirrorlog))
++		if (!strcmp("redundant", mirrorlog))
++			log_count = 2;
++		else if (!strcmp("disk", mirrorlog))
+ 			log_count = 1;
+ 		else if (!strcmp("core", mirrorlog))
+ 			log_count = 0;
+Index: LVM2/tools/lvcreate.c
+===================================================================
+--- LVM2.orig/tools/lvcreate.c
++++ LVM2/tools/lvcreate.c
+@@ -342,7 +342,9 @@ static int _read_mirror_params(struct lv
  		return 0;
  	}
  
--	if (!_create_mimage_lvs(ah, mirrors, lv, img_lvs))
-+	if (!_create_mimage_lvs(ah, mirrors, lv, img_lvs, for_log))
- 		return 0;
- 
- 	if (!lv_add_mirror_lvs(lv, img_lvs, mirrors,
-@@ -1513,7 +1514,7 @@ int add_mirror_images(struct cmd_context
- 	   So from here on, if failure occurs, the log must be explicitly
- 	   removed and the updated vg metadata should be committed. */
- 
--	if (!_form_mirror(cmd, ah, lv, mirrors, region_size))
-+	if (!_form_mirror(cmd, ah, lv, mirrors, region_size, 0))
- 		goto out_remove_log;
- 
- 	if (log_count && !attach_mirror_log(first_seg(lv), log_lv))
+-	if (!strcmp("disk", mirrorlog))
++	if (!strcmp("redundant", mirrorlog))
++		lp->log_count = 2;
++	else if (!strcmp("disk", mirrorlog))
+ 		lp->log_count = 1;
+ 	else if (!strcmp("core", mirrorlog))
+ 		lp->log_count = 0;
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
