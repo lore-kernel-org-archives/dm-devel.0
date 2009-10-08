@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 10] LVM:  make log_area a list
-Date: Thu, 8 Oct 2009 16:18:36 -0500
-Message-ID: <200910082118.n98LIaik014287@hydrogen.msp.redhat.com>
+Subject: [PATCH 3 of 10] LVM:  build log_area list
+Date: Thu, 8 Oct 2009 16:18:46 -0500
+Message-ID: <200910082118.n98LIkFp014360@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,11 +17,14 @@ To: dm-devel@redhat.com
 Cc: lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: lvm-make-log_area-a-list.patch
+Patch name: lvm-build-log_area-list.patch
 
-The 'alloc_handle' structure only has space for one log_area.
-We change that to a list to allow an arbitrary number of
-log areas.
+Now that we have change the allocation handle structure to be
+able to store a list of log areas, fill them in and utilize
+them based on the 'log_count' parameter.  (log_count will
+be generalized in subsequent patches, but it is still just
+'1' or '0' for now... meaning nothing has changed at this
+point.)
 
 RFC: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -29,159 +32,125 @@ Index: LVM2/lib/metadata/lv_manip.c
 ===================================================================
 --- LVM2.orig/lib/metadata/lv_manip.c
 +++ LVM2/lib/metadata/lv_manip.c
-@@ -515,7 +515,7 @@ struct alloc_handle {
+@@ -730,11 +730,11 @@ static uint32_t mirror_log_extents(uint3
+  */
+ static int _alloc_parallel_area(struct alloc_handle *ah, uint32_t needed,
+ 				struct pv_area **areas,
+-				uint32_t *ix, struct pv_area *log_area,
++				uint32_t *ix, struct pv_area **log_areas,
+ 				uint32_t log_len)
+ {
+ 	uint32_t area_len, remaining;
+-	uint32_t s;
++	uint32_t i,s;
+ 	struct alloced_area *aa;
  
- 	struct dm_list *parallel_areas;	/* PVs to avoid */
+ 	remaining = needed - *ix;
+@@ -745,8 +745,8 @@ static int _alloc_parallel_area(struct a
+ 		if (area_len > areas[s]->count)
+ 			area_len = areas[s]->count;
  
--	struct alloced_area log_area;	/* Extent used for log */
-+	struct dm_list log_areas;	/* Extents used for logs */
- 	struct dm_list alloced_areas[0];	/* Lists of areas in each stripe */
- };
- 
-@@ -582,6 +582,7 @@ static struct alloc_handle *_alloc_init(
- 	ah->alloc = alloc;
- 	ah->area_multiple = calc_area_multiple(segtype, area_count);
- 
-+	dm_list_init(&ah->log_areas);
+-	if (!(aa = dm_pool_alloc(ah->mem, sizeof(*aa) *
+-			      (ah->area_count + (log_area ? 1 : 0))))) {
++	s = sizeof(*aa) * (ah->area_count + ah->log_count);
++	if (!(aa = dm_pool_alloc(ah->mem, s))) {
+ 		log_error("alloced_area allocation failed");
+ 		return 0;
+ 	}
+@@ -763,12 +763,14 @@ static int _alloc_parallel_area(struct a
  	for (s = 0; s < ah->area_count; s++)
- 		dm_list_init(&ah->alloced_areas[s]);
- 
-@@ -763,10 +764,11 @@ static int _alloc_parallel_area(struct a
  		consume_pv_area(areas[s], area_len);
  
- 	if (log_area) {
--		ah->log_area.pv = log_area->map->pv;
--		ah->log_area.pe = log_area->start;
--		ah->log_area.len = log_len;
--		consume_pv_area(log_area, ah->log_area.len);
-+		aa[s].pv = log_area->map->pv;
-+		aa[s].pe = log_area->start;
-+		aa[s].len = log_len;
-+		dm_list_add(&ah->log_areas, &aa[s].list);
-+		consume_pv_area(log_area, log_len);
+-	if (log_area) {
+-		aa[s].pv = log_area->map->pv;
+-		aa[s].pe = log_area->start;
++	for (i = 0, s = ah->area_count;
++	     log_areas && (s < ah->area_count + ah->log_count);
++	     s++, i++) {
++		aa[s].pv = log_areas[i]->map->pv;
++		aa[s].pe = log_areas[i]->start;
+ 		aa[s].len = log_len;
+ 		dm_list_add(&ah->log_areas, &aa[s].list);
+-		consume_pv_area(log_area, log_len);
++		consume_pv_area(log_areas[i], log_len);
  	}
  
  	*ix += area_len * ah->area_multiple;
-@@ -983,6 +985,7 @@ static int _find_parallel_space(struct a
+@@ -985,7 +987,7 @@ static int _find_parallel_space(struct a
  				struct lv_segment *prev_lvseg,
  				uint32_t *allocated, uint32_t needed)
  {
-+	int skip = 0;
+-	int skip = 0;
++	int i, j, skip = 0;
  	struct pv_map *pvm;
  	struct pv_area *pva;
  	struct pv_list *pvl;
-@@ -999,6 +1002,7 @@ static int _find_parallel_space(struct a
+@@ -1000,7 +1002,7 @@ static int _find_parallel_space(struct a
+ 	struct dm_list *parallel_pvs;
+ 	uint32_t free_pes;
  	uint32_t log_len;
- 	struct pv_area *log_area;
+-	struct pv_area *log_area;
++	struct pv_area **log_areas;
  	unsigned log_needs_allocating;
-+	struct alloced_area *aa;
+ 	struct alloced_area *aa;
  
- 	/* Is there enough total space? */
- 	free_pes = pv_maps_size(pvms);
-@@ -1061,10 +1065,14 @@ static int _find_parallel_space(struct a
- 				continue;	/* Next PV */
+@@ -1137,8 +1139,13 @@ static int _find_parallel_space(struct a
+ 		if (ah->log_count && dm_list_empty(&ah->log_areas))
+ 			log_needs_allocating = 1;
  
- 			if (alloc != ALLOC_ANYWHERE) {
--				/* Don't allocate onto the log pv */
--				if (ah->log_count &&
--				    pvm->pv == ah->log_area.pv)
--					continue;	/* Next PV */
-+				/* Don't allocate onto the log pvs */
-+				dm_list_iterate_items(aa, &ah->log_areas)
-+					if (pvm->pv == aa->pv)
-+						skip = 1;
-+				if (skip) {
-+					skip = 0;
-+					continue;
-+				}
- 
- 				/* Avoid PVs used by existing parallel areas */
- 				if (parallel_pvs)
-@@ -1125,8 +1133,9 @@ static int _find_parallel_space(struct a
- 		if ((contiguous || cling) && (preferred_count < ix_offset))
++		/*
++		 * Note:  If we allow logs on the same devices as mirror
++		 * images, then that shouldn't factor into the equation.
++		 */
+ 		if (ix + ix_offset < ah->area_count +
+-		   (log_needs_allocating ? ah->log_count : 0))
++		    ((log_needs_allocating && (alloc != ALLOC_ANYWHERE)) ?
++		     ah->log_count : 0))
  			break;
  
--		log_needs_allocating = (ah->log_count && !ah->log_area.len) ?
--				       1 : 0;
-+		log_needs_allocating = 0;
-+		if (ah->log_count && dm_list_empty(&ah->log_areas))
-+			log_needs_allocating = 1;
+ 		/* sort the areas so we allocate from the biggest */
+@@ -1157,8 +1164,12 @@ static int _find_parallel_space(struct a
+ 
+ 		if (!log_needs_allocating) {
+ 			log_len = 0;
+-			log_area = NULL;
++			log_areas = NULL;
+ 		} else {
++			log_areas = dm_pool_alloc(ah->mem,
++						  sizeof(struct pv_area) *
++						  ah->log_count);
++
+ 			log_len = mirror_log_extents(ah->log_region_size,
+ 			    pv_pe_size((*areas)->map->pv),
+ 			    (max_parallel - *allocated) / ah->area_multiple);
+@@ -1169,18 +1180,25 @@ static int _find_parallel_space(struct a
+ 				  too_small_for_log_count))->count < log_len)
+ 				too_small_for_log_count++;
+ 
+-			log_area = *(areas + ix_offset + ix - 1 -
+-				     too_small_for_log_count);
++			i = ah->log_count - 1;
++			j = ix_offset + ix - 1 - too_small_for_log_count;
++			for (; (i >= 0) && (j >= 0); i--) {
++				log_areas[i] = *(areas + j);
++
++				/* Advance to next PV */
++				for (; ((j >= 0) &&
++					(log_areas[i]->map->pv == (*(areas + j))->map->pv)); j--);
++			}
+ 		}
  
  		if (ix + ix_offset < ah->area_count +
- 		   (log_needs_allocating ? ah->log_count : 0))
-@@ -1199,6 +1208,7 @@ static int _allocate(struct alloc_handle
- 	struct dm_list *pvms;
- 	uint32_t areas_size;
- 	alloc_policy_t alloc;
-+	struct alloced_area *aa;
+-		    (log_needs_allocating ? ah->log_count +
+-					    too_small_for_log_count : 0))
++		    ((log_needs_allocating  && (alloc != ALLOC_ANYWHERE)) ?
++		     ah->log_count + too_small_for_log_count : 0))
+ 			/* FIXME With ALLOC_ANYWHERE, need to split areas */
+ 			break;
  
- 	if (allocated >= new_extents && !ah->log_count) {
- 		log_error("_allocate called with no work to do!");
-@@ -1264,12 +1274,13 @@ static int _allocate(struct alloc_handle
- 		goto out;
- 	}
+ 		if (!_alloc_parallel_area(ah, max_parallel, areas, allocated,
+-					  log_area, log_len))
++					  log_areas, log_len))
+ 			return_0;
  
--	if (ah->log_count && !ah->log_area.len) {
--		log_error("Insufficient extents for log allocation "
--			  "for logical volume %s.",
--			  lv ? lv->name : "");
--		goto out;
--	}
-+	dm_list_iterate_items(aa, &ah->log_areas)
-+		if (ah->log_count && !aa->len) {
-+			log_error("Insufficient extents for log allocation "
-+				  "for logical volume %s.",
-+				  lv ? lv->name : "");
-+			goto out;
-+		}
- 
- 	r = 1;
- 
-@@ -1545,10 +1556,21 @@ int lv_add_mirror_lvs(struct logical_vol
- 
- /*
-  * Turn an empty LV into a mirror log.
-+ *
-+ * Only for the addition of the first, linear log.
-  */
- int lv_add_log_segment(struct alloc_handle *ah, struct logical_volume *log_lv)
- {
- 	struct lv_segment *seg;
-+	struct alloced_area *log_area;
-+
-+	dm_list_iterate_items(log_area, &ah->log_areas)
-+		break;
-+
-+	if (!log_area)
-+		return 0;
-+
-+	dm_list_del(&log_area->list);
- 
- 	if (dm_list_size(&log_lv->segments)) {
- 		log_error("Log segments can only be added to an empty LV");
-@@ -1558,19 +1580,21 @@ int lv_add_log_segment(struct alloc_hand
- 	if (!(seg = alloc_lv_segment(log_lv->vg->cmd->mem,
- 				     get_segtype_from_string(log_lv->vg->cmd,
- 							     "striped"),
--				     log_lv, 0, ah->log_area.len, MIRROR_LOG,
--				     0, NULL, 1, ah->log_area.len, 0, 0, 0))) {
-+				     log_lv, 0, log_area->len, MIRROR_LOG,
-+				     0, NULL, 1, log_area->len, 0, 0, 0))) {
- 		log_error("Couldn't allocate new mirror log segment.");
- 		return 0;
- 	}
- 
--	if (!set_lv_segment_area_pv(seg, 0, ah->log_area.pv, ah->log_area.pe))
-+	if (!set_lv_segment_area_pv(seg, 0, log_area->pv, log_area->pe))
- 		return_0;
- 
- 	dm_list_add(&log_lv->segments, &seg->list);
--	log_lv->le_count += ah->log_area.len;
-+	log_lv->le_count += log_area->len;
- 	log_lv->size += (uint64_t) log_lv->le_count * log_lv->vg->extent_size;
- 
-+	dm_pool_free(ah->mem, log_area);
-+
- 	if (log_lv->vg->fid->fmt->ops->lv_setup &&
- 	    !log_lv->vg->fid->fmt->ops->lv_setup(log_lv->vg->fid, log_lv))
- 		return_0;
+ 	} while (!contiguous && *allocated != needed && can_split);
