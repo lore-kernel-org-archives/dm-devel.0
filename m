@@ -1,14 +1,21 @@
-From: "j.Lucas" <lukasz.jurewicz@gmail.com>
-Subject: Re: Help with MPIO assigning / blacklisting
-Date: Fri, 9 Oct 2009 14:59:46 +0200
-Message-ID: <8f3e95600910090559g10d267e3l3ba2c398d57aa7b4@mail.gmail.com>
-References: <8f3e95600910081515x1257d9fbud365667c7e55c713@mail.gmail.com>
-	<1255042244.10144.2.camel@chandra-ubuntu>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: RE: [PATCH 0/4] scsi_dh: Make scsi_dh_activate
+	asynchronous
+Date: Fri, 9 Oct 2009 08:06:01 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF474F4317C@cosmail01.lsi.com>
+References: <20090930020811.11455.59565.sendpatchset@chandra-ubuntu>
+	<4AC9EE1B.7030702@suse.de> <1254785154.15826.18.camel@chandra-ubuntu>
+	<4ACAFAF5.5000805@suse.de>
+	<E463DF2B2E584B4A82673F53D62C2EF474ED90C7@cosmail01.lsi.com>
+	<E463DF2B2E584B4A82673F53D62C2EF474ED95C8@cosmail01.lsi.com>
+	<4ACF05FF.2030401@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1034221298=="
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1255042244.10144.2.camel@chandra-ubuntu>
+In-Reply-To: <4ACF05FF.2030401@suse.de>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,176 +25,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: "michaelc@cs.wisc.edu" <michaelc@cs.wisc.edu>, "Stankey,
+	Robert" <Robert.Stankey@lsi.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, device-mapper development <dm-devel@redhat.com>, "Chauhan,
+	Vijay" <Vijay.Chauhan@lsi.com>, "Benoit_Arthur@emc.com" <Benoit_Arthur@emc.com>, "Qi,
+	Yanling" <Yanling.Qi@lsi.com>, "Eddie.Williams@steeleye.com" <Eddie.Williams@steeleye.com>
 List-Id: dm-devel.ids
 
---===============1034221298==
-Content-Type: multipart/alternative; boundary=0015175df46eb602b80475802863
-
---0015175df46eb602b80475802863
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-
-According to SLES partitions do work and uses the kpratx tool  (partition
-seem to work fine in MPIO when I manually set them up)=85 the issue isn=92t=
- them
-working it is trying to limit mpio to only addressing the partitions by
-using the blacklist option  (which seems to suggest it is very possible)
-
-
-
-On Fri, Oct 9, 2009 at 12:50 AM, Chandra Seetharaman <sekharan@us.ibm.com>w=
-rote:
-
-> Hi Lucas,
->
-> You can setup multipath only for block devices and not "partitions". You
-> will be able to setup multipathing to sdb and use the multipathed
-> partition corresponding to sdb1 for your purposes.
->
-> You will not be able to setup multipathing to sdb1 and not sdb2.
->
-> chandra
-> On Fri, 2009-10-09 at 00:15 +0200, j.Lucas wrote:
-> > I apologize if this is a simple question but I have tried in every
-> > place I can google to resolve this before posting this.  The problem I
-> > have (and hoping someone will help resolve) is:
+Hannes, Thanks again for the response..  Please see the comments below..
+=20
+> Moger, Babu wrote:
+> > 1. Run I/O on both these Luns
+> > 2. Pull the cable connected to controller A.
+> > 3. Failover will happen and Lun 0 will move to controller B. Now both
+> the Luns are on controller B.
+> > 4. Connect the cable back on controller A.
+> > 5. multipath tool will detect the physical Luns on controller A and
+> run the priority test.
+> > 6. It will find that Lun 0 is not on preferred path and will initiate
+> a failback.
+> >    Because it is a controller level failover it will move the Lun 1
+> also to controller A.
+> >    Now both the Luns are on controller A.
+> > 7. Multipath tool will come again and find Lun 1 not on preferred
+> path and initiate failback.
+> >    This will both the Luns to controller B.
+> >    This will continue forever.
 > >
-> > Setting up a MPIO SAS configuration it is important to me that I have
-> > multiple paths to a partition on each drive.. each drive has two
-> > partitions, but only one is of interest.  So we normal have eg sdb,
-> > sdb1 and sdb2.  However we only want to MPIO to sdb1.
-> >
-> > Manually this would maybe seem easy, but there is likely to be many
-> > many drives and hot-plugged in and out etc=85 so it seems sensible to
-> > use the option of black listing and exclusions from black lists so
-> > that DM only addresses sdx1=85.. but this is where my problems start an=
-d
-> > my hair fails out.
-> >
-> > I have tried reading everything I can find on this, and tried all
-> > options I can think of=85 but I cannot get it work like this.  In fact =
-I
-> > cannot seem to get it to by default see any of the partitions (without
-> > having to manually run something).
-> >
-> > I have even tried to blacklist ALL sd[a-z]  (which seems to work) but
-> > exclude i.e. sdb1 which doesn=92t seem to work.
-> >
-> > I really would appreciate any advice as I am sure that to someone who
-> > has the experience here will probably be able to resolve this in a
-> > couple of lines as opposed to my couple of years!
-> >
-> > Thank you
-> >
-> > --
-> > Lucas
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+> Hmm. Yes, correct.
+> After all, the patch I sent was meant to be a proof of concept, not a
+> fully fledged
+> solution. (In fact, I'm quite surprised it worked so well :-)
+>=20
+> What about modifying the LUN select code to switch all _visible_ LUNs
+> (ie all LUNs which
+> are _not_ on the preferred path) in one go?
+> That way we wouldn't run into this issue.
 
+In this case handler should be able to do two tasks.
+1. move all the Luns when one of the path failed(failover)
+2. move only the luns which are not there on preferred path(failback).
 
-
---=20
-Lucas
-
---0015175df46eb602b80475802863
-Content-Type: text/html; charset=windows-1252
-Content-Transfer-Encoding: quoted-printable
-
-According to SLES partitions do work and uses the kpratx tool=A0 (partition=
- seem to work fine in MPIO when I manually set them up)=85 the issue isn=92=
-t them working it is trying to limit mpio to only addressing the partitions=
- by using the blacklist option=A0 (which seems to suggest it is very possib=
-le)<br>
-
-<br><br><br><div class=3D"gmail_quote">On Fri, Oct 9, 2009 at 12:50 AM, Cha=
-ndra Seetharaman <span dir=3D"ltr">&lt;<a href=3D"mailto:sekharan@us.ibm.co=
-m">sekharan@us.ibm.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_=
-quote" style=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt =
-0pt 0.8ex; padding-left: 1ex;">
-
-Hi Lucas,<br>
-<br>
-You can setup multipath only for block devices and not &quot;partitions&quo=
-t;. You<br>
-will be able to setup multipathing to sdb and use the multipathed<br>
-partition corresponding to sdb1 for your purposes.<br>
-<br>
-You will not be able to setup multipathing to sdb1 and not sdb2.<br>
-<br>
-chandra<br>
-<div><div></div><div class=3D"h5">On Fri, 2009-10-09 at 00:15 +0200, j.Luca=
-s wrote:<br>
-&gt; I apologize if this is a simple question but I have tried in every<br>
-&gt; place I can google to resolve this before posting this. =A0The problem=
- I<br>
-&gt; have (and hoping someone will help resolve) is:<br>
-&gt;<br>
-&gt; Setting up a MPIO SAS configuration it is important to me that I have<=
-br>
-&gt; multiple paths to a partition on each drive.. each drive has two<br>
-&gt; partitions, but only one is of interest. =A0So we normal have eg sdb,<=
-br>
-&gt; sdb1 and sdb2. =A0However we only want to MPIO to sdb1.<br>
-&gt;<br>
-&gt; Manually this would maybe seem easy, but there is likely to be many<br=
->
-&gt; many drives and hot-plugged in and out etc=85 so it seems sensible to<=
-br>
-&gt; use the option of black listing and exclusions from black lists so<br>
-&gt; that DM only addresses sdx1=85.. but this is where my problems start a=
-nd<br>
-&gt; my hair fails out.<br>
-&gt;<br>
-&gt; I have tried reading everything I can find on this, and tried all<br>
-&gt; options I can think of=85 but I cannot get it work like this. =A0In fa=
-ct I<br>
-&gt; cannot seem to get it to by default see any of the partitions (without=
-<br>
-&gt; having to manually run something).<br>
-&gt;<br>
-&gt; I have even tried to blacklist ALL sd[a-z] =A0(which seems to work) bu=
-t<br>
-&gt; exclude i.e. sdb1 which doesn=92t seem to work.<br>
-&gt;<br>
-&gt; I really would appreciate any advice as I am sure that to someone who<=
-br>
-&gt; has the experience here will probably be able to resolve this in a<br>
-&gt; couple of lines as opposed to my couple of years!<br>
-&gt;<br>
-&gt; Thank you<br>
-&gt;<br>
-&gt; --<br>
-&gt; Lucas<br>
-</div></div>&gt; --<br>
-&gt; dm-devel mailing list<br>
-&gt; <a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-&gt; <a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D=
-"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
-<font color=3D"#888888"><br>
---<br>
-dm-devel mailing list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
-nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
-</font></blockquote></div><br><br clear=3D"all"><br>-- <br>Lucas<br>
-
---0015175df46eb602b80475802863--
-
-
---===============1034221298==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1034221298==--
+With the current code rdac_activate(struct scsi_device *sdev) we cannot m=
+ake that decision.  There is no information passed from dm layer to know =
+if this command is for task 1(failover) or task 2(failback).=20
