@@ -1,14 +1,11 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [PATCH 0/8] SECURITY ISSUE with connector
-Date: Fri, 9 Oct 2009 15:25:05 -0700
-Message-ID: <20091009222505.GA28979@kroah.com>
-References: <1254487211-11810-1-git-send-email-philipp.reisner@linbit.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] sort snapshots according to a chunk size
+Date: Fri, 9 Oct 2009 19:28:13 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0910091926590.334@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1254487211-11810-1-git-send-email-philipp.reisner@linbit.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,31 +15,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Philipp Reisner <philipp.reisner@linbit.com>
-Cc: linux-fbdev-devel@lists.sourceforge.net, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Evgeniy Polyakov <zbr@ioremap.net>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 02, 2009 at 02:40:03PM +0200, Philipp Reisner wrote:
-> Affected: All code that uses connector, in kernel and out of mainline
-> 
-> The connector, as it is today, does not allow the in kernel receiving
-> parts to do any checks on privileges of a message's sender.
-> 
-> I know, there are not many out there that like connector, but as
-> long as it is in the kernel, we have to fix the security issues it has!
-> 
-> Please either drop connector, or someone who feels a bit responsible
-> and has our beloved dictator's blessing, PLEASE PLEASE PLEASE take 
-> this into your tree, and send the pull request to Linus.
-> 
-> Patches 1 to 4 are already Acked-by Evgeny, the connector's maintainer.
-> Patches 5 to 7 are the obvious fixes to the connector user's code.
+Sort the snapshot list.
 
-These don't apply to the 2.6.31-stable tree at all.
+Snapshot with the largest chunk size goes first, smallest last.
 
-Could you provide them backported to that tree if you want to see them
-go into a .31-stable release?
+This fixes corruption with multiple snapshots with different chunksizes
+(https://bugzilla.redhat.com/show_bug.cgi?id=182659)
 
-thanks,
+For example, let's have two snapshots with different chunksizes, the first
+snapshot has small chunksize and the second snapshot has large chunksize.
+Let's have chunks A, B, C in these snapshots:
+snapshot1: ====A====   ====B====
+snapshot2: ==========C==========
 
-greg k-h
+Now, write to the origin at the position "A/C" comes. It triggers reallocation
+of A, then reallocation of C and links C's primary_pe to A.
+
+Then, another write to the origin comes at the position "B/C". It creates
+pending exception for "B", then it finds "C", it has already pending
+exceptions and it is already linked to "A", so nothing is done with it.
+
+If the reallocation of "B" finishes before reallocation of "C", the second
+write is dispatched to the origin and causes data corruption in the chunk "C"
+in snapshot2.
+
+To avoid this situation, we maintain snapshots sorted, in a descending order
+according to a chunk size.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-snap.c |    7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+Index: linux-2.6.31-fast-new/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.31-fast-new.orig/drivers/md/dm-snap.c	2009-10-09 23:37:10.000000000 +0200
++++ linux-2.6.31-fast-new/drivers/md/dm-snap.c	2009-10-10 01:15:29.000000000 +0200
+@@ -297,6 +297,7 @@ static void __insert_origin(struct origi
+  */
+ static int register_snapshot(struct dm_snapshot *snap)
+ {
++	struct dm_snapshot *l;
+ 	struct origin *o, *new_o;
+ 	struct block_device *bdev = snap->origin->bdev;
+ 
+@@ -320,7 +321,11 @@ static int register_snapshot(struct dm_s
+ 		__insert_origin(o);
+ 	}
+ 
+-	list_add_tail(&snap->list, &o->snapshots);
++	/* Sort the list according to chunk size, largest-first smallest-last */
++	list_for_each_entry(l, &o->snapshots, list)
++		if (l->store->chunk_size < snap->store->chunk_size)
++			break;
++	list_add_tail(&snap->list, &l->list);
+ 
+ 	up_write(&_origins_lock);
+ 	return 0;
