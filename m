@@ -1,14 +1,14 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH 0 of 10] LVM: Mirrored log support
-Date: Fri, 09 Oct 2009 18:07:17 +0200
-Message-ID: <1255104437.20671.1.camel@o>
-References: <1255036474.12319.16.camel@hydrogen.msp.redhat.com>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [PATCH 0/8] SECURITY ISSUE with connector
+Date: Fri, 9 Oct 2009 15:25:05 -0700
+Message-ID: <20091009222505.GA28979@kroah.com>
+References: <1254487211-11810-1-git-send-email-philipp.reisner@linbit.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1255036474.12319.16.camel@hydrogen.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1254487211-11810-1-git-send-email-philipp.reisner@linbit.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,44 +18,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Philipp Reisner <philipp.reisner@linbit.com>
+Cc: linux-fbdev-devel@lists.sourceforge.net, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Evgeniy Polyakov <zbr@ioremap.net>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>
 List-Id: dm-devel.ids
 
-Hi Jon,
+On Fri, Oct 02, 2009 at 02:40:03PM +0200, Philipp Reisner wrote:
+> Affected: All code that uses connector, in kernel and out of mainline
+> 
+> The connector, as it is today, does not allow the in kernel receiving
+> parts to do any checks on privileges of a message's sender.
+> 
+> I know, there are not many out there that like connector, but as
+> long as it is in the kernel, we have to fix the security issues it has!
+> 
+> Please either drop connector, or someone who feels a bit responsible
+> and has our beloved dictator's blessing, PLEASE PLEASE PLEASE take 
+> this into your tree, and send the pull request to Linus.
+> 
+> Patches 1 to 4 are already Acked-by Evgeny, the connector's maintainer.
+> Patches 5 to 7 are the obvious fixes to the connector user's code.
 
-shouldn't these rather go to lvm-devel ?
+These don't apply to the 2.6.31-stable tree at all.
 
-Heinz
+Could you provide them backported to that tree if you want to see them
+go into a .31-stable release?
 
-On Thu, 2009-10-08 at 16:14 -0500, Jonathan Brassow wrote:
-> I spent the last few days looking over the mirror allocation code.  I
-> wanted to understand why 'log_count' was being treated generically in
-> most places... as if the idea of mirrored logs were already thought of.
-> I mostly discovered that it was possible to push what looked like
-> incomplete code towards completion.  The following patches represent
-> where I would like the mirrored log support to start from.
-> 
-> These patches are a replacement to the proposed patches - a fresh start.
-> They address a couple problems that I saw with the old patches: 1)
-> Allocation policies are respected and behave the same as today for other
-> log types.
-> 2) The on-disk layout of the previous version - when given only two
-> disks to allocate from - would put the log on the front of one device
-> and the back of another.  This virtually ensures a performance hit.
-> These patches put the logs in the same place WRT the images.
-> 3) The new patches reduce parameter bloat.  I think the previous patches
-> required the extra parameters because they were using functions deep in
-> the code that were from higher levels... adding parameters and
-> "spaghettifying" the code.
-> 
-> These patches should be considered a starting point.  While 'lvcreate'
-> works, 'lvconvert' does not handle all transitions.  In fact,
-> 'lvconvert' will only handle 'core' -> 'disk/redundant' and
-> 'disk/redundant' -> 'core'.  It will not handle 'disk' <-> 'redundant'.
-> 
->  brassow
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+thanks,
+
+greg k-h
