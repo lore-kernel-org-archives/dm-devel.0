@@ -1,13 +1,14 @@
-From: Tomasz Torcz <tomek@pipebreaker.pl>
-Subject: multipathd support for non-SCSI devices (AOE)?
-Date: Wed, 21 Oct 2009 09:52:51 +0200
-Message-ID: <20091021075251.GC23138@mother.pipebreaker.pl>
+From: Wes Felter <wesley@felter.org>
+Subject: Re: dmcache project
+Date: Mon, 12 Oct 2009 14:47:50 -0500
+Message-ID: <hb0155$33r$1@ger.gmane.org>
+References: <4bbcfcd40910101336t4cf3824bsf6fb58e12c350953@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1032118362=="
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Resent-Message-ID: <20091027071044.GB14807@mother.pipebreaker.pl>
-Resent-To: dm-devel@redhat.com
+In-Reply-To: <4bbcfcd40910101336t4cf3824bsf6fb58e12c350953@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,66 +19,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: tomek@pipebreaker.pl
 List-Id: dm-devel.ids
 
+ganesh kumar wrote:
+> hello,
+>       I am working on the dmcacheio project which is described in the
+> http://kernelnewbies.org/KernelProjects/DmCache.I am newbie to he
+> kernel modules..kindly give me the ideas to implement the project
+> through device mapper.hoping replies
 
---===============1032118362==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="vGgW1X5XWziG23Ko"
-Content-Disposition: inline
+Someone already started on this: 
+http://users.cis.fiu.edu/~zhaom/dmcache/index.html
 
+There are plenty of possible improvements:
+Parameter tuning (e.g. block size)
+Replacing the set associative crap with a fully associative hash table
+Sequential IO bypass
+Flash-optimized writeback (e.g. log-structured)
 
---vGgW1X5XWziG23Ko
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
- Hello,
-
-  I was playing with ATA-over-Ethernet lately and to my sadness, multipathd
-seem to ignore aoe devices. I've traced it to followingg error:
-
-Oct 20 09:05:52 | Discover device /sys/block/etherd!e0.0
-Oct 20 09:05:52 | path /sys/block/etherd!e0.0/device not present
-
-  AOE devices don't have "device" file or symlink in their sysfs directorie=
-s.
-I've found one mailing list message from 2005 stating that multipath tools =
-are
-designed to be general, but current implementation is SCSI-only.
-  Has the situation changed recently, or am I out of luck trying to multipa=
-th
-AOE devices?
-  I'm using device-mapper-multipath-0.4.9-5.fc12.x86_64
-
-
---=20
-Tomasz Torcz                 Morality must always be based on practicality.
-xmpp: zdzichubg@chrome.pl                -- Baron Vladimir Harkonnen
-
-
---vGgW1X5XWziG23Ko
-Content-Type: application/pgp-signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.12 (GNU/Linux)
-Comment: gpg --search-keys Tomasz Torcz
-
-iEYEARECAAYFAkrevdIACgkQ10UJr+75NrlysgCeLAIGtlSTEHp7XfV6W7wvJX4+
-31cAn1cF1A5JYKO6xJp3B6iTdAsTnXHw
-=jLQd
------END PGP SIGNATURE-----
-
---vGgW1X5XWziG23Ko--
-
-
---===============1032118362==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1032118362==--
+Wes Felter
