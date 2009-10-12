@@ -1,16 +1,10 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm snapshot: add allocated metadata to
-	snapshot status
-Date: Fri, 9 Oct 2009 13:04:00 +0100
-Message-ID: <20091009120400.GB3054@agk-dp.fab.redhat.com>
-References: <1255017269-4429-1-git-send-email-snitzer@redhat.com>
-	<20091009114509.GA3054@agk-dp.fab.redhat.com>
+From: "Theodore Ts'o" <tytso@mit.edu>
+Subject: [Bug 14354] Status of barrier requests in LVM and
+	dm-crypt?
+Date: Mon, 12 Oct 2009 14:15:10 -0400
+Message-ID: <E1MxPQM-00074N-Ph@closure.thunk.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20091009114509.GA3054@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,20 +14,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: linux-ext4@vger.kernel.org, bugzilla-daemon@bugzilla.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Oct 09, 2009 at 12:45:09PM +0100, Alasdair G Kergon wrote:
-> I'm thinking a formula more like:
->   ((current_area - 2) / (exceptions_per_area + 1) + 3
-> for the number of metadata chunks.
- 
-But no - current_area already takes account of the factor (exceptions_per_area
-+ 1).
+Hi, I'm trying to track down a problem relating to ext4 problems, in
+kernel bugzilla 14354.  Originally it was thought this was a regression
+2.6.31->2.6.32-rc1 regression, but the Aneesh Kumar's report shows a
+very similar fsck transcript using a 2.6.30-1 kernel (which makes makes
+it unclear whether this is really a regression or not), and all three
+reports are tied together by the use of device-mapper.  
 
-So just current_area + 3?
+The fsck logs are consistent barriers being disabled.  As I recall under
+some circumstances device mapper silently drops barrier requests --- I
+thought this was fixed for device mapper in some cases.  What's the
+current status of barrier requests in device mapper?  Are they
+faithfully passed for standard (non-RAID) LVM2 volumes?  When was this
+changed?   What about dm-crypto volumes?  (One of the reports was with a
+dm-crypt volume from what I can tell.)
 
-(The first is 0, plus 2 for the header.)
+Thanks,
 
-Alasdair
+						- Ted
