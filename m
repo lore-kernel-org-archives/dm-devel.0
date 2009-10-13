@@ -1,15 +1,15 @@
-From: Boaz Harrosh <bharrosh@panasas.com>
-Subject: Re: [PATCH 1/1] RFC: scsi/dm-mpath: return -EACCES on
- reservation conflict
-Date: Tue, 13 Oct 2009 12:07:51 +0200
-Message-ID: <4AD45177.9050303@panasas.com>
-References: <1255406553-7054-1-git-send-email-michaelc@cs.wisc.edu>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [Bug 14354] Status of barrier requests in LVM and
+	dm-crypt?
+Date: Tue, 13 Oct 2009 10:49:45 -0400
+Message-ID: <20091013144945.GA22223@redhat.com>
+References: <E1MxPQM-00074N-Ph@closure.thunk.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1255406553-7054-1-git-send-email-michaelc@cs.wisc.edu>
+Content-Disposition: inline
+In-Reply-To: <E1MxPQM-00074N-Ph@closure.thunk.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,110 +19,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: michaelc@cs.wisc.edu
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, linux-ext4@vger.kernel.org, bugzilla-daemon@bugzilla.kernel.org
 List-Id: dm-devel.ids
 
-On 10/13/2009 06:02 AM, michaelc@cs.wisc.edu wrote:
-> From: Mike Christie <michaelc@cs.wisc.edu>
+On Mon, Oct 12 2009 at  2:15pm -0400,
+Theodore Ts'o <tytso@mit.edu> wrote:
+
+> Hi, I'm trying to track down a problem relating to ext4 problems, in
+> kernel bugzilla 14354.  Originally it was thought this was a regression
+> 2.6.31->2.6.32-rc1 regression, but the Aneesh Kumar's report shows a
+> very similar fsck transcript using a 2.6.30-1 kernel (which makes makes
+> it unclear whether this is really a regression or not), and all three
+> reports are tied together by the use of device-mapper.  
 > 
-> This patch was made over this patch
-> http://marc.info/?l=linux-scsi&m=125417106125449&w=2
-> 
-> The basic problem is that we do not want dm-multipath to retry
-> this error, but the scsi layer returns -EIO or -EILSEQ, so
-> dm-multipath cannot distinguish between a reservation conflict
-> and other errors.
-> 
-> This problem was originally discussed here
-> http://www.linux-archive.org/device-mapper-development/180290-dm-mpath-scsi-persistent-reservation.html
-> 
-> I have considered adding new blk error values (I have sent pactches
-> for this before and can send updated ones if we want to go this route),
-> and even just using more -EXYZ values for scsi errors, but in the end I am
-> just not sure it ended up being worth it, so this patch just
-> handles the one error.
-> 
-> The problem with adding new blk errors is that it seems only dm-multipath
-> knows what it wants (have not seen anything from the FS or RAID people),
-> and I also do not know what every device is sending so I cannot completely
-> clean up cases like where a device returns a error (check condition
-> and sense) indicating a controller port is temporarily unavialable.
-> For example, I do not know if I am getting a ILLEGAL request for some
-> non retryable device error vs the controller is getting its FW updated
-> (for a non retryable device error case we do not want to fail the path
-> and just want to fail the IO, but for FW update we just want to fail
-> the path), so I have to treat those device errors like a transport error
-> and just fail the path.
-> 
-> So, I did another take just using lots of different -EXYZ values. See
-> this patch
-> 
-> for an example. The problem is still that the transport error
-> and generic error cases are the same so all I bought was the handling
-> of the reservation conflict.
-> 
-> And, that is how I ended up here where I am only handling the one
-> error I know for sure will cause problems with the infrastructure we have.
-> I am  not in love with this patch, so please give me any other
-> suggestions.
-> 
+> The fsck logs are consistent barriers being disabled.  As I recall under
+> some circumstances device mapper silently drops barrier requests --- I
+> thought this was fixed for device mapper in some cases.  What's the
+> current status of barrier requests in device mapper?  Are they
+> faithfully passed for standard (non-RAID) LVM2 volumes?  When was this
+> changed?   What about dm-crypto volumes?  (One of the reports was with a
+> dm-crypt volume from what I can tell.)
 
-Hi Mike.
+Barrier infrastructure started to get added to the DM core in 2.6.30, see:
+http://git.kernel.org/linus/af7e466a1ace
 
-I guess error handling is always a mess. It's fine to take it one at a time.
-At the end we'll handle them all ;-)
+But barriers were not enabled for all DM targets (_except_ dm-multipath)
+until 2.6.31.  So 2.6.31's dm-crypt does support barriers, see:
+http://git.kernel.org/linus/647c7db14ef9
 
-Please do not use -EACCES it means something else. It means more like permissions
-thing, as if, this user does not have access but someone else might. (Actually I've
-used it in OSD when permissions are not sufficient for requested access)
+If the underlying device(s) support barriers DM should faithfully pass
+them on (again except for dm-multipath).  Also, requests with barriers
+that result in -EOPNOTSUPP are retried without the barrier, see:
+http://git.kernel.org/linus/51aa32284958
 
-I have some better suggestions perhaps, some taken from Posix/NFS world
-
-#define	EISCONN		106	/* Transport endpoint is already connected */
-#define	ECONNREFUSED	111	/* Connection refused */
-#define	EREMOTEIO	121	/* Remote I/O error */
-
-
-> Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
-> ---
->  drivers/md/dm-mpath.c   |    2 +-
->  drivers/scsi/scsi_lib.c |    4 ++++
->  2 files changed, 5 insertions(+), 1 deletions(-)
-> 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 32d0b87..93e6ce5 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -1214,7 +1214,7 @@ static int do_end_io(struct multipath *m, struct request *clone,
->  	if (!error && !clone->errors)
->  		return 0;	/* I/O complete */
->  
-> -	if (error == -EOPNOTSUPP)
-> +	if (error == -EOPNOTSUPP || error == -EACCES)
->  		return error;
->  
->  	if (mpio->pgpath)
-> diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-> index 1086552..5635035 100644
-> --- a/drivers/scsi/scsi_lib.c
-> +++ b/drivers/scsi/scsi_lib.c
-> @@ -797,6 +797,10 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
->  		 * happens.
->  		 */
->  		action = ACTION_RETRY;
-> +	else if (status_byte(cmd->result) == RESERVATION_CONFLICT) {
-> +		error = -EACCES;
-> +		description = "Could not access device";
-
-Please put: description = "scsi reservation conflict"
-
-It is a well defined scsi error that means exactly what it is.
-
-> +		action = ACTION_FAIL;
->  	} else if (sense_valid && !sense_deferred) {
->  		switch (sshdr.sense_key) {
->  		case UNIT_ATTENTION:
-
-Thanks
-Boaz
+Mike
