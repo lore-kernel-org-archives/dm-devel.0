@@ -1,56 +1,93 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [Bug 14354] Status of barrier requests in LVM and
-	dm-crypt?
-Date: Tue, 13 Oct 2009 10:49:45 -0400
-Message-ID: <20091013144945.GA22223@redhat.com>
-References: <E1MxPQM-00074N-Ph@closure.thunk.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH 0 of 2]  LVM:  Split mirror capability
+Date: Tue, 13 Oct 2009 16:20:42 -0500
+Message-ID: <1255468842.16495.21.camel@hydrogen.msp.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <E1MxPQM-00074N-Ph@closure.thunk.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, linux-ext4@vger.kernel.org, bugzilla-daemon@bugzilla.kernel.org
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <lvm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: lvm-devel@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Oct 12 2009 at  2:15pm -0400,
-Theodore Ts'o <tytso@mit.edu> wrote:
+Adding code to allow users to split legs off of a mirror wasn't all that
+hard.  However, I could use some help regarding the nature of the
+arguments that should be used to invoke this action.
 
-> Hi, I'm trying to track down a problem relating to ext4 problems, in
-> kernel bugzilla 14354.  Originally it was thought this was a regression
-> 2.6.31->2.6.32-rc1 regression, but the Aneesh Kumar's report shows a
-> very similar fsck transcript using a 2.6.30-1 kernel (which makes makes
-> it unclear whether this is really a regression or not), and all three
-> reports are tied together by the use of device-mapper.  
-> 
-> The fsck logs are consistent barriers being disabled.  As I recall under
-> some circumstances device mapper silently drops barrier requests --- I
-> thought this was fixed for device mapper in some cases.  What's the
-> current status of barrier requests in device mapper?  Are they
-> faithfully passed for standard (non-RAID) LVM2 volumes?  When was this
-> changed?   What about dm-crypto volumes?  (One of the reports was with a
-> dm-crypt volume from what I can tell.)
+The following patches introduce a new (horrible) argument '--split' to
+lvconvert that signals the intent to split and keep a desired leg of a
+mirror.  Example run:
 
-Barrier infrastructure started to get added to the DM core in 2.6.30, see:
-http://git.kernel.org/linus/af7e466a1ace
+[root@bp-01 ~]# lvcreate -m2 -L 500M -n lv vg
+  Logical volume "lv" created
+[root@bp-01 ~]# lvs -a -o name,copy_percent,devices
+  LV            Copy%  Devices
+  LogVol00             /dev/sda2(0)
+  LogVol01             /dev/sda2(4451)
+  lv            100.00 lv_mimage_0(0),lv_mimage_1(0),lv_mimage_2(0)
+  [lv_mimage_0]        /dev/sdb1(0)
+  [lv_mimage_1]        /dev/sdc1(0)
+  [lv_mimage_2]        /dev/sdd1(0)
+  [lv_mlog]            /dev/sdi1(0)
+[root@bp-01 ~]# lvconvert -m1 --split vg/lv /dev/sdc1
+  Logical volume lv converted.
+[root@bp-01 ~]# lvs
+  LV          VG         Attr   LSize   Origin Snap%  Move Log     Copy%  Convert
+  LogVol00    VolGroup00 -wi-ao 139.09g
+  LogVol01    VolGroup00 -wi-ao   9.81g
+  lv          vg         mwi-a- 500.00m                    lv_mlog 100.00
+  lv_mimage_1 vg         -wi-a- 500.00m
 
-But barriers were not enabled for all DM targets (_except_ dm-multipath)
-until 2.6.31.  So 2.6.31's dm-crypt does support barriers, see:
-http://git.kernel.org/linus/647c7db14ef9
+You can see from the above that I went as far as to specify the leg I
+wanted split off.
 
-If the underlying device(s) support barriers DM should faithfully pass
-them on (again except for dm-multipath).  Also, requests with barriers
-that result in -EOPNOTSUPP are retried without the barrier, see:
-http://git.kernel.org/linus/51aa32284958
+Aside from the new '--split' argument not being very good, we also end
+up with a new logical volume named, 'lv_mimage_1', which also isn't very
+good.  Should I change the name via s/_mimage_1/-copy-%d/, or should I
+allow the name to be specified (or left alone)?
 
-Mike
+Here is the current syntax and some others I have thought of:
+
+# New '--split' argument.
+# This is suppose to give the user the ability to signify a split
+# of the mirror, rather than a reduction/increase in mirror images.
+# However, something like '--keep_images' might better signify that
+# although we are reducing the number of mirror legs, we want to
+# have them presented rather than removed.
+prompt> lvconvert -m <n> --split vg/lv <removable device(s)>
+
+# New '--splitmirror <n>' argument
+# Replaces '-m <n> --split', and rather than specifying the number
+# of legs you want remaining in the mirror when finished, you specify
+# the number of legs you want split off.
+#
+# BTW, you can only split off one leg at a time right now, but I
+# don't see a reason why we couldn't split a 4-way mirror into
+# 2 2-way mirrors at some point in the future.  (Being able to
+# specify the removable devices also allows us to choose every
+# other device if we chose to.)
+prompt> lvconvert --splitmirror 1 vg/lv <removable device(s)>
+
+Please added better ideas if you have them... I am leaning toward the
+second example (even though I implemented the 1st in the patches).
+
+Concerning the naming of the newly split off device, we could use the
+'-n <name>' argument.  If unspecified, we would have to choose some
+default.
+
+ brassow
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
