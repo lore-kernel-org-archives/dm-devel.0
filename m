@@ -1,107 +1,158 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 1 of 2] LVM: add split capability to
-	_remove_mirror_images
-Date: Tue, 13 Oct 2009 16:21:32 -0500
-Message-ID: <200910132121.n9DLLWPo017083@hydrogen.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Subject: [PATCH 2 of 2] LVM:  use new split capability
+Date: Tue, 13 Oct 2009 16:21:42 -0500
+Message-ID: <200910132121.n9DLLgZR017156@hydrogen.msp.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
+Return-path: <lvm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
 To: lvm-devel@redhat.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: lvm-add-split-capability-to-_remove_mirror_images.patch
+Patch name: lvm-use-new-split-capability.patch
 
-This patch adds the capability to split off a mirror leg
-to the _remove_mirror_images function.  Essentially, we
-replace the function that pulls a leg from a mirror and
-frees it with just the function that pulls it.
+Percolate the ability split off a leg up to the user.
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+[FIXME:  This is just to illustrate things are working.
+Getting consensus on CLI args will be the hard part.  It
+should be easy to adjust this patch when that is done.]
+
+RFC: Jonathan Brassow <jbrassow@redhat.com>
 
 Index: LVM2/lib/metadata/mirror.c
 ===================================================================
 --- LVM2.orig/lib/metadata/mirror.c
 +++ LVM2/lib/metadata/mirror.c
-@@ -472,6 +472,8 @@ struct logical_volume *detach_mirror_log
-  *                  mirror layer and merge mirrors to the original LV.
-  *                  removable_pvs should be NULL and num_removed should be
-  *                  seg->area_count - 1.
-+ *   split:	    if non-zero, split the mimage off rather than removing
-+ *		    it.  (Note:  It will still be named '<lv>_mimage_%d'.
-  *   removed:       if non NULL, the number of removed mirror images is set
-  *                  as a result
-  *
-@@ -486,7 +488,9 @@ struct logical_volume *detach_mirror_log
- static int _remove_mirror_images(struct logical_volume *lv,
- 				 uint32_t num_removed,
- 				 struct dm_list *removable_pvs,
--				 unsigned remove_log, unsigned collapse,
-+				 unsigned remove_log,
-+				 unsigned collapse,
-+				 unsigned split,
- 				 uint32_t *removed)
- {
- 	uint32_t m;
-@@ -537,13 +541,20 @@ static int _remove_mirror_images(struct 
- 	for (m = new_area_count; m < mirrored_seg->area_count; m++) {
- 		seg_lv(mirrored_seg, m)->status &= ~MIRROR_IMAGE;
- 		lv_set_visible(seg_lv(mirrored_seg, m));
--		if (!(lvl = dm_pool_alloc(lv->vg->cmd->mem, sizeof(*lvl)))) {
--			log_error("lv_list alloc failed");
--			return 0;
-+		if (!split) {
-+			lvl = dm_pool_alloc(lv->vg->cmd->mem, sizeof(*lvl));
-+			if (!lvl) {
-+				log_error("lv_list alloc failed");
-+				return 0;
-+			}
-+			lvl->lv = seg_lv(mirrored_seg, m);
-+			dm_list_add(&tmp_orphan_lvs, &lvl->list);
-+			release_lv_segment_area(mirrored_seg, m,
-+						mirrored_seg->area_len);
-+			continue;
- 		}
--		lvl->lv = seg_lv(mirrored_seg, m);
--		dm_list_add(&tmp_orphan_lvs, &lvl->list);
--		release_lv_segment_area(mirrored_seg, m, mirrored_seg->area_len);
-+		remove_seg_from_segs_using_this_lv(seg_lv(mirrored_seg, m),
-+						   mirrored_seg);
+@@ -1607,6 +1607,37 @@ int lv_add_mirrors(struct cmd_context *c
+ 	return 0;
+ }
+ 
++int lv_split_mirror_images(struct logical_volume *lv, uint32_t split_count,
++			   struct dm_list *removable_pvs)
++{
++	int r;
++
++	/*
++	 * Right now, we only allow the user to split a single
++	 * leg off at a time.  In the future, we might allow a
++	 * 4-way mirror to be split into 2 2-way mirrors, but
++	 * not right now.
++	 */
++	if (split_count != 1) {
++		log_error("Unable to split more than one leg from a mirror.");
++		return_0;
++	}
++
++	/* Can't split a mirror that is not in-sync... unless force? */
++	if (!_mirrored_lv_in_sync(lv)) {
++		log_error("Unable to split mirror that is not in-sync.");
++		return_0;
++	}
++
++	r = _remove_mirror_images(lv, split_count,
++				  removable_pvs, 0, 0, 1, NULL);
++	if (!r)
++		return 0;
++
++	/* Rename split leg here? */
++	return 1;
++}
++
+ /*
+  * Generic interface for removing mirror and/or mirror log.
+  * 'mirror' is the number of mirrors to be removed.
+Index: LVM2/tools/args.h
+===================================================================
+--- LVM2.orig/tools/args.h
++++ LVM2/tools/args.h
+@@ -49,6 +49,7 @@ arg(nosync_ARG, '\0', "nosync", NULL, 0)
+ arg(resync_ARG, '\0', "resync", NULL, 0)
+ arg(corelog_ARG, '\0', "corelog", NULL, 0)
+ arg(mirrorlog_ARG, '\0', "mirrorlog", string_arg, 0)
++arg(mirrorsplit_ARG, '\0', "split", NULL, 0)
+ arg(repair_ARG, '\0', "repair", NULL, 0)
+ arg(use_policies_ARG, '\0', "use-policies", NULL, 0)
+ arg(monitor_ARG, '\0', "monitor", yes_no_arg, 0)
+Index: LVM2/tools/commands.h
+===================================================================
+--- LVM2.orig/tools/commands.h
++++ LVM2/tools/commands.h
+@@ -122,8 +122,9 @@ xx(lvconvert,
+    "\tOriginalLogicalVolume[Path] SnapshotLogicalVolume[Path]\n",
+ 
+    alloc_ARG, background_ARG, chunksize_ARG, corelog_ARG, interval_ARG,
+-   mirrorlog_ARG, mirrors_ARG, noudevsync_ARG, regionsize_ARG, repair_ARG,
+-   snapshot_ARG, test_ARG, use_policies_ARG, yes_ARG, force_ARG, zero_ARG)
++   mirrorsplit_ARG, mirrorlog_ARG, mirrors_ARG, noudevsync_ARG,
++   regionsize_ARG, repair_ARG, snapshot_ARG, test_ARG, use_policies_ARG,
++   yes_ARG, force_ARG, zero_ARG)
+ 
+ xx(lvcreate,
+    "Create a logical volume",
+Index: LVM2/tools/lvconvert.c
+===================================================================
+--- LVM2.orig/tools/lvconvert.c
++++ LVM2/tools/lvconvert.c
+@@ -30,6 +30,8 @@ struct lvconvert_params {
+ 	uint32_t chunk_size;
+ 	uint32_t region_size;
+ 
++	int split;
++	int track_deltas;
+ 	uint32_t mirrors;
+ 	sign_t mirrors_sign;
+ 
+@@ -125,6 +127,7 @@ static int _read_params(struct lvconvert
+ 		lp->snapshot = 1;
+ 
+ 	if (arg_count(cmd, mirrors_ARG)) {
++		lp->split = arg_count(cmd, mirrorsplit_ARG) ? 1 :0;
+ 		lp->mirrors = arg_uint_value(cmd, mirrors_ARG, 0);
+ 		lp->mirrors_sign = arg_sign_value(cmd, mirrors_ARG, 0);
  	}
- 	mirrored_seg->area_count = new_area_count;
- 
-@@ -671,7 +682,7 @@ int remove_mirror_images(struct logical_
- 			removed_once = first_seg(next_lv)->area_count - 1;
- 
- 		if (!_remove_mirror_images(next_lv, removed_once,
--					   removable_pvs, remove_log, 0, &r))
-+					   removable_pvs, remove_log, 0, 0, &r))
+@@ -681,10 +684,16 @@ static int _lvconvert_mirrors(struct cmd
+ 		/* Reduce number of mirrors */
+ 		if (repair || lp->pv_count)
+ 			remove_pvs = lp->pvh;
+-		if (!lv_remove_mirrors(cmd, lv, existing_mirrors - lp->mirrors,
+-				       (!log_count || lp->mirrors == 1) ? 1U : 0U,
+-				       remove_pvs, 0))
++
++		if (lp->split) {
++			if (!lv_split_mirror_images(lv, existing_mirrors - lp->mirrors,
++						    remove_pvs))
++				return 0;
++		} else if (!lv_remove_mirrors(cmd, lv, existing_mirrors - lp->mirrors,
++					      (!log_count || lp->mirrors == 1) ? 1U : 0U,
++					      remove_pvs, 0))
  			return_0;
- 
- 		if (r < removed_once) {
-@@ -745,7 +756,7 @@ int collapse_mirrored_lv(struct logical_
- 
- 		if (!_remove_mirror_images(mirror_seg->lv,
- 					   mirror_seg->area_count - 1,
--					   NULL, 1, 1, NULL)) {
-+					   NULL, 1, 1, 0, NULL)) {
- 			log_error("Failed to release mirror images");
- 			return 0;
- 		}
-@@ -866,7 +877,7 @@ int reconfigure_mirror_images(struct lv_
- 	init_mirror_in_sync(in_sync);
- 
- 	r = _remove_mirror_images(mirrored_seg->lv, old_num_mirrors - num_mirrors,
--				  removable_pvs, remove_log, 0, NULL);
-+				  removable_pvs, remove_log, 0, 0, NULL);
- 	if (!r)
- 		/* Unable to remove bad devices */
- 		return 0;
++
+ 		if (lp->mirrors > 1 &&
+ 		    !_lv_update_log_type(cmd, lp, lv, log_count))
+ 			return_0;
+Index: LVM2/lib/metadata/metadata-exported.h
+===================================================================
+--- LVM2.orig/lib/metadata/metadata-exported.h
++++ LVM2/lib/metadata/metadata-exported.h
+@@ -648,6 +648,8 @@ int lv_add_mirrors(struct cmd_context *c
+ 		   uint32_t mirrors, uint32_t stripes,
+ 		   uint32_t region_size, uint32_t log_count,
+ 		   struct dm_list *pvs, alloc_policy_t alloc, uint32_t flags);
++int lv_split_mirror_images(struct logical_volume *lv, uint32_t split_count,
++			   struct dm_list *removable_pvs);
+ int lv_remove_mirrors(struct cmd_context *cmd, struct logical_volume *lv,
+ 		      uint32_t mirrors, uint32_t log_count,
+ 		      struct dm_list *pvs, uint32_t status_mask);
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
