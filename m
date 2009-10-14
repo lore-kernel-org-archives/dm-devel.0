@@ -1,158 +1,68 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 2] LVM:  use new split capability
-Date: Tue, 13 Oct 2009 16:21:42 -0500
-Message-ID: <200910132121.n9DLLgZR017156@hydrogen.msp.redhat.com>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
-Return-path: <lvm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: lvm-devel@redhat.com
-Cc: dm-devel@redhat.com
+From: Ryo Tsuruta <ryov@valinux.co.jp>,
+	Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: IO controller Mini-Summit 2009
+Date: Wed, 14 Oct 2009 21:24:44 +0900 (JST)
+Message-ID: <20091014.212444.179938286.ryov@valinux.co.jp>
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
 List-Id: dm-devel.ids
 
-Patch name: lvm-use-new-split-capability.patch
+Hello,
 
-Percolate the ability split off a leg up to the user.
+I have summarized the topics for the IO controller mini-summit and
+written the ideas seen in the mailing list.
 
-[FIXME:  This is just to illustrate things are working.
-Getting consensus on CLI args will be the hard part.  It
-should be easy to adjust this patch when that is done.]
+- The place where IO controller should be implemented
+  - Block layer in conjunction with the IO scheduler
+  - Common layer right above the IO scheduler
+  - CFQ enhancement.
+  - Both block and common layer, users can select whichever controller
+    they want.
+  - VFS layer
 
-RFC: Jonathan Brassow <jbrassow@redhat.com>
+- What kind of bandwidth control policies are needed?
+  - Proportional weight
+  - Enforcing upper limit
+  - Minimum bandwidth guarantee
 
-Index: LVM2/lib/metadata/mirror.c
-===================================================================
---- LVM2.orig/lib/metadata/mirror.c
-+++ LVM2/lib/metadata/mirror.c
-@@ -1607,6 +1607,37 @@ int lv_add_mirrors(struct cmd_context *c
- 	return 0;
- }
- 
-+int lv_split_mirror_images(struct logical_volume *lv, uint32_t split_count,
-+			   struct dm_list *removable_pvs)
-+{
-+	int r;
-+
-+	/*
-+	 * Right now, we only allow the user to split a single
-+	 * leg off at a time.  In the future, we might allow a
-+	 * 4-way mirror to be split into 2 2-way mirrors, but
-+	 * not right now.
-+	 */
-+	if (split_count != 1) {
-+		log_error("Unable to split more than one leg from a mirror.");
-+		return_0;
-+	}
-+
-+	/* Can't split a mirror that is not in-sync... unless force? */
-+	if (!_mirrored_lv_in_sync(lv)) {
-+		log_error("Unable to split mirror that is not in-sync.");
-+		return_0;
-+	}
-+
-+	r = _remove_mirror_images(lv, split_count,
-+				  removable_pvs, 0, 0, 1, NULL);
-+	if (!r)
-+		return 0;
-+
-+	/* Rename split leg here? */
-+	return 1;
-+}
-+
- /*
-  * Generic interface for removing mirror and/or mirror log.
-  * 'mirror' is the number of mirrors to be removed.
-Index: LVM2/tools/args.h
-===================================================================
---- LVM2.orig/tools/args.h
-+++ LVM2/tools/args.h
-@@ -49,6 +49,7 @@ arg(nosync_ARG, '\0', "nosync", NULL, 0)
- arg(resync_ARG, '\0', "resync", NULL, 0)
- arg(corelog_ARG, '\0', "corelog", NULL, 0)
- arg(mirrorlog_ARG, '\0', "mirrorlog", string_arg, 0)
-+arg(mirrorsplit_ARG, '\0', "split", NULL, 0)
- arg(repair_ARG, '\0', "repair", NULL, 0)
- arg(use_policies_ARG, '\0', "use-policies", NULL, 0)
- arg(monitor_ARG, '\0', "monitor", yes_no_arg, 0)
-Index: LVM2/tools/commands.h
-===================================================================
---- LVM2.orig/tools/commands.h
-+++ LVM2/tools/commands.h
-@@ -122,8 +122,9 @@ xx(lvconvert,
-    "\tOriginalLogicalVolume[Path] SnapshotLogicalVolume[Path]\n",
- 
-    alloc_ARG, background_ARG, chunksize_ARG, corelog_ARG, interval_ARG,
--   mirrorlog_ARG, mirrors_ARG, noudevsync_ARG, regionsize_ARG, repair_ARG,
--   snapshot_ARG, test_ARG, use_policies_ARG, yes_ARG, force_ARG, zero_ARG)
-+   mirrorsplit_ARG, mirrorlog_ARG, mirrors_ARG, noudevsync_ARG,
-+   regionsize_ARG, repair_ARG, snapshot_ARG, test_ARG, use_policies_ARG,
-+   yes_ARG, force_ARG, zero_ARG)
- 
- xx(lvcreate,
-    "Create a logical volume",
-Index: LVM2/tools/lvconvert.c
-===================================================================
---- LVM2.orig/tools/lvconvert.c
-+++ LVM2/tools/lvconvert.c
-@@ -30,6 +30,8 @@ struct lvconvert_params {
- 	uint32_t chunk_size;
- 	uint32_t region_size;
- 
-+	int split;
-+	int track_deltas;
- 	uint32_t mirrors;
- 	sign_t mirrors_sign;
- 
-@@ -125,6 +127,7 @@ static int _read_params(struct lvconvert
- 		lp->snapshot = 1;
- 
- 	if (arg_count(cmd, mirrors_ARG)) {
-+		lp->split = arg_count(cmd, mirrorsplit_ARG) ? 1 :0;
- 		lp->mirrors = arg_uint_value(cmd, mirrors_ARG, 0);
- 		lp->mirrors_sign = arg_sign_value(cmd, mirrors_ARG, 0);
- 	}
-@@ -681,10 +684,16 @@ static int _lvconvert_mirrors(struct cmd
- 		/* Reduce number of mirrors */
- 		if (repair || lp->pv_count)
- 			remove_pvs = lp->pvh;
--		if (!lv_remove_mirrors(cmd, lv, existing_mirrors - lp->mirrors,
--				       (!log_count || lp->mirrors == 1) ? 1U : 0U,
--				       remove_pvs, 0))
-+
-+		if (lp->split) {
-+			if (!lv_split_mirror_images(lv, existing_mirrors - lp->mirrors,
-+						    remove_pvs))
-+				return 0;
-+		} else if (!lv_remove_mirrors(cmd, lv, existing_mirrors - lp->mirrors,
-+					      (!log_count || lp->mirrors == 1) ? 1U : 0U,
-+					      remove_pvs, 0))
- 			return_0;
-+
- 		if (lp->mirrors > 1 &&
- 		    !_lv_update_log_type(cmd, lp, lv, log_count))
- 			return_0;
-Index: LVM2/lib/metadata/metadata-exported.h
-===================================================================
---- LVM2.orig/lib/metadata/metadata-exported.h
-+++ LVM2/lib/metadata/metadata-exported.h
-@@ -648,6 +648,8 @@ int lv_add_mirrors(struct cmd_context *c
- 		   uint32_t mirrors, uint32_t stripes,
- 		   uint32_t region_size, uint32_t log_count,
- 		   struct dm_list *pvs, alloc_policy_t alloc, uint32_t flags);
-+int lv_split_mirror_images(struct logical_volume *lv, uint32_t split_count,
-+			   struct dm_list *removable_pvs);
- int lv_remove_mirrors(struct cmd_context *cmd, struct logical_volume *lv,
- 		      uint32_t mirrors, uint32_t log_count,
- 		      struct dm_list *pvs, uint32_t status_mask);
+- How to handle buffered writes?
+  - Add dirt-ratio in the memory controller
+  - Add bufferred-write-cgroup to track buffered writebacks
+  - A per group per bdi pdflush threads
 
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+- Who should be charged for swap activity?
+  - who requests a page.
+  - who has a page.
+  - All swap activities are charged to the root group.
+
+And I would also like to discuss about the followings.
+
+- Extensions of struct bio
+  - Make a bio point to the io_context of a process which creates the
+    I/O request. This allows to pass the IO scheduling class and
+    priority information to IO controller even if the IO is submitted
+    by another process which does not create the request, such as a
+    worker thread.
+  - Add a new flag to struct bio to identify the bio as urgent. This
+    gives IO controller a chance to handle the bio as high
+    priority. This flag should be set if the bio is created for the
+    page-out operation. 
+
+- Common test methods to verify the functionality of IO controller.
+
+Please give me comments and suggestions. I may be missing or
+misunderstanding something.
+
+Thanks,
+Ryo Tsuruta
