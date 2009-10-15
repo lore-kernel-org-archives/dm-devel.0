@@ -1,191 +1,39 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: IO controller Mini-Summit 2009
-Date: Thu, 15 Oct 2009 11:35:36 +0900 (JST)
-Message-ID: <20091015.113536.232748879.ryov@valinux.co.jp>
-References: <20091014175521.GG3528@redhat.com> <4AD66F28.9030607@oss.ntt.co.jp>
-	<4AD67DFB.60402@oss.ntt.co.jp>
+From: Massimo Cetra <mcetra@navynet.it>
+Subject: Re: Bug on barriers for virtio_blk device - end_request: I/O error,
+ dev vda, sector 0
+Date: Thu, 15 Oct 2009 12:55:23 +0200
+Message-ID: <4AD6FF9B.6060109@navynet.it>
+References: <4AD5DC1D.9070002@navynet.it> <4AD5DC1D.9070002@navynet.it>1 2 <4AD62690.9080408@navynet.it> <200910142232.14837.elendil@planet.nl>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <4AD67DFB.60402@oss.ntt.co.jp>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: yoshikawa.takuya@oss.ntt.co.jp
-Cc: xen-devel@lists.xensource.com, guijianfeng@cn.fujitsu.com, containers@lists.linux-foundation.org, lizf@cn.fujitsu.com, linux-kernel@vger.kernel.org, rostedt@goodmis.org, virtualization@lists.linux-foundation.org, taka@valinux.co.jp, yamahata@valinux.co.jp, dm-devel@redhat.com, baramsori72@gmail.com, takebe_akio@jp.fujitsu.com, jens.axboe@oracle.com, nauman@google.com, m-ikeda@ds.jp.nec.com, fernando@oss.ntt.co.jp, vgoyal@redhat.com, balbir@linux.vnet.ibm.com
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762657AbZJOK4J@vger.kernel.org>
+In-Reply-To: <200910142232.14837.elendil@planet.nl>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Frans Pop <elendil@planet.nl>
+Cc: linux-kernel@vger.kernel.org, Mark McLoughlin <markmc@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, virtualization <virtualization@lists.linux-foundation.org>, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Yoshikawa-san and all,
+Frans Pop ha scritto:
+> Added CCs for the author of and people CCed on the patch.
+> 
+> The patch has been submitted twice (6 Aug, 3 Sept), the first time there 
+> was one concern voiced which seems to have been addressed in replies. The 
+> second time there were no reactions.
+> 
+> The patch seems to work for Massimo...
 
-Takuya Yoshikawa <yoshikawa.takuya@oss.ntt.co.jp> wrote:
-> Hi all,
-> =
+[CUT]
 
-> As Fernando said below, I will be glad if I can help you by taking
-> notes of the mini summit. I would also be glad if someone helps me
-> take notes.
+>> No one listening here ?
+> 
+> It helps if you CC the people who maintain the relevant code.
 
-It is very helpful, thank you very much.
+Thanks, Frans.
 
-> Tsuruta-san, thank you for summarizing the topics. It looks good!
-> The only thing I am worrying about is whether we can summarize our
-> discussions for 5-6 minutes of presentation.
+By the way, where can i find a list of the mantainers of the various areas ?
+I found it some years ago, but it seems i can't find it anymore.
+It's probably under my eyes... but i'm blind.
 
-I would like to do what little I can to help it.
-And if you permit, I would like to publish the meeting miniutes and
-the presentation slides on the mini-summit web site.
- =
-
-> I would be happy if we all have it in mind that we can send our
-> message to maintainers, including Ted Tso, by sending our summary.
-> So before starting the discussion, how about taking some time to
-> talk about which topic we want to include in the summary.
-
-I think it is a good idea to talk about it at the start.
-
-> IMHO,
->  >>> - The place where IO controller should be implemented
-> is the most important, basic, topic, and other things should be
-> summarized so as to explain why we think the place, e.g. block layer,=
-
-> VFS layer, common layer, is better for implementing io controllers.
-> =
-
-> It would also be better if we can answer to the comments we have
-> already received from maintainers, e.g. Andrew, Jens.
-
-I would like to do so, too.
-
-Thanks,
-Ryo Tsuruta
-
-> Thanks,
-> Takuya Yoshikawa
-> =
-
-> =
-
-> =
-
-> =
-
-> Fernando Luis V=E1zquez Cao wrote:
-> > Hi Vivek,
-> > Thank you for CCing me.
-> > I just wanted to let you know that Ted Tso was kind enough to let
-> > us give a readout for the mini-summit at the kernel summit.
-> > There will be other mini-summits sharing 50 minutes so we need to
-> > keep each mini-summit readout to 5-6 minutes of presentation and
-> > 4-5 minutes of questions/discussions.
-> > Yoshikawa-san and myself were planning to take notes of the
-> > mini-summit, but it would be great if you could share yours.  The
-> > idea is to use those to prepare a brief mini-summit report (4-5
-> > slides) that we can show at the kernel summit.
-> > Later in the day, after the mini-summit, we would be sending a
-> > draft version of the slides to the relevant mailing lists for you
-> > to review. Since the mini-summit readouts will take place on
-> > Monday I would appreciate it if you could comment on them before
-> > Sunday night the latest.
-> > Thanks,
-> > Fernando
-> > Vivek Goyal wrote:
-> >> On Wed, Oct 14, 2009 at 09:24:44PM +0900, Ryo Tsuruta wrote:
-> >>> Hello,
-> >>>
-> >>
-> >> Hi Ryo,
-> >>
-> >> CCing people who are planning to attend the mini summit either in =
-person
-> >> or phone. (As per your list on io mini summit wiki page). Not sure=
- if
-> >> everybody is scanning mailing list for update on mini summit.
-> >>
-> >> I am checking out wiki page for more information like Venue. It sa=
-ys the
-> >> venue is linux foundation office Japan. Hopefully there is no chan=
-ge in
-> >> that information.
-> >>
-> >> What are the conference call details for the people who might want=
- to join
-> >> in over phone? Could not find those. Are you yet to post these?
-> >>
-> >> Thanks
-> >> Vivek
-> >>
-> >>> I have summarized the topics for the IO controller mini-summit an=
-d
-> >>> written the ideas seen in the mailing list.
-> >>>
-> >>> - The place where IO controller should be implemented
-> >>>   - Block layer in conjunction with the IO scheduler
-> >>>   - Common layer right above the IO scheduler
-> >>>   - CFQ enhancement.
-> >>>   - Both block and common layer, users can select whichever contr=
-oller
-> >>>     they want.
-> >>>   - VFS layer
-> >>>
-> >>> - What kind of bandwidth control policies are needed?
-> >>>   - Proportional weight
-> >>>   - Enforcing upper limit
-> >>>   - Minimum bandwidth guarantee
-> >>>
-> >>> - How to handle buffered writes?
-> >>>   - Add dirt-ratio in the memory controller
-> >>>   - Add bufferred-write-cgroup to track buffered writebacks
-> >>>   - A per group per bdi pdflush threads
-> >>>
-> >>> - Who should be charged for swap activity?
-> >>>   - who requests a page.
-> >>>   - who has a page.
-> >>>   - All swap activities are charged to the root group.
-> >>>
-> >>> And I would also like to discuss about the followings.
-> >>>
-> >>> - Extensions of struct bio
-> >>>   - Make a bio point to the io_context of a process which creates=
- the
-> >>>     I/O request. This allows to pass the IO scheduling class and
-> >>>     priority information to IO controller even if the IO is submi=
-tted
-> >>>     by another process which does not create the request, such as=
- a
-> >>>     worker thread.
-> >>>   - Add a new flag to struct bio to identify the bio as urgent. T=
-his
-> >>>     gives IO controller a chance to handle the bio as high
-> >>>     priority. This flag should be set if the bio is created for t=
-he
-> >>>     page-out operation.
-> >>> - Common test methods to verify the functionality of IO controlle=
-r.
-> >>>
-> >>> Please give me comments and suggestions. I may be missing or
-> >>> misunderstanding something.
-> >>>
-> >>> Thanks,
-> >>> Ryo Tsuruta
-> >>> -- To unsubscribe from this list: send the line "unsubscribe linu=
-x-kernel" in
-> >>> the body of a message to majordomo@vger.kernel.org
-> >>> More majordomo info at  http://vger.kernel.org/majordomo-info.htm=
-l
-> >>> Please read the FAQ at  http://www.tux.org/lkml/
-> > =
-
-> =
-
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
-l" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Thanks again
+Massimo
