@@ -1,15 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH resend] block: silently error unsupported
-	empty barriers too
-Date: Thu, 15 Oct 2009 01:23:50 +0100
-Message-ID: <20091015002350.GV16950@agk-dp.fab.redhat.com>
-References: <1251992870.3084.125.camel@blaa>
+From: =?ISO-8859-1?Q?Fernando_Luis_V=E1zquez_Cao?=
+ <fernando@oss.ntt.co.jp>
+Subject: Re: IO controller Mini-Summit 2009
+Date: Thu, 15 Oct 2009 09:39:04 +0900
+Message-ID: <4AD66F28.9030607@oss.ntt.co.jp>
+References: <20091014.212444.179938286.ryov@valinux.co.jp>
+	<20091014175521.GG3528@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1251992870.3084.125.camel@blaa>
+In-Reply-To: <20091014175521.GG3528@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,12 +20,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Mark McLoughlin <markmc@redhat.com>, Rusty Russell <rusty@rustcorp.com.au>, linux-kernel <linux-kernel@vger.kernel.org>, virtualization <virtualization@lists.linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Takuya Yoshikawa <yoshikawa.takuya@oss.ntt.co.jp>, xen-devel@lists.xensource.com, Gui Jianfeng <guijianfeng@cn.fujitsu.com>, containers@lists.linux-foundation.org, Li Zefan <lizf@cn.fujitsu.com>, linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, Dong-Jae Kang <baramsori72@gmail.com>, Nauman Rafique <nauman@google.com>, Akio Takebe <takebe_akio@jp.fujitsu.com>, Jens Axboe <jens.axboe@oracle.com>, Munehiro Ikeda <m-ikeda@ds.jp.nec.com>, Balbir Singh <balbir@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 03, 2009 at 04:47:50PM +0100, Mark McLoughlin wrote:
-> We should error all barriers, even empty barriers, on devices like
-> virtio_blk which don't support them.
+Hi Vivek,
 
-Acked-by: Alasdair G Kergon <agk@redhat.com>
+Thank you for CCing me.
+
+I just wanted to let you know that Ted Tso was kind enough to let
+us give a readout for the mini-summit at the kernel summit.
+
+There will be other mini-summits sharing 50 minutes so we need to
+keep each mini-summit readout to 5-6 minutes of presentation and
+4-5 minutes of questions/discussions.
+
+Yoshikawa-san and myself were planning to take notes of the
+mini-summit, but it would be great if you could share yours.  The
+idea is to use those to prepare a brief mini-summit report (4-5
+slides) that we can show at the kernel summit.
+
+Later in the day, after the mini-summit, we would be sending a
+draft version of the slides to the relevant mailing lists for you
+to review. Since the mini-summit readouts will take place on
+Monday I would appreciate it if you could comment on them before
+Sunday night the latest.
+
+Thanks,
+
+Fernando
+
+Vivek Goyal wrote:
+> On Wed, Oct 14, 2009 at 09:24:44PM +0900, Ryo Tsuruta wrote:
+>> Hello,
+>>
+> 
+> Hi Ryo,
+> 
+> CCing people who are planning to attend the mini summit either in person
+> or phone. (As per your list on io mini summit wiki page). Not sure if
+> everybody is scanning mailing list for update on mini summit.
+> 
+> I am checking out wiki page for more information like Venue. It says the
+> venue is linux foundation office Japan. Hopefully there is no change in
+> that information.
+> 
+> What are the conference call details for the people who might want to join
+> in over phone? Could not find those. Are you yet to post these?
+> 
+> Thanks
+> Vivek
+> 
+>> I have summarized the topics for the IO controller mini-summit and
+>> written the ideas seen in the mailing list.
+>>
+>> - The place where IO controller should be implemented
+>>   - Block layer in conjunction with the IO scheduler
+>>   - Common layer right above the IO scheduler
+>>   - CFQ enhancement.
+>>   - Both block and common layer, users can select whichever controller
+>>     they want.
+>>   - VFS layer
+>>
+>> - What kind of bandwidth control policies are needed?
+>>   - Proportional weight
+>>   - Enforcing upper limit
+>>   - Minimum bandwidth guarantee
+>>
+>> - How to handle buffered writes?
+>>   - Add dirt-ratio in the memory controller
+>>   - Add bufferred-write-cgroup to track buffered writebacks
+>>   - A per group per bdi pdflush threads
+>>
+>> - Who should be charged for swap activity?
+>>   - who requests a page.
+>>   - who has a page.
+>>   - All swap activities are charged to the root group.
+>>
+>> And I would also like to discuss about the followings.
+>>
+>> - Extensions of struct bio
+>>   - Make a bio point to the io_context of a process which creates the
+>>     I/O request. This allows to pass the IO scheduling class and
+>>     priority information to IO controller even if the IO is submitted
+>>     by another process which does not create the request, such as a
+>>     worker thread.
+>>   - Add a new flag to struct bio to identify the bio as urgent. This
+>>     gives IO controller a chance to handle the bio as high
+>>     priority. This flag should be set if the bio is created for the
+>>     page-out operation. 
+>>
+>> - Common test methods to verify the functionality of IO controller.
+>>
+>> Please give me comments and suggestions. I may be missing or
+>> misunderstanding something.
+>>
+>> Thanks,
+>> Ryo Tsuruta
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>> Please read the FAQ at  http://www.tux.org/lkml/
