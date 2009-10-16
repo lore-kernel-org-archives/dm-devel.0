@@ -1,7 +1,7 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Subject: [PATCH 9/9] rqdm core: add barrier support
-Date: Fri, 16 Oct 2009 14:06:46 +0900
-Message-ID: <4AD7FF66.1080001@ct.jp.nec.com>
+Date: Fri, 16 Oct 2009 14:17:31 +0900
+Message-ID: <4AD801EB.60904@ct.jp.nec.com>
 References: <4AD7FC11.7030009@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,10 +22,13 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+(Resending since the patchwork mis-catched.)
+
 This patch adds barrier support for request-based dm.
 
+
 CORE DESIGN
-===========
+
 The design is basically same as bio-based dm, which emulates barrier
 by mapping empty barrier bios before/after a barrier I/O.
 But request-based dm has been using struct request_queue for I/O
@@ -73,8 +76,9 @@ o dm-core
   the request_queue has been stopped.  Otherwise, the next flush work
   can be kicked even after the suspend completes.
 
+
 TARGET INTERFACE
-================
+
 No new interface is added.
 Just use the existing num_flush_requests in struct target_type
 as same as bio-based dm.
