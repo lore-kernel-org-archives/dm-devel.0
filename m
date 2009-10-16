@@ -1,7 +1,8 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 1/9] dm core: clean up in-flight checking
-Date: Fri, 16 Oct 2009 13:55:29 +0900
-Message-ID: <4AD7FCC1.6040100@ct.jp.nec.com>
+Subject: [PATCH 2/9] rqdm core: map_request() takes clone instead
+	of orig
+Date: Fri, 16 Oct 2009 13:57:15 +0900
+Message-ID: <4AD7FD2B.3020800@ct.jp.nec.com>
 References: <4AD7FC11.7030009@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,47 +23,42 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds md_in_flight() to get the number of in_flight I/Os.
-No functional change.
+This patch changes the argument of map_request() to clone request
+from original request.  No functional change.
 
-This patch is a preparation for PATCH 6, which changes I/O counter
-to md->pending from q->in_flight in request-based dm.
-
-This patch depends on:
-  http://git.kernel.org/?p=linux/kernel/git/axboe/linux-2.6-block.git;a=commit;h=a9327cac440be4d8333bba975cbbf76045096275
-  (Seperate read and write statistics of in_flight requests)
+This patch is a preparation for PATCH 9, which needs to use
+map_request() for clones sharing an original barrier request.
 
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: Alasdair G Kergon <agk@redhat.com>
 ---
- drivers/md/dm.c |    9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ drivers/md/dm.c |    5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
 Index: 2.6.32-rc4/drivers/md/dm.c
 ===================================================================
 --- 2.6.32-rc4.orig/drivers/md/dm.c
 +++ 2.6.32-rc4/drivers/md/dm.c
-@@ -450,6 +450,12 @@ static void free_bio_info(struct dm_rq_c
- 	mempool_free(info, info->tio->md->io_pool);
+@@ -1493,11 +1493,10 @@ static int dm_prep_fn(struct request_que
+ 	return BLKPREP_OK;
  }
  
-+static int md_in_flight(struct mapped_device *md)
-+{
-+	return atomic_read(&md->pending[READ]) +
-+	       atomic_read(&md->pending[WRITE]);
-+}
-+
- static void start_io_acct(struct dm_io *io)
+-static void map_request(struct dm_target *ti, struct request *rq,
++static void map_request(struct dm_target *ti, struct request *clone,
+ 			struct mapped_device *md)
  {
- 	struct mapped_device *md = io->md;
-@@ -2100,8 +2106,7 @@ static int dm_wait_for_completion(struct
- 				break;
- 			}
- 			spin_unlock_irqrestore(q->queue_lock, flags);
--		} else if (!atomic_read(&md->pending[0]) &&
--					!atomic_read(&md->pending[1]))
-+		} else if (!md_in_flight(md))
- 			break;
+ 	int r;
+-	struct request *clone = rq->special;
+ 	struct dm_rq_target_io *tio = clone->end_io_data;
  
- 		if (interruptible == TASK_INTERRUPTIBLE &&
+ 	/*
+@@ -1576,7 +1575,7 @@ static void dm_request_fn(struct request
+ 
+ 		blk_start_request(rq);
+ 		spin_unlock(q->queue_lock);
+-		map_request(ti, rq, md);
++		map_request(ti, rq->special, md);
+ 		spin_lock_irq(q->queue_lock);
+ 	}
+ 
