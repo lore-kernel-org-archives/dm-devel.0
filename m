@@ -1,15 +1,9 @@
-From: Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>
-Subject: memory consumption of multipathd after Upgrade SLES 10
-	SP2 -> SLES 11
-Date: Fri, 16 Oct 2009 17:20:42 +0200
-Message-ID: <200910161720.42414.sebastia@l00-bugdead-prods.de>
+From: bmarzins@sourceware.org
+Subject: multipath-tools devmap_name/devmap_name.c kpar ...
+Date: 16 Oct 2009 19:58:11 -0000
+Message-ID: <20091016195811.25777.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,134 +13,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	bmarzins@sourceware.org	2009-10-16 19:58:10
 
-I use multipath tools to manage the multiple ways through the SAN connected 
-via FC. The server sees two paths per LUN. There are 15 LUNs presented to the 
-server.
+Modified files:
+	devmap_name    : devmap_name.c 
+	kpartx         : devmapper.c devmapper.h kpartx.c 
 
-I upgraded two server to SLES 11, installed latest patches, running kernel:
-Linux server1 2.6.27.29-0.1-xen #1 SMP 2009-08-15 17:53:59 +0200 x86_64 x86_64 
-x86_64 GNU/Linux
+Log message:
+	Fix for bz #528734.  kpartx now correctly handles minor numbers greater than
+	255.
 
-multipath-tools-0.4.8-40.4.1
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/devmap_name/devmap_name.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.3&r2=1.3.2.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.6.2.3&r2=1.6.2.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/devmapper.h.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.3.2.3&r2=1.3.2.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/kpartx.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.7.2.4&r2=1.7.2.5
 
-There I recognized a fairly large amount of memory used by multipathd:
-  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
- 5367 root      RT   0  238m 140m 2804 S    0 28.1   0:34.70 multipathd
-
-I see the huge memory consumption on both of the servers. 
-
-
-On a different server, not yet upgraded, running SLES 10 SP2, with different 
-SAN storages applied, there I run kernel:
-Linux server2 2.6.16.60-0.34-xen #1 SMP Fri Jan 16 14:59:01 UTC 2009 x86_64 
-x86_64 x86_64 GNU/Linux
-with multipath tools:
-multipath-tools-0.4.7-34.40
-There I have 20 LUNs presented, and the server sees 4 paths per LUN, I in top 
-a much fewer memory consumption:
-  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
- 4796 root      RT   0 11928 4808 2220 S    0  1.6   0:01.37 multipathd
-
-
-However, both of the servers running SLES 11 work fine so far, no "errors" 
-recognized. I still wonder whether the large memory consumption is correct, as 
-I expected sth. similar as on the SLES10 SP2 hosts. 
-Below the configuration file I use on the SLES 11 servers.
-
-If I need to provide more information, please let me know.
-
-cheers
-Sebastian
-
-/etc/init.d/multipath.conf file on the SLES 11 servers.
-defaults {
-        udev_dir        /dev
-        verbosity       2
-        polling_interval 10
-        selector        "round-robin 0"
-        path_grouping_policy    group_by_serial
-        getuid_callout  "/lib/udev/scsi_id -g -u -d /dev/%n"
-        path_checker    tur
-        rr_min_io       100
-        max_fds         8192
-        rr_weight       priorities
-        failback        immediate
-        no_path_retry  fail
-        user_friendly_names yes
-}
-
-blacklist {
-        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*|sda"
-        devnode "^hd[a-z][[0-9]*]"
-        devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
-}
-blacklist_exceptions {
-        devnode "^sda[a-z]+"
-}
-multipaths {
-        multipath {
-                wwid                    3600508b4001074ab0000c000014e0000
-                alias                   ONE
-        }
-        multipath {
-                wwid                    3600508b4001074ab0000c000014b0000
-                alias                   TWO
-        }
-        multipath {
-                wwid                    3600508b4001074ab0000c00001960000
-                alias                   THREE
-        }
-        multipath {
-                wwid                    3600508b4001074ab0000c00001be0000
-                alias                   FOUR
-        }
-        multipath {
-                wwid                    3600a0b800048b31000000fdc4a0809ff
-                alias                   FIVE
-        }
-        multipath {
-                wwid                    3600a0b800048b31000000fb949f9627c
-                alias                   SIX
-        }
-        multipath {
-                wwid                    3600a0b800048b31000000fc249f96349
-                alias                   SEVEN
-        }
-        multipath {
-                wwid                    3600a0b800048b31000000fbc49f962b0
-                alias                   EIGHT
-        }
-        multipath {
-                wwid                    3600a0b800048b31000000fc049f96308
-                alias                   NINE
-        }
-        multipath {
-                wwid                    3600508b4001074ab0000c00000a70000
-                alias                   TEN
-        }
-        multipath {
-                wwid                    3600a0b800048b310000017c64a48ee34
-                alias                   ELEVEN
-        }
-        multipath {
-                wwid                    3600a0b800048b310000017c44a48ec5a
-                alias                   TWELVE
-        }
-        multipath {
-                wwid                    3600a0b800048b310000017a04a4058d0
-                alias                   THIRTEEN
-        }
-        multipath {
-                wwid                    3600a0b800048b3100000179d4a40589e
-                alias                   FOURTEEN
-        }
-        multipath {
-                wwid                    3600a0b800048b310000017c94a48ee57
-                alias                   FIVETEEN
-        }
-}
+--- multipath-tools/devmap_name/devmap_name.c	2005/11/16 20:24:57	1.3
++++ multipath-tools/devmap_name/devmap_name.c	2009/10/16 19:58:10	1.3.2.1
+@@ -6,7 +6,6 @@
+ #include <string.h>
+ #include <ctype.h>
+ #include <unistd.h>
+-#include <linux/kdev_t.h>
+ #include <libdevmapper.h>
+ 
+ static void usage(char * progname) {
+--- multipath-tools/kpartx/devmapper.c	2009/01/19 22:34:01	1.6.2.3
++++ multipath-tools/kpartx/devmapper.c	2009/10/16 19:58:10	1.6.2.4
+@@ -7,7 +7,6 @@
+ #include <stdint.h>
+ #include <libdevmapper.h>
+ #include <ctype.h>
+-#include <linux/kdev_t.h>
+ #include <errno.h>
+ #include "devmapper.h"
+ 
+--- multipath-tools/kpartx/devmapper.h	2009/01/19 22:34:01	1.3.2.3
++++ multipath-tools/kpartx/devmapper.h	2009/10/16 19:58:10	1.3.2.4
+@@ -1,3 +1,7 @@
++#define MAJOR(dev)      ((dev & 0xfff00) >> 8)
++#define MINOR(dev)      ((dev & 0xff) | ((dev >> 12) & 0xfff00))
++#define MKDEV(ma,mi)    ((mi & 0xff) | (ma << 8) | ((mi & ~0xff) << 12))
++
+ int dm_prereq (char *, int, int, int);
+ int dm_simplecmd (int, const char *);
+ int dm_addmap (int, const char *, const char *, const char *, uint64_t,
+--- multipath-tools/kpartx/kpartx.c	2009/01/19 22:34:01	1.7.2.4
++++ multipath-tools/kpartx/kpartx.c	2009/10/16 19:58:10	1.7.2.5
+@@ -30,7 +30,6 @@
+ #include <sys/types.h>
+ #include <ctype.h>
+ #include <libdevmapper.h>
+-#include <linux/kdev_t.h>
+ 
+ #include "devmapper.h"
+ #include "crc32.h"
