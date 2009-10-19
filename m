@@ -1,14 +1,19 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: IO controller Mini-Summit 2009
-Date: Mon, 19 Oct 2009 16:58:05 +0900 (JST)
-Message-ID: <20091019.165805.226786007.ryov@valinux.co.jp>
-References: <20091014.212444.179938286.ryov@valinux.co.jp>
+From: Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>
+Subject: Re: memory consumption of multipathd after Upgrade SLES
+	=?iso-8859-1?q?10=09SP2?= -> SLES 11
+Date: Mon, 19 Oct 2009 13:14:47 +0200
+Message-ID: <200910191314.48183.sebastia@l00-bugdead-prods.de>
+References: <200910161720.42414.sebastia@l00-bugdead-prods.de>
+	<4ADC0453.9010406@suse.de>
+	<200910190904.11668.sebastia@l00-bugdead-prods.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091014.212444.179938286.ryov@valinux.co.jp>
+In-Reply-To: <200910190904.11668.sebastia@l00-bugdead-prods.de>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,18 +23,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: vgoyal@redhat.com, jens.axboe@oracle.com, nauman@google.com, balbir@linux.vnet.ibm.com, rostedt@goodmis.org, m-ikeda@ds.jp.nec.com, taka@valinux.co.jp, lizf@cn.fujitsu.com, guijianfen
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, @valinux.co.jp
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
+Hi,
 
-I've uploaded the conslusions of IO controller Mini-summit 2009 on the
-web page. Thanks Fernando for creating the slides.
-http://sourceforge.net/apps/trac/ioband/wiki/iosummit
+On Monday 19 October 2009 09:04:11 am Sebastian Reitenbach wrote:
+> Hi,
+>
+> On Monday 19 October 2009 08:16:51 am Hannes Reinecke wrote:
+> > Sebastian Reitenbach wrote:
+> > > Hi,
+> > >
+> > > I use multipath tools to manage the multiple ways through the SAN
+> > > connected via FC. The server sees two paths per LUN. There are 15 LUNs
+> > > presented to the server.
+> > >
+> > > I upgraded two server to SLES 11, installed latest patches, running
+> > > kernel: Linux server1 2.6.27.29-0.1-xen #1 SMP 2009-08-15 17:53:59
+> > > +0200 x86_64 x86_64 x86_64 GNU/Linux
+> > >
+> > > multipath-tools-0.4.8-40.4.1
+> > >
+> > > There I recognized a fairly large amount of memory used by multipathd:
+> > >   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+> > >  5367 root      RT   0  238m 140m 2804 S    0 28.1   0:34.70 multipathd
+> > >
+> > > I see the huge memory consumption on both of the servers.
+> > >
+> > >
+> > > On a different server, not yet upgraded, running SLES 10 SP2, with
+> > > different SAN storages applied, there I run kernel:
+> > > Linux server2 2.6.16.60-0.34-xen #1 SMP Fri Jan 16 14:59:01 UTC 2009
+> > > x86_64 x86_64 x86_64 GNU/Linux
+> > > with multipath tools:
+> > > multipath-tools-0.4.7-34.40
+> > > There I have 20 LUNs presented, and the server sees 4 paths per LUN, I
+> > > in top a much fewer memory consumption:
+> > >   PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
+> > >  4796 root      RT   0 11928 4808 2220 S    0  1.6   0:01.37 multipathd
+> > >
+> > >
+> > > However, both of the servers running SLES 11 work fine so far, no
+> > > "errors" recognized. I still wonder whether the large memory
+> > > consumption is correct, as I expected sth. similar as on the SLES10 SP2
+> > > hosts. Below the configuration file I use on the SLES 11 servers.
+> >
+> > This is a known regression with SLES11. Please update to the latest
+> > maintenance release.
+>
+> I thought I have all available updates installed, need to check, refresh my
+> update sources, and see again whether updates are available.
 
-Thank you to all attendees and thank you to the Linux Foundation Japan
-for providing us with a conference venue and facilities. 
+Not perfectly sure what you mean with latest maintenance release. However, I 
+just synched again the SLES 11 updates from:
+https://nu.novell.com/repo/\$RCE/SLES11-Updates/sle-11-x86_64/
+however, no new multipath-tools or kernel update is available. 
+Do you know which version is supposed to work?
 
-Thanks,
-Ryo Tsuruta
+regards
+Sebastian
