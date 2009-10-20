@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 06/17] dm exception store: add snapshot-merge
-	specific methods
-Date: Tue, 20 Oct 2009 18:46:54 -0400
-Message-ID: <1256078825-11331-7-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 14/17] dm snapshot: make exceptions in other
+	snapshots when merging
+Date: Tue, 20 Oct 2009 18:47:02 -0400
+Message-ID: <1256078825-11331-15-git-send-email-snitzer@redhat.com>
 References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -22,150 +22,87 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-prepare_merge: returns the last chunk in the variables passed by reference.
-	The return value is the number of consecutive chunks.
-commit_merge: permanently removes 'n' chunks from the exception store.
-	'n' is less or equal that the number returned by prepare_merge.
+When there is one merging snapshot and other non-merging snapshots,
+make exceptions in non-merging snapshots while merging.
 
-If the caller wishes, it can do the optimization of merging several consecutive
-chunks at once. If it doesn't want to do this optimization, it just calls
-commit_merge with n == 1.
+This is not yet complete (the exception is not made when remapping
+directly to the origin), another patch fixes that.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-exception-store.h |   16 +++++++++
- drivers/md/dm-snap-persistent.c |   70 +++++++++++++++++++++++++++++++++++++++
- 2 files changed, 86 insertions(+), 0 deletions(-)
+ drivers/md/dm-snap.c |   31 +++++++++++++++++++++++++++++++
+ 1 files changed, 31 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm-exception-store.h b/drivers/md/dm-exception-store.h
-index a96a40a..9cdc08b 100644
---- a/drivers/md/dm-exception-store.h
-+++ b/drivers/md/dm-exception-store.h
-@@ -79,6 +79,22 @@ struct dm_exception_store_type {
- 				  void *callback_context);
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 72ff282..7f0d261 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -275,6 +275,8 @@ struct origin {
+ static struct list_head *_origins;
+ static struct rw_semaphore _origins_lock;
  
- 	/*
-+	 * Returns the last chunk in the pointers. (TODO: -ENOPARSE)
-+	 * > 0:  the number of consecutive chunks that can
-+	 *       be copied in one shot.
-+	 * == 0: the exception store is empty.
-+	 * < 0:  error.
-+	 */
-+	int (*prepare_merge) (struct dm_exception_store *store,
-+			      chunk_t *old_chunk, chunk_t *new_chunk);
++static DECLARE_WAIT_QUEUE_HEAD(_pending_exception_done);
 +
-+	/*
-+	 * Clear the last n exceptions.
-+	 * n must be <= the value returned by prepare_merge.
-+	 */
-+	int (*commit_merge) (struct dm_exception_store *store, int n);
-+
-+	/*
- 	 * The snapshot is invalid, note this in the metadata.
- 	 */
- 	void (*drop_snapshot) (struct dm_exception_store *store);
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index e0f526a..4015923 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -409,6 +409,15 @@ static void write_exception(struct pstore *ps,
- 	e->new_chunk = cpu_to_le64(de->new_chunk);
- }
- 
-+static void clear_exception(struct pstore *ps, uint32_t index)
-+{
-+	struct disk_exception *e = get_exception(ps, index);
-+
-+	/* clear it */
-+	e->old_chunk = 0;
-+	e->new_chunk = 0;
-+}
-+
- /*
-  * Registers the exceptions that are present in the current area.
-  * 'full' is filled in to indicate if the area has been
-@@ -681,6 +690,63 @@ static void persistent_commit_exception(struct dm_exception_store *store,
- 	ps->callback_count = 0;
- }
- 
-+static int persistent_prepare_merge(struct dm_exception_store *store,
-+				    chunk_t *old_chunk, chunk_t *new_chunk)
-+{
-+	int r, i;
-+	struct pstore *ps = get_info(store);
-+	struct disk_exception de;
-+
-+	if (!ps->current_committed) {
-+		if (!ps->current_area)
-+			return 0;
-+		ps->current_area--;
-+		r = area_io(ps, READ);
-+		if (r < 0)
-+			return r;
-+		ps->current_committed = ps->exceptions_per_area;
-+	}
-+
-+	read_exception(ps, ps->current_committed - 1, &de);
-+	*old_chunk = de.old_chunk;
-+	*new_chunk = de.new_chunk;
-+
-+	for (i = 1; i < ps->current_committed; i++) {
-+		read_exception(ps, ps->current_committed - 1 - i, &de);
-+		if (de.old_chunk != *old_chunk - i ||
-+		    de.new_chunk != *new_chunk - i)
-+			break;
-+	}
-+
-+	return i;
-+}
-+
-+static int persistent_commit_merge(struct dm_exception_store *store, int n)
-+{
-+	int r, i;
-+	struct pstore *ps = get_info(store);
-+
-+	BUG_ON(n > ps->current_committed);
-+
-+	for (i = 0; i < n; i++)
-+		clear_exception(ps, ps->current_committed - 1 - i);
-+
-+	r = area_io(ps, WRITE);
-+	if (r < 0)
-+		return r;
-+
-+	ps->current_committed -= i;
-+
-+	/*
-+	 * ps->next_free cannot really be reliably decreased here (because of
-+	 * misordered chunks), so don't do it. We don't even need it, because
-+	 * there is no situation where merging snapshot would become
-+	 * non-merging.
-+	 */
-+
-+	return 0;
-+}
-+
- static void persistent_drop_snapshot(struct dm_exception_store *store)
+ static int init_origin_hash(void)
  {
- 	struct pstore *ps = get_info(store);
-@@ -749,6 +815,8 @@ static struct dm_exception_store_type _persistent_type = {
- 	.read_metadata = persistent_read_metadata,
- 	.prepare_exception = persistent_prepare_exception,
- 	.commit_exception = persistent_commit_exception,
-+	.prepare_merge = persistent_prepare_merge,
-+	.commit_merge = persistent_commit_merge,
- 	.drop_snapshot = persistent_drop_snapshot,
- 	.usage = persistent_usage,
- 	.status = persistent_status,
-@@ -762,6 +830,8 @@ static struct dm_exception_store_type _persistent_compat_type = {
- 	.read_metadata = persistent_read_metadata,
- 	.prepare_exception = persistent_prepare_exception,
- 	.commit_exception = persistent_commit_exception,
-+	.prepare_merge = persistent_prepare_merge,
-+	.commit_merge = persistent_commit_merge,
- 	.drop_snapshot = persistent_drop_snapshot,
- 	.usage = persistent_usage,
- 	.status = persistent_status,
+ 	int i;
+@@ -669,6 +671,9 @@ static int init_hash_tables(struct dm_snapshot *s)
+ static void flush_bios(struct bio *bio);
+ static void error_bios(struct bio *bio);
+ 
++static int __origin_write(struct list_head *snapshots,
++			  sector_t sector, struct bio *bio);
++
+ static void merge_callback(int read_err, unsigned long write_err,
+ 			   void *context);
+ 
+@@ -676,6 +681,9 @@ static void snapshot_merge_process(struct dm_snapshot *s)
+ {
+ 	int r;
+ 	chunk_t old_chunk, new_chunk;
++	struct origin *o;
++	chunk_t min_chunksize;
++	int must_wait;
+ 	struct dm_io_region src, dest;
+ 
+ 	BUG_ON(!s->merge_running);
+@@ -706,6 +714,27 @@ static void snapshot_merge_process(struct dm_snapshot *s)
+ 	src.sector = chunk_to_sector(s->store, new_chunk);
+ 	src.count = dest.count;
+ 
++test_again:
++	/* Reallocate other snapshots */
++	down_read(&_origins_lock);
++	o = __lookup_origin(s->origin->bdev);
++	must_wait = 0;
++	min_chunksize = __minimum_chunk_size(o);
++	if (min_chunksize) {
++		chunk_t n;
++		for (n = 0; n < s->store->chunk_size; n += min_chunksize) {
++			r = __origin_write(&o->snapshots, dest.sector + n,
++					   NULL);
++			if (r == DM_MAPIO_SUBMITTED)
++				must_wait = 1;
++		}
++	}
++	up_read(&_origins_lock);
++	if (must_wait) {
++		sleep_on_timeout(&_pending_exception_done, HZ / 100 + 1);
++		goto test_again;
++	}
++
+ 	down_write(&s->lock);
+ 	s->merge_write_interlock = old_chunk;
+ 	s->merge_write_interlock_n = 1;
+@@ -1245,6 +1274,8 @@ static void pending_complete(struct dm_snap_pending_exception *pe, int success)
+ 	origin_bios = bio_list_get(&pe->origin_bios);
+ 	free_pending_exception(pe);
+ 
++	wake_up_all(&_pending_exception_done);
++
+ 	up_write(&s->lock);
+ 
+ 	/* Submit any pending write bios */
 -- 
 1.6.5.rc2
