@@ -1,15 +1,10 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 1/9] dm core: clean up in-flight checking
-Date: Tue, 20 Oct 2009 16:47:38 +0900
-Message-ID: <4ADD6B1A.3040309@ct.jp.nec.com>
-References: <4AD7FC11.7030009@ct.jp.nec.com> <4AD7FCC1.6040100@ct.jp.nec.com>
-	<20091019211656.GB25347@agk-dp.fab.redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH] dm-sysfs: Add empty release function to avoid
+	debug warning.
+Date: Tue, 20 Oct 2009 15:07:04 +0200
+Message-ID: <1256044024-16099-1-git-send-email-mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091019211656.GB25347@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,27 +14,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+The kobject is embedded in mapped device struct, so
+code do not need to release memory explicitly here.
 
-On 2009/10/20 6:16 +0900, Alasdair G Kergon wrote:
-> On Fri, Oct 16, 2009 at 01:55:29PM +0900, Kiyoshi Ueda wrote:
->> This patch depends on:
->>   http://git.kernel.org/?p=linux/kernel/git/axboe/linux-2.6-block.git;a=commit;h=a9327cac440be4d8333bba975cbbf76045096275
->>   (Seperate read and write statistics of in_flight requests)
->  
-> Already upstream I think!
+This patch just removes annoying warning:
+ kobject: 'dm': does not have a release() function,
+ it is broken and must be fixed.
 
-It has been committed in 2.6.32-rc5, so this clean-up patch
-can be applied on it now.
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+---
+ drivers/md/dm-sysfs.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-I'll update my patch-set (on top of 2.6.32-rc6 probably) and re-post
-if you want.
-
-> Alasdair
-
-Thanks,
-Kiyoshi Ueda
+diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
+index 4b04590..b000de3 100644
+--- a/drivers/md/dm-sysfs.c
++++ b/drivers/md/dm-sysfs.c
+@@ -80,12 +80,20 @@ static struct sysfs_ops dm_sysfs_ops = {
+ };
+ 
+ /*
++ * The sysfs structure is embedded in md struct, nothing to do here
++ */
++static void dm_sysfs_release(struct kobject *kobj)
++{
++}
++
++/*
+  * dm kobject is embedded in mapped_device structure
+  * no need to define release function here
+  */
+ static struct kobj_type dm_ktype = {
+ 	.sysfs_ops	= &dm_sysfs_ops,
+ 	.default_attrs	= dm_attrs,
++	.release	= dm_sysfs_release
+ };
+ 
+ /*
+-- 
+1.6.5
