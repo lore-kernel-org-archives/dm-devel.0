@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 10/17] dm snapshot: do not allow more than one
-	merging snapshot.
-Date: Tue, 20 Oct 2009 18:46:58 -0400
-Message-ID: <1256078825-11331-11-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 09/17] dm snapshot: merge target should not
+	allocate new exceptions
+Date: Tue, 20 Oct 2009 18:46:57 -0400
+Message-ID: <1256078825-11331-10-git-send-email-snitzer@redhat.com>
 References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -22,56 +22,93 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-It is pointless to merge two snapshots simultaneously.
-Allowing multiple merging snapshots would complicate things later.
-Adds function to find merging snapshot for a given origin device.
+Make new method, snapshot_merge_map, that won't allocate exceptions.
+Modify __origin_write so that it doesn't allocate exceptions in
+merging snapshots.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   23 +++++++++++++++++++++++
- 1 files changed, 23 insertions(+), 0 deletions(-)
+ drivers/md/dm-snap.c |   46 +++++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 45 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index ea3ff81..c422355 100644
+index d83a26e..ea3ff81 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -305,6 +305,22 @@ static void __insert_origin(struct origin *o)
- 	list_add_tail(&o->hash_list, sl);
+@@ -147,6 +147,11 @@ static int bdev_equal(struct block_device *lhs, struct block_device *rhs)
+ 	return lhs == rhs;
  }
  
-+static struct dm_snapshot *__find_merging_snapshot(struct block_device *origin)
-+{
-+	struct origin *o;
-+	struct dm_snapshot *snap;
++static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
++			       union map_info *map_context);
 +
-+	o = __lookup_origin(origin);
-+	if (!o)
-+		return NULL;
++#define is_merge(ti)	((ti)->type->map == snapshot_merge_map)
 +
-+	list_for_each_entry(snap, &o->snapshots, list)
-+		if (is_merge(snap->ti))
-+			return snap;
-+
-+	return NULL;
-+}
-+
- /*
-  * Make a note of the snapshot and its origin so we can look it
-  * up when the origin has a write on it.
-@@ -320,6 +336,13 @@ static int register_snapshot(struct dm_snapshot *snap)
- 		return -ENOMEM;
+ struct dm_snap_pending_exception {
+ 	struct dm_exception e;
  
- 	down_write(&_origins_lock);
+@@ -1239,6 +1244,40 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ 	return r;
+ }
+ 
++static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
++			       union map_info *map_context)
++{
++	struct dm_exception *e;
++	struct dm_snapshot *s = ti->private;
++	int r = DM_MAPIO_REMAPPED;
++	chunk_t chunk;
 +
-+	/* Do not allow more than one merging snapshot */
-+	if (is_merge(snap->ti) && __find_merging_snapshot(bdev)) {
-+		up_write(&_origins_lock);
-+		return -EINVAL;
++	chunk = sector_to_chunk(s->store, bio->bi_sector);
++
++	down_read(&s->lock);
++
++	/* Full snapshots are not usable */
++	if (!s->valid) {
++		r = -EIO;
++		goto out_unlock;
 +	}
 +
- 	o = __lookup_origin(bdev);
++	/* If the block is already remapped - use that */
++	e = dm_lookup_exception(&s->complete, chunk);
++	if (e) {
++		remap_exception(s, e, bio, chunk);
++		goto out_unlock;
++	}
++
++	bio->bi_bdev = s->origin->bdev;
++
++ out_unlock:
++	up_read(&s->lock);
++
++	return r;
++}
++
++
+ static int snapshot_end_io(struct dm_target *ti, struct bio *bio,
+ 			   int error, union map_info *map_context)
+ {
+@@ -1358,6 +1397,11 @@ static int __origin_write(struct list_head *snapshots,
+ 	/* Do all the snapshots on this origin */
+ 	list_for_each_entry (snap, snapshots, list) {
  
- 	if (o)
++		/* If the snapshot is merging, don't make new exceptions in it
++		   - but in this case no one should be writing to the origin */
++		if (is_merge(snap->ti))
++			continue;
++
+ 		down_write(&snap->lock);
+ 
+ 		/* Only deal with valid and active snapshots */
+@@ -1585,7 +1629,7 @@ static struct target_type merge_target = {
+ 	.module  = THIS_MODULE,
+ 	.ctr     = snapshot_ctr,
+ 	.dtr     = snapshot_dtr,
+-	.map     = snapshot_map,
++	.map     = snapshot_merge_map,
+ 	.end_io  = snapshot_end_io,
+ 	.resume  = snapshot_resume,
+ 	.status  = snapshot_status,
 -- 
 1.6.5.rc2
