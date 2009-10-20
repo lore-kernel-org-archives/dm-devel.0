@@ -1,14 +1,13 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Subject: [Patch] multipath-tools: rdac path checked leads to I/O
- hang when volumes are unmapped from storage.
-Date: Tue, 20 Oct 2009 18:39:15 +0530
-Message-ID: <0D1E8821739E724A86F4D16902CE275C1C93A0247B@inbmail01.lsi.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath-tools: Change default configs to look
+	for "hp_sw" not "hp-sw"
+Date: Tue, 20 Oct 2009 13:20:42 -0500
+Message-ID: <20091020182042.GO3555@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,95 +17,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, "christophe.varoqui@free.fr" <christophe.varoqui@free.fr>
-Cc: "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>, "Moger, Babu" <Babu.Moger@lsi.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+The kernel hp_sw handler now wants the hwhandler string to be "hp_sw", not
+"hp-sw".  This fixes the default configs to match.
 
-We are seeing I/O hang when volumes (configured with rdac path checker) a=
-re unmapped from the storage. Expected is I/O should fail. Please see the=
- syslog snippet below:
-
-Oct  15 14:40:43 linux kernel: sd 6:0:0:0: queueing MODE_SELECT command.
-Oct  15 14:40:43 linux kernel: sd 6:0:0:0: MODE_SELECT failed with sense =
-0x59100.
-Oct  15 14:40:43 linux kernel: end_request: I/O error, dev sdh, sector 18=
-509824
-Oct  15 14:40:43 linux kernel: device-mapper: multipath: Failing path 8:1=
-12.
-Oct  15 14:40:43 linux kernel: end_request: I/O error, dev sdh, sector 0
-Oct  15 14:40:43 linux kernel: end_request: I/O error, dev sdh, sector 18=
-512896
-Oct  15 14:40:43 linux kernel: end_request: I/O error, dev sdh, sector 18=
-511872
-Oct  15 14:40:43 linux kernel: end_request: I/O error, dev sdh, sector 18=
-510848
-Oct  15 14:40:43 linux multipathd: 8:112: mark as failed
-Oct  15 14:40:43 linux multipathd: 3600a0b800029ea52000097bc4acde51e: Ent=
-ering recovery mode: max_retries=3D30
-Oct  15 14:40:44 linux multipathd: 3600a0b800029eb0a0000f2af4acde4d1: que=
-ue_if_no_path enabled
-Oct  15 14:40:44 linux multipathd: 3600a0b800029eb0a0000f2af4acde4d1: Rec=
-overed to normal mode
-Oct  15 14:40:44 linux kernel: sd 5:0:0:1: queueing MODE_SELECT command.
-Oct  15 14:40:44 linux kernel: sd 5:0:0:1: MODE_SELECT failed with sense =
-0x59100.
-Oct  15 14:40:44 linux kernel: end_request: I/O error, dev sdc, sector 0
-Oct  15 14:40:44 linux kernel: device-mapper: multipath: Failing path 8:3=
-2.
-Oct  15 14:40:44 linux kernel: end_request: I/O error, dev sdc, sector 16=
-089088
-Oct  15 14:40:44 linux kernel: end_request: I/O error, dev sdc, sector 16=
-090112
-Oct  15 14:40:44 linux kernel: end_request: I/O error, dev sdc, sector 16=
-091136
-Oct  15 14:40:44 linux kernel: end_request: I/O error, dev sdc, sector 16=
-092160
-Oct  15 14:40:44 linux multipathd: 8:32: mark as failed
-
-Below is the patch that fix this issue. When devices are unmapped from st=
-orage, rdac patch checker sets the path state for those devices as ghost.=
- As a reason dm issues mode select to failover path group and fails with =
-0x59100, which eventually ends up with ping pong between path groups resu=
-lting in I/O hang. In rdac path checker, we need to check if devices are =
-not connected, mark it as failed. This patch adds check for Peripheral Qu=
-alifier (PQ) & Peripheral Device type(PDT) of Inquiry data and fails the =
-path if either 1) PQ is set to 0x1 or 2) PQ set to 0x11 and PDT set to 0x=
-1F.
-
-
-Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
-Reviewed-by: Babu Moger <babu.moger@lsi.com>
-
+Signed-off-by: Fabio M. Di Nitto <fdinitto@redhat.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
+:100644 100644 2f1699f... a207fc6... M	libmultipath/hwtable.c
+:100644 100644 fb1dd6c... d24a801... M	multipath.conf.defaults
+ libmultipath/hwtable.c  |    4 ++--
+ multipath.conf.defaults |    4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
---- multipath-tools/libmultipath/checkers/rdac.c.orig	2009-10-20 23:01:50=
-.000000000 +0530
-+++ multipath-tools/libmultipath/checkers/rdac.c	2009-10-20 23:49:31.0000=
-00000 +0530
-@@ -91,7 +91,8 @@ do_inq(int sg_fd, unsigned int pg_op, vo
-=20
- struct volume_access_inq
- {
--	char dontcare0[8];
-+	char PQ_PDT;
-+	char dontcare0[7];
- 	char avtcvp;
- 	char dontcare1[39];
- };
-@@ -105,6 +106,11 @@ libcheck_check (struct checker * c)
- 	if (0 !=3D do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq)))=
- {
- 		MSG(c, MSG_RDAC_DOWN);
- 		return PATH_DOWN;
-+	} else {
-+		if ((inq.PQ_PDT & 0x20) || (inq.PQ_PDT & 0x7f)) {
-+			/* LUN not connected*/
-+			return PATH_DOWN;
-+		}
- 	}
-=20
- 	if (inq.avtcvp & 0x1) {
-
---
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 2f1699f..a207fc6 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -85,7 +85,7 @@ static struct hwentry default_hw[] = {
+ 		.product       = "HSG80",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.features      = "1 queue_if_no_path",
+-		.hwhandler     = "1 hp-sw",
++		.hwhandler     = "1 hp_sw",
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = FAILBACK_UNDEF,
+@@ -116,7 +116,7 @@ static struct hwentry default_hw[] = {
+ 		.product       = "(MSA|HSV)1.0.*",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.features      = "1 queue_if_no_path",
+-		.hwhandler     = "1 hp-sw",
++		.hwhandler     = "1 hp_sw",
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = FAILBACK_UNDEF,
+diff --git a/multipath.conf.defaults b/multipath.conf.defaults
+index fb1dd6c..d24a801 100644
+--- a/multipath.conf.defaults
++++ b/multipath.conf.defaults
+@@ -54,7 +54,7 @@
+ #		product			"HSG80"
+ #		getuid_callout		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+ #		features		"1 queue_if_no_path"
+-#		hardware_handler	"1 hp-sw"
++#		hardware_handler	"1 hp_sw"
+ #		path_selector		"round-robin 0"
+ #		path_grouping_policy	multibus
+ #		rr_weight		uniform
+@@ -81,7 +81,7 @@
+ #		product			"(MSA|HSV)1.0.*"
+ #		getuid_callout		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+ #		features		"1 queue_if_no_path"
+-#		hardware_handler	"1 hp-sw"
++#		hardware_handler	"1 hp_sw"
+ #		path_selector		"round-robin 0"
+ #		path_grouping_policy	group_by_prio
+ #		rr_weight		uniform
+-- 
+1.6.5.rc2
