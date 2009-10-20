@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 15/17] dm snapshot: make exceptions if merge
-	is dispatching to origin
-Date: Tue, 20 Oct 2009 18:47:03 -0400
-Message-ID: <1256078825-11331-16-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 10/17] dm snapshot: do not allow more than one
+	merging snapshot.
+Date: Tue, 20 Oct 2009 18:46:58 -0400
+Message-ID: <1256078825-11331-11-git-send-email-snitzer@redhat.com>
 References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -22,31 +22,56 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-If write request to merging snapshot device is to be dispatched
-directly to the origin (because the chunk is not remapped or was
-already merged), we must make exceptions in other snapshots.
+It is pointless to merge two snapshots simultaneously.
+Allowing multiple merging snapshots would complicate things later.
+Adds function to find merging snapshot for a given origin device.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ drivers/md/dm-snap.c |   23 +++++++++++++++++++++++
+ 1 files changed, 23 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 7f0d261..f67bfff 100644
+index ea3ff81..c422355 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -1529,6 +1529,11 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
+@@ -305,6 +305,22 @@ static void __insert_origin(struct origin *o)
+ 	list_add_tail(&o->hash_list, sl);
+ }
  
- 	bio->bi_bdev = s->origin->bdev;
++static struct dm_snapshot *__find_merging_snapshot(struct block_device *origin)
++{
++	struct origin *o;
++	struct dm_snapshot *snap;
++
++	o = __lookup_origin(origin);
++	if (!o)
++		return NULL;
++
++	list_for_each_entry(snap, &o->snapshots, list)
++		if (is_merge(snap->ti))
++			return snap;
++
++	return NULL;
++}
++
+ /*
+  * Make a note of the snapshot and its origin so we can look it
+  * up when the origin has a write on it.
+@@ -320,6 +336,13 @@ static int register_snapshot(struct dm_snapshot *snap)
+ 		return -ENOMEM;
  
-+	if (bio_rw(bio) == WRITE) {
-+		up_write(&s->lock);
-+		return do_origin(s->origin, bio);
+ 	down_write(&_origins_lock);
++
++	/* Do not allow more than one merging snapshot */
++	if (is_merge(snap->ti) && __find_merging_snapshot(bdev)) {
++		up_write(&_origins_lock);
++		return -EINVAL;
 +	}
 +
-  out_unlock:
- 	up_write(&s->lock);
+ 	o = __lookup_origin(bdev);
  
+ 	if (o)
 -- 
 1.6.5.rc2
