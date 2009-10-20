@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 09/17] dm snapshot: merge target should not
-	allocate new exceptions
-Date: Tue, 20 Oct 2009 18:46:57 -0400
-Message-ID: <1256078825-11331-10-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 07/17] dm exception store: snapshot-merge
+	usage accounting
+Date: Tue, 20 Oct 2009 18:46:55 -0400
+Message-ID: <1256078825-11331-8-git-send-email-snitzer@redhat.com>
 References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,95 +20,75 @@ To: dm-devel@redhat.com
 Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+Conditionally adjust snapshot usage accounting if snapshot-merge is in
+progress.  Care is taken to preserve the established kernel<->userspace
+interface.
 
-Make new method, snapshot_merge_map, that won't allocate exceptions.
-Modify __origin_write so that it doesn't allocate exceptions in
-merging snapshots.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
 ---
- drivers/md/dm-snap.c |   46 +++++++++++++++++++++++++++++++++++++++++++++-
- 1 files changed, 45 insertions(+), 1 deletions(-)
+ drivers/md/dm-snap-persistent.c |   21 ++++++++++++++++++++-
+ 1 files changed, 20 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index d83a26e..ea3ff81 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -147,6 +147,11 @@ static int bdev_equal(struct block_device *lhs, struct block_device *rhs)
- 	return lhs == rhs;
- }
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index 4015923..2cac778 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -91,6 +91,7 @@ struct pstore {
+ 	struct dm_exception_store *store;
+ 	int version;
+ 	int valid;
++	int merging;	/* 1 if there is merging going on */
+ 	uint32_t exceptions_per_area;
  
-+static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
-+			       union map_info *map_context);
-+
-+#define is_merge(ti)	((ti)->type->map == snapshot_merge_map)
-+
- struct dm_snap_pending_exception {
- 	struct dm_exception e;
- 
-@@ -1239,6 +1244,40 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
- 	return r;
- }
- 
-+static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
-+			       union map_info *map_context)
-+{
-+	struct dm_exception *e;
-+	struct dm_snapshot *s = ti->private;
-+	int r = DM_MAPIO_REMAPPED;
-+	chunk_t chunk;
-+
-+	chunk = sector_to_chunk(s->store, bio->bi_sector);
-+
-+	down_read(&s->lock);
-+
-+	/* Full snapshots are not usable */
-+	if (!s->valid) {
-+		r = -EIO;
-+		goto out_unlock;
-+	}
-+
-+	/* If the block is already remapped - use that */
-+	e = dm_lookup_exception(&s->complete, chunk);
-+	if (e) {
-+		remap_exception(s, e, bio, chunk);
-+		goto out_unlock;
-+	}
-+
-+	bio->bi_bdev = s->origin->bdev;
-+
-+ out_unlock:
-+	up_read(&s->lock);
-+
-+	return r;
-+}
-+
-+
- static int snapshot_end_io(struct dm_target *ti, struct bio *bio,
- 			   int error, union map_info *map_context)
+ 	/*
+@@ -506,7 +507,20 @@ static void persistent_usage(struct dm_exception_store *store,
  {
-@@ -1358,6 +1397,11 @@ static int __origin_write(struct list_head *snapshots,
- 	/* Do all the snapshots on this origin */
- 	list_for_each_entry (snap, snapshots, list) {
+ 	struct pstore *ps = get_info(store);
  
-+		/* If the snapshot is merging, don't make new exceptions in it
-+		   - but in this case no one should be writing to the origin */
-+		if (is_merge(snap->ti))
-+			continue;
+-	*sectors_allocated = ps->next_free * store->chunk_size;
++	/*
++	 * Must maintain the fact that DM reports all metadata chunks
++	 * in 'sectors_allocated'
++	 * - preserves the established kernel<->userspace interface
++	 * - snapshot-merge must account for the first two metadata
++	 *   chunks in its 'sectors_allocated'
++	 */
++	if (!ps->merging) {
++		*sectors_allocated = ps->next_free * store->chunk_size;
++	} else {
++		*sectors_allocated =
++			(area_location(ps, ps->current_area) - 1 +
++			 ps->current_committed + 2) * store->chunk_size;
++	}
+ 	*total_sectors = get_dev_size(dm_snap_cow(store->snap)->bdev);
+ 
+ 	/*
+@@ -609,6 +623,8 @@ static int persistent_prepare_exception(struct dm_exception_store *store,
+ 	chunk_t next_free;
+ 	sector_t size = get_dev_size(dm_snap_cow(store->snap)->bdev);
+ 
++	ps->merging = 0;
 +
- 		down_write(&snap->lock);
+ 	/* Is there enough room ? */
+ 	if (size < ((ps->next_free + 1) * store->chunk_size))
+ 		return -ENOSPC;
+@@ -697,6 +713,8 @@ static int persistent_prepare_merge(struct dm_exception_store *store,
+ 	struct pstore *ps = get_info(store);
+ 	struct disk_exception de;
  
- 		/* Only deal with valid and active snapshots */
-@@ -1585,7 +1629,7 @@ static struct target_type merge_target = {
- 	.module  = THIS_MODULE,
- 	.ctr     = snapshot_ctr,
- 	.dtr     = snapshot_dtr,
--	.map     = snapshot_map,
-+	.map     = snapshot_merge_map,
- 	.end_io  = snapshot_end_io,
- 	.resume  = snapshot_resume,
- 	.status  = snapshot_status,
++	ps->merging = 1;
++
+ 	if (!ps->current_committed) {
+ 		if (!ps->current_area)
+ 			return 0;
+@@ -768,6 +786,7 @@ static int persistent_ctr(struct dm_exception_store *store,
+ 
+ 	ps->store = store;
+ 	ps->valid = 1;
++	ps->merging = 0;
+ 	ps->version = SNAPSHOT_DISK_VERSION;
+ 	ps->area = NULL;
+ 	ps->zero_area = NULL;
 -- 
 1.6.5.rc2
