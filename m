@@ -1,15 +1,13 @@
-From: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
-Subject: Re: [PATCH 1/7] dm: use __GFP_HIGH instead PF_MEMALLOC
-Date: Wed, 18 Nov 2009 15:17:54 +0900 (JST)
-Message-ID: <20091118145621.3E1A.A69D9226__36152.6700122797$1259241155$gmane$org@jp.fujitsu.com>
-References: <20091117161616.3DD7.A69D9226@jp.fujitsu.com>
-	<20091117131527.GB6644@agk-dp.fab.redhat.com>
+From: Tomasz Torcz <tomek@pipebreaker.pl>
+Subject: multipathd support for non-SCSI devices (AOE)?
+Date: Wed, 21 Oct 2009 09:52:51 +0200
+Message-ID: <20091021075251.GC23138@mother.pipebreaker.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1032118362=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091117131527.GB6644@agk-dp.fab.redhat.com>
+Resent-Message-ID: <20091027071044.GB14807@mother.pipebreaker.pl>
+Resent-To: dm-devel@redhat.com
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,53 +17,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com
-Cc: kosaki.motohiro@jp.fujitsu.com
+To: dm-devel@redhat.com
+Cc: tomek@pipebreaker.pl
 List-Id: dm-devel.ids
 
-Hi,
 
-Thank you for give me comment.
-
-> On Tue, Nov 17, 2009 at 04:17:07PM +0900, KOSAKI Motohiro wrote:
-> > Non MM subsystem must not use PF_MEMALLOC. Memory reclaim need few
-> > memory, anyone must not prevent it. Otherwise the system cause
-> > mysterious hang-up and/or OOM Killer invokation.
->  
-> This code is also on the critical path, for example, if you are swapping
-> onto a dm device.  (There are ways we could reduce its use further as
-> not every dm ioctl needs to be on the critical path and the buffer size
-> could be limited for the ioctls that do.)
-
-May I ask one additional question?
-Original code is here.
-
-	-------------------------------------------------------
-        /*
-         * Trying to avoid low memory issues when a device is
-         * suspended.
-         */
-        current->flags |= PF_MEMALLOC;
-
-        /*
-         * Copy the parameters into kernel space.
-         */
-        r = copy_params(user, &param);
-
-        current->flags &= ~PF_MEMALLOC;
-	-------------------------------------------------------
-
-but PF_MEMALLOC doesn't gurantee allocation successfull. In your case,
-mempoll seems better to me. copy_params seems enough small function 
-and we can rewrite it. Why didn't you use mempool?
-
-Am I missing something?
+--===============1032118362==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="vGgW1X5XWziG23Ko"
+Content-Disposition: inline
 
 
-> But what situations have been causing you trouble?  The OOM killer must
-> generally avoid killing userspace processes that suspend & resume dm
-> devices, and there are tight restrictions on what those processes
-> can do safely between suspending and resuming.
+--vGgW1X5XWziG23Ko
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-No. This is theorical issue. but I really want to avoid stress weakness
-kernel.
+ Hello,
+
+  I was playing with ATA-over-Ethernet lately and to my sadness, multipathd
+seem to ignore aoe devices. I've traced it to followingg error:
+
+Oct 20 09:05:52 | Discover device /sys/block/etherd!e0.0
+Oct 20 09:05:52 | path /sys/block/etherd!e0.0/device not present
+
+  AOE devices don't have "device" file or symlink in their sysfs directorie=
+s.
+I've found one mailing list message from 2005 stating that multipath tools =
+are
+designed to be general, but current implementation is SCSI-only.
+  Has the situation changed recently, or am I out of luck trying to multipa=
+th
+AOE devices?
+  I'm using device-mapper-multipath-0.4.9-5.fc12.x86_64
+
+
+--=20
+Tomasz Torcz                 Morality must always be based on practicality.
+xmpp: zdzichubg@chrome.pl                -- Baron Vladimir Harkonnen
+
+
+--vGgW1X5XWziG23Ko
+Content-Type: application/pgp-signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.12 (GNU/Linux)
+Comment: gpg --search-keys Tomasz Torcz
+
+iEYEARECAAYFAkrevdIACgkQ10UJr+75NrlysgCeLAIGtlSTEHp7XfV6W7wvJX4+
+31cAn1cF1A5JYKO6xJp3B6iTdAsTnXHw
+=jLQd
+-----END PGP SIGNATURE-----
+
+--vGgW1X5XWziG23Ko--
+
+
+--===============1032118362==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1032118362==--
