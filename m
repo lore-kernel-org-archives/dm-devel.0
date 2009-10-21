@@ -1,148 +1,248 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 08/17] dm snapshot: add snapshot-merge target
-Date: Tue, 20 Oct 2009 18:46:56 -0400
-Message-ID: <1256078825-11331-9-git-send-email-snitzer@redhat.com>
-References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH 2/4] scsi_dh: Make rdac hardware handler's activate() async
+Date: Wed, 21 Oct 2009 09:22:51 -0700
+Message-ID: <20091021162251.8473.16503.sendpatchset@chandra-ubuntu>
+References: <20091021162240.8473.99556.sendpatchset@chandra-ubuntu>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20091021162240.8473.99556.sendpatchset@chandra-ubuntu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-scsi@vger.kernel.org
+Cc: dm-devel@redhat.com, babu.moger@lsi.com, michaelc@cs.wisc.edu, Benoit_Arthur@emc.com, Eddie.Williams@steeleye.com, berthiaume_wayne@emc.com, Chandra Seetharaman <sekharan@us.ibm.com>
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+Batch up MODE_SELECT in rdac device handler.
 
-For starters, snapshot-merge is identical to the snapshot target.
+LSI RDAC storage has the capability of handling mode selects for
+multiple luns in a same command. Make use of that ability to send
+as few MODE SELECTs as possible to the storage controller as possible.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+This patch creates a work queue and queues up activate requests
+when a MODE SELECT is sent down the wire. When that MODE SELECT 
+completes, it compiles queued up activate requests for multiple
+luns into a single MODE SELECT.
+
+This reduces the time to do failover/failback of large number of LUNS.
+
+Signed-off-by: Babu Moger <babu.moger@lsi.com>
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+
 ---
- drivers/md/dm-snap.c |   46 ++++++++++++++++++++++++++++++++++------------
- 1 files changed, 34 insertions(+), 12 deletions(-)
+ drivers/scsi/device_handler/scsi_dh_rdac.c |  108 +++++++++++++++++++++++++++--
+ 1 file changed, 100 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 1f0a57c..d83a26e 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1579,6 +1579,19 @@ static struct target_type snapshot_target = {
- 	.iterate_devices = snapshot_iterate_devices,
+Index: linux-2.6.32-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c
+===================================================================
+--- linux-2.6.32-rc5.orig/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-10-20 18:26:14.000000000 -0700
++++ linux-2.6.32-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-10-20 18:26:29.000000000 -0700
+@@ -22,6 +22,7 @@
+ #include <scsi/scsi.h>
+ #include <scsi/scsi_eh.h>
+ #include <scsi/scsi_dh.h>
++#include <linux/workqueue.h>
+ 
+ #define RDAC_NAME "rdac"
+ #define RDAC_RETRY_COUNT 5
+@@ -138,7 +139,13 @@
+ 	} mode_select;
+ 	u8	index;
+ 	u8	array_name[ARRAY_LABEL_LEN];
++	spinlock_t		ms_lock;
++	int			ms_queued;
++	struct work_struct	ms_work;
++	struct scsi_device	*ms_sdev;
++	struct list_head	ms_head;
+ };
++
+ struct c8_inquiry {
+ 	u8	peripheral_info;
+ 	u8	page_code; /* 0xC8 */
+@@ -198,8 +205,17 @@
+ 	"owned (AVT mode)",
  };
  
-+static struct target_type merge_target = {
-+	.name    = "snapshot-merge",
-+	.version = {1, 9, 0},
-+	.module  = THIS_MODULE,
-+	.ctr     = snapshot_ctr,
-+	.dtr     = snapshot_dtr,
-+	.map     = snapshot_map,
-+	.end_io  = snapshot_end_io,
-+	.resume  = snapshot_resume,
-+	.status  = snapshot_status,
-+	.iterate_devices = snapshot_iterate_devices,
++struct rdac_queue_data {
++	struct list_head	entry;
++	struct rdac_dh_data	*h;
++	activate_complete	callback_fn;
++	void			*callback_data;
 +};
 +
- static int __init dm_snapshot_init(void)
- {
- 	int r;
-@@ -1590,7 +1603,7 @@ static int __init dm_snapshot_init(void)
- 	}
+ static LIST_HEAD(ctlr_list);
+ static DEFINE_SPINLOCK(list_lock);
++static struct workqueue_struct *kmpath_rdacd;
++static void send_mode_select(struct work_struct *work);
  
- 	r = dm_register_target(&snapshot_target);
--	if (r) {
-+	if (r < 0) {
- 		DMERR("snapshot target register failed %d", r);
- 		goto bad_register_snapshot_target;
+ /*
+  * module parameter to enable rdac debug logging.
+@@ -281,7 +297,6 @@
+ 		rdac_pg->subpage_code = 0x1;
+ 		rdac_pg->page_len[0] = 0x01;
+ 		rdac_pg->page_len[1] = 0x28;
+-		rdac_pg->lun_table[h->lun] = 0x81;
+ 	} else {
+ 		struct rdac_pg_legacy *rdac_pg;
+ 
+@@ -291,7 +306,6 @@
+ 		common = &rdac_pg->common;
+ 		rdac_pg->page_code = RDAC_PAGE_CODE_REDUNDANT_CONTROLLER;
+ 		rdac_pg->page_len = 0x68;
+-		rdac_pg->lun_table[h->lun] = 0x81;
  	}
-@@ -1598,34 +1611,40 @@ static int __init dm_snapshot_init(void)
- 	r = dm_register_target(&origin_target);
- 	if (r < 0) {
- 		DMERR("Origin target register failed %d", r);
--		goto bad1;
-+		goto bad_register_origin_target;
+ 	common->rdac_mode[1] = RDAC_MODE_TRANSFER_SPECIFIED_LUNS;
+ 	common->quiescence_timeout = RDAC_QUIESCENCE_TIME;
+@@ -325,6 +339,7 @@
+ 	struct rdac_controller *ctlr;
+ 	ctlr = container_of(kref, struct rdac_controller, kref);
+ 
++	flush_workqueue(kmpath_rdacd);
+ 	spin_lock(&list_lock);
+ 	list_del(&ctlr->node);
+ 	spin_unlock(&list_lock);
+@@ -363,6 +378,11 @@
+ 
+ 	kref_init(&ctlr->kref);
+ 	ctlr->use_ms10 = -1;
++	ctlr->ms_queued = 0;
++	ctlr->ms_sdev = NULL;
++	spin_lock_init(&ctlr->ms_lock);
++	INIT_WORK(&ctlr->ms_work, send_mode_select);
++	INIT_LIST_HEAD(&ctlr->ms_head);
+ 	list_add(&ctlr->node, &ctlr_list);
+ done:
+ 	spin_unlock(&list_lock);
+@@ -490,7 +510,7 @@
+ }
+ 
+ static int mode_select_handle_sense(struct scsi_device *sdev,
+-				    unsigned char *sensebuf)
++					unsigned char *sensebuf)
+ {
+ 	struct scsi_sense_hdr sense_hdr;
+ 	int err = SCSI_DH_IO, ret;
+@@ -533,11 +553,29 @@
+ 	return err;
+ }
+ 
+-static int send_mode_select(struct scsi_device *sdev, struct rdac_dh_data *h)
++static void send_mode_select(struct work_struct *work)
+ {
++	struct rdac_controller *ctlr =
++		container_of(work, struct rdac_controller, ms_work);
+ 	struct request *rq;
++	struct scsi_device *sdev = ctlr->ms_sdev;
++	struct rdac_dh_data *h = get_rdac_data(sdev);
+ 	struct request_queue *q = sdev->request_queue;
+ 	int err, retry_cnt = RDAC_RETRY_COUNT;
++	struct rdac_queue_data *tmp, *qdata;
++	LIST_HEAD(list);
++	u8 *lun_table;
++
++	spin_lock(&ctlr->ms_lock);
++	list_splice_init(&ctlr->ms_head, &list);
++	ctlr->ms_queued = 0;
++	ctlr->ms_sdev = NULL;
++	spin_unlock(&ctlr->ms_lock);
++
++	if (ctlr->use_ms10)
++		lun_table = ctlr->mode_select.expanded.lun_table;
++	else
++		lun_table = ctlr->mode_select.legacy.lun_table;
+ 
+ retry:
+ 	err = SCSI_DH_RES_TEMP_UNAVAIL;
+@@ -545,6 +583,10 @@
+ 	if (!rq)
+ 		goto done;
+ 
++	list_for_each_entry(qdata, &list, entry) {
++		lun_table[qdata->h->lun] = 0x81;
 +	}
 +
-+	r = dm_register_target(&merge_target);
-+	if (r < 0) {
-+		DMERR("Merge target register failed %d", r);
-+		goto bad_register_merge_target;
+ 	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
+ 		"%s MODE_SELECT command",
+ 		(char *) h->ctlr->array_name, h->ctlr->index,
+@@ -565,7 +607,41 @@
  	}
  
- 	r = init_origin_hash();
- 	if (r) {
- 		DMERR("init_origin_hash failed.");
--		goto bad2;
-+		goto bad_origin_hash;
- 	}
- 
- 	exception_cache = KMEM_CACHE(dm_exception, 0);
- 	if (!exception_cache) {
- 		DMERR("Couldn't create exception cache.");
- 		r = -ENOMEM;
--		goto bad3;
-+		goto bad_exception_cache;
- 	}
- 
- 	pending_cache = KMEM_CACHE(dm_snap_pending_exception, 0);
- 	if (!pending_cache) {
- 		DMERR("Couldn't create pending cache.");
- 		r = -ENOMEM;
--		goto bad4;
-+		goto bad_pending_cache;
- 	}
- 
- 	tracked_chunk_cache = KMEM_CACHE(dm_snap_tracked_chunk, 0);
- 	if (!tracked_chunk_cache) {
- 		DMERR("Couldn't create cache to track chunks in use.");
- 		r = -ENOMEM;
--		goto bad5;
-+		goto bad_tracked_chunk_cache;
- 	}
- 
- 	ksnapd = create_singlethread_workqueue("ksnapd");
-@@ -1639,19 +1658,21 @@ static int __init dm_snapshot_init(void)
- 
- bad_pending_pool:
- 	kmem_cache_destroy(tracked_chunk_cache);
--bad5:
-+bad_tracked_chunk_cache:
- 	kmem_cache_destroy(pending_cache);
--bad4:
-+bad_pending_cache:
- 	kmem_cache_destroy(exception_cache);
--bad3:
-+bad_exception_cache:
- 	exit_origin_hash();
--bad2:
-+bad_origin_hash:
-+	dm_unregister_target(&merge_target);
-+bad_register_merge_target:
- 	dm_unregister_target(&origin_target);
--bad1:
-+bad_register_origin_target:
- 	dm_unregister_target(&snapshot_target);
--
- bad_register_snapshot_target:
- 	dm_exception_store_exit();
+ done:
+-	return err;
++	list_for_each_entry_safe(qdata, tmp, &list, entry) {
++		list_del(&qdata->entry);
++		if (err == SCSI_DH_OK)
++			qdata->h->state = RDAC_STATE_ACTIVE;
++		if (qdata->callback_fn)
++			qdata->callback_fn(qdata->callback_data, err);
++		kfree(qdata);
++	}
++	return;
++}
 +
++static int queue_mode_select(struct scsi_device *sdev,
++				activate_complete fn, void *data)
++{
++	struct rdac_queue_data *qdata;
++	struct rdac_controller *ctlr;
++
++	qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
++	if (!qdata)
++		return SCSI_DH_RETRY;
++
++	qdata->h = get_rdac_data(sdev);
++	qdata->callback_fn = fn;
++	qdata->callback_data = data;
++
++	ctlr = qdata->h->ctlr;
++	spin_lock(&ctlr->ms_lock);
++	list_add_tail(&qdata->entry, &ctlr->ms_head);
++	if (!ctlr->ms_queued) {
++		ctlr->ms_queued = 1;
++		ctlr->ms_sdev = sdev;
++		queue_work(kmpath_rdacd, &ctlr->ms_work);
++	}
++	spin_unlock(&ctlr->ms_lock);
++	return SCSI_DH_OK;
+ }
+ 
+ static int rdac_activate(struct scsi_device *sdev,
+@@ -578,8 +654,11 @@
+ 	if (err != SCSI_DH_OK)
+ 		goto done;
+ 
+-	if (h->lun_state == RDAC_LUN_UNOWNED)
+-		err = send_mode_select(sdev, h);
++	if (h->lun_state == RDAC_LUN_UNOWNED) {
++		err = queue_mode_select(sdev, fn, data);
++		if (err == SCSI_DH_OK)
++			return 0;
++	}
+ done:
+ 	if (fn)
+ 		fn(data, err);
+@@ -793,13 +872,26 @@
+ 	int r;
+ 
+ 	r = scsi_register_device_handler(&rdac_dh);
+-	if (r != 0)
++	if (r != 0) {
+ 		printk(KERN_ERR "Failed to register scsi device handler.");
++		goto done;
++	}
++
++	/*
++	 * Create workqueue to handle mode selects for rdac
++	 */
++	kmpath_rdacd = create_singlethread_workqueue("kmpath_rdacd");
++	if (!kmpath_rdacd) {
++		scsi_unregister_device_handler(&rdac_dh);
++		printk(KERN_ERR "kmpath_rdacd creation failed.\n");
++	}
++done:
  	return r;
  }
  
-@@ -1661,6 +1682,7 @@ static void __exit dm_snapshot_exit(void)
+ static void __exit rdac_exit(void)
+ {
++	destroy_workqueue(kmpath_rdacd);
+ 	scsi_unregister_device_handler(&rdac_dh);
+ }
  
- 	dm_unregister_target(&snapshot_target);
- 	dm_unregister_target(&origin_target);
-+	dm_unregister_target(&merge_target);
- 
- 	exit_origin_hash();
- 	kmem_cache_destroy(pending_cache);
--- 
-1.6.5.rc2
