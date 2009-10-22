@@ -1,55 +1,50 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: trimmable dm-snapshot?
-Date: Thu, 22 Oct 2009 10:20:50 -0400
-Message-ID: <20091022142050.GB19699@redhat.com>
-References: <4ADFCC0D.6000903@filteredperception.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@linux.vnet.ibm.com>
+Subject: Re: [dm-devel] [PATCH 0/4] scsi_dh: Make scsi_dh_activate
+	asynchronous
+Date: Thu, 22 Oct 2009 09:06:28 -0700
+Message-ID: <1256227588.6475.6.camel@chandra-ubuntu>
+References: <20091021162240.8473.99556.sendpatchset@chandra-ubuntu>
+	 <20091022010608.GA10445@infradead.org>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4ADFCC0D.6000903@filteredperception.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20091022010608.GA10445@infradead.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org, michaelc@cs.wisc.edu, Benoit_Arthur@emc.com, Eddie.Williams@steeleye.com
 List-Id: dm-devel.ids
 
-On Wed, Oct 21 2009 at 11:05pm -0400,
-Douglas McClendon <dmc.fedora@filteredperception.org> wrote:
+Hi Christoph,
 
-> Has anyone looked into the idea of dm-snapshots responding
-> appropriately to trims from filesystems?
-> 
-> I.e. the efficiency problem of a dm-snapshotted ext filesystem
-> having files created and then deleted?  I.e. in such a scenario,
-> resources in the cow device end up taken that could be freed if the
-> dm layer could efficiently respond to trim notifications by
-> discarding any useless exceptions?
-> 
-> I've been poking around pondering whether an offline quick hack
-> might be possible with libext2fs and enough knowledge of the on-disk
-> persistent snapshot format.  I.e. just walk the exception chunks in
-> the cow device, use libext2fs (sufficient? easiest way?) to
-> determine whether all the fsblocks/sectors the chunk contains are
-> all currently unneeded, and if so reclaiming that space (possibly by
-> relocating the last exception. I'm still a distance from truly
-> grokking the on-disk format along with the rest of the dm-snapshot
-> and exception-store code).
-> 
-> Does any of this make sense?  Been looked at?  Seem like a
-> reasonable avenue to pursue?
+Thanks for looking into this.
 
-The snapshot must faithfully maintain a copy of the origin's data
-relative to a particular point in time.  You can't use changes to the
-origin (trim or any other change) to delete the exceptions that a
-snapshot is already maintaining.  That would invalidate the whole intent
-of the snapshot.
+Babu (LSI) and I did some testing and found couple of problems. Major
+one was that moving all luns blindly causes luns to be moved to their
+non-preferred path against the user's setting, which is a no-no.
 
-Mike
+Here is the email Babu sent on this:
+http://marc.info/?l=linux-scsi&m=125495712310371&w=2
+
+chandra
+
+On Wed, 2009-10-21 at 21:06 -0400, Christoph Hellwig wrote:
+> On Wed, Oct 21, 2009 at 09:22:40AM -0700, Chandra Seetharaman wrote:
+> > Hello All,
+> > 
+> > Currently, device handlers process path activation in series. This leads
+> > to a lot of time delay when more than 100 luns are involved. For example,
+> > with lsi rdac 100+ luns take about 12-15 minutes. This was found by Moger
+> > Babu of LSI.
+> 
+> So what happened to the suggestion to just switch over per target
+> instead of per lun?   It's the obviously much better way to do, and
+> unless there are bugs in the hardware preventing it from working it
+> should be the way to go.
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
