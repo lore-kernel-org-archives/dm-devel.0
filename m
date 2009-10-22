@@ -1,11 +1,10 @@
-From: Douglas McClendon <dmc.fedora@filteredperception.org>
-Subject: trimmable dm-snapshot?
-Date: Wed, 21 Oct 2009 21:05:49 -0600
-Message-ID: <4ADFCC0D.6000903@filteredperception.org>
+From: Eyal Gordon <eyal.gordon@gmail.com>
+Subject: multipath-tools make rpm failure
+Date: Thu, 22 Oct 2009 10:44:25 +0200
+Message-ID: <4ebf5d590910220144n37fdf3c2s870d7c22e810b252@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1927830738=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,28 +16,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: david.woodhouse@intel.com
 List-Id: dm-devel.ids
 
-Has anyone looked into the idea of dm-snapshots responding appropriately 
-to trims from filesystems?
+--===============1927830738==
+Content-Type: multipart/alternative; boundary=0016e6d7ea694174d00476821ace
 
-I.e. the efficiency problem of a dm-snapshotted ext filesystem having 
-files created and then deleted?  I.e. in such a scenario, resources in 
-the cow device end up taken that could be freed if the dm layer could 
-efficiently respond to trim notifications by discarding any useless 
-exceptions?
+--0016e6d7ea694174d00476821ace
+Content-Type: text/plain; charset=ISO-8859-1
 
-I've been poking around pondering whether an offline quick hack might be 
-possible with libext2fs and enough knowledge of the on-disk persistent 
-snapshot format.  I.e. just walk the exception chunks in the cow device, 
-use libext2fs (sufficient? easiest way?) to determine whether all the 
-fsblocks/sectors the chunk contains are all currently unneeded, and if 
-so reclaiming that space (possibly by relocating the last exception. 
-I'm still a distance from truly grokking the on-disk format along with 
-the rest of the dm-snapshot and exception-store code).
+Hello,
 
-Does any of this make sense?  Been looked at?  Seem like a reasonable 
-avenue to pursue?
+I received the following error while trying to run 'make rpm' for
+multipath-tools. My local git repository is a clone of the upstream master
+branch from today.
 
--dmc
+# make rpm
+sed -e "s/__VERSION__//" \
+        multipath-tools.spec.in > multipath-tools.spec
+rpmbuild -bb multipath-tools.spec
+error: line 6: Empty tag: Version:
+make: *** [rpm] Error 1
+
+
+After looking at the Makefile and adding echo statements to debug, it seems
+that a ${VERSION} variable is required for the above 'sed' statement, but it
+is not defined.
+
+Could anyone help me please?
+
+Thanks,
+ Eyal
+
+--0016e6d7ea694174d00476821ace
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello,<br><br>I received the following error while trying =
+to run &#39;make rpm&#39; for multipath-tools. My local git repository is a=
+ clone of the upstream master branch from today.<br><br># make rpm<br>sed -=
+e &quot;s/__VERSION__//&quot; \<br>
+=A0=A0=A0=A0=A0=A0=A0 <a href=3D"http://multipath-tools.spec.in">multipath-=
+tools.spec.in</a> &gt; multipath-tools.spec<br>rpmbuild -bb multipath-tools=
+.spec<br>error: line 6: Empty tag: Version:<br>make: *** [rpm] Error 1<br><=
+br><br>After looking at the Makefile and adding echo statements to debug, i=
+t seems that a ${VERSION} variable is required for the above &#39;sed&#39; =
+statement, but it is not defined.<br>
+<br>Could anyone help me please? <br><br>Thanks,<br>=A0Eyal<br><br></div>
+
+--0016e6d7ea694174d00476821ace--
+
+
+--===============1927830738==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1927830738==--
