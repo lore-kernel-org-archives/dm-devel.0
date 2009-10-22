@@ -1,29 +1,44 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [dm-devel] [PATCH 0/4] scsi_dh: Make scsi_dh_activate
-	asynchronous
-Date: Wed, 21 Oct 2009 21:06:08 -0400
-Message-ID: <20091022010608.GA10445@infradead.org>
-References: <20091021162240.8473.99556.sendpatchset@chandra-ubuntu>
+From: Douglas McClendon <dmc.fedora@filteredperception.org>
+Subject: trimmable dm-snapshot?
+Date: Wed, 21 Oct 2009 21:05:49 -0600
+Message-ID: <4ADFCC0D.6000903@filteredperception.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20091021162240.8473.99556.sendpatchset@chandra-ubuntu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: linux-scsi@vger.kernel.org, michaelc@cs.wisc.edu, Benoit_Arthur@emc.com, Eddie.Williams@steeleye.com
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: david.woodhouse@intel.com
 List-Id: dm-devel.ids
 
-On Wed, Oct 21, 2009 at 09:22:40AM -0700, Chandra Seetharaman wrote:
-> Hello All,
-> 
-> Currently, device handlers process path activation in series. This leads
-> to a lot of time delay when more than 100 luns are involved. For example,
-> with lsi rdac 100+ luns take about 12-15 minutes. This was found by Moger
-> Babu of LSI.
+Has anyone looked into the idea of dm-snapshots responding appropriately 
+to trims from filesystems?
 
-So what happened to the suggestion to just switch over per target
-instead of per lun?   It's the obviously much better way to do, and
-unless there are bugs in the hardware preventing it from working it
-should be the way to go.
+I.e. the efficiency problem of a dm-snapshotted ext filesystem having 
+files created and then deleted?  I.e. in such a scenario, resources in 
+the cow device end up taken that could be freed if the dm layer could 
+efficiently respond to trim notifications by discarding any useless 
+exceptions?
 
+I've been poking around pondering whether an offline quick hack might be 
+possible with libext2fs and enough knowledge of the on-disk persistent 
+snapshot format.  I.e. just walk the exception chunks in the cow device, 
+use libext2fs (sufficient? easiest way?) to determine whether all the 
+fsblocks/sectors the chunk contains are all currently unneeded, and if 
+so reclaiming that space (possibly by relocating the last exception. 
+I'm still a distance from truly grokking the on-disk format along with 
+the rest of the dm-snapshot and exception-store code).
+
+Does any of this make sense?  Been looked at?  Seem like a reasonable 
+avenue to pursue?
+
+-dmc
