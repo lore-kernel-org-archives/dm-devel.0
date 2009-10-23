@@ -1,16 +1,10 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 04/17] dm snapshot: exception handover
-	improvements
-Date: Fri, 23 Oct 2009 11:01:34 -0400
-Message-ID: <20091023150134.GA25363@redhat.com>
-References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
-	<1256078825-11331-5-git-send-email-snitzer@redhat.com>
+From: heinzm@redhat.com
+Subject: [PATCH 0/6] dm-replicator: introduce new remote
+	replication target
+Date: Fri, 23 Oct 2009 17:16:51 +0200
+Message-ID: <1256311017-11291-1-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1256078825-11331-5-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,55 +15,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Oct 20 2009 at  6:46pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-> Simplify exception handover so that the duplicate snapshot is found in
-> one location (snapshot_ctr) and recorded in the associated (old and new)
-> snapshots that will be participating in the handover.
-> 
-> Confines handover to be from a specific snapshot to another specific
-> snapshot without additional __find_duplicate() calls.
-> 
-> Documents the exception handover state diagram with relevant comments
-> in the associated code.
 
-In testing --onactivate support I found that my revised handover
-incorrectly assumed that the snapshot-merge target _always_ needs the
-exceptions explicitly handed over to it.
+This is a series of 6 patches introducing the device-mapper remote
+data replication target "dm-replicator" to kernel 2.6.32-rc5.
 
-In reality --onactivate doesn't require any handover at all.  The
-snapshot_ctr() for such a merge is provided with the correct cow_path up
-front; so no handover is needed.
+Userspace support for remote data replication will be in
+a future LVM2 version.
 
-I also found that I was missing some locking when changing the "old"
-snapshot's 'handover_snap' reference.
+The target supports disaster recovery by replicating groups of active
+mapped devices (ie. receiving io from applications) to one or more
+remote sites to paired groups of equally sized passive block devices
+(ie. no application access). Synchronous, asynchronous replication
+(with fallbehind settings) and temporary downtime of transports
+are supported.
 
-The following incremental patch addresses both these oversights; I'll be
-posting v3 of this "dm snapshot: exception handover improvements"
-shortly (it will include these fixes).
+It utilizes a replication log to ensure write ordering fidelity for
+the whole group of replicated devices, hence allowing for consistent
+recovery after failover of arbitrary applications
+(eg. DBMS utilizing N > 1 devices).
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index fca2479..e0330e3 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -982,13 +982,13 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		}
- 
- 		/* cross reference snapshots that will do handover */
-+		down_write(&dup->lock);
- 		dup->handover_snap = s;
-+		up_write(&dup->lock);
- 		s->handover_snap = dup;
-+
- 		/* this new snapshot will accept the handover */
- 		s->handover = 1;
--	} else if (is_merge(ti)) {
--		ti->error = "Unable to find snapshot that is to be merged";
--		goto bad_load_and_register;
- 	}
- 
- 	/* Metadata must only be loaded into one table at once */
+In case the replication log runs full, it is capable to fall back
+to dirty logging utilizing the existing dm-log module, hence keeping
+track of regions of devices wich need resynchronization after access
+to the transport returned.
+
+Access logic of the replication log and the site links are implemented
+as loadable modules, hence allowing for future implementations with
+different capabilities in terms of additional plugins.
+
+A "ringbuffer" replication log module implements a circular ring buffer
+store for all writes being processed. Other replication log handlers
+may follow this one as plugins too.
+
+A "blockdev" site link module implements block devices access to all remote
+devices, ie. all devices exposed via the Linux block device layer
+(eg. iSCSI, FC). Again, other eg. network type transport site link
+handlers may follow as plugins.
+
+Please review for upstream inclusion.
+
+Heinz
