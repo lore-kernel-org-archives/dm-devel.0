@@ -1,14 +1,12 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Question about EMC Clariion trespass in multipath
-Date: Thu, 22 Oct 2009 18:50:19 -0700
-Message-ID: <1256262619.15157.19.camel@chandra-ubuntu>
-References: <9083A7B28D088E4ABC0651D61B19F5C207575ED2@mail9.express-scripts.com>
+Subject: test email. pls ignore
+Date: Thu, 22 Oct 2009 19:09:54 -0700
+Message-ID: <1256263794.15157.37.camel@chandra-ubuntu>
 Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <9083A7B28D088E4ABC0651D61B19F5C207575ED2@mail9.express-scripts.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,112 +16,5 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
-
-Hi Martin,
-
-This is the general sequence of events that happen w.r.t pg_init(). I do
-not know exactly what happens in the EMC handler (from pg_init() to
-pg_init_complete()) :)...
-
-- dm-multipath chooses a path group with highest priority to be the
-  active path group.
-- dm-multipath sends IO to paths in this path group in a round-robin
-  fashion.
-- When one of the paths in this "active" path group fail, dm-multipath 
-  stops sending IO on that path, but continues to use the other paths 
-  in that path group.
-- All along, path checker will be checking for path's state and when the
-  path comes back, it will be added to the round-robin logic.
-- When all paths in a path group fail, dm-multipath will send a 
-  pg_init(). The underlying handler is supposed to do the needful to 
-  enable that path group (like EMC doing a trespass).
-- On Success, pg_init_complete() will be called with success by the 
-  handler and dm-multipath will make that path group the "active"
-  path group and start sending IOs to the paths in that path group.
-- On Failure, pg_init_complete() will be called with failure by the 
-  handler and dm-multipath will fail that path group too, and depending 
-  on the value set for queue_if_no_path the IO will be either failed
-  of held on a queue or tried specified # of times.
-- When the high priority path group comes back alive ( path checker
-  keeps polling and finds it out), pg_init() will be sent to that 
-  path group and dm-multipath will try to make that path group active
-  again.
-
-In effect, trespass happens only when a failover or failback happens,
-not for each IOs.
-
-Hopefully it is clear.
-
-If you are not following the terminologies, see my Wiki at
-http://sources.redhat.com/lvm2/wiki/MultipathUsageGuide
-
-regards,
-
-chandra
-On Thu, 2009-10-22 at 13:07 -0700, McGreal, Martin (EHQ) wrote:
-> I've been told that dm multipath does not support trespassing LUNs on
-> Clariion, but after looking through the hardware handler for EMC
-> Clariion devices, I believe it does.  However, I'm confused about how it
-> determines when to issue the trespass command.
-> 
-> Since we are using RHEL 5.3, I am looking at the 2.6.18.8 version of the
-> hardware handler, dm-emc.c
-> (http://lxr.linux.no/#linux+v2.6.18.8/drivers/md/dm-emc.c).
-> 
-> Looking at emc_pg_init(), which, according to the documentation, is
-> called "when a Priority Group is selected for use, but before any I/O is
-> sent to it" (http://lwn.net/Articles/123134), it looks like the only way
-> out of this function is by either failing the path via
-> dm_pg_init_complete(), or issuing a switch-over command.  So either a
-> path is failed or a trespass occurs every time that a priority group is
-> selected?  What am I missing here?
-> 
-> Any guidance would be appreciated.
-> 
-> Thanks!
-> Martin
-> 
-> 
->  192static void emc_pg_init(struct hw_handler *hwh, unsigned bypassed,
->  193                        struct path *path)
->  194{
->  195        struct request *rq;
->  196        struct request_queue *q = bdev_get_queue(path->dev->bdev);
->  197
->  198        /*
->  199         * We can either blindly init the pg (then look at the
-> sense),
->  200         * or we can send some commands to get the state here (then
->  201         * possibly send the fo cmnd), or we can also have the
->  202         * initial state passed into us and then get an update here.
->  203         */
->  204        if (!q) {
->  205                DMINFO("emc_pg_init: no queue");
->  206                goto fail_path;
->  207        }
->  208
->  209        /* FIXME: The request should be pre-allocated. */
->  210        rq = emc_trespass_get(hwh->context, path);
->  211        if (!rq) {
->  212                DMERR("emc_pg_init: no rq");
->  213                goto fail_path;
->  214        }
->  215
->  216        DMINFO("emc_pg_init: sending switch-over command");
->  217        elv_add_request(q, rq, ELEVATOR_INSERT_FRONT, 1);
->  218        return;
->  219
->  220fail_path:
->  221        dm_pg_init_complete(path, MP_FAIL_PATH);
->  222}
-> 
-> 
-> 
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
