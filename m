@@ -1,13 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath-tools: Add dev_loss_tmo and
-	fast_io_fail multipath.conf parameters
-Date: Thu, 22 Oct 2009 21:47:08 -0500
-Message-ID: <20091023024707.GT3555@ether.msp.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2 04/17] dm snapshot: exception handover
+	improvements
+Date: Fri, 23 Oct 2009 11:01:34 -0400
+Message-ID: <20091023150134.GA25363@redhat.com>
+References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
+	<1256078825-11331-5-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <1256078825-11331-5-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,536 +20,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds the ability to set
+On Tue, Oct 20 2009 at  6:46pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-/sys/class/fc_remote_ports/rport-H:B-T/fast_io_fail_tmo
+> Simplify exception handover so that the duplicate snapshot is found in
+> one location (snapshot_ctr) and recorded in the associated (old and new)
+> snapshots that will be participating in the handover.
+> 
+> Confines handover to be from a specific snapshot to another specific
+> snapshot without additional __find_duplicate() calls.
+> 
+> Documents the exception handover state diagram with relevant comments
+> in the associated code.
 
-and
+In testing --onactivate support I found that my revised handover
+incorrectly assumed that the snapshot-merge target _always_ needs the
+exceptions explicitly handed over to it.
 
-/sys/class/fc_remote_ports/rport-H:B-T/dev_loss_tmo
+In reality --onactivate doesn't require any handover at all.  The
+snapshot_ctr() for such a merge is provided with the correct cow_path up
+front; so no handover is needed.
 
-in /etc/multipath.conf.
+I also found that I was missing some locking when changing the "old"
+snapshot's 'handover_snap' reference.
 
-fast_io_fail_tmo controls the number of seconds the scsi layer will wait after
-a problem has been detected on a FC remote port before failing IO to devices on
-that remote port.
+The following incremental patch addresses both these oversights; I'll be
+posting v3 of this "dm snapshot: exception handover improvements"
+shortly (it will include these fixes).
 
-dev_loss_tmo controls the number of seconds the scsi layer will wait after a
-problem has been detected on a FC remote port before removing it from the
-system.
-
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/config.h      |    4 +
- libmultipath/configure.c   |    3 +
- libmultipath/dict.c        |  102 +++++++++++++++++++++++++++++++++++++++++++++
- libmultipath/discovery.c   |   37 ++++++++++++++++
- libmultipath/discovery.h   |    1 
- libmultipath/propsel.c     |   42 ++++++++++++++++++
- libmultipath/propsel.h     |    2 
- libmultipath/structs.h     |    2 
- libmultipath/sysfs.c       |   56 ++++++++++++++++++++++++
- libmultipath/sysfs.h       |    3 -
- multipath.conf.annotated   |   38 ++++++++++++++++
- multipath/multipath.conf.5 |   15 ++++++
- 12 files changed, 303 insertions(+), 2 deletions(-)
-
-Index: multipath-tools-091020/multipath.conf.annotated
-===================================================================
---- multipath-tools-091020.orig/multipath.conf.annotated
-+++ multipath-tools-091020/multipath.conf.annotated
-@@ -191,6 +191,25 @@
- #	# default : determined by the process
- #	gid disk
- #
-+#	#
-+#	# name    : fast_io_fail_tmo
-+#	# scope   : multipath & multipathd
-+#	# desc    : The number of seconds the scsi layer will wait after a
-+#	#           problem has been detected on a FC remote port before failing
-+#	#           IO to devices on that remote port.
-+#	# values  : off | n >= 0 (smaller than dev_loss_tmo)
-+#	# default : determined by the OS
-+#	fast_io_fail_tmo 5
-+#
-+#	#
-+#	# name    : dev_loss_tmo
-+#	# scope   : multipath & multipathd
-+#	# desc    : The number of seconds the scsi layer will wait after a
-+#	#           problem has been detected on a FC remote port before
-+#	#           removing it from the system.
-+#	# values  : n > 0
-+#	# default : determined by the OS
-+#	dev_loss_tmo 600
- #}
- #	
- ##
-@@ -504,7 +523,6 @@
- #		# desc    : If set to "yes", multipathd will disable queueing
- #		#           when the last path to a device has been deleted.
- #		# values  : yes|no
--#		# default : no
- #		#
- #		flush_on_last_del       yes
- #
-@@ -514,6 +532,24 @@
- #		# desc    : product strings to blacklist for this vendor
- #		#
- #		product_blacklist	LUN_Z
-+#
-+#		#
-+#		# name    : fast_io_fail_tmo
-+#		# scope   : multipath & multipathd
-+#		# desc    : The number of seconds the scsi layer will wait after
-+#		#           a problem has been detected on a FC remote port
-+#		#           before failing IO to devices on that remote port.
-+#		# values  : off | n >= 0 (smaller than dev_loss_tmo)
-+#		fast_io_fail_tmo 5
-+#
-+#		#
-+#		# name    : dev_loss_tmo
-+#		# scope   : multipath & multipathd
-+#		# desc    : The number of seconds the scsi layer will wait after
-+#		#           a problem has been detected on a FC remote port
-+#		#           before removing it from the system.
-+#		# values  : n > 0
-+#		dev_loss_tmo 600
- #	}
- #	device {
- #		vendor			"COMPAQ  "
-Index: multipath-tools-091020/multipath/multipath.conf.5
-===================================================================
---- multipath-tools-091020.orig/multipath/multipath.conf.5
-+++ multipath-tools-091020/multipath/multipath.conf.5
-@@ -240,6 +240,17 @@ this to the system limit from /proc/sys/
- maximum number of open fds is taken from the calling process. It is usually
- 1024. To be safe, this should be set to the maximum number of paths plus 32,
- if that number is greated than 1024.
-+.TP
-+.B fast_io_fail_tmo
-+Specify the number of seconds the scsi layer will wait after a problem has been
-+detected on a FC remote port before failing IO to devices on that remote port.
-+This should be smaller than dev_loss_tmo. Setting this to
-+.I off
-+will disable the timeout.
-+.TP
-+.B dev_loss_tmo
-+Specify the number of seconds the scsi layer will wait after a problem has
-+been detected on a FC remote port before removing it from the system.
- .
- .SH "blacklist section"
- The
-@@ -384,6 +395,10 @@ section:
- .B no_path_retry
- .TP
- .B rr_min_io
-+.TP
-+.B fast_io_fail_tmo
-+.TP
-+.B dev_loss_tmo
- .RE
- .PD
- .LP
-Index: multipath-tools-091020/libmultipath/dict.c
-===================================================================
---- multipath-tools-091020.orig/libmultipath/dict.c
-+++ multipath-tools-091020/libmultipath/dict.c
-@@ -37,6 +37,35 @@ polling_interval_handler(vector strvec)
- }
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index fca2479..e0330e3 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -982,13 +982,13 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		}
  
- static int
-+def_fast_io_fail_handler(vector strvec)
-+{
-+	char * buff;
+ 		/* cross reference snapshots that will do handover */
++		down_write(&dup->lock);
+ 		dup->handover_snap = s;
++		up_write(&dup->lock);
+ 		s->handover_snap = dup;
 +
-+	buff = set_value(strvec);
-+	if (strlen(buff) == 3 && !strcmp(buff, "off"))
-+		conf->fast_io_fail = -1;
-+	else if (sscanf(buff, "%d", &conf->fast_io_fail) != 1 ||
-+		 conf->fast_io_fail < -1)
-+		conf->fast_io_fail = 0;
-+
-+	FREE(buff);
-+	return 0;
-+}
-+
-+static int
-+def_dev_loss_handler(vector strvec)
-+{
-+	char * buff;
-+
-+	buff = set_value(strvec);
-+	if (sscanf(buff, "%u", &conf->dev_loss) != 1)
-+		conf->dev_loss = 0;
-+
-+	FREE(buff);
-+	return 0;
-+}
-+
-+static int
- verbosity_handler(vector strvec)
- {
- 	char * buff;
-@@ -628,6 +657,37 @@ bl_product_handler(vector strvec)
- }
+ 		/* this new snapshot will accept the handover */
+ 		s->handover = 1;
+-	} else if (is_merge(ti)) {
+-		ti->error = "Unable to find snapshot that is to be merged";
+-		goto bad_load_and_register;
+ 	}
  
- static int
-+hw_fast_io_fail_handler(vector strvec)
-+{
-+	char * buff;
-+	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
-+
-+	buff = set_value(strvec);
-+	if (strlen(buff) == 3 && !strcmp(buff, "off"))
-+		hwe->fast_io_fail = -1;
-+	else if (sscanf(buff, "%d", &hwe->fast_io_fail) != 1 ||
-+		 hwe->fast_io_fail < -1)
-+		hwe->fast_io_fail = 0;
-+
-+	FREE(buff);
-+	return 0;
-+}
-+
-+static int
-+hw_dev_loss_handler(vector strvec)
-+{
-+	char * buff;
-+	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
-+
-+	buff = set_value(strvec);
-+	if (sscanf(buff, "%u", &hwe->dev_loss) != 1)
-+		hwe->dev_loss = 0;
-+
-+	FREE(buff);
-+	return 0;
-+}
-+
-+static int
- hw_pgpolicy_handler(vector strvec)
- {
- 	char * buff;
-@@ -1390,6 +1450,26 @@ snprint_mp_flush_on_last_del (char * buf
- }
- 
- static int
-+snprint_hw_fast_io_fail(char * buff, int len, void * data)
-+{
-+	struct hwentry * hwe = (struct hwentry *)data;
-+	if (!hwe->fast_io_fail)
-+		return 0;
-+	if (hwe->fast_io_fail == -1)
-+		return snprintf(buff, len, "off");
-+	return snprintf(buff, len, "%d", hwe->fast_io_fail);
-+}
-+
-+static int
-+snprint_hw_dev_loss(char * buff, int len, void * data)
-+{
-+	struct hwentry * hwe = (struct hwentry *)data;
-+	if (!hwe->dev_loss)
-+		return 0;
-+	return snprintf(buff, len, "%u", hwe->dev_loss);
-+}
-+
-+static int
- snprint_hw_vendor (char * buff, int len, void * data)
- {
- 	struct hwentry * hwe = (struct hwentry *)data;
-@@ -1640,6 +1720,24 @@ snprint_def_polling_interval (char * buf
- }
- 
- static int
-+snprint_def_fast_io_fail(char * buff, int len, void * data)
-+{
-+	if (!conf->fast_io_fail)
-+		return 0;
-+	if (conf->fast_io_fail == -1)
-+		return snprintf(buff, len, "off");
-+	return snprintf(buff, len, "%d", conf->fast_io_fail);
-+}
-+
-+static int
-+snprint_def_dev_loss(char * buff, int len, void * data)
-+{
-+	if (!conf->dev_loss)
-+		return 0;
-+	return snprintf(buff, len, "%u", conf->dev_loss);
-+}
-+
-+static int
- snprint_def_verbosity (char * buff, int len, void * data)
- {
- 	if (conf->checkint == DEFAULT_VERBOSITY)
-@@ -1937,6 +2035,8 @@ init_keywords(void)
- 	install_keyword("mode", &def_mode_handler, &snprint_def_mode);
- 	install_keyword("uid", &def_uid_handler, &snprint_def_uid);
- 	install_keyword("gid", &def_gid_handler, &snprint_def_gid);
-+	install_keyword("fast_io_fail_tmo", &def_fast_io_fail_handler, &snprint_def_fast_io_fail);
-+	install_keyword("dev_loss_tmo", &def_dev_loss_handler, &snprint_def_dev_loss);
- 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
- 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
- 	__deprecated install_keyword("default_getuid_callout", &def_getuid_callout_handler, NULL);
-@@ -1991,6 +2091,8 @@ init_keywords(void)
- 	install_keyword("rr_min_io", &hw_minio_handler, &snprint_hw_rr_min_io);
- 	install_keyword("pg_timeout", &hw_pg_timeout_handler, &snprint_hw_pg_timeout);
- 	install_keyword("flush_on_last_del", &hw_flush_on_last_del_handler, &snprint_hw_flush_on_last_del);
-+	install_keyword("fast_io_fail_tmo", &hw_fast_io_fail_handler, &snprint_hw_fast_io_fail);
-+	install_keyword("dev_loss_tmo", &hw_dev_loss_handler, &snprint_hw_dev_loss);
- 	install_sublevel_end();
- 
- 	install_keyword_root("multipaths", &multipaths_handler);
-Index: multipath-tools-091020/libmultipath/config.h
-===================================================================
---- multipath-tools-091020.orig/libmultipath/config.h
-+++ multipath-tools-091020/libmultipath/config.h
-@@ -31,6 +31,8 @@ struct hwentry {
- 	int minio;
- 	int pg_timeout;
- 	int flush_on_last_del;
-+	int fast_io_fail;
-+	unsigned int dev_loss;
- 	char * bl_product;
- };
- 
-@@ -75,6 +77,8 @@ struct config {
- 	int daemon;
- 	int flush_on_last_del;
- 	int attribute_flags;
-+	int fast_io_fail;
-+	unsigned int dev_loss;
- 	uid_t uid;
- 	gid_t gid;
- 	mode_t mode;
-Index: multipath-tools-091020/libmultipath/propsel.c
-===================================================================
---- multipath-tools-091020.orig/libmultipath/propsel.c
-+++ multipath-tools-091020/libmultipath/propsel.c
-@@ -428,6 +428,48 @@ select_pg_timeout(struct multipath *mp)
- }
- 
- extern int
-+select_fast_io_fail(struct multipath *mp)
-+{
-+	if (mp->hwe && mp->hwe->fast_io_fail) {
-+		mp->fast_io_fail = mp->hwe->fast_io_fail;
-+		if (mp->fast_io_fail == -1)
-+			condlog(3, "%s: fast_io_fail_tmo = off (controller default)", mp->alias);
-+		else
-+			condlog(3, "%s: fast_io_fail_tmo = %d (controller default)", mp->alias, mp->fast_io_fail);
-+		return 0;
-+	}
-+	if (conf->fast_io_fail) {
-+		mp->fast_io_fail = conf->fast_io_fail;
-+		if (mp->fast_io_fail == -1)
-+			condlog(3, "%s: fast_io_fail_tmo = off (config file default)", mp->alias);
-+		else
-+			condlog(3, "%s: fast_io_fail_tmo = %d (config file default)", mp->alias, mp->fast_io_fail);
-+		return 0;
-+	}
-+	mp->fast_io_fail = 0;
-+	return 0;
-+}
-+
-+extern int
-+select_dev_loss(struct multipath *mp)
-+{
-+	if (mp->hwe && mp->hwe->dev_loss) {
-+		mp->dev_loss = mp->hwe->dev_loss;
-+		condlog(3, "%s: dev_loss_tmo = %u (controller default)",
-+			mp->alias, mp->dev_loss);
-+		return 0;
-+	}
-+	if (conf->dev_loss) {
-+		mp->dev_loss = conf->dev_loss;
-+		condlog(3, "%s: dev_loss_tmo = %u (config file default)",
-+			mp->alias, mp->dev_loss);
-+		return 0;
-+	}
-+	mp->dev_loss = 0;
-+	return 0;
-+}
-+
-+extern int
- select_flush_on_last_del(struct multipath *mp)
- {
- 	if (mp->flush_on_last_del == FLUSH_IN_PROGRESS)
-Index: multipath-tools-091020/libmultipath/structs.h
-===================================================================
---- multipath-tools-091020.orig/libmultipath/structs.h
-+++ multipath-tools-091020/libmultipath/structs.h
-@@ -166,6 +166,8 @@ struct multipath {
- 	int pg_timeout;
- 	int flush_on_last_del;
- 	int attribute_flags;
-+	int fast_io_fail;
-+	unsigned int dev_loss;
- 	uid_t uid;
- 	gid_t gid;
- 	mode_t mode;
-Index: multipath-tools-091020/libmultipath/configure.c
-===================================================================
---- multipath-tools-091020.orig/libmultipath/configure.c
-+++ multipath-tools-091020/libmultipath/configure.c
-@@ -70,7 +70,10 @@ setup_map (struct multipath * mpp)
- 	select_mode(mpp);
- 	select_uid(mpp);
- 	select_gid(mpp);
-+	select_fast_io_fail(mpp);
-+	select_dev_loss(mpp);
- 
-+	sysfs_set_scsi_tmo(mpp);
- 	/*
- 	 * assign paths to path groups -- start with no groups and all paths
- 	 * in mpp->paths
-Index: multipath-tools-091020/libmultipath/discovery.c
-===================================================================
---- multipath-tools-091020.orig/libmultipath/discovery.c
-+++ multipath-tools-091020/libmultipath/discovery.c
-@@ -204,6 +204,43 @@ sysfs_get_fc_nodename (struct sysfs_devi
- 	return 1;
- }
- 
-+int
-+sysfs_set_scsi_tmo (struct multipath *mpp)
-+{
-+	char attr_path[SYSFS_PATH_SIZE];
-+	struct path *pp;
-+	int i;
-+	char value[11];
-+
-+	if (!mpp->dev_loss && !mpp->fast_io_fail)
-+		return 0;
-+	vector_foreach_slot(mpp->paths, pp, i) {
-+		if (safe_snprintf(attr_path, SYSFS_PATH_SIZE,
-+	        	          "/class/fc_remote_ports/rport-%d:%d-%d",
-+				  pp->sg_id.host_no, pp->sg_id.channel,
-+				  pp->sg_id.scsi_id)) {
-+			condlog(0, "attr_path '/class/fc_remote_ports/rport-%d:%d-%d' too large", pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.scsi_id);
-+			return 1;
-+		}
-+		if (mpp->dev_loss){
-+			snprintf(value, 11, "%u", mpp->dev_loss);
-+ 			if (sysfs_attr_set_value(attr_path, "dev_loss_tmo",
-+						 value))
-+				return 1;
-+		}
-+		if (mpp->fast_io_fail){
-+			if (mpp->fast_io_fail == -1)
-+				sprintf(value, "off");
-+			else
-+				snprintf(value, 11, "%u", mpp->fast_io_fail);
-+			if (sysfs_attr_set_value(attr_path, "fast_io_fail",
-+						 value))
-+				return 1;
-+		}
-+	}
-+	return 0;
-+}
-+
- static int
- opennode (char * dev, int mode)
- {
-Index: multipath-tools-091020/libmultipath/propsel.h
-===================================================================
---- multipath-tools-091020.orig/libmultipath/propsel.h
-+++ multipath-tools-091020/libmultipath/propsel.h
-@@ -15,3 +15,5 @@ int select_minio(struct multipath *mp);
- int select_mode(struct multipath *mp);
- int select_uid(struct multipath *mp);
- int select_gid(struct multipath *mp);
-+int select_fast_io_fail(struct multipath *mp);
-+int select_dev_loss(struct multipath *mp);
-Index: multipath-tools-091020/libmultipath/discovery.h
-===================================================================
---- multipath-tools-091020.orig/libmultipath/discovery.h
-+++ multipath-tools-091020/libmultipath/discovery.h
-@@ -33,6 +33,7 @@ int path_offline (struct path *);
- int pathinfo (struct path *, vector hwtable, int mask);
- struct path * store_pathinfo (vector pathvec, vector hwtable,
- 			      char * devname, int flag);
-+int sysfs_set_scsi_tmo (struct multipath *mpp);
- 
- /*
-  * discovery bitmask
-Index: multipath-tools-091020/libmultipath/sysfs.c
-===================================================================
---- multipath-tools-091020.orig/libmultipath/sysfs.c
-+++ multipath-tools-091020/libmultipath/sysfs.c
-@@ -356,6 +356,62 @@ void sysfs_device_put(struct sysfs_devic
- 	return;
- }
- 
-+int
-+sysfs_attr_set_value(const char *devpath, const char *attr_name,
-+		     const char *value)
-+{
-+	char path_full[PATH_SIZE];
-+	int sysfs_len;
-+	struct stat statbuf;
-+	int fd, value_len, ret = -1;
-+
-+	dbg("open '%s'/'%s'", devpath, attr_name);
-+	sysfs_len = snprintf(path_full, PATH_SIZE, "%s%s/%s", sysfs_path,
-+			     devpath, attr_name);
-+	if (sysfs_len >= PATH_SIZE || sysfs_len < 0) {
-+		if (sysfs_len < 0)
-+			dbg("cannot copy sysfs path %s%s/%s : %s", sysfs_path,
-+			    devpath, attr_name, strerror(errno));
-+		else
-+			dbg("sysfs_path %s%s/%s too large", sysfs_path,
-+			    devpath, attr_name);
-+		goto out;
-+	}
-+
-+	if (stat(path_full, &statbuf) != 0) {
-+		dbg("stat '%s' failed: %s" path_full, strerror(errno));
-+		goto out;
-+	}
-+
-+	/* skip directories */
-+        if (S_ISDIR(statbuf.st_mode))
-+                goto out;
-+
-+	if ((statbuf.st_mode & S_IWUSR) == 0)
-+		goto out;
-+
-+	fd = open(path_full, O_WRONLY);
-+	if (fd < 0) {
-+		dbg("attribute '%s' can not be opened: %s",
-+		    path_full, strerror(errno));
-+		goto out;
-+	}
-+	value_len = strlen(value) + 1;
-+	ret = write(fd, value, value_len);
-+	if (ret == value_len)
-+		ret = 0;
-+	else if (ret < 0)
-+		dbg("write to %s failed: %s", path_full, strerror(errno));
-+	else {
-+		dbg("tried to write %d to %s. Wrote %d\n", value_len,
-+		    path_full, ret);
-+		ret = -1;
-+	}
-+out:
-+	return ret;
-+}
-+
-+
- char *sysfs_attr_get_value(const char *devpath, const char *attr_name)
- {
- 	char path_full[PATH_SIZE];
-Index: multipath-tools-091020/libmultipath/sysfs.h
-===================================================================
---- multipath-tools-091020.orig/libmultipath/sysfs.h
-+++ multipath-tools-091020/libmultipath/sysfs.h
-@@ -22,5 +22,6 @@ void sysfs_device_put(struct sysfs_devic
- char *sysfs_attr_get_value(const char *devpath, const char *attr_name);
- int sysfs_resolve_link(char *path, size_t size);
- int sysfs_get_size (struct sysfs_device * dev, unsigned long long * size);
--
-+int sysfs_attr_set_value(const char *devpath, const char *attr_name,
-+			 const char *value);
- #endif
+ 	/* Metadata must only be loaded into one table at once */
