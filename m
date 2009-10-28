@@ -1,7 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [PATCH 5/9] rqdm core: simplify suspend code
-Date: Wed, 28 Oct 2009 16:21:18 +0000
-Message-ID: <20091028162118.GQ25303@agk-dp.fab.redhat.com>
+Date: Wed, 28 Oct 2009 17:39:04 +0000
+Message-ID: <20091028173904.GR25303@agk-dp.fab.redhat.com>
 References: <4AD7FC11.7030009@ct.jp.nec.com> <4AD7FE16.6050907@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,25 +23,14 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Fri, Oct 16, 2009 at 02:01:10PM +0900, Kiyoshi Ueda wrote:
-> In case of suspend with "--nolockfs" but without "--noflush",
-> the semantics for bio-based dm has been changed in 2.6.30 as below:
->   before 2.6.30:   I/Os submitted before the suspend invocation
->                    are flushed
->   2.6.30 or later: I/Os submitted even before the suspend invocation
->                    may not be flushed
->   (*) We had no idea whether the semantics change hurt someone.
->       (For details, see http://marc.info/?t=123994433400003&r=1&w=2)
->       But it seems no hurt since there is no complaint against 2.6.30
->       or later.
+>   o To keep the old semantics, we need to distinguish which I/Os were
+>     queued before/after the suspend invocation.
+>     So a special barrier-like request called 'suspend marker' was
+>     introduced.
 
-See my new reply on that thread.
- 
-> Since the semantics of request-based dm committed in 2.6.31-rc1
-> is still old one, change it to new one by this patch.
-
-Do you agree that after applying this patch series here, we could
-reinstate 'suspend with flush' by flushing before entering the guts of
-the suspend code (i.e. sending a flush to the dm device, which would be
-implemented using the barrier) and then suspending (--noflush)?
+This is the key to the simplification - when dm devices can support
+flushing properly (using this barrier support), there is no need for an
+additional implementation of 'flush' to be embedded within any
+internal suspend logic.
 
 Alasdair
