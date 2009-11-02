@@ -1,7 +1,7 @@
 From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: [PATCH 16/18] Replicator: update copyright dates
-Date: Mon,  2 Nov 2009 15:20:20 +0100
-Message-ID: <1257171622-8380-17-git-send-email-zkabelac@redhat.com>
+Subject: [PATCH 15/18] Replicator: add new options for replicator
+Date: Mon,  2 Nov 2009 15:20:19 +0100
+Message-ID: <1257171622-8380-16-git-send-email-zkabelac@redhat.com>
 References: <1257171622-8380-1-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-2-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-3-git-send-email-zkabelac@redhat.com>
@@ -17,10 +17,9 @@ References: <1257171622-8380-1-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-13-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-14-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-15-git-send-email-zkabelac@redhat.com>
-	<1257171622-8380-16-git-send-email-zkabelac@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1257171622-8380-16-git-send-email-zkabelac@redhat.com>
+In-Reply-To: <1257171622-8380-15-git-send-email-zkabelac@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -34,47 +33,209 @@ To: dm-devel@redhat.com
 Cc: Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
+New options: addsite, delsite, replicator,
+replicatorlog, replicatorlogtype.
+
 Signed-off-by: Zdenek Kabelac <zkabelac@redhat.com>
 ---
- lib/activate/dev_manager.c |    2 +-
- lib/metadata/segtype.h     |    2 +-
- libdm/libdm-deptree.c      |    2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ lib/config/defaults.h            |    1 +
+ lib/metadata/metadata-exported.h |    1 +
+ tools/args.h                     |    5 ++++
+ tools/commands.h                 |   10 ++++++-
+ tools/lvcreate.c                 |   47 ++++++++++++++++++++++++++++++++++++++
+ tools/lvmcmdline.c               |    9 +++++++
+ tools/tools.h                    |    1 +
+ 7 files changed, 72 insertions(+), 2 deletions(-)
 
-diff --git a/lib/activate/dev_manager.c b/lib/activate/dev_manager.c
-index 00f3cf3..ab4327c 100644
---- a/lib/activate/dev_manager.c
-+++ b/lib/activate/dev_manager.c
-@@ -1,6 +1,6 @@
- /*
-  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
-- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
-+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
-  *
-  * This file is part of LVM2.
-  *
-diff --git a/lib/metadata/segtype.h b/lib/metadata/segtype.h
-index 20a032f..dfdb7bf 100644
---- a/lib/metadata/segtype.h
-+++ b/lib/metadata/segtype.h
-@@ -1,6 +1,6 @@
- /*
-  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
-- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
-+ * Copyright (C) 2004-2009 Red Hat, Inc. All rights reserved.
-  *
-  * This file is part of LVM2.
-  *
-diff --git a/libdm/libdm-deptree.c b/libdm/libdm-deptree.c
-index 652b9e8..4ccaad3 100644
---- a/libdm/libdm-deptree.c
-+++ b/libdm/libdm-deptree.c
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (C) 2005-2007 Red Hat, Inc. All rights reserved.
-+ * Copyright (C) 2005-2009 Red Hat, Inc. All rights reserved.
-  *
-  * This file is part of the device-mapper userspace tools.
-  *
+diff --git a/lib/config/defaults.h b/lib/config/defaults.h
+index 824fec2..e904e58 100644
+--- a/lib/config/defaults.h
++++ b/lib/config/defaults.h
+@@ -103,6 +103,7 @@
+ 
+ #define DEFAULT_STRIPE_FILLER "error"
+ #define DEFAULT_MIRROR_REGION_SIZE 512	/* KB */
++#define DEFAULT_REPLICATOR_REGION_SIZE 512	/* KB */
+ #define DEFAULT_INTERVAL 15
+ 
+ #ifdef READLINE_SUPPORT
+diff --git a/lib/metadata/metadata-exported.h b/lib/metadata/metadata-exported.h
+index 257165c..2ca2d81 100644
+--- a/lib/metadata/metadata-exported.h
++++ b/lib/metadata/metadata-exported.h
+@@ -584,6 +584,7 @@ uint64_t extents_from_size(struct cmd_context *cmd, uint64_t size,
+ struct lvcreate_params {
+ 	/* flags */
+ 	int snapshot; /* snap */
++	int replicator; /* replicator */
+ 	int zero; /* all */
+ 	int major; /* all */
+ 	int minor; /* all */
+diff --git a/tools/args.h b/tools/args.h
+index 1f2427b..40b92b3 100644
+--- a/tools/args.h
++++ b/tools/args.h
+@@ -64,6 +64,11 @@ arg(dataalignmentoffset_ARG, '\0', "dataalignmentoffset", size_kb_arg, 0)
+ arg(virtualoriginsize_ARG, '\0', "virtualoriginsize", size_mb_arg, 0)
+ arg(virtualsize_ARG, '\0', "virtualsize", size_mb_arg, 0)
+ arg(noudevsync_ARG, '\0', "noudevsync", NULL, 0)
++arg(replicator_ARG, '\0', "replicator", NULL, 0)
++arg(replicatorlog_ARG, '\0', "replicatorlog", NULL, 0)
++arg(replicatorlogtype_ARG, '\0', "replicatorlogtype", NULL, 0)
++arg(addsite_ARG, '\0', "addsite", site_arg, 0)
++arg(delsite_ARG, '\0', "delsite", site_arg, 0)
+ 
+ /* Allow some variations */
+ arg(resizable_ARG, '\0', "resizable", yes_no_arg, 0)
+diff --git a/tools/commands.h b/tools/commands.h
+index 85222e4..fc37889 100644
+--- a/tools/commands.h
++++ b/tools/commands.h
+@@ -62,10 +62,12 @@ xx(lvchange,
+    "lvchange\n"
+    "\t[-A|--autobackup y|n]\n"
+    "\t[-a|--available [e|l]y|n]\n"
++   "\t[--addsite Site]\n"
+    "\t[--addtag Tag]\n"
+    "\t[--alloc AllocationPolicy]\n"
+    "\t[-C|--contiguous y|n]\n"
+    "\t[-d|--debug]\n"
++   "\t[--delsite Site]\n"
+    "\t[--deltag Tag]\n"
+    "\t[-f|--force]\n"
+    "\t[-h|--help]\n"
+@@ -89,7 +91,7 @@ xx(lvchange,
+    ignorelockingfailure_ARG, ignoremonitoring_ARG, major_ARG, minor_ARG,
+    monitor_ARG, noudevsync_ARG, partial_ARG, permission_ARG, persistent_ARG,
+    readahead_ARG, resync_ARG, refresh_ARG, addtag_ARG, deltag_ARG, test_ARG,
+-   yes_ARG)
++   addsite_ARG, delsite_ARG, yes_ARG)
+ 
+ xx(lvconvert,
+    "Change logical volume layout",
+@@ -145,6 +147,9 @@ xx(lvcreate,
+    "\t[-p|--permission {r|rw}]\n"
+    "\t[-r|--readahead ReadAheadSectors|auto|none]\n"
+    "\t[-R|--regionsize MirrorLogRegionSize]\n"
++   "\t[--replicator]\n"
++   "\t[--replicatorlog LogicalVolumeName]\n"
++   "\t[--replicatorlogtype ringbuffer]\n"
+    "\t[-t|--test]\n"
+    "\t[--type VolumeType]\n"
+    "\t[-v|--verbose]\n"
+@@ -179,7 +184,8 @@ xx(lvcreate,
+    addtag_ARG, alloc_ARG, autobackup_ARG, chunksize_ARG, contiguous_ARG,
+    corelog_ARG, extents_ARG, major_ARG, minor_ARG, mirrorlog_ARG, mirrors_ARG,
+    name_ARG, nosync_ARG, noudevsync_ARG, permission_ARG, persistent_ARG,
+-   readahead_ARG, regionsize_ARG, size_ARG, snapshot_ARG, stripes_ARG,
++   readahead_ARG, regionsize_ARG, replicator_ARG, replicatorlog_ARG,
++   replicatorlogtype_ARG, size_ARG, snapshot_ARG, stripes_ARG,
+    stripesize_ARG, test_ARG, type_ARG, virtualoriginsize_ARG, virtualsize_ARG,
+    zero_ARG)
+ 
+diff --git a/tools/lvcreate.c b/tools/lvcreate.c
+index be6b5cc..6f71aaf 100644
+--- a/tools/lvcreate.c
++++ b/tools/lvcreate.c
+@@ -373,6 +373,36 @@ static int _read_mirror_params(struct lvcreate_params *lp,
+ 	return 1;
+ }
+ 
++static int _read_replicator_params(struct lvcreate_params *lp,
++			       struct cmd_context *cmd)
++{
++	int region_size;
++	const char *mirrorlog;
++
++	if (arg_count(cmd, regionsize_ARG)) {
++		if (arg_sign_value(cmd, regionsize_ARG, 0) == SIGN_MINUS) {
++			log_error("Negative regionsize is invalid");
++			return 0;
++		}
++		lp->region_size = arg_uint_value(cmd, regionsize_ARG, 0);
++	} else {
++		region_size = 2 * find_config_tree_int(cmd,
++						       "activation/replicator_region_size",
++						       DEFAULT_REPLICATOR_REGION_SIZE);
++		if (region_size < 0) {
++			log_error("Negative regionsize in configuration file "
++				  "is invalid");
++			return 0;
++		}
++		lp->region_size = region_size;
++	}
++
++	if (!_validate_mirror_params(cmd, lp))
++		return 0;
++
++	return 1;
++}
++
+ static int _lvcreate_params(struct lvcreate_params *lp,
+ 			    struct lvcreate_cmdline_params *lcp,
+ 			    struct cmd_context *cmd,
+@@ -405,6 +435,9 @@ static int _lvcreate_params(struct lvcreate_params *lp,
+ 	if (seg_is_mirrored(lp))
+ 		lp->mirrors = 2;
+ 
++	if (seg_is_replicator(lp) || arg_count(cmd, replicator_ARG))
++		lp->replicator = 1;
++
+ 	if (arg_count(cmd, mirrors_ARG)) {
+ 		lp->mirrors = arg_uint_value(cmd, mirrors_ARG, 0) + 1;
+ 		if (lp->mirrors == 1)
+@@ -469,6 +502,20 @@ static int _lvcreate_params(struct lvcreate_params *lp,
+ 		}
+ 	}
+ 
++	if (lp->replicator) {
++		log_error("--replicator for replicators");
++
++	} else {
++		if (arg_count(cmd, replicatorlog_ARG)) {
++			log_error("--replicatorlog is only available with replicators");
++			return 0;
++		}
++		if (arg_count(cmd, replicatorlogtype_ARG)) {
++			log_error("--replicatorlogtype is only available with replicators");
++			return 0;
++		}
++	}
++
+ 	if (activation() && lp->segtype->ops->target_present &&
+ 	    !lp->segtype->ops->target_present(cmd, NULL, NULL)) {
+ 		log_error("%s: Required device-mapper target(s) not "
+diff --git a/tools/lvmcmdline.c b/tools/lvmcmdline.c
+index 31ebd12..cdfef3f 100644
+--- a/tools/lvmcmdline.c
++++ b/tools/lvmcmdline.c
+@@ -483,6 +483,15 @@ int readahead_arg(struct cmd_context *cmd __attribute((unused)), struct arg *a)
+ 	return 1;
+ }
+ 
++int site_arg(struct cmd_context *cmd __attribute((unused)), struct arg *a)
++{
++	char *pos = a->value;
++	if (!validate_name(pos))
++		return 0;
++
++	return 1;
++}
++
+ static void __alloc(int size)
+ {
+ 	if (!(_cmdline.commands = dm_realloc(_cmdline.commands, sizeof(*_cmdline.commands) * size))) {
+diff --git a/tools/tools.h b/tools/tools.h
+index 3afa1a1..67b2178 100644
+--- a/tools/tools.h
++++ b/tools/tools.h
+@@ -151,6 +151,7 @@ int units_arg(struct cmd_context *cmd, struct arg *a);
+ int segtype_arg(struct cmd_context *cmd, struct arg *a);
+ int alloc_arg(struct cmd_context *cmd, struct arg *a);
+ int readahead_arg(struct cmd_context *cmd, struct arg *a);
++int site_arg(struct cmd_context *cmd, struct arg *a);
+ 
+ /* we use the enums to access the switches */
+ unsigned int arg_count(const struct cmd_context *cmd, int a);
 -- 
 1.6.5.1
