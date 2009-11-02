@@ -1,9 +1,17 @@
 From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Replicator part for lvm
-Date: Mon,  2 Nov 2009 15:20:04 +0100
-Message-ID: <1257171622-8380-1-git-send-email-zkabelac@redhat.com>
+Subject: [PATCH 07/18] Replicator: suspend/deactivate replicator
+Date: Mon,  2 Nov 2009 15:20:11 +0100
+Message-ID: <1257171622-8380-8-git-send-email-zkabelac@redhat.com>
+References: <1257171622-8380-1-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-2-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-3-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-4-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-5-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-6-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-7-git-send-email-zkabelac@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1257171622-8380-7-git-send-email-zkabelac@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,28 +22,139 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Generic code updates:
+Introducing dm_tree_set_replicator_suspend() to suspend
+replicator control device before actual deactivation of replicator-dev
+head device.
 
-[PATCH 01/18] Adding fflush after yes/no prompt
-[PATCH 02/18] Export outnl and indent functions for modules
-[PATCH 03/18] Export outsz() and outhnt() for modules
-[PATCH 04/18] Export outfc() macro and out_text_with_comment()
-[PATCH 05/18] Use outsz macro
+Signed-off-by: Zdenek Kabelac <zkabelac@redhat.com>
+---
+ libdm/.exported_symbols |    1 +
+ libdm/libdevmapper.h    |    2 +
+ libdm/libdm-deptree.c   |   63 +++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 66 insertions(+), 0 deletions(-)
 
-Replicator related code:
-
-[PATCH 06/18] Replicator: add libdm support
-[PATCH 07/18] Replicator: suspend/deactivate replicator
-[PATCH 08/18] Replicator: add lvm support
-[PATCH 09/18] Replicator: vg validation
-[PATCH 10/18] Replicator: extend _lv_each_dependency() rep. deps
-[PATCH 11/18] Replicator: update _create_partial_dtree()
-[PATCH 12/18] Replicator: add replicator to dtree
-[PATCH 13/18] Replicator: do not remove of replicators' LVs
-[PATCH 14/18] Replicator: activate change for vgchange
-[PATCH 15/18] Replicator: add new options for replicator
-[PATCH 16/18] Replicator: update copyright dates
-[PATCH 17/18] Replicator: new variable in generated file
-[PATCH 18/18] Replicator: update of generated configure file
+diff --git a/libdm/.exported_symbols b/libdm/.exported_symbols
+index 7b5e3f0..3217e03 100644
+--- a/libdm/.exported_symbols
++++ b/libdm/.exported_symbols
+@@ -79,6 +79,7 @@ dm_tree_node_add_mirror_target_log
+ dm_tree_node_add_target_area
+ dm_tree_node_add_replicator_target
+ dm_tree_node_add_replicator_dev_target
++dm_tree_set_replicator_suspend
+ dm_tree_node_set_read_ahead
+ dm_tree_skip_lockfs
+ dm_tree_use_no_flush_suspend
+diff --git a/libdm/libdevmapper.h b/libdm/libdevmapper.h
+index f96aed3..66ce055 100644
+--- a/libdm/libdevmapper.h
++++ b/libdm/libdevmapper.h
+@@ -457,6 +457,8 @@ int dm_tree_node_add_replicator_dev_target(struct dm_tree_node *node,
+ 					   uint32_t slog_flags,		/* Mirror log flags */
+ 					   uint32_t slog_size);
+ 
++int dm_tree_set_replicator_suspend(struct dm_tree *dtree, const char *uuid);
++
+ int dm_tree_node_add_target_area(struct dm_tree_node *node,
+ 				    const char *dev_name,
+ 				    const char *dlid,
+diff --git a/libdm/libdm-deptree.c b/libdm/libdm-deptree.c
+index 0ba4e7e..652b9e8 100644
+--- a/libdm/libdm-deptree.c
++++ b/libdm/libdm-deptree.c
+@@ -157,6 +157,7 @@ struct dm_tree_node {
+         struct dm_list used_by;    	/* Nodes that use this node */
+ 
+ 	int activation_priority;	/* 0 gets activated first */
++	int replicator_suspend;		/* 1 gets suspend first */
+ 
+ 	uint16_t udev_flags;		/* Udev control flags */
+ 
+@@ -678,6 +679,18 @@ void dm_tree_node_set_read_ahead(struct dm_tree_node *dnode,
+ 	dnode->props.read_ahead_flags = read_ahead_flags;
+ }
+ 
++int dm_tree_set_replicator_suspend(struct dm_tree *dtree, const char *uuid)
++{
++	struct dm_tree_node *dnode;
++
++	if ((dnode = dm_tree_find_node_by_uuid(dtree, uuid))) {
++		log_verbose("Setting replicator suspend for %s", dnode->name);
++		dnode->replicator_suspend = 1;
++	}
++
++	return 1;
++}
++
+ int dm_tree_add_dev(struct dm_tree *dtree, uint32_t major, uint32_t minor)
+ {
+ 	return _add_dev(dtree, &dtree->root, major, minor) ? 1 : 0;
+@@ -1030,6 +1043,53 @@ static int _suspend_node(const char *name, uint32_t major, uint32_t minor,
+ 	return r;
+ }
+ 
++static int _suspend_replicator_parent(struct dm_tree_node *dnode,
++				      const char *uuid_prefix,
++				      size_t uuid_prefix_len)
++{
++	struct dm_info info;
++	const struct dm_info *dinfo;
++	const char *name;
++	const char *uuid;
++	struct dm_tree_link *dlink;
++
++	dm_list_iterate_items(dlink, &dnode->uses) {
++		if (!dlink->node->replicator_suspend)
++			continue;
++
++		if (!(uuid = dm_tree_node_get_uuid(dlink->node))) {
++			stack;
++			continue;
++		}
++		/* Ignore if it doesn't belong to this VG */
++		if (!_uuid_prefix_matches(uuid, uuid_prefix, uuid_prefix_len))
++			continue;
++
++		if (!(dinfo = dm_tree_node_get_info(dlink->node))) {
++			stack;
++			continue;
++		}
++
++		if (dinfo->suspended)
++			continue;
++
++		if (!(name = dm_tree_node_get_name(dlink->node))) {
++			stack;
++			continue;
++		}
++
++		if (!_suspend_node(name, dinfo->major, dinfo->minor,
++				   1, 1, &info)) {
++			log_error("Unable to suspend %s (%" PRIu32
++				  ":%" PRIu32 ")", name, dinfo->major,
++				  dinfo->minor);
++			return 0;
++		}
++	}
++
++	return 1;
++}
++
+ int dm_tree_deactivate_children(struct dm_tree_node *dnode,
+ 				   const char *uuid_prefix,
+ 				   size_t uuid_prefix_len)
+@@ -1066,6 +1126,9 @@ int dm_tree_deactivate_children(struct dm_tree_node *dnode,
+ 		    !info.exists || info.open_count)
+ 			continue;
+ 
++		if (!_suspend_replicator_parent(child, uuid_prefix, uuid_prefix_len))
++			continue;
++
+ 		if (!_deactivate_node(name, info.major, info.minor,
+ 				      &dnode->dtree->cookie, dnode->udev_flags)) {
+ 			log_error("Unable to deactivate %s (%" PRIu32
+-- 
+1.6.5.1
