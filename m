@@ -1,13 +1,21 @@
 From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: [PATCH 03/18] Export outsz() and outhnt() for modules
-Date: Mon,  2 Nov 2009 15:20:07 +0100
-Message-ID: <1257171622-8380-4-git-send-email-zkabelac@redhat.com>
+Subject: [PATCH 10/18] Replicator: extend _lv_each_dependency()
+	rep. deps
+Date: Mon,  2 Nov 2009 15:20:14 +0100
+Message-ID: <1257171622-8380-11-git-send-email-zkabelac@redhat.com>
 References: <1257171622-8380-1-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-2-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-3-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-4-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-5-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-6-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-7-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-8-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-9-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-10-git-send-email-zkabelac@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1257171622-8380-3-git-send-email-zkabelac@redhat.com>
+In-Reply-To: <1257171622-8380-10-git-send-email-zkabelac@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,84 +29,32 @@ To: dm-devel@redhat.com
 Cc: Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Adding macro outsz() for out_size() and outhnt() for out_hint()
-that checks for error in a similar way as outf() does for out_text()
-
 Signed-off-by: Zdenek Kabelac <zkabelac@redhat.com>
 ---
- lib/format_text/export.c      |   23 +++++++++--------------
- lib/format_text/text_export.h |    2 ++
- 2 files changed, 11 insertions(+), 14 deletions(-)
+ lib/metadata/metadata.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-diff --git a/lib/format_text/export.c b/lib/format_text/export.c
-index 7f7d0de..f25b80e 100644
---- a/lib/format_text/export.c
-+++ b/lib/format_text/export.c
-@@ -386,9 +386,8 @@ static int _print_vg(struct formatter *f, struct volume_group *vg)
- 	if (vg->system_id && *vg->system_id)
- 		outf(f, "system_id = \"%s\"", vg->system_id);
+diff --git a/lib/metadata/metadata.c b/lib/metadata/metadata.c
+index ebb2f16..3743c89 100644
+--- a/lib/metadata/metadata.c
++++ b/lib/metadata/metadata.c
+@@ -1927,6 +1927,8 @@ static int _lv_each_dependency(struct logical_volume *lv,
+ 	struct lv_segment *lvseg;
  
--	if (!out_size(f, (uint64_t) vg->extent_size, "extent_size = %u",
--		      vg->extent_size))
--		return_0;
-+	outsz(f, (uint64_t) vg->extent_size, "extent_size = %u",
-+	      vg->extent_size);
- 	outf(f, "max_lv = %u", vg->max_lv);
- 	outf(f, "max_pv = %u", vg->max_pv);
- 
-@@ -453,9 +452,8 @@ static int _print_pvs(struct formatter *f, struct volume_group *vg)
- 			return 0;
- 		}
- 
--		if (!out_hint(f, "device = \"%s\"",
--			      escape_double_quotes(buf, pv_dev_name(pv))))
--			return_0;
-+		outhnt(f, "device = \"%s\"",
-+		       escape_double_quotes(buf, pv_dev_name(pv)));
- 		outnl(f);
- 
- 		if (!_print_flag_config(f, pv->status, PV_FLAGS))
-@@ -467,13 +465,11 @@ static int _print_pvs(struct formatter *f, struct volume_group *vg)
- 			outf(f, "tags = %s", buffer);
- 		}
- 
--		if (!out_size(f, pv->size, "dev_size = %" PRIu64, pv->size))
--			return_0;
-+		outsz(f, pv->size, "dev_size = %" PRIu64, pv->size);
- 
- 		outf(f, "pe_start = %" PRIu64, pv->pe_start);
--		if (!out_size(f, vg->extent_size * (uint64_t) pv->pe_count,
--			      "pe_count = %u", pv->pe_count))
--			return_0;
-+		outsz(f, vg->extent_size * (uint64_t) pv->pe_count,
-+		      "pe_count = %u", pv->pe_count);
- 
- 		_dec_indent(f);
- 		outf(f, "}");
-@@ -493,9 +489,8 @@ static int _print_segment(struct formatter *f, struct volume_group *vg,
- 	_inc_indent(f);
- 
- 	outf(f, "start_extent = %u", seg->le);
--	if (!out_size(f, (uint64_t) seg->len * vg->extent_size,
--		      "extent_count = %u", seg->len))
--		return_0;
-+	outsz(f, (uint64_t) seg->len * vg->extent_size,
-+	      "extent_count = %u", seg->len);
- 
- 	outnl(f);
- 	outf(f, "type = \"%s\"", seg->segtype->name);
-diff --git a/lib/format_text/text_export.h b/lib/format_text/text_export.h
-index cdba82f..a452439 100644
---- a/lib/format_text/text_export.h
-+++ b/lib/format_text/text_export.h
-@@ -16,6 +16,8 @@
- #ifndef _LVM_TEXT_EXPORT_H
- #define _LVM_TEXT_EXPORT_H
- 
-+#define outsz(args...) do {if (!out_size(args)) return_0;} while (0)
-+#define outhnt(args...) do {if (!out_hint(args)) return_0;} while (0)
- #define outf(args...) do {if (!out_text(args)) return_0;} while (0)
- #define outnl(f) do {if (!out_newline(f)) return_0;} while (0)
- 
+ 	struct logical_volume *deps[] = {
++		(lv->rdevice && lv != lv->rdevice->lv) ? lv->rdevice->lv : 0,
++		(lv->rdevice && lv != lv->rdevice->slog) ? lv->rdevice->slog : 0,
+ 		lv->snapshot ? lv->snapshot->origin : 0,
+ 		lv->snapshot ? lv->snapshot->cow : 0 };
+ 	for (i = 0; i < sizeof(deps) / sizeof(*deps); ++i) {
+@@ -1937,6 +1939,8 @@ static int _lv_each_dependency(struct logical_volume *lv,
+ 	dm_list_iterate_items(lvseg, &lv->segments) {
+ 		if (lvseg->log_lv && !fn(lvseg->log_lv, data))
+ 			return_0;
++		if (lvseg->rlog_lv && !fn(lvseg->rlog_lv, data))
++			return_0;
+ 		for (s = 0; s < lvseg->area_count; ++s) {
+ 			if (seg_type(lvseg, s) == AREA_LV && !fn(seg_lv(lvseg,s), data))
+ 				return_0;
 -- 
 1.6.5.1
