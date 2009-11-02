@@ -1,10 +1,10 @@
-From: Tsavatapalli Ganesh Kumar <ganigaadu@gmail.com>
-Subject: Invitation to connect on LinkedIn
-Date: Thu, 29 Oct 2009 10:27:44 -0700 (PDT)
-Message-ID: <1912748559.778339.1256837264912.JavaMail.app@ech3-cdn06.prod>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-kcopyd: accept zero-size jobs
+Date: Sun, 1 Nov 2009 21:09:29 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911012108001.18194@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2031161482=="
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,85 +15,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
---===============2031161482==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_778338_431987117.1256837264911"
+Hi
 
-------=_Part_778338_431987117.1256837264911
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+This is a simple patch that makes kcopyd accept zero-size jobs. It is 
+needed for handling snapshot resizing in shared snapshots.
 
-LinkedIn
-------------
+Mikulas
 
+--
 
+dm-kcopyd: accept zero-size jobs
 
-   
-I'd like to add you to my professional network on LinkedIn.
+This patch changes dm-kcopyd so that it accepts zero-size jobs and completes
+them immediatelly via its completion thread.
 
-- Tsavatapalli
+It is needed for multisnapshots snapshot resizing. When we are writing to
+a chunk beyond origin end, no copying is done. To simplify the code, we submit
+an empty request to kcopyd and let kcopyd complete it. If we didn't submit
+a request to kcopyd and called the completion routine immediatelly, it would
+violate the principle that completion is called only from one thread and
+it would need additional locking.
 
-Confirm that you know Tsavatapalli Ganesh Kumar
-https://www.linkedin.com/e/isd/828997283/B6mCpvHH/
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Every day, millions of professionals like Tsavatapalli Ganesh Kumar use LinkedIn to connect with colleagues, find experts, and explore opportunities.
+---
+ drivers/md/dm-kcopyd.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-
-
+Index: linux-2.6.31.5-fast/drivers/md/dm-kcopyd.c
+===================================================================
+--- linux-2.6.31.5-fast.orig/drivers/md/dm-kcopyd.c	2009-11-02 01:21:49.000000000 +0100
++++ linux-2.6.31.5-fast/drivers/md/dm-kcopyd.c	2009-11-02 01:22:01.000000000 +0100
+@@ -450,7 +450,10 @@ static void dispatch_job(struct kcopyd_j
+ {
+ 	struct dm_kcopyd_client *kc = job->kc;
+ 	atomic_inc(&kc->nr_jobs);
+-	push(&kc->pages_jobs, job);
++	if (unlikely(!job->source.count))
++		push(&kc->complete_jobs, job);
++	else
++		push(&kc->pages_jobs, job);
+ 	wake(kc);
+ }
  
-------
-(c) 2009, LinkedIn Corporation
-
-
-------=_Part_778338_431987117.1256837264911
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-
-
-<html>
-  <body>
-
-  
-
-<table border="0" width="550" cellpadding="0" cellspacing="0" style="max-width:550px; border-top:4px solid #39C; font: 12px arial, sans-serif; margin: 0 auto;"><tr><td>  
-  <h1 style="color: #000; font: bold 23px arial; margin:5px 0;" >LinkedIn</h1>
-
-
-<div style="font:13px arial, sans-serif; width:540px">  
-  <p>
-    I'd like to add you to my professional network on LinkedIn.<br/>
-<br/>
-- Tsavatapalli
-  </p>
-  <p>
-        <a href="https://www.linkedin.com/e/isd/828997283/B6mCpvHH/">Confirm that you know Tsavatapalli Ganesh Kumar</a>
-  </p>
-  
-  <p>Every day, millions of professionals like <strong>Tsavatapalli Ganesh Kumar</strong> use LinkedIn to connect with colleagues, find experts, and explore opportunities.</p>
-</div>
-
-
-
-
-
-
-  <p style="width: 550px; margin: 3px auto; font: 10px arial, sans-serif; color: #999;">&#169; 2009, LinkedIn Corporation
-
-</p>
-
-</body>
-</html>
-------=_Part_778338_431987117.1256837264911--
-
-
---===============2031161482==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2031161482==--
