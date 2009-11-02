@@ -1,7 +1,8 @@
 From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: [PATCH 11/18] Replicator: update _create_partial_dtree()
-Date: Mon,  2 Nov 2009 15:20:15 +0100
-Message-ID: <1257171622-8380-12-git-send-email-zkabelac@redhat.com>
+Subject: [PATCH 13/18] Replicator: do not remove of replicators'
+	LVs
+Date: Mon,  2 Nov 2009 15:20:17 +0100
+Message-ID: <1257171622-8380-14-git-send-email-zkabelac@redhat.com>
 References: <1257171622-8380-1-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-2-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-3-git-send-email-zkabelac@redhat.com>
@@ -13,9 +14,11 @@ References: <1257171622-8380-1-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-9-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-10-git-send-email-zkabelac@redhat.com>
 	<1257171622-8380-11-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-12-git-send-email-zkabelac@redhat.com>
+	<1257171622-8380-13-git-send-email-zkabelac@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1257171622-8380-11-git-send-email-zkabelac@redhat.com>
+In-Reply-To: <1257171622-8380-13-git-send-email-zkabelac@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,63 +32,30 @@ To: dm-devel@redhat.com
 Cc: Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Creating partial tree for Replicator target.
-Using dm_tree_set_priority() to set higher priority for Replicator.
-
 Signed-off-by: Zdenek Kabelac <zkabelac@redhat.com>
 ---
- lib/activate/dev_manager.c |   27 ++++++++++++++++++++++++++-
- 1 files changed, 26 insertions(+), 1 deletions(-)
+ lib/metadata/lv_manip.c |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
 
-diff --git a/lib/activate/dev_manager.c b/lib/activate/dev_manager.c
-index a4ae9e0..1f1d645 100644
---- a/lib/activate/dev_manager.c
-+++ b/lib/activate/dev_manager.c
-@@ -731,6 +731,9 @@ static struct dm_tree *_create_partial_dtree(struct dev_manager *dm, struct logi
- 	struct dm_list *snh, *snht;
- 	struct lv_segment *seg;
- 	uint32_t s;
-+	struct replicator_device *rdev;
-+	struct replicator_site *rsite;
-+	const char *replicator_dlid;
+diff --git a/lib/metadata/lv_manip.c b/lib/metadata/lv_manip.c
+index f3e6511..816c5b6 100644
+--- a/lib/metadata/lv_manip.c
++++ b/lib/metadata/lv_manip.c
+@@ -2084,6 +2084,15 @@ int lv_remove_single(struct cmd_context *cmd, struct logical_volume *lv,
+ 		return 0;
+ 	}
  
- 	if (!(dtree = dm_tree_create())) {
- 		log_error("Partial dtree creation failed for %s.", lv->name);
-@@ -746,12 +749,34 @@ static struct dm_tree *_create_partial_dtree(struct dev_manager *dm, struct logi
- 			goto_bad;
- 
- 	/* Add any LVs used by segments in this LV */
--	dm_list_iterate_items(seg, &lv->segments)
-+	dm_list_iterate_items(seg, &lv->segments) {
- 		for (s = 0; s < seg->area_count; s++)
- 			if (seg_type(seg, s) == AREA_LV && seg_lv(seg, s)) {
- 				if (!_add_lv_to_dtree(dm, dtree, seg_lv(seg, s)))
- 					goto_bad;
- 			}
-+		if (seg->replicator) {
-+                        /* Add all replicator-dev from same replicator */
-+			dm_list_iterate_items(rsite, &seg->replicator->rsites) {
-+				dm_list_iterate_items(rdev, &rsite->rdevices) {
-+					if (rsite->state == REPLICATOR_STATE_ACTIVE) {
-+						if (!rdev->replicator_dev->lv)
-+							goto_bad;
-+						if (lv == rdev->replicator_dev->lv)
-+                                                        continue;
-+						/* Add replicator-dev LV */
-+						if (!_add_lv_to_dtree(dm, dtree, rdev->replicator_dev->lv))
-+							goto_bad;
-+					}
-+				}
-+			}
-+
-+			if (!(replicator_dlid = build_dlid(dm, seg->replicator->lvid.s, NULL)))
-+				goto_bad;
-+			if (!dm_tree_set_replicator_suspend(dtree, replicator_dlid))
-+				goto_bad;
-+		}
++	if (lv_is_replicator_dev(lv) ||
++	    lv_is_rimage(lv) ||
++	    lv_is_rlog(lv) ||
++	    lv_is_slog(lv)) {
++		log_error("Can't remove logical volume %s used by a replicator",
++			  lv->name);
++		return 0;
 +	}
- 
- 	return dtree;
- 
++
+ 	if (lv->status & LOCKED) {
+ 		log_error("Can't remove locked LV %s", lv->name);
+ 		return 0;
 -- 
 1.6.5.1
