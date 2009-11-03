@@ -1,22 +1,18 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 07/18] Replicator: suspend/deactivate
-	replicator
-Date: Tue, 3 Nov 2009 11:46:14 -0500
-Message-ID: <20091103164613.GA26722@redhat.com>
-References: <1257171622-8380-1-git-send-email-zkabelac@redhat.com>
-	<1257171622-8380-2-git-send-email-zkabelac@redhat.com>
-	<1257171622-8380-3-git-send-email-zkabelac@redhat.com>
-	<1257171622-8380-4-git-send-email-zkabelac@redhat.com>
-	<1257171622-8380-5-git-send-email-zkabelac@redhat.com>
-	<1257171622-8380-6-git-send-email-zkabelac@redhat.com>
-	<1257171622-8380-7-git-send-email-zkabelac@redhat.com>
-	<1257171622-8380-8-git-send-email-zkabelac@redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: Re: Ext3 sequential read performance drop 2.6.29 ->
+	2.6.30,2.6.31,...
+Date: Tue, 3 Nov 2009 08:50:30 -0800
+Message-ID: <20091103085030.6c2f3304.akpm@linux-foundation.org>
+References: <20091013120955.6bd5844b@smartjog.com>
+	<20091102135554.b10ece3e.akpm@linux-foundation.org>
+	<20091103100645.GA13118@infradead.org>
+	<d6aea4636eac5a7c065f8c1a83c0dbe2.squirrel@neil.brown.name>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1257171622-8380-8-git-send-email-zkabelac@redhat.com>
+In-Reply-To: <d6aea4636eac5a7c065f8c1a83c0dbe2.squirrel@neil.brown.name>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,69 +22,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Zdenek Kabelac <zkabelac@redhat.com>
+To: NeilBrown <neilb@suse.de>
+Cc: linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Laurent CORBES <laurent.corbes@smartjog.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Nov 02 2009 at  9:20am -0500,
-Zdenek Kabelac <zkabelac@redhat.com> wrote:
+On Tue, 3 Nov 2009 21:42:30 +1100 "NeilBrown" <neilb@suse.de> wrote:
 
-> Introducing dm_tree_set_replicator_suspend() to suspend
-> replicator control device before actual deactivation of replicator-dev
-> head device.
+> On Tue, November 3, 2009 9:06 pm, Christoph Hellwig wrote:
+> > On Mon, Nov 02, 2009 at 01:55:54PM -0800, Andrew Morton wrote:
+> >> On Tue, 13 Oct 2009 12:09:55 +0200
+> >> Laurent CORBES <laurent.corbes@smartjog.com> wrote:
+> >>
+> >> > Hi all,
+> >> >
+> >> > While benchmarking some systems I discover a big sequential read
+> >> performance
+> >> > drop using ext3 on ~ big files. The drop seems to be introduced in
+> >> 2.6.30. I'm
+> >> > testing with 2.6.28.6 -> 2.6.29.6 -> 2.6.30.4 -> 2.6.31.3.
+> >>
+> >> Seems that large performance regressions aren't of interest to this
+> >> list :(
+> >
+> > No sure which list you mean, but dm-devel is for dm, not md.
+
+bah.
+
+>  We're also
+> > seeing similarly massive performance drops with md and ext3/xfs as
+> > already reported on the list.  Someone tracked it down to writeback
+> > changes as usual, but there it got stuck.
 > 
-> Signed-off-by: Zdenek Kabelac <zkabelac@redhat.com>
-> ---
->  libdm/.exported_symbols |    1 +
->  libdm/libdevmapper.h    |    2 +
->  libdm/libdm-deptree.c   |   63 +++++++++++++++++++++++++++++++++++++++++++++++
->  3 files changed, 66 insertions(+), 0 deletions(-)
+> I'm still looking - running some basic tests on 4 filesystems over
+> half a dozen recent kernels to see what has been happening.
 > 
-> diff --git a/libdm/.exported_symbols b/libdm/.exported_symbols
-> index 7b5e3f0..3217e03 100644
-> --- a/libdm/.exported_symbols
-> +++ b/libdm/.exported_symbols
-> @@ -79,6 +79,7 @@ dm_tree_node_add_mirror_target_log
->  dm_tree_node_add_target_area
->  dm_tree_node_add_replicator_target
->  dm_tree_node_add_replicator_dev_target
-> +dm_tree_set_replicator_suspend
->  dm_tree_node_set_read_ahead
->  dm_tree_skip_lockfs
->  dm_tree_use_no_flush_suspend
-> diff --git a/libdm/libdevmapper.h b/libdm/libdevmapper.h
-> index f96aed3..66ce055 100644
-> --- a/libdm/libdevmapper.h
-> +++ b/libdm/libdevmapper.h
-> @@ -457,6 +457,8 @@ int dm_tree_node_add_replicator_dev_target(struct dm_tree_node *node,
->  					   uint32_t slog_flags,		/* Mirror log flags */
->  					   uint32_t slog_size);
->  
-> +int dm_tree_set_replicator_suspend(struct dm_tree *dtree, const char *uuid);
-> +
->  int dm_tree_node_add_target_area(struct dm_tree_node *node,
->  				    const char *dev_name,
->  				    const char *dlid,
-> diff --git a/libdm/libdm-deptree.c b/libdm/libdm-deptree.c
-> index 0ba4e7e..652b9e8 100644
-> --- a/libdm/libdm-deptree.c
-> +++ b/libdm/libdm-deptree.c
-> @@ -157,6 +157,7 @@ struct dm_tree_node {
->          struct dm_list used_by;    	/* Nodes that use this node */
->  
->  	int activation_priority;	/* 0 gets activated first */
-> +	int replicator_suspend;		/* 1 gets suspend first */
->  
->  	uint16_t udev_flags;		/* Udev control flags */
->  
+> I have a suspicion that there a multiple problems.
+> In particular, XFS has a strange degradation which was papered over
+> by commit c8a4051c3731b.
+> I'm beginning to wonder if it was caused by commit 17bc6c30cf6bf
+> but I haven't actually tested that yet.
 
-I think it would be wise to make this more generic,
-e.g. "suspend_priority".
-
-It could be that other future devices would like to prioritize the
-suspend sequence too.  Having a means to do so (without using a
-seemingly replicator-specific node attribute) would be good.
-
-So this really just amounts to: s/replicator_suspend/suspend_priority/
-
-Mike
+I think Laurent's workload involves only reads, with no writes.
