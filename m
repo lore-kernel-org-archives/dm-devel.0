@@ -1,65 +1,187 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: Re: Ext3 sequential read performance drop 2.6.29 ->
-	2.6.30,2.6.31,...
-Date: Tue, 3 Nov 2009 08:50:30 -0800
-Message-ID: <20091103085030.6c2f3304.akpm@linux-foundation.org>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: [dm-devel] Re: Ext3 sequential read performance drop 2.6.29 ->
+  2.6.30,2.6.31,...
+Date: Wed, 4 Nov 2009 18:16:51 +1100
+Message-ID: <19185.10851.259745.139962@notabene.brown>
 References: <20091013120955.6bd5844b@smartjog.com>
 	<20091102135554.b10ece3e.akpm@linux-foundation.org>
 	<20091103100645.GA13118@infradead.org>
 	<d6aea4636eac5a7c065f8c1a83c0dbe2.squirrel@neil.brown.name>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<20091103115505.3d6e096d@smartjog.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: multipart/mixed; boundary="QSSQsmgX53"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d6aea4636eac5a7c065f8c1a83c0dbe2.squirrel@neil.brown.name>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.de>
-Cc: linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Laurent CORBES <laurent.corbes@smartjog.com>, linux-kernel@vger.kernel.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: message from Laurent CORBES on Tuesday November 3
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Laurent CORBES <laurent.corbes@smartjog.com>
+Cc: device-mapper development <dm-devel@redhat.com>, akpm@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, 3 Nov 2009 21:42:30 +1100 "NeilBrown" <neilb@suse.de> wrote:
 
-> On Tue, November 3, 2009 9:06 pm, Christoph Hellwig wrote:
-> > On Mon, Nov 02, 2009 at 01:55:54PM -0800, Andrew Morton wrote:
-> >> On Tue, 13 Oct 2009 12:09:55 +0200
-> >> Laurent CORBES <laurent.corbes@smartjog.com> wrote:
-> >>
-> >> > Hi all,
-> >> >
-> >> > While benchmarking some systems I discover a big sequential read
-> >> performance
-> >> > drop using ext3 on ~ big files. The drop seems to be introduced in
-> >> 2.6.30. I'm
-> >> > testing with 2.6.28.6 -> 2.6.29.6 -> 2.6.30.4 -> 2.6.31.3.
-> >>
-> >> Seems that large performance regressions aren't of interest to this
-> >> list :(
-> >
-> > No sure which list you mean, but dm-devel is for dm, not md.
+--QSSQsmgX53
+Content-Type: text/plain; charset=us-ascii
+Content-Description: message body text
+Content-Transfer-Encoding: 7bit
 
-bah.
-
->  We're also
-> > seeing similarly massive performance drops with md and ext3/xfs as
-> > already reported on the list.  Someone tracked it down to writeback
-> > changes as usual, but there it got stuck.
+On Tuesday November 3, laurent.corbes@smartjog.com wrote:
 > 
-> I'm still looking - running some basic tests on 4 filesystems over
-> half a dozen recent kernels to see what has been happening.
-> 
-> I have a suspicion that there a multiple problems.
-> In particular, XFS has a strange degradation which was papered over
-> by commit c8a4051c3731b.
-> I'm beginning to wonder if it was caused by commit 17bc6c30cf6bf
-> but I haven't actually tested that yet.
+> What is really strange is that from all the tests I did the raw md perfs never
+> dropped. only a few MB of diff between kernel (~2%). This is maybe related to
+> the way upper FS write datas on the md layer.
 
-I think Laurent's workload involves only reads, with no writes.
+That isn't all that strange.  It just says that the problem isn't with
+MD, but is in some other part of Linux closer to the filesystem.
+
+I did some tests with a range of kernels (all 'mainline', not the
+'stable' versions that you used) and while I do see a noticeable dip
+at 2.6.30 (except with ext3) is see improved performance in 2.6.31 and
+even greater improvements with 2.6.32-rc5.
+
+So while I confirm that 2.6.30 is worse than earlier kernels, and that
+there was a general decline leading to that point, things have become
+dramatically better.  So I don't think it is worth exploring very deeply.
+
+All the numbers in the graph come from 'bonnie' over the various
+file-systems on a 5-drive RAID6.
+
+NeilBrown
+
+
+--QSSQsmgX53
+Content-Type: image/png
+Content-Disposition: inline;
+	filename="read.png"
+Content-Transfer-Encoding: base64
+
+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
+--QSSQsmgX53--
