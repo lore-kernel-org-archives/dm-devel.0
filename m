@@ -1,36 +1,79 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH] scsi_dh_rdac: Add two new IBM devices to rdac_dev_list
-Date: Wed, 04 Nov 2009 13:35:45 -0800
-Message-ID: <1257370545.21609.10.camel@chandra-ubuntu>
-References: <E463DF2B2E584B4A82673F53D62C2EF48744CE36@cosmail01.lsi.com>
-Reply-To: sekharan@us.ibm.com
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF48744CE36@cosmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: revise snapshot_resume's exception
+	handover
+Date: Wed,  4 Nov 2009 16:45:40 -0500
+Message-ID: <1257371140-18483-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Until now snapshot_resume only allowed the resuming snapshot to get the
+exception store from another snapshot.
 
-On Wed, 2009-11-04 at 12:36 -0700, Moger, Babu wrote:
-> This patch adds two new IBM storage devices which can use rdac device handlers.
-> Signed-off-by: Babu Moger <babu.moger@lsi.com>
-> ---
-> --- linux-2.6.32-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-11-03 16:06:58.677451876 -0600
-> +++ linux-2.6.32-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-11-03 16:08:29.725570987 -0600
-> @@ -666,6 +666,8 @@ static const struct scsi_dh_devlist rdac
->  	{"IBM", "1724"},
->  	{"IBM", "1726"},
->  	{"IBM", "1742"},
-> +	{"IBM", "1745"},
-> +	{"IBM", "1746"},
->  	{"IBM", "1814"},
->  	{"IBM", "1815"},
->  	{"IBM", "1818"},
-> 
-> 
+Revise snapshot_resume's exception handover to allow a snapshot to
+handover its exceptions to another snapshot prior to resuming.
 
+This is needed to accomodate the following sequence:
+new_snapshot->ctr
+old_snapshot->suspend
+old_snapshot->resume
+new_snapshot->resume
+
+lvm2 relies on this sequence if 'lvchange --refresh' is used to start a
+snapshot merge that was deferred until both origin and snapshot were not
+in use.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-snap.c |   25 ++++++++++++++++++-------
+ 1 file changed, 18 insertions(+), 7 deletions(-)
+
+Index: linux-2.6-dev/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6-dev.orig/drivers/md/dm-snap.c
++++ linux-2.6-dev/drivers/md/dm-snap.c
+@@ -1268,16 +1268,27 @@ static void snapshot_resume(struct dm_ta
+ 	struct dm_snapshot *s = ti->private;
+ 
+ 	down_write(&s->lock);
+-	if (s->handover) {
+-		/* Get exception store from another snapshot */
++	if (s->handover_snap) {
++		/*
++		 * Initially assumes this snapshot will get
++		 * exception store from another snapshot
++		 */
+ 		struct dm_snapshot *old_snap = s->handover_snap;
+-		BUG_ON(!old_snap);
+-		down_write_nested(&old_snap->lock, SINGLE_DEPTH_NESTING);
+-		handover_exceptions(old_snap, s);
+-		up_write(&old_snap->lock);
++		struct dm_snapshot *new_snap = s;
++		struct dm_snapshot *lock_snap = old_snap;
++		if (!s->handover) {
++			/* Handover exceptions to another snapshot */
++			old_snap = s;
++			new_snap = s->handover_snap;
++			lock_snap = new_snap;
++		}
++		down_write_nested(&lock_snap->lock,
++				  SINGLE_DEPTH_NESTING);
++		handover_exceptions(old_snap, new_snap);
++		up_write(&lock_snap->lock);
+ 	}
+ 	/* An incomplete exception handover is not allowed */
+-	BUG_ON(s->handover || s->handover_snap);
++	BUG_ON(s->handover_snap);
+ 	s->active = 1;
+ 	s->suspended = 0;
+ 	up_write(&s->lock);
