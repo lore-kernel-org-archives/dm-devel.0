@@ -1,16 +1,9 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: [PATCH 07/18] Replicator: suspend/deactivate
-	replicator
-Date: Wed, 04 Nov 2009 11:05:41 +0100
-Message-ID: <hcrjlm$17p$1@ger.gmane.org>
-References: <1257171622-8380-1-git-send-email-zkabelac@redhat.com>	<1257171622-8380-2-git-send-email-zkabelac@redhat.com>	<1257171622-8380-3-git-send-email-zkabelac@redhat.com>	<1257171622-8380-4-git-send-email-zkabelac@redhat.com>	<1257171622-8380-5-git-send-email-zkabelac@redhat.com>	<1257171622-8380-6-git-send-email-zkabelac@redhat.com>	<1257171622-8380-7-git-send-email-zkabelac@redhat.com>	<1257171622-8380-8-git-send-email-zkabelac@redhat.com>
-	<20091103164613.GA26722@redhat.com>
+From: heinzm@sourceware.org
+Subject: dmraid/lib/metadata metadata.c
+Date: 4 Nov 2009 13:06:36 -0000
+Message-ID: <20091104130636.12529.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091103164613.GA26722@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,47 +13,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dne 3.11.2009 17:46, Mike Snitzer napsal(a):
-> On Mon, Nov 02 2009 at  9:20am -0500,
-> Zdenek Kabelac <zkabelac@redhat.com> wrote:
-> 
->> Introducing dm_tree_set_replicator_suspend() to suspend
->> replicator control device before actual deactivation of replicator-dev
->> head device.
->>
->>
->>  	int activation_priority;	/* 0 gets activated first */
->> +	int replicator_suspend;		/* 1 gets suspend first */
->>  
->>  	uint16_t udev_flags;		/* Udev control flags */
->>  
-> 
-> I think it would be wise to make this more generic,
-> e.g. "suspend_priority".
-> 
-> It could be that other future devices would like to prioritize the
-> suspend sequence too.  Having a means to do so (without using a
-> seemingly replicator-specific node attribute) would be good.
-> 
-> So this really just amounts to: s/replicator_suspend/suspend_priority/
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2009-11-04 13:06:36
 
+Modified files:
+	lib/metadata   : metadata.c 
 
-  I think using 'priority' would be more challenging here - for replicator it
-is only needs to check parental node - while with priority you would probably
-expect full tree traversal to see whether there is node which should be
-suspend in front of current device - thought the code could be probably
-extended in a way to specify recursive traversal depth - for replicator tree
-depth 1 is enough.
+Log message:
+	Return error when no block devices or no RAID disks found
 
-  Previous implementation was probably more generic in this, but required API
-changes - the use case for current implementation is rather focused on the
-replicator's needs with the advantage, it will not influence anything else.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/metadata/metadata.c.diff?cvsroot=dm&r1=1.7&r2=1.8
 
-  I think at this moment this API is static internal and might be probably
-easily changed/modified once some similar target would need to use it ?
-(It's not easy to predict future use case)
-
-Zdenek
+--- dmraid/lib/metadata/metadata.c	2009/09/16 11:45:16	1.7
++++ dmraid/lib/metadata/metadata.c	2009/11/04 13:06:36	1.8
+@@ -2096,7 +2096,7 @@
+ 
+ 	if (!count_devices(lc, DEVICE)) {
+ 		log_print(lc, "no block devices found");
+-		return 1;
++		return 0;
+ 	}
+ 
+ 	if (!(M_RAID & p->metadata))
+@@ -2118,7 +2118,7 @@
+ 	if (!OPT_HOT_SPARE_SET(lc) && !OPT_CREATE(lc)
+ 	    && !count_devices(lc, RAID)) {
+ 		format_error(lc, "disks", argv);
+-		return 1;
++		return 0;
+ 	}
+ 
+ 	if (M_SET & p->metadata) {
