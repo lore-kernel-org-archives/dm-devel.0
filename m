@@ -1,17 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm snapshot: revise snapshot_resume's
- exception handover
-Date: Wed, 4 Nov 2009 17:28:34 -0500
-Message-ID: <20091104222834.GB21348@redhat.com>
-References: <1257371140-18483-1-git-send-email-snitzer@redhat.com>
-	<20091104221148.GA19580@redhat.com>
-	<20091104222052.GA21348@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH v2 02/17] dm snapshot: add suspended flag to
+	dm_snapshot
+Date: Thu, 5 Nov 2009 00:56:35 +0000
+Message-ID: <20091105005635.GN13375@agk-dp.fab.redhat.com>
+References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
+	<1256078825-11331-3-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20091104222052.GA21348@redhat.com>
+In-Reply-To: <1256078825-11331-3-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,45 +20,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 04 2009 at  5:20pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
-
-> On Wed, Nov 04 2009 at  5:11pm -0500,
-> Mike Snitzer <snitzer@redhat.com> wrote:
-> 
-> > Until now snapshot_resume only allowed the resuming snapshot to get the
-> > exception store from another snapshot.
-> > 
-> > Revise snapshot_resume's exception handover to allow a snapshot to
-> > handover its exceptions to another snapshot prior to resuming.
-> > 
-> > This is needed to accomodate the following sequence:
-> > new_snapshot->ctr
-> > old_snapshot->suspend
-> > old_snapshot->resume
-> > new_snapshot->resume
-> > 
-> > lvm2 relies on this sequence if 'lvchange --refresh' is used to start a
-> > snapshot merge that was deferred until both origin and snapshot were not
-> > in use.
-> 
-> FYI, the above is the last of 3 patches in the "exception handover"
-> series, the patch order is:
-
-Ok, actually this 'suspended' flag patch is the first; so its 4 patches:
-
-dm snapshot: add suspended flag to dm_snapshot
-http://patchwork.kernel.org/patch/55021/
+On Tue, Oct 20, 2009 at 06:46:50PM -0400, Mike Snitzer wrote:
+> Allow the snapshot target to be able to verify its state relative to a
+> requested operation.  Allows for invalid operations to be prevented,
+> e.g. an attempt handover an "old" snapshot's exceptions without it
+> having been suspended first.
  
-> dm snapshot: initial support for exception handover
-> http://patchwork.kernel.org/patch/55022/
-> 
-> dm snapshot: exception handover improvements
-> http://patchwork.kernel.org/patch/55569/
-> 
-> dm snapshot: revise snapshot_resume's exception handover
-> http://patchwork.kernel.org/patch/57787/
+OK - same as we do in dm-raid1.
+
+But just be aware that:
+        /* This does not get reverted if there's an error later. */
+        dm_table_presuspend_targets(map);
+
+and so it's not identical to querying the dm_suspended() property directly.
+
+Alasdair
