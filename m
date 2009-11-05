@@ -1,19 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm snapshot: revise snapshot_resume's
- exception handover
-Date: Thu, 5 Nov 2009 09:14:39 -0500
-Message-ID: <20091105141439.GB30737@redhat.com>
-References: <1257371140-18483-1-git-send-email-snitzer@redhat.com>
-	<20091104221148.GA19580@redhat.com>
-	<20091104222052.GA21348@redhat.com>
-	<20091104222834.GB21348@redhat.com>
-	<20091105014417.GO13375@agk-dp.fab.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: a deadlock bug in the kernel-side device mapper code
+Date: Thu, 5 Nov 2009 14:24:35 +0000
+Message-ID: <20091105142435.GQ13375@agk-dp.fab.redhat.com>
+References: <4AF2D176.4010000@actcom.co.il>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20091105014417.GO13375@agk-dp.fab.redhat.com>
+In-Reply-To: <4AF2D176.4010000@actcom.co.il>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,33 +18,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: guy keren <choo@actcom.co.il>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 04 2009 at  8:44pm -0500,
-Alasdair G Kergon <agk@redhat.com> wrote:
+On Thu, Nov 05, 2009 at 03:21:58PM +0200, guy keren wrote:
+> below is the stack trace of the self-deadlocking code. this is one of  
+> the threads of multipathd, that attempts to remove a dm device using a  
+> ioctl to the dm driver:
 
-> On Wed, Nov 04, 2009 at 05:28:34PM -0500, Mike Snitzer wrote:
-> > Ok, actually this 'suspended' flag patch is the first; so its 4 patches:
-> > 
-> > dm snapshot: add suspended flag to dm_snapshot
-> > http://patchwork.kernel.org/patch/55021/
-> >  
-> > > dm snapshot: initial support for exception handover
-> > > http://patchwork.kernel.org/patch/55022/
-> > > 
-> > > dm snapshot: exception handover improvements
-> > > http://patchwork.kernel.org/patch/55569/
-> > > 
-> > > dm snapshot: revise snapshot_resume's exception handover
-> > > http://patchwork.kernel.org/patch/57787/
-> 
-> As quite a few changes get superceded by later changes, with added lines
-> later removed, I've merged the last three of those together into a single
-> patch for now.
+Yes, thanks for reporting this.
 
-This patch goes along with the other handover patches too:
+This only happens if there are some uevents still waiting to be sent
+when the device is being destroyed, but it does need to be fixed.
 
-dm exception store: do not read metadata if going to handover exceptions
-http://patchwork.kernel.org/patch/55024/
+Alasdair
