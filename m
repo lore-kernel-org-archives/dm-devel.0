@@ -1,44 +1,43 @@
-From: Alan Cox <alan@lxorguk.ukuu.org.uk>
-Subject: Re: [PATCH v4 10/12] string: factorize skip_spaces
- and export it to be generally available
-Date: Sun, 8 Nov 2009 16:50:00 +0000
-Message-ID: <20091108165000.374714cb@lxorguk.ukuu.org.uk>
-References: <cover.1257602781.git.andre.goddard@gmail.com>
-	<c7d3b02b5e28eaa54a5360d57dfd177c44320187.1257602781.git.andre.goddard@gmail.com>
-Reply-To: Linux filesystem caching discussion list <linux-cachefs@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: is 'vgchange -an' deprecated ?
+Date: Sun, 08 Nov 2009 22:57:44 +0100
+Message-ID: <1257717464.10825.7.camel@zezette>
+Reply-To: christophe.varoqui@free.fr,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-14
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-cachefs-bounces@redhat.com>
-In-Reply-To: <c7d3b02b5e28eaa54a5360d57dfd177c44320187.1257602781.git.andre.goddard@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/linux-cachefs>,
-	<mailto:linux-cachefs-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-cachefs>
-List-Post: <mailto:linux-cachefs@redhat.com>
-List-Help: <mailto:linux-cachefs-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-cachefs>,
-	<mailto:linux-cachefs-request@redhat.com?subject=subscribe>
-Sender: linux-cachefs-bounces@redhat.com
-Errors-To: linux-cachefs-bounces@redhat.com
-To: =?ISO-8859-14?B?QW5kcuk=?= Goddard Rosa <andre.goddard@gmail.com>
-Cc: Andreas Dilger <adilger@sun.com>, Mike Snitzer <snitzer@redhat.com>, Takashi Iwai <tiwai@suse.de>, Kysela <perex@perex.cz>, Jan, Stefan Weinhuber <wein@de.ibm.com>, Eric Sandeen <sandeen@redhat.com>, "James E .
-	J . Bottomley" <jejb@parisc-linux.org>, linux-cachefs@redhat.com, WANG Cong <wangcong@zeuux.org>, Len Brown <len.brown@intel.com>, Trond Myklebust <Trond.Myklebust@netapp.com>, Rusty Russell <rusty@rustcorp.com.au>, netfilter@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Engelhardt <jengelh@medozas.de>, Bjorn Helgaas <bjorn.helgaas@hp.com>, =?ISO-8859-14?B?QW5k?=, "Martin K .
-	Petersen" <martin.petersen@oracle.com>, linux-kernel@vger.kernel.org, Stoyan Gaydarov <stoyboyker@gmail.com>, Kyle McMartin <kyle@mcmartin.ca>, netfilter-devel@vger.kernel.org, Joe Perches <joe@perches.com>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat,  7 Nov 2009 13:16:18 -0200
-Andr=E9 Goddard Rosa <andre.goddard@gmail.com> wrote:
+Sorry for the hooker's subject.
 
-> On the following sentence:
->     while (*s && isspace(*s))
->         s++;
+On Ubuntu 9.10, using udev+DeviceKit, I observe the following sequence
 
-Looks fine but for one thing: it's actually shorter inline than moved
-into /lib so at the very least it should be a header inline not a
-function call.
+1/ manually : "vgchange -an myvg"
+2/ manually : "sg_persist -r /dev/sdb" sdb being a path of a PV of myvg
+3/ udevadm monitor shows shortly thereafter :
+KERNEL[1257716424.475961]
+change   /devices/platform/host5/session1/target5:0:0/5:0:0:0/block/sdb
+(block)
+UDEV  [1257716427.373569]
+change   /devices/platform/host5/session1/target5:0:0/5:0:0:0/block/sdb
+(block)
+4/ and finally the VG has its LV active again :)
 
-Second minor comment. Although it never made it into the final ANSI C,
-the proposed name (and the one used in a lot of other non Linux code for
-this) is stpblk().
+Funny, but is that really indented ? In a failover cluster setup, isn't
+it considered safer to not import VG on the failover node ? How can we
+achieve that in this dynamic age ?
 
-Alan
+Best regards,
+cvaroqui
