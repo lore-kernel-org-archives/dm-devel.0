@@ -1,127 +1,76 @@
-From: Julia Lawall <julia@diku.dk>
-Subject: Re: [PATCH v4 12/12] tree-wide: convert open calls
- to remove spaces to skip_spaces() lib function
-Date: Sun, 8 Nov 2009 21:23:07 +0100 (CET)
-Message-ID: <Pine.LNX.4.64.0911082103000.8143@ask.diku.dk>
-References: <cover.1257602781.git.andre.goddard@gmail.com>
-	<7d5883637aa976b54e944998f635d47a41618a75.1257602781.git.andre.goddard@gmail.com>
-	<20091108184722.GA1647@mit.edu>
-Reply-To: Linux filesystem caching discussion list <linux-cachefs@redhat.com>
+From: Mike Anderson <andmike@linux.vnet.ibm.com>
+Subject: Re: [PATCH] a deadlock bug in the kernel-side device
+	mapper code
+Date: Mon, 9 Nov 2009 00:51:42 -0800
+Message-ID: <20091109085142.GA4432@linux.vnet.ibm.com>
+References: <4AF2D176.4010000@actcom.co.il>
+	<20091105142435.GQ13375@agk-dp.fab.redhat.com>
+	<Pine.LNX.4.64.0911052157170.18661@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-cachefs-bounces@redhat.com>
-In-Reply-To: <20091108184722.GA1647@mit.edu>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/linux-cachefs>,
-	<mailto:linux-cachefs-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-cachefs>
-List-Post: <mailto:linux-cachefs@redhat.com>
-List-Help: <mailto:linux-cachefs-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-cachefs>,
-	<mailto:linux-cachefs-request@redhat.com?subject=subscribe>
-Sender: linux-cachefs-bounces@redhat.com
-Errors-To: linux-cachefs-bounces@redhat.com
-To: Theodore Tso <tytso@mit.edu>
-Cc: Pavel Roskin <proski@gnu.org>, Stefan Haberland <stefan.haberland@de.ibm.com>, Jan Kara <jack@suse.cz>, linux-cachefs@redhat.com, Mike Snitzer <snitzer@redhat.com>, Neil Brown <neilb@suse.de>, Frederic Weisbecker <fweisbec@gmail.com>, Jens Axboe <jens.axboe@oracle.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, "James E . J . Bottomley" <jejb@parisc-linux.org>, ibm-acpi-devel@lists.sourceforge.net, dm-devel@redhat.com, "H . Peter Anvin" <hpa@zytor.com>, Daire Byrne <Daire.Byrne@framestore.com>, Alasdair G Kergon <agk@redhat.com>, Greg Banks <gnb@melbourne.sgi.com>, Stefan Weinhuber <wein@de.ibm.com>, Eric Sandeen <sandeen@redhat.com>, Adam Belay <abelay@mit.edu>, Helge Deller <deller@gmx.de>, x86@kernel.org, James Morris <jmorris@namei.org>, Takashi Iwai <tiwai@suse.de>, =?iso-8859-1?Q?Andr=E9?= Goddard Rosa <andre.goddard@gmail.com>, Alan Cox <alan@lxorguk.ukuu.or>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0911052157170.18661@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-> > Also, while at it, if we see (*str && isspace(*str)), we can be sure to
-> > remove the first condition (*str) as the second one (isspace(*str)) also
-> > evaluates to 0 whenever *str == 0, making it redundant. In other words,
-> > "a char equals zero is never a space".
+Mikulas Patocka <mpatocka@redhat.com> wrote:
+> Hi
+> 
+> This is the patch that uses two locks to avoid the deadlock.
 
-I tried the following semantic patch (http://coccinelle.lip6.fr), and got 
-the results below.
+Thanks for doing the patch. 
 
-@@
-expression str;
-@@
+I had previously started trying to address this issue using rcu and moving
+dm_copy_name_and_uuid back to being called during dm_build_path_uevent, but
+that patch still had a couple of cases to be addressed.
 
-( // ignore skip_spaces cases
- while (*str &&  isspace(*str)) { \(str++;\|++str;\) }
-|
-- *str && 
-  isspace(*str)
-)
+In testing your patch without moving where dm_copy_name_and_uuid is called
+I run into a issue during test runs where I receive a BUG_ON for the
+dm_put in dm_copy_name_and_uuid as DMF_FREEING was able to progress (Note:
+this failure case occurs without your path). If the proper dm_get / dm_put
+is added to the dm_uevent functions then there are cases where
+dm_uevent_free becomes the last dm_put resulting in recursion.
 
-I haven't checked the results in any way, however.
+It would be good since we are adding this synchronization if we selected a
+synchronization type that could be called from dm_build_path_uevent (i.e.,
+SOFTIRQ-safe) allowing the movement of the call to dm_copy_name_and_uuid
+back to dm_build_path_uevent.
 
-julia
+The test case below normally fails in about 5-10 minutes.
 
-diff -u -p a/drivers/leds/led-class.c b/drivers/leds/led-class.c
---- a/drivers/leds/led-class.c
-+++ b/drivers/leds/led-class.c
-@@ -50,7 +50,7 @@ static ssize_t led_brightness_store(stru
- 	unsigned long state = simple_strtoul(buf, &after, 10);
- 	size_t count = after - buf;
- 
--	if (*after && isspace(*after))
-+	if (isspace(*after))
- 		count++;
- 
- 	if (count == size) {
-diff -u -p a/drivers/leds/ledtrig-timer.c b/drivers/leds/ledtrig-timer.c
---- a/drivers/leds/ledtrig-timer.c
-+++ b/drivers/leds/ledtrig-timer.c
-@@ -83,7 +83,7 @@ static ssize_t led_delay_on_store(struct
- 	unsigned long state = simple_strtoul(buf, &after, 10);
- 	size_t count = after - buf;
- 
--	if (*after && isspace(*after))
-+	if (isspace(*after))
- 		count++;
- 
- 	if (count == size) {
-@@ -127,7 +127,7 @@ static ssize_t led_delay_off_store(struc
- 	unsigned long state = simple_strtoul(buf, &after, 10);
- 	size_t count = after - buf;
- 
--	if (*after && isspace(*after))
-+	if (isspace(*after))
- 		count++;
- 
- 	if (count == size) {
-diff -u -p a/drivers/video/backlight/lcd.c b/drivers/video/backlight/lcd.c
---- a/drivers/video/backlight/lcd.c
-+++ b/drivers/video/backlight/lcd.c
-@@ -101,7 +101,7 @@ static ssize_t lcd_store_power(struct de
- 	int power = simple_strtoul(buf, &endp, 0);
- 	size_t size = endp - buf;
- 
--	if (*endp && isspace(*endp))
-+	if (isspace(*endp))
- 		size++;
- 	if (size != count)
- 		return -EINVAL;
-@@ -140,7 +140,7 @@ static ssize_t lcd_store_contrast(struct
- 	int contrast = simple_strtoul(buf, &endp, 0);
- 	size_t size = endp - buf;
- 
--	if (*endp && isspace(*endp))
-+	if (isspace(*endp))
- 		size++;
- 	if (size != count)
- 		return -EINVAL;
-diff -u -p a/drivers/video/display/display-sysfs.c b/drivers/video/display/display-sysfs.c
---- a/drivers/video/display/display-sysfs.c
-+++ b/drivers/video/display/display-sysfs.c
-@@ -67,7 +67,7 @@ static ssize_t display_store_contrast(st
- 	contrast = simple_strtoul(buf, &endp, 0);
- 	size = endp - buf;
- 
--	if (*endp && isspace(*endp))
-+	if (isspace(*endp))
- 		size++;
- 
- 	if (size != count)
-diff -u -p a/drivers/video/output.c b/drivers/video/output.c
---- a/drivers/video/output.c
-+++ b/drivers/video/output.c
-@@ -50,7 +50,7 @@ static ssize_t video_output_store_state(
- 	int request_state = simple_strtoul(buf,&endp,0);
- 	size_t size = endp - buf;
- 
--	if (*endp && isspace(*endp))
-+	if (isspace(*endp))
- 		size++;
- 	if (size != count)
- 		return -EINVAL;
+I am running the test case using a spinlock instead of the mutex and
+moving dm_copy_name_and_uuid to being called from dm_build_path_uevent. It
+has been running for a few hours now. I will continue to let it run.
+
+Should we look to use a spinlock for this read access?
+
+My test case just uses scsi debug to create a two path dm mpath device.
+
+1.) modprobe scsi_debug vpd_use_hostno=0 add_host=2
+2.) Then in one shell do a loop of "dmsetup remove" and multipath
+3.) In another window do a loop of "dmsetup message ... fail_path"
+followed by "dmsetup message ... reinstate_path" on the two paths of the
+same dm device that is being removed / added.
+
+Note: If someone tries to repeat this testing, occasionally I would hit an
+issue in scsi_debug so for longer test runs I needed to add a patch for
+handling ensuring that reacquiring queued_arr_lock did not occur.
+
+Thanks,
+
+-andmike
+--
+Michael Anderson
+andmike@linux.vnet.ibm.com
