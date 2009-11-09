@@ -1,18 +1,11 @@
-From: malahal@us.ibm.com
-Subject: Re: [PATCH] a deadlock bug in the kernel-side device
-	mapper code
-Date: Mon, 9 Nov 2009 09:57:30 -0800
-Message-ID: <20091109175730.GA12556@us.ibm.com>
-References: <4AF2D176.4010000@actcom.co.il>
-	<20091105142435.GQ13375@agk-dp.fab.redhat.com>
-	<Pine.LNX.4.64.0911052157170.18661@hs20-bc2-1.build.redhat.com>
-	<20091109085142.GA4432@linux.vnet.ibm.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: PATCH for dm-raid1 barriers
+Date: Mon, 9 Nov 2009 14:22:14 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911091420590.18408@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20091109085142.GA4432@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,83 +15,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mike Anderson [andmike@linux.vnet.ibm.com] wrote:
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > Hi
-> > 
-> > This is the patch that uses two locks to avoid the deadlock.
-> 
-> Thanks for doing the patch. 
-> 
-> I had previously started trying to address this issue using rcu and moving
-> dm_copy_name_and_uuid back to being called during dm_build_path_uevent, but
-> that patch still had a couple of cases to be addressed.
-> 
-> In testing your patch without moving where dm_copy_name_and_uuid is called
-> I run into a issue during test runs where I receive a BUG_ON for the
-> dm_put in dm_copy_name_and_uuid as DMF_FREEING was able to progress (Note:
-> this failure case occurs without your path). If the proper dm_get / dm_put
-> is added to the dm_uevent functions then there are cases where
-> dm_uevent_free becomes the last dm_put resulting in recursion.
+Hi
 
-Why do we need dm_get() and dm_put() in dm_copy_name_and_uuid()?
-dm_copy_name_and_uuid() already has access to md and there shouldn't be
-any need to hold a reference. The caller of dm_copy_name_and_uuid()
-should have placed a hold. This is just some unnecessary code and should
-not cause a BUG_ON though.
+This is that patch for bio code that is needed for dm-raid1 barriers.
 
-Can you send the BUG_ON stack?
+Mikulas
 
-dm_get_from_kobject() seems to be a culprit though. It checks
-DMF_FREEING without a lock and then calls dm_get. Here is an untested
-patch. Made on top of _name_read_lock patch.
+---
 
+Change definition of bio_has_data (and bio_empty_barrier that uses it).
 
-Signed-off-by: malahal@us.ibm.com
+With the following dm-io patch, it may happen that we create a null barrier bio
+that has non-zero bi_io_vec but zero bi_size and bi_vcnt. (dm-io uses data past the vector end to store its own bookkeeping information, so the vector must
+be non-null).
 
-diff -r ce6e81a22554 -r 1106e5e3dabc drivers/md/dm-ioctl.c
---- a/drivers/md/dm-ioctl.c	Thu Nov 05 21:35:30 2009 -0800
-+++ b/drivers/md/dm-ioctl.c	Mon Nov 09 09:32:03 2009 -0800
-@@ -1595,7 +1595,6 @@
- 	if (!md)
- 		return -ENXIO;
- 
--	dm_get(md);
- 	mutex_lock(&_name_read_lock);
- 	hc = dm_get_mdptr(md);
- 	if (!hc || hc->md != md) {
-@@ -1610,7 +1609,6 @@
- 
- out:
- 	mutex_unlock(&_name_read_lock);
--	dm_put(md);
- 
- 	return r;
- }
-diff -r ce6e81a22554 -r 1106e5e3dabc drivers/md/dm.c
---- a/drivers/md/dm.c	Thu Nov 05 21:35:30 2009 -0800
-+++ b/drivers/md/dm.c	Mon Nov 09 09:32:03 2009 -0800
-@@ -2584,11 +2584,18 @@
- 	if (&md->kobj != kobj)
- 		return NULL;
- 
-+	spin_lock(&_minor_lock);
- 	if (test_bit(DMF_FREEING, &md->flags) ||
--	    test_bit(DMF_DELETING, &md->flags))
--		return NULL;
-+	    test_bit(DMF_DELETING, &md->flags)) {
-+		md = NULL;
-+		goto out;
-+	}
- 
- 	dm_get(md);
-+
-+out:
-+	spin_unlock(&_minor_lock);
-+
- 	return md;
+This patch changes the logic so that bio with zero length and non-zero vector
+pointer is recognized as an empty-barrier bio. Without this patch, such bio
+would be mistreated at a number of locations in the bio stack as well as in
+device mapper.
+
+I grepped for all users of bio_has_data and didn't find problem with any of
+them. I also grepped for other code locations that may mistakenly use
+bio->bi_io_vec != NULL to test for an empty barrier and there were not any
+other.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ include/linux/bio.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6.30-rc4-devel/include/linux/bio.h
+===================================================================
+--- linux-2.6.30-rc4-devel.orig/include/linux/bio.h	2009-05-04 17:00:52.000000000 +0200
++++ linux-2.6.30-rc4-devel/include/linux/bio.h	2009-05-04 17:03:55.000000000 +0200
+@@ -505,7 +505,7 @@ static inline char *__bio_kmap_irq(struc
+  */
+ static inline int bio_has_data(struct bio *bio)
+ {
+-	return bio && bio->bi_io_vec != NULL;
++	return bio && bio->bi_size != 0;
  }
  
+ /*
