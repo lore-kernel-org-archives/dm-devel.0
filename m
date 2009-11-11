@@ -1,14 +1,11 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: dm: bind new table before destroying old
-Date: Wed, 11 Nov 2009 01:20:40 +0000
-Message-ID: <20091111012040.GP6208@agk-dp.fab.redhat.com>
-References: <20091111011652.GK17055@agk-dp.fab.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/2] Allocate "struct io" from a slab.
+Date: Tue, 10 Nov 2009 21:04:34 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911102104080.23116@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20091111011652.GK17055@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,105 +16,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <mauelshagen@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-And now a version that actually compiles:-)
+Allocate "struct io" from a slab.
 
+This patch changes dm-io, so that "struct io" is allocated from a slab cache.
+It used to be allocated with kmalloc. Allocating from a slab will be needed
+for the next patch, because it requires a special alignment of "struct io"
+and kmalloc cannot meet this alignment.
 
-From: Alasdair G Kergon <agk@redhat.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-When replacing a mapped device's table during a 'resume', delay the
-destruction of the old table until the new one is successfully in place.
-
-This will make it easier for a later patch to transfer internal state
-information from the old table to the new one (something we do not currently
-support) while giving us more options for reversion if a later part
-of the operation fails.
-
-Devices are always in the suspended state during dm_swap_table().
-This patch reinforces the requirement that all I/O must have been
-flushed from the table targets while in this state (including any in
-workqueues).  In the case of 'noflush' suspending, unprocessed
-I/O should have been 'pushed back' to the dm core prior to this point,
-for resubmission after the new table is in place.
-
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 ---
- drivers/md/dm-table.c |    3 +++
- drivers/md/dm.c       |   16 +++++++++++-----
- 2 files changed, 14 insertions(+), 5 deletions(-)
+ drivers/md/dm-io.c |   19 ++++++++++++++++++-
+ drivers/md/dm.c    |    2 ++
+ drivers/md/dm.h    |    3 +++
+ 3 files changed, 23 insertions(+), 1 deletion(-)
 
-Index: linux-2.6.32-rc6/drivers/md/dm-table.c
+Index: linux-2.6.31.6-fast/drivers/md/dm-io.c
 ===================================================================
---- linux-2.6.32-rc6.orig/drivers/md/dm-table.c
-+++ linux-2.6.32-rc6/drivers/md/dm-table.c
-@@ -237,6 +237,9 @@ void dm_table_destroy(struct dm_table *t
- {
- 	unsigned int i;
+--- linux-2.6.31.6-fast.orig/drivers/md/dm-io.c	2009-11-11 00:51:03.000000000 +0100
++++ linux-2.6.31.6-fast/drivers/md/dm-io.c	2009-11-11 00:51:22.000000000 +0100
+@@ -30,6 +30,8 @@ struct io {
+ 	void *context;
+ };
  
-+	if (!t)
-+		return;
++static struct kmem_cache *_io_cache = NULL;
 +
- 	while (atomic_read(&t->holders))
- 		msleep(1);
- 	smp_mb();
-Index: linux-2.6.32-rc6/drivers/md/dm.c
-===================================================================
---- linux-2.6.32-rc6.orig/drivers/md/dm.c
-+++ linux-2.6.32-rc6/drivers/md/dm.c
-@@ -2070,19 +2070,23 @@ static int __bind(struct mapped_device *
- 	return 0;
- }
- 
--static void __unbind(struct mapped_device *md)
-+/*
-+ * Returns unbound table for the caller to free.
-+ */
-+static struct dm_table *__unbind(struct mapped_device *md)
- {
- 	struct dm_table *map = md->map;
- 	unsigned long flags;
- 
- 	if (!map)
--		return;
-+		return NULL;
- 
- 	dm_table_event_callback(map, NULL, NULL);
- 	write_lock_irqsave(&md->map_lock, flags);
- 	md->map = NULL;
- 	write_unlock_irqrestore(&md->map_lock, flags);
--	dm_table_destroy(map);
-+
-+	return map;
- }
- 
  /*
-@@ -2175,7 +2179,7 @@ void dm_put(struct mapped_device *md)
- 		}
- 		dm_sysfs_exit(md);
- 		dm_table_put(map);
--		__unbind(md);
-+		dm_table_destroy(__unbind(md));
- 		free_dev(md);
- 	}
+  * io contexts are only dynamically allocated for asynchronous
+  * io.  Since async io is likely to be the majority of io we'll
+@@ -53,7 +55,7 @@ struct dm_io_client *dm_io_client_create
+ 	if (!client)
+ 		return ERR_PTR(-ENOMEM);
+ 
+-	client->pool = mempool_create_kmalloc_pool(ios, sizeof(struct io));
++	client->pool = mempool_create_slab_pool(ios, _io_cache);
+ 	if (!client->pool)
+ 		goto bad;
+ 
+@@ -476,3 +478,18 @@ int dm_io(struct dm_io_request *io_req, 
+ 			&dp, io_req->notify.fn, io_req->notify.context);
  }
-@@ -2361,6 +2365,7 @@ static void dm_rq_barrier_work(struct wo
-  */
- int dm_swap_table(struct mapped_device *md, struct dm_table *table)
- {
-+	struct dm_table *map;
- 	struct queue_limits limits;
- 	int r = -EINVAL;
+ EXPORT_SYMBOL(dm_io);
++
++int __init dm_io_init(void)
++{
++	_io_cache = KMEM_CACHE(io, 0);
++	if (!_io_cache)
++		return -ENOMEM;
++
++	return 0;
++}
++
++void dm_io_exit(void)
++{
++	kmem_cache_destroy(_io_cache);
++	_io_cache = NULL;
++}
+Index: linux-2.6.31.6-fast/drivers/md/dm.c
+===================================================================
+--- linux-2.6.31.6-fast.orig/drivers/md/dm.c	2009-11-11 00:51:04.000000000 +0100
++++ linux-2.6.31.6-fast/drivers/md/dm.c	2009-11-11 00:51:22.000000000 +0100
+@@ -275,6 +275,7 @@ static int (*_inits[])(void) __initdata 
+ 	dm_target_init,
+ 	dm_linear_init,
+ 	dm_stripe_init,
++	dm_io_init,
+ 	dm_kcopyd_init,
+ 	dm_interface_init,
+ };
+@@ -284,6 +285,7 @@ static void (*_exits[])(void) = {
+ 	dm_target_exit,
+ 	dm_linear_exit,
+ 	dm_stripe_exit,
++	dm_io_exit,
+ 	dm_kcopyd_exit,
+ 	dm_interface_exit,
+ };
+Index: linux-2.6.31.6-fast/drivers/md/dm.h
+===================================================================
+--- linux-2.6.31.6-fast.orig/drivers/md/dm.h	2009-11-11 00:51:04.000000000 +0100
++++ linux-2.6.31.6-fast/drivers/md/dm.h	2009-11-11 00:51:22.000000000 +0100
+@@ -118,6 +118,9 @@ int dm_lock_for_deletion(struct mapped_d
+ void dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
+ 		       unsigned cookie);
  
-@@ -2381,8 +2386,9 @@ int dm_swap_table(struct mapped_device *
- 		goto out;
- 	}
++int dm_io_init(void);
++void dm_io_exit(void);
++
+ int dm_kcopyd_init(void);
+ void dm_kcopyd_exit(void);
  
--	__unbind(md);
-+	map = __unbind(md);
- 	r = __bind(md, table, &limits);
-+	dm_table_destroy(map);
- 
- out:
- 	mutex_unlock(&md->suspend_lock);
