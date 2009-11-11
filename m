@@ -1,14 +1,14 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: dm: bind new table before destroying old
-Date: Wed, 11 Nov 2009 15:56:05 +0900
-Message-ID: <4AFA6005.9060501@ct.jp.nec.com>
-References: <20091111011652.GK17055@agk-dp.fab.redhat.com>
+Subject: Re: [PATCH 2/2] Use low pointer bits for dm io region
+Date: Wed, 11 Nov 2009 16:26:15 +0900
+Message-ID: <4AFA6717.2060305@ct.jp.nec.com>
+References: <Pine.LNX.4.64.0911102104350.23116@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091111011652.GK17055@agk-dp.fab.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0911102104350.23116@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,56 +18,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <mauelshagen@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+Hi Mikulas,
 
-On 11/11/2009 10:16 AM +0900, Alasdair G Kergon wrote:
-> Questions:
+On 11/11/2009 11:05 AM +0900, Mikulas Patocka wrote:
+> Use low pointer bits for dm io region
 > 
->   Do all the targets correctly flush or push back everything during a
->   suspend (including workqueues)?
+> We need to store two things per bio: the pointer to the main io structure and
+> a region number, an index of disk where this bio belongs to (if there is
+> simultaneous write to multiple disks). There can be at most BITS_PER_LONG
+> regions. BITS_PER_LONG is 32 on 32-bit machines and 64 on 64-bit machines.
 > 
->   Do all the targets correctly sync to disk all internal state that
->   needs to be preserved during a suspend?
+> A region number was stored in the last hidden bio vector and the pointer to
+> struct io was stored in bi_private.
 > 
-> In other words, in the case of an already-suspended target, the target
-> 'dtr' functions should only be freeing memory and other resources and
-> not causing I/O to any of the table's devices.
-> 
-> All targets are supposed to be behave this way already, but please
-> would you check the targets with which you are familiar anyway?
+> This patch changes it so that "struct io" is always aligned on BITS_PER_LONG
+> bytes and region number is stored in the low BITS_PER_LONG bits of bi_private.
 
-I have checked multipath and found 2 issues.
-
-multipath flushes all normal I/Os before suspend completion.
-But multipath doesn't flush some workqueues until the table destruction.
-Also, such works can be added and kicked even after suspend completion
-through message ioctl.
-
-For example, [de]activate_path() and trigger_event() are such works.
-"reinstate path" message will trigger activate_path() work and
-activate_path() may send some SCSI commands (through pg_init()) to
-the underlying devices of the already-suspended target.
-(Also, "fail_path" message will trigger deactivate_path() work
- and deactivate_path() may abort the underlying device's queue
- of the already-suspended target.)
-
-So moving the table destruction after the resume (in your another
-patch) could/might cause some race problems between new_table and
-old_table if they have a same underlying device.
-(e.g. pg_init() race, aborting queue after resume.)
-
-I believe dm-mpath needs to flush such workqueues in postsuspend.
-Also, we need something to block message ioctl to suspended device.
-
-As for the message ioctl, I don't have any good idea, but...
-  - Reject message ioctl to suspended device in dm-ioctl
-  Or/And 
-  - Targets must not kick any work influencing external themselves
-    in their message ioctl handlers.
+The code is not easily readable for me.
+Why don't you introduce a new structure in which those two things
+can be stored, and allocate/attach it per bio?
+If it's possible, the code should be easy to read and maintain, I think.
 
 Thanks,
 Kiyoshi Ueda
