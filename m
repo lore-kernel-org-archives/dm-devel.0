@@ -1,11 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/2] Use low pointer bits for dm io region
-Date: Tue, 10 Nov 2009 21:05:04 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0911102104350.23116@hs20-bc2-1.build.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: dm: keep old table until after resume succeeded
+Date: Wed, 11 Nov 2009 02:48:23 +0000
+Message-ID: <20091111024823.GL17055@agk-dp.fab.redhat.com>
+References: <20091111011652.GK17055@agk-dp.fab.redhat.com>
+	<20091111012040.GP6208@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20091111012040.GP6208@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,212 +20,172 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <mauelshagen@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Use low pointer bits for dm io region
+Follow-up patch which moves the table destruction after the resume.
+__unbind() becomes redundant when followed by __bind().
 
-We need to store two things per bio: the pointer to the main io structure and
-a region number, an index of disk where this bio belongs to (if there is
-simultaneous write to multiple disks). There can be at most BITS_PER_LONG
-regions. BITS_PER_LONG is 32 on 32-bit machines and 64 on 64-bit machines.
+Alasdair
 
-A region number was stored in the last hidden bio vector and the pointer to
-struct io was stored in bi_private.
 
-This patch changes it so that "struct io" is always aligned on BITS_PER_LONG
-bytes and region number is stored in the low BITS_PER_LONG bits of bi_private.
+From: Alasdair G Kergon <agk@redhat.com>
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+When swapping a new table into place, retain the old table until 
+its replacement is in place.
 
+An old check for an empty table is removed because this is enforced
+in populate_table().
+
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 ---
- drivers/md/dm-io.c |   84 +++++++++++++++++++++++++++++++----------------------
- 1 file changed, 50 insertions(+), 34 deletions(-)
+ drivers/md/dm-ioctl.c         |   10 ++++++----
+ drivers/md/dm.c               |   34 +++++++++++++++++-----------------
+ include/linux/device-mapper.h |    4 +++-
+ 3 files changed, 26 insertions(+), 22 deletions(-)
 
-Index: linux-2.6.31.6-fast/drivers/md/dm-io.c
+Index: linux-2.6.32-rc6/drivers/md/dm-ioctl.c
 ===================================================================
---- linux-2.6.31.6-fast.orig/drivers/md/dm-io.c	2009-11-11 00:51:38.000000000 +0100
-+++ linux-2.6.31.6-fast/drivers/md/dm-io.c	2009-11-11 02:13:32.000000000 +0100
-@@ -14,12 +14,17 @@
- #include <linux/slab.h>
- #include <linux/dm-io.h>
+--- linux-2.6.32-rc6.orig/drivers/md/dm-ioctl.c
++++ linux-2.6.32-rc6/drivers/md/dm-ioctl.c
+@@ -855,7 +855,7 @@ static int do_resume(struct dm_ioctl *pa
+ 	unsigned suspend_flags = DM_SUSPEND_LOCKFS_FLAG;
+ 	struct hash_cell *hc;
+ 	struct mapped_device *md;
+-	struct dm_table *new_map;
++	struct dm_table *new_map, *old_map = NULL;
  
-+#define DM_IO_MAX_REGIONS	BITS_PER_LONG
-+
- struct dm_io_client {
- 	mempool_t *pool;
- 	struct bio_set *bios;
- };
+ 	down_write(&_hash_lock);
  
--/* FIXME: can we shrink this ? */
+@@ -884,11 +884,11 @@ static int do_resume(struct dm_ioctl *pa
+ 		if (!dm_suspended(md))
+ 			dm_suspend(md, suspend_flags);
+ 
+-		r = dm_swap_table(md, new_map);
+-		if (r) {
++		old_map = dm_swap_table(md, new_map);
++		if (IS_ERR(old_map)) {
+ 			dm_table_destroy(new_map);
+ 			dm_put(md);
+-			return r;
++			return PTR_ERR(old_map);
+ 		}
+ 
+ 		if (dm_table_get_mode(new_map) & FMODE_WRITE)
+@@ -900,6 +900,8 @@ static int do_resume(struct dm_ioctl *pa
+ 	if (dm_suspended(md))
+ 		r = dm_resume(md);
+ 
++	if (old_map)
++		dm_table_destroy(old_map);
+ 
+ 	if (!r) {
+ 		dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr);
+Index: linux-2.6.32-rc6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.32-rc6.orig/drivers/md/dm.c
++++ linux-2.6.32-rc6/drivers/md/dm.c
+@@ -2026,9 +2026,13 @@ static void __set_size(struct mapped_dev
+ 	mutex_unlock(&md->bdev->bd_inode->i_mutex);
+ }
+ 
+-static int __bind(struct mapped_device *md, struct dm_table *t,
+-		  struct queue_limits *limits)
 +/*
-+ * The alignment of "struct io" is required because region number is stored
-+ * in the low bits of the pointer.
++ * Returns old map, which caller must destroy.
 + */
- struct io {
- 	unsigned long error_bits;
- 	unsigned long eopnotsupp_bits;
-@@ -28,7 +33,7 @@ struct io {
- 	struct dm_io_client *client;
- 	io_notify_fn callback;
- 	void *context;
--};
-+} __attribute__((aligned(DM_IO_MAX_REGIONS)));
- 
- static struct kmem_cache *_io_cache = NULL;
- 
-@@ -90,18 +95,25 @@ EXPORT_SYMBOL(dm_io_client_destroy);
- 
- /*-----------------------------------------------------------------
-  * We need to keep track of which region a bio is doing io for.
-- * In order to save a memory allocation we store this the last
-- * bvec which we know is unused (blech).
-- * XXX This is ugly and can OOPS with some configs... find another way.
-+ * In order to save a memory allocation we store this the lowest
-+ * bits of the pointer.
-  *---------------------------------------------------------------*/
--static inline void bio_set_region(struct bio *bio, unsigned region)
-+static inline void bio_set_io_region(struct bio *bio, struct io *io,
-+				     unsigned region)
++static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
++			       struct queue_limits *limits)
  {
--	bio->bi_io_vec[bio->bi_max_vecs].bv_len = region;
-+	if (unlikely(!IS_ALIGNED((unsigned long)io, DM_IO_MAX_REGIONS))) {
-+		printk(KERN_CRIT "dm-io: Unaligned pointer %p\n", io);
-+		BUG();
-+	}
-+	bio->bi_private = (void *)((unsigned long)io | region);
- }
++	struct dm_table *old_map;
+ 	struct request_queue *q = md->queue;
+ 	sector_t size;
+ 	unsigned long flags;
+@@ -2043,11 +2047,6 @@ static int __bind(struct mapped_device *
  
--static inline unsigned bio_get_region(struct bio *bio)
-+static inline void bio_get_io_region(struct bio *bio, struct io **io,
-+				     unsigned *region)
- {
--	return bio->bi_io_vec[bio->bi_max_vecs].bv_len;
-+	unsigned long val = (unsigned long)bio->bi_private;
-+	*io = (void *)(val & -(unsigned long)DM_IO_MAX_REGIONS);
-+	*region = val & (DM_IO_MAX_REGIONS - 1);
- }
+ 	__set_size(md, size);
  
- /*-----------------------------------------------------------------
-@@ -142,10 +154,8 @@ static void endio(struct bio *bio, int e
+-	if (!size) {
+-		dm_table_destroy(t);
+-		return 0;
+-	}
+-
+ 	dm_table_event_callback(t, event_callback, md);
+ 
  	/*
- 	 * The bio destructor in bio_put() may use the io object.
- 	 */
--	io = bio->bi_private;
--	region = bio_get_region(bio);
-+	bio_get_io_region(bio, &io, &region);
+@@ -2063,11 +2062,12 @@ static int __bind(struct mapped_device *
+ 	__bind_mempools(md, t);
  
--	bio->bi_max_vecs++;
- 	bio_put(bio);
+ 	write_lock_irqsave(&md->map_lock, flags);
++	old_map = md->map;
+ 	md->map = t;
+ 	dm_table_set_restrictions(t, q, limits);
+ 	write_unlock_irqrestore(&md->map_lock, flags);
  
- 	dec_count(io, region, error);
-@@ -245,7 +255,10 @@ static void vm_dp_init(struct dpages *dp
- 
- static void dm_bio_destructor(struct bio *bio)
- {
--	struct io *io = bio->bi_private;
-+	unsigned region;
-+	struct io *io;
-+
-+	bio_get_io_region(bio, &io, &region);
- 
- 	bio_free(bio, io->client->bios);
- }
-@@ -294,24 +307,17 @@ static void do_region(int rw, unsigned r
- 	 */
- 	do {
- 		/*
--		 * Allocate a suitably sized-bio: we add an extra
--		 * bvec for bio_get/set_region() and decrement bi_max_vecs
--		 * to hide it from bio_add_page().
-+		 * Allocate a suitably sized-bio.
- 		 */
- 		num_bvecs = dm_sector_div_up(remaining,
- 					     (PAGE_SIZE >> SECTOR_SHIFT));
--		num_bvecs = 1 + min_t(int, bio_get_nr_vecs(where->bdev),
--				      num_bvecs);
--		if (unlikely(num_bvecs > BIO_MAX_PAGES))
--			num_bvecs = BIO_MAX_PAGES;
-+		num_bvecs = min_t(int, bio_get_nr_vecs(where->bdev), num_bvecs);
- 		bio = bio_alloc_bioset(GFP_NOIO, num_bvecs, io->client->bios);
- 		bio->bi_sector = where->sector + (where->count - remaining);
- 		bio->bi_bdev = where->bdev;
- 		bio->bi_end_io = endio;
--		bio->bi_private = io;
- 		bio->bi_destructor = dm_bio_destructor;
--		bio->bi_max_vecs--;
--		bio_set_region(bio, region);
-+		bio_set_io_region(bio, io, region);
- 
- 		/*
- 		 * Try and add as many pages as possible.
-@@ -339,6 +345,8 @@ static void dispatch_io(int rw, unsigned
- 	int i;
- 	struct dpages old_pages = *dp;
- 
-+	BUG_ON(num_regions > DM_IO_MAX_REGIONS);
-+
- 	if (sync)
- 		rw |= (1 << BIO_RW_SYNCIO) | (1 << BIO_RW_UNPLUG);
- 
-@@ -363,7 +371,15 @@ static int sync_io(struct dm_io_client *
- 		   struct dm_io_region *where, int rw, struct dpages *dp,
- 		   unsigned long *error_bits)
- {
--	struct io io;
-+	/*
-+	 * gcc <= 4.3 can't do the alignment for stack variables, so we must
-+	 * align it on our own.
-+	 * volatile is there to prevent the optimizer from removing or reusing
-+	 * "io_" field from the stack frame. (which would be allowed according
-+	 * to ANSI C rules).
-+	 */
-+	volatile char io_[sizeof(struct io) * 2 - 1];
-+	struct io *io = (struct io *)PTR_ALIGN(&io_, __alignof__(struct io));
- 
- 	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
- 		WARN_ON(1);
-@@ -371,33 +387,33 @@ static int sync_io(struct dm_io_client *
- 	}
- 
- retry:
--	io.error_bits = 0;
--	io.eopnotsupp_bits = 0;
--	atomic_set(&io.count, 1); /* see dispatch_io() */
--	io.sleeper = current;
--	io.client = client;
-+	io->error_bits = 0;
-+	io->eopnotsupp_bits = 0;
-+	atomic_set(&io->count, 1); /* see dispatch_io() */
-+	io->sleeper = current;
-+	io->client = client;
- 
--	dispatch_io(rw, num_regions, where, dp, &io, 1);
-+	dispatch_io(rw, num_regions, where, dp, io, 1);
- 
- 	while (1) {
- 		set_current_state(TASK_UNINTERRUPTIBLE);
- 
--		if (!atomic_read(&io.count))
-+		if (!atomic_read(&io->count))
- 			break;
- 
- 		io_schedule();
- 	}
- 	set_current_state(TASK_RUNNING);
- 
--	if (io.eopnotsupp_bits && (rw & (1 << BIO_RW_BARRIER))) {
-+	if (io->eopnotsupp_bits && (rw & (1 << BIO_RW_BARRIER))) {
- 		rw &= ~(1 << BIO_RW_BARRIER);
- 		goto retry;
- 	}
- 
- 	if (error_bits)
--		*error_bits = io.error_bits;
-+		*error_bits = io->error_bits;
- 
--	return io.error_bits ? -EIO : 0;
-+	return io->error_bits ? -EIO : 0;
+-	return 0;
++	return old_map;
  }
  
- static int async_io(struct dm_io_client *client, unsigned int num_regions,
+ /*
+@@ -2361,13 +2361,13 @@ static void dm_rq_barrier_work(struct wo
+ }
+ 
+ /*
+- * Swap in a new table (destroying old one).
++ * Swap in a new table, returning the old one for the caller to destroy.
+  */
+-int dm_swap_table(struct mapped_device *md, struct dm_table *table)
++struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
+ {
+-	struct dm_table *map;
++	struct dm_table *map = ERR_PTR(-EINVAL);
+ 	struct queue_limits limits;
+-	int r = -EINVAL;
++	int r;
+ 
+ 	mutex_lock(&md->suspend_lock);
+ 
+@@ -2376,8 +2376,10 @@ int dm_swap_table(struct mapped_device *
+ 		goto out;
+ 
+ 	r = dm_calculate_queue_limits(table, &limits);
+-	if (r)
++	if (r) {
++		map = ERR_PTR(r);
+ 		goto out;
++	}
+ 
+ 	/* cannot change the device type, once a table is bound */
+ 	if (md->map &&
+@@ -2386,13 +2388,11 @@ int dm_swap_table(struct mapped_device *
+ 		goto out;
+ 	}
+ 
+-	map = __unbind(md);
+-	r = __bind(md, table, &limits);
+-	dm_table_destroy(map);
++	map = __bind(md, table, &limits);
+ 
+ out:
+ 	mutex_unlock(&md->suspend_lock);
+-	return r;
++	return map;
+ }
+ 
+ /*
+Index: linux-2.6.32-rc6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.32-rc6.orig/include/linux/device-mapper.h
++++ linux-2.6.32-rc6/include/linux/device-mapper.h
+@@ -295,8 +295,10 @@ void dm_table_event(struct dm_table *t);
+ 
+ /*
+  * The device must be suspended before calling this method.
++ * Returns the previous table, which the caller must destroy.
+  */
+-int dm_swap_table(struct mapped_device *md, struct dm_table *t);
++struct dm_table *dm_swap_table(struct mapped_device *md,
++			       struct dm_table *t);
+ 
+ /*
+  * A wrapper around vmalloc.
