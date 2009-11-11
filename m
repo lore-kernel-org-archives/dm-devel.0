@@ -1,16 +1,14 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm snapshot: allow live exception store handover
-	between tables
-Date: Wed, 11 Nov 2009 07:41:39 -0500
-Message-ID: <20091111124138.GA24901@redhat.com>
-References: <1257532814-17100-1-git-send-email-snitzer@redhat.com>
-	<Pine.LNX.4.64.0911102221470.3386@hs20-bc2-1.build.redhat.com>
+Subject: Re: dm: bind new table before destroying old
+Date: Wed, 11 Nov 2009 08:20:57 -0500
+Message-ID: <20091111132056.GA28612@redhat.com>
+References: <20091111011652.GK17055@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0911102221470.3386@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20091111011652.GK17055@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,76 +18,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Heinz Mauelshagen <mauelshagen@redhat.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 10 2009 at 10:26pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Tue, Nov 10 2009 at  8:16pm -0500,
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-> > +	/*
-> > +	 * 'is_handover_destination' denotes another snapshot with the same
-> > +	 * cow block device (as identified with find_snapshot_using_cow)
-> > +	 * will hand over its exception store to this snapshot.
-> > +	 *
-> > +	 * 'is_handover_destination' is set in snapshot_ctr if an existing
-> > +	 * snapshot has the same cow device. The handover is performed,
-> > +	 * and 'is_handover_destination' is cleared, when either of the
-> > +	 * following occurs:
-> > +	 * - src (old) snapshot, that is handing over, is destructed
-> > +	 * - dest (new) snapshot, that is accepting the handover, is resumed
-> > +	 */
-> > +	int is_handover_destination;
-> > +
-> > +	/*
-> > +	 * reference to the other snapshot that will participate in the
-> > +	 * exception store handover; src references dest, dest references src
-> > +	 */
-> > +	struct dm_snapshot *handover_snap;
+> Questions:
 > 
-> Hi
+>   Do all the targets correctly flush or push back everything during a
+>   suspend (including workqueues)?
 > 
-> Please drop snapshot-linking through this "handover_snap" field, it will 
-> create real or possible problems with locking or with dangling pointers 
-> (i.e. are both properly locked? Which to lock first? If you destroy a 
-> snapshot, you must check if something links to it, etc. --- these problems 
-> could be solved, but if they can be avoided by dropping linking, it's 
-> better to avoid them).
+>   Do all the targets correctly sync to disk all internal state that
+>   needs to be preserved during a suspend?
+> 
+> In other words, in the case of an already-suspended target, the target
+> 'dtr' functions should only be freeing memory and other resources and
+> not causing I/O to any of the table's devices.
+> 
+> All targets are supposed to be behave this way already, but please
+> would you check the targets with which you are familiar anyway?
+> 
+> Alasdair
+> 
+> 
+> From: Alasdair G Kergon <agk@redhat.com>
+> 
+> When replacing a mapped device's table during a 'resume', delay the
+> destruction of the old table until the new one is successfully in place.
+> 
+> This will make it easier for a later patch to transfer internal state
+> information from the old table to the new one (something we do not currently
+> support) while giving us more options for reversion if a later part
+> of the operation fails.
 
-I agree, lock_snapshots_for_handover() is too complicated.  But by dropping
-these 'handover_snap' associations we'll lose the ability to have tight
-constraints on what handover will take place on resume of new snapshot
-(ideally a source of handover will only have one destination).
+I have confirmed that this patch allows handover to work within a single
+device.
 
-The new snapshot (destination of exception handover) is not registered
-with the origin until after resume's handover_exceptions (via
-register_snapshot).  And therefore it can't be found via
-find_snapshot_using_cow().  But that is a good thing as we'll know that
-if find_snapshot_using_cow does return a snapshot then it is the source
-of the handover.
-
-If we keep regitration of the new snapshot late, as I believe we need
-to, then we do not have a way to check for a conflicting handover (in
-snapshot_ctr).  We'd then have a situation where N new snapshots _could_
-be racing to get the exceptions handed over from a single old snapshot.
-
-So I think we'll need the snapshot to have a 'is_handover_source' flag;
-it would allow us to check of the 'handover_snap' in snapshot_ctr()
-already 'is_handover_source' and if so fail the new snapshot_ctr().
-I'll look to add this after I have coded the handover to not use any
-state.  Looking will be dead simple (just need to take the old
-snapshot's lock).
-
-> When you are about to do a handover (Alasdair is arranging generic dm core 
-> do handover only un resume), just search for a possible handover candidate 
-> with find_snapshot_using_cow.
-
-As I think you're aware: Alasdair's core DM changes have nothing to do
-with actually constraining handover to be on resume.  His changes make
-handover on resume safe; as we can guarantee that handover on resume
-actually worked (and if not rollback to old map).  A very welcomed
-advance.
-
-Thanks for your review,
+The error recovery, will it be done unilaterally in the DM core (on
+preresume failure)?  Or will each target driver need to call a DM core
+callback if it'd like recovery?
 
 Mike
