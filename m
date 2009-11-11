@@ -1,14 +1,16 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 2/2] Use low pointer bits for dm io region
-Date: Wed, 11 Nov 2009 16:26:15 +0900
-Message-ID: <4AFA6717.2060305@ct.jp.nec.com>
-References: <Pine.LNX.4.64.0911102104350.23116@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm snapshot: allow live exception store handover
+	between tables
+Date: Wed, 11 Nov 2009 07:41:39 -0500
+Message-ID: <20091111124138.GA24901@redhat.com>
+References: <1257532814-17100-1-git-send-email-snitzer@redhat.com>
+	<Pine.LNX.4.64.0911102221470.3386@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0911102104350.23116@hs20-bc2-1.build.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0911102221470.3386@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,29 +21,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mikulas,
+On Tue, Nov 10 2009 at 10:26pm -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-On 11/11/2009 11:05 AM +0900, Mikulas Patocka wrote:
-> Use low pointer bits for dm io region
+> > +	/*
+> > +	 * 'is_handover_destination' denotes another snapshot with the same
+> > +	 * cow block device (as identified with find_snapshot_using_cow)
+> > +	 * will hand over its exception store to this snapshot.
+> > +	 *
+> > +	 * 'is_handover_destination' is set in snapshot_ctr if an existing
+> > +	 * snapshot has the same cow device. The handover is performed,
+> > +	 * and 'is_handover_destination' is cleared, when either of the
+> > +	 * following occurs:
+> > +	 * - src (old) snapshot, that is handing over, is destructed
+> > +	 * - dest (new) snapshot, that is accepting the handover, is resumed
+> > +	 */
+> > +	int is_handover_destination;
+> > +
+> > +	/*
+> > +	 * reference to the other snapshot that will participate in the
+> > +	 * exception store handover; src references dest, dest references src
+> > +	 */
+> > +	struct dm_snapshot *handover_snap;
 > 
-> We need to store two things per bio: the pointer to the main io structure and
-> a region number, an index of disk where this bio belongs to (if there is
-> simultaneous write to multiple disks). There can be at most BITS_PER_LONG
-> regions. BITS_PER_LONG is 32 on 32-bit machines and 64 on 64-bit machines.
+> Hi
 > 
-> A region number was stored in the last hidden bio vector and the pointer to
-> struct io was stored in bi_private.
-> 
-> This patch changes it so that "struct io" is always aligned on BITS_PER_LONG
-> bytes and region number is stored in the low BITS_PER_LONG bits of bi_private.
+> Please drop snapshot-linking through this "handover_snap" field, it will 
+> create real or possible problems with locking or with dangling pointers 
+> (i.e. are both properly locked? Which to lock first? If you destroy a 
+> snapshot, you must check if something links to it, etc. --- these problems 
+> could be solved, but if they can be avoided by dropping linking, it's 
+> better to avoid them).
 
-The code is not easily readable for me.
-Why don't you introduce a new structure in which those two things
-can be stored, and allocate/attach it per bio?
-If it's possible, the code should be easy to read and maintain, I think.
+I agree, lock_snapshots_for_handover() is too complicated.  But by dropping
+these 'handover_snap' associations we'll lose the ability to have tight
+constraints on what handover will take place on resume of new snapshot
+(ideally a source of handover will only have one destination).
 
-Thanks,
-Kiyoshi Ueda
+The new snapshot (destination of exception handover) is not registered
+with the origin until after resume's handover_exceptions (via
+register_snapshot).  And therefore it can't be found via
+find_snapshot_using_cow().  But that is a good thing as we'll know that
+if find_snapshot_using_cow does return a snapshot then it is the source
+of the handover.
+
+If we keep regitration of the new snapshot late, as I believe we need
+to, then we do not have a way to check for a conflicting handover (in
+snapshot_ctr).  We'd then have a situation where N new snapshots _could_
+be racing to get the exceptions handed over from a single old snapshot.
+
+So I think we'll need the snapshot to have a 'is_handover_source' flag;
+it would allow us to check of the 'handover_snap' in snapshot_ctr()
+already 'is_handover_source' and if so fail the new snapshot_ctr().
+I'll look to add this after I have coded the handover to not use any
+state.  Looking will be dead simple (just need to take the old
+snapshot's lock).
+
+> When you are about to do a handover (Alasdair is arranging generic dm core 
+> do handover only un resume), just search for a possible handover candidate 
+> with find_snapshot_using_cow.
+
+As I think you're aware: Alasdair's core DM changes have nothing to do
+with actually constraining handover to be on resume.  His changes make
+handover on resume safe; as we can guarantee that handover on resume
+actually worked (and if not rollback to old map).  A very welcomed
+advance.
+
+Thanks for your review,
+
+Mike
