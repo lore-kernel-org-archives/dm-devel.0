@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/2] Allocate "struct io" from a slab.
-Date: Tue, 10 Nov 2009 21:04:34 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0911102104080.23116@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 2/2] Use low pointer bits for dm io region
+Date: Tue, 10 Nov 2009 21:05:04 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911102104350.23116@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
@@ -19,93 +19,209 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Allocate "struct io" from a slab.
+Use low pointer bits for dm io region
 
-This patch changes dm-io, so that "struct io" is allocated from a slab cache.
-It used to be allocated with kmalloc. Allocating from a slab will be needed
-for the next patch, because it requires a special alignment of "struct io"
-and kmalloc cannot meet this alignment.
+We need to store two things per bio: the pointer to the main io structure and
+a region number, an index of disk where this bio belongs to (if there is
+simultaneous write to multiple disks). There can be at most BITS_PER_LONG
+regions. BITS_PER_LONG is 32 on 32-bit machines and 64 on 64-bit machines.
+
+A region number was stored in the last hidden bio vector and the pointer to
+struct io was stored in bi_private.
+
+This patch changes it so that "struct io" is always aligned on BITS_PER_LONG
+bytes and region number is stored in the low BITS_PER_LONG bits of bi_private.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-io.c |   19 ++++++++++++++++++-
- drivers/md/dm.c    |    2 ++
- drivers/md/dm.h    |    3 +++
- 3 files changed, 23 insertions(+), 1 deletion(-)
+ drivers/md/dm-io.c |   84 +++++++++++++++++++++++++++++++----------------------
+ 1 file changed, 50 insertions(+), 34 deletions(-)
 
 Index: linux-2.6.31.6-fast/drivers/md/dm-io.c
 ===================================================================
---- linux-2.6.31.6-fast.orig/drivers/md/dm-io.c	2009-11-11 00:51:03.000000000 +0100
-+++ linux-2.6.31.6-fast/drivers/md/dm-io.c	2009-11-11 00:51:22.000000000 +0100
-@@ -30,6 +30,8 @@ struct io {
+--- linux-2.6.31.6-fast.orig/drivers/md/dm-io.c	2009-11-11 00:51:38.000000000 +0100
++++ linux-2.6.31.6-fast/drivers/md/dm-io.c	2009-11-11 02:13:32.000000000 +0100
+@@ -14,12 +14,17 @@
+ #include <linux/slab.h>
+ #include <linux/dm-io.h>
+ 
++#define DM_IO_MAX_REGIONS	BITS_PER_LONG
++
+ struct dm_io_client {
+ 	mempool_t *pool;
+ 	struct bio_set *bios;
+ };
+ 
+-/* FIXME: can we shrink this ? */
++/*
++ * The alignment of "struct io" is required because region number is stored
++ * in the low bits of the pointer.
++ */
+ struct io {
+ 	unsigned long error_bits;
+ 	unsigned long eopnotsupp_bits;
+@@ -28,7 +33,7 @@ struct io {
+ 	struct dm_io_client *client;
+ 	io_notify_fn callback;
  	void *context;
- };
+-};
++} __attribute__((aligned(DM_IO_MAX_REGIONS)));
  
-+static struct kmem_cache *_io_cache = NULL;
-+
- /*
-  * io contexts are only dynamically allocated for asynchronous
-  * io.  Since async io is likely to be the majority of io we'll
-@@ -53,7 +55,7 @@ struct dm_io_client *dm_io_client_create
- 	if (!client)
- 		return ERR_PTR(-ENOMEM);
+ static struct kmem_cache *_io_cache = NULL;
  
--	client->pool = mempool_create_kmalloc_pool(ios, sizeof(struct io));
-+	client->pool = mempool_create_slab_pool(ios, _io_cache);
- 	if (!client->pool)
- 		goto bad;
+@@ -90,18 +95,25 @@ EXPORT_SYMBOL(dm_io_client_destroy);
  
-@@ -476,3 +478,18 @@ int dm_io(struct dm_io_request *io_req, 
- 			&dp, io_req->notify.fn, io_req->notify.context);
+ /*-----------------------------------------------------------------
+  * We need to keep track of which region a bio is doing io for.
+- * In order to save a memory allocation we store this the last
+- * bvec which we know is unused (blech).
+- * XXX This is ugly and can OOPS with some configs... find another way.
++ * In order to save a memory allocation we store this the lowest
++ * bits of the pointer.
+  *---------------------------------------------------------------*/
+-static inline void bio_set_region(struct bio *bio, unsigned region)
++static inline void bio_set_io_region(struct bio *bio, struct io *io,
++				     unsigned region)
+ {
+-	bio->bi_io_vec[bio->bi_max_vecs].bv_len = region;
++	if (unlikely(!IS_ALIGNED((unsigned long)io, DM_IO_MAX_REGIONS))) {
++		printk(KERN_CRIT "dm-io: Unaligned pointer %p\n", io);
++		BUG();
++	}
++	bio->bi_private = (void *)((unsigned long)io | region);
  }
- EXPORT_SYMBOL(dm_io);
-+
-+int __init dm_io_init(void)
-+{
-+	_io_cache = KMEM_CACHE(io, 0);
-+	if (!_io_cache)
-+		return -ENOMEM;
-+
-+	return 0;
-+}
-+
-+void dm_io_exit(void)
-+{
-+	kmem_cache_destroy(_io_cache);
-+	_io_cache = NULL;
-+}
-Index: linux-2.6.31.6-fast/drivers/md/dm.c
-===================================================================
---- linux-2.6.31.6-fast.orig/drivers/md/dm.c	2009-11-11 00:51:04.000000000 +0100
-+++ linux-2.6.31.6-fast/drivers/md/dm.c	2009-11-11 00:51:22.000000000 +0100
-@@ -275,6 +275,7 @@ static int (*_inits[])(void) __initdata 
- 	dm_target_init,
- 	dm_linear_init,
- 	dm_stripe_init,
-+	dm_io_init,
- 	dm_kcopyd_init,
- 	dm_interface_init,
- };
-@@ -284,6 +285,7 @@ static void (*_exits[])(void) = {
- 	dm_target_exit,
- 	dm_linear_exit,
- 	dm_stripe_exit,
-+	dm_io_exit,
- 	dm_kcopyd_exit,
- 	dm_interface_exit,
- };
-Index: linux-2.6.31.6-fast/drivers/md/dm.h
-===================================================================
---- linux-2.6.31.6-fast.orig/drivers/md/dm.h	2009-11-11 00:51:04.000000000 +0100
-+++ linux-2.6.31.6-fast/drivers/md/dm.h	2009-11-11 00:51:22.000000000 +0100
-@@ -118,6 +118,9 @@ int dm_lock_for_deletion(struct mapped_d
- void dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
- 		       unsigned cookie);
  
-+int dm_io_init(void);
-+void dm_io_exit(void);
-+
- int dm_kcopyd_init(void);
- void dm_kcopyd_exit(void);
+-static inline unsigned bio_get_region(struct bio *bio)
++static inline void bio_get_io_region(struct bio *bio, struct io **io,
++				     unsigned *region)
+ {
+-	return bio->bi_io_vec[bio->bi_max_vecs].bv_len;
++	unsigned long val = (unsigned long)bio->bi_private;
++	*io = (void *)(val & -(unsigned long)DM_IO_MAX_REGIONS);
++	*region = val & (DM_IO_MAX_REGIONS - 1);
+ }
  
+ /*-----------------------------------------------------------------
+@@ -142,10 +154,8 @@ static void endio(struct bio *bio, int e
+ 	/*
+ 	 * The bio destructor in bio_put() may use the io object.
+ 	 */
+-	io = bio->bi_private;
+-	region = bio_get_region(bio);
++	bio_get_io_region(bio, &io, &region);
+ 
+-	bio->bi_max_vecs++;
+ 	bio_put(bio);
+ 
+ 	dec_count(io, region, error);
+@@ -245,7 +255,10 @@ static void vm_dp_init(struct dpages *dp
+ 
+ static void dm_bio_destructor(struct bio *bio)
+ {
+-	struct io *io = bio->bi_private;
++	unsigned region;
++	struct io *io;
++
++	bio_get_io_region(bio, &io, &region);
+ 
+ 	bio_free(bio, io->client->bios);
+ }
+@@ -294,24 +307,17 @@ static void do_region(int rw, unsigned r
+ 	 */
+ 	do {
+ 		/*
+-		 * Allocate a suitably sized-bio: we add an extra
+-		 * bvec for bio_get/set_region() and decrement bi_max_vecs
+-		 * to hide it from bio_add_page().
++		 * Allocate a suitably sized-bio.
+ 		 */
+ 		num_bvecs = dm_sector_div_up(remaining,
+ 					     (PAGE_SIZE >> SECTOR_SHIFT));
+-		num_bvecs = 1 + min_t(int, bio_get_nr_vecs(where->bdev),
+-				      num_bvecs);
+-		if (unlikely(num_bvecs > BIO_MAX_PAGES))
+-			num_bvecs = BIO_MAX_PAGES;
++		num_bvecs = min_t(int, bio_get_nr_vecs(where->bdev), num_bvecs);
+ 		bio = bio_alloc_bioset(GFP_NOIO, num_bvecs, io->client->bios);
+ 		bio->bi_sector = where->sector + (where->count - remaining);
+ 		bio->bi_bdev = where->bdev;
+ 		bio->bi_end_io = endio;
+-		bio->bi_private = io;
+ 		bio->bi_destructor = dm_bio_destructor;
+-		bio->bi_max_vecs--;
+-		bio_set_region(bio, region);
++		bio_set_io_region(bio, io, region);
+ 
+ 		/*
+ 		 * Try and add as many pages as possible.
+@@ -339,6 +345,8 @@ static void dispatch_io(int rw, unsigned
+ 	int i;
+ 	struct dpages old_pages = *dp;
+ 
++	BUG_ON(num_regions > DM_IO_MAX_REGIONS);
++
+ 	if (sync)
+ 		rw |= (1 << BIO_RW_SYNCIO) | (1 << BIO_RW_UNPLUG);
+ 
+@@ -363,7 +371,15 @@ static int sync_io(struct dm_io_client *
+ 		   struct dm_io_region *where, int rw, struct dpages *dp,
+ 		   unsigned long *error_bits)
+ {
+-	struct io io;
++	/*
++	 * gcc <= 4.3 can't do the alignment for stack variables, so we must
++	 * align it on our own.
++	 * volatile is there to prevent the optimizer from removing or reusing
++	 * "io_" field from the stack frame. (which would be allowed according
++	 * to ANSI C rules).
++	 */
++	volatile char io_[sizeof(struct io) * 2 - 1];
++	struct io *io = (struct io *)PTR_ALIGN(&io_, __alignof__(struct io));
+ 
+ 	if (num_regions > 1 && (rw & RW_MASK) != WRITE) {
+ 		WARN_ON(1);
+@@ -371,33 +387,33 @@ static int sync_io(struct dm_io_client *
+ 	}
+ 
+ retry:
+-	io.error_bits = 0;
+-	io.eopnotsupp_bits = 0;
+-	atomic_set(&io.count, 1); /* see dispatch_io() */
+-	io.sleeper = current;
+-	io.client = client;
++	io->error_bits = 0;
++	io->eopnotsupp_bits = 0;
++	atomic_set(&io->count, 1); /* see dispatch_io() */
++	io->sleeper = current;
++	io->client = client;
+ 
+-	dispatch_io(rw, num_regions, where, dp, &io, 1);
++	dispatch_io(rw, num_regions, where, dp, io, 1);
+ 
+ 	while (1) {
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
+ 
+-		if (!atomic_read(&io.count))
++		if (!atomic_read(&io->count))
+ 			break;
+ 
+ 		io_schedule();
+ 	}
+ 	set_current_state(TASK_RUNNING);
+ 
+-	if (io.eopnotsupp_bits && (rw & (1 << BIO_RW_BARRIER))) {
++	if (io->eopnotsupp_bits && (rw & (1 << BIO_RW_BARRIER))) {
+ 		rw &= ~(1 << BIO_RW_BARRIER);
+ 		goto retry;
+ 	}
+ 
+ 	if (error_bits)
+-		*error_bits = io.error_bits;
++		*error_bits = io->error_bits;
+ 
+-	return io.error_bits ? -EIO : 0;
++	return io->error_bits ? -EIO : 0;
+ }
+ 
+ static int async_io(struct dm_io_client *client, unsigned int num_regions,
