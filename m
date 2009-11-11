@@ -1,12 +1,14 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: dm: bind new table before destroying old
-Date: Wed, 11 Nov 2009 01:16:52 +0000
-Message-ID: <20091111011652.GK17055@agk-dp.fab.redhat.com>
+Subject: Re: dm: bind new table before destroying old
+Date: Wed, 11 Nov 2009 01:20:40 +0000
+Message-ID: <20091111012040.GP6208@agk-dp.fab.redhat.com>
+References: <20091111011652.GK17055@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <20091111011652.GK17055@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,22 +22,7 @@ To: dm-devel@redhat.com
 Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <mauelshagen@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Questions:
-
-  Do all the targets correctly flush or push back everything during a
-  suspend (including workqueues)?
-
-  Do all the targets correctly sync to disk all internal state that
-  needs to be preserved during a suspend?
-
-In other words, in the case of an already-suspended target, the target
-'dtr' functions should only be freeing memory and other resources and
-not causing I/O to any of the table's devices.
-
-All targets are supposed to be behave this way already, but please
-would you check the targets with which you are familiar anyway?
-
-Alasdair
+And now a version that actually compiles:-)
 
 
 From: Alasdair G Kergon <agk@redhat.com>
@@ -58,8 +45,8 @@ for resubmission after the new table is in place.
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 ---
  drivers/md/dm-table.c |    3 +++
- drivers/md/dm.c       |   13 +++++++++----
- 2 files changed, 12 insertions(+), 4 deletions(-)
+ drivers/md/dm.c       |   16 +++++++++++-----
+ 2 files changed, 14 insertions(+), 5 deletions(-)
 
 Index: linux-2.6.32-rc6/drivers/md/dm-table.c
 ===================================================================
@@ -79,7 +66,7 @@ Index: linux-2.6.32-rc6/drivers/md/dm.c
 ===================================================================
 --- linux-2.6.32-rc6.orig/drivers/md/dm.c
 +++ linux-2.6.32-rc6/drivers/md/dm.c
-@@ -2070,7 +2070,10 @@ static int __bind(struct mapped_device *
+@@ -2070,19 +2070,23 @@ static int __bind(struct mapped_device *
  	return 0;
  }
  
@@ -87,11 +74,16 @@ Index: linux-2.6.32-rc6/drivers/md/dm.c
 +/*
 + * Returns unbound table for the caller to free.
 + */
-+struct dm_table *__unbind(struct mapped_device *md)
++static struct dm_table *__unbind(struct mapped_device *md)
  {
  	struct dm_table *map = md->map;
  	unsigned long flags;
-@@ -2082,7 +2085,8 @@ static void __unbind(struct mapped_devic
+ 
+ 	if (!map)
+-		return;
++		return NULL;
+ 
+ 	dm_table_event_callback(map, NULL, NULL);
  	write_lock_irqsave(&md->map_lock, flags);
  	md->map = NULL;
  	write_unlock_irqrestore(&md->map_lock, flags);
@@ -110,7 +102,15 @@ Index: linux-2.6.32-rc6/drivers/md/dm.c
  		free_dev(md);
  	}
  }
-@@ -2381,8 +2385,9 @@ int dm_swap_table(struct mapped_device *
+@@ -2361,6 +2365,7 @@ static void dm_rq_barrier_work(struct wo
+  */
+ int dm_swap_table(struct mapped_device *md, struct dm_table *table)
+ {
++	struct dm_table *map;
+ 	struct queue_limits limits;
+ 	int r = -EINVAL;
+ 
+@@ -2381,8 +2386,9 @@ int dm_swap_table(struct mapped_device *
  		goto out;
  	}
  
