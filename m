@@ -1,17 +1,13 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: Re: dm: bind new table before destroying old
-Date: Wed, 11 Nov 2009 23:00:15 -0800
-Message-ID: <20091112070015.GA29091@linux.vnet.ibm.com>
-References: <20091111011652.GK17055@agk-dp.fab.redhat.com>
-	<4AFA6005.9060501@ct.jp.nec.com>
-	<20091111151110.GO17055@agk-dp.fab.redhat.com>
-	<4AFAD4F3.8070505@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH] dm-mpath: flush workqueues before suspend
+	completes
+Date: Thu, 12 Nov 2009 18:55:22 +0900
+Message-ID: <4AFBDB8A.4080900@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4AFAD4F3.8070505@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,48 +17,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <mauelshagen@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Milan Broz <mbroz@redhat.com> wrote:
-> On 11/11/2009 04:11 PM, Alasdair G Kergon wrote:
-> > On Wed, Nov 11, 2009 at 03:56:05PM +0900, Kiyoshi Ueda wrote:
-> >> I believe dm-mpath needs to flush such workqueues in postsuspend.
-> > 
-> > Yes - should be an easy change.
-> 
-> similar problem is probably in crypt target, I'll check it later.
-> 
-> >> Also, we need something to block message ioctl to suspended device.
-> >  
-> >> As for the message ioctl, I don't have any good idea, but...
-> >>   - Reject message ioctl to suspended device in dm-ioctl
-> > 
-> > I think the crypt target expects to be able to do this to manipulate
-> > the in-core encryption key.
-> 
-> yes, crypt target must be able to process messages when in suspended state.
-> 
+Hi Alasdair,
 
-I hit a issue like Kiyoshi described of the target_message
-(multipath_message) generating new work while dev_remove is trying
-complete in parallel with calling fail_path / reinstate_path.
+Current dm-mpath target may not be quiet even after suspend completes
+because some workqueues (e.g. device_handler's work, event handling)
+are not flushed during the suspend sequence, although suspended
+devices/targets should be quiet.
 
-I added two accessor functions to dm-table.c (dm_table_md_suspended and
-dm_table_md_freeing). I am calling both functions from multipath_message
-to return early if we are in one of these states. Depending on the usage
-model of the other targets message functions dm_table_md_freeing (or a new
-function dm_table_md_deleting) could be called in target_message instead
-of each targets message function.
+This patch lets dm-mpath be quiet during the suspend sequence by
+flushing workqueues in postsuspend function.
 
-The test runs using a mutex and the alternate option of using spin_lock
-are currently passing I will post tomorrow the series for comments.
+Note: Even with this patch, multipath_message ioctl can kick such works
+      for already-suspended devices/targets.
+      Other patches are needed for it.
 
-I also tested suspend / resume in parallel with calling fail_path /
-reinstate_path. 
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+---
+ drivers/md/dm-mpath.c |   19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
 
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+Index: 2.6.32-rc6/drivers/md/dm-mpath.c
+===================================================================
+--- 2.6.32-rc6.orig/drivers/md/dm-mpath.c
++++ 2.6.32-rc6/drivers/md/dm-mpath.c
+@@ -885,13 +885,18 @@ static int multipath_ctr(struct dm_targe
+ 	return r;
+ }
+ 
+-static void multipath_dtr(struct dm_target *ti)
++static void flush_multipath_work(void)
+ {
+-	struct multipath *m = (struct multipath *) ti->private;
+-
+ 	flush_workqueue(kmpath_handlerd);
+ 	flush_workqueue(kmultipathd);
+ 	flush_scheduled_work();
++}
++
++static void multipath_dtr(struct dm_target *ti)
++{
++	struct multipath *m = ti->private;
++
++	flush_multipath_work();
+ 	free_multipath(m);
+ }
+ 
+@@ -1261,6 +1266,11 @@ static void multipath_presuspend(struct 
+ 	queue_if_no_path(m, 0, 1);
+ }
+ 
++static void multipath_postsuspend(struct dm_target *ti)
++{
++	flush_multipath_work();
++}
++
+ /*
+  * Restore the queue_if_no_path setting.
+  */
+@@ -1567,13 +1577,14 @@ out:
+  *---------------------------------------------------------------*/
+ static struct target_type multipath_target = {
+ 	.name = "multipath",
+-	.version = {1, 1, 0},
++	.version = {1, 1, 1},
+ 	.module = THIS_MODULE,
+ 	.ctr = multipath_ctr,
+ 	.dtr = multipath_dtr,
+ 	.map_rq = multipath_map,
+ 	.rq_end_io = multipath_end_io,
+ 	.presuspend = multipath_presuspend,
++	.postsuspend = multipath_postsuspend,
+ 	.resume = multipath_resume,
+ 	.status = multipath_status,
+ 	.message = multipath_message,
