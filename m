@@ -1,18 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm snapshot: allow live exception store handover
-	between tables
-Date: Wed, 11 Nov 2009 18:47:49 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0911111839030.1911@hs20-bc2-1.build.redhat.com>
-References: <1257532814-17100-1-git-send-email-snitzer@redhat.com>
-	<Pine.LNX.4.64.0911102221470.3386@hs20-bc2-1.build.redhat.com>
-	<20091111124138.GA24901@redhat.com>
-	<Pine.LNX.4.64.0911111530240.32278@hs20-bc2-1.build.redhat.com>
-	<20091111233536.GA7502@redhat.com>
+From: Mike Anderson <andmike@linux.vnet.ibm.com>
+Subject: Re: Re: dm: bind new table before destroying old
+Date: Wed, 11 Nov 2009 23:00:15 -0800
+Message-ID: <20091112070015.GA29091@linux.vnet.ibm.com>
+References: <20091111011652.GK17055@agk-dp.fab.redhat.com>
+	<4AFA6005.9060501@ct.jp.nec.com>
+	<20091111151110.GO17055@agk-dp.fab.redhat.com>
+	<4AFAD4F3.8070505@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091111233536.GA7502@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4AFAD4F3.8070505@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,60 +21,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <mauelshagen@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 List-Id: dm-devel.ids
 
-> > It is registered in snapshot_ctr --- that's how it was originally written. 
-> > So it should be possible to find it.
-> >
-> > You moved the registration away? So move it back.
+Milan Broz <mbroz@redhat.com> wrote:
+> On 11/11/2009 04:11 PM, Alasdair G Kergon wrote:
+> > On Wed, Nov 11, 2009 at 03:56:05PM +0900, Kiyoshi Ueda wrote:
+> >> I believe dm-mpath needs to flush such workqueues in postsuspend.
+> > 
+> > Yes - should be an easy change.
 > 
-> Why?  That would be counter-productive.
+> similar problem is probably in crypt target, I'll check it later.
 > 
-> register_snapshot() is skipped if handover will be performed.  The
-> reason is register_snapshot() looks at the store's chunk_size.  Problem
-> is we don't have the store yet.  Your handover relied on rereading the
-> snapshot header.  I no longer read_metadata() at all if the store will
-> be handed over.
-
-If you don't want to read the header and get the chunk size from there, 
-you can get it from the existing active snapshot. And then register the 
-new to-be-activated snapshot with active == 0 (so that it will be skipped 
-for exception reallocation).
-
-> > I'm somehow concerned, how this simple handover code (that I wrote 1.5 
-> > years ago, on a train way from Berlin to Prague) is getting more and more 
-> > complicated, just for handling some "can't happen" cases.
+> >> Also, we need something to block message ioctl to suspended device.
+> >  
+> >> As for the message ioctl, I don't have any good idea, but...
+> >>   - Reject message ioctl to suspended device in dm-ioctl
+> > 
+> > I think the crypt target expects to be able to do this to manipulate
+> > the in-core encryption key.
 > 
-> Believe me, I'd rather not be lingering over the finer points of
-> exception handover; but once I hit the fact that snapshot_ctr() was
-> imposing that the COW device must not be suspended it opened a can or
-> worms (lvchange --refresh exposed this, in general it is fair to assume
-> the cow device isn't suspended in snapshot_ctr :).  
+> yes, crypt target must be able to process messages when in suspended state.
+> 
 
-No one should be calling any target constructor if there are any suspended 
-devices. But there may be bugs in lvm2 that do that ... and you may need 
-to work around them ...
+I hit a issue like Kiyoshi described of the target_message
+(multipath_message) generating new work while dev_remove is trying
+complete in parallel with calling fail_path / reinstate_path.
 
-The reason: the constructor can allocate memory and that could attempt to 
-flush pages to the suspended devices and deadlock.
+I added two accessor functions to dm-table.c (dm_table_md_suspended and
+dm_table_md_freeing). I am calling both functions from multipath_message
+to return early if we are in one of these states. Depending on the usage
+model of the other targets message functions dm_table_md_freeing (or a new
+function dm_table_md_deleting) could be called in target_message instead
+of each targets message function.
 
-> The handover-based snapshot_ctr() needing to access the COW device
-> begged the followong questions:
-> why are we reading the snapshot header via read_metadata()?
-> Why are we doing any IO to the COW if it will just be handed over?
+The test runs using a mutex and the alternate option of using spin_lock
+are currently passing I will post tomorrow the series for comments.
 
-Originaly it read the whole snapshot store :) And I optimized away the 
-worst thing (reading exceptions) because it takes a lot of memory.
+I also tested suspend / resume in parallel with calling fail_path /
+reinstate_path. 
 
-> Answer: we don't have a real need, so don't.  Not only that, but
-> Alasdair asserted read_metadata() must not be called if another snapshot
-> is already actively using the COW.  What if something else is changing
-> it at the same time that the new snapshot_ctr() re-reads it?
-
-It won't cause trouble. It will just read incomplete list of exceptions 
-(that will be thrown away anyway). But reading exceptions is a memory 
-waste, my patch didn't do it too.
-
-Mikulas
+-andmike
+--
+Michael Anderson
+andmike@linux.vnet.ibm.com
