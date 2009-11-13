@@ -1,7 +1,7 @@
 From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: [PATCH 1/3] dm: Add dm_deleting accesor function
-Date: Fri, 13 Nov 2009 00:04:28 -0800
-Message-ID: <20091113080427.17412.41405.stgit@localhost.localdomain>
+Subject: [PATCH 2/3] dm: Add accessor dm_table_md_deleting
+Date: Fri, 13 Nov 2009 00:04:33 -0800
+Message-ID: <20091113080433.17412.48559.stgit@localhost.localdomain>
 References: <20091113080422.17412.49305.stgit@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,39 +21,44 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add dm_deleting accesor function to allow checking of the DMF_DELETING bit.
+Add a dm_table accessor function to check if md is being deleted.
 
 Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
 ---
- drivers/md/dm.c               |    5 +++++
+ drivers/md/dm-table.c         |    6 ++++++
  include/linux/device-mapper.h |    1 +
- 2 files changed, 6 insertions(+), 0 deletions(-)
+ 2 files changed, 7 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 724efc6..96127cc 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2604,6 +2604,11 @@ int dm_suspended(struct mapped_device *md)
- 	return test_bit(DMF_SUSPENDED, &md->flags);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 6616598..fdf86fe 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1250,6 +1250,11 @@ int dm_table_md_suspended(struct dm_table *t)
+ 	return dm_suspended(t->md);
  }
  
-+int dm_deleting(struct mapped_device *md)
++int dm_table_md_deleting(struct dm_table *t)
 +{
-+	return test_bit(DMF_DELETING, &md->flags);
++	return dm_deleting(t->md);
 +}
 +
- int dm_noflush_suspending(struct dm_target *ti)
- {
- 	struct mapped_device *md = dm_table_get_md(ti->table);
+ EXPORT_SYMBOL(dm_vcalloc);
+ EXPORT_SYMBOL(dm_get_device);
+ EXPORT_SYMBOL(dm_put_device);
+@@ -1261,3 +1266,4 @@ EXPORT_SYMBOL(dm_table_put);
+ EXPORT_SYMBOL(dm_table_get);
+ EXPORT_SYMBOL(dm_table_unplug_all);
+ EXPORT_SYMBOL(dm_table_md_suspended);
++EXPORT_SYMBOL(dm_table_md_deleting);
 diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 3440c54..16cd291 100644
+index 16cd291..5a0fb6c 100644
 --- a/include/linux/device-mapper.h
 +++ b/include/linux/device-mapper.h
-@@ -236,6 +236,7 @@ const char *dm_device_name(struct mapped_device *md);
- int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid);
- struct gendisk *dm_disk(struct mapped_device *md);
- int dm_suspended(struct mapped_device *md);
-+int dm_deleting(struct mapped_device *md);
- int dm_noflush_suspending(struct dm_target *ti);
- union map_info *dm_get_mapinfo(struct bio *bio);
- union map_info *dm_get_rq_mapinfo(struct request *rq);
+@@ -289,6 +289,7 @@ unsigned int dm_table_get_num_targets(struct dm_table *t);
+ fmode_t dm_table_get_mode(struct dm_table *t);
+ struct mapped_device *dm_table_get_md(struct dm_table *t);
+ int dm_table_md_suspended(struct dm_table *t);
++int dm_table_md_deleting(struct dm_table *t);
+ 
+ /*
+  * Trigger an event.
