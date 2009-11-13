@@ -1,7 +1,7 @@
 From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: [PATCH 1/2] dm: Add accessor dm_table_md_suspended
-Date: Fri, 13 Nov 2009 00:06:42 -0800
-Message-ID: <20091113080642.17587.37581.stgit@localhost.localdomain>
+Subject: [PATCH 2/2] dm: Add suspended check to multipath_message
+Date: Fri, 13 Nov 2009 00:06:48 -0800
+Message-ID: <20091113080647.17587.58265.stgit@localhost.localdomain>
 References: <20091113080637.17587.64935.stgit@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,44 +21,24 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add a dm_table accessor function to check if md is suspended.
+Add suspended check to multipath_message
 
 Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
 ---
- drivers/md/dm-table.c         |    6 ++++++
- include/linux/device-mapper.h |    1 +
- 2 files changed, 7 insertions(+), 0 deletions(-)
+ drivers/md/dm-mpath.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 1a6cb3c..6616598 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1245,6 +1245,11 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
- 	return t->md;
- }
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 32d0b87..ee56ef7 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1402,6 +1402,9 @@ static int multipath_message(struct dm_target *ti, unsigned argc, char **argv)
+ 	struct multipath *m = (struct multipath *) ti->private;
+ 	action_fn action;
  
-+int dm_table_md_suspended(struct dm_table *t)
-+{
-+	return dm_suspended(t->md);
-+}
++	if (dm_table_md_suspended(ti->table))
++		return -EBUSY;
 +
- EXPORT_SYMBOL(dm_vcalloc);
- EXPORT_SYMBOL(dm_get_device);
- EXPORT_SYMBOL(dm_put_device);
-@@ -1255,3 +1260,4 @@ EXPORT_SYMBOL(dm_table_get_md);
- EXPORT_SYMBOL(dm_table_put);
- EXPORT_SYMBOL(dm_table_get);
- EXPORT_SYMBOL(dm_table_unplug_all);
-+EXPORT_SYMBOL(dm_table_md_suspended);
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index df7607e..3440c54 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -287,6 +287,7 @@ sector_t dm_table_get_size(struct dm_table *t);
- unsigned int dm_table_get_num_targets(struct dm_table *t);
- fmode_t dm_table_get_mode(struct dm_table *t);
- struct mapped_device *dm_table_get_md(struct dm_table *t);
-+int dm_table_md_suspended(struct dm_table *t);
- 
- /*
-  * Trigger an event.
+ 	if (argc == 1) {
+ 		if (!strnicmp(argv[0], MESG_STR("queue_if_no_path")))
+ 			return queue_if_no_path(m, 1, 0);
