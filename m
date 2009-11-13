@@ -1,12 +1,14 @@
 From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: [PATCH 0/2] Add suspended state check for target messages
-Date: Fri, 13 Nov 2009 00:06:37 -0800
-Message-ID: <20091113080637.17587.64935.stgit@localhost.localdomain>
+Subject: [PATCH 1/2] dm: Add accessor dm_table_md_suspended
+Date: Fri, 13 Nov 2009 00:06:42 -0800
+Message-ID: <20091113080642.17587.37581.stgit@localhost.localdomain>
+References: <20091113080637.17587.64935.stgit@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20091113080637.17587.64935.stgit@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,30 +21,44 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds a accessor function that allows determining if a
-mapped_device is in the suspended state and then adds this check to the
-multipath targets multipath_message function.
+Add a dm_table accessor function to check if md is suspended.
 
-As previously described in the email at the archive url provided below the
-target_message ioctl can call into the target after suspend completes.
-This can cause new work to be queued and actions to be taken by the target
-that should be prevented in the suspended state.
-
-http://permalink.gmane.org/gmane.linux.kernel.device-mapper.devel/10486
-
+Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
 ---
-
-Mike Anderson (2):
-      dm: Add accessor dm_table_md_suspended
-      dm: Add suspended check to multipath_message
-
-
- drivers/md/dm-mpath.c         |    3 +++
  drivers/md/dm-table.c         |    6 ++++++
  include/linux/device-mapper.h |    1 +
- 3 files changed, 10 insertions(+), 0 deletions(-)
+ 2 files changed, 7 insertions(+), 0 deletions(-)
 
---
--andmike
-
-Michael Anderson <andmike@linux.vnet.ibm.com>
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 1a6cb3c..6616598 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1245,6 +1245,11 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
+ 	return t->md;
+ }
+ 
++int dm_table_md_suspended(struct dm_table *t)
++{
++	return dm_suspended(t->md);
++}
++
+ EXPORT_SYMBOL(dm_vcalloc);
+ EXPORT_SYMBOL(dm_get_device);
+ EXPORT_SYMBOL(dm_put_device);
+@@ -1255,3 +1260,4 @@ EXPORT_SYMBOL(dm_table_get_md);
+ EXPORT_SYMBOL(dm_table_put);
+ EXPORT_SYMBOL(dm_table_get);
+ EXPORT_SYMBOL(dm_table_unplug_all);
++EXPORT_SYMBOL(dm_table_md_suspended);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index df7607e..3440c54 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -287,6 +287,7 @@ sector_t dm_table_get_size(struct dm_table *t);
+ unsigned int dm_table_get_num_targets(struct dm_table *t);
+ fmode_t dm_table_get_mode(struct dm_table *t);
+ struct mapped_device *dm_table_get_md(struct dm_table *t);
++int dm_table_md_suspended(struct dm_table *t);
+ 
+ /*
+  * Trigger an event.
