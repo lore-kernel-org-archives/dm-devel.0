@@ -1,15 +1,16 @@
 From: malahal@us.ibm.com
-Subject: Re: [PATCH 3/3] dm: Add deleting check to target_message
-Date: Fri, 13 Nov 2009 10:32:43 -0800
-Message-ID: <20091113183243.GB19866@us.ibm.com>
-References: <20091113080422.17412.49305.stgit@localhost.localdomain>
-	<20091113080438.17412.87434.stgit@localhost.localdomain>
+Subject: Re: [PATCH 2/2] dm: Add suspended check to
+	multipath_message
+Date: Fri, 13 Nov 2009 10:35:27 -0800
+Message-ID: <20091113183527.GC19866@us.ibm.com>
+References: <20091113080637.17587.64935.stgit@localhost.localdomain>
+	<20091113080647.17587.58265.stgit@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20091113080438.17412.87434.stgit@localhost.localdomain>
+In-Reply-To: <20091113080647.17587.58265.stgit@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,42 +24,32 @@ To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 Mike Anderson [andmike@linux.vnet.ibm.com] wrote:
-> Add dm_table_md_deleting check to target_message
+> Add suspended check to multipath_message
 > 
 > Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
 > ---
->  drivers/md/dm-ioctl.c |    6 ++++++
->  1 files changed, 6 insertions(+), 0 deletions(-)
+>  drivers/md/dm-mpath.c |    3 +++
+>  1 files changed, 3 insertions(+), 0 deletions(-)
 > 
-> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-> index a679429..04e252c 100644
-> --- a/drivers/md/dm-ioctl.c
-> +++ b/drivers/md/dm-ioctl.c
-> @@ -1292,6 +1292,11 @@ static int target_message(struct dm_ioctl *param, size_t param_size)
->  	if (!table)
->  		goto out_argv;
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index 32d0b87..ee56ef7 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -1402,6 +1402,9 @@ static int multipath_message(struct dm_target *ti, unsigned argc, char **argv)
+>  	struct multipath *m = (struct multipath *) ti->private;
+>  	action_fn action;
 > 
-> +	if (dm_table_md_deleting(table)) {
-> +		r = -ENXIO;
-> +		goto out_table;
-> +	}
+> +	if (dm_table_md_suspended(ti->table))
+> +		return -EBUSY;
 
-Is there some reason that DELETING bit won't be set while executing the
-rest of the following code. If not, what is the point of checking the
-bit above?
+Same question as DELETING. SUSPEND bit could be set just after the above
+check. Is it OK if the following code executes after the SUSPEND bit is
+set???
 
-> 
->  	ti = dm_table_find_target(table, tmsg->sector);
->  	if (!dm_target_is_valid(ti)) {
->  		DMWARN("Target message sector outside device.");
-> @@ -1303,6 +1308,7 @@ static int target_message(struct dm_ioctl *param, size_t param_size)
->  		r = -EINVAL;
->  	}
-> 
-> + out_table:
->  	dm_table_put(table);
->   out_argv:
->  	kfree(argv);
+> +
+>  	if (argc == 1) {
+>  		if (!strnicmp(argv[0], MESG_STR("queue_if_no_path")))
+>  			return queue_if_no_path(m, 1, 0);
 > 
 > --
 > dm-devel mailing list
