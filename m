@@ -1,55 +1,65 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 02/17] dm snapshot: add suspended flag to
-	dm_snapshot
-Date: Mon, 16 Nov 2009 13:17:17 -0500
-Message-ID: <20091116181716.GA17448@redhat.com>
-References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
-	<1256078825-11331-3-git-send-email-snitzer@redhat.com>
-	<20091105005635.GN13375@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chris Mason <chris.mason@oracle.com>
+Subject: Re: [PATCH 0/7] Reduce GFP_ATOMIC allocation failures, candidate
+ fix V3
+Date: Mon, 16 Nov 2009 13:36:13 -0500
+Message-ID: <20091116183613.GG27677@think>
+References: <1258054211-2854-1-git-send-email-mel@csn.ul.ie>
+ <20091112202748.GC2811@think>
+ <20091112220005.GD2811@think>
+ <20091113024642.GA7771@think>
+ <4B018157.3080707@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20091105005635.GN13375@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <4B018157.3080707@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Milan Broz <mbroz@redhat.com>
+Cc: Mel Gorman <mel@csn.ul.ie>, Andrew Morton <akpm@linux-foundation.org>, Frans Pop <elendil@planet.nl>, Jiri Kosina <jkosina@suse.cz>, Sven Geggus <lists@fuchsschwanzdomain.de>, Karol Lewandowski <karol.k.lewandowski@gmail.com>, Tobias Oetiker <tobi@oetiker.ch>, linux-kernel@vger.kernel.org, "linux-mm@kvack.org" <linux-mm@kvack.org>, KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>, Pekka Enberg <penberg@cs.helsinki.fi>, Rik van Riel <riel@redhat.com>, Christoph Lameter <cl@linux-foundation.org>, Stephan von Krawczynski <skraw@ithnet.com>, "Rafael J. Wysocki" <rjw@sisk.pl>, Kernel Testers List <kernel-testers@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 04 2009 at  7:56pm -0500,
-Alasdair G Kergon <agk@redhat.com> wrote:
-
-> On Tue, Oct 20, 2009 at 06:46:50PM -0400, Mike Snitzer wrote:
-> > Allow the snapshot target to be able to verify its state relative to a
-> > requested operation.  Allows for invalid operations to be prevented,
-> > e.g. an attempt handover an "old" snapshot's exceptions without it
-> > having been suspended first.
->  
-> OK - same as we do in dm-raid1.
+On Mon, Nov 16, 2009 at 05:44:07PM +0100, Milan Broz wrote:
+> On 11/13/2009 03:46 AM, Chris Mason wrote:
+> > On Thu, Nov 12, 2009 at 05:00:05PM -0500, Chris Mason wrote:
+> > 
+> > [ ...]
+> > 
+> >>
+> >> The punch line is that the btrfs guy thinks we can solve all of this with
+> >> just one more thread.  If we change dm-crypt to have a thread dedicated
+> >> to sync IO and a thread dedicated to async IO the system should smooth
+> >> out.
 > 
-> But just be aware that:
->         /* This does not get reverted if there's an error later. */
->         dm_table_presuspend_targets(map);
+> Please, can you cc DM maintainers with these kind of patches? dm-devel list at least.
 > 
-> and so it's not identical to querying the dm_suspended() property directly.
 
-Right, it is now clear that I should be using postsuspend.  The handover
-patch has a need to know that another snapshot target has been
-suspended; setting dm-snapshot's 'suspended' in .presuspend doesn't give
-us that information.
+Well, my current patch is a hack.  If I had come up with a proven theory
+(hopefully Mel can prove it ;), it definitely would have gone through
+the dm-devel lists.
 
-So the dm-snapshot-track-suspended-state-in-target.patch that you have
-queued should be changed with: s/presuspend/postsuspend/
+> Note that the crypt requests can be already processed synchronously or asynchronously,
+> depending on used crypto module (async it is in the case of some hw acceleration).
+> 
+> Adding another queue make the situation more complicated and because the crypt
+> requests can be queued in crypto layer I am not sure that this solution will help
+> in this situation at all.
+> (Try to run that with AES-NI acceleration for example.)
 
-(the same search and replace is needed in the v7 handover patch)
+The problem is that async threads still imply a kind of ordering.
+If there's a fifo serviced by one thread or 10, the latency ramifications
+are very similar for a new entry on the list.  We have to wait for a
+large portion of the low-prio items in order to service a high prio
+item.
 
-Mike
+With a queue dedicated to sync requests and one dedicated to async,
+you'll get better read latencies.  Btrfs has a similar problem around
+the crc helper threads and it ends up solving things with two different
+lists (high and low prio) processed by one thread.
+
+-chris
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
