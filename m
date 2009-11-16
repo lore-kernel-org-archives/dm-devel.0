@@ -1,11 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: dm-raid1 barriers
-Date: Mon, 16 Nov 2009 11:50:56 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0911161136500.5769@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2 02/17] dm snapshot: add suspended flag to
+	dm_snapshot
+Date: Mon, 16 Nov 2009 13:17:17 -0500
+Message-ID: <20091116181716.GA17448@redhat.com>
+References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
+	<1256078825-11331-3-git-send-email-snitzer@redhat.com>
+	<20091105005635.GN13375@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20091105005635.GN13375@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,44 +22,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+On Wed, Nov 04 2009 at  7:56pm -0500,
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-As you talked about setting the whole device dirty. The problem is this:
+> On Tue, Oct 20, 2009 at 06:46:50PM -0400, Mike Snitzer wrote:
+> > Allow the snapshot target to be able to verify its state relative to a
+> > requested operation.  Allows for invalid operations to be prevented,
+> > e.g. an attempt handover an "old" snapshot's exceptions without it
+> > having been suspended first.
+>  
+> OK - same as we do in dm-raid1.
+> 
+> But just be aware that:
+>         /* This does not get reverted if there's an error later. */
+>         dm_table_presuspend_targets(map);
+> 
+> and so it's not identical to querying the dm_suspended() property directly.
 
-When there are no writes pending for a given region, we set the bit in 
-memory, indicating that the region is clean.
+Right, it is now clear that I should be using postsuspend.  The handover
+patch has a need to know that another snapshot target has been
+suspended; setting dm-snapshot's 'suspended' in .presuspend doesn't give
+us that information.
 
-Some times later (usually while setting another dirty bit in the log), we 
-write the log to disk.
+So the dm-snapshot-track-suspended-state-in-target.patch that you have
+queued should be changed with: s/presuspend/postsuspend/
 
-Before writing the log, we must flush cache on both mirror legs. 
-(otherwise, we might write some bit as clean while the data is still 
-pending in the disk cache)
+(the same search and replace is needed in the v7 handover patch)
 
-If this flush fails, the bits in memory are already clean and we don't 
-know which regions may hold unwritten data in the disk cache and which 
-not. So, we must set all regions as dirty.
-
----
-
-If you don't like setting all regions as dirty, we would have to introduce 
-new region state ("no pending writes but possibly unflushed") and 
-introduce new bitmap for regions in this state.
-
-I wouldn't like to do it because it is considerable coding overhead, it 
-makes a lot of opportunities for bugs (which are hard to find because 
-failures happen rarely) and the whole effect for the user could be 
-negative --- instead of resyncing the whole array it could introduce a bug 
-that corrupts user's data.
-
-BTW, when running with dmeventd, the whole issue is poitless because 
-dmeventd removes failed mirror legs, so it always resyncs when recreating 
-the mirror. Without dmeventd, the mirror is already unsafe and has 
-problems leading to data corruption when failed devices reappear, so 
-resyncing or not-resyncing the whole mirror is probably the least serious 
-thing to worry about.
-
-Mikulas
+Mike
