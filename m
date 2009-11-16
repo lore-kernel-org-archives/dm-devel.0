@@ -1,15 +1,16 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 0/3] Add deleting state check for target
-	messages
-Date: Mon, 16 Nov 2009 11:14:47 +0900
-Message-ID: <4B00B597.6050905@ct.jp.nec.com>
-References: <20091113080422.17412.49305.stgit@localhost.localdomain>
+Subject: Re: [PATCH 0/2] Add suspended state check for
+	target	messages
+Date: Mon, 16 Nov 2009 16:25:26 +0900
+Message-ID: <4B00FE66.9020405@ct.jp.nec.com>
+References: <20091113080637.17587.64935.stgit@localhost.localdomain>	<4AFD3358.7000007@ct.jp.nec.com>
+	<20091113141930.GA3185@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091113080422.17412.49305.stgit@localhost.localdomain>
+In-Reply-To: <20091113141930.GA3185@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,37 +23,18 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
+Hi Alasdair,
 
-On 11/13/2009 05:04 PM +0900, Mike Anderson wrote:
-> This patch adds a accessor function that allows determining if a
-> mapped_device is in the deleting state and then adds this check to the
-> target_message function. The result of this change would be that all
-> targets would not be allowed to process messages post a mapped device
-> entering the deleting state.
-> 
-> As previously described in the email at the archive url provided below the
-> target_message ioctl can result in new work / activities being started
-> post the mapped device entering states that new target work could cause
-> issues.
-> 
-> http://permalink.gmane.org/gmane.linux.kernel.device-mapper.devel/10486
+On 11/13/2009 11:19 PM +0900, Alasdair G Kergon wrote:
+> Would DMF_BLOCK_IO_FOR_SUSPEND work instead?
 
-Thank you for the patch-set.
-Although I'm not sure this patch-set is really needed after the fix
-of message ioctl during suspend will have been done, I understand
-why you want this patch-set (since issuing message ioctl to a deleting
-device is a bit pointless).
+Maybe.
+But we must remember that using the flag means that multipath can't
+use message during flushing I/Os, although I'm not sure how it hurts us.
 
-But there is a small window in this patch-set as Malahal described.
-Also, I have some comments below:
-  o Please use drivers/md/dm.h instead of include/linux/device-mapper.h
-    and don't export symbols, because all accessors you are adding are
-    used in only dm-core, no target uses them.
-
-  o target_message() can use dm_deleting(), because target_message()
-    has a reference to the md.
-    We don't need the table function, dm_table_md_deleting(), at all.
+If we'd like to keep the ability to use message during flushing I/Os,
+we should use another flag for this purpose and set it after
+dm_wait_for_completion().
 
 Thanks,
 Kiyoshi Ueda
