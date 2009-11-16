@@ -1,17 +1,17 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 0/3] Add deleting state check for target
-	messages
-Date: Mon, 16 Nov 2009 15:00:40 +0000
-Message-ID: <20091116150040.GC11886@agk-dp.fab.redhat.com>
-References: <20091113080422.17412.49305.stgit@localhost.localdomain>
-	<4B00B597.6050905@ct.jp.nec.com>
-	<20091116073848.GA20475@linux.vnet.ibm.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [PATCH 0/7] Reduce GFP_ATOMIC allocation failures,
+ candidate fix V3
+Date: Mon, 16 Nov 2009 17:44:07 +0100
+Message-ID: <4B018157.3080707@redhat.com>
+References: <1258054211-2854-1-git-send-email-mel@csn.ul.ie>
+	<20091112202748.GC2811@think> <20091112220005.GD2811@think>
+	<20091113024642.GA7771@think>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20091116073848.GA20475@linux.vnet.ibm.com>
+In-Reply-To: <20091113024642.GA7771@think>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,19 +21,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Chris Mason <chris.mason@oracle.com>, Mel Gorman <mel@csn.ul.ie>, Andrew Morton <akpm@linux-foundation.org>, Frans Pop <elendil@planet.nl>, Jiri Kosina <jkosina@suse.cz>, Sven
 List-Id: dm-devel.ids
 
-On Sun, Nov 15, 2009 at 11:38:48PM -0800, Mike Anderson wrote:
-> Yes this patch set should not be needed post the fix to the message ioctl.
-> The reduction was aimed at future callers using dm_get_md prior to
-> DMF_FREEING being set as the dm_table_destroy holders wait would not
-> proceed until current message operations had completed, but the reduction
-> of this case is not that important with the other message ioctl changes in
-> place.
- 
-I've left it in my tree for now (with the suggested simplifications - private
-to dm.h), to enforce the situation that the dm core will not forward messages
-to table targets after they begin to be deleted.
+On 11/13/2009 03:46 AM, Chris Mason wrote:
+> On Thu, Nov 12, 2009 at 05:00:05PM -0500, Chris Mason wrote:
+> 
+> [ ...]
+> 
+>>
+>> The punch line is that the btrfs guy thinks we can solve all of this with
+>> just one more thread.  If we change dm-crypt to have a thread dedicated
+>> to sync IO and a thread dedicated to async IO the system should smooth
+>> out.
 
-Alasdair
+Please, can you cc DM maintainers with these kind of patches? dm-devel list at least.
+
+Note that the crypt requests can be already processed synchronously or asynchronously,
+depending on used crypto module (async it is in the case of some hw acceleration).
+
+Adding another queue make the situation more complicated and because the crypt
+requests can be queued in crypto layer I am not sure that this solution will help
+in this situation at all.
+(Try to run that with AES-NI acceleration for example.)
+
+
+Milan
+--
+mbroz@redhat.com
