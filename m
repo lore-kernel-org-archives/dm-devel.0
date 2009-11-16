@@ -1,18 +1,16 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: [PATCH 0/2] Add suspended state check for target
-	messages
-Date: Sun, 15 Nov 2009 23:43:33 -0800
-Message-ID: <20091116074333.GB20475@linux.vnet.ibm.com>
-References: <20091113080637.17587.64935.stgit@localhost.localdomain>
-	<4AFD3358.7000007@ct.jp.nec.com>
-	<20091113141930.GA3185@agk-dp.fab.redhat.com>
-	<4B00FE66.9020405@ct.jp.nec.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH 1/2] dm-mpath: Add mutex to synchronize adding
+	and flushing work
+Date: Mon, 16 Nov 2009 18:16:38 +0900
+Message-ID: <4B011876.1040101@ct.jp.nec.com>
+References: <20091116073819.4070.40173.stgit@localhost.localdomain>
+	<20091116073824.4070.71075.stgit@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4B00FE66.9020405@ct.jp.nec.com>
+In-Reply-To: <20091116073824.4070.71075.stgit@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,27 +23,22 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
-> Hi Alasdair,
-> 
-> On 11/13/2009 11:19 PM +0900, Alasdair G Kergon wrote:
-> > Would DMF_BLOCK_IO_FOR_SUSPEND work instead?
-> 
-> Maybe.
-> But we must remember that using the flag means that multipath can't
-> use message during flushing I/Os, although I'm not sure how it hurts us.
-> 
-> If we'd like to keep the ability to use message during flushing I/Os,
-> we should use another flag for this purpose and set it after
-> dm_wait_for_completion().
-> 
+Hi Mike,
 
-I just re-rolled / re-submitted a update series that use a multipath
-internal flag for the suspended state plus a mutex. This would avoid a
-extended meaning for DMF_BLOCK_IO_FOR_SUSPEND if we needed to avoid that
-case.
+On 11/16/2009 04:38 PM +0900, Mike Anderson wrote:
+> Add a mutex to allow possible creators of new work to synchronize with
+> flushing work queues.
+<snip>
+> @@ -1268,7 +1271,11 @@ static void multipath_presuspend(struct dm_target *ti)
+>  
+>  static void multipath_postsuspend(struct dm_target *ti)
+>  {
+> +	struct multipath *m = (struct multipath *) ti->private;
 
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+Please drop the cast when it's from void.
+
+For others,
+Acked-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+
+Thanks,
+Kiyoshi Ueda
