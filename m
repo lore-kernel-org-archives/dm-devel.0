@@ -1,17 +1,11 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [PATCH 0/7] Reduce GFP_ATOMIC allocation failures,
- candidate fix V3
-Date: Mon, 16 Nov 2009 17:44:07 +0100
-Message-ID: <4B018157.3080707@redhat.com>
-References: <1258054211-2854-1-git-send-email-mel@csn.ul.ie>
-	<20091112202748.GC2811@think> <20091112220005.GD2811@think>
-	<20091113024642.GA7771@think>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: dm-raid1 barriers
+Date: Mon, 16 Nov 2009 11:50:56 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911161136500.5769@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091113024642.GA7771@think>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,31 +15,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Chris Mason <chris.mason@oracle.com>, Mel Gorman <mel@csn.ul.ie>, Andrew Morton <akpm@linux-foundation.org>, Frans Pop <elendil@planet.nl>, Jiri Kosina <jkosina@suse.cz>, Sven
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/13/2009 03:46 AM, Chris Mason wrote:
-> On Thu, Nov 12, 2009 at 05:00:05PM -0500, Chris Mason wrote:
-> 
-> [ ...]
-> 
->>
->> The punch line is that the btrfs guy thinks we can solve all of this with
->> just one more thread.  If we change dm-crypt to have a thread dedicated
->> to sync IO and a thread dedicated to async IO the system should smooth
->> out.
+Hi
 
-Please, can you cc DM maintainers with these kind of patches? dm-devel list at least.
+As you talked about setting the whole device dirty. The problem is this:
 
-Note that the crypt requests can be already processed synchronously or asynchronously,
-depending on used crypto module (async it is in the case of some hw acceleration).
+When there are no writes pending for a given region, we set the bit in 
+memory, indicating that the region is clean.
 
-Adding another queue make the situation more complicated and because the crypt
-requests can be queued in crypto layer I am not sure that this solution will help
-in this situation at all.
-(Try to run that with AES-NI acceleration for example.)
+Some times later (usually while setting another dirty bit in the log), we 
+write the log to disk.
 
+Before writing the log, we must flush cache on both mirror legs. 
+(otherwise, we might write some bit as clean while the data is still 
+pending in the disk cache)
 
-Milan
---
-mbroz@redhat.com
+If this flush fails, the bits in memory are already clean and we don't 
+know which regions may hold unwritten data in the disk cache and which 
+not. So, we must set all regions as dirty.
+
+---
+
+If you don't like setting all regions as dirty, we would have to introduce 
+new region state ("no pending writes but possibly unflushed") and 
+introduce new bitmap for regions in this state.
+
+I wouldn't like to do it because it is considerable coding overhead, it 
+makes a lot of opportunities for bugs (which are hard to find because 
+failures happen rarely) and the whole effect for the user could be 
+negative --- instead of resyncing the whole array it could introduce a bug 
+that corrupts user's data.
+
+BTW, when running with dmeventd, the whole issue is poitless because 
+dmeventd removes failed mirror legs, so it always resyncs when recreating 
+the mirror. Without dmeventd, the mirror is already unsafe and has 
+problems leading to data corruption when failed devices reappear, so 
+resyncing or not-resyncing the whole mirror is probably the least serious 
+thing to worry about.
+
+Mikulas
