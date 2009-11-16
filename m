@@ -1,14 +1,16 @@
 From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: [PATCH 2/2] dm-mpath: Add element for suspended state.
-Date: Sun, 15 Nov 2009 23:38:29 -0800
-Message-ID: <20091116073829.4070.45194.stgit@localhost.localdomain>
-References: <20091116073819.4070.40173.stgit@localhost.localdomain>
+Subject: Re: [PATCH 0/3] Add deleting state check for target
+	messages
+Date: Sun, 15 Nov 2009 23:38:48 -0800
+Message-ID: <20091116073848.GA20475@linux.vnet.ibm.com>
+References: <20091113080422.17412.49305.stgit@localhost.localdomain>
+	<4B00B597.6050905@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091116073819.4070.40173.stgit@localhost.localdomain>
+Content-Disposition: inline
+In-Reply-To: <4B00B597.6050905@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,57 +20,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Add element to multipath structure for indication of suspended state.
+Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+> Hi Mike,
+> 
+> On 11/13/2009 05:04 PM +0900, Mike Anderson wrote:
+> > This patch adds a accessor function that allows determining if a
+> > mapped_device is in the deleting state and then adds this check to the
+> > target_message function. The result of this change would be that all
+> > targets would not be allowed to process messages post a mapped device
+> > entering the deleting state.
+> > 
+> > As previously described in the email at the archive url provided below the
+> > target_message ioctl can result in new work / activities being started
+> > post the mapped device entering states that new target work could cause
+> > issues.
+> > 
+> > http://permalink.gmane.org/gmane.linux.kernel.device-mapper.devel/10486
+> 
+> Thank you for the patch-set.
+> Although I'm not sure this patch-set is really needed after the fix
+> of message ioctl during suspend will have been done, I understand
+> why you want this patch-set (since issuing message ioctl to a deleting
+> device is a bit pointless).
+> 
 
-Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
----
- drivers/md/dm-mpath.c |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
+Yes this patch set should not be needed post the fix to the message ioctl.
+The reduction was aimed at future callers using dm_get_md prior to
+DMF_FREEING being set as the dm_table_destroy holders wait would not
+proceed until current message operations had completed, but the reduction
+of this case is not that important with the other message ioctl changes in
+place.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index b102959..1f598c9 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -95,6 +95,8 @@ struct multipath {
- 	mempool_t *mpio_pool;
- 
- 	struct mutex work_mutex;
-+
-+	unsigned int  suspended;
- };
- 
- /*
-@@ -1274,6 +1276,7 @@ static void multipath_postsuspend(struct dm_target *ti)
- 	struct multipath *m = (struct multipath *) ti->private;
- 
- 	mutex_lock(&m->work_mutex);
-+	m->suspended = 1;
- 	flush_multipath_work();
- 	mutex_unlock(&m->work_mutex);
- }
-@@ -1286,6 +1289,10 @@ static void multipath_resume(struct dm_target *ti)
- 	struct multipath *m = (struct multipath *) ti->private;
- 	unsigned long flags;
- 
-+	mutex_lock(&m->work_mutex);
-+	m->suspended = 0;
-+	mutex_unlock(&m->work_mutex);
-+
- 	spin_lock_irqsave(&m->lock, flags);
- 	m->queue_if_no_path = m->saved_queue_if_no_path;
- 	spin_unlock_irqrestore(&m->lock, flags);
-@@ -1421,6 +1428,11 @@ static int multipath_message(struct dm_target *ti, unsigned argc, char **argv)
- 
- 	mutex_lock(&m->work_mutex);
- 
-+	if (m->suspended) {
-+		r = -EBUSY;
-+		goto out;
-+	}
-+
- 	if (argc == 1) {
- 		if (!strnicmp(argv[0], MESG_STR("queue_if_no_path"))) {
- 			r = queue_if_no_path(m, 1, 0);
+This patch set can be dropped.
+
+> But there is a small window in this patch-set as Malahal described.
+> Also, I have some comments below:
+>   o Please use drivers/md/dm.h instead of include/linux/device-mapper.h
+>     and don't export symbols, because all accessors you are adding are
+>     used in only dm-core, no target uses them.
+> 
+>   o target_message() can use dm_deleting(), because target_message()
+>     has a reference to the md.
+>     We don't need the table function, dm_table_md_deleting(), at all.
+>
+
+Thanks for the review tip.
+
+
+-andmike
+--
+Michael Anderson
+andmike@linux.vnet.ibm.com
