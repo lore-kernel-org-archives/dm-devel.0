@@ -1,15 +1,18 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 2/2] dm-mpath: Add element for suspended state.
-Date: Mon, 16 Nov 2009 18:17:10 +0900
-Message-ID: <4B011896.40807@ct.jp.nec.com>
-References: <20091116073819.4070.40173.stgit@localhost.localdomain>
-	<20091116073829.4070.45194.stgit@localhost.localdomain>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 0/2] Add suspended state check for target
+	messages
+Date: Mon, 16 Nov 2009 13:23:06 +0000
+Message-ID: <20091116132306.GA11886@agk-dp.fab.redhat.com>
+References: <20091113080637.17587.64935.stgit@localhost.localdomain>
+	<4AFD3358.7000007@ct.jp.nec.com>
+	<20091113141930.GA3185@agk-dp.fab.redhat.com>
+	<4B00FE66.9020405@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091116073829.4070.45194.stgit@localhost.localdomain>
+Content-Disposition: inline
+In-Reply-To: <4B00FE66.9020405@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,10 +25,14 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/16/2009 04:38 PM +0900, Mike Anderson wrote:
-> Add element to multipath structure for indication of suspended state.
+On Mon, Nov 16, 2009 at 04:25:26PM +0900, Kiyoshi Ueda wrote:
+> On 11/13/2009 11:19 PM +0900, Alasdair G Kergon wrote:
+> > Would DMF_BLOCK_IO_FOR_SUSPEND work instead?
+> If we'd like to keep the ability to use message during flushing I/Os,
+> we should use another flag for this purpose and set it after
+> dm_wait_for_completion().
+ 
+We should rename the flag as it's original meaning has changed:-)
+FOR_SUSPEND_OR_FLUSH
 
-Acked-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-
-Thanks,
-Kiyoshi Ueda
+Alasdair
