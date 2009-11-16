@@ -1,18 +1,15 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 0/2] Add suspended state check for target
-	messages
-Date: Mon, 16 Nov 2009 13:23:06 +0000
-Message-ID: <20091116132306.GA11886@agk-dp.fab.redhat.com>
-References: <20091113080637.17587.64935.stgit@localhost.localdomain>
-	<4AFD3358.7000007@ct.jp.nec.com>
-	<20091113141930.GA3185@agk-dp.fab.redhat.com>
-	<4B00FE66.9020405@ct.jp.nec.com>
+Subject: Re: [PATCH 2/2] dm-mpath: Add element for suspended state.
+Date: Mon, 16 Nov 2009 13:54:30 +0000
+Message-ID: <20091116135430.GB11886@agk-dp.fab.redhat.com>
+References: <20091116073819.4070.40173.stgit@localhost.localdomain>
+	<20091116073829.4070.45194.stgit@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4B00FE66.9020405@ct.jp.nec.com>
+In-Reply-To: <20091116073829.4070.45194.stgit@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,17 +19,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mike Anderson <andmike@linux.vnet.ibm.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Nov 16, 2009 at 04:25:26PM +0900, Kiyoshi Ueda wrote:
-> On 11/13/2009 11:19 PM +0900, Alasdair G Kergon wrote:
-> > Would DMF_BLOCK_IO_FOR_SUSPEND work instead?
-> If we'd like to keep the ability to use message during flushing I/Os,
-> we should use another flag for this purpose and set it after
-> dm_wait_for_completion().
+On Sun, Nov 15, 2009 at 11:38:29PM -0800, Mike Anderson wrote:
+> Add element to multipath structure for indication of suspended state.
  
-We should rename the flag as it's original meaning has changed:-)
-FOR_SUSPEND_OR_FLUSH
+Is there a way to avoid this?
+It seems redundant for a target to need to track whether or not
+it is suspended.  Core dm should be capable of that.
+
+dm_suspend has:
+        dm_table_postsuspend_targets(map);
+
+        set_bit(DMF_SUSPENDED, &md->flags);
+
+Can we reorder those two?
+
+What about dm_resume?
+        clear_bit(DMF_SUSPENDED, &md->flags);
+Can that move a little higher up the function?
+- preresume, clear DMF_SUSPENDED, resume perhaps?
 
 Alasdair
