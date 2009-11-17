@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 12/12] dm snapshot: merge a linear region of
-	chunks using one large IO
-Date: Tue, 17 Nov 2009 11:12:24 -0500
-Message-ID: <1258474344-10886-13-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v3 07/12] dm snapshot: queue writes to an area
+	that is actively being merged
+Date: Tue, 17 Nov 2009 11:12:19 -0500
+Message-ID: <1258474344-10886-8-git-send-email-snitzer@redhat.com>
 References: <1258474344-10886-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -19,118 +19,230 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-s->store->type->prepare_merge returns the number of chunks that can be
-linearly copied starting from the returned chunk number backward. (but
-the caller is allowed to copy less, and the caller puts the number of
-copied chunks to s->store->type->commit_merge)
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-I.e. if returned chunk numbers are old_chunk == 10 and new_chunk == 20
-and returned value is 3, then chunk 20 can be copied to 10, chunk 19 to
-9 and 18 to 8.
+New variables merge_write_interlock and merge_write_interlock_n
+determine the chunk number (on the origin device) and number of chunks
+that are being merged.  Writes to this area are held on the queue
+merge_write_list.
 
-s->merge_write_interlock_n has now been allowed to be increased up to
-the full range of chunks returned from s->store->type->prepare_merge.
-Until now kcopyd was only ever allowed to copy one chunk at a time;
-as a result snapshot-merge performance was extremely slow.
-
-Also, snapshot_merge_process() needs to delay the merging of _all_
-chunks that have in-progress writes; not just the first chunk in the
-region that is to be merged.
-
-snapshot-merge performance is now very respectible.
-
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
 ---
- drivers/md/dm-snap.c |   35 +++++++++++++++++++++++------------
- 1 files changed, 23 insertions(+), 12 deletions(-)
+ drivers/md/dm-snap.c |  119 +++++++++++++++++++++++++++++++++++++-------------
+ 1 files changed, 88 insertions(+), 31 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 3d214f4..34d8c3f 100644
+index f9aac21..e37fc93 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -685,12 +685,13 @@ static void merge_callback(int read_err, unsigned long write_err,
+@@ -124,6 +124,16 @@ struct dm_snapshot {
+ 	/* It is requested to shut down merging */
+ 	/* Cleared back to 0 when the merging is stopped */
+ 	int merge_shutdown;
++
++	/* Merging this area --- block any writes */
++	chunk_t merge_write_interlock;
++	int merge_write_interlock_n;
++
++	/*
++	 * A list of requests that were delayed because
++	 * of racing with merge
++	 */
++	struct bio_list merge_write_list;
+ };
  
- static void snapshot_merge_process(struct dm_snapshot *s)
+ struct dm_dev *dm_snap_cow(struct dm_snapshot *s)
+@@ -662,6 +672,9 @@ static int init_hash_tables(struct dm_snapshot *s)
+ 	return 0;
+ }
+ 
++static void flush_bios(struct bio *bio);
++static void error_bios(struct bio *bio);
++
+ static void merge_callback(int read_err, unsigned long write_err,
+ 			   void *context);
+ 
+@@ -669,7 +682,6 @@ static void snapshot_merge_process(struct dm_snapshot *s)
  {
--	int r;
-+	int r, i, linear_chunks;
+ 	int r;
  	chunk_t old_chunk, new_chunk;
- 	struct origin *o;
- 	chunk_t min_chunksize;
- 	int must_wait;
+-	struct dm_exception *e;
  	struct dm_io_region src, dest;
-+	sector_t io_size;
  
  	BUG_ON(!s->merge_running);
- 	if (s->merge_shutdown)
-@@ -701,34 +702,41 @@ static void snapshot_merge_process(struct dm_snapshot *s)
- 		goto shut;
- 	}
+@@ -691,32 +703,6 @@ static void snapshot_merge_process(struct dm_snapshot *s)
  
--	r = s->store->type->prepare_merge(s->store, &old_chunk, &new_chunk);
--	if (r <= 0) {
--		if (r < 0)
-+	linear_chunks = s->store->type->prepare_merge(s->store,
-+						      &old_chunk, &new_chunk);
-+	if (linear_chunks <= 0) {
-+		if (linear_chunks < 0)
- 			DMERR("Read error in exception store, "
- 			      "shutting down merge");
- 		goto shut;
- 	}
-+	/* Adjust old_chunk and new_chunk to reflect start of linear region */
-+	old_chunk = old_chunk + 1 - linear_chunks;
-+	new_chunk = new_chunk + 1 - linear_chunks;
+ 	/* TODO: use larger I/O size once we verify that kcopyd handles it */
  
--	/* TODO: use larger I/O size once we verify that kcopyd handles it */
-+	/*
-+	 * Use one (potentially large) I/O to copy all 'linear_chunks'
-+	 * from the exception store to the origin
-+	 */
-+	io_size = linear_chunks * s->store->chunk_size;
- 
+-	/* !!! FIXME: intelock writes to this chunk */
+-	down_write(&s->lock);
+-	e = dm_lookup_exception(&s->complete, old_chunk);
+-	if (!e) {
+-		DMERR("exception for block %llu is on disk but not in memory",
+-		      (unsigned long long)old_chunk);
+-		up_write(&s->lock);
+-		goto shut;
+-	}
+-	if (dm_consecutive_chunk_count(e)) {
+-		if (old_chunk == e->old_chunk) {
+-			e->old_chunk++;
+-			e->new_chunk++;
+-		} else if (old_chunk != e->old_chunk +
+-			   dm_consecutive_chunk_count(e)) {
+-			DMERR("merge from the middle of a chunk range");
+-			up_write(&s->lock);
+-			goto shut;
+-		}
+-		dm_consecutive_chunk_count_dec(e);
+-	} else {
+-		dm_remove_exception(e);
+-		free_completed_exception(e);
+-	}
+-	up_write(&s->lock);
+-
  	dest.bdev = s->origin->bdev;
  	dest.sector = chunk_to_sector(s->store, old_chunk);
--	dest.count = min((sector_t)s->store->chunk_size,
--			 get_dev_size(dest.bdev) - dest.sector);
-+	dest.count = min(io_size, get_dev_size(dest.bdev) - dest.sector);
- 
- 	src.bdev = s->cow->bdev;
+ 	dest.count = min((sector_t)s->store->chunk_size,
+@@ -726,6 +712,13 @@ static void snapshot_merge_process(struct dm_snapshot *s)
  	src.sector = chunk_to_sector(s->store, new_chunk);
  	src.count = dest.count;
  
- test_again:
--	/* Reallocate other snapshots */
-+	/* Reallocate other snapshots; must account for all 'linear_chunks' */
- 	down_read(&_origins_lock);
- 	o = __lookup_origin(s->origin->bdev);
- 	must_wait = 0;
- 	min_chunksize = __minimum_chunk_size(o);
- 	if (min_chunksize) {
- 		chunk_t n;
--		for (n = 0; n < s->store->chunk_size; n += min_chunksize) {
-+		for (n = 0; n < io_size; n += min_chunksize) {
- 			r = __origin_write(&o->snapshots, dest.sector + n,
- 					   NULL);
- 			if (r == DM_MAPIO_SUBMITTED)
-@@ -743,11 +751,14 @@ test_again:
- 
- 	down_write(&s->lock);
- 	s->merge_write_interlock = old_chunk;
--	s->merge_write_interlock_n = 1;
-+	s->merge_write_interlock_n = linear_chunks;
- 	up_write(&s->lock);
- 
--	while (__chunk_is_tracked(s, old_chunk))
--		msleep(1);
-+	/* Wait until writes to all 'linear_chunks' drain */
-+	for (i = 0; i < linear_chunks; i++) {
-+		while (__chunk_is_tracked(s, old_chunk + i))
-+			msleep(1);
-+	}
- 
++	down_write(&s->lock);
++	s->merge_write_interlock = old_chunk;
++	s->merge_write_interlock_n = 1;
++	up_write(&s->lock);
++
++	/* !!! FIXME: wait until writes to this chunk drain */
++
  	dm_kcopyd_copy(s->kcopyd_client, &src, 1, &dest, 0, merge_callback, s);
  	return;
+ 
+@@ -733,10 +726,25 @@ shut:
+ 	s->merge_running = 0;
+ }
+ 
++/* This function drops s->lock */
++static inline void release_write_interlock(struct dm_snapshot *s, int err)
++{
++	struct bio *b;
++	s->merge_write_interlock = 0;
++	s->merge_write_interlock_n = 0;
++	b = bio_list_get(&s->merge_write_list);
++	up_write(&s->lock);
++	if (!err)
++		flush_bios(b);
++	else
++		error_bios(b);
++}
++
+ static void merge_callback(int read_err, unsigned long write_err, void *context)
+ {
+-	int r;
++	int r, i;
+ 	struct dm_snapshot *s = context;
++	struct dm_exception *e;
+ 
+ 	if (read_err || write_err) {
+ 		if (read_err)
+@@ -746,16 +754,51 @@ static void merge_callback(int read_err, unsigned long write_err, void *context)
+ 		goto shut;
+ 	}
+ 
+-	r = s->store->type->commit_merge(s->store, 1);
++	r = s->store->type->commit_merge(s->store, s->merge_write_interlock_n);
+ 	if (r < 0) {
+ 		DMERR("Write error in exception store, shutting down merge");
+ 		goto shut;
+ 	}
+ 
++	down_write(&s->lock);
++	/*
++	 * Must process chunks (and associated exceptions) in reverse
++	 * so that dm_consecutive_chunk_count_dec() accounting works
++	 */
++	for (i = s->merge_write_interlock_n - 1; i >= 0; i--) {
++		chunk_t old_chunk = s->merge_write_interlock + i;
++		e = dm_lookup_exception(&s->complete, old_chunk);
++		if (!e) {
++			DMERR("exception for block %llu is on "
++			      "disk but not in memory",
++			      (unsigned long long)old_chunk);
++			up_write(&s->lock);
++			goto shut;
++		}
++		if (dm_consecutive_chunk_count(e)) {
++			if (old_chunk == e->old_chunk) {
++				e->old_chunk++;
++				e->new_chunk++;
++			} else if (old_chunk != e->old_chunk +
++				   dm_consecutive_chunk_count(e)) {
++				DMERR("merge from the middle of a chunk range");
++				up_write(&s->lock);
++				goto shut;
++			}
++			dm_consecutive_chunk_count_dec(e);
++		} else {
++			dm_remove_exception(e);
++			free_completed_exception(e);
++		}
++	}
++	release_write_interlock(s, 0);
++
+ 	snapshot_merge_process(s);
+ 	return;
+ 
+ shut:
++	down_write(&s->lock);
++	release_write_interlock(s, 1);
+ 	s->merge_running = 0;
+ }
+ 
+@@ -846,6 +889,9 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	spin_lock_init(&s->pe_lock);
+ 	s->merge_running = 0;
+ 	s->merge_shutdown = 0;
++	s->merge_write_interlock = 0;
++	s->merge_write_interlock_n = 0;
++	bio_list_init(&s->merge_write_list);
+ 
+ 	/* Allocate hash table for COW data */
+ 	if (init_hash_tables(s)) {
+@@ -1440,7 +1486,7 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
+ 
+ 	chunk = sector_to_chunk(s->store, bio->bi_sector);
+ 
+-	down_read(&s->lock);
++	down_write(&s->lock);
+ 
+ 	/* Full snapshots are not usable */
+ 	if (!s->valid) {
+@@ -1451,6 +1497,17 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
+ 	/* If the block is already remapped - use that */
+ 	e = dm_lookup_exception(&s->complete, chunk);
+ 	if (e) {
++		/* We are copying this area --- so don't write to it */
++		if (bio_rw(bio) == WRITE &&
++		    chunk >= s->merge_write_interlock &&
++		    chunk < (s->merge_write_interlock +
++			     s->merge_write_interlock_n)) {
++			bio->bi_bdev = s->origin->bdev;
++			bio_list_add(&s->merge_write_list, bio);
++
++			r = DM_MAPIO_SUBMITTED;
++			goto out_unlock;
++		}
+ 		remap_exception(s, e, bio, chunk);
+ 		goto out_unlock;
+ 	}
+@@ -1458,7 +1515,7 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
+ 	bio->bi_bdev = s->origin->bdev;
+ 
+  out_unlock:
+-	up_read(&s->lock);
++	up_write(&s->lock);
+ 
+ 	return r;
+ }
 -- 
 1.6.5.2
