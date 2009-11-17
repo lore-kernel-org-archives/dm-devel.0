@@ -1,14 +1,18 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: dm-raid1 barriers
-Date: Mon, 16 Nov 2009 18:48:02 +0000
-Message-ID: <20091116184802.GD11886@agk-dp.fab.redhat.com>
-References: <Pine.LNX.4.64.0911161136500.5769@hs20-bc2-1.build.redhat.com>
+Subject: Re: [PATCH v2 02/17] dm snapshot: add suspended flag to
+	dm_snapshot
+Date: Tue, 17 Nov 2009 02:24:30 +0000
+Message-ID: <20091117022430.GA6644@agk-dp.fab.redhat.com>
+References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
+	<1256078825-11331-3-git-send-email-snitzer@redhat.com>
+	<20091105005635.GN13375@agk-dp.fab.redhat.com>
+	<20091116181716.GA17448@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0911161136500.5769@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20091116181716.GA17448@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,30 +22,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 16, 2009 at 11:50:56AM -0500, Mikulas Patocka wrote:
-> When there are no writes pending for a given region, we set the bit in 
-> memory, indicating that the region is clean.
-> Some times later (usually while setting another dirty bit in the log), we 
-> write the log to disk.
-> Before writing the log, we must flush cache on both mirror legs. 
-> (otherwise, we might write some bit as clean while the data is still 
-> pending in the disk cache)
-> 
-> If this flush fails, the bits in memory are already clean and we don't 
-> know which regions may hold unwritten data in the disk cache and which 
-
-Actually we do: the on-disk version of the log tells us.
-
-> not. So, we must set all regions as dirty.
+On Mon, Nov 16, 2009 at 01:17:17PM -0500, Mike Snitzer wrote:
+> So the dm-snapshot-track-suspended-state-in-target.patch that you have
+> queued should be changed with: s/presuspend/postsuspend/
  
-Anyway, let's not try to handle these situations at the moment.
-what I need for now, is a way to know whether or not this situation has
-actually occurred when we get reports from users, so probably a kernel
-log message, a dm event raised plus a failure indicator against the device in
-the status line.
+Changed.
+
+As discussed earlier, as we have something that works, we'll leave the
+suspended state tracking as-is for now.  Then once all the batches of
+patches for the next kernel are signed off, we can return to this and
+clean it up in all the targets.
 
 Alasdair
