@@ -1,14 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-raid1 barriers
-Date: Tue, 17 Nov 2009 05:06:47 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0911170502370.4304@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0911161136500.5769@hs20-bc2-1.build.redhat.com>
-	<20091116184802.GD11886@agk-dp.fab.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 1/7] dm: use __GFP_HIGH instead PF_MEMALLOC
+Date: Tue, 17 Nov 2009 13:15:28 +0000
+Message-ID: <20091117131527.GB6644@agk-dp.fab.redhat.com>
+References: <20091117161551.3DD4.A69D9226@jp.fujitsu.com>
+	<20091117161616.3DD7.A69D9226@jp.fujitsu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="279731514-589528270-1258452407=:4304"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091116184802.GD11886@agk-dp.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20091117161616.3DD7.A69D9226@jp.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,172 +19,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+Cc: linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Tue, Nov 17, 2009 at 04:17:07PM +0900, KOSAKI Motohiro wrote:
+> Non MM subsystem must not use PF_MEMALLOC. Memory reclaim need few
+> memory, anyone must not prevent it. Otherwise the system cause
+> mysterious hang-up and/or OOM Killer invokation.
+ 
+This code is also on the critical path, for example, if you are swapping
+onto a dm device.  (There are ways we could reduce its use further as
+not every dm ioctl needs to be on the critical path and the buffer size
+could be limited for the ioctls that do.)
 
---279731514-589528270-1258452407=:4304
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+But what situations have been causing you trouble?  The OOM killer must
+generally avoid killing userspace processes that suspend & resume dm
+devices, and there are tight restrictions on what those processes
+can do safely between suspending and resuming.
 
-> > If this flush fails, the bits in memory are already clean and we don't 
-> > know which regions may hold unwritten data in the disk cache and which 
-> 
-> Actually we do: the on-disk version of the log tells us.
-
-Yes, it could be read into another buffer and anded.
-
-> > not. So, we must set all regions as dirty.
->  
-> Anyway, let's not try to handle these situations at the moment.
-> what I need for now, is a way to know whether or not this situation has
-> actually occurred when we get reports from users, so probably a kernel
-> log message, a dm event raised plus a failure indicator against the device in
-> the status line.
-> 
-> Alasdair
-
-Here I'm attaching two patches that make it report 'F' on flush error. But 
-I think it's not really important, the flush error could be treated as 
-write error, there is no need for special handling of flush errors --- 
-both flush errors and write errors can happen either on transport errors 
-or if the device is out of spare sectors.
-
-Note that this approach of reporting flushes speciall also breaks 
-new-kernel-with-old-userspace case.
-
-Mikulas
---279731514-589528270-1258452407=:4304
-Content-Type: TEXT/PLAIN; charset=US-ASCII;
-	name=dm-raid1-report-flush-error.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.0911170506470.4304@hs20-bc2-1.build.redhat.com>
-Content-Description: 
-Content-Disposition: attachment; filename=dm-raid1-report-flush-error.patch
-
-UmVwb3J0IGZsdXNoIGVycm9ycyBhcyAnRicgaW5zdGVhZCBvZiAnRCcgZm9y
-IGxvZyBhbmQgbWlycm9yIGRldmljZXMuDQoNClNpZ25lZC1vZmYtYnk6IE1p
-a3VsYXMgUGF0b2NrYSA8bXBhdG9ja2FAcmVkaGF0LmNvbT4NCg0KLS0tDQog
-ZHJpdmVycy9tZC9kbS1sb2cuYyAgIHwgICAxNiArKysrKysrKysrKystLS0t
-DQogZHJpdmVycy9tZC9kbS1yYWlkMS5jIHwgICAgNiArKysrLS0NCiAyIGZp
-bGVzIGNoYW5nZWQsIDE2IGluc2VydGlvbnMoKyksIDYgZGVsZXRpb25zKC0p
-DQoNCkluZGV4OiBsaW51eC0yLjYuMzEuNi1mYXN0L2RyaXZlcnMvbWQvZG0t
-cmFpZDEuYw0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIGxpbnV4LTIu
-Ni4zMS42LWZhc3Qub3JpZy9kcml2ZXJzL21kL2RtLXJhaWQxLmMJMjAwOS0x
-MS0xNyAwOTowODoxNS4wMDAwMDAwMDAgKzAxMDANCisrKyBsaW51eC0yLjYu
-MzEuNi1mYXN0L2RyaXZlcnMvbWQvZG0tcmFpZDEuYwkyMDA5LTExLTE3IDA5
-OjEwOjA3LjAwMDAwMDAwMCArMDEwMA0KQEAgLTM1LDYgKzM1LDcgQEAgc3Rh
-dGljIERFQ0xBUkVfV0FJVF9RVUVVRV9IRUFEKF9rbWlycm9yZA0KICAqLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tKi8NCiBlbnVtIGRtX3JhaWQxX2Vycm9yIHsNCiAJ
-RE1fUkFJRDFfV1JJVEVfRVJST1IsDQorCURNX1JBSUQxX0ZMVVNIX0VSUk9S
-LA0KIAlETV9SQUlEMV9TWU5DX0VSUk9SLA0KIAlETV9SQUlEMV9SRUFEX0VS
-Uk9SDQogfTsNCkBAIC0yNzAsNyArMjcxLDcgQEAgc3RhdGljIGludCBtaXJy
-b3JfZmx1c2godm9pZCAqbXNfKQ0KIAlpZiAodW5saWtlbHkoZXJyb3JfYml0
-cyAhPSAwKSkgew0KIAkJZm9yIChpID0gMDsgaSA8IG1zLT5ucl9taXJyb3Jz
-OyBpKyspDQogCQkJaWYgKHRlc3RfYml0KGksICZlcnJvcl9iaXRzKSkNCi0J
-CQkJZmFpbF9taXJyb3IobXMtPm1pcnJvciArIGksIERNX1JBSUQxX1dSSVRF
-X0VSUk9SKTsNCisJCQkJZmFpbF9taXJyb3IobXMtPm1pcnJvciArIGksIERN
-X1JBSUQxX0ZMVVNIX0VSUk9SKTsNCiAJCXJldHVybiAtRUlPOw0KIAl9DQog
-DQpAQCAtMTMxMiw3ICsxMzEzLDggQEAgc3RhdGljIGNoYXIgZGV2aWNlX3N0
-YXR1c19jaGFyKHN0cnVjdCBtaQ0KIAlpZiAoIWF0b21pY19yZWFkKCYobS0+
-ZXJyb3JfY291bnQpKSkNCiAJCXJldHVybiAnQSc7DQogDQotCXJldHVybiAo
-dGVzdF9iaXQoRE1fUkFJRDFfV1JJVEVfRVJST1IsICYobS0+ZXJyb3JfdHlw
-ZSkpKSA/ICdEJyA6DQorCXJldHVybiAodGVzdF9iaXQoRE1fUkFJRDFfRkxV
-U0hfRVJST1IsICYobS0+ZXJyb3JfdHlwZSkpKSA/ICdGJyA6DQorCQkodGVz
-dF9iaXQoRE1fUkFJRDFfV1JJVEVfRVJST1IsICYobS0+ZXJyb3JfdHlwZSkp
-KSA/ICdEJyA6DQogCQkodGVzdF9iaXQoRE1fUkFJRDFfU1lOQ19FUlJPUiwg
-JihtLT5lcnJvcl90eXBlKSkpID8gJ1MnIDoNCiAJCSh0ZXN0X2JpdChETV9S
-QUlEMV9SRUFEX0VSUk9SLCAmKG0tPmVycm9yX3R5cGUpKSkgPyAnUicgOiAn
-VSc7DQogfQ0KSW5kZXg6IGxpbnV4LTIuNi4zMS42LWZhc3QvZHJpdmVycy9t
-ZC9kbS1sb2cuYw0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIGxpbnV4
-LTIuNi4zMS42LWZhc3Qub3JpZy9kcml2ZXJzL21kL2RtLWxvZy5jCTIwMDkt
-MTEtMTcgMTA6MjA6MzkuMDAwMDAwMDAwICswMTAwDQorKysgbGludXgtMi42
-LjMxLjYtZmFzdC9kcml2ZXJzL21kL2RtLWxvZy5jCTIwMDktMTEtMTcgMTA6
-MjI6MTcuMDAwMDAwMDAwICswMTAwDQpAQCAtMjM1LDYgKzIzNSw3IEBAIHN0
-cnVjdCBsb2dfYyB7DQogCSAqIERpc2sgbG9nIGZpZWxkcw0KIAkgKi8NCiAJ
-aW50IGxvZ19kZXZfZmFpbGVkOw0KKwlpbnQgbG9nX2Rldl9mbHVzaF9mYWls
-ZWQ7DQogCXN0cnVjdCBkbV9kZXYgKmxvZ19kZXY7DQogCXN0cnVjdCBsb2df
-aGVhZGVyIGhlYWRlcjsNCiANCkBAIC00MjIsNiArNDIzLDcgQEAgc3RhdGlj
-IGludCBjcmVhdGVfbG9nX2NvbnRleHQoc3RydWN0IGRtXw0KIAl9IGVsc2Ug
-ew0KIAkJbGMtPmxvZ19kZXYgPSBkZXY7DQogCQlsYy0+bG9nX2Rldl9mYWls
-ZWQgPSAwOw0KKwkJbGMtPmxvZ19kZXZfZmx1c2hfZmFpbGVkID0gMDsNCiAJ
-CWxjLT5oZWFkZXJfbG9jYXRpb24uYmRldiA9IGxjLT5sb2dfZGV2LT5iZGV2
-Ow0KIAkJbGMtPmhlYWRlcl9sb2NhdGlvbi5zZWN0b3IgPSAwOw0KIA0KQEAg
-LTYzMCw4ICs2MzIsMTEgQEAgc3RhdGljIGludCBkaXNrX3Jlc3VtZShzdHJ1
-Y3QgZG1fZGlydHlfbA0KIA0KIAkvKiB3cml0ZSB0aGUgbmV3IGhlYWRlciAq
-Lw0KIAlyID0gcndfaGVhZGVyKGxjLCBXUklURSk7DQotCWlmICghcikNCisJ
-aWYgKCFyKSB7DQogCQlyID0gZmx1c2hfaGVhZGVyKGxjKTsNCisJCWlmIChy
-KQ0KKwkJCWxjLT5sb2dfZGV2X2ZsdXNoX2ZhaWxlZCA9IDE7DQorCX0NCiAJ
-aWYgKHIpIHsNCiAJCURNV0FSTigiJXM6IEZhaWxlZCB0byB3cml0ZSBoZWFk
-ZXIgb24gZGlydHkgcmVnaW9uIGxvZyBkZXZpY2UiLA0KIAkJICAgICAgIGxj
-LT5sb2dfZGV2LT5uYW1lKTsNCkBAIC03MDEsOSArNzA2LDEwIEBAIHN0YXRp
-YyBpbnQgZGlza19mbHVzaChzdHJ1Y3QgZG1fZGlydHlfbG8NCiAJZWxzZSB7
-DQogCQlpZiAobGMtPnRvdWNoZWRfZGlydGllZCkgew0KIAkJCXIgPSBmbHVz
-aF9oZWFkZXIobGMpOw0KLQkJCWlmIChyKQ0KKwkJCWlmIChyKSB7DQorCQkJ
-CWxjLT5sb2dfZGV2X2ZsdXNoX2ZhaWxlZCA9IDE7DQogCQkJCWZhaWxfbG9n
-X2RldmljZShsYyk7DQotCQkJZWxzZQ0KKwkJCX0gZWxzZQ0KIAkJCQlsYy0+
-dG91Y2hlZF9kaXJ0aWVkID0gMDsNCiAJCX0NCiAJCWxjLT50b3VjaGVkX2Ns
-ZWFuZWQgPSAwOw0KQEAgLTgwMyw3ICs4MDksOSBAQCBzdGF0aWMgaW50IGRp
-c2tfc3RhdHVzKHN0cnVjdCBkbV9kaXJ0eV9sDQogCXN3aXRjaChzdGF0dXMp
-IHsNCiAJY2FzZSBTVEFUVVNUWVBFX0lORk86DQogCQlETUVNSVQoIjMgJXMg
-JXMgJWMiLCBsb2ctPnR5cGUtPm5hbWUsIGxjLT5sb2dfZGV2LT5uYW1lLA0K
-LQkJICAgICAgIGxjLT5sb2dfZGV2X2ZhaWxlZCA/ICdEJyA6ICdBJyk7DQor
-CQkgICAgICAgbGMtPmxvZ19kZXZfZmx1c2hfZmFpbGVkID8gJ0YnIDoNCisJ
-CSAgICAgICBsYy0+bG9nX2Rldl9mYWlsZWQgPyAnRCcgOg0KKwkJICAgICAg
-ICdBJyk7DQogCQlicmVhazsNCiANCiAJY2FzZSBTVEFUVVNUWVBFX1RBQkxF
-Og0K
-
---279731514-589528270-1258452407=:4304
-Content-Type: TEXT/PLAIN; charset=US-ASCII; name=lvm-dmeventd-F-flag.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.0911170506471.4304@hs20-bc2-1.build.redhat.com>
-Content-Description: 
-Content-Disposition: attachment; filename=lvm-dmeventd-F-flag.patch
-
-QWNjZXB0ICdGJyBmb3IgZGV2aWNlcyB3aXRoIGZhaWxlZCBmbHVzaC4NCg0K
-U2lnbmVkLW9mZi1ieTogTWlrdWxhcyBQYXRvY2thIDxtcGF0b2NrYUByZWRo
-YXQuY29tPg0KDQotLS0NCiBkYWVtb25zL2RtZXZlbnRkL3BsdWdpbnMvbWly
-cm9yL2RtZXZlbnRkX21pcnJvci5jIHwgICAxOSArKysrKysrKysrKysrKyst
-LS0tDQogMSBmaWxlIGNoYW5nZWQsIDE1IGluc2VydGlvbnMoKyksIDQgZGVs
-ZXRpb25zKC0pDQoNCkluZGV4OiBMVk0yLjIuMDIuNTQvZGFlbW9ucy9kbWV2
-ZW50ZC9wbHVnaW5zL21pcnJvci9kbWV2ZW50ZF9taXJyb3IuYw0KPT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PQ0KLS0tIExWTTIuMi4wMi41NC5vcmlnL2RhZW1v
-bnMvZG1ldmVudGQvcGx1Z2lucy9taXJyb3IvZG1ldmVudGRfbWlycm9yLmMJ
-MjAwOS0xMS0xNyAwOToxMjo0MC4wMDAwMDAwMDAgKzAxMDANCisrKyBMVk0y
-LjIuMDIuNTQvZGFlbW9ucy9kbWV2ZW50ZC9wbHVnaW5zL21pcnJvci9kbWV2
-ZW50ZF9taXJyb3IuYwkyMDA5LTExLTE3IDEwOjU2OjQzLjAwMDAwMDAwMCAr
-MDEwMA0KQEAgLTk0LDEyICs5NCwyMyBAQCBzdGF0aWMgaW50IF9nZXRfbWly
-cm9yX2V2ZW50KGNoYXIgKnBhcmFtDQogCQkJc3lzbG9nKExPR19FUlIsICJN
-aXJyb3IgZGV2aWNlLCAlcywgaGFzIGZhaWxlZC5cbiIsIGFyZ3NbaV0pOw0K
-IAkJCXIgPSBNRV9GQUlMVVJFOw0KIAkJfQ0KKwkJaWYgKGRldl9zdGF0dXNf
-c3RyW2ldID09ICdGJykgew0KKwkJCXN5c2xvZyhMT0dfRVJSLCAiRmx1c2gg
-b24gbWlycm9yIGRldmljZSwgJXMsIGhhcyBmYWlsZWQuXG4iLCBhcmdzW2ld
-KTsNCisJCQlyID0gTUVfRkFJTFVSRTsNCisJCX0NCiANCiAJLyogQ2hlY2sg
-Zm9yIGJhZCBkaXNrIGxvZyBkZXZpY2UgKi8NCi0JaWYgKGxvZ19hcmdjID4g
-MSAmJiBsb2dfc3RhdHVzX3N0clswXSA9PSAnRCcpIHsNCi0JCXN5c2xvZyhM
-T0dfRVJSLCAiTG9nIGRldmljZSwgJXMsIGhhcyBmYWlsZWQuXG4iLA0KLQkJ
-ICAgICAgIGFyZ3NbMiArIG51bV9kZXZzICsgbG9nX2FyZ2NdKTsNCi0JCXIg
-PSBNRV9GQUlMVVJFOw0KKwlpZiAobG9nX2FyZ2MgPiAxKSB7DQorCQlpZiAo
-bG9nX3N0YXR1c19zdHJbMF0gPT0gJ0QnKSB7DQorCQkJc3lzbG9nKExPR19F
-UlIsICJMb2cgZGV2aWNlLCAlcywgaGFzIGZhaWxlZC5cbiIsDQorCQkJICAg
-ICAgIGFyZ3NbMiArIG51bV9kZXZzICsgbG9nX2FyZ2NdKTsNCisJCQlyID0g
-TUVfRkFJTFVSRTsNCisJCX0NCisJCWlmIChsb2dfc3RhdHVzX3N0clswXSA9
-PSAnRicpIHsNCisJCQlzeXNsb2coTE9HX0VSUiwgIkZsdXNoIG9uIGxvZyBk
-ZXZpY2UsICVzLCBoYXMgZmFpbGVkLlxuIiwNCisJCQkgICAgICAgYXJnc1sy
-ICsgbnVtX2RldnMgKyBsb2dfYXJnY10pOw0KKwkJCXIgPSBNRV9GQUlMVVJF
-Ow0KKwkJfQ0KIAl9DQogDQogCWlmIChyID09IE1FX0ZBSUxVUkUpDQo=
-
---279731514-589528270-1258452407=:4304
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---279731514-589528270-1258452407=:4304--
+Alasdair
