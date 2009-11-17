@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: (no subject)
-Date: Tue, 17 Nov 2009 10:34:31 -0500
-Message-ID: <1258472071-4896-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: rework writing to snapshot origin
+Date: Tue, 17 Nov 2009 10:41:17 -0500
+Message-ID: <1258472477-5795-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -14,12 +14,9 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
-
-Subject: [PATCH] dm snapshot: rework writing to snapshot origin
 
 The previous code selected one exception as "primary_pe", linked all
 other exceptions on it and used reference counting to wait until all
