@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 03/12] dm snapshot: add snapshot-merge target
-Date: Tue, 17 Nov 2009 11:12:15 -0500
-Message-ID: <1258474344-10886-4-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v3 04/12] dm snapshot: merge target should not
+	allocate new exceptions
+Date: Tue, 17 Nov 2009 11:12:16 -0500
+Message-ID: <1258474344-10886-5-git-send-email-snitzer@redhat.com>
 References: <1258474344-10886-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,130 +21,93 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-For starters, snapshot-merge is identical to the snapshot target.
+Make new method, snapshot_merge_map, that won't allocate exceptions.
+Modify __origin_write so that it doesn't allocate exceptions in
+merging snapshots.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   48 ++++++++++++++++++++++++++++++++++++------------
- 1 files changed, 36 insertions(+), 12 deletions(-)
+ drivers/md/dm-snap.c |   46 +++++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 45 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 11af0a9..51bc74f 100644
+index 51bc74f..5fd7055 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -1647,6 +1647,21 @@ static struct target_type snapshot_target = {
- 	.iterate_devices = snapshot_iterate_devices,
- };
+@@ -143,6 +143,11 @@ static int bdev_equal(struct block_device *lhs, struct block_device *rhs)
+ 	return lhs == rhs;
+ }
  
-+static struct target_type merge_target = {
-+	.name    = "snapshot-merge",
-+	.version = {1, 9, 0},
-+	.module  = THIS_MODULE,
-+	.ctr     = snapshot_ctr,
-+	.dtr     = snapshot_dtr,
-+	.map     = snapshot_map,
-+	.end_io  = snapshot_end_io,
-+	.postsuspend = snapshot_postsuspend,
-+	.preresume  = snapshot_preresume,
-+	.resume  = snapshot_resume,
-+	.status  = snapshot_status,
-+	.iterate_devices = snapshot_iterate_devices,
-+};
++static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
++			       union map_info *map_context);
 +
- static int __init dm_snapshot_init(void)
- {
- 	int r;
-@@ -1658,7 +1673,7 @@ static int __init dm_snapshot_init(void)
- 	}
- 
- 	r = dm_register_target(&snapshot_target);
--	if (r) {
-+	if (r < 0) {
- 		DMERR("snapshot target register failed %d", r);
- 		goto bad_register_snapshot_target;
- 	}
-@@ -1666,34 +1681,40 @@ static int __init dm_snapshot_init(void)
- 	r = dm_register_target(&origin_target);
- 	if (r < 0) {
- 		DMERR("Origin target register failed %d", r);
--		goto bad1;
-+		goto bad_register_origin_target;
-+	}
++#define is_merge(ti)	((ti)->type->map == snapshot_merge_map)
 +
-+	r = dm_register_target(&merge_target);
-+	if (r < 0) {
-+		DMERR("Merge target register failed %d", r);
-+		goto bad_register_merge_target;
- 	}
+ struct dm_snap_pending_exception {
+ 	struct dm_exception e;
  
- 	r = init_origin_hash();
- 	if (r) {
- 		DMERR("init_origin_hash failed.");
--		goto bad2;
-+		goto bad_origin_hash;
- 	}
- 
- 	exception_cache = KMEM_CACHE(dm_exception, 0);
- 	if (!exception_cache) {
- 		DMERR("Couldn't create exception cache.");
- 		r = -ENOMEM;
--		goto bad3;
-+		goto bad_exception_cache;
- 	}
- 
- 	pending_cache = KMEM_CACHE(dm_snap_pending_exception, 0);
- 	if (!pending_cache) {
- 		DMERR("Couldn't create pending cache.");
- 		r = -ENOMEM;
--		goto bad4;
-+		goto bad_pending_cache;
- 	}
- 
- 	tracked_chunk_cache = KMEM_CACHE(dm_snap_tracked_chunk, 0);
- 	if (!tracked_chunk_cache) {
- 		DMERR("Couldn't create cache to track chunks in use.");
- 		r = -ENOMEM;
--		goto bad5;
-+		goto bad_tracked_chunk_cache;
- 	}
- 
- 	ksnapd = create_singlethread_workqueue("ksnapd");
-@@ -1707,19 +1728,21 @@ static int __init dm_snapshot_init(void)
- 
- bad_pending_pool:
- 	kmem_cache_destroy(tracked_chunk_cache);
--bad5:
-+bad_tracked_chunk_cache:
- 	kmem_cache_destroy(pending_cache);
--bad4:
-+bad_pending_cache:
- 	kmem_cache_destroy(exception_cache);
--bad3:
-+bad_exception_cache:
- 	exit_origin_hash();
--bad2:
-+bad_origin_hash:
-+	dm_unregister_target(&merge_target);
-+bad_register_merge_target:
- 	dm_unregister_target(&origin_target);
--bad1:
-+bad_register_origin_target:
- 	dm_unregister_target(&snapshot_target);
--
- bad_register_snapshot_target:
- 	dm_exception_store_exit();
-+
+@@ -1256,6 +1261,40 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
  	return r;
  }
  
-@@ -1729,6 +1752,7 @@ static void __exit dm_snapshot_exit(void)
++static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
++			       union map_info *map_context)
++{
++	struct dm_exception *e;
++	struct dm_snapshot *s = ti->private;
++	int r = DM_MAPIO_REMAPPED;
++	chunk_t chunk;
++
++	chunk = sector_to_chunk(s->store, bio->bi_sector);
++
++	down_read(&s->lock);
++
++	/* Full snapshots are not usable */
++	if (!s->valid) {
++		r = -EIO;
++		goto out_unlock;
++	}
++
++	/* If the block is already remapped - use that */
++	e = dm_lookup_exception(&s->complete, chunk);
++	if (e) {
++		remap_exception(s, e, bio, chunk);
++		goto out_unlock;
++	}
++
++	bio->bi_bdev = s->origin->bdev;
++
++ out_unlock:
++	up_read(&s->lock);
++
++	return r;
++}
++
++
+ static int snapshot_end_io(struct dm_target *ti, struct bio *bio,
+ 			   int error, union map_info *map_context)
+ {
+@@ -1425,6 +1464,11 @@ static int __origin_write(struct list_head *snapshots,
+ 	/* Do all the snapshots on this origin */
+ 	list_for_each_entry (snap, snapshots, list) {
  
- 	dm_unregister_target(&snapshot_target);
- 	dm_unregister_target(&origin_target);
-+	dm_unregister_target(&merge_target);
++		/* If the snapshot is merging, don't make new exceptions in it
++		   - but in this case no one should be writing to the origin */
++		if (is_merge(snap->ti))
++			continue;
++
+ 		down_write(&snap->lock);
  
- 	exit_origin_hash();
- 	kmem_cache_destroy(pending_cache);
+ 		/* Only deal with valid and active snapshots */
+@@ -1653,7 +1697,7 @@ static struct target_type merge_target = {
+ 	.module  = THIS_MODULE,
+ 	.ctr     = snapshot_ctr,
+ 	.dtr     = snapshot_dtr,
+-	.map     = snapshot_map,
++	.map     = snapshot_merge_map,
+ 	.end_io  = snapshot_end_io,
+ 	.postsuspend = snapshot_postsuspend,
+ 	.preresume  = snapshot_preresume,
 -- 
 1.6.5.2
