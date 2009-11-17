@@ -1,40 +1,76 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH v2 02/17] dm snapshot: add suspended flag to
-	dm_snapshot
-Date: Tue, 17 Nov 2009 02:24:30 +0000
-Message-ID: <20091117022430.GA6644@agk-dp.fab.redhat.com>
-References: <1256078825-11331-1-git-send-email-snitzer@redhat.com>
-	<1256078825-11331-3-git-send-email-snitzer@redhat.com>
-	<20091105005635.GN13375@agk-dp.fab.redhat.com>
-	<20091116181716.GA17448@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+Subject: [PATCH 1/7] dm: use __GFP_HIGH instead PF_MEMALLOC
+Date: Tue, 17 Nov 2009 16:17:07 +0900 (JST)
+Message-ID: <20091117161616.3DD7.A69D9226@jp.fujitsu.com>
+References: <20091117161551.3DD4.A69D9226@jp.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20091116181716.GA17448@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20091117161551.3DD4.A69D9226@jp.fujitsu.com>
+Sender: owner-linux-mm@kvack.org
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: kosaki.motohiro@jp.fujitsu.com, linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Nov 16, 2009 at 01:17:17PM -0500, Mike Snitzer wrote:
-> So the dm-snapshot-track-suspended-state-in-target.patch that you have
-> queued should be changed with: s/presuspend/postsuspend/
+Non MM subsystem must not use PF_MEMALLOC. Memory reclaim need few
+memory, anyone must not prevent it. Otherwise the system cause
+mysterious hang-up and/or OOM Killer invokation.
+
+Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+Signed-off-by: KOSAKI Motohiro <kosaki.motohiro@jp.fujitsu.com>
+---
+ drivers/md/dm-ioctl.c |   18 +++++++-----------
+ 1 files changed, 7 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index a679429..4d24b0a 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1396,7 +1396,13 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl **param)
+ 	if (tmp.data_size < (sizeof(tmp) - sizeof(tmp.data)))
+ 		return -EINVAL;
  
-Changed.
+-	dmi = vmalloc(tmp.data_size);
++
++	/*
++	 * We use __vmalloc(__GFP_HIGH) instead vmalloc() because trying to
++	 * avoid low memory issues when a device is suspended.
++	 */
++	dmi = __vmalloc(tmp.data_size, GFP_KERNEL | __GFP_HIGHMEM | __GFP_HIGH,
++			PAGE_KERNEL);
+ 	if (!dmi)
+ 		return -ENOMEM;
+ 
+@@ -1473,20 +1479,10 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
+ 		DMWARN("dm_ctl_ioctl: unknown command 0x%x", command);
+ 		return -ENOTTY;
+ 	}
+-
+-	/*
+-	 * Trying to avoid low memory issues when a device is
+-	 * suspended.
+-	 */
+-	current->flags |= PF_MEMALLOC;
+-
+ 	/*
+ 	 * Copy the parameters into kernel space.
+ 	 */
+ 	r = copy_params(user, &param);
+-
+-	current->flags &= ~PF_MEMALLOC;
+-
+ 	if (r)
+ 		return r;
+ 
+-- 
+1.6.2.5
 
-As discussed earlier, as we have something that works, we'll leave the
-suspended state tracking as-is for now.  Then once all the batches of
-patches for the next kernel are signed off, we can return to this and
-clean it up in all the targets.
 
-Alasdair
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
