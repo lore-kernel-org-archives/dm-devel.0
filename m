@@ -1,11 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 0/7] patches: fix dm-raid1 race, bug 502927
-Date: Wed, 18 Nov 2009 07:09:50 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0911180703410.21358@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 1/7] Explicitly initialize bio lists
+Date: Wed, 18 Nov 2009 07:10:31 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911180709570.21358@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0911180703410.21358@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0911180703410.21358@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,20 +21,28 @@ To: Alasdair G Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+Explicitly initialize bio lists.
 
-Here is the serie of 7 patches to hold write bios on dm-raid1 until 
-dmeventd does its job. It fixes bug 
-https://bugzilla.redhat.com/show_bug.cgi?id=502927 . The first 6 patches 
-are preparatory, they just move the code around, the last patch does the 
-fix.
+Currently, zeroing the list with kzalloc already does the initialization,
+bit if we ever switch to another bio list implementation, it could be a problem.
 
-I tested the thing, I managed to reproduce the bug (by manually stopping 
-dmeventd with STOP signal, failing primary mirror leg and writing to the 
-device) and I also verified that the patches fix the bug.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-For non-dmeventd operation, the current behavior is wrong and I just keep 
-it as wrong as it was. There is no easy fix. It is just assume that if the 
-user doesn't use dmeventd, he can't activate failed disks again.
+---
+ drivers/md/dm-raid1.c |    3 +++
+ 1 file changed, 3 insertions(+)
 
-Mikulas
+Index: linux-2.6.31-fast-new/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.31-fast-new.orig/drivers/md/dm-raid1.c	2009-10-06 18:15:09.000000000 +0200
++++ linux-2.6.31-fast-new/drivers/md/dm-raid1.c	2009-10-06 18:15:10.000000000 +0200
+@@ -791,6 +791,9 @@ static struct mirror_set *alloc_context(
+ 	}
+ 
+ 	spin_lock_init(&ms->lock);
++	bio_list_init(&ms->reads);
++	bio_list_init(&ms->writes);
++	bio_list_init(&ms->failures);
+ 
+ 	ms->ti = ti;
+ 	ms->nr_mirrors = nr_mirrors;
