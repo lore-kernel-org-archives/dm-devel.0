@@ -1,8 +1,10 @@
-From: heinzm@sourceware.org
-Subject: dmraid/lib/format/ataraid pdc.h
-Date: 18 Nov 2009 10:04:10 -0000
-Message-ID: <20091118100410.7096.qmail@sourceware.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 0/7] patches: fix dm-raid1 race, bug 502927
+Date: Wed, 18 Nov 2009 07:09:50 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911180703410.21358@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,30 +15,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2009-11-18 10:04:10
+Hi
 
-Modified files:
-	lib/format/ataraid: pdc.h 
+Here is the serie of 7 patches to hold write bios on dm-raid1 until 
+dmeventd does its job. It fixes bug 
+https://bugzilla.redhat.com/show_bug.cgi?id=502927 . The first 6 patches 
+are preparatory, they just move the code around, the last patch does the 
+fix.
 
-Log message:
-	Added new identified pdc metadata signature offsets
+I tested the thing, I managed to reproduce the bug (by manually stopping 
+dmeventd with STOP signal, failing primary mirror leg and writing to the 
+device) and I also verified that the patches fix the bug.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ataraid/pdc.h.diff?cvsroot=dm&r1=1.4&r2=1.5
+For non-dmeventd operation, the current behavior is wrong and I just keep 
+it as wrong as it was. There is no easy fix. It is just assume that if the 
+user doesn't use dmeventd, he can't activate failed disks again.
 
---- dmraid/lib/format/ataraid/pdc.h	2009/09/16 11:45:14	1.4
-+++ dmraid/lib/format/ataraid/pdc.h	2009/11/18 10:04:09	1.5
-@@ -13,7 +13,7 @@
- 
- #include <stdint.h>
- 
--#define PDC_CONFIGOFFSETS	63,255,256,16,399,591,675,735,974,991
-+#define PDC_CONFIGOFFSETS	63,255,256,16,399,591,675,735,911,974,991,3087
- #define	PDC_DATAOFFSET 0
- 
- /*
+Mikulas
