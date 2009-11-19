@@ -1,17 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3 00/12] snapshot-merge target
-Date: Thu, 19 Nov 2009 12:45:52 -0500
-Message-ID: <20091119174551.GA5852@redhat.com>
-References: <1258474344-10886-1-git-send-email-snitzer@redhat.com>
-	<87y6m24uyk.fsf@basil.nowhere.org>
-	<20091119140233.GA3894@redhat.com>
-	<20091119145338.GF6644@agk-dp.fab.redhat.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [PATCH] multipath: Evaluate request result and sense
+	code
+Date: Thu, 19 Nov 2009 13:58:36 -0600
+Message-ID: <4B05A36C.2030409@cs.wisc.edu>
+References: <20091119122503.413AD3A174@ochil.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20091119145338.GF6644@agk-dp.fab.redhat.com>
+In-Reply-To: <20091119122503.413AD3A174@ochil.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,26 +19,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: James Bottomley <James.Bottomley@suse.de>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Nov 19 2009 at  9:53am -0500,
-Alasdair G Kergon <agk@redhat.com> wrote:
-
-> On Thu, Nov 19, 2009 at 09:02:33AM -0500, Mike Snitzer wrote:
-> > DM (and LVM) snapshot merging allows a snapshot (its COW store) to be
-> > merged back into the snapshot's origin device.
-> > One expected use of snapshot merging is rollback of a root filesystem
-> > after system upgrades (e.g.: yum update).
+Hannes Reinecke wrote:
+> As we now see the result for every command we
+> can use it to make some more elaborate choices
+> if we should retry the request on another path.
 > 
-> Has the patch to 'Documentation/device-mapper' been written yet?
-> (It won't go upstream until we have that of course.  Same for the
-> replicator and any other new dm targets.)
+> This solves a potential data corruption when
+> a request is being terminated with RESERVATION
+> CONFLICT and queue_if_no_path is active; the
+> request will be queued until the reservation
+> status changes and then transmitted.
 
-Nope, I'll work on that (and adding comments like Andi suggested).  I'll
-include these changes into the v4 snapshot-merge patchset submission
-that I'll be getting out today.  The v4 patchset will be based on v9 of
-the handover patch that we worked on (which I just emailed to dm-devel).
 
-Mike
+I had the same bz. To handle it I just converted the error to some other 
+-EXYZ value. But like I said in my patch that I sent to the list I did 
+not like it much.
+
+I thought of going the route you did in this patch, but thought it was 
+too scsi specific. Does dasd want advanced error handling? If not, then 
+I am fine since for hw handlers we assume they are always scsi_dh modules.
