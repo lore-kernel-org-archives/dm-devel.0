@@ -1,127 +1,93 @@
-From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH] multipath: Evaluate request result and sense code
-Date: Thu, 19 Nov 2009 13:25:03 +0100
-Message-ID: <20091119122503.413AD3A174@ochil.suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Re: dm: bind new table before destroying old
+Date: Thu, 19 Nov 2009 07:49:52 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911190738270.30671@hs20-bc2-1.build.redhat.com>
+References: <20091111011652.GK17055@agk-dp.fab.redhat.com>
+	<20091111132056.GA28612@redhat.com> <20091111234555.GA24019@redhat.com>
+	<20091119005036.GE6644@agk-dp.fab.redhat.com>
+	<20091119025140.GA17829@us.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@suse.de>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20091119025140.GA17829@us.ibm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-ext4@vger.kernel.org, Stephen Tweedie <sct@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <mauelshagen@redhat.com>, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, 18 Nov 2009, malahal@us.ibm.com wrote:
 
-As we now see the result for every command we
-can use it to make some more elaborate choices
-if we should retry the request on another path.
+> Alasdair G Kergon [agk@redhat.com] wrote:
+> > > After further testing I've hit a lockdep trace.  My testing was with
+> > > handing over on the same device.  I had the snapshot (of an ext3 FS)
+> > > mounted and I was doing a sequential direct-io write to a file in the
+> > > FS.  While writing I triggered a handover with the following:
+> > 
+> > > =======================================================
+> > > [ INFO: possible circular locking dependency detected ]
+> > > 2.6.32-rc6-snitm #8
+> > > -------------------------------------------------------
+> > > dmsetup/1827 is trying to acquire lock:
+> > >  (&md->suspend_lock){+.+...}, at: [<ffffffffa00678d8>] dm_swap_table+0x2d/0x249 [dm_mod]
+> > > 
+> > > but task is already holding lock:
+> > >  (&journal->j_barrier){+.+...}, at: [<ffffffff8119192d>] journal_lock_updates+0xe1/0xf0
+> > > 
+> > > which lock already depends on the new lock.
+> > 
+> > I'm going to assume this is bogus - and I can't spot any annotations
+> > available to suppress it, so people will just have to ignore it.
+> > 
+> > Suspend involves:
+> >   get suspend lock
+> >   if dev is not already suspended
+> >     get journal lock
+> >     set state "dev is suspended"
+> >   release suspend lock
+> >   
+> > Resume involves
+> >   [journal lock is held]
+> >   get suspend lock
+> >   if dev is suspended 
+> >     release journal lock
+> >     set state "dev is not suspended"
+> >   release suspend lock
+> > 
+> > It looks as if lockdep sees that as a problem:
+> >   Imagine those two sections running in parallel without the "Is dev
+> >   suspended?" check, of which lockdep has no knowledge.
+> 
+> Agreed, but is it possible to restructure the suspend code such that it
+> acquires the journal lock before the suspend lock, and then releases the
+> journal lock if dev is already suspended? This needs some explaining
+> in a comment form though! :-)
+> 
+> Thanks, Malahal.
 
-This solves a potential data corruption when
-a request is being terminated with RESERVATION
-CONFLICT and queue_if_no_path is active; the
-request will be queued until the reservation
-status changes and then transmitted.
+The real reason for the warning is that ext3 jbd takes the mutex on 
+suspend (ext3_freeze) and then keeps it taken until resume 
+(ext3_unfreeze).
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-mpath.c |   49 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 49 insertions(+), 0 deletions(-)
+You also get a warning if you issue "dmsetup suspend" manually, it warns 
+that a task exists with mutex held.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index dce971d..460e11f 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -19,6 +19,7 @@
- #include <linux/time.h>
- #include <linux/workqueue.h>
- #include <scsi/scsi_dh.h>
-+#include <scsi/scsi_eh.h>
- #include <asm/atomic.h>
- 
- #define DM_MSG_PREFIX "multipath"
-@@ -101,6 +102,7 @@ struct multipath {
- struct dm_mpath_io {
- 	struct pgpath *pgpath;
- 	size_t nr_bytes;
-+	char sense[SCSI_SENSE_BUFFERSIZE];
- };
- 
- typedef int (*action_fn) (struct pgpath *pgpath);
-@@ -913,6 +915,9 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
- 
- 	map_context->ptr = mpio;
- 	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
-+	/* Always attach a sense buffer */
-+	if (!clone->sense)
-+		clone->sense = mpio->sense;
- 	r = map_io(m, clone, mpio, 0);
- 	if (r < 0 || r == DM_MAPIO_REQUEUE)
- 		mempool_free(mpio, m->mpio_pool);
-@@ -1192,6 +1197,42 @@ static void activate_path(struct work_struct *work)
- }
- 
- /*
-+ * Evaluate scsi return code
-+ */
-+static int eval_scsi_error(int result, char *sense, int sense_len)
-+{
-+	struct scsi_sense_hdr sshdr;
-+	int r = DM_ENDIO_REQUEUE;
-+
-+	if (host_byte(result) != DID_OK)
-+		return r;
-+
-+	if (msg_byte(result) != COMMAND_COMPLETE)
-+		return r;
-+
-+	if (status_byte(result) == RESERVATION_CONFLICT)
-+		/* Do not retry here, possible data corruption */
-+		return -EIO;
-+
-+	if (status_byte(result) == CHECK_CONDITION &&
-+	    !scsi_normalize_sense(sense, sense_len, &sshdr)) {
-+
-+		switch (sshdr.sense_key) {
-+		case MEDIUM_ERROR:
-+		case DATA_PROTECT:
-+		case BLANK_CHECK:
-+		case COPY_ABORTED:
-+		case VOLUME_OVERFLOW:
-+		case MISCOMPARE:
-+			r = -EIO;
-+			break;
-+		}
-+	}
-+
-+	return r;
-+}
-+
-+/*
-  * end_io handling
-  */
- static int do_end_io(struct multipath *m, struct request *clone,
-@@ -1217,6 +1258,10 @@ static int do_end_io(struct multipath *m, struct request *clone,
- 	if (error == -EOPNOTSUPP)
- 		return error;
- 
-+	r = eval_scsi_error(clone->errors, clone->sense, clone->sense_len);
-+	if (r != DM_ENDIO_REQUEUE)
-+		return r;
-+
- 	if (mpio->pgpath)
- 		fail_path(mpio->pgpath);
- 
-@@ -1243,6 +1288,10 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
- 		if (ps->type->end_io)
- 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
- 	}
-+	if (clone->sense == mpio->sense) {
-+		clone->sense = NULL;
-+		clone->sense_len = 0;
-+	}
- 	mempool_free(mpio, m->mpio_pool);
- 
- 	return r;
--- 
-1.5.3.2
+If suspending and resuming manually, suspend and resume are done from 
+different processes, thus ext3 is violating mutex specification
+Documentation/mutex-design.txt
+* - only the owner can unlock the mutex
+* - task may not exit with mutex held
 
+It is really a bug in ext3 and ext4 and device mapper has nothing to do 
+with it, except that it triggers it. The bug should be reported to ext[34] 
+maintainers and fixed there.
+
+Mikulas
