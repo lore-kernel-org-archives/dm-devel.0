@@ -1,14 +1,9 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: [PATCH v3 00/12] snapshot-merge target
-Date: Thu, 19 Nov 2009 12:25:55 +0100
-Message-ID: <87y6m24uyk.fsf@basil.nowhere.org>
-References: <1258474344-10886-1-git-send-email-snitzer@redhat.com>
+From: heinzm@sourceware.org
+Subject: dmraid/lib/events libdmraid-events-isw.c
+Date: 19 Nov 2009 11:37:26 -0000
+Message-ID: <20091119113726.4030.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1258474344-10886-1-git-send-email-snitzer@redhat.com> (Mike
-	Snitzer's message of "Tue, 17 Nov 2009 11:12:12 -0500")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,20 +13,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: snitzer@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mike Snitzer <snitzer@redhat.com> writes:
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2009-11-19 11:37:25
 
-> snapshot-merge target, quilt tree is maintained here:
-> http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel/2.6.33/
+Modified files:
+	lib/events     : libdmraid-events-isw.c 
 
-It might seem trivial to you, but afaik nothing in the whole series
-(nor in the comments in the code) says what snapshot merging
-actually is. Please write meaningful changelogs and comments.
+Log message:
+	Fix: spare LED is still in rebuilding state even after manual rebuilding has finished
 
--Andi
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/events/libdmraid-events-isw.c.diff?cvsroot=dm&r1=1.1&r2=1.2
 
--- 
-ak@linux.intel.com -- Speaking for myself only.
+--- dmraid/lib/events/libdmraid-events-isw.c	2009/09/16 11:45:13	1.1
++++ dmraid/lib/events/libdmraid-events-isw.c	2009/11/19 11:37:25	1.2
+@@ -729,7 +729,7 @@
+ 			      _dso_perform(lc, lib_argv + lib_argc, action);
+ 
+ 			if (!ret &&
+-			    action == GET_MEMBERS)
++			    action == GET_MEMBERS) 
+ 				ret = _repopulate(device, (char *)OPT_STR(lc, LC_REBUILD_SET));
+ 		}
+ 
+@@ -1034,14 +1034,16 @@
+ 		break;
+ 
+ 	case REBUILD_END:
+-		if (!_lib_main('F', dev_name) ||
+-		    !_lib_main('r', dev_name))
++		if (!_lib_main('F', dev_name)) {
+ 			syslog(LOG_NOTICE, "Rebuild of RAID set %s complete",
+-			       dev_name);
+-
++					dev_name);
++			_lib_main('r', dev_name); 
++		} 
++			
+ 		/* Turn all RAID set LEDs off anyway, since it's in-sync.*/
+ 		/* Used also for manual rebuild. */
+ 		_dev_led_all(DSO_LED_OFF, rs);
++		break;
+ 	}
+ 
+ 	return ret;
