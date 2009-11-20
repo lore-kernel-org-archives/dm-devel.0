@@ -1,15 +1,13 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [PATCH] multipath: Evaluate request result and sense
-	code
-Date: Thu, 19 Nov 2009 13:58:36 -0600
-Message-ID: <4B05A36C.2030409@cs.wisc.edu>
-References: <20091119122503.413AD3A174@ochil.suse.de>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH 1/4] dm: move DMF_SUSPENDED flag set before
+	postsuspend
+Date: Fri, 20 Nov 2009 16:08:58 +0900
+Message-ID: <4B06408A.1080700@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091119122503.413AD3A174@ochil.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,26 +17,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: James Bottomley <James.Bottomley@suse.de>, linux-scsi@vger.kernel.org
+To: Alasdair Kergon <agk@redhat.com>, Mike Anderson <andmike@linux.vnet.ibm.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hannes Reinecke wrote:
-> As we now see the result for every command we
-> can use it to make some more elaborate choices
-> if we should retry the request on another path.
-> 
-> This solves a potential data corruption when
-> a request is being terminated with RESERVATION
-> CONFLICT and queue_if_no_path is active; the
-> request will be queued until the reservation
-> status changes and then transmitted.
+This patch moves DMF_SUSPENDED flag set before postsuspend.
+No one should care about the ordering, because the flag set and
+the postsuspend are protected by a single lock, md->suspend_lock,
+and all strict flag-checkers take the lock.
 
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Mike Anderson <andmike@linux.vnet.ibm.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+---
+ drivers/md/dm.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-I had the same bz. To handle it I just converted the error to some other 
--EXYZ value. But like I said in my patch that I sent to the list I did 
-not like it much.
-
-I thought of going the route you did in this patch, but thought it was 
-too scsi specific. Does dasd want advanced error handling? If not, then 
-I am fine since for hw handlers we assume they are always scsi_dh modules.
+Index: 2.6.32-rc7/drivers/md/dm.c
+===================================================================
+--- 2.6.32-rc7.orig/drivers/md/dm.c
++++ 2.6.32-rc7/drivers/md/dm.c
+@@ -2542,10 +2542,10 @@ int dm_suspend(struct mapped_device *md,
+ 	 * requests are being added to md->deferred list.
+ 	 */
+ 
+-	dm_table_postsuspend_targets(map);
+-
+ 	set_bit(DMF_SUSPENDED, &md->flags);
+ 
++	dm_table_postsuspend_targets(map);
++
+ out:
+ 	dm_table_put(map);
+ 
