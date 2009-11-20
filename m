@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v4 11/13] dm snapshot: make exceptions in other
-	snapshots when merging
-Date: Fri, 20 Nov 2009 15:27:51 -0500
-Message-ID: <1258748873-24185-12-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v4 06/13] dm snapshot: merge target should not
+	allocate new exceptions
+Date: Fri, 20 Nov 2009 15:27:46 -0500
+Message-ID: <1258748873-24185-7-git-send-email-snitzer@redhat.com>
 References: <1258748873-24185-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -22,85 +22,104 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-When there is one merging snapshot and other non-merging snapshots,
-snapshot_merge_process() must make exceptions in the non-merging
-snapshots.
+The snapshot-merge target should not allocate new exceptions because the
+intent is to merge all of its exceptions as quickly and safely as
+possible.
+
+Introduce new method, snapshot_merge_map(), that won't allocate
+exceptions.  Modify __origin_write() so that it doesn't allocate
+exceptions in merging snapshots.
+
+If a write request to a merging snapshot device is to be dispatched
+directly to the origin (because the chunk is not remapped or was already
+merged), snapshot_merge_map() must make exceptions in other snapshots.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   32 +++++++++++++++++++++++++++++++-
- 1 files changed, 31 insertions(+), 1 deletions(-)
+ drivers/md/dm-snap.c |   49 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 48 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index e41be70..2b5b083 100644
+index e8a1107..b8838e7 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -255,6 +255,8 @@ struct origin {
- static struct list_head *_origins;
- static struct rw_semaphore _origins_lock;
+@@ -127,6 +127,11 @@ static int bdev_equal(struct block_device *lhs, struct block_device *rhs)
+ 	return lhs == rhs;
+ }
  
-+static DECLARE_WAIT_QUEUE_HEAD(_pending_exception_done);
++static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
++			      union map_info *map_context);
 +
- static int init_origin_hash(void)
- {
- 	int i;
-@@ -742,13 +744,18 @@ static int init_hash_tables(struct dm_snapshot *s)
- static void flush_bios(struct bio *bio);
- static void error_bios(struct bio *bio);
- 
-+static int __origin_write(struct list_head *snapshots,
-+			  sector_t sector, struct bio *bio);
++#define is_merge(ti) ((ti)->type->map == snapshot_merge_map)
 +
- static void merge_callback(int read_err, unsigned long write_err,
- 			   void *context);
+ struct dm_snap_pending_exception {
+ 	struct dm_exception e;
  
- static void snapshot_merge_process(struct dm_snapshot *s)
- {
- 	int r;
--	chunk_t old_chunk, new_chunk;
-+	chunk_t old_chunk, new_chunk, n;
-+	struct origin *o;
-+	int must_wait;
- 	struct dm_io_region src, dest;
+@@ -1292,6 +1297,44 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ 	return r;
+ }
  
- 	BUG_ON(!s->merge_running);
-@@ -779,6 +786,27 @@ static void snapshot_merge_process(struct dm_snapshot *s)
- 	src.sector = chunk_to_sector(s->store, new_chunk);
- 	src.count = dest.count;
- 
-+test_again:
-+	/* Reallocate other snapshots */
-+	must_wait = 0;
-+	/*
-+	 * Merging snapshot already has the origin's __minimum_chunk_size()
-+	 * stored in split_io (see: snapshot_merge_resume); avoid rediscovery
-+	 */
-+	BUG_ON(!s->ti->split_io);
-+	down_read(&_origins_lock);
-+	o = __lookup_origin(s->origin->bdev);
-+	for (n = 0; n < s->store->chunk_size; n += s->ti->split_io) {
-+		r = __origin_write(&o->snapshots, dest.sector + n, NULL);
-+		if (r == DM_MAPIO_SUBMITTED)
-+			must_wait = 1;
-+	}
-+	up_read(&_origins_lock);
-+	if (must_wait) {
-+		sleep_on_timeout(&_pending_exception_done, HZ / 100 + 1);
-+		goto test_again;
++static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
++			      union map_info *map_context)
++{
++	struct dm_exception *e;
++	struct dm_snapshot *s = ti->private;
++	int r = DM_MAPIO_REMAPPED;
++	chunk_t chunk;
++
++	chunk = sector_to_chunk(s->store, bio->bi_sector);
++
++	down_read(&s->lock);
++
++	/* Full snapshots are not usable */
++	if (!s->valid) {
++		r = -EIO;
++		goto out_unlock;
 +	}
 +
- 	down_write(&s->lock);
- 	s->merge_write_interlock = old_chunk;
- 	s->merge_write_interlock_n = 1;
-@@ -1301,6 +1329,8 @@ static void pending_complete(struct dm_snap_pending_exception *pe, int success)
- 	origin_bios = bio_list_get(&pe->origin_bios);
- 	free_pending_exception(pe);
- 
-+	wake_up_all(&_pending_exception_done);
++	/* If the block is already remapped - use that */
++	e = dm_lookup_exception(&s->complete, chunk);
++	if (e) {
++		remap_exception(s, e, bio, chunk);
++		goto out_unlock;
++	}
 +
- 	up_write(&s->lock);
++	bio->bi_bdev = s->origin->bdev;
++
++	if (bio_rw(bio) == WRITE) {
++		up_write(&s->lock);
++		return do_origin(s->origin, bio);
++	}
++
++ out_unlock:
++	up_read(&s->lock);
++
++	return r;
++}
++
+ static int snapshot_end_io(struct dm_target *ti, struct bio *bio,
+ 			   int error, union map_info *map_context)
+ {
+@@ -1442,6 +1485,10 @@ static int __origin_write(struct list_head *snapshots,
+ 	/* Do all the snapshots on this origin */
+ 	list_for_each_entry (snap, snapshots, list) {
  
- 	/* Submit any pending write bios */
++		/* Don't make new exceptions in a merging snapshot */
++		if (is_merge(snap->ti))
++			continue;
++
+ 		down_write(&snap->lock);
+ 
+ 		/* Only deal with valid and active snapshots */
+@@ -1670,7 +1717,7 @@ static struct target_type merge_target = {
+ 	.module  = THIS_MODULE,
+ 	.ctr     = snapshot_ctr,
+ 	.dtr     = snapshot_dtr,
+-	.map     = snapshot_map,
++	.map     = snapshot_merge_map,
+ 	.end_io  = snapshot_end_io,
+ 	.postsuspend = snapshot_postsuspend,
+ 	.preresume  = snapshot_preresume,
 -- 
 1.6.5.2
