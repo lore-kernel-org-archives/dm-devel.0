@@ -1,70 +1,80 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 2/2] dm-mpath: Add element for suspended state.
-Date: Fri, 20 Nov 2009 16:19:49 +0900
-Message-ID: <4B064315.5050105@ct.jp.nec.com>
-References: <20091116073819.4070.40173.stgit@localhost.localdomain>	<20091116073829.4070.45194.stgit@localhost.localdomain>
-	<20091116135430.GB11886@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [PATCH] multipath: Evaluate request result and sense
+ code
+Date: Fri, 20 Nov 2009 08:48:49 +0100
+Message-ID: <4B0649E1.10106@suse.de>
+References: <20091119122503.413AD3A174@ochil.suse.de> <4B05A36C.2030409@cs.wisc.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091116135430.GB11886@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Anderson <andmike@linux.vnet.ibm.com>, Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <4B05A36C.2030409@cs.wisc.edu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: device-mapper development <dm-devel@redhat.com>, James Bottomley <James.Bottomley@suse.de>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Alasdair, Mike,
+Mike Christie wrote:
+> Hannes Reinecke wrote:
+>> As we now see the result for every command we
+>> can use it to make some more elaborate choices
+>> if we should retry the request on another path.
+>>
+>> This solves a potential data corruption when
+>> a request is being terminated with RESERVATION
+>> CONFLICT and queue_if_no_path is active; the
+>> request will be queued until the reservation
+>> status changes and then transmitted.
+>=20
+>=20
+> I had the same bz. To handle it I just converted the error to some ot=
+her
+> -EXYZ value. But like I said in my patch that I sent to the list I di=
+d
+> not like it much.
+>=20
+Yeah, that was my thought, too.
+The scsi result codes simply don't fit on the -EXXX values.
 
-On 11/16/2009 10:54 PM +0900, Alasdair G Kergon wrote:
-> On Sun, Nov 15, 2009 at 11:38:29PM -0800, Mike Anderson wrote:
->> Add element to multipath structure for indication of suspended state.
->  
-> Is there a way to avoid this?
-> It seems redundant for a target to need to track whether or not
-> it is suspended.  Core dm should be capable of that.
-> 
-> dm_suspend has:
->         dm_table_postsuspend_targets(map);
-> 
->         set_bit(DMF_SUSPENDED, &md->flags);
-> 
-> Can we reorder those two?
+> I thought of going the route you did in this patch, but thought it wa=
+s
+> too scsi specific. Does dasd want advanced error handling? If not, th=
+en
+> I am fine since for hw handlers we assume they are always scsi_dh mod=
+ules.
+Well, DASD has it's own sort of problems; basically DASD will _always_
+try to do it's own internal recovery by waiting for the storage array
+to respond. So with DASD we basically only ever have three states:
+- GOOD
+- Failure as being evaluated by the _storage array_
+- Don't know (if failfast is set)
+And any advanced checking won't give us much here, as either the link
+is on-line and we have details about the error or the link is severed
+and we don't know anything.
 
-For multipath and dm-core, yes.
-I'm not sure whether other targets care about the ordering.
+But there's a good point, we should be doing some sort of
+cross-check to determine if it really is a SCSI error.
+Just to prevent any accidental spill-overs in the future.
 
-But from semantics point of view, is it confusing if dm_suspended()
-returns true but a target is doing something in postsuspend()?
+I'll be sending a patch.
 
-If we take the approach instead of this patch, the patch-set is like:
-    1/4: http://patchwork.kernel.org/patch/61588/
-    2/4: http://patchwork.kernel.org/patch/61589/
-    3/4: http://patchwork.kernel.org/patch/61594/
-    4/4: http://patchwork.kernel.org/patch/61595/
+Cheers,
 
-Please review.
+Hannes
+> --=20
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi"=
+ in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
 
-> What about dm_resume?
->         clear_bit(DMF_SUSPENDED, &md->flags);
-> Can that move a little higher up the function?
-> - preresume, clear DMF_SUSPENDED, resume perhaps?
-
-I think we shouldn't move the clear_bit in resume.
-
-It doesn't make sense to clear the flag before I/Os start flowing.
-If targets want to do any preparation before I/Os flowing through,
-it can do in the resume() callback.
-
-Thanks,
-Kiyoshi Ueda
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
