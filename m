@@ -1,15 +1,12 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH] multipath-tools: multipath should allow
-	only path with valid size to get added in the map
-Date: Fri, 20 Nov 2009 13:57:15 -0800
-Message-ID: <1258754235.20768.1.camel@chandra-ubuntu>
-References: <0D1E8821739E724A86F4D16902CE275C1C93C74DFE@inbmail01.lsi.com>
-Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+From: Guido =?iso-8859-1?Q?G=FCnther?= <agx@sigxcpu.org>
+Subject: [PATCH]: multipath-tools: fix udev rule for dmraid
+Date: Sat, 21 Nov 2009 18:10:10 +0100
+Message-ID: <20091121171010.GA14931@bogon.sigxcpu.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="wac7ysb48OaltWcw"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0D1E8821739E724A86F4D16902CE275C1C93C74DFE@inbmail01.lsi.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,77 +16,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "Stankey,
-	Robert" <Robert.Stankey@lsi.com>, "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>, "Moger, Babu" <Babu.Moger@lsi.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Looks good to me except one comment below.
 
-On Fri, 2009-11-20 at 20:38 +0530, Chauhan, Vijay wrote:
-> Hi,
-> 
-> If READ_CAPACITY fails during device discovery, sd device gets attached with device size 0. Currently multipath discover these paths and adds into the map. RDAC patch checker sends inquiry on each path to check path status, which eventually marks this path as up. If this path is from owning controller then mode select will be issued to switch the pathgroup. But any I/O sent to this path(path with size 0) will eventually fail in sd_prep_fn due to incorrect device size and resulting to ping pong between pathgroups.  We should only allow valid paths to get added in the map. Below patch checks two cases before adding paths; i.e.:
-> 	1) device size of path is not 0
-> 	2) there is no mismatch between mpp size and new path size.
-> 
-> 
-> Thanks,
-> Vijay
-> 
-> ----
-> multipath should only add paths with valid size to the map. If there is mismatch between map and path size it should not be added. This patch also check if the device size is not 0 before adding path. During device discovery if READ_CAPACITY fails, sd device get attached with device size 0. multipath should not allow the such device to get added in the map.
-> 
-> Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
-> 
-> ---
-> 
-> diff -uprN multipath-tools-orig/multipathd/main.c multipath-tools/multipathd/main.c
-> --- multipath-tools-orig/multipathd/main.c	2009-11-20 23:39:09.000000000 +0530
-> +++ multipath-tools/multipathd/main.c	2009-11-21 01:09:16.000000000 +0530
-> @@ -398,6 +398,17 @@ ev_add_path (char * devname, struct vect
->  	mpp = pp->mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
->  rescan:
->  	if (mpp) {
-> +			if ((!pp->size) || (mpp->size != pp->size)) {
-> +				condlog(0, "%s: failed to add new path %s, "
-> +					"device size mismatch",
+--wac7ysb48OaltWcw
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Appropriate error message for the two different cases (pp->size = 0 and
-mpp->size!= pp->size) would be the right thing to do, IMO.
+Hi,
+attach patch fixes the udev rule for dmraid by not abusing the mpath
+prefix. It also drops the superflous path from kpartx_id.
+Cheers,
+ -- Guido
 
-> +					devname, pp->dev);
-> +				int i = find_slot(vecs->pathvec, (void *)pp);
-> +				if (i != -1)
-> +					vector_del_slot(vecs->pathvec, i);
-> +				free_path(pp);
-> +				return 1;
-> +			}
-> +
->  		condlog(4,"%s: adopting all paths for path %s",
->  			mpp->alias, pp->dev);
->  		if (adopt_paths(vecs->pathvec, mpp))
-> @@ -408,6 +419,16 @@ rescan:
->  		mpp->action = ACT_RELOAD;
->  	}
->  	else {
-> +		if (!pp->size) {
-> +			condlog(0, "%s: failed to create new map,"
-> +				" %s device size is 0 ", devname, pp->dev);
-> +			int i = find_slot(vecs->pathvec, (void *)pp);
-> +			if (i != -1)
-> +				vector_del_slot(vecs->pathvec, i);
-> +			free_path(pp);
-> +			return 1;
-> +		}
-> +
->  		condlog(4,"%s: creating new map", pp->dev);
->  		if ((mpp = add_map_with_path(vecs, pp, 1)))
->  			mpp->action = ACT_CREATE;
-> 
-> --
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--wac7ysb48OaltWcw
+Content-Type: text/x-diff; charset=us-ascii
+Content-Disposition: attachment;
+	filename="0001-Fix-udev-rules-for-dmraid.patch"
+
+From: Hannes Reinecke <hare@suse.de>
+Date: Tue, 24 Jun 2008 16:38:37 +0200
+Subject: [PATCH] Fix udev rules for dmraid
+
+The kpartx_id program is located under /lib/udev, so we don't need to
+call it with the full pathname.
+And we should also create persistent links for dmraid tables.
+---
+ kpartx/kpartx.rules |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+index f32c718..5a62d57 100644
+--- a/kpartx/kpartx.rules
++++ b/kpartx/kpartx.rules
+@@ -9,7 +9,7 @@ ACTION=="remove", GOTO="kpartx_end"
+ 
+ ENV{DM_TABLE_STATE}!="LIVE", GOTO="kpartx_end"
+ 
+-ENV{DM_UUID}=="?*", IMPORT{program}=="/lib/udev/kpartx_id %M %m $env{DM_UUID}"
++ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
+ 
+ OPTIONS="link_priority=50"
+ 
+@@ -18,7 +18,7 @@ ENV{DM_UUID}=="mpath-*", \
+ 	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
+ 
+ # Create persistent links for dmraid tables
+-ENV{DM_UUID}=="mpath-*", \
++ENV{DM_UUID}=="dmraid-*", \
+         SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
+ 
+ # Create persistent links for partitions
+-- 
+
+--wac7ysb48OaltWcw
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--wac7ysb48OaltWcw--
