@@ -1,16 +1,21 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Subject: RE: [PATCH] multipath-tools: multipath should allow	only
-	path with valid size to get added in the map
-Date: Mon, 23 Nov 2009 11:21:58 +0530
-Message-ID: <0D1E8821739E724A86F4D16902CE275C1C93C74E91@inbmail01.lsi.com>
-References: <1258754235.20768.1.camel@chandra-ubuntu>
+From: malahal@us.ibm.com
+Subject: Re: [PATCH 7/7] Hold all write bios when errors are handled
+Date: Sun, 22 Nov 2009 21:58:35 -0800
+Message-ID: <20091123055835.GA28981@us.ibm.com>
+References: <Pine.LNX.4.64.0911180703410.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180709570.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180710370.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180711140.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180711510.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180712340.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180713150.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180718540.21358@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1258754235.20768.1.camel@chandra-ubuntu>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0911180718540.21358@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,79 +25,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "sekharan@us.ibm.com" <sekharan@us.ibm.com>, device-mapper development <dm-devel@redhat.com>
-Cc: "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "Stankey,
-	Robert" <Robert.Stankey@lsi.com>, "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>, "Moger, Babu" <Babu.Moger@lsi.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-=20
-On Friday, November 20, 2009 at 21:55:00 UTC, Chandra Seetharaman wrote :
- > Looks good to me except one comment below.
- >=20
+Mikulas Patocka [mpatocka@redhat.com] wrote:
+> Index: linux-2.6.31.6-fast/drivers/md/dm-raid1.c
+> -	if (unlikely(!uptodate)) {
+> -		DMERR("All replicated volumes dead, failing I/O");
+> -		/* None of the writes succeeded, fail the I/O. */
+> -		ret = -EIO;
+> -	} else if (errors_handled(ms)) {
+> -		/*
+> -		 * Need to raise event.  Since raising
+> -		 * events can block, we need to do it in
+> -		 * the main thread.
+> -		 */
+> -		spin_lock_irqsave(&ms->lock, flags);
+> -		bio_list_add(&ms->failures, bio);
+> -		spin_unlock_irqrestore(&ms->lock, flags);
+> -		wakeup_mirrord(ms);
+> -		return;
+> -	}
+> -out:
+> -	bio_endio(bio, ret);
+> +	/*
+> +	 * In either case we must mark the region as NOSYNC.
+> +	 * That would block, so do it in the thread.
+> +	 */
 
- > > +			if ((!pp->size) || (mpp->size !=3D pp->size)) {
- > > +				condlog(0, "%s: failed to add=20
- > new path %s, "
- > > +					"device size mismatch",
- >=20
- > Appropriate error message for the two different cases=20
- > (pp->size =3D 0 and
- > mpp->size!=3D pp->size) would be the right thing to do, IMO.
- >=20
- > > +					devname, pp->dev);
+What exactly you mean by "either case' here? "errors_handled" case or not?
+Need to adjust the comment as we don't do that check here anymore.
 
-Chandra, Thanks for you comment. I have made the changes as per your comm=
-ent.
+> @@ -730,10 +719,25 @@ static void do_failures(struct mirror_se
+>  		if (!ms->log_failure) {
+>  			ms->in_sync = 0;
+>  			dm_rh_mark_nosync(ms->rh, bio);
+> +		}
+> +		/*
+> +		 * If all the legs are dead, fail the I/O.
+> +		 *
+> +		 * If we are not using dmeventd, we pretend that the I/O
+> +		 * succeeded. This is wrong (the failed leg might come online
+> +		 * again after reboot and it would be replicated back to
+> +		 * the good leg) but it is consistent with current behavior.
+> +		 * For proper behavior, dm-raid1 shouldn't be used without
+> +		 * dmeventd at all.
+> +		 *
+> +		 * If we use dmeventd, hold the bio until dmeventd does its job.
+> +		 */
+> +		if (!get_valid_mirror(ms))
+> +			bio_endio(bio, -EIO);
+> +		else if (!errors_handled(ms))
+>  			bio_endio(bio, 0);
+> -		} else {
+> +		else
+>  			hold_bio(ms, bio);
 
-Please let me if it looks fine now.
+You seem to be holding the I/O that has failed, but what about writes
+that are issued after this failure. They seem to go through just fine.
+Did I miss something? I think do_writes() needs to check for a leg
+failure (just like it does for log_failure already), and put them on
+failure/hold list, right?
 
+Also, we do need to do the above work only if "primary" leg fails. We
+can continue to work just like the old code if "secondary" legs fail,
+right? Not sure if this is worth optimizing though, but I would like to
+see it implemented as it is just a few extra checks. We can have
+primary_failure field like log_failure field.
 
-Thanks,
-Vijay
-
-
----
-multipath should only add paths with valid size to the map. If there is m=
-ismatch between map and path size it should not be added. This patch also=
- check if the device size is not 0 before adding path. During device disc=
-overy if READ_CAPACITY fails, sd device get attached with device size 0. =
-multipath should not allow the such device to get added in the map.
-
-Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
----
-diff -uprN multipath-tools-orig/multipathd/main.c multipath-tools/multipa=
-thd/main.c
---- multipath-tools-orig/multipathd/main.c	2009-11-20 23:39:09.000000000 =
-+0530
-+++ multipath-tools/multipathd/main.c	2009-11-23 16:37:16.000000000 +0530
-@@ -396,8 +396,29 @@ ev_add_path (char * devname, struct vect
- 		return 2;
- 	}
- 	mpp =3D pp->mpp =3D find_mp_by_wwid(vecs->mpvec, pp->wwid);
-+	if (!pp->size) {
-+		condlog(0, "%s: not a valid path %s, "
-+			" device size is 0 ", devname, pp->dev);
-+		int i =3D find_slot(vecs->pathvec, (void *)pp);
-+		if (i !=3D -1)
-+			vector_del_slot(vecs->pathvec, i);
-+		free_path(pp);
-+		return 1;
-+	}
-+
- rescan:
- 	if (mpp) {
-+		if (mpp->size !=3D pp->size) {
-+			condlog(0, "%s: failed to add new path %s, "
-+				"device size mismatch",
-+				devname, pp->dev);
-+			int i =3D find_slot(vecs->pathvec, (void *)pp);
-+			if (i !=3D -1)
-+				vector_del_slot(vecs->pathvec, i);
-+			free_path(pp);
-+			return 1;
-+		}
-+
- 		condlog(4,"%s: adopting all paths for path %s",
- 			mpp->alias, pp->dev);
- 		if (adopt_paths(vecs->pathvec, mpp))
---
+Thanks, Malahal.
