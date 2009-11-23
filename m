@@ -1,17 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath-tools: multipath should allow
-	only path with valid size to get added in the map
-Date: Mon, 23 Nov 2009 14:39:36 +0100
-Message-ID: <20091123133936.GA26597@ochil.suse.de>
-References: <0D1E8821739E724A86F4D16902CE275C1C93C74DFE@inbmail01.lsi.com>
-	<1258754235.20768.1.camel@chandra-ubuntu>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: Re: [PATCH 7/7] Hold all write bios when errors are handled
+Date: Mon, 23 Nov 2009 12:54:47 -0500
+Message-ID: <4B0ACC67.6060805@redhat.com>
+References: <Pine.LNX.4.64.0911180703410.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180709570.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180710370.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180711140.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180711510.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180712340.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180713150.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180718540.21358@hs20-bc2-1.build.redhat.com>
+	<20091123055835.GA28981@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1258754235.20768.1.camel@chandra-ubuntu>
+In-Reply-To: <20091123055835.GA28981@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,45 +19,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
-Cc: "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "Stankey,
-	Robert" <Robert.Stankey@lsi.com>, "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>, "Moger, Babu" <Babu.Moger@lsi.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Nov 20, 2009 at 01:57:15PM -0800, Chandra Seetharaman wrote:
-> Looks good to me except one comment below.
->=20
-> On Fri, 2009-11-20 at 20:38 +0530, Chauhan, Vijay wrote:
-> > Hi,
-> >=20
-> > If READ_CAPACITY fails during device discovery, sd device gets attach=
-ed
-> > with device size 0. Currently multipath discover these paths and adds
-> > into the map. RDAC patch checker sends inquiry on each path to check
-> > path status, which eventually marks this path as up. If this path is
-> > from owning controller then mode select will be issued to switch the
-> > pathgroup. But any I/O sent to this path(path with size 0) will event=
-ually
-> > fail in sd_prep_fn due to incorrect device size and resulting to ping=
- pong
-> > between pathgroups.  We should only allow valid paths to get added in=
- the
-> > map. Below patch checks two cases before adding paths; i.e.:
-> > 	1) device size of path is not 0
-> > 	2) there is no mismatch between mpp size and new path size.
-> >=20
-> >=20
-Careful here. Some storage arrays (like the old HP MSA firmware) will rep=
-ort
-a size of zero for the inactive path. So we must make sure to not kill su=
-pport
-for those.
+On 11/23/09 00:58, malahal@us.ibm.com wrote:
+> Mikulas Patocka [mpatocka@redhat.com] wrote:
+>> @@ -730,10 +719,25 @@ static void do_failures(struct mirror_se
+>>  		if (!ms->log_failure) {
+>>  			ms->in_sync = 0;
+>>  			dm_rh_mark_nosync(ms->rh, bio);
+>> +		}
+>> +		/*
+>> +		 * If all the legs are dead, fail the I/O.
+>> +		 *
+>> +		 * If we are not using dmeventd, we pretend that the I/O
+>> +		 * succeeded. This is wrong (the failed leg might come online
+>> +		 * again after reboot and it would be replicated back to
+>> +		 * the good leg) but it is consistent with current behavior.
+>> +		 * For proper behavior, dm-raid1 shouldn't be used without
+>> +		 * dmeventd at all.
+>> +		 *
+>> +		 * If we use dmeventd, hold the bio until dmeventd does its job.
+>> +		 */
+>> +		if (!get_valid_mirror(ms))
+>> +			bio_endio(bio, -EIO);
+>> +		else if (!errors_handled(ms))
+>>  			bio_endio(bio, 0);
+>> -		} else {
+>> +		else
+>>  			hold_bio(ms, bio);
+> 
+> You seem to be holding the I/O that has failed, but what about writes
+> that are issued after this failure. They seem to go through just fine.
+> Did I miss something? I think do_writes() needs to check for a leg
+> failure (just like it does for log_failure already), and put them on
+> failure/hold list, right?
 
-Cheers,
+On 09/09/09 16:18, Takahiro Yasui wrote:
+>  - As I mentioned before, bios which are sent to out-of-sync regions also
+>    need to be blocked because bios to out-of-sync regions are processed by
+>    generic_make_request() and would return the "success" to upper layer
+>    without dm-raid1 notices it. This might cause data corruption.
+>    https://www.redhat.com/archives/dm-devel/2009-July/msg00118.html
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+I think you are right. I also commented above two months ago, but
+I haven't got comments from Mikulas.
+
+> Also, we do need to do the above work only if "primary" leg fails. We
+> can continue to work just like the old code if "secondary" legs fail,
+> right? Not sure if this is worth optimizing though, but I would like to
+> see it implemented as it is just a few extra checks. We can have
+> primary_failure field like log_failure field.
+
+Good idea. This data corruption we are talking could happen only if
+the primary leg fails. Keeping system running in case of non-primary
+legs looks reasonable.
+
+Taka
