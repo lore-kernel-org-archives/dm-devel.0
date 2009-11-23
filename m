@@ -1,15 +1,16 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [PATCH] multipath: Evaluate request result and sense
-	code
-Date: Sun, 22 Nov 2009 15:00:17 -0600
-Message-ID: <4B09A661.10102@cs.wisc.edu>
-References: <20091119122503.413AD3A174@ochil.suse.de>
+From: malahal@us.ibm.com
+Subject: Re: dm-raid1 barriers
+Date: Sun, 22 Nov 2009 19:16:02 -0800
+Message-ID: <20091123031602.GA26756@us.ibm.com>
+References: <Pine.LNX.4.64.0911161136500.5769@hs20-bc2-1.build.redhat.com>
+	<20091116184802.GD11886@agk-dp.fab.redhat.com>
+	<Pine.LNX.4.64.0911170502370.4304@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091119122503.413AD3A174@ochil.suse.de>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0911170502370.4304@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,23 +20,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: James Bottomley <James.Bottomley@suse.de>, linux-scsi@vger.kernel.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hannes Reinecke wrote:
->  /*
-> + * Evaluate scsi return code
-> + */
-> +static int eval_scsi_error(int result, char *sense, int sense_len)
-> +{
-> +	struct scsi_sense_hdr sshdr;
-> +	int r = DM_ENDIO_REQUEUE;
-> +
-> +	if (host_byte(result) != DID_OK)
+Mikulas Patocka [mpatocka@redhat.com] wrote:
+> > > If this flush fails, the bits in memory are already clean and we don't 
+> > > know which regions may hold unwritten data in the disk cache and which 
+> > 
+> > Actually we do: the on-disk version of the log tells us.
+> 
+> Yes, it could be read into another buffer and anded.
+> 
+> > > not. So, we must set all regions as dirty.
+> >  
+> > Anyway, let's not try to handle these situations at the moment.
+> > what I need for now, is a way to know whether or not this situation has
+> > actually occurred when we get reports from users, so probably a kernel
+> > log message, a dm event raised plus a failure indicator against the device in
+> > the status line.
 
+Agreed, we don't want to handle this error case with reading the entries
+from the disk log and comparing them with the in memory buffer at this
+point.  Why not just set all regions to dirty as Mikulas pointed as a
+short term solution? Not optimal but it is a correct way to handle.
 
-For values like DID_NO_CONNECT or DID_TRANSPORT FAILFAST, I think it 
-makes sense to fail the path. Not in this patch, but a new one, would we 
-want to modify dm-mpath so that we do not fail the path for errors like 
-DID_ABORT or DID_SOFT_ERROR, DID_RESET or DID_ERROR?
+--Malahal.
