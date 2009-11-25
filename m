@@ -1,15 +1,22 @@
-From: Takahiro Yasui <tyasui@redhat.com>
+From: malahal@us.ibm.com
 Subject: Re: [PATCH 7/7] Hold all write bios when errors are handled
-Date: Wed, 25 Nov 2009 17:50:43 -0500
-Message-ID: <4B0DB4C3.7010903@redhat.com>
-References: <Pine.LNX.4.64.0911180711140.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180711510.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180712340.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180713150.21358@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0911180718540.21358@hs20-bc2-1.build.redhat.com>	<20091123055835.GA28981@us.ibm.com>	<Pine.LNX.4.64.0911240638250.27545@hs20-bc2-1.build.redhat.com>	<20091124191704.GB7971@us.ibm.com>	<Pine.LNX.4.64.0911250807500.14481@hs20-bc2-1.build.redhat.com>	<4B0D509E.9090001@redhat.com>
-	<20091125204458.GC1673@us.ibm.com>
+Date: Wed, 25 Nov 2009 15:20:10 -0800
+Message-ID: <20091125232010.GA5968@us.ibm.com>
+References: <Pine.LNX.4.64.0911180711510.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180712340.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180713150.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180718540.21358@hs20-bc2-1.build.redhat.com>
+	<20091123055835.GA28981@us.ibm.com>
+	<Pine.LNX.4.64.0911240638250.27545@hs20-bc2-1.build.redhat.com>
+	<20091124191704.GB7971@us.ibm.com>
+	<Pine.LNX.4.64.0911250807500.14481@hs20-bc2-1.build.redhat.com>
+	<20091125202346.GB1673@us.ibm.com> <4B0DB408.6020906@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091125204458.GC1673@us.ibm.com>
+Content-Disposition: inline
+In-Reply-To: <4B0DB408.6020906@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,51 +29,39 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/25/09 15:44, malahal@us.ibm.com wrote:
-> Takahiro Yasui [tyasui@redhat.com] wrote:
->>> The requirements are:
->>> * if one of legs fail or log fails, you must automatically continue 
->>> without human intervention
->>> * if both legs fail, you must shut it down and not pretend that something 
->>> was written when it wasn't (this would break durability requirement of 
->>> transactions).
->>
->> I agree with this point. lvm mirror could be used on filesystems such as
->> ext3 and each filesystem and application needs to take care those situation
->> to prevent data corruption. I don't think that it is realistic, and the
->> underlying layer should prevent data corruption. I now understand primary
->> and secondary disks need to be blocked.
+Takahiro Yasui [tyasui@redhat.com] wrote:
+> I think again the scenario which Mikulas pointed. It looks double failures
+> (fails happened on two legs), and human intervention would be acceptable.
+> However, how do we know if the second leg contains valid data?
 > 
-> If you think that I/O needs to be blocked for first or second leg
-> failures, then I am afraid that there is no way to keep the failed
-> mirror in the system for re-integrating failed devices.
+> There might be two cases.
 > 
-> I would like to keep the mirror as mirror when one of the legs fails as
-> opposed to making it linear now by dmeventd. This is to re-integrate a
-> failed leg into the mirror to handle transient device failures. Here is
-> what I am planning to do, let me know if you find any issues:
+>   1) System crashed during write operations without any disk failures, and
+>      the first leg fails at the next boot.
 > 
-> 1. Secondary leg failure. dmeventd will NOT change the meta data at all.
->    It will call "lvchange --refresh" that will start resynchronization.
->    This will be done a few times. If the device still fails to
->    re-integrate, it is left the way it is and no further re-integrations
->    attempts are done. The number of attempts can be done at configurable
->    intervals.
+>      We can use the secondary leg because data in the secondary leg is valid.
 > 
-> 2. First leg failure (aka Primary leg failure): The kernel would stop
->    handling any further I/O. The dmeventd will change mirror meta data
->    [it will re-order the legs ] so that the secondary now becomes the
->    primary. I will try to re-integrate the failed device few times before
->    giving up just as in the case "1" above.
+>   2) System crashed after the secondary leg failed, and the first leg fails
+>      and the secondary leg gets back online at the next boot.
 > 
-> The kernel module will never progress with a first leg failure as you
-> see above.
+>      We can't use the secondary leg because data might be stale.
+> 
+> I haven't checked the contents of log disk, but I guess we can't
+> differentiate these cases from log disks.
 
-It looks very good idea for both increasing system availability and
-handling transient errors. I hope we could solve the issue I commented
-in the email:
-  https://www.redhat.com/archives/dm-devel/2009-November/msg00253.html
-and adopt this method.
+There were plans to add a new region state to make sure that all the
+mirror legs have same data after a "crash". Currently your best bet is a
+complete resync after a crash! I am not sure if the state is written to
+log disk though. It may be possible to distinguish the above two cases
+with this...
 
-Thanks,
-Taka
+Or just have LVM meta data that records a device failure. Suspend writes
+[for any kind of leg] and record device failure in the LVM meta data and
+restart writes. This requires LVM meta data change though!
+
+> Another possibility I thought was error messages.
+> If any error messages for the secondary leg are recorded, we can judge that
+> the secondary leg contains stale data, but I suspect that it is not a secure
+> way because syslog might not be written in disk before system crash.
+
+We should be able to fix it in the LVM meta data!
