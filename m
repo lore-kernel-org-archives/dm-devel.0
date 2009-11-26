@@ -1,149 +1,67 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH] multipath: Evaluate request result and sense code
-Date: Wed, 25 Nov 2009 17:25:41 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF48723766A@cosmail01.lsi.com>
-References: <20091119122503.413AD3A174@ochil.suse.de>
+From: malahal@us.ibm.com
+Subject: Re: [PATCH 7/7] Hold all write bios when errors are handled
+Date: Wed, 25 Nov 2009 16:30:43 -0800
+Message-ID: <20091126003043.GA6840@us.ibm.com>
+References: <Pine.LNX.4.64.0911180713150.21358@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0911180718540.21358@hs20-bc2-1.build.redhat.com>
+	<20091123055835.GA28981@us.ibm.com>
+	<Pine.LNX.4.64.0911240638250.27545@hs20-bc2-1.build.redhat.com>
+	<20091124191704.GB7971@us.ibm.com>
+	<Pine.LNX.4.64.0911250807500.14481@hs20-bc2-1.build.redhat.com>
+	<20091125202346.GB1673@us.ibm.com> <4B0DB408.6020906@redhat.com>
+	<20091125232010.GA5968@us.ibm.com> <4B0DC2C0.9020008@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20091119122503.413AD3A174@ochil.suse.de>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>, James Bottomley <James.Bottomley@suse.de>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4B0DC2C0.9020008@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hannes,
-  My .02 cents on this below..
+Takahiro Yasui [tyasui@redhat.com] wrote:
+> >> I haven't checked the contents of log disk, but I guess we can't
+> >> differentiate these cases from log disks.
+> > 
+> > There were plans to add a new region state to make sure that all the
+> > mirror legs have same data after a "crash". Currently your best bet is a
+> > complete resync after a crash!
+> 
+> Please let me clarify this. There are two legs and system crash happens.
+> Then, how can we resync? We have only one leg (secondary) after boot.
+> When we use "mirror", we expect the last device to contain valid data,
+> don't we?
 
-________________________________________
-From: linux-scsi-owner@vger.kernel.org [linux-scsi-owner@vger.kernel.org] On Behalf Of Hannes Reinecke [hare@suse.de]
-Sent: Thursday, November 19, 2009 6:25 AM
-To: James Bottomley
-Cc: dm-devel@redhat.com; linux-scsi@vger.kernel.org
-Subject: [PATCH] multipath: Evaluate request result and sense code
+I was actually referring to a problem that I mentioned in a DM/LVM
+meeting.  Mikulas posted it here and there were some discussions.
+http://thread.gmane.org/gmane.linux.kernel.device-mapper.devel/5392
 
-As we now see the result for every command we
-can use it to make some more elaborate choices
-if we should retry the request on another path.
+If I remember, the proposed solution would add another state bit. If it
+is implemented, then we can use that information to differentiate the
+cases you mentioned. Essentially, if there are only 'dirty' regions, we
+can safely use the secondary. On the other hand, if th log has some 'out
+of sync' regions, then we can't use the secondary.
 
-This solves a potential data corruption when
-a request is being terminated with RESERVATION
-CONFLICT and queue_if_no_path is active; the
-request will be queued until the reservation
-status changes and then transmitted.
+You can ignore my reference to "complete resynchronization". I was
+referring to an existing problem with system crashes!
+ 
+> > Or just have LVM meta data that records a device failure. Suspend writes
+> > [for any kind of leg] and record device failure in the LVM meta data and
+> > restart writes. This requires LVM meta data change though!
+> 
+> Do you mean that write I/Os need to be blocked when the secondary leg fails
+> in order to update LVM meta data by lvm commands called by dmeventd?
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-mpath.c |   49 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 49 insertions(+), 0 deletions(-)
+Yes, that is correct. We need to stop write I/O for any leg failure if
+we chose LVM meta data method.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index dce971d..460e11f 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -19,6 +19,7 @@
- #include <linux/time.h>
- #include <linux/workqueue.h>
- #include <scsi/scsi_dh.h>
-+#include <scsi/scsi_eh.h>
- #include <asm/atomic.h>
-
- #define DM_MSG_PREFIX "multipath"
-@@ -101,6 +102,7 @@ struct multipath {
- struct dm_mpath_io {
-        struct pgpath *pgpath;
-        size_t nr_bytes;
-+       char sense[SCSI_SENSE_BUFFERSIZE];
- };
-
- typedef int (*action_fn) (struct pgpath *pgpath);
-@@ -913,6 +915,9 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
-
-        map_context->ptr = mpio;
-        clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
-+       /* Always attach a sense buffer */
-+       if (!clone->sense)
-+               clone->sense = mpio->sense;
-        r = map_io(m, clone, mpio, 0);
-        if (r < 0 || r == DM_MAPIO_REQUEUE)
-                mempool_free(mpio, m->mpio_pool);
-@@ -1192,6 +1197,42 @@ static void activate_path(struct work_struct *work)
- }
-
- /*
-+ * Evaluate scsi return code
-+ */
-+static int eval_scsi_error(int result, char *sense, int sense_len)
-+{
-+       struct scsi_sense_hdr sshdr;
-+       int r = DM_ENDIO_REQUEUE;
-+
-+       if (host_byte(result) != DID_OK)
-+               return r;
-+
-+       if (msg_byte(result) != COMMAND_COMPLETE)
-+               return r;
-+
-+       if (status_byte(result) == RESERVATION_CONFLICT)
-+               /* Do not retry here, possible data corruption */
-+               return -EIO;
-+
-+       if (status_byte(result) == CHECK_CONDITION &&
-+           !scsi_normalize_sense(sense, sense_len, &sshdr)) {
-+
-+               switch (sshdr.sense_key) {
-+               case MEDIUM_ERROR:
-+               case DATA_PROTECT:
-+               case BLANK_CHECK:
-+               case COPY_ABORTED:
-+               case VOLUME_OVERFLOW:
-+               case MISCOMPARE:
-+                       r = -EIO;
-+                       break;
-+               }
-
-The above sense key list does not cover all the cases(at least for my case). For example, I have these requirements for my storage.
-1. For certain check conditions I should be reporting I/O error immediately without retrying on other paths. You have covered some cases here but we a have bigger list.
-2. For few other check condtions I should be calling activate_path instead of failing the path.
-So, I am thinking it may be better to handle this with scsi device handlers(may be providing a new scsi_dh interface and fallback to default handling if the device handler does not handle the sense).  I am not sure if this is feasible but something to think about.
-
-+       }
-+
-+       return r;
-+}
-+
-+/*
-  * end_io handling
-  */
- static int do_end_io(struct multipath *m, struct request *clone,
-@@ -1217,6 +1258,10 @@ static int do_end_io(struct multipath *m, struct request *clone,
-        if (error == -EOPNOTSUPP)
-                return error;
-
-+       r = eval_scsi_error(clone->errors, clone->sense, clone->sense_len);
-+       if (r != DM_ENDIO_REQUEUE)
-+               return r;
-+
-        if (mpio->pgpath)
-                fail_path(mpio->pgpath);
-
-@@ -1243,6 +1288,10 @@ static int multipath_end_io(struct dm_target *ti, struct request *clone,
-                if (ps->type->end_io)
-                        ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
-        }
-+       if (clone->sense == mpio->sense) {
-+               clone->sense = NULL;
-+               clone->sense_len = 0;
-+       }
-        mempool_free(mpio, m->mpio_pool);
-
-        return r;
---
-1.5.3.2
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks, Malahal.
