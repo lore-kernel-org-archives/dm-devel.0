@@ -1,12 +1,15 @@
 From: heinzm@redhat.com
-Subject: [PATCH v2 2/5] dm-replicator: add main control module
-Date: Thu, 26 Nov 2009 13:29:49 +0100
-Message-ID: <1259238592-12439-3-git-send-email-heinzm@redhat.com>
+Subject: [PATCH v2 4/5] dm-replicator: add site link interface
+	and block device handler module
+Date: Thu, 26 Nov 2009 13:29:51 +0100
+Message-ID: <1259238592-12439-5-git-send-email-heinzm@redhat.com>
 References: <1259238592-12439-1-git-send-email-heinzm@redhat.com>
 	<1259238592-12439-2-git-send-email-heinzm@redhat.com>
+	<1259238592-12439-3-git-send-email-heinzm@redhat.com>
+	<1259238592-12439-4-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1259238592-12439-2-git-send-email-heinzm@redhat.com>
+In-Reply-To: <1259238592-12439-4-git-send-email-heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,2031 +25,3085 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-This is the main replicator module plugging into the dm core interface
-to construct/destruct/... replication control ("replicator" target)
-and data devices ("replicator-dev" target).
+This is the "blockdev" type site link handler module plugging
+into the main replication module.
 
-The "replicator" control target handles the replication log and
-the site link properties (eg. log size or asynchronous replication),
-while the "replicator-dev" target handles all local and remote device
-properties (eg. their paths and dirty log parameters).
+It abstracts the access logic to the transport used allowing the
+replication log to be agnostic about it (block device transport
+in this handlers case).
 
-
+.
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 Reviewed-by: Jon Brassow <jbrassow@redhat.com>
 Tested-by: Jon Brassow <jbrassow@redhat.com>
 ---
- drivers/md/dm-repl.c | 1993 ++++++++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-repl.h |  124 ++++
- 2 files changed, 2117 insertions(+), 0 deletions(-)
- create mode 100644 drivers/md/dm-repl.c
- create mode 100644 drivers/md/dm-repl.h
+ drivers/md/dm-repl-slink-blockdev.c | 3049 +++++++++++++++++++++++++++++++++++
+ drivers/md/dm-repl-slink.h          |  313 ++++
+ 2 files changed, 3362 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/md/dm-repl-slink-blockdev.c
+ create mode 100644 drivers/md/dm-repl-slink.h
 
-diff --git linux-2.6.orig/drivers/md/dm-repl.c linux-2.6/drivers/md/dm-repl.c
+diff --git linux-2.6.orig/drivers/md/dm-repl-slink-blockdev.c linux-2.6/drivers/md/dm-repl-slink-blockdev.c
 new file mode 100644
-index 0000000..bb122b5
+index 0000000..0633acb
 --- /dev/null
-+++ linux-2.6/drivers/md/dm-repl.c
-@@ -0,0 +1,1993 @@
++++ linux-2.6/drivers/md/dm-repl-slink-blockdev.c
+@@ -0,0 +1,3049 @@
 +/*
 + * Copyright (C) 2008,2009  Red Hat, Inc. All rights reserved.
 + *
-+ * Module Author: Heinz Mauelshagen <HeinzM@redhat.com>
++ * Module Author: Heinz Mauelshagen (heinzm@redhat.com)
 + *
 + * This file is released under the GPL.
 + *
-+ * Remote Replication target.
 + *
-+ * Features:
-+ * o Logs writes to circular buffer keeping persistent state metadata.
-+ * o Writes data from log synchronuously or asynchronuously
-+ *   to multiple (1-N) remote replicas.
-+ * o stores CRCs with metadata for integrity checks
-+ * o stores versions with metadata to support future metadata migration
++ * "blockdev" site link handler for the replicator target supporting
++ * devices on block transports with device node access.
 + *
++ * Locking Hierarchy:
++ * 1) repl_slinks->lock
++ * 2) sl->lock
 + *
-+ * For disk layout of backing store see dm-repl-log implementation.
 + */
 +
-+static const char version[] = "v0.028";
++static const char version[] = "v0.022";
 +
 +#include "dm.h"
 +#include "dm-repl.h"
++#include "dm-registry.h"
 +#include "dm-repl-log.h"
 +#include "dm-repl-slink.h"
 +
-+#include <stdarg.h>
 +#include <linux/dm-dirty-log.h>
-+#include <linux/bio.h>
-+#include <linux/blkdev.h>
-+#include <linux/crc32.h>
-+#include <linux/init.h>
++#include <linux/dm-kcopyd.h>
++#include <linux/kernel.h>
 +#include <linux/module.h>
-+#include <linux/namei.h>
-+#include <linux/types.h>
-+#include <linux/vmalloc.h>
-+#include <linux/workqueue.h>
 +
-+#define	DM_MSG_PREFIX	"dm-repl"
-+#define	DAEMON	DM_MSG_PREFIX	"d"
++#define	DM_MSG_PREFIX	"dm-repl-slink-blockdev"
++#define	DAEMON		DM_MSG_PREFIX	"d"
++#define	COPY_PAGES	BIO_MAX_PAGES
++#define	RESYNC_PAGES	(BIO_MAX_PAGES / 2)
++#define	RESYNC_SIZE	(to_sector(PAGE_SIZE) * RESYNC_PAGES)
++#define	MIN_IOS		1
 +
-+/* Default local device read ahead pages. */
-+#define	LD_RA_PAGES_DEFAULT	8
++/* Jiffies to wait before retrying a device. */
++#define	SLINK_TEST_JIFFIES	(15 * HZ)
++#define	SLINK_TEST_SIZE		4096
 +
-+/* Factor out to dm.[ch] */
-+/* Return type for name. */
-+int
-+dm_descr_type(const struct dm_str_descr *descr, unsigned len, const char *name)
-+{
-+	while (len--) {
-+		if (!strncmp(STR_LEN(name, descr[len].name)))
-+			return descr[len].type;
-+	}
++#define _SET_AND_BUG_ON_SL(sl, slink) \
++	do { \
++		_BUG_ON_PTR(slink); \
++		(sl) = slink_check(slink); \
++		_BUG_ON_PTR(sl); \
++	} while (0);
 +
-+	return -ENOENT;
-+}
-+EXPORT_SYMBOL_GPL(dm_descr_type);
-+
-+/* Return name for type. */
-+const char *
-+dm_descr_name(const struct dm_str_descr *descr, unsigned len, const int type)
-+{
-+	while (len--) {
-+		if (type == descr[len].type)
-+			return descr[len].name;
-+	}
-+
-+	return NULL;
-+}
-+EXPORT_SYMBOL_GPL(dm_descr_name);
-+/* END Factor out to dm.[ch] */
-+
-+/* Global list of replication log contexts for ctr/dtr and lock. */
-+LIST_HEAD(replog_c_list);
-+static struct mutex replog_c_list_mutex;
-+
-+/* REMOVEME: */
-+/* Development statistics. */
-+struct stats {
-+	atomic_t io[2];
-+	atomic_t submitted_io[2];
-+	atomic_t congested_fn[2];
++/* An slink device. */
++enum sdev_list_type {
++	SDEV_SLINK,	/* To put on slink's device list. */
++	SDEV_RESYNC,	/* To put on slink's resynchronization list. */
++	SDEV_TEST,	/* To put on so_slink_test()'s test list. */
++	NR_SDEV_LISTS,
 +};
++struct test_buffer;
++struct sdev {
++	struct kref ref;	/* Reference counter. */
 +
-+/* Reset statistics variables. */
-+static void
-+stats_reset(struct stats *stats)
-+{
-+	int i = 2;
-+
-+	while (i--) {
-+		atomic_set(stats->io + i, 0);
-+		atomic_set(stats->submitted_io + i, 0);
-+		atomic_set(stats->congested_fn + i, 0);
-+	}
-+}
-+
-+/* Per site link context. */
-+struct slink_c {
-+	struct {
-+		struct list_head slink_c;
-+		struct list_head dc; /* List of replication device contexts. */
-+	} lists;
-+
-+	/* Reference count (ie. number of devices on this site link) */
-+	struct kref ref;
-+
-+	/* Slink handle. */
-+	struct dm_repl_slink *slink;
-+
-+	/* Replog context. */
-+	struct replog_c *replog_c;
-+};
-+
-+/* Global context kept with replicator log. */
-+enum replog_c_flags {
-+	REPLOG_C_BLOCKED,
-+	REPLOG_C_DEVEL_STATS,
-+	REPLOG_C_IO_INFLIGHT
-+};
-+struct replog_c {
-+	struct {
-+		struct list_head replog_c;/* To add to global replog_c list. */
-+		struct list_head slink_c; /* Site link context elements. */
-+	} lists;
-+
++	/* Lists to hang off slink, resync and flush lists */
++	struct list_head lists[NR_SDEV_LISTS];
 +	struct dm_target *ti;
++	struct slink *sl;	/* Backpointer for callback. */
 +
-+	/* Reference count (ie. # of slinks * # of devices on this replog) */
-+	struct kref ref;
++	struct {
++		struct sdev_resync {
++			sector_t region; /* Region being resynchronized. */
++			sector_t writer_region; /* region being written to. */
++			sector_t start;	/* Start of actual resync copy. */
++			sector_t end;	/* End of actual resync copy. */
++			unsigned len;	/* Length of actual copy. */
++			/* Source device pointer for resync callback. */
++			struct sdev *from;
++		} resync;
 +
-+	/* Back pointer to replication log. */
-+	struct dm_repl_log *replog;
-+	dev_t dev;	/* Replicator control device major:minor. */
++		struct {
++			unsigned long time;
++			struct test_buffer *buffer;
++		} test;
 +
-+	/* Global io housekeeping on site link 0. */
-+	struct repl_io {
-+		unsigned long flags;	/* I/O state flags. */
 +
-+		struct bio_list in;	/* Pending bios (central input list).*/
-+		spinlock_t in_lock;	/* Protects central input list.*/
-+		atomic_t in_flight;	/* In flight io counter. */
++		/* kcopyd resynchronization client. */
++		struct dm_kcopyd_client *kcopyd_client;
 +
-+		/* IO workqueue. */
-+		struct workqueue_struct *wq;
-+		struct work_struct ws;
-+
-+		/* Statistics. */
-+		struct stats stats;
-+
-+		/* slink+I/O teardown synchronization. */
++		/* Teardown synchronization. */
 +		wait_queue_head_t waiters;
++
++		sector_t split_io;
++
++		unsigned long flags;
 +	} io;
-+};
-+BITOPS(ReplBlocked, replog_c, REPLOG_C_BLOCKED);
-+BITOPS(ReplDevelStats, replog_c, REPLOG_C_DEVEL_STATS);
-+BITOPS(ReplIoInflight, replog_c, REPLOG_C_IO_INFLIGHT);
 +
-+/*
-+ * Per device replication context kept with any mapped device and
-+ * any associated remote device, which doesn't have a local mapping.
-+ */
-+struct device_c {
-+	struct list_head list; /* To add to slink_c rc list. */
++	/* Device properties. */
++	struct sdev_dev {
++		struct {
++			unsigned count;	/* Ctr parameters count. */
++			const char *path; /* Device path/major:minor. */
++		} params;
 +
-+	/* Local device ti (i.e. head). */
-+	struct dm_target *ti;
-+
-+	/* replicator control device reference. */
-+	struct dm_dev *replicator_dev;
-+
-+	/* SLINK handle. */
-+	struct slink_c *slink_c;
-+
-+	/* This device's number. */
-+	int number;
++		struct dm_dev *dm_dev;
++		struct dm_dirty_log *dl;
++		unsigned number;
++	} dev;
 +};
 +
-+/* IO in flight wait qeue handling during suspension. */
-+static void
-+replog_c_io_get(struct replog_c *replog_c)
-+{
-+	SetReplIoInflight(replog_c);
-+	atomic_inc(&replog_c->io.in_flight);
-+}
++/* Macros to access sdev lists. */
++#define	SDEV_SLINK_LIST(sl)	(sl->lists + SDEV_SLINK)
++#define	SDEV_RESYNC_LIST(sl)	(sl->lists + SDEV_RESYNC)
 +
-+/* Drop io in flight reference. */
-+static void
-+replog_c_io_put(struct replog_c *replog_c)
-+{
-+	if (atomic_dec_and_test(&replog_c->io.in_flight)) {
-+		ClearReplIoInflight(replog_c);
-+		wake_up(&replog_c->io.waiters);
-+	}
-+}
++/* Status flags for device. */
++enum dev_flags {
++	DEV_ERROR_READ,		/* Read error on device. */
++	DEV_ERROR_WRITE,	/* Write error on device. */
++	DEV_IO_QUEUED,		/* Request(s) to device queued. */
++	DEV_IO_UNPLUG,		/* Unplug device queue. */
++	DEV_OPEN,		/* Device got opend during ctr. */
++	DEV_RESYNC,		/* Device may resync. */
++	DEV_RESYNC_END,		/* Flag device resynchronization end. */
++	DEV_RESYNCING,		/* Device has active resync. */
++	DEV_SUSPENDED,		/* Device suspended. */
++	DEV_TEARDOWN,		/* Device is being deleted. */
++};
 +
-+/* Get a handle on a replicator log. */
-+static struct dm_repl_log *
-+repl_log_ctr(const char *name, struct dm_target *ti,
-+	     unsigned int argc, char **argv)
-+{
-+	int r;
-+	struct dm_repl_log_type *type;
-+	struct dm_repl_log *log;
++/* Create slink bitfield (io.flags) access inline definitions. */
++BITOPS(DevErrorRead, sdev, DEV_ERROR_READ)
++BITOPS(DevErrorWrite, sdev, DEV_ERROR_WRITE)
++BITOPS(DevIOQueued, sdev, DEV_IO_QUEUED)
++BITOPS(DevIOUnplug, sdev, DEV_IO_UNPLUG)
++BITOPS(DevOpen, sdev, DEV_OPEN)
++BITOPS(DevResync, sdev, DEV_RESYNC)
++BITOPS(DevResyncEnd, sdev, DEV_RESYNC_END)
++BITOPS(DevResyncing, sdev, DEV_RESYNCING)
++BITOPS(DevSuspended, sdev, DEV_SUSPENDED)
++BITOPS(DevTeardown, sdev, DEV_TEARDOWN)
 +
-+	log = kzalloc(sizeof(*log), GFP_KERNEL);
-+	if (unlikely(!log))
-+		return ERR_PTR(-ENOMEM);
++/* Internal site link representation. */
++enum slink_list_type { SLINK_DEVS, SLINK_REPLOG, SLINK_RESYNC, NR_SLINK_LISTS };
++enum cache_type { COPY_CACHE, TEST_CACHE, NR_CACHES };
++struct slink {
++	struct kref ref;	/* Reference count. */
++	/*
++	 * Protect slink lists.
++	 *
++	 * Has to be spinlock, because the global replog lock
++	 * needs to be one to be used from interrupt context
++	 * and they are both taken in some places.
++	 */
++	rwlock_t lock;		/* Protect slink lists. */
 +
-+	/* Load requested replication log module. */
-+	r = request_module("dm-repl-log-%s", name);
-+	if (r < 0) {
-+		DMERR("replication log module for \"%s\" not found", name);
-+		kfree(log);
-+		return ERR_PTR(-ENOENT);
-+	}
++	/* Devices on this slink, on replog list and on resync list. */
++	struct list_head lists[NR_SLINK_LISTS];
 +
-+	type = dm_get_type(name, DM_REPLOG);
-+	if (unlikely(IS_ERR(type))) {
-+		DMERR("replication log registry type not found");
-+		kfree(log);
-+		return (struct dm_repl_log *) type;
-+	}
++	/* List of all slinks for a replog. */
++	struct dm_repl_log_slink_list *repl_slinks;
 +
-+	log->ops = type;
-+	r = type->ctr(log, ti, argc, argv);
-+	if (unlikely(r < 0)) {
-+		DMERR("%s: constructor failed", __func__);
-+		dm_put_type(type, DM_REPLOG);
-+		kfree(log);
-+		log = ERR_PTR(r);
-+	}
++	unsigned number; /* slink number. */
 +
-+	return log;
-+}
++	struct slink_params {
++		unsigned count;
++		struct dm_repl_slink_fallbehind fallbehind;
++		enum dm_repl_slink_policy_type policy;
++	} params;
 +
-+/* Put a handle on a replicator log. */
-+static void
-+repl_log_dtr(struct dm_repl_log *log, struct dm_target *ti)
-+{
-+	/* Frees log on last drop. */
-+	log->ops->dtr(log, ti);
-+	dm_put_type(log->ops, DM_REPLOG);
-+	kfree(log);
-+}
-+
-+/*
-+ * Create/destroy a transient replicator site link on initial get/last out.
-+ */
-+static struct dm_repl_slink *
-+repl_slink_ctr(char *name, struct dm_repl_log *replog,
-+	       unsigned argc, char **argv)
-+{
-+	int r;
-+	struct dm_repl_slink_type *type;
 +	struct dm_repl_slink *slink;
 +
-+	slink = kzalloc(sizeof(*slink), GFP_KERNEL);
-+	if (unlikely(!slink))
-+		return ERR_PTR(-ENOMEM);
++	struct slink_io {
++		unsigned long flags;
++		struct dm_kcopyd_client *kcopyd_client;
++		struct dm_io_client *dm_io_client;
 +
-+	/* Load requested replication site link module. */
-+	r = request_module("dm-repl-slink-%s", name);
-+	if (r < 0) {
-+		DMERR("replication slink module for \"%s\" not found", name);
-+		kfree(slink);
-+		return ERR_PTR(-ENOENT);
-+	}
++		/* Copy context and test buffer mempools. */
++		mempool_t *pool[NR_CACHES];
 +
-+	type = dm_get_type(name, DM_SLINK);
-+	if (unlikely(IS_ERR(type))) {
-+		DMERR("replication slink registry type not found");
-+		kfree(slink);
-+		return (struct dm_repl_slink *) type;
-+	}
++		/* io work. */
++		struct workqueue_struct *wq;
++		struct delayed_work dws;
 +
-+	r = type->ctr(slink, replog, argc, argv);
-+	if (unlikely(r < 0)) {
-+		DMERR("%s: constructor failed", __func__);
-+		dm_put_type(type, DM_SLINK);
-+		kfree(slink);
-+		return ERR_PTR(r);
-+	}
++		struct sdev *dev_test;
++	} io;
 +
-+	slink->ops = type;
-+	return slink;
-+}
++	/* Callback for slink recovered. */
++	struct dm_repl_slink_notify_ctx recover;
++};
 +
-+static void
-+slink_destroy(struct dm_repl_slink *slink)
++/* Macros to access slink lists. */
++#define	SLINK_DEVS_LIST(sl)	(sl->lists + SLINK_DEVS)
++#define	SLINK_REPLOG_LIST(sl)	(sl->lists + SLINK_REPLOG)
++#define	SLINK_RESYNC_LIST(sl)	(sl->lists + SLINK_RESYNC)
++
++/* Status flags for slink. */
++enum slink_flags {
++	SLINK_ERROR_READ,	/* Read error on site link. */
++	SLINK_ERROR_WRITE,	/* Write error on site link. */
++	SLINK_IMMEDIATE_WORK,	/* Flag immediate worker run. */
++	SLINK_RESYNC_PROCESSING,/* Resync is being processed on slink. */
++	SLINK_TEST_ACTIVE,	/* Device test active on slink. */
++	SLINK_WRITER,		/* Slink is being written to. */
++};
++
++/* Create slink bitfield (io.flags) access inline definitions. */
++BITOPS(SlinkErrorRead, slink, SLINK_ERROR_READ)
++BITOPS(SlinkErrorWrite, slink, SLINK_ERROR_WRITE)
++BITOPS(SlinkImmediateWork, slink, SLINK_IMMEDIATE_WORK)
++BITOPS(SlinkResyncProcessing, slink, SLINK_RESYNC_PROCESSING)
++BITOPS(SlinkTestActive, slink, SLINK_TEST_ACTIVE)
++BITOPS(SlinkWriter, slink, SLINK_WRITER)
++
++/* Copy context to carry from blockdev_copy() to copy_endio(). */
++struct copy_context {
++	struct sdev *dev_to;	/* Device to copy to. */
++
++	/* Callback for data in RAM (noop for 'blockdev' type). */
++	struct dm_repl_slink_notify_ctx ram;
++
++	/* Callback for data on disk. */
++	struct dm_repl_slink_notify_ctx disk;
++};
++
++/* Allocate/free blockdev copy context. */
++static inline struct copy_context *alloc_copy_context(struct slink *sl)
 +{
-+	/* Frees slink on last reference drop. */
-+	slink->ops->dtr(slink);
-+	dm_put_type(slink->ops, DM_SLINK);
-+	kfree(slink);
++	return mempool_alloc(sl->io.pool[COPY_CACHE], GFP_KERNEL);
 +}
 +
-+
-+/* Wake worker. */
-+static void do_repl(struct work_struct *ws);
-+static void
-+wake_do_repl(struct replog_c *replog_c)
++static inline void free_copy_context(struct copy_context *cc, struct slink *sl)
 +{
-+	queue_work(replog_c->io.wq, &replog_c->io.ws);
++	mempool_free(cc, sl->io.pool[COPY_CACHE]);
 +}
 +
-+/* Called from the replog in case we can queue more bios. */
-+static void
-+io_callback(int read_err, int write_err, void *context)
++/* Allocate/free blockdev test io buffer. */
++static inline struct test_buffer *alloc_test_buffer(struct slink *sl)
 +{
-+	struct replog_c *replog_c = context;
-+
-+	DMDEBUG_LIMIT("%s", __func__);
-+	_BUG_ON_PTR(replog_c);
-+	ClearReplBlocked(replog_c);
-+	wake_do_repl(replog_c);
++	return mempool_alloc(sl->io.pool[TEST_CACHE], GFP_KERNEL);
 +}
 +
-+/* Get a reference on a replog_c by replog reference. */
-+static struct replog_c *
-+replog_c_get(struct replog_c *replog_c)
++static inline void free_test_buffer(struct test_buffer *tb, struct slink *sl)
 +{
-+	kref_get(&replog_c->ref);
-+	return replog_c;
++	mempool_free(tb, sl->io.pool[TEST_CACHE]);
 +}
 +
-+/* Destroy replog_c object. */
-+static int slink_c_put(struct slink_c *slink_c);
-+static void
-+replog_c_release(struct kref *ref)
++/* Destcriptor type <-> name mapping. */
++static const struct dm_str_descr policies[] = {
++	{ DM_REPL_SLINK_ASYNC, "asynchronous" },
++	{ DM_REPL_SLINK_SYNC, "synchronous" },
++	{ DM_REPL_SLINK_STALL, "stall" },
++};
++
++/* Get slink policy flags. */
++static int _slink_policy_type(char *name)
 +{
-+	struct replog_c *replog_c = container_of(ref, struct replog_c, ref);
++	int r = dm_descr_type(policies, ARRAY_SIZE(policies), name);
 +
-+	BUG_ON(!list_empty(&replog_c->lists.replog_c));
-+	BUG_ON(!list_empty(&replog_c->lists.slink_c));
-+	kfree(replog_c);
++	if (r < 0)
++		DMERR("Invalid site link policy %s", name);
++
++	return r;
 +}
 +
-+/* Release reference on replog_c, releasing resources on last drop. */
++/* Get slink policy name. */
++static const char *
++_slink_policy_name(const int type)
++{
++	return dm_descr_name(policies, ARRAY_SIZE(policies), type);
++}
++
++#define	SEPARATOR	'+'
 +static int
-+replog_c_put(struct replog_c *replog_c)
++get_slink_policy(char *arg)
 +{
-+	_BUG_ON_PTR(replog_c);
-+	return kref_put(&replog_c->ref, replog_c_release);
++	int policy = 0, r;
++	char *sep;
++
++	DMDEBUG_LIMIT("%s arg=%s", __func__, arg);
++
++	/*
++	 * Check substrings of the compound policy
++	 * string separated by SEPARATOR.
++	 */
++	do {
++		sep = strchr(arg, SEPARATOR);
++		if (sep)
++			*sep = 0;
++		else
++			sep = arg;
++
++		r = _slink_policy_type(arg);
++		if (sep != arg) {
++			arg = sep + 1;
++			*sep = SEPARATOR;
++		}
++
++		if (r < 0)
++			return r;
++		else
++			set_bit(r, (unsigned long *) &policy);
++	} while (sep != arg);
++
++	return policy;
 +}
 +
-+/*
-+ * Find a replog_c by replog reference in the global replog context list.
-+ *
-+ * Call with replog_c_list_mutex held.
-+ */
-+static struct replog_c *
-+replog_c_get_by_dev(dev_t dev)
++/* String print policies. */
++static char *
++snprint_policies(enum dm_repl_slink_policy_type policies,
++		 char *result, size_t maxlen)
 +{
-+	struct replog_c *replog_c;
++	int bits = sizeof(policies) * 8, i;
++	size_t sz = 0;
 +
-+	list_for_each_entry(replog_c, &replog_c_list, lists.replog_c) {
-+		if (dev == replog_c->dev)
-+			return replog_c_get(replog_c);
-+	}
++	*result = 0;
++	for (i = 0; i < bits; i++) {
++		if (test_bit(i, (unsigned long *) &policies)) {
++			const char *name = _slink_policy_name(i);
 +
-+	return ERR_PTR(-ENOENT);
-+}
++			if (name) {
++				if (*result)
++					DMEMIT("%c", SEPARATOR);
 +
-+/* Get replicator control device major:minor. */
-+static dev_t
-+get_ctrl_dev(struct dm_target *ti)
-+{
-+	dev_t dev;
-+	struct mapped_device *md = dm_table_get_md(ti->table);
-+	struct block_device *bdev = bdget_disk(dm_disk(md), 0);
-+
-+	dev = bdev->bd_dev;
-+	bdput(bdev);
-+	dm_put(md);
-+	return dev;
-+}
-+
-+/* Allocate a replication control context. */
-+static struct replog_c *
-+replog_c_alloc(void)
-+{
-+	struct replog_c *replog_c = kzalloc(sizeof(*replog_c), GFP_KERNEL);
-+	struct repl_io *io;
-+
-+	if (unlikely(!replog_c))
-+		return ERR_PTR(-ENOMEM);
-+
-+	io = &replog_c->io;
-+
-+	/* Create singlethread workqueue for this replog's io. */
-+	io->wq = create_singlethread_workqueue(DAEMON);
-+	if (unlikely(!io->wq)) {
-+		kfree(replog_c);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+
-+	kref_init(&replog_c->ref);
-+	INIT_LIST_HEAD(&replog_c->lists.slink_c);
-+	ClearReplDevelStats(replog_c);
-+	ClearReplBlocked(replog_c);
-+	spin_lock_init(&io->in_lock);
-+	bio_list_init(&io->in);
-+	atomic_set(&io->in_flight, 0);
-+	INIT_WORK(&io->ws, do_repl);
-+	stats_reset(&io->stats);
-+	init_waitqueue_head(&io->waiters);
-+	return replog_c;
-+}
-+
-+/* Create replog_c context. */
-+static struct replog_c *
-+replog_c_create(struct dm_target *ti, struct dm_repl_log *replog)
-+{
-+	dev_t replicator_dev;
-+	struct replog_c *replog_c, *replog_c_tmp;
-+
-+	/* Get replicator control device major:minor. */
-+	replicator_dev = get_ctrl_dev(ti);
-+
-+	/* Allcate and init replog_c object. */
-+	replog_c = replog_c_alloc();
-+	if (IS_ERR(replog_c))
-+		return replog_c;
-+
-+	/* Add to global replog_c list. */
-+	mutex_lock(&replog_c_list_mutex);
-+	replog_c_tmp = replog_c_get_by_dev(replicator_dev);
-+	if (likely(IS_ERR(replog_c_tmp))) {
-+		/* We won any potential race. */
-+		/* Set replog global I/O callback and context. */
-+		replog->ops->io_notify_fn_set(replog, io_callback,
-+					      replog_c);
-+		replog_c->dev = replicator_dev;
-+		replog_c->ti = ti;
-+		replog_c->replog = replog;
-+		list_add_tail(&replog_c->lists.replog_c,
-+			      &replog_c_list);
-+		mutex_unlock(&replog_c_list_mutex);
-+	} else {
-+		/* Lost a potential race. */
-+		mutex_unlock(&replog_c_list_mutex);
-+
-+		destroy_workqueue(replog_c->io.wq);
-+		kfree(replog_c);
-+		replog_c = replog_c_tmp;
-+	}
-+
-+	return replog_c;
-+}
-+
-+/* Find dc on slink_c list by dev_nr. */
-+static struct device_c *
-+device_c_find(struct slink_c *slink_c, unsigned dev_nr)
-+{
-+	struct device_c *dc;
-+
-+	list_for_each_entry(dc, &slink_c->lists.dc, list) {
-+		if (dev_nr == dc->number)
-+			return dc;
-+	}
-+
-+	return ERR_PTR(-ENOENT);
-+}
-+
-+/* Get a reference on an slink_c by slink reference. */
-+static struct slink_c *
-+slink_c_get(struct slink_c *slink_c)
-+{
-+	kref_get(&slink_c->ref);
-+	return slink_c;
-+}
-+
-+/* Find an slink_c by slink number on the replog slink list. */
-+static struct slink_c *
-+slink_c_get_by_number(struct replog_c *replog_c, int slink_nr)
-+{
-+	struct slink_c *slink_c;
-+
-+	list_for_each_entry(slink_c, &replog_c->lists.slink_c, lists.slink_c) {
-+		int slink_nr_tmp =
-+			slink_c->slink->ops->slink_number(slink_c->slink);
-+
-+		if (slink_nr == slink_nr_tmp)
-+			return slink_c_get(slink_c);
-+	}
-+
-+	return ERR_PTR(-ENOENT);
-+}
-+
-+static struct slink_c *
-+slink_c_create(struct replog_c *replog_c, struct dm_repl_slink *slink)
-+{
-+	int r, slink_nr = slink->ops->slink_number(slink);
-+	struct slink_c *slink_c, *slink_c_tmp;
-+	struct dm_repl_log *replog = replog_c->replog;
-+
-+	BUG_ON(slink_nr < 0);
-+	DMDEBUG("%s creating slink_c for site link=%d", __func__, slink_nr);
-+
-+	slink_c = kzalloc(sizeof(*slink_c), GFP_KERNEL);
-+	if (unlikely(!slink_c))
-+		return ERR_PTR(-ENOMEM);
-+
-+	r = replog->ops->slink_add(replog, slink);
-+	if (unlikely(r < 0)) {
-+		kfree(slink_c);
-+		return ERR_PTR(r);
-+	}
-+
-+	DMDEBUG("%s added site link=%d", __func__,
-+		slink->ops->slink_number(slink));
-+
-+	kref_init(&slink_c->ref);
-+	INIT_LIST_HEAD(&slink_c->lists.dc);
-+	slink_c->replog_c = replog_c;
-+	slink_c->slink = slink;
-+
-+	/* Check creation race and add to per replog_c slink_c list. */
-+	mutex_lock(&replog_c_list_mutex);
-+	slink_c_tmp = slink_c_get_by_number(replog_c, slink_nr);
-+	if (likely(IS_ERR(slink_c_tmp)))
-+		list_add_tail(&slink_c->lists.slink_c,
-+			      &replog_c->lists.slink_c);
-+	else {
-+		kfree(slink_c);
-+		slink_c = slink_c_tmp;
-+	}
-+
-+	mutex_unlock(&replog_c_list_mutex);
-+	return slink_c;
-+}
-+
-+/*
-+ * Release reference on slink_c, removing dc from
-+ * it and releasing resources on last drop.
-+ */
-+static void
-+slink_c_release(struct kref *ref)
-+{
-+	struct slink_c *slink_c = container_of(ref, struct slink_c, ref);
-+
-+	BUG_ON(!list_empty(&slink_c->lists.dc));
-+	kfree(slink_c);
-+}
-+
-+/*
-+ * Release reference on slink_c, removing dc from
-+ * it and releasing resources on last drop.
-+ */
-+static int
-+slink_c_put(struct slink_c *slink_c)
-+{
-+	return kref_put(&slink_c->ref, slink_c_release);
-+}
-+
-+/* Either set ti->error or call DMERR() depending on ctr call type. */
-+enum ctr_call_type { CTR_CALL, MESSAGE_CALL };
-+static void
-+ti_or_dmerr(enum ctr_call_type call_type, struct dm_target *ti, char *msg)
-+{
-+	if (call_type == CTR_CALL)
-+		ti->error = msg;
-+	else
-+		DMERR("%s", msg);
-+}
-+
-+/*
-+ * Check, if @str is listed on variable (const char *) list of strings.
-+ *
-+ * Returns 1 for found on list and 0 for failure.
-+ */
-+static int
-+str_listed(const char *str, ...)
-+{
-+	int r = 0;
-+	const char *s;
-+	va_list str_list;
-+
-+	va_start(str_list, str);
-+
-+	while ((s = va_arg(str_list, const char *))) {
-+		if (!strncmp(str, s, strlen(str))) {
-+			r = 1;
-+			break;
++				DMEMIT("%s", name);
++			}
 +		}
 +	}
 +
-+	va_end(str_list);
-+	return r;
++	return result;
++}
++
++/* Fallbehind type <-> name mappings. */
++static const struct dm_str_descr fb_types[] = {
++	{ DM_REPL_SLINK_FB_IOS, "ios" },
++	{ DM_REPL_SLINK_FB_SIZE, "size" },
++	{ DM_REPL_SLINK_FB_TIMEOUT, "timeout" },
++};
++
++/* Return name of fallbehind parameter by type. */
++static const char *
++fb_name(enum dm_repl_slink_fallbehind_type type)
++{
++	return dm_descr_name(fb_types, ARRAY_SIZE(fb_types), type);
++}
++
++/* String print fallbehind. */
++static char *
++snprint_fallbehind(struct dm_repl_slink_fallbehind *fallbehind,
++		   char *result, size_t maxlen)
++{
++	size_t sz = 0;
++	sector_t value = fallbehind->value;
++
++	sector_div(value, fallbehind->multiplier);
++	DMEMIT("%s %llu%c", fb_name(fallbehind->type),
++	       (unsigned long long) value, fallbehind->unit);
++	return result;
 +}
 +
 +/*
-+ * Worker thread.
-+ *
-+ * o work on all new queued bios io'ing them to the REPLOG
-+ * o break out if replog reports -EWOULDBLOCK until called back
++ * Check and get fallbehind value and type.
++ * Pay attention to unit qualifiers.
 + */
-+static void
-+do_repl(struct work_struct *ws)
++static int
++_get_slink_fallbehind(int argc, char **argv,
++		      enum dm_repl_slink_fallbehind_type fb_type,
++		      struct dm_repl_slink_fallbehind *fb)
 +{
-+	struct replog_c *replog_c = container_of(ws, struct replog_c, io.ws);
-+	struct dm_repl_log *replog = replog_c->replog;
-+	struct bio *bio;
-+	struct bio_list ios;
++	int arg = 0, r;
++	unsigned multi = 1;
++	long long tmp;
++	char *unit;
++	const char *name = fb_name(fb_type);
 +
-+	_BUG_ON_PTR(replog);
++	fb->unit = 0;
 +
-+	if (ReplBlocked(replog_c))
-+		return;
++	/* Old syntax e.g. "ios=1000". */
++	r = sscanf(argv[arg] + strlen(name), "=%lld", &tmp) != 1 || tmp < 0;
++	if (r) {
++		if (argc < 2)
++			goto bad_value;
 +
-+	bio_list_init(&ios);
-+
-+	/* Quickly grab all (new) input bios queued. */
-+	spin_lock(&replog_c->io.in_lock);
-+	bio_list_merge(&ios, &replog_c->io.in);
-+	bio_list_init(&replog_c->io.in);
-+	spin_unlock(&replog_c->io.in_lock);
-+
-+	/* Work all deferred or new bios on work list. */
-+	while ((bio = bio_list_pop(&ios))) {
-+		int r = replog->ops->io(replog, bio, 0);
-+
-+		if (r == -EWOULDBLOCK) {
-+			SetReplBlocked(replog_c);
-+			/* REMOVEME: */
-+			DMDEBUG_LIMIT("%s SetReplBlocked", __func__);
-+
-+			/* Push non-processed bio back to the work list. */
-+			bio_list_push(&ios, bio);
-+
-+			/*
-+			 * Merge non-processed bios
-+			 * back to the input list head.
-+			 */
-+			spin_lock(&replog_c->io.in_lock);
-+			bio_list_merge_head(&replog_c->io.in, &ios);
-+			spin_unlock(&replog_c->io.in_lock);
-+
-+			break;
-+		} else
-+			BUG_ON(r);
++		/* New syntax e.g. "ios 1000". */
++		r = sscanf(argv[++arg], "%lld", &tmp) != 1 || tmp < 0;
 +	}
-+}
 +
-+/* Replication congested function. */
-+static int
-+repl_congested(void *congested_data, int bdi_bits)
-+{
-+	int r;
-+	struct device_c *dc = congested_data;
-+	struct replog_c *replog_c;
++	unit = argv[arg] + strlen(argv[arg]) - 1;
++	unit = (*unit < '0' || *unit > '9') ? unit : NULL;
 +
-+	_BUG_ON_PTR(dc);
-+	_BUG_ON_PTR(dc->slink_c);
-+	replog_c = dc->slink_c->replog_c;
-+	_BUG_ON_PTR(replog_c);
-+	r = !!ReplBlocked(replog_c);
++	if (r)
++		goto bad_value;
 +
-+	/* REMOVEME: statistics. */
-+	atomic_inc(&replog_c->io.stats.congested_fn[r]);
-+	return r;
-+}
++	if (unit) {
++		const struct units {
++			const char *chars;
++			const sector_t multiplier[];
++		} *u = NULL;
++		static const struct units size = {
++			"sSkKmMgGtTpPeE",
++			#define TWO	(sector_t) 2
++		/*  sectors, KB,MB,      GB,      TB,      PB,      EB */
++			{ 1, 2, TWO<<10, TWO<<20, TWO<<30, TWO<<40, TWO<<50 },
++			#undef	TWO
++		}, timeout = {
++			"tTsSmMhHdD",
++			/*ms, sec, minute,  hour,       day */
++			{ 1, 1000, 60*1000, 60*60*1000, 24*60*60*1000 },
++		};
++		const char *c;
 +
-+/* Set backing device congested function of a local replicated device. */
-+static void
-+dc_set_bdi(struct device_c *dc)
-+{
-+	struct mapped_device *md = dm_table_get_md(dc->ti->table);
-+	struct backing_dev_info *bdi = &dm_disk(md)->queue->backing_dev_info;
++		switch (fb_type) {
++		case DM_REPL_SLINK_FB_SIZE:
++			u = &size;
++			goto retrieve;
++		case DM_REPL_SLINK_FB_TIMEOUT:
++			u = &timeout;
++retrieve:
++			/* Skip to unit identifier character. */
++			for (c = u->chars, multi = 0;
++			     *c && *c != *unit;
++			     c++, multi++)
++				;
 +
-+	/* Set congested function and data. */
-+	bdi->congested_fn = repl_congested;
-+	bdi->congested_data = dc;
-+	dm_put(md);
-+}
++			if (*c) {
++				fb->unit = *c;
++				multi = u->multiplier[(multi + 2) / 2];
++			} else
++				goto bad_unit;
++		case DM_REPL_SLINK_FB_IOS:
++			break;
 +
-+/* Get device on slink and unlink it from the list of devices. */
-+static struct device_c *
-+dev_get_del(struct device_c *dc, int slink_nr, struct list_head *dc_list)
-+{
-+	int dev_nr;
-+	struct slink_c *slink_c;
-+	struct dm_repl_slink *slink;
-+	struct dm_repl_log *replog;
-+	struct replog_c *replog_c;
-+
-+	/* REMOVEME: */
-+	_BUG_ON_PTR(dc);
-+	dev_nr = dc->number;
-+	BUG_ON(dev_nr < 0);
-+	slink_c = dc->slink_c;
-+	_BUG_ON_PTR(slink_c);
-+	slink = slink_c->slink;
-+	_BUG_ON_PTR(slink);
-+	replog_c = slink_c->replog_c;
-+	_BUG_ON_PTR(replog_c);
-+	replog = replog_c->replog;
-+	_BUG_ON_PTR(replog);
-+
-+	/* Get the slink by number. */
-+	slink = slink->ops->slink(replog, slink_nr);
-+	if (IS_ERR(slink))
-+		return (struct device_c *) slink;
-+
-+	slink_c = slink_c_get_by_number(replog_c, slink_nr);
-+	if (IS_ERR(slink_c))
-+		return (struct device_c *) slink_c;
-+
-+	dc = device_c_find(slink_c, dev_nr);
-+	if (IS_ERR(dc))
-+		DMERR("No device %d on slink %d", dev_nr, slink_nr);
-+	else
-+		list_move(&dc->list, dc_list);
-+
-+	BUG_ON(slink_c_put(slink_c));
-+	return dc;
-+}
-+
-+/* Free device and put references. */
-+static int
-+dev_free_put(struct device_c *dc, int slink_nr)
-+{
-+	int r;
-+	struct slink_c *slink_c;
-+	struct dm_repl_slink *slink;
-+
-+	/* REMOVEME: */
-+	_BUG_ON_PTR(dc);
-+	BUG_ON(dc->number < 0);
-+	BUG_ON(slink_nr < 0);
-+	slink_c = dc->slink_c;
-+	_BUG_ON_PTR(slink_c);
-+	slink = slink_c->slink;
-+	_BUG_ON_PTR(slink);
-+
-+	/* Delete device from slink. */
-+	r = slink->ops->dev_del(slink, dc->number);
-+	if (r < 0) {
-+		DMERR("Error %d deleting device %d from "
-+		      "site link %d", r, dc->number, slink_nr);
-+	} else
-+		/* Drop reference on replicator control device. */
-+		dm_put_device(dc->ti, dc->replicator_dev);
-+
-+	kfree(dc);
-+
-+	if (!r)
-+		/* Drop reference on slink_c, freeing it on last one. */
-+		BUG_ON(slink_c_put(slink_c));
-+
-+	return r;
-+}
-+
-+/*
-+ * Replication device "replicator-dev" destructor method.
-+ *
-+ * Either on slink0 in case slink_nr == 0 for mapped devices;
-+ * the whole chain of LD + its RDs will be deleted
-+ * -or-
-+ * on slink > 0 in case of message interface calls (just one RD)
-+ */
-+static int
-+_replicator_dev_dtr(struct dm_target *ti, int slink_nr)
-+{
-+	int r;
-+	struct device_c *dc = ti->private, *dc_tmp, *dc_n;
-+	struct slink_c *slink_c, *slink_c_n;
-+	struct replog_c *replog_c;
-+	struct dm_repl_slink *slink;
-+	struct list_head dc_list;
-+
-+	BUG_ON(slink_nr < 0);
-+	_BUG_ON_PTR(dc);
-+	INIT_LIST_HEAD(&dc_list);
-+	slink_c = dc->slink_c;
-+	_BUG_ON_PTR(slink_c);
-+	replog_c = slink_c->replog_c;
-+	_BUG_ON_PTR(replog_c);
-+
-+	/* First pull device out on all slinks holding lock. */
-+	mutex_lock(&replog_c_list_mutex);
-+	/* Call from message interface wih slink_nr > 0. */
-+	if (slink_nr)
-+		dev_get_del(dc, slink_nr, &dc_list);
-+	else {
-+		/* slink number 0 -> delete LD and any RDs. */
-+		list_for_each_entry_safe(slink_c, slink_c_n,
-+					 &replog_c->lists.slink_c,
-+					 lists.slink_c) {
-+			slink = slink_c->slink;
-+			_BUG_ON_PTR(slink);
-+			slink_nr = slink->ops->slink_number(slink);
-+			BUG_ON(slink_nr < 0);
-+			dev_get_del(dc, slink_nr, &dc_list);
++		default:
++			BUG();
 +		}
 +	}
 +
-+	mutex_unlock(&replog_c_list_mutex);
-+
-+	r = !list_empty(&dc_list);
-+
-+	/* Now delete devices on pulled out list. */
-+	list_for_each_entry_safe(dc_tmp, dc_n, &dc_list, list) {
-+		slink = dc_tmp->slink_c->slink;
-+		dev_free_put(dc_tmp, slink->ops->slink_number(slink));
-+	}
-+
-+	ti->private = NULL;
-+	return r;
-+}
-+
-+/* Replicator device destructor. Autodestructs devices on slink > 0. */
-+static void
-+replicator_dev_dtr(struct dm_target *ti)
-+{
-+	_replicator_dev_dtr(ti, 0); /* Slink 0 device destruction. */
-+}
-+
-+/* Construct a local/remote device. */
-+/*
-+ * slink_nr dev_nr dev_path dirty_log_params
-+ *
-+ * [0 1 /dev/mapper/local_device \	# local device being replicated
-+ * nolog 0]{1..N}			# no dirty log with local devices
-+ */
-+#define	MIN_DEV_ARGS	5
-+static int
-+device_ctr(enum ctr_call_type call_type, struct dm_target *ti,
-+	   struct replog_c *replog_c,
-+	   const char *replicator_path, unsigned dev_nr,
-+	   unsigned argc, char **argv, unsigned *args_used)
-+{
-+	int dev_params, dirtylog_params, params, r, slink_nr;
-+	struct dm_repl_slink *slink;	/* Site link handle. */
-+	struct slink_c *slink_c;	/* Site link context. */
-+	struct device_c *dc;		/* Replication device context. */
-+
-+	SHOW_ARGV;
-+
-+	if (argc < MIN_DEV_ARGS) {
-+		ti_or_dmerr(call_type, ti, "Not enough device arguments");
-+		return -EINVAL;
-+	}
-+
-+	/* Get slink number. */
-+	params = 0;
-+	if (unlikely(sscanf(argv[params], "%d", &slink_nr) != 1 ||
-+		     slink_nr < 0)) {
-+		ti_or_dmerr(call_type, ti,
-+			    "Invalid site link number argument");
-+		return -EINVAL;
-+	}
-+
-+	/* Get #dev_params. */
-+	params++;
-+	if (unlikely(sscanf(argv[params], "%d", &dev_params) != 1 ||
-+		     dev_params < 0 ||
-+		     dev_params  + 4 > argc)) {
-+		ti_or_dmerr(call_type, ti,
-+			    "Invalid device parameter number argument");
-+		return -EINVAL;
-+	}
-+
-+	/* Get #dirtylog_params. */
-+	params += dev_params + 2;
-+	if (unlikely(sscanf(argv[params], "%d", &dirtylog_params) != 1 ||
-+		     dirtylog_params < 0 ||
-+		     params + dirtylog_params + 1 > argc)) {
-+		ti_or_dmerr(call_type, ti,
-+			    "Invalid dirtylog parameter number argument");
-+		return -EINVAL;
-+	}
-+
-+	/* Check that all parameters are sane. */
-+	params = dev_params + dirtylog_params + 3;
-+	if (params > argc) {
-+		ti_or_dmerr(call_type, ti,
-+			    "Invalid device/dirtylog argument count");
-+		return -EINVAL;
-+	}
-+
-+	/* Get SLINK handle. */
-+	mutex_lock(&replog_c_list_mutex);
-+	slink_c = slink_c_get_by_number(replog_c, slink_nr);
-+	mutex_unlock(&replog_c_list_mutex);
-+
-+	if (unlikely(IS_ERR(slink_c))) {
-+		ti_or_dmerr(call_type, ti, "Cannot find site link context");
-+		return -ENOENT;
-+	}
-+
-+	slink = slink_c->slink;
-+	_BUG_ON_PTR(slink);
-+
-+	/* Allocate replication context for new device. */
-+	dc = kzalloc(sizeof(*dc), GFP_KERNEL);
-+	if (unlikely(!dc)) {
-+		ti_or_dmerr(call_type, ti, "Cannot allocate device context");
-+		BUG_ON(slink_c_put(slink_c));
-+		return -ENOMEM;
-+	}
-+
-+	INIT_LIST_HEAD(&dc->list);
-+	dc->slink_c = slink_c;
-+	dc->ti = ti;
-+
-+	/*
-+	 * Get reference on replicator control device.
-+	 *
-+	 * Dummy start/size sufficient here.
-+	 */
-+	r = dm_get_device(ti, replicator_path, 0, 1,
-+			  FMODE_WRITE, &dc->replicator_dev);
-+	if (unlikely(r < 0)) {
-+		ti_or_dmerr(call_type, ti,
-+			    "Can't access replicator control device");
-+		goto err_slink_put;
-+	}
-+
-+	/* Add device to slink. */
-+	/*
-+	 * ti->split_io for all local devices must be set
-+	 * to the unique region_size of the remote devices.
-+	 */
-+	r = slink->ops->dev_add(slink, dev_nr, ti, params, argv + 1);
-+	if (unlikely(r < 0)) {
-+		ti_or_dmerr(call_type, ti, r == -EEXIST ?
-+			"device already in use on site link" :
-+			"Failed to add device to site link");
-+		goto err_device_put;
-+	}
-+
-+	dc->number = r;
-+
-+	/* Only set bdi properties on local devices. */
-+	if (!slink_nr) {
-+		/* Preset, will be set to region size in the slink code. */
-+		ti->split_io = DM_REPL_MIN_SPLIT_IO;
-+
-+		/*
-+		 * Init ti reference on slink0 devices only,
-+		 * because they only have a local mapping!
-+		 */
-+		ti->private = dc;
-+		dc_set_bdi(dc);
-+	}
-+
-+	/* Add rc to slink_c list. */
-+	mutex_lock(&replog_c_list_mutex);
-+	list_add_tail(&dc->list, &slink_c->lists.dc);
-+	mutex_unlock(&replog_c_list_mutex);
-+
-+	*args_used = dev_params + dirtylog_params + 4;
-+	DMDEBUG("%s added device=%d to site link=%u", __func__,
-+		r, slink->ops->slink_number(slink));
++	fb->type = fb_type;
++	fb->multiplier = multi;
++	fb->value = tmp * multi;
 +	return 0;
 +
-+err_device_put:
-+	dm_put_device(ti, dc->replicator_dev);
-+err_slink_put:
-+	BUG_ON(slink_c_put(slink_c));
-+	kfree(dc);
-+	return r;
-+}
++bad_value:
++	DMERR("invalid fallbehind %s value", argv[0]);
++	return -EINVAL;
 +
-+/*
-+ * Replication device "replicator-dev" constructor method.
-+ *
-+ * <start> <length> replicator-dev
-+ *         <replicator_device> <dev_nr>		\
-+ *         [<slink_nr> <#dev_params> <dev_params>
-+ *          <dlog_type> <#dlog_params> <dlog_params>]{1..N}
-+ *
-+ * <replicator_device> = device previously constructed via "replication" target
-+ * <dev_nr>	    = An integer that is used to 'tag' write requests as
-+ *		      belonging to a particular set of devices - specifically,
-+ *		      the devices that follow this argument (i.e. the site
-+ *		      link devices).
-+ * <slink_nr>	    = This number identifies the site/location where the next
-+ *		      device to be specified comes from.  It is exactly the
-+ *		      same number used to identify the site/location (and its
-+ *		      policies) in the "replicator" target.  Interestingly,
-+ *		      while one might normally expect a "dev_type" argument
-+ *		      here, it can be deduced from the site link number and
-+ *		      the 'slink_type' given in the "replication" target.
-+ * <#dev_params>    = '1'  (The number of allowed parameters actually depends
-+ *		      on the 'slink_type' given in the "replication" target.
-+ *		      Since our only option there is "blockdev", the only
-+ *		      allowable number here is currently '1'.)
-+ * <dev_params>	    = 'dev_path'  (Again, since "blockdev" is the only
-+ *		      'slink_type' available, the only allowable argument here
-+ *		      is the path to the device.)
-+ * <dlog_type>	    = Not to be confused with the "replicator log", this is
-+ *		      the type of dirty log associated with this particular
-+ *		      device.  Dirty logs are used for synchronization, during
-+ *		      initialization or fall behind conditions, to bring devices
-+ *		      into a coherent state with its peers - analogous to
-+ *		      rebuilding a RAID1 (mirror) device.  Available dirty
-+ *		      log types include: 'nolog', 'core', and 'disk'
-+ * <#dlog_params>   = The number of arguments required for a particular log
-+ *		      type - 'nolog' = 0, 'core' = 1/2, 'disk' = 2/3.
-+ * <dlog_params>    = 'nolog' => ~no arguments~
-+ *		      'core'  => <region_size> [sync | nosync]
-+ *		      'disk'  => <dlog_dev_path> <region_size> [sync | nosync]
-+ *	<region_size>   = This sets the granularity at which the dirty log
-+ *			  tracks what areas of the device is in-sync.
-+ *	[sync | nosync] = Optionally specify whether the sync should be forced
-+ *			  or avoided initially.
-+ */
-+#define LOG_ARGS 2
-+#define DEV_MIN_ARGS 5
-+static int
-+_replicator_dev_ctr(enum ctr_call_type call_type, struct dm_target *ti,
-+		    unsigned argc, char **argv)
-+{
-+	int args_used, r, tmp;
-+	unsigned dev_nr;
-+	char *replicator_path = argv[0];
-+	struct dm_dev *ctrl_dev;
-+	struct replog_c *replog_c;
-+
-+	SHOW_ARGV;
-+
-+	if (argc < LOG_ARGS + DEV_MIN_ARGS)
-+		goto err_args;
-+
-+	/*
-+	 * Get reference on replicator control device.
-+	 *
-+	 * Dummy start/size sufficient here.
-+	 */
-+	r = dm_get_device(ti, replicator_path, 0, 1, FMODE_WRITE, &ctrl_dev);
-+	if (unlikely(r < 0)) {
-+		ti_or_dmerr(CTR_CALL, ti,
-+			    "Can't access replicator control device");
-+		return r;
-+	}
-+
-+	if (sscanf(argv[1], "%d", &tmp) != 1 ||
-+	    tmp < 0) {
-+		dm_put_device(ti, ctrl_dev);
-+		ti_or_dmerr(call_type, ti, "Invalid device number argument");
-+		return -EINVAL;
-+	}
-+
-+	dev_nr = tmp;
-+
-+	/* Find precreated replog context by device, taking out a reference. */
-+	mutex_lock(&replog_c_list_mutex);
-+	replog_c = replog_c_get_by_dev(ctrl_dev->bdev->bd_dev);
-+	mutex_unlock(&replog_c_list_mutex);
-+
-+	if (unlikely(IS_ERR(replog_c))) {
-+		dm_put_device(ti, ctrl_dev);
-+		ti_or_dmerr(call_type, ti, "Failed to find replication log");
-+		return PTR_ERR(replog_c);
-+	}
-+
-+	_BUG_ON_PTR(replog_c->replog);
-+	argc -= LOG_ARGS;
-+	argv += LOG_ARGS;
-+
-+	/*
-+	 * Iterate all slinks/rds if multiple device/dirty
-+	 * log tuples present on mapping table line.
-+	 */
-+	while (argc >= DEV_MIN_ARGS) {
-+		/* Create slink+device context. */
-+		r = device_ctr(call_type, ti, replog_c, replicator_path,
-+			       dev_nr, argc, argv, &args_used);
-+		if (unlikely(r))
-+			goto device_ctr_err;
-+
-+		BUG_ON(args_used > argc);
-+		argc -= args_used;
-+		argv += args_used;
-+	}
-+
-+	/* All arguments consumed? */
-+	if (argc) {
-+		r = -EINVAL;
-+		goto invalid_args;
-+	}
-+
-+	/* Drop initially taken replog reference. */
-+	BUG_ON(replog_c_put(replog_c));
-+	dm_put_device(ti, ctrl_dev);
-+	return 0;
-+
-+invalid_args:
-+	ti_or_dmerr(call_type, ti, "Invalid device arguments");
-+device_ctr_err:
-+	/* Drop the initially taken replog reference. */
-+	BUG_ON(replog_c_put(replog_c));
-+	dm_put_device(ti, ctrl_dev);
-+
-+	/* If we get an error in ctr -> tear down. */
-+	if (call_type == CTR_CALL)
-+		replicator_dev_dtr(ti);
-+
-+	return r;
-+
-+err_args:
-+	ti_or_dmerr(call_type, ti, "Not enough device arguments");
++bad_unit:
++	DMERR("invalid slink fallbehind unit");
 +	return -EINVAL;
 +}
 +
-+/* Constructor method. */
 +static int
-+replicator_dev_ctr(struct dm_target *ti, unsigned argc, char **argv)
++get_slink_fallbehind(int argc, char **argv, struct dm_repl_slink_fallbehind *fb)
 +{
-+	return _replicator_dev_ctr(CTR_CALL, ti, argc, argv);
-+}
++	const struct dm_str_descr *f = ARRAY_END(fb_types);
 +
-+/* Device flush method. */
-+static void
-+replicator_dev_flush(struct dm_target *ti)
-+{
-+	struct device_c *dc = ti->private;
-+	struct dm_repl_log *replog;
-+
-+	_BUG_ON_PTR(dc);
-+	_BUG_ON_PTR(dc->slink_c);
-+	_BUG_ON_PTR(dc->slink_c->replog_c);
-+	replog = dc->slink_c->replog_c->replog;
-+	_BUG_ON_PTR(replog);
-+	BUG_ON(!replog->ops->flush);
-+	replog->ops->flush(replog);
-+}
-+
-+/* Queues bios to the cache and wakes up worker thread. */
-+static inline void
-+queue_bio(struct device_c *dc, struct bio *bio)
-+{
-+	struct replog_c *replog_c = dc->slink_c->replog_c;
-+
-+	/* REMOVEME: statistics */
-+	atomic_inc(replog_c->io.stats.io + !!(bio_data_dir(bio) == WRITE));
-+
-+	spin_lock(&replog_c->io.in_lock);
-+	bio_list_add(&replog_c->io.in, bio);
-+	replog_c_io_get(replog_c);
-+	spin_unlock(&replog_c->io.in_lock);
-+
-+	/* Wakeup worker to deal with bio input list. */
-+	wake_do_repl(replog_c);
-+}
-+
-+/*
-+ * Map a replicated device io by handling it in the worker
-+ * thread in order to avoid delays in the fast path.
-+ */
-+static int
-+replicator_dev_map(struct dm_target *ti, struct bio *bio,
-+		   union map_info *map_context)
-+{
-+	map_context->ptr = bio->bi_private;
-+	bio->bi_sector -= ti->begin;	/* Remap sector to target begin. */
-+	queue_bio(ti->private, bio);	/* Queue bio to the worker. */
-+	return DM_MAPIO_SUBMITTED;	/* Handle later. */
-+}
-+
-+
-+/* Replication device suspend/resume helper. */
-+enum suspend_resume_type { POSTSUSPEND, RESUME };
-+static void
-+_replicator_dev_suspend_resume(struct dm_target *ti,
-+			       enum suspend_resume_type type)
-+{
-+	struct device_c *dc = ti->private;
-+	struct replog_c *replog_c;
-+	struct slink_c *slink_c, *n;
-+	int dev_nr = dc->number, slinks = 0;
-+
-+	DMDEBUG("%s %s", __func__, type == RESUME ? "resume" : "postsusend");
-+	_BUG_ON_PTR(dc);
-+	_BUG_ON_PTR(dc->slink_c);
-+	replog_c = dc->slink_c->replog_c;
-+	_BUG_ON_PTR(replog_c);
-+	BUG_ON(dev_nr < 0);
-+
-+	/* Suspend/resume device on all slinks. */
-+	list_for_each_entry_safe(slink_c, n, &replog_c->lists.slink_c,
-+				 lists.slink_c) {
-+		int r;
-+		struct dm_repl_slink *slink = slink_c->slink;
-+
-+		_BUG_ON_PTR(slink);
-+
-+		r = type == RESUME ?
-+			slink->ops->resume(slink, dev_nr) :
-+			slink->ops->postsuspend(slink, dev_nr);
-+		if (r < 0)
-+			DMERR("Error %d %s device=%d on site link %u",
-+			      r, type == RESUME ?
-+			      "resuming" : "postsuspending",
-+			      dev_nr, slink->ops->slink_number(slink));
-+		else
-+			slinks++;
++	while (f-- > fb_types) {
++		/* Check for fallbehind argument. */
++		if (!strnicmp(STR_LEN(fb_name(f->type), argv[0])))
++			return _get_slink_fallbehind(argc, argv, f->type, fb);
 +	}
 +
-+	if (type == RESUME && slinks)
-+		wake_do_repl(replog_c);
++	DMERR("invalid fallbehind type %s", argv[0]);
++	return -EINVAL;
 +}
 +
-+/* Replication device post suspend method. */
-+static void
-+replicator_dev_postsuspend(struct dm_target *ti)
++/* Return region on device fro given sector. */
++static sector_t
++sector_to_region(struct sdev *dev, sector_t sector)
 +{
-+	_replicator_dev_suspend_resume(ti, POSTSUSPEND);
++	sector_div(sector, dev->ti->split_io);
++	return sector;
 +}
 +
-+/* Replicatin device resume method. */
-+static void
-+replicator_dev_resume(struct dm_target *ti)
++/* Check dm_repl_slink and slink ok. */
++static struct slink *
++slink_check(struct dm_repl_slink *slink)
 +{
-+	_replicator_dev_suspend_resume(ti, RESUME);
++	struct slink *sl;
++
++	if (unlikely(!slink))
++		return ERR_PTR(-EINVAL);
++
++	if (unlikely(IS_ERR(slink)))
++		return (struct slink *) slink;
++
++	sl = slink->context;
++	return sl ? sl : ERR_PTR(-EINVAL);
 +}
 +
-+/* Pass endio calls down to the replicator log if requested. */
-+static int
-+replicator_dev_endio(struct dm_target *ti, struct bio *bio,
-+		     int error, union map_info *map_context)
-+{
-+	int rr, rs;
-+	struct device_c *dc = ti->private;
-+	struct replog_c *replog_c;
-+	struct dm_repl_log *replog;
-+	struct dm_repl_slink *slink;
-+
-+	_BUG_ON_PTR(dc);
-+	_BUG_ON_PTR(dc->slink_c);
-+	slink = dc->slink_c->slink;
-+	replog_c = dc->slink_c->replog_c;
-+	_BUG_ON_PTR(replog_c);
-+	replog = dc->slink_c->replog_c->replog;
-+	_BUG_ON_PTR(replog);
-+
-+	rr = replog->ops->endio ?
-+	     replog->ops->endio(replog, bio, error, map_context) : 0;
-+	rs = slink->ops->endio ?
-+	     slink->ops->endio(slink, bio, error, map_context) : 0;
-+	replog_c_io_put(replog_c);
-+	return rs < 0 ? rs : rr;
-+}
-+
-+/*
-+ * Replication device message method.
-+ *
-+ * Arguments:
-+ * device add/del \
-+ * 63:4 0 \		# replication log on 63:4 and device number '0'
-+ * [0 1 /dev/mapper/local_device \	# local device being replicated
-+ * nolog 0]{1..N}			# no dirty log with local devices
-+ *
-+ * start/resume all/device		# Resume whole replicator/
-+ * 					# a single device
-+ */
-+static int
-+replicator_dev_message(struct dm_target *ti, unsigned argc, char **argv)
-+{
-+	int slink_nr;
-+	struct device_c *dc = ti->private;
-+	struct replog_c *replog_c;
-+	struct dm_repl_log *replog;
-+
-+	SHOW_ARGV;
-+
-+	_BUG_ON_PTR(dc);
-+	_BUG_ON_PTR(dc->slink_c);
-+	replog_c = dc->slink_c->replog_c;
-+	_BUG_ON_PTR(replog_c);
-+	replog = dc->slink_c->replog_c->replog;
-+	_BUG_ON_PTR(replog);
-+
-+	/* Check minimum arguments. */
-+	if (unlikely(argc < 1))
-+		goto err_args;
-+
-+	/* Add/delete a device to/from a site link. */
-+	if (str_listed(argv[0], "device", NULL)) {
-+		if (argc < 2)
-+			goto err_args;
-+
-+		/* We've got the target index of an SLINK0 device here. */
-+		if (str_listed(argv[1], "add", NULL))
-+			return _replicator_dev_ctr(MESSAGE_CALL, ti,
-+						   argc - 2, argv + 2);
-+		else if (str_listed(argv[1], "del", NULL)) {
-+			if (argc < 3)
-+				goto err_args;
-+
-+			if (sscanf(argv[2], "%d", &slink_nr) != 1 ||
-+			    slink_nr < 1)
-+				DM_EINVAL("invalid site link number "
-+					  "argument; must be > 0");
-+
-+			return _replicator_dev_dtr(ti, slink_nr);
-+		} else
-+			DM_EINVAL("invalid device command argument");
-+
-+	/* Start replication on single device on all slinks. */
-+	} else if (str_listed(argv[0], "start", "resume", NULL))
-+		replicator_dev_resume(ti);
-+
-+	/* Stop replication for single device on all slinks. */
-+	else if (str_listed(argv[0], "stop", "suspend", "postsuspend", NULL))
-+		replicator_dev_postsuspend(ti);
-+	else
-+		DM_EINVAL("invalid message command");
-+
-+	return 0;
-+
-+err_args:
-+	DM_EINVAL("too few message arguments");
-+}
-+
-+/* Replication device status output method. */
-+static int
-+replicator_dev_status(struct dm_target *ti, status_type_t type,
-+		      char *result, unsigned maxlen)
-+{
-+	ssize_t sz = 0;
-+	static char buffer[2048];
-+	struct device_c *dc = ti->private;
-+	struct replog_c *replog_c;
-+	struct dm_repl_slink *slink;
-+
-+	mutex_lock(&replog_c_list_mutex);
-+	_BUG_ON_PTR(dc);
-+	_BUG_ON_PTR(dc->slink_c);
-+	slink = dc->slink_c->slink;
-+	_BUG_ON_PTR(slink);
-+	replog_c = dc->slink_c->replog_c;
-+	_BUG_ON_PTR(replog_c);
-+
-+	DMEMIT("%s %d ", format_dev_t(buffer, replog_c->dev), dc->number);
-+	mutex_unlock(&replog_c_list_mutex);
-+	slink->ops->status(slink, dc->number, type, buffer, sizeof(buffer));
-+	DMEMIT("%s", buffer);
-+	return 0;
-+}
-+
-+/* Replicator device interface. */
-+static struct target_type replicator_dev_target = {
-+	.name = "replicator-dev",
-+	.version = {1, 0, 0},
-+	.module = THIS_MODULE,
-+	.ctr = replicator_dev_ctr,
-+	.dtr = replicator_dev_dtr,
-+	.flush = replicator_dev_flush,
-+	.map = replicator_dev_map,
-+	.postsuspend = replicator_dev_postsuspend,
-+	.resume = replicator_dev_resume,
-+	.end_io = replicator_dev_endio,
-+	.message = replicator_dev_message,
-+	.status = replicator_dev_status,
++struct cache_defs {
++	enum cache_type type;
++	const int min;
++	struct kmem_cache *cache;
++	const char *name;
++	const size_t size;
 +};
 +
++/* Slabs for the copy context structures and for device test I/O buffers. */
++static struct cache_defs cache_defs[] = {
++	{ COPY_CACHE, MIN_IOS, NULL,
++	  "dm_repl_slink_copy", sizeof(struct copy_context) },
++	{ TEST_CACHE, MIN_IOS, NULL,
++	  "dm_repl_slink_test", SLINK_TEST_SIZE },
++};
 +
 +/*
-+ * Replication log destructor.
++ * Release resources when last reference dropped.
++ *
++ * Gets called with lock hold to atomically delete slink from list.
 + */
 +static void
-+replicator_dtr(struct dm_target *ti)
++slink_release(struct kref *ref)
 +{
-+	int r, slink_nr;
-+	struct replog_c *replog_c = ti->private;
-+	struct dm_repl_log *replog;
-+	struct slink_c *slink_c, *n;
-+	struct dm_repl_slink *slink;
++	struct slink *sl = container_of(ref, struct slink, ref);
 +
-+	_BUG_ON_PTR(replog_c);
-+	replog = replog_c->replog;
-+	_BUG_ON_PTR(replog);
++	DMDEBUG("%s slink=%d released", __func__, sl->number);
++	kfree(sl);
++}
 +
-+	/* Pull out replog_c to process destruction cleanly. */
-+	mutex_lock(&replog_c_list_mutex);
-+	list_del_init(&replog_c->lists.replog_c);
-+	mutex_unlock(&replog_c_list_mutex);
++/* Take out reference on slink. */
++static struct slink *
++slink_get(struct slink *sl)
++{
++	kref_get(&sl->ref);
++	return sl;
++}
 +
-+	/* Put all replog's slink contexts. */
-+	list_for_each_entry_safe(slink_c, n, &replog_c->lists.slink_c,
-+				 lists.slink_c) {
-+		list_del_init(&slink_c->lists.slink_c);
-+		slink = slink_c->slink;
-+		_BUG_ON_PTR(slink);
-+		slink_nr = slink->ops->slink_number(slink);
-+		r = replog->ops->slink_del(replog, slink);
-+		BUG_ON(r < 0);
-+		slink_destroy(slink);
-+		BUG_ON(replog_c_put(replog_c));
-+		BUG_ON(!slink_c_put(slink_c));
++/* Drop reference on slink and destroy it on last release. */
++static int
++slink_put(struct slink *sl)
++{
++	return kref_put(&sl->ref, slink_release);
++}
++
++/* Find slink on global slink list by number. */
++static struct slink *
++slink_get_by_number(struct dm_repl_log_slink_list *repl_slinks,
++		    unsigned slink_number)
++{
++	struct slink *sl;
++
++	BUG_ON(!repl_slinks);
++
++	list_for_each_entry(sl, &repl_slinks->list, lists[SLINK_REPLOG]) {
++		if (slink_number == sl->number)
++			return slink_get(sl);
 +	}
 +
-+	/* Drop work queue. */
-+	destroy_workqueue(replog_c->io.wq);
++	return ERR_PTR(-ENOENT);
++}
 +
-+	/* Drop reference on replog. */
-+	repl_log_dtr(replog_c->replog, replog_c->ti);
++/* Destroy slink object. */
++static void
++slink_destroy(struct slink *sl)
++{
++	struct slink_io *io;
++	struct cache_defs *cd;
 +
-+	BUG_ON(!replog_c_put(replog_c));
++	_BUG_ON_PTR(sl);
++	_BUG_ON_PTR(sl->repl_slinks);
++	io = &sl->io;
++
++	write_lock(&sl->repl_slinks->lock);
++	if (!list_empty(SLINK_REPLOG_LIST(sl)))
++		list_del(SLINK_REPLOG_LIST(sl));
++	write_unlock(&sl->repl_slinks->lock);
++
++	/* Destroy workqueue before freeing resources. */
++	if (io->wq)
++		destroy_workqueue(io->wq);
++
++	if (io->kcopyd_client)
++		dm_kcopyd_client_destroy(io->kcopyd_client);
++
++	if (io->dm_io_client)
++		dm_io_client_destroy(io->dm_io_client);
++
++	cd = ARRAY_END(cache_defs);
++	while (cd-- > cache_defs) {
++		if (io->pool[cd->type]) {
++			mempool_destroy(io->pool[cd->type]);
++			io->pool[cd->type] = NULL;
++		}
++	}
 +}
 +
 +/*
-+ * Replication constructor helpers.
++ * Get slink from global slink list by number or create
++ * new one and put it on list; take out reference.
 + */
-+/* Create a site link tying it to the replication log. */
-+/*
-+ * E.g.: "local 4 1 async ios 10000"
-+ */
-+#define	MIN_SLINK_ARGS	3
-+static int
-+_replicator_slink_ctr(enum ctr_call_type call_type, struct dm_target *ti,
-+		      struct replog_c *replog_c,
-+		      unsigned argc, char **argv, unsigned *args_used)
++static void do_slink(struct work_struct *ws);
++static struct slink *
++slink_create(struct dm_repl_slink *slink,
++	     struct dm_repl_log_slink_list *repl_slinks,
++	     struct slink_params *params, unsigned slink_number)
 +{
-+	int first_slink, slink_nr, slink_params;
-+	struct dm_repl_slink *slink;	/* Site link handle. */
-+	struct slink_c *slink_c;	/* Site link context. */
++	int i, r;
++	struct slink *sl;
 +
-+	SHOW_ARGV;
++	DMDEBUG_LIMIT("%s %u", __func__, slink_number);
 +
-+	if (argc < MIN_SLINK_ARGS)
-+		return -EINVAL;
++	/* Make sure, slink0 exists when creating slink > 0. */
++	if (slink_number) {
++		struct slink *sl0;
 +
-+	/* Get #slink_params. */
-+	if (unlikely(sscanf(argv[1], "%d", &slink_params) != 1 ||
-+		     slink_params < 0 ||
-+		     slink_params + 2 > argc)) {
-+		ti_or_dmerr(call_type, ti,
-+			   "Invalid site link parameter number argument");
-+		return -EINVAL;
++		read_lock(&repl_slinks->lock);
++		sl0 = slink_get_by_number(repl_slinks, 0);
++		read_unlock(&repl_slinks->lock);
++
++		if (IS_ERR(sl0)) {
++			DMERR("Can't create slink=%u w/o slink0.",
++			      slink_number);
++			return ERR_PTR(-EPERM);
++		}
++
++		BUG_ON(slink_put(sl0));
 +	}
 +
-+	/* Get slink #. */
-+	if (unlikely(sscanf(argv[2], "%d", &slink_nr) != 1 ||
-+		     slink_nr < 0)) {
-+		ti_or_dmerr(call_type, ti,
-+			   "Invalid site link number argument");
-+		return -EINVAL;
++	read_lock(&repl_slinks->lock);
++	sl = slink_get_by_number(repl_slinks, slink_number);
++	read_unlock(&repl_slinks->lock);
++
++	if (IS_ERR(sl)) {
++		struct slink *sl_tmp;
++		struct slink_io *io;
++		struct cache_defs *cd;
++
++		if (!params)
++			return sl;
++
++		/* Preallocate internal slink struct. */
++		sl = kzalloc(sizeof(*sl), GFP_KERNEL);
++		if (unlikely(!sl))
++			return ERR_PTR(-ENOMEM);
++
++		rwlock_init(&sl->lock);
++		kref_init(&sl->ref);
++
++#ifdef CONFIG_LOCKDEP
++		{
++			static struct lock_class_key slink_number_lock;
++
++			lockdep_set_class_and_subclass(&sl->lock,
++						       &slink_number_lock,
++						       slink_number);
++		}
++#endif
++
++		i = ARRAY_SIZE(sl->lists);
++		while (i--)
++			INIT_LIST_HEAD(sl->lists + i);
++
++		/* Copy (parsed) fallbehind arguments accross. */
++		io = &sl->io;
++		sl->params = *params;
++		sl->number = slink_number;
++		sl->repl_slinks = repl_slinks;
++		sl->slink = slink;
++		slink->context = sl;
++
++		/* Create kcopyd client for data copies to slinks. */
++		r = dm_kcopyd_client_create(COPY_PAGES, &io->kcopyd_client);
++		if (unlikely(r < 0)) {
++			io->kcopyd_client = NULL;
++			goto bad;
++		}
++
++		/* Create dm-io client context for test I/Os on slinks. */
++		io->dm_io_client = dm_io_client_create(1);
++		if (unlikely(IS_ERR(io->dm_io_client))) {
++			r = PTR_ERR(io->dm_io_client);
++			io->dm_io_client = NULL;
++			goto bad;
++		}
++
++		r = -ENOMEM;
++
++		/* Create slab mempools for copy contexts and test buffers. */
++		cd = ARRAY_END(cache_defs);
++		while (cd-- > cache_defs) {
++			io->pool[cd->type] =
++				mempool_create_slab_pool(cd->min, cd->cache);
++			if (unlikely(!io->pool[cd->type])) {
++				DMERR("Failed to create mempool %p",
++				       io->pool[cd->type]);
++				goto bad;
++			}
++		}
++
++		io->wq = create_singlethread_workqueue(DAEMON);
++		if (likely(io->wq))
++			INIT_DELAYED_WORK(&sl->io.dws, do_slink);
++		else
++			goto bad;
++
++		/* Add to replog list. */
++		write_lock(&repl_slinks->lock);
++		sl_tmp = slink_get_by_number(repl_slinks, slink_number);
++		if (likely(IS_ERR(sl_tmp))) {
++			/* We won the race -> add to list. */
++			list_add_tail(SLINK_REPLOG_LIST(sl),
++				      &repl_slinks->list);
++			write_unlock(&repl_slinks->lock);
++		} else {
++			/* We lost the race, take the winner. */
++			write_unlock(&repl_slinks->lock);
++			/* Will release sl. */
++			slink_destroy(sl);
++			sl = sl_tmp;
++		}
++
++		return sl;
 +	}
 +
-+	/* Check first slink is slink 0. */
-+	mutex_lock(&replog_c_list_mutex);
-+	first_slink = !list_first_entry(&replog_c->lists.slink_c,
-+					struct slink_c, lists.slink_c);
-+	if (first_slink && slink_nr) {
-+		mutex_unlock(&replog_c_list_mutex);
-+		ti_or_dmerr(call_type, ti, "First site link must be 0");
-+		return -EINVAL;
-+	}
++	slink_put(sl);
++	return ERR_PTR(-EEXIST);
 +
-+	slink_c = slink_c_get_by_number(replog_c, slink_nr);
-+	mutex_unlock(&replog_c_list_mutex);
-+
-+	if (!IS_ERR(slink_c)) {
-+		ti_or_dmerr(call_type, ti, "slink already existing");
-+		BUG_ON(slink_c_put(slink_c));
-+		return -EPERM;
-+	}
-+
-+	/* Get SLINK handle. */
-+	slink = repl_slink_ctr(argv[0], replog_c->replog,
-+			       slink_params + 1, argv + 1);
-+	if (unlikely(IS_ERR(slink))) {
-+		ti_or_dmerr(call_type, ti, "Cannot create site link context");
-+		return PTR_ERR(slink);
-+	}
-+
-+	slink_c = slink_c_create(replog_c, slink);
-+	if (unlikely(IS_ERR(slink_c))) {
-+		ti_or_dmerr(call_type, ti, "Cannot allocate site link context");
-+		slink_destroy(slink);
-+		return PTR_ERR(slink_c);
-+	}
-+
-+	*args_used = slink_params + 2;
-+	DMDEBUG("%s added site link=%d", __func__, slink_nr);
-+	return 0;
++bad:
++	slink_destroy(sl);
++	return ERR_PTR(r);
 +}
 +
-+/*
-+ * Construct a replicator mapping to log writes of one or more local mapped
-+ * devices in a local replicator log (REPLOG) in order to replicate them to
-+ * one or multiple site links (SLINKs) while ensuring write order fidelity.
-+ *
-+ *******************************
-+ *
-+ * "replicator" constructor table:
-+ *
-+ * <start> <length> replicator \
-+ *	<replog_type> <#replog_params> <replog_params> \
-+ *	[<slink_type_0> <#slink_params_0> <slink_params_0>]{1..N}
-+ *
-+ * <replog_type>    = "ringbuffer" is currently the only available type
-+ * <#replog_params> = # of args intended for the replog (2 or 4)
-+ * <replog_params>  = <dev_path> <dev_start> [auto/create/open <size>]
-+ *	<dev_path>  = device path of replication log (REPLOG) backing store
-+ *	<dev_start> = offset to REPLOG header
-+ *	create	    = The replication log will be initialized if not active
-+ *		      and sized to "size".  (If already active, the create
-+ *		      will fail.)  Size is always in sectors.
-+ *	open	    = The replication log must be initialized and valid or
-+ *		      the constructor will fail.
-+ *	auto        = If a valid replication log header is found on the
-+ *		      replication device, this will behave like 'open'.
-+ *		      Otherwise, this option behaves like 'create'.
-+ *
-+ * <slink_type>    = "blockdev" is currently the only available type
-+ * <#slink_params> = 1/2/4
-+ * <slink_params>  = <slink_nr> [<slink_policy> [<fall_behind> <N>]]
-+ *	<slink_nr>     = This is a unique number that is used to identify a
-+ *			 particular site/location.  '0' is always used to
-+ *			 identify the local site, while increasing integers
-+ *			 are used to identify remote sites.
-+ *	<slink_policy> = The policy can be either 'sync' or 'async'.
-+ *			 'sync' means write requests will not return until
-+ *			 the data is on the storage device.  'async' allows
-+ *			 a device to "fall behind"; that is, outstanding
-+ *			 write requests are waiting in the replication log
-+ *			 to be processed for this site, but it is not delaying
-+ *			 the writes of other sites.
-+ *	<fall_behind>  = This field is used to specify how far the user is
-+ *			 willing to allow write requests to this specific site
-+ *			 to "fall behind" in processing before switching to
-+ *			 a 'sync' policy.  This "fall behind" threshhold can
-+ *			 be specified in three ways: ios, size, or timeout.
-+ *			 'ios' is the number of pending I/Os allowed (e.g.
-+ *			 "ios 10000").  'size' is the amount of pending data
-+ *			 allowed (e.g. "size 200m").  Size labels include:
-+ *			 s (sectors), k, m, g, t, p, and e.  'timeout' is
-+ *			 the amount of time allowed for writes to be
-+ *			 outstanding.  Time labels include: s, m, h, and d.
-+ */
-+#define	MIN_CONTROL_ARGS	3
-+static int
-+replicator_ctr(struct dm_target *ti, unsigned argc, char **argv)
++/* Return slink count. */
++static unsigned
++slink_count(struct slink *sl)
 +{
-+	int args_used = 0, params, r;
-+	struct dm_dev *backing_dev;
-+	struct dm_repl_log *replog;	/* Replicator log handle. */
-+	struct replog_c *replog_c;	/* Replication log context. */
++	unsigned count = 0;
++	struct slink *sl_cur;
 +
-+	SHOW_ARGV;
++	_BUG_ON_PTR(sl);
 +
-+	if (unlikely(argc < MIN_CONTROL_ARGS)) {
-+		ti->error = "Invalid argument count";
-+		return -EINVAL;
-+	}
++	list_for_each_entry(sl_cur, &sl->repl_slinks->list, lists[SLINK_REPLOG])
++		count++;
 +
-+	/* Get # of replog params. */
-+	if (unlikely(sscanf(argv[1], "%d", &params) != 1 ||
-+		     params < 2 ||
-+		     params + 3 > argc)) {
-+		ti->error = "Invalid replicator log parameter number";
-+		return -EINVAL;
-+	}
++	return count;
++}
 +
-+	/* Check for site link 0 parameter count. */
-+	if (params + 4 > argc) {
-+		ti->error = "Invalid replicator site link parameter number";
-+		return -EINVAL;
-+	}
-+
-+	/*
-+	 * Get reference on replicator control device.
-+	 *
-+	 * Dummy start/size sufficient here.
-+	 */
-+	r = dm_get_device(ti, argv[2], 0, 1, FMODE_WRITE, &backing_dev);
-+	if (unlikely(r < 0)) {
-+		ti_or_dmerr(CTR_CALL, ti,
-+			    "Can't access replicator control device");
-+		return r;
-+	}
++/* Return number of regions for device. */
++static inline sector_t
++region_count(struct sdev *dev)
++{
++	return dm_sector_div_up(dev->ti->len, dev->ti->split_io);
++}
 +
 +
-+	/* Lookup replog_c by dev_t. */
-+	mutex_lock(&replog_c_list_mutex);
-+	replog_c = replog_c_get_by_dev(backing_dev->bdev->bd_dev);
-+	mutex_unlock(&replog_c_list_mutex);
++/*
++ * Site link worker.
++ */
++/* Queue (optionally delayed) io work. */
++static void
++wake_do_slink_delayed(struct slink *sl, unsigned long delay)
++{
++	struct delayed_work *dws = &sl->io.dws;
 +
-+	if (unlikely(!IS_ERR(replog_c))) {
-+		BUG_ON(replog_c_put(replog_c));
-+		dm_put_device(ti, backing_dev);
-+		ti->error = "Recreating replication log prohibited";
-+		return -EPERM;
-+	}
-+
-+	/* Get a reference on the replication log. */
-+	replog = repl_log_ctr(argv[0], ti, params, argv + 1);
-+	dm_put_device(ti, backing_dev);
-+	if (unlikely(IS_ERR(replog))) {
-+		ti->error = "Cannot create replication log context";
-+		return PTR_ERR(replog);
-+	}
-+
-+	_BUG_ON_PTR(replog->ops->postsuspend);
-+	_BUG_ON_PTR(replog->ops->resume);
-+
-+	/* Create global replication control context. */
-+	replog_c = replog_c_create(ti, replog);
-+	if (unlikely(IS_ERR(replog_c))) {
-+		ti->error = "Cannot allocate replication device context";
-+		return PTR_ERR(replog_c);
++	if (delay) {
++		/* Avoid delaying if immediate worker run already requested. */
++		if (SlinkImmediateWork(sl))
++			return;
 +	} else
-+		ti->private = replog_c;
++		SetSlinkImmediateWork(sl);
 +
-+	/* Work any slink parameter tupels. */
-+	params += 2;
-+	BUG_ON(argc < params);
-+	argc -= params;
-+	argv += params;
-+	r = 0;
++	if (delayed_work_pending(dws))
++		cancel_delayed_work(dws);
 +
-+	while (argc > 0) {
-+		r = _replicator_slink_ctr(CTR_CALL, ti, replog_c,
-+					  argc, argv, &args_used);
-+		if (r)
-+			break;
++	queue_delayed_work(sl->io.wq, dws, delay);
++}
 +
-+		/* Take per site link reference out. */
-+		replog_c_get(replog_c);
++/* Queue io work immediately. */
++static void
++wake_do_slink(void *context)
++{
++	wake_do_slink_delayed(context, 0);
++}
 +
-+		BUG_ON(argc < args_used);
-+		argc -= args_used;
-+		argv += args_used;
++/* Set/get device test timeouts. */
++/* FIXME: algorithm to have flexible test timing? */
++static inline void
++set_dev_test_time(struct sdev *dev)
++{
++	unsigned long time = jiffies + SLINK_TEST_JIFFIES;
++
++	/* Check jiffies wrap. */
++	if (unlikely(time < jiffies))
++		time = SLINK_TEST_JIFFIES;
++
++	dev->io.test.time = time;
++}
++
++static inline unsigned long
++get_dev_test_time(struct sdev *dev)
++{
++	return dev->io.test.time;
++}
++
++/*
++ * Get device object reference count.
++ *
++ * A reference count > 1 indicates IO in flight on the device.
++ *
++ */
++static int dev_io(struct sdev *dev)
++{
++	return atomic_read(&dev->ref.refcount) > 1;
++}
++
++/* Take device object reference out. */
++static struct sdev *dev_get(struct sdev *dev)
++{
++	kref_get(&dev->ref);
++	return dev;
++}
++
++/* Release sdev object. */
++static void
++dev_release(struct kref *ref)
++{
++	struct sdev *dev = container_of(ref, struct sdev, ref);
++	struct slink *sl = dev->sl;
++
++	_BUG_ON_PTR(sl);
++
++	kfree(dev->dev.params.path);
++	DMDEBUG("%s dev=%d slink=%d released", __func__,
++		dev->dev.number, sl->number);
++	kfree(dev);
++}
++
++/* Drop device object reference. */
++static int dev_put(struct sdev *dev)
++{
++	int r = kref_put(&dev->ref, dev_release);
++
++	if (!r) {
++		if (!dev_io(dev))
++			wake_up(&dev->io.waiters);
 +	}
 +
 +	return r;
 +}
 +
-+/*
-+ * Replication log map function.
-+ *
-+ * No io to replication log device allowed: ignore it
-+ * by returning zeroes on read and ignoring writes silently.
-+ */
-+static int
-+replicator_map(struct dm_target *ti, struct bio *bio,
-+	       union map_info *map_context)
++/* Find device by device number. */
++static struct sdev *dev_get_by_number(struct slink *sl, int dev_number)
 +{
-+	/* Readahead of null bytes only wastes buffer cache. */
-+	if (bio_rw(bio) == READA)
-+		return -EIO;
-+	else if (bio_rw(bio) == READ)
-+		zero_fill_bio(bio);
++	struct sdev *dev;
 +
-+	bio_endio(bio, 0);
-+	return DM_MAPIO_SUBMITTED; /* Accepted bio, don't make new request. */
-+}
++	_BUG_ON_PTR(sl);
 +
-+/* Replication log suspend/resume helper. */
-+static void
-+_replicator_suspend_resume(struct replog_c *replog_c,
-+			   enum suspend_resume_type type)
-+{
-+	struct dm_repl_log *replog;
-+
-+	DMDEBUG("%s %s", __func__, type == RESUME ? "resume" : "postsusend");
-+	_BUG_ON_PTR(replog_c);
-+	replog = replog_c->replog;
-+	_BUG_ON_PTR(replog);
-+
-+	/* FIXME: device number not utilized yet. */
-+	switch (type) {
-+	case POSTSUSPEND:
-+		ClearReplBlocked(replog_c);
-+		flush_workqueue(replog_c->io.wq);
-+		wait_event(replog_c->io.waiters, !ReplIoInflight(replog_c));
-+		replog->ops->postsuspend(replog, -1);
-+		break;
-+	case RESUME:
-+		replog->ops->resume(replog, -1);
-+		ClearReplBlocked(replog_c);
-+		wake_do_repl(replog_c);
-+		break;
-+	default:
-+		BUG();
++	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
++		if (dev_number == dev->dev.number)
++			return dev_get(dev);
 +	}
++
++	return ERR_PTR(-ENODEV);
++}
++
++/* Find device by bdev. */
++static struct sdev *dev_get_by_bdev(struct slink *sl,
++				   struct block_device *bdev)
++{
++	struct sdev *dev;
++
++	_BUG_ON_PTR(sl);
++
++	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
++		struct mapped_device *md = dm_table_get_md(dev->ti->table);
++		struct gendisk *gd = dm_disk(md);
++
++		dm_put(md);
++
++		if (bdev->bd_disk == gd)
++			return dev_get(dev);
++	}
++
++	return ERR_PTR(-ENODEV);
++}
++
++/* Find device by path. */
++static struct sdev *dev_get_by_path(struct slink *sl,
++				     const char *path)
++{
++	struct sdev *dev;
++
++	_BUG_ON_PTR(sl);
++
++	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
++		if (!strcmp(dev->dev.params.path, path))
++			return dev_get(dev);
++	}
++
++	return ERR_PTR(-ENODEV);
++}
++
++static struct sdev *
++dev_get_on_any_slink(struct slink *sl, struct sdev *dev)
++{
++	struct slink *sl_cur = NULL;
++	struct sdev *dev_r;
++
++	list_for_each_entry(sl_cur, &sl->repl_slinks->list,
++			    lists[SLINK_REPLOG]) {
++		/* Check by path if device already present. */
++		if (sl_cur != sl)
++			read_lock(&sl_cur->lock);
++
++		/* Check by bdev/number depending on device open or not. */
++		dev_r = DevOpen(dev) ?
++			dev_get_by_bdev(sl_cur, dev->dev.dm_dev->bdev) :
++			dev_get_by_path(sl_cur, dev->dev.params.path);
++
++		if (sl_cur != sl)
++			read_unlock(&sl_cur->lock);
++
++		if (unlikely(!IS_ERR(dev_r)))
++			return dev_r;
++	}
++
++	return ERR_PTR(-ENOENT);
++}
++
++/* Callback for site link accessibility tests. */
++static void
++dev_test_endio(unsigned long error, void *context)
++{
++	struct sdev *dev = context;
++	struct slink *sl;
++
++	_BUG_ON_PTR(dev);
++	sl = dev->sl;
++	_BUG_ON_PTR(sl);
++
++	if (error)
++		set_dev_test_time(dev);
++	else {
++		ClearDevErrorRead(dev);
++		ClearDevErrorWrite(dev);
++	}
++
++	/* Release test io buffer. */
++	free_test_buffer(dev->io.test.buffer, sl);
++
++	ClearSlinkTestActive(sl);
++	BUG_ON(dev_put(dev)); /* Release reference. */
++	wake_do_slink(sl);
++}
++
++/* Submit a read to sector 0 of a remote device to test access to it. */
++static void
++dev_test(struct slink *sl, struct sdev *dev)
++{
++	struct dm_io_region region = {
++		.bdev = dev->dev.dm_dev->bdev,
++		.sector = 0,
++		.count = 1,
++	};
++	struct dm_io_request req = {
++		.bi_rw = READ,
++		.mem.type = DM_IO_KMEM,
++		.mem.ptr.addr = alloc_test_buffer(sl),
++		.notify.fn = dev_test_endio,
++		.notify.context = dev,
++		.client = sl->io.dm_io_client,
++	};
++
++	/* FIXME: flush_workqueue should care for race. */
++	sl->io.dev_test = dev;
++	dev->io.test.buffer = req.mem.ptr.addr;
++	set_dev_test_time(dev);
++	BUG_ON(dm_io(&req, 1, &region, NULL));
 +}
 +
 +
-+/* Suspend/Resume all. */
-+static void
-+_replicator_suspend_resume_all(struct replog_c *replog_c,
-+			       enum suspend_resume_type type)
++/*
++ * Callback replog handler in case of a region
++ * resynchronized or a device recovered.
++ */
++static inline void
++recover_callback(struct slink *sl, int read_err, int write_err)
 +{
-+	struct device_c *dc;
-+	struct slink_c *slink_c0;
++	struct dm_repl_slink_notify_ctx recover;
 +
-+	_BUG_ON_PTR(replog_c);
++	_BUG_ON_PTR(sl);
++	read_lock(&sl->lock);
++	recover = sl->recover;
++	read_unlock(&sl->lock);
 +
-+	/* First entry on replog_c slink_c list is slink0. */
-+	slink_c0 = list_first_entry(&replog_c->lists.slink_c,
-+				    struct slink_c, lists.slink_c);
-+	_BUG_ON_PTR(slink_c0);
-+
-+	/* Walk all slink device_c dc and resume slinks. */
-+	if (type == RESUME)
-+		list_for_each_entry(dc, &slink_c0->lists.dc, list)
-+			_replicator_dev_suspend_resume(dc->ti, type);
-+
-+	_replicator_suspend_resume(replog_c, type);
-+
-+	/* Walk all slink device_c dc and resume slinks. */
-+	if (type == POSTSUSPEND)
-+		list_for_each_entry(dc, &slink_c0->lists.dc, list)
-+			_replicator_dev_suspend_resume(dc->ti, type);
++	/* Optionally call back site link recovery. */
++	if (likely(recover.fn))
++		recover.fn(read_err, write_err, recover.context);
 +}
 +
-+/* Replication control post suspend method. */
-+static void
-+replicator_postsuspend(struct dm_target *ti)
++/* Try to open device. */
++static int
++try_dev_open(struct sdev *dev)
 +{
-+	_replicator_suspend_resume(ti->private, POSTSUSPEND);
++	int r = 0;
++
++	if (!DevOpen(dev)) {
++		/* Try getting device with limit checks. */
++		r = dm_get_device(dev->ti, dev->dev.params.path,
++				  0, dev->ti->len,
++				  dm_table_get_mode(dev->ti->table),
++				  &dev->dev.dm_dev);
++		if (r) {
++			set_dev_test_time(dev);
++			SetDevErrorRead(dev);
++		} else {
++			SetDevOpen(dev);
++			ClearDevErrorRead(dev);
++		}
++	}
++
++	return r;
 +}
 +
-+/* Replication control resume method. */
++/* Check devices for error condition and initiate test io on those. */
 +static void
-+replicator_resume(struct dm_target *ti)
++do_slink_test(struct slink *sl)
 +{
-+	_replicator_suspend_resume(ti->private, RESUME);
++	int r;
++	unsigned error_count = 0;
++	/* FIXME: jiffies may differ on MP ? */
++	unsigned long delay = ~0, j = jiffies;
++	struct sdev *dev, *dev_t = NULL;
++
++	read_lock(&sl->lock);
++	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
++		if ((DevErrorRead(dev) || DevErrorWrite(dev))) {
++			error_count++;
++
++			if (!DevTeardown(dev) && !DevSuspended(dev)) {
++				unsigned long t = get_dev_test_time(dev);
++
++				/* Check we didn't reach the test time jet. */
++				if (time_before(j, t)) {
++					unsigned long d = t - j;
++
++					if (d < delay)
++						delay = d;
++				} else {
++					dev_t = dev;
++					slink_get(sl);
++					break;
++				}
++			}
++		}
++	}
++
++	read_unlock(&sl->lock);
++
++	if (!error_count) {
++		/*
++		 * If all are ok -> reset site link error state.
++		 *
++		 * We can't allow submission of writes
++		 * before all devices are accessible.
++		 */
++		/*
++		 * FIXME: I actually test the remote device only so
++		 * I shouldn't update state on the local reader side!
++		 *
++		 * Question is, where to update this or leave it
++		 * to the caller to fail fataly when it can't read data
++		 * of off the log or the replicated device any more.
++		 */
++		if (TestClearSlinkErrorRead(sl))
++			error_count++;
++
++		if (TestClearSlinkErrorWrite(sl))
++			error_count++;
++
++		if (error_count)
++			recover_callback(sl, 0, 0);
++
++		return;
++	}
++
++	j = jiffies;
++
++	/* Check for jiffies overrun. */
++	if (unlikely(j < SLINK_TEST_JIFFIES))
++		set_dev_test_time(dev);
++
++	if (!TestSetSlinkTestActive(sl)) {
++		dev_get(dev); /* Take out device reference. */
++
++		/* Check device is open or open it. */
++		r = try_dev_open(dev_t);
++		if (r) {
++			ClearSlinkTestActive(sl);
++			BUG_ON(dev_put(dev_t));
++		} else
++			/* If open, do test. */
++			dev_test(sl, dev_t);
++	}
++
++	if (!SlinkTestActive(sl) && delay < ~0)
++		wake_do_slink_delayed(sl, delay);
++
++	slink_put(sl);
++}
++
++/* Set device error state and throw a dm event. */
++static void
++resync_error_dev(struct sdev *dev)
++{
++	SetDevErrorRead(dev);
++	dm_table_event(dev->ti->table);
++}
++
++/* Resync copy callback. */
++static void
++resync_endio(int read_err, unsigned long write_err, void *context)
++{
++	struct sdev *dev_from, *dev_to = context;
++	struct sdev_resync *resync;
++
++	_BUG_ON_PTR(dev_to);
++	resync = &dev_to->io.resync;
++	dev_from = resync->from;
++	_BUG_ON_PTR(dev_from);
++
++	if (unlikely(read_err))
++		resync_error_dev(dev_from);
++
++	if (unlikely(write_err))
++		resync_error_dev(dev_to);
++
++	resync->start += resync->len;
++	ClearDevResyncing(dev_to);
++	dev_put(dev_from);
++	dev_put(dev_to);
++	wake_do_slink(dev_to->sl);
++}
++
++/* Unplug a block devices queue. */
++static inline void
++dev_unplug(struct block_device *bdev)
++{
++	blk_unplug(bdev_get_queue(bdev));
++}
++
++/* Resync copy function. */
++static void
++resync_copy(struct sdev *dev_to, struct sdev *dev_from,
++	    struct sdev_resync *resync)
++{
++	sector_t max_len = dev_from->ti->len;
++	struct dm_io_region src = {
++		.bdev = dev_from->dev.dm_dev->bdev,
++		.sector = resync->start,
++	}, dst = {
++		.bdev = dev_to->dev.dm_dev->bdev,
++		.sector = resync->start,
++	};
++
++	src.count = dst.count = unlikely(src.sector + resync->len > max_len) ?
++				max_len - src.sector : resync->len;
++	BUG_ON(!src.count);
++	BUG_ON(src.sector + src.count > max_len);
++	dev_to->io.resync.from = dev_from;
++	SetDevResyncing(dev_to);
++	BUG_ON(dm_kcopyd_copy(dev_to->io.kcopyd_client, &src, 1, &dst, 0,
++			      resync_endio, dev_to));
++	dev_unplug(src.bdev);
++	dev_unplug(dst.bdev);
++}
++
++/* Return length of segment to resynchronoze. */
++static inline sector_t
++resync_len(struct sdev *dev)
++{
++	sector_t r = RESYNC_SIZE, region_size = dev->ti->split_io;
++	struct sdev_resync *resync = &dev->io.resync;
++
++	if (unlikely(r > region_size))
++		r = region_size;
++
++	if (unlikely(resync->start + r > resync->end))
++		r = resync->end - resync->start;
++
++	return r;
++}
++
++/* Initiate recovery on all site links registered for. */
++static void
++do_slink_resync(struct slink *sl)
++{
++	struct slink *sl0;
++	struct sdev *dev_from, *dev_n, *dev_to;
++	struct list_head resync_list;
++
++	_BUG_ON_PTR(sl);
++
++	if (!sl->number)
++		return;
++
++	/*
++	 * Protect the global site link list from
++	 * changes while getting slink 0.
++	 */
++	read_lock(&sl->repl_slinks->lock);
++	sl0 = slink_get_by_number(sl->repl_slinks, 0);
++	read_unlock(&sl->repl_slinks->lock);
++
++	_BUG_ON_PTR(sl0);
++
++	/*
++	 * Quickly take out resync list for local unlocked processing
++	 * and take references per device for suspend/delete race prevention
++	 */
++	INIT_LIST_HEAD(&resync_list);
++	read_lock(&sl0->lock);
++	write_lock(&sl->lock);
++	SetSlinkResyncProcessing(sl);
++
++	list_splice(SLINK_RESYNC_LIST(sl), &resync_list);
++	INIT_LIST_HEAD(SLINK_RESYNC_LIST(sl));
++
++	list_for_each_entry(dev_to, &resync_list, lists[SDEV_RESYNC]) {
++		dev_from = dev_get_by_number(sl0, dev_to->dev.number);
++		_BUG_ON_PTR(dev_from);
++		dev_get(dev_to);
++		/* Memorize device to copy from. */
++		dev_to->io.resync.from = dev_from;
++	}
++
++	write_unlock(&sl->lock);
++	read_unlock(&sl0->lock);
++
++	/*
++	 * Process all devvices needing
++	 * resynchronization on the private list.
++	 *
++	 * "dev_to" is device to copy to.
++	 */
++	list_for_each_entry(dev_to, &resync_list, lists[SDEV_RESYNC]) {
++		unsigned region_size;
++		struct sdev_resync *resync;
++		struct dm_dirty_log *dl = dev_to->dev.dl;
++
++		/* Can't resync w/o dirty log. */
++		_BUG_ON_PTR(dl);
++
++		/* Device closed/copy active/suspended/being torn down/error. */
++		if (!DevOpen(dev_to) ||
++		    DevResyncing(dev_to) ||
++		    DevSuspended(dev_to) ||
++		    DevTeardown(dev_to) ||
++		    DevErrorWrite(dev_to))
++			continue;
++
++		/* Device to copy from. */
++		resync = &dev_to->io.resync;
++		dev_from = resync->from;
++
++		/* slink0 device suspended/being torn down or I/O error. */
++		if (DevSuspended(dev_from) ||
++		    DevTeardown(dev_from) ||
++		    DevErrorRead(dev_from))
++			continue;
++
++		/* No copy active if resync->end == 0. */
++		if (!resync->end) {
++			int r;
++			sector_t region;
++
++			/* Ask dirty region log for another region to sync. */
++			r = dl->type->get_resync_work(dl, &region);
++			if (r) {
++				write_lock(&sl0->lock);
++
++				/* Region is being written to -> postpone. */
++				if (unlikely(SlinkWriter(sl0) &&
++					     resync->writer_region == region)) {
++					write_unlock(&sl0->lock);
++					continue;
++				}
++
++				region_size = dev_to->ti->split_io;
++				resync->region = region;
++				resync->start = region * region_size;
++				resync->end = resync->start + region_size;
++				if (unlikely(resync->end > dev_to->ti->len))
++					resync->end = dev_to->ti->len;
++
++				write_unlock(&sl0->lock);
++			} else {
++				/* No more regions to recover. */
++				SetDevResyncEnd(dev_to);
++				continue;
++			}
++		}
++
++		/* More to copy for this region. */
++		if (resync->start < resync->end) {
++			resync->len = resync_len(dev_to);
++			BUG_ON(!resync->len);
++
++			/*
++			 * Take out references in order
++			 * to not race with deletion.
++			 *
++			 * resync_endio will release them.
++			 */
++			dev_get(dev_from);
++			dev_get(dev_to);
++			resync_copy(dev_to, dev_from, resync);
++
++		/*
++		 * Done with copying this region:
++		 * mark in sync and flush dirty log.
++		 */
++		} else {
++			dl->type->set_region_sync(dl, resync->region, 1);
++			dl->type->flush(dl);
++
++			/* Optionally call back site link recovery. */
++			recover_callback(sl, 0, 0);
++			resync->end = 0;
++
++			/* Another run to check for more resync work. */
++			wake_do_slink(sl);
++		}
++	}
++
++	/* Put race device references. */
++	read_lock(&sl0->lock);
++	write_lock(&sl->lock);
++	list_for_each_entry_safe(dev_to, dev_n, &resync_list,
++				 lists[SDEV_RESYNC]) {
++		if (TestClearDevResyncEnd(dev_to))
++			list_del_init(SDEV_RESYNC_LIST(dev_to));
++
++		dev_from = dev_get_by_number(sl0, dev_to->dev.number);
++		/* 1 put just taken, 1 put for the one initially taken. */
++		_BUG_ON_PTR(dev_from);
++		BUG_ON(dev_put(dev_from));
++		BUG_ON(dev_put(dev_from));
++		BUG_ON(dev_put(dev_to));
++	}
++
++	list_splice(&resync_list, SLINK_RESYNC_LIST(sl));
++	ClearSlinkResyncProcessing(sl);
++
++	write_unlock(&sl->lock);
++	read_unlock(&sl0->lock);
++
++	BUG_ON(slink_put(sl0));
++}
++
++/* Main worker thread function. */
++static void
++do_slink(struct work_struct *ws)
++{
++	int must_resync;
++	struct slink *sl = container_of(ws, struct slink, io.dws.work);
++
++	if (!SlinkTestActive(sl))
++		do_slink_test(sl);
++
++	write_lock(&sl->lock);
++	must_resync = !list_empty(SLINK_RESYNC_LIST(sl));
++	write_unlock(&sl->lock);
++
++	if (must_resync)
++		do_slink_resync(sl);
++
++	ClearSlinkImmediateWork(sl);
 +}
 +
 +/*
-+ * Replication log message method.
++ * End site link worker.
++ */
++
++/* Allocate/init an sdev structure and dm_get_device(). */
++static struct sdev *
++dev_create(struct slink *sl, struct dm_target *ti,
++	   char *path, unsigned dev_number)
++{
++	int i, r;
++	struct sdev *dev;
++
++	_BUG_ON_PTR(sl);
++	_BUG_ON_PTR(ti);
++	_BUG_ON_PTR(path);
++
++	/* Preallocate site link device structure. */
++	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
++	if (unlikely(!dev))
++		goto bad_dev_alloc;
++
++	dev->ti = ti;
++	dev->dev.number = dev_number;
++	init_waitqueue_head(&dev->io.waiters);
++	kref_init(&dev->ref);
++
++	i = ARRAY_SIZE(dev->lists);
++	while (i--)
++		INIT_LIST_HEAD(dev->lists + i);
++
++	dev->dev.params.path = kstrdup(path, GFP_KERNEL);
++	if (unlikely(!dev->dev.params.path))
++		goto bad_dev_path_alloc;
++
++	/* FIXME: closed device handling 29.09.2009
++	 *
++	 * Allow inaccessible devices to be created, hence
++	 * opening them during transport failure discovery.
++	 */
++	ClearDevOpen(dev);
++	try_dev_open(dev);
++
++	/*
++	 * Create kcopyd client for resynchronization copies to slinks.
++	 * Only needed for remote devices and hence slinks > 0.
++	 */
++	if (sl->number) {
++		r = dm_kcopyd_client_create(RESYNC_PAGES,
++					    &dev->io.kcopyd_client);
++		if (unlikely(r < 0))
++			goto bad_kcopyd_client;
++	}
++
++	dev->sl = sl;
++	SetDevSuspended(dev);
++	return dev;
++
++bad_dev_alloc:
++	DMERR("site link device allocation failed");
++	return ERR_PTR(-ENOMEM);
++
++bad_dev_path_alloc:
++	DMERR("site link device path allocation failed");
++	r = -ENOMEM;
++	goto bad;
++
++bad_kcopyd_client:
++	DMERR("site link device allocation failed");
++bad:
++	dev_release(&dev->ref);
++	return ERR_PTR(r);
++}
++
++/* Add an sdev to an slink. */
++static int
++dev_add(struct slink *sl, struct sdev *dev)
++{
++	int r;
++	struct slink *sl0;
++	struct sdev *dev_tmp;
++
++	_BUG_ON_PTR(sl);
++	_BUG_ON_PTR(dev);
++
++	/* Check by number if device got already added to this site link. */
++	dev_tmp = dev_get_by_number(sl, dev->dev.number);
++	if (unlikely(!IS_ERR(dev_tmp)))
++		goto bad_device;
++
++	/* Check by bdev/path if device got already added to any site link. */
++	dev_tmp = dev_get_on_any_slink(sl, dev);
++	if (unlikely(!IS_ERR(dev_tmp)))
++		goto bad_device;
++
++	/* Sibling device on local slink 0 registered yet ? */
++	if (sl->number) {
++		sl0 = slink_get_by_number(sl->repl_slinks, 0);
++		if (unlikely(IS_ERR(sl0)))
++			goto bad_slink0;
++
++		read_lock(&sl0->lock);
++		dev_tmp = dev_get_by_number(sl0, dev->dev.number);
++		read_unlock(&sl0->lock);
++
++		BUG_ON(slink_put(sl0));
++
++		if (unlikely(IS_ERR(dev_tmp)))
++			goto bad_sibling;
++
++		BUG_ON(dev_put(dev_tmp));
++	}
++
++	/* Add to slink's list of devices. */
++	list_add_tail(SDEV_SLINK_LIST(dev), SLINK_DEVS_LIST(sl));
++
++	/* All ok, add to list of remote devices to resync. */
++	if (sl->number) {
++		SetDevResync(dev);
++		list_add_tail(SDEV_RESYNC_LIST(dev), SLINK_RESYNC_LIST(sl));
++	}
++
++	return 0;
++
++bad_device:
++	DMERR("device already exists");
++	BUG_ON(dev_put(dev_tmp));
++	return -EBUSY;
++
++bad_slink0:
++	DMERR("SLINK0 doesn't exit!");
++	r = PTR_ERR(sl0);
++	return r;
++
++bad_sibling:
++	DMERR("Sibling device=%d on SLINK0 doesn't exist!", dev->dev.number);
++	r = PTR_ERR(dev_tmp);
++	return r;
++}
++
++/*
++ * Set up dirty log for new device.
 + *
-+ * Arguments: start/resume/stop/suspend/statistics/replog
++ * For local devices, no dirty log is allowed.
++ * For remote devices, a dirty log is mandatory.
++ *
++ * dirtylog_type = "nolog"/"core"/"disk",
++ * #dirtylog_params = 0-3 (1-2 for core dirty log type, 3 for
++ * 			   disk dirty log only)
++ * dirtylog_params = [dirty_log_path] region_size [[no]sync])
 + */
 +static int
-+replicator_message(struct dm_target *ti, unsigned argc, char **argv)
++dirty_log_create(struct slink *sl, struct sdev *dev, unsigned argc, char **argv)
 +{
-+	int r, resume, suspend;
-+	struct replog_c *replog_c = ti->private;
-+	struct dm_repl_log *replog;
++	struct dm_dirty_log *dl;
 +
 +	SHOW_ARGV;
 +
-+	_BUG_ON_PTR(replog_c);
-+	replog = replog_c->replog;
-+	_BUG_ON_PTR(replog);
++	_BUG_ON_PTR(sl);
++	_BUG_ON_PTR(dev);
 +
-+	/* Check minimum arguments. */
-+	if (unlikely(argc < 1))
-+		goto err_args;
++	if (unlikely(argc < 2))
++		goto bad_params;
 +
-+	resume  = str_listed(argv[0], "resume", "start", NULL);
-+	/* Hrm, bogus: need a NULL end arg to make it work!? */
-+	suspend = !resume &&
-+		  str_listed(argv[0], "suspend", "postsuspend", "stop", NULL);
++	/* Check for no dirty log with local devices. */
++	if (!strcmp(argv[0], "nolog") ||
++	    !strcmp(argv[0], "-")) {
++		if (argc != 2 ||
++		    strcmp(argv[1], "0"))
++			goto bad_params;
++
++		dev->dev.dl = NULL;
++		dev->io.split_io = DM_REPL_MIN_SPLIT_IO;
++
++		/* Mandatory dirty logs on SLINK > 0. */
++		if (sl->number)
++			goto bad_need_dl;
++
++		return 0;
++	}
++
++	/* No dirty logs on SLINK0. */
++	if (unlikely(!sl->number))
++		goto bad_site_link;
++
++	dl = dm_dirty_log_create(argv[0], dev->ti, argc - 2, argv + 2);
++	if (unlikely(!dl))
++		goto bad_dirty_log;
++
++	dev->dev.dl = dl;
++	dev->io.split_io = dl->type->get_region_size(dl);
++	if (dev->io.split_io < BIO_MAX_SECTORS)
++		DM_EINVAL("Invalid dirty log region size");
++
++	return 0;
++
++bad_params:
++	DMERR("invalid dirty log parameter count");
++	return -EINVAL;
++
++bad_need_dl:
++	DMERR("dirty log mandatory on SLINKs > 0");
++	return -EINVAL;
++
++bad_site_link:
++	DMERR("no dirty log allowed on SLINK0");
++	return -EINVAL;
++
++bad_dirty_log:
++	DMERR("failed to create dirty log");
++	return -ENXIO;
++}
++
++/*
++ * Check and adjust split_io on all replicated devices.
++ *
++ * Called with write repl_slinks->lock and write sl->lock hold.
++ *
++ * All remote devices must go by the same dirty log
++ * region size in order to keep the caller simple.
++ *
++ * @sl = slink > 0
++ * @dev = device to check and use to set ti->split_io
++ *
++ */
++static int
++set_split_io(struct slink *sl, struct sdev *dev)
++{
++	sector_t split_io_1st, split_io_ref = 0;
++	struct slink *sl_cur, *sl0;
++	struct sdev *dev_cur;
++
++	/* Nonsense to proceed on SLINK0. */
++	_BUG_ON_PTR(sl);
++	if (!sl->number)
++		return 0;
++
++	_BUG_ON_PTR(dev);
++
++	sl0 = slink_get_by_number(sl->repl_slinks, 0);
++	_BUG_ON_PTR(sl0);
++
++	/* Get split_io from any existing dev on this actual slink. */
++	if (list_empty(SLINK_DEVS_LIST(sl)))
++		split_io_1st = 0;
++	else {
++		dev_cur = list_first_entry(SLINK_DEVS_LIST(sl), struct sdev,
++					   lists[SDEV_SLINK]);
++		split_io_1st = dev_cur->io.split_io;
++	}
++
++	/* Find any preset split_io on any (slink > 0 && slink != sl) device. */
++	list_for_each_entry(sl_cur, &sl0->repl_slinks->list,
++			    lists[SLINK_REPLOG]) {
++		if (!sl_cur->number ||
++		    sl_cur->number == sl->number)
++			continue;
++
++		if (!list_empty(SLINK_DEVS_LIST(sl_cur))) {
++			dev_cur = list_first_entry(SLINK_DEVS_LIST(sl_cur),
++						   struct sdev,
++						   lists[SDEV_SLINK]);
++			split_io_ref = dev_cur->io.split_io;
++			break;
++		}
++	}
++
 +
 +	/*
-+	 * Start/resume replicaton log or
-+	 * start/resume it and all slinks+devices.
++	 * The region size *must* be the same for all devices
++	 * in order to simplify the related caller logic.
 +	 */
-+	if (suspend || resume) {
-+		int all;
++	if ((split_io_ref && split_io_1st && split_io_ref != split_io_1st) ||
++	    (split_io_1st && split_io_1st != dev->io.split_io) ||
++	    (split_io_ref && split_io_ref != dev->io.split_io))
++		DM_EINVAL("region size argument must be the "
++			  "same for all devices");
 +
-+		if (!range_ok(argc, 1, 2)) {
-+			DMERR("Invalid suspend/resume argument count");
-+			return -EINVAL;
-+		}
++	/* Lock sl0, because we ain't get here with sl == sl0. */
++	write_lock(&sl0->lock);
++	list_for_each_entry(dev_cur, SLINK_DEVS_LIST(sl0), lists[SDEV_SLINK])
++		dev_cur->ti->split_io = dev->io.split_io;
 +
-+		all = (argc == 2 && str_listed(argv[1], "all", NULL));
++	write_unlock(&sl0->lock);
 +
-+		if (resume) {
-+			if (all)
-+				_replicator_suspend_resume_all(replog_c,
-+							       RESUME);
-+			else
-+				_replicator_suspend_resume(replog_c,
-+							   RESUME);
++	BUG_ON(slink_put(sl0));
++	return 0;
++}
 +
-+		/* Stop replication log. */
-+		} else  {
-+			if (all) {
-+				_replicator_suspend_resume_all(replog_c,
-+							       POSTSUSPEND);
-+			} else
-+				_replicator_suspend_resume(replog_c,
-+							   POSTSUSPEND);
-+		}
++/* Wait on device in flight device I/O before allowing device destroy. */
++static void
++slink_wait_on_io(struct sdev *dev)
++{
++	while (dev_io(dev)) {
++		flush_workqueue(dev->sl->io.wq);
++		wait_event(dev->io.waiters, !dev_io(dev));
++	}
++}
 +
-+	/* Site link message. */
-+	} else if (str_listed(argv[0], "slink", NULL)) {
-+		/* E.g.: "local 4 1 async ios 10000" */
-+		int args_used, tmp;
-+		unsigned slink_nr;
-+		struct dm_repl_slink *slink;
-+		struct slink_c *slink_c;
++/* Postsuspend method. */
++static int
++blockdev_postsuspend(struct dm_repl_slink *slink, int dev_number)
++{
++	struct slink *sl;
++	struct sdev *dev;
 +
-+		/* Check minimum arguments. */
-+		if (unlikely(argc < 3))
-+			goto err_args;
++	DMDEBUG_LIMIT("%s dev_number=%d", __func__, dev_number);
++	_SET_AND_BUG_ON_SL(sl, slink);
 +
-+		if (sscanf(argv[2], "%d", &tmp) != 1 ||	tmp < 1)
-+			DM_EINVAL("site link number invalid");
++	if (dev_number < 0)
++		return -EINVAL;
 +
-+		slink_nr = tmp;
++	write_lock(&sl->lock);
++	dev = dev_get_by_number(sl, dev_number);
++	if (unlikely(IS_ERR(dev))) {
++		write_unlock(&sl->lock);
++		return PTR_ERR(dev);
++	}
 +
-+		if (str_listed(argv[1], "add", "del", NULL) &&
-+		    !slink_nr)
-+			DM_EPERM("Can't add/delete site link 0 via message");
++	/* Set device suspended. */
++	SetDevSuspended(dev);
++	write_unlock(&sl->lock);
 +
-+		mutex_lock(&replog_c_list_mutex);
-+		slink_c = slink_c_get_by_number(replog_c, slink_nr);
-+		mutex_unlock(&replog_c_list_mutex);
++	dev_put(dev);
 +
-+		if (str_listed(argv[1], "add", NULL)) {
-+			if (IS_ERR(slink_c)) {
-+				r = _replicator_slink_ctr(MESSAGE_CALL, ti,
-+							 replog_c,
-+							  argc - 2, argv + 2,
-+							  &args_used);
-+				if (r)
-+					DMERR("Error creating site link");
++	/* Wait for any device io to finish. */
++	slink_wait_on_io(dev);
++	return 0;
++}
 +
++/* Resume method. */
++static int
++blockdev_resume(struct dm_repl_slink *slink, int dev_number)
++{
++	struct slink *sl;
++	struct sdev *dev;
++
++	_SET_AND_BUG_ON_SL(sl, slink);
++	DMDEBUG("%s sl_number=%d dev_number=%d", __func__,
++		sl->number, dev_number);
++
++	if (dev_number < 0)
++		return -EINVAL;
++
++	read_lock(&sl->lock);
++	dev = dev_get_by_number(sl, dev_number);
++	read_unlock(&sl->lock);
++
++	if (unlikely(IS_ERR(dev)))
++		return PTR_ERR(dev);
++
++	/* Clear device suspended. */
++	ClearDevSuspended(dev);
++	BUG_ON(dev_put(dev));
++	wake_do_slink(sl);
++	return 0;
++}
++
++/* Destroy device resources. */
++static void
++dev_destroy(struct sdev *dev)
++{
++	if (dev->dev.dl)
++		dm_dirty_log_destroy(dev->dev.dl);
++
++	if (dev->io.kcopyd_client)
++		dm_kcopyd_client_destroy(dev->io.kcopyd_client);
++
++	if (dev->dev.dm_dev)
++		dm_put_device(dev->ti, dev->dev.dm_dev);
++
++	BUG_ON(!dev_put(dev));
++}
++
++/*
++ * Method to add a device to a given site link
++ * and optionally create a dirty log for it.
++ *
++ * @dev_number = unsigned int stored in the REPLOG to associate to a dev_path
++ * @ti = dm_target ptr (needed for dm functions)
++ * @argc = 4...
++ * @argv = dev_params# dev_path dirty_log_args
++ */
++#define	MIN_DEV_ARGS	4
++static int
++blockdev_dev_add(struct dm_repl_slink *slink, int dev_number,
++		 struct dm_target *ti, unsigned argc, char **argv)
++{
++	int r;
++	unsigned dev_params, params, sl_count;
++	long long tmp;
++	struct slink *sl;
++	struct sdev *dev;
++
++	SHOW_ARGV;
++
++	if (dev_number < 0)
++		return -EINVAL;
++
++	/* Two more because of the following dirty log parameters. */
++	if (unlikely(argc < MIN_DEV_ARGS))
++		DM_EINVAL("invalid device parameters count");
++
++	/* Get #dev_params. */
++	if (unlikely(sscanf(argv[0], "%lld", &tmp) != 1 ||
++		     tmp != 1)) {
++		DM_EINVAL("invalid device parameters argument");
++	} else
++		dev_params = tmp;
++
++	_SET_AND_BUG_ON_SL(sl, slink);
++	_BUG_ON_PTR(sl->repl_slinks);
++
++	dev = dev_create(sl, ti, argv[1], dev_number);
++	if (unlikely(IS_ERR(dev)))
++		return PTR_ERR(dev);
++
++	dev->dev.params.count = dev_params;
++
++	/* Work on dirty log paramaters. */
++	params = dev_params + 1;
++	r = dirty_log_create(sl, dev, argc - params, argv + params);
++	if (unlikely(r < 0))
++		goto bad;
++
++	/* Take out global and local lock to update the configuration. */
++	write_lock(&sl->repl_slinks->lock);
++	write_lock(&sl->lock);
++
++	/* Set split io value on all replicated devices. */
++	r = set_split_io(sl, dev);
++	if (unlikely(r < 0))
++		goto bad_unlock;
++
++	/*
++	 * Now that dev is all set, add it to the slink.
++	 *
++	 * If callers are racing for the same device,
++	 * dev_add() will catch that case too.
++	 */
++	r = dev_add(sl, dev);
++	if (unlikely(r < 0))
++		goto bad_unlock;
++
++	write_unlock(&sl->lock);
++
++	sl_count = slink_count(sl);
++	write_unlock(&sl->repl_slinks->lock);
++
++	/* Ignore any resize problem and live with what we got. */
++	if (sl_count > 1)
++		dm_io_client_resize(sl_count, sl->io.dm_io_client);
++
++	DMDEBUG("%s added device=%u to slink=%u",
++		__func__, dev_number, sl->number);
++	return dev_number;
++
++bad_unlock:
++	write_unlock(&sl->lock);
++	write_unlock(&sl->repl_slinks->lock);
++bad:
++	BUG_ON(dev_io(dev));
++	dev_destroy(dev);
++	return r;
++}
++
++/* Method to delete a device from a given site link. */
++static int
++blockdev_dev_del(struct dm_repl_slink *slink, int dev_number)
++{
++	int i;
++	unsigned sl_count;
++	struct slink *sl;
++	struct sdev *dev;
++
++	_SET_AND_BUG_ON_SL(sl, slink);
++
++	if (dev_number < 0)
++		return -EINVAL;
++
++	/* Check if device is active! */
++	write_lock(&sl->lock);
++	dev = dev_get_by_number(sl, dev_number);
++	if (unlikely(IS_ERR(dev))) {
++		write_unlock(&sl->lock);
++		return PTR_ERR(dev);
++	}
++
++	SetDevTeardown(dev);
++	write_unlock(&sl->lock);
++
++	/* Release the new reference taken out via dev_get_by_number() .*/
++	BUG_ON(dev_put(dev));
++
++	/* Wait for any device I/O to finish. */
++	slink_wait_on_io(dev);
++	BUG_ON(dev_io(dev));
++
++	/* Take device off any lists. */
++	write_lock(&sl->lock);
++	i = ARRAY_SIZE(dev->lists);
++	while (i--) {
++		if (!list_empty(dev->lists + i))
++			list_del(dev->lists + i);
++	}
++
++	write_unlock(&sl->lock);
++
++	/* Destroy device. */
++	dev_destroy(dev);
++
++	/* Ignore any resize problem. */
++	sl_count = slink_count(sl);
++	dm_io_client_resize(sl_count ? sl_count : 1, sl->io.dm_io_client);
++	DMDEBUG("%s deleted device=%u from slink=%u",
++		__func__, dev_number, sl->number);
++	return 0;
++}
++
++/* Check slink properties for consistency. */
++static int slink_check_properties(struct slink_params *params)
++{
++	enum dm_repl_slink_policy_type policy = params->policy;
++
++	if (slink_policy_synchronous(policy) &&
++	    slink_policy_asynchronous(policy))
++		DM_EINVAL("synchronous and asynchronous slink "
++			  "policies are mutually exclusive!");
++
++	if (slink_policy_synchronous(policy) &&
++	    params->fallbehind.value)
++		DM_EINVAL("synchronous slink policy and fallbehind "
++			  "are mutually exclusive!");
++	return 0;
++}
++
++/*
++ * Start methods of "blockdev" slink type.
++ */
++/* Method to destruct a site link context. */
++static void
++blockdev_dtr(struct dm_repl_slink *slink)
++{
++	struct slink *sl;
++
++	_BUG_ON_PTR(slink);
++	sl = slink->context;
++	_BUG_ON_PTR(sl);
++
++	slink_destroy(sl);
++	BUG_ON(!slink_put(sl));
++}
++
++/*
++ * Method to construct a site link context.
++ *
++ * #slink_params = 1-4
++ * <slink_params> = slink# [slink_policy [fall_behind value]]
++ * slink# = used to tie the host+dev_path to a particular SLINK; 0 is used
++ *          for the local site link and 1-M are for remote site links.
++ * slink_policy = policy to set on the slink (eg. async/sync)
++ * fall_behind = # of ios the SLINK can fall behind before switching to
++ * 		 synchronous mode (ios N, data N[kmgtpe], timeout N[smhd])
++ */
++static int
++blockdev_ctr(struct dm_repl_slink *slink, struct dm_repl_log *replog,
++	     unsigned argc, char **argv)
++{
++	int check, r;
++	long long tmp;
++	unsigned slink_number, slink_params;
++	struct slink *sl;
++	struct slink_params params;
++	/* Makes our task to keep a unique list of slinks per replog easier. */
++	struct dm_repl_log_slink_list *repl_slinks =
++		replog->ops->slinks(replog);
++
++	SHOW_ARGV;
++	_BUG_ON_PTR(repl_slinks);
++
++	memset(&params, 0, sizeof(params));
++	params.policy = DM_REPL_SLINK_ASYNC;
++	params.fallbehind.type = DM_REPL_SLINK_FB_IOS;
++	params.fallbehind.multiplier = 1;
++
++	if (unlikely(argc < 2))
++		DM_EINVAL("invalid number of slink arguments");
++
++	/* Get # of slink parameters. */
++	if (unlikely(sscanf(argv[0], "%lld", &tmp) != 1 ||
++		     tmp < 1 || tmp > argc))
++		DM_EINVAL("invalid slink parameter argument");
++	else
++		params.count = slink_params = tmp;
++
++
++	/* Get slink#. */
++	if (unlikely(sscanf(argv[1], "%lld", &tmp) != 1 ||
++		     tmp < 0 || tmp >= replog->ops->slink_max(replog))) {
++		DM_EINVAL("invalid slink number argument");
++	} else
++		slink_number = tmp;
++
++	if (slink_params > 1) {
++		/* Handle policy argument. */
++		r = get_slink_policy(argv[2]);
++		if (unlikely(r < 0))
++			return r;
++
++		params.policy = r;
++		check = 1;
++
++		/* Handle fallbehind argument. */
++		if (slink_params > 2) {
++			r = get_slink_fallbehind(slink_params,
++						 argv + 3, &params.fallbehind);
++			if (unlikely(r < 0))
 +				return r;
-+			} else {
-+				BUG_ON(slink_c_put(slink_c));
-+				DM_EPERM("site link already exists");
-+			}
-+		} else if (str_listed(argv[1], "del", NULL)) {
-+			if (IS_ERR(slink_c))
-+				DM_EPERM("site link doesn't exist");
-+			else {
-+				if (!list_empty(&slink_c->lists.dc)) {
-+					slink_c_put(slink_c);
-+					DM_EPERM("site link still has devices");
++		}
++	} else
++		check = 0;
++
++	/* Check that policies make sense vs. fallbehind. */
++	if (check) {
++		r = slink_check_properties(&params);
++		if (r < 0)
++			return r;
++	}
++
++	/* Get/create an slink context. */
++	sl = slink_create(slink, repl_slinks, &params, slink_number);
++	return unlikely(IS_ERR(sl)) ? PTR_ERR(sl) : 0;
++}
++
++/*
++ * Initiate data copy across a site link.
++ *
++ * This function may be used to copy a buffer entry *or*
++ * for resynchronizing regions initially or when an SLINK
++ * has fallen back to dirty log (bitmap) mode.
++ */
++/* Get sdev ptr from copy address. */
++static struct sdev *
++dev_get_by_addr(struct slink *sl, struct dm_repl_slink_copy_addr *addr)
++{
++	BUG_ON(addr->type != DM_REPL_SLINK_BLOCK_DEVICE &&
++	       addr->type != DM_REPL_SLINK_DEV_NUMBER);
++	return addr->type == DM_REPL_SLINK_BLOCK_DEVICE ?
++	       dev_get_by_bdev(sl, addr->dev.bdev) :
++	       dev_get_by_number(sl, addr->dev.number.dev);
++}
++
++/*
++ * Needs to be called with sl->lock held.
++ *
++ * Return 0 in case io is allowed to the region the sector
++ * is in and take out an I/O reference on the device.
++ *
++ * If I/O isn't allowd, no I/O reference will be taken out
++ * and the follwoing return codes apply to caller actions:
++ *
++ * o -EAGAIN in case of prohibiting I/O because of device suspension
++ *    or device I/O errors (i.e. link temporarilly down) ->
++ *    caller is allowed to retry the I/O later once
++ *    he'll have received a callback.
++ *
++ * o -EACCES in case a region is being resynchronized and the source
++ *    region is being read to copy data accross to the same region
++ *    of the replica (RD) ->
++ *    caller is allowed to retry the I/O later once
++ *    he'll have received a callback.
++ *
++ * o -ENODEV in case a device is not configured
++ *    caller must drop the I/O to the device/slink pair.
++ *
++ * o -EPERM in case a region is out of sync ->
++ *    caller must drop the I/O to the device/slink pair.
++ */
++static int
++may_io(int rw, struct slink *sl, struct sdev *dev,
++       sector_t sector, const char *action)
++{
++	int r;
++	sector_t region;
++	struct slink *sl_cur;
++	struct sdev *dev_tmp;
++	struct sdev_resync *resync;
++
++	_BUG_ON_PTR(sl);
++
++	if (IS_ERR(dev))
++		return PTR_ERR(dev);
++
++	region = sector_to_region(dev, sector);
++
++	/*
++	 * It's a caller error to call for multiple copies per slink.
++	 */
++	if (rw == WRITE &&
++	    SlinkWriter(sl)) {
++		DMERR_LIMIT("%s %s to slink%d, dev%d, region=%llu "
++			    "while write pending to region=%llu!",
++			    __func__, action, sl->number, dev->dev.number,
++			    (unsigned long long) region,
++			    (unsigned long long) dev->io.resync.writer_region);
++		return -EPERM;
++	}
++
++	/*
++	 * If the device is suspended, being torn down,
++	 * closed or errored, retry again later.
++	 */
++	if (!DevOpen(dev) ||
++	    DevSuspended(dev) ||
++	    DevTeardown(dev) ||
++	    DevErrorRead(dev) ||
++	    DevErrorWrite(dev))
++		return -EAGAIN;
++
++	/* slink > 0 may read and write in case region is in sync. */
++	if (sl->number) {
++		struct dm_dirty_log *dl = dev->dev.dl;
++
++		/*
++		 * Ask dirty log for region in sync.
++		 *
++		 * In sync -> allow reads and writes.
++		 * Out of sync -> prohibit them.
++		 */
++		_BUG_ON_PTR(dl);
++		r = dl->type->in_sync(dl, region, 0); /* Don't block. */
++		r = r ? 0 : -EPERM;
++	} else {
++		/* slink0 may always read. */
++		if (rw == READ)
++			return 0;
++
++		read_lock(&sl->repl_slinks->lock);
++
++		/*
++		 * Walk all slinks and check if anyone is syncing this region,
++		 * in which case no write is allowed to it on slink0.
++		 */
++		list_for_each_entry(sl_cur, &sl->repl_slinks->list,
++				    lists[SLINK_REPLOG]) {
++			/* Avoid local devices. */
++			if (!sl_cur->number)
++				continue;
++
++			/*
++			 * If device exists and the LD is
++			 * being read off for resync.
++			 */
++			read_lock(&sl_cur->lock);
++			dev_tmp = dev_get_by_number(sl_cur, dev->dev.number);
++			read_unlock(&sl_cur->lock);
++
++			if (!IS_ERR(dev_tmp)) {
++				resync = &dev_tmp->io.resync;
++				if (resync->end &&
++				    resync->region == region) {
++					BUG_ON(dev_put(dev_tmp));
++					r = -EACCES;
++					goto out;
 +				}
 +
-+				slink_c_put(slink_c);
-+				r = slink_c_put(slink_c);
-+				if (!r)
-+					DMERR("site link still exists (race)!");
-+
-+				return r;
++				BUG_ON(dev_put(dev_tmp));
 +			}
-+		} else if (str_listed(argv[1], "message", NULL)) {
-+			slink = slink_c->slink;
-+			_BUG_ON_PTR(slink);
-+
-+			if (slink->ops->message)
-+				return slink->ops->message(slink,
-+							   argc - 2, argv + 2);
-+			else
-+				DM_EPERM("no site link message interface");
 +		}
 +
-+	/* Statistics. */
-+	} else if (str_listed(argv[0], "statistics", NULL)) {
++		/* We're allowed to write to this LD -> indicate we do. */
++		r = 0;
++out:
++		read_unlock(&sl->repl_slinks->lock);
++	}
++
++	if (!r && rw == WRITE) {
++		write_lock(&sl->lock);
++		/*
++		 * Memorize region being synchronized
++		 * to check in do_slink_resync().
++		 */
++		dev->io.resync.writer_region = region;
++		SetSlinkWriter(sl);
++		write_unlock(&sl->lock);
++	}
++
++	return r;
++}
++
++/* Set source/destination address of the copy. */
++static int
++copy_addr_init(struct slink *sl, struct dm_io_region *io,
++	      struct dm_repl_slink_copy_addr *addr, unsigned size)
++{
++
++	if (addr->type == DM_REPL_SLINK_BLOCK_DEVICE) {
++		io->bdev = addr->dev.bdev;
++	} else if (addr->type == DM_REPL_SLINK_DEV_NUMBER) {
++		struct sdev *dev;
++		struct slink *sl_tmp;
++
++		/* Check that slink number is correct. */
++		read_lock(&sl->repl_slinks->lock);
++		sl_tmp = slink_get_by_number(sl->repl_slinks,
++					     addr->dev.number.slink);
++		if (unlikely(IS_ERR(sl_tmp))) {
++			int r = PTR_ERR(sl_tmp);
++
++			read_unlock(&sl->repl_slinks->lock);
++			return r;
++		}
++
++		read_unlock(&sl->repl_slinks->lock);
++
++		if (unlikely(sl != sl_tmp))
++			return -EINVAL;
++
++		read_lock(&sl_tmp->lock);
++		dev = dev_get_by_number(sl_tmp, addr->dev.number.dev);
++		read_unlock(&sl_tmp->lock);
++
++		BUG_ON(slink_put(sl_tmp));
++
++		if (unlikely(IS_ERR(dev)))
++			return PTR_ERR(dev);
++
++		io->bdev = dev->dev.dm_dev->bdev;
++		BUG_ON(dev_put(dev));
++	} else
++		BUG();
++
++	io->sector = addr->sector;
++	io->count = dm_div_up(size, to_bytes(1));
++	return 0;
++}
++
++/*
++ * Copy endio function.
++ *
++ * For the "blockdev" type, both states (data in (remote) ram and data
++ * on (remote) disk) are reported here at once. For future transports
++ * those will be reported seperately.
++ */
++static void
++copy_endio(int read_err, unsigned long write_err, void *context)
++{
++	struct copy_context *ctx = context;
++	struct slink *sl;
++	struct sdev *dev_to;
++
++	_BUG_ON_PTR(ctx);
++	dev_to = ctx->dev_to;
++	_BUG_ON_PTR(dev_to);
++	sl = dev_to->sl;
++	_BUG_ON_PTR(sl);
++
++	/* Throw a table event in case of a site link device copy error. */
++	if (unlikely(read_err || write_err)) {
++		if (read_err) {
++			if (!TestSetDevErrorRead(dev_to)) {
++				SetSlinkErrorRead(sl);
++				dm_table_event(dev_to->ti->table);
++			}
++		} else if (!TestSetDevErrorWrite(dev_to)) {
++			SetSlinkErrorWrite(sl);
++			dm_table_event(dev_to->ti->table);
++		}
++
++		set_dev_test_time(dev_to);
++	}
++
++	/* Must clear before calling back. */
++	ClearSlinkWriter(sl);
++
++	/*
++	 * FIXME: check if caller has set region to NOSYNC and
++	 *        and if so, avoid calling callbacks completely.
++	 */
++	if (ctx->ram.fn)
++		ctx->ram.fn(read_err, write_err ? -EIO : 0, ctx->ram.context);
++
++	/* Only call when no error or when no ram callback defined. */
++	if (likely((!read_err && !write_err) || !ctx->ram.fn))
++		ctx->disk.fn(read_err, write_err, ctx->disk.context);
++
++	/* Copy done slinkX device. */
++	free_copy_context(ctx, sl);
++
++	/* Release device reference. */
++	BUG_ON(dev_put(dev_to));
++
++	/* Wake slink worker to reschedule any postponed resynchronization. */
++	wake_do_slink(sl);
++}
++
++/* Site link copy method. */
++static int
++blockdev_copy(struct dm_repl_slink *slink, struct dm_repl_slink_copy *copy,
++	      unsigned long long tag)
++{
++	int r;
++	struct slink *sl;
++	struct sdev *dev_to;
++	struct copy_context *ctx = NULL;
++	static struct dm_io_region src, dst;
++
++	_SET_AND_BUG_ON_SL(sl, slink);
++	if (unlikely(SlinkErrorRead(sl) || SlinkErrorWrite(sl)))
++		return -EAGAIN;
++
++	/* Get device by address taking out reference. */
++	read_lock(&sl->lock);
++	dev_to = dev_get_by_addr(sl, &copy->dst);
++	read_unlock(&sl->lock);
++
++	/* Check if io is allowed or a resync is active. */
++	r = may_io(WRITE, sl, dev_to, copy->dst.sector, "copy");
++	if (r < 0)
++		goto bad;
++
++	ctx = alloc_copy_context(sl);
++	BUG_ON(!ctx);
++
++	/* Device to copy to. */
++	ctx->dev_to = dev_to;
++
++	/* Save caller context. */
++	ctx->ram = copy->ram;
++	ctx->disk = copy->disk;
++
++	/* Setup copy source. */
++	r = copy_addr_init(sl, &src, &copy->src, copy->size);
++	if (unlikely(r < 0))
++		goto bad;
++
++	/* Setup copy destination. */
++	r = copy_addr_init(sl, &dst, &copy->dst, copy->size);
++	if (unlikely(r < 0))
++		goto bad;
++
++	/* FIXME: can we avoid reading per copy on multiple slinks ? */
++	r = dm_kcopyd_copy(sl->io.kcopyd_client, &src, 1, &dst, 0,
++			   copy_endio, ctx);
++	BUG_ON(r); /* dm_kcopyd_copy() may never fail. */
++	SetDevIOQueued(dev_to); /* dev_unplug(src.bdev); */
++	return r;
++
++bad:
++	if (!IS_ERR(dev_to))
++		BUG_ON(dev_put(dev_to));
++
++	if (ctx)
++		free_copy_context(ctx, sl);
++
++	return r;
++}
++
++/* Method to get site link policy. */
++static enum dm_repl_slink_policy_type
++blockdev_policy(struct dm_repl_slink *slink)
++{
++	struct slink *sl = slink_check(slink);
++
++	return IS_ERR(sl) ? PTR_ERR(sl) : sl->params.policy;
++}
++
++/* Method to get site link State. */
++static enum dm_repl_slink_state_type
++blockdev_state(struct dm_repl_slink *slink)
++{
++	enum dm_repl_slink_state_type state = 0;
++	struct slink *sl = slink_check(slink);
++
++	if (unlikely(IS_ERR(sl)))
++		return PTR_ERR(sl);
++
++	if (SlinkErrorRead(sl))
++		set_bit(DM_REPL_SLINK_READ_ERROR, (unsigned long *) &state);
++
++	if (SlinkErrorWrite(sl))
++		set_bit(DM_REPL_SLINK_DOWN, (unsigned long *) &state);
++
++	return state;
++}
++
++/* Method to get reference to site link fallbehind parameters. */
++static struct dm_repl_slink_fallbehind *
++blockdev_fallbehind(struct dm_repl_slink *slink)
++{
++	struct slink *sl = slink_check(slink);
++
++	return IS_ERR(sl) ? ((struct dm_repl_slink_fallbehind *) sl) :
++			    &sl->params.fallbehind;
++}
++
++/* Return # of the device. */
++static int
++blockdev_dev_number(struct dm_repl_slink *slink, struct block_device *bdev)
++{
++	struct slink *sl = slink_check(slink);
++	struct sdev *dev;
++	struct mapped_device *md;
++
++	if (unlikely(IS_ERR(sl)))
++		return PTR_ERR(sl);
++
++	if (unlikely(sl->number)) {
++		DMERR("Can't retrieve device number from slink > 0");
++		return -EINVAL;
++	}
++
++	read_lock(&sl->lock);
++	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
++		md = dm_table_get_md(dev->ti->table);
++		if (bdev->bd_disk == dm_disk(md)) {
++			read_unlock(&sl->lock);
++			dm_put(md);
++			return dev->dev.number;
++		}
++
++		dm_put(md);
++	}
++
++	read_unlock(&sl->lock);
++
++	/*
++	 * The caller might have removed the device from SLINK0 but
++	 * have an order to copy to the device in its metadata still,
++	 * so he has to react accordingly (ie. remove device copy request).
++	 */
++	return -ENOENT;
++}
++
++/* Method to remap bio to underlying device on slink0. */
++static int
++blockdev_io(struct dm_repl_slink *slink, struct bio *bio,
++	    unsigned long long tag)
++{
++	int r, rw = bio_data_dir(bio);
++	struct slink *sl;
++	struct sdev *dev;
++
++	_SET_AND_BUG_ON_SL(sl, slink);
++
++	/*
++	 * Prohibit slink > 0 I/O, because the resync
++	 * code can't cope with it for now...
++	 */
++	if (sl->number)
++		DM_EPERM("I/O to slink > 0 prohibited!");
++
++	if (rw == WRITE)
++		DM_EPERM("Writes to slink0 prohibited!");
++
++	read_lock(&sl->lock);
++	dev = dev_get_by_bdev(sl, bio->bi_bdev);
++	read_unlock(&sl->lock);
++
++	/* Check if io is allowed or a resync is active. */
++	r = may_io(rw, sl, dev, bio->bi_sector, "io");
++	if (likely(!r)) {
++		bio->bi_bdev = dev->dev.dm_dev->bdev;
++		generic_make_request(bio);
++		SetDevIOQueued(dev);
++	}
++
++	if (!IS_ERR(dev))
++		BUG_ON(dev_put(dev));
++
++	return r;
++}
++
++/* Method to unplug all device queues on a site link. */
++static int
++blockdev_unplug(struct dm_repl_slink *slink)
++{
++	struct slink *sl = slink_check(slink);
++	struct sdev *dev, *dev_n;
++
++	if (unlikely(IS_ERR(sl)))
++		return PTR_ERR(sl);
++
++	/* Take out device references for all devices with IO queued. */
++	read_lock(&sl->lock);
++	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
++		if (TestClearDevIOQueued(dev)) {
++			dev_get(dev);
++			SetDevIOUnplug(dev);
++		}
++	}
++
++	read_unlock(&sl->lock);
++
++	list_for_each_entry_safe(dev, dev_n,
++				 SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
++		if (TestClearDevIOUnplug(dev)) {
++			if (DevOpen(dev) &&
++			    !DevSuspended(dev) &&
++			    !DevTeardown(dev))
++				dev_unplug(dev->dev.dm_dev->bdev);
++
++			BUG_ON(dev_put(dev));
++		}
++	}
++
++	return 0;
++}
++
++/* Method to set global recovery function and context. */
++static void
++blockdev_recover_notify_fn_set(struct dm_repl_slink *slink,
++			       dm_repl_notify_fn fn, void *context)
++{
++	struct slink *sl;
++
++	_SET_AND_BUG_ON_SL(sl, slink);
++
++	write_lock(&sl->lock);
++	sl->recover.fn = fn;
++	sl->recover.context = context;
++	write_unlock(&sl->lock);
++}
++
++/* Method to return # of the SLINK. */
++static int
++blockdev_slink_number(struct dm_repl_slink *slink)
++{
++	struct slink *sl = slink_check(slink);
++
++	return unlikely(IS_ERR(sl)) ? PTR_ERR(sl) : sl->number;
++}
++
++/* Method to return SLINK by number. */
++static struct dm_repl_slink *
++blockdev_slink(struct dm_repl_log *replog, unsigned slink_number)
++{
++	struct slink *sl;
++	struct dm_repl_slink *slink;
++	struct dm_repl_log_slink_list *repl_slinks;
++
++	_BUG_ON_PTR(replog);
++	repl_slinks = replog->ops->slinks(replog);
++	_BUG_ON_PTR(repl_slinks);
++
++	read_lock(&repl_slinks->lock);
++	sl = slink_get_by_number(repl_slinks, slink_number);
++	if (IS_ERR(sl))
++		slink = (struct dm_repl_slink *) sl;
++	else {
++		slink = sl->slink;
++		BUG_ON(slink_put(sl));
++	}
++
++	read_unlock(&repl_slinks->lock);
++	return slink;
++}
++
++/* Method to set SYNC state of a region of a device. */
++static int
++blockdev_set_sync(struct dm_repl_slink *slink, int dev_number,
++	       sector_t sector, int in_sync)
++{
++	struct sdev *dev;
++	struct sdev_dev *sd;
++	struct dm_dirty_log *dl;
++	struct slink *sl;
++
++	_SET_AND_BUG_ON_SL(sl, slink);
++
++	if (dev_number < 0)
++		return -EINVAL;
++
++	read_lock(&sl->lock);
++	dev = dev_get_by_number(sl, dev_number);
++	read_unlock(&sl->lock);
++
++	if (IS_ERR(dev))
++		return PTR_ERR(dev);
++
++	sd = &dev->dev;
++	dl = sd->dl;
++	if (dl)
++		dl->type->set_region_sync(dl, sector_to_region(dev, sector),
++					  in_sync);
++	BUG_ON(dev_put(dev));
++	return 0;
++}
++
++/* Method to flush all dirty logs on slink's devices. */
++static int
++blockdev_flush_sync(struct dm_repl_slink *slink)
++{
++	int r = 0;
++	struct slink *sl;
++	struct sdev *dev;
++	struct list_head resync_list;
++
++	_SET_AND_BUG_ON_SL(sl, slink);
++	if (!sl->number)
++		return -EINVAL;
++
++	INIT_LIST_HEAD(&resync_list);
++
++	write_lock(&sl->lock);
++	if (SlinkResyncProcessing(sl)) {
++		write_unlock(&sl->lock);
++		return -EAGAIN;
++	}
++
++	/* Take out resync list in order to process flushs unlocked. */
++	list_splice(SLINK_RESYNC_LIST(sl), &resync_list);
++	INIT_LIST_HEAD(SLINK_RESYNC_LIST(sl));
++
++	/* Get race references on devices. */
++	list_for_each_entry(dev, &resync_list, lists[SDEV_RESYNC]) {
++		_BUG_ON_PTR(dev->dev.dl);
++		dev_get(dev);
++	}
++
++	write_unlock(&sl->lock);
++
++	list_for_each_entry(dev, &resync_list, lists[SDEV_RESYNC]) {
++		if (DevOpen(dev) &&
++		    !(DevSuspended(dev) || DevTeardown(dev))) {
++			int rr;
++			struct dm_dirty_log *dl = dev->dev.dl;
++
++			rr = dl->type->flush(dl);
++			if (rr && !r)
++				r = rr;
++		}
++	}
++
++	/* Put race device references. */
++	write_lock(&sl->lock);
++	list_for_each_entry(dev, &resync_list, lists[SDEV_RESYNC])
++		BUG_ON(dev_put(dev));
++
++	list_splice(&resync_list, SLINK_RESYNC_LIST(sl));
++	write_unlock(&sl->lock);
++
++	return r;
++}
++
++/*
++ * Method to trigger/prohibit resynchronzation on all devices by
++ * adding to the slink resync list and waking up the worker.
++ *
++ * We may *not* remove from the slink resync list here,
++ * because we'd end up with partitally resynchronized
++ * regions in do_slink_resync() otherwise.
++ */
++static int
++blockdev_resync(struct dm_repl_slink *slink, int resync)
++{
++	struct slink *sl;
++	struct sdev *dev;
++
++	_SET_AND_BUG_ON_SL(sl, slink);
++
++	/* Don't proceed on site link 0. */
++	if (!sl->number)
++		return -EINVAL;
++
++	/* If resync processing, we need to postpone. */
++	write_lock(&sl->lock);
++	if (SlinkResyncProcessing(sl)) {
++		write_unlock(&sl->lock);
++		return -EAGAIN;
++	}
++
++	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
++		BUG_ON(IS_ERR(dev));
++
++		if (resync) {
++			SetDevResync(dev);
++
++			/* Add to resync list if not yet on. */
++			if (list_empty(SDEV_RESYNC_LIST(dev))) {
++				list_add_tail(SDEV_RESYNC_LIST(dev),
++					      SLINK_RESYNC_LIST(sl));
++				break;
++			}
++		} else {
++			ClearDevResync(dev);
++
++			/* emove from resync list if on. */
++			if (!list_empty(SDEV_RESYNC_LIST(dev)))
++				list_del_init(SDEV_RESYNC_LIST(dev));
++		}
++	}
++
++	write_unlock(&sl->lock);
++	wake_do_slink(sl);
++	return 0;
++}
++
++/*
++ * Method to check if a region is in sync
++ * by sector on all devices on all slinks.
++ */
++static int
++blockdev_in_sync(struct dm_repl_slink *slink, int dev_number, sector_t sector)
++{
++	int nosync = 0;
++	sector_t region = 0;
++	struct slink *sl = slink_check(slink);
++
++	if (IS_ERR(sl) ||
++	    dev_number < 0)
++		return -EINVAL;
++
++	BUG_ON(!sl->repl_slinks);
++
++	read_lock(&sl->repl_slinks->lock);
++	list_for_each_entry(sl, &sl->repl_slinks->list, lists[SLINK_REPLOG]) {
++		int r;
++		struct dm_dirty_log *dl;
++		struct sdev *dev;
++
++		if (!sl->number)
++			continue;
++
++		read_lock(&sl->lock);
++		dev = dev_get_by_number(sl, dev_number);
++		read_unlock(&sl->lock);
++
++		if (IS_ERR(dev))
++			continue;
++
++		dl = dev->dev.dl;
++		_BUG_ON_PTR(dl);
++
++		/* Calculate region once for all devices on any slinks. */
++		if (!region)
++			region = sector_to_region(dev, sector);
++
++		r = dl->type->in_sync(dl, region, 0);
++		BUG_ON(dev_put(dev));
++		if (!r) {
++			nosync = 1;
++			break;
++		}
++	}
++
++	read_unlock(&sl->repl_slinks->lock);
++	return nosync;
++}
++
++/*
++ * Method for site link messages.
++ *
++ * fallbehind ios/size/timeout=X[unit]
++ * policy X
++ */
++static int
++blockdev_message(struct dm_repl_slink *slink, unsigned argc, char **argv)
++{
++	int r;
++	struct slink_params params;
++	struct slink *sl = slink_check(slink);
++
++	if (IS_ERR(sl))
++		return PTR_ERR(sl);
++
++	if (unlikely(argc < 2))
++		goto bad_arguments;
++
++	/* Preserve parameters. */
++	params = sl->params;
++
++	if (!strnicmp(STR_LEN(argv[0], "fallbehind"))) {
 +		if (argc != 2)
-+			DM_EINVAL("too many message arguments");
++			DM_EINVAL("wrong fallbehind argument count");
 +
-+		_BUG_ON_PTR(replog_c);
-+		if (str_listed(argv[1], "on"))
-+			SetReplDevelStats(replog_c);
-+		else if (str_listed(argv[1], "off"))
-+			ClearReplDevelStats(replog_c);
-+		else if (str_listed(argv[1], "reset"))
-+			stats_reset(&replog_c->io.stats);
++		r = get_slink_fallbehind(argc - 1, argv + 1,
++					 &params.fallbehind);
++		if (r < 0)
++			return r;
++	} else if (!strnicmp(STR_LEN(argv[0], "policy"))) {
++		if (argc != 2)
++			DM_EINVAL("wrong policy argument count");
 +
-+	/* Replication log message. */
-+	} else if (str_listed(argv[0], "replog", NULL)) {
-+		if (argc < 2)
-+			goto err_args;
++		r = get_slink_policy(argv[1]);
++		if (r < 0)
++			return r;
 +
-+		if (replog->ops->message)
-+			return replog->ops->message(replog, argc - 1, argv + 1);
-+		else
-+			DM_EPERM("no replication log message interface");
++		params.policy = r;
 +	} else
 +		DM_EINVAL("invalid message received");
 +
++	/* Check properties' consistency. */
++	r = slink_check_properties(&params);
++	if (r < 0)
++		return r;
++
++	/* Set parameters. */
++	sl->params = params;
 +	return 0;
 +
-+err_args:
++bad_arguments:
 +	DM_EINVAL("too few message arguments");
 +}
 +
-+/* Replication log status output method. */
-+static int
-+replicator_status(struct dm_target *ti, status_type_t type,
-+		    char *result, unsigned maxlen)
++/* String print site link error state. */
++static const char *
++snprint_slink_error(struct slink *sl, char *result, size_t maxlen)
 +{
-+	unsigned dev_nr = 0;
-+	ssize_t sz = 0;
-+	static char buffer[2048];
-+	struct replog_c *replog_c = ti->private;
-+	struct dm_repl_log *replog;
-+	struct slink_c *slink_c0;
-+	struct dm_repl_slink *slink;
++	size_t sz = 0;
 +
-+	mutex_lock(&replog_c_list_mutex);
-+	_BUG_ON_PTR(replog_c);
-+	replog = replog_c->replog;
-+	_BUG_ON_PTR(replog);
++	*result = 0;
++	if (SlinkErrorRead(sl))
++		DMEMIT("R");
 +
-+	if (type == STATUSTYPE_INFO) {
-+		if (ReplDevelStats(replog_c)) {
-+			struct stats *s = &replog_c->io.stats;
++	if (SlinkErrorWrite(sl))
++		DMEMIT("W");
 +
-+			DMEMIT("v=%s r=%u w=%u rs=%u "
-+			       "ws=%u nc=%u c=%u ",
-+			       version,
-+			       atomic_read(s->io), atomic_read(s->io + 1),
-+			       atomic_read(s->submitted_io),
-+			       atomic_read(s->submitted_io + 1),
-+			       atomic_read(s->congested_fn),
-+			       atomic_read(s->congested_fn + 1));
++	if (!*result)
++		DMEMIT("A");
++
++	return result;
++}
++
++/* String print device status. */
++static const char *
++snprint_device(struct slink *sl, struct sdev *dev,
++	      status_type_t type, char *result, unsigned maxlen)
++{
++	size_t sz = 0;
++	static char buf[BDEVNAME_SIZE];
++	struct sdev_dev *sd;
++	struct dm_dirty_log *dl;
++
++	*result = 0;
++	if (IS_ERR(dev))
++		goto out;
++
++	sd = &dev->dev;
++	DMEMIT("%u %s ", sd->params.count,
++	       sd->dm_dev ?
++	       format_dev_t(buf, sd->dm_dev->bdev->bd_dev) :
++	       sd->params.path);
++	dl = sd->dl;
++	if (dl)
++		dl->type->status(dl, type, result + sz, maxlen - sz);
++	else
++		DMEMIT("nolog 0");
++
++out:
++	return result;
++}
++
++/* String print device resynchronization state. */
++static const char *
++snprint_sync_count(struct slink *sl, struct sdev *dev,
++		   char *result, unsigned maxlen)
++{
++	size_t sz = 0;
++	struct dm_dirty_log *dl;
++
++	if (IS_ERR(dev))
++		goto no_dev;
++
++	dl = dev->dev.dl;
++	if (dl) {
++		DMEMIT("%llu%s/%llu",
++		       (unsigned long long) dl->type->get_sync_count(dl),
++		       DevResyncing(dev) ? "+" : "",
++		       (unsigned long long) region_count(dev));
++	} else {
++no_dev:
++		DMEMIT("-");
++	}
++
++	return result;
++}
++
++/* Method for site link status requests. */
++static struct dm_repl_slink_type blockdev_type;
++static int
++blockdev_status(struct dm_repl_slink *slink, int dev_number,
++	     status_type_t type, char *result, unsigned int maxlen)
++{
++	size_t sz = 0;
++	static char buffer[256];
++	struct slink *sl_cur, *sl = slink_check(slink);
++	struct sdev *dev;
++	struct slink_params *p;
++	struct list_head *sl_list;
++
++	if (unlikely(IS_ERR(sl)))
++		return PTR_ERR(sl);
++
++	if (dev_number < -1)
++		return -EINVAL;
++
++	BUG_ON(!sl->repl_slinks);
++	sl_list = &sl->repl_slinks->list;
++
++	read_lock(&sl->repl_slinks->lock);
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		list_for_each_entry(sl_cur, sl_list, lists[SLINK_REPLOG]) {
++			read_lock(&sl_cur->lock);
++			dev = dev_get_by_number(sl_cur, dev_number);
++			read_unlock(&sl_cur->lock);
++
++			if (!IS_ERR(dev)) {
++				DMEMIT("%s,",
++				       snprint_slink_error(sl_cur, buffer,
++							   sizeof(buffer)));
++
++				DMEMIT("%s ",
++				       snprint_sync_count(sl_cur, dev, buffer,
++							  sizeof(buffer)));
++				BUG_ON(dev_put(dev));
++			}
++		}
++
++		break;
++
++	case STATUSTYPE_TABLE:
++		list_for_each_entry(sl_cur, sl_list, lists[SLINK_REPLOG]) {
++			read_lock(&sl_cur->lock);
++			if (dev_number < 0) {
++				p = &sl_cur->params;
++				DMEMIT("%s %u %u ",
++				       blockdev_type.type.name,
++				       p->count, sl_cur->number);
++
++				if (p->count > 1) {
++					snprint_policies(p->policy, buffer,
++							 sizeof(buffer));
++					DMEMIT("%s ", buffer);
++					snprint_fallbehind(&p->fallbehind,
++							   buffer,
++							   sizeof(buffer));
++					if (p->count > 2)
++						DMEMIT("%s ", buffer);
++				}
++			} else {
++				dev = dev_get_by_number(sl_cur, dev_number);
++				if (!IS_ERR(dev)) {
++					DMEMIT("%u %s ", sl_cur->number,
++					       snprint_device(sl_cur, dev, type,
++							      buffer,
++							      sizeof(buffer)));
++					BUG_ON(dev_put(dev));
++				}
++			}
++
++			read_unlock(&sl_cur->lock);
 +		}
 +	}
 +
-+	mutex_unlock(&replog_c_list_mutex);
-+
-+	/* Get status from replog. */
-+	/* FIXME: dev_nr superfluous? */
-+	replog->ops->status(replog, dev_nr, type, buffer, sizeof(buffer));
-+	DMEMIT("%s", buffer);
-+
-+	slink_c0 = list_first_entry(&replog_c->lists.slink_c,
-+				    struct slink_c, lists.slink_c);
-+	slink = slink_c0->slink;
-+	_BUG_ON_PTR(slink);
-+	/* Get status from slink. */
-+	*buffer = 0;
-+	slink->ops->status(slink, -1, type, buffer, sizeof(buffer));
-+	DMEMIT(" %s", buffer);
++	read_unlock(&sl->repl_slinks->lock);
 +	return 0;
 +}
 +
-+/* Replicator control interface. */
-+static struct target_type replicator_target = {
-+	.name = "replicator",
-+	.version = {1, 0, 0},
-+	.module = THIS_MODULE,
-+	.ctr = replicator_ctr,
-+	.dtr = replicator_dtr,
-+	.map = replicator_map,
-+	.postsuspend = replicator_postsuspend,
-+	.resume = replicator_resume,
-+	.message = replicator_message,
-+	.status = replicator_status,
++/*
++ * End methods of "blockdev" slink type.
++ */
++
++/* "blockdev" SLINK handler interface type. */
++static struct dm_repl_slink_type blockdev_type = {
++	.type.name = "blockdev",
++	.type.module = THIS_MODULE,
++
++	.ctr = blockdev_ctr,
++	.dtr = blockdev_dtr,
++
++	.postsuspend = blockdev_postsuspend,
++	.resume = blockdev_resume,
++
++	.dev_add = blockdev_dev_add,
++	.dev_del = blockdev_dev_del,
++
++	.copy = blockdev_copy,
++	.io = blockdev_io,
++	.unplug = blockdev_unplug,
++	.recover_notify_fn_set = blockdev_recover_notify_fn_set,
++	.set_sync = blockdev_set_sync,
++	.flush_sync = blockdev_flush_sync,
++	.resync = blockdev_resync,
++	.in_sync = blockdev_in_sync,
++
++	.policy = blockdev_policy,
++	.state = blockdev_state,
++	.fallbehind = blockdev_fallbehind,
++	.dev_number = blockdev_dev_number,
++	.slink_number = blockdev_slink_number,
++	.slink = blockdev_slink,
++
++	.message = blockdev_message,
++	.status = blockdev_status,
 +};
 +
-+int __init dm_repl_init(void)
++/* Destroy kmem caches on module unload. */
++static void
++slink_kmem_caches_exit(void)
++{
++	struct cache_defs *cd = ARRAY_END(cache_defs);
++
++	while (cd-- > cache_defs) {
++		if (cd->cache) {
++			kmem_cache_destroy(cd->cache);
++			cd->cache = NULL;
++		}
++	}
++}
++
++/* Create kmem caches on module load. */
++static int
++slink_kmem_caches_init(void)
++{
++	int r = 0;
++	struct cache_defs *cd = ARRAY_END(cache_defs);
++
++	while (cd-- > cache_defs) {
++		cd->cache = kmem_cache_create(cd->name, cd->size, 0, 0, NULL);
++
++		if (unlikely(!cd->cache)) {
++			DMERR("failed to create %s slab for site link "
++			      "handler %s %s",
++			      cd->name, blockdev_type.type.name, version);
++			slink_kmem_caches_exit();
++			r = -ENOMEM;
++			break;
++		}
++	}
++
++	return r;
++}
++
++int __init
++dm_repl_slink_init(void)
 +{
 +	int r;
 +
-+	INIT_LIST_HEAD(&replog_c_list);
-+	mutex_init(&replog_c_list_mutex);
-+
-+	r = dm_register_target(&replicator_target);
-+	if (r < 0)
-+		DMERR("failed to register %s %s [%d]",
-+		      replicator_target.name, version, r);
-+	else {
-+		DMINFO("registered %s target %s",
-+		       replicator_target.name, version);
-+		r = dm_register_target(&replicator_dev_target);
-+		if (r < 0) {
-+			DMERR("Failed to register %s %s [%d]",
-+			      replicator_dev_target.name, version, r);
-+			dm_unregister_target(&replicator_target);
-+		} else
-+			DMINFO("registered %s target %s",
-+			       replicator_dev_target.name, version);
++	/* Create slabs for the copy contexts and test buffers. */
++	r = slink_kmem_caches_init();
++	if (r) {
++		DMERR("failed to init %s kmem caches", blockdev_type.type.name);
++		return r;
 +	}
++
++	r = dm_register_type(&blockdev_type, DM_SLINK);
++	if (unlikely(r < 0)) {
++		DMERR("failed to register replication site "
++		      "link handler %s %s [%d]",
++		      blockdev_type.type.name, version, r);
++		slink_kmem_caches_exit();
++	} else
++		DMINFO("registered replication site link handler %s %s",
++		       blockdev_type.type.name, version);
 +
 +	return r;
 +}
 +
 +void __exit
-+dm_repl_exit(void)
++dm_repl_slink_exit(void)
 +{
-+	dm_unregister_target(&replicator_dev_target);
-+	DMINFO("unregistered target %s %s",
-+	       replicator_dev_target.name, version);
-+	dm_unregister_target(&replicator_target);
-+	DMINFO("unregistered target %s %s", replicator_target.name, version);
++	int r = dm_unregister_type(&blockdev_type, DM_SLINK);
++
++	slink_kmem_caches_exit();
++
++	if (r)
++		DMERR("failed to unregister replication site "
++		      "link handler %s %s [%d]",
++		       blockdev_type.type.name, version, r);
++	else
++		DMINFO("unregistered replication site link handler %s %s",
++		       blockdev_type.type.name, version);
++
 +}
 +
-+/* Module hooks */
-+module_init(dm_repl_init);
-+module_exit(dm_repl_exit);
++/* Module hooks. */
++module_init(dm_repl_slink_init);
++module_exit(dm_repl_slink_exit);
 +
-+MODULE_DESCRIPTION(DM_NAME " remote replication target");
++MODULE_DESCRIPTION(DM_NAME " remote replication target \"blockdev\" "
++			   "site link (SLINK) handler");
 +MODULE_AUTHOR("Heinz Mauelshagen <heinzm@redhat.com>");
 +MODULE_LICENSE("GPL");
-diff --git linux-2.6.orig/drivers/md/dm-repl.h linux-2.6/drivers/md/dm-repl.h
+diff --git linux-2.6.orig/drivers/md/dm-repl-slink.h linux-2.6/drivers/md/dm-repl-slink.h
 new file mode 100644
-index 0000000..f0101e0
+index 0000000..9c3cccd
 --- /dev/null
-+++ linux-2.6/drivers/md/dm-repl.h
-@@ -0,0 +1,124 @@
++++ linux-2.6/drivers/md/dm-repl-slink.h
+@@ -0,0 +1,313 @@
 +/*
 + * Copyright (C) 2008,2009  Red Hat, Inc. All rights reserved.
 + *
@@ -2068,107 +3125,296 @@ index 0000000..f0101e0
 + * 3(cont). repeat the device binding for any additional devices on that slink
 + * 4. bind the created slink which has device(s) bound to it to the replog
 + * 4(cont). repeat the slink binding to the replog for all created slinks
-+ * 5. call the replog io function for each IO.
++ * 5. call the replog write function for each write IO and the replog hit
++ *    function for each read IO..
 + *
 + * Reverse steps 1-4 to tear a replication mapping down, hence freeing all
 + * transient resources allocated to it.
 + */
 +
-+#ifndef _DM_REPL_H
-+#define _DM_REPL_H
++#ifndef _DM_REPL_SLINK_IO_H
++#define _DM_REPL_SLINK_IO_H
 +
-+#include <linux/device-mapper.h>
++#include "dm.h"
++#include "dm-repl.h"
++#include "dm-registry.h"
 +
-+/* FIXME: factor these macros out to dm.h */
-+#define	STR_LEN(ptr, str)	ptr, str, strlen(ptr)
-+#define ARRAY_END(a)    ((a) + ARRAY_SIZE(a))
-+#define	range_ok(i, min, max)   (i >= min && i <= max)
++#include <linux/dm-io.h>
 +
-+#define	TI_ERR_RET(str, ret) \
-+do { \
-+	ti->error = DM_MSG_PREFIX ": " str; \
-+	return ret; } \
-+while (0)
-+#define	TI_ERR(str)	TI_ERR_RET(str, -EINVAL)
-+
-+#define	DM_ERR_RET(ret, x...)	do { DMERR(x); return ret; } while (0)
-+#define	DM_EINVAL(x...)	DM_ERR_RET(-EINVAL, x)
-+#define	DM_EPERM(x...)	DM_ERR_RET(-EPERM, x)
-+
-+/*
-+ * Minimum split_io of target to preset for local devices in repl_ctr().
-+ * Will be adjusted while constructing (a) remote device(s).
-+ */
-+#define	DM_REPL_MIN_SPLIT_IO	BIO_MAX_SECTORS
-+
-+/* REMOVEME: deevel testing. */
-+#if	0
-+#define	SHOW_ARGV \
-+	do { \
-+		int i; \
-+\
-+		DMINFO("%s: called with the following args:", __func__); \
-+		for (i = 0; i < argc; i++) \
-+			DMINFO("%d: %s", i, argv[i]); \
-+	} while (0)
-+#else
-+#define	SHOW_ARGV
-+#endif
-+
-+
-+/* Factor out to dm-bio-list.h */
-+static inline void
-+bio_list_push(struct bio_list *bl, struct bio *bio)
-+{
-+	bio->bi_next = bl->head;
-+	bl->head = bio;
-+
-+	if (!bl->tail)
-+		bl->tail = bio;
-+}
-+
-+/* REMOVEME: development */
-+#define	_BUG_ON_PTR(ptr) \
-+	do { \
-+		BUG_ON(!ptr); \
-+		BUG_ON(IS_ERR(ptr)); \
-+	} while (0)
-+
-+/* Callback function. */
-+typedef void
-+(*dm_repl_notify_fn)(int read_err, int write_err, void *context);
-+
-+/* Macros to access bitfields. o.flag */
-+#define	BITOPS(name, var, flag) \
-+static inline int \
-+TestClear ## name(struct var *v) \
-+{ return test_and_clear_bit(flag, &v->io.flags); } \
-+static inline int \
-+TestSet ## name(struct var *v) \
-+{ return test_and_set_bit(flag, &v->io.flags); } \
-+static inline void \
-+Clear ## name(struct var *v) \
-+{ clear_bit(flag, &v->io.flags); } \
-+static inline void \
-+Set ## name(struct var *v) \
-+{ set_bit(flag, &v->io.flags); } \
-+static inline int \
-+name(struct var *v) \
-+{ return test_bit(flag, &v->io.flags); }
-+
-+/* FIXME: move to dm core. */
-+/* Search routines for descriptor arrays. */
-+struct dm_str_descr {
-+	const int type;
-+	const char *name;
++/* Handle to access a site link. */
++struct dm_repl_slink {
++	struct dm_repl_slink_type *ops;
++	void *context;	/* Private slink (callee) context. */
++	void *caller;	/* Caller context to (optionally) tie to slink. */
 +};
 +
-+/* Return type for name. */
-+extern int
-+dm_descr_type(const struct dm_str_descr *descr, unsigned len, const char *name);
-+/* Return name for type. */
-+extern const char *
-+dm_descr_name(const struct dm_str_descr *descr, unsigned len, const int type);
++/*
++ * Start copy function parameters.
++ */
++/* Copy device address union content type. */
++enum dm_repl_slink_dev_type {
++	DM_REPL_SLINK_BLOCK_DEVICE,	/* Copying from/to block_device. */
++	DM_REPL_SLINK_DEV_NUMBER,	/* Copying from/to device number. */
++};
++
++/* Copy device address. */
++struct dm_repl_slink_copy_addr {
++	/* Union content type. */
++	enum dm_repl_slink_dev_type type;
++
++	/* Either address is block_device or slink/device # pair. */
++	union {
++		struct block_device *bdev;
++		struct {
++			unsigned slink;
++			unsigned dev;
++		} number;
++	} dev;
++
++	/* Sector offset on device to copy to/from. */
++	sector_t sector;
++};
++
++/* Copy notification callback parameters. */
++struct dm_repl_slink_notify_ctx {
++	dm_repl_notify_fn fn;
++	void *context;
++};
++
++/* Copy function structure to pass in from caller. */
++struct dm_repl_slink_copy {
++	struct dm_repl_slink_copy_addr src; /* Source address of copy. */
++	struct dm_repl_slink_copy_addr dst; /* Destination address of copy. */
++	unsigned size;			    /* Size of copy [bytes]. */
++
++	/* Notification callback for data transfered to (remote) RAM. */
++	struct dm_repl_slink_notify_ctx ram;
++	/* Notification callback for data transfered to (remote) disk. */
++	struct dm_repl_slink_notify_ctx disk;
++};
++/*
++ * End copy function parameters.
++ */
++
++/* SLINK policies */
++enum dm_repl_slink_policy_type {
++	DM_REPL_SLINK_ASYNC,
++	DM_REPL_SLINK_SYNC,
++	DM_REPL_SLINK_STALL,
++};
++
++/* SLINK states */
++enum dm_repl_slink_state_type {
++	DM_REPL_SLINK_DOWN,
++	DM_REPL_SLINK_READ_ERROR,
++	DM_REPL_SLINK_WRITE_ERROR,
++};
++
++/* SLINK fallbehind information. */
++/* Definition of fall behind values. */
++enum dm_repl_slink_fallbehind_type {
++	DM_REPL_SLINK_FB_IOS,		/* Number of IOs. */
++	DM_REPL_SLINK_FB_SIZE,		/* In sectors unless unit. */
++	DM_REPL_SLINK_FB_TIMEOUT,	/* In ms unless unit. */
++};
++struct dm_repl_slink_fallbehind {
++	enum dm_repl_slink_fallbehind_type type;
++	sector_t value;
++	sector_t multiplier;
++	char unit;
++};
++
++struct dm_repl_log;
++
++/* SLINK handler interface type. */
++struct dm_repl_slink_type {
++	/* Must be first to allow for registry abstraction! */
++	struct dm_registry_type type;
++
++	/* Construct/destruct a site link. */
++	int (*ctr)(struct dm_repl_slink *, struct dm_repl_log *,
++		   unsigned argc, char **argv);
++	void (*dtr)(struct dm_repl_slink *);
++
++	/*
++	 * There are times when we want the slink to be quiet.
++	 * Ie. no checks will run on slinks and no initial
++	 * resynchronization will be performed.
++	 */
++	int (*postsuspend)(struct dm_repl_slink *slink, int dev_number);
++	int (*resume)(struct dm_repl_slink *slink, int dev_number);
++
++	/* Add a device to a site link. */
++	int (*dev_add)(struct dm_repl_slink *, int dev_number,
++		       struct dm_target *ti, unsigned argc, char **argv);
++
++	/* Delete a device from a site link. */
++	int (*dev_del)(struct dm_repl_slink *, int dev_number);
++
++	/*
++	 * Initiate data copy across a site link.
++	 *
++	 * This function may be used to copy a buffer entry *or*
++	 * for resynchronizing regions initially or when an SLINK
++	 * has fallen back to dirty log (bitmap) mode.
++	 *
++	 * The dm_repl_slink_copy can be allocated on the stack,
++	 * because copies of its members are taken before the function returns.
++	 *
++	 * The function will call 2 callbacks, one to report data in (remote)
++	 * RAM and another one to report data on (remote) disk
++	 * (see dm_repl_slink_copy structure for details).
++	 *
++	 * Tag is a unique tag to identify a data set.
++	 *
++	 *
++	 * The return codes are defined as follows:
++	 *
++	 * o -EAGAIN in case of prohibiting I/O because
++	 *    of device inaccessibility/suspension
++	 *    or device I/O errors
++	 *    (i.e. link temporarilly down) ->
++	 *    caller is allowed to retry the I/O later once
++	 *    he'll have received a callback.
++	 *
++	 * o -EACCES in case a region is being resynchronized
++	 *    and the source region is being read to copy data
++	 *    accross to the same region of the replica (RD) ->
++	 *    caller is allowed to retry the I/O later once
++	 *    he'll have received a callback.
++	 *
++	 * o -ENODEV in case a device is not configured
++	 *    caller must drop the I/O to the device/slink pair.
++	 *
++	 * o -EPERM in case a region is out of sync ->
++	 *    caller must drop the I/O to the device/slink pair.
++	 */
++	int (*copy)(struct dm_repl_slink *, struct dm_repl_slink_copy *,
++		    unsigned long long tag);
++
++	/* Submit bio to underlying transport. */
++	int (*io)(struct dm_repl_slink *, struct bio *,
++		  unsigned long long tag);
++
++	/* Endio function to call from dm_repl core on bio endio processing. */
++	int (*endio) (struct dm_repl_slink *, struct bio *bio, int error,
++		      union map_info *map_context);
++
++	/* Unplug request queues on all devices on slink. */
++	int (*unplug)(struct dm_repl_slink *);
++
++	/* Set global recovery notification function and context- */
++	void (*recover_notify_fn_set)(struct dm_repl_slink *,
++				      dm_repl_notify_fn, void *context);
++
++	/* Set/clear sync status of sector. */
++	int (*set_sync)(struct dm_repl_slink *, int dev_number,
++			sector_t sector, int in_sync);
++
++	/* Flush any dirty logs on slink. */
++	int (*flush_sync)(struct dm_repl_slink *);
++
++	/* Trigger resynchronization of devices on slink. */
++	int (*resync)(struct dm_repl_slink *slink, int resync);
++
++	/* Return > 0 if region is in sync on all slinks. */
++	int (*in_sync)(struct dm_repl_slink *slink, int dev_number,
++		       sector_t region);
++
++	/* Site link policies. */
++	enum dm_repl_slink_policy_type (*policy)(struct dm_repl_slink *);
++
++	/* Site link state. */
++	enum dm_repl_slink_state_type (*state)(struct dm_repl_slink *);
++
++	/* Return reference to fallbehind information. */
++	struct dm_repl_slink_fallbehind *(*fallbehind)(struct dm_repl_slink *);
++
++	/* Return device number for block_device on slink if any. */
++	int (*dev_number)(struct dm_repl_slink *, struct block_device *);
++
++	/* Return # of the SLINK. */
++	int (*slink_number)(struct dm_repl_slink *);
++
++	/* Return SLINK by number. */
++	struct dm_repl_slink *(*slink)(struct dm_repl_log *,
++				       unsigned slink_number);
++
++	/* SLINK status requests. */
++	int (*status)(struct dm_repl_slink *, int dev_number,
++		      status_type_t, char *result, unsigned int maxlen);
++
++	/* SLINK messages (eg. change policy). */
++	int (*message)(struct dm_repl_slink *, unsigned argc, char **argv);
++};
++
++/* Policy and state access inlines. */
++/* Policy synchronous. */
++static inline int
++slink_policy_synchronous(enum dm_repl_slink_policy_type policy)
++{
++	return test_bit(DM_REPL_SLINK_SYNC, (unsigned long *) &policy);
++}
++
++/* Slink synchronous. */
++static inline int
++slink_synchronous(struct dm_repl_slink *slink)
++{
++	return slink_policy_synchronous(slink->ops->policy(slink));
++}
++
++/* Policy asynchronous. */
++static inline int
++slink_policy_asynchronous(enum dm_repl_slink_policy_type policy)
++{
++	return test_bit(DM_REPL_SLINK_ASYNC, (unsigned long *) &policy);
++}
++
++/* Slink asynchronous. */
++static inline int
++slink_asynchronous(struct dm_repl_slink *slink)
++{
++	return slink_policy_asynchronous(slink->ops->policy(slink));
++}
++
++/* Policy stall. */
++static inline int
++slink_policy_stall(enum dm_repl_slink_policy_type policy)
++{
++	return test_bit(DM_REPL_SLINK_STALL, (unsigned long *) &policy);
++}
++
++/* Slink stall. */
++static inline int
++slink_stall(struct dm_repl_slink *slink)
++{
++	return slink_policy_stall(slink->ops->policy(slink));
++}
++
++/* State down.*/
++static inline int
++slink_state_down(enum dm_repl_slink_state_type state)
++{
++	return test_bit(DM_REPL_SLINK_DOWN, (unsigned long *) &state);
++}
++
++/* Slink down.*/
++static inline int
++slink_down(struct dm_repl_slink *slink)
++{
++	return slink_state_down(slink->ops->state(slink));
++}
++
++/* Setup of site links. */
++/* Create/destroy a transient replicator site link */
++struct dm_repl_slink *
++dm_repl_slink_get(char *name, struct dm_repl_log *,
++		  unsigned argc, char **argv);
++void dm_repl_slink_put(struct dm_repl_slink *);
++
++/* init/exit functions. */
++int dm_repl_slink_init(void);
++void dm_repl_slink_exit(void);
 +
 +#endif
 -- 
