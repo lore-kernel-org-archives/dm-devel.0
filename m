@@ -1,10 +1,10 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] Lock only when querying status, not table
-Date: Mon, 30 Nov 2009 14:05:09 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0911301356260.26310@hs20-bc2-1.build.redhat.com>
+Subject: [PATCHES 7+8] patches for dm-raid1-bio-holding
+Date: Mon, 30 Nov 2009 18:14:29 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911301810330.7766@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: MULTIPART/MIXED; BOUNDARY="279731514-643289630-1259622869=:7766"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,64 +19,180 @@ To: Alasdair G Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--279731514-643289630-1259622869=:7766
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
 Hi
 
-Please, apply this before 2.6.32, there is a possibility for regression 
-(locking in snapshot_status was introduced in 2.6.32-rc).
+There is an error in do_failures, in that cycle
+while ((bio = bio_list_pop(failures))) --- there exists a path where the 
+bio is not processed at all and the pointer to the bio is lost --- you 
+forgot the last "else hold_bio". It deadlocked in my testing.
+
+I'm resending these two patches, correct it according to them.
 
 Mikulas
+--279731514-643289630-1259622869=:7766
+Content-Type: TEXT/PLAIN; charset=US-ASCII;
+	name=dm-raid1-hold-when-errors-handled.patch
+Content-Transfer-Encoding: BASE64
+Content-ID: <Pine.LNX.4.64.0911301814290.7766@hs20-bc2-1.build.redhat.com>
+Content-Description: dm-raid1-hold-when-errors-handled.patch
+Content-Disposition: attachment;
+	filename=dm-raid1-hold-when-errors-handled.patch
 
----
+SG9sZCBhbGwgd3JpdGUgYmlvcyB3aGVuIGVycm9ycyBhcmUgaGFuZGxlZC4N
+Cg0KVGhlIHBhdGNoIGNoYW5nZXMgdGhlc2UgdGhpbmdzOg0KLSBwcmV2aW91
+c2x5LCB0aGUgZmFpbHVyZXMgbGlzdCB3YXMgdXNlZCBvbmx5IHdoZW4gaGFu
+ZGxpbmcgZXJyb3JzIHdpdGgNCiAgZG1ldmVudGQuIE5vdywgaXQgaXMgdXNl
+ZCBmb3IgYWxsIGJpb3MuIEV2ZW4gd2hlbiBub3QgdXNpbmcgZG1ldmVudGQs
+DQogIHRoZSByZWdpb25zIHdoZXJlIHNvbWUgd3JpdGVzIGZhaWxlZCBtdXN0
+IGJlIG1hcmtlZCBhcyBub3N5bmMuIFRoaXMgY2FuIG9ubHkNCiAgYmUgZG9u
+ZSBpbiBwcm9jZXNzIGNvbnRleHQgKGkuZS4gaW4gcmFpZDEgd29ya3F1ZXVl
+KSwgbm90IGluDQogIHRoZSB3cml0ZV9jYWxsYmFjayBmdW5jdGlvbi4NCi0g
+cHJldmlvdXNseSwgdGhlIHdyaXRlIHdvdWxkIHN1Y2NlZWQgaWYgd3JpdGlu
+ZyB0byBhdCBsZWFzdCBvbmUgbGVnIHN1Y2NlZWRlZC4NCiAgVGhpcyBpcyB3
+cm9uZyBiZWNhdXNlIGRhdGEgZnJvbSB0aGUgZmFpbGVkIGxlZyBtYXkgYmUg
+cmVwbGljYXRlZCB0byB0aGUNCiAgY29ycmVjdCBsZWcuDQogIE5vdywgaWYg
+dXNpbmcgZG1ldmVudGQsIHRoZSB3cml0ZSB3aXRoIHNvbWUgZmFpbHVyZXMg
+d2lsbCBmYWlsIGJlIGhlbGQgdW50aWwNCiAgZG1ldmVudGQgZG9lcyBpdHMg
+am9iIGFuZCByZWNvbmZpZ3VyZXMgdGhlIGFycmF5Lg0KICBJZiBub3QgdXNp
+bmcgZG1ldmVudGQsIHRoZSB3cml0ZSBzdGlsbCBzdWNjZWVkcyBpZiBhdCBs
+ZWFzdCBvbmUgbGVnIHN1Y2NlZWRzLA0KICBpdCBpcyB3cm9uZyBidXQgaXQg
+aXMgY29uc2lzdGVudCB3aXRoIGN1cnJlbnQgYmVoYXZpb3IuDQoNClNpZ25l
+ZC1vZmYtYnk6IE1pa3VsYXMgUGF0b2NrYSA8bXBhdG9ja2FAcmVkaGF0LmNv
+bT4NCg0KLS0tDQogZHJpdmVycy9tZC9kbS1yYWlkMS5jIHwgICA2MiArKysr
+KysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LQ0KIDEgZmlsZSBjaGFuZ2VkLCAzMyBpbnNlcnRpb25zKCspLCAyOSBkZWxl
+dGlvbnMoLSkNCg0KSW5kZXg6IGxpbnV4LTIuNi4zMi1yYzgtZGV2ZWwvZHJp
+dmVycy9tZC9kbS1yYWlkMS5jDQo9PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQot
+LS0gbGludXgtMi42LjMyLXJjOC1kZXZlbC5vcmlnL2RyaXZlcnMvbWQvZG0t
+cmFpZDEuYwkyMDA5LTExLTI2IDAwOjU1OjIxLjAwMDAwMDAwMCArMDEwMA0K
+KysrIGxpbnV4LTIuNi4zMi1yYzgtZGV2ZWwvZHJpdmVycy9tZC9kbS1yYWlk
+MS5jCTIwMDktMTEtMjYgMDA6NTk6NTguMDAwMDAwMDAwICswMTAwDQpAQCAt
+NTQzLDcgKzU0Myw2IEBAIHN0YXRpYyB2b2lkIHdyaXRlX2NhbGxiYWNrKHVu
+c2lnbmVkIGxvbmcNCiAJdW5zaWduZWQgaSwgcmV0ID0gMDsNCiAJc3RydWN0
+IGJpbyAqYmlvID0gKHN0cnVjdCBiaW8gKikgY29udGV4dDsNCiAJc3RydWN0
+IG1pcnJvcl9zZXQgKm1zOw0KLQlpbnQgdXB0b2RhdGUgPSAwOw0KIAl1bnNp
+Z25lZCBsb25nIGZsYWdzOw0KIA0KIAltcyA9IGJpb19nZXRfbShiaW8pLT5t
+czsNCkBAIC01NTUsMzMgKzU1NCwyMyBAQCBzdGF0aWMgdm9pZCB3cml0ZV9j
+YWxsYmFjayh1bnNpZ25lZCBsb25nDQogCSAqIFRoaXMgd2F5IHdlIGhhbmRs
+ZSBib3RoIHdyaXRlcyB0byBTWU5DIGFuZCBOT1NZTkMNCiAJICogcmVnaW9u
+cyB3aXRoIHRoZSBzYW1lIGNvZGUuDQogCSAqLw0KLQlpZiAobGlrZWx5KCFl
+cnJvcikpDQotCQlnb3RvIG91dDsNCisJaWYgKGxpa2VseSghZXJyb3IpKSB7
+DQorCQliaW9fZW5kaW8oYmlvLCByZXQpOw0KKwkJcmV0dXJuOw0KKwl9DQog
+DQogCWZvciAoaSA9IDA7IGkgPCBtcy0+bnJfbWlycm9yczsgaSsrKQ0KIAkJ
+aWYgKHRlc3RfYml0KGksICZlcnJvcikpDQogCQkJZmFpbF9taXJyb3IobXMt
+Pm1pcnJvciArIGksIERNX1JBSUQxX1dSSVRFX0VSUk9SKTsNCi0JCWVsc2UN
+Ci0JCQl1cHRvZGF0ZSA9IDE7DQogDQotCWlmICh1bmxpa2VseSghdXB0b2Rh
+dGUpKSB7DQotCQlETUVSUigiQWxsIHJlcGxpY2F0ZWQgdm9sdW1lcyBkZWFk
+LCBmYWlsaW5nIEkvTyIpOw0KLQkJLyogTm9uZSBvZiB0aGUgd3JpdGVzIHN1
+Y2NlZWRlZCwgZmFpbCB0aGUgSS9PLiAqLw0KLQkJcmV0ID0gLUVJTzsNCi0J
+fSBlbHNlIGlmIChlcnJvcnNfaGFuZGxlZChtcykpIHsNCi0JCS8qDQotCQkg
+KiBOZWVkIHRvIHJhaXNlIGV2ZW50LiAgU2luY2UgcmFpc2luZw0KLQkJICog
+ZXZlbnRzIGNhbiBibG9jaywgd2UgbmVlZCB0byBkbyBpdCBpbg0KLQkJICog
+dGhlIG1haW4gdGhyZWFkLg0KLQkJICovDQotCQlzcGluX2xvY2tfaXJxc2F2
+ZSgmbXMtPmxvY2ssIGZsYWdzKTsNCi0JCWJpb19saXN0X2FkZCgmbXMtPmZh
+aWx1cmVzLCBiaW8pOw0KLQkJc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmbXMt
+PmxvY2ssIGZsYWdzKTsNCi0JCXdha2V1cF9taXJyb3JkKG1zKTsNCi0JCXJl
+dHVybjsNCi0JfQ0KLW91dDoNCi0JYmlvX2VuZGlvKGJpbywgcmV0KTsNCisJ
+LyoNCisJICogSW4gZWl0aGVyIGNhc2Ugd2UgbXVzdCBtYXJrIHRoZSByZWdp
+b24gYXMgTk9TWU5DLg0KKwkgKiBUaGF0IHdvdWxkIGJsb2NrLCBzbyBkbyBp
+dCBpbiB0aGUgdGhyZWFkLg0KKwkgKi8NCisJc3Bpbl9sb2NrX2lycXNhdmUo
+Jm1zLT5sb2NrLCBmbGFncyk7DQorCWJpb19saXN0X2FkZCgmbXMtPmZhaWx1
+cmVzLCBiaW8pOw0KKwlzcGluX3VubG9ja19pcnFyZXN0b3JlKCZtcy0+bG9j
+aywgZmxhZ3MpOw0KKwl3YWtldXBfbWlycm9yZChtcyk7DQogfQ0KIA0KIHN0
+YXRpYyB2b2lkIGRvX3dyaXRlKHN0cnVjdCBtaXJyb3Jfc2V0ICptcywgc3Ry
+dWN0IGJpbyAqYmlvKQ0KQEAgLTczNiwxMyArNzI1LDI4IEBAIHN0YXRpYyB2
+b2lkIGRvX2ZhaWx1cmVzKHN0cnVjdCBtaXJyb3Jfc2UNCiAJICovDQogDQog
+CXdoaWxlICgoYmlvID0gYmlvX2xpc3RfcG9wKGZhaWx1cmVzKSkpIHsNCi0J
+CWlmIChtcy0+bG9nX2ZhaWx1cmUpDQotCQkJaG9sZF9iaW8obXMsIGJpbyk7
+DQotCQllbHNlIHsNCi0JCQltcy0+aW5fc3luYyA9IDA7DQotCQkJZG1fcmhf
+bWFya19ub3N5bmMobXMtPnJoLCBiaW8pOw0KLQkJCWJpb19lbmRpbyhiaW8s
+IDApOw0KKyAgCQlpZiAoIW1zLT5sb2dfZmFpbHVyZSkgew0KKyAgCQkJbXMt
+PmluX3N5bmMgPSAwOw0KKyAgCQkJZG1fcmhfbWFya19ub3N5bmMobXMtPnJo
+LCBiaW8pOw0KIAkJfQ0KKwkJLyoNCisJCSAqIElmIGFsbCB0aGUgbGVncyBh
+cmUgZGVhZCwgZmFpbCB0aGUgSS9PLg0KKwkJICoNCisJCSAqIElmIHdlIGFy
+ZSBub3QgdXNpbmcgZG1ldmVudGQsIHdlIHByZXRlbmQgdGhhdCB0aGUgSS9P
+DQorCQkgKiBzdWNjZWVkZWQuIFRoaXMgaXMgd3JvbmcgKHRoZSBmYWlsZWQg
+bGVnIG1pZ2h0IGNvbWUgb25saW5lDQorCQkgKiBhZ2FpbiBhZnRlciByZWJv
+b3QgYW5kIGl0IHdvdWxkIGJlIHJlcGxpY2F0ZWQgYmFjayB0bw0KKwkJICog
+dGhlIGdvb2QgbGVnKSBidXQgaXQgaXMgY29uc2lzdGVudCB3aXRoIGN1cnJl
+bnQgYmVoYXZpb3IuDQorCQkgKiBGb3IgcHJvcGVyIGJlaGF2aW9yLCBkbS1y
+YWlkMSBzaG91bGRuJ3QgYmUgdXNlZCB3aXRob3V0DQorCQkgKiBkbWV2ZW50
+ZCBhdCBhbGwuDQorCQkgKg0KKwkJICogSWYgd2UgdXNlIGRtZXZlbnRkLCBo
+b2xkIHRoZSBiaW8gdW50aWwgZG1ldmVudGQgZG9lcyBpdHMgam9iLg0KKwkJ
+ICovDQorCQlpZiAoIWdldF92YWxpZF9taXJyb3IobXMpKQ0KKwkJCWJpb19l
+bmRpbyhiaW8sIC1FSU8pOw0KKwkJZWxzZSBpZiAoIWVycm9yc19oYW5kbGVk
+KG1zKSkNCisgIAkJCWJpb19lbmRpbyhiaW8sIDApOw0KKwkJZWxzZQ0KKyAg
+CQkJaG9sZF9iaW8obXMsIGJpbyk7DQogCX0NCiB9DQogDQo=
 
-Lock only when querying status, not table
+--279731514-643289630-1259622869=:7766
+Content-Type: TEXT/PLAIN; charset=US-ASCII;
+	name=dm-raid1-hold-all-bios-when-leg-fails.patch
+Content-Transfer-Encoding: BASE64
+Content-ID: <Pine.LNX.4.64.0911301814291.7766@hs20-bc2-1.build.redhat.com>
+Content-Description: dm-raid1-hold-all-bios-when-leg-fails.patch
+Content-Disposition: attachment;
+	filename=dm-raid1-hold-all-bios-when-leg-fails.patch
 
-LVM sometimes suspends the underlying device and asks for a table.
+SG9sZCBhbGwgd3JpdGUgYmlvcyB3aGVuIGxlZyBmYWlscyBhbmQgZXJyb3Jz
+IGFyZSBoYW5kbGVkDQoNCldoZW4gdXNpbmcgZG1ldmVudGQgdG8gaGFuZGxl
+IGVycm9ycywgd2UgbXVzdCBiZSBoZWxkIHVudGlsIGRtZXZlbnRkIGRvZXMN
+Cml0cyBqb2IuIFRoaXMgcGF0Y2ggcHJldmVudHMgdGhlIGZvbGxvd2luZyBy
+YWNlOg0KKiBwcmltYXJ5IGxlZyBmYWlscw0KKiB3cml0ZSAiMSIgZmFpbCwg
+dGhlIHdyaXRlIGlzIGhlbGQsIHNlY29uZGFyeSBsZWcgaXMgc2V0IGRlZmF1
+bHQNCiogd3JpdGUgIjIiIGdvZXMgc3RyYWlnaHQgdG8gdGhlIHNlY29uZGFy
+eSBsZWcNCioqKiBjcmFzaCAqKiogKGJlZm9yZSBkbWV2ZW50ZCBkb2VzIGl0
+cyBqb2IpDQoqIGFmdGVyIGEgcmVib290LCBwcmltYXJ5IGxlZyBnb2VzIGJh
+Y2sgb25saW5lLCBpdCBpcyByZXN5bmNocm9uaXplZCB0bw0KICB0aGUgc2Vj
+b25kYXJ5IGxlZywgd3JpdGUgIjIiIGlzIHJldmVydGVkIGFsdGhvdWdoIGl0
+IGFscmVhZHkgY29tcGxldGVkDQoNClNpZ25lZC1vZmYtYnk6IE1pa3VsYXMg
+UGF0b2NrYSA8bXBhdG9ja2FAcmVkaGF0LmNvbT4NCg0KLS0tDQogZHJpdmVy
+cy9tZC9kbS1yYWlkMS5jIHwgICAxMiArKysrKysrKysrLS0NCiAxIGZpbGUg
+Y2hhbmdlZCwgMTAgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkNCg0K
+SW5kZXg6IGxpbnV4LTIuNi4zMi1yYzgtZGV2ZWwvZHJpdmVycy9tZC9kbS1y
+YWlkMS5jDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gbGludXgtMi42
+LjMyLXJjOC1kZXZlbC5vcmlnL2RyaXZlcnMvbWQvZG0tcmFpZDEuYwkyMDA5
+LTExLTI2IDE3OjI2OjI2LjAwMDAwMDAwMCArMDEwMA0KKysrIGxpbnV4LTIu
+Ni4zMi1yYzgtZGV2ZWwvZHJpdmVycy9tZC9kbS1yYWlkMS5jCTIwMDktMTEt
+MjYgMTg6MzA6NDguMDAwMDAwMDAwICswMTAwDQpAQCAtNjgsNiArNjgsNyBA
+QCBzdHJ1Y3QgbWlycm9yX3NldCB7DQogCXJlZ2lvbl90IG5yX3JlZ2lvbnM7
+DQogCWludCBpbl9zeW5jOw0KIAlpbnQgbG9nX2ZhaWx1cmU7DQorCWludCBs
+ZWdfZmFpbHVyZTsNCiAJYXRvbWljX3Qgc3VzcGVuZDsNCiANCiAJYXRvbWlj
+X3QgZGVmYXVsdF9taXJyb3I7CS8qIERlZmF1bHQgbWlycm9yICovDQpAQCAt
+MjEwLDYgKzIxMSw4IEBAIHN0YXRpYyB2b2lkIGZhaWxfbWlycm9yKHN0cnVj
+dCBtaXJyb3IgKm0NCiAJc3RydWN0IG1pcnJvcl9zZXQgKm1zID0gbS0+bXM7
+DQogCXN0cnVjdCBtaXJyb3IgKm5ldzsNCiANCisJbXMtPmxlZ19mYWlsdXJl
+ID0gMTsNCisNCiAJLyoNCiAJICogZXJyb3JfY291bnQgaXMgdXNlZCBmb3Ig
+bm90aGluZyBtb3JlIHRoYW4gYQ0KIAkgKiBzaW1wbGUgd2F5IHRvIHRlbGwg
+aWYgYSBkZXZpY2UgaGFzIGVuY291bnRlcmVkDQpAQCAtNjk0LDggKzY5Nywx
+MiBAQCBzdGF0aWMgdm9pZCBkb193cml0ZXMoc3RydWN0IG1pcnJvcl9zZXQg
+DQogCQlkbV9yaF9kZWxheShtcy0+cmgsIGJpbyk7DQogDQogCXdoaWxlICgo
+YmlvID0gYmlvX2xpc3RfcG9wKCZub3N5bmMpKSkgew0KLQkJbWFwX2Jpbyhn
+ZXRfZGVmYXVsdF9taXJyb3IobXMpLCBiaW8pOw0KLQkJZ2VuZXJpY19tYWtl
+X3JlcXVlc3QoYmlvKTsNCisJCWlmICh1bmxpa2VseShtcy0+bGVnX2ZhaWx1
+cmUpICYmIGVycm9yc19oYW5kbGVkKG1zKSkNCisJCQlob2xkX2Jpbyhtcywg
+YmlvKTsNCisJCWVsc2Ugew0KKwkJCW1hcF9iaW8oZ2V0X2RlZmF1bHRfbWly
+cm9yKG1zKSwgYmlvKTsNCisJCQlnZW5lcmljX21ha2VfcmVxdWVzdChiaW8p
+Ow0KKwkJfQ0KIAl9DQogfQ0KIA0KQEAgLTgxNiw2ICs4MjMsNyBAQCBzdGF0
+aWMgc3RydWN0IG1pcnJvcl9zZXQgKmFsbG9jX2NvbnRleHQoDQogCW1zLT5u
+cl9yZWdpb25zID0gZG1fc2VjdG9yX2Rpdl91cCh0aS0+bGVuLCByZWdpb25f
+c2l6ZSk7DQogCW1zLT5pbl9zeW5jID0gMDsNCiAJbXMtPmxvZ19mYWlsdXJl
+ID0gMDsNCisJbXMtPmxlZ19mYWlsdXJlID0gMDsNCiAJYXRvbWljX3NldCgm
+bXMtPnN1c3BlbmQsIDApOw0KIAlhdG9taWNfc2V0KCZtcy0+ZGVmYXVsdF9t
+aXJyb3IsIERFRkFVTFRfTUlSUk9SKTsNCiANCg==
 
-To prevent a possible deadlock (LVM suspends the snapshot store, snapshot
-takes the lock and waits for I/O, LVM asks for table before unsuspend,
-deadlock), lock only when querying the status. The lock is not needed for
-table anyway, because the table doesn't change during snapshot operation.
+--279731514-643289630-1259622869=:7766
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
----
- drivers/md/dm-snap.c |   10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
-
-Index: linux-2.6.32-rc8-devel/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.32-rc8-devel.orig/drivers/md/dm-snap.c	2009-11-30 17:56:06.000000000 +0100
-+++ linux-2.6.32-rc8-devel/drivers/md/dm-snap.c	2009-11-30 18:00:44.000000000 +0100
-@@ -1407,10 +1407,11 @@ static int snapshot_status(struct dm_tar
- 	unsigned sz = 0;
- 	struct dm_snapshot *snap = ti->private;
- 
--	down_write(&snap->lock);
--
- 	switch (type) {
- 	case STATUSTYPE_INFO:
-+
-+		down_write(&snap->lock);
-+
- 		if (!snap->valid)
- 			DMEMIT("Invalid");
- 		else {
-@@ -1429,6 +1430,9 @@ static int snapshot_status(struct dm_tar
- 			else
- 				DMEMIT("Unknown");
- 		}
-+
-+		up_write(&snap->lock);
-+
- 		break;
- 
- 	case STATUSTYPE_TABLE:
-@@ -1443,8 +1447,6 @@ static int snapshot_status(struct dm_tar
- 		break;
- 	}
- 
--	up_write(&snap->lock);
--
- 	return 0;
- }
- 
+--279731514-643289630-1259622869=:7766--
