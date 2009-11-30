@@ -1,14 +1,11 @@
-From: Takahiro Yasui <tyasui@redhat.com>
-Subject: Re: [PATCH 0/7] patches: fix dm-raid1 race, bug 502927
-Date: Mon, 30 Nov 2009 11:46:04 -0500
-Message-ID: <4B13F6CC.5050305@redhat.com>
-References: <Pine.LNX.4.64.0911180703410.21358@hs20-bc2-1.build.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] Lock only when querying status, not table
+Date: Mon, 30 Nov 2009 14:05:09 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0911301356260.26310@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0911180703410.21358@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,79 +15,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/18/09 07:09, Mikulas Patocka wrote:
-> Hi
-> 
-> Here is the serie of 7 patches to hold write bios on dm-raid1 until 
-> dmeventd does its job. It fixes bug 
-> https://bugzilla.redhat.com/show_bug.cgi?id=502927 . The first 6 patches 
-> are preparatory, they just move the code around, the last patch does the 
-> fix.
-> 
-> I tested the thing, I managed to reproduce the bug (by manually stopping 
-> dmeventd with STOP signal, failing primary mirror leg and writing to the 
-> device) and I also verified that the patches fix the bug.
-> 
-> For non-dmeventd operation, the current behavior is wrong and I just keep 
-> it as wrong as it was. There is no easy fix. It is just assume that if the 
-> user doesn't use dmeventd, he can't activate failed disks again.
-> 
-> Mikulas
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Hi
 
-I reviewed and tested your patch set and looks good as a kernel side.
+Please, apply this before 2.6.32, there is a possibility for regression 
+(locking in snapshot_status was introduced in 2.6.32-rc).
 
-Reviewed-by: Takahiro Yasui <tyasui@redhat.com>
-Tested-by: Takahiro Yasui <tyasui@redhat.com>
+Mikulas
 
-However, there are two issues found related to #8 and requires
-improvements of dmeventd and lvm commands. This patch set is based on
-the idea that dmeventd and lvm commands (lvconvert and vgreduce) fix
-device failures and release blocked write I/Os. However, the blocked
-write I/Os won't be released forever in some cases.
+---
 
-* Case 1: Medium error
+Lock only when querying status, not table
 
-When medium errors are detected for a write I/O and reported to dmeventd,
-lvconvert is kicked from dmeventd, but nothing is done. Therefore, write
-I/Os will be blocked forever. lvm commands will result in as follows:
+LVM sometimes suspends the underlying device and asks for a table.
 
-# dmsetup status vg00-lv00
-0 24576 mirror 2 253:1 253:2 23/24 1 DA 3 disk 253:0 A
-# lvconvert --config devices{ignore_suspended_devices=1} --repair vg00/lv00
-  The mirror is consistent, nothing to repair.
-# vgreduce --removemissing vg00
-  Volume group "vg00" is already consistent
+To prevent a possible deadlock (LVM suspends the snapshot store, snapshot
+takes the lock and waits for I/O, LVM asks for table before unsuspend,
+deadlock), lock only when querying the status. The lock is not needed for
+table anyway, because the table doesn't change during snapshot operation.
 
-# /usr/sbin/lvm version
-  LVM version:     2.02.57(1)-cvs (2009-11-24)
-  Library version: 1.02.41-cvs (2009-11-24)
-  Driver version:  4.15.0
-# uname -mr
-2.6.31.6 i686
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
+---
+ drivers/md/dm-snap.c |   10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
-* Case 2: Sync error
-
-dmeventd doesn't handle sync error ('S' showed by status) which happens
-during recovery. When write I/Os are issued on out-of-sync region, they
-are blocked, but dmeventd won't handle sync error and release blocked I/Os.
-
-The error on the primary leg during recovery won't help and we need to
-accept the system stop because of no valid leg. The error on the secondary
-leg can be handled as the regular write error. We can fix this issue by
-changing the error flag from DM_RAID1_SYNC_ERROR to DM_RAID1_WRITE_ERROR
-so that this error can be handled by dmeventd.
-
-Other idea is to change dmeventd so that it can handle sync error ('S')
-on the secondary error. It is also easy to make a small patch.
-
-Thanks,
-Taka
+Index: linux-2.6.32-rc8-devel/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.32-rc8-devel.orig/drivers/md/dm-snap.c	2009-11-30 17:56:06.000000000 +0100
++++ linux-2.6.32-rc8-devel/drivers/md/dm-snap.c	2009-11-30 18:00:44.000000000 +0100
+@@ -1407,10 +1407,11 @@ static int snapshot_status(struct dm_tar
+ 	unsigned sz = 0;
+ 	struct dm_snapshot *snap = ti->private;
+ 
+-	down_write(&snap->lock);
+-
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
++
++		down_write(&snap->lock);
++
+ 		if (!snap->valid)
+ 			DMEMIT("Invalid");
+ 		else {
+@@ -1429,6 +1430,9 @@ static int snapshot_status(struct dm_tar
+ 			else
+ 				DMEMIT("Unknown");
+ 		}
++
++		up_write(&snap->lock);
++
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE:
+@@ -1443,8 +1447,6 @@ static int snapshot_status(struct dm_tar
+ 		break;
+ 	}
+ 
+-	up_write(&snap->lock);
+-
+ 	return 0;
+ }
+ 
