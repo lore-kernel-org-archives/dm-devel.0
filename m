@@ -1,16 +1,12 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH v3 0/4] dm-replicator: introduce new remote
-	replication target
-Date: Tue, 01 Dec 2009 18:18:39 +0100
-Message-ID: <1259687919.9639.15.camel@o>
-References: <1259683507-12455-1-git-send-email-heinzm@redhat.com>
-	<20091201164142.GL19238@suse.de>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Jose Nuno Neto <j.neto@eib.org>
+Subject: Too many paths from multipath?
+Date: Wed, 02 Dec 2009 16:45:03 +0100
+Message-ID: <4B168B7F.6060307@eib.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091201164142.GL19238@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,116 +16,188 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 2009-12-01 at 17:41 +0100, Lars Marowsky-Bree wrote:
-> On 2009-12-01T17:05:03, heinzm@redhat.com wrote:
-> 
-> > * 3rd version of patch series (dated Oct 23 2009) *
-> > 
-> > Reworked to allow for Build after each single patch has been applied.
-> 
-> Hi Heinz, have you considered a git tree? Might make it easier to review
-> changes.
+Hi
 
-Hi Lars,
+I'm setting up and testing multipath on a RedHat 5.3,=20
+device-mapper-multipath-0.4.7-23.el5
+I have 2 HBAs connected to one LUN on a Hitachi Storage. Only two=20
+connections have been zoned
+And that appears on sys fc_remote_ports information, but on multipath I=20
+see 4paths per HBA
+I'm a little puzzled with this can you explain why? The Fabric we're=20
+using has several switch, could be this the reason?
+Any hints on this are welcomed
+Thanks
+Jose
 
-got an internal one but no public git so far.
 
-> 
-> > This is a series of 4 patches introducing the device-mapper remote
-> > data replication target "dm-replicator" to kernel 2.6.
-> > 
-> > Userspace support for remote data replication will be in
-> > a future LVM2 version.
-> 
-> Is there any code available for testing this yet?
 
-Zdenek's patches for lvm2 on lvm-devel.
-If you want to at the dm level, I can send you test scripts to create
-test LVs and utiluze them as devices for the replicator.
+Info:
 
-> 
-> > The target supports disaster recovery by replicating groups of active
-> > mapped devices (ie. receiving io from applications) to one or more
-> > remote sites to paired groups of equally sized passive block devices
-> > (ie. no application access). Synchronous, asynchronous replication
-> > (with fallbehind settings) and temporary downtime of transports
-> > are supported.
-> 
-> How is resync handled - peer-to-peer or relayed via the master?
+systool -c fc_remote_ports -v
 
-All io activity is driven by the master in this initial version.
-Ie. resync happens with the primary site as the source for all the
-remote ones.
+Class =3D "fc_remote_ports"
 
->  
-> 
-> What about device failures / IO errors at the sites?
+Class Device =3D "0-0"
+Class Device path =3D "/sys/class/fc_remote_ports/rport-3:0-0"
+dev_loss_tmo =3D "30"
+fast_io_fail_tmo =3D "off"
+node_name =3D "0x50060e8004f3ca72"
+port_id =3D "0x2a1f00"
+port_name =3D "0x50060e8004f3ca72"
+port_state =3D "Online"
+roles =3D "FCP Target"
+scsi_target_id =3D "0"
+supported_classes =3D "Class 3"
+uevent =3D <store method only>
 
-The replication log retries until the administrator decides to drop the
-broken devices. Requirement is to have at least RAID1 in a storage
-appliance remotely. It would work w/o such resilience though.
+Device =3D "rport-3:0-0"
+Device path =3D=20
+"/sys/devices/pci0000:00/0000:00:02.0/0000:01:00.0/0000:02:00.0/0000:03:0=
+0.0/0000:04:02.0/0000:05:00.0/host3/rport-3:0-0"
+uevent =3D <store method only>
 
-> 
-> > It utilizes a replication log to ensure write ordering fidelity for
-> > the whole group of replicated devices, hence allowing for consistent
-> > recovery after failover of arbitrary applications
-> > (eg. DBMS utilizing N > 1 devices).
-> 
-> Write ordering is not guaranteed across different file systems / block
-> devices today; so no DBMS actually requires this. What is the benefit?
 
-W/o replication at the block level, no application needs it because a
-local flush will do at application consistency points. With replication,
-we only have data sets corresponding to such consistency points in the
-log as sequentially ordered entries. In order to allow for application
-recovery in remote sites, we need to ensure write-ordering so that any
-data commits will follow the data. Otherwise we'd end up with finding a
-commit record remotely but not the full data set commited by it, hence
-causing data corruption.
+Class Device =3D "0-0"
+Class Device path =3D "/sys/class/fc_remote_ports/rport-5:0-0"
+dev_loss_tmo =3D "30"
+fast_io_fail_tmo =3D "off"
+node_name =3D "0x50060e8004f3ca62"
+port_id =3D "0x201f00"
+port_name =3D "0x50060e8004f3ca62"
+port_state =3D "Online"
+roles =3D "FCP Target"
+scsi_target_id =3D "0"
+supported_classes =3D "Class 3"
+uevent =3D <store method only>
 
-> 
-> What kind of reordering on a per-device basis is allowed via this
-> infrastructure at each site? (drbd has logic to detect implicit write
-> dependencies to allow peers to optimize local IO.)
+Device =3D "rport-5:0-0"
+Device path =3D=20
+"/sys/devices/pci0000:00/0000:00:04.0/0000:0d:00.0/0000:0e:02.0/0000:0f:0=
+0.0/host5/rport-5:0-0"
+uevent =3D <store method only>
 
-No reordering allowed so far. Any such write dependency optimization is
-subject to another replication log handler implentation which could
-potentially take advantage of given DRBD logic. Surely we've got
-optimization potential...
+####################################
 
-> 
-> > A "blockdev" site link module implements block devices access to all remote
-> > devices, ie. all devices exposed via the Linux block device layer
-> > (eg. iSCSI, FC).
-> 
-> > Again, other eg. network type transport site link handlers may
-> > follow as plugins.
-> 
-> How is all of this actually configured and used?
+multipath -ll
+mpath1 (360060e8004f3ca000000f3ca00000066) dm-8 HITACHI,OPEN-V -SU
+[size=3D26G][features=3D1 queue_if_no_path][hwhandler=3D0][rw]
+\_ round-robin 0 [prio=3D4][active]
+\_ 3:0:0:1 sdk 8:160 [active][ready]
+\_ 3:0:0:16385 sdl 8:176 [active][ready]
+\_ 3:0:0:32769 sdm 8:192 [active][ready]
+\_ 3:0:0:49153 sdo 8:224 [active][ready]
+\_ round-robin 0 [prio=3D4][enabled]
+\_ 5:0:0:1 sdn 8:208 [active][ready]
+\_ 5:0:0:16385 sdp 8:240 [active][ready]
+\_ 5:0:0:32769 sdq 65:0 [active][ready]
+\_ 5:0:0:49153 sdr 65:16 [active][ready]
+mpath0 (360060e8004f3ca000000f3ca0000017d) dm-7 HITACHI,OPEN-V*3 -SU
+[size=3D79G][features=3D1 queue_if_no_path][hwhandler=3D0][rw]
+\_ round-robin 0 [prio=3D4][active]
+\_ 3:0:0:0 sdc 8:32 [active][ready]
+\_ 3:0:0:16384 sde 8:64 [active][ready]
+\_ 3:0:0:32768 sdg 8:96 [active][ready]
+\_ 3:0:0:49152 sdi 8:128 [active][ready]
+\_ round-robin 0 [prio=3D4][enabled]
+\_ 5:0:0:0 sdd 8:48 [active][ready]
+\_ 5:0:0:16384 sdf 8:80 [active][ready]
+\_ 5:0:0:32768 sdh 8:112 [active][ready]
+\_ 5:0:0:49152 sdj 8:144 [active][ready]
 
-Via the above mentioned LVM2 patches.
-Ie. lvm command extensions.
 
-> 
-> > Please review for upstream inclusion.
-> 
-> Should this not be Cc'ed to LKML if you aim for upstream inclusion? I
-> actually would expect that most of the criticism of drbd's inclusion
-> would also apply here, no? (With the added point that dm-replicator does
-> not actually have any users yet.)
+####################################
 
-We have a series of patches to sort out basic issues on dm-devel.
-The usual process is, that agk as the subsystem maintainer integrates
-and upstreams it.
+systool -c fc_host -v host3
+Class =3D "fc_host"
 
-Regards,
-Heinz
+Class Device =3D "host3"
+Class Device path =3D "/sys/class/fc_host/host3"
+fabric_name =3D "0x1000006069909274"
+issue_lip =3D <store method only>
+node_name =3D "0x2000001b3214cfc7"
+port_id =3D "0x2a1100"
+port_name =3D "0x2100001b3214cfc7"
+port_state =3D "Online"
+port_type =3D "NPort (fabric via point-to-point)"
+speed =3D "2 Gbit"
+supported_classes =3D "Class 3"
+symbolic_name =3D "QEM3472 FW:v4.04.05 DVR:v8.02.00.06.05.03-k"
+system_hostname =3D ""
+tgtid_bind_type =3D "wwpn (World Wide Port Name)"
+uevent =3D <store method only>
 
-> 
-> 
-> Regards,
->     Lars
-> 
+Device =3D "host3"
+Device path =3D=20
+"/sys/devices/pci0000:00/0000:00:02.0/0000:01:00.0/0000:02:00.0/0000:03:0=
+0.0/0000:04:02.0/0000:05:00.0/host3"
+ct =3D
+els =3D
+fw_dump =3D
+nvram =3D "ISP "
+optrom_ctl =3D <store method only>
+optrom =3D
+sfp =3D ""
+uevent =3D <store method only>
+vpd =3D "=C2=82r"
+systool -c fc_host -v host5
+Class =3D "fc_host"
+
+Class Device =3D "host5"
+Class Device path =3D "/sys/class/fc_host/host5"
+fabric_name =3D "0x10000060699093ae"
+issue_lip =3D <store method only>
+node_name =3D "0x2000001b3281eb3f"
+port_id =3D "0x201100"
+port_name =3D "0x2100001b3281eb3f"
+port_state =3D "Online"
+port_type =3D "NPort (fabric via point-to-point)"
+speed =3D "2 Gbit"
+supported_classes =3D "Class 3"
+symbolic_name =3D "QEM3472 FW:v4.04.05 DVR:v8.02.00.06.05.03-k"
+system_hostname =3D ""
+tgtid_bind_type =3D "wwpn (World Wide Port Name)"
+uevent =3D <store method only>
+
+Device =3D "host5"
+Device path =3D=20
+"/sys/devices/pci0000:00/0000:00:04.0/0000:0d:00.0/0000:0e:02.0/0000:0f:0=
+0.0/host5"
+ct =3D
+els =3D
+fw_dump =3D
+nvram =3D "ISP "
+optrom_ctl =3D <store method only>
+optrom =3D
+sfp =3D ""
+uevent =3D <store method only>
+vpd =3D "=C2=82r"
+
+
+
+--------------------------------------------------------------------
+
+Les informations contenues dans ce message et/ou ses annexes sont=20
+reservees a l'attention et a l'utilisation de leur destinataire et peuven=
+t etre=20
+confidentielles. Si vous n'etes pas destinataire de ce message, vous etes=
+=20
+informes que vous l'avez recu par erreur et que toute utilisation en est=20
+interdite. Dans ce cas, vous etes pries de le detruire et d'en informer l=
+a=20
+Banque Europeenne d'Investissement.
+
+The information in this message and/or attachments is intended solely for=
+=20
+the attention and use of the named addressee and may be confidential. If=20
+you are not the intended recipient, you are hereby notified that you have=
+=20
+received this transmittal in error and that any use of it is prohibited. =
+In=20
+such a case please delete this message and kindly notify the European=20
+Investment Bank accordingly.
+--------------------------------------------------------------------
+=20
