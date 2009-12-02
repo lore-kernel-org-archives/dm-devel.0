@@ -1,14 +1,9 @@
-From: Jose Nuno Neto <j.neto@eib.org>
-Subject: Re: Too many paths from multipath?
-Date: Wed, 02 Dec 2009 18:57:08 +0100
-Message-ID: <4B16AA74.7050307@eib.org>
-References: <4B168B7F.6060307@eib.org> <1259774764.2177.9.camel@localhost>
+From: bmarzins@sourceware.org
+Subject: multipath-tools ./multipath.conf.defaults libm ...
+Date: 2 Dec 2009 19:15:29 -0000
+Message-ID: <20091202191529.21773.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; format="flowed"
-Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-reply-to: <1259774764.2177.9.camel@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,71 +13,179 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: jsosic@srce.hr, device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Ok that seems right, but on my case I have 4connections per HBA total of=20
-8per Lun
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-12-02 19:15:28
 
-The info I got regarding zoning is that each HBA is connected/zoned to=20
-only one Storage controller
-So that would make 2connections per Lun
+Modified files:
+	.              : multipath.conf.defaults 
+	libmultipath   : hwtable.c 
 
-What I suspect is that the Fabric here is made of 4switchs and that=20
-makes 4x plus. The SAN people just configured it with a generic "big"=20
-fabric zoning just one connection. but Linux shoes 4. could this be the=20
-reason?
+Log message:
+	Fix for bz #540882
+	Add default configurations for IBM, LSI, and DELL storage
 
-Jakov Sosic wrote:
-> On Wed, 2009-12-02 at 16:45 +0100, Jose Nuno Neto wrote:
->
->  =20
->> I have 2 HBAs connected to one LUN on a Hitachi Storage. Only two=20
->> connections have been zoned
->>    =20
->
-> If one connection goes to one switch, and that switch is connected to
-> two controllers on the storage, then you'll see two paths on that HBA i=
-n
-> your host. If you have two HBA's and second is connected to second
-> switch, which is also connected to two controllers of the stroage, then
-> you'll see 4 of them.
->
-> That is the situation in my company. It goes like this:
->
->
->              ________Hitachi controller0
->             /
-> HOST----switch0
->             \
->              \_______Hitachi controller1
->
->
->
->
->
->  =20
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.17&r2=1.5.4.18
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.24&r2=1.20.2.25
 
---------------------------------------------------------------------
-
-Les informations contenues dans ce message et/ou ses annexes sont=20
-reservees a l'attention et a l'utilisation de leur destinataire et peuven=
-t etre=20
-confidentielles. Si vous n'etes pas destinataire de ce message, vous etes=
-=20
-informes que vous l'avez recu par erreur et que toute utilisation en est=20
-interdite. Dans ce cas, vous etes pries de le detruire et d'en informer l=
-a=20
-Banque Europeenne d'Investissement.
-
-The information in this message and/or attachments is intended solely for=
-=20
-the attention and use of the named addressee and may be confidential. If=20
-you are not the intended recipient, you are hereby notified that you have=
-=20
-received this transmittal in error and that any use of it is prohibited. =
-In=20
-such a case please delete this message and kindly notify the European=20
-Investment Bank accordingly.
---------------------------------------------------------------------
-=20
+--- multipath-tools/multipath.conf.defaults	2009/09/28 18:41:20	1.5.4.17
++++ multipath-tools/multipath.conf.defaults	2009/12/02 19:15:28	1.5.4.18
+@@ -187,15 +187,44 @@
+ #		path_checker		emc_clariion
+ #	}
+ #	device {
++#		vendor			"(LSI|ENGENIO)"
++#		product			"INF.*"
++#		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
++#		prio_callout		"/sbin/mpath_prio_rdac /dev/%n"
++#		features		"2 pg_init_retries 50"
++#		hardware_handler	"1 rdac"
++#               path_grouping_policy    group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		no_path_retry		15
++#		rr_min_io		1000
++#               path_checker            rdac
++#	}
++#	device {
+ #		vendor                  "DELL"
+-#               product                 "MD3000"
++#               product                 "MD3000|MD3000i"
+ #		getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+ #               prio_callout            "/sbin/mpath_prio_rdac /dev/%n"	
+-#		features		"0"
++#		features		"2 pg_init_retries 50"
++#               hardware_handler        "1 rdac"
++#		path_grouping_policy	group_by_prio
++#               failback                immediate
++#		no_path_retry		15
++#		rr_min_io		1000
++#               path_checker            rdac
++#       }
++#	device {
++#		vendor                  "DELL"
++#               product                 "MD32xx|MD32xxi"
++#		getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
++#               prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
++#		features		"2 pg_init_retries 50"
+ #               hardware_handler        "1 rdac"
+ #		path_grouping_policy	group_by_prio
+-#               failback                manual
+-#               path_checker            readsector0
++#               failback                immediate
++#		no_path_retry		15
++#		rr_min_io		1000
++#               path_checker            rdac
+ #       }
+ #       device {
+ #               vendor                  "EMC"
+@@ -284,6 +313,20 @@
+ #		rr_min_io		1000
+ #               path_checker            rdac
+ #	}
++#	device {
++#		vendor			"IBM"
++#		product			"1745|1746"
++#		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
++#		prio_callout		"/sbin/mpath_prio_rdac /dev/%n"
++#		features		"2 pg_init_retries 50"
++#		hardware_handler	"1 rdac"
++#               path_grouping_policy    group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		no_path_retry		15
++#		rr_min_io		1000
++#               path_checker            rdac
++#	}
+ #       device {
+ #               vendor                  "IBM"
+ #               product                 "1815"
+--- multipath-tools/libmultipath/hwtable.c	2009/11/04 21:47:06	1.20.2.24
++++ multipath-tools/libmultipath/hwtable.c	2009/12/02 19:15:28	1.20.2.25
+@@ -402,6 +402,21 @@
+ 		.checker_name  = RDAC,
+ 	},
+ 	{
++		.vendor        = "IBM",
++		.product       = "1745|1746",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = "/sbin/mpath_prio_rdac /dev/%n",
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 15,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
++	},
++	{
+ 		/* IBM DS4800 */
+ 		.vendor        = "IBM",
+ 		.product       = "1815",
+@@ -810,23 +825,54 @@
+ 		.minio         = DEFAULT_MINIO,
+ 		.checker_name  = RDAC,
+ 	},
++	{
++		.vendor        = "(LSI|ENGENIO)",
++		.product       = "INF.*",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = "/sbin/mpath_prio_rdac /dev/%n",
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 15,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
++	},
+ 	/*
+ 	 * DELL arrays
+ 	 */
+ 	{
+ 		.vendor        = "DELL",
+-		.product       = "MD3000",
++		.product       = "MD3000|MD3000i",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.getprio       = "/sbin/mpath_prio_rdac /dev/%n",
+-		.features      = DEFAULT_FEATURES,
++		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = -FAILBACK_MANUAL,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.no_path_retry = 15,
+ 		.minio         = DEFAULT_MINIO,
+-		.checker_name  = READSECTOR0,
++		.checker_name  = RDAC,
++	},
++	{
++	/* DELL MD32xx/MD32xxi */
++		.vendor        = "DELL",
++		.product       = "MD32xx|MD32xxi",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = "/sbin/mpath_prio_rdac /dev/%n",
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 15,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
+ 	},
+ 	/*
+ 	 * Compellent Technologies, Inc.
