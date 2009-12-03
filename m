@@ -1,16 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm snapshot: don't use zero chunksize
-Date: Wed, 2 Dec 2009 18:57:34 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0912021852220.10569@hs20-bc2-1.build.redhat.com>
-References: <20090930144110.GA16605@redhat.com>
-	<20091002222716.GA5351@agk-dp.fab.redhat.com>
-	<Pine.LNX.4.64.0910061859230.20258@hs20-bc2-1.build.redhat.com>
-	<20091007233631.GK3054@agk-dp.fab.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath-tools: fix soname
+Date: Wed, 2 Dec 2009 19:45:56 -0600
+Message-ID: <20091203014555.GE2406@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091007233631.GK3054@agk-dp.fab.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,41 +16,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 8 Oct 2009, Alasdair G Kergon wrote:
+I assume that the soname wasn't supposed to have a 'd' at the end.
 
-> On Tue, Oct 06, 2009 at 07:01:37PM -0400, Mikulas Patocka wrote:
-> > Under some special conditions (too big chunk size or zero-sized device),
-> > the resulting hash_size is calculated as zero.
-> > 
-> > rounddown_pow_of_two(0) is undefined operation (it expands to shift by -1).
-> > And init_exception_table with zero argument would fail with -ENOMEM.
-> > 
-> > This patch makes minimum chunk size 64, just like for pending exception table.
->  
-> Could we have some more specific information in this patch header?
-> 
-> How does a "too big" chunk size happen?  And what is "too big"?
+-Ben
 
-The problem is if you have bigger chunk size than the origin device (this 
-is valid, but useless). Then, hash_size is set to zero and false 
-allocation failure is reported.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/Makefile |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-I think bug 502965 is caused by this --- Milan tried to create a 10k 
-volume with 16k chunksize.
-
-> How does a zero-sized device happen and how can this code do anything
-> sensible if it encounters one - shouldn't it fail with an error instead?
-> Or do we still have a problem with the sequence in which dm ioctls are being
-> issued?
-
-I don't know if zero-sized device can happen with lvm. I think not. It 
-could be only created manually with dmsetup. Snapshot of a zero-sized 
-device may be still considered allowed.
-
-> Alasdairs
-
-Mikulas
+Index: multipath-tools-091202/libmultipath/Makefile
+===================================================================
+--- multipath-tools-091202.orig/libmultipath/Makefile
++++ multipath-tools-091202/libmultipath/Makefile
+@@ -4,7 +4,7 @@
+ #
+ include ../Makefile.inc
+ 
+-SONAME=0d
++SONAME=0
+ DEVLIB = libmultipath.so
+ LIBS = $(DEVLIB).$(SONAME)
+ LIBDEPS = -lpthread -ldl -ldevmapper
