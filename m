@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v5 10/13] dm snapshot: make exceptions in other
-	snapshots when merging
-Date: Thu,  3 Dec 2009 21:23:51 -0500
-Message-ID: <1259893434-10792-11-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v5 11/13] dm snapshot: redirect accesses to
+	origin if merging snap invalidated
+Date: Thu,  3 Dec 2009 21:23:52 -0500
+Message-ID: <1259893434-10792-12-git-send-email-snitzer@redhat.com>
 References: <1259893434-10792-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -22,85 +22,45 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-When there is one merging snapshot and other non-merging snapshots,
-snapshot_merge_process() must make exceptions in the non-merging
-snapshots.
+If we are merging an invalidated snapshot, redirect all accesses to the
+origin device.  This is safe because snapshot_merge_process() will
+stop_merge() if the merging snapshot becomes invalid.
+
+Allowing the origin device to remain functional is important because it
+may contain the root filesystem.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   32 +++++++++++++++++++++++++++++++-
- 1 files changed, 31 insertions(+), 1 deletions(-)
+ drivers/md/dm-snap.c |    9 ++++-----
+ 1 files changed, 4 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 45c47b0..c3578f5 100644
+index c3578f5..257e2d1 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -254,6 +254,8 @@ struct origin {
- static struct list_head *_origins;
- static struct rw_semaphore _origins_lock;
+@@ -1573,11 +1573,9 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
  
-+static DECLARE_WAIT_QUEUE_HEAD(_pending_exception_done);
-+
- static int init_origin_hash(void)
- {
- 	int i;
-@@ -746,13 +748,18 @@ static int init_hash_tables(struct dm_snapshot *s)
- static void flush_bios(struct bio *bio);
- static void error_bios(struct bio *bio);
- 
-+static int __origin_write(struct list_head *snapshots,
-+			  sector_t sector, struct bio *bio);
-+
- static void merge_callback(int read_err, unsigned long write_err,
- 			   void *context);
- 
- static void snapshot_merge_process(struct dm_snapshot *s)
- {
- 	int r;
--	chunk_t old_chunk, new_chunk;
-+	chunk_t old_chunk, new_chunk, n;
-+	struct origin *o;
-+	int must_wait;
- 	struct dm_io_region src, dest;
- 
- 	BUG_ON(!s->merge_running);
-@@ -783,6 +790,27 @@ static void snapshot_merge_process(struct dm_snapshot *s)
- 	src.sector = chunk_to_sector(s->store, new_chunk);
- 	src.count = dest.count;
- 
-+test_again:
-+	/* Reallocate other snapshots */
-+	must_wait = 0;
-+	/*
-+	 * Merging snapshot already has the origin's __minimum_chunk_size()
-+	 * stored in split_io (see: snapshot_merge_resume); avoid rediscovery
-+	 */
-+	BUG_ON(!s->ti->split_io);
-+	down_read(&_origins_lock);
-+	o = __lookup_origin(s->origin->bdev);
-+	for (n = 0; n < s->store->chunk_size; n += s->ti->split_io) {
-+		r = __origin_write(&o->snapshots, dest.sector + n, NULL);
-+		if (r == DM_MAPIO_SUBMITTED)
-+			must_wait = 1;
-+	}
-+	up_read(&_origins_lock);
-+	if (must_wait) {
-+		sleep_on_timeout(&_pending_exception_done, HZ / 100 + 1);
-+		goto test_again;
-+	}
-+
  	down_write(&s->lock);
- 	s->merge_write_interlock = old_chunk;
- 	s->merge_write_interlock_n = 1;
-@@ -1310,6 +1338,8 @@ static void pending_complete(struct dm_snap_pending_exception *pe, int success)
- 	origin_bios = bio_list_get(&pe->origin_bios);
- 	free_pending_exception(pe);
  
-+	wake_up_all(&_pending_exception_done);
-+
- 	up_write(&s->lock);
+-	/* Full snapshots are not usable */
+-	if (!s->valid) {
+-		r = -EIO;
+-		goto out_unlock;
+-	}
++	/* Full merging snapshots are redirected to the origin */
++	if (!s->valid)
++		goto redirect_to_origin;
  
- 	/* Submit any pending write bios */
+ 	/* If the block is already remapped - use that */
+ 	e = dm_lookup_exception(&s->complete, chunk);
+@@ -1600,6 +1598,7 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
+ 		goto out_unlock;
+ 	}
+ 
++ redirect_to_origin:
+ 	bio->bi_bdev = s->origin->bdev;
+ 
+ 	if (bio_rw(bio) == WRITE) {
 -- 
 1.6.5.2
