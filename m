@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v5 13/13] dm snapshot: report merge failure in
-	status
-Date: Thu,  3 Dec 2009 21:23:54 -0500
-Message-ID: <1259893434-10792-14-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v5 10/13] dm snapshot: make exceptions in other
+	snapshots when merging
+Date: Thu,  3 Dec 2009 21:23:51 -0500
+Message-ID: <1259893434-10792-11-git-send-email-snitzer@redhat.com>
 References: <1259893434-10792-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -17,77 +17,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Set 'merge_failed' flag if a snapshot fails to merge.  Update
-snapshot_status() to report "Merge failed" if 'merge_failed' is set.
+From: Mikulas Patocka <mpatocka@redhat.com>
 
+When there is one merging snapshot and other non-merging snapshots,
+snapshot_merge_process() must make exceptions in the non-merging
+snapshots.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   14 +++++++++++++-
- 1 files changed, 13 insertions(+), 1 deletions(-)
+ drivers/md/dm-snap.c |   32 +++++++++++++++++++++++++++++++-
+ 1 files changed, 31 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index e1eafc2..1934455 100644
+index 45c47b0..c3578f5 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -102,6 +102,9 @@ struct dm_snapshot {
- 	spinlock_t tracked_chunk_lock;
- 	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
+@@ -254,6 +254,8 @@ struct origin {
+ static struct list_head *_origins;
+ static struct rw_semaphore _origins_lock;
  
-+	/* Merge operation failed if this is set */
-+	int merge_failed;
++static DECLARE_WAIT_QUEUE_HEAD(_pending_exception_done);
 +
- 	/* Merge operation is in progress */
- 	int merge_running;
+ static int init_origin_hash(void)
+ {
+ 	int i;
+@@ -746,13 +748,18 @@ static int init_hash_tables(struct dm_snapshot *s)
+ static void flush_bios(struct bio *bio);
+ static void error_bios(struct bio *bio);
  
-@@ -775,9 +778,13 @@ static void snapshot_merge_process(struct dm_snapshot *s)
- 	linear_chunks = s->store->type->prepare_merge(s->store,
- 						      &old_chunk, &new_chunk);
- 	if (linear_chunks <= 0) {
--		if (linear_chunks < 0)
-+		if (linear_chunks < 0) {
- 			DMERR("Read error in exception store, "
- 			      "shutting down merge");
-+			down_write(&s->lock);
-+			s->merge_failed = 1;
-+			up_write(&s->lock);
-+		}
- 		goto shut;
- 	}
- 	/* Adjust old_chunk and new_chunk to reflect start of linear region */
-@@ -883,6 +890,7 @@ static void merge_callback(int read_err, unsigned long write_err, void *context)
- 			DMERR("corruption detected: exception for block %llu "
- 			      "is on disk but not in memory",
- 			      (unsigned long long)old_chunk);
-+			s->merge_failed = 1;
- 			up_write(&s->lock);
- 			goto shut;
- 		}
-@@ -898,6 +906,7 @@ static void merge_callback(int read_err, unsigned long write_err, void *context)
- 				      (unsigned long long)e->old_chunk,
- 				      (unsigned long long)e->old_chunk +
- 				      dm_consecutive_chunk_count(e));
-+				s->merge_failed = 1;
- 				up_write(&s->lock);
- 				goto shut;
- 			}
-@@ -1002,6 +1011,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	init_rwsem(&s->lock);
- 	INIT_LIST_HEAD(&s->list);
- 	spin_lock_init(&s->pe_lock);
-+	s->merge_failed = 0;
- 	s->merge_running = 0;
- 	s->merge_shutdown = 0;
- 	s->merge_write_interlock = 0;
-@@ -1741,6 +1751,8 @@ static int snapshot_status(struct dm_target *ti, status_type_t type,
++static int __origin_write(struct list_head *snapshots,
++			  sector_t sector, struct bio *bio);
++
+ static void merge_callback(int read_err, unsigned long write_err,
+ 			   void *context);
  
- 		if (!snap->valid)
- 			DMEMIT("Invalid");
-+		else if (snap->merge_failed)
-+			DMEMIT("Merge failed");
- 		else {
- 			if (snap->store->type->usage) {
- 				sector_t total_sectors, sectors_allocated,
+ static void snapshot_merge_process(struct dm_snapshot *s)
+ {
+ 	int r;
+-	chunk_t old_chunk, new_chunk;
++	chunk_t old_chunk, new_chunk, n;
++	struct origin *o;
++	int must_wait;
+ 	struct dm_io_region src, dest;
+ 
+ 	BUG_ON(!s->merge_running);
+@@ -783,6 +790,27 @@ static void snapshot_merge_process(struct dm_snapshot *s)
+ 	src.sector = chunk_to_sector(s->store, new_chunk);
+ 	src.count = dest.count;
+ 
++test_again:
++	/* Reallocate other snapshots */
++	must_wait = 0;
++	/*
++	 * Merging snapshot already has the origin's __minimum_chunk_size()
++	 * stored in split_io (see: snapshot_merge_resume); avoid rediscovery
++	 */
++	BUG_ON(!s->ti->split_io);
++	down_read(&_origins_lock);
++	o = __lookup_origin(s->origin->bdev);
++	for (n = 0; n < s->store->chunk_size; n += s->ti->split_io) {
++		r = __origin_write(&o->snapshots, dest.sector + n, NULL);
++		if (r == DM_MAPIO_SUBMITTED)
++			must_wait = 1;
++	}
++	up_read(&_origins_lock);
++	if (must_wait) {
++		sleep_on_timeout(&_pending_exception_done, HZ / 100 + 1);
++		goto test_again;
++	}
++
+ 	down_write(&s->lock);
+ 	s->merge_write_interlock = old_chunk;
+ 	s->merge_write_interlock_n = 1;
+@@ -1310,6 +1338,8 @@ static void pending_complete(struct dm_snap_pending_exception *pe, int success)
+ 	origin_bios = bio_list_get(&pe->origin_bios);
+ 	free_pending_exception(pe);
+ 
++	wake_up_all(&_pending_exception_done);
++
+ 	up_write(&s->lock);
+ 
+ 	/* Submit any pending write bios */
 -- 
 1.6.5.2
