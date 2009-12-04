@@ -1,7 +1,8 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath configure.c disco ...
-Date: 4 Dec 2009 21:19:53 -0000
-Message-ID: <20091204211953.17379.qmail@sourceware.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: introduce common
+	__check_for_conflicting_io
+Date: Fri,  4 Dec 2009 16:40:08 -0500
+Message-ID: <1259962808-13939-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -13,100 +14,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2009-12-04 21:19:52
+Both existing callers of __chunk_is_tracked() address very rare races
+with conflicting I/O.  In both cases the potential for conflict is so
+improbable that the use of msleep(1) is warranted.
 
-Modified files:
-	libmultipath   : configure.c discovery.c 
+The justification for the pending_complete() call was introduced with
+commit a8d41b59f3f5a7ac19452ef442a7fc1b5fa17366 ("dm snapshot: fix race
+during exception creation").
 
-Log message:
-	Fix for bzs #524178 and #537281. Make sure that multipath unlocks the paths
-	if it encounters an error, and tweak some warning messages
+In the case of snapshot_merge_process(), conflicting writes on a chunk
+that is about to be merged is also quite rare.  For example, a linear
+write to a device that has a background merge active, e.g. the root
+device, will only trigger the msleep(1) once.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.5&r2=1.2.2.6
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.9&r2=1.32.2.10
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-snap.c |   24 ++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
 
---- multipath-tools/libmultipath/configure.c	2009/09/28 16:30:27	1.2.2.5
-+++ multipath-tools/libmultipath/configure.c	2009/12/04 21:19:51	1.2.2.6
-@@ -269,6 +269,7 @@
- 	struct pathgroup * pgp;
- 	struct path * pp;
- 	int i, j;
-+	int x, y;
- 
- 	if (!mpp || !mpp->pg)
- 		return 0;
-@@ -279,12 +280,25 @@
- 		vector_foreach_slot(pgp->paths, pp, j) {
- 			if (lock && flock(pp->fd, LOCK_EX | LOCK_NB) &&
- 			    errno == EWOULDBLOCK)
--				return 1;
-+				goto fail;
- 			else if (!lock)
- 				flock(pp->fd, LOCK_UN);
- 		}
- 	}
- 	return 0;
-+fail:
-+	vector_foreach_slot (mpp->pg, pgp, x) {
-+		if (x > i)
-+			return 1;
-+		if (!pgp->paths)
-+			continue;
-+		vector_foreach_slot(pgp->paths, pp, y) {
-+			if (x == i && y > j)
-+				return 1;
-+			flock(pp->fd, LOCK_UN);
-+		}
-+	}
-+	return 1;
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -236,6 +236,16 @@ static int __chunk_is_tracked(struct dm_
  }
  
  /*
-@@ -331,8 +345,10 @@
- 			return DOMAP_RETRY;
- 		}
++ * This conflicting I/O is extremely improbable in the caller,
++ * so msleep(1) is sufficient and there is no need for a wait queue.
++ */
++static void __check_for_conflicting_io(struct dm_snapshot *s, chunk_t chunk)
++{
++	while (__chunk_is_tracked(s, chunk))
++		msleep(1);
++}
++
++/*
+  * One of these per registered origin, held in the snapshot_origins hash
+  */
+ struct origin {
+@@ -832,10 +842,8 @@ test_again:
+ 	up_write(&s->lock);
  
--		if (dm_map_present(mpp->alias))
-+		if (dm_map_present(mpp->alias)) {
-+			lock_multipath(mpp, 0);
- 			break;
-+		}
+ 	/* Wait until writes to all 'linear_chunks' drain */
+-	for (i = 0; i < linear_chunks; i++) {
+-		while (__chunk_is_tracked(s, old_chunk + i))
+-			msleep(1);
+-	}
++	for (i = 0; i < linear_chunks; i++)
++		__check_for_conflicting_io(s, old_chunk + i);
  
- 		r = dm_addmap(DM_DEVICE_CREATE, DEFAULT_TARGET, mpp, 1, 0);
- 
-@@ -344,11 +360,12 @@
- 		 * DM_TABLE_LOAD. Failing the second part leaves an
- 		 * empty map. Clean it up.
- 		 */
--		if (!r && dm_map_present(mpp->alias)) {
-+		if (!r) {
-+		 	if (dm_map_present(mpp->alias))
-+				dm_flush_map(mpp->alias, DEFAULT_TARGET);
- 			condlog(3, "%s: failed to load map "
- 				   "(a path might be in use)",
- 				   mpp->alias);
--			dm_flush_map(mpp->alias, DEFAULT_TARGET);
- 		}
- 
- 		lock_multipath(mpp, 0);
---- multipath-tools/libmultipath/discovery.c	2009/11/23 21:08:34	1.32.2.9
-+++ multipath-tools/libmultipath/discovery.c	2009/12/04 21:19:51	1.32.2.10
-@@ -752,8 +752,9 @@
- 	if (apply_format(pp->getuid, &buff[0], pp)) {
- 		condlog(0, "error formatting uid callout command");
- 		memset(pp->wwid, 0, WWID_SIZE);
--	} else if (execute_program(buff, pp->wwid, WWID_SIZE)) {
--		condlog(0, "error calling out %s", buff);
-+	} else if (execute_program(buff, pp->wwid, WWID_SIZE) ||
-+		   pp->wwid[0] == 0) {
-+		condlog(0, "cannot get the the wwid for %s", pp->dev);
- 		memset(pp->wwid, 0, WWID_SIZE);
- 		return 1;
+ 	dm_kcopyd_copy(s->kcopyd_client, &src, 1, &dest, 0, merge_callback, s);
+ 	return;
+@@ -1340,12 +1348,8 @@ static void pending_complete(struct dm_s
+ 		goto out;
  	}
+ 
+-	/*
+-	 * Check for conflicting reads. This is extremely improbable,
+-	 * so msleep(1) is sufficient and there is no need for a wait queue.
+-	 */
+-	while (__chunk_is_tracked(s, pe->e.old_chunk))
+-		msleep(1);
++	/* Check for conflicting reads */
++	__check_for_conflicting_io(s, pe->e.old_chunk);
+ 
+ 	/*
+ 	 * Add a proper exception, and remove the
