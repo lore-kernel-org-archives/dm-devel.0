@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v5 06/13] dm snapshot: do not allow more than one
-	merging snapshot.
-Date: Thu,  3 Dec 2009 21:23:47 -0500
-Message-ID: <1259893434-10792-7-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v5 09/13] dm snapshot: do not merge a chunk until
+	active writes to it finish
+Date: Thu,  3 Dec 2009 21:23:50 -0500
+Message-ID: <1259893434-10792-10-git-send-email-snitzer@redhat.com>
 References: <1259893434-10792-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -22,73 +22,41 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-Merging more than one snapshot is not supported.
-__find_merging_snapshot() will find the merging snapshot for a given
-origin device.
+Track merging snapshot device's in-progress writes, to chunks that
+were already remapped, and delay merging a chunk until all writes to
+that chunk finish.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   36 +++++++++++++++++++++++++++++++++++-
- 1 files changed, 35 insertions(+), 1 deletions(-)
+ drivers/md/dm-snap.c |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index c232460..a0ac29f 100644
+index 3504672..45c47b0 100644
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -331,9 +331,29 @@ out:
- 	return count;
- }
+@@ -788,7 +788,8 @@ static void snapshot_merge_process(struct dm_snapshot *s)
+ 	s->merge_write_interlock_n = 1;
+ 	up_write(&s->lock);
  
-+static struct dm_snapshot *__find_merging_snapshot(struct block_device *origin)
-+{
-+	struct dm_snapshot *s, *merging_snap = NULL;
-+	struct origin *o;
-+
-+	o = __lookup_origin(origin);
-+	if (!o)
-+		return NULL;
-+
-+	list_for_each_entry(s, &o->snapshots, list) {
-+		if (is_merge(s->ti)) {
-+			merging_snap = s;
-+			break;
-+		}
-+	}
-+
-+	return merging_snap;
-+}
-+
- static int __validate_exception_handover(struct dm_snapshot *snap)
- {
- 	struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
-+	struct block_device *bdev = snap->origin->bdev;
- 	int r = 0;
+-	/* !!! FIXME: wait until writes to this chunk drain */
++	while (__chunk_is_tracked(s, old_chunk))
++		msleep(1);
  
- 	/* Does snapshot need exceptions handed over to it? */
-@@ -345,8 +365,22 @@ static int __validate_exception_handover(struct dm_snapshot *snap)
- 		goto out;
+ 	dm_kcopyd_copy(s->kcopyd_client, &src, 1, &dest, 0, merge_callback, s);
+ 	return;
+@@ -1561,7 +1562,11 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
+ 			r = DM_MAPIO_SUBMITTED;
+ 			goto out_unlock;
+ 		}
++
+ 		remap_exception(s, e, bio, chunk);
++
++		if (bio_rw(bio) == WRITE)
++			map_context->ptr = track_chunk(s, chunk);
+ 		goto out_unlock;
  	}
  
--	if (snap_src)
-+	if (snap_src) {
-+		/* This snapshot is a handover destination */
-+		if (!is_merge(snap->ti)) {
-+			r = 1;
-+			goto out;
-+		}
-+
-+		/* Do not allow more than one merging snapshot */
-+		if (__find_merging_snapshot(bdev)) {
-+			snap->ti->error = "A snapshot is already merging.";
-+			r = -EINVAL;
-+			goto out;
-+		}
-+
- 		r = 1;
-+	}
- 
- out:
- 	return r;
 -- 
 1.6.5.2
