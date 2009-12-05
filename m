@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm snapshot: introduce common
-	__check_for_conflicting_io
-Date: Fri,  4 Dec 2009 16:40:08 -0500
-Message-ID: <1259962808-13939-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: stop merging using a completion
+Date: Sat,  5 Dec 2009 13:24:44 -0500
+Message-ID: <1260037484-20905-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -15,72 +14,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Both existing callers of __chunk_is_tracked() address very rare races
-with conflicting I/O.  In both cases the potential for conflict is so
-improbable that the use of msleep(1) is warranted.
+Switch stop_merge() from using a busy loop to a completion event.
 
-The justification for the pending_complete() call was introduced with
-commit a8d41b59f3f5a7ac19452ef442a7fc1b5fa17366 ("dm snapshot: fix race
-during exception creation").
+stop_merge() now requests merging be shutdown using the
+'merge_completion' pointer (instead of the 'merge_shutdown' flag).  This
+is accomplished by testing if 'merge_completion' is not NULL in
+snapshot_merge_process().  stop_merge() allocates its completion on the
+stack and assigns it to the 'merge_completion' pointer in the snapshot.
+'merge_completion' is protected by the snapshot's lock.
 
-In the case of snapshot_merge_process(), conflicting writes on a chunk
-that is about to be merged is also quite rare.  For example, a linear
-write to a device that has a background merge active, e.g. the root
-device, will only trigger the msleep(1) once.
+Also changed the 'merge_running' flag from int to atomic_t.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
 ---
- drivers/md/dm-snap.c |   24 ++++++++++++++----------
- 1 file changed, 14 insertions(+), 10 deletions(-)
+ drivers/md/dm-snap.c |   41 +++++++++++++++++++++++++----------------
+ 1 file changed, 25 insertions(+), 16 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-snap.c
+Index: linux-2.6-dev/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -236,6 +236,16 @@ static int __chunk_is_tracked(struct dm_
+--- linux-2.6-dev.orig/drivers/md/dm-snap.c
++++ linux-2.6-dev/drivers/md/dm-snap.c
+@@ -106,11 +106,10 @@ struct dm_snapshot {
+ 	int merge_failed;
+ 
+ 	/* Merge operation is in progress */
+-	int merge_running;
++	atomic_t merge_running;
+ 
+-	/* It is requested to shut down merging */
+-	/* Cleared back to 0 when the merging is stopped */
+-	int merge_shutdown;
++	/* Merge completion that is triggered when using stop_merge() */
++	struct completion *merge_completion;
+ 
+ 	/* Merging this area --- block any writes */
+ 	chunk_t merge_write_interlock;
+@@ -776,9 +775,17 @@ static void snapshot_merge_process(struc
+ 	struct dm_io_region src, dest;
+ 	sector_t io_size;
+ 
+-	BUG_ON(!s->merge_running);
+-	if (s->merge_shutdown)
++	BUG_ON(!atomic_read(&s->merge_running));
++	if (s->merge_completion) {
++		/* stop_merge() has requested that merging be shutdown */
++		down_write(&s->lock);
++		if (s->merge_completion) {
++			complete(s->merge_completion);
++			s->merge_completion = NULL;
++		}
++		up_write(&s->lock);
+ 		goto shut;
++	}
+ 
+ 	if (!s->valid) {
+ 		DMERR("snapshot is invalid, can't merge");
+@@ -849,7 +856,7 @@ test_again:
+ 	return;
+ 
+ shut:
+-	s->merge_running = 0;
++	atomic_set(&s->merge_running, 0);
+ }
+ 
+ /* This function drops s->lock */
+@@ -932,13 +939,13 @@ static void merge_callback(int read_err,
+ shut:
+ 	down_write(&s->lock);
+ 	release_write_interlock(s, 1);
+-	s->merge_running = 0;
++	atomic_set(&s->merge_running, 0);
+ }
+ 
+ static void start_merge(struct dm_snapshot *s)
+ {
+-	if (!s->merge_running && !s->merge_shutdown) {
+-		s->merge_running = 1;
++	if (!atomic_read(&s->merge_running)) {
++		atomic_set(&s->merge_running, 1);
+ 		snapshot_merge_process(s);
+ 	}
+ }
+@@ -948,11 +955,13 @@ static void start_merge(struct dm_snapsh
+  */
+ static void stop_merge(struct dm_snapshot *s)
+ {
+-	while (s->merge_running) {
+-		s->merge_shutdown = 1;
+-		msleep(1);
++	DECLARE_COMPLETION_ONSTACK(merge_stopped);
++	if (atomic_read(&s->merge_running)) {
++		down_write(&s->lock);
++		s->merge_completion = &merge_stopped;
++		up_write(&s->lock);
++		wait_for_completion(&merge_stopped);
+ 	}
+-	s->merge_shutdown = 0;
  }
  
  /*
-+ * This conflicting I/O is extremely improbable in the caller,
-+ * so msleep(1) is sufficient and there is no need for a wait queue.
-+ */
-+static void __check_for_conflicting_io(struct dm_snapshot *s, chunk_t chunk)
-+{
-+	while (__chunk_is_tracked(s, chunk))
-+		msleep(1);
-+}
-+
-+/*
-  * One of these per registered origin, held in the snapshot_origins hash
-  */
- struct origin {
-@@ -832,10 +842,8 @@ test_again:
- 	up_write(&s->lock);
- 
- 	/* Wait until writes to all 'linear_chunks' drain */
--	for (i = 0; i < linear_chunks; i++) {
--		while (__chunk_is_tracked(s, old_chunk + i))
--			msleep(1);
--	}
-+	for (i = 0; i < linear_chunks; i++)
-+		__check_for_conflicting_io(s, old_chunk + i);
- 
- 	dm_kcopyd_copy(s->kcopyd_client, &src, 1, &dest, 0, merge_callback, s);
- 	return;
-@@ -1340,12 +1348,8 @@ static void pending_complete(struct dm_s
- 		goto out;
- 	}
- 
--	/*
--	 * Check for conflicting reads. This is extremely improbable,
--	 * so msleep(1) is sufficient and there is no need for a wait queue.
--	 */
--	while (__chunk_is_tracked(s, pe->e.old_chunk))
--		msleep(1);
-+	/* Check for conflicting reads */
-+	__check_for_conflicting_io(s, pe->e.old_chunk);
- 
- 	/*
- 	 * Add a proper exception, and remove the
+@@ -1020,8 +1029,8 @@ static int snapshot_ctr(struct dm_target
+ 	INIT_LIST_HEAD(&s->list);
+ 	spin_lock_init(&s->pe_lock);
+ 	s->merge_failed = 0;
+-	s->merge_running = 0;
+-	s->merge_shutdown = 0;
++	atomic_set(&s->merge_running, 0);
++	s->merge_completion = NULL;
+ 	s->merge_write_interlock = 0;
+ 	s->merge_write_interlock_n = 0;
+ 	bio_list_init(&s->merge_write_list);
