@@ -1,16 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v5 13/13] dm snapshot: report merge failure in
-	status
-Date: Sat, 5 Dec 2009 13:44:38 -0500
-Message-ID: <20091205184437.GA21045@redhat.com>
-References: <1259893434-10792-1-git-send-email-snitzer@redhat.com>
-	<1259893434-10792-14-git-send-email-snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] dm snapshot: stop merging using a completion
+Date: Sat, 5 Dec 2009 21:01:20 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0912052041330.2999@hs20-bc2-1.build.redhat.com>
+References: <1260037484-20905-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1259893434-10792-14-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1260037484-20905-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,71 +17,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Set 'merge_failed' flag if a snapshot fails to merge.  Update
-snapshot_status() to report "Merge failed" if 'merge_failed' is set.
+On Sat, 5 Dec 2009, Mike Snitzer wrote:
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
-NOTE: Revised slightly so all other merge failures in merge_callback()
-properly set 'merge_failed'
----
- drivers/md/dm-snap.c |   13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+> Switch stop_merge() from using a busy loop to a completion event.
+> 
+> stop_merge() now requests merging be shutdown using the
+> 'merge_completion' pointer (instead of the 'merge_shutdown' flag).  This
+> is accomplished by testing if 'merge_completion' is not NULL in
+> snapshot_merge_process().  stop_merge() allocates its completion on the
+> stack and assigns it to the 'merge_completion' pointer in the snapshot.
+> 'merge_completion' is protected by the snapshot's lock.
+> 
+> Also changed the 'merge_running' flag from int to atomic_t.
 
-Index: linux-2.6-dev/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6-dev.orig/drivers/md/dm-snap.c
-+++ linux-2.6-dev/drivers/md/dm-snap.c
-@@ -102,6 +102,9 @@ struct dm_snapshot {
- 	spinlock_t tracked_chunk_lock;
- 	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
- 
-+	/* Merge operation failed if this is set */
-+	int merge_failed;
-+
- 	/* Merge operation is in progress */
- 	int merge_running;
- 
-@@ -775,9 +778,13 @@ static void snapshot_merge_process(struc
- 	linear_chunks = s->store->type->prepare_merge(s->store,
- 						      &old_chunk, &new_chunk);
- 	if (linear_chunks <= 0) {
--		if (linear_chunks < 0)
-+		if (linear_chunks < 0) {
- 			DMERR("Read error in exception store, "
- 			      "shutting down merge");
-+			down_write(&s->lock);
-+			s->merge_failed = 1;
-+			up_write(&s->lock);
-+		}
- 		goto shut;
- 	}
- 	/* Adjust old_chunk and new_chunk to reflect start of linear region */
-@@ -914,6 +921,7 @@ static void merge_callback(int read_err,
- 
- shut:
- 	down_write(&s->lock);
-+	s->merge_failed = 1;
- 	release_write_interlock(s, 1);
- 	s->merge_running = 0;
- }
-@@ -1002,6 +1010,7 @@ static int snapshot_ctr(struct dm_target
- 	init_rwsem(&s->lock);
- 	INIT_LIST_HEAD(&s->list);
- 	spin_lock_init(&s->pe_lock);
-+	s->merge_failed = 0;
- 	s->merge_running = 0;
- 	s->merge_shutdown = 0;
- 	s->merge_write_interlock = 0;
-@@ -1741,6 +1750,8 @@ static int snapshot_status(struct dm_tar
- 
- 		if (!snap->valid)
- 			DMEMIT("Invalid");
-+		else if (snap->merge_failed)
-+			DMEMIT("Merge failed");
- 		else {
- 			if (snap->store->type->usage) {
- 				sector_t total_sectors, sectors_allocated,
+No, there's a bug:
+
+>  static void stop_merge(struct dm_snapshot *s)
+>  {
+> -	while (s->merge_running) {
+> -		s->merge_shutdown = 1;
+> -		msleep(1);
+> +	DECLARE_COMPLETION_ONSTACK(merge_stopped);
+> +	if (atomic_read(&s->merge_running)) {
+
+--- if the merge stops exactly at this point (because it gets finished or 
+because of an i/o error), we are waiting for a completion that will be 
+never signalled.
+
+> +		down_write(&s->lock);
+> +		s->merge_completion = &merge_stopped;
+> +		up_write(&s->lock);
+> +		wait_for_completion(&merge_stopped);
+>  	}
+> -	s->merge_shutdown = 0;
+>  }
+>  
+>  /*
+
+For Alasdair: do you get the problem? If I write it with msleep() 
+correctly, you keep on complaining how unclean it is --- if it is written 
+with completions and it is wrong (because they are just harder to use 
+correctly than simple variables and msleep), you tend to support it. Now 
+you see in practice how complex constructs tend to trigger bugs.
+
+Mike: I thought that the completion would be in struct dm_snapshot. But 
+maybe, try it with wait_on_bit / wake_up_bit / test_bit / set_bit etc., it 
+may be easier than completions.
+
+Mikulas
