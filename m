@@ -1,19 +1,14 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: dm snapshot: eliminate busy waiting when stopping merge
- [Was: Re: dm snapshot: stop merging using a completion]
-Date: Mon, 7 Dec 2009 10:45:55 -0500
-Message-ID: <20091207154555.GC8917@redhat.com>
-References: <1260037484-20905-1-git-send-email-snitzer@redhat.com>
-	<Pine.LNX.4.64.0912052041330.2999@hs20-bc2-1.build.redhat.com>
-	<20091206064338.GA15389@redhat.com>
-	<Pine.LNX.4.64.0912070621500.15072@hs20-bc2-1.build.redhat.com>
-	<20091207140145.GA8917@redhat.com>
+Subject: Re: snapshot merging: change timeout to a sequence count
+Date: Mon, 7 Dec 2009 10:52:58 -0500
+Message-ID: <20091207155258.GD8917@redhat.com>
+References: <Pine.LNX.4.64.0912070816120.15633@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20091207140145.GA8917@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0912070816120.15633@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,205 +19,140 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Dec 07 2009 at  9:01am -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Mon, Dec 07 2009 at  8:19am -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> On Mon, Dec 07 2009 at  6:22am -0500,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> Hi
 > 
-> > 
-> > 
-> > On Sun, 6 Dec 2009, Mike Snitzer wrote:
-> > 
-> > > On Sat, Dec 05 2009 at  9:01pm -0500,
-> > > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > > 
-> > > > On Sat, 5 Dec 2009, Mike Snitzer wrote:
-> > > > 
-> > > > > Switch stop_merge() from using a busy loop to a completion event.
-> > > > > 
-> > > > > stop_merge() now requests merging be shutdown using the
-> > > > > 'merge_completion' pointer (instead of the 'merge_shutdown' flag).  This
-> > > > > is accomplished by testing if 'merge_completion' is not NULL in
-> > > > > snapshot_merge_process().  stop_merge() allocates its completion on the
-> > > > > stack and assigns it to the 'merge_completion' pointer in the snapshot.
-> > > > > 'merge_completion' is protected by the snapshot's lock.
-> > > > > 
-> > > > > Also changed the 'merge_running' flag from int to atomic_t.
-> > > > 
-> > > > No, there's a bug:
-> > > > 
-> > > > >  static void stop_merge(struct dm_snapshot *s)
-> > > > >  {
-> > > > > -	while (s->merge_running) {
-> > > > > -		s->merge_shutdown = 1;
-> > > > > -		msleep(1);
-> > > > > +	DECLARE_COMPLETION_ONSTACK(merge_stopped);
-> > > > > +	if (atomic_read(&s->merge_running)) {
-> > > > 
-> > > > --- if the merge stops exactly at this point (because it gets finished or 
-> > > > because of an i/o error), we are waiting for a completion that will be 
-> > > > never signalled.
-> > > 
-> > > Yes, valid point.  But for this rare corner case we could just use
-> > > wait_for_completion_timeout() with a fairly large timeout; like 30 sec?
-> > > That actually isn't a great option (racey)...
-> > > 
-> > > How about if the 'shut:' code paths also checked for s->merge_completion
-> > > and complete() if it is not NULL?  Which means that check and related
-> > > complete() code would become a function.
-> > > 
-> > > > > +		down_write(&s->lock);
-> > > > > +		s->merge_completion = &merge_stopped;
-> > > > > +		up_write(&s->lock);
-> > > > > +		wait_for_completion(&merge_stopped);
-> > > > >  	}
-> > > > > -	s->merge_shutdown = 0;
-> > > > >  }
-> > > > >  
-> > > > >  /*
-> > > > 
-> > > > For Alasdair: do you get the problem? If I write it with msleep() 
-> > > > correctly, you keep on complaining how unclean it is --- if it is written 
-> > > > with completions and it is wrong (because they are just harder to use 
-> > > > correctly than simple variables and msleep), you tend to support it. Now 
-> > > > you see in practice how complex constructs tend to trigger bugs.
-> > > > 
-> > > > Mike: I thought that the completion would be in struct dm_snapshot. But 
-> > > > maybe, try it with wait_on_bit / wake_up_bit / test_bit / set_bit etc., it 
-> > > > may be easier than completions.
-> > > 
-> > > I can look at it; but I think using a completion can work.
-> > > 
-> > > Mike
-> > 
-> > Here it is with bits:
+> This changes the timeout to a sequence count. And adds a comment.
 > 
-> OK, looks good; especially in that we can reuse 'bits' for other things
-> as needed.
+> Mikulas
 > 
-> Acked-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+> 
+> Avoit the timeout.
+> 
+> Use a sequence count to resolve the race. The count increases each time
+> an exception reallocation finishes. Use wait_event() to wait until the count
+> changes.
+> 
+> The chunk-reallocation logic is explained in the comment in the patch.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Here is a refreshed patch that applies cleanly ontop of the
-'merge_failed' patch.  I've added it to my quilt tree that is here:
+Here is an updated patch that falls at the end of my snapshot-merge
+series here:
 http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel/2.6.33/
 
 ---
 
-dm snapshot: eliminate busy waiting when stopping merge
+dm snapshot: change the snapshot reallocation timeout to a sequence count
 
-stop_merge() now requests merging be shutdown by setting the
-'SHUTDOWN_MERGE' bit.  stop_merge() then waits on the 'SNAPSHOT_RUNNING'
-bit to be cleared rather tahn busy waiting.
+Use a sequence count to resolve the race between I/O to chunks that are
+about to be merged.  The count increases each time an exception
+reallocation finishes.  Use wait_event() to wait until the count
+changes.
+
+The chunk-reallocation logic is now explained in snapshot_merge_process()
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-snap.c |   45 +++++++++++++++++++++++++++------------------
- 1 file changed, 27 insertions(+), 18 deletions(-)
+ drivers/md/dm-snap.c |   45 +++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 43 insertions(+), 2 deletions(-)
 
 Index: linux-rhel6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-rhel6.orig/drivers/md/dm-snap.c
 +++ linux-rhel6/drivers/md/dm-snap.c
-@@ -102,15 +102,18 @@ struct dm_snapshot {
- 	spinlock_t tracked_chunk_lock;
- 	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
+@@ -271,6 +271,8 @@ static struct list_head *_origins;
+ static struct rw_semaphore _origins_lock;
  
--	/* Merge operation failed if this is set */
--	int merge_failed;
-+	/* Wait for events based on state bits */
-+	unsigned long bits;
+ static DECLARE_WAIT_QUEUE_HEAD(_pending_exception_done);
++static DEFINE_SPINLOCK(_pending_exception_done_spinlock);
++static u64 _pending_exception_done_count = 0;
  
- 	/* Merge operation is in progress */
--	int merge_running;
-+#define MERGE_RUNNING		0
- 
- 	/* It is requested to shut down merging */
- 	/* Cleared back to 0 when the merging is stopped */
--	int merge_shutdown;
-+#define SHUTDOWN_MERGE		1
-+
-+	/* Merge operation failed if this is set */
-+	int merge_failed;
- 
- 	/* Merging this area --- block any writes */
- 	chunk_t merge_write_interlock;
-@@ -776,8 +779,8 @@ static void snapshot_merge_process(struc
- 	struct dm_io_region src, dest;
- 	sector_t io_size;
- 
--	BUG_ON(!s->merge_running);
--	if (s->merge_shutdown)
-+	BUG_ON(!test_bit(MERGE_RUNNING, &s->bits));
-+	if (unlikely(test_bit(SHUTDOWN_MERGE, &s->bits)))
- 		goto shut;
- 
- 	if (!s->valid) {
-@@ -849,7 +852,9 @@ test_again:
- 	return;
- 
- shut:
--	s->merge_running = 0;
-+	clear_bit_unlock(MERGE_RUNNING, &s->bits);
-+	smp_mb__after_clear_bit();
-+	wake_up_bit(&s->bits, MERGE_RUNNING);
- }
- 
- /* This function drops s->lock */
-@@ -931,15 +936,21 @@ shut:
- 	down_write(&s->lock);
- 	s->merge_failed = 1;
- 	release_write_interlock(s, 1);
--	s->merge_running = 0;
-+	clear_bit_unlock(MERGE_RUNNING, &s->bits);
-+	smp_mb__after_clear_bit();
-+	wake_up_bit(&s->bits, MERGE_RUNNING);
- }
- 
- static void start_merge(struct dm_snapshot *s)
+ static int init_origin_hash(void)
  {
--	if (!s->merge_running && !s->merge_shutdown) {
--		s->merge_running = 1;
-+	if (!test_and_set_bit(MERGE_RUNNING, &s->bits))
- 		snapshot_merge_process(s);
--	}
+@@ -770,6 +772,17 @@ static int __origin_write(struct list_he
+ static void merge_callback(int read_err, unsigned long write_err,
+ 			   void *context);
+ 
++static u64 read_pending_exception_done_count(void)
++{
++	u64 current_count;
++
++	spin_lock(&_pending_exception_done_spinlock);
++	current_count = _pending_exception_done_count;
++	spin_unlock(&_pending_exception_done_spinlock);
++
++	return current_count;
 +}
 +
-+static int wait_schedule(void *ptr)
-+{
-+	schedule();
-+	return 0;
- }
- 
- /*
-@@ -947,11 +958,10 @@ static void start_merge(struct dm_snapsh
-  */
- static void stop_merge(struct dm_snapshot *s)
+ static void snapshot_merge_process(struct dm_snapshot *s)
  {
--	while (s->merge_running) {
--		s->merge_shutdown = 1;
--		msleep(1);
--	}
--	s->merge_shutdown = 0;
-+	set_bit(SHUTDOWN_MERGE, &s->bits);
-+	wait_on_bit(&s->bits, MERGE_RUNNING, wait_schedule,
-+		    TASK_UNINTERRUPTIBLE);
-+	clear_bit(SHUTDOWN_MERGE, &s->bits);
- }
+ 	int r, i, linear_chunks;
+@@ -778,6 +791,7 @@ static void snapshot_merge_process(struc
+ 	int must_wait;
+ 	struct dm_io_region src, dest;
+ 	sector_t io_size;
++	u64 previous_count;
  
- /*
-@@ -1018,9 +1028,8 @@ static int snapshot_ctr(struct dm_target
- 	init_rwsem(&s->lock);
- 	INIT_LIST_HEAD(&s->list);
- 	spin_lock_init(&s->pe_lock);
-+	s->bits = 0;
- 	s->merge_failed = 0;
--	s->merge_running = 0;
--	s->merge_shutdown = 0;
- 	s->merge_write_interlock = 0;
- 	s->merge_write_interlock_n = 0;
- 	bio_list_init(&s->merge_write_list);
+ 	BUG_ON(!test_bit(MERGE_RUNNING, &s->bits));
+ 	if (unlikely(test_bit(SHUTDOWN_MERGE, &s->bits)))
+@@ -818,9 +832,32 @@ static void snapshot_merge_process(struc
+ 	src.sector = chunk_to_sector(s->store, new_chunk);
+ 	src.count = dest.count;
+ 
++	/*
++	 * Reallocate the other snapshots:
++	 *
++	 * The chunk size of the merging snapshot may be larger than the chunk
++	 * size of some other snapshot. So we may need to reallocate multiple
++	 * chunks in a snapshot.
++	 *
++	 * We don't do linking of pending exceptions and waiting for the last
++	 * one --- that would complicate code too much and it would also be
++	 * bug-prone.
++	 *
++	 * Instead, we try to scan all the overlapping exceptions in all
++	 * non-merging snapshots and if something was reallocated then wait
++	 * for any pending exception to complete. Retry after the wait, until
++	 * all exceptions are done.
++	 *
++	 * This may seem ineffective, but in practice, people hardly use more
++	 * than one or two snapshots. In case of two snapshots (one merging and
++	 * one non-merging) with the same chunksize, wait and wakeup is done
++	 * only once.
++	 */
++
+ test_again:
+-	/* Reallocate other snapshots; must account for all 'linear_chunks' */
++	previous_count = read_pending_exception_done_count();
+ 	must_wait = 0;
++
+ 	/*
+ 	 * Merging snapshot already has the origin's __minimum_chunk_size()
+ 	 * stored in split_io (see: snapshot_merge_resume); avoid rediscovery
+@@ -835,7 +872,8 @@ test_again:
+ 	}
+ 	up_read(&_origins_lock);
+ 	if (must_wait) {
+-		sleep_on_timeout(&_pending_exception_done, HZ / 100 + 1);
++		wait_event(_pending_exception_done,
++			   read_pending_exception_done_count() != previous_count);
+ 		goto test_again;
+ 	}
+ 
+@@ -1371,6 +1409,9 @@ static void pending_complete(struct dm_s
+ 	origin_bios = bio_list_get(&pe->origin_bios);
+ 	free_pending_exception(pe);
+ 
++	spin_lock(&_pending_exception_done_spinlock);
++	_pending_exception_done_count++;
++	spin_unlock(&_pending_exception_done_spinlock);
+ 	wake_up_all(&_pending_exception_done);
+ 
+ 	up_write(&s->lock);
