@@ -1,15 +1,9 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: snapshot merging: change timeout to a sequence count
-Date: Mon, 7 Dec 2009 11:04:10 -0500
-Message-ID: <20091207160410.GE8917@redhat.com>
-References: <Pine.LNX.4.64.0912070816120.15633@hs20-bc2-1.build.redhat.com>
-	<20091207155258.GD8917@redhat.com>
+From: heinzm@sourceware.org
+Subject: dmraid/lib/activate activate.c
+Date: 7 Dec 2009 16:05:47 -0000
+Message-ID: <20091207160547.31665.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20091207155258.GD8917@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,67 +13,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Dec 07 2009 at 10:52am -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2009-12-07 16:05:46
 
-> On Mon, Dec 07 2009 at  8:19am -0500,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > Hi
-> > 
-> > This changes the timeout to a sequence count. And adds a comment.
-> > 
-> > Mikulas
-> > 
-> > ---
-> > 
-> > Avoit the timeout.
-> > 
-> > Use a sequence count to resolve the race. The count increases each time
-> > an exception reallocation finishes. Use wait_event() to wait until the count
-> > changes.
-> > 
-> > The chunk-reallocation logic is explained in the comment in the patch.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> Here is an updated patch that falls at the end of my snapshot-merge
-> series here:
-> http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel/2.6.33/
-> 
-> ---
-> 
-> dm snapshot: change the snapshot reallocation timeout to a sequence count
-> 
-> Use a sequence count to resolve the race between I/O to chunks that are
-> about to be merged.  The count increases each time an exception
-> reallocation finishes.  Use wait_event() to wait until the count
-> changes.
-> 
-> The chunk-reallocation logic is now explained in snapshot_merge_process()
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> ---
->  drivers/md/dm-snap.c |   45 +++++++++++++++++++++++++++++++++++++++++++--
->  1 file changed, 43 insertions(+), 2 deletions(-)
-> 
-> Index: linux-rhel6/drivers/md/dm-snap.c
-> ===================================================================
-> --- linux-rhel6.orig/drivers/md/dm-snap.c
-> +++ linux-rhel6/drivers/md/dm-snap.c
-> @@ -271,6 +271,8 @@ static struct list_head *_origins;
->  static struct rw_semaphore _origins_lock;
->  
->  static DECLARE_WAIT_QUEUE_HEAD(_pending_exception_done);
-> +static DEFINE_SPINLOCK(_pending_exception_done_spinlock);
-> +static u64 _pending_exception_done_count = 0;
+Modified files:
+	lib/activate   : activate.c 
 
-BTW, checkpatch issues the following error:
+Log message:
+	Avoid (un)registering devices for monitoring if metadata format handler doesn't support it
 
-ERROR: do not initialise statics to 0 or NULL
-#24: FILE: drivers/md/dm-snap.c:275:
-+static u64 _pending_exception_done_count = 0;
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/activate/activate.c.diff?cvsroot=dm&r1=1.5&r2=1.6
+
+--- dmraid/lib/activate/activate.c	2009/09/16 11:45:13	1.5
++++ dmraid/lib/activate/activate.c	2009/12/07 16:05:46	1.6
+@@ -964,11 +964,13 @@
+ {
+ 	int ret = 0;
+ 	char *table = NULL;
++	struct dmraid_format *fmt = get_format(rs);
+ 
+ 	if (T_GROUP(rs))
+ 		return 1;
+ 
+-	if (what == DM_REGISTER)
++	if (what == DM_REGISTER &&
++	    fmt->metadata_handler)
+ 		return register_devices(lc, rs);
+ 
+ 	/* Call type handler */
+@@ -1053,8 +1055,10 @@
+ 		    enum dm_what what)
+ {
+ 	int ret = 1, status;
++	struct dmraid_format *fmt = get_format(rs);
+ 
+-	if (what == DM_REGISTER)
++	if (what == DM_REGISTER &&
++	    fmt->metadata_handler)
+ 		return unregister_devices(lc, rs);
+ 
+ 	status = dm_status(lc, rs);
