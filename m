@@ -1,16 +1,10 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [PATCH v3 0/4] dm-replicator: introduce new remote
-	replication target
-Date: Tue, 08 Dec 2009 12:42:27 -0600
-Message-ID: <1260297747.4147.30.camel@mulgrave.site>
-References: <1259683507-12455-1-git-send-email-heinzm@redhat.com>
-	<20091201164142.GL19238@suse.de>  <1259687919.9639.15.camel@o>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: support barriers in snapshot-merge
+	target
+Date: Tue,  8 Dec 2009 16:02:06 -0500
+Message-ID: <1260306126-20574-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1259687919.9639.15.camel@o>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,27 +14,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 2009-12-01 at 18:18 +0100, Heinz Mauelshagen wrote:
-> On Tue, 2009-12-01 at 17:41 +0100, Lars Marowsky-Bree wrote:
-> > On 2009-12-01T17:05:03, heinzm@redhat.com wrote: 
-> > > Please review for upstream inclusion.
-> > 
-> > Should this not be Cc'ed to LKML if you aim for upstream inclusion? I
-> > actually would expect that most of the criticism of drbd's inclusion
-> > would also apply here, no? (With the added point that dm-replicator does
-> > not actually have any users yet.)
-> 
-> We have a series of patches to sort out basic issues on dm-devel.
-> The usual process is, that agk as the subsystem maintainer integrates
-> and upstreams it.
+Sets num_flush_requests=2 to support flushing both the origin and cow
+devices used by the snapshot-merge target.
 
-Could I just echo Lars' statement.  With the upstream inclusion of drbd,
-dm-replicator becomes a *third* replication system asking to be in
-kernel.  It is definitely a kernel policy question of whether we want
-three separate replicators, and so should be Cc'd to lkml so that people
-interested in that can weigh in.
+Also, snapshot_ctr() now gets the origin device using FMODE_WRITE if the
+target is snapshot-merge (which writes to the origin device).
 
-James
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+NOTE: this patch is made to follow:
+v5-05-13-dm-snapshot-merge-target-should-not-allocate-new-exceptions.patch 
+---
+ drivers/md/dm-snap.c |   20 +++++++++++++++++---
+ 1 file changed, 17 insertions(+), 3 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -704,7 +704,8 @@ static int snapshot_ctr(struct dm_target
+ 	int i;
+ 	int r = -EINVAL;
+ 	char *origin_path, *cow_path;
+-	unsigned args_used;
++	unsigned args_used, num_flush_requests = 1;
++	fmode_t origin_mode = FMODE_READ;
+ 
+ 	if (argc != 4) {
+ 		ti->error = "requires exactly 4 arguments";
+@@ -712,6 +713,11 @@ static int snapshot_ctr(struct dm_target
+ 		goto bad;
+ 	}
+ 
++	if (dm_target_is_snapshot_merge(ti)) {
++		num_flush_requests = 2;
++		origin_mode = FMODE_WRITE;
++	}
++
+ 	origin_path = argv[0];
+ 	argv++;
+ 	argc--;
+@@ -745,7 +751,7 @@ static int snapshot_ctr(struct dm_target
+ 	argv += args_used;
+ 	argc -= args_used;
+ 
+-	r = dm_get_device(ti, origin_path, 0, ti->len, FMODE_READ, &s->origin);
++	r = dm_get_device(ti, origin_path, 0, ti->len, origin_mode, &s->origin);
+ 	if (r) {
+ 		ti->error = "Cannot get origin device";
+ 		goto bad_origin;
+@@ -796,7 +802,7 @@ static int snapshot_ctr(struct dm_target
+ 	INIT_WORK(&s->queued_bios_work, flush_queued_bios);
+ 
+ 	ti->private = s;
+-	ti->num_flush_requests = 1;
++	ti->num_flush_requests = num_flush_requests;
+ 
+ 	/* Add snapshot to the list of snapshots for this origin */
+ 	/* Exceptions aren't triggered till snapshot_resume() is called */
+@@ -1322,6 +1328,14 @@ static int snapshot_merge_map(struct dm_
+ 	int r = DM_MAPIO_REMAPPED;
+ 	chunk_t chunk;
+ 
++	if (unlikely(bio_empty_barrier(bio))) {
++		if (map_context->flush_request == 0)
++			bio->bi_bdev = s->origin->bdev;
++		else if (map_context->flush_request == 1)
++			bio->bi_bdev = s->cow->bdev;
++		return DM_MAPIO_REMAPPED;
++	}
++
+ 	chunk = sector_to_chunk(s->store, bio->bi_sector);
+ 
+ 	down_read(&s->lock);
