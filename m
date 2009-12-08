@@ -1,28 +1,46 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH] scsi_dh_rdac: Add two new IBM devices to rdac_dev_list
-Date: Tue, 8 Dec 2009 09:22:25 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF487663E76@cosmail01.lsi.com>
-References: <E463DF2B2E584B4A82673F53D62C2EF48744CE36@cosmail01.lsi.com>
-	 <1257370545.21609.10.camel@chandra-ubuntu>
-	 <E463DF2B2E584B4A82673F53D62C2EF487663E4C@cosmail01.lsi.com>
- <1260288115.4147.4.camel@mulgrave.site>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [PATCH v3 0/4] dm-replicator: introduce new remote
+	replication target
+Date: Tue, 08 Dec 2009 12:42:27 -0600
+Message-ID: <1260297747.4147.30.camel@mulgrave.site>
+References: <1259683507-12455-1-git-send-email-heinzm@redhat.com>
+	<20091201164142.GL19238@suse.de>  <1259687919.9639.15.camel@o>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1260288115.4147.4.camel@mulgrave.site>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@suse.de>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "sekharan@us.ibm.com" <sekharan@us.ibm.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1259687919.9639.15.camel@o>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBKYW1lcyBCb3R0b21sZXkgW21h
-aWx0bzpKYW1lcy5Cb3R0b21sZXlAc3VzZS5kZV0NCj4gU2VudDogVHVlc2RheSwgRGVjZW1iZXIg
-MDgsIDIwMDkgMTA6MDIgQU0NCj4gVG86IE1vZ2VyLCBCYWJ1DQo+IENjOiBsaW51eC1zY3NpQHZn
-ZXIua2VybmVsLm9yZzsgQ2hhdWhhbiwgVmlqYXk7IGRtLWRldmVsQHJlZGhhdC5jb207DQo+IHNl
-a2hhcmFuQHVzLmlibS5jb20NCj4gU3ViamVjdDogUkU6IFtQQVRDSF0gc2NzaV9kaF9yZGFjOiBB
-ZGQgdHdvIG5ldyBJQk0gZGV2aWNlcyB0bw0KPiByZGFjX2Rldl9saXN0DQo+IA0KPiBPbiBUdWUs
-IDIwMDktMTItMDggYXQgMDg6NTUgLTA3MDAsIE1vZ2VyLCBCYWJ1IHdyb3RlOg0KPiA+IEphbWVz
-LA0KPiA+ICAgQ2FuIHlvdSBwbGVhc2UgcGljayB0aGlzIHVwPw0KPiANCj4gQWRkZWQgaXQgdG8g
-dGhlIGxpc3QuDQoNClRoYW5rcy4uDQo=
+On Tue, 2009-12-01 at 18:18 +0100, Heinz Mauelshagen wrote:
+> On Tue, 2009-12-01 at 17:41 +0100, Lars Marowsky-Bree wrote:
+> > On 2009-12-01T17:05:03, heinzm@redhat.com wrote: 
+> > > Please review for upstream inclusion.
+> > 
+> > Should this not be Cc'ed to LKML if you aim for upstream inclusion? I
+> > actually would expect that most of the criticism of drbd's inclusion
+> > would also apply here, no? (With the added point that dm-replicator does
+> > not actually have any users yet.)
+> 
+> We have a series of patches to sort out basic issues on dm-devel.
+> The usual process is, that agk as the subsystem maintainer integrates
+> and upstreams it.
+
+Could I just echo Lars' statement.  With the upstream inclusion of drbd,
+dm-replicator becomes a *third* replication system asking to be in
+kernel.  It is definitely a kernel policy question of whether we want
+three separate replicators, and so should be Cc'd to lkml so that people
+interested in that can weigh in.
+
+James
