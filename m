@@ -1,10 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm snapshot: remove try_again goto from
-	snapshot_merge_process()
-Date: Mon,  7 Dec 2009 23:26:20 -0500
-Message-ID: <1260246380-32576-1-git-send-email-snitzer@redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: [PATCH] scsi_dh_rdac: Add two new IBM devices to
+	rdac_dev_list
+Date: Tue, 8 Dec 2009 08:55:58 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF487663E4C@cosmail01.lsi.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF48744CE36@cosmail01.lsi.com>
+	<1257370545.21609.10.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1257370545.21609.10.camel@chandra-ubuntu>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,156 +21,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: "James.Bottomley@suse.de" <James.Bottomley@suse.de>, James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "Chauhan,
+	Vijay" <Vijay.Chauhan@lsi.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Replace snapshot_merge_process()'s 'goto try_again;' loop with a while
-loop that calls origin_write_extent().  origin_write_extent() triggers
-exceptions in all non-merging snapshots for the specified extent.
+James,
+  Can you please pick this up?
+Thanks
+Babu Moger=20
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
-NOTE: this patch has been appended to the following quilt tree:
-http://people.redhat.com/msnitzer/patches/snapshot-merge/kernel/2.6.33/
----
- drivers/md/dm-snap.c |  103 ++++++++++++++++++++++++++++-----------------------
- 1 file changed, 57 insertions(+), 46 deletions(-)
-
-Index: linux-rhel6/drivers/md/dm-snap.c
-===================================================================
---- linux-rhel6.orig/drivers/md/dm-snap.c
-+++ linux-rhel6/drivers/md/dm-snap.c
-@@ -766,8 +766,8 @@ static int init_hash_tables(struct dm_sn
- static void flush_bios(struct bio *bio);
- static void error_bios(struct bio *bio);
- 
--static int __origin_write(struct list_head *snapshots,
--			  sector_t sector, struct bio *bio);
-+static int origin_write_extent(struct dm_snapshot *merging_snap,
-+			       sector_t sector, chunk_t size);
- 
- static void merge_callback(int read_err, unsigned long write_err,
- 			   void *context);
-@@ -785,10 +785,8 @@ static u64 read_pending_exception_done_c
- 
- static void snapshot_merge_process(struct dm_snapshot *s)
- {
--	int r, i, linear_chunks;
--	chunk_t old_chunk, new_chunk, n;
--	struct origin *o;
--	int must_wait;
-+	int i, linear_chunks;
-+	chunk_t old_chunk, new_chunk;
- 	struct dm_io_region src, dest;
- 	sector_t io_size;
- 	u64 previous_count;
-@@ -832,49 +830,13 @@ static void snapshot_merge_process(struc
- 	src.sector = chunk_to_sector(s->store, new_chunk);
- 	src.count = dest.count;
- 
--	/*
--	 * Reallocate the other snapshots:
--	 *
--	 * The chunk size of the merging snapshot may be larger than the chunk
--	 * size of some other snapshot. So we may need to reallocate multiple
--	 * chunks in a snapshot.
--	 *
--	 * We don't do linking of pending exceptions and waiting for the last
--	 * one --- that would complicate code too much and it would also be
--	 * bug-prone.
--	 *
--	 * Instead, we try to scan all the overlapping exceptions in all
--	 * non-merging snapshots and if something was reallocated then wait
--	 * for any pending exception to complete. Retry after the wait, until
--	 * all exceptions are done.
--	 *
--	 * This may seem ineffective, but in practice, people hardly use more
--	 * than one or two snapshots. In case of two snapshots (one merging and
--	 * one non-merging) with the same chunksize, wait and wakeup is done
--	 * only once.
--	 */
--
--test_again:
-+	/* Reallocate the other snapshots */
- 	previous_count = read_pending_exception_done_count();
--	must_wait = 0;
--
--	/*
--	 * Merging snapshot already has the origin's __minimum_chunk_size()
--	 * stored in split_io (see: snapshot_merge_resume); avoid rediscovery
--	 */
--	BUG_ON(!s->ti->split_io);
--	down_read(&_origins_lock);
--	o = __lookup_origin(s->origin->bdev);
--	for (n = 0; n < io_size; n += s->ti->split_io) {
--		r = __origin_write(&o->snapshots, dest.sector + n, NULL);
--		if (r == DM_MAPIO_SUBMITTED)
--			must_wait = 1;
--	}
--	up_read(&_origins_lock);
--	if (must_wait) {
-+	while (origin_write_extent(s, dest.sector, io_size)) {
- 		wait_event(_pending_exception_done,
- 			   read_pending_exception_done_count() != previous_count);
--		goto test_again;
-+		/* Retry after the wait, until all exceptions are done. */
-+		previous_count = read_pending_exception_done_count();
- 	}
- 
- 	down_write(&s->lock);
-@@ -1984,6 +1946,55 @@ static int do_origin(struct dm_dev *orig
- }
- 
- /*
-+ * Trigger exceptions in all non-merging snapshots for the
-+ * specified extent:
-+ *
-+ * The chunk size of the merging snapshot may be larger than the chunk
-+ * size of some other snapshot. So we may need to reallocate multiple
-+ * chunks in a snapshot.
-+ *
-+ * We don't do linking of pending exceptions and waiting for the last
-+ * one --- that would complicate code too much and it would also be
-+ * bug-prone.
-+ *
-+ * Instead, we try to scan all the overlapping exceptions in all
-+ * non-merging snapshots and if something was reallocated then wait
-+ * for any pending exception to complete. Retry after the wait, until
-+ * all exceptions are done.
-+ *
-+ * This may seem ineffective, but in practice, people hardly use more
-+ * than one or two snapshots. In case of two snapshots (one merging and
-+ * one non-merging) with the same chunksize, wait and wakeup is done
-+ * only once.
-+ */
-+static int origin_write_extent(struct dm_snapshot *merging_snap,
-+			       sector_t sector, chunk_t size)
-+{
-+	int r, must_wait = 0;
-+	chunk_t n;
-+	struct origin *o;
-+
-+	/* 'size' must be a multiple of the 'merging_snap's chunk_size */
-+	BUG_ON(size % merging_snap->store->chunk_size);
-+	/*
-+	 * Merging snapshot already has the origin's __minimum_chunk_size()
-+	 * stored in split_io (see: snapshot_merge_resume); avoid rediscovery
-+	 */
-+	BUG_ON(!merging_snap->ti->split_io);
-+
-+	down_read(&_origins_lock);
-+	o = __lookup_origin(merging_snap->origin->bdev);
-+	for (n = 0; n < size; n += merging_snap->ti->split_io) {
-+		r = __origin_write(&o->snapshots, sector + n, NULL);
-+		if (r == DM_MAPIO_SUBMITTED)
-+			must_wait = 1;
-+	}
-+	up_read(&_origins_lock);
-+
-+	return must_wait;
-+}
-+
-+/*
-  * Origin: maps a linear range of a device, with hooks for snapshotting.
-  */
- 
+> -----Original Message-----
+> From: Chandra Seetharaman [mailto:sekharan@us.ibm.com]
+> Sent: Wednesday, November 04, 2009 3:36 PM
+> To: Moger, Babu
+> Cc: linux-scsi@vger.kernel.org; Chauhan, Vijay; dm-devel@redhat.com
+> Subject: Re: [PATCH] scsi_dh_rdac: Add two new IBM devices to
+> rdac_dev_list
+>=20
+> Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
+>=20
+> On Wed, 2009-11-04 at 12:36 -0700, Moger, Babu wrote:
+> > This patch adds two new IBM storage devices which can use rdac device
+> handlers.
+> > Signed-off-by: Babu Moger <babu.moger@lsi.com>
+> > ---
+> > --- linux-2.6.32-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig
+> 	2009-11-03 16:06:58.677451876 -0600
+> > +++ linux-2.6.32-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-
+> 11-03 16:08:29.725570987 -0600
+> > @@ -666,6 +666,8 @@ static const struct scsi_dh_devlist rdac
+> >  	{"IBM", "1724"},
+> >  	{"IBM", "1726"},
+> >  	{"IBM", "1742"},
+> > +	{"IBM", "1745"},
+> > +	{"IBM", "1746"},
+> >  	{"IBM", "1814"},
+> >  	{"IBM", "1815"},
+> >  	{"IBM", "1818"},
+> >
+> >
