@@ -1,92 +1,70 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm snapshot: support barriers in snapshot-merge
-	target
-Date: Tue,  8 Dec 2009 16:02:06 -0500
-Message-ID: <1260306126-20574-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [dm-devel] [PATCH v2 1/1] dm-raid45
+Date: Tue, 8 Dec 2009 17:38:06 -0700
+Message-ID: <e9c3a7c20912081638w39469743n76b4114b840f1c43@mail.gmail.com>
+References: <1259243112-28175-1-git-send-email-heinzm@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <1259243112-28175-1-git-send-email-heinzm@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, linux-raid <linux-raid@vger.kernel.org>, NeilBrown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-Sets num_flush_requests=2 to support flushing both the origin and cow
-devices used by the snapshot-merge target.
+On Thu, Nov 26, 2009 at 6:45 AM,  <heinzm@redhat.com> wrote:
+> From: Heinz Mauelshagen <heinzm@redhat.com>
+>
+> Neil et al.,
+>
+> finally got around to creating a followup (interim) patch, which allo=
+ws
+> for changing the xor algorithn at runtime via the message interface,
+> hence allowing to test if the xor unrole optimization around the
+> supported algorithms is performing better than the assembler
+> optimized one in the kernel.
 
-Also, snapshot_ctr() now gets the origin device using FMODE_WRITE if the
-target is snapshot-merge (which writes to the origin device).
+Now that perf is available it would be good to get some comparative
+cache utilization statistics on the two approaches.  The assembly
+routines make an attempt to avoid polluting L2 (however the memcpy's
+into the cache do not).
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
-NOTE: this patch is made to follow:
-v5-05-13-dm-snapshot-merge-target-should-not-allocate-new-exceptions.patch 
----
- drivers/md/dm-snap.c |   20 +++++++++++++++++---
- 1 file changed, 17 insertions(+), 3 deletions(-)
+> If we can prove my findings rigth, we could move those into
+> the crypto subsystem xor.
+>
+> Syntax:
+> -------
+> dmsetup message $MappedDevice 0 xor $Algorithm $Chunks
+>
+> $MappedDevice =3D whatever name you picked during creation
+> $Algorithm =3D { "xor_8", "xor_16", "xor_32", "xor_64", "xor_blocks" =
+}
+> $Chunks =3D 2..N # N being the amount of stripes (eg. 5 with 5 disks)
+>
+> Patch applies to clean mainline git 2.6.32-rc8.
+>
+> Regards,
+> Heinz
+>
+> Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+> ---
+> =A0drivers/md/Kconfig =A0 =A0 =A0 =A0 =A0 =A0 | =A0 =A09 +
+> =A0drivers/md/Makefile =A0 =A0 =A0 =A0 =A0 =A0| =A0 =A02 +
+> =A0drivers/md/dm-memcache.c =A0 =A0 =A0 | =A0301 +++
+> =A0drivers/md/dm-memcache.h =A0 =A0 =A0 | =A0 68 +
+> =A0drivers/md/dm-raid45.c =A0 =A0 =A0 =A0 | 4720 ++++++++++++++++++++=
+++++++++++++++++++++
 
-Index: linux-2.6/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -704,7 +704,8 @@ static int snapshot_ctr(struct dm_target
- 	int i;
- 	int r = -EINVAL;
- 	char *origin_path, *cow_path;
--	unsigned args_used;
-+	unsigned args_used, num_flush_requests = 1;
-+	fmode_t origin_mode = FMODE_READ;
- 
- 	if (argc != 4) {
- 		ti->error = "requires exactly 4 arguments";
-@@ -712,6 +713,11 @@ static int snapshot_ctr(struct dm_target
- 		goto bad;
- 	}
- 
-+	if (dm_target_is_snapshot_merge(ti)) {
-+		num_flush_requests = 2;
-+		origin_mode = FMODE_WRITE;
-+	}
-+
- 	origin_path = argv[0];
- 	argv++;
- 	argc--;
-@@ -745,7 +751,7 @@ static int snapshot_ctr(struct dm_target
- 	argv += args_used;
- 	argc -= args_used;
- 
--	r = dm_get_device(ti, origin_path, 0, ti->len, FMODE_READ, &s->origin);
-+	r = dm_get_device(ti, origin_path, 0, ti->len, origin_mode, &s->origin);
- 	if (r) {
- 		ti->error = "Cannot get origin device";
- 		goto bad_origin;
-@@ -796,7 +802,7 @@ static int snapshot_ctr(struct dm_target
- 	INIT_WORK(&s->queued_bios_work, flush_queued_bios);
- 
- 	ti->private = s;
--	ti->num_flush_requests = 1;
-+	ti->num_flush_requests = num_flush_requests;
- 
- 	/* Add snapshot to the list of snapshots for this origin */
- 	/* Exceptions aren't triggered till snapshot_resume() is called */
-@@ -1322,6 +1328,14 @@ static int snapshot_merge_map(struct dm_
- 	int r = DM_MAPIO_REMAPPED;
- 	chunk_t chunk;
- 
-+	if (unlikely(bio_empty_barrier(bio))) {
-+		if (map_context->flush_request == 0)
-+			bio->bi_bdev = s->origin->bdev;
-+		else if (map_context->flush_request == 1)
-+			bio->bi_bdev = s->cow->bdev;
-+		return DM_MAPIO_REMAPPED;
-+	}
-+
- 	chunk = sector_to_chunk(s->store, bio->bi_sector);
- 
- 	down_read(&s->lock);
+Where did the investigation of reusing md/raid5.c [1] end up?  This
+would simultaneously enable hardware accelerated raid6 for dmraid.
+
+--
+Dan
+
+[1] http://marc.info/?l=3Ddm-devel&m=3D124567352518676&w=3D2
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
