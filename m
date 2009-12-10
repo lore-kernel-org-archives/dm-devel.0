@@ -1,111 +1,87 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3 0/4] dm-replicator: introduce new remote
- replication target
-Date: Wed, 9 Dec 2009 14:14:51 -0500
-Message-ID: <20091209191450.GA1968@redhat.com>
-References: <1259683507-12455-1-git-send-email-heinzm@redhat.com>
-	<20091201164142.GL19238@suse.de> <1259687919.9639.15.camel@o>
-	<1260297747.4147.30.camel@mulgrave.site>
-	<20091209103941.GA920@infradead.org>
-	<1260382357.2532.201.camel@mulgrave.site>
-	<20091209183830.GC30947@redhat.com>
-	<1260384405.2532.218.camel@mulgrave.site>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@gmail.com>
+Subject: Re: todays git regression (2.6.32-04008.g3ff6a46): lot of device
+	mapper warnings
+Date: Wed, 9 Dec 2009 19:56:46 -0500
+Message-ID: <170fa0d20912091656s31575d0cneaf899e1781bdc16@mail.gmail.com>
+References: <200912091049.12604.borntraeger@de.ibm.com>
+	 <20091209212516.GA6206@fancy-poultry.org>
+	 <20091209214501.GC8742@kernel.dk> <20091209220749.GD8742@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1260384405.2532.218.camel@mulgrave.site>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753435AbZLJA4s@vger.kernel.org>
+In-Reply-To: <20091209220749.GD8742@kernel.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Heinz Diehl <htd@fancy-poultry.org>, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, Christian Borntraeger <borntraeger@de.ibm.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 09 2009 at  1:46pm -0500,
-James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
+On Wed, Dec 9, 2009 at 5:07 PM, Jens Axboe <jens.axboe@oracle.com> wrot=
+e:
+> On Wed, Dec 09 2009, Jens Axboe wrote:
+>> On Wed, Dec 09 2009, Heinz Diehl wrote:
+>> > On 09.12.2009, Christian Borntraeger wrote:
+>> >
+>> > > with todays git I got a huge amount of warnings for device mappe=
+r:
+>> > > device-mapper: uevent: version 1.0.3
+>> > > device-mapper: ioctl: 4.15.0-ioctl (2009-04-01) initialised: dm-=
+devel@redhat.com
+>> > > device-mapper: table: 252:0: target device dasdf1 is misaligned:=
+ physical_block_size=3D4096, logical_block_size=3D4096, alignment_offse=
+t=3D0, start=3D196608
+>> > [...]
+>> >
+>> > > The same devices produce no warning with a 2.6.32 vanilla kernel=
+=2E
+>> >
+>> > I have exactly the same here...
+>>
+>> Can either one of you try and bisect it? I've cc'ed Martin, it's lik=
+ely
+>> one of the io stacking patches that causes this.
+>
+> Does this work?
+>
+> diff --git a/block/blk-settings.c b/block/blk-settings.c
+> index dd1f1e0..0116d29 100644
+> --- a/block/blk-settings.c
+> +++ b/block/blk-settings.c
+> @@ -554,11 +554,13 @@ int blk_stack_limits(struct queue_limits *t, st=
+ruct queue_limits *b,
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0ret =3D -1;
+> =A0 =A0 =A0 =A0}
+>
+> +#if 0
+> =A0 =A0 =A0 =A0if (offset &&
+> =A0 =A0 =A0 =A0 =A0 =A0(offset & (b->discard_granularity - 1)) !=3D b=
+->discard_alignment) {
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0t->discard_misaligned =3D 1;
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0ret =3D -1;
+> =A0 =A0 =A0 =A0}
+> +#endif
+>
+> =A0 =A0 =A0 =A0/* If top has no alignment offset, inherit from bottom=
+ */
+> =A0 =A0 =A0 =A0if (!t->alignment_offset)
 
-> On Wed, 2009-12-09 at 13:38 -0500, Mike Snitzer wrote:
-> > On Wed, Dec 09 2009 at  1:12pm -0500,
-> > James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
-> > 
-> > > On Wed, 2009-12-09 at 05:39 -0500, Christoph Hellwig wrote:
-> > > > On Tue, Dec 08, 2009 at 12:42:27PM -0600, James Bottomley wrote:
-> > > > > Could I just echo Lars' statement.  With the upstream inclusion of drbd,
-> > > > > dm-replicator becomes a *third* replication system asking to be in
-> > > > > kernel.  It is definitely a kernel policy question of whether we want
-> > > > > three separate replicators, and so should be Cc'd to lkml so that people
-> > > > > interested in that can weigh in.
-> > > > 
-> > > > And unliley the previous two this one actually offers the benefit of
-> > > > beeing integrated with our major block device management framework.
-> > > 
-> > > md/nbd *is* integrated with a major block management framework.  The
-> > > fact that it's md not dm reflects the fact that it leverages the md
-> > > raid1 framework to perform the replication and merely uses nbd as a
-> > > remote block transmission pipe.  I'd submit this is the correct way to
-> > > do things.
-> > 
-> > Yes and no...
-> > 
-> > As someone who producticized md+nbd for a previous proprietary employer
-> > (standing on the shoulders of the work that was done by steeleye) I can
-> > say that md+nbd can provide the core plumbing but you need quite a bit
-> > of higher-level tools integration to make it _really_ approachable for
-> > the enterprise.  command line and UI interface and backend DB to store
-> > all relations, etc... And all sorts of nasty corner cases (e.g. split
-> > brain and double failure scenarios) are left as an exercise to the
-> > md+nbd user.
-> 
-> I didn't advocate using it as a framework ... I said it was done the
-> right way (leveraging the existing RAID engines).  What's actually
-> missing from it is the framework.
-> 
-> > > The problem now is that the md raid framework isn't integrated into dm,
-> > > but I think someone else is looking at that ...
-> > > 
-> > > > Interesting that the question comes up now after I was shot down for it
-> > > > in the drbd discussion.
-> > > 
-> > > So the value add of drbd over md/nbd is symmetric active.  I think that
-> > > could be pulled into the md raid infrastructure as well, but someone has
-> > > to figure out how.
-> > 
-> > md+nbd really isn't the way forward here IMHO..  if anything I think we
-> > need to focus on melding drbd and dm-replicator into the DM framework.
-> 
-> Actually, I think we need to focus on the goal, which should be a single
-> replication engine.  The problem with dm-replicator is that it brings
-> yet another network RAID-1 engine to the table.  The benefit is that it
-> does actually come with a framework.
-> 
-> The problem with network replicators is that they're hard to get right
-> and very time consuming to debug and test.  Since we've already invested
-> the correctness and testing effort twice over already (and it took
-> several years in each case) doing it yet again looks to be a big waste
-> to me.
-> 
-> > A single system management tool-chain and interface is increasingly
-> > important in the enterprise.
-> 
-> So isn't the way forwards then to prototype using this framework to
-> absorb both our existing in-kernel replicators?  A side bonus is that
-> the logging framework should be extensible to md to verify we're getting
-> it right.  If it's done correctly, it could even facilitate the eventual
-> raid unification goal of pulling together md and dm ... which would be a
-> huge benefit to the enterprise.
+Jens,
 
-Sure, I'd say we're in [violent] agreement on the way forward.
+It should be noted that Christian (original poster but cc's got
+dropped) is using striped LVs.
 
-But the buy-off from others (Heinz, drbd devs, Neil B, etc) and the
-strategy for when/how to phase this integration work is better for
-others to say.
+Striped LVs use blk_limits_io_opt() via drivers/md/dm-stripe.c:stripe_i=
+o_hints()
+
+Martin's change for discard alignment (commit: 86b37281) also splits
+out the least common multiple code, that was exclusively used for
+io_opt, to a new lcm() function in block/blk-settings.c
+
+On the surface I thought this might be the reason for the warnings,
+but Martin's lcm() looks perfectly fine; can't see why it would cause
+these warnings to appear all of a sudden... but I figured I'd share.
+
+It'll be interesting to see if the discard_granularity block you
+#ifdef'd out helps either Christian or Heinz.
 
 Mike
