@@ -1,12 +1,11 @@
-From: NeilBrown <neilb@suse.de>
-Subject: [PATCH dmraid 1/1] Ensure metadata dump of pdc metadata
-	has the correct offset.
-Date: Fri, 11 Dec 2009 14:27:11 +1100
-Message-ID: <20091211033030.695580934@suse.de>
-References: <20091211032710.161471708@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: (no subject)
+Date: Fri, 11 Dec 2009 00:31:30 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0912110029570.6881@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=pdc-metadata-dump-fix
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,32 +15,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-a read_metadata function needds to set *offset so that file_metadata
-can create the correct xxx/dev-offset file.
-pdf_read_metadata does not set *offset.
+Hi
 
-This patch add the appropriate setting.
+The current version of shared snapshots can be downloaded from 
+http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel
 
-Signed-off-by: NeilBrown <neilb@suse.de>
----
- 1.0.0.rc16/lib/format/ataraid/pdc.c |    5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+So if you want to review it, you can get it from there. (I'm not sending 
+it to the mailing list because it's big)
 
---- dmraid.orig/1.0.0.rc16/lib/format/ataraid/pdc.c
-+++ dmraid/1.0.0.rc16/lib/format/ataraid/pdc.c
-@@ -202,8 +202,11 @@ pdc_read_metadata(struct lib_context *lc
- 							break;
- 
- 					/* Memorize main metadata sector. */
--					} else if (!info->u32)
-+					} else if (!info->u32) {
- 						info->u32 = *s;
-+						*offset = sub ? di->sectors - *s : *s;
-+					}
-+
- 				}
- 			}
- 		}
+Mikulas
