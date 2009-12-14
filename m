@@ -1,14 +1,16 @@
 From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH libdmraid-events 0/3] Assorted fixes
-Date: Mon, 14 Dec 2009 15:28:50 +0100
-Message-ID: <1260800930.7677.35.camel@o>
-References: <20091211032255.766079509@suse.de>
+Subject: Re: [PATCH dmraid 1/1] Ensure metadata dump of pdc
+	metadata has the correct offset.
+Date: Mon, 14 Dec 2009 15:35:00 +0100
+Message-ID: <1260801300.7677.39.camel@o>
+References: <20091211032710.161471708@suse.de>
+	<20091211033030.695580934@suse.de>
 Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091211032255.766079509@suse.de>
+In-Reply-To: <20091211033030.695580934@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,28 +23,40 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Neil,
 
-you seem to be based on an old version of libdmraid-events.c.
-
-Please rebase to sources.redhat.com:/cvs/dm/ (dmraid subdirectory is
-recent), which most likely has all of that addressed already and rebase
-if you still find the issues.
+Applied to the sources repository.
 
 Thanks,
 Heinz
 
-On Fri, 2009-12-11 at 14:22 +1100, NeilBrown wrote:
-> Hi,
->  a recent code inspection found a few minor bugs in libdmraid-events. 
->  Here are 3 patches which address these issues.
->  This is based on 1.0.0.rc4 retrieved from
+On Fri, 2009-12-11 at 14:27 +1100, NeilBrown wrote:
+> plain text document attachment (pdc-metadata-dump-fix)
+> a read_metadata function needds to set *offset so that file_metadata
+> can create the correct xxx/dev-offset file.
+> pdf_read_metadata does not set *offset.
 > 
-> http://sources.redhat.com/lvm2/wiki/DMRAID_Eventing?action=AttachFile&do=get&target=libdmraid-events_DSO-1.0.0.rc4.tgz
+> This patch add the appropriate setting.
 > 
-> Thanks,
-> NeilBrown
+> Signed-off-by: NeilBrown <neilb@suse.de>
+> ---
+>  1.0.0.rc16/lib/format/ataraid/pdc.c |    5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
 > 
+> --- dmraid.orig/1.0.0.rc16/lib/format/ataraid/pdc.c
+> +++ dmraid/1.0.0.rc16/lib/format/ataraid/pdc.c
+> @@ -202,8 +202,11 @@ pdc_read_metadata(struct lib_context *lc
+>  							break;
+>  
+>  					/* Memorize main metadata sector. */
+> -					} else if (!info->u32)
+> +					} else if (!info->u32) {
+>  						info->u32 = *s;
+> +						*offset = sub ? di->sectors - *s : *s;
+> +					}
+> +
+>  				}
+>  			}
+>  		}
 > 
 > --
 > dm-devel mailing list
