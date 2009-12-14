@@ -1,16 +1,9 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH dmraid 1/1] Ensure metadata dump of pdc
-	metadata has the correct offset.
-Date: Mon, 14 Dec 2009 15:35:00 +0100
-Message-ID: <1260801300.7677.39.camel@o>
-References: <20091211032710.161471708@suse.de>
-	<20091211033030.695580934@suse.de>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+From: heinzm@sourceware.org
+Subject: dmraid/lib/format/ataraid pdc.c
+Date: 14 Dec 2009 14:33:14 -0000
+Message-ID: <20091214143314.18834.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091211033030.695580934@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +13,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2009-12-14 14:33:14
 
-Applied to the sources repository.
+Modified files:
+	lib/format/ataraid: pdc.c 
 
-Thanks,
-Heinz
+Log message:
+	pdc: fix offset.dat file (Neil Brown)
 
-On Fri, 2009-12-11 at 14:27 +1100, NeilBrown wrote:
-> plain text document attachment (pdc-metadata-dump-fix)
-> a read_metadata function needds to set *offset so that file_metadata
-> can create the correct xxx/dev-offset file.
-> pdf_read_metadata does not set *offset.
-> 
-> This patch add the appropriate setting.
-> 
-> Signed-off-by: NeilBrown <neilb@suse.de>
-> ---
->  1.0.0.rc16/lib/format/ataraid/pdc.c |    5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
-> 
-> --- dmraid.orig/1.0.0.rc16/lib/format/ataraid/pdc.c
-> +++ dmraid/1.0.0.rc16/lib/format/ataraid/pdc.c
-> @@ -202,8 +202,11 @@ pdc_read_metadata(struct lib_context *lc
->  							break;
->  
->  					/* Memorize main metadata sector. */
-> -					} else if (!info->u32)
-> +					} else if (!info->u32) {
->  						info->u32 = *s;
-> +						*offset = sub ? di->sectors - *s : *s;
-> +					}
-> +
->  				}
->  			}
->  		}
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ataraid/pdc.c.diff?cvsroot=dm&r1=1.7&r2=1.8
+
+--- dmraid/lib/format/ataraid/pdc.c	2009/11/02 13:20:40	1.7
++++ dmraid/lib/format/ataraid/pdc.c	2009/12/14 14:33:13	1.8
+@@ -202,8 +202,11 @@
+ 							break;
+ 
+ 					/* Memorize main metadata sector. */
+-					} else if (!info->u32)
++					} else if (!info->u32) {
+ 						info->u32 = *s;
++						*offset = sub ? di->sectors - *s :
++								*s;
++					}
+ 				}
+ 			}
+ 		}
