@@ -1,14 +1,14 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: [git pull] device-mapper patches for 2.6.33-rc1
-Date: Tue, 15 Dec 2009 10:42:18 +0200
-Message-ID: <20091215084218.GT16033@reaktio.net>
-References: <20091211000548.GS6208@agk-dp.fab.redhat.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [PATCH] Remove capping from dev_loss_tmo
+Date: Tue, 15 Dec 2009 02:54:09 -0600
+Message-ID: <4B274EB1.50500@cs.wisc.edu>
+References: <20091215082606.A45B037AD2@ochil.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20091211000548.GS6208@agk-dp.fab.redhat.com>
+In-Reply-To: <20091215082606.A45B037AD2@ochil.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,23 +18,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com, James Bottomley <James.Bottomley@suse.de>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Dec 11, 2009 at 12:05:48AM +0000, Alasdair G Kergon wrote:
-> Please pull from:
-> 
->   master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
-> 
-> to get device-mapper fixes and enhancements for inclusion in 2.6.33-rc1.
-> 
-> The main new feature is support for merging the changes held in a
-> snapshot back into the original device.  Barriers are now supported
-> by all the types of dm devices.
-> 
+Hannes Reinecke wrote:
+> diff --git a/drivers/scsi/scsi_transport_fc.c b/drivers/scsi/scsi_transport_fc.c
+> index 573ce21..6f39bf4 100644
+> --- a/drivers/scsi/scsi_transport_fc.c
+> +++ b/drivers/scsi/scsi_transport_fc.c
+> @@ -475,7 +475,8 @@ MODULE_PARM_DESC(dev_loss_tmo,
+>  		 "Maximum number of seconds that the FC transport should"
+>  		 " insulate the loss of a remote port. Once this value is"
+>  		 " exceeded, the scsi target is removed. Value should be"
+> -		 " between 1 and SCSI_DEVICE_BLOCK_MAX_TIMEOUT.");
+> +		 " between 1 and SCSI_DEVICE_BLOCK_MAX_TIMEOUT if"
+> +		 " fast_io_fail_tmo is not set.");
+>  
 
-Nice! barrier support is a good thing.
-Any plans to backport these to RHEL5 ?
-
--- Pasi
+What was the largest timeout value you tried? I think I am hitting a bug 
+with iscsi where if you pass queue_delayed_work a large enough value it 
+will overflow and instead of getting 100 minutes you get 1.
