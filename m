@@ -1,48 +1,88 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [PATCH libdmraid-events 0/3] Assorted fixes
-Date: Tue, 15 Dec 2009 12:07:32 +1100
-Message-ID: <20091215120732.1ffb55b8@notabene.brown>
-References: <20091211032255.766079509@suse.de>
-	<1260800930.7677.35.camel@o>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: hare@suse.de (Hannes Reinecke)
+Subject: [PATCH] Remove capping from dev_loss_tmo
+Date: Tue, 15 Dec 2009 09:26:06 +0100
+Message-ID: <20091215082606.A45B037AD2@ochil.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1260800930.7677.35.camel@o>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: heinzm@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@suse.de>
+Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, 14 Dec 2009 15:28:50 +0100
-Heinz Mauelshagen <heinzm@redhat.com> wrote:
 
-> Neil,
-> 
-> you seem to be based on an old version of libdmraid-events.c.
-> 
-> Please rebase to sources.redhat.com:/cvs/dm/ (dmraid subdirectory is
-> recent), which most likely has all of that addressed already and rebase
-> if you still find the issues.
-> 
->
+Currently dev_loss_tmo is capped by SCSI_DEVICE_BLOCK_MAX_TIMEOUT.
+This causes problem with multipathing when the 'no_path_retry' setting
+exceeds the dev_loss_tmo setting, as then the system might run into
+a deadlock when all paths have been removed temporarily for longer
+than dev_loss_tmo.
+The principal reasons for the capping has been that we should
+not allow a remote port to remain in status 'blocked' indefinitely,
+so the capping is there to ensure that the port status is being reset
+eventually.
+However, the fast_io_fail_tmo will also move the remote port out of
+the 'blocked' state, so for any HBA driver implementing both the
+capping should really be on the fast_io_fail_tmo, and not on the
+dev_loss_tmo.
+This patch implements just that, ie the fast_io_fail_tmo is capped
+to SCSI_DEVICE_BLOCK_TIMEOUT and the capping is removed from
+dev_loss_tmo when fast_io_fail_tmo is set.
+This allows us to synchronize the dev_loss_tmo setting to the
+'no_path_retry' setting from multipathing thus avoiding the deadlock.
 
-Also, I tried building from that source tree and there seem to be a number
-of problems.
- - include/dmraid/dmreg.h is needed but not provided
- - lib/dmraid.a needs lib/device/partition.o, but there is no rule for
-   building that file.
- - when tools/dmraid is build, the "-I" flags don't get passed to 'cc' so the
-   compile fails ... I haven't managed to figure out why that is yet.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 
-Thanks,
-NeilBrown
+diff --git a/drivers/scsi/scsi_transport_fc.c b/drivers/scsi/scsi_transport_fc.c
+index 573ce21..6f39bf4 100644
+--- a/drivers/scsi/scsi_transport_fc.c
++++ b/drivers/scsi/scsi_transport_fc.c
+@@ -475,7 +475,8 @@ MODULE_PARM_DESC(dev_loss_tmo,
+ 		 "Maximum number of seconds that the FC transport should"
+ 		 " insulate the loss of a remote port. Once this value is"
+ 		 " exceeded, the scsi target is removed. Value should be"
+-		 " between 1 and SCSI_DEVICE_BLOCK_MAX_TIMEOUT.");
++		 " between 1 and SCSI_DEVICE_BLOCK_MAX_TIMEOUT if"
++		 " fast_io_fail_tmo is not set.");
+ 
+ /*
+  * Netlink Infrastructure
+@@ -831,9 +832,17 @@ store_fc_rport_dev_loss_tmo(struct device *dev, struct device_attribute *attr,
+ 	    (rport->port_state == FC_PORTSTATE_NOTPRESENT))
+ 		return -EBUSY;
+ 	val = simple_strtoul(buf, &cp, 0);
+-	if ((*cp && (*cp != '\n')) ||
+-	    (val < 0) || (val > SCSI_DEVICE_BLOCK_MAX_TIMEOUT))
++	if ((*cp && (*cp != '\n')) || (val < 0))
+ 		return -EINVAL;
++
++	/*
++	 * If fast_io_fail is off we have to cap
++	 * dev_loss_tmo at SCSI_DEVICE_BLOCK_MAX_TIMEOUT
++	 */
++	if (rport->fast_io_fail_tmo == -1 &&
++	    val > SCSI_DEVICE_BLOCK_MAX_TIMEOUT)
++		return -EINVAL;
++
+ 	i->f->set_rport_dev_loss_tmo(rport, val);
+ 	return count;
+ }
+@@ -914,9 +923,16 @@ store_fc_rport_fast_io_fail_tmo(struct device *dev,
+ 		rport->fast_io_fail_tmo = -1;
+ 	else {
+ 		val = simple_strtoul(buf, &cp, 0);
+-		if ((*cp && (*cp != '\n')) ||
+-		    (val < 0) || (val >= rport->dev_loss_tmo))
++		if ((*cp && (*cp != '\n')) || (val < 0))
+ 			return -EINVAL;
++		/*
++		 * Cap fast_io_fail by dev_loss_tmo or
++		 * SCSI_DEVICE_BLOCK_MAX_TIMEOUT.
++		 */
++		if ((val >= rport->dev_loss_tmo) ||
++		    (val > SCSI_DEVICE_BLOCK_MAX_TIMEOUT))
++			return -EINVAL;
++
+ 		rport->fast_io_fail_tmo = val;
+ 	}
+ 	return count;
