@@ -1,14 +1,14 @@
 From: heinzm@redhat.com
-Subject: [PATCH v5 4/4] dm-replicator: blockdev site link handler
-Date: Tue, 15 Dec 2009 18:16:50 +0100
-Message-ID: <1260897410-2062-5-git-send-email-heinzm@redhat.com>
+Subject: [PATCH v5 3/4] dm-replicator: ringbuffer replication log
+	handler
+Date: Tue, 15 Dec 2009 18:16:49 +0100
+Message-ID: <1260897410-2062-4-git-send-email-heinzm@redhat.com>
 References: <1260897410-2062-1-git-send-email-heinzm@redhat.com>
 	<1260897410-2062-2-git-send-email-heinzm@redhat.com>
 	<1260897410-2062-3-git-send-email-heinzm@redhat.com>
-	<1260897410-2062-4-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1260897410-2062-4-git-send-email-heinzm@redhat.com>
+In-Reply-To: <1260897410-2062-3-git-send-email-heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,12 +24,13 @@ List-Id: dm-devel.ids
 
 From: Heinz Mauelshagen <heinzm@redhat.com>
 
-This is the "blockdev" type site link handler module plugging
-into the main replication module. 
+This is the "ringbuffer" type replication log handler module
+plugging into the main replicator module.
 
-It abstracts the transport access logic used, allowing the
-replication log to be agnostic about it (block device transport
-in this handlers case).
+It abstracts the handling of the log from the main module
+allowing it to be log type agnostic. It uses the abstracted
+device access logic of the site link module, hence allowing
+it to be transport type agnostic.
 
 
 Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
@@ -37,3024 +38,4967 @@ Reviewed-by: Jon Brassow <jbrassow@redhat.com>
 Tested-by: Jon Brassow <jbrassow@redhat.com>
 ---
  drivers/md/Makefile                 |    1 +
- drivers/md/dm-repl-slink-blockdev.c | 3054 +++++++++++++++++++++++++++++++++++
- 2 files changed, 3055 insertions(+), 0 deletions(-)
- create mode 100644 drivers/md/dm-repl-slink-blockdev.c
+ drivers/md/dm-repl-log-ringbuffer.c | 5001 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 5002 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/md/dm-repl-log-ringbuffer.c
 
 diff --git 2.6.32.orig/drivers/md/Makefile 2.6.32/drivers/md/Makefile
-index dcb1f69..a5e38dd 100644
+index 832d547..dcb1f69 100644
 --- 2.6.32.orig/drivers/md/Makefile
 +++ 2.6.32/drivers/md/Makefile
-@@ -47,6 +47,7 @@ obj-$(CONFIG_DM_LOG_USERSPACE)	+= dm-log-userspace.o
+@@ -46,6 +46,7 @@ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o dm-region-hash.o
+ obj-$(CONFIG_DM_LOG_USERSPACE)	+= dm-log-userspace.o
  obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
  obj-$(CONFIG_DM_REPLICATOR)	+= dm-replicator.o \
- 				   dm-repl-log-ringbuffer.o \
-+				   dm-repl-slink-blockdev.o \
++				   dm-repl-log-ringbuffer.o \
  				   dm-log.o dm-registry.o
  
  quiet_cmd_unroll = UNROLL  $@
-diff --git 2.6.32.orig/drivers/md/dm-repl-slink-blockdev.c 2.6.32/drivers/md/dm-repl-slink-blockdev.c
+diff --git 2.6.32.orig/drivers/md/dm-repl-log-ringbuffer.c 2.6.32/drivers/md/dm-repl-log-ringbuffer.c
 new file mode 100644
-index 0000000..308fd94
+index 0000000..8295e6d
 --- /dev/null
-+++ 2.6.32/drivers/md/dm-repl-slink-blockdev.c
-@@ -0,0 +1,3054 @@
++++ 2.6.32/drivers/md/dm-repl-log-ringbuffer.c
+@@ -0,0 +1,5001 @@
 +/*
 + * Copyright (C) 2009 Red Hat, Inc. All rights reserved.
 + *
-+ * Module Author: Heinz Mauelshagen (heinzm@redhat.com)
++ * Module Authors: Jeff Moyer (jmoyer@redhat.com)
++ *		   Heinz Mauelshagen (heinzm@redhat.com)
 + *
 + * This file is released under the GPL.
 + *
++ * "default" device-mapper replication log type implementing a ring buffer
++ * for write IOs, which will be copied accross site links to devices.
 + *
-+ * "blockdev" site link handler for the replicator target supporting
-+ * devices on block transports with device node access abstracting
-+ * the nature of the access to the caller.
-+ *
-+ * It handles the fallbehind thresholds, temporary transport failures,
-+ * their recovery and initial/partial device resynchronization.
-+ *
-+ * Locking Hierarchy:
-+ * 1) repl_slinks->lock
-+ * 2) sl->lock
-+ *
++ * A log like this allows for write coalescing enhancements in order
++ * to reduce network traffic at the cost of larger fallbehind windows.
 + */
 +
-+static const char version[] = "v0.022";
++/*
++ * Locking:
++ * l->io.lock for io (de)queueing / slink manipulation
++ * l->lists.lock for copy contexts moved around lists
++ *
++ * The ringbuffer lock does not need to be held in order to take the io.lock,
++ * but if they are both acquired, the ordering must be as indicated above.
++ */
 +
-+#include "dm.h"
 +#include "dm-repl.h"
 +#include "dm-registry.h"
 +#include "dm-repl-log.h"
 +#include "dm-repl-slink.h"
 +
-+#include <linux/dm-dirty-log.h>
-+#include <linux/dm-kcopyd.h>
++#include <linux/crc32.h>
++#include <linux/dm-io.h>
 +#include <linux/kernel.h>
-+#include <linux/module.h>
++#include <linux/version.h>
 +
-+#define	DM_MSG_PREFIX	"dm-repl-slink-blockdev"
++static const char version[] = "v0.028";
++static struct dm_repl_log_type ringbuffer_type;
++
++static struct mutex list_mutex;
++
++#define	DM_MSG_PREFIX	"dm-repl-log-ringbuffer"
 +#define	DAEMON		DM_MSG_PREFIX	"d"
-+#define	COPY_PAGES	BIO_MAX_PAGES
-+#define	RESYNC_PAGES	(BIO_MAX_PAGES / 2)
-+#define	RESYNC_SIZE	(to_sector(PAGE_SIZE) * RESYNC_PAGES)
-+#define	MIN_IOS		1
 +
-+/* Jiffies to wait before retrying a device. */
-+#define	SLINK_TEST_JIFFIES	(15 * HZ)
-+#define	SLINK_TEST_SIZE		4096
++/* Maximum number of site links supported. */
++#define MAX_DEFAULT_SLINKS 	2048
 +
-+#define _SET_AND_BUG_ON_SL(sl, slink) \
-+	do { \
-+		_BUG_ON_PTR(slink); \
-+		(sl) = slink_check(slink); \
-+		_BUG_ON_PTR(sl); \
-+	} while (0);
++#define DEFAULT_BIOS	16 /* Default number of max bios -> ring buffer */
 +
-+/* An slink device. */
-+enum sdev_list_type {
-+	SDEV_SLINK,	/* To put on slink's device list. */
-+	SDEV_RESYNC,	/* To put on slink's resynchronization list. */
-+	SDEV_TEST,	/* To put on so_slink_test()'s test list. */
-+	NR_SDEV_LISTS,
-+};
-+struct test_buffer;
-+struct sdev {
-+	struct kref ref;	/* Reference counter. */
++#define	LOG_SIZE_MIN	(2 * BIO_MAX_SECTORS)
++#define	REGIONS_MAX	32768
 +
-+	/* Lists to hang off slink, resync and flush lists */
-+	struct list_head lists[NR_SDEV_LISTS];
-+	struct dm_target *ti;
-+	struct slink *sl;	/* Backpointer for callback. */
-+
-+	struct {
-+		struct sdev_resync {
-+			sector_t region; /* Region being resynchronized. */
-+			sector_t writer_region; /* region being written to. */
-+			sector_t start;	/* Start of actual resync copy. */
-+			sector_t end;	/* End of actual resync copy. */
-+			unsigned len;	/* Length of actual copy. */
-+			/* Source device pointer for resync callback. */
-+			struct sdev *from;
-+		} resync;
-+
-+		struct {
-+			unsigned long time;
-+			struct test_buffer *buffer;
-+		} test;
-+
-+
-+		/* kcopyd resynchronization client. */
-+		struct dm_kcopyd_client *kcopyd_client;
-+
-+		/* Teardown synchronization. */
-+		wait_queue_head_t waiters;
-+
-+		sector_t split_io;
-+
-+		unsigned long flags;
-+	} io;
-+
-+	/* Device properties. */
-+	struct sdev_dev {
-+		struct {
-+			unsigned count;	/* Ctr parameters count. */
-+			const char *path; /* Device path/major:minor. */
-+		} params;
-+
-+		struct dm_dev *dm_dev;
-+		struct dm_dirty_log *dl;
-+		unsigned number;
-+	} dev;
-+};
-+
-+/* Macros to access sdev lists. */
-+#define	SDEV_SLINK_LIST(sl)	(sl->lists + SDEV_SLINK)
-+#define	SDEV_RESYNC_LIST(sl)	(sl->lists + SDEV_RESYNC)
-+
-+/* Status flags for device. */
-+enum dev_flags {
-+	DEV_ERROR_READ,		/* Read error on device. */
-+	DEV_ERROR_WRITE,	/* Write error on device. */
-+	DEV_IO_QUEUED,		/* Request(s) to device queued. */
-+	DEV_IO_UNPLUG,		/* Unplug device queue. */
-+	DEV_OPEN,		/* Device got opend during ctr. */
-+	DEV_RESYNC,		/* Device may resync. */
-+	DEV_RESYNC_END,		/* Flag device resynchronization end. */
-+	DEV_RESYNCING,		/* Device has active resync. */
-+	DEV_SUSPENDED,		/* Device suspended. */
-+	DEV_TEARDOWN,		/* Device is being deleted. */
-+};
-+
-+/* Create slink bitfield (io.flags) access inline definitions. */
-+DM_BITOPS(DevErrorRead, sdev, DEV_ERROR_READ)
-+DM_BITOPS(DevErrorWrite, sdev, DEV_ERROR_WRITE)
-+DM_BITOPS(DevIOQueued, sdev, DEV_IO_QUEUED)
-+DM_BITOPS(DevIOUnplug, sdev, DEV_IO_UNPLUG)
-+DM_BITOPS(DevOpen, sdev, DEV_OPEN)
-+DM_BITOPS(DevResync, sdev, DEV_RESYNC)
-+DM_BITOPS(DevResyncEnd, sdev, DEV_RESYNC_END)
-+DM_BITOPS(DevResyncing, sdev, DEV_RESYNCING)
-+DM_BITOPS(DevSuspended, sdev, DEV_SUSPENDED)
-+DM_BITOPS(DevTeardown, sdev, DEV_TEARDOWN)
-+
-+/* Internal site link representation. */
-+enum slink_list_type { SLINK_DEVS, SLINK_REPLOG, SLINK_RESYNC, NR_SLINK_LISTS };
-+enum cache_type { COPY_CACHE, TEST_CACHE, NR_CACHES };
-+struct slink {
-+	struct kref ref;	/* Reference count. */
-+	/*
-+	 * Protect slink lists.
-+	 *
-+	 * Has to be spinlock, because the global replog lock
-+	 * needs to be one to be used from interrupt context
-+	 * and they are both taken in some places.
-+	 */
-+	rwlock_t lock;		/* Protect slink lists. */
-+
-+	/* Devices on this slink, on replog list and on resync list. */
-+	struct list_head lists[NR_SLINK_LISTS];
-+
-+	/* List of all slinks for a replog. */
-+	struct dm_repl_log_slink_list *repl_slinks;
-+
-+	unsigned number; /* slink number. */
-+
-+	struct slink_params {
-+		unsigned count;
-+		struct dm_repl_slink_fallbehind fallbehind;
-+		enum dm_repl_slink_policy_type policy;
-+	} params;
-+
-+	struct dm_repl_slink *slink;
-+
-+	struct slink_io {
-+		unsigned long flags;
-+		struct dm_kcopyd_client *kcopyd_client;
-+		struct dm_io_client *dm_io_client;
-+
-+		/* Copy context and test buffer mempools. */
-+		mempool_t *pool[NR_CACHES];
-+
-+		/* io work. */
-+		struct workqueue_struct *wq;
-+		struct delayed_work dws;
-+
-+		struct sdev *dev_test;
-+	} io;
-+
-+	/* Callback for slink recovered. */
-+	struct dm_repl_slink_notify_ctx recover;
-+};
-+
-+/* Macros to access slink lists. */
-+#define	SLINK_DEVS_LIST(sl)	(sl->lists + SLINK_DEVS)
-+#define	SLINK_REPLOG_LIST(sl)	(sl->lists + SLINK_REPLOG)
-+#define	SLINK_RESYNC_LIST(sl)	(sl->lists + SLINK_RESYNC)
-+
-+/* Status flags for slink. */
-+enum slink_flags {
-+	SLINK_ERROR_READ,	/* Read error on site link. */
-+	SLINK_ERROR_WRITE,	/* Write error on site link. */
-+	SLINK_IMMEDIATE_WORK,	/* Flag immediate worker run. */
-+	SLINK_RESYNC_PROCESSING,/* Resync is being processed on slink. */
-+	SLINK_TEST_ACTIVE,	/* Device test active on slink. */
-+	SLINK_WRITER,		/* Slink is being written to. */
-+};
-+
-+/* Create slink bitfield (io.flags) access inline definitions. */
-+DM_BITOPS(SlinkErrorRead, slink, SLINK_ERROR_READ)
-+DM_BITOPS(SlinkErrorWrite, slink, SLINK_ERROR_WRITE)
-+DM_BITOPS(SlinkImmediateWork, slink, SLINK_IMMEDIATE_WORK)
-+DM_BITOPS(SlinkResyncProcessing, slink, SLINK_RESYNC_PROCESSING)
-+DM_BITOPS(SlinkTestActive, slink, SLINK_TEST_ACTIVE)
-+DM_BITOPS(SlinkWriter, slink, SLINK_WRITER)
-+
-+/* Copy context to carry from blockdev_copy() to copy_endio(). */
-+struct copy_context {
-+	struct sdev *dev_to;	/* Device to copy to. */
-+
-+	/* Callback for data in RAM (noop for 'blockdev' type). */
-+	struct dm_repl_slink_notify_ctx ram;
-+
-+	/* Callback for data on disk. */
-+	struct dm_repl_slink_notify_ctx disk;
-+};
-+
-+/* Allocate/free blockdev copy context. */
-+static inline struct copy_context *alloc_copy_context(struct slink *sl)
-+{
-+	return mempool_alloc(sl->io.pool[COPY_CACHE], GFP_KERNEL);
-+}
-+
-+static inline void free_copy_context(struct copy_context *cc, struct slink *sl)
-+{
-+	mempool_free(cc, sl->io.pool[COPY_CACHE]);
-+}
-+
-+/* Allocate/free blockdev test io buffer. */
-+static inline struct test_buffer *alloc_test_buffer(struct slink *sl)
-+{
-+	return mempool_alloc(sl->io.pool[TEST_CACHE], GFP_KERNEL);
-+}
-+
-+static inline void free_test_buffer(struct test_buffer *tb, struct slink *sl)
-+{
-+	mempool_free(tb, sl->io.pool[TEST_CACHE]);
-+}
-+
-+/* Destcriptor type <-> name mapping. */
-+static const struct dm_str_descr policies[] = {
-+	{ DM_REPL_SLINK_ASYNC, "asynchronous" },
-+	{ DM_REPL_SLINK_SYNC, "synchronous" },
-+	{ DM_REPL_SLINK_STALL, "stall" },
-+};
-+
-+/* Get slink policy flags. */
-+static int _slink_policy_type(char *name)
-+{
-+	int r = dm_descr_type(policies, ARRAY_SIZE(policies), name);
-+
-+	if (r < 0)
-+		DMERR("Invalid site link policy %s", name);
-+
-+	return r;
-+}
-+
-+/* Get slink policy name. */
-+static const char *
-+_slink_policy_name(const int type)
-+{
-+	return dm_descr_name(policies, ARRAY_SIZE(policies), type);
-+}
-+
-+#define	SEPARATOR	'+'
-+static int
-+get_slink_policy(char *arg)
-+{
-+	int policy = 0, r;
-+	char *sep;
-+
-+	DMDEBUG_LIMIT("%s arg=%s", __func__, arg);
-+
-+	/*
-+	 * Check substrings of the compound policy
-+	 * string separated by SEPARATOR.
-+	 */
-+	do {
-+		sep = strchr(arg, SEPARATOR);
-+		if (sep)
-+			*sep = 0;
-+		else
-+			sep = arg;
-+
-+		r = _slink_policy_type(arg);
-+		if (sep != arg) {
-+			arg = sep + 1;
-+			*sep = SEPARATOR;
-+		}
-+
-+		if (r < 0)
-+			return r;
-+		else
-+			set_bit(r, (unsigned long *) &policy);
-+	} while (sep != arg);
-+
-+	smp_mb();
-+	return policy;
-+}
-+
-+/* String print policies. */
-+static char *
-+snprint_policies(enum dm_repl_slink_policy_type policies,
-+		 char *result, size_t maxlen)
-+{
-+	int bits = sizeof(policies) * 8, i;
-+	size_t sz = 0;
-+
-+	*result = 0;
-+	for (i = 0; i < bits; i++) {
-+		if (test_bit(i, (unsigned long *) &policies)) {
-+			const char *name = _slink_policy_name(i);
-+
-+			if (name) {
-+				if (*result)
-+					DMEMIT("%c", SEPARATOR);
-+
-+				DMEMIT("%s", name);
-+			}
-+		}
-+	}
-+
-+	return result;
-+}
-+
-+/* Fallbehind type <-> name mappings. */
-+static const struct dm_str_descr fb_types[] = {
-+	{ DM_REPL_SLINK_FB_IOS, "ios" },
-+	{ DM_REPL_SLINK_FB_SIZE, "size" },
-+	{ DM_REPL_SLINK_FB_TIMEOUT, "timeout" },
-+};
-+
-+/* Return name of fallbehind parameter by type. */
-+static const char *
-+fb_name(enum dm_repl_slink_fallbehind_type type)
-+{
-+	return dm_descr_name(fb_types, ARRAY_SIZE(fb_types), type);
-+}
-+
-+/* String print fallbehind. */
-+static char *
-+snprint_fallbehind(struct dm_repl_slink_fallbehind *fallbehind,
-+		   char *result, size_t maxlen)
-+{
-+	size_t sz = 0;
-+	sector_t value = fallbehind->value;
-+
-+	sector_div(value, fallbehind->multiplier);
-+	DMEMIT("%s %llu%c", fb_name(fallbehind->type),
-+	       (unsigned long long) value, fallbehind->unit);
-+	return result;
-+}
-+
-+/*
-+ * Check and get fallbehind value and type.
-+ * Pay attention to unit qualifiers.
-+ */
-+static int
-+_get_slink_fallbehind(int argc, char **argv,
-+		      enum dm_repl_slink_fallbehind_type fb_type,
-+		      struct dm_repl_slink_fallbehind *fb)
-+{
-+	int arg = 0, r;
-+	unsigned multi = 1;
-+	long long tmp;
-+	char *unit;
-+	const char *name = fb_name(fb_type);
-+
-+	fb->unit = 0;
-+
-+	/* Old syntax e.g. "ios=1000". */
-+	r = sscanf(argv[arg] + strlen(name), "=%lld", &tmp) != 1 || tmp < 0;
-+	if (r) {
-+		if (argc < 2)
-+			goto bad_value;
-+
-+		/* New syntax e.g. "ios 1000". */
-+		r = sscanf(argv[++arg], "%lld", &tmp) != 1 || tmp < 0;
-+	}
-+
-+	unit = argv[arg] + strlen(argv[arg]) - 1;
-+	unit = (*unit < '0' || *unit > '9') ? unit : NULL;
-+
-+	if (r)
-+		goto bad_value;
-+
-+	if (unit) {
-+		const struct units {
-+			const char *chars;
-+			const sector_t multiplier[];
-+		} *u = NULL;
-+		static const struct units size = {
-+			"sSkKmMgGtTpPeE",
-+			#define TWO	(sector_t) 2
-+		/*  sectors, KB,MB,      GB,      TB,      PB,      EB */
-+			{ 1, 2, TWO<<10, TWO<<20, TWO<<30, TWO<<40, TWO<<50 },
-+			#undef	TWO
-+		}, timeout = {
-+			"tTsSmMhHdD",
-+			/*ms, sec, minute,  hour,       day */
-+			{ 1, 1000, 60*1000, 60*60*1000, 24*60*60*1000 },
-+		};
-+		const char *c;
-+
-+		switch (fb_type) {
-+		case DM_REPL_SLINK_FB_SIZE:
-+			u = &size;
-+			goto retrieve;
-+		case DM_REPL_SLINK_FB_TIMEOUT:
-+			u = &timeout;
-+retrieve:
-+			/* Skip to unit identifier character. */
-+			for (c = u->chars, multi = 0;
-+			     *c && *c != *unit;
-+			     c++, multi++)
-+				;
-+
-+			if (*c) {
-+				fb->unit = *c;
-+				multi = u->multiplier[(multi + 2) / 2];
-+			} else
-+				goto bad_unit;
-+		case DM_REPL_SLINK_FB_IOS:
-+			break;
-+
-+		default:
-+			BUG();
-+		}
-+	}
-+
-+	fb->type = fb_type;
-+	fb->multiplier = multi;
-+	fb->value = tmp * multi;
-+	return 0;
-+
-+bad_value:
-+	DMERR("invalid fallbehind %s value", argv[0]);
-+	return -EINVAL;
-+
-+bad_unit:
-+	DMERR("invalid slink fallbehind unit");
-+	return -EINVAL;
-+}
-+
-+static int
-+get_slink_fallbehind(int argc, char **argv, struct dm_repl_slink_fallbehind *fb)
-+{
-+	const struct dm_str_descr *f = ARRAY_END(fb_types);
-+
-+	while (f-- > fb_types) {
-+		/* Check for fallbehind argument. */
-+		if (!strnicmp(STR_LEN(fb_name(f->type), argv[0])))
-+			return _get_slink_fallbehind(argc, argv, f->type, fb);
-+	}
-+
-+	DMERR("invalid fallbehind type %s", argv[0]);
-+	return -EINVAL;
-+}
-+
-+/* Return region on device fro given sector. */
-+static sector_t
-+sector_to_region(struct sdev *dev, sector_t sector)
-+{
-+	sector_div(sector, dev->ti->split_io);
-+	return sector;
-+}
-+
-+/* Check dm_repl_slink and slink ok. */
-+static struct slink *
-+slink_check(struct dm_repl_slink *slink)
-+{
-+	struct slink *sl;
-+
-+	if (unlikely(!slink))
-+		return ERR_PTR(-EINVAL);
-+
-+	if (unlikely(IS_ERR(slink)))
-+		return (struct slink *) slink;
-+
-+	sl = slink->context;
-+	return sl ? sl : ERR_PTR(-EINVAL);
-+}
-+
-+struct cache_defs {
-+	enum cache_type type;
-+	const int min;
-+	struct kmem_cache *cache;
-+	const char *name;
-+	const size_t size;
-+};
-+
-+/* Slabs for the copy context structures and for device test I/O buffers. */
-+static struct cache_defs cache_defs[] = {
-+	{ COPY_CACHE, MIN_IOS, NULL,
-+	  "dm_repl_slink_copy", sizeof(struct copy_context) },
-+	{ TEST_CACHE, MIN_IOS, NULL,
-+	  "dm_repl_slink_test", SLINK_TEST_SIZE },
-+};
-+
-+/*
-+ * Release resources when last reference dropped.
-+ *
-+ * Gets called with lock hold to atomically delete slink from list.
-+ */
-+static void
-+slink_release(struct kref *ref)
-+{
-+	struct slink *sl = container_of(ref, struct slink, ref);
-+
-+	DMDEBUG("%s slink=%d released", __func__, sl->number);
-+	kfree(sl);
-+}
-+
-+/* Take out reference on slink. */
-+static struct slink *
-+slink_get(struct slink *sl)
-+{
-+	kref_get(&sl->ref);
-+	return sl;
-+}
-+
-+/* Drop reference on slink and destroy it on last release. */
-+static int
-+slink_put(struct slink *sl)
-+{
-+	return kref_put(&sl->ref, slink_release);
-+}
-+
-+/* Find slink on global slink list by number. */
-+static struct slink *
-+slink_get_by_number(struct dm_repl_log_slink_list *repl_slinks,
-+		    unsigned slink_number)
-+{
-+	struct slink *sl;
-+
-+	BUG_ON(!repl_slinks);
-+
-+	list_for_each_entry(sl, &repl_slinks->list, lists[SLINK_REPLOG]) {
-+		if (slink_number == sl->number)
-+			return slink_get(sl);
-+	}
-+
-+	return ERR_PTR(-ENOENT);
-+}
-+
-+/* Destroy slink object. */
-+static void
-+slink_destroy(struct slink *sl)
-+{
-+	struct slink_io *io;
-+	struct cache_defs *cd;
-+
-+	_BUG_ON_PTR(sl);
-+	_BUG_ON_PTR(sl->repl_slinks);
-+	io = &sl->io;
-+
-+	write_lock(&sl->repl_slinks->lock);
-+	if (!list_empty(SLINK_REPLOG_LIST(sl)))
-+		list_del(SLINK_REPLOG_LIST(sl));
-+	write_unlock(&sl->repl_slinks->lock);
-+
-+	/* Destroy workqueue before freeing resources. */
-+	if (io->wq)
-+		destroy_workqueue(io->wq);
-+
-+	if (io->kcopyd_client)
-+		dm_kcopyd_client_destroy(io->kcopyd_client);
-+
-+	if (io->dm_io_client)
-+		dm_io_client_destroy(io->dm_io_client);
-+
-+	cd = ARRAY_END(cache_defs);
-+	while (cd-- > cache_defs) {
-+		if (io->pool[cd->type]) {
-+			mempool_destroy(io->pool[cd->type]);
-+			io->pool[cd->type] = NULL;
-+		}
-+	}
-+}
-+
-+/*
-+ * Get slink from global slink list by number or create
-+ * new one and put it on list; take out reference.
-+ */
-+static void do_slink(struct work_struct *ws);
-+static struct slink *
-+slink_create(struct dm_repl_slink *slink,
-+	     struct dm_repl_log_slink_list *repl_slinks,
-+	     struct slink_params *params, unsigned slink_number)
-+{
-+	int i, r;
-+	struct slink *sl;
-+
-+	DMDEBUG_LIMIT("%s %u", __func__, slink_number);
-+
-+	/* Make sure, slink0 exists when creating slink > 0. */
-+	if (slink_number) {
-+		struct slink *sl0;
-+
-+		read_lock(&repl_slinks->lock);
-+		sl0 = slink_get_by_number(repl_slinks, 0);
-+		read_unlock(&repl_slinks->lock);
-+
-+		if (IS_ERR(sl0)) {
-+			DMERR("Can't create slink=%u w/o slink0.",
-+			      slink_number);
-+			return ERR_PTR(-EPERM);
-+		}
-+
-+		BUG_ON(slink_put(sl0));
-+	}
-+
-+	read_lock(&repl_slinks->lock);
-+	sl = slink_get_by_number(repl_slinks, slink_number);
-+	read_unlock(&repl_slinks->lock);
-+
-+	if (IS_ERR(sl)) {
-+		struct slink *sl_tmp;
-+		struct slink_io *io;
-+		struct cache_defs *cd;
-+
-+		if (!params)
-+			return sl;
-+
-+		/* Preallocate internal slink struct. */
-+		sl = kzalloc(sizeof(*sl), GFP_KERNEL);
-+		if (unlikely(!sl))
-+			return ERR_PTR(-ENOMEM);
-+
-+		rwlock_init(&sl->lock);
-+		kref_init(&sl->ref);
-+
-+#ifdef CONFIG_LOCKDEP
-+		{
-+			static struct lock_class_key slink_number_lock;
-+
-+			lockdep_set_class_and_subclass(&sl->lock,
-+						       &slink_number_lock,
-+						       slink_number);
-+		}
++/* Later kernels have this macro in bitops.h */
++#ifndef for_each_bit
++#define for_each_bit(bit, addr, size) \
++	for ((bit) = find_first_bit((void *)(addr), (size)); \
++	     (bit) < (size); \
++	     (bit) = find_next_bit((void *)(addr), (size), (bit) + 1))
 +#endif
 +
-+		i = ARRAY_SIZE(sl->lists);
-+		while (i--)
-+			INIT_LIST_HEAD(sl->lists + i);
++#define	_BUG_ON_SLINK_NR(l, slink_nr) \
++	do { \
++		BUG_ON(slink_nr < 0); \
++	} while (0);
 +
-+		/* Copy (parsed) fallbehind arguments accross. */
-+		io = &sl->io;
-+		sl->params = *params;
-+		sl->number = slink_number;
-+		sl->repl_slinks = repl_slinks;
-+		sl->slink = slink;
-+		slink->context = sl;
-+
-+		/* Create kcopyd client for data copies to slinks. */
-+		r = dm_kcopyd_client_create(COPY_PAGES, &io->kcopyd_client);
-+		if (unlikely(r < 0)) {
-+			io->kcopyd_client = NULL;
-+			goto bad;
-+		}
-+
-+		/* Create dm-io client context for test I/Os on slinks. */
-+		io->dm_io_client = dm_io_client_create(1);
-+		if (unlikely(IS_ERR(io->dm_io_client))) {
-+			r = PTR_ERR(io->dm_io_client);
-+			io->dm_io_client = NULL;
-+			goto bad;
-+		}
-+
-+		r = -ENOMEM;
-+
-+		/* Create slab mempools for copy contexts and test buffers. */
-+		cd = ARRAY_END(cache_defs);
-+		while (cd-- > cache_defs) {
-+			io->pool[cd->type] =
-+				mempool_create_slab_pool(cd->min, cd->cache);
-+			if (unlikely(!io->pool[cd->type])) {
-+				DMERR("Failed to create mempool %p",
-+				       io->pool[cd->type]);
-+				goto bad;
-+			}
-+		}
-+
-+		io->wq = create_singlethread_workqueue(DAEMON);
-+		if (likely(io->wq))
-+			INIT_DELAYED_WORK(&sl->io.dws, do_slink);
-+		else
-+			goto bad;
-+
-+		/* Add to replog list. */
-+		write_lock(&repl_slinks->lock);
-+		sl_tmp = slink_get_by_number(repl_slinks, slink_number);
-+		if (likely(IS_ERR(sl_tmp))) {
-+			/* We won the race -> add to list. */
-+			list_add_tail(SLINK_REPLOG_LIST(sl),
-+				      &repl_slinks->list);
-+			write_unlock(&repl_slinks->lock);
-+		} else {
-+			/* We lost the race, take the winner. */
-+			write_unlock(&repl_slinks->lock);
-+			/* Will release sl. */
-+			slink_destroy(sl);
-+			sl = sl_tmp;
-+		}
-+
-+		return sl;
-+	}
-+
-+	slink_put(sl);
-+	return ERR_PTR(-EEXIST);
-+
-+bad:
-+	slink_destroy(sl);
-+	return ERR_PTR(r);
-+}
-+
-+/* Return slink count. */
-+static unsigned
-+slink_count(struct slink *sl)
-+{
-+	unsigned count = 0;
-+	struct slink *sl_cur;
-+
-+	_BUG_ON_PTR(sl);
-+
-+	list_for_each_entry(sl_cur, &sl->repl_slinks->list, lists[SLINK_REPLOG])
-+		count++;
-+
-+	return count;
-+}
-+
-+/* Return number of regions for device. */
-+static inline sector_t
-+region_count(struct sdev *dev)
-+{
-+	return dm_sector_div_up(dev->ti->len, dev->ti->split_io);
-+}
-+
++/* Replicator log metadata version. */
++struct repl_log_version {
++	unsigned major;
++	unsigned minor;
++	unsigned subminor;
++};
 +
 +/*
-+ * Site link worker.
++ *  Each version of the log code may get a separate source module, so
++ *  we store the version information in the .c file.
 + */
-+/* Queue (optionally delayed) io work. */
++#define DM_REPL_LOG_MAJOR	0
++#define DM_REPL_LOG_MINOR	0
++#define DM_REPL_LOG_MICRO	1
++
++#define DM_REPL_LOG_VERSION			\
++	{ DM_REPL_LOG_MAJOR,			\
++	  DM_REPL_LOG_MINOR,			\
++	  DM_REPL_LOG_MICRO, }
++
++struct version {
++	uint16_t	major;
++	uint16_t	minor;
++	uint16_t	subminor;
++} my_version = DM_REPL_LOG_VERSION;
++
++/* 1 */
++/* Shall be 16 bytes long */
++static const char log_header_magic[] = "dm-replicatorHJM";
++#define	MAGIC_LEN	(sizeof(log_header_magic) - 1)
++#define	HANDLER_LEN	MAGIC_LEN
++
++/* Header format on disk */
++struct log_header_disk {
++	uint8_t			magic[MAGIC_LEN];
++	uint32_t		crc;
++	struct version		version;
++	uint64_t		size;
++	uint64_t		buffer_header; /* sector of first
++						* buffer_header_disk */
++	uint8_t			handler_name[HANDLER_LEN];
++	/* Free space. */
++} __attribute__((__packed__));
++
++/* Macros for bitmap access. */
++#define	BITMAP_SIZE(l)	((l)->slink.bitmap_size)
++#define	BITMAP_ELEMS(l)	((l)->slink.bitmap_elems)
++#define	BITMAP_ELEMS_MAX	32
++
++/* Header format in core (only one of these per log device). */
++struct log_header {
++	struct repl_log_version version;
++	sector_t size;
++	sector_t buffer_header;
++
++	/* Bitarray of configured slinks to copy accross and those to I/O to. */
++	struct {
++		uint64_t slinks[BITMAP_ELEMS_MAX];
++		uint64_t ios[BITMAP_ELEMS_MAX];
++		uint64_t set_accessible[BITMAP_ELEMS_MAX];
++		uint64_t inaccessible[BITMAP_ELEMS_MAX];
++	} slink_bits;
++};
++#define LOG_SLINKS(l) ((void *) (l)->header.log->slink_bits.slinks)
++#define LOG_SLINKS_IO(l) ((void *) (l)->header.log->slink_bits.ios)
++#define LOG_SLINKS_INACCESSIBLE(l) \
++	((void *)(l)->header.log->slink_bits.inaccessible)
++#define LOG_SLINKS_SET_ACCESSIBLE(l) \
++	((void *)(l)->header.log->slink_bits.set_accessible)
++
 +static void
-+wake_do_slink_delayed(struct slink *sl, unsigned long delay)
++log_header_to_disk(unsigned slinks, void *d_ptr, void *c_ptr)
 +{
-+	struct delayed_work *dws = &sl->io.dws;
++	struct log_header_disk *d = d_ptr;
++	struct log_header *c = c_ptr;
 +
-+	if (delay) {
-+		/* Avoid delaying if immediate worker run already requested. */
-+		if (SlinkImmediateWork(sl))
-+			return;
-+	} else
-+		SetSlinkImmediateWork(sl);
-+
-+	if (delayed_work_pending(dws))
-+		cancel_delayed_work(dws);
-+
-+	queue_delayed_work(sl->io.wq, dws, delay);
++	strncpy((char *) d->magic, log_header_magic, MAGIC_LEN);
++	strncpy((char *) d->handler_name,
++			 ringbuffer_type.type.name, HANDLER_LEN);
++	d->version.major = cpu_to_le16(c->version.major);
++	d->version.minor = cpu_to_le16(c->version.minor);
++	d->version.subminor = cpu_to_le16(c->version.subminor);
++	d->size = cpu_to_le64(c->size);
++	d->buffer_header = cpu_to_le64(c->buffer_header);
++	d->crc = 0;
++	d->crc = crc32(~0, d, sizeof(d));
 +}
 +
-+/* Queue io work immediately. */
-+static void
-+wake_do_slink(void *context)
-+{
-+	wake_do_slink_delayed(context, 0);
-+}
-+
-+/* Set/get device test timeouts. */
-+/* FIXME: algorithm to have flexible test timing? */
-+static inline void
-+set_dev_test_time(struct sdev *dev)
-+{
-+	unsigned long time = jiffies + SLINK_TEST_JIFFIES;
-+
-+	/* Check jiffies wrap. */
-+	if (unlikely(time < jiffies))
-+		time = SLINK_TEST_JIFFIES;
-+
-+	dev->io.test.time = time;
-+}
-+
-+static inline unsigned long
-+get_dev_test_time(struct sdev *dev)
-+{
-+	return dev->io.test.time;
-+}
-+
-+/*
-+ * Get device object reference count.
-+ *
-+ * A reference count > 1 indicates IO in flight on the device.
-+ *
-+ */
-+static int dev_io(struct sdev *dev)
-+{
-+	return atomic_read(&dev->ref.refcount) > 1;
-+}
-+
-+/* Take device object reference out. */
-+static struct sdev *dev_get(struct sdev *dev)
-+{
-+	kref_get(&dev->ref);
-+	return dev;
-+}
-+
-+/* Release sdev object. */
-+static void
-+dev_release(struct kref *ref)
-+{
-+	struct sdev *dev = container_of(ref, struct sdev, ref);
-+	struct slink *sl = dev->sl;
-+
-+	_BUG_ON_PTR(sl);
-+
-+	kfree(dev->dev.params.path);
-+	DMDEBUG("%s dev=%d slink=%d released", __func__,
-+		dev->dev.number, sl->number);
-+	kfree(dev);
-+}
-+
-+/* Drop device object reference. */
-+static int dev_put(struct sdev *dev)
-+{
-+	int r = kref_put(&dev->ref, dev_release);
-+
-+	if (!r) {
-+		if (!dev_io(dev))
-+			wake_up(&dev->io.waiters);
-+	}
-+
-+	return r;
-+}
-+
-+/* Find device by device number. */
-+static struct sdev *dev_get_by_number(struct slink *sl, int dev_number)
-+{
-+	struct sdev *dev;
-+
-+	_BUG_ON_PTR(sl);
-+
-+	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
-+		if (dev_number == dev->dev.number)
-+			return dev_get(dev);
-+	}
-+
-+	return ERR_PTR(-ENODEV);
-+}
-+
-+/* Find device by bdev. */
-+static struct sdev *dev_get_by_bdev(struct slink *sl,
-+				   struct block_device *bdev)
-+{
-+	struct sdev *dev;
-+
-+	_BUG_ON_PTR(sl);
-+
-+	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
-+		struct mapped_device *md = dm_table_get_md(dev->ti->table);
-+		struct gendisk *gd = dm_disk(md);
-+
-+		dm_put(md);
-+
-+		if (bdev->bd_disk == gd)
-+			return dev_get(dev);
-+	}
-+
-+	return ERR_PTR(-ENODEV);
-+}
-+
-+/* Find device by path. */
-+static struct sdev *dev_get_by_path(struct slink *sl,
-+				     const char *path)
-+{
-+	struct sdev *dev;
-+
-+	_BUG_ON_PTR(sl);
-+
-+	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
-+		if (!strcmp(dev->dev.params.path, path))
-+			return dev_get(dev);
-+	}
-+
-+	return ERR_PTR(-ENODEV);
-+}
-+
-+static struct sdev *
-+dev_get_on_any_slink(struct slink *sl, struct sdev *dev)
-+{
-+	struct slink *sl_cur = NULL;
-+	struct sdev *dev_r;
-+
-+	list_for_each_entry(sl_cur, &sl->repl_slinks->list,
-+			    lists[SLINK_REPLOG]) {
-+		/* Check by path if device already present. */
-+		if (sl_cur != sl)
-+			read_lock(&sl_cur->lock);
-+
-+		/* Check by bdev/number depending on device open or not. */
-+		dev_r = DevOpen(dev) ?
-+			dev_get_by_bdev(sl_cur, dev->dev.dm_dev->bdev) :
-+			dev_get_by_path(sl_cur, dev->dev.params.path);
-+
-+		if (sl_cur != sl)
-+			read_unlock(&sl_cur->lock);
-+
-+		if (unlikely(!IS_ERR(dev_r)))
-+			return dev_r;
-+	}
-+
-+	return ERR_PTR(-ENOENT);
-+}
-+
-+/* Callback for site link accessibility tests. */
-+static void
-+dev_test_endio(unsigned long error, void *context)
-+{
-+	struct sdev *dev = context;
-+	struct slink *sl;
-+
-+	_BUG_ON_PTR(dev);
-+	sl = dev->sl;
-+	_BUG_ON_PTR(sl);
-+
-+	if (error)
-+		set_dev_test_time(dev);
-+	else {
-+		ClearDevErrorRead(dev);
-+		ClearDevErrorWrite(dev);
-+	}
-+
-+	/* Release test io buffer. */
-+	free_test_buffer(dev->io.test.buffer, sl);
-+
-+	ClearSlinkTestActive(sl);
-+	BUG_ON(dev_put(dev)); /* Release reference. */
-+	wake_do_slink(sl);
-+}
-+
-+/* Submit a read to sector 0 of a remote device to test access to it. */
-+static void
-+dev_test(struct slink *sl, struct sdev *dev)
-+{
-+	struct dm_io_region region = {
-+		.bdev = dev->dev.dm_dev->bdev,
-+		.sector = 0,
-+		.count = 1,
-+	};
-+	struct dm_io_request req = {
-+		.bi_rw = READ,
-+		.mem.type = DM_IO_KMEM,
-+		.mem.ptr.addr = alloc_test_buffer(sl),
-+		.notify.fn = dev_test_endio,
-+		.notify.context = dev,
-+		.client = sl->io.dm_io_client,
-+	};
-+
-+	/* FIXME: flush_workqueue should care for race. */
-+	sl->io.dev_test = dev;
-+	dev->io.test.buffer = req.mem.ptr.addr;
-+	set_dev_test_time(dev);
-+	BUG_ON(dm_io(&req, 1, &region, NULL));
-+}
-+
-+
-+/*
-+ * Callback replog handler in case of a region
-+ * resynchronized or a device recovered.
-+ */
-+static inline void
-+recover_callback(struct slink *sl, int read_err, int write_err)
-+{
-+	struct dm_repl_slink_notify_ctx recover;
-+
-+	_BUG_ON_PTR(sl);
-+	read_lock(&sl->lock);
-+	recover = sl->recover;
-+	read_unlock(&sl->lock);
-+
-+	/* Optionally call back site link recovery. */
-+	if (likely(recover.fn))
-+		recover.fn(read_err, write_err, recover.context);
-+}
-+
-+/* Try to open device. */
 +static int
-+try_dev_open(struct sdev *dev)
-+{
-+	int r = 0;
-+
-+	if (!DevOpen(dev)) {
-+		/* Try getting device with limit checks. */
-+		r = dm_get_device(dev->ti, dev->dev.params.path,
-+				  0, dev->ti->len,
-+				  dm_table_get_mode(dev->ti->table),
-+				  &dev->dev.dm_dev);
-+		if (r) {
-+			set_dev_test_time(dev);
-+			SetDevErrorRead(dev);
-+		} else {
-+			SetDevOpen(dev);
-+			ClearDevErrorRead(dev);
-+		}
-+	}
-+
-+	return r;
-+}
-+
-+/* Check devices for error condition and initiate test io on those. */
-+static void
-+do_slink_test(struct slink *sl)
++log_header_to_core(unsigned slinks, void *c_ptr, void *d_ptr)
 +{
 +	int r;
-+	unsigned error_count = 0;
-+	/* FIXME: jiffies may differ on MP ? */
-+	unsigned long delay = ~0, j = jiffies;
-+	struct sdev *dev, *dev_t = NULL;
++	uint32_t crc;
++	struct log_header *c = c_ptr;
++	struct log_header_disk *d = d_ptr;
 +
-+	read_lock(&sl->lock);
-+	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
-+		if ((DevErrorRead(dev) || DevErrorWrite(dev))) {
-+			error_count++;
++	r = strncmp((char *) d->magic, log_header_magic, MAGIC_LEN);
++	if (r)
++		return -EINVAL;
 +
-+			if (!DevTeardown(dev) && !DevSuspended(dev)) {
-+				unsigned long t = get_dev_test_time(dev);
++	/* Check, if acceptible to this replication log handler. */
++	r = strncmp((char *) d->handler_name, ringbuffer_type.type.name,
++		    HANDLER_LEN);
++	if (r)
++		return -EINVAL;
 +
-+				/* Check we didn't reach the test time jet. */
-+				if (time_before(j, t)) {
-+					unsigned long d = t - j;
++	c->version.major = le16_to_cpu(d->version.major);
++	c->version.minor = le16_to_cpu(d->version.minor);
++	c->version.subminor = le16_to_cpu(d->version.subminor);
++	c->size = le64_to_cpu(d->size);
++	c->buffer_header = le64_to_cpu(d->buffer_header);
++	crc = d->crc;
++	d->crc = 0;
++	return (crc == crc32(~0, d, sizeof(d))) ? 0 : -EINVAL;
++}
 +
-+					if (d < delay)
-+						delay = d;
-+				} else {
-+					dev_t = dev;
-+					slink_get(sl);
++/* 1a */
++static const char *buffer_header_magic = "dm-replbufferHJM";
++
++/*
++ * meta-data for the ring buffer, one per replog:
++ *
++ *   start: location on disk
++ *   head:  ring buffer head, first data item to be replicated
++ *   tail:  points to one after the last data item to be replicated
++ *
++ * The ring buffer is full of data_header(_disk) entries.
++ */
++struct buffer_header_disk {
++	uint8_t			magic[MAGIC_LEN];
++	uint32_t		crc;
++	struct buffer_disk {
++		uint64_t	start;
++		uint64_t	head;
++		uint64_t	tail;
++	} buffer;
++
++	uint64_t	flags;
++	/* Free space. */
++} __attribute__((__packed__));
++
++/*
++ * In-core format of the buffer_header_disk structure
++ *
++ * start, head, and tail are as described above for buffer_header_disk.
++ *
++ * next_avail points to the next available sector for placing a log entry.
++ *   It is important to distinguish this from tail, as we can issue I/O to
++ *   multiple log entries at a time.
++ *
++ * end is the end sector of the log device
++ *
++ * len is the total length of the log device, handy to keep around for maths
++ *   free represents the amount of free space in the log. This number
++ *   reflects the free space in the log given the current outstanding I/O's.
++ *   In other words, it is the distance between next_avail and head.
++ */
++/*
++ *  My guess is that this should be subsumed by the repl_log structure, as
++ *  much of the data is copied from there, anyway.  The question is just
++ *  how to organize it in a readable and efficient way.
++ */
++/* Ring state flag(s). */
++enum ring_status_type {
++	RING_BLOCKED,
++	RING_BUFFER_ERROR,
++	RING_BUFFER_DATA_ERROR,
++	RING_BUFFER_HEADER_ERROR,
++	RING_BUFFER_HEAD_ERROR,
++	RING_BUFFER_TAIL_ERROR,
++	RING_BUFFER_FULL,
++	RING_BUFFER_IO_QUEUED,
++	RING_SUSPENDED
++};
++
++/*
++ * Pools types for:
++ * o ring buffer entries
++ * o data headers.
++ * o disk data headers.
++ * o slink copy contexts
++ */
++enum ring_pool_type {
++	ENTRY,			/* Ring buffer entries. */
++	DATA_HEADER,		/* Ring buffer data headers. */
++	DATA_HEADER_DISK,	/* Ring buffer ondisk data headers. */
++	COPY_CONTEXT,		/* Context for any single slink copy. */
++	NR_RING_POOLS,
++};
++
++struct sector_range {
++	sector_t start;
++	sector_t end;
++} range;
++
++struct ringbuffer {
++	sector_t	start;	/* Start sector of the log space on disk. */
++	sector_t	head;	/* Sector of the first log entry. */
++	sector_t	tail;	/* Sector of the last valid log entry. */
++
++	struct mutex	mutex;	/* Mutex hold on member updates below. */
++
++	/* The following fields are useful to keep track of in-core state. */
++	sector_t	next_avail;	/* In-memory tail of the log. */
++	sector_t	end;		/* 1st sector past end of log device. */
++	sector_t	free;		/* Free space left in the log. */
++	sector_t	pending;	/* sectors queued but not allocated */
++
++	struct {
++		unsigned long flags;	/* Buffer state flags. */
++	} io;
++
++	/* Dirty sectors for slink0. */
++	struct sector_hash {
++		struct list_head *hash;
++		unsigned buckets;
++		unsigned mask;
++	} busy_sectors;
++
++	/* Waiting for all I/O to be flushed. */
++	wait_queue_head_t flushq;
++	mempool_t *pools[NR_RING_POOLS];
++};
++
++DM_BITOPS(RingBlocked, ringbuffer, RING_BLOCKED)
++DM_BITOPS(RingBufferError, ringbuffer, RING_BUFFER_ERROR)
++DM_BITOPS(RingBufferDataError, ringbuffer, RING_BUFFER_DATA_ERROR)
++DM_BITOPS(RingBufferHeaderError, ringbuffer, RING_BUFFER_HEADER_ERROR)
++DM_BITOPS(RingBufferHeadError, ringbuffer, RING_BUFFER_HEAD_ERROR)
++DM_BITOPS(RingBufferTailError, ringbuffer, RING_BUFFER_TAIL_ERROR)
++DM_BITOPS(RingBufferFull, ringbuffer, RING_BUFFER_FULL)
++DM_BITOPS(RingBufferIOQueued, ringbuffer, RING_BUFFER_IO_QUEUED)
++DM_BITOPS(RingSuspended, ringbuffer, RING_SUSPENDED)
++
++#define CC_POOL_MIN 4
++#define HEADER_POOL_MIN 32
++#define ENTRY_POOL_MIN 32
++
++static void
++buffer_header_to_disk(unsigned slinks, void *d_ptr, void *c_ptr)
++{
++	struct buffer_header_disk *d = d_ptr;
++	struct ringbuffer *c = c_ptr;
++
++	strncpy((char *) d->magic, buffer_header_magic, MAGIC_LEN);
++	d->buffer.start = cpu_to_le64(to_bytes(c->start));
++	d->buffer.head = cpu_to_le64(to_bytes(c->head));
++	d->buffer.tail = cpu_to_le64(to_bytes(c->tail));
++	d->flags = cpu_to_le64(c->io.flags);
++	d->crc = 0;
++	d->crc = crc32(~0, d, sizeof(d));
++}
++
++static int
++buffer_header_to_core(unsigned slinks, void *c_ptr, void *d_ptr)
++{
++	int r;
++	uint32_t crc;
++	struct ringbuffer *c = c_ptr;
++	struct buffer_header_disk *d = d_ptr;
++
++	r = strncmp((char *) d->magic, buffer_header_magic, MAGIC_LEN);
++	if (r)
++		return -EINVAL;
++
++	c->start = to_sector(le64_to_cpu(d->buffer.start));
++	c->head = to_sector(le64_to_cpu(d->buffer.head));
++	c->tail = to_sector(le64_to_cpu(d->buffer.tail));
++	c->io.flags = le64_to_cpu(d->flags);
++	crc = d->crc;
++	d->crc = 0;
++	return likely(crc == crc32(~0, d, sizeof(d))) ? 0 : -EINVAL;
++}
++
++/* 3 */
++/* The requirement is to support devices with 4k sectors. */
++#define HEADER_SECTORS	to_sector(4096)
++
++static const char *data_header_magic = "dm-replicdataHJM";
++
++/* FIXME: XXX adjust for larger sector size! */
++#define	DATA_HEADER_DISK_SIZE	512
++enum entry_wrap_type { WRAP_NONE, WRAP_DATA, WRAP_NEXT };
++struct data_header_disk {
++	uint8_t	 magic[MAGIC_LEN];
++	uint32_t crc;
++	uint32_t filler;
++
++	struct {
++		/* Internal namespace to get rid of major/minor. -HJM */
++		uint64_t dev;
++		uint64_t offset;
++		uint64_t size;
++	} region;
++
++	/* Position of header and data on disk in bytes. */
++	struct {
++		uint64_t header; /* Offset of this header */
++		uint64_t data; /* Offset of data (ie. the bio). */
++	} pos;
++
++	uint8_t valid; /* FIXME: XXX this needs to be in memory copy, too */
++	uint8_t wrap;  /* Above enum entry_wrap_type. */
++	uint8_t barrier;/* Be prepared for write barrier support. */
++
++	/*
++	 * Free space: fill up to offset 256.
++	 */
++	uint8_t	filler1[189];
++
++	/* Offset 256! */
++	/* Bitmap, bit position set to 0 for uptodate slink */
++	uint64_t slink_bits[BITMAP_ELEMS_MAX];
++
++	/* Free space. */
++} __attribute__((__packed__));
++
++struct data_header {
++	struct list_head list;
++
++	/* Bitmap, bit position set to 0 for uptodate slink. */
++	uint64_t slink_bits[BITMAP_ELEMS_MAX];
++
++	/*
++	 * Reference count indicating the number of endios
++	 * expected while writing the header and bitmap.
++	 */
++	atomic_t cnt;
++
++	struct data_header_region {
++		/* dev, sector, and size are taken from the initial bio. */
++		unsigned long dev;
++		sector_t sector;
++		unsigned size;
++	} region;
++
++	/* Position of header and data on disk and size in sectors. */
++	struct {
++		sector_t header; /* sector of this header on disk */
++		sector_t data; /* Offset of data (ie. the bio). */
++		unsigned data_sectors; /* Useful for sector calculation. */
++	} pos;
++
++	/* Next data or complete entry wraps. */
++	enum entry_wrap_type wrap;
++};
++
++/* Round size in bytes up to multiples of HEADER_SECTORS. */
++enum distance_type { FULL_SECTORS, DATA_SECTORS };
++static inline sector_t
++_roundup_sectors(unsigned sectors, enum distance_type type)
++{
++	return HEADER_SECTORS *
++		(!!(type == FULL_SECTORS) + dm_div_up(sectors, HEADER_SECTORS));
++}
++
++/* Header + data. */
++static inline sector_t
++roundup_sectors(unsigned sectors)
++{
++	return _roundup_sectors(sectors, FULL_SECTORS);
++}
++
++/* Data only. */
++static inline sector_t
++roundup_data_sectors(unsigned sectors)
++{
++	return _roundup_sectors(sectors, DATA_SECTORS);
++}
++
++static void
++data_header_to_disk(unsigned bitmap_elems, void *d_ptr, void *c_ptr)
++{
++	unsigned i = bitmap_elems;
++	struct data_header_disk *d = d_ptr;
++	struct data_header *c = c_ptr;
++
++	BUG_ON(!i);
++
++	strncpy((char *) d->magic, data_header_magic, MAGIC_LEN);
++	d->region.dev =  cpu_to_le64(c->region.dev);
++	d->region.offset = cpu_to_le64(to_bytes(c->region.sector));
++	d->region.size = cpu_to_le64(c->region.size);
++
++	/* Xfer bitmap. */
++	while (i--)
++		d->slink_bits[i] = cpu_to_le64(c->slink_bits[i]);
++
++	d->valid = 1;
++	d->wrap = c->wrap;
++	d->pos.header = cpu_to_le64(to_bytes(c->pos.header));
++	d->pos.data = cpu_to_le64(to_bytes(c->pos.data));
++	d->crc = 0;
++	d->crc = crc32(~0, d, sizeof(d));
++}
++
++static int
++data_header_to_core(unsigned bitmap_elems, void *c_ptr, void *d_ptr)
++{
++	int r;
++	unsigned i = bitmap_elems;
++	uint32_t crc;
++	struct data_header *c = c_ptr;
++	struct data_header_disk *d = d_ptr;
++
++	BUG_ON(!i);
++
++	r = strncmp((char *) d->magic, data_header_magic, MAGIC_LEN);
++	if (r)
++		return -EINVAL;
++
++	c->region.dev =  le64_to_cpu(d->region.dev);
++	c->region.sector = to_sector(le64_to_cpu(d->region.offset));
++	c->region.size =  le64_to_cpu(d->region.size);
++
++	/* Xfer bitmap. */
++	while (i--)
++		c->slink_bits[i] = le64_to_cpu(d->slink_bits[i]);
++
++	c->pos.header = to_sector(le64_to_cpu(d->pos.header));
++	c->pos.data = to_sector(le64_to_cpu(d->pos.data));
++	c->pos.data_sectors = roundup_data_sectors(to_sector(c->region.size));
++	c->wrap = d->wrap;
++
++	if (unlikely(!d->valid) ||
++		     !c->region.size)
++		return -EINVAL;
++
++	crc = d->crc;
++	d->crc = 0;
++	return likely(crc == crc32(~0, d, sizeof(d))) ? 0 : -EINVAL;
++}
++
++static inline void
++slink_set_bit(int bit, uint64_t *ptr)
++{
++	set_bit(bit, (unsigned long *)ptr);
++	smp_mb();
++}
++
++static inline void
++slink_clear_bit(int bit, uint64_t *ptr)
++{
++	clear_bit(bit, (unsigned long *)ptr);
++	smp_mb();
++}
++
++static inline int
++slink_test_bit(int bit, uint64_t *ptr)
++{
++	return test_bit(bit, (unsigned long *)ptr);
++}
++
++
++/* entry list types and access macros. */
++enum entry_list_type {
++	E_BUSY_HASH,	/* Busys entries hash. */
++	E_COPY_CONTEXT,	/* Copyies accross slinks in progress for entry. */
++	E_ORDERED,	/* Ordered for advancing the ring buffer head. */
++	E_WRITE_OR_COPY,/* Add to l->lists.l[L_ENTRY_RING_WRITE/L_SLINK_COPY] */
++	E_NR_LISTS,
++};
++#define	E_BUSY_HASH_LIST(entry)		(entry->lists.l + E_BUSY_HASH)
++#define	E_COPY_CONTEXT_LIST(entry)	(entry->lists.l + E_COPY_CONTEXT)
++#define	E_ORDERED_LIST(entry)		(entry->lists.l + E_ORDERED)
++#define	E_WRITE_OR_COPY_LIST(entry)	(entry->lists.l + E_WRITE_OR_COPY)
++
++/*
++ * Container for the data_header and the associated data pages.
++ */
++struct ringbuffer_entry {
++	struct {
++		struct list_head l[E_NR_LISTS];
++	} lists;
++
++	struct ringbuffer *ring; /* Back pointer. */
++
++	/* Reference count. */
++	atomic_t ref;
++
++	/*
++	 * Reference count indicating the number of endios expected
++	 * while writing its header and data to the ring buffer log
++	 * -or- future use:
++	 * how many copies accross site links are active and how many
++	 * reads are being sattisfied from the entry.
++	 */
++	atomic_t endios;
++
++	struct entry_data {
++		struct data_header *header;
++		struct data_header_disk *disk_header;
++		struct {
++			unsigned long data;
++			unsigned long header;
++		} error;
++	} data;
++
++	struct {
++		struct bio *read;	/* bio to read. */
++		struct bio *write;	/* Original bio to write. */
++	} bios;
++
++	struct {
++		/* Bitmask of slinks the entry has active copies accross. */
++		uint64_t ios[BITMAP_ELEMS_MAX];
++		/* Bitmask of synchronuous slinks for endio. */
++		/* FIXME: drop in favour of slink inquiry of sync state ? */
++		uint64_t sync[BITMAP_ELEMS_MAX];
++		/* Bitmask of slinks with errors. */
++		uint64_t error[BITMAP_ELEMS_MAX];
++	} slink_bits;
++};
++#define ENTRY_SLINKS(l) ((void *) (entry)->data.header->slink_bits)
++#define ENTRY_IOS(entry) ((void *) (entry)->slink_bits.ios)
++#define ENTRY_SYNC(entry) ((entry)->slink_bits.sync)
++#define ENTRY_ERROR(entry) ((entry)->slink_bits.error)
++
++/* FIXME: XXX
++ * For now, the copy context has a backpointer to the ring buffer entry.
++ * This means that a ring buffer entry has to remain in memory until all
++ * of the slink copies have finished.  Heinz, you mentioned that this was
++ * not a good idea.  I'm open to suggestions on how better to organize this.
++ */
++enum error_type { ERR_DISK, ERR_RAM, NR_ERR_TYPES };
++struct slink_copy_error {
++	int read;
++	int write;
++};
++
++struct slink_copy_context {
++	/*
++	 * List first points to the copy context list in the ring buffer
++	 * entry.  Then, upon completion it gets moved to the slink endios
++	 * list.
++	 */
++	struct list_head list;
++	atomic_t cnt;
++	struct ringbuffer_entry *entry;
++	struct dm_repl_slink *slink;
++	struct slink_copy_error error[NR_ERR_TYPES];
++	unsigned long start_jiffies;
++};
++
++/* Development statistics. */
++struct stats {
++	atomic_t io[2];
++	atomic_t writes_pending;
++	atomic_t hash_elem;
++
++	unsigned copy[2];
++	unsigned wrap;
++	unsigned hash_insert;
++	unsigned hash_insert_max;
++	unsigned stall;
++};
++
++/* Per site link measure/state. */
++enum slink_status_type {
++	SS_SYNC,	/* slink fell behind an I/O threshold. */
++	SS_TEARDOWN,	/* Flag site link teardown. */
++};
++struct slink_state {
++	unsigned slink_nr;
++	struct repl_log *l;
++
++	struct {
++
++		/*
++		 * Difference of time (measured in jiffies) between the
++		 * first outstanding copy for this slink and the last
++		 * outstanding copy.
++		 */
++		unsigned long head_jiffies;
++
++		/* Number of ios/sectors currently copy() to this slink. */
++		struct {
++			sector_t sectors;
++			uint64_t ios;
++		} outstanding;
++	} fb;
++
++	struct {
++		unsigned long flags; /* slink_state flags._*/
++
++		/* slink+I/O teardown synchronization. */
++		wait_queue_head_t waiters;
++		atomic_t in_flight;
++	} io;
++};
++DM_BITOPS(SsSync, slink_state, SS_SYNC)
++DM_BITOPS(SsTeardown, slink_state, SS_TEARDOWN)
++
++enum open_type { OT_AUTO, OT_OPEN, OT_CREATE };
++enum replog_status_type {
++	LOG_DEVEL_STATS,	/* Turn on development stats. */
++	LOG_INITIALIZED,	/* Log initialization finished. */
++	LOG_RESIZE,		/* Log resize requested. */
++};
++
++/* repl_log list types and access macros. */
++enum replog_list_type {
++	L_REPLOG,		/* Linked list of replogs. */
++	L_SLINK_COPY,		/* Entries to copy accross slinks. */
++	L_SLINK_ENDIO,		/* Entries to endio process. */
++	L_ENTRY_RING_WRITE,	/* Entries to write to ring buffer */
++	L_ENTRY_ORDERED,	/* Ordered list of entries (write fidelity). */
++	L_NR_LISTS,
++};
++#define	L_REPLOG_LIST(l)		(l->lists.l + L_REPLOG)
++#define	L_SLINK_COPY_LIST(l)		(l->lists.l + L_SLINK_COPY)
++#define	L_SLINK_ENDIO_LIST(l)		(l->lists.l + L_SLINK_ENDIO)
++#define	L_ENTRY_RING_WRITE_LIST(l)	(l->lists.l + L_ENTRY_RING_WRITE)
++#define	L_ENTRY_ORDERED_LIST(l)		(l->lists.l + L_ENTRY_ORDERED)
++
++/* The replication log in core. */
++struct repl_log {
++	struct dm_repl_log *log;
++
++	struct kref ref;	/* Pin count. */
++
++	struct dm_repl_log *replog;
++	struct dm_repl_slink *slink0;
++
++	struct stats stats;	/* Development statistics. */
++
++	struct repl_params {
++		enum open_type open_type;
++		unsigned count;
++		struct repl_dev {
++			struct dm_dev *dm_dev;
++			sector_t start;
++			sector_t size;
++		} dev;
++	} params;
++
++	struct {
++		spinlock_t lock; /* Lock on pending list below. */
++		struct bio_list in; /* pending list of bios */
++		struct dm_io_client *io_client;
++		struct workqueue_struct *wq;
++		struct work_struct ws;
++		unsigned long flags;	/* State flags. */
++		/* Preallocated header. We only need one at a time.*/
++		struct buffer_header_disk *buffer_header_disk;
++	} io;
++
++	struct ringbuffer ringbuffer;
++
++	/* Useful for runtime performance on bitmap accesses. */
++	struct {
++		int count;	/* Actual # of slinks in this replog. */
++		unsigned max;	/* Actual maximum added site link #. */
++		unsigned bitmap_elems;	/* Actual used elements in bitmaps. */
++		unsigned bitmap_size;	/* Actual bitmap size (for memcpy). */
++	} slink;
++
++	struct {
++		struct log_header *log;
++	} header;
++
++	struct {
++		/* List of site links. */
++		struct dm_repl_log_slink_list slinks;
++
++		/*
++		 * A single lock for all of these lists should be sufficient
++		 * given that each list is processed in-turn (see do_log()).
++		 *
++		 * The lock has to protect the L_SLINK_ENDIO list
++		 * and the entry ring write lists below.
++		 *
++		 * We got to streamline these lists vs. the lock. -HJM
++		 * The others are accessed by one thread only. -HJM
++		 */
++		rwlock_t	lock;
++
++		/*
++		 * Lists for entry slink copies, entry endios,
++		 * ring buffer writes and ordered entries.
++		 */
++		struct list_head l[L_NR_LISTS];
++	} lists;
++
++	/* Caller callback function and context. */
++	struct replog_notify {
++		dm_repl_notify_fn fn;
++		void *context;
++	} notify;
++};
++
++#define _SET_AND_BUG_ON_L(l, log) \
++	do { \
++		_BUG_ON_PTR(log); \
++		(l) = (log)->context; \
++		_BUG_ON_PTR(l); \
++	} while (0);
++
++/* Define log bitops. */
++DM_BITOPS(LogDevelStats, repl_log, LOG_DEVEL_STATS);
++DM_BITOPS(LogInitialized, repl_log, LOG_INITIALIZED);
++DM_BITOPS(LogResize, repl_log, LOG_RESIZE);
++
++static inline struct repl_log *
++ringbuffer_repl_log(struct ringbuffer *ring)
++{
++	return container_of(ring, struct repl_log, ringbuffer);
++}
++
++static inline struct block_device *
++repl_log_bdev(struct repl_log *l)
++{
++	return l->params.dev.dm_dev->bdev;
++}
++
++static inline struct block_device *
++ringbuffer_bdev(struct ringbuffer *ring)
++{
++	return repl_log_bdev(ringbuffer_repl_log(ring));
++}
++
++/* Check MAX_SLINKS bit array for busy bits. */
++static inline int
++entry_busy(struct repl_log *l, void *bits)
++{
++	return find_first_bit(bits, l->slink.max) < l->slink.max;
++}
++
++static inline int
++entry_endios_pending(struct ringbuffer_entry *entry)
++{
++	return entry_busy(ringbuffer_repl_log(entry->ring), ENTRY_IOS(entry));
++}
++
++static inline int
++ss_io(struct slink_state *ss)
++{
++	_BUG_ON_PTR(ss);
++	return atomic_read(&ss->io.in_flight);
++}
++
++static void
++ss_io_get(struct slink_state *ss)
++{
++	BUG_ON(!ss || IS_ERR(ss));
++	atomic_inc(&ss->io.in_flight);
++}
++
++static void
++ss_io_put(struct slink_state *ss)
++{
++	_BUG_ON_PTR(ss);
++	if (atomic_dec_and_test((&ss->io.in_flight)))
++		wake_up(&ss->io.waiters);
++	else
++		BUG_ON(ss_io(ss) < 0);
++}
++
++static void
++ss_wait_on_io(struct slink_state *ss)
++{
++	_BUG_ON_PTR(ss);
++	while (ss_io(ss)) {
++		flush_workqueue(ss->l->io.wq);
++		wait_event(ss->io.waiters, !ss_io(ss));
++	}
++}
++
++/* Wait for I/O to finish on all site links. */
++static inline void
++ss_all_wait_on_ios(struct repl_log *l)
++{
++	unsigned long slink_nr;
++
++	for_each_bit(slink_nr, LOG_SLINKS(l), l->slink.max) {
++		struct dm_repl_slink *slink =
++			l->slink0->ops->slink(l->replog, slink_nr);
++		struct slink_state *ss;
++
++		if (IS_ERR(slink)) {
++			DMERR_LIMIT("%s slink error", __func__);
++			continue;
++		}
++
++		ss = slink->caller;
++		_BUG_ON_PTR(ss);
++		ss_wait_on_io(ss);
++	}
++}
++
++static inline struct dm_io_client *
++replog_io_client(struct repl_log *l)
++{
++	return l->io.io_client;
++}
++
++static inline struct repl_log *
++dev_repl_log(struct repl_dev *dev)
++{
++	return container_of(dev, struct repl_log, params.dev);
++}
++
++/* Define mempool_{alloc,free}() functions for the ring buffer pools. */
++#define	ALLOC_FREE_ELEM(name, type) \
++static void *\
++alloc_ ## name(struct ringbuffer *ring) \
++{ \
++	return mempool_alloc(ring->pools[(type)], GFP_KERNEL); \
++} \
++\
++static inline void \
++free_ ## name(void *ptr, struct ringbuffer *ring) \
++{ \
++	_BUG_ON_PTR(ptr); \
++	mempool_free(ptr, ring->pools[(type)]); \
++}
++
++ALLOC_FREE_ELEM(entry, ENTRY)
++ALLOC_FREE_ELEM(header, DATA_HEADER)
++ALLOC_FREE_ELEM(data_header_disk, DATA_HEADER_DISK)
++ALLOC_FREE_ELEM(copy_context, COPY_CONTEXT)
++#undef ALLOC_FREE_ELEM
++
++/* Additional alloc/free functions for header_io() abstraction. */
++/* No need to allocate bitmaps, because they are transient. */
++static void *
++alloc_log_header_disk(struct ringbuffer *ring)
++{
++	return kmalloc(to_bytes(1), GFP_KERNEL);
++}
++
++static void
++free_log_header_disk(void *ptr, struct ringbuffer *ring)
++{
++	kfree(ptr);
++}
++
++/* Dummies to allow for abstraction. */
++static void *
++alloc_buffer_header_disk(struct ringbuffer *ring)
++{
++	return ringbuffer_repl_log(ring)->io.buffer_header_disk;
++}
++
++static void
++free_buffer_header_disk(void *ptr, struct ringbuffer *ring)
++{
++}
++
++/*********************************************************************
++ * Busys entries hash.
++ */
++/* Initialize/destroy sector hash. */
++static int
++sector_hash_init(struct sector_hash *hash, sector_t size)
++{
++	unsigned buckets = roundup_pow_of_two(size / BIO_MAX_SECTORS);
++
++	if (buckets > 4) {
++		if (buckets > REGIONS_MAX)
++			buckets = REGIONS_MAX;
++
++		buckets /= 4;
++	}
++
++	/* Allocate stripe hash. */
++	hash->hash = vmalloc(buckets * sizeof(*hash->hash));
++	if (!hash->hash)
++		return -ENOMEM;
++
++	hash->buckets = hash->mask = buckets;
++	hash->mask--;
++
++	/* Initialize buckets. */
++	while (buckets--)
++		INIT_LIST_HEAD(hash->hash + buckets);
++
++	return 0;
++}
++
++static void
++sector_hash_exit(struct sector_hash *hash)
++{
++	if (hash->hash) {
++		vfree(hash->hash);
++		hash->hash = NULL;
++	}
++}
++
++/* Hash function. */
++static inline struct list_head *
++hash_bucket(struct sector_hash *hash, sector_t sector)
++{
++	sector_div(sector, BIO_MAX_SECTORS);
++	return hash->hash + (unsigned) (sector & hash->mask);
++}
++
++/* Insert an entry into a sector hash. */
++static inline void
++sector_hash_elem_insert(struct sector_hash *hash,
++			struct ringbuffer_entry *entry)
++{
++	struct repl_log *l;
++	struct stats *s;
++	struct list_head *bucket =
++		hash_bucket(hash, entry->data.header->region.sector);
++
++	BUG_ON(!bucket);
++	_BUG_ON_PTR(entry->ring);
++	l = ringbuffer_repl_log(entry->ring);
++	s = &l->stats;
++
++	BUG_ON(!list_empty(E_BUSY_HASH_LIST(entry)));
++	list_add_tail(E_BUSY_HASH_LIST(entry), bucket);
++
++	atomic_inc(&s->hash_elem);
++	if (++s->hash_insert > s->hash_insert_max)
++		s->hash_insert_max = s->hash_insert;
++}
++
++/* Return first sector # of bio. */
++static inline sector_t
++bio_begin(struct bio *bio)
++{
++	return bio->bi_sector;
++}
++
++/* Return last sector # of bio. */
++static inline sector_t bio_end(struct bio *bio)
++{
++	return bio_begin(bio) + bio_sectors(bio);
++}
++
++/* Roundup size to sectors. */
++static inline sector_t round_up_to_sector(unsigned size)
++{
++	return to_sector(dm_round_up(size, to_bytes(1)));
++}
++
++/* Check if a bio and a range overlap. */
++static inline int
++_ranges_overlap(struct sector_range *r1, struct sector_range *r2)
++{
++	return r1->start >= r2->start &&
++	       r1->start < r2->end;
++}
++
++static inline int
++ranges_overlap(struct sector_range *elem_range, struct sector_range *bio_range)
++{
++	return _ranges_overlap(elem_range, bio_range) ||
++	       _ranges_overlap(bio_range, elem_range);
++}
++
++/* Take an entry ref reference out. */
++static inline void
++entry_get(struct ringbuffer_entry *entry)
++{
++	atomic_inc(&entry->ref);
++}
++
++/*
++ * Check if bio's address range has writes pending.
++ *
++ * Must be called with the read hash lock held.
++ */
++static int
++ringbuffer_writes_pending(struct sector_hash *hash, struct bio *bio,
++			   struct list_head *buckets[2])
++{
++	int r = 0;
++	unsigned end, i;
++	struct ringbuffer_entry *entry;
++	/* Setup a range for the bio. */
++	struct sector_range bio_range = {
++		.start = bio_begin(bio),
++		.end = bio_end(bio),
++	}, entry_range;
++
++	buckets[0] = hash_bucket(hash, bio_range.start);
++	buckets[1] = hash_bucket(hash, bio_range.end);
++	if (buckets[0] == buckets[1]) {
++		end = 1;
++		buckets[1] = NULL;
++	} else
++		end = 2;
++
++	for (i = 0; i < end; i++) {
++		/* Walk the entries checking for overlaps. */
++		list_for_each_entry_reverse(entry, buckets[i],
++					    lists.l[E_BUSY_HASH]) {
++			entry_range.start = entry->data.header->region.sector;
++			entry_range.end = entry_range.start +
++			round_up_to_sector(entry->data.header->region.size);
++
++			if (ranges_overlap(&entry_range, &bio_range))
++				return atomic_read(&entry->endios) ? -EBUSY : 1;
++		}
++	}
++
++	return r;
++}
++
++/* Clear a sector range busy. */
++static void
++entry_put(struct ringbuffer_entry *entry)
++{
++	_BUG_ON_PTR(entry);
++
++	if (atomic_dec_and_test(&entry->ref)) {
++		struct ringbuffer *ring = entry->ring;
++		struct stats *s;
++		struct repl_log *l;
++
++		_BUG_ON_PTR(ring);
++		l = ringbuffer_repl_log(ring);
++		s = &l->stats;
++
++		/*
++		 * We don't need locking here because the last
++		 * put is carried out in daemon context.
++		 */
++		BUG_ON(list_empty(E_BUSY_HASH_LIST(entry)));
++		list_del_init(E_BUSY_HASH_LIST(entry));
++
++		atomic_dec(&s->hash_elem);
++		s->hash_insert--;
++	} else
++		BUG_ON(atomic_read(&entry->ref) < 0);
++}
++
++static inline void
++sector_range_clear_busy(struct ringbuffer_entry *entry)
++{
++	entry_put(entry);
++}
++
++/*
++ * Mark a sector range start and length busy.
++ *
++ * Caller has to serialize calls.
++ */
++static void
++sector_range_mark_busy(struct ringbuffer_entry *entry)
++{
++	_BUG_ON_PTR(entry);
++	entry_get(entry);
++
++	/* Insert new element into hash. */
++	sector_hash_elem_insert(&entry->ring->busy_sectors, entry);
++}
++
++static void
++stats_init(struct repl_log *l)
++{
++	unsigned i = 2;
++	struct stats *s = &l->stats;
++
++	memset(s, 0, sizeof(*s));
++
++	while (i--)
++		atomic_set(s->io + i, 0);
++
++	atomic_set(&s->writes_pending, 0);
++	atomic_set(&s->hash_elem, 0);
++}
++
++/* Global replicator log list. */
++LIST_HEAD(replog_list);
++
++/* Wake worker. */
++static void
++wake_do_log(struct repl_log *l)
++{
++	queue_work(l->io.wq, &l->io.ws);
++}
++
++struct dm_repl_slink *
++slink_find(struct repl_log *l, int slink_nr)
++{
++	struct dm_repl_slink *slink0 = l->slink0;
++
++	if (!slink0)
++		return ERR_PTR(-ENOENT);
++
++	_BUG_ON_SLINK_NR(l, slink_nr);
++	return slink_nr ? slink0->ops->slink(l->replog, slink_nr) : slink0;
++}
++
++/*
++ * If an slink is asynchronous, check to see if it needs to fall
++ * back to synchronous mode due to falling too far behind.
++ *
++ * Declare a bunch of fallbehind specific small functions in order
++ * to avoid conditions in the fast path by accessing them via
++ * function pointers.
++ */
++/* True if slink exceeds fallbehind threshold. */
++static int
++slink_fallbehind_exceeded(struct repl_log *l, struct slink_state *ss,
++			  struct dm_repl_slink_fallbehind *fallbehind,
++			  unsigned amount)
++{
++	sector_t *sectors;
++	uint64_t *ios;
++	unsigned long *head_jiffies;
++
++	_BUG_ON_PTR(l);
++	_BUG_ON_PTR(ss);
++	_BUG_ON_PTR(fallbehind);
++	ios = &ss->fb.outstanding.ios;
++	sectors = &ss->fb.outstanding.sectors;
++
++	spin_lock(&l->io.lock);
++	(*ios)++;
++	(*sectors) += amount;
++	spin_unlock(&l->io.lock);
++
++	if (!fallbehind->value)
++		return 0;
++
++	switch (fallbehind->type) {
++	case DM_REPL_SLINK_FB_IOS:
++		return *ios > fallbehind->value;
++
++	case DM_REPL_SLINK_FB_SIZE:
++		return *sectors > fallbehind->value;
++
++	case DM_REPL_SLINK_FB_TIMEOUT:
++		head_jiffies = &ss->fb.head_jiffies;
++		if (unlikely(!*head_jiffies))
++			*head_jiffies = jiffies;
++
++		return time_after(jiffies, *head_jiffies +
++				  msecs_to_jiffies(fallbehind->value));
++
++	default:
++		BUG();
++	}
++
++	return 0;
++}
++
++/*
++ * True if slink falls below fallbehind threshold.
++ *
++ * Can be called from interrupt context.
++ */
++static int
++slink_fallbehind_recovered(struct repl_log *l, struct slink_state *ss,
++			   struct dm_repl_slink_fallbehind *fallbehind,
++			   unsigned amount)
++{
++	sector_t *sectors;
++	uint64_t *ios;
++
++	_BUG_ON_PTR(ss);
++	_BUG_ON_PTR(fallbehind);
++	ios = &ss->fb.outstanding.ios;
++	sectors = &ss->fb.outstanding.sectors;
++
++	/* Need the non-irq versions here, because IRQs are already disabled. */
++	spin_lock(&l->io.lock);
++	(*ios)--;
++	(*sectors) -= amount;
++	spin_unlock(&l->io.lock);
++
++	if (!fallbehind->value)
++		return 0;
++
++	switch (fallbehind->type) {
++	case DM_REPL_SLINK_FB_IOS:
++		return *ios <= fallbehind->value;
++
++	case DM_REPL_SLINK_FB_SIZE:
++		return *sectors <= fallbehind->value;
++
++	case DM_REPL_SLINK_FB_TIMEOUT:
++		return time_before(jiffies, ss->fb.head_jiffies +
++				   msecs_to_jiffies(fallbehind->value));
++	default:
++		BUG();
++	}
++
++	return 0;
++}
++
++/*
++ * Update fallbehind account.
++ *
++ * Has to be called with rw lock held.
++ */
++/* FIXME: account for resynchronization. */
++enum fb_update_type { UPD_INC, UPD_DEC };
++static void
++slink_fallbehind_update(enum fb_update_type type,
++			struct dm_repl_slink *slink,
++			struct ringbuffer_entry *entry)
++{
++	int slink_nr, sync;
++	struct repl_log *l;
++	struct slink_state *ss;
++	struct data_header_region *region;
++	struct dm_repl_slink_fallbehind *fallbehind;
++	struct ringbuffer_entry *pos;
++
++	_BUG_ON_PTR(slink);
++	fallbehind = slink->ops->fallbehind(slink);
++	_BUG_ON_PTR(fallbehind);
++	_BUG_ON_PTR(entry);
++	l = ringbuffer_repl_log(entry->ring);
++	_BUG_ON_PTR(l);
++	slink_nr = slink->ops->slink_number(slink);
++	_BUG_ON_SLINK_NR(l, slink_nr);
++	region = &entry->data.header->region;
++	_BUG_ON_PTR(region);
++
++	/*
++	 * We can access ss w/o a lock, because it's referenced by
++	 * inflight I/Os and by the running worker which processes
++	 * this function.
++	 */
++	ss = slink->caller;
++	if (!ss)
++		return;
++
++	_BUG_ON_PTR(ss);
++	sync = SsSync(ss);
++
++	switch (type) {
++	case UPD_INC:
++		if (slink_fallbehind_exceeded(l, ss, fallbehind,
++					      region->size) &&
++		    !TestSetSsSync(ss) &&
++		    !sync)
++			DMINFO("enforcing fallbehind sync on slink=%d at %u",
++			       slink_nr, jiffies_to_msecs(jiffies));
++		break;
++
++	case UPD_DEC:
++		/*
++		 * Walk the list of outstanding copy I/Os and update the
++		 * start_jiffies value with the first entry found.
++		 */
++		list_for_each_entry(pos, L_SLINK_COPY_LIST(l),
++				    lists.l[E_WRITE_OR_COPY]) {
++			struct slink_copy_context *cc;
++
++			list_for_each_entry(cc, E_COPY_CONTEXT_LIST(pos),
++					    list) {
++				if (cc->slink->ops->slink_number(cc->slink) ==
++				    slink_nr) {
++					ss->fb.head_jiffies = cc->start_jiffies;
 +					break;
 +				}
 +			}
 +		}
-+	}
 +
-+	read_unlock(&sl->lock);
-+
-+	if (!error_count) {
-+		/*
-+		 * If all are ok -> reset site link error state.
-+		 *
-+		 * We can't allow submission of writes
-+		 * before all devices are accessible.
-+		 */
-+		/*
-+		 * FIXME: I actually test the remote device only so
-+		 * I shouldn't update state on the local reader side!
-+		 *
-+		 * Question is, where to update this or leave it
-+		 * to the caller to fail fataly when it can't read data
-+		 * of off the log or the replicated device any more.
-+		 */
-+		if (TestClearSlinkErrorRead(sl))
-+			error_count++;
-+
-+		if (TestClearSlinkErrorWrite(sl))
-+			error_count++;
-+
-+		if (error_count)
-+			recover_callback(sl, 0, 0);
-+
-+		return;
-+	}
-+
-+	j = jiffies;
-+
-+	/* Check for jiffies overrun. */
-+	if (unlikely(j < SLINK_TEST_JIFFIES))
-+		set_dev_test_time(dev);
-+
-+	if (!TestSetSlinkTestActive(sl)) {
-+		dev_get(dev); /* Take out device reference. */
-+
-+		/* Check device is open or open it. */
-+		r = try_dev_open(dev_t);
-+		if (r) {
-+			ClearSlinkTestActive(sl);
-+			BUG_ON(dev_put(dev_t));
-+		} else
-+			/* If open, do test. */
-+			dev_test(sl, dev_t);
-+	}
-+
-+	if (!SlinkTestActive(sl) && delay < ~0)
-+		wake_do_slink_delayed(sl, delay);
-+
-+	slink_put(sl);
-+}
-+
-+/* Set device error state and throw a dm event. */
-+static void
-+resync_error_dev(struct sdev *dev)
-+{
-+	SetDevErrorRead(dev);
-+	dm_table_event(dev->ti->table);
-+}
-+
-+/* Resync copy callback. */
-+static void
-+resync_endio(int read_err, unsigned long write_err, void *context)
-+{
-+	struct sdev *dev_from, *dev_to = context;
-+	struct sdev_resync *resync;
-+
-+	_BUG_ON_PTR(dev_to);
-+	resync = &dev_to->io.resync;
-+	dev_from = resync->from;
-+	_BUG_ON_PTR(dev_from);
-+
-+	if (unlikely(read_err))
-+		resync_error_dev(dev_from);
-+
-+	if (unlikely(write_err))
-+		resync_error_dev(dev_to);
-+
-+	resync->start += resync->len;
-+	ClearDevResyncing(dev_to);
-+	dev_put(dev_from);
-+	dev_put(dev_to);
-+	wake_do_slink(dev_to->sl);
-+}
-+
-+/* Unplug a block devices queue. */
-+static inline void
-+dev_unplug(struct block_device *bdev)
-+{
-+	blk_unplug(bdev_get_queue(bdev));
-+}
-+
-+/* Resync copy function. */
-+static void
-+resync_copy(struct sdev *dev_to, struct sdev *dev_from,
-+	    struct sdev_resync *resync)
-+{
-+	sector_t max_len = dev_from->ti->len;
-+	struct dm_io_region src = {
-+		.bdev = dev_from->dev.dm_dev->bdev,
-+		.sector = resync->start,
-+	}, dst = {
-+		.bdev = dev_to->dev.dm_dev->bdev,
-+		.sector = resync->start,
-+	};
-+
-+	src.count = dst.count = unlikely(src.sector + resync->len > max_len) ?
-+				max_len - src.sector : resync->len;
-+	BUG_ON(!src.count);
-+	BUG_ON(src.sector + src.count > max_len);
-+	dev_to->io.resync.from = dev_from;
-+	SetDevResyncing(dev_to);
-+	BUG_ON(dm_kcopyd_copy(dev_to->io.kcopyd_client, &src, 1, &dst, 0,
-+			      resync_endio, dev_to));
-+	dev_unplug(src.bdev);
-+	dev_unplug(dst.bdev);
-+}
-+
-+/* Return length of segment to resynchronoze. */
-+static inline sector_t
-+resync_len(struct sdev *dev)
-+{
-+	sector_t r = RESYNC_SIZE, region_size = dev->ti->split_io;
-+	struct sdev_resync *resync = &dev->io.resync;
-+
-+	if (unlikely(r > region_size))
-+		r = region_size;
-+
-+	if (unlikely(resync->start + r > resync->end))
-+		r = resync->end - resync->start;
-+
-+	return r;
-+}
-+
-+/* Initiate recovery on all site links registered for. */
-+static void
-+do_slink_resync(struct slink *sl)
-+{
-+	struct slink *sl0;
-+	struct sdev *dev_from, *dev_n, *dev_to;
-+	struct list_head resync_list;
-+
-+	_BUG_ON_PTR(sl);
-+
-+	if (!sl->number)
-+		return;
-+
-+	/*
-+	 * Protect the global site link list from
-+	 * changes while getting slink 0.
-+	 */
-+	read_lock(&sl->repl_slinks->lock);
-+	sl0 = slink_get_by_number(sl->repl_slinks, 0);
-+	read_unlock(&sl->repl_slinks->lock);
-+
-+	_BUG_ON_PTR(sl0);
-+
-+	/*
-+	 * Quickly take out resync list for local unlocked processing
-+	 * and take references per device for suspend/delete race prevention
-+	 */
-+	INIT_LIST_HEAD(&resync_list);
-+	read_lock(&sl0->lock);
-+	write_lock(&sl->lock);
-+	SetSlinkResyncProcessing(sl);
-+
-+	list_splice(SLINK_RESYNC_LIST(sl), &resync_list);
-+	INIT_LIST_HEAD(SLINK_RESYNC_LIST(sl));
-+
-+	list_for_each_entry(dev_to, &resync_list, lists[SDEV_RESYNC]) {
-+		dev_from = dev_get_by_number(sl0, dev_to->dev.number);
-+		_BUG_ON_PTR(dev_from);
-+		dev_get(dev_to);
-+		/* Memorize device to copy from. */
-+		dev_to->io.resync.from = dev_from;
-+	}
-+
-+	write_unlock(&sl->lock);
-+	read_unlock(&sl0->lock);
-+
-+	/*
-+	 * Process all devvices needing
-+	 * resynchronization on the private list.
-+	 *
-+	 * "dev_to" is device to copy to.
-+	 */
-+	list_for_each_entry(dev_to, &resync_list, lists[SDEV_RESYNC]) {
-+		unsigned region_size;
-+		struct sdev_resync *resync;
-+		struct dm_dirty_log *dl = dev_to->dev.dl;
-+
-+		/* Can't resync w/o dirty log. */
-+		_BUG_ON_PTR(dl);
-+
-+		/* Device closed/copy active/suspended/being torn down/error. */
-+		if (!DevOpen(dev_to) ||
-+		    DevResyncing(dev_to) ||
-+		    DevSuspended(dev_to) ||
-+		    DevTeardown(dev_to) ||
-+		    DevErrorWrite(dev_to))
-+			continue;
-+
-+		/* Device to copy from. */
-+		resync = &dev_to->io.resync;
-+		dev_from = resync->from;
-+
-+		/* slink0 device suspended/being torn down or I/O error. */
-+		if (DevSuspended(dev_from) ||
-+		    DevTeardown(dev_from) ||
-+		    DevErrorRead(dev_from))
-+			continue;
-+
-+		/* No copy active if resync->end == 0. */
-+		if (!resync->end) {
-+			int r;
-+			sector_t region;
-+
-+			/* Ask dirty region log for another region to sync. */
-+			r = dl->type->get_resync_work(dl, &region);
-+			if (r) {
-+				write_lock(&sl0->lock);
-+
-+				/* Region is being written to -> postpone. */
-+				if (unlikely(SlinkWriter(sl0) &&
-+					     resync->writer_region == region)) {
-+					write_unlock(&sl0->lock);
-+					continue;
-+				}
-+
-+				region_size = dev_to->ti->split_io;
-+				resync->region = region;
-+				resync->start = region * region_size;
-+				resync->end = resync->start + region_size;
-+				if (unlikely(resync->end > dev_to->ti->len))
-+					resync->end = dev_to->ti->len;
-+
-+				write_unlock(&sl0->lock);
-+			} else {
-+				/* No more regions to recover. */
-+				SetDevResyncEnd(dev_to);
-+				continue;
-+			}
-+		}
-+
-+		/* More to copy for this region. */
-+		if (resync->start < resync->end) {
-+			resync->len = resync_len(dev_to);
-+			BUG_ON(!resync->len);
-+
-+			/*
-+			 * Take out references in order
-+			 * to not race with deletion.
-+			 *
-+			 * resync_endio will release them.
-+			 */
-+			dev_get(dev_from);
-+			dev_get(dev_to);
-+			resync_copy(dev_to, dev_from, resync);
-+
-+		/*
-+		 * Done with copying this region:
-+		 * mark in sync and flush dirty log.
-+		 */
-+		} else {
-+			dl->type->set_region_sync(dl, resync->region, 1);
-+			dl->type->flush(dl);
-+
-+			/* Optionally call back site link recovery. */
-+			recover_callback(sl, 0, 0);
-+			resync->end = 0;
-+
-+			/* Another run to check for more resync work. */
-+			wake_do_slink(sl);
-+		}
-+	}
-+
-+	/* Put race device references. */
-+	read_lock(&sl0->lock);
-+	write_lock(&sl->lock);
-+	list_for_each_entry_safe(dev_to, dev_n, &resync_list,
-+				 lists[SDEV_RESYNC]) {
-+		if (TestClearDevResyncEnd(dev_to))
-+			list_del_init(SDEV_RESYNC_LIST(dev_to));
-+
-+		dev_from = dev_get_by_number(sl0, dev_to->dev.number);
-+		/* 1 put just taken, 1 put for the one initially taken. */
-+		_BUG_ON_PTR(dev_from);
-+		BUG_ON(dev_put(dev_from));
-+		BUG_ON(dev_put(dev_from));
-+		BUG_ON(dev_put(dev_to));
-+	}
-+
-+	list_splice(&resync_list, SLINK_RESYNC_LIST(sl));
-+	ClearSlinkResyncProcessing(sl);
-+
-+	write_unlock(&sl->lock);
-+	read_unlock(&sl0->lock);
-+
-+	BUG_ON(slink_put(sl0));
-+}
-+
-+/* Main worker thread function. */
-+static void
-+do_slink(struct work_struct *ws)
-+{
-+	int must_resync;
-+	struct slink *sl = container_of(ws, struct slink, io.dws.work);
-+
-+	if (!SlinkTestActive(sl))
-+		do_slink_test(sl);
-+
-+	write_lock(&sl->lock);
-+	must_resync = !list_empty(SLINK_RESYNC_LIST(sl));
-+	write_unlock(&sl->lock);
-+
-+	if (must_resync)
-+		do_slink_resync(sl);
-+
-+	ClearSlinkImmediateWork(sl);
-+}
-+
-+/*
-+ * End site link worker.
-+ */
-+
-+/* Allocate/init an sdev structure and dm_get_device(). */
-+static struct sdev *
-+dev_create(struct slink *sl, struct dm_target *ti,
-+	   char *path, unsigned dev_number)
-+{
-+	int i, r;
-+	struct sdev *dev;
-+
-+	_BUG_ON_PTR(sl);
-+	_BUG_ON_PTR(ti);
-+	_BUG_ON_PTR(path);
-+
-+	/* Preallocate site link device structure. */
-+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-+	if (unlikely(!dev))
-+		goto bad_dev_alloc;
-+
-+	dev->ti = ti;
-+	dev->dev.number = dev_number;
-+	init_waitqueue_head(&dev->io.waiters);
-+	kref_init(&dev->ref);
-+
-+	i = ARRAY_SIZE(dev->lists);
-+	while (i--)
-+		INIT_LIST_HEAD(dev->lists + i);
-+
-+	dev->dev.params.path = kstrdup(path, GFP_KERNEL);
-+	if (unlikely(!dev->dev.params.path))
-+		goto bad_dev_path_alloc;
-+
-+	/* FIXME: closed device handling 29.09.2009
-+	 *
-+	 * Allow inaccessible devices to be created, hence
-+	 * opening them during transport failure discovery.
-+	 */
-+	ClearDevOpen(dev);
-+	try_dev_open(dev);
-+
-+	/*
-+	 * Create kcopyd client for resynchronization copies to slinks.
-+	 * Only needed for remote devices and hence slinks > 0.
-+	 */
-+	if (sl->number) {
-+		r = dm_kcopyd_client_create(RESYNC_PAGES,
-+					    &dev->io.kcopyd_client);
-+		if (unlikely(r < 0))
-+			goto bad_kcopyd_client;
-+	}
-+
-+	dev->sl = sl;
-+	SetDevSuspended(dev);
-+	return dev;
-+
-+bad_dev_alloc:
-+	DMERR("site link device allocation failed");
-+	return ERR_PTR(-ENOMEM);
-+
-+bad_dev_path_alloc:
-+	DMERR("site link device path allocation failed");
-+	r = -ENOMEM;
-+	goto bad;
-+
-+bad_kcopyd_client:
-+	DMERR("site link device allocation failed");
-+bad:
-+	dev_release(&dev->ref);
-+	return ERR_PTR(r);
-+}
-+
-+/* Add an sdev to an slink. */
-+static int
-+dev_add(struct slink *sl, struct sdev *dev)
-+{
-+	int r;
-+	struct slink *sl0;
-+	struct sdev *dev_tmp;
-+
-+	_BUG_ON_PTR(sl);
-+	_BUG_ON_PTR(dev);
-+
-+	/* Check by number if device got already added to this site link. */
-+	dev_tmp = dev_get_by_number(sl, dev->dev.number);
-+	if (unlikely(!IS_ERR(dev_tmp)))
-+		goto bad_device;
-+
-+	/* Check by bdev/path if device got already added to any site link. */
-+	dev_tmp = dev_get_on_any_slink(sl, dev);
-+	if (unlikely(!IS_ERR(dev_tmp)))
-+		goto bad_device;
-+
-+	/* Sibling device on local slink 0 registered yet ? */
-+	if (sl->number) {
-+		sl0 = slink_get_by_number(sl->repl_slinks, 0);
-+		if (unlikely(IS_ERR(sl0)))
-+			goto bad_slink0;
-+
-+		read_lock(&sl0->lock);
-+		dev_tmp = dev_get_by_number(sl0, dev->dev.number);
-+		read_unlock(&sl0->lock);
-+
-+		BUG_ON(slink_put(sl0));
-+
-+		if (unlikely(IS_ERR(dev_tmp)))
-+			goto bad_sibling;
-+
-+		BUG_ON(dev_put(dev_tmp));
-+	}
-+
-+	/* Add to slink's list of devices. */
-+	list_add_tail(SDEV_SLINK_LIST(dev), SLINK_DEVS_LIST(sl));
-+
-+	/* All ok, add to list of remote devices to resync. */
-+	if (sl->number) {
-+		SetDevResync(dev);
-+		list_add_tail(SDEV_RESYNC_LIST(dev), SLINK_RESYNC_LIST(sl));
-+	}
-+
-+	return 0;
-+
-+bad_device:
-+	DMERR("device already exists");
-+	BUG_ON(dev_put(dev_tmp));
-+	return -EBUSY;
-+
-+bad_slink0:
-+	DMERR("SLINK0 doesn't exit!");
-+	r = PTR_ERR(sl0);
-+	return r;
-+
-+bad_sibling:
-+	DMERR("Sibling device=%d on SLINK0 doesn't exist!", dev->dev.number);
-+	r = PTR_ERR(dev_tmp);
-+	return r;
-+}
-+
-+/*
-+ * Set up dirty log for new device.
-+ *
-+ * For local devices, no dirty log is allowed.
-+ * For remote devices, a dirty log is mandatory.
-+ *
-+ * dirtylog_type = "nolog"/"core"/"disk",
-+ * #dirtylog_params = 0-3 (1-2 for core dirty log type, 3 for
-+ * 			   disk dirty log only)
-+ * dirtylog_params = [dirty_log_path] region_size [[no]sync])
-+ */
-+static int
-+dirty_log_create(struct slink *sl, struct sdev *dev, unsigned argc, char **argv)
-+{
-+	struct dm_dirty_log *dl;
-+
-+	SHOW_ARGV;
-+
-+	_BUG_ON_PTR(sl);
-+	_BUG_ON_PTR(dev);
-+
-+	if (unlikely(argc < 2))
-+		goto bad_params;
-+
-+	/* Check for no dirty log with local devices. */
-+	if (!strcmp(argv[0], "nolog") ||
-+	    !strcmp(argv[0], "-")) {
-+		if (argc != 2 ||
-+		    strcmp(argv[1], "0"))
-+			goto bad_params;
-+
-+		dev->dev.dl = NULL;
-+		dev->io.split_io = DM_REPL_MIN_SPLIT_IO;
-+
-+		/* Mandatory dirty logs on SLINK > 0. */
-+		if (sl->number)
-+			goto bad_need_dl;
-+
-+		return 0;
-+	}
-+
-+	/* No dirty logs on SLINK0. */
-+	if (unlikely(!sl->number))
-+		goto bad_site_link;
-+
-+	dl = dm_dirty_log_create(argv[0], dev->ti, argc - 2, argv + 2);
-+	if (unlikely(!dl))
-+		goto bad_dirty_log;
-+
-+	dev->dev.dl = dl;
-+	dev->io.split_io = dl->type->get_region_size(dl);
-+	if (dev->io.split_io < BIO_MAX_SECTORS)
-+		DM_EINVAL("Invalid dirty log region size");
-+
-+	return 0;
-+
-+bad_params:
-+	DMERR("invalid dirty log parameter count");
-+	return -EINVAL;
-+
-+bad_need_dl:
-+	DMERR("dirty log mandatory on SLINKs > 0");
-+	return -EINVAL;
-+
-+bad_site_link:
-+	DMERR("no dirty log allowed on SLINK0");
-+	return -EINVAL;
-+
-+bad_dirty_log:
-+	DMERR("failed to create dirty log");
-+	return -ENXIO;
-+}
-+
-+/*
-+ * Check and adjust split_io on all replicated devices.
-+ *
-+ * Called with write repl_slinks->lock and write sl->lock hold.
-+ *
-+ * All remote devices must go by the same dirty log
-+ * region size in order to keep the caller simple.
-+ *
-+ * @sl = slink > 0
-+ * @dev = device to check and use to set ti->split_io
-+ *
-+ */
-+static int
-+set_split_io(struct slink *sl, struct sdev *dev)
-+{
-+	sector_t split_io_1st, split_io_ref = 0;
-+	struct slink *sl_cur, *sl0;
-+	struct sdev *dev_cur;
-+
-+	/* Nonsense to proceed on SLINK0. */
-+	_BUG_ON_PTR(sl);
-+	if (!sl->number)
-+		return 0;
-+
-+	_BUG_ON_PTR(dev);
-+
-+	sl0 = slink_get_by_number(sl->repl_slinks, 0);
-+	_BUG_ON_PTR(sl0);
-+
-+	/* Get split_io from any existing dev on this actual slink. */
-+	if (list_empty(SLINK_DEVS_LIST(sl)))
-+		split_io_1st = 0;
-+	else {
-+		dev_cur = list_first_entry(SLINK_DEVS_LIST(sl), struct sdev,
-+					   lists[SDEV_SLINK]);
-+		split_io_1st = dev_cur->io.split_io;
-+	}
-+
-+	/* Find any preset split_io on any (slink > 0 && slink != sl) device. */
-+	list_for_each_entry(sl_cur, &sl0->repl_slinks->list,
-+			    lists[SLINK_REPLOG]) {
-+		if (!sl_cur->number ||
-+		    sl_cur->number == sl->number)
-+			continue;
-+
-+		if (!list_empty(SLINK_DEVS_LIST(sl_cur))) {
-+			dev_cur = list_first_entry(SLINK_DEVS_LIST(sl_cur),
-+						   struct sdev,
-+						   lists[SDEV_SLINK]);
-+			split_io_ref = dev_cur->io.split_io;
-+			break;
-+		}
-+	}
-+
-+
-+	/*
-+	 * The region size *must* be the same for all devices
-+	 * in order to simplify the related caller logic.
-+	 */
-+	if ((split_io_ref && split_io_1st && split_io_ref != split_io_1st) ||
-+	    (split_io_1st && split_io_1st != dev->io.split_io) ||
-+	    (split_io_ref && split_io_ref != dev->io.split_io))
-+		DM_EINVAL("region size argument must be the "
-+			  "same for all devices");
-+
-+	/* Lock sl0, because we ain't get here with sl == sl0. */
-+	write_lock(&sl0->lock);
-+	list_for_each_entry(dev_cur, SLINK_DEVS_LIST(sl0), lists[SDEV_SLINK])
-+		dev_cur->ti->split_io = dev->io.split_io;
-+
-+	write_unlock(&sl0->lock);
-+
-+	BUG_ON(slink_put(sl0));
-+	return 0;
-+}
-+
-+/* Wait on device in flight device I/O before allowing device destroy. */
-+static void
-+slink_wait_on_io(struct sdev *dev)
-+{
-+	while (dev_io(dev)) {
-+		flush_workqueue(dev->sl->io.wq);
-+		wait_event(dev->io.waiters, !dev_io(dev));
-+	}
-+}
-+
-+/* Postsuspend method. */
-+static int
-+blockdev_postsuspend(struct dm_repl_slink *slink, int dev_number)
-+{
-+	struct slink *sl;
-+	struct sdev *dev;
-+
-+	DMDEBUG_LIMIT("%s dev_number=%d", __func__, dev_number);
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+
-+	if (dev_number < 0)
-+		return -EINVAL;
-+
-+	write_lock(&sl->lock);
-+	dev = dev_get_by_number(sl, dev_number);
-+	if (unlikely(IS_ERR(dev))) {
-+		write_unlock(&sl->lock);
-+		return PTR_ERR(dev);
-+	}
-+
-+	/* Set device suspended. */
-+	SetDevSuspended(dev);
-+	write_unlock(&sl->lock);
-+
-+	dev_put(dev);
-+
-+	/* Wait for any device io to finish. */
-+	slink_wait_on_io(dev);
-+	return 0;
-+}
-+
-+/* Resume method. */
-+static int
-+blockdev_resume(struct dm_repl_slink *slink, int dev_number)
-+{
-+	struct slink *sl;
-+	struct sdev *dev;
-+
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+	DMDEBUG("%s sl_number=%d dev_number=%d", __func__,
-+		sl->number, dev_number);
-+
-+	if (dev_number < 0)
-+		return -EINVAL;
-+
-+	read_lock(&sl->lock);
-+	dev = dev_get_by_number(sl, dev_number);
-+	read_unlock(&sl->lock);
-+
-+	if (unlikely(IS_ERR(dev)))
-+		return PTR_ERR(dev);
-+
-+	/* Clear device suspended. */
-+	ClearDevSuspended(dev);
-+	BUG_ON(dev_put(dev));
-+	wake_do_slink(sl);
-+	return 0;
-+}
-+
-+/* Destroy device resources. */
-+static void
-+dev_destroy(struct sdev *dev)
-+{
-+	if (dev->dev.dl)
-+		dm_dirty_log_destroy(dev->dev.dl);
-+
-+	if (dev->io.kcopyd_client)
-+		dm_kcopyd_client_destroy(dev->io.kcopyd_client);
-+
-+	if (dev->dev.dm_dev)
-+		dm_put_device(dev->ti, dev->dev.dm_dev);
-+
-+	BUG_ON(!dev_put(dev));
-+}
-+
-+/*
-+ * Method to add a device to a given site link
-+ * and optionally create a dirty log for it.
-+ *
-+ * @dev_number = unsigned int stored in the REPLOG to associate to a dev_path
-+ * @ti = dm_target ptr (needed for dm functions)
-+ * @argc = 4...
-+ * @argv = dev_params# dev_path dirty_log_args
-+ */
-+#define	MIN_DEV_ARGS	4
-+static int
-+blockdev_dev_add(struct dm_repl_slink *slink, int dev_number,
-+		 struct dm_target *ti, unsigned argc, char **argv)
-+{
-+	int r;
-+	unsigned dev_params, params, sl_count;
-+	long long tmp;
-+	struct slink *sl;
-+	struct sdev *dev;
-+
-+	SHOW_ARGV;
-+
-+	if (dev_number < 0)
-+		return -EINVAL;
-+
-+	/* Two more because of the following dirty log parameters. */
-+	if (unlikely(argc < MIN_DEV_ARGS))
-+		DM_EINVAL("invalid device parameters count");
-+
-+	/* Get #dev_params. */
-+	if (unlikely(sscanf(argv[0], "%lld", &tmp) != 1 ||
-+		     tmp != 1)) {
-+		DM_EINVAL("invalid device parameters argument");
-+	} else
-+		dev_params = tmp;
-+
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+	_BUG_ON_PTR(sl->repl_slinks);
-+
-+	dev = dev_create(sl, ti, argv[1], dev_number);
-+	if (unlikely(IS_ERR(dev)))
-+		return PTR_ERR(dev);
-+
-+	dev->dev.params.count = dev_params;
-+
-+	/* Work on dirty log paramaters. */
-+	params = dev_params + 1;
-+	r = dirty_log_create(sl, dev, argc - params, argv + params);
-+	if (unlikely(r < 0))
-+		goto bad;
-+
-+	/* Take out global and local lock to update the configuration. */
-+	write_lock(&sl->repl_slinks->lock);
-+	write_lock(&sl->lock);
-+
-+	/* Set split io value on all replicated devices. */
-+	r = set_split_io(sl, dev);
-+	if (unlikely(r < 0))
-+		goto bad_unlock;
-+
-+	/*
-+	 * Now that dev is all set, add it to the slink.
-+	 *
-+	 * If callers are racing for the same device,
-+	 * dev_add() will catch that case too.
-+	 */
-+	r = dev_add(sl, dev);
-+	if (unlikely(r < 0))
-+		goto bad_unlock;
-+
-+	write_unlock(&sl->lock);
-+
-+	sl_count = slink_count(sl);
-+	write_unlock(&sl->repl_slinks->lock);
-+
-+	/* Ignore any resize problem and live with what we got. */
-+	if (sl_count > 1)
-+		dm_io_client_resize(sl_count, sl->io.dm_io_client);
-+
-+	DMDEBUG("%s added device=%u to slink=%u",
-+		__func__, dev_number, sl->number);
-+	return dev_number;
-+
-+bad_unlock:
-+	write_unlock(&sl->lock);
-+	write_unlock(&sl->repl_slinks->lock);
-+bad:
-+	BUG_ON(dev_io(dev));
-+	dev_destroy(dev);
-+	return r;
-+}
-+
-+/* Method to delete a device from a given site link. */
-+static int
-+blockdev_dev_del(struct dm_repl_slink *slink, int dev_number)
-+{
-+	int i;
-+	unsigned sl_count;
-+	struct slink *sl;
-+	struct sdev *dev;
-+
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+
-+	if (dev_number < 0)
-+		return -EINVAL;
-+
-+	/* Check if device is active! */
-+	write_lock(&sl->lock);
-+	dev = dev_get_by_number(sl, dev_number);
-+	if (unlikely(IS_ERR(dev))) {
-+		write_unlock(&sl->lock);
-+		return PTR_ERR(dev);
-+	}
-+
-+	SetDevTeardown(dev);
-+	write_unlock(&sl->lock);
-+
-+	/* Release the new reference taken out via dev_get_by_number() .*/
-+	BUG_ON(dev_put(dev));
-+
-+	/* Wait for any device I/O to finish. */
-+	slink_wait_on_io(dev);
-+	BUG_ON(dev_io(dev));
-+
-+	/* Take device off any lists. */
-+	write_lock(&sl->lock);
-+	i = ARRAY_SIZE(dev->lists);
-+	while (i--) {
-+		if (!list_empty(dev->lists + i))
-+			list_del(dev->lists + i);
-+	}
-+
-+	write_unlock(&sl->lock);
-+
-+	/* Destroy device. */
-+	dev_destroy(dev);
-+
-+	/* Ignore any resize problem. */
-+	sl_count = slink_count(sl);
-+	dm_io_client_resize(sl_count ? sl_count : 1, sl->io.dm_io_client);
-+	DMDEBUG("%s deleted device=%u from slink=%u",
-+		__func__, dev_number, sl->number);
-+	return 0;
-+}
-+
-+/* Check slink properties for consistency. */
-+static int slink_check_properties(struct slink_params *params)
-+{
-+	enum dm_repl_slink_policy_type policy = params->policy;
-+
-+	if (slink_policy_synchronous(policy) &&
-+	    slink_policy_asynchronous(policy))
-+		DM_EINVAL("synchronous and asynchronous slink "
-+			  "policies are mutually exclusive!");
-+
-+	if (slink_policy_synchronous(policy) &&
-+	    params->fallbehind.value)
-+		DM_EINVAL("synchronous slink policy and fallbehind "
-+			  "are mutually exclusive!");
-+	return 0;
-+}
-+
-+/*
-+ * Start methods of "blockdev" slink type.
-+ */
-+/* Method to destruct a site link context. */
-+static void
-+blockdev_dtr(struct dm_repl_slink *slink)
-+{
-+	struct slink *sl;
-+
-+	_BUG_ON_PTR(slink);
-+	sl = slink->context;
-+	_BUG_ON_PTR(sl);
-+
-+	slink_destroy(sl);
-+	BUG_ON(!slink_put(sl));
-+}
-+
-+/*
-+ * Method to construct a site link context.
-+ *
-+ * #slink_params = 1-4
-+ * <slink_params> = slink# [slink_policy [fall_behind value]]
-+ * slink# = used to tie the host+dev_path to a particular SLINK; 0 is used
-+ *          for the local site link and 1-M are for remote site links.
-+ * slink_policy = policy to set on the slink (eg. async/sync)
-+ * fall_behind = # of ios the SLINK can fall behind before switching to
-+ * 		 synchronous mode (ios N, data N[kmgtpe], timeout N[smhd])
-+ */
-+static int
-+blockdev_ctr(struct dm_repl_slink *slink, struct dm_repl_log *replog,
-+	     unsigned argc, char **argv)
-+{
-+	int check, r;
-+	long long tmp;
-+	unsigned slink_number, slink_params;
-+	struct slink *sl;
-+	struct slink_params params;
-+	/* Makes our task to keep a unique list of slinks per replog easier. */
-+	struct dm_repl_log_slink_list *repl_slinks =
-+		replog->ops->slinks(replog);
-+
-+	SHOW_ARGV;
-+	_BUG_ON_PTR(repl_slinks);
-+
-+	memset(&params, 0, sizeof(params));
-+	params.policy = DM_REPL_SLINK_ASYNC;
-+	params.fallbehind.type = DM_REPL_SLINK_FB_IOS;
-+	params.fallbehind.multiplier = 1;
-+
-+	if (unlikely(argc < 2))
-+		DM_EINVAL("invalid number of slink arguments");
-+
-+	/* Get # of slink parameters. */
-+	if (unlikely(sscanf(argv[0], "%lld", &tmp) != 1 ||
-+		     tmp < 1 || tmp > argc))
-+		DM_EINVAL("invalid slink parameter argument");
-+	else
-+		params.count = slink_params = tmp;
-+
-+
-+	/* Get slink#. */
-+	if (unlikely(sscanf(argv[1], "%lld", &tmp) != 1 ||
-+		     tmp < 0 || tmp >= replog->ops->slink_max(replog))) {
-+		DM_EINVAL("invalid slink number argument");
-+	} else
-+		slink_number = tmp;
-+
-+	if (slink_params > 1) {
-+		/* Handle policy argument. */
-+		r = get_slink_policy(argv[2]);
-+		if (unlikely(r < 0))
-+			return r;
-+
-+		params.policy = r;
-+		check = 1;
-+
-+		/* Handle fallbehind argument. */
-+		if (slink_params > 2) {
-+			r = get_slink_fallbehind(slink_params,
-+						 argv + 3, &params.fallbehind);
-+			if (unlikely(r < 0))
-+				return r;
-+		}
-+	} else
-+		check = 0;
-+
-+	/* Check that policies make sense vs. fallbehind. */
-+	if (check) {
-+		r = slink_check_properties(&params);
-+		if (r < 0)
-+			return r;
-+	}
-+
-+	/* Get/create an slink context. */
-+	sl = slink_create(slink, repl_slinks, &params, slink_number);
-+	return unlikely(IS_ERR(sl)) ? PTR_ERR(sl) : 0;
-+}
-+
-+/*
-+ * Initiate data copy across a site link.
-+ *
-+ * This function may be used to copy a buffer entry *or*
-+ * for resynchronizing regions initially or when an SLINK
-+ * has fallen back to dirty log (bitmap) mode.
-+ */
-+/* Get sdev ptr from copy address. */
-+static struct sdev *
-+dev_get_by_addr(struct slink *sl, struct dm_repl_slink_copy_addr *addr)
-+{
-+	BUG_ON(addr->type != DM_REPL_SLINK_BLOCK_DEVICE &&
-+	       addr->type != DM_REPL_SLINK_DEV_NUMBER);
-+	return addr->type == DM_REPL_SLINK_BLOCK_DEVICE ?
-+	       dev_get_by_bdev(sl, addr->dev.bdev) :
-+	       dev_get_by_number(sl, addr->dev.number.dev);
-+}
-+
-+/*
-+ * Needs to be called with sl->lock held.
-+ *
-+ * Return 0 in case io is allowed to the region the sector
-+ * is in and take out an I/O reference on the device.
-+ *
-+ * If I/O isn't allowd, no I/O reference will be taken out
-+ * and the follwoing return codes apply to caller actions:
-+ *
-+ * o -EAGAIN in case of prohibiting I/O because of device suspension
-+ *    or device I/O errors (i.e. link temporarilly down) ->
-+ *    caller is allowed to retry the I/O later once
-+ *    he'll have received a callback.
-+ *
-+ * o -EACCES in case a region is being resynchronized and the source
-+ *    region is being read to copy data accross to the same region
-+ *    of the replica (RD) ->
-+ *    caller is allowed to retry the I/O later once
-+ *    he'll have received a callback.
-+ *
-+ * o -ENODEV in case a device is not configured
-+ *    caller must drop the I/O to the device/slink pair.
-+ *
-+ * o -EPERM in case a region is out of sync ->
-+ *    caller must drop the I/O to the device/slink pair.
-+ */
-+static int
-+may_io(int rw, struct slink *sl, struct sdev *dev,
-+       sector_t sector, const char *action)
-+{
-+	int r;
-+	sector_t region;
-+	struct slink *sl_cur;
-+	struct sdev *dev_tmp;
-+	struct sdev_resync *resync;
-+
-+	_BUG_ON_PTR(sl);
-+
-+	if (IS_ERR(dev))
-+		return PTR_ERR(dev);
-+
-+	region = sector_to_region(dev, sector);
-+
-+	/*
-+	 * It's a caller error to call for multiple copies per slink.
-+	 */
-+	if (rw == WRITE &&
-+	    SlinkWriter(sl)) {
-+		DMERR_LIMIT("%s %s to slink%d, dev%d, region=%llu "
-+			    "while write pending to region=%llu!",
-+			    __func__, action, sl->number, dev->dev.number,
-+			    (unsigned long long) region,
-+			    (unsigned long long) dev->io.resync.writer_region);
-+		return -EPERM;
-+	}
-+
-+	/*
-+	 * If the device is suspended, being torn down,
-+	 * closed or errored, retry again later.
-+	 */
-+	if (!DevOpen(dev) ||
-+	    DevSuspended(dev) ||
-+	    DevTeardown(dev) ||
-+	    DevErrorRead(dev) ||
-+	    DevErrorWrite(dev))
-+		return -EAGAIN;
-+
-+	/* slink > 0 may read and write in case region is in sync. */
-+	if (sl->number) {
-+		struct dm_dirty_log *dl = dev->dev.dl;
-+
-+		/*
-+		 * Ask dirty log for region in sync.
-+		 *
-+		 * In sync -> allow reads and writes.
-+		 * Out of sync -> prohibit them.
-+		 */
-+		_BUG_ON_PTR(dl);
-+		r = dl->type->in_sync(dl, region, 0); /* Don't block. */
-+		r = r ? 0 : -EPERM;
-+	} else {
-+		/* slink0 may always read. */
-+		if (rw == READ)
-+			return 0;
-+
-+		read_lock(&sl->repl_slinks->lock);
-+
-+		/*
-+		 * Walk all slinks and check if anyone is syncing this region,
-+		 * in which case no write is allowed to it on slink0.
-+		 */
-+		list_for_each_entry(sl_cur, &sl->repl_slinks->list,
-+				    lists[SLINK_REPLOG]) {
-+			/* Avoid local devices. */
-+			if (!sl_cur->number)
-+				continue;
-+
-+			/*
-+			 * If device exists and the LD is
-+			 * being read off for resync.
-+			 */
-+			read_lock(&sl_cur->lock);
-+			dev_tmp = dev_get_by_number(sl_cur, dev->dev.number);
-+			read_unlock(&sl_cur->lock);
-+
-+			if (!IS_ERR(dev_tmp)) {
-+				resync = &dev_tmp->io.resync;
-+				if (resync->end &&
-+				    resync->region == region) {
-+					BUG_ON(dev_put(dev_tmp));
-+					r = -EACCES;
-+					goto out;
-+				}
-+
-+				BUG_ON(dev_put(dev_tmp));
-+			}
-+		}
-+
-+		/* We're allowed to write to this LD -> indicate we do. */
-+		r = 0;
-+out:
-+		read_unlock(&sl->repl_slinks->lock);
-+	}
-+
-+	if (!r && rw == WRITE) {
-+		write_lock(&sl->lock);
-+		/*
-+		 * Memorize region being synchronized
-+		 * to check in do_slink_resync().
-+		 */
-+		dev->io.resync.writer_region = region;
-+		SetSlinkWriter(sl);
-+		write_unlock(&sl->lock);
-+	}
-+
-+	return r;
-+}
-+
-+/* Set source/destination address of the copy. */
-+static int
-+copy_addr_init(struct slink *sl, struct dm_io_region *io,
-+	      struct dm_repl_slink_copy_addr *addr, unsigned size)
-+{
-+
-+	if (addr->type == DM_REPL_SLINK_BLOCK_DEVICE) {
-+		io->bdev = addr->dev.bdev;
-+	} else if (addr->type == DM_REPL_SLINK_DEV_NUMBER) {
-+		struct sdev *dev;
-+		struct slink *sl_tmp;
-+
-+		/* Check that slink number is correct. */
-+		read_lock(&sl->repl_slinks->lock);
-+		sl_tmp = slink_get_by_number(sl->repl_slinks,
-+					     addr->dev.number.slink);
-+		if (unlikely(IS_ERR(sl_tmp))) {
-+			int r = PTR_ERR(sl_tmp);
-+
-+			read_unlock(&sl->repl_slinks->lock);
-+			return r;
-+		}
-+
-+		read_unlock(&sl->repl_slinks->lock);
-+
-+		if (unlikely(sl != sl_tmp))
-+			return -EINVAL;
-+
-+		read_lock(&sl_tmp->lock);
-+		dev = dev_get_by_number(sl_tmp, addr->dev.number.dev);
-+		read_unlock(&sl_tmp->lock);
-+
-+		BUG_ON(slink_put(sl_tmp));
-+
-+		if (unlikely(IS_ERR(dev)))
-+			return PTR_ERR(dev);
-+
-+		io->bdev = dev->dev.dm_dev->bdev;
-+		BUG_ON(dev_put(dev));
-+	} else
-+		BUG();
-+
-+	io->sector = addr->sector;
-+	io->count = dm_div_up(size, to_bytes(1));
-+	return 0;
-+}
-+
-+/*
-+ * Copy endio function.
-+ *
-+ * For the "blockdev" type, both states (data in (remote) ram and data
-+ * on (remote) disk) are reported here at once. For future transports
-+ * those will be reported seperately.
-+ */
-+static void
-+copy_endio(int read_err, unsigned long write_err, void *context)
-+{
-+	struct copy_context *ctx = context;
-+	struct slink *sl;
-+	struct sdev *dev_to;
-+
-+	_BUG_ON_PTR(ctx);
-+	dev_to = ctx->dev_to;
-+	_BUG_ON_PTR(dev_to);
-+	sl = dev_to->sl;
-+	_BUG_ON_PTR(sl);
-+
-+	/* Throw a table event in case of a site link device copy error. */
-+	if (unlikely(read_err || write_err)) {
-+		if (read_err) {
-+			if (!TestSetDevErrorRead(dev_to)) {
-+				SetSlinkErrorRead(sl);
-+				dm_table_event(dev_to->ti->table);
-+			}
-+		} else if (!TestSetDevErrorWrite(dev_to)) {
-+			SetSlinkErrorWrite(sl);
-+			dm_table_event(dev_to->ti->table);
-+		}
-+
-+		set_dev_test_time(dev_to);
-+	}
-+
-+	/* Must clear before calling back. */
-+	ClearSlinkWriter(sl);
-+
-+	/*
-+	 * FIXME: check if caller has set region to NOSYNC and
-+	 *        and if so, avoid calling callbacks completely.
-+	 */
-+	if (ctx->ram.fn)
-+		ctx->ram.fn(read_err, write_err ? -EIO : 0, ctx->ram.context);
-+
-+	/* Only call when no error or when no ram callback defined. */
-+	if (likely((!read_err && !write_err) || !ctx->ram.fn))
-+		ctx->disk.fn(read_err, write_err, ctx->disk.context);
-+
-+	/* Copy done slinkX device. */
-+	free_copy_context(ctx, sl);
-+
-+	/* Release device reference. */
-+	BUG_ON(dev_put(dev_to));
-+
-+	/* Wake slink worker to reschedule any postponed resynchronization. */
-+	wake_do_slink(sl);
-+}
-+
-+/* Site link copy method. */
-+static int
-+blockdev_copy(struct dm_repl_slink *slink, struct dm_repl_slink_copy *copy,
-+	      unsigned long long tag)
-+{
-+	int r;
-+	struct slink *sl;
-+	struct sdev *dev_to;
-+	struct copy_context *ctx = NULL;
-+	static struct dm_io_region src, dst;
-+
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+	if (unlikely(SlinkErrorRead(sl) || SlinkErrorWrite(sl)))
-+		return -EAGAIN;
-+
-+	/* Get device by address taking out reference. */
-+	read_lock(&sl->lock);
-+	dev_to = dev_get_by_addr(sl, &copy->dst);
-+	read_unlock(&sl->lock);
-+
-+	/* Check if io is allowed or a resync is active. */
-+	r = may_io(WRITE, sl, dev_to, copy->dst.sector, "copy");
-+	if (r < 0)
-+		goto bad;
-+
-+	ctx = alloc_copy_context(sl);
-+	BUG_ON(!ctx);
-+
-+	/* Device to copy to. */
-+	ctx->dev_to = dev_to;
-+
-+	/* Save caller context. */
-+	ctx->ram = copy->ram;
-+	ctx->disk = copy->disk;
-+
-+	/* Setup copy source. */
-+	r = copy_addr_init(sl, &src, &copy->src, copy->size);
-+	if (unlikely(r < 0))
-+		goto bad;
-+
-+	/* Setup copy destination. */
-+	r = copy_addr_init(sl, &dst, &copy->dst, copy->size);
-+	if (unlikely(r < 0))
-+		goto bad;
-+
-+	/* FIXME: can we avoid reading per copy on multiple slinks ? */
-+	r = dm_kcopyd_copy(sl->io.kcopyd_client, &src, 1, &dst, 0,
-+			   copy_endio, ctx);
-+	BUG_ON(r); /* dm_kcopyd_copy() may never fail. */
-+	SetDevIOQueued(dev_to); /* dev_unplug(src.bdev); */
-+	return r;
-+
-+bad:
-+	if (!IS_ERR(dev_to))
-+		BUG_ON(dev_put(dev_to));
-+
-+	if (ctx)
-+		free_copy_context(ctx, sl);
-+
-+	return r;
-+}
-+
-+/* Method to get site link policy. */
-+static enum dm_repl_slink_policy_type
-+blockdev_policy(struct dm_repl_slink *slink)
-+{
-+	struct slink *sl = slink_check(slink);
-+
-+	return IS_ERR(sl) ? PTR_ERR(sl) : sl->params.policy;
-+}
-+
-+/* Method to get site link State. */
-+static enum dm_repl_slink_state_type
-+blockdev_state(struct dm_repl_slink *slink)
-+{
-+	enum dm_repl_slink_state_type state = 0;
-+	struct slink *sl = slink_check(slink);
-+
-+	if (unlikely(IS_ERR(sl)))
-+		return PTR_ERR(sl);
-+
-+	if (SlinkErrorRead(sl))
-+		set_bit(DM_REPL_SLINK_READ_ERROR, (unsigned long *) &state);
-+
-+	if (SlinkErrorWrite(sl))
-+		set_bit(DM_REPL_SLINK_DOWN, (unsigned long *) &state);
-+
-+	return state;
-+}
-+
-+/* Method to get reference to site link fallbehind parameters. */
-+static struct dm_repl_slink_fallbehind *
-+blockdev_fallbehind(struct dm_repl_slink *slink)
-+{
-+	struct slink *sl = slink_check(slink);
-+
-+	return IS_ERR(sl) ? ((struct dm_repl_slink_fallbehind *) sl) :
-+			    &sl->params.fallbehind;
-+}
-+
-+/* Return # of the device. */
-+static int
-+blockdev_dev_number(struct dm_repl_slink *slink, struct block_device *bdev)
-+{
-+	struct slink *sl = slink_check(slink);
-+	struct sdev *dev;
-+	struct mapped_device *md;
-+
-+	if (unlikely(IS_ERR(sl)))
-+		return PTR_ERR(sl);
-+
-+	if (unlikely(sl->number)) {
-+		DMERR("Can't retrieve device number from slink > 0");
-+		return -EINVAL;
-+	}
-+
-+	read_lock(&sl->lock);
-+	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
-+		md = dm_table_get_md(dev->ti->table);
-+		if (bdev->bd_disk == dm_disk(md)) {
-+			read_unlock(&sl->lock);
-+			dm_put(md);
-+			return dev->dev.number;
-+		}
-+
-+		dm_put(md);
-+	}
-+
-+	read_unlock(&sl->lock);
-+
-+	/*
-+	 * The caller might have removed the device from SLINK0 but
-+	 * have an order to copy to the device in its metadata still,
-+	 * so he has to react accordingly (ie. remove device copy request).
-+	 */
-+	return -ENOENT;
-+}
-+
-+/* Method to remap bio to underlying device on slink0. */
-+static int
-+blockdev_io(struct dm_repl_slink *slink, struct bio *bio,
-+	    unsigned long long tag)
-+{
-+	int r, rw = bio_data_dir(bio);
-+	struct slink *sl;
-+	struct sdev *dev;
-+
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+
-+	/*
-+	 * Prohibit slink > 0 I/O, because the resync
-+	 * code can't cope with it for now...
-+	 */
-+	if (sl->number)
-+		DM_EPERM("I/O to slink > 0 prohibited!");
-+
-+	if (rw == WRITE)
-+		DM_EPERM("Writes to slink0 prohibited!");
-+
-+	read_lock(&sl->lock);
-+	dev = dev_get_by_bdev(sl, bio->bi_bdev);
-+	read_unlock(&sl->lock);
-+
-+	/* Check if io is allowed or a resync is active. */
-+	r = may_io(rw, sl, dev, bio->bi_sector, "io");
-+	if (likely(!r)) {
-+		bio->bi_bdev = dev->dev.dm_dev->bdev;
-+		generic_make_request(bio);
-+		SetDevIOQueued(dev);
-+	}
-+
-+	if (!IS_ERR(dev))
-+		BUG_ON(dev_put(dev));
-+
-+	return r;
-+}
-+
-+/* Method to unplug all device queues on a site link. */
-+static int
-+blockdev_unplug(struct dm_repl_slink *slink)
-+{
-+	struct slink *sl = slink_check(slink);
-+	struct sdev *dev, *dev_n;
-+
-+	if (unlikely(IS_ERR(sl)))
-+		return PTR_ERR(sl);
-+
-+	/* Take out device references for all devices with IO queued. */
-+	read_lock(&sl->lock);
-+	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
-+		if (TestClearDevIOQueued(dev)) {
-+			dev_get(dev);
-+			SetDevIOUnplug(dev);
-+		}
-+	}
-+
-+	read_unlock(&sl->lock);
-+
-+	list_for_each_entry_safe(dev, dev_n,
-+				 SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
-+		if (TestClearDevIOUnplug(dev)) {
-+			if (DevOpen(dev) &&
-+			    !DevSuspended(dev) &&
-+			    !DevTeardown(dev))
-+				dev_unplug(dev->dev.dm_dev->bdev);
-+
-+			BUG_ON(dev_put(dev));
-+		}
-+	}
-+
-+	return 0;
-+}
-+
-+/* Method to set global recovery function and context. */
-+static void
-+blockdev_recover_notify_fn_set(struct dm_repl_slink *slink,
-+			       dm_repl_notify_fn fn, void *context)
-+{
-+	struct slink *sl;
-+
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+
-+	write_lock(&sl->lock);
-+	sl->recover.fn = fn;
-+	sl->recover.context = context;
-+	write_unlock(&sl->lock);
-+}
-+
-+/* Method to return # of the SLINK. */
-+static int
-+blockdev_slink_number(struct dm_repl_slink *slink)
-+{
-+	struct slink *sl = slink_check(slink);
-+
-+	return unlikely(IS_ERR(sl)) ? PTR_ERR(sl) : sl->number;
-+}
-+
-+/* Method to return SLINK by number. */
-+static struct dm_repl_slink *
-+blockdev_slink(struct dm_repl_log *replog, unsigned slink_number)
-+{
-+	struct slink *sl;
-+	struct dm_repl_slink *slink;
-+	struct dm_repl_log_slink_list *repl_slinks;
-+
-+	_BUG_ON_PTR(replog);
-+	repl_slinks = replog->ops->slinks(replog);
-+	_BUG_ON_PTR(repl_slinks);
-+
-+	read_lock(&repl_slinks->lock);
-+	sl = slink_get_by_number(repl_slinks, slink_number);
-+	if (IS_ERR(sl))
-+		slink = (struct dm_repl_slink *) sl;
-+	else {
-+		slink = sl->slink;
-+		BUG_ON(slink_put(sl));
-+	}
-+
-+	read_unlock(&repl_slinks->lock);
-+	return slink;
-+}
-+
-+/* Method to set SYNC state of a region of a device. */
-+static int
-+blockdev_set_sync(struct dm_repl_slink *slink, int dev_number,
-+	       sector_t sector, int in_sync)
-+{
-+	struct sdev *dev;
-+	struct sdev_dev *sd;
-+	struct dm_dirty_log *dl;
-+	struct slink *sl;
-+
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+
-+	if (dev_number < 0)
-+		return -EINVAL;
-+
-+	read_lock(&sl->lock);
-+	dev = dev_get_by_number(sl, dev_number);
-+	read_unlock(&sl->lock);
-+
-+	if (IS_ERR(dev))
-+		return PTR_ERR(dev);
-+
-+	sd = &dev->dev;
-+	dl = sd->dl;
-+	if (dl)
-+		dl->type->set_region_sync(dl, sector_to_region(dev, sector),
-+					  in_sync);
-+	BUG_ON(dev_put(dev));
-+	return 0;
-+}
-+
-+/* Method to flush all dirty logs on slink's devices. */
-+static int
-+blockdev_flush_sync(struct dm_repl_slink *slink)
-+{
-+	int r = 0;
-+	struct slink *sl;
-+	struct sdev *dev;
-+	struct list_head resync_list;
-+
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+	if (!sl->number)
-+		return -EINVAL;
-+
-+	INIT_LIST_HEAD(&resync_list);
-+
-+	write_lock(&sl->lock);
-+	if (SlinkResyncProcessing(sl)) {
-+		write_unlock(&sl->lock);
-+		return -EAGAIN;
-+	}
-+
-+	/* Take out resync list in order to process flushs unlocked. */
-+	list_splice(SLINK_RESYNC_LIST(sl), &resync_list);
-+	INIT_LIST_HEAD(SLINK_RESYNC_LIST(sl));
-+
-+	/* Get race references on devices. */
-+	list_for_each_entry(dev, &resync_list, lists[SDEV_RESYNC]) {
-+		_BUG_ON_PTR(dev->dev.dl);
-+		dev_get(dev);
-+	}
-+
-+	write_unlock(&sl->lock);
-+
-+	list_for_each_entry(dev, &resync_list, lists[SDEV_RESYNC]) {
-+		if (DevOpen(dev) &&
-+		    !(DevSuspended(dev) || DevTeardown(dev))) {
-+			int rr;
-+			struct dm_dirty_log *dl = dev->dev.dl;
-+
-+			rr = dl->type->flush(dl);
-+			if (rr && !r)
-+				r = rr;
-+		}
-+	}
-+
-+	/* Put race device references. */
-+	write_lock(&sl->lock);
-+	list_for_each_entry(dev, &resync_list, lists[SDEV_RESYNC])
-+		BUG_ON(dev_put(dev));
-+
-+	list_splice(&resync_list, SLINK_RESYNC_LIST(sl));
-+	write_unlock(&sl->lock);
-+
-+	return r;
-+}
-+
-+/*
-+ * Method to trigger/prohibit resynchronzation on all devices by
-+ * adding to the slink resync list and waking up the worker.
-+ *
-+ * We may *not* remove from the slink resync list here,
-+ * because we'd end up with partitally resynchronized
-+ * regions in do_slink_resync() otherwise.
-+ */
-+static int
-+blockdev_resync(struct dm_repl_slink *slink, int resync)
-+{
-+	struct slink *sl;
-+	struct sdev *dev;
-+
-+	_SET_AND_BUG_ON_SL(sl, slink);
-+
-+	/* Don't proceed on site link 0. */
-+	if (!sl->number)
-+		return -EINVAL;
-+
-+	/* If resync processing, we need to postpone. */
-+	write_lock(&sl->lock);
-+	if (SlinkResyncProcessing(sl)) {
-+		write_unlock(&sl->lock);
-+		return -EAGAIN;
-+	}
-+
-+	list_for_each_entry(dev, SLINK_DEVS_LIST(sl), lists[SDEV_SLINK]) {
-+		BUG_ON(IS_ERR(dev));
-+
-+		if (resync) {
-+			SetDevResync(dev);
-+
-+			/* Add to resync list if not yet on. */
-+			if (list_empty(SDEV_RESYNC_LIST(dev))) {
-+				list_add_tail(SDEV_RESYNC_LIST(dev),
-+					      SLINK_RESYNC_LIST(sl));
-+				break;
-+			}
-+		} else {
-+			ClearDevResync(dev);
-+
-+			/* emove from resync list if on. */
-+			if (!list_empty(SDEV_RESYNC_LIST(dev)))
-+				list_del_init(SDEV_RESYNC_LIST(dev));
-+		}
-+	}
-+
-+	write_unlock(&sl->lock);
-+	wake_do_slink(sl);
-+	return 0;
-+}
-+
-+/*
-+ * Method to check if a region is in sync
-+ * by sector on all devices on all slinks.
-+ */
-+static int
-+blockdev_in_sync(struct dm_repl_slink *slink, int dev_number, sector_t sector)
-+{
-+	int nosync = 0;
-+	sector_t region = 0;
-+	struct slink *sl = slink_check(slink);
-+
-+	if (IS_ERR(sl) ||
-+	    dev_number < 0)
-+		return -EINVAL;
-+
-+	BUG_ON(!sl->repl_slinks);
-+
-+	read_lock(&sl->repl_slinks->lock);
-+	list_for_each_entry(sl, &sl->repl_slinks->list, lists[SLINK_REPLOG]) {
-+		int r;
-+		struct dm_dirty_log *dl;
-+		struct sdev *dev;
-+
-+		if (!sl->number)
-+			continue;
-+
-+		read_lock(&sl->lock);
-+		dev = dev_get_by_number(sl, dev_number);
-+		read_unlock(&sl->lock);
-+
-+		if (IS_ERR(dev))
-+			continue;
-+
-+		dl = dev->dev.dl;
-+		_BUG_ON_PTR(dl);
-+
-+		/* Calculate region once for all devices on any slinks. */
-+		if (!region)
-+			region = sector_to_region(dev, sector);
-+
-+		r = dl->type->in_sync(dl, region, 0);
-+		BUG_ON(dev_put(dev));
-+		if (!r) {
-+			nosync = 1;
-+			break;
-+		}
-+	}
-+
-+	read_unlock(&sl->repl_slinks->lock);
-+	return nosync;
-+}
-+
-+/*
-+ * Method for site link messages.
-+ *
-+ * fallbehind ios/size/timeout=X[unit]
-+ * policy X
-+ */
-+static int
-+blockdev_message(struct dm_repl_slink *slink, unsigned argc, char **argv)
-+{
-+	int r;
-+	struct slink_params params;
-+	struct slink *sl = slink_check(slink);
-+
-+	if (IS_ERR(sl))
-+		return PTR_ERR(sl);
-+
-+	if (unlikely(argc < 2))
-+		goto bad_arguments;
-+
-+	/* Preserve parameters. */
-+	params = sl->params;
-+
-+	if (!strnicmp(STR_LEN(argv[0], "fallbehind"))) {
-+		if (argc != 2)
-+			DM_EINVAL("wrong fallbehind argument count");
-+
-+		r = get_slink_fallbehind(argc - 1, argv + 1,
-+					 &params.fallbehind);
-+		if (r < 0)
-+			return r;
-+	} else if (!strnicmp(STR_LEN(argv[0], "policy"))) {
-+		if (argc != 2)
-+			DM_EINVAL("wrong policy argument count");
-+
-+		r = get_slink_policy(argv[1]);
-+		if (r < 0)
-+			return r;
-+
-+		params.policy = r;
-+	} else
-+		DM_EINVAL("invalid message received");
-+
-+	/* Check properties' consistency. */
-+	r = slink_check_properties(&params);
-+	if (r < 0)
-+		return r;
-+
-+	/* Set parameters. */
-+	sl->params = params;
-+	return 0;
-+
-+bad_arguments:
-+	DM_EINVAL("too few message arguments");
-+}
-+
-+/* String print site link error state. */
-+static const char *
-+snprint_slink_error(struct slink *sl, char *result, size_t maxlen)
-+{
-+	size_t sz = 0;
-+
-+	*result = 0;
-+	if (SlinkErrorRead(sl))
-+		DMEMIT("R");
-+
-+	if (SlinkErrorWrite(sl))
-+		DMEMIT("W");
-+
-+	if (!*result)
-+		DMEMIT("A");
-+
-+	return result;
-+}
-+
-+/* String print device status. */
-+static const char *
-+snprint_device(struct slink *sl, struct sdev *dev,
-+	      status_type_t type, char *result, unsigned maxlen)
-+{
-+	size_t sz = 0;
-+	static char buf[BDEVNAME_SIZE];
-+	struct sdev_dev *sd;
-+	struct dm_dirty_log *dl;
-+
-+	*result = 0;
-+	if (IS_ERR(dev))
-+		goto out;
-+
-+	sd = &dev->dev;
-+	DMEMIT("%u %s ", sd->params.count,
-+	       sd->dm_dev ?
-+	       format_dev_t(buf, sd->dm_dev->bdev->bd_dev) :
-+	       sd->params.path);
-+	dl = sd->dl;
-+	if (dl)
-+		dl->type->status(dl, type, result + sz, maxlen - sz);
-+	else
-+		DMEMIT("nolog 0");
-+
-+out:
-+	return result;
-+}
-+
-+/* String print device resynchronization state. */
-+static const char *
-+snprint_sync_count(struct slink *sl, struct sdev *dev,
-+		   char *result, unsigned maxlen)
-+{
-+	size_t sz = 0;
-+	struct dm_dirty_log *dl;
-+
-+	if (IS_ERR(dev))
-+		goto no_dev;
-+
-+	dl = dev->dev.dl;
-+	if (dl) {
-+		DMEMIT("%llu%s/%llu",
-+		       (unsigned long long) dl->type->get_sync_count(dl),
-+		       DevResyncing(dev) ? "+" : "",
-+		       (unsigned long long) region_count(dev));
-+	} else {
-+no_dev:
-+		DMEMIT("-");
-+	}
-+
-+	return result;
-+}
-+
-+/* Method for site link status requests. */
-+static struct dm_repl_slink_type blockdev_type;
-+static int
-+blockdev_status(struct dm_repl_slink *slink, int dev_number,
-+	     status_type_t type, char *result, unsigned int maxlen)
-+{
-+	size_t sz = 0;
-+	static char buffer[256];
-+	struct slink *sl_cur, *sl = slink_check(slink);
-+	struct sdev *dev;
-+	struct slink_params *p;
-+	struct list_head *sl_list;
-+
-+	if (unlikely(IS_ERR(sl)))
-+		return PTR_ERR(sl);
-+
-+	if (dev_number < -1)
-+		return -EINVAL;
-+
-+	BUG_ON(!sl->repl_slinks);
-+	sl_list = &sl->repl_slinks->list;
-+
-+	read_lock(&sl->repl_slinks->lock);
-+
-+	switch (type) {
-+	case STATUSTYPE_INFO:
-+		list_for_each_entry(sl_cur, sl_list, lists[SLINK_REPLOG]) {
-+			read_lock(&sl_cur->lock);
-+			dev = dev_get_by_number(sl_cur, dev_number);
-+			read_unlock(&sl_cur->lock);
-+
-+			if (!IS_ERR(dev)) {
-+				DMEMIT("%s,",
-+				       snprint_slink_error(sl_cur, buffer,
-+							   sizeof(buffer)));
-+
-+				DMEMIT("%s ",
-+				       snprint_sync_count(sl_cur, dev, buffer,
-+							  sizeof(buffer)));
-+				BUG_ON(dev_put(dev));
++		if (slink_fallbehind_recovered(l, ss, fallbehind,
++					       region->size)) {
++			ss->fb.head_jiffies = 0;
++
++			if (TestClearSsSync(ss) && sync) {
++				DMINFO("releasing fallbehind sync on slink=%d"
++				       " at %u",
++				       slink_nr, jiffies_to_msecs(jiffies));
++				wake_do_log(l);
 +			}
 +		}
 +
 +		break;
 +
-+	case STATUSTYPE_TABLE:
-+		list_for_each_entry(sl_cur, sl_list, lists[SLINK_REPLOG]) {
-+			read_lock(&sl_cur->lock);
-+			if (dev_number < 0) {
-+				p = &sl_cur->params;
-+				DMEMIT("%s %u %u ",
-+				       blockdev_type.type.name,
-+				       p->count, sl_cur->number);
++	default:
++		BUG();
++	}
++}
 +
-+				if (p->count > 1) {
-+					snprint_policies(p->policy, buffer,
-+							 sizeof(buffer));
-+					DMEMIT("%s ", buffer);
-+					snprint_fallbehind(&p->fallbehind,
-+							   buffer,
-+							   sizeof(buffer));
-+					if (p->count > 2)
-+						DMEMIT("%s ", buffer);
-+				}
-+			} else {
-+				dev = dev_get_by_number(sl_cur, dev_number);
-+				if (!IS_ERR(dev)) {
-+					DMEMIT("%u %s ", sl_cur->number,
-+					       snprint_device(sl_cur, dev, type,
-+							      buffer,
-+							      sizeof(buffer)));
-+					BUG_ON(dev_put(dev));
-+				}
-+			}
++static inline void
++slink_fallbehind_inc(struct dm_repl_slink *slink,
++		     struct ringbuffer_entry *entry)
++{
++	slink_fallbehind_update(UPD_INC, slink, entry);
++}
 +
-+			read_unlock(&sl_cur->lock);
++static inline void
++slink_fallbehind_dec(struct dm_repl_slink *slink,
++		     struct ringbuffer_entry *entry)
++{
++	slink_fallbehind_update(UPD_DEC, slink, entry);
++}
++
++/* Caller properties definition for dev_io(). */
++struct dev_io_params {
++	struct repl_dev *dev;
++	sector_t sector;
++	unsigned size;
++	struct dm_io_memory mem;
++	struct dm_io_notify notify;
++	unsigned long flags;
++};
++
++/*
++ * Read/write device items.
++ *
++ * In case of dio->fn, an asynchronous dm_io()
++ * call will be performed, else synchronous.
++ */
++static int
++dev_io(int rw, struct ringbuffer *ring, struct dev_io_params *dio)
++{
++	BUG_ON(dio->size > BIO_MAX_SIZE);
++	DMDEBUG_LIMIT("%s: rw: %d, %u sectors at sector %llu, dev %p",
++		      __func__, rw, dio->size,
++		      (unsigned long long) dio->sector,
++		      dio->dev->dm_dev->bdev);
++
++	/* Flag IO queued on asynchronous calls. */
++	if (dio->notify.fn)
++		SetRingBufferIOQueued(ring);
++
++	return dm_io(
++		&(struct dm_io_request) {
++			.bi_rw = rw,
++			.mem = dio->mem,
++			.notify = dio->notify,
++			.client = replog_io_client(dev_repl_log(dio->dev))
++		}, 1 /* 1 region following */,
++		&(struct dm_io_region) {
++			.bdev = dio->dev->dm_dev->bdev,
++			.sector = dio->sector,
++			.count = round_up_to_sector(dio->size),
++		},
++		NULL
++	);
++}
++
++/* Definition of properties/helper functions for header IO. */
++struct header_io_spec {
++	const char *name;	/* Header identifier (eg. 'data'). */
++	unsigned size;		/* Size of ondisk structure. */
++	/* Disk structure allocation helper. */
++	void *(*alloc_disk)(struct ringbuffer *);
++	/* Disk structure deallocation helper. */
++	void (*free_disk)(void *, struct ringbuffer *);
++	/* Disk structure to core structure xfer helper. */
++	int (*to_core_fn)(unsigned bitmap_elems, void *, void *);
++	/* Core structure to disk structure xfer helper. */
++	void (*to_disk_fn)(unsigned bitmap_elems, void *, void *);
++};
++/* Macro to initialize type specific header_io_spec structure. */
++#define	IO_SPEC(header) \
++	{ .name = # header, \
++	  .size = sizeof(struct header ## _header_disk), \
++	  .alloc_disk = alloc_ ## header ## _header_disk, \
++	  .free_disk = free_ ## header ## _header_disk, \
++	  .to_core_fn = header ## _header_to_core, \
++	  .to_disk_fn = header ## _header_to_disk }
++
++enum header_type { IO_LOG, IO_BUFFER, IO_DATA };
++struct header_io_params {
++	enum header_type type;
++	struct repl_log *l;
++	void *core_header;
++	sector_t sector;
++	void (*disk_header_fn)(void *);
++};
++
++/* Read /write a {log,buffer,data} header to disk. */
++static int
++header_io(int rw, struct header_io_params *hio)
++{
++	int r;
++	struct repl_log *l = hio->l;
++	struct ringbuffer *ring = &l->ringbuffer;
++	/* Specs of all log headers. Must be in 'enum header_type' order! */
++	static const struct header_io_spec io_specs[] = {
++		IO_SPEC(log),
++		IO_SPEC(buffer),
++		IO_SPEC(data),
++	};
++	const struct header_io_spec *io = io_specs + hio->type;
++	void *disk_header = io->alloc_disk(ring);
++	struct dev_io_params dio = {
++		&l->params.dev, hio->sector, io->size,
++		.mem = { DM_IO_KMEM, { .addr = disk_header }, 0 },
++		.notify = { NULL, NULL}
++	};
++
++	BUG_ON(io < io_specs || io >= ARRAY_END(io_specs));
++	BUG_ON(!hio->core_header);
++	BUG_ON(!disk_header);
++	memset(disk_header, 0, io->size);
++
++	if (rw == WRITE) {
++		io->to_disk_fn(BITMAP_ELEMS(l), disk_header, hio->core_header);
++
++		/*  If disk header needs special handling before write. */
++		if (hio->disk_header_fn)
++			hio->disk_header_fn(disk_header);
++	}
++
++	r = dev_io(rw, ring, &dio);
++	if (unlikely(r)) {
++		SetRingBufferError(ring);
++		DMERR("Failed to %s %s header!",
++		      rw == WRITE ? "write" : "read", io->name);
++	} else if (rw == READ) {
++		r = io->to_core_fn(BITMAP_ELEMS(l), hio->core_header,
++				   disk_header);
++		if (unlikely(r))
++			DMERR("invalid %s header/sector=%llu",
++			      io->name, (unsigned long long) hio->sector);
++	}
++
++	io->free_disk(disk_header, ring);
++	return r;
++}
++
++/* Read/write the log header synchronously. */
++static inline int
++log_header_io(int rw, struct repl_log *l)
++{
++	return header_io(rw, &(struct header_io_params) {
++			 IO_LOG, l, l->header.log, l->params.dev.start, NULL });
++}
++
++/* Read/write the ring buffer header synchronously. */
++static inline int
++buffer_header_io(int rw, struct repl_log *l)
++{
++	return header_io(rw, &(struct header_io_params) {
++			 IO_BUFFER, l, &l->ringbuffer,
++			 l->header.log->buffer_header, NULL });
++}
++
++/* Read/write a data header to/from the ring buffer synchronously. */
++static inline int
++data_header_io(int rw, struct repl_log *l,
++	       struct data_header *header, sector_t sector)
++{
++	return header_io(rw, &(struct header_io_params) {
++			 IO_DATA, l, header, sector, NULL });
++}
++
++/* Notify dm-repl.c to submit more IO. */
++static void
++notify_caller(struct repl_log *l, int rw, int error)
++{
++	struct replog_notify notify;
++
++	_BUG_ON_PTR(l);
++
++	spin_lock(&l->io.lock);
++	notify = l->notify;
++	spin_unlock(&l->io.lock);
++
++	if (likely(notify.fn)) {
++		if (rw == READ)
++			notify.fn(error, 0, notify.context);
++		else
++			notify.fn(0, error, notify.context);
++	}
++}
++
++/*
++ * Ring buffer routines.
++ *
++ * The ring buffer needs to keep track of arbitrarily-sized data items.
++ * HEAD points to the first data header that needs to be replicated.  This
++ * can mean it has been partially replicated or not replicated at all.
++ * The ring buffer is empty if HEAD == TAIL.
++ * The ring buffer is full if HEAD == TAIL + len(TAIL) modulo device size.
++ *
++ * An entry in the buffer is not valid until both the data header and the
++ * associated data items are on disk.  Multiple data headers and data items
++ * may be written in parallel.  This means that, in addition to the
++ * traditional HEAD and TAIL pointers, we need to keep track of an in-core
++ * variable reflecting the next area in the log that is unallocated.  We also
++ * need to keep an ordered list of pending and completd buffer entry writes.
++ */
++/*
++ * Check and wrap a ring buffer offset around ring buffer end.
++ *
++ * There are three cases to distinguish here:
++ * 1. header and data fit before ring->end
++ * 2. header fits before ring->end, data doesn't -> remap data to ring->start
++ * 3. header doesn't fit before ring->end -> remap both to ring->start
++ *
++ * Function returns the next rounded offset *after* any
++ * conditional remapping of the actual header.
++ *
++ */
++static sector_t
++sectors_unused(struct ringbuffer *ring, sector_t first_free)
++{
++	return (ring->end < first_free) ? 0 : ring->end - first_free;
++}
++
++/*
++ * Return the first sector past the end of the header
++ * (i.e. the first data sector).
++ */
++static inline sector_t
++data_start(struct data_header *header)
++{
++	return header->pos.header + HEADER_SECTORS;
++}
++
++/*
++ * Return the first sector past the end of the entry.
++ * (i.e.(the first unused sector).
++ */
++static inline sector_t
++next_start(struct data_header *header)
++{
++	return header->pos.data + header->pos.data_sectors;
++}
++
++static inline sector_t
++next_start_adjust(struct ringbuffer *ring, struct data_header *header)
++{
++	sector_t next_sector = next_start(header);
++
++	return likely(sectors_unused(ring, next_sector) < HEADER_SECTORS) ?
++	       ring->start : next_sector;
++}
++
++/* True if entry doesn't wrap. */
++static inline int
++not_wrapped(struct data_header *header)
++{
++	return header->wrap == WRAP_NONE;
++}
++
++/* True if header at ring end and data wrapped to ring start. */
++static inline int
++data_wrapped(struct data_header *header)
++{
++	return header->wrap == WRAP_DATA;
++}
++
++/* True if next entry wraps to ring start. */
++static inline int
++next_entry_wraps(struct data_header *header)
++{
++	return header->wrap == WRAP_NEXT;
++}
++
++/* Return amount of skipped sectors in case of wrapping. */
++static unsigned
++sectors_skipped(struct ringbuffer *ring, struct data_header *header)
++{
++	if (likely(not_wrapped(header)))
++		/* noop */ ;
++	else if (data_wrapped(header))
++		return sectors_unused(ring, data_start(header));
++	else if (next_entry_wraps(header))
++		return sectors_unused(ring, next_start(header));
++
++	return 0;
++}
++
++/* Emmit only once log error messages. */
++static void
++ringbuffer_error(enum ring_status_type type,
++		  struct ringbuffer *ring, int error)
++{
++	struct error {
++		enum ring_status_type type;
++		int (*f)(struct ringbuffer *);
++		const char *msg;
++	};
++	static const struct error errors[] = {
++		{ RING_BUFFER_DATA_ERROR, TestSetRingBufferDataError, "data" },
++		{ RING_BUFFER_HEAD_ERROR, TestSetRingBufferHeadError, "head" },
++		{ RING_BUFFER_HEADER_ERROR, TestSetRingBufferHeaderError,
++		  "header" },
++		{ RING_BUFFER_TAIL_ERROR, TestSetRingBufferTailError, "tail" },
++	};
++	const struct error *e = ARRAY_END(errors);
++
++	while (e-- > errors) {
++		if (type == e->type) {
++			if (!e->f(ring))
++				DMERR("ring buffer %s I/O error %d",
++				      e->msg, error);
++
++			return SetRingBufferError(ring);
 +		}
 +	}
 +
-+	read_unlock(&sl->repl_slinks->lock);
++	BUG();
++}
++
++/*
++ * Allocate space for a data item in the ring buffer.
++ *
++ * header->pos is filled in with the sectors for the header and data in
++ * the ring buffer. The free space in the ring buffer is decremented to
++ * account for this entry. The return value is the sector address for the
++ * next data_header_disk.
++ */
++
++/* Increment buffer offset past actual header, optionaly wrapping data. */
++static sector_t
++ringbuffer_inc(struct ringbuffer *ring, struct data_header *header)
++{
++	sector_t sectors;
++
++	/* Initialize the header with the common case */
++	header->pos.header = ring->next_avail;
++	header->pos.data = data_start(header);
++
++	/*
++	 * Header doesn't fit before ring->end.
++	 *
++	 * This can only happen when we are started with an empty ring
++	 * buffer that has its tail near the end of the device.
++	 */
++	if (unlikely(data_start(header) > ring->end)) {
++		/*
++		 * Wrap an entire entry (header + data) to the beginning of
++		 * the log device. This will update the ring free sector
++		 * count to account for the unused sectors at the end
++		 * of the device.
++		 */
++		header->pos.header = ring->start;
++		header->pos.data = data_start(header);
++	/* Data doesn't fit before ring->end. */
++	} else if (unlikely(next_start(header) > ring->end)) {
++		/*
++		 * Wrap the data portion of a ring buffer entry to the
++		 * beginning of the log device. This will update the ring
++		 * free sector count to account for the unused sectors at
++		 * the end of the device.
++		 */
++		header->pos.data = ring->start;
++		header->wrap = WRAP_DATA;
++
++		ringbuffer_repl_log(ring)->stats.wrap++;
++	} else
++		header->wrap = WRAP_NONE;
++
++	sectors = roundup_sectors(header->pos.data_sectors);
++	BUG_ON(sectors > ring->pending);
++	ring->pending -= sectors;
++
++	sectors = next_start_adjust(ring, header);
++	if (sectors == ring->start) {
++		header->wrap = WRAP_NEXT;
++
++		ringbuffer_repl_log(ring)->stats.wrap++;
++	}
++
++	return sectors;
++}
++
++/* Slab and mempool definition. */
++struct cache_defs {
++	const enum ring_pool_type type;
++	const int min;
++	const size_t size;
++	struct kmem_cache *slab_pool;
++	const char *slab_name;
++	const size_t align;
++};
++
++/* Slab and mempool declarations. */
++static struct cache_defs cache_defs[] = {
++	{ ENTRY, ENTRY_POOL_MIN, sizeof(struct ringbuffer_entry),
++	  NULL, "dm_repl_log_entry", 0 },
++	{ DATA_HEADER, HEADER_POOL_MIN, sizeof(struct data_header),
++	  NULL, "dm_repl_log_header", 0 },
++	{ DATA_HEADER_DISK, HEADER_POOL_MIN, DATA_HEADER_DISK_SIZE,
++	  NULL, "dm_repl_log_disk_header", DATA_HEADER_DISK_SIZE },
++	{ COPY_CONTEXT, CC_POOL_MIN, sizeof(struct slink_copy_context),
++	  NULL, "dm_repl_log_copy", 0 },
++};
++
++/* Destroy all memory pools for a ring buffer. */
++static void
++ringbuffer_exit(struct ringbuffer *ring)
++{
++	mempool_t **pool = ARRAY_END(ring->pools);
++
++	sector_hash_exit(&ring->busy_sectors);
++
++	while (pool-- > ring->pools) {
++		if (likely(*pool)) {
++			mempool_destroy(*pool);
++			*pool = NULL;
++		}
++	}
++}
++
++/* Create all mempools for a ring buffer. */
++static int
++ringbuffer_init(struct ringbuffer *ring)
++{
++	int r;
++	struct repl_log *l = ringbuffer_repl_log(ring);
++	struct cache_defs *pd = ARRAY_END(cache_defs);
++
++
++	mutex_init(&l->ringbuffer.mutex);
++	init_waitqueue_head(&ring->flushq);
++
++	/* Create slab pools. */
++	while (pd-- > cache_defs) {
++		/* Bitmap is not a slab pool. */
++		if (!pd->size)
++			continue;
++
++		ring->pools[pd->type] =
++			mempool_create_slab_pool(pd->min, pd->slab_pool);
++
++		if (unlikely(!ring->pools[pd->type])) {
++			DMERR("Error creating mempool %s", pd->slab_name);
++			goto bad;
++		}
++	}
++
++	/* Initialize busy sector hash. */
++	r = sector_hash_init(&ring->busy_sectors, l->params.dev.size);
++	if (r < 0) {
++		DMERR("Failed to allocate sector busy hash!");
++		goto bad;
++	}
++
++	return 0;
++
++bad:
++	ringbuffer_exit(ring);
++	return -ENOMEM;
++}
++
++/*
++ * Reserve space in the ring buffer for the
++ * given bio data and associated header.
++ *
++ * Correct ring->free by any skipped sectors at the end of the ring buffer.
++ */
++static int
++ringbuffer_reserve_space(struct ringbuffer *ring, struct bio *bio)
++{
++	unsigned nsectors = roundup_sectors(bio_sectors(bio));
++	sector_t end_space, start_sector;
++
++	if (!nsectors)
++		return -EPERM;
++
++	BUG_ON(!mutex_is_locked(&ring->mutex));
++
++	if (unlikely(ring->free < nsectors)) {
++		SetRingBufferFull(ring);
++		return -EBUSY;
++	}
++
++	/*
++	 * Account for the sectors that are queued for do_log()
++	 * but have not been accounted for on the disk.  We need this
++	 * calculation to see if any sectors will be lost from our
++	 * free pool at the end of ring buffer.
++	 */
++	start_sector = ring->next_avail + ring->pending;
++	end_space = sectors_unused(ring, start_sector);
++
++	/* if the whole I/O won't fit before the end of the disk. */
++	if (unlikely(end_space && end_space < nsectors)) {
++		sector_t skipped = end_space >= HEADER_SECTORS ?
++			sectors_unused(ring, start_sector + HEADER_SECTORS) :
++			end_space;
++
++		/* Don't subtract skipped sectors in case the bio won't fit. */
++		if (ring->free - skipped < nsectors)
++			return -EBUSY;
++
++		/*
++		 * We subtract the amount of skipped sectors
++		 * from ring->free here..
++		 *
++		 * ringbuffer_advance_head() will add them back on.
++		 */
++		ring->free -= skipped;
++	}
++
++	ring->free -= nsectors;
++	ring->pending += nsectors;
++	return 0;
++}
++
++static int
++ringbuffer_empty_nolock(struct ringbuffer *ring)
++{
++	return (ring->head == ring->tail) && !RingBufferFull(ring);
++}
++
++static int
++ringbuffer_empty(struct ringbuffer *ring)
++{
++	int r;
++
++	mutex_lock(&ring->mutex);
++	r = ringbuffer_empty_nolock(ring);
++	mutex_unlock(&ring->mutex);
++
++	return r;
++}
++
++static void
++set_sync_mask(struct repl_log *l, struct ringbuffer_entry *entry)
++{
++	unsigned long slink_nr;
++
++	/* Bitmask of slinks with synchronous I/O completion policy. */
++	for_each_bit(slink_nr, ENTRY_SLINKS(entry), l->slink.max) {
++		struct dm_repl_slink *slink = slink_find(l, slink_nr);
++
++		/* Slink not configured. */
++		if (unlikely(IS_ERR(slink)))
++			continue;
++
++		/* If an slink has fallen behind an I/O threshold, it
++		 * must be marked for synchronous I/O completion. */
++		if (slink_synchronous(slink) ||
++		    SsSync(slink->caller))
++			slink_set_bit(slink_nr, ENTRY_SYNC(entry));
++	}
++}
++
++/*
++ * Always returns an initialized write entry,
++ * unless fatal memory allocation happens.
++ */
++static struct ringbuffer_entry *
++ringbuffer_alloc_entry(struct ringbuffer *ring, struct bio *bio)
++{
++	int dev_number, i;
++	struct repl_log *l = ringbuffer_repl_log(ring);
++	struct ringbuffer_entry *entry = alloc_entry(ring);
++	struct data_header *header = alloc_header(ring);
++	struct data_header_region *region;
++
++	BUG_ON(!entry);
++	BUG_ON(!header);
++	memset(entry, 0, sizeof(*entry));
++	memset(header, 0, sizeof(*header));
++
++	/* Now setup the ringbuffer_entry. */
++	atomic_set(&entry->endios, 0);
++	atomic_set(&entry->ref, 0);
++	entry->ring = ring;
++	entry->data.header = header;
++	header->wrap = WRAP_NONE;
++
++	i = ARRAY_SIZE(entry->lists.l);
++	while (i--)
++		INIT_LIST_HEAD(entry->lists.l + i);
++
++	/*
++	 * In case we're called with a bio, we're creating a new entry
++	 * or we're allocating it for reading the header in during init.
++	 */
++	if (bio) {
++		struct dm_repl_slink *slink0 = slink_find(l, 0);
++
++		_BUG_ON_PTR(slink0);
++
++		/* Setup the header region. */
++		dev_number = slink0->ops->dev_number(slink0, bio->bi_bdev);
++		BUG_ON(dev_number < 0);
++		region = &header->region;
++		region->dev = dev_number;
++		region->sector = bio_begin(bio);
++		region->size = bio->bi_size;
++		BUG_ON(!region->size);
++		header->pos.data_sectors =
++			roundup_data_sectors(bio_sectors(bio));
++
++		entry->bios.write = bio;
++		sector_range_mark_busy(entry);
++
++		/*
++		 * Successfully allocated space in the ring buffer
++		 * for this entry. Advance our in-memory tail pointer.
++		 * Round up to HEADER_SECTORS boundary for supporting
++		 * up to 4k sector sizes.
++		 */
++		mutex_lock(&ring->mutex);
++		ring->next_avail = ringbuffer_inc(ring, header);
++		mutex_unlock(&ring->mutex);
++
++		/* Bitmask of slinks to initiate copies accross. */
++		memcpy(ENTRY_SLINKS(entry), LOG_SLINKS(l), BITMAP_SIZE(l));
++
++		/* Set synchronous I/O policy mask. */
++		set_sync_mask(l, entry);
++	}
++
++	/* Add header to the ordered list of headers. */
++	list_add_tail(E_ORDERED_LIST(entry), L_ENTRY_ORDERED_LIST(l));
++
++	DMDEBUG_LIMIT("%s header->pos.header=%llu header->pos.data=%llu "
++		      "advancing ring->next_avail=%llu", __func__,
++		      (unsigned long long) header->pos.header,
++		      (unsigned long long) header->pos.data,
++		      (unsigned long long) ring->next_avail);
++	return entry;
++}
++
++/* Free a ring buffer entry and the data header hanging off it. */
++static void
++ringbuffer_free_entry(struct ringbuffer_entry *entry)
++{
++	struct ringbuffer *ring;
++
++	_BUG_ON_PTR(entry);
++	_BUG_ON_PTR(entry->data.header);
++
++	ring = entry->ring;
++	_BUG_ON_PTR(ring);
++
++	/*
++	 * Will need to change once ringbuffer_entry is
++	 * not kept around as long as the data header.
++	 */
++	if (!list_empty(E_BUSY_HASH_LIST(entry))) {
++		DMERR("%s E_BUSY_HAS_LIST not empty!", __func__);
++		BUG();
++	}
++
++	if (!list_empty(E_COPY_CONTEXT_LIST(entry))) {
++		DMERR("%s E_COPY_CONTEXT_LIST not empty!", __func__);
++		BUG();
++	}
++
++	if (!list_empty(E_ORDERED_LIST(entry)))
++		list_del(E_ORDERED_LIST(entry));
++
++	if (!list_empty(E_WRITE_OR_COPY_LIST(entry)))
++		list_del(E_WRITE_OR_COPY_LIST(entry));
++
++	free_header(entry->data.header, ring);
++	free_entry(entry, ring);
++}
++
++/* Mark a ring buffer entry invalid on the backing store device. */
++static void
++disk_header_set_invalid(void *ptr)
++{
++	((struct data_header_disk *) ptr)->valid = 0;
++}
++
++static int
++ringbuffer_mark_entry_invalid(struct ringbuffer *ring,
++			       struct ringbuffer_entry *entry)
++{
++	struct data_header *header = entry->data.header;
++
++	return header_io(WRITE, &(struct header_io_params) {
++			 DATA_HEADER, ringbuffer_repl_log(ring),
++			 header, header->pos.header, disk_header_set_invalid });
++}
++
++enum endio_type { HEADER_ENDIO = 0, DATA_ENDIO, NR_ENDIOS };
++static void
++endio(struct ringbuffer_entry *entry,
++      enum endio_type type, unsigned long error)
++{
++	*(type == DATA_ENDIO ? &entry->data.error.data :
++			       &entry->data.error.header) = error;
++
++	if (atomic_dec_and_test(&entry->endios))
++		/*
++		 * Endio processing requires disk writes to advance the log
++		 * tail pointer. So, we need to defer this to process context.
++		 * The endios are processed from the l->lists.entry.io list,
++		 * and the entry is already on that list.
++		 */
++		wake_do_log(ringbuffer_repl_log(entry->ring));
++	else
++		BUG_ON(atomic_read(&entry->endios) < 0);
++}
++
++/* Endio routine for data header io. */
++static void
++header_endio(unsigned long error, void *context)
++{
++	endio(context, HEADER_ENDIO, error);
++}
++
++/* Endio routine for data io (ie. the bio data written for an entry). */
++static void
++data_endio(unsigned long error, void *context)
++{
++	endio(context, DATA_ENDIO, error);
++}
++
++/*
++ * Place the data contained in bio asynchronously
++ * into the replog's ring buffer.
++ *
++ * This can be void, because any allocation failure is fatal and any
++ * IO errors will be reported asynchronously via dm_io() callbacks.
++ */
++static void
++ringbuffer_write_entry(struct repl_log *l, struct bio *bio)
++{
++	int i;
++	struct ringbuffer *ring = &l->ringbuffer;
++	/*
++	 * ringbuffer_alloc_entry returns an entry,
++	 * including an initialized data_header.
++	 */
++	struct ringbuffer_entry *entry = ringbuffer_alloc_entry(ring, bio);
++	struct data_header_disk *disk_header = alloc_data_header_disk(ring);
++	struct data_header *header = entry->data.header;
++	struct dev_io_params dio[] = {
++		{ /* Data IO specs. */
++		  &l->params.dev, header->pos.data, bio->bi_size,
++		  .mem = { DM_IO_BVEC, { .bvec = bio_iovec(bio) },
++			   bio_offset(bio) },
++		  .notify = { data_endio, entry }
++		},
++		{ /* Header IO specs. */
++		  &l->params.dev, header->pos.header, DATA_HEADER_DISK_SIZE,
++		  .mem = { DM_IO_KMEM, { .addr = disk_header }, 0 },
++		  .notify = { header_endio, entry }
++		},
++	};
++
++	DMDEBUG_LIMIT("in  %s %u", __func__, jiffies_to_msecs(jiffies));
++	BUG_ON(!disk_header);
++	entry->data.disk_header = disk_header;
++	data_header_to_disk(BITMAP_ELEMS(l), disk_header, header);
++
++	/* Take ringbuffer IO reference out vs. slink0. */
++	ss_io_get(l->slink0->caller);
++
++	/* Add to ordered list of active entries. */
++	list_add_tail(E_WRITE_OR_COPY_LIST(entry), L_ENTRY_RING_WRITE_LIST(l));
++
++	DMDEBUG_LIMIT("%s writing header to offset=%llu and bio for "
++		      "sector=%llu to sector=%llu/size=%llu", __func__,
++		      (unsigned long long) entry->data.header->pos.header,
++		      (unsigned long long) bio_begin(bio),
++		      (unsigned long long) entry->data.header->pos.data,
++		      (unsigned long long) to_sector(dio[1].size));
++
++	/*
++	 * Submit the writes.
++	 *
++	 * 1 I/O count for header + 1 for data
++	 */
++	i = ARRAY_SIZE(dio);
++	atomic_set(&entry->endios, i);
++	while (i--)
++		BUG_ON(dev_io(WRITE, ring, dio + i));
++
++	DMDEBUG_LIMIT("out %s %u", __func__, jiffies_to_msecs(jiffies));
++}
++
++/* Endio routine for bio data reads of off the ring buffer. */
++static void
++read_bio_vec_endio(unsigned long error, void *context)
++{
++	struct ringbuffer_entry *entry = context;
++	struct ringbuffer *ring = entry->ring;
++	struct repl_log *l = ringbuffer_repl_log(ring);
++
++	atomic_dec(&entry->endios);
++	BUG_ON(!entry->bios.read);
++	bio_endio(entry->bios.read, error ? -EIO : 0);
++	entry->bios.read = NULL;
++	entry_put(entry);
++	wake_do_log(l);
++
++	/* Release IO reference on slink0. */
++	ss_io_put(l->slink0->caller);
++}
++
++/* Read bio data of off the ring buffer. */
++static void
++ringbuffer_read_bio_vec(struct repl_log *l,
++			 struct ringbuffer_entry *entry, sector_t offset,
++			 struct bio *bio)
++{
++	/* Data IO specs. */
++	struct dev_io_params dio = {
++		&l->params.dev,
++		entry->data.header->pos.data + offset, bio->bi_size,
++		.mem = { DM_IO_BVEC, { .bvec = bio_iovec(bio) },
++			 bio_offset(bio) },
++		.notify = { read_bio_vec_endio, entry }
++	};
++
++	DMDEBUG_LIMIT("in  %s %u", __func__, jiffies_to_msecs(jiffies));
++	_BUG_ON_PTR(entry);
++	entry_get(entry);
++	atomic_inc(&entry->endios);
++
++	/* Take IO reference out vs. slink0. */
++	ss_io_get(l->slink0->caller);
++
++	DMDEBUG("%s reading bio data bio for sector=%llu/size=%llu",
++		__func__, (unsigned long long) bio_begin(bio),
++		(unsigned long long) to_sector(dio.size));
++
++	/*
++	 * Submit the read.
++	 */
++	BUG_ON(dev_io(READ, &l->ringbuffer, &dio));
++	DMDEBUG_LIMIT("out %s %u", __func__, jiffies_to_msecs(jiffies));
++}
++
++/*
++ * Advances the ring buffer head pointer, updating the in-core data
++ * and writing it to the backing store device, but only if there are
++ * inactive entries (ie. those with copies to all slinks) at the head.
++ *
++ * Returns -ve errno on failure, otherwise the number of entries freed.
++ */
++static int
++ringbuffer_advance_head(const char *caller, struct ringbuffer *ring)
++{
++	int r;
++	unsigned entries_freed = 0;
++	sector_t sectors_freed = 0;
++	struct repl_log *l = ringbuffer_repl_log(ring);
++	struct ringbuffer_entry *entry, *entry_last = NULL, *n;
++
++	/* Count any freeable entries and remeber last one. */
++	list_for_each_entry(entry, L_ENTRY_ORDERED_LIST(l),
++			    lists.l[E_ORDERED]) {
++		/* Can't advance past dirty entry. */
++		if (entry_busy(l, ENTRY_SLINKS(entry)) ||
++		    atomic_read(&entry->endios))
++			break;
++
++		BUG_ON(entry_endios_pending(entry));
++		entry_last = entry;
++		entries_freed++;
++	}
++
++	/* No entries to free. */
++	if (!entries_freed)
++		return 0;
++
++	BUG_ON(!entry_last);
++
++	/* Need safe version, because ringbuffer_free_entry removes entry. */
++	list_for_each_entry_safe(entry, n, L_ENTRY_ORDERED_LIST(l),
++				 lists.l[E_ORDERED]) {
++		struct data_header *header = entry->data.header;
++
++		BUG_ON(entry_busy(l, ENTRY_SLINKS(entry)) ||
++		       entry_endios_pending(entry) ||
++		       atomic_read(&entry->endios));
++
++		/*
++		 * If the entry wrapped around between the header and
++		 * the data or if the next entry wraps, free the
++		 * unused sectors at the end of the device.
++		 */
++		mutex_lock(&ring->mutex);
++		sectors_freed += roundup_sectors(header->pos.data_sectors)
++				 + sectors_skipped(ring, header);
++		if (likely(ring->head != ring->tail))
++			ring->head = next_start_adjust(ring, header);
++		BUG_ON(ring->head >= ring->end);
++		mutex_unlock(&ring->mutex);
++
++		/* Don't access entry after this call! */
++		ringbuffer_free_entry(entry);
++
++		if (entry == entry_last)
++			break;
++	}
++
++	DMDEBUG_LIMIT("%s (%s) advancing ring buffer head for %u "
++		      "entries to %llu",
++		      __func__, caller, entries_freed,
++		      (unsigned long long) ring->head);
++
++	/* Update ring buffer pointers in buffer header. */
++	r = buffer_header_io(WRITE, l);
++	if (likely(!r)) {
++		/* Buffer header written... */
++		mutex_lock(&ring->mutex);
++		ring->free += sectors_freed;
++		mutex_unlock(&ring->mutex);
++	}
++
++	/* Inform caller, that we're willing to receive more I/Os. */
++	ClearRingBlocked(ring);
++	ClearRingBufferFull(ring);
++	notify_caller(l, WRITE, 0);
++	if (unlikely(r < 0))
++		ringbuffer_error(RING_BUFFER_HEAD_ERROR, ring, r);
++
++	return r ? r : entries_freed;
++}
++
++/*
++ * Advances the tail pointer after a successful
++ * write of an entry to the log.
++ */
++static int
++ringbuffer_advance_tail(struct ringbuffer_entry *entry)
++{
++	int r;
++	sector_t new_tail, old_tail;
++	struct ringbuffer *ring = entry->ring;
++	struct repl_log *l = ringbuffer_repl_log(ring);
++	struct data_header *header = entry->data.header;
++
++/*
++	if (unlikely(ring->tail != header->pos.header)) {
++		DMERR("ring->tail %llu header->pos.header %llu",
++		      (unsigned long long) ring->tail,
++		      (unsigned long long) header->pos.header);
++		BUG();
++	}
++*/
++
++	mutex_lock(&ring->mutex);
++	old_tail = ring->tail;
++	/* Should we let this get out of sync? */
++	new_tail = ring->tail = next_start_adjust(ring, header);
++	BUG_ON(ring->tail >= ring->end);
++	mutex_unlock(&ring->mutex);
++
++	DMDEBUG_LIMIT("%s header->pos.header=%llu header->pos.data=%llu "
++		      "ring->tail=%llu; "
++		      "advancing ring tail pointer to %llu",
++		      __func__,
++		      (unsigned long long) header->pos.header,
++		      (unsigned long long) header->pos.data,
++		      (unsigned long long) ring->tail,
++		      (unsigned long long) ring->tail);
++
++	r = buffer_header_io(WRITE, l);
++	if (unlikely(r < 0)) {
++		/* Return the I/O size to ring->free. */
++		mutex_lock(&ring->mutex);
++		/* Make sure it wasn't changed. */
++		BUG_ON(ring->tail != new_tail);
++		ring->tail = old_tail;
++		mutex_unlock(&ring->mutex);
++
++		ringbuffer_error(RING_BUFFER_TAIL_ERROR, ring, r);
++	}
++
++	return r;
++}
++
++/* Open type <-> name mapping. */
++static const struct dm_str_descr open_types[] = {
++	{ OT_AUTO, "auto" },
++	{ OT_OPEN, "open" },
++	{ OT_CREATE, "create" },
++};
++
++/* Get slink policy flags. */
++static inline int
++_open_type(const char *name)
++{
++	return dm_descr_type(open_types, ARRAY_SIZE(open_types), name);
++}
++
++/* Get slink policy name. */
++static inline const char *
++_open_str(const int type)
++{
++	return dm_descr_name(open_types, ARRAY_SIZE(open_types), type);
++}
++
++/*
++ * Amount of free sectors in ring buffer.  This function does not take
++ * into account unused sectors at the end of the log device.
++ */
++static sector_t
++ring_free(struct ringbuffer *ring)
++{
++	if (unlikely(ring->head == ring->next_avail))
++		return ring->end - ring->start;
++	else
++		return ring->head > ring->tail ?
++		       ring->head - ring->tail :
++		       (ring->head - ring->start) + (ring->end - ring->tail);
++}
++
++static struct log_header *
++alloc_log_header(struct repl_log *l)
++{
++	struct log_header *log_header =
++		kzalloc(sizeof(*log_header), GFP_KERNEL);
++
++	if (log_header)
++		l->header.log = log_header;
++
++	return log_header;
++}
++
++static void free_log_header(struct log_header *log_header,
++			    struct ringbuffer *ring)
++{
++	kfree(log_header);
++}
++
++/* Create a new dirty log. */
++static int
++log_create(struct repl_log *l)
++{
++	int r;
++	struct log_header *log_header = l->header.log;
++	struct repl_dev *dev = &l->params.dev;
++	struct repl_params *params = &l->params;
++	struct ringbuffer *ring = &l->ringbuffer;
++
++	DMINFO("%s: creating new log", __func__);
++	_BUG_ON_PTR(log_header);
++
++	/* First, create the in-memory representation */
++	log_header->version.major = DM_REPL_LOG_MAJOR;
++	log_header->version.minor =  DM_REPL_LOG_MINOR;
++	log_header->version.subminor =  DM_REPL_LOG_MICRO;
++	log_header->size = params->dev.size;
++	log_header->buffer_header = dev->start + HEADER_SECTORS;
++
++	/* Write log header to device. */
++	r = log_header_io(WRITE, l);
++	if (unlikely(r < 0)) {
++		free_log_header(log_header, ring);
++		l->header.log = NULL;
++		return r;
++	}
++
++	/*
++	 * Initialize the ring buffer.
++	 *
++	 * Start is behind the buffer header which follows the log header.
++	 */
++	ring->start = params->dev.start;
++	ring->end = ring->start + params->dev.size;
++	ring->start += 2 * HEADER_SECTORS;
++	ring->head = ring->tail = ring->next_avail = ring->start;
++	ring->free = ring_free(ring);
++
++	DMDEBUG("%s start=%llu end=%llu free=%llu", __func__,
++		(unsigned long long) ring->start,
++		(unsigned long long) ring->end,
++		(unsigned long long) ring->free);
++
++	r = buffer_header_io(WRITE, l);
++	if (unlikely(r < 0)) {
++		free_log_header(log_header, ring);
++		l->header.log = NULL;
++		return r;
++	}
++
++	return 0;
++}
++
++/* Allocate a log_header and read header in from disk. */
++static int
++log_read(struct repl_log *l)
++{
++	int r;
++	struct log_header *log_header = l->header.log;
++	struct repl_dev *dev;
++	struct ringbuffer *ring;
++	char buf[BDEVNAME_SIZE];
++
++	_BUG_ON_PTR(log_header);
++	r = log_header_io(READ, l);
++	if (unlikely(r < 0))
++		return r;
++
++	format_dev_t(buf, l->params.dev.dm_dev->bdev->bd_dev);
++
++	/* Make sure that we can handle this version of the log. */
++	if (memcmp(&log_header->version, &my_version, sizeof(my_version)))
++		DMINFO("Found valid log header on %s", buf);
++	else
++		DM_EINVAL("On-disk version (%d.%d.%d) is "
++			  "not supported by this module.",
++			  log_header->version.major, log_header->version.minor,
++			  log_header->version.subminor);
++
++	/*
++	 * Read in the buffer_header_disk
++	 */
++	r = buffer_header_io(READ, l);
++	if (unlikely(r < 0))
++		return r;
++
++	dev = &l->params.dev;
++	ring = &l->ringbuffer;
++
++	/*
++	 * We'll go with the size in the log header and
++	 * adjust it in the worker thread when possible.
++	 */
++	ring->end = dev->start + log_header->size;
++	ring->next_avail = ring->tail;
++
++	/*
++	 * The following call to ring_free is incorrect as the free
++	 * space in the ring has to take into account the potential
++	 * for unused sectors at the end of the device.  However, once
++	 * do_log_init is called, any discrepencies are fixed there.
++	 */
++	ring->free = ring_free(ring);
 +	return 0;
 +}
 +
 +/*
-+ * End methods of "blockdev" slink type.
++ * Open and read/initialize a replicator log backing store device.
++ *
++ * Must be called with dm_io client set up, because we dm_io to the device.
 + */
-+
-+/* "blockdev" SLINK handler interface type. */
-+static struct dm_repl_slink_type blockdev_type = {
-+	.type.name = "blockdev",
-+	.type.module = THIS_MODULE,
-+
-+	.ctr = blockdev_ctr,
-+	.dtr = blockdev_dtr,
-+
-+	.postsuspend = blockdev_postsuspend,
-+	.resume = blockdev_resume,
-+
-+	.dev_add = blockdev_dev_add,
-+	.dev_del = blockdev_dev_del,
-+
-+	.copy = blockdev_copy,
-+	.io = blockdev_io,
-+	.unplug = blockdev_unplug,
-+	.recover_notify_fn_set = blockdev_recover_notify_fn_set,
-+	.set_sync = blockdev_set_sync,
-+	.flush_sync = blockdev_flush_sync,
-+	.resync = blockdev_resync,
-+	.in_sync = blockdev_in_sync,
-+
-+	.policy = blockdev_policy,
-+	.state = blockdev_state,
-+	.fallbehind = blockdev_fallbehind,
-+	.dev_number = blockdev_dev_number,
-+	.slink_number = blockdev_slink_number,
-+	.slink = blockdev_slink,
-+
-+	.message = blockdev_message,
-+	.status = blockdev_status,
-+};
-+
-+/* Destroy kmem caches on module unload. */
-+static void
-+slink_kmem_caches_exit(void)
++/* Try to read an existing log or create a new one. */
++static int
++log_init(struct repl_log *l)
 +{
-+	struct cache_defs *cd = ARRAY_END(cache_defs);
++	int r;
++	struct repl_params *p = &l->params;
++	struct log_header *log_header = alloc_log_header(l);
 +
-+	while (cd-- > cache_defs) {
-+		if (cd->cache) {
-+			kmem_cache_destroy(cd->cache);
-+			cd->cache = NULL;
++	BUG_ON(!log_header);
++
++	/* Read the log header in from disk. */
++	r = log_read(l);
++	switch (r) {
++	case 0:
++		/* Sucessfully read in the log. */
++		if (p->open_type == OT_CREATE)
++			DMERR("OT_CREATE requested: "
++			      "initializing existing log!");
++		else
++			p->dev.size = l->header.log->size;
++
++		break;
++	case -EINVAL:
++		/*
++		 * Most likely this is the initial create of the log.
++		 * But, if this is an open, return failure.
++		 */
++		if (p->open_type == OT_OPEN)
++			DMWARN("Can't create new replog on open!");
++		else
++			/* Try to create a new log. */
++			r = log_create(l);
++
++		break;
++	case -EIO:
++		DMERR("log_read IO error!");
++		break;
++	default:
++		DMERR("log_read failed with %d?", r);
++	}
++
++	return r;
++}
++
++/* Find a replog on the global list checking for bdev and start offset. */
++static struct repl_log *
++replog_find(dev_t dev, sector_t dev_start)
++{
++	struct repl_log *replog;
++
++	list_for_each_entry(replog, &replog_list, lists.l[L_REPLOG]) {
++		if (replog->params.dev.dm_dev->bdev->bd_dev == dev)
++			return likely(replog->params.dev.start == dev_start) ?
++				replog : ERR_PTR(-EINVAL);
++	}
++
++	return ERR_PTR(-ENOENT);
++}
++
++/* Clear all allocated slab objects in case of busys teardown. */
++static void
++ringbuffer_free_entries(struct ringbuffer *ring)
++{
++	struct ringbuffer_entry *entry, *n;
++	struct repl_log *l = ringbuffer_repl_log(ring);
++
++	list_for_each_entry_safe(entry, n, L_ENTRY_ORDERED_LIST(l),
++				 lists.l[E_ORDERED]) {
++		if (atomic_read(&entry->ref))
++			sector_range_clear_busy(entry);
++
++		ringbuffer_free_entry(entry);
++	}
++}
++
++static void
++replog_release(struct kref *ref)
++{
++	struct repl_log *l = container_of(ref, struct repl_log, ref);
++
++	BUG_ON(!list_empty(L_REPLOG_LIST(l)));
++	kfree(l);
++}
++
++/* Destroy replication log. */
++static void
++replog_destroy(struct repl_log *l)
++{
++	_BUG_ON_PTR(l);
++
++	if (l->io.wq)
++		destroy_workqueue(l->io.wq);
++
++	free_log_header(l->header.log, &l->ringbuffer);
++	ringbuffer_free_entries(&l->ringbuffer);
++	ringbuffer_exit(&l->ringbuffer);
++	kfree(l->io.buffer_header_disk);
++
++	if (l->io.io_client)
++		dm_io_client_destroy(l->io.io_client);
++}
++
++/* Release a reference on a replog freeing its resources on last drop. */
++static int
++replog_put(struct dm_repl_log *log, struct dm_target *ti)
++{
++	struct repl_log *l;
++
++	_SET_AND_BUG_ON_L(l, log);
++	dm_put_device(ti, l->params.dev.dm_dev);
++	return kref_put(&l->ref, replog_release);
++}
++
++/* Return ringbuffer log device size. */
++static sector_t
++replog_dev_size(struct dm_dev *dm_dev, sector_t size_wanted)
++{
++	sector_t dev_size = i_size_read(dm_dev->bdev->bd_inode) >> SECTOR_SHIFT;
++
++	return (!dev_size || size_wanted > dev_size) ? 0 : dev_size;
++}
++
++/* Get a reference on a replicator log. */
++static void do_log(struct work_struct *ws);
++static struct repl_log *
++replog_get(struct dm_repl_log *log, struct dm_target *ti,
++	   const char *path, struct repl_params *params)
++{
++	int i, r;
++	dev_t dev;
++	sector_t dev_size;
++	struct dm_dev *dm_dev;
++	char buf[BDEVNAME_SIZE];
++	struct repl_log *l;
++	struct dm_io_client *io_client;
++
++	/* Get device with major:minor or device path. */
++	r = dm_get_device(ti, path, params->dev.start, params->dev.size,
++			  FMODE_WRITE, &dm_dev);
++	if (r) {
++		DMERR("Failed to open replicator log device \"%s\" [%d]",
++		      path, r);
++		return ERR_PTR(r);
++	}
++
++	dev = dm_dev->bdev->bd_dev;
++	dev_size = replog_dev_size(dm_dev, params->dev.size);
++	if (!dev_size)
++		return ERR_PTR(-EINVAL);
++
++	/* Check if we already have a handle to this device. */
++	mutex_lock(&list_mutex);
++	l = replog_find(dev, params->dev.start);
++	if (IS_ERR(l)) {
++		mutex_unlock(&list_mutex);
++
++		if (unlikely(l == ERR_PTR(-EINVAL))) {
++			DMERR("Device open with different start offset!");
++			dm_put_device(ti, dm_dev);
++			return l;
++		}
++	} else {
++		/* Cannot create if there is an open reference. */
++		if (params->open_type == OT_CREATE) {
++			mutex_unlock(&list_mutex);
++			DMERR("OT_CREATE requested, but existing log found!");
++			dm_put_device(ti, dm_dev);
++			return ERR_PTR(-EPERM);
++		}
++
++		/* Take reference on replication log out. */
++		kref_get(&l->ref);
++		mutex_unlock(&list_mutex);
++
++		DMINFO("Found existing replog=%s", format_dev_t(buf, dev));
++
++		/* Found one, return it. */
++		log->context = l;
++		return l;
++	}
++
++	/*
++	 * There is no open log, so time to look for one on disk.
++	 */
++	l = kzalloc(sizeof(*l), GFP_KERNEL);
++	if (unlikely(!l)) {
++		DMERR("failed to allocate replicator log context");
++		dm_put_device(ti, dm_dev);
++		return ERR_PTR(-ENOMEM);
++	}
++
++	/* Preserve constructor parameters. */
++	l->params = *params;
++	l->params.dev.dm_dev = dm_dev;
++
++	log->context = l;
++	l->replog = log;
++
++	/* Init basic members. */
++	rwlock_init(&l->lists.lock);
++	rwlock_init(&l->lists.slinks.lock);
++	INIT_LIST_HEAD(&l->lists.slinks.list);
++
++	i = L_NR_LISTS;
++	while (i--)
++		INIT_LIST_HEAD(l->lists.l + i);
++
++	spin_lock_init(&l->io.lock);
++	bio_list_init(&l->io.in);
++
++	/* Take first reference out. */
++	kref_init(&l->ref);
++
++	/* Initialize ring buffer. */
++	r = ringbuffer_init(&l->ringbuffer);
++	if (unlikely(r < 0)) {
++		DMERR("failed to initialize ring buffer %d", r);
++		goto bad;
++	}
++
++	/* Preallocate to avoid stalling on OOM. */
++	l->io.buffer_header_disk =
++		kzalloc(dm_round_up(sizeof(l->io.buffer_header_disk),
++			to_bytes(1)), GFP_KERNEL);
++	if (unlikely(!l->io.buffer_header_disk)) {
++		DMERR("failed to allocate ring buffer disk header");
++		r = -ENOMEM;
++		goto bad;
++	}
++
++	/*
++	 * ringbuffer_io will only be called with I/O sizes of ti->split_io
++	 * or fewer bytes, which are boundary checked too.
++	 *
++	 * The io_client needs to be setup before we can call log_init below.
++	 */
++	io_client = dm_io_client_create(DEFAULT_BIOS * (1 + BIO_MAX_PAGES));
++	if (unlikely(IS_ERR(io_client))) {
++		DMERR("dm_io_client_create failed!");
++		r = PTR_ERR(io_client);
++		goto bad;
++	} else
++		l->io.io_client = io_client;
++
++	/* Create one worker per replog. */
++	l->io.wq = create_singlethread_workqueue(DAEMON);
++	if (unlikely(!l->io.wq)) {
++		DMERR("failed to create workqueue");
++		r = -ENOMEM;
++		goto bad;
++	} else
++		INIT_WORK(&l->io.ws, do_log);
++
++	/* Try to read an existing log or create a new one. */
++	r = log_init(l);
++	if (unlikely(r < 0))
++		goto bad;
++
++	stats_init(l);
++	ClearLogDevelStats(l);
++
++	/* Start out suspended, dm core will resume us. */
++	SetRingSuspended(&l->ringbuffer);
++	SetRingBlocked(&l->ringbuffer);
++
++	/* Link the new replog into the global list */
++	mutex_lock(&list_mutex);
++	list_add_tail(L_REPLOG_LIST(l), &replog_list);
++	mutex_unlock(&list_mutex);
++
++	return l;
++
++bad:
++	replog_destroy(l);
++	return ERR_PTR(r);
++}
++
++/* Account and entry for fallbehind and put on copy list. */
++static void
++entry_account_and_copy(struct ringbuffer_entry *entry)
++{
++	unsigned long slink_nr;
++	struct repl_log *l;
++
++	_BUG_ON_PTR(entry);
++	l = ringbuffer_repl_log(entry->ring);
++	_BUG_ON_PTR(l);
++
++	/* If there's no outstanding copies for this entry -> bail out. */
++	if (!entry_busy(l, ENTRY_SLINKS(entry)))
++		return;
++
++	_BUG_ON_PTR(entry->ring);
++
++	/* Account for fallbehind. */
++	for_each_bit(slink_nr, ENTRY_SLINKS(entry), l->slink.max) {
++		struct dm_repl_slink *slink = slink_find(l, slink_nr);
++
++		if (!IS_ERR(slink))
++			slink_fallbehind_inc(slink, entry);
++	}
++
++	/*
++	 * Initiate copies across all SLINKS by moving to
++	 * copy list in order. Because we are already processing
++	 * do_log before do_slink_ios(), we need not call wake_do_log.
++	 */
++	list_move_tail(E_WRITE_OR_COPY_LIST(entry), L_SLINK_COPY_LIST(l));
++}
++
++/* Adjust the log size. */
++static void
++do_log_resize(struct repl_log *l)
++{
++	int r = 0;
++	sector_t size_cur = l->header.log->size,
++		 size_dev = l->params.dev.size;
++
++	/* If size change requested, adjust when possible. */
++	if (size_cur != size_dev) {
++		int write = 0;
++		int grow = size_dev > size_cur;
++		struct ringbuffer *ring = &l->ringbuffer;
++
++		mutex_lock(&ring->mutex);
++
++		/* Ringbuffer empty easy case. */
++		r = ringbuffer_empty_nolock(ring);
++		if (r) {
++			ring->head = ring->tail = \
++			ring->next_avail = ring->start;
++			write = true;
++		/* Ringbuffer grow easy case. */
++		/* FIXME: check for device size valid! */
++		} else if (grow) {
++			write = true;
++		/* Ringbuffer shrink case. */
++		} else if (ring->head < ring->tail &&
++			   max(ring->tail, ring->next_avail) < size_dev)
++			write = true;
++
++		if (write) {
++			ring->end = l->header.log->size = size_dev;
++			ring->free = ring_free(ring);
++			mutex_unlock(&ring->mutex);
++
++			r = log_header_io(WRITE, l);
++			if (r)
++				DMERR("failed to write log header "
++				      "while resizing!");
++			else
++				DMINFO("%sing ringbuffer to %llu sectors",
++				       grow ? "grow" : "shrink",
++				       (unsigned long long) size_dev);
++		} else {
++			mutex_unlock(&ring->mutex);
++			r = 0;
++		}
++
++		ClearLogResize(l);
++	}
++}
++
++/*
++ * Initialize logs incore metadata.
++ */
++static void
++do_log_init(struct repl_log *l)
++{
++	int entries = 0, r;
++	sector_t sector;
++	struct ringbuffer *ring = &l->ringbuffer;
++	struct ringbuffer_entry *entry;
++
++	/* NOOP in case we're initialized already. */
++	if (TestSetLogInitialized(l))
++		return;
++
++	DMDEBUG("%s ring->head=%llu ring->tail=%llu",
++		__func__,
++		(unsigned long long) ring->head,
++		(unsigned long long) ring->tail);
++
++	/* Nothing to do if the log is empty */
++	if (ringbuffer_empty(ring))
++		goto out;
++
++	/*
++	 * Start at head and walk to tail, queuing I/O to slinks.
++	 */
++	for (sector = ring->head; sector != ring->tail;) {
++		int r;
++		struct data_header *header;
++
++		entry = ringbuffer_alloc_entry(ring, NULL); /* No bio alloc. */
++		header = entry->data.header;
++		r = data_header_io(READ, l, header, sector);
++		if (unlikely(r < 0)) {
++			/*
++			 * FIXME: as written, this is not recoverable.
++			 * 	  All ios have to be errored because
++			 * 	  of RingBufferError().
++			 */
++			ringbuffer_error(RING_BUFFER_HEADER_ERROR, ring,
++					  PTR_ERR(entry));
++			ringbuffer_free_entry(entry);
++			break;
++		} else {
++			/* Set synchronous I/O policy mask. */
++			set_sync_mask(l, entry);
++
++			/* Adjust ring->free for any skipped sectors. */
++			ring->free -= sectors_skipped(ring, header);
++
++			/*
++			 * Mark sector range busy in case the
++			 * entry hasn't been copied to slink0 yet.
++			 */
++			if (slink_test_bit(0, ENTRY_SLINKS(entry)))
++				sector_range_mark_busy(entry);
++
++			/*
++			 * Account entry for fallbehind and
++			 * put on slink copy list if needed.
++			 */
++			entry_account_and_copy(entry);
++
++			/* Advance past this entry. */
++			sector = unlikely(next_entry_wraps(header)) ?
++				 ring->start : next_start(header);
++			entries++;
++		}
++	}
++
++	DMINFO("found %d entries in the log", entries);
++
++	/* Advance head past any already copied entries. */
++	r = ringbuffer_advance_head(__func__, ring);
++	if (r >= 0)
++		DMINFO("%d entries freed", r);
++	else
++		DMERR_LIMIT("Error %d advancing ring buffer head!", r);
++
++out:
++	ClearRingBlocked(ring);
++	notify_caller(l, READ, 0);
++}
++
++/*
++ * Conditionally endio a bio, when no copies on sync slinks are pending.
++ *
++ * In case an error on site link 0 occured, the bio will be errored!
++ */
++/*
++ * FIXME: in case of no synchronous site links, the entry hasn't hit
++ * 	  the local device yet, so a potential io error on it ain't
++ * 	  available while endio processing the bio.
++ */
++static void
++entry_nosync_endio(struct ringbuffer_entry *entry)
++{
++	struct bio *bio = entry->bios.write;
++
++	/* If all sync slinks processed (if any). */
++	if (bio && !entry_busy(ringbuffer_repl_log(entry->ring),
++			       ENTRY_SYNC(entry))) {
++		DMDEBUG_LIMIT("Calling bio_endio with %u, bi_endio %p",
++			      entry->data.header->region.size, bio->bi_end_io);
++
++		/* Only error in case of site link 0 errors. */
++		bio_endio(bio,
++			  slink_test_bit(0, ENTRY_ERROR(entry)) ? -EIO : 0);
++		entry->bios.write = NULL;
++	}
++}
++
++/*
++ * Error endio the entries bio, mark the ring
++ * buffer entry invalid and advance the tail.
++ */
++static void
++entry_endio_invalid(struct repl_log *l, struct ringbuffer_entry *entry)
++{
++	int r;
++
++	DMDEBUG_LIMIT("entry %p header_err %lu, data_err %lu", entry,
++		      entry->data.error.header, entry->data.error.data);
++	BUG_ON(!entry->bios.write);
++	bio_endio(entry->bios.write, -EIO);
++
++	/* Mark the header as invalid so it is not queued for slink copies. */
++	r = ringbuffer_mark_entry_invalid(&l->ringbuffer, entry);
++	if (unlikely(r < 0)) {
++		/* FIXME: XXX
++		 * Take the device offline?
++		 */
++		DMERR("%s: I/O to sector %llu of log device "
++				"failed, and failed to mark header "
++				"invalid.  Taking device off-line.",
++				__func__,
++				(unsigned long long)
++				entry->data.header->region.sector);
++	}
++
++	ringbuffer_free_entry(entry);
++}
++
++static inline int
++cc_error_read(struct slink_copy_context *cc)
++{
++	return cc->error[ERR_DISK].read ||
++	       cc->error[ERR_RAM].read;
++}
++
++static inline int
++cc_error_write(struct slink_copy_context *cc)
++{
++	return cc->error[ERR_DISK].write ||
++	       cc->error[ERR_RAM].write;
++}
++
++static inline int
++cc_error(struct slink_copy_context *cc)
++{
++	return cc_error_read(cc) ||
++	       cc_error_write(cc);
++}
++
++/*
++ * Set state of slink_copy_context to completion.
++ *
++ * slink_copy_conmtext is the object describing a *single* copy
++ * of a particular ringbuffer entry to *one* site link.
++ *
++ * Called with list lock held.
++ */
++static void
++slink_copy_complete(struct slink_copy_context *cc)
++{
++	int slink_nr;
++	struct dm_repl_slink *slink = cc->slink;
++	struct ringbuffer_entry *entry = cc->entry;
++	struct repl_log *l = ringbuffer_repl_log(entry->ring);
++
++	_BUG_ON_PTR(slink);
++	_BUG_ON_PTR(slink->caller);
++	_BUG_ON_PTR(entry);
++	_BUG_ON_PTR(l);
++	slink_nr = slink->ops->slink_number(slink);
++	_BUG_ON_SLINK_NR(l, slink_nr);
++
++	/* The entry is no longer under I/O accross this slink. */
++	slink_clear_bit(slink_nr, ENTRY_IOS(entry));
++
++	/* The slink is no longer under I/O. */
++	slink_clear_bit(slink_nr, LOG_SLINKS_IO(l));
++
++	/* Update the I/O threshold counters */
++	slink_fallbehind_dec(slink, entry);
++
++	DMDEBUG_LIMIT("processing I/O completion for slink%d", slink_nr);
++
++	if (unlikely(cc_error(cc)) &&
++		     slink_test_bit(slink_nr, LOG_SLINKS(l))) {
++		slink_set_bit(slink_nr, ENTRY_ERROR(entry));
++		DMERR_LIMIT("copy on slink%d failed", slink_nr);
++	} else {
++		/* Flag entry copied to slink_nr. */
++		slink_clear_bit(slink_nr, ENTRY_SLINKS(entry));
++
++		/* Reset any sync copy request on entry to slink_nr. */
++		slink_clear_bit(slink_nr, ENTRY_SYNC(entry));
++	}
++
++	free_copy_context(cc, entry->ring);
++
++	/* Release slink state reference after completion. */
++	ss_io_put(slink->caller);
++}
++
++/* Check for entry with endios pending at ring buffer head. */
++static int
++ringbuffer_head_busy(struct repl_log *l)
++{
++	int r;
++	struct ringbuffer_entry *entry;
++
++	mutex_lock(&l->ringbuffer.mutex);
++
++	/*
++	 * This shouldn't happen.  Presumably this function is called
++	 * when the ring buffer is overflowing, so you would expect
++	 * at least one entry on the list!
++	 */
++	if (unlikely(list_empty(L_ENTRY_ORDERED_LIST(l))))
++		goto out_unlock;
++
++	/* The first entry on this list is the ring head. */
++	entry = list_first_entry(L_ENTRY_ORDERED_LIST(l),
++				 struct ringbuffer_entry,
++				 lists.l[E_ORDERED]);
++	r = entry_endios_pending(entry);
++	mutex_unlock(&l->ringbuffer.mutex);
++	return r;
++
++out_unlock:
++	mutex_unlock(&l->ringbuffer.mutex);
++	DMERR_LIMIT("%s called with an empty ring!", __func__);
++	return 0;
++}
++
++/*
++ * Find the first ring buffer entry with outstanding copies
++ * and record each slink that hasn't completed the copy I/O.
++ */
++static int
++find_slow_slinks(struct repl_log *l, uint64_t *slow_slinks)
++{
++	int r = 0;
++	struct ringbuffer_entry *entry;
++
++	DMDEBUG("%s", __func__);
++	/* Needed for E_COPY_CONTEXT_LIST() access. */
++	list_for_each_entry(entry, L_SLINK_COPY_LIST(l),
++			    lists.l[E_WRITE_OR_COPY]) {
++		int slink_nr;
++		struct slink_copy_context *cc;
++
++		/*
++		 * There may or may not be slink copy contexts hanging
++		 * off of the entry. If there aren't any, it means the
++		 * copy has already completed.
++		 */
++		list_for_each_entry(cc, E_COPY_CONTEXT_LIST(entry), list) {
++			struct dm_repl_slink *slink = cc->slink;
++
++			slink_nr = slink->ops->slink_number(slink);
++			_BUG_ON_SLINK_NR(l, slink_nr);
++			slink_set_bit(slink_nr, slow_slinks);
++			r = 1;
++			break;
++		}
++
++	}
++
++	if (r) {
++		/*
++		 * Check to see if all slinks are slow!  slink0 should
++		 * not be slow, one would hope!  But, we need to deal
++		 * with that case.
++		 */
++		if (slink_test_bit(0, slow_slinks)) {
++			struct slink_state *ss;
++
++			_BUG_ON_PTR(l->slink0);
++			ss = l->slink0->caller;
++			_BUG_ON_PTR(ss);
++
++			/*
++			 * If slink0 is slow, there is
++			 * obviously some other problem!
++			 */
++			DMWARN("%s: slink0 copy taking a long time "
++			       "(%u ms)", __func__,
++			       jiffies_to_msecs(jiffies) -
++			       jiffies_to_msecs(ss->fb.head_jiffies));
++			r = 0;
++		} else if (!memcmp(slow_slinks, LOG_SLINKS(l),
++				   sizeof(LOG_SLINKS(l))))
++			r = 0;
++
++		if (!r)
++			memset(slow_slinks, 0, BITMAP_SIZE(l));
++	}
++
++	return r;
++}
++
++/* Check if entry has ios scheduled on slow slinks. */
++static int
++entry_is_slow(struct ringbuffer_entry *entry, uint64_t *slow_slinks)
++{
++	unsigned long slink_nr;
++
++	for_each_bit(slink_nr, ENTRY_IOS(entry),
++		     ringbuffer_repl_log(entry->ring)->slink.max) {
++		if (test_bit(slink_nr, (void *) slow_slinks))
++			return 1;
++	}
++
++	return 0;
++}
++
++/*
++ * Cancel slink_copies to the slinks specified in the slow_slinks bitmask.
++ *
++ * This function starts at the beginning of the ordered slink copy list
++ * and frees up ring buffer entries which are waiting only for the slow
++ * slinks.  This is accomplished by marking the regions under I/O as
++ * dirty in the slink dirty logs and advancing the ring head pointer.
++ * Once a ring buffer entry is encountered that is waiting for more
++ * than just the slinks specified, the function terminates.
++ */
++static void
++repl_log_cancel_copies(struct repl_log *l, uint64_t *slow_slinks)
++{
++	int r;
++	unsigned long slink_nr;
++	struct ringbuffer *ring = &l->ringbuffer;
++	struct ringbuffer_entry *entry;
++	struct dm_repl_slink *slink;
++	struct data_header_region *region;
++	struct slink_copy_context *cc, *n;
++	static uint64_t flush_slinks[BITMAP_ELEMS_MAX],
++			flush_error[BITMAP_ELEMS_MAX],
++			stall_slinks[BITMAP_ELEMS_MAX];
++
++	DMDEBUG("%s", __func__);
++	memset(flush_slinks, 0, BITMAP_SIZE(l));
++	memset(flush_error, 0, BITMAP_SIZE(l));
++	memset(stall_slinks, 0, BITMAP_SIZE(l));
++
++	/* First walk the entry list setting region nosync state. */
++	list_for_each_entry(entry, L_SLINK_COPY_LIST(l),
++			    lists.l[E_WRITE_OR_COPY]) {
++		if (!entry_is_slow(entry, slow_slinks) ||
++		    entry_endios_pending(entry))
++			break;
++
++		region = &entry->data.header->region;
++
++		/* Needed for E_COPY_CONTEXT_LIST() access. */
++		read_lock_irq(&l->lists.lock);
++
++		/* Walk the copy context list. */
++		list_for_each_entry_safe(cc, n, E_COPY_CONTEXT_LIST(entry),
++					 list) {
++			slink = cc->slink;
++			_BUG_ON_PTR(slink);
++			slink_nr = slink->ops->slink_number(slink);
++			_BUG_ON_SLINK_NR(l, slink_nr);
++
++			/* Stall IO policy set. */
++			if (slink_stall(slink)) {
++				DMINFO_LIMIT("slink=%lu stall", slink_nr);
++				/*
++				 * Keep stall policy in bitarray
++				 * to avoid policy change race.
++				 */
++				slink_set_bit(slink_nr, stall_slinks);
++				l->stats.stall++;
++				continue;
++			}
++
++			r = slink->ops->in_sync(slink,
++						region->dev, region->sector);
++			if (r)
++				slink_set_bit(slink_nr, flush_slinks);
++
++			r = slink->ops->set_sync(slink, region->dev,
++						 region->sector, 0);
++			BUG_ON(r);
++		}
++
++		read_unlock_irq(&l->lists.lock);
++	}
++
++	/*
++	 * The dirty logs of all devices on this slink must be flushed in
++	 * this second step for performance reasons before advancing the
++	 * ring head.
++	 */
++	for_each_bit(slink_nr, (void *) flush_slinks, l->slink.max) {
++		slink = slink_find(l, slink_nr);
++		r = slink->ops->flush_sync(slink);
++
++		if (unlikely(r)) {
++			/*
++			 * What happens when the region is
++			 * marked but not flushed? Will we
++			 * still get an endio?
++			 * This code assumes not. -JEM
++			 *
++			 * If a region is marked sync, the slink
++			 * code won't select it for resync,
++			 * Hence we got to keep the buffer entries,
++			 * because we can't assume resync is
++			 * ever going to happen. -HJM
++			 */
++			DMERR_LIMIT("error flushing dirty logs "
++				    "on slink=%d",
++				    slink->ops->slink_number(slink));
++			slink_set_bit(slink_nr, flush_error);
++		} else {
++			/* Trigger resynchronization on slink. */
++			r = slink->ops->resync(slink, 1);
++			BUG_ON(r);
++		}
++	}
++
++	/* Now release copy contexts, declaring copy completion. */
++	list_for_each_entry(entry, L_SLINK_COPY_LIST(l),
++			    lists.l[E_WRITE_OR_COPY]) {
++		if (!entry_is_slow(entry, slow_slinks) ||
++		    entry_endios_pending(entry))
++			break;
++
++		/* Needed for E_COPY_CONTEXT_LIST() access. */
++		write_lock_irq(&l->lists.lock);
++
++		/* Walk the copy context list. */
++		list_for_each_entry_safe(cc, n, E_COPY_CONTEXT_LIST(entry),
++					 list) {
++			slink = cc->slink;
++			slink_nr = slink->ops->slink_number(slink);
++
++			/* Stall IO policy set. */
++			if (slink_test_bit(slink_nr, stall_slinks))
++				continue;
++
++			/* Error flushing dirty log, keep entry. */
++			if (unlikely(slink_test_bit(slink_nr, flush_error)))
++				continue;
++
++			BUG_ON(list_empty(&cc->list));
++			list_del_init(&cc->list);
++
++			/* Do not reference cc after this call. */
++			slink_copy_complete(cc);
++		}
++
++		write_unlock_irq(&l->lists.lock);
++	}
++
++	/*
++	 * Now advance the head pointer to free up room in the ring buffer.
++	 * In case we fail here, we've got both entries in the ring buffer
++	 * *and* nosync regions to recover.
++	 */
++	ringbuffer_advance_head(__func__, ring);
++}
++
++/*
++ * This function is called to free up some ring buffer space when a
++ * full condition is encountered.  The basic idea is to walk through
++ * the list of outstanding copies and see which slinks are slow to
++ * respond.  Then, we free up as many of the entries as possible and
++ * advance the ring head.
++ */
++static void
++ring_check_fallback(struct ringbuffer *ring)
++{
++	int r;
++	struct repl_log *l = ringbuffer_repl_log(ring);
++	static uint64_t slow_slinks[BITMAP_ELEMS_MAX];
++
++	DMDEBUG("%s", __func__);
++	/*
++	 * First, check to see if we can simply
++	 * free entries at the head of the ring.
++	 */
++	r = ringbuffer_advance_head(__func__, ring);
++	if (r > 0) {
++		DMINFO_LIMIT("%s: able to advance head", __func__);
++		return;
++	}
++
++	/*
++	 * Check to see if any entries at the head of the ring buffer
++	 * are currently queued for completion.  If they are, then
++	 * don't do anything here; simply allow the I/O completion to
++	 * proceed.
++	 */
++	r = ringbuffer_head_busy(l);
++	if (r) {
++		DMINFO_LIMIT("%s: endios pending.", __func__);
++		return;
++	}
++
++	/*
++	 * Take a look at the first entry in the copy list with outstanding
++	 * I/O and figure out which slinks are holding up progress.
++	 */
++	memset(slow_slinks, 0, BITMAP_SIZE(l));
++
++	r = find_slow_slinks(l, slow_slinks);
++	if (r) {
++		DMINFO_LIMIT("%s: slow slinks found.", __func__);
++		/*
++		 * Now, walk the copy list from the beginning and free
++		 * any entry which is awaiting copy completion from the
++		 * slow slinks. Once we hit an entry which is awaiting
++		 * completion from an slink other than the slow ones, we stop.
++		 */
++		repl_log_cancel_copies(l, slow_slinks);
++	} else
++		DMINFO_LIMIT("%s: no slow slinks found.", __func__);
++}
++
++static int
++entry_error(struct ringbuffer_entry *entry)
++{
++	struct entry_data *data = &entry->data;
++
++	if (unlikely(data->error.header ||
++		     data->error.data)) {
++		if (data->error.header)
++			ringbuffer_error(RING_BUFFER_HEADER_ERROR,
++					  entry->ring, -EIO);
++
++		if (data->error.data)
++			ringbuffer_error(RING_BUFFER_DATA_ERROR,
++					  entry->ring, -EIO);
++
++		return -EIO;
++	}
++
++	return 0;
++}
++
++/*
++ *  Ring buffer endio processing.  The ring buffer tail cannot be
++ *  advanced until both the data and data_header portions are written
++ *  to the log, AND all of the buffer I/O's preceding this one are in
++ *  the log have completed.
++ */
++#define	MIN_ENTRIES_INACTIVE	128
++static void
++do_ringbuffer_endios(struct repl_log *l)
++{
++	int r;
++	unsigned count = 0;
++	struct ringbuffer *ring = &l->ringbuffer;
++	struct ringbuffer_entry *entry, *entry_last = NULL, *n;
++
++	DMDEBUG_LIMIT("%s", __func__);
++
++	/*
++	 * The l->lists.entry.io list is sorted by on-disk order. The first
++	 * entry in the list will correspond to the current ring buffer tail
++	 * plus the size of the last valid entry.  We process endios in
++	 * order so that the tail is not advanced past unfinished entries.
++	 */
++
++	list_for_each_entry(entry, L_ENTRY_RING_WRITE_LIST(l),
++			    lists.l[E_WRITE_OR_COPY]) {
++		if (atomic_read(&entry->endios))
++			break;
++
++		count++;
++		entry_last = entry;
++	}
++
++	/* No inactive entries on list -> bail out. */
++	if (!count)
++		return;
++
++	BUG_ON(!entry_last);
++
++	/* Update the tail pointer once for a list of entries. */
++	DMDEBUG_LIMIT("%s advancing ring buffer tail %u entries",
++		      __func__, count);
++	r = ringbuffer_advance_tail(entry_last);
++
++	/* Now check for any errored entries. */
++	list_for_each_entry_safe(entry, n, L_ENTRY_RING_WRITE_LIST(l),
++				 lists.l[E_WRITE_OR_COPY]) {
++		struct entry_data *data = &entry->data;
++
++		_BUG_ON_PTR(data->disk_header);
++		free_data_header_disk(data->disk_header, ring);
++		data->disk_header = NULL;
++
++		ss_io_put(l->slink0->caller);
++
++		/*
++		 * Tail update error before or header/data
++		 * ring buffer write error -> error bio.
++		 */
++		if (unlikely(r || entry_error(entry)))
++			entry_endio_invalid(l, entry);
++		else {
++			/*
++			 * Handle the slink policy for sync vs. async here.
++			 *
++			 * Synchronous link means, that endio needs to be
++			 * reported *after* the slink copy of the entry
++			 * succeeded and *not* after the entry got stored
++			 * in the ring buffer. -HJM
++			 */
++			/* Endio bio in case of no sync slinks. */
++			entry_nosync_endio(entry);
++
++			/*
++			 * Account entry for fallbehind
++			 * and put on slink copy list.
++			 *
++			 * WARNING: removes entry from write list!
++			 */
++			entry_account_and_copy(entry);
++		}
++
++		if (entry == entry_last)
++			break;
++	}
++
++	/* On ring full, check if we need to fall back to bitmap mode. */
++	if (RingBufferFull(ring))
++		ring_check_fallback(ring);
++
++	/* Wake up any waiters. */
++	wake_up(&ring->flushq);
++}
++
++/*
++ * Work all site link endios (i.e. all slink_copy contexts).
++ */
++static struct slink_copy_context *
++cc_pop(struct repl_log *l)
++{
++	struct slink_copy_context *cc;
++
++	/* Pop copy_context from copy contexts list. */
++	if (list_empty(L_SLINK_ENDIO_LIST(l)))
++		cc = NULL;
++	else {
++		cc = list_first_entry(L_SLINK_ENDIO_LIST(l),
++				      struct slink_copy_context, list);
++		list_del(&cc->list);
++	}
++
++	return cc;
++}
++
++static void
++do_slink_endios(struct repl_log *l)
++{
++	int r;
++	LIST_HEAD(slink_endios);
++	struct ringbuffer *ring = &l->ringbuffer;
++	struct ringbuffer_entry *entry = NULL;
++	struct data_header *header;
++
++	DMDEBUG_LIMIT("%s", __func__);
++
++	while (1) {
++		int slink_nr;
++		struct slink_copy_context *cc;
++		struct dm_repl_slink *slink;
++
++		/* Pop copy_context from copy contexts list. */
++		write_lock_irq(&l->lists.lock);
++		cc = cc_pop(l);
++		if (!cc) {
++			write_unlock_irq(&l->lists.lock);
++			break;
++		}
++
++		/* No active copy on endios list! */
++		BUG_ON(atomic_read(&cc->cnt));
++
++		slink = cc->slink;
++		entry = cc->entry;
++
++		/* Do not reference cc after this call. */
++		slink_copy_complete(cc);
++
++		write_unlock_irq(&l->lists.lock);
++
++		_BUG_ON_PTR(slink);
++		_BUG_ON_PTR(slink->ops);
++		_BUG_ON_PTR(entry);
++
++		/*
++		 * All reads are serviced from slink0 (for now), so mark
++		 * sectors as no longer under I/O once the copy to slink0
++		 * is complete.
++		 */
++		slink_nr = slink->ops->slink_number(slink);
++		_BUG_ON_SLINK_NR(l, slink_nr);
++		if (!slink_nr)
++			sector_range_clear_busy(entry);
++
++		/* If all synchronous site links processed, endio here. */
++		entry_nosync_endio(entry);
++
++		/*
++		 * Update data header on disk to reflect the ENTRY_SLINK
++		 * change so that we don't pick up a copy which has
++		 * finished again on restart.
++		 *
++		 * FIXME: this throttles throughput on fast site links.
++		 */
++		header = entry->data.header;
++		_BUG_ON_PTR(header);
++		r = data_header_io(WRITE, l, header, header->pos.header);
++		if (unlikely(r < 0)) {
++			DMERR_LIMIT("Writing data header at %llu",
++				    (unsigned long long) header->pos.header);
++
++			/* Flag error on all slinks because we can't recover. */
++			for_each_bit(slink_nr, LOG_SLINKS(l), l->slink.max)
++				slink_set_bit(slink_nr, ENTRY_ERROR(entry));
++		}
++	}
++
++	/*
++	 * If all slinks are up-to-date, then we can advance
++	 * the ring buffer head pointer and remove the entry
++	 * from the slink copy list.
++	 */
++	r = ringbuffer_advance_head(__func__, ring);
++	if (r < 0)
++		DMERR_LIMIT("Error %d advancing ring buffer head!", r);
++}
++
++/*
++ * Read a bio (partially) of off log:
++ *
++ * o check if bio's data is completely in the log
++ *   -> redirect N reads to the log
++ *   (N = 1 for simple cases to N > 1)
++ * o check if bio's data is split between log and LD
++ *   -> redirect N parts to the log
++ *   -> redirect 1 part to the LD
++ * o if bio'data is on the LD
++ */
++#define DO_INFO1 \
++DMDEBUG_LIMIT("%s overlap for bio_range.start=%llu bio_range.end=%llu " \
++	      "entry_range.start=%llu entry_range.end=%llu", __func__, \
++	      (unsigned long long) bio_range.start, \
++	      (unsigned long long) bio_range.end, \
++	      (unsigned long long) entry_range.start, \
++	      (unsigned long long) entry_range.end);
++#define DO_INFO2 \
++DMDEBUG_LIMIT("%s NO overlap for bio_range.start=%llu bio_range.end=%llu " \
++	      "entry_range.start=%llu entry_range.end=%llu", __func__, \
++	      (unsigned long long) bio_range.start, \
++	      (unsigned long long) bio_range.end, \
++	      (unsigned long long) entry_range.start, \
++	      (unsigned long long) entry_range.end);
++static int
++bio_read(struct repl_log *l, struct bio *bio, struct list_head *buckets[2])
++{
++	int r;
++	unsigned i;
++	struct ringbuffer_entry *entry;
++	struct sector_range bio_range = {
++		.start = bio_begin(bio),
++		.end = bio_end(bio),
++	}, entry_range;
++
++	/* Figure overlapping areas. */
++	r = 0;
++	for (i = 0; buckets[i] && i < 2; i++) {
++		/* Find entry from end of bucket. */
++		list_for_each_entry_reverse(entry, buckets[i],
++					    lists.l[E_BUSY_HASH]) {
++			entry_range.start = entry->data.header->region.sector;
++			entry_range.end = entry_range.start +
++			round_up_to_sector(entry->data.header->region.size);
++
++			if (ranges_overlap(&bio_range, &entry_range)) {
++				if (bio_range.start >= entry_range.start &&
++				    bio_range.end <= entry_range.end) {
++					sector_t off;
++
++					entry->bios.read = bio;
++					DO_INFO1;
++					off = bio_range.start -
++					      entry_range.start;
++					ringbuffer_read_bio_vec(l, entry,
++								 off, bio);
++					return 0;
++				} else
++					DO_INFO2;
++			} else
++				goto out;
++		}
++	}
++
++	/*
++	 * slink->ops->io() will check if region is in sync
++	 * and return -EAGAIN in case the I/O needs
++	 * to be delayed. Returning -ENODEV etc. is fatal.
++	 *
++	 * WARNING: bio->bi_bdev changed after return!
++	 */
++	/*
++	 * Reading of off log:
++	 * o check if bio's data is completely in the log
++	 *   -> redirect N reads to the log
++	 *   (N = 1 for simple cases to N > 1)
++	 * o check if bio's data is split between log and LD
++	 *   -> redirect N parts to the log
++	 *   -> redirect 1 part to the LD
++	 * o if bio'data is on the LD
++	 */
++out:
++	return -EAGAIN;
++}
++#undef DO_INFO1
++#undef DO_INFO2
++
++static int
++ringbuffer_read_bio(struct repl_log *l, struct bio *bio)
++{
++	int r;
++	struct ringbuffer *ring = &l->ringbuffer;
++	struct dm_repl_slink *slink0 = slink_find(l, 0);
++	struct list_head *buckets[2];
++
++	if (IS_ERR(slink0))
++		return PTR_ERR(slink0);
++
++	/*
++	 * Check if there's writes pending to the area the bio intends
++	 * to read and if so, satisfy request from ring buffer.
++	 */
++	/* We've got writes in the log for this bio. */
++	r = ringbuffer_writes_pending(&ring->busy_sectors, bio, buckets);
++	if (r) {
++		atomic_inc(&l->stats.writes_pending);
++		r = bio_read(l, bio, buckets);
++	/* Simple case: no writes in the log for this bio. */
++	} else {
++		/*
++		 * slink->ops->io() will check if region is in sync
++		 * and return -EAGAIN in case the I/O needs
++		 * to be delayed. Returning -ENODEV etc. is fatal.
++		 *
++		 * WARNING: bio->bi_bdev changed after return!
++		 */
++		r = slink0->ops->io(slink0, bio, 0);
++		if (r < 0)
++			/* No retry possibility is fatal. */
++			BUG_ON(unlikely(r != -EAGAIN));
++	}
++
++	return r;
++}
++
++/* Work on any IOS queued into the ring buffer. */
++static void
++do_ringbuffer_ios(struct repl_log *l)
++{
++	int r;
++	struct bio *bio;
++	struct bio_list ios_in;
++
++	DMDEBUG_LIMIT("%s %u start", __func__, jiffies_to_msecs(jiffies));
++
++	bio_list_init(&ios_in);
++
++	/* Quickly grab the bio input list. */
++	spin_lock(&l->io.lock);
++	bio_list_merge(&ios_in, &l->io.in);
++	bio_list_init(&l->io.in);
++	spin_unlock(&l->io.lock);
++
++	while ((bio = bio_list_pop(&ios_in))) {
++		/* FATAL: ring buffer I/O error ocurred! */
++		if (unlikely(RingBufferError(&l->ringbuffer)))
++			bio_endio(bio, -EIO);
++		else if (bio_data_dir(bio) == READ) {
++			r = ringbuffer_read_bio(l, bio);
++			/* We have to wait. */
++			if (r < 0) {
++				bio_list_push(&ios_in, bio);
++				break;
++			}
++		} else
++			/* Insert new write bio into ring buffer. */
++			ringbuffer_write_entry(l, bio);
++	}
++
++	DMDEBUG_LIMIT("%s %u end ", __func__, jiffies_to_msecs(jiffies));
++
++	if (!bio_list_empty(&ios_in)) {
++		spin_lock(&l->io.lock);
++		bio_list_merge_head(&l->io.in, &ios_in);
++		spin_unlock(&l->io.lock);
++	}
++}
++
++/*
++ * Set any slinks requested by the recovery callback to accessible.
++ *
++ * Needs doing in the main worker thread in order to avoid
++ * a race between do_slink_ios() and slink_recover_callback(),
++ * which is being called asynchrnously from the slink module.
++ */
++static void
++do_slinks_accessible(struct repl_log *l)
++{
++	unsigned long slink_nr;
++
++	/* Reset any requested inaccessible bits. */
++	for_each_bit(slink_nr, LOG_SLINKS(l), l->slink.max) {
++		if (slink_test_bit(slink_nr, LOG_SLINKS_SET_ACCESSIBLE(l))) {
++			slink_clear_bit(slink_nr, LOG_SLINKS_INACCESSIBLE(l));
++			slink_clear_bit(slink_nr, LOG_SLINKS_SET_ACCESSIBLE(l));
 +		}
 +	}
 +}
 +
-+/* Create kmem caches on module load. */
++/* Drop reference on a copy context and put on endio list on last drop. */
++static void
++slink_copy_context_put(struct slink_copy_context *cc)
++{
++	DMDEBUG_LIMIT("%s", __func__);
++
++	if (atomic_dec_and_test(&cc->cnt)) {
++		int slink_nr;
++		unsigned long flags;
++		struct repl_log *l = ringbuffer_repl_log(cc->entry->ring);
++		struct dm_repl_slink *slink = cc->slink;
++
++		/* last put, schedule completion */
++		DMDEBUG_LIMIT("last put, scheduling do_log");
++
++		_BUG_ON_PTR(l);
++		_BUG_ON_PTR(slink);
++		slink_nr = slink->ops->slink_number(slink);
++		_BUG_ON_SLINK_NR(l, slink_nr);
++
++		write_lock_irqsave(&l->lists.lock, flags);
++		BUG_ON(list_empty(&cc->list));
++		list_move_tail(&cc->list, L_SLINK_ENDIO_LIST(l));
++		write_unlock_irqrestore(&l->lists.lock, flags);
++
++		wake_do_log(l);
++	} else
++		BUG_ON(atomic_read(&cc->cnt) < 0);
++}
++
++enum slink_endio_type { SLINK_ENDIO_RAM, SLINK_ENDIO_DISK };
++static void
++slink_copy_endio(enum slink_endio_type type, int read_err, int write_err,
++		 void *context)
++{
++	struct slink_copy_context *cc = context;
++	struct slink_copy_error *error;
++
++	DMDEBUG_LIMIT("%s", __func__);
++	_BUG_ON_PTR(cc);
++	error = cc->error;
++
++	if (type == SLINK_ENDIO_RAM) {
++		/* On RAM endio error, no disk callback will be performed. */
++		if (unlikely(read_err || write_err))
++			atomic_dec(&cc->cnt);
++
++		error += ERR_RAM;
++	} else
++		error += ERR_DISK;
++
++	error->read = read_err;
++	error->write = write_err;
++	slink_copy_context_put(cc);
++}
++
++/* Callback for copy in RAM. */
++static void
++slink_copy_ram_endio(int read_err, int write_err, void *context)
++{
++	slink_copy_endio(SLINK_ENDIO_RAM, read_err, write_err, context);
++}
++
++/* Callback for copy on disk. */
++static void
++slink_copy_disk_endio(int read_err, int write_err, void *context)
++{
++	slink_copy_endio(SLINK_ENDIO_DISK, read_err, write_err, context);
++}
++
++/*
++ * Called back when:
++ *
++ * o site link recovered from failure
++ * o site link recovered a region.
++ */
++static void
++slink_recover_callback(int read_err, int write_err, void *context)
++{
++	unsigned slink_nr;
++	struct repl_log *l;
++	struct slink_state *ss = context;
++
++	_BUG_ON_PTR(ss);
++	l = ss->l;
++	_BUG_ON_PTR(l);
++	slink_nr = ss->slink_nr;
++	_BUG_ON_SLINK_NR(l, slink_nr);
++
++	DMDEBUG_LIMIT("%s slink=%d", __func__, slink_nr);
++
++	if (!read_err && !write_err)
++		slink_set_bit(slink_nr, LOG_SLINKS_SET_ACCESSIBLE(l));
++
++	/* Inform caller, that we're willing to receive more I/Os. */
++	notify_caller(l, WRITE, 0);
++
++	/* Wakeup worker to allow for further IO. */
++	wake_do_log(l);
++}
++
++/* Initialize slink_copy global properties independent of entry. */
++static void
++slink_copy_init(struct dm_repl_slink_copy *slink_copy, struct repl_log *l)
++{
++	/*
++	 * The source block device (ie. the ring buffer device)
++	 * is the same for all I/Os.
++	 */
++	slink_copy->src.type = DM_REPL_SLINK_BLOCK_DEVICE;
++	slink_copy->src.dev.bdev = repl_log_bdev(l);
++
++	/* The destination is identified by slink and device number. */
++	slink_copy->dst.type = DM_REPL_SLINK_DEV_NUMBER;
++
++	/* RAM, disk, slink recovery callbacks. */
++	slink_copy->ram.fn = slink_copy_ram_endio;
++	slink_copy->disk.fn = slink_copy_disk_endio;
++}
++
++/* Initialize slink_copy global properties dependent of entry. */
++static void
++slink_copy_addr(struct dm_repl_slink_copy *slink_copy,
++		struct ringbuffer_entry *entry)
++{
++	struct data_header *header = entry->data.header;
++	struct data_header_region *region;
++
++	_BUG_ON_PTR(header);
++	region = &header->region;
++	_BUG_ON_PTR(region);
++
++	/* The offset/size to copy from is given by the entry. */
++	slink_copy->src.sector = header->pos.data;
++
++	/* Most of the destination is the same across slinks. */
++	slink_copy->dst.dev.number.dev = region->dev;
++	slink_copy->dst.sector = region->sector;
++	slink_copy->size = region->size;
++}
++
++/* Allocate and initialize and slink_copy_context structure. */
++static inline struct slink_copy_context *
++slink_copy_context_alloc(struct ringbuffer_entry *entry,
++			 struct dm_repl_slink *slink)
++{
++	struct slink_copy_context *cc = alloc_copy_context(entry->ring);
++
++	BUG_ON(!cc);
++	memset(cc, 0, sizeof(*cc));
++
++	/* NR_ENDIOS # of endios callbacks per copy (RAM and disk). */
++	atomic_set(&cc->cnt, NR_ENDIOS);
++	cc->entry = entry;
++	cc->slink = slink;
++	cc->start_jiffies = jiffies;
++	return cc;
++}
++
++/* Trigger/prohibit resynchronization on all site links. */
++enum resync_switch { RESYNC_OFF = 0, RESYNC_ON };
++static void
++resync_on_off(struct repl_log *l, enum resync_switch resync)
++{
++	unsigned long slink_nr;
++	struct dm_repl_slink *slink;
++
++	for_each_bit(slink_nr, LOG_SLINKS(l), l->slink.max) {
++		slink = slink_find(l, slink_nr);
++		if (!IS_ERR(slink))
++			slink->ops->resync(slink, resync);
++	}
++}
++
++/* Return true if all slinks processed (either active or inaccessible). */
 +static int
-+slink_kmem_caches_init(void)
++all_slinks_processed(struct repl_log *l)
++{
++	unsigned slinks = 0;
++	unsigned long slink_nr;
++
++	for_each_bit(slink_nr, LOG_SLINKS_IO(l), l->slink.max)
++		slinks++;
++
++	for_each_bit(slink_nr, LOG_SLINKS_INACCESSIBLE(l), l->slink.max)
++		slinks++;
++
++	return slinks >= l->slink.count;
++}
++
++/*
++ * Work all site link copy orders.
++ */
++static void
++do_slink_ios(struct repl_log *l)
++{
++	unsigned long slink_nr;
++	struct ringbuffer_entry *entry;
++	struct dm_repl_slink *slink;
++	static struct dm_repl_slink_copy slink_copy;
++
++	/* If there's no entries on the copy list, allow resync. */
++	if (list_empty(L_SLINK_COPY_LIST(l)))
++		return resync_on_off(l, RESYNC_ON);
++
++	/*
++	 * ...else prohibit resync.
++	 *
++	 * We'll deal with any active resynchronization based
++	 * on the return code of slink->ops->copy() below.
++	 */
++	resync_on_off(l, RESYNC_OFF);
++
++	/*
++	 * This list is ordered, how do we keep it so that endio processing
++	 * is ordered?  We need this so that head pointer advances in order.
++	 *
++	 * We do that by changing ringbuffer_advance_head() to check
++	 * for entry_busy(l, ENTRY_SLINKS(entry))) and stop processing. -HJM
++	 */
++
++	/* Initialize global properties, which are independent of the entry. */
++	slink_copy_init(&slink_copy, l);
++
++	/* Walk all entries on the slink copy list. */
++	list_for_each_entry(entry, L_SLINK_COPY_LIST(l),
++			    lists.l[E_WRITE_OR_COPY]) {
++		int r;
++		unsigned copies = 0;
++
++		/* Check, if all slinks processed now. */
++		r = all_slinks_processed(l);
++		if (r)
++			break;
++
++		/* Set common parts independent of slink up. */
++		slink_copy_addr(&slink_copy, entry);
++
++		/* Walk all slinks, which still need this entry. */
++		for_each_bit(slink_nr, ENTRY_SLINKS(entry), l->slink.max) {
++			int teardown;
++			struct slink_copy_context *cc;
++			struct slink_state *ss;
++
++			/*
++			 * One maximum write pending to slink already
++			 * -or-
++			 * slink is recovering this region.
++			 */
++			if (slink_test_bit(slink_nr, LOG_SLINKS_IO(l)) ||
++			    slink_test_bit(slink_nr,
++					   LOG_SLINKS_INACCESSIBLE(l)))
++				continue;
++
++			/*
++			 * Check for deleted or being torn down site link.
++			 */
++			slink = slink_find(l, slink_nr);
++			if (unlikely(IS_ERR(slink))) {
++				DMERR_LIMIT("%s no slink!", __func__);
++				ss = NULL;
++				teardown = 0;
++			} else {
++				ss = slink->caller;
++				_BUG_ON_PTR(ss);
++				teardown = SsTeardown(ss);
++			}
++
++			if (unlikely(IS_ERR(slink) ||
++				     teardown ||
++				     !slink_test_bit(slink_nr,
++						     LOG_SLINKS(l)))) {
++drop_copy:
++				if (IS_ERR(slink))
++					DMERR_LIMIT("%s: slink %lu not "
++						    "configured!",
++						    __func__, slink_nr);
++				else
++					/* Correct fallbehind account. */
++					slink_fallbehind_dec(slink, entry);
++
++				/* Flag entry copied to slink_nr. */
++				slink_clear_bit(slink_nr, ENTRY_SLINKS(entry));
++
++				/* Reset any sync copy request to slink_nr. */
++				slink_clear_bit(slink_nr, ENTRY_SYNC(entry));
++
++				if (!slink_nr)
++					sector_range_clear_busy(entry);
++
++				continue;
++			}
++
++			/* Take slink reference out. */
++			ss_io_get(ss);
++
++			/* Flag active copy to slink+entry, */
++			slink_set_bit(slink_nr, LOG_SLINKS_IO(l));
++			slink_set_bit(slink_nr, ENTRY_IOS(entry));
++
++			/* Fill in the destination slink number. */
++			slink_copy.dst.dev.number.slink = slink_nr;
++
++			/* Setup the callback data. */
++			cc = slink_copy_context_alloc(entry, slink);
++			BUG_ON(!cc);
++			slink_copy.ram.context = slink_copy.disk.context = cc;
++
++			/*
++			 * Add to entrys copy list of active copies in
++			 * order to avoid race with ->copy() endio function
++			 * accessing cc->list.
++			 */
++			write_lock_irq(&l->lists.lock);
++			list_add_tail(&cc->list, E_COPY_CONTEXT_LIST(entry));
++			write_unlock_irq(&l->lists.lock);
++
++			DMDEBUG("slink0->ops->copy() from log, sector=%llu, "
++				"size=%u to dev_number=%d, sector=%llu "
++				"on slink=%u",
++				(unsigned long long) slink_copy.src.sector,
++				slink_copy.size,
++				slink_copy.dst.dev.number.dev,
++				(unsigned long long) slink_copy.dst.sector,
++				slink_copy.dst.dev.number.slink);
++
++
++			/*
++			 * slink->ops->copy() may return:
++			 *
++			 * o -EAGAIN in case of prohibiting I/O because
++			 *    of device inaccessibility/suspension
++			 *    or device I/O errors
++			 *    (i.e. link temporarilly down) ->
++			 *    caller is allowed to retry the I/O later once
++			 *    he'll have received a callback.
++			 *
++			 * o -EACCES in case a region is being resynchronized
++			 *    and the source region is being read to copy data
++			 *    accross to the same region of the replica (RD) ->
++			 *    caller is allowed to retry the I/O later once
++			 *    he'll have received a callback.
++			 *
++			 * o -ENODEV in case a device is not configured
++			 *    caller must drop the I/O to the device/slink pair.
++			 *
++			 * o -EPERM in case a region is out of sync ->
++			 *    caller must drop the I/O to the device/slink pair.
++			 */
++			r = slink->ops->copy(slink, &slink_copy, 0);
++			if (unlikely(r < 0)) {
++				DMDEBUG_LIMIT("Copy to slink%d/dev%d/"
++					      "sector=%llu failed with %d.",
++					      slink_copy.dst.dev.number.slink,
++					      slink_copy.dst.dev.number.dev,
++					      (unsigned long long)
++					      slink_copy.dst.sector, r);
++
++				/*
++				 * Failed -> take off entrys copies list
++				 * 	     and free copy contrext.
++				 */
++				write_lock_irq(&l->lists.lock);
++				list_del_init(&cc->list);
++				write_unlock_irq(&l->lists.lock);
++
++				free_copy_context(cc, entry->ring);
++
++				/* Reset active I/O on slink+entry. */
++				slink_clear_bit(slink_nr, LOG_SLINKS_IO(l));
++				slink_clear_bit(slink_nr, ENTRY_IOS(entry));
++
++				/* Release slink reference. */
++				ss_io_put(ss);
++
++				/*
++				 * Source region is being read for recovery
++				 * or device is temporarilly inaccessible ->
++				 * retry later once accessible again.
++				 */
++				if (r == -EACCES ||
++				    r == -EAGAIN) {
++					slink_set_bit(slink_nr,
++						LOG_SLINKS_INACCESSIBLE(l));
++
++				/*
++				 * Device not on slink
++				 * -or-
++				 * region not in sync -> avoid copy.
++				 */
++				} else if (r == -ENODEV ||
++					   r == -EPERM)
++					goto drop_copy;
++				else
++					BUG();
++			} else
++				copies++;
++		}
++
++		if (copies)
++			l->stats.copy[copies > 1]++;
++	}
++}
++
++/* Unplug device queues with entries on all site links. */
++static void
++do_unplug(struct repl_log *l)
++{
++	struct dm_repl_slink *slink;
++	unsigned long slink_nr;
++
++	/* Conditionally unplug ring buffer. */
++	if (TestClearRingBufferIOQueued(&l->ringbuffer))
++		blk_unplug(bdev_get_queue(ringbuffer_bdev(&l->ringbuffer)));
++
++	/* Unplug any devices with queued IO on site links. */
++	for_each_bit(slink_nr, LOG_SLINKS(l), l->slink.max) {
++		slink = slink_find(l, slink_nr);
++		if (!IS_ERR(slink))
++			slink->ops->unplug(slink);
++	}
++}
++
++/* Take out/drop slink state references to synchronize with slink delition. */
++enum reference_type { REF_GET, REF_PUT };
++static inline void
++ss_ref(enum reference_type type, struct repl_log *l)
++{
++	unsigned long slink_nr;
++	void (*f)(struct slink_state *) =
++		type == REF_GET ? ss_io_get : ss_io_put;
++
++	if (!l->slink0)
++		return;
++
++	for_each_bit(slink_nr, LOG_SLINKS(l), l->slink.max) {
++		struct dm_repl_slink *slink =
++			l->slink0->ops->slink(l->replog, slink_nr);
++
++		_BUG_ON_PTR(slink);
++		f(slink->caller);
++	}
++}
++
++/*
++ * Worker thread.
++ *
++ * Belabour any:
++ * o replicator log ring buffer initialization
++ * o endios on the ring buffer
++ * o endios on any site links
++ * o I/O on site links (copies of buffer entries via site links to [LR]Ds
++ * o I/O to the ring buffer
++ *
++ */
++static void
++do_log(struct work_struct *ws)
++{
++	struct repl_log *l = container_of(ws, struct repl_log, io.ws);
++
++	/* Take out references vs. removal races. */
++	spin_lock(&l->io.lock);
++	ss_ref(REF_GET, l);
++	spin_unlock(&l->io.lock);
++
++	if (!RingSuspended(&l->ringbuffer)) {
++		do_log_init(l);
++		do_log_resize(l);
++	}
++
++	/* Allow for endios at any time, even while suspended. */
++	do_ringbuffer_endios(l); /* Must be called before do_slink_ios. */
++
++	/* Don't allow for new I/Os while suspended. */
++	if (!RingSuspended(&l->ringbuffer)) {
++		int r;
++
++		do_slink_endios(l);
++		do_ringbuffer_ios(l);
++
++		/*
++		 * Set any slinks requested to accessible
++		 * before checking all_slinks_processed().
++		 */
++		do_slinks_accessible(l);
++
++		/* Only initiate slink copies if not all slinks active. */
++		r = all_slinks_processed(l);
++		if (!r)
++			do_slink_ios(l);
++
++		do_unplug(l);
++	}
++
++	ss_ref(REF_PUT, l);
++}
++
++/*
++ * Start methods of "default" type
++ */
++/* Destroy a replicator log context. */
++static void
++ringbuffer_dtr(struct dm_repl_log *log, struct dm_target *ti)
++{
++	struct repl_log *l;
++
++	DMDEBUG("%s: log %p", __func__, log);
++	_SET_AND_BUG_ON_L(l, log);
++
++	/* Remove from the global list of replogs. */
++	mutex_lock(&list_mutex);
++	list_del_init(L_REPLOG_LIST(l));
++	mutex_unlock(&list_mutex);
++
++	replog_destroy(l);
++	BUG_ON(!replog_put(log, ti));
++}
++
++/*
++ * Construct a replicator log context.
++ *
++ * Arguments:
++ * 	#replog_params dev_path dev_start [auto/create/open [size]
++ *
++ * dev_path = device path of replication log (REPLOG) backing store
++ * dev_start = offset in sectors to REPLOG header
++ *
++ * auto = causes open of an REPLOG with a valid header or
++ *        creation of a new REPLOG in case the header's invalid.
++ * <#replog_params> = 2 or (3 and "open")
++ *      -> the cache device must be initialized or the constructor will fail.
++ * <#replog_params> = 4 and "auto"
++ * 	-> if not already initialized, the log device will get initialized
++ * 	   and sized to "size", otherwise it'll be opened.
++ * <#replog_params> = 4 and 'create'
++ * 	-> the log device will get initialized if not active and sized to
++ *         "size"; if the REPLOG is active 'create' will fail.
++ *
++ * The above roughly translates to:
++ *  argv[0] == #params
++ *  argv[1] == dev_name
++ *  argv[2] == dev_start
++ *  argv[3] == OT_OPEN|OT_CREATE|OT_AUTO
++ *  argv[4] == size in sectors
++ */
++#define	MIN_ARGS	3
++static int
++ringbuffer_ctr(struct dm_repl_log *log, struct dm_target *ti,
++	       unsigned argc, char **argv)
++{
++	int open_type, params;
++	unsigned long long tmp;
++	struct repl_log *l;
++	struct repl_params p;
++
++	SHOW_ARGV;
++
++	if (unlikely(argc < MIN_ARGS))
++		DM_EINVAL("%s: at least 3 args required, only got %d\n",
++			  __func__, argc);
++
++	memset(&p, 0, sizeof(p));
++
++	/* Get # of parameters. */
++	if (unlikely(sscanf(argv[0], "%d", &params) != 1 ||
++	    params < 2 ||
++	    params > 5)) {
++		DM_EINVAL("invalid replicator log device start");
++	} else
++		p.count = params;
++
++	if (params == 2)
++		open_type = OT_OPEN;
++	else {
++		open_type = _open_type(argv[3]);
++		if (unlikely(open_type < 0))
++			return -EINVAL;
++		else if (unlikely(open_type == OT_OPEN && params > 3))
++			DM_EINVAL("3 arguments required for open, %d given.",
++				  params);
++	}
++
++	p.open_type = open_type;
++
++	if (params > 3) {
++		/* Get device size argument. */
++		if (unlikely(sscanf(argv[4], "%llu", &tmp) != 1 ||
++		    tmp < LOG_SIZE_MIN)) {
++			DM_EINVAL("invalid replicator log device size");
++		} else
++			p.dev.size = tmp;
++
++	} else
++		p.dev.size = LOG_SIZE_MIN;
++
++	if (unlikely((open_type == OT_AUTO || open_type == OT_CREATE) &&
++		     params < 4))
++		DM_EINVAL("4 arguments required for auto and create");
++
++	/* Get device start argument. */
++	if (unlikely(sscanf(argv[2], "%llu", &tmp) != 1))
++		DM_EINVAL("invalid replicator log device start");
++	else
++		p.dev.start = tmp;
++
++	/* Get a reference on the replog. */
++	l = replog_get(log, ti, argv[1], &p);
++	if (unlikely(IS_ERR(l)))
++		return PTR_ERR(l);
++
++	return 0;
++}
++
++/* Flush the current log contents. This function may block. */
++static int
++ringbuffer_flush(struct dm_repl_log *log)
++{
++	struct repl_log *l;
++	struct ringbuffer *ring;
++
++	DMDEBUG("%s", __func__);
++	_SET_AND_BUG_ON_L(l, log);
++	ring = &l->ringbuffer;
++
++	wake_do_log(l);
++	wait_event(ring->flushq, ringbuffer_empty(ring));
++	return 0;
++}
++
++/* Suspend method. */
++/*
++ * FIXME: we're suspending/resuming the whole ring buffer,
++ *	  not just the device requested. Avoiding this complete
++ *	  suspension would afford knowledge on the reason for the suspension.
++ *	  E.g. in case of device removal, we could avoid suspending completely.
++ *	  Don't know how we can optimize this w/o a bitmap
++ *	  for the devices, hence limiting dev_numbers. -HJM
++ */
++static int
++ringbuffer_postsuspend(struct dm_repl_log *log, int dev_number)
++{
++	struct repl_log *l;
++
++	_SET_AND_BUG_ON_L(l, log);
++	flush_workqueue(l->io.wq);
++
++	if (TestSetRingSuspended(&l->ringbuffer))
++		DMWARN("%s ring buffer already suspended", __func__);
++
++	flush_workqueue(l->io.wq);
++	SetRingBlocked(&l->ringbuffer);
++	ss_all_wait_on_ios(l);
++	return 0;
++}
++
++/* Resume method. */
++static int
++ringbuffer_resume(struct dm_repl_log *log, int dev_number)
++{
++	struct repl_log *l;
++	struct ringbuffer *ring;
++
++	_SET_AND_BUG_ON_L(l, log);
++
++	ring = &l->ringbuffer;
++	if (!TestClearRingSuspended(ring))
++		DMWARN("%s ring buffer already resumed", __func__);
++
++	ClearRingBlocked(ring);
++	notify_caller(l, WRITE, 0);
++	wake_do_log(l);
++	return 0;
++}
++
++/*
++ * Queue a bio to the worker thread ensuring, that
++ * there's enough space for writes in the ring buffer.
++ */
++static inline int
++queue_bio(struct repl_log *l, struct bio *bio)
++{
++	int rw = bio_data_dir(bio);
++	struct ringbuffer *ring = &l->ringbuffer;
++
++	/*
++	 * Try reserving space for the bio in the
++	 * buffer and mark the sector range busy.
++	 */
++	if (rw == WRITE) {
++		int r;
++
++		mutex_lock(&ring->mutex);
++		r = ringbuffer_reserve_space(ring, bio);
++		mutex_unlock(&ring->mutex);
++
++		/* Ring buffer full. */
++		if (r < 0)
++			return r;
++	}
++
++	spin_lock(&l->io.lock);
++	bio_list_add(&l->io.in, bio);
++	spin_unlock(&l->io.lock);
++
++	atomic_inc(l->stats.io + !!rw);
++	wake_do_log(l);
++	return 0;
++}
++
++/*
++ * Read a bio either from a replicator log's ring buffer
++ * or from the replicated device if no buffer entry.
++ * - or-
++ * write a bio to a replicator log's ring
++ * buffer (increments buffer tail).
++ *
++ * This includes buffer allocation in case of a write and
++ * inititation of copies accross an/multiple SLINK(s).
++ *
++ * In case of a read with (partial) writes in the buffer,
++ * the replog may postpone the read until the buffer content has
++ * been copied accross the local SLINK *or* optimize by reading
++ * (parts of) the bio off the buffer.
++ */
++/*
++ * Returns 0 on success, -EWOULDBLOCK if this is a WRITE request
++ * and buffer space could not be allocated.  Returns -EWOULDBLOCK if
++ * this is a READ request and the call would block due to the
++ * requested region being currently under WRITE I/O.
++ */
++static int
++ringbuffer_io(struct dm_repl_log *log, struct bio *bio, unsigned long long tag)
 +{
 +	int r = 0;
-+	struct cache_defs *cd = ARRAY_END(cache_defs);
++	struct repl_log *l;
++	struct ringbuffer *ring;
 +
-+	while (cd-- > cache_defs) {
-+		cd->cache = kmem_cache_create(cd->name, cd->size, 0, 0, NULL);
++	_SET_AND_BUG_ON_L(l, log);
++	ring = &l->ringbuffer;
 +
-+		if (unlikely(!cd->cache)) {
-+			DMERR("failed to create %s slab for site link "
-+			      "handler %s %s",
-+			      cd->name, blockdev_type.type.name, version);
-+			slink_kmem_caches_exit();
++	if (RingBlocked(ring) ||
++	    !LogInitialized(l))
++		goto out_blocked;
++
++	if (unlikely(RingSuspended(ring)))
++		goto set_blocked;
++
++	/*
++	 * Queue writes to the daemon in order to avoid sleeping
++	 * on allocations. queue_bio() checks to see if there is
++	 * enough space in the log for this bio and all of the
++	 * other bios currently queued for the daemon.
++	 */
++	r = queue_bio(l, bio);
++	if (!r)
++		return r;
++
++set_blocked:
++	SetRingBlocked(ring);
++out_blocked:
++	DMDEBUG_LIMIT("%s Ring blocked", __func__);
++	return -EWOULDBLOCK;
++}
++
++/* Set maximum slink # for bitarray access optimization. */
++static void replog_set_slink_max(struct repl_log *l)
++{
++	unsigned long bit_nr;
++
++	l->slink.max = 0;
++	for_each_bit(bit_nr, LOG_SLINKS(l), MAX_DEFAULT_SLINKS)
++		l->slink.max = bit_nr;
++
++	l->slink.max++;
++	BITMAP_ELEMS(l) = dm_div_up(dm_div_up(l->slink.max, BITS_PER_BYTE),
++				    sizeof(uint64_t));
++	BITMAP_SIZE(l) = BITMAP_ELEMS(l) * sizeof(uint64_t);
++}
++
++/* Set replog global I/O notification function and context. */
++static void
++ringbuffer_io_notify_fn_set(struct dm_repl_log *log,
++			 dm_repl_notify_fn fn, void *notify_context)
++{
++	struct repl_log *l;
++
++	_SET_AND_BUG_ON_L(l, log);
++
++	spin_lock(&l->io.lock);
++	l->notify.fn = fn;
++	l->notify.context = notify_context;
++	spin_unlock(&l->io.lock);
++}
++
++/* Add (tie) a site link to a replication log for SLINK copy processing. */
++static int
++ringbuffer_slink_add(struct dm_repl_log *log, struct dm_repl_slink *slink)
++{
++	int slink_nr;
++	struct repl_log *l;
++	struct slink_state *ss;
++
++	/* FIXME: XXX lock the repl_log */
++	DMDEBUG("ringbuffer_slink_add");
++	_BUG_ON_PTR(slink);
++	_SET_AND_BUG_ON_L(l, log);
++
++	/* See if slink was already added. */
++	slink_nr = slink->ops->slink_number(slink);
++	if (slink_nr >= MAX_DEFAULT_SLINKS)
++		DM_EINVAL("slink number larger than maximum "
++			  "for 'default' replication log.");
++
++	DMDEBUG("%s: attempting to add slink%d", __func__, slink_nr);
++
++	/* No entry -> add a new one. */
++	ss = kzalloc(sizeof(*ss), GFP_KERNEL);
++	if (unlikely(!ss))
++		return -ENOMEM;
++
++	ss->slink_nr = slink_nr;
++	ss->l = l;
++	atomic_set(&ss->io.in_flight, 0);
++	init_waitqueue_head(&ss->io.waiters);
++
++	spin_lock(&l->io.lock);
++
++	if (unlikely(slink->caller)) {
++		spin_unlock(&l->io.lock);
++		kfree(ss);
++		DMERR("slink already exists.");
++		return -EEXIST;
++	}
++
++	ClearSsTeardown(ss);
++
++	/* Keep slink state reference. */
++	slink->caller = ss;
++
++	if (!slink_nr)
++		l->slink0 = slink;
++
++	l->slink.count++;
++
++	/* Set site link recovery notification. */
++	slink->ops->recover_notify_fn_set(slink, slink_recover_callback, ss);
++
++	/* Update log_header->slinks bit mask before setting max slink #! */
++	slink_set_bit(slink_nr, LOG_SLINKS(l));
++
++	/* Set maximum slink # for bitarray access optimization. */
++	replog_set_slink_max(l);
++
++	spin_unlock(&l->io.lock);
++	return 0;
++}
++
++/* Remove (untie) a site link from a replication log. */
++/*
++ * How do we tell if this is a configuration change or just a shutdown?
++ * After _repl_ctr, the RDs on the site link are either there or not.
++ */
++static int
++ringbuffer_slink_del(struct dm_repl_log *log, struct dm_repl_slink *slink)
++{
++	int r, slink_nr;
++	struct repl_log *l;
++	struct ringbuffer *ring;
++	struct slink_state *ss;
++
++	DMDEBUG("%s", __func__);
++	_BUG_ON_PTR(slink);
++	_SET_AND_BUG_ON_L(l, log);
++	ring = &l->ringbuffer;
++
++	/* Find entry to be deleted. */
++	slink_nr = slink->ops->slink_number(slink);
++	DMDEBUG("%s slink_nr=%d", __func__, slink_nr);
++
++	spin_lock(&l->io.lock);
++	ss = slink->caller;
++	if (likely(ss)) {
++		BUG_ON(atomic_read(&ss->io.in_flight));
++
++		/* No new I/Os on this slink and no duplicate deletion calls. */
++		if (TestSetSsTeardown(ss)) {
++			spin_unlock(&l->io.lock);
++			return -EPERM;
++		}
++
++		/* Wait on worker and any async I/O to finish on site link. */
++		do {
++			spin_unlock(&l->io.lock);
++			ss_wait_on_io(ss);
++			spin_lock(&l->io.lock);
++
++			if (!ss_io(ss)) {
++				slink_clear_bit(slink_nr, LOG_SLINKS(l));
++				slink->caller = NULL;
++				slink->ops->recover_notify_fn_set(slink,
++								  NULL, NULL);
++				if (!slink_nr)
++					l->slink0 = NULL;
++
++				l->slink.count--;
++				replog_set_slink_max(l); /* Set l->slink.max. */
++			}
++		} while (slink->caller);
++
++		spin_unlock(&l->io.lock);
++
++		BUG_ON(l->slink.count < 0);
++		kfree(ss);
++		DMDEBUG("%s removed slink=%u", __func__, slink_nr);
++		r = 0;
++	} else {
++		spin_unlock(&l->io.lock);
++		r = -EINVAL;
++	}
++
++	wake_do_log(l);
++	return r;
++}
++
++/* Return head of the list of site links for this replicator log. */
++static struct dm_repl_log_slink_list
++*ringbuffer_slinks(struct dm_repl_log *log)
++{
++	struct repl_log *l;
++
++	_SET_AND_BUG_ON_L(l, log);
++	return &l->lists.slinks;
++}
++
++/* Return maximum number of supported site links. */
++static int
++ringbuffer_slink_max(struct dm_repl_log *log)
++{
++	return MAX_DEFAULT_SLINKS;
++}
++
++/*
++ * Message interface
++ *
++ * 'sta[tistics] {on,of[f],r[eset]}'		# e.g. 'stat of'
++ */
++static int
++ringbuffer_message(struct dm_repl_log *log, unsigned argc, char **argv)
++{
++	static const char stat[] = "statistics";
++	static const char resize[] = "resize";
++	struct repl_log *l;
++
++	_SET_AND_BUG_ON_L(l, log);
++
++	if (argc != 2)
++		DM_EINVAL("Invalid number of arguments.");
++
++	if (!strnicmp(STR_LEN(argv[0], stat))) {
++		if (!strnicmp(STR_LEN(argv[1], "on")))
++			set_bit(LOG_DEVEL_STATS, &l->io.flags);
++		else if (!strnicmp(STR_LEN(argv[1], "off")))
++			clear_bit(LOG_DEVEL_STATS, &l->io.flags);
++		else if (!strnicmp(STR_LEN(argv[1], "reset")))
++			stats_init(l);
++		else
++			DM_EINVAL("Invalid '%s' arguments.", stat);
++	} else if (!strnicmp(STR_LEN(argv[0], resize))) {
++		if (TestSetLogResize(l))
++			DM_EPERM("Log resize already in progress");
++		else {
++			unsigned long long tmp;
++			sector_t dev_size;
++
++			if (unlikely(sscanf(argv[1], "%llu", &tmp) != 1) ||
++				tmp < LOG_SIZE_MIN)
++				DM_EINVAL("Invalid log %s argument.", resize);
++
++			dev_size = replog_dev_size(l->params.dev.dm_dev, tmp);
++			if (!dev_size)
++				DM_EINVAL("Invalid log size requested.");
++
++			l->params.dev.size = tmp;
++			wake_do_log(l); /* Let the worker do the resize. */
++		}
++	} else
++		DM_EINVAL("Invalid argument.");
++
++	return 0;
++}
++
++/* Support function for replicator log status requests. */
++static int
++ringbuffer_status(struct dm_repl_log *log, int dev_number,
++		  status_type_t type, char *result, unsigned int maxlen)
++{
++	unsigned long slink_nr;
++	size_t sz = 0;
++	sector_t ios, sectors;
++	char buf[BDEVNAME_SIZE];
++	struct repl_log *l;
++	struct stats *s;
++	struct ringbuffer *ring;
++	struct repl_params *p;
++
++	_SET_AND_BUG_ON_L(l, log);
++	s = &l->stats;
++	ring = &l->ringbuffer;
++	p = &l->params;
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		ios = sectors = 0;
++
++		/* Output ios/sectors stats. */
++		spin_lock(&l->io.lock);
++		for_each_bit(slink_nr, LOG_SLINKS(l), l->slink.max) {
++			struct dm_repl_slink *slink = slink_find(l, slink_nr);
++			struct slink_state *ss;
++
++			_BUG_ON_PTR(slink);
++			ss = slink->caller;
++			_BUG_ON_PTR(ss);
++
++			DMEMIT(" %s,%llu,%llu",
++			       SsSync(ss) ? "S" : "A",
++			       (unsigned long long) ss->fb.outstanding.ios,
++			       (unsigned long long) ss->fb.outstanding.sectors);
++			ios += ss->fb.outstanding.ios;
++			sectors += ss->fb.outstanding.sectors;
++		}
++
++		DMEMIT(" %llu/%llu/%llu",
++		       (unsigned long long) ios,
++		       (unsigned long long) sectors,
++		       (unsigned long long) l->params.dev.size);
++
++		spin_unlock(&l->io.lock);
++
++		if (LogDevelStats(l))
++			DMEMIT(" ring->start=%llu "
++			       "ring->head=%llu ring->tail=%llu "
++			       "ring->next_avail=%llu ring->end=%llu "
++			       "ring_free=%llu wrap=%d r=%d w=%d wp=%d he=%d "
++			       "hash_insert=%u hash_insert_max=%u "
++			       "single=%u multi=%u stall=%u",
++			       (unsigned long long) ring->start,
++			       (unsigned long long) ring->head,
++			       (unsigned long long) ring->tail,
++			       (unsigned long long) ring->next_avail,
++			       (unsigned long long) ring->end,
++			       (unsigned long long) ring_free(ring),
++			       s->wrap,
++			       atomic_read(s->io + 0), atomic_read(s->io + 1),
++			       atomic_read(&s->writes_pending),
++			       atomic_read(&s->hash_elem),
++			       s->hash_insert, s->hash_insert_max,
++			       s->copy[0], s->copy[1],
++			       s->stall);
++
++		break;
++
++	case STATUSTYPE_TABLE:
++		DMEMIT("%s %d %s %llu", ringbuffer_type.type.name, p->count,
++		       format_dev_t(buf, p->dev.dm_dev->bdev->bd_dev),
++		       (unsigned long long) p->dev.start);
++
++		if (p->count > 2) {
++			DMEMIT(" %s", _open_str(p->open_type));
++
++			if (p->count > 3)
++				DMEMIT(" %llu",
++				       (unsigned long long) p->dev.size);
++		}
++	}
++
++	return 0;
++}
++
++/*
++ * End methods of "ring-buffer" type
++ */
++
++/* "ring-buffer" replication log type. */
++static struct dm_repl_log_type ringbuffer_type = {
++	.type.name = "ringbuffer",
++	.type.module = THIS_MODULE,
++
++	.ctr = ringbuffer_ctr,
++	.dtr = ringbuffer_dtr,
++
++	.postsuspend = ringbuffer_postsuspend,
++	.resume = ringbuffer_resume,
++	.flush = ringbuffer_flush,
++	.io = ringbuffer_io,
++	.io_notify_fn_set = ringbuffer_io_notify_fn_set,
++
++	.slink_add = ringbuffer_slink_add,
++	.slink_del = ringbuffer_slink_del,
++	.slinks = ringbuffer_slinks,
++	.slink_max = ringbuffer_slink_max,
++
++	.message = ringbuffer_message,
++	.status = ringbuffer_status,
++};
++
++/* Destroy kmem caches on module unload. */
++static int
++replog_kmem_caches_exit(void)
++{
++	struct cache_defs *pd = ARRAY_END(cache_defs);
++
++	while (pd-- > cache_defs) {
++		if (unlikely(!pd->slab_pool))
++			continue;
++
++		DMDEBUG("Destroying kmem_cache %p", pd->slab_pool);
++		kmem_cache_destroy(pd->slab_pool);
++		pd->slab_pool = NULL;
++	}
++
++	return 0;
++}
++
++/* Create kmem caches on module load. */
++static int
++replog_kmem_caches_init(void)
++{
++	int r = 0;
++	struct cache_defs *pd = ARRAY_END(cache_defs);
++
++	while (pd-- > cache_defs) {
++		BUG_ON(pd->slab_pool);
++
++		/* No slab pool. */
++		if (!pd->size)
++			continue;
++
++		pd->slab_pool = kmem_cache_create(pd->slab_name, pd->size,
++						  pd->align, 0, NULL);
++		if (likely(pd->slab_pool))
++			DMDEBUG("Created kmem_cache %p", pd->slab_pool);
++		else {
++			DMERR("failed to create slab %s for replication log "
++			      " handler %s %s",
++			      pd->slab_name, ringbuffer_type.type.name,
++			      version);
++			replog_kmem_caches_exit();
 +			r = -ENOMEM;
 +			break;
 +		}
@@ -3064,54 +5008,58 @@ index 0000000..308fd94
 +}
 +
 +int __init
-+dm_repl_slink_init(void)
++dm_repl_log_init(void)
 +{
 +	int r;
 +
-+	/* Create slabs for the copy contexts and test buffers. */
-+	r = slink_kmem_caches_init();
-+	if (r) {
-+		DMERR("failed to init %s kmem caches", blockdev_type.type.name);
++	if (sizeof(struct data_header_disk) != DATA_HEADER_DISK_SIZE)
++		DM_EINVAL("invalid size of 'struct data_header_disk' for %s %s",
++			  ringbuffer_type.type.name, version);
++
++	mutex_init(&list_mutex);
++
++	r = replog_kmem_caches_init();
++	if (r < 0) {
++		DMERR("failed to init %s kmem caches %s",
++		      ringbuffer_type.type.name, version);
 +		return r;
 +	}
 +
-+	r = dm_register_type(&blockdev_type, DM_SLINK);
-+	if (unlikely(r < 0)) {
-+		DMERR("failed to register replication site "
-+		      "link handler %s %s [%d]",
-+		      blockdev_type.type.name, version, r);
-+		slink_kmem_caches_exit();
++	r = dm_register_type(&ringbuffer_type, DM_REPLOG);
++	if (r < 0) {
++		DMERR("failed to register replication log %s handler %s [%d]",
++		      ringbuffer_type.type.name, version, r);
++		replog_kmem_caches_exit();
 +	} else
-+		DMINFO("registered replication site link handler %s %s",
-+		       blockdev_type.type.name, version);
++		DMINFO("registered replication log %s handler %s",
++		       ringbuffer_type.type.name, version);
 +
 +	return r;
 +}
 +
 +void __exit
-+dm_repl_slink_exit(void)
++dm_repl_log_exit(void)
 +{
-+	int r = dm_unregister_type(&blockdev_type, DM_SLINK);
++	int r = dm_unregister_type(&ringbuffer_type, DM_REPLOG);
 +
-+	slink_kmem_caches_exit();
++	replog_kmem_caches_exit();
 +
 +	if (r)
-+		DMERR("failed to unregister replication site "
-+		      "link handler %s %s [%d]",
-+		       blockdev_type.type.name, version, r);
++		DMERR("failed to unregister replication log %s handler %s [%d]",
++		       ringbuffer_type.type.name, version, r);
 +	else
-+		DMINFO("unregistered replication site link handler %s %s",
-+		       blockdev_type.type.name, version);
-+
++		DMINFO("unregistered replication log %s handler %s",
++		       ringbuffer_type.type.name, version);
 +}
 +
-+/* Module hooks. */
-+module_init(dm_repl_slink_init);
-+module_exit(dm_repl_slink_exit);
++/* Module hooks */
++module_init(dm_repl_log_init);
++module_exit(dm_repl_log_exit);
 +
-+MODULE_DESCRIPTION(DM_NAME " remote replication target \"blockdev\" "
-+			   "site link (SLINK) handler");
-+MODULE_AUTHOR("Heinz Mauelshagen <heinzm@redhat.com>");
++MODULE_DESCRIPTION(DM_NAME " remote replication target \"ringbuffer\" "
++			   "log handler");
++MODULE_AUTHOR("Jeff Moyer <jmoyer@redhat.com>, "
++	      "Heinz Mauelshagen <heinzm@redhat.com");
 +MODULE_LICENSE("GPL");
 -- 
 1.6.2.5
