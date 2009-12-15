@@ -1,7 +1,7 @@
 From: Neil Brown <neilb@suse.de>
 Subject: Re: [PATCH libdmraid-events 0/3] Assorted fixes
-Date: Tue, 15 Dec 2009 11:43:28 +1100
-Message-ID: <20091215114328.4cf708f2@notabene.brown>
+Date: Tue, 15 Dec 2009 12:07:32 +1100
+Message-ID: <20091215120732.1ffb55b8@notabene.brown>
 References: <20091211032255.766079509@suse.de>
 	<1260800930.7677.35.camel@o>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -34,13 +34,15 @@ Heinz Mauelshagen <heinzm@redhat.com> wrote:
 > recent), which most likely has all of that addressed already and rebase
 > if you still find the issues.
 > 
+>
 
-Thanks for the pointer.
-However I cannot find libdmraid-events.c in the repository.
-Only libdmraid-events-isw.c which seems to be a very different thing
-
-Is there still a libdmraid-events.c ? or has it been incorporated in
-something else?
+Also, I tried building from that source tree and there seem to be a number
+of problems.
+ - include/dmraid/dmreg.h is needed but not provided
+ - lib/dmraid.a needs lib/device/partition.o, but there is no rule for
+   building that file.
+ - when tools/dmraid is build, the "-I" flags don't get passed to 'cc' so the
+   compile fails ... I haven't managed to figure out why that is yet.
 
 Thanks,
 NeilBrown
