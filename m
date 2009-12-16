@@ -1,10 +1,15 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 1 of 1] dm log userspace variable calculation
-	fixes
-Date: Wed, 16 Dec 2009 14:37:47 -0600
-Message-ID: <200912162037.nBGKblWN030076@hydrogen.msp.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Shared snapshots
+Date: Wed, 16 Dec 2009 15:39:01 -0500
+Message-ID: <20091216203901.GA17098@redhat.com>
+References: <Pine.LNX.4.64.0912160255370.10656@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0912160255370.10656@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,70 +19,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Patch name: dm-log-userspace-variable-calculation-fixes.patch
+On Wed, Dec 16 2009 at  3:05am -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-dm-log-cluster: Fix badly computed value.
+> Hi
+>=20
+> I uploaded new shared snapshots here:
+> http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
 
-This patch fixes two bugs that revolve around the
-miscalculation and misuse of the variable
-'overhead_size'.  'overhead_size' is the size of
-the various header structures used during communication.
+Just a general observation:
+You have an empty line separating your comment blocks above functions.
+I think eliminating that empty line would help join the comment block to
+the function a bit better (as is common in the rest of the kernel).
 
-The first bug is the use of 'sizeof' with the pointer
-of a structure instead of the structure itself -
-resulting in the wrong size being computed.  This is
-then used in a check to see if the payload (data_size)
-would be to large for the preallocated structure.
-Since the bug produces a smaller value for the
-overhead, it was possible for the structure to be
-breached.  (Although the current users of the code
-do not currently send enough data to trigger this
-bug.)
+Also, a comment block of the form:
+/* single line comment above function */
 
-The second bug is that the 'overhead_size' value
-is used to compute how much of the preallocated
-space should be cleared before populating it with
-fresh data.  This should have simply been
-'sizeof(struct cn_msg)' not overhead_size.  The
-fact that 'overhead_size' was computed incorrectly
-made this problem "less bad" - leaving only a
-pointer's worth of space at the end uncleared.
-Thus, this bug was never producing a bad result,
-but still needs to be fixed - especially now that
-the value is computed correctly.
+Is generally done as:
+/*
+ * single line comment above function
+ */
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com
+Hopefully I'm not triggering unhappy checkpatch.pl-type thoughts with
+these recommendations :)
 
-Index: linux-2.6/drivers/md/dm-log-userspace-transfer.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-log-userspace-transfer.c
-+++ linux-2.6/drivers/md/dm-log-userspace-transfer.c
-@@ -173,10 +173,15 @@ int dm_consult_userspace(const char *uui
- 	int r = 0;
- 	size_t dummy = 0;
- 	int overhead_size =
--		sizeof(struct dm_ulog_request *) + sizeof(struct cn_msg);
-+		sizeof(struct dm_ulog_request) + sizeof(struct cn_msg);
- 	struct dm_ulog_request *tfr = prealloced_ulog_tfr;
- 	struct receiving_pkg pkg;
- 
-+	/*
-+	 * Given the space needed to hold the 'struct cn_msg' and
-+	 * 'struct dm_ulog_request' - do we have enough payload
-+	 * space remaining?
-+	 */
- 	if (data_size > (DM_ULOG_PREALLOCED_SIZE - overhead_size)) {
- 		DMINFO("Size of tfr exceeds preallocated size");
- 		return -EINVAL;
-@@ -191,7 +196,7 @@ resend:
- 	 */
- 	mutex_lock(&dm_ulog_lock);
- 
--	memset(tfr, 0, DM_ULOG_PREALLOCED_SIZE - overhead_size);
-+	memset(tfr, 0, DM_ULOG_PREALLOCED_SIZE - sizeof(struct cn_msg));
- 	memcpy(tfr->uuid, uuid, DM_UUID_LEN);
- 	tfr->luid = luid;
- 	tfr->seq = dm_ulog_seq++;
+> changes:
+>=20
+> - Broken to separate patches, one patch per file. The last patch adds a=
+ll=20
+> the files to Makefile and makes it all compile. It allows you to ack=20
+> patches individually. I didn't use stubs to compile intermediate patche=
+s,=20
+> the problem is that if multiple patches modify the same file, general=20
+> modifications to the code become harder. With one-patch-per-file I can=20
+> edit it with normal text editor and quilt regenerates the patches.
+>=20
+> - Document on-disk format in dm-multisnap-mikulas-struct.h
+>=20
+> - More functions are commented
+>=20
+> - Removed /*printk ... */ statements. I left some #ifdefed debug routin=
+es,=20
+> they are non-trivial to write again
+
+I'm still seeing one in dm_bufio_client_create()
+
+> - Fixed a bug on big-endian systems
+>=20
+> - Exposed interface for snapshots-of-snapshots, tested that they work
+
+Where is that interface documented?
+
+As an aside, I have some ideas for improving
+Documentation/device-mapper/dm-multisnapshot.txt
+I'll just send a patch and we can go from there.
+
+> Mikulas
+
+BTW, I'm getting the following warning when I build the code:
+
+drivers/md/dm-bufio.c: In function =E2=80=98write_endio=E2=80=99:
+drivers/md/dm-bufio.c:725: warning: value computed is not used
+
+A cast fixes it:
+
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 1ab5304..be7b89b 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -722,7 +722,7 @@ static void write_endio(struct bio *bio, int error)
+ 	b->write_error =3D error;
+ 	if (unlikely(error)) {
+ 		struct dm_bufio_client *c =3D b->c;
+-		cmpxchg(&c->async_write_error, 0, error);
++		(void)cmpxchg(&c->async_write_error, 0, error);
+ 	}
+ 	BUG_ON(!test_bit(B_WRITING, &b->state));
+ 	smp_mb__before_clear_bit();
