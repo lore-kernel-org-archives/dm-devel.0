@@ -1,12 +1,9 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: eliminate some holes in data structures
-Date: Tue, 15 Dec 2009 22:49:41 -0500
-Message-ID: <20091216034940.GA11003@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath pgpolicies.c
+Date: 16 Dec 2009 05:31:51 -0000
+Message-ID: <20091216053151.31526.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,87 +13,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Eliminate 1 4-byte hole in 'struct dm_io_memory' by moving 'offset'
-above the 'ptr' to which it applies (size reduced from 24 to 16 bytes).
-And by association, 1 4 byte hole is eliminated in 'struct
-dm_io_request' (size reduced from 56 to 48 bytes).
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-12-16 05:31:51
 
-Eliminate all (3 4-byte) holes (and one cache-line) in 'struct
-dm_snapshot' by moving 'pending_pool' after 'pending_exceptions_count'
-and moving 'merge_failed' lower (size reduced from 648 to 632 bytes).
+Modified files:
+	libmultipath   : pgpolicies.c 
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-snap.c  |   18 +++++++++---------
- include/linux/dm-io.h |    4 ++--
- 2 files changed, 11 insertions(+), 11 deletions(-)
+Log message:
+	Fix for 537977. The failover priority function now orders the paths by
+	priority, so that multipath will correctly fail over.
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index ee8eb28..0435442 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -83,10 +83,10 @@ struct dm_snapshot {
- 	/* Whether or not owning mapped_device is suspended */
- 	int suspended;
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/pgpolicies.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7.2.1&r2=1.7.2.2
+
+--- multipath-tools/libmultipath/pgpolicies.c	2009/04/03 15:09:02	1.7.2.1
++++ multipath-tools/libmultipath/pgpolicies.c	2009/12/16 05:31:50	1.7.2.2
+@@ -206,7 +206,8 @@
+ extern int
+ one_path_per_group (struct multipath * mp)
+ {
+-	int i;
++	int i, j;
++	unsigned int prio;
+ 	struct path * pp;
+ 	struct pathgroup * pgp;
  
--	mempool_t *pending_pool;
--
- 	atomic_t pending_exceptions_count;
+@@ -218,16 +219,30 @@
  
-+	mempool_t *pending_pool;
+ 	for (i = 0; i < VECTOR_SIZE(mp->paths); i++) {
+ 		pp = VECTOR_SLOT(mp->paths, i);
++		prio = pp->priority;
 +
- 	struct dm_exception_table pending;
- 	struct dm_exception_table complete;
- 
-@@ -110,6 +110,13 @@ struct dm_snapshot {
- 	spinlock_t tracked_chunk_lock;
- 	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
- 
-+	/* Wait for events based on state_bits */
-+	unsigned long state_bits;
++		vector_foreach_slot(mp->pg, pgp, j) {
++			pp = VECTOR_SLOT(pgp->paths, 0);
 +
-+	/* Range of chunks currently being merged. */
-+	chunk_t first_merging_chunk;
-+	int num_merging_chunks;
++			if (prio > pp->priority)
++				break;
++		}
 +
- 	/*
- 	 * The merge operation failed if this flag is set.
- 	 * Failure modes are handled as follows:
-@@ -125,13 +132,6 @@ struct dm_snapshot {
- 	 */
- 	int merge_failed;
+ 		pgp = alloc_pathgroup();
  
--	/* Wait for events based on state_bits */
--	unsigned long state_bits;
--
--	/* Range of chunks currently being merged. */
--	chunk_t first_merging_chunk;
--	int num_merging_chunks;
--
- 	/*
- 	 * Incoming bios that overlap with chunks being merged must wait
- 	 * for them to be committed.
-diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
-index b6bf17e..5c9186b 100644
---- a/include/linux/dm-io.h
-+++ b/include/linux/dm-io.h
-@@ -37,14 +37,14 @@ enum dm_io_mem_type {
- struct dm_io_memory {
- 	enum dm_io_mem_type type;
+ 		if (!pgp)
+ 			goto out;
  
-+	unsigned offset;
+-		if (store_pathgroup(mp->pg, pgp))
+-			goto out;
+-		
+-		if (store_path(pgp->paths, pp))
++		if (store_path(pgp->paths, VECTOR_SLOT(mp->paths, i)))
+ 			goto out;
 +
- 	union {
- 		struct page_list *pl;
- 		struct bio_vec *bvec;
- 		void *vma;
- 		void *addr;
- 	} ptr;
--
--	unsigned offset;
- };
- 
- struct dm_io_notify {
++		if (j < VECTOR_SIZE(mp->pg)) {
++			if (!vector_insert_slot(mp->pg, j, pgp))
++				goto out;
++		} else {
++			if (store_pathgroup(mp->pg, pgp))
++				goto out;
++		}
+ 	}
+ 	free_pathvec(mp->paths, KEEP_PATHS);
+ 	mp->paths = NULL;
