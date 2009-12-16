@@ -1,14 +1,16 @@
-From: James Smart <James.Smart@Emulex.Com>
-Subject: Re: [PATCH] Remove capping from dev_loss_tmo
-Date: Wed, 16 Dec 2009 10:34:31 -0500
-Message-ID: <4B28FE07.4020503@emulex.com>
-References: <20091215082606.A45B037AD2@ochil.suse.de>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: Re: dm: sysfs add empty release function to avoid
+	debug	warning
+Date: Wed, 16 Dec 2009 17:32:21 +0100
+Message-ID: <4B290B95.10306@redhat.com>
+References: <200912151735.nBFHZ8XP018683@hera.kernel.org>	<20091216004739.GB4898@kroah.com>
+	<4B28AC09.2000302@redhat.com> <20091216134538.GA20857@kroah.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091215082606.A45B037AD2@ochil.suse.de>
+In-Reply-To: <20091216134538.GA20857@kroah.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,104 +21,115 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: James Bottomley <James.Bottomley@suse.de>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: Greg KH <greg@kroah.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Hannes,
-
-Not sure I quite agree with your description of the two timers - but relative 
-to the goal of
-allowing a larger dev_loss_tmo when fast_io_fail_tmo is enabled, it's fine. 
-Interestingly, I
-was looking at when it's disabled, does the cap kick back in - and realized 
-that once we
-enable fast fail, we don't allow it to be turned off.
-
-Looks good.
-
-Acked-by:  James Smart  <james.smart@emulex.com>
-
--- james s
-
-
-Hannes Reinecke wrote:
-> Currently dev_loss_tmo is capped by SCSI_DEVICE_BLOCK_MAX_TIMEOUT.
-> This causes problem with multipathing when the 'no_path_retry' setting
-> exceeds the dev_loss_tmo setting, as then the system might run into
-> a deadlock when all paths have been removed temporarily for longer
-> than dev_loss_tmo.
-> The principal reasons for the capping has been that we should
-> not allow a remote port to remain in status 'blocked' indefinitely,
-> so the capping is there to ensure that the port status is being reset
-> eventually.
-> However, the fast_io_fail_tmo will also move the remote port out of
-> the 'blocked' state, so for any HBA driver implementing both the
-> capping should really be on the fast_io_fail_tmo, and not on the
-> dev_loss_tmo.
-> This patch implements just that, ie the fast_io_fail_tmo is capped
-> to SCSI_DEVICE_BLOCK_TIMEOUT and the capping is removed from
-> dev_loss_tmo when fast_io_fail_tmo is set.
-> This allows us to synchronize the dev_loss_tmo setting to the
-> 'no_path_retry' setting from multipathing thus avoiding the deadlock.
+Dne 16.12.2009 14:45, Greg KH napsal(a):
+> On Wed, Dec 16, 2009 at 10:44:41AM +0100, Milan Broz wrote:
+>> On 12/16/2009 01:47 AM, Greg KH wrote:
+>>> On Tue, Dec 15, 2009 at 05:35:08PM +0000, James Bottomley wrote:
+>>>> commit: d2bb7df8cac647b92f51fb84ae735771e7adbfa7
+>>>> From: Milan Broz <mbroz@redhat.com>
+>>>> Date: Thu, 10 Dec 2009 23:51:53 +0000
+>>>> Subject: [PATCH] dm: sysfs add empty release function to avoid debug warning
+>>>>
+>>>> This patch just removes an unnecessary warning:
+>>>>  kobject: 'dm': does not have a release() function,
+>>>>  it is broken and must be fixed.
+>>>>
+>>>> The kobject is embedded in mapped device struct, so
+>>>> code does not need to release memory explicitly here.
+>>>
+>>
+>>> Please, this is totally and completly wrong.  And if you feel that it is
+>>> needed, then your design is wrong and it needs to be fixed.
+>>
+>> There are several places in kernel, where kobject have not defined release
+>> method. Yes, something is wrong here.
 > 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> Where are those instances, becides the use of static kobjects, which is
+> being worked on?
 > 
-> diff --git a/drivers/scsi/scsi_transport_fc.c b/drivers/scsi/scsi_transport_fc.c
-> index 573ce21..6f39bf4 100644
-> --- a/drivers/scsi/scsi_transport_fc.c
-> +++ b/drivers/scsi/scsi_transport_fc.c
-> @@ -475,7 +475,8 @@ MODULE_PARM_DESC(dev_loss_tmo,
->  		 "Maximum number of seconds that the FC transport should"
->  		 " insulate the loss of a remote port. Once this value is"
->  		 " exceeded, the scsi target is removed. Value should be"
-> -		 " between 1 and SCSI_DEVICE_BLOCK_MAX_TIMEOUT.");
-> +		 " between 1 and SCSI_DEVICE_BLOCK_MAX_TIMEOUT if"
-> +		 " fast_io_fail_tmo is not set.");
->  
->  /*
->   * Netlink Infrastructure
-> @@ -831,9 +832,17 @@ store_fc_rport_dev_loss_tmo(struct device *dev, struct device_attribute *attr,
->  	    (rport->port_state == FC_PORTSTATE_NOTPRESENT))
->  		return -EBUSY;
->  	val = simple_strtoul(buf, &cp, 0);
-> -	if ((*cp && (*cp != '\n')) ||
-> -	    (val < 0) || (val > SCSI_DEVICE_BLOCK_MAX_TIMEOUT))
-> +	if ((*cp && (*cp != '\n')) || (val < 0))
->  		return -EINVAL;
-> +
-> +	/*
-> +	 * If fast_io_fail is off we have to cap
-> +	 * dev_loss_tmo at SCSI_DEVICE_BLOCK_MAX_TIMEOUT
-> +	 */
-> +	if (rport->fast_io_fail_tmo == -1 &&
-> +	    val > SCSI_DEVICE_BLOCK_MAX_TIMEOUT)
-> +		return -EINVAL;
-> +
->  	i->f->set_rport_dev_loss_tmo(rport, val);
->  	return count;
->  }
-> @@ -914,9 +923,16 @@ store_fc_rport_fast_io_fail_tmo(struct device *dev,
->  		rport->fast_io_fail_tmo = -1;
->  	else {
->  		val = simple_strtoul(buf, &cp, 0);
-> -		if ((*cp && (*cp != '\n')) ||
-> -		    (val < 0) || (val >= rport->dev_loss_tmo))
-> +		if ((*cp && (*cp != '\n')) || (val < 0))
->  			return -EINVAL;
-> +		/*
-> +		 * Cap fast_io_fail by dev_loss_tmo or
-> +		 * SCSI_DEVICE_BLOCK_MAX_TIMEOUT.
-> +		 */
-> +		if ((val >= rport->dev_loss_tmo) ||
-> +		    (val > SCSI_DEVICE_BLOCK_MAX_TIMEOUT))
-> +			return -EINVAL;
-> +
->  		rport->fast_io_fail_tmo = val;
->  	}
->  	return count;
+> That still does not make this change acceptable, it is incorrect.
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+>> So quietly ignoring warning is ok? Why is not there BUG_ON(!release) then?
 > 
+> I was trying to be nice and not crash your machine and give you the
+> opportunity to fix it easily.
+> 
+>> The sysfs attributes here just represents attributes of block device object,
+>> this device is always removed before release here is called.
+> 
+> Then why use a kobject at all?  Your reference counting will be all
+> wrong if you use it incorrectly like this.
+> 
+>> So if there is preferred to do another alloc/free, no problem.
+> 
+> Please do.
+> 
+> Also, with the addition of this patch, your comments for the kobject are
+> now incorrect as well.
+> 
+
+Here is list of just some errors I get on my 2.6.32 linux kernel.
+(error message itself is removed)
+Messages are printed during module removal/reboot.
+
+'aead' (ffffffffa017c050): does not have a release() function, it is broken
+and must be fixed.
+'bridge'
+'cdrom'
+'cfg80211'
+'crypto_hash'
+'cryptomgr'
+'dm_log'
+'dm_mirror'
+'dm_mod'
+'dm_multipath'
+'dm_region_hash'
+'ehci_hcd'
+'e1000e'
+'iptable_filter'
+'iptable_nat'
+'ip_tables'
+'ipt_MASQUERADE'
+'ipt_REJECT'
+'iTCO_vendor_support'
+'iTCO_wdt'
+'iwlcore'
+'iwl3945'
+'iwl3945'
+'kvm'
+'kvm_intel'
+'kvm0'
+'llc'
+'mac80211'
+'microcode'
+'mmc_core'
+'mmc'
+'nf_conntrack'
+'nf_conntrack_ipv4'
+'nf_defrag_ipv4'
+'nf_nat'
+'pcompress'
+'psmouse'
+'rtc_cmos'
+'rtc_core'
+'rtc_lib'
+'scsi_wait_scan'
+'sdhci'
+'sdhci_pci'
+'sdio'
+'snd_mixer_oss'
+'snd_pcm_oss'
+'snd_seq_device'
+'snd_seq'
+'snd_seq_midi_event'
+'snd_seq_oss'
+'sr_mod'
+'stp'
+'x_tables'
+'xt_state'
+'xt_tcpudp'
+
+Zdenek
