@@ -1,47 +1,54 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Shared snapshots
-Date: Wed, 16 Dec 2009 03:05:34 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0912160255370.10656@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: dm: sysfs add empty release function to avoid debug warning
+Date: Wed, 16 Dec 2009 10:44:41 +0100
+Message-ID: <4B28AC09.2000302@redhat.com>
+References: <200912151735.nBFHZ8XP018683@hera.kernel.org> <20091216004739.GB4898@kroah.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754753AbZLPJow@vger.kernel.org>
+In-Reply-To: <20091216004739.GB4898@kroah.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg KH <greg@kroah.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+On 12/16/2009 01:47 AM, Greg KH wrote:
+> On Tue, Dec 15, 2009 at 05:35:08PM +0000, James Bottomley wrote:
+>> commit: d2bb7df8cac647b92f51fb84ae735771e7adbfa7
+>> From: Milan Broz <mbroz@redhat.com>
+>> Date: Thu, 10 Dec 2009 23:51:53 +0000
+>> Subject: [PATCH] dm: sysfs add empty release function to avoid debug warning
+>>
+>> This patch just removes an unnecessary warning:
+>>  kobject: 'dm': does not have a release() function,
+>>  it is broken and must be fixed.
+>>
+>> The kobject is embedded in mapped device struct, so
+>> code does not need to release memory explicitly here.
+> 
 
-I uploaded new shared snapshots here:
-http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
+> Please, this is totally and completly wrong.  And if you feel that it is
+> needed, then your design is wrong and it needs to be fixed.
 
-changes:
+There are several places in kernel, where kobject have not defined release
+method. Yes, something is wrong here.
+So quietly ignoring warning is ok? Why is not there BUG_ON(!release) then?
 
-- Broken to separate patches, one patch per file. The last patch adds all 
-the files to Makefile and makes it all compile. It allows you to ack 
-patches individually. I didn't use stubs to compile intermediate patches, 
-the problem is that if multiple patches modify the same file, general 
-modifications to the code become harder. With one-patch-per-file I can 
-edit it with normal text editor and quilt regenerates the patches.
+The sysfs attributes here just represents attributes of block device object,
+this device is always removed before release here is called.
 
-- Document on-disk format in dm-multisnap-mikulas-struct.h
+So if there is preferred to do another alloc/free, no problem.
 
-- More functions are commented
+> And note, as per the Documentation/kobject.txt file, you were warned
+> about this public mocking, next time it will be harsher.
+> 
+> Heh, and you tried to get this into a -stable kernel release, as if.
 
-- Removed /*printk ... */ statements. I left some #ifdefed debug routines, 
-they are non-trivial to write again
+btw I did'n added stable@, someone added that later. But it is not relevant. 
 
-- Fixed a bug on big-endian systems
+> Patch left below so that others can mock.
 
-- Exposed interface for snapshots-of-snapshots, tested that they work
+Enjoy;-)
 
-Mikulas
+Milan
