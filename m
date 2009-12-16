@@ -1,22 +1,29 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
-Date: Wed, 16 Dec 2009 11:58:42 +0100
-Message-ID: <87eimv5gnx.fsf@basil.nowhere.org>
-References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761960AbZLPK6q@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com> (Mikulas Patocka's message of "Tue, 15 Dec 2009 16:57:49 -0500 (EST)")
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: linux-kernel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+From: heinzm@sourceware.org
+Subject: dmraid/logwatch
+Date: 16 Dec 2009 11:36:49 -0000
+Message-ID: <20091216113649.7185.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mikulas Patocka <mpatocka@redhat.com> writes:
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Acked-by: Andi Kleen <ak@linux.intel.com>
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2009-12-16 11:36:49
 
--Andi
--- 
-ak@linux.intel.com -- Speaking for myself only.
+dmraid/logwatch
+
+Update of /cvs/dm/dmraid/logwatch
+In directory sourceware.org:/tmp/cvs-serv7175/logwatch
+
+Log Message:
+Directory /cvs/dm/dmraid/logwatch added to the repository
