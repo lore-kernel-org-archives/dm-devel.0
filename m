@@ -1,94 +1,87 @@
-From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
-Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
-Date: Tue, 15 Dec 2009 23:26:34 +0100
-Message-ID: <200912152326.34728.bzolnier@gmail.com>
-References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Greg KH <greg@kroah.com>
+Subject: Re: dm: sysfs add empty release function to avoid debug warning
+Date: Tue, 15 Dec 2009 16:47:39 -0800
+Message-ID: <20091216004739.GB4898@kroah.com>
+References: <200912151735.nBFHZ8XP018683@hera.kernel.org>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756079AbZLPAsK@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <200912151735.nBFHZ8XP018683@hera.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tuesday 15 December 2009 10:57:49 pm Mikulas Patocka wrote:
-
-> But some maintainers take output of the script checkpatch.pl dogmatically,
-> requiring that every new work must pass the script without a warning. This is
-> counterproductive --- if I write a driver and I will be doing most maintenance
-> work on it in the future, it is viable that the driver is formatted in such
-> a way that is best editable for me, not for anyone else. And as shown in example
-> (1), this 80-column requirement makes even simple changes much harder.
-
-It has been agreed in the past that 80-column warnings shouldn't result
-automatically in the rejection of the new hardware support so the above
-argumentation is a bit weak.
-
-> So: I am submitting this patch for the checkpatch.pl script.
+On Tue, Dec 15, 2009 at 05:35:08PM +0000, James Bottomley wrote:
+> commit: d2bb7df8cac647b92f51fb84ae735771e7adbfa7
+> From: Milan Broz <mbroz@redhat.com>
+> Date: Thu, 10 Dec 2009 23:51:53 +0000
+> Subject: [PATCH] dm: sysfs add empty release function to avoid debug warning
 > 
+> This patch just removes an unnecessary warning:
+>  kobject: 'dm': does not have a release() function,
+>  it is broken and must be fixed.
 > 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> The kobject is embedded in mapped device struct, so
+> code does not need to release memory explicitly here.
 
-Having this limitation makes people at least think about designing their
-code properly and making it more compact.
+Oh no you did not!
 
-If you don't want to see such warnings just apply the following patch that
-I've been keeping locally (it helped me to work on staging drivers):
+Come on people, do you think that the kernel is just randomly spitting
+out warnings because it fricken feels like it!
 
-From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
-Subject: [PATCH] checkpatch.pl: add option to disable 80 column limit check
+No, please revert this patch now before someone does it for you.
 
-Signed-off-by: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
----
- scripts/checkpatch.pl |    5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+Please, this is totally and completly wrong.  And if you feel that it is
+needed, then your design is wrong and it needs to be fixed.
 
-Index: b/scripts/checkpatch.pl
-===================================================================
---- a/scripts/checkpatch.pl
-+++ b/scripts/checkpatch.pl
-@@ -17,6 +17,7 @@ use Getopt::Long qw(:config no_auto_abbr
- my $quiet = 0;
- my $tree = 1;
- my $chk_signoff = 1;
-+my $chk_cl = 1;
- my $chk_patch = 1;
- my $tst_only;
- my $emacs = 0;
-@@ -41,6 +42,7 @@ Options:
-   -q, --quiet                quiet
-   --no-tree                  run without a kernel tree
-   --no-signoff               do not check for 'Signed-off-by' line
-+  --no-cl                    do not apply 80 column limit
-   --patch                    treat FILE as patchfile (default)
-   --emacs                    emacs compile window format
-   --terse                    one line per report
-@@ -67,6 +69,7 @@ GetOptions(
- 	'q|quiet+'	=> \$quiet,
- 	'tree!'		=> \$tree,
- 	'signoff!'	=> \$chk_signoff,
-+	'cl!'		=> \$chk_cl,
- 	'patch!'	=> \$chk_patch,
- 	'emacs!'	=> \$emacs,
- 	'terse!'	=> \$terse,
-@@ -1365,7 +1368,7 @@ sub process {
- 		next if ($realfile !~ /\.(h|c|s|S|pl|sh)$/);
- 
- #80 column limit
--		if ($line =~ /^\+/ && $prevrawline !~ /\/\*\*/ &&
-+		if ($chk_cl && $line =~ /^\+/ && $prevrawline !~ /\/\*\*/ &&
- 		    $rawline !~ /^.\s*\*\s*\@$Ident\s/ &&
- 		    $line !~ /^\+\s*printk\s*\(\s*(?:KERN_\S+\s*)?"[X\t]*"\s*(?:,|\)\s*;)\s*$/ &&
- 		    $length > 80)
+And note, as per the Documentation/kobject.txt file, you were warned
+about this public mocking, next time it will be harsher.
+
+Heh, and you tried to get this into a -stable kernel release, as if.
+
+Patch left below so that others can mock.
+
+bah,
+
+greg k-h
+
+> 
+> Cc: stable@kernel.org
+> Signed-off-by: Milan Broz <mbroz@redhat.com>
+> Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+> ---
+>  drivers/md/dm-sysfs.c |    8 ++++++++
+>  1 files changed, 8 insertions(+), 0 deletions(-)
+> 
+> diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
+> index 4b04590..b000de3 100644
+> --- a/drivers/md/dm-sysfs.c
+> +++ b/drivers/md/dm-sysfs.c
+> @@ -80,12 +80,20 @@ static struct sysfs_ops dm_sysfs_ops = {
+>  };
+>  
+>  /*
+> + * The sysfs structure is embedded in md struct, nothing to do here
+> + */
+> +static void dm_sysfs_release(struct kobject *kobj)
+> +{
+> +}
+> +
+> +/*
+>   * dm kobject is embedded in mapped_device structure
+>   * no need to define release function here
+>   */
+>  static struct kobj_type dm_ktype = {
+>  	.sysfs_ops	= &dm_sysfs_ops,
+>  	.default_attrs	= dm_attrs,
+> +	.release	= dm_sysfs_release
+>  };
+>  
+>  /*
+> 
+> _______________________________________________
+> stable mailing list
+> stable@linux.kernel.org
+> http://linux.kernel.org/mailman/listinfo/stable
