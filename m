@@ -1,116 +1,52 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH] dm: eliminate some holes in data structures
-Date: Wed, 16 Dec 2009 13:25:23 -0600
-Message-ID: <C2396898-128F-4603-A21B-ECDD04981339@redhat.com>
-References: <20091216034940.GA11003@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v936)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091216034940.GA11003@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Alex Chiang <achiang@hp.com>
+Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
+Date: Wed, 16 Dec 2009 12:59:35 -0700
+Message-ID: <20091216195935.GA551@ldl.fc.hp.com>
+References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762455AbZLPT7j@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-ACK  (Reviewed-by)
+I've no comments on the actual patch but...
 
-  brassow
+* Mikulas Patocka <mpatocka@redhat.com>:
+> Drop 80-character limit in checkpatch.pl
+> 
+> Serious issues:
+> ===============
+> 
+> (1) The code is hard to edit with common text editors
 
-On Dec 15, 2009, at 9:49 PM, Mike Snitzer wrote:
+You mention vi; most distros provide vim these days.
 
-> Eliminate 1 4-byte hole in 'struct dm_io_memory' by moving 'offset'
-> above the 'ptr' to which it applies (size reduced from 24 to 16  
-> bytes).
-> And by association, 1 4 byte hole is eliminated in 'struct
-> dm_io_request' (size reduced from 56 to 48 bytes).
->
-> Eliminate all (3 4-byte) holes (and one cache-line) in 'struct
-> dm_snapshot' by moving 'pending_pool' after 'pending_exceptions_count'
-> and moving 'merge_failed' lower (size reduced from 648 to 632 bytes).
->
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
-> drivers/md/dm-snap.c  |   18 +++++++++---------
-> include/linux/dm-io.h |    4 ++--
-> 2 files changed, 11 insertions(+), 11 deletions(-)
->
-> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-> index ee8eb28..0435442 100644
-> --- a/drivers/md/dm-snap.c
-> +++ b/drivers/md/dm-snap.c
-> @@ -83,10 +83,10 @@ struct dm_snapshot {
-> 	/* Whether or not owning mapped_device is suspended */
-> 	int suspended;
->
-> -	mempool_t *pending_pool;
-> -
-> 	atomic_t pending_exceptions_count;
->
-> +	mempool_t *pending_pool;
-> +
-> 	struct dm_exception_table pending;
-> 	struct dm_exception_table complete;
->
-> @@ -110,6 +110,13 @@ struct dm_snapshot {
-> 	spinlock_t tracked_chunk_lock;
-> 	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
->
-> +	/* Wait for events based on state_bits */
-> +	unsigned long state_bits;
-> +
-> +	/* Range of chunks currently being merged. */
-> +	chunk_t first_merging_chunk;
-> +	int num_merging_chunks;
-> +
-> 	/*
-> 	 * The merge operation failed if this flag is set.
-> 	 * Failure modes are handled as follows:
-> @@ -125,13 +132,6 @@ struct dm_snapshot {
-> 	 */
-> 	int merge_failed;
->
-> -	/* Wait for events based on state_bits */
-> -	unsigned long state_bits;
-> -
-> -	/* Range of chunks currently being merged. */
-> -	chunk_t first_merging_chunk;
-> -	int num_merging_chunks;
-> -
-> 	/*
-> 	 * Incoming bios that overlap with chunks being merged must wait
-> 	 * for them to be committed.
-> diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
-> index b6bf17e..5c9186b 100644
-> --- a/include/linux/dm-io.h
-> +++ b/include/linux/dm-io.h
-> @@ -37,14 +37,14 @@ enum dm_io_mem_type {
-> struct dm_io_memory {
-> 	enum dm_io_mem_type type;
->
-> +	unsigned offset;
-> +
-> 	union {
-> 		struct page_list *pl;
-> 		struct bio_vec *bvec;
-> 		void *vma;
-> 		void *addr;
-> 	} ptr;
-> -
-> -	unsigned offset;
-> };
->
-> struct dm_io_notify {
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+In my .vimrc, I have:
+
+	set ai
+	set si
+
+That helps a bit.
+
+> (2) Grepping the code is unreliable
+
+Reviewers (at least in my part of the kernel) have been
+requesting that user-visible (and thus developer greppable)
+output be combined on one line precisely for this reason.
+
+We've been rejecting patches that unnecessarily break up these
+strings at 80 cols.
+
+> But some maintainers take output of the script checkpatch.pl
+> dogmatically, requiring that every new work must pass the
+> script without a warning.
+
+This is the real problem. And I think the solution is to lobby
+your maintainer.
+
+fwiw,
+/ac
