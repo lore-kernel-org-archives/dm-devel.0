@@ -1,87 +1,102 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: dm: sysfs add empty release function to avoid debug warning
-Date: Tue, 15 Dec 2009 16:47:39 -0800
-Message-ID: <20091216004739.GB4898@kroah.com>
-References: <200912151735.nBFHZ8XP018683@hera.kernel.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm: eliminate some holes in data structures
+Date: Tue, 15 Dec 2009 22:49:41 -0500
+Message-ID: <20091216034940.GA11003@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756079AbZLPAsK@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <200912151735.nBFHZ8XP018683@hera.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 15, 2009 at 05:35:08PM +0000, James Bottomley wrote:
-> commit: d2bb7df8cac647b92f51fb84ae735771e7adbfa7
-> From: Milan Broz <mbroz@redhat.com>
-> Date: Thu, 10 Dec 2009 23:51:53 +0000
-> Subject: [PATCH] dm: sysfs add empty release function to avoid debug warning
-> 
-> This patch just removes an unnecessary warning:
->  kobject: 'dm': does not have a release() function,
->  it is broken and must be fixed.
-> 
-> The kobject is embedded in mapped device struct, so
-> code does not need to release memory explicitly here.
+Eliminate 1 4-byte hole in 'struct dm_io_memory' by moving 'offset'
+above the 'ptr' to which it applies (size reduced from 24 to 16 bytes).
+And by association, 1 4 byte hole is eliminated in 'struct
+dm_io_request' (size reduced from 56 to 48 bytes).
 
-Oh no you did not!
+Eliminate all (3 4-byte) holes (and one cache-line) in 'struct
+dm_snapshot' by moving 'pending_pool' after 'pending_exceptions_count'
+and moving 'merge_failed' lower (size reduced from 648 to 632 bytes).
 
-Come on people, do you think that the kernel is just randomly spitting
-out warnings because it fricken feels like it!
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-snap.c  |   18 +++++++++---------
+ include/linux/dm-io.h |    4 ++--
+ 2 files changed, 11 insertions(+), 11 deletions(-)
 
-No, please revert this patch now before someone does it for you.
-
-Please, this is totally and completly wrong.  And if you feel that it is
-needed, then your design is wrong and it needs to be fixed.
-
-And note, as per the Documentation/kobject.txt file, you were warned
-about this public mocking, next time it will be harsher.
-
-Heh, and you tried to get this into a -stable kernel release, as if.
-
-Patch left below so that others can mock.
-
-bah,
-
-greg k-h
-
-> 
-> Cc: stable@kernel.org
-> Signed-off-by: Milan Broz <mbroz@redhat.com>
-> Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-> ---
->  drivers/md/dm-sysfs.c |    8 ++++++++
->  1 files changed, 8 insertions(+), 0 deletions(-)
-> 
-> diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
-> index 4b04590..b000de3 100644
-> --- a/drivers/md/dm-sysfs.c
-> +++ b/drivers/md/dm-sysfs.c
-> @@ -80,12 +80,20 @@ static struct sysfs_ops dm_sysfs_ops = {
->  };
->  
->  /*
-> + * The sysfs structure is embedded in md struct, nothing to do here
-> + */
-> +static void dm_sysfs_release(struct kobject *kobj)
-> +{
-> +}
-> +
-> +/*
->   * dm kobject is embedded in mapped_device structure
->   * no need to define release function here
->   */
->  static struct kobj_type dm_ktype = {
->  	.sysfs_ops	= &dm_sysfs_ops,
->  	.default_attrs	= dm_attrs,
-> +	.release	= dm_sysfs_release
->  };
->  
->  /*
-> 
-> _______________________________________________
-> stable mailing list
-> stable@linux.kernel.org
-> http://linux.kernel.org/mailman/listinfo/stable
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index ee8eb28..0435442 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -83,10 +83,10 @@ struct dm_snapshot {
+ 	/* Whether or not owning mapped_device is suspended */
+ 	int suspended;
+ 
+-	mempool_t *pending_pool;
+-
+ 	atomic_t pending_exceptions_count;
+ 
++	mempool_t *pending_pool;
++
+ 	struct dm_exception_table pending;
+ 	struct dm_exception_table complete;
+ 
+@@ -110,6 +110,13 @@ struct dm_snapshot {
+ 	spinlock_t tracked_chunk_lock;
+ 	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
+ 
++	/* Wait for events based on state_bits */
++	unsigned long state_bits;
++
++	/* Range of chunks currently being merged. */
++	chunk_t first_merging_chunk;
++	int num_merging_chunks;
++
+ 	/*
+ 	 * The merge operation failed if this flag is set.
+ 	 * Failure modes are handled as follows:
+@@ -125,13 +132,6 @@ struct dm_snapshot {
+ 	 */
+ 	int merge_failed;
+ 
+-	/* Wait for events based on state_bits */
+-	unsigned long state_bits;
+-
+-	/* Range of chunks currently being merged. */
+-	chunk_t first_merging_chunk;
+-	int num_merging_chunks;
+-
+ 	/*
+ 	 * Incoming bios that overlap with chunks being merged must wait
+ 	 * for them to be committed.
+diff --git a/include/linux/dm-io.h b/include/linux/dm-io.h
+index b6bf17e..5c9186b 100644
+--- a/include/linux/dm-io.h
++++ b/include/linux/dm-io.h
+@@ -37,14 +37,14 @@ enum dm_io_mem_type {
+ struct dm_io_memory {
+ 	enum dm_io_mem_type type;
+ 
++	unsigned offset;
++
+ 	union {
+ 		struct page_list *pl;
+ 		struct bio_vec *bvec;
+ 		void *vma;
+ 		void *addr;
+ 	} ptr;
+-
+-	unsigned offset;
+ };
+ 
+ struct dm_io_notify {
