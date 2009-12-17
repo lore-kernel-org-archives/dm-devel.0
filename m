@@ -1,12 +1,11 @@
 From: neilb@suse.de
-Subject: [dmraid 4/4] Fix two issues with installing shared
-	libraries.
-Date: Thu, 17 Dec 2009 16:44:14 +1100
-Message-ID: <20091217054532.073566335@suse.de>
+Subject: [dmraid 3/4] Fix min/max macros
+Date: Thu, 17 Dec 2009 16:44:13 +1100
+Message-ID: <20091217054526.545361172@suse.de>
 References: <20091217054410.410634166@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=lib-install
+Content-Disposition: inline; filename=remove-min-max
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,31 +18,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-1/  the [[ =~ ]] operator only treats the RHS as a regular expression
-   if it isn't quoted.  So we need to remove the quotes.
+These need parentheses around them.
 
-2/ The libdmraid-event-* library is not a shared library in the regular
-   sense.  i.e. programs are not linked against it and so do not have the
-   library version number encoded in them.
-   Rather, this is a shared-object that is explicitly loaded by dmeventd
-   on request from dmraid.  dmraid asks for "libdmraid-event-ism.so", so
-   that is the only name that the shared object should be stored under.
-   Providing a name with a trailing version number just makes it look like
-   something that it is not.
+In particular, in hpt37x.c, in 'to_cpu'
+we have an expression:
+   x + min(y,z)
+which will become
 
+ x + y > z ? y : z
+
+which is not what is wanted.
+
+From: dmraid-fdleak.patch
 Signed-off-by: NeilBrown <neilb@suse.de>
----
- lib/Makefile.in |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
---- dmraid.orig/lib/Makefile.in
-+++ dmraid/lib/Makefile.in
-@@ -82,7 +82,7 @@ install_dmraid_libs: $(INSTALL_TARGETS)
- 	for f in $(INSTALL_TARGETS); \
- 	do \
- 		n=$$(basename $${f}) ; \
--		if [[ "$$n" =~ '.so$$' ]]; then \
-+		if [[ "$$n" =~ .so$$ && ! "$$n" =~ libdmraid-events-.* ]]; then \
- 			$(INSTALL) -m 555 $(STRIP) \
- 				$$f $(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
- 			$(LN_S) -f $${n}.@DMRAID_LIB_VERSION@ $(libdir)/$${n}; \
+---
+ lib/internal.h |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- dmraid-16.orig/lib/internal.h
++++ dmraid-16/lib/internal.h
+@@ -50,8 +50,8 @@
+ #define	u_int64_t	uint64_t
+ #endif
+ 
+-#define min(a, b) (a) < (b) ? (a) : (b)
+-#define max(a, b) (a) > (b) ? (a) : (b)
++#define min(a, b) ((a) < (b) ? (a) : (b))
++#define max(a, b) ((a) > (b) ? (a) : (b))
+ #define ARRAY_SIZE(a)   (sizeof(a) / sizeof(*a))
+ #define ARRAY_END(a)   (a + ARRAY_SIZE(a))
+ 
