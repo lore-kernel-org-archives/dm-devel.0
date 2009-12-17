@@ -1,11 +1,11 @@
 From: neilb@suse.de
-Subject: [dmraid 3/4] Fix min/max macros
-Date: Thu, 17 Dec 2009 16:44:13 +1100
-Message-ID: <20091217054526.545361172@suse.de>
+Subject: [dmraid 2/4] Avoid fd leak in remove_device_partitions.
+Date: Thu, 17 Dec 2009 16:44:12 +1100
+Message-ID: <20091217054520.996066834@suse.de>
 References: <20091217054410.410634166@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=remove-min-max
+Content-Disposition: inline; filename=dmraid-fdleak.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,34 +18,33 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-These need parentheses around them.
+As this removes partitions for a list of devices, it could leak
+a large number of file descriptors.
 
-In particular, in hpt37x.c, in 'to_cpu'
-we have an expression:
-   x + min(y,z)
-which will become
-
- x + y > z ? y : z
-
-which is not what is wanted.
-
-From: dmraid-fdleak.patch
+Reported-by:  David Binderman <dcb314@hotmail.com>
+From: crrodriguez@opensuse.org
 Signed-off-by: NeilBrown <neilb@suse.de>
 
 ---
- lib/internal.h |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ lib/device/partition.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
---- dmraid-16.orig/lib/internal.h
-+++ dmraid-16/lib/internal.h
-@@ -50,8 +50,8 @@
- #define	u_int64_t	uint64_t
- #endif
- 
--#define min(a, b) (a) < (b) ? (a) : (b)
--#define max(a, b) (a) > (b) ? (a) : (b)
-+#define min(a, b) ((a) < (b) ? (a) : (b))
-+#define max(a, b) ((a) > (b) ? (a) : (b))
- #define ARRAY_SIZE(a)   (sizeof(a) / sizeof(*a))
- #define ARRAY_END(a)   (a + ARRAY_SIZE(a))
- 
+--- dmraid-16.orig/lib/device/partition.c
++++ dmraid-16/lib/device/partition.c
+@@ -30,12 +30,15 @@ _remove_subset_partitions(struct lib_con
+ 		/* There is no way to enumerate partitions */
+ 		for (part.pno = 1; part.pno <= 256; part.pno++) {
+ 			if (ioctl(fd, BLKPG, &io) < 0 && errno != ENXIO &&
+-					(part.pno < 16 || errno != EINVAL))
++					(part.pno < 16 || errno != EINVAL)) {
++			       close(fd);
+ 				LOG_ERR(lc, 0,
+ 					"removing part %d from %s: %s\n",
+ 					part.pno, rd->di->path,
+ 					strerror(errno));
++			}
+ 		}
++		close(fd);
+ 	}
+ 	return 1;
+ }
