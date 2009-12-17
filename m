@@ -1,9 +1,16 @@
-From: heinzm@sourceware.org
-Subject: dmraid/lib/device partition.c
-Date: 17 Dec 2009 14:29:24 -0000
-Message-ID: <20091217142924.27772.qmail@sourceware.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
+Date: Thu, 17 Dec 2009 07:14:37 -0800 (PST)
+Message-ID: <alpine.LFD.2.00.0912170713390.17868@localhost.localdomain>
+References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
+	<200912152326.34728.bzolnier@gmail.com>
+	<2375c9f90912170131g3144ca2eydfa067c85f6ced44@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <2375c9f90912170131g3144ca2eydfa067c85f6ced44@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,51 +20,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: =?ISO-8859-15?Q?Am=E9rico_Wang?= <xiyou.wangcong@gmail.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2009-12-17 14:29:24
 
-Modified files:
-	lib/device     : partition.c 
 
-Log message:
-	Avoid fd leak in _remove_subset_partitions (Neil Brown)
+On Thu, 17 Dec 2009, Am=C3=A9rico Wang wrote:
+>=20
+> I like this patch, this is actually what I wanted to do.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/device/partition.c.diff?cvsroot=dm&r1=1.1&r2=1.2
+I have nothing against a switch, but it had better default to off.
 
---- dmraid/lib/device/partition.c	2009/12/16 11:39:18	1.1
-+++ dmraid/lib/device/partition.c	2009/12/17 14:29:24	1.2
-@@ -23,20 +23,27 @@
- 
- 	list_for_each_entry(rd, &rs->devs, devs) {
- 		int fd = open(rd->di->path, O_RDWR);
-+
- 		if (fd < 0)
- 			LOG_ERR(lc, 0, "opening %s: %s\n", rd->di->path,
- 				strerror(errno));
- 
- 		/* There is no way to enumerate partitions */
- 		for (part.pno = 1; part.pno <= 256; part.pno++) {
--			if (ioctl(fd, BLKPG, &io) < 0 && errno != ENXIO &&
--					(part.pno < 16 || errno != EINVAL))
-+			if (ioctl(fd, BLKPG, &io) < 0 &&
-+			    errno != ENXIO &&
-+			    (part.pno < 16 || errno != EINVAL)) {
-+				close(fd);
- 				LOG_ERR(lc, 0,
- 					"removing part %d from %s: %s\n",
- 					part.pno, rd->di->path,
- 					strerror(errno));
-+			}
- 		}
-+
-+		close(fd);
- 	}
-+
- 	return 1;
- }
- 
+The whole 80-char limit is insane. It results in insane "fixes". Just=20
+about every time somebody "improves" a patch due to the warning, the=20
+result is worse than the original patch.
+
+		Linus
