@@ -1,15 +1,16 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
-Date: Thu, 17 Dec 2009 18:29:25 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0912171744070.21142@hs20-bc2-1.build.redhat.com>
+Date: Thu, 17 Dec 2009 18:33:12 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0912171829340.21142@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
 	<20091217061229.GD3946@linux-sh.org>
-	<m3tyvqgfs4.fsf@intrepid.localdomain>
+	<Pine.LNX.4.64.0912171725370.21142@hs20-bc2-1.build.redhat.com>
+	<20091217231240.GA1421@linux-sh.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3tyvqgfs4.fsf@intrepid.localdomain>
+In-Reply-To: <20091217231240.GA1421@linux-sh.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,78 +20,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Krzysztof Halasa <khc@pm.waw.pl>
-Cc: dm-devel@redhat.com, Paul Mundt <lethal@linux-sh.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+To: Paul Mundt <lethal@linux-sh.org>
+Cc: dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
 
 
-On Thu, 17 Dec 2009, Krzysztof Halasa wrote:
+On Fri, 18 Dec 2009, Paul Mundt wrote:
 
-> Paul Mundt <lethal@linux-sh.org> writes:
-> 
-> > For starters, this is just crap. If you're writing code like this, then
-> > line wrapping is really the least of your concerns. Take your function
-> > return value and assign it to a variable before testing it in unlikely()
-> > as per existing conventions and most of this goes away in this example.
-> > If you're testing an absurd amount of conditions in a single block with
-> > needlessly verbose variable names, then yes, you will go over 80
-> > characters. Consequently, your "clean" example doesn't look much better
-> > than your purposely obfuscated one.
-> 
-> Then perhaps checkpatch should warn about too complex expressions
-> instead? Line length is rather weak indication of complexity.
-> The typical problem being printk() with the printed info approaching
-> 80 chars (but there are others, of course).
+> On Thu, Dec 17, 2009 at 05:37:57PM -0500, Mikulas Patocka wrote:
+> > On Thu, 17 Dec 2009, Paul Mundt wrote:
+> > > On Tue, Dec 15, 2009 at 04:57:49PM -0500, Mikulas Patocka wrote:
+> > > > (5) Wrapping makes long expressions harder to understand
+> > > > --------------------------------------------------------
+> > > > 
+> > > > If I have a complex expression, I do not try to wrap it at predefined
+> > > > 80-column boundaries, but at logical boundaries within the expression to make
+> > > > it more readable (the brain can't find matching parentheses fast, so we can
+> > > > help it by aligning the code according to topmost terms in the expression).
+> > > > 
+> > > > Example:
+> > > > 				if (unlikely(call_some_function(s, value) != RET
+> > > > _SUCCESS) ||
+> > > > 				    (var_1 == prev_var_1 && var_2 == prev_var_2)
+> > > >  ||
+> > > > 				    flags & (FLAG_1 | FLAG_2) ||
+> > > > 				    some_other_condition) {
+> > > > 				}
+> > > > 
+> > > > Now, if we impose 80-column limit, we get this. One may argue that is looks
+> > > > aesthetically better, but it is also less intelligible than the previous
+> > > > version:
+> > > > 				if (unlikely(call_some_function(s, value) !=
+> > > > 				    RET_SUCCESS) || (var_1 == prev_var_1 &&
+> > > > 				    var_2 == prev_var_2) || flags & (FLAG_1 |
+> > > > 				    FLAG_2) || some_other_condition) {
+> > > > 				}
+> > > > 
+> > > For starters, this is just crap. If you're writing code like this, then
+> > > line wrapping is really the least of your concerns. Take your function
+> > > return value and assign it to a variable before testing it in unlikely()
+> > > as per existing conventions and most of this goes away in this example.
+> > 
+> > I wouldn't say that this is better:
+> > 				int csf_failed, vars_equal, flags_12;
+> > 
+> > 				...
+> > 
+> > 				csf_failed = call_some_function(s, value) != RET_SUCCESS;
+> > 				vars_equal = var_1 == prev_var_1 && var_2 == prev_var_2;
+> > 				flags_12 = flags & (FLAG_1 | FLAG_2);
+> > 				if (unlikely(csf_failed) || vars_equal ||
+> > 				    flags_12 || some_other_conditions) {
+> > 				}
+> > 
+> > If you think that it is better, it's OK, just write your code like that. 
+> > And don't force it to everyone.
+> > 
+> No, I wouldn't say that that's better either, but that's also not how I
+> suggested cleaning reworking it. We have existing conventions for how
+> complex blocks are broken down in to more readable forms which you seem
+> to have issues grasping. My point is that you are purposely obfuscating
+> things, and therefore your entire rationale is suspect at best.
 
-No. If someone wrote an expression too long to be understood, he will not 
-understand it when maintaining his code, he burns himself and he will 
-eventually learn to not write such long expressions. Or ... if he 
-understands it, there is no problem with it.
-
-There is no need to make a script for it. The script isn't so smart to 
-tell what is understandable and what is nto.
-
-
-All these coding-style discussions are just nit-picking. If you move the 
-code up or down a few lines, it won't help anything.
-
-The real problems of hard-to-understand code are totally different than 
-"is this line too long" or "is this expression too complex".
-
-
-Examples (what I personally found hard to understand):
-
-* excessive inheritance in C++ --- if you have object->method(params), it 
-is impossible to determine what is really called if the person is using 
-inheritance trees deeper than two levels.
-
-* excessively deep calls --- for example, python's module loader is 
-written partially in python and partially in C and it is impossible to 
-determine what is the control flow between the parts (see also the 
-previous problem about inheritance). In Linux, an example is waking a 
-process waiting on a bit, that calls 8 nested functions.
-
-* excessive abstractions --- find that these two drivers have some common 
-part and blast an abstraction layer with method tables in an effort to 
-share these common parts. I have seen when two drivers were merged this 
-way, the resulting driver was as big as those two separate drivers. What 
-the sharing saved, the abstraction layer added.
-
-* repeating the same logic again and again and not making it a macro or a 
-function --- it's not seen in Linux kernel, but in other project I have 
-seen the code for allocating and initializing a structure being repeated 
-38 times. It's not hard to read, it's hard to modify. Linux community 
-tends to be obsessive the opposite way (which leads to problems too, if 
-done excessively), see the previous paragraph.
-
-* code diffuse --- one thing at different places. An example is the Linux 
-cdrom stack (ide-cd, sr, drivers/cdrom).
-
-* constructing function names by concatenating macro arguments --- i.e. 
-try to find with grep, where is "outb_p" defined.
-
-
---- and rules for code formatting fix really nothing.
+So, how would you clean this complex code block?
 
 Mikulas
