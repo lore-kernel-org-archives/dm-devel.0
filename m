@@ -1,31 +1,57 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] Re: dm: sysfs add empty release function to avoid
- debug	warning
-Date: Thu, 17 Dec 2009 16:43:07 +0100
-Message-ID: <4B2A518B.1030800@redhat.com>
-References: <200912151735.nBFHZ8XP018683@hera.kernel.org> <20091216004739.GB4898@kroah.com> <4B28AC09.2000302@redhat.com> <20091216134538.GA20857@kroah.com> <4B290B95.10306@redhat.com> <20091216174632.GA12473@kroah.com> <4B29299B.5080704@redhat.com> <20091217003021.GB3512@kroah.com>
+From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
+Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
+Date: Thu, 17 Dec 2009 17:08:07 +0100
+Message-ID: <200912171708.07899.bzolnier@gmail.com>
+References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
+	<200912171618.32882.bzolnier@gmail.com>
+	<alpine.LFD.2.00.0912170726230.17868@localhost.localdomain>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: Text/Plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S965256AbZLQPnQ@vger.kernel.org>
-In-Reply-To: <20091217003021.GB3512@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Greg KH <greg@kroah.com>, Zdenek Kabelac <zkabelac@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LFD.2.00.0912170726230.17868@localhost.localdomain>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: =?iso-8859-1?q?Am=E9rico_Wang?= <xiyou.wangcong@gmail.com>, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 12/17/2009 01:30 AM, Greg KH wrote:
-> On Wed, Dec 16, 2009 at 07:40:27PM +0100, Milan Broz wrote:
->> On 12/16/2009 06:46 PM, Greg KH wrote:
->>> You will find that all of these are modules, right?  That's being worked
->>> on still.
->>
->> probably. I see that this implementation is in kernel since import to git...
+On Thursday 17 December 2009 04:37:41 pm Linus Torvalds wrote:
 > 
-> And you will also note that I didn't paper over the issue by trying to
-> provide an empty release function :)
+> On Thu, 17 Dec 2009, Bartlomiej Zolnierkiewicz wrote:
+> > 
+> > Examples? :)
+> 
+> They're typically things like this:
+> 
+> -			ret = sscanf (buf, "0x%lx - 0x%lx", &start_addr, &end_addr);
+> +			ret = sscanf(buf, "0x%lx - 0x%lx", &start_addr,
+> +				&end_addr);
+> 
+> ie a line-break that is just annoying and makes the code harder to read 
+> rather than easier. 
 
-Alasdair, can we request revert of that last patch for now
-(which introduced the empty release function)?
+Well, it could have been done in the other way:
 
-Milan
+-			ret = sscanf (buf, "0x%lx - 0x%lx", &start_addr, &end_addr);
++			ret = sscanf(buf, "0x%lx - 0x%lx",
++				     &start_addr, &end_addr);
+
+Just an example that the limit itself is usually not a problem
+but its literal interpretation is..
+
+I don't feel strongly about it the either way so how's about just
+adding the switch and than changing the default (Alasdair?) on top
+of it?
+
+--
+Bartlomiej Zolnierkiewicz
