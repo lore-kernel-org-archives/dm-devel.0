@@ -1,11 +1,16 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: [PATCH] dm: Fix alignment stacking on partitioned devices
-Date: Fri, 18 Dec 2009 02:30:51 -0500
-Message-ID: <yq1aaxg7n84.fsf@sermon.lab.mkp.net>
+From: Jiri Kosina <jkosina@suse.cz>
+Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
+Date: Fri, 18 Dec 2009 14:04:37 +0100 (CET)
+Message-ID: <alpine.LRH.2.00.0912181400130.21496@twin.jikos.cz>
+References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
+	<2375c9f90912170131g3144ca2eydfa067c85f6ced44@mail.gmail.com>
+	<alpine.LFD.2.00.0912170713390.17868@localhost.localdomain>
+	<200912171618.32882.bzolnier@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <200912171618.32882.bzolnier@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,49 +20,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: jens.axboe@oracle.com
+To: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, =?ISO-8859-15?Q?Am=E9rico_Wang?= <xiyou.wangcong@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Thu, 17 Dec 2009, Bartlomiej Zolnierkiewicz wrote:
 
-The dm device limits function passes the start sector within the block
-device to the block layer stacking function.  However, the partition's
-offset on the physical device is not added, resulting in incorrect
-alignment reporting.
+> > > I like this patch, this is actually what I wanted to do.
+> > 
+> > I have nothing against a switch, but it had better default to off.
+> > 
+> > The whole 80-char limit is insane. It results in insane "fixes". Just 
+> > about every time somebody "improves" a patch due to the warning, the 
+> > result is worse than the original patch.
+> 
+> Examples? :)
 
-Add the partition offset to the values passed to blk_stack_limits().
+balance_leaf() in fs/reiserfs/do_balan.c
 
-Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Example picked totally at random:
 
----
+	set_le_ih_k_offset(ih,
+			   le_ih_k_offset(ih) +
+			   (tb->
+			    lbytes <<
+			    (is_indirect_le_ih
+			     (ih) ? tb->tb_sb->
+			     s_blocksize_bits -
+			     UNFM_P_SHIFT :
+			     0)));
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index be62547..67efac9 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -495,6 +495,7 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
- 	struct queue_limits *limits = data;
- 	struct block_device *bdev = dev->bdev;
- 	struct request_queue *q = bdev_get_queue(bdev);
-+	sector_t offset = (get_start_sect(bdev) + start) << 9;
- 	char b[BDEVNAME_SIZE];
- 
- 	if (unlikely(!q)) {
-@@ -503,7 +504,7 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
- 		return 0;
- 	}
- 
--	if (blk_stack_limits(limits, &q->limits, start << 9) < 0)
-+	if (blk_stack_limits(limits, &q->limits, offset) < 0)
- 		DMWARN("%s: target device %s is misaligned: "
- 		       "physical_block_size=%u, logical_block_size=%u, "
- 		       "alignment_offset=%u, start=%llu",
-@@ -511,7 +512,7 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
- 		       q->limits.physical_block_size,
- 		       q->limits.logical_block_size,
- 		       q->limits.alignment_offset,
--		       (unsigned long long) start << 9);
-+		       (unsigned long long) offset);
- 
- 
- 	/*
+See how everything is nicely aligned to 80 cols?
+
+
+Generally, don't look at this function after having a good lunch you want 
+to keep. You have been warned.
+
+-- 
+Jiri Kosina
+SUSE Labs, Novell Inc.
