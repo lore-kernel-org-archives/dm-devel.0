@@ -1,64 +1,95 @@
-From: Doug Dumitru <doug@easyco.com>
-Subject: dm-ramdisk module
-Date: Thu, 17 Dec 2009 23:37:54 -0800
-Message-ID: <4B2B3152.8090207@easyco.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: kevin granade <kevin.granade@gmail.com>
+Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
+Date: Fri, 18 Dec 2009 15:15:03 -0600
+Message-ID: <7004b08e0912181315n1894ca90m8752b57708cf55eb@mail.gmail.com>
+References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
+	 <20091217061229.GD3946@linux-sh.org>
+	 <m3tyvqgfs4.fsf@intrepid.localdomain>
+	 <Pine.LNX.4.64.0912171744070.21142@hs20-bc2-1.build.redhat.com>
+	 <24653.1261110557@localhost> <m3my1g1hmr.fsf@intrepid.localdomain>
+	 <7004b08e0912180652p42777da3h70906f2fbdb60a69@mail.gmail.com>
+	 <Pine.LNX.4.64.0912181137140.23738@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932988AbZLRVPP@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.0912181137140.23738@hs20-bc2-1.build.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Krzysztof Halasa <khc@pm.waw.pl>, Valdis.Kletnieks@vt.edu, Paul Mundt <lethal@linux-sh.org>, linux-kernel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Alasdair Kergon,
+On Fri, Dec 18, 2009 at 10:43 AM, Mikulas Patocka <mpatocka@redhat.com>=
+ wrote:
+>> Note: I'm not specifically arguing for keeping the 80-column rule, t=
+he
+>> project I work on uses 100 columns, and that's quite workable, but I
+>> haven't had any problem working with 80 columns as a limit either. =A0=
+I
+>> do however think that just removing the limit without replacing it
+>> with something better is a bad idea.
+>>
+>> -Kevin Granade
+>
+> But think what happens when someone views that 100-char code on 80-ch=
+ar
+> terminal (or for example 94-char, that I used for some times too) ---
+> every second line will be wasted with just 20 characters on the left.=
+ On
+> the other hand, if you have unlimited line length, it will look bette=
+r on
+> 80-char terminal.
 
-The MAINTAINERS file shows you as the person with responsibility for 
-device-mapper functions.  Hopefully you are the correct person to contact.
+1. I think that is why the limit is at 80 characters, so it's at the
+lowest common denominator of screen and will not wrap at all.
+(actually wasn't the original limit an email mangling issue?)
+2. Aside from choosing the specific limit of 80, I don't think line
+wrapping is a major goal of the line length limitation, as I said
+before it is a heuristic that is indicative of BAD CODE.  The wrapping
+issue is somewhat incidental.
+3. I don't trust automated line-wrapping to provide readable code
+anyway.  People I think will be much better at doing this, for
+example, a common issue is with formatted string functions like scanf.
+ A person will (ok, should) know to preferentially wrap after the
+format string, and if they are really being nice can generalize about
+other things, like name-value pairs:
 
-I have developed a high-performance ramdisk device-mapper module and 
-wanted to see if there was any interest in it.
+scanf("%d,%d;%d,%d;%d,%d",
+         key1, value1,
+         key2, value2,
+         key3, value3);
 
-In doing work with another proprietary driver, I needed a very fast 
-block device to test and tune against.  The system boot ramdisk seemed 
-difficult to use and also seems to suffer performance issues when 
-hammered on multiple threads.  Based on the dm-zero module, and the work 
-that I have been doing, throwing together a dm-ramdisk module was pretty 
-easy.
+whereas automated wrapping will only know about a limited number of
+rules, generally purely syntax-based: (yes, this is somewhat
+contrived, but I think it illustrates the kind of limitation I'm
+talking about.)
 
-Do you think there is any interest in this module in the main-line 
-kernel or as a teaching tool for device-mapper programmers.  If so I 
-would be happy to contribute it.
+scanf("%d,%d;%d,%d;%d,%d", key1, value1, key2,
+         value2, key3, value3);
 
-* In it's current state it is functional on 32-bit and 64-bit x86 kernels.
+But this is all really beside the point, if you really want to you can
+write a text editor that will unwrap the text for you, and then
+re-wrap it exactly how you want it.  I don't think this would be all
+that much harder than one that could intelligently wrap the lines in
+the first place.
 
-* It compiles and runs on 2.6.9 thru 2.6.30.
+The point I keep coming back to is to follow the *important* coding
+guidelines, like avoiding excessive nesting and properly factoring
+your code into sub-modules (macros, functions, inlined functions, etc.
+as appropriate.)  The line limit acts as a warning that you are
+probably doing something wrong, just shortening the line in question
+is not the answer.
 
-* It will probably work on non-x86 platforms, but needs to be audited to 
-make sure all memory primitives are correct (things like KMAP_ATOMIC usage).
+Other incidental issues:
+"wasting lines" - Don't care, factor properly and a single unit of
+code should fit in a screenfull or two.
+"effort wasted manually wrapping lines" - Also don't care, if you
+think the text editor should be smart enough to wrap lines
+intelligently, just use it to do it for you.  (hint: they're generally
+not actually that smart).  Also consider the alternative there, if
+multi-hundred character lines are the norm, just how easy are the
+contents of those lines to manipulate?
 
-* The source probably needs to be adjusted for source code style, 
-indenting, etc. to match the rest of the kernel.
-
-* It would probably make sense to "over comment" the source code so that 
-it is a good teaching platform for basic device-mapper and bio programming.
-
-This project is a spin-off of a much bigger proprietary device-mapper 
-module.  Nothing in the dm-ramdisk module driver is really all that 
-special except that it is a functional ramdisk in less than 300 lines of 
-code.
-
-If you think there is any interest in this simple module, I would be 
-happy to send you a copy (or anyone else for that matter).
-
-Thank you,
-Doug Dumitru
-CTO EasyCo LLC
+>
+> Mikulas
+>
