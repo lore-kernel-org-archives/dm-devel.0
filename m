@@ -1,20 +1,11 @@
-From: Paul Mundt <lethal@linux-sh.org>
-Subject: Re: [PATCH] scripts/checkpatch.pl: Change long line
-	warning to 105 chars
-Date: Fri, 18 Dec 2009 14:57:12 +0900
-Message-ID: <20091218055712.GA4186@linux-sh.org>
-References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
-	<20091217061229.GD3946@linux-sh.org>
-	<m3tyvqgfs4.fsf@intrepid.localdomain>
-	<Pine.LNX.4.64.0912171744070.21142@hs20-bc2-1.build.redhat.com>
-	<24653.1261110557@localhost>
-	<1261113144.13734.317.camel@Joe-Laptop.home>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: [PATCH] dm: Fix alignment stacking on partitioned devices
+Date: Fri, 18 Dec 2009 02:30:51 -0500
+Message-ID: <yq1aaxg7n84.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1261113144.13734.317.camel@Joe-Laptop.home>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,21 +15,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Perches <joe@perches.com>
-Cc: Valdis.Kletnieks@vt.edu, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Andy Whitcroft <apw@canonical.com>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, Krzysztof Halasa <khc@pm.waw.pl>
+To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Thu, Dec 17, 2009 at 09:12:24PM -0800, Joe Perches wrote:
-> On Thu, 2009-12-17 at 23:29 -0500, Valdis.Kletnieks@vt.edu wrote:
-> > Yeah, but I respectfully submit that if the regexp '^\t{6}' matches a non-
-> > continuation line, it's probably in its rights to whinge. 
-> > 	grep -r -P '^\t{7:}(?!(.*,$|.*\);$))' . | more
-> > produces a whole lot of "this can't end well" output.
-> 
-> I think this is a good test to add to checkpatch.
-> 
-> Add 105 character long line WARN test
-> Add 80 character long line STRICT test
-> Add 6+ leading indent tabs test, consider restructuring
-> 
-This looks like a reasonable compromise.
+
+The dm device limits function passes the start sector within the block
+device to the block layer stacking function.  However, the partition's
+offset on the physical device is not added, resulting in incorrect
+alignment reporting.
+
+Add the partition offset to the values passed to blk_stack_limits().
+
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+---
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index be62547..67efac9 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -495,6 +495,7 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 	struct queue_limits *limits = data;
+ 	struct block_device *bdev = dev->bdev;
+ 	struct request_queue *q = bdev_get_queue(bdev);
++	sector_t offset = (get_start_sect(bdev) + start) << 9;
+ 	char b[BDEVNAME_SIZE];
+ 
+ 	if (unlikely(!q)) {
+@@ -503,7 +504,7 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 		return 0;
+ 	}
+ 
+-	if (blk_stack_limits(limits, &q->limits, start << 9) < 0)
++	if (blk_stack_limits(limits, &q->limits, offset) < 0)
+ 		DMWARN("%s: target device %s is misaligned: "
+ 		       "physical_block_size=%u, logical_block_size=%u, "
+ 		       "alignment_offset=%u, start=%llu",
+@@ -511,7 +512,7 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 		       q->limits.physical_block_size,
+ 		       q->limits.logical_block_size,
+ 		       q->limits.alignment_offset,
+-		       (unsigned long long) start << 9);
++		       (unsigned long long) offset);
+ 
+ 
+ 	/*
