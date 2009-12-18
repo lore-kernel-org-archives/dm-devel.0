@@ -1,17 +1,18 @@
-From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
+From: Krzysztof Halasa <khc@pm.waw.pl>
 Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
-Date: Fri, 18 Dec 2009 14:55:34 +0100
-Message-ID: <200912181455.34664.bzolnier@gmail.com>
+Date: Fri, 18 Dec 2009 15:28:12 +0100
+Message-ID: <m3my1g1hmr.fsf@intrepid.localdomain>
 References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com>
-	<200912171618.32882.bzolnier@gmail.com>
-	<alpine.LRH.2.00.0912181400130.21496@twin.jikos.cz>
+	<20091217061229.GD3946@linux-sh.org>
+	<m3tyvqgfs4.fsf@intrepid.localdomain>
+	<Pine.LNX.4.64.0912171744070.21142@hs20-bc2-1.build.redhat.com>
+	<24653.1261110557@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.00.0912181400130.21496@twin.jikos.cz>
+In-Reply-To: <24653.1261110557@localhost> (Valdis Kletnieks's message of "Thu,
+	17 Dec 2009 23:29:17 -0500")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,65 +22,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jiri Kosina <jkosina@suse.cz>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, =?iso-8859-1?q?Am=E9rico_Wang?= <xiyou.wangcong@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+To: Valdis.Kletnieks@vt.edu
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Paul Mundt <lethal@linux-sh.org>, Mikulas Patocka <mpatocka@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Friday 18 December 2009 02:04:37 pm Jiri Kosina wrote:
-> On Thu, 17 Dec 2009, Bartlomiej Zolnierkiewicz wrote:
-> 
-> > > > I like this patch, this is actually what I wanted to do.
-> > > 
-> > > I have nothing against a switch, but it had better default to off.
-> > > 
-> > > The whole 80-char limit is insane. It results in insane "fixes". Just 
-> > > about every time somebody "improves" a patch due to the warning, the 
-> > > result is worse than the original patch.
-> > 
-> > Examples? :)
-> 
-> balance_leaf() in fs/reiserfs/do_balan.c
-> 
-> Example picked totally at random:
-> 
-> 	set_le_ih_k_offset(ih,
-> 			   le_ih_k_offset(ih) +
-> 			   (tb->
-> 			    lbytes <<
-> 			    (is_indirect_le_ih
-> 			     (ih) ? tb->tb_sb->
-> 			     s_blocksize_bits -
-> 			     UNFM_P_SHIFT :
-> 			     0)));
-> 
-> See how everything is nicely aligned to 80 cols?
+Valdis.Kletnieks@vt.edu writes:
 
-I see but the above code is an utter crap anyway.
+> Yeah, but I respectfully submit that if the regexp '^\t{6}' matches a non-
+> continuation line, it's probably in its rights to whinge.
 
-Firstly what kind of a function parameter is that:
+Yes, but don't make it a hard error, only a suggestion that something is
+probably really wrong.
 
-   le_ih_k_offset(ih) + (tb->lbytes << (is_indirect_le_ih(ih) ? tb->tb_sb->s_blocksize_bits - UNFM_P_SHIFT : 0))
+> fs/reisersfs/do_balan.c, lines 460-477 (note: 3 leading tabs elided)
+>
+> 				leaf_paste_entries(&bi,
+> 						   n +
+> 						   item_pos
+> 						   -
+> 						   ret_val,
+> 						   l_pos_in_item,
+> 						   1,
+> 						   (struct
+> 						    reiserfs_de_head
+> 						    *)
+> 						   body,
+> 						   body
+> 						   +
+> 						   DEH_SIZE,
+> 						   tb->
+> 						   insert_size
+> 						   [0]
+> 				    );
+>
+> Yes, that used to be 24 more columns to the right.  Gaak.
 
-?
-
-[ BTW 'tb->tb_sb->s_blocksize_bits - UNFM_P_SHIFT' construct is used five
-  times in balance_leaf() and is a likely candidate for helper / macro. ]
-
-More importantly the whole balance_leaf() function is almost 1400 LOC (!)
-big and impossible to read: code for handling particular 'switch' blocks
-should be factored out into separate functions etc.
-
-The point I was making is that the once we remove the limit we don't have
-other tool to _automatically_ point suspicious code areas (yes, I would
-also prefer intelligent static code checker over dumb limit but it simply
-not here as things are today and dumb limit works surprisingly well most
-of the time -- please note how that the structural problem with the code
-example given is immediately visible with the current limit).
-
-> Generally, don't look at this function after having a good lunch you want 
-> to keep. You have been warned.
-
-No worries, I visit dark places (ide, staging, ..) and come back alive.. ;)
-
---
-Bartlomiej Zolnierkiewicz
+Precisely. It's a clear show of the damage hard rules like that do.
+I can't even tell how the code should be fixed and if the simple merging
+would do, since I can't really imagine how it would look like :-)
+-- 
+Krzysztof Halasa
