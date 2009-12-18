@@ -1,70 +1,69 @@
-From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
-Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
-Date: Fri, 18 Dec 2009 16:11:50 +0100
-Message-ID: <200912181611.50871.bzolnier@gmail.com>
-References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com> <24653.1261110557@localhost> <m3my1g1hmr.fsf@intrepid.localdomain>
-Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754512AbZLRPNb@vger.kernel.org>
-In-Reply-To: <m3my1g1hmr.fsf@intrepid.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Krzysztof Halasa <khc@pm.waw.pl>
-Cc: Valdis.Kletnieks@vt.edu, Mikulas Patocka <mpatocka@redhat.com>, Paul Mundt <lethal@linux-sh.org>, linux-kernel@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+From: heinzm@redhat.com
+Subject: [PATCH v6 0/4] dm-replicator: introduce new remote
+	replication target
+Date: Fri, 18 Dec 2009 16:44:29 +0100
+Message-ID: <1261151073-25962-1-git-send-email-heinzm@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-On Friday 18 December 2009 03:28:12 pm Krzysztof Halasa wrote:
-> Valdis.Kletnieks@vt.edu writes:
-> 
-> > Yeah, but I respectfully submit that if the regexp '^\t{6}' matches a non-
-> > continuation line, it's probably in its rights to whinge.
-> 
-> Yes, but don't make it a hard error, only a suggestion that something is
-> probably really wrong.
-> 
-> > fs/reisersfs/do_balan.c, lines 460-477 (note: 3 leading tabs elided)
-> >
-> > 				leaf_paste_entries(&bi,
-> > 						   n +
-> > 						   item_pos
-> > 						   -
-> > 						   ret_val,
-> > 						   l_pos_in_item,
-> > 						   1,
-> > 						   (struct
-> > 						    reiserfs_de_head
-> > 						    *)
-> > 						   body,
-> > 						   body
-> > 						   +
-> > 						   DEH_SIZE,
-> > 						   tb->
-> > 						   insert_size
-> > 						   [0]
-> > 				    );
-> >
-> > Yes, that used to be 24 more columns to the right.  Gaak.
-> 
-> Precisely. It's a clear show of the damage hard rules like that do.
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-It is not a hard rule and the above damage was done in 2005 when some
-random developer (Linus Torvalds?  Is this even a real name? ;-) decided
-to mindlessly pass do_balan.c file through Lindent script and later
-didn't finish the task of cleaning the code properly (see commit bd4c625
-for details).
 
-We didn't even have checkpatch.pl back then (it was added in 2007).
+* 6th version of patch series (initial version dated Oct 23 2009) *
 
-> I can't even tell how the code should be fixed and if the simple merging
-> would do, since I can't really imagine how it would look like :-)
+Rebased to 2.6.33-rc1 (dm-dirty-log interface change).
+Fixed some sparse warnings spotted by Alasdair (make C=1).
 
-The old code [ no tabs removed ]:
 
--                           leaf_paste_entries (bi.bi_bh, n + item_pos - ret_val, l_pos_in_item, 1,
--                                               (struct reiserfs_de_head *)body,
--                                               body + DEH_SIZE, tb->insert_size[0]
--                               );
+This is a series of 4 patches introducing the device-mapper remote
+data replication target "dm-replicator" to kernel 2.6.
 
---
-Bartlomiej Zolnierkiewicz
+Userspace support for remote data replication will be in
+a future LVM2 version.
+
+The target supports disaster recovery by replicating groups of active
+mapped devices (ie. receiving io from applications) to one or more
+remote sites to paired groups of equally sized passive block devices
+(ie. no application access). Synchronous, asynchronous replication
+(with fallbehind settings) and temporary downtime of transports
+are supported.
+
+It utilizes a replication log to ensure write ordering fidelity for
+the whole group of replicated devices, hence allowing for consistent
+recovery after failover of arbitrary applications
+(eg. DBMS utilizing N > 1 devices).
+
+In case the replication log runs full, it is capable to fall back
+to dirty logging utilizing the existing dm-log module, hence keeping
+track of regions of devices wich need resynchronization after access
+to the transport returned.
+
+Access logic of the replication log and the site links are implemented
+as loadable modules, hence allowing for future implementations with
+different capabilities in terms of additional plugins.
+
+A "ringbuffer" replication log module implements a circular ring buffer
+store for all writes being processed. Other replication log handlers
+may follow this one as plugins too.
+
+A "blockdev" site link module implements block devices access to all remote
+devices, ie. all devices exposed via the Linux block device layer
+(eg. iSCSI, FC).
+Again, other eg. network type transport site link handlers may
+follow as plugins.
+
+Please review for upstream inclusion.
+
+Heinz
