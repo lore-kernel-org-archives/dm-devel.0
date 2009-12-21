@@ -1,52 +1,85 @@
-From: Paul Mundt <lethal@linux-sh.org>
-Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
-Date: Mon, 21 Dec 2009 15:32:38 +0900
-Message-ID: <20091221063238.GC15721@linux-sh.org>
-References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com> <2375c9f90912170131g3144ca2eydfa067c85f6ced44@mail.gmail.com> <alpine.LFD.2.00.0912170713390.17868@localhost.localdomain> <200912171618.32882.bzolnier@gmail.com> <alpine.LRH.2.00.0912181400130.21496@twin.jikos.cz>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH] dm-mpath: Remove 'suspended' flag from struct
+	multipath
+Date: Mon, 21 Dec 2009 20:02:44 +0900
+Message-ID: <4B2F55D4.5010108@ct.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751991AbZLUGcx@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.00.0912181400130.21496@twin.jikos.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jiri Kosina <jkosina@suse.cz>
-Cc: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Am?rico Wang <xiyou.wangcong@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Anderson <andmike@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-On Fri, Dec 18, 2009 at 02:04:37PM +0100, Jiri Kosina wrote:
-> On Thu, 17 Dec 2009, Bartlomiej Zolnierkiewicz wrote:
-> 
-> > > > I like this patch, this is actually what I wanted to do.
-> > > 
-> > > I have nothing against a switch, but it had better default to off.
-> > > 
-> > > The whole 80-char limit is insane. It results in insane "fixes". Just 
-> > > about every time somebody "improves" a patch due to the warning, the 
-> > > result is worse than the original patch.
-> > 
-> > Examples? :)
-> 
-> balance_leaf() in fs/reiserfs/do_balan.c
-> 
-> Example picked totally at random:
-> 
-> 	set_le_ih_k_offset(ih,
-> 			   le_ih_k_offset(ih) +
-> 			   (tb->
-> 			    lbytes <<
-> 			    (is_indirect_le_ih
-> 			     (ih) ? tb->tb_sb->
-> 			     s_blocksize_bits -
-> 			     UNFM_P_SHIFT :
-> 			     0)));
-> 
-> See how everything is nicely aligned to 80 cols?
-> 
-> 
-> Generally, don't look at this function after having a good lunch you want 
-> to keep. You have been warned.
-> 
-This isn't a valid example, as it wasn't written by a human. This is the
-result of Lindent being run blindly on the file and nothing more.
+Hi Alasdair,
 
-Try again.
+'suspended' flag in struct multipath was introduced to check whether
+the multipath target is in suspended state, but the same check is
+done through dm_suspended() now.
+So remove the flag and the related codes.
+
+This patch is for 2.6.33-rc1.
+Please apply.
+
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+Cc: Mike Anderson <andmike@linux.vnet.ibm.com>
+---
+ drivers/md/dm-mpath.c |   12 ------------
+ 1 file changed, 12 deletions(-)
+
+Index: 2.6.33-rc1/drivers/md/dm-mpath.c
+===================================================================
+--- 2.6.33-rc1.orig/drivers/md/dm-mpath.c
++++ 2.6.33-rc1/drivers/md/dm-mpath.c
+@@ -95,8 +95,6 @@ struct multipath {
+ 	mempool_t *mpio_pool;
+ 
+ 	struct mutex work_mutex;
+-
+-	unsigned suspended;	/* Don't create new I/O internally when set. */
+ };
+ 
+ /*
+@@ -1276,7 +1274,6 @@ static void multipath_postsuspend(struct
+ 	struct multipath *m = ti->private;
+ 
+ 	mutex_lock(&m->work_mutex);
+-	m->suspended = 1;
+ 	flush_multipath_work();
+ 	mutex_unlock(&m->work_mutex);
+ }
+@@ -1289,10 +1286,6 @@ static void multipath_resume(struct dm_t
+ 	struct multipath *m = (struct multipath *) ti->private;
+ 	unsigned long flags;
+ 
+-	mutex_lock(&m->work_mutex);
+-	m->suspended = 0;
+-	mutex_unlock(&m->work_mutex);
+-
+ 	spin_lock_irqsave(&m->lock, flags);
+ 	m->queue_if_no_path = m->saved_queue_if_no_path;
+ 	spin_unlock_irqrestore(&m->lock, flags);
+@@ -1428,11 +1421,6 @@ static int multipath_message(struct dm_t
+ 
+ 	mutex_lock(&m->work_mutex);
+ 
+-	if (m->suspended) {
+-		r = -EBUSY;
+-		goto out;
+-	}
+-
+ 	if (dm_suspended(ti)) {
+ 		r = -EBUSY;
+ 		goto out;
