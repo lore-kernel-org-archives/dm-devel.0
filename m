@@ -1,54 +1,58 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [dm-devel] [PATCH v2 1/1] dm-raid45
-Date: Mon, 21 Dec 2009 09:48:08 -0700
-Message-ID: <e9c3a7c20912210848u3f6ced7cvc57aec586ff7c0ef@mail.gmail.com>
-References: <1259243112-28175-1-git-send-email-heinzm@redhat.com>
-	 <e9c3a7c20912081638w39469743n76b4114b840f1c43@mail.gmail.com>
-	 <1260380840.9639.99.camel@o>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: dm: Fix alignment stacking on partitioned devices
+Date: Mon, 21 Dec 2009 12:49:33 -0500
+Message-ID: <yq14onk5iaa.fsf@sermon.lab.mkp.net>
+References: <yq1aaxg7n84.fsf@sermon.lab.mkp.net>
+	<20091218173322.GA4163@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1260380840.9639.99.camel@o>
-Sender: linux-raid-owner@vger.kernel.org
-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
-Cc: linux-raid <linux-raid@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20091218173322.GA4163@redhat.com> (Mike Snitzer's message of
+	"Fri, 18 Dec 2009 12:33:23 -0500")
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 9, 2009 at 10:47 AM, Heinz Mauelshagen <heinzm@redhat.com> =
-wrote:
-> On Tue, 2009-12-08 at 17:38 -0700, Dan Williams wrote:
->> On Thu, Nov 26, 2009 at 6:45 AM, =A0<heinzm@redhat.com> wrote:
->> > From: Heinz Mauelshagen <heinzm@redhat.com>
->> >
->> > Neil et al.,
->> >
->> > finally got around to creating a followup (interim) patch, which a=
-llows
->> > for changing the xor algorithn at runtime via the message interfac=
-e,
->> > hence allowing to test if the xor unrole optimization around the
->> > supported algorithms is performing better than the assembler
->> > optimized one in the kernel.
->>
->> Now that perf is available it would be good to get some comparative
->> cache utilization statistics on the two approaches.
->
-> I'd appreciate it.
-> Do you have any time to spend on this comparison ?
->
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-I can give it a shot.  The easiest way to test would be to export your
-versions via a struct xor_block_template.  However, the question I
-have is how do your macros differ from the existing ones in
-include/asm-generic/xor.h?  Can we achieve the same effect by
-extending the ones in include/asm-generic/xor.h to do up to 8 at a
-time?
+Mike> This is not required because DM assumes alignment_offset has
+Mike> already been accounted for by the caller (e.g. LVM2 or some other
+Mike> ficitional DM consumer).
 
-Thanks,
-Dan
---
-To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Mike> Below, "start" represents the aligned start of the data for a
+Mike> given volume.  That start must have already been shifted by
+Mike> alignment_offset; as is the case with lvm2 (>= 2.02.51), see the
+Mike> following lvm2 commits:
+Mike> http://sources.redhat.com/git/gitweb.cgi?p=lvm2.git;a=commit;h=282029eb45e56
+Mike> http://sources.redhat.com/git/gitweb.cgi?p=lvm2.git;a=commit;h=6c88b6c660020
+
+Mike> All this being said, how did you arrive at this patch?  Why do you
+Mike> feel it is needed?  Was it just from code inspection?
+
+Interesting.
+
+I have one case in my topology test scripts that prints a DM alignment
+warning with the old stacking algorithm but doesn't with the new one.  A
+bit surprising given that the new approach is much more picky.  MD
+correctly prints a warning for the same device with both algorithms.
+
+So I added a few printks and noticed that DM was calling the stacking
+function with the same start sector for both devices.  That seemed odd
+because the PV devices are misaligned partitions on the same disk.
+
+Note that this was run using an old EL5 LVM toolkit because I'm not
+interested in having userland compensate for any misalignment.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
