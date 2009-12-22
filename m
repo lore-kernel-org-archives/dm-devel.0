@@ -1,48 +1,78 @@
-From: Jiri Kosina <jkosina@suse.cz>
-Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
-Date: Tue, 22 Dec 2009 16:10:44 +0100 (CET)
-Message-ID: <alpine.LRH.2.00.0912221607180.21496@twin.jikos.cz>
-References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com> <2375c9f90912170131g3144ca2eydfa067c85f6ced44@mail.gmail.com> <alpine.LFD.2.00.0912170713390.17868@localhost.localdomain> <200912171618.32882.bzolnier@gmail.com>
- <alpine.LRH.2.00.0912181400130.21496@twin.jikos.cz> <20091221063238.GC15721@linux-sh.org>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: dm: Fix alignment stacking on partitioned devices
+Date: Tue, 22 Dec 2009 12:41:31 -0500
+Message-ID: <yq1my1a52k4.fsf@sermon.lab.mkp.net>
+References: <yq1aaxg7n84.fsf@sermon.lab.mkp.net>
+	<20091218173322.GA4163@redhat.com>
+	<yq14onk5iaa.fsf@sermon.lab.mkp.net>
+	<20091221195204.GA28703@redhat.com>
+	<yq1r5qn4orc.fsf@sermon.lab.mkp.net>
+	<20091222143240.GA9154@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751924AbZLVPKt@vger.kernel.org>
-In-Reply-To: <20091221063238.GC15721@linux-sh.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Mundt <lethal@linux-sh.org>
-Cc: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Am?rico Wang <xiyou.wangcong@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20091222143240.GA9154@redhat.com> (Mike Snitzer's message of
+	"Tue, 22 Dec 2009 09:32:40 -0500")
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Mon, 21 Dec 2009, Paul Mundt wrote:
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-> > Example picked totally at random:
-> > 
-> > 	set_le_ih_k_offset(ih,
-> > 			   le_ih_k_offset(ih) +
-> > 			   (tb->
-> > 			    lbytes <<
-> > 			    (is_indirect_le_ih
-> > 			     (ih) ? tb->tb_sb->
-> > 			     s_blocksize_bits -
-> > 			     UNFM_P_SHIFT :
-> > 			     0)));
-> > 
-> > See how everything is nicely aligned to 80 cols?
-> > 
-> > 
-> > Generally, don't look at this function after having a good lunch you want 
-> > to keep. You have been warned.
-> > 
-> This isn't a valid example, as it wasn't written by a human. This is the
-> result of Lindent being run blindly on the file and nothing more.
-> 
-> Try again.
+Mike,
 
-But having hard rule imposed on everyone to stick with 80-char rule makes 
-people to do exactly this kind of things (blindly running indent -l80 and 
-believing that it makes the code more readable because it is 
-CodingStyle-compliant(tm)).
+Mike> OK, so is MD somehow getting things wrong?  (You originally said
+Mike> that with the new stacking function MD resulted in an error but DM
+Mike> did not).
+
+MD is passing in absolute offsets and got the right result in both
+cases.
+
+
+Mike> "start" isn't a relative offset.  
+
+It's relative to the beginning of the partition (block_device), not
+relative to the beginning of the disk (request_queue).
+
+My beef here is that DM created a device like this:
+
+[root@10 ~]# pvs -o +pe_start
+  PV         VG   Fmt  Attr PSize   PFree   1st PE 
+  /dev/sde1  foo  lvm2 a-   508.00M 256.00M 192.00K
+  /dev/sde2  foo  lvm2 a-   512.00M 260.00M 192.00K
+[root@10 ~]# dmsetup table
+foo-bar: 0 1032192 striped 2 32 8:66 384 8:65 384
+
+/dev/sde  has an alignment_offset of 3584
+/dev/sde1 has an alignment_offset of 0
+/dev/sde2 has an alignment_offset of 1024
+
+dm_set_device_limits() calls blk_stack_limits() with a byte offset of
+196608 for both sde1 and sde2.  And that offset is checked for alignment
+with the queue's limits which has an alignment_offset of 3584.
+
+The two PVs are misaligned but that information is lost because you use
+blk_stack_limits() with partition-relative offsets.  My patch was an
+attempt to fix that.
+
+Test case:
+
+# modprobe scsi_debug dev_size_mb=1024 num_parts=2 lowest_aligned=7 physblk_exp=3
+# pvcreate /dev/sde1
+# pvcreate /dev/sde2
+# vgcreate foo /dev/sde1 /dev/sde2
+# lvcreate -I 16 -i 2 -L 500M -n bar foo
 
 -- 
-Jiri Kosina
-SUSE Labs, Novell Inc.
+Martin K. Petersen	Oracle Linux Engineering
