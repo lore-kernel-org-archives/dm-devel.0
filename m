@@ -1,36 +1,127 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [dm-devel] Re: dm: sysfs add empty release function to avoid
-	debug warning
-Date: Mon, 21 Dec 2009 21:31:55 -0800
-Message-ID: <20091222053155.GA16888@kroah.com>
-References: <200912151735.nBFHZ8XP018683@hera.kernel.org> <20091216004739.GB4898@kroah.com> <4B28AC09.2000302@redhat.com> <20091216134538.GA20857@kroah.com> <4B290B95.10306@redhat.com> <20091216174632.GA12473@kroah.com> <4B29299B.5080704@redhat.com> <20091217003021.GB3512@kroah.com> <4B2A518B.1030800@redhat.com>
+From: =?GB2312?B?1cXT7g==?= <chaimvy@gmail.com>
+Subject: Re: Shared snapshots
+Date: Tue, 22 Dec 2009 17:50:53 +0800
+Message-ID: <b8091bb40912220150n5d3eb153ga5689f64bccda203@mail.gmail.com>
+References: <Pine.LNX.4.64.0912160255370.10656@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752001AbZLVGAj@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4B2A518B.1030800@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============0015337299346342850=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0912160255370.10656@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Dec 17, 2009 at 04:43:07PM +0100, Milan Broz wrote:
-> On 12/17/2009 01:30 AM, Greg KH wrote:
-> > On Wed, Dec 16, 2009 at 07:40:27PM +0100, Milan Broz wrote:
-> >> On 12/16/2009 06:46 PM, Greg KH wrote:
-> >>> You will find that all of these are modules, right?  That's being worked
-> >>> on still.
-> >>
-> >> probably. I see that this implementation is in kernel since import to git...
-> > 
-> > And you will also note that I didn't paper over the issue by trying to
-> > provide an empty release function :)
-> 
-> Alasdair, can we request revert of that last patch for now
-> (which introduced the empty release function)?
+--===============0015337299346342850==
+Content-Type: multipart/alternative; boundary=000e0cd144684b208a047b4e24ca
 
-Ping?  Any word on the revert?
+--000e0cd144684b208a047b4e24ca
+Content-Type: text/plain; charset=ISO-8859-1
 
-thanks,
+does the origin device or cow  device can be resized dynamically?
+once created the multisnapshot device 'ms':
+echo 0 `blockdev --getsize /dev/mapper/vg1-lv1` multisnapshot /dev/mapper/
+vg1-lv1 /dev/mapper/vg1-lv2 16 0 mikulas 0|dmsetup create ms
+vg1-lv1, vg1-lv2, ms, if all of them can be resized dynamically?
 
-greg k-h
+thank you very much!
+
+
+2009/12/16 Mikulas Patocka <mpatocka@redhat.com>
+
+> Hi
+>
+> I uploaded new shared snapshots here:
+> http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
+>
+> changes:
+>
+> - Broken to separate patches, one patch per file. The last patch adds all
+> the files to Makefile and makes it all compile. It allows you to ack
+> patches individually. I didn't use stubs to compile intermediate patches,
+> the problem is that if multiple patches modify the same file, general
+> modifications to the code become harder. With one-patch-per-file I can
+> edit it with normal text editor and quilt regenerates the patches.
+>
+> - Document on-disk format in dm-multisnap-mikulas-struct.h
+>
+> - More functions are commented
+>
+> - Removed /*printk ... */ statements. I left some #ifdefed debug routines,
+> they are non-trivial to write again
+>
+> - Fixed a bug on big-endian systems
+>
+> - Exposed interface for snapshots-of-snapshots, tested that they work
+>
+> Mikulas
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+
+--000e0cd144684b208a047b4e24ca
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div>does the origin=A0device=A0or cow=A0 device can be resized dynamically=
+?</div>
+<div>once created the multisnapshot device &#39;ms&#39;:</div>
+<div><font style=3D"BACKGROUND-COLOR: #ffffff" color=3D"#3333ff">echo 0 `bl=
+ockdev --getsize /dev/mapper/<font color=3D"#ffffff">vg1-lv1</font>` multis=
+napshot /dev/mapper/<font color=3D"#990000">vg1-lv1</font> /dev/mapper/<fon=
+t color=3D"#990000">vg1-lv2</font> 16 0 mikulas 0|dmsetup create <font colo=
+r=3D"#990000">ms</font></font><br>
+</div>
+<div>vg1-lv1, vg1-lv2, ms, if all of them can be resized dynamically?</div>
+<div>=A0</div>
+<div>thank you very much!</div>
+<div>=A0</div>
+<div>=A0</div>
+<div class=3D"gmail_quote">2009/12/16 Mikulas Patocka <span dir=3D"ltr">&lt=
+;<a href=3D"mailto:mpatocka@redhat.com">mpatocka@redhat.com</a>&gt;</span><=
+br>
+<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
+px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid">Hi<br><br>I uploaded new shared =
+snapshots here:<br><a href=3D"http://people.redhat.com/mpatocka/patches/ker=
+nel/new-snapshots/devel/" target=3D"_blank">http://people.redhat.com/mpatoc=
+ka/patches/kernel/new-snapshots/devel/</a><br>
+<br>changes:<br><br>- Broken to separate patches, one patch per file. The l=
+ast patch adds all<br>the files to Makefile and makes it all compile. It al=
+lows you to ack<br>patches individually. I didn&#39;t use stubs to compile =
+intermediate patches,<br>
+the problem is that if multiple patches modify the same file, general<br>mo=
+difications to the code become harder. With one-patch-per-file I can<br>edi=
+t it with normal text editor and quilt regenerates the patches.<br><br>
+- Document on-disk format in dm-multisnap-mikulas-struct.h<br><br>- More fu=
+nctions are commented<br><br>- Removed /*printk ... */ statements. I left s=
+ome #ifdefed debug routines,<br>they are non-trivial to write again<br>
+<br>- Fixed a bug on big-endian systems<br><br>- Exposed interface for snap=
+shots-of-snapshots, tested that they work<br><br>Mikulas<br><font color=3D"=
+#888888"><br>--<br>dm-devel mailing list<br><a href=3D"mailto:dm-devel@redh=
+at.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
+nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br></font></blockq=
+uote></div><br>
+
+--000e0cd144684b208a047b4e24ca--
+
+
+--===============0015337299346342850==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0015337299346342850==--
