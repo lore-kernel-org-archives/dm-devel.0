@@ -1,13 +1,19 @@
-From: =?GB2312?B?1cXT7g==?= <chaimvy@gmail.com>
-Subject: Re: Shared snapshots
-Date: Tue, 22 Dec 2009 17:50:53 +0800
-Message-ID: <b8091bb40912220150n5d3eb153ga5689f64bccda203@mail.gmail.com>
-References: <Pine.LNX.4.64.0912160255370.10656@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: Fix alignment stacking on partitioned devices
+Date: Tue, 22 Dec 2009 09:32:40 -0500
+Message-ID: <20091222143240.GA9154@redhat.com>
+References: <yq1aaxg7n84.fsf@sermon.lab.mkp.net>
+	<20091218173322.GA4163@redhat.com>
+	<yq14onk5iaa.fsf@sermon.lab.mkp.net>
+	<20091221195204.GA28703@redhat.com>
+	<yq1r5qn4orc.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0015337299346342850=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0912160255370.10656@hs20-bc2-1.build.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <yq1r5qn4orc.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,111 +23,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
---===============0015337299346342850==
-Content-Type: multipart/alternative; boundary=000e0cd144684b208a047b4e24ca
+On Mon, Dec 21 2009 at 11:27pm -0500,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
---000e0cd144684b208a047b4e24ca
-Content-Type: text/plain; charset=ISO-8859-1
+> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+> 
+> Mike> If that is the case then the data "start" should be different for
+> Mike> these individual PVs (one following the other).  If not, can you
+> Mike> provide the 'dmsetup table' output for the associated DM devices?
+> 
+> Did some more runs.  It turns out the old stacking algorithm identified
+> the two alignments as being incompatible for the wrong reasons.  That's
+> why a message was printed with the older kernel.
 
-does the origin device or cow  device can be resized dynamically?
-once created the multisnapshot device 'ms':
-echo 0 `blockdev --getsize /dev/mapper/vg1-lv1` multisnapshot /dev/mapper/
-vg1-lv1 /dev/mapper/vg1-lv2 16 0 mikulas 0|dmsetup create ms
-vg1-lv1, vg1-lv2, ms, if all of them can be resized dynamically?
+OK, so is MD somehow getting things wrong?  (You originally said that
+with the new stacking function MD resulted in an error but DM did not).
+ 
+> I do find it a bit strange that you pass relative offsets to the
+> stacking function and rely on the userland utilities to do the right
+> thing, though.  Doesn't that mean that existing misaligned volumes will
+> go undetected?  Or do you perform a check when you prepare the table
+> before feeding it to the kernel?
 
-thank you very much!
+"start" isn't a relative offset.  The "start" is absolute from the
+beginning of the device.  So for old LVs that are already misaligned
+they'll pass down a start that _should_ cause misalignment messages in
+the kernel (via the stacking function).  I know I've seen such messages
+when LVM doesn't compensate for alignment_offset but I'll revisit this
+with your new stacking function.
 
+The justification for relying on userspace to consume and adjust for
+alignment_offset is: you're not creating LVM LVs with the kernel.
+Metadata that (may) precede the data "start" of a volume gets layed out
+(and managed) by userspace (LVM).  Not having the kernel involved in
+generating the "correct" offset to data allows such concerns to be
+purely in userspace (having the kernel contribute to that calculation
+doesn't get us anything other than potential for split brain bugs).
 
-2009/12/16 Mikulas Patocka <mpatocka@redhat.com>
-
-> Hi
->
-> I uploaded new shared snapshots here:
-> http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
->
-> changes:
->
-> - Broken to separate patches, one patch per file. The last patch adds all
-> the files to Makefile and makes it all compile. It allows you to ack
-> patches individually. I didn't use stubs to compile intermediate patches,
-> the problem is that if multiple patches modify the same file, general
-> modifications to the code become harder. With one-patch-per-file I can
-> edit it with normal text editor and quilt regenerates the patches.
->
-> - Document on-disk format in dm-multisnap-mikulas-struct.h
->
-> - More functions are commented
->
-> - Removed /*printk ... */ statements. I left some #ifdefed debug routines,
-> they are non-trivial to write again
->
-> - Fixed a bug on big-endian systems
->
-> - Exposed interface for snapshots-of-snapshots, tested that they work
->
-> Mikulas
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---000e0cd144684b208a047b4e24ca
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div>does the origin=A0device=A0or cow=A0 device can be resized dynamically=
-?</div>
-<div>once created the multisnapshot device &#39;ms&#39;:</div>
-<div><font style=3D"BACKGROUND-COLOR: #ffffff" color=3D"#3333ff">echo 0 `bl=
-ockdev --getsize /dev/mapper/<font color=3D"#ffffff">vg1-lv1</font>` multis=
-napshot /dev/mapper/<font color=3D"#990000">vg1-lv1</font> /dev/mapper/<fon=
-t color=3D"#990000">vg1-lv2</font> 16 0 mikulas 0|dmsetup create <font colo=
-r=3D"#990000">ms</font></font><br>
-</div>
-<div>vg1-lv1, vg1-lv2, ms, if all of them can be resized dynamically?</div>
-<div>=A0</div>
-<div>thank you very much!</div>
-<div>=A0</div>
-<div>=A0</div>
-<div class=3D"gmail_quote">2009/12/16 Mikulas Patocka <span dir=3D"ltr">&lt=
-;<a href=3D"mailto:mpatocka@redhat.com">mpatocka@redhat.com</a>&gt;</span><=
-br>
-<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
-px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid">Hi<br><br>I uploaded new shared =
-snapshots here:<br><a href=3D"http://people.redhat.com/mpatocka/patches/ker=
-nel/new-snapshots/devel/" target=3D"_blank">http://people.redhat.com/mpatoc=
-ka/patches/kernel/new-snapshots/devel/</a><br>
-<br>changes:<br><br>- Broken to separate patches, one patch per file. The l=
-ast patch adds all<br>the files to Makefile and makes it all compile. It al=
-lows you to ack<br>patches individually. I didn&#39;t use stubs to compile =
-intermediate patches,<br>
-the problem is that if multiple patches modify the same file, general<br>mo=
-difications to the code become harder. With one-patch-per-file I can<br>edi=
-t it with normal text editor and quilt regenerates the patches.<br><br>
-- Document on-disk format in dm-multisnap-mikulas-struct.h<br><br>- More fu=
-nctions are commented<br><br>- Removed /*printk ... */ statements. I left s=
-ome #ifdefed debug routines,<br>they are non-trivial to write again<br>
-<br>- Fixed a bug on big-endian systems<br><br>- Exposed interface for snap=
-shots-of-snapshots, tested that they work<br><br>Mikulas<br><font color=3D"=
-#888888"><br>--<br>dm-devel mailing list<br><a href=3D"mailto:dm-devel@redh=
-at.com">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
-nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br></font></blockq=
-uote></div><br>
-
---000e0cd144684b208a047b4e24ca--
-
-
---===============0015337299346342850==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0015337299346342850==--
+Mike
