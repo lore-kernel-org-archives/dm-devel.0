@@ -1,55 +1,36 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: dm: Fix alignment stacking on partitioned devices
-Date: Mon, 21 Dec 2009 23:27:19 -0500
-Message-ID: <yq1r5qn4orc.fsf@sermon.lab.mkp.net>
-References: <yq1aaxg7n84.fsf@sermon.lab.mkp.net>
-	<20091218173322.GA4163@redhat.com>
-	<yq14onk5iaa.fsf@sermon.lab.mkp.net>
-	<20091221195204.GA28703@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [dm-devel] Re: dm: sysfs add empty release function to avoid
+	debug warning
+Date: Mon, 21 Dec 2009 21:31:55 -0800
+Message-ID: <20091222053155.GA16888@kroah.com>
+References: <200912151735.nBFHZ8XP018683@hera.kernel.org> <20091216004739.GB4898@kroah.com> <4B28AC09.2000302@redhat.com> <20091216134538.GA20857@kroah.com> <4B290B95.10306@redhat.com> <20091216174632.GA12473@kroah.com> <4B29299B.5080704@redhat.com> <20091217003021.GB3512@kroah.com> <4B2A518B.1030800@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091221195204.GA28703@redhat.com> (Mike Snitzer's message of
-	"Mon, 21 Dec 2009 14:52:04 -0500")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752001AbZLVGAj@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4B2A518B.1030800@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+On Thu, Dec 17, 2009 at 04:43:07PM +0100, Milan Broz wrote:
+> On 12/17/2009 01:30 AM, Greg KH wrote:
+> > On Wed, Dec 16, 2009 at 07:40:27PM +0100, Milan Broz wrote:
+> >> On 12/16/2009 06:46 PM, Greg KH wrote:
+> >>> You will find that all of these are modules, right?  That's being worked
+> >>> on still.
+> >>
+> >> probably. I see that this implementation is in kernel since import to git...
+> > 
+> > And you will also note that I didn't paper over the issue by trying to
+> > provide an empty release function :)
+> 
+> Alasdair, can we request revert of that last patch for now
+> (which introduced the empty release function)?
 
-Mike> If that is the case then the data "start" should be different for
-Mike> these individual PVs (one following the other).  If not, can you
-Mike> provide the 'dmsetup table' output for the associated DM devices?
+Ping?  Any word on the revert?
 
-Did some more runs.  It turns out the old stacking algorithm identified
-the two alignments as being incompatible for the wrong reasons.  That's
-why a message was printed with the older kernel.
+thanks,
 
-I do find it a bit strange that you pass relative offsets to the
-stacking function and rely on the userland utilities to do the right
-thing, though.  Doesn't that mean that existing misaligned volumes will
-go undetected?  Or do you perform a check when you prepare the table
-before feeding it to the kernel?
-
-
->> Note that this was run using an old EL5 LVM toolkit because I'm not
->> interested in having userland compensate for any misalignment.
-
-Mike> OK, strikes me as odd but you must have your reasons
-
-I'm testing the stacking function.  I'm not interested in things being
-lined up.
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
+greg k-h
