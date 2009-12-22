@@ -1,67 +1,48 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: Fix alignment stacking on partitioned devices
-Date: Tue, 22 Dec 2009 09:32:40 -0500
-Message-ID: <20091222143240.GA9154@redhat.com>
-References: <yq1aaxg7n84.fsf@sermon.lab.mkp.net>
-	<20091218173322.GA4163@redhat.com>
-	<yq14onk5iaa.fsf@sermon.lab.mkp.net>
-	<20091221195204.GA28703@redhat.com>
-	<yq1r5qn4orc.fsf@sermon.lab.mkp.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jiri Kosina <jkosina@suse.cz>
+Subject: Re: [PATCH] Drop 80-character limit in checkpatch.pl
+Date: Tue, 22 Dec 2009 16:10:44 +0100 (CET)
+Message-ID: <alpine.LRH.2.00.0912221607180.21496@twin.jikos.cz>
+References: <Pine.LNX.4.64.0912151656010.29183@hs20-bc2-1.build.redhat.com> <2375c9f90912170131g3144ca2eydfa067c85f6ced44@mail.gmail.com> <alpine.LFD.2.00.0912170713390.17868@localhost.localdomain> <200912171618.32882.bzolnier@gmail.com>
+ <alpine.LRH.2.00.0912181400130.21496@twin.jikos.cz> <20091221063238.GC15721@linux-sh.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <yq1r5qn4orc.fsf@sermon.lab.mkp.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751924AbZLVPKt@vger.kernel.org>
+In-Reply-To: <20091221063238.GC15721@linux-sh.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Paul Mundt <lethal@linux-sh.org>
+Cc: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, Am?rico Wang <xiyou.wangcong@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Dec 21 2009 at 11:27pm -0500,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+On Mon, 21 Dec 2009, Paul Mundt wrote:
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+> > Example picked totally at random:
+> > 
+> > 	set_le_ih_k_offset(ih,
+> > 			   le_ih_k_offset(ih) +
+> > 			   (tb->
+> > 			    lbytes <<
+> > 			    (is_indirect_le_ih
+> > 			     (ih) ? tb->tb_sb->
+> > 			     s_blocksize_bits -
+> > 			     UNFM_P_SHIFT :
+> > 			     0)));
+> > 
+> > See how everything is nicely aligned to 80 cols?
+> > 
+> > 
+> > Generally, don't look at this function after having a good lunch you want 
+> > to keep. You have been warned.
+> > 
+> This isn't a valid example, as it wasn't written by a human. This is the
+> result of Lindent being run blindly on the file and nothing more.
 > 
-> Mike> If that is the case then the data "start" should be different for
-> Mike> these individual PVs (one following the other).  If not, can you
-> Mike> provide the 'dmsetup table' output for the associated DM devices?
-> 
-> Did some more runs.  It turns out the old stacking algorithm identified
-> the two alignments as being incompatible for the wrong reasons.  That's
-> why a message was printed with the older kernel.
+> Try again.
 
-OK, so is MD somehow getting things wrong?  (You originally said that
-with the new stacking function MD resulted in an error but DM did not).
- 
-> I do find it a bit strange that you pass relative offsets to the
-> stacking function and rely on the userland utilities to do the right
-> thing, though.  Doesn't that mean that existing misaligned volumes will
-> go undetected?  Or do you perform a check when you prepare the table
-> before feeding it to the kernel?
+But having hard rule imposed on everyone to stick with 80-char rule makes 
+people to do exactly this kind of things (blindly running indent -l80 and 
+believing that it makes the code more readable because it is 
+CodingStyle-compliant(tm)).
 
-"start" isn't a relative offset.  The "start" is absolute from the
-beginning of the device.  So for old LVs that are already misaligned
-they'll pass down a start that _should_ cause misalignment messages in
-the kernel (via the stacking function).  I know I've seen such messages
-when LVM doesn't compensate for alignment_offset but I'll revisit this
-with your new stacking function.
-
-The justification for relying on userspace to consume and adjust for
-alignment_offset is: you're not creating LVM LVs with the kernel.
-Metadata that (may) precede the data "start" of a volume gets layed out
-(and managed) by userspace (LVM).  Not having the kernel involved in
-generating the "correct" offset to data allows such concerns to be
-purely in userspace (having the kernel contribute to that calculation
-doesn't get us anything other than potential for split brain bugs).
-
-Mike
+-- 
+Jiri Kosina
+SUSE Labs, Novell Inc.
