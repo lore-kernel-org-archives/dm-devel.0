@@ -1,16 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm: Fix alignment stacking on partitioned
-	devices
-Date: Wed, 23 Dec 2009 14:21:40 -0500
-Message-ID: <20091223192139.GA29535@redhat.com>
-References: <1261591640-24380-1-git-send-email-snitzer@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: [PATCH 1/2] block: Fix incorrect reporting of partition
+	alignment
+Date: Wed, 23 Dec 2009 15:31:29 -0500
+Message-ID: <1261600290-29627-2-git-send-email-martin.petersen@oracle.com>
+References: <20091223171351.GA17896@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1261591640-24380-1-git-send-email-snitzer@redhat.com>
+In-Reply-To: <20091223171351.GA17896@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,33 +19,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>
+To: jens.axboe@oracle.com, snitzer@redhat.com, dm-devel@redhat.com
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, Dec 23 2009 at  1:07pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+queue_sector_alignment_offset returned the wrong value which caused
+partitions to report an incorrect alignment_offset. Since offset
+calculation is needed several places it has been split into a separate
+helper function.
 
-> From: Martin K. Petersen <martin.petersen@oracle.com> 
-> 
-> The DM device limits function passes the start offset within the block
-> device to the block layer stacking function.  The stacking function
-> expects the provided start offset to be relative to start of the disk
-> (request_queue).  Until now DM was passing a start offset that was
-> relative to beginning of the partition (block_device), resulting in
-> incorrect alignment stacking.
-> 
-> Add the partition offset to the values passed to blk_stack_limits().
-> 
-> Also clarify, in the DMWARN message, that the device which caused
-> blk_stack_limits() to return failure isn't necessarily misaligned
-> itself.  It caused the top-level (DM) device to have inconsistent
-> alignment when taken in combination with all previously stacked
-> device(s).
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Tested-by: Mike Snitzer <snitzer@redhat.com>
+---
+ include/linux/blkdev.h |   11 +++++++++--
+ 1 files changed, 9 insertions(+), 2 deletions(-)
 
-Alasdair,
-
-This should be pushed as a fix for 2.6.33.  It should probably go to
-stable (2.6.31.y and 2.6.32.y) too.
-
-Mike
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 784a919..59b832b 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1116,11 +1116,18 @@ static inline int queue_alignment_offset(struct request_queue *q)
+ 	return q->limits.alignment_offset;
+ }
+ 
++static inline int queue_limit_alignment_offset(struct queue_limits *lim, sector_t offset)
++{
++	unsigned int granularity = max(lim->physical_block_size, lim->io_min);
++
++	offset &= granularity - 1;
++	return (granularity + lim->alignment_offset - offset) & (granularity - 1);
++}
++
+ static inline int queue_sector_alignment_offset(struct request_queue *q,
+ 						sector_t sector)
+ {
+-	return ((sector << 9) - q->limits.alignment_offset)
+-		& (q->limits.io_min - 1);
++	return queue_limit_alignment_offset(&q->limits, sector << 9);
+ }
+ 
+ static inline int bdev_alignment_offset(struct block_device *bdev)
+-- 
+1.6.0.6
