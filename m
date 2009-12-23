@@ -1,7 +1,7 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm: Fix alignment stacking on partitioned devices
-Date: Wed, 23 Dec 2009 01:05:37 -0500
-Message-ID: <yq17hse443y.fsf@sermon.lab.mkp.net>
+Date: Wed, 23 Dec 2009 09:26:49 -0500
+Message-ID: <20091223142649.GA4462@redhat.com>
 References: <yq1aaxg7n84.fsf@sermon.lab.mkp.net>
 	<20091218173322.GA4163@redhat.com>
 	<yq14onk5iaa.fsf@sermon.lab.mkp.net>
@@ -10,13 +10,14 @@ References: <yq1aaxg7n84.fsf@sermon.lab.mkp.net>
 	<20091222143240.GA9154@redhat.com>
 	<yq1my1a52k4.fsf@sermon.lab.mkp.net>
 	<20091222214250.GA28497@redhat.com>
+	<yq17hse443y.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20091222214250.GA28497@redhat.com> (Mike Snitzer's message of
-	"Tue, 22 Dec 2009 16:42:52 -0500")
+Content-Disposition: inline
+In-Reply-To: <yq17hse443y.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,160 +27,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, jens.axboe@oracle.com
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+On Wed, Dec 23 2009 at  1:05am -0500,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
-Mike> I also need to review your patch further (relative to virtual
-Mike> device stacking: does get_start_sect(bdev) always work?).
+> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+> 
+> Mike> I also need to review your patch further (relative to virtual
+> Mike> device stacking: does get_start_sect(bdev) always work?).
+> 
+> Yep.
+> 
+> I found a bug in the partition alignment reporting.  The following patch
+> should fix that.  Please try it out.
 
-Yep.
+alignment_offset(s) look good now.  Though I have one observation below.
 
-I found a bug in the partition alignment reporting.  The following patch
-should fix that.  Please try it out.
+> Concerning your test cases: It is perfectly valid for two component
+> devices to be misaligned with regards to their underlying physical
+> devices as long as they have identical alignment.  In that case the top
+> level device will report a suitable alignment_offset.
 
-Concerning your test cases: It is perfectly valid for two component
-devices to be misaligned with regards to their underlying physical
-devices as long as they have identical alignment.  In that case the top
-level device will report a suitable alignment_offset.
+One thing I noticed along the way is that: when stacking one or more
+misaligned devices there is the potential for misleading error messages,
+e.g.:
 
+foo-bar: 0 212992 striped 2 32 8:18 384 8:17 384
 
-block: Fix topology stacking for data and discard alignment
+sdb alignment_offset is 3584
+sdb1 alignment_offset is 0
+sdb2 alignment_offset is 3072
 
-The stacking code incorrectly scaled up the data offset in some cases
-causing misaligned devices to report alignment.  Rewrite the stacking
-algorithm to remedy this and apply the same alignment principles to the
-discard handling.
+when loading this table sdb2 is stacked before sdb1; sdb2 is misaligned
+but sdb1 is not, yet:
 
-Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+device-mapper: table: 254:2: target device sdb2 call to blk_stack_limits(): physical_block_size=4096, logical_block_size=512, alignment_offset=3584, start=534839808
+device-mapper: table: 254:2: target device sdb1 is misaligned: physical_block_size=4096, logical_block_size=512, alignment_offset=3584, start=228864
+
+>>> 228864 % 4096
+3584
+>>> 534839808 % 4096
+512
+
+So sdb2 is taken to be aligned (even though it isn't, relative to the
+queue's alignment_offset of 3584) and then when sdb1 is stacked it is
+flagged as misaligned.  Doesn't seem right.
+
+> block: Fix topology stacking for data and discard alignment
+> 
+> The stacking code incorrectly scaled up the data offset in some cases
+> causing misaligned devices to report alignment.  Rewrite the stacking
+> algorithm to remedy this and apply the same alignment principles to the
+> discard handling.
+> 
+> Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+With this patch the alignment_offset values are correct.  They
+accurately reflect the established baseline (queue's limits
+alignment_offset).
+
+Here is the incremental diff (for those following along):
+
+---
+ block/blk-settings.c   |    7 +++----
+ include/linux/blkdev.h |   12 ++++++++++--
+ 2 files changed, 13 insertions(+), 6 deletions(-)
 
 diff --git a/block/blk-settings.c b/block/blk-settings.c
-index 6ae118d..ca4f0a4 100644
+index e14fcbc..ca4f0a4 100644
 --- a/block/blk-settings.c
 +++ b/block/blk-settings.c
-@@ -517,9 +517,8 @@ static unsigned int lcm(unsigned int a, unsigned int b)
- int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+@@ -518,7 +518,7 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
  		     sector_t offset)
  {
--	int ret;
--
--	ret = 0;
-+	sector_t alignment;
+ 	sector_t alignment;
+-	unsigned int top, bottom, granularity;
 +	unsigned int top, bottom;
  
  	t->max_sectors = min_not_zero(t->max_sectors, b->max_sectors);
  	t->max_hw_sectors = min_not_zero(t->max_hw_sectors, b->max_hw_sectors);
-@@ -537,6 +536,18 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+@@ -536,14 +536,13 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
  	t->max_segment_size = min_not_zero(t->max_segment_size,
  					   b->max_segment_size);
  
+-	granularity = max(b->physical_block_size, b->io_min);
+-	alignment = b->alignment_offset - (offset & (granularity - 1));
 +	alignment = queue_limit_alignment_offset(b, offset);
-+
-+	if (t->alignment_offset != alignment) {
-+
-+		top = max(t->physical_block_size, t->io_min)
-+			+ t->alignment_offset;
+ 
+ 	if (t->alignment_offset != alignment) {
+ 
+ 		top = max(t->physical_block_size, t->io_min)
+ 			+ t->alignment_offset;
+-		bottom = granularity + alignment;
 +		bottom = max(b->physical_block_size, b->io_min) + alignment;
-+
-+		if (max(top, bottom) & (min(top, bottom) - 1))
-+			t->misaligned = 1;
-+	}
-+
- 	t->logical_block_size = max(t->logical_block_size,
- 				    b->logical_block_size);
  
-@@ -544,54 +555,55 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 				     b->physical_block_size);
- 
- 	t->io_min = max(t->io_min, b->io_min);
-+	t->io_opt = lcm(t->io_opt, b->io_opt);
-+
- 	t->no_cluster |= b->no_cluster;
- 	t->discard_zeroes_data &= b->discard_zeroes_data;
- 
--	/* Bottom device offset aligned? */
--	if (offset &&
--	    (offset & (b->physical_block_size - 1)) != b->alignment_offset) {
-+	if (t->physical_block_size & (t->logical_block_size - 1)) {
-+		t->physical_block_size = t->logical_block_size;
- 		t->misaligned = 1;
--		ret = -1;
- 	}
- 
--	/*
--	 * Temporarily disable discard granularity. It's currently buggy
--	 * since we default to 0 for discard_granularity, hence this
--	 * "failure" will always trigger for non-zero offsets.
--	 */
--#if 0
--	if (offset &&
--	    (offset & (b->discard_granularity - 1)) != b->discard_alignment) {
--		t->discard_misaligned = 1;
--		ret = -1;
-+	if (t->io_min & (t->physical_block_size - 1)) {
-+		t->io_min = t->physical_block_size;
-+		t->misaligned = 1;
- 	}
--#endif
- 
--	/* If top has no alignment offset, inherit from bottom */
--	if (!t->alignment_offset)
--		t->alignment_offset =
--			b->alignment_offset & (b->physical_block_size - 1);
-+	if (t->io_opt & (t->physical_block_size - 1)) {
-+		t->io_opt = 0;
-+		t->misaligned = 1;
-+	}
- 
--	if (!t->discard_alignment)
--		t->discard_alignment =
--			b->discard_alignment & (b->discard_granularity - 1);
-+	t->alignment_offset = lcm(t->alignment_offset, alignment)
-+		& (max(t->physical_block_size, t->io_min) - 1);
- 
--	/* Top device aligned on logical block boundary? */
--	if (t->alignment_offset & (t->logical_block_size - 1)) {
-+	if (t->alignment_offset & (t->logical_block_size - 1))
- 		t->misaligned = 1;
--		ret = -1;
--	}
- 
--	/* Find lcm() of optimal I/O size and granularity */
--	t->io_opt = lcm(t->io_opt, b->io_opt);
--	t->discard_granularity = lcm(t->discard_granularity,
--				     b->discard_granularity);
-+	/* Discard alignment and granularity */
-+	if (b->discard_granularity) {
-+
-+		alignment = b->discard_alignment -
-+			(offset & (b->discard_granularity - 1));
-+
-+		if (t->discard_granularity != 0 &&
-+		    t->discard_alignment != alignment) {
-+			top = t->discard_granularity + t->discard_alignment;
-+			bottom = b->discard_granularity + alignment;
- 
--	/* Verify that optimal I/O size is a multiple of io_min */
--	if (t->io_min && t->io_opt % t->io_min)
--		ret = -1;
-+			/* Verify that top and bottom intervals line up */
-+			if (max(top, bottom) & (min(top, bottom) - 1))
-+				t->discard_misaligned = 1;
-+		}
-+
-+		t->discard_granularity = max(t->discard_granularity,
-+					     b->discard_granularity);
-+		t->discard_alignment = lcm(t->discard_alignment, alignment) &
-+			(t->discard_granularity - 1);
-+	}
- 
--	return ret;
-+	return t->misaligned ? -1 : 0;
- }
- EXPORT_SYMBOL(blk_stack_limits);
- 
+ 		if (max(top, bottom) & (min(top, bottom) - 1))
+ 			t->misaligned = 1;
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
 index 784a919..af0ffac 100644
 --- a/include/linux/blkdev.h
