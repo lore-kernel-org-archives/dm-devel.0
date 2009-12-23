@@ -1,24 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: Fix alignment stacking on partitioned devices
-Date: Wed, 23 Dec 2009 12:13:51 -0500
-Message-ID: <20091223171351.GA17896@redhat.com>
-References: <20091218173322.GA4163@redhat.com>
-	<yq14onk5iaa.fsf@sermon.lab.mkp.net>
-	<20091221195204.GA28703@redhat.com>
-	<yq1r5qn4orc.fsf@sermon.lab.mkp.net>
-	<20091222143240.GA9154@redhat.com>
-	<yq1my1a52k4.fsf@sermon.lab.mkp.net>
-	<20091222214250.GA28497@redhat.com>
-	<yq17hse443y.fsf@sermon.lab.mkp.net>
-	<20091223142649.GA4462@redhat.com>
-	<yq1y6kt3b1n.fsf@sermon.lab.mkp.net>
+Subject: [PATCH v2] dm: Fix alignment stacking on partitioned
+	devices
+Date: Wed, 23 Dec 2009 13:07:20 -0500
+Message-ID: <1261591640-24380-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <yq1y6kt3b1n.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,72 +17,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com
+To: dm-devel@redhat.com
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, Dec 23 2009 at 11:33am -0500,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+From: Martin K. Petersen <martin.petersen@oracle.com> 
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> Mike> One thing I noticed along the way is that: when stacking one or
-> Mike> more misaligned devices there is the potential for misleading
-> Mike> error messages, e.g.:
-> 
-> [...]
-> 
-> Mike> So sdb2 is taken to be aligned (even though it isn't, relative to
-> Mike> the queue's alignment_offset of 3584) and then when sdb1 is
-> Mike> stacked it is flagged as misaligned.  Doesn't seem right.
-> 
-> I know.  It's an unfortunate side-effect of having an iterative stacking
-> process.  I don't know the whole picture so I don't know which device
-> the real offender is.  At the time you add device #2 I have no
-> recollection of device #1.
-> 
-> When you create a new top-level (DM/MD) device and add the first disk to
-> it I have no option but to inherit that component's queue limits.  So
-> that's what initially defines the top-level.
-> 
-> In your case adding a misaligned device will cause the stacking to
-> report that alignment can be obtained by padding the top level device
-> with an offset. Then you add a device which happens to be naturally
-> aligned. And that means the stacking logic breaks down because the
-> 0-alignment is incompatible with the top's nonzero alignment_offset.
+The DM device limits function passes the start offset within the block
+device to the block layer stacking function.  The stacking function
+expects the provided start offset to be relative to start of the disk
+(request_queue).  Until now DM was passing a start offset that was
+relative to beginning of the partition (block_device), resulting in
+incorrect alignment stacking.
 
-Understood.  Thanks for clarifying.
+Add the partition offset to the values passed to blk_stack_limits().
 
-> Originally (before the Great Naming Debate) the `misaligned' flag was
-> called `inconsistent' (actually, it was called `consistent' and the
-> logic was reversed).  I think that's a better term for it.  Compatible
-> would also work, I guess.
-> 
-> So when blk_stack_limits() returns an error it is because no consistent
-> alignment could be calculated.  blk_stack_limits() returning 0 does not
-> imply "alignment" (i.e. an alignment_offset of 0).  A return value of 0
-> means that we have successfully added the bottom device and the
-> resulting top device queue_limits now apply.
+Also clarify, in the DMWARN message, that the device which caused
+blk_stack_limits() to return failure isn't necessarily misaligned
+itself.  It caused the top-level (DM) device to have inconsistent
+alignment when taken in combination with all previously stacked
+device(s).
 
-I think it would be great if you added something along those lines as a
-comment block above blk_stack_limits() (rather than "Returns 0 if
-alignment didn't change.")
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c |    7 ++++---
+ 1 files changed, 4 insertions(+), 3 deletions(-)
 
-Also, your most recent patch eliminates many of the inline comments you
-had in blk_stack_limits().  I think that is unfortunate considering
-those comments helped give context for code that wasn't always
-immediately clear on its own.
-
-That observation aside, please feel free to add 'Tested-by: Mike Snitzer
-<snitzer@redhat.com>' to your most recent blk_stack_limits() patch
-header.
-
-> Maybe you should print something along the lines of "adding device sdX
-> caused an alignment consistency error on DM device foo".  That's a bit
-> vague but doesn't single out sdX as much.
-
-Good suggestion.  I'll work that in to the DM patch you originally
-posted (the start of this thread) and repost it to dm-devel.
-
-Thanks,
-Mike
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index be62547..44527c1 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -495,6 +495,7 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 	struct queue_limits *limits = data;
+ 	struct block_device *bdev = dev->bdev;
+ 	struct request_queue *q = bdev_get_queue(bdev);
++	sector_t offset = (get_start_sect(bdev) + start) << 9;
+ 	char b[BDEVNAME_SIZE];
+ 
+ 	if (unlikely(!q)) {
+@@ -503,15 +504,15 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 		return 0;
+ 	}
+ 
+-	if (blk_stack_limits(limits, &q->limits, start << 9) < 0)
+-		DMWARN("%s: target device %s is misaligned: "
++	if (blk_stack_limits(limits, &q->limits, offset) < 0)
++		DMWARN("%s: adding target device %s caused an alignment inconsistency: "
+ 		       "physical_block_size=%u, logical_block_size=%u, "
+ 		       "alignment_offset=%u, start=%llu",
+ 		       dm_device_name(ti->table->md), bdevname(bdev, b),
+ 		       q->limits.physical_block_size,
+ 		       q->limits.logical_block_size,
+ 		       q->limits.alignment_offset,
+-		       (unsigned long long) start << 9);
++		       (unsigned long long) offset);
+ 
+ 
+ 	/*
