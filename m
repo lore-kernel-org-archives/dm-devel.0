@@ -1,7 +1,7 @@
 From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
 Subject: Re: dm multipath kernel driver version too old - 2.6.32
-Date: Fri, 01 Jan 2010 20:31:03 -0500
-Message-ID: <1262395863.4244.2.camel@jaspav.ssiservices.biz>
+Date: Sat, 02 Jan 2010 18:25:50 -0500
+Message-ID: <1262474750.4244.37.camel@jaspav.ssiservices.biz>
 References: <1262246366.8333.13.camel@jaspav.ssiservices.biz>
 	<20100102002420.GA25814@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -71,12 +71,8 @@ On Fri, 2010-01-01 at 19:24 -0500, Mike Snitzer wrote:
 > 			break;
 > 
 > But again: upstream multipath-tools already has a nicer fix.
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-Thanks very, very much to both respondents.  I was feeling quite
-befuddled.  I'll give upstream a try and see how I fare.  Thanks again -
-John
+<snip>
+Hmm . . . I'll keep looking but the first fifteen minutes of googling
+has not shown me where to find upstream multipath-tools.  Everything on
+http://christophe.varoqui.free.fr/multipath-tools/ looks quite old.
+Where do I find the latest upstream multipath-tools? Thanks - John
