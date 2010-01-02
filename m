@@ -1,7 +1,7 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm multipath kernel driver version too old - 2.6.32
-Date: Fri, 1 Jan 2010 18:00:49 +0200
-Message-ID: <20100101160049.GC25902@reaktio.net>
+Date: Fri, 1 Jan 2010 19:24:20 -0500
+Message-ID: <20100102002420.GA25814@redhat.com>
 References: <1262246366.8333.13.camel@jaspav.ssiservices.biz>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,7 +22,9 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Dec 31, 2009 at 02:59:26AM -0500, John A. Sullivan III wrote:
+On Thu, Dec 31 2009 at  2:59am -0500,
+John A. Sullivan III <jsullivan@opensourcedevel.com> wrote:
+
 > Hello, all.  We are attempting to upgrade our kernel on our VServer
 > hosts from 2.6.28 to 2.6.32.1.  After some initial grief, we thought we
 > were successful until multipath kicked in and we received an error
@@ -36,13 +38,35 @@ On Thu, Dec 31, 2009 at 02:59:26AM -0500, John A. Sullivan III wrote:
 > 
 > We are running fully patched CentOS 5.4.  What have we done wrong?
 > Thanks - John
-> 
 
-Are you using the dm-multipath rpm that comes with CentOS/RHEL?
-I believe that dm-multipath version requires the CentOS/RHEL kernel
-(because of the patches Redhat has applied to that kernel).
+Linux >= 2.6.31 has a DM multipath target version that was bumped to >=
+1.1.0 (for request-based multipath et al).
 
-You might have better luck using the upstream dm-multipath with the
-upstream kernel.
+The device-mapper-multipath in 5.4 has:
+multipath/main.c:     if (dm_prereq(DEFAULT_TARGET, 1, 0, 3))
 
--- Pasi
+But 5.4's dm_prereq() is too simplistic to handle the higher DM target
+version numbers that Linux >= 2.6.31 has for the DM multipath target.
+
+Upstream multipath-tools can handle the newer DM target versions
+properly.  5.4's device-mapper-multipath-tools can be patched with
+something like the following (note this is white-space damaged, but you
+get the idea):
+
+@@ -107,10 +107,10 @@ dm_prereq (char * str, int x, int y, int z)
+ 
+                if (!strncmp(str, target->name, strlen(str))) {
+                        r--;
+-                       
+-                       if (target->version[0] >= x &&
+-                           target->version[1] >= y &&
+-                           target->version[2] >= z)
++
++                       if ((target->version[0] > x) ||
++                           ((target->version[0] ==  x) && (target->version[1] > y)) ||
++                           ((target->version[0] == x) && (target->version[1] == y) && (target->version[2] >= z)))
+                                r--;
+
+			break;
+
+But again: upstream multipath-tools already has a nicer fix.
