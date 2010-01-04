@@ -1,18 +1,12 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: dm multipath kernel driver version too old - 2.6.32
-Date: Sun, 3 Jan 2010 19:04:04 +0200
-Message-ID: <20100103170404.GX25902@reaktio.net>
-References: <1262246366.8333.13.camel@jaspav.ssiservices.biz>
-	<20100102002420.GA25814@redhat.com>
-	<1262474750.4244.37.camel@jaspav.ssiservices.biz>
-	<1262477828.4244.40.camel@jaspav.ssiservices.biz>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [RFC PATCH] dm: Remove dm_get() from dm_table_get_md()
+Date: Mon, 04 Jan 2010 17:28:09 +0900
+Message-ID: <4B41A699.5080802@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1262477828.4244.40.camel@jaspav.ssiservices.biz>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,84 +16,120 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: pmdaws@ssiservices.biz
+To: Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Jan 02, 2010 at 07:17:08PM -0500, John A. Sullivan III wrote:
-> On Sat, 2010-01-02 at 18:25 -0500, John A. Sullivan III wrote: 
-> > On Fri, 2010-01-01 at 19:24 -0500, Mike Snitzer wrote: 
-> > > On Thu, Dec 31 2009 at  2:59am -0500,
-> > > John A. Sullivan III <jsullivan@opensourcedevel.com> wrote:
-> > > 
-> > > > Hello, all.  We are attempting to upgrade our kernel on our VServer
-> > > > hosts from 2.6.28 to 2.6.32.1.  After some initial grief, we thought we
-> > > > were successful until multipath kicked in and we received an error
-> > > > message:
-> > > > 
-> > > > DM multipath kernel driver version too old
-> > > > 
-> > > > In the RAID and LVM section of our kernel configuration, we have enabled
-> > > > Multipath I/O support.  We have then created modules for Multipath
-> > > > target and both I/O Path Selectors (in-flight I/Os and service time).
-> > > > 
-> > > > We are running fully patched CentOS 5.4.  What have we done wrong?
-> > > > Thanks - John
-> > > 
-> > > Linux >= 2.6.31 has a DM multipath target version that was bumped to >=
-> > > 1.1.0 (for request-based multipath et al).
-> > > 
-> > > The device-mapper-multipath in 5.4 has:
-> > > multipath/main.c:     if (dm_prereq(DEFAULT_TARGET, 1, 0, 3))
-> > > 
-> > > But 5.4's dm_prereq() is too simplistic to handle the higher DM target
-> > > version numbers that Linux >= 2.6.31 has for the DM multipath target.
-> > > 
-> > > Upstream multipath-tools can handle the newer DM target versions
-> > > properly.  5.4's device-mapper-multipath-tools can be patched with
-> > > something like the following (note this is white-space damaged, but you
-> > > get the idea):
-> > > 
-> > > @@ -107,10 +107,10 @@ dm_prereq (char * str, int x, int y, int z)
-> > >  
-> > >                 if (!strncmp(str, target->name, strlen(str))) {
-> > >                         r--;
-> > > -                       
-> > > -                       if (target->version[0] >= x &&
-> > > -                           target->version[1] >= y &&
-> > > -                           target->version[2] >= z)
-> > > +
-> > > +                       if ((target->version[0] > x) ||
-> > > +                           ((target->version[0] ==  x) && (target->version[1] > y)) ||
-> > > +                           ((target->version[0] == x) && (target->version[1] == y) && (target->version[2] >= z)))
-> > >                                 r--;
-> > > 
-> > > 			break;
-> > > 
-> > > But again: upstream multipath-tools already has a nicer fix.
-> > <snip>
-> > Hmm . . . I'll keep looking but the first fifteen minutes of googling
-> > has not shown me where to find upstream multipath-tools.  Everything on
-> > http://christophe.varoqui.free.fr/multipath-tools/ looks quite old.
-> > Where do I find the latest upstream multipath-tools? Thanks - John
-> <snip>
-> Sorry to be a pest but I'm a bit out of my depth . . . well, maybe more
-> than a bit.  From examining main.c in the various tarballs, I am
-> assuming 0.4.8 is indeed what I want.  Now, what exactly do I do?
-> 
-> Do I simply compile the multipath directory and replace the resultant
-> binaries or do I build and replace everything? I don't want to destroy
-> my data storage by mixing versions but I also don't want to step too far
-> outside the official packaging.  Any guidance would be greatly
-> appreciated.  Thanks - John
-> 
+Hi Alasdair and all,
 
-You could always grab the latest device-mapper-multipath src.rpm from
-Fedora rawhide and re-build it on your setup for EL5.
+I'd like to remove dm_get() in dm_table_get_md() because
+dm_table_get_md() could be called from presuspend/postsuspend,
+which are called while mapped_device is in DMF_FREEING state,
+where dm_get() is not allowed.
+Please give me your opinion if you object this change.
 
-device-mapper-multipath-0.4.9-11.fc13.src.rpm seems to be the latest in Fedora.
 
-(Note that the new rpms in Fedora 12/13 use different compression/format, 
-so EL5 rpm tool might not be able to install/handle that src.rpm..)
+Justification for that is the lifetime of both objects:
+As far as the current dm design/implementation, mapped_device is
+never freed while targets are doing something, because dm core waits
+for targets to become quiet in dm_put() using presuspend/postsuspend.
+So targets should be able to touch mapped_device without holding
+reference count of the mapped_device, and we should allow targets
+to touch mapped_device even if it is in DMF_FREEING state.
 
--- Pasi
+
+Backgrounds:
+I'm trying to remove the multipath internal queue, since dm core
+now has a generic queue for request-based dm.
+In the patch-set, the multipath target wants to request dm core
+to start/stop queue.  One of such start/stop requests can happen
+during postsuspend() while the target waits for pg-init to complete,
+because the target stops queue when starting pg-init and tries to
+restart it when completing pg-init.  Since queue belongs to
+mapped_device, it involves calling dm_table_get_md() and dm_put().
+On the other hand, postsuspend() is called in dm_put() for mapped_device
+which is in DMF_FREEING state, and that triggers BUG_ON(DMF_FREEING)
+in the 2nd dm_put().
+
+I had tried to solve this problem by changing only multipath not to
+touch mapped_device which is in DMF_FREEING state, but I couldn't and
+I came up with a question why we need dm_get() in dm_table_get_md().
+
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+---
+ drivers/md/dm-table.c  |    2 --
+ drivers/md/dm-uevent.c |    7 ++-----
+ drivers/md/dm.c        |   14 ++------------
+ 3 files changed, 4 insertions(+), 19 deletions(-)
+
+Index: 2.6.33-rc2/drivers/md/dm-table.c
+===================================================================
+--- 2.6.33-rc2.orig/drivers/md/dm-table.c
++++ 2.6.33-rc2/drivers/md/dm-table.c
+@@ -1241,8 +1241,6 @@ void dm_table_unplug_all(struct dm_table
+ 
+ struct mapped_device *dm_table_get_md(struct dm_table *t)
+ {
+-	dm_get(t->md);
+-
+ 	return t->md;
+ }
+ 
+Index: 2.6.33-rc2/drivers/md/dm-uevent.c
+===================================================================
+--- 2.6.33-rc2.orig/drivers/md/dm-uevent.c
++++ 2.6.33-rc2/drivers/md/dm-uevent.c
+@@ -187,7 +187,7 @@ void dm_path_uevent(enum dm_uevent_type 
+ 
+ 	if (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) {
+ 		DMERR("%s: Invalid event_type %d", __func__, event_type);
+-		goto out;
++		return;
+ 	}
+ 
+ 	event = dm_build_path_uevent(md, ti,
+@@ -195,12 +195,9 @@ void dm_path_uevent(enum dm_uevent_type 
+ 				     _dm_uevent_type_names[event_type].name,
+ 				     path, nr_valid_paths);
+ 	if (IS_ERR(event))
+-		goto out;
++		return;
+ 
+ 	dm_uevent_add(md, &event->elist);
+-
+-out:
+-	dm_put(md);
+ }
+ EXPORT_SYMBOL_GPL(dm_path_uevent);
+ 
+Index: 2.6.33-rc2/drivers/md/dm.c
+===================================================================
+--- 2.6.33-rc2.orig/drivers/md/dm.c
++++ 2.6.33-rc2/drivers/md/dm.c
+@@ -2686,23 +2686,13 @@ int dm_suspended_md(struct mapped_device
+ 
+ int dm_suspended(struct dm_target *ti)
+ {
+-	struct mapped_device *md = dm_table_get_md(ti->table);
+-	int r = dm_suspended_md(md);
+-
+-	dm_put(md);
+-
+-	return r;
++	return dm_suspended_md(dm_table_get_md(ti->table));
+ }
+ EXPORT_SYMBOL_GPL(dm_suspended);
+ 
+ int dm_noflush_suspending(struct dm_target *ti)
+ {
+-	struct mapped_device *md = dm_table_get_md(ti->table);
+-	int r = __noflush_suspending(md);
+-
+-	dm_put(md);
+-
+-	return r;
++	return __noflush_suspending(dm_table_get_md(ti->table));
+ }
+ EXPORT_SYMBOL_GPL(dm_noflush_suspending);
+ 
