@@ -1,12 +1,18 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [RFC PATCH] dm: Remove dm_get() from dm_table_get_md()
-Date: Mon, 04 Jan 2010 17:28:09 +0900
-Message-ID: <4B41A699.5080802@ct.jp.nec.com>
+From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
+Subject: Re: dm multipath kernel driver version too old - 2.6.32
+Date: Mon, 04 Jan 2010 12:59:20 -0500
+Message-ID: <1262627960.4433.8.camel@jaspav.ssiservices.biz>
+References: <1262246366.8333.13.camel@jaspav.ssiservices.biz>
+	<20100102002420.GA25814@redhat.com>
+	<1262474750.4244.37.camel@jaspav.ssiservices.biz>
+	<1262477828.4244.40.camel@jaspav.ssiservices.biz>
+	<20100103170404.GX25902@reaktio.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20100103170404.GX25902@reaktio.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,120 +22,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: pmdaws@ssiservices.biz
 List-Id: dm-devel.ids
 
-Hi Alasdair and all,
-
-I'd like to remove dm_get() in dm_table_get_md() because
-dm_table_get_md() could be called from presuspend/postsuspend,
-which are called while mapped_device is in DMF_FREEING state,
-where dm_get() is not allowed.
-Please give me your opinion if you object this change.
-
-
-Justification for that is the lifetime of both objects:
-As far as the current dm design/implementation, mapped_device is
-never freed while targets are doing something, because dm core waits
-for targets to become quiet in dm_put() using presuspend/postsuspend.
-So targets should be able to touch mapped_device without holding
-reference count of the mapped_device, and we should allow targets
-to touch mapped_device even if it is in DMF_FREEING state.
-
-
-Backgrounds:
-I'm trying to remove the multipath internal queue, since dm core
-now has a generic queue for request-based dm.
-In the patch-set, the multipath target wants to request dm core
-to start/stop queue.  One of such start/stop requests can happen
-during postsuspend() while the target waits for pg-init to complete,
-because the target stops queue when starting pg-init and tries to
-restart it when completing pg-init.  Since queue belongs to
-mapped_device, it involves calling dm_table_get_md() and dm_put().
-On the other hand, postsuspend() is called in dm_put() for mapped_device
-which is in DMF_FREEING state, and that triggers BUG_ON(DMF_FREEING)
-in the 2nd dm_put().
-
-I had tried to solve this problem by changing only multipath not to
-touch mapped_device which is in DMF_FREEING state, but I couldn't and
-I came up with a question why we need dm_get() in dm_table_get_md().
-
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
----
- drivers/md/dm-table.c  |    2 --
- drivers/md/dm-uevent.c |    7 ++-----
- drivers/md/dm.c        |   14 ++------------
- 3 files changed, 4 insertions(+), 19 deletions(-)
-
-Index: 2.6.33-rc2/drivers/md/dm-table.c
-===================================================================
---- 2.6.33-rc2.orig/drivers/md/dm-table.c
-+++ 2.6.33-rc2/drivers/md/dm-table.c
-@@ -1241,8 +1241,6 @@ void dm_table_unplug_all(struct dm_table
- 
- struct mapped_device *dm_table_get_md(struct dm_table *t)
- {
--	dm_get(t->md);
--
- 	return t->md;
- }
- 
-Index: 2.6.33-rc2/drivers/md/dm-uevent.c
-===================================================================
---- 2.6.33-rc2.orig/drivers/md/dm-uevent.c
-+++ 2.6.33-rc2/drivers/md/dm-uevent.c
-@@ -187,7 +187,7 @@ void dm_path_uevent(enum dm_uevent_type 
- 
- 	if (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) {
- 		DMERR("%s: Invalid event_type %d", __func__, event_type);
--		goto out;
-+		return;
- 	}
- 
- 	event = dm_build_path_uevent(md, ti,
-@@ -195,12 +195,9 @@ void dm_path_uevent(enum dm_uevent_type 
- 				     _dm_uevent_type_names[event_type].name,
- 				     path, nr_valid_paths);
- 	if (IS_ERR(event))
--		goto out;
-+		return;
- 
- 	dm_uevent_add(md, &event->elist);
--
--out:
--	dm_put(md);
- }
- EXPORT_SYMBOL_GPL(dm_path_uevent);
- 
-Index: 2.6.33-rc2/drivers/md/dm.c
-===================================================================
---- 2.6.33-rc2.orig/drivers/md/dm.c
-+++ 2.6.33-rc2/drivers/md/dm.c
-@@ -2686,23 +2686,13 @@ int dm_suspended_md(struct mapped_device
- 
- int dm_suspended(struct dm_target *ti)
- {
--	struct mapped_device *md = dm_table_get_md(ti->table);
--	int r = dm_suspended_md(md);
--
--	dm_put(md);
--
--	return r;
-+	return dm_suspended_md(dm_table_get_md(ti->table));
- }
- EXPORT_SYMBOL_GPL(dm_suspended);
- 
- int dm_noflush_suspending(struct dm_target *ti)
- {
--	struct mapped_device *md = dm_table_get_md(ti->table);
--	int r = __noflush_suspending(md);
--
--	dm_put(md);
--
--	return r;
-+	return __noflush_suspending(dm_table_get_md(ti->table));
- }
- EXPORT_SYMBOL_GPL(dm_noflush_suspending);
- 
+T24gU3VuLCAyMDEwLTAxLTAzIGF0IDE5OjA0ICswMjAwLCBQYXNpIEvDpHJra8OkaW5lbiB3cm90
+ZTogCj4gT24gU2F0LCBKYW4gMDIsIDIwMTAgYXQgMDc6MTc6MDhQTSAtMDUwMCwgSm9obiBBLiBT
+dWxsaXZhbiBJSUkgd3JvdGU6Cj4gPiBPbiBTYXQsIDIwMTAtMDEtMDIgYXQgMTg6MjUgLTA1MDAs
+IEpvaG4gQS4gU3VsbGl2YW4gSUlJIHdyb3RlOiAKPiA+ID4gT24gRnJpLCAyMDEwLTAxLTAxIGF0
+IDE5OjI0IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6IAo+ID4gPiA+IE9uIFRodSwgRGVjIDMx
+IDIwMDkgYXQgIDI6NTlhbSAtMDUwMCwKPiA+ID4gPiBKb2huIEEuIFN1bGxpdmFuIElJSSA8anN1
+bGxpdmFuQG9wZW5zb3VyY2VkZXZlbC5jb20+IHdyb3RlOgo+ID4gPiA+IAo+ID4gPiA+ID4gSGVs
+bG8sIGFsbC4gIFdlIGFyZSBhdHRlbXB0aW5nIHRvIHVwZ3JhZGUgb3VyIGtlcm5lbCBvbiBvdXIg
+VlNlcnZlcgo+ID4gPiA+ID4gaG9zdHMgZnJvbSAyLjYuMjggdG8gMi42LjMyLjEuICBBZnRlciBz
+b21lIGluaXRpYWwgZ3JpZWYsIHdlIHRob3VnaHQgd2UKPiA+ID4gPiA+IHdlcmUgc3VjY2Vzc2Z1
+bCB1bnRpbCBtdWx0aXBhdGgga2lja2VkIGluIGFuZCB3ZSByZWNlaXZlZCBhbiBlcnJvcgo+ID4g
+PiA+ID4gbWVzc2FnZToKPiA+ID4gPiA+IAo+ID4gPiA+ID4gRE0gbXVsdGlwYXRoIGtlcm5lbCBk
+cml2ZXIgdmVyc2lvbiB0b28gb2xkCj4gPiA+ID4gPiAKPiA+ID4gPiA+IEluIHRoZSBSQUlEIGFu
+ZCBMVk0gc2VjdGlvbiBvZiBvdXIga2VybmVsIGNvbmZpZ3VyYXRpb24sIHdlIGhhdmUgZW5hYmxl
+ZAo+ID4gPiA+ID4gTXVsdGlwYXRoIEkvTyBzdXBwb3J0LiAgV2UgaGF2ZSB0aGVuIGNyZWF0ZWQg
+bW9kdWxlcyBmb3IgTXVsdGlwYXRoCj4gPiA+ID4gPiB0YXJnZXQgYW5kIGJvdGggSS9PIFBhdGgg
+U2VsZWN0b3JzIChpbi1mbGlnaHQgSS9PcyBhbmQgc2VydmljZSB0aW1lKS4KPiA+ID4gPiA+IAo+
+ID4gPiA+ID4gV2UgYXJlIHJ1bm5pbmcgZnVsbHkgcGF0Y2hlZCBDZW50T1MgNS40LiAgV2hhdCBo
+YXZlIHdlIGRvbmUgd3Jvbmc/Cj4gPiA+ID4gPiBUaGFua3MgLSBKb2huCj4gPiA+ID4gCj4gPiA+
+ID4gTGludXggPj0gMi42LjMxIGhhcyBhIERNIG11bHRpcGF0aCB0YXJnZXQgdmVyc2lvbiB0aGF0
+IHdhcyBidW1wZWQgdG8gPj0KPiA+ID4gPiAxLjEuMCAoZm9yIHJlcXVlc3QtYmFzZWQgbXVsdGlw
+YXRoIGV0IGFsKS4KPiA+ID4gPiAKPiA+ID4gPiBUaGUgZGV2aWNlLW1hcHBlci1tdWx0aXBhdGgg
+aW4gNS40IGhhczoKPiA+ID4gPiBtdWx0aXBhdGgvbWFpbi5jOiAgICAgaWYgKGRtX3ByZXJlcShE
+RUZBVUxUX1RBUkdFVCwgMSwgMCwgMykpCj4gPiA+ID4gCj4gPiA+ID4gQnV0IDUuNCdzIGRtX3By
+ZXJlcSgpIGlzIHRvbyBzaW1wbGlzdGljIHRvIGhhbmRsZSB0aGUgaGlnaGVyIERNIHRhcmdldAo+
+ID4gPiA+IHZlcnNpb24gbnVtYmVycyB0aGF0IExpbnV4ID49IDIuNi4zMSBoYXMgZm9yIHRoZSBE
+TSBtdWx0aXBhdGggdGFyZ2V0Lgo+ID4gPiA+IAo+ID4gPiA+IFVwc3RyZWFtIG11bHRpcGF0aC10
+b29scyBjYW4gaGFuZGxlIHRoZSBuZXdlciBETSB0YXJnZXQgdmVyc2lvbnMKPiA+ID4gPiBwcm9w
+ZXJseS4gIDUuNCdzIGRldmljZS1tYXBwZXItbXVsdGlwYXRoLXRvb2xzIGNhbiBiZSBwYXRjaGVk
+IHdpdGgKPiA+ID4gPiBzb21ldGhpbmcgbGlrZSB0aGUgZm9sbG93aW5nIChub3RlIHRoaXMgaXMg
+d2hpdGUtc3BhY2UgZGFtYWdlZCwgYnV0IHlvdQo+ID4gPiA+IGdldCB0aGUgaWRlYSk6Cj4gPiA+
+ID4gCj4gPiA+ID4gQEAgLTEwNywxMCArMTA3LDEwIEBAIGRtX3ByZXJlcSAoY2hhciAqIHN0ciwg
+aW50IHgsIGludCB5LCBpbnQgeikKPiA+ID4gPiAgCj4gPiA+ID4gICAgICAgICAgICAgICAgIGlm
+ICghc3RybmNtcChzdHIsIHRhcmdldC0+bmFtZSwgc3RybGVuKHN0cikpKSB7Cj4gPiA+ID4gICAg
+ICAgICAgICAgICAgICAgICAgICAgci0tOwo+ID4gPiA+IC0gICAgICAgICAgICAgICAgICAgICAg
+IAo+ID4gPiA+IC0gICAgICAgICAgICAgICAgICAgICAgIGlmICh0YXJnZXQtPnZlcnNpb25bMF0g
+Pj0geCAmJgo+ID4gPiA+IC0gICAgICAgICAgICAgICAgICAgICAgICAgICB0YXJnZXQtPnZlcnNp
+b25bMV0gPj0geSAmJgo+ID4gPiA+IC0gICAgICAgICAgICAgICAgICAgICAgICAgICB0YXJnZXQt
+PnZlcnNpb25bMl0gPj0geikKPiA+ID4gPiArCj4gPiA+ID4gKyAgICAgICAgICAgICAgICAgICAg
+ICAgaWYgKCh0YXJnZXQtPnZlcnNpb25bMF0gPiB4KSB8fAo+ID4gPiA+ICsgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAoKHRhcmdldC0+dmVyc2lvblswXSA9PSAgeCkgJiYgKHRhcmdldC0+dmVy
+c2lvblsxXSA+IHkpKSB8fAo+ID4gPiA+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAoKHRh
+cmdldC0+dmVyc2lvblswXSA9PSB4KSAmJiAodGFyZ2V0LT52ZXJzaW9uWzFdID09IHkpICYmICh0
+YXJnZXQtPnZlcnNpb25bMl0gPj0geikpKQo+ID4gPiA+ICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgci0tOwo+ID4gPiA+IAo+ID4gPiA+IAkJCWJyZWFrOwo+ID4gPiA+IAo+ID4gPiA+
+IEJ1dCBhZ2FpbjogdXBzdHJlYW0gbXVsdGlwYXRoLXRvb2xzIGFscmVhZHkgaGFzIGEgbmljZXIg
+Zml4Lgo+ID4gPiA8c25pcD4KPiA+ID4gSG1tIC4gLiAuIEknbGwga2VlcCBsb29raW5nIGJ1dCB0
+aGUgZmlyc3QgZmlmdGVlbiBtaW51dGVzIG9mIGdvb2dsaW5nCj4gPiA+IGhhcyBub3Qgc2hvd24g
+bWUgd2hlcmUgdG8gZmluZCB1cHN0cmVhbSBtdWx0aXBhdGgtdG9vbHMuICBFdmVyeXRoaW5nIG9u
+Cj4gPiA+IGh0dHA6Ly9jaHJpc3RvcGhlLnZhcm9xdWkuZnJlZS5mci9tdWx0aXBhdGgtdG9vbHMv
+IGxvb2tzIHF1aXRlIG9sZC4KPiA+ID4gV2hlcmUgZG8gSSBmaW5kIHRoZSBsYXRlc3QgdXBzdHJl
+YW0gbXVsdGlwYXRoLXRvb2xzPyBUaGFua3MgLSBKb2huCj4gPiA8c25pcD4KPiA+IFNvcnJ5IHRv
+IGJlIGEgcGVzdCBidXQgSSdtIGEgYml0IG91dCBvZiBteSBkZXB0aCAuIC4gLiB3ZWxsLCBtYXli
+ZSBtb3JlCj4gPiB0aGFuIGEgYml0LiAgRnJvbSBleGFtaW5pbmcgbWFpbi5jIGluIHRoZSB2YXJp
+b3VzIHRhcmJhbGxzLCBJIGFtCj4gPiBhc3N1bWluZyAwLjQuOCBpcyBpbmRlZWQgd2hhdCBJIHdh
+bnQuICBOb3csIHdoYXQgZXhhY3RseSBkbyBJIGRvPwo+ID4gCj4gPiBEbyBJIHNpbXBseSBjb21w
+aWxlIHRoZSBtdWx0aXBhdGggZGlyZWN0b3J5IGFuZCByZXBsYWNlIHRoZSByZXN1bHRhbnQKPiA+
+IGJpbmFyaWVzIG9yIGRvIEkgYnVpbGQgYW5kIHJlcGxhY2UgZXZlcnl0aGluZz8gSSBkb24ndCB3
+YW50IHRvIGRlc3Ryb3kKPiA+IG15IGRhdGEgc3RvcmFnZSBieSBtaXhpbmcgdmVyc2lvbnMgYnV0
+IEkgYWxzbyBkb24ndCB3YW50IHRvIHN0ZXAgdG9vIGZhcgo+ID4gb3V0c2lkZSB0aGUgb2ZmaWNp
+YWwgcGFja2FnaW5nLiAgQW55IGd1aWRhbmNlIHdvdWxkIGJlIGdyZWF0bHkKPiA+IGFwcHJlY2lh
+dGVkLiAgVGhhbmtzIC0gSm9obgo+ID4gCj4gCj4gWW91IGNvdWxkIGFsd2F5cyBncmFiIHRoZSBs
+YXRlc3QgZGV2aWNlLW1hcHBlci1tdWx0aXBhdGggc3JjLnJwbSBmcm9tCj4gRmVkb3JhIHJhd2hp
+ZGUgYW5kIHJlLWJ1aWxkIGl0IG9uIHlvdXIgc2V0dXAgZm9yIEVMNS4KPiAKPiBkZXZpY2UtbWFw
+cGVyLW11bHRpcGF0aC0wLjQuOS0xMS5mYzEzLnNyYy5ycG0gc2VlbXMgdG8gYmUgdGhlIGxhdGVz
+dCBpbiBGZWRvcmEuCj4gCj4gKE5vdGUgdGhhdCB0aGUgbmV3IHJwbXMgaW4gRmVkb3JhIDEyLzEz
+IHVzZSBkaWZmZXJlbnQgY29tcHJlc3Npb24vZm9ybWF0LCAKPiBzbyBFTDUgcnBtIHRvb2wgbWln
+aHQgbm90IGJlIGFibGUgdG8gaW5zdGFsbC9oYW5kbGUgdGhhdCBzcmMucnBtLi4pCjxzbmlwPgpU
+aGFua3MsIFBhc2kuICBJIHRob3VnaHQsIHJhdGhlciB0aGFuIHRha2UgYSBjaGFuY2Ugd2l0aCB0
+aGF0LCBJIHdvdWxkCnNpbXBseSB1c2UgdGhlIG1ha2UgcnBtIHRhcmdldCBpbmNsdWRlZCB3aXRo
+IDAuNC44LiAgSG93ZXZlciwgaXQKcHJvZHVjZXMgYW4gZXJyb3I6CgplcnJvcjogSW5zdGFsbGVk
+IChidXQgdW5wYWNrYWdlZCkgZmlsZShzKSBmb3VuZDoKICAgL2V0Yy91ZGV2L3J1bGVzLmQva3Bh
+cnR4LnJ1bGVzCiAgIC9saWIvdWRldi9rcGFydHhfaWQKICAgL3NiaW4vbXBhdGhfcHJpb19ocF9z
+dwogICAvdXNyL3NoYXJlL21hbi9tYW41L211bHRpcGF0aC5jb25mLjUuZ3oKCgpSUE0gYnVpbGQg
+ZXJyb3JzOgogICAgSW5zdGFsbGVkIChidXQgdW5wYWNrYWdlZCkgZmlsZShzKSBmb3VuZDoKICAg
+L2V0Yy91ZGV2L3J1bGVzLmQva3BhcnR4LnJ1bGVzCiAgIC9saWIvdWRldi9rcGFydHhfaWQKICAg
+L3NiaW4vbXBhdGhfcHJpb19ocF9zdwogICAvdXNyL3NoYXJlL21hbi9tYW41L211bHRpcGF0aC5j
+b25mLjUuZ3oKbWFrZTogKioqIFtycG1dIEVycm9yIDEKCk5vdCBiZWluZyBhbiBleHBlcnQgaW4g
+YnVpbGRpbmcgcnBtcyAodGhpcyB3b3VsZCBiZSBteSBmaXJzdCksIGFuZCBub3QKd2FudGluZyB0
+byBtYW5nbGUgbXkgc3RvcmFnZSwgSSB0aG91Z2h0IEkgaGFkIGJldHRlciBhc2sgaG93IHRvIGhh
+bmRsZQppdC4gIERvIEkgYWRkIHRoZSBmaWxlcyB0byB0aGUgc3BlYyBmaWxlIG9yIGRvIEkgcmVt
+b3ZlIHRoZW0gZnJvbQpNYWtlZmlsZT8gSSBzdXBwb3NlIHRoYXQncyBhbm90aGVyIHdheSBvZiBh
+c2tpbmcgaWYgdGhlc2UgYXJlIHJlcXVpcmVkCmZvciBDZW50T1Mgb3IgaWYgdGhleSBhcmUgRGVi
+aWFuIHNwZWNpZmljPyBUaGFua3MgLSBKb2huCgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
+bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9kbS1kZXZlbA==
