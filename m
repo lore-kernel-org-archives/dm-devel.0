@@ -1,114 +1,60 @@
-From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
-Subject: Re: dm multipath kernel driver version too old - 2.6.32
-Date: Mon, 04 Jan 2010 12:59:20 -0500
-Message-ID: <1262627960.4433.8.camel@jaspav.ssiservices.biz>
-References: <1262246366.8333.13.camel@jaspav.ssiservices.biz>
-	<20100102002420.GA25814@redhat.com>
-	<1262474750.4244.37.camel@jaspav.ssiservices.biz>
-	<1262477828.4244.40.camel@jaspav.ssiservices.biz>
-	<20100103170404.GX25902@reaktio.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: [PATCH] scsi_dh_rdac: Changing the memory allocation flag from
+ GFP_KERNEL to GFP_NOIO
+Date: Tue, 5 Jan 2010 10:20:07 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4877BC7E8@cosmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100103170404.GX25902@reaktio.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: pmdaws@ssiservices.biz
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: "michaelc@cs.wisc.edu" <michaelc@cs.wisc.edu>, Rob Evers <revers@redhat.com>, Chandra Seetharaman <chandra.seetharaman@us.ibm.com>
 List-Id: dm-devel.ids
 
-T24gU3VuLCAyMDEwLTAxLTAzIGF0IDE5OjA0ICswMjAwLCBQYXNpIEvDpHJra8OkaW5lbiB3cm90
-ZTogCj4gT24gU2F0LCBKYW4gMDIsIDIwMTAgYXQgMDc6MTc6MDhQTSAtMDUwMCwgSm9obiBBLiBT
-dWxsaXZhbiBJSUkgd3JvdGU6Cj4gPiBPbiBTYXQsIDIwMTAtMDEtMDIgYXQgMTg6MjUgLTA1MDAs
-IEpvaG4gQS4gU3VsbGl2YW4gSUlJIHdyb3RlOiAKPiA+ID4gT24gRnJpLCAyMDEwLTAxLTAxIGF0
-IDE5OjI0IC0wNTAwLCBNaWtlIFNuaXR6ZXIgd3JvdGU6IAo+ID4gPiA+IE9uIFRodSwgRGVjIDMx
-IDIwMDkgYXQgIDI6NTlhbSAtMDUwMCwKPiA+ID4gPiBKb2huIEEuIFN1bGxpdmFuIElJSSA8anN1
-bGxpdmFuQG9wZW5zb3VyY2VkZXZlbC5jb20+IHdyb3RlOgo+ID4gPiA+IAo+ID4gPiA+ID4gSGVs
-bG8sIGFsbC4gIFdlIGFyZSBhdHRlbXB0aW5nIHRvIHVwZ3JhZGUgb3VyIGtlcm5lbCBvbiBvdXIg
-VlNlcnZlcgo+ID4gPiA+ID4gaG9zdHMgZnJvbSAyLjYuMjggdG8gMi42LjMyLjEuICBBZnRlciBz
-b21lIGluaXRpYWwgZ3JpZWYsIHdlIHRob3VnaHQgd2UKPiA+ID4gPiA+IHdlcmUgc3VjY2Vzc2Z1
-bCB1bnRpbCBtdWx0aXBhdGgga2lja2VkIGluIGFuZCB3ZSByZWNlaXZlZCBhbiBlcnJvcgo+ID4g
-PiA+ID4gbWVzc2FnZToKPiA+ID4gPiA+IAo+ID4gPiA+ID4gRE0gbXVsdGlwYXRoIGtlcm5lbCBk
-cml2ZXIgdmVyc2lvbiB0b28gb2xkCj4gPiA+ID4gPiAKPiA+ID4gPiA+IEluIHRoZSBSQUlEIGFu
-ZCBMVk0gc2VjdGlvbiBvZiBvdXIga2VybmVsIGNvbmZpZ3VyYXRpb24sIHdlIGhhdmUgZW5hYmxl
-ZAo+ID4gPiA+ID4gTXVsdGlwYXRoIEkvTyBzdXBwb3J0LiAgV2UgaGF2ZSB0aGVuIGNyZWF0ZWQg
-bW9kdWxlcyBmb3IgTXVsdGlwYXRoCj4gPiA+ID4gPiB0YXJnZXQgYW5kIGJvdGggSS9PIFBhdGgg
-U2VsZWN0b3JzIChpbi1mbGlnaHQgSS9PcyBhbmQgc2VydmljZSB0aW1lKS4KPiA+ID4gPiA+IAo+
-ID4gPiA+ID4gV2UgYXJlIHJ1bm5pbmcgZnVsbHkgcGF0Y2hlZCBDZW50T1MgNS40LiAgV2hhdCBo
-YXZlIHdlIGRvbmUgd3Jvbmc/Cj4gPiA+ID4gPiBUaGFua3MgLSBKb2huCj4gPiA+ID4gCj4gPiA+
-ID4gTGludXggPj0gMi42LjMxIGhhcyBhIERNIG11bHRpcGF0aCB0YXJnZXQgdmVyc2lvbiB0aGF0
-IHdhcyBidW1wZWQgdG8gPj0KPiA+ID4gPiAxLjEuMCAoZm9yIHJlcXVlc3QtYmFzZWQgbXVsdGlw
-YXRoIGV0IGFsKS4KPiA+ID4gPiAKPiA+ID4gPiBUaGUgZGV2aWNlLW1hcHBlci1tdWx0aXBhdGgg
-aW4gNS40IGhhczoKPiA+ID4gPiBtdWx0aXBhdGgvbWFpbi5jOiAgICAgaWYgKGRtX3ByZXJlcShE
-RUZBVUxUX1RBUkdFVCwgMSwgMCwgMykpCj4gPiA+ID4gCj4gPiA+ID4gQnV0IDUuNCdzIGRtX3By
-ZXJlcSgpIGlzIHRvbyBzaW1wbGlzdGljIHRvIGhhbmRsZSB0aGUgaGlnaGVyIERNIHRhcmdldAo+
-ID4gPiA+IHZlcnNpb24gbnVtYmVycyB0aGF0IExpbnV4ID49IDIuNi4zMSBoYXMgZm9yIHRoZSBE
-TSBtdWx0aXBhdGggdGFyZ2V0Lgo+ID4gPiA+IAo+ID4gPiA+IFVwc3RyZWFtIG11bHRpcGF0aC10
-b29scyBjYW4gaGFuZGxlIHRoZSBuZXdlciBETSB0YXJnZXQgdmVyc2lvbnMKPiA+ID4gPiBwcm9w
-ZXJseS4gIDUuNCdzIGRldmljZS1tYXBwZXItbXVsdGlwYXRoLXRvb2xzIGNhbiBiZSBwYXRjaGVk
-IHdpdGgKPiA+ID4gPiBzb21ldGhpbmcgbGlrZSB0aGUgZm9sbG93aW5nIChub3RlIHRoaXMgaXMg
-d2hpdGUtc3BhY2UgZGFtYWdlZCwgYnV0IHlvdQo+ID4gPiA+IGdldCB0aGUgaWRlYSk6Cj4gPiA+
-ID4gCj4gPiA+ID4gQEAgLTEwNywxMCArMTA3LDEwIEBAIGRtX3ByZXJlcSAoY2hhciAqIHN0ciwg
-aW50IHgsIGludCB5LCBpbnQgeikKPiA+ID4gPiAgCj4gPiA+ID4gICAgICAgICAgICAgICAgIGlm
-ICghc3RybmNtcChzdHIsIHRhcmdldC0+bmFtZSwgc3RybGVuKHN0cikpKSB7Cj4gPiA+ID4gICAg
-ICAgICAgICAgICAgICAgICAgICAgci0tOwo+ID4gPiA+IC0gICAgICAgICAgICAgICAgICAgICAg
-IAo+ID4gPiA+IC0gICAgICAgICAgICAgICAgICAgICAgIGlmICh0YXJnZXQtPnZlcnNpb25bMF0g
-Pj0geCAmJgo+ID4gPiA+IC0gICAgICAgICAgICAgICAgICAgICAgICAgICB0YXJnZXQtPnZlcnNp
-b25bMV0gPj0geSAmJgo+ID4gPiA+IC0gICAgICAgICAgICAgICAgICAgICAgICAgICB0YXJnZXQt
-PnZlcnNpb25bMl0gPj0geikKPiA+ID4gPiArCj4gPiA+ID4gKyAgICAgICAgICAgICAgICAgICAg
-ICAgaWYgKCh0YXJnZXQtPnZlcnNpb25bMF0gPiB4KSB8fAo+ID4gPiA+ICsgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAoKHRhcmdldC0+dmVyc2lvblswXSA9PSAgeCkgJiYgKHRhcmdldC0+dmVy
-c2lvblsxXSA+IHkpKSB8fAo+ID4gPiA+ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAoKHRh
-cmdldC0+dmVyc2lvblswXSA9PSB4KSAmJiAodGFyZ2V0LT52ZXJzaW9uWzFdID09IHkpICYmICh0
-YXJnZXQtPnZlcnNpb25bMl0gPj0geikpKQo+ID4gPiA+ICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgci0tOwo+ID4gPiA+IAo+ID4gPiA+IAkJCWJyZWFrOwo+ID4gPiA+IAo+ID4gPiA+
-IEJ1dCBhZ2FpbjogdXBzdHJlYW0gbXVsdGlwYXRoLXRvb2xzIGFscmVhZHkgaGFzIGEgbmljZXIg
-Zml4Lgo+ID4gPiA8c25pcD4KPiA+ID4gSG1tIC4gLiAuIEknbGwga2VlcCBsb29raW5nIGJ1dCB0
-aGUgZmlyc3QgZmlmdGVlbiBtaW51dGVzIG9mIGdvb2dsaW5nCj4gPiA+IGhhcyBub3Qgc2hvd24g
-bWUgd2hlcmUgdG8gZmluZCB1cHN0cmVhbSBtdWx0aXBhdGgtdG9vbHMuICBFdmVyeXRoaW5nIG9u
-Cj4gPiA+IGh0dHA6Ly9jaHJpc3RvcGhlLnZhcm9xdWkuZnJlZS5mci9tdWx0aXBhdGgtdG9vbHMv
-IGxvb2tzIHF1aXRlIG9sZC4KPiA+ID4gV2hlcmUgZG8gSSBmaW5kIHRoZSBsYXRlc3QgdXBzdHJl
-YW0gbXVsdGlwYXRoLXRvb2xzPyBUaGFua3MgLSBKb2huCj4gPiA8c25pcD4KPiA+IFNvcnJ5IHRv
-IGJlIGEgcGVzdCBidXQgSSdtIGEgYml0IG91dCBvZiBteSBkZXB0aCAuIC4gLiB3ZWxsLCBtYXli
-ZSBtb3JlCj4gPiB0aGFuIGEgYml0LiAgRnJvbSBleGFtaW5pbmcgbWFpbi5jIGluIHRoZSB2YXJp
-b3VzIHRhcmJhbGxzLCBJIGFtCj4gPiBhc3N1bWluZyAwLjQuOCBpcyBpbmRlZWQgd2hhdCBJIHdh
-bnQuICBOb3csIHdoYXQgZXhhY3RseSBkbyBJIGRvPwo+ID4gCj4gPiBEbyBJIHNpbXBseSBjb21w
-aWxlIHRoZSBtdWx0aXBhdGggZGlyZWN0b3J5IGFuZCByZXBsYWNlIHRoZSByZXN1bHRhbnQKPiA+
-IGJpbmFyaWVzIG9yIGRvIEkgYnVpbGQgYW5kIHJlcGxhY2UgZXZlcnl0aGluZz8gSSBkb24ndCB3
-YW50IHRvIGRlc3Ryb3kKPiA+IG15IGRhdGEgc3RvcmFnZSBieSBtaXhpbmcgdmVyc2lvbnMgYnV0
-IEkgYWxzbyBkb24ndCB3YW50IHRvIHN0ZXAgdG9vIGZhcgo+ID4gb3V0c2lkZSB0aGUgb2ZmaWNp
-YWwgcGFja2FnaW5nLiAgQW55IGd1aWRhbmNlIHdvdWxkIGJlIGdyZWF0bHkKPiA+IGFwcHJlY2lh
-dGVkLiAgVGhhbmtzIC0gSm9obgo+ID4gCj4gCj4gWW91IGNvdWxkIGFsd2F5cyBncmFiIHRoZSBs
-YXRlc3QgZGV2aWNlLW1hcHBlci1tdWx0aXBhdGggc3JjLnJwbSBmcm9tCj4gRmVkb3JhIHJhd2hp
-ZGUgYW5kIHJlLWJ1aWxkIGl0IG9uIHlvdXIgc2V0dXAgZm9yIEVMNS4KPiAKPiBkZXZpY2UtbWFw
-cGVyLW11bHRpcGF0aC0wLjQuOS0xMS5mYzEzLnNyYy5ycG0gc2VlbXMgdG8gYmUgdGhlIGxhdGVz
-dCBpbiBGZWRvcmEuCj4gCj4gKE5vdGUgdGhhdCB0aGUgbmV3IHJwbXMgaW4gRmVkb3JhIDEyLzEz
-IHVzZSBkaWZmZXJlbnQgY29tcHJlc3Npb24vZm9ybWF0LCAKPiBzbyBFTDUgcnBtIHRvb2wgbWln
-aHQgbm90IGJlIGFibGUgdG8gaW5zdGFsbC9oYW5kbGUgdGhhdCBzcmMucnBtLi4pCjxzbmlwPgpU
-aGFua3MsIFBhc2kuICBJIHRob3VnaHQsIHJhdGhlciB0aGFuIHRha2UgYSBjaGFuY2Ugd2l0aCB0
-aGF0LCBJIHdvdWxkCnNpbXBseSB1c2UgdGhlIG1ha2UgcnBtIHRhcmdldCBpbmNsdWRlZCB3aXRo
-IDAuNC44LiAgSG93ZXZlciwgaXQKcHJvZHVjZXMgYW4gZXJyb3I6CgplcnJvcjogSW5zdGFsbGVk
-IChidXQgdW5wYWNrYWdlZCkgZmlsZShzKSBmb3VuZDoKICAgL2V0Yy91ZGV2L3J1bGVzLmQva3Bh
-cnR4LnJ1bGVzCiAgIC9saWIvdWRldi9rcGFydHhfaWQKICAgL3NiaW4vbXBhdGhfcHJpb19ocF9z
-dwogICAvdXNyL3NoYXJlL21hbi9tYW41L211bHRpcGF0aC5jb25mLjUuZ3oKCgpSUE0gYnVpbGQg
-ZXJyb3JzOgogICAgSW5zdGFsbGVkIChidXQgdW5wYWNrYWdlZCkgZmlsZShzKSBmb3VuZDoKICAg
-L2V0Yy91ZGV2L3J1bGVzLmQva3BhcnR4LnJ1bGVzCiAgIC9saWIvdWRldi9rcGFydHhfaWQKICAg
-L3NiaW4vbXBhdGhfcHJpb19ocF9zdwogICAvdXNyL3NoYXJlL21hbi9tYW41L211bHRpcGF0aC5j
-b25mLjUuZ3oKbWFrZTogKioqIFtycG1dIEVycm9yIDEKCk5vdCBiZWluZyBhbiBleHBlcnQgaW4g
-YnVpbGRpbmcgcnBtcyAodGhpcyB3b3VsZCBiZSBteSBmaXJzdCksIGFuZCBub3QKd2FudGluZyB0
-byBtYW5nbGUgbXkgc3RvcmFnZSwgSSB0aG91Z2h0IEkgaGFkIGJldHRlciBhc2sgaG93IHRvIGhh
-bmRsZQppdC4gIERvIEkgYWRkIHRoZSBmaWxlcyB0byB0aGUgc3BlYyBmaWxlIG9yIGRvIEkgcmVt
-b3ZlIHRoZW0gZnJvbQpNYWtlZmlsZT8gSSBzdXBwb3NlIHRoYXQncyBhbm90aGVyIHdheSBvZiBh
-c2tpbmcgaWYgdGhlc2UgYXJlIHJlcXVpcmVkCmZvciBDZW50T1Mgb3IgaWYgdGhleSBhcmUgRGVi
-aWFuIHNwZWNpZmljPyBUaGFua3MgLSBKb2huCgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApk
-bS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9kbS1kZXZlbA==
+This patch changes the memory allocation flag from GFP_KERNEL to GFP_NOIO which is more appropriate.
+
+This was noticed by Mike Christie and Rob Evers.. 
+Mike Christie wrote:
+> Rob Evers wrote:
+>> +
+>> +static int queue_mode_select(struct scsi_device *sdev,
+>> +                activate_complete fn, void *data)
+>> +{
+>> +    struct rdac_queue_data *qdata;
+>> +    struct rdac_controller *ctlr;
+>> +
+>> +    qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
+>> +    if (!qdata)
+>> +        return SCSI_DH_RETRY;
+>> +
+>
+> It looks like this is called in the main IO path. A failed IO could cause, the path to go down,
+> then we would call this to active a new path. If the system needed to write out pages to the same
+> disk that just had the failed path so it can allocate memory then GFP_KERNEL would be bad to use here.
+> You would use a mempool and still use something like GFP_NOIO. If a mempool is not possible for some 
+> reason, then you would want to still use GFP_NOIO.
+
+Using mempool would become bit more complex here because I cannot assume about the number of elements
+during the allocation. I would use GFP_NOIO.
+
+CC: Mike Christie <michaelc@cs.wisc.edu>
+CC: Rob Evers <revers@redhat.com>
+CC: Chandra Seetharaman <chandra.seetharaman@us.ibm.com>
+Signed-off-by: Babu Moger <babu.moger@lsi.com>
+
+---
+--- linux-2.6.33-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2010-01-05 11:49:22.000000000 -0400
++++ linux-2.6.33-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-01-05 11:53:13.000000000 -0400
+@@ -624,7 +624,7 @@ static int queue_mode_select(struct scsi
+ 	struct rdac_queue_data *qdata;
+ 	struct rdac_controller *ctlr;
+ 
+-	qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
++	qdata = kzalloc(sizeof(*qdata), GFP_NOIO);
+ 	if (!qdata)
+ 		return SCSI_DH_RETRY;
+ 
+
+
