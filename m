@@ -1,38 +1,45 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH v2] dm: Fix alignment stacking on	partitioned
-	devices
-Date: Tue, 5 Jan 2010 18:27:35 +0000
-Message-ID: <20100105182735.GC6042@agk-dp.fab.redhat.com>
-References: <1261591640-24380-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: [PATCH] dm-mpath: Fixing unnecessary argument casting
+Date: Tue, 5 Jan 2010 11:39:26 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4877BC84E@cosmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1261591640-24380-1-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: Chandra Seetharaman <chandra.seetharaman@us.ibm.com>
 List-Id: dm-devel.ids
 
-On Wed, Dec 23, 2009 at 01:07:20PM -0500, Mike Snitzer wrote:
-> +	if (blk_stack_limits(limits, &q->limits, offset) < 0)
+This patch removes couple of unnecessary argument casting. There is no functional change with this patch.
+Tested the changes with LSI storage..
 
-extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
-                            sector_t offset);
+CC: Chandra Seetharaman <chandra.seetharaman@us.ibm.com>
+Signed-off-by: Babu Moger <babu.moger@lsi.com>
 
-This function is asking for the offset to be supplied as sector_t i.e.
-in units of sectors, but this patch uses bytes.  Please either change
-that to sectors as per the prototype, or if it really does want bytes,
-fix the prototype to make that clear.
+---
+--- linux-2.6.33-rc2/drivers/md/dm-mpath.c.orig	2010-01-05 12:47:26.000000000 -0400
++++ linux-2.6.33-rc2/drivers/md/dm-mpath.c	2010-01-05 12:34:00.000000000 -0400
+@@ -1128,8 +1128,7 @@ static int pg_init_limit_reached(struct
+ 
+ static void pg_init_done(void *data, int errors)
+ {
+-	struct dm_path *path = data;
+-	struct pgpath *pgpath = path_to_pgpath(path);
++	struct pgpath *pgpath = data;
+ 	struct priority_group *pg = pgpath->pg;
+ 	struct multipath *m = pg->m;
+ 	unsigned long flags;
+@@ -1198,7 +1197,7 @@ static void activate_path(struct work_st
+ 		container_of(work, struct pgpath, activate_path);
+ 
+ 	scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
+-				pg_init_done, &pgpath->path);
++				pg_init_done, pgpath);
+ }
+ 
+ /*
 
-Alasdair
+
+
