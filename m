@@ -1,7 +1,7 @@
 From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH] dm-mpath: Fixing unnecessary argument casting
-Date: Tue, 5 Jan 2010 11:39:26 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4877BC84E@cosmail01.lsi.com>
+Subject: [PATCH] dm-mpath: Two minor fixes while processing activate_path
+Date: Tue, 5 Jan 2010 15:43:44 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4877BC98C@cosmail01.lsi.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7BIT
@@ -9,37 +9,40 @@ Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Language: en-US
 Sender: linux-scsi-owner@vger.kernel.org
 To: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
-Cc: Chandra Seetharaman <chandra.seetharaman@us.ibm.com>
 List-Id: dm-devel.ids
 
-This patch removes couple of unnecessary argument casting. There is no functional change with this patch.
-Tested the changes with LSI storage..
+This patch adds two minor fixes while processing device mapper path activation.
 
-CC: Chandra Seetharaman <chandra.seetharaman@us.ibm.com>
+1. Skip failed paths while calling activate_path.
+   If the path is already failed then activate_path will fail for sure. We 
+   don't have to call in that case. In some case this might cause prolonged retries unnecessarily.
+
+2. changed the mis-leading message if the activate path fails with SCSI_DH_NOSYS.
+
 Signed-off-by: Babu Moger <babu.moger@lsi.com>
 
 ---
 --- linux-2.6.33-rc2/drivers/md/dm-mpath.c.orig	2010-01-05 12:47:26.000000000 -0400
-+++ linux-2.6.33-rc2/drivers/md/dm-mpath.c	2010-01-05 12:34:00.000000000 -0400
-@@ -1128,8 +1128,7 @@ static int pg_init_limit_reached(struct
- 
- static void pg_init_done(void *data, int errors)
- {
--	struct dm_path *path = data;
--	struct pgpath *pgpath = path_to_pgpath(path);
-+	struct pgpath *pgpath = data;
- 	struct priority_group *pg = pgpath->pg;
- 	struct multipath *m = pg->m;
- 	unsigned long flags;
-@@ -1198,7 +1197,7 @@ static void activate_path(struct work_st
- 		container_of(work, struct pgpath, activate_path);
- 
- 	scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
--				pg_init_done, &pgpath->path);
-+				pg_init_done, pgpath);
- }
- 
- /*
-
++++ linux-2.6.33-rc2/drivers/md/dm-mpath.c	2010-01-05 17:07:35.000000000 -0400
+@@ -461,6 +461,9 @@ static void process_queued_ios(struct wo
+ 		m->pg_init_count++;
+ 		m->pg_init_required = 0;
+ 		list_for_each_entry(tmp, &pgpath->pg->pgpaths, list) {
++			/* Skip failed paths */
++			if (!tmp->is_active)
++				continue;
+ 			if (queue_work(kmpath_handlerd, &tmp->activate_path))
+ 				m->pg_init_in_progress++;
+ 		}
+@@ -1143,8 +1146,7 @@ static void pg_init_done(void *data, int
+ 			errors = 0;
+ 			break;
+ 		}
+-		DMERR("Cannot failover device because scsi_dh_%s was not "
+-		      "loaded.", m->hw_handler_name);
++		DMERR("Could not failover device. Error %d.", errors);
+ 		/*
+ 		 * Fail path for now, so we do not ping pong
+ 		 */
 
 
