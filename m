@@ -1,13 +1,25 @@
-From: Takahiro Yasui <tyasui@redhat.com>
-Subject: [PATCH][BUGFIX] dm-raid1: fix suspend stuck of failed
-	device
-Date: Fri, 08 Jan 2010 15:08:55 -0500
-Message-ID: <4B4790D7.7000800@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm: Fix alignment stacking on partitioned
+	devices
+Date: Fri, 8 Jan 2010 15:28:07 -0500
+Message-ID: <20100108202807.GA21439@redhat.com>
+References: <20100106025731.GA16154@redhat.com>
+	<yq11vi3ud84.fsf@sermon.lab.mkp.net>
+	<20100106041050.GA21438@redhat.com>
+	<yq1wrzvswaa.fsf@sermon.lab.mkp.net>
+	<20100106051605.GB21438@redhat.com>
+	<yq1pr5nsk3z.fsf@sermon.lab.mkp.net>
+	<20100106132508.GA3589@redhat.com>
+	<yq1hbqxsup7.fsf@sermon.lab.mkp.net>
+	<20100107185505.GA15181@redhat.com>
+	<yq13a2gsal8.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <yq13a2gsal8.fsf@sermon.lab.mkp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,130 +29,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-When a dm-mirror device of which error recovery failed is going to
-suspend, suspend process could stuck at acquireing semaphore. This
-is a call trace when it happened.
+On Fri, Jan 08 2010 at  1:41pm -0500,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
-dmsetup       D 01b014fa     0  2446   6087 0x00000000
- f5c2bcb0 00000086 c03a9807 01b014fa 0f87fd46 00000c81 f48ad780 f48ada00
- c2c084a0 00000000 c06944a0 c024aa17 00cd3503 ffffffff f5c2bcb4 c023211e
- 00000000 00000000 000003ff f5f946b4 7fffffff 7fffffff f5c2bcfc c049554e
-Call Trace:
- [<c049554e>] schedule_timeout+0x17/0x1a5
- [<c0496062>] __down+0x4a/0x6b
- [<c024aa9f>] down+0x22/0x2f
- [<f807919b>] dm_rh_stop_recovery+0x14/0x1d [dm_region_hash]
- [<f84c4c92>] mirror_presuspend+0x44/0x12f [dm_mirror]
- [<f84af571>] suspend_targets+0x2d/0x3b [dm_mod]
- [<f84af58d>] dm_table_presuspend_targets+0xe/0x10 [dm_mod]
- [<f84aee56>] dm_suspend+0x4d/0x150 [dm_mod]
- [<f84b1fe9>] dev_suspend+0x55/0x18a [dm_mod]
- [<f84b29f3>] dm_ctl_ioctl+0x303/0x344 [dm_mod]
- [<c02c3c4b>] vfs_ioctl+0x22/0x85
- [<c02c422c>] do_vfs_ioctl+0x4cb/0x516
- [<c02c42b7>] sys_ioctl+0x40/0x5a
- [<c0202858>] sysenter_do_call+0x12/0x28
+> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+> 
+> Mike,
+> 
+> Mike> Seems I took the time to add a comment whose FIXME doesn't ring
+> Mike> many bells now!  But ignoring that, the comment before the FIXME
+> Mike> is making a veiled reference to userspace having consumed
+> Mike> alignment_offset.
+> 
+> I read and understood the comment.  But even then explicitly zeroing out
+> those two values didn't make sense (because if user space did in fact do
+> the right thing they'd always be zero).
+> 
+> I know that the DM utilities take care of business.  And that DM devices
+> are special because they are always set up by user space and not a
+> kernel discovery process.
+> 
+> But since the code *is* in place to validate things I'm not so keen on
+> you clearing fields that have been calculated and have a meaning.  For
+> me it masked a case where the DM utilities did the wrong thing (because
+> they were old).
+> 
+> With the Enterprise Linux hat on it is easy for us to specify that you
+> must use this version of the kernel and the device mapper utilities.
+> But reality is that lots of people are running upstream kernels on
+> distributions with older userland.  And some distributions get things
+> wrong, ship broken bits, etc.
+> 
+> It's great that new DM utils will transparently adjust the starting
+> offset.  That's the way it's supposed to work.  No arguments there.
+> 
+> My main concern is making sure that we never get into a case where we
+> run with misaligned components without indicating that there is a
+> problem.  Ever!  Regardless of which DM utils might be in place.
+> 
+> We have the power to get that right.  All the pieces are in place.  I'd
+> simply like us to stop making assumptions about user space always doing
+> the right thing.
 
-When an error recovery processes a region with a positive pending count,
-__rh_recovery_prepare() returns "1" without adding the region in the
-quiesed_regions list. In this case, the semaphore (recovery_count) is
-not released. This causes stuck when recovery_count is acquired in
-dm_rh_stop_recovery() called from mirror_presuspend().
+Yeap, I already agreed that those 2 lines should be removed (in the
+p.s. of my previous mail).  They really aren't serving any purpose and
+their justification was/is tenuous at best.
 
-To prevent the stuck, all bios in the hold list should be processed
-after the suspend flag is set but before dm_rh_stop_recovery() is called.
+I'll get the fix, for 2.6.33, to Alasdair shortly.
 
-I appreciate your comments.
-
-Thanks,
-Taka
-
-
-Signed-off-by: Takahiro Yasui <tyasui@redhat.com>
----
- drivers/md/dm-raid1.c |   41 +++++++++++++++++++++++------------------
- 1 file changed, 23 insertions(+), 18 deletions(-)
-
-Index: linux-2.6.33-rc1-dm/drivers/md/dm-raid1.c
-===================================================================
---- linux-2.6.33-rc1-dm.orig/drivers/md/dm-raid1.c
-+++ linux-2.6.33-rc1-dm/drivers/md/dm-raid1.c
-@@ -465,9 +465,17 @@ static void map_region(struct dm_io_regi
- static void hold_bio(struct mirror_set *ms, struct bio *bio)
- {
- 	/*
--	 * If device is suspended, complete the bio.
-+	 * Lock is required to avoid race condition during suspend
-+	 * process.
- 	 */
-+	spin_lock_irq(&ms->lock);
-+
- 	if (atomic_read(&ms->suspend)) {
-+		spin_unlock_irq(&ms->lock);
-+
-+		/*
-+		 * If device is suspended, complete the bio.
-+		 */
- 		if (dm_noflush_suspending(ms->ti))
- 			bio_endio(bio, DM_ENDIO_REQUEUE);
- 		else
-@@ -478,7 +486,6 @@ static void hold_bio(struct mirror_set *
- 	/*
- 	 * Hold bio until the suspend is complete.
- 	 */
--	spin_lock_irq(&ms->lock);
- 	bio_list_add(&ms->holds, bio);
- 	spin_unlock_irq(&ms->lock);
- }
-@@ -1259,6 +1266,20 @@ static void mirror_presuspend(struct dm_
- 	atomic_set(&ms->suspend, 1);
- 
- 	/*
-+	 * Process bios in the hold list to start recovery waiting
-+	 * for bios in the hold list. After the process, no bio has
-+	 * a chance to be added in the hold list because ms->suspend
-+	 * is set.
-+	 */
-+	spin_lock_irq(&ms->lock);
-+	holds = ms->holds;
-+	bio_list_init(&ms->holds);
-+	spin_unlock_irq(&ms->lock);
-+
-+	while ((bio = bio_list_pop(&holds)))
-+		hold_bio(ms, bio);
-+
-+	/*
- 	 * We must finish up all the work that we've
- 	 * generated (i.e. recovery work).
- 	 */
-@@ -1278,22 +1299,6 @@ static void mirror_presuspend(struct dm_
- 	 * we know that all of our I/O has been pushed.
- 	 */
- 	flush_workqueue(ms->kmirrord_wq);
--
--	/*
--	 * Now set ms->suspend is set and the workqueue flushed, no more
--	 * entries can be added to ms->hold list, so process it.
--	 *
--	 * Bios can still arrive concurrently with or after this
--	 * presuspend function, but they cannot join the hold list
--	 * because ms->suspend is set.
--	 */
--	spin_lock_irq(&ms->lock);
--	holds = ms->holds;
--	bio_list_init(&ms->holds);
--	spin_unlock_irq(&ms->lock);
--
--	while ((bio = bio_list_pop(&holds)))
--		hold_bio(ms, bio);
- }
- 
- static void mirror_postsuspend(struct dm_target *ti)
-
--- 
-Takahiro Yasui
-Hitachi Computer Products (America), Inc.
+Mike
