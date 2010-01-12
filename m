@@ -1,71 +1,78 @@
-From: Gianluca Cecchi <gianluca.cecchi@gmail.com>
-Subject: Re: Problem Delay construction of multipath device
-Date: Tue, 12 Jan 2010 15:16:59 +0100
-Message-ID: <561c252c1001120616y52547001lce4614b9331d9526@mail.gmail.com>
-References: <a960d84c1001110316r59c2443bx9feee2da793b7946@mail.gmail.com>
-	<561c252c1001120045r7cde4af1jf8bb7c05bb1a1315@mail.gmail.com>
-	<a960d84c1001120403r738e1b2br1cc9a57ebf90c942@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: [dm-devel] [PATCH v2 1/1] dm-raid45
+Date: Tue, 12 Jan 2010 15:44:28 +0100
+Message-ID: <1263307468.1346.9.camel@o>
+References: <1259243112-28175-1-git-send-email-heinzm@redhat.com>
+	 <e9c3a7c20912081638w39469743n76b4114b840f1c43@mail.gmail.com>
+	 <1260380840.9639.99.camel@o>
+	 <e9c3a7c20912210848u3f6ced7cvc57aec586ff7c0ef@mail.gmail.com>
+Reply-To: heinzm@redhat.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <a960d84c1001120403r738e1b2br1cc9a57ebf90c942@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <e9c3a7c20912210848u3f6ced7cvc57aec586ff7c0ef@mail.gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: linux-raid <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-SXQncyBnb2luZyBzb21ld2hhdCBvZmZ0b3BpYyBub3cuLi4gc29ycnkgdG8gdGhlIGxpc3QuCkFz
-IHlvdSB3cm90ZSB0aGF0IHlvdSByZWNlbnRseSB1cGRhdGVkIHRoZSBzeXN0ZW0gdG8gNS40IChv
-ciBhdCBsZWFzdApJIHVuZGVyc3Rvb2QgdGhpcyksIGl0IG1lYW5zIHlvdSBoYXZlIGEgdmFsaWQg
-cmhuIHN1YnNjcmlwdGlvbi4KVGlwaWNhbGx5IHlvdSBoYXZlIHN1cHBvcnQgKHdlYiBhbmQvb3Ig
-cGhvbmUpIHN1cHBvcnQgYm91bmQgdG8gdGhpcy4KYnV0IHRoZXkgY291bGQgYmUgcGFydGljdWxh
-ciBjYXNlcyB3aGVyZSB5b3UgaGF2ZSBub3QgYWJpbGl0eSB0byBvcGVuCnRpY2tldHMgKGZvciBl
-eGFtcGxlIGZvciBzb21lIGtpbmQgb2YgQWNhZGVtaWMgbGljZW5zZXMgQUZBSUspCllvdSBoYXZl
-IHRvIGFzayB0aGUgcGVyc29uIHJlc3BvbnNpYmxlIHdpdGggbGljZW5zZXMvc3Vic2NyaXB0aW9u
-cyBpbgp5b3VyIG9yZ2FuaXphdGlvbi4KCkluIGdlbmVyYWwgeW91IGhhdmUgYSBsb2dpbiB0byBh
-Y2Nlc3MgUmVkIGhhdCBOZXR3b3JrIHdlYiBzaXRlIHdpdGggYSBicm93c2VyOgpodHRwczovL3Jo
-bi5yZWRoYXQuY29tCkFmdGVyIGxvZ2luIHlvdSBzZWxlY3QKInJlZCBoYXQgY3VzdG9tZXIgY2Vu
-dGVyIiBib3ggYXQgdGhlIG1pZCdsZWZ0IG9mIHRoZSBwYWdlCkluIHRoZSBuZXcgcGFnZSwgaW5z
-aWRlIHRoZSB0aGlyZCBjb2x1bW4gZnJvbSB0aGUgbGVmdCwgbmFtZWQKIlRpY2tldHMiLCB5b3Ug
-c2VsZWN0IHRoZSBsaW5rCiJPcGVuIG5ldyB0aWNrZXRzIG9yIG1hbmFnZSBleGlzdGluZyIKYW5k
-IHRoZW4gaXQgaXMgc2VsZiBleHBsYW5hdG9yeS4KCkhJSCwKR2Fpbmx1Y2EKCk9uIFR1ZSwgSmFu
-IDEyLCAyMDEwIGF0IDE6MDMgUE0sIENoZWxseSBZb3Vzc2VmIChJU0VGQykKPGNoaWxvbm5iQGdt
-YWlsLmNvbT4gd3JvdGU6Cj4gaGksCj4KPiBpIHVzZSByaGVsIDUuNCBhbmQgbXkgaHcvc3cgY29u
-ZmlnIGlzIHN1cHBvcnRlZC4gaG93IGNhbiBpIG9wZW4gYSBjYXNlLiB5b3UKPiBoYXZlIHRoZSBs
-aW5rID8KPgo+IFRoYW5rcy4KPgo+IDIwMTAvMS8xMiBHaWFubHVjYSBDZWNjaGkgPGdpYW5sdWNh
-LmNlY2NoaUBnbWFpbC5jb20+Cj4+Cj4+IE9uIE1vbiwgSmFuIDExLCAyMDEwIGF0IDEyOjE2IFBN
-LCBDaGVsbHkgWW91c3NlZiAoSVNFRkMpCj4+IDxjaGlsb25uYkBnbWFpbC5jb20+IHdyb3RlOgo+
-PiA+IFByb2JsZW06IERlbGF5IGNvbnN0cnVjdGlvbiBvZiBtdWx0aXBhdGggZGV2aWNlICgvIGRl
-di9kbS0zKQo+PiBbc25pcF0KPj4KPj4gPiBNeSBmc3RhYsKgOgo+PiBbc25pcF0KPj4KPj4gW3Nu
-aXBdCj4+ID4gSSBtYWRlIHRoZSB1cGdyYWRlIHRvIFJlZGhhdCA1LjQgKDIuNi4xOC0xNjQuZWw1
-KSBidXQgSSBoYXZlIG5vdCBzb2x2ZWQKPj4gPiB0aGUKPj4gPiBwcm9ibGVtLiBJdCBtdXN0IGJl
-IGRvbmUgYXQgYm9vdAo+PiA+Cj4+ID4gSG93IEkgY2FuIGRvLiBJIGNhbiBnaXZlIHlvdSBteSAi
-c29zcmVwb3J0IiBpZiB5b3Ugd2FudC4KPj4gW3NuaXBdCj4+Cj4+IEkgZG9uJ3Qga25vdyBpZiB5
-b3UgaGF2ZSBzb21lIHByb2JsZW1zIHJlbGF0ZWQgdG8gbGF0ZW5jaWVzIG9yIG9oZXIsCj4+IGJ1
-dCBJIGhhdmUgdHdvIGNvbW1lbnRzOgo+Pgo+PiAtIEluIGdlbmVyYWwsIGF0IGxlYXN0IGluIHJo
-IGVsIDUueCwgZG0teCBuYW1lcyBhcmUgbm90IHBlcnNpc3RlbnQKPj4gYWNyb3NzIHJlYm9vdHMs
-IHNvIEkgdGhpbmsgaXQgaXMgbm90IHNhZmUgdG8gZGlyZWN0bHkgcmVmZXIgdGhlbSBpbgo+PiBm
-c3RhYi4KPj4gWW91IGNhbiBtYWtlIGEgbGFiZWwgb24gdGhlIGZzLCBzdWNoIGFzIHRoaXMsIGlm
-IHRoZXkgYXJlIGV4dDIvMy80Cj4+Cj4+IHR1bmUyZnMgLUwgaG9tZWZzIC9kZXYvbXBhdGgyICh3
-aXRoIC9ob21lIHVtb3VudGVkIGFuZCBwb2ludGluZyB0bwo+PiBtcGF0aDIgaW4gdGhpcyBjYXNl
-KQo+Pgo+PiBhbmQgdGhlbiBpbiBmc3RhYgo+PiBMQUJFTD1ob21lZnMgwqAgwqAgwqAgwqAgwqAg
-wqAgMjQwRyDCoDE0OEcgwqAgOTNHIMKgNjIlIC9ob21lCj4+Cj4+IG9yIGNyZWF0ZSBhIHZvbHVt
-ZSBncm91cCBhbmQgcmVmZXIgdGhlIExWIHdpdGggc29tZXRoaW5nIGxpa2UgdGhpcyBpbgo+PiBm
-c3RhYiAoVkc9dmduYW1lLCBMVj1sdm5hbWUpIGluIHRoZSBmaXJzdCBjb2x1bW46Cj4+IC9kZXYv
-bWFwcGVyL3ZnbmFtZS1sdm5hbWUKPj4KPj4gLSBJZiB5b3UgYXJlIHVzaW5nIHJoIGVsIDUuNCBh
-bmQgeW91ciBody9zdyBjb25maWcgaXMgc3VwcG9ydGVkIHlvdQo+PiBjYW4gb3BlbiBhIGNhc2Uu
-Li4uCj4+Cj4+IC0tCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+PiBkbS1kZXZlbEByZWRoYXQu
-Y29tCj4+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+
-Cj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCj4KCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Mon, 2009-12-21 at 09:48 -0700, Dan Williams wrote:
+> On Wed, Dec 9, 2009 at 10:47 AM, Heinz Mauelshagen <heinzm@redhat.com> wrote:
+> > On Tue, 2009-12-08 at 17:38 -0700, Dan Williams wrote:
+> >> On Thu, Nov 26, 2009 at 6:45 AM,  <heinzm@redhat.com> wrote:
+> >> > From: Heinz Mauelshagen <heinzm@redhat.com>
+> >> >
+> >> > Neil et al.,
+> >> >
+> >> > finally got around to creating a followup (interim) patch, which allows
+> >> > for changing the xor algorithn at runtime via the message interface,
+> >> > hence allowing to test if the xor unrole optimization around the
+> >> > supported algorithms is performing better than the assembler
+> >> > optimized one in the kernel.
+> >>
+> >> Now that perf is available it would be good to get some comparative
+> >> cache utilization statistics on the two approaches.
+> >
+> > I'd appreciate it.
+> > Do you have any time to spend on this comparison ?
+> >
+> 
+> I can give it a shot.
+
+Thanks.
+
+>  The easiest way to test would be to export your
+> versions via a struct xor_block_template.
+
+Yes, but my recent dm-raid45 patch on dm-devel allows for selection of
+the xor routine being used and its parameters..
+
+Fiddling the macros into xor_block_template structs would allow for
+testing them with other callers...
+
+>  However, the question I
+> have is how do your macros differ from the existing ones in
+> include/asm-generic/xor.h?
+
+Those xor data from multiple blocks via sequenced single xor operations
+whereas mine does them in one go.
+
+> Can we achieve the same effect by
+> extending the ones in include/asm-generic/xor.h to do up to 8 at a
+> time?
+
+I don't think so but that's one question to answer.
+
+Thanks,
+Heinz
+
+> 
+> Thanks,
+> Dan
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
