@@ -1,11 +1,14 @@
-From: jjaing <jjaing@163.com>
-Subject: dmsetup snapshot merge problem
-Date: Tue, 12 Jan 2010 11:12:26 +0800 (CST)
-Message-ID: <10902610.542611263265946202.JavaMail.coremail@bj163app61.163.com>
+From: Gianluca Cecchi <gianluca.cecchi@gmail.com>
+Subject: Re: Problem Delay construction of multipath device
+Date: Tue, 12 Jan 2010 09:45:49 +0100
+Message-ID: <561c252c1001120045r7cde4af1jf8bb7c05bb1a1315@mail.gmail.com>
+References: <a960d84c1001110316r59c2443bx9feee2da793b7946@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3006960268499559085=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <a960d84c1001110316r59c2443bx9feee2da793b7946@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,51 +18,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============3006960268499559085==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_140344_30224992.1263265946202"
-
-------=_Part_140344_30224992.1263265946202
-Content-Type: text/plain; charset=gbk
-Content-Transfer-Encoding: base64
-
-SGkgQWxso6wKICAgICAiZWNobyAwICQoYmxvY2tkZXYgLS1nZXRzaXplIC9kZXYvbG9vcDApIHNu
-YXBzaG90IC9kZXYvbG9vcDAgL2Rldi9sb29wMSBuIDY0IHwgZG1zZXR1cCBjcmVhdGUgdGVzdGNv
-dyIKCiAgICAgIEkgdXNlIHRoZSBhYm92ZSBjb21tYW5kIHRvIGNyZWF0ZSBhIHRlc3Rjb3csIEkg
-ZG9udCBmaW5kIGhvdyB0byB1c2Ugc25hcHNob3Qgb24gZG1zZXR1cCwgc28gaW4gbXkgdW5kZXJz
-dGFuZGluZywgdGVzdGNvdyB3aWxsIGJlIHNldHVwIGFzIC9kZXYvbG9vcDAgZm9yIHJlYWRpbmcg
-YW5kIC9kZXYvbG9vcDEgZm9yIHdyaXRpbmcuIGRvZXMgaXQgY29ycmVjdD8gIGlzIHRoZXJlIGFu
-eSBtYW51YWwgb24gaG93IHRvIHVzZSBzbmFwc2hvdD8KICAgICBhbmQgY291bGQgYW55b25lIHRl
-bGwgbWUgLCBob3cgdG8gbWVyZ2UgdGhpcyB0d28gZGV2aWNlJ3MgY29udGVudHMgYWZ0ZXIgSSBt
-YWRlIHNvbWUgd3JpdGluZyBvbiB0ZXN0Y293PwogICAgIFRoYW5rcyEKCiAgICAgICAgCg==
-------=_Part_140344_30224992.1263265946202
-Content-Type: text/html; charset=gbk
-Content-Transfer-Encoding: base64
-
-SGkgQWxso6w8YnI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7ICJlY2hvIDAgJChibG9ja2RldiAt
-LWdldHNpemUgL2Rldi9sb29wMCkgc25hcHNob3QgL2Rldi9sb29wMCAvZGV2L2xvb3AxIG4gNjQg
-fCBkbXNldHVwIGNyZWF0ZSB0ZXN0Y293Ijxicj48YnI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7IEkgdXNlIHRoZSBhYm92ZSBjb21tYW5kIHRvIGNyZWF0ZSBhIHRlc3Rjb3csIEkgZG9u
-dCBmaW5kIGhvdyB0byB1c2Ugc25hcHNob3Qgb24gZG1zZXR1cCwgc28gaW4gbXkgdW5kZXJzdGFu
-ZGluZywgdGVzdGNvdyB3aWxsIGJlIHNldHVwIGFzIC9kZXYvbG9vcDAgZm9yIHJlYWRpbmcgYW5k
-ICAvZGV2L2xvb3AxIGZvciB3cml0aW5nLiBkb2VzIGl0IGNvcnJlY3Q/Jm5ic3A7IGlzIHRoZXJl
-IGFueSBtYW51YWwgb24gaG93IHRvIHVzZSBzbmFwc2hvdD88YnI+Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7IGFuZCBjb3VsZCBhbnlvbmUgdGVsbCBtZSAsIGhvdyB0byBtZXJnZSB0aGlzIHR3byBk
-ZXZpY2UncyBjb250ZW50cyBhZnRlciBJIG1hZGUgc29tZSB3cml0aW5nIG9uICB0ZXN0Y293Pzxi
-cj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgVGhhbmtzITxicj48YnI+Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IDxicj48YnI+PGJyPjxzcGFuIHRpdGxlPSJuZXRl
-YXNlZm9vdGVyIi8+PC9zcGFuPg==
-------=_Part_140344_30224992.1263265946202--
-
-
---===============3006960268499559085==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3006960268499559085==--
+T24gTW9uLCBKYW4gMTEsIDIwMTAgYXQgMTI6MTYgUE0sIENoZWxseSBZb3Vzc2VmIChJU0VGQykK
+PGNoaWxvbm5iQGdtYWlsLmNvbT4gd3JvdGU6Cj4gUHJvYmxlbTogRGVsYXkgY29uc3RydWN0aW9u
+IG9mIG11bHRpcGF0aCBkZXZpY2UgKC8gZGV2L2RtLTMpCltzbmlwXQoKPiBNeSBmc3RhYsKgOgpb
+c25pcF0KCltzbmlwXQo+IEkgbWFkZSB0aGUgdXBncmFkZSB0byBSZWRoYXQgNS40ICgyLjYuMTgt
+MTY0LmVsNSkgYnV0IEkgaGF2ZSBub3Qgc29sdmVkIHRoZQo+IHByb2JsZW0uIEl0IG11c3QgYmUg
+ZG9uZSBhdCBib290Cj4KPiBIb3cgSSBjYW4gZG8uIEkgY2FuIGdpdmUgeW91IG15ICJzb3NyZXBv
+cnQiIGlmIHlvdSB3YW50Lgpbc25pcF0KCkkgZG9uJ3Qga25vdyBpZiB5b3UgaGF2ZSBzb21lIHBy
+b2JsZW1zIHJlbGF0ZWQgdG8gbGF0ZW5jaWVzIG9yIG9oZXIsCmJ1dCBJIGhhdmUgdHdvIGNvbW1l
+bnRzOgoKLSBJbiBnZW5lcmFsLCBhdCBsZWFzdCBpbiByaCBlbCA1LngsIGRtLXggbmFtZXMgYXJl
+IG5vdCBwZXJzaXN0ZW50CmFjcm9zcyByZWJvb3RzLCBzbyBJIHRoaW5rIGl0IGlzIG5vdCBzYWZl
+IHRvIGRpcmVjdGx5IHJlZmVyIHRoZW0gaW4KZnN0YWIuCllvdSBjYW4gbWFrZSBhIGxhYmVsIG9u
+IHRoZSBmcywgc3VjaCBhcyB0aGlzLCBpZiB0aGV5IGFyZSBleHQyLzMvNAoKdHVuZTJmcyAtTCBo
+b21lZnMgL2Rldi9tcGF0aDIgKHdpdGggL2hvbWUgdW1vdW50ZWQgYW5kIHBvaW50aW5nIHRvCm1w
+YXRoMiBpbiB0aGlzIGNhc2UpCgphbmQgdGhlbiBpbiBmc3RhYgpMQUJFTD1ob21lZnMgICAgICAg
+ICAgICAgMjQwRyAgMTQ4RyAgIDkzRyAgNjIlIC9ob21lCgpvciBjcmVhdGUgYSB2b2x1bWUgZ3Jv
+dXAgYW5kIHJlZmVyIHRoZSBMViB3aXRoIHNvbWV0aGluZyBsaWtlIHRoaXMgaW4KZnN0YWIgKFZH
+PXZnbmFtZSwgTFY9bHZuYW1lKSBpbiB0aGUgZmlyc3QgY29sdW1uOgovZGV2L21hcHBlci92Z25h
+bWUtbHZuYW1lCgotIElmIHlvdSBhcmUgdXNpbmcgcmggZWwgNS40IGFuZCB5b3VyIGh3L3N3IGNv
+bmZpZyBpcyBzdXBwb3J0ZWQgeW91CmNhbiBvcGVuIGEgY2FzZS4uLi4KCi0tCmRtLWRldmVsIG1h
+aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
+bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
