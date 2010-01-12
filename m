@@ -1,12 +1,16 @@
-From: heinzm@sourceware.org
-Subject: dmraid lib/version.h tools/VERSION
-Date: 12 Jan 2010 12:23:26 -0000
-Message-ID: <20100112122326.4037.qmail@sourceware.org>
+From: Gianluca Cecchi <gianluca.cecchi@gmail.com>
+Subject: Re: Problem Delay construction of multipath device
+Date: Tue, 12 Jan 2010 15:16:59 +0100
+Message-ID: <561c252c1001120616y52547001lce4614b9331d9526@mail.gmail.com>
+References: <a960d84c1001110316r59c2443bx9feee2da793b7946@mail.gmail.com>
+	<561c252c1001120045r7cde4af1jf8bb7c05bb1a1315@mail.gmail.com>
+	<a960d84c1001120403r738e1b2br1cc9a57ebf90c942@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <a960d84c1001120403r738e1b2br1cc9a57ebf90c942@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,44 +20,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2010-01-12 12:23:26
-
-Modified files:
-	lib            : version.h 
-	tools          : VERSION 
-
-Log message:
-	Adjust version strings
-
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/version.h.diff?cvsroot=dm&r1=1.8&r2=1.9
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/VERSION.diff?cvsroot=dm&r1=1.8&r2=1.9
-
---- dmraid/lib/version.h	2009/09/16 11:45:12	1.8
-+++ dmraid/lib/version.h	2010/01/12 12:23:26	1.9
-@@ -1,12 +1,12 @@
- #ifndef	DMRAID_LIB_VERSION
- 
--#define	DMRAID_LIB_VERSION		"1.0.0.rc16"
-+#define	DMRAID_LIB_VERSION		"1.0.0.rc16-3"
- 
- #define	DMRAID_LIB_MAJOR_VERSION	1
- #define	DMRAID_LIB_MINOR_VERSION	0
- #define	DMRAID_LIB_SUBMINOR_VERSION	0
--#define	DMRAID_LIB_VERSION_SUFFIX	"rc16"
-+#define	DMRAID_LIB_VERSION_SUFFIX	"rc16-3"
- 
--#define	DMRAID_LIB_DATE			"(2009.09.16)"
-+#define	DMRAID_LIB_DATE			"(2010.01.12)"
- 
- #endif
---- dmraid/tools/VERSION	2009/09/16 11:45:18	1.8
-+++ dmraid/tools/VERSION	2010/01/12 12:23:26	1.9
-@@ -1 +1 @@
--1.0.0.rc16 (2009.09.16)
-+1.0.0.rc16-3 (2010.01.12)
+SXQncyBnb2luZyBzb21ld2hhdCBvZmZ0b3BpYyBub3cuLi4gc29ycnkgdG8gdGhlIGxpc3QuCkFz
+IHlvdSB3cm90ZSB0aGF0IHlvdSByZWNlbnRseSB1cGRhdGVkIHRoZSBzeXN0ZW0gdG8gNS40IChv
+ciBhdCBsZWFzdApJIHVuZGVyc3Rvb2QgdGhpcyksIGl0IG1lYW5zIHlvdSBoYXZlIGEgdmFsaWQg
+cmhuIHN1YnNjcmlwdGlvbi4KVGlwaWNhbGx5IHlvdSBoYXZlIHN1cHBvcnQgKHdlYiBhbmQvb3Ig
+cGhvbmUpIHN1cHBvcnQgYm91bmQgdG8gdGhpcy4KYnV0IHRoZXkgY291bGQgYmUgcGFydGljdWxh
+ciBjYXNlcyB3aGVyZSB5b3UgaGF2ZSBub3QgYWJpbGl0eSB0byBvcGVuCnRpY2tldHMgKGZvciBl
+eGFtcGxlIGZvciBzb21lIGtpbmQgb2YgQWNhZGVtaWMgbGljZW5zZXMgQUZBSUspCllvdSBoYXZl
+IHRvIGFzayB0aGUgcGVyc29uIHJlc3BvbnNpYmxlIHdpdGggbGljZW5zZXMvc3Vic2NyaXB0aW9u
+cyBpbgp5b3VyIG9yZ2FuaXphdGlvbi4KCkluIGdlbmVyYWwgeW91IGhhdmUgYSBsb2dpbiB0byBh
+Y2Nlc3MgUmVkIGhhdCBOZXR3b3JrIHdlYiBzaXRlIHdpdGggYSBicm93c2VyOgpodHRwczovL3Jo
+bi5yZWRoYXQuY29tCkFmdGVyIGxvZ2luIHlvdSBzZWxlY3QKInJlZCBoYXQgY3VzdG9tZXIgY2Vu
+dGVyIiBib3ggYXQgdGhlIG1pZCdsZWZ0IG9mIHRoZSBwYWdlCkluIHRoZSBuZXcgcGFnZSwgaW5z
+aWRlIHRoZSB0aGlyZCBjb2x1bW4gZnJvbSB0aGUgbGVmdCwgbmFtZWQKIlRpY2tldHMiLCB5b3Ug
+c2VsZWN0IHRoZSBsaW5rCiJPcGVuIG5ldyB0aWNrZXRzIG9yIG1hbmFnZSBleGlzdGluZyIKYW5k
+IHRoZW4gaXQgaXMgc2VsZiBleHBsYW5hdG9yeS4KCkhJSCwKR2Fpbmx1Y2EKCk9uIFR1ZSwgSmFu
+IDEyLCAyMDEwIGF0IDE6MDMgUE0sIENoZWxseSBZb3Vzc2VmIChJU0VGQykKPGNoaWxvbm5iQGdt
+YWlsLmNvbT4gd3JvdGU6Cj4gaGksCj4KPiBpIHVzZSByaGVsIDUuNCBhbmQgbXkgaHcvc3cgY29u
+ZmlnIGlzIHN1cHBvcnRlZC4gaG93IGNhbiBpIG9wZW4gYSBjYXNlLiB5b3UKPiBoYXZlIHRoZSBs
+aW5rID8KPgo+IFRoYW5rcy4KPgo+IDIwMTAvMS8xMiBHaWFubHVjYSBDZWNjaGkgPGdpYW5sdWNh
+LmNlY2NoaUBnbWFpbC5jb20+Cj4+Cj4+IE9uIE1vbiwgSmFuIDExLCAyMDEwIGF0IDEyOjE2IFBN
+LCBDaGVsbHkgWW91c3NlZiAoSVNFRkMpCj4+IDxjaGlsb25uYkBnbWFpbC5jb20+IHdyb3RlOgo+
+PiA+IFByb2JsZW06IERlbGF5IGNvbnN0cnVjdGlvbiBvZiBtdWx0aXBhdGggZGV2aWNlICgvIGRl
+di9kbS0zKQo+PiBbc25pcF0KPj4KPj4gPiBNeSBmc3RhYsKgOgo+PiBbc25pcF0KPj4KPj4gW3Nu
+aXBdCj4+ID4gSSBtYWRlIHRoZSB1cGdyYWRlIHRvIFJlZGhhdCA1LjQgKDIuNi4xOC0xNjQuZWw1
+KSBidXQgSSBoYXZlIG5vdCBzb2x2ZWQKPj4gPiB0aGUKPj4gPiBwcm9ibGVtLiBJdCBtdXN0IGJl
+IGRvbmUgYXQgYm9vdAo+PiA+Cj4+ID4gSG93IEkgY2FuIGRvLiBJIGNhbiBnaXZlIHlvdSBteSAi
+c29zcmVwb3J0IiBpZiB5b3Ugd2FudC4KPj4gW3NuaXBdCj4+Cj4+IEkgZG9uJ3Qga25vdyBpZiB5
+b3UgaGF2ZSBzb21lIHByb2JsZW1zIHJlbGF0ZWQgdG8gbGF0ZW5jaWVzIG9yIG9oZXIsCj4+IGJ1
+dCBJIGhhdmUgdHdvIGNvbW1lbnRzOgo+Pgo+PiAtIEluIGdlbmVyYWwsIGF0IGxlYXN0IGluIHJo
+IGVsIDUueCwgZG0teCBuYW1lcyBhcmUgbm90IHBlcnNpc3RlbnQKPj4gYWNyb3NzIHJlYm9vdHMs
+IHNvIEkgdGhpbmsgaXQgaXMgbm90IHNhZmUgdG8gZGlyZWN0bHkgcmVmZXIgdGhlbSBpbgo+PiBm
+c3RhYi4KPj4gWW91IGNhbiBtYWtlIGEgbGFiZWwgb24gdGhlIGZzLCBzdWNoIGFzIHRoaXMsIGlm
+IHRoZXkgYXJlIGV4dDIvMy80Cj4+Cj4+IHR1bmUyZnMgLUwgaG9tZWZzIC9kZXYvbXBhdGgyICh3
+aXRoIC9ob21lIHVtb3VudGVkIGFuZCBwb2ludGluZyB0bwo+PiBtcGF0aDIgaW4gdGhpcyBjYXNl
+KQo+Pgo+PiBhbmQgdGhlbiBpbiBmc3RhYgo+PiBMQUJFTD1ob21lZnMgwqAgwqAgwqAgwqAgwqAg
+wqAgMjQwRyDCoDE0OEcgwqAgOTNHIMKgNjIlIC9ob21lCj4+Cj4+IG9yIGNyZWF0ZSBhIHZvbHVt
+ZSBncm91cCBhbmQgcmVmZXIgdGhlIExWIHdpdGggc29tZXRoaW5nIGxpa2UgdGhpcyBpbgo+PiBm
+c3RhYiAoVkc9dmduYW1lLCBMVj1sdm5hbWUpIGluIHRoZSBmaXJzdCBjb2x1bW46Cj4+IC9kZXYv
+bWFwcGVyL3ZnbmFtZS1sdm5hbWUKPj4KPj4gLSBJZiB5b3UgYXJlIHVzaW5nIHJoIGVsIDUuNCBh
+bmQgeW91ciBody9zdyBjb25maWcgaXMgc3VwcG9ydGVkIHlvdQo+PiBjYW4gb3BlbiBhIGNhc2Uu
+Li4uCj4+Cj4+IC0tCj4+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+PiBkbS1kZXZlbEByZWRoYXQu
+Y29tCj4+IGh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo+
+Cj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBkbS1kZXZlbEByZWRoYXQuY29tCj4gaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCj4KCi0tCmRtLWRl
+dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5j
+b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
