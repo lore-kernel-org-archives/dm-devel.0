@@ -1,7 +1,7 @@
 From: heinzm@sourceware.org
-Subject: dmraid ./dmraid.spec tools/commands.c tools/co ...
-Date: 12 Jan 2010 12:21:10 -0000
-Message-ID: <20100112122110.2505.qmail@sourceware.org>
+Subject: dmraid lib/version.h tools/VERSION
+Date: 12 Jan 2010 12:23:26 -0000
+Message-ID: <20100112122326.4037.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,45 +21,39 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2010-01-12 12:21:10
+Changes by:	heinzm@sourceware.org	2010-01-12 12:23:26
 
 Modified files:
-	.              : dmraid.spec 
-	tools          : commands.c commands.h 
+	lib            : version.h 
+	tools          : VERSION 
 
 Log message:
-	add changelog comment
+	Adjust version strings
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/dmraid.spec.diff?cvsroot=dm&r1=1.10&r2=1.11
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/commands.c.diff?cvsroot=dm&r1=1.5&r2=1.6
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/commands.h.diff?cvsroot=dm&r1=1.4&r2=1.5
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/version.h.diff?cvsroot=dm&r1=1.8&r2=1.9
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/VERSION.diff?cvsroot=dm&r1=1.8&r2=1.9
 
---- dmraid/dmraid.spec	2010/01/12 12:15:58	1.10
-+++ dmraid/dmraid.spec	2010/01/12 12:21:09	1.11
-@@ -142,6 +142,7 @@
- %changelog
- * Tue Jan 12 2010  Heinz Mauelshagen <heinzm@redhat.com> - 1.0.0.rc16-3
- - Add logwatch files and move pattern file to /var/cache
-+- Fix multiple options (eg. "-ccc") not recognized properly
+--- dmraid/lib/version.h	2009/09/16 11:45:12	1.8
++++ dmraid/lib/version.h	2010/01/12 12:23:26	1.9
+@@ -1,12 +1,12 @@
+ #ifndef	DMRAID_LIB_VERSION
  
- * Mon Nov 2 2009  Heinz Mauelshagen <heinzm@redhat.com> - 1.0.0.rc16-2
- - Fix manual path in specfile
---- dmraid/tools/commands.c	2010/01/12 12:15:59	1.5
-+++ dmraid/tools/commands.c	2010/01/12 12:21:10	1.6
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (C) 2004-2008  Heinz Mauelshagen, Red Hat GmbH.
-+ * Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH.
-  *                          All rights reserved.
-  *
-  * Copyright (C) 2007   Intel Corporation. All rights reserved.
---- dmraid/tools/commands.h	2010/01/12 12:15:59	1.4
-+++ dmraid/tools/commands.h	2010/01/12 12:21:10	1.5
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (C) 2004,2005  Heinz Mauelshagen, Red Hat GmbH.
-+ * Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH.
-  *                          All rights reserved.
-  *
-  * Copyright (C) 2007   Intel Corporation. All rights reserved.
+-#define	DMRAID_LIB_VERSION		"1.0.0.rc16"
++#define	DMRAID_LIB_VERSION		"1.0.0.rc16-3"
+ 
+ #define	DMRAID_LIB_MAJOR_VERSION	1
+ #define	DMRAID_LIB_MINOR_VERSION	0
+ #define	DMRAID_LIB_SUBMINOR_VERSION	0
+-#define	DMRAID_LIB_VERSION_SUFFIX	"rc16"
++#define	DMRAID_LIB_VERSION_SUFFIX	"rc16-3"
+ 
+-#define	DMRAID_LIB_DATE			"(2009.09.16)"
++#define	DMRAID_LIB_DATE			"(2010.01.12)"
+ 
+ #endif
+--- dmraid/tools/VERSION	2009/09/16 11:45:18	1.8
++++ dmraid/tools/VERSION	2010/01/12 12:23:26	1.9
+@@ -1 +1 @@
+-1.0.0.rc16 (2009.09.16)
++1.0.0.rc16-3 (2010.01.12)
