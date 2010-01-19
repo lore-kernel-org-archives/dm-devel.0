@@ -1,15 +1,13 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: Online disk size change and Linux
-Date: Tue, 19 Jan 2010 22:08:52 +0200
-Message-ID: <20100119200852.GG2861@reaktio.net>
-References: <2c46f67e1001190742l13ebdc1fs95aa6d545332bcc1@mail.gmail.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: [RFC][PATCH 0/3] dm-raid1: fix deadlock at suspend after
+ suspend was interrupted
+Date: Tue, 19 Jan 2010 15:40:55 -0500
+Message-ID: <4B5618D7.4050202@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <2c46f67e1001190742l13ebdc1fs95aa6d545332bcc1@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,18 +20,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 19, 2010 at 01:42:37PM -0200, Daniel Olops wrote:
->    Sorry if this is off-topic... but if anyone could help, it'd be good.
-> 
->    Is Linux (more specifically Red Hat EL 5.4) able to recognize _disk_ size
->    changes online? We have some HP servers with QLogic HBAs connected to an
->    EVA 4000 Storage, with multipathing properly set up. These disks can be
->    resized online, but only after a reboot that RHEL recognizes the change.
->    I've been trying to find any information about it, but to no avail.
-> 
+Hi,
 
-I've done iSCSI LUN online resizing using Equallogic storage arrays.
+This is a patch set to fix deadlock on suspending of mirror device.
 
-See: http://pasik.reaktio.net/rhel5-online-iscsi-resize-test.txt
 
--- Pasi
+ISSUE
+=====
+
+Suspend procedure on a dm-mirror device could cause deadlock on recovery_count
+semaphore.
+
+When mirror_presuspend is called, recovery_count semaphore is acquired in
+dm_rh_stop_recovery() to stop recovery routine, but when an signal is caught
+in dm_wait_for_completion() or an error occurred in in dm_suspend(),
+the suspend process is interrupted without releasing recovery_count semaphore
+of a mirror device. This means that another suspend is executed, and then
+the suspend process gets stuck at dm_rh_stop_recovery().
+
+When suspend procedure is interrupted, the device should work properly since
+the status of the device is not "suspended."
+
+
+SOLUTION
+========
+
+Introduce a target handler, cancel_presuspend, to cancel status changes
+done by a target specific presuspend handler.
+
+
+PATCH SET
+=========
+    1/3: dm: introduce cancel_presuspend framework
+    2/3: dm-raid1: add cancel_presuspend function
+    3/3: dm-delay: add cancel_presuspend function
+
+
+I appreciate your comments.
+
+Thanks,
+-- 
+Takahiro Yasui
+Hitachi Computer Products (America), Inc.
