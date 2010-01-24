@@ -1,10 +1,10 @@
-From: Philipp Kohlbecher <xt28@gmx.de>
-Subject: Is ksnapd superfluous?
-Date: Mon, 25 Jan 2010 13:07:50 +0100
-Message-ID: <4B5D8996.2060602@gmx.de>
+From: Wicher Minnaard <wicher@gavagai.eu>
+Subject: How to determine when a snapshot has finished merging?
+Date: Sun, 24 Jan 2010 15:12:25 +0100
+Message-ID: <f03e393e1001240612l3cd3e5f7mc8d9ca1b11635954@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -19,19 +19,24 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello, everyone!
+Hi, I'm new to the list.
+I'm experimenting with the snapshot-merge target on a 2.6.33_rc4 kernel:
 
-Looking at drivers/md/dm-snap.c, it seems to me that ksnapd (introduced 
-in 2006 with commit ca3a931fd33b841cbcc5932f8eac7c43e0909242) does not 
-actually do anything. It gets created, flushed, and destroyed, but no 
-work ever gets cued. Looking at the file's history, it also looks like 
-it has never been used in the past.
+echo 0 $(blockdev --getsize /dev/mapper/original) snapshot-merge
+/dev/mapper/original /dev/loop1 p 8 | dmsetup create mergeomatic
 
-Am I getting this wrong? Should I prepare a patch that removes ksnapd or 
-would that be wasted work? (Not that it would be all that much work...)
+where /dev/loop1 is a COW volume I created earlier (with the
+'snapshot' target, against /dev/mapper/original, of course).
+I wait for some time and then I just 'dmsetup remove' to break down
+the device stack, starting with the 'mergeomatic' device. I then take
+a look at /dev/mapper/original, and, much to my delight, I see stuff
+that has been merged back in from the snapshot.
 
-Thanks for reading!
-- Philipp Kohlbecher
+But I don't know how to determine whether the merge has completed. I
+looked around in /proc and /sys, but those contained no obvious clues
+(not obvious to me, that is). My kernel logs never mention any dm
+activity (whereas the md driver is quite chatty and features
+/proc/mdstat).
+Any suggestions greatly appreciated.
 
-
-Please CC me--I am not subscribed to the list.
+Regards, Wicher
