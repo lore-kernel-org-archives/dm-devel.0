@@ -1,14 +1,14 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: partitioning multipath device
-Date: Mon, 25 Jan 2010 12:32:25 +0000
-Message-ID: <1264422745.8461.5559.camel@localhost>
-References: <20100122192935.GC31538@mtholyoke.edu>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: suppress debugobjects workqueue
+	warning
+Date: Mon, 25 Jan 2010 11:57:59 -0500
+Message-ID: <20100125165759.GB20047@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100122192935.GC31538@mtholyoke.edu>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,31 +18,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 2010-01-22 at 14:29 -0500, Ron Peterson wrote:
-> The multipath-tools FAQ has the following to say about partitioning
-> multipath devices.
-> 
-> >From http://christophe.varoqui.free.fr/faq.html
-> 
-> > 6. How do I partition my multipathed devices
-> > Partition a constituant path instead. And reload the map through multipath(8)
-> 
-> I take this to mean, for example, that one should partition /dev/sdX,
-> rather than the corresponding coalesced /dev/mapper/... device, correct?
-> 
-> My question is: why?  Paritioning the /dev/mapper device appears to
-> work.  Is there an operational difference?  I've always done this
-> exactly as advised, but I know someone who didn't, and we're wondering
-> if it matters.
+chunk_io() declares its 'struct mdata_req' on the stack and then
+initializes its 'struct work_struct' member.  Annotate the
+initialization of this workqueue with INIT_WORK_ON_STACK to suppress a
+debugobjects warning seen when CONFIG_DEBUG_OBJECTS_WORK is enabled:
 
-It doesn't actually matter too much. If you're partitioning before
-assembling maps then you may as well do it on a path. The common
-partitioning tools should do the right thing if you point them at the
-multipath device too though (although you may need to arrange for kpartx
-to get run again, or run it manually to refresh).
+  ODEBUG: object is on stack, but not annotated
+  ------------[ cut here ]------------
+  WARNING: at lib/debugobjects.c:291 __debug_object_init+0x2b9/0x35c()
+  ...
+  Call Trace:
+  [<ffffffff810485ac>] warn_slowpath_common+0x7c/0x94
+  [<ffffffff810485d8>] warn_slowpath_null+0x14/0x16
+  [<ffffffff811e113b>] __debug_object_init+0x2b9/0x35c
+  [<ffffffff811e120b>] debug_object_init+0x14/0x16
+  [<ffffffff810606c0>] __init_work+0x27/0x29
+  [<ffffffffa0077306>] chunk_io+0xba/0x127 [dm_snapshot]
+  ...
 
-Regards,
-Bryn.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index 7d08879..c097d8a 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -254,7 +254,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, int rw,
+ 	 * Issue the synchronous I/O from a different thread
+ 	 * to avoid generic_make_request recursion.
+ 	 */
+-	INIT_WORK(&req.work, do_metadata);
++	INIT_WORK_ON_STACK(&req.work, do_metadata);
+ 	queue_work(ps->metadata_wq, &req.work);
+ 	flush_workqueue(ps->metadata_wq);
+ 
