@@ -1,57 +1,71 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm snapshot: suppress debugobjects workqueue
-	warning
-Date: Mon, 25 Jan 2010 11:57:59 -0500
-Message-ID: <20100125165759.GB20047@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-crypt: disable block encryption with arc4
+Date: Mon, 25 Jan 2010 13:29:30 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1001251324310.18309@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
 To: dm-devel@redhat.com
+Cc: Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
-chunk_io() declares its 'struct mdata_req' on the stack and then
-initializes its 'struct work_struct' member.  Annotate the
-initialization of this workqueue with INIT_WORK_ON_STACK to suppress a
-debugobjects warning seen when CONFIG_DEBUG_OBJECTS_WORK is enabled:
+Hi
 
-  ODEBUG: object is on stack, but not annotated
-  ------------[ cut here ]------------
-  WARNING: at lib/debugobjects.c:291 __debug_object_init+0x2b9/0x35c()
-  ...
-  Call Trace:
-  [<ffffffff810485ac>] warn_slowpath_common+0x7c/0x94
-  [<ffffffff810485d8>] warn_slowpath_null+0x14/0x16
-  [<ffffffff811e113b>] __debug_object_init+0x2b9/0x35c
-  [<ffffffff811e120b>] debug_object_init+0x14/0x16
-  [<ffffffff810606c0>] __init_work+0x27/0x29
-  [<ffffffffa0077306>] chunk_io+0xba/0x127 [dm_snapshot]
-  ...
+When using arc4 to encrypt a block device, the resulting device is 
+unreliable. It reads garbage. That's because arc4 is a stream cipher, if 
+you write something, it advances its state and if you attempt to decrypt 
+the same sector, it uses new state that is different.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+This patch disables the use of arc4 on block devices.
+
+A question to crypto maintainers: Is there some general method how to 
+determine that the cipher is a stream cipher, changes its state as it 
+progresses and thus is unusable for block devices? I haven't found any 
+flag for that.
+
+Mikulas
+
 ---
 
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index 7d08879..c097d8a 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -254,7 +254,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, int rw,
- 	 * Issue the synchronous I/O from a different thread
- 	 * to avoid generic_make_request recursion.
- 	 */
--	INIT_WORK(&req.work, do_metadata);
-+	INIT_WORK_ON_STACK(&req.work, do_metadata);
- 	queue_work(ps->metadata_wq, &req.work);
- 	flush_workqueue(ps->metadata_wq);
+Disable arc4 for encrypting block device
+
+Arc4 is a stream cipher, it's once initialized with a key, it outputs a stream
+of bytes (that are xored with the data to be encrypted) and changes it's
+internal state.
+
+Because the cipher changes it's internal state, it is not useable for encrypting
+block devices --- once someone encrypts a sector of data, the internal state
+changes --- and further attempts to decrypt the same block of data use the new
+internal state. Thus, the encrypted device returns garbage.
+
+This patch disables the use of arc4 for dm-crypt.
+
+If we wanted to use arc4, we would have to setup the key before encrypting each
+sector. That is slow. Because arc4 works by xoring the bitstream with the data,
+it is not suitable for encrypting block devices anyway: if the attacker obtains
+two images of the same block device at two different times, he can xor them with
+each other, eliminating the cipher and getting two xored plaintexts.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-crypt.c |    5 +++++
+ 1 file changed, 5 insertions(+)
+
+Index: linux-2.6.32-devel/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.32-devel.orig/drivers/md/dm-crypt.c	2010-01-25 18:55:14.000000000 +0100
++++ linux-2.6.32-devel/drivers/md/dm-crypt.c	2010-01-25 18:57:02.000000000 +0100
+@@ -1035,6 +1035,11 @@ static int crypt_ctr(struct dm_target *t
+ 		goto bad_cipher;
+ 	}
  
++	if (!strcmp(cc->cipher, "arc4")) {
++		ti->error = "Stream cipher arc4 not supported";
++		goto bad_cipher;
++	}
++
+ 	if (snprintf(cc->cipher, CRYPTO_MAX_ALG_NAME, "%s(%s)",
+ 		     chainmode, cipher) >= CRYPTO_MAX_ALG_NAME) {
+ 		ti->error = "Chain mode + cipher name is too long";
