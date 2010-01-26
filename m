@@ -1,19 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm_ioctl: Only send a change uevent when a resume
- ioctl changes the device.
-Date: Tue, 26 Jan 2010 16:12:19 -0500
-Message-ID: <20100126211219.GC17190@redhat.com>
-References: <1264528570-10498-1-git-send-email-dwysocha@redhat.com>
-	<20100126180929.GA17190@redhat.com>
-	<1264531714.2572.6.camel@f10-node1>
-	<1264532220.2572.8.camel@f10-node1>
+From: Jakov Sosic <jakov.sosic@srce.hr>
+Subject: Trouble with StorageTek 2530 (SAS) and RDAC
+Date: Tue, 26 Jan 2010 23:09:41 +0100
+Message-ID: <4B5F6825.6070906@srce.hr>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1264532220.2572.8.camel@f10-node1>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,120 +19,161 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jan 26 2010 at  1:57pm -0500,
-Dave Wysochanski <dwysocha@redhat.com> wrote:
+Hi!
 
-> On Tue, 2010-01-26 at 13:48 -0500, Dave Wysochanski wrote:
-> > On Tue, 2010-01-26 at 13:09 -0500, Mike Snitzer wrote:
-> > > On Tue, Jan 26 2010 at 12:56pm -0500,
-> > > Dave Wysochanski <dwysocha@redhat.com> wrote:
-> > > 
-> > > > Resume ioctls may result in no changes to the device and thus they
-> > > > should not generate change uevents.  For example, if a device is
-> > > > not suspended when a resume ioctl occurs, we should not send a
-> > > > uevent.
-> > > > 
-> > > > Signed-off-by: Dave Wysochanski <dwysocha@redhat.com>
-> > > > ---
-> > > >  drivers/md/dm-ioctl.c |   12 ++++++++----
-> > > >  1 files changed, 8 insertions(+), 4 deletions(-)
-> > > > 
-> > > > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-> > > > index 1d66932..0c1cf53 100644
-> > > > --- a/drivers/md/dm-ioctl.c
-> > > > +++ b/drivers/md/dm-ioctl.c
-> > > > @@ -851,6 +851,7 @@ static int do_suspend(struct dm_ioctl *param)
-> > > >  
-> > > >  static int do_resume(struct dm_ioctl *param)
-> > > >  {
-> > > > +	int send_uevent = 0;
-> > > >  	int r = 0;
-> > > >  	unsigned suspend_flags = DM_SUSPEND_LOCKFS_FLAG;
-> > > >  	struct hash_cell *hc;
-> > > > @@ -895,18 +896,21 @@ static int do_resume(struct dm_ioctl *param)
-> > > >  			set_disk_ro(dm_disk(md), 0);
-> > > >  		else
-> > > >  			set_disk_ro(dm_disk(md), 1);
-> > > > +		send_uevent = 1;
-> > > >  	}
-> > > > -
-> > > > -	if (dm_suspended_md(md))
-> > > > +	if (dm_suspended_md(md)) {
-> > > >  		r = dm_resume(md);
-> > > > +		send_uevent = 1;
-> > > > +	}
-> > > >  
-> > > >  	if (old_map)
-> > > >  		dm_table_destroy(old_map);
-> > > >  
-> > > > -	if (!r) {
-> > > > +	if (send_uevent)
-> > > >  		dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr);
-> > > > +
-> > > > +	if (!r)
-> > > >  		r = __dev_status(md, param);
-> > > > -	}
-> > > >  
-> > > >  	dm_put(md);
-> > > >  	return r;
-> > > 
-> > > Seems you're sending the uevent even if resume failed.  Is that intended?
-> > > 
-> > > Also, can dm_kobject_uevent() come before dm_table_destroy()?
-> > > 
-> > > If so this would be a bit simpler:
-> > > 
-> > > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-> > > index 1d66932..e3cf568 100644
-> > > --- a/drivers/md/dm-ioctl.c
-> > > +++ b/drivers/md/dm-ioctl.c
-> > > @@ -897,16 +897,17 @@ static int do_resume(struct dm_ioctl *param)
-> > >  			set_disk_ro(dm_disk(md), 1);
-> > >  	}
-> > >  
-> > > -	if (dm_suspended_md(md))
-> > > +	if (dm_suspended_md(md)) {
-> > >  		r = dm_resume(md);
-> > > +		if (!r)
-> > > +			dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr);
-> > > +	}
-> > >  
-> > >  	if (old_map)
-> > >  		dm_table_destroy(old_map);
-> > >  
-> > > -	if (!r) {
-> > > -		dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr);
-> > > +	if (!r)
-> > >  		r = __dev_status(md, param);
-> > > -	}
-> > >  
-> > >  	dm_put(md);
-> > >  	return r;
-> > > 
-> > 
-> > Nice simplification Mike, as discussed on IRC.
-> > 
-> > Ack.
-> > 
-> 
-> Actually, the more I think about it I am not sure about sending the
-> uevent in the case where dm_resume() fails.  Seems like we should send
-> it since the map could have changed - depends on whether we went through
-> that 'if (new_map)' block.
+I have contacted list almost a half a year ago about this storage. I
+still haven't figured out how to set it up... I have 3 nodes connected
+to it, and 2 volumes shared across all 3 nodes. I'm using CentOS 5.4.
+Here is my multipath.conf:
 
-Pretty sure we resolved this.  As we discussed (just after you sent this
-last reply); for the benefit of others:
 
-<dave> so the change uevent here really means "resume was successful"
-<mike> yes
-<dave> wait - if we suspend it, but resume fails, shouldn't we still
-send the event?
-<mike> in that case the device will be left suspended; in terms of udev
-that's not a "change"
-<mike> device is wedged (suspended)
-<mike> telling udev about it could just stack up other processes trying
-to issue IO to it
-<mike> but to be honest I don't know what the purist definition of what
-a "change" uevent is; I'm just treating it as telling some blackbox that
-DM device has changed and is functional
-<dave> that does make sense
+defaults {
+	udev_dir		/dev
+	polling_interval 	10
+	selector		"round-robin 0"
+	path_grouping_policy	multibus
+	getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
+	prio_callout		/bin/true
+	path_checker		readsector0
+	rr_min_io		100
+	max_fds			8192
+	rr_weight		priorities
+	failback		immediate
+	no_path_retry		fail
+}
+blacklist {
+	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+	devnode "^hd[a-z]"
+	devnode "^sda"
+}
+multipaths {
+	multipath {
+		wwid			3600a0b80003abc5c000011504b52f919
+		alias			sas-qd
+	}
+	multipath {
+		wwid			3600a0b80002fcd1800001a374b52fa1e
+		alias			sas-data
+	}
+}
+
+devices {
+	device {
+		vendor			"SUN"
+		product			"LCSM100_S"
+		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
+		prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
+		features		"0"
+		hardware_handler	"1 rdac"
+		path_grouping_policy	group_by_prio
+		failback		immediate
+		path_checker		rdac
+		rr_weight		uniform
+		no_path_retry		300
+		rr_min_io		1000
+	}
+}
+
+
+And here is multipath -ll:
+# multipath -ll sas-data
+sas-data (3600a0b80002fcd1800001a374b52fa1e) dm-1 SUN,LCSM100_S
+[size=2.7T][features=1 queue_if_no_path][hwhandler=1 rdac][rw]
+\_ round-robin 0 [prio=100][enabled]
+ \_ 1:0:3:1  sde 8:64  [active][ready]
+\_ round-robin 0 [prio=0][enabled]
+ \_ 1:0:0:1  sdc 8:32  [active][ghost]
+
+
+On that volume, I have set up CLVM, and I have created one logical
+clustered volume. If I try to format it with ext3, here is what I finish
+with:
+
+
+Jan 26 23:00:43 node01 kernel: mptbase: ioc1: LogInfo(0x31140000):
+Originator={PL}, Code={IO Executed}, SubCode(0x0000)
+Jan 26 23:00:43 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:43 node01 kernel: end_request: I/O error, dev sde, sector
+1360267648
+Jan 26 23:00:43 node01 kernel: device-mapper: multipath: Failing path 8:64.
+Jan 26 23:00:43 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:43 node01 kernel: end_request: I/O error, dev sde, sector
+1360269696
+Jan 26 23:00:43 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:43 node01 kernel: end_request: I/O error, dev sde, sector
+1360527744
+Jan 26 23:00:43 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:43 node01 kernel: end_request: I/O error, dev sde, sector
+1360528768
+Jan 26 23:00:43 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:43 node01 kernel: end_request: I/O error, dev sde, sector
+1360529792
+Jan 26 23:00:43 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:43 node01 multipathd: 8:64: mark as failed
+Jan 26 23:00:43 node01 kernel: end_request: I/O error, dev sde, sector
+1360530816
+Jan 26 23:00:44 node01 multipathd: sas-data: remaining active paths: 1
+Jan 26 23:00:44 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:44 node01 multipathd: dm-1: add map (uevent)
+Jan 26 23:00:44 node01 kernel: end_request: I/O error, dev sde, sector
+1360531840
+Jan 26 23:00:44 node01 multipathd: dm-1: devmap already registered
+Jan 26 23:00:44 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:44 node01 multipathd: sdd: remove path (uevent)
+Jan 26 23:00:44 node01 kernel: end_request: I/O error, dev sde, sector
+1360789888
+Jan 26 23:00:44 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:44 node01 kernel: end_request: I/O error, dev sde, sector
+1360790912
+.
+.
+.
+lot of similar messages
+.
+.
+.
+
+Jan 26 23:00:50 node01 kernel: sd 1:0:1:1: SCSI error: return code =
+0x00010000
+Jan 26 23:00:50 node01 kernel: end_request: I/O error, dev sde, sector
+1358694784
+Jan 26 23:00:50 node01 kernel: mptsas: ioc1: removing ssp device,
+channel 0, id 4, phy 7
+Jan 26 23:00:50 node01 kernel: scsi 1:0:1:0: rdac Dettached
+Jan 26 23:00:50 node01 kernel: scsi 1:0:1:1: rdac Dettached
+Jan 26 23:00:50 node01 kernel: sd 1:0:0:1: queueing MODE_SELECT command.
+Jan 26 23:00:50 node01 kernel: device-mapper: multipath: Using scsi_dh
+module scsi_dh_rdac for failover/failback and device management.
+Jan 26 23:00:51 node01 kernel: sd 1:0:0:0: rdac Dettached
+Jan 26 23:00:51 node01 multipathd: sas-qd: load table [0 204800
+multipath 0 1 rdac 1 1 round-robin 0 1 1 8:16 1000]
+Jan 26 23:00:51 node01 multipathd: sde: remove path (uevent)
+Jan 26 23:00:51 node01 kernel: device-mapper: multipath: Using scsi_dh
+module scsi_dh_rdac for failover/failback and device management.
+Jan 26 23:00:52 node01 kernel: sd 1:0:0:1: rdac Dettached
+Jan 26 23:00:52 node01 multipathd: sas-data: load table [0 5855165440
+multipath 0 1 rdac 1 1 round-robin 0 1 1 8:32 1000]
+Jan 26 23:00:52 node01 multipathd: dm-0: add map (uevent)
+Jan 26 23:00:52 node01 multipathd: dm-0: devmap already registered
+Jan 26 23:00:52 node01 multipathd: dm-1: add map (uevent)
+Jan 26 23:00:52 node01 multipathd: dm-1: devmap already registered
+Jan 26 23:00:52 node01 kernel: device-mapper: multipath: Cannot failover
+device because scsi_dh_rdac was not loaded.
+
+
+Any ideas?
+
+
+-- 
+|    Jakov Sosic    |    ICQ: 28410271    |   PGP: 0x965CAE2D   |
+=================================================================
+| start fighting cancer -> http://www.worldcommunitygrid.org/   |
