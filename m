@@ -1,86 +1,41 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults libm ...
-Date: 26 Jan 2010 05:50:45 -0000
-Message-ID: <20100126055045.5404.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Sebastian Andrzej Siewior <linux-crypto@ml.breakpoint.cc>
+Subject: Re: [PATCH] dm-crypt: disable block encryption with arc4
+Date: Tue, 26 Jan 2010 10:22:34 +0100
+Message-ID: <20100126092234.GA3304@Chamillionaire.breakpoint.cc>
+References: <Pine.LNX.4.64.1001251324310.18309@hs20-bc2-1.build.redhat.com>
+ <4B5DE54F.7050206@redhat.com>
+Reply-To: Sebastian Andrzej Siewior <linux-crypto@ml.breakpoint.cc>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=iso-8859-15
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4B5DE54F.7050206@redhat.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-01-26 05:50:45
+* Milan Broz | 2010-01-25 19:39:11 [+0100]:
 
-Modified files:
-	.              : multipath.conf.defaults 
-	libmultipath   : hwtable.c 
+>On 01/25/2010 07:29 PM, Mikulas Patocka wrote:
+>> Hi
+>> 
+>> When using arc4 to encrypt a block device, the resulting device is 
+>> unreliable. It reads garbage. That's because arc4 is a stream cipher, if 
+>> you write something, it advances its state and if you attempt to decrypt 
+>> the same sector, it uses new state that is different.
+>> 
+>> This patch disables the use of arc4 on block devices.
+>
+>arc4 again. it is simply not a block cipher:-)
+>
+>This should be solved inside cryptoAPI and not blacklist it in dm-crypt,
+>see that thread
+>http://article.gmane.org/gmane.linux.kernel.cryptoapi/3441
 
-Log message:
-	Fix for bz #545822
-	Add hwentry for EMC Invista
+I some how remember Herbert saying to test for block size > 1. Wouldn't
+this be acceptable to block all stream cipher in one go?
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.18&r2=1.5.4.19
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.25&r2=1.20.2.26
+>Milan
 
---- multipath-tools/multipath.conf.defaults	2009/12/02 19:15:28	1.5.4.18
-+++ multipath-tools/multipath.conf.defaults	2010/01/26 05:50:44	1.5.4.19
-@@ -237,6 +237,20 @@
- #		rr_min_io		1000
- #		path_checker		readsector0
- #       }
-+#      device {
-+#               vendor                  "EMC"
-+#               product                 "Invista"
-+#               product_blacklist       "LUNZ"
-+#		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
-+#               features                "0"
-+#               hardware_handler        "0"
-+#               path_selector           "round-robin 0"
-+#               path_grouping_policy    failover
-+#               rr_weight               uniform
-+#               no_path_retry           5
-+#               rr_min_io               1000
-+#               path_checker            tur
-+#      }
- #       device {
- #               vendor                  "FSC"
- #               product                 "CentricStor"
---- multipath-tools/libmultipath/hwtable.c	2009/12/02 19:15:28	1.20.2.25
-+++ multipath-tools/libmultipath/hwtable.c	2010/01/26 05:50:45	1.20.2.26
-@@ -300,6 +300,22 @@
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = READSECTOR0,
- 	},
-+	{
-+		.vendor        = "EMC",
-+		.product       = "Invista",
-+		.bl_product    = "LUNZ",
-+		.getuid        = DEFAULT_GETUID,
-+		.getprio       = NULL,
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = FAILOVER,
-+		.pgfailback    = FAILBACK_UNDEF,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = 5,
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = TUR,
-+	},
- 	/*
- 	 * IBM controller family
- 	 *
+Sebastian
