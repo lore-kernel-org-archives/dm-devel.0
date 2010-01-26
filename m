@@ -1,138 +1,86 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-crypt: disable block encryption with arc4
-Date: Mon, 25 Jan 2010 13:39:48 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1001251336311.18309@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1001251324310.18309@hs20-bc2-1.build.redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools ./multipath.conf.defaults libm ...
+Date: 26 Jan 2010 05:50:45 -0000
+Message-ID: <20100126055045.5404.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="279731514-2096129439-1264444788=:18309"
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1001251324310.18309@hs20-bc2-1.build.redhat.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>, linux-crypto@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2010-01-26 05:50:45
 
---279731514-2096129439-1264444788=:18309
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Modified files:
+	.              : multipath.conf.defaults 
+	libmultipath   : hwtable.c 
 
-BTW. I created a script that tests all possible ciphers, keysizes, 
-chaining modes and iv modes for dm-crypt. arc4 is the only one that fails. 
-You can add it your regression testsuite if you want.
+Log message:
+	Fix for bz #545822
+	Add hwentry for EMC Invista
 
-Mikulas
---279731514-2096129439-1264444788=:18309
-Content-Type: TEXT/PLAIN; charset=US-ASCII; name=test-cipher
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.1001251339480.18309@hs20-bc2-1.build.redhat.com>
-Content-Description: test-cipher
-Content-Disposition: attachment; filename=test-cipher
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.18&r2=1.5.4.19
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.25&r2=1.20.2.26
 
-IyEvYmluL3NoDQpkbXNldHVwIHJlbW92ZSBjcjANCnNldCAtZQ0KY2lwaGVy
-PSIkQCINCmNyeXB0c2V0dXAgLWQga2V5ICRjaXBoZXIgY3JlYXRlIGNyMCAv
-ZGV2L3JhbTANCm1rZnMuZXh0MyAtYiAxMDI0IC9kZXYvbWFwcGVyL2NyMA0K
-ZnNjay5leHQyIC1mbiAvZGV2L21hcHBlci9jcjANCmRtc2V0dXAgcmVtb3Zl
-IGNyMA0KY3J5cHRzZXR1cCAtZCBrZXkgJGNpcGhlciBjcmVhdGUgY3IwIC9k
-ZXYvcmFtMA0KZnNjay5leHQyIC1mbiAvZGV2L21hcHBlci9jcjANCmRtc2V0
-dXAgcmVtb3ZlIGNyMA0K
-
---279731514-2096129439-1264444788=:18309
-Content-Type: TEXT/PLAIN; charset=US-ASCII; name=cryptest
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.1001251339481.18309@hs20-bc2-1.build.redhat.com>
-Content-Description: cryptest
-Content-Disposition: attachment; filename=cryptest
-
-IyEvYmluL3NoDQpzZXQgLWUNCj5sb2cNCiMgYXJjNCAtIGRvZXNuJ3Qgd29y
-aw0KZm9yIGNpcGhlciBpbiBhZXMgYW51YmlzIGJsb3dmaXNoIGNhbWVsbGlh
-IGNhc3Q1IGNhc3Q2IGRlcyBkZXMzX2VkZSBmY3J5cHQga2hhemFkIHNlZWQg
-c2VycGVudCB0bmVwcmVzIHRlYSB4dGVhIHhldGE7IGRvDQoJaWYgWyAtbiAi
-JDEiIC1hICIkY2lwaGVyIiAhPSAiJDEiIF07IHRoZW4NCgkJY29udGludWUN
-CglmaQ0KCWlmIFsgJGNpcGhlciA9IGFlcyBdOyB0aGVuDQoJCWtleXNpemVz
-PSIxMjggMTkyIDI1NiINCgkJYmxvY2tzaXplPTEyOA0KCWVsaWYgWyAkY2lw
-aGVyID0gYW51YmlzIF07IHRoZW4NCgkJa2V5c2l6ZXM9ImBzZXEgMTI4IDMy
-IDMyMGAiDQoJCWJsb2Nrc2l6ZT0xMjgNCgllbGlmIFsgJGNpcGhlciA9IGFy
-YzQgXTsgdGhlbg0KCQlrZXlzaXplcz0iYHNlcSA4IDI1NiAyMDQ4YCAyMDQ4
-Ig0KCQlibG9ja3NpemU9MQ0KCWVsaWYgWyAkY2lwaGVyID0gYmxvd2Zpc2gg
-XTsgdGhlbg0KCQlrZXlzaXplcz0iYHNlcSAzMiA4IDQ0OGAiDQoJCWJsb2Nr
-c2l6ZT02NA0KCWVsaWYgWyAkY2lwaGVyID0gY2FtZWxsaWEgXTsgdGhlbg0K
-CQlrZXlzaXplcz0iMTI4IDE5MiAyNTYiDQoJCWJsb2Nrc2l6ZT0xMjgNCgll
-bGlmIFsgJGNpcGhlciA9IGNhc3Q1IF07IHRoZW4NCgkJa2V5c2l6ZXM9ImBz
-ZXEgNDAgOCAxMjhgIg0KCQlibG9ja3NpemU9NjQNCgllbGlmIFsgJGNpcGhl
-ciA9IGNhc3Q2IF07IHRoZW4NCgkJa2V5c2l6ZXM9ImBzZXEgMTI4IDMyIDI1
-NmAiDQoJCWJsb2Nrc2l6ZT0xMjgNCgllbGlmIFsgJGNpcGhlciA9IGRlcyBd
-OyB0aGVuDQoJCWtleXNpemVzPTY0DQoJCWJsb2Nrc2l6ZT02NA0KCWVsaWYg
-WyAkY2lwaGVyID0gZGVzM19lZGUgXTsgdGhlbg0KCQlrZXlzaXplcz0xOTIN
-CgkJYmxvY2tzaXplPTY0DQoJZWxpZiBbICRjaXBoZXIgPSBmY3J5cHQgXTsg
-dGhlbg0KCQlrZXlzaXplcz02NA0KCQlibG9ja3NpemU9NjQNCgllbGlmIFsg
-JGNpcGhlciA9IGtoYXphZCBdOyB0aGVuDQoJCWtleXNpemVzPTEyOA0KCQli
-bG9ja3NpemU9NjQNCgllbGlmIFsgJGNpcGhlciA9IHNlZWQgXTsgdGhlbg0K
-CQlrZXlzaXplcz0xMjgNCgkJYmxvY2tzaXplPTEyOA0KCWVsaWYgWyAkY2lw
-aGVyID0gc2VycGVudCAtbyAkY2lwaGVyID0gdG5lcHJlcyBdOyB0aGVuDQoJ
-CWtleXNpemVzPSJgc2VxIDAgOCAyNTZgIg0KCQlibG9ja3NpemU9MTI4DQoJ
-ZWxpZiBbICRjaXBoZXIgPSB0ZWEgLW8gJGNpcGhlciA9IHh0ZWEgLW8gJGNp
-cGhlciA9IHhldGEgXTsgdGhlbg0KCQlrZXlzaXplcz0xMjgNCgkJYmxvY2tz
-aXplPTY0DQoJZWxpZiBbICRjaXBoZXIgPSB0d29maXNoIF07IHRoZW4NCgkJ
-a2V5c2l6ZXM9IjEyOCAxOTIgMjU2Ig0KCQlibG9ja3NpemU9MTI4DQoJZWxz
-ZQ0KCQllY2hvIFVOS05PV04gQ0lQSEVSDQoJCWV4aXQgMQ0KCWZpDQoJZm9y
-IGtleXNpemUgaW4gJGtleXNpemVzOyBkbw0KCQkjIGlmICEgZWNobyAka2V5
-c2l6ZXMgfCBncmVwIC1xdyAka2V5c2l6ZSQ7IHRoZW4gY29udGludWU7IGZp
-DQoJCWZvciBjaGFpbmluZyBpbiBjYmMgY3RyIGVjYiBscncgcGNiYyB4dHM7
-IGRvDQoJCQljaGFpbmluZ19rZXlzaXplPSRrZXlzaXplDQoJCQlpZiBbICRj
-aGFpbmluZyA9IHh0cyBdOyB0aGVuDQoJCQkJY2hhaW5pbmdfa2V5c2l6ZT1g
-ZXhwciAkY2hhaW5pbmdfa2V5c2l6ZSBcKiAyIHwgY2F0YDsNCgkJCQlpZiBb
-ICRibG9ja3NpemUgIT0gMTI4IF07IHRoZW4gY29udGludWU7IGZpDQoJCQlm
-aQ0KCQkJaWYgWyAkY2hhaW5pbmcgPSBscncgXTsgdGhlbg0KCQkJCWNoYWlu
-aW5nX2tleXNpemU9YGV4cHIgJGNoYWluaW5nX2tleXNpemUgKyAkYmxvY2tz
-aXplIHwgY2F0YA0KCQkJCWlmIFsgJGJsb2Nrc2l6ZSAhPSAxMjggXTsgdGhl
-biBjb250aW51ZTsgZmkNCgkJCWZpDQoJCQlmb3IgaXYgaW4gbnVsbCBwbGFp
-biBiZW5iaSBlc3NpdjptZDQgZXNzaXY6bWQ1IGVzc2l2Om1pY2hhZWxfbWlj
-IGVzc2l2OnJtZDEyOCBlc3NpdjpybWQxNjAgZXNzaXY6cm1kMjU2IGVzc2l2
-OnJtZDMyMCBlc3NpdjpzaGExIGVzc2l2OnNoYTIyNCBlc3NpdjpzaGEyNTYg
-ZXNzaXY6c2hhMzg0IGVzc2l2OnNoYTUxMiBlc3Npdjp0Z3IxMjggZXNzaXY6
-dGdyMTYwIGVzc2l2OnRncjE5MiBlc3Npdjp3cDI1NiBlc3Npdjp3cDM4NCBl
-c3Npdjp3cDUxMjsgZG8NCgkJCQlpZiBbICRjaGFpbmluZyA9IGVjYiBdICYm
-IGVjaG8gIiRpdiIgfCBncmVwIC1xIF5lc3NpdjsgdGhlbiBjb250aW51ZTsg
-ZmkNCgkJCQlpZiBbICRpdiA9IGVzc2l2Om1kNCBdICYmICEgZWNobyAka2V5
-c2l6ZXMgfCBncmVwIC1xdyAxMjg7IHRoZW4gY29udGludWU7IGZpDQoJCQkJ
-aWYgWyAkaXYgPSBlc3NpdjptZDUgXSAmJiAhIGVjaG8gJGtleXNpemVzIHwg
-Z3JlcCAtcXcgMTI4OyB0aGVuIGNvbnRpbnVlOyBmaQ0KCQkJCWlmIFsgJGl2
-ID0gZXNzaXY6bWljaGFlbF9taWMgXSAmJiAhIGVjaG8gJGtleXNpemVzIHwg
-Z3JlcCAtcXcgNjQ7IHRoZW4gY29udGludWU7IGZpDQoJCQkJaWYgWyAkaXYg
-PSBlc3NpdjpybWQxMjggXSAmJiAhIGVjaG8gJGtleXNpemVzIHwgZ3JlcCAt
-cXcgMTI4OyB0aGVuIGNvbnRpbnVlOyBmaQ0KCQkJCWlmIFsgJGl2ID0gZXNz
-aXY6cm1kMTYwIF0gJiYgISBlY2hvICRrZXlzaXplcyB8IGdyZXAgLXF3IDE2
-MDsgdGhlbiBjb250aW51ZTsgZmkNCgkJCQlpZiBbICRpdiA9IGVzc2l2OnJt
-ZDI1NiBdICYmICEgZWNobyAka2V5c2l6ZXMgfCBncmVwIC1xdyAyNTY7IHRo
-ZW4gY29udGludWU7IGZpDQoJCQkJaWYgWyAkaXYgPSBlc3NpdjpybWQzMjAg
-XSAmJiAhIGVjaG8gJGtleXNpemVzIHwgZ3JlcCAtcXcgMzIwOyB0aGVuIGNv
-bnRpbnVlOyBmaQ0KCQkJCWlmIFsgJGl2ID0gZXNzaXY6c2hhMSBdICYmICEg
-ZWNobyAka2V5c2l6ZXMgfCBncmVwIC1xdyAxNjA7IHRoZW4gY29udGludWU7
-IGZpDQoJCQkJaWYgWyAkaXYgPSBlc3NpdjpzaGEyMjQgXSAmJiAhIGVjaG8g
-JGtleXNpemVzIHwgZ3JlcCAtcXcgMjI0OyB0aGVuIGNvbnRpbnVlOyBmaQ0K
-CQkJCWlmIFsgJGl2ID0gZXNzaXY6c2hhMjU2IF0gJiYgISBlY2hvICRrZXlz
-aXplcyB8IGdyZXAgLXF3IDI1NjsgdGhlbiBjb250aW51ZTsgZmkNCgkJCQlp
-ZiBbICRpdiA9IGVzc2l2OnNoYTM4NCBdICYmICEgZWNobyAka2V5c2l6ZXMg
-fCBncmVwIC1xdyAzODQ7IHRoZW4gY29udGludWU7IGZpDQoJCQkJaWYgWyAk
-aXYgPSBlc3NpdjpzaGE1MTIgXSAmJiAhIGVjaG8gJGtleXNpemVzIHwgZ3Jl
-cCAtcXcgNTEyOyB0aGVuIGNvbnRpbnVlOyBmaQ0KCQkJCWlmIFsgJGl2ID0g
-ZXNzaXY6dGdyMTI4IF0gJiYgISBlY2hvICRrZXlzaXplcyB8IGdyZXAgLXF3
-IDEyODsgdGhlbiBjb250aW51ZTsgZmkNCgkJCQlpZiBbICRpdiA9IGVzc2l2
-OnRncjE2MCBdICYmICEgZWNobyAka2V5c2l6ZXMgfCBncmVwIC1xdyAxNjA7
-IHRoZW4gY29udGludWU7IGZpDQoJCQkJaWYgWyAkaXYgPSBlc3Npdjp0Z3Ix
-OTIgXSAmJiAhIGVjaG8gJGtleXNpemVzIHwgZ3JlcCAtcXcgMTkyOyB0aGVu
-IGNvbnRpbnVlOyBmaQ0KCQkJCWlmIFsgJGl2ID0gZXNzaXY6d3AyNTYgXSAm
-JiAhIGVjaG8gJGtleXNpemVzIHwgZ3JlcCAtcXcgMjU2OyB0aGVuIGNvbnRp
-bnVlOyBmaQ0KCQkJCWlmIFsgJGl2ID0gZXNzaXY6d3AzODQgXSAmJiAhIGVj
-aG8gJGtleXNpemVzIHwgZ3JlcCAtcXcgMzg0OyB0aGVuIGNvbnRpbnVlOyBm
-aQ0KCQkJCWlmIFsgJGl2ID0gZXNzaXY6d3A1MTIgXSAmJiAhIGVjaG8gJGtl
-eXNpemVzIHwgZ3JlcCAtcXcgNTEyOyB0aGVuIGNvbnRpbnVlOyBmaQ0KCQkJ
-CWVjaG8gVEVTVElORzogQ0lQSEVSICRjaXBoZXIsIEtFWVNJWkUgJGNoYWlu
-aW5nX2tleXNpemUsIENIQUlOSU5HICRjaGFpbmluZywgSVYgJGl2IHwgdGVl
-IC1hIGxvZw0KCQkJCS4vdGVzdC1jaXBoZXIgLXMgJGNoYWluaW5nX2tleXNp
-emUgLWMgJGNpcGhlci0kY2hhaW5pbmctJGl2DQoJCQlkb25lDQoJCWRvbmUN
-Cglkb25lDQpkb25lDQplY2hvIFBBU1NFRA0K
-
---279731514-2096129439-1264444788=:18309--
+--- multipath-tools/multipath.conf.defaults	2009/12/02 19:15:28	1.5.4.18
++++ multipath-tools/multipath.conf.defaults	2010/01/26 05:50:44	1.5.4.19
+@@ -237,6 +237,20 @@
+ #		rr_min_io		1000
+ #		path_checker		readsector0
+ #       }
++#      device {
++#               vendor                  "EMC"
++#               product                 "Invista"
++#               product_blacklist       "LUNZ"
++#		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
++#               features                "0"
++#               hardware_handler        "0"
++#               path_selector           "round-robin 0"
++#               path_grouping_policy    failover
++#               rr_weight               uniform
++#               no_path_retry           5
++#               rr_min_io               1000
++#               path_checker            tur
++#      }
+ #       device {
+ #               vendor                  "FSC"
+ #               product                 "CentricStor"
+--- multipath-tools/libmultipath/hwtable.c	2009/12/02 19:15:28	1.20.2.25
++++ multipath-tools/libmultipath/hwtable.c	2010/01/26 05:50:45	1.20.2.26
+@@ -300,6 +300,22 @@
+ 		.minio         = DEFAULT_MINIO,
+ 		.checker_name  = READSECTOR0,
+ 	},
++	{
++		.vendor        = "EMC",
++		.product       = "Invista",
++		.bl_product    = "LUNZ",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = NULL,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = FAILOVER,
++		.pgfailback    = FAILBACK_UNDEF,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 5,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = TUR,
++	},
+ 	/*
+ 	 * IBM controller family
+ 	 *
