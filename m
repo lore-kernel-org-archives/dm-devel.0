@@ -1,16 +1,19 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: How to determine when a snapshot has finished
-	merging?
-Date: Tue, 26 Jan 2010 15:49:54 -0500
-Message-ID: <20100126204954.GB17190@redhat.com>
-References: <f03e393e1001240612l3cd3e5f7mc8d9ca1b11635954@mail.gmail.com>
+Subject: Re: dm_ioctl: Only send a change uevent when a resume
+ ioctl changes the device.
+Date: Tue, 26 Jan 2010 16:12:19 -0500
+Message-ID: <20100126211219.GC17190@redhat.com>
+References: <1264528570-10498-1-git-send-email-dwysocha@redhat.com>
+	<20100126180929.GA17190@redhat.com>
+	<1264531714.2572.6.camel@f10-node1>
+	<1264532220.2572.8.camel@f10-node1>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <f03e393e1001240612l3cd3e5f7mc8d9ca1b11635954@mail.gmail.com>
+In-Reply-To: <1264532220.2572.8.camel@f10-node1>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,75 +23,123 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Wicher Minnaard <wicher@gavagai.eu>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Jan 24 2010 at  9:12am -0500,
-Wicher Minnaard <wicher@gavagai.eu> wrote:
+On Tue, Jan 26 2010 at  1:57pm -0500,
+Dave Wysochanski <dwysocha@redhat.com> wrote:
 
-> Hi, I'm new to the list.
-> I'm experimenting with the snapshot-merge target on a 2.6.33_rc4 kernel:
+> On Tue, 2010-01-26 at 13:48 -0500, Dave Wysochanski wrote:
+> > On Tue, 2010-01-26 at 13:09 -0500, Mike Snitzer wrote:
+> > > On Tue, Jan 26 2010 at 12:56pm -0500,
+> > > Dave Wysochanski <dwysocha@redhat.com> wrote:
+> > > 
+> > > > Resume ioctls may result in no changes to the device and thus they
+> > > > should not generate change uevents.  For example, if a device is
+> > > > not suspended when a resume ioctl occurs, we should not send a
+> > > > uevent.
+> > > > 
+> > > > Signed-off-by: Dave Wysochanski <dwysocha@redhat.com>
+> > > > ---
+> > > >  drivers/md/dm-ioctl.c |   12 ++++++++----
+> > > >  1 files changed, 8 insertions(+), 4 deletions(-)
+> > > > 
+> > > > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> > > > index 1d66932..0c1cf53 100644
+> > > > --- a/drivers/md/dm-ioctl.c
+> > > > +++ b/drivers/md/dm-ioctl.c
+> > > > @@ -851,6 +851,7 @@ static int do_suspend(struct dm_ioctl *param)
+> > > >  
+> > > >  static int do_resume(struct dm_ioctl *param)
+> > > >  {
+> > > > +	int send_uevent = 0;
+> > > >  	int r = 0;
+> > > >  	unsigned suspend_flags = DM_SUSPEND_LOCKFS_FLAG;
+> > > >  	struct hash_cell *hc;
+> > > > @@ -895,18 +896,21 @@ static int do_resume(struct dm_ioctl *param)
+> > > >  			set_disk_ro(dm_disk(md), 0);
+> > > >  		else
+> > > >  			set_disk_ro(dm_disk(md), 1);
+> > > > +		send_uevent = 1;
+> > > >  	}
+> > > > -
+> > > > -	if (dm_suspended_md(md))
+> > > > +	if (dm_suspended_md(md)) {
+> > > >  		r = dm_resume(md);
+> > > > +		send_uevent = 1;
+> > > > +	}
+> > > >  
+> > > >  	if (old_map)
+> > > >  		dm_table_destroy(old_map);
+> > > >  
+> > > > -	if (!r) {
+> > > > +	if (send_uevent)
+> > > >  		dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr);
+> > > > +
+> > > > +	if (!r)
+> > > >  		r = __dev_status(md, param);
+> > > > -	}
+> > > >  
+> > > >  	dm_put(md);
+> > > >  	return r;
+> > > 
+> > > Seems you're sending the uevent even if resume failed.  Is that intended?
+> > > 
+> > > Also, can dm_kobject_uevent() come before dm_table_destroy()?
+> > > 
+> > > If so this would be a bit simpler:
+> > > 
+> > > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> > > index 1d66932..e3cf568 100644
+> > > --- a/drivers/md/dm-ioctl.c
+> > > +++ b/drivers/md/dm-ioctl.c
+> > > @@ -897,16 +897,17 @@ static int do_resume(struct dm_ioctl *param)
+> > >  			set_disk_ro(dm_disk(md), 1);
+> > >  	}
+> > >  
+> > > -	if (dm_suspended_md(md))
+> > > +	if (dm_suspended_md(md)) {
+> > >  		r = dm_resume(md);
+> > > +		if (!r)
+> > > +			dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr);
+> > > +	}
+> > >  
+> > >  	if (old_map)
+> > >  		dm_table_destroy(old_map);
+> > >  
+> > > -	if (!r) {
+> > > -		dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr);
+> > > +	if (!r)
+> > >  		r = __dev_status(md, param);
+> > > -	}
+> > >  
+> > >  	dm_put(md);
+> > >  	return r;
+> > > 
+> > 
+> > Nice simplification Mike, as discussed on IRC.
+> > 
+> > Ack.
+> > 
 > 
-> echo 0 $(blockdev --getsize /dev/mapper/original) snapshot-merge
-> /dev/mapper/original /dev/loop1 p 8 | dmsetup create mergeomatic
-> 
-> where /dev/loop1 is a COW volume I created earlier (with the
-> 'snapshot' target, against /dev/mapper/original, of course).
-> I wait for some time and then I just 'dmsetup remove' to break down
-> the device stack, starting with the 'mergeomatic' device. I then take
-> a look at /dev/mapper/original, and, much to my delight, I see stuff
-> that has been merged back in from the snapshot.
-> 
-> But I don't know how to determine whether the merge has completed. I
-> looked around in /proc and /sys, but those contained no obvious clues
-> (not obvious to me, that is). My kernel logs never mention any dm
-> activity (whereas the md driver is quite chatty and features
-> /proc/mdstat).
-> Any suggestions greatly appreciated.
+> Actually, the more I think about it I am not sure about sending the
+> uevent in the case where dm_resume() fails.  Seems like we should send
+> it since the map could have changed - depends on whether we went through
+> that 'if (new_map)' block.
 
-Hi Wicher,
+Pretty sure we resolved this.  As we discussed (just after you sent this
+last reply); for the benefit of others:
 
-The status for the snapshot-merge (and snapshot) target was extended to
-include the "allocated metadata sectors" at the end of its status
-output, see commit: http://git.kernel.org/linus/985903bb3a6d98
-
-And here is the corresponding lvm2 commit:
-http://sources.redhat.com/git/?p=lvm2.git;a=commit;h=f02531802c002
-
-The format is: <sectors_allocated>/<total_sectors> <metadata_sectors>
-
-So merging has finished when <sectors_allocated> == <metadata_sectors>
-
-Here is a practical example (using hybrid of lvm and dmsetup commands):
-
-# lvs
-  LV             VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
-  testlv1        test owi-a- 4.00g
-  testlv1_snap   test swi-a- 1.00g testlv1  18.97
-
-# dmsetup status test-testlv1_snap
-0 8388608 snapshot 397896/2097152 1560
-                                  ^^^^ metadata sectors
-
-# lvconvert --merge -b test/testlv1_snap
-  Merging of volume testlv1_snap started.
-
-# lvs test/testlv1
-  LV      VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
-  testlv1 test Owi-a- 4.00g          17.23
-
-# dmsetup status test-testlv1
-0 8388608 snapshot-merge 281688/2097152 1104
-
-# dmsetup status test-testlv1
-0 8388608 snapshot-merge 180480/2097152 712
-
-# dmsetup status test-testlv1
-0 8388608 snapshot-merge 16/2097152 16
-
-Merge has completed
-
-# lvs
-  LV             VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
-  testlv1        test owi-a- 4.00g
+<dave> so the change uevent here really means "resume was successful"
+<mike> yes
+<dave> wait - if we suspend it, but resume fails, shouldn't we still
+send the event?
+<mike> in that case the device will be left suspended; in terms of udev
+that's not a "change"
+<mike> device is wedged (suspended)
+<mike> telling udev about it could just stack up other processes trying
+to issue IO to it
+<mike> but to be honest I don't know what the purist definition of what
+a "change" uevent is; I'm just treating it as telling some blackbox that
+DM device has changed and is functional
+<dave> that does make sense
