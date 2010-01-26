@@ -1,14 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: partitioning multipath device
-Date: Fri, 22 Jan 2010 20:53:26 +0100
-Message-ID: <1264190006.17306.5.camel@Nokia-N900-42-11>
-References: <20100122192935.GC31538@mtholyoke.edu>
-Reply-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: How to determine when a snapshot has finished
+	merging?
+Date: Tue, 26 Jan 2010 15:49:54 -0500
+Message-ID: <20100126204954.GB17190@redhat.com>
+References: <f03e393e1001240612l3cd3e5f7mc8d9ca1b11635954@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4195529100770442948=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100122192935.GC31538@mtholyoke.edu>
+Content-Disposition: inline
+In-Reply-To: <f03e393e1001240612l3cd3e5f7mc8d9ca1b11635954@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,103 +20,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Wicher Minnaard <wicher@gavagai.eu>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Sun, Jan 24 2010 at  9:12am -0500,
+Wicher Minnaard <wicher@gavagai.eu> wrote:
 
---===============4195529100770442948==
-Content-Type: multipart/alternative; boundary="=-nVy/ts4KD4Hzl9wokgiX"
+> Hi, I'm new to the list.
+> I'm experimenting with the snapshot-merge target on a 2.6.33_rc4 kernel:
+> 
+> echo 0 $(blockdev --getsize /dev/mapper/original) snapshot-merge
+> /dev/mapper/original /dev/loop1 p 8 | dmsetup create mergeomatic
+> 
+> where /dev/loop1 is a COW volume I created earlier (with the
+> 'snapshot' target, against /dev/mapper/original, of course).
+> I wait for some time and then I just 'dmsetup remove' to break down
+> the device stack, starting with the 'mergeomatic' device. I then take
+> a look at /dev/mapper/original, and, much to my delight, I see stuff
+> that has been merged back in from the snapshot.
+> 
+> But I don't know how to determine whether the merge has completed. I
+> looked around in /proc and /sys, but those contained no obvious clues
+> (not obvious to me, that is). My kernel logs never mention any dm
+> activity (whereas the md driver is quite chatty and features
+> /proc/mdstat).
+> Any suggestions greatly appreciated.
 
+Hi Wicher,
 
---=-nVy/ts4KD4Hzl9wokgiX
-Content-Type: text/plain; charset=utf-8
-Content-ID: <1264190005.17306.2.camel@Nokia-N900-42-11>
-Content-Transfer-Encoding: quoted-printable
+The status for the snapshot-merge (and snapshot) target was extended to
+include the "allocated metadata sectors" at the end of its status
+output, see commit: http://git.kernel.org/linus/985903bb3a6d98
 
-The device mapper used to eat ioctl. This is no longer the case. I'll fix t=
-he faq.
-Thanks for the heads-up.
+And here is the corresponding lvm2 commit:
+http://sources.redhat.com/git/?p=lvm2.git;a=commit;h=f02531802c002
 
------ Message d'origine -----
-> The multipath-tools FAQ has the following to say about partitioning
-> multipath devices.
->
-> > From http://christophe.varoqui.free.fr/faq.html
->
-> > 6. How do I partition my multipathed devices
-> > Partition a constituant path instead. And reload the map through multip=
-ath(8)
->
-> I take this to mean, for example, that one should partition /dev/sdX,
-> rather than the corresponding coalesced /dev/mapper/... device, correct?
->
-> My question is: why?=C2=A0 Paritioning the /dev/mapper device appears to
-> work.=C2=A0 Is there an operational difference?=C2=A0 I've always done th=
-is
-> exactly as advised, but I know someone who didn't, and we're wondering
-> if it matters.
->
-> TIA
->
-> -Ron-
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+The format is: <sectors_allocated>/<total_sectors> <metadata_sectors>
 
+So merging has finished when <sectors_allocated> == <metadata_sectors>
 
---=-nVy/ts4KD4Hzl9wokgiX
-Content-Type: text/html; charset=utf-8
-Content-ID: <1264190005.17306.4.camel@Nokia-N900-42-11>
-Content-Transfer-Encoding: 7bit
+Here is a practical example (using hybrid of lvm and dmsetup commands):
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html><head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="generator" content="Osso Notes">
-    <title></title></head>
-<body>
-<p>The device mapper used to eat ioctl. This is no longer the case. I'll fix the faq.
-<br>Thanks for the heads-up.
-<br>
-<br>----- Message d'origine -----
-<br>&gt; The multipath-tools FAQ has the following to say about partitioning
-<br>&gt; multipath devices.
-<br>&gt;
-<br>&gt; &gt; From <a href="http://christophe.varoqui.free.fr/faq.html">http://christophe.varoqui.free.fr/faq.html</a>
-<br>&gt;
-<br>&gt; &gt; 6. How do I partition my multipathed devices
-<br>&gt; &gt; Partition a constituant path instead. And reload the map through multipath(8)
-<br>&gt;
-<br>&gt; I take this to mean, for example, that one should partition /dev/sdX,
-<br>&gt; rather than the corresponding coalesced /dev/mapper/... device, correct?
-<br>&gt;
-<br>&gt; My question is: why?&nbsp; Paritioning the /dev/mapper device appears to
-<br>&gt; work.&nbsp; Is there an operational difference?&nbsp; I've always done this
-<br>&gt; exactly as advised, but I know someone who didn't, and we're wondering
-<br>&gt; if it matters.
-<br>&gt;
-<br>&gt; TIA
-<br>&gt;
-<br>&gt; -Ron-
-<br>&gt;
-<br>&gt; --
-<br>&gt; dm-devel mailing list
-<br>&gt; <a href="mailto:dm-devel@redhat.com">dm-devel@redhat.com</a>
-<br>&gt; <a href="https://www.redhat.com/mailman/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a>
-<br><br></p>
-</body>
-</html>
+# lvs
+  LV             VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
+  testlv1        test owi-a- 4.00g
+  testlv1_snap   test swi-a- 1.00g testlv1  18.97
 
---=-nVy/ts4KD4Hzl9wokgiX--
+# dmsetup status test-testlv1_snap
+0 8388608 snapshot 397896/2097152 1560
+                                  ^^^^ metadata sectors
 
+# lvconvert --merge -b test/testlv1_snap
+  Merging of volume testlv1_snap started.
 
---===============4195529100770442948==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+# lvs test/testlv1
+  LV      VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
+  testlv1 test Owi-a- 4.00g          17.23
 
+# dmsetup status test-testlv1
+0 8388608 snapshot-merge 281688/2097152 1104
 
---===============4195529100770442948==--
+# dmsetup status test-testlv1
+0 8388608 snapshot-merge 180480/2097152 712
+
+# dmsetup status test-testlv1
+0 8388608 snapshot-merge 16/2097152 16
+
+Merge has completed
+
+# lvs
+  LV             VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
+  testlv1        test owi-a- 4.00g
