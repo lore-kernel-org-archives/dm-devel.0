@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm-flakey target refreshed for 2.6.33
-Date: Wed, 27 Jan 2010 19:40:27 +0000
-Message-ID: <20100127194027.GJ5478@agk-dp.fab.redhat.com>
-References: <20100126192050.GA5550@localhost.localdomain>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm: document when snapshot has finished merging
+Date: Wed, 27 Jan 2010 15:55:59 -0500
+Message-ID: <1264625759-23087-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20100126192050.GA5550@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +16,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Josef Bacik <josef@redhat.com>, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jan 26, 2010 at 02:20:51PM -0500, Josef Bacik wrote:
-> -changed SECTOR_FORMAT to "%llu"
+Update Documentation/device-mapper/snapshot.txt to cover "How to
+determine when a snapshot has finished merging".
 
-We also cast the parameter to 'unsigned long long' to match when displaying
-sectors.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ Documentation/device-mapper/snapshot.txt |   42 ++++++++++++++++++++++++++++++
+ 1 files changed, 42 insertions(+), 0 deletions(-)
 
-> -changed DMERR to printk (for some reason DMERR was failing and I have no idea
-
-We moved the target name ('flakey: ') inside the macro instead of having to
-write it in every message - so it needed #define DM_MSG_PREFIX.
-
-I've made these changes and they'll appear at
-http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
-next time I sync up.
-
-> with an fs without having to do crazy things like rip out cables, so if it could
-> be included in mainline that would be helpful.  Thanks,
- 
-Well the main thing I'm missing is a Documentation file and a patch header.
-This shouldn't be hard to write - any volunteers?  Kconfig should get a few
-more words too.
-
-It still needs a review for adherence to the latest dm standards, but that should
-be really quick, given how small it is.
-
-Alasdair
+diff --git a/Documentation/device-mapper/snapshot.txt b/Documentation/device-mapper/snapshot.txt
+index e3a77b2..7028a2a 100644
+--- a/Documentation/device-mapper/snapshot.txt
++++ b/Documentation/device-mapper/snapshot.txt
+@@ -122,3 +122,45 @@ volumeGroup-base: 0 2097152 snapshot-merge 254:11 254:12 P 16
+ brw-------  1 root root 254, 11 29 ago 18:15 /dev/mapper/volumeGroup-base-real
+ brw-------  1 root root 254, 12 29 ago 18:16 /dev/mapper/volumeGroup-base-cow
+ brw-------  1 root root 254, 10 29 ago 18:16 /dev/mapper/volumeGroup-base
++
++
++How to determine when a snapshot has finished merging
++=====================================================
++The status for the snapshot-merge (and snapshot) target includes the
++"allocated metadata sectors".  The snapshot(-merge) status format is:
++<sectors_allocated>/<total_sectors> <metadata_sectors>
++
++Merging has finished when <sectors_allocated> == <metadata_sectors>
++
++Here is a practical example (using a hybrid of lvm and dmsetup commands):
++
++# lvs
++  LV             VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
++  testlv1        test owi-a- 4.00g
++  testlv1_snap   test swi-a- 1.00g testlv1  18.97
++
++# dmsetup status test-testlv1_snap
++0 8388608 snapshot 397896/2097152 1560
++                                  ^^^^ metadata sectors
++
++# lvconvert --merge -b test/testlv1_snap
++  Merging of volume testlv1_snap started.
++
++# lvs test/testlv1
++  LV      VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
++  testlv1 test Owi-a- 4.00g          17.23
++
++# dmsetup status test-testlv1
++0 8388608 snapshot-merge 281688/2097152 1104
++
++# dmsetup status test-testlv1
++0 8388608 snapshot-merge 180480/2097152 712
++
++# dmsetup status test-testlv1
++0 8388608 snapshot-merge 16/2097152 16
++
++Merging has finished
++
++# lvs
++  LV             VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
++  testlv1        test owi-a- 4.00g
