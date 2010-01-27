@@ -1,79 +1,71 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: document when snapshot has finished merging
-Date: Wed, 27 Jan 2010 15:55:59 -0500
-Message-ID: <1264625759-23087-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [dm-devel] [PATCH] scsi_dh_rdac: Changing the memory
+	allocation flag from GFP_KERNEL to GFP_NOIO
+Date: Wed, 27 Jan 2010 14:19:47 -0800
+Message-ID: <1264630787.27583.144.camel@chandra-ubuntu>
+References: <E463DF2B2E584B4A82673F53D62C2EF4877BC7E8@cosmail01.lsi.com>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF4877BC7E8@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Chandra Seetharaman <chandra.seetharaman@us.ibm.com>, "michaelc@cs.wisc.edu" <michaelc@cs.wisc.edu>, Rob Evers <revers@redhat.com>
 List-Id: dm-devel.ids
 
-Update Documentation/device-mapper/snapshot.txt to cover "How to
-determine when a snapshot has finished merging".
+Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- Documentation/device-mapper/snapshot.txt |   42 ++++++++++++++++++++++++++++++
- 1 files changed, 42 insertions(+), 0 deletions(-)
+On Tue, 2010-01-05 at 10:20 -0700, Moger, Babu wrote:
+> This patch changes the memory allocation flag from GFP_KERNEL to GFP_NOIO which is more appropriate.
+> 
+> This was noticed by Mike Christie and Rob Evers.. 
+> Mike Christie wrote:
+> > Rob Evers wrote:
+> >> +
+> >> +static int queue_mode_select(struct scsi_device *sdev,
+> >> +                activate_complete fn, void *data)
+> >> +{
+> >> +    struct rdac_queue_data *qdata;
+> >> +    struct rdac_controller *ctlr;
+> >> +
+> >> +    qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
+> >> +    if (!qdata)
+> >> +        return SCSI_DH_RETRY;
+> >> +
+> >
+> > It looks like this is called in the main IO path. A failed IO could cause, the path to go down,
+> > then we would call this to active a new path. If the system needed to write out pages to the same
+> > disk that just had the failed path so it can allocate memory then GFP_KERNEL would be bad to use here.
+> > You would use a mempool and still use something like GFP_NOIO. If a mempool is not possible for some 
+> > reason, then you would want to still use GFP_NOIO.
+> 
+> Using mempool would become bit more complex here because I cannot assume about the number of elements
+> during the allocation. I would use GFP_NOIO.
+> 
+> CC: Mike Christie <michaelc@cs.wisc.edu>
+> CC: Rob Evers <revers@redhat.com>
+> CC: Chandra Seetharaman <chandra.seetharaman@us.ibm.com>
+> Signed-off-by: Babu Moger <babu.moger@lsi.com>
+> 
+> ---
+> --- linux-2.6.33-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2010-01-05 11:49:22.000000000 -0400
+> +++ linux-2.6.33-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-01-05 11:53:13.000000000 -0400
+> @@ -624,7 +624,7 @@ static int queue_mode_select(struct scsi
+>  	struct rdac_queue_data *qdata;
+>  	struct rdac_controller *ctlr;
+> 
+> -	qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
+> +	qdata = kzalloc(sizeof(*qdata), GFP_NOIO);
+>  	if (!qdata)
+>  		return SCSI_DH_RETRY;
+> 
+> 
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
-diff --git a/Documentation/device-mapper/snapshot.txt b/Documentation/device-mapper/snapshot.txt
-index e3a77b2..7028a2a 100644
---- a/Documentation/device-mapper/snapshot.txt
-+++ b/Documentation/device-mapper/snapshot.txt
-@@ -122,3 +122,45 @@ volumeGroup-base: 0 2097152 snapshot-merge 254:11 254:12 P 16
- brw-------  1 root root 254, 11 29 ago 18:15 /dev/mapper/volumeGroup-base-real
- brw-------  1 root root 254, 12 29 ago 18:16 /dev/mapper/volumeGroup-base-cow
- brw-------  1 root root 254, 10 29 ago 18:16 /dev/mapper/volumeGroup-base
-+
-+
-+How to determine when a snapshot has finished merging
-+=====================================================
-+The status for the snapshot-merge (and snapshot) target includes the
-+"allocated metadata sectors".  The snapshot(-merge) status format is:
-+<sectors_allocated>/<total_sectors> <metadata_sectors>
-+
-+Merging has finished when <sectors_allocated> == <metadata_sectors>
-+
-+Here is a practical example (using a hybrid of lvm and dmsetup commands):
-+
-+# lvs
-+  LV             VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
-+  testlv1        test owi-a- 4.00g
-+  testlv1_snap   test swi-a- 1.00g testlv1  18.97
-+
-+# dmsetup status test-testlv1_snap
-+0 8388608 snapshot 397896/2097152 1560
-+                                  ^^^^ metadata sectors
-+
-+# lvconvert --merge -b test/testlv1_snap
-+  Merging of volume testlv1_snap started.
-+
-+# lvs test/testlv1
-+  LV      VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
-+  testlv1 test Owi-a- 4.00g          17.23
-+
-+# dmsetup status test-testlv1
-+0 8388608 snapshot-merge 281688/2097152 1104
-+
-+# dmsetup status test-testlv1
-+0 8388608 snapshot-merge 180480/2097152 712
-+
-+# dmsetup status test-testlv1
-+0 8388608 snapshot-merge 16/2097152 16
-+
-+Merging has finished
-+
-+# lvs
-+  LV             VG   Attr   LSize Origin  Snap%  Move Log Copy%  Convert
-+  testlv1        test owi-a- 4.00g
