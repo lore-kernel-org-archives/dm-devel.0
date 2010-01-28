@@ -1,106 +1,110 @@
-From: Bob <M8R-0t7cpu@mailinator.com>
-Subject: Re: dm-multipath splitting IOs in 4k blocks
-Date: Thu, 28 Jan 2010 17:24:03 +0100
-Message-ID: <20100128162403.GA28639@marmite.ath.cx>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Thomas Backlund <tmb@mandriva.org>
+Subject: Re: [dm-devel] [BUG] kernel 2.6.32.x hangs during boot process
+Date: Thu, 28 Jan 2010 20:16:34 +0200
+Message-ID: <4B61D482.4080907@mandriva.org>
+References: <d2deb3241001160158r4baed1e1t7e8f6642de018b4c@mail.gmail.com>	<20100122160740.6c16c22d.akpm@linux-foundation.org> <20100128134205.352044bd@notabene> <4B612F89.7020503@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <4B612F89.7020503@ce.jp.nec.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: =?ISO-8859-1?Q?Fran=E7ois_Figarola?= <francois.figarola@i-consult.fr>, hch@infradead.org, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Neil Brown <neilb@suse.de>, Andrew Morton <akpm@linux-foundation.org>, linux-raid@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: dm-devel.ids
 
-On Fri, 22 Jan 2010 at 14:14:56 -0500,
-Mike Snitzer <snitzer redhat com> wrote:
+28.01.2010 08:32, Jun'ichi Nomura skrev:
+>>> On Sat, 16 Jan 2010 10:58:30 +0100
+>>> Fran__ois Figarola<francois.figarola@i-consult.fr>  wrote:
+>>>> Since I've tried to boot 2.6.32.x kernel, my system hangs during the
+>>>> boot process, and I think it could be related to the problem reported
+>>>> earlier by Megastorage (http://lkml.org/lkml/2010/1/10/92).
+>>>>
+>>>> The hardware is a Dell PowerEdge 2950 which runs fine with the
+>>>> 2.6.31.x kernel series (actually running with the latest 2.6.31.11),
+>>>> and the system is debian etch.
+>>>>
+>>>> Here is the trace of the bug I've got (using netconsole) with a
+>>>> 2.6.32.3 kernel :
+>>>>
+>>>> BUG: Dentry ffff880667690000{i=41a46,n=sleep} still in use (8)
+>>>> [unmount of ext3 dm-4]
+>>>> ------------[ cut here ]------------
+>>>> kernel BUG at fs/dcache.c:670!
+>
+> I can reproduce this when suspend/resume read-only mounted dm device.
+>
+> When MS_RDONLY, both freeze_bdev and thaw_bdev call deactivate_locked_super,
+> which seems wrong. The change was introduced with the commit below:
+>
+>    commit 4504230a71566785a05d3e6b53fa1ee071b864eb
+>    Author: Christoph Hellwig<hch@lst.de>
+>    Date:   Mon Aug 3 23:28:35 2009 +0200
+>
+>    freeze_bdev: grab active reference to frozen superblocks
+>
+> With the attached patch, both remount-ro and remount-rw are
+> rejected as EBUSY on freezed device as expected.
+>
+> Christoph, do you think this is the right fix?
+>
 
-> On Fri, Jan 22 2010 at 11:41am -0500,
-> Bob <M8R-0t7cpu mailinator com> wrote:
-> 
-> > Hello,
-> > 
-> > I have a question about dm-multipath. As you can see below, it seems that
-> > multipath splits any IO incoming to the device in 4k blocks, and then
-> > reassembles it when doing the actual read from the SAN. If the device is opened
-> > in direct IO mode, this behavior is not experienced. It is not experienced
-> > either if the IO is sent directly to a single path (eg /dev/sdef in this
-> > example).
-> > 
-> > My question is : what causes this behavior, and is there any way to change that ?
-> 
-> direct-io will cause DM to accumulate pages into larger bios (via
-> bio_add_page calls to dm_merge_bvec).  This is why you see larger
-> requests with iflag=direct.
-> 
-> Buffered IO writes (from the page-cache) will always be in one-page
-> units.  It is the IO scheduler that will merge these requests.
-> 
-> Buffered IO reads _should_ have larger requests.  So it is curious that
-> you're seeing single-page read requests.  I can't reproduce that on a
-> recent kernel.org kernel.  Will need time to test on RHEL 5.3.
+I can confirm that both reverting the above patch, or applying the fix 
+below fixes the issue on both 2.6.32 and 2.6.33-rc5
 
-I tested on a vanilla 2.6.31.12, and the 4k limitation is indeed gone (took me some time because of a buggy nash).
-I also needed to upgrade multipath-tools to get the "Bad DM version" fix.
+So if it's considered the correct fix, it needs to be cc stable@ for 2.6.32
 
-Anyway, I'm a bit clueless as to where to start looking for which commit removed the bug... (can we call that a bug ?)
+(I reported this same issue this morning here:
+  http://marc.info/?l=linux-kernel&m=126467195500908&w=2,
+  but then I found this thread/fix)
 
-> 
-> NOTE: all DM devices should behave like I explained above (you just
-> happen to be focusing on dm-multipath).  Testing against normal "linear"
-> DM devices would also be valid.
+The system I have tested on is a 4-disk dmraid10 connected to an Intel 
+ICH10R on an Asus P7P55D Deluxe running x86_64
 
-Indeed, the results are the same.
-
-> 
-> > Some quick dd tests would tend to show that the device is quite faster if
-> > multipath doesn't split the IOs.
-> 
-> The testing output you provided doesn't reflect that (nor would I expect
-> it to for sequential IO if readahead is configured)...
-
-Speaking of read-ahead, which one is used among :
- - the path RA ( /dev/sdX )
- - the mpath RA ( /dev/mapper/mpathX )
- - the LVM RA ( /dev/mapper/lvg-lvs ) ?
-
-Thanks for your time
-Bob
-
-> 
-> Mike
-> 
-> > [root test-bis ~]# dd if=/dev/dm-5 of=/dev/null bs=16384
-> > 
-> > Meanwhile...
-> > 
-> > [root test-bis ~]# iostat -kx /dev/dm-5 /dev/sdef /dev/sdfh /dev/sdgi /dev/sdgw 5
-> > ...
-> > Device:         rrqm/s   wrqm/s   r/s   w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util
-> > sdef           4187.82     0.00 289.42  0.00 17932.14     0.00   123.92     0.45    1.56   1.01  29.34
-> > sdfh           4196.41     0.00 293.81  0.00 17985.63     0.00   122.43     0.41    1.39   0.90  26.37
-> > sdgi           4209.98     0.00 286.43  0.00 17964.07     0.00   125.44     0.69    2.38   1.43  40.98
-> > sdgw           4188.62     0.00 289.22  0.00 17885.03     0.00   123.68     0.54    1.87   1.16  33.59
-> > dm-5              0.00     0.00 17922.55  0.00 71690.22     0.00     8.00    47.14    2.63   0.05  98.28
-> > 
-> > => avgrq-sz is 4kB (8.00 blocks) on the mpath device
-> > --------
-> > [root test-bis ~]# dd if=/dev/dm-5 iflag=direct of=/dev/null bs=16384
-> > 
-> > iostat now gives :
-> > Device:         rrqm/s   wrqm/s   r/s   w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util
-> > sdef              0.00     0.00 640.00  0.00 10240.00     0.00    32.00     0.31    0.48   0.48  30.86
-> > sdfh              0.00     0.00 644.40  0.00 10310.40     0.00    32.00     0.22    0.34   0.34  22.10
-> > sdgi              0.00     0.00 663.80  0.00 10620.80     0.00    32.00     0.24    0.36   0.36  24.20
-> > sdgw              0.00     0.00 640.00  0.00 10240.00     0.00    32.00     0.20    0.32   0.32  20.28
-> > dm-5              0.00     0.00 2587.00  0.00 41392.00     0.00    32.00     0.97    0.38   0.38  97.20
-> > 
-> > => avgrq-sz is now 16kB (32.00 blocks) on the mpath device
+> Jun'ichi Nomura, NEC Corporation
+>
+>
+> If MS_RDONLY, freeze_bdev should just up_write(s_umount) instead of
+> deactivate_locked_super().
+> Also, keep sb->s_frozen consistent so that remount can check the frozen state.
+>
+> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+   Tested-by: Thomas Backlund <tmb@mandriva.org>
+>
+> diff --git a/fs/block_dev.c b/fs/block_dev.c
+> index 73d6a73..600261f 100644
+> --- a/fs/block_dev.c
+> +++ b/fs/block_dev.c
+> @@ -246,7 +246,9 @@ struct super_block *freeze_bdev(struct block_device *bdev)
+>  	if (!sb)
+>  		goto out;
+>  	if (sb->s_flags & MS_RDONLY) {
+> -		deactivate_locked_super(sb);
+> +		sb->s_frozen = SB_FREEZE_TRANS;
+> +		smp_wmb();
+> +		up_write(&sb->s_umount);
+>  		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+>  		return sb;
+>  	}
+> @@ -307,7 +309,7 @@ int thaw_bdev(struct block_device *bdev, struct super_block *sb)
+>  	BUG_ON(sb->s_bdev != bdev);
+>  	down_write(&sb->s_umount);
+>  	if (sb->s_flags & MS_RDONLY)
+> -		goto out_deactivate;
+> +		goto out_unfrozen;
+>
+>  	if (sb->s_op->unfreeze_fs) {
+>  		error = sb->s_op->unfreeze_fs(sb);
+> @@ -321,11 +323,11 @@ int thaw_bdev(struct block_device *bdev, struct super_block *sb)
+>  		}
+>  	}
+>
+> +out_unfrozen:
+>  	sb->s_frozen = SB_UNFROZEN;
+>  	smp_wmb();
+>  	wake_up(&sb->s_wait_unfrozen);
+>
+> -out_deactivate:
+>  	if (sb)
+>  		deactivate_locked_super(sb);
+>  out_unlock:
