@@ -1,46 +1,79 @@
-From: "Michael S. Tsirkin" <m.s.tsirkin@gmail.com>
-Subject: Re: compat_ioctl: ignore RAID_VERSION ioctl
-Date: Sun, 31 Jan 2010 11:03:25 +0200
-Message-ID: <20100131090324.GA3178@redhat.com>
-References: <20100130205353.GA3168@redhat.com> <201001302302.10574.arnd@arndb.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] Don't lose writes if errors are not handled and
+	log fails
+Date: Sun, 31 Jan 2010 15:34:53 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1001311530280.13480@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <201001302302.10574.arnd@arndb.de>
-Sender: linux-raid-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: "Rafael J. Wysocki" <rjw@sisk.pl>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, neilb@suse.de, linux-raid@vger.kernel.org, dm-devel@redhat.com, maan@systemlinux.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, Jan 30, 2010 at 11:02:10PM +0100, Arnd Bergmann wrote:
-> md ioctls are now handled by the md driver itself, but mdadm
-> may call RAID_VERSION on other devices as well. Mark the command
-> as IGNORE_IOCTL so this fails silently rather than printing
-> an annoying message.
-> 
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> ---
-> 
-> On Saturday 30 January 2010, Michael S. Tsirkin wrote:
-> > Under 2.6.33-rcX (at least rc5 and rc6, didn't check earlier versions),
-> > I started seeing these messages in dmesg (I do not see these messages on 2.6.32):
-> > 
-> > [   16.528951] ioctl32(mdadm:2243): Unknown cmd fd(3) cmd(800c0910){t:09;sz:12} arg(ffb7f9c4) on /dev/sda9
-> 
-> Does this help?
+Hi
 
-Yes, this fixes it.
+This fixes bug https://bugzilla.redhat.com/show_bug.cgi?id=555197
 
-> --- a/fs/compat_ioctl.c
-> +++ b/fs/compat_ioctl.c
-> @@ -1038,6 +1038,8 @@ COMPATIBLE_IOCTL(FIOQSIZE)
->  #ifdef CONFIG_BLOCK
->  /* loop */
->  IGNORE_IOCTL(LOOP_CLR_FD)
-> +/* md calls this on random blockdevs */
-> +IGNORE_IOCTL(RAID_VERSION)
->  /* SG stuff */
->  COMPATIBLE_IOCTL(SG_SET_TIMEOUT)
->  COMPATIBLE_IOCTL(SG_GET_TIMEOUT)
-> 
+Please submit this patch before 2.6.33 goes out. It fixes a bug when old 
+LVM (<= 2.02.51) is used, that doesn't pass errors_handled flag to 
+dm-raid1.
+
+It doesn't need to be backported to RHEL 5.5, because lvm always passes a 
+flag to handle errors there.
+
+Mikulas
+
+Don't lose writes if errors are not handled and log fails
+
+If the log fails and errors are not handled by dmeventd, the writes
+are successfully finished without being actually written to the device.
+
+This code path is taken:
+do_writes:
+	bio_list_merge(&ms->failures, &sync);
+do_failures:
+	if (!get_valid_mirror(ms)) (false)
+	else if (errors_handled(ms)) (false)
+	else bio_endio(bio, 0);
+
+The logic in do_failures is based on presuming that the write was already
+tried --- if it succeeded at least on one leg and errors are not handled,
+it is reported as success.
+
+However, bio can be added to the failures queue without being submitted, in
+do_writes.
+
+This patch changes it so that bios are added to the failures list only if
+errors are handled --- then, they will be held with hold_bio() called from
+do_failures.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-raid1.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6.33-rc5-devel/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.33-rc5-devel.orig/drivers/md/dm-raid1.c	2010-01-29 20:29:37.000000000 +0100
++++ linux-2.6.33-rc5-devel/drivers/md/dm-raid1.c	2010-01-30 00:04:18.000000000 +0100
+@@ -724,7 +724,7 @@ static void do_writes(struct mirror_set 
+ 	/*
+ 	 * Dispatch io.
+ 	 */
+-	if (unlikely(ms->log_failure)) {
++	if (unlikely(ms->log_failure) && errors_handled(ms)) {
+ 		spin_lock_irq(&ms->lock);
+ 		bio_list_merge(&ms->failures, &sync);
+ 		spin_unlock_irq(&ms->lock);
