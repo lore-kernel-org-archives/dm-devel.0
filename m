@@ -1,8 +1,7 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] Don't lose writes if errors are not handled and
-	log fails
-Date: Sun, 31 Jan 2010 15:34:53 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1001311530280.13480@hs20-bc2-1.build.redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH 0/4] dm-mpath: bug fixes around pg-init handling
+Date: Mon, 01 Feb 2010 13:13:59 +0900
+Message-ID: <4B665507.8080205@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,63 +16,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Alasdair G Kergon <agk@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Hi Alasdair and multipath developers,
 
-This fixes bug https://bugzilla.redhat.com/show_bug.cgi?id=555197
+I've started to work on removing the multipath internal I/O queue,
+since request-based dm-core now has a generic queue and multipath
+can use it instead of having its own queue.
 
-Please submit this patch before 2.6.33 goes out. It fixes a bug when old 
-LVM (<= 2.02.51) is used, that doesn't pass errors_handled flag to 
-dm-raid1.
+As a first step, I'm separating pg-init handling from queued I/O
+handling.  During code inspection for that work, I found some bugs
+in the current pg-init handling codes.
+This patch-set fixes those bugs (and implies preparations for
+the work of removing the multipath internal queue).
 
-It doesn't need to be backported to RHEL 5.5, because lvm always passes a 
-flag to handle errors there.
+I don't have any active-passive storage, so I've just done compile
+and boot tests.  Please review, and test on your storages.
 
-Mikulas
+This patch-set was made on top of 2.6.33-rc6 + Alasdair's patches below:
+  dm-mpath-pass-struct-pgpath-to-pg-init-done.patch
+  dm-mpath-skip-activate_path-for-failed-paths.patch
+  dm-mpath-Remove-suspended-flag-from-struct-multipath.patch
 
-Don't lose writes if errors are not handled and log fails
+Summary of the patch-set:
+  1/4: dm-mpath: don't clear m->queue_io until all activations complete
+  2/4: dm-mpath: must wait for pg-init completion in postsuspend
+  3/4: dm-mpath: separate pg-init handling from process_queued_ios()
+  4/4: dm-mpath: move initial pg-init kick into __switch_pg()
 
-If the log fails and errors are not handled by dmeventd, the writes
-are successfully finished without being actually written to the device.
+ drivers/md/dm-mpath.c |  131 +++++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 97 insertions(+), 34 deletions(-)
 
-This code path is taken:
-do_writes:
-	bio_list_merge(&ms->failures, &sync);
-do_failures:
-	if (!get_valid_mirror(ms)) (false)
-	else if (errors_handled(ms)) (false)
-	else bio_endio(bio, 0);
-
-The logic in do_failures is based on presuming that the write was already
-tried --- if it succeeded at least on one leg and errors are not handled,
-it is reported as success.
-
-However, bio can be added to the failures queue without being submitted, in
-do_writes.
-
-This patch changes it so that bios are added to the failures list only if
-errors are handled --- then, they will be held with hold_bio() called from
-do_failures.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-raid1.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-Index: linux-2.6.33-rc5-devel/drivers/md/dm-raid1.c
-===================================================================
---- linux-2.6.33-rc5-devel.orig/drivers/md/dm-raid1.c	2010-01-29 20:29:37.000000000 +0100
-+++ linux-2.6.33-rc5-devel/drivers/md/dm-raid1.c	2010-01-30 00:04:18.000000000 +0100
-@@ -724,7 +724,7 @@ static void do_writes(struct mirror_set 
- 	/*
- 	 * Dispatch io.
- 	 */
--	if (unlikely(ms->log_failure)) {
-+	if (unlikely(ms->log_failure) && errors_handled(ms)) {
- 		spin_lock_irq(&ms->lock);
- 		bio_list_merge(&ms->failures, &sync);
- 		spin_unlock_irq(&ms->lock);
+Thanks,
+Kiyoshi Ueda
