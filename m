@@ -1,16 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] If all legs fail, return an error
-Date: Tue, 2 Feb 2010 13:17:08 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1002021315140.30625@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1001311530280.13480@hs20-bc2-1.build.redhat.com>
-	<4B670EB6.5000201@redhat.com>
-	<Pine.LNX.4.64.1002020755100.30625@hs20-bc2-1.build.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 3/4] dm-mpath: separate pg-init handling
+	from	process_queued_ios()
+Date: Tue, 2 Feb 2010 18:24:37 +0000
+Message-ID: <20100202182437.GI864@agk-dp.fab.redhat.com>
+References: <4B665507.8080205@ct.jp.nec.com> <4B6656FF.5000701@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1002020755100.30625@hs20-bc2-1.build.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4B6656FF.5000701@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,123 +20,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-
-On Tue, 2 Feb 2010, Mikulas Patocka wrote:
-
-> 
-> 
-> On Mon, 1 Feb 2010, Takahiro Yasui wrote:
-> 
-> > > This fixes bug https://bugzilla.redhat.com/show_bug.cgi?id=555197
-> > > 
-> > > Please submit this patch before 2.6.33 goes out. It fixes a bug when old 
-> > > LVM (<= 2.02.51) is used, that doesn't pass errors_handled flag to 
-> > > dm-raid1.
-> > > 
-> > > It doesn't need to be backported to RHEL 5.5, because lvm always passes a 
-> > > flag to handle errors there.
-> > 
-> > Don't we need to backport it to RHEL 5.5? If lvm is the only user of dm-raid1,
-> > we don't need to backport it to RHEL 5.5. But if not, we need to.
-> > 
-> > > Don't lose writes if errors are not handled and log fails
-> > > 
-> > > If the log fails and errors are not handled by dmeventd, the writes
-> > > are successfully finished without being actually written to the device.
-> > > 
-> > > This code path is taken:
-> > > do_writes:
-> > > 	bio_list_merge(&ms->failures, &sync);
-> > > do_failures:
-> > > 	if (!get_valid_mirror(ms)) (false)
-> > > 	else if (errors_handled(ms)) (false)
-> > > 	else bio_endio(bio, 0);
-> > > 
-> > > The logic in do_failures is based on presuming that the write was already
-> > > tried --- if it succeeded at least on one leg and errors are not handled,
-> > > it is reported as success.
-> > > 
-> > > However, bio can be added to the failures queue without being submitted, in
-> > > do_writes.
-> > > 
-> > > This patch changes it so that bios are added to the failures list only if
-> > > errors are handled --- then, they will be held with hold_bio() called from
-> > > do_failures.
-> > 
-> > I agree that bios should be issued by do_write() when ms->log_failures is set,
-> > but do we need to add bios to the failures queue? As you mentioned, the failures
-> > queue should be used to bios which are already handled. Therefore, I think
-> > bios are better to handled directly by hold_bio() instead of adding them to
-> > the failures queue as bios for nosync regions are done.
-> > 
-> > -	if (unlikely(ms->log_failure)) {
-> > -		spin_lock_irq(&ms->lock);
-> > -		bio_list_merge(&ms->failures, &sync);
-> > -		spin_unlock_irq(&ms->lock);
-> > -		wakeup_mirrord(ms);
-> > -	} else
-> > -		while ((bio = bio_list_pop(&sync)))
-> > +	while ((bio = bio_list_pop(&sync)))
-> > +		if (unlikely(ms->log_failure) && errors_handled(ms))
-> > +			hold_bio(ms, bio);
-> > +		else
-> >  			do_write(ms, bio);
-> 
-> I thought about this too, but I'd decided to put the bios on the failures 
-> queue rather than holding them for this reason: if all the legs fail, it 
-> is better to terminate the bio with -EIO than to hold it. If all the legs 
-> fail, you can't save anything anyway and the less things you are holding, 
-> the less possibility for deadlocks exists.
-> 
-> So I put the bios to the failure queue and do_failures will terminate them 
-> with -EIO if all the legs failred and hold them if we use dmeventd and 
-> there is at least one live leg.
-> 
-> Mikulas
-
-BTW. if you want to follow this principle (abort bio if all legs fail), 
-you can also apply this patch, that does it for out-of-sync regions. It is 
-not critical, so it can wait for 2.6.34.
-
-Mikulas
-
----
-
-If all legs fail, return an error rather than holding the bio
-
-Add the bio to the failures list instead of holding it. It is processed
-in do_failures, do_failures tests first if all legs failed and returns
-the bio with -EIO in this case. If there is some leg alive and errors
-are handled by dmeventd, do_failures calls hold_bio.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-raid1.c |    9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
-
-Index: linux-2.6.33-rc5-devel/drivers/md/dm-raid1.c
-===================================================================
---- linux-2.6.33-rc5-devel.orig/drivers/md/dm-raid1.c	2010-02-02 17:23:08.000000000 +0100
-+++ linux-2.6.33-rc5-devel/drivers/md/dm-raid1.c	2010-02-02 17:23:40.000000000 +0100
-@@ -737,9 +737,12 @@ static void do_writes(struct mirror_set 
- 		dm_rh_delay(ms->rh, bio);
+On Mon, Feb 01, 2010 at 01:22:23PM +0900, Kiyoshi Ueda wrote:
+> This patch is a preparation of the next patch, which fixes the issue
+> that ioctl isn't processed until any I/O is issued.  (And also it is
+> a preparation of another patch-set to remove multipath internal queue.)
+> No functional change.
  
- 	while ((bio = bio_list_pop(&nosync))) {
--		if (unlikely(ms->leg_failure) && errors_handled(ms))
--			hold_bio(ms, bio);
--		else {
-+		if (unlikely(ms->leg_failure) && errors_handled(ms)) {
-+			spin_lock_irq(&ms->lock);
-+			bio_list_add(&ms->failures, bio);
-+			spin_unlock_irq(&ms->lock);
-+			wakeup_mirrord(ms);
-+		} else {
- 			map_bio(get_default_mirror(ms), bio);
- 			generic_make_request(bio);
- 		}
+I've split this into two, but it's very 'tight' code forming a state
+machine here, and while I understand the principle of the patch, I can't
+spot an easy way to tell that all the paths through the code are right.
+Is it worth trying to extend the explanation, or will later patches be
+replacing this code, making it better to wait for that new code before
+reviewing?
+
+  ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/dm-mpath-refactor-pg_init-trigger.patch
+
+Alasdair
