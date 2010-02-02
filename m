@@ -1,12 +1,15 @@
 From: neilb@suse.de
-Subject: [dmraid 0/3] Some more dmraid patches
-Date: Tue, 02 Feb 2010 18:25:44 +1100
-Message-ID: <20100202072544.305994749@suse.de>
+Subject: [dmraid 2/3] Dont install libdmraid-event-* with verison
+	number.
+Date: Tue, 02 Feb 2010 18:25:46 +1100
+Message-ID: <20100202072756.333649313@suse.de>
+References: <20100202072544.305994749@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline; filename=lib-install
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,13 +22,28 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
- following are a few patches for dmraid that I made while packaging -rc16
- for openSUSE.
+   The libdmraid-event-* library is not a shared library in the regular
+   sense.  i.e. programs are not linked against it and so do not have the
+   library version number encoded in them.
+   Rather, this is a shared-object that is explicitly loaded by dmeventd
+   on request from dmraid.  dmraid asks for "libdmraid-event-ism.so", so
+   that is the only name that the shared object should be stored under.
+   Providing a name with a trailing version number just makes it look like
+   something that it is not.
 
- The first two I sent previously as just one patch but it didn't get applied.
- So I broke it into two in the hope that at least the first (which is a clear
- bug) will be applied.
+Signed-off-by: NeilBrown <neilb@suse.de>
+---
+ lib/Makefile.in |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thanks,
-NeilBrown
+--- dmraid.orig/lib/Makefile.in
++++ dmraid/lib/Makefile.in
+@@ -82,7 +82,7 @@ install_dmraid_libs: $(INSTALL_TARGETS)
+ 	for f in $(INSTALL_TARGETS); \
+ 	do \
+ 		n=$$(basename $${f}) ; \
+-		if [[ "$$n" =~ .so$$ ]]; then \
++		if [[ "$$n" =~ .so$$ && ! "$$n" =~ libdmraid-events-.* ]]; then \
+ 			$(INSTALL) -m 555 $(STRIP) \
+ 				$$f $(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
+ 			$(LN_S) -f $${n}.@DMRAID_LIB_VERSION@ $(libdir)/$${n}; \
