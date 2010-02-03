@@ -1,15 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: Manual failback commands
-Date: Wed, 03 Feb 2010 02:07:58 +0100
-Message-ID: <1265159278.19083.11.camel@zezette>
-References: <4B68C5A7.8090303@gps.caltech.edu>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Nikanth Karthikesan <knikanth@suse.de>
+Subject: Re: [PATCH] dm_crypt: Issue all previous bios before
+	remapping barrier bio
+Date: Wed, 3 Feb 2010 11:39:15 +0530
+Message-ID: <201002031139.15659.knikanth@suse.de>
+References: <201002012049.27132.knikanth@suse.de> <4B66F5BE.3030205@redhat.com>
+	<Pine.LNX.4.64.1002020743340.30625@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4B68C5A7.8090303@gps.caltech.edu>
+In-Reply-To: <Pine.LNX.4.64.1002020743340.30625@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,24 +20,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On mar., 2010-02-02 at 16:39 -0800, Scott Dungan wrote:
-> Hello all.
+On Tuesday 02 February 2010 18:17:24 Mikulas Patocka wrote:
+> On Mon, 1 Feb 2010, Milan Broz wrote:
+> > On 02/01/2010 04:19 PM, Nikanth Karthikesan wrote:
+> > > Before remapping a barrier bio, make sure that there are no un-issued
+> > > pending I/O in the workqueue. Otherwise a dm_flush would simply add
+> > > a barrier request to the underlying device, without issuing the bio's
+> > > queued in the dm_crypt device.
+> >
+> > This should not be needed. Core dm code waits for all bios submitted
+> > before barrier requests.
+> >
+> > Mikulas, could you verify it?
+> >
+> > Milan
 > 
-> If we set a device to manual failback, how does one command the 
-> multipathd service to reinstate the path when we have decided the path 
-> is indeed ready to accept IO?
+> Yes, you are right, the patch is not needed.
 > 
-paths are automatically reinstated by multipathd.
+> When the target receives an empty barrier request, there are no other data
+> requests in flight.
+> 
+> BTW. The target may receive more empty barrier requests simultaneously, if
+> it asked for it by setting ti->num_flush_requests to more than one. But
+> barrier and non-barrier requests are never mixed.
+> 
 
-The 'failback' parameter means the original path_group is not
-re-activated after a switch-over to a secondary path_group.
+Correct. Sorry, I was a bit hasty in sending that patch. It is not required. 
+Thanks for the patient explanation.
 
-You can force multipathd to not reinstate a path using the CLI (or
-pro-actively disable it).
-
-Regards,
-cvaroqui
-http://www.opensvc.com
+Thanks
+Nikanth
