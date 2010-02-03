@@ -1,17 +1,12 @@
-From: Takahiro Yasui <tyasui@redhat.com>
-Subject: Re: [PATCH] If all legs fail, return an error
-Date: Tue, 02 Feb 2010 14:47:29 -0500
-Message-ID: <4B688151.1070306@redhat.com>
-References: <Pine.LNX.4.64.1001311530280.13480@hs20-bc2-1.build.redhat.com>
-	<4B670EB6.5000201@redhat.com>
-	<Pine.LNX.4.64.1002020755100.30625@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1002021315140.30625@hs20-bc2-1.build.redhat.com>
+From: Scott Dungan <scott@gps.caltech.edu>
+Subject: Manual failback commands
+Date: Tue, 02 Feb 2010 16:39:03 -0800
+Message-ID: <4B68C5A7.8090303@gps.caltech.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1002021315140.30625@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,18 +16,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 02/02/10 13:17, Mikulas Patocka wrote:
-> BTW. if you want to follow this principle (abort bio if all legs fail), 
-> you can also apply this patch, that does it for out-of-sync regions. It is 
-> not critical, so it can wait for 2.6.34.
+Hello all.
 
-Looks good to me.
-
-Reviewed-by: Takahiro Yasui <tyasui@redhat.com>
+If we set a device to manual failback, how does one command the 
+multipathd service to reinstate the path when we have decided the path 
+is indeed ready to accept IO?
 
 Thanks,
-Taka
+
+-Scott
