@@ -1,16 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: Manual failback commands
-Date: Wed, 03 Feb 2010 17:59:02 +0100
-Message-ID: <1265216342.26432.9.camel@zezette>
-References: <4B68C5A7.8090303@gps.caltech.edu>
-	<1265159278.19083.11.camel@zezette> <4B69A924.7010000@gps.caltech.edu>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: "Mey, Georg" <Georg.Mey@netapp.com>
+Subject: DMMP and UDEV issue on SLES10 SP2 (64bit)
+Date: Wed, 3 Feb 2010 16:59:46 -0000
+Message-ID: <1CD9B7FF2BF5674E85D505154465DAF609DDF143@LDCMVEXC1-PRD.hq.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4B69A924.7010000@gps.caltech.edu>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +17,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On mer., 2010-02-03 at 08:49 -0800, Scott Dungan wrote:
-> > On mar., 2010-02-02 at 16:39 -0800, Scott Dungan wrote:
-> >    
-> >> Hello all.
-> >>
-> >> If we set a device to manual failback, how does one command the
-> >> multipathd service to reinstate the path when we have decided the path
-> >> is indeed ready to accept IO?
-> >>
-> >>      
-> > paths are automatically reinstated by multipathd.
-> >
-> > The 'failback' parameter means the original path_group is not
-> > re-activated after a switch-over to a secondary path_group.
-> >
-> > You can force multipathd to not reinstate a path using the CLI (or
-> > pro-actively disable it).
-> >    
-> Thanks for the clarification. I think I understand this better now. 
-> Would it be possible to post CLI example(s) of reinstating or disabling 
-> a path? I cannot seem to find such an example in documentation or other 
-> available resources.
-> 
+Hi all,
 
-The cli has a syntax help message, accessed using 'help' or whatever
-unknown keyword.
+does anybody ahev seen this issue:
 
-The relevant commands are:
- reinstate path $path
- fail path $path
+When adding new disks in an envrionment with device mapper mulitpathing con=
+figured =
 
-which wrap 1/ the dm messaging to fail/resinstate a path and 2/
-disable/enable the specified path checking in multipathd
+properly, new disks do show up and multipath -ll does show the correct prio=
+rity
+groups. Along with all the new DM devices created in =
 
--- 
-cvaroqui,
-http://www.opensvc.com
+- /dev/disk/by-id
+- /dev/disk/by-name
+- /dev/disk/by-uuid
+- /dev/mapper
+we do expect to get entries like /dev/dm-[0-9][0-9]* - but this does not ha=
+ppen.
+Unfortunately some NetApp provisioning software needs these entries.
+
+Any ideas?
+
+The system(s) are SLES10 SP2 (no additional patches applied yet)
+
+Kind regards
+
+Georg
+
+ =
+
+___________________________________________________________________________=
+____________
+Georg Mey
+Solutions Architect
+NetApp
+Wankelstrasse 3
+D-70563 Stuttgart
+
++49 (0) 711-686880-65 Tel
++49 (0) 711-686880-99 Fax
++49 (0) 151-12055-928 Mobil
+Georg.Mey@netapp.com
+www.netapp.de
+
+
+
+
+
+Diese e-Mail kann vertrauliche und/oder rechtlich gesch=FCtzte Informatione=
+n enthalten. Wenn Sie nicht der richtige Adressat sind =
+
+oder diese e-Mail irrt=FCmlich erhalten haben, informieren Sie bitte sofort=
+ den Absender und vernichten Sie diese e-Mail. Das unerlaubte =
+
+Kopieren sowie die unbefugte Weitergabe dieser e-Mail und ihrer Inhalte ist=
+ nicht gestattet.
+This e-mail may contain confidential and/or privileged information. If you =
+are not the intended addressee or have received this e-mail
+in error, please notify the sender immediately and destroy this e-mail. Any=
+ unauthorized copying, disclosure or distribution of the =
+
+material in this e-mail is strictly forbidden.
+NetApp Deutschland GmbH, Bretonischer Ring 6, 85630 Grasbrunn, =
+
+Handelsregister: AG M=FCnchen HRB113907, Gesch=E4ftsf=FChrer: Manfred Reitn=
+er
+ =
