@@ -1,13 +1,16 @@
-From: "Mey, Georg" <Georg.Mey@netapp.com>
-Subject: DMMP and UDEV issue on SLES10 SP2 (64bit)
-Date: Wed, 3 Feb 2010 16:59:46 -0000
-Message-ID: <1CD9B7FF2BF5674E85D505154465DAF609DDF143@LDCMVEXC1-PRD.hq.netapp.com>
+From: Scott Dungan <scott@gps.caltech.edu>
+Subject: Re: Manual failback commands
+Date: Wed, 03 Feb 2010 09:44:17 -0800
+Message-ID: <4B69B5F1.8030801@gps.caltech.edu>
+References: <4B68C5A7.8090303@gps.caltech.edu>	<1265159278.19083.11.camel@zezette>
+	<4B69A924.7010000@gps.caltech.edu>
+	<1265216342.26432.9.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <1265216342.26432.9.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,69 +23,25 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
 
-does anybody ahev seen this issue:
+> The cli has a syntax help message, accessed using 'help' or whatever
+> unknown keyword.
+>
+> The relevant commands are:
+>   reinstate path $path
+>   fail path $path
+>
+> which wrap 1/ the dm messaging to fail/resinstate a path and 2/
+> disable/enable the specified path checking in multipathd
+>
+>    
+Thanks for your continued help. Perhaps I am using the incorrect tools. 
+Neither the 'multipath' command or the interactive mode of the 
+multipathd daemon (multipath -k) have any of those directives documented 
+under the 'help' listing, nor do they respond to them when I use them as 
+you specify above. What CLI command are you using with those directives? 
+Like:
 
-When adding new disks in an envrionment with device mapper mulitpathing con=
-figured =
+%cli_command% reinstate path $path
 
-properly, new disks do show up and multipath -ll does show the correct prio=
-rity
-groups. Along with all the new DM devices created in =
-
-- /dev/disk/by-id
-- /dev/disk/by-name
-- /dev/disk/by-uuid
-- /dev/mapper
-we do expect to get entries like /dev/dm-[0-9][0-9]* - but this does not ha=
-ppen.
-Unfortunately some NetApp provisioning software needs these entries.
-
-Any ideas?
-
-The system(s) are SLES10 SP2 (no additional patches applied yet)
-
-Kind regards
-
-Georg
-
- =
-
-___________________________________________________________________________=
-____________
-Georg Mey
-Solutions Architect
-NetApp
-Wankelstrasse 3
-D-70563 Stuttgart
-
-+49 (0) 711-686880-65 Tel
-+49 (0) 711-686880-99 Fax
-+49 (0) 151-12055-928 Mobil
-Georg.Mey@netapp.com
-www.netapp.de
-
-
-
-
-
-Diese e-Mail kann vertrauliche und/oder rechtlich gesch=FCtzte Informatione=
-n enthalten. Wenn Sie nicht der richtige Adressat sind =
-
-oder diese e-Mail irrt=FCmlich erhalten haben, informieren Sie bitte sofort=
- den Absender und vernichten Sie diese e-Mail. Das unerlaubte =
-
-Kopieren sowie die unbefugte Weitergabe dieser e-Mail und ihrer Inhalte ist=
- nicht gestattet.
-This e-mail may contain confidential and/or privileged information. If you =
-are not the intended addressee or have received this e-mail
-in error, please notify the sender immediately and destroy this e-mail. Any=
- unauthorized copying, disclosure or distribution of the =
-
-material in this e-mail is strictly forbidden.
-NetApp Deutschland GmbH, Bretonischer Ring 6, 85630 Grasbrunn, =
-
-Handelsregister: AG M=FCnchen HRB113907, Gesch=E4ftsf=FChrer: Manfred Reitn=
-er
- =
+-Scott
