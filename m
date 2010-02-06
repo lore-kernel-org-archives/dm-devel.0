@@ -1,15 +1,12 @@
-From: "Ronei Kliemann" <Ronei@tscom.com.br>
-Subject: Problem with HP 110 G5
-Date: Fri, 5 Feb 2010 14:03:46 -0200
-Message-ID: <766AD601A3F2BC4BB5C12D5CC0678B061467DF@tecsystem.TecSystem.local>
-References: <886648DFAE0D42CC97560EF58E589076@TecSystem.local>
-Reply-To: Ronei@tscom.com.br, device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: [Fwd: [PATCH] Latest git -master is not compilable]
+Date: Sat, 06 Feb 2010 10:01:58 +0100
+Message-ID: <1265446918.4273.3.camel@zezette>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="=-X6kPA2JZTNyYEdtoTCmt"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <886648DFAE0D42CC97560EF58E589076@TecSystem.local>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,370 +16,171 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: alex.zeffertt@eu.citrix.com
+Cc: rumcic@gmail.com, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Lucca
 
-Thanks' for reply.
+--=-X6kPA2JZTNyYEdtoTCmt
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 
-[Backup_DrClin /]# modprobe dm-mirror
-[Backup_DrClin /]# modprobe dm-mirror
-[Backup_DrClin /]# modprobe -l dm-mirror
-/lib/modules/2.6.18-128.1.10.el5/kernel/drivers/md/dm-mirror.ko
-[Backup_DrClin /]# modprobe -v dm-mirror
-[Backup_DrClin /]# dmraid -ay
-RAID set "ddf1_Raid_1_Mirror" was not activated
-ERROR: device "ddf1_Raid_1_Mirror" could not be found
-
-
-
-
-
-Message: 6
-Date: Thu, 4 Feb 2010 08:09:47 +0100
-From: Luca Berra <bluca@comedia.it>
-To: dm-devel@redhat.com
-Subject: Re: [dm-devel] Problem with HP - ML 110 G5
-Message-ID: <20100204070947.GA29619@maude.comedia.it>
-Content-Type: text/plain; charset=iso-8859-1; format=flowed
-
-On Wed, Feb 03, 2010 at 05:12:38PM -0200, Ronei Kliemann wrote:
->Feb  3 08:31:35 Backup_DrClin kernel: device-mapper: table: 253:0:
-mirror: Device lookup failure
->
->Feb  3 08:31:35 Backup_DrClin kernel: device-mapper: ioctl: error
-adding target to table
->
->Feb  3 08:31:35 Backup_DrClin kernel: device-mapper: ioctl: device
-doesn't appear to be in the dev hash table.
-
-modprobe dm-mirror?
-
-L.
+Can you confirm the fix from Rumko does not break your ulibc setup ?
 
 -- 
-Luca Berra -- bluca@comedia.it
-         Communication Media & Services S.r.l.
-  /"\
-  \ /     ASCII RIBBON CAMPAIGN
-   X        AGAINST HTML MAIL
-
-Ronei Kliemann
-Tec System Sistemas Eletronicos LTDA
-Fone/Fax: 55 51 3599 1191 (Ramal 23) / Fone: 55 51 2108 0721 / Fone: 55
-51 9259 5361
-Celular:. 55 51 9127 3588 
-VoIP Tellfree: 782 1191 / DDR - 780 3191
-E-mail: ronei@tscom.com.br
-Site: www.tscom.com.br 
-Msn: kronei@hotmail.com (apenas para - Chat)
- 
-
-Message: 3
-Date: Wed, 3 Feb 2010 17:12:38 -0200
-From: "Ronei Kliemann" <Ronei@tscom.com.br>
-To: <dm-devel@redhat.com>
-Subject: [dm-devel] Problem with HP - ML 110 G5
-Message-ID:
-	
-<766AD601A3F2BC4BB5C12D5CC0678B0614679E@tecsystem.TecSystem.local>
-Content-Type: text/plain; charset="iso-8859-1"
-
-Hi
-
- 
-
-I am with one problem that I couldn't find solution at the intenet. 
-
- 
-
-My server is HP ML 110 G5 with Embedded Raid. By lspci , I can see that
-it's a  "RAID bus controller: Intel Corporation 82801 SATA RAID
-Controller (rev 02)". I am using centos 5
-
- 
-
-I can see that RAID is not working because there isn?t volume at
-/dev/mapper/, just "control".
-
- 
-
-"[Backup_DrClin ~]# cd /dev/mapper/
-
-[Backup_DrClin mapper]# ls
-
-control
-
-[Backup_DrClin mapper]#"
-
- 
-
- 
-
-The device mapper was load at boot:
-
- 
-
- 
-
-[Backup_DrClin log]# grep device-mapper dmesg
-
-device-mapper: uevent: version 1.0.3
-
-device-mapper: ioctl: 4.11.5-ioctl (2007-12-12) initialised:
-dm-devel@redhat.com
-
-device-mapper: multipath: version 1.0.5 loaded
-
-[Backup_DrClin log]#
-
- 
-
- 
-
-I Try to activate dmraid, but no work:
-
- 
-
-[Backup_DrClin mapper]# dmraid -ay
-
-RAID set "ddf1_Raid_1_Mirror" was not activated
-
-ERROR: device "ddf1_Raid_1_Mirror" could not be found
-
-[Backup_DrClin mapper]#
-
- 
-
-I can see at logs : (/var/log/messages
-
- 
-
-Feb  3 08:31:35 Backup_DrClin kernel: device-mapper: table: 253:0:
-mirror: Device lookup failure
-
-Feb  3 08:31:35 Backup_DrClin kernel: device-mapper: ioctl: error adding
-target to table
-
-Feb  3 08:31:35 Backup_DrClin kernel: device-mapper: ioctl: device
-doesn't appear to be in the dev hash table.
-
- 
-
- 
-
- 
-
-More info:
-
- 
-
-[Backup_DrClin log]# dmraid -s
-
-*** Group superset .ddf1_disks
-
---> Subset
-
-name   : ddf1_Raid_1_Mirror
-
-size   : 312237824
-
-stride : 128
-
-type   : mirror
-
-status : ok
-
-subsets: 0
-
-devs   : 2
-
-spares : 0
-
-[Backup_DrClin log]#
-
- 
-
-[Backup_DrClin log]# dmraid -r
-
-/dev/sda: ddf1, ".ddf1_disks", GROUP, ok, 312237856 sectors, data@ 0
-
-/dev/sdb: ddf1, ".ddf1_disks", GROUP, ok, 312237856 sectors, data@ 0
-
-[Backup_DrClin log]#
-
- 
-
- 
-
-[Backup_DrClin mapper]# dmraid -rD -d -d -d -v -v -v
-
-WARN: locking /var/lock/dmraid/.lock
-
-NOTICE: /dev/sda: asr     discovering
-
-NOTICE: /dev/sda: ddf1    discovering
-
-NOTICE: creating directory dmraid.ddf1
-
-NOTICE: writing metadata file "sda.dat"
-
-NOTICE: writing offset to file "sda.offset"
-
-NOTICE: writing size to file "sda.size"
-
-NOTICE: /dev/sda: ddf1 metadata discovered
-
-NOTICE: /dev/sda: hpt37x  discovering
-
-NOTICE: /dev/sda: hpt45x  discovering
-
-NOTICE: /dev/sda: isw     discovering
-
-NOTICE: /dev/sda: jmicron discovering
-
-NOTICE: /dev/sda: lsi     discovering
-
-NOTICE: /dev/sda: nvidia  discovering
-
-NOTICE: /dev/sda: pdc     discovering
-
-NOTICE: /dev/sda: sil     discovering
-
-NOTICE: /dev/sda: via     discovering
-
-NOTICE: /dev/sdb: asr     discovering
-
-NOTICE: /dev/sdb: ddf1    discovering
-
-NOTICE: writing metadata file "sdb.dat"
-
-NOTICE: writing offset to file "sdb.offset"
-
-NOTICE: writing size to file "sdb.size"
-
-NOTICE: /dev/sdb: ddf1 metadata discovered
-
-NOTICE: /dev/sdb: hpt37x  discovering
-
-NOTICE: /dev/sdb: hpt45x  discovering
-
-NOTICE: /dev/sdb: isw     discovering
-
-NOTICE: /dev/sdb: jmicron discovering
-
-NOTICE: /dev/sdb: lsi     discovering
-
-NOTICE: /dev/sdb: nvidia  discovering
-
-NOTICE: /dev/sdb: pdc     discovering
-
-NOTICE: /dev/sdb: sil     discovering
-
-NOTICE: /dev/sdb: via     discovering
-
-NOTICE: /dev/sdc: asr     discovering
-
-NOTICE: /dev/sdc: ddf1    discovering
-
-NOTICE: /dev/sdc: hpt37x  discovering
-
-NOTICE: /dev/sdc: hpt45x  discovering
-
-NOTICE: /dev/sdc: isw     discovering
-
-NOTICE: /dev/sdc: jmicron discovering
-
-NOTICE: /dev/sdc: lsi     discovering
-
-NOTICE: /dev/sdc: nvidia  discovering
-
-NOTICE: /dev/sdc: pdc     discovering
-
-NOTICE: /dev/sdc: sil     discovering
-
-NOTICE: /dev/sdc: via     discovering
-
-INFO: RAID devices discovered:
-
- 
-
-/dev/sda: ddf1, ".ddf1_disks", GROUP, ok, 312237856 sectors, data@ 0
-
-/dev/sdb: ddf1, ".ddf1_disks", GROUP, ok, 312237856 sectors, data@ 0
-
-WARN: unlocking /var/lock/dmraid/.lock
-
-[Backup_DrClin mapper]#
-
- 
-
-[Backup_DrClin /]# yum list dmraid*
-
-Loading "installonlyn" plugin
-
-Setting up repositories
-
-Reading repository metadata in from local files
-
-Excluding Packages from CentOS-5 - Base
-
-Finished
-
-Excluding Packages from CentOS-5 - Updates
-
-Finished
-
-Excluding Packages from CentOS-5 - Addons
-
-Finished
-
-Excluding Packages from CentOS-5 - Extras
-
-Finished
-
-Installed Packages
-
-dmraid.i386                              1.0.0.rc13-53.el5
-installed
-
-dmraid-events.i386                       1.0.0.rc13-53.el5
-installed
-
-Available Packages
-
-dmraid-devel.i386                        1.0.0.rc13-53.el5      base
-
-dmraid-events-logwatch.i386              1.0.0.rc13-53.el5      base
-
-[Backup_DrClin /]#
-
- 
-
-Could someone help me? I guess that must be a Bug !
-
- 
-
-Thank?s
-
- 
-
- 
-
-Ronei Kliemann
-
-Tec System Sistemas Eletronicos LTDA
-
-Fone/Fax: 55 51 3599 1191 (Ramal 23) / Fone: 55 51 2108 0721 / Fone: 55
-51 9259 5361
-
-Celular:. 55 51 9127 3588 
-
-VoIP Tellfree: 782 1191 / DDR - 780 3191
-
-E-mail: ronei@tscom.com.br
-
-Site: www.tscom.com.br 
-
-Msn: kronei@hotmail.com (apenas para - Chat)
+cvaroqui,
+http://www.opensvc.com
+
+--=-X6kPA2JZTNyYEdtoTCmt
+Content-Disposition: inline
+Content-Description: Forwarded message - [PATCH] Latest git -master is not
+	compilable
+Content-Type: message/rfc822
+
+Return-Path: rumcic@gmail.com
+Received: from zimbra16-e3.priv.proxad.net (LHLO
+	zimbra16-e3.priv.proxad.net) (172.20.243.166) by
+	zimbra16-e3.priv.proxad.net with LMTP;
+	Fri, 5 Feb 2010 21:02:37 +0100 (CET)
+Received: from relay1-v.mail.gandi.net (mx28-g26.priv.proxad.net
+	[172.20.243.98]) by zimbra16-e3.priv.proxad.net (Postfix) with ESMTP id
+	3C5EC2DA0F for <christophe.varoqui@free.fr>; Fri,  5 Feb 2010 21:02:37
+	+0100 (CET)
+Received: from relay1-v.mail.gandi.net ([217.70.178.75]) by mx1-g20.free.fr
+	(MXproxy) for christophe.varoqui@free.fr ;
+	Fri,  5 Feb 2010 21:02:32 +0100 (CET)
+X-ProXaD-SC: state=HAM score=0
+Received: from spool.mail.gandi.net (mspool1-v.mgt.gandi.net [10.0.21.71])
+	by relay1-v.mail.gandi.net (Postfix) with ESMTP id 3F8C2362B5 for
+	<christophe.varoqui@free.fr>; Fri,  5 Feb 2010 21:02:32 +0100 (CET)
+Received: from mfilter5-d.gandi.net (mfilter5-d.gandi.net [217.70.178.39])
+	by spool.mail.gandi.net (Postfix) with ESMTP id 2EA886A80B5 for
+	<christophe.varoqui@free.fr>; Fri,  5 Feb 2010 21:02:32 +0100 (CET)
+X-Virus-Scanned: Debian amavisd-new at mfilter5-d.gandi.net
+Received: from spool.mail.gandi.net ([10.0.21.71]) by mfilter5-d.gandi.net
+	(mfilter5-d.gandi.net [217.70.178.39]) (amavisd-new,
+	port 10024) with ESMTP
+	id Ik01MRQO6weJ for <christophe.varoqui@free.fr>;
+	Fri,  5 Feb 2010 21:02:31 +0100 (CET)
+Received: from mail-fx0-f216.google.com (mail-fx0-f216.google.com
+	[209.85.220.216]) by spool.mail.gandi.net (Postfix) with ESMTP id
+	C1EAD6A80B9 for <christophe.varoqui@opensvc.com>;
+	Fri,  5 Feb 2010 21:02:28 +0100 (CET)
+Received: by fxm8 with SMTP id 8so2824682fxm.6 for
+	<christophe.varoqui@opensvc.com>; Fri, 05 Feb 2010 12:02:28 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=gamma;
+	h=domainkey-signature:received:received:from:to:subject:date
+	:user-agent:mime-version:content-type:content-transfer-encoding
+	:message-id; bh=y4RA7FLVINH1hXmCpM8nUq84T2Z1Sc2Tr6avbSrxlZc=;
+	b=UNkj30zUWn8vqJN+DDUwo2yEB3UhyobpvTx/1Cfwk1EikuC0Nz6TuAMLV+ALWr4q7C
+	4SVG8xn9/12Z2G6ewWPQIA+9veIYG/nmuls+Yxwf9G5E/81NKqXDMEdvZQXQp07ugtj+
+	0ixTPuVy+wPbHwMOtaZNWci4kYMxg8u0OSQu8=
+DomainKey-Signature: a=rsa-sha1; c=nofws; d=gmail.com; s=gamma;
+	h=from:to:subject:date:user-agent:mime-version:content-type
+	:content-transfer-encoding:message-id;
+	b=NhzKhnVtLYPXf51QrRJrKoqYfXcT6WofFBwKBSHX2YT2K+MSnIEFlYOYTPxsIeCfc7
+	aCDkgAubiRt6SPI7vUH3b2x3BIO7n6+n2+Uxo0IpHokDuLqPyhsv4xSGlAr/4sYyO9Ky
+	v68wi8AgJFNpu1QzaM9XMFdeLRPA/eGPV6zB0=
+Received: by 10.223.94.211 with SMTP id a19mr3587635fan.59.1265400148528;
+	Fri, 05 Feb 2010 12:02:28 -0800 (PST)
+Received: from ?192.168.0.2? (84-255-193-183.static.t-2.net
+	[84.255.193.183]) by mx.google.com with ESMTPS id
+	28sm2853242fkx.28.2010.02.05.12.02.27 (version=SSLv3 cipher=RC4-MD5);
+	Fri, 05 Feb 2010 12:02:27 -0800 (PST)
+From: Rumko <rumcic@gmail.com>
+To: christophe.varoqui@opensvc.com
+Subject: [PATCH] Latest git -master is not compilable
+Date: Fri, 5 Feb 2010 21:02:23 +0100
+User-Agent: KMail/1.9.10
+MIME-Version: 1.0
+Content-Type: multipart/signed; boundary="nextPart1681857.SM6GsaD6WG";
+	protocol="application/pgp-signature"; micalg=pgp-sha1
+Content-Transfer-Encoding: 7bit
+Message-Id: <201002052102.27089.rumcic@gmail.com>
+
+--nextPart1681857.SM6GsaD6WG
+Content-Type: multipart/mixed;
+  boundary="Boundary-01=_PlHbLmcCyk7NmgQ"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+--Boundary-01=_PlHbLmcCyk7NmgQ
+Content-Type: text/plain;
+  charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+Hi!
+
+In latest git -master on line 1443 of multipathd/main.c lock() is called on=
+=20
+exit_mutex, but since exit_mutex is a pthread_mutex_t, pthread_mutex_lock()=
+=20
+is needed.
+
+Attached is the one-liner patch, tested it on a gentoo machine and seems to=
+ be=20
+working.
+=2D-=20
+Regards,
+Rumko
+
+--Boundary-01=_PlHbLmcCyk7NmgQ
+Content-Type: text/x-diff; charset="iso 8859-15";
+	name="0001-Use-pthread_mutex_lock-instead-of-lock-since-we-are-.patch"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment;
+	filename="0001-Use-pthread_mutex_lock-instead-of-lock-since-we-are-.patch"
+
+=46rom a6bf54d588c2d0c9d3a97541bcb7b605fd1f3ae0 Mon Sep 17 00:00:00 2001
+=46rom: Rumko <rumcic@gmail.com>
+Date: Fri, 5 Feb 2010 20:59:21 +0100
+Subject: [PATCH] Use pthread_mutex_lock() instead of lock() since we are de=
+aling with a
+ mutex directly.
+
+=2D--
+ multipathd/main.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index e7955bd..3f7eb49 100644
+=2D-- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1440,7 +1440,7 @@ child (void * param)
+ 	pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
+ 	pthread_attr_destroy(&misc_attr);
+=20
+=2D	lock(&exit_mutex);
++	pthread_mutex_lock(&exit_mutex);
+ 	pthread_cond_wait(&exit_cond, &exit_mutex);
+=20
+ 	/*
+=2D-=20
+1.6.6
+
+
+--Boundary-01=_PlHbLmcCyk7NmgQ--
+
+--nextPart1681857.SM6GsaD6WG
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.14 (DragonFly)
+
+iEYEABECAAYFAktseVMACgkQxV3ce2RZW73+9QCgmV+wJWK/xxHFz55tTbjrI6Wz
+8NYAnjKiuKilgTGt1/er3rNexxdtuTCZ
+=IWHq
+-----END PGP SIGNATURE-----
+
+--nextPart1681857.SM6GsaD6WG--
+
+--=-X6kPA2JZTNyYEdtoTCmt
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=-X6kPA2JZTNyYEdtoTCmt--
