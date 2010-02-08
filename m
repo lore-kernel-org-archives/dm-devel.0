@@ -1,33 +1,66 @@
-From: "Rafael J. Wysocki" <rjw@sisk.pl>
-Subject: Re: compat_ioctl: ignore RAID_VERSION ioctl
-Date: Sun, 7 Feb 2010 11:03:37 +0100
-Message-ID: <201002071103.37276.rjw@sisk.pl>
-References: <20100130205353.GA3168@redhat.com> <201001302302.10574.arnd@arndb.de> <20100207092407.GA19684@redhat.com>
+From: Alex Zeffertt <alex.zeffertt@eu.citrix.com>
+Subject: Re: [Fwd: [PATCH] Latest git -master is not compilable]
+Date: Mon, 8 Feb 2010 10:01:08 +0000
+Message-ID: <4B6FE0E4.7050609@eu.citrix.com>
+References: <1265446918.4273.3.camel@zezette>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20100207092407.GA19684@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Michael S. Tsirkin" <m.s.tsirkin@gmail.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, neilb@suse.de, linux-raid@vger.kernel.org, dm-devel@redhat.com, maan@systemlinux.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1265446918.4273.3.camel@zezette>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Cc: "rumcic@gmail.com" <rumcic@gmail.com>, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sunday 07 February 2010, Michael S. Tsirkin wrote:
-> On Sat, Jan 30, 2010 at 11:02:10PM +0100, Arnd Bergmann wrote:
-> > md ioctls are now handled by the md driver itself, but mdadm
-> > may call RAID_VERSION on other devices as well. Mark the command
-> > as IGNORE_IOCTL so this fails silently rather than printing
-> > an annoying message.
-> > 
-> > Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+The lock() macro is defined in libmultipath/lock.h and just invokes 
+pthread_mutex_lock() so there'll be no problem replacing the call to lock() with 
+a call to pthread_mutex_lock().
+
+In the version I was patching (0.4.7) the macros were used everywhere, but in 
+the latest git master it looks like pthread library calls are invoked directly. 
+  Please change it if it makes the style more consistent.
+
+Regards,
+
+Alex
+
+
+Christophe Varoqui wrote:
+> Can you confirm the fix from Rumko does not break your ulibc setup ?
 > 
-> The patch does not seem to be there in -rc7.
-> Since this is fixes a regression, should this go into 2.6.33?
-
-I guess it should.
-
-Do you have a link to the original report or has it been sent privately?
-
-Rafael
+> 
+> 
+> ------------------------------------------------------------------------
+> 
+> Subject:
+> [PATCH] Latest git -master is not compilable
+> From:
+> Rumko <rumcic@gmail.com>
+> Date:
+> Fri, 5 Feb 2010 20:02:23 +0000
+> To:
+> "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+> 
+> To:
+> "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+> 
+> 
+> Hi!
+> 
+> In latest git -master on line 1443 of multipathd/main.c lock() is called on 
+> exit_mutex, but since exit_mutex is a pthread_mutex_t, pthread_mutex_lock() 
+> is needed.
+> 
+> Attached is the one-liner patch, tested it on a gentoo machine and seems to be 
+> working.
+> 
