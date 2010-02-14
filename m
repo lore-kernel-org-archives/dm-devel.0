@@ -1,15 +1,13 @@
-From: malahal@us.ibm.com
-Subject: Re: Device Mapper and unknown device.
-Date: Sat, 13 Feb 2010 12:57:38 -0800
-Message-ID: <20100213205738.GA10412@us.ibm.com>
-References: <4B76C2FC.3080109@mbs.sphere.ne.jp>
+From: jjaing <jjaing@163.com>
+Subject: Re: [PATCH]: shared snapshots
+Date: Mon, 15 Feb 2010 00:10:56 +0800 (CST)
+Message-ID: <154e7e0.2be0.126cd3f35d1.Coremail.jjaing@163.com>
+References: <Pine.LNX.4.64.1002090037540.23767@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============6645103798504410587=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4B76C2FC.3080109@mbs.sphere.ne.jp>
+In-Reply-To: <Pine.LNX.4.64.1002090037540.23767@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,99 +17,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Find the major/minor number of /dev/dm-1 (most likely 253,1). Then run
-"dmsetup table --major <major> --minor <minor>".
+--===============6645103798504410587==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_28389_21143684.1266163856848"
 
-It is most likely same as your mpath0p1
+------=_Part_28389_21143684.1266163856848
+Content-Type: text/plain; charset=gbk
+Content-Transfer-Encoding: base64
 
-Or see the major/minor of mpath0p1.
+SGkgTWlrdWxhcywKCiAgICAgICAgdGhlIG11bHRpc25hcGhvc3QgbXVzdCBiZSB3b3JrZWQgd2l0
+aCBsb2dpY2FsIHZvbHVtbj8KSSBydW4gZm9sbG93aW5nIGNvbW1hbmQsIGJ1dCBpdCBmYWlsZWQu
+ICAvZGV2L3NkYSBpcyBhIFNBVEEgZGlzaywgL2Rldi9tZDAgaXMgYSBzb2Z0IHJhaWQwLgoKcm9v
+dEB1YnVudHU6L2hvbWUvZHR0eCMgZWNobyAwIGBibG9ja2RldiAtLWdldHNpemUgL2Rldi9zZGFg
+IG11bHRpc25hcHNob3QgL2Rldi9zZGEgL2Rldi9tZDAgMTYgMCBtaWt1bGFzIDB8ZG1zZXR1cCBj
+cmVhdGUgbXMKZGV2aWNlLW1hcHBlcjogcmVsb2FkIGlvY3RsIGZhaWxlZDogSW52YWxpZCBhcmd1
+bWVudAoKCgrU2jIwMTAtMDItMDk/MTM6NDE6MDCjrCJNaWt1bGFzP1BhdG9ja2EiPzxtcGF0b2Nr
+YUByZWRoYXQuY29tPj/QtLXAo7oKPkhpCj4KPkk/cGxhY2VkP3RoZT9jdXJyZW50P3BhdGNoZXM/
+Zm9yP3NoYXJlZD9zbmFwc2hvdHM/aGVyZToKPmh0dHA6Ly9wZW9wbGUucmVkaGF0LmNvbS9tcGF0
+b2NrYS9wYXRjaGVzL2tlcm5lbC9uZXctc25hcHNob3RzL3IxNS8KPgo+TWlrdWxhcwo+Cj4tLQo+
+ZG0tZGV2ZWw/bWFpbGluZz9saXN0Cj5kbS1kZXZlbEByZWRoYXQuY29tCj5odHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
+------=_Part_28389_21143684.1266163856848
+Content-Type: text/html; charset=gbk
+Content-Transfer-Encoding: base64
 
-Thanks, Malahal.
+SGkgTWlrdWxhcyw8YnI+PGJyPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyB0aGUgbXVsdGlzbmFwaG9zdCBtdXN0IGJlIHdvcmtlZCB3aXRoIGxvZ2ljYWwgdm9sdW1u
+Pzxicj5JIHJ1biBmb2xsb3dpbmcgY29tbWFuZCwgYnV0IGl0IGZhaWxlZC4mbmJzcDsgL2Rldi9z
+ZGEgaXMgYSBTQVRBIGRpc2ssIC9kZXYvbWQwIGlzIGEgc29mdCByYWlkMC48YnI+PGJyPjxpPnJv
+b3RAdWJ1bnR1Oi9ob21lL2R0dHgjIGVjaG8gMCBgYmxvY2tkZXYgLS1nZXRzaXplIC9kZXYvc2Rh
+YCBtdWx0aXNuYXBzaG90IC9kZXYvc2RhIC9kZXYvbWQwIDE2IDAgbWlrdWxhcyAwfGRtc2V0dXAg
+Y3JlYXRlIG1zPGJyPmRldmljZS1tYXBwZXI6IHJlbG9hZCBpb2N0bCBmYWlsZWQ6IEludmFsaWQg
+YXJndW1lbnQ8L2k+PGJyPjxkaXY+PC9kaXY+PGJyPjxwcmU+1NoyMDEwLTAyLTA5Jm5ic3A7MTM6
+NDE6MDCjrCJNaWt1bGFzJm5ic3A7UGF0b2NrYSImbmJzcDsmbHQ7bXBhdG9ja2FAcmVkaGF0LmNv
+bSZndDsmbmJzcDvQtLXAo7oKJmd0O0hpCiZndDsKJmd0O0kmbmJzcDtwbGFjZWQmbmJzcDt0aGUm
+bmJzcDtjdXJyZW50Jm5ic3A7cGF0Y2hlcyZuYnNwO2ZvciZuYnNwO3NoYXJlZCZuYnNwO3NuYXBz
+aG90cyZuYnNwO2hlcmU6CiZndDtodHRwOi8vcGVvcGxlLnJlZGhhdC5jb20vbXBhdG9ja2EvcGF0
+Y2hlcy9rZXJuZWwvbmV3LXNuYXBzaG90cy9yMTUvCiZndDsKJmd0O01pa3VsYXMKJmd0OwomZ3Q7
+LS0KJmd0O2RtLWRldmVsJm5ic3A7bWFpbGluZyZuYnNwO2xpc3QKJmd0O2RtLWRldmVsQHJlZGhh
+dC5jb20KJmd0O2h0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bAo8L3ByZT48YnI+PGJyPjxzcGFuIHRpdGxlPSJuZXRlYXNlZm9vdGVyIi8+PC9zcGFuPg==
+------=_Part_28389_21143684.1266163856848--
 
-Saito Jun [cartman@mbs.sphere.ne.jp] wrote:
-> Hello everybody professional.
-> I am embarrassed.
-> What is this /dev/dm-1?
-> The cylinder is different though it is the same capacity.
-> And I newly made LUN.
-> 
-> -------------------------
-> [root@ns01 ~]# fdisk -l
-> This doesn't look like a partition table
-> Probably you selected the wrong device.
-> dev/sdb: 10.7 GB, 10737418240 bytes
-> 255 heads, 63 sectors/track, 1305 cylinders
-> Units = cylinders of 16065 * 512 = 8225280 bytes
-> 
-> Device Boot Start End Blocks Id System
-> /dev/sdb1 * 1 1305 10482381 7 HPFS/NTFS
-> 
-> Disk /dev/sdc: 10.7 GB, 10737418240 bytes
-> 255 heads, 63 sectors/track, 1305 cylinders
-> Units = cylinders of 16065 * 512 = 8225280 bytes
-> 
-> Device Boot Start End Blocks Id System
-> /dev/sdc1 * 1 1305 10482381 7 HPFS/NTFS
-> 
-> Disk /dev/dm-0: 10.7 GB, 10737418240 bytes
-> 255 heads, 63 sectors/track, 1305 cylinders
-> Units = cylinders of 16065 * 512 = 8225280 bytes
-> 
-> Device Boot Start End Blocks Id System
-> /dev/dm-0p1 * 1 1305 10482381 7 HPFS/NTFS
-> 
-> Disk /dev/dm-1: 10.7 GB, 10733958144 bytes
-> 255 heads, 63 sectors/track, 1304 cylinders
-> Units = cylinders of 16065 * 512 = 8225280 bytes
-> 
-> This doesn't look like a partition table
-> Probably you selected the wrong device.
-> 
-> Device Boot Start End Blocks Id System
-> /dev/dm-1p1 ? 10499 10499 0 65 Novell Netware 386
-> Partition 1 does not end on cylinder boundary.
-> /dev/dm-1p2 ? 13578 119522 850995205 72 unknown
-> Partition 2 does not end on cylinder boundary.
-> /dev/dm-1p3 ? 45382 79243 271987362 74 unknown
-> Partition 3 does not end on cylinder boundary.
-> /dev/dm-1p4 167628 167631 25817+ 0 empty
-> Partition 4 does not end on cylinder boundary.
-> ---------------------------------
-> 
-> 
-> It explains the procedure.
-> --------------------
-> My Environment
-> /dev/sda [LocalDisk]
-> /dev/sdb [SAN External Disk]
-> /dev/sdc [SAN External Disk]
-> 
-> Configure Multipath
-> Edit /etc/multipath.conf
-> /etc/init.d/multipathd
-> 
-> Create Partition
-> fdisk /dev/sdb
-> 
-> Create Multipath block device
-> kpartx -a /dev/mapper/mpath0
-> 
-> Create File System
-> mke2fs -j /dev/mapper/mpath0p1
-> 
-> Mount
-> mount -t ext3 /dev/mapper/mpath0p1
-> 
-> Question
-> ls /dev/dm-1
-> ---------------------
-> 
-> Regards,
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+
+--===============6645103798504410587==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6645103798504410587==--
