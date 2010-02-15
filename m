@@ -1,39 +1,38 @@
-From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+From: Herbert Xu <herbert@gondor.apana.org.au>
 Subject: Re: [PATCH] crypto/arc4: convert this stream cipher into a block
- cipher
-Date: Sun, 14 Feb 2010 21:42:54 +0100
-Message-ID: <20100214204253.GA19275@Chamillionaire.breakpoint.cc>
-References: <Pine.LNX.4.64.1001260722080.20780@hs20-bc2-1.build.redhat.com>
- <20100209073718.GA17612@gondor.apana.org.au>
- <20100209145705.GA20421@Chamillionaire.breakpoint.cc>
- <20100209204519.GC26258@gondor.apana.org.au>
- <20100209211238.GC21548@Chamillionaire.breakpoint.cc>
- <20100209214522.GA27002@gondor.apana.org.au>
- <20100212084228.GA1535@Chamillionaire.breakpoint.cc>
-Reply-To: Sebastian Andrzej Siewior <linux-crypto@ml.breakpoint.cc>
+	cipher
+Date: Mon, 15 Feb 2010 08:10:08 +0800
+Message-ID: <20100215001008.GA15437@gondor.apana.org.au>
+References: <Pine.LNX.4.64.1001260722080.20780@hs20-bc2-1.build.redhat.com> <20100209073718.GA17612@gondor.apana.org.au> <20100209145705.GA20421@Chamillionaire.breakpoint.cc> <20100209204519.GC26258@gondor.apana.org.au> <20100209211238.GC21548@Chamillionaire.breakpoint.cc> <20100209214522.GA27002@gondor.apana.org.au> <20100212084228.GA1535@Chamillionaire.breakpoint.cc> <20100214204253.GA19275@Chamillionaire.breakpoint.cc>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-crypto-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20100212084228.GA1535@Chamillionaire.breakpoint.cc>
+In-Reply-To: <20100214204253.GA19275@Chamillionaire.breakpoint.cc>
 Sender: linux-crypto-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
+To: Sebastian Andrzej Siewior <linux-crypto@ml.breakpoint.cc>
 Cc: Mikulas Patocka <mpatocka@redhat.com>, mbroz@redhat.com, dm-devel@redhat.com, agk@redhat.com, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
-* Sebastian Andrzej Siewior | 2010-02-12 09:42:28 [+0100]:
+On Sun, Feb 14, 2010 at 09:42:54PM +0100, Sebastian Andrzej Siewior wrote:
+> * Sebastian Andrzej Siewior | 2010-02-12 09:42:28 [+0100]:
+> 
+> >+static void arc4_ivsetup(struct arc4_ctx *ctx, u8 *iv)
+> > {
+> >-	struct arc4_ctx *ctx = crypto_tfm_ctx(tfm);
+> >+	if (unlikely(!ctx->new_key))
+> 
+> That should be likely(). Do you want me resend the whole thing? Haven't
+> noticed anything else :)
 
->+static void arc4_ivsetup(struct arc4_ctx *ctx, u8 *iv)
-> {
->-	struct arc4_ctx *ctx = crypto_tfm_ctx(tfm);
->+	if (unlikely(!ctx->new_key))
+How about we just remove it? It's not on a hot path anyway.
 
-That should be likely(). Do you want me resend the whole thing? Haven't
-noticed anything else :)
+I can do this when integrating the patch so you don't have to
+resend.
 
->+		return;
->+	memcpy(iv, &ctx->iv, sizeof(ctx->iv));
->+	ctx->new_key = 0;
->+}
-
-Sebastian
+Thanks,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
