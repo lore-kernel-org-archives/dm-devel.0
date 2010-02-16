@@ -1,51 +1,60 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH] crypto/arc4: convert this stream cipher into a block
-	cipher
-Date: Tue, 16 Feb 2010 20:51:25 +0800
-Message-ID: <20100216125125.GA390@gondor.apana.org.au>
-References: <Pine.LNX.4.64.1001260722080.20780@hs20-bc2-1.build.redhat.com> <20100209073718.GA17612@gondor.apana.org.au> <20100209145705.GA20421@Chamillionaire.breakpoint.cc> <20100209204519.GC26258@gondor.apana.org.au> <20100209211238.GC21548@Chamillionaire.breakpoint.cc> <20100209214522.GA27002@gondor.apana.org.au> <20100212084228.GA1535@Chamillionaire.breakpoint.cc>
+From: Brian King <brking@linux.vnet.ibm.com>
+Subject: [PATCH 1/1] multipath_tools: Add IBM Virtual SCSI ALUA
+	device type to hwtable
+Date: Tue, 16 Feb 2010 13:44:59 -0600
+Message-ID: <201002161944.o1GJirOk014950@d01av01.pok.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100212084228.GA1535@Chamillionaire.breakpoint.cc>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, mbroz@redhat.com, dm-devel@redhat.com, agk@redhat.com, linux-crypto@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: brking@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Fri, Feb 12, 2010 at 09:42:28AM +0100, Sebastian Andrzej Siewior wrote:
->
-> -static void arc4_crypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
-> +static void arc4_ivsetup(struct arc4_ctx *ctx, u8 *iv)
->  {
-> -	struct arc4_ctx *ctx = crypto_tfm_ctx(tfm);
-> +	if (unlikely(!ctx->new_key))
-> +		return;
-> +	memcpy(iv, &ctx->iv, sizeof(ctx->iv));
-> +	ctx->new_key = 0;
 
-Sorry, but this doesn't work.
+Add entry to the hwtable for IBM Power Virtual SCSI ALUA devices
 
-A ctx is supposed to be reentrant.  That is, while one thread
-is working away with a given ctx I should be able to use that
-same ctx in a different thread without them clobbering each
-other.
+Signed-off-by: Brian King <brking@linux.vnet.ibm.com>
+---
 
-So that means (in general) you must not modify the ctx in any
-function other than setkey.
+ libmultipath/hwtable.c |   17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
 
-This also brings up the bigger question of how we transition to
-this new arc4.  I don't think we need to maintain exactly the
-same behaviour as the existing ecb(arc4).
-
-So what we could do is simply add a new blkcipher arc4, alongside
-the existing cipher arc4.  Then we can convert the existing users
-across, and finally remove the old arc4.
-
-Cheers,
--- 
-Visit Openswan at http://www.openswan.org/
-Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+diff -puN libmultipath/hwtable.c~mpath_nvdisk libmultipath/hwtable.c
+--- multipath-tools/libmultipath/hwtable.c~mpath_nvdisk	2010-02-16 13:42:42.000000000 -0600
++++ multipath-tools-bjking1/libmultipath/hwtable.c	2010-02-16 13:42:42.000000000 -0600
+@@ -673,6 +673,23 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = DEFAULT_PRIO,
+ 	},
+ 	{
++		/* AIX NVDISK */
++		.vendor        = "AIX",
++		.product       = "NVDISK",
++		.getuid        = DEFAULT_GETUID,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = "1 alua",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = (300 / DEFAULT_CHECKINT),
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = TUR,
++		.prio_name     = PRIO_ALUA,
++	},
++
++	{
+ 		/* DELL MD3000 */
+ 		.vendor        = "DELL",
+ 		.product       = "MD3000",
+_
