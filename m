@@ -1,36 +1,54 @@
-From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Subject: Re: [PATCH] crypto/arc4: convert this stream cipher into a block
- cipher
-Date: Mon, 15 Feb 2010 09:49:31 +0100
-Message-ID: <20100215084931.GA22637@Chamillionaire.breakpoint.cc>
-References: <Pine.LNX.4.64.1001260722080.20780@hs20-bc2-1.build.redhat.com>
- <20100209073718.GA17612@gondor.apana.org.au>
- <20100209145705.GA20421@Chamillionaire.breakpoint.cc>
- <20100209204519.GC26258@gondor.apana.org.au>
- <20100209211238.GC21548@Chamillionaire.breakpoint.cc>
- <20100209214522.GA27002@gondor.apana.org.au>
- <20100212084228.GA1535@Chamillionaire.breakpoint.cc>
- <20100214204253.GA19275@Chamillionaire.breakpoint.cc>
- <20100215001008.GA15437@gondor.apana.org.au>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: patches for 2.6.33
+Date: Tue, 16 Feb 2010 11:01:31 +0900
+Message-ID: <4B79FC7B.7090608@ct.jp.nec.com>
+References: <Pine.LNX.4.64.1002101202400.30138@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100215001008.GA15437@gondor.apana.org.au>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, mbroz@redhat.com, dm-devel@redhat.com, agk@redhat.com, linux-crypto@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1002101202400.30138@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-* Herbert Xu | 2010-02-15 08:10:08 [+0800]:
+Hi Alasdair, Mikulas,
 
->How about we just remove it? It's not on a hot path anyway.
-Sure.
+Sorry for the late reply.
 
->I can do this when integrating the patch so you don't have to
->resend.
-Okay, thanks.
+On 02/11/2010 02:25 AM +0900, Mikulas Patocka wrote:
+> I went through the patches in Alasdair's patchset and tried to sort them 
+> for seriousness. These should be sent immediatelly (before 2.6.33):
+<snip>
+> multipath patches
+> - let Kiyoshi Ueda decide, I am not familiar with mpath well enough
 
->Thanks,
+http://patchwork.kernel.org/patch/76618/
+  - Fixes a serious bug (system stall) of request-based dm.
+    No bug report yet, but I can reproduce it on my box.
+    It has been existing since 2.6.31-rc1.
+  - Should be sent for 2.6.33
+  - Should be sent to -stable, too
 
-Sebastian
+dm-mpath-wait-for-pg_init-completion-when-suspending.patch # 76027
+  - Fixes a possible serious bug (panic).
+    But no bug report, I don't have any producer, and
+    some cosmetic dependencies on other patches.
+  - No need to send for 2.6.33 nor -stable for now.
+
+Some other patches fix some minor bugs which display unnecessary
+I/O errors, but such I/O errors have no serious effect.
+So no need to send for 2.6.33 nor -stable.
+
+Thanks,
+Kiyoshi Ueda
