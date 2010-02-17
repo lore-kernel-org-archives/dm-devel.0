@@ -1,14 +1,12 @@
-From: Bas Mevissen <abuse@basmevissen.nl>
-Subject: Re: dmraid ./dmraid.spec lib/version.h lib/misc/li ...
-Date: Wed, 17 Feb 2010 15:07:21 +0100
-Message-ID: <1266415641.24106.37.camel@msdes019.mapscape.nl>
-References: <20100217115155.28893.qmail@sourceware.org>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH 0 of 13] LVM add 'mirrored' log type
+Date: Wed, 17 Feb 2010 11:53:45 -0600
+Message-ID: <1266429228.29358.34.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100217115155.28893.qmail@sourceware.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,18 +16,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2010-02-17 at 11:51 +0000, heinzm@sourceware.org wrote:
+I've fixed the segfaults Taka reported.  I've also begun to go through
+and fix the remaining issues with handling device failures in the
+various different scenarios.  I could use some help testing all the
+different variations.  I've described below some of the different
+permutations that will now exist.  I will be going through and testing
+these as well.
 
-> Log message:
-> 	Change library version to '1' and enhance display of internal extended version
-> 
+Device failure handling policies:
+=================================
+The following policies are available for both mirror logs and mirror
+images...
+"remove" (rm):
+Take out the failed device from the LV and do nothing else.  IOW, just
+make things consistent again.
 
-Maybe making the DSO version (and possibly all version info) an autoconf
-parameter? This avoids spreading the DSO number through multiple files.
+"replace" (rp):
+Remove the failed device and attempt to replace it with available space
+in the VG.  IOW, try to recreate what was lost.
 
-Best Regards,
+Device failure scenarios:
+=========================
+"2devs":
+You will have to use '--alloc anywhere' to get the mirrored log to be
+placed on the same devices as the mirror images.  Failing a single
+device will result in a failure of an image in the mirrored log and the
+mirror itself - simultaneously.  Obviously, a "replace" policy will
+fail, but the results should be the same as "remove".  The final result
+should be a linear device.
 
-Bas.
+"3devs":
+'--alloc anywhere' is still necessary.  Failing a single leg can affect
+the mirror, its mirrored log, or both.  The "remove" policy can leave a
+lone linear LV or a mirror with a linear log.  The "replace" policy
+should be able to restore the LV.  It is also possible to test 3-way
+mirrors and fail one of the legs - presumably leaving a 2-way mirror and
+a mirrored log.
+
+"5devs":
+Gives the ability to have the mirrored log on separate devices from the
+mirror images and be able to "replace" the device.
+
+So, the it is necessary to test all of the fault scenarios in each cell
+of the following matrix.  Any help would be most welcome.
+
+          | 2devs | 3devs | 5devs |
+----------|-------|-------|-------|
+rm_l,rm_i |       |       |       |
+rm_l,rp_i |       |       |       |
+rp_l,rm_i |       |       |       |
+rp_l,rp_i |       |       |       |
+-----------------------------------
+
+ brassow
