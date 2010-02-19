@@ -1,11 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm snapshot: avoid storing private suspended
-	state
-Date: Wed, 17 Feb 2010 17:39:34 -0500
-Message-ID: <1266446374-23771-1-git-send-email-snitzer@redhat.com>
+From: David Huffman <dm-devel@storix.com>
+Subject: multipath: Determine which device to use for grub
+	device.map file
+Date: Thu, 18 Feb 2010 17:14:50 -0800
+Message-ID: <4B7DE60A.9020805@storix.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -20,97 +20,46 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Use dm_suspended() rather than having each snapshot target maintain a
-private 'suspended' flag in struct dm_snapshot.
+I need to configure a dm-multipath device (mpatha) as a boot disk in a 
+script. For RHEL it appears I can put the mpath device in my device.map 
+file. However, for  SLES 11 if I use the mpath device, grub fails with 
+"Floating point exception". For SLES I have to use the underlying path 
+device (sd[a-z]).
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-snap.c |   22 +++-------------------
- 1 files changed, 3 insertions(+), 19 deletions(-)
+I know which devices make up my multipath disk. Here is an example that 
+shows my problem.
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index ee8eb28..72d2bff 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -80,9 +80,6 @@ struct dm_snapshot {
- 	/* Origin writes don't trigger exceptions until this is set */
- 	int active;
- 
--	/* Whether or not owning mapped_device is suspended */
--	int suspended;
--
- 	mempool_t *pending_pool;
- 
- 	atomic_t pending_exceptions_count;
-@@ -1107,7 +1104,6 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	s->ti = ti;
- 	s->valid = 1;
- 	s->active = 0;
--	s->suspended = 0;
- 	atomic_set(&s->pending_exceptions_count, 0);
- 	init_rwsem(&s->lock);
- 	INIT_LIST_HEAD(&s->list);
-@@ -1757,15 +1753,6 @@ static void snapshot_merge_presuspend(struct dm_target *ti)
- 	stop_merge(s);
- }
- 
--static void snapshot_postsuspend(struct dm_target *ti)
--{
--	struct dm_snapshot *s = ti->private;
--
--	down_write(&s->lock);
--	s->suspended = 1;
--	up_write(&s->lock);
--}
--
- static int snapshot_preresume(struct dm_target *ti)
- {
- 	int r = 0;
-@@ -1780,7 +1767,7 @@ static int snapshot_preresume(struct dm_target *ti)
- 			DMERR("Unable to resume snapshot source until "
- 			      "handover completes.");
- 			r = -EINVAL;
--		} else if (!snap_src->suspended) {
-+		} else if (!dm_suspended(snap_src->ti)) {
- 			DMERR("Unable to perform snapshot handover until "
- 			      "source is suspended.");
- 			r = -EINVAL;
-@@ -1813,7 +1800,6 @@ static void snapshot_resume(struct dm_target *ti)
- 
- 	down_write(&s->lock);
- 	s->active = 1;
--	s->suspended = 0;
- 	up_write(&s->lock);
- }
- 
-@@ -2183,13 +2169,12 @@ static struct target_type origin_target = {
- 
- static struct target_type snapshot_target = {
- 	.name    = "snapshot",
--	.version = {1, 9, 0},
-+	.version = {1, 10, 0},
- 	.module  = THIS_MODULE,
- 	.ctr     = snapshot_ctr,
- 	.dtr     = snapshot_dtr,
- 	.map     = snapshot_map,
- 	.end_io  = snapshot_end_io,
--	.postsuspend = snapshot_postsuspend,
- 	.preresume  = snapshot_preresume,
- 	.resume  = snapshot_resume,
- 	.status  = snapshot_status,
-@@ -2198,14 +2183,13 @@ static struct target_type snapshot_target = {
- 
- static struct target_type merge_target = {
- 	.name    = dm_snapshot_merge_target_name,
--	.version = {1, 0, 0},
-+	.version = {1, 1, 0},
- 	.module  = THIS_MODULE,
- 	.ctr     = snapshot_ctr,
- 	.dtr     = snapshot_dtr,
- 	.map     = snapshot_merge_map,
- 	.end_io  = snapshot_end_io,
- 	.presuspend = snapshot_merge_presuspend,
--	.postsuspend = snapshot_postsuspend,
- 	.preresume  = snapshot_preresume,
- 	.resume  = snapshot_merge_resume,
- 	.status  = snapshot_status,
+mpatha (36006016094511600449d92ae1937d611) dm-0 DGC,DISK
+[size=50G][features=1 queue_if_no_path][hwhandler=1 emc][rw]
+\_ round-robin 0 [prio=2][active]
+\_ 2:0:1:0 sdd 8:48  [active][ready]
+\_ 3:0:1:0 sdf 8:80  [active][ready]
+\_ round-robin 0 [prio=0][enabled]
+\_ 2:0:0:0 sdc 8:32  [active][ready]
+\_ 3:0:0:0 sde 8:64  [active][ready]
+
+Out of the 4 paths, only two (sdd and sdf) are active. This output is 
+not very good to parse through in a script to determine which disks I 
+can specify in my device.map file. Is there a command or better way to 
+determine which underlying paths I can use in my device.map file.
+
+For clarification, here is a breakdown of my device.map entries and the 
+results:
+
+(hd0) /dev/mapper/mpatha  - FAIL with "Floating point exception"
+
+(hd0) /dev/sdc  - FAIL with "Error 21: Selected disk does not exist"
+
+(hd0) /dev/sdd - Success!!!
+
+I would rather put the mpath device in device.map, but that does not 
+appear to be an option for SLES. Is there a way to determine the 
+underlying path device that is "active" and not just enabled?
+
+Right now I can run "dd if=/dev/sdc of=/dev/null bs=512 count=1 
+2>/dev/null; echo $?"
+
+This will tell me in the device can be written to. Any suggestions would 
+be helpful.
+
+- David
