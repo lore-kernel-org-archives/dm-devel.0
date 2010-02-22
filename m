@@ -1,43 +1,48 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH] crypto/arc4: convert this stream cipher into a block
-	cipher
-Date: Mon, 22 Feb 2010 08:52:17 +0800
-Message-ID: <20100222005217.GA24920@gondor.apana.org.au>
-References: <Pine.LNX.4.64.1001260722080.20780@hs20-bc2-1.build.redhat.com> <20100209073718.GA17612@gondor.apana.org.au> <20100209145705.GA20421@Chamillionaire.breakpoint.cc> <20100209204519.GC26258@gondor.apana.org.au> <20100209211238.GC21548@Chamillionaire.breakpoint.cc> <20100209214522.GA27002@gondor.apana.org.au> <20100212084228.GA1535@Chamillionaire.breakpoint.cc> <20100216125125.GA390@gondor.apana.org.au> <20100221200140.GC11951@Chamillionaire.breakpoint.cc> <20100222004547.GA24812@gondor.apana.org.au>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: multipath: Determine which device to use
+ for	grubdevice.map file
+Date: Mon, 22 Feb 2010 07:41:12 +0100
+Message-ID: <4B822708.3010803@suse.de>
+References: <4B7DE60A.9020805@storix.com>	<8F08A56613D77044BD153E2AC5DA0F8403B0E9F0@CORPUSMX40A.corp.emc.com>
+	<4B7F1194.2040201@storix.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100222004547.GA24812@gondor.apana.org.au>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, mbroz@redhat.com, dm-devel@redhat.com, agk@redhat.com, linux-crypto@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4B7F1194.2040201@storix.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Feb 22, 2010 at 08:45:47AM +0800, Herbert Xu wrote:
-> 
-> How about this? You extend the IV by one more byte, and use that
-> byte as a boolean flag to indicate whether the IV is valid.  All
-> users that cannot supply their own IVs can then set the IV to zero.
-> 
-> When you see the zero flag in the IV, you reinitialise the IV per
-> the key.
+David Huffman wrote:
+> Thanks for the response Wayne, but this does me no good. You cannot use
+> the /dev/disk/by-id/* entries for device.map. You have to use the block
+> device and not a link or dm-* device name.
+> =
 
-In fact for arc4 we could just drop the key altogether since it
-plays no part after setting the initial state.
+Hm. Works here in my setup ...
 
-> > salsa also does not stick to plan here. ctx->input[6-9] is initialized
-> > in encrypt() path. So two threads sharing a ctx are going to clobber
-> > their state.
-> 
-> Salsa should also be fixed.
+# cat /boot/grub/device.map
+(hd0)   /dev/disk/by-id/scsi-35000c5000042f3f3
+(hd1)   /dev/disk/by-id/scsi-SATA_WDC_WD800JD-23L_WD-WMAM9K563627
 
-For Salsa on the other hand the key is rather useful since all
-we need is a two-byte IV that's just a sequence number.
+What are the errors you see?
 
 Cheers,
--- 
-Visit Openswan at http://www.openswan.org/
-Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
