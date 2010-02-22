@@ -1,41 +1,63 @@
-From: "Pfizer Genuine VIAGRA" <ipakasaur4735@gaoland.net>
-Subject: Mr. glkdd-dm-devel 80% Off on all products
-Date: Mon, 22 Feb 2010 01:32:30 +0000 (UTC)
-Message-ID: <32428.3322356225$1266802350@news.gmane.org>
+From: "Swiss Watch on-line" <glkdd-dm-devel@gmane.org>
+Subject: Hi, glkdd-dm-devel, unbelievable 80% off prices
+Date: Mon, 22 Feb 2010 01:36:53 +0000 (UTC)
+Message-ID: <26290.1328890168$1266802613@news.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/html; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <ipakasaur4735@gaoland.net>
+Return-path: <glkdd-dm-devel@gmane.org>
 To: glkdd-dm-devel@gmane.org
 List-Id: dm-devel.ids
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title></title>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8" >
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Newsletter</title>
+<style type="text/css">
+<!--
+a:visited
+{ color: #2DAC98; text-decoration: underline; }
+
+tohyzip
+{
+ margin-top: 0px;
+ margin-bottom: 6.5pt;
+ line-height: 13px;
+ font-family: Tahoma;
+ font-size: 14px;
+ color: #C773AB;
+}
+
+a:link
+{ color: #5A2AC2; }
+
+a:hover
+{ color: #85D2FD; text-decoration: none; }
+
+-->
+</style>
 </head>
-<body link="#242424" alink="#242424" vlink="#242424" bgcolor="#ffffff">
-<table width="100%" border="0" cellspacing="0" cellpadding="0">
-<tr><td align="center">
-<table width="581" border="0" cellspacing="0" cellpadding="0">
-<tr><td align="center">
-<font face="Verdana, Helvetica, sans-serif" color="#242424" size="1">
-This message contains graphics. If you do not see the graphics:&nbsp;<a href="http://6b7195a961d5.surecreate.ru/" style="color:#c3010c">Graphic Version</a>.
-</font></td></tr><tr><td align="left">
-<table width="100%" border="0" cellspacing="0" cellpadding="0"><tr>
-<td width="541" valign="top" style="text-align: center">
-<font face="Verdana, Arial, Helvetica, sans-serif" color="#666666" size="1">
-<br><a href="http://c4b5bd859e4.surecreate.ru/">
-<img alt="Just click here if no image" src="http://i061.radikal.ru/1002/6d/7a80c5df0353.jpg" width="458" height="551" style="border-width: 0px"></a><br>
-<br>Sent to: glkdd-dm-devel@gmane.org.<br><br>
-<a style="color:#666666;" href="http://54151fd3a97e5.surecreate.ru/">
-Privacy</a> | <a style="color:#666666;" href="http://79519477a85cece.surecreate.ru/">Unsubscribe</a> |
-<a style="color:#666666;" href="http://5c44a07e31db7d.surecreate.ru/">Subscribe</a>
-<br><br><strong>&copy; 2009 Ufiuadileb Inc. All rights reserved.</strong></font></td>
-</tr></table>
-</td></tr>
-</table></td></tr>
+<body>
+<table width="631" border="0" cellpadding="10" cellspacing="0" align="center">
+  <tr>
+    <td align="left" valign="top" colspan=3>
+      <p class="tohyzip">To view this email online,
+		<a href="http://803b8d11fd87.wholespeech.ru/">click here</a>.
+      </p></td></tr>
+  </table>
+<table width="631" border="0" cellpadding="0" cellspacing="0" bgcolor="#FFFFFF" align=center>
+  <tr>
+    <td align="left" valign="top">
+	<a href="http://16c949ff82b.wholespeech.ru/">
+	<img alt="No graphics loaded successfully? Click here!" src="http://imageboo.com/files/x0yyiwro9njo3c9zk69r.jpg" width="555" height="454" style="border:0px"></a>
+	<p class="tohyzip">&nbsp;</p>
+	<p class="tohyzip">Click <a href="http://116c4aa5b03d15.wholespeech.ru/" target="_blank">here</a> to
+	unsubscribe. </p>
+      <p class="tohyzip">Read our <a href="http://40a9c44b.wholespeech.ru/">privacy policy</a>.</p>
+	<p class="tohyzip">(c) 2008-2010 Baabiyhoot. All rights reserved.</p>
+	</td>
+  </tr>
 </table>
 </body>
 </html>
