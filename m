@@ -1,45 +1,41 @@
-From: malahal@us.ibm.com
-Subject: Re: multipath: Determine which device to use for
- grubdevice.map file
-Date: Fri, 19 Feb 2010 16:04:34 -0800
-Message-ID: <20100220000434.GA7527@us.ibm.com>
-References: <4B7DE60A.9020805@storix.com>
-	<8F08A56613D77044BD153E2AC5DA0F8403B0E9F0@CORPUSMX40A.corp.emc.com>
-	<4B7F1194.2040201@storix.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Pfizer Genuine VIAGRA" <ipakasaur4735@gaoland.net>
+Subject: Mr. glkdd-dm-devel 80% Off on all products
+Date: Mon, 22 Feb 2010 01:32:30 +0000 (UTC)
+Message-ID: <32428.3322356225$1266802350@news.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/html; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4B7F1194.2040201@storix.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <ipakasaur4735@gaoland.net>
+To: glkdd-dm-devel@gmane.org
 List-Id: dm-devel.ids
 
-> mpatha (36006016094511600449d92ae1937d611) dm-0 DGC,DISK
-> [size=50G][features=1 queue_if_no_path][hwhandler=1 emc][rw]
-> \_ round-robin 0 [prio=2][active]
-> \_ 2:0:1:0 sdd 8:48  [active][ready]
-> \_ 3:0:1:0 sdf 8:80  [active][ready]
-> \_ round-robin 0 [prio=0][enabled]
-> \_ 2:0:0:0 sdc 8:32  [active][ready]
-> \_ 3:0:0:0 sde 8:64  [active][ready]
->
-> Out of the 4 paths, only two (sdd and sdf) are active. This output is 
-> not very good to parse through in a script to determine which disks I 
-> can specify in my device.map file. Is there a command or better way to 
-> determine which underlying paths I can use in my device.map file.
-
-You can probably get it from "dmsetup status <device>", but it may be
-even harder to parse!
-
-Thanks, Malahal.
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title></title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" >
+</head>
+<body link="#242424" alink="#242424" vlink="#242424" bgcolor="#ffffff">
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+<tr><td align="center">
+<table width="581" border="0" cellspacing="0" cellpadding="0">
+<tr><td align="center">
+<font face="Verdana, Helvetica, sans-serif" color="#242424" size="1">
+This message contains graphics. If you do not see the graphics:&nbsp;<a href="http://6b7195a961d5.surecreate.ru/" style="color:#c3010c">Graphic Version</a>.
+</font></td></tr><tr><td align="left">
+<table width="100%" border="0" cellspacing="0" cellpadding="0"><tr>
+<td width="541" valign="top" style="text-align: center">
+<font face="Verdana, Arial, Helvetica, sans-serif" color="#666666" size="1">
+<br><a href="http://c4b5bd859e4.surecreate.ru/">
+<img alt="Just click here if no image" src="http://i061.radikal.ru/1002/6d/7a80c5df0353.jpg" width="458" height="551" style="border-width: 0px"></a><br>
+<br>Sent to: glkdd-dm-devel@gmane.org.<br><br>
+<a style="color:#666666;" href="http://54151fd3a97e5.surecreate.ru/">
+Privacy</a> | <a style="color:#666666;" href="http://79519477a85cece.surecreate.ru/">Unsubscribe</a> |
+<a style="color:#666666;" href="http://5c44a07e31db7d.surecreate.ru/">Subscribe</a>
+<br><br><strong>&copy; 2009 Ufiuadileb Inc. All rights reserved.</strong></font></td>
+</tr></table>
+</td></tr>
+</table></td></tr>
+</table>
+</body>
+</html>
