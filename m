@@ -1,8 +1,7 @@
 From: Takahiro Yasui <tyasui@redhat.com>
-Subject: [RFC][PATCH 3/4] dm-crypt: update resume method for
- interruption of presuspend
-Date: Tue, 23 Feb 2010 13:45:11 -0500
-Message-ID: <4B842237.7020202@redhat.com>
+Subject: [RFC][PATCH 1/4] dm: restore presuspend status
+Date: Tue, 23 Feb 2010 13:45:02 -0500
+Message-ID: <4B84222E.10304@redhat.com>
 Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,45 +20,48 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: k-ueda@ct.jp.nec.com, LVM2 development <lvm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-When suspend is interrupted after presuspend procedure, each
-target needs to cancel all state changes done by its presuspend
-procedure. As for the crypt target, there is nothing to be
-canceled because the crypt target doesn't have a presuspend method.
-
-The crypt target should skip crypt_preresume/crypt_resume method
-when the target isn't suspended.
+When suspend procedure was interrupted just after a target's presuspend
+method was executed, dm_suspend() calls the target's resume method to
+cancel the target's state changes.
 
 
 Signed-off-by: Takahiro Yasui <tyasui@redhat.com>
 ---
- drivers/md/dm-crypt.c |    8 ++++++++
- 1 file changed, 8 insertions(+)
+ drivers/md/dm.c |    7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-Index: linux-2.6.33-rc1-dm/drivers/md/dm-crypt.c
+Index: linux-2.6.33-rc1-dm/drivers/md/dm.c
 ===================================================================
---- linux-2.6.33-rc1-dm.orig/drivers/md/dm-crypt.c
-+++ linux-2.6.33-rc1-dm/drivers/md/dm-crypt.c
-@@ -1314,6 +1314,10 @@ static int crypt_preresume(struct dm_tar
- {
- 	struct crypt_config *cc = ti->private;
+--- linux-2.6.33-rc1-dm.orig/drivers/md/dm.c
++++ linux-2.6.33-rc1-dm/drivers/md/dm.c
+@@ -2475,7 +2475,6 @@ int dm_suspend(struct mapped_device *md,
+ 	if (noflush)
+ 		set_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
  
-+	/* Just returns if the state is not "suspended". */
-+	if (!dm_suspended(ti))
-+		return 0;
-+
- 	if (!test_bit(DM_CRYPT_KEY_VALID, &cc->flags)) {
- 		DMERR("aborting resume - crypt key is not set.");
- 		return -EAGAIN;
-@@ -1326,6 +1330,10 @@ static void crypt_resume(struct dm_targe
- {
- 	struct crypt_config *cc = ti->private;
+-	/* This does not get reverted if there's an error later. */
+ 	dm_table_presuspend_targets(map);
  
-+	/* Just returns if the state is not "suspended". */
-+	if (!dm_suspended(ti))
-+		return;
+ 	/*
+@@ -2486,8 +2485,10 @@ int dm_suspend(struct mapped_device *md,
+ 	 */
+ 	if (!noflush && do_lockfs) {
+ 		r = lock_fs(md);
+-		if (r)
++		if (r) {
++			dm_table_resume_targets(map);
+ 			goto out;
++		}
+ 	}
+ 
+ 	/*
+@@ -2541,6 +2542,8 @@ int dm_suspend(struct mapped_device *md,
+ 			start_queue(md->queue);
+ 
+ 		unlock_fs(md);
 +
- 	clear_bit(DM_CRYPT_SUSPENDED, &cc->flags);
- }
++		dm_table_resume_targets(map);
+ 		goto out; /* pushback list is already flushed, so skip flush */
+ 	}
  
 
 --
