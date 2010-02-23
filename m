@@ -1,102 +1,133 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH] crypto/arc4: convert this stream cipher into a block
-	cipher
-Date: Tue, 23 Feb 2010 08:32:39 +0800
-Message-ID: <20100223003239.GC9118@gondor.apana.org.au>
-References: <20100209145705.GA20421@Chamillionaire.breakpoint.cc> <20100209204519.GC26258@gondor.apana.org.au> <20100209211238.GC21548@Chamillionaire.breakpoint.cc> <20100209214522.GA27002@gondor.apana.org.au> <20100212084228.GA1535@Chamillionaire.breakpoint.cc> <20100216125125.GA390@gondor.apana.org.au> <20100221200140.GC11951@Chamillionaire.breakpoint.cc> <20100222004547.GA24812@gondor.apana.org.au> <20100222005217.GA24920@gondor.apana.org.au> <20100222220835.GB31291@Chamillionaire.breakpoint.cc>
+From: Neil Brown <neilb@suse.de>
+Subject: [PATCH] dmraid: Handle spaces in names stored in vendor
+	metadata.
+Date: Tue, 23 Feb 2010 13:38:33 +1100
+Message-ID: <19331.16297.375514.579107@notabene.brown>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100222220835.GB31291@Chamillionaire.breakpoint.cc>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, mbroz@redhat.com, dm-devel@redhat.com, agk@redhat.com, linux-crypto@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: heinzm@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 22, 2010 at 11:08:35PM +0100, Sebastian Andrzej Siewior wrote:
-> * Herbert Xu | 2010-02-22 08:52:17 [+0800]:
-> 
-> >On Mon, Feb 22, 2010 at 08:45:47AM +0800, Herbert Xu wrote:
-> >> 
-> >> How about this? You extend the IV by one more byte, and use that
-> >> byte as a boolean flag to indicate whether the IV is valid.  All
-> So I trick the crypto api to allocate more bytes than ->ivsize says.
 
-No tricks needed, just add the flag to the struct.
+Hi Heinz,
+ I sent you a few patches a few weeks ago which fixes some problems
+ with the dmraid Makefile, but haven't heard back?  Let me know
+ if I should resend them.
 
-struct arc4_iv {
-	u8 S[256];
-	u8 x, y;
-	u8 valid;
-};
+Here is another patch.  This is related to a rather ancient discussion
+which included
 
-> Okay. When we have to re-key and the user calls setkey() without
-> re-allocating thr cipher then I would not notice this. So I need a
-> counter. And all this will make it work but I still think it is fishy.
-> Plus we waste 258bytes.
+    https://www.redhat.com/archives/dm-devel/2008-December/msg00019.html
 
-No you don't need to refresh the IV when the key changes.  The
-key should only be consulted when the valid flag in the IV is zero.
+I think I can get you the "dmraid -rD" output that you asked for in
+that email if you are still interested, but the problem is fairly
+simple to identify and affects ddf1 and isw metadata as they contain
+strings that are included in the name.
+This patch changes any spaces (and other special characters) in those
+names to '_'.
 
-You need the 258 + flag bytes because that's just the amount of
-state carried between the encrypt/decrypt operation.  So it isn't
-really wasted.
+Thanks,
+NeilBrown
 
-If you can find a way that allows arc4 to be used by multiple
-threads at the same time while storing less than 258 bytes in
-each thread, please let me know :)
 
-> >In fact for arc4 we could just drop the key altogether since it
-> >plays no part after setting the initial state.
-> Since I'm not allowed to kfree() the ctx in encrypt() are you proposing
-> tfm->setup_iv(iv, key)? 
+-------------
+When dmraid activates an array, it builds a name from information in
+the metadata.  For two formats of metadata (isw and ddf1), the
+information can include a textual string.
 
-No, what you could do is structure the IV differently based on the
-flag:
+dmraid does not allow arrays be created with spaces in the name and
+so makes no attempt to handle spaces well.  So for consistency it
+should not allow spaces stored in the metadata to get in to the name
+either.
 
-struct arc4_iv {
-	union {
-		struct key {
-			u8 key[256];
-			u16 keylen;
-		};
-		struct iv {
-			u8 S[256];
-			u8 x, y;
-		};
-	};
-	u8 type;
-};
+This patch changes every character that dmraid would not allow in a
+name to be converted to '_'
 
-This relies on the fact that we never use more than 256 bytes in
-the key so limiting its length is OK.
+Signed-off-by: NeilBrown <neilb@suse.de>
 
-> >> Salsa should also be fixed.
-> I saw that comming. And I complaind back then that the assembly code was
-> not pretty enough... and removing the assembly is probably not option :)
+---
+ include/dmraid/misc.h    |    1 +
+ lib/format/ataraid/isw.c |    7 ++++++-
+ lib/format/ddf/ddf1.c    |    1 +
+ lib/misc/misc.c          |   14 ++++++++++++++
+ 4 files changed, 22 insertions(+), 1 deletion(-)
 
-Well if nobody steps in to fix the assembly then removing it is the
-only option.
-
-> >For Salsa on the other hand the key is rather useful since all
-> >we need is a two-byte IV that's just a sequence number.
-> No it's 8 bytes. Berstein's U8TO32_LITTLE() is actually a cpu_to_be32().
-> Not sure if he knows it :)
-
-Right.
-
-> However I'm not sure where you going with this. salsa is fine besides
-> the clobber thing, isn't it?
-
-I don't know of any other problems.
-
-Basically salsa should look pretty much like CTR from the outside
-when it's fixed.
-
-Cheers,
--- 
-Visit Openswan at http://www.openswan.org/
-Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+--- dmraid.orig/include/dmraid/misc.h
++++ dmraid/include/dmraid/misc.h
+@@ -18,6 +18,7 @@ extern void libdmraid_exit(struct lib_co
+ 
+ extern void sysfs_workaround(struct lib_context *lc);
+ extern void mk_alpha(struct lib_context *lc, char *str, size_t len);
++extern void mk_alphanum(struct lib_context *lc, char *str, size_t len);
+ extern char *get_basename(struct lib_context *lc, char *str);
+ extern char *get_dirname(struct lib_context *lc, char *str);
+ extern char *remove_white_space(struct lib_context *lc, char *str, size_t len);
+--- dmraid.orig/lib/format/ataraid/isw.c
++++ dmraid/lib/format/ataraid/isw.c
+@@ -169,6 +169,7 @@ static size_t
+ _name(struct lib_context *lc, struct isw *isw, char *str, size_t len,
+       enum name_type nt, int num, struct isw_dev *dev, struct raid_dev *rd)
+ {
++	int n;
+ 	struct {
+ 		const char *fmt, *what;
+ 	} formats[] = {
+@@ -189,7 +190,11 @@ _name(struct lib_context *lc, struct isw
+ 			f += (is_raid10(dev) ? 1 : 0);
+ 	}
+ 
+-	return snprintf(str, len, f->fmt, isw->family_num, f->what, num);
++	n = snprintf(str, len, f->fmt, isw->family_num, f->what, num);
++	/* As '->volume' could contain anything, we need to sanitise the name */
++	if (str)
++		mk_alphanum(lc, str, n);
++	return n;
+ }
+ 
+ static char *
+--- dmraid.orig/lib/format/ddf/ddf1.c
++++ dmraid/lib/format/ddf/ddf1.c
+@@ -689,6 +689,7 @@ name(struct lib_context *lc, struct ddf1
+ 		i = prefix + 16;
+ 		while (!isgraph(buf[--i]));
+ 		buf[i + 1] = 0;
++		mk_alphanum(lc, buf, i);
+ 	} else {
+ 		char *b;
+ 
+--- dmraid.orig/lib/misc/misc.c
++++ dmraid/lib/misc/misc.c
+@@ -66,6 +66,20 @@ mk_alpha(struct lib_context *lc, char *s
+ 	}
+ }
+ 
++/* Convert a string to only have alphanum or '-' or '_'.
++ * All others become '_'
++ */
++void
++mk_alphanum(struct lib_context *lc, char *str, size_t len)
++{
++	for (; len && *str; len--, str++) {
++		if (!isalnum(*str) &&
++		    *str != '-' &&
++		    *str != '_')
++			*str = '_';
++	}
++}
++
+ /* Remove any whitespace from a string. */
+ char *
+ remove_white_space(struct lib_context *lc, char *str, size_t size)
