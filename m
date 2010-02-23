@@ -1,113 +1,114 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [Stable-review] [93/93] dm mpath: fix stall when
-	requeueing io
-Date: Tue, 23 Feb 2010 14:52:12 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1002231429210.29863@hs20-bc2-1.build.redhat.com>
-References: <20100219163257.186977438@kvm.kroah.org>
-	<4B815A3D.9040402@canonical.com> <4B825982.3060606@ct.jp.nec.com>
-	<20100223175331.GE560@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: disk/crypto performance regression 2.6.31 -> 2.6.32 (mmap
+	problem?)
+Date: Wed, 24 Feb 2010 09:41:11 +1100
+Message-ID: <20100223224111.GC16175@discord.disaster>
+References: <alpine.DEB.1.10.1002191729220.28940@uplift.swm.pp.se> <alpine.DEB.1.10.1002221337170.28940@uplift.swm.pp.se> <20100223044818.GD22370@discord.disaster> <alpine.DEB.1.10.1002230820110.12694@uplift.swm.pp.se> <20100223133219.GB16175@discord.disaster> <alpine.DEB.1.10.1002232138021.12694@uplift.swm.pp.se>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100223175331.GE560@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Junichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.1.10.1002232138021.12694@uplift.swm.pp.se>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikael Abrahamsson <swmike@swm.pp.se>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Tue, Feb 23, 2010 at 09:42:40PM +0100, Mikael Abrahamsson wrote:
+> On Wed, 24 Feb 2010, Dave Chinner wrote:
+>
+> Thought I should send the dump only to you, would you like me to post to  
+> the list as well and include a link to the logfile (think attachments  
+> shouldn't be done too much to lkml, right?). Feel free to post any  
+> information from this letter or attachment back onto lkml if you feel 
+> it's appropriate.
 
+Attachments under roughly 100kb (IIRC) are fine for LKML. This is
+allowed specifically to let people attach log files and configs.
 
-On Tue, 23 Feb 2010, Alasdair G Kergon wrote:
+I've re-added the lkml CC to continue the discussion there.  I also
+added the DM mailing list, so that they know directly that barriers
+are causing _significant_ system slowdowns. This is important,
+because there have been several reports of this problem since the
+start of the year to XFS forums as people are upgrading kernels.
 
-> > >>  		spin_unlock(q->queue_lock);
-> > >> -		map_request(ti, rq, md);
-> > >> +		if (map_request(ti, rq, md))
-> > >> +			goto requeued;
-> > >>  		spin_lock_irq(q->queue_lock);
-> 
-> > In the current device-mapper code, I would like to go with
-> > spin_unlock/lock here.
-> > However, there was a case to enable irq in map_requst() for request
-> > allocation, and this spin_lock_irq was a work-around for the case.
-> > Now, there is no such case in the device-mapper code, so spin_lock should
-> > be enough here.  But I'm still using spin_lock_irq for safeness, since
-> > there might be some more cases to enable irq during request submission
-> > to underlying devices.
+>> Barriers are only recently supported across DM and MD, so it would be  
+>> worth checking you logs for the last mount of the filesystems to  
+>> confirm.
+>
+> You're right, it doesn't say that anymore in 2.6.31, so I think I'm 
+> indeed running with barriers on.
 
-Either map_requst() may enable irqs --- then you should enable them with 
-spin_unlock_irq (then, you'd have to review all the callers of 
-dm_request_fn that they are fine with enabling irqs).
+And the stack traces confirm that. Every single blocked process
+output set has this trace in it:
 
-Or map_request() must not enable irqs --- and then there is already a bug 
-and there is no point in using "spin_lock_irq" for safeness, because it 
-doesn't fix the bug (the interrupt may come anyway, before spin_lock_irq).
+kdmflush      D 0000000000000000     0  3082      2 0x00000000
+ ffff880208553d20 0000000000000046 ffff880210a5f640 0000000000015880
+ ffff8802241ac7c0 0000000000015880 0000000000015880 0000000000015880
+ 0000000000015880 ffff8802241ac7c0 0000000000015880 0000000000015880
+Call Trace:
+ [<ffffffff81527cf8>] io_schedule+0x28/0x40
+ [<ffffffff813e7ca7>] dm_wait_for_completion+0x87/0x150
+ [<ffffffff81053c50>] ? default_wake_function+0x0/0x10
+ [<ffffffff813e8617>] ? __split_and_process_bio+0x107/0x170
+ [<ffffffff813e86a5>] dm_flush+0x25/0x70
+ [<ffffffff813e8749>] process_barrier+0x59/0xf0
+ [<ffffffff813e881b>] dm_wq_work+0x3b/0x100
+ [<ffffffff813e87e0>] ? dm_wq_work+0x0/0x100
+ [<ffffffff81073695>] run_workqueue+0x95/0x170
+ [<ffffffff81073814>] worker_thread+0xa4/0x120
+ [<ffffffff810789c0>] ? autoremove_wake_function+0x0/0x40
+ [<ffffffff81073770>] ? worker_thread+0x0/0x120
+ [<ffffffff810785d6>] kthread+0xa6/0xb0
+ [<ffffffff810130ea>] child_rip+0xa/0x20
+ [<ffffffff81078530>] ? kthread+0x0/0xb0
+ [<ffffffff810130e0>] ? child_rip+0x0/0x20
 
-> I don't understand this.
-> 
-> Are you saying that sometimes this fn is called with local interrupts disabled
-> and other times with them still enabled?
-> 
-> If they are sometimes left enabled, and the unlock() leaves them alone,
-> then the lock_irq disables them,  what piece of code then reenables them?
-> 
-> Surely this code can only be working if local interrupts are always 
-> disabled prior to entry?
-> 
-> Alasdair
+That is, it appears that DM is blocking waiting for a barrier to
+complete. Everything else is backed up waiting for IO completion to
+occur...
 
-Another problem:
-dm_request_fn can be called in an interrupt context, I scanned it for 
-calling process-context functions and found:
+>>> Currently it's "lazy-count=0", so I'll change that setting tonight.
+>
+> I didn't do this before the test I'm referring to now.
+>
+>> When IO is really slow so we get a better idea of where things are  
+>> blocking. Running a few of these 30s apart will give a fair indication  
+>> of what is blocked and what is making progress....
+>
+> Attached to this email, logfile from yesterday and today.
+>
+> Some interesting parts as well, that didn't trigger from the above sysrq  
+> stuff:
+>
+> Feb 22 19:56:16 ub kernel: [201245.583915] INFO: task md0_raid5:425 blocked for more than 120 seconds.
+> Feb 22 22:36:16 ub kernel: [210846.031875] INFO: task xfssyncd:3167 blocked for more than 120 seconds.
+> Feb 23 18:10:18 ub kernel: [281287.492499] INFO: task kdmflush:3082 blocked for more than 120 seconds.
+> Feb 23 18:12:18 ub kernel: [281407.491041] INFO: task kdmflush:3082 blocked for more than 120 seconds.
+> Feb 23 21:36:18 ub kernel: [293647.665917] INFO: task md0_raid5:425 blocked for more than 120 seconds.
+>
+> Didn't really think md0_raid5 could be blocked like that...
 
-It may call rq_completed (either directly, via
-dm_request_fn->map_request->dm_kill_unmapped_request->dm_complete_request
-->dm_done->dm_end_request->dm_put) or indirectly, when the request is
-completed from host controller interrupt. And dm_put is a process_context 
-function.
+They are blocking in:
 
-I believe it doesn't cause a real crash, because dm_put is called in 
-dm_blk_close, thus there is always at least one reference. When the device 
-is closed with dm_blk_close, there should be no requests on it.
+ [<ffffffff813dc0e1>] md_super_wait+0xc1/0xe0
+ [<ffffffff810789c0>] ? autoremove_wake_function+0x0/0x40
+ [<ffffffff813dc4e0>] md_update_sb+0x230/0x3b0
+ [<ffffffff813de2f2>] md_check_recovery+0x272/0x590
+ [<ffffffffa0063621>] raid5d+0x21/0x320 [raid456]
+ [<ffffffff813dbd94>] md_thread+0x44/0x120
 
-But it is simply a logic error to call a process-context function from 
-an interrupt context. I'd remove those dm_get/dm_put from 
-request-based-dm --- they are not needed anyway, as long as there are 
-requests, the "mapped_device" structure can't disappear.
+I'm assuming this is just taking a long time because of all the
+other IO that is going on slowing this down. The other 3 (xfssyncd,
+kdmflush) are all waiting for barrier IO to complete...
 
-You can apply this (in 2.6.34-rc1) to catch all the errorneous users of 
-dm_put.
+So it sounds like the immediate WAR for your extremely slow IO
+problem is to mount the XFS filesystems with "-o nobarrier", but
+keep in mind this can result in corruption if a crash occurrs.
 
-Mikulas
+Cheers,
 
----
-
-Catch errorneous calls of dm_put from an interrupt context.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm.c |    1 +
- 1 file changed, 1 insertion(+)
-
-Index: linux-2.6.33-rc8-fast/drivers/md/dm.c
-===================================================================
---- linux-2.6.33-rc8-fast.orig/drivers/md/dm.c	2010-02-23 20:45:31.000000000 +0100
-+++ linux-2.6.33-rc8-fast/drivers/md/dm.c	2010-02-23 20:46:10.000000000 +0100
-@@ -2188,6 +2188,7 @@ void dm_put(struct mapped_device *md)
- 	struct dm_table *map;
- 
- 	BUG_ON(test_bit(DMF_FREEING, &md->flags));
-+	might_sleep();
- 
- 	if (atomic_dec_and_lock(&md->holders, &_minor_lock)) {
- 		map = dm_get_live_table(md);
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
