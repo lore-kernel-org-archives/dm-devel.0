@@ -1,8 +1,8 @@
 From: Takahiro Yasui <tyasui@redhat.com>
-Subject: [RFC][PATCH 0/4] dm-raid1: fix deadlock at suspend
- after suspend was interrupted (v2)
-Date: Tue, 23 Feb 2010 13:45:00 -0500
-Message-ID: <4B84222C.9030102@redhat.com>
+Subject: [RFC][PATCH 3/4] dm-crypt: update resume method for
+ interruption of presuspend
+Date: Tue, 23 Feb 2010 13:45:11 -0500
+Message-ID: <4B842237.7020202@redhat.com>
 Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,51 +21,46 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: k-ueda@ct.jp.nec.com, LVM2 development <lvm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+When suspend is interrupted after presuspend procedure, each
+target needs to cancel all state changes done by its presuspend
+procedure. As for the crypt target, there is nothing to be
+canceled because the crypt target doesn't have a presuspend method.
 
-This is an update patch set to fix deadlock on suspending of mirror device.
-Based on the Ueda-san's suggestion, I updated the patch set so that a target's
-resume handler is used instead of introducing new handler (cancel_presuspend).
-
-
-ISSUE
-=====
-
-Suspend procedure on a dm-mirror device could cause deadlock on recovery_count
-semaphore.
-
-When mirror_presuspend is called, recovery_count semaphore is acquired in
-dm_rh_stop_recovery() to stop recovery routine, but when an signal is caught
-in dm_wait_for_completion() or an error occurred in in dm_suspend(),
-the suspend process is interrupted without releasing recovery_count semaphore
-of a mirror device. This means that another suspend is executed, and then
-the suspend process gets stuck at dm_rh_stop_recovery().
-
-When suspend procedure is interrupted, the device should work properly since
-the status of the device is not "suspended."
+The crypt target should skip crypt_preresume/crypt_resume method
+when the target isn't suspended.
 
 
-SOLUTION
-========
+Signed-off-by: Takahiro Yasui <tyasui@redhat.com>
+---
+ drivers/md/dm-crypt.c |    8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-Restore the target's state change by calling a target's specific resume handler
-when its suspend procedure was interrupted after its presuspend handler completed.
-
-
-PATCH SET
-=========
-    1/4: dm: restore presuspend status
-    2/4: dm-log: update resume method for interruption of presuspend
-    3/4: dm-crypt: update resume method for interruption of presuspend
-    4/4: cmirror: update resume method for interruption of presuspend
-
-    NOTE: The cmirror patch (4/4) hasn't been tested yet.
-
-
-I appreciate your comments.
-
-Thanks,
-Taka
+Index: linux-2.6.33-rc1-dm/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.33-rc1-dm.orig/drivers/md/dm-crypt.c
++++ linux-2.6.33-rc1-dm/drivers/md/dm-crypt.c
+@@ -1314,6 +1314,10 @@ static int crypt_preresume(struct dm_tar
+ {
+ 	struct crypt_config *cc = ti->private;
+ 
++	/* Just returns if the state is not "suspended". */
++	if (!dm_suspended(ti))
++		return 0;
++
+ 	if (!test_bit(DM_CRYPT_KEY_VALID, &cc->flags)) {
+ 		DMERR("aborting resume - crypt key is not set.");
+ 		return -EAGAIN;
+@@ -1326,6 +1330,10 @@ static void crypt_resume(struct dm_targe
+ {
+ 	struct crypt_config *cc = ti->private;
+ 
++	/* Just returns if the state is not "suspended". */
++	if (!dm_suspended(ti))
++		return;
++
+ 	clear_bit(DM_CRYPT_SUSPENDED, &cc->flags);
+ }
+ 
 
 --
 lvm-devel mailing list
