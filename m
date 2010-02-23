@@ -1,7 +1,8 @@
 From: Takahiro Yasui <tyasui@redhat.com>
-Subject: [RFC][PATCH 1/4] dm: restore presuspend status
-Date: Tue, 23 Feb 2010 13:45:02 -0500
-Message-ID: <4B84222E.10304@redhat.com>
+Subject: [RFC][PATCH 4/4] cmirror: update resume method for
+ interruption of presuspend
+Date: Tue, 23 Feb 2010 13:45:14 -0500
+Message-ID: <4B84223A.7030304@redhat.com>
 Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,48 +21,51 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: k-ueda@ct.jp.nec.com, LVM2 development <lvm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-When suspend procedure was interrupted just after a target's presuspend
-method was executed, dm_suspend() calls the target's resume method to
-cancel the target's state changes.
+Suspend procedure could be interrupted between presuspend and
+postsuspend procedure. When it happens, all state changes done
+by presuspend procedure needs to be canceled.
+
+I proposed a kernel patch to use a resume handler for canceling
+state changes and this patch fixes the cluster mirror.
+
+Cluster mirror changes only one flag (log's recovery_halted) for
+the DM_ULOG_PRESUSPEND request. Therefore, clog_resume function
+needs to reset the log's recovery_halted flag if cluster mirror
+received the DM_ULOG_RESUME request with the condition of log's
+state is LOG_RESUMED and its recovery_halted is set.
 
 
 Signed-off-by: Takahiro Yasui <tyasui@redhat.com>
 ---
- drivers/md/dm.c |    7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ daemons/cmirrord/functions.c |    8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-Index: linux-2.6.33-rc1-dm/drivers/md/dm.c
+Index: LVM2-2.02.62-20100217/daemons/cmirrord/functions.c
 ===================================================================
---- linux-2.6.33-rc1-dm.orig/drivers/md/dm.c
-+++ linux-2.6.33-rc1-dm/drivers/md/dm.c
-@@ -2475,7 +2475,6 @@ int dm_suspend(struct mapped_device *md,
- 	if (noflush)
- 		set_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
+--- LVM2-2.02.62-20100217.orig/daemons/cmirrord/functions.c
++++ LVM2-2.02.62-20100217/daemons/cmirrord/functions.c
+@@ -721,6 +721,10 @@ static int clog_resume(struct dm_ulog_re
+ 	if (!lc)
+ 		return -EINVAL;
  
--	/* This does not get reverted if there's an error later. */
- 	dm_table_presuspend_targets(map);
- 
- 	/*
-@@ -2486,8 +2485,10 @@ int dm_suspend(struct mapped_device *md,
- 	 */
- 	if (!noflush && do_lockfs) {
- 		r = lock_fs(md);
--		if (r)
-+		if (r) {
-+			dm_table_resume_targets(map);
- 			goto out;
-+		}
- 	}
- 
- 	/*
-@@ -2541,6 +2542,8 @@ int dm_suspend(struct mapped_device *md,
- 			start_queue(md->queue);
- 
- 		unlock_fs(md);
++	/* Check if the resume is called by interrupting suspend procedure */
++	if (lc->state == LOG_RESUMED && lc->recovery_halted)
++		goto cancel_presuspend;
 +
-+		dm_table_resume_targets(map);
- 		goto out; /* pushback list is already flushed, so skip flush */
- 	}
+ 	switch (lc->resume_override) {
+ 	case 1000:
+ 		LOG_ERROR("[%s] Additional resume issued before suspend",
+@@ -825,8 +829,10 @@ out:
+ 		   SHORT_UUID(lc->uuid), (unsigned long long)lc->sync_count);
+ 	lc->sync_search = 0;
+ 	lc->state = LOG_RESUMED;
++
++cancel_presuspend:
+ 	lc->recovery_halted = 0;
+-	
++
+ 	return rq->error;
+ }
  
 
 --
