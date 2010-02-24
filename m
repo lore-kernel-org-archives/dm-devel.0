@@ -1,49 +1,77 @@
-From: Mikael Abrahamsson <swmike@swm.pp.se>
-Subject: Re: disk/crypto performance regression 2.6.31 -> 2.6.32 (mmap
- problem?)
-Date: Wed, 24 Feb 2010 06:20:11 +0100 (CET)
-Message-ID: <alpine.DEB.1.10.1002240612400.12694@uplift.swm.pp.se>
-References: <alpine.DEB.1.10.1002191729220.28940@uplift.swm.pp.se> <alpine.DEB.1.10.1002221337170.28940@uplift.swm.pp.se> <20100223044818.GD22370@discord.disaster> <alpine.DEB.1.10.1002230820110.12694@uplift.swm.pp.se> <20100223133219.GB16175@discord.disaster>
- <alpine.DEB.1.10.1002232138021.12694@uplift.swm.pp.se> <20100223224111.GC16175@discord.disaster> <m37hq3id3h.fsf@lugabout.jhcloos.org>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: rqdm: bad usage of dm_get/dm_put (Was: Re: dm mpath: fix
+ stall when requeueing io)
+Date: Wed, 24 Feb 2010 17:16:28 +0900
+Message-ID: <4B84E05C.4070300@ct.jp.nec.com>
+References: <20100219163257.186977438@kvm.kroah.org>
+	<4B815A3D.9040402@canonical.com> <4B825982.3060606@ct.jp.nec.com>
+	<20100223175331.GE560@agk-dp.fab.redhat.com>
+	<Pine.LNX.4.64.1002231429210.29863@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <m37hq3id3h.fsf@lugabout.jhcloos.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: James Cloos <cloos@jhcloos.com>
-Cc: Dave Chinner <david@fromorbit.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1002231429210.29863@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 23 Feb 2010, James Cloos wrote:
+Hi Mikulas, Alasdair,
 
-> Based on a recent thread on the ext4 list I've started using deadline
-> rather than cfq on that disk.  There are some slowdowns on that disk's
-> other partition, but the overall throughput is significantly better than
-> using the combination of cfq, ext4 and barriers.
+Thank you for spotting this.
+
+On 02/24/2010 04:52 AM +0900, Mikulas Patocka wrote:
+> Another problem:
+> dm_request_fn can be called in an interrupt context, I scanned it for 
+> calling process-context functions and found:
+> 
+> It may call rq_completed (either directly, via
+> dm_request_fn->map_request->dm_kill_unmapped_request->dm_complete_request
+> ->dm_done->dm_end_request->dm_put) or indirectly, when the request is
+> completed from host controller interrupt. And dm_put is a process_context 
+> function.
 >
-> You might want to test out deadline and/or noop.
->
-> Cf:  /sys/block/*/queue/scheduler
+> I believe it doesn't cause a real crash, because dm_put is called in 
+> dm_blk_close, thus there is always at least one reference. When the device 
+> is closed with dm_blk_close, there should be no requests on it.
+> 
+> But it is simply a logic error to call a process-context function from 
+> an interrupt context. I'd remove those dm_get/dm_put from 
+> request-based-dm --- they are not needed anyway, as long as there are 
+> requests, the "mapped_device" structure can't disappear.
+ 
+Indeed, we shouldn't use the current dm_put() in any interrupt-context.
+But the "mapped_device" can disappear in request-based dm while there
+is a request after all bios complete, so I used dm_get()/dm_put() there.
+I'll consider another way to prevent the problem without dm_get()/dm_put().
+E.g. wait for request completion in dm_put() instead.
 
-I have been running deadline on the drives itself for years, I've tried 
-both with cfq and deadline in this case, and it doesn't really help.
 
-Another question is what the recommended scheduler setup when it comes to 
-my different layers drive->md->crypto(dm)->lvm(dm). For now I have only 
-been changing scheduler to deadline on the drive layer.
+> You can apply this (in 2.6.34-rc1) to catch all the errorneous users of 
+> dm_put.
+<snip>
+> @@ -2188,6 +2188,7 @@ void dm_put(struct mapped_device *md)
+>  	struct dm_table *map;
+>  
+>  	BUG_ON(test_bit(DMF_FREEING, &md->flags));
+> +	might_sleep();
+>  
+>  	if (atomic_dec_and_lock(&md->holders, &_minor_lock)) {
+>  		map = dm_get_live_table(md);
 
-I guess the different layers doesn't really know that much about each 
-other? I can imagine a few different scenarios where one only wants to do 
-most of the scheduling on the lvm layer, and then wants to keep the 
-queueing to a minimum on the other layers and keep the queue as small as 
-possible there, so it can do the proper re-ordering.
+The current request-based dm usually calls dm_put() from softirq context
+and is warned a lot, so don't apply this patch until I fix the problem
+above with another way.
 
-Anyone has any thoughts to share on this? I don't have much experience 
-with this when it comes to block devices, I'm a network engineer and I'm 
-trying to use my experience in QoS/packet schedulers in different layers, 
-where for instance when one runs an IP QoS scheduler, one doesn't want a 
-lot of buffering on the underlying ATM layer, because it makes the IP 
-schedulers job much harder.
-
--- 
-Mikael Abrahamsson    email: swmike@swm.pp.se
+Thanks,
+Kiyoshi Ueda
