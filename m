@@ -1,8 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 10] LVM: remove prevention checks for
-	mirrored log
-Date: Fri, 26 Feb 2010 17:35:59 -0600
-Message-ID: <201002262335.o1QNZx1w024129@hydrogen.msp.redhat.com>
+Subject: [PATCH 10 of 10] LVM: remove name restriction check for
+	repair
+Date: Fri, 26 Feb 2010 17:37:20 -0600
+Message-ID: <201002262337.o1QNbKXb024717@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,39 +20,30 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: lvm-remove-prevention-checks-for-mirrored-log.patch
+Patch name: lvm-remove-name-restriction-check-for-repair.patch
 
-In preparation for "mirrored" mirror logs, remove the
-checks that prevent this sort of processing.
+I've removed the 'apply_lvname_restrictions' call in lvconvert if the
+'--repair' option is given on the command line.  This is because the
+repair action will be making no new LV names; so the check shouldn't
+be necessary.  (Unless you don't like the idea of passing in hidden
+LVs.)
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: LVM2/lib/metadata/mirror.c
+Index: LVM2/tools/lvconvert.c
 ===================================================================
---- LVM2.orig/lib/metadata/mirror.c
-+++ LVM2/lib/metadata/mirror.c
-@@ -1563,11 +1563,6 @@ static struct logical_volume *_set_up_mi
+--- LVM2.orig/tools/lvconvert.c
++++ LVM2/tools/lvconvert.c
+@@ -105,7 +105,12 @@ static int _lvconvert_name_params(struct
+ 	if ((ptr = strrchr(lp->lv_name_full, '/')))
+ 		lp->lv_name = ptr + 1;
  
- 	init_mirror_in_sync(in_sync);
+-	if (!apply_lvname_restrictions(lp->lv_name))
++	/*
++	 * Repair will alter existing LVs - not make new ones - so
++	 * it doesn't make sense to do name restriction tests.
++	 */
++	if (!arg_count(cmd, repair_ARG) &&
++	    !apply_lvname_restrictions(lp->lv_name))
+ 		return_0;
  
--	if (log_count != 1) {
--		log_error("log_count != 1 is not supported.");
--		return NULL;
--	}
--
- 	/* Mirror log name is lv_name + suffix, determined as the following:
- 	 *   1. suffix is:
- 	 *        o "_mlog" for the original mirror LV.
-@@ -1630,12 +1625,6 @@ int add_mirror_log(struct cmd_context *c
- 	struct lvinfo info;
- 	int r = 0;
- 
--	/* Unimplemented features */
--	if (log_count > 1) {
--		log_error("log_count > 1 is not supported");
--		return 0;
--	}
--
- 	if (dm_list_size(&lv->segments) != 1) {
- 		log_error("Multiple-segment mirror is not supported");
- 		return 0;
+ 	if (*pargc && lp->snapshot) {
