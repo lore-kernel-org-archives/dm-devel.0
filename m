@@ -1,7 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 5 of 10] LVM:  hack to make things work
-Date: Fri, 26 Feb 2010 17:36:29 -0600
-Message-ID: <201002262336.o1QNaTcS024350@hydrogen.msp.redhat.com>
+Subject: [PATCH 2 of 10] LVM: remove prevention checks for
+	mirrored log
+Date: Fri, 26 Feb 2010 17:35:59 -0600
+Message-ID: <201002262335.o1QNZx1w024129@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,161 +20,39 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: lvm-hack-to-make-things-work.patch
+Patch name: lvm-remove-prevention-checks-for-mirrored-log.patch
 
-This patch is somewhat of a hack to put the various pieces
-together.
+In preparation for "mirrored" mirror logs, remove the
+checks that prevent this sort of processing.
 
-Although the changes to lv_add_log_segment are clever, they
-don't create the mirror in the right way (more like what
-pvmove needs, and not like what a LV mirror needs).
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Other changes to get functions to pull areas from the end
-of the list when creating the log.
-
-RFC:
-Index: LVM2/lib/metadata/lv_manip.c
-===================================================================
---- LVM2.orig/lib/metadata/lv_manip.c
-+++ LVM2/lib/metadata/lv_manip.c
-@@ -1363,8 +1363,11 @@ int lv_add_segment(struct alloc_handle *
- 		   const struct segment_type *segtype,
- 		   uint32_t stripe_size,
- 		   uint64_t status,
--		   uint32_t region_size)
-+		   uint32_t region_size,
-+		   int reverse)
- {
-+	uint32_t fa = first_area;
-+
- 	if (!segtype) {
- 		log_error("Missing segtype in lv_add_segment().");
- 		return 0;
-@@ -1380,7 +1383,14 @@ int lv_add_segment(struct alloc_handle *
- 		return 0;
- 	}
- 
--	if (!_setup_alloced_segments(lv, &ah->alloced_areas[first_area],
-+	if (reverse)
-+		fa = (ah->area_count + ah->log_area_count - 1) - first_area;
-+
-+	/* 'fa' is unsigned, so check if too large (invalid). */
-+	if (fa >= (ah->area_count + ah->log_area_count))
-+		return 0;
-+
-+	if (!_setup_alloced_segments(lv, &ah->alloced_areas[fa],
- 				     num_areas, status,
- 				     stripe_size, segtype,
- 				     region_size))
-@@ -1559,11 +1569,16 @@ int lv_add_mirror_lvs(struct logical_vol
-  */
- int lv_add_log_segment(struct alloc_handle *ah, struct logical_volume *log_lv)
- {
--	const char *segtype_name = ah->log_area_count > 1 ? "mirror" : "striped";
-+	int r;
- 
--	return lv_add_segment(ah, ah->area_count, ah->log_area_count, log_lv,
--			      get_segtype_from_string(log_lv->vg->cmd, segtype_name),
--			      0, MIRROR_LOG, 0);
-+	/*
-+	 * We specify the first area as starting after the areas
-+	 * allocated for the mirror.
-+	 */
-+	return lv_add_segment(ah, ah->area_count, 1, log_lv,
-+			      get_segtype_from_string(log_lv->vg->cmd,
-+						      "striped"),
-+			      0, MIRROR_LOG, 0, 0);
- }
- 
- static int _lv_extend_mirror(struct alloc_handle *ah,
-@@ -1585,7 +1600,7 @@ static int _lv_extend_mirror(struct allo
- 		if (!lv_add_segment(ah, m++, 1, seg_lv(seg, s),
- 				    get_segtype_from_string(lv->vg->cmd,
- 							    "striped"),
--				    0, 0, 0)) {
-+				    0, 0, 0, 0)) {
- 			log_error("Aborting. Failed to extend %s.",
- 				  seg_lv(seg, s)->name);
- 			return 0;
-@@ -1623,7 +1638,7 @@ int lv_extend(struct logical_volume *lv,
- 
- 	if (mirrors < 2)
- 		r = lv_add_segment(ah, 0, ah->area_count, lv, segtype,
--				   stripe_size, status, 0);
-+				   stripe_size, status, 0, 0);
- 	else
- 		r = _lv_extend_mirror(ah, lv, extents, 0);
- 
-Index: LVM2/lib/metadata/lv_alloc.h
-===================================================================
---- LVM2.orig/lib/metadata/lv_alloc.h
-+++ LVM2/lib/metadata/lv_alloc.h
-@@ -58,7 +58,8 @@ int lv_add_segment(struct alloc_handle *
-                    const struct segment_type *segtype,
-                    uint32_t stripe_size,
-                    uint64_t status,
--		   uint32_t region_size);
-+		   uint32_t region_size,
-+		   int reverse);
- 
- int lv_add_mirror_areas(struct alloc_handle *ah,
- 			struct logical_volume *lv, uint32_t le,
 Index: LVM2/lib/metadata/mirror.c
 ===================================================================
 --- LVM2.orig/lib/metadata/mirror.c
 +++ LVM2/lib/metadata/mirror.c
-@@ -1171,7 +1171,8 @@ int reconfigure_mirror_images(struct lv_
- static int _create_mimage_lvs(struct alloc_handle *ah,
- 			      uint32_t num_mirrors,
- 			      struct logical_volume *lv,
--			      struct logical_volume **img_lvs)
-+			      struct logical_volume **img_lvs,
-+			      int log)
- {
- 	uint32_t m;
- 	char *img_name;
-@@ -1202,7 +1203,7 @@ static int _create_mimage_lvs(struct all
- 		if (!lv_add_segment(ah, m, 1, img_lvs[m],
- 				    get_segtype_from_string(lv->vg->cmd,
- 							    "striped"),
--				    0, 0, 0)) {
-+				    0, 0, 0, log)) {
- 			log_error("Aborting. Failed to add mirror image segment "
- 				  "to %s. Remove new LV and retry.",
- 				  img_lvs[m]->name);
-@@ -1552,7 +1553,7 @@ static struct logical_volume *_create_mi
-  */
- static int _form_mirror(struct cmd_context *cmd, struct alloc_handle *ah,
- 			struct logical_volume *lv,
--			uint32_t mirrors, uint32_t region_size)
-+			uint32_t mirrors, uint32_t region_size, int log)
- {
- 	struct logical_volume **img_lvs;
+@@ -1563,11 +1563,6 @@ static struct logical_volume *_set_up_mi
  
-@@ -1573,7 +1574,7 @@ static int _form_mirror(struct cmd_conte
+ 	init_mirror_in_sync(in_sync);
+ 
+-	if (log_count != 1) {
+-		log_error("log_count != 1 is not supported.");
+-		return NULL;
+-	}
+-
+ 	/* Mirror log name is lv_name + suffix, determined as the following:
+ 	 *   1. suffix is:
+ 	 *        o "_mlog" for the original mirror LV.
+@@ -1630,12 +1625,6 @@ int add_mirror_log(struct cmd_context *c
+ 	struct lvinfo info;
+ 	int r = 0;
+ 
+-	/* Unimplemented features */
+-	if (log_count > 1) {
+-		log_error("log_count > 1 is not supported");
+-		return 0;
+-	}
+-
+ 	if (dm_list_size(&lv->segments) != 1) {
+ 		log_error("Multiple-segment mirror is not supported");
  		return 0;
- 	}
- 
--	if (!_create_mimage_lvs(ah, mirrors, lv, img_lvs))
-+	if (!_create_mimage_lvs(ah, mirrors, lv, img_lvs, log))
- 		return 0;
- 
- 	if (!lv_add_mirror_lvs(lv, img_lvs, mirrors,
-@@ -1636,7 +1637,7 @@ static struct logical_volume *_set_up_mi
- 	}
- 
- 	if ((log_count > 1) &&
--	    !_form_mirror(cmd, ah, log_lv, log_count-1, region_size)) {
-+	    !_form_mirror(cmd, ah, log_lv, log_count-1, region_size, 1)) {
- 		log_error("Failed to form mirrored log.");
- 		return NULL;
- 	}
-@@ -1781,7 +1782,7 @@ int add_mirror_images(struct cmd_context
- 	   So from here on, if failure occurs, the log must be explicitly
- 	   removed and the updated vg metadata should be committed. */
- 
--	if (!_form_mirror(cmd, ah, lv, mirrors, region_size))
-+	if (!_form_mirror(cmd, ah, lv, mirrors, region_size, 0))
- 		goto out_remove_log;
- 
- 	if (log_count && !attach_mirror_log(first_seg(lv), log_lv))
