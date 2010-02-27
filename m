@@ -1,14 +1,14 @@
 From: Takahiro Yasui <tyasui@redhat.com>
-Subject: Re: [PATCH 4 of 10] LVM: add logic to allow mirrored log
-Date: Sat, 27 Feb 2010 02:28:06 -0500
-Message-ID: <4B88C986.7040508@redhat.com>
-References: <201002262336.o1QNaJwv024277@hydrogen.msp.redhat.com>
+Subject: Re: [PATCH 5 of 10] LVM:  hack to make things work
+Date: Sat, 27 Feb 2010 02:39:25 -0500
+Message-ID: <4B88CC2D.6010207@redhat.com>
+References: <201002262336.o1QNaTcS024350@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <201002262336.o1QNaJwv024277@hydrogen.msp.redhat.com>
+In-Reply-To: <201002262336.o1QNaTcS024350@hydrogen.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,21 +18,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: jbrassow@redhat.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Jon,
+Jonathan Brassow wrote:
+> @@ -1559,11 +1569,16 @@ int lv_add_mirror_lvs(struct logical_vol
+>   */
+>  int lv_add_log_segment(struct alloc_handle *ah, struct logical_volume *log_lv)
+>  {
+> -	const char *segtype_name = ah->log_area_count > 1 ? "mirror" : "striped";
+> +	int r;
 
-I haven't got your comments for the following emails.
-
-https://www.redhat.com/archives/lvm-devel/2010-February/msg00207.html
-https://www.redhat.com/archives/lvm-devel/2010-February/msg00213.html
-
-Could please you check them?
-
-I tested your new patch set, but the above two issues haven't been fixed.
-
-Please tell me if I have misunderstandings.
+I guess you forgot to remove "int r;".
 
 Thanks,
 Taka
