@@ -1,15 +1,15 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 14/14] dm-multisnap-daniel
-Date: Tue, 2 Mar 2010 09:57:31 +0900
-Message-ID: <20100302095648E.fujita.tomonori@lab.ntt.co.jp>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 00/14] mikulas' shared snapshot patches
+Date: Tue, 2 Mar 2010 09:56:45 -0500
+Message-ID: <20100302145645.GA13568@redhat.com>
 References: <1267489438-6271-1-git-send-email-snitzer@redhat.com>
-	<1267489438-6271-15-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1267489438-6271-15-git-send-email-snitzer@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1267489438-6271-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,76 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: mpatocka@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon,  1 Mar 2010 19:23:58 -0500
+On Mon, Mar 01 2010 at  7:23pm -0500,
 Mike Snitzer <snitzer@redhat.com> wrote:
 
-> From: Mikulas Patocka <mpatocka@redhat.com>
+> Mikulas,
 > 
-> An implementation of snapshot store.
-> Designed by Daniel Phillips, ported to kernelspace by Fujita Tomonorig.
-
-Thanks for putting my name here, however, I prefer "Fujita Tomonori" :)
-
-
-> This implementation plugs as a module into dm-multisnapshot interface.
+> This is just the full submit of your shared snapshot patches from:
+> http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/r15/
 > 
-> The interface is almost the same as in Mikulas' exception store. You have to
-> specify "daniel" instead of "mikulas" as a type of exception store.
-> The only supported chunk size is 16384 bytes (but the code is general enough and
-> this restriction may be removed in the future).
+> I think the next phase of review should possibly be driven through the
+> dm-devel mailing list.  I'd at least like the option of exchanging
+> mail on aspects of some of these patches.
 > 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> ---
->  drivers/md/Kconfig               |   14 +
->  drivers/md/Makefile              |    2 +
->  drivers/md/dm-multisnap-daniel.c | 1711 ++++++++++++++++++++++++++++++++++++++
->  3 files changed, 1727 insertions(+), 0 deletions(-)
->  create mode 100644 drivers/md/dm-multisnap-daniel.c
+> The first patch has one small cleanup in do_origin_write(): I
+> eliminated the 'midcycle' goto.
 > 
-> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-> index 0c3ce3b..c30bf70 100644
-> --- a/drivers/md/Kconfig
-> +++ b/drivers/md/Kconfig
-> @@ -268,6 +268,20 @@ config DM_MULTISNAPSHOT_MIKULAS
->  	  A B+-tree-based log-structured storage allowing unlimited
->  	  number of snapshots.
->  
-> +config DM_MULTISNAPSHOT_DANIEL
-> +	tristate "Daniel's snapshot store"
-> +	depends on DM_MULTISNAPSHOT
-> +	---help---
-> +	  Daniel Philips' exception store. The data structures were
-> +	  designed by Daniel Phillips for Zumastore project, a porting
-> +	  to kernel space was done by Fujita Tomonorig.
+> But the primary difference with this submission (when compared to your
+> r15 patches) is I editted the patches for whitespace and typos.
 
-s/Tomonorig/Tomonori/;
+Mikulas,
 
+I've made these patches available for download here:
+http://people.redhat.com/msnitzer/patches/multisnap/kernel/2.6.33/
 
-(snip)
+I'd like to hand these DM patches, and the lvm2 patches, over to you so
+we don't get out of sync.
 
-> +static int __init dm_multisnapshot_daniel_module_init(void)
-> +{
-> +	return dm_multisnap_register_exception_store(&dm_multisnap_daniel_store);
-> +}
-> +
-> +static void __exit dm_multisnapshot_daniel_module_exit(void)
-> +{
-> +	dm_multisnap_unregister_exception_store(&dm_multisnap_daniel_store);
-> +}
-> +
-> +module_init(dm_multisnapshot_daniel_module_init);
-> +module_exit(dm_multisnapshot_daniel_module_exit);
-> +
-> +MODULE_DESCRIPTION(DM_NAME " multisnapshot Fujita/Daniel's exceptions store");
-> +MODULE_AUTHOR("Fujita Tomonorig, Daniel Phillips");
+The lvm2 patches were rebased and fixed to work with lvm2 2.02.62:
+http://people.redhat.com/msnitzer/patches/multisnap/lvm2/LVM2-2.02.62/
 
-s/Tomonorig/Tomonori/;
+I've not heard from you on either line of work that I did here.  I
+welcome your feedback.
 
-> +MODULE_LICENSE("GPL");
-
-
-Thanks,
+Mike
