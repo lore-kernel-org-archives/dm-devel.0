@@ -1,15 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 00/14] mikulas' shared snapshot patches
-Date: Tue, 2 Mar 2010 09:56:45 -0500
-Message-ID: <20100302145645.GA13568@redhat.com>
-References: <1267489438-6271-1-git-send-email-snitzer@redhat.com>
+From: heinzm@sourceware.org
+Subject: dmraid/lib Makefile.in register/dmreg.c
+Date: 2 Mar 2010 15:27:39 -0000
+Message-ID: <20100302152739.7163.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1267489438-6271-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,40 +16,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 01 2010 at  7:23pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2010-03-02 15:27:38
 
-> Mikulas,
-> 
-> This is just the full submit of your shared snapshot patches from:
-> http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/r15/
-> 
-> I think the next phase of review should possibly be driven through the
-> dm-devel mailing list.  I'd at least like the option of exchanging
-> mail on aspects of some of these patches.
-> 
-> The first patch has one small cleanup in do_origin_write(): I
-> eliminated the 'midcycle' goto.
-> 
-> But the primary difference with this submission (when compared to your
-> r15 patches) is I editted the patches for whitespace and typos.
+Modified files:
+	lib            : Makefile.in 
+	lib/register   : dmreg.c 
 
-Mikulas,
+Log message:
+	Explicitely link libdmraid-events-isw.so to libpthread
 
-I've made these patches available for download here:
-http://people.redhat.com/msnitzer/patches/multisnap/kernel/2.6.33/
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.4&r2=1.5
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/register/dmreg.c.diff?cvsroot=dm&r1=1.1&r2=1.2
 
-I'd like to hand these DM patches, and the lvm2 patches, over to you so
-we don't get out of sync.
-
-The lvm2 patches were rebased and fixed to work with lvm2 2.02.62:
-http://people.redhat.com/msnitzer/patches/multisnap/lvm2/LVM2-2.02.62/
-
-I've not heard from you on either line of work that I did here.  I
-welcome your feedback.
-
-Mike
+--- dmraid/lib/Makefile.in	2009/09/16 11:51:32	1.4
++++ dmraid/lib/Makefile.in	2010/03/02 15:27:38	1.5
+@@ -72,7 +72,7 @@
+ 	@echo $(TARGETS) $(INSTALL_TARGETS)
+ 
+ $(LIB_EVENTS_SHARED):
+-	$(CC) events/$(LIB_EVENTS_NAME).c $(INCLUDES) $(CFLAGS) $(LDFLAGS) -shared  -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) -o $@ -ldevmapper -ldevmapper-event $(LIB_SHARED)
++	$(CC) events/$(LIB_EVENTS_NAME).c $(INCLUDES) $(CFLAGS) $(LDFLAGS) -shared  -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) -o $@ -ldevmapper -ldevmapper-event $(LIB_SHARED) -lpthread
+ 
+ .PHONY: install_dmraid_libs remove_dmraid_libs
+ 
+--- dmraid/lib/register/dmreg.c	2009/09/16 11:45:17	1.1
++++ dmraid/lib/register/dmreg.c	2010/03/02 15:27:38	1.2
+@@ -475,7 +475,7 @@
+ 		printf("ERROR: device \"%s\" %s\n", dev_name,
+ 		       pending ?
+ 		       "has a registration event pending and "
+-		       "cannot be unregistered until completed":
++		       "cannot be unregistered until completed" :
+ 		       "is not currently being monitored");
+ 		return 1;
+ 	}
