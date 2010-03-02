@@ -1,12 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] Free dm_io structure before calling bio_endio
-Date: Mon, 1 Mar 2010 19:48:26 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1003011944510.10656@hs20-bc2-1.build.redhat.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH 14/14] dm-multisnap-daniel
+Date: Tue, 2 Mar 2010 09:57:31 +0900
+Message-ID: <20100302095648E.fujita.tomonori@lab.ntt.co.jp>
+References: <1267489438-6271-1-git-send-email-snitzer@redhat.com>
+	<1267489438-6271-15-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1267489438-6271-15-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,76 +19,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+On Mon,  1 Mar 2010 19:23:58 -0500
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-This partially fixes a problem described here
-https://www.redhat.com/archives/dm-devel/2010-February/msg00109.html
-I fixes a bug when device removal happens immediatelly after bio_endio.
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> An implementation of snapshot store.
+> Designed by Daniel Phillips, ported to kernelspace by Fujita Tomonorig.
 
-Note that rmmod is still not safe. These rmmod bugs seem to be ubiquitous.
+Thanks for putting my name here, however, I prefer "Fujita Tomonori" :)
 
-Mikulas
 
----
+> This implementation plugs as a module into dm-multisnapshot interface.
+> 
+> The interface is almost the same as in Mikulas' exception store. You have to
+> specify "daniel" instead of "mikulas" as a type of exception store.
+> The only supported chunk size is 16384 bytes (but the code is general enough and
+> this restriction may be removed in the future).
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> ---
+>  drivers/md/Kconfig               |   14 +
+>  drivers/md/Makefile              |    2 +
+>  drivers/md/dm-multisnap-daniel.c | 1711 ++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 1727 insertions(+), 0 deletions(-)
+>  create mode 100644 drivers/md/dm-multisnap-daniel.c
+> 
+> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> index 0c3ce3b..c30bf70 100644
+> --- a/drivers/md/Kconfig
+> +++ b/drivers/md/Kconfig
+> @@ -268,6 +268,20 @@ config DM_MULTISNAPSHOT_MIKULAS
+>  	  A B+-tree-based log-structured storage allowing unlimited
+>  	  number of snapshots.
+>  
+> +config DM_MULTISNAPSHOT_DANIEL
+> +	tristate "Daniel's snapshot store"
+> +	depends on DM_MULTISNAPSHOT
+> +	---help---
+> +	  Daniel Philips' exception store. The data structures were
+> +	  designed by Daniel Phillips for Zumastore project, a porting
+> +	  to kernel space was done by Fujita Tomonorig.
 
-Free dm_io structure before calling bio_endio
+s/Tomonorig/Tomonori/;
 
-There is a possible race:
 
-thread 1:
-bio_endio(bio, io_error);
-/* scheduling happens */
-					thread 2:
-					close the device
-					remove the device
-thread 1:
-free_io(md, io);
+(snip)
 
-Thread 2, when removing the device, sees nonempty md->io_pool (because the
-io hasn't been freed by thread 1 yet) and may crash with BUG in mempool_free.
-Thread 1 may also crash, when freeing into a nonexisting mempool.
+> +static int __init dm_multisnapshot_daniel_module_init(void)
+> +{
+> +	return dm_multisnap_register_exception_store(&dm_multisnap_daniel_store);
+> +}
+> +
+> +static void __exit dm_multisnapshot_daniel_module_exit(void)
+> +{
+> +	dm_multisnap_unregister_exception_store(&dm_multisnap_daniel_store);
+> +}
+> +
+> +module_init(dm_multisnapshot_daniel_module_init);
+> +module_exit(dm_multisnapshot_daniel_module_exit);
+> +
+> +MODULE_DESCRIPTION(DM_NAME " multisnapshot Fujita/Daniel's exceptions store");
+> +MODULE_AUTHOR("Fujita Tomonorig, Daniel Phillips");
 
-To fix this bug, we must make sure that bio_endio is the last call and
-the md structure is not accessed after bio_endio was signaled.
+s/Tomonorig/Tomonori/;
 
-There is another bio_endio in process_barrier, but it is called from the thread
-and the thread is destroyed prior to freeing the mempools, so this call is
-not affected by the bug.
+> +MODULE_LICENSE("GPL");
 
-Similar bug exists for module unloads (the module may be unloaded immediatelly
-after bio_endio), but it can't be fixed without redesigning module refcounts.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-Index: linux-2.6.33-rc8-fast/drivers/md/dm.c
-===================================================================
---- linux-2.6.33-rc8-fast.orig/drivers/md/dm.c	2010-03-01 22:50:47.000000000 +0100
-+++ linux-2.6.33-rc8-fast/drivers/md/dm.c	2010-03-01 22:52:48.000000000 +0100
-@@ -635,8 +635,10 @@ static void dec_pending(struct dm_io *io
- 			if (!md->barrier_error && io_error != -EOPNOTSUPP)
- 				md->barrier_error = io_error;
- 			end_io_acct(io);
-+			free_io(md, io);
- 		} else {
- 			end_io_acct(io);
-+			free_io(md, io);
- 
- 			if (io_error != DM_ENDIO_REQUEUE) {
- 				trace_block_bio_complete(md->queue, bio);
-@@ -644,8 +646,6 @@ static void dec_pending(struct dm_io *io
- 				bio_endio(bio, io_error);
- 			}
- 		}
--
--		free_io(md, io);
- 	}
- }
- 
+Thanks,
