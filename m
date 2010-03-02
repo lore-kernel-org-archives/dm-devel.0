@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 04/14] dm-multisnap-mikulas-alloc
-Date: Mon,  1 Mar 2010 19:23:48 -0500
-Message-ID: <1267489438-6271-5-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 11/14] dm-multisnap-mikulas-snaps
+Date: Mon,  1 Mar 2010 19:23:55 -0500
+Message-ID: <1267489438-6271-12-git-send-email-snitzer@redhat.com>
 References: <1267489438-6271-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,23 +24,22 @@ List-Id: dm-devel.ids
 
 From: Mikulas Patocka <mpatocka@redhat.com>
 
-Management of allocation bitmaps.
+The management of snapshot ID map.
 
-Creating the bitmaps.
-Allocating and freeing blocks.
+Red-black tree is used to hold the snapshot ID ranges in memory.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 ---
- drivers/md/dm-multisnap-alloc.c |  590 +++++++++++++++++++++++++++++++++++++++
- 1 files changed, 590 insertions(+), 0 deletions(-)
- create mode 100644 drivers/md/dm-multisnap-alloc.c
+ drivers/md/dm-multisnap-snaps.c |  636 +++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 636 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/md/dm-multisnap-snaps.c
 
-diff --git a/drivers/md/dm-multisnap-alloc.c b/drivers/md/dm-multisnap-alloc.c
+diff --git a/drivers/md/dm-multisnap-snaps.c b/drivers/md/dm-multisnap-snaps.c
 new file mode 100644
-index 0000000..02f89be
+index 0000000..9947673
 --- /dev/null
-+++ b/drivers/md/dm-multisnap-alloc.c
-@@ -0,0 +1,590 @@
++++ b/drivers/md/dm-multisnap-snaps.c
+@@ -0,0 +1,636 @@
 +/*
 + * Copyright (C) 2009 Red Hat Czech, s.r.o.
 + *
@@ -51,585 +50,631 @@ index 0000000..02f89be
 +
 +#include "dm-multisnap-mikulas.h"
 +
-+#define rshift_roundup(val, bits)	(((val) + ((chunk_t)1 << (bits)) - 1) >> (bits))
-+
-+#define BITS_PER_BYTE_SHIFT	3
-+#define BYTES_PER_POINTER_SHIFT	3
++/*
++ * In-memory red-black tree denoting the used snapshot IDs.
++ */
++struct snapshot_range {
++	struct rb_node node;
++	mikulas_snapid_t from;
++	mikulas_snapid_t to;
++};
 +
 +/*
-+ * Initialize the root bitmap, write it at the position "writing block".
++ * Find a leftmost key in rbtree in the specified range (if add == 0)
++ * or create a new key (if add != 0).
 + */
-+void dm_multisnap_create_bitmaps(struct dm_exception_store *s, chunk_t *writing_block)
++static struct snapshot_range *
++rb_find_insert_snapshot(struct dm_exception_store *s,
++			mikulas_snapid_t from, mikulas_snapid_t to, int add)
 +{
-+	struct dm_buffer *bp;
-+	unsigned i;
-+	void *bmp;
-+
-+	while (dm_multisnap_is_commit_block(s, *writing_block))
-+		(*writing_block)++;
-+
-+	if (*writing_block >= s->dev_size) {
-+		DM_MULTISNAP_SET_ERROR(s->dm, -ENOSPC,
-+				       ("dm_multisnap_create_bitmaps: device is too small"));
-+		return;
-+	}
-+
-+	if (*writing_block >= s->chunk_size << BITS_PER_BYTE_SHIFT) {
-+		DM_MULTISNAP_SET_ERROR(s->dm, -ENOSPC,
-+				       ("dm_multisnap_create_bitmaps: invalid block to write: %llx",
-+					(unsigned long long)*writing_block));
-+		return;
-+	}
-+
-+	bmp = dm_bufio_new(s->bufio, *writing_block, &bp);
-+	if (IS_ERR(bmp)) {
-+		DM_MULTISNAP_SET_ERROR(s->dm, PTR_ERR(bmp),
-+				       ("dm_multisnap_create_bitmaps: can't create direct bitmap block at %llx",
-+					(unsigned long long)*writing_block));
-+		return;
-+	}
-+	cond_resched();
-+	memset(bmp, 0, s->chunk_size);
-+	for (i = 0; i <= *writing_block; i++) {
-+		generic___set_le_bit(i, bmp);
-+		dm_multisnap_status_lock(s->dm);
-+		s->total_allocated++;
-+		dm_multisnap_status_unlock(s->dm);
-+		cond_resched();
-+	}
-+	s->bitmap_root = *writing_block;
-+	s->bitmap_depth = 0;
-+
-+	dm_bufio_mark_buffer_dirty(bp);
-+	dm_bufio_release(bp);
-+
-+	(*writing_block)++;
-+}
-+
-+static void dm_multisnap_add_bitmap(struct dm_exception_store *s);
-+
-+/*
-+ * Extend bitmaps to cover "new_size" area.
-+ *
-+ * While we extend bitmaps we increase s->dev_size so that the newly mapped
-+ * space can be used to hold further bitmaps.
-+ */
-+void dm_multisnap_extend_bitmaps(struct dm_exception_store *s, chunk_t new_size)
-+{
-+	while (s->dev_size < new_size) {
-+		struct dm_buffer *bp;
-+		void *bmp;
-+		bitmap_t bitmap_no = s->dev_size >> (s->chunk_shift + BITS_PER_BYTE_SHIFT);
-+		unsigned i = s->dev_size & ((1 << (s->chunk_shift + BITS_PER_BYTE_SHIFT)) - 1);
-+		chunk_t c = s->dev_size;
-+		if (!i) {
-+			dm_multisnap_add_bitmap(s);
-+			if (unlikely(dm_multisnap_has_error(s->dm)))
-+				return;
-+		}
-+		bmp = dm_multisnap_map_bitmap(s, bitmap_no, &bp, NULL, NULL);
-+		if (unlikely(!bmp))
-+			return;
-+		for (; i < s->chunk_size << BITS_PER_BYTE_SHIFT; i++, c++) {
-+			if (unlikely(dm_multisnap_is_commit_block(s, c)))
-+				generic___set_le_bit(i, bmp);
-+			else
-+				generic___clear_le_bit(i, bmp);
-+		}
-+		dm_bufio_mark_buffer_dirty(bp);
-+		dm_bufio_release(bp);
-+
-+		s->dev_size = ((chunk_t)bitmap_no + 1) << (s->chunk_shift + BITS_PER_BYTE_SHIFT);
-+		if (s->dev_size > new_size)
-+			s->dev_size = new_size;
-+	}
-+}
-+
-+/*
-+ * Add one bitmap after the last bitmap. A helper function for
-+ * dm_multisnap_extend_bitmaps
-+ */
-+static void dm_multisnap_add_bitmap(struct dm_exception_store *s)
-+{
-+	struct path_element path[MAX_BITMAP_DEPTH];
-+	struct dm_buffer *bp;
-+	int d;
-+	__u64 *bmpp;
-+	unsigned i;
-+	chunk_t c, bitmap_blk, new_blk;
-+	bitmap_t bitmap_no = s->dev_size >> (s->chunk_shift + BITS_PER_BYTE_SHIFT);
-+	void *bmp = dm_multisnap_alloc_make_block(s, &bitmap_blk, &bp);
-+	if (!bmp)
-+		return;
-+	c = (chunk_t)bitmap_no << (s->chunk_shift + BITS_PER_BYTE_SHIFT);
-+	for (i = 0; i < s->chunk_size << BITS_PER_BYTE_SHIFT; i++, c++) {
-+		if (unlikely(dm_multisnap_is_commit_block(s, c)))
-+			generic___set_le_bit(i, bmp);
-+		else
-+			generic___clear_le_bit(i, bmp);
-+	}
-+	dm_bufio_mark_buffer_dirty(bp);
-+	dm_bufio_release(bp);
-+
-+	/* just get the path to the last block */
-+	bmp = dm_multisnap_map_bitmap(s, bitmap_no - 1, &bp, NULL, path);
-+	if (unlikely(!bmp))
-+		return;
-+	dm_bufio_release(bp);
-+
-+	for (d = s->bitmap_depth - 1; d >= 0; d--) {
-+		if (path[d].idx + 1 < path[d].n_entries) {
-+			bmpp = dm_multisnap_read_block(s, path[d].block, &bp);
-+			if (!bmpp)
-+				return;
-+			bmpp[path[d].idx + 1] = cpu_to_le64(bitmap_blk);
-+			dm_bufio_mark_buffer_dirty(bp);
-+			dm_bufio_release(bp);
-+			return;
++	struct snapshot_range *new;
++	struct snapshot_range *found = NULL;
++	struct rb_node **p = &s->active_snapshots.rb_node;
++	struct rb_node *parent = NULL;
++	while (*p) {
++		parent = *p;
++#define rn	rb_entry(parent, struct snapshot_range, node)
++		if (to < rn->from) {
++go_left:
++			p = &rn->node.rb_left;
++		} else if (from > rn->to) {
++			p = &rn->node.rb_right;
 +		} else {
-+			bmpp = dm_multisnap_alloc_make_block(s, &new_blk, &bp);
-+			if (!bmpp)
-+				return;
-+			memset(bmpp, 0, s->chunk_size);
-+			bmpp[0] = cpu_to_le64(bitmap_blk);
-+			dm_bufio_mark_buffer_dirty(bp);
-+			dm_bufio_release(bp);
-+			bitmap_blk = new_blk;
++			if (!add) {
++				found = rn;
++		/* If there is range query, we need to find the leftmost node */
++				if (from < rn->from)
++					goto go_left;
++				break;
++			} else {
++				DM_MULTISNAP_SET_ERROR(s->dm, -EFSERROR,
++						       ("rb_insert_snapshot: inserting overlapping entry: "
++							"(%llx,%llx) overlaps (%llx,%llx)",
++							(unsigned long long)from,
++							(unsigned long long)to,
++							(unsigned long long)rn->from,
++							(unsigned long long)rn->to));
++				return NULL;
++			}
 +		}
++#undef rn
++	}
++	if (!add)
++		return found;
++
++	dm_multisnap_status_assert_locked(s->dm);
++
++	new = kmalloc(sizeof(struct snapshot_range), GFP_KERNEL);
++	if (!new) {
++		DM_MULTISNAP_SET_ERROR(s->dm, -ENOMEM,
++				       ("rb_insert_snapshot: can't allocate memory for snapshot descriptor"));
++		return NULL;
 +	}
 +
-+	/* make new root */
-+	bmpp = dm_multisnap_alloc_make_block(s, &new_blk, &bp);
-+	if (!bmpp)
-+		return;
-+	memset(bmpp, 0, s->chunk_size);
-+	bmpp[0] = cpu_to_le64(s->bitmap_root);
-+	bmpp[1] = cpu_to_le64(bitmap_blk);
-+	dm_bufio_mark_buffer_dirty(bp);
-+	dm_bufio_release(bp);
-+	s->bitmap_root = new_blk;
-+	s->bitmap_depth++;
++	new->from = from;
++	new->to = to;
++
++	rb_link_node(&new->node, parent, p);
++	rb_insert_color(&new->node, &s->active_snapshots);
++
++	return new;
 +}
 +
 +/*
-+ * Read a leaf bitmap node with index "bitmap".
-+ * Return the pointer to the data, store the held buffer to bl.
-+ * Return the block in block and path in path.
++ * Find a leftmost key in rbtree in the specified range.
 + */
-+void *dm_multisnap_map_bitmap(struct dm_exception_store *s, bitmap_t bitmap,
-+			      struct dm_buffer **bp, chunk_t *block, struct path_element *path)
++static struct snapshot_range *
++rb_find_snapshot(struct dm_exception_store *s,
++		 mikulas_snapid_t from, mikulas_snapid_t to)
 +{
-+	__u64 *bmp;
-+	unsigned idx;
-+	unsigned d = s->bitmap_depth;
-+	chunk_t blk = s->bitmap_root;
-+	chunk_t parent = 0;
-+
-+	while (1) {
-+		bmp = dm_multisnap_read_block(s, blk, bp);
-+		if (unlikely(!bmp)) {
-+			/* error is already set in dm_multisnap_read_block */
-+			DMERR("dm_multisnap_map_bitmap: can't read bitmap at "
-+			      "%llx (%llx), pointed to by %llx (%llx), depth %d/%d, index %llx",
-+			      (unsigned long long)blk,
-+			      (unsigned long long)dm_multisnap_remap_block(s, blk),
-+			      (unsigned long long)parent,
-+			      (unsigned long long)dm_multisnap_remap_block(s, parent),
-+			      s->bitmap_depth - d,
-+			      s->bitmap_depth,
-+			      (unsigned long long)bitmap);
-+			return NULL;
-+		}
-+		if (!d) {
-+			if (block)
-+				*block = blk;
-+			return bmp;
-+		}
-+
-+		idx = (bitmap >> ((d - 1) * (s->chunk_shift - BYTES_PER_POINTER_SHIFT))) &
-+			((s->chunk_size - 1) >> BYTES_PER_POINTER_SHIFT);
-+
-+		if (unlikely(path != NULL)) {
-+			path[s->bitmap_depth - d].block = blk;
-+			path[s->bitmap_depth - d].idx = idx;
-+			path[s->bitmap_depth - d].n_entries = s->chunk_size >> BYTES_PER_POINTER_SHIFT;
-+		}
-+
-+		parent = blk;
-+		blk = le64_to_cpu(bmp[idx]);
-+
-+		dm_bufio_release(*bp);
-+
-+		d--;
-+	}
++	return rb_find_insert_snapshot(s, from, to, 0);
 +}
 +
 +/*
-+ * Find a free bit from "start" to "end" (in bits).
-+ * If wide_search is nonzero, search for the whole free byte first.
++ * Insert a range to rbtree. It must not overlap with existing entries.
 + */
-+static int find_bit(const void *bmp, unsigned start, unsigned end, int wide_search)
++static int rb_insert_snapshot_unlocked(struct dm_exception_store *s,
++				       mikulas_snapid_t from,
++				       mikulas_snapid_t to)
 +{
-+	const void *p;
-+	unsigned bit;
-+	if (unlikely(start >= end))
-+		return -ENOSPC;
-+	if (likely(!generic_test_le_bit(start, bmp)))
-+		return start;
-+	cond_resched();
-+	if (likely(wide_search)) {
-+		p = memchr((const char *)bmp + (start >> 3), 0, (end >> 3) - (start >> 3));
-+		cond_resched();
-+		if (p) {
-+			bit = (((const __u8 *)p - (const __u8 *)bmp) << 3) | (start & 7);
-+			while (bit > start && !generic_test_le_bit(bit - 1, bmp))
-+				bit--;
-+			goto ret_bit;
-+		}
-+	}
-+	bit = generic_find_next_zero_le_bit(bmp, end, start);
-+	cond_resched();
-+
-+ret_bit:
-+	if (unlikely(bit >= end))
-+		return -ENOSPC;
-+	return bit;
-+}
-+
-+/*
-+ * Find the bitmap limit in bits.
-+ *
-+ * All the bitmaps hold s->chunk_size << BITS_PER_BYTE_SHIFT bits, except
-+ * the last one where we must use s->dev_size modulo number of bits in bitmap
-+ * to find the valid number of bits. Note that bits past s->dev_size are
-+ * undefined, there can be anything, so we must not scan past this limit.
-+ */
-+static unsigned bitmap_limit(struct dm_exception_store *s, bitmap_t bmp)
-+{
-+	if (bmp == (bitmap_t)(s->dev_size >> (s->chunk_shift + BITS_PER_BYTE_SHIFT)))
-+		return (unsigned)s->dev_size & ((s->chunk_size << BITS_PER_BYTE_SHIFT) - 1);
-+	return s->chunk_size << BITS_PER_BYTE_SHIFT;
-+}
-+
-+/*
-+ * The central allocation routine.
-+ *
-+ * Allocation strategy:
-+ *
-+ * We maintain s->alloc_rover to point past the last allocated blocks (and wraps
-+ * around back to 0 if it would point past the device end).
-+ *
-+ * We attempt to allocate at the rover and increment the rover, this will
-+ * minimize seek times for writes. I assume that this snapshot driver will be
-+ * mostly loaded with write requests (it happens when writing to the origin),
-+ * so I attempt to optimize for writes.
-+ *
-+ * If there is no space at the rover, find the whole free byte (8 bits) in the
-+ * current chunk. If there is not any free byte, we search the individual bits.
-+ * If we don't find any bit, continue with the next bitmap. If we scan the whole
-+ * device linearly and still don't find anything, abort with a failure.
-+ *
-+ * This is similar to what ext[23] does, so I suppose it is tuned well enough
-+ * that it won't fragment too much.
-+ */
-+int dm_multisnap_alloc_blocks(struct dm_exception_store *s, chunk_t *results,
-+			      unsigned n_blocks, int flags)
-+{
-+	void *bmp;
-+	struct dm_buffer *bp;
-+	chunk_t block;
-+	int wrap_around = 0;
-+	int start_bit;
-+	int wide_search;
-+	int i;
-+	bitmap_t bitmap_no;
-+	int c;
-+	int bit;
-+	chunk_t to_free = 0;
-+
-+	bitmap_no = s->alloc_rover >> (s->chunk_shift + BITS_PER_BYTE_SHIFT);
-+next_bitmap:
-+	bmp = dm_multisnap_map_bitmap(s, bitmap_no, &bp, &block, NULL);
-+	if (unlikely(!bmp))
++	struct snapshot_range *rn;
++	rn = rb_find_insert_snapshot(s, from, to, 1);
++	if (!rn)
 +		return -1;
++	return 0;
++}
 +
-+	wide_search = 1;
-+find_again:
-+	start_bit = s->alloc_rover & ((s->chunk_size << BITS_PER_BYTE_SHIFT) - 1);
-+
-+	for (i = 0; i < n_blocks; i++) {
-+find_another_bit:
-+		bit = find_bit(bmp, start_bit, bitmap_limit(s, bitmap_no), wide_search);
-+		if (unlikely(bit < 0)) {
-+bit_find_failed:
-+			if (wide_search) {
-+				wide_search = 0;
-+				goto find_again;
-+			}
-+			dm_bufio_release(bp);
-+			s->alloc_rover = (chunk_t) ++bitmap_no << (s->chunk_shift + BITS_PER_BYTE_SHIFT);
-+			if (unlikely(s->alloc_rover >= s->dev_size)) {
-+				s->alloc_rover = 0;
-+				bitmap_no = 0;
-+				wrap_around++;
-+				if (wrap_around >= 2) {
-+					DM_MULTISNAP_SET_ERROR(s->dm, -ENOSPC, ("snapshot overflow"));
-+					return -1;
-+				}
-+			}
-+			goto next_bitmap;
-+		}
-+		results[i] = ((chunk_t)bitmap_no << (s->chunk_shift + BITS_PER_BYTE_SHIFT)) | bit;
-+		start_bit = bit + 1;
-+		dm_bufio_release(bp);
-+
-+		c = dm_multisnap_check_allocated_block(s, results[i]);
-+		if (dm_multisnap_has_error(s->dm))
-+			return -1;
-+
-+		bmp = dm_multisnap_read_block(s, block, &bp);
-+		if (unlikely(!bmp))
-+			return -1;
-+
-+		if (unlikely(c))
-+			goto find_another_bit;
-+	}
-+
-+	if (flags & ALLOC_DRY)
-+		goto bp_release_return;
-+
-+	if (!dm_multisnap_block_is_uncommitted(s, block)) {
-+		chunk_t new_block;
-+find_another_bit_for_bitmap:
-+		bit = find_bit(bmp, start_bit, bitmap_limit(s, bitmap_no), wide_search);
-+		if (unlikely(bit < 0))
-+			goto bit_find_failed;
-+
-+		new_block = ((chunk_t)bitmap_no << (s->chunk_shift + BITS_PER_BYTE_SHIFT)) | bit;
-+		start_bit = bit + 1;
-+
-+		dm_bufio_release(bp);
-+		c = dm_multisnap_check_allocated_block(s, new_block);
-+		if (dm_multisnap_has_error(s->dm))
-+			return -1;
-+
-+		bmp = dm_multisnap_read_block(s, block, &bp);
-+		if (unlikely(!bmp))
-+			return -1;
-+
-+		if (unlikely(c))
-+			goto find_another_bit_for_bitmap;
-+
-+		/*
-+		 * Warning: record the address of a block to free in a special
-+		 * variable.
-+		 *
-+		 * If we freed it here, that could recurse back to
-+		 * dm_multisnap_alloc_blocks and corrupt allocations. Free it
-+		 * later when we are done with the allocation and all the
-+		 * allocated blocks are marked in the bitmap.
-+		 */
-+		bmp = dm_multisnap_duplicate_block(s, block, new_block, bitmap_no, &bp, &to_free);
-+		if (unlikely(!bmp))
-+			return -1;
-+
-+		generic___set_le_bit(bit, bmp);
-+		dm_multisnap_status_lock(s->dm);
-+		s->total_allocated++;
-+		dm_multisnap_status_unlock(s->dm);
-+	}
-+
-+	for (i = 0; i < n_blocks; i++)
-+		generic___set_le_bit(results[i] & ((s->chunk_size << BITS_PER_BYTE_SHIFT) - 1), bmp);
++/*
++ * Hold the lock and insert a range to rbtree. It must not overlap with
++ * existing entries.
++ */
++static int rb_insert_snapshot(struct dm_exception_store *s,
++			      mikulas_snapid_t from, mikulas_snapid_t to)
++{
++	int r;
 +	dm_multisnap_status_lock(s->dm);
-+	s->total_allocated += n_blocks;
++	r = rb_insert_snapshot_unlocked(s, from, to);
 +	dm_multisnap_status_unlock(s->dm);
++	return r;
++}
 +
-+	dm_bufio_mark_buffer_dirty(bp);
++/*
++ * "from" must be last entry in the existing range. This function extends the
++ * range. The extended area must not overlap with another entry.
++ */
++static int rb_extend_range(struct dm_exception_store *s,
++			   mikulas_snapid_t from, mikulas_snapid_t to)
++{
++	struct snapshot_range *rn;
++	rn = rb_find_insert_snapshot(s, from, from, 0);
++	if (!rn) {
++		DM_MULTISNAP_SET_ERROR(s->dm, -EFSERROR,
++				       ("rb_extend_range: snapshot %llx not found",
++					(unsigned long long)from));
++		return -1;
++	}
++	if (rn->to != from) {
++		DM_MULTISNAP_SET_ERROR(s->dm, -EFSERROR,
++				       ("rb_extend_range: bad attempt to extend range: "
++					"%llx >= %llx",
++					(unsigned long long)rn->to,
++					(unsigned long long)from));
++		return -1;
++	}
++	dm_multisnap_status_lock(s->dm);
++	rn->to = to;
++	dm_multisnap_status_unlock(s->dm);
++	return 0;
++}
 +
-+bp_release_return:
-+	dm_bufio_release(bp);
++/*
++ * Delete range from the rbtree. The range must be already allocated.
++ *
++ * It is valid to specify a subset of existing range, in this case, the range
++ * is trimmed and possible split to two ranges.
++ */
++static int rb_delete_range(struct dm_exception_store *s,
++			   mikulas_snapid_t from, mikulas_snapid_t to)
++{
++	struct snapshot_range *sr = rb_find_snapshot(s, from, from);
 +
-+	s->alloc_rover = (s->alloc_rover & ~(chunk_t)((s->chunk_size << BITS_PER_BYTE_SHIFT) - 1)) + start_bit;
-+	if (unlikely(s->alloc_rover >= s->dev_size))
-+		s->alloc_rover = 0;
++	if (!sr || sr->to < to) {
++		DM_MULTISNAP_SET_ERROR(s->dm, -EFSERROR,
++				       ("rb_delete_range: deleting non-existing snapid "
++					"%llx-%llx",
++					(unsigned long long)from,
++					(unsigned long long)to));
++		return -1;
++	}
 +
-+	if (unlikely(to_free != 0))
-+		dm_multisnap_free_block(s, to_free, 0);
++	dm_multisnap_status_lock(s->dm);
++	if (sr->from < from) {
++		mikulas_snapid_t orig_to = sr->to;
++		sr->to = from - 1;
++		if (orig_to > to) {
++			if (rb_insert_snapshot_unlocked(s, to + 1, orig_to)) {
++				sr->to = orig_to;
++				dm_multisnap_status_unlock(s->dm);
++				return -1;
++			}
++		}
++	} else {
++		if (sr->to > to) {
++			sr->from = to + 1;
++		} else {
++			rb_erase(&sr->node, &s->active_snapshots);
++			kfree(sr);
++		}
++	}
++	dm_multisnap_status_unlock(s->dm);
++	return 0;
++}
++
++/*
++ * If "snapid" is valid snapshot ID, return snapid.
++ * Otherwise, return the next valid snapshot ID.
++ * If there is no next valid snapshot ID, return DM_SNAPID_T_ORIGIN.
++ */
++snapid_t dm_multisnap_get_next_snapid(struct dm_exception_store *s,
++				      snapid_t snapid)
++{
++	struct snapshot_range *rn;
++
++	rn = rb_find_snapshot(s, snapid, DM_SNAPID_T_MAX);
++	if (!rn)
++		return DM_SNAPID_T_ORIGIN;
++	if (rn->from > snapid)
++		snapid = rn->from;
++	if (rn->to >= (snapid | DM_MIKULAS_SUBSNAPID_MASK))
++		return snapid | DM_MIKULAS_SUBSNAPID_MASK;
++	return snapid;
++}
++
++/*
++ * Find next range.
++ * A wrapper around rb_find_snapshot that is useable in other object files
++ * that don't know about struct snapshot_range.
++ */
++int dm_multisnap_find_next_snapid_range(struct dm_exception_store *s,
++					snapid_t snapid, snapid_t *from,
++					snapid_t *to)
++{
++	struct snapshot_range *rn;
++	rn = rb_find_snapshot(s, snapid, DM_SNAPID_T_MAX);
++	if (!rn)
++		return 0;
++	*from = rn->from;
++	*to = rn->to;
++	return 1;
++}
++
++/*
++ * Return true, if the snapid is master (not subsnapshot).
++ */
++static int dm_multisnap_snapid_is_master(snapid_t snapid)
++{
++	return (snapid & DM_MIKULAS_SUBSNAPID_MASK) == DM_MIKULAS_SUBSNAPID_MASK;
++}
++
++/*
++ * Find the next subsnapshot that is to be created for a snapshot with snapid.
++ *
++ * If it returns snapid, then no subsnapshot can be created.
++ */
++snapid_t dm_multisnap_find_next_subsnapshot(struct dm_exception_store *s,
++					    snapid_t snapid)
++{
++#ifdef CONFIG_DM_MULTISNAPSHOT_MIKULAS_SNAP_OF_SNAP
++	mikulas_snapid_t find_from, find_to;
++	if (unlikely(!dm_multisnap_snapid_is_master(snapid)))
++		return snapid;
++	if (!dm_multisnap_find_next_snapid_range(s, snapid,
++						 &find_from, &find_to))
++		BUG();
++	snapid &= ~DM_MIKULAS_SUBSNAPID_MASK;
++	if (snapid < find_from)
++		snapid = find_from;
++#endif
++	return snapid;
++}
++
++/*
++ * Deallocate the whole rbtree.
++ */
++void dm_multisnap_destroy_snapshot_tree(struct dm_exception_store *s)
++{
++	struct rb_node *root;
++	while ((root = s->active_snapshots.rb_node)) {
++#define rn	rb_entry(root, struct snapshot_range, node)
++		rb_erase(root, &s->active_snapshots);
++		kfree(rn);
++#undef rn
++	}
++}
++
++/*
++ * Populate in-memory rbtree from on-disk b+tree.
++ */
++void dm_multisnap_read_snapshots(struct dm_exception_store *s)
++{
++	struct bt_key snap_key;
++	chunk_t ignore;
++	int r;
++
++	dm_multisnap_destroy_snapshot_tree(s);
++
++	snap_key.snap_from = 0;
++find_next:
++	snap_key.snap_to = DM_SNAPID_T_MAX;
++	snap_key.chunk = DM_CHUNK_T_SNAP_PRESENT;
++
++	r = dm_multisnap_find_in_btree(s, &snap_key, &ignore);
++
++	if (unlikely(r < 0))
++		return;
++
++	if (r) {
++		if (unlikely(snap_key.snap_to > DM_SNAPID_T_MAX)) {
++			DM_MULTISNAP_SET_ERROR(s->dm, -EFSERROR,
++					       ("dm_multisnap_read_snapshots: invalid snapshot id"));
++			return;
++		}
++		r = rb_insert_snapshot(s, snap_key.snap_from, snap_key.snap_to);
++		if (unlikely(r < 0))
++			return;
++		snap_key.snap_from = snap_key.snap_to + 1;
++		goto find_next;
++	}
++}
++
++/*
++ * Allocate next snapshot ID.
++ * If snap_of_snap != 0, allocate a subsnapshot ID for snapshot "master".
++ * Otherwise, allocate a new master snapshot ID.
++ */
++int dm_multisnap_allocate_snapid(struct dm_exception_store *s,
++				 snapid_t *snapid, int snap_of_snap, snapid_t master)
++{
++	if (snap_of_snap) {
++#ifdef CONFIG_DM_MULTISNAPSHOT_MIKULAS_SNAP_OF_SNAP
++		if (!dm_multisnap_snapid_is_master(master)) {
++			DMERR("dm_multisnap_allocate_snapid: only two levels of snapshots are supported");
++			return -EOPNOTSUPP;
++		}
++		*snapid = dm_multisnap_find_next_subsnapshot(s, master);
++		if (*snapid == master) {
++			DMERR("dm_multisnap_allocate_snapid: 2^32 snapshots-of-snapshot limit reached");
++			return -ENOSPC;
++		}
++		return 0;
++#else
++		DMERR("dm_multisnap_allocate_snapid: snapshots of snapshots not supported with 32-bit snapshot IDs");
++		return -EOPNOTSUPP;
++#endif
++	}
++	*snapid = ((mikulas_snapid_t)s->snapshot_num << DM_MIKULAS_SNAPID_STEP_BITS) | DM_MIKULAS_SUBSNAPID_MASK;
++	if (s->snapshot_num == 0xffffffff || *snapid > DM_SNAPID_T_MAX) {
++		DMERR("dm_multisnap_allocate_snapid: 2^32 snapshot limit reached");
++		return -ENOSPC;
++	}
++	return 0;
++}
++
++/*
++ * Add a snapid range to in-memory rbtree and on-disk b+tree.
++ * Optionally, merge with the previous range. Don't merge with the next.
++ */
++static int dm_multisnap_create_snapid_range(struct dm_exception_store *s,
++					    snapid_t from, snapid_t to)
++{
++	int r;
++	struct bt_key snap_key;
++
++	if (from && dm_multisnap_snapshot_exists(s->dm, from - 1)) {
++		/* Extend existing key range */
++
++		r = rb_extend_range(s, from - 1, to);
++
++		if (r < 0)
++			return dm_multisnap_has_error(s->dm);
++
++		snap_key.chunk = DM_CHUNK_T_SNAP_PRESENT;
++		snap_key.snap_from = from - 1;
++		snap_key.snap_to = to;
++		dm_multisnap_extend_btree_entry(s, &snap_key);
++	} else {
++		/* Add new entry */
++
++		r = rb_insert_snapshot(s, from, to);
++		if (r < 0)
++			return dm_multisnap_has_error(s->dm);
++
++		snap_key.chunk = DM_CHUNK_T_SNAP_PRESENT;
++		snap_key.snap_from = from;
++		snap_key.snap_to = to;
++		dm_multisnap_add_to_btree(s, &snap_key, 0);
++	}
++	if (dm_multisnap_has_error(s->dm))
++		return dm_multisnap_has_error(s->dm);
++
++	dm_multisnap_transition_mark(s);
 +
 +	return 0;
 +}
 +
 +/*
-+ * This function gets a valid block number (block), buffer for this block (bp)
-+ * and data in this buffer (ptr) and returns new writeable block. It possibly
-+ * moves the data to another buffer and updates *bp.
-+ *
-+ * Note that to maintain log-structured storage, we must not write to the block,
-+ * but we must allocate new block and copy the data there.
-+ *
-+ * The only case where we can write to the provided block directly is if the
-+ * block was created since last commit.
++ * Delete a snapid range from in-memory rbtree and on-disk b+tree.
 + */
-+
-+void *dm_multisnap_alloc_duplicate_block(struct dm_exception_store *s, chunk_t block,
-+					 struct dm_buffer **bp, void *ptr)
++static int dm_multisnap_delete_snapid_range(struct dm_exception_store *s,
++					    snapid_t from, snapid_t to)
 +{
 +	int r;
-+	chunk_t new_chunk;
-+	void *data;
++	struct bt_key snap_key;
++	chunk_t ignore;
 +
-+	if (dm_multisnap_block_is_uncommitted(s, block))
-+		return ptr;
++	r = rb_delete_range(s, from, to);
++	if (r < 0)
++		return dm_multisnap_has_error(s->dm);
 +
-+	dm_bufio_release(*bp);
++	snap_key.chunk = DM_CHUNK_T_SNAP_PRESENT;
++	snap_key.snap_from = from;
++	snap_key.snap_to = from;
 +
-+	r = dm_multisnap_alloc_blocks(s, &new_chunk, 1, 0);
-+	if (r)
-+		return NULL;
-+
-+	data = dm_multisnap_read_block(s, block, bp);
-+	if (!data)
-+		return NULL;
-+
-+	return dm_multisnap_duplicate_block(s, block, new_chunk,
-+					    CB_BITMAP_IDX_NONE, bp, NULL);
-+}
-+
-+/*
-+ * Allocate a new block and return its data. Return the block number in *result
-+ * and buffer pointer in *bp.
-+ */
-+void *dm_multisnap_alloc_make_block(struct dm_exception_store *s, chunk_t *result,
-+				    struct dm_buffer **bp)
-+{
-+	int r = dm_multisnap_alloc_blocks(s, result, 1, 0);
-+	if (unlikely(r < 0))
-+		return NULL;
-+
-+	return dm_multisnap_make_block(s, *result, bp);
-+}
-+
-+/*
-+ * Free the block immediately. You must be careful with this function because
-+ * it doesn't follow log-structured protocol.
-+ *
-+ * It may be used only if
-+ * - the blocks to free were allocated since last transactions.
-+ * - or from freelist management, which means the blocks were already recorded in
-+ *   a freelist (thus it would be freed again in case of machine crash).
-+ */
-+void dm_multisnap_free_blocks_immediate(struct dm_exception_store *s, chunk_t block,
-+					unsigned n_blocks)
-+{
-+	void *bmp;
-+	struct dm_buffer *bp;
-+
-+	if (!n_blocks)
-+		return;
-+
-+	if (unlikely(block + n_blocks > s->dev_size)) {
++	r = dm_multisnap_find_in_btree(s, &snap_key, &ignore);
++	if (r <= 0) {
++		if (!r)
++			DM_MULTISNAP_SET_ERROR(s->dm, -EFSERROR,
++					       ("dm_multisnap_delete_snapshot: snapshot id %llx not found in b-tree",
++						(unsigned long long)from));
++		return dm_multisnap_has_error(s->dm);
++	}
++	if (snap_key.snap_to < to) {
 +		DM_MULTISNAP_SET_ERROR(s->dm, -EFSERROR,
-+				       ("dm_multisnap_free_block_immediate: freeing invalid blocks %llx, %x",
-+					(unsigned long long)block, n_blocks));
-+		return;
++				       ("dm_multisnap_delete_snapshot: snapshot id %llx-%llx not found in b-tree",
++					(unsigned long long)from, (unsigned long long)to));
++		return -EFSERROR;
 +	}
 +
-+	if (block + n_blocks == s->alloc_rover)
-+		s->alloc_rover = block;
++	if (snap_key.snap_from < from) {
++		snap_key.snap_from = from;
++		dm_multisnap_restrict_btree_entry(s, &snap_key);
 +
-+	do {
-+		bitmap_t bitmap_no = block >> (s->chunk_shift + BITS_PER_BYTE_SHIFT);
++		dm_multisnap_transition_mark(s);
 +
-+		bmp = dm_multisnap_map_bitmap(s, bitmap_no, &bp, NULL, NULL);
-+		if (!bmp)
-+			return;
++		if (dm_multisnap_has_error(s->dm))
++			return dm_multisnap_has_error(s->dm);
 +
-+		do {
-+			generic___clear_le_bit(block & ((s->chunk_size << BITS_PER_BYTE_SHIFT) - 1), bmp);
-+			dm_multisnap_status_lock(s->dm);
-+			s->total_allocated--;
-+			dm_multisnap_status_unlock(s->dm);
-+			n_blocks--;
-+			block++;
-+			cond_resched();
-+		} while (n_blocks && (block & ((s->chunk_size << BITS_PER_BYTE_SHIFT) - 1)));
++		if (snap_key.snap_to > to) {
++			snap_key.snap_from = to + 1;
++			dm_multisnap_add_to_btree(s, &snap_key, 0);
++		}
++	} else {
++		if (snap_key.snap_to > to) {
++			snap_key.snap_to = to;
++			dm_multisnap_restrict_btree_entry(s, &snap_key);
++		} else {
++			dm_multisnap_delete_from_btree(s, &snap_key);
++		}
++	}
 +
-+		dm_bufio_mark_buffer_dirty(bp);
-+		dm_bufio_release(bp);
-+	} while (unlikely(n_blocks != 0));
++	dm_multisnap_transition_mark(s);
++
++	return 0;
 +}
 +
 +/*
-+ * Flush tmp_remaps for bitmaps. Write the path from modified bitmaps to the
-+ * root.
++ * Create a subsnapshot.
 + */
-+void dm_multisnap_bitmap_finalize_tmp_remap(struct dm_exception_store *s, struct tmp_remap *tmp_remap)
++static int dm_multisnap_create_subsnapshot(struct dm_exception_store *s, snapid_t snapid)
 +{
-+	chunk_t block;
-+	struct dm_buffer *bp;
-+	__u64 *new_block;
-+	struct path_element path[MAX_BITMAP_DEPTH];
-+	int results_ptr;
++	int r;
++	snapid_t master, next_sub;
 +
-+	chunk_t new_blockn;
-+	int i;
-+
-+	/*
-+	 * Preallocate twice the required amount of blocks, so that resolving
-+	 * the next tmp_remap (created here, in dm_multisnap_alloc_blocks)
-+	 * doesn't have to allocate anything.
-+	 */
-+	if (s->n_preallocated_blocks < s->bitmap_depth) {
-+		if (unlikely(dm_multisnap_alloc_blocks(s, s->preallocated_blocks + s->n_preallocated_blocks,
-+						       s->bitmap_depth * 2 - s->n_preallocated_blocks, 0) < 0))
-+			return;
-+		s->n_preallocated_blocks = s->bitmap_depth * 2;
-+	}
-+	results_ptr = 0;
-+
-+	new_block = dm_multisnap_map_bitmap(s, tmp_remap->bitmap_idx, &bp, &block, path);
-+	if (unlikely(!new_block))
-+		return;
-+
-+	dm_bufio_release(bp);
-+
-+	new_blockn = tmp_remap->new;
-+	for (i = s->bitmap_depth - 1; i >= 0; i--) {
-+		chunk_t block_to_free;
-+		int remapped = 0;
-+		__u64 *bmp = dm_multisnap_read_block(s, path[i].block, &bp);
-+		if (unlikely(!bmp))
-+			return;
-+
-+		if (!dm_multisnap_block_is_uncommitted(s, path[i].block)) {
-+			remapped = 1;
-+			dm_bufio_release_move(bp, s->preallocated_blocks[results_ptr]);
-+			bmp = dm_multisnap_read_block(s, s->preallocated_blocks[results_ptr], &bp);
-+			if (!bmp)
-+				return;
-+			dm_multisnap_block_set_uncommitted(s, s->preallocated_blocks[results_ptr]);
-+		}
-+
-+		block_to_free = le64_to_cpu(bmp[path[i].idx]);
-+		bmp[path[i].idx] = cpu_to_le64(new_blockn);
-+		dm_bufio_mark_buffer_dirty(bp);
-+		dm_bufio_release(bp);
-+
-+		dm_multisnap_free_block(s, block_to_free, 0);
-+
-+		if (!remapped)
-+			goto skip_it;
-+		new_blockn = s->preallocated_blocks[results_ptr];
-+		results_ptr++;
++	master = snapid | DM_MIKULAS_SUBSNAPID_MASK;
++	if (!dm_multisnap_snapshot_exists(s->dm, master)) {
++		DMERR("dm_multisnap_create_subsnapshot: master snapshot with id %llx doesn't exist",
++		      (unsigned long long)snapid);
++		return -EINVAL;
 +	}
 +
-+	dm_multisnap_free_block(s, s->bitmap_root, 0);
-+	s->bitmap_root = new_blockn;
++	next_sub = dm_multisnap_find_next_subsnapshot(s, master);
++	if (snapid < next_sub) {
++		DMERR("dm_multisnap_create_subsnapshot: invalid subsnapshot id %llx "
++		      "(allowed range %llx - %llx)",
++		      (unsigned long long)snapid,
++		      (unsigned long long)next_sub,
++		      (unsigned long long)master - 1);
++		return -EINVAL;
++	}
 +
-+skip_it:
-+	memmove(s->preallocated_blocks, s->preallocated_blocks + results_ptr,
-+		(s->n_preallocated_blocks -= results_ptr) * sizeof(chunk_t));
++	r = dm_multisnap_delete_snapid_range(s, next_sub, snapid);
++	if (r)
++		return r;
++
++	r = dm_multisnap_create_snapid_range(s, snapid, snapid);
++	if (r)
++		return r;
++
++	dm_multisnap_commit(s);
++
++	return 0;
 +}
++
++/*
++ * Create a snapshot or subsnapshot with a given snapid.
++ */
++int dm_multisnap_create_snapshot(struct dm_exception_store *s, snapid_t snapid)
++{
++	int r;
++
++	if (!dm_multisnap_snapid_is_master(snapid))
++		return dm_multisnap_create_subsnapshot(s, snapid);
++
++	if ((snapid >> DM_MIKULAS_SNAPID_STEP_BITS) < s->snapshot_num || snapid > DM_SNAPID_T_MAX) {
++		DMERR("dm_multisnap_create_snapshot: invalid snapshot id %llx (allowed range %llx - %llx)",
++			(unsigned long long)snapid,
++			(unsigned long long)s->snapshot_num,
++			(unsigned long long)DM_SNAPID_T_MAX);
++		return -EINVAL;
++	}
++	if (dm_multisnap_snapshot_exists(s->dm, snapid)) {
++		DMERR("dm_multisnap_create_snapshot: snapshot with id %llx already exists",
++		      (unsigned long long)snapid);
++		return -EINVAL;
++	}
++
++	r = dm_multisnap_create_snapid_range(s, snapid - DM_MIKULAS_SUBSNAPID_MASK, snapid);
++	if (r)
++		return r;
++
++	s->snapshot_num = (snapid >> DM_MIKULAS_SNAPID_STEP_BITS) + 1;
++	dm_multisnap_commit(s);
++
++	return 0;
++}
++
++/*
++ * Delete a snapshot or subsnapshot with a given snapid.
++ * Spawn background scanning for entries to delete.
++ */
++int dm_multisnap_delete_snapshot(struct dm_exception_store *s, snapid_t snapid)
++{
++	int r;
++
++	if (!dm_multisnap_snapshot_exists(s->dm, snapid)) {
++		DM_MULTISNAP_SET_ERROR(s->dm, -EFSERROR,
++				       ("dm_multisnap_delete_snapshot: snapshot id %llx not found in rb-tree",
++					(unsigned long long)snapid));
++		return -EFSERROR;
++	}
++
++	r = dm_multisnap_delete_snapid_range(s, dm_multisnap_find_next_subsnapshot(s, snapid), snapid);
++	if (r)
++		return r;
++
++	s->flags |= DM_MULTISNAP_FLAG_PENDING_DELETE;
++	dm_multisnap_queue_work(s->dm, &s->delete_work);
++
++	dm_multisnap_commit(s);
++
++	return 0;
++}
++
++/*
++ * Sort the snapids for creating. Sort them linearly except that the master
++ * goes before all subsnapshots.
++ */
++int dm_multisnap_compare_snapids_for_create(const void *p1, const void *p2)
++{
++	mikulas_snapid_t s1 = *(const snapid_t *)p1;
++	mikulas_snapid_t s2 = *(const snapid_t *)p2;
++	mikulas_snapid_t ms1 = s1 >> DM_MIKULAS_SNAPID_STEP_BITS;
++	mikulas_snapid_t ms2 = s2 >> DM_MIKULAS_SNAPID_STEP_BITS;
++	int m1 = dm_multisnap_snapid_is_master(s1);
++	int m2 = dm_multisnap_snapid_is_master(s2);
++	if (ms1 < ms2)
++		return -1;
++	if (ms1 > ms2)
++		return 1;
++	if (m1 != m2)
++		return m2 - m1;
++	if (s1 < s2)
++		return -1;
++	if (s1 > s2)
++		return 1;
++	return 0;
++}
++
++/*
++ * Return the number of total, allocated and metadata chunks.
++ */
++void dm_multisnap_get_space(struct dm_exception_store *s,
++			    unsigned long long *chunks_total,
++			    unsigned long long *chunks_allocated,
++			    unsigned long long *chunks_metadata_allocated)
++{
++	dm_multisnap_status_assert_locked(s->dm);
++	*chunks_total = s->dev_size;
++	*chunks_allocated = s->total_allocated;
++	*chunks_metadata_allocated = s->total_allocated - s->data_allocated;
++}
++
++#ifdef CONFIG_DM_MULTISNAPSHOT_MIKULAS_SNAP_OF_SNAP
++
++/*
++ * Convert snapid to user-friendly format (so that he won't see things like
++ * 4294967296).
++ */
++void dm_multisnap_print_snapid(struct dm_exception_store *s, char *string,
++			       unsigned maxlen, snapid_t snapid)
++{
++	unsigned master = snapid >> DM_MIKULAS_SNAPID_STEP_BITS;
++	unsigned subsnap = snapid & DM_MIKULAS_SUBSNAPID_MASK;
++	if (dm_multisnap_snapid_is_master(snapid))
++		snprintf(string, maxlen, "%u", master);
++	else
++		snprintf(string, maxlen, "%u.%u", master, subsnap);
++}
++
++/*
++ * Convert snapid from user-friendly format to the internal 64-bit number.
++ */
++int dm_multisnap_read_snapid(struct dm_exception_store *s, char *string,
++			     snapid_t *snapid, char **error)
++{
++	unsigned long master;
++	unsigned long subsnap;
++	if (!string[0]) {
++err:
++		*error = "Invalid snapshot id";
++		return -EINVAL;
++	}
++
++	master = simple_strtoul(string, &string, 10);
++
++	if (!string[0])
++		subsnap = DM_MIKULAS_SUBSNAPID_MASK;
++	else {
++		if (string[0] != '.' || !string[1])
++			goto err;
++		string++;
++		subsnap = simple_strtoul(string, &string, 10);
++		if (string[0])
++			goto err;
++		if (subsnap >= DM_MIKULAS_SUBSNAPID_MASK) {
++bad_number:
++			*error = "Number out of range";
++			return -EINVAL;
++		}
++	}
++
++	if (master >= DM_SNAPID_T_MAX >> DM_MIKULAS_SNAPID_STEP_BITS)
++		goto bad_number;
++
++	*snapid = (mikulas_snapid_t)master << DM_MIKULAS_SNAPID_STEP_BITS | subsnap;
++	return 0;
++}
++
++#endif
 -- 
 1.6.5.2
