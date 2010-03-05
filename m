@@ -1,7 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [PATCH] dm_ioctl: Introduce DM_UEVENT_GENERATED_FLAG
-Date: Fri, 5 Mar 2010 19:32:23 +0000
-Message-ID: <20100305193223.GR27852@agk-dp.fab.redhat.com>
+Date: Fri, 5 Mar 2010 19:38:19 +0000
+Message-ID: <20100305193819.GS27852@agk-dp.fab.redhat.com>
 References: <4B8B7A65.3020301@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,14 +24,11 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On Mon, Mar 01, 2010 at 09:27:17AM +0100, Peter Rajnoha wrote:
-> diff -purN linux-2.6.33-rc8.orig/drivers/md/dm-ioctl.c linux-2.6.33-rc8/drivers/md/dm-ioctl.c
-
-> @@ -736,10 +738,10 @@ static int dev_remove(struct dm_ioctl *p
+> +	if (!dm_kobject_uevent(hc->md, KOBJ_CHANGE, cookie))
+> +		*flags |= DM_UEVENT_GENERATED_FLAG;
   
->  	dm_put(md);
-> -	param->data_size = 0;
->  	return 0;
-
-Why is that line removed?
+If userspace set this flag before the call, where is it cleared?
+It needs to have a defined state on *every* call.
+I'll add this to the top of validate_params.
 
 Alasdair
