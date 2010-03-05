@@ -1,46 +1,74 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1/2] blkdev: fix merge_bvec_fn return
-	value	checks
-Date: Fri, 5 Mar 2010 17:37:16 +0000
-Message-ID: <20100305173716.GQ27852@agk-dp.fab.redhat.com>
-References: <1267292113-12900-1-git-send-email-dmonakhov@openvz.org>
-	<20100228184634.GI5768@kernel.dk> <874okyf4iw.fsf@openvz.org>
-	<170fa0d21003031020x5b71b492vd733cf0d7c9b83d4@mail.gmail.com>
-	<87wrxtkzwu.fsf@openvz.org> <20100303191613.GB18480@redhat.com>
-	<87lje9kx9i.fsf@openvz.org> <20100303200734.GW5768@kernel.dk>
-	<20100304175921.GD3670@soda.linbit>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: edits for r16 of shared snapshot patches [was: Re:
+ userspace patches for shared snapshots]
+Date: Fri, 5 Mar 2010 12:47:47 -0500
+Message-ID: <20100305174747.GA777@redhat.com>
+References: <Pine.LNX.4.64.1002101858410.15802@hs20-bc2-1.build.redhat.com>
+	<20100225221324.GA29946@redhat.com>
+	<Pine.LNX.4.64.1002252327100.29287@hs20-bc2-1.build.redhat.com>
+	<20100226211702.GA23893@redhat.com>
+	<20100303223740.GA12242@redhat.com>
+	<Pine.LNX.4.64.1003040502020.16112@hs20-bc2-1.build.redhat.com>
+	<20100304132228.GA20534@redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <lvm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20100304175921.GD3670@soda.linbit>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <20100304132228.GA20534@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, LVM2 development <lvm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Mar 04, 2010 at 06:59:21PM +0100, Lars Ellenberg wrote:
-> +		/* Restricting max_sectors is not enough.
-> +		 * If someone uses bio_add_page to add 8 disjunct 512 byte
-> +		 * partial pages to a bio, it would succeed,
-> +		 * but could still cross a border of whatever restrictions
-> +		 * are below us (raid0 stripe boundary).  An attempted
-> +		 * bio_split would not succeed, because bi_vcnt is 8.
-> +		 * E.g. the xen io layer is known to trigger this.
-> +		 */
+On Thu, Mar 04 2010 at  8:22am -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Sounds plausible.
+> On Thu, Mar 04 2010 at  5:11am -0500,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> > I went through your kernel patch and uploaded a new version at 
+> > http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/r16/ . It 
+> > contains fix for this 100% usage. It contains most of your changes (I 
+> > rolled back that cycle change).
+> 
+> OK, I have made further edits that layered ontop of my other changes
+> (primarily just making use of __func__ rather than hardcoding the
+> function name in ERROR messages).  I'll have a look at your r16 and
+> hopefully they'll apply there too.
 
-Do you or anyone readingt his have example messages demonstrating the failure
-when this patch is not applied?
+I've uploaded my edits to r16 here:
+http://people.redhat.com/msnitzer/patches/multisnap/kernel/2.6.33/r16a/
 
-Alasdair.
+You can see the edits here:
+http://people.redhat.com/msnitzer/patches/multisnap/kernel/2.6.33/r16a/r16_edits.patch
+
+Boils down to:
+* use __func__ rather than hardcoding the function name
+  - this fixed ~3 inconsistencies (incorrect function names) and should
+    help if/when we do any function renaming in later phases of review
+* s/Tomonorig/Tomonori/
+* a few more typo fixups
+* a few more whitespace cleanups.
+
+I'd appreciate it if you pull these in for the basis of any follow-on
+release you make.
+
+Also, I'm working to improve Documentation/device-mapper/dm-multisnapshot.txt
+I'll share this a bit later (hopefully today).
+
+Mike
+
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
