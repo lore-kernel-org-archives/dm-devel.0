@@ -1,74 +1,45 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: edits for r16 of shared snapshot patches [was: Re:
- userspace patches for shared snapshots]
-Date: Fri, 5 Mar 2010 12:47:47 -0500
-Message-ID: <20100305174747.GA777@redhat.com>
-References: <Pine.LNX.4.64.1002101858410.15802@hs20-bc2-1.build.redhat.com>
-	<20100225221324.GA29946@redhat.com>
-	<Pine.LNX.4.64.1002252327100.29287@hs20-bc2-1.build.redhat.com>
-	<20100226211702.GA23893@redhat.com>
-	<20100303223740.GA12242@redhat.com>
-	<Pine.LNX.4.64.1003040502020.16112@hs20-bc2-1.build.redhat.com>
-	<20100304132228.GA20534@redhat.com>
-Reply-To: LVM2 development <lvm-devel@redhat.com>
+From: malahal@us.ibm.com
+Subject: Re: Boot Problems with Multipath
+Date: Fri, 5 Mar 2010 10:33:18 -0800
+Message-ID: <20100305183318.GA22835@us.ibm.com>
+References: <c6143162346dbd7d9212f46bb5115ae6.squirrel@fela.liber4e.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <lvm-devel-bounces@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20100304132228.GA20534@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/lvm-devel>
-List-Post: <mailto:lvm-devel@redhat.com>
-List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
-	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
-Sender: lvm-devel-bounces@redhat.com
-Errors-To: lvm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, LVM2 development <lvm-devel@redhat.com>
+In-Reply-To: <c6143162346dbd7d9212f46bb5115ae6.squirrel@fela.liber4e.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Mar 04 2010 at  8:22am -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
-
-> On Thu, Mar 04 2010 at  5:11am -0500,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+jose nuno neto [jose.neto@liber4e.com] wrote:
+> Hi2all
 > 
-> > I went through your kernel patch and uploaded a new version at 
-> > http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/r16/ . It 
-> > contains fix for this 100% usage. It contains most of your changes (I 
-> > rolled back that cycle change).
+> I was doing some testing on multipath on san and copied a
+> /etc/multipath.conf from one machine to another. each machine has local
+> disk for / and all OS partitions. San/multipath is used only on data.
+> I had black list local disk on /etc/multipath.conf but when I copied from
+> one machine to the other...no longer blacklist
+> After this ( i didn't noticed the error ) I issue a mkinitrd
 > 
-> OK, I have made further edits that layered ontop of my other changes
-> (primarily just making use of __func__ rather than hardcoding the
-> function name in ERROR messages).  I'll have a look at your r16 and
-> hopefully they'll apply there too.
+> After all this when rebooting the machine with the wrong local disk black
+> list, the boot hangs after setting hostname, wtih message "cannot create
+> directory /var/lib filesystem read only"
+> 
+> I have gonne into rescue mode, rebuild initrd, disable friendy_names
+> option ( read some references about it) but cant boot. Now no create
+> directory errors but doesn't go after setting hostname
+> 
+> Any clues on how to fix it?
 
-I've uploaded my edits to r16 here:
-http://people.redhat.com/msnitzer/patches/multisnap/kernel/2.6.33/r16a/
-
-You can see the edits here:
-http://people.redhat.com/msnitzer/patches/multisnap/kernel/2.6.33/r16a/r16_edits.patch
-
-Boils down to:
-* use __func__ rather than hardcoding the function name
-  - this fixed ~3 inconsistencies (incorrect function names) and should
-    help if/when we do any function renaming in later phases of review
-* s/Tomonorig/Tomonori/
-* a few more typo fixups
-* a few more whitespace cleanups.
-
-I'd appreciate it if you pull these in for the basis of any follow-on
-release you make.
-
-Also, I'm working to improve Documentation/device-mapper/dm-multisnapshot.txt
-I'll share this a bit later (hopefully today).
-
-Mike
-
---
-lvm-devel mailing list
-lvm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/lvm-devel
+Create /var/lib/multipath/bindings file and reboot.
