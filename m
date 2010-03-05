@@ -1,23 +1,21 @@
-From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Subject: Re: [PATCH] crypto/arc4: convert this stream cipher into
- a block cipher
-Date: Sun, 21 Feb 2010 21:01:40 +0100
-Message-ID: <20100221200140.GC11951@Chamillionaire.breakpoint.cc>
-References: <Pine.LNX.4.64.1001260722080.20780@hs20-bc2-1.build.redhat.com>
-	<20100209073718.GA17612@gondor.apana.org.au>
-	<20100209145705.GA20421@Chamillionaire.breakpoint.cc>
-	<20100209204519.GC26258@gondor.apana.org.au>
-	<20100209211238.GC21548@Chamillionaire.breakpoint.cc>
-	<20100209214522.GA27002@gondor.apana.org.au>
-	<20100212084228.GA1535@Chamillionaire.breakpoint.cc>
-	<20100216125125.GA390@gondor.apana.org.au>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 1/2] blkdev: fix merge_bvec_fn return
+	value	checks
+Date: Fri, 5 Mar 2010 17:37:16 +0000
+Message-ID: <20100305173716.GQ27852@agk-dp.fab.redhat.com>
+References: <1267292113-12900-1-git-send-email-dmonakhov@openvz.org>
+	<20100228184634.GI5768@kernel.dk> <874okyf4iw.fsf@openvz.org>
+	<170fa0d21003031020x5b71b492vd733cf0d7c9b83d4@mail.gmail.com>
+	<87wrxtkzwu.fsf@openvz.org> <20100303191613.GB18480@redhat.com>
+	<87lje9kx9i.fsf@openvz.org> <20100303200734.GW5768@kernel.dk>
+	<20100304175921.GD3670@soda.linbit>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20100216125125.GA390@gondor.apana.org.au>
+In-Reply-To: <20100304175921.GD3670@soda.linbit>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,60 +25,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org, agk@redhat.com, mbroz@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-* Herbert Xu | 2010-02-16 20:51:25 [+0800]:
+On Thu, Mar 04, 2010 at 06:59:21PM +0100, Lars Ellenberg wrote:
+> +		/* Restricting max_sectors is not enough.
+> +		 * If someone uses bio_add_page to add 8 disjunct 512 byte
+> +		 * partial pages to a bio, it would succeed,
+> +		 * but could still cross a border of whatever restrictions
+> +		 * are below us (raid0 stripe boundary).  An attempted
+> +		 * bio_split would not succeed, because bi_vcnt is 8.
+> +		 * E.g. the xen io layer is known to trigger this.
+> +		 */
 
->On Fri, Feb 12, 2010 at 09:42:28AM +0100, Sebastian Andrzej Siewior wrote:
->>
->> -static void arc4_crypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
->> +static void arc4_ivsetup(struct arc4_ctx *ctx, u8 *iv)
->>  {
->> -	struct arc4_ctx *ctx = crypto_tfm_ctx(tfm);
->> +	if (unlikely(!ctx->new_key))
->> +		return;
->> +	memcpy(iv, &ctx->iv, sizeof(ctx->iv));
->> +	ctx->new_key = 0;
->
->Sorry, but this doesn't work.
->
->A ctx is supposed to be reentrant.  That is, while one thread
->is working away with a given ctx I should be able to use that
->same ctx in a different thread without them clobbering each
->other.
-I also destroy the user supplied IV. You don't care about that? :)
-So I have to know that someone called setkey() on this ctx but I can't
-leave hints.
-salsa also does not stick to plan here. ctx->input[6-9] is initialized
-in encrypt() path. So two threads sharing a ctx are going to clobber
-their state.
+Sounds plausible.
 
-What about a new api for the stream cipher? We would merge the ctx part
-and the iv into one handle. So the user would call setup_iv() instead of
-setkey(). The difference would be that I can access the iv from within
-setkey(). And the algorithm can fully express himself since he is no
-longer trapped in the wrong body :)
+Do you or anyone readingt his have example messages demonstrating the failure
+when this patch is not applied?
 
->So that means (in general) you must not modify the ctx in any
->function other than setkey.
-That is hard because I have a new state after encryption which I am only
-allowed to save in the iv. And the new state may be reset in setkey()
-where I can't touch the iv.
-salsa does not keep/update its state. So the input[6-9] problem could be
-fixed. Who/where is it used anyway? I can't see any user besides the
-possible once (i.e. dm-crypt/ipsec).
-
->This also brings up the bigger question of how we transition to
->this new arc4.  I don't think we need to maintain exactly the
->same behaviour as the existing ecb(arc4).
->
->So what we could do is simply add a new blkcipher arc4, alongside
->the existing cipher arc4.  Then we can convert the existing users
->across, and finally remove the old arc4.
-This has worked out before, lets stick to this :)
-
->Cheers,
-
-Sebastian
+Alasdair.
