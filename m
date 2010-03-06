@@ -1,46 +1,95 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH 1/2] blkdev: fix merge_bvec_fn return value
-	checks
-Date: Sat, 6 Mar 2010 02:20:15 +0000
-Message-ID: <20100306022015.GU27852@agk-dp.fab.redhat.com>
-References: <20100303191613.GB18480@redhat.com> <87lje9kx9i.fsf@openvz.org> <20100303200734.GW5768@kernel.dk> <Pine.LNX.4.64.1003040629230.990@hs20-bc2-1.build.redhat.com> <20100304121931.GB5768@kernel.dk> <Pine.LNX.4.64.1003041615120.17032@hs20-bc2-1.build.redhat.com> <20100305073059.GI5768@kernel.dk> <20100306085651.1a571571@notabene.brown> <20100305222748.GT27852@agk-dp.fab.redhat.com> <20100306105237.0a8621ed@notabene.brown>
+Subject: [git pull] device-mapper patches for 2.6.34
+Date: Sat, 6 Mar 2010 02:48:52 +0000
+Message-ID: <20100306024852.GP6208@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20100306105237.0a8621ed@notabene.brown>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Dmitry Monakhov <dmonakhov@openvz.org>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, jens.axboe@oracle.com
+To: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Sat, Mar 06, 2010 at 10:52:37AM +1100, Neil Brown wrote:
-> But my first suggestion, that splitting could be made easier, still stands.
-
-In full agreement we should try to make it easier.
-
-> And do you honour merge_bvec_fn's of underlying devices?  A quick grep
-> suggests you do only for dm-linear and dm-crypt.  
-
-We implemented it to address some specific performance problems reported by
-people using those targets.  So far there hasn't been any pressing need to
-implement it for other targets.
-
-> This suggests to me that it
-> is actually a hard interface to support completely in a stacked device, so we
-> might be better off without it.
-
-All this code is hard - but very useful.  The direction I want to explore when
-I finally get some time to work on this is one which will probably make more
-use of, and extend, merge_bvec.
-
-> that it makes sense to only require that the lowest level does the
-> splitting, as that is where the specifics on what might be required exists.
-
-We have a hybrid model at the moment - some stuff dealt with top-down, other
-stuff bottom-up.  This thread describes just one of several problems related to
-this.  In the next incarnation of device-mapper I hope we'll find a way to
-eliminate all of them together.  Maybe I'll finally get time later this year to
-start working on these ideas properly.
+Lost the mailing lists there somehow - forwarding!
 
 Alasdair
+
+----- Forwarded message from Alasdair G Kergon <agk@redhat.com> -----
+
+Date: Sat, 6 Mar 2010 02:45:07 +0000
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper patches for 2.6.34
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Jonathan Brassow <jbrassow@redhat.com>,
+	Kiyoshi Ueda <k-ueda@ct.jp.nec.com>,
+	Mike Snitzer <snitzer@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Nikanth Karthikesan <knikanth@suse.de>,
+	Takahiro Yasui <tyasui@redhat.com>,
+	Jun'ichi Nomura <j-nomura@ce.jp.nec.com>,
+	Milan Broz <mbroz@redhat.com>, Babu Moger <babu.moger@lsi.com>,
+	Chandra Seetharaman <chandra.seetharaman@us.ibm.com>,
+	Dave Wysochanski <dwysocha@redhat.com>,
+	Josef Bacik <josef@redhat.com>,
+	Mike Anderson <andmike@linux.vnet.ibm.com>,
+	Nikanth Karthikesan <knikanth@novell.com>,
+	Peter Rajnoha <prajnoha@redhat.com>
+
+Please pull from:
+
+  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
+
+to get the following device-mapper fixes and minor updates for inclusion in 2.6.34:
+ 
+Kiyoshi Ueda (5):
+      dm table: remove dm_get from dm_table_get_md
+      dm mpath: avoid storing private suspended state
+      dm mpath: hold io until all pg_inits completed
+      dm mpath: wait for pg_init completion when suspending
+      dm mpath: refactor pg_init
+
+Mike Snitzer (3):
+      dm: document when snapshot has finished merging
+      dm ioctl: only issue uevent on resume if state changed
+      dm: eliminate some holes data structures
+
+Mikulas Patocka (2):
+      dm raid1: always return error if all legs fail
+      dm: free dm_io before bio_endio not after
+
+Moger, Babu (2):
+      dm mpath: pass struct pgpath to pg init done
+      dm mpath: skip activate_path for failed paths
+
+Nikanth Karthikesan (1):
+      dm table: remove unused dm_get_device range parameters
+
+Peter Rajnoha (1):
+      dm ioctl: introduce flag indicating uevent was generated
+
+Takahiro Yasui (1):
+      dm raid1: fix deadlock when suspending failed device
+
+ Documentation/device-mapper/snapshot.txt |   44 ++++++++++++
+ drivers/md/dm-crypt.c                    |    3 +-
+ drivers/md/dm-delay.c                    |    8 +-
+ drivers/md/dm-ioctl.c                    |   24 ++++---
+ drivers/md/dm-linear.c                   |    3 +-
+ drivers/md/dm-log.c                      |    3 +-
+ drivers/md/dm-mpath.c                    |  111 +++++++++++++++++++-----------
+ drivers/md/dm-raid1.c                    |   53 ++++++++------
+ drivers/md/dm-snap.c                     |   34 ++++-----
+ drivers/md/dm-stripe.c                   |    3 +-
+ drivers/md/dm-table.c                    |   12 +--
+ drivers/md/dm-uevent.c                   |    7 +--
+ drivers/md/dm.c                          |   25 ++-----
+ drivers/md/dm.h                          |    4 +-
+ include/linux/device-mapper.h            |    5 +-
+ include/linux/dm-io.h                    |    4 +-
+ include/linux/dm-ioctl.h                 |    9 ++-
+ 17 files changed, 212 insertions(+), 140 deletions(-)
+
+Thanks,
+Alasdair.
+
+----- End forwarded message -----
