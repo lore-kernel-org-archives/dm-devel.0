@@ -1,88 +1,65 @@
 From: Neil Brown <neilb@suse.de>
-Subject: Re: [PATCH] dm: max_segments=1 if merge_bvec_fn is not supported
-Date: Mon, 8 Mar 2010 16:33:45 +1100
-Message-ID: <20100308163345.42841480@notabene.brown>
-References: <20100306211012.GA9689@racke>
+Subject: Re: [PATCH 1/2] blkdev: fix merge_bvec_fn return value
+ checks
+Date: Mon, 8 Mar 2010 16:43:36 +1100
+Message-ID: <20100308164336.707f74be@notabene.brown>
+References: <1267292113-12900-1-git-send-email-dmonakhov@openvz.org>
+	<20100228184634.GI5768@kernel.dk> <874okyf4iw.fsf@openvz.org>
+	<170fa0d21003031020x5b71b492vd733cf0d7c9b83d4@mail.gmail.com>
+	<87wrxtkzwu.fsf@openvz.org> <20100303191613.GB18480@redhat.com>
+	<87lje9kx9i.fsf@openvz.org> <20100303200734.GW5768@kernel.dk>
+	<20100304175921.GD3670@soda.linbit>
+	<20100305173716.GQ27852@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20100306211012.GA9689@racke>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Lars Ellenberg <lars.ellenberg@linbit.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, jens.axboe@oracle.com, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20100305173716.GQ27852@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, 6 Mar 2010 22:10:13 +0100
-Lars Ellenberg <lars.ellenberg@linbit.com> wrote:
+On Fri, 5 Mar 2010 17:37:16 +0000
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-> If the lower device exposes a merge_bvec_fn,
-> dm_set_device_limits() restricts max_sectors
-> to PAGE_SIZE "just to be safe".
+> On Thu, Mar 04, 2010 at 06:59:21PM +0100, Lars Ellenberg wrote:
+> > +		/* Restricting max_sectors is not enough.
+> > +		 * If someone uses bio_add_page to add 8 disjunct 512 byte
+> > +		 * partial pages to a bio, it would succeed,
+> > +		 * but could still cross a border of whatever restrictions
+> > +		 * are below us (raid0 stripe boundary).  An attempted
+> > +		 * bio_split would not succeed, because bi_vcnt is 8.
+> > +		 * E.g. the xen io layer is known to trigger this.
+> > +		 */
 > 
-> This is not sufficient, however.
+> Sounds plausible.
 > 
-> If someone uses bio_add_page() to add 8 disjunct 512 byte partial
-> pages to a bio, it would succeed, but could still cross a border
-> of whatever restrictions are below us (e.g. raid10 stripe boundary).
-> An attempted bio_split() would not succeed, because bi_vcnt is 8.
-> 
-> One example that triggered this frequently is the xen io layer.
-> 
-> raid10_make_request bug: can't convert block across chunks or bigger than 64k 209265151 1
-> 
-> Signed-off-by: Lars <lars.ellenberg@linbit.com>
-> 
-> ---
-> 
-> Neil: you may want to double check linear.c and raid*.c for similar logic,
-> even though it is unlikely that someone puts md raid6 on top of something
-> exposing a merge_bvec_fn.
-> 
+> Do you or anyone readingt his have example messages demonstrating the failure
+> when this patch is not applied?
 
-Unlikely, but by no means impossible.  I have queued up an appropriate fix
-for md.
+Yes.  This
 
-Thanks!
+   http://marc.info/?l=linux-raid&m=126672681521073&w=2
+
+almost certainly refers to that problem.
 
 NeilBrown
 
 
-> This is not the first time this has been patched, btw.
-> See https://bugzilla.redhat.com/show_bug.cgi?id=440093
-> and the patch by Mikulas:
-> https://bugzilla.redhat.com/attachment.cgi?id=342638&action=diff
 > 
-> ---
->  drivers/md/dm-table.c |   12 ++++++++++--
->  1 files changed, 10 insertions(+), 2 deletions(-)
+> Alasdair.
 > 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 4b22feb..c686ff4 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -515,14 +515,22 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
->  
->  	/*
->  	 * Check if merge fn is supported.
-> -	 * If not we'll force DM to use PAGE_SIZE or
-> +	 * If not we'll force DM to use single bio_vec of PAGE_SIZE or
->  	 * smaller I/O, just to be safe.
->  	 */
->  
-> -	if (q->merge_bvec_fn && !ti->type->merge)
-> +	if (q->merge_bvec_fn && !ti->type->merge) {
->  		limits->max_sectors =
->  			min_not_zero(limits->max_sectors,
->  				     (unsigned int) (PAGE_SIZE >> 9));
-> +		/* Restricting max_sectors is not enough.
-> +		 * If someone uses bio_add_page to add 8 disjunct 512 byte
-> +		 * partial pages to a bio, it would succeed,
-> +		 * but could still cross a border of whatever restrictions
-> +		 * are below us (e.g. raid0 stripe boundary).  An attempted
-> +		 * bio_split() would not succeed, because bi_vcnt is 8. */
-> +		limits->max_segments = 1;
-> +	}
->  	return 0;
->  }
->  EXPORT_SYMBOL_GPL(dm_set_device_limits);
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
