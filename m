@@ -1,59 +1,70 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Re: [PATCH] dm: max_segments=1 if merge_bvec_fn is not supported
-Date: Mon, 8 Mar 2010 14:14:49 +0100
-Message-ID: <20100308131449.GA15156@racke>
-References: <20100306211012.GA9689@racke>
- <20100308163345.42841480@notabene.brown>
- <Pine.LNX.4.64.1003080321190.25635@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: discard + LVM
+Date: Mon, 8 Mar 2010 11:54:45 -0500
+Message-ID: <170fa0d21003080854l1c7e8a76w277b1d1ce51da2e@mail.gmail.com>
+References: <4B922929.5020006@zappa.cx> <4B933BD6.80100@redhat.com>
+	 <yq18wa4c9qn.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1003080321190.25635@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Neil Brown <neilb@suse.de>, Alasdair G Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <yq18wa4c9qn.fsf@sermon.lab.mkp.net>
+Sender: linux-raid-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Eric Sandeen <sandeen@redhat.com>, Andreas Sundstrom <sunkan@zappa.cx>, linux-ext4@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-On Mon, Mar 08, 2010 at 03:35:37AM -0500, Mikulas Patocka wrote:
-> Hi
-> 
-> That patch with limits->max_segments = 1; is wrong. It fixes this bug 
-> sometimes and sometimes not.
-> 
-> The problem is, if someone attempts to create a bio with two vector 
-> entries, the first maps the last sector contained in some page and the 
-> second maps the first sector of the next physical page: it has one 
-> segment, it has size <= PAGE_SIZE, but it still may cross raid stripe and 
-> the raid driver will reject it.
+On Sun, Mar 7, 2010 at 12:38 PM, Martin K. Petersen
+<martin.petersen@oracle.com> wrote:
+>>>>>> "Eric" =3D=3D Eric Sandeen <sandeen@redhat.com> writes:
+>
+> Eric> Andreas Sundstrom wrote:
+>>> Hi..
+>>>
+>>> I have an OCZ agility SSD drive with FW 1.5 that supports the TRIM
+>>> command.
+>>>
+>>> I can see that it works on a plain partition. =A0But it does not se=
+em
+>>> to work together with LVM.
+>>>
+>>> So I'm wondering if this is expected and whether it is something th=
+at
+>>> will be worked on to get fixed?
+>
+> Eric> It is expected, as lvm is not yet passing discard requests.
+>
+> I'm working on this. =A0Missed the 2.6.34 merge window so I'm aiming =
+at
+> 2.6.35.
 
-Now that you put it that way ;)
-You are right.
+Hey Martin,
 
-My asumption that "single segment" was  
-equalvalent in practice with "single bvec"
-does not hold true in that case.
+We've been scoping the work associated with adding discard support to
+DM (afaik MD would need comparable infrastructure, e.g.: spliting
+discard requests).
 
-Then, what about adding seg_boundary_mask restrictions as well?
-	max_sectors = PAGE_SIZE >> 9;
-	max_segments = 1;
-	seg_boundary_mask = PAGE_SIZE -1;
-or some such.
+There is a fair amount of complexity associated with this work.
+Especially when you look to support discards for some of the more
+advanced DM targets.  Discard support for the 'linear' target is the
+relatively low hanging fruit.  The 'striped' target gets more
+interesting (having to split the discard into multiple discards to
+submit to the appropriate underlying devices in the striped volume).
 
-> > > This is not the first time this has been patched, btw.
-> > > See https://bugzilla.redhat.com/show_bug.cgi?id=440093
-> > > and the patch by Mikulas:
-> > > https://bugzilla.redhat.com/attachment.cgi?id=342638&action=diff
-> 
-> Look at this patch, it is the proper way how to fix it: create a 
-> merge_bvec_fn that reject more than one biovec entry.
+One thought was we might have a block layer hook along the lines of
+the q->merge_bvec_fn (similar but hopefully less
+problematic/controversial).  Christoph removed a hook that was vaguely
+like this, but posed allocation problems, with linux-2.6 commit:
+c15227de132f
 
-If adding seg_boundary_mask is still not sufficient,
-lets merge that patch instead?
-Why has it been dropped, respectively never been merged?
-It became obsolete for dm-linear by 7bc3447b,
-but in general the bug is still there, or am I missing something?
+Please feel free to share your patches/design with dm-devel.  (I'll
+also check with Alasdair to see about making the dm-devel filtering
+less prone to eat mail)
 
-
-
-	Lars
+Thanks!
+Mike
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
