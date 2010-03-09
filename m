@@ -1,52 +1,139 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: discard + LVM
-Date: Mon, 08 Mar 2010 14:46:12 -0500
-Message-ID: <yq1tysqa96j.fsf@sermon.lab.mkp.net>
-References: <4B922929.5020006@zappa.cx> <4B933BD6.80100@redhat.com>
-	<yq18wa4c9qn.fsf@sermon.lab.mkp.net>
-	<170fa0d21003080854l1c7e8a76w277b1d1ce51da2e@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 03/14] dm-multisnap-mikulas-headers
+Date: Mon, 8 Mar 2010 22:08:26 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1003082145210.20675@hs20-bc2-1.build.redhat.com>
+References: <1267489438-6271-1-git-send-email-snitzer@redhat.com>
+	<1267489438-6271-4-git-send-email-snitzer@redhat.com>
+	<20100305224642.GA16425@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <170fa0d21003080854l1c7e8a76w277b1d1ce51da2e@mail.gmail.com>
-	(Mike Snitzer's message of "Mon, 8 Mar 2010 11:54:45 -0500")
-Sender: linux-raid-owner@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20100305224642.GA16425@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Eric Sandeen <sandeen@redhat.com>, Andreas Sundstrom <sunkan@zappa.cx>, linux-ext4@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Christoph Hellwig <hch@infradead.org>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+> > + * The minimum block size is 512, the maximum block size is not specified (it is
+> > + * limited by 32-bit integer size and available memory). All on-disk pointers
+> > + * are in the units of blocks. The pointers are 48-bit, making this format
+> > + * capable of handling 2^48 blocks.
+> 
+> Shouldn't we require the chunk size be at least as big as
+> (and a multiple of) physical_block_size?  E.g. 4096 on a 4K sector
+> device.
+> 
+> This question applies to non-shared snapshots too.
 
-Mike> We've been scoping the work associated with adding discard support
-Mike> to DM (afaik MD would need comparable infrastructure, e.g.:
-Mike> spliting discard requests).
+If the device has a larger physical block size, it will reject smaller 
+chunks. The same for non-shared snapshots.
 
-Mike> There is a fair amount of complexity associated with this work.
-Mike> Especially when you look to support discards for some of the more
-Mike> advanced DM targets.  Discard support for the 'linear' target is
-Mike> the relatively low hanging fruit.  The 'striped' target gets more
-Mike> interesting (having to split the discard into multiple discards to
-Mike> submit to the appropriate underlying devices in the striped
-Mike> volume).
+> > + * Note: because the disks only support atomic writes of 512 bytes, the commit
+> > + * block has only 512 bytes of valid data. The remaining data in the commit
+> > + * block up to the chunk size is unused.
+> 
+> Are there other places where you assume 512b is beneficial?  My concern
+> is: what will happen on 4K devices?
 
-Mike> One thought was we might have a block layer hook along the lines
-Mike> of the q->merge_bvec_fn (similar but hopefully less
-Mike> problematic/controversial).  Christoph removed a hook that was
-Mike> vaguely like this, but posed allocation problems, with linux-2.6
-Mike> commit: c15227de132f
+With 4K chunk size, it writes 4K, but assumes that only 512b write is 
+atomic. So, if the disk supports atomic write of 4K, it doesn't hurt.
 
-This is a work in progress and something that turned out to be much
-harder than I anticipated.  Discard is not the only problem child here.
-The other one is write same.  In both cases we'll have to split things
-that cover an area bigger than the corresponding bio_vec payload.
+> Would making the commit block's size match the physical_block_size give
+> us any multisnapshot benefit?  At a minimum I see a larger commit block
+> would allow us to have more remap entries (larger remap
+> array)..
+>
+> "Remaps" detailed below.  But what does that buy us?
 
-At first I took the blk_pc splitting approach but it got really hairy
-and had lots of special casing.  So what I'm working on right now is to
-make write same and discard requests first class citizens so they can be
-split and merged like regular write requests.  There are lots of
-assumptions in our stack about things being either read or write so it's
-a pretty invasive change.  But at this point it looks like it'll be
-nicer than my first attempt.  Still plugging away at it though...
+They reduce the number of blocks written. Without remaps, you'd have to 
+write the path from the root every time.
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+> However, and before I get ahead of myself, with blk_stack_limits() we
+> could have a (DM) device that is composed of 4K and 512b devices; with a
+> resulting physical_block_size of 4K.  But 4K wouldn't be atomic to the
+> 512b disk.
+
+Yes, that's why I must assume only 512b atomic write.
+
+> But what if we were to add a checksum to the commit block?  This could
+> give us the ability to have a larger commit block regardless of the
+> physical_block_size. [NOTE: I saw dm_multisnap_commit() is just writing
+> a fixed CB_SIGNATURE]
+
+That would have to be cryptographic hash --- simple checksum can be 
+fooled.
+
+Even that wouldn't be correct, because if the hash fails, the commit block 
+is lost. If you wanted to use full commit blocks, you'd have to:
+
+- divide the commit block to two.
+- write these two alternatively (so that at least one is valid)
+- hash them or (which is simpler) copy sequence number to each 512b sector 
+(so that if some sectors get written and some not, you find it out by 
+having different sequence number).
+
+That is possible to do.
+
+> And in speaking with Ric Wheeler, using a checksum in the commit block
+> opens up the possibility for optimizing (reducing) the barrier ops
+> associated with:
+> 1) before the commit block is written (flushes journal transaction) 
+> 2) and after the commit block is written.
+
+No, you have to use barriers. If the data before the commit blocks is not 
+written and the commit block is written (with matching checksum), then the 
+data is corrupted.
+
+Obviously, you can checksum all the data, but SHA1 is slow and it is being 
+phased out already and even slower SHA256 is being recommended...
+
+> Leaving us with only needing to barrier after the commit block is
+> written.  But this optimization apparently also requires having a
+> checksummed journal.  Ext4 offers this (somewhat controversial yet fast)
+> capability with the 'journal_async_commit' mount option. [NOTE: I'm
+> largely parroting what I heard from Ric]
+> 
+> [NOTE: I couldn't immediately tell if dm_multisnap_commit() is doing
+> multiple barriers when writing out the transaction and commit block]
+
+It calls dm_bufio_write_dirty_buffers twice and 
+dm_bufio_write_dirty_buffers submits a zero barrier. (there's no point in 
+submitting data-barrier, because that gets split into two zero barriers 
+and non-barrier write anyway)
+
+> Taking a step back, any reason you elected to not reuse existing kernel
+> infrastructure (e.g. jbd2) for journaling?  Custom solution needed for
+> the log-nature of the multisnapshot?  [Excuse my naive question(s), I
+> see nilfs2 also has its own journaling... I'm just playing devil's
+> advocate given how important it is that the multisnapshot journal code
+> be correct]
+
+All the filesystems have their own journaling. jbd is used only by ext3, 
+jbd2 only by ext4. Reiserfs has its own, JFS has its own, XFS has its 
+own... etc.
+
+I consider the idead of sharing journaling code as inefficient: arguing 
+about the interface would take more time than writing it from scratch.
+
+> Above provided, for the benefit of others, to give more context on the
+> role of remap entries (and the commit block's remap array).
+
+If there were no remaps, change in any B-tree node would require to 
+overwrite all the nodes from the root. Similarly, changing any bitmap 
+would require to overwrite the bitmap directory from the root.
+
+With remaps, changes to B-tree nodes or bitmaps write just that one block 
+(and commit block, to store the remap). The full write from the root is 
+done later, when the remap table fills up.
+
+Mikulas
