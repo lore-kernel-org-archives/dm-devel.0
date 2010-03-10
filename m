@@ -1,16 +1,24 @@
-From: Mikhail Klepachevskyy <mikhailk1@open-e.com>
-Subject: Re: Shared snapshots test
-Date: Wed, 10 Mar 2010 15:34:38 +0200
-Message-ID: <20100310133438.GA9704@mick>
-References: <20100310123713.GA9341@mick>
-	<Pine.LNX.4.64.1003100806450.1635@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: edits for r16 of shared snapshot patches [was: Re:
+ userspace patches for shared snapshots]
+Date: Wed, 10 Mar 2010 15:45:14 -0500
+Message-ID: <20100310204513.GA29283@redhat.com>
+References: <Pine.LNX.4.64.1002101858410.15802@hs20-bc2-1.build.redhat.com>
+	<20100225221324.GA29946@redhat.com>
+	<Pine.LNX.4.64.1002252327100.29287@hs20-bc2-1.build.redhat.com>
+	<20100226211702.GA23893@redhat.com>
+	<20100303223740.GA12242@redhat.com>
+	<Pine.LNX.4.64.1003040502020.16112@hs20-bc2-1.build.redhat.com>
+	<20100304132228.GA20534@redhat.com>
+	<20100305174747.GA777@redhat.com>
+	<Pine.LNX.4.64.1003090332350.21412@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1003100806450.1635@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1003090332350.21412@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,60 +28,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello!
+On Tue, Mar 09 2010 at  3:41am -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-Big thanks! It helped!
-
-
-On Wed, Mar 10, 2010 at 08:11:11AM -0500, Mikulas Patocka wrote:
-
-> 
-> You need to suspend and resume the origin device after create message and 
-> before attaching the snapshot.
-> 
-> > I tried to test multisnapshots but unfortunately got some errors.
-> > Here is what I did:
+> > You can see the edits here:
+> > http://people.redhat.com/msnitzer/patches/multisnap/kernel/2.6.33/r16a/r16_edits.patch
 > > 
+> > Boils down to:
+> > * use __func__ rather than hardcoding the function name
+> >   - this fixed ~3 inconsistencies (incorrect function names) and should
+> >     help if/when we do any function renaming in later phases of review
+> 
+> It consumes one more stack word for every function where this conversion 
+> was performed ... I don't know if it's worth it ... likely it doesn't 
+> matter.
+> 
+> The problem here is that GCC is preallocating the space for all outgoing 
+> arguments in the function prologue, so if the function has something like 
+> this
+> if (bug_happened) {
+> 	printk("%s: bug happened: %d %d %d %d %d %d %d %d", __func__, a, 
+> b, c, d, e, f, g, h, i);
+> }
+> the whole function always wastes 10 stack words, even if the bug doesn't 
+> happen :(
+> 
+> But that one word because of __func__ maybe doesn't matter (there are much 
+> more wasted already in these printks). Or do you think that it's better to 
+> not do this __func__ conversion?
 
-<skip>
+I think the use of __func__ reduces the maintenance cost of keeping the
+printk updated if the code were to change.  Like I said, I found ~3
+remaining function name inconsistencies.  Plus I had already fixed a few
+others in my previous large whitespace patch.
 
-> >    # echo 0 `blockdev --getsize /dev/mapper/vg1-lv1` multisnapshot \
-> >      /dev/mapper/vg1-lv1 /dev/mapper/vg1-lv2 16 0 mikulas 0\
-> > 	 | dmsetup create ms
-> > 
-> >    # dmsetup message /dev/mapper/ms 0 create
-> 
-> dmsetup suspend ms
-> dmsetup resume ms
-> 
-> >    # echo 0 `blockdev --getsize /dev/mapper/vg1-lv1` multisnap-snap \
-> >      /dev/mapper/vg1-lv1 0 | dmsetup create ms0
-> > 
-> > At this point I got the next error:
-> > device-mapper: reload ioctl failed: No such file or directory
-> > Command failed
-> > 
-> > And these lines appeared in dmesg:
-> > [ 6876.506623] device-mapper: table: 252:3: multisnap-snap: Snapshot with this id doesn't exist
-> > [ 6876.506629] device-mapper: ioctl: error adding target to table
-> > 
-> > Could you check all the steps I performed right and what could cause
-> > those error messages?
-> > 
-> 
-> But rather, you could use userspace support for shared snapshots, it makes 
-> the use much easier, you can use lvcreate, lvremove, lvresize commands:
-> 
-> for lvm-2.02.54: 
-> http://people.redhat.com/mpatocka/patches/userspace/new-snapshots/lvm-2.02.54/
-> for lvm-2.02.60:
-> http://people.redhat.com/mpatocka/patches/userspace/new-snapshots/lvm-2.02.60/
-> for lvm-2.02.62:
-> http://people.redhat.com/msnitzer/patches/multisnap/lvm2/LVM2-2.02.62/
+Anyway, I understand your point on the extra word associated with using
+__func__ but feel using it is more helpful.
 
--- 
-Best wishes,
-Mikhail Klepachevskyy
+Mike
