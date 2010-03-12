@@ -1,15 +1,12 @@
-From: Busby <chaimvy@gmail.com>
-Subject: Re: Shared snapshots test
-Date: Thu, 11 Mar 2010 13:06:58 +0800
-Message-ID: <b8091bb41003102106r531c90d0nbe146e0ab14f51a1@mail.gmail.com>
-References: <20100310123713.GA9341@mick>
-	<Pine.LNX.4.64.1003100806450.1635@hs20-bc2-1.build.redhat.com>
-	<20100310133438.GA9704@mick>
+From: heinzm@sourceware.org
+Subject: dmraid include/dmraid/misc.h lib/format/atarai ...
+Date: 12 Mar 2010 11:33:03 -0000
+Message-ID: <20100312113303.15183.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7188002944597537391=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100310133438.GA9704@mick>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,175 +16,128 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============7188002944597537391==
-Content-Type: multipart/alternative; boundary=000e0cd359b6694cfa04817f6260
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2010-03-12 11:33:02
 
---000e0cd359b6694cfa04817f6260
-Content-Type: text/plain; charset=ISO-8859-1
+Modified files:
+	include/dmraid : misc.h 
+	lib/format/ataraid: isw.c 
+	lib/format/ddf : ddf1.c 
+	lib/misc       : misc.c 
 
-Hi,
-     I used the patchs for LVM2.02.54, however, when i compiled it, an err
-came:
+Log message:
+	Avoid spaces (and other special characters) in isw and ddf RAID set names
 
-../lib/liblvm-internal.a(lv_manip.o): In function `lv_extend':
-lv_manip.c:(.text+0x629a): undefined reference to `last_seg'
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/include/dmraid/misc.h.diff?cvsroot=dm&r1=1.3&r2=1.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ataraid/isw.c.diff?cvsroot=dm&r1=1.6&r2=1.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ddf/ddf1.c.diff?cvsroot=dm&r1=1.6&r2=1.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/misc/misc.c.diff?cvsroot=dm&r1=1.3&r2=1.4
 
-  where is the 'last_seg' 's definition?
-  my linux kernel version is 2.6.18.
-  thank you!
-
-best regards
-Bubsy
-
-2010/3/10 Mikhail Klepachevskyy <mikhailk1@open-e.com>
-
-> Hello!
->
-> Big thanks! It helped!
->
->
-> On Wed, Mar 10, 2010 at 08:11:11AM -0500, Mikulas Patocka wrote:
->
-> >
-> > You need to suspend and resume the origin device after create message and
-> > before attaching the snapshot.
-> >
-> > > I tried to test multisnapshots but unfortunately got some errors.
-> > > Here is what I did:
-> > >
->
-> <skip>
->
-> > >    # echo 0 `blockdev --getsize /dev/mapper/vg1-lv1` multisnapshot \
-> > >      /dev/mapper/vg1-lv1 /dev/mapper/vg1-lv2 16 0 mikulas 0\
-> > >      | dmsetup create ms
-> > >
-> > >    # dmsetup message /dev/mapper/ms 0 create
-> >
-> > dmsetup suspend ms
-> > dmsetup resume ms
-> >
-> > >    # echo 0 `blockdev --getsize /dev/mapper/vg1-lv1` multisnap-snap \
-> > >      /dev/mapper/vg1-lv1 0 | dmsetup create ms0
-> > >
-> > > At this point I got the next error:
-> > > device-mapper: reload ioctl failed: No such file or directory
-> > > Command failed
-> > >
-> > > And these lines appeared in dmesg:
-> > > [ 6876.506623] device-mapper: table: 252:3: multisnap-snap: Snapshot
-> with this id doesn't exist
-> > > [ 6876.506629] device-mapper: ioctl: error adding target to table
-> > >
-> > > Could you check all the steps I performed right and what could cause
-> > > those error messages?
-> > >
-> >
-> > But rather, you could use userspace support for shared snapshots, it
-> makes
-> > the use much easier, you can use lvcreate, lvremove, lvresize commands:
-> >
-> > for lvm-2.02.54:
-> >
-> http://people.redhat.com/mpatocka/patches/userspace/new-snapshots/lvm-2.02.54/
-> > for lvm-2.02.60:
-> >
-> http://people.redhat.com/mpatocka/patches/userspace/new-snapshots/lvm-2.02.60/
-> > for lvm-2.02.62:
-> > http://people.redhat.com/msnitzer/patches/multisnap/lvm2/LVM2-2.02.62/
->
-> --
-> Best wishes,
-> Mikhail Klepachevskyy
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---000e0cd359b6694cfa04817f6260
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div>Hi,</div>
-<div>=A0=A0=A0=A0 I used the patchs for LVM2.02.54, however, when i compile=
-d it, an err came:</div>
-<div>=A0=A0=A0=A0 </div>
-<div><font color=3D"#3333ff">../lib/liblvm-internal.a(lv_manip.o): In funct=
-ion `lv_extend&#39;:<br>lv_manip.c:(.text+0x629a): undefined reference to `=
-last_seg&#39;<br></font><br>=A0 where is the &#39;last_seg&#39; &#39;s defi=
-nition?</div>
-
-<div>=A0 my linux kernel version is 2.6.18.</div>
-<div>=A0 thank you!</div>
-<div>=A0</div>
-<div>best regards</div>
-<div>Bubsy</div>
-<div>=A0</div>
-<div class=3D"gmail_quote">2010/3/10 Mikhail Klepachevskyy <span dir=3D"ltr=
-">&lt;<a href=3D"mailto:mikhailk1@open-e.com">mikhailk1@open-e.com</a>&gt;<=
-/span><br>
-<blockquote style=3D"BORDER-LEFT: #ccc 1px solid; MARGIN: 0px 0px 0px 0.8ex=
-; PADDING-LEFT: 1ex" class=3D"gmail_quote">Hello!<br><br>Big thanks! It hel=
-ped!<br>
-<div class=3D"im"><br><br>On Wed, Mar 10, 2010 at 08:11:11AM -0500, Mikulas=
- Patocka wrote:<br><br>&gt;<br>&gt; You need to suspend and resume the orig=
-in device after create message and<br>&gt; before attaching the snapshot.<b=
-r>
-&gt;<br></div>
-<div class=3D"im">&gt; &gt; I tried to test multisnapshots but unfortunatel=
-y got some errors.<br>&gt; &gt; Here is what I did:<br>&gt; &gt;<br><br></d=
-iv>&lt;skip&gt;<br>
-<div class=3D"im"><br>&gt; &gt; =A0 =A0# echo 0 `blockdev --getsize /dev/ma=
-pper/vg1-lv1` multisnapshot \<br>&gt; &gt; =A0 =A0 =A0/dev/mapper/vg1-lv1 /=
-dev/mapper/vg1-lv2 16 0 mikulas 0\<br>&gt; &gt; =A0 =A0 =A0| dmsetup create=
- ms<br>&gt; &gt;<br>
-&gt; &gt; =A0 =A0# dmsetup message /dev/mapper/ms 0 create<br>&gt;<br>&gt; =
-dmsetup suspend ms<br>&gt; dmsetup resume ms<br>&gt;<br>&gt; &gt; =A0 =A0# =
-echo 0 `blockdev --getsize /dev/mapper/vg1-lv1` multisnap-snap \<br>&gt; &g=
-t; =A0 =A0 =A0/dev/mapper/vg1-lv1 0 | dmsetup create ms0<br>
-&gt; &gt;<br>&gt; &gt; At this point I got the next error:<br>&gt; &gt; dev=
-ice-mapper: reload ioctl failed: No such file or directory<br>&gt; &gt; Com=
-mand failed<br>&gt; &gt;<br>&gt; &gt; And these lines appeared in dmesg:<br=
->
-&gt; &gt; [ 6876.506623] device-mapper: table: 252:3: multisnap-snap: Snaps=
-hot with this id doesn&#39;t exist<br>&gt; &gt; [ 6876.506629] device-mappe=
-r: ioctl: error adding target to table<br>&gt; &gt;<br>&gt; &gt; Could you =
-check all the steps I performed right and what could cause<br>
-&gt; &gt; those error messages?<br>&gt; &gt;<br>&gt;<br></div>
-<div class=3D"im">&gt; But rather, you could use userspace support for shar=
-ed snapshots, it makes<br>&gt; the use much easier, you can use lvcreate, l=
-vremove, lvresize commands:<br>&gt;<br>&gt; for lvm-2.02.54:<br>&gt; <a hre=
-f=3D"http://people.redhat.com/mpatocka/patches/userspace/new-snapshots/lvm-=
-2.02.54/" target=3D"_blank">http://people.redhat.com/mpatocka/patches/users=
-pace/new-snapshots/lvm-2.02.54/</a><br>
-&gt; for lvm-2.02.60:<br>&gt; <a href=3D"http://people.redhat.com/mpatocka/=
-patches/userspace/new-snapshots/lvm-2.02.60/" target=3D"_blank">http://peop=
-le.redhat.com/mpatocka/patches/userspace/new-snapshots/lvm-2.02.60/</a><br>
-&gt; for lvm-2.02.62:<br>&gt; <a href=3D"http://people.redhat.com/msnitzer/=
-patches/multisnap/lvm2/LVM2-2.02.62/" target=3D"_blank">http://people.redha=
-t.com/msnitzer/patches/multisnap/lvm2/LVM2-2.02.62/</a><br><br></div>--<br>
-Best wishes,<br><font color=3D"#888888">Mikhail Klepachevskyy<br></font>
-<div>
-<div></div>
-<div class=3D"h5"><br>--<br>dm-devel mailing list<br><a href=3D"mailto:dm-d=
-evel@redhat.com">dm-devel@redhat.com</a><br><a href=3D"https://www.redhat.c=
-om/mailman/listinfo/dm-devel" target=3D"_blank">https://www.redhat.com/mail=
-man/listinfo/dm-devel</a><br>
-</div></div></blockquote></div><br>
-
---000e0cd359b6694cfa04817f6260--
-
-
---===============7188002944597537391==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7188002944597537391==--
+--- dmraid/include/dmraid/misc.h	2009/09/16 11:45:12	1.3
++++ dmraid/include/dmraid/misc.h	2010/03/12 11:33:01	1.4
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2004-2005  Heinz Mauelshagen, Red Hat GmbH.
++ * Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH.
+  *                          All rights reserved.
+  *
+  * Copyright (C) 2007   Intel Corporation. All rights reserved.
+@@ -18,6 +18,7 @@
+ 
+ extern void sysfs_workaround(struct lib_context *lc);
+ extern void mk_alpha(struct lib_context *lc, char *str, size_t len);
++extern void mk_alphanum(struct lib_context *lc, char *str, size_t len);
+ extern char *get_basename(struct lib_context *lc, char *str);
+ extern char *get_dirname(struct lib_context *lc, char *str);
+ extern char *remove_white_space(struct lib_context *lc, char *str, size_t len);
+--- dmraid/lib/format/ataraid/isw.c	2009/09/16 11:45:14	1.6
++++ dmraid/lib/format/ataraid/isw.c	2010/03/12 11:33:01	1.7
+@@ -1,7 +1,7 @@
+ /*
+  * Intel Software RAID metadata format handler.
+  *
+- * Copyright (C) 2004-2009  Heinz Mauelshagen, Red Hat GmbH.
++ * Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH.
+  *                          All rights reserved.
+  *
+  * Copyright (C) 2007,2009  Intel Corporation. All rights reserved.
+@@ -169,6 +169,7 @@
+ _name(struct lib_context *lc, struct isw *isw, char *str, size_t len,
+       enum name_type nt, int num, struct isw_dev *dev, struct raid_dev *rd)
+ {
++	int n;
+ 	struct {
+ 		const char *fmt, *what;
+ 	} formats[] = {
+@@ -189,7 +190,13 @@
+ 			f += (is_raid10(dev) ? 1 : 0);
+ 	}
+ 
+-	return snprintf(str, len, f->fmt, isw->family_num, f->what, num);
++	n = snprintf(str, len, f->fmt, isw->family_num, f->what, num);
++
++	/* As '->volume' could contain anything, we sanitise the name. */
++	if (n > 0)
++		mk_alphanum(lc, str, n);
++
++	return n;
+ }
+ 
+ static char *
+--- dmraid/lib/format/ddf/ddf1.c	2009/11/02 13:20:41	1.6
++++ dmraid/lib/format/ddf/ddf1.c	2010/03/12 11:33:01	1.7
+@@ -4,7 +4,7 @@
+  * Copyright (C) 2005-2006 IBM, All rights reserved.
+  * Written by Darrick Wong <djwong@us.ibm.com>
+  *
+- * Copyright (C) 2006-2008 Heinz Mauelshagen, Red Hat GmbH
++ * Copyright (C) 2006-2010 Heinz Mauelshagen, Red Hat GmbH
+  *                         All rights reserved.
+  *
+  * See file LICENSE at the top of this source tree for license information.
+@@ -689,6 +689,9 @@
+ 		i = prefix + 16;
+ 		while (!isgraph(buf[--i]));
+ 		buf[i + 1] = 0;
++
++		/* As buf could contain anything, we sanitise the name. */
++		mk_alphanum(lc, buf, i);
+ 	} else {
+ 		char *b;
+ 
+--- dmraid/lib/misc/misc.c	2009/09/16 11:45:17	1.3
++++ dmraid/lib/misc/misc.c	2010/03/12 11:33:02	1.4
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C) 2004,2005  Heinz Mauelshagen, Red Hat GmbH.
++ * Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH.
+  *                          All rights reserved.
+  *
+  * Copyright (C) 2007   Intel Corporation. All rights reserved.
+@@ -66,6 +66,21 @@
+ 	}
+ }
+ 
++/*
++ * Convert a string to only have alphanum or '-' or '_'. [Neil Brown]
++ * All others become '_'
++ */
++void
++mk_alphanum(struct lib_context *lc, char *str, size_t len)
++{
++	for (; len && *str; len--, str++) {
++		if (!isalnum(*str) &&
++		    *str != '-' &&
++		    *str != '_')
++			*str = '_';
++	}
++}
++
+ /* Remove any whitespace from a string. */
+ char *
+ remove_white_space(struct lib_context *lc, char *str, size_t size)
