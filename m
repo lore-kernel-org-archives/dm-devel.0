@@ -1,49 +1,44 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH] crypto/arc4: convert this stream cipher into a block
-	cipher
-Date: Sun, 14 Mar 2010 17:06:23 +0800
-Message-ID: <20100314090623.GA32391@gondor.apana.org.au>
-References: <20100209211238.GC21548@Chamillionaire.breakpoint.cc> <20100209214522.GA27002@gondor.apana.org.au> <20100212084228.GA1535@Chamillionaire.breakpoint.cc> <20100216125125.GA390@gondor.apana.org.au> <20100221200140.GC11951@Chamillionaire.breakpoint.cc> <20100222004547.GA24812@gondor.apana.org.au> <20100222005217.GA24920@gondor.apana.org.au> <20100222220835.GB31291@Chamillionaire.breakpoint.cc> <20100223003239.GC9118@gondor.apana.org.au> <20100314082432.GA1800@Chamillionaire.breakpoint.cc>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 0/4] fix snapshot flaws with 4k sectors
+Date: Mon, 15 Mar 2010 01:59:55 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1003150145220.12526@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100314082432.GA1800@Chamillionaire.breakpoint.cc>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, mbroz@redhat.com, dm-devel@redhat.com, agk@redhat.com, linux-crypto@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Mar 14, 2010 at 09:24:32AM +0100, Sebastian Andrzej Siewior wrote:
-> 
-> Okay. So so are we talking about something like that below then? This is
+Hi
 
-Pretty much.
+This is series of 4 patches that fix flaws with 4k sectors and snapshots.
+The first flaw is bad iterate devices (it can hurt even with 512-byte 
+sectors, if the snapshot and origin are at devices with different 
+limits).
 
-> untested and I break other users bexcept lib80211_crypt_tkip. 
+The next two patches just prepare things for the 4th patch. The 4th patch 
+extends the chunk size test for both the snapshot and the origin --- i.e. 
+chunk size must be greater than or equal to both snapshot and origin 
+sector size. Previously, the test was only for the snapshot, thus if you 
+had origin with large sector and snapshot with small sector, it would fail 
+copying the small chunk from the origin to the snapshot.
 
-For the sake of compatibility please do this as a 3-step dance.
-First add a new arc4 blkcipher, then convert the users, and
-finally delete the old arc4.
+BTW. if anyone wants to test his code with non-512-byte sector devices, 
+you can use old Seagate U160 SCSI disks (Cheetah XL and before), they can 
+be reformatted to 512-4096 byte sectors with sg_format command. They are 
+no longer being manufactured, you can find them at internet auctions. The 
+current U320 SCSI disks (Cheetah 10K.X or 15K.X) don't support large 
+sectors, they only support 512-528 byte sector-size.
 
->  static int arc4_set_key(struct crypto_tfm *tfm, const u8 *in_key,
->  			unsigned int key_len)
->  {
-> -	struct arc4_ctx *ctx = crypto_tfm_ctx(tfm);
-> +	/*
-> +	 * ARC4 is special: The user should supply an IV as struct arc4_iv and
-> +	 * fill either the key or the iv.
-> +	 */
-> +	return -EOPNOTSUPP;
-> +}
-
-You should return 0 here.  You should also set the min/max key
-size to zero.  The new arc4 no longer has a key as far as the
-API is concerned.
-
-Cheers,
--- 
-Visit Openswan at http://www.openswan.org/
-Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Mikulas
