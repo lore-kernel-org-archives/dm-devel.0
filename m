@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 0/4] fix snapshot flaws with 4k sectors
-Date: Mon, 15 Mar 2010 01:59:55 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1003150145220.12526@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 1/4] Iterate both origin and snapshot devices
+Date: Mon, 15 Mar 2010 02:00:27 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1003150159590.12526@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,25 +20,40 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Iterate both origin and snapshot devices
 
-This is series of 4 patches that fix flaws with 4k sectors and snapshots.
-The first flaw is bad iterate devices (it can hurt even with 512-byte 
-sectors, if the snapshot and origin are at devices with different 
-limits).
+iterate_devices method should call the callback for all the devices where
+the bio may be remapped. Thus, snapshot_iterate_devices should call the callback
+for both snapshot and origin underlying devices because it remaps some bios
+to the snapshot and some to the origin.
 
-The next two patches just prepare things for the 4th patch. The 4th patch 
-extends the chunk size test for both the snapshot and the origin --- i.e. 
-chunk size must be greater than or equal to both snapshot and origin 
-sector size. Previously, the test was only for the snapshot, thus if you 
-had origin with large sector and snapshot with small sector, it would fail 
-copying the small chunk from the origin to the snapshot.
+snapshot_iterate_devices called the callback only for the origin device.
+This lead to badly calculated device limits if snapshot and origin were placed
+on different types of disks.
 
-BTW. if anyone wants to test his code with non-512-byte sector devices, 
-you can use old Seagate U160 SCSI disks (Cheetah XL and before), they can 
-be reformatted to 512-4096 byte sectors with sg_format command. They are 
-no longer being manufactured, you can find them at internet auctions. The 
-current U320 SCSI disks (Cheetah 10K.X or 15K.X) don't support large 
-sectors, they only support 512-528 byte sector-size.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Mikulas
+---
+ drivers/md/dm-snap.c |    8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+Index: linux-2.6.34-rc1-devel/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.34-rc1-devel.orig/drivers/md/dm-snap.c	2010-03-12 14:24:39.000000000 +0100
++++ linux-2.6.34-rc1-devel/drivers/md/dm-snap.c	2010-03-12 14:30:30.000000000 +0100
+@@ -1899,8 +1899,14 @@ static int snapshot_iterate_devices(stru
+ 				    iterate_devices_callout_fn fn, void *data)
+ {
+ 	struct dm_snapshot *snap = ti->private;
++	int r;
++
++	r = fn(ti, snap->origin, 0, ti->len, data);
+ 
+-	return fn(ti, snap->origin, 0, ti->len, data);
++	if (!r)
++		r = fn(ti, snap->cow, 0, get_dev_size(snap->cow->bdev), data);
++
++	return r;
+ }
+ 
+ 
