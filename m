@@ -1,15 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/4] fix snapshot flaws with 4k sectors
-Date: Mon, 15 Mar 2010 10:08:03 -0400
-Message-ID: <20100315140803.GA6853@redhat.com>
-References: <Pine.LNX.4.64.1003150145220.12526@hs20-bc2-1.build.redhat.com>
+Subject: Re: [PATCH 1/4] Iterate both origin and snapshot devices
+Date: Mon, 15 Mar 2010 10:14:11 -0400
+Message-ID: <20100315141410.GB6853@redhat.com>
+References: <Pine.LNX.4.64.1003150159590.12526@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1003150145220.12526@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1003150159590.12526@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,21 +20,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 15 2010 at  1:59am -0400,
+On Mon, Mar 15 2010 at  2:00am -0400,
 Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> BTW. if anyone wants to test his code with non-512-byte sector devices, 
-> you can use old Seagate U160 SCSI disks (Cheetah XL and before), they can 
-> be reformatted to 512-4096 byte sectors with sg_format command. They are 
-> no longer being manufactured, you can find them at internet auctions. The 
-> current U320 SCSI disks (Cheetah 10K.X or 15K.X) don't support large 
-> sectors, they only support 512-528 byte sector-size.
+> Iterate both origin and snapshot devices
+> 
+> iterate_devices method should call the callback for all the devices where
+> the bio may be remapped. Thus, snapshot_iterate_devices should call the callback
+> for both snapshot and origin underlying devices because it remaps some bios
+> to the snapshot and some to the origin.
+> 
+> snapshot_iterate_devices called the callback only for the origin device.
+> This lead to badly calculated device limits if snapshot and origin were placed
+> on different types of disks.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-The scsi_debug modules can also be used to create 4K devices.
-
-This is a software-only test-bed but it is bound by the amount of
-available ram.
-
-Mike
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
