@@ -1,8 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/4] Open origin before exception store
-	initialization
-Date: Mon, 15 Mar 2010 02:00:59 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1003150200290.12526@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 3/4] Add dm_snap_origin function
+Date: Mon, 15 Mar 2010 02:01:23 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1003150201010.12526@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,93 +20,47 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Open origin before exception store initialization
+Add dm_snap_origin function
 
-Further patch for chunk size validation requires that the origin
-is open when initializing an exception store.
+Add function dm_snap_origin, it will be used for checking chunk size against
+origin sector size.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-snap.c |   30 +++++++++++++++---------------
- 1 file changed, 15 insertions(+), 15 deletions(-)
+ drivers/md/dm-exception-store.h |    3 ++-
+ drivers/md/dm-snap.c            |    6 ++++++
+ 2 files changed, 8 insertions(+), 1 deletion(-)
 
+Index: linux-2.6.34-rc1-devel/drivers/md/dm-exception-store.h
+===================================================================
+--- linux-2.6.34-rc1-devel.orig/drivers/md/dm-exception-store.h	2010-03-12 14:41:37.000000000 +0100
++++ linux-2.6.34-rc1-devel/drivers/md/dm-exception-store.h	2010-03-12 14:42:11.000000000 +0100
+@@ -126,8 +126,9 @@ struct dm_exception_store {
+ };
+ 
+ /*
+- * Obtain the cow device used by a given snapshot.
++ * Obtain the origin and cow device used by a given snapshot.
+  */
++struct dm_dev *dm_snap_origin(struct dm_snapshot *snap);
+ struct dm_dev *dm_snap_cow(struct dm_snapshot *snap);
+ 
+ /*
 Index: linux-2.6.34-rc1-devel/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.34-rc1-devel.orig/drivers/md/dm-snap.c	2010-03-12 16:32:47.000000000 +0100
-+++ linux-2.6.34-rc1-devel/drivers/md/dm-snap.c	2010-03-12 16:36:21.000000000 +0100
-@@ -1065,10 +1065,6 @@ static int snapshot_ctr(struct dm_target
- 		origin_mode = FMODE_WRITE;
- 	}
+--- linux-2.6.34-rc1-devel.orig/drivers/md/dm-snap.c	2010-03-12 14:41:20.000000000 +0100
++++ linux-2.6.34-rc1-devel/drivers/md/dm-snap.c	2010-03-12 14:42:37.000000000 +0100
+@@ -148,6 +148,12 @@ struct dm_snapshot {
+ #define RUNNING_MERGE          0
+ #define SHUTDOWN_MERGE         1
  
--	origin_path = argv[0];
--	argv++;
--	argc--;
--
- 	s = kmalloc(sizeof(*s), GFP_KERNEL);
- 	if (!s) {
- 		ti->error = "Cannot allocate snapshot context private "
-@@ -1077,6 +1073,16 @@ static int snapshot_ctr(struct dm_target
- 		goto bad;
- 	}
- 
-+	origin_path = argv[0];
-+	argv++;
-+	argc--;
++struct dm_dev *dm_snap_origin(struct dm_snapshot *s)
++{
++	return s->origin;
++}
++EXPORT_SYMBOL(dm_snap_origin);
 +
-+	r = dm_get_device(ti, origin_path, origin_mode, &s->origin);
-+	if (r) {
-+		ti->error = "Cannot get origin device";
-+		goto bad_origin;
-+	}
-+
- 	cow_path = argv[0];
- 	argv++;
- 	argc--;
-@@ -1097,12 +1103,6 @@ static int snapshot_ctr(struct dm_target
- 	argv += args_used;
- 	argc -= args_used;
- 
--	r = dm_get_device(ti, origin_path, origin_mode, &s->origin);
--	if (r) {
--		ti->error = "Cannot get origin device";
--		goto bad_origin;
--	}
--
- 	s->ti = ti;
- 	s->valid = 1;
- 	s->active = 0;
-@@ -1212,15 +1212,15 @@ bad_kcopyd:
- 	dm_exception_table_exit(&s->complete, exception_cache);
- 
- bad_hash_tables:
--	dm_put_device(ti, s->origin);
--
--bad_origin:
- 	dm_exception_store_destroy(s->store);
- 
- bad_store:
- 	dm_put_device(ti, s->cow);
- 
- bad_cow:
-+	dm_put_device(ti, s->origin);
-+
-+bad_origin:
- 	kfree(s);
- 
- bad:
-@@ -1314,12 +1314,12 @@ static void snapshot_dtr(struct dm_targe
- 
- 	mempool_destroy(s->pending_pool);
- 
--	dm_put_device(ti, s->origin);
--
- 	dm_exception_store_destroy(s->store);
- 
- 	dm_put_device(ti, s->cow);
- 
-+	dm_put_device(ti, s->origin);
-+
- 	kfree(s);
- }
- 
+ struct dm_dev *dm_snap_cow(struct dm_snapshot *s)
+ {
+ 	return s->cow;
