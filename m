@@ -1,7 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 3/4] Add dm_snap_origin function
-Date: Mon, 15 Mar 2010 02:01:23 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1003150201010.12526@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 4/4] Test chunk size against both origin and
+ snapshot sector size
+Date: Mon, 15 Mar 2010 02:04:11 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1003150201270.12526@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,47 +21,30 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Add dm_snap_origin function
+Test chunk size against both origin and snapshot sector size
 
-Add function dm_snap_origin, it will be used for checking chunk size against
-origin sector size.
+Don't allow chunk size smaller than either origin or snapshot logical
+sector size. Reading or writing data unaligned to sector size is not allowed
+and causes immediate errors.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-exception-store.h |    3 ++-
- drivers/md/dm-snap.c            |    6 ++++++
- 2 files changed, 8 insertions(+), 1 deletion(-)
+ drivers/md/dm-exception-store.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-Index: linux-2.6.34-rc1-devel/drivers/md/dm-exception-store.h
+Index: linux-2.6.34-rc1-devel/drivers/md/dm-exception-store.c
 ===================================================================
---- linux-2.6.34-rc1-devel.orig/drivers/md/dm-exception-store.h	2010-03-12 14:41:37.000000000 +0100
-+++ linux-2.6.34-rc1-devel/drivers/md/dm-exception-store.h	2010-03-12 14:42:11.000000000 +0100
-@@ -126,8 +126,9 @@ struct dm_exception_store {
- };
+--- linux-2.6.34-rc1-devel.orig/drivers/md/dm-exception-store.c	2010-03-12 14:38:31.000000000 +0100
++++ linux-2.6.34-rc1-devel/drivers/md/dm-exception-store.c	2010-03-12 14:39:56.000000000 +0100
+@@ -173,7 +173,9 @@ int dm_exception_store_set_chunk_size(st
  
- /*
-- * Obtain the cow device used by a given snapshot.
-+ * Obtain the origin and cow device used by a given snapshot.
-  */
-+struct dm_dev *dm_snap_origin(struct dm_snapshot *snap);
- struct dm_dev *dm_snap_cow(struct dm_snapshot *snap);
- 
- /*
-Index: linux-2.6.34-rc1-devel/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.34-rc1-devel.orig/drivers/md/dm-snap.c	2010-03-12 14:41:20.000000000 +0100
-+++ linux-2.6.34-rc1-devel/drivers/md/dm-snap.c	2010-03-12 14:42:37.000000000 +0100
-@@ -148,6 +148,12 @@ struct dm_snapshot {
- #define RUNNING_MERGE          0
- #define SHUTDOWN_MERGE         1
- 
-+struct dm_dev *dm_snap_origin(struct dm_snapshot *s)
-+{
-+	return s->origin;
-+}
-+EXPORT_SYMBOL(dm_snap_origin);
-+
- struct dm_dev *dm_snap_cow(struct dm_snapshot *s)
- {
- 	return s->cow;
+ 	/* Validate the chunk size against the device block size */
+ 	if (chunk_size %
+-	    (bdev_logical_block_size(dm_snap_cow(store->snap)->bdev) >> 9)) {
++	    (bdev_logical_block_size(dm_snap_cow(store->snap)->bdev) >> 9) ||
++	    chunk_size %
++	    (bdev_logical_block_size(dm_snap_origin(store->snap)->bdev) >> 9)) {
+ 		*error = "Chunk size is not a multiple of device blocksize";
+ 		return -EINVAL;
+ 	}
