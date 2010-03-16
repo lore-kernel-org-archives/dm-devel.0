@@ -1,7 +1,7 @@
-From: brem belguebli <brem.belguebli@gmail.com>
-Subject: DM-MP looping
-Date: Tue, 16 Mar 2010 02:42:50 +0100
-Message-ID: <1268703770.26490.41.camel@localhost>
+From: heinzm@sourceware.org
+Subject: dmraid/lib/events libdmraid-events-isw.c
+Date: 16 Mar 2010 15:33:51 -0000
+Message-ID: <20100316153351.17171.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,73 +16,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2010-03-16 15:33:51
 
-I'm having a SAN problem causing some of my linux machines to become
-unresponsive.
+Modified files:
+	lib/events     : libdmraid-events-isw.c 
 
-However, when trying to reproduce the problem, I did some experiments
-that lead me to think I have hit a bug in dm-mp.
+Log message:
+	Fix compiler warnings
 
-I have 2 multipathed devices from HP EVA8100 arrays, each device seeing
-8 paths.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/events/libdmraid-events-isw.c.diff?cvsroot=dm&r1=1.2&r2=1.3
 
-when I issue a blocked to one of the paths of one of the mpath devices
-"echo blocked > /sys/bus/scsi/devices/0:0:2:4/state" while stracing
-multipathd, any multipath command on any of the mpath devs (multipath
--l ) gets stuck on all the devices never returning.
-
-the multipathd strace output shows the following :
-
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
-....
-I can see in the processes list several scsi_id commands stuck on the
-path I've blocked. The load average of my test machine going high very
-fast (from 0.5 to 15 in a few minutes on a dual xeon 5560)
-
-Issuing scsi_id -p 0x80 on the 7 remaining paths is ok.
-
-When reactivating the path "echo running
-> /sys/bus/scsi/devices/0:0:2:4/state" everything returns to normal.
-
-Below an extract of my /etc/multipath.conf
-
-defaults { 
-	polling_interval 10 
-	path_grouping_policy multibus  
-	getuid_callout "/sbin/scsi_id -g -u -s /block/%n" 
-	no_path_retry fail 
-} 
-blacklist { 
-	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*" 
-	devnode "^hd[a-z]" 
-}
-devices { 
-	device { 
-		vendor "HP" product "HSV2[10]0" 
-		getuid_callout "/sbin/scsi_id -g -u -s /block/%n" 
-	} 
-}
-
-The SAN problem I'm having is that some DWDM FC services switch from
-their nominal path to the protected one (dwdm loop with built-in
-failover) in less than a few tens of millisecs, that I'm suspecting it
-may be causing some paths to go to blocked state, but i couldn't verify
-it yet, and last time it happened the machines were already at very high
-load >80, the guys here were unable to do anythng except to reset them.
-
-Running Rhel 5.3 with shipped dm-mp version 
+--- dmraid/lib/events/libdmraid-events-isw.c	2009/11/19 11:37:25	1.2
++++ dmraid/lib/events/libdmraid-events-isw.c	2010/03/16 15:33:50	1.3
+@@ -27,20 +27,8 @@
+  */
+ 
+ /*
+- * FIXME before releasing in RHEL5 (Heinz Mauelshagen):
+- *
+- * o symbols naming consistency
+- *
+- * Likely after 5.3:
+- * o integrate code with dmraid package
+- * o support metadata updates
+- * o use libsysfs rather than duplicated code to access sysfs
+- * o remove any limitations to SATA, because dmraid must be device agnostic;
+- *   ie. the devices being registered with dmeventd have to be derived from
+- *   libdmraid metadata discovery; this essentially means a rewrite!
+- *
+  * FIXED:
+- * o stremaline event processing functions
++ * o streamline event processing functions
+  * o register/event processing major:minor usage concept
+  * o cover error paths
+  * o locking race vs. registration in event processing
+@@ -101,13 +89,11 @@
+ static const char *default_dmraid_events_lib = "libdmraid-events.so";
+ static const char *sys_dm_dm = "dm-";
+ static const char *sys_block_path = "/sys/block/";
+-static const char *sys_dm_path = "/sys/block/dm-";
+ static const char *sys_scsi_path = "/sys/class/scsi_device/";
+ static const char *sys_slaves_dir = "/slaves";
+ static const char *sys_scsi_dev_blk = "/device/block";
+ static const char sys_scsi_dev_blk_delims[] = { '/', ':' };
+ static const char *sys_dev_dir = "/dev";
+-static const char *syslog_ident = "libdmraid-events";
+ 
+ /* Logging. */
+ enum log_type { LOG_NAMES, LOG_PORTS, LOG_OPEN_FAILURE, LOG_NONE };
+@@ -1070,7 +1056,7 @@
+ 						  char *params)
+ {
+ 	int argc, i, num_devs, ret = D_INSYNC;
+-	char **args, *dev_status_str, *p;
++	char **args = NULL, *dev_status_str, *p;
+ 	const char *rs_name = dm_task_get_name(dmt);
+ 	struct dso_raid_set *rs = _find_raid_set(rs_name, NULL, 1);
+ 	struct dso_raid_dev *dev;
+@@ -1135,7 +1121,7 @@
+ {
+ 	int argc, i, log_argc, num_devs, ret = D_INSYNC;
+ 	char **args = NULL, *dev_status_str,
+-	     *log_status_str, *p, *sync_str;
++	     *log_status_str = NULL, *p, *sync_str;
+ 	const char *rs_name = dm_task_get_name(dmt);
+ 	struct dso_raid_set *rs = _find_raid_set(rs_name, NULL, 1);
+ 
+@@ -1517,16 +1503,17 @@
+  *
+  * Return 1 for success and 0 for failure.
+  */ 
+-int register_device(const char *rs_name, const char *uuid,
++int register_device(const char *rs_name_in, const char *uuid,
+ 		    int major, int minor,
+ 		    void **unused __attribute((unused)))
+ {
++	char *rs_name;
+ 	struct dso_raid_set *rs, *rs_new;
+ 
+ 	/* FIXME: need to run first to get syslog() to work. */
+ 	_check_sgpio();
+ 
+-	rs_name = basename(rs_name);
++	rs_name = basename((char *) rs_name_in);
+ 
+ 	/* Check for double registration attempt. */
+ 	pthread_mutex_lock(&_register_mutex);
+@@ -1581,13 +1568,14 @@
+  *
+  * Return 1 for success and 0 for failure.
+  */ 
+-int unregister_device(const char *rs_name, const char *uuid,
++int unregister_device(const char *rs_name_in, const char *uuid,
+ 		      int major, int minor,
+ 		      void **unused __attribute((unused)))
+ {
++	char *rs_name;
+ 	struct dso_raid_set *prev, *rs;
+ 
+-	rs_name = basename(rs_name);
++	rs_name = basename((char *) rs_name_in);
+ 
+ 	pthread_mutex_lock(&_register_mutex);
+ 
