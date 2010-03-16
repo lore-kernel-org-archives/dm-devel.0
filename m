@@ -1,15 +1,12 @@
-From: guy keren <choo@actcom.co.il>
-Subject: Re: max number of paths
-Date: Mon, 15 Mar 2010 22:46:11 +0200
-Message-ID: <4B9E9C93.2050202@actcom.co.il>
-References: <03FB5D708BE3C8448E8079186A56CDE60162B9C7@BTIBURMAIL.bustech.com>	<4B9E9552.9000603@actcom.co.il>
-	<03FB5D708BE3C8448E8079186A56CDE60162B9F9@BTIBURMAIL.bustech.com>
+From: brem belguebli <brem.belguebli@gmail.com>
+Subject: DM-MP looping
+Date: Tue, 16 Mar 2010 02:42:50 +0100
+Message-ID: <1268703770.26490.41.camel@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <03FB5D708BE3C8448E8079186A56CDE60162B9F9@BTIBURMAIL.bustech.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,57 +16,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi,
 
-do the devices look something like /dev/sd*, or /dev/cciss/* or 
-something similar? if the later - it _could_ be a driver-specific issue, 
-and i would look for info about the specific block driver.
+I'm having a SAN problem causing some of my linux machines to become
+unresponsive.
 
---guy
+However, when trying to reproduce the problem, I did some experiments
+that lead me to think I have hit a bug in dm-mp.
 
-Charlie Sharkey wrote:
-> I'm seeing this on a Suse Sles10 x86_64 system, 2.6.16.60-0.34-smp.
-> I have a qlogic qle2462 connected to a hp eva back end. 
-> 
-> 
-> 
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of guy keren
-> Sent: Monday, March 15, 2010 4:15 PM
-> To: device-mapper development
-> Subject: Re: [dm-devel] max number of paths
-> 
-> 
-> Charlie Sharkey wrote:
->>  
->>
->> Is there a maximum number of paths supported by the device mapper ?
->>
->> I have a setup with 12 paths to 14 luns. I had to reduce the number of
-> paths
->> to 10 for the device mapper to startup correctly.
-> 
-> i have seen such problems with linux kernel 2.4, long ago, when max SCSI
-> 
-> disk devices was 256 (and hence - also max paths for such devices).
-> 
-> if you're not using SCSI, but rather some other type of device - it 
-> could be a limitation of the specific low level driver.
-> 
-> which kernel are you using? and which linux distribution? and what kind 
-> of block devices do your disks reside on?
-> 
-> --guy
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+I have 2 multipathed devices from HP EVA8100 arrays, each device seeing
+8 paths.
+
+when I issue a blocked to one of the paths of one of the mpath devices
+"echo blocked > /sys/bus/scsi/devices/0:0:2:4/state" while stracing
+multipathd, any multipath command on any of the mpath devs (multipath
+-l ) gets stuck on all the devices never returning.
+
+the multipathd strace output shows the following :
+
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+[pid 29060] poll([{fd=198, events=POLLIN}], 1, 5000) = 0 (Timeout)
+....
+I can see in the processes list several scsi_id commands stuck on the
+path I've blocked. The load average of my test machine going high very
+fast (from 0.5 to 15 in a few minutes on a dual xeon 5560)
+
+Issuing scsi_id -p 0x80 on the 7 remaining paths is ok.
+
+When reactivating the path "echo running
+> /sys/bus/scsi/devices/0:0:2:4/state" everything returns to normal.
+
+Below an extract of my /etc/multipath.conf
+
+defaults { 
+	polling_interval 10 
+	path_grouping_policy multibus  
+	getuid_callout "/sbin/scsi_id -g -u -s /block/%n" 
+	no_path_retry fail 
+} 
+blacklist { 
+	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*" 
+	devnode "^hd[a-z]" 
+}
+devices { 
+	device { 
+		vendor "HP" product "HSV2[10]0" 
+		getuid_callout "/sbin/scsi_id -g -u -s /block/%n" 
+	} 
+}
+
+The SAN problem I'm having is that some DWDM FC services switch from
+their nominal path to the protected one (dwdm loop with built-in
+failover) in less than a few tens of millisecs, that I'm suspecting it
+may be causing some paths to go to blocked state, but i couldn't verify
+it yet, and last time it happened the machines were already at very high
+load >80, the guys here were unable to do anythng except to reset them.
+
+Running Rhel 5.3 with shipped dm-mp version 
