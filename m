@@ -1,10 +1,11 @@
-From: David Huffman <dm-devel@storix.com>
-Subject: Determine partition prefix used for mpath devices
-Date: Tue, 16 Mar 2010 13:28:48 -0700
-Message-ID: <4B9FEA00.2040703@storix.com>
+From: Nikanth Karthikesan <knikanth@suse.de>
+Subject: [PATCH] multipath: display average priority as group
+	priority
+Date: Wed, 17 Mar 2010 12:44:25 +0530
+Message-ID: <201003171244.25957.knikanth@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -16,29 +17,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-In a script, I need to somehow determine what prefix is being used for 
-partitions as set by UDEV. It seems that the naming convention is in 
-flux and could change frequently. When using user_friendly_names the 
-prefix is set using kpartx within udev rules. My problem is I need to 
-know what the prefix is so my scripts know what device naming convention 
-to look for.
+Display avg priority as group priority
 
-Here are the different iterations of naming schemes:
+Now average priority is used as path group priority, instead of sum of
+priorities of the paths. But while displaying group priority, sum is
+being displayed. Change it to print the average priority.
 
-mpath0p1
-mpath0-part1
-mpathap1
-mpatha-part1
+When there are no enabled paths, print 0 as priority.
 
-Is there a way other than grepping through the udev rules to determine 
-what the prefix is? The partitions may not exist so I cannot just look 
-to see what they are. I need to know BEFORE I create partitions. I know 
-this is a strange request, but I am working with a lot of code that was 
-designed before multipath was available and using the sys naming is not 
-an option (i.e. /disk/by-id/wwid).
+Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
 
-Thanks in advance,
-David
+---
+
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 10e5ce5..9753fe2 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -378,6 +378,7 @@ snprint_pg_selector (char * buff, size_t len, struct pathgroup * pgp)
+ static int
+ snprint_pg_pri (char * buff, size_t len, struct pathgroup * pgp)
+ {
++	int avg_priority = 0;
+ 	/*
+ 	 * path group priority is not updated for every path prio change,
+ 	 * but only on switch group code path.
+@@ -385,7 +386,9 @@ snprint_pg_pri (char * buff, size_t len, struct pathgroup * pgp)
+ 	 * Printing is another reason to update.
+ 	 */
+ 	path_group_prio_update(pgp);
+-	return snprint_int(buff, len, pgp->priority);
++	if (pgp->enabled_paths)
++		avg_priority = pgp->priority / pgp->enabled_paths;
++	return snprint_int(buff, len, avg_priority);
+ }
+ 
+ static int
