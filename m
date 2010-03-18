@@ -1,7 +1,7 @@
 From: heinzm@sourceware.org
-Subject: dmraid include/dmraid/lib_context.h lib/activa ...
-Date: 18 Mar 2010 13:10:45 -0000
-Message-ID: <20100318131045.3057.qmail@sourceware.org>
+Subject: dmraid/man dmraid.8
+Date: 18 Mar 2010 13:24:39 -0000
+Message-ID: <20100318132439.27954.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,327 +21,1089 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2010-03-18 13:10:43
+Changes by:	heinzm@sourceware.org	2010-03-18 13:24:39
 
 Modified files:
-	include/dmraid : lib_context.h 
-	lib/activate   : activate.c 
-	lib/format/ataraid: isw.c jm.c 
-	lib/register   : dmreg.c 
-	tools          : commands.c 
+	man            : dmraid.8 
 
 Log message:
-	Support --ignoremonitoring option to prohibit any dmeventd action, eg. allowing to disable monitoring in early boot with dynamic dmraid binary
+	--ignoremonitoring manual update
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/include/dmraid/lib_context.h.diff?cvsroot=dm&r1=1.4&r2=1.5
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/activate/activate.c.diff?cvsroot=dm&r1=1.6&r2=1.7
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ataraid/isw.c.diff?cvsroot=dm&r1=1.7&r2=1.8
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ataraid/jm.c.diff?cvsroot=dm&r1=1.5&r2=1.6
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/register/dmreg.c.diff?cvsroot=dm&r1=1.2&r2=1.3
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/commands.c.diff?cvsroot=dm&r1=1.6&r2=1.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/man/dmraid.8.diff?cvsroot=dm&r1=1.4&r2=1.5
 
---- dmraid/include/dmraid/lib_context.h	2009/09/16 11:45:12	1.4
-+++ dmraid/include/dmraid/lib_context.h	2010/03/18 13:10:42	1.5
-@@ -46,7 +46,8 @@
- 	LC_CREATE,
- 	LC_REBUILD_SET,
- 	LC_REBUILD_DISK,
--	LC_HOT_SPARE_SET,	/* Add new options below this one ! */
-+	LC_HOT_SPARE_SET,
-+	LC_IGNOREMONITORING,	/* Add new options below this one ! */
- 	LC_OPTIONS_SIZE,	/* Must be the last enumerator. */
- };
- 
-@@ -65,8 +66,9 @@
- #define	OPT_VERBOSE(lc)		(lc_opt(lc, LC_VERBOSE))
- #define	OPT_PARTCHAR(lc)	(lc_opt(lc, LC_PARTCHAR))
- #define	OPT_CREATE(lc)		(lc_opt(lc, LC_CREATE))
--#define OPT_HOT_SPARE_SET(lc)	(lc_opt(lc, LC_HOT_SPARE_SET))
- #define OPT_REBUILD_DISK(lc)	(lc_opt(lc, LC_REBUILD_DISK))
-+#define OPT_HOT_SPARE_SET(lc)	(lc_opt(lc, LC_HOT_SPARE_SET))
-+#define OPT_IGNOREMONITORING(lc) (lc_opt(lc, LC_IGNOREMONITORING))
- 
- /* Return option value. */
- #define	OPT_STR(lc, o)		(lc->options[o].arg.str)
-@@ -170,6 +172,9 @@
- 
- #endif
- 	RMPARTITIONS = 0x40000000,
-+#ifndef DMRAID_MINI
-+	IGNOREMONITORING = 0x80000000,
-+#endif
- };
- 
- /* Arguments allowed ? */
---- dmraid/lib/activate/activate.c	2009/12/07 16:05:46	1.6
-+++ dmraid/lib/activate/activate.c	2010/03/18 13:10:42	1.7
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (C) 2004-2008  Heinz Mauelshagen, Red Hat GmbH.
-+ * Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH.
-  *                          All rights reserved.
-  *
-  * Copyright (C) 2007,2009   Intel Corporation. All rights reserved.
-@@ -845,23 +845,17 @@
- enum dm_what { DM_ACTIVATE, DM_REGISTER };
- 
- /* Register devices of the RAID set with the dmeventd. */
--#define	ALL_EVENTS 0xffffffff
-+#ifdef	DMRAID_AUTOREGISTER
- static int
- dm_register_for_event(char *dev_name, char *lib_name)
- {
--#ifdef	DMRAID_AUTOREGISTER
--	dm_register_device(dev_name, lib_name);
--#endif
--	return 1;
-+	return !dm_register_device(dev_name, lib_name);
- }
- 
- static int
- dm_unregister_for_event(char *dev_name, char *lib_name)
- {
--#ifdef	DMRAID_AUTOREGISTER
--	dm_unregister_device(dev_name, lib_name);
--#endif
--	return 1;
-+	return !dm_unregister_device(dev_name, lib_name);
- }
- 
- #define LIB_NAME_LENGTH 255
-@@ -870,35 +864,34 @@
- {
- 	int ret = 0;
- 	char lib_name[LIB_NAME_LENGTH];
-+        struct dmraid_format *fmt;
- 
- 	if (OPT_TEST(lc))
- 		return 1;
- 
--        struct dmraid_format *fmt = get_format(rs);
+--- dmraid/man/dmraid.8	2009/09/16 11:45:17	1.4
++++ dmraid/man/dmraid.8	2010/03/18 13:24:39	1.5
+@@ -1,538 +1,558 @@
+-.TH DMRAID 8 "DMRAID TOOL" "Heinz Mauelshagen" \" -*- nroff -*-
+-.SH NAME
+-dmraid \- discover, configure and activate software (ATA)RAID
+-.SH SYNOPSIS
+-.B dmraid
+- {-a|--activate} {y|n|yes|no} 
+- [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
+- [-f|--format FORMAT[,FORMAT...]]
+- [{-P|--partchar} CHAR]
+- [-p|--no_partitions]
+- [-Z|--rm_partitions]
+- [--separator SEPARATOR]
+- [-t|--test]
+- [RAID-set...]
 -
--        if (fmt->name != NULL) {
--                strncpy(lib_name, "libdmraid-events-",LIB_NAME_LENGTH);
--                strncat(lib_name, fmt->name, LIB_NAME_LENGTH-strlen(fmt->name)-3);
--                strncat(lib_name, ".so", 3);
+-.B dmraid
+- {-b|--block_devices}
+- [-c|--display_columns][FIELD[,FIELD...]]...
+- [-d|--debug]... [-v|--verbose]...
+- [--separator SEPARATOR]
+- [device-path...]
 -
--                ret = f(rs->name, lib_name);
-+	fmt = get_format(rs);
-+	if (fmt->name) {
-+		snprintf(lib_name, sizeof(lib_name), "libdmraid-events-%s.so",
-+			 fmt->name);
-+		ret = f(rs->name, lib_name);
-         }
- 
--	return ret ? 1 : 0;
-+	return ret;
- }
- 
- static int
--register_devices(struct lib_context *lc, struct raid_set *rs)
-+register_device(struct lib_context *lc, struct raid_set *rs)
- {
- 	return do_device(lc, rs, dm_register_for_event);
- }
- 
- /* Unregister devices of the RAID set with the dmeventd. */
- static int
--unregister_devices(struct lib_context *lc, struct raid_set *rs)
-+unregister_device(struct lib_context *lc, struct raid_set *rs)
- {
- 	return do_device(lc, rs, dm_unregister_for_event);
- }
-+#endif /* #ifdef	DMRAID_AUTOREGISTER */
- 
- /* Reload a single set. */
- static int
-@@ -940,14 +933,6 @@
- {
- 	struct raid_set *r;
- 
--	/* FIXME: Does it matter if the set is (in)active? */
--#if 0
--	if (!OPT_TEST(lc) && what == DM_ACTIVATE && dm_status(lc, rs)) {
--		log_print(lc, "RAID set \"%s\" already active", rs->name);
--		return 1;
--	}
--#endif
+-.B dmraid
+- {-h|--help}
 -
- 	/* Recursively walk down the chain of stacked RAID sets */
- 	list_for_each_entry(r, &rs->sets, list) {
- 		/* Activate set below this one */
-@@ -969,12 +954,16 @@
- 	if (T_GROUP(rs))
- 		return 1;
+-.B dmraid
+- {-l|--list_formats}
+- [-d|--debug]... [-v|--verbose]...
+-
+-.B dmraid
+- {-n|--native_log}
+- [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
+- [-f|--format FORMAT[,FORMAT...]]
+- [--separator SEPARATOR]
+- [device-path...]
+-
+-.B dmraid
+- {-R| --rebuild}
+- RAID-set
+- [device-path]
+-
+-.B dmraid
+- {-x| --remove}
+- [RAID-set]
+-
+-.B dmraid
+- -f FORMAT-handler
+-{-C| --create} set 
+- --type raidlevel
+- [--size=setsize --strip stridesize] 
+- --disk "device-path, device-path [, device-path ...]"
+-
+-.B dmraid
+-[ -f|--format FORMAT-handler]
+--S|--spare [RAID-set]
+--M|--media  "device-path"
+-
+-.B dmraid
+- {-r|--raid_devices}
+- [-c|--display_columns][FIELD[,FIELD...]]...
+- [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
+- [-D|--dump_metadata]
+- [-f|--format FORMAT[,FORMAT...]]
+- [--separator SEPARATOR]
+- [device-path...]
+-
+-.B dmraid
+- {-r|--raid_devices}
+- [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
+- [-E|--erase_metadata]
+- [-f|--format FORMAT[,FORMAT...]]
+- [--separator SEPARATOR]
+- [device-path...]
+-
+-.B dmraid
+- {-s|--sets}...[a|i|active|inactive]
+- [-c|--display_columns][FIELD[,FIELD...]]...
+- [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
+- [-f|--format FORMAT[,FORMAT...]]
+- [-g|--display_group]
+- [--separator SEPARATOR]
+- [RAID-set...]
+-
+-.B dmraid
+- {-V/--version}
+-
+-.SH DESCRIPTION
+-dmraid discovers block and software RAID devices (eg, ATARAID)
+-by using multiple different metadata format handlers which
+-support various formats (eg, Highpoint 37x series).
+-It offers activating RAID sets made up by 2 or more
+-discovered RAID devices, display properties of devices and sets (see option
+-.B -l
+-for supported metadata formats).
+-Block device access to activated RAID sets occurs via device-mapper nodes
+-/dev/mapper/RaidSetName.
+-RaidSetName starts with the format name (see
+-.B -l
+-option) which can be used to access all RAID sets of a specific format
+-easily with certain options (eg,
+-.B -a
+-below).
+-
+-.SS OPTIONS
+-.TP
+-.I \-a, \-\-activate {y|n} [RAID set...]
+-Activates or deactivates all or particular software RAID set.
+-In case metadata format handlers are chosen with
+-.B -f
+-, only RAID sets with such format(s) can be activated or deactivated.
+-Useful if devices have multiple metadata signatures.
+-When activating RAID sets,
+-.B -p
+-disables the activation of partitions on them, and
+-.B -Z
+-will make dmraid tell the kernel to remove the partitions from the disks
+-underlying the set, ie if sda is part of the set, remove sda1, sda2, etc.
+-This prevents applications from directly accessiong the disks bypassing dmraid.
+-RAID set names given on command line don't need to be fully specified
+-(eg, "dmraid -ay sil" would activate all discovered Silicon Image Medley
+-RAID sets).
+-
+-.TP
+-.I {-b|--block_devices} [device-path...]
+-List all or particular discovered block devices with their
+-properties (size, serial number).
+-Add
+-.B -c
+-to display block device names only and
+-.B -cc
+-for CSV column output of block device properties.
+-See description of
+-.B -c
+-below for FIELD identifiers.
+-
+-.TP
+-.I [-d|--debug]...
+-Enable debugging output. Opion can be given multiple times
+-increasing the debug output level.
+-
+-.TP
+-.I [-c|--display_columns][FIELD[,FIELD...]]...
+-Display properties of block devices, RAID sets and devices in column(s).
+-Optional list specifying which FIELDs to display.
+-.br
+-For
+-.B -b:
+-.br
+-d[evpath]|p[ath], sec[tors]|si[ze], ser[ialnumber].
+-.br
+-For
+-.B -r:
+-.br
+-de[vpath]|p[ath], f[ormat], r[aidname], t[ype], st[atus], se[ctors]|si[ze], da[taoffset]|o[ffset].
+-.br
+-For
+-.B -s:
+-.br
+-f[ormat], r[aidname], t[ype], sta[tus], str[ide], se[ctors]|si[ze], su[bsets], d[evices], sp[ares].
+-.br
+-.TP
+-.I [-f|--format FORMAT[,FORMAT...]]
+-Use metadata format handler(s) to discover RAID devices.
+-See
+-.B -l
+-for a list of supported format handler names. This is useful to
+-select particular formats in case multiple metadata signatures are found
+-on a device. A comma seperated list of format names can be specified which 
+-may not contain white space.
+-
+-.TP
+-.I {-h|--help}
+-Display help text.
+-
+-.TP
+-.I {-i|--ignorelocking}
+-Don't take out any locks. Useful in early boot where no read/write
+-access to /var is available.
+-
+-.TP
+-.I {-l|--list_formats}
+-List all available metadata format handlers with their names and
+-descriptions. Supported RAID levels are listed in parenthesis:
+-.br
+-
+-S: Span (concatination)
+-.br
+-0: RAID0 (stripe)
+-.br
+-1: RAID1 (mirror)
+-.br
++.TH DMRAID 8 "DMRAID TOOL" "Heinz Mauelshagen" \" -*- nroff -*-
++.SH NAME
++dmraid \- discover, configure and activate software (ATA)RAID
++.SH SYNOPSIS
++.B dmraid
++ {-a|--activate} {y|n|yes|no} 
++ [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
++ [-f|--format FORMAT[,FORMAT...]]
++ [-I|--ignoremonitoring]
++ [{-P|--partchar} CHAR]
++ [-p|--no_partitions]
++ [-Z|--rm_partitions]
++ [--separator SEPARATOR]
++ [-t|--test]
++ [RAID-set...]
++
++.B dmraid
++ {-b|--block_devices}
++ [-c|--display_columns][FIELD[,FIELD...]]...
++ [-d|--debug]... [-v|--verbose]...
++ [--separator SEPARATOR]
++ [device-path...]
++
++.B dmraid
++ {-h|--help}
++
++.B dmraid
++ {-l|--list_formats}
++ [-d|--debug]... [-v|--verbose]...
++
++.B dmraid
++ {-n|--native_log}
++ [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
++ [-f|--format FORMAT[,FORMAT...]]
++ [--separator SEPARATOR]
++ [device-path...]
++
++.B dmraid
++ {-R| --rebuild}
++ RAID-set
++ [device-path]
++
++.B dmraid
++ {-x| --remove}
++ [RAID-set]
++
++.B dmraid
++ -f FORMAT-handler
++{-C| --create} set 
++ --type raidlevel
++ [--size=setsize --strip stridesize] 
++ --disk "device-path, device-path [, device-path ...]"
++
++.B dmraid
++[ -f|--format FORMAT-handler]
++-S|--spare [RAID-set]
++-M|--media  "device-path"
++
++.B dmraid
++ {-r|--raid_devices}
++ [-c|--display_columns][FIELD[,FIELD...]]...
++ [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
++ [-D|--dump_metadata]
++ [-f|--format FORMAT[,FORMAT...]]
++ [--separator SEPARATOR]
++ [device-path...]
++
++.B dmraid
++ {-r|--raid_devices}
++ [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
++ [-E|--erase_metadata]
++ [-f|--format FORMAT[,FORMAT...]]
++ [--separator SEPARATOR]
++ [device-path...]
++
++.B dmraid
++ {-s|--sets}...[a|i|active|inactive]
++ [-c|--display_columns][FIELD[,FIELD...]]...
++ [-d|--debug]... [-v|--verbose]... [-i|--ignorelocking]
++ [-f|--format FORMAT[,FORMAT...]]
++ [-g|--display_group]
++ [--separator SEPARATOR]
++ [RAID-set...]
++
++.B dmraid
++ {-V/--version}
++
++.SH DESCRIPTION
++dmraid discovers block and software RAID devices (eg, ATARAID)
++by using multiple different metadata format handlers which
++support various formats (eg, Highpoint 37x series).
++It offers activating RAID sets made up by 2 or more
++discovered RAID devices, display properties of devices and sets (see option
++.B -l
++for supported metadata formats).
++Block device access to activated RAID sets occurs via device-mapper nodes
++/dev/mapper/RaidSetName.
++RaidSetName starts with the format name (see
++.B -l
++option) which can be used to access all RAID sets of a specific format
++easily with certain options (eg,
++.B -a
++below).
++
++.SS OPTIONS
++.TP
++.I \-a, \-\-activate {y|n} [RAID set...]
++Activates or deactivates all or particular software RAID set.
++Activates or deactivates device monitoring automatically unless the
++.B [-I|--ignoremonitoring]
++option is given at the same time, hence preventing any dmeventd device
++monitoring daemon interaction. If
++.B -I
++is being used on initial RAID set activation,
++.B -ay
++can be used later to activate device monitoring on such active RAID sets
++if the RAID format supports it. See dmevent_tool(8) for device monitoring
++management via this tool.
++In case metadata format handlers are chosen with
++.B -f
++, only RAID sets with such format(s) can be activated or deactivated.
++Useful if devices have multiple metadata signatures.
++When activating RAID sets,
++.B -p
++disables the activation of partitions on them, and
++.B -Z
++will make dmraid tell the kernel to remove the partitions from the disks
++underlying the set, ie if sda is part of the set, remove sda1, sda2, etc.
++This prevents applications from directly accessiong the disks bypassing dmraid.
++RAID set names given on command line don't need to be fully specified
++(eg, "dmraid -ay sil" would activate all discovered Silicon Image Medley
++RAID sets).
++
++.TP
++.I {-b|--block_devices} [device-path...]
++List all or particular discovered block devices with their
++properties (size, serial number).
++Add
++.B -c
++to display block device names only and
++.B -cc
++for CSV column output of block device properties.
++See description of
++.B -c
++below for FIELD identifiers.
++
++.TP
++.I [-d|--debug]...
++Enable debugging output. Opion can be given multiple times
++increasing the debug output level.
++
++.TP
++.I [-c|--display_columns][FIELD[,FIELD...]]...
++Display properties of block devices, RAID sets and devices in column(s).
++Optional list specifying which FIELDs to display.
++.br
++For
++.B -b:
++.br
++d[evpath]|p[ath], sec[tors]|si[ze], ser[ialnumber].
++.br
++For
++.B -r:
++.br
++de[vpath]|p[ath], f[ormat], r[aidname], t[ype], st[atus], se[ctors]|si[ze], da[taoffset]|o[ffset].
++.br
++For
++.B -s:
++.br
++f[ormat], r[aidname], t[ype], sta[tus], str[ide], se[ctors]|si[ze], su[bsets], d[evices], sp[ares].
++.br
++.TP
++.I [-f|--format FORMAT[,FORMAT...]]
++Use metadata format handler(s) to discover RAID devices.
++See
++.B -l
++for a list of supported format handler names. This is useful to
++select particular formats in case multiple metadata signatures are found
++on a device. A comma seperated list of format names can be specified which 
++may not contain white space.
++
++.TP
++.I {-h|--help}
++Display help text.
++
++.TP
++.I {-i|--ignorelocking}
++Don't take out any locks. Useful in early boot where no read/write
++access to /var is available.
++
++.TP
++.I {-I|--ignoremonitoring}
++Don't activate or deactivate device monitoring with
++.B -ay
++or
++.B -an
++respectively. This avoids interaction with the dmeventd device
++monitoring daemon altogether.
++
++.TP
++.I {-l|--list_formats}
++List all available metadata format handlers with their names and
++descriptions. Supported RAID levels are listed in parenthesis:
++.br
++
++S: Span (concatination)
++.br
++0: RAID0 (stripe)
++.br
++1: RAID1 (mirror)
++.br
+ 10: RAID10 (mirror on top of stripes)
  
--	if (what == DM_REGISTER &&
--	    fmt->metadata_handler)
--		return register_devices(lc, rs);
-+	if (what == DM_REGISTER)
-+#ifdef	DMRAID_AUTOREGISTER
-+		return (!OPT_IGNOREMONITORING(lc) && fmt->metadata_handler) ?
-+		       register_device(lc, rs) : 1;
-+#else
-+		return 1;
-+#endif
+-.br
+-01: RAID10 (stripe on top of mirrors) Note: Intel OROM displays this as RAID10
+-
+-.TP
+-.I {-n|--native_log} [device-path...]
+-Display metadata in native, vendor-specific format.
+-In case a metadata format handler is chosen with
+-.B -f
+-only RAID devices with such format will be displayed in native format.
+-If device-path(s) is/are given on the command line, native metadata output
+-is restricted to those listed.
+-.TP
+-.I [{-P|--partchar} CHAR]
+-Use CHAR as the separator between the device name and the partition number.
+-.TP
+-.I {-R| --rebuild} RAID-set [device-path]
+-Rebuild raid array after a drive has failed and a new drive is added. 
+-For Intel chipset based systems, there are two methods in which a new drive 
+-is added to the system.
+-
+-1. Using OROM to identify a new drive
+-    During system reboot, enter OROM and mark the new drive as the rebuild drive.  
+-    After booting to the OS, use the dmraid command to rebuild.
+-
+-    Example: dmraid -R raid_set 
+-
+-2. Using dmraid to identify a new drive
+-    Boot to the OS and use the dmraid command with the new drive as
+-the second parameter.
+-
+-    Example: dmraid -R raid_set /dev/sdc
+-
+-3. Using hot spare drive
+-    Mark a drive as hot spare using the "dmraid -f isw -S" command. Then use the dmraid command to start the rebuild.
+-
+-    Example: dmraid -R raid_set
+-
+-.TP
+-.I {-x|--remove} [RAID-set]
+-Delete one or all existing software RAID devices from the metadata.
+-
+-.TP
+-.I -f FORMAT-handler {-C|--create} --type raidlevel [--size=setsize --strip stripsize] --disk "device-path, device-path [,device-path]"
++.br
++01: RAID10 (stripe on top of mirrors) Note: Intel OROM displays this as RAID10
++
++.TP
++.I {-n|--native_log} [device-path...]
++Display metadata in native, vendor-specific format.
++In case a metadata format handler is chosen with
++.B -f
++only RAID devices with such format will be displayed in native format.
++If device-path(s) is/are given on the command line, native metadata output
++is restricted to those listed.
++.TP
++.I [{-P|--partchar} CHAR]
++Use CHAR as the separator between the device name and the partition number.
++.TP
++.I {-R| --rebuild} RAID-set [device-path]
++Rebuild raid array after a drive has failed and a new drive is added. 
++For Intel chipset based systems, there are two methods in which a new drive 
++is added to the system.
++
++1. Using OROM to identify a new drive
++    During system reboot, enter OROM and mark the new drive as the rebuild drive.  
++    After booting to the OS, use the dmraid command to rebuild.
++
++    Example: dmraid -R raid_set 
++
++2. Using dmraid to identify a new drive
++    Boot to the OS and use the dmraid command with the new drive as
++the second parameter.
++
++    Example: dmraid -R raid_set /dev/sdc
++
++3. Using hot spare drive
++    Mark a drive as hot spare using the "dmraid -f isw -S" command. Then use the dmraid command to start the rebuild.
++
++    Example: dmraid -R raid_set
++
++.TP
++.I {-x|--remove} [RAID-set]
++Delete one or all existing software RAID devices from the metadata.
++
++.TP
++.I -f FORMAT-handler {-C|--create} --type raidlevel [--size=setsize --strip stripsize] --disk "device-path, device-path [,device-path]"
+ Delete one or all existing Configure a software RAID device  and store the configuration data in a group of hard drive devices consisting of this array. This command requires the following options:
  
- 	/* Call type handler */
--	if ((ret = (handler(rs))->f(lc, &table, rs))) {
-+	if ((ret = handler(rs)->f(lc, &table, rs))) {
- 		if (OPT_TEST(lc))
- 			display_table(lc, rs->name, table);
- 		else if ((ret = dm_create(lc, rs, table, rs->name)))
-@@ -1057,9 +1046,14 @@
- 	int ret = 1, status;
- 	struct dmraid_format *fmt = get_format(rs);
- 
--	if (what == DM_REGISTER &&
--	    fmt->metadata_handler)
--		return unregister_devices(lc, rs);
-+	if (what == DM_REGISTER) {
-+#ifdef	DMRAID_AUTOREGISTER
-+		return (!OPT_IGNOREMONITORING(lc) && fmt->metadata_handler) ?
-+			unregister_device(lc, rs) : 1;
-+#else
-+		return 1;
-+#endif
-+	}
- 
- 	status = dm_status(lc, rs);
- 	if (OPT_TEST(lc))
---- dmraid/lib/format/ataraid/isw.c	2010/03/12 11:33:01	1.7
-+++ dmraid/lib/format/ataraid/isw.c	2010/03/18 13:10:42	1.8
-@@ -193,7 +193,7 @@
- 	n = snprintf(str, len, f->fmt, isw->family_num, f->what, num);
- 
- 	/* As '->volume' could contain anything, we sanitise the name. */
--	if (n > 0)
-+	if (str && n > 0)
- 		mk_alphanum(lc, str, n);
- 
- 	return n;
---- dmraid/lib/format/ataraid/jm.c	2009/09/17 09:21:07	1.5
-+++ dmraid/lib/format/ataraid/jm.c	2010/03/18 13:10:42	1.6
-@@ -32,6 +32,7 @@
- 
- 	/* Sanitize name, make sure it's null terminated */
- 	strncpy(buf, name, JM_NAME_LEN);
-+	i = strlen(buf);
- 	while (i && isspace(buf[i])) {
- 		name[i]='\0';
- 		buf[i]='\0';
---- dmraid/lib/register/dmreg.c	2010/03/02 15:27:38	1.2
-+++ dmraid/lib/register/dmreg.c	2010/03/18 13:10:43	1.3
-@@ -441,7 +441,7 @@
- 
- 	errors = _dm_raid_state(dev_name);
- 	if (errors < 0)
--		return 1;
-+		return 0;
- 
- 	if (errors) {
- 		printf("ERROR: device \"%s\" \n"
---- dmraid/tools/commands.c	2010/01/12 12:21:10	1.6
-+++ dmraid/tools/commands.c	2010/03/18 13:10:43	1.7
-@@ -32,7 +32,7 @@
-  */
- static char const *short_opts = "a:hipP:"
- #ifndef	DMRAID_MINI
--	"bc::dDEf:glxM:"
-+	"bc::dDEf:gIlxM:"
- #ifdef	DMRAID_NATIVE_LOG
- 	"n"
- #endif
-@@ -74,6 +74,7 @@
- 	{"create", required_argument, NULL, 'C'},
- 	{"spare", optional_argument, NULL, 'S'},
- 	{"rm_partitions", no_argument, NULL, 'Z'},
-+	{"ignoremonitoring", no_argument, NULL, 'I'},
- 	{NULL, no_argument, NULL, 0}
- };
- #endif /* #ifdef HAVE_GETOPTLONG */
-@@ -229,8 +230,8 @@
- #ifdef	DMRAID_MINI
- 	log_print(lc, "%s: Device-Mapper Software RAID tool "
- 		  "[Early Boot Version]\n", c);
--	log_print(lc, "%s\t{-a|--activate} {y|n|yes|no} [-i|--ignorelocking]\n"
--		  "\t[-f|--format FORMAT[,FORMAT...]]\n"
-+	log_print(lc, "%s\t{-a|--activate} {y|n|yes|no} [-i|--ignorelocking]\n" 
-+		  "\t[-f|--format fORMAT[,FORMAT...]]\n"
- 		  "\t[-P|--partchar CHAR]\n"
- 		  "\t[-p|--no_partitions]\n"
- 		  "\t[-Z|--rm_partitions]\n"
-@@ -244,6 +245,7 @@
- 	log_print(lc,
- 		  "%s\t{-a|--activate} {y|n|yes|no} *\n"
- 		  "\t[-f|--format FORMAT[,FORMAT...]]\n"
-+		  "\t[-I|--ignoremonitoring]\n"
- 		  "\t[-P|--partchar CHAR]\n" "\t[-p|--no_partitions]\n"
- 		  "\t[--separator SEPARATOR]\n" "\t[-t|--test]\n"
- 		  "\t[-Z|--rm_partitions] [RAID-set...]\n", c);
-@@ -301,7 +303,7 @@
- 	 ACTIVATE | DEACTIVATE | FORMAT | HELP | IGNORELOCKING | NOPARTITIONS |
- 	 SEPARATOR | RMPARTITIONS
- #ifndef DMRAID_MINI
--	 | DBG | TEST | VERBOSE
-+	 | DBG | TEST | VERBOSE | IGNOREMONITORING
- #endif
- 	 , ARGS,
- 	 check_activate,
-@@ -311,15 +313,15 @@
- 	/* Format option. */
- 	{'f',
- 	 FORMAT,
--	 ACTIVATE | DEACTIVATE
-+	 ACTIVATE | DEACTIVATE | IGNORELOCKING
- #ifndef DMRAID_MINI
- #  ifdef DMRAID_NATIVE_LOG
- 	 | NATIVE_LOG
- #  endif
- 	 | RAID_DEVICES | RAID_SETS,
- 	 ACTIVE | INACTIVE | COLUMN | DBG | DUMP | DMERASE | GROUP | HELP |
--	 IGNORELOCKING | NOPARTITIONS | SEPARATOR | TEST | VERBOSE |
--	 RMPARTITIONS
-+	 NOPARTITIONS | SEPARATOR | TEST | VERBOSE | RMPARTITIONS |
-+	 IGNOREMONITORING
- #else
- 	 , UNDEF
- #endif
-@@ -338,7 +340,7 @@
- 	 ACTIVATE | DEACTIVATE,
- 	 FORMAT | HELP | IGNORELOCKING | SEPARATOR | RMPARTITIONS
- #ifndef DMRAID_MINI
--	 | DBG | TEST | VERBOSE
-+	 | DBG | TEST | VERBOSE | IGNOREMONITORING
- #endif
- 	 , ARGS,
- 	 check_part_separator,
-@@ -351,7 +353,7 @@
- 	 ACTIVATE | DEACTIVATE,
- 	 FORMAT | HELP | IGNORELOCKING | SEPARATOR | RMPARTITIONS
- #ifndef DMRAID_MINI
--	 | DBG | TEST | VERBOSE
-+	 | DBG | TEST | VERBOSE | IGNOREMONITORING
- #endif
- 	 , ARGS,
- 	 NULL,
-@@ -608,6 +610,18 @@
- 	 NULL,
- 	 0,
- 	 },
-+#ifndef DMRAID_MINI
-+	/* ignoremonitoring option. */
-+	{'I',
-+	 IGNOREMONITORING,
-+	 ACTIVATE | DEACTIVATE,
-+	 DBG | FORMAT | HELP | IGNORELOCKING | NOPARTITIONS | VERBOSE |
-+	 SEPARATOR,
-+	 ARGS,
-+	 _lc_inc_opt,
-+	 LC_IGNOREMONITORING,
-+	 },
-+#endif
- };
- 
- /*
+ -f FORMAT-handler
+ .br
+-	metadata format (see "dmraid -l")
+-.br		
++	metadata format (see "dmraid -l")
++.br		
+ --type digit[digit...]
+-.br
++.br
+ 	specify the raid level of the software RAID set. 
+-.br
++.br
+ 		0:  raid0
+-.br
++.br
+ 		1:  raid1
+-.br
++.br
+ 		5:  raid5
+-.br
+-		01: raid01 (isw raid10)
+-.br
++.br
++		01: raid01 (isw raid10)
++.br
+ --size: [digits[k|K|m|M|g|G][b|B]]
+ .br
+ 	specify the size of the RAID set.The number is an integer followed by [kKmMgG] and/or [bB].
+ .br
+ 		b: byte (default)
+-.br
+-		B: block (512 bytes)
++.br
++		B: block (512 bytes)
+ .br
+ 		K or K: on the base of 1024
+ .br
+ 		m or M: on the base of 1024*1024
+-.br
++.br
+ 		g or G: on the base of 1024*1024*1024
+ .br
+-If this option is missing, it's set to the default value pre-configured by the vendor. Note that different vendors may apply different constraints on the granularity of the size or the minimal value.
+-.br
++If this option is missing, it's set to the default value pre-configured by the vendor. Note that different vendors may apply different constraints on the granularity of the size or the minimal value.
++.br
+ --strip: [digits[k|K|m|M|g|G][b|B]]
+-.br
+-	specify the strip size of a RAID1, RAID5, and RAID10 RAID set (as above)
+-.br
++.br
++	specify the strip size of a RAID1, RAID5, and RAID10 RAID set (as above)
++.br
+ --disk: device-path[{,| }device-path...]
+ .br
+-	specify the array of the hard drives, e.g. /dev/sda.
+-
+-.TP
+-.I -f FORMAT-handler -S -M device-path
+-.I -S -M device-path
+-
+-This command adds hot spare support for one or more RAID sets.
+-
+-1. When used with a format handler, which supports hot spare sets (e.g. isw), a hot spare is marked to be used when rebuilding any RAID set of that format.
+-2. When used when specifying a RAID set, the drive is added to that RAID set and will be used only to rebuild that set. Note: If the specified name does not match an existing RAID-set, a set with the new name will be created.
+-
+-.TP
+-.I {-r|--raid_devices} [device-path...]
+-List all discovered RAID devices with format, RAID level, sectors used
+-and data offset into the device.
+-In case a metadata format handler is chosen with
+-.B -f
+-, only RAID devices with such format can be discovered. Useful if devices
+-have multiple metadata signatures.
+-If 
+-.B -D
+-is added to
+-.B -r
+-the RAID metadata gets dumped into a subdirectory named dmraid.format_name
+-(eg. format_name = isw) in files named devicename.dat.
+-The byte offset where the metadata is located on the device is written
+-into files named devicename.offset and the size of the device in sectors
+-into files named devicename.size.
+-
+-If 
+-.B -E
+-is added to
+-.B -r
+-the RAID metadata on the devices gets conditionally erased.
+-Useful to erase old metadata after new one of different type has been
+-stored on a device in order to avoid discovering both. If you enter
+-.B -E
+-option
+-.B -D
+-will be enforced in order to have a fallback in case the wrong metadata
+-got erased.
+-Manual copying back onto the device is needed to recover from erasing
+-the wrong metadata using the dumped files devicename_formatname.dat
+-and devicename_formatname.offset.
+-Eg, to restore all *.dat files in the working directory to the respective devices:
+-
+-.br
+-for f in *.dat
+-.br
+-do
+-.br
+-	dd if=$f of=/dev/${f%%.dat} \\
+-.br
+-	seek=`cat ${f%%dat}offset` bs=1
+-.br
+-done
+-.br
+-
+-If device-path(s) is/are given on the command line, the above actions
+-are restricted to those listed.
+-Add
+-.B -c
+-to display RAID device names only and
+-.B -cc
+-for CSV column output of RAID device properties.
+-See description of
+-.B -c
+-above for FIELD identifiers.
+-
+-.TP
+-.I --separator SEPARATOR
+-Use SEPARATOR as a delimiter for all options taking or displaying lists.
+-
+-.TP
+-.I -s... [a|i] [RAID-set...]
+-Display properties of RAID sets. Multiple RAID set names can be given
+-on the command line which don't need to be fully specified (eg, "dmraid -s hpt"
+-would display all discovered Highpoint RAID sets). Enter
+-.B -s
+-twice to display RAID subsets too.
+-Add
+-.B -c
+-to display names of RAID sets only,
+-.B -cc
+-for CSV column output of RAID set properties and
+-.B -ccc
+-for inclusion of block devices in the listing. Doesn't imply
+-.B -s -s
+-to show RAID subsets (implied for group sets, e.g. isw).
+-Add
+-.B -g
+-to include information about group RAID sets (as with Intel Software
+-RAID) in the listing.
+-See description of
+-.B -c
+-above for FIELD identifiers.
++	specify the array of the hard drives, e.g. /dev/sda.
++
++.TP
++.I -f FORMAT-handler -S -M device-path
++.I -S -M device-path
++
++This command adds hot spare support for one or more RAID sets.
++
++1. When used with a format handler, which supports hot spare sets (e.g. isw), a hot spare is marked to be used when rebuilding any RAID set of that format.
++2. When used when specifying a RAID set, the drive is added to that RAID set and will be used only to rebuild that set. Note: If the specified name does not match an existing RAID-set, a set with the new name will be created.
++
++.TP
++.I {-r|--raid_devices} [device-path...]
++List all discovered RAID devices with format, RAID level, sectors used
++and data offset into the device.
++In case a metadata format handler is chosen with
++.B -f
++, only RAID devices with such format can be discovered. Useful if devices
++have multiple metadata signatures.
++If 
++.B -D
++is added to
++.B -r
++the RAID metadata gets dumped into a subdirectory named dmraid.format_name
++(eg. format_name = isw) in files named devicename.dat.
++The byte offset where the metadata is located on the device is written
++into files named devicename.offset and the size of the device in sectors
++into files named devicename.size.
++
++If 
++.B -E
++is added to
++.B -r
++the RAID metadata on the devices gets conditionally erased.
++Useful to erase old metadata after new one of different type has been
++stored on a device in order to avoid discovering both. If you enter
++.B -E
++option
++.B -D
++will be enforced in order to have a fallback in case the wrong metadata
++got erased.
++Manual copying back onto the device is needed to recover from erasing
++the wrong metadata using the dumped files devicename_formatname.dat
++and devicename_formatname.offset.
++Eg, to restore all *.dat files in the working directory to the respective devices:
++
++.br
++for f in *.dat
++.br
++do
++.br
++	dd if=$f of=/dev/${f%%.dat} \\
++.br
++	seek=`cat ${f%%dat}offset` bs=1
++.br
++done
++.br
++
++If device-path(s) is/are given on the command line, the above actions
++are restricted to those listed.
++Add
++.B -c
++to display RAID device names only and
++.B -cc
++for CSV column output of RAID device properties.
++See description of
++.B -c
++above for FIELD identifiers.
++
++.TP
++.I --separator SEPARATOR
++Use SEPARATOR as a delimiter for all options taking or displaying lists.
++
++.TP
++.I -s... [a|i] [RAID-set...]
++Display properties of RAID sets. Multiple RAID set names can be given
++on the command line which don't need to be fully specified (eg, "dmraid -s hpt"
++would display all discovered Highpoint RAID sets). Enter
++.B -s
++twice to display RAID subsets too.
++Add
++.B -c
++to display names of RAID sets only,
++.B -cc
++for CSV column output of RAID set properties and
++.B -ccc
++for inclusion of block devices in the listing. Doesn't imply
++.B -s -s
++to show RAID subsets (implied for group sets, e.g. isw).
++Add
++.B -g
++to include information about group RAID sets (as with Intel Software
++RAID) in the listing.
++See description of
++.B -c
++above for FIELD identifiers.
+ Note: Size is given in sectors (not bytes).
+-
+-.TP
+-.I [-v|--verbose]...
+-Enable verbose runtime information output. Opion can be given multiple times
+-increasing the verbosity level.
+-
+-.SH EXAMPLES
+-"dmraid -l" lists all supported metadata formats with their names along with
+-some descriptive information, eg:
+-.br
+-hpt37x : (+) Highpoint HPT37X
+-.br
+-hpt45x : (+) Highpoint HPT45X
+-.br
+-isw    : (+) Intel Software RAID
+-.br
+-lsi    : (0) LSI Logic MegaRAID
+-.br
+-nvidia : (+) NVidia RAID
+-.br
+-pdc    : (+) Promise FastTrack
+-.br
+-sil    : (+) Silicon Image(tm) Medley(tm)
+-.br
+-via    : (+) VIA Software RAID
+-.br
+-dos    : (+) DOS partitions on SW RAIDs
+-.br
+-(0): Discover, (+): Discover+Activate
+-
+-"dmraid -ay" activates all software RAID sets discovered.
+-
+-"dmraid -an" deactivates all active software RAID sets which are not open
+-(eg, mounted filesystem on them).
+-
+-"dmraid -ay -f pdc" (pdc looked up from "dmraid -l") activates all
+-software RAID sets with Promise format discovered and ignores all other
+-supported formats.
+-
+-"dmraid -r" discovers all software RAID devices supported on your system, eg:
+-.br
+-/dev/dm-46: hpt45x, "hpt45x_chidjhaiaa-0", striped, ok, 320172928 sectors, data@ 0
+-.br
+-/dev/dm-50: hpt45x, "hpt45x_chidjhaiaa-0", striped, ok, 320172928 sectors, data@ 0
+-.br
+-/dev/dm-54: hpt45x, "hpt45x_chidjhaiaa-1", striped, ok, 320172928 sectors, data@ 0
+-.br
+-/dev/dm-58: hpt45x, "hpt45x_chidjhaiaa-1", striped, ok, 320172928 sectors, data@ 0
+-
+-
+-"dmraid -s -s hpt45x_chidjhaiaa" displays properties of
+-set "hpt45x_chidjhaiaa", eg:
+-.br
+-*** Superset
+-.br
+-name   : hpt45x_chidjhaiaa
+-.br
+-size   : 640345856
+-.br
+-stride : 128
+-.br
+-type   : raid10
+-.br
+-status : ok
+-.br
+-subsets: 2
+-.br
+-dev    : 4
+-.br
+-spare  : 0
+-.br
+----> Subset
+-.br
+-name   : hpt45x_chidjhaiaa-0
+-.br
+-size   : 640345856
+-.br
+-stride : 128
+-.br
+-type   : stripe
+-.br
+-status : ok
+-.br
+-subsets: 0
+-.br
+-dev    : 2
+-.br
+-spare  : 0
+-.br
+----> Subset
+-.br
+-name   : hpt45x_chidjhaiaa-1
+-.br
+-size   : 640345856
+-.br
+-stride : 128
+-.br
+-type   : stripe
+-.br
+-status : ok
+-.br
+-subsets: 0
+-.br
+-dev    : 2
+-.br
+-spare  : 0
+-.br
+-
+-"dmraid -s -ccs hpt45" displays properties in column format of all sets
+-and subsets with hpt45* format, eg:
+-.br
+-hpt45x_chidjhaiaa,640345856,128,raid10,ok,4,0
+-.br
+-hpt45x_chidjhaiaa-a,640345856,128,stripe,ok,2,0
+-.br
+-hpt45x_chidjhaiaa-b,640345856,128,stripe,ok,2,0
+-
+-"dmraid -r --sep : -cpath:size" display paths and sizes in sectors for
+-RAID devices in column format using ':' as a delimiter, eg:
+-.br
+-/dev/dm-8:320173055
+-.br
+-/dev/dm-12:320173055
+-.br
+-/dev/dm-22:320173055
+-.br
+-/dev/dm-26:320173055
+-.br
+-/dev/dm-30:586114703
+-.br
+-/dev/dm-34:586114703
+-.br
+-/dev/dm-38:586114703
+-.br
+-/dev/dm-42:586114703
+-.br
+-/dev/dm-46:156301487
+-.br
+-/dev/dm-50:156301487
+-.br
+-/dev/dm-54:390624896
+-.br
+-/dev/dm-58:390624896
+-.br
+-/dev/dm-62:390624896
+-.br
+-/dev/dm-66:390624896
+-
+-"dmraid -f isw -C Raid0 --type 0 --strip 8k --size 20g --disk "/dev/sdb /dev/sdc"" creates an ISW volume with
+-a name of "Raid0", 20Gig bytes in total, and 8kilo bytes strip size on two disks.
+-
+-"dmraid -f isw -C Test0 --type 0 --disk "/dev/sdd /dev/sde"" creates an ISW volume with the default size and strip size.
+-
+-"dmraid -f isw -C Test10 --type 01 --strip 128B --disk "/dev/sda /dev/sdb /dev/sdc /dev/sdd" creates a stacked
+-RAID device, RAID10 (isw format), with a name of "Test10", 128 blocks (512bytes) strip size , and the default volume size on
+-4 disks.
+-
+-"dmraid -f isw -S -M /dev/sde" marks the device /dev/sde as a hot spare for rebuild
+-
+-"dmraid -R isw_djaggchdde_RAID1 /dev/sde" starts rebuild of the RAID volume on device /dev/sde
+-
+-.SH DIAGNOSTICS
+-dmraid returns an exit code of 0 for success or 1 for error.
+-
+-.SH AUTHOR
+-Heinz Mauelshagen <Mauelshagen@RedHat.com>
++
++.TP
++.I [-v|--verbose]...
++Enable verbose runtime information output. Opion can be given multiple times
++increasing the verbosity level.
++
++.SH EXAMPLES
++"dmraid -l" lists all supported metadata formats with their names along with
++some descriptive information, eg:
++.br
++hpt37x : (+) Highpoint HPT37X
++.br
++hpt45x : (+) Highpoint HPT45X
++.br
++isw    : (+) Intel Software RAID
++.br
++lsi    : (0) LSI Logic MegaRAID
++.br
++nvidia : (+) NVidia RAID
++.br
++pdc    : (+) Promise FastTrack
++.br
++sil    : (+) Silicon Image(tm) Medley(tm)
++.br
++via    : (+) VIA Software RAID
++.br
++dos    : (+) DOS partitions on SW RAIDs
++.br
++(0): Discover, (+): Discover+Activate
++
++"dmraid -ay" activates all software RAID sets discovered.
++
++"dmraid -an" deactivates all active software RAID sets which are not open
++(eg, mounted filesystem on them).
++
++"dmraid -ay -f pdc" (pdc looked up from "dmraid -l") activates all
++software RAID sets with Promise format discovered and ignores all other
++supported formats.
++
++"dmraid -r" discovers all software RAID devices supported on your system, eg:
++.br
++/dev/dm-46: hpt45x, "hpt45x_chidjhaiaa-0", striped, ok, 320172928 sectors, data@ 0
++.br
++/dev/dm-50: hpt45x, "hpt45x_chidjhaiaa-0", striped, ok, 320172928 sectors, data@ 0
++.br
++/dev/dm-54: hpt45x, "hpt45x_chidjhaiaa-1", striped, ok, 320172928 sectors, data@ 0
++.br
++/dev/dm-58: hpt45x, "hpt45x_chidjhaiaa-1", striped, ok, 320172928 sectors, data@ 0
++
++
++"dmraid -s -s hpt45x_chidjhaiaa" displays properties of
++set "hpt45x_chidjhaiaa", eg:
++.br
++*** Superset
++.br
++name   : hpt45x_chidjhaiaa
++.br
++size   : 640345856
++.br
++stride : 128
++.br
++type   : raid10
++.br
++status : ok
++.br
++subsets: 2
++.br
++dev    : 4
++.br
++spare  : 0
++.br
++---> Subset
++.br
++name   : hpt45x_chidjhaiaa-0
++.br
++size   : 640345856
++.br
++stride : 128
++.br
++type   : stripe
++.br
++status : ok
++.br
++subsets: 0
++.br
++dev    : 2
++.br
++spare  : 0
++.br
++---> Subset
++.br
++name   : hpt45x_chidjhaiaa-1
++.br
++size   : 640345856
++.br
++stride : 128
++.br
++type   : stripe
++.br
++status : ok
++.br
++subsets: 0
++.br
++dev    : 2
++.br
++spare  : 0
++.br
++
++"dmraid -s -ccs hpt45" displays properties in column format of all sets
++and subsets with hpt45* format, eg:
++.br
++hpt45x_chidjhaiaa,640345856,128,raid10,ok,4,0
++.br
++hpt45x_chidjhaiaa-a,640345856,128,stripe,ok,2,0
++.br
++hpt45x_chidjhaiaa-b,640345856,128,stripe,ok,2,0
++
++"dmraid -r --sep : -cpath:size" display paths and sizes in sectors for
++RAID devices in column format using ':' as a delimiter, eg:
++.br
++/dev/dm-8:320173055
++.br
++/dev/dm-12:320173055
++.br
++/dev/dm-22:320173055
++.br
++/dev/dm-26:320173055
++.br
++/dev/dm-30:586114703
++.br
++/dev/dm-34:586114703
++.br
++/dev/dm-38:586114703
++.br
++/dev/dm-42:586114703
++.br
++/dev/dm-46:156301487
++.br
++/dev/dm-50:156301487
++.br
++/dev/dm-54:390624896
++.br
++/dev/dm-58:390624896
++.br
++/dev/dm-62:390624896
++.br
++/dev/dm-66:390624896
++
++"dmraid -f isw -C Raid0 --type 0 --strip 8k --size 20g --disk "/dev/sdb /dev/sdc"" creates an ISW volume with
++a name of "Raid0", 20Gig bytes in total, and 8kilo bytes strip size on two disks.
++
++"dmraid -f isw -C Test0 --type 0 --disk "/dev/sdd /dev/sde"" creates an ISW volume with the default size and strip size.
++
++"dmraid -f isw -C Test10 --type 01 --strip 128B --disk "/dev/sda /dev/sdb /dev/sdc /dev/sdd" creates a stacked
++RAID device, RAID10 (isw format), with a name of "Test10", 128 blocks (512bytes) strip size , and the default volume size on
++4 disks.
++
++"dmraid -f isw -S -M /dev/sde" marks the device /dev/sde as a hot spare for rebuild
++
++"dmraid -R isw_djaggchdde_RAID1 /dev/sde" starts rebuild of the RAID volume on device /dev/sde
++
++.SH DIAGNOSTICS
++dmraid returns an exit code of 0 for success or 1 for error.
++
++.SH AUTHOR
++Heinz Mauelshagen <Mauelshagen@RedHat.com>
