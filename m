@@ -1,47 +1,66 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1/3] Send KOBJ_ADD event after dm
-	resume	ioctl.
-Date: Thu, 18 Mar 2010 17:24:18 +0000
-Message-ID: <20100318172418.GI17615@agk-dp.fab.redhat.com>
-References: <1268920694-10960-1-git-send-email-mbroz@redhat.com>
-	<ac3eb2511003180913t5f69e0bs29ff3dcfd1209c60@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH] dm: max_segments=1 if merge_bvec_fn is not supported
+Date: Thu, 18 Mar 2010 11:48:58 -0700
+Message-ID: <20100318114858.0303157e.akpm@linux-foundation.org>
+References: <20100306211012.GA9689@racke>
+	<20100308163345.42841480@notabene.brown>
+	<Pine.LNX.4.64.1003080321190.25635@hs20-bc2-1.build.redhat.com>
+	<20100308131449.GA15156@racke>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <ac3eb2511003180913t5f69e0bs29ff3dcfd1209c60@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kay Sievers <kay.sievers@vrfy.org>
-Cc: dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20100308131449.GA15156@racke>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Lars Ellenberg <lars.ellenberg@linbit.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Neil Brown <neilb@suse.de>, Alasdair G Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Mar 18, 2010 at 05:13:22PM +0100, Kay Sievers wrote:
-> How about doing a two-stage instantiation instead of mangling events
-> to work around this setup model? Instead of creating the mentioned
-> event/sys inconsistencies, did you think about not registering the
-> "dead" blockdev until it is ready to be used as a blockdev? Like you
-> would allocate the dm instance in the kernel, but only register the
-> blockdev with the block subsystem when the device is resumed/the table
-> loaded. That way, only after the device is usable, it would get
-> registered and appear in /dev, /sys and proc.
- 
-Still going around in circles, I'm afraid.
+On Mon, 8 Mar 2010 14:14:49 +0100
+Lars Ellenberg <lars.ellenberg@linbit.com> wrote:
 
-That looked like even bigger block layer surgery last time we considered it.
-By all means, look at it yet again...
+> On Mon, Mar 08, 2010 at 03:35:37AM -0500, Mikulas Patocka wrote:
+> > Hi
+> > 
+> > That patch with limits->max_segments = 1; is wrong. It fixes this bug 
+> > sometimes and sometimes not.
+> > 
+> > The problem is, if someone attempts to create a bio with two vector 
+> > entries, the first maps the last sector contained in some page and the 
+> > second maps the first sector of the next physical page: it has one 
+> > segment, it has size <= PAGE_SIZE, but it still may cross raid stripe and 
+> > the raid driver will reject it.
+> 
+> Now that you put it that way ;)
+> You are right.
+> 
+> My asumption that "single segment" was  
+> equalvalent in practice with "single bvec"
+> does not hold true in that case.
+> 
+> Then, what about adding seg_boundary_mask restrictions as well?
+> 	max_sectors = PAGE_SIZE >> 9;
+> 	max_segments = 1;
+> 	seg_boundary_mask = PAGE_SIZE -1;
+> or some such.
+> 
+> > > > This is not the first time this has been patched, btw.
+> > > > See https://bugzilla.redhat.com/show_bug.cgi?id=440093
+> > > > and the patch by Mikulas:
+> > > > https://bugzilla.redhat.com/attachment.cgi?id=342638&action=diff
+> > 
+> > Look at this patch, it is the proper way how to fix it: create a 
+> > merge_bvec_fn that reject more than one biovec entry.
+> 
+> If adding seg_boundary_mask is still not sufficient,
+> lets merge that patch instead?
+> Why has it been dropped, respectively never been merged?
+> It became obsolete for dm-linear by 7bc3447b,
+> but in general the bug is still there, or am I missing something?
+> 
 
-We're creating trees of devices that reference each other (need to know
-minor numbers) and have constraints about which parts of the code may
-allocate new memory.
+This all seemed to die.  Does Neil's mysterypatch fix all these issues?
 
-Alasdair
+Neil, was that patch tagged for -stable backporting?
+
+Thanks.
