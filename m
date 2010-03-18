@@ -1,14 +1,12 @@
-From: David Huffman <dm-devel@storix.com>
-Subject: Re: Determine partition prefix used for mpath devices
-Date: Wed, 17 Mar 2010 16:39:15 -0700
-Message-ID: <4BA16823.1040803@storix.com>
-References: <4B9FEA00.2040703@storix.com> <4BA0FE95.8010406@suse.de>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH] rqdm: remove superfluous irq disablement
+Date: Thu, 18 Mar 2010 20:07:36 +0900
+Message-ID: <4BA20978.7090601@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4BA0FE95.8010406@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,74 +16,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hannes Reinecke wrote:
-> David Huffman wrote:
->   
->> In a script, I need to somehow determine what prefix is being used for
->> partitions as set by UDEV. It seems that the naming convention is in
->> flux and could change frequently. When using user_friendly_names the
->> prefix is set using kpartx within udev rules. My problem is I need to
->> know what the prefix is so my scripts know what device naming convention
->> to look for.
->>
->> Here are the different iterations of naming schemes:
->>
->> mpath0p1
->> mpath0-part1
->> mpathap1
->> mpatha-part1
->>
->> Is there a way other than grepping through the udev rules to determine
->> what the prefix is? The partitions may not exist so I cannot just look
->> to see what they are. I need to know BEFORE I create partitions. I know
->> this is a strange request, but I am working with a lot of code that was
->> designed before multipath was available and using the sys naming is not
->> an option (i.e. /disk/by-id/wwid).
->>
->>     
-> I wouldn't rely on the device-mapper table names, as they could be pretty
-> much everything.
->
-> To handle this situation I've patches up multipath and kpartx to provide
-> UUID prefixes, which normally can't be influenced from userspace.
-> Multipath devices carry the prefix 'mpath-', kpartx generated devices
-> carry the prefix 'part<num>-'.
-> So by checking the prefix you pretty much know which program generated
-> this particular device.
->
-> Cheers,
->
-> Hannes
->   
-Humm.. Maybe I did not explain myself well enough because I do not 
-understand your response. I am trying to determine what prefix is 
-currently being used for the partitions by kpartx.
+Hi Alasdair,
 
-Example:
-If I am on a SLES9 SP4 system there is a udev rule that states to use 
-kpartx -a -p -part so that the prefix is "-part". Partitions that are 
-created later are named [alias|mpath|uuid]a-part1.
-If I am on a RHEL 5.1 system, there is a udev rule that states to use 
-kpartx -a -p p so that the prefix is "p".
-Partitions that are created later are named [alias|uuid|mpath]0p1
+This patch changes spin_lock_irq() to spin_lock() in dm_request_fn().
+This patch is just a clean-up and no functional change.
+Made for 2.6.34-rc1.
+Please review and apply.
 
-Right now, the only way I can find out what prefix is used for 
-partitions is to grep and awk through the udev rule (which is 
-unreliable). I am looking for a better way to see what prefix is 
-currently being used by kpartx.
+The spin_lock_irq() was leftover from the early request-based dm code,
+where map_request() used to enable interrupts.
+Since current map_request() never enable interrupts, we can change it
+to spin_lock() so to match with the prior spin_unlock().
 
-When you state that you have a patch to provide UUID prefixes, I do not 
-understand. If you are not using "user_friendly_names yes" in 
-multipath.conf, isn't it already the uuid? How does this change the 
-naming of the partitions used? Right now it could be "-part" or "p".
+Auditing through the dm and block-layer code called from
+map_request(), I confirmed all functions save/restore interrupt
+status, so no function returning with interrupts enabled.
+Also I haven't observed any problem on my test environment which
+uses scsi and lpfc driver after heavy I/O testing with occasional
+path down/up.
 
-Sorry but my limited knowledge of the naming schemes is probably 
-confusing the issue. It appears that there are too many players on the 
-field when it comes to naming these devices. (UDEV, multipath, 
-device-mapper)
+Added BUG_ON() to detect breakage in future.
 
-Thanks
-David
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+---
+ drivers/md/dm.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+Index: 2.6.34-rc1/drivers/md/dm.c
+===================================================================
+--- 2.6.34-rc1.orig/drivers/md/dm.c
++++ 2.6.34-rc1/drivers/md/dm.c
+@@ -1688,13 +1688,15 @@ static void dm_request_fn(struct request
+ 		if (map_request(ti, clone, md))
+ 			goto requeued;
+ 
+-		spin_lock_irq(q->queue_lock);
++		BUG_ON(!irqs_disabled());
++		spin_lock(q->queue_lock);
+ 	}
+ 
+ 	goto out;
+ 
+ requeued:
+-	spin_lock_irq(q->queue_lock);
++	BUG_ON(!irqs_disabled());
++	spin_lock(q->queue_lock);
+ 
+ plug_and_out:
+ 	if (!elv_queue_empty(q))
