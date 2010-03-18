@@ -1,8 +1,8 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH 2/3] Add genhd flag requesting notification of
-	partition changes only.
-Date: Thu, 18 Mar 2010 14:58:13 +0100
-Message-ID: <1268920694-10960-2-git-send-email-mbroz@redhat.com>
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: Re: [PATCH 1/3] Send KOBJ_ADD event after dm resume
+	ioctl.
+Date: Thu, 18 Mar 2010 17:13:22 +0100
+Message-ID: <ac3eb2511003180913t5f69e0bs29ff3dcfd1209c60@mail.gmail.com>
 References: <1268920694-10960-1-git-send-email-mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,95 +19,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, kay.sievers@vrfy.org
-Cc: Milan Broz <mbroz@redhat.com>
+To: Milan Broz <mbroz@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch provides notification mechanism which allows handle partition
-code in userspace.
+On Thu, Mar 18, 2010 at 14:58, Milan Broz <mbroz@redhat.com> wrote:
+> Block layer sends ADD uevent when new device is initialised.
+>
+> But the device-mapper block devices are more complex,
+> initialisation consists of allocating underlying device and
+> loading mapping table.
+>
+> Because from the userspace all block devices should behave
+> the same, patch defines new flag indicating that ADD event
+> should be suppressed in block layer.
+>
+> If the flag is set, caller then take full responsibility
+> for enabling and sending events later when device is ready
+> to use.
 
-If the BLKRRPART ioctl arrives and GENHD_FL_PARTITION_CHANGE_NOTIFY
-is set, just send uevent and ignore in-kernel partitioning code.
+This will disconnect /sys, /dev and /proc from the flow of events. We
+rather like to keep them in sync. Device enumeration will find devices
+which have never been announced before. It will also find devices
+where "remove" was sent, but the device is still there. I don't think
+this disconnect is really acceptable from a driver core perspective
+and its consumers. On systems without devtmpfs, there will be no
+device node for the dm device while there is already the full sysfs
+entry and udev would be idle (settle returns), but the state in /sys
+not fully reflected in /dev, which is what we should avoid.
 
-This is useful e.g. for device-mapper devices, which can use kpartx
-or similar tool in udev rules.
+How about doing a two-stage instantiation instead of mangling events
+to work around this setup model? Instead of creating the mentioned
+event/sys inconsistencies, did you think about not registering the
+"dead" blockdev until it is ready to be used as a blockdev? Like you
+would allocate the dm instance in the kernel, but only register the
+blockdev with the block subsystem when the device is resumed/the table
+loaded. That way, only after the device is usable, it would get
+registered and appear in /dev, /sys and proc.
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
----
- block/ioctl.c         |    3 ++-
- drivers/md/dm.c       |    1 +
- fs/partitions/check.c |    6 ++++++
- include/linux/genhd.h |    8 ++++++++
- 4 files changed, 17 insertions(+), 1 deletions(-)
-
-diff --git a/block/ioctl.c b/block/ioctl.c
-index be48ea5..77faed3 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -101,7 +101,8 @@ static int blkdev_reread_part(struct block_device *bdev)
- 	struct gendisk *disk = bdev->bd_disk;
- 	int res;
- 
--	if (!disk_partitionable(disk) || bdev != bdev->bd_contains)
-+	if (!disk_userspace_partitions(disk) &&
-+	    (!disk_partitionable(disk) || bdev != bdev->bd_contains))
- 		return -EINVAL;
- 	if (!capable(CAP_SYS_ADMIN))
- 		return -EACCES;
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 7b364d7..57da1f7 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1934,6 +1934,7 @@ static struct mapped_device *alloc_dev(int minor)
- 	md->disk->private_data = md;
- 	sprintf(md->disk->disk_name, "dm-%d", minor);
- 	md->disk->flags |= GENHD_FL_SUPPRESS_ADD_EVENT;
-+	md->disk->flags |= GENHD_FL_PARTITION_CHANGE_NOTIFY;
- 	add_disk(md->disk);
- 	format_dev_t(md->name, MKDEV(_major, minor));
- 
-diff --git a/fs/partitions/check.c b/fs/partitions/check.c
-index 916173b..b66253f 100644
---- a/fs/partitions/check.c
-+++ b/fs/partitions/check.c
-@@ -548,6 +548,12 @@ int rescan_partitions(struct gendisk *disk, struct block_device *bdev)
- 	struct parsed_partitions *state;
- 	int p, highest, res;
- 
-+	/* partitions handled in userspace, just send change event */
-+	if (disk_userspace_partitions(disk)) {
-+		kobject_uevent(&disk_to_dev(disk)->kobj, KOBJ_CHANGE);
-+		return 0;
-+	}
-+
- 	if (bdev->bd_part_count)
- 		return -EBUSY;
- 	res = invalidate_partition(disk, 0);
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index ade71ff..64b25f0 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -118,6 +118,9 @@ struct hd_struct {
- #define GENHD_FL_NATIVE_CAPACITY		128
- #define GENHD_FL_SUPPRESS_ADD_EVENT		256
- 
-+/* notify udev instead of use in-kernel partitioning */
-+#define GENHD_FL_PARTITION_CHANGE_NOTIFY	512
-+
- #define BLK_SCSI_MAX_CMDS	(256)
- #define BLK_SCSI_CMD_PER_LONG	(BLK_SCSI_MAX_CMDS / (sizeof(long) * 8))
- 
-@@ -182,6 +185,11 @@ static inline struct gendisk *part_to_disk(struct hd_struct *part)
- 	return NULL;
- }
- 
-+static inline bool disk_userspace_partitions(struct gendisk *disk)
-+{
-+	return (disk->flags & GENHD_FL_PARTITION_CHANGE_NOTIFY) ? 1 : 0;
-+}
-+
- static inline int disk_max_parts(struct gendisk *disk)
- {
- 	if (disk->flags & GENHD_FL_EXT_DEVT)
--- 
-1.7.0
+Thanks,
+Kay
