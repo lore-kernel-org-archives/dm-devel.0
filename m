@@ -1,16 +1,24 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 1/3] Send KOBJ_ADD event after
-	dm	resume	ioctl.
-Date: Fri, 19 Mar 2010 15:08:39 +0100
-Message-ID: <4BA38567.1050106@suse.de>
-References: <1268920694-10960-1-git-send-email-mbroz@redhat.com>	<ac3eb2511003180913t5f69e0bs29ff3dcfd1209c60@mail.gmail.com>	<4BA29CA4.9070000@redhat.com>	<ac3eb2511003190127n1aa2dda5pbd4e0841a46830bc@mail.gmail.com>	<20100319090656.GR6379@soda.linbit>	<ac3eb2511003190224u1eb19e4lfeda36bbab18939@mail.gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 1/3] Send KOBJ_ADD event after dm
+	resume	ioctl.
+Date: Fri, 19 Mar 2010 14:34:12 +0000
+Message-ID: <20100319143412.GE919@agk-dp.fab.redhat.com>
+References: <1268920694-10960-1-git-send-email-mbroz@redhat.com>
+	<ac3eb2511003180913t5f69e0bs29ff3dcfd1209c60@mail.gmail.com>
+	<4BA29CA4.9070000@redhat.com>
+	<ac3eb2511003190127n1aa2dda5pbd4e0841a46830bc@mail.gmail.com>
+	<20100319090656.GR6379@soda.linbit>
+	<ac3eb2511003190224u1eb19e4lfeda36bbab18939@mail.gmail.com>
 	<4BA37B06.1040107@redhat.com>
+	<ac3eb2511003190643u32a8e702l4e7774e7ec924a12@mail.gmail.com>
+	<7b13a0f81003190658i78664328ocb94aa0048054a17@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4BA37B06.1040107@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <7b13a0f81003190658i78664328ocb94aa0048054a17@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,47 +28,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: David Zeuthen <zeuthen@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Peter Rajnoha wrote:
-> On 03/19/2010 10:24 AM, Kay Sievers wrote:
->> No, that's what "change" is for, and we already have these "change"
->> events for dm. Udev does not care if the device is ready or not, it
->> synchronizes /sys and /dev, and that works just fine with "change"
->> events.
-> =
+On Fri, Mar 19, 2010 at 09:58:00AM -0400, David Zeuthen wrote:
+> I think the problem is the that fact that 3rd party user space
+> opens the device before it is ready (e.g. just after ADD but before
+> the first CHANGE) makes things fall over.
+> This short-coming is what needs to get fixed, I think - it's very
+> fragile this way and since any random user / package can add
+> rules to open the device on add events, said user / package can
+> make device-mapper fail. Which doesn't exactly strike me
+> as robust behavior.
 
-> CHANGE events, not quite... We can't even rely on these.
-> =
+And we suggested two potential solutions:
 
-> Just to mention, there's also a CHANGE event generated when
-> read-only flag is set for a device (this is not managed by
-> device-mapper of course). This one is generated even before
-> the actual CHANGE event that is generated when DM device is
-> ready to be used.
-> =
+  1 - change the kernel so the ADD event doesn't arrive until the device is
+ready for use.     [plus equivalent change for REMOVE]
 
-As mentioned earlier, CHANGE events do not carry any
-information about _what_ has changed.
-The udev rules / programs are expected to check for
-this themselves. So from that point of view yes, you
-cannot simply wait for 'the' CHANGE event as you
-might get more than one.
+      Advantage: the dm device handling looks more like a real disk so we have
+less 'special case' code.  /dev then only indexes "dm devices ready to be used"
+rather than "dm devices registered in the kernel"
 
-I guess most of this discussion could be solved if
-the CHANGE events would be modify to attach some
-enviroment variables indicating the nature of the change.
+      Disadvantage: breaks the currently-simple kobject/sysfs/dev linkage (as
+per Kay's earlier mail)
+ 
 
-EG adding 'DM_STATE=3DLIVE' or whatever is appropriate
-here.
+  2 - several changes to the way udev rules are handled so we can choose to
+ignore events and make no changes to /dev, so we can override rules other
+packages insert without requiring dm-specific checks adding to them all, and
+probably some of the other things we've discussed on these various threads.
 
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+ 
+Alasdair
