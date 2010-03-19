@@ -1,17 +1,24 @@
-From: Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: [PATCH 1/3] Send KOBJ_ADD event after dm
-	resume	ioctl.
-Date: Fri, 19 Mar 2010 16:51:53 +0100
-Message-ID: <4BA39D99.1090608@redhat.com>
-References: <1268920694-10960-1-git-send-email-mbroz@redhat.com>	<ac3eb2511003180913t5f69e0bs29ff3dcfd1209c60@mail.gmail.com>	<4BA29CA4.9070000@redhat.com>	<ac3eb2511003190127n1aa2dda5pbd4e0841a46830bc@mail.gmail.com>	<20100319090656.GR6379@soda.linbit>	<ac3eb2511003190224u1eb19e4lfeda36bbab18939@mail.gmail.com>	<4BA37B06.1040107@redhat.com>
-	<4BA38567.1050106@suse.de>	<4BA392B2.50903@redhat.com>
-	<7b13a0f81003190814y56a3ed76yf06ed23a11747b4@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/3] Send KOBJ_ADD event after dm resume
+	ioctl.
+Date: Fri, 19 Mar 2010 11:55:42 -0400
+Message-ID: <20100319155541.GA24051@redhat.com>
+References: <1268920694-10960-1-git-send-email-mbroz@redhat.com>
+	<ac3eb2511003180913t5f69e0bs29ff3dcfd1209c60@mail.gmail.com>
+	<4BA29CA4.9070000@redhat.com>
+	<ac3eb2511003190127n1aa2dda5pbd4e0841a46830bc@mail.gmail.com>
+	<20100319090656.GR6379@soda.linbit>
+	<ac3eb2511003190224u1eb19e4lfeda36bbab18939@mail.gmail.com>
+	<4BA37B06.1040107@redhat.com>
+	<ac3eb2511003190643u32a8e702l4e7774e7ec924a12@mail.gmail.com>
+	<7b13a0f81003190658i78664328ocb94aa0048054a17@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <7b13a0f81003190814y56a3ed76yf06ed23a11747b4@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <7b13a0f81003190658i78664328ocb94aa0048054a17@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,38 +28,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: David Zeuthen <zeuthen@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/19/2010 04:14 PM, David Zeuthen wrote:
->> Generally, it carries hints for udev rules to instruct them
->> how they should be applied correctly, which parts should be
->> run based on the type of the device, it's real meaning with all
->> relations to other devices taken into account within that
->> DM subsystem used (e.g. LVM2's snapshots, mirrors...).
->>
->> Most of this information is really not suitable to be stored
->> as a sysfs attribute since it deals with userspace notions,
->> an abstraction layer above device-mapper...
->>
+Hi David,
+
+On Fri, Mar 19 2010 at  9:58am -0400,
+David Zeuthen <zeuthen@gmail.com> wrote:
+
+> Hey Kay,
 > 
-> Presumably this information originates from user space when
-> setting up the device-mapper device, right? Why can't you
-> simply store it in, say, /var/run/device-mapper?
+> On Fri, Mar 19, 2010 at 9:43 AM, Kay Sievers <kay.sievers@vrfy.org> wrote:
 > 
-> (Or, better, store it in /dev/.device-mapper/ to avoid hitting
-> the real disk - /dev is guaranteed to be on tmpfs)
+> > On Fri, Mar 19, 2010 at 14:24, Peter Rajnoha <prajnoha@redhat.com> wrote:
+> > > On 03/19/2010 10:24 AM, Kay Sievers wrote:
+> > >> No, that's what "change" is for, and we already have these "change"
+> > >> events for dm. Udev does not care if the device is ready or not, it
+> > >> synchronizes /sys and /dev, and that works just fine with "change"
+> > >> events.
+> > >
+> > > CHANGE events, not quite... We can't even rely on these.
+> > >
+> > > Just to mention, there's also a CHANGE event generated when
+> > > read-only flag is set for a device (this is not managed by
+> > > device-mapper of course). This one is generated even before
+> > > the actual CHANGE event that is generated when DM device is
+> > > ready to be used.
+> >
+> > Sure, but as mentioned earlier, these events are just expected to
+> > fail, and update the current udev state, if they can't retrieve the
+> > needed information or find out that the device in not usable.
+> >
+> 
+> I think the problem is the that fact that 3rd party user space
+> opens the device before it is ready (e.g. just after ADD but before
+> the first CHANGE) makes things fall over.
+> 
+> This short-coming is what needs to get fixed, I think - it's very
+> fragile this way and since any random user / package can add
+> rules to open the device on add events, said user / package can
+> make device-mapper fail. Which doesn't exactly strike me
+> as robust behavior.
 
-Sure, this is a possibility...
+When I first read this response I thought we had a major break-through,
+namely: udev allowing udev rules to race with the tool that is making
+the device usable was not "robust behavior".
 
-But that would mean *duplicating* the (part) of udev db functionality
-(so it could be considered as another workaround?) I just asked
-myself if there would be more people who could benefit from such
-feature in udev db directly. A more proper and official solution
-others can use if needed as well.
+But your 2nd mail in this thread established that I had wishful thinking
+on that so-called break-through.
 
-(Maybe we can even write our own udev daemon, called dm-udevd :))
+At least we agree that these uevents are causing DM to race against
+arbitrary udev rules; which leads to sporadic failures.
 
+I think I understand udev's utopian intent to have all udev rules be
+able to do as they wish with any device: said access should "fail
+gracefully" on devices that aren't ready.
 
-Peter
+Thing is, this isn't scalable at all.  Having all these arbitrary rules
+issuing IOs to devices that aren't usable is a complete waste of time.
+On enterprise systems that have 100s (*shudder* 1000s) of LUNs, this
+udev rules' freedom to access such unusable devices is really working
+against us (if the goal is to activate devices as quickly and reliably
+as possible).
+
+We at least need a way to _reliably_ allow DM to do its work of managing
+its devices.  What if udev were to offer a per device "udev rules lock"
+(exposed via sysfs?) that allows subsystems (e.g. DM) to know they can't
+yet proceed with exclussively accessing the device they are tasked with
+managing?
+
+This per device "udev rules lock" would at least allow DM to cope with
+the racey nature of udev rules.  Not ideal as it still allows
+inefficient (and unecessary) access to devices that shouldn't be touched
+but it would at least be a means to an end (or so I'd think).
+
+Mike
