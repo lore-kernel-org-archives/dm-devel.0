@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] dm-log-userspace: Failure to trap all errors
-Date: Fri, 19 Mar 2010 17:04:37 -0500
-Message-ID: <1269036277.22303.7.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH 1 of 2] dm log userspace split flush queue
+Date: Fri, 19 Mar 2010 17:13:06 -0500
+Message-ID: <201003192213.o2JMD6JB005831@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,10 +19,16 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch resolves unhandled errors.
+Patch name: dm-log-userspace-split-flush-queue.patch
 
-When constructing a mirror, it is possible for the initial request to
-fail for other reasons besides just -ESRCH.  These must be handled too.
+This patch splits a list of containing two different types of requests
+into two lists containing distinct requests.
+
+The device mapper log implementations (used by various DM targets) are
+allowed to cache 'mark' and 'clear' requests until a 'flush' is
+received.  Until now, these cached requests were kept in the same list.
+They will now be put into distinct lists to facilitate group processing
+of these requests (in the next patch).
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -30,17 +36,99 @@ Index: linux-2.6/drivers/md/dm-log-userspace-base.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-log-userspace-base.c
 +++ linux-2.6/drivers/md/dm-log-userspace-base.c
-@@ -180,8 +180,11 @@ static int userspace_ctr(struct dm_dirty
- 	r = dm_consult_userspace(lc->uuid, lc->luid, DM_ULOG_CTR,
- 				 ctr_str, str_size, NULL, NULL);
+@@ -36,8 +36,15 @@ struct log_c {
+ 	 */
+ 	uint64_t in_sync_hint;
  
--	if (r == -ESRCH) {
--		DMERR("Userspace log server not found");
-+	if (r < 0) {
-+		if (r == -ESRCH)
-+			DMERR("Userspace log server not found");
-+		else
-+			DMERR("Userspace log server failed to create log");
- 		goto out;
++	/*
++	 * Mark and clear requests are held until a flush is issued
++	 * so that we can group, and thereby limit, the amount of
++	 * network traffic between kernel and userspace.  The 'flush_lock'
++	 * is used to protect these lists.
++	 */
+ 	spinlock_t flush_lock;
+-	struct list_head flush_list;  /* only for clear and mark requests */
++	struct list_head mark_list;
++	struct list_head clear_list;
+ };
+ 
+ static mempool_t *flush_entry_pool;
+@@ -168,7 +175,8 @@ static int userspace_ctr(struct dm_dirty
+ 
+ 	strncpy(lc->uuid, argv[0], DM_UUID_LEN);
+ 	spin_lock_init(&lc->flush_lock);
+-	INIT_LIST_HEAD(&lc->flush_list);
++	INIT_LIST_HEAD(&lc->mark_list);
++	INIT_LIST_HEAD(&lc->clear_list);
+ 
+ 	str_size = build_constructor_string(ti, argc - 1, argv + 1, &ctr_str);
+ 	if (str_size < 0) {
+@@ -362,14 +370,16 @@ static int userspace_flush(struct dm_dir
+ 	int r = 0;
+ 	unsigned long flags;
+ 	struct log_c *lc = log->context;
+-	LIST_HEAD(flush_list);
++	LIST_HEAD(mark_list);
++	LIST_HEAD(clear_list);
+ 	struct flush_entry *fe, *tmp_fe;
+ 
+ 	spin_lock_irqsave(&lc->flush_lock, flags);
+-	list_splice_init(&lc->flush_list, &flush_list);
++	list_splice_init(&lc->mark_list, &mark_list);
++	list_splice_init(&lc->clear_list, &clear_list);
+ 	spin_unlock_irqrestore(&lc->flush_lock, flags);
+ 
+-	if (list_empty(&flush_list))
++	if (list_empty(&mark_list) && list_empty(&clear_list))
+ 		return 0;
+ 
+ 	/*
+@@ -379,7 +389,16 @@ static int userspace_flush(struct dm_dir
+ 	 * do it one by one.
+ 	 */
+ 
+-	list_for_each_entry(fe, &flush_list, list) {
++	list_for_each_entry(fe, &mark_list, list) {
++		r = userspace_do_request(lc, lc->uuid, fe->type,
++					 (char *)&fe->region,
++					 sizeof(fe->region),
++					 NULL, NULL);
++		if (r)
++			goto fail;
++	}
++
++	list_for_each_entry(fe, &clear_list, list) {
+ 		r = userspace_do_request(lc, lc->uuid, fe->type,
+ 					 (char *)&fe->region,
+ 					 sizeof(fe->region),
+@@ -397,7 +416,11 @@ fail:
+ 	 * Calling code will receive an error and will know that
+ 	 * the log facility has failed.
+ 	 */
+-	list_for_each_entry_safe(fe, tmp_fe, &flush_list, list) {
++	list_for_each_entry_safe(fe, tmp_fe, &mark_list, list) {
++		list_del(&fe->list);
++		mempool_free(fe, flush_entry_pool);
++	}
++	list_for_each_entry_safe(fe, tmp_fe, &clear_list, list) {
+ 		list_del(&fe->list);
+ 		mempool_free(fe, flush_entry_pool);
  	}
+@@ -427,7 +450,7 @@ static void userspace_mark_region(struct
+ 	spin_lock_irqsave(&lc->flush_lock, flags);
+ 	fe->type = DM_ULOG_MARK_REGION;
+ 	fe->region = region;
+-	list_add(&fe->list, &lc->flush_list);
++	list_add(&fe->list, &lc->mark_list);
+ 	spin_unlock_irqrestore(&lc->flush_lock, flags);
  
+ 	return;
+@@ -464,7 +487,7 @@ static void userspace_clear_region(struc
+ 	spin_lock_irqsave(&lc->flush_lock, flags);
+ 	fe->type = DM_ULOG_CLEAR_REGION;
+ 	fe->region = region;
+-	list_add(&fe->list, &lc->flush_list);
++	list_add(&fe->list, &lc->clear_list);
+ 	spin_unlock_irqrestore(&lc->flush_lock, flags);
+ 
+ 	return;
