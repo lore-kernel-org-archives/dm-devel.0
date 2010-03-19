@@ -1,8 +1,8 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [PATCH 1/3] Send KOBJ_ADD event after dm resume
-	ioctl.
-Date: Fri, 19 Mar 2010 13:08:26 +0100
-Message-ID: <4BA3693A.9030101@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 1/3] Send KOBJ_ADD event after dm
+	resume	ioctl.
+Date: Fri, 19 Mar 2010 12:12:38 +0000
+Message-ID: <20100319121238.GB919@agk-dp.fab.redhat.com>
 References: <1268920694-10960-1-git-send-email-mbroz@redhat.com>
 	<ac3eb2511003180913t5f69e0bs29ff3dcfd1209c60@mail.gmail.com>
 	<4BA29CA4.9070000@redhat.com>
@@ -11,14 +11,13 @@ References: <1268920694-10960-1-git-send-email-mbroz@redhat.com>
 	<ac3eb2511003190224u1eb19e4lfeda36bbab18939@mail.gmail.com>
 	<4BA348B7.5070604@redhat.com>
 	<ac3eb2511003190316s30c106fdkfd94861c99f9802d@mail.gmail.com>
-	<4BA35C90.7000301@redhat.com>
-	<ac3eb2511003190444s4536d984s216e737c1c7b45e3@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ac3eb2511003190444s4536d984s216e737c1c7b45e3@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <ac3eb2511003190316s30c106fdkfd94861c99f9802d@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,41 +28,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Kay Sievers <kay.sievers@vrfy.org>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/19/2010 12:44 PM, Kay Sievers wrote:
-> On Fri, Mar 19, 2010 at 12:14, Milan Broz <mbroz@redhat.com> wrote:
->> On 03/19/2010 11:16 AM, Kay Sievers wrote:
->> Well. And what should happen if anyone generate
->> artificial CHANGE event before the real first CHANGE event comes from
->> subsystem? (yes, I am looking at you, OPTIONS+="watch" thing for example)
-> 
-> We retrieve the device state and if it's not ready, we just exit.
+On Fri, Mar 19, 2010 at 11:16:15AM +0100, Kay Sievers wrote:
+> It will not wait, the tools will just fail to open the device, and
 
-How? By scanning/opening it?
+In some cases the tools are wasting their time even trying to open
+the device - we know in advance that it is pointless and should have
+a mechanism in place so they can be told not to bother.
 
-Scan on uninitialised device can lock the device and break initialisation,
-"-EBUSY" - isn't it race?
+E.g. Flagging a device as 'private' as discussed in an earlier mail.
 
-So all applications, which run some kind of configuration of device
-should expect that device can be randomly locked by udev rules...
-
-[Yes, it happens. I solved several problems in cryptsetup where various
-udev scans open and locks keyslot device.
-(Ignoring the fact that it contains key material, in this case it was
-not security problem - the material is still obfuscated.)
-These are now masked in udev rules, but I do not like this approach much.]
-
-> Yeah, usually it does not create any meta-information besides the
-> primary device node.
-
-Unfortunately it is not the DM/LVM etc case - we had always symlinks
-and long device names etc.
-
-Anyway, this name/uuid information is in sysfs now.
-But not the VG/LV symlinks info which is pure userspace abstraction...
-
-Milan
---
-mbroz@redhat.com
+Alasdair
