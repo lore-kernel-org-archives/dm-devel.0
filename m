@@ -1,78 +1,55 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [PATCH] dm: max_segments=1 if merge_bvec_fn is not supported
-Date: Fri, 19 Mar 2010 08:48:44 +1100
-Message-ID: <20100319084844.7ea9db41@notabene.brown>
-References: <20100306211012.GA9689@racke>
-	<20100308163345.42841480@notabene.brown>
-	<Pine.LNX.4.64.1003080321190.25635@hs20-bc2-1.build.redhat.com>
-	<20100308131449.GA15156@racke>
-	<20100318114858.0303157e.akpm@linux-foundation.org>
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: Re: [PATCH 1/3] Send KOBJ_ADD event after dm resume
+	ioctl.
+Date: Fri, 19 Mar 2010 09:27:35 +0100
+Message-ID: <ac3eb2511003190127n1aa2dda5pbd4e0841a46830bc@mail.gmail.com>
+References: <1268920694-10960-1-git-send-email-mbroz@redhat.com>
+	<ac3eb2511003180913t5f69e0bs29ff3dcfd1209c60@mail.gmail.com>
+	<4BA29CA4.9070000@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20100318114858.0303157e.akpm@linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Lars Ellenberg <lars.ellenberg@linbit.com>, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>, jens.axboe@oracle.com, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4BA29CA4.9070000@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <mbroz@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 18 Mar 2010 11:48:58 -0700
-Andrew Morton <akpm@linux-foundation.org> wrote:
+On Thu, Mar 18, 2010 at 22:35, Milan Broz <mbroz@redhat.com> wrote:
 
-> On Mon, 8 Mar 2010 14:14:49 +0100
-> Lars Ellenberg <lars.ellenberg@linbit.com> wrote:
-> 
-> > On Mon, Mar 08, 2010 at 03:35:37AM -0500, Mikulas Patocka wrote:
-> > > Hi
-> > > 
-> > > That patch with limits->max_segments = 1; is wrong. It fixes this bug 
-> > > sometimes and sometimes not.
-> > > 
-> > > The problem is, if someone attempts to create a bio with two vector 
-> > > entries, the first maps the last sector contained in some page and the 
-> > > second maps the first sector of the next physical page: it has one 
-> > > segment, it has size <= PAGE_SIZE, but it still may cross raid stripe and 
-> > > the raid driver will reject it.
-> > 
-> > Now that you put it that way ;)
-> > You are right.
-> > 
-> > My asumption that "single segment" was  
-> > equalvalent in practice with "single bvec"
-> > does not hold true in that case.
-> > 
-> > Then, what about adding seg_boundary_mask restrictions as well?
-> > 	max_sectors = PAGE_SIZE >> 9;
-> > 	max_segments = 1;
-> > 	seg_boundary_mask = PAGE_SIZE -1;
-> > or some such.
-> > 
-> > > > > This is not the first time this has been patched, btw.
-> > > > > See https://bugzilla.redhat.com/show_bug.cgi?id=440093
-> > > > > and the patch by Mikulas:
-> > > > > https://bugzilla.redhat.com/attachment.cgi?id=342638&action=diff
-> > > 
-> > > Look at this patch, it is the proper way how to fix it: create a 
-> > > merge_bvec_fn that reject more than one biovec entry.
-> > 
-> > If adding seg_boundary_mask is still not sufficient,
-> > lets merge that patch instead?
-> > Why has it been dropped, respectively never been merged?
-> > It became obsolete for dm-linear by 7bc3447b,
-> > but in general the bug is still there, or am I missing something?
-> > 
-> 
-> This all seemed to die.  Does Neil's mysterypatch fix all these issues?
-> 
-> Neil, was that patch tagged for -stable backporting?
+> But if your statement is "it is your broken activation model" as you said
+> in some discussion, I can do nothing, just disagree - it is different model,
+> not broken.
 
-The patch at the top of my 'for-linus' branch (which Linus doesn't seem to
-have pulled yet) fixes this for md and is tagged for -stable backporting.
-I just sets max_segments and seg_boundary_mask.  There is no point setting
-max_sectors as well.  I found that setting merge_bvec_fn, while a perfectly
-correct approach, was more cumbersome.
+Sure, if you are fine with that model, I'm fine with it too. You are
+the one sending patches to mangle basic driver-core definitions to
+paper-over some issues dm seem to have with it. I just object to such
+core changes, not to the way dm is doing things.
 
-My patch doesn't fix this for dm.  I assume the dm developers will do that.
+I have no problem with dm creating "dead" devices, it's like this
+since a long time, but please don't try to fake things in the driver
+core to make it look different from what it is. We don't want /sys and
+/dev and events to be out of sync, like non-"add"-ed devices which are
+fully created in /sys, or "remove"-d devices which are still fully
+populated in /sys.
 
-NeilBrown
+/sys is the direct export of kernel objects, if you create objects,
+they appear, and they get announced. If you don't want them to be
+announced at that time, just don't register them at that time.
+
+Don't get me wrong, I'm not asking you to change the current state how
+dm is doing things, I just object to the patch which inconsistently
+tries to fake events, which do not match the state in /sys.
+
+Thanks,
+Kay
