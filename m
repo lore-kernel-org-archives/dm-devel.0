@@ -1,14 +1,12 @@
-From: "Ulrich Windl" <Ulrich.Windl@rz.uni-regensburg.de>
-Subject: /usr/src/linux/drivers/md/bitmap.c: strange rounding
- lines 855-875
-Date: Thu, 21 Oct 2010 16:18:59 +0200
-Message-ID: <4CC067F4020000A1000108AB@gwsmtp1.uni-regensburg.de>
+From: Andreas Beckmann <beckmann@cs.uni-frankfurt.de>
+Subject: discard/trim support in device mapper?
+Date: Sun, 21 Mar 2010 11:16:22 +0100
+Message-ID: <4BA5F1F6.2050804@cs.uni-frankfurt.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,23 +21,26 @@ List-Id: dm-devel.ids
 
 Hi,
 
-I just found this strange rounding code in /usr/src/linux/drivers/md/bitmap.c:
+since 2.6.33 the ext4 file system supports emitting DISCARD/TRIM/...
+commands that notify the disk about deleted blocks that may be reused by
+ the disk for whatever it wants. This is especially helpful for SSDs to
+reduce performance degradation due to internal fragmentation ...
 
------snip-------
-        /* We need 4 bits per page, rounded up to a multiple of sizeof(unsigned
-long) */
-        bitmap->filemap_attr = kzalloc(
-                (((num_pages*4/8)+sizeof(unsigned long))
-                 /sizeof(unsigned long))
-                *sizeof(unsigned long),
-                GFP_KERNEL);
----------snip-----
+What are the plans / is the status for adding DISCARD support to the
+device mapper? Especially for RAID-0/RAID-1 configurations with multiple
+SSDs this will be really helpful. The DISCARD requests received from the
+file system layer just need to be translated/duplicated to the sector
+ranges on the physical disks and than the appropriate commands for the
+disks need to be generated.
 
-IMHO, this is not rounding, it's just adding one extra "sizeof(unsigned long)":
+If there is anything to be tested, I'm willing to help. I have a machine
+with 4 SuperTalent FTM56GX25H SSDs (firmware 1916) that happily do TRIM
+if they are used as single disks, but not in a 1TB RAID-0 configuration
+managed via LVM.
 
-Instead of using the pattern "((a + b) / b) * b" ==  (a/b + 1) * b == a + b the pattern "((a + b - 1) / b) * b" should be used. Even preferrable: define one macro that does it right, then use it. Example:
-#define   ROUND_UP(n, g)  ((((n) + (g) - 1) / (g)) * (g))
-#define   ROUND_DWN(n, g) (((n) / (g)) * (g))
+Experiments have shown significant performance improvements (factor 4-5)
+for some heavy I/O loads on single SSD (250 GB) using DISCARD, I'd like
+to achieve them for a larger data set (1 TB), too.
 
-Regards,
-Ulrich
+
+Andreas
