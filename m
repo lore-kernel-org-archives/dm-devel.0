@@ -1,12 +1,13 @@
-From: David Huffman <dm-devel@storix.com>
-Subject: Determine partition prefix used for mpath devices
-Date: Tue, 23 Mar 2010 09:22:43 -0700
-Message-ID: <4BA8EAD3.2050009@storix.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: add some default configurations.
+Date: Tue, 23 Mar 2010 14:48:43 -0500
+Message-ID: <20100323194843.GD23952@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,71 +20,181 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hannes Reinecke wrote:
-> David Huffman wrote:
->  
->> In a script, I need to somehow determine what prefix is being used for
->> partitions as set by UDEV. It seems that the naming convention is in
->> flux and could change frequently. When using user_friendly_names the
->> prefix is set using kpartx within udev rules. My problem is I need to
->> know what the prefix is so my scripts know what device naming convention
->> to look for.
->>
->> Here are the different iterations of naming schemes:
->>
->> mpath0p1
->> mpath0-part1
->> mpathap1
->> mpatha-part1
->>
->> Is there a way other than grepping through the udev rules to determine
->> what the prefix is? The partitions may not exist so I cannot just look
->> to see what they are. I need to know BEFORE I create partitions. I know
->> this is a strange request, but I am working with a lot of code that was
->> designed before multipath was available and using the sys naming is not
->> an option (i.e. /disk/by-id/wwid).
->>
->>     
-> I wouldn't rely on the device-mapper table names, as they could be pretty
-> much everything.
->
-> To handle this situation I've patches up multipath and kpartx to provide
-> UUID prefixes, which normally can't be influenced from userspace.
-> Multipath devices carry the prefix 'mpath-', kpartx generated devices
-> carry the prefix 'part<num>-'.
-> So by checking the prefix you pretty much know which program generated
-> this particular device.
->
-> Cheers,
->
-> Hannes
->   
-Humm.. Maybe I did not explain myself well enough because I do not 
-understand your response. I am trying to determine what prefix is 
-currently being used for the partitions by kpartx.
+This patch adds some default configurations that have been requested.
 
-Example:
-If I am on a SLES9 SP4 system there is a udev rule that states to use 
-kpartx -a -p -part so that the prefix is "-part". Partitions that are 
-created later are named [alias|mpath|uuid]a-part1.
-If I am on a RHEL 5.1 system, there is a udev rule that states to use 
-kpartx -a -p p so that the prefix is "p".
-Partitions that are created later are named [alias|uuid|mpath]0p1
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/hwtable.c  |   52 ++++++++++++++++++++++++++++++++++++++++++++++--
+ multipath.conf.defaults |   46 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 96 insertions(+), 2 deletions(-)
 
-Right now, the only way I can find out what prefix is used for 
-partitions is to grep and awk through the udev rule (which is 
-unreliable). I am looking for a better way to see what prefix is 
-currently being used by kpartx.
-
-When you state that you have a patch to provide UUID prefixes, I do not 
-understand. If you are not using "user_friendly_names yes" in 
-multipath.conf, isn't it already the uuid? How does this change the 
-naming of the partitions used? Right now it could be "-part" or "p".
-
-Sorry but my limited knowledge of the naming schemes is probably 
-confusing the issue. It appears that there are too many players on the 
-field when it comes to naming these devices. (UDEV, multipath, 
-device-mapper)
-
-Thanks
-David
+Index: multipath-tools-100322/libmultipath/hwtable.c
+===================================================================
+--- multipath-tools-100322.orig/libmultipath/hwtable.c
++++ multipath-tools-100322/libmultipath/hwtable.c
+@@ -282,6 +282,21 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = EMC_CLARIION,
+ 		.prio_name     = PRIO_EMC,
+ 	},
++	{
++		.vendor        = "EMC",
++		.product       = "Invista",
++		.bl_product    = "LUNZ",
++		.getuid        = DEFAULT_GETUID,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = MULTIBUS,
++		.pgfailback    = FAILBACK_UNDEF,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 5,
++		.minio         = DEFAULT_MINIO,
++		.prio_name     = DEFAULT_PRIO,
++	},
+ 	/*
+ 	 * Fujitsu controller family
+ 	 *
+@@ -441,6 +456,21 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
++		.vendor        = "IBM",
++		.product       = "1745|1746",
++		.getuid        = DEFAULT_GETUID,
++		.features      = "2 pg_init_retries 50",
++		.hwhandler     = "1 rdac",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 15,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
++	{
+ 	    /* IBM DS4700 */
+ 		.vendor        = "IBM",
+ 		.product       = "1814",
+@@ -677,12 +707,13 @@ static struct hwentry default_hw[] = {
+ 		.vendor        = "DELL",
+ 		.product       = "MD3000",
+ 		.getuid        = DEFAULT_GETUID,
+-		.features      = "1 queue_if_no_path",
++		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 15,
+ 		.minio         = DEFAULT_MINIO,
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+@@ -692,12 +723,13 @@ static struct hwentry default_hw[] = {
+ 		.vendor        = "DELL",
+ 		.product       = "MD3000i",
+ 		.getuid        = DEFAULT_GETUID,
+-		.features      = "1 queue_if_no_path",
++		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 15,
+ 		.minio         = DEFAULT_MINIO,
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+@@ -979,6 +1011,22 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+ 	},
++	{
++		.vendor        = "STK",
++		.product       = "FLEXLINE 380",
++		.bl_product    = "Universal Xport",
++		.getuid        = DEFAULT_GETUID,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = "1 rdac",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
+ 	/*
+ 	 * EOL
+ 	 */
+Index: multipath-tools-100322/multipath.conf.defaults
+===================================================================
+--- multipath-tools-100322.orig/multipath.conf.defaults
++++ multipath-tools-100322/multipath.conf.defaults
+@@ -223,6 +223,21 @@
+ #		path_checker            tur
+ #	}
+ #	device {
++#		vendor			"EMC"
++#		product			"Invista"
++#		product_blacklist	"LUNZ"
++#		getuid_callout		"/lib/udev/scsi_id --whitelisted --page=pre-spc3-83 --device=/dev/%n"
++#		features		"0"
++#		hardware_handler	"0"
++#		path_selector		"round-robin 0"
++#		path_grouping_policy	multibus
++#		rr_weight		uniform
++#		no_path_retry		5
++#		rr_min_io		1000
++#		path_checker		tur
++#		prio			const
++#	}
++#	device {
+ #		vendor			"FSC"
+ #		product			"CentricStor"
+ #		getuid_callout		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+@@ -307,6 +322,21 @@
+ #	}
+ #	device {
+ #		vendor			"IBM"
++#		product			"1745|1746"
++#		getuid_callout		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
++#		features		"2 pg_init_retries 50"
++#		hardware_handler	"1 rdac"
++#		path_selector		"round-robin 0"
++#		path_grouping_policy	group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		no_path_retry		queue
++#		rr_min_io		1000
++#		path_checker		rdac
++#		prio			rdac
++#	}
++#	device {
++#		vendor			"IBM"
+ #		product			"1814"
+ #		getuid_callout		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+ #		features		"0"
+@@ -600,4 +630,20 @@
+ #		path_checker		rdac
+ #		prio			rdac
+ #	}
++#	device {
++#		vendor			"STK"
++#		product			"FLEXLINE 380"
++#		product_blacklist	"Universal Xport"
++#		getuid_callout		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
++#		features		"0"
++#		hardware_handler	"1 rdac"
++#		path_selector		"round-robin 0"
++#		path_grouping_policy	group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		no_path_retry		queue
++#		rr_min_io		1000
++#		path_checker		rdac
++#		prio			rdac
++#	}
+ #}
