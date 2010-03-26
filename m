@@ -1,17 +1,13 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH] multipath: don't let init script
-	stop	multipathd for root devices
-Date: Fri, 26 Mar 2010 11:23:40 -0500
-Message-ID: <20100326162340.GI23952@ether.msp.redhat.com>
-References: <20100325175205.GG23952@ether.msp.redhat.com>
-	<4BAC1626.3080605@ct.jp.nec.com>
+From: Brian King <brking@linux.vnet.ibm.com>
+Subject: [PATCH 1/1] multipath_tools: Add IBM Virtual SCSI ALUA
+	device type to hwtable
+Date: Fri, 26 Mar 2010 14:28:14 -0500
+Message-ID: <201003261928.o2QJSFZv020128@d01av03.pok.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4BAC1626.3080605@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,44 +17,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: brking@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Fri, Mar 26, 2010 at 11:04:22AM +0900, Kiyoshi Ueda wrote:
-> Hi Ben,
-> 
-> On 03/26/2010 02:52 AM +0900, Benjamin Marzinski wrote:
-> > This patch modifies the redhat init script, so that it doesn't allow
-> > multipathd to be stopped when the root device is on it.
-> 
-> Why do you need to prevent stopping daemon by script-level forcibly?
-> I think that users/developers may want to restart the daemon at their
-> own risk when it starts to behave something wrong or they change
-> a configuration (since "reconfigure" may not be stable feature).
-> 
-> # Maybe others have different opinion but I often use "restart".
-> 
-> If you need this patch anyway, please add other options to stop/restart
-> the daemon forcibly.  (e.g. adding force-stop/force-restart)
 
-I can certainly add a force-stop/force-restart.  This can currently be
-accomplished by simply killing the daemon, but admittedly doing it
-through the init script is cleaner and more obvious to users, and it's
-necessary to allow package upgrades to immediately start using
-multipathd on systems with multipathed root disks.
+Add entry to the hwtable for IBM Power Virtual SCSI ALUA devices
 
-However, what is there that you need to restart the daemon for that
+Signed-off-by: Brian King <brking@linux.vnet.ibm.com>
+---
 
-# service multipathd reload
+ libmultipath/hwtable.c |   17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
 
-won't fix, besides upgrading the package.  If there is something, then
-we should fix it.  I only stop the daemon when I'm testing shutting
-down, and upgrading source. Otherwise, I've been using reconfigure
-without problems.
-
--Ben
-
-> 
-> Thanks,
-> Kiyoshi Ueda
+diff -puN libmultipath/hwtable.c~mpath_nvdisk libmultipath/hwtable.c
+--- multipath-tools/libmultipath/hwtable.c~mpath_nvdisk	2010-03-26 14:25:53.000000000 -0500
++++ multipath-tools-bjking1/libmultipath/hwtable.c	2010-03-26 14:25:53.000000000 -0500
+@@ -703,6 +703,23 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = DEFAULT_PRIO,
+ 	},
+ 	{
++		/* AIX NVDISK */
++		.vendor        = "AIX",
++		.product       = "NVDISK",
++		.getuid        = DEFAULT_GETUID,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = "1 alua",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = (300 / DEFAULT_CHECKINT),
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = TUR,
++		.prio_name     = PRIO_ALUA,
++	},
++
++	{
+ 		/* DELL MD3000 */
+ 		.vendor        = "DELL",
+ 		.product       = "MD3000",
+_
