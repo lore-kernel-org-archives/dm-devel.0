@@ -1,13 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: move bindings file location
-Date: Fri, 26 Mar 2010 17:10:24 -0500
-Message-ID: <20100326221024.GJ23952@ether.msp.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCHES] shared snapshots release 18
+Date: Fri, 26 Mar 2010 20:35:04 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1003262024080.6303@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1003221513150.15382@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1003221513150.15382@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,63 +18,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Mike Snitzer <msnitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-The current bindings file location (/var/lib/multipath/bindings) can be
-problematic, since multipath can start up before /var/lib is mounted yet in
-late boot.  In this case, multipath will create it's own bindings file which
-will be covered up by /var when it is mounted.  This means that the device
-names that you get on startup might be different from the device names that you
-get when you run multipath on a system during normal operation.  Since /etc is
-always available when multipath starts up in late boot, moving the bindings
-file there fixes the problem.
+Hi
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
-:100644 100644 84e5d6b... 5a38d25... M	libmultipath/defaults.h
-:100644 100644 9afa615... 7b6453f... M	multipath.conf.annotated
-:100644 100644 a165e4e... 4340e51... M	multipath/multipath.conf.5
- libmultipath/defaults.h    |    2 +-
- multipath.conf.annotated   |    2 +-
- multipath/multipath.conf.5 |    2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+I released version 18 of shared snapshots. See 
+http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/r18/
 
-Index: multipath-tools-100322/libmultipath/defaults.h
-===================================================================
---- multipath-tools-100322.orig/libmultipath/defaults.h
-+++ multipath-tools-100322/libmultipath/defaults.h
-@@ -19,6 +19,6 @@
- #define DEFAULT_PIDFILE		"/var/run/multipathd.pid"
- #define DEFAULT_SOCKET		"/var/run/multipathd.sock"
- #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
--#define DEFAULT_BINDINGS_FILE	"/var/lib/multipath/bindings"
-+#define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
- 
- char * set_default (char * str);
-Index: multipath-tools-100322/multipath.conf.annotated
-===================================================================
---- multipath-tools-100322.orig/multipath.conf.annotated
-+++ multipath-tools-100322/multipath.conf.annotated
-@@ -165,7 +165,7 @@
- #	# name    : user_friendly_names
- #	# scope   : multipath
- #	# desc    : If set to "yes", using the bindings file
--#	#           /var/lib/multipath/bindings to assign a persistent and
-+#	#           /etc/multipath/bindings to assign a persistent and
- #	#           unique alias to the multipath, in the form of mpath<n>.
- #	#           If set to "no" use the WWID as the alias. In either case
- #	#           this be will be overriden by any specific aliases in this
-Index: multipath-tools-100322/multipath/multipath.conf.5
-===================================================================
---- multipath-tools-100322.orig/multipath/multipath.conf.5
-+++ multipath-tools-100322/multipath/multipath.conf.5
-@@ -224,7 +224,7 @@ for never stop queueing. Default is 0.
- If set to 
- .I yes
- , using the bindings file
--.I /var/lib/multipath/bindings
-+.I /etc/multipath/bindings
- to assign a persistent and unique alias to the multipath, in the form of mpath<n>.
- If set to 
- .I no
+It contains a variable to tune cache memory consumption.
+
+I decided to place it as a module parameter, to 
+/sys/module/dm_store_mikulas/parameters/dm_bufio_cache_size It is one 
+setting, the cache is divided fairly for all the instances. I may come up 
+with some sort of adaptive sharing (i.e. shrink cache for unused caches 
+and allow the space to be used by used)
+
+
+Other options, where to place the configuration are:
+
+*** On lvm command line, passed through dm table line (or messages):
++ could be saved in lvm2 metadata
+- the cache management policy may change and require additional parameters 
+or drop the existing parameter, if memory management people provide us 
+with a callback to free cache. This leads to a situation where kernel and 
+userspace needs synchronization. For the same reason, vm or tcpip tunables 
+are exported in /proc and are not set with an userspace utility --- the 
+tunables change from kernel to kernel.
+
+*** Create a directory and file in /proc
++ /proc is disorganized, so we can create what we want there
+- /proc is disorganized, so people don't want to add new stuff there
+
+*** Set it individually for each block device
++ it is understandable for the admin
+- it is logicaly wrong, because dm targets don't correspond to block 
+devices (for example, if we have two targets in a table for one device, 
+how does one setting affect the targets?). dm-bufio doesn't know 
+anything about the device it is used for and it would need a lot of glue 
+code.
+
+Mikulas
