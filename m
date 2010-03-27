@@ -1,14 +1,15 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCHES] shared snapshots release 18
-Date: Fri, 26 Mar 2010 20:35:04 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1003262024080.6303@hs20-bc2-1.build.redhat.com>
+Subject: Re: shared snapshots release 17
+Date: Fri, 26 Mar 2010 20:36:41 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1003262036030.6303@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.1003221513150.15382@hs20-bc2-1.build.redhat.com>
+	<20100322205433.GB13346@redhat.com> <20100322223318.GA26907@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1003221513150.15382@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20100322223318.GA26907@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,45 +19,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Mike Snitzer <msnitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 Hi
 
-I released version 18 of shared snapshots. See 
-http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/r18/
-
-It contains a variable to tune cache memory consumption.
-
-I decided to place it as a module parameter, to 
-/sys/module/dm_store_mikulas/parameters/dm_bufio_cache_size It is one 
-setting, the cache is divided fairly for all the instances. I may come up 
-with some sort of adaptive sharing (i.e. shrink cache for unused caches 
-and allow the space to be used by used)
-
-
-Other options, where to place the configuration are:
-
-*** On lvm command line, passed through dm table line (or messages):
-+ could be saved in lvm2 metadata
-- the cache management policy may change and require additional parameters 
-or drop the existing parameter, if memory management people provide us 
-with a callback to free cache. This leads to a situation where kernel and 
-userspace needs synchronization. For the same reason, vm or tcpip tunables 
-are exported in /proc and are not set with an userspace utility --- the 
-tunables change from kernel to kernel.
-
-*** Create a directory and file in /proc
-+ /proc is disorganized, so we can create what we want there
-- /proc is disorganized, so people don't want to add new stuff there
-
-*** Set it individually for each block device
-+ it is understandable for the admin
-- it is logicaly wrong, because dm targets don't correspond to block 
-devices (for example, if we have two targets in a table for one device, 
-how does one setting affect the targets?). dm-bufio doesn't know 
-anything about the device it is used for and it would need a lot of glue 
-code.
+Thanks for finding it. I used a smaller fix that does the same thing, but 
+doesn't introduce a new function.
 
 Mikulas
+
+> multisnap_origin_iterate_devices() is failing for me with:
+>  kernel: device-mapper: table: 253:0: dm-2 too small for target: start=0, len=8388608, dev_size=2097152
+> 
+> After failure to reload the origin, the remaining tables are:
+> test-testlv1: 0 8388608 linear 254:16 384
+> test-testlv1-cow: 0 2097152 linear 254:16 8388992
+> test-testlv1-real: 0 8388608 linear 254:16 384
+> 
+> 
+> The following patch fixes it for me, but it needs further cleanup
+> (duplicates method from the old snapshot code).
+> 
+> diff --git a/drivers/md/dm-multisnap.c b/drivers/md/dm-multisnap.c
+> index 5ba1af8..0644e19 100644
+> --- a/drivers/md/dm-multisnap.c
+> +++ b/drivers/md/dm-multisnap.c
+> @@ -113,6 +113,15 @@ EXPORT_SYMBOL(dm_multisnap_drop_on_error);
+>  static DEFINE_MUTEX(all_multisnapshots_lock);
+>  static LIST_HEAD(all_multisnapshots);
+>  
+> +/*
+> + * Return the number of sectors in the device.
+> + * FIXME: duplicates dm-exception-store.h:get_dev_size
+> + */
+> +static inline sector_t get_dev_size(struct block_device *bdev)
+> +{
+> +	return i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
+> +}
+> +
+>  static chunk_t sector_to_chunk(struct dm_multisnap *s, sector_t sector)
+>  {
+>  	return sector >> (s->chunk_shift - SECTOR_SHIFT);
+> @@ -1476,7 +1485,8 @@ static int multisnap_iterate_devices(struct dm_target *ti, struct dm_multisnap *
+>  	r = fn(ti, s->origin, 0, s->origin_sectors, data);
+>  
+>  	if (!r)
+> -		r = fn(ti, s->snapshot, 0, s->origin_sectors, data);
+> +		r = fn(ti, s->snapshot, 0,
+> +		       get_dev_size(dm_multisnap_snapshot_bdev(s)), data);
+>  
+>  	return r;
+>  }
+> 
