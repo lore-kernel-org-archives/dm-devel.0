@@ -1,17 +1,12 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH] multipath: don't let init script
- stop	multipathd for root devices
-Date: Tue, 30 Mar 2010 09:11:13 +0900
-Message-ID: <4BB141A1.3070402@ct.jp.nec.com>
-References: <20100325175205.GG23952@ether.msp.redhat.com>
-	<4BAC1626.3080605@ct.jp.nec.com>
-	<20100326162340.GI23952@ether.msp.redhat.com>
+From: Martin Schwenke <martin@meltin.net>
+Subject: RHEL 5.4 multipath doesn't handle virtio block devices
+Date: Tue, 30 Mar 2010 12:16:06 +1100
+Message-ID: <20100330121606.54b4a50c@martins.ozlabs.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100326162340.GI23952@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,53 +16,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Ben,
+[Repost since subscribing - post from 2010-03-23 never made it...]
 
-On 03/27/2010 01:23 AM +0900, Benjamin Marzinski wrote:
-> On Fri, Mar 26, 2010 at 11:04:22AM +0900, Kiyoshi Ueda wrote:
->> Hi Ben,
->>
->> On 03/26/2010 02:52 AM +0900, Benjamin Marzinski wrote:
->>> This patch modifies the redhat init script, so that it doesn't allow
->>> multipathd to be stopped when the root device is on it.
->> Why do you need to prevent stopping daemon by script-level forcibly?
->> I think that users/developers may want to restart the daemon at their
->> own risk when it starts to behave something wrong or they change
->> a configuration (since "reconfigure" may not be stable feature).
->>
->> # Maybe others have different opinion but I often use "restart".
->>
->> If you need this patch anyway, please add other options to stop/restart
->> the daemon forcibly.  (e.g. adding force-stop/force-restart)
-> 
-> I can certainly add a force-stop/force-restart.  This can currently be
-> accomplished by simply killing the daemon, but admittedly doing it
-> through the init script is cleaner and more obvious to users, and it's
-> necessary to allow package upgrades to immediately start using
-> multipathd on systems with multipathed root disks.
-> 
-> However, what is there that you need to restart the daemon for that
-> 
-> # service multipathd reload
-> 
-> won't fix, besides upgrading the package.  If there is something, then
-> we should fix it.  I only stop the daemon when I'm testing shutting
-> down, and upgrading source. Otherwise, I've been using reconfigure
-> without problems.
+multipath in RHEL 5.4 doesn't handle virtio block devices.  It excludes
+them because they use a sysfs bus that is not recognised.
 
-I may be confusing you.
-I know/understand that current reconfigure works well and if it doesn't
-work we should fix it.
+Here's a patch that seems to fix this:
 
-My point is that "why do you need to prevent stopping daemon
-by script-level forcibly?".
-As you mentioned above, killing the daemon through the init script
-is cleaner and more obvious.  So I think leaving something to stop
-the daemon in the init script is more friendly for admins.
+diff -r -u multipath-tools-0.4.7.rhel5.16.orig/libmultipath/discovery.c multipath-tools-0.4.7.rhel5.16/libmultipath/discovery.c
+--- multipath-tools-0.4.7.rhel5.16.orig/libmultipath/discovery.c	2009-04-21 10:05:22.000000000 +1000
++++ multipath-tools-0.4.7.rhel5.16/libmultipath/discovery.c	2010-03-22 10:17:36.000000000 +1100
+@@ -486,8 +486,6 @@
+ 		pp->bus = SYSFS_BUS_CCW;
+ 	else if (!strncmp(sdev->bus, "cciss", 5)) 
+ 		pp->bus = SYSFS_BUS_CCISS;
+-	else
+-		return 1;
+ 
+ 	sysfs_close_device(sdev);
+ 
 
-Thanks,
-Kiyoshi Ueda
+
+The problem occurs because on line 490 of libmultipath/discovery.c
+sysfs_get_bus() returns 1 (failure) if the bus type is not recognised.
+The function should just fall through and return 0 (success), leaving
+pp->bus set to the default value SYSFS_BUS_UNDEF.
+
+This can be confirmed by noting that SYSFS_BUS_IDE is only ever used
+once in the code (i.e. when pp->bus is set to SYSFS_BUS_IDE in
+sysfs_get_bus()).  This shows that although there is no special case
+code for SYSFS_BUS_IDE the rest of code works fine.  Similarly,
+without a special case for SYSFS_BUS_UNDEF the rest of the code will
+work fine.
+
+To complicate the analysis very slightly, sysfs_pathinfo() does have a
+special case for SYSFS_BUS_UNDEF.  However, it could be removed
+because it simply returns 0 and this is the default return value of
+sysfs_pathinfo()...
+
+A quick scan of the current upstream multipath code in git seems to
+suggest that it copes fine with unknown sysfs bus types and behaves as I
+describe above.  In fact, the code no longer seems to have a special
+case for SYSFS_BUS_IDE, which seems sensible.
+
+I've tested the patch above on a KVM guest with virtio block devices
+and it appears to work just fine.  Given that IDE (apparently) works
+and the code has no special handling for it suggests that the change
+should be backward compatible.  However, I don't have various pieces of
+hardware handy to test with.
+
+I'm happy to post a description of how to reproduce this if anyone is
+interested.  It basically involves writing a unique ID at the beginning
+each disk image, telling libvirt to create 2 devices pointing at each
+image and then using a script for getuid_callout that reads the unique
+IDs.  Hence, we're able to simulate multiple paths on virtio block
+devices.
+
+peace & happiness,
+martin
