@@ -1,15 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: shared snapshots release 17
-Date: Fri, 26 Mar 2010 20:36:41 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1003262036030.6303@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1003221513150.15382@hs20-bc2-1.build.redhat.com>
-	<20100322205433.GB13346@redhat.com> <20100322223318.GA26907@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH] multipath: don't let init script
+ stop	multipathd for root devices
+Date: Tue, 30 Mar 2010 09:11:13 +0900
+Message-ID: <4BB141A1.3070402@ct.jp.nec.com>
+References: <20100325175205.GG23952@ether.msp.redhat.com>
+	<4BAC1626.3080605@ct.jp.nec.com>
+	<20100326162340.GI23952@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100322223318.GA26907@redhat.com>
+In-Reply-To: <20100326162340.GI23952@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,57 +21,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Hi Ben,
 
-Thanks for finding it. I used a smaller fix that does the same thing, but 
-doesn't introduce a new function.
+On 03/27/2010 01:23 AM +0900, Benjamin Marzinski wrote:
+> On Fri, Mar 26, 2010 at 11:04:22AM +0900, Kiyoshi Ueda wrote:
+>> Hi Ben,
+>>
+>> On 03/26/2010 02:52 AM +0900, Benjamin Marzinski wrote:
+>>> This patch modifies the redhat init script, so that it doesn't allow
+>>> multipathd to be stopped when the root device is on it.
+>> Why do you need to prevent stopping daemon by script-level forcibly?
+>> I think that users/developers may want to restart the daemon at their
+>> own risk when it starts to behave something wrong or they change
+>> a configuration (since "reconfigure" may not be stable feature).
+>>
+>> # Maybe others have different opinion but I often use "restart".
+>>
+>> If you need this patch anyway, please add other options to stop/restart
+>> the daemon forcibly.  (e.g. adding force-stop/force-restart)
+> 
+> I can certainly add a force-stop/force-restart.  This can currently be
+> accomplished by simply killing the daemon, but admittedly doing it
+> through the init script is cleaner and more obvious to users, and it's
+> necessary to allow package upgrades to immediately start using
+> multipathd on systems with multipathed root disks.
+> 
+> However, what is there that you need to restart the daemon for that
+> 
+> # service multipathd reload
+> 
+> won't fix, besides upgrading the package.  If there is something, then
+> we should fix it.  I only stop the daemon when I'm testing shutting
+> down, and upgrading source. Otherwise, I've been using reconfigure
+> without problems.
 
-Mikulas
+I may be confusing you.
+I know/understand that current reconfigure works well and if it doesn't
+work we should fix it.
 
-> multisnap_origin_iterate_devices() is failing for me with:
->  kernel: device-mapper: table: 253:0: dm-2 too small for target: start=0, len=8388608, dev_size=2097152
-> 
-> After failure to reload the origin, the remaining tables are:
-> test-testlv1: 0 8388608 linear 254:16 384
-> test-testlv1-cow: 0 2097152 linear 254:16 8388992
-> test-testlv1-real: 0 8388608 linear 254:16 384
-> 
-> 
-> The following patch fixes it for me, but it needs further cleanup
-> (duplicates method from the old snapshot code).
-> 
-> diff --git a/drivers/md/dm-multisnap.c b/drivers/md/dm-multisnap.c
-> index 5ba1af8..0644e19 100644
-> --- a/drivers/md/dm-multisnap.c
-> +++ b/drivers/md/dm-multisnap.c
-> @@ -113,6 +113,15 @@ EXPORT_SYMBOL(dm_multisnap_drop_on_error);
->  static DEFINE_MUTEX(all_multisnapshots_lock);
->  static LIST_HEAD(all_multisnapshots);
->  
-> +/*
-> + * Return the number of sectors in the device.
-> + * FIXME: duplicates dm-exception-store.h:get_dev_size
-> + */
-> +static inline sector_t get_dev_size(struct block_device *bdev)
-> +{
-> +	return i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
-> +}
-> +
->  static chunk_t sector_to_chunk(struct dm_multisnap *s, sector_t sector)
->  {
->  	return sector >> (s->chunk_shift - SECTOR_SHIFT);
-> @@ -1476,7 +1485,8 @@ static int multisnap_iterate_devices(struct dm_target *ti, struct dm_multisnap *
->  	r = fn(ti, s->origin, 0, s->origin_sectors, data);
->  
->  	if (!r)
-> -		r = fn(ti, s->snapshot, 0, s->origin_sectors, data);
-> +		r = fn(ti, s->snapshot, 0,
-> +		       get_dev_size(dm_multisnap_snapshot_bdev(s)), data);
->  
->  	return r;
->  }
-> 
+My point is that "why do you need to prevent stopping daemon
+by script-level forcibly?".
+As you mentioned above, killing the daemon through the init script
+is cleaner and more obvious.  So I think leaving something to stop
+the daemon in the init script is more friendly for admins.
+
+Thanks,
+Kiyoshi Ueda
