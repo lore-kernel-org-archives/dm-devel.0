@@ -1,19 +1,19 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Subject: Re: [PATCH] multipath: don't let init script
-	stop	multipathd for root devices
-Date: Thu, 1 Apr 2010 13:42:05 -0500
-Message-ID: <20100401184205.GK23952@ether.msp.redhat.com>
+ stop	multipathd for root devices
+Date: Fri, 02 Apr 2010 11:20:45 +0900
+Message-ID: <4BB5547D.4050502@ct.jp.nec.com>
 References: <20100325175205.GG23952@ether.msp.redhat.com>
 	<4BAC1626.3080605@ct.jp.nec.com>
 	<20100326162340.GI23952@ether.msp.redhat.com>
 	<4BB141A1.3070402@ct.jp.nec.com>
+	<20100401184205.GK23952@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4BB141A1.3070402@ct.jp.nec.com>
+In-Reply-To: <20100401184205.GK23952@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,71 +23,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Mar 30, 2010 at 09:11:13AM +0900, Kiyoshi Ueda wrote:
-> Hi Ben,
+Hi Ben,
+
+On 04/02/2010 03:42 AM +0900, Benjamin Marzinski wrote:
+> On Tue, Mar 30, 2010 at 09:11:13AM +0900, Kiyoshi Ueda wrote:
+>> Hi Ben,
+>>
+>> On 03/27/2010 01:23 AM +0900, Benjamin Marzinski wrote:
+>>> On Fri, Mar 26, 2010 at 11:04:22AM +0900, Kiyoshi Ueda wrote:
+>>>> Hi Ben,
+>>>>
+>>>> On 03/26/2010 02:52 AM +0900, Benjamin Marzinski wrote:
+>>>>> This patch modifies the redhat init script, so that it doesn't allow
+>>>>> multipathd to be stopped when the root device is on it.
+>>>> Why do you need to prevent stopping daemon by script-level forcibly?
+>>>> I think that users/developers may want to restart the daemon at their
+>>>> own risk when it starts to behave something wrong or they change
+>>>> a configuration (since "reconfigure" may not be stable feature).
+>>>>
+>>>> # Maybe others have different opinion but I often use "restart".
+>>>>
+>>>> If you need this patch anyway, please add other options to stop/restart
+>>>> the daemon forcibly.  (e.g. adding force-stop/force-restart)
+>>> I can certainly add a force-stop/force-restart.  This can currently be
+>>> accomplished by simply killing the daemon, but admittedly doing it
+>>> through the init script is cleaner and more obvious to users, and it's
+>>> necessary to allow package upgrades to immediately start using
+>>> multipathd on systems with multipathed root disks.
+>>>
+>>> However, what is there that you need to restart the daemon for that
+>>>
+>>> # service multipathd reload
+>>>
+>>> won't fix, besides upgrading the package.  If there is something, then
+>>> we should fix it.  I only stop the daemon when I'm testing shutting
+>>> down, and upgrading source. Otherwise, I've been using reconfigure
+>>> without problems.
+>> I may be confusing you.
+>> I know/understand that current reconfigure works well and if it doesn't
+>> work we should fix it.
+>>
+>> My point is that "why do you need to prevent stopping daemon
+>> by script-level forcibly?".
+>> As you mentioned above, killing the daemon through the init script
+>> is cleaner and more obvious.  So I think leaving something to stop
+>> the daemon in the init script is more friendly for admins.
 > 
-> On 03/27/2010 01:23 AM +0900, Benjamin Marzinski wrote:
-> > On Fri, Mar 26, 2010 at 11:04:22AM +0900, Kiyoshi Ueda wrote:
-> >> Hi Ben,
-> >>
-> >> On 03/26/2010 02:52 AM +0900, Benjamin Marzinski wrote:
-> >>> This patch modifies the redhat init script, so that it doesn't allow
-> >>> multipathd to be stopped when the root device is on it.
-> >> Why do you need to prevent stopping daemon by script-level forcibly?
-> >> I think that users/developers may want to restart the daemon at their
-> >> own risk when it starts to behave something wrong or they change
-> >> a configuration (since "reconfigure" may not be stable feature).
-> >>
-> >> # Maybe others have different opinion but I often use "restart".
-> >>
-> >> If you need this patch anyway, please add other options to stop/restart
-> >> the daemon forcibly.  (e.g. adding force-stop/force-restart)
-> > 
-> > I can certainly add a force-stop/force-restart.  This can currently be
-> > accomplished by simply killing the daemon, but admittedly doing it
-> > through the init script is cleaner and more obvious to users, and it's
-> > necessary to allow package upgrades to immediately start using
-> > multipathd on systems with multipathed root disks.
-> > 
-> > However, what is there that you need to restart the daemon for that
-> > 
-> > # service multipathd reload
-> > 
-> > won't fix, besides upgrading the package.  If there is something, then
-> > we should fix it.  I only stop the daemon when I'm testing shutting
-> > down, and upgrading source. Otherwise, I've been using reconfigure
-> > without problems.
+> The script only blocks stopping multipathd if the root device is
+> multipathed, since you won't be able to restart it if you lose all
+> the paths to your root device, ever for a short while.
 > 
-> I may be confusing you.
-> I know/understand that current reconfigure works well and if it doesn't
-> work we should fix it.
+> Admittedly, if you are able to run the script, you most likely currently
+> have access to your root device, and running something like
 > 
-> My point is that "why do you need to prevent stopping daemon
-> by script-level forcibly?".
-> As you mentioned above, killing the daemon through the init script
-> is cleaner and more obvious.  So I think leaving something to stop
-> the daemon in the init script is more friendly for admins.
-
-The script only blocks stopping multipathd if the root device is
-multipathed, since you won't be able to restart it if you lose all
-the paths to your root device, ever for a short while.
-
-Admittedly, if you are able to run the script, you most likely currently
-have access to your root device, and running something like
-
-# service multipathd restart
-
-is likely (but not certain) to be safe.
-
-This obviously isn't fixing a bug, so if people are against the patch,
-I'm O.K. with leaving it out.
-
--Ben
-
+> # service multipathd restart
 > 
-> Thanks,
-> Kiyoshi Ueda
+> is likely (but not certain) to be safe.
+
+Make sense.
+
+ 
+> This obviously isn't fixing a bug, so if people are against the patch,
+> I'm O.K. with leaving it out.
+
+I don't object the patch.
+I understand it's useful/friendly for admins not to allow stopping
+multipathd easily when it can cause critical problems (and Christophe
+has already commited the patch).
+
+But for more friendness for admins who know it's their own risk,
+force-stop/restart are good additional options, I think.
+
+Thanks,
+Kiyoshi Ueda
