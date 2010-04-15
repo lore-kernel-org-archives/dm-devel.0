@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 09/12] dm-raid456: support unplug
+Subject: [PATCH 12/12] dm-raid456: add message handler.
 Date: Thu, 15 Apr 2010 16:43:02 +1000
-Message-ID: <20100415064302.15646.71361.stgit@notabene.brown>
+Message-ID: <20100415064302.15646.93062.stgit@notabene.brown>
 References: <20100415062909.15646.16.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,132 +13,91 @@ To: dm-devel@redhat.com
 Cc: linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-In a similar manner to congestion checking, per-target
-unplug support for raid456 under dm.
+Support messages to:
+ - change the size of the stripe cache
+ - change the speed limiter on resync.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/dm-raid456.c       |    9 +++++++++
- drivers/md/dm-table.c         |    4 ++++
- drivers/md/raid5.c            |   11 +++++------
- drivers/md/raid5.h            |    1 +
- include/linux/device-mapper.h |    1 +
- 5 files changed, 20 insertions(+), 6 deletions(-)
+ drivers/md/dm-raid456.c |   26 ++++++++++++++++++++++++++
+ drivers/md/raid5.c      |    3 ++-
+ drivers/md/raid5.h      |    1 +
+ 3 files changed, 29 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/md/dm-raid456.c b/drivers/md/dm-raid456.c
-index 5632999..d0e44f2 100644
+index 126042d..62c2807 100644
 --- a/drivers/md/dm-raid456.c
 +++ b/drivers/md/dm-raid456.c
-@@ -153,6 +153,14 @@ static int raid_is_congested(void *v, int bits)
- 					   callbacks);
- 	return md_raid5_congested(&rs->md, bits);
+@@ -478,6 +478,31 @@ static void raid_resume(struct dm_target *ti)
+ 	mddev_resume(&rs->md);
  }
-+static void raid_unplug(void *v)
+ 
++/* Parse and handle a message from userspace
++ * Messages are:
++ *    stripecache  N  (pages per devices)
++ *    minspeed  N          (kibibytes per seconds)
++ */
++static int raid_message(struct dm_target *ti, unsigned argc, char **argv)
 +{
-+	struct target_callbacks *cb = v;
-+	struct raid_set *rs = container_of(cb, struct raid_set,
-+					   callbacks);
-+	raid5_unplug_device(rs->md.private);
++	struct raid_set *rs = ti->private;
++
++	if (argc == 2 && strcmp(argv[0], "stripecache") == 0) {
++		unsigned long size;
++		if (strict_strtoul(argv[1], 10, &size))
++			return -EINVAL;
++		return raid5_set_cache_size(&rs->md, size);
++	}
++	if (argc == 2 && strcmp(argv[0], "minspeed") == 0) {
++		unsigned long speed;
++		if (strict_strtoul(argv[1], 10, &speed))
++			return -EINVAL;
++		rs->md.sync_speed_min = speed;
++		return 0;
++	}
++	return -EINVAL;
 +}
 +
- /*
-  * Construct a RAID4/5/6 mapping:
-  * Args:
-@@ -288,6 +296,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 			goto err;
- 		clear_bit(In_sync, &rs->dev[rebuildA].rdev.flags);
- 		rs->dev[rebuildA].rdev.recovery_offset = 0;
-+	rs->callbacks.unplug_fn = raid_unplug;
- 	}
- 	if (rebuildB >= 0) {
- 		if (rs->dev[rebuildB].dev == NULL)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index b856340..cad4992 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1228,6 +1228,7 @@ void dm_table_unplug_all(struct dm_table *t)
- {
- 	struct dm_dev_internal *dd;
- 	struct list_head *devices = dm_table_get_devices(t);
-+	struct target_callbacks *cb;
- 
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->dm_dev.bdev);
-@@ -1240,6 +1241,9 @@ void dm_table_unplug_all(struct dm_table *t)
- 				     dm_device_name(t->md),
- 				     bdevname(dd->dm_dev.bdev, b));
- 	}
-+	list_for_each_entry(cb, &t->target_callbacks, list)
-+		if (cb->unplug_fn)
-+			cb->unplug_fn(cb);
- }
- 
- struct mapped_device *dm_table_get_md(struct dm_table *t)
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index fae805e..41a905b 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -364,7 +364,6 @@ static struct stripe_head *__find_stripe(raid5_conf_t *conf, sector_t sector,
- }
- 
- static void unplug_slaves(mddev_t *mddev);
--static void raid5_unplug_device(raid5_conf_t *conf);
- 
- static struct stripe_head *
- get_active_stripe(raid5_conf_t *conf, sector_t sector,
-@@ -3576,7 +3575,7 @@ static void unplug_slaves(mddev_t *mddev)
- 	rcu_read_unlock();
- }
- 
--static void raid5_unplug_device(raid5_conf_t *conf)
-+void raid5_unplug_device(raid5_conf_t *conf)
- {
- 	unsigned long flags;
- 
-@@ -3592,6 +3591,7 @@ static void raid5_unplug_device(raid5_conf_t *conf)
- 
- 	unplug_slaves(conf->mddev);
- }
-+EXPORT_SYMBOL_GPL(raid5_unplug_device);
- 
- static void raid5_unplug(struct plug_handle *plug)
- {
-@@ -5127,11 +5127,10 @@ static int run(mddev_t *mddev)
- 
- 		mddev->queue->backing_dev_info.congested_data = mddev;
- 		mddev->queue->backing_dev_info.congested_fn = raid5_congested;
--	}
--
--	mddev->queue->queue_lock = &conf->device_lock;
- 
--	mddev->queue->unplug_fn = raid5_unplug_queue;
-+		mddev->queue->queue_lock = &conf->device_lock;
-+		mddev->queue->unplug_fn = raid5_unplug_queue;
-+	}
- 
- 	chunk_size = mddev->chunk_sectors << 9;
- 	blk_queue_io_min(mddev->queue, chunk_size);
-diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
-index 4dc58bf..69dfe39 100644
---- a/drivers/md/raid5.h
-+++ b/drivers/md/raid5.h
-@@ -501,4 +501,5 @@ static inline int algorithm_is_DDF(int layout)
- 	return layout >= 8 && layout <= 10;
- }
- extern int md_raid5_congested(mddev_t *mddev, int bits);
-+extern void raid5_unplug_device(raid5_conf_t *conf);
- #endif
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 2b0f538..c6de593 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -191,6 +191,7 @@ struct dm_target {
- struct target_callbacks {
- 	struct list_head list;
- 	congested_fn *congested_fn;
-+	void (*unplug_fn)(void*);
+ static struct target_type raid_target = {
+ 	.name = "raid45",
+ 	.version = {1, 0, 0},
+@@ -490,6 +515,7 @@ static struct target_type raid_target = {
+ 	.io_hints = raid_io_hints,
+ 	.presuspend = raid_presuspend,
+ 	.resume = raid_resume,
++	.message = raid_message,
  };
  
- int dm_register_target(struct target_type *t);
+ static int __init dm_raid_init(void)
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 138f65f..805f229 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -4503,7 +4503,7 @@ raid5_show_stripe_cache_size(mddev_t *mddev, char *page)
+ 		return 0;
+ }
+ 
+-static int
++int
+ raid5_set_cache_size(mddev_t *mddev, int size)
+ {
+ 	raid5_conf_t *conf = mddev->private;
+@@ -4527,6 +4527,7 @@ raid5_set_cache_size(mddev_t *mddev, int size)
+ 	}
+ 	return 0;
+ }
++EXPORT_SYMBOL(raid5_set_cache_size);
+ 
+ static ssize_t
+ raid5_store_stripe_cache_size(mddev_t *mddev, const char *page, size_t len)
+diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
+index 69dfe39..a08c71b 100644
+--- a/drivers/md/raid5.h
++++ b/drivers/md/raid5.h
+@@ -502,4 +502,5 @@ static inline int algorithm_is_DDF(int layout)
+ }
+ extern int md_raid5_congested(mddev_t *mddev, int bits);
+ extern void raid5_unplug_device(raid5_conf_t *conf);
++extern int raid5_set_cache_size(mddev_t *mddev, int size);
+ #endif
 
 
