@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 10/12] dm-raid456: add support for setting IO hints.
+Subject: [PATCH 09/12] dm-raid456: support unplug
 Date: Thu, 15 Apr 2010 16:43:02 +1000
-Message-ID: <20100415064302.15646.3504.stgit@notabene.brown>
+Message-ID: <20100415064302.15646.71361.stgit@notabene.brown>
 References: <20100415062909.15646.16.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,108 +13,132 @@ To: dm-devel@redhat.com
 Cc: linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
+In a similar manner to congestion checking, per-target
+unplug support for raid456 under dm.
+
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/dm-raid456.c |   33 +++++++++++++++++++++++++++++++++
- drivers/md/raid5.c      |   19 ++++++++++---------
- 2 files changed, 43 insertions(+), 9 deletions(-)
+ drivers/md/dm-raid456.c       |    9 +++++++++
+ drivers/md/dm-table.c         |    4 ++++
+ drivers/md/raid5.c            |   11 +++++------
+ drivers/md/raid5.h            |    1 +
+ include/linux/device-mapper.h |    1 +
+ 5 files changed, 20 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/md/dm-raid456.c b/drivers/md/dm-raid456.c
-index d0e44f2..071a8ae 100644
+index 5632999..d0e44f2 100644
 --- a/drivers/md/dm-raid456.c
 +++ b/drivers/md/dm-raid456.c
-@@ -434,6 +434,37 @@ static int raid_status(struct dm_target *ti, status_type_t type,
- 	return 0;
+@@ -153,6 +153,14 @@ static int raid_is_congested(void *v, int bits)
+ 					   callbacks);
+ 	return md_raid5_congested(&rs->md, bits);
  }
- 
-+static int raid_iterate_devices(struct dm_target *ti,
-+				iterate_devices_callout_fn fn,
-+				void *data)
++static void raid_unplug(void *v)
 +{
-+	struct raid_set *rs = ti->private;
-+	int ret = 0;
-+	unsigned i = 0;
-+
-+	for (i=0; !ret && i < rs->md.raid_disks; i++)
-+		if (rs->dev[i].dev)
-+			ret = fn(ti,
-+				 rs->dev[i].dev,
-+				 rs->dev[i].rdev.data_offset,
-+				 rs->md.dev_sectors,
-+				 data);
-+
-+	return ret;
++	struct target_callbacks *cb = v;
++	struct raid_set *rs = container_of(cb, struct raid_set,
++					   callbacks);
++	raid5_unplug_device(rs->md.private);
 +}
 +
-+static void raid_io_hints(struct dm_target *ti,
-+			  struct queue_limits *limits)
-+{
-+	struct raid_set *rs = ti->private;
-+	unsigned chunk_size = rs->md.chunk_sectors << 9;
-+	raid5_conf_t *conf = rs->md.private;
-+
-+	blk_limits_io_min(limits, chunk_size);
-+	blk_limits_io_opt(limits, chunk_size *
-+			  (conf->raid_disks - conf->max_degraded));
-+}			  
-+
- static struct target_type raid_target = {
- 	.name = "raid45",
- 	.version = {1, 0, 0},
-@@ -442,6 +473,8 @@ static struct target_type raid_target = {
- 	.dtr = raid_dtr,
- 	.map = raid_map,
- 	.status = raid_status,
-+	.iterate_devices = raid_iterate_devices,
-+	.io_hints = raid_io_hints,
- };
+ /*
+  * Construct a RAID4/5/6 mapping:
+  * Args:
+@@ -288,6 +296,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 			goto err;
+ 		clear_bit(In_sync, &rs->dev[rebuildA].rdev.flags);
+ 		rs->dev[rebuildA].rdev.recovery_offset = 0;
++	rs->callbacks.unplug_fn = raid_unplug;
+ 	}
+ 	if (rebuildB >= 0) {
+ 		if (rs->dev[rebuildB].dev == NULL)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index b856340..cad4992 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1228,6 +1228,7 @@ void dm_table_unplug_all(struct dm_table *t)
+ {
+ 	struct dm_dev_internal *dd;
+ 	struct list_head *devices = dm_table_get_devices(t);
++	struct target_callbacks *cb;
  
- static int __init dm_raid_init(void)
+ 	list_for_each_entry(dd, devices, list) {
+ 		struct request_queue *q = bdev_get_queue(dd->dm_dev.bdev);
+@@ -1240,6 +1241,9 @@ void dm_table_unplug_all(struct dm_table *t)
+ 				     dm_device_name(t->md),
+ 				     bdevname(dd->dm_dev.bdev, b));
+ 	}
++	list_for_each_entry(cb, &t->target_callbacks, list)
++		if (cb->unplug_fn)
++			cb->unplug_fn(cb);
+ }
+ 
+ struct mapped_device *dm_table_get_md(struct dm_table *t)
 diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 41a905b..138f65f 100644
+index fae805e..41a905b 100644
 --- a/drivers/md/raid5.c
 +++ b/drivers/md/raid5.c
-@@ -4906,7 +4906,7 @@ static int only_parity(int raid_disk, int algo, int raid_disks, int max_degraded
- static int run(mddev_t *mddev)
+@@ -364,7 +364,6 @@ static struct stripe_head *__find_stripe(raid5_conf_t *conf, sector_t sector,
+ }
+ 
+ static void unplug_slaves(mddev_t *mddev);
+-static void raid5_unplug_device(raid5_conf_t *conf);
+ 
+ static struct stripe_head *
+ get_active_stripe(raid5_conf_t *conf, sector_t sector,
+@@ -3576,7 +3575,7 @@ static void unplug_slaves(mddev_t *mddev)
+ 	rcu_read_unlock();
+ }
+ 
+-static void raid5_unplug_device(raid5_conf_t *conf)
++void raid5_unplug_device(raid5_conf_t *conf)
  {
- 	raid5_conf_t *conf;
--	int working_disks = 0, chunk_size;
-+	int working_disks = 0;
- 	int dirty_parity_disks = 0;
- 	mdk_rdev_t *rdev;
- 	sector_t reshape_offset = 0;
-@@ -5113,6 +5113,7 @@ static int run(mddev_t *mddev)
- 	plugger_init(&conf->plug, raid5_unplug);
- 	mddev->plug = &conf->plug;
- 	if (mddev->queue) {
-+		int chunk_size;
- 		/* read-ahead size must cover two whole stripes, which
- 		 * is 2 * (datadisks) * chunksize where 'n' is the
- 		 * number of raid devices
-@@ -5130,16 +5131,16 @@ static int run(mddev_t *mddev)
+ 	unsigned long flags;
  
- 		mddev->queue->queue_lock = &conf->device_lock;
- 		mddev->queue->unplug_fn = raid5_unplug_queue;
+@@ -3592,6 +3591,7 @@ static void raid5_unplug_device(raid5_conf_t *conf)
+ 
+ 	unplug_slaves(conf->mddev);
+ }
++EXPORT_SYMBOL_GPL(raid5_unplug_device);
+ 
+ static void raid5_unplug(struct plug_handle *plug)
+ {
+@@ -5127,11 +5127,10 @@ static int run(mddev_t *mddev)
+ 
+ 		mddev->queue->backing_dev_info.congested_data = mddev;
+ 		mddev->queue->backing_dev_info.congested_fn = raid5_congested;
 -	}
+-
+-	mddev->queue->queue_lock = &conf->device_lock;
  
--	chunk_size = mddev->chunk_sectors << 9;
--	blk_queue_io_min(mddev->queue, chunk_size);
--	blk_queue_io_opt(mddev->queue, chunk_size *
--			 (conf->raid_disks - conf->max_degraded));
-+		chunk_size = mddev->chunk_sectors << 9;
-+		blk_queue_io_min(mddev->queue, chunk_size);
-+		blk_queue_io_opt(mddev->queue, chunk_size *
-+				 (conf->raid_disks - conf->max_degraded));
- 
--	list_for_each_entry(rdev, &mddev->disks, same_set)
--		disk_stack_limits(mddev->gendisk, rdev->bdev,
--				  rdev->data_offset << 9);
-+		list_for_each_entry(rdev, &mddev->disks, same_set)
-+			disk_stack_limits(mddev->gendisk, rdev->bdev,
-+					  rdev->data_offset << 9);
+-	mddev->queue->unplug_fn = raid5_unplug_queue;
++		mddev->queue->queue_lock = &conf->device_lock;
++		mddev->queue->unplug_fn = raid5_unplug_queue;
 +	}
  
- 	return 0;
- abort:
+ 	chunk_size = mddev->chunk_sectors << 9;
+ 	blk_queue_io_min(mddev->queue, chunk_size);
+diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
+index 4dc58bf..69dfe39 100644
+--- a/drivers/md/raid5.h
++++ b/drivers/md/raid5.h
+@@ -501,4 +501,5 @@ static inline int algorithm_is_DDF(int layout)
+ 	return layout >= 8 && layout <= 10;
+ }
+ extern int md_raid5_congested(mddev_t *mddev, int bits);
++extern void raid5_unplug_device(raid5_conf_t *conf);
+ #endif
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 2b0f538..c6de593 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -191,6 +191,7 @@ struct dm_target {
+ struct target_callbacks {
+ 	struct list_head list;
+ 	congested_fn *congested_fn;
++	void (*unplug_fn)(void*);
+ };
+ 
+ int dm_register_target(struct target_type *t);
 
 
