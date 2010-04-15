@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 06/12] dm-raid456: add congestion checking.
+Subject: [PATCH 07/12] md/raid5: add simple plugging infrastructure.
 Date: Thu, 15 Apr 2010 16:43:02 +1000
-Message-ID: <20100415064302.15646.30471.stgit@notabene.brown>
+Message-ID: <20100415064302.15646.81656.stgit@notabene.brown>
 References: <20100415062909.15646.16.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,230 +13,249 @@ To: dm-devel@redhat.com
 Cc: linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-dm currently implements congestion checking by checking on congestion
-in each component device.
+md/raid5 uses the plugging infrastructure provided by the block layer
+and 'struct request_queue'.  However when we plug raid5 under dm there
+is no request queue so we cannot use that.
 
-For raid456 we need to also check if the stripe cache is congested.
-So add support to dm for a target to register a congestion checker,
-then registered such a checker for dm-raid456.
-
-We add support for multiple callbacks as we will need one for unplug
-too.
-
-Finally, we move the setting for congested_fn for the mddev->queue
-into the "if (mddev->queue)" protected branch as it is not needed
-for dm-raid456 now.
+So create a similar infrastructure that is much lighter weight and use
+it for raid5.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/dm-raid456.c       |   13 +++++++++++++
- drivers/md/dm-table.c         |   15 +++++++++++++++
- drivers/md/raid5.c            |   22 +++++++++++++++-------
- drivers/md/raid5.h            |    1 +
- include/linux/device-mapper.h |   12 ++++++++++++
- 5 files changed, 56 insertions(+), 7 deletions(-)
+ drivers/md/md.c    |   45 +++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/md.h    |   21 +++++++++++++++++++++
+ drivers/md/raid5.c |   39 +++++++++++++++++++++++++--------------
+ drivers/md/raid5.h |    3 +++
+ 4 files changed, 94 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/md/dm-raid456.c b/drivers/md/dm-raid456.c
-index 373784d..5632999 100644
---- a/drivers/md/dm-raid456.c
-+++ b/drivers/md/dm-raid456.c
-@@ -16,6 +16,7 @@ struct raid_set {
- 	struct dm_target *ti;
- 	struct mddev_s md;
- 	struct raid_type *raid_type;
-+	struct target_callbacks callbacks;
- 	struct raid_dev dev[0];
- };
- 
-@@ -145,6 +146,13 @@ static void do_table_event(struct work_struct *ws)
- 	dm_table_event(rs->ti->table);
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 2042b1c..49336e7 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -383,6 +383,51 @@ void md_barrier_request(mddev_t *mddev, struct bio *bio)
  }
+ EXPORT_SYMBOL(md_barrier_request);
  
-+static int raid_is_congested(void *v, int bits)
++/* Support for plugging.
++ * This mirrors the plugging support in request_queue, but does not
++ * require having a whole queue
++ */
++static void plugger_work(struct work_struct *work)
 +{
-+	struct target_callbacks *cb = v;
-+	struct raid_set *rs = container_of(cb, struct raid_set,
-+					   callbacks);
-+	return md_raid5_congested(&rs->md, bits);
++	struct plug_handle *plug =
++		container_of(work, struct plug_handle, unplug_work);
++	plug->unplug_fn(plug);
 +}
++static void plugger_timeout(unsigned long data)
++{
++	struct plug_handle *plug = (void*)data;
++	kblockd_schedule_work(NULL, &plug->unplug_work);
++}
++void plugger_init(struct plug_handle *plug,
++		  void (*unplug_fn)(struct plug_handle *))
++{
++	plug->unplug_flag = 0;
++	plug->unplug_fn = unplug_fn;
++	init_timer(&plug->unplug_timer);
++	plug->unplug_timer.function = plugger_timeout;
++	plug->unplug_timer.data = (unsigned long)plug;
++	INIT_WORK(&plug->unplug_work, plugger_work);
++}
++EXPORT_SYMBOL_GPL(plugger_init);
++
++void plugger_set_plug(struct plug_handle *plug)
++{
++	if (!test_and_set_bit(PLUGGED_FLAG, &plug->unplug_flag))
++		mod_timer(&plug->unplug_timer, jiffies + msecs_to_jiffies(3)+1);
++}
++EXPORT_SYMBOL_GPL(plugger_set_plug);
++
++int plugger_remove_plug(struct plug_handle *plug)
++{
++	if (test_and_clear_bit(PLUGGED_FLAG, &plug->unplug_flag)) {
++		del_timer(&plug->unplug_timer);
++		return 1;
++	} else
++		return 0;
++}
++EXPORT_SYMBOL_GPL(plugger_remove_plug);
++
++
+ static inline mddev_t *mddev_get(mddev_t *mddev)
+ {
+ 	atomic_inc(&mddev->active);
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 09a2881..1c14c33 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -29,6 +29,26 @@
+ typedef struct mddev_s mddev_t;
+ typedef struct mdk_rdev_s mdk_rdev_t;
+ 
++/* generic plugging support - like that provided with request_queue,
++ * but does not require a request_queue
++ */
++struct plug_handle {
++	void 	(*unplug_fn)(struct plug_handle *);
++	struct timer_list	unplug_timer;
++	struct work_struct	unplug_work;
++	unsigned long		unplug_flag;
++};
++#define	PLUGGED_FLAG 1
++void plugger_init(struct plug_handle *plug,
++		  void (*unplug_fn)(struct plug_handle *));
++void plugger_set_plug(struct plug_handle *plug);
++int plugger_remove_plug(struct plug_handle *plug);
++static inline void plugger_flush(struct plug_handle *plug)
++{
++	del_timer_sync(&plug->unplug_timer);
++	cancel_work_sync(&plug->unplug_work);
++}
++
  /*
-  * Construct a RAID4/5/6 mapping:
-  * Args:
-@@ -308,6 +316,10 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	
- 	if (errnum)
- 		goto err;
-+
-+	rs->callbacks.congested_fn = raid_is_congested;
-+	dm_table_add_callbacks(ti->table, &rs->callbacks);
-+
- 	return 0;
- err:
- 	if (rs)
-@@ -320,6 +332,7 @@ static void raid_dtr(struct dm_target *ti)
- {
- 	struct raid_set *rs = ti->private;
- 
-+	list_del_init(&rs->callbacks.list);
- 	md_stop(&rs->md);
- 	context_free(rs);
- }
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 9924ea2..b856340 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -68,6 +68,8 @@ struct dm_table {
- 	void (*event_fn)(void *);
- 	void *event_context;
- 
-+	struct list_head target_callbacks;
-+
- 	struct dm_md_mempools *mempools;
- };
- 
-@@ -202,6 +204,7 @@ int dm_table_create(struct dm_table **result, fmode_t mode,
- 		return -ENOMEM;
- 
- 	INIT_LIST_HEAD(&t->devices);
-+	INIT_LIST_HEAD(&t->target_callbacks);
- 	atomic_set(&t->holders, 0);
- 
- 	if (!num_targets)
-@@ -1174,10 +1177,18 @@ int dm_table_resume_targets(struct dm_table *t)
- 	return 0;
+  * MD's 'extended' device
+  */
+@@ -449,6 +469,7 @@ static inline void safe_put_page(struct page *p)
+ 	if (p) put_page(p);
  }
  
-+void dm_table_add_callbacks(struct dm_table *t,
-+			    struct target_callbacks *cb)
-+{
-+	list_add(&cb->list, &t->target_callbacks);
-+}
-+EXPORT_SYMBOL_GPL(dm_table_add_callbacks);
 +
- int dm_table_any_congested(struct dm_table *t, int bdi_bits)
- {
- 	struct dm_dev_internal *dd;
- 	struct list_head *devices = dm_table_get_devices(t);
-+	struct target_callbacks *cb;
- 	int r = 0;
- 
- 	list_for_each_entry(dd, devices, list) {
-@@ -1192,6 +1203,10 @@ int dm_table_any_congested(struct dm_table *t, int bdi_bits)
- 				     bdevname(dd->dm_dev.bdev, b));
- 	}
- 
-+	list_for_each_entry(cb, &t->target_callbacks, list)
-+		if (cb->congested_fn)
-+			r |= cb->congested_fn(cb, bdi_bits);
-+
- 	return r;
- }
- 
+ extern int register_md_personality(struct mdk_personality *p);
+ extern int unregister_md_personality(struct mdk_personality *p);
+ extern mdk_thread_t * md_register_thread(void (*run) (mddev_t *mddev),
 diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 3e97950..aaaed29 100644
+index aaaed29..ac63012 100644
 --- a/drivers/md/raid5.c
 +++ b/drivers/md/raid5.c
-@@ -3595,17 +3595,14 @@ static void raid5_unplug_device(struct request_queue *q)
- 	unplug_slaves(mddev);
+@@ -200,11 +200,11 @@ static void __release_stripe(raid5_conf_t *conf, struct stripe_head *sh)
+ 		if (test_bit(STRIPE_HANDLE, &sh->state)) {
+ 			if (test_bit(STRIPE_DELAYED, &sh->state)) {
+ 				list_add_tail(&sh->lru, &conf->delayed_list);
+-				blk_plug_device(conf->mddev->queue);
++				plugger_set_plug(&conf->plug);
+ 			} else if (test_bit(STRIPE_BIT_DELAY, &sh->state) &&
+ 				   sh->bm_seq - conf->seq_write > 0) {
+ 				list_add_tail(&sh->lru, &conf->bitmap_list);
+-				blk_plug_device(conf->mddev->queue);
++				plugger_set_plug(&conf->plug);
+ 			} else {
+ 				clear_bit(STRIPE_BIT_DELAY, &sh->state);
+ 				list_add_tail(&sh->lru, &conf->handle_list);
+@@ -364,7 +364,7 @@ static struct stripe_head *__find_stripe(raid5_conf_t *conf, sector_t sector,
  }
  
--static int raid5_congested(void *data, int bits)
-+int md_raid5_congested(mddev_t *mddev, int bits)
+ static void unplug_slaves(mddev_t *mddev);
+-static void raid5_unplug_device(struct request_queue *q);
++static void raid5_unplug_device(raid5_conf_t *conf);
+ 
+ static struct stripe_head *
+ get_active_stripe(raid5_conf_t *conf, sector_t sector,
+@@ -394,7 +394,7 @@ get_active_stripe(raid5_conf_t *conf, sector_t sector,
+ 						     < (conf->max_nr_stripes *3/4)
+ 						     || !conf->inactive_blocked),
+ 						    conf->device_lock,
+-						    raid5_unplug_device(conf->mddev->queue)
++						    raid5_unplug_device(conf)
+ 					);
+ 				conf->inactive_blocked = 0;
+ 			} else
+@@ -3535,7 +3535,7 @@ static void raid5_activate_delayed(raid5_conf_t *conf)
+ 			list_add_tail(&sh->lru, &conf->hold_list);
+ 		}
+ 	} else
+-		blk_plug_device(conf->mddev->queue);
++		plugger_set_plug(&conf->plug);
+ }
+ 
+ static void activate_bit_delay(raid5_conf_t *conf)
+@@ -3576,23 +3576,33 @@ static void unplug_slaves(mddev_t *mddev)
+ 	rcu_read_unlock();
+ }
+ 
+-static void raid5_unplug_device(struct request_queue *q)
++static void raid5_unplug_device(raid5_conf_t *conf)
  {
--	mddev_t *mddev = data;
- 	raid5_conf_t *conf = mddev->private;
+-	mddev_t *mddev = q->queuedata;
+-	raid5_conf_t *conf = mddev->private;
+ 	unsigned long flags;
  
- 	/* No difference between reads and writes.  Just check
- 	 * how busy the stripe_cache is
- 	 */
+ 	spin_lock_irqsave(&conf->device_lock, flags);
  
--	if (mddev_congested(mddev, bits))
--		return 1;
- 	if (conf->inactive_blocked)
- 		return 1;
- 	if (conf->quiesce)
-@@ -3615,6 +3612,15 @@ static int raid5_congested(void *data, int bits)
- 
- 	return 0;
- }
-+EXPORT_SYMBOL_GPL(md_raid5_congested);
-+
-+static int raid5_congested(void *data, int bits)
-+{
-+	mddev_t *mddev = data;
-+
-+	return mddev_congested(mddev, bits) ||
-+		md_raid5_congested(mddev, bits);
-+}
- 
- /* We want read requests to align with chunks where possible,
-  * but write requests don't need to.
-@@ -5106,13 +5112,14 @@ static int run(mddev_t *mddev)
- 			mddev->queue->backing_dev_info.ra_pages = 2 * stripe;
- 
- 		blk_queue_merge_bvec(mddev->queue, raid5_mergeable_bvec);
-+
-+		mddev->queue->backing_dev_info.congested_data = mddev;
-+		mddev->queue->backing_dev_info.congested_fn = raid5_congested;
+-	if (blk_remove_plug(q)) {
++	if (plugger_remove_plug(&conf->plug)) {
+ 		conf->seq_flush++;
+ 		raid5_activate_delayed(conf);
  	}
+-	md_wakeup_thread(mddev->thread);
++	md_wakeup_thread(conf->mddev->thread);
+ 
+ 	spin_unlock_irqrestore(&conf->device_lock, flags);
+ 
+-	unplug_slaves(mddev);
++	unplug_slaves(conf->mddev);
++}
++
++static void raid5_unplug(struct plug_handle *plug)
++{
++	raid5_conf_t *conf = container_of(plug, raid5_conf_t, plug);
++	raid5_unplug_device(conf);
++}
++	
++static void raid5_unplug_queue(struct request_queue *q)
++{
++	mddev_t *mddev = q->queuedata;
++	raid5_unplug_device(mddev->private);
+ }
+ 
+ int md_raid5_congested(mddev_t *mddev, int bits)
+@@ -4002,7 +4012,7 @@ static int make_request(mddev_t *mddev, struct bio * bi)
+ 				 * add failed due to overlap.  Flush everything
+ 				 * and wait a while
+ 				 */
+-				raid5_unplug_device(mddev->queue);
++				raid5_unplug_device(conf);
+ 				release_stripe(sh);
+ 				schedule();
+ 				goto retry;
+@@ -5100,6 +5110,7 @@ static int run(mddev_t *mddev)
+ 		       mdname(mddev));
+ 	md_set_array_sectors(mddev, raid5_size(mddev, 0, 0));
+ 
++	plugger_init(&conf->plug, raid5_unplug);
+ 	if (mddev->queue) {
+ 		/* read-ahead size must cover two whole stripes, which
+ 		 * is 2 * (datadisks) * chunksize where 'n' is the
+@@ -5119,7 +5130,7 @@ static int run(mddev_t *mddev)
  
  	mddev->queue->queue_lock = &conf->device_lock;
  
- 	mddev->queue->unplug_fn = raid5_unplug_device;
--	mddev->queue->backing_dev_info.congested_data = mddev;
--	mddev->queue->backing_dev_info.congested_fn = raid5_congested;
+-	mddev->queue->unplug_fn = raid5_unplug_device;
++	mddev->queue->unplug_fn = raid5_unplug_queue;
  
  	chunk_size = mddev->chunk_sectors << 9;
  	blk_queue_io_min(mddev->queue, chunk_size);
-@@ -5144,7 +5151,8 @@ static int stop(mddev_t *mddev)
- 
- 	md_unregister_thread(mddev->thread);
+@@ -5153,7 +5164,7 @@ static int stop(mddev_t *mddev)
  	mddev->thread = NULL;
--	mddev->queue->backing_dev_info.congested_fn = NULL;
-+	if (mddev->queue)
-+		mddev->queue->backing_dev_info.congested_fn = NULL;
- 	blk_sync_queue(mddev->queue); /* the unplug fn references 'conf'*/
+ 	if (mddev->queue)
+ 		mddev->queue->backing_dev_info.congested_fn = NULL;
+-	blk_sync_queue(mddev->queue); /* the unplug fn references 'conf'*/
++	plugger_flush(&conf->plug); /* the unplug fn references 'conf'*/
  	free_conf(conf);
  	mddev->private = NULL;
+ 	mddev->to_remove = &raid5_attrs_group;
 diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
-index 0f86f5e..6641789 100644
+index 6641789..4dc58bf 100644
 --- a/drivers/md/raid5.h
 +++ b/drivers/md/raid5.h
-@@ -497,4 +497,5 @@ static inline int algorithm_is_DDF(int layout)
- {
- 	return layout >= 8 && layout <= 10;
- }
-+extern int md_raid5_congested(mddev_t *mddev, int bits);
- #endif
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 1381cd9..2b0f538 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -187,6 +187,12 @@ struct dm_target {
- 	char *error;
- };
- 
-+/* Each target can link one of these into the table */
-+struct target_callbacks {
-+	struct list_head list;
-+	congested_fn *congested_fn;
-+};
+@@ -398,6 +398,9 @@ struct raid5_private_data {
+ 					    * (fresh device added).
+ 					    * Cleared when a sync completes.
+ 					    */
 +
- int dm_register_target(struct target_type *t);
- void dm_unregister_target(struct target_type *t);
- 
-@@ -263,6 +269,12 @@ int dm_table_add_target(struct dm_table *t, const char *type,
- 			sector_t start, sector_t len, char *params);
- 
- /*
-+ * Target_ctr should call this if they need to add any
-+ * callback
-+ */
-+void dm_table_add_callbacks(struct dm_table *t,
-+			    struct target_callbacks *cb);
-+/*
-  * Finally call this to make the table ready for use.
-  */
- int dm_table_complete(struct dm_table *t);
++	struct plug_handle	plug;
++
+ 	/* per cpu variables */
+ 	struct raid5_percpu {
+ 		struct page	*spare_page; /* Used when checking P/Q in raid6 */
 
 
