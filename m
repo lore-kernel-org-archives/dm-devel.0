@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 11/12] dm-raid456: add suspend/resume method
+Subject: [PATCH 10/12] dm-raid456: add support for setting IO hints.
 Date: Thu, 15 Apr 2010 16:43:02 +1000
-Message-ID: <20100415064302.15646.44263.stgit@notabene.brown>
+Message-ID: <20100415064302.15646.3504.stgit@notabene.brown>
 References: <20100415062909.15646.16.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,89 +13,108 @@ To: dm-devel@redhat.com
 Cc: linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-These just call in to the md methods.
-
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/dm-raid456.c |   15 +++++++++++++++
- drivers/md/md.c         |    6 ++++--
- drivers/md/md.h         |    3 +++
- 3 files changed, 22 insertions(+), 2 deletions(-)
+ drivers/md/dm-raid456.c |   33 +++++++++++++++++++++++++++++++++
+ drivers/md/raid5.c      |   19 ++++++++++---------
+ 2 files changed, 43 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/md/dm-raid456.c b/drivers/md/dm-raid456.c
-index 071a8ae..126042d 100644
+index d0e44f2..071a8ae 100644
 --- a/drivers/md/dm-raid456.c
 +++ b/drivers/md/dm-raid456.c
-@@ -465,6 +465,19 @@ static void raid_io_hints(struct dm_target *ti,
- 			  (conf->raid_disks - conf->max_degraded));
- }			  
+@@ -434,6 +434,37 @@ static int raid_status(struct dm_target *ti, status_type_t type,
+ 	return 0;
+ }
  
-+static void raid_presuspend(struct dm_target *ti)
++static int raid_iterate_devices(struct dm_target *ti,
++				iterate_devices_callout_fn fn,
++				void *data)
 +{
 +	struct raid_set *rs = ti->private;
-+	mddev_suspend(&rs->md);
++	int ret = 0;
++	unsigned i = 0;
++
++	for (i=0; !ret && i < rs->md.raid_disks; i++)
++		if (rs->dev[i].dev)
++			ret = fn(ti,
++				 rs->dev[i].dev,
++				 rs->dev[i].rdev.data_offset,
++				 rs->md.dev_sectors,
++				 data);
++
++	return ret;
 +}
 +
-+static void raid_resume(struct dm_target *ti)
++static void raid_io_hints(struct dm_target *ti,
++			  struct queue_limits *limits)
 +{
 +	struct raid_set *rs = ti->private;
++	unsigned chunk_size = rs->md.chunk_sectors << 9;
++	raid5_conf_t *conf = rs->md.private;
 +
-+	mddev_resume(&rs->md);
-+}
++	blk_limits_io_min(limits, chunk_size);
++	blk_limits_io_opt(limits, chunk_size *
++			  (conf->raid_disks - conf->max_degraded));
++}			  
 +
  static struct target_type raid_target = {
  	.name = "raid45",
  	.version = {1, 0, 0},
-@@ -475,6 +488,8 @@ static struct target_type raid_target = {
+@@ -442,6 +473,8 @@ static struct target_type raid_target = {
+ 	.dtr = raid_dtr,
+ 	.map = raid_map,
  	.status = raid_status,
- 	.iterate_devices = raid_iterate_devices,
- 	.io_hints = raid_io_hints,
-+	.presuspend = raid_presuspend,
-+	.resume = raid_resume,
++	.iterate_devices = raid_iterate_devices,
++	.io_hints = raid_io_hints,
  };
  
  static int __init dm_raid_init(void)
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index b292dc5..098f72c 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -260,7 +260,7 @@ static int md_make_request(struct request_queue *q, struct bio *bio)
-  * Once ->stop is called and completes, the module will be completely
-  * unused.
-  */
--static void mddev_suspend(mddev_t *mddev)
-+void mddev_suspend(mddev_t *mddev)
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 41a905b..138f65f 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -4906,7 +4906,7 @@ static int only_parity(int raid_disk, int algo, int raid_disks, int max_degraded
+ static int run(mddev_t *mddev)
  {
- 	BUG_ON(mddev->suspended);
- 	mddev->suspended = 1;
-@@ -268,13 +268,15 @@ static void mddev_suspend(mddev_t *mddev)
- 	wait_event(mddev->sb_wait, atomic_read(&mddev->active_io) == 0);
- 	mddev->pers->quiesce(mddev, 1);
- }
-+EXPORT_SYMBOL_GPL(mddev_suspend);
+ 	raid5_conf_t *conf;
+-	int working_disks = 0, chunk_size;
++	int working_disks = 0;
+ 	int dirty_parity_disks = 0;
+ 	mdk_rdev_t *rdev;
+ 	sector_t reshape_offset = 0;
+@@ -5113,6 +5113,7 @@ static int run(mddev_t *mddev)
+ 	plugger_init(&conf->plug, raid5_unplug);
+ 	mddev->plug = &conf->plug;
+ 	if (mddev->queue) {
++		int chunk_size;
+ 		/* read-ahead size must cover two whole stripes, which
+ 		 * is 2 * (datadisks) * chunksize where 'n' is the
+ 		 * number of raid devices
+@@ -5130,16 +5131,16 @@ static int run(mddev_t *mddev)
  
--static void mddev_resume(mddev_t *mddev)
-+void mddev_resume(mddev_t *mddev)
- {
- 	mddev->suspended = 0;
- 	wake_up(&mddev->sb_wait);
- 	mddev->pers->quiesce(mddev, 0);
- }
-+EXPORT_SYMBOL_GPL(mddev_resume);
+ 		mddev->queue->queue_lock = &conf->device_lock;
+ 		mddev->queue->unplug_fn = raid5_unplug_queue;
+-	}
  
- int mddev_congested(mddev_t *mddev, int bits)
- {
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index e4f60ae..fac75bd 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -506,4 +506,7 @@ extern void mddev_init(mddev_t *mddev);
- extern int md_run(mddev_t *mddev);
- extern void md_stop(mddev_t *mddev);
- extern void md_rdev_init(mdk_rdev_t *rdev);
-+
-+extern void mddev_suspend(mddev_t *mddev);
-+extern void mddev_resume(mddev_t *mddev);
- #endif /* _MD_MD_H */
+-	chunk_size = mddev->chunk_sectors << 9;
+-	blk_queue_io_min(mddev->queue, chunk_size);
+-	blk_queue_io_opt(mddev->queue, chunk_size *
+-			 (conf->raid_disks - conf->max_degraded));
++		chunk_size = mddev->chunk_sectors << 9;
++		blk_queue_io_min(mddev->queue, chunk_size);
++		blk_queue_io_opt(mddev->queue, chunk_size *
++				 (conf->raid_disks - conf->max_degraded));
+ 
+-	list_for_each_entry(rdev, &mddev->disks, same_set)
+-		disk_stack_limits(mddev->gendisk, rdev->bdev,
+-				  rdev->data_offset << 9);
++		list_for_each_entry(rdev, &mddev->disks, same_set)
++			disk_stack_limits(mddev->gendisk, rdev->bdev,
++					  rdev->data_offset << 9);
++	}
+ 
+ 	return 0;
+ abort:
 
 
