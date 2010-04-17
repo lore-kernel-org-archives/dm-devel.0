@@ -1,16 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] multipath_tools: add alias while printing
- checker_message
-Date: Sat, 17 Apr 2010 13:17:46 +0200
-Message-ID: <1271503066.9079.21.camel@localhost>
+From: brem belguebli <brem.belguebli@gmail.com>
+Subject: multipath blocking a single path making multipath -ll ,
+ lvm commands go to D state
+Date: Sat, 17 Apr 2010 22:26:55 +0200
+Message-ID: <1271536015.5449.115.camel@localhost>
 References: <E463DF2B2E584B4A82673F53D62C2EF48D088D7E@cosmail01.lsi.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+	<1271503066.9079.21.camel@localhost>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF48D088D7E@cosmail01.lsi.com>
+In-Reply-To: <1271503066.9079.21.camel@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,42 +23,22 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-You're right,
-Applied
+Hello,
 
-On mar., 2010-04-13 at 09:21 -0600, Moger, Babu wrote:
-> This patch adds alias while printing checker messages. 
-> Example of current Checker message. 
-> 
-> Apr 11 04:03:53 mymachine multipathd: sde: rdac checker reports path is down
-> 
-> Most of the time "sde" is meaningless when debugging the past failures. 
-> 
-> This patch add alias before the checker message..  
-> Example of the new message..
-> 
-> Apr 12 16:55:54 mymachine multipathd: mpathb: sde - rdac checker reports path is down
-> 
-> Signed-off-by: Babu Moger <babu.moger@lsi.com>
-> Reviewed-by: Vijay Chauhan <Vijay.Chauhan@lsi.com>
-> 
-> ---
-> --- multipath-tools/multipathd/main.c.orig	2010-04-12 13:58:27.000000000 -0500
-> +++ multipath-tools/multipathd/main.c	2010-04-12 14:01:08.000000000 -0500
-> @@ -61,7 +61,7 @@
->  #define CMDSIZE 160
->  
->  #define LOG_MSG(a,b) \
-> -	if (strlen(b)) condlog(a, "%s: %s", pp->dev, b);
-> +	if (strlen(b)) condlog(a, "%s: %s - %s", pp->mpp->alias, pp->dev, b);
->  
->  pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
->  pthread_mutex_t exit_mutex = PTHREAD_MUTEX_INITIALIZER;
-> 
-> 
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+I'm trying to troubleshoot a problem we had on RHEL 5.x (dm-mp 0.4.7.x).
+
+When a path of a multipath'd device is in blocked state (echo blocked
+> /sys/bus/sdX/device/state), multipath -ll, lvm (vgs, ...) go to D
+state rendering the whole thing unresponsive (global wait ratio hitting
+100%). 
+
+Tried to figure out if newer versions of dm-mp are affected, and tried
+the same test on a fedora 12 box (dm-mp 0.4.9-6) and got the same
+results.
+
+device timeout is set to 30, queue_depth is 16, multipath configuration
+set to "no_path_retry fail".
+
+Nothing in syslog or anything that could help
+
+Thanks
