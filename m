@@ -1,15 +1,16 @@
 From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: multipath-tools libmultipath/devmapper.c libmu ...
-Date: Sat, 17 Apr 2010 13:16:31 +0200
-Message-ID: <1271502991.9079.20.camel@localhost>
-References: <20100416220803.19055.qmail@sourceware.org>
+Subject: Re: [PATCH] multipath_tools: add alias while printing
+ checker_message
+Date: Sat, 17 Apr 2010 13:17:46 +0200
+Message-ID: <1271503066.9079.21.camel@localhost>
+References: <E463DF2B2E584B4A82673F53D62C2EF48D088D7E@cosmail01.lsi.com>
 Reply-To: christophe.varoqui@opensvc.com,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100416220803.19055.qmail@sourceware.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF48D088D7E@cosmail01.lsi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,160 +23,40 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Ben,
+You're right,
+Applied
 
-upstream has 1.2.8 as a minimum lib version.
-I see in this patch you chose 1.2.11 instead.
-
-Should upstream also bump the min lib version ? If so, what's the
-feature introduced between .8 and .11 that justifies the bump ?
-
-Thanks,
-cvaroqui
-
-On ven., 2010-04-16 at 22:08 +0000, bmarzins@sourceware.org wrote:
-> CVSROOT:	/cvs/dm
-> Module name:	multipath-tools
-> Branch: 	RHEL5_FC6
-> Changes by:	bmarzins@sourceware.org	2010-04-16 22:08:03
+On mar., 2010-04-13 at 09:21 -0600, Moger, Babu wrote:
+> This patch adds alias while printing checker messages. 
+> Example of current Checker message. 
 > 
-> Modified files:
-> 	libmultipath   : devmapper.c devmapper.h 
-> 	multipath      : main.c 
+> Apr 11 04:03:53 mymachine multipathd: sde: rdac checker reports path is down
 > 
-> Log message:
-> 	Fix for bz #517951. Updated prereq testing code.
+> Most of the time "sde" is meaningless when debugging the past failures. 
 > 
-> Patches:
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.22.2.8&r2=1.22.2.9
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.5&r2=1.11.2.6
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.44.2.8&r2=1.44.2.9
+> This patch add alias before the checker message..  
+> Example of the new message..
 > 
-> --- multipath-tools/libmultipath/devmapper.c	2009/05/04 18:12:06	1.22.2.8
-> +++ multipath-tools/libmultipath/devmapper.c	2010/04/16 22:08:02	1.22.2.9
-> @@ -82,13 +82,35 @@
->  	dm_log_init_verbose(conf ? conf->verbosity + 3 : 0);
->  }
+> Apr 12 16:55:54 mymachine multipathd: mpathb: sde - rdac checker reports path is down
+> 
+> Signed-off-by: Babu Moger <babu.moger@lsi.com>
+> Reviewed-by: Vijay Chauhan <Vijay.Chauhan@lsi.com>
+> 
+> ---
+> --- multipath-tools/multipathd/main.c.orig	2010-04-12 13:58:27.000000000 -0500
+> +++ multipath-tools/multipathd/main.c	2010-04-12 14:01:08.000000000 -0500
+> @@ -61,7 +61,7 @@
+>  #define CMDSIZE 160
 >  
-> -extern int
-> -dm_prereq (char * str, int x, int y, int z)
-> +static int
-> +dm_libprereq (void)
-> +{
-> +	char version[64];
-> +	int v[3];
-> +	int minv[3] = {1, 2, 11};
-> +
-> +	dm_get_library_version(version, sizeof(version));
-> +	condlog(3, "libdevmapper version %s", version);
-> +	sscanf(version, "%d.%d.%d ", &v[0], &v[1], &v[2]);
-> +
-> +	if ((v[0] > minv[0]) ||
-> +	    ((v[0] ==  minv[0]) && (v[1] > minv[1])) ||
-> +	    ((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2])))
-> +		return 0;
-> +	condlog(0, "libdevmapper version must be >= %d.%.2d.%.2d",
-> +		minv[0], minv[1], minv[2]);
-> +	return 1;
-> +}
-> +
-> +static int
-> +dm_drvprereq (char * str)
->  {
->  	int r = 2;
->  	struct dm_task *dmt;
->  	struct dm_versions *target;
->  	struct dm_versions *last_target;
-> +	int minv[3] = {1, 0, 3};
-> +	unsigned int *v;
+>  #define LOG_MSG(a,b) \
+> -	if (strlen(b)) condlog(a, "%s: %s", pp->dev, b);
+> +	if (strlen(b)) condlog(a, "%s: %s - %s", pp->mpp->alias, pp->dev, b);
 >  
->  	if (!(dmt = dm_task_create(DM_DEVICE_LIST_VERSIONS)))
->  		return 3;
-> @@ -104,25 +126,26 @@
->  
->  	do {
->  		last_target = target;
-> -
->  		if (!strncmp(str, target->name, strlen(str))) {
-> -			r--;
-> -			
-> -			if (target->version[0] >= x &&
-> -			    target->version[1] >= y &&
-> -			    target->version[2] >= z)
-> -				r--;
-> -
-> +			r = 1;
->  			break;
->  		}
-> -
->  		target = (void *) target + target->next;
->  	} while (last_target != target);
->  
-> -	if (r == 2)
-> +	if (r == 2) {
->  		condlog(0, "DM multipath kernel driver not loaded");
-> -	else if (r == 1)
-> -		condlog(0, "DM multipath kernel driver version too old");
-> +		goto out;
-> +	}
-> +	v = target->version;
-> +	if ((v[0] > minv[0]) ||
-> +	    ((v[0] == minv[0]) && (v[1] > minv[1])) ||
-> +	    ((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2]))) {
-> +		r = 0;
-> +		goto out;
-> +	}
-> +	condlog(0, "DM multipath kernel driver must be >= %u.%.2u.%.2u",
-> +		minv[0], minv[1], minv[2]);
->  
->  out:
->  	dm_task_destroy(dmt);
-> @@ -130,6 +153,14 @@
->  }
->  
->  extern int
-> +dm_prereq (char * str)
-> +{
-> +	if (dm_libprereq())
-> +		return 1;
-> +	return dm_drvprereq(str);
-> +}
-> +
-> +extern int
->  dm_simplecmd (int task, const char *name, int no_flush) {
->  	int r = 0;
->  	struct dm_task *dmt;
-> --- multipath-tools/libmultipath/devmapper.h	2008/09/19 03:27:08	1.11.2.5
-> +++ multipath-tools/libmultipath/devmapper.h	2010/04/16 22:08:03	1.11.2.6
-> @@ -3,7 +3,7 @@
->  #include "structs.h"
->  
->  void dm_init(void);
-> -int dm_prereq (char *, int, int, int);
-> +int dm_prereq (char *);
->  int dm_simplecmd (int, const char *, int);
->  int dm_addmap (int, const char *, struct multipath *, int, int); 
->  int dm_map_present (char *);
-> --- multipath-tools/multipath/main.c	2010/04/08 19:31:49	1.44.2.8
-> +++ multipath-tools/multipath/main.c	2010/04/16 22:08:03	1.44.2.9
-> @@ -1,7 +1,7 @@
->  /*
->   * Soft:        multipath device mapper target autoconfig
->   *
-> - * Version:     $Id: main.c,v 1.44.2.8 2010/04/08 19:31:49 bmarzins Exp $
-> + * Version:     $Id: main.c,v 1.44.2.9 2010/04/16 22:08:03 bmarzins Exp $
->   *
->   * Author:      Christophe Varoqui
->   *
-> @@ -315,7 +315,7 @@
->  		exit(1);
->  	}
->  
-> -	if (dm_prereq(DEFAULT_TARGET, 1, 0, 3))
-> +	if (dm_prereq(DEFAULT_TARGET))
->  		exit(1);
->  
->  	if (sysfs_get_mnt_path(sysfs_path, FILE_NAME_SIZE)) {
+>  pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
+>  pthread_mutex_t exit_mutex = PTHREAD_MUTEX_INITIALIZER;
+> 
+> 
+> 
 > 
 > --
 > dm-devel mailing list
