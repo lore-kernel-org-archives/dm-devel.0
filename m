@@ -1,67 +1,95 @@
-From: "Darrick J. Wong" <djwong@us.ibm.com>
-Subject: [PATCH 2/4] md: Compute average flush time from component devices
-Date: Mon, 29 Nov 2010 14:05:51 -0800
-Message-ID: <20101129220551.12401.80601.stgit@elm3b57.beaverton.ibm.com>
-References: <20101129220536.12401.16581.stgit@elm3b57.beaverton.ibm.com>
+From: Oren Held <orenhe@il.ibm.com>
+Subject: [Multipath DOCS] Some possibly deprecated info
+Date: Sun, 18 Apr 2010 19:28:23 +0300
+Message-ID: <4BCB3327.1040407@il.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20101129220536.12401.16581.stgit@elm3b57.beaverton.ibm.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>, Neil Brown <neilb@suse.de>, Andreas Dilger <adilger.kernel@dilger.ca>, Alasdair G Kergon <agk@redhat.com>, Darrick J.
-Cc: Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Keith Mannthey <kmannth@us.ibm.com>, dm-devel@redhat.com, Mingming Cao <cmm@us.ibm.com>, Tejun Heo <tj@kernel.org>, linux-ext4@vger.kernel.org, Ric Wheeler <rwheeler@redhat.com>, Christoph Hellwig <hch@lst.de>, Josef Bacik <josef@redhat.com>
+Content-Type: multipart/mixed; boundary="===============9151810628471378629=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-For md devices which are composed of other block devices, a flush is spread out
-to those other block devices.  Therefore, the average flush time can be
-computed as the average flush time of whichever device flushes most slowly.
+This is a multi-part message in MIME format.
+--===============9151810628471378629==
+Content-Type: multipart/alternative;
+	boundary="------------040401050305010501010702"
 
-Signed-off-by: Darrick J. Wong <djwong@us.ibm.com>
----
- drivers/md/md.c |   23 +++++++++++++++++++++++
- 1 files changed, 23 insertions(+), 0 deletions(-)
+This is a multi-part message in MIME format.
+--------------040401050305010501010702
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+
+Hello,
+
+In http://christophe.varoqui.free.fr/refbook.html, "the multipathd 
+daemon" pargagraph states:
+"This daemon executes the external multipath config tool when events occur."
+
+As far as I understand from the current code this is no more true, for 
+multipathd uses libmultipath to create new maps, and not real execution 
+of an external binary.
+
+(And.. of course it could be easier if docs were moved to some wiki space..)
+
+Best Regards,
+
+Oren Held
+Host Side Development Team
+IBM-XIV
+
+--------------040401050305010501010702
+Content-Transfer-Encoding: 7bit
+Content-Type: text/html; charset=ISO-8859-1
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+</head>
+<body text="#000000" bgcolor="#ffffff">
+Hello,<br>
+<br>
+In<a href="http://christophe.varoqui.free.fr/refbook.html">
+http://christophe.varoqui.free.fr/refbook.html</a>, "the multipathd
+daemon" pargagraph states:<br>
+"This daemon executes the external multipath config tool when events
+occur."<br>
+<br>
+As far as I understand from the current code this is no more true, for
+multipathd uses libmultipath to create new maps, and not real execution
+of an external binary.<br>
+<br>
+(And.. of course it could be easier if docs were moved to some wiki
+space..)<br>
+<br>
+Best Regards,<br>
+<br>
+<div class="moz-signature"><span style="color: rgb(63, 63, 63);">Oren
+Held<br>
+Host Side Development Team<br>
+IBM-XIV<br>
+</span></div>
+</body>
+</html>
+
+--------------040401050305010501010702--
 
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 43243a4..af25c96 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -357,6 +357,28 @@ EXPORT_SYMBOL(mddev_congested);
-  * Generic flush handling for md
-  */
- 
-+static void measure_flushes(mddev_t *mddev)
-+{
-+	mdk_rdev_t *rdev;
-+	u64 max = 0, samples = 0;
-+
-+	rcu_read_lock();
-+	list_for_each_entry_rcu(rdev, &mddev->disks, same_set)
-+		if (rdev->raid_disk >= 0 &&
-+		    !test_bit(Faulty, &rdev->flags)) {
-+			if (rdev->bdev->bd_disk->avg_flush_time_ns <= max)
-+				continue;
-+			max = rdev->bdev->bd_disk->avg_flush_time_ns;
-+			samples = rdev->bdev->bd_disk->flush_samples;
-+		}
-+	rcu_read_unlock();
-+
-+	spin_lock(&mddev->gendisk->flush_time_lock);
-+	mddev->gendisk->avg_flush_time_ns = max;
-+	mddev->gendisk->flush_samples = samples;
-+	spin_unlock(&mddev->gendisk->flush_time_lock);
-+}
-+
- static void md_end_flush(struct bio *bio, int err)
- {
- 	mdk_rdev_t *rdev = bio->bi_private;
-@@ -365,6 +387,7 @@ static void md_end_flush(struct bio *bio, int err)
- 	rdev_dec_pending(rdev, mddev);
- 
- 	if (atomic_dec_and_test(&mddev->flush_pending)) {
-+		measure_flushes(mddev);
- 		/* The pre-request flush has finished */
- 		queue_work(md_wq, &mddev->flush_work);
- 	}
+--===============9151810628471378629==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
+
+--===============9151810628471378629==--
