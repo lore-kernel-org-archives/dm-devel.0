@@ -1,44 +1,67 @@
-From: brem belguebli <brem.belguebli@gmail.com>
-Subject: multipath blocking a single path making multipath -ll ,
- lvm commands go to D state
-Date: Sat, 17 Apr 2010 22:26:55 +0200
-Message-ID: <1271536015.5449.115.camel@localhost>
-References: <E463DF2B2E584B4A82673F53D62C2EF48D088D7E@cosmail01.lsi.com>
-	<1271503066.9079.21.camel@localhost>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: high iowait problem(Bug 12309 on bugzilla.kernel.org)
+Date: Mon, 19 Apr 2010 14:31:02 -0700
+Message-ID: <20100419143102.38f37fe9.akpm@linux-foundation.org>
+References: <20100331124834.192500@gmx.com>
+	<20100413135416.b537eee8.akpm@linux-foundation.org>
+	<o2k8c2bb01004142258zd1a02d38ib2128e324b7d9947@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1271503066.9079.21.camel@localhost>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <o2k8c2bb01004142258zd1a02d38ib2128e324b7d9947@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Steven B <damentz@gmail.com>
+Cc: Frank Ren <frankrq2009@gmx.com>, mingo <mingo@elte.hu>, "a.p.zijlstra" <a.p.zijlstra@chello.nl>, "jens.axboe" <jens.axboe@oracle.com>, linux-kernel@vger.kernel.org, stable@kernel.org, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-Hello,
+On Thu, 15 Apr 2010 00:58:05 -0500
+Steven B <damentz@gmail.com> wrote:
 
-I'm trying to troubleshoot a problem we had on RHEL 5.x (dm-mp 0.4.7.x).
+> Hi Andrew,
+> 
+> > So something between 2.6.32.3 and 2.6.32.8 inclusive rebroke the
+> > kernel. __That's useful info.
+> >
+> > Looking at the changelogs, the only thing I can immediately see in the
+> > block-core area is
+> >
+> > : commit cb723ba5d03bf719dbc7409b4d67572d4472ef8b
+> > : Author: Dmitry Monakhov <dmonakhov@openvz.org>
+> > : Date: __ Wed Jan 27 22:44:36 2010 +0300
+> > :
+> > : __ __ block: fix bio_add_page for non trivial merge_bvec_fn case
+> >
+> > which seems unlikely.
+> >
+> > I'm seeing just one device-mapper change whcih went in over that
+> > timeframe:
+> >
+> > : commit e0f5cfa7c18b411634e73923841eccd3a4c0ce7f
+> > : Author: Martin K. Petersen <martin.petersen@oracle.com>
+> > : Date: __ Mon Jan 11 03:21:50 2010 -0500
+> > :
+> > : __ __ DM: Fix device mapper topology stacking
+> >
+> >
+> 
+> Although I can't provide any big details, I went through the commits between
+> 2.6.32.2 and 2.6.32.8 and as many things that could affect IO and reverted
+> them from my 2.6.33.2 kernel.
+> 
+> Here's my list of commits I reverted that seemed to improve performance locally
+> running a 2.6.33.2 kernel.
+> 
+> cb723ba5d03bf719dbc7409b4d67572d4472ef8b (this one you suspected)
+> block: fix bio_add_page for non trivial merge_bvec_fn case
+> 
+> b2ea8cb9c8f1937cb80b9beb50548a05bfc37819
+> vmscan: do not evict inactive pages when skipping an active list scan
+> 
+> e4dd8ca5be771aa706b0797b3284328bb595bfa1
+> fasync: split 'fasync_helper()' into separate add/remove functions
+> 
+> Though, I was hoping you guys could identify which one of these is
+> the real culprit.
 
-When a path of a multipath'd device is in blocked state (echo blocked
-> /sys/bus/sdX/device/state), multipath -ll, lvm (vgs, ...) go to D
-state rendering the whole thing unresponsive (global wait ratio hitting
-100%). 
-
-Tried to figure out if newer versions of dm-mp are affected, and tried
-the same test on a fedora 12 box (dm-mp 0.4.9-6) and got the same
-results.
-
-device timeout is set to 30, queue_depth is 16, multipath configuration
-set to "no_path_retry fail".
-
-Nothing in syslog or anything that could help
-
-Thanks
+Can you go through and revert them individually please?
