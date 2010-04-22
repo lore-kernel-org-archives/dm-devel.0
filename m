@@ -1,116 +1,81 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [patch,rfc v2] ext3/4: enhance fsync performance when using cfq
-Date: Wed, 21 Apr 2010 16:52:11 -0400
-Message-ID: <x49ochc1qbo.fsf@segfault.boston.devel.redhat.com>
-References: <x49ochv7yi3.fsf@segfault.boston.devel.redhat.com>
-	<20100407214631.GL3206@redhat.com> <20100408110442.GK10103@kernel.dk>
-	<20100408140515.GB10879@redhat.com> <20100408140944.GQ10103@kernel.dk>
-	<z2u170fa0d21004211342ncaf04f90h2cd7ebe832dcc46a@mail.gmail.com>
+From: "Theodore Ts'o" <tytso@mit.edu>
+Subject: Linux Plumbers Conference: Call for Tracks
+Date: Thu, 22 Apr 2010 13:42:14 -0400
+Message-ID: <E1O50Pm-0003vu-9z@closure.thunk.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <z2u170fa0d21004211342ncaf04f90h2cd7ebe832dcc46a@mail.gmail.com>
-	(Mike Snitzer's message of "Wed, 21 Apr 2010 16:42:38 -0400")
-Sender: linux-ext4-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>, Vivek Goyal <vgoyal@redhat.com>, Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mike Snitzer <snitzer@redhat.com> writes:
 
-> On Thu, Apr 8, 2010 at 10:09 AM, Jens Axboe <jens.axboe@oracle.com> w=
-rote:
->> On Thu, Apr 08 2010, Vivek Goyal wrote:
->>> On Thu, Apr 08, 2010 at 01:04:42PM +0200, Jens Axboe wrote:
->>> > On Wed, Apr 07 2010, Vivek Goyal wrote:
->>> > > On Wed, Apr 07, 2010 at 05:18:12PM -0400, Jeff Moyer wrote:
->>> > > > Hi again,
->>> > > >
->>> > > > So, here's another stab at fixing this. =C2=A0This patch is v=
-ery much an RFC,
->>> > > > so do not pull it into anything bound for Linus. =C2=A0;-) =C2=
-=A0For those new to
->>> > > > this topic, here is the original posting: =C2=A0http://lkml.o=
-rg/lkml/2010/4/1/344
->>> > > >
->>> > > > The basic problem is that, when running iozone on smallish fi=
-les (up to
->>> > > > 8MB in size) and including fsync in the timings, deadline out=
-performs
->>> > > > CFQ by a factor of about 5 for 64KB files, and by about 10% f=
-or 8MB
->>> > > > files. =C2=A0From examining the blktrace data, it appears tha=
-t iozone will
->>> > > > issue an fsync() call, and will have to wait until it's CFQ t=
-imeslice
->>> > > > has expired before the journal thread can run to actually com=
-mit data to
->>> > > > disk.
->>> > > >
->>> > > > The approach below puts an explicit call into the filesystem-=
-specific
->>> > > > fsync code to yield the disk so that the jbd[2] process has a=
- chance to
->>> > > > issue I/O. =C2=A0This bring performance of CFQ in line with d=
-eadline.
->>> > > >
->>> > > > There is one outstanding issue with the patch that Vivek poin=
-ted out.
->>> > > > Basically, this could starve out the sync-noidle workload if =
-there is a
->>> > > > lot of fsync-ing going on. =C2=A0I'll address that in a follo=
-w-on patch. =C2=A0For
->>> > > > now, I wanted to get the idea out there for others to comment=
- on.
->>> > > >
->>> > > > Thanks a ton to Vivek for spotting the problem with the initi=
-al
->>> > > > approach, and for his continued review.
->>> > > >
-> ...
->>> > > So we got to take care of two issues now.
->>> > >
->>> > > - Make it work with dm/md devices also. Somehow shall have to p=
-ropogate
->>> > > =C2=A0 this yield semantic down the stack.
->>> >
->>> > The way that Jeff set it up, it's completely parallel to eg conge=
-stion
->>> > or unplugging. So that should be easily doable.
->>> >
->>>
->>> Ok, so various dm targets now need to define "yield_fn" and propoga=
-te the
->>> yield call to all the component devices.
->>
->> Exactly.
->
-> To do so doesn't DM (and MD) need a blk_queue_yield() setter to
-> establish its own yield_fn?  The established dm_yield_fn would call
-> blk_yield() for all real devices in a given DM target.  Something lik=
-e
-> how blk_queue_merge_bvec() or blk_queue_make_request() allow DM to
-> provide functional extensions.
->
-> I'm not seeing such a yield_fn hook for stacking drivers to use. And
-> as is, jbd and jbd2 just call blk_yield() directly and there is no wa=
-y
-> for the block layer to call into DM.
->
-> What am I missing?
 
-Nothing, it is I who am missing something (extra code).  When I send ou=
-t
-the next version, I'll add the setter function and ensure that
-queue->yield_fn is called from blk_yield.  Hopefully that's not viewed
-as upside down.  We'll see.
+		    Linux Plumbers Conference 2010
+			    Call for Tracks
 
-Thanks for the review, Mike!
+This year, Linux Plumbers Conference will take place in Cambridge, MA
+on November 3-5, 2010.  Unlike more traditional conferences, the
+Plumbers conference is not structured around presentations of
+completed work, or problems and solutions confined to a single
+subsystem or layer of the Linux ecosystem.  Rather the Plumbers
+Conference encourages BOFs type meetings and brainstorming sessions
+where technical experts from different areas and leaders in the Linux
+and Open Source world can get together and discuss how to make
+progress towards the solution of interdisciplinary multifaceted
+problems spanning multiple components of the Linux system.  In some
+sense, the Plumbers Conference is really more of a workshop.
 
--Jeff
---
-To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+The program committee for the Linux Plumbers Conference is looking for
+proposals for the "tracks" that will be run during the Plumbers
+Conference.  
+
+To do that, we are looking for "problem statements": things that could
+be improved in Linux that cross multiple interfaces or other project
+boundaries (if you can solve it yourself inside a single project,
+please, don't let us stop you --- get hacking!).  We are looking for
+problems that require collaboration and face-to-face communication
+across multiple teams and open source projects.  These problems could
+apply to anywhere Linux is used: Linux on the Desktop, Linux on Mobile
+devices, Linux on servers, etc.
+
+For example, if in order to get better performance, we need to get
+better information about low-level devices from the kernel, and that
+needs to be utilized by file system utilities, and the user needs to
+be able to involved by exposing options at the UI level in control
+panels and distribution installers --- the Plumbers conference might
+be a great place to get everyone in the same room for half a day to
+solve this particular problem.
+
+Along with your problem statements or track ideas, please list the
+projects which and/or key individuals who ideally should be present,
+and who might be a good person or persons to run such a conference
+track.
+
+If you have any thoughts or contributions, you can either
+
+   * discuss them on this Linux Weekly News page:
+	http://lwn.net/Articles/lpc2010-cfi/
+   * add the proposed topic to the Topics wiki page:
+	http://wiki.linuxplumbersconf.org/2010:topics
+   * send e-mail to: lpc-planning@linuxplumbersconf.org
+
+Many thanks for helping to make Linux an even better platform!
+
+	    		   	The 2010 LPC Committee
+
+Note: The event will be co-located with the Linux Kernel Summit which
+will be held earlier that week.
+
+Please feel free to forward this announcements to any communities or
+mailing lists where you think it would be appropriate.
