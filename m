@@ -1,14 +1,16 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: Development problem: uninterruptable processes
-Date: Mon, 26 Apr 2010 13:27:10 +0200
-Message-ID: <1272281230.2031.58.camel@o>
-References: <000301cae3c7$3ef52250$bcdf66f0$@tu-berlin.de>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: multipath-tools libmultipath/devmapper.c libmu ...
+Date: Mon, 26 Apr 2010 11:50:47 -0500
+Message-ID: <20100426165046.GA3295@ether.msp.redhat.com>
+References: <20100416220803.19055.qmail@sourceware.org>
+	<1271502991.9079.20.camel@localhost>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <000301cae3c7$3ef52250$bcdf66f0$@tu-berlin.de>
+Content-Disposition: inline
+In-Reply-To: <1271502991.9079.20.camel@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,48 +20,175 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Anselm,
+On Sat, Apr 17, 2010 at 01:16:31PM +0200, Christophe Varoqui wrote:
+> Ben,
+> 
+> upstream has 1.2.8 as a minimum lib version.
+> I see in this patch you chose 1.2.11 instead.
+> 
+> Should upstream also bump the min lib version ? If so, what's the
+> feature introduced between .8 and .11 that justifies the bump ?
 
-you're not explaining the design and functions of your driver here, so
-it's hard to tell. You're telling though, starvation happens in the
-write path so you want to look if you're in an OOM situation, presumably
-the locking is correct as you claim. Another possibility may be that
-you're scheduling a thread handling your write not properly.
+No, it's not necessary to bump it.
 
-You better provide the source code of your driver to allow for better
-advice.
+-Ben
 
-Regards,
-Heinz
-
-On Sat, 2010-04-24 at 18:00 +0200, Anselm Busse wrote:
-> Hello everyone,
 > 
-> I am not sure whether I am right in this mailing list or not, but I hope
-> so...
+> Thanks,
+> cvaroqui
 > 
-> I am relative new to kernel development and especially to the device mapper.
-> Currently I am developing a driver using the device mapper API. It works
-> perfectly with one exception. After some time of heavy load every process
-> that tries to access the mapped block device gets stuck in the
-> uninterruptable state.
+> On ven., 2010-04-16 at 22:08 +0000, bmarzins@sourceware.org wrote:
+> > CVSROOT:	/cvs/dm
+> > Module name:	multipath-tools
+> > Branch: 	RHEL5_FC6
+> > Changes by:	bmarzins@sourceware.org	2010-04-16 22:08:03
+> > 
+> > Modified files:
+> > 	libmultipath   : devmapper.c devmapper.h 
+> > 	multipath      : main.c 
+> > 
+> > Log message:
+> > 	Fix for bz #517951. Updated prereq testing code.
+> > 
+> > Patches:
+> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.22.2.8&r2=1.22.2.9
+> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.5&r2=1.11.2.6
+> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.44.2.8&r2=1.44.2.9
+> > 
+> > --- multipath-tools/libmultipath/devmapper.c	2009/05/04 18:12:06	1.22.2.8
+> > +++ multipath-tools/libmultipath/devmapper.c	2010/04/16 22:08:02	1.22.2.9
+> > @@ -82,13 +82,35 @@
+> >  	dm_log_init_verbose(conf ? conf->verbosity + 3 : 0);
+> >  }
+> >  
+> > -extern int
+> > -dm_prereq (char * str, int x, int y, int z)
+> > +static int
+> > +dm_libprereq (void)
+> > +{
+> > +	char version[64];
+> > +	int v[3];
+> > +	int minv[3] = {1, 2, 11};
+> > +
+> > +	dm_get_library_version(version, sizeof(version));
+> > +	condlog(3, "libdevmapper version %s", version);
+> > +	sscanf(version, "%d.%d.%d ", &v[0], &v[1], &v[2]);
+> > +
+> > +	if ((v[0] > minv[0]) ||
+> > +	    ((v[0] ==  minv[0]) && (v[1] > minv[1])) ||
+> > +	    ((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2])))
+> > +		return 0;
+> > +	condlog(0, "libdevmapper version must be >= %d.%.2d.%.2d",
+> > +		minv[0], minv[1], minv[2]);
+> > +	return 1;
+> > +}
+> > +
+> > +static int
+> > +dm_drvprereq (char * str)
+> >  {
+> >  	int r = 2;
+> >  	struct dm_task *dmt;
+> >  	struct dm_versions *target;
+> >  	struct dm_versions *last_target;
+> > +	int minv[3] = {1, 0, 3};
+> > +	unsigned int *v;
+> >  
+> >  	if (!(dmt = dm_task_create(DM_DEVICE_LIST_VERSIONS)))
+> >  		return 3;
+> > @@ -104,25 +126,26 @@
+> >  
+> >  	do {
+> >  		last_target = target;
+> > -
+> >  		if (!strncmp(str, target->name, strlen(str))) {
+> > -			r--;
+> > -			
+> > -			if (target->version[0] >= x &&
+> > -			    target->version[1] >= y &&
+> > -			    target->version[2] >= z)
+> > -				r--;
+> > -
+> > +			r = 1;
+> >  			break;
+> >  		}
+> > -
+> >  		target = (void *) target + target->next;
+> >  	} while (last_target != target);
+> >  
+> > -	if (r == 2)
+> > +	if (r == 2) {
+> >  		condlog(0, "DM multipath kernel driver not loaded");
+> > -	else if (r == 1)
+> > -		condlog(0, "DM multipath kernel driver version too old");
+> > +		goto out;
+> > +	}
+> > +	v = target->version;
+> > +	if ((v[0] > minv[0]) ||
+> > +	    ((v[0] == minv[0]) && (v[1] > minv[1])) ||
+> > +	    ((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2]))) {
+> > +		r = 0;
+> > +		goto out;
+> > +	}
+> > +	condlog(0, "DM multipath kernel driver must be >= %u.%.2u.%.2u",
+> > +		minv[0], minv[1], minv[2]);
+> >  
+> >  out:
+> >  	dm_task_destroy(dmt);
+> > @@ -130,6 +153,14 @@
+> >  }
+> >  
+> >  extern int
+> > +dm_prereq (char * str)
+> > +{
+> > +	if (dm_libprereq())
+> > +		return 1;
+> > +	return dm_drvprereq(str);
+> > +}
+> > +
+> > +extern int
+> >  dm_simplecmd (int task, const char *name, int no_flush) {
+> >  	int r = 0;
+> >  	struct dm_task *dmt;
+> > --- multipath-tools/libmultipath/devmapper.h	2008/09/19 03:27:08	1.11.2.5
+> > +++ multipath-tools/libmultipath/devmapper.h	2010/04/16 22:08:03	1.11.2.6
+> > @@ -3,7 +3,7 @@
+> >  #include "structs.h"
+> >  
+> >  void dm_init(void);
+> > -int dm_prereq (char *, int, int, int);
+> > +int dm_prereq (char *);
+> >  int dm_simplecmd (int, const char *, int);
+> >  int dm_addmap (int, const char *, struct multipath *, int, int); 
+> >  int dm_map_present (char *);
+> > --- multipath-tools/multipath/main.c	2010/04/08 19:31:49	1.44.2.8
+> > +++ multipath-tools/multipath/main.c	2010/04/16 22:08:03	1.44.2.9
+> > @@ -1,7 +1,7 @@
+> >  /*
+> >   * Soft:        multipath device mapper target autoconfig
+> >   *
+> > - * Version:     $Id: main.c,v 1.44.2.8 2010/04/08 19:31:49 bmarzins Exp $
+> > + * Version:     $Id: main.c,v 1.44.2.9 2010/04/16 22:08:03 bmarzins Exp $
+> >   *
+> >   * Author:      Christophe Varoqui
+> >   *
+> > @@ -315,7 +315,7 @@
+> >  		exit(1);
+> >  	}
+> >  
+> > -	if (dm_prereq(DEFAULT_TARGET, 1, 0, 3))
+> > +	if (dm_prereq(DEFAULT_TARGET))
+> >  		exit(1);
+> >  
+> >  	if (sysfs_get_mnt_path(sysfs_path, FILE_NAME_SIZE)) {
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
 > 
-> I already checked every entry and callback routine in my driver, but it gets
-> not stuck there. I also checked every lock I am using in my driver and every
-> one of them gets released properly. I am pretty stuck at the moment, because
-> I don't know where to look else for the problem and was hoping that some one
-> of you might have experienced similar problems or an idea where to look for
-> it. 
-> I don't know if it is important but I've noticed (using the kernel debug
-> option for detecting hung tasks) that every process seems to hang in a write
-> call and I've tried kernel versions 2.6.31 and 2.6.33.
-> 
-> I would appreciate every bit of help because I am completely out of ideas!
-> 
-> Regards, Anselm
 > 
 > --
 > dm-devel mailing list
