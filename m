@@ -1,12 +1,15 @@
-From: akpm@linux-foundation.org
-Subject: [patch 1/1] dm_ioctl: use nonseekable_open
-Date: Tue, 27 Apr 2010 14:10:15 -0700
-Message-ID: <201004272110.o3RLAGlh019922@imap1.linux-foundation.org>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: semop failed for cookie?
+Date: Tue, 27 Apr 2010 23:33:23 +0100
+Message-ID: <20100427223323.GB29708@agk-dp.fab.redhat.com>
+References: <4BD74F99.8020605@filteredperception.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4BD74F99.8020605@filteredperception.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,35 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: fweisbec@gmail.com, dm-devel@redhat.com, akpm@linux-foundation.org, arnd@arndb.de, arnd@relay.de.ibm.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Sebastian Dziallas <sdz@sugarlabs.org>, satellit@bendbroadband.com
 List-Id: dm-devel.ids
 
-From: Arnd Bergmann <arnd@relay.de.ibm.com>
+On Tue, Apr 27, 2010 at 03:56:57PM -0500, Douglas McClendon wrote:
+> I have a user of an installation tool of mine that is hitting this  
+> message, with a very recent pre-fedora-13 kernel.
 
-The dm control device does not implement read/write, so it has no use for
-seeking.  Using no_llseek prevents falling back to default_llseek, which
-requires the BKL.
+udev is now involved in this process.
+Check they have up-to-date lvm2 and udev packages and that they've not
+tried to customise their udev rules - if they have, you'll need to
+check their changes didn't break things.
 
-[fweisbec@gmail.com: drop useless llseek = no_llseek]
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-Signed-off-by: Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
----
+Big script.
 
- drivers/md/dm-ioctl.c |    1 +
- 1 file changed, 1 insertion(+)
+Debug it by adding lines to dump the state immediately before the problem
+command, then immediately after it.
 
-diff -puN drivers/md/dm-ioctl.c~dm_ioctl-use-nonseekable_open drivers/md/dm-ioctl.c
---- a/drivers/md/dm-ioctl.c~dm_ioctl-use-nonseekable_open
-+++ a/drivers/md/dm-ioctl.c
-@@ -1593,6 +1593,7 @@ static long dm_compat_ctl_ioctl(struct f
- #endif
- 
- static const struct file_operations _ctl_fops = {
-+	.open = nonseekable_open,
- 	.unlocked_ioctl	 = dm_ctl_ioctl,
- 	.compat_ioctl = dm_compat_ctl_ioctl,
- 	.owner	 = THIS_MODULE,
-_
+Dump state by running 'dmsetup info -c', 'dmsetup table', 'dmsetup status'
+and 'dmsetup udevcookies'.
+
+If that still doesn't help, break the 'dmsetup create' command down into
+its three constituent commands (dmsetup create --notable, dmsetup load,
+dmsetup resume) and dump the state between each of them and confirm
+which is failing.
+
+Alasdair
