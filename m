@@ -1,15 +1,12 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: Status of dm integrity checksumming features
-Date: Tue, 27 Apr 2010 20:01:29 +0300
-Message-ID: <20100427170128.GX17817@reaktio.net>
-References: <20100324163920.GM1878@reaktio.net>
+From: Douglas McClendon <dmc.fedora@filteredperception.org>
+Subject: semop failed for cookie?
+Date: Tue, 27 Apr 2010 15:56:57 -0500
+Message-ID: <4BD74F99.8020605@filteredperception.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20100324163920.GM1878@reaktio.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,51 +17,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Sebastian Dziallas <sdz@sugarlabs.org>, satellit@bendbroadband.com
 List-Id: dm-devel.ids
 
-On Wed, Mar 24, 2010 at 06:39:20PM +0200, Pasi K=E4rkk=E4inen wrote:
-> Hello,
-> =
+Hi,
 
-> What's the current status of Linux device mapper integrity (checksumming)=
- features? =
+I have a user of an installation tool of mine that is hitting this 
+message, with a very recent pre-fedora-13 kernel.
 
-> =
+zyx-liveinstaller-cli: creating temporary rootfs virtual duplicate
+device-mapper: resume ioctl failed: Invalid argument
+semid 65536: semop failed for cookie 0xd4d423c: incorrect semaphore state
+Failed to set a proper state for notification semaphore identified by 
+cookie value 223167036 (0xd4d423c) to initialize waiting for incoming 
+notifications.
+Command failed
+zyx-liveinstaller-cli: error: failed to create temporary rootfs virtual 
+duplicate
 
-> iirc bio integrity extensions were integrated into Linux 2.6.27, but thos=
-e are only
-> usable for SCSI disks that provide 520-bytes per sector support and also =
-have the =
+The error is happening at line 742 in this monster bash script (which 
+I'm pretty sure does work on f11 and f12)
 
-> hardware support for verifying the checksums, correct? Or then you need t=
-o have a HBA
-> or RAID-adapter with integrity support..
-> =
+http://filteredperception.org/dawg/projects/zyx-liveinstaller/src/zyx-liveinstaller-latest/rli/zyx-liveinstaller-cli.html
 
-> (bio integrity patches: http://kerneltrap.org/mailarchive/linux-kernel/20=
-08/6/7/2056354)
-> =
+http://filteredperception.org/dawg/projects/zyx-liveinstaller
 
-> Is it possible to use 'normal' 512-bytes per sectors disks, and store the=
- checksums
-> on them, and calculate/verify the checkcums in software in device mapper.=
-. =
+Now, I've already urged the sugar on a stick project to primarily pursue 
+the path of the standard fedora livecd/usb installer, for many 
+additional reasons.  But, I guess I would still like my rebootless 
+installer to actually work.  And this may be one of those great corner 
+case issues that developers love.  I.e. a very obscure tickling of some 
+code path.  Or maybe I'm just being too lazy to read the accompanying 
+dmsetup man page for some clue as to what I should be doing when I see 
+such a bizarre error message.  Or, some other bug in the script is 
+causing the arguments to become malformed.  Still, the crypticness of 
+the message from devicemapper suggests something you folks might want to 
+improve.  In any event, FWIW, there it is...
 
-> this obviously gives you a bit less usable space, but would be suitable f=
-or sw-raid scenarios. =
-
-> =
-
-> I guess that sounds pretty much like dm-csum:
-> https://patchwork.kernel.org/patch/25245/
-> =
-
-> What's the status of all this nowadays? =
-
-> =
-
-
-Any comments about this? =
-
-
--- Pasi
+-dmc
