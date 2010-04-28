@@ -1,14 +1,17 @@
-From: Peter Rajnoha <prajnoha@redhat.com>
-Subject: Re: semop failed for cookie?
-Date: Wed, 28 Apr 2010 11:38:01 +0200
-Message-ID: <4BD801F9.3020803@redhat.com>
-References: <4BD74F99.8020605@filteredperception.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: dm-cache module
+Date: Wed, 28 Apr 2010 16:02:24 +0200
+Message-ID: <1272463344.2031.91.camel@o>
+References: <4BA5623F.8040502@daevel.fr> <20100321033704.GA6448@redhat.com>
+	<15606e421003202156n21de56a6n868f84bf737cce51@mail.gmail.com>
+	<1269270327.21395.42.camel@o>  <4BD7906E.6010602@daevel.fr>
+	<1272442907.2031.79.camel@o>
+Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4BD74F99.8020605@filteredperception.org>
+In-Reply-To: <1272442907.2031.79.camel@o>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,37 +22,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Sebastian Dziallas <sdz@sugarlabs.org>, satellit@bendbroadband.com
 List-Id: dm-devel.ids
 
-On 04/27/2010 10:56 PM, Douglas McClendon wrote:
-> zyx-liveinstaller-cli: creating temporary rootfs virtual duplicate
-> device-mapper: resume ioctl failed: Invalid argument
-> semid 65536: semop failed for cookie 0xd4d423c: incorrect semaphore state
-> Failed to set a proper state for notification semaphore identified by
-> cookie value 223167036 (0xd4d423c) to initialize waiting for incoming
-> notifications.
+Olivier,
 
-Well, the primary cause is that "resume" ioctl that is failing
-(can you trace the exact parameters that are substituted in the
-script for that failing dmsetup call?). I think the errors printed
-afterwards are just an outcome of this failure.
+some initial impressions:
 
-Anyway, it seems that our internal "_udev_complete" fn is called more
-than once on some error path. This call is exactly the same as calling
-"dmsetup udevcomplete", but we have to call one internally if any error
-occurs while processing a device-mapper task (that generates udev events).
-That's because we can't await any notification for failed ioctls since
-no udev events will be generated. We need to do that to prevent
-infinite waiting for notifications that will never come.
+I've spent an hour porting the source code to 2.6.34-rc4 and doing first
+tests.
 
-If that internal _udev_complete is called more than necessary, we'll
-get into an improper state with the semaphore so that needs to be
-fixed!
+Those unveil, that it only works with cache block size equal to page
+size (4KB here). With large cache block sizes it doesn't cache at all.
 
-What's the exact version of dmsetup/lvm2 used? Also, in addition to
-Alasdair's hints in the other post, could you please run the failing
-dmsetup with verbose output "dmsetup -vv ...". This way we should
-see how the semaphore is handled throughout processing..
+That may well be the result of a porting flaw but I have to have a
+closer look to tell. It works with quite decent performance with that
+block size. Code looks like heavily derived from the dm-cache source and
+overly complicated.
 
-Peter
+Destroying a flashcache mapping with a large dirty cache flushs the
+whole dirty content out which is not suitable to practical dm needs
+requiring a mapping to be suspendable quickly during reconfiguration.
+
+Regards,
+Heinz
+
+On Wed, 2010-04-28 at 10:21 +0200, Heinz Mauelshagen wrote:
+> On Wed, 2010-04-28 at 03:33 +0200, Olivier B. wrote:
+> > On 22/03/2010 16:05, Heinz Mauelshagen wrote:
+> > > On Sun, 2010-03-21 at 00:56 -0400, Ming Zhao wrote:
+> > >    
+> > >> Hi Mike,
+> > >>
+> > >> Thank you very much for your advice!
+> > >>
+> > >> I can revise dm-cache code and resubmit it as you suggested. I would
+> > >> also love to know Heinz's progress on his implementation and work with
+> > >> him if there anything I could contribute.
+> > >>      
+> > > Hi all,
+> > >
+> > > this is a list of the functions of my dm-hstore
+> > > device-mapper target implementation:
+> > >
+> > > o caches reads and writes keeping persistent state metadata.
+> > > o writes back in order to enhance streaming performance
+> > >    on fragmented access pattern.
+> > > o can run on top of readonly original device
+> > > o if so, writes back any dirty areas when set readwrite
+> > >    (useful for tests)
+> > > o readonly<->  readwrite access changes supported via message interface
+> > > o initializes metadata for extents in cache in the background
+> > >    in order to fasten cache construction
+> > > o supports cache resizing via message interface or constructor
+> > > o keeps metadata persistent by default
+> > > o stores CRCs with metadata for integrity checks
+> > > o stores versions with metadata to support future metadata migration
+> > >
+> > > Test features only:
+> > > o transient cache
+> > > o cache write through
+> > >
+> > >
+> > > Provides very good performance on SSD cache backing stores.
+> > >
+> > > Has been shelved for a while because of other priorities so I need to
+> > > rebase it to the actual kernel.
+> > >
+> > > Regards,
+> > > Heinz
+> > >
+> > >    
+> > Hi,
+> > 
+> > Facebook have just released "FlashCache" : 
+> > http://github.com/facebook/flashcache
+> > in the documentation we can read :
+> 
+> > Flashcache is built using the Linux Device Mapper (DM), part of the 
+> > Linux Storage Stack infrastructure that facilitates building SW-RAID and 
+> > other components.
+> > 
+> > So it's an other implementation of the same concept, no ?
+> 
+> Yes, it looks like it. I'll have a closer look how it differs form mine.
+> 
+> Heinz
+> 
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
