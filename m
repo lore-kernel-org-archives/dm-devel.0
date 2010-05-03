@@ -1,15 +1,14 @@
-From: Andreas Beckmann <beckmann@cs.uni-frankfurt.de>
-Subject: Re: discard/trim support in device mapper?
-Date: Mon, 03 May 2010 10:13:14 +0200
-Message-ID: <4BDE859A.9010108@cs.uni-frankfurt.de>
-References: <4BA75F52.9090701@cs.uni-frankfurt.de>
-	<20100322135720.GA16077@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Question about WWID
+Date: Mon, 03 May 2010 13:12:48 +0200
+Message-ID: <4BDEAFB0.8000609@suse.de>
+References: <o2zaf7b4eb21004301216s726e4e82x8de50d0fa21469d@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100322135720.GA16077@redhat.com>
+In-Reply-To: <o2zaf7b4eb21004301216s726e4e82x8de50d0fa21469d@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,15 +21,23 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Mike Snitzer wrote:
-> We are aware of the benefits associated with issuing discards to SSDs.
-> Discard support for DM will be a focused priority for me starting
-> mid-April.
+Rodrigo Nascimento wrote:
+> Hi All,
+> =
 
-Hi Mike,
+> How the WWID from dm-mp is generated? I can image that it use serial
+> number of the disk, but how it is really generated?
+> =
 
-did you find some time to look into discard support?
-If there is already an experimental patch I would be glad to try it.
+It is using the SCSI Inquiry VPD pages; page 0x83 or, failing that, path 0x=
+80.
 
+Cheers,
 
-Andreas
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
