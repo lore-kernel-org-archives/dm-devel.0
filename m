@@ -1,43 +1,60 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Question about WWID
-Date: Mon, 03 May 2010 13:12:48 +0200
-Message-ID: <4BDEAFB0.8000609@suse.de>
-References: <o2zaf7b4eb21004301216s726e4e82x8de50d0fa21469d@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <o2zaf7b4eb21004301216s726e4e82x8de50d0fa21469d@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Anderson <andmike@linux.vnet.ibm.com>
+Subject: [PATCH 0/9] blk: scsi: blk abort queue updates
+Date: Mon,  3 May 2010 20:36:59 -0700
+Message-ID: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-scsi@vger.kernel.org
+Cc: Jens Axobe <jens.axboe@oracle.com>, James Bottomley <James.Bottomley@suse.de>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Rodrigo Nascimento wrote:
-> Hi All,
-> =
+  This patch series has three sections explained below. The patches are
+  presented as a series as they hit some common functions and may need to
+  be applied in order to avoid conflicts.
 
-> How the WWID from dm-mp is generated? I can image that it use serial
-> number of the disk, but how it is really generated?
-> =
+  1.) Avoid possibly waking up the error handler on a queue that it stopped.
+  blk: Do not abort requests if queue is stopped
 
-It is using the SCSI Inquiry VPD pages; page 0x83 or, failing that, path 0x=
-80.
+  2.) It is possible to have a request on the elevator that is already
+  prepped. The prepped resources should be released also. This was seen under
+  heavy IO load while a lot of requeue activity as going occurring.
 
-Cheers,
+  blk: In elv_abort_queue skip requests with REQ_DONTPREP set
+  blk: Add a unprep_rq_fn
+  blk: Call unprep_fn from elv_abort_queue is available
+  scsi: Add a scsi_unprep_fn
 
-Hannes
--- =
+  3.) These four patches add a flag to a request indicating that a block
+  abort has been called on the request. It also adds a common
+  scsi_requeue_request so that the flag can be checked in only one location
+  on a attempt to requeue.
+  
+  Currently we may abort a request and post error recovery the request can
+  be requeued. We may also try to abort a request that is in the process of
+  completing that we would like to prevent a requeue on. 
+  
+  The abort flag is different than a fast fail flag in that it is provides a
+  hint that the request should be returned as soon as possible (i.e. do not
+  requeue even if disposition indicates that it would be allowed). 
+  
+  The change allowed failovers that where exceeding (SD_MAX_RETRIES * IO
+  TIMEOUT) to be able to failover in less than a single timeout (the less
+  than case depended on the type of event that triggered the path failure).
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+  blk: Add request atomic flag for abort
+  blk: Mark requests aborted
+  scsi: Add scsi_requeue_request function
+  scsi: Add blk_request_aborted check
+
+  I tested the patches on a IBM,2105800 connected through a zfcp adapter,
+  a IBM,1815 through a qlogic adapter, and scsi_debug.
+
+
+ block/blk-settings.c    |   17 +++++++++++
+ block/blk-timeout.c     |   19 +++++++++++-
+ block/blk.h             |   14 +++++++++
+ block/elevator.c        |   25 ++++++++++++++--
+ drivers/scsi/scsi_lib.c |   73 +++++++++++++++++++++++++++++++---------------
+ include/linux/blkdev.h  |    4 ++
+ 6 files changed, 123 insertions(+), 29 deletions(-)
+
