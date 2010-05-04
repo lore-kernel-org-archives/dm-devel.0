@@ -1,22 +1,24 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 1/9] blk: Do not abort requests if queue is stopped
-Date: Tue, 04 May 2010 12:40:14 +0200
-Message-ID: <4BDFF98E.1060906@suse.de>
-References: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com> <1272944228-30511-2-git-send-email-andmike@linux.vnet.ibm.com>
+Subject: Re: [PATCH 2/9] blk: In elv_abort_queue skip requests with REQ_DONTPREP
+ set
+Date: Tue, 04 May 2010 12:40:53 +0200
+Message-ID: <4BDFF9B5.9090100@suse.de>
+References: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com> <1272944228-30511-3-git-send-email-andmike@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1272944228-30511-2-git-send-email-andmike@linux.vnet.ibm.com>
+In-Reply-To: <1272944228-30511-3-git-send-email-andmike@linux.vnet.ibm.com>
 Sender: linux-scsi-owner@vger.kernel.org
 To: Mike Anderson <andmike@linux.vnet.ibm.com>
 Cc: linux-scsi@vger.kernel.org, Jens Axobe <jens.axboe@oracle.com>, James Bottomley <James.Bottomley@suse.de>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 Mike Anderson wrote:
-> If the queue is stopped it could be an indication that other recovery=
- is
-> happening in this case skip the blk_abort_request.
+> Having REQ_DONTPREP set on a request can indicated that resources hav=
+e been
+> allocated for this request. In elv_abort_queue skip requests with
+> REQ_DONTPREP set to avoid leaking resources.
 >=20
 > Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
 > Cc: Jens Axobe <jens.axboe@oracle.com>
