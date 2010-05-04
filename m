@@ -1,7 +1,8 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 4/9] blk: Call unprep_fn from elv_abort_queue is available
-Date: Tue, 04 May 2010 12:42:08 +0200
-Message-ID: <4BDFFA00.8070809@suse.de>
+Subject: Re: [dm-devel] [PATCH 4/9] blk: Call unprep_fn from elv_abort_queue
+ is	available
+Date: Tue, 04 May 2010 12:42:30 +0200
+Message-ID: <4BDFFA16.1070104@suse.de>
 References: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com> <1272944228-30511-5-git-send-email-andmike@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
@@ -9,8 +10,8 @@ Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <1272944228-30511-5-git-send-email-andmike@linux.vnet.ibm.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Anderson <andmike@linux.vnet.ibm.com>
-Cc: linux-scsi@vger.kernel.org, Jens Axobe <jens.axboe@oracle.com>, James Bottomley <James.Bottomley@suse.de>, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: linux-scsi@vger.kernel.org, James Bottomley <James.Bottomley@suse.de>, Jens Axobe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
 Mike Anderson wrote:
