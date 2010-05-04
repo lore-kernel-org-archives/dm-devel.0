@@ -1,7 +1,7 @@
 From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: [PATCH 6/9] blk: Add request atomic flag for abort
-Date: Mon,  3 May 2010 20:37:05 -0700
-Message-ID: <1272944228-30511-7-git-send-email-andmike@linux.vnet.ibm.com>
+Subject: [PATCH 7/9] blk: Mark requests aborted
+Date: Mon,  3 May 2010 20:37:06 -0700
+Message-ID: <1272944228-30511-8-git-send-email-andmike@linux.vnet.ibm.com>
 References: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com>
 Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com>
@@ -10,78 +10,38 @@ To: linux-scsi@vger.kernel.org
 Cc: Jens Axobe <jens.axboe@oracle.com>, James Bottomley <James.Bottomley@suse.de>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add atomic flag for a request to indicate that it has marked as aborted.
-Provide functions to mark and test the aborted flag.
+Mark requests aborted using blk_mark_rq_aborted to assist lower levels in
+identifying aborted requests.
 
 Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
 Cc: Jens Axobe <jens.axboe@oracle.com>
 ---
- block/blk-timeout.c    |    6 ++++++
- block/blk.h            |   14 ++++++++++++++
- include/linux/blkdev.h |    1 +
- 3 files changed, 21 insertions(+), 0 deletions(-)
+ block/blk-timeout.c |   10 +++++++++-
+ 1 files changed, 9 insertions(+), 1 deletions(-)
 
 diff --git a/block/blk-timeout.c b/block/blk-timeout.c
-index 89fbe0a..ad45b44 100644
+index ad45b44..d8610c1 100644
 --- a/block/blk-timeout.c
 +++ b/block/blk-timeout.c
-@@ -155,6 +155,12 @@ void blk_abort_request(struct request *req)
- }
- EXPORT_SYMBOL_GPL(blk_abort_request);
+@@ -229,9 +229,17 @@ void blk_abort_queue(struct request_queue *q)
+ 	 */
+ 	list_splice_init(&q->timeout_list, &list);
  
-+int blk_request_aborted(struct request *req)
-+{
-+	return blk_test_rq_aborted(req);
-+}
-+EXPORT_SYMBOL_GPL(blk_request_aborted);
+-	list_for_each_entry_safe(rq, tmp, &list, timeout_list)
++	list_for_each_entry_safe(rq, tmp, &list, timeout_list) {
++                /*
++                 * Mark all requests even if we are unable to abort. The
++                 * aborted flag can used by lower levels to indicate that
++                 * the request should finished as soon as possible.
++                 */
++		blk_mark_rq_aborted(rq);
 +
- /**
-  * blk_add_timer - Start timeout timer for a single request
-  * @req:	request that is about to start running.
-diff --git a/block/blk.h b/block/blk.h
-index 5ee3d7e..165262a 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -30,6 +30,7 @@ void __generic_unplug_device(struct request_queue *);
-  */
- enum rq_atomic_flags {
- 	REQ_ATOM_COMPLETE = 0,
-+	REQ_ATOM_ABORT = 1,
- };
+ 		if (!blk_queue_stopped(q))
+ 			blk_abort_request(rq);
++	}
  
- /*
-@@ -47,6 +48,19 @@ static inline void blk_clear_rq_complete(struct request *rq)
- }
- 
- /*
-+ * Mark and test a request for aborted.
-+ */
-+static inline int blk_mark_rq_aborted(struct request *rq)
-+{
-+	return test_and_set_bit(REQ_ATOM_ABORT, &rq->atomic_flags);
-+}
-+
-+static inline int blk_test_rq_aborted(struct request *rq)
-+{
-+	return test_bit(REQ_ATOM_ABORT, &rq->atomic_flags);
-+}
-+
-+/*
-  * Internal elevator interface
-  */
- #define ELV_ON_HASH(rq)		(!hlist_unhashed(&(rq)->hash))
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 2818e80..7636e58 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -912,6 +912,7 @@ extern void blk_complete_request(struct request *);
- extern void __blk_complete_request(struct request *);
- extern void blk_abort_request(struct request *);
- extern void blk_abort_queue(struct request_queue *);
-+extern int blk_request_aborted(struct request *);
- 
- /*
-  * Access functions for manipulating queue properties
+ 	/*
+ 	 * Occasionally, blk_abort_request() will return without
 -- 
 1.6.6.1
 
