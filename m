@@ -1,60 +1,38 @@
 From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: [PATCH 0/9] blk: scsi: blk abort queue updates
-Date: Mon,  3 May 2010 20:36:59 -0700
-Message-ID: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com>
+Subject: [PATCH 1/9] blk: Do not abort requests if queue is stopped
+Date: Mon,  3 May 2010 20:37:00 -0700
+Message-ID: <1272944228-30511-2-git-send-email-andmike@linux.vnet.ibm.com>
+References: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com>
 Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com>
 Sender: linux-scsi-owner@vger.kernel.org
 To: linux-scsi@vger.kernel.org
 Cc: Jens Axobe <jens.axboe@oracle.com>, James Bottomley <James.Bottomley@suse.de>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-  This patch series has three sections explained below. The patches are
-  presented as a series as they hit some common functions and may need to
-  be applied in order to avoid conflicts.
+If the queue is stopped it could be an indication that other recovery is
+happening in this case skip the blk_abort_request.
 
-  1.) Avoid possibly waking up the error handler on a queue that it stopped.
-  blk: Do not abort requests if queue is stopped
+Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
+Cc: Jens Axobe <jens.axboe@oracle.com>
+---
+ block/blk-timeout.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-  2.) It is possible to have a request on the elevator that is already
-  prepped. The prepped resources should be released also. This was seen under
-  heavy IO load while a lot of requeue activity as going occurring.
-
-  blk: In elv_abort_queue skip requests with REQ_DONTPREP set
-  blk: Add a unprep_rq_fn
-  blk: Call unprep_fn from elv_abort_queue is available
-  scsi: Add a scsi_unprep_fn
-
-  3.) These four patches add a flag to a request indicating that a block
-  abort has been called on the request. It also adds a common
-  scsi_requeue_request so that the flag can be checked in only one location
-  on a attempt to requeue.
-  
-  Currently we may abort a request and post error recovery the request can
-  be requeued. We may also try to abort a request that is in the process of
-  completing that we would like to prevent a requeue on. 
-  
-  The abort flag is different than a fast fail flag in that it is provides a
-  hint that the request should be returned as soon as possible (i.e. do not
-  requeue even if disposition indicates that it would be allowed). 
-  
-  The change allowed failovers that where exceeding (SD_MAX_RETRIES * IO
-  TIMEOUT) to be able to failover in less than a single timeout (the less
-  than case depended on the type of event that triggered the path failure).
-
-  blk: Add request atomic flag for abort
-  blk: Mark requests aborted
-  scsi: Add scsi_requeue_request function
-  scsi: Add blk_request_aborted check
-
-  I tested the patches on a IBM,2105800 connected through a zfcp adapter,
-  a IBM,1815 through a qlogic adapter, and scsi_debug.
-
-
- block/blk-settings.c    |   17 +++++++++++
- block/blk-timeout.c     |   19 +++++++++++-
- block/blk.h             |   14 +++++++++
- block/elevator.c        |   25 ++++++++++++++--
- drivers/scsi/scsi_lib.c |   73 +++++++++++++++++++++++++++++++---------------
- include/linux/blkdev.h  |    4 ++
- 6 files changed, 123 insertions(+), 29 deletions(-)
+diff --git a/block/blk-timeout.c b/block/blk-timeout.c
+index 1ba7e0a..89fbe0a 100644
+--- a/block/blk-timeout.c
++++ b/block/blk-timeout.c
+@@ -224,7 +224,8 @@ void blk_abort_queue(struct request_queue *q)
+ 	list_splice_init(&q->timeout_list, &list);
+ 
+ 	list_for_each_entry_safe(rq, tmp, &list, timeout_list)
+-		blk_abort_request(rq);
++		if (!blk_queue_stopped(q))
++			blk_abort_request(rq);
+ 
+ 	/*
+ 	 * Occasionally, blk_abort_request() will return without
+-- 
+1.6.6.1
 
