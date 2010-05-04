@@ -1,26 +1,27 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] [PATCH 4/9] blk: Call unprep_fn from elv_abort_queue
- is	available
-Date: Tue, 04 May 2010 12:42:30 +0200
-Message-ID: <4BDFFA16.1070104@suse.de>
-References: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com> <1272944228-30511-5-git-send-email-andmike@linux.vnet.ibm.com>
+Subject: Re: [dm-devel] [PATCH 5/9] scsi: Add a scsi_unprep_fn
+Date: Tue, 04 May 2010 12:43:04 +0200
+Message-ID: <4BDFFA38.5000706@suse.de>
+References: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com> <1272944228-30511-6-git-send-email-andmike@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1272944228-30511-5-git-send-email-andmike@linux.vnet.ibm.com>
+In-Reply-To: <1272944228-30511-6-git-send-email-andmike@linux.vnet.ibm.com>
 Sender: linux-scsi-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
 Cc: linux-scsi@vger.kernel.org, James Bottomley <James.Bottomley@suse.de>, Jens Axobe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
 Mike Anderson wrote:
-> Call the unprep_fn for the queue if it has been set for requests that=
- have
-> been prepped indicated by REQ_DONTPREP being set.
+> Add scsi_unprep_fn and set this function as the unprep_rq_fn for the =
+scsi
+> queue. This will allow SCSI resources to be released if the block lay=
+er
+> unpreps a request.
 >=20
 > Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
-> Cc: Jens Axobe <jens.axboe@oracle.com>
+> Cc: James Bottomley <James.Bottomley@suse.de>
 Acked-by: Hannes Reinecke <hare@suse.de>
 
 Cheers,
