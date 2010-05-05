@@ -1,64 +1,71 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: [PATCH 1/9] blk: Do not abort requests if queue is stopped
-Date: Tue, 4 May 2010 21:52:31 -0700
-Message-ID: <20100505045231.GA25395@linux.vnet.ibm.com>
-References: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com>
- <1272944228-30511-2-git-send-email-andmike@linux.vnet.ibm.com>
- <20100504104537.GN27497@kernel.dk>
+From: Douglas McClendon <dmc.fedora@filteredperception.org>
+Subject: Snapshot handover working, yippee!,
+ was Re:  semop failed for cookie?
+Date: Wed, 05 May 2010 00:18:03 -0500
+Message-ID: <4BE0FF8B.2070800@filteredperception.org>
+References: <4BD74F99.8020605@filteredperception.org>
+	<20100427223323.GB29708@agk-dp.fab.redhat.com>
+	<4BD8C0B2.7020509@filteredperception.org>
+	<20100429000045.GF29708@agk-dp.fab.redhat.com>
+	<4BD8FDE6.40507@filteredperception.org>
+	<20100429162338.GA14077@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100504104537.GN27497@kernel.dk>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: linux-scsi@vger.kernel.org, James Bottomley <James.Bottomley@suse.de>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20100429162338.GA14077@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Jens Axboe <jens.axboe@oracle.com> wrote:
-> On Mon, May 03 2010, Mike Anderson wrote:
-> > If the queue is stopped it could be an indication that other recovery is
-> > happening in this case skip the blk_abort_request.
-> > 
-> > Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
-> > Cc: Jens Axobe <jens.axboe@oracle.com>
-> > ---
-> >  block/blk-timeout.c |    3 ++-
-> >  1 files changed, 2 insertions(+), 1 deletions(-)
-> > 
-> > diff --git a/block/blk-timeout.c b/block/blk-timeout.c
-> > index 1ba7e0a..89fbe0a 100644
-> > --- a/block/blk-timeout.c
-> > +++ b/block/blk-timeout.c
-> > @@ -224,7 +224,8 @@ void blk_abort_queue(struct request_queue *q)
-> >  	list_splice_init(&q->timeout_list, &list);
-> >  
-> >  	list_for_each_entry_safe(rq, tmp, &list, timeout_list)
-> > -		blk_abort_request(rq);
-> > +		if (!blk_queue_stopped(q))
-> > +			blk_abort_request(rq);
-> >  
-> >  	/*
-> >  	 * Occasionally, blk_abort_request() will return without
-> 
-> That seems like a bit of a mixup, what ties a stopped queue to recovery?
+Ok, so my complaining about code-progress should now be complete.  I 
+think I'm back in action.  But the "BUG: lock held when returning to 
+user space" still seems like a message you folks wanted yourselves to hear.
 
-This was coding to SCSI behavior again. I tried to reduce the case of
-waking the eh if the transport moved the target into a blocked state. It
-might be redundant as FC has eh blocking and timer_reset. iSCSI has
-blocking but not eh blocking.
+After grumbling to myself that fedora doesn't provide a package with 
+dmsetup.static, I went ahead and copied all relocatable deps 
+(/lib/ld-linux.so.2??) to tmpfs along with dmsetup, using 
+LD_LIBRARY_PATH.  I also used --noudevrules and --noudevsync.  Then I 
+followed the documentation I found which, for use cases as esoteric as 
+mine, might be desirable in snapshot.txt
 
-> To take one example, the cciss driver stops the queue when it can't
-> queue more at the hw level and starts it on completion to queue more. If
-> recovery triggers when the hw queue has been filled, then timeouts will
-> fail?
-> 
-> It would be better to mark the queue as already doing abort. That state
-> could be in the queue, or it could be at the driver level.
+https://patchwork.kernel.org/patch/59806/
 
-ok. I will look into this.
+I.e. rules for snapshot handover in the general case.  (who knows, maybe 
+I'll be the only user of non-snapshot-merge snapshot handover for all 
+time) (though technically I guess you can call what I've been doing for 
+the last several years to be an alternate form of snapshot merging. 
+I.e. where your snapshot base is readonly and you are merging both the 
+readonly base and cow to a third writable device)
 
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+Anyway, I finally got my stuffs working again, or at least, I have a 
+virtual snapshot-as-rootfs being dm-mirror migrated right now.  I assume 
+that my loading of a new table, is sufficiently equivalent to the 
+dmsetup remove of the old snapshot as described in the above link.
+
+But finally, and the real reason for this message- during this I noticed 
+that the aforementioned "BUG:" was not in fact what was killing my 
+system.  I.e. I still get that message, though everything else appears 
+to work and it appears to be harmless (I hope).
+
+BUG: lock held when returning to user space!
+
+dmsetup/865 is leaving the kernel with locks still held!
+1 lock held by dmsetup/865:
+  #0:   (&journal->j_barrier){+.+...+}, at: [<c056b84d>] jbd2_journal_lock_\
+updates+0xbd/0xc5
+
+Thanks again for putting up with my corner case complaints.
+
+Cheers,
+
+-dmc
