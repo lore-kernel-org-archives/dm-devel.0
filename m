@@ -1,17 +1,22 @@
-From: Busby <chaimvy@gmail.com>
-Subject: Re: create lvm2 snapshot will take a long time while
-	large IO on origin lv(till large IO ends)
-Date: Wed, 5 May 2010 19:10:08 +0800
-Message-ID: <j2nb8091bb41005050410tc0376726jaf9061685a6a5fa1@mail.gmail.com>
-References: <w2ub8091bb41004282024i9ae427f7gf963baab82d811d0@mail.gmail.com>
-	<4BD9C264.7040501@cfl.rr.com>
-	<q2hb8091bb41004291809i8fa5d34cr3918144d715f0792@mail.gmail.com>
-	<4BDAEB90.7050305@cfl.rr.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Snapshot handover working, yippee!,
+ was Re:  semop failed for cookie?
+Date: Wed, 5 May 2010 11:22:05 -0400
+Message-ID: <20100505152204.GB21704@redhat.com>
+References: <4BD74F99.8020605@filteredperception.org>
+	<20100427223323.GB29708@agk-dp.fab.redhat.com>
+	<4BD8C0B2.7020509@filteredperception.org>
+	<20100429000045.GF29708@agk-dp.fab.redhat.com>
+	<4BD8FDE6.40507@filteredperception.org>
+	<20100429162338.GA14077@agk-dp.fab.redhat.com>
+	<4BE0FF8B.2070800@filteredperception.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8376303562084609810=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4BDAEB90.7050305@cfl.rr.com>
+Content-Disposition: inline
+In-Reply-To: <4BE0FF8B.2070800@filteredperception.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,100 +26,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Phillip Susi <psusi@cfl.rr.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Douglas McClendon <dmc.fedora@filteredperception.org>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============8376303562084609810==
-Content-Type: multipart/alternative; boundary=000e0cd7629e6f9acf0485d6dedc
+On Wed, May 05 2010 at  1:18am -0400,
+Douglas McClendon <dmc.fedora@filteredperception.org> wrote:
 
---000e0cd7629e6f9acf0485d6dedc
-Content-Type: text/plain; charset=ISO-8859-1
+> Ok, so my complaining about code-progress should now be complete.  I
+> think I'm back in action.  But the "BUG: lock held when returning to
+> user space" still seems like a message you folks wanted yourselves
+> to hear.
+> 
+> After grumbling to myself that fedora doesn't provide a package with
+> dmsetup.static, I went ahead and copied all relocatable deps
+> (/lib/ld-linux.so.2??) to tmpfs along with dmsetup, using
+> LD_LIBRARY_PATH.  I also used --noudevrules and --noudevsync.  Then
+> I followed the documentation I found which, for use cases as
+> esoteric as mine, might be desirable in snapshot.txt
+> 
+> https://patchwork.kernel.org/patch/59806/
+> 
+> I.e. rules for snapshot handover in the general case.  (who knows,
+> maybe I'll be the only user of non-snapshot-merge snapshot handover
+> for all time) (though technically I guess you can call what I've
+> been doing for the last several years to be an alternate form of
+> snapshot merging. I.e. where your snapshot base is readonly and you
+> are merging both the readonly base and cow to a third writable
+> device)
+> 
+> Anyway, I finally got my stuffs working again, or at least, I have a
+> virtual snapshot-as-rootfs being dm-mirror migrated right now.  I
+> assume that my loading of a new table, is sufficiently equivalent to
+> the dmsetup remove of the old snapshot as described in the above
+> link.
 
-I read the source code of 'dm_suspend' in the kernel, find it will call this
-function:
+Glad to hear snapshot cow handover is working well for you.
 
-__filemap_fdatawrite(mapping, WB_SYNC_ALL);
+> But finally, and the real reason for this message- during this I
+> noticed that the aforementioned "BUG:" was not in fact what was
+> killing my system.  I.e. I still get that message, though everything
+> else appears to work and it appears to be harmless (I hope).
+> 
+> BUG: lock held when returning to user space!
+> 
+> dmsetup/865 is leaving the kernel with locks still held!
+> 1 lock held by dmsetup/865:
+>  #0:   (&journal->j_barrier){+.+...+}, at: [<c056b84d>] jbd2_journal_lock_updates+0xbd/0xc5
 
-so I understand
-"I don't think it is possible to suspend new IO requests from user land
-while allowing it from the buffer cache"
-you said.
-Thank you very much, :)
+This is an ext4 issue that has been fixed upstream, see:
+https://bugzilla.redhat.com/show_bug.cgi?id=568503
 
-Best regards,
-Busby
-2010/4/30 Phillip Susi <psusi@cfl.rr.com>
-
-> On 4/29/2010 9:09 PM, Busby wrote:
-> > Hi, Phillip Susi,
-> >                  Why not suspend the origin's IO first, then create the
-> > snapshot lv, resume the origin lv 's IO waiting Q last. the 'dd' cmd is
-> > eariler than the snapshot's creating, if suspend the IO, the filesystem
-> > on the snapshot will be corrupt, I get it, but I think the  snapshot is
-> > in block layer, should suspend the user layer's data coming first, then
-> > flush the data in the dirty buffer and create the snapshot.  like the dd
-> > cmd on the origin, will make the snapshot's creating take a very long
-> > time, for waiting for the dm suspend 's return, I think flush the data
-> > in the dirty buffer (data from dd ), suspend the next data of the dd,
-> > create the snapshot, then let the data into dirty buffer to the block
-> > layer. the dd cmd will put the data into dirty buffer continually, can
-> > not be suspended?
->
-> I don't think it is possible to suspend new IO requests from user land
-> while allowing it from the buffer cache.
->
-
---000e0cd7629e6f9acf0485d6dedc
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div>I read the source code of &#39;dm_suspend&#39; in the kernel, find it =
-will call this function:</div>
-<div>=A0</div>
-<div>__filemap_fdatawrite(mapping, <font color=3D"#ff0000">WB_SYNC_ALL</fon=
-t>);</div>
-<div>=A0</div>
-<div>so=A0I understand=A0</div>
-<div>&quot;I don&#39;t think it is possible to suspend new IO requests from=
- user land<br>while allowing it from the buffer cache&quot;=A0</div>
-<div>you said.</div>
-<div>Thank you very much, :)</div>
-<div>=A0</div>
-<div>Best regards,</div>
-<div>Busby<br></div>
-<div class=3D"gmail_quote">2010/4/30 Phillip Susi <span dir=3D"ltr">&lt;<a =
-href=3D"mailto:psusi@cfl.rr.com">psusi@cfl.rr.com</a>&gt;</span><br>
-<blockquote style=3D"BORDER-LEFT: #ccc 1px solid; MARGIN: 0px 0px 0px 0.8ex=
-; PADDING-LEFT: 1ex" class=3D"gmail_quote">
-<div class=3D"im">On 4/29/2010 9:09 PM, Busby wrote:<br>&gt; Hi, Phillip Su=
-si,<br>&gt; =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0Why not suspend the origin&#=
-39;s IO first, then create the<br>&gt; snapshot lv, resume the origin lv &#=
-39;s IO waiting Q last. the &#39;dd&#39; cmd is<br>
-&gt; eariler than the snapshot&#39;s creating, if suspend the IO, the files=
-ystem<br>&gt; on the snapshot will be corrupt, I get it, but I think the =
-=A0snapshot is<br>&gt; in block layer, should suspend the user layer&#39;s =
-data coming first, then<br>
-&gt; flush the data in the dirty buffer and create the snapshot. =A0like th=
-e dd<br>&gt; cmd on the origin, will make the snapshot&#39;s creating take =
-a very long<br>&gt; time, for waiting for the dm suspend &#39;s return, I t=
-hink flush the data<br>
-&gt; in the dirty buffer (data from dd ), suspend the next data of the dd,<=
-br>&gt; create the snapshot, then let the data into dirty buffer to the blo=
-ck<br>&gt; layer. the dd cmd will put the data into dirty buffer continuall=
-y, can<br>
-&gt; not be suspended?<br><br></div>I don&#39;t think it is possible to sus=
-pend new IO requests from user land<br>while allowing it from the buffer ca=
-che.<br></blockquote></div><br>
-
---000e0cd7629e6f9acf0485d6dedc--
-
-
---===============8376303562084609810==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8376303562084609810==--
+and it is staged for inclussion in the next kernel (2.6.35):
+http://git.kernel.org/?p=linux/kernel/git/tytso/ext4.git;a=commit;h=74a8f0090293696a716c728f9cd484b45083937f
