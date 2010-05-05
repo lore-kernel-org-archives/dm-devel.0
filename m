@@ -1,71 +1,46 @@
-From: Douglas McClendon <dmc.fedora@filteredperception.org>
-Subject: Snapshot handover working, yippee!,
- was Re:  semop failed for cookie?
-Date: Wed, 05 May 2010 00:18:03 -0500
-Message-ID: <4BE0FF8B.2070800@filteredperception.org>
-References: <4BD74F99.8020605@filteredperception.org>
-	<20100427223323.GB29708@agk-dp.fab.redhat.com>
-	<4BD8C0B2.7020509@filteredperception.org>
-	<20100429000045.GF29708@agk-dp.fab.redhat.com>
-	<4BD8FDE6.40507@filteredperception.org>
-	<20100429162338.GA14077@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [PATCH 2/9] blk: In elv_abort_queue skip requests with
+	REQ_DONTPREP set
+Date: Wed, 5 May 2010 10:21:50 +0200
+Message-ID: <20100505082150.GY27497@kernel.dk>
+References: <1272944228-30511-1-git-send-email-andmike@linux.vnet.ibm.com> <1272944228-30511-3-git-send-email-andmike@linux.vnet.ibm.com> <20100504104709.GO27497@kernel.dk> <20100504175855.GB16156@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100429162338.GA14077@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100504175855.GB16156@linux.vnet.ibm.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Anderson <andmike@linux.vnet.ibm.com>
+Cc: linux-scsi@vger.kernel.org, James Bottomley <James.Bottomley@suse.de>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Ok, so my complaining about code-progress should now be complete.  I 
-think I'm back in action.  But the "BUG: lock held when returning to 
-user space" still seems like a message you folks wanted yourselves to hear.
+On Tue, May 04 2010, Mike Anderson wrote:
+> Jens Axboe <jens.axboe@oracle.com> wrote:
+> > On Mon, May 03 2010, Mike Anderson wrote:
+> > > Having REQ_DONTPREP set on a request can indicated that resources have been
+> > > allocated for this request. In elv_abort_queue skip requests with
+> > > REQ_DONTPREP set to avoid leaking resources.
+> > 
+> > This also seems weird, are you coding the API backwards from what SCSI
+> > currently has implemented?
+> > 
+> 
+> Yes I was coding to current SCSI implementation.
+> 
+> > Would seem a lot cleaner to separate dont-prep from already-prepped.
+> > 
+> 
+> I assumed to do this we would need another request flag indicating
+> ??REQ_PREPPED?? that would need to be set in the prep function. Then
+> this flag would be checked vs REQ_DONTPREP to call the unprep_fn or did you
+> mean something else?
 
-After grumbling to myself that fedora doesn't provide a package with 
-dmsetup.static, I went ahead and copied all relocatable deps 
-(/lib/ld-linux.so.2??) to tmpfs along with dmsetup, using 
-LD_LIBRARY_PATH.  I also used --noudevrules and --noudevsync.  Then I 
-followed the documentation I found which, for use cases as esoteric as 
-mine, might be desirable in snapshot.txt
+Yeah, something like that, cleanly seperating the state of needing
+unprep vs never being prepped. As that's a driver state, most drivers
+should be able to get that info without needing an extra flag. But it's
+probably cleaner to add the REQ_PREPPED flag and only call back into the
+driver if the rq really needs an unprep.
 
-https://patchwork.kernel.org/patch/59806/
+-- 
+Jens Axboe
 
-I.e. rules for snapshot handover in the general case.  (who knows, maybe 
-I'll be the only user of non-snapshot-merge snapshot handover for all 
-time) (though technically I guess you can call what I've been doing for 
-the last several years to be an alternate form of snapshot merging. 
-I.e. where your snapshot base is readonly and you are merging both the 
-readonly base and cow to a third writable device)
-
-Anyway, I finally got my stuffs working again, or at least, I have a 
-virtual snapshot-as-rootfs being dm-mirror migrated right now.  I assume 
-that my loading of a new table, is sufficiently equivalent to the 
-dmsetup remove of the old snapshot as described in the above link.
-
-But finally, and the real reason for this message- during this I noticed 
-that the aforementioned "BUG:" was not in fact what was killing my 
-system.  I.e. I still get that message, though everything else appears 
-to work and it appears to be harmless (I hope).
-
-BUG: lock held when returning to user space!
-
-dmsetup/865 is leaving the kernel with locks still held!
-1 lock held by dmsetup/865:
-  #0:   (&journal->j_barrier){+.+...+}, at: [<c056b84d>] jbd2_journal_lock_\
-updates+0xbd/0xc5
-
-Thanks again for putting up with my corner case complaints.
-
-Cheers,
-
--dmc
