@@ -1,66 +1,85 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: [PATCH 0/2] dm: Add no_abort_q feature flag to dm-mpath
-Date: Wed, 5 May 2010 18:39:17 -0700
-Message-ID: <20100506013917.GA9298@linux.vnet.ibm.com>
-References: <1272945691-31649-1-git-send-email-andmike@linux.vnet.ibm.com>
- <E463DF2B2E584B4A82673F53D62C2EF498E060CB@cosmail01.lsi.com>
+From: Busby <chaimvy@gmail.com>
+Subject: dm_suspend will take too long?
+Date: Thu, 6 May 2010 12:08:07 +0800
+Message-ID: <p2xb8091bb41005052108vc7f9a590u31962f64c7b75004@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF498E060CB@cosmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="===============4652066193891198658=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Moger, Babu <Babu.Moger@lsi.com> wrote:
-> > -----Original Message-----
-> > From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-
-> > owner@vger.kernel.org] On Behalf Of Mike Anderson
-> > Sent: Monday, May 03, 2010 11:01 PM
-> > To: dm-devel@redhat.com
-> > Cc: linux-scsi@vger.kernel.org
-> > Subject: [PATCH 0/2] dm: Add no_abort_q feature flag to dm-mpath
-> > 
-> > This patch series contains two patches.
-> > 
-> > 1.) The first patch adds a feature flags bit field to the multipath
-> > structure for selected features.
-> > 
-> > 2.) The second patch allows a user to set a feature flag for a dm-mpath
-> > device of "no_abort_q" to indicate that deactivate_path should not call
-> > blk_abort_queue. I tried to select a short feature name to feature
-> > output
-> > listed with multipath -l would not be too long "features='2
-> > queue_if_no_path
-> > no_abort_q'
-> 
-> Mike, 
->  In what special circumstances you recommend to use this feature? It would be great if you could add that explanation in your patch descriptions. 
+--===============4652066193891198658==
+Content-Type: multipart/alternative; boundary=000e0cd2d8a0109efd0485e517f1
 
-Yes I will update the descriptions.
+--000e0cd2d8a0109efd0485e517f1
+Content-Type: text/plain; charset=ISO-8859-1
 
-To answer your question in general it would be circumstance where the
-block_abort_queue during failover is leading to longer recovery instead of
-shorter. This could be because of aborting / transport / device
-interactions (the work by others in the iSCSI and FC transports have made
-things better here).
+Hi All,
+        I use "dd if=/dev/zero of=/dev/vg00/lv00 bs=1K"  to make big IO on
+the origin LV. then I use lvcreate to create a snapshot on it (lv00). it
+will suspend till the 'dd' ends.
+       I read the source code and find the 'dm_suspend' function will call
+"lock_fs", then find all of them hang at  "sync_blockdev(struct block_device
+*bdev)" function, because the function call  "__filemap_fdatawrite(mapping,
+WB_SYNC_ALL);" later.
+      I don't want the lvcreate snapshot take so long, suspend the origin lv
+is needed?And the WB_SYNC_ALL will cause update dirty pages slower than
+'dd'  write data.
+      sync_blockdev will wait on any mapping it seems. can dm_suspend do not
+wait for it?
+      My kernel version:2.6.29. LVM2.02.63.
+      Thanks.
 
-While there are case where abort makes a big difference (being able to
-failover in less than max_retries * IO timeout value). The latency numbers
-for simple RDAC initiator failover show only small improvements on my
-configurations (others may have better data). A assumption would be that
-there could be combinations of transports and devices out there where this
-might not give the fastest failover so the user may want control.
+Best regards,
+Busby
 
-On a historically note the call to block_abort_queue came in somewhat
-sideways by me linked to the timeout movement from SCSI to blk so it could
-have integrated better. I should have had a way to disable / enable it
-then and I am trying to provide that now so that the user has some
-control.
+--000e0cd2d8a0109efd0485e517f1
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+<div>Hi All,</div>
+<div>=A0=A0=A0=A0=A0=A0=A0 I use &quot;dd if=3D/dev/zero of=3D/dev/vg00/lv0=
+0 bs=3D1K&quot;=A0 to make big IO on the origin LV. then I use lvcreate to =
+create a snapshot on it (lv00). it will suspend till the &#39;dd&#39; ends.=
+</div>
+<div>=A0=A0=A0=A0=A0=A0 I read the source code and=A0find the &#39;dm_suspe=
+nd&#39; function will call &quot;lock_fs&quot;,=A0then find all of them=A0h=
+ang at =A0&quot;sync_blockdev(struct block_device *bdev)&quot; function, be=
+cause the function call =A0&quot;__filemap_fdatawrite(mapping, <font color=
+=3D"#ff0000">WB_SYNC_ALL</font>);&quot; later.</div>
+
+<div>=A0=A0=A0=A0=A0 I don&#39;t want the lvcreate snapshot take so long, s=
+uspend the origin lv is needed?And the <font color=3D"#ff0000">WB_SYNC_ALL =
+</font><font color=3D"#000000">will cause=A0update dirty=A0pages=A0slower t=
+han &#39;dd&#39;=A0=A0write data.</font></div>
+
+<div>=A0=A0=A0=A0=A0=A0sync_blockdev will wait on any mapping it seems. can=
+ dm_suspend do not wait for it?</div>
+<div>=A0=A0=A0=A0 =A0My kernel version:2.6.29. LVM2.02.63.</div>
+<div>=A0=A0=A0=A0=A0 Thanks.</div>
+<div>=A0</div>
+<div>Best regards,</div>
+<div>Busby</div>
+<div>=A0</div>
+
+--000e0cd2d8a0109efd0485e517f1--
+
+
+--===============4652066193891198658==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============4652066193891198658==--
