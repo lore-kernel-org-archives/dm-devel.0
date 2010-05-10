@@ -1,45 +1,57 @@
-From: Paolo Ornati <ornati@gmail.com>
-Subject: Re: Testers needed - Maxtor performance degradation
-Date: Thu, 6 May 2010 20:32:50 +0200
-Message-ID: <20100506203250.76f559cd@gmail.com>
-References: <Pine.LNX.4.64.1005051433080.30185@hs20-bc2-1.build.redhat.com>
+From: Daire Byrne <daire.byrne@gmail.com>
+Subject: Re: Shared snapshot tests
+Date: Mon, 10 May 2010 12:39:21 +0100
+Message-ID: <AANLkTikVrvzk1YWXjfS_vGcHsp_R9jyclFgT31H6F2z9@mail.gmail.com>
+References: <20100415182356.GN13021@agk-dp.fab.redhat.com>
+	<Pine.LNX.4.64.1004200207170.24170@hs20-bc2-1.build.redhat.com>
+	<h2l131780341004211054p6e3cb893xb5dcb38ed2a9fceb@mail.gmail.com>
+	<Pine.LNX.4.64.1005042334530.16138@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1005051433080.30185@hs20-bc2-1.build.redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1005042334530.16138@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 6 May 2010 12:15:58 -0400 (EDT)
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Wed, May 5, 2010 at 4:39 AM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+> See the patch that I sent you. Does it improve performance for NON-shared
+> snapshots? (eventually, I'll make the same change to shared snapshots too)
 
-> I'd like to ask other people with Maxtor disks to run this script (with 
-> "sda", "sdb", etc. as an argument ... without "/dev/" prefix). The script 
-> measures read rate as a function of request size. Report the results, so 
-> that it can be determined which disks are buggy and which not and the 
-> default transfer size could be reduced to 256kB for the buggy ones.
+The server and RAID I had for testing has now been used for something
+else so I am unable to do any more tests atm.
 
-ATA MAXTOR STM316021 3.AA
-64 kB: 78.9 MB/s
-128 kB: 79.1 MB/s
-192 kB: 79.1 MB/s
-256 kB: 78.6 MB/s
-320 kB: 79.1 MB/s
-384 kB: 78.9 MB/s
-448 kB: 79.0 MB/s
-512 kB: 79.1 MB/s
-576 kB: 79.0 MB/s
-640 kB: 79.1 MB/s
-704 kB: 79.0 MB/s
-768 kB: 79.1 MB/s
-832 kB: 79.0 MB/s
-896 kB: 79.0 MB/s
-960 kB: 79.1 MB/s
-1024 kB: 78.8 MB/s
+> BTW. what disks and raid array do you use? Is it a hardware or software
+> raid?
 
--- 
-	Paolo Ornati
-	Linux 2.6.34-rc6-00063-gbe1066b on x86_64
+Hardware (Infortrend) RAID.
+
+> I have found that with Maxtor disks (IDE, SATA and SCSI), you have to
+> limit the request size to 256kB, or you get unpredictable performance
+> drops.
+
+I played with the request size but it made little difference.
+
+>> Out of interest what are Redhat's plans for this feature? Will it be
+>> in RHEL6 or is it going to wait until it is accepted upstream and then
+>> make it into some later Fedora release? Could it be easily backported
+>> to RHEL5 do you think?
+>
+> Not in RHEL 6.0. Maybe in 6.1.
+>
+> It's not planned to backport to 5.x.
+
+Okay. Thanks. I will try and test this again when I get some hardware.
+
+Daire
