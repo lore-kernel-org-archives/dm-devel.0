@@ -1,17 +1,15 @@
-From: Daire Byrne <daire.byrne@gmail.com>
-Subject: Re: Shared snapshot tests
-Date: Mon, 10 May 2010 12:39:21 +0100
-Message-ID: <AANLkTikVrvzk1YWXjfS_vGcHsp_R9jyclFgT31H6F2z9@mail.gmail.com>
-References: <20100415182356.GN13021@agk-dp.fab.redhat.com>
-	<Pine.LNX.4.64.1004200207170.24170@hs20-bc2-1.build.redhat.com>
-	<h2l131780341004211054p6e3cb893xb5dcb38ed2a9fceb@mail.gmail.com>
-	<Pine.LNX.4.64.1005042334530.16138@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [RFC PATCH 2/2] dm: only initialize full request_queue
+	for request-based device
+Date: Mon, 10 May 2010 18:55:39 -0400
+Message-ID: <1273532139-23043-2-git-send-email-snitzer@redhat.com>
+References: <1273532139-23043-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1005042334530.16138@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <1273532139-23043-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,37 +19,138 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, linux-kernel@vger.kernel.org, Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, May 5, 2010 at 4:39 AM, Mikulas Patocka <mpatocka@redhat.com> wrote:
-> See the patch that I sent you. Does it improve performance for NON-shared
-> snapshots? (eventually, I'll make the same change to shared snapshots too)
+Revert back to only allocating a minimalist request_queue structure
+initially (needed for both bio and request-based DM).  Initialization of
+a full request_queue (request_fn, elevator, etc) is deferred until it is
+known that the DM device is request-based.
 
-The server and RAID I had for testing has now been used for something
-else so I am unable to do any more tests atm.
+dm_init_request_based_queue is now called at the end of a request-based
+DM device's table load.
 
-> BTW. what disks and raid array do you use? Is it a hardware or software
-> raid?
+Otherwise bio-based DM devices will have an elevator, request_fn, etc.
+As a result bio-based DM devices had an 'iosched/' tree as well as an
+'elevator' other than "none" in sysfs.
 
-Hardware (Infortrend) RAID.
+Reported-by: Vivek Goyal <vgoyal@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c |    5 ++++
+ drivers/md/dm.c       |   52 ++++++++++++++++++++++++++++++++-----------------
+ drivers/md/dm.h       |    2 +
+ 3 files changed, 41 insertions(+), 18 deletions(-)
 
-> I have found that with Maxtor disks (IDE, SATA and SCSI), you have to
-> limit the request size to 256kB, or you get unpredictable performance
-> drops.
-
-I played with the request size but it made little difference.
-
->> Out of interest what are Redhat's plans for this feature? Will it be
->> in RHEL6 or is it going to wait until it is accepted upstream and then
->> make it into some later Fedora release? Could it be easily backported
->> to RHEL5 do you think?
->
-> Not in RHEL 6.0. Maybe in 6.1.
->
-> It's not planned to backport to 5.x.
-
-Okay. Thanks. I will try and test this again when I get some hardware.
-
-Daire
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 9924ea2..64a8578 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -829,6 +829,11 @@ int dm_table_set_type(struct dm_table *t)
+ 		return -EINVAL;
+ 	}
+ 
++	if (!dm_init_request_based_queue(t->md)) {
++		DMWARN("Cannot initialize queue for Request-based dm");
++		return -EINVAL;
++	}
++
+ 	t->type = DM_TYPE_REQUEST_BASED;
+ 
+ 	return 0;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index d21e128..6df7f6c 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1886,22 +1886,10 @@ static struct mapped_device *alloc_dev(int minor)
+ 	INIT_LIST_HEAD(&md->uevent_list);
+ 	spin_lock_init(&md->uevent_lock);
+ 
+-	md->queue = blk_init_queue(dm_request_fn, NULL);
++	md->queue = blk_alloc_queue(GFP_KERNEL);
+ 	if (!md->queue)
+ 		goto bad_queue;
+ 
+-	/*
+-	 * Request-based dm devices cannot be stacked on top of bio-based dm
+-	 * devices.  The type of this dm device has not been decided yet,
+-	 * although we initialized the queue using blk_init_queue().
+-	 * The type is decided at the first table loading time.
+-	 * To prevent problematic device stacking, clear the queue flag
+-	 * for request stacking support until then.
+-	 *
+-	 * This queue is new, so no concurrency on the queue_flags.
+-	 */
+-	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
+-	md->saved_make_request_fn = md->queue->make_request_fn;
+ 	md->queue->queuedata = md;
+ 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
+ 	md->queue->backing_dev_info.congested_data = md;
+@@ -1909,11 +1897,6 @@ static struct mapped_device *alloc_dev(int minor)
+ 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
+ 	md->queue->unplug_fn = dm_unplug_all;
+ 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
+-	blk_queue_softirq_done(md->queue, dm_softirq_done);
+-	blk_queue_prep_rq(md->queue, dm_prep_fn);
+-	blk_queue_lld_busy(md->queue, dm_lld_busy);
+-	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN_FLUSH,
+-			  dm_rq_prepare_flush);
+ 
+ 	md->disk = alloc_disk(1);
+ 	if (!md->disk)
+@@ -1968,6 +1951,39 @@ bad_module_get:
+ 	return NULL;
+ }
+ 
++int dm_init_request_based_queue(struct mapped_device *md)
++{
++	struct request_queue *q = NULL;
++
++	q = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
++	if (!q)
++		return 0;
++	md->queue = q;
++
++	/*
++	 * Request-based dm devices cannot be stacked on top of bio-based dm
++	 * devices.  The type of this dm device has not been decided yet.
++	 * The type is decided at the first table loading time.
++	 * To prevent problematic device stacking, clear the queue flag
++	 * for request stacking support until then.
++	 *
++	 * This queue is new, so no concurrency on the queue_flags.
++	 */
++	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
++	md->saved_make_request_fn = md->queue->make_request_fn;
++
++	blk_queue_softirq_done(md->queue, dm_softirq_done);
++	blk_queue_prep_rq(md->queue, dm_prep_fn);
++	blk_queue_lld_busy(md->queue, dm_lld_busy);
++	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN_FLUSH,
++			  dm_rq_prepare_flush);
++
++	/* Register the request-based queue's elevator with sysfs */
++	elv_register_queue(md->queue);
++
++	return 1;
++}
++
+ static void unlock_fs(struct mapped_device *md);
+ 
+ static void free_dev(struct mapped_device *md)
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index bad1724..489feba 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -113,6 +113,8 @@ void dm_sysfs_exit(struct mapped_device *md);
+ struct kobject *dm_kobject(struct mapped_device *md);
+ struct mapped_device *dm_get_from_kobject(struct kobject *kobj);
+ 
++int dm_init_request_based_queue(struct mapped_device *md);
++
+ /*
+  * Targets for linear and striped mappings
+  */
+-- 
+1.6.6.1
