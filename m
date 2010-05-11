@@ -1,121 +1,48 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [RFC PATCH 1/2] block: allow initialization of
-	previously allocated request_queue
-Date: Mon, 10 May 2010 18:55:38 -0400
-Message-ID: <1273532139-23043-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [RFC PATCH 2/2] dm: only initialize full request_queue for request-based
+ device
+Date: Tue, 11 May 2010 13:23:12 +0900
+Message-ID: <4BE8DBB0.5060701@ct.jp.nec.com>
+References: <1273532139-23043-1-git-send-email-snitzer@redhat.com> <1273532139-23043-2-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, linux-kernel@vger.kernel.org, Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1273532139-23043-2-git-send-email-snitzer@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Vivek Goyal <vgoyal@redhat.com>
 List-Id: dm-devel.ids
 
-blk_init_queue() allocates the request_queue structure and then
-initializes it as needed (request_fn, elevator, etc).
+Hi Mike,
 
-Split initialization out to blk_init_allocated_queue_node.
-Introduce blk_init_allocated_queue wrapper function to model existing
-blk_init_queue and blk_init_queue_node interfaces.
+On 05/11/2010 07:55 AM +0900, Mike Snitzer wrote:
+> Revert back to only allocating a minimalist request_queue structure
+> initially (needed for both bio and request-based DM).  Initialization of
+> a full request_queue (request_fn, elevator, etc) is deferred until it is
+> known that the DM device is request-based.
 
-Export elv_register_queue to allow a newly added elevator to be
-registered with sysfs.  Export elv_unregister_queue for symmetry.
+Thank you for working on this.
+However, I still disagree with this patch as we discussed on this thread:
+http://marc.info/?t=124990138700003&r=1&w=2
+(Exporting a part of queue's features may cause some maintenance costs
+ in future.)
 
-These changes allow DM to initialize a device's request_queue with more
-precision.  In particular, DM no longer unconditionally initializes a
-full request_queue (elevator et al).  It only does so for a
-request-based DM device.
+As I mentioned on the last email of the thread above (see below),
+specifying device type at the device creation time by userspace tools
+should make dm code very simple.  So that may be a better approach.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- block/blk-core.c       |   18 +++++++++++++++++-
- block/elevator.c       |    2 ++
- include/linux/blkdev.h |    5 +++++
- 3 files changed, 24 insertions(+), 1 deletions(-)
+> By the way, another approach to optimizing the memory usage would be
+> to determine whether the dm device is bio-based or request-based
+> at the device creation time, instead of the table binding time.
+> We want the delayed allocation, since kernel can't decide the device
+> type until the first table is bound because of the auto-detection
+> mechanism.  The auto-detection is good for keeping compatibility with
+> existing user-space tools.  But once user-space tools are changed to
+> specify device type at the device creation time, we can eventually
+> remove the auto-detection.
+> Then, kernel can decide device type in alloc_dev(), so
+> the initialization code in kernel will become very simple.
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 9fe174d..bfd420c 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -567,7 +567,23 @@ struct request_queue *
- blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
- {
- 	struct request_queue *q = blk_alloc_queue_node(GFP_KERNEL, node_id);
-+	
-+	return blk_init_allocated_queue_node(q, rfn, lock, node_id);
-+}
-+EXPORT_SYMBOL(blk_init_queue_node);
- 
-+struct request_queue *
-+blk_init_allocated_queue(struct request_queue *q, request_fn_proc *rfn,
-+			 spinlock_t *lock)
-+{
-+	return blk_init_allocated_queue_node(q, rfn, lock, -1);
-+}
-+EXPORT_SYMBOL(blk_init_allocated_queue);
-+
-+struct request_queue *
-+blk_init_allocated_queue_node(struct request_queue *q, request_fn_proc *rfn,
-+			      spinlock_t *lock, int node_id)
-+{
- 	if (!q)
- 		return NULL;
- 
-@@ -601,7 +617,7 @@ blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
- 	blk_put_queue(q);
- 	return NULL;
- }
--EXPORT_SYMBOL(blk_init_queue_node);
-+EXPORT_SYMBOL(blk_init_allocated_queue_node);
- 
- int blk_get_queue(struct request_queue *q)
- {
-diff --git a/block/elevator.c b/block/elevator.c
-index 76e3702..6ec9137 100644
---- a/block/elevator.c
-+++ b/block/elevator.c
-@@ -921,6 +921,7 @@ int elv_register_queue(struct request_queue *q)
- 	}
- 	return error;
- }
-+EXPORT_SYMBOL_GPL(elv_register_queue);
- 
- static void __elv_unregister_queue(struct elevator_queue *e)
- {
-@@ -933,6 +934,7 @@ void elv_unregister_queue(struct request_queue *q)
- 	if (q)
- 		__elv_unregister_queue(q->elevator);
- }
-+EXPORT_SYMBOL_GPL(elv_unregister_queue);
- 
- void elv_register(struct elevator_type *e)
- {
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 6690e8b..89ce7a2 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -917,7 +917,12 @@ extern void blk_abort_queue(struct request_queue *);
-  */
- extern struct request_queue *blk_init_queue_node(request_fn_proc *rfn,
- 					spinlock_t *lock, int node_id);
-+extern struct request_queue *blk_init_allocated_queue_node(struct request_queue *,
-+							   request_fn_proc *,
-+							   spinlock_t *, int node_id);
- extern struct request_queue *blk_init_queue(request_fn_proc *, spinlock_t *);
-+extern struct request_queue *blk_init_allocated_queue(struct request_queue *,
-+						      request_fn_proc *, spinlock_t *);
- extern void blk_cleanup_queue(struct request_queue *);
- extern void blk_queue_make_request(struct request_queue *, make_request_fn *);
- extern void blk_queue_bounce_limit(struct request_queue *, u64);
--- 
-1.6.6.1
+Thanks,
+Kiyoshi Ueda
