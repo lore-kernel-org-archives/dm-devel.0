@@ -1,82 +1,99 @@
-From: Tomohiro Kusumi <kusumi.tomohiro@jp.fujitsu.com>
-Subject: Re: [PATCH] fix hard-coded disk header chunk size for persistent
- snapshot
-Date: Wed, 12 May 2010 14:57:34 +0900
-Message-ID: <4BEA434E.3030403@jp.fujitsu.com>
-References: <4BEA0472.1060300@jp.fujitsu.com> <20100512013909.GD2377@agk-dp.fab.redhat.com> <Pine.LNX.4.64.1005120055020.1551@hs20-bc2-1.build.redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [RFC PATCH 2/2] dm: only initialize full request_queue for request-based
+ device
+Date: Wed, 12 May 2010 17:23:59 +0900
+Message-ID: <4BEA659F.9050206@ct.jp.nec.com>
+References: <1273532139-23043-1-git-send-email-snitzer@redhat.com> <1273532139-23043-2-git-send-email-snitzer@redhat.com> <4BE8DBB0.5060701@ct.jp.nec.com> <20100511131502.GA25211@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1005120055020.1551@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20100511131502.GA25211@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org, kusumi.tomohiro@jp.fujitsu.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Vivek Goyal <vgoyal@redhat.com>, Nikanth Karthikesan <knikanth@suse.de>
 List-Id: dm-devel.ids
 
-(2010/05/12 13:58), Mikulas Patocka wrote:
->
->
-> On Wed, 12 May 2010, Alasdair G Kergon wrote:
->
->> On Wed, May 12, 2010 at 10:29:22AM +0900, Tomohiro Kusumi wrote:
->>> This patch fixes hard-coded value for the size of a chunk that includes
->>> disk header for persistent snapshot. It should be changed to existing
->>> macro NUM_SNAPSHOT_HDR_CHUNKS instead of using hard-coded value 1.
+Hi Mike,
+
+On 05/11/2010 10:15 PM +0900, Mike Snitzer wrote:
+> On Tue, May 11 2010 at 12:23am -0400,
+> Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+> 
+>> Hi Mike,
 >>
->> Any more places too?  (E.g. persistent_commit_merge)
+>> On 05/11/2010 07:55 AM +0900, Mike Snitzer wrote:
+>>> Revert back to only allocating a minimalist request_queue structure
+>>> initially (needed for both bio and request-based DM).  Initialization of
+>>> a full request_queue (request_fn, elevator, etc) is deferred until it is
+>>> known that the DM device is request-based.
 >>
->> Alasdair
->
-> I think the expression in persistent_commit_merge should be changed to:
-> ps->next_free = area_location(ps, ps->current_area) +
->                  ps->current_committed + 1;
->
-> It is numerically the same, but will avoid trouble if
-> NUM_SNAPSHOT_HDR_CHUNKS is increased.
->
-> Mikulas
->
->
+>> Thank you for working on this.
+>> However, I still disagree with this patch as we discussed on this thread:
+>> http://marc.info/?t=124990138700003&r=1&w=2
+>> (Exporting a part of queue's features may cause some maintenance costs
+>>  in future.)
+> 
+> Thanks for the reference.  I completely forgot about that thread (even
+> though I responded to Nikanth's patches in detail! :)
+> 
+> It is clear we need to resolve the current full request_queue
+> initialization that occurs even for bio-based DM devices.
+> 
+> I believe the 2 patches I posted accomplish this in a stright-forward
+> way.  We can always improve on it (by looking at what you proposed
+> below) but we need a minimlaist fix that doesn't depend on userspace
+> LVM2 changes right now.
 
-agree,
+Humm, OK.
+Indeed, showing iosched directory in bio-based device's sysfs is
+confusing users actually, and we need something to resolve that soon.
+So I don't strongly object to your approach as the first step, as long
+as we can accept the risk of the maintenance cost which I mentioned.
 
-a single chunk is large enough to contain 16byte disk header
-which does not seem necessary to increase NUM_SNAPSHOT_HDR_CHUNKS in the future
-(unless whole structure get totally changed),
-but it should also get fixed to avoid trouble.
+By the way, your current patch has a problem below.
+It needs to be fixed at least.
 
-I merged it to the patch with your names signed off.
+
+> Similarly, my proposed DM changes are also quite natural. By using
+> dm_table_set_type() as the hook to initialize the request-based DM
+> device's elevator we perform allocations during table load.
+
+Your patch initializes queue everytime request-based table is loaded.
+I think that could cause a problem (although I haven't tested your
+patch yet).
+
+
+Also, as you know, the table load can be canceled.
+So initializing queue at table loading time may cause some weird
+behaviors for users.  For example,
+    # dmsetup create --notable bio-based
+    # echo "0 100 multipath ..." | dmsetup load bio-based
+    # echo "0 100 linear ..."    | dmsetup load bio-based
+    # dmsetup resume bio-based
+    # ls /sys/block/dm-0/queue/
+    ... iosched ...
+If you (and Alasdair) think this behavior is acceptable, it might
+be OK.  I just feel it's weird though...
+
+
+> Having just looked at Nikanth's proposed DM patch 2/2 again it shows
+> that blk_init_allocated_queue(), which allocates memory, was being
+> called during resume (dm_swap_table).  Allocations are not allowed
+> during resume.
+
+Right, in general.
+However, in this special case, I think initializing queue (allocating
+memory) during resume should be OK as I mentioned like below in:
+    http://marc.info/?l=linux-kernel&m=124999806420663&w=2
+
+    > Generally, dm must not allocate memory during resume because
+    > it may cause a deadlock in no memory situation.
+    > However, there is no I/O on this device at this point,
+    > so the allocation should be ok for this special case.
+    > I think some comments are needed here to describe that.
+
+So you should be able to take this approach.
 
 Thanks,
-Tomohiro Kusumi
-
-
-Signed-off-by: Tomohiro Kusumi <kusumi.tomohiro@jp.fujitsu.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
----
-
-diff -aNur linux-2.6.34-rc7.org/drivers/md/dm-snap-persistent.c linux-2.6.34-rc7/drivers/md/dm-snap-persistent.c
---- linux-2.6.34-rc7.org/drivers/md/dm-snap-persistent.c	2010-05-10 10:36:28.000000000 +0900
-+++ linux-2.6.34-rc7/drivers/md/dm-snap-persistent.c	2010-05-12 14:49:13.000000000 +0900
-@@ -266,7 +266,7 @@
-   */
-  static chunk_t area_location(struct pstore *ps, chunk_t area)
-  {
--	return 1 + ((ps->exceptions_per_area + 1) * area);
-+	return NUM_SNAPSHOT_HDR_CHUNKS + ((ps->exceptions_per_area + 1) * area);
-  }
-  
-  /*
-@@ -780,8 +780,8 @@
-  	 * ps->current_area does not get reduced by prepare_merge() until
-  	 * after commit_merge() has removed the nr_merged previous exceptions.
-  	 */
--	ps->next_free = (area_location(ps, ps->current_area) - 1) +
--			(ps->current_committed + 1) + NUM_SNAPSHOT_HDR_CHUNKS;
-+	ps->next_free = area_location(ps, ps->current_area) +
-+			ps->current_committed + 1;
-  
-  	return 0;
-  }
+Kiyoshi Ueda
