@@ -1,36 +1,54 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] fix hard-coded disk header chunk size for persistent
- snapshot
-Date: Wed, 12 May 2010 00:58:27 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1005120055020.1551@hs20-bc2-1.build.redhat.com>
-References: <4BEA0472.1060300@jp.fujitsu.com> <20100512013909.GD2377@agk-dp.fab.redhat.com>
+From: Mike Anderson <andmike@linux.vnet.ibm.com>
+Subject: block_abort_queue (blk_abort_request) racing with scsi_request_fn
+Date: Tue, 11 May 2010 22:23:37 -0700
+Message-ID: <20100512052336.GB15240@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20100512013909.GD2377@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Tomohiro Kusumi <kusumi.tomohiro@jp.fujitsu.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-scsi-owner@vger.kernel.org
+To: Jens Axboe <jens.axboe@oracle.com>, James Bottomley <James.Bottomley@suse.de>
+Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
+I was looking at a dump from a weekend run and I believe I am seeing a
+case where blk_abort_request through blk_abort_queue picked up a request
+for timeout that scsi_request_fn decided not to start. This test was under
+error injection.
 
+I assume the case in scsi_request_fn this is hitting is that a request has
+been put on the timeout_list with blk_start_request and then one of the
+not_ready checks is hit and the request is decided not to be started. I
+believe the drop 
 
-On Wed, 12 May 2010, Alasdair G Kergon wrote:
+It appears that my usage of walking the timeout_list in block_abort_queue
+and using blk_mark_rq_complete in block_abort_request will not work in
+this case.
+ 
+While it would be good to have way to ensure a command is started, it is
+unclear if even at a low timeout of 1 second that a user other than
+blk_abort_queue would hit this race.
 
-> On Wed, May 12, 2010 at 10:29:22AM +0900, Tomohiro Kusumi wrote:
-> > This patch fixes hard-coded value for the size of a chunk that includes
-> > disk header for persistent snapshot. It should be changed to existing
-> > macro NUM_SNAPSHOT_HDR_CHUNKS instead of using hard-coded value 1.
->  
-> Any more places too?  (E.g. persistent_commit_merge)
-> 
-> Alasdair
+The dropping / acquiring of host_lock and queue_lock in scsi_request_fn
+and scsi_dispatch_cmd make it unclear to me if usage of
+blk_mark_rq_complete will cover all cases.
 
-I think the expression in persistent_commit_merge should be changed to:
-ps->next_free = area_location(ps, ps->current_area) +
-                ps->current_committed + 1;
+I looked at checking serial_number in scsi_times_out along with a couple
+blk_mark_rq_complete additions, but unclear if this would be good and / or
+work in all cases.
 
-It is numerically the same, but will avoid trouble if 
-NUM_SNAPSHOT_HDR_CHUNKS is increased.
+I looked at just accelerating deadline by some default value but unclear
+if that would be acceptable. 
 
-Mikulas
+I also looked at just using just the mark interface I previously posted
+and not calling blk_abort_request at all, but that would change current
+behavior that has been in use for a while.
+
+Looking for suggestions.
+
+Thanks,
+
+-andmike
+--
+Michael Anderson
+andmike@linux.vnet.ibm.com
