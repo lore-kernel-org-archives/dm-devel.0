@@ -1,16 +1,17 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [RFC PATCH 3/2] dm: bio-based device must not register elevator in
+Subject: [PATCH 3/2 v2] dm: bio-based device must not register elevator in
  sysfs
-Date: Thu, 13 May 2010 01:02:53 -0400
-Message-ID: <20100513050252.GC25523@redhat.com>
+Date: Thu, 13 May 2010 18:14:04 -0400
+Message-ID: <20100513221404.GA17153@redhat.com>
 References: <1273532139-23043-1-git-send-email-snitzer@redhat.com>
  <1273532139-23043-2-git-send-email-snitzer@redhat.com>
  <20100513043108.GB25523@redhat.com>
+ <20100513050252.GC25523@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20100513043108.GB25523@redhat.com>
+In-Reply-To: <20100513050252.GC25523@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: dm-devel@redhat.com
 Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Nikanth Karthikesan <knikanth@suse.de>, linux-kernel@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Vivek Goyal <vgoyal@redhat.com>
@@ -36,15 +37,129 @@ Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
  block/elevator.c      |    2 +-
  drivers/md/dm-table.c |    1 +
- drivers/md/dm.c       |   41 ++++++++++++++++++++++++++++++++++++++---
+ drivers/md/dm.c       |   44 ++++++++++++++++++++++++++++++++++++--------
  drivers/md/dm.h       |    1 +
- 4 files changed, 41 insertions(+), 4 deletions(-)
+ 4 files changed, 39 insertions(+), 9 deletions(-)
 
-diff --git a/block/elevator.c b/block/elevator.c
-index 6ec9137..168112e 100644
---- a/block/elevator.c
-+++ b/block/elevator.c
-@@ -1088,7 +1088,7 @@ ssize_t elv_iosched_show(struct request_queue *q, char *name)
+v2 changes:
+* switched to using BUG_ON in dm_{init,clear}_request_based_queue
+* refined dm_clear_request_based_queue slightly
+* introduced dm_bio_based_md
+* cleaned up some comments
+
+Index: linux-2.6/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-table.c
++++ linux-2.6/drivers/md/dm-table.c
+@@ -803,6 +803,7 @@ int dm_table_set_type(struct dm_table *t
+ 	if (bio_based) {
+ 		/* We must use this table as bio-based */
+ 		t->type = DM_TYPE_BIO_BASED;
++		dm_clear_request_based_queue(t->md);
+ 		return 0;
+ 	}
+ 
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c
++++ linux-2.6/drivers/md/dm.c
+@@ -1445,6 +1445,11 @@ static int dm_request_based(struct mappe
+ 	return blk_queue_stackable(md->queue);
+ }
+ 
++static int dm_bio_based_md(struct mapped_device *md)
++{
++	return (md->queue->request_fn) ? 0 : 1;
++}
++
+ static int dm_request(struct request_queue *q, struct bio *bio)
+ {
+ 	struct mapped_device *md = q->queuedata;
+@@ -1952,19 +1957,16 @@ bad_module_get:
+ }
+ 
+ /*
+- * Fully initialize the request_queue (elevator, ->request_fn, etc).
++ * Fully initialize a request-based queue (->elevator, ->request_fn, etc).
+  */
+ int dm_init_request_based_queue(struct mapped_device *md)
+ {
+ 	struct request_queue *q = NULL;
++	int register_elevator = 0;
+ 
+-	if (!md->queue)
+-		return 0;
++	BUG_ON(!md->queue);
+ 
+-	/*
+-	 * Avoid re-initializing the queue (and leaking the existing
+-	 * elevator) if dm_init_request_based_queue() was already used.
+-	 */
++	/* Avoid re-initializing the queue if already fully initialized */
+ 	if (!md->queue->elevator) {
+ 		/* Fully initialize the queue */
+ 		q = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
+@@ -1973,9 +1975,21 @@ int dm_init_request_based_queue(struct m
+ 		md->queue = q;
+ 		md->saved_make_request_fn = md->queue->make_request_fn;
+ 		blk_queue_make_request(md->queue, dm_request);
+-		elv_register_queue(md->queue);
++		register_elevator = 1;
++	} else if (dm_bio_based_md(md)) {
++		/*
++		 * Queue was fully initialized on behalf of a previous
++		 * request-based table load.  Table is now switching from
++		 * bio-based back to request-based, e.g.: rq -> bio -> rq
++		 */
++		md->queue->request_fn = dm_request_fn;
++		register_elevator = 1;
+ 	}
+ 
++	/* Avoid re-registering elevator if already registered */
++	if (register_elevator)
++		elv_register_queue(md->queue);
++
+ 	/*
+ 	 * Request-based dm devices cannot be stacked on top of bio-based dm
+ 	 * devices.  The type of this dm device has not been decided yet.
+@@ -1996,6 +2010,20 @@ int dm_init_request_based_queue(struct m
+ 	return 1;
+ }
+ 
++void dm_clear_request_based_queue(struct mapped_device *md)
++{
++	BUG_ON(!md->queue);
++
++	if (dm_bio_based_md(md))
++		return; /* already bio-based so return */
++
++	/* Clear ->request_fn, not used for bio-based */
++	md->queue->request_fn = NULL;
++
++	/* Unregister the request-based queue's elevator from sysfs */
++	elv_unregister_queue(md->queue);
++}
++
+ static void unlock_fs(struct mapped_device *md);
+ 
+ static void free_dev(struct mapped_device *md)
+Index: linux-2.6/drivers/md/dm.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.h
++++ linux-2.6/drivers/md/dm.h
+@@ -114,6 +114,7 @@ struct kobject *dm_kobject(struct mapped
+ struct mapped_device *dm_get_from_kobject(struct kobject *kobj);
+ 
+ int dm_init_request_based_queue(struct mapped_device *md);
++void dm_clear_request_based_queue(struct mapped_device *md);
+ 
+ /*
+  * Targets for linear and striped mappings
+Index: linux-2.6/block/elevator.c
+===================================================================
+--- linux-2.6.orig/block/elevator.c
++++ linux-2.6/block/elevator.c
+@@ -1086,7 +1086,7 @@ ssize_t elv_iosched_show(struct request_
  	struct elevator_type *__e;
  	int len = 0;
  
@@ -53,96 +168,3 @@ index 6ec9137..168112e 100644
  		return sprintf(name, "none\n");
  
  	elv = e->elevator_type;
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 64a8578..dec8295 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -803,6 +803,7 @@ int dm_table_set_type(struct dm_table *t)
- 	if (bio_based) {
- 		/* We must use this table as bio-based */
- 		t->type = DM_TYPE_BIO_BASED;
-+		dm_clear_request_based_queue(t->md);
- 		return 0;
- 	}
- 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index b2171be..08a4745 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1957,9 +1957,9 @@ bad_module_get:
- int dm_init_request_based_queue(struct mapped_device *md)
- {
- 	struct request_queue *q = NULL;
-+	int register_queue = 0;
- 
--	if (!md->queue)
--		return 0;
-+	BUG_ON(!md->queue);
- 
- 	/*
- 	 * Avoid re-initializing the queue (and leaking the existing
-@@ -1973,9 +1973,22 @@ int dm_init_request_based_queue(struct mapped_device *md)
- 		md->queue = q;
- 		md->saved_make_request_fn = md->queue->make_request_fn;
- 		blk_queue_make_request(md->queue, dm_request);
--		elv_register_queue(md->queue);
-+		register_queue = 1;
-+	} else if (!md->queue->request_fn) {
-+		/*
-+		 * Handle corner-case where bio-based table was cleared
-+		 * and requested-based table was loaded in its place.
-+		 * - re-instate the ->request_fn that was cleared
-+		 *   by dm_clear_request_based_queue().
-+		 * - register the queue's 'iosched/' sysfs attributes
-+		 */
-+		md->queue->request_fn = dm_request_fn;
-+		register_queue = 1;
- 	}
- 
-+	if (register_queue)
-+		elv_register_queue(md->queue);
-+
- 	/*
- 	 * Request-based dm devices cannot be stacked on top of bio-based dm
- 	 * devices.  The type of this dm device has not been decided yet.
-@@ -1996,6 +2009,28 @@ int dm_init_request_based_queue(struct mapped_device *md)
- 	return 1;
- }
- 
-+void dm_clear_request_based_queue(struct mapped_device *md)
-+{
-+	BUG_ON(!md->queue);
-+
-+	if (!md->queue->elevator)
-+		return; /* already bio-based so return */
-+
-+	/*
-+	 * Clear ->request_fn, treat NULL as a flag to indicate a
-+	 * bio-based table was loaded after a request-based table.
-+	 */
-+	md->queue->request_fn = NULL;
-+
-+	/*
-+	 * Unregister the request-based queue's elevator from sysfs.
-+	 * NOTE: md->queue doesn't have the QUEUE_FLAG_STACKABLE flag
-+	 * set so elv_iosched_show() will report the allocated queue's
-+	 * type as "none" through the 'scheduler' sysfs attribute.
-+	 */
-+	elv_unregister_queue(md->queue);
-+}
-+
- static void unlock_fs(struct mapped_device *md);
- 
- static void free_dev(struct mapped_device *md)
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 489feba..95aec64 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -114,6 +114,7 @@ struct kobject *dm_kobject(struct mapped_device *md);
- struct mapped_device *dm_get_from_kobject(struct kobject *kobj);
- 
- int dm_init_request_based_queue(struct mapped_device *md);
-+void dm_clear_request_based_queue(struct mapped_device *md);
- 
- /*
-  * Targets for linear and striped mappings
