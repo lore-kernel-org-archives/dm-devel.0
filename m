@@ -1,169 +1,178 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 2/2] dm: only initialize full request_queue for
- request-based device
-Date: Fri, 14 May 2010 10:08:52 -0400
-Message-ID: <20100514140852.GA10373@redhat.com>
-References: <1273532139-23043-1-git-send-email-snitzer@redhat.com>
- <1273532139-23043-2-git-send-email-snitzer@redhat.com>
- <4BE8DBB0.5060701@ct.jp.nec.com>
- <20100511131502.GA25211@redhat.com>
- <4BEA659F.9050206@ct.jp.nec.com>
- <20100513035750.GA25523@redhat.com>
- <4BED049C.5040409@ct.jp.nec.com>
+From: Will Drewry <wad@chromium.org>
+Subject: Re: [RFC PATCH] dm: allow a dm-fs-style device to be
+	shared via dm-ioctl
+Date: Fri, 14 May 2010 09:32:48 -0500
+Message-ID: <AANLkTimVP_5s8EMvGBadx9JTI0cLjVBDHAlM_8mFcpNg@mail.gmail.com>
+References: <20100514013940.GA3523@z600> <20100514035347.GA20636@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4BED049C.5040409@ct.jp.nec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Vivek Goyal <vgoyal@redhat.com>, Nikanth Karthikesan <knikanth@suse.de>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20100514035347.GA20636@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, May 14 2010 at  4:06am -0400,
-Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+Hi Mike,
 
-> Hi Mike,
-> 
-> On 05/13/2010 12:57 PM +0900, Mike Snitzer wrote:
-> > On Wed, May 12 2010 at  4:23am -0400,
-> > Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
-> > 
-> >> Hi Mike,
-> >>
-> >> On 05/11/2010 10:15 PM +0900, Mike Snitzer wrote:
-> >>> It is clear we need to resolve the current full request_queue
-> >>> initialization that occurs even for bio-based DM devices.
-> >>>
-> >>> I believe the 2 patches I posted accomplish this in a stright-forward
-> >>> way.  We can always improve on it (by looking at what you proposed
-> >>> below) but we need a minimlaist fix that doesn't depend on userspace
-> >>> LVM2 changes right now.
-> >> Humm, OK.
-> >> Indeed, showing iosched directory in bio-based device's sysfs is
-> >> confusing users actually, and we need something to resolve that soon.
-> >> So I don't strongly object to your approach as the first step, as long
-> >> as we can accept the risk of the maintenance cost which I mentioned.
-> > 
-> > OK, I understand your concern (especially after having gone through this
-> > further over the past couple days).  I'm hopeful maintenance will be
-> > minimal.
-> > 
-> >> By the way, your current patch has a problem below.
-> >> It needs to be fixed at least.
-> > 
-> > Thanks for the review.  I've addressed both your points with additional
-> > changes (split between 2 patches).
-> 
-> I found another bug; blk_init_allocated_queue() overwrites q->unplug_fn
-> with generic one. (Although it's currently harmless for multipath target.)
+On Thu, May 13, 2010 at 10:53 PM, Mike Snitzer <snitzer@redhat.com> wrote:
+> Hi Will,
+>
+> On Thu, May 13 2010 at =A09:39pm -0400,
+> Will Drewry <wad@chromium.org> wrote:
+>
+>> Following on the discussion of booting directly to a device-mapper
+>> device, two things were made clear:
+>> 1. The ioctl interface's name and uuid are mandatory for udev to work
+>> 2. There is a functional gap between the dm(-fs) and dm-ioctl
+>>
+>> This change adds one function which is used for binding a given mapped
+>> device to a name+uuid in the dm-ioctl hash table. =A0In addition, it
+>> ensures that public functions are available that allow mapped devices
+>> and tables to be created and associated with shared code paths in
+>> dm-ioctl:
+>> - suspend flags and block integrity registration are now exposed
+>> - dm_table_complete() now prepares a table for use completely
+>> =A0 (builds the btree; sets the type; allocates md pools)
+>
+> I have done a preliminary review and have some comments inlined below.
 
-Thanks again for your review!
+Thanks for the review and comments!
 
-Here is a simple incremental fix:
+>> Ideally, this lays the groundwork for any kernel code to create fully
+>> functional mapped devices, but I'd appreciate feedback on if this
+>> approach makes sense/is safe, preferred function names, and if it
+>> integrates with the current direction.
+>>
+>> (I can also pair this with the init code patch if it makes sense to show
+>> consumer code.)
+>
+> It would certainly help follow-on reviews as we take a closer look. =A0For
+> the next version of your work I'd recommend sharing all related code in
+> a series (e.g.: core DM patch 1/2, init patch 2/2).
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 5390754..985dd9c 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1854,6 +1854,17 @@ static const struct block_device_operations dm_blk_dops;
- static void dm_wq_work(struct work_struct *work);
- static void dm_rq_barrier_work(struct work_struct *work);
- 
-+static void dm_init_md_queue(struct mapped_device *md)
-+{
-+	md->queue->queuedata = md;
-+	md->queue->backing_dev_info.congested_fn = dm_any_congested;
-+	md->queue->backing_dev_info.congested_data = md;
-+	blk_queue_make_request(md->queue, dm_request);
-+	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
-+	md->queue->unplug_fn = dm_unplug_all;
-+	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
-+}
-+
- /*
-  * Allocate and initialise a blank device with a given minor.
-  */
-@@ -1895,13 +1906,7 @@ static struct mapped_device *alloc_dev(int minor)
- 	if (!md->queue)
- 		goto bad_queue;
- 
--	md->queue->queuedata = md;
--	md->queue->backing_dev_info.congested_fn = dm_any_congested;
--	md->queue->backing_dev_info.congested_data = md;
--	blk_queue_make_request(md->queue, dm_request);
--	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
--	md->queue->unplug_fn = dm_unplug_all;
--	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
-+	dm_init_md_queue(md);
- 
- 	md->disk = alloc_disk(1);
- 	if (!md->disk)
-@@ -1974,7 +1979,7 @@ int dm_init_request_based_queue(struct mapped_device *md)
- 			return 0;
- 		md->queue = q;
- 		md->saved_make_request_fn = md->queue->make_request_fn;
--		blk_queue_make_request(md->queue, dm_request);
-+		dm_init_md_queue(md);
- 		register_elevator = 1;
- 	} else if (dm_bio_based_md(md)) {
- 		/*
+Will do - just finishing up integrating comments from Alasdair and wanted
+to see if the direction for core DM changes would be reasonable.
 
-> I feel your patch-set is growing and becoming complex fix rather than
-> minimalist/simple fix.
 
-Seems the numerous patches I've posted over the past couple days have
-given a false impression.  But I do understand your concern.
+>> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+>> index 9924ea2..66726d1 100644
+>> --- a/drivers/md/dm-table.c
+>> +++ b/drivers/md/dm-table.c
+>> @@ -900,7 +900,7 @@ static int setup_indexes(struct dm_table *t)
+>> =A0/*
+>> =A0 * Builds the btree to index the map.
+>> =A0 */
+>> -int dm_table_complete(struct dm_table *t)
+>> +int dm_table_build_index(struct dm_table *t)
+>> =A0{
+>> =A0 =A0 =A0 int r =3D 0;
+>> =A0 =A0 =A0 unsigned int leaf_nodes;
+>> @@ -919,6 +919,48 @@ int dm_table_complete(struct dm_table *t)
+>> =A0 =A0 =A0 return r;
+>> =A0}
+>>
+>> +
+>> +/*
+>> + * Prepares the table for use by building the indices,
+>> + * setting the type, and allocating mempools.
+>> + */
+>> +int dm_table_complete(struct dm_table *t)
+>> +{
+>> + =A0 =A0 int r =3D 0;
+>> +
+>> + =A0 =A0 r =3D dm_table_build_index(t);
+>> + =A0 =A0 if (r) {
+>> + =A0 =A0 =A0 =A0 =A0 =A0 DMWARN("unable to build btrees");
+>> + =A0 =A0 =A0 =A0 =A0 =A0 return r;
+>> + =A0 =A0 }
+>> + =A0 =A0 r =3D dm_table_set_type(t);
+>> + =A0 =A0 if (r) {
+>> + =A0 =A0 =A0 =A0 =A0 =A0 DMWARN("unable to set table type");
+>> + =A0 =A0 =A0 =A0 =A0 =A0 return r;
+>> + =A0 =A0 }
+>> + =A0 =A0 r =3D dm_table_alloc_md_mempools(t);
+>> + =A0 =A0 if (r)
+>> + =A0 =A0 =A0 =A0 =A0 =A0 DMWARN("unable to allocate mempools");
+>> +
+>> + =A0 =A0 return r;
+>> +}
+>
+> Please have dm_table_set_type() come before dm_table_build_index() to
+> preserve the existing call sequence. =A0It is better to check the type
+> related constraints before going on to build the indices.
 
-The longer-term direction you want to take DM (known type during
-alloc_dev) illustrates that we share a common goal: only do the precise
-work that is needed to initialize the request_queue for a DM device
-(whether it is bio-based or request-based).
+Nice catch! I had meant to preserve the order.
 
-My changes do accomplish that in the near-term without requiring
-userspace change.  Many of my proposed changes are just refactoring
-existing code to clearly split out what is needed for request-based vs
-bio-based.
+>> +
+>> +/*
+>> + * Register the mapped device for blk_integrity support if
+>> + * the underlying devices support it.
+>> + */
+>> +int dm_table_prealloc_integrity(struct dm_table *t, struct mapped_devic=
+e *md)
+>> +{
+>> + =A0 =A0 struct list_head *devices =3D dm_table_get_devices(t);
+>> + =A0 =A0 struct dm_dev_internal *dd;
+>> +
+>> + =A0 =A0 list_for_each_entry(dd, devices, list)
+>> + =A0 =A0 =A0 =A0 =A0 =A0 if (bdev_get_integrity(dd->dm_dev.bdev))
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 return blk_integrity_register(=
+dm_disk(md), NULL);
+>> +
+>> + =A0 =A0 return 0;
+>> +}
+>
+> I think we need more justification for why you'd want to expose
+> dm_table_prealloc_integrity() as a public interface. =A0Makes DM a bit
+> more brittle with unknown gain at the moment. =A0Why not just move the
+> dm_table_prealloc_integrity() call to dm_table_complete() -- just before
+> dm_table_alloc_md_mempools()?
 
-I'll post a single patch that contains my changes (no need to have 2
-patches any more).  With that patch I'm hopeful you'll see my changes
-aren't as complex as they might have seemed over the past few days.
+For some reason I special cased it, but I have no idea why. I'll fold it in
+to dm_table_complete().
 
-> I think touching mapped_device/queue at table loading time makes
-> things complex.  It is natural that table's arguments are reflected
-> to mapped_device/queue at table binding time instead.
-> 
-> > I confirmed with Alasdair that we don't want to conditionally relax DM's
-> > allocation constraints for request-based DM.  Best to be consistent
-> > about not allowing allocations during resume.
-> 
-> OK.
-> Then, how about the patch below?
-> It still fully initializes queue at device creation time for both
-> bio-based and request-based.  Then, it drops elevator when the device
-> type is decided as bio-based at table binding time.
-> So no memory allocation during resume (freeing instead).
+>
+>> =A0static DEFINE_MUTEX(_event_lock);
+>> =A0void dm_table_event_callback(struct dm_table *t,
+>> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0void (*fn)(void *=
+), void *context)
+>> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper=
+.h
+>> index 1381cd9..95fea4c 100644
+>> --- a/include/linux/device-mapper.h
+>> +++ b/include/linux/device-mapper.h
+>> @@ -215,6 +215,18 @@ void dm_set_mdptr(struct mapped_device *md, void *p=
+tr);
+>> =A0void *dm_get_mdptr(struct mapped_device *md);
+>>
+>> =A0/*
+>> + * Export the device via the ioctl interface
+>> + */
+>> +int dm_ioctl_export(struct mapped_device *md, const char *name,
+>> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 const char *uuid);
+>> +
+>> +/*
+>> + * Suspend feature flags
+>> + */
+>> +#define DM_SUSPEND_LOCKFS_FLAG =A0 =A0 =A0 =A0 =A0 =A0 =A0 (1 << 0)
+>> +#define DM_SUSPEND_NOFLUSH_FLAG =A0 =A0 =A0 =A0 =A0 =A0 =A0(1 << 1)
+>
+> You're missing the matching removal of these flags from drivers/md/dm.h
 
-I'm inclined to believe that the extra work for bio-based DM is not
-ideal.  And even freeing during resume _could_ pose a problem during a
-resume (if it triggers unknown additional housekeeping).
-elv_unregister_queue() and elevator_exit() do quite a bit more than
-simply freeing memory.  We can't safely assume those methods will never
-allocate memory to accomplish their cleanup (now or in the future).
+I'll pull that into the next mail as well once I get the init changes in be=
+tter
+shape.
 
-> I hope this simple work-around approach is acceptable for you and
-> Alasdair (and others).
-
-While it is certainly a small change it carries with it the disadvantage
-of still requiring more work than is needed for bio-based request_queue
-initialization.  It also poses a risk by requiring additional work when
-resuming a bio-based device.
-
-> (Then, let's focus on making a right fix rather than hacking
->  the block layer.)
-
-I haven't been hacking the block layer.  Please don't misrepresent what
-I proposed.
-
-Regards,
-Mike
+Thanks again!
+will
