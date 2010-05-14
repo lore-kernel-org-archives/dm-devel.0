@@ -1,170 +1,253 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 3/2 v2] dm: bio-based device must not register elevator in
- sysfs
-Date: Thu, 13 May 2010 18:14:04 -0400
-Message-ID: <20100513221404.GA17153@redhat.com>
-References: <1273532139-23043-1-git-send-email-snitzer@redhat.com>
- <1273532139-23043-2-git-send-email-snitzer@redhat.com>
- <20100513043108.GB25523@redhat.com>
- <20100513050252.GC25523@redhat.com>
+From: Will Drewry <wad@chromium.org>
+Subject: [RFC PATCH] dm: allow a dm-fs-style device to be shared
+ via dm-ioctl
+Date: Thu, 13 May 2010 20:39:40 -0500
+Message-ID: <20100514013940.GA3523@z600>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20100513050252.GC25523@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Nikanth Karthikesan <knikanth@suse.de>, linux-kernel@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Vivek Goyal <vgoyal@redhat.com>
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-Properly clear io scheduler state from sysfs if transitioning from a
-request-based table back to bio-based.  Unregister the elevator from
-sysfs (removes 'iosched/') and have the 'scheduler' sysfs attribute
-properly report "none" for bio-based DM.
+Following on the discussion of booting directly to a device-mapper
+device, two things were made clear:
+1. The ioctl interface's name and uuid are mandatory for udev to work
+2. There is a functional gap between the dm(-fs) and dm-ioctl
 
-Adjust elv_iosched_show() to return "none" if !blk_queue_stackable.
-This allows the block layer to take bio-based DM into consideration.
+This change adds one function which is used for binding a given mapped
+device to a name+uuid in the dm-ioctl hash table.  In addition, it
+ensures that public functions are available that allow mapped devices
+and tables to be created and associated with shared code paths in
+dm-ioctl:
+- suspend flags and block integrity registration are now exposed
+- dm_table_complete() now prepares a table for use completely
+  (builds the btree; sets the type; allocates md pools)
 
-These changes address the following (albeit obscure) corner-case:
-   # dmsetup create --notable bio-based
-   # echo "0 100 multipath ..." | dmsetup load bio-based
-   # echo "0 100 linear ..."    | dmsetup load bio-based
-   # dmsetup resume bio-based
-   # ls /sys/block/dm-0/queue/
-   ... iosched ...
+Ideally, this lays the groundwork for any kernel code to create fully
+functional mapped devices, but I'd appreciate feedback on if this
+approach makes sense/is safe, preferred function names, and if it
+integrates with the current direction.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+(I can also pair this with the init code patch if it makes sense to show
+consumer code.)
+
+Signed-off-by: Will Drewry <wad@chromium.org>
 ---
- block/elevator.c      |    2 +-
- drivers/md/dm-table.c |    1 +
- drivers/md/dm.c       |   44 ++++++++++++++++++++++++++++++++++++--------
- drivers/md/dm.h       |    1 +
- 4 files changed, 39 insertions(+), 9 deletions(-)
+ drivers/md/dm-ioctl.c         |   66 ++++++++++++++++++++++++-----------------
+ drivers/md/dm-table.c         |   44 ++++++++++++++++++++++++++-
+ include/linux/device-mapper.h |   17 ++++++++++
+ 3 files changed, 99 insertions(+), 28 deletions(-)
 
-v2 changes:
-* switched to using BUG_ON in dm_{init,clear}_request_based_queue
-* refined dm_clear_request_based_queue slightly
-* introduced dm_bio_based_md
-* cleaned up some comments
-
-Index: linux-2.6/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c
-+++ linux-2.6/drivers/md/dm-table.c
-@@ -803,6 +803,7 @@ int dm_table_set_type(struct dm_table *t
- 	if (bio_based) {
- 		/* We must use this table as bio-based */
- 		t->type = DM_TYPE_BIO_BASED;
-+		dm_clear_request_based_queue(t->md);
- 		return 0;
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index d7500e1..8dc5fd8 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1112,28 +1112,9 @@ static int populate_table(struct dm_table *table,
+ 		next = spec->next;
  	}
  
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c
-+++ linux-2.6/drivers/md/dm.c
-@@ -1445,6 +1445,11 @@ static int dm_request_based(struct mappe
- 	return blk_queue_stackable(md->queue);
+-	r = dm_table_set_type(table);
+-	if (r) {
+-		DMWARN("unable to set table type");
+-		return r;
+-	}
+-
+ 	return dm_table_complete(table);
  }
  
-+static int dm_bio_based_md(struct mapped_device *md)
-+{
-+	return (md->queue->request_fn) ? 0 : 1;
-+}
-+
- static int dm_request(struct request_queue *q, struct bio *bio)
+-static int table_prealloc_integrity(struct dm_table *t,
+-				    struct mapped_device *md)
+-{
+-	struct list_head *devices = dm_table_get_devices(t);
+-	struct dm_dev_internal *dd;
+-
+-	list_for_each_entry(dd, devices, list)
+-		if (bdev_get_integrity(dd->dm_dev.bdev))
+-			return blk_integrity_register(dm_disk(md), NULL);
+-
+-	return 0;
+-}
+-
+ static int table_load(struct dm_ioctl *param, size_t param_size)
  {
- 	struct mapped_device *md = q->queuedata;
-@@ -1952,19 +1957,16 @@ bad_module_get:
+ 	int r;
+@@ -1155,7 +1136,7 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 		goto out;
+ 	}
+ 
+-	r = table_prealloc_integrity(t, md);
++	r = dm_table_prealloc_integrity(t, md);
+ 	if (r) {
+ 		DMERR("%s: could not register integrity profile.",
+ 		      dm_device_name(md));
+@@ -1163,13 +1144,6 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 		goto out;
+ 	}
+ 
+-	r = dm_table_alloc_md_mempools(t);
+-	if (r) {
+-		DMWARN("unable to allocate mempools for this table");
+-		dm_table_destroy(t);
+-		goto out;
+-	}
+-
+ 	down_write(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
+@@ -1637,6 +1611,44 @@ void dm_interface_exit(void)
+ 	dm_hash_exit();
  }
  
++
++/**
++ * dm_ioctl_export - Permanently export a mapped device via the ioctl interface
++ * @md: Pointer to mapped_device
++ * @name: Buffer (size DM_NAME_LEN) for name
++ * @uuid: Buffer (size DM_UUID_LEN) for uuid or NULL if not desired
++ */
++int dm_ioctl_export(struct mapped_device *md, const char *name, const char *uuid)
++{
++	int r = 0;
++	struct hash_cell *hc;
++
++	if (!md) {
++		r = -ENXIO;
++		goto out;
++	}
++
++	/* The name and uuid can only be set once. */
++	mutex_lock(&dm_hash_cells_mutex);
++	hc = dm_get_mdptr(md);
++	mutex_unlock(&dm_hash_cells_mutex);
++	if (hc) {
++		DMERR("%s: already exported", dm_device_name(md));
++		r = -ENXIO;
++		goto out;
++	}
++
++	r = dm_hash_insert(name, uuid, md);
++	if (r) {
++		DMERR("%s: could not export as '%s'", dm_device_name(md), name);
++		goto out;
++	}
++
++	/* Let udev know we've changed. */
++	dm_kobject_uevent(md, KOBJ_CHANGE, dm_get_event_nr(md));
++out:
++	return r;
++}
+ /**
+  * dm_copy_name_and_uuid - Copy mapped device name & uuid into supplied buffers
+  * @md: Pointer to mapped_device
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 9924ea2..66726d1 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -900,7 +900,7 @@ static int setup_indexes(struct dm_table *t)
  /*
-- * Fully initialize the request_queue (elevator, ->request_fn, etc).
-+ * Fully initialize a request-based queue (->elevator, ->request_fn, etc).
+  * Builds the btree to index the map.
   */
- int dm_init_request_based_queue(struct mapped_device *md)
+-int dm_table_complete(struct dm_table *t)
++int dm_table_build_index(struct dm_table *t)
  {
- 	struct request_queue *q = NULL;
-+	int register_elevator = 0;
- 
--	if (!md->queue)
--		return 0;
-+	BUG_ON(!md->queue);
- 
--	/*
--	 * Avoid re-initializing the queue (and leaking the existing
--	 * elevator) if dm_init_request_based_queue() was already used.
--	 */
-+	/* Avoid re-initializing the queue if already fully initialized */
- 	if (!md->queue->elevator) {
- 		/* Fully initialize the queue */
- 		q = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
-@@ -1973,9 +1975,21 @@ int dm_init_request_based_queue(struct m
- 		md->queue = q;
- 		md->saved_make_request_fn = md->queue->make_request_fn;
- 		blk_queue_make_request(md->queue, dm_request);
--		elv_register_queue(md->queue);
-+		register_elevator = 1;
-+	} else if (dm_bio_based_md(md)) {
-+		/*
-+		 * Queue was fully initialized on behalf of a previous
-+		 * request-based table load.  Table is now switching from
-+		 * bio-based back to request-based, e.g.: rq -> bio -> rq
-+		 */
-+		md->queue->request_fn = dm_request_fn;
-+		register_elevator = 1;
- 	}
- 
-+	/* Avoid re-registering elevator if already registered */
-+	if (register_elevator)
-+		elv_register_queue(md->queue);
-+
- 	/*
- 	 * Request-based dm devices cannot be stacked on top of bio-based dm
- 	 * devices.  The type of this dm device has not been decided yet.
-@@ -1996,6 +2010,20 @@ int dm_init_request_based_queue(struct m
- 	return 1;
+ 	int r = 0;
+ 	unsigned int leaf_nodes;
+@@ -919,6 +919,48 @@ int dm_table_complete(struct dm_table *t)
+ 	return r;
  }
  
-+void dm_clear_request_based_queue(struct mapped_device *md)
++
++/*
++ * Prepares the table for use by building the indices,
++ * setting the type, and allocating mempools.
++ */
++int dm_table_complete(struct dm_table *t)
 +{
-+	BUG_ON(!md->queue);
++	int r = 0;
++	
++	r = dm_table_build_index(t);
++	if (r) {
++		DMWARN("unable to build btrees");
++		return r;
++	}
++	r = dm_table_set_type(t);
++	if (r) {
++		DMWARN("unable to set table type");
++		return r;
++	}
++	r = dm_table_alloc_md_mempools(t);
++	if (r)
++		DMWARN("unable to allocate mempools");
 +
-+	if (dm_bio_based_md(md))
-+		return; /* already bio-based so return */
-+
-+	/* Clear ->request_fn, not used for bio-based */
-+	md->queue->request_fn = NULL;
-+
-+	/* Unregister the request-based queue's elevator from sysfs */
-+	elv_unregister_queue(md->queue);
++	return r;
 +}
 +
- static void unlock_fs(struct mapped_device *md);
- 
- static void free_dev(struct mapped_device *md)
-Index: linux-2.6/drivers/md/dm.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm.h
-+++ linux-2.6/drivers/md/dm.h
-@@ -114,6 +114,7 @@ struct kobject *dm_kobject(struct mapped
- struct mapped_device *dm_get_from_kobject(struct kobject *kobj);
- 
- int dm_init_request_based_queue(struct mapped_device *md);
-+void dm_clear_request_based_queue(struct mapped_device *md);
++/*
++ * Register the mapped device for blk_integrity support if
++ * the underlying devices support it.
++ */
++int dm_table_prealloc_integrity(struct dm_table *t, struct mapped_device *md)
++{
++	struct list_head *devices = dm_table_get_devices(t);
++	struct dm_dev_internal *dd;
++
++	list_for_each_entry(dd, devices, list)
++		if (bdev_get_integrity(dd->dm_dev.bdev))
++			return blk_integrity_register(dm_disk(md), NULL);
++
++	return 0;
++}
++
+ static DEFINE_MUTEX(_event_lock);
+ void dm_table_event_callback(struct dm_table *t,
+ 			     void (*fn)(void *), void *context)
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 1381cd9..95fea4c 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -215,6 +215,18 @@ void dm_set_mdptr(struct mapped_device *md, void *ptr);
+ void *dm_get_mdptr(struct mapped_device *md);
  
  /*
-  * Targets for linear and striped mappings
-Index: linux-2.6/block/elevator.c
-===================================================================
---- linux-2.6.orig/block/elevator.c
-+++ linux-2.6/block/elevator.c
-@@ -1086,7 +1086,7 @@ ssize_t elv_iosched_show(struct request_
- 	struct elevator_type *__e;
- 	int len = 0;
++ * Export the device via the ioctl interface
++ */
++int dm_ioctl_export(struct mapped_device *md, const char *name,
++		    const char *uuid);
++
++/*
++ * Suspend feature flags
++ */
++#define DM_SUSPEND_LOCKFS_FLAG		(1 << 0)
++#define DM_SUSPEND_NOFLUSH_FLAG		(1 << 1)
++
++/*
+  * A device can still be used while suspended, but I/O is deferred.
+  */
+ int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
+@@ -268,6 +280,11 @@ int dm_table_add_target(struct dm_table *t, const char *type,
+ int dm_table_complete(struct dm_table *t);
  
--	if (!q->elevator)
-+	if (!q->elevator || !blk_queue_stackable(q))
- 		return sprintf(name, "none\n");
- 
- 	elv = e->elevator_type;
+ /*
++ * Optionally add support for block integrity.
++ */
++int dm_table_prealloc_integrity(struct dm_table *t, struct mapped_device *md);
++
++/*
+  * Unplug all devices in a table.
+  */
+ void dm_table_unplug_all(struct dm_table *t);
+-- 
+1.6.6.1
