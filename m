@@ -1,10 +1,10 @@
-From: Bram Gillemon <bram@x-plose.be>
-Subject: lvm + dmmapper on a 2.6.32.10 kernel
-Date: Thu, 13 May 2010 23:56:40 +0200
-Message-ID: <A5E3A8B9-248E-4A6D-AAB9-6374E35058EF@x-plose.be>
+From: Paul Raines <raines@nmr.mgh.harvard.edu>
+Subject: missing /sys/block/dm-*/queue
+Date: Fri, 14 May 2010 12:43:17 -0400 (EDT)
+Message-ID: <Pine.LNX.4.62.1005141234190.24031@gate.nmr.mgh.harvard.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1078)
-Content-Type: text/plain; charset="us-ascii"
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -19,39 +19,57 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
 
-I'm having some problems with lvm + dmmapper on my own compiled 2.6.32.10 kernel, I'm not sure if the problem is with dmmapper or with my kernel, so i hope someone can help me or point me into the right direction.
+Sorry if this is the wrong contact to ask this
 
-When I try to create a lvm volume i recieve the following error:
+I am running RHEL 5.5 w/ device-mapper-multipath-0.4.7-34.el5
 
-bram-PC:~# lvcreate -L 10485760k -n test5-root xendomains
-  device-mapper: table ioctl failed: No such device or address
-  Aborting. Failed to activate new LV to wipe the start of it.
+I am trying to tune my disks for better performance with the settings
 
-Sometimes it works to create a lvm volume, but when i try to create a mapper on the device i recieve errors like this:
+   echo 2048 > /sys/block/$bdev/queue/read_ahead_kb
+   echo 64 > /sys/block/$bdev/queue/nr_requests
+   echo deadline > /sys/block/$bdev/queue/scheduler
+   echo 8192 > /sys/block/$bdev/queue/max_sectors_kb
 
-bram-PC:~# echo "0 $( blockdev --getsize /dev/xendomains/test-root ) linear /dev/xendomains/test-root 0" | dmsetup create test-root-dm
-/dev/xendomains/test-root: No such file or directory
-Invalid format on line 1 of table on stdin
-Command failed
+On the individual disk when I do this I get a big jump in read 
+performance of nearly 2x
+
+# dd if=/dev/sdig bs=1024k of=/dev/null skip=3000 count=3000
+3000+0 records in
+3000+0 records out
+3145728000 bytes (3.1 GB) copied, 13.8672 seconds, 227 MB/s
+
+# dd if=/dev/sdig bs=1024k of=/dev/null skip=9000 count=3000
+3000+0 records in
+3000+0 records out
+3145728000 bytes (3.1 GB) copied, 7.70806 seconds, 408 MB/s
+
+So /dev/sdig is part of a multipath
+
+# ls -l /sys/block/dm-119/slaves/
+total 0
+lrwxrwxrwx 1 root root 0 May 14 12:14 sdez -> ../../../block/sdez
+lrwxrwxrwx 1 root root 0 May 14 12:14 sdif -> ../../../block/sdif
+
+I apply the tuning to both sdez and sdif, however, when I do the
+dd read test on the dm device, it is still slow
+
+# dd if=/dev/dm-119 bs=1024k of=/dev/null skip=18000 count=3000
+3000+0 records in
+3000+0 records out
+3145728000 bytes (3.1 GB) copied, 15.1546 seconds, 208 MB/s
+
+Fine, I need to apply the tuning to the dm-119 device itself.  But there
+is no queue sub dir in /sys/block/dm-119
+
+# ls /sys/block/dm-119
+dev  holders  range  removable  size  slaves  stat  subsystem  uevent
 
 
-and dmesg tells me:
+So how do I tune the multipath device itself?
 
-[29955.397572] device-mapper: ioctl: device doesn't appear to be in the dev hash table.
- 
-
-The reason i build my own kernel is i want to run xen 4.0, my config is available on pastebin:
-
-http://pastebin.com/T6ntfKme
-
-
-I compiled dmmapper as a module or built-in i always have these errors.
-
-I know i don't have much info to post here cause i don't have any idea what you need to know, just ask and i'll post it :)
-
-Can someone help me to find a solution to this problem, or help me to build a bug report (if it's a bug ;) )
-
-Kr,
-Bram
+-- 
+---------------------------------------------------------------
+Paul Raines                email: raines at nmr.mgh.harvard.edu
+MGH/MIT/HMS Athinoula A. Martinos Center for Biomedical Imaging
+149 (2301) 13th Street     Charlestown, MA 02129	    USA
