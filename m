@@ -1,35 +1,72 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH] multipath: update redhat multipathd init
-	script
-Date: Tue, 18 May 2010 11:24:51 +0900
-Message-ID: <4BF1FA73.9080901@ct.jp.nec.com>
-References: <20100517190247.GN3295@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [RFC PATCH v2 1/2] dm: allow a dm-fs-style device
+ to be	shared via dm-ioctl
+Date: Tue, 18 May 2010 11:36:35 +0900
+Message-ID: <4BF1FD33.4040305@ct.jp.nec.com>
+References: <20100514035347.GA20636@redhat.com> <1273887701-2152-1-git-send-email-wad@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100517190247.GN3295@ether.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1273887701-2152-1-git-send-email-wad@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Will Drewry <wad@chromium.org>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, snitzer@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi Ben,
+Hi Will,
 
-On 2010/05/18 4:02 +0900, Benjamin Marzinski wrote:
-> This patch adds the requested force-stop and force-restart to the init
-> script. It also keeps the init script for printing annoying error messages,
-> while checking the root device.
+n 05/15/2010 10:41 AM +0900, Will Drewry wrote:
+> In addition, it ensures that public functions are available that
+> allow mapped devices and tables to be created and associated
+> with the shared code paths with dm-ioctl:
+> - suspend flags are available
+snip 
+> diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+> index bad1724..782d867 100644
+> --- a/drivers/md/dm.h
+> +++ b/drivers/md/dm.h
+> @@ -17,12 +17,6 @@
+>  #include <linux/hdreg.h>
+>  
+>  /*
+> - * Suspend feature flags
+> - */
+> -#define DM_SUSPEND_LOCKFS_FLAG		(1 << 0)
+> -#define DM_SUSPEND_NOFLUSH_FLAG		(1 << 1)
+> -
+> -/*
+>   * Type of table and mapped_device's mempool
+>   */
+>  #define DM_TYPE_NONE		0
+> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> index 1381cd9..6c1c230 100644
+> --- a/include/linux/device-mapper.h
+> +++ b/include/linux/device-mapper.h
+> @@ -215,6 +215,18 @@ void dm_set_mdptr(struct mapped_device *md, void *ptr);
+>  void *dm_get_mdptr(struct mapped_device *md);
+>  
+>  /*
+> + * Export the device via the ioctl interface (uses mdptr).
+> + */
+> +int dm_ioctl_export(struct mapped_device *md, const char *name,
+> +		    const char *uuid);
+> +
+> +/*
+> + * Suspend feature flags
+> + */
+> +#define DM_SUSPEND_LOCKFS_FLAG		(1 << 0)
+> +#define DM_SUSPEND_NOFLUSH_FLAG		(1 << 1)
+> +
+> +/*
+>   * A device can still be used while suspended, but I/O is deferred.
+>   */
+>  int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
 
-I really appreciate this.
+Why do you need suspend feature flags?
+I think no feature is needed (specifying '0' is enough) to make/suspend
+a dm device at boot time (although I have looked at only this flag part).
+Am I missing something?
 
 Thanks,
 Kiyoshi Ueda
