@@ -1,90 +1,94 @@
-From: Will Drewry <wad@chromium.org>
-Subject: Re: [dm-devel] [RFC PATCH v2 1/2] dm: allow a dm-fs-style device to
-	be shared via dm-ioctl
-Date: Mon, 17 May 2010 22:11:55 -0500
-Message-ID: <AANLkTimHUPh0UHEU-5YckhwppX8AhFBYBxc4BZiIpmfZ@mail.gmail.com>
-References: <20100514035347.GA20636@redhat.com>
-	 <1273887701-2152-1-git-send-email-wad@chromium.org>
-	 <4BF1FD33.4040305@ct.jp.nec.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [RFC PATCH 2/2] dm: only initialize full request_queue for request-based
+ device
+Date: Tue, 18 May 2010 17:32:17 +0900
+Message-ID: <4BF25091.3000507@ct.jp.nec.com>
+References: <1273532139-23043-1-git-send-email-snitzer@redhat.com> <1273532139-23043-2-git-send-email-snitzer@redhat.com> <4BE8DBB0.5060701@ct.jp.nec.com> <20100511131502.GA25211@redhat.com> <4BEA659F.9050206@ct.jp.nec.com> <20100513035750.GA25523@redhat.com> <4BED049C.5040409@ct.jp.nec.com> <20100514140852.GA10373@redhat.com> <4BF10BF1.3040108@ct.jp.nec.com> <20100517172737.GA24591@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4BF1FD33.4040305@ct.jp.nec.com>
+In-Reply-To: <20100517172737.GA24591@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, snitzer@redhat.com, agk@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Vivek Goyal <vgoyal@redhat.com>, Nikanth Karthikesan <knikanth@suse.de>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, May 17, 2010 at 9:36 PM, Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wr=
-ote:
-> Hi Will,
->
-> n 05/15/2010 10:41 AM +0900, Will Drewry wrote:
->> In addition, it ensures that public functions are available that
->> allow mapped devices and tables to be created and associated
->> with the shared code paths with dm-ioctl:
->> - suspend flags are available
-> snip
->> diff --git a/drivers/md/dm.h b/drivers/md/dm.h
->> index bad1724..782d867 100644
->> --- a/drivers/md/dm.h
->> +++ b/drivers/md/dm.h
->> @@ -17,12 +17,6 @@
->> =A0#include <linux/hdreg.h>
+Hi Mike,
+
+On 05/18/2010 02:27 AM +0900, Mike Snitzer wrote:
+> Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+>> On 05/14/2010 11:08 PM +0900, Mike Snitzer wrote:
+>>> Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+>>>> On 05/13/2010 12:57 PM +0900, Mike Snitzer wrote:
+>>>>> Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+>>>>>> On 05/11/2010 10:15 PM +0900, Mike Snitzer wrote:
+>>>>>>> It is clear we need to resolve the current full request_queue
+>>>>>>> initialization that occurs even for bio-based DM devices.
+>>>>>>>
+>>>>>>> I believe the 2 patches I posted accomplish this in a stright-forward
+>>>>>>> way.  We can always improve on it (by looking at what you proposed
+>>>>>>> below) but we need a minimlaist fix that doesn't depend on userspace
+>>>>>>> LVM2 changes right now.
+>>>>>>
+>>>>>> Humm, OK.
+>>>>>> Indeed, showing iosched directory in bio-based device's sysfs is
+>>>>>> confusing users actually, and we need something to resolve that soon.
+>>>>>> So I don't strongly object to your approach as the first step, as long
+>>>>>> as we can accept the risk of the maintenance cost which I mentioned.
+>>>>>
+>>>>> OK, I understand your concern (especially after having gone through this
+>>>>> further over the past couple days).  I'm hopeful maintenance will be
+>>>>> minimal.
+>> snip
+>>>> I feel your patch-set is growing and becoming complex fix rather than
+>>>> minimalist/simple fix.
+>>>>
+>>>> I think touching mapped_device/queue at table loading time makes
+>>>> things complex.  It is natural that table's arguments are reflected
+>>>> to mapped_device/queue at table binding time instead.
+>>>
+>>> Seems the numerous patches I've posted over the past couple days have
+>>> given a false impression.  But I do understand your concern.
+>>>
+>>> The longer-term direction you want to take DM (known type during
+>>> alloc_dev) illustrates that we share a common goal: only do the precise
+>>> work that is needed to initialize the request_queue for a DM device
+>>> (whether it is bio-based or request-based).
+>>>
+>>> My changes do accomplish that in the near-term without requiring
+>>> userspace change.  Many of my proposed changes are just refactoring
+>>> existing code to clearly split out what is needed for request-based vs
+>>> bio-based.
 >>
->> =A0/*
->> - * Suspend feature flags
->> - */
->> -#define DM_SUSPEND_LOCKFS_FLAG =A0 =A0 =A0 =A0 =A0 =A0 =A0 (1 << 0)
->> -#define DM_SUSPEND_NOFLUSH_FLAG =A0 =A0 =A0 =A0 =A0 =A0 =A0(1 << 1)
->> -
->> -/*
->> =A0 * Type of table and mapped_device's mempool
->> =A0 */
->> =A0#define DM_TYPE_NONE =A0 =A0 =A0 =A0 0
->> diff --git a/include/linux/device-mapper.h b/include/linux/device-ma=
-pper.h
->> index 1381cd9..6c1c230 100644
->> --- a/include/linux/device-mapper.h
->> +++ b/include/linux/device-mapper.h
->> @@ -215,6 +215,18 @@ void dm_set_mdptr(struct mapped_device *md, voi=
-d *ptr);
->> =A0void *dm_get_mdptr(struct mapped_device *md);
+>> As far as I understand, the current model of device-mapper is:
+>>   - a table (precisely, a target) has various attributes,
+>>     bio-based/request-based is one of such attributes
+>>   - a table and its attributes are bound to the block device on resume
+>> If we want to fix a problem, I think we should either work based on
+>> this model or change the model.
 >>
->> =A0/*
->> + * Export the device via the ioctl interface (uses mdptr).
->> + */
->> +int dm_ioctl_export(struct mapped_device *md, const char *name,
->> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 const char *uuid);
->> +
->> +/*
->> + * Suspend feature flags
->> + */
->> +#define DM_SUSPEND_LOCKFS_FLAG =A0 =A0 =A0 =A0 =A0 =A0 =A0 (1 << 0)
->> +#define DM_SUSPEND_NOFLUSH_FLAG =A0 =A0 =A0 =A0 =A0 =A0 =A0(1 << 1)
->> +
->> +/*
->> =A0 * A device can still be used while suspended, but I/O is deferre=
-d.
->> =A0 */
->> =A0int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
->
-> Why do you need suspend feature flags?
-> I think no feature is needed (specifying '0' is enough) to make/suspe=
-nd
-> a dm device at boot time (although I have looked at only this flag pa=
-rt).
-> Am I missing something?
+>> Your patch makes that loading table affects the block device, so you
+>> are changing the model.
+>>
+>> If you change the model, it should be done carefully.
+>> For example, the current model allows most of the table loading code
+>> to run without exclusive lock on the device because it doesn't affect
+>> the device itself.  If you change this model, table loading needs to
+>> be serialized with appropriate locking.
+> 
+> Nice catch, yes md->queue needs protection (see patch below).
 
-Not at all! I hadn't thoroughly reviewed the code path for flush/noflus=
-h
-and was hoping to avoid additional code paths.  However, looking at
-effect, I don't see any tangible benefit to doing so with a brand new
-device.
+Not enough. (See drivers/md/dm-ioctl.c:table_load().)
+Table load sequence is:
+  1. populate table
+  2. set the table to ->new_map of the hash_cell for the mapped_device
+     in protection by _hash_lock.
 
-I'll switch it over to 0, and I can take exposing the flags out of this
-patch.
+Since your fix only serializes the step 1, concurrent table loading
+could end up with inconsistent status; e.g. request-based table is
+bound to the mapped_device while the queue is initialized as bio-based.
+With your new model, those 2 steps above must be atomic.
 
-Any additional comments are appreciated -  thanks!
-will
+Thanks,
+Kiyoshi Ueda
