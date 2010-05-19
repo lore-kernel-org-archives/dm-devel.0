@@ -1,56 +1,45 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 2/2] dm: only initialize full request_queue for
- request-based device
-Date: Wed, 19 May 2010 10:45:42 -0400
-Message-ID: <20100519144542.GD24618@redhat.com>
-References: <20100513035750.GA25523@redhat.com>
- <4BED049C.5040409@ct.jp.nec.com>
- <20100514140852.GA10373@redhat.com>
- <4BF10BF1.3040108@ct.jp.nec.com>
- <20100517172737.GA24591@redhat.com>
- <4BF25091.3000507@ct.jp.nec.com>
- <20100518134639.GA27582@redhat.com>
- <4BF37DD5.9050409@ct.jp.nec.com>
- <AANLkTinndXq8DkMBOUf5z8R_8lWRoRbDuOZ1LEmWeI21@mail.gmail.com>
- <20100519143900.GC24618@redhat.com>
+From: <Yanqing_Liu@Dell.com>
+Subject: [PATCH v4] dm: Add Dell MD36xxi controller into RDAC
+	device list
+Date: Wed, 19 May 2010 12:31:36 -0500
+Message-ID: <F757EE5C3631ED4DBDFD7709119219FE03BBD8CF4C@AUSX7MCPS302.AMER.DELL.COM>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100519143900.GC24618@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: Nikanth Karthikesan <knikanth@suse.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Vivek Goyal <vgoyal@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: Charles_Rose@Dell.com
 List-Id: dm-devel.ids
 
-On Wed, May 19 2010 at 10:39am -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Hi all,
 
-> > On Wed, May 19, 2010 at 1:57 AM, Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
-> > > Hi Mike,
-> > >
-> > > dm_table_setup_md_queue() may allocate memory with blocking mode.
-> > > Blocking allocation inside exclusive _hash_lock can cause deadlock;
-> > > e.g. when it has to wait for other dm devices to resume to free some
-> > > memory.
+This patch is to add next generation of Dell iSCSI PowerVault controller MD36xxi into RDAC device list.
 
-<snip>
+Thanks,
+Yanqing
 
-> We discussed this and I understand the scope of the problem now.
-> 
-> Just reiterating what you covered when you first pointed this issue out:
-> 
-> It could be that a table load gets blocked (waiting on a memory
-> allocation).  The table load can take as long as it needs.  But we can't
-> have it block holding the exclusive _hash_lock while blocking.  Having
-> _hash_lock prevents further DM ioctls.  The table load's allocation may
-> be blocking waiting for writeback to a DM device that will be resumed by
-> another thread.
-> 
-> Thanks again for pointing this out; I'll work to arrive at an
-> alternative locking scheme.  Likely introduce a lock local to the
-> multiple_device (effectively the 'queue_lock' I had before).  But
-
-s/multiple_device/mapped_device/
-
-Mike
+Signed off by: Yanqing Liu <Yanqing_Liu@Dell.com>
+---
+Index: linux-2.6.34/drivers/scsi/device_handler/scsi_dh_rdac.c
+========================================================================
+--- linux-2.6.34.orig/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-05-19 09:03:34.000000000 -0400
++++ linux-2.6.34/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-05-19 09:01:06.000000000 -0400
+@@ -768,6 +768,7 @@
+ 	{"DELL", "MD3000i"},
+ 	{"DELL", "MD32xx"},
+ 	{"DELL", "MD32xxi"},
++	{"DELL", "MD36xxi"},
+ 	{"LSI", "INF-01-00"},
+ 	{"ENGENIO", "INF-01-00"},
+ 	{"STK", "FLEXLINE 380"},
