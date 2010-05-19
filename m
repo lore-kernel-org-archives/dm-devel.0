@@ -1,340 +1,516 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: Questions regarding request based dm-multipath
-	and	blk-layer/elevator
-Date: Wed, 19 May 2010 14:31:47 -0400
-Message-ID: <20100519183147.GA3394@redhat.com>
-References: <201005191716.38617.knikanth@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <201005191716.38617.knikanth@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Nikanth Karthikesan <knikanth@suse.de>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Alasdair G Kergon <agk@redhat.com>
+From: Will Drewry <wad@chromium.org>
+Subject: [PATCH v3 2/3] init: boot to device-mapper targets without an initr*
+Date: Wed, 19 May 2010 13:38:23 -0500
+Message-ID: <1274294304-30606-2-git-send-email-wad@chromium.org>
+References: <1274294304-30606-1-git-send-email-wad@chromium.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1274294304-30606-1-git-send-email-wad@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Cc: agk@redhat.com, snitzer@redhat.com, Will Drewry <wad@chromium.org>
 List-Id: dm-devel.ids
 
-On Wed, May 19, 2010 at 05:16:38PM +0530, Nikanth Karthikesan wrote:
-> Hi
-> 
-> I have couple of questions regd request based dm.
-> 
-> 1. With request based multipath, we have 2 elevators in the path to the
-> device. Doesn't 2 idling I/O schedulers affect performance? Is it better to
-> use the noop elevator for the dm device? What is suggested?
-> I can send a patch to set noop as default for rq based dm, if it would be
-> better.
-> 
+Add a dm= kernel parameter modeled after the md= parameter from
+do_mounts_md.  It allows for device-mapper targets to be configured at
+boot time for use early in the boot process (as the root device or
+otherwise).
 
-IIUC, we don't use the ioscheduler of unerlying device and directly insert
-the request in request queue of underlying device. So double idling should
-not be an issue.
+The format is dm="name uuid ro,table line 1,table line 2,...".  The
+parser expects the comma to be safe to use as a newline substitute but,
+otherwise, uses the normal separator of space.  Some attempt has been
+made to make it forgiving of additional spaces (using skip_spaces()).
 
-Look at blk_insert_cloned_request(), which uses __elv_add_request() with
-option ELEVATOR_INSERT_BACK.
+A mapped device created during boot will be assigned a minor of 0 and
+may be access via /dev/dm-0.
 
-Thanks
-Vivek
+An example dm-linear root with no uuid may look like:
 
-> 2. The blk-layer limit nr_requests is the maximum nr of requests per-queue.
-> Currently we set it to the default maximum(128) and leave it.
-> 
-> Instead would it be better to set it to a higher number based on the number of
-> paths(underlying devices) and their nr_requests? In bio-based dm-multipath, we
-> were queueing upto the sum of all the underlying queue's nr_requests.
-> 
-> For example the attached patch would set it to the sum of nr_requests of all
-> the targets. May be it is better to do it from the user-space daemon,
-> multipathd? Or just 128 requests is enough as in the end, it is going to be a
-> single LUN? Or should we simply use the nr_request from one of the underlying
-> device? Or the maximum nr_request amoung the underlying devices?
-> 
-> Thanks
-> Nikanth
-> 
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index 9fe174d..fc33c2d 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -91,6 +91,44 @@ void blk_queue_congestion_threshold(struct request_queue *q)
->  	q->nr_congestion_off = nr;
->  }
->  
-> +unsigned long
-> +__blk_queue_set_nr_requests(struct request_queue *q, unsigned long nr)
-> +{
-> +	struct request_list *rl = &q->rq;
-> +
-> +	if (nr < BLKDEV_MIN_RQ)
-> +		nr = BLKDEV_MIN_RQ;
-> +
-> +	q->nr_requests = nr;
-> +	blk_queue_congestion_threshold(q);
-> +
-> +	if (rl->count[BLK_RW_SYNC] >= queue_congestion_on_threshold(q))
-> +		blk_set_queue_congested(q, BLK_RW_SYNC);
-> +	else if (rl->count[BLK_RW_SYNC] < queue_congestion_off_threshold(q))
-> +		blk_clear_queue_congested(q, BLK_RW_SYNC);
-> +
-> +	if (rl->count[BLK_RW_ASYNC] >= queue_congestion_on_threshold(q))
-> +		blk_set_queue_congested(q, BLK_RW_ASYNC);
-> +	else if (rl->count[BLK_RW_ASYNC] < queue_congestion_off_threshold(q))
-> +		blk_clear_queue_congested(q, BLK_RW_ASYNC);
-> +
-> +	if (rl->count[BLK_RW_SYNC] >= q->nr_requests) {
-> +		blk_set_queue_full(q, BLK_RW_SYNC);
-> +	} else if (rl->count[BLK_RW_SYNC]+1 <= q->nr_requests) {
-> +		blk_clear_queue_full(q, BLK_RW_SYNC);
-> +		wake_up(&rl->wait[BLK_RW_SYNC]);
-> +	}
-> +
-> +	if (rl->count[BLK_RW_ASYNC] >= q->nr_requests) {
-> +		blk_set_queue_full(q, BLK_RW_ASYNC);
-> +	} else if (rl->count[BLK_RW_ASYNC]+1 <= q->nr_requests) {
-> +		blk_clear_queue_full(q, BLK_RW_ASYNC);
-> +		wake_up(&rl->wait[BLK_RW_ASYNC]);
-> +	}
-> +	return nr;
-> +}
-> +EXPORT_SYMBOL(__blk_queue_set_nr_requests);
-> +
->  /**
->   * blk_get_backing_dev_info - get the address of a queue's backing_dev_info
->   * @bdev:	device
-> diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-> index 306759b..615198c 100644
-> --- a/block/blk-sysfs.c
-> +++ b/block/blk-sysfs.c
-> @@ -39,7 +39,6 @@ static ssize_t queue_requests_show(struct request_queue *q, char *page)
->  static ssize_t
->  queue_requests_store(struct request_queue *q, const char *page, size_t count)
->  {
-> -	struct request_list *rl = &q->rq;
->  	unsigned long nr;
->  	int ret;
->  
-> @@ -47,37 +46,11 @@ queue_requests_store(struct request_queue *q, const char *page, size_t count)
->  		return -EINVAL;
->  
->  	ret = queue_var_store(&nr, page, count);
-> -	if (nr < BLKDEV_MIN_RQ)
-> -		nr = BLKDEV_MIN_RQ;
->  
->  	spin_lock_irq(q->queue_lock);
-> -	q->nr_requests = nr;
-> -	blk_queue_congestion_threshold(q);
-> -
-> -	if (rl->count[BLK_RW_SYNC] >= queue_congestion_on_threshold(q))
-> -		blk_set_queue_congested(q, BLK_RW_SYNC);
-> -	else if (rl->count[BLK_RW_SYNC] < queue_congestion_off_threshold(q))
-> -		blk_clear_queue_congested(q, BLK_RW_SYNC);
-> -
-> -	if (rl->count[BLK_RW_ASYNC] >= queue_congestion_on_threshold(q))
-> -		blk_set_queue_congested(q, BLK_RW_ASYNC);
-> -	else if (rl->count[BLK_RW_ASYNC] < queue_congestion_off_threshold(q))
-> -		blk_clear_queue_congested(q, BLK_RW_ASYNC);
-> -
-> -	if (rl->count[BLK_RW_SYNC] >= q->nr_requests) {
-> -		blk_set_queue_full(q, BLK_RW_SYNC);
-> -	} else if (rl->count[BLK_RW_SYNC]+1 <= q->nr_requests) {
-> -		blk_clear_queue_full(q, BLK_RW_SYNC);
-> -		wake_up(&rl->wait[BLK_RW_SYNC]);
-> -	}
-> -
-> -	if (rl->count[BLK_RW_ASYNC] >= q->nr_requests) {
-> -		blk_set_queue_full(q, BLK_RW_ASYNC);
-> -	} else if (rl->count[BLK_RW_ASYNC]+1 <= q->nr_requests) {
-> -		blk_clear_queue_full(q, BLK_RW_ASYNC);
-> -		wake_up(&rl->wait[BLK_RW_ASYNC]);
-> -	}
-> +	__blk_queue_set_nr_requests(q, nr);
->  	spin_unlock_irq(q->queue_lock);
-> +
->  	return ret;
->  }
->  
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 9924ea2..c6deff9 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -526,6 +526,18 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
->  }
->  EXPORT_SYMBOL_GPL(dm_set_device_limits);
->  
-> +int dm_set_device_nr_requests(struct dm_target *ti, struct dm_dev *dev,
-> +			 sector_t start, sector_t len, void *data)
-> +{
-> +	unsigned long *nr_requests = data;
-> +	struct block_device *bdev = dev->bdev;
-> +	struct request_queue *q = bdev_get_queue(bdev);
-> +
-> +	*nr_requests += q->nr_requests;
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL_GPL(dm_set_device_nr_requests);
-> +
->  int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
->  		  struct dm_dev **result)
->  {
-> @@ -983,12 +995,13 @@ struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector)
->   * Establish the new table's queue_limits and validate them.
->   */
->  int dm_calculate_queue_limits(struct dm_table *table,
-> -			      struct queue_limits *limits)
-> +	      struct queue_limits *limits, unsigned long *nr_requests)
->  {
->  	struct dm_target *uninitialized_var(ti);
->  	struct queue_limits ti_limits;
->  	unsigned i = 0;
->  
-> +	*nr_requests = 0;
->  	blk_set_default_limits(limits);
->  
->  	while (i < dm_table_get_num_targets(table)) {
-> @@ -1005,6 +1018,13 @@ int dm_calculate_queue_limits(struct dm_table *table,
->  		ti->type->iterate_devices(ti, dm_set_device_limits,
->  					  &ti_limits);
->  
-> +		/*
-> +		 * Combine queue nr_requests limit of all the devices this
-> +		 * target uses.
-> +		 */
-> +		ti->type->iterate_devices(ti, dm_set_device_nr_requests,
-> +					  nr_requests);
-> +
->  		/* Set I/O hints portion of queue limits */
->  		if (ti->type->io_hints)
->  			ti->type->io_hints(ti, &ti_limits);
-> @@ -1074,7 +1094,7 @@ no_integrity:
->  }
->  
->  void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
-> -			       struct queue_limits *limits)
-> +	       struct queue_limits *limits, unsigned long nr_requests)
->  {
->  	/*
->  	 * Copy table's limits to the DM device's request_queue
-> @@ -1098,8 +1118,10 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
->  	 * Those bios are passed to request-based dm at the resume time.
->  	 */
->  	smp_mb();
-> -	if (dm_table_request_based(t))
-> +	if (dm_table_request_based(t)) {
->  		queue_flag_set_unlocked(QUEUE_FLAG_STACKABLE, q);
-> +		__blk_queue_set_nr_requests(q, nr_requests);
-> +	}
->  }
->  
->  unsigned int dm_table_get_num_targets(struct dm_table *t)
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index d21e128..2d45689 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -2052,7 +2052,7 @@ static void __set_size(struct mapped_device *md, sector_t size)
->   * Returns old map, which caller must destroy.
->   */
->  static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
-> -			       struct queue_limits *limits)
-> +		       struct queue_limits *limits, unsigned long nr_requests)
->  {
->  	struct dm_table *old_map;
->  	struct request_queue *q = md->queue;
-> @@ -2083,11 +2083,13 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
->  
->  	__bind_mempools(md, t);
->  
-> -	write_lock_irqsave(&md->map_lock, flags);
-> +	spin_lock_irqsave(q->queue_lock, flags);
-> +	write_lock(&md->map_lock);
->  	old_map = md->map;
->  	md->map = t;
-> -	dm_table_set_restrictions(t, q, limits);
-> -	write_unlock_irqrestore(&md->map_lock, flags);
-> +	dm_table_set_restrictions(t, q, limits, nr_requests);
-> +	write_unlock(&md->map_lock);
-> +	spin_unlock_irqrestore(q->queue_lock, flags);
->  
->  	return old_map;
->  }
-> @@ -2390,6 +2392,7 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
->  	struct dm_table *map = ERR_PTR(-EINVAL);
->  	struct queue_limits limits;
->  	int r;
-> +	unsigned long nr_requests;
->  
->  	mutex_lock(&md->suspend_lock);
->  
-> @@ -2397,7 +2400,7 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
->  	if (!dm_suspended_md(md))
->  		goto out;
->  
-> -	r = dm_calculate_queue_limits(table, &limits);
-> +	r = dm_calculate_queue_limits(table, &limits, &nr_requests);
->  	if (r) {
->  		map = ERR_PTR(r);
->  		goto out;
-> @@ -2410,7 +2413,7 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
->  		goto out;
->  	}
->  
-> -	map = __bind(md, table, &limits);
-> +	map = __bind(md, table, &limits, nr_requests);
->  
->  out:
->  	mutex_unlock(&md->suspend_lock);
-> diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-> index bad1724..9e25c48 100644
-> --- a/drivers/md/dm.h
-> +++ b/drivers/md/dm.h
-> @@ -50,9 +50,9 @@ void dm_table_event_callback(struct dm_table *t,
->  struct dm_target *dm_table_get_target(struct dm_table *t, unsigned int index);
->  struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector);
->  int dm_calculate_queue_limits(struct dm_table *table,
-> -			      struct queue_limits *limits);
-> +		      struct queue_limits *limits, unsigned long *nr_requests);
->  void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
-> -			       struct queue_limits *limits);
-> +		       struct queue_limits *limits, unsigned long nr_requests);
->  struct list_head *dm_table_get_devices(struct dm_table *t);
->  void dm_table_presuspend_targets(struct dm_table *t);
->  void dm_table_postsuspend_targets(struct dm_table *t);
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index 6690e8b..366bba5 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -934,6 +934,9 @@ extern void blk_limits_io_min(struct queue_limits *limits, unsigned int min);
->  extern void blk_queue_io_min(struct request_queue *q, unsigned int min);
->  extern void blk_limits_io_opt(struct queue_limits *limits, unsigned int opt);
->  extern void blk_queue_io_opt(struct request_queue *q, unsigned int opt);
-> +extern unsigned long __blk_queue_set_nr_requests(struct request_queue *q,
-> +							unsigned long nr);
-> +
->  extern void blk_set_default_limits(struct queue_limits *lim);
->  extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
->  			    sector_t offset);
-> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> index 1381cd9..b0f9443 100644
-> --- a/include/linux/device-mapper.h
-> +++ b/include/linux/device-mapper.h
-> @@ -108,6 +108,11 @@ void dm_error(const char *message);
->   */
->  int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
->  			 sector_t start, sector_t len, void *data);
-> +/*
-> + * Combine device nr_requests.
-> + */
-> +int dm_set_device_nr_requests(struct dm_target *ti, struct dm_dev *dev,
-> +			 sector_t start, sector_t len, void *data);
->  
->  struct dm_dev {
->  	struct block_device *bdev;
+ root=/dev/dm-0  dm="lroot none 0, 0 4096 linear /dev/ubdb 0, 4096 4096 linear /dv/ubdc 0"
+
+Once udev is started, /dev/dm-0 will become /dev/mapper/lroot.
+
+Signed-off-by: Will Drewry <wad@chromium.org>
+---
+ Documentation/device-mapper/boot.txt |   42 ++++
+ Documentation/kernel-parameters.txt  |    4 +
+ init/Makefile                        |    1 +
+ init/do_mounts.c                     |    1 +
+ init/do_mounts.h                     |   10 +
+ init/do_mounts_dm.c                  |  353 ++++++++++++++++++++++++++++++++++
+ 6 files changed, 411 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/device-mapper/boot.txt
+ create mode 100644 init/do_mounts_dm.c
+
+diff --git a/Documentation/device-mapper/boot.txt b/Documentation/device-mapper/boot.txt
+new file mode 100644
+index 0000000..835d8de
+--- /dev/null
++++ b/Documentation/device-mapper/boot.txt
+@@ -0,0 +1,42 @@
++Boot time creation of mapped devices
++===================================
++
++It is possible to configure a device mapper device to act as the root
++device for your system in two ways.
++
++The first is to build an initial ramdisk which boots to a minimal
++userspace which configures the device, then pivot_root(8) in to it.
++
++For simple device mapper configurations, it is possible to boot directly
++using the following kernel command line:
++
++dm="<name> <uuid> <ro>,table line 1,...,table line n"
++
++name = the name to associate with the device
++	after boot, udev, if used, will use that name to label
++	the device node.
++uuid = may be 'none' or the UUID desired for the device.
++ro = may be 0 or 1.  If non-zero, the device and device table will be
++	marked read-only.
++
++Each table line may be as normal when using the dmsetup tool except for
++two variations:
++1. Any use of commas will be interpreted as a newline
++2. Quotation marks cannot be escaped and cannot be used without
++   terminating the dm= argument.
++
++Unless renamed by udev, the device node created will be dm-0 as the
++first minor number for the device-mapper is used during early creation.
++
++Example
++=======
++
++- Booting to a linear array made up of user-mode linux block devices:
++
++  dm="lroot none 0, 0 4096 linear 98:16 0, 4096 4096 linear 98:32 0" \
++  root=/dev/dm-0
++
++Will boot to a rw dm-linear target of 8192 sectors split across two
++block devices identified by their major:minor numbers.  After boot, udev
++will rename this target to /dev/mapper/lroot (depending on the rules).
++No uuid was assigned.
+diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
+index 839b21b..9e22f8e 100644
+--- a/Documentation/kernel-parameters.txt
++++ b/Documentation/kernel-parameters.txt
+@@ -43,6 +43,7 @@ parameter is applicable:
+ 	AVR32	AVR32 architecture is enabled.
+ 	AX25	Appropriate AX.25 support is enabled.
+ 	BLACKFIN Blackfin architecture is enabled.
++	DM	Device mapper support is enabled.
+ 	DRM	Direct Rendering Management support is enabled.
+ 	EDD	BIOS Enhanced Disk Drive Services (EDD) is enabled
+ 	EFI	EFI Partitioning (GPT) is enabled
+@@ -654,6 +655,9 @@ and is between 256 and 4096 characters. It is defined in the file
+ 			Disable PIN 1 of APIC timer
+ 			Can be useful to work around chipset bugs.
+ 
++	dm=		[DM] Allows early creation of a device-mapper device.
++			See Documentation/device-mapper/boot.txt.
++
+ 	dmasound=	[HW,OSS] Sound subsystem buffers
+ 
+ 	dma_debug=off	If the kernel is compiled with DMA_API_DEBUG support,
+diff --git a/init/Makefile b/init/Makefile
+index 0bf677a..1677baa 100644
+--- a/init/Makefile
++++ b/init/Makefile
+@@ -14,6 +14,7 @@ mounts-y			:= do_mounts.o
+ mounts-$(CONFIG_BLK_DEV_RAM)	+= do_mounts_rd.o
+ mounts-$(CONFIG_BLK_DEV_INITRD)	+= do_mounts_initrd.o
+ mounts-$(CONFIG_BLK_DEV_MD)	+= do_mounts_md.o
++mounts-$(CONFIG_BLK_DEV_DM)	+= do_mounts_dm.o
+ 
+ # dependencies on generated files need to be listed explicitly
+ $(obj)/version.o: include/generated/compile.h
+diff --git a/init/do_mounts.c b/init/do_mounts.c
+index 02e3ca4..0848a5b 100644
+--- a/init/do_mounts.c
++++ b/init/do_mounts.c
+@@ -383,6 +383,7 @@ void __init prepare_namespace(void)
+ 	wait_for_device_probe();
+ 
+ 	md_run_setup();
++	dm_run_setup();
+ 
+ 	if (saved_root_name[0]) {
+ 		root_device_name = saved_root_name;
+diff --git a/init/do_mounts.h b/init/do_mounts.h
+index f5b978a..09d2286 100644
+--- a/init/do_mounts.h
++++ b/init/do_mounts.h
+@@ -74,3 +74,13 @@ void md_run_setup(void);
+ static inline void md_run_setup(void) {}
+ 
+ #endif
++
++#ifdef CONFIG_BLK_DEV_DM
++
++void dm_run_setup(void);
++
++#else
++
++static inline void dm_run_setup(void) {}
++
++#endif
+diff --git a/init/do_mounts_dm.c b/init/do_mounts_dm.c
+new file mode 100644
+index 0000000..3862014
+--- /dev/null
++++ b/init/do_mounts_dm.c
+@@ -0,0 +1,353 @@
++/* do_mounts_dm.c
++ * Copyright (C) 2010 The Chromium OS Authors <chromium-os-dev@chromium.org>
++ *                    All Rights Reserved.
++ * Based on do_mounts_md.c
++ *
++ * This file is released under the GPL.
++ */
++#include <linux/device-mapper.h>
++#include <linux/fs.h>
++#include <linux/string.h>
++
++#include "do_mounts.h"
++
++#define DM_MAX_NAME 32
++#define DM_MAX_UUID 129
++#define DM_NO_UUID "none"
++
++#define DM_MSG_PREFIX "init"
++
++/* Separators used for parsing the dm= argument. */
++#define DM_FIELD_SEP ' '
++#define DM_LINE_SEP ','
++
++/*
++ * When the device-mapper and any targets are compiled into the kernel
++ * (not a module), one target may be created and used as the root device at
++ * boot time with the parameters given with the boot line dm=...
++ * The code for that is here.
++ */
++
++struct dm_setup_target {
++	sector_t begin;
++	sector_t length;
++	char *type;
++	char *params;
++	/* simple singly linked list */
++	struct dm_setup_target *next;
++};
++
++static struct {
++	int minor;
++	int ro;
++	char name[DM_MAX_NAME];
++	char uuid[DM_MAX_UUID];
++	char *targets;
++	struct dm_setup_target *target;
++	int target_count;
++} dm_setup_args __initdata;
++
++static __initdata int dm_early_setup = 0;
++
++static size_t __init get_dm_option(char *str, char **next, char sep)
++{
++	size_t len = 0;
++	char *endp = NULL;
++
++	if (!str)
++		return 0;
++
++	endp = strchr(str, sep);
++	if (!endp) {  /* act like strchrnul */
++		len = strlen(str);
++		endp = str + len;
++	} else {
++		len = endp - str;
++	}
++
++	if (endp == str)
++		return 0;
++
++	if (!next)
++		return len;
++
++	if (*endp == 0) {
++		/* Don't advance past the nul. */
++		*next = endp;
++	} else {
++		*next = endp + 1;
++	}
++	return len;
++}
++
++static int __init dm_setup_args_init(void)
++{
++	dm_setup_args.minor = 0;
++	dm_setup_args.ro = 0;
++	dm_setup_args.target = NULL;
++	dm_setup_args.target_count = 0;
++	return 0;
++}
++
++static int __init dm_setup_cleanup(void)
++{
++	struct dm_setup_target *target = dm_setup_args.target;
++	struct dm_setup_target *old_target = NULL;
++	while (target) {
++		if (target->type)
++			kfree(target->type);
++		if (target->params)
++			kfree(target->params);
++		old_target = target;
++		target = target->next;
++		kfree(old_target);
++		dm_setup_args.target_count--;
++	}
++	BUG_ON(dm_setup_args.target_count);
++	return 0;
++}
++
++static char * __init dm_setup_parse_device_args(char *str)
++{
++	char *next = NULL;
++	size_t len = 0;
++
++	/* Grab the logical name of the device to be exported to udev */
++	len = get_dm_option(str, &next, DM_FIELD_SEP);
++	if (!len) {
++		DMERR("failed to parse device name");
++		goto parse_fail;
++	}
++	len = min(len + 1, sizeof(dm_setup_args.name));
++	strlcpy(dm_setup_args.name, str, len + 1);  /* includes nul */
++	str = skip_spaces(next);
++
++	/* Grab the UUID value or "none" */
++	len = get_dm_option(str, &next, DM_FIELD_SEP);
++	if (!len) {
++		DMERR("failed to parse device uuid");
++		goto parse_fail;
++	}
++	len = min(len + 1, sizeof(dm_setup_args.uuid));
++	strlcpy(dm_setup_args.uuid, str, len);
++	str = skip_spaces(next);
++
++	/* If ro is non-zero, the table will be create FMODE_READ. */
++	if (*str++ != '0')
++		dm_setup_args.ro = 1;
++	if (*str++ != ',') {
++		DMERR("failed to parse table mode");
++		goto parse_fail;
++	}
++	str = skip_spaces(str);
++
++	return str;
++
++parse_fail:
++	return NULL;
++}
++
++static int __init dm_setup_parse_targets(char *str)
++{
++	char *next = NULL;
++	size_t len = 0;
++	struct dm_setup_target **target = NULL;
++
++	/* Targets are defined as per the table format but with a
++	 * comma as a newline separator. */
++	target = &dm_setup_args.target;
++	while (str && *str) {
++		*target = kzalloc(sizeof(struct dm_setup_target), GFP_KERNEL);
++		if (!*target) {
++			DMERR("failed to allocate memory for target %d",
++			      dm_setup_args.target_count);
++			goto parse_fail;
++		}
++		dm_setup_args.target_count++;
++
++		(*target)->begin = simple_strtoull(str, &next, 10);
++		if (!next || *next != DM_FIELD_SEP) {
++			DMERR("failed to parse starting sector for target %d",
++			      dm_setup_args.target_count - 1);
++			goto parse_fail;
++		}
++		str = skip_spaces(next + 1);
++
++		(*target)->length = simple_strtoull(str, &next, 10);
++		if (!next || *next != DM_FIELD_SEP) {
++			DMERR("failed to parse length for target %d",
++			      dm_setup_args.target_count - 1);
++			goto parse_fail;
++		}
++		str = skip_spaces(next + 1);
++
++		len = get_dm_option(str, &next, DM_FIELD_SEP);
++		if (!len ||
++		    !((*target)->type = kstrndup(str, len, GFP_KERNEL))) {
++			DMERR("failed to parse type for target %d",
++			      dm_setup_args.target_count - 1);
++			goto parse_fail;
++		}
++		str = skip_spaces(next);
++
++		len = get_dm_option(str, &next, DM_LINE_SEP);
++		if (!len ||
++		    !((*target)->params = kstrndup(str, len, GFP_KERNEL))) {
++			DMERR("failed to parse params for target %d",
++			      dm_setup_args.target_count - 1);
++			goto parse_fail;
++		}
++		str = skip_spaces(next);
++
++		target = &((*target)->next);
++	}
++	DMDEBUG("parsed %d targets", dm_setup_args.target_count);
++
++	return 0;
++
++parse_fail:
++	return 1;
++}
++
++/*
++ * Parse the command-line parameters given our kernel, but do not
++ * actually try to invoke the DM device now; that is handled by
++ * dm_setup_drive after the low-level disk drivers have initialised.
++ * dm format is as follows:
++ *  dm="name uuid fmode,[table line 1],[table line 2],..."
++ * May be used with root=/dev/dm-0 as it always uses the first dm minor.
++ */
++
++static int __init dm_setup(char *str)
++{
++	dm_setup_args_init();
++
++	str = dm_setup_parse_device_args(str);
++	if (!str) {
++		DMDEBUG("str is NULL");
++		goto parse_fail;
++	}
++
++	/* Target parsing is delayed until we have dynamic memory */
++	dm_setup_args.targets = str;
++
++	printk(KERN_INFO "dm: will configure '%s' on dm-%d\n",
++	       dm_setup_args.name, dm_setup_args.minor);
++
++	dm_early_setup = 1;
++	return 1;
++
++parse_fail:
++	printk(KERN_WARNING "dm: Invalid arguments supplied to dm=.\n");
++	return 0;
++}
++
++
++static void __init dm_setup_drive(void)
++{
++	struct mapped_device *md = NULL;
++	struct dm_table *table = NULL;
++	struct dm_setup_target *target;
++	char *uuid = dm_setup_args.uuid;
++	fmode_t fmode = FMODE_READ;
++
++	/* Finish parsing the targets. */
++	if (dm_setup_parse_targets(dm_setup_args.targets)) {
++		goto parse_fail;
++	}
++
++	if (dm_create(dm_setup_args.minor, &md)) {
++		DMDEBUG("failed to create the device");
++		goto dm_create_fail;
++	}
++	DMDEBUG("created device '%s'", dm_device_name(md));
++
++	/* In addition to flagging the table below, the disk must be
++	 * set explicitly ro/rw. */
++	if (dm_setup_args.ro) {
++		set_disk_ro(dm_disk(md), 1);
++	} else {
++		set_disk_ro(dm_disk(md), 0);
++	}
++
++	fmode |= (dm_setup_args.ro ? 0 : FMODE_WRITE);
++	if (dm_table_create(&table, fmode, dm_setup_args.target_count, md)) {
++		DMDEBUG("failed to create the table");
++		goto dm_table_create_fail;
++	}
++
++	target = dm_setup_args.target;
++	while (target) {
++		DMINFO("adding target '%llu %llu %s %s'",
++		       (unsigned long long) target->begin,
++		       (unsigned long long) target->length, target->type,
++		       target->params);
++		if (dm_table_add_target(table, target->type, target->begin,
++					target->length, target->params)) {
++			DMDEBUG("failed to add the target to the table");
++			goto add_target_fail;
++		}
++		target = target->next;
++	}
++
++	if (dm_table_complete(table)) {
++		DMDEBUG("failed to complete the table");
++		goto table_complete_fail;
++	}
++
++	/* Suspend the device so that we can bind it to the table. */
++	if (dm_suspend(md, 0)) {
++		DMDEBUG("failed to suspend the device pre-bind");
++		goto suspend_fail;
++	}
++
++	/* Bind the table to the device. This is the only way to associate
++	 * md->map with the table and set the disk capacity directly. */
++	if (dm_swap_table(md, table)) {  /* should return NULL. */
++		DMDEBUG("failed to bind the device to the table");
++		goto table_bind_fail;
++	}
++	
++	/* Finally, resume and the device should be ready. */
++	if (dm_resume(md)) {
++		DMDEBUG("failed to resume the device");
++		goto resume_fail;
++	}
++
++	/* Export the dm device via the ioctl interface */
++	if (!strcmp(DM_NO_UUID, dm_setup_args.uuid))
++		uuid = NULL;
++	if (dm_ioctl_export(md, dm_setup_args.name, uuid)) {
++		DMDEBUG("failed to export device with given name and uuid");
++		goto export_fail;
++	}
++	printk(KERN_INFO "dm: dm-%d is ready\n", dm_setup_args.minor);
++
++	dm_setup_cleanup();
++	return;
++
++export_fail:
++resume_fail:
++table_bind_fail:
++suspend_fail:
++table_complete_fail:
++add_target_fail:
++	dm_table_put(table);
++dm_table_create_fail:
++	dm_put(md);
++dm_create_fail:
++	dm_setup_cleanup();
++parse_fail:
++	printk(KERN_WARNING "dm: starting dm-%d (%s) failed\n",
++	       dm_setup_args.minor, dm_setup_args.name);
++}
++
++__setup("dm=", dm_setup);
++
++void __init dm_run_setup(void)
++{
++	if (!dm_early_setup)
++		return;
++	printk(KERN_INFO "dm: attempting early device configuration.\n");
++	dm_setup_drive();
++}
+-- 
+1.7.0.4
