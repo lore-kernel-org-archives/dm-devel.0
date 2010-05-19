@@ -1,66 +1,217 @@
 From: Will Drewry <wad@chromium.org>
-Subject: [PATCH v3 3/3] dm: lookup devices by path with name_to_dev_t
-Date: Wed, 19 May 2010 13:38:24 -0500
-Message-ID: <1274294304-30606-3-git-send-email-wad@chromium.org>
-References: <1274294304-30606-1-git-send-email-wad@chromium.org>
+Subject: [PATCH v3 1/3] dm: allow a dm-fs-style device to be shared via dm-ioctl
+Date: Wed, 19 May 2010 13:38:22 -0500
+Message-ID: <1274294304-30606-1-git-send-email-wad@chromium.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1274294304-30606-1-git-send-email-wad@chromium.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 Cc: agk@redhat.com, snitzer@redhat.com, Will Drewry <wad@chromium.org>
 List-Id: dm-devel.ids
 
-Replace major:minor parsing with name_to_dev_t.  This
-maintains the current functionality (as the code was the same),
-but adds support for the hexadecimal dev as well as device lookup
-before the root filesystem is available.  The latter is the motivation
-for this change.
+Integrates feedback from Alisdair, Mike, and Kiyoshi.
 
-It still falls back to lookup_bdev() for cases where the inode
-on disk provides more information than the name (and the path exceeds
-the length handled by name_to_dev_t).
+Two main changes occur here:
+
+- One function is added which allows for a programmatically created
+  mapped device to be inserted into the dm-ioctl hash table.  This binds
+  the device to a name and, optional, uuid which is needed by udev and
+  allows for userspace management of the mapped device.
+
+- dm_table_complete() was extended to handle all of the final
+  functional changes required for the table to be operational once
+  called.
 
 Signed-off-by: Will Drewry <wad@chromium.org>
 ---
- drivers/md/dm-table.c |   16 ++++++++--------
- 1 files changed, 8 insertions(+), 8 deletions(-)
+ drivers/md/dm-ioctl.c         |   72 +++++++++++++++++++++-------------------
+ drivers/md/dm-table.c         |   50 ++++++++++++++++++++++++++++-
+ include/linux/device-mapper.h |    6 +++
+ 3 files changed, 93 insertions(+), 35 deletions(-)
 
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index d7500e1..006be9d 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1112,28 +1112,9 @@ static int populate_table(struct dm_table *table,
+ 		next = spec->next;
+ 	}
+ 
+-	r = dm_table_set_type(table);
+-	if (r) {
+-		DMWARN("unable to set table type");
+-		return r;
+-	}
+-
+ 	return dm_table_complete(table);
+ }
+ 
+-static int table_prealloc_integrity(struct dm_table *t,
+-				    struct mapped_device *md)
+-{
+-	struct list_head *devices = dm_table_get_devices(t);
+-	struct dm_dev_internal *dd;
+-
+-	list_for_each_entry(dd, devices, list)
+-		if (bdev_get_integrity(dd->dm_dev.bdev))
+-			return blk_integrity_register(dm_disk(md), NULL);
+-
+-	return 0;
+-}
+-
+ static int table_load(struct dm_ioctl *param, size_t param_size)
+ {
+ 	int r;
+@@ -1155,21 +1136,6 @@ static int table_load(struct dm_ioctl *param, size_t param_size)
+ 		goto out;
+ 	}
+ 
+-	r = table_prealloc_integrity(t, md);
+-	if (r) {
+-		DMERR("%s: could not register integrity profile.",
+-		      dm_device_name(md));
+-		dm_table_destroy(t);
+-		goto out;
+-	}
+-
+-	r = dm_table_alloc_md_mempools(t);
+-	if (r) {
+-		DMWARN("unable to allocate mempools for this table");
+-		dm_table_destroy(t);
+-		goto out;
+-	}
+-
+ 	down_write(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
+@@ -1637,6 +1603,44 @@ void dm_interface_exit(void)
+ 	dm_hash_exit();
+ }
+ 
++
++/**
++ * dm_ioctl_export - Permanently export a mapped device via the ioctl interface
++ * @md: Pointer to mapped_device
++ * @name: Buffer (size DM_NAME_LEN) for name
++ * @uuid: Buffer (size DM_UUID_LEN) for uuid or NULL if not desired
++ */
++int dm_ioctl_export(struct mapped_device *md, const char *name, const char *uuid)
++{
++	int r = 0;
++	struct hash_cell *hc;
++
++	if (!md) {
++		r = -ENXIO;
++		goto out;
++	}
++
++	/* The name and uuid can only be set once. */
++	mutex_lock(&dm_hash_cells_mutex);
++	hc = dm_get_mdptr(md);
++	mutex_unlock(&dm_hash_cells_mutex);
++	if (hc) {
++		DMERR("%s: already exported", dm_device_name(md));
++		r = -ENXIO;
++		goto out;
++	}
++
++	r = dm_hash_insert(name, uuid, md);
++	if (r) {
++		DMERR("%s: could not bind to '%s'", dm_device_name(md), name);
++		goto out;
++	}
++
++	/* Let udev know we've changed. */
++	dm_kobject_uevent(md, KOBJ_CHANGE, dm_get_event_nr(md));
++out:
++	return r;
++}
+ /**
+  * dm_copy_name_and_uuid - Copy mapped device name & uuid into supplied buffers
+  * @md: Pointer to mapped_device
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index ef6a3ab..589e86a 100644
+index 9924ea2..ef6a3ab 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
-@@ -11,6 +11,7 @@
- #include <linux/vmalloc.h>
- #include <linux/blkdev.h>
- #include <linux/namei.h>
-+#include <linux/mount.h>
- #include <linux/ctype.h>
- #include <linux/string.h>
- #include <linux/slab.h>
-@@ -434,17 +435,16 @@ static int __table_get_device(struct dm_table *t, struct dm_target *ti,
- 	int r;
- 	dev_t uninitialized_var(dev);
- 	struct dm_dev_internal *dd;
--	unsigned int major, minor;
-+	char base_path[32];  /* size from name_to_dev_t */
+@@ -900,7 +900,7 @@ static int setup_indexes(struct dm_table *t)
+ /*
+  * Builds the btree to index the map.
+  */
+-int dm_table_complete(struct dm_table *t)
++int dm_table_build_index(struct dm_table *t)
+ {
+ 	int r = 0;
+ 	unsigned int leaf_nodes;
+@@ -919,6 +919,54 @@ int dm_table_complete(struct dm_table *t)
+ 	return r;
+ }
  
- 	BUG_ON(!t);
- 
--	if (sscanf(path, "%u:%u", &major, &minor) == 2) {
--		/* Extract the major/minor numbers */
--		dev = MKDEV(major, minor);
--		if (MAJOR(dev) != major || MINOR(dev) != minor)
--			return -EOVERFLOW;
--	} else {
--		/* convert the path to a device */
-+	/* stage the shorter path for name_to_dev_t. */
-+	strncpy(base_path, path, sizeof(base_path));
++/*
++ * Register the mapped device for blk_integrity support if
++ * the underlying devices support it.
++ */
++static int dm_table_prealloc_integrity(struct dm_table *t, struct mapped_device *md)
++{
++	struct list_head *devices = dm_table_get_devices(t);
++	struct dm_dev_internal *dd;
 +
-+	/* lookup by major:minor or registered device name */
-+	if (!(dev = name_to_dev_t(base_path))) {
-+		/* convert the path to a device by finding its inode */
- 		struct block_device *bdev = lookup_bdev(path);
++	list_for_each_entry(dd, devices, list)
++		if (bdev_get_integrity(dd->dm_dev.bdev))
++			return blk_integrity_register(dm_disk(md), NULL);
++
++	return 0;
++}
++
++/*
++ * Prepares the table for use by building the indices,
++ * setting the type, and allocating mempools.
++ */
++int dm_table_complete(struct dm_table *t)
++{
++	int r = 0;
++	r = dm_table_set_type(t);
++	if (r) {
++		DMERR("unable to set table type");
++		return r;
++	}
++
++	r = dm_table_build_index(t);
++	if (r) {
++		DMERR("unable to build btrees");
++		return r;
++	}
++
++	r = dm_table_prealloc_integrity(t, t->md);
++	if (r) {
++		DMERR("could not register integrity profile.");
++		return r;
++	}
++
++	r = dm_table_alloc_md_mempools(t);
++	if (r) {
++		DMERR("unable to allocate mempools");
++	}
++	return r;
++}
++
+ static DEFINE_MUTEX(_event_lock);
+ void dm_table_event_callback(struct dm_table *t,
+ 			     void (*fn)(void *), void *context)
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 1381cd9..0792cf3 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -215,6 +215,12 @@ void dm_set_mdptr(struct mapped_device *md, void *ptr);
+ void *dm_get_mdptr(struct mapped_device *md);
  
- 		if (IS_ERR(bdev))
+ /*
++ * Export the device via the ioctl interface (uses mdptr).
++ */
++int dm_ioctl_export(struct mapped_device *md, const char *name,
++		    const char *uuid);
++
++/*
+  * A device can still be used while suspended, but I/O is deferred.
+  */
+ int dm_suspend(struct mapped_device *md, unsigned suspend_flags);
 -- 
 1.7.0.4
