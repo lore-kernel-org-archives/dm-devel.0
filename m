@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: close sysfs file after setting value
-Date: Wed, 19 May 2010 22:59:57 -0500
-Message-ID: <20100520035957.GS3295@ether.msp.redhat.com>
+Subject: [PATCH] multipath: don't clear daemon setting on
+	reconfigure
+Date: Wed, 19 May 2010 23:00:45 -0500
+Message-ID: <20100520040045.GT3295@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,22 +21,23 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-We need to close the sysfs file after setting its value.
+When you reconfigure multipathd, it needs to set the daemon flag in the
+new config structure, so that the daemon only-code will still work.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/sysfs.c |    1 +
+ multipathd/main.c |    1 +
  1 file changed, 1 insertion(+)
 
-Index: multipath-tools/libmultipath/sysfs.c
+Index: multipath-tools-100510/multipathd/main.c
 ===================================================================
---- multipath-tools.orig/libmultipath/sysfs.c
-+++ multipath-tools/libmultipath/sysfs.c
-@@ -407,6 +407,7 @@ sysfs_attr_set_value(const char *devpath
- 		    path_full, ret);
- 		ret = -1;
+--- multipath-tools-100510.orig/multipathd/main.c
++++ multipath-tools-100510/multipathd/main.c
+@@ -1198,6 +1198,7 @@ reconfigure (struct vectors * vecs)
+ 		conf->checkint = DEFAULT_CHECKINT;
+ 		conf->max_checkint = MAX_CHECKINT(conf->checkint);
  	}
-+	close(fd);
- out:
- 	return ret;
- }
++	conf->daemon = 1;
+ 	configure(vecs, 1);
+ 	free_config(old);
+ 	return 0;
