@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: fix fast_io_fail_tmo typo
-Date: Wed, 19 May 2010 22:57:52 -0500
-Message-ID: <20100520035752.GR3295@ether.msp.redhat.com>
+Subject: [PATCH] multipath: close sysfs file after setting value
+Date: Wed, 19 May 2010 22:59:57 -0500
+Message-ID: <20100520035957.GS3295@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,23 +20,22 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The name of the sysfs file is actually fast_io_fail_tmo, not fast_io_fail
+We need to close the sysfs file after setting its value.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/sysfs.c |    1 +
+ 1 file changed, 1 insertion(+)
 
-Index: multipath-tools-100510/libmultipath/discovery.c
+Index: multipath-tools/libmultipath/sysfs.c
 ===================================================================
---- multipath-tools-100510.orig/libmultipath/discovery.c
-+++ multipath-tools-100510/libmultipath/discovery.c
-@@ -233,7 +233,7 @@ sysfs_set_scsi_tmo (struct multipath *mp
- 				sprintf(value, "off");
- 			else
- 				snprintf(value, 11, "%u", mpp->fast_io_fail);
--			if (sysfs_attr_set_value(attr_path, "fast_io_fail",
-+			if (sysfs_attr_set_value(attr_path, "fast_io_fail_tmo",
- 						 value))
- 				return 1;
- 		}
+--- multipath-tools.orig/libmultipath/sysfs.c
++++ multipath-tools/libmultipath/sysfs.c
+@@ -407,6 +407,7 @@ sysfs_attr_set_value(const char *devpath
+ 		    path_full, ret);
+ 		ret = -1;
+ 	}
++	close(fd);
+ out:
+ 	return ret;
+ }
