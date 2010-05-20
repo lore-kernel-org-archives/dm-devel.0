@@ -1,121 +1,134 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 2/2] dm: only initialize full request_queue for
- request-based device
-Date: Thu, 20 May 2010 13:07:33 -0400
-Message-ID: <20100520170732.GA22791@redhat.com>
-References: <4BED049C.5040409@ct.jp.nec.com>
- <20100514140852.GA10373@redhat.com>
- <4BF10BF1.3040108@ct.jp.nec.com>
- <20100517172737.GA24591@redhat.com>
- <4BF25091.3000507@ct.jp.nec.com>
- <20100518134639.GA27582@redhat.com>
- <4BF37DD5.9050409@ct.jp.nec.com>
- <AANLkTinndXq8DkMBOUf5z8R_8lWRoRbDuOZ1LEmWeI21@mail.gmail.com>
- <20100519143900.GC24618@redhat.com>
- <4BF51B52.70308@ct.jp.nec.com>
+Subject: [PATCH] dm: also check for conflicting table type in
+ dm_table_set_type
+Date: Thu, 20 May 2010 18:26:26 -0400
+Message-ID: <20100520222625.GA19250@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4BF51B52.70308@ct.jp.nec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: Nikanth Karthikesan <knikanth@suse.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Vivek Goyal <vgoyal@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 List-Id: dm-devel.ids
 
-On Thu, May 20 2010 at  7:21am -0400,
-Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+Factorize live table type compatibility check into
+dm_table_type_matches_live_table().  Catching a conflicting table type
+early, during table load, avoids failing during resume -- which always
+leaves the DM device suspended.
 
-> Hi Mike,
-> 
-> On 05/19/2010 11:39 PM +0900, Mike Snitzer wrote:
-> > Thanks again for pointing this out; I'll work to arrive at an
-> > alternative locking scheme.  Likely introduce a lock local to the
-> > multiple_device (effectively the 'queue_lock' I had before).  But
-> > difference is I'd take that lock before taking _hash_lock.
-> 
-> You have to see do_resume(), too.
-> do_resume() gets hc->new_map with _hash_lock held but without your
-> 'queue_lock' held.  This could cause inconsistent status;
->   table_load() for bio-based table    do_resume() for rq-based table
->   --------------------------------------------------------------------
->   dm_lock_md_queue(md)
->   dm_table_setup_md_queue(t) (<= bio-based)
->     dm_clear_request_based_queue(md)
->       md->queue->request_fn = NULL
->                                        down_write(_hash_lock)
->                                        new_map = hc->new_map (<= rq-based)
->                                        up_write(_hash_lock)
->                                        dm_swap_table(md, new_map)
->                                        __bind(md, new_map) (<= rq-based)
->   down_write(_hash_lock)
->   hc->new_map = t
->   up_write(_hash_lock)
->   dm_unlock_md_queue(md)
+So also check type during dm_table_set_type() -- which happens as part
+of a table load.  But preserve the existing check during resume, in
+dm_swap_table(), because a racing table load could stage an inactive
+table that conflicts with the table type that dm_swap_table() is about
+to make live:
 
-Understood.
+table_load() for bio-based               do_resume() for rq-based
+-----------------------------------------------------------------
+dm_table_type_matches_live_table(t)
+                                         down_write(_hash_lock)
+                                         new_map = hc->new_map
+                                         up_write(_hash_lock)
+down_write(_hash_lock)
+hc->new_map = t
+up_write(_hash_lock)
+                                         dm_swap_table(md, new_map)
+                                         dm_table_type_matches_live_table(t)
+                                         __bind(md, new_map)
 
-> Other ioctls might be as well, since I have checked only interaction
-> between table load and resume.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c |   24 +++++++++++++++++++++++-
+ drivers/md/dm.c       |    6 +-----
+ drivers/md/dm.h       |    1 +
+ 3 files changed, 25 insertions(+), 6 deletions(-)
 
-Table load and resume should be the only ioctls that are relevant.
-
-> > I hope to have v6 available at some point today but it may be delayed by
-> > a day.
-> 
-> Sorry for repeating but since you are trying to change the current dm
-> model, please design/consider it carefully; what objects/ioctls are
-> involved and how you change their relationships, where are the critical
-> sections and how you protect them.
-> Otherwise, I'm afraid we will just spend your time in transforming
-> one bug to another. (and my time for reviewing and verifying problems :)
-
-Noted.  I do appreciate your thorough reviews but will hopefully reduce
-your burden by improving my awareness and code.
-
-> >>> Also, your patch changes the queue configuration even when a table is
-> >>> already active and used.  (e.g. Loading bio-based table to a mapped_device
-> >>> which is already active/used as request-based sets q->requst_fn in NULL.)
-> >>> That could cause some critical problems.
-> >>
-> >> Yes, that is possible and I can add additional checks to prevent this.
-> >> But this speaks to a more general problem with the existing DM code.
-> >>
-> >> dm_swap_table() has the negative check to prevent such table loads, e.g.:
-> >> /* cannot change the device type, once a table is bound */
-> >>
-> >> This check should come during table_load, as part of
-> >> dm_table_set_type(), rather than during table resume.
-> > 
-> > I'll look to address this issue in v6 too.
-> 
-> It can race between table_load() and do_resume() as well;
->   table_load() for bio-based            do_resume() for rq-based
->   ---------------------------------------------------------------------
->   dm_table_set_type(t) (<= bio-based)
->     live_table = dm_get_live_table(md)
->     (assume no live_table yet)
->                                         new_map = hc->new_map (<= rq-based)
->                                         dm_swap_table(md, new_map)
->                                         __bind(md, new_map)
->   dm_table_setup_md_queue(t)
->     dm_clear_request_based_queue(md)
->       md->queue->request_fn = NULL
-
-Understood.
-
-I've addressed the above races by:
-1) properly protecting md->queue during do_resume().  Both do_resume()
-   and table_load() first take md->queue_lock and then _hash_lock.
-2) adding a negative check for an existing live table to
-   dm_table_setup_md_queue().
-
-I will mail out v7 after I've given it additional review.
-
-FYI, I've revised and split out the conflicting table type checking
-patch as that patch should not be controversial and is completely
-independent of this DM queue initialization work.  I'll email it to
-dm-devel soon.
-
-Regards,
-Mike
+Index: linux-2.6/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-table.c
++++ linux-2.6/drivers/md/dm-table.c
+@@ -803,7 +803,7 @@ int dm_table_set_type(struct dm_table *t
+ 	if (bio_based) {
+ 		/* We must use this table as bio-based */
+ 		t->type = DM_TYPE_BIO_BASED;
+-		return 0;
++		goto finish;
+ 	}
+ 
+ 	BUG_ON(!request_based); /* No targets in this table */
+@@ -831,6 +831,10 @@ int dm_table_set_type(struct dm_table *t
+ 
+ 	t->type = DM_TYPE_REQUEST_BASED;
+ 
++finish:
++	if (!dm_table_type_matches_live_table(t))
++		return -EINVAL;
++
+ 	return 0;
+ }
+ 
+@@ -839,6 +843,24 @@ unsigned dm_table_get_type(struct dm_tab
+ 	return t->type;
+ }
+ 
++int dm_table_type_matches_live_table(struct dm_table *t)
++{
++	int r = 1;
++	struct dm_table *live_table = NULL;
++
++	live_table = dm_get_live_table(t->md);
++	if (!live_table)
++		return 1; /* no live table, return success */
++
++	if (dm_table_get_type(live_table) != dm_table_get_type(t)) {
++		DMWARN("can't change the device type after a table is bound");
++		r = 0;
++	}
++	dm_table_put(live_table);
++
++	return r;
++}
++
+ bool dm_table_request_based(struct dm_table *t)
+ {
+ 	return dm_table_get_type(t) == DM_TYPE_REQUEST_BASED;
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c
++++ linux-2.6/drivers/md/dm.c
+@@ -2403,12 +2403,8 @@ struct dm_table *dm_swap_table(struct ma
+ 		goto out;
+ 	}
+ 
+-	/* cannot change the device type, once a table is bound */
+-	if (md->map &&
+-	    (dm_table_get_type(md->map) != dm_table_get_type(table))) {
+-		DMWARN("can't change the device type after a table is bound");
++	if (!dm_table_type_matches_live_table(table))
+ 		goto out;
+-	}
+ 
+ 	map = __bind(md, table, &limits);
+ 
+Index: linux-2.6/drivers/md/dm.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.h
++++ linux-2.6/drivers/md/dm.h
+@@ -61,6 +61,7 @@ int dm_table_any_congested(struct dm_tab
+ int dm_table_any_busy_target(struct dm_table *t);
+ int dm_table_set_type(struct dm_table *t);
+ unsigned dm_table_get_type(struct dm_table *t);
++int dm_table_type_matches_live_table(struct dm_table *t);
+ bool dm_table_request_based(struct dm_table *t);
+ int dm_table_alloc_md_mempools(struct dm_table *t);
+ void dm_table_free_md_mempools(struct dm_table *t);
