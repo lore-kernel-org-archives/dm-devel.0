@@ -1,19 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v7] dm: only initialize full request_queue for
- request-based device
-Date: Thu, 20 May 2010 18:50:46 -0400
-Message-ID: <20100520225046.GA26202@redhat.com>
-References: <1273861781-3280-1-git-send-email-snitzer@redhat.com>
-	<20100517182449.GB32278@redhat.com>
-	<20100518140324.GB27582@redhat.com>
-	<20100519214411.GA31354@redhat.com>
+From: Busby <chaimvy@gmail.com>
+Subject: Re: Shared snapshot tests
+Date: Fri, 21 May 2010 16:27:02 +0800
+Message-ID: <AANLkTikpvYqQjdgfipFZ7iRLQZuwcMBjcQ1IWWif9SOx@mail.gmail.com>
+References: <y2h131780341004151106k584e905fv5b659d4f9fd2366a@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2292321942318026550=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20100519214411.GA31354@redhat.com>
+In-Reply-To: <y2h131780341004151106k584e905fv5b659d4f9fd2366a@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,385 +17,241 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Nikanth Karthikesan <knikanth@suse.de>, Alasdair Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Vivek Goyal <vgoyal@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Allocate a minimalist request_queue structure initially (needed for both
-bio and request-based DM).  A bio-based DM device no longer defaults to
-having a fully initialized request_queue (request_fn, elevator, etc).
-So bio-based DM devices no longer register elevator sysfs attributes
-('iosched/' tree or 'scheduler' other than "none").
+--===============2292321942318026550==
+Content-Type: multipart/alternative; boundary=000e0cd6133ca59acf0487167424
 
-Initialization of a full request_queue (request_fn, elevator, etc) is
-deferred until it is known that the DM device is request-based -- at the
-end of the table load sequence.
+--000e0cd6133ca59acf0487167424
+Content-Type: text/plain; charset=ISO-8859-1
 
-Factor DM device's request_queue initialization:
-- common to both request-based and bio-based into dm_init_md_queue().
-- specific to request-based into dm_init_request_based_queue().
+Hi,
+      I patched the r19 version of multisnap and LVM2.02.64.
+      But when I type the command like "  lvcreate -s -n test_lv_ss1
+/dev/test_vg/test_lv", it failed, it seems the system did the command as no
+sharedstore, outputing the err mesg like: no extents.
+      I create the origin lv and sharedstore as  Daire Byrne did. 'lvs'
+command can see the test_lv and the 'test_lv--shared'. How to create
+snapshot?
+     Thank you very much.
 
-Introduce 'queue_lock' in mapped_device structure and use it to protect
-md->queue during table_load() and do_resume().
 
-Adjust elv_iosched_show() to return "none" if !blk_queue_stackable.
-This allows the block layer to take bio-based DM into consideration.
 
-NOTE: It is still possible, albeit unlikely, for a bio-based device to
-have a full request_queue.  But in this case the unused elevator will
-not be registered with sysfs.  A table switch from request-based to 
-bio-based would be required, e.g.:
+Best regards,
+Busby
 
-   # dmsetup create --notable bio-based
-   # echo "0 100 multipath ..." | dmsetup load bio-based
-   # echo "0 100 linear ..."    | dmsetup load bio-based
-   # dmsetup resume bio-based
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- block/elevator.c      |    2 
- drivers/md/dm-ioctl.c |   34 +++++++++++++-
- drivers/md/dm-table.c |   27 +++++++++++
- drivers/md/dm.c       |  121 +++++++++++++++++++++++++++++++++++++++-----------
- drivers/md/dm.h       |    8 +++
- 5 files changed, 164 insertions(+), 28 deletions(-)
 
-v7: fix locking to properly protect md->queue during do_resume(), don't
-    change queue if device already has a live table
-v6: use dm_{lock,unlock}_md_queue to protect md->queue during table_load(),
-    move conflicting table type check from resume to table load.
-v5: revert v4's synchronization, localize table load queue manipulation
-    to _hash_lock protected critical section in dm-ioctl.c:table_load()
-v4: add synchronization to dm_{init,clear}_request_based_queue
-v3: consolidate to 1 patch, introduce dm_init_md_queue
+2010/4/16 Daire Byrne <daire.byrne@gmail.com>
 
-Index: linux-2.6/block/elevator.c
-===================================================================
---- linux-2.6.orig/block/elevator.c
-+++ linux-2.6/block/elevator.c
-@@ -1086,7 +1086,7 @@ ssize_t elv_iosched_show(struct request_
- 	struct elevator_type *__e;
- 	int len = 0;
- 
--	if (!q->elevator)
-+	if (!q->elevator || !blk_queue_stackable(q))
- 		return sprintf(name, "none\n");
- 
- 	elv = e->elevator_type;
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c
-+++ linux-2.6/drivers/md/dm-ioctl.c
-@@ -862,7 +862,6 @@ static int do_resume(struct dm_ioctl *pa
- 	struct dm_table *new_map, *old_map = NULL;
- 
- 	down_write(&_hash_lock);
--
- 	hc = __find_device_hash_cell(param);
- 	if (!hc) {
- 		DMWARN("device doesn't appear to be in the dev hash table.");
-@@ -871,11 +870,27 @@ static int do_resume(struct dm_ioctl *pa
- 	}
- 
- 	md = hc->md;
-+	up_write(&_hash_lock);
-+
-+	/*
-+	 * Protect against md->queue changing via competing table_load
-+	 * until the device is known to have a live table.
-+	 */
-+	dm_lock_md_queue(md);
-+
-+	down_write(&_hash_lock);
-+	hc = dm_get_mdptr(md);
-+	if (!hc || hc->md != md) {
-+		DMWARN("device has been removed from the dev hash table.");
-+		up_write(&_hash_lock);
-+		dm_unlock_md_queue(md);
-+		dm_put(md);
-+		return -ENXIO;
-+	}
- 
- 	new_map = hc->new_map;
- 	hc->new_map = NULL;
- 	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
--
- 	up_write(&_hash_lock);
- 
- 	/* Do we need to load a new map ? */
-@@ -891,6 +906,7 @@ static int do_resume(struct dm_ioctl *pa
- 		old_map = dm_swap_table(md, new_map);
- 		if (IS_ERR(old_map)) {
- 			dm_table_destroy(new_map);
-+			dm_unlock_md_queue(md);
- 			dm_put(md);
- 			return PTR_ERR(old_map);
- 		}
-@@ -901,6 +917,9 @@ static int do_resume(struct dm_ioctl *pa
- 			set_disk_ro(dm_disk(md), 1);
- 	}
- 
-+	/* The device has a live table at this point. */
-+	dm_unlock_md_queue(md);
-+
- 	if (dm_suspended_md(md)) {
- 		r = dm_resume(md);
- 		if (!r && !dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr))
-@@ -1170,12 +1189,22 @@ static int table_load(struct dm_ioctl *p
- 		goto out;
- 	}
- 
-+	dm_lock_md_queue(md);
-+	r = dm_table_setup_md_queue(t);
-+	if (r) {
-+		DMWARN("unable to setup device queue for this table");
-+		dm_table_destroy(t);
-+		dm_unlock_md_queue(md);
-+		goto out;
-+	}
-+
- 	down_write(&_hash_lock);
- 	hc = dm_get_mdptr(md);
- 	if (!hc || hc->md != md) {
- 		DMWARN("device has been removed from the dev hash table.");
- 		dm_table_destroy(t);
- 		up_write(&_hash_lock);
-+		dm_unlock_md_queue(md);
- 		r = -ENXIO;
- 		goto out;
- 	}
-@@ -1184,6 +1213,7 @@ static int table_load(struct dm_ioctl *p
- 		dm_table_destroy(hc->new_map);
- 	hc->new_map = t;
- 	up_write(&_hash_lock);
-+	dm_unlock_md_queue(md);
- 
- 	param->flags |= DM_INACTIVE_PRESENT_FLAG;
- 	r = __dev_status(md, param);
-Index: linux-2.6/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c
-+++ linux-2.6/drivers/md/dm-table.c
-@@ -866,6 +866,33 @@ bool dm_table_request_based(struct dm_ta
- 	return dm_table_get_type(t) == DM_TYPE_REQUEST_BASED;
- }
- 
-+/*
-+ * Setup the DM device's queue based on table's type.
-+ */
-+int dm_table_setup_md_queue(struct dm_table *t)
-+{
-+	struct dm_table *live_table = NULL;
-+
-+	BUG_ON(!dm_md_queue_is_locked(t->md));
-+
-+	/* don't change queue if device already has a live table */
-+	live_table = dm_get_live_table(t->md);
-+	if (live_table) {
-+		dm_table_put(live_table);
-+		return 0;
-+	}
-+
-+	if (dm_table_request_based(t)) {
-+		if (!dm_init_request_based_queue(t->md)) {
-+			DMWARN("Cannot initialize queue for Request-based dm");
-+			return -EINVAL;
-+		}
-+	} else
-+		dm_clear_request_based_queue(t->md);
-+
-+	return 0;
-+}
-+
- int dm_table_alloc_md_mempools(struct dm_table *t)
- {
- 	unsigned type = dm_table_get_type(t);
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c
-+++ linux-2.6/drivers/md/dm.c
-@@ -123,6 +123,11 @@ struct mapped_device {
- 	unsigned long flags;
- 
- 	struct request_queue *queue;
-+	/*
-+	 * Protect queue from concurrent access during
-+	 * table load(s) and resume.
-+	 */
-+	struct mutex queue_lock;
- 	struct gendisk *disk;
- 	char name[16];
- 
-@@ -1445,6 +1450,11 @@ static int dm_request_based(struct mappe
- 	return blk_queue_stackable(md->queue);
- }
- 
-+static int dm_bio_based_md(struct mapped_device *md)
-+{
-+	return (md->queue->request_fn) ? 0 : 1;
-+}
-+
- static int dm_request(struct request_queue *q, struct bio *bio)
- {
- 	struct mapped_device *md = q->queuedata;
-@@ -1849,6 +1859,28 @@ static const struct block_device_operati
- static void dm_wq_work(struct work_struct *work);
- static void dm_rq_barrier_work(struct work_struct *work);
- 
-+static void dm_init_md_queue(struct mapped_device *md)
-+{
-+	/*
-+	 * Request-based dm devices cannot be stacked on top of bio-based dm
-+	 * devices.  The type of this dm device has not been decided yet.
-+	 * The type is decided at the first table loading time.
-+	 * To prevent problematic device stacking, clear the queue flag
-+	 * for request stacking support until then.
-+	 *
-+	 * This queue is new, so no concurrency on the queue_flags.
-+	 */
-+	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
-+
-+	md->queue->queuedata = md;
-+	md->queue->backing_dev_info.congested_fn = dm_any_congested;
-+	md->queue->backing_dev_info.congested_data = md;
-+	blk_queue_make_request(md->queue, dm_request);
-+	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
-+	md->queue->unplug_fn = dm_unplug_all;
-+	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
-+}
-+
- /*
-  * Allocate and initialise a blank device with a given minor.
-  */
-@@ -1876,6 +1908,7 @@ static struct mapped_device *alloc_dev(i
- 
- 	init_rwsem(&md->io_lock);
- 	mutex_init(&md->suspend_lock);
-+	mutex_init(&md->queue_lock);
- 	spin_lock_init(&md->deferred_lock);
- 	spin_lock_init(&md->barrier_error_lock);
- 	rwlock_init(&md->map_lock);
-@@ -1886,34 +1919,11 @@ static struct mapped_device *alloc_dev(i
- 	INIT_LIST_HEAD(&md->uevent_list);
- 	spin_lock_init(&md->uevent_lock);
- 
--	md->queue = blk_init_queue(dm_request_fn, NULL);
-+	md->queue = blk_alloc_queue(GFP_KERNEL);
- 	if (!md->queue)
- 		goto bad_queue;
- 
--	/*
--	 * Request-based dm devices cannot be stacked on top of bio-based dm
--	 * devices.  The type of this dm device has not been decided yet,
--	 * although we initialized the queue using blk_init_queue().
--	 * The type is decided at the first table loading time.
--	 * To prevent problematic device stacking, clear the queue flag
--	 * for request stacking support until then.
--	 *
--	 * This queue is new, so no concurrency on the queue_flags.
--	 */
--	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
--	md->saved_make_request_fn = md->queue->make_request_fn;
--	md->queue->queuedata = md;
--	md->queue->backing_dev_info.congested_fn = dm_any_congested;
--	md->queue->backing_dev_info.congested_data = md;
--	blk_queue_make_request(md->queue, dm_request);
--	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
--	md->queue->unplug_fn = dm_unplug_all;
--	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
--	blk_queue_softirq_done(md->queue, dm_softirq_done);
--	blk_queue_prep_rq(md->queue, dm_prep_fn);
--	blk_queue_lld_busy(md->queue, dm_lld_busy);
--	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN_FLUSH,
--			  dm_rq_prepare_flush);
-+	dm_init_md_queue(md);
- 
- 	md->disk = alloc_disk(1);
- 	if (!md->disk)
-@@ -1968,6 +1978,67 @@ bad_module_get:
- 	return NULL;
- }
- 
-+void dm_lock_md_queue(struct mapped_device *md)
-+{
-+	mutex_lock(&md->queue_lock);
-+}
-+
-+void dm_unlock_md_queue(struct mapped_device *md)
-+{
-+	mutex_unlock(&md->queue_lock);
-+}
-+
-+int dm_md_queue_is_locked(struct mapped_device *md)
-+{
-+	return mutex_is_locked(&md->queue_lock);
-+}
-+
-+/*
-+ * Fully initialize a request-based queue (->elevator, ->request_fn, etc).
-+ */
-+int dm_init_request_based_queue(struct mapped_device *md)
-+{
-+	struct request_queue *q = NULL;
-+
-+	/* Avoid re-initializing the queue if already fully initialized */
-+	if (!md->queue->elevator) {
-+		/* Fully initialize the queue */
-+		q = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
-+		if (!q)
-+			return 0;
-+		md->queue = q;
-+		md->saved_make_request_fn = md->queue->make_request_fn;
-+		dm_init_md_queue(md);
-+		blk_queue_softirq_done(md->queue, dm_softirq_done);
-+		blk_queue_prep_rq(md->queue, dm_prep_fn);
-+		blk_queue_lld_busy(md->queue, dm_lld_busy);
-+		blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN_FLUSH,
-+				  dm_rq_prepare_flush);
-+	} else if (dm_bio_based_md(md)) {
-+		/*
-+		 * Queue was fully initialized on behalf of a previous
-+		 * request-based table load.  Table is now switching from
-+		 * bio-based back to request-based, e.g.: rq -> bio -> rq
-+		 */
-+		md->queue->request_fn = dm_request_fn;
-+	} else
-+		return 1; /* already request-based */
-+
-+	elv_register_queue(md->queue);
-+
-+	return 1;
-+}
-+
-+void dm_clear_request_based_queue(struct mapped_device *md)
-+{
-+	if (dm_bio_based_md(md))
-+		return; /* already bio-based */
-+
-+	/* Unregister elevator from sysfs and clear ->request_fn */
-+	elv_unregister_queue(md->queue);
-+	md->queue->request_fn = NULL;
-+}
-+
- static void unlock_fs(struct mapped_device *md);
- 
- static void free_dev(struct mapped_device *md)
-Index: linux-2.6/drivers/md/dm.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm.h
-+++ linux-2.6/drivers/md/dm.h
-@@ -66,6 +66,14 @@ bool dm_table_request_based(struct dm_ta
- int dm_table_alloc_md_mempools(struct dm_table *t);
- void dm_table_free_md_mempools(struct dm_table *t);
- struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
-+int dm_table_setup_md_queue(struct dm_table *t);
-+
-+int dm_init_request_based_queue(struct mapped_device *md);
-+void dm_clear_request_based_queue(struct mapped_device *md);
-+
-+void dm_lock_md_queue(struct mapped_device *md);
-+void dm_unlock_md_queue(struct mapped_device *md);
-+int dm_md_queue_is_locked(struct mapped_device *md);
- 
- /*
-  * To check the return value from dm_table_find_target().
+> Hi,
+>
+> I had some spare RAID hardware lying around and thought I'd give the
+> new shared snapshots code a whirl. Maybe the results are of interest
+> so I'm posting them here. I used the "r18" version of the code with
+> 2.6.33 and patched lvm2-2.02.54.
+>
+> Steps to create test environment:
+>
+>  # pvcreate /dev/sdb
+>  # vgcreate test_vg /dev/sdb
+>  # lvcreate -L 1TB test_vg -n test_lv
+>  # mkfs.xfs /dev/test_vg/test_lv
+>  # mount /dev/test_vg/test_lv /mnt/images/
+>
+>  # lvcreate -L 2TB -c 256 --sharedstore mikulas -s /dev/test_vg/test_lv
+>  # lvcreate -s -n test_lv_ss1 /dev/test_vg/test_lv
+>  # dd if=/dev/zero of=/mnt/images/dd-file bs=1M count=102400
+>  # dd of=/dev/null if=/mnt/images/dd-file bs=1M count=102400
+>
+> Raw speeds of the "test_lv" xfs formatted volume without any shared
+> snapshot space allocated was 308 MB/s writes and 214 MB/s reads. I
+> have done no further tuning.
+>
+> No. snaps |  type  | chunk | writes  |  reads
+> ----------------------------------------------
+>        0   mikulas     4k    225MB/s   127MB/s
+>        1   mikulas     4k     18MB/s   128MB/s
+>        2   mikulas     4k     11MB/s   128MB/s
+>        3   mikulas     4k     11MB/s   127MB/s
+>        4   mikulas     4k     10MB/s   127MB/s
+>       10   mikulas     4k      9MB/s   127MB/s
+>
+>        0   mikulas     256k  242MB/s   129MB/s
+>        1   mikulas     256k   38MB/s   130MB/s
+>        2   mikulas     256k   37MB/s   131MB/s
+>        3   mikulas     256k   36MB/s   132MB/s
+>        4   mikulas     256k   33MB/s   129MB/s
+>       10   mikulas     256k   31MB/s   128MB/s
+>
+>        1   normal      256k   45MB/s   127MB/s
+>        2   normal      256k   18MB/s   128MB/s
+>        3   normal      256k   11MB/s   127MB/s
+>        4   normal      256k    8MB/s   124MB/s
+>       10   normal      256k    3MB/s   126MB/s
+>
+> I wanted to test the "daniel" store but I got "multisnapshot:
+> Unsupported chunk size" with everything except a chunksize of "16k".
+> Even then the store was created but reported that it was 100% full.
+> Nevertheless I created a few snapshots but performance didn't seem
+> much different. I have not included the results as I could only use a
+> chunksize of 16k. Also when removing the snapshots I got some kmalloc
+> nastiness (needed to reboot). I think the daniel store is a bit
+> broken.
+>
+> Observations/questions:
+>
+>  (1) why does performance drop when you create the shared snapshot
+> space but not create any actual snapshots and there is no COW being
+> done? The kmultisnapd eats CPU...
+>  (2) similarly why does the read performance change at all
+> (214->127MB/s). There is no COW overhead. This is the case for both
+> the old snapshots and the new shared ones.
+>  (3) when writing why does it write data to the origin quickly in
+> short bursts (buffer?) but then effectively stall while the COW
+> read/write occurs? Why can you not write to the filesystem
+> asynchronously while the COW is happening? This is the same for the
+> normal/old snapshots too so I guess it is just an inherent limitation
+> to ensure consistency?
+>  (4) why is there a small (but appreciable) drop in writes as the
+> number of snapshots increase? It should only have to do a single COW
+> in all cases no?
+>  (5) It takes a really long time (hours) to create a few TB worth of
+> shared snapshot space when using 4k chunks. Seems much better with
+> 256k. The old snapshots create almost instantly.
+>
+> All in all it looks very interesting and is currently the best way of
+> implementing shared snapshots for filesystems which don't have native
+> support for it (e.g. btrfs). I found the zumastor stuff to be rather
+> slow, buggy and difficult to operate in comparison.
+>
+> The performance seem to be on par with with the normal/old snapshots
+> and much much better once you increase the number of snapshots. If
+> only the snapshot performance could be better overall (old and multi)
+> - perhaps there are some further tweaks and tunings I could do?
+>
+> Regards,
+>
+> Daire
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+
+--000e0cd6133ca59acf0487167424
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div>Hi,</div>
+<div>=A0=A0=A0=A0=A0 I patched the r19 version of multisnap and LVM2.02.64.=
+</div>
+<div>=A0=A0=A0=A0=A0 But when I type the command like &quot;=A0 lvcreate -s=
+ -n test_lv_ss1 /dev/test_vg/test_lv&quot;, it failed, it seems the system =
+did the command as no sharedstore, outputing the err mesg like: no extents.=
+</div>
+<div>=A0=A0=A0=A0 =A0I create the origin lv and sharedstore as=A0 Daire Byr=
+ne did. &#39;lvs&#39; command can see the test_lv and the &#39;test_lv--sha=
+red&#39;. How to create snapshot?</div>
+<div>=A0=A0=A0=A0 Thank you very much.</div>
+<div>=A0</div>
+<div>=A0</div>
+<div>=A0</div>
+<div>Best regards,</div>
+<div>Busby</div>
+<div>=A0=A0=A0 </div>
+<div>=A0=A0=A0 <br><br></div>
+<div class=3D"gmail_quote">2010/4/16 Daire Byrne <span dir=3D"ltr">&lt;<a h=
+ref=3D"mailto:daire.byrne@gmail.com">daire.byrne@gmail.com</a>&gt;</span><b=
+r>
+<blockquote style=3D"BORDER-LEFT: #ccc 1px solid; MARGIN: 0px 0px 0px 0.8ex=
+; PADDING-LEFT: 1ex" class=3D"gmail_quote">Hi,<br><br>I had some spare RAID=
+ hardware lying around and thought I&#39;d give the<br>new shared snapshots=
+ code a whirl. Maybe the results are of interest<br>
+so I&#39;m posting them here. I used the &quot;r18&quot; version of the cod=
+e with<br>2.6.33 and patched lvm2-2.02.54.<br><br>Steps to create test envi=
+ronment:<br><br>=A0# pvcreate /dev/sdb<br>=A0# vgcreate test_vg /dev/sdb<br=
+>
+=A0# lvcreate -L 1TB test_vg -n test_lv<br>=A0# mkfs.xfs /dev/test_vg/test_=
+lv<br>=A0# mount /dev/test_vg/test_lv /mnt/images/<br><br>=A0# lvcreate -L =
+2TB -c 256 --sharedstore mikulas -s /dev/test_vg/test_lv<br>=A0# lvcreate -=
+s -n test_lv_ss1 /dev/test_vg/test_lv<br>
+=A0# dd if=3D/dev/zero of=3D/mnt/images/dd-file bs=3D1M count=3D102400<br>=
+=A0# dd of=3D/dev/null if=3D/mnt/images/dd-file bs=3D1M count=3D102400<br><=
+br>Raw speeds of the &quot;test_lv&quot; xfs formatted volume without any s=
+hared<br>snapshot space allocated was 308 MB/s writes and 214 MB/s reads. I=
+<br>
+have done no further tuning.<br><br>No. snaps | =A0type =A0| chunk | writes=
+ =A0| =A0reads<br>----------------------------------------------<br>=A0 =A0=
+ =A0 =A00 =A0 mikulas =A0 =A0 4k =A0 =A0225MB/s =A0 127MB/s<br>=A0 =A0 =A0 =
+=A01 =A0 mikulas =A0 =A0 4k =A0 =A0 18MB/s =A0 128MB/s<br>
+=A0 =A0 =A0 =A02 =A0 mikulas =A0 =A0 4k =A0 =A0 11MB/s =A0 128MB/s<br>=A0 =
+=A0 =A0 =A03 =A0 mikulas =A0 =A0 4k =A0 =A0 11MB/s =A0 127MB/s<br>=A0 =A0 =
+=A0 =A04 =A0 mikulas =A0 =A0 4k =A0 =A0 10MB/s =A0 127MB/s<br>=A0 =A0 =A0 1=
+0 =A0 mikulas =A0 =A0 4k =A0 =A0 =A09MB/s =A0 127MB/s<br><br>=A0 =A0 =A0 =
+=A00 =A0 mikulas =A0 =A0 256k =A0242MB/s =A0 129MB/s<br>
+=A0 =A0 =A0 =A01 =A0 mikulas =A0 =A0 256k =A0 38MB/s =A0 130MB/s<br>=A0 =A0=
+ =A0 =A02 =A0 mikulas =A0 =A0 256k =A0 37MB/s =A0 131MB/s<br>=A0 =A0 =A0 =
+=A03 =A0 mikulas =A0 =A0 256k =A0 36MB/s =A0 132MB/s<br>=A0 =A0 =A0 =A04 =
+=A0 mikulas =A0 =A0 256k =A0 33MB/s =A0 129MB/s<br>=A0 =A0 =A0 10 =A0 mikul=
+as =A0 =A0 256k =A0 31MB/s =A0 128MB/s<br>
+<br>=A0 =A0 =A0 =A01 =A0 normal =A0 =A0 =A0256k =A0 45MB/s =A0 127MB/s<br>=
+=A0 =A0 =A0 =A02 =A0 normal =A0 =A0 =A0256k =A0 18MB/s =A0 128MB/s<br>=A0 =
+=A0 =A0 =A03 =A0 normal =A0 =A0 =A0256k =A0 11MB/s =A0 127MB/s<br>=A0 =A0 =
+=A0 =A04 =A0 normal =A0 =A0 =A0256k =A0 =A08MB/s =A0 124MB/s<br>=A0 =A0 =A0=
+ 10 =A0 normal =A0 =A0 =A0256k =A0 =A03MB/s =A0 126MB/s<br>
+<br>I wanted to test the &quot;daniel&quot; store but I got &quot;multisnap=
+shot:<br>Unsupported chunk size&quot; with everything except a chunksize of=
+ &quot;16k&quot;.<br>Even then the store was created but reported that it w=
+as 100% full.<br>
+Nevertheless I created a few snapshots but performance didn&#39;t seem<br>m=
+uch different. I have not included the results as I could only use a<br>chu=
+nksize of 16k. Also when removing the snapshots I got some kmalloc<br>nasti=
+ness (needed to reboot). I think the daniel store is a bit<br>
+broken.<br><br>Observations/questions:<br><br>=A0(1) why does performance d=
+rop when you create the shared snapshot<br>space but not create any actual =
+snapshots and there is no COW being<br>done? The kmultisnapd eats CPU...<br=
+>
+=A0(2) similarly why does the read performance change at all<br>(214-&gt;12=
+7MB/s). There is no COW overhead. This is the case for both<br>the old snap=
+shots and the new shared ones.<br>=A0(3) when writing why does it write dat=
+a to the origin quickly in<br>
+short bursts (buffer?) but then effectively stall while the COW<br>read/wri=
+te occurs? Why can you not write to the filesystem<br>asynchronously while =
+the COW is happening? This is the same for the<br>normal/old snapshots too =
+so I guess it is just an inherent limitation<br>
+to ensure consistency?<br>=A0(4) why is there a small (but appreciable) dro=
+p in writes as the<br>number of snapshots increase? It should only have to =
+do a single COW<br>in all cases no?<br>=A0(5) It takes a really long time (=
+hours) to create a few TB worth of<br>
+shared snapshot space when using 4k chunks. Seems much better with<br>256k.=
+ The old snapshots create almost instantly.<br><br>All in all it looks very=
+ interesting and is currently the best way of<br>implementing shared snapsh=
+ots for filesystems which don&#39;t have native<br>
+support for it (e.g. btrfs). I found the zumastor stuff to be rather<br>slo=
+w, buggy and difficult to operate in comparison.<br><br>The performance see=
+m to be on par with with the normal/old snapshots<br>and much much better o=
+nce you increase the number of snapshots. If<br>
+only the snapshot performance could be better overall (old and multi)<br>- =
+perhaps there are some further tweaks and tunings I could do?<br><br>Regard=
+s,<br><br>Daire<br><font color=3D"#888888"><br>--<br>dm-devel mailing list<=
+br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br><a href=
+=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_blank">htt=
+ps://www.redhat.com/mailman/listinfo/dm-devel</a><br></font></blockquote></=
+div>
+<br>
+
+--000e0cd6133ca59acf0487167424--
+
+
+--===============2292321942318026550==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2292321942318026550==--
