@@ -1,107 +1,34 @@
-From: Kay Sievers <kay.sievers@vrfy.org>
-Subject: Re: add devname module aliases to allow module on-demand
-	auto-loading
-Date: Fri, 21 May 2010 20:51:49 +0200
-Message-ID: <AANLkTimuciWfkVwn7dKVeKL38WpMiCvgAxGx4ngAankW__4454.58281687952$1274468179$gmane$org@mail.gmail.com>
-References: <1274371640.302.5.camel@yio.site>
-	<AANLkTilI3RYcybjG7b1juTa3H31ImxQI1-2R_l7q0yc1@mail.gmail.com>
-	<AANLkTinQwEqFKAiyAwVPwmzLtUXJkaOdZ0c88O_tfp-1@mail.gmail.com>
-	<201005211909.29326.knikanth@suse.de>
-	<AANLkTimGBgpqB7HEZrecv7uEis6L8b5Yv7jfD6iv_f4J@mail.gmail.com>
-	<20100521182325.GO3991@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] add devname module aliases to allow module
+	on-demand auto-loading
+Date: Fri, 21 May 2010 20:32:51 +0100
+Message-ID: <20100521193251.GP3991@agk-dp.fab.redhat.com>
+References: <1274371640.302.5.camel@yio.site> <AANLkTilI3RYcybjG7b1juTa3H31ImxQI1-2R_l7q0yc1@mail.gmail.com> <AANLkTinQwEqFKAiyAwVPwmzLtUXJkaOdZ0c88O_tfp-1@mail.gmail.com> <201005211909.29326.knikanth@suse.de> <AANLkTimGBgpqB7HEZrecv7uEis6L8b5Yv7jfD6iv_f4J@mail.gmail.com> <20100521182325.GO3991@agk-dp.fab.redhat.com> <AANLkTimuciWfkVwn7dKVeKL38WpMiCvgAxGx4ngAankW@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100521182325.GO3991@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kay Sievers <kay.sievers@vrfy.org>, Nikanth Karthikesan <knikanth@suse.de>, Peter Rajnoha <prajnoha@redhat.com>, Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@red>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <AANLkTimuciWfkVwn7dKVeKL38WpMiCvgAxGx4ngAankW@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kay Sievers <kay.sievers@vrfy.org>
+Cc: Nikanth Karthikesan <knikanth@suse.de>, Peter Rajnoha <prajnoha@redhat.com>, Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, Greg Kroah-Hartman <gregkh@suse.de>, "David S. Miller" <davem@davemloft.net>, Miklos Szeredi <miklos@szeredi.hu>, Chris Mason <chris.mason@oracle.com>, Tigran Aivazian <tigran@aivazian.fsnet.co.uk>, Ian Kent <raven@themaw.net>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gRnJpLCBNYXkgMjEsIDIwMTAgYXQgMjA6MjMsIEFsYXNkYWlyIEcgS2VyZ29uIDxhZ2tAcmVk
-aGF0LmNvbT4gd3JvdGU6Cj4gT24gRnJpLCBNYXkgMjEsIDIwMTAgYXQgMDM6NTU6MjFQTSArMDIw
-MCwgS2F5IFNpZXZlcnMgd3JvdGU6Cj4+IE9uIEZyaSwgTWF5IDIxLCAyMDEwIGF0IDE1OjM5LCBO
-aWthbnRoIEthcnRoaWtlc2FuIDxrbmlrYW50aEBzdXNlLmRlPiB3cm90ZToKPj4gPiBPbiBGcmlk
-YXkgMjEgTWF5IDIwMTAgMTg6NDE6MzggS2F5IFNpZXZlcnMgd3JvdGU6Cj4+ID4+IE9uIEZyaSwg
-TWF5IDIxLCAyMDEwIGF0IDEzOjUxLCBLYXkgU2lldmVycyA8a2F5LnNpZXZlcnNAdnJmeS5vcmc+
-IHdyb3RlOgo+PiA+PiA+IE9uIEZyaSwgTWF5IDIxLCAyMDEwIGF0IDEzOjM0LCBBbGFzZGFpciBH
-IEtlcmdvbiA8YWdrQHJlZGhhdC5jb20+IHdyb3RlOgo+PiA+PiA+Cj4+ID4+ID4gVGhlcmUgaXMg
-bm8gaGFybSB0byBtYWtlIGEgd2VsbC1rbm93IGRldmljZSBub2RlIHN0YXRpYywgaXQganVzdAo+
-PiA+PiA+IHNvbHZlcyBhIGxvdCBvZiBwcm9ibGVtcywgYW5kIGFsc28gbWFrZXMgaXQgcG9zc2li
-bGUgdG8gd29yayBvZmYgb2YgYQo+PiA+PiA+IHN0YXRpYyAvZGV2Lgo+Cj4gV2VsbCB1bnRpbCBu
-b3cgd2UndmUgdHJpZWQgdG8gbWFrZSBldmVyeXRoaW5nIHBvc3NpYmxlIHRyZWF0IGRldmljZSBu
-dW1iZXJzIGFzCj4gZHluYW1pYywgc28gSSdkIGxpa2UgdG8gc2VlIHNvbWUgY29tcGVsbGluZyBs
-b2dpYyBiZWhpbmQgdGhlIGNoYW5nZS4KCkl0J3MgYSB3ZWxsIGtub3duIHNpbmdsZS1pbnN0YW5j
-ZSBkZXZpY2UsIGFuZCB0aGUgc3RhdGljIGFzc2lnbm1lbnQKc29sdmVzIGEgZmV3IHByb2JsZW1z
-IHdpdGggb24tZGVtYW5kIHN1YnN5c3RlbSBhY3RpdmF0aW9uICh3aGljaCBpcwp0aGUgbmV3IGZh
-c2hpb24gOikpIGFuZCBtYWtlcyBpdCBwb3NzaWJsZSB0byBoaWRlIHRoZQpjb21waWxlZC1pbi9t
-b2R1bGFyIGlzc3VlcyB3ZSBzZWUsIGFuZCBoYXZlIG5vIHByb3BlciBzb2x1dGlvbiBmb3IgaXQu
-Cgo+PiA+PiBUbyBpbGx1c3RyYXRlOgo+PiA+Pgo+PiA+PiBPbiBteSBib3ggd2l0aG91dCB0aGlz
-IHBhdGNoOgo+PiA+PiDCoCBkbXNldHVwIHZlcnNpb24KPj4gPj4gwqAgTGlicmFyeSB2ZXJzaW9u
-OiDCoCAxLjAyLjQyICgyMDEwLTAxLTE0KQo+PiA+PiDCoCAvcHJvYy9taXNjOiBObyBlbnRyeSBm
-b3IgZGV2aWNlLW1hcHBlciBmb3VuZAo+PiA+PiDCoCBJcyBkZXZpY2UtbWFwcGVyIGRyaXZlciBt
-aXNzaW5nIGZyb20ga2VybmVsPwo+PiA+PiDCoCBGYWlsdXJlIHRvIGNvbW11bmljYXRlIHdpdGgg
-a2VybmVsIGRldmljZS1tYXBwZXIgZHJpdmVyLgo+Cj4gKEN1cmlvdXNseSB0aGlzIGlzIG5vdCBh
-biBpc3N1ZSBJIHJlbWVtYmVyIGFueW9uZSByYWlzaW5nIHdpdGggbWUgYXMgYSBwcm9ibGVtCj4g
-YmVmb3JlLikKCkJlY2F1c2UgZGlzdHJvcyBnbyB0aGUgZWFzeSBhbmQgc3R1cGlkIHdheSBhbmQg
-anVzdCBsb2FkIGV2ZXJ5dGhpbmcKdGhleSBjb25maWd1cmVkIGFzIGEgbW9kdWxlLiA6KSBUaGF0
-IGlzIHNvbWV0aGluZyB0byBzb2x2ZSwgb3IgYXQKbGVhc3QgYXZvaWQgYW5kIGhpZGUgYSBiaXQu
-Cgo+IFNvIHdoYXQgY29uY2VwdHMgYXJlIGF0IHN0YWtlIGhlcmUuCj4gVGhlIG1vZHVsZSBpcyBh
-dmFpbGFibGUgdG8gdGhlIGtlcm5lbCBidXQgaGFzIG5vdCBiZWVuIGxvYWRlZC4KPiBTb21lIHVz
-ZXJzIGRvIG5vdCBuZWVkIHRoZSBtb2R1bGUsIHNvIGl0IHNob3VsZCBub3QgYmUgbG9hZGVkIGJ5
-IGRlZmF1bHQuCj4gVXNlcnMgd2hvICpkbyogbmVlZCBpdCB3b3VsZCBsaWtlIGl0IHRvIGdldCBs
-b2FkZWQgYXV0b21hdGljYWxseS4KClllcy4gTGlrZSBtYW55IG90aGVyIHRoaW5ncyB0b28uIElk
-ZWFsbHkgd2UganVzdCBoaWRlIGFzIG11Y2ggYXMgd2UKY2FuIHRoYXQgc3R1ZmYgaXMgYSBtb2R1
-bGUgYW5kIG5vdCBjb21waWxlZC1pbi4KCj4gVGhlIG1hdHRlciB1bmRlciBkaXNjdXNzaW9uIGlz
-IHdoYXQgbWVjaGFuaXNtIHRvIHVzZSB0byBsb2FkIGl0IGF1dG9tYXRpY2FsbHkuCj4KPiBUaGUg
-dW5pcXVlIGluZm9ybWF0aW9uIGlzIHRoZSBtb2R1bGUgbmFtZSBzbyB0aGUgbWVjaGFuaXNtIHNo
-b3VsZAo+IGlkZWFsbHkgYmUgdGllZCBkaXJlY3RseSB0byB0aGF0LiDCoEFueXRoaW5nIHdhbnRp
-bmcgdG8gdXNlIGRtIGFscmVhZHkKPiBrbm93cyB0aGF0IG5hbWUuIMKgVGhlIGNoYXJhY3RlciBk
-ZXZpY2Ugb25seSBiZWNvbWVzIGF2YWlsYWJsZSBsYXRlciwKPiBhZnRlciB0aGUgbW9kdWxlIGlz
-IGxvYWRlZCwgYW5kIHVzZXJzcGFjZSBvYnRhaW5zIGl0IGZyb20gL3Byb2MvbWlzYy4KPgo+IFRo
-ZSBtb2Rwcm9iZSBtZWNoYW5pc20gaXMgdGllZCB0byB0aGUgbmFtZSwgc28gd2Ugc2hvdWxkIHJl
-YWxseSBsb29rIGZvcgo+IGEgc29sdXRpb24gYmFzZWQgb24gdGhhdCBpbiB0aGUgZmlyc3QgaW5z
-dGFuY2UuCj4KPiBBIHJlbGF0ZWQgbWF0dGVyIC0gbm90IHlldCBtZW50aW9uZWQgb3IgZGlzY3Vz
-c2VkIGJldHdlZW4gdXMgLSBpcyBob3cKPiB0aGUgL2Rldi9tYXBwZXIvY29udHJvbCBub2RlIGdl
-dHMgY3JlYXRlZCBhbmQgd2hhdCBpdCBzaG91bGQgYmUgY2FsbGVkLAo+IGFzIHRoYXQgbmFtZSBv
-YnZpb3VzbHkgZ29lcyBhZ2FpbnN0IHRoZSB1ZGV2IHN0YW5kYXJkIG9mIHBsYWNpbmcKPiBldmVy
-eXRoaW5nIGluIGEgZmxhdCAvZGV2IG5hbWVzcGFjZSB3aXRoIGtlcm5lbC1iYXNlZCBuYW1lcyAo
-c28KPiBzb21ldGhpbmcgbGlrZSAnL2Rldi9taXNjTk5OJyBpbiB0aGlzIGNhc2UpIGFuZCBjcmVh
-dGluZyBzeW1saW5rcyBmcm9tCj4gdGhlIHRyYWRpdGlvbmFsIGZpbGVzeXN0ZW0gbG9jYXRpb25z
-IGxpa2UgL2Rldi9tYXBwZXIvY29udHJvbC4KClRoZSBrZXJuZWwgaXRzZWxmIGNyZWF0ZXMgL2Rl
-di9tYXBwZXIvY29udHJvbCB0b2RheS4gQW5kIGlmIGRldnRtcGZzCmlzIG5vdCB1c2VkIChhbGwg
-cmVjZW50IHJlbGVhc2VkIG9yIHVwY29taW5nIGRpc3RybyByZWxlYXNlcyBkZXBlbmQgb24KaXQp
-IHRoZSBrZXJuZWwgd2lsbCBzdXBwbHkgdGhpcyBuYW1lIHRvIHVkZXYsIGFuZCB1ZGV2IHdpbGwg
-Y3JlYXRlIGl0LgoKPiBDdXJyZW50bHkgbGliZGV2bWFwcGVyIGNyZWF0ZXMgL2Rldi9tYXBwZXIv
-Y29udHJvbCBhcyByZXF1aXJlZCBiYXNlZCBvbgo+IC9wcm9jL21pc2MuIMKgUHJlc3VtYWJseSB3
-ZSBzaG91bGQgbm93IGhhbmQgdGhhdCBvdmVyIHRvIHVkZXYgYXMgYQo+IHNwZWNpYWwgY2FzZSBv
-ZiB0aGUgd2F5IHdlIHRyYW5zZmVycmVkIHRoZSBlbnRyaWVzIGZvciB0aGUgYWN0dWFsCj4gZGV2
-aWNlcyB3aXRoIHNpbWlsYXIgd2FpdGluZyAmIG5vdGlmaWNhdGlvbi4KCkl0IGxpa2UgdGhpcyBh
-bHJlYWR5IGZvciBhIHdoaWxlLiBCdXQgaXQncyBhbGwgaW4gdGhlIGtlcm5lbCwgYW5kIGlzCnJh
-Y2UgZnJlZSByZWdhcmRpbmcgdGhlIG1vZHVsZSBsb2FkaW5nLCBBdCB0aGUgbW9tZW50IG1vZHBy
-b2JlIGNvbWVzCmJhY2ssIHdlIGFyZSBzdXJlIHRoZSBub2RlIGV4aXN0cy4KCj4gQ3VycmVudGx5
-IHRvb2xzIChub3QgbGliZGV2bWFwcGVyKSB0YWtlIHJlc3BvbnNpYmlsaXR5IGZvciBjaGVja2lu
-ZyBhbmQKPiBhdXRvbG9hZGluZy4gwqBFLmcuIGx2bSBpc3N1ZXMgbW9kcHJvYmVzIHRvIGF1dG9s
-b2FkIGRtIHRhcmdldCBtb2R1bGVzLgo+IChUaGUga2VybmVsIGRvZXMgYWxzbyBoYW5kbGUgdGhp
-cyBidXQgbHZtIGRvZXNuJ3QgdXNlIGl0IGJlY2F1c2UKPiBpdCB3YW50cyB0byBrbm93IGVhcmxp
-ZXIgdGhhdCB0aGUgb3BlcmF0aW9uIHdvdWxkIGZhaWwgdG8gYXZvaWQgbW9yZQo+IGNvbXBsZXgg
-ZXJyb3ItaGFuZGxpbmcgY29kZS4pCgpUaGF0J3Mgd2hhdCB0aGlzIGlzIGFib3V0LiBUaGUga2Vy
-bmVsIHdpbGwgYmxvY2sgdGhlIHByb2Nlc3MgdGhhdAphY2Nlc3NlcyAvZGV2L21hcHBlci9jb250
-cm9sIHVudGlsIGl0IGlzIGxvYWRlZC4gTm8gbmVlZCB0byBzeW5jCmFueXRoaW5nIG9yIHRoZW4s
-IG9yIGhhbmRsZSBjb21wbGV4IGVycm9yIGNhc2VzLgoKPiBTbyBJIHRoaW5rIHdlIHNob3VsZCBm
-aXJzdCB0cnkgdG8gbWFrZSBhbiBleHRlbnNpb24gb2YgdGhlIGV4aXN0aW5nCj4gbWVjaGFuaXNt
-cyB3b3JrLiDCoEV2ZXJ5dGhpbmcgaXMga2V5ZWQgb2ZmIGEgc2luZ2xlIHBpZWNlIG9mIGluZm9y
-bWF0aW9uLAo+IHRoZSBtb2R1bGUgbmFtZSwgc2hhcmVkIGJldHdlZW4gdXNlcnNwYWNlIGFuZCBr
-ZXJuZWwuCgpJIHRoaW5rIGl0cyBhbGwgY292ZXJlZCB3aXRoIHRoaXMgcGF0Y2guIDopIEJ1dCBp
-ZiB5byBoYXZlIGFueSBiZXR0ZXIKaWRlYSwgbGV0IHVzIGtub3cuCgpUaGFua3MsCktheQoKLS0K
-ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
-aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Fri, May 21, 2010 at 08:51:49PM +0200, Kay Sievers wrote:
+> The kernel itself creates /dev/mapper/control today. 
+
+Must have missed that patch:)
+Userspace lvm and dm code is certainly not tied to that today.
+
+The device node that userspace lvm and dm tools use is under the
+complete control of this userspace code: it chooses the name, and
+creates or fixes it if it doesn't already exist with the required
+properties: anything devtmpfs is relevant only if it guessed the
+right name that this *completely independent* userspace code
+chooses to use and already created it exactly as required.
+
+If we were to move to a fixed name for the control device and hand
+control of that name to the kernel, then obviously this userspace
+code would need adjusting to respect that.
+
+Alasdair
