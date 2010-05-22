@@ -1,65 +1,103 @@
-From: Kay Sievers <kay.sievers@vrfy.org>
-Subject: Re: add devname module aliases to allow module on-demand
-	auto-loading
-Date: Fri, 21 May 2010 22:20:02 +0200
-Message-ID: <AANLkTimrz9wyVKe0Mdabc_zylZt0JmpVxgf7ab2Bw55B__13668.4144301855$1274473342$gmane$org@mail.gmail.com>
-References: <1274371640.302.5.camel@yio.site>
-	<AANLkTilI3RYcybjG7b1juTa3H31ImxQI1-2R_l7q0yc1@mail.gmail.com>
-	<AANLkTinQwEqFKAiyAwVPwmzLtUXJkaOdZ0c88O_tfp-1@mail.gmail.com>
-	<201005211909.29326.knikanth@suse.de>
-	<AANLkTimGBgpqB7HEZrecv7uEis6L8b5Yv7jfD6iv_f4J@mail.gmail.com>
-	<20100521182325.GO3991@agk-dp.fab.redhat.com>
-	<AANLkTimuciWfkVwn7dKVeKL38WpMiCvgAxGx4ngAankW@mail.gmail.com>
-	<20100521193251.GP3991@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: [ANNOUNCE] multipath-tools 0.4.9
+Date: Sat, 22 May 2010 15:34:08 +0200
+Message-ID: <1274535248.6881.10.camel@localhost>
+Reply-To: christophe.varoqui@opensvc.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100521193251.GP3991@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kay Sievers <kay.sievers@vrfy.org>, Nikanth Karthikesan <knikanth@suse.de>, Peter Rajnoha <prajnoha@redhat.com>, Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@red>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, May 21, 2010 at 21:32, Alasdair G Kergon <agk@redhat.com> wrote:
-> On Fri, May 21, 2010 at 08:51:49PM +0200, Kay Sievers wrote:
->> The kernel itself creates /dev/mapper/control today.
->
-> Must have missed that patch:)
-> Userspace lvm and dm code is certainly not tied to that today.
->
-> The device node that userspace lvm and dm tools use is under the
-> complete control of this userspace code: it chooses the name, and
-> creates or fixes it if it doesn't already exist with the required
-> properties: anything devtmpfs is relevant only if it guessed the
-> right name that this *completely independent* userspace code
-> chooses to use and already created it exactly as required.
->
-> If we were to move to a fixed name for the control device and hand
-> control of that name to the kernel, then obviously this userspace
-> code would need adjusting to respect that.
+Here is a long due multipath-tools release.
 
-Upstream udev has no primary device node naming anymore, it's all
-controlled by the kernel. In fact, recent udev versions log errors if
-userspace defines names which disagree with the kernel-provided names,
-or the kernel-created nodes.
+Most patches in there are already available in enterprise distributions
+package.
 
-There is no "abstraction" anymore, the kernel defines the API today,
-and device naming is 100% inside the kernel.
+The tarball is available on http://christophe.varoqui.free.fr/
+My maintainer work on this project is now sponsored by
+http://www.opensvc.com and the Nexenta multipath support has been
+sponsored by http://www.alyseo.com/
 
-Udev's job is manage permissions, and to create meaningful symlinks
-which may change during lifetime of a kernel device.
+multipath-tools-0.4.9 shortlog :
 
-The primary kernel device name is always in sync with "dmesg",
-"proc/sys" and "/dev" these days. Only the symlinks may change at any
-time, reflecting the current state of the device.
+      * Changes that may require your altering your config file :
+              * rename hp_sw hwhandler
+              * directio is now the default checker (async)
+              * deprecated prio_callout keyword: now use prio/prio_args
+              * move bindings file location to /etc
+              * add 'max_fds' keyword
+              * add 'verbosity' keyword
+              * add 'queue_without_daemon' keyword
+              * add 'mode', 'uid' and 'gid' keywords
+              * add 'fast_io_fail' and 'dev_loss_tmo' keywords
+              * add 'checker' keyword as alias to 'path_checker'
+      * Features
+              * make kpartx deal with more than 256 minor numbers
+              * fail/reinstate CLI commands disable/enable path checker
+              * support multipath-capable cciss hardware, add cciss_tur
+                checker
+              * 'show config' output usable as a config file replacemen=
+t
+              * create read-only multipath if rw try failed
+              * care about offlined paths
+              * support resizing of multipath maps
+              * kpartx removes its loop devices
+              * support other load-balancing policies
+              * add datacore prioritizer
+              * add '-r' multipath arg to force maps reload
+              * add "show paths format" cli command
+              * add "show maps format" cli command
+              * add "show status" cli command
+              * add "show wildcards" cli command
+              * add "quit" cli command
+              * add "enablequeueing" and "disablequeueing" cli commands
+      * Fixes
+              * leaks plugged (virtualiron, suse, redhat work)
+              * honour ALUA preference indicator
+      * Developers changes :
+              * no more prioritizer callouts. replaced by mem-pinned .s=
+o
+                to avoid having to cache the callouts.
+              * move checkers to mem-pinned .so too
+              * allow arguments passing to prioritizers
+      * Contributors :
+              * Alex Zeffertt <...@eu.citrix.com>
+              * Andrey Panin <...@pazke.donpac.ru>
+              * Babu Moger <...@lsi.com>
+              * Benjamin Marzinski <...@redhat.com>
+              * Brian King <...@linux.vnet.ibm.com>
+              * Bryn M.Reeves <...@redhat.com>
+              * Chandra Seetharaman <...@us.ibm.com>
+              * Charlie Brady <...@budge.apana.org.au>
+              * Chauhan, Vijay <...@lsi.com>
+              * Christophe Varoqui <...@opensvc.com>
+              * Colin Watson <...@canonical.com>
+              * Dave Wysochanski <...@redhat.com>
+              * Guido Guenther <...@sigxcpu.org>
+              * Guido G=C3=83=C2=BCnther <...@sigxcpu.org>
+              * Hannes Reinecke <...@suse.de>
+              * Jim Lester <...@compellent.com>
+              * Kiyoshi Ueda <...@ct.jp.nec.com>
+              * Konrad Rzeszutek <...@virtualiron.com>
+              * Martin Petermann <...@linux.vnet.ibm.com>
+              * Matthew Kent <...@bravenet.com>
+              * Mike Anderson <...@linux.vnet.ibm.com>
+              * Mike Snitzer <...@redhat.com>
+              * Moger, Babu <...@lsi.com>
+              * Nikanth Karthikesan <...@suse.de>
+              * Ritesh Raj Sarraf <...@researchut.com>
+              * Rumko <...@gmail.com>
+              * Stefan Bader <...@de.ibm.com>
+              * Stefan Haberland <...@de.ibm.com>
+              * Stefan Weinhuber <...@de.ibm.com>
+              * Yanqing Liu <...@dell.com>
 
-Kay
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
