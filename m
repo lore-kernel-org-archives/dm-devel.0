@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1/6] block: Adjust elv_iosched_show to return
-	"none" for bio-based DM
-Date: Sun, 23 May 2010 17:44:56 -0400
-Message-ID: <1274651101-9784-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 5/6] dm ioctl: introduce dm_get_verified_mdptr
+Date: Sun, 23 May 2010 17:45:00 -0400
+Message-ID: <1274651101-9784-6-git-send-email-snitzer@redhat.com>
 References: <1274651101-9784-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,34 +19,98 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Bio-based DM doesn't use an elevator (queue is !blk_queue_stackable()).
-
-Longer-term DM will not allocate an elevator for bio-based DM.  But even
-then there will be small potential for an elevator to be allocated for
-a request-based DM table only to have a bio-based table be loaded in the
-end.
-
-Displaying "none" for bio-based DM will help avoid user confusion.
+Factor all appropriate consumers of dm_get_mdptr() to use the
+dm_get_verified_mdptr() rather than duplicate code.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>
 ---
- block/elevator.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-ioctl.c |   37 +++++++++++++++++++++++--------------
+ 1 file changed, 23 insertions(+), 14 deletions(-)
 
-Index: linux-2.6-block/block/elevator.c
+Index: linux-2.6/drivers/md/dm-ioctl.c
 ===================================================================
---- linux-2.6-block.orig/block/elevator.c
-+++ linux-2.6-block/block/elevator.c
-@@ -1097,7 +1097,7 @@ ssize_t elv_iosched_show(struct request_
- 	struct elevator_type *__e;
- 	int len = 0;
+--- linux-2.6.orig/drivers/md/dm-ioctl.c
++++ linux-2.6/drivers/md/dm-ioctl.c
+@@ -174,6 +174,19 @@ static void free_cell(struct hash_cell *
+ 	}
+ }
  
--	if (!q->elevator)
-+	if (!q->elevator || !blk_queue_stackable(q))
- 		return sprintf(name, "none\n");
++static struct hash_cell *dm_get_verified_mdptr(struct mapped_device *md)
++{
++	struct hash_cell *hc;
++
++	hc = dm_get_mdptr(md);
++	if (!hc || hc->md != md) {
++		DMWARN("device has been removed from the dev hash table.");
++		return NULL;
++	}
++
++	return hc;
++}
++
+ /*
+  * The kdev_t and uuid of a device can never change once it is
+  * initially inserted.
+@@ -546,11 +559,9 @@ static struct dm_table *dm_get_inactive_
+ 	struct dm_table *table = NULL;
  
- 	elv = e->elevator_type;
+ 	down_read(&_hash_lock);
+-	hc = dm_get_mdptr(md);
+-	if (!hc || hc->md != md) {
+-		DMWARN("device has been removed from the dev hash table.");
++	hc = dm_get_verified_mdptr(md);
++	if (!hc)
+ 		goto out;
+-	}
+ 
+ 	table = hc->new_map;
+ 	if (table)
+@@ -876,8 +887,8 @@ static int do_resume(struct dm_ioctl *pa
+ 	dm_lock_resume(md);
+ 
+ 	down_write(&_hash_lock);
+-	if (!hc || hc->md != md) {
+-		DMWARN("device has been removed from the dev hash table.");
++	hc = dm_get_verified_mdptr(md);
++	if (!hc) {
+ 		up_write(&_hash_lock);
+ 		r = -ENXIO;
+ 		goto out;
+@@ -1226,9 +1237,8 @@ static int table_load(struct dm_ioctl *p
+ 
+ 	/* stage inactive table */
+ 	down_write(&_hash_lock);
+-	hc = dm_get_mdptr(md);
+-	if (!hc || hc->md != md) {
+-		DMWARN("device has been removed from the dev hash table.");
++	hc = dm_get_verified_mdptr(md);
++	if (!hc) {
+ 		dm_table_destroy(t);
+ 		up_write(&_hash_lock);
+ 		if (initial_table_load)
+@@ -1277,9 +1287,8 @@ static int table_clear(struct dm_ioctl *
+ 	dm_lock_md_type(md); /* May need to clear md's type */
+ 
+ 	down_write(&_hash_lock);
+-	hc = dm_get_mdptr(md);
+-	if (!hc || hc->md != md) {
+-		DMWARN("device has been removed from the dev hash table.");
++	hc = dm_get_verified_mdptr(md);
++	if (!hc) {
+ 		up_write(&_hash_lock);
+ 		r = -ENXIO;
+ 		goto out;
+@@ -1736,8 +1745,8 @@ int dm_copy_name_and_uuid(struct mapped_
+ 		return -ENXIO;
+ 
+ 	mutex_lock(&dm_hash_cells_mutex);
+-	hc = dm_get_mdptr(md);
+-	if (!hc || hc->md != md) {
++	hc = dm_get_verified_mdptr(md);
++	if (!hc) {
+ 		r = -ENXIO;
+ 		goto out;
+ 	}
