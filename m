@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/6] dm ioctl: interlock resume and table clear
-Date: Sun, 23 May 2010 17:44:57 -0400
-Message-ID: <1274651101-9784-3-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 3/6] dm: prevent table type changes after initial
+	table load
+Date: Sun, 23 May 2010 17:44:58 -0400
+Message-ID: <1274651101-9784-4-git-send-email-snitzer@redhat.com>
 References: <1274651101-9784-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,148 +23,267 @@ To: dm-devel@redhat.com
 Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-When resuming an inactive table there is a lack of testable state during
-its transition to being live (hc->new_map is NULL and md->map isn't
-set).  Interlock allows table_clear() to _know_ there isn't a live table
-yet.
+Before table_load() stages an inactive table atomically check if its
+type conflicts with a previously established device type (md->type).
 
-This interlock also has the side-effect of serializing N resumes to the
-_same_ mapped_device (more coarsely than the suspend_lock provides).
+Introduce 'type_lock' in mapped_device structure and use it to protect
+md->type access.  table_load() sets md->type without concern for:
+- another table_load() racing to set conflicting md->type.
+- do_resume() making a conflicting table live.
+
+Allowed transitions:
+UNKNOWN_MD_TYPE => BIO_BASED_MD_TYPE
+UNKNOWN_MD_TYPE => REQUEST_BASED_MD_TYPE
+
+This prevents a table reload from switching the inactive table directly
+to a conflicting type (even if a table hasn't yet been made live via
+resume).
+
+Switching table type is still possible, before resume, if an explicit
+table clear is performed.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-ioctl.c |   34 +++++++++++++++++++++++++++++++---
- drivers/md/dm.c       |   17 +++++++++++++++++
- drivers/md/dm.h       |    3 +++
- 3 files changed, 51 insertions(+), 3 deletions(-)
+ drivers/md/dm-ioctl.c |   43 ++++++++++++++++++++++++++++
+ drivers/md/dm.c       |   76 +++++++++++++++++++++++++++++++++++++++++++++-----
+ drivers/md/dm.h       |    7 ++++
+ 3 files changed, 119 insertions(+), 7 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-ioctl.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-ioctl.c
 +++ linux-2.6/drivers/md/dm-ioctl.c
-@@ -871,6 +871,17 @@ static int do_resume(struct dm_ioctl *pa
+@@ -1153,6 +1153,7 @@ static int table_load(struct dm_ioctl *p
+ 	struct hash_cell *hc;
+ 	struct dm_table *t;
+ 	struct mapped_device *md;
++	int initial_table_load = 0;
+ 
+ 	md = find_device(param);
+ 	if (!md)
+@@ -1183,12 +1184,43 @@ static int table_load(struct dm_ioctl *p
+ 		goto out;
  	}
  
- 	md = hc->md;
-+	up_write(&_hash_lock);
++	/*
++	 * Protect md->type against concurrent table loads.
++	 * Locking strategy:
++	 * + Leverage fact that md's type cannot change after initial table load.
++	 *   - Only protect type in table_load() -- not in do_resume().
++	 *
++	 * + Protect type while working to stage an inactive table:
++	 *   - check if table's type conflicts with md->type
++	 *     (holding: md->type_lock)
++	 *   - stage inactive table (hc->new_map)
++	 *     (holding: md->type_lock + _hash_lock)
++	 */
++	dm_lock_md_type(md);
 +
-+	dm_lock_resume(md);
-+
-+	down_write(&_hash_lock);
-+	if (!hc || hc->md != md) {
-+		DMWARN("device has been removed from the dev hash table.");
-+		up_write(&_hash_lock);
-+		r = -ENXIO;
++	if (dm_unknown_md_type(md)) {
++		/* set md's type based on table's type */
++		dm_set_md_type(md, t);
++		/* note initial_table_load to clear md's type on error */
++		initial_table_load = 1;
++	} else if (!dm_md_type_matches_table(md, t)) {
++		DMWARN("can't change device type after initial table load.");
++		dm_table_destroy(t);
++		dm_unlock_md_type(md);
++		r = -EINVAL;
 +		goto out;
 +	}
++
++	/* stage inactive table */
+ 	down_write(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
+ 		DMWARN("device has been removed from the dev hash table.");
+ 		dm_table_destroy(t);
+ 		up_write(&_hash_lock);
++		if (initial_table_load)
++			dm_clear_md_type(md);
++		dm_unlock_md_type(md);
+ 		r = -ENXIO;
+ 		goto out;
+ 	}
+@@ -1198,6 +1230,8 @@ static int table_load(struct dm_ioctl *p
+ 	hc->new_map = t;
+ 	up_write(&_hash_lock);
  
- 	new_map = hc->new_map;
- 	hc->new_map = NULL;
-@@ -891,8 +902,8 @@ static int do_resume(struct dm_ioctl *pa
- 		old_map = dm_swap_table(md, new_map);
- 		if (IS_ERR(old_map)) {
- 			dm_table_destroy(new_map);
--			dm_put(md);
--			return PTR_ERR(old_map);
-+			r = PTR_ERR(old_map);
-+			goto out;
- 		}
++	dm_unlock_md_type(md);
++
+ 	param->flags |= DM_INACTIVE_PRESENT_FLAG;
+ 	r = __dev_status(md, param);
  
- 		if (dm_table_get_mode(new_map) & FMODE_WRITE)
-@@ -913,6 +924,8 @@ static int do_resume(struct dm_ioctl *pa
- 	if (!r)
- 		r = __dev_status(md, param);
+@@ -1212,6 +1246,7 @@ static int table_clear(struct dm_ioctl *
+ 	int r;
+ 	struct hash_cell *hc;
+ 	struct mapped_device *md;
++	struct dm_table *live_table;
  
-+out:
-+	dm_unlock_resume(md);
- 	dm_put(md);
- 	return r;
- }
-@@ -1209,6 +1222,20 @@ static int table_clear(struct dm_ioctl *
- 		return -ENXIO;
+ 	down_write(&_hash_lock);
+ 
+@@ -1226,6 +1261,7 @@ static int table_clear(struct dm_ioctl *
+ 	up_write(&_hash_lock);
+ 
+ 	dm_lock_resume(md);
++	dm_lock_md_type(md); /* May need to clear md's type */
+ 
+ 	down_write(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+@@ -1236,6 +1272,12 @@ static int table_clear(struct dm_ioctl *
+ 		goto out;
  	}
  
-+	md = hc->md;
-+	up_write(&_hash_lock);
-+
-+	dm_lock_resume(md);
-+
-+	down_write(&_hash_lock);
-+	hc = dm_get_mdptr(md);
-+	if (!hc || hc->md != md) {
-+		DMWARN("device has been removed from the dev hash table.");
-+		up_write(&_hash_lock);
-+		r = -ENXIO;
-+		goto out;
-+	}
++	/* Clear md's type if there is no live table */
++	live_table = dm_get_live_table(md);
++	if (!live_table)
++		dm_clear_md_type(md);
++	dm_table_put(live_table);
 +
  	if (hc->new_map) {
  		dm_table_destroy(hc->new_map);
  		hc->new_map = NULL;
-@@ -1217,8 +1244,9 @@ static int table_clear(struct dm_ioctl *
- 	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
- 
+@@ -1246,6 +1288,7 @@ static int table_clear(struct dm_ioctl *
  	r = __dev_status(hc->md, param);
--	md = hc->md;
  	up_write(&_hash_lock);
-+out:
-+	dm_unlock_resume(md);
+ out:
++	dm_unlock_md_type(md);
+ 	dm_unlock_resume(md);
  	dm_put(md);
  	return r;
- }
 Index: linux-2.6/drivers/md/dm.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm.c
 +++ linux-2.6/drivers/md/dm.c
-@@ -116,6 +116,12 @@ EXPORT_SYMBOL_GPL(dm_get_rq_mapinfo);
- struct mapped_device {
- 	struct rw_semaphore io_lock;
- 	struct mutex suspend_lock;
-+	/*
-+	 * Resuming inactive table lacks testable state during its
-+	 * transition to being live.  Interlock allows other operations
-+	 * (e.g. table_clear) to _know_ there isn't a live table yet.
-+	 */
-+	struct mutex resume_lock;
- 	rwlock_t map_lock;
- 	atomic_t holders;
- 	atomic_t open_count;
-@@ -1876,6 +1882,7 @@ static struct mapped_device *alloc_dev(i
+@@ -111,6 +111,15 @@ EXPORT_SYMBOL_GPL(dm_get_rq_mapinfo);
+ #define DMF_QUEUE_IO_TO_THREAD 6
  
+ /*
++ * Type for md->type field.
++ */
++enum mapped_device_type {
++	UNKNOWN_MD_TYPE,
++	BIO_BASED_MD_TYPE,
++	REQUEST_BASED_MD_TYPE,
++};
++
++/*
+  * Work processed by per-device workqueue.
+  */
+ struct mapped_device {
+@@ -129,6 +138,12 @@ struct mapped_device {
+ 	unsigned long flags;
+ 
+ 	struct request_queue *queue;
++	enum mapped_device_type type;
++	/*
++	 * Protect type from concurrent access.
++	 */
++	struct mutex type_lock;
++
+ 	struct gendisk *disk;
+ 	char name[16];
+ 
+@@ -1880,9 +1895,11 @@ static struct mapped_device *alloc_dev(i
+ 	if (r < 0)
+ 		goto bad_minor;
+ 
++	md->type = UNKNOWN_MD_TYPE;
  	init_rwsem(&md->io_lock);
  	mutex_init(&md->suspend_lock);
-+	mutex_init(&md->resume_lock);
+ 	mutex_init(&md->resume_lock);
++	mutex_init(&md->type_lock);
  	spin_lock_init(&md->deferred_lock);
  	spin_lock_init(&md->barrier_error_lock);
  	rwlock_init(&md->map_lock);
-@@ -1997,6 +2004,16 @@ static void free_dev(struct mapped_devic
- 	kfree(md);
+@@ -2145,6 +2162,58 @@ int dm_create(int minor, struct mapped_d
+ 	return 0;
  }
  
-+void dm_lock_resume(struct mapped_device *md)
++/*
++ * Functions to manage md->type.
++ * All are required to hold md->type_lock.
++ */
++void dm_lock_md_type(struct mapped_device *md)
 +{
-+	mutex_lock(&md->resume_lock);
++	mutex_lock(&md->type_lock);
 +}
 +
-+void dm_unlock_resume(struct mapped_device *md)
++void dm_unlock_md_type(struct mapped_device *md)
 +{
-+	mutex_unlock(&md->resume_lock);
++	mutex_unlock(&md->type_lock);
 +}
 +
- static void __bind_mempools(struct mapped_device *md, struct dm_table *t)
++void dm_set_md_type(struct mapped_device *md, struct dm_table* t)
++{
++	if (dm_table_request_based(t))
++		md->type = REQUEST_BASED_MD_TYPE;
++	else
++		md->type = BIO_BASED_MD_TYPE;
++}
++
++void dm_clear_md_type(struct mapped_device *md)
++{
++	md->type = UNKNOWN_MD_TYPE;
++}
++
++bool dm_unknown_md_type(struct mapped_device *md)
++{
++	return md->type == UNKNOWN_MD_TYPE;
++}
++
++static bool dm_bio_based_md_type(struct mapped_device *md)
++{
++	return md->type == BIO_BASED_MD_TYPE;
++}
++
++static bool dm_request_based_md_type(struct mapped_device *md)
++{
++	return md->type == REQUEST_BASED_MD_TYPE;
++}
++
++bool dm_md_type_matches_table(struct mapped_device *md, struct dm_table* t)
++{
++	if (dm_request_based_md_type(md))
++		return dm_table_request_based(t);
++	else if (dm_bio_based_md_type(md))
++		return !dm_table_request_based(t);
++
++	return 0;
++}
++
+ static struct mapped_device *dm_find_md(dev_t dev)
  {
- 	struct dm_md_mempools *p;
+ 	struct mapped_device *md;
+@@ -2420,13 +2489,6 @@ struct dm_table *dm_swap_table(struct ma
+ 		goto out;
+ 	}
+ 
+-	/* cannot change the device type, once a table is bound */
+-	if (md->map &&
+-	    (dm_table_get_type(md->map) != dm_table_get_type(table))) {
+-		DMWARN("can't change the device type after a table is bound");
+-		goto out;
+-	}
+-
+ 	map = __bind(md, table, &limits);
+ 
+ out:
 Index: linux-2.6/drivers/md/dm.h
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm.h
 +++ linux-2.6/drivers/md/dm.h
-@@ -66,6 +66,9 @@ int dm_table_alloc_md_mempools(struct dm
+@@ -66,6 +66,13 @@ int dm_table_alloc_md_mempools(struct dm
  void dm_table_free_md_mempools(struct dm_table *t);
  struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
  
-+void dm_lock_resume(struct mapped_device *md);
-+void dm_unlock_resume(struct mapped_device *md);
++void dm_lock_md_type(struct mapped_device *md);
++void dm_unlock_md_type(struct mapped_device *md);
++void dm_set_md_type(struct mapped_device *md, struct dm_table* t);
++void dm_clear_md_type(struct mapped_device *md);
++bool dm_unknown_md_type(struct mapped_device *md);
++bool dm_md_type_matches_table(struct mapped_device *md, struct dm_table* t);
 +
- /*
-  * To check the return value from dm_table_find_target().
-  */
+ void dm_lock_resume(struct mapped_device *md);
+ void dm_unlock_resume(struct mapped_device *md);
+ 
