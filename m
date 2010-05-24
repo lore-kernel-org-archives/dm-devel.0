@@ -1,27 +1,43 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v3 3/3] dm: lookup devices by path with
-	name_to_dev_t
-Date: Mon, 24 May 2010 12:57:37 +0100
-Message-ID: <20100524115737.GY3991@agk-dp.fab.redhat.com>
-References: <1274294304-30606-1-git-send-email-wad@chromium.org> <1274294304-30606-3-git-send-email-wad@chromium.org>
+From: "--[ UxBoD ]--" <uxbod@splatnix.net>
+Subject: Unable to build MPT 0.4.9
+Date: Mon, 24 May 2010 13:52:34 +0100 (BST)
+Message-ID: <13799941.598.1274705554197.JavaMail.root@office.splatnix.net>
+Reply-To: "--\[ UxBoD \]--" <uxbod@splatnix.net>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1274294304-30606-3-git-send-email-wad@chromium.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Will Drewry <wad@chromium.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, May 19, 2010 at 01:38:24PM -0500, Will Drewry wrote:
-> +	char base_path[32];  /* size from name_to_dev_t */
-  
-> +	/* stage the shorter path for name_to_dev_t. */
-> +	strncpy(base_path, path, sizeof(base_path));
+When attempting to build the RPM for the latest release I receive the error:
 
-I'm dropping that, and just passing path directly, so the strlen test
-will be used.  (There's a "name += 5" in there so 32 would ignore
-any longer standard names anyway.)
+ake[2]: Leaving directory `/home/compuser/multipath-tools-0.4.9/libmultipath/checkers'
+make[2]: Entering directory `/home/compuser/multipath-tools-0.4.9/multipath'
+cc -pipe -g -Wall -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -I../libmultipath -c -o main.o main.c
+main.c: In function ?main?:
+main.c:457: warning: implicit declaration of function ?dm_udev_wait?
+cc -pipe -g -Wall -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -I../libmultipath main.o -o multipath -lpthread -ldevmapper -ldl -lmultipath -L../libmultipath
+main.o: In function `main':
+/home/compuser/multipath-tools-0.4.9/multipath/main.c:457: undefined reference to `dm_udev_wait'
+../libmultipath/libmultipath.so: undefined reference to `dm_task_set_cookie'
+collect2: ld returned 1 exit status
+make[2]: *** [multipath] Error 1
+make[2]: Leaving directory `/home/compuser/multipath-tools-0.4.9/multipath'
+make[1]: *** [recurse] Error 2
+make[1]: Leaving directory `/home/compuser/multipath-tools-0.4.9'
+error: Bad exit status from /var/tmp/rpm-tmp.44249 (%build)
 
-Alasdair
+This is on a CentOS 5.4 system running kernel 2.6.28.7.  Am I missing a dependency ?
+-- 
+Thanks, Phil
