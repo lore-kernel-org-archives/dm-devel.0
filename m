@@ -1,44 +1,63 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3 3/3] dm: lookup devices by path with name_to_dev_t
-Date: Mon, 24 May 2010 19:35:52 -0400
-Message-ID: <20100524233552.GA7204@redhat.com>
-References: <1274294304-30606-1-git-send-email-wad@chromium.org>
- <1274294304-30606-3-git-send-email-wad@chromium.org>
- <20100524115737.GY3991@agk-dp.fab.redhat.com>
- <AANLkTik8F43_4SRkH7XpfX5CTQ-xQ_8f3_yJTjDqSulU@mail.gmail.com>
- <20100524150729.GZ3991@agk-dp.fab.redhat.com>
- <AANLkTinlgQ5Br4vyjgvNKtHD4F3mZKwoz3siYCQyReAl@mail.gmail.com>
+Subject: [PATCH v2 0/2] dm: restrict conflicting table loads and
+	improve queue initialization
+Date: Mon, 24 May 2010 19:46:33 -0400
+Message-ID: <1274744795-9825-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <AANLkTinlgQ5Br4vyjgvNKtHD4F3mZKwoz3siYCQyReAl@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Will Drewry <wad@chromium.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, May 24 2010 at 12:35pm -0400,
-Will Drewry <wad@chromium.org> wrote:
+A mapped_device now has a specific immutable type (md->type) that is
+set during the initial table_load (see: patch 1/2).
 
-> On Mon, May 24, 2010 at 10:07 AM, Alasdair G Kergon <agk@redhat.com> =
-wrote:
-> > On Mon, May 24, 2010 at 09:44:07AM -0500, Will Drewry wrote:
-> >> fwiw, the only reason for the copy was because |path| is a
-> >> const in the function but not when passed to name_to_dev_t.
-> >> I wasn't sure what the preferred practice was so I just duped
-> >> the data needed.
-> >
-> > Well check that it is treated as 'const' and send a separate patch =
-to
-> > the maintainer to add const, perhaps? =A0If it isn't const (why wou=
-ld
-> > that be?), then yes we'd need to copy it.
->=20
-> I'll cross-check the code again and send a patch out if it looks like
-> it is const-safe.
+The DM device's request_queue will only have an elevator allocated and
+exposed via sysfs if it is request-based (see: patch 2/2).
 
-Also, it would see that name_to_dev_t is EXPORT_SYMBOL?
+Please see the individual patch headers for more details.
+(Kiyoshi, if you approve please reply with your "Acked-by" :)
 
-Mike
+This patchset is based on agk's DM "editing" tree:
+http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
+(apply all patches listed in the series file up to NEXT_PATCHES_END)
+
+This also patchset depends on the following linux-2.6-block.git
+'for-linus' branch commits:
+01effb0 block: allow initialization of previously allocated request_queue
+e36f724 block: Adjust elv_iosched_show to return "none" for bio-based DM
+
+I've made a full quilt series available here (builds on 2.6.34):
+http://people.redhat.com/msnitzer/patches/dm-queue-init/latest/
+
+A monolithic patch is also available here:
+http://people.redhat.com/msnitzer/patches/dm-queue-init/latest/monolithic.patch
+
+I welcome all comments/review.
+
+v2 changes:
+- removed do_resume and table_clear interlock
+- rebased to agk's latest "editing" tree
+- dropped the dm_get_verified_mdptr and find_device_noinit patches that
+  were at the end of v1; can revisit that code duplication cleanup later
+
+Mike Snitzer (2):
+  dm: prevent table type changes after initial table load
+  dm: only initialize full request_queue for request-based device
+
+ drivers/md/dm-ioctl.c |   40 ++++++++++
+ drivers/md/dm.c       |  189 ++++++++++++++++++++++++++++++++++++++++--------
+ drivers/md/dm.h       |    8 ++
+ 3 files changed, 205 insertions(+), 32 deletions(-)
