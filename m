@@ -1,84 +1,44 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 0/6] dm: restrict conflicting table loads and
- improve queue initialization
-Date: Mon, 24 May 2010 13:24:49 -0400
-Message-ID: <20100524172449.GB32389@redhat.com>
-References: <1274651101-9784-1-git-send-email-snitzer@redhat.com>
-	<4BFA4E4A.6060404@ct.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH v3 3/3] dm: lookup devices by path with name_to_dev_t
+Date: Mon, 24 May 2010 19:35:52 -0400
+Message-ID: <20100524233552.GA7204@redhat.com>
+References: <1274294304-30606-1-git-send-email-wad@chromium.org>
+ <1274294304-30606-3-git-send-email-wad@chromium.org>
+ <20100524115737.GY3991@agk-dp.fab.redhat.com>
+ <AANLkTik8F43_4SRkH7XpfX5CTQ-xQ_8f3_yJTjDqSulU@mail.gmail.com>
+ <20100524150729.GZ3991@agk-dp.fab.redhat.com>
+ <AANLkTinlgQ5Br4vyjgvNKtHD4F3mZKwoz3siYCQyReAl@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4BFA4E4A.6060404@ct.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+In-Reply-To: <AANLkTinlgQ5Br4vyjgvNKtHD4F3mZKwoz3siYCQyReAl@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Will Drewry <wad@chromium.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, May 24 2010 at  6:00am -0400,
-Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+On Mon, May 24 2010 at 12:35pm -0400,
+Will Drewry <wad@chromium.org> wrote:
 
-> Hi Mike,
-> 
-> On 05/24/2010 06:44 AM +0900, Mike Snitzer wrote:
+> On Mon, May 24, 2010 at 10:07 AM, Alasdair G Kergon <agk@redhat.com> =
+wrote:
+> > On Mon, May 24, 2010 at 09:44:07AM -0500, Will Drewry wrote:
+> >> fwiw, the only reason for the copy was because |path| is a
+> >> const in the function but not when passed to name_to_dev_t.
+> >> I wasn't sure what the preferred practice was so I just duped
+> >> the data needed.
+> >
+> > Well check that it is treated as 'const' and send a separate patch =
+to
+> > the maintainer to add const, perhaps? =A0If it isn't const (why wou=
+ld
+> > that be?), then yes we'd need to copy it.
+>=20
+> I'll cross-check the code again and send a patch out if it looks like
+> it is const-safe.
 
-> > But this new series eliminates v7's locking between table_load() and
-> > do_resume() -- fixed md->type made this possible.  So these changes
-> > may be more desirable overall (adds some clearer exclusion and state
-> > transitions that I feel help DM without being too restrictive).
-> 
-> Yes, I think it's reasonable.
+Also, it would see that name_to_dev_t is EXPORT_SYMBOL?
 
-OK.
-
-> > This work has expanded in scope somewhat (based on Mikulas' suggestion
-> > that I pursue more constrained table/device type switching to avoid
-> > Kiyoshi's locking concerns).  A mapped_device now has a specific type
-> > (md->type) that is managed in table_{load,clear} (see patch 3/6).
->  
-> Cancelling the type by table_clear() keeps the code/model complex
-> even after changing model.
-> I think the feature to cancel the type is not required any userspace
-> tools nor admins at least for now.  So dropping the feature and
-> completely fixing the type at the first table loading time may be
-> a good meeting point to make the kernel code simple.
-
-I initially thought it best to keep table_clear() more "friendly".. so
-as not to impose a user explicitly delete a DM device just to switch
-from bio-based to request-based tables (or vice-versa).
-
-But I think I've come full-circle:
-
-- I'm not against imposing your suggestion (never reset md->type).
-  Certainly keeps the DM code simpler! :)
-
-- We don't know all existing userspace code -- people could be using
-  DM's clear ioctl and we'd break their assumptions; but do we _really_
-  care?  They'll adapt (they'd have to do a device delete, device
-  create, table load).
-
-> I had only a quick look, so I may find some more comments.  But I'd
-> like to have more review after we reach an agreement about the basic
-> implementation design above.
-
-Yes, wish I had the restraint to avoid making dm_clear_md_type() work ;)
-
-But pulling out that support will be easy and will also simplify other
-code:
-- will eliminate concern for "rq -> bio -> rq" in
-  dm_init_request_based_queue()
-- can remove dm_clear_request_based_queue()
-- maybe more...
-
-Thanks,
 Mike
