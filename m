@@ -1,49 +1,46 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: Re: Unable to build MPT 0.4.9
-Date: Mon, 24 May 2010 16:38:17 +0200
-Message-ID: <4BFA8F59.4040805@redhat.com>
-References: <13799941.598.1274705554197.JavaMail.root@office.splatnix.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Will Drewry <wad@chromium.org>
+Subject: Re: [dm-devel] [PATCH v3 3/3] dm: lookup devices by path with
+	name_to_dev_t
+Date: Mon, 24 May 2010 09:44:07 -0500
+Message-ID: <AANLkTik8F43_4SRkH7XpfX5CTQ-xQ_8f3_yJTjDqSulU@mail.gmail.com>
+References: <1274294304-30606-1-git-send-email-wad@chromium.org>
+	<1274294304-30606-3-git-send-email-wad@chromium.org>
+	<20100524115737.GY3991@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <13799941.598.1274705554197.JavaMail.root@office.splatnix.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "--[ UxBoD ]--" <uxbod@splatnix.net>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20100524115737.GY3991@agk-dp.fab.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com
+Cc: linux-kernel@vger.kernel.org, snitzer@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dne 24.5.2010 14:52, --[ UxBoD ]-- napsal(a):
-> When attempting to build the RPM for the latest release I receive the error:
-> 
-> ake[2]: Leaving directory `/home/compuser/multipath-tools-0.4.9/libmultipath/checkers'
-> make[2]: Entering directory `/home/compuser/multipath-tools-0.4.9/multipath'
-> cc -pipe -g -Wall -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -I../libmultipath -c -o main.o main.c
-> main.c: In function ?main?:
-> main.c:457: warning: implicit declaration of function ?dm_udev_wait?
-> cc -pipe -g -Wall -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -I../libmultipath main.o -o multipath -lpthread -ldevmapper -ldl -lmultipath -L../libmultipath
-> main.o: In function `main':
-> /home/compuser/multipath-tools-0.4.9/multipath/main.c:457: undefined reference to `dm_udev_wait'
-> ../libmultipath/libmultipath.so: undefined reference to `dm_task_set_cookie'
-> collect2: ld returned 1 exit status
-> make[2]: *** [multipath] Error 1
-> make[2]: Leaving directory `/home/compuser/multipath-tools-0.4.9/multipath'
-> make[1]: *** [recurse] Error 2
-> make[1]: Leaving directory `/home/compuser/multipath-tools-0.4.9'
-> error: Bad exit status from /var/tmp/rpm-tmp.44249 (%build)
-> 
-> This is on a CentOS 5.4 system running kernel 2.6.28.7.  Am I missing a dependency ?
+On Mon, May 24, 2010 at 6:38 AM, Alasdair G Kergon <agk@redhat.com> wro=
+te:
+> I'll apply this, [snip]
 
-Looks like your libdevmapper is compiled without udev support, but multipath
-is configured with udev support - thought this is just a wild guess from your
-output.
+Thanks!
 
-Zdenek
+On Mon, May 24, 2010 at 6:57 AM, Alasdair G Kergon <agk@redhat.com> wro=
+te:
+> On Wed, May 19, 2010 at 01:38:24PM -0500, Will Drewry wrote:
+>> + =A0 =A0 char base_path[32]; =A0/* size from name_to_dev_t */
+>
+>> + =A0 =A0 /* stage the shorter path for name_to_dev_t. */
+>> + =A0 =A0 strncpy(base_path, path, sizeof(base_path));
+>
+> I'm dropping that, and just passing path directly, so the strlen test
+> will be used. =A0(There's a "name +=3D 5" in there so 32 would ignore
+> any longer standard names anyway.)
+
+Sounds good.  And nice catch on the truncation with 32 - in an
+attempt to minimize the extra copying, I went a bit too far!
+
+fwiw, the only reason for the copy was because |path| is a
+const in the function but not when passed to name_to_dev_t.
+I wasn't sure what the preferred practice was so I just duped
+the data needed.
+
+cheers!
+will
