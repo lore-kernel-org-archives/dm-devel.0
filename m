@@ -1,27 +1,55 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v3 3/3] dm: lookup devices by path with
-	name_to_dev_t
-Date: Mon, 24 May 2010 16:07:29 +0100
-Message-ID: <20100524150729.GZ3991@agk-dp.fab.redhat.com>
-References: <1274294304-30606-1-git-send-email-wad@chromium.org> <1274294304-30606-3-git-send-email-wad@chromium.org> <20100524115737.GY3991@agk-dp.fab.redhat.com> <AANLkTik8F43_4SRkH7XpfX5CTQ-xQ_8f3_yJTjDqSulU@mail.gmail.com>
+From: Peter Rajnoha <prajnoha@redhat.com>
+Subject: Re: Unable to build MPT 0.4.9
+Date: Mon, 24 May 2010 17:10:19 +0200
+Message-ID: <4BFA96DB.8090101@redhat.com>
+References: <13799941.598.1274705554197.JavaMail.root@office.splatnix.net>
+	<4BFA8F59.4040805@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <AANLkTik8F43_4SRkH7XpfX5CTQ-xQ_8f3_yJTjDqSulU@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Will Drewry <wad@chromium.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4BFA8F59.4040805@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "--[ UxBoD ]--" <uxbod@splatnix.net>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, May 24, 2010 at 09:44:07AM -0500, Will Drewry wrote:
-> fwiw, the only reason for the copy was because |path| is a
-> const in the function but not when passed to name_to_dev_t.
-> I wasn't sure what the preferred practice was so I just duped
-> the data needed.
- 
-Well check that it is treated as 'const' and send a separate patch to
-the maintainer to add const, perhaps?  If it isn't const (why would
-that be?), then yes we'd need to copy it.
+On 05/24/2010 04:38 PM, Zdenek Kabelac wrote:
+> Dne 24.5.2010 14:52, --[ UxBoD ]-- napsal(a):
+>> When attempting to build the RPM for the latest release I receive the error:
+>>
+>> ake[2]: Leaving directory `/home/compuser/multipath-tools-0.4.9/libmultipath/checkers'
+>> make[2]: Entering directory `/home/compuser/multipath-tools-0.4.9/multipath'
+>> cc -pipe -g -Wall -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -I../libmultipath -c -o main.o main.c
+>> main.c: In function ?main?:
+>> main.c:457: warning: implicit declaration of function ?dm_udev_wait?
+>> cc -pipe -g -Wall -Wunused -Wstrict-prototypes -fPIC -DLIB_STRING=\"lib64\" -I../libmultipath main.o -o multipath -lpthread -ldevmapper -ldl -lmultipath -L../libmultipath
+>> main.o: In function `main':
+>> /home/compuser/multipath-tools-0.4.9/multipath/main.c:457: undefined reference to `dm_udev_wait'
+>> ../libmultipath/libmultipath.so: undefined reference to `dm_task_set_cookie'
+>> collect2: ld returned 1 exit status
+>> make[2]: *** [multipath] Error 1
+>> make[2]: Leaving directory `/home/compuser/multipath-tools-0.4.9/multipath'
+>> make[1]: *** [recurse] Error 2
+>> make[1]: Leaving directory `/home/compuser/multipath-tools-0.4.9'
+>> error: Bad exit status from /var/tmp/rpm-tmp.44249 (%build)
+>>
+>> This is on a CentOS 5.4 system running kernel 2.6.28.7.  Am I missing a dependency ?
+> 
+> Looks like your libdevmapper is compiled without udev support, but multipath
+> is configured with udev support - thought this is just a wild guess from your
+> output.
 
-Alasdair
+Well, yes, multipath needs to check for the version of libdevmapper if it's
+recent enough and if it has udev_sync support interface (libdevmapper >= 1.2.39).
+
+Peter
