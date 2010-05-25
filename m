@@ -1,12 +1,15 @@
-From: Tomohiro Kusumi <kusumi.tomohiro@jp.fujitsu.com>
-Subject: [PATCH] multipath: generic timeout function in dm-mpath
-Date: Tue, 25 May 2010 22:25:24 +0900
-Message-ID: <4BFBCFC4.5090400@jp.fujitsu.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v3 1/2] dm: prevent table type changes after
+	initial table load
+Date: Tue, 25 May 2010 10:43:12 -0400
+Message-ID: <1274798593-19418-2-git-send-email-snitzer@redhat.com>
+References: <1274798593-19418-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1274798593-19418-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,110 +20,147 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Tomohiro Kusumi <kusumi.tomohiro@jp.fujitsu.com>, Alasdair G Kergon <agk@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Before table_load() stages an inactive table atomically check if its
+type conflicts with a previously established device type (md->type).
 
-This patch is a trial patch for handling i/o latency issue in multipath layer.
-Let me explain details.
+Introduce 'type_lock' in mapped_device structure and use it to protect
+md->type access.  table_load() sets md->type without concern for:
+- another table_load() racing to set conflicting md->type.
+- do_resume() making a conflicting table live.
 
-I've been looking for ways to minimize impact of faulty (scsi) drive in a multipath
-failover environment. Our major problem is that it takes quite long time before
-dm-mpath can failover to alternative path not because of device-mapper, but because
-of huge recovery operation by scsi driver's timeout handler. device-mapper can't
-take care of timed out i/o until scsi subsystem finishes all the device/bus/host
-reset handlers, retries and everything which I think conflicts with what the multipath
-software is designed to do.
+Allowed transitions:
+DM_TYPE_NONE => DM_TYPE_BIO_BASED
+DM_TYPE_NONE => DM_TYPE_REQUEST_BASED
 
-I've posted a patch to linux-scsi that can turn off error recovery operation recently,
-so dm-mpath (or any other multipath software) can do fast failover when i/o had timed
-out. http://groups.google.co.jp/group/linux.kernel/browse_thread/thread/c78d190336bbe363
+Once a table load occurs the DM device's type is completely immutable.
 
-This patch is yet another (trial) way by implementing generic timeout function in
-device-mappper layer. A problem in this patch is that even if dm-mpath takes care
-of timed out i/o, using fail_path() -> deactivate_path() on failover calls
-blk_abort_queue() -> blk_abort_request(), and that ends up doing scsi error
-recovery operation anyway. So it is required to implement generic fast failover
-handler that can override the one registered by the lower level device driver.
+This prevents a table reload from switching the inactive table directly
+to a conflicting type (even if the table is explicitly cleared before
+load).
 
-Currently userland multipathd can detect a link break as path down, but there is
-no way dm-mpath (or multipathd) can detect i/o latency issue. What would you say
-to implementing generic timeout in dm-mpath ?? It could be device-mapper's generic
-function implemented in md/dm.c.  Any comments would be helpful.
-
-Thanks,
-Tomohiro Kusumi
-
-
-
-Signed-off-by: Tomohiro Kusumi <kusumi.tomohiro@jp.fujitsu.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
+ drivers/md/dm-ioctl.c |   15 +++++++++++++++
+ drivers/md/dm.c       |   40 +++++++++++++++++++++++++++++++++-------
+ drivers/md/dm.h       |    5 +++++
+ 3 files changed, 53 insertions(+), 7 deletions(-)
 
-diff -aNur linux-2.6.34.org/drivers/md/dm-mpath.c linux-2.6.34/drivers/md/dm-mpath.c
---- linux-2.6.34.org/drivers/md/dm-mpath.c	2010-05-17 06:17:36.000000000 +0900
-+++ linux-2.6.34/drivers/md/dm-mpath.c	2010-05-25 21:45:10.000000000 +0900
-@@ -104,6 +104,7 @@
- struct dm_mpath_io {
- 	struct pgpath *pgpath;
- 	size_t nr_bytes;
-+	struct timer_list tmo;
- };
+Index: linux-2.6/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-ioctl.c
++++ linux-2.6/drivers/md/dm-ioctl.c
+@@ -1176,6 +1176,21 @@ static int table_load(struct dm_ioctl *p
+ 		goto out;
+ 	}
  
- typedef int (*action_fn) (struct pgpath *pgpath);
-@@ -439,11 +440,13 @@
++	/* Protect md->type against concurrent table loads. */
++	dm_lock_md_type(md);
++	if (dm_get_md_type(md) == DM_TYPE_NONE) {
++		/* initial table load, set md's type based on table's type */
++		dm_set_md_type(md, t);
++	} else if (dm_get_md_type(md) != dm_table_get_type(t)) {
++		DMWARN("can't change device type after initial table load.");
++		dm_table_destroy(t);
++		dm_unlock_md_type(md);
++		r = -EINVAL;
++		goto out;
++	}
++	dm_unlock_md_type(md);
++
++	/* stage inactive table */
+ 	down_write(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c
++++ linux-2.6/drivers/md/dm.c
+@@ -123,6 +123,10 @@ struct mapped_device {
+ 	unsigned long flags;
  
- 		r = map_io(m, clone, mpio, 1);
- 		if (r < 0) {
-+			del_timer(&mpio->tmo);
- 			mempool_free(mpio, m->mpio_pool);
- 			dm_kill_unmapped_request(clone, r);
- 		} else if (r == DM_MAPIO_REMAPPED)
- 			dm_dispatch_request(clone);
- 		else if (r == DM_MAPIO_REQUEUE) {
-+			del_timer(&mpio->tmo);
- 			mempool_free(mpio, m->mpio_pool);
- 			dm_requeue_unmapped_request(clone);
- 		}
-@@ -940,6 +943,13 @@
- 	free_multipath(m);
+ 	struct request_queue *queue;
++	unsigned type;
++	/* Protect type against concurrent access. */
++	struct mutex type_lock;
++
+ 	struct gendisk *disk;
+ 	char name[16];
+ 
+@@ -1874,8 +1878,10 @@ static struct mapped_device *alloc_dev(i
+ 	if (r < 0)
+ 		goto bad_minor;
+ 
++	md->type = DM_TYPE_NONE;
+ 	init_rwsem(&md->io_lock);
+ 	mutex_init(&md->suspend_lock);
++	mutex_init(&md->type_lock);
+ 	spin_lock_init(&md->deferred_lock);
+ 	spin_lock_init(&md->barrier_error_lock);
+ 	rwlock_init(&md->map_lock);
+@@ -2128,6 +2134,33 @@ int dm_create(int minor, struct mapped_d
+ 	return 0;
  }
  
-+static void multipath_tmo(unsigned long priv)
++/*
++ * Functions to manage md->type.
++ * All are required to hold md->type_lock.
++ */
++void dm_lock_md_type(struct mapped_device *md)
 +{
-+	struct dm_mpath_io *mpio = (struct dm_mpath_io*)priv;
-+	if (mpio->pgpath)
-+		fail_path(mpio->pgpath);
++	mutex_lock(&md->type_lock);
 +}
 +
- /*
-  * Map cloned requests
-  */
-@@ -956,11 +966,18 @@
- 		return DM_MAPIO_REQUEUE;
- 	memset(mpio, 0, sizeof(*mpio));
- 
-+	init_timer(&mpio->tmo);
-+	mpio->tmo.function = multipath_tmo;
-+	mpio->tmo.data = (unsigned long)mpio;
-+	mod_timer(&mpio->tmo, jiffies+HZ*10); // timeout should be tunable
++void dm_unlock_md_type(struct mapped_device *md)
++{
++	mutex_unlock(&md->type_lock);
++}
 +
- 	map_context->ptr = mpio;
- 	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
- 	r = map_io(m, clone, mpio, 0);
--	if (r < 0 || r == DM_MAPIO_REQUEUE)
-+	if (r < 0 || r == DM_MAPIO_REQUEUE) {
-+		del_timer(&mpio->tmo);
- 		mempool_free(mpio, m->mpio_pool);
-+	}
- 
- 	return r;
- }
-@@ -1297,6 +1314,7 @@
- 		if (ps->type->end_io)
- 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
++void dm_set_md_type(struct mapped_device *md, struct dm_table* t)
++{
++	if (dm_table_request_based(t))
++		md->type = DM_TYPE_REQUEST_BASED;
++	else
++		md->type = DM_TYPE_BIO_BASED;
++}
++
++unsigned dm_get_md_type(struct mapped_device *md)
++{
++	return md->type;
++}
++
+ static struct mapped_device *dm_find_md(dev_t dev)
+ {
+ 	struct mapped_device *md;
+@@ -2403,13 +2436,6 @@ struct dm_table *dm_swap_table(struct ma
+ 		goto out;
  	}
-+	del_timer(&mpio->tmo);
- 	mempool_free(mpio, m->mpio_pool);
  
- 	return r;
+-	/* cannot change the device type, once a table is bound */
+-	if (md->map &&
+-	    (dm_table_get_type(md->map) != dm_table_get_type(table))) {
+-		DMWARN("can't change the device type after a table is bound");
+-		goto out;
+-	}
+-
+ 	map = __bind(md, table, &limits);
+ 
+ out:
+Index: linux-2.6/drivers/md/dm.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.h
++++ linux-2.6/drivers/md/dm.h
+@@ -66,6 +66,11 @@ int dm_table_alloc_md_mempools(struct dm
+ void dm_table_free_md_mempools(struct dm_table *t);
+ struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+ 
++void dm_lock_md_type(struct mapped_device *md);
++void dm_unlock_md_type(struct mapped_device *md);
++void dm_set_md_type(struct mapped_device *md, struct dm_table* t);
++unsigned dm_get_md_type(struct mapped_device *md);
++
+ /*
+  * To check the return value from dm_table_find_target().
+  */
