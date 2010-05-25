@@ -1,153 +1,70 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] block: avoid unconditionally freeing previously
- allocated request_queue
-Date: Tue, 25 May 2010 12:34:55 -0400
-Message-ID: <20100525163455.GA10155@redhat.com>
+Subject: [PATCH 2/1] block: make blk_init_free_list and elevator_init
+ idempotent
+Date: Tue, 25 May 2010 13:15:15 -0400
+Message-ID: <20100525171515.GB10155@redhat.com>
 References: <1274744795-9825-1-git-send-email-snitzer@redhat.com>
-	<1274744795-9825-3-git-send-email-snitzer@redhat.com>
-	<4BFBB21A.3030105@ct.jp.nec.com> <20100525124912.GA7447@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+ <1274744795-9825-3-git-send-email-snitzer@redhat.com>
+ <4BFBB21A.3030105@ct.jp.nec.com>
+ <20100525124912.GA7447@redhat.com>
+ <20100525163455.GA10155@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20100525124912.GA7447@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <20100525163455.GA10155@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, May 25 2010 at  8:49am -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
-
-> On Tue, May 25 2010 at  7:18am -0400,
-> Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
-> 
-> > > +/*
-> > > + * Fully initialize a request-based queue (->elevator, ->request_fn, etc).
-> > > + */
-> > > +static int dm_init_request_based_queue(struct mapped_device *md)
-> > > +{
-> > > +	struct request_queue *q = NULL;
-> > > +
-> > > +	/* Avoid re-initializing the queue if already fully initialized */
-> > > +	if (!md->queue->elevator) {
-> > > +		/* Fully initialize the queue */
-> > > +		q = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
-> > > +		if (!q)
-> > > +			return 0;
-> > 
-> > When blk_init_allocated_queue() fails, the block-layer seems not to
-> > guarantee that the queue is still available.
-> 
-> Ouch, yes this portion of blk_init_allocated_queue_node() is certainly
-> problematic:
-> 
->         if (blk_init_free_list(q)) {
->                 kmem_cache_free(blk_requestq_cachep, q);
->                 return NULL;
->         }
-> 
-> Cc'ing Jens as I think it would be advantageous for us to push the above
-> kmem_cache_free() into the callers where it really makes sense, e.g.:
-> blk_init_queue_node().
-> 
-> So on blk_init_allocated_queue_node() failure blk_init_queue_node() will
-> take care to cleanup the queue that it assumes it is managing
-> completely.
-> 
-> My patch (linux-2.6-block.git's commit: 01effb0) that split out
-> blk_init_allocated_queue_node() from blk_init_queue_node() opened up
-> this issue.  I'm fairly confident we'll get it fixed by the time 2.6.35
-> ships.
-
-Jens,
-
-How about something like the following?
-
-
-block: avoid unconditionally freeing previously allocated request_queue
-
-On blk_init_allocated_queue_node failure, only free request_queue if
-it is wasn't previously allocated outside the block layer
-(e.g. blk_init_queue_node was blk_init_allocated_queue_node caller).
-
-This addresses a regression introduced by the following commit:
-01effb0 block: allow initialization of previously allocated request_queue
-
-Otherwise the request_queue may be free'd out from underneath a caller
-that is managing the request_queue directly (e.g. caller uses
-blk_alloc_queue + blk_init_allocated_queue_node).
+blk_init_allocated_queue_node may fail and the caller _could_ retry.
+Accommodate the unlikely event that blk_init_allocated_queue_node is
+called on an already initialized (possibly partially) request_queue.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- block/blk-core.c |   31 ++++++++++++++++++++++++++-----
- 1 files changed, 26 insertions(+), 5 deletions(-)
+ block/blk-core.c |    3 +++
+ block/elevator.c |    6 ++++--
+ 2 files changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/block/blk-core.c b/block/blk-core.c
-index 3bc5579..c0179b7 100644
+index c0179b7..2c208c3 100644
 --- a/block/blk-core.c
 +++ b/block/blk-core.c
-@@ -528,6 +528,24 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- }
- EXPORT_SYMBOL(blk_alloc_queue_node);
- 
-+static void blk_free_partial_queue(struct request_queue *q)
-+{
-+	/* Free q if blk_init_queue failed early enough. */
-+	int free_request_queue = 0;
-+	struct request_list *rl;
-+
-+	if (!q)
-+		return;
-+
-+	/* Was blk_init_free_list the cause for failure? */
-+	rl = &q->rq;
-+	if (!rl->rq_pool)
-+		free_request_queue = 1;
-+
-+	if (free_request_queue)
-+		kmem_cache_free(blk_requestq_cachep, q);
-+}
-+
- /**
-  * blk_init_queue  - prepare a request queue for use with a block device
-  * @rfn:  The function to be called to process requests that have been
-@@ -570,9 +588,14 @@ EXPORT_SYMBOL(blk_init_queue);
- struct request_queue *
- blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
+@@ -467,6 +467,9 @@ static int blk_init_free_list(struct request_queue *q)
  {
--	struct request_queue *q = blk_alloc_queue_node(GFP_KERNEL, node_id);
-+	struct request_queue *uninit_q, *q;
+ 	struct request_list *rl = &q->rq;
+ 
++	if (unlikely(rl->rq_pool))
++		return 0;
 +
-+	uninit_q = blk_alloc_queue_node(GFP_KERNEL, node_id);
-+	q = blk_init_allocated_queue_node(uninit_q, rfn, lock, node_id);
-+	if (!q)
-+		blk_free_partial_queue(uninit_q);
+ 	rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
+ 	rl->starved[BLK_RW_SYNC] = rl->starved[BLK_RW_ASYNC] = 0;
+ 	rl->elvpriv = 0;
+diff --git a/block/elevator.c b/block/elevator.c
+index 0abce47..923a913 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -242,9 +242,11 @@ int elevator_init(struct request_queue *q, char *name)
+ {
+ 	struct elevator_type *e = NULL;
+ 	struct elevator_queue *eq;
+-	int ret = 0;
+ 	void *data;
  
--	return blk_init_allocated_queue_node(q, rfn, lock, node_id);
-+	return q;
++	if (unlikely(q->elevator))
++		return 0;
++
+ 	INIT_LIST_HEAD(&q->queue_head);
+ 	q->last_merge = NULL;
+ 	q->end_sector = 0;
+@@ -284,7 +286,7 @@ int elevator_init(struct request_queue *q, char *name)
+ 	}
+ 
+ 	elevator_attach(q, eq, data);
+-	return ret;
++	return 0;
  }
- EXPORT_SYMBOL(blk_init_queue_node);
+ EXPORT_SYMBOL(elevator_init);
  
-@@ -592,10 +615,8 @@ blk_init_allocated_queue_node(struct request_queue *q, request_fn_proc *rfn,
- 		return NULL;
- 
- 	q->node = node_id;
--	if (blk_init_free_list(q)) {
--		kmem_cache_free(blk_requestq_cachep, q);
-+	if (blk_init_free_list(q))
- 		return NULL;
--	}
- 
- 	q->request_fn		= rfn;
- 	q->prep_rq_fn		= NULL;
