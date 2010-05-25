@@ -1,70 +1,74 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/1] block: make blk_init_free_list and elevator_init
- idempotent
-Date: Tue, 25 May 2010 13:15:15 -0400
-Message-ID: <20100525171515.GB10155@redhat.com>
-References: <1274744795-9825-1-git-send-email-snitzer@redhat.com>
- <1274744795-9825-3-git-send-email-snitzer@redhat.com>
- <4BFBB21A.3030105@ct.jp.nec.com>
- <20100525124912.GA7447@redhat.com>
- <20100525163455.GA10155@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipath kpartx_get_name mpat ...
+Date: 25 May 2010 22:51:48 -0000
+Message-ID: <20100525225148.27224.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100525163455.GA10155@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-blk_init_allocated_queue_node may fail and the caller _could_ retry.
-Accommodate the unlikely event that blk_init_allocated_queue_node is
-called on an already initialized (possibly partially) request_queue.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	bmarzins@sourceware.org	2010-05-25 22:51:43
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- block/blk-core.c |    3 +++
- block/elevator.c |    6 ++++--
- 2 files changed, 7 insertions(+), 2 deletions(-)
+Modified files:
+	multipath      : kpartx_get_name mpath_get_name multipath.dev 
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index c0179b7..2c208c3 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -467,6 +467,9 @@ static int blk_init_free_list(struct request_queue *q)
- {
- 	struct request_list *rl = &q->rq;
+Log message:
+	Mark Goodwin's patch to avoid running dm ls --exec <program>, to avoid the
+	race between multipath and dmsetup creating the device nodes.
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/kpartx_get_name.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.1&r2=1.1.2.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/mpath_get_name.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.1&r2=1.1.2.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.dev.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.13.2.1&r2=1.13.2.2
+
+--- multipath-tools/multipath/Attic/kpartx_get_name	2006/05/12 22:17:13	1.1
++++ multipath-tools/multipath/Attic/kpartx_get_name	2010/05/25 22:51:42	1.1.2.1
+@@ -25,7 +25,8 @@
+ 	exit 1
+ fi
  
-+	if (unlikely(rl->rq_pool))
-+		return 0;
-+
- 	rl->count[BLK_RW_SYNC] = rl->count[BLK_RW_ASYNC] = 0;
- 	rl->starved[BLK_RW_SYNC] = rl->starved[BLK_RW_ASYNC] = 0;
- 	rl->elvpriv = 0;
-diff --git a/block/elevator.c b/block/elevator.c
-index 0abce47..923a913 100644
---- a/block/elevator.c
-+++ b/block/elevator.c
-@@ -242,9 +242,11 @@ int elevator_init(struct request_queue *q, char *name)
- {
- 	struct elevator_type *e = NULL;
- 	struct elevator_queue *eq;
--	int ret = 0;
- 	void *data;
+-i=`/sbin/dmsetup ls --target linear --exec basename -j $1 -m $2 2> /dev/null`
++dev=`/sbin/dmsetup ls --target linear -j $1 -m $2 | sed -e 's/([ 0-9]*,[ 0-9]*)//g' 2>/dev/null`
++i=`basename $dev 2>/dev/null`
  
-+	if (unlikely(q->elevator))
-+		return 0;
-+
- 	INIT_LIST_HEAD(&q->queue_head);
- 	q->last_merge = NULL;
- 	q->end_sector = 0;
-@@ -284,7 +286,7 @@ int elevator_init(struct request_queue *q, char *name)
- 	}
+ if [ -n "$i" ] ; then
+ 	echo $i
+--- multipath-tools/multipath/Attic/mpath_get_name	2006/05/12 22:17:13	1.1
++++ multipath-tools/multipath/Attic/mpath_get_name	2010/05/25 22:51:42	1.1.2.1
+@@ -19,7 +19,8 @@
+ 	exit 1
+ fi
  
- 	elevator_attach(q, eq, data);
--	return ret;
-+	return 0;
- }
- EXPORT_SYMBOL(elevator_init);
+-i=`/sbin/dmsetup ls --target multipath --exec basename -j $1 -m $2 2> /dev/null`
++dev=`/sbin/dmsetup ls --target multipath -j $1 -m $2 | sed -e 's/([ 0-9]*,[ 0-9]*)//g' 2>/dev/null`
++i=`basename $dev 2>/dev/null`
  
+ if [ -n "$i" ] ; then
+ 	echo $i
+--- multipath-tools/multipath/Attic/multipath.dev	2006/06/28 19:29:10	1.13.2.1
++++ multipath-tools/multipath/Attic/multipath.dev	2010/05/25 22:51:42	1.13.2.2
+@@ -29,5 +29,8 @@
+ 
+ if [ "${DEVPATH:7:3}" = "dm-" -a "${ACTION}" = "add" ]; then
+ 	majmin=`awk -F ':' '{ print "-j",$1,"-m",$2 }' /sys/${DEVPATH}/dev`
+-	/sbin/dmsetup ls ${majmin} --target multipath --exec "/sbin/kpartx -a"
++	devnames=`/sbin/dmsetup ls ${majmin} --target multipath | sed -e 's/([ 0-9]*,[ 0-9]*)//g'`
++	for dev in $devnames; do
++		[ -n "$dev" ] && /sbin/kpartx -a /dev/mapper/$dev
++	done
+ fi
