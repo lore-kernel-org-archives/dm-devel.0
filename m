@@ -1,53 +1,71 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3 3/3] dm: lookup devices by path with name_to_dev_t
-Date: Mon, 24 May 2010 19:55:44 -0400
-Message-ID: <20100524235544.GB7204@redhat.com>
-References: <1274294304-30606-1-git-send-email-wad@chromium.org>
- <1274294304-30606-3-git-send-email-wad@chromium.org>
- <20100524115737.GY3991@agk-dp.fab.redhat.com>
- <AANLkTik8F43_4SRkH7XpfX5CTQ-xQ_8f3_yJTjDqSulU@mail.gmail.com>
- <20100524150729.GZ3991@agk-dp.fab.redhat.com>
- <AANLkTinlgQ5Br4vyjgvNKtHD4F3mZKwoz3siYCQyReAl@mail.gmail.com>
- <20100524233552.GA7204@redhat.com>
+From: Luca Berra <bluca@comedia.it>
+Subject: Re: add devname module aliases to allow module	on-demand
+	auto-loading
+Date: Tue, 25 May 2010 07:33:41 +0200
+Message-ID: <20100525053341.GB31345@maude.comedia.it>
+References: <1274371640.302.5.camel@yio.site>
+	<AANLkTilI3RYcybjG7b1juTa3H31ImxQI1-2R_l7q0yc1@mail.gmail.com>
+	<AANLkTinQwEqFKAiyAwVPwmzLtUXJkaOdZ0c88O_tfp-1@mail.gmail.com>
+	<201005211909.29326.knikanth@suse.de>
+	<AANLkTimGBgpqB7HEZrecv7uEis6L8b5Yv7jfD6iv_f4J@mail.gmail.com>
+	<20100521182325.GO3991@agk-dp.fab.redhat.com>
+	<AANLkTimuciWfkVwn7dKVeKL38WpMiCvgAxGx4ngAankW@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20100524233552.GA7204@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Will Drewry <wad@chromium.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+In-Reply-To: <AANLkTimuciWfkVwn7dKVeKL38WpMiCvgAxGx4ngAankW@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kay Sievers <kay.sievers@vrfy.org>
+Cc: Greg Kroah-Hartman <gregkh@suse.de>, Miklos Szeredi <miklos@szeredi.hu>, Nikanth Karthikesan <knikanth@suse.de>, Peter Rajnoha <prajnoha@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, Chris Mason <chris.mason@oracle.com>, Tigran Aivazian <tigran@aivazian.fsnet.co.uk>, "David S. Miller" <davem@davemloft.net>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, May 24 2010 at  7:35pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Fri, May 21, 2010 at 08:51:49PM +0200, Kay Sievers wrote:
+>On Fri, May 21, 2010 at 20:23, Alasdair G Kergon <agk@redhat.com> wrote:
+>> On Fri, May 21, 2010 at 03:55:21PM +0200, Kay Sievers wrote:
+>>> >> On my box without this patch:
+>>> >> =A0 dmsetup version
+>>> >> =A0 Library version: =A0 1.02.42 (2010-01-14)
+>>> >> =A0 /proc/misc: No entry for device-mapper found
+>>> >> =A0 Is device-mapper driver missing from kernel?
+>>> >> =A0 Failure to communicate with kernel device-mapper driver.
+>>
+>> (Curiously this is not an issue I remember anyone raising with me as a p=
+roblem
+>> before.)
+I am fairly sure i did report that, i even tried moving the module
+loading framework from lvm2 to device mapper, but the resulting code
+sucked too much to submit, the idea was to load device-mapper module,
+and all target modules on first use.
 
-> On Mon, May 24 2010 at 12:35pm -0400,
-> Will Drewry <wad@chromium.org> wrote:
->=20
-> > On Mon, May 24, 2010 at 10:07 AM, Alasdair G Kergon <agk@redhat.com=
-> wrote:
-> > > On Mon, May 24, 2010 at 09:44:07AM -0500, Will Drewry wrote:
-> > >> fwiw, the only reason for the copy was because |path| is a
-> > >> const in the function but not when passed to name_to_dev_t.
-> > >> I wasn't sure what the preferred practice was so I just duped
-> > >> the data needed.
-> > >
-> > > Well check that it is treated as 'const' and send a separate patc=
-h to
-> > > the maintainer to add const, perhaps? =A0If it isn't const (why w=
-ould
-> > > that be?), then yes we'd need to copy it.
-> >=20
-> > I'll cross-check the code again and send a patch out if it looks li=
-ke
-> > it is const-safe.
->=20
-> Also, it would see that name_to_dev_t is EXPORT_SYMBOL?
+>Because distros go the easy and stupid way and just load everything
+>they configured as a module. :) That is something to solve, or at
+>least avoid and hide a bit.
+In this case we were forced to preload dm-mod to work around the issue
+;)
 
-Bleh, I typed that way too quick:
-Also, it would seem that name_to_dev_t is _not_ EXPORT_SYMBOL?
+>
+>I think its all covered with this patch. :) But if yo have any better
+>idea, let us know.
 
-Regards,
-Mike
+what patch?
+
+L.
+-- =
+
+Luca Berra -- bluca@comedia.it
+         Communication Media & Services S.r.l.
+  /"\
+  \ /     ASCII RIBBON CAMPAIGN
+   X        AGAINST HTML MAIL
+  / \
