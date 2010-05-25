@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/multipath kpartx_get_name mpat ...
-Date: 25 May 2010 22:51:48 -0000
-Message-ID: <20100525225148.27224.qmail@sourceware.org>
+Subject: multipath-tools/libmultipath discovery.c
+Date: 25 May 2010 23:23:08 -0000
+Message-ID: <20100525232308.18704.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,53 +22,40 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2010-05-25 22:51:43
+Changes by:	bmarzins@sourceware.org	2010-05-25 23:23:07
 
 Modified files:
-	multipath      : kpartx_get_name mpath_get_name multipath.dev 
+	libmultipath   : discovery.c 
 
 Log message:
-	Mark Goodwin's patch to avoid running dm ls --exec <program>, to avoid the
-	race between multipath and dmsetup creating the device nodes.
+	Fix for bz #512065
+	If you can't get /sys/class/fc_transport/target%i:%i:%i/node_name, try
+	/sys/class/fc_transport/target%i:%i:%i/node_name.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/kpartx_get_name.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.1&r2=1.1.2.1
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/mpath_get_name.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.1&r2=1.1.2.1
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.dev.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.13.2.1&r2=1.13.2.2
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.28.2.7&r2=1.28.2.8
 
---- multipath-tools/multipath/Attic/kpartx_get_name	2006/05/12 22:17:13	1.1
-+++ multipath-tools/multipath/Attic/kpartx_get_name	2010/05/25 22:51:42	1.1.2.1
-@@ -25,7 +25,8 @@
- 	exit 1
- fi
+--- multipath-tools/libmultipath/discovery.c	2008/04/14 17:59:54	1.28.2.7
++++ multipath-tools/libmultipath/discovery.c	2010/05/25 23:23:07	1.28.2.8
+@@ -553,6 +553,21 @@
+ 	if (0 <= readattr(attr_path, attr_buff) && strlen(attr_buff) > 0)
+ 		strncpy(curpath->tgt_node_name, attr_buff,
+ 			strlen(attr_buff) - 1);
++	else {
++		if(safe_sprintf(attr_path,
++			"%s/class/iscsi_transport/target%i:%i:%i/target_name",
++				sysfs_path,
++				curpath->sg_id.host_no,
++				curpath->sg_id.channel,
++				curpath->sg_id.scsi_id)) {
++			condlog(0, "attr_path too small");
++			return 1;
++		}
++		if (0 <= readattr(attr_path, attr_buff) &&
++		    strlen(attr_buff) > 0)
++			strncpy(curpath->tgt_node_name, attr_buff,
++				strlen(attr_buff) - 1);
++	}
+ 	condlog(3, "tgt_node_name = %s", curpath->tgt_node_name);
  
--i=`/sbin/dmsetup ls --target linear --exec basename -j $1 -m $2 2> /dev/null`
-+dev=`/sbin/dmsetup ls --target linear -j $1 -m $2 | sed -e 's/([ 0-9]*,[ 0-9]*)//g' 2>/dev/null`
-+i=`basename $dev 2>/dev/null`
- 
- if [ -n "$i" ] ; then
- 	echo $i
---- multipath-tools/multipath/Attic/mpath_get_name	2006/05/12 22:17:13	1.1
-+++ multipath-tools/multipath/Attic/mpath_get_name	2010/05/25 22:51:42	1.1.2.1
-@@ -19,7 +19,8 @@
- 	exit 1
- fi
- 
--i=`/sbin/dmsetup ls --target multipath --exec basename -j $1 -m $2 2> /dev/null`
-+dev=`/sbin/dmsetup ls --target multipath -j $1 -m $2 | sed -e 's/([ 0-9]*,[ 0-9]*)//g' 2>/dev/null`
-+i=`basename $dev 2>/dev/null`
- 
- if [ -n "$i" ] ; then
- 	echo $i
---- multipath-tools/multipath/Attic/multipath.dev	2006/06/28 19:29:10	1.13.2.1
-+++ multipath-tools/multipath/Attic/multipath.dev	2010/05/25 22:51:42	1.13.2.2
-@@ -29,5 +29,8 @@
- 
- if [ "${DEVPATH:7:3}" = "dm-" -a "${ACTION}" = "add" ]; then
- 	majmin=`awk -F ':' '{ print "-j",$1,"-m",$2 }' /sys/${DEVPATH}/dev`
--	/sbin/dmsetup ls ${majmin} --target multipath --exec "/sbin/kpartx -a"
-+	devnames=`/sbin/dmsetup ls ${majmin} --target multipath | sed -e 's/([ 0-9]*,[ 0-9]*)//g'`
-+	for dev in $devnames; do
-+		[ -n "$dev" ] && /sbin/kpartx -a /dev/mapper/$dev
-+	done
- fi
+ 	return 0;
