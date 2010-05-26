@@ -1,16 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: how to load dm-multisnapshot [with LVM patch]
-Date: Wed, 26 May 2010 01:12:30 -0400
-Message-ID: <20100526051230.GC24702@redhat.com>
+Date: Wed, 26 May 2010 07:50:50 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1005260742340.31622@hs20-bc2-1.build.redhat.com>
 References: <AANLkTin9s-W4vvlRasZKfNqQo4r8t8hc-eE2zQTPL_jp@mail.gmail.com>
 	<AANLkTinNk5D7ojJyoBnHhMDfECB7eoYrnjQS4ptW3oVI@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: MULTIPART/MIXED;
+	BOUNDARY="279731514-1974843086-1274874627=:31622"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 In-Reply-To: <AANLkTinNk5D7ojJyoBnHhMDfECB7eoYrnjQS4ptW3oVI@mail.gmail.com>
+Content-ID: <Pine.LNX.4.64.1005260750341.31622@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,68 +20,133 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: daire.byrne@gmail.com, mpatocka <mpatocka@redhat.com>
+To: Busby <chaimvy@gmail.com>
+Cc: daire.byrne@gmail.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-SSdsbCByZXRlc3QgYW5kIHdpbGwgc2hhcmUgbXkgZmluZGluZ3MgbGF0ZXIgdG9kYXkgKHRoZSAy
-LjAyLjY0IHBhdGNoZXMKb24gbXkgd2Vic2l0ZSB3ZXJlIHJlZnJlc2hlZCBmcm9tIDIuMDIuNjMr
-IHRoYXQgd2FzIHZlcnkgY2xvc2UgdG8gdGhlCmZpbmFsIDIuMDIuNjQpOyBidXQgSSBkaWRuJ3Qg
-cmV0ZXN0IHRoZW0gYXQgdGhhdCB0aW1lKS4KCkJ1dCBJIGhhbmRlZCB0aGVzZSAyLjAyLjY0IHBh
-dGNoZXMgb2ZmIHRvIE1pa3VsYXMgYW5kIEkgaGF2ZSB0byBiZWxpZXZlCmhlJ2QgaGF2ZSBzZWVu
-IHRoaXMgaXNzdWUgd2hlbiB0ZXN0aW5nIGhpcyBmdXJ0aGVyIGRldmVsb3BtZW50LiAgVG8gbXkK
-a25vd2xlZGdlIGhlIGhhc24ndC4KCkFueXdheSwgd2UnbGwgc2VlLCBidXQgSSd2ZSBzZWVuIHNp
-bWlsYXIgZXJyb3JzIHdoZW4gSSd2ZSBjcmVhdGVkIGEKc2hhcmVkIGNvdyBMViB1c2luZyBhIHNh
-bmRib3ggbHZtMiBidWlsZCAobm90IGluc3RhbGxlZCB0byB0aGUgc3lzdGVtKS4KQW5kIHRoZW4g
-dGhlIHN5c3RlbSdzIGx2bTIgZGlkbid0IGhhdmUgbXVsdGlzbmFwc2hvdCBzdXBwb3J0LiAgSW4g
-dGhhdApzaXR1YXRpb24geW91J2xsIHNlZSB0aGUgc2FtZSB0eXBlIG9mIHVua25vd24gc2VnbWVu
-dCBlcnJvcnMgd2hlbgpydW5uaW5nIHRoZSBzeXN0ZW0ncyBsdm0yIGNvbW1hbmRzLgoKTWlrZQoK
-T24gVHVlLCBNYXkgMjUgMjAxMCBhdCAxMTo1MnBtIC0wNDAwLApCdXNieSA8Y2hhaW12eUBnbWFp
-bC5jb20+IHdyb3RlOgoKPiBIaSwKPiAgICAgIEkgaGF2ZSBkZWJ1ZyB0aGUgbHZtMi4wMi42NCAo
-d2l0aCB0aGUgc2hhcmVkLXNuYXBzaG90IHBhdGNoZXMpLgo+ICAgICAgSW4gdGhlIGxhc3QgZW1h
-aWwgSSBtZW50aW9uZWQgdGhlICdDYW5ub3QgdXBkYXRlIHZvbHVtZSBncm91cCB2ZzAwIHdpdGgK
-PiB1bmtub3duIHNlZ21lbnRzIGluIGl0IScKPiAgICAgIFRoZSBkZWJ1ZyBtZXNnOiAiIHZnX2hh
-c191bmtub3duX3NlZ21lbnRzICBmdW5jdGlvbjogc25hcHNob3QwIGhhcwo+IHVua25vd24gc2Vn
-LiIKPiAgICAgICBJIGRvbid0IGtub3cgd2hlbiB0aGUgc25hcHNob3QwIGhhcyBiZWVuIGNyZWF0
-ZWQ/d2h5IGl0cyBzZWd0eXBlCj4gdW5rb3duPwo+ICAgICAgSG9wZSBmb3IgeW91ciBoZWxwLgo+
-ICAgICAgVGhhbmsgeW91Lgo+IAo+IAo+IEJlc3QgcmVnYXJkcywKPiBCdXNieQo+IAo+IOWcqCAy
-MDEw5bm0NeaciDI05pelIOS4i+WNiDU6MDTvvIxCdXNieSA8Y2hhaW12eUBnbWFpbC5jb20+5YaZ
-6YGT77yaCj4gCj4gPiBIaSBBbGwsCj4gPgo+ID4gSSBnZXQgdGhlIHBhdGNoZXMgZnJvbToKPiA+
-IExpbnV4IGtlcm5lbCAyLjYuMzQgcGF0Y2g6Cj4gPiBodHRwOi8vcGVvcGxlLnJlZGhhdC5jb20v
-bXBhdG9ja2EvcGF0Y2hlcy9rZXJuZWwvbmV3LXNuYXBzaG90cy9yMTkvCj4gPgo+ID4gTFZNMi0y
-LjAyLjY0IHBhdGNoOgo+ID4gaHR0cDovL3Blb3BsZS5yZWRoYXQuY29tL21zbml0emVyL3BhdGNo
-ZXMvbXVsdGlzbmFwL2x2bTIvTFZNMi0yLjAyLjY0Lwo+ID4KPiA+Cj4gPgo+ID4gYnV0IHdoZW4g
-SSB1c2VkIGl0LCB0aGUgc2VnbWVudCB0eXBlIGNhbiBub3QgZmluZCwgY2FuIGFueW9uZSBoZWxw
-IG1lPwo+ID4KPiA+Cj4gPgo+ID4gW3Jvb3RAbmV3LWhvc3QtMzQgfl0jIHB2Y3JlYXRlIC9kZXYv
-c2RbYmNkZWZdCj4gPgo+ID4gW3Jvb3RAbmV3LWhvc3QtMzQgfl0jIHZnY3JlYXRlIHZnMDAgL2Rl
-di9zZFtiY2RlZl0KPiA+Cj4gPiBbcm9vdEBuZXctaG9zdC0zNCB+XSMgbHZjcmVhdGUgLUwgMTAw
-RyAtbiBsdl90ZXN0IC9kZXYvdmcwMAo+ID4KPiA+IFtyb290QG5ldy1ob3N0LTM0IH5dIyBsdmNy
-ZWF0ZSAtTCAyMDBHIC1jIDI1NiAtLXNoYXJlZHN0b3JlICBtaWt1bGFzIC1zCj4gPiAvZGV2L3Zn
-MDAvbHZfdGVzdAo+ID4KPiA+ICAgKldBUk5JTkc6IFVucmVjb2duaXNlZCBzZWdtZW50IHR5cGUg
-bXVsdGlzbmFwc2hvdCoKPiA+Cj4gPiAqICBDYW5ub3QgdXBkYXRlIHZvbHVtZSBncm91cCB2ZzAw
-IHdpdGggdW5rbm93biBzZWdtZW50cyBpbiBpdCEqCj4gPgo+ID4gW3Jvb3RAbmV3LWhvc3QtMzQg
-fl0jIGx2c2Nhbgo+ID4KPiA+IEFDVElWRSAgICAgICAgICcvZGV2L3ZnMDAvbHZfdGVzdCcgWzEw
-MC4wMCBHaUJdIGluaGVyaXQKPiA+Cj4gPiAgIGluYWN0aXZlICAgICAgICAgICcvZGV2L3ZnMDAv
-bHZfdGVzdC1zaGFyZWQnIFsyMDAuMDAgR2lCXSBpbmhlcml0Cj4gPgo+ID4gW3Jvb3RAbmV3LWhv
-c3QtMzQgfl0jIGx2Y3JlYXRlIC1zIC1uIGx2X3Rlc3Rfc3MxIC9kZXYvdmcwMC9sdl90ZXN0Cj4g
-Pgo+ID4gICAqVW5hYmxlIHRvIGNyZWF0ZSBuZXcgbG9naWNhbCB2b2x1bWUgd2l0aCBubyBleHRl
-bnRzKgo+ID4KPiA+Cj4gPgo+ID4KPiA+Cj4gPiBUaGUgZG0gbW9kdWxlcyBpbiB0aGUgc3lzdGVt
-Ogo+ID4KPiA+Cj4gPgo+ID4gW3Jvb3RAbmV3LWhvc3QtMzQgTFZNMi4yLjAyLjY0XSMgbHNtb2Qg
-fGdyZXAgZG0KPiA+IGRtX3NuYXBzaG90ICAgICAgICAgICAgMjU1ODMgIDAKPiA+IGRtX3N0b3Jl
-X2RhbmllbCAgICAgICAgMTEzMDQgIDAKPiA+IGRtX3N0b3JlX21pa3VsYXMgICAgICAgNDMyNjUg
-IDAKPiA+IGRtX211bHRpc25hcHNob3QgICAgICAgMjAyNzYgIDIgZG1fc3RvcmVfZGFuaWVsLGRt
-X3N0b3JlX21pa3VsYXMKPiA+IGRtX21pcnJvciAgICAgICAgICAgICAgMTE1NjQgIDAKPiA+IGRt
-X211bHRpcGF0aCAgICAgICAgICAgMTQ1OTQgIDAKPiA+IHNjc2lfZGggICAgICAgICAgICAgICAg
-IDU0ODAgIDEgZG1fbXVsdGlwYXRoCj4gPiBkbV9yZWdpb25faGFzaCAgICAgICAgICA4MjMzICAx
-IGRtX21pcnJvcgo+ID4gZG1fbG9nICAgICAgICAgICAgICAgICAgODE1OCAgMiBkbV9taXJyb3Is
-ZG1fcmVnaW9uX2hhc2gKPiA+IGRtX21vZCAgICAgICAgICAgICAgICAgNTg4NTUgIDkgZG1fc25h
-cHNob3QsKgo+ID4gZG1fc3RvcmVfZGFuaWVsLGRtX3N0b3JlX21pa3VsYXMsZG1fbXVsdGlzbmFw
-c2hvdCoKPiA+ICxkbV9taXJyb3IsZG1fbXVsdGlwYXRoLGRtX2xvZwo+ID4KPiA+Cj4gPgo+ID4K
-PiA+Cj4gPiAgICAgICAgIEkganVzdCB3YW50IHRvIHVzZSB0aGUgbXVsdGlzbmFwIGJ5IExWTTIg
-Y29tbWFuZC4gQnV0IEkgZG9uJ3Qga25vdwo+ID4gaXMgdGhlcmUgYW55IGRvY3VtZW50IGFib3V0
-IEhPVy1UTz8KPiA+Cj4gPiAgICAgICAgIFRoYW5rIHlvdSB2ZXJ5IG11Y2guCj4gPgo+ID4KPiA+
-Cj4gPgo+ID4KPiA+Cj4gPgo+ID4gQmVzdCByZWdhcmRzLAo+ID4KPiA+IEJ1c2J5Cj4gPgoKPiAt
-LQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBodHRwczov
-L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
-bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--279731514-1974843086-1274874627=:31622
+Content-Type: TEXT/PLAIN; CHARSET=X-UNKNOWN
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-ID: <Pine.LNX.4.64.1005260750342.31622@hs20-bc2-1.build.redhat.com>
+
+On Wed, 26 May 2010, Busby wrote:
+
+> Hi,
+>      I have debug the lvm2.02.64 (with the shared-snapshot patches).
+>      In the last email I mentioned the 'Cannot update volume group vg00 w=
+ith
+> unknown segments in it!'
+>      The debug mesg: " vg_has_unknown_segments  function: snapshot0 has
+> unknown seg."
+>       I don't know when the snapshot0 has been created?why its segtype
+> unkown?
+>      Hope for your help.
+>      Thank you.
+>
+> Best regards,
+> Busby
+
+Hi
+
+I think that you didn't run aclocal and autoconf before ./configure and=20
+make. So the multisnapshot module wasn't compiled in.
+
+Do make distclean, then aclocal, autoconf, ./configure, make
+
+Mikulas
+
+> =D4=DA 2010=C4=EA5=D4=C224=C8=D5 =CF=C2=CE=E75:04=A3=ACBusby <chaimvy@gma=
+il.com>=D0=B4=B5=C0=A3=BA
+>=20
+> > Hi All,
+> >
+> > I get the patches from:
+> > Linux kernel 2.6.34 patch:
+> > http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/r19/
+> >
+> > LVM2-2.02.64 patch:
+> > http://people.redhat.com/msnitzer/patches/multisnap/lvm2/LVM2-2.02.64/
+> >
+> >
+> >
+> > but when I used it, the segment type can not find, can anyone help me?
+> >
+> >
+> >
+> > [root@new-host-34 ~]# pvcreate /dev/sd[bcdef]
+> >
+> > [root@new-host-34 ~]# vgcreate vg00 /dev/sd[bcdef]
+> >
+> > [root@new-host-34 ~]# lvcreate -L 100G -n lv_test /dev/vg00
+> >
+> > [root@new-host-34 ~]# lvcreate -L 200G -c 256 --sharedstore  mikulas -s
+> > /dev/vg00/lv_test
+> >
+> >   *WARNING: Unrecognised segment type multisnapshot*
+> >
+> > *  Cannot update volume group vg00 with unknown segments in it!*
+> >
+> > [root@new-host-34 ~]# lvscan
+> >
+> > ACTIVE         '/dev/vg00/lv_test' [100.00 GiB] inherit
+> >
+> >   inactive          '/dev/vg00/lv_test-shared' [200.00 GiB] inherit
+> >
+> > [root@new-host-34 ~]# lvcreate -s -n lv_test_ss1 /dev/vg00/lv_test
+> >
+> >   *Unable to create new logical volume with no extents*
+> >
+> >
+> >
+> >
+> >
+> > The dm modules in the system:
+> >
+> >
+> >
+> > [root@new-host-34 LVM2.2.02.64]# lsmod |grep dm
+> > dm_snapshot            25583  0
+> > dm_store_daniel        11304  0
+> > dm_store_mikulas       43265  0
+> > dm_multisnapshot       20276  2 dm_store_daniel,dm_store_mikulas
+> > dm_mirror              11564  0
+> > dm_multipath           14594  0
+> > scsi_dh                 5480  1 dm_multipath
+> > dm_region_hash          8233  1 dm_mirror
+> > dm_log                  8158  2 dm_mirror,dm_region_hash
+> > dm_mod                 58855  9 dm_snapshot,*
+> > dm_store_daniel,dm_store_mikulas,dm_multisnapshot*
+> > ,dm_mirror,dm_multipath,dm_log
+> >
+> >
+> >
+> >
+> >
+> >         I just want to use the multisnap by LVM2 command. But I don't k=
+now
+> > is there any document about HOW-TO?
+> >
+> >         Thank you very much.
+> >
+> >
+> >
+> >
+> >
+> >
+> >
+> > Best regards,
+> >
+> > Busby
+> >
+>=20
+--279731514-1974843086-1274874627=:31622
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--279731514-1974843086-1274874627=:31622--
