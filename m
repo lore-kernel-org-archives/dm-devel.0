@@ -1,103 +1,87 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2] block: avoid unconditionally freeing previously allocated
- request_queue
-Date: Wed, 26 May 2010 00:52:20 -0400
-Message-ID: <20100526045219.GB24702@redhat.com>
-References: <1274744795-9825-1-git-send-email-snitzer@redhat.com>
- <1274744795-9825-3-git-send-email-snitzer@redhat.com>
- <4BFBB21A.3030105@ct.jp.nec.com>
- <20100525124912.GA7447@redhat.com>
- <20100525163455.GA10155@redhat.com>
+Subject: Re: how to load dm-multisnapshot [with LVM patch]
+Date: Wed, 26 May 2010 01:12:30 -0400
+Message-ID: <20100526051230.GC24702@redhat.com>
+References: <AANLkTin9s-W4vvlRasZKfNqQo4r8t8hc-eE2zQTPL_jp@mail.gmail.com>
+	<AANLkTinNk5D7ojJyoBnHhMDfECB7eoYrnjQS4ptW3oVI@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20100525163455.GA10155@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, linux-kernel@vger.kernel.org
+In-Reply-To: <AANLkTinNk5D7ojJyoBnHhMDfECB7eoYrnjQS4ptW3oVI@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: daire.byrne@gmail.com, mpatocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-On blk_init_allocated_queue_node failure, only free request_queue if
-it is wasn't previously allocated outside the block layer
-(e.g. blk_init_queue_node was blk_init_allocated_queue_node caller).
-
-This addresses an interface bug introduced by the following commit:
-01effb0 block: allow initialization of previously allocated request_queue
-
-Otherwise the request_queue may be free'd out from underneath a caller
-that is managing the request_queue directly (e.g. caller uses
-blk_alloc_queue + blk_init_allocated_queue_node).
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- block/blk-core.c |   33 +++++++++++++++++++++++++++------
- 1 files changed, 27 insertions(+), 6 deletions(-)
-
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 3bc5579..c0cdafd 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -528,6 +528,25 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- }
- EXPORT_SYMBOL(blk_alloc_queue_node);
- 
-+static void blk_free_partial_queue(struct request_queue *q)
-+{
-+	struct request_list *rl;
-+
-+	if (!q)
-+		return;
-+
-+	/* Was blk_init_free_list the cause for failure? */
-+	rl = &q->rq;
-+	if (!rl->rq_pool) {
-+		kmem_cache_free(blk_requestq_cachep, q);
-+		return;
-+	}
-+
-+	/* Or was elevator_init? */
-+	if (!q->elevator)
-+		blk_put_queue(q);
-+}
-+
- /**
-  * blk_init_queue  - prepare a request queue for use with a block device
-  * @rfn:  The function to be called to process requests that have been
-@@ -570,9 +589,14 @@ EXPORT_SYMBOL(blk_init_queue);
- struct request_queue *
- blk_init_queue_node(request_fn_proc *rfn, spinlock_t *lock, int node_id)
- {
--	struct request_queue *q = blk_alloc_queue_node(GFP_KERNEL, node_id);
-+	struct request_queue *uninit_q, *q;
-+
-+	uninit_q = blk_alloc_queue_node(GFP_KERNEL, node_id);
-+	q = blk_init_allocated_queue_node(uninit_q, rfn, lock, node_id);
-+	if (!q)
-+		blk_free_partial_queue(uninit_q);
- 
--	return blk_init_allocated_queue_node(q, rfn, lock, node_id);
-+	return q;
- }
- EXPORT_SYMBOL(blk_init_queue_node);
- 
-@@ -592,10 +616,8 @@ blk_init_allocated_queue_node(struct request_queue *q, request_fn_proc *rfn,
- 		return NULL;
- 
- 	q->node = node_id;
--	if (blk_init_free_list(q)) {
--		kmem_cache_free(blk_requestq_cachep, q);
-+	if (blk_init_free_list(q))
- 		return NULL;
--	}
- 
- 	q->request_fn		= rfn;
- 	q->prep_rq_fn		= NULL;
-@@ -618,7 +640,6 @@ blk_init_allocated_queue_node(struct request_queue *q, request_fn_proc *rfn,
- 		return q;
- 	}
- 
--	blk_put_queue(q);
- 	return NULL;
- }
- EXPORT_SYMBOL(blk_init_allocated_queue_node);
+SSdsbCByZXRlc3QgYW5kIHdpbGwgc2hhcmUgbXkgZmluZGluZ3MgbGF0ZXIgdG9kYXkgKHRoZSAy
+LjAyLjY0IHBhdGNoZXMKb24gbXkgd2Vic2l0ZSB3ZXJlIHJlZnJlc2hlZCBmcm9tIDIuMDIuNjMr
+IHRoYXQgd2FzIHZlcnkgY2xvc2UgdG8gdGhlCmZpbmFsIDIuMDIuNjQpOyBidXQgSSBkaWRuJ3Qg
+cmV0ZXN0IHRoZW0gYXQgdGhhdCB0aW1lKS4KCkJ1dCBJIGhhbmRlZCB0aGVzZSAyLjAyLjY0IHBh
+dGNoZXMgb2ZmIHRvIE1pa3VsYXMgYW5kIEkgaGF2ZSB0byBiZWxpZXZlCmhlJ2QgaGF2ZSBzZWVu
+IHRoaXMgaXNzdWUgd2hlbiB0ZXN0aW5nIGhpcyBmdXJ0aGVyIGRldmVsb3BtZW50LiAgVG8gbXkK
+a25vd2xlZGdlIGhlIGhhc24ndC4KCkFueXdheSwgd2UnbGwgc2VlLCBidXQgSSd2ZSBzZWVuIHNp
+bWlsYXIgZXJyb3JzIHdoZW4gSSd2ZSBjcmVhdGVkIGEKc2hhcmVkIGNvdyBMViB1c2luZyBhIHNh
+bmRib3ggbHZtMiBidWlsZCAobm90IGluc3RhbGxlZCB0byB0aGUgc3lzdGVtKS4KQW5kIHRoZW4g
+dGhlIHN5c3RlbSdzIGx2bTIgZGlkbid0IGhhdmUgbXVsdGlzbmFwc2hvdCBzdXBwb3J0LiAgSW4g
+dGhhdApzaXR1YXRpb24geW91J2xsIHNlZSB0aGUgc2FtZSB0eXBlIG9mIHVua25vd24gc2VnbWVu
+dCBlcnJvcnMgd2hlbgpydW5uaW5nIHRoZSBzeXN0ZW0ncyBsdm0yIGNvbW1hbmRzLgoKTWlrZQoK
+T24gVHVlLCBNYXkgMjUgMjAxMCBhdCAxMTo1MnBtIC0wNDAwLApCdXNieSA8Y2hhaW12eUBnbWFp
+bC5jb20+IHdyb3RlOgoKPiBIaSwKPiAgICAgIEkgaGF2ZSBkZWJ1ZyB0aGUgbHZtMi4wMi42NCAo
+d2l0aCB0aGUgc2hhcmVkLXNuYXBzaG90IHBhdGNoZXMpLgo+ICAgICAgSW4gdGhlIGxhc3QgZW1h
+aWwgSSBtZW50aW9uZWQgdGhlICdDYW5ub3QgdXBkYXRlIHZvbHVtZSBncm91cCB2ZzAwIHdpdGgK
+PiB1bmtub3duIHNlZ21lbnRzIGluIGl0IScKPiAgICAgIFRoZSBkZWJ1ZyBtZXNnOiAiIHZnX2hh
+c191bmtub3duX3NlZ21lbnRzICBmdW5jdGlvbjogc25hcHNob3QwIGhhcwo+IHVua25vd24gc2Vn
+LiIKPiAgICAgICBJIGRvbid0IGtub3cgd2hlbiB0aGUgc25hcHNob3QwIGhhcyBiZWVuIGNyZWF0
+ZWQ/d2h5IGl0cyBzZWd0eXBlCj4gdW5rb3duPwo+ICAgICAgSG9wZSBmb3IgeW91ciBoZWxwLgo+
+ICAgICAgVGhhbmsgeW91Lgo+IAo+IAo+IEJlc3QgcmVnYXJkcywKPiBCdXNieQo+IAo+IOWcqCAy
+MDEw5bm0NeaciDI05pelIOS4i+WNiDU6MDTvvIxCdXNieSA8Y2hhaW12eUBnbWFpbC5jb20+5YaZ
+6YGT77yaCj4gCj4gPiBIaSBBbGwsCj4gPgo+ID4gSSBnZXQgdGhlIHBhdGNoZXMgZnJvbToKPiA+
+IExpbnV4IGtlcm5lbCAyLjYuMzQgcGF0Y2g6Cj4gPiBodHRwOi8vcGVvcGxlLnJlZGhhdC5jb20v
+bXBhdG9ja2EvcGF0Y2hlcy9rZXJuZWwvbmV3LXNuYXBzaG90cy9yMTkvCj4gPgo+ID4gTFZNMi0y
+LjAyLjY0IHBhdGNoOgo+ID4gaHR0cDovL3Blb3BsZS5yZWRoYXQuY29tL21zbml0emVyL3BhdGNo
+ZXMvbXVsdGlzbmFwL2x2bTIvTFZNMi0yLjAyLjY0Lwo+ID4KPiA+Cj4gPgo+ID4gYnV0IHdoZW4g
+SSB1c2VkIGl0LCB0aGUgc2VnbWVudCB0eXBlIGNhbiBub3QgZmluZCwgY2FuIGFueW9uZSBoZWxw
+IG1lPwo+ID4KPiA+Cj4gPgo+ID4gW3Jvb3RAbmV3LWhvc3QtMzQgfl0jIHB2Y3JlYXRlIC9kZXYv
+c2RbYmNkZWZdCj4gPgo+ID4gW3Jvb3RAbmV3LWhvc3QtMzQgfl0jIHZnY3JlYXRlIHZnMDAgL2Rl
+di9zZFtiY2RlZl0KPiA+Cj4gPiBbcm9vdEBuZXctaG9zdC0zNCB+XSMgbHZjcmVhdGUgLUwgMTAw
+RyAtbiBsdl90ZXN0IC9kZXYvdmcwMAo+ID4KPiA+IFtyb290QG5ldy1ob3N0LTM0IH5dIyBsdmNy
+ZWF0ZSAtTCAyMDBHIC1jIDI1NiAtLXNoYXJlZHN0b3JlICBtaWt1bGFzIC1zCj4gPiAvZGV2L3Zn
+MDAvbHZfdGVzdAo+ID4KPiA+ICAgKldBUk5JTkc6IFVucmVjb2duaXNlZCBzZWdtZW50IHR5cGUg
+bXVsdGlzbmFwc2hvdCoKPiA+Cj4gPiAqICBDYW5ub3QgdXBkYXRlIHZvbHVtZSBncm91cCB2ZzAw
+IHdpdGggdW5rbm93biBzZWdtZW50cyBpbiBpdCEqCj4gPgo+ID4gW3Jvb3RAbmV3LWhvc3QtMzQg
+fl0jIGx2c2Nhbgo+ID4KPiA+IEFDVElWRSAgICAgICAgICcvZGV2L3ZnMDAvbHZfdGVzdCcgWzEw
+MC4wMCBHaUJdIGluaGVyaXQKPiA+Cj4gPiAgIGluYWN0aXZlICAgICAgICAgICcvZGV2L3ZnMDAv
+bHZfdGVzdC1zaGFyZWQnIFsyMDAuMDAgR2lCXSBpbmhlcml0Cj4gPgo+ID4gW3Jvb3RAbmV3LWhv
+c3QtMzQgfl0jIGx2Y3JlYXRlIC1zIC1uIGx2X3Rlc3Rfc3MxIC9kZXYvdmcwMC9sdl90ZXN0Cj4g
+Pgo+ID4gICAqVW5hYmxlIHRvIGNyZWF0ZSBuZXcgbG9naWNhbCB2b2x1bWUgd2l0aCBubyBleHRl
+bnRzKgo+ID4KPiA+Cj4gPgo+ID4KPiA+Cj4gPiBUaGUgZG0gbW9kdWxlcyBpbiB0aGUgc3lzdGVt
+Ogo+ID4KPiA+Cj4gPgo+ID4gW3Jvb3RAbmV3LWhvc3QtMzQgTFZNMi4yLjAyLjY0XSMgbHNtb2Qg
+fGdyZXAgZG0KPiA+IGRtX3NuYXBzaG90ICAgICAgICAgICAgMjU1ODMgIDAKPiA+IGRtX3N0b3Jl
+X2RhbmllbCAgICAgICAgMTEzMDQgIDAKPiA+IGRtX3N0b3JlX21pa3VsYXMgICAgICAgNDMyNjUg
+IDAKPiA+IGRtX211bHRpc25hcHNob3QgICAgICAgMjAyNzYgIDIgZG1fc3RvcmVfZGFuaWVsLGRt
+X3N0b3JlX21pa3VsYXMKPiA+IGRtX21pcnJvciAgICAgICAgICAgICAgMTE1NjQgIDAKPiA+IGRt
+X211bHRpcGF0aCAgICAgICAgICAgMTQ1OTQgIDAKPiA+IHNjc2lfZGggICAgICAgICAgICAgICAg
+IDU0ODAgIDEgZG1fbXVsdGlwYXRoCj4gPiBkbV9yZWdpb25faGFzaCAgICAgICAgICA4MjMzICAx
+IGRtX21pcnJvcgo+ID4gZG1fbG9nICAgICAgICAgICAgICAgICAgODE1OCAgMiBkbV9taXJyb3Is
+ZG1fcmVnaW9uX2hhc2gKPiA+IGRtX21vZCAgICAgICAgICAgICAgICAgNTg4NTUgIDkgZG1fc25h
+cHNob3QsKgo+ID4gZG1fc3RvcmVfZGFuaWVsLGRtX3N0b3JlX21pa3VsYXMsZG1fbXVsdGlzbmFw
+c2hvdCoKPiA+ICxkbV9taXJyb3IsZG1fbXVsdGlwYXRoLGRtX2xvZwo+ID4KPiA+Cj4gPgo+ID4K
+PiA+Cj4gPiAgICAgICAgIEkganVzdCB3YW50IHRvIHVzZSB0aGUgbXVsdGlzbmFwIGJ5IExWTTIg
+Y29tbWFuZC4gQnV0IEkgZG9uJ3Qga25vdwo+ID4gaXMgdGhlcmUgYW55IGRvY3VtZW50IGFib3V0
+IEhPVy1UTz8KPiA+Cj4gPiAgICAgICAgIFRoYW5rIHlvdSB2ZXJ5IG11Y2guCj4gPgo+ID4KPiA+
+Cj4gPgo+ID4KPiA+Cj4gPgo+ID4gQmVzdCByZWdhcmRzLAo+ID4KPiA+IEJ1c2J5Cj4gPgoKPiAt
+LQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJlZGhhdC5jb20KPiBodHRwczov
+L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwKCi0tCmRtLWRldmVsIG1h
+aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
+bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
