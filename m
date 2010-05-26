@@ -1,61 +1,59 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath discovery.c
-Date: 25 May 2010 23:23:08 -0000
-Message-ID: <20100525232308.18704.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH] block: avoid unconditionally freeing previously allocated
+ request_queue
+Date: Wed, 26 May 2010 11:37:30 +0900
+Message-ID: <4BFC896A.6050306@ct.jp.nec.com>
+References: <1274744795-9825-1-git-send-email-snitzer@redhat.com> <1274744795-9825-3-git-send-email-snitzer@redhat.com> <4BFBB21A.3030105@ct.jp.nec.com> <20100525124912.GA7447@redhat.com> <20100525163455.GA10155@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20100525163455.GA10155@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <jens.axboe@oracle.com>, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2010-05-25 23:23:07
+Hi Mike,
 
-Modified files:
-	libmultipath   : discovery.c 
+On 05/26/2010 01:34 AM +0900, Mike Snitzer wrote:
+> Mike Snitzer <snitzer@redhat.com> wrote:
+>> Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+>>>> +/*
+>>>> + * Fully initialize a request-based queue (->elevator, ->request_fn, etc).
+>>>> + */
+>>>> +static int dm_init_request_based_queue(struct mapped_device *md)
+>>>> +{
+>>>> +	struct request_queue *q = NULL;
+>>>> +
+>>>> +	/* Avoid re-initializing the queue if already fully initialized */
+>>>> +	if (!md->queue->elevator) {
+>>>> +		/* Fully initialize the queue */
+>>>> +		q = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
+>>>> +		if (!q)
+>>>> +			return 0;
+>>>
+>>> When blk_init_allocated_queue() fails, the block-layer seems not to
+>>> guarantee that the queue is still available.
+>>
+>> Ouch, yes this portion of blk_init_allocated_queue_node() is certainly
+>> problematic:
+>>
+>>         if (blk_init_free_list(q)) {
+>>                 kmem_cache_free(blk_requestq_cachep, q);
+>>                 return NULL;
+>>         }
 
-Log message:
-	Fix for bz #512065
-	If you can't get /sys/class/fc_transport/target%i:%i:%i/node_name, try
-	/sys/class/fc_transport/target%i:%i:%i/node_name.
+Not only that.  The blk_put_queue() in blk_init_allocated_queue_node()
+will also free the queue:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.28.2.7&r2=1.28.2.8
+	if (!elevator_init(q, NULL)) {
+		blk_queue_congestion_threshold(q);
+		return q;
+	}
 
---- multipath-tools/libmultipath/discovery.c	2008/04/14 17:59:54	1.28.2.7
-+++ multipath-tools/libmultipath/discovery.c	2010/05/25 23:23:07	1.28.2.8
-@@ -553,6 +553,21 @@
- 	if (0 <= readattr(attr_path, attr_buff) && strlen(attr_buff) > 0)
- 		strncpy(curpath->tgt_node_name, attr_buff,
- 			strlen(attr_buff) - 1);
-+	else {
-+		if(safe_sprintf(attr_path,
-+			"%s/class/iscsi_transport/target%i:%i:%i/target_name",
-+				sysfs_path,
-+				curpath->sg_id.host_no,
-+				curpath->sg_id.channel,
-+				curpath->sg_id.scsi_id)) {
-+			condlog(0, "attr_path too small");
-+			return 1;
-+		}
-+		if (0 <= readattr(attr_path, attr_buff) &&
-+		    strlen(attr_buff) > 0)
-+			strncpy(curpath->tgt_node_name, attr_buff,
-+				strlen(attr_buff) - 1);
-+	}
- 	condlog(3, "tgt_node_name = %s", curpath->tgt_node_name);
- 
- 	return 0;
+	blk_put_queue(q);
+	return NULL;
+
+Thanks,
+Kiyoshi Ueda
