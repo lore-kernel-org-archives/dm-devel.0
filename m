@@ -1,16 +1,13 @@
-From: Anselm Busse <abusse@cs.tu-berlin.de>
-Subject: Re: [PATCH v3 2/3] init: boot to device-mapper targets
-	without an initr*
-Date: Thu, 27 May 2010 09:38:17 +0200
-Message-ID: <E14718F3-E489-4921-8A5D-FAFCF2C8F8FA@cs.tu-berlin.de>
-References: <1274294304-30606-1-git-send-email-wad@chromium.org>
-	<1274294304-30606-2-git-send-email-wad@chromium.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v4 0/2] dm: restrict conflicting table loads and
+	improve queue initialization
+Date: Thu, 27 May 2010 08:47:47 -0400
+Message-ID: <1274964469-22289-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v1078)
+Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1274294304-30606-2-git-send-email-wad@chromium.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,19 +17,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-> An example dm-linear root with no uuid may look like:
-> 
-> root=/dev/dm-0  dm="lroot none 0, 0 4096 linear /dev/ubdb 0, 4096 4096 linear /dv/ubdc 0"
-> 
-> Once udev is started, /dev/dm-0 will become /dev/mapper/lroot.
+A mapped_device now has a specific immutable type (md->type) that is
+set during the initial table_load (see: patch 1/2).
 
-Hi,
+The DM device's request_queue will only have an elevator allocated and
+exposed via sysfs if it is request-based (see: patch 2/2).
 
-I'm having the problem that the device - for example - won't come available at "/dev/mapper/lroot" but at "/dev/mapper/lroot ". There is an additional space at the end of the name, which is...lets say not so good. The problem is exists already in the dm_setup_args.name field, so I think is a problem parsing the arguments.
+Please see the individual patch headers for more details.
 
-I'm new around here, so I don't know how things work. Should I look into the problem myself and post a fix, or will the author of the patch?
+This patchset is based on agk's DM "editing" tree:
+http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
+(apply all patches listed in the series file up to NEXT_PATCHES_END)
 
-Anselm
+This patchset also depends on the following linux-2.6-block.git
+'for-linus' branch commits:
+01effb0 block: allow initialization of previously allocated request_queue
+e36f724 block: Adjust elv_iosched_show to return "none" for bio-based DM
+
+I've made a full quilt series available here (builds on 2.6.34):
+http://people.redhat.com/msnitzer/patches/dm-queue-init/latest/
+
+I welcome all comments/review.
+
+v4 change:
+- dm_set_md_type takes a specific unsigned type rather than dm_table*
+
+v3 changes:
+- reduce table_load's md->type_lock protected critical section
+- only call dm_setup_md_queue on first table load
+  - simplified dm_setup_md_queue as a result
+- use existing DM_TYPE_* definitions instead of duplicating them
+- eliminate overly verbose comments as the code speaks for itself much
+  more clearly
+
+v2 changes:
+- remove do_resume and table_clear interlock
+- rebase to agk's latest "editing" tree
+- drop the dm_get_verified_mdptr and find_device_noinit patches that
+  were at the end of v1; can revisit that code duplication cleanup later
+
+Mike Snitzer (2):
+  dm: prevent table type changes after initial table load
+  dm: only initialize full request_queue for request-based device
+
+ drivers/md/dm-ioctl.c |   24 +++++++++
+ drivers/md/dm.c       |  131 +++++++++++++++++++++++++++++++++++++------------
+ drivers/md/dm.h       |    7 +++
+ 3 files changed, 130 insertions(+), 32 deletions(-)
