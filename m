@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v4 1/2] dm: prevent table type changes after
-	initial table load
-Date: Thu, 27 May 2010 08:47:48 -0400
-Message-ID: <1274964469-22289-2-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v4 2/2 "v11"] dm: only initialize full
+	request_queue for request-based device
+Date: Thu, 27 May 2010 08:47:49 -0400
+Message-ID: <1274964469-22289-3-git-send-email-snitzer@redhat.com>
 References: <1274964469-22289-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,141 +23,196 @@ To: dm-devel@redhat.com
 Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Before table_load() stages an inactive table atomically check if its
-type conflicts with a previously established device type (md->type).
+Allocate a minimalist request_queue structure initially (needed for both
+bio and request-based DM).  A bio-based DM device no longer defaults to
+having a fully initialized request_queue (request_fn, elevator, etc).
+So bio-based DM devices no longer register elevator sysfs attributes
+('iosched/' tree or 'scheduler' other than "none").
 
-Introduce 'type_lock' in mapped_device structure and use it to protect
-md->type access.  table_load() sets md->type without concern for:
-- another table_load() racing to set conflicting md->type.
+Initialization of a full request_queue (request_fn, elevator, etc) is
+deferred until it is known that the DM device is request-based -- at the
+end of the table load sequence.
+
+Factor DM device's request_queue initialization:
+- common to both request-based and bio-based into dm_init_md_queue().
+- specific to request-based into dm_init_request_based_queue().
+
+md->type_lock is also used to protect md->queue during table_load().
+md->queue is setup without concern for:
+- another table_load() racing to setup conflicting queue state.
 - do_resume() making a conflicting table live.
-
-Allowed transitions:
-DM_TYPE_NONE => DM_TYPE_BIO_BASED
-DM_TYPE_NONE => DM_TYPE_REQUEST_BASED
-
-Once a table load occurs the DM device's type is completely immutable.
-
-This prevents a table reload from switching the inactive table directly
-to a conflicting type (even if the table is explicitly cleared before
-load).
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Acked-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 ---
- drivers/md/dm-ioctl.c |   15 +++++++++++++++
- drivers/md/dm.c       |   37 ++++++++++++++++++++++++++++++-------
- drivers/md/dm.h       |    5 +++++
- 3 files changed, 50 insertions(+), 7 deletions(-)
+ drivers/md/dm-ioctl.c |   11 +++++
+ drivers/md/dm.c       |   93 ++++++++++++++++++++++++++++++++++++--------------
+ drivers/md/dm.h       |    2 +
+ 3 files changed, 79 insertions(+), 27 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-ioctl.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-ioctl.c
 +++ linux-2.6/drivers/md/dm-ioctl.c
-@@ -1176,6 +1176,21 @@ static int table_load(struct dm_ioctl *p
+@@ -1176,11 +1176,20 @@ static int table_load(struct dm_ioctl *p
  		goto out;
  	}
  
-+	/* Protect md->type against concurrent table loads. */
-+	dm_lock_md_type(md);
-+	if (dm_get_md_type(md) == DM_TYPE_NONE) {
-+		/* initial table load, set md's type based on table's type */
-+		dm_set_md_type(md, dm_table_get_type(t));
-+	} else if (dm_get_md_type(md) != dm_table_get_type(t)) {
-+		DMWARN("can't change device type after initial table load.");
-+		dm_table_destroy(t);
-+		dm_unlock_md_type(md);
-+		r = -EINVAL;
-+		goto out;
-+	}
-+	dm_unlock_md_type(md);
+-	/* Protect md->type against concurrent table loads. */
++	/* Protect md->type and md->queue against concurrent table loads. */
+ 	dm_lock_md_type(md);
+ 	if (dm_get_md_type(md) == DM_TYPE_NONE) {
+ 		/* initial table load, set md's type based on table's type */
+ 		dm_set_md_type(md, dm_table_get_type(t));
 +
-+	/* stage inactive table */
- 	down_write(&_hash_lock);
- 	hc = dm_get_mdptr(md);
- 	if (!hc || hc->md != md) {
++		/* setup md->queue to reflect md's type (may block) */
++		r = dm_setup_md_queue(md);
++		if (r) {
++			DMWARN("unable to setup device queue for this table.");
++			dm_table_destroy(t);
++			dm_unlock_md_type(md);
++			goto out;
++		}
+ 	} else if (dm_get_md_type(md) != dm_table_get_type(t)) {
+ 		DMWARN("can't change device type after initial table load.");
+ 		dm_table_destroy(t);
 Index: linux-2.6/drivers/md/dm.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm.c
 +++ linux-2.6/drivers/md/dm.c
-@@ -123,6 +123,10 @@ struct mapped_device {
- 	unsigned long flags;
+@@ -124,7 +124,7 @@ struct mapped_device {
  
  	struct request_queue *queue;
-+	unsigned type;
-+	/* Protect type against concurrent access. */
-+	struct mutex type_lock;
-+
+ 	unsigned type;
+-	/* Protect type against concurrent access. */
++	/* Protect queue and type against concurrent access. */
+ 	struct mutex type_lock;
+ 
  	struct gendisk *disk;
- 	char name[16];
+@@ -1853,6 +1853,28 @@ static const struct block_device_operati
+ static void dm_wq_work(struct work_struct *work);
+ static void dm_rq_barrier_work(struct work_struct *work);
  
-@@ -1874,8 +1878,10 @@ static struct mapped_device *alloc_dev(i
- 	if (r < 0)
- 		goto bad_minor;
++static void dm_init_md_queue(struct mapped_device *md)
++{
++	/*
++	 * Request-based dm devices cannot be stacked on top of bio-based dm
++	 * devices.  The type of this dm device has not been decided yet.
++	 * The type is decided at the first table loading time.
++	 * To prevent problematic device stacking, clear the queue flag
++	 * for request stacking support until then.
++	 *
++	 * This queue is new, so no concurrency on the queue_flags.
++	 */
++	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
++
++	md->queue->queuedata = md;
++	md->queue->backing_dev_info.congested_fn = dm_any_congested;
++	md->queue->backing_dev_info.congested_data = md;
++	blk_queue_make_request(md->queue, dm_request);
++	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
++	md->queue->unplug_fn = dm_unplug_all;
++	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
++}
++
+ /*
+  * Allocate and initialise a blank device with a given minor.
+  */
+@@ -1892,34 +1914,11 @@ static struct mapped_device *alloc_dev(i
+ 	INIT_LIST_HEAD(&md->uevent_list);
+ 	spin_lock_init(&md->uevent_lock);
  
-+	md->type = DM_TYPE_NONE;
- 	init_rwsem(&md->io_lock);
- 	mutex_init(&md->suspend_lock);
-+	mutex_init(&md->type_lock);
- 	spin_lock_init(&md->deferred_lock);
- 	spin_lock_init(&md->barrier_error_lock);
- 	rwlock_init(&md->map_lock);
-@@ -2128,6 +2134,30 @@ int dm_create(int minor, struct mapped_d
- 	return 0;
+-	md->queue = blk_init_queue(dm_request_fn, NULL);
++	md->queue = blk_alloc_queue(GFP_KERNEL);
+ 	if (!md->queue)
+ 		goto bad_queue;
+ 
+-	/*
+-	 * Request-based dm devices cannot be stacked on top of bio-based dm
+-	 * devices.  The type of this dm device has not been decided yet,
+-	 * although we initialized the queue using blk_init_queue().
+-	 * The type is decided at the first table loading time.
+-	 * To prevent problematic device stacking, clear the queue flag
+-	 * for request stacking support until then.
+-	 *
+-	 * This queue is new, so no concurrency on the queue_flags.
+-	 */
+-	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
+-	md->saved_make_request_fn = md->queue->make_request_fn;
+-	md->queue->queuedata = md;
+-	md->queue->backing_dev_info.congested_fn = dm_any_congested;
+-	md->queue->backing_dev_info.congested_data = md;
+-	blk_queue_make_request(md->queue, dm_request);
+-	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
+-	md->queue->unplug_fn = dm_unplug_all;
+-	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
+-	blk_queue_softirq_done(md->queue, dm_softirq_done);
+-	blk_queue_prep_rq(md->queue, dm_prep_fn);
+-	blk_queue_lld_busy(md->queue, dm_lld_busy);
+-	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN_FLUSH,
+-			  dm_rq_prepare_flush);
++	dm_init_md_queue(md);
+ 
+ 	md->disk = alloc_disk(1);
+ 	if (!md->disk)
+@@ -2158,6 +2157,48 @@ unsigned dm_get_md_type(struct mapped_de
+ 	return md->type;
  }
  
 +/*
-+ * Functions to manage md->type.
-+ * All are required to hold md->type_lock.
++ * Fully initialize a request-based queue (->elevator, ->request_fn, etc).
 + */
-+void dm_lock_md_type(struct mapped_device *md)
++static int dm_init_request_based_queue(struct mapped_device *md)
 +{
-+	mutex_lock(&md->type_lock);
++	struct request_queue *q = NULL;
++
++	BUG_ON(md->queue->elevator);
++
++	/* Fully initialize the queue */
++	q = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
++	if (!q)
++		return 0;
++
++	md->queue = q;
++	md->saved_make_request_fn = md->queue->make_request_fn;
++	dm_init_md_queue(md);
++	blk_queue_softirq_done(md->queue, dm_softirq_done);
++	blk_queue_prep_rq(md->queue, dm_prep_fn);
++	blk_queue_lld_busy(md->queue, dm_lld_busy);
++	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN_FLUSH,
++			  dm_rq_prepare_flush);
++
++	elv_register_queue(md->queue);
++
++	return 1;
 +}
 +
-+void dm_unlock_md_type(struct mapped_device *md)
++/*
++ * Setup the DM device's queue based on md's type
++ */
++int dm_setup_md_queue(struct mapped_device *md)
 +{
-+	mutex_unlock(&md->type_lock);
-+}
++	if ((dm_get_md_type(md) == DM_TYPE_REQUEST_BASED) &&
++	    !dm_init_request_based_queue(md)) {
++		DMWARN("Cannot initialize queue for Request-based dm");
++		return -EINVAL;
++	}
 +
-+void dm_set_md_type(struct mapped_device *md, unsigned type)
-+{
-+	md->type = type;
-+}
-+
-+unsigned dm_get_md_type(struct mapped_device *md)
-+{
-+	return md->type;
++	return 0;
 +}
 +
  static struct mapped_device *dm_find_md(dev_t dev)
  {
  	struct mapped_device *md;
-@@ -2403,13 +2433,6 @@ struct dm_table *dm_swap_table(struct ma
- 		goto out;
- 	}
- 
--	/* cannot change the device type, once a table is bound */
--	if (md->map &&
--	    (dm_table_get_type(md->map) != dm_table_get_type(table))) {
--		DMWARN("can't change the device type after a table is bound");
--		goto out;
--	}
--
- 	map = __bind(md, table, &limits);
- 
- out:
 Index: linux-2.6/drivers/md/dm.h
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm.h
 +++ linux-2.6/drivers/md/dm.h
-@@ -66,6 +66,11 @@ int dm_table_alloc_md_mempools(struct dm
- void dm_table_free_md_mempools(struct dm_table *t);
- struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+@@ -71,6 +71,8 @@ void dm_unlock_md_type(struct mapped_dev
+ void dm_set_md_type(struct mapped_device *md, unsigned type);
+ unsigned dm_get_md_type(struct mapped_device *md);
  
-+void dm_lock_md_type(struct mapped_device *md);
-+void dm_unlock_md_type(struct mapped_device *md);
-+void dm_set_md_type(struct mapped_device *md, unsigned type);
-+unsigned dm_get_md_type(struct mapped_device *md);
++int dm_setup_md_queue(struct mapped_device *md);
 +
  /*
   * To check the return value from dm_table_find_target().
