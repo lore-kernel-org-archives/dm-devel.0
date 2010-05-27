@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/lib Makefile.in
-Date: 27 May 2010 19:47:49 -0000
-Message-ID: <20100527194749.20819.qmail@sourceware.org>
+Subject: dmraid/tools Makefile.in
+Date: 27 May 2010 19:50:28 -0000
+Message-ID: <20100527195028.22238.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,21 +21,23 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-27 19:47:49
+Changes by:	zkabelac@sourceware.org	2010-05-27 19:50:28
 
 Modified files:
-	lib            : Makefile.in 
+	tools          : Makefile.in 
 
 Log message:
 	Use top_builddir
-	Avoid linking libdmraid-events-isw to libdmraid (opened as plugin)
+	Link only with dmraid  (pthread is devmapper dependency)
+	Do not link DMEVENTTOOLLIBS with dmraid
+	-ldl is linked via libdmraid
 	Use new INSTALL
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.8&r2=1.9
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/Makefile.in.diff?cvsroot=dm&r1=1.8&r2=1.9
 
---- dmraid/lib/Makefile.in	2010/05/27 14:28:48	1.8
-+++ dmraid/lib/Makefile.in	2010/05/27 19:47:49	1.9
+--- dmraid/tools/Makefile.in	2010/05/27 14:28:48	1.8
++++ dmraid/tools/Makefile.in	2010/05/27 19:50:28	1.9
 @@ -1,5 +1,5 @@
  #
 -# Copyright (C) 2004-2005  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
@@ -43,86 +45,65 @@ http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&
  #
  # See file LICENSE at the top of this source tree for license information.
  #
-@@ -17,7 +17,6 @@
- 	device/scan.c \
- 	device/scsi.c \
- 	display/display.c \
--	events/libdmraid-events-isw.c \
- 	format/format.c \
- 	locking/locking.c \
- 	log/log.c \
-@@ -49,22 +48,24 @@
+@@ -9,9 +9,9 @@
+ top_builddir = @top_builddir@
+ VPATH = @srcdir@
+ DIETLIBC = @DIETLIBC@
+-KIBC = @KLIBC@
++KLIBC = @KLIBC@
  
- ifeq ("@STATIC_LINK@", "no")
- 	SOURCES += register/dmreg.c
-+# Dynamic linker library
-+LIBS += -ldl
- endif
+-INCLUDES += -I $(src_dir)
++INCLUDES += -I$(src_dir)
  
- OBJECTS=$(SOURCES:%.c=%.o)
- 
--LIB_STATIC=$(top_srcdir)/lib/libdmraid.a
-+LIB_STATIC=$(top_builddir)/lib/libdmraid.a
- LIB_EVENTS_NAME=libdmraid-events-isw
- 
- TARGETS=$(LIB_STATIC)
- INSTALL_TARGETS=$(LIB_STATIC)
+ SOURCES=\
+ 	dmraid.c \
+@@ -21,7 +21,7 @@
+ TARGETS=\
+ 	dmraid
  
 -include $(top_srcdir)/make.tmpl
 +include $(top_builddir)/make.tmpl
  
  ifeq ("@KLIBC@", "no")
  	ifeq ("@STATIC_LINK@", "no")
--		LIB_SHARED=$(top_srcdir)/lib/libdmraid.so
--		LIB_EVENTS_SHARED=$(top_srcdir)/lib/$(LIB_EVENTS_NAME).so
-+		LIB_SHARED=$(top_builddir)/lib/libdmraid.so
-+		LIB_EVENTS_SHARED=$(LIB_EVENTS_NAME).so
- 		TARGETS += $(LIB_SHARED) $(LIB_EVENTS_SHARED)
- 		INSTALL_TARGETS += $(LIB_SHARED) $(LIB_EVENTS_SHARED)
+@@ -29,7 +29,7 @@
  	endif
-@@ -74,26 +75,26 @@
- 	@echo $(TARGETS) $(INSTALL_TARGETS)
+ endif
  
- $(LIB_EVENTS_SHARED):
--	$(CC) events/$(LIB_EVENTS_NAME).c $(INCLUDES) $(CFLAGS) $(LDFLAGS) -shared  -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) -o $@ -ldevmapper -ldevmapper-event $(LIB_SHARED) -lpthread
-+	$(CC) -o $@ $(INCLUDES) $(CFLAGS) $(LDFLAGS) events/$(LIB_EVENTS_NAME).c \
-+	  -shared  -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) \
-+	  $(LIB_SHARED) -ldevmapper-event -lpthread
+-DMRAIDLIBS=-ldmraid -lpthread
++DMRAIDLIBS=-ldmraid
  
- .PHONY: install_dmraid_libs remove_dmraid_libs
+ # FIXME: use pkg-config here to get the list of needed librarie
+ #  pkg-config --libs  devmapper
+@@ -61,25 +61,21 @@
+ 	endif
+ endif
  
- install_dmraid_libs: $(INSTALL_TARGETS)
- 	@echo "Installing $(INSTALL_TARGETS) in $(DESTDIR)$(libdir)"; \
--	mkdir -p $(DESTDIR)$(libdir); \
-+	$(INSTALL_DIR) $(DESTDIR)$(libdir); \
- 	for f in $(INSTALL_TARGETS); \
- 	do \
- 		n=$$(basename $${f}) ; \
-  		if [[ "$$n" =~ .so$$ ]]; then \
--			$(INSTALL) -m 555 $(STRIP) \
--				$$f $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
-+			$(INSTALL_PROGRAM) $$f $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
- 			$(LN_S) -f $${n}.@DMRAID_LIB_VERSION@ $(DESTDIR)$(libdir)/$${n}; \
- 		else \
--			$(INSTALL) -m 555 $(STRIP) $$f $(DESTDIR)$(libdir)/$${n}; \
-+			$(INSTALL_PROGRAM) $$f $(DESTDIR)$(libdir)/$${n}; \
- 		fi \
- 	done
- 
+-# Dynamic linker library
+-LIBS += -ldl
 -
- install: install_dmraid_libs
+ all: $(TARGETS)
  
- remove_dmraid_libs:
-@@ -101,10 +102,8 @@
- 	for f in $(INSTALL_TARGETS); \
- 	do \
- 		n=$$(basename $${f}) ; \
--		rm -f $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
--		rm -f $(DESTDIR)$(libdir)/$${n}; \
-+		$(RM) $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
-+		$(RM) $(DESTDIR)$(libdir)/$${n}; \
- 	done
+ .PHONY: install_dmraid_tools remove_dmraid_tools
  
--
--
- remove:	remove_dmraid_libs
+ dmraid:	$(OBJECTS) $(top_builddir)/lib/libdmraid.a
+-	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) -L$(top_srcdir)/lib \
+-	      -L$(DESTDIR)$(libdir) $(DMRAIDLIBS) $(DMEVENTTOOLLIBS) $(DMRAIDLIBS) $(LIBS) 
++	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) -L$(top_builddir)/lib $(DMRAIDLIBS) $(LIBS)
+ 
+-dmevent_tool: $(top_srcdir)/lib/libdmraid.a
+-	$(CC) -o $@ $@.c $(INCLUDES) $(LDFLAGS) -L$(top_srcdir)/lib \
+-	      -L$(DESTDIR)$(libdir) $(DMRAIDLIBS) $(DMEVENTTOOLLIBS) $(DMRAIDLIBS) $(LIBS) 
++dmevent_tool: $(top_builddir)/lib/libdmraid.a
++	$(CC) -o $@ $@.c $(INCLUDES) $(LDFLAGS) -L$(top_builddir)/lib \
++	  $(DMRAIDLIBS) $(DMEVENTTOOLLIBS) $(LIBS)
+ 
+ install_dmraid_tools: $(TARGETS)
+ 	@echo "Installing $(TARGETS) in $(DESTDIR)$(sbindir)"; \
+-	mkdir -p $(DESTDIR)$(sbindir); \
+-	$(INSTALL) $(STRIP) $(TARGETS) $(DESTDIR)$(sbindir)
++	$(INSTALL_DIR) $(DESTDIR)$(sbindir); \
++	$(INSTALL_PROGRAM) $(TARGETS) $(DESTDIR)$(sbindir)
+ 
+ install: install_dmraid_tools
+ 
