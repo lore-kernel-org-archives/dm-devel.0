@@ -1,17 +1,12 @@
-From: Will Drewry <wad@chromium.org>
-Subject: Re: [PATCH v3 2/3] init: boot to device-mapper targets
-	without an initr*
-Date: Thu, 27 May 2010 06:13:42 -0700
-Message-ID: <AANLkTikPMpIdMEgCNqoaIuG02aUWvTgzH2OWIvGnAlaB@mail.gmail.com>
-References: <1274294304-30606-1-git-send-email-wad@chromium.org>
-	<1274294304-30606-2-git-send-email-wad@chromium.org>
-	<E14718F3-E489-4921-8A5D-FAFCF2C8F8FA@cs.tu-berlin.de>
+From: zkabelac@sourceware.org
+Subject: dmraid make.tmpl.in
+Date: 27 May 2010 13:27:33 -0000
+Message-ID: <20100527132733.7729.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <E14718F3-E489-4921-8A5D-FAFCF2C8F8FA@cs.tu-berlin.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,49 +16,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Anselm Busse <abusse@cs.tu-berlin.de>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, May 27, 2010 at 12:38 AM, Anselm Busse <abusse@cs.tu-berlin.de> wro=
-te:
->> An example dm-linear root with no uuid may look like:
->>
->> root=3D/dev/dm-0 =A0dm=3D"lroot none 0, 0 4096 linear /dev/ubdb 0, 4096 =
-4096 linear /dv/ubdc 0"
->>
->> Once udev is started, /dev/dm-0 will become /dev/mapper/lroot.
->
-> Hi,
->
-> I'm having the problem that the device - for example - won't come availab=
-le at "/dev/mapper/lroot" but at "/dev/mapper/lroot ". There is an addition=
-al space at the end of the name, which is...lets say not so good. The probl=
-em is exists already in the dm_setup_args.name field, so I think is a probl=
-em parsing the arguments.
->
-> I'm new around here, so I don't know how things work. Should I look into =
-the problem myself and post a fix, or will the author of the patch?
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	zkabelac@sourceware.org	2010-05-27 13:27:31
 
-Hi Anselm!
+Modified files:
+	.              : make.tmpl.in 
 
-I'm new around here too :) There is an off-by-one where it calls
-strlcpy(..., len + 1).  I have a new patch to post but have been
-traveling and haven't had a chance to get it posted.  I'll try to mail
-it out today!
+Log message:
+	Define datarootdir
+	Move infodir and mandir as common part in front of KLIBC 'if'
 
-I think that since I have posted the patch but it hasn't yet been
-picked up, the best thing (for me) was just to mail the list like you
-did and let the author (me) know there is an issue in the patch, and
-then see if they are responsive before posting your own patch.  But
-maybe someone who isn't new here should respond :)
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/make.tmpl.in.diff?cvsroot=dm&r1=1.3&r2=1.4
 
-Needless to say, I'll post a new patch soon.  The fix is:
-
-+       strlcpy(dm_setup_args.name, str, len + 1);  /* includes nul */
-becomes
-+       strlcpy(dm_setup_args.name, str, len);  /* includes nul */
-because I've already incremented len in the previous line.
-
-cheers!
-will
+--- dmraid/make.tmpl.in	2010/03/16 16:02:16	1.3
++++ dmraid/make.tmpl.in	2010/05/27 13:27:29	1.4
+@@ -25,21 +25,19 @@
+ exec_prefix = @exec_prefix@
+ bindir = @bindir@
+ datadir = @datarootdir@
++datarootdir = @datarootdir@
++infodir = @infodir@
++mandir = @mandir@
+ ifeq ("@KLIBC@", "no")
+   libdir = @libdir@
+   sbindir = @sbindir@
+   includedir = @includedir@
+-  infodir = @infodir@
+-  mandir = @mandir@
+ else
+   libdir = @KLIBC_LIB_DIR@
+   sbindir = @KLIBC_SBIN_DIR@
+   includedir = @KLIBC_INCLUDE_DIR@
+-  infodir = @infodir@
+-  mandir = @mandir@
+ endif
+ 
+-
+ # setup misc variables
+ # define the ownership variables for the binaries and man pages
+ OWNER = @OWNER@
