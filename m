@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/include Makefile.in
-Date: 27 May 2010 19:45:08 -0000
-Message-ID: <20100527194508.19351.qmail@sourceware.org>
+Subject: dmraid/lib Makefile.in
+Date: 27 May 2010 19:47:49 -0000
+Message-ID: <20100527194749.20819.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,58 +21,108 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-27 19:45:08
+Changes by:	zkabelac@sourceware.org	2010-05-27 19:47:49
 
 Modified files:
-	include        : Makefile.in 
+	lib            : Makefile.in 
 
 Log message:
 	Use top_builddir
-	Use new INSTALL commands
-	Remove dmraid dir for remove target
+	Avoid linking libdmraid-events-isw to libdmraid (opened as plugin)
+	Use new INSTALL
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/include/Makefile.in.diff?cvsroot=dm&r1=1.2&r2=1.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.8&r2=1.9
 
---- dmraid/include/Makefile.in	2010/03/16 16:02:16	1.2
-+++ dmraid/include/Makefile.in	2010/05/27 19:45:07	1.3
-@@ -1,31 +1,31 @@
+--- dmraid/lib/Makefile.in	2010/05/27 14:28:48	1.8
++++ dmraid/lib/Makefile.in	2010/05/27 19:47:49	1.9
+@@ -1,5 +1,5 @@
  #
--# Copyright (C) 2005  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
-+# Copyright (C) 2005-2010  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
+-# Copyright (C) 2004-2005  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
++# Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
  #
  # See file LICENSE at the top of this source tree for license information.
  #
+@@ -17,7 +17,6 @@
+ 	device/scan.c \
+ 	device/scsi.c \
+ 	display/display.c \
+-	events/libdmraid-events-isw.c \
+ 	format/format.c \
+ 	locking/locking.c \
+ 	log/log.c \
+@@ -49,22 +48,24 @@
  
- srcdir = @srcdir@
- top_srcdir = @top_srcdir@
-+top_builddir = @top_builddir@
+ ifeq ("@STATIC_LINK@", "no")
+ 	SOURCES += register/dmreg.c
++# Dynamic linker library
++LIBS += -ldl
+ endif
  
- HEADERS=$(wildcard dmraid/*.h)
+ OBJECTS=$(SOURCES:%.c=%.o)
  
- all:
+-LIB_STATIC=$(top_srcdir)/lib/libdmraid.a
++LIB_STATIC=$(top_builddir)/lib/libdmraid.a
+ LIB_EVENTS_NAME=libdmraid-events-isw
+ 
+ TARGETS=$(LIB_STATIC)
+ INSTALL_TARGETS=$(LIB_STATIC)
  
 -include $(top_srcdir)/make.tmpl
 +include $(top_builddir)/make.tmpl
  
- .PHONY: install_dmraid_headers remove_dmraid_headers
+ ifeq ("@KLIBC@", "no")
+ 	ifeq ("@STATIC_LINK@", "no")
+-		LIB_SHARED=$(top_srcdir)/lib/libdmraid.so
+-		LIB_EVENTS_SHARED=$(top_srcdir)/lib/$(LIB_EVENTS_NAME).so
++		LIB_SHARED=$(top_builddir)/lib/libdmraid.so
++		LIB_EVENTS_SHARED=$(LIB_EVENTS_NAME).so
+ 		TARGETS += $(LIB_SHARED) $(LIB_EVENTS_SHARED)
+ 		INSTALL_TARGETS += $(LIB_SHARED) $(LIB_EVENTS_SHARED)
+ 	endif
+@@ -74,26 +75,26 @@
+ 	@echo $(TARGETS) $(INSTALL_TARGETS)
  
- install_dmraid_headers: $(HEADERS)
--	@echo "Installing $(HEADERS) in $(DESTDIR)$(includedir)/dmraid"
--	mkdir -p $(DESTDIR)$(includedir)/dmraid
--	$(INSTALL) $(STRIP) $(HEADERS) $(DESTDIR)$(includedir)/dmraid
-+	$(INSTALL_DIR) $(DESTDIR)$(includedir)/dmraid
-+	$(INSTALL_DATA) $(HEADERS) $(DESTDIR)$(includedir)/dmraid
+ $(LIB_EVENTS_SHARED):
+-	$(CC) events/$(LIB_EVENTS_NAME).c $(INCLUDES) $(CFLAGS) $(LDFLAGS) -shared  -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) -o $@ -ldevmapper -ldevmapper-event $(LIB_SHARED) -lpthread
++	$(CC) -o $@ $(INCLUDES) $(CFLAGS) $(LDFLAGS) events/$(LIB_EVENTS_NAME).c \
++	  -shared  -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) \
++	  $(LIB_SHARED) -ldevmapper-event -lpthread
  
- install: install_dmraid_headers
+ .PHONY: install_dmraid_libs remove_dmraid_libs
  
- remove_dmraid_headers:
--	@echo "Removing $(HEADERS) from $(DESTDIR)$(includedir)/dmraid"
--	rm -f $(DESTDIR)$(includedir)/dmraid
-+	@echo "Removing $(DESTDIR)$(includedir)/dmraid"
-+	$(RM) -r $(DESTDIR)$(includedir)/dmraid
+ install_dmraid_libs: $(INSTALL_TARGETS)
+ 	@echo "Installing $(INSTALL_TARGETS) in $(DESTDIR)$(libdir)"; \
+-	mkdir -p $(DESTDIR)$(libdir); \
++	$(INSTALL_DIR) $(DESTDIR)$(libdir); \
+ 	for f in $(INSTALL_TARGETS); \
+ 	do \
+ 		n=$$(basename $${f}) ; \
+  		if [[ "$$n" =~ .so$$ ]]; then \
+-			$(INSTALL) -m 555 $(STRIP) \
+-				$$f $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
++			$(INSTALL_PROGRAM) $$f $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
+ 			$(LN_S) -f $${n}.@DMRAID_LIB_VERSION@ $(DESTDIR)$(libdir)/$${n}; \
+ 		else \
+-			$(INSTALL) -m 555 $(STRIP) $$f $(DESTDIR)$(libdir)/$${n}; \
++			$(INSTALL_PROGRAM) $$f $(DESTDIR)$(libdir)/$${n}; \
+ 		fi \
+ 	done
  
--remove:        remove_dmraid_headers
-+remove: remove_dmraid_headers
+-
+ install: install_dmraid_libs
  
- clean:
+ remove_dmraid_libs:
+@@ -101,10 +102,8 @@
+ 	for f in $(INSTALL_TARGETS); \
+ 	do \
+ 		n=$$(basename $${f}) ; \
+-		rm -f $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
+-		rm -f $(DESTDIR)$(libdir)/$${n}; \
++		$(RM) $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
++		$(RM) $(DESTDIR)$(libdir)/$${n}; \
+ 	done
+ 
+-
+-
+ remove:	remove_dmraid_libs
