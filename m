@@ -1,17 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3 1/2] dm: prevent table type changes after
-	initial table load
-Date: Wed, 26 May 2010 23:41:11 -0400
-Message-ID: <AANLkTilRW0QnUYmjnlbntkqOYYbBEiG2gjr2nP0044zi@mail.gmail.com>
-References: <1274798593-19418-1-git-send-email-snitzer@redhat.com>
-	<1274798593-19418-2-git-send-email-snitzer@redhat.com>
-	<4BFDE2EA.80009@ct.jp.nec.com>
+From: Anselm Busse <abusse@cs.tu-berlin.de>
+Subject: Re: [PATCH v3 2/3] init: boot to device-mapper targets
+	without an initr*
+Date: Thu, 27 May 2010 09:38:17 +0200
+Message-ID: <E14718F3-E489-4921-8A5D-FAFCF2C8F8FA@cs.tu-berlin.de>
+References: <1274294304-30606-1-git-send-email-wad@chromium.org>
+	<1274294304-30606-2-git-send-email-wad@chromium.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0 (Apple Message framework v1078)
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4BFDE2EA.80009@ct.jp.nec.com>
+In-Reply-To: <1274294304-30606-2-git-send-email-wad@chromium.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,43 +20,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, dm-devel@redhat.com
-Cc: Alasdair Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, May 26, 2010 at 11:11 PM, Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
-> Hi Mike,
->
-> Some small comments below.
->
-> For others,
-> Acked-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
->
-> On 05/25/2010 11:43 PM +0900, Mike Snitzer wrote:
->> @@ -1176,6 +1176,21 @@ static int table_load(struct dm_ioctl *p
->> =A0 =A0 =A0 =A0 =A0 =A0 =A0 goto out;
->> =A0 =A0 =A0 }
->>
->> + =A0 =A0 /* Protect md->type against concurrent table loads. */
->> + =A0 =A0 dm_lock_md_type(md);
->> + =A0 =A0 if (dm_get_md_type(md) =3D=3D DM_TYPE_NONE) {
->> + =A0 =A0 =A0 =A0 =A0 =A0 /* initial table load, set md's type based on =
-table's type */
->> + =A0 =A0 =A0 =A0 =A0 =A0 dm_set_md_type(md, t);
->
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0dm_set_md_type(md, dm_table_get_type(t));
->
-> Although I don't impose this interface, I feel it is straightforward
-> for this function. =A0Then, dm_set_md_type() just set the type in md->typ=
-e;
->
-> =A0 =A0 =A0 =A0void dm_set_md_type(struct mapped_device *md, unsigned typ=
-e)
-> =A0 =A0 =A0 =A0{
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0md->type =3D type;
-> =A0 =A0 =A0 =A0}
+> An example dm-linear root with no uuid may look like:
+> 
+> root=/dev/dm-0  dm="lroot none 0, 0 4096 linear /dev/ubdb 0, 4096 4096 linear /dv/ubdc 0"
+> 
+> Once udev is started, /dev/dm-0 will become /dev/mapper/lroot.
 
-Looks good, I'll change it as you suggest.
+Hi,
 
-Thanks,
-Mike
+I'm having the problem that the device - for example - won't come available at "/dev/mapper/lroot" but at "/dev/mapper/lroot ". There is an additional space at the end of the name, which is...lets say not so good. The problem is exists already in the dm_setup_args.name field, so I think is a problem parsing the arguments.
+
+I'm new around here, so I don't know how things work. Should I look into the problem myself and post a fix, or will the author of the patch?
+
+Anselm
