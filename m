@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
 Subject: dmraid make.tmpl.in
-Date: 27 May 2010 13:27:33 -0000
-Message-ID: <20100527132733.7729.qmail@sourceware.org>
+Date: 27 May 2010 13:29:47 -0000
+Message-ID: <20100527132947.10076.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,42 +21,28 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-27 13:27:31
+Changes by:	zkabelac@sourceware.org	2010-05-27 13:29:46
 
 Modified files:
 	.              : make.tmpl.in 
 
 Log message:
-	Define datarootdir
-	Move infodir and mandir as common part in front of KLIBC 'if'
+	remove  DESTDIR path from INCLUDES
+	(compilation should be the same for  make DESTDIR=path as without it)
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/make.tmpl.in.diff?cvsroot=dm&r1=1.3&r2=1.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/make.tmpl.in.diff?cvsroot=dm&r1=1.4&r2=1.5
 
---- dmraid/make.tmpl.in	2010/03/16 16:02:16	1.3
-+++ dmraid/make.tmpl.in	2010/05/27 13:27:29	1.4
-@@ -25,21 +25,19 @@
- exec_prefix = @exec_prefix@
- bindir = @bindir@
- datadir = @datarootdir@
-+datarootdir = @datarootdir@
-+infodir = @infodir@
-+mandir = @mandir@
- ifeq ("@KLIBC@", "no")
-   libdir = @libdir@
-   sbindir = @sbindir@
-   includedir = @includedir@
--  infodir = @infodir@
--  mandir = @mandir@
- else
-   libdir = @KLIBC_LIB_DIR@
-   sbindir = @KLIBC_SBIN_DIR@
-   includedir = @KLIBC_INCLUDE_DIR@
--  infodir = @infodir@
--  mandir = @mandir@
- endif
+--- dmraid/make.tmpl.in	2010/05/27 13:27:29	1.4
++++ dmraid/make.tmpl.in	2010/05/27 13:29:45	1.5
+@@ -87,10 +87,6 @@
  
+ STRIP=
+ 
+-ifdef DESTDIR
+-  INCLUDES+=-I$(DESTDIR)/usr/include
+-endif
 -
- # setup misc variables
- # define the ownership variables for the binaries and man pages
- OWNER = @OWNER@
+ DEPS=$(top_srcdir)/make.tmpl $(top_srcdir)/tools/VERSION Makefile
+ 
+ OBJECTS=$(SOURCES:%.c=%.o)
