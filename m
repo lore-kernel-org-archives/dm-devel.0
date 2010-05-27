@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/lib .export.sym
-Date: 27 May 2010 20:24:27 -0000
-Message-ID: <20100527202427.26003.qmail@sourceware.org>
+Subject: dmraid/tools dmevent_tool.c
+Date: 27 May 2010 20:56:36 -0000
+Message-ID: <20100527205636.13554.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,199 +21,48 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-27 20:24:27
+Changes by:	zkabelac@sourceware.org	2010-05-27 20:56:36
 
 Modified files:
-	lib            : .export.sym 
+	tools          : dmevent_tool.c 
 
 Log message:
-	Removed double NL/LF
-	Sorted
+	Fix compiler warnings
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/.export.sym.diff?cvsroot=dm&r1=1.3&r2=1.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/dmevent_tool.c.diff?cvsroot=dm&r1=1.1&r2=1.2
 
---- dmraid/lib/.export.sym	2009/09/16 11:45:12	1.3
-+++ dmraid/lib/.export.sym	2010/05/27 20:24:27	1.4
-@@ -1,61 +1,61 @@
--Base {
-
--	global:
-
--		add_delimiter;
-
--		change_set;
-
--		check_valid_format;
-
--		collapse_delimiter;
-
--		count_devices;
-
--		count_devs;
-
--		count_sets;
-
--		_dbg_free;
-
--		_dbg_malloc;
-
--		_dbg_realloc;
-
--		_dbg_strdup;
-
--		discover_devices;
-
--		discover_partitions;
-
--		discover_raid_devices;
-
--		display_devices;
-
--		display_set;
-
--		dm_version;
-
--		erase_metadata;
-
--		find_set;
-
--		get_dm_type;
-
--		get_set_type;
-
--		get_set_name;
-
--		get_status;
-
--		get_type;
-
--		group_set;
-
--		init_locking;
-
--		lc_inc_opt;
-
--		lc_list;
-
--		lc_opt;
-
--		lc_stralloc_opt;
-
--		lc_strcat_opt;
-
--		libdmraid_exit;
-
--		libdmraid_init;
-
--		libdmraid_date;
-
--		libdmraid_version;
-
--		libdmraid_make_table;
-
--		list_formats;
-
--		lock_resource;
-
--		log_alloc_err;
-
--		plog;
-
--		process_sets;
-
--		remove_delimiter;
-
--		remove_white_space;
-
--		total_sectors;
-
--		unlock_resource;
-
--		add_dev_to_array;
-
--		delete_raidsets;
-
--                lib_perform;
-
--                rebuild_raidset;
-
--		dso_end_rebuild;
-
--		hot_spare_add;
-
--		dso_get_members;
-
--		dm_register_device;
-
--		dm_unregister_device;
--		dm_all_monitored;
--	local:
-
--		*;
-
--};
-
--
-
-+Base {
-+	global:
-+		add_delimiter;
-+		add_dev_to_array;
-+		change_set;
-+		check_valid_format;
-+		collapse_delimiter;
-+		count_devices;
-+		count_devs;
-+		count_sets;
-+		delete_raidsets;
-+		discover_devices;
-+		discover_partitions;
-+		discover_raid_devices;
-+		display_devices;
-+		display_set;
-+		dm_all_monitored;
-+		dm_register_device;
-+		dm_unregister_device;
-+		dm_version;
-+		dso_end_rebuild;
-+		dso_get_members;
-+		erase_metadata;
-+		find_set;
-+		get_dm_type;
-+		get_set_name;
-+		get_set_type;
-+		get_status;
-+		get_type;
-+		group_set;
-+		hot_spare_add;
-+		init_locking;
-+		lc_inc_opt;
-+		lc_list;
-+		lc_opt;
-+		lc_stralloc_opt;
-+		lc_strcat_opt;
-+		libdmraid_date;
-+		libdmraid_exit;
-+		libdmraid_init;
-+		libdmraid_make_table;
-+		libdmraid_version;
-+		lib_perform;
-+		list_formats;
-+		lock_resource;
-+		log_alloc_err;
-+		plog;
-+		process_sets;
-+		rebuild_raidset;
-+		remove_delimiter;
-+		remove_white_space;
-+		total_sectors;
-+		unlock_resource;
-+		_dbg_free;
-+		_dbg_malloc;
-+		_dbg_realloc;
-+		_dbg_strdup;
-+	local:
-+		*;
-+};
-+
+--- dmraid/tools/dmevent_tool.c	2009/12/16 11:39:18	1.1
++++ dmraid/tools/dmevent_tool.c	2010/05/27 20:56:36	1.2
+@@ -123,7 +123,7 @@
+ }
+ 
+ /* Increment option counters. */
+-static _process_opt(int opt, const char *cmd)
++static void _process_opt(int opt, const char *cmd)
+ {
+ 	struct opt_def_struct {
+ 		const char opt;		/* Option character. */
+@@ -214,7 +214,7 @@
+ /* main: Process command line options + arguments. */
+ int main(int argc, char **argv)
+ {
+-	int opt, ret = 0;
++	int ret = 0;
+ 	char *cmd = basename(argv[0]);
+ 	enum display_opt display_option;
+ 
+@@ -225,11 +225,12 @@
+ 		display_option = ALL;
+ 		if (!optc[OPT_r] && optc[OPT_u])
+ 			display_option = UNREGISTERED;
+-		else if (optc[OPT_r] && !optc[OPT_u])
++		else if (optc[OPT_r] && !optc[OPT_u]) {
+ 			if (optc[OPT_a])
+ 				display_option = REGISTERED_WITH_UUID;
+ 			else if (optc[OPT_m])
+ 				display_option = REGISTERED_NO_UUID;
++		}
+ 		dm_all_monitored(display_option);
+ 	}
+ 	else if (optc[OPT_r])
