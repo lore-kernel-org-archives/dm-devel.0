@@ -1,13 +1,12 @@
-From: <Yanqing_Liu@Dell.com>
-Subject: Issue of RDAC array failback
-Date: Wed, 26 May 2010 10:08:23 -0500
-Message-ID: <F757EE5C3631ED4DBDFD7709119219FE03BBEF81EA@AUSX7MCPS302.AMER.DELL.COM>
+From: "Allen, Jack" <Jack.Allen@mckesson.com>
+Subject: General questions
+Date: Wed, 26 May 2010 20:07:51 -0400
+Message-ID: <230ED15F81AFD3409345FFA4E565F0E50A85E940@NDHV3000.na.corp.mckesson.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============6537007957830815700=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,51 +16,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-In testing with RHEL 5.4 on Dell PV MD series controller, we ran into the following issue:
+This is a multi-part message in MIME format.
 
-The array uses RDAC device handler. When connections to one of the controller is, failover happens as normal. When connections are restored, LUNs are supposed to failback as expected, however it didn't happen every time. What we've found is, after failover, the multipath topology for the LUN is shown as the following, the failed path is not removed from multipathing structure:
+--===============6537007957830815700==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01CAFD30.A6827B6C"
 
-...
-mpath78 (360026b90006185270000132a4be80261) dm-21 ,
-[size=4.0G][features=2 pg_init_retries 50][hwhandler=1 rdac][rw]
-\_ round-robin 0 [prio=0][active]
- \_ #:#:#:#   -    #:#     [failed][faulty] <-- [ stale path, no sd node associated, however not removed from path topology]
-\_ round-robin 0 [prio=0][enabled]
- \_ 2:0:2:45  sdax 67:16   [active][ready]
-...
+This is a multi-part message in MIME format.
 
-After path is restored, seems multipath daemon is trying to remove the stale path and adding the restored path, however it hang at the step of reloading map. The related message is shown below:
+------_=_NextPart_001_01CAFD30.A6827B6C
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-,,,
+Hello:=20
+        This list is named dm-devel, so is there another list to ask
+general question about multiplath.conf and related things?
 
-sder: ownership set to mpath78  <--- [This is the restored path]
-sder: not found in pathvec
-sder: mask = 0xc
-sder: state = 4
-sder: prio = 100
-: ownership set to mpath78  <-- [ stale path with no dev node associated]
-: not found in pathvec
-: mask = 0xc
-: path checker = readsector0 (config file default)
-: state = 1
-: checker msg is "readsector0 checker reports path is down"
-mpath78: removing path 135:80 with no devname    <--- [trying to remove the stale path]
-mpath78: pgfailback = -2 (controller setting)
-mpath78: pgpolicy = group_by_prio (controller setting)
-mpath78: selector = round-robin 0 (internal default)
-mpath78: features = 2 pg_init_retries 50 (controller setting)
-mpath78: hwhandler = 1 rdac (controller setting)
-mpath78: rr_weight = 1 (internal default)
-mpath78: minio = 100 (controller setting)
-mpath78: no_path_retry = 30 (controller setting)
-pg_timeout = NONE (internal default)
-mpath78: set ACT_RELOAD (path group topology change) <--- [Hangs here, never completed]
+        In other words I want to ask some questions about how to
+configure multipath for better performance and basically how some =
+things
+work in general, not make changes to code.
+
+-----=20
+Jack Allen=20
 
 
-It seems like a possible deadlock condition which prevents multipath aggregation from completing. Any suggestion in here? The package in RHEL 5.4 is device-mapper-multipath-0.4.7.-30.
+------_=_NextPart_001_01CAFD30.A6827B6C
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-Thanks,
-Yanqing
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+
+<META NAME=3D"Generator" CONTENT=3D"MS Exchange Server version =
+6.5.7655.4">
+<TITLE>General questions</TITLE>
+</HEAD>
+<BODY>
+<!-- Converted from text/rtf format -->
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Hello:</FONT>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <FONT SIZE=3D2 =
+FACE=3D"Arial">This list is named dm-devel, so is there another list to =
+ask general question about multiplath.conf and related =
+things?</FONT></P>
+
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <FONT SIZE=3D2 =
+FACE=3D"Arial">In other words I want to ask some questions about how to =
+configure multipath for better performance and basically how some =
+things work in general, not make changes to code.</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">-----</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Arial">Jack Allen</FONT>
+</P>
+
+</BODY>
+</HTML>
+------_=_NextPart_001_01CAFD30.A6827B6C--
+
+
+--===============6537007957830815700==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6537007957830815700==--
