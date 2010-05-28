@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid ./make.tmpl.in lib/Makefile.in lib/vers ...
-Date: 28 May 2010 09:17:26 -0000
-Message-ID: <20100528091726.11697.qmail@sourceware.org>
+Subject: dmraid configure configure.in
+Date: 28 May 2010 12:25:55 -0000
+Message-ID: <20100528122555.12731.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,95 +21,211 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-28 09:17:25
+Changes by:	zkabelac@sourceware.org	2010-05-28 12:25:55
 
 Modified files:
-	.              : make.tmpl.in 
-	lib            : Makefile.in version.h 
+	.              : configure configure.in 
 
 Log message:
-	Fix DMRAID_LIB_VERSION
-	Add common cleandir target for clean and distclean
-	Clean SOURCES2 generated files
+	Add SED detection
+	Add --with-staticdir
+	Add --with-usrlibdir
+	Remove default prefix change to /usr/share - keep /usr/local
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/make.tmpl.in.diff?cvsroot=dm&r1=1.7&r2=1.8
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.10&r2=1.11
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/version.h.diff?cvsroot=dm&r1=1.10&r2=1.11
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/configure.diff?cvsroot=dm&r1=1.7&r2=1.8
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/configure.in.diff?cvsroot=dm&r1=1.7&r2=1.8
 
---- dmraid/make.tmpl.in	2010/05/27 20:59:45	1.7
-+++ dmraid/make.tmpl.in	2010/05/28 09:17:24	1.8
-@@ -41,7 +41,7 @@
+--- dmraid/configure	2010/05/27 20:59:44	1.7
++++ dmraid/configure	2010/05/28 12:25:54	1.8
+@@ -635,9 +635,10 @@
+ # include <unistd.h>
+ #endif"
  
- # setup misc variables
- DMRAID_VERSION := $(shell cat $(top_srcdir)/tools/VERSION)
--DMRAID_LIB_VERSION := $(shell sed --quiet 's/^.*\(DMRAID_LIB_VERSION\)[[^_]].*"\(.*\)"/\2/p' $(top_srcdir)/lib/version.h)
-+DMRAID_LIB_VERSION := $(shell sed --quiet 's/^.*\(DMRAID_LIB_VERSION\)[^_].*"\(.*\)"/\2/p' $(top_srcdir)/lib/version.h)
- INSTALL_PROGRAM = $(INSTALL) $(STRIP)
- INSTALL_DIR = $(INSTALL) -d
- INSTALL_DATA = $(INSTALL) -m 644 -p
-@@ -99,7 +99,7 @@
- SUBDIRS.clean := $(SUBDIRS:=.clean)
- SUBDIRS.distclean := $(SUBDIRS:=.distclean)
+-ac_default_prefix=/usr/share
+ ac_subst_vars='LTLIBOBJS
+ LIBOBJS
++staticdir
++usrlibdir
+ STATIC_LINK
+ SOFLAG
+ LIB_SO
+@@ -675,6 +676,7 @@
+ INSTALL_SCRIPT
+ INSTALL_PROGRAM
+ AWK
++SED
+ target_os
+ target_vendor
+ target_cpu
+@@ -728,6 +730,8 @@
+ ac_user_opts='
+ enable_option_checking
+ enable_klibc
++with_staticdir
++with_usrlibdir
+ enable_debug
+ enable_debug_malloc
+ enable_dietlibc
+@@ -1391,6 +1395,12 @@
+                           tools to it. Default is static libdmraid
+   --disable-testing       Disable testing with mapped devices
  
--.PHONY: all install distclean clean
-+.PHONY: all install distclean clean cleandir
- .PHONY: $(SUBDIRS) $(SUBDIRS.install) $(SUBDIRS.clean) $(SUBDIRS.distclean)
- .PHONY: $(SUBDIRS.remove)
- 
-@@ -149,14 +149,15 @@
- 	$(AR) r $@ $(OBJECTS)
- 	$(RANLIB) $@
- 
--clean: $(SUBDIRS.clean)
--	$(RM) $(OBJECTS) $(TARGETS) $(CLEAN_TARGETS) $(SOURCES:%.c=%.d)
--
--distclean: $(SUBDIRS.distclean)
--	$(RM) $(OBJECTS) $(TARGETS) $(CLEAN_TARGETS) $(SOURCES:%.c=%.d) \
--	      cscope.out \
--	      config.cache config.log config.status \
--	      Makefile make.tmpl core tools/version.h
-+cleandir:
-+	$(RM) $(OBJECTS) $(OBJECTS2) $(TARGETS) $(CLEAN_TARGETS) \
-+		$(SOURCES:%.c=%.d) $(SOURCES2:%.c=%.d)
++Optional Packages:
++  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
++  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
++  --with-staticdir=DIR    Static binary in DIR [EPREFIX/sbin]
++  --with-usrlibdir=DIR    User library in DIR [PREFIX/lib]
 +
-+clean: $(SUBDIRS.clean) cleandir
+ Some influential environment variables:
+   CC          C compiler command
+   CFLAGS      C compiler flags
+@@ -2000,6 +2010,77 @@
+     NONENONEs,x,x, &&
+   program_prefix=${target_alias}-
+ 
++{ $as_echo "$as_me:$LINENO: checking for a sed that does not truncate output" >&5
++$as_echo_n "checking for a sed that does not truncate output... " >&6; }
++if test "${ac_cv_path_SED+set}" = set; then
++  $as_echo_n "(cached) " >&6
++else
++            ac_script=s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/
++     for ac_i in 1 2 3 4 5 6 7; do
++       ac_script="$ac_script$as_nl$ac_script"
++     done
++     echo "$ac_script" 2>/dev/null | sed 99q >conftest.sed
++     $as_unset ac_script || ac_script=
++     if test -z "$SED"; then
++  ac_path_SED_found=false
++  # Loop through the user's path and test for each of PROGNAME-LIST
++  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++for as_dir in $PATH
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++  for ac_prog in sed gsed; do
++    for ac_exec_ext in '' $ac_executable_extensions; do
++      ac_path_SED="$as_dir/$ac_prog$ac_exec_ext"
++      { test -f "$ac_path_SED" && $as_test_x "$ac_path_SED"; } || continue
++# Check for GNU ac_path_SED and select it if it is found.
++  # Check for GNU $ac_path_SED
++case `"$ac_path_SED" --version 2>&1` in
++*GNU*)
++  ac_cv_path_SED="$ac_path_SED" ac_path_SED_found=:;;
++*)
++  ac_count=0
++  $as_echo_n 0123456789 >"conftest.in"
++  while :
++  do
++    cat "conftest.in" "conftest.in" >"conftest.tmp"
++    mv "conftest.tmp" "conftest.in"
++    cp "conftest.in" "conftest.nl"
++    $as_echo '' >> "conftest.nl"
++    "$ac_path_SED" -f conftest.sed < "conftest.nl" >"conftest.out" 2>/dev/null || break
++    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
++    ac_count=`expr $ac_count + 1`
++    if test $ac_count -gt ${ac_path_SED_max-0}; then
++      # Best one so far, save it but keep looking for a better one
++      ac_cv_path_SED="$ac_path_SED"
++      ac_path_SED_max=$ac_count
++    fi
++    # 10*(2^10) chars as input seems more than enough
++    test $ac_count -gt 10 && break
++  done
++  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
++esac
 +
-+distclean: $(SUBDIRS.distclean) cleandir
-+	$(RM) cscope.out config.cache config.log config.status \
-+		Makefile make.tmpl core tools/version.h
++      $ac_path_SED_found && break 3
++    done
++  done
++done
++IFS=$as_save_IFS
++  if test -z "$ac_cv_path_SED"; then
++    { { $as_echo "$as_me:$LINENO: error: no acceptable sed could be found in \$PATH" >&5
++$as_echo "$as_me: error: no acceptable sed could be found in \$PATH" >&2;}
++   { (exit 1); exit 1; }; }
++  fi
++else
++  ac_cv_path_SED=$SED
++fi
++
++fi
++{ $as_echo "$as_me:$LINENO: result: $ac_cv_path_SED" >&5
++$as_echo "$ac_cv_path_SED" >&6; }
++ SED="$ac_cv_path_SED"
++  rm -f conftest.sed
++
+ for ac_prog in gawk mawk nawk awk
+ do
+   # Extract the first word of "$ac_prog", so it can be a program name with args.
+@@ -5227,6 +5308,23 @@
  
- ifeq (,$(findstring $(MAKECMDGOALS), clean distclean))
-     ifdef SOURCES
---- dmraid/lib/Makefile.in	2010/05/28 08:46:04	1.10
-+++ dmraid/lib/Makefile.in	2010/05/28 09:17:25	1.11
-@@ -88,8 +88,8 @@
- 	do \
- 		n=$$(basename $${f}) ; \
-  		if [[ "$$n" =~ .so$$ ]]; then \
--			$(INSTALL_PROGRAM) $$f $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
--			$(LN_S) -f $${n}.@DMRAID_LIB_VERSION@ $(DESTDIR)$(libdir)/$${n}; \
-+			$(INSTALL_PROGRAM) $$f $(DESTDIR)$(libdir)/$${n}.$(DMRAID_LIB_VERSION); \
-+			$(LN_S) -f $${n}.$(DMRAID_LIB_VERSION) $(DESTDIR)$(libdir)/$${n}; \
- 		else \
- 			$(INSTALL_PROGRAM) $$f $(DESTDIR)$(libdir)/$${n}; \
- 		fi \
-@@ -102,7 +102,7 @@
- 	for f in $(INSTALL_TARGETS); \
- 	do \
- 		n=$$(basename $${f}) ; \
--		$(RM) $(DESTDIR)$(libdir)/$${n}.@DMRAID_LIB_VERSION@; \
-+		$(RM) $(DESTDIR)$(libdir)/$${n}.$(DMRAID_LIB_VERSION); \
- 		$(RM) $(DESTDIR)$(libdir)/$${n}; \
- 	done
  
---- dmraid/lib/version.h	2010/02/17 11:51:53	1.10
-+++ dmraid/lib/version.h	2010/05/28 09:17:25	1.11
-@@ -1,6 +1,6 @@
- #ifndef	DMRAID_LIB_VERSION
  
--#define	DMRAID_LIB_VERSION		"1"
-+#define	DMRAID_LIB_VERSION		"1.0.0"
++# Check whether --with-staticdir was given.
++if test "${with_staticdir+set}" = set; then
++  withval=$with_staticdir; staticdir=$withval
++else
++  staticdir='${exec_prefix}/sbin'
++fi
++
++
++
++# Check whether --with-usrlibdir was given.
++if test "${with_usrlibdir+set}" = set; then
++  withval=$with_usrlibdir; usrlibdir=$withval
++else
++  usrlibdir='${prefix}/lib'
++fi
++
++
+ # Check whether --enable-debug was given.
+ if test "${enable_debug+set}" = set; then
+   enableval=$enable_debug; DEBUG=$enableval
+@@ -5961,6 +6059,8 @@
  
- #define	DMRAID_LIB_MAJOR_VERSION	1
- #define	DMRAID_LIB_MINOR_VERSION	0
+ 
+ 
++
++
+ ac_config_files="$ac_config_files include/Makefile lib/Makefile man/Makefile tools/Makefile tools/version.h Makefile make.tmpl"
+ 
+ cat >confcache <<\_ACEOF
+--- dmraid/configure.in	2010/05/27 20:59:45	1.7
++++ dmraid/configure.in	2010/05/28 12:25:54	1.8
+@@ -16,6 +16,7 @@
+ AC_CANONICAL_SYSTEM
+ 
+ dnl Checks for programs.
++AC_PROG_SED
+ AC_PROG_AWK
+ AC_PROG_INSTALL
+ AC_PROG_LN_S
+@@ -60,8 +61,16 @@
+ 	esac
+ fi
+ 
+-dnl -- prefix is /usr by default, the exec_prefix default is setup later
+-AC_PREFIX_DEFAULT(/usr/share)
++dnl -- prefix is /usr/local by default, the exec_prefix default is setup later
++dnl AC_PREFIX_DEFAULT(/usr/share)
++
++AC_ARG_WITH(staticdir,
++  AC_HELP_STRING([--with-staticdir=DIR], [Static binary in DIR [[EPREFIX/sbin]]]),
++  [staticdir=$withval], [staticdir='${exec_prefix}/sbin'])
++
++AC_ARG_WITH(usrlibdir,
++  AC_HELP_STRING([--with-usrlibdir=DIR], [User library in DIR [[PREFIX/lib]]]),
++  [usrlibdir=$withval], [usrlibdir='${prefix}/lib'])
+ 
+ dnl Enable Debugging
+ AC_ARG_ENABLE(debug, 
+@@ -212,6 +221,8 @@
+ AC_SUBST(LIB_SO)
+ AC_SUBST(SOFLAG)
+ AC_SUBST(STATIC_LINK)
++AC_SUBST(usrlibdir)
++AC_SUBST(staticdir)
+ 
+ dnl First and last lines should not contain files to generate in order to 
+ dnl keep utility scripts running properly
