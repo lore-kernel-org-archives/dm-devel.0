@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/tools Makefile.in
-Date: 28 May 2010 08:37:37 -0000
-Message-ID: <20100528083737.9570.qmail@sourceware.org>
+Subject: dmraid/man Makefile.in
+Date: 28 May 2010 08:40:53 -0000
+Message-ID: <20100528084053.11661.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,37 +21,65 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-28 08:37:37
+Changes by:	zkabelac@sourceware.org	2010-05-28 08:40:52
 
 Modified files:
-	tools          : Makefile.in 
+	man            : Makefile.in 
 
 Log message:
-	Use SOURCES2 for dmevent_tool compilation
+	Fix usage of top_builddir
+	Install man pages properly from top_srcdir
+	Use vpath instead of VPATH
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/Makefile.in.diff?cvsroot=dm&r1=1.9&r2=1.10
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/man/Makefile.in.diff?cvsroot=dm&r1=1.3&r2=1.4
 
---- dmraid/tools/Makefile.in	2010/05/27 19:50:28	1.9
-+++ dmraid/tools/Makefile.in	2010/05/28 08:37:37	1.10
-@@ -18,6 +18,9 @@
- 	commands.c \
- 	toollib.c
+--- dmraid/man/Makefile.in	2010/03/16 16:02:16	1.3
++++ dmraid/man/Makefile.in	2010/05/28 08:40:52	1.4
+@@ -1,30 +1,27 @@
+ #
+-# Copyright (C) 2004-2005  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
++# Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
+ #
+ # See file LICENSE at the top of this source tree for license information.
+ #
  
-+SOURCES2=\
-+	dmevent_tool.c
+ srcdir = @srcdir@
+ top_srcdir = @top_srcdir@
+-VPATH = @srcdir@
++top_builddir = @top_builddir@
++vpath %.8 $(srcdir)
+ 
+ MAN8=dmraid.8 dmevent_tool.8
+ MAN8DIR=${mandir}/man8
+ 
+-include $(top_srcdir)/make.tmpl
++include $(top_builddir)/make.tmpl
+ 
+-.PHONY:	install_dmraid_man remove_dmraid_man
++.PHONY: install_dmraid_man remove_dmraid_man
+ 
+-install_dmraid_man:
+-	@echo "Installing $(MAN8) in $(DESTDIR)$(MAN8DIR)"; \
+-	mkdir -p $(DESTDIR)$(MAN8DIR); \
+-	for f in $(MAN8); \
+-	do \
+-	   $(RM) $(DESTDIR)$(MAN8DIR)/$$f; \
+-	   @INSTALL@ -D -m 444 $$f $(DESTDIR)$(MAN8DIR)/$$f; \
+-	done
++%_install: %.8
++	$(INSTALL_DATA) -D $< $(DESTDIR)$(MAN8DIR)/$(<F)
 +
- TARGETS=\
- 	dmraid
++install_dmraid_man: $(MAN8:.8=_install)
  
-@@ -68,8 +71,8 @@
- dmraid:	$(OBJECTS) $(top_builddir)/lib/libdmraid.a
- 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) -L$(top_builddir)/lib $(DMRAIDLIBS) $(LIBS)
+-install:	install_dmraid_man
++install: install_dmraid_man
  
--dmevent_tool: $(top_builddir)/lib/libdmraid.a
--	$(CC) -o $@ $@.c $(INCLUDES) $(LDFLAGS) -L$(top_builddir)/lib \
-+dmevent_tool: $(OBJECTS2) $(top_builddir)/lib/libdmraid.a
-+	$(CC) -o $@ $(OBJECTS2) $(INCLUDES) $(LDFLAGS) -L$(top_builddir)/lib \
- 	  $(DMRAIDLIBS) $(DMEVENTTOOLLIBS) $(LIBS)
+ remove_dmraid_man:
+ 	@echo "Removing $(MAN8) in $(DESTDIR)$(MAN8DIR)"; \
+@@ -33,4 +30,4 @@
+ 	   $(RM) $(DESTDIR)$(MAN8DIR)/$$f; \
+ 	done
  
- install_dmraid_tools: $(TARGETS)
+-remove:	remove_dmraid_man
++remove: remove_dmraid_man
