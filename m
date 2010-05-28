@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/include Makefile.in
-Date: 28 May 2010 08:44:59 -0000
-Message-ID: <20100528084459.12477.qmail@sourceware.org>
+Subject: dmraid/lib Makefile.in
+Date: 28 May 2010 08:46:05 -0000
+Message-ID: <20100528084605.12939.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,34 +21,37 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-28 08:44:58
+Changes by:	zkabelac@sourceware.org	2010-05-28 08:46:04
 
 Modified files:
-	include        : Makefile.in 
+	lib            : Makefile.in 
 
 Log message:
-	Fix install from buildir - use srcdir for headers
+	Use SOURCES2 for dmraid plugin
+	OBJECTS is created by make.tmpl.in
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/include/Makefile.in.diff?cvsroot=dm&r1=1.3&r2=1.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.9&r2=1.10
 
---- dmraid/include/Makefile.in	2010/05/27 19:45:07	1.3
-+++ dmraid/include/Makefile.in	2010/05/28 08:44:58	1.4
-@@ -8,7 +8,7 @@
- top_srcdir = @top_srcdir@
- top_builddir = @top_builddir@
+--- dmraid/lib/Makefile.in	2010/05/27 19:47:49	1.9
++++ dmraid/lib/Makefile.in	2010/05/28 08:46:04	1.10
+@@ -52,7 +52,7 @@
+ LIBS += -ldl
+ endif
  
--HEADERS=$(wildcard dmraid/*.h)
-+HEADERS=$(wildcard $(top_srcdir)/include/dmraid/*.h)
+-OBJECTS=$(SOURCES:%.c=%.o)
++SOURCES2 = events/$(LIB_EVENTS_NAME).c
  
- all:
+ LIB_STATIC=$(top_builddir)/lib/libdmraid.a
+ LIB_EVENTS_NAME=libdmraid-events-isw
+@@ -74,8 +74,8 @@
+ all: $(TARGETS)
+ 	@echo $(TARGETS) $(INSTALL_TARGETS)
  
-@@ -18,7 +18,7 @@
- 
- install_dmraid_headers: $(HEADERS)
- 	$(INSTALL_DIR) $(DESTDIR)$(includedir)/dmraid
--	$(INSTALL_DATA) $(HEADERS) $(DESTDIR)$(includedir)/dmraid
-+	$(INSTALL_DATA) $(HEADERS) $(DESTDIR)$(includedir)/dmraid/
- 
- install: install_dmraid_headers
+-$(LIB_EVENTS_SHARED):
+-	$(CC) -o $@ $(INCLUDES) $(CFLAGS) $(LDFLAGS) events/$(LIB_EVENTS_NAME).c \
++$(LIB_EVENTS_SHARED): $(OBJECTS2)
++	$(CC) -o $@ $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(OBJECTS2) \
+ 	  -shared  -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) \
+ 	  $(LIB_SHARED) -ldevmapper-event -lpthread
  
