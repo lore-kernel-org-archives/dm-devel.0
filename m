@@ -1,7 +1,7 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath discovery.c structs.h
-Date: 28 May 2010 04:53:26 -0000
-Message-ID: <20100528045326.10188.qmail@sourceware.org>
+From: zkabelac@sourceware.org
+Subject: dmraid/tools Makefile.in
+Date: 28 May 2010 08:37:37 -0000
+Message-ID: <20100528083737.9570.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,51 +20,38 @@ To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2010-05-28 04:53:26
+Module name:	dmraid
+Changes by:	zkabelac@sourceware.org	2010-05-28 08:37:37
 
 Modified files:
-	libmultipath   : discovery.c structs.h 
+	tools          : Makefile.in 
 
 Log message:
-	Fix for 512065. Increase the tgt_node_name size to be able to handle IQNs,
-	which can be up to 223 bytes long.
+	Use SOURCES2 for dmevent_tool compilation
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.28.2.8&r2=1.28.2.9
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/structs.h.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.17.2.9&r2=1.17.2.10
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/Makefile.in.diff?cvsroot=dm&r1=1.9&r2=1.10
 
---- multipath-tools/libmultipath/discovery.c	2010/05/25 23:23:07	1.28.2.8
-+++ multipath-tools/libmultipath/discovery.c	2010/05/28 04:53:25	1.28.2.9
-@@ -552,7 +552,7 @@
- 	}
- 	if (0 <= readattr(attr_path, attr_buff) && strlen(attr_buff) > 0)
- 		strncpy(curpath->tgt_node_name, attr_buff,
--			strlen(attr_buff) - 1);
-+			NODE_NAME_SIZE - 1);
- 	else {
- 		if(safe_sprintf(attr_path,
- 			"%s/class/iscsi_transport/target%i:%i:%i/target_name",
-@@ -566,8 +566,9 @@
- 		if (0 <= readattr(attr_path, attr_buff) &&
- 		    strlen(attr_buff) > 0)
- 			strncpy(curpath->tgt_node_name, attr_buff,
--				strlen(attr_buff) - 1);
-+				NODE_NAME_SIZE - 1);
- 	}
-+	curpath->tgt_node_name[NODE_NAME_SIZE - 1] = '\0';
- 	condlog(3, "tgt_node_name = %s", curpath->tgt_node_name);
+--- dmraid/tools/Makefile.in	2010/05/27 19:50:28	1.9
++++ dmraid/tools/Makefile.in	2010/05/28 08:37:37	1.10
+@@ -18,6 +18,9 @@
+ 	commands.c \
+ 	toollib.c
  
- 	return 0;
---- multipath-tools/libmultipath/structs.h	2009/01/17 00:46:51	1.17.2.9
-+++ multipath-tools/libmultipath/structs.h	2010/05/28 04:53:25	1.17.2.10
-@@ -5,7 +5,7 @@
++SOURCES2=\
++	dmevent_tool.c
++
+ TARGETS=\
+ 	dmraid
  
- #define WWID_SIZE		128
- #define SERIAL_SIZE		64
--#define NODE_NAME_SIZE		19
-+#define NODE_NAME_SIZE		224
- #define PATH_STR_SIZE  		16
- #define PARAMS_SIZE		1024
- #define FILE_NAME_SIZE		256
+@@ -68,8 +71,8 @@
+ dmraid:	$(OBJECTS) $(top_builddir)/lib/libdmraid.a
+ 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) -L$(top_builddir)/lib $(DMRAIDLIBS) $(LIBS)
+ 
+-dmevent_tool: $(top_builddir)/lib/libdmraid.a
+-	$(CC) -o $@ $@.c $(INCLUDES) $(LDFLAGS) -L$(top_builddir)/lib \
++dmevent_tool: $(OBJECTS2) $(top_builddir)/lib/libdmraid.a
++	$(CC) -o $@ $(OBJECTS2) $(INCLUDES) $(LDFLAGS) -L$(top_builddir)/lib \
+ 	  $(DMRAIDLIBS) $(DMEVENTTOOLLIBS) $(LIBS)
+ 
+ install_dmraid_tools: $(TARGETS)
