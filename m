@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid make.tmpl.in
-Date: 28 May 2010 12:31:40 -0000
-Message-ID: <20100528123140.15089.qmail@sourceware.org>
+Subject: dmraid/tools relpath.awk
+Date: 28 May 2010 12:32:48 -0000
+Message-ID: <20100528123248.16659.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,44 +21,59 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-28 12:31:40
+Changes by:	zkabelac@sourceware.org	2010-05-28 12:32:48
 
-Modified files:
-	.              : make.tmpl.in 
+Added files:
+	tools          : relpath.awk 
 
 Log message:
-	Define  AWK and SED vars
-	Used  $(SED) for DMRAID_LIB_VERSION
+	Reused relpath.awk script for relative paths from lvm2
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/make.tmpl.in.diff?cvsroot=dm&r1=1.8&r2=1.9
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/relpath.awk.diff?cvsroot=dm&r1=NONE&r2=1.1
 
---- dmraid/make.tmpl.in	2010/05/28 09:17:24	1.8
-+++ dmraid/make.tmpl.in	2010/05/28 12:31:39	1.9
-@@ -15,6 +15,9 @@
- MKDIR_P = @MKDIR_P@
- LN_S = @LN_S@
- LIBS = @LIBS@
-+AWK = @AWK@
-+SED = @SED@
+/cvs/dm/dmraid/tools/relpath.awk,v  -->  standard output
+revision 1.1
+--- dmraid/tools/relpath.awk
++++ -	2010-05-28 12:32:48.876050000 +0000
+@@ -0,0 +1,40 @@
++#!/usr/bin/awk -f
++#
++# Copyright (C) 2010 Red Hat, Inc. All rights reserved.
++#
++# This file is part of LVM2.
++#
++# This copyrighted material is made available to anyone wishing to use,
++# modify, copy, or redistribute it subject to the terms and conditions
++# of the GNU General Public License v.2.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program; if not, write to the Free Software Foundation,
++# Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 +
- CFLAGS += @CFLAGS@
- CLDFLAGS += @CLDFLAGS@
- LDFLAGS += @LDFLAGS@
-@@ -29,6 +32,7 @@
- datarootdir = @datarootdir@
- infodir = @infodir@
- mandir = @mandir@
-+usrlibdir = @usrlibdir@
- ifeq ("@KLIBC@", "no")
-   libdir = @libdir@
-   sbindir = @sbindir@
-@@ -41,7 +45,7 @@
- 
- # setup misc variables
- DMRAID_VERSION := $(shell cat $(top_srcdir)/tools/VERSION)
--DMRAID_LIB_VERSION := $(shell sed --quiet 's/^.*\(DMRAID_LIB_VERSION\)[^_].*"\(.*\)"/\2/p' $(top_srcdir)/lib/version.h)
-+DMRAID_LIB_VERSION := $(shell $(SED) --quiet 's/^.*\(DMRAID_LIB_VERSION\)[^_].*"\(.*\)"/\2/p' $(top_srcdir)/lib/version.h)
- INSTALL_PROGRAM = $(INSTALL) $(STRIP)
- INSTALL_DIR = $(INSTALL) -d
- INSTALL_DATA = $(INSTALL) -m 644 -p
++# relpath.awk: Script is used to calculate relative path
++#	       between two real absolute paths.
++#
++# echo /a/b/c/d  /a/b/e/f | relpath.awk
++# -> ../../e/f/
++
++{
++	length_from = split($1, from, "/");
++	length_to = split($2, to, "/") ;
++	l = 1;
++	while (l <= length_from && l <= length_to && from[l] == to[l])
++		l++;
++	for (i = l; i <= length_from && length(from[i]); i++) {
++		if (i > l)
++			p = sprintf("%s/", p);
++		p = sprintf("%s..", p);
++	}
++	for (i = l; i <= length_to && length(to[i]); i++) {
++		if (length(p) > 0)
++			p = sprintf("%s/", p);
++		p = sprintf("%s%s", p, to[i]);
++	}
++	if (length(p))
++		p = sprintf("%s/", p);
++	print p
++}
