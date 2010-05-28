@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/tools relpath.awk
-Date: 28 May 2010 12:32:48 -0000
-Message-ID: <20100528123248.16659.qmail@sourceware.org>
+Subject: dmraid/lib Makefile.in
+Date: 28 May 2010 12:35:02 -0000
+Message-ID: <20100528123502.18489.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,59 +21,112 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-28 12:32:48
+Changes by:	zkabelac@sourceware.org	2010-05-28 12:35:02
 
-Added files:
-	tools          : relpath.awk 
+Modified files:
+	lib            : Makefile.in 
 
 Log message:
-	Reused relpath.awk script for relative paths from lvm2
+	Reworked installation of libraries and plugins
+	Using relpath.awk for path between  usrlibdir and libdir
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/relpath.awk.diff?cvsroot=dm&r1=NONE&r2=1.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.11&r2=1.12
 
-/cvs/dm/dmraid/tools/relpath.awk,v  -->  standard output
-revision 1.1
---- dmraid/tools/relpath.awk
-+++ -	2010-05-28 12:32:48.876050000 +0000
-@@ -0,0 +1,40 @@
-+#!/usr/bin/awk -f
-+#
-+# Copyright (C) 2010 Red Hat, Inc. All rights reserved.
-+#
-+# This file is part of LVM2.
-+#
-+# This copyrighted material is made available to anyone wishing to use,
-+# modify, copy, or redistribute it subject to the terms and conditions
-+# of the GNU General Public License v.2.
-+#
-+# You should have received a copy of the GNU General Public License
-+# along with this program; if not, write to the Free Software Foundation,
-+# Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+--- dmraid/lib/Makefile.in	2010/05/28 09:17:25	1.11
++++ dmraid/lib/Makefile.in	2010/05/28 12:35:01	1.12
+@@ -47,18 +47,19 @@
+ 	format/partition/dos.c
+ 
+ ifeq ("@STATIC_LINK@", "no")
+-	SOURCES += register/dmreg.c
+ # Dynamic linker library
+-LIBS += -ldl
++	LIBS += -ldl
++	SOURCES += register/dmreg.c
+ endif
+ 
+ SOURCES2 = events/$(LIB_EVENTS_NAME).c
+ 
+-LIB_STATIC=$(top_builddir)/lib/libdmraid.a
+-LIB_EVENTS_NAME=libdmraid-events-isw
++LIB_STATIC = $(top_builddir)/lib/libdmraid.a
++LIB_EVENTS_NAME = libdmraid-events-isw
++USRLIB_RELPATH = $(shell echo $(abspath $(usrlibdir) $(libdir)) | \
++  $(AWK) -f $(top_srcdir)/tools/relpath.awk)
+ 
+-TARGETS=$(LIB_STATIC)
+-INSTALL_TARGETS=$(LIB_STATIC)
++TARGETS = $(LIB_STATIC)
+ 
+ include $(top_builddir)/make.tmpl
+ 
+@@ -67,43 +68,40 @@
+ 		LIB_SHARED=$(top_builddir)/lib/libdmraid.so
+ 		LIB_EVENTS_SHARED=$(LIB_EVENTS_NAME).so
+ 		TARGETS += $(LIB_SHARED) $(LIB_EVENTS_SHARED)
+-		INSTALL_TARGETS += $(LIB_SHARED) $(LIB_EVENTS_SHARED)
+ 	endif
+ endif
+ 
+ all: $(TARGETS)
+-	@echo $(TARGETS) $(INSTALL_TARGETS)
+ 
+ $(LIB_EVENTS_SHARED): $(OBJECTS2)
+ 	$(CC) -o $@ $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(OBJECTS2) \
+ 	  -shared  -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) \
+ 	  $(LIB_SHARED) -ldevmapper-event -lpthread
+ 
+-.PHONY: install_dmraid_libs remove_dmraid_libs
++.PHONY: $(addprefix install_,$(TARGETS)) $(addprefix remove_,$(TARGETS))
 +
-+# relpath.awk: Script is used to calculate relative path
-+#	       between two real absolute paths.
-+#
-+# echo /a/b/c/d  /a/b/e/f | relpath.awk
-+# -> ../../e/f/
++install_$(LIB_EVENTS_SHARED): $(LIB_EVENTS_SHARED)
++	$(INSTALL_PROGRAM) -D $< $(DESTDIR)$(libdir)/device-mapper/$(<F)
++	$(LN_S) -f device-mapper/$(<F) $(DESTDIR)$(libdir)/$(<F)
 +
-+{
-+	length_from = split($1, from, "/");
-+	length_to = split($2, to, "/") ;
-+	l = 1;
-+	while (l <= length_from && l <= length_to && from[l] == to[l])
-+		l++;
-+	for (i = l; i <= length_from && length(from[i]); i++) {
-+		if (i > l)
-+			p = sprintf("%s/", p);
-+		p = sprintf("%s..", p);
-+	}
-+	for (i = l; i <= length_to && length(to[i]); i++) {
-+		if (length(p) > 0)
-+			p = sprintf("%s/", p);
-+		p = sprintf("%s%s", p, to[i]);
-+	}
-+	if (length(p))
-+		p = sprintf("%s/", p);
-+	print p
-+}
++remove_$(LIB_EVENTS_SHARED):
++	$(RM) $(DESTDIR)$(libdir)/device-mapper/$(notdir $(LIB_EVENTS_SHARED))
++	$(RM) $(DESTDIR)$(libdir)/$(notdir $(LIB_EVENTS_SHARED))
++
++install_$(LIB_SHARED): $(LIB_SHARED)
++	$(INSTALL_PROGRAM) -D $< $(DESTDIR)$(libdir)/$(<F).$(DMRAID_LIB_VERSION)
++	$(INSTALL_DIR) $(DESTDIR)$(usrlibdir)
++	$(LN_S) -f $(USRLIB_RELPATH)$(<F).$(DMRAID_LIB_VERSION) $(DESTDIR)$(usrlibdir)/$(<F)
++
++remove_$(LIB_SHARED):
++	$(RM) $(DESTDIR)$(libdir)/$(notdir $(LIB_SHARED)).$(DMRAID_LIB_VERSION)
++	$(RM) $(DESTDIR)$(usrlibdir)/$(notdir $(LIB_SHARED))
++
++install_$(LIB_STATIC): $(LIB_STATIC)
++	$(INSTALL_DATA) -D $< $(DESTDIR)$(usrlibdir)/$(LIB_STATIC)
+ 
+-install_dmraid_libs: $(INSTALL_TARGETS)
+-	@echo "Installing $(INSTALL_TARGETS) in $(DESTDIR)$(libdir)"; \
+-	$(INSTALL_DIR) $(DESTDIR)$(libdir); \
+-	for f in $(INSTALL_TARGETS); \
+-	do \
+-		n=$$(basename $${f}) ; \
+- 		if [[ "$$n" =~ .so$$ ]]; then \
+-			$(INSTALL_PROGRAM) $$f $(DESTDIR)$(libdir)/$${n}.$(DMRAID_LIB_VERSION); \
+-			$(LN_S) -f $${n}.$(DMRAID_LIB_VERSION) $(DESTDIR)$(libdir)/$${n}; \
+-		else \
+-			$(INSTALL_PROGRAM) $$f $(DESTDIR)$(libdir)/$${n}; \
+-		fi \
+-	done
+-
+-install: install_dmraid_libs
+-
+-remove_dmraid_libs:
+-	@echo "Removing $(INSTALL_TARGETS) from $(libdir)"; \
+-	for f in $(INSTALL_TARGETS); \
+-	do \
+-		n=$$(basename $${f}) ; \
+-		$(RM) $(DESTDIR)$(libdir)/$${n}.$(DMRAID_LIB_VERSION); \
+-		$(RM) $(DESTDIR)$(libdir)/$${n}; \
+-	done
++remove_$(LIB_STATIC):
++	$(RM) $(DESTDIR)$(usrlibdir)/$(notdir $(LIB_STATIC))
+ 
+-remove:	remove_dmraid_libs
++install: $(addprefix install_,$(TARGETS))
++remove: $(addprefix remove_,$(TARGETS))
