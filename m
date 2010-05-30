@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid make.tmpl.in
-Date: 30 May 2010 22:13:57 -0000
-Message-ID: <20100530221357.20407.qmail@sourceware.org>
+Subject: dmraid/lib Makefile.in
+Date: 30 May 2010 22:21:32 -0000
+Message-ID: <20100530222132.21903.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,34 +21,71 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-30 22:13:56
+Changes by:	zkabelac@sourceware.org	2010-05-30 22:21:31
 
 Modified files:
-	.              : make.tmpl.in 
+	lib            : Makefile.in 
 
 Log message:
+	Remove VPATH
+	Create complete TARGETS before include of make.tmpl
+	Move LIB_SHARED and LIB_EVENTS_SHARED outside of 'if' block
 	Add support for DEVMAPPEREVENT_CFLAGS
-	Use vpath for .c files
+	Create  soname.major  link as well in libdir
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/make.tmpl.in.diff?cvsroot=dm&r1=1.12&r2=1.13
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.15&r2=1.16
 
---- dmraid/make.tmpl.in	2010/05/30 19:15:26	1.12
-+++ dmraid/make.tmpl.in	2010/05/30 22:13:56	1.13
-@@ -17,6 +17,7 @@
- LIBS = @LIBS@
- AWK = @AWK@
- SED = @SED@
-+DEVMAPPEREVENT_CFLAGS = @DEVMAPPEREVENT_CFLAGS@
- DEVMAPPEREVENT_LIBS = @DEVMAPPEREVENT_LIBS@
- DMRAID_LIB_DATE = @DMRAID_LIB_DATE@
- DMRAID_LIB_MAJOR = @DMRAID_LIB_MAJOR@
-@@ -49,6 +50,8 @@
-   includedir = @KLIBC_INCLUDE_DIR@
+--- dmraid/lib/Makefile.in	2010/05/30 19:15:26	1.15
++++ dmraid/lib/Makefile.in	2010/05/30 22:21:31	1.16
+@@ -7,7 +7,6 @@
+ srcdir = @srcdir@
+ top_srcdir = @top_srcdir@
+ top_builddir = @top_builddir@
+-VPATH = @srcdir@
+ 
+ SOURCES  = \
+ 	activate/activate.c \
+@@ -56,22 +55,22 @@
+ 
+ LIB_STATIC = libdmraid.a
+ LIB_EVENTS_NAME = libdmraid-events-isw
++LIB_SHARED = libdmraid.so
++LIB_EVENTS_SHARED=$(LIB_EVENTS_NAME).so
+ USRLIB_RELPATH = $(shell echo $(abspath $(usrlibdir) $(libdir)) | \
+   $(AWK) -f $(top_srcdir)/tools/relpath.awk)
+ 
+ TARGETS = $(LIB_STATIC)
+ 
+-include $(top_builddir)/make.tmpl
+-
+ ifeq ("@KLIBC@", "no")
+ 	ifeq ("@STATIC_LINK@", "no")
+-		LIB_SHARED = libdmraid.so
+-		LIB_EVENTS_SHARED=$(LIB_EVENTS_NAME).so
+ 		TARGETS += $(LIB_SHARED) $(LIB_EVENTS_SHARED)
+ 	endif
  endif
  
-+vpath %.c $(srcdir)
+-all: $(TARGETS)
++include $(top_builddir)/make.tmpl
 +
- # setup misc variables
- INSTALL_PROGRAM = $(INSTALL) $(STRIP)
- INSTALL_DIR = $(INSTALL) -d
++INCLUDES += $(DEVMAPPEREVENT_CFLAGS)
+ 
+ DMRAID_LIB_VERSION = $(DMRAID_LIB_MAJOR).$(DMRAID_LIB_MINOR).$(DMRAID_LIB_SUBMINOR)
+ $(LIB_SHARED): $(OBJECTS) $(LD_DEPS)
+@@ -95,11 +94,13 @@
+ install_$(LIB_SHARED): $(LIB_SHARED)
+ 	$(INSTALL_PROGRAM) -D $< $(DESTDIR)$(libdir)/$(<F).$(DMRAID_LIB_VERSION)
+ 	$(INSTALL_DIR) $(DESTDIR)$(usrlibdir)
++	$(LN_S) -f $(<F).$(DMRAID_LIB_VERSION) $(DESTDIR)$(libdir)/$(<F).$(DMRAID_LIB_MAJOR)
+ 	$(LN_S) -f $(USRLIB_RELPATH)$(<F).$(DMRAID_LIB_VERSION) $(DESTDIR)$(usrlibdir)/$(<F)
+ 
+ remove_$(LIB_SHARED):
+-	$(RM) $(DESTDIR)$(libdir)/$(notdir $(LIB_SHARED)).$(DMRAID_LIB_VERSION)
+ 	$(RM) $(DESTDIR)$(usrlibdir)/$(notdir $(LIB_SHARED))
++	$(RM) $(DESTDIR)$(libdir)/$(notdir $(LIB_SHARED)).$(DMRAID_LIB_MAJOR)
++	$(RM) $(DESTDIR)$(libdir)/$(notdir $(LIB_SHARED)).$(DMRAID_LIB_VERSION)
+ 
+ install_$(LIB_STATIC): $(LIB_STATIC)
+ 	$(INSTALL_DATA) -D $< $(DESTDIR)$(usrlibdir)/$(LIB_STATIC)
