@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid Makefile.in
-Date: 30 May 2010 17:36:20 -0000
-Message-ID: <20100530173620.30371.qmail@sourceware.org>
+Subject: dmraid/tools Makefile.in
+Date: 30 May 2010 17:39:03 -0000
+Message-ID: <20100530173903.31350.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,39 +21,78 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-30 17:36:18
+Changes by:	zkabelac@sourceware.org	2010-05-30 17:39:02
 
 Modified files:
-	.              : Makefile.in 
+	tools          : Makefile.in 
 
 Log message:
-	Don't use tools/dmraid as target
-	Force deps through all:
-	Add DISTCLEAN_TARGETS definition
+	Add version.h to DISCLEAN_TARGETS
+	Simplify install and remove targets
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/Makefile.in.diff?cvsroot=dm&r1=1.1&r2=1.2
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/Makefile.in.diff?cvsroot=dm&r1=1.10&r2=1.11
 
---- dmraid/Makefile.in	2008/02/22 16:50:38	1.1
-+++ dmraid/Makefile.in	2010/05/30 17:36:18	1.2
-@@ -1,16 +1,17 @@
- #
--# Copyright (C) 2004,2005  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
-+# Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
- #
- # See file LICENSE at the top of this source tree for license information.
- #
+--- dmraid/tools/Makefile.in	2010/05/28 08:37:37	1.10
++++ dmraid/tools/Makefile.in	2010/05/30 17:39:02	1.11
+@@ -11,6 +11,7 @@
+ DIETLIBC = @DIETLIBC@
+ KLIBC = @KLIBC@
  
- srcdir = @srcdir@
- top_srcdir = @top_srcdir@
--VPATH = @srcdir@
++DISTCLEAN_TARGETS += version.h
+ INCLUDES += -I$(src_dir)
  
- SUBDIRS = include lib man tools
+ SOURCES=\
+@@ -24,14 +25,14 @@
+ TARGETS=\
+ 	dmraid
  
--TARGETS = tools/dmraid
-+DISTCLEAN_TARGETS = make.tmpl core cscope.out config.cache config.log config.status
+-include $(top_builddir)/make.tmpl
+-
+ ifeq ("@KLIBC@", "no")
+ 	ifeq ("@STATIC_LINK@", "no")
+ 		TARGETS += dmevent_tool
+ 	endif
+ endif
+ 
++include $(top_builddir)/make.tmpl
 +
-+all: tools
+ DMRAIDLIBS=-ldmraid
  
- include make.tmpl
+ # FIXME: use pkg-config here to get the list of needed librarie
+@@ -64,29 +65,20 @@
+ 	endif
+ endif
  
+-all: $(TARGETS)
+-
+-.PHONY: install_dmraid_tools remove_dmraid_tools
++.PHONY: install_dmraid_tools
+ 
+-dmraid:	$(OBJECTS) $(top_builddir)/lib/libdmraid.a
++dmraid: $(OBJECTS) $(top_builddir)/lib/libdmraid.a
+ 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) -L$(top_builddir)/lib $(DMRAIDLIBS) $(LIBS)
+ 
+ dmevent_tool: $(OBJECTS2) $(top_builddir)/lib/libdmraid.a
+ 	$(CC) -o $@ $(OBJECTS2) $(INCLUDES) $(LDFLAGS) -L$(top_builddir)/lib \
+-	  $(DMRAIDLIBS) $(DMEVENTTOOLLIBS) $(LIBS)
++		$(DMEVENTTOOLLIBS) $(DMRAIDLIBS) $(LIBS)
+ 
+ install_dmraid_tools: $(TARGETS)
+-	@echo "Installing $(TARGETS) in $(DESTDIR)$(sbindir)"; \
+-	$(INSTALL_DIR) $(DESTDIR)$(sbindir); \
++	$(INSTALL_DIR) $(DESTDIR)$(sbindir)
+ 	$(INSTALL_PROGRAM) $(TARGETS) $(DESTDIR)$(sbindir)
+ 
+ install: install_dmraid_tools
+ 
+-remove_dmraid_tools:
+-	@echo "Removing $(TARGETS) from $(DESTDIR)$(sbindir)"; \
+-	for f in $(TARGETS); \
+-	do \
+-		rm -f $(DESTDIR)$(sbindir)/$$f; \
+-	done
+-
+-remove:	remove_dmraid_tools
++remove:
++	$(RM) $(addprefix $(DESTDIR)$(sbindir)/,$(TARGETS))
