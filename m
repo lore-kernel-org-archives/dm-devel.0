@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/tools commands.c
-Date: 30 May 2010 22:12:43 -0000
-Message-ID: <20100530221243.20195.qmail@sourceware.org>
+Subject: dmraid make.tmpl.in
+Date: 30 May 2010 22:13:57 -0000
+Message-ID: <20100530221357.20407.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,26 +21,34 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-30 22:12:43
+Changes by:	zkabelac@sourceware.org	2010-05-30 22:13:56
 
 Modified files:
-	tools          : commands.c 
+	.              : make.tmpl.in 
 
 Log message:
-	Check for possible _GNU_SOURCE already defined
+	Add support for DEVMAPPEREVENT_CFLAGS
+	Use vpath for .c files
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/commands.c.diff?cvsroot=dm&r1=1.9&r2=1.10
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/make.tmpl.in.diff?cvsroot=dm&r1=1.12&r2=1.13
 
---- dmraid/tools/commands.c	2010/03/19 13:56:49	1.9
-+++ dmraid/tools/commands.c	2010/05/30 22:12:43	1.10
-@@ -9,7 +9,9 @@
-  */
+--- dmraid/make.tmpl.in	2010/05/30 19:15:26	1.12
++++ dmraid/make.tmpl.in	2010/05/30 22:13:56	1.13
+@@ -17,6 +17,7 @@
+ LIBS = @LIBS@
+ AWK = @AWK@
+ SED = @SED@
++DEVMAPPEREVENT_CFLAGS = @DEVMAPPEREVENT_CFLAGS@
+ DEVMAPPEREVENT_LIBS = @DEVMAPPEREVENT_LIBS@
+ DMRAID_LIB_DATE = @DMRAID_LIB_DATE@
+ DMRAID_LIB_MAJOR = @DMRAID_LIB_MAJOR@
+@@ -49,6 +50,8 @@
+   includedir = @KLIBC_INCLUDE_DIR@
+ endif
  
- #ifdef HAVE_GETOPTLONG
-+#ifndef _GNU_SOURCE
- # define _GNU_SOURCE
-+#endif
- # include <getopt.h>
- #endif
- 
++vpath %.c $(srcdir)
++
+ # setup misc variables
+ INSTALL_PROGRAM = $(INSTALL) $(STRIP)
+ INSTALL_DIR = $(INSTALL) -d
