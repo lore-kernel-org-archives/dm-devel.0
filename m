@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid lib/Makefile.in ./make.tmpl.in
-Date: 29 May 2010 21:34:42 -0000
-Message-ID: <20100529213442.29766.qmail@sourceware.org>
+Subject: dmraid/man Makefile.in
+Date: 30 May 2010 17:11:31 -0000
+Message-ID: <20100530171131.24491.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,67 +21,44 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-29 21:34:42
+Changes by:	zkabelac@sourceware.org	2010-05-30 17:11:30
 
 Modified files:
-	lib            : Makefile.in 
-	.              : make.tmpl.in 
+	man            : Makefile.in 
 
 Log message:
-	Remove global %.so target
-	Add target for plugin.so
-	Add target for libdmraid.so
-	Hardcoded major version for libdmraid.so -> libdmraid.so.1
+	Simplify, keep all executed commands visible
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.12&r2=1.13
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/make.tmpl.in.diff?cvsroot=dm&r1=1.9&r2=1.10
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/man/Makefile.in.diff?cvsroot=dm&r1=1.4&r2=1.5
 
---- dmraid/lib/Makefile.in	2010/05/28 12:35:01	1.12
-+++ dmraid/lib/Makefile.in	2010/05/29 21:34:41	1.13
-@@ -73,10 +73,16 @@
+--- dmraid/man/Makefile.in	2010/05/28 08:40:52	1.4
++++ dmraid/man/Makefile.in	2010/05/30 17:11:30	1.5
+@@ -14,20 +14,13 @@
  
- all: $(TARGETS)
+ include $(top_builddir)/make.tmpl
  
-+# FIXME  Use major version for -soname
-+$(LIB_SHARED): $(OBJECTS) $(top_srcdir)/lib/.export.sym
-+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(OBJECTS) \
-+		-shared -Wl,-soname,$(notdir $@).1 \
-+		-Wl,--version-script,$(top_srcdir)/lib/.export.sym \
-+		-ldevmapper-event
-+
- $(LIB_EVENTS_SHARED): $(OBJECTS2)
--	$(CC) -o $@ $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(OBJECTS2) \
--	  -shared  -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) \
--	  $(LIB_SHARED) -ldevmapper-event -lpthread
-+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(OBJECTS2) \
-+		-shared  -Wl,-soname,$(notdir $@) -ldevmapper-event -lpthread
+-.PHONY: install_dmraid_man remove_dmraid_man
++.PHONY: install_dmraid_man8
  
- .PHONY: $(addprefix install_,$(TARGETS)) $(addprefix remove_,$(TARGETS))
+-%_install: %.8
+-	$(INSTALL_DATA) -D $< $(DESTDIR)$(MAN8DIR)/$(<F)
++install_dmraid_man8: $(MAN8)
++	$(INSTALL_DIR) $(DESTDIR)$(MAN8DIR)
++	$(INSTALL_DATA) $? $(DESTDIR)$(MAN8DIR)
  
---- dmraid/make.tmpl.in	2010/05/28 12:31:39	1.9
-+++ dmraid/make.tmpl.in	2010/05/29 21:34:41	1.10
-@@ -130,8 +130,8 @@
+-install_dmraid_man: $(MAN8:.8=_install)
++install: install_dmraid_man8
  
- $(TARGETS): $(OBJECTS)
- 
--%.o: %.c
--	$(CC) -c $(INCLUDES) $(CFLAGS) $< -o $@
-+%.o: %.c $(top_builddir)/include/config.h
-+	$(CC) -o $@ -c $(INCLUDES) $(CFLAGS) -include $(top_builddir)/include/config.h $<
- 
- %.d: %.c
- 	$(MKDIR_P) $(dir $@); \
-@@ -142,12 +142,6 @@
- 	sed -i "s/\(.*\)\.o[ :]*/$$FILE.o $$FILE.d $$FILE.pot: $$DEPS /g" $@; \
- 	[ -s $@ ] || $(RM) $@
- 
--%.so: $(OBJECTS) $(top_srcdir)/lib/.export.sym
+-install: install_dmraid_man
 -
--%.so: $(OBJECTS)
--	$(CC) -shared -Wl,-soname,$(notdir $@).$(DMRAID_LIB_VERSION) \
--	-Wl,--version-script,$(top_srcdir)/lib/.export.sym $(OBJECTS) -o $@ -ldevmapper-event
+-remove_dmraid_man:
+-	@echo "Removing $(MAN8) in $(DESTDIR)$(MAN8DIR)"; \
+-	for f in $(MAN8); \
+-	do \
+-	   $(RM) $(DESTDIR)$(MAN8DIR)/$$f; \
+-	done
 -
- $(LIB_STATIC): $(OBJECTS)
- 	$(RM) $@
- 	$(AR) r $@ $(OBJECTS)
+-remove: remove_dmraid_man
++remove:
++	$(RM) $(addprefix $(DESTDIR)$(MAN8DIR)/,$(MAN8))
