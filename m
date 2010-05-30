@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/man Makefile.in
-Date: 30 May 2010 17:11:31 -0000
-Message-ID: <20100530171131.24491.qmail@sourceware.org>
+Subject: dmraid Makefile.in
+Date: 30 May 2010 17:36:20 -0000
+Message-ID: <20100530173620.30371.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,44 +21,39 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-30 17:11:30
+Changes by:	zkabelac@sourceware.org	2010-05-30 17:36:18
 
 Modified files:
-	man            : Makefile.in 
+	.              : Makefile.in 
 
 Log message:
-	Simplify, keep all executed commands visible
+	Don't use tools/dmraid as target
+	Force deps through all:
+	Add DISTCLEAN_TARGETS definition
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/man/Makefile.in.diff?cvsroot=dm&r1=1.4&r2=1.5
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/Makefile.in.diff?cvsroot=dm&r1=1.1&r2=1.2
 
---- dmraid/man/Makefile.in	2010/05/28 08:40:52	1.4
-+++ dmraid/man/Makefile.in	2010/05/30 17:11:30	1.5
-@@ -14,20 +14,13 @@
+--- dmraid/Makefile.in	2008/02/22 16:50:38	1.1
++++ dmraid/Makefile.in	2010/05/30 17:36:18	1.2
+@@ -1,16 +1,17 @@
+ #
+-# Copyright (C) 2004,2005  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
++# Copyright (C) 2004-2010  Heinz Mauelshagen, Red Hat GmbH. All rights reserved.
+ #
+ # See file LICENSE at the top of this source tree for license information.
+ #
  
- include $(top_builddir)/make.tmpl
+ srcdir = @srcdir@
+ top_srcdir = @top_srcdir@
+-VPATH = @srcdir@
  
--.PHONY: install_dmraid_man remove_dmraid_man
-+.PHONY: install_dmraid_man8
+ SUBDIRS = include lib man tools
  
--%_install: %.8
--	$(INSTALL_DATA) -D $< $(DESTDIR)$(MAN8DIR)/$(<F)
-+install_dmraid_man8: $(MAN8)
-+	$(INSTALL_DIR) $(DESTDIR)$(MAN8DIR)
-+	$(INSTALL_DATA) $? $(DESTDIR)$(MAN8DIR)
+-TARGETS = tools/dmraid
++DISTCLEAN_TARGETS = make.tmpl core cscope.out config.cache config.log config.status
++
++all: tools
  
--install_dmraid_man: $(MAN8:.8=_install)
-+install: install_dmraid_man8
+ include make.tmpl
  
--install: install_dmraid_man
--
--remove_dmraid_man:
--	@echo "Removing $(MAN8) in $(DESTDIR)$(MAN8DIR)"; \
--	for f in $(MAN8); \
--	do \
--	   $(RM) $(DESTDIR)$(MAN8DIR)/$$f; \
--	done
--
--remove: remove_dmraid_man
-+remove:
-+	$(RM) $(addprefix $(DESTDIR)$(MAN8DIR)/,$(MAN8))
