@@ -1,71 +1,58 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Subject: Re: [PATCH] DM-CRYPT: Scale to multiple CPUs
-Date: Mon, 31 May 2010 18:34:55 +0200
-Message-ID: <1275323695.3291.122.camel@edumazet-laptop>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [dm-devel] [PATCH] DM-CRYPT: Scale to multiple CPUs
+Date: Mon, 31 May 2010 19:22:21 +0200
+Message-ID: <4C03F04D.4040200@redhat.com>
 References: <20100531160425.GA20344@basil.fritz.box>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20100531160425.GA20344@basil.fritz.box>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andi Kleen <andi@firstfloor.org>
-Cc: herbert@gondor.apana.org.au, dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com, ak@linux.intel.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Andi Kleen <andi@firstfloor.org>, herbert@gondor.hengli.com.au, linux-kernel@vger.kernel.org, agk@redhat.com, ak@linux.intel.com
 List-Id: dm-devel.ids
 
-Le lundi 31 mai 2010 =C3=A0 18:04 +0200, Andi Kleen a =C3=A9crit :
+On 05/31/2010 06:04 PM, Andi Kleen wrote:
 > DM-CRYPT: Scale to multiple CPUs
->=20
+> 
 > Currently dm-crypt does all encryption work per dmcrypt mapping in a
 > single workqueue. This does not scale well when multiple CPUs
 > are submitting IO at a high rate. The single CPU running the single
-> thread cannot keep up with the encryption and encrypted IO performanc=
-e
+> thread cannot keep up with the encryption and encrypted IO performance
 > tanks.
->=20
-> This patch changes the crypto workqueue to be per CPU. This means
-> that as long as the IO submitter (or the interrupt target CPUs
-> for reads) runs on different CPUs the encryption work will be also
-> parallel.
->=20
-> To avoid a bottleneck on the IO worker I also changed those to be
-> per CPU threads.
->=20
-> There is still some shared data, so I suspect some bouncing
-> cache lines. But I haven't done a detailed study on that yet.
->=20
-> All the threads are global, not per CPU. That is to avoid a thread
-> explosion on systems with a large number of CPUs and a larger
-> number of dm-crypt mappings. The code takes care to avoid problems
-> with nested mappings.
->    =20
-> Signed-off-by: Andi Kleen <ak@linux.intel.com>
+
+This is true only if encryption run on the CPU synchronously.
+
+(Usually it is high speed SSD or dm-crypt above striped RAID where
+underlying device throughput is higher than CPU encryption speed.)
+
+I did a lot of experiments with similar design and abandoned it.
+(If we go this way, there should be some parameter limiting
+used # cpu threads for encryption, I had this configurable
+through dm messages online + initial kernel module parameter.)
+
+But I see two main problems:
+
+1) How this scale together with asynchronous
+crypto which run in parallel in crypto API layer (and have limited
+resources)? (AES-NI for example)
+
+2) Per volume threads and mempools were added to solve low memory
+problems (exhausted mempools), isn't now possible deadlock here again?
+
+(Like one CPU, many dm-crypt volumes - thread waiting for allocating
+page from exhausted mempool, blocking another request (another volume)
+in queue later which will free some pages after crypt processing.
+This cannot happen with per volume threads. Or am I missing something here?)
 
 
->  	/*
-> +	 * Duplicated per cpu state. Access through
-> +	 * per_cpu_ptr() only.
-> +	 */
-> +	struct crypt_cpu *cpu;
-> +
-> +	/*
->  	 * Layout of each crypto request:
->  	 *
+Anyway, I still think that proper solution to this problem is run
+parallel requests in cryptoAPI using async crypt interface,
+IOW paralelize this on cryptoAPI layer which know best which resources
+it can use for crypto work.
 
-Since commit e0fdb0e050eae331, we have a __percpu annotation so that
-sparse can be augmented. This would also make the comment unnecessary..=
-=2E
+(Herbert - is something like per cpu crypto threads planned
+for use in this case?)
 
-
-We also have this_cpu_ accessors
-
-> +       return per_cpu_ptr(cc->cpu, smp_processor_id());
-
-	this_cpu_ptr(cc->cpu)
-
-and __thic_cpu_ptr() for the 'raw' version
-
-
-> +       __get_cpu_var(io_wq_cpu) =3D current;
-
-	this_cpu_write(io_wq_cpu, current)
+Milan
