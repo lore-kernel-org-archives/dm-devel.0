@@ -1,513 +1,667 @@
-From: zkabelac@sourceware.org
-Subject: dmraid ./configure ./configure.in ./make.tmpl. ...
-Date: 31 May 2010 09:24:43 -0000
-Message-ID: <20100531092443.23093.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: [PATCH] DM-CRYPT: Scale to multiple CPUs
+Date: Mon, 31 May 2010 18:04:25 +0200
+Message-ID: <20100531160425.GA20344@basil.fritz.box>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: herbert@gondor.apana.org.au, dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com, ak@linux.intel.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-05-31 09:24:43
+DM-CRYPT: Scale to multiple CPUs
 
-Modified files:
-	.              : configure configure.in make.tmpl.in 
-	lib            : Makefile.in 
+Currently dm-crypt does all encryption work per dmcrypt mapping in a
+single workqueue. This does not scale well when multiple CPUs
+are submitting IO at a high rate. The single CPU running the single
+thread cannot keep up with the encryption and encrypted IO performance
+tanks.
 
-Log message:
-	Add configure detection for -ldl and -lpthread
-	Check for devmapper installation
-	Link all used libs by libdmraid and its plugin
-	(do not expect devmapper-event will have devmapper and dl)
-	Add few more linker flags for this detection
+This patch changes the crypto workqueue to be per CPU. This means
+that as long as the IO submitter (or the interrupt target CPUs
+for reads) runs on different CPUs the encryption work will be also
+parallel.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/configure.diff?cvsroot=dm&r1=1.12&r2=1.13
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/configure.in.diff?cvsroot=dm&r1=1.12&r2=1.13
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/make.tmpl.in.diff?cvsroot=dm&r1=1.13&r2=1.14
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/Makefile.in.diff?cvsroot=dm&r1=1.16&r2=1.17
+To avoid a bottleneck on the IO worker I also changed those to be
+per CPU threads.
 
---- dmraid/configure	2010/05/30 22:25:37	1.12
-+++ dmraid/configure	2010/05/31 09:24:42	1.13
-@@ -641,6 +641,7 @@
- usrlibdir
- STATIC_LINK
- SOFLAG
-+PTHREAD_LIBS
- LIB_SO
- LD_DEPS
- JOBS
-@@ -650,7 +651,10 @@
- DMRAID_LIB_MINOR
- DMRAID_LIB_MAJOR
- DMRAID_LIB_DATE
-+DL_LIBS
- DIETLIBC
-+DEVMAPPER_LIBS
-+DEVMAPPER_CFLAGS
- DEVMAPPEREVENT_LIBS
- DEVMAPPEREVENT_CFLAGS
- DEBUG_MALLOC
-@@ -751,7 +755,7 @@
- enable_static_link
- enable_shared_lib
- enable_testing
--with_devmapper_event_prefix
-+with_devmapper_prefix
- '
-       ac_precious_vars='build_alias
- host_alias
-@@ -1410,8 +1414,8 @@
-   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-   --with-staticdir=DIR    Static binary in DIR [EPREFIX/sbin]
-   --with-usrlibdir=DIR    User library in DIR [PREFIX/lib]
--  --with-devmapper-event-prefix=PFX
--                          Where is 'd-m-e' library installed
-+  --with-devmapper-prefix=PFX
-+                          Where is devmapper library installed
+There is still some shared data, so I suspect some bouncing
+cache lines. But I haven't done a detailed study on that yet.
+
+All the threads are global, not per CPU. That is to avoid a thread
+explosion on systems with a large number of CPUs and a larger
+number of dm-crypt mappings. The code takes care to avoid problems
+with nested mappings.
+    
+Signed-off-by: Andi Kleen <ak@linux.intel.com>
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 3bdbb61..fb95896 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -18,6 +18,7 @@
+ #include <linux/crypto.h>
+ #include <linux/workqueue.h>
+ #include <linux/backing-dev.h>
++#include <linux/percpu.h>
+ #include <asm/atomic.h>
+ #include <linux/scatterlist.h>
+ #include <asm/page.h>
+@@ -77,11 +78,15 @@ struct crypt_iv_operations {
+ };
  
- Some influential environment variables:
-   CC          C compiler command
-@@ -8914,23 +8918,171 @@
+ struct iv_essiv_private {
+-	struct crypto_cipher *tfm;
+ 	struct crypto_hash *hash_tfm;
+ 	u8 *salt;
+ };
  
- fi
- 
-+{ $as_echo "$as_me:$LINENO: checking for dlopen in -ldl" >&5
-+$as_echo_n "checking for dlopen in -ldl... " >&6; }
-+if test "${ac_cv_lib_dl_dlopen+set}" = set; then
-+  $as_echo_n "(cached) " >&6
-+else
-+  ac_check_lib_save_LIBS=$LIBS
-+LIBS="-ldl  $LIBS"
-+cat >conftest.$ac_ext <<_ACEOF
-+/* confdefs.h.  */
-+_ACEOF
-+cat confdefs.h >>conftest.$ac_ext
-+cat >>conftest.$ac_ext <<_ACEOF
-+/* end confdefs.h.  */
++/* Duplicated per CPU state for cipher */
++struct iv_essiv_private_cpu {
++	struct crypto_cipher *tfm;
++};
 +
-+/* Override any GCC internal prototype to avoid an error.
-+   Use char because int might match the return type of a GCC
-+   builtin and then its argument prototype would still apply.  */
-+#ifdef __cplusplus
-+extern "C"
-+#endif
-+char dlopen ();
-+int
-+main ()
+ struct iv_benbi_private {
+ 	int shift;
+ };
+@@ -91,6 +96,18 @@ struct iv_benbi_private {
+  * and encrypts / decrypts at the same time.
+  */
+ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID };
++
++/* Duplicated per CPU state for cipher */
++struct crypt_cpu {
++	struct ablkcipher_request *req;
++	struct crypto_ablkcipher *tfm;
++	struct iv_essiv_private_cpu ie;
++};
++
++/*
++ * The fields in here must be read only after initialization,
++ * changing state should be in crypt_cpu.
++ */
+ struct crypt_config {
+ 	struct dm_dev *dev;
+ 	sector_t start;
+@@ -103,10 +120,6 @@ struct crypt_config {
+ 	mempool_t *req_pool;
+ 	mempool_t *page_pool;
+ 	struct bio_set *bs;
+-
+-	struct workqueue_struct *io_queue;
+-	struct workqueue_struct *crypt_queue;
+-
+ 	/*
+ 	 * crypto related data
+ 	 */
+@@ -120,6 +133,12 @@ struct crypt_config {
+ 	unsigned int iv_size;
+ 
+ 	/*
++	 * Duplicated per cpu state. Access through
++	 * per_cpu_ptr() only.
++	 */
++	struct crypt_cpu *cpu;
++
++	/*
+ 	 * Layout of each crypto request:
+ 	 *
+ 	 *   struct ablkcipher_request
+@@ -133,25 +152,44 @@ struct crypt_config {
+ 	 * correctly aligned.
+ 	 */
+ 	unsigned int dmreq_start;
+-	struct ablkcipher_request *req;
+ 
+ 	char cipher[CRYPTO_MAX_ALG_NAME];
+ 	char chainmode[CRYPTO_MAX_ALG_NAME];
+-	struct crypto_ablkcipher *tfm;
+ 	unsigned long flags;
+ 	unsigned int key_size;
+ 	u8 key[0];
+ };
+ 
++/* RED-PEN scale with number of cpus? */
+ #define MIN_IOS        16
+ #define MIN_POOL_PAGES 32
+ #define MIN_BIO_PAGES  8
+ 
++/* Protect creation of a new crypt queue */
++static DEFINE_MUTEX(queue_setup_lock);
++static struct workqueue_struct *crypt_workqueue;
++static struct workqueue_struct *io_workqueue;
++static DEFINE_PER_CPU(struct task_struct *, io_wq_cpu);
++
+ static struct kmem_cache *_crypt_io_pool;
+ 
+ static void clone_init(struct dm_crypt_io *, struct bio *);
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io);
+ 
++static struct crypt_cpu *crypt_me(struct crypt_config *cc)
 +{
-+return dlopen ();
-+  ;
-+  return 0;
++	return per_cpu_ptr(cc->cpu, smp_processor_id());
 +}
-+_ACEOF
-+rm -f conftest.$ac_objext conftest$ac_exeext
-+if { (ac_try="$ac_link"
-+case "(($ac_try" in
-+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-+  *) ac_try_echo=$ac_try;;
-+esac
-+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-+$as_echo "$ac_try_echo") >&5
-+  (eval "$ac_link") 2>conftest.er1
-+  ac_status=$?
-+  grep -v '^ *+' conftest.er1 >conftest.err
-+  rm -f conftest.er1
-+  cat conftest.err >&5
-+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-+  (exit $ac_status); } && {
-+	 test -z "$ac_c_werror_flag" ||
-+	 test ! -s conftest.err
-+       } && test -s conftest$ac_exeext && {
-+	 test "$cross_compiling" = yes ||
-+	 $as_test_x conftest$ac_exeext
-+       }; then
-+  ac_cv_lib_dl_dlopen=yes
-+else
-+  $as_echo "$as_me: failed program was:" >&5
-+sed 's/^/| /' conftest.$ac_ext >&5
- 
--# Check whether --with-devmapper-event-prefix was given.
--if test "${with_devmapper_event_prefix+set}" = set; then
--  withval=$with_devmapper_event_prefix; DEVMAPPEREVENT_LIBS="-L$withval/lib"
--	 DEVMAPPEREVENT_CFLAGS="-I$withval/include"
-+	ac_cv_lib_dl_dlopen=no
-+fi
 +
-+rm -rf conftest.dSYM
-+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-+      conftest$ac_exeext conftest.$ac_ext
-+LIBS=$ac_check_lib_save_LIBS
-+fi
-+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_dl_dlopen" >&5
-+$as_echo "$ac_cv_lib_dl_dlopen" >&6; }
-+if test "x$ac_cv_lib_dl_dlopen" = x""yes; then
-+  DL_LIBS="-ldl"
- else
--  DEVMAPPEREVENT_LIBS=
--	 DEVMAPPEREVENT_CFLAGS=
-+  { { $as_echo "$as_me:$LINENO: error: dl library is missing" >&5
-+$as_echo "$as_me: error: dl library is missing" >&2;}
-+   { (exit 1); exit 1; }; }
-+fi
-+
-+
-+{ $as_echo "$as_me:$LINENO: checking for pthread_mutex_lock in -lpthread" >&5
-+$as_echo_n "checking for pthread_mutex_lock in -lpthread... " >&6; }
-+if test "${ac_cv_lib_pthread_pthread_mutex_lock+set}" = set; then
-+  $as_echo_n "(cached) " >&6
-+else
-+  ac_check_lib_save_LIBS=$LIBS
-+LIBS="-lpthread  $LIBS"
-+cat >conftest.$ac_ext <<_ACEOF
-+/* confdefs.h.  */
-+_ACEOF
-+cat confdefs.h >>conftest.$ac_ext
-+cat >>conftest.$ac_ext <<_ACEOF
-+/* end confdefs.h.  */
-+
-+/* Override any GCC internal prototype to avoid an error.
-+   Use char because int might match the return type of a GCC
-+   builtin and then its argument prototype would still apply.  */
-+#ifdef __cplusplus
-+extern "C"
-+#endif
-+char pthread_mutex_lock ();
-+int
-+main ()
++/* Use this for cipher attributes that are the same for all cpus */
++static struct crypto_ablkcipher *any_tfm(struct crypt_config *cc)
 +{
-+return pthread_mutex_lock ();
-+  ;
-+  return 0;
++	struct crypto_ablkcipher *tfm;
++	/* cpu doesn't matter, output is always the same */
++	tfm = per_cpu_ptr(cc->cpu, raw_smp_processor_id())->tfm;
++	return tfm;
 +}
-+_ACEOF
-+rm -f conftest.$ac_objext conftest$ac_exeext
-+if { (ac_try="$ac_link"
-+case "(($ac_try" in
-+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-+  *) ac_try_echo=$ac_try;;
-+esac
-+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-+$as_echo "$ac_try_echo") >&5
-+  (eval "$ac_link") 2>conftest.er1
-+  ac_status=$?
-+  grep -v '^ *+' conftest.er1 >conftest.err
-+  rm -f conftest.er1
-+  cat conftest.err >&5
-+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-+  (exit $ac_status); } && {
-+	 test -z "$ac_c_werror_flag" ||
-+	 test ! -s conftest.err
-+       } && test -s conftest$ac_exeext && {
-+	 test "$cross_compiling" = yes ||
-+	 $as_test_x conftest$ac_exeext
-+       }; then
-+  ac_cv_lib_pthread_pthread_mutex_lock=yes
-+else
-+  $as_echo "$as_me: failed program was:" >&5
-+sed 's/^/| /' conftest.$ac_ext >&5
 +
-+	ac_cv_lib_pthread_pthread_mutex_lock=no
-+fi
-+
-+rm -rf conftest.dSYM
-+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-+      conftest$ac_exeext conftest.$ac_ext
-+LIBS=$ac_check_lib_save_LIBS
-+fi
-+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_pthread_pthread_mutex_lock" >&5
-+$as_echo "$ac_cv_lib_pthread_pthread_mutex_lock" >&6; }
-+if test "x$ac_cv_lib_pthread_pthread_mutex_lock" = x""yes; then
-+  PTHREAD_LIBS="-lpthread"
-+else
-+  { { $as_echo "$as_me:$LINENO: error: pthread library is missing" >&5
-+$as_echo "$as_me: error: pthread library is missing" >&2;}
-+   { (exit 1); exit 1; }; }
-+fi
-+
-+
-+
-+# Check whether --with-devmapper-prefix was given.
-+if test "${with_devmapper_prefix+set}" = set; then
-+  withval=$with_devmapper_prefix; DEVMAPPER_LIBS="-L$withval/lib"
-+	 DEVMAPPER_CFLAGS="-I$withval/include"
-+else
-+  DEVMAPPER_LIBS=
-+	 DEVMAPPER_CFLAGS=
- fi
+ /*
+  * Different IV generation algorithms:
+  *
+@@ -198,7 +236,7 @@ static int crypt_iv_essiv_init(struct crypt_config *cc)
+ 	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+ 	struct hash_desc desc;
+ 	struct scatterlist sg;
+-	int err;
++	int err, n, cpu;
  
- save_LDFLAGS=$LDFLAGS
- save_CPPFLAGS=$CPPFLAGS
--LDFLAGS="$LDFLAGS $DEVMAPPEREVENT_LIBS"
--CPPFLAGS="$CPPFLAGS $DEVMAPPEREVENT_CFLAGS"
--{ $as_echo "$as_me:$LINENO: checking for dm_task_set_name in -ldevmapper-event" >&5
--$as_echo_n "checking for dm_task_set_name in -ldevmapper-event... " >&6; }
--if test "${ac_cv_lib_devmapper_event_dm_task_set_name+set}" = set; then
-+LDFLAGS="$LDFLAGS $DEVMAPPER_LIBS"
-+CPPFLAGS="$CPPFLAGS $DEVMAPPER_CFLAGS"
-+{ $as_echo "$as_me:$LINENO: checking for dm_event_handler_create in -ldevmapper-event" >&5
-+$as_echo_n "checking for dm_event_handler_create in -ldevmapper-event... " >&6; }
-+if test "${ac_cv_lib_devmapper_event_dm_event_handler_create+set}" = set; then
-   $as_echo_n "(cached) " >&6
- else
-   ac_check_lib_save_LIBS=$LIBS
-@@ -8948,11 +9100,11 @@
- #ifdef __cplusplus
- extern "C"
- #endif
--char dm_task_set_name ();
-+char dm_event_handler_create ();
- int
- main ()
- {
--return dm_task_set_name ();
-+return dm_event_handler_create ();
-   ;
-   return 0;
+ 	sg_init_one(&sg, cc->key, cc->key_size);
+ 	desc.tfm = essiv->hash_tfm;
+@@ -208,8 +246,18 @@ static int crypt_iv_essiv_init(struct crypt_config *cc)
+ 	if (err)
+ 		return err;
+ 
+-	return crypto_cipher_setkey(essiv->tfm, essiv->salt,
++	for_each_possible_cpu (cpu) {
++		struct crypt_cpu *cs = per_cpu_ptr(cc->cpu, cpu);
++
++		n = crypto_cipher_setkey(cs->ie.tfm, essiv->salt,
+ 				    crypto_hash_digestsize(essiv->hash_tfm));
++		if (n) {
++			err = n;
++			break;
++		}
++	}
++
++	return err;
  }
-@@ -8978,12 +9130,12 @@
- 	 test "$cross_compiling" = yes ||
- 	 $as_test_x conftest$ac_exeext
-        }; then
--  ac_cv_lib_devmapper_event_dm_task_set_name=yes
-+  ac_cv_lib_devmapper_event_dm_event_handler_create=yes
- else
-   $as_echo "$as_me: failed program was:" >&5
- sed 's/^/| /' conftest.$ac_ext >&5
  
--	ac_cv_lib_devmapper_event_dm_task_set_name=no
-+	ac_cv_lib_devmapper_event_dm_event_handler_create=no
- fi
+ /* Wipe salt and reset key derived from volume key */
+@@ -217,24 +265,70 @@ static int crypt_iv_essiv_wipe(struct crypt_config *cc)
+ {
+ 	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+ 	unsigned salt_size = crypto_hash_digestsize(essiv->hash_tfm);
++	int cpu, err, n;
  
- rm -rf conftest.dSYM
-@@ -8991,16 +9143,89 @@
-       conftest$ac_exeext conftest.$ac_ext
- LIBS=$ac_check_lib_save_LIBS
- fi
--{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_devmapper_event_dm_task_set_name" >&5
--$as_echo "$ac_cv_lib_devmapper_event_dm_task_set_name" >&6; }
--if test "x$ac_cv_lib_devmapper_event_dm_task_set_name" = x""yes; then
--  DEVMAPPEREVENT_LIBS="$DEVMAPPEREVENT_LIBS -ldevmapper-event"
-+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_devmapper_event_dm_event_handler_create" >&5
-+$as_echo "$ac_cv_lib_devmapper_event_dm_event_handler_create" >&6; }
-+if test "x$ac_cv_lib_devmapper_event_dm_event_handler_create" = x""yes; then
-+  DEVMAPPEREVENT_LIBS="$DEVMAPPER_LIBS -ldevmapper-event"
- else
-   { { $as_echo "$as_me:$LINENO: error: device-mapper-event library is either missing or is too old and badly linked" >&5
- $as_echo "$as_me: error: device-mapper-event library is either missing or is too old and badly linked" >&2;}
-    { (exit 1); exit 1; }; }
- fi
+ 	memset(essiv->salt, 0, salt_size);
  
-+{ $as_echo "$as_me:$LINENO: checking for dm_task_set_name in -ldevmapper" >&5
-+$as_echo_n "checking for dm_task_set_name in -ldevmapper... " >&6; }
-+if test "${ac_cv_lib_devmapper_dm_task_set_name+set}" = set; then
-+  $as_echo_n "(cached) " >&6
-+else
-+  ac_check_lib_save_LIBS=$LIBS
-+LIBS="-ldevmapper  $LIBS"
-+cat >conftest.$ac_ext <<_ACEOF
-+/* confdefs.h.  */
-+_ACEOF
-+cat confdefs.h >>conftest.$ac_ext
-+cat >>conftest.$ac_ext <<_ACEOF
-+/* end confdefs.h.  */
-+
-+/* Override any GCC internal prototype to avoid an error.
-+   Use char because int might match the return type of a GCC
-+   builtin and then its argument prototype would still apply.  */
-+#ifdef __cplusplus
-+extern "C"
-+#endif
-+char dm_task_set_name ();
-+int
-+main ()
-+{
-+return dm_task_set_name ();
-+  ;
-+  return 0;
+-	return crypto_cipher_setkey(essiv->tfm, essiv->salt, salt_size);
++	err = 0;
++	for_each_possible_cpu (cpu) {
++		struct crypt_cpu *cs = per_cpu_ptr(cc->cpu, cpu);
++		n = crypto_cipher_setkey(cs->ie.tfm, essiv->salt, salt_size);
++		if (n)
++			err = n;
++	}
++	return err;
 +}
-+_ACEOF
-+rm -f conftest.$ac_objext conftest$ac_exeext
-+if { (ac_try="$ac_link"
-+case "(($ac_try" in
-+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-+  *) ac_try_echo=$ac_try;;
-+esac
-+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-+$as_echo "$ac_try_echo") >&5
-+  (eval "$ac_link") 2>conftest.er1
-+  ac_status=$?
-+  grep -v '^ *+' conftest.er1 >conftest.err
-+  rm -f conftest.er1
-+  cat conftest.err >&5
-+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-+  (exit $ac_status); } && {
-+	 test -z "$ac_c_werror_flag" ||
-+	 test ! -s conftest.err
-+       } && test -s conftest$ac_exeext && {
-+	 test "$cross_compiling" = yes ||
-+	 $as_test_x conftest$ac_exeext
-+       }; then
-+  ac_cv_lib_devmapper_dm_task_set_name=yes
-+else
-+  $as_echo "$as_me: failed program was:" >&5
-+sed 's/^/| /' conftest.$ac_ext >&5
 +
-+	ac_cv_lib_devmapper_dm_task_set_name=no
-+fi
++/* Set up per cpu cipher state */
++static struct crypto_cipher *setup_essiv_cpu(struct crypt_config *cc,
++					     struct dm_target *ti,
++					     u8 *salt, unsigned saltsize)
++{
++	struct crypto_cipher *essiv_tfm;
++	int err;
 +
-+rm -rf conftest.dSYM
-+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-+      conftest$ac_exeext conftest.$ac_ext
-+LIBS=$ac_check_lib_save_LIBS
-+fi
-+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_devmapper_dm_task_set_name" >&5
-+$as_echo "$ac_cv_lib_devmapper_dm_task_set_name" >&6; }
-+if test "x$ac_cv_lib_devmapper_dm_task_set_name" = x""yes; then
-+  DEVMAPPER_LIBS="$DEVMAPPER_LIBS -ldevmapper"
-+else
-+  { { $as_echo "$as_me:$LINENO: error: device-mapper library is missing" >&5
-+$as_echo "$as_me: error: device-mapper library is missing" >&2;}
-+   { (exit 1); exit 1; }; }
-+fi
++	/* Setup the essiv_tfm with the given salt */
++	essiv_tfm = crypto_alloc_cipher(cc->cipher, 0, CRYPTO_ALG_ASYNC);
++	if (IS_ERR(essiv_tfm)) {
++		ti->error = "Error allocating crypto tfm for ESSIV";
++		return essiv_tfm;
++	}
 +
++	if (crypto_cipher_blocksize(essiv_tfm) !=
++	    crypto_ablkcipher_ivsize(any_tfm(cc))) {
++		ti->error = "Block size of ESSIV cipher does "
++			    "not match IV size of block cipher";
++		crypto_free_cipher(essiv_tfm);
++		return ERR_PTR(-EINVAL);
++	}
++	err = crypto_cipher_setkey(essiv_tfm, salt, saltsize);
++	if (err) {
++		ti->error = "Failed to set key for ESSIV cipher";
++		crypto_free_cipher(essiv_tfm);
++		return ERR_PTR(err);
++	}
++
++	return essiv_tfm;
+ }
  
+ static void crypt_iv_essiv_dtr(struct crypt_config *cc)
+ {
++	int cpu;
+ 	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
  
- for ac_header in libdevmapper.h libdevmapper-event.h
-@@ -9185,6 +9410,10 @@
+-	crypto_free_cipher(essiv->tfm);
+-	essiv->tfm = NULL;
+-
+ 	crypto_free_hash(essiv->hash_tfm);
+ 	essiv->hash_tfm = NULL;
  
+ 	kzfree(essiv->salt);
+ 	essiv->salt = NULL;
++
++	for_each_possible_cpu (cpu) {
++		struct crypt_cpu *cs = per_cpu_ptr(cc->cpu, cpu);
++		if (cs->ie.tfm) {
++			crypto_free_cipher(cs->ie.tfm);
++			cs->ie.tfm = NULL;
++		}
++	}
+ }
  
+ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+@@ -244,6 +338,7 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 	struct crypto_hash *hash_tfm = NULL;
+ 	u8 *salt = NULL;
+ 	int err;
++	int cpu;
  
+ 	if (!opts) {
+ 		ti->error = "Digest algorithm missing for ESSIV mode";
+@@ -265,30 +360,22 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 		goto bad;
+ 	}
+ 
+-	/* Allocate essiv_tfm */
+-	essiv_tfm = crypto_alloc_cipher(cc->cipher, 0, CRYPTO_ALG_ASYNC);
+-	if (IS_ERR(essiv_tfm)) {
+-		ti->error = "Error allocating crypto tfm for ESSIV";
+-		err = PTR_ERR(essiv_tfm);
+-		goto bad;
+-	}
+-	if (crypto_cipher_blocksize(essiv_tfm) !=
+-	    crypto_ablkcipher_ivsize(cc->tfm)) {
+-		ti->error = "Block size of ESSIV cipher does "
+-			    "not match IV size of block cipher";
+-		err = -EINVAL;
+-		goto bad;
+-	}
+-
+ 	cc->iv_gen_private.essiv.salt = salt;
+-	cc->iv_gen_private.essiv.tfm = essiv_tfm;
+ 	cc->iv_gen_private.essiv.hash_tfm = hash_tfm;
+ 
++	for_each_possible_cpu (cpu) {
++		essiv_tfm = setup_essiv_cpu(cc, ti, salt,
++					crypto_hash_digestsize(hash_tfm));
++		if (IS_ERR(essiv_tfm)) {
++			kfree(salt);
++			crypt_iv_essiv_dtr(cc);
++			return PTR_ERR(essiv_tfm);
++		}
++		per_cpu_ptr(cc->cpu, cpu)->ie.tfm = essiv_tfm;
++	}
+ 	return 0;
+ 
+ bad:
+-	if (essiv_tfm && !IS_ERR(essiv_tfm))
+-		crypto_free_cipher(essiv_tfm);
+ 	if (hash_tfm && !IS_ERR(hash_tfm))
+ 		crypto_free_hash(hash_tfm);
+ 	kfree(salt);
+@@ -299,14 +386,14 @@ static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
+ {
+ 	memset(iv, 0, cc->iv_size);
+ 	*(u64 *)iv = cpu_to_le64(sector);
+-	crypto_cipher_encrypt_one(cc->iv_gen_private.essiv.tfm, iv, iv);
++	crypto_cipher_encrypt_one(crypt_me(cc)->ie.tfm, iv, iv);
+ 	return 0;
+ }
+ 
+ static int crypt_iv_benbi_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 			      const char *opts)
+ {
+-	unsigned bs = crypto_ablkcipher_blocksize(cc->tfm);
++	unsigned bs = crypto_ablkcipher_blocksize(any_tfm(cc));
+ 	int log = ilog2(bs);
+ 
+ 	/* we need to calculate how far we must shift the sector count
+@@ -415,7 +502,7 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 
+ 	dmreq = dmreq_of_req(cc, req);
+ 	iv = (u8 *)ALIGN((unsigned long)(dmreq + 1),
+-			 crypto_ablkcipher_alignmask(cc->tfm) + 1);
++			 crypto_ablkcipher_alignmask(any_tfm(cc)) + 1);
+ 
+ 	dmreq->ctx = ctx;
+ 	sg_init_table(&dmreq->sg_in, 1);
+@@ -460,13 +547,14 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ static void crypt_alloc_req(struct crypt_config *cc,
+ 			    struct convert_context *ctx)
+ {
+-	if (!cc->req)
+-		cc->req = mempool_alloc(cc->req_pool, GFP_NOIO);
+-	ablkcipher_request_set_tfm(cc->req, cc->tfm);
+-	ablkcipher_request_set_callback(cc->req, CRYPTO_TFM_REQ_MAY_BACKLOG |
++	struct crypt_cpu *cs = crypt_me(cc);
++	if (!cs->req)
++		cs->req = mempool_alloc(cc->req_pool, GFP_NOIO);
++	ablkcipher_request_set_tfm(cs->req, cs->tfm);
++	ablkcipher_request_set_callback(cs->req, CRYPTO_TFM_REQ_MAY_BACKLOG |
+ 					CRYPTO_TFM_REQ_MAY_SLEEP,
+ 					kcryptd_async_done,
+-					dmreq_of_req(cc, cc->req));
++					dmreq_of_req(cc, cs->req));
+ }
+ 
+ /*
+@@ -475,6 +563,7 @@ static void crypt_alloc_req(struct crypt_config *cc,
+ static int crypt_convert(struct crypt_config *cc,
+ 			 struct convert_context *ctx)
+ {
++	struct crypt_cpu *cs = crypt_me(cc);
+ 	int r;
+ 
+ 	atomic_set(&ctx->pending, 1);
+@@ -486,7 +575,7 @@ static int crypt_convert(struct crypt_config *cc,
+ 
+ 		atomic_inc(&ctx->pending);
+ 
+-		r = crypt_convert_block(cc, ctx, cc->req);
++		r = crypt_convert_block(cc, ctx, cs->req);
+ 
+ 		switch (r) {
+ 		/* async */
+@@ -495,7 +584,7 @@ static int crypt_convert(struct crypt_config *cc,
+ 			INIT_COMPLETION(ctx->restart);
+ 			/* fall through*/
+ 		case -EINPROGRESS:
+-			cc->req = NULL;
++			cs->req = NULL;
+ 			ctx->sector++;
+ 			continue;
+ 
+@@ -654,6 +743,9 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
+  * They must be separated as otherwise the final stages could be
+  * starved by new requests which can block in the first stages due
+  * to memory allocation.
++ *
++ * The work is done per CPU global for all dmcrypt instances.
++ * They should not depend on each other and do not block.
+  */
+ static void crypt_endio(struct bio *clone, int error)
+ {
+@@ -735,6 +827,7 @@ static void kcryptd_io(struct work_struct *work)
+ {
+ 	struct dm_crypt_io *io = container_of(work, struct dm_crypt_io, work);
+ 
++	__get_cpu_var(io_wq_cpu) = current;
+ 	if (bio_data_dir(io->base_bio) == READ)
+ 		kcryptd_io_read(io);
+ 	else
+@@ -743,10 +836,23 @@ static void kcryptd_io(struct work_struct *work)
+ 
+ static void kcryptd_queue_io(struct dm_crypt_io *io)
+ {
+-	struct crypt_config *cc = io->target->private;
++	int cpu;
++
++	/*
++	 * Since we only have a single worker per CPU in extreme
++	 * cases there might be nesting (dm-crypt on another dm-crypt)
++	 * To avoid deadlock run the work directly then.
++	 */
++	cpu = get_cpu();
++	if (per_cpu(io_wq_cpu, cpu) == current && !in_interrupt()) {
++		put_cpu();
++		kcryptd_io(&io->work);
++		return;
++	}
+ 
+ 	INIT_WORK(&io->work, kcryptd_io);
+-	queue_work(cc->io_queue, &io->work);
++	queue_work(io_workqueue, &io->work);
++	put_cpu();
+ }
+ 
+ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io,
+@@ -927,10 +1033,8 @@ static void kcryptd_crypt(struct work_struct *work)
+ 
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io)
+ {
+-	struct crypt_config *cc = io->target->private;
+-
+ 	INIT_WORK(&io->work, kcryptd_crypt);
+-	queue_work(cc->crypt_queue, &io->work);
++	queue_work(crypt_workqueue, &io->work);
+ }
+ 
+ /*
+@@ -974,6 +1078,21 @@ static void crypt_encode_key(char *hex, u8 *key, unsigned int size)
+ 	}
+ }
+ 
++static int crypt_setkey_allcpus(struct crypt_config *cc)
++{
++	int cpu, n, err;
++
++	err = 0;
++	for_each_possible_cpu (cpu) {
++		struct crypt_cpu *cs = per_cpu_ptr(cc->cpu, cpu);
++		n = crypto_ablkcipher_setkey(cs->tfm, cc->key, cc->key_size);
++		if (n)
++			err = n;
++	}
++	return err;
++}
 +
 +
+ static int crypt_set_key(struct crypt_config *cc, char *key)
+ {
+ 	unsigned key_size = strlen(key) >> 1;
+@@ -989,14 +1108,48 @@ static int crypt_set_key(struct crypt_config *cc, char *key)
+ 
+ 	set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
+ 
+-	return crypto_ablkcipher_setkey(cc->tfm, cc->key, cc->key_size);
++	return crypt_setkey_allcpus(cc);
+ }
+ 
+ static int crypt_wipe_key(struct crypt_config *cc)
+ {
+ 	clear_bit(DM_CRYPT_KEY_VALID, &cc->flags);
+ 	memset(&cc->key, 0, cc->key_size * sizeof(u8));
+-	return crypto_ablkcipher_setkey(cc->tfm, cc->key, cc->key_size);
++	return crypt_setkey_allcpus(cc);
++}
 +
++/* Use a global per-CPU encryption workqueue for all mounts */
++static int crypt_create_workqueues(void)
++{
++	int ret = 0;
 +
- ac_config_files="$ac_config_files include/Makefile lib/Makefile lib/version.h man/Makefile tools/Makefile tools/version.h Makefile make.tmpl"
- 
- cat >confcache <<\_ACEOF
---- dmraid/configure.in	2010/05/30 22:25:36	1.12
-+++ dmraid/configure.in	2010/05/31 09:24:42	1.13
-@@ -234,22 +234,33 @@
- 	AC_CHECK_HEADERS(getopt.h, AC_DEFINE(HAVE_GETOPTLONG, 1, [Define to 1 for longopt.]))
- fi
- 
-+AC_CHECK_LIB(dl, dlopen,
-+	[DL_LIBS="-ldl"],
-+	[AC_MSG_ERROR([dl library is missing])])
++	/* Module unload cleans up on error */
++	mutex_lock(&queue_setup_lock);
++	if (!crypt_workqueue) {
++		crypt_workqueue = create_workqueue("dmcrypt");
++		if (!crypt_workqueue)
++			ret = -ENOMEM;
++	}
++	if (!io_workqueue) {
++		io_workqueue = create_workqueue("dmcrypt-io");
++		if (!io_workqueue)
++			ret = -ENOMEM;
++	}
++	mutex_unlock(&queue_setup_lock);
++	return ret;
++}
 +
-+AC_CHECK_LIB(pthread, pthread_mutex_lock,
-+	[PTHREAD_LIBS="-lpthread"],
-+	[AC_MSG_ERROR([pthread library is missing])])
++static void crypt_dtr_cpus(struct crypt_config *cc)
++{
++	int cpu;
 +
- dnl FIXME static linking would need some extension here
- dnl best would be to use pkg-config in Makefiles 
--AC_ARG_WITH(devmapper-event-prefix, 
--	AC_HELP_STRING([--with-devmapper-event-prefix=PFX],
--		[Where is 'd-m-e' library installed]),
--	[DEVMAPPEREVENT_LIBS="-L$withval/lib"
--	 DEVMAPPEREVENT_CFLAGS="-I$withval/include"],
--	[DEVMAPPEREVENT_LIBS=
--	 DEVMAPPEREVENT_CFLAGS=])
-+AC_ARG_WITH(devmapper-prefix,
-+	AC_HELP_STRING([--with-devmapper-prefix=PFX],
-+		[Where is devmapper library installed]),
-+	[DEVMAPPER_LIBS="-L$withval/lib"
-+	 DEVMAPPER_CFLAGS="-I$withval/include"],
-+	[DEVMAPPER_LIBS=
-+	 DEVMAPPER_CFLAGS=])
- save_LDFLAGS=$LDFLAGS
- save_CPPFLAGS=$CPPFLAGS
--LDFLAGS="$LDFLAGS $DEVMAPPEREVENT_LIBS"
--CPPFLAGS="$CPPFLAGS $DEVMAPPEREVENT_CFLAGS"
--AC_CHECK_LIB(devmapper-event, dm_task_set_name,
--	[DEVMAPPEREVENT_LIBS="$DEVMAPPEREVENT_LIBS -ldevmapper-event"],
-+LDFLAGS="$LDFLAGS $DEVMAPPER_LIBS"
-+CPPFLAGS="$CPPFLAGS $DEVMAPPER_CFLAGS"
-+AC_CHECK_LIB(devmapper-event, dm_event_handler_create,
-+	[DEVMAPPEREVENT_LIBS="$DEVMAPPER_LIBS -ldevmapper-event"],
- 	[AC_MSG_ERROR([device-mapper-event library is either missing or is too old and badly linked])])
-+AC_CHECK_LIB(devmapper, dm_task_set_name,
-+	[DEVMAPPER_LIBS="$DEVMAPPER_LIBS -ldevmapper"],
-+	[AC_MSG_ERROR([device-mapper library is missing])])
- AC_CHECK_HEADERS(libdevmapper.h libdevmapper-event.h,,
- 	[AC_MSG_ERROR([Missing headers device-mapper headers])])
- CPPFLAGS=$save_CPPFLAGS
-@@ -269,7 +280,10 @@
- AC_SUBST(DEBUG_MALLOC)
- AC_SUBST(DEVMAPPEREVENT_CFLAGS)
- AC_SUBST(DEVMAPPEREVENT_LIBS)
-+AC_SUBST(DEVMAPPER_CFLAGS)
-+AC_SUBST(DEVMAPPER_LIBS)
- AC_SUBST(DIETLIBC)
-+AC_SUBST(DL_LIBS)
- AC_SUBST(DMRAID_LIB_DATE)
- AC_SUBST(DMRAID_LIB_MAJOR)
- AC_SUBST(DMRAID_LIB_MINOR)
-@@ -280,6 +294,7 @@
- AC_SUBST(LD_DEPS)
- AC_SUBST(LIBS)
- AC_SUBST(LIB_SO)
-+AC_SUBST(PTHREAD_LIBS)
- AC_SUBST(SOFLAG)
- AC_SUBST(STATIC_LINK)
- AC_SUBST(usrlibdir)
---- dmraid/make.tmpl.in	2010/05/30 22:13:56	1.13
-+++ dmraid/make.tmpl.in	2010/05/31 09:24:42	1.14
-@@ -19,11 +19,15 @@
- SED = @SED@
- DEVMAPPEREVENT_CFLAGS = @DEVMAPPEREVENT_CFLAGS@
- DEVMAPPEREVENT_LIBS = @DEVMAPPEREVENT_LIBS@
-+DEVMAPPER_CFLAGS = @DEVMAPPER_CFLAGS@
-+DEVMAPPER_LIBS = @DEVMAPPER_LIBS@
-+DL_LIBS = @DL_LIBS@
- DMRAID_LIB_DATE = @DMRAID_LIB_DATE@
- DMRAID_LIB_MAJOR = @DMRAID_LIB_MAJOR@
- DMRAID_LIB_MINOR = @DMRAID_LIB_MINOR@
- DMRAID_LIB_SUBMINOR = @DMRAID_LIB_SUBMINOR@
- DMRAID_LIB_SUFFIX = @DMRAID_LIB_SUFFIX@
-+PTHREAD_LIBS = @PTHREAD_LIBS@
++	for_each_possible_cpu (cpu) {
++		struct crypt_cpu *cs = per_cpu_ptr(cc->cpu, cpu);
++		if (cs->tfm) {
++			crypto_free_ablkcipher(cs->tfm);
++			cs->tfm = NULL;
++		}
++	}
+ }
  
- CFLAGS += @CFLAGS@
- CLDFLAGS += @CLDFLAGS@
---- dmraid/lib/Makefile.in	2010/05/30 22:21:31	1.16
-+++ dmraid/lib/Makefile.in	2010/05/31 09:24:42	1.17
-@@ -47,7 +47,6 @@
+ /*
+@@ -1014,6 +1167,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	char *ivopts;
+ 	unsigned int key_size;
+ 	unsigned long long tmpll;
++	int cpu;
  
- ifeq ("@STATIC_LINK@", "no")
- # Dynamic linker library
--	LIBS += -ldl
- 	SOURCES += register/dmreg.c
- endif
+ 	if (argc != 5) {
+ 		ti->error = "Not enough arguments";
+@@ -1038,7 +1192,13 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		return -ENOMEM;
+ 	}
  
-@@ -74,12 +73,15 @@
+-	/* Compatibility mode for old dm-crypt cipher strings */
++	cc->cpu = alloc_percpu(struct crypt_cpu);
++	if (!cc->cpu) {
++		ti->error = "Cannot allocate per cpu state";
++		goto bad_percpu;
++	}
++
++	/* Compatiblity mode for old dm-crypt cipher strings */
+ 	if (!chainmode || (strcmp(chainmode, "plain") == 0 && !ivmode)) {
+ 		chainmode = "cbc";
+ 		ivmode = "plain";
+@@ -1055,15 +1215,18 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad_cipher;
+ 	}
  
- DMRAID_LIB_VERSION = $(DMRAID_LIB_MAJOR).$(DMRAID_LIB_MINOR).$(DMRAID_LIB_SUBMINOR)
- $(LIB_SHARED): $(OBJECTS) $(LD_DEPS)
--	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(DEVMAPPEREVENT_LIBS) \
--		-shared -Wl,-soname,$(notdir $@).$(DMRAID_LIB_MAJOR) $(CLDFLAGS)
-+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(OBJECTS) \
-+		-shared -Wl,--discard-all -Wl,--no-undefined $(CLDFLAGS) \
-+		-Wl,-soname,$(notdir $@).$(DMRAID_LIB_MAJOR) \
-+		$(DEVMAPPEREVENT_LIBS) $(DEVMAPPER_LIBS) $(DL_LIBS) $(LIBS)
+-	tfm = crypto_alloc_ablkcipher(cc->cipher, 0, 0);
+-	if (IS_ERR(tfm)) {
+-		ti->error = "Error allocating crypto tfm";
+-		goto bad_cipher;
++	for_each_possible_cpu (cpu) {
++		tfm = crypto_alloc_ablkcipher(cc->cipher, 0, 0);
++		if (IS_ERR(tfm)) {
++			ti->error = "Error allocating crypto tfm";
++			goto bad_ivmode;
++		}
++		per_cpu_ptr(cc->cpu, cpu)->tfm = tfm;
+ 	}
++	tfm = any_tfm(cc);
  
- $(LIB_EVENTS_SHARED): $(OBJECTS2)
- 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(OBJECTS2) \
--		-shared  -Wl,-soname,$(notdir $@) $(DEVMAPPEREVENT_LIBS) -lpthread
-+		-shared -Wl,--discard-all -Wl,--no-undefined -Wl,-soname,$(notdir $@) \
-+		$(LIB_SHARED) $(DEVMAPPEREVENT_LIBS) $(DEVMAPPER_LIBS) $(PTHREAD_LIBS) $(LIBS)
+ 	strcpy(cc->cipher, cipher);
+ 	strcpy(cc->chainmode, chainmode);
+-	cc->tfm = tfm;
  
- .PHONY: $(addprefix install_,$(TARGETS)) $(addprefix remove_,$(TARGETS))
+ 	if (crypt_set_key(cc, argv[1]) < 0) {
+ 		ti->error = "Error decoding and setting key";
+@@ -1134,7 +1297,6 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		ti->error = "Cannot allocate crypt request mempool";
+ 		goto bad_req_pool;
+ 	}
+-	cc->req = NULL;
  
+ 	cc->page_pool = mempool_create_page_pool(MIN_POOL_PAGES, 0);
+ 	if (!cc->page_pool) {
+@@ -1148,6 +1310,14 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad_bs;
+ 	}
+ 
++	for_each_possible_cpu (cpu) {
++		struct crypt_cpu *cs = per_cpu_ptr(cc->cpu, cpu);
++		if (crypto_ablkcipher_setkey(cs->tfm, cc->key, key_size) < 0) {
++			ti->error = "Error setting key";
++			goto bad_device;
++		}
++	}
++
+ 	if (sscanf(argv[2], "%llu", &tmpll) != 1) {
+ 		ti->error = "Invalid iv_offset sector";
+ 		goto bad_device;
+@@ -1177,25 +1347,16 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	} else
+ 		cc->iv_mode = NULL;
+ 
+-	cc->io_queue = create_singlethread_workqueue("kcryptd_io");
+-	if (!cc->io_queue) {
+-		ti->error = "Couldn't create kcryptd io queue";
+-		goto bad_io_queue;
+-	}
+-
+-	cc->crypt_queue = create_singlethread_workqueue("kcryptd");
+-	if (!cc->crypt_queue) {
+-		ti->error = "Couldn't create kcryptd queue";
+-		goto bad_crypt_queue;
++	if (crypt_create_workqueues() < 0) {
++		ti->error = "Couldn't create kcrypt work queues";
++		goto bad_queues;
+ 	}
+ 
+ 	ti->num_flush_requests = 1;
+ 	ti->private = cc;
+ 	return 0;
+ 
+-bad_crypt_queue:
+-	destroy_workqueue(cc->io_queue);
+-bad_io_queue:
++bad_queues:
+ 	kfree(cc->iv_mode);
+ bad_ivmode_string:
+ 	dm_put_device(ti, cc->dev);
+@@ -1211,8 +1372,10 @@ bad_slab_pool:
+ 	if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
+ 		cc->iv_gen_ops->dtr(cc);
+ bad_ivmode:
+-	crypto_free_ablkcipher(tfm);
++	crypt_dtr_cpus(cc);
+ bad_cipher:
++	free_percpu(cc->cpu);
++bad_percpu:
+ 	/* Must zero key material before freeing */
+ 	kzfree(cc);
+ 	return -EINVAL;
+@@ -1220,13 +1383,14 @@ bad_cipher:
+ 
+ static void crypt_dtr(struct dm_target *ti)
+ {
++	int cpu;
+ 	struct crypt_config *cc = (struct crypt_config *) ti->private;
+ 
+-	destroy_workqueue(cc->io_queue);
+-	destroy_workqueue(cc->crypt_queue);
+-
+-	if (cc->req)
+-		mempool_free(cc->req, cc->req_pool);
++	for_each_possible_cpu (cpu) {
++		struct crypt_cpu *cs = per_cpu_ptr(cc->cpu, cpu);
++		if (cs->req)
++			mempool_free(cs->req, cc->req_pool);
++	}
+ 
+ 	bioset_free(cc->bs);
+ 	mempool_destroy(cc->page_pool);
+@@ -1236,9 +1400,11 @@ static void crypt_dtr(struct dm_target *ti)
+ 	kfree(cc->iv_mode);
+ 	if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
+ 		cc->iv_gen_ops->dtr(cc);
+-	crypto_free_ablkcipher(cc->tfm);
++	crypt_dtr_cpus(cc);
+ 	dm_put_device(ti, cc->dev);
+ 
++	free_percpu(cc->cpu);
++
+ 	/* Must zero key material before freeing */
+ 	kzfree(cc);
+ }
+@@ -1428,6 +1594,10 @@ static void __exit dm_crypt_exit(void)
+ {
+ 	dm_unregister_target(&crypt_target);
+ 	kmem_cache_destroy(_crypt_io_pool);
++	if (crypt_workqueue)
++		destroy_workqueue(crypt_workqueue);
++	if (io_workqueue)
++		destroy_workqueue(io_workqueue);
+ }
+ 
+ module_init(dm_crypt_init);
