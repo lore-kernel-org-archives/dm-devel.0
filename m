@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 15/24] dm-raid456: add suspend/resume method
+Subject: [PATCH 16/24] dm-raid456: add message handler.
 Date: Tue, 01 Jun 2010 19:56:20 +1000
-Message-ID: <20100601095619.565.58721.stgit@notabene.brown>
+Message-ID: <20100601095620.565.49108.stgit@notabene.brown>
 References: <20100601094414.565.3638.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,96 +13,91 @@ To: Heinz Mauelshagen <heinzm@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-These just call in to the md methods.
+Support messages to:
+ - change the size of the stripe cache
+ - change the speed limiter on resync.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/dm-raid456.c |   22 ++++++++++++++++++++++
- drivers/md/md.c         |    6 ++++--
- drivers/md/md.h         |    3 +++
- 3 files changed, 29 insertions(+), 2 deletions(-)
+ drivers/md/dm-raid456.c |   26 ++++++++++++++++++++++++++
+ drivers/md/raid5.c      |    3 ++-
+ drivers/md/raid5.h      |    1 +
+ 3 files changed, 29 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/md/dm-raid456.c b/drivers/md/dm-raid456.c
-index 0b72fa4..044faae 100644
+index 044faae..3fda954 100644
 --- a/drivers/md/dm-raid456.c
 +++ b/drivers/md/dm-raid456.c
-@@ -466,6 +466,25 @@ static void raid_io_hints(struct dm_target *ti,
- 			  (conf->raid_disks - conf->max_degraded));
+@@ -485,6 +485,31 @@ static void raid_resume(struct dm_target *ti)
+ 	mddev_resume(&rs->md);
  }
  
-+static void raid_presuspend(struct dm_target *ti)
-+{
-+	struct raid_set *rs = ti->private;
-+	md_stop_writes(&rs->md);
-+}
-+
-+static void raid_postsuspend(struct dm_target *ti)
-+{
-+	struct raid_set *rs = ti->private;
-+	mddev_suspend(&rs->md);
-+}
-+
-+static void raid_resume(struct dm_target *ti)
++/* Parse and handle a message from userspace
++ * Messages are:
++ *    stripecache  N  (pages per devices)
++ *    minspeed  N          (kibibytes per seconds)
++ */
++static int raid_message(struct dm_target *ti, unsigned argc, char **argv)
 +{
 +	struct raid_set *rs = ti->private;
 +
-+	mddev_resume(&rs->md);
++	if (argc == 2 && strcmp(argv[0], "stripecache") == 0) {
++		unsigned long size;
++		if (strict_strtoul(argv[1], 10, &size))
++			return -EINVAL;
++		return raid5_set_cache_size(&rs->md, size);
++	}
++	if (argc == 2 && strcmp(argv[0], "minspeed") == 0) {
++		unsigned long speed;
++		if (strict_strtoul(argv[1], 10, &speed))
++			return -EINVAL;
++		rs->md.sync_speed_min = speed;
++		return 0;
++	}
++	return -EINVAL;
 +}
 +
  static struct target_type raid_target = {
  	.name = "raid45",
  	.version = {1, 0, 0},
-@@ -476,6 +495,9 @@ static struct target_type raid_target = {
- 	.status = raid_status,
- 	.iterate_devices = raid_iterate_devices,
- 	.io_hints = raid_io_hints,
-+	.presuspend = raid_presuspend,
-+	.postsuspend = raid_postsuspend,
-+	.resume = raid_resume,
+@@ -498,6 +523,7 @@ static struct target_type raid_target = {
+ 	.presuspend = raid_presuspend,
+ 	.postsuspend = raid_postsuspend,
+ 	.resume = raid_resume,
++	.message = raid_message,
  };
  
  static int __init dm_raid_init(void)
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index ea6577b..21f3c35 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -261,7 +261,7 @@ static int md_make_request(struct request_queue *q, struct bio *bio)
-  * Once ->stop is called and completes, the module will be completely
-  * unused.
-  */
--static void mddev_suspend(mddev_t *mddev)
-+void mddev_suspend(mddev_t *mddev)
- {
- 	BUG_ON(mddev->suspended);
- 	mddev->suspended = 1;
-@@ -269,13 +269,15 @@ static void mddev_suspend(mddev_t *mddev)
- 	wait_event(mddev->sb_wait, atomic_read(&mddev->active_io) == 0);
- 	mddev->pers->quiesce(mddev, 1);
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index be5cab8..8ac122d 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -4500,7 +4500,7 @@ raid5_show_stripe_cache_size(mddev_t *mddev, char *page)
+ 		return 0;
  }
-+EXPORT_SYMBOL_GPL(mddev_suspend);
  
--static void mddev_resume(mddev_t *mddev)
-+void mddev_resume(mddev_t *mddev)
+-static int
++int
+ raid5_set_cache_size(mddev_t *mddev, int size)
  {
- 	mddev->suspended = 0;
- 	wake_up(&mddev->sb_wait);
- 	mddev->pers->quiesce(mddev, 0);
+ 	raid5_conf_t *conf = mddev->private;
+@@ -4524,6 +4524,7 @@ raid5_set_cache_size(mddev_t *mddev, int size)
+ 	}
+ 	return 0;
  }
-+EXPORT_SYMBOL_GPL(mddev_resume);
++EXPORT_SYMBOL(raid5_set_cache_size);
  
- int mddev_congested(mddev_t *mddev, int bits)
- {
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 0bf8c18..6f2c568 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -512,4 +512,7 @@ extern int md_run(mddev_t *mddev);
- extern void md_stop(mddev_t *mddev);
- extern void md_stop_writes(mddev_t *mddev);
- extern void md_rdev_init(mdk_rdev_t *rdev);
-+
-+extern void mddev_suspend(mddev_t *mddev);
-+extern void mddev_resume(mddev_t *mddev);
- #endif /* _MD_MD_H */
+ static ssize_t
+ raid5_store_stripe_cache_size(mddev_t *mddev, const char *page, size_t len)
+diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
+index fa3938a..292a9c6 100644
+--- a/drivers/md/raid5.h
++++ b/drivers/md/raid5.h
+@@ -502,4 +502,5 @@ static inline int algorithm_is_DDF(int layout)
+ }
+ extern int md_raid5_congested(mddev_t *mddev, int bits);
+ extern void raid5_unplug_device(raid5_conf_t *conf);
++extern int raid5_set_cache_size(mddev_t *mddev, int size);
+ #endif
 
 
