@@ -1,8 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 12/24] md/plug: optionally use plugger to unplug an array
-	during resync/recovery.
+Subject: [PATCH 13/24] dm-raid456: support unplug
 Date: Tue, 01 Jun 2010 19:56:19 +1000
-Message-ID: <20100601095619.565.35245.stgit@notabene.brown>
+Message-ID: <20100601095619.565.62028.stgit@notabene.brown>
 References: <20100601094414.565.3638.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,96 +13,132 @@ To: Heinz Mauelshagen <heinzm@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-If an array doesn't have a 'queue' then md_do_sync cannot
-unplug it.
-In that case it will have a 'plugger', so make that available
-to the mddev, and us it to unplug the array if needed.
+In a similar manner to congestion checking, per-target
+unplug support for raid456 under dm.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/md.c    |   15 ++++++++++++---
- drivers/md/md.h    |    2 ++
- drivers/md/raid5.c |    1 +
- 3 files changed, 15 insertions(+), 3 deletions(-)
+ drivers/md/dm-raid456.c       |    9 +++++++++
+ drivers/md/dm-table.c         |    4 ++++
+ drivers/md/raid5.c            |   11 +++++------
+ drivers/md/raid5.h            |    1 +
+ include/linux/device-mapper.h |    1 +
+ 5 files changed, 20 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index e44b9c6..ea6577b 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -4665,6 +4665,7 @@ static void md_clean(mddev_t *mddev)
- 	mddev->bitmap_info.chunksize = 0;
- 	mddev->bitmap_info.daemon_sleep = 0;
- 	mddev->bitmap_info.max_write_behind = 0;
-+	mddev->plug = NULL;
+diff --git a/drivers/md/dm-raid456.c b/drivers/md/dm-raid456.c
+index 0e3922a..46a5e29 100644
+--- a/drivers/md/dm-raid456.c
++++ b/drivers/md/dm-raid456.c
+@@ -154,6 +154,14 @@ static int raid_is_congested(void *v, int bits)
+ 					   callbacks);
+ 	return md_raid5_congested(&rs->md, bits);
  }
- 
- void md_stop_writes(mddev_t *mddev)
-@@ -6597,6 +6598,14 @@ int md_allow_write(mddev_t *mddev)
- }
- EXPORT_SYMBOL_GPL(md_allow_write);
- 
-+static void md_unplug(mddev_t *mddev)
++static void raid_unplug(void *v)
 +{
-+	if (mddev->queue)
-+		blk_unplug(mddev->queue);
-+	if (mddev->plug)
-+		mddev->plug->unplug_fn(mddev->plug);
++	struct target_callbacks *cb = v;
++	struct raid_set *rs = container_of(cb, struct raid_set,
++					   callbacks);
++	raid5_unplug_device(rs->md.private);
 +}
 +
- #define SYNC_MARKS	10
- #define	SYNC_MARK_STEP	(3*HZ)
- void md_do_sync(mddev_t *mddev)
-@@ -6775,7 +6784,7 @@ void md_do_sync(mddev_t *mddev)
- 		     >= mddev->resync_max - mddev->curr_resync_completed
- 			    )) {
- 			/* time to update curr_resync_completed */
--			blk_unplug(mddev->queue);
-+			md_unplug(mddev);
- 			wait_event(mddev->recovery_wait,
- 				   atomic_read(&mddev->recovery_active) == 0);
- 			mddev->curr_resync_completed =
-@@ -6853,7 +6862,7 @@ void md_do_sync(mddev_t *mddev)
- 		 * about not overloading the IO subsystem. (things like an
- 		 * e2fsck being done on the RAID array should execute fast)
- 		 */
--		blk_unplug(mddev->queue);
-+		md_unplug(mddev);
- 		cond_resched();
+ /*
+  * Construct a RAID4/5/6 mapping:
+  * Args:
+@@ -289,6 +297,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 			goto err;
+ 		clear_bit(In_sync, &rs->dev[rebuildA].rdev.flags);
+ 		rs->dev[rebuildA].rdev.recovery_offset = 0;
++	rs->callbacks.unplug_fn = raid_unplug;
+ 	}
+ 	if (rebuildB >= 0) {
+ 		if (rs->dev[rebuildB].dev == NULL)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index b856340..cad4992 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1228,6 +1228,7 @@ void dm_table_unplug_all(struct dm_table *t)
+ {
+ 	struct dm_dev_internal *dd;
+ 	struct list_head *devices = dm_table_get_devices(t);
++	struct target_callbacks *cb;
  
- 		currspeed = ((unsigned long)(io_sectors-mddev->resync_mark_cnt))/2
-@@ -6872,7 +6881,7 @@ void md_do_sync(mddev_t *mddev)
- 	 * this also signals 'finished resyncing' to md_stop
- 	 */
-  out:
--	blk_unplug(mddev->queue);
-+	md_unplug(mddev);
+ 	list_for_each_entry(dd, devices, list) {
+ 		struct request_queue *q = bdev_get_queue(dd->dm_dev.bdev);
+@@ -1240,6 +1241,9 @@ void dm_table_unplug_all(struct dm_table *t)
+ 				     dm_device_name(t->md),
+ 				     bdevname(dd->dm_dev.bdev, b));
+ 	}
++	list_for_each_entry(cb, &t->target_callbacks, list)
++		if (cb->unplug_fn)
++			cb->unplug_fn(cb);
+ }
  
- 	wait_event(mddev->recovery_wait, !atomic_read(&mddev->recovery_active));
- 
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index f210482..0bf8c18 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -325,6 +325,8 @@ struct mddev_s
- 	struct list_head		all_mddevs;
- 
- 	struct attribute_group		*to_remove;
-+	struct plug_handle		*plug; /* if used by personality */
-+
- 	/* Generic barrier handling.
- 	 * If there is a pending barrier request, all other
- 	 * writes are blocked while the devices are flushed.
+ struct mapped_device *dm_table_get_md(struct dm_table *t)
 diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 6b1802c..74bc7a6 100644
+index 74bc7a6..efcea17 100644
 --- a/drivers/md/raid5.c
 +++ b/drivers/md/raid5.c
-@@ -5100,6 +5100,7 @@ static int run(mddev_t *mddev)
- 	md_set_array_sectors(mddev, raid5_size(mddev, 0, 0));
+@@ -365,7 +365,6 @@ static struct stripe_head *__find_stripe(raid5_conf_t *conf, sector_t sector,
+ }
  
- 	plugger_init(&conf->plug, raid5_unplug);
-+	mddev->plug = &conf->plug;
- 	if (mddev->queue) {
- 		/* read-ahead size must cover two whole stripes, which
- 		 * is 2 * (datadisks) * chunksize where 'n' is the
+ static void unplug_slaves(mddev_t *mddev);
+-static void raid5_unplug_device(raid5_conf_t *conf);
+ 
+ static struct stripe_head *
+ get_active_stripe(raid5_conf_t *conf, sector_t sector,
+@@ -3573,7 +3572,7 @@ static void unplug_slaves(mddev_t *mddev)
+ 	rcu_read_unlock();
+ }
+ 
+-static void raid5_unplug_device(raid5_conf_t *conf)
++void raid5_unplug_device(raid5_conf_t *conf)
+ {
+ 	unsigned long flags;
+ 
+@@ -3589,6 +3588,7 @@ static void raid5_unplug_device(raid5_conf_t *conf)
+ 
+ 	unplug_slaves(conf->mddev);
+ }
++EXPORT_SYMBOL_GPL(raid5_unplug_device);
+ 
+ static void raid5_unplug(struct plug_handle *plug)
+ {
+@@ -5116,11 +5116,10 @@ static int run(mddev_t *mddev)
+ 
+ 		mddev->queue->backing_dev_info.congested_data = mddev;
+ 		mddev->queue->backing_dev_info.congested_fn = raid5_congested;
+-	}
+-
+-	mddev->queue->queue_lock = &conf->device_lock;
+ 
+-	mddev->queue->unplug_fn = raid5_unplug_queue;
++		mddev->queue->queue_lock = &conf->device_lock;
++		mddev->queue->unplug_fn = raid5_unplug_queue;
++	}
+ 
+ 	chunk_size = mddev->chunk_sectors << 9;
+ 	blk_queue_io_min(mddev->queue, chunk_size);
+diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
+index edf90a8..fa3938a 100644
+--- a/drivers/md/raid5.h
++++ b/drivers/md/raid5.h
+@@ -501,4 +501,5 @@ static inline int algorithm_is_DDF(int layout)
+ 	return layout >= 8 && layout <= 10;
+ }
+ extern int md_raid5_congested(mddev_t *mddev, int bits);
++extern void raid5_unplug_device(raid5_conf_t *conf);
+ #endif
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 2b0f538..5b8ac19 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -191,6 +191,7 @@ struct dm_target {
+ struct target_callbacks {
+ 	struct list_head list;
+ 	congested_fn *congested_fn;
++	void (*unplug_fn)(void *);
+ };
+ 
+ int dm_register_target(struct target_type *t);
 
 
