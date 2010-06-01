@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 16/24] dm-raid456: add message handler.
-Date: Tue, 01 Jun 2010 19:56:20 +1000
-Message-ID: <20100601095620.565.49108.stgit@notabene.brown>
+Subject: [PATCH 14/24] dm-raid456: add support for setting IO hints.
+Date: Tue, 01 Jun 2010 19:56:19 +1000
+Message-ID: <20100601095619.565.76605.stgit@notabene.brown>
 References: <20100601094414.565.3638.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,91 +13,108 @@ To: Heinz Mauelshagen <heinzm@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Support messages to:
- - change the size of the stripe cache
- - change the speed limiter on resync.
-
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/dm-raid456.c |   26 ++++++++++++++++++++++++++
- drivers/md/raid5.c      |    3 ++-
- drivers/md/raid5.h      |    1 +
- 3 files changed, 29 insertions(+), 1 deletions(-)
+ drivers/md/dm-raid456.c |   33 +++++++++++++++++++++++++++++++++
+ drivers/md/raid5.c      |   19 ++++++++++---------
+ 2 files changed, 43 insertions(+), 9 deletions(-)
 
 diff --git a/drivers/md/dm-raid456.c b/drivers/md/dm-raid456.c
-index 044faae..3fda954 100644
+index 46a5e29..0b72fa4 100644
 --- a/drivers/md/dm-raid456.c
 +++ b/drivers/md/dm-raid456.c
-@@ -485,6 +485,31 @@ static void raid_resume(struct dm_target *ti)
- 	mddev_resume(&rs->md);
+@@ -435,6 +435,37 @@ static int raid_status(struct dm_target *ti, status_type_t type,
+ 	return 0;
  }
  
-+/* Parse and handle a message from userspace
-+ * Messages are:
-+ *    stripecache  N  (pages per devices)
-+ *    minspeed  N          (kibibytes per seconds)
-+ */
-+static int raid_message(struct dm_target *ti, unsigned argc, char **argv)
++static int raid_iterate_devices(struct dm_target *ti,
++				iterate_devices_callout_fn fn,
++				void *data)
 +{
 +	struct raid_set *rs = ti->private;
++	int ret = 0;
++	unsigned i = 0;
 +
-+	if (argc == 2 && strcmp(argv[0], "stripecache") == 0) {
-+		unsigned long size;
-+		if (strict_strtoul(argv[1], 10, &size))
-+			return -EINVAL;
-+		return raid5_set_cache_size(&rs->md, size);
-+	}
-+	if (argc == 2 && strcmp(argv[0], "minspeed") == 0) {
-+		unsigned long speed;
-+		if (strict_strtoul(argv[1], 10, &speed))
-+			return -EINVAL;
-+		rs->md.sync_speed_min = speed;
-+		return 0;
-+	}
-+	return -EINVAL;
++	for (i = 0; !ret && i < rs->md.raid_disks; i++)
++		if (rs->dev[i].dev)
++			ret = fn(ti,
++				 rs->dev[i].dev,
++				 rs->dev[i].rdev.data_offset,
++				 rs->md.dev_sectors,
++				 data);
++
++	return ret;
++}
++
++static void raid_io_hints(struct dm_target *ti,
++			  struct queue_limits *limits)
++{
++	struct raid_set *rs = ti->private;
++	unsigned chunk_size = rs->md.chunk_sectors << 9;
++	raid5_conf_t *conf = rs->md.private;
++
++	blk_limits_io_min(limits, chunk_size);
++	blk_limits_io_opt(limits, chunk_size *
++			  (conf->raid_disks - conf->max_degraded));
 +}
 +
  static struct target_type raid_target = {
  	.name = "raid45",
  	.version = {1, 0, 0},
-@@ -498,6 +523,7 @@ static struct target_type raid_target = {
- 	.presuspend = raid_presuspend,
- 	.postsuspend = raid_postsuspend,
- 	.resume = raid_resume,
-+	.message = raid_message,
+@@ -443,6 +474,8 @@ static struct target_type raid_target = {
+ 	.dtr = raid_dtr,
+ 	.map = raid_map,
+ 	.status = raid_status,
++	.iterate_devices = raid_iterate_devices,
++	.io_hints = raid_io_hints,
  };
  
  static int __init dm_raid_init(void)
 diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index be5cab8..8ac122d 100644
+index efcea17..be5cab8 100644
 --- a/drivers/md/raid5.c
 +++ b/drivers/md/raid5.c
-@@ -4500,7 +4500,7 @@ raid5_show_stripe_cache_size(mddev_t *mddev, char *page)
- 		return 0;
- }
- 
--static int
-+int
- raid5_set_cache_size(mddev_t *mddev, int size)
+@@ -4904,7 +4904,7 @@ static int only_parity(int raid_disk, int algo, int raid_disks, int max_degraded
+ static int run(mddev_t *mddev)
  {
- 	raid5_conf_t *conf = mddev->private;
-@@ -4524,6 +4524,7 @@ raid5_set_cache_size(mddev_t *mddev, int size)
- 	}
- 	return 0;
- }
-+EXPORT_SYMBOL(raid5_set_cache_size);
+ 	raid5_conf_t *conf;
+-	int working_disks = 0, chunk_size;
++	int working_disks = 0;
+ 	int dirty_parity_disks = 0;
+ 	mdk_rdev_t *rdev;
+ 	sector_t reshape_offset = 0;
+@@ -5102,6 +5102,7 @@ static int run(mddev_t *mddev)
+ 	plugger_init(&conf->plug, raid5_unplug);
+ 	mddev->plug = &conf->plug;
+ 	if (mddev->queue) {
++		int chunk_size;
+ 		/* read-ahead size must cover two whole stripes, which
+ 		 * is 2 * (datadisks) * chunksize where 'n' is the
+ 		 * number of raid devices
+@@ -5119,16 +5120,16 @@ static int run(mddev_t *mddev)
  
- static ssize_t
- raid5_store_stripe_cache_size(mddev_t *mddev, const char *page, size_t len)
-diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
-index fa3938a..292a9c6 100644
---- a/drivers/md/raid5.h
-+++ b/drivers/md/raid5.h
-@@ -502,4 +502,5 @@ static inline int algorithm_is_DDF(int layout)
- }
- extern int md_raid5_congested(mddev_t *mddev, int bits);
- extern void raid5_unplug_device(raid5_conf_t *conf);
-+extern int raid5_set_cache_size(mddev_t *mddev, int size);
- #endif
+ 		mddev->queue->queue_lock = &conf->device_lock;
+ 		mddev->queue->unplug_fn = raid5_unplug_queue;
+-	}
+ 
+-	chunk_size = mddev->chunk_sectors << 9;
+-	blk_queue_io_min(mddev->queue, chunk_size);
+-	blk_queue_io_opt(mddev->queue, chunk_size *
+-			 (conf->raid_disks - conf->max_degraded));
++		chunk_size = mddev->chunk_sectors << 9;
++		blk_queue_io_min(mddev->queue, chunk_size);
++		blk_queue_io_opt(mddev->queue, chunk_size *
++				 (conf->raid_disks - conf->max_degraded));
+ 
+-	list_for_each_entry(rdev, &mddev->disks, same_set)
+-		disk_stack_limits(mddev->gendisk, rdev->bdev,
+-				  rdev->data_offset << 9);
++		list_for_each_entry(rdev, &mddev->disks, same_set)
++			disk_stack_limits(mddev->gendisk, rdev->bdev,
++					  rdev->data_offset << 9);
++	}
+ 
+ 	return 0;
+ abort:
 
 
