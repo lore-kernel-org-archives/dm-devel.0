@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 05/24] md: split out md_rdev_init
+Subject: [PATCH 06/24] md: export various start/stop interfaces
 Date: Tue, 01 Jun 2010 19:56:19 +1000
-Message-ID: <20100601095619.565.77218.stgit@notabene.brown>
+Message-ID: <20100601095619.565.77294.stgit@notabene.brown>
 References: <20100601094414.565.3638.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,90 +13,108 @@ To: Heinz Mauelshagen <heinzm@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This functionality will be needed separately in a subsequent patch, so
-split it into it's own exported function.
+export entry points for starting and stopping md arrays.
+This will be used by a module to make md/raid5 work under
+dm.
+Also stop calling md_stop_writes from md_stop, as that won't
+work well with dm - it will want to call the two separately.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/md.c |   34 +++++++++++++++++++---------------
- drivers/md/md.h |    1 +
- 2 files changed, 20 insertions(+), 15 deletions(-)
+ drivers/md/md.c |   15 +++++++++------
+ drivers/md/md.h |    4 ++++
+ 2 files changed, 13 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 2337cb2..d8e8a8c 100644
+index d8e8a8c..4eccf4e 100644
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -2690,6 +2690,24 @@ static struct kobj_type rdev_ktype = {
- 	.default_attrs	= rdev_default_attrs,
- };
+@@ -416,7 +416,7 @@ static void mddev_put(mddev_t *mddev)
+ 	spin_unlock(&all_mddevs_lock);
+ }
  
-+void md_rdev_init(mdk_rdev_t *rdev)
-+{
-+	rdev->desc_nr = -1;
-+	rdev->saved_raid_disk = -1;
-+	rdev->raid_disk = -1;
-+	rdev->flags = 0;
-+	rdev->data_offset = 0;
-+	rdev->sb_events = 0;
-+	rdev->last_read_error.tv_sec  = 0;
-+	rdev->last_read_error.tv_nsec = 0;
-+	atomic_set(&rdev->nr_pending, 0);
-+	atomic_set(&rdev->read_errors, 0);
-+	atomic_set(&rdev->corrected_errors, 0);
-+
-+	INIT_LIST_HEAD(&rdev->same_set);
-+	init_waitqueue_head(&rdev->blocked_wait);
-+}
-+EXPORT_SYMBOL_GPL(md_rdev_init);
- /*
-  * Import a device. If 'super_format' >= 0, then sanity check the superblock
-  *
-@@ -2713,6 +2731,7 @@ static mdk_rdev_t *md_import_device(dev_t newdev, int super_format, int super_mi
- 		return ERR_PTR(-ENOMEM);
+-static void mddev_init(mddev_t *mddev)
++void mddev_init(mddev_t *mddev)
+ {
+ 	mutex_init(&mddev->open_mutex);
+ 	mutex_init(&mddev->reconfig_mutex);
+@@ -436,6 +436,7 @@ static void mddev_init(mddev_t *mddev)
+ 	mddev->resync_max = MaxSector;
+ 	mddev->level = LEVEL_NONE;
+ }
++EXPORT_SYMBOL_GPL(mddev_init);
+ 
+ static mddev_t * mddev_find(dev_t unit)
+ {
+@@ -4307,7 +4308,7 @@ static void md_safemode_timeout(unsigned long data)
+ 
+ static int start_dirty_degraded;
+ 
+-static int md_run(mddev_t *mddev)
++int md_run(mddev_t *mddev)
+ {
+ 	int err;
+ 	mdk_rdev_t *rdev;
+@@ -4511,6 +4512,7 @@ static int md_run(mddev_t *mddev)
+ 	sysfs_notify(&mddev->kobj, NULL, "degraded");
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(md_run);
+ 
+ static int do_md_run(mddev_t *mddev)
+ {
+@@ -4620,7 +4622,7 @@ static void md_clean(mddev_t *mddev)
+ 	mddev->bitmap_info.max_write_behind = 0;
+ }
+ 
+-static void md_stop_writes(mddev_t *mddev)
++void md_stop_writes(mddev_t *mddev)
+ {
+ 	if (mddev->sync_thread) {
+ 		set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+@@ -4640,11 +4642,10 @@ static void md_stop_writes(mddev_t *mddev)
+ 		md_update_sb(mddev, 1);
  	}
+ }
++EXPORT_SYMBOL_GPL(md_stop_writes);
  
-+	md_rdev_init(rdev);
- 	if ((err = alloc_disk_sb(rdev)))
- 		goto abort_free;
- 
-@@ -2722,18 +2741,6 @@ static mdk_rdev_t *md_import_device(dev_t newdev, int super_format, int super_mi
- 
- 	kobject_init(&rdev->kobj, &rdev_ktype);
- 
--	rdev->desc_nr = -1;
--	rdev->saved_raid_disk = -1;
--	rdev->raid_disk = -1;
--	rdev->flags = 0;
--	rdev->data_offset = 0;
--	rdev->sb_events = 0;
--	rdev->last_read_error.tv_sec  = 0;
--	rdev->last_read_error.tv_nsec = 0;
--	atomic_set(&rdev->nr_pending, 0);
--	atomic_set(&rdev->read_errors, 0);
--	atomic_set(&rdev->corrected_errors, 0);
+-static void md_stop(mddev_t *mddev)
++void md_stop(mddev_t *mddev)
+ {
+-	md_stop_writes(mddev);
 -
- 	size = rdev->bdev->bd_inode->i_size >> BLOCK_SIZE_BITS;
- 	if (!size) {
- 		printk(KERN_WARNING 
-@@ -2762,9 +2769,6 @@ static mdk_rdev_t *md_import_device(dev_t newdev, int super_format, int super_mi
- 		}
- 	}
+ 	mddev->pers->stop(mddev);
+ 	if (mddev->pers->sync_request && mddev->to_remove == NULL)
+ 		mddev->to_remove = &md_redundancy_group;
+@@ -4652,6 +4653,7 @@ static void md_stop(mddev_t *mddev)
+ 	mddev->pers = NULL;
+ 	clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
+ }
++EXPORT_SYMBOL_GPL(md_stop);
  
--	INIT_LIST_HEAD(&rdev->same_set);
--	init_waitqueue_head(&rdev->blocked_wait);
--
- 	return rdev;
+ static int md_set_readonly(mddev_t *mddev, int is_open)
+ {
+@@ -4698,6 +4700,7 @@ static int do_md_stop(mddev_t * mddev, int mode, int is_open)
+ 		if (mddev->ro)
+ 			set_disk_ro(disk, 0);
  
- abort_free:
++		md_stop_writes(mddev);
+ 		md_stop(mddev);
+ 		mddev->queue->merge_bvec_fn = NULL;
+ 		mddev->queue->unplug_fn = NULL;
 diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 1f680e4..a9cde80 100644
+index a9cde80..8e19e86 100644
 --- a/drivers/md/md.h
 +++ b/drivers/md/md.h
-@@ -484,4 +484,5 @@ extern void md_integrity_add_rdev(mdk_rdev_t *rdev, mddev_t *mddev);
+@@ -484,5 +484,9 @@ extern void md_integrity_add_rdev(mdk_rdev_t *rdev, mddev_t *mddev);
  extern int strict_strtoul_scaled(const char *cp, unsigned long *res, int scale);
  extern void restore_bitmap_write_access(struct file *file);
  
-+extern void md_rdev_init(mdk_rdev_t *rdev);
++extern void mddev_init(mddev_t *mddev);
++extern int md_run(mddev_t *mddev);
++extern void md_stop(mddev_t *mddev);
++extern void md_stop_writes(mddev_t *mddev);
+ extern void md_rdev_init(mdk_rdev_t *rdev);
  #endif /* _MD_MD_H */
 
 
