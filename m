@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
-Subject: [PATCH 20/24] md/bitmap: optimise scanning of empty bitmaps.
+Subject: [PATCH 18/24] md/bitmap: reduce dependence on sysfs.
 Date: Tue, 01 Jun 2010 19:56:20 +1000
-Message-ID: <20100601095620.565.48900.stgit@notabene.brown>
+Message-ID: <20100601095620.565.35504.stgit@notabene.brown>
 References: <20100601094414.565.3638.stgit@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,71 +13,45 @@ To: Heinz Mauelshagen <heinzm@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A bitmap is stored as one page per 2048 bits.
-If none of the bits are set, the page is not allocated.
-
-When bitmap_get_counter finds that a page isn't allocate,
-it just reports that one bit work of space isn't flagged,
-rather than reporting that 2048 bits worth of space are
-unflagged.
-This can cause searches for flagged bits (e.g. bitmap_close_sync)
-to do more work than is really necessary.
-
-So change bitmap_get_counter (when creating) to report a number of
-blocks that more accurately reports the range of the device for which
-no counter currently exists.
+For dm-raid45 we will want to use bitmaps in dm-targets which don't
+have entries in sysfs, so cope with the mddev not living in sysfs.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/bitmap.c |   23 +++++++++++++----------
- 1 files changed, 13 insertions(+), 10 deletions(-)
+ drivers/md/bitmap.c |    7 ++++---
+ 1 files changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/bitmap.c b/drivers/md/bitmap.c
-index 3f04699..29a3c86 100644
+index 67fb32d..8af4d65 100644
 --- a/drivers/md/bitmap.c
 +++ b/drivers/md/bitmap.c
-@@ -1235,29 +1235,32 @@ __acquires(bitmap->lock)
- 	unsigned long page = chunk >> PAGE_COUNTER_SHIFT;
- 	unsigned long pageoff = (chunk & PAGE_COUNTER_MASK) << COUNTER_BYTE_SHIFT;
- 	sector_t csize;
-+	int err;
-+
-+	err = bitmap_checkpage(bitmap, page, create);
+@@ -1358,7 +1358,7 @@ void bitmap_endwrite(struct bitmap *bitmap, sector_t offset, unsigned long secto
+ 		    bitmap->events_cleared < bitmap->mddev->events) {
+ 			bitmap->events_cleared = bitmap->mddev->events;
+ 			bitmap->need_sync = 1;
+-			sysfs_notify_dirent(bitmap->sysfs_can_clear);
++			sysfs_notify_dirent_safe(bitmap->sysfs_can_clear);
+ 		}
  
--	if (bitmap_checkpage(bitmap, page, create) < 0) {
-+	if (bitmap->bp[page].hijacked ||
-+	    bitmap->bp[page].map == NULL)
-+		csize = ((sector_t)1) << (CHUNK_BLOCK_SHIFT(bitmap) +
-+					  PAGE_COUNTER_SHIFT - 1);
-+	else
- 		csize = ((sector_t)1) << (CHUNK_BLOCK_SHIFT(bitmap));
--		*blocks = csize - (offset & (csize - 1));
-+	*blocks = csize - (offset & (csize - 1));
-+
-+	if (err < 0)
- 		return NULL;
--	}
-+
- 	/* now locked ... */
+ 		if (!success && ! (*bmc & NEEDED_MASK))
+@@ -1643,7 +1643,7 @@ int bitmap_create(mddev_t *mddev)
+ 	struct file *file = mddev->bitmap_info.file;
+ 	int err;
+ 	sector_t start;
+-	struct sysfs_dirent *bm;
++	struct sysfs_dirent *bm = NULL;
  
- 	if (bitmap->bp[page].hijacked) { /* hijacked pointer */
- 		/* should we use the first or second counter field
- 		 * of the hijacked pointer? */
- 		int hi = (pageoff > PAGE_COUNTER_MASK);
--		csize = ((sector_t)1) << (CHUNK_BLOCK_SHIFT(bitmap) +
--					  PAGE_COUNTER_SHIFT - 1);
--		*blocks = csize - (offset & (csize - 1));
- 		return  &((bitmap_counter_t *)
- 			  &bitmap->bp[page].map)[hi];
--	} else { /* page is allocated */
--		csize = ((sector_t)1) << (CHUNK_BLOCK_SHIFT(bitmap));
--		*blocks = csize - (offset & (csize - 1));
-+	} else /* page is allocated */
- 		return (bitmap_counter_t *)
- 			&(bitmap->bp[page].map[pageoff]);
--	}
- }
+ 	BUILD_BUG_ON(sizeof(bitmap_super_t) != 256);
  
- int bitmap_startwrite(struct bitmap *bitmap, sector_t offset, unsigned long sectors, int behind)
+@@ -1664,7 +1664,8 @@ int bitmap_create(mddev_t *mddev)
+ 
+ 	bitmap->mddev = mddev;
+ 
+-	bm = sysfs_get_dirent(mddev->kobj.sd, NULL, "bitmap");
++	if (mddev->kobj.sd)
++		bm = sysfs_get_dirent(mddev->kobj.sd, NULL, "bitmap");
+ 	if (bm) {
+ 		bitmap->sysfs_can_clear = sysfs_get_dirent(bm, NULL, "can_clear");
+ 		sysfs_put(bm);
 
 
