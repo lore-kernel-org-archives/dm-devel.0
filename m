@@ -1,55 +1,34 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Herbert Xu <herbert@gondor.apana.org.au>
 Subject: Re: [dm-devel] [PATCH] DM-CRYPT: Scale to multiple CPUs
-Date: Wed, 2 Jun 2010 01:15:43 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1006020110220.22695@hs20-bc2-1.build.redhat.com>
-References: <20100531160425.GA20344@basil.fritz.box>
- <Pine.LNX.4.64.1005312239520.6372@hs20-bc2-1.build.redhat.com>
- <4C04AB6E.1080305@linux.intel.com>
+Date: Wed, 2 Jun 2010 15:20:54 +1000
+Message-ID: <20100602052054.GA5918@gondor.apana.org.au>
+References: <20100531160425.GA20344@basil.fritz.box> <Pine.LNX.4.64.1005312239520.6372@hs20-bc2-1.build.redhat.com> <4C04AB6E.1080305@linux.intel.com> <Pine.LNX.4.64.1006020110220.22695@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4C04AB6E.1080305@linux.intel.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1006020110220.22695@hs20-bc2-1.build.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andi Kleen <ak@linux.intel.com>
-Cc: device-mapper development <dm-devel@redhat.com>, herbert@gondor.hengli.com.au, linux-kernel@vger.kernel.org, agk@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Andi Kleen <ak@linux.intel.com>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
+On Wed, Jun 02, 2010 at 01:15:43AM -0400, Mikulas Patocka wrote:
+>
+> Almost every CPU is "very slow" so that it lags behind disk when 
+> encrypting. CPUs with hardware AES may be the exception.
 
+I would not call a platform like Nehalem the exception.
 
-On Tue, 1 Jun 2010, Andi Kleen wrote:
+> If one CPU submits I/O for 10MB of data, your patch makes no 
+> paralelization at all. Because all those 10MB will be encrypted by the 
+> same CPU that submitted it.
 
-> , Mikulas Patocka wrote:
-> > Questions:
-> > 
-> > If you are optimizing it,
-> > 
-> > 1) why don't you optimize it in such a way that if one CPU submits
-> > requests, the crypto work is spread among all the CPUs? Currently it
-> > spreads the work only if different CPUs submit it.
-> 
-> This case is only useful with very slow CPUs and is handled by pcrypt
-> in theory
-> 
-> (but I haven't tested it)
+He doesn't need to.  This is already solved by pcrypt.
 
-Almost every CPU is "very slow" so that it lags behind disk when 
-encrypting. CPUs with hardware AES may be the exception.
-
-> > 2) why not optimize software async crypto daemon (crypt/cryptd.c) instead
-> > of dm-crypt, so that all kernel subsystems can actually take advantage of
-> > those multi-CPU optimizations, not just dm-crypt?
-> 
-> Normally most subsystems are multi-CPU already, unless they limit
-> themselves artitifically like dm-crypt.
-> 
-> For dm-crypt would be wasteful to funnel everything through two single CPU
-> threads just
-> to spread it out again.  That is why I also used per CPU IO threads too.
-
-If one CPU submits I/O for 10MB of data, your patch makes no 
-paralelization at all. Because all those 10MB will be encrypted by the 
-same CPU that submitted it.
-
-> -Andi
-
-Mikulas
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
