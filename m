@@ -1,95 +1,38 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 3/2] dm: table load must always try
-	dm_setup_md_queue
-Date: Fri, 4 Jun 2010 16:15:25 -0400
-Message-ID: <20100604201524.GC4917@redhat.com>
-References: <1274964469-22289-1-git-send-email-snitzer@redhat.com>
-	<1274964469-22289-3-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: LinuxTag, Berlin, Weds 9 - Sat 12 June 2010
+Date: Mon, 7 Jun 2010 13:54:07 +0100
+Message-ID: <20100607125407.GC8043@agk-dp.fab.redhat.com>
+Reply-To: LVM2 development <lvm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <lvm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1274964469-22289-3-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/lvm-devel>
+List-Post: <mailto:lvm-devel@redhat.com>
+List-Help: <mailto:lvm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/lvm-devel>,
+	<mailto:lvm-devel-request@redhat.com?subject=subscribe>
+Sender: lvm-devel-bounces@redhat.com
+Errors-To: lvm-devel-bounces@redhat.com
+To: linux-lvm@redhat.com, lvm-devel@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A DM device's first table_load will establish the immutable md->type.
-But md->queue initialization, based on md->type, may fail at that time
-(if blk_init_allocated_queue cannot allocate memory).
+We're holding an informal LVM & device-mapper developers' meeting at
+LinuxTag later this week, discussing our road map for the projects
+amongst other stuff.  (Drop me a line if you'll be there and would like
+to join in any of this.)
 
-Therefore any subsequent table_load must (re)try dm_setup_md_queue
-independent of establishing md->type.
+We've been allocated presentation slots on Friday morning (10am-1pm,
+Saal Berlin II) and Saturday afternoon (3pm-4pm, Saal London).
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-ioctl.c |   18 +++++++++---------
- drivers/md/dm.c       |    3 ++-
- 2 files changed, 11 insertions(+), 10 deletions(-)
+  http://www.linuxtag.org/2010/en/
 
-NOTE: coping with blk_init_allocated_queue failure was mistakenly
-"optimized" away during review of the patch that introduced
-dm_setup_md_queue:
-https://www.redhat.com/archives/dm-devel/2010-May/msg00173.html
+Alasdair
 
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c
-+++ linux-2.6/drivers/md/dm-ioctl.c
-@@ -1181,15 +1181,6 @@ static int table_load(struct dm_ioctl *p
- 	if (dm_get_md_type(md) == DM_TYPE_NONE) {
- 		/* initial table load, set md's type based on table's type */
- 		dm_set_md_type(md, dm_table_get_type(t));
--
--		/* setup md->queue to reflect md's type (may block) */
--		r = dm_setup_md_queue(md);
--		if (r) {
--			DMWARN("unable to setup device queue for this table.");
--			dm_table_destroy(t);
--			dm_unlock_md_type(md);
--			goto out;
--		}
- 	} else if (dm_get_md_type(md) != dm_table_get_type(t)) {
- 		DMWARN("can't change device type after initial table load.");
- 		dm_table_destroy(t);
-@@ -1197,6 +1188,15 @@ static int table_load(struct dm_ioctl *p
- 		r = -EINVAL;
- 		goto out;
- 	}
-+
-+	/* setup md->queue to reflect md's type (may block) */
-+	r = dm_setup_md_queue(md);
-+	if (r) {
-+		DMWARN("unable to setup device queue for this table.");
-+		dm_table_destroy(t);
-+		dm_unlock_md_type(md);
-+		goto out;
-+	}
- 	dm_unlock_md_type(md);
- 
- 	/* stage inactive table */
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c
-+++ linux-2.6/drivers/md/dm.c
-@@ -2164,7 +2164,8 @@ static int dm_init_request_based_queue(s
- {
- 	struct request_queue *q = NULL;
- 
--	BUG_ON(md->queue->elevator);
-+	if (unlikely(md->queue->elevator))
-+		return 1;
- 
- 	/* Fully initialize the queue */
- 	q = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
+--
+lvm-devel mailing list
+lvm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/lvm-devel
