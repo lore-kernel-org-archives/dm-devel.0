@@ -1,7 +1,8 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 1/3] dm: prevent access to md being deleted
-Date: Tue, 08 Jun 2010 19:25:49 +0900
-Message-ID: <4C0E1AAD.1050108@ct.jp.nec.com>
+Subject: [PATCH 2/3] dm: release _hash_lock when removing device
+	in remove_all
+Date: Tue, 08 Jun 2010 19:26:34 +0900
+Message-ID: <4C0E1ADA.2030003@ct.jp.nec.com>
 References: <4C0E19A0.1040804@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,55 +23,100 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch prevents access to mapped_device which is being deleted.
+This patch changes dm_hash_remove_all() to release _hash_lock when
+removing a device.  After removing the device, dm_hash_remove_all()
+takes _hash_lock and searches the hash from scratch again.
 
-Currently, even after a mapped_device has been removed from the hash,
-it could be accessed through idr_find() using minor number.
-That could cause a race and NULL pointer reference below:
-  CPU0                          CPU1
-  ------------------------------------------------------------------
-  dev_remove(param)
+This patch is a preparation for the next patch, which changes device
+deletion code to wait for md reference to be 0.  Without this patch,
+the wait in the next patch may cause AB-BA deadlock:
+  CPU0                                CPU1
+  -----------------------------------------------------------------------
+  dm_hash_remove_all()
     down_write(_hash_lock)
-    dm_lock_for_deletion(md)
-      spin_lock(_minor_lock)
-      set_bit(DMF_DELETING)
-      spin_unlock(_minor_lock)
-    __hash_remove(hc)
-    up_write(_hash_lock)
-                                dev_status(param)
-                                  md = find_device(param)
-                                         down_read(_hash_lock)
-                                         __find_device_hash_cell(param)
-                                           dm_get_md(param->dev)
-                                             md = dm_find_md(dev)
-                                                    spin_lock(_minor_lock)
-                                                    md = idr_find(MINOR(dev))
-                                                    spin_unlock(_minor_lock)
-    dm_put(md)
-      free_dev(md)
-                                             dm_get(md)
-                                         up_read(_hash_lock)
-                                  __dev_status(md, param)
-                                  dm_put(md)
-
-This patch fixes such problems.
+                                      table_status()
+                                        md = find_device()
+                                               dm_get(md)
+                                                 <increment md->holders>
+                                        dm_get_live_or_inactive_table()
+                                          dm_get_inactive_table()
+                                            down_write(_hash_lock)
+    <in the md deletion code>
+      <wait for md->holders to be 0>
 
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: Alasdair G Kergon <agk@redhat.com>
 ---
- drivers/md/dm.c |    1 +
- 1 file changed, 1 insertion(+)
+ drivers/md/dm-ioctl.c |   46 ++++++++++++++++++++++++----------------------
+ 1 file changed, 24 insertions(+), 22 deletions(-)
 
-Index: 2.6.35-rc1/drivers/md/dm.c
+Index: 2.6.35-rc1/drivers/md/dm-ioctl.c
 ===================================================================
---- 2.6.35-rc1.orig/drivers/md/dm.c
-+++ 2.6.35-rc1/drivers/md/dm.c
-@@ -2141,6 +2141,7 @@ static struct mapped_device *dm_find_md(
- 	md = idr_find(&_minor_idr, minor);
- 	if (md && (md == MINOR_ALLOCED ||
- 		   (MINOR(disk_devt(dm_disk(md))) != minor) ||
-+		   dm_deleting_md(md) ||
- 		   test_bit(DMF_FREEING, &md->flags))) {
- 		md = NULL;
- 		goto out;
+--- 2.6.35-rc1.orig/drivers/md/dm-ioctl.c
++++ 2.6.35-rc1/drivers/md/dm-ioctl.c
+@@ -249,40 +249,42 @@ static void __hash_remove(struct hash_ce
+ 
+ static void dm_hash_remove_all(int keep_open_devices)
+ {
+-	int i, dev_skipped, dev_removed;
++	int i, dev_skipped;
+ 	struct hash_cell *hc;
+-	struct list_head *tmp, *n;
+-
+-	down_write(&_hash_lock);
++	struct mapped_device *md;
+ 
+ retry:
+-	dev_skipped = dev_removed = 0;
+-	for (i = 0; i < NUM_BUCKETS; i++) {
+-		list_for_each_safe (tmp, n, _name_buckets + i) {
+-			hc = list_entry(tmp, struct hash_cell, name_list);
++	down_write(&_hash_lock);
++	for (dev_skipped = 0, i = 0; i < NUM_BUCKETS; i++) {
++		list_for_each_entry(hc, _name_buckets + i, name_list) {
++			md = hc->md;
++			dm_get(md);
+ 
+-			if (keep_open_devices &&
+-			    dm_lock_for_deletion(hc->md)) {
++			if (keep_open_devices && dm_lock_for_deletion(md)) {
++				dm_put(md);
+ 				dev_skipped++;
+ 				continue;
+ 			}
++
+ 			__hash_remove(hc);
+-			dev_removed = 1;
+-		}
+-	}
++			up_write(&_hash_lock);
+ 
+-	/*
+-	 * Some mapped devices may be using other mapped devices, so if any
+-	 * still exist, repeat until we make no further progress.
+-	 */
+-	if (dev_skipped) {
+-		if (dev_removed)
+-			goto retry;
++			dm_put(md);
+ 
+-		DMWARN("remove_all left %d open device(s)", dev_skipped);
++			/*
++			 * Some mapped devices may be using other mapped
++			 * devices, so repeat until we make no further
++			 * progress.
++			 * If a new mapped device is created here, it will be
++			 * also removed.
++			 */
++			goto retry;
++		}
+ 	}
+-
+ 	up_write(&_hash_lock);
++
++	if (dev_skipped)
++		DMWARN("remove_all left %d open device(s)", dev_skipped);
+ }
+ 
+ static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
