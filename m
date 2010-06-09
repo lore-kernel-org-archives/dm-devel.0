@@ -1,11 +1,17 @@
-From: vivacious absolutely <vivacious@sify.com>
-Subject: patches archive for replicator
-Date: Tue, 8 Jun 2010 19:38:41 +0530
-Message-ID: <AANLkTinlDGzlzTOLG476tPwWM25x87A321dCrl2LRGC_@mail.gmail.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH 3/2] dm: table load must always try
+	dm_setup_md_queue
+Date: Wed, 09 Jun 2010 14:38:56 +0900
+Message-ID: <4C0F28F0.5090604@ct.jp.nec.com>
+References: <1274964469-22289-1-git-send-email-snitzer@redhat.com>
+	<1274964469-22289-3-git-send-email-snitzer@redhat.com>
+	<20100604201524.GC4917@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1032728188040648833=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20100604201524.GC4917@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,74 +21,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
---===============1032728188040648833==
-Content-Type: multipart/alternative; boundary=00504502cf2b9e7f7f04888553f9
+Hi Mike,
 
---00504502cf2b9e7f7f04888553f9
-Content-Type: text/plain; charset=ISO-8859-1
+On 06/05/2010 05:15 AM +0900, Mike Snitzer wrote:
+> @@ -2164,7 +2164,8 @@ static int dm_init_request_based_queue(s
+>  {
+>  	struct request_queue *q = NULL;
+>  
+> -	BUG_ON(md->queue->elevator);
+> +	if (unlikely(md->queue->elevator))
+> +		return 1;
 
-Hello,
-I want to test and debug Replicator feature.
+I think the "unlikely" should be rather "likely", since
+dm_init_request_based_queue() is now called whenever request-based
+table is loaded even after the actual initialization has been done.
 
-Is it sufficient to patch only the following or are more patches needed?
+For others,
+Acked-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 
-v6-1-4-dm-replicator-documentation-and-module-registry.patch
-<http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.32-rc1/v6-1-4-dm-replicator-documentation-and-module-registry.patch>
-                                          21-Dec-2009 23:37   19K
-v6-2-4-dm-replicator-replication-log-and-site-link-handler-interfaces-and-main-replicator-module.patch
-<http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.32-rc1/v6-2-4-dm-replicator-replication-log-and-site-link-handler-interfaces-and-main-replicator-module.patch>
-21-Dec-2009 23:48   73K
-v6-3-4-dm-replicator-ringbuffer-replication-log-handler.patch
-<http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.32-rc1/v6-3-4-dm-replicator-ringbuffer-replication-log-handler.patch>
-                                         21-Dec-2009 23:50  132K
-v6-4-4-dm-replicator-blockdev-site-link-handler.patch
-<http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.32-rc1/v6-4-4-dm-replicator-blockdev-site-link-handler.patch>
-                                                 21-Dec-2009 23:46
-73K
-
-Is there an archive of all patches of device-mapper to download in one go,
-say for kernel 2.6.33?
-
-Thanks & regards,
-Rohit
-
---00504502cf2b9e7f7f04888553f9
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-Hello,<br>I want to test and debug Replicator feature. <br><br>Is it suffic=
-ient to patch only the following or are more patches needed?<br><pre><a hre=
-f=3D"http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.32-r=
-c1/v6-1-4-dm-replicator-documentation-and-module-registry.patch">v6-1-4-dm-=
-replicator-documentation-and-module-registry.patch</a>                     =
-                      21-Dec-2009 23:37   19K  <br>
-<a href=3D"http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.=
-6.32-rc1/v6-2-4-dm-replicator-replication-log-and-site-link-handler-interfa=
-ces-and-main-replicator-module.patch">v6-2-4-dm-replicator-replication-log-=
-and-site-link-handler-interfaces-and-main-replicator-module.patch</a> 21-De=
-c-2009 23:48   73K  <br>
-<a href=3D"http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.=
-6.32-rc1/v6-3-4-dm-replicator-ringbuffer-replication-log-handler.patch">v6-=
-3-4-dm-replicator-ringbuffer-replication-log-handler.patch</a>             =
-                             21-Dec-2009 23:50  132K  <br>
-<a href=3D"http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.=
-6.32-rc1/v6-4-4-dm-replicator-blockdev-site-link-handler.patch">v6-4-4-dm-r=
-eplicator-blockdev-site-link-handler.patch</a>                             =
-                     21-Dec-2009 23:46   73K  <br>
-</pre>Is there an archive of all patches of device-mapper to download in on=
-e go, say for kernel 2.6.33?<br><br>Thanks &amp; regards,<br>Rohit<br>
-
---00504502cf2b9e7f7f04888553f9--
-
-
---===============1032728188040648833==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1032728188040648833==--
+Thanks,
+Kiyoshi Ueda
