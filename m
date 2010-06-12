@@ -1,17 +1,15 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] Fix kernel NULL pointer dereference
-	in	dm-mpath.c
-Date: Sat, 12 Jun 2010 01:45:37 +0100
-Message-ID: <20100612004537.GI8043@agk-dp.fab.redhat.com>
-References: <AANLkTilQx3qv6HIi83nYIoC9QRvgS4lJiC42UlcanhSs@mail.gmail.com>
-	<AANLkTim0Fgiwj-3h5XweiO0oiXQOM7twKfCg7csO8Zc1@mail.gmail.com>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: 2 TB wraparound on 32 bit host
+Date: Sat, 12 Jun 2010 11:45:20 -0400
+Message-ID: <4C13AB90.1070802@cfl.rr.com>
+References: <4C12A32C.3000501@cfl.rr.com>
+	<1276290990.2862.161.camel@mulgrave.site>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <AANLkTim0Fgiwj-3h5XweiO0oiXQOM7twKfCg7csO8Zc1@mail.gmail.com>
+In-Reply-To: <1276290990.2862.161.camel@mulgrave.site>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,11 +22,13 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 11, 2010 at 10:18:14AM -0700, Patrick J. LoPresti wrote:
-> P.S. =A0Are the Coverity folks still running the kernel through their
-> tool? =A0This seems like the sort of thing it would catch.
- =
+On 06/11/2010 05:16 PM, James Bottomley wrote:
+> So best guess is that CONFIG_LBDAF isn't set.  This would make all
+> sector_t counts wrap at 2TB (32 bits worth of 512 bytes).  It would be
+> rather a daft thing for a distribution not to have set, though ...
 
-No - it hasn't run since February, unfortunately.
-
-Alasdair
+Bingo, thanks.  It doesn't seem to be set on this machine running the 
+amd64 2.6.32 lucid build which also appears to suffer the same problem. 
+  If this config option isn't set though, shouldn't the kernel fail 
+calls like llseek() that try to exceed the limit, rather than silently 
+wrap around to the wrong address?
