@@ -1,50 +1,233 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Re: 2 TB wraparound on snapshots on kernels < 2.6.33
-Date: Wed, 16 Jun 2010 09:52:54 -0400
-Message-ID: <4C18D736.7070109@cfl.rr.com>
-References: <4C12A32C.3000501@cfl.rr.com>
-	<1276290990.2862.161.camel@mulgrave.site>
-	<4C13AB90.1070802@cfl.rr.com>
-	<1276358598.4399.3.camel@mulgrave.site>
-	<1276358949.4399.8.camel@mulgrave.site>
-	<4C13CAD6.70902@cfl.rr.com> <4C13D65B.7010800@cfl.rr.com>
-	<1276373001.4399.11.camel@mulgrave.site>
-	<4C14043B.7080203@cfl.rr.com> <4C1794D6.5070703@cfl.rr.com>
-	<Pine.LNX.4.64.1006160911420.25637@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1006160942130.651@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1006160942130.651@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm: discard support for the linear target
+Date: Wed, 16 Jun 2010 15:48:34 -0400
+Message-ID: <1276717714-16750-1-git-send-email-snitzer@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Aha!  I looked at the code carefully as it aroused my suspicions, but I
-couldn't quite work out how it actually caused the problem.  Good catch.
+Allow discards to be passed through to a single device linear mapping.
+Introduce DM_TARGET_SUPPORTS_DISCARDS target features flag that each
+target must set once discard support is added.
 
-On 6/16/2010 9:45 AM, Mikulas Patocka wrote:
-> The bug existed even in upstream, but only in 2.6.32 kernel. The reason 
-> was this function:
-> static inline chunk_t sector_to_chunk(struct dm_exception_store *store,
->                                       sector_t sector)
-> {
->         return (sector & ~store->chunk_mask) >> store->chunk_shift;
-> }
-> 
-> "store->chunk_mask" was changed to be unsigned in 2.6.32, so it was 
-> masking the sector with 32-bit value. In 2.6.33 that masking was removed. 
-> Ubuntu picked that 2.6.32 patch but didn't pick further patches.
-> 
-> Mikulas
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-linear.c        |    1 +
+ drivers/md/dm-table.c         |   20 +++++++++++++
+ drivers/md/dm.c               |   61 +++++++++++++++++++++++++++++++++--------
+ drivers/md/dm.h               |    1 +
+ include/linux/device-mapper.h |    1 +
+ 5 files changed, 72 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 9200dbf..7071f17 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -152,6 +152,7 @@ static struct target_type linear_target = {
+ 	.ioctl  = linear_ioctl,
+ 	.merge  = linear_merge,
+ 	.iterate_devices = linear_iterate_devices,
++	.features = DM_TARGET_SUPPORTS_DISCARDS,
+ };
+ 
+ int __init dm_linear_init(void)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 9924ea2..7671665 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -54,6 +54,8 @@ struct dm_table {
+ 	sector_t *highs;
+ 	struct dm_target *targets;
+ 
++	unsigned discards_supported:1;
++
+ 	/*
+ 	 * Indicates the rw permissions for the new logical
+ 	 * device.  This should be a combination of FMODE_READ
+@@ -203,6 +205,7 @@ int dm_table_create(struct dm_table **result, fmode_t mode,
+ 
+ 	INIT_LIST_HEAD(&t->devices);
+ 	atomic_set(&t->holders, 0);
++	t->discards_supported = 1;
+ 
+ 	if (!num_targets)
+ 		num_targets = KEYS_PER_NODE;
+@@ -770,6 +773,9 @@ int dm_table_add_target(struct dm_table *t, const char *type,
+ 
+ 	t->highs[t->num_targets++] = tgt->begin + tgt->len - 1;
+ 
++	if (!(tgt->type->features & DM_TARGET_SUPPORTS_DISCARDS))
++		t->discards_supported = 0;
++
+ 	return 0;
+ 
+  bad:
+@@ -905,6 +911,12 @@ int dm_table_complete(struct dm_table *t)
+ 	int r = 0;
+ 	unsigned int leaf_nodes;
+ 
++	/*
++	 * We only support discards if there is exactly one underlying device.
++	 */
++	if (!list_is_singular(&t->devices))
++		t->discards_supported = 0;
++
+ 	/* how many indexes will the btree have ? */
+ 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
+ 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
+@@ -1086,6 +1098,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	else
+ 		queue_flag_set_unlocked(QUEUE_FLAG_CLUSTER, q);
+ 
++	if (dm_table_supports_discards(t))
++		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
++
+ 	dm_table_set_integrity(t);
+ 
+ 	/*
+@@ -1232,6 +1247,11 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
+ 	return t->md;
+ }
+ 
++bool dm_table_supports_discards(struct dm_table *t)
++{
++	return t->discards_supported;
++}
++
+ EXPORT_SYMBOL(dm_vcalloc);
+ EXPORT_SYMBOL(dm_get_device);
+ EXPORT_SYMBOL(dm_put_device);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 0f53d1c..b029a37 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1198,6 +1198,49 @@ static int __clone_and_map_empty_barrier(struct clone_info *ci)
+ 	return 0;
+ }
+ 
++/*
++ * Perform all io with a single clone.
++ */
++static void __clone_and_map_simple(struct clone_info *ci, struct dm_target *ti)
++{
++	struct bio *clone, *bio = ci->bio;
++	struct dm_target_io *tio;
++
++	tio = alloc_tio(ci, ti);
++	clone = clone_bio(bio, ci->sector, ci->idx,
++			  bio->bi_vcnt - ci->idx, ci->sector_count,
++			  ci->md->bs);
++	__map_bio(ti, clone, tio);
++	ci->sector_count = 0;
++}
++
++static int __clone_and_map_discard(struct clone_info *ci)
++{
++	struct dm_target *ti;
++	sector_t max;
++
++	if (!dm_table_supports_discards(ci->map))
++		return -EOPNOTSUPP;
++
++	ti = dm_table_find_target(ci->map, ci->sector);
++	if (!dm_target_is_valid(ti))
++		return -EIO;
++
++	max = max_io_len(ci->md, ci->sector, ti);
++
++	if (ci->sector_count <= max)
++		__clone_and_map_simple(ci, ti);
++	else {
++		/*
++		 * FIXME: handle discards that span targets; allocating biovec
++		 * with 1 page (logical_block_size) payload for each clone.
++		 */
++		return -EOPNOTSUPP;
++	}
++
++	return 0;
++}
++
+ static int __clone_and_map(struct clone_info *ci)
+ {
+ 	struct bio *clone, *bio = ci->bio;
+@@ -1208,27 +1251,21 @@ static int __clone_and_map(struct clone_info *ci)
+ 	if (unlikely(bio_empty_barrier(bio)))
+ 		return __clone_and_map_empty_barrier(ci);
+ 
++	if (unlikely(bio_rw_flagged(bio, BIO_RW_DISCARD)))
++		return __clone_and_map_discard(ci);
++
+ 	ti = dm_table_find_target(ci->map, ci->sector);
+ 	if (!dm_target_is_valid(ti))
+ 		return -EIO;
+ 
+ 	max = max_io_len(ci->md, ci->sector, ti);
+ 
+-	/*
+-	 * Allocate a target io object.
+-	 */
+-	tio = alloc_tio(ci, ti);
+-
+ 	if (ci->sector_count <= max) {
+ 		/*
+ 		 * Optimise for the simple case where we can do all of
+ 		 * the remaining io with a single clone.
+ 		 */
+-		clone = clone_bio(bio, ci->sector, ci->idx,
+-				  bio->bi_vcnt - ci->idx, ci->sector_count,
+-				  ci->md->bs);
+-		__map_bio(ti, clone, tio);
+-		ci->sector_count = 0;
++		__clone_and_map_simple(ci, ti);
+ 
+ 	} else if (to_sector(bio->bi_io_vec[ci->idx].bv_len) <= max) {
+ 		/*
+@@ -1249,6 +1286,7 @@ static int __clone_and_map(struct clone_info *ci)
+ 			len += bv_len;
+ 		}
+ 
++		tio = alloc_tio(ci, ti);
+ 		clone = clone_bio(bio, ci->sector, ci->idx, i - ci->idx, len,
+ 				  ci->md->bs);
+ 		__map_bio(ti, clone, tio);
+@@ -1272,12 +1310,11 @@ static int __clone_and_map(struct clone_info *ci)
+ 					return -EIO;
+ 
+ 				max = max_io_len(ci->md, ci->sector, ti);
+-
+-				tio = alloc_tio(ci, ti);
+ 			}
+ 
+ 			len = min(remaining, max);
+ 
++			tio = alloc_tio(ci, ti);
+ 			clone = split_bvec(bio, ci->sector, ci->idx,
+ 					   bv->bv_offset + offset, len,
+ 					   ci->md->bs);
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index 664a5ae..032ce2f 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -62,6 +62,7 @@ int dm_table_any_busy_target(struct dm_table *t);
+ int dm_table_set_type(struct dm_table *t);
+ unsigned dm_table_get_type(struct dm_table *t);
+ bool dm_table_request_based(struct dm_table *t);
++bool dm_table_supports_discards(struct dm_table *t);
+ int dm_table_alloc_md_mempools(struct dm_table *t);
+ void dm_table_free_md_mempools(struct dm_table *t);
+ struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 1381cd9..e44cbcb 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -130,6 +130,7 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d);
+ /*
+  * Target features
+  */
++#define DM_TARGET_SUPPORTS_DISCARDS 0x00000001
+ 
+ struct target_type {
+ 	uint64_t features;
