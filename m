@@ -1,31 +1,46 @@
-From: Eric Sandeen <sandeen@sandeen.net>
-Subject: Re: 2.6.35 causes deadlock when snapshotting root lv
-Date: Fri, 18 Jun 2010 13:55:33 -0500
-Message-ID: <4C1BC125.4090902@sandeen.net>
-References: <4C1A2839.5010407@cfl.rr.com> <20100617142731.GA10071@redhat.com> <4C1A4A74.9070105@cfl.rr.com> <20100617162747.GA21336@redhat.com> <4C1ACBF1.3050603@cfl.rr.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: multipath-tools only binding 2 out of 4 paths,
+ bug w/ numerous devices?
+Date: Fri, 18 Jun 2010 20:55:13 +0200
+Message-ID: <1276887313.2657.1.camel@localhost>
+References: <5B2DB4801E21E64BB49494533CCF208A07330E95@CWYMSX02.Corp.Acxiom.net>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <4C1ACBF1.3050603@cfl.rr.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Phillip Susi <psusi@cfl.rr.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, Eric Sandeen <sandeen@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <5B2DB4801E21E64BB49494533CCF208A07330E95@CWYMSX02.Corp.Acxiom.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Costaras Steve - stcost <Steve.Costaras@acxiom.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Phillip Susi wrote:
-> On 06/17/2010 12:27 PM, Mike Snitzer wrote:
->>>> http://git.kernel.org/linus/18e9e5104fcd9a9
->>>> http://git.kernel.org/linus/6b0310fbf087ad6
->>>
->>> Yes, these do look suspicious.  I'll test reverting them tonight.
->>
->> OK, I'd suggest reverting the VFS change (18e9e5104fcd9a9) first.
+On ven., 2010-06-18 at 13:37 -0500, Costaras Steve - stcost wrote:
+> I have a STK Flexline 680 which is presenting 12 2TB LUNS across 4 paths
+> (48 devices).   They are showing up below correctly as sdb through sdaw.
+> They are being encapsulated into dm-0 through dm-11.  (dm-12 is a lv).
+> As below multipath is working but only using/seeing two of the paths.
+> With exception of sdz (FLEX680-000 (3600104f0008baaa17c99eebb00000001)).
+> It appears that the 3 & 4 paths that DO NOT show up are with device
+> major numbers 66 & 67.   
 > 
-> Turns out it was 6b0310fbf087ad6 that did it.  CCing Eric Sandeen since
-> he wrote it.  Eric, this patch seems to cause a deadlock when taking an
-> lvm snapshot of the root lv.  Any idea why?
+> Is this a known bug?
+> 
+Hi,
 
-I'll look.  A sysrq-w when it hangs up would probably be enlightening...
+do you reproduce with upstream multipath-tools ? What distribution and
+versions are you using ?
 
--Eric
+Best regards,
+-- 
+Christophe Varoqui <christophe.varoqui@opensvc.com>
+OpenSVC
