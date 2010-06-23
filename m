@@ -1,176 +1,384 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH, RFC] block: don't allocate a payload for discard request
-Date: Tue, 22 Jun 2010 14:00:29 -0400
-Message-ID: <20100622180029.GA15950@redhat.com>
-References: <20100618145942.GA1148@lst.de>
- <20100619042534.GA16217@redhat.com>
+From: Malahal Naineni <malahal@us.ibm.com>
+Subject: [PATCH] [RFC] [PATCH] Add alias_prefix to get multipath
+	names based on	storage type
+Date: Tue, 22 Jun 2010 19:27:33 -0700
+Message-ID: <b4d519b4bbc657671382.1277260053@malahal>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100619042534.GA16217@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@free.fr, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Jun 19 2010 at 12:25am -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+The current multipath tools use "mpath" prefix for all LUNs when
+user_friendly_names is set. It would be nice if the names are generated
+based on the storage subsystem. For example, all EMC LUNs would be named
+emc_a, emc_b, elm_c etc., and all IBM's SVC LUNs would be named svc_a,
+svc_b, svc_c. This patch attempts to do that using only multipath.conf.
+Patches can be added to the internal hardware table, if needed.
 
-> On Fri, Jun 18 2010 at 10:59am -0400,
-> Christoph Hellwig <hch@lst.de> wrote:
-> 
-> > 
-> > Allocating a fixed payload for discard requests always was a horrible hack,
-> > and it's not coming to byte us when adding support for discard in DM/MD.
-> > 
-> > So change the code to leave the allocation of a payload to the lowlevel
-> > driver.  Unfortunately that means we'll need another hack, which allows
-> > us to update the various block layer length fields indicating that we
-> > have a payload.  Instead of hiding this in sd.c, which we already partially
-> > do for UNMAP support add a documented helper in the core block layer for it.
-> > 
-> > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> 
-> Acked-by: Mike Snitzer <snitzer@redhat.com>
-> 
-> I've built on your patch to successfully implement discard support for
-> DM (this includes splitting discards that span targets; only the linear
-> and striped DM targets are supported so far).
+Signed-off-by: Malahal Naineni (malahal@us.ibm.com)
 
-I must retract my Acked-by because further testing has shown that this
-change results in OOM (on 2.6.34 with postmark benchmarking against ext4
-w/ -o discard).
-
-The patch is _very_ desirable (simplifies DM's discard support, etc) but
-there is more work needed to get it stable.  I'll continue tracking this
-OOM down.
-
-Mem-Info:
-Node 0 DMA per-cpu:
-CPU    0: hi:    0, btch:   1 usd:   0
-CPU    1: hi:    0, btch:   1 usd:   0
-Node 0 DMA32 per-cpu:
-CPU    0: hi:  186, btch:  31 usd:  91
-CPU    1: hi:  186, btch:  31 usd:  92
-active_anon:52 inactive_anon:65 isolated_anon:0
- active_file:525 inactive_file:1275 isolated_file:0
- unevictable:0 dirty:802 writeback:0 unstable:0
- free:3411 slab_reclaimable:5386 slab_unreclaimable:7672
- mapped:86 shmem:0 pagetables:576 bounce:0
-Node 0 DMA free:8040kB min:40kB low:48kB high:60kB active_anon:0kB
-inactive_anon:0kB active_file:12kB inactive_file:0kB unevictable:0kB
-isolated(anon):0kB isolated(file):0kB present:15768kB mlocked:0kB
-dirty:0kB writeback:0kB mapped:8kB shmem:0kB slab_reclaimable:28kB
-slab_unreclaimable:16kB kernel_stack:0kB pagetables:0kB unstable:0kB
-bounce:0kB writeback_tmp:0kB pages_scanned:22 all_unreclaimable? yes
-lowmem_reserve[]: 0 2003 2003 2003
-Node 0 DMA32 free:5604kB min:5704kB low:7128kB high:8556kB
-active_anon:208kB inactive_anon:260kB active_file:2088kB
-inactive_file:4976kB unevictable:0kB isolated(anon):0kB
-isolated(file):128kB present:2052068kB mlocked:0kB dirty:3208kB
-writeback:0kB mapped:336kB shmem:0kB slab_reclaimable:21516kB
-slab_unreclaimable:30672kB kernel_stack:816kB pagetables:2304kB
-unstable:0kB bounce:0kB writeback_tmp:0kB pages_scanned:608
-all_unreclaimable? no
-lowmem_reserve[]: 0 0 0 0
-Node 0 DMA: 4*4kB 3*8kB 1*16kB 2*32kB 2*64kB 3*128kB 3*256kB 3*512kB
-3*1024kB 1*2048kB 0*4096kB = 8056kB
-Node 0 DMA32: 422*4kB 0*8kB 0*16kB 3*32kB 1*64kB 1*128kB 0*256kB 1*512kB
-1*1024kB 1*2048kB 0*4096kB = 5560kB
-1914 total pagecache pages
-106 pages in swap cache
-Swap cache stats: add 499740, delete 499634, find 61395/208276
-Free swap  = 4177680kB
-Total swap = 4194300kB
-524224 pages RAM
-79718 pages reserved
-1622 pages shared
-438890 pages non-shared
-Out of memory: kill process 2672 (sshd) score 2515 or a child
-Killed process 3013 (sshd) vsz:97340kB, anon-rss:0kB, file-rss:4kB
-postmark used greatest stack depth: 2560 bytes left
-
-I identified one potential leak, on an error path, through code
-inspection but I still hit OOM even with the following patch:
-
----
- block/blk-core.c       |   24 ++++++++++++++++++++++++
- drivers/scsi/sd.c      |    9 ++++++++-
- include/linux/blkdev.h |    1 +
- 3 files changed, 33 insertions(+), 1 deletion(-)
-
-Index: linux-2.6/drivers/scsi/sd.c
-===================================================================
---- linux-2.6.orig/drivers/scsi/sd.c
-+++ linux-2.6/drivers/scsi/sd.c
-@@ -424,6 +424,7 @@ static int scsi_setup_discard_cmnd(struc
- 	sector_t sector = bio->bi_sector;
- 	unsigned int nr_sectors = bio_sectors(bio);
- 	unsigned int len;
-+	int ret;
- 	struct page *page;
+diff -r 49b7dc2c9d46 -r b4d519b4bbc6 libmultipath/alias.c
+--- a/libmultipath/alias.c	Tue Jun 15 17:23:49 2010 -0700
++++ b/libmultipath/alias.c	Tue Jun 22 19:25:24 2010 -0700
+@@ -180,34 +180,35 @@ fail:
+ }
  
- 	if (sdkp->device->sector_size == 4096) {
-@@ -464,7 +465,13 @@ static int scsi_setup_discard_cmnd(struc
+ static int
+-format_devname(char *name, int id, int len)
++format_devname(char *name, int id, int len, char *prefix)
+ {
+ 	int pos;
++	int prefix_len = strlen(prefix);
+ 
+ 	memset(name,0, len);
+-	strcpy(name,"mpath");
+-	for (pos = len - 1; pos >= 5; pos--) {
++	strcpy(name, prefix);
++	for (pos = len - 1; pos >= prefix_len; pos--) {
+ 		name[pos] = 'a' + id % 26;
+ 		if (id < 26)
+ 			break;
+ 		id /= 26;
+ 		id--;
+ 	}
+-	memmove(name + 5, name + pos, len - pos);
+-	name[5 + len - pos] = '\0';
+-	return (5 + len - pos);
++	memmove(name + prefix_len, name + pos, len - pos);
++	name[prefix_len + len - pos] = '\0';
++	return (prefix_len + len - pos);
+ }
+ 
+ static int
+-scan_devname(char *alias)
++scan_devname(char *alias, char *prefix)
+ {
+ 	char *c;
+ 	int i, n = 0;
+ 
+-	if (strncmp(alias, "mpath", 5))
++	if (!prefix || strncmp(alias, prefix, strlen(prefix)))
+ 		return -1;
+ 
+-	c = alias + 5;
++	c = alias + strlen(prefix);
+ 	while (*c != '\0' && *c != ' ' && *c != '\t') {
+ 		i = *c - 'a';
+ 		n = ( n * 26 ) + i;
+@@ -221,7 +222,7 @@ scan_devname(char *alias)
+ }
+ 
+ static int
+-lookup_binding(FILE *f, char *map_wwid, char **map_alias)
++lookup_binding(FILE *f, char *map_wwid, char **map_alias, char *prefix)
+ {
+ 	char buf[LINE_MAX];
+ 	unsigned int line_nr = 0;
+@@ -240,7 +241,7 @@ lookup_binding(FILE *f, char *map_wwid, 
+ 		alias = strtok(buf, " \t");
+ 		if (!alias) /* blank line */
+ 			continue;
+-		curr_id = scan_devname(alias);
++		curr_id = scan_devname(alias, prefix);
+ 		if (curr_id >= id)
+ 			id = curr_id + 1;
+ 		wwid = strtok(NULL, "");
+@@ -284,7 +285,7 @@ rlookup_binding(FILE *f, char **map_wwid
+ 		alias = strtok(buf, " \t");
+ 		if (!alias) /* blank line */
+ 			continue;
+-		curr_id = scan_devname(alias);
++		curr_id = scan_devname(alias, NULL); /* TBD: Why this call? */
+ 		if (curr_id >= id)
+ 			id = curr_id + 1;
+ 		wwid = strtok(NULL, " \t");
+@@ -309,7 +310,7 @@ rlookup_binding(FILE *f, char **map_wwid
+ }
+ 
+ static char *
+-allocate_binding(int fd, char *wwid, int id)
++allocate_binding(int fd, char *wwid, int id, char *prefix)
+ {
+ 	char buf[LINE_MAX];
+ 	off_t offset;
+@@ -321,7 +322,7 @@ allocate_binding(int fd, char *wwid, int
+ 		return NULL;
  	}
  
- 	blk_add_request_payload(rq, page, len);
--	return scsi_setup_blk_pc_cmnd(sdp, rq);
-+	ret = scsi_setup_blk_pc_cmnd(sdp, rq);
-+	if (ret != BLKPREP_OK) {
-+		blk_clear_request_payload(rq);
-+		__free_page(page);
-+	}
-+
-+	return ret;
+-	i = format_devname(buf, id, LINE_MAX);
++	i = format_devname(buf, id, LINE_MAX, prefix);
+ 	c = buf + i;
+ 	snprintf(c,LINE_MAX - i, " %s\n", wwid);
+ 	buf[LINE_MAX - 1] = '\0';
+@@ -352,7 +353,7 @@ allocate_binding(int fd, char *wwid, int
  }
  
- /**
-Index: linux-2.6/block/blk-core.c
-===================================================================
---- linux-2.6.orig/block/blk-core.c
-+++ linux-2.6/block/blk-core.c
-@@ -1139,6 +1139,30 @@ void blk_add_request_payload(struct requ
- }
- EXPORT_SYMBOL_GPL(blk_add_request_payload);
- 
-+/**
-+ * blk_add_request_payload - add a payload to a request
-+ * @rq: request to update
-+ *
-+ * This clears a request's payload.  The driver needs to take care of
-+ * freeing the payload itself.
-+ */
-+void blk_clear_request_payload(struct request *rq)
-+{
-+	struct bio *bio = rq->bio;
-+
-+	rq->__data_len = rq->resid_len = 0;
-+	rq->nr_phys_segments = 0;
-+	rq->buffer = NULL;
-+
-+	bio->bi_size = 0;
-+	bio->bi_vcnt = 0;
-+	bio->bi_phys_segments = 0;
-+
-+	bio->bi_io_vec->bv_page = NULL;
-+	bio->bi_io_vec->bv_len = 0;
-+}
-+EXPORT_SYMBOL_GPL(blk_clear_request_payload);
-+
- void init_request_from_bio(struct request *req, struct bio *bio)
+ char *
+-get_user_friendly_alias(char *wwid, char *file)
++get_user_friendly_alias(char *wwid, char *file, char *prefix)
  {
- 	req->cpu = bio->bi_comp_cpu;
-Index: linux-2.6/include/linux/blkdev.h
-===================================================================
---- linux-2.6.orig/include/linux/blkdev.h
-+++ linux-2.6/include/linux/blkdev.h
-@@ -779,6 +779,7 @@ extern void blk_insert_request(struct re
- extern void blk_requeue_request(struct request_queue *, struct request *);
- extern void blk_add_request_payload(struct request *rq, struct page *page,
- 		unsigned int len);
-+extern void blk_clear_request_payload(struct request *rq);
- extern int blk_rq_check_limits(struct request_queue *q, struct request *rq);
- extern int blk_lld_busy(struct request_queue *q);
- extern int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+ 	char *alias;
+ 	int fd, scan_fd, id;
+@@ -385,7 +386,7 @@ get_user_friendly_alias(char *wwid, char
+ 		return NULL;
+ 	}
+ 
+-	id = lookup_binding(f, wwid, &alias);
++	id = lookup_binding(f, wwid, &alias, prefix);
+ 	if (id < 0) {
+ 		fclose(f);
+ 		close(scan_fd);
+@@ -394,7 +395,7 @@ get_user_friendly_alias(char *wwid, char
+ 	}
+ 
+ 	if (!alias && can_write)
+-		alias = allocate_binding(fd, wwid, id);
++		alias = allocate_binding(fd, wwid, id, prefix);
+ 
+ 	fclose(f);
+ 	close(scan_fd);
+diff -r 49b7dc2c9d46 -r b4d519b4bbc6 libmultipath/alias.h
+--- a/libmultipath/alias.h	Tue Jun 15 17:23:49 2010 -0700
++++ b/libmultipath/alias.h	Tue Jun 22 19:25:24 2010 -0700
+@@ -8,5 +8,5 @@
+ "# alias wwid\n" \
+ "#\n"
+ 
+-char *get_user_friendly_alias(char *wwid, char *file);
++char *get_user_friendly_alias(char *wwid, char *file, char *prefix);
+ char *get_user_friendly_wwid(char *alias, char *file);
+diff -r 49b7dc2c9d46 -r b4d519b4bbc6 libmultipath/config.c
+--- a/libmultipath/config.c	Tue Jun 15 17:23:49 2010 -0700
++++ b/libmultipath/config.c	Tue Jun 22 19:25:24 2010 -0700
+@@ -158,6 +158,9 @@ free_hwe (struct hwentry * hwe)
+ 	if (hwe->prio_args)
+ 		FREE(hwe->prio_args);
+ 
++	if (hwe->alias_prefix)
++		FREE(hwe->alias_prefix);
++
+ 	if (hwe->bl_product)
+ 		FREE(hwe->bl_product);
+ 
+@@ -282,6 +285,7 @@ merge_hwe (struct hwentry * hwe1, struct
+ 	merge_str(checker_name);
+ 	merge_str(prio_name);
+ 	merge_str(prio_args);
++	merge_str(alias_prefix);
+ 	merge_str(bl_product);
+ 	merge_num(pgpolicy);
+ 	merge_num(pgfailback);
+@@ -333,6 +337,9 @@ store_hwe (vector hwtable, struct hwentr
+ 	if (dhwe->prio_args && !(hwe->prio_args = set_param_str(dhwe->prio_args)))
+ 		goto out;
+ 
++	if (dhwe->alias_prefix && !(hwe->alias_prefix = set_param_str(dhwe->alias_prefix)))
++		goto out;
++
+ 	hwe->pgpolicy = dhwe->pgpolicy;
+ 	hwe->pgfailback = dhwe->pgfailback;
+ 	hwe->rr_weight = dhwe->rr_weight;
+@@ -409,6 +416,9 @@ free_config (struct config * conf)
+ 	if (conf->prio_name)
+ 		FREE(conf->prio_name);
+ 
++	if (conf->alias_prefix)
++		FREE(conf->alias_prefix);
++
+ 	if (conf->prio_args)
+ 		FREE(conf->prio_args);
+ 
+diff -r 49b7dc2c9d46 -r b4d519b4bbc6 libmultipath/config.h
+--- a/libmultipath/config.h	Tue Jun 15 17:23:49 2010 -0700
++++ b/libmultipath/config.h	Tue Jun 22 19:25:24 2010 -0700
+@@ -25,6 +25,7 @@ struct hwentry {
+ 	char * checker_name;
+ 	char * prio_name;
+ 	char * prio_args;
++	char * alias_prefix;
+ 
+ 	int pgpolicy;
+ 	int pgfailback;
+@@ -99,6 +100,7 @@ struct config {
+ 	char * prio_name;
+ 	char * prio_args;
+ 	char * checker_name;
++	char * alias_prefix;
+ 
+ 	vector keywords;
+ 	vector mptable;
+diff -r 49b7dc2c9d46 -r b4d519b4bbc6 libmultipath/defaults.h
+--- a/libmultipath/defaults.h	Tue Jun 15 17:23:49 2010 -0700
++++ b/libmultipath/defaults.h	Tue Jun 22 19:25:24 2010 -0700
+@@ -2,6 +2,7 @@
+ #define DEFAULT_UDEVDIR		"/dev"
+ #define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
+ #define DEFAULT_SELECTOR	"round-robin 0"
++#define DEFAULT_ALIAS_PREFIX	"mpath"
+ #define DEFAULT_FEATURES	"0"
+ #define DEFAULT_HWHANDLER	"0"
+ #define DEFAULT_MINIO		1000
+diff -r 49b7dc2c9d46 -r b4d519b4bbc6 libmultipath/dict.c
+--- a/libmultipath/dict.c	Tue Jun 15 17:23:49 2010 -0700
++++ b/libmultipath/dict.c	Tue Jun 22 19:25:24 2010 -0700
+@@ -148,6 +148,17 @@ def_prio_handler(vector strvec)
+ }
+ 
+ static int
++def_alias_prefix_handler(vector strvec)
++{
++	conf->alias_prefix = set_value(strvec);
++
++	if (!conf->alias_prefix)
++		return 1;
++
++	return 0;
++}
++
++static int
+ def_prio_args_handler(vector strvec)
+ {
+ 	conf->prio_args = set_value(strvec);
+@@ -831,6 +842,22 @@ hw_prio_handler(vector strvec)
+ }
+ 
+ static int
++hw_alias_prefix_handler(vector strvec)
++{
++	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
++
++	if (!hwe)
++		return 1;
++
++	hwe->alias_prefix = set_value(strvec);
++
++	if (!hwe->alias_prefix)
++		return 1;
++
++	return 0;
++}
++
++static int
+ hw_prio_args_handler(vector strvec)
+ {
+ 	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
+@@ -1580,6 +1607,19 @@ snprint_hw_prio (char * buff, int len, v
+ }
+ 
+ static int
++snprint_hw_alias_prefix (char * buff, int len, void * data)
++{
++	struct hwentry * hwe = (struct hwentry *)data;
++
++	if (!hwe->alias_prefix || (strlen(hwe->alias_prefix) == 0))
++		return 0;
++	if (conf->alias_prefix && !strcmp(hwe->alias_prefix, conf->alias_prefix))
++		return 0;
++
++	return snprintf(buff, len, "%s", hwe->alias_prefix);
++}
++
++static int
+ snprint_hw_prio_args (char * buff, int len, void * data)
+ {
+ 	struct hwentry * hwe = (struct hwentry *)data;
+@@ -2076,6 +2116,16 @@ snprint_def_user_friendly_names (char * 
+ }
+ 
+ static int
++snprint_def_alias_prefix (char * buff, int len, void * data)
++{
++	if (!conf->alias_prefix)
++		return 0;
++	if (!strcmp(conf->alias_prefix, DEFAULT_ALIAS_PREFIX))
++		return 0;
++	return snprintf(buff, len, conf->alias_prefix);
++}
++
++static int
+ snprint_ble_simple (char * buff, int len, void * data)
+ {
+ 	struct blentry * ble = (struct blentry *)data;
+@@ -2117,6 +2167,7 @@ init_keywords(void)
+ 	install_keyword("features", &def_features_handler, &snprint_def_features);
+ 	install_keyword("path_checker", &def_path_checker_handler, &snprint_def_path_checker);
+ 	install_keyword("checker", &def_path_checker_handler, &snprint_def_path_checker);
++	install_keyword("alias_prefix", &def_alias_prefix_handler, &snprint_def_alias_prefix);
+ 	install_keyword("failback", &default_failback_handler, &snprint_def_failback);
+ 	install_keyword("rr_min_io", &def_minio_handler, &snprint_def_rr_min_io);
+ 	install_keyword("max_fds", &max_fds_handler, &snprint_max_fds);
+@@ -2176,6 +2227,7 @@ init_keywords(void)
+ 	install_keyword("path_selector", &hw_selector_handler, &snprint_hw_selector);
+ 	install_keyword("path_checker", &hw_path_checker_handler, &snprint_hw_path_checker);
+ 	install_keyword("checker", &hw_path_checker_handler, &snprint_hw_path_checker);
++	install_keyword("alias_prefix", &hw_alias_prefix_handler, &snprint_hw_alias_prefix);
+ 	install_keyword("features", &hw_features_handler, &snprint_hw_features);
+ 	install_keyword("hardware_handler", &hw_handler_handler, &snprint_hw_hardware_handler);
+ 	install_keyword("prio", &hw_prio_handler, &snprint_hw_prio);
+diff -r 49b7dc2c9d46 -r b4d519b4bbc6 libmultipath/propsel.c
+--- a/libmultipath/propsel.c	Tue Jun 15 17:23:49 2010 -0700
++++ b/libmultipath/propsel.c	Tue Jun 22 19:25:24 2010 -0700
+@@ -215,6 +215,26 @@ select_selector (struct multipath * mp)
+ 	return 0;
+ }
+ 
++static void
++select_alias_prefix (struct multipath * mp)
++{
++	if (mp->hwe && mp->hwe->alias_prefix) {
++		mp->alias_prefix = mp->hwe->alias_prefix;
++		condlog(3, "%s: alias_prefix = %s (controller setting)",
++			mp->wwid, mp->alias_prefix);
++		return;
++	}
++	if (conf->alias_prefix) {
++		mp->alias_prefix = conf->alias_prefix;
++		condlog(3, "%s: alias_prefix = %s (config file default)",
++			mp->wwid, mp->alias_prefix);
++		return;
++	}
++	mp->alias_prefix = set_default(DEFAULT_ALIAS_PREFIX);
++	condlog(3, "%s: alias_prefix = %s (internal default)",
++		mp->wwid, mp->alias_prefix);
++}
++
+ extern int
+ select_alias (struct multipath * mp)
+ {
+@@ -222,9 +242,11 @@ select_alias (struct multipath * mp)
+ 		mp->alias = mp->mpe->alias;
+ 	else {
+ 		mp->alias = NULL;
+-		if (conf->user_friendly_names)
++		if (conf->user_friendly_names) {
++			select_alias_prefix(mp);
+ 			mp->alias = get_user_friendly_alias(mp->wwid,
+-					conf->bindings_file);
++					conf->bindings_file, mp->alias_prefix);
++		}
+ 		if (mp->alias == NULL){
+ 			char *alias;
+ 			if ((alias = MALLOC(WWID_SIZE)) != NULL){
+diff -r 49b7dc2c9d46 -r b4d519b4bbc6 libmultipath/structs.h
+--- a/libmultipath/structs.h	Tue Jun 15 17:23:49 2010 -0700
++++ b/libmultipath/structs.h	Tue Jun 22 19:25:24 2010 -0700
+@@ -186,6 +186,7 @@ struct multipath {
+ 
+ 	/* configlet pointers */
+ 	char * alias;
++	char * alias_prefix;
+ 	char * selector;
+ 	char * features;
+ 	char * hwhandler;
