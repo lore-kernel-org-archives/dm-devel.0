@@ -1,139 +1,280 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1/2] block: fix leaks associated with discard request payload
-Date: Sat, 26 Jun 2010 15:56:50 -0400
-Message-ID: <1277582211-10725-1-git-send-email-snitzer@redhat.com>
-References: <20100622180029.GA15950@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20100622180029.GA15950@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org
+Subject: [PATCH 1/2 v2] dm: discard support for the linear target
+Date: Sat, 26 Jun 2010 16:31:24 -0400
+Message-ID: <1277584285-13774-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: axboe@kernel.dk, Christoph Hellwig <hch@lst.de>, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
-Fix leaks introduced via "block: don't allocate a payload for discard
-request" commit a1d949f5f44.
+Allow discards to be passed through to a single device linear mapping.
+Introduce DM_TARGET_SUPPORTS_DISCARDS target features flag that each
+target must set once discard support is added.
 
-sd_done() is not called for REQ_TYPE_BLOCK_PC commands so cleanup
-discard request's payload directly in scsi_finish_command().
-
-Also cleanup page allocated for discard payload in
-scsi_setup_discard_cmnd's scsi_setup_blk_pc_cmnd error path.
+Verify table's underlying devices support discards prior to setting the
+associated DM device as capable of discards (via QUEUE_FLAG_DISCARD).
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- block/blk-core.c       |   23 +++++++++++++++++++++++
- drivers/scsi/scsi.c    |    8 ++++++++
- drivers/scsi/sd.c      |   18 ++++++++----------
- include/linux/blkdev.h |    1 +
- 4 files changed, 40 insertions(+), 10 deletions(-)
+ drivers/md/dm-linear.c        |    1 +
+ drivers/md/dm-table.c         |   51 ++++++++++++++++++++++++++++++++++
+ drivers/md/dm.c               |   60 ++++++++++++++++++++++++++++++++--------
+ drivers/md/dm.h               |    1 +
+ include/linux/device-mapper.h |    1 +
+ 5 files changed, 102 insertions(+), 12 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 98b4cee..07925aa 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1167,6 +1167,29 @@ void blk_add_request_payload(struct request *rq, struct page *page,
- }
- EXPORT_SYMBOL_GPL(blk_add_request_payload);
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 9200dbf..7071f17 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -152,6 +152,7 @@ static struct target_type linear_target = {
+ 	.ioctl  = linear_ioctl,
+ 	.merge  = linear_merge,
+ 	.iterate_devices = linear_iterate_devices,
++	.features = DM_TARGET_SUPPORTS_DISCARDS,
+ };
  
-+/**
-+ * blk_clear_request_payload - clear a request's payload
-+ * @rq: request to update
-+ *
-+ * The driver needs to take care of freeing the payload itself.
-+ */
-+void blk_clear_request_payload(struct request *rq)
+ int __init dm_linear_init(void)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 9924ea2..a825a7b 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -54,6 +54,8 @@ struct dm_table {
+ 	sector_t *highs;
+ 	struct dm_target *targets;
+ 
++	unsigned discards_supported:1;
++
+ 	/*
+ 	 * Indicates the rw permissions for the new logical
+ 	 * device.  This should be a combination of FMODE_READ
+@@ -203,6 +205,7 @@ int dm_table_create(struct dm_table **result, fmode_t mode,
+ 
+ 	INIT_LIST_HEAD(&t->devices);
+ 	atomic_set(&t->holders, 0);
++	t->discards_supported = 1;
+ 
+ 	if (!num_targets)
+ 		num_targets = KEYS_PER_NODE;
+@@ -770,6 +773,9 @@ int dm_table_add_target(struct dm_table *t, const char *type,
+ 
+ 	t->highs[t->num_targets++] = tgt->begin + tgt->len - 1;
+ 
++	if (!(tgt->type->features & DM_TARGET_SUPPORTS_DISCARDS))
++		t->discards_supported = 0;
++
+ 	return 0;
+ 
+  bad:
+@@ -905,6 +911,12 @@ int dm_table_complete(struct dm_table *t)
+ 	int r = 0;
+ 	unsigned int leaf_nodes;
+ 
++	/*
++	 * We only support discards if there is exactly one underlying device.
++	 */
++	if (!list_is_singular(&t->devices))
++		t->discards_supported = 0;
++
+ 	/* how many indexes will the btree have ? */
+ 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
+ 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
+@@ -1086,6 +1098,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	else
+ 		queue_flag_set_unlocked(QUEUE_FLAG_CLUSTER, q);
+ 
++	if (dm_table_supports_discards(t))
++		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
++
+ 	dm_table_set_integrity(t);
+ 
+ 	/*
+@@ -1232,6 +1247,42 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
+ 	return t->md;
+ }
+ 
++static int device_discard_incapable(struct dm_target *ti, struct dm_dev *dev,
++				    sector_t start, sector_t len, void *data)
 +{
-+	struct bio *bio = rq->bio;
++	struct block_device *bdev = dev->bdev;
++	struct request_queue *q = bdev_get_queue(bdev);
 +
-+	rq->__data_len = rq->resid_len = 0;
-+	rq->nr_phys_segments = 0;
-+	rq->buffer = NULL;
-+
-+	bio->bi_size = 0;
-+	bio->bi_vcnt = 0;
-+	bio->bi_phys_segments = 0;
-+
-+	bio->bi_io_vec->bv_page = NULL;
-+	bio->bi_io_vec->bv_len = 0;
++	WARN_ON(!q);
++	return (!q || !blk_queue_discard(q));
 +}
-+EXPORT_SYMBOL_GPL(blk_clear_request_payload);
 +
- void init_request_from_bio(struct request *req, struct bio *bio)
- {
- 	req->cpu = bio->bi_comp_cpu;
-diff --git a/drivers/scsi/scsi.c b/drivers/scsi/scsi.c
-index ad0ed21..69c7ea4 100644
---- a/drivers/scsi/scsi.c
-+++ b/drivers/scsi/scsi.c
-@@ -851,6 +851,14 @@ void scsi_finish_command(struct scsi_cmnd *cmd)
- 		 */
- 		if (good_bytes == old_good_bytes)
- 			good_bytes -= scsi_get_resid(cmd);
-+	} else if (cmd->request->cmd_flags & REQ_DISCARD) {
-+		/*
-+		 * If this is a discard request that originated from the kernel
-+		 * we need to free our payload here.  Note that we need to check
-+		 * the request flag as the normal payload rules apply for
-+		 * pass-through UNMAP / WRITE SAME requests.
-+		 */
-+		__free_page(bio_page(cmd->request->bio));
- 	}
- 	scsi_io_completion(cmd, good_bytes);
- }
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index 86da819..9b81dda 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -425,6 +425,7 @@ static int scsi_setup_discard_cmnd(struct scsi_device *sdp, struct request *rq)
- 	sector_t sector = bio->bi_sector;
- 	unsigned int nr_sectors = bio_sectors(bio);
- 	unsigned int len;
-+	int ret;
- 	struct page *page;
- 
- 	if (sdkp->device->sector_size == 4096) {
-@@ -465,7 +466,13 @@ static int scsi_setup_discard_cmnd(struct scsi_device *sdp, struct request *rq)
- 	}
- 
- 	blk_add_request_payload(rq, page, len);
--	return scsi_setup_blk_pc_cmnd(sdp, rq);
-+	ret = scsi_setup_blk_pc_cmnd(sdp, rq);
-+	if (ret != BLKPREP_OK) {
-+		blk_clear_request_payload(rq);
-+		__free_page(page);
++bool dm_table_supports_discards(struct dm_table *t)
++{
++	struct dm_target *uninitialized_var(ti);
++	unsigned i = 0;
++
++	if (!t->discards_supported)
++		return 0;
++
++	/*
++	 * table's targets support discards but do
++	 * the underlying devices?
++	 */
++	while (i < dm_table_get_num_targets(t)) {
++		ti = dm_table_get_target(t, i++);
++
++		if (!ti->type->iterate_devices)
++			return 0; /* assume DISCARD incapable */
++
++		if (ti->type->iterate_devices(ti, device_discard_incapable,
++					      NULL))
++			return 0;
 +	}
 +
-+	return ret;
++	return 1;
++}
++
+ EXPORT_SYMBOL(dm_vcalloc);
+ EXPORT_SYMBOL(dm_get_device);
+ EXPORT_SYMBOL(dm_put_device);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 0f53d1c..232332a 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1198,6 +1198,48 @@ static int __clone_and_map_empty_barrier(struct clone_info *ci)
+ 	return 0;
  }
  
- /**
-@@ -1170,15 +1177,6 @@ static int sd_done(struct scsi_cmnd *SCpnt)
- 	int sense_valid = 0;
- 	int sense_deferred = 0;
++/*
++ * Perform all io with a single clone.
++ */
++static void __clone_and_map_simple(struct clone_info *ci, struct dm_target *ti)
++{
++	struct bio *clone, *bio = ci->bio;
++	struct dm_target_io *tio;
++
++	tio = alloc_tio(ci, ti);
++	clone = clone_bio(bio, ci->sector, ci->idx,
++			  bio->bi_vcnt - ci->idx, ci->sector_count,
++			  ci->md->bs);
++	__map_bio(ti, clone, tio);
++	ci->sector_count = 0;
++}
++
++static int __clone_and_map_discard(struct clone_info *ci)
++{
++	struct dm_target *ti;
++	sector_t max;
++
++	if (!dm_table_supports_discards(ci->map))
++		return -EOPNOTSUPP;
++
++	ti = dm_table_find_target(ci->map, ci->sector);
++	if (!dm_target_is_valid(ti))
++		return -EIO;
++
++	max = max_io_len(ci->md, ci->sector, ti);
++
++	if (ci->sector_count <= max)
++		__clone_and_map_simple(ci, ti);
++	else {
++		/*
++		 * FIXME: Handle a discard that spans two or more targets.
++		 */
++		return -EOPNOTSUPP;
++	}
++
++	return 0;
++}
++
+ static int __clone_and_map(struct clone_info *ci)
+ {
+ 	struct bio *clone, *bio = ci->bio;
+@@ -1208,27 +1250,21 @@ static int __clone_and_map(struct clone_info *ci)
+ 	if (unlikely(bio_empty_barrier(bio)))
+ 		return __clone_and_map_empty_barrier(ci);
+ 
++	if (unlikely(bio_rw_flagged(bio, BIO_RW_DISCARD)))
++		return __clone_and_map_discard(ci);
++
+ 	ti = dm_table_find_target(ci->map, ci->sector);
+ 	if (!dm_target_is_valid(ti))
+ 		return -EIO;
+ 
+ 	max = max_io_len(ci->md, ci->sector, ti);
  
 -	/*
--	 * If this is a discard request that originated from the kernel
--	 * we need to free our payload here.  Note that we need to check
--	 * the request flag as the normal payload rules apply for
--	 * pass-through UNMAP / WRITE SAME requests.
+-	 * Allocate a target io object.
 -	 */
--	if (SCpnt->request->cmd_flags & REQ_DISCARD)
--		__free_page(bio_page(SCpnt->request->bio));
+-	tio = alloc_tio(ci, ti);
 -
- 	if (result) {
- 		sense_valid = scsi_command_normalize_sense(SCpnt, &sshdr);
- 		if (sense_valid)
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 204fbe2..fdeef47 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -707,6 +707,7 @@ extern void blk_insert_request(struct request_queue *, struct request *, int, vo
- extern void blk_requeue_request(struct request_queue *, struct request *);
- extern void blk_add_request_payload(struct request *rq, struct page *page,
- 		unsigned int len);
-+extern void blk_clear_request_payload(struct request *rq);
- extern int blk_rq_check_limits(struct request_queue *q, struct request *rq);
- extern int blk_lld_busy(struct request_queue *q);
- extern int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+ 	if (ci->sector_count <= max) {
+ 		/*
+ 		 * Optimise for the simple case where we can do all of
+ 		 * the remaining io with a single clone.
+ 		 */
+-		clone = clone_bio(bio, ci->sector, ci->idx,
+-				  bio->bi_vcnt - ci->idx, ci->sector_count,
+-				  ci->md->bs);
+-		__map_bio(ti, clone, tio);
+-		ci->sector_count = 0;
++		__clone_and_map_simple(ci, ti);
+ 
+ 	} else if (to_sector(bio->bi_io_vec[ci->idx].bv_len) <= max) {
+ 		/*
+@@ -1249,6 +1285,7 @@ static int __clone_and_map(struct clone_info *ci)
+ 			len += bv_len;
+ 		}
+ 
++		tio = alloc_tio(ci, ti);
+ 		clone = clone_bio(bio, ci->sector, ci->idx, i - ci->idx, len,
+ 				  ci->md->bs);
+ 		__map_bio(ti, clone, tio);
+@@ -1272,12 +1309,11 @@ static int __clone_and_map(struct clone_info *ci)
+ 					return -EIO;
+ 
+ 				max = max_io_len(ci->md, ci->sector, ti);
+-
+-				tio = alloc_tio(ci, ti);
+ 			}
+ 
+ 			len = min(remaining, max);
+ 
++			tio = alloc_tio(ci, ti);
+ 			clone = split_bvec(bio, ci->sector, ci->idx,
+ 					   bv->bv_offset + offset, len,
+ 					   ci->md->bs);
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index 664a5ae..032ce2f 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -62,6 +62,7 @@ int dm_table_any_busy_target(struct dm_table *t);
+ int dm_table_set_type(struct dm_table *t);
+ unsigned dm_table_get_type(struct dm_table *t);
+ bool dm_table_request_based(struct dm_table *t);
++bool dm_table_supports_discards(struct dm_table *t);
+ int dm_table_alloc_md_mempools(struct dm_table *t);
+ void dm_table_free_md_mempools(struct dm_table *t);
+ struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 1381cd9..e44cbcb 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -130,6 +130,7 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d);
+ /*
+  * Target features
+  */
++#define DM_TARGET_SUPPORTS_DISCARDS 0x00000001
+ 
+ struct target_type {
+ 	uint64_t features;
 -- 
 1.6.5.rc2
