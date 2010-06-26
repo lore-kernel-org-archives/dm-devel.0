@@ -1,57 +1,119 @@
-From: Eric Sandeen <sandeen@sandeen.net>
-Subject: [PATCH] ext4: fix freeze deadlock under IO
-Date: Wed, 23 Jun 2010 14:37:27 -0500
-Message-ID: <4C226277.4060505@sandeen.net>
-References: <4C1A2839.5010407@cfl.rr.com> <20100617142731.GA10071@redhat.com> <4C1A4A74.9070105@cfl.rr.com> <20100617162747.GA21336@redhat.com> <4C1ACBF1.3050603@cfl.rr.com> <4C1BC125.4090902@sandeen.net> <4C1BC6D0.2030203@sandeen.net> <4C1BC7AD.1060900@sandeen.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <4C1BC7AD.1060900@sandeen.net>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Phillip Susi <psusi@cfl.rr.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, Eric Sandeen <sandeen@redhat.com>, ext4 development <linux-ext4@vger.kernel.org>, Dave Chinner <dchinner@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 2/2] block: defer the use of inline biovecs for discard requests
+Date: Sat, 26 Jun 2010 15:56:51 -0400
+Message-ID: <1277582211-10725-2-git-send-email-snitzer@redhat.com>
+References: <20100622180029.GA15950@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20100622180029.GA15950@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-Commit 6b0310fbf087ad6 caused a regression resulting in deadlocks
-when freezing a filesystem which had active IO; the vfs_check_frozen
-level (SB_FREEZE_WRITE) did not let the freeze-related IO syncing
-through.  Duh.
+Don't alloc discard bio with a biovec in blkdev_issue_discard.  Doing so
+means bio_has_data() will not be true until the SCSI layer adds the
+payload to the discard request via blk_add_request_payload.
 
-Changing the test to FREEZE_TRANS should let the normal freeze
-syncing get through the fs, but still block any transactions from
-starting once the fs is completely frozen.
+bio_{enable,disable}_inline_vecs are not expected to be widely used so
+they were exported using EXPORT_SYMBOL_GPL.
 
-I tested this by running fsstress in the background while periodically
-snapshotting the fs and running fsck on the result.  I ran into
-occasional deadlocks, but different ones.  I think this is a
-fine fix for the problem at hand, and the other deadlocky things
-will need more investigation.
+This patch avoids the need for the following VM accounting fix for
+discards: http://lkml.org/lkml/2010/6/23/361
+NOTE: Jens, you said you applied Tao Ma's fix but I cannot see it in
+your linux-2.6-block's for-next or for-2.6.36... as such I didn't revert
+it in this patch.
 
-Reported-by: Phillip Susi <psusi@cfl.rr.com>
-Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
+ block/blk-core.c    |    2 ++
+ block/blk-lib.c     |    2 +-
+ fs/bio.c            |   19 +++++++++++++++++--
+ include/linux/bio.h |    3 +++
+ 4 files changed, 23 insertions(+), 3 deletions(-)
 
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 4e8983a..a45ced9 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -241,7 +241,7 @@ handle_t *ext4_journal_start_sb(struct super_block *sb, int nblocks)
- 	if (sb->s_flags & MS_RDONLY)
- 		return ERR_PTR(-EROFS);
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 07925aa..457fc29 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1153,6 +1153,7 @@ void blk_add_request_payload(struct request *rq, struct page *page,
+ {
+ 	struct bio *bio = rq->bio;
  
--	vfs_check_frozen(sb, SB_FREEZE_WRITE);
-+	vfs_check_frozen(sb, SB_FREEZE_TRANS);
- 	/* Special case here: if the journal has aborted behind our
- 	 * backs (eg. EIO in the commit thread), then we still need to
- 	 * take the FS itself readonly cleanly. */
-@@ -3491,7 +3491,7 @@ int ext4_force_commit(struct super_block *sb)
++	bio_enable_inline_vecs(bio);
+ 	bio->bi_io_vec->bv_page = page;
+ 	bio->bi_io_vec->bv_offset = 0;
+ 	bio->bi_io_vec->bv_len = len;
+@@ -1187,6 +1188,7 @@ void blk_clear_request_payload(struct request *rq)
  
- 	journal = EXT4_SB(sb)->s_journal;
- 	if (journal) {
--		vfs_check_frozen(sb, SB_FREEZE_WRITE);
-+		vfs_check_frozen(sb, SB_FREEZE_TRANS);
- 		ret = ext4_journal_force_commit(journal);
- 	}
+ 	bio->bi_io_vec->bv_page = NULL;
+ 	bio->bi_io_vec->bv_len = 0;
++	bio_disable_inline_vecs(bio);
+ }
+ EXPORT_SYMBOL_GPL(blk_clear_request_payload);
  
-
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index e16185b..345a4b6 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -54,7 +54,7 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 		unsigned int max_discard_sectors =
+ 			min(q->limits.max_discard_sectors, UINT_MAX >> 9);
+ 
+-		bio = bio_alloc(gfp_mask, 1);
++		bio = bio_alloc(gfp_mask, 0);
+ 		if (!bio) {
+ 			ret = -ENOMEM;
+ 			break;
+diff --git a/fs/bio.c b/fs/bio.c
+index 8abb2df..e47d0a6 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -260,6 +260,21 @@ void bio_init(struct bio *bio)
+ }
+ EXPORT_SYMBOL(bio_init);
+ 
++void bio_enable_inline_vecs(struct bio *bio)
++{
++	bio->bi_flags |= BIO_POOL_NONE << BIO_POOL_OFFSET;
++	bio->bi_max_vecs = BIO_INLINE_VECS;
++	bio->bi_io_vec = bio->bi_inline_vecs;;
++}
++EXPORT_SYMBOL_GPL(bio_enable_inline_vecs);
++
++void bio_disable_inline_vecs(struct bio *bio)
++{
++	bio->bi_max_vecs = 0;
++	bio->bi_io_vec = NULL;
++}
++EXPORT_SYMBOL_GPL(bio_disable_inline_vecs);
++
+ /**
+  * bio_alloc_bioset - allocate a bio for I/O
+  * @gfp_mask:   the GFP_ mask given to the slab allocator
+@@ -293,8 +308,8 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, int nr_iovecs, struct bio_set *bs)
+ 		goto out_set;
+ 
+ 	if (nr_iovecs <= BIO_INLINE_VECS) {
+-		bvl = bio->bi_inline_vecs;
+-		nr_iovecs = BIO_INLINE_VECS;
++		bio_enable_inline_vecs(bio);
++		return bio;
+ 	} else {
+ 		bvl = bvec_alloc_bs(gfp_mask, nr_iovecs, &idx, bs);
+ 		if (unlikely(!bvl))
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 4d379c8..3135631 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -403,6 +403,9 @@ extern struct bio *bio_clone(struct bio *, gfp_t);
+ 
+ extern void bio_init(struct bio *);
+ 
++extern void bio_enable_inline_vecs(struct bio *);
++extern void bio_disable_inline_vecs(struct bio *);
++
+ extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
+ extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
+ 			   unsigned int, unsigned int);
+-- 
+1.6.5.rc2
