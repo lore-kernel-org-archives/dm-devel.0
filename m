@@ -1,136 +1,109 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [RFC PATCH 2/2] dm: add support for splitting discard
-	requests
-Date: Sat, 26 Jun 2010 16:31:25 -0400
-Message-ID: <1277584285-13774-2-git-send-email-snitzer@redhat.com>
-References: <1277584285-13774-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request
+ payload
+Date: Sun, 27 Jun 2010 17:49:29 +0900
+Message-ID: <20100627174721D.fujita.tomonori@lab.ntt.co.jp>
+References: <20100622180029.GA15950@redhat.com>
+	<1277582211-10725-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1277584285-13774-1-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: axboe@kernel.dk, Christoph Hellwig <hch@lst.de>, martin.petersen@oracle.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1277582211-10725-1-git-send-email-snitzer@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: snitzer@redhat.com
+Cc: hch@lst.de, axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-Enable the striped target to support discard requests by splitting a
-single discard into N discards on a stripe chunk size boundary.
+On Sat, 26 Jun 2010 15:56:50 -0400
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Follow on core block layer work to merge discards would be helpful.
+> Fix leaks introduced via "block: don't allocate a payload for discard
+> request" commit a1d949f5f44.
+> 
+> sd_done() is not called for REQ_TYPE_BLOCK_PC commands so cleanup
+> discard request's payload directly in scsi_finish_command().
 
-This work relies on DM's clone_bio() always having BIO_RW_BARRIER set
-for discard requests.  Without BIO_RW_BARRIER the block layer will spew
-"blk: request botched" warnings for discards that were split by DM.
-- this clearly needs further investigation!
+Instead of adding another discard hack to scsi_finish_command(), how
+about converting discard to REQ_TYPE_FS request? discard is FS request
+from the perspective of the block layer. It also fixes a problem that
+discard isn't retried in the case of UNIT ATTENTION.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+I think that we can get more cleaner code if we handle discard as
+normal (fs) request in the block layer (and scsi-ml). We need more
+changes but this patch is the first step.
+
+This patch depends on the patchset to convert flush request to
+REQ_TYPE_FS:
+
+http://marc.info/?l=linux-kernel&m=127730591527424&w=2
+
+The git tree is also available:
+
+git://git.kernel.org/pub/scm/linux/kernel/git/tomo/linux-2.6-misc.git flush
+
+
+> Also cleanup page allocated for discard payload in
+> scsi_setup_discard_cmnd's scsi_setup_blk_pc_cmnd error path.
+
+This patch doesn't address on this (since it's a different problem). I
+think that scsi_setup_discard_cmnd() sees if it already allocates a
+page before allocating a page. That's similar to how other prep
+functions work, I think.
+
+=
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: [PATCH] convert discard request to REQ_TYPE_FS instead of BLOCK_PC
+
+Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 ---
- drivers/md/dm-stripe.c |    1 +
- drivers/md/dm-table.c  |    6 ------
- drivers/md/dm.c        |   37 +++++++++++++++++++++++++++++++++----
- 3 files changed, 34 insertions(+), 10 deletions(-)
+ block/blk-lib.c   |    4 ++++
+ drivers/scsi/sd.c |   11 +----------
+ 2 files changed, 5 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index e610725..052f254 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -349,6 +349,7 @@ static struct target_type stripe_target = {
- 	.status = stripe_status,
- 	.iterate_devices = stripe_iterate_devices,
- 	.io_hints = stripe_io_hints,
-+	.features = DM_TARGET_SUPPORTS_DISCARDS,
- };
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index e16185b..9e15c46 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -20,6 +20,10 @@ static void blkdev_discard_end_io(struct bio *bio, int err)
+ 	if (bio->bi_private)
+ 		complete(bio->bi_private);
  
- int __init dm_stripe_init(void)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index a825a7b..b38fdb3 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -911,12 +911,6 @@ int dm_table_complete(struct dm_table *t)
- 	int r = 0;
- 	unsigned int leaf_nodes;
++	/* free the page that the lower layer allocated */
++	if (bio_page(bio))
++		__free_page(bio_page(bio));
++
+ 	bio_put(bio);
+ }
  
--	/*
--	 * We only support discards if there is exactly one underlying device.
--	 */
--	if (!list_is_singular(&t->devices))
--		t->discards_supported = 0;
--
- 	/* how many indexes will the btree have ? */
- 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
- 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 232332a..a08b1d3 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1137,7 +1137,12 @@ static struct bio *clone_bio(struct bio *bio, sector_t sector,
- 
- 	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
- 	__bio_clone(clone, bio);
--	clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
-+	if (!bio_rw_flagged(bio, BIO_RW_DISCARD))
-+		clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
-+	else if (!bio_rw_flagged(bio, BIO_RW_BARRIER)) {
-+		/* discard w/o barrier results in "blk: request botched" */
-+		clone->bi_rw |= (1 << BIO_RW_BARRIER);
-+	}
- 	clone->bi_destructor = dm_bio_destructor;
- 	clone->bi_sector = sector;
- 	clone->bi_idx = idx;
-@@ -1217,7 +1222,7 @@ static void __clone_and_map_simple(struct clone_info *ci, struct dm_target *ti)
- static int __clone_and_map_discard(struct clone_info *ci)
- {
- 	struct dm_target *ti;
--	sector_t max;
-+	sector_t len = 0, max;
- 
- 	if (!dm_table_supports_discards(ci->map))
- 		return -EOPNOTSUPP;
-@@ -1232,9 +1237,33 @@ static int __clone_and_map_discard(struct clone_info *ci)
- 		__clone_and_map_simple(ci, ti);
- 	else {
- 		/*
--		 * FIXME: Handle a discard that spans two or more targets.
-+		 * Handle a discard that spans two or more targets.
- 		 */
--		return -EOPNOTSUPP;
-+		struct bio *clone;
-+		struct dm_target_io *tio;
-+		sector_t remaining = ci->sector_count;
-+		unsigned int offset = 0;
-+
-+		do {
-+			if (offset) {
-+				ti = dm_table_find_target(ci->map, ci->sector);
-+				if (!dm_target_is_valid(ti))
-+					return -EIO;
-+
-+				max = max_io_len(ci->md, ci->sector, ti);
-+			}
-+
-+			len = min(remaining, max);
-+
-+			tio = alloc_tio(ci, ti);
-+			clone = clone_bio(ci->bio, ci->sector, 0,
-+					  0, len, ci->md->bs);
-+			__map_bio(ti, clone, tio);
-+
-+			ci->sector += len;
-+			ci->sector_count -= len;
-+			offset += to_bytes(len);
-+		} while (remaining -= len);
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index d447726..1b182de 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -432,7 +432,7 @@ static int scsi_setup_discard_cmnd(struct scsi_device *sdp, struct request *rq)
+ 		nr_sectors >>= 3;
  	}
  
- 	return 0;
+-	rq->cmd_type = REQ_TYPE_BLOCK_PC;
++	rq->cmd_type = REQ_TYPE_FS;
+ 	rq->timeout = SD_TIMEOUT;
+ 
+ 	memset(rq->cmd, 0, rq->cmd_len);
+@@ -1177,15 +1177,6 @@ static int sd_done(struct scsi_cmnd *SCpnt)
+ 	int sense_valid = 0;
+ 	int sense_deferred = 0;
+ 
+-	/*
+-	 * If this is a discard request that originated from the kernel
+-	 * we need to free our payload here.  Note that we need to check
+-	 * the request flag as the normal payload rules apply for
+-	 * pass-through UNMAP / WRITE SAME requests.
+-	 */
+-	if (SCpnt->request->cmd_flags & REQ_DISCARD)
+-		__free_page(bio_page(SCpnt->request->bio));
+-
+ 	if (result) {
+ 		sense_valid = scsi_command_normalize_sense(SCpnt, &sshdr);
+ 		if (sense_valid)
 -- 
-1.6.5.rc2
+1.6.5
