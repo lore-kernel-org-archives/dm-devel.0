@@ -1,103 +1,64 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: multipathd daemon and some bad behavior
-Date: Sun, 27 Jun 2010 11:17:51 +0200
-Message-ID: <1277630271.20849.787.camel@localhost>
-References: <AANLkTikn_lqBPASgffO0fJUmvdJubbuOLQ9ZCzT_0wBQ@mail.gmail.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request payload
+Date: Sun, 27 Jun 2010 11:26:52 +0200
+Message-ID: <20100627092652.GA11625@lst.de>
+References: <20100622180029.GA15950@redhat.com> <1277582211-10725-1-git-send-email-snitzer@redhat.com> <20100627174721D.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AANLkTikn_lqBPASgffO0fJUmvdJubbuOLQ9ZCzT_0wBQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: jozef janec <jozefjanec@gmail.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100627174721D.fujita.tomonori@lab.ntt.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: snitzer@redhat.com, hch@lst.de, axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-On sam., 2010-06-26 at 12:13 +0200, jozef janec wrote:
-> Hello All,
+On Sun, Jun 27, 2010 at 05:49:29PM +0900, FUJITA Tomonori wrote:
+> On Sat, 26 Jun 2010 15:56:50 -0400
+> Mike Snitzer <snitzer@redhat.com> wrote:
 > 
-> I'm using device mapper multipath for long time, on SAN storage and I
-> have detected a few very critical issues. The main is:
+> > Fix leaks introduced via "block: don't allocate a payload for discard
+> > request" commit a1d949f5f44.
+> > 
+> > sd_done() is not called for REQ_TYPE_BLOCK_PC commands so cleanup
+> > discard request's payload directly in scsi_finish_command().
 > 
-> example:
-> 
-> configure 2 multipath devices (and have friednly names enabled)
-> 
-> on those two devices create vg and lvol and ctivate it. Than edit the
-> bindigs file and swap the ids for mpath devices.
-> 
-> mpatha id1
-> mpathb id2
-> 
-> to
-> 
-> mpatha id2
-> mpathb id1 
-> 
-> and restart multipathd
-> 
-> when you check output from multipath -ll you will see that multipath
-> swapped the devices behinde the used mpath targets. The result is that
-> the io operation are directed to wrong lun and the fs is corupted. We
-> have found workeround and to define aliases for the luns in
-> multipath.conf. Than the bindigs file is ignored .
-> 
-> 
-> but this is not fix the best solution is if there will be added some
-> check if the line in bindings file is correct, or if the mpath target
-> is used or not, and if it is used don\t allow change it. IS possible
-> create a patch for this?
-> 
-> This issue can be happneded for example when you remove bindings file
-> and you restart the multipath.
-> 
-> the problem is that you can add lun to the server, it will get mpatha
-> device name, than second but with scsi id lower as the first one but
-> because mpatha is already assaigned it will get mpathb. Now when you
-> remove the bindigs file and restart multipath, multipath will create
-> new bindigs file not by currect situation which is in dm-multipath but
-> by scsi ids, and it will swap the luns maps, and activate them .
-> result corupted fs.
-> 
-> I think the bext way will be that multipathd should try get the
-> information from dm-multipath modul, and if they aren't there than by
-> scsi information. This will avoind create wrong bindings file which
-> can makes troubles.
-> 
-> I already restored 3 servers because I lost oracle on alot of
-> servers. 
-> 
-The bindings file is a database, not a config file. That's why it would
-best reside in /var than /etc, but the mount ordering problems forced us
-to move it to /etc. As a database, you wouldn't ever think sane to
-mangle it freely like you do.
+> Instead of adding another discard hack to scsi_finish_command(), how
+> about converting discard to REQ_TYPE_FS request? discard is FS request
+> from the perspective of the block layer. It also fixes a problem that
+> discard isn't retried in the case of UNIT ATTENTION.
+>
+> I think that we can get more cleaner code if we handle discard as
+> normal (fs) request in the block layer (and scsi-ml). We need more
+> changes but this patch is the first step.
 
-user_friendly_names is for people who don't want to name their multipath
-devices *at all*. If you want user-defined names, you must use aliasing
-in /etc/multipath.conf. If you have a cluster setup, you must user
-aliasing to force a consistent device naming across the cluster.
+Making discard a REQ_TYPE_FS inside scsi (it already is before entering
+sd_prep_fn) means we'll need to special case it all over the I/O
+submission and completion path.  Having the payload length not matching
+the transfer length is something we don't expect for FS requests.
 
-> Please could you check if there is possible cerate some patches for
-> multipathd which will avoid this behavior?
-> 
-A documentation patch at least.
+> index e16185b..9e15c46 100644
+> --- a/block/blk-lib.c
+> +++ b/block/blk-lib.c
+> @@ -20,6 +20,10 @@ static void blkdev_discard_end_io(struct bio *bio, int err)
+>  	if (bio->bi_private)
+>  		complete(bio->bi_private);
+>  
+> +	/* free the page that the lower layer allocated */
+> +	if (bio_page(bio))
+> +		__free_page(bio_page(bio));
+> +
 
-> Thanks
-> 
-> best regards
-> 
-> Jozef
+This is exactly what this patchkit gets rid off.  Having a payload
+page that the caller tracks (previously fully, with this patch only for
+freeing) makes DM's life a lot harder.  Remember we don't actually store
+any payload in there before entering sd_prep_fn - it's just that the
+scsi commands implementing discards need some payload - either a sector
+sizes zero filled buffer for WRITE SAME, or an LBA/len encoding inside
+the payload for UNMAP.
 
--- 
-Christophe Varoqui <christophe.varoqui@opensvc.com>
-OpenSVC
+
+> -	rq->cmd_type = REQ_TYPE_BLOCK_PC;
+> +	rq->cmd_type = REQ_TYPE_FS;
+
+No need to set REQ_TYPE_FS here, it's already set up that way.
