@@ -1,125 +1,116 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/2 v2] block: defer the use of inline biovecs for discard
- requests
-Date: Sun, 27 Jun 2010 10:55:15 -0400
-Message-ID: <20100627145515.GE3970@redhat.com>
+From: James Bottomley <James.Bottomley@suse.de>
+Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request
+ payload
+Date: Sun, 27 Jun 2010 10:29:36 -0500
+Message-ID: <1277652576.4366.19.camel@mulgrave.site>
 References: <20100622180029.GA15950@redhat.com>
- <1277582211-10725-2-git-send-email-snitzer@redhat.com>
+	 <1277582211-10725-1-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1277582211-10725-2-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1277582211-10725-1-git-send-email-snitzer@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@kernel.dk, martin.petersen@oracle.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, James.Bottomley@suse.de, akpm@linux-foundation.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org, linux-scsi@vger.kernel.org, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 List-Id: dm-devel.ids
 
-Don't alloc discard bio with a biovec in blkdev_issue_discard.  Doing so
-means bio_has_data() will not be true until the SCSI layer adds the
-payload to the discard request via blk_add_request_payload.
+linux-scsi cc added, since it's a SCSI patch.
 
-This patch avoids the need for the following VM accounting fix for
-discards: http://lkml.org/lkml/2010/6/23/361
-NOTE: Jens, you said you applied Tao Ma's fix but I cannot see it in
-your linux-2.6-block's for-next or for-2.6.36... as such I didn't revert
-it in this patch.
+On Sat, 2010-06-26 at 15:56 -0400, Mike Snitzer wrote:
+> Fix leaks introduced via "block: don't allocate a payload for discard
+> request" commit a1d949f5f44.
+> 
+> sd_done() is not called for REQ_TYPE_BLOCK_PC commands so cleanup
+> discard request's payload directly in scsi_finish_command().
+> 
+> Also cleanup page allocated for discard payload in
+> scsi_setup_discard_cmnd's scsi_setup_blk_pc_cmnd error path.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  block/blk-core.c       |   23 +++++++++++++++++++++++
+>  drivers/scsi/scsi.c    |    8 ++++++++
+>  drivers/scsi/sd.c      |   18 ++++++++----------
+>  include/linux/blkdev.h |    1 +
+>  4 files changed, 40 insertions(+), 10 deletions(-)
+> 
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index 98b4cee..07925aa 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -1167,6 +1167,29 @@ void blk_add_request_payload(struct request *rq, struct page *page,
+>  }
+>  EXPORT_SYMBOL_GPL(blk_add_request_payload);
+>  
+> +/**
+> + * blk_clear_request_payload - clear a request's payload
+> + * @rq: request to update
+> + *
+> + * The driver needs to take care of freeing the payload itself.
+> + */
+> +void blk_clear_request_payload(struct request *rq)
+> +{
+> +	struct bio *bio = rq->bio;
+> +
+> +	rq->__data_len = rq->resid_len = 0;
+> +	rq->nr_phys_segments = 0;
+> +	rq->buffer = NULL;
+> +
+> +	bio->bi_size = 0;
+> +	bio->bi_vcnt = 0;
+> +	bio->bi_phys_segments = 0;
+> +
+> +	bio->bi_io_vec->bv_page = NULL;
+> +	bio->bi_io_vec->bv_len = 0;
+> +}
+> +EXPORT_SYMBOL_GPL(blk_clear_request_payload);
+> +
+>  void init_request_from_bio(struct request *req, struct bio *bio)
+>  {
+>  	req->cpu = bio->bi_comp_cpu;
+> diff --git a/drivers/scsi/scsi.c b/drivers/scsi/scsi.c
+> index ad0ed21..69c7ea4 100644
+> --- a/drivers/scsi/scsi.c
+> +++ b/drivers/scsi/scsi.c
+> @@ -851,6 +851,14 @@ void scsi_finish_command(struct scsi_cmnd *cmd)
+>  		 */
+>  		if (good_bytes == old_good_bytes)
+>  			good_bytes -= scsi_get_resid(cmd);
+> +	} else if (cmd->request->cmd_flags & REQ_DISCARD) {
+> +		/*
+> +		 * If this is a discard request that originated from the kernel
+> +		 * we need to free our payload here.  Note that we need to check
+> +		 * the request flag as the normal payload rules apply for
+> +		 * pass-through UNMAP / WRITE SAME requests.
+> +		 */
+> +		__free_page(bio_page(cmd->request->bio));
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- block/blk-core.c    |    2 ++
- block/blk-lib.c     |    2 +-
- fs/bio.c            |   25 +++++++++++++++++++++++--
- include/linux/bio.h |    3 +++
- 4 files changed, 29 insertions(+), 3 deletions(-)
+This is another layering violation:  the page is allocated in the Upper
+layer and freed in the mid-layer.
 
-Index: linux-2.6-block/block/blk-core.c
-===================================================================
---- linux-2.6-block.orig/block/blk-core.c
-+++ linux-2.6-block/block/blk-core.c
-@@ -1153,6 +1153,7 @@ void blk_add_request_payload(struct requ
- {
- 	struct bio *bio = rq->bio;
- 
-+	bio_enable_inline_vecs(bio);
- 	bio->bi_io_vec->bv_page = page;
- 	bio->bi_io_vec->bv_offset = 0;
- 	bio->bi_io_vec->bv_len = len;
-@@ -1187,6 +1188,7 @@ void blk_clear_request_payload(struct re
- 
- 	bio->bi_io_vec->bv_page = NULL;
- 	bio->bi_io_vec->bv_len = 0;
-+	bio_disable_inline_vecs(bio);
- }
- EXPORT_SYMBOL_GPL(blk_clear_request_payload);
- 
-Index: linux-2.6-block/block/blk-lib.c
-===================================================================
---- linux-2.6-block.orig/block/blk-lib.c
-+++ linux-2.6-block/block/blk-lib.c
-@@ -54,7 +54,7 @@ int blkdev_issue_discard(struct block_de
- 		unsigned int max_discard_sectors =
- 			min(q->limits.max_discard_sectors, UINT_MAX >> 9);
- 
--		bio = bio_alloc(gfp_mask, 1);
-+		bio = bio_alloc(gfp_mask, 0);
- 		if (!bio) {
- 			ret = -ENOMEM;
- 			break;
-Index: linux-2.6-block/fs/bio.c
-===================================================================
---- linux-2.6-block.orig/fs/bio.c
-+++ linux-2.6-block/fs/bio.c
-@@ -261,6 +261,27 @@ void bio_init(struct bio *bio)
- EXPORT_SYMBOL(bio_init);
- 
- /**
-+ * bio_enable_inline_vecs - enable use of bio's inline iovecs
-+ * @bio:   bio that will use its inline iovecs
-+ */
-+void bio_enable_inline_vecs(struct bio *bio)
-+{
-+	bio->bi_flags |= BIO_POOL_NONE << BIO_POOL_OFFSET;
-+	bio->bi_max_vecs = BIO_INLINE_VECS;
-+	bio->bi_io_vec = bio->bi_inline_vecs;;
-+}
-+
-+/**
-+ * bio_disable_inline_vecs - disable use of bio's inline iovecs
-+ * @bio:   bio that will no longer use its inline iovecs
-+ */
-+void bio_disable_inline_vecs(struct bio *bio)
-+{
-+	bio->bi_max_vecs = 0;
-+	bio->bi_io_vec = NULL;
-+}
-+
-+/**
-  * bio_alloc_bioset - allocate a bio for I/O
-  * @gfp_mask:   the GFP_ mask given to the slab allocator
-  * @nr_iovecs:	number of iovecs to pre-allocate
-@@ -293,8 +314,8 @@ struct bio *bio_alloc_bioset(gfp_t gfp_m
- 		goto out_set;
- 
- 	if (nr_iovecs <= BIO_INLINE_VECS) {
--		bvl = bio->bi_inline_vecs;
--		nr_iovecs = BIO_INLINE_VECS;
-+		bio_enable_inline_vecs(bio);
-+		return bio;
- 	} else {
- 		bvl = bvec_alloc_bs(gfp_mask, nr_iovecs, &idx, bs);
- 		if (unlikely(!bvl))
-Index: linux-2.6-block/include/linux/bio.h
-===================================================================
---- linux-2.6-block.orig/include/linux/bio.h
-+++ linux-2.6-block/include/linux/bio.h
-@@ -403,6 +403,9 @@ extern struct bio *bio_clone(struct bio 
- 
- extern void bio_init(struct bio *);
- 
-+extern void bio_enable_inline_vecs(struct bio *);
-+extern void bio_disable_inline_vecs(struct bio *);
-+
- extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
- extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
- 			   unsigned int, unsigned int);
+I really hate these growing contortions for discard.  They're a clear
+signal that we haven't implemented it right.
+
+So let's first work out how it should be done.  I really like Tomo's
+idea of doing discard through the normal REQ_TYPE_FS route, which means
+we can control the setup in prep and the tear down in done, all confined
+to the ULD.
+
+Where I think I'm at is partially what Christoph says:  The command
+transformation belongs in the ULD so that's where the allocation and
+deallocation should be, and partly what Tomo says in that we should
+eliminate the special case paths.
+
+The payload vs actual request size should be a red herring if we've got
+everything correct:  only the ULD cares about the request parameters.
+Once we've got everything set up, the mid layer and LLD should only care
+about the parameters in the command, so we can confine the size changing
+part to the ULD doing the discard.
+
+Could someone take a stab at this and see if it works without layering
+violations or any other problematic signals?
+
+Thanks,
+
+James
