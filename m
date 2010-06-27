@@ -1,32 +1,19 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request payload
-Date: Sun, 27 Jun 2010 17:33:35 +0200
-Message-ID: <20100627153335.GA25667@lst.de>
-References: <20100627185927K.fujita.tomonori@lab.ntt.co.jp> <20100627193253P.fujita.tomonori@lab.ntt.co.jp> <20100627110712.GA14511@lst.de> <20100627212952D.fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH 2/2 v2] block: defer the use of inline biovecs for discard requests
+Date: Sun, 27 Jun 2010 17:33:59 +0200
+Message-ID: <20100627153359.GB25667@lst.de>
+References: <20100622180029.GA15950@redhat.com> <1277582211-10725-2-git-send-email-snitzer@redhat.com> <20100627145515.GE3970@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20100627212952D.fujita.tomonori@lab.ntt.co.jp>
-Sender: linux-scsi-owner@vger.kernel.org
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Cc: hch@lst.de, snitzer@redhat.com, axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org, linux-scsi@vger.kernel.org
+In-Reply-To: <20100627145515.GE3970@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, martin.petersen@oracle.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, James.Bottomley@suse.de, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Sun, Jun 27, 2010 at 09:32:07PM +0900, FUJITA Tomonori wrote:
-> On Sun, 27 Jun 2010 13:07:12 +0200
-> Christoph Hellwig <hch@lst.de> wrote:
-> 
-> > > How about this?
-> > 
-> > As I tried to explain before this utterly confuses the I/O completion
-> > path.  With the patch applied even a simple mkfs.xfs that issues discard
-> > just hangs.
-> 
-> Wired. I just tried mkfs.xfs against scsi_debug with my block patches
-> (I saw one discard command). Seemed that it worked fine.
+Looks good,
 
-Doesn't work for me against either a real SSD or WRITE SAME support in
-qemu.  But I think I didn't actually have your barrier patches applied,
-so I'll try again with a clean tree.
 
+Reviewed-by: Christoph Hellwig <hch@lst.de>
