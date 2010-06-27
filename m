@@ -1,29 +1,60 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request
- payload
-Date: Sun, 27 Jun 2010 21:32:07 +0900
-Message-ID: <20100627212952D.fujita.tomonori@lab.ntt.co.jp>
-References: <20100627185927K.fujita.tomonori@lab.ntt.co.jp>
-	<20100627193253P.fujita.tomonori@lab.ntt.co.jp>
-	<20100627110712.GA14511@lst.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/2 v2] dm: discard support for the linear
+	target
+Date: Sun, 27 Jun 2010 09:41:47 -0400
+Message-ID: <20100627134145.GA3970@redhat.com>
+References: <1277584285-13774-1-git-send-email-snitzer@redhat.com>
+	<20100627094918.GF12016@lst.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20100627110712.GA14511@lst.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: hch@lst.de
-Cc: fujita.tomonori@lab.ntt.co.jp, snitzer@redhat.com, axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org, linux-scsi@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20100627094918.GF12016@lst.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christoph Hellwig <hch@lst.de>
+Cc: axboe@kernel.dk, dm-devel@redhat.com, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
-On Sun, 27 Jun 2010 13:07:12 +0200
+On Sun, Jun 27 2010 at  5:49am -0400,
 Christoph Hellwig <hch@lst.de> wrote:
 
-> > How about this?
+> On Sat, Jun 26, 2010 at 04:31:24PM -0400, Mike Snitzer wrote:
+> > Allow discards to be passed through to a single device linear mapping.
+> > Introduce DM_TARGET_SUPPORTS_DISCARDS target features flag that each
+> > target must set once discard support is added.
+> > 
+> > Verify table's underlying devices support discards prior to setting the
+> > associated DM device as capable of discards (via QUEUE_FLAG_DISCARD).
+> > 
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > ---
+> >  drivers/md/dm-linear.c        |    1 +
+> >  drivers/md/dm-table.c         |   51 ++++++++++++++++++++++++++++++++++
+> >  drivers/md/dm.c               |   60 ++++++++++++++++++++++++++++++++--------
+> >  drivers/md/dm.h               |    1 +
+> >  include/linux/device-mapper.h |    1 +
+> >  5 files changed, 102 insertions(+), 12 deletions(-)
 > 
-> As I tried to explain before this utterly confuses the I/O completion
-> path.  With the patch applied even a simple mkfs.xfs that issues discard
-> just hangs.
+> > +static int device_discard_incapable(struct dm_target *ti, struct dm_dev *dev,
+> > +				    sector_t start, sector_t len, void *data)
+> > +{
+> > +	struct block_device *bdev = dev->bdev;
+> > +	struct request_queue *q = bdev_get_queue(bdev);
+> > +
+> > +	WARN_ON(!q);
+> > +	return (!q || !blk_queue_discard(q));
+> > +}
+> 
+> How could a NULL queue happen here?
 
-Wired. I just tried mkfs.xfs against scsi_debug with my block patches
-(I saw one discard command). Seemed that it worked fine.
+It really cannot, I was just being defensive.
