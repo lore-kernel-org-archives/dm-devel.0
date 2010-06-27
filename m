@@ -1,37 +1,27 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request payload
-Date: Sun, 27 Jun 2010 11:38:23 +0200
-Message-ID: <20100627093823.GC12016@lst.de>
-References: <20100622180029.GA15950@redhat.com> <1277582211-10725-1-git-send-email-snitzer@redhat.com>
+Subject: Re: [PATCH 2/2] block: defer the use of inline biovecs for discard requests
+Date: Sun, 27 Jun 2010 11:39:55 +0200
+Message-ID: <20100627093955.GD12016@lst.de>
+References: <20100622180029.GA15950@redhat.com> <1277582211-10725-2-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1277582211-10725-1-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1277582211-10725-2-git-send-email-snitzer@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
 Cc: Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Sat, Jun 26, 2010 at 03:56:50PM -0400, Mike Snitzer wrote:
-> Fix leaks introduced via "block: don't allocate a payload for discard
-> request" commit a1d949f5f44.
+On Sat, Jun 26, 2010 at 03:56:51PM -0400, Mike Snitzer wrote:
+> Don't alloc discard bio with a biovec in blkdev_issue_discard.  Doing so
+> means bio_has_data() will not be true until the SCSI layer adds the
+> payload to the discard request via blk_add_request_payload.
 > 
-> sd_done() is not called for REQ_TYPE_BLOCK_PC commands so cleanup
-> discard request's payload directly in scsi_finish_command().
-> 
-> Also cleanup page allocated for discard payload in
-> scsi_setup_discard_cmnd's scsi_setup_blk_pc_cmnd error path.
+> bio_{enable,disable}_inline_vecs are not expected to be widely used so
+> they were exported using EXPORT_SYMBOL_GPL.
 
-This looks good - I've tested an equivalent patch doing xfstests runs
-for more than 24hours now without seeing leaks.
+Why do we need them exported at all?  Also some comments on these
+functions would be useful.
 
-On the long run I'd prefer not having the knowledge of the payload
-freeing inside the core scsi code, but that requires either calling
-->done for block pc requests, or treating discards as fs requests all
-the way, which will require much larger changes.
-
-So for now:
-
-
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Otherwise it looks good to me.
