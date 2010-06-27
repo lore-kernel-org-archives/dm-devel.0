@@ -1,40 +1,47 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 2/2] block: defer the use of inline biovecs for discard
- requests
-Date: Sun, 27 Jun 2010 10:00:50 -0400
-Message-ID: <20100627140045.GC3970@redhat.com>
-References: <20100622180029.GA15950@redhat.com>
- <1277582211-10725-2-git-send-email-snitzer@redhat.com>
- <20100627093955.GD12016@lst.de>
+Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request
+ payload
+Date: Sun, 27 Jun 2010 10:16:40 -0400
+Message-ID: <20100627141638.GD3970@redhat.com>
+References: <20100627185927K.fujita.tomonori@lab.ntt.co.jp>
+ <20100627193253P.fujita.tomonori@lab.ntt.co.jp>
+ <20100627110712.GA14511@lst.de>
+ <20100627212952D.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20100627093955.GD12016@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org
+In-Reply-To: <20100627212952D.fujita.tomonori@lab.ntt.co.jp>
+Sender: linux-scsi-owner@vger.kernel.org
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: hch@lst.de, axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Sun, Jun 27 2010 at  5:39am -0400,
-Christoph Hellwig <hch@lst.de> wrote:
+On Sun, Jun 27 2010 at  8:32am -0400,
+FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp> wrote:
 
-> On Sat, Jun 26, 2010 at 03:56:51PM -0400, Mike Snitzer wrote:
-> > Don't alloc discard bio with a biovec in blkdev_issue_discard.  Doing so
-> > means bio_has_data() will not be true until the SCSI layer adds the
-> > payload to the discard request via blk_add_request_payload.
-> > 
-> > bio_{enable,disable}_inline_vecs are not expected to be widely used so
-> > they were exported using EXPORT_SYMBOL_GPL.
+> On Sun, 27 Jun 2010 13:07:12 +0200
+> Christoph Hellwig <hch@lst.de> wrote:
 > 
-> Why do we need them exported at all?
+> > > How about this?
+> > 
+> > As I tried to explain before this utterly confuses the I/O completion
+> > path.  With the patch applied even a simple mkfs.xfs that issues discard
+> > just hangs.
+> 
+> Wired. I just tried mkfs.xfs against scsi_debug with my block patches
+> (I saw one discard command). Seemed that it worked fine.
 
-Hmm, good point!
+My leak fixes have been tested extensively against all permuations of
+devices with discards (ATA trim, SCSI UNMAP, SCSI WRTIE SAME w/ unmap=1).
 
-> Also some comments on these functions would be useful.
+I think we need to get Christoph's discard payload transformation
+complete by fixing the leaks _without_ trying to rework how discard
+commands are tagged, etc.  E.g. fix what Jens already has staged in
+linux-2.6-block's 'for-next' and 'for-2.6.36'.
 
-OK.
+With that sorted out we can then look at longer term changes to cleanup
+discard request processing.
 
-> Otherwise it looks good to me.
-
-Thanks, I'll get a v2 of this patch out. 
+Regards,
+Mike
