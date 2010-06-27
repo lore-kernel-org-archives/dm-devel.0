@@ -1,17 +1,16 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [RFC PATCH 2/2] dm: add support for splitting
-	discard requests
-Date: Sun, 27 Jun 2010 11:47:00 +0200
-Message-ID: <20100627094700.GE12016@lst.de>
+Subject: Re: [PATCH 1/2 v2] dm: discard support for the linear
+	target
+Date: Sun, 27 Jun 2010 11:49:18 +0200
+Message-ID: <20100627094918.GF12016@lst.de>
 References: <1277584285-13774-1-git-send-email-snitzer@redhat.com>
-	<1277584285-13774-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1277584285-13774-2-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1277584285-13774-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,44 +24,33 @@ To: Mike Snitzer <snitzer@redhat.com>
 Cc: axboe@kernel.dk, dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>, martin.petersen@oracle.com
 List-Id: dm-devel.ids
 
-On Sat, Jun 26, 2010 at 04:31:25PM -0400, Mike Snitzer wrote:
-> Enable the striped target to support discard requests by splitting a
-> single discard into N discards on a stripe chunk size boundary.
+On Sat, Jun 26, 2010 at 04:31:24PM -0400, Mike Snitzer wrote:
+> Allow discards to be passed through to a single device linear mapping.
+> Introduce DM_TARGET_SUPPORTS_DISCARDS target features flag that each
+> target must set once discard support is added.
 > 
-> Follow on core block layer work to merge discards would be helpful.
+> Verify table's underlying devices support discards prior to setting the
+> associated DM device as capable of discards (via QUEUE_FLAG_DISCARD).
 > 
-> This work relies on DM's clone_bio() always having BIO_RW_BARRIER set
-> for discard requests.  Without BIO_RW_BARRIER the block layer will spew
-> "blk: request botched" warnings for discards that were split by DM.
-> - this clearly needs further investigation!
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  drivers/md/dm-linear.c        |    1 +
+>  drivers/md/dm-table.c         |   51 ++++++++++++++++++++++++++++++++++
+>  drivers/md/dm.c               |   60 ++++++++++++++++++++++++++++++++--------
+>  drivers/md/dm.h               |    1 +
+>  include/linux/device-mapper.h |    1 +
+>  5 files changed, 102 insertions(+), 12 deletions(-)
 
-Btw, you can get discard requests from the upper layer that do not
-have BIO_RW_BARRIER set, currently from the BLKDISCARD ioctl used by
-various mkfs tools, and also from the not yet merged xfs discard
-support.
+> +static int device_discard_incapable(struct dm_target *ti, struct dm_dev *dev,
+> +				    sector_t start, sector_t len, void *data)
+> +{
+> +	struct block_device *bdev = dev->bdev;
+> +	struct request_queue *q = bdev_get_queue(bdev);
+> +
+> +	WARN_ON(!q);
+> +	return (!q || !blk_queue_discard(q));
+> +}
 
-Can I assume it works fine with those?
+How could a NULL queue happen here?
 
-> -	clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
-> +	if (!bio_rw_flagged(bio, BIO_RW_DISCARD))
-> +		clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
-> +	else if (!bio_rw_flagged(bio, BIO_RW_BARRIER)) {
-> +		/* discard w/o barrier results in "blk: request botched" */
-> +		clone->bi_rw |= (1 << BIO_RW_BARRIER);
-> +	}
-
-So previously we unconditionally cleared the BIO_RW_BARRIER bit in the clone.
-
-Maybe to make it cleared reorder the if a bit and also just set the
-barrier bit unconditionally for discards, similar to how we
-unconditionally clear it otherwise:
-
-	if (bio_rw_flagged(bio, BIO_RW_DISCARD)) {
-		/* discard w/o barrier results in "blk: request botched" */
-		clone->bi_rw |= (1 << BIO_RW_BARRIER);
-	} else {
-		clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
-	}
-
-maybe even with a slightly longer comment explaining what's actually
-going on here, and a FIXME.
+Otherwise it looks okay to me, but my DM knowledge is rather limited.
