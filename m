@@ -1,296 +1,54 @@
-From: Edward Thornber <thornber@redhat.com>
-Subject: Re: [PATCH 1/2 v2] dm: discard support for the linear
- target
-Date: Mon, 28 Jun 2010 12:18:53 -0400 (EDT)
-Message-ID: <1064344122.323961277741933643.JavaMail.root@zmail05.collab.prod.int.phx2.redhat.com>
-References: <1022306007.323911277741886883.JavaMail.root@zmail05.collab.prod.int.phx2.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request payload
+Date: Mon, 28 Jun 2010 13:16:42 -0400
+Message-ID: <yq1sk47dqmd.fsf@sermon.lab.mkp.net>
+References: <20100622180029.GA15950@redhat.com>
+	<1277582211-10725-1-git-send-email-snitzer@redhat.com>
+	<1277652576.4366.19.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1022306007.323911277741886883.JavaMail.root@zmail05.collab.prod.int.phx2.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1277652576.4366.19.camel@mulgrave.site> (James Bottomley's
+	message of "Sun, 27 Jun 2010 10:29:36 -0500")
+Sender: linux-kernel-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@suse.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org, linux-scsi@vger.kernel.org, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 List-Id: dm-devel.ids
 
-Reviewed-by: Joe Thornber <thornber@redhat.com>
+>>>>> "James" == James Bottomley <James.Bottomley@suse.de> writes:
 
------ Original Message -----
-From: "Mike Snitzer" <snitzer@redhat.com>
-To: dm-devel@redhat.com
-Cc: axboe@kernel.dk, "Christoph Hellwig" <hch@lst.de>, "martin petersen" <martin.petersen@oracle.com>
-Sent: Saturday, 26 June, 2010 21:31:24 GMT +00:00 GMT Britain, Ireland, Portugal
-Subject: [dm-devel] [PATCH 1/2 v2] dm: discard support for the linear target
+James> I really hate these growing contortions for discard.  They're a
+James> clear signal that we haven't implemented it right.
 
-Allow discards to be passed through to a single device linear mapping.
-Introduce DM_TARGET_SUPPORTS_DISCARDS target features flag that each
-target must set once discard support is added.
+James> So let's first work out how it should be done.  I really like
+James> Tomo's idea of doing discard through the normal REQ_TYPE_FS
+James> route, which means we can control the setup in prep and the tear
+James> down in done, all confined to the ULD.
 
-Verify table's underlying devices support discards prior to setting the
-associated DM device as capable of discards (via QUEUE_FLAG_DISCARD).
+Yeah, this is what I was trying to do a couple of months ago.  Trying to
+make discard and write same filesystem class requests so we can split,
+merge, etc. like READs and WRITEs.  I still think this is how we should
+do it but it's a lot of work.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-linear.c        |    1 +
- drivers/md/dm-table.c         |   51 ++++++++++++++++++++++++++++++++++
- drivers/md/dm.c               |   60 ++++++++++++++++++++++++++++++++--------
- drivers/md/dm.h               |    1 +
- include/linux/device-mapper.h |    1 +
- 5 files changed, 102 insertions(+), 12 deletions(-)
+There are several challenges involved.  I was doing the "payload"
+allocation at request allocation time by permitting a buffer trailing
+struct request (size defined by ULD depending on req type).  However, we
+have a few places in the stack where we memcpy requests and assume them
+to be the same size.  That needs to be fixed.  That's also the roadblock
+I ran into wrt. 32-byte CDB allocation so for that I ended up allocating
+the command in sd.
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 9200dbf..7071f17 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -152,6 +152,7 @@ static struct target_type linear_target = {
- 	.ioctl  = linear_ioctl,
- 	.merge  = linear_merge,
- 	.iterate_devices = linear_iterate_devices,
-+	.features = DM_TARGET_SUPPORTS_DISCARDS,
- };
- 
- int __init dm_linear_init(void)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 9924ea2..a825a7b 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -54,6 +54,8 @@ struct dm_table {
- 	sector_t *highs;
- 	struct dm_target *targets;
- 
-+	unsigned discards_supported:1;
-+
- 	/*
- 	 * Indicates the rw permissions for the new logical
- 	 * device.  This should be a combination of FMODE_READ
-@@ -203,6 +205,7 @@ int dm_table_create(struct dm_table **result, fmode_t mode,
- 
- 	INIT_LIST_HEAD(&t->devices);
- 	atomic_set(&t->holders, 0);
-+	t->discards_supported = 1;
- 
- 	if (!num_targets)
- 		num_targets = KEYS_PER_NODE;
-@@ -770,6 +773,9 @@ int dm_table_add_target(struct dm_table *t, const char *type,
- 
- 	t->highs[t->num_targets++] = tgt->begin + tgt->len - 1;
- 
-+	if (!(tgt->type->features & DM_TARGET_SUPPORTS_DISCARDS))
-+		t->discards_supported = 0;
-+
- 	return 0;
- 
-  bad:
-@@ -905,6 +911,12 @@ int dm_table_complete(struct dm_table *t)
- 	int r = 0;
- 	unsigned int leaf_nodes;
- 
-+	/*
-+	 * We only support discards if there is exactly one underlying device.
-+	 */
-+	if (!list_is_singular(&t->devices))
-+		t->discards_supported = 0;
-+
- 	/* how many indexes will the btree have ? */
- 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
- 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
-@@ -1086,6 +1098,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	else
- 		queue_flag_set_unlocked(QUEUE_FLAG_CLUSTER, q);
- 
-+	if (dm_table_supports_discards(t))
-+		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
-+
- 	dm_table_set_integrity(t);
- 
- 	/*
-@@ -1232,6 +1247,42 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
- 	return t->md;
- }
- 
-+static int device_discard_incapable(struct dm_target *ti, struct dm_dev *dev,
-+				    sector_t start, sector_t len, void *data)
-+{
-+	struct block_device *bdev = dev->bdev;
-+	struct request_queue *q = bdev_get_queue(bdev);
-+
-+	WARN_ON(!q);
-+	return (!q || !blk_queue_discard(q));
-+}
-+
-+bool dm_table_supports_discards(struct dm_table *t)
-+{
-+	struct dm_target *uninitialized_var(ti);
-+	unsigned i = 0;
-+
-+	if (!t->discards_supported)
-+		return 0;
-+
-+	/*
-+	 * table's targets support discards but do
-+	 * the underlying devices?
-+	 */
-+	while (i < dm_table_get_num_targets(t)) {
-+		ti = dm_table_get_target(t, i++);
-+
-+		if (!ti->type->iterate_devices)
-+			return 0; /* assume DISCARD incapable */
-+
-+		if (ti->type->iterate_devices(ti, device_discard_incapable,
-+					      NULL))
-+			return 0;
-+	}
-+
-+	return 1;
-+}
-+
- EXPORT_SYMBOL(dm_vcalloc);
- EXPORT_SYMBOL(dm_get_device);
- EXPORT_SYMBOL(dm_put_device);
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 0f53d1c..232332a 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1198,6 +1198,48 @@ static int __clone_and_map_empty_barrier(struct clone_info *ci)
- 	return 0;
- }
- 
-+/*
-+ * Perform all io with a single clone.
-+ */
-+static void __clone_and_map_simple(struct clone_info *ci, struct dm_target *ti)
-+{
-+	struct bio *clone, *bio = ci->bio;
-+	struct dm_target_io *tio;
-+
-+	tio = alloc_tio(ci, ti);
-+	clone = clone_bio(bio, ci->sector, ci->idx,
-+			  bio->bi_vcnt - ci->idx, ci->sector_count,
-+			  ci->md->bs);
-+	__map_bio(ti, clone, tio);
-+	ci->sector_count = 0;
-+}
-+
-+static int __clone_and_map_discard(struct clone_info *ci)
-+{
-+	struct dm_target *ti;
-+	sector_t max;
-+
-+	if (!dm_table_supports_discards(ci->map))
-+		return -EOPNOTSUPP;
-+
-+	ti = dm_table_find_target(ci->map, ci->sector);
-+	if (!dm_target_is_valid(ti))
-+		return -EIO;
-+
-+	max = max_io_len(ci->md, ci->sector, ti);
-+
-+	if (ci->sector_count <= max)
-+		__clone_and_map_simple(ci, ti);
-+	else {
-+		/*
-+		 * FIXME: Handle a discard that spans two or more targets.
-+		 */
-+		return -EOPNOTSUPP;
-+	}
-+
-+	return 0;
-+}
-+
- static int __clone_and_map(struct clone_info *ci)
- {
- 	struct bio *clone, *bio = ci->bio;
-@@ -1208,27 +1250,21 @@ static int __clone_and_map(struct clone_info *ci)
- 	if (unlikely(bio_empty_barrier(bio)))
- 		return __clone_and_map_empty_barrier(ci);
- 
-+	if (unlikely(bio_rw_flagged(bio, BIO_RW_DISCARD)))
-+		return __clone_and_map_discard(ci);
-+
- 	ti = dm_table_find_target(ci->map, ci->sector);
- 	if (!dm_target_is_valid(ti))
- 		return -EIO;
- 
- 	max = max_io_len(ci->md, ci->sector, ti);
- 
--	/*
--	 * Allocate a target io object.
--	 */
--	tio = alloc_tio(ci, ti);
--
- 	if (ci->sector_count <= max) {
- 		/*
- 		 * Optimise for the simple case where we can do all of
- 		 * the remaining io with a single clone.
- 		 */
--		clone = clone_bio(bio, ci->sector, ci->idx,
--				  bio->bi_vcnt - ci->idx, ci->sector_count,
--				  ci->md->bs);
--		__map_bio(ti, clone, tio);
--		ci->sector_count = 0;
-+		__clone_and_map_simple(ci, ti);
- 
- 	} else if (to_sector(bio->bi_io_vec[ci->idx].bv_len) <= max) {
- 		/*
-@@ -1249,6 +1285,7 @@ static int __clone_and_map(struct clone_info *ci)
- 			len += bv_len;
- 		}
- 
-+		tio = alloc_tio(ci, ti);
- 		clone = clone_bio(bio, ci->sector, ci->idx, i - ci->idx, len,
- 				  ci->md->bs);
- 		__map_bio(ti, clone, tio);
-@@ -1272,12 +1309,11 @@ static int __clone_and_map(struct clone_info *ci)
- 					return -EIO;
- 
- 				max = max_io_len(ci->md, ci->sector, ti);
--
--				tio = alloc_tio(ci, ti);
- 			}
- 
- 			len = min(remaining, max);
- 
-+			tio = alloc_tio(ci, ti);
- 			clone = split_bvec(bio, ci->sector, ci->idx,
- 					   bv->bv_offset + offset, len,
- 					   ci->md->bs);
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 664a5ae..032ce2f 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -62,6 +62,7 @@ int dm_table_any_busy_target(struct dm_table *t);
- int dm_table_set_type(struct dm_table *t);
- unsigned dm_table_get_type(struct dm_table *t);
- bool dm_table_request_based(struct dm_table *t);
-+bool dm_table_supports_discards(struct dm_table *t);
- int dm_table_alloc_md_mempools(struct dm_table *t);
- void dm_table_free_md_mempools(struct dm_table *t);
- struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 1381cd9..e44cbcb 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -130,6 +130,7 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d);
- /*
-  * Target features
-  */
-+#define DM_TARGET_SUPPORTS_DISCARDS 0x00000001
- 
- struct target_type {
- 	uint64_t features;
+Also, another major headache of mine is WRITE SAME/UNMAP to DSM TRIM
+conversion.  Because of the limitations of the TRIM command format a
+single WRITE SAME can turn into effectively hundreds of TRIM commands to
+be issued.  I tried to limit this by using UNMAP translation instead.
+But we can still get into cases where we need to either loop or allocate
+a bunch of TRIMs in the translation layer.  That leaves two options:
+Either pass really conservative limits up the stack and loop up there.
+Or deal with the allocation/translation stuff at the bottom of the pile.
+None of my attempts in these departments turned out to be very nice.
+I'm still dreaming of the day where libata moves out from under SCSI so
+we don't have to translate square pegs into round holes...
+
 -- 
-1.6.5.rc2
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Martin K. Petersen	Oracle Linux Engineering
