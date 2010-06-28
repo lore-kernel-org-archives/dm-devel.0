@@ -1,55 +1,45 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request
- payload
-Date: Mon, 28 Jun 2010 17:45:21 +0900
-Message-ID: <20100628174304S.fujita.tomonori@lab.ntt.co.jp>
-References: <20100628075738.GA26606@lst.de>
-	<20100628171218Q.fujita.tomonori@lab.ntt.co.jp>
-	<4C285AE8.9090702@kernel.dk>
+Subject: Re: [PATCH 2/2] block: defer the use of inline biovecs for discard
+ requests
+Date: Mon, 28 Jun 2010 19:33:34 +0900
+Message-ID: <20100628193122L.fujita.tomonori@lab.ntt.co.jp>
+References: <20100622180029.GA15950@redhat.com>
+	<1277582211-10725-2-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4C285AE8.9090702@kernel.dk>
-Sender: linux-scsi-owner@vger.kernel.org
-To: axboe@kernel.dk
-Cc: fujita.tomonori@lab.ntt.co.jp, hch@lst.de, snitzer@redhat.com, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org, linux-scsi@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1277582211-10725-2-git-send-email-snitzer@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: snitzer@redhat.com
+Cc: hch@lst.de, axboe@kernel.dk, dm-devel@redhat.com, James.Bottomley@suse.de, linux-kernel@vger.kernel.org, martin.petersen@oracle.com, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Mon, 28 Jun 2010 10:18:48 +0200
-Jens Axboe <axboe@kernel.dk> wrote:
+On Sat, 26 Jun 2010 15:56:51 -0400
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> On 2010-06-28 10:14, FUJITA Tomonori wrote:
-> > On Mon, 28 Jun 2010 09:57:38 +0200
-> > Christoph Hellwig <hch@lst.de> wrote:
-> > 
-> >> On Sun, Jun 27, 2010 at 09:32:07PM +0900, FUJITA Tomonori wrote:
-> >>> On Sun, 27 Jun 2010 13:07:12 +0200
-> >>> Christoph Hellwig <hch@lst.de> wrote:
-> >>>
-> >>>>> How about this?
-> >>>>
-> >>>> As I tried to explain before this utterly confuses the I/O completion
-> >>>> path.  With the patch applied even a simple mkfs.xfs that issues discard
-> >>>> just hangs.
-> >>>
-> >>> Wired. I just tried mkfs.xfs against scsi_debug with my block patches
-> >>> (I saw one discard command). Seemed that it worked fine.
-> >>
-> >> I've tracked it down to the call to scsi_requeue_command in scsi_end_request.
-> >> When the command is marked BLOCK_PC we'll just get it back as such in
-> >> ->prep_fn next time, but now it's reverting to the previous state.
-> > 
-> > If scsi_end_request() calls scsi_requeue_command(), the command has a
-> > left over (i.e. hasn't finished all the data), right? You hit such
-> > condition with discard commands?
-> > 
-> > BLOCK_PC requests don't hit this case since blk_end_request() always
-> > return false for PC.
+> Don't alloc discard bio with a biovec in blkdev_issue_discard.  Doing so
+> means bio_has_data() will not be true until the SCSI layer adds the
+> payload to the discard request via blk_add_request_payload.
 > 
-> You can get requeues on the ->queuecommand() path as well, for a
-> variety of reasons, and that would be what Christoph is hitting.
+> bio_{enable,disable}_inline_vecs are not expected to be widely used so
+> they were exported using EXPORT_SYMBOL_GPL.
+> 
+> This patch avoids the need for the following VM accounting fix for
+> discards: http://lkml.org/lkml/2010/6/23/361
 
-Probably, that's would be fine (we need to fix memory leak in that
-path). I guess that requeue with the partial completion commands might
-cause problems.
+Why do we need to avoid the above fix? Surely, the above fix is hacky
+but much simpler than this patch.
+
+
+> NOTE: Jens, you said you applied Tao Ma's fix but I cannot see it in
+> your linux-2.6-block's for-next or for-2.6.36... as such I didn't revert
+> it in this patch.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  block/blk-core.c    |    2 ++
+>  block/blk-lib.c     |    2 +-
+>  fs/bio.c            |   19 +++++++++++++++++--
+>  include/linux/bio.h |    3 +++
+>  4 files changed, 23 insertions(+), 3 deletions(-)
