@@ -1,178 +1,150 @@
-From: "Narendran Ganapathy" <Narendran_Ganapathy@Dell.com>
-Subject: Re: [PATCH 1/1] dm-mpath: Extend path selector interface
-	for	supporting Dell EqualLogic path selector
-Date: Tue, 29 Jun 2010 17:30:19 -0400
-Message-ID: <86A3089001A44141B76B882059E7E53B05968CCB@M31.equallogic.com>
-References: <86A3089001A44141B76B882059E7E53B01E87A3B@M31.equallogic.com>
-	<4C29D489.3040801@ct.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH 1/2] block: fix leaks associated with discard
+ request payload
+Date: Tue, 29 Jun 2010 18:28:55 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1006291811300.27462@hs20-bc2-1.build.redhat.com>
+References: <20100622180029.GA15950@redhat.com> <1277582211-10725-1-git-send-email-snitzer@redhat.com>
+ <1277652576.4366.19.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <4C29D489.3040801@ct.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Parind Shah <Parind_Shah@Dell.com>, Jason Shamberger <Jason_Shamberger@Dell.com>, agk@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1277652576.4366.19.camel@mulgrave.site>
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, axboe@kernel.dk, linux-scsi@vger.kernel.org, martin.petersen@oracle.com, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-Hi,
-
-Thanks for the feedback..  
-
-> Interesting.
-> How can the path-selector know which path owns which location?
-
-Path selector obtains the "path-location mappings" through a user land
-helper application that queries the storage group. To explain further,
-Path-Location mappings are nothing but relationships between the SCSI
-minor and LBA ranges. 
- 
-> I can just see "it's invisible from initiator" from your explanation
-> above, so I can't understand why the path-selector can choose the best
-> path which is directly connected to the member owning the location.
-> It can just guess using the new path-selector parameters below?
-
-By using the address parameter the path selector can choose the optimal
-path to the member where the requested data is located and increase the
-performance instead of getting forwarded from one member to another
-member. 
-
-> I disagree with passing 'struct request' directly to path-selector.
-> As I said at http://marc.info/?l=dm-devel&m=123330286327402&w=2,
-> I think we should keep independency of path-selector from the type of
-> I/O structure as much as possible, since bio-based targets may want
-> to use them in the future (e.g. read balancing of dm-mirror).
-
-> So I would prefer the way below:
->  o define what parameters are needed (now and in the future)
->  o pass them to path-selector
-
-Ok. We thought passing the request pointer would allow extra flexibility
-in the case of future path selectors who could choose a path based on
-different criteria (like the direction of request, read goes to a
-separate path, write goes to another path etc..). For our path selector,
-we need the starting address of the request. 
-
-> Also, please post your path-selector patch if you already have,
-> so that people can understand your needs much correctly.
-
-We are working on it and would post the path-selector patch soon. 
-
-Thanks,
- Naren.
 
 
+On Sun, 27 Jun 2010, James Bottomley wrote:
 
------Original Message-----
-From: Kiyoshi Ueda [mailto:k-ueda@ct.jp.nec.com] 
-Sent: Tuesday, June 29, 2010 7:10 AM
-To: Narendran Ganapathy
-Cc: device-mapper development; Parind Shah; Jason Shamberger;
-agk@redhat.com
-Subject: Re: [dm-devel] [PATCH 1/1] dm-mpath: Extend path selector
-interface for supporting Dell EqualLogic path selector
+> linux-scsi cc added, since it's a SCSI patch.
+> 
+> On Sat, 2010-06-26 at 15:56 -0400, Mike Snitzer wrote:
+> > Fix leaks introduced via "block: don't allocate a payload for discard
+> > request" commit a1d949f5f44.
+> > 
+> > sd_done() is not called for REQ_TYPE_BLOCK_PC commands so cleanup
+> > discard request's payload directly in scsi_finish_command().
+> > 
+> > Also cleanup page allocated for discard payload in
+> > scsi_setup_discard_cmnd's scsi_setup_blk_pc_cmnd error path.
+> > 
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > ---
+> >  block/blk-core.c       |   23 +++++++++++++++++++++++
+> >  drivers/scsi/scsi.c    |    8 ++++++++
+> >  drivers/scsi/sd.c      |   18 ++++++++----------
+> >  include/linux/blkdev.h |    1 +
+> >  4 files changed, 40 insertions(+), 10 deletions(-)
+> > 
+> > diff --git a/block/blk-core.c b/block/blk-core.c
+> > index 98b4cee..07925aa 100644
+> > --- a/block/blk-core.c
+> > +++ b/block/blk-core.c
+> > @@ -1167,6 +1167,29 @@ void blk_add_request_payload(struct request *rq, struct page *page,
+> >  }
+> >  EXPORT_SYMBOL_GPL(blk_add_request_payload);
+> >  
+> > +/**
+> > + * blk_clear_request_payload - clear a request's payload
+> > + * @rq: request to update
+> > + *
+> > + * The driver needs to take care of freeing the payload itself.
+> > + */
+> > +void blk_clear_request_payload(struct request *rq)
+> > +{
+> > +	struct bio *bio = rq->bio;
+> > +
+> > +	rq->__data_len = rq->resid_len = 0;
+> > +	rq->nr_phys_segments = 0;
+> > +	rq->buffer = NULL;
+> > +
+> > +	bio->bi_size = 0;
+> > +	bio->bi_vcnt = 0;
+> > +	bio->bi_phys_segments = 0;
+> > +
+> > +	bio->bi_io_vec->bv_page = NULL;
+> > +	bio->bi_io_vec->bv_len = 0;
+> > +}
+> > +EXPORT_SYMBOL_GPL(blk_clear_request_payload);
+> > +
+> >  void init_request_from_bio(struct request *req, struct bio *bio)
+> >  {
+> >  	req->cpu = bio->bi_comp_cpu;
+> > diff --git a/drivers/scsi/scsi.c b/drivers/scsi/scsi.c
+> > index ad0ed21..69c7ea4 100644
+> > --- a/drivers/scsi/scsi.c
+> > +++ b/drivers/scsi/scsi.c
+> > @@ -851,6 +851,14 @@ void scsi_finish_command(struct scsi_cmnd *cmd)
+> >  		 */
+> >  		if (good_bytes == old_good_bytes)
+> >  			good_bytes -= scsi_get_resid(cmd);
+> > +	} else if (cmd->request->cmd_flags & REQ_DISCARD) {
+> > +		/*
+> > +		 * If this is a discard request that originated from the kernel
+> > +		 * we need to free our payload here.  Note that we need to check
+> > +		 * the request flag as the normal payload rules apply for
+> > +		 * pass-through UNMAP / WRITE SAME requests.
+> > +		 */
+> > +		__free_page(bio_page(cmd->request->bio));
+> 
+> This is another layering violation:  the page is allocated in the Upper
+> layer and freed in the mid-layer.
+> 
+> I really hate these growing contortions for discard.  They're a clear
+> signal that we haven't implemented it right.
+> 
+> So let's first work out how it should be done.  I really like Tomo's
+> idea of doing discard through the normal REQ_TYPE_FS route, which means
+> we can control the setup in prep and the tear down in done, all confined
+> to the ULD.
+> 
+> Where I think I'm at is partially what Christoph says:  The command
+> transformation belongs in the ULD so that's where the allocation and
+> deallocation should be, and partly what Tomo says in that we should
+> eliminate the special case paths.
+> 
+> The payload vs actual request size should be a red herring if we've got
+> everything correct:  only the ULD cares about the request parameters.
+> Once we've got everything set up, the mid layer and LLD should only care
+> about the parameters in the command, so we can confine the size changing
+> part to the ULD doing the discard.
+> 
+> Could someone take a stab at this and see if it works without layering
+> violations or any other problematic signals?
+> 
+> Thanks,
+> 
+> James
 
-Hi,
+Well, I think that you overestimate the importance of scsi code too much.
 
-On 06/28/2010 10:53 PM +0900, Narendran Ganapathy wrote:
-> This patch extends the dm-path-selector interface to allow path
-> selectors to use extra information from the IO request when selecting
-> a path.
->
-> Dell EqualLogic and other iSCSI storage arrays use a distributed
-> frameless architecture.  In this architecture, the storage group
-> consists of a number of distinct storage arrays ("members"),
-> each having independent controllers, disk storage and network
-adapters.
-> When a LUN is created it is spread across multiple members.
-> The details of the distribution are hidden from initiators connected
-to
-> this storage system.  The storage group exposes a single target
-> discovery portal, no matter how many members are being used.
-> When iSCSI sessions are created, each session is connected to an eth
-> port on a single member.  Data to a LUN can be sent on any iSCSI
-> session, and if the blocks being accessed are stored on another
-> member the IO will be forwarded as required.  This forwarding is
-> invisible to the initiator.  The storage layout is also dynamic,
-> and the blocks stored on disk may be moved from member to member
-> as needed to balance the load.
->
-> This architecture simplifies the management and configuration of both
-> the storage group and initiators.  In a multipathing configuration,
-> it is possible to set up multiple iSCSI sessions to use multiple
-> network interfaces on both the host and target to take advantage of
-> the increased network bandwidth.  An initiator can use a simple round
-> robin algorithm to send IO on all paths and let the storage array
-> members forward it as necessary.  However, there is a performance
-> advantage to sending data directly to the correct member.
-> At the same time, the existing techniques of building a separate
-> priority group for paths to each controller does not fit this model,
-> because the block ranges may be moved at any time from member to
-member,
-> and it is also acceptable to send IO to any member in the group when
-> no direct path exists or there is a path error.
->
-> We propose to develop a new path selector to perform this
-location-based
-> routing.  The basic idea is to use knowledge about the current
-location
-> of data to prefer paths directly to the owning member, but fall back
-to
-> use any available path when no direct path is available.
-> This submission includes the necessary changes to the dm-path-selector
-> interface.  In the current interface, the only information passed
-> to the select_path routine is the path_selector struct and the number
-> of bytes in the request.  To do location based routing, we need
-> the address information of the request.
+There is a layering violation in the code. So what --- you either fix the 
+layering violation or let it be there and grind your teeth on it. But in 
+either case, that layering violation won't affect anyone except scsi 
+developers.
 
-Interesting.
-How can the path-selector know which path owns which location?
+On the other hand, if you say "because we want to avoid layering violation 
+in SCSI, every issuer of discard request must supply an empty page", you 
+create havoc all over the Linux codebase. md, dm, drbd, xvd, virtio --- 
+whatever you think of, will be allocating a dummy page when constructing 
+a discard request.
 
-I can just see "it's invisible from initiator" from your explanation
-above, so I can't understand why the path-selector can choose the best
-path which is directly connected to the member owning the location.
-It can just guess using the new path-selector parameters below?
+If the layering violation spans only scsi code, it can be eventually 
+fixed, but this, much worse "layering violation" that will be spanning all 
+block device midlayers, won't ever be fixed.
 
+Imagine for example --- a discard request arrivers at a dm-snapshot 
+device. The driver splits it into chunks, remaps each chunk to the 
+physical chunk, submits the requests, the elevator merges adjacent 
+requests and submits fewer bigger requests to the device. Now, if you had 
+to allocate a zeroed page each time you are splitting the request, that 
+would exhaust memory and burn cpu needlessly. You delete a 100MB file? --- 
+fine, allocate a 100MB of zeroed pages.
 
-> We propose to extend the path selector interface to pass the entire
-> request pointer to the 'select_path' / 'start_io' /  'end_io'
-functions
-> so that the path selector can use any information therein to route
-> the I/O.
->
-> We also propose extending the dm_mpath_io structure used to hold
-> information about each I/O to include extra fields for the path
-> selector to store I/O specific flags and a timestamp, so the path
-> selector can determine the latency of I/Os on different paths and
-> that information is passed to the 'select_path' / 'start_io' /
-'end_io'
-> functions for path selector usage. These additions to the dm_mpath_io
-> allow future flexibility in developing algorithms that route IO based
-> on other information from the request in the future.
+So I say --- let there be a layering violation in the scsi code, but don't 
+put this problem with a page allocation to all the other bio midlayer 
+developers.
 
-I disagree with passing 'struct request' directly to path-selector.
-As I said at http://marc.info/?l=dm-devel&m=123330286327402&w=2,
-I think we should keep independency of path-selector from the type of
-I/O structure as much as possible, since bio-based targets may want
-to use them in the future (e.g. read balancing of dm-mirror).
-
-So I would prefer the way below:
-  o define what parameters are needed (now and in the future)
-  o pass them to path-selector
-
-
-Also, please post your path-selector patch if you already have,
-so that people can understand your needs much correctly.
-
-Thanks,
-Kiyoshi Ueda
+Mikulas
