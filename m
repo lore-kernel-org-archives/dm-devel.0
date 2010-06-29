@@ -1,15 +1,17 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 1/1] dm-mpath: Extend path selector interface
- for	supporting Dell EqualLogic path selector
-Date: Tue, 29 Jun 2010 20:10:01 +0900
-Message-ID: <4C29D489.3040801@ct.jp.nec.com>
-References: <86A3089001A44141B76B882059E7E53B01E87A3B@M31.equallogic.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH v4 1/2] dm: prevent table type changes
+	after	initial table load
+Date: Tue, 29 Jun 2010 12:40:40 +0100
+Message-ID: <20100629114040.GE23989@agk-dp.fab.redhat.com>
+References: <1274964469-22289-1-git-send-email-snitzer@redhat.com>
+	<1274964469-22289-2-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <86A3089001A44141B76B882059E7E53B01E87A3B@M31.equallogic.com>
+Content-Disposition: inline
+In-Reply-To: <1274964469-22289-2-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,93 +21,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Narendran Ganapathy <Narendran_Ganapathy@dell.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Parind Shah <Parind_Shah@dell.com>, Jason Shamberger <Jason_Shamberger@dell.com>, agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+On Thu, May 27, 2010 at 08:47:48AM -0400, Mike Snitzer wrote:
+> Introduce 'type_lock' in mapped_device structure and use it to protect
+> md->type access.  table_load() sets md->type without concern for:
 
-On 06/28/2010 10:53 PM +0900, Narendran Ganapathy wrote:
-> This patch extends the dm-path-selector interface to allow path
-> selectors to use extra information from the IO request when selecting
-> a path.
->
-> Dell EqualLogic and other iSCSI storage arrays use a distributed
-> frameless architecture.  In this architecture, the storage group
-> consists of a number of distinct storage arrays ("members"),
-> each having independent controllers, disk storage and network adapters.
-> When a LUN is created it is spread across multiple members.
-> The details of the distribution are hidden from initiators connected to
-> this storage system.  The storage group exposes a single target
-> discovery portal, no matter how many members are being used.
-> When iSCSI sessions are created, each session is connected to an eth
-> port on a single member.  Data to a LUN can be sent on any iSCSI
-> session, and if the blocks being accessed are stored on another
-> member the IO will be forwarded as required.  This forwarding is
-> invisible to the initiator.  The storage layout is also dynamic,
-> and the blocks stored on disk may be moved from member to member
-> as needed to balance the load.
->
-> This architecture simplifies the management and configuration of both
-> the storage group and initiators.  In a multipathing configuration,
-> it is possible to set up multiple iSCSI sessions to use multiple
-> network interfaces on both the host and target to take advantage of
-> the increased network bandwidth.  An initiator can use a simple round
-> robin algorithm to send IO on all paths and let the storage array
-> members forward it as necessary.  However, there is a performance
-> advantage to sending data directly to the correct member.
-> At the same time, the existing techniques of building a separate
-> priority group for paths to each controller does not fit this model,
-> because the block ranges may be moved at any time from member to member,
-> and it is also acceptable to send IO to any member in the group when
-> no direct path exists or there is a path error.
->
-> We propose to develop a new path selector to perform this location-based
-> routing.  The basic idea is to use knowledge about the current location
-> of data to prefer paths directly to the owning member, but fall back to
-> use any available path when no direct path is available.
-> This submission includes the necessary changes to the dm-path-selector
-> interface.  In the current interface, the only information passed
-> to the select_path routine is the path_selector struct and the number
-> of bytes in the request.  To do location based routing, we need
-> the address information of the request.
+> - another table_load() racing to set conflicting md->type.
+which leads to non-deterministic behaviour that is of no practical use and
+so there is no need to support it.
 
-Interesting.
-How can the path-selector know which path owns which location?
+> - do_resume() making a conflicting table live.
+Any table being made live must already have passed through table_load so I
+don't see how there can be conflicting types.
 
-I can just see "it's invisible from initiator" from your explanation
-above, so I can't understand why the path-selector can choose the best
-path which is directly connected to the member owning the location.
-It can just guess using the new path-selector parameters below?
+The mutex here seems to be overkill: instead of protecting one field to
+cope with a useless race, we should be making the output of the race
+deterministic (e.g. perhaps giving an error on the parallel table_load
+attempt).
 
+Anyway, I can take this patch for now and we can deal with the mutex/race
+differently later.
 
-> We propose to extend the path selector interface to pass the entire
-> request pointer to the 'select_path' / 'start_io' /  'end_io' functions
-> so that the path selector can use any information therein to route
-> the I/O.
->
-> We also propose extending the dm_mpath_io structure used to hold
-> information about each I/O to include extra fields for the path
-> selector to store I/O specific flags and a timestamp, so the path
-> selector can determine the latency of I/Os on different paths and
-> that information is passed to the 'select_path' / 'start_io' /  'end_io'
-> functions for path selector usage. These additions to the dm_mpath_io
-> allow future flexibility in developing algorithms that route IO based
-> on other information from the request in the future.
-
-I disagree with passing 'struct request' directly to path-selector.
-As I said at http://marc.info/?l=dm-devel&m=123330286327402&w=2,
-I think we should keep independency of path-selector from the type of
-I/O structure as much as possible, since bio-based targets may want
-to use them in the future (e.g. read balancing of dm-mirror).
-
-So I would prefer the way below:
-  o define what parameters are needed (now and in the future)
-  o pass them to path-selector
-
-
-Also, please post your path-selector patch if you already have,
-so that people can understand your needs much correctly.
-
-Thanks,
-Kiyoshi Ueda
+Alasdair
+ 
