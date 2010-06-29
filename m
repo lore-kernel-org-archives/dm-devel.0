@@ -1,13 +1,13 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Subject: Re: [PATCH 1/1] dm-mpath: Extend path selector interface
  for	supporting Dell EqualLogic path selector
-Date: Tue, 29 Jun 2010 10:32:02 +0200
-Message-ID: <4C29AF82.7020703@suse.de>
+Date: Tue, 29 Jun 2010 20:10:01 +0900
+Message-ID: <4C29D489.3040801@ct.jp.nec.com>
 References: <86A3089001A44141B76B882059E7E53B01E87A3B@M31.equallogic.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <86A3089001A44141B76B882059E7E53B01E87A3B@M31.equallogic.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -19,92 +19,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: christophe varoqui <christophe.varoqui@free.fr>, Parind Shah <Parind_Shah@Dell.com>, Jason Shamberger <Jason_Shamberger@Dell.com>, agk@redhat.com, Narendran Ganapathy <Narendran_Ganapathy@Dell.com>
+To: Narendran Ganapathy <Narendran_Ganapathy@dell.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Parind Shah <Parind_Shah@dell.com>, Jason Shamberger <Jason_Shamberger@dell.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-Narendran Ganapathy wrote:
-> This patch extends the dm-path-selector interface to allow path
-> selectors to use extra information from the IO request when selecting a
-> path.
-> =
+Hi,
 
+On 06/28/2010 10:53 PM +0900, Narendran Ganapathy wrote:
+> This patch extends the dm-path-selector interface to allow path
+> selectors to use extra information from the IO request when selecting
+> a path.
+>
 > Dell EqualLogic and other iSCSI storage arrays use a distributed
 > frameless architecture.  In this architecture, the storage group
-> consists of a number of distinct storage arrays ("members"), each having
-> independent controllers, disk storage and network adapters.  When a LUN
-> is created it is spread across multiple members.  The details of the
-> distribution are hidden from initiators connected to this storage
-> system.  The storage group exposes a single target discovery portal, no
-> matter how many members are being used.  When iSCSI sessions are
-> created, each session is connected to an eth port on a single member. =
+> consists of a number of distinct storage arrays ("members"),
+> each having independent controllers, disk storage and network adapters.
+> When a LUN is created it is spread across multiple members.
+> The details of the distribution are hidden from initiators connected to
+> this storage system.  The storage group exposes a single target
+> discovery portal, no matter how many members are being used.
+> When iSCSI sessions are created, each session is connected to an eth
+> port on a single member.  Data to a LUN can be sent on any iSCSI
+> session, and if the blocks being accessed are stored on another
+> member the IO will be forwarded as required.  This forwarding is
+> invisible to the initiator.  The storage layout is also dynamic,
+> and the blocks stored on disk may be moved from member to member
+> as needed to balance the load.
+>
+> This architecture simplifies the management and configuration of both
+> the storage group and initiators.  In a multipathing configuration,
+> it is possible to set up multiple iSCSI sessions to use multiple
+> network interfaces on both the host and target to take advantage of
+> the increased network bandwidth.  An initiator can use a simple round
+> robin algorithm to send IO on all paths and let the storage array
+> members forward it as necessary.  However, there is a performance
+> advantage to sending data directly to the correct member.
+> At the same time, the existing techniques of building a separate
+> priority group for paths to each controller does not fit this model,
+> because the block ranges may be moved at any time from member to member,
+> and it is also acceptable to send IO to any member in the group when
+> no direct path exists or there is a path error.
+>
+> We propose to develop a new path selector to perform this location-based
+> routing.  The basic idea is to use knowledge about the current location
+> of data to prefer paths directly to the owning member, but fall back to
+> use any available path when no direct path is available.
+> This submission includes the necessary changes to the dm-path-selector
+> interface.  In the current interface, the only information passed
+> to the select_path routine is the path_selector struct and the number
+> of bytes in the request.  To do location based routing, we need
+> the address information of the request.
 
-> Data to a LUN can be sent on any iSCSI session, and if the blocks being
-> accessed are stored on another member the IO will be forwarded as
-> required.  This forwarding is invisible to the initiator.  The storage
-> layout is also dynamic, and the blocks stored on disk may be moved from
-> member to member as needed to balance the load.
-> =
+Interesting.
+How can the path-selector know which path owns which location?
 
-This sounds surprisingly similar to the upcoming 'Logical block dependent'
-ALUA state of the upcoming T10 SPC-4.
+I can just see "it's invisible from initiator" from your explanation
+above, so I can't understand why the path-selector can choose the best
+path which is directly connected to the member owning the location.
+It can just guess using the new path-selector parameters below?
 
-Which begs the question if
-a) is it implemented as such
-and
-b) if not why not?
 
-And if it _is_ the logical block dependent ALUA state then yes, we
-definitely need to update the multipath infrastructure for this.
+> We propose to extend the path selector interface to pass the entire
+> request pointer to the 'select_path' / 'start_io' /  'end_io' functions
+> so that the path selector can use any information therein to route
+> the I/O.
+>
+> We also propose extending the dm_mpath_io structure used to hold
+> information about each I/O to include extra fields for the path
+> selector to store I/O specific flags and a timestamp, so the path
+> selector can determine the latency of I/Os on different paths and
+> that information is passed to the 'select_path' / 'start_io' /  'end_io'
+> functions for path selector usage. These additions to the dm_mpath_io
+> allow future flexibility in developing algorithms that route IO based
+> on other information from the request in the future.
 
-However, given the good match between the 'REPORT REFERRALS' command
-and the device-mapper table definitions I would rather propose to
-use the output of 'REPORT REFERRALS' to create / modify the existing
-multipath tables.
+I disagree with passing 'struct request' directly to path-selector.
+As I said at http://marc.info/?l=dm-devel&m=123330286327402&w=2,
+I think we should keep independency of path-selector from the type of
+I/O structure as much as possible, since bio-based targets may want
+to use them in the future (e.g. read balancing of dm-mirror).
 
-Currently we have a strict path-only mapping:
+So I would prefer the way below:
+  o define what parameters are needed (now and in the future)
+  o pass them to path-selector
 
-3600508b40008ddd70000600000620000 dm-0 HP,HSV300
-[size=3D16G][features=3D1 queue_if_no_path][hwhandler=3D0]
-\_ round-robin 0 [prio=3D50][active]
- \_ 6:0:6:1 sde 8:64  [active][ready]
-\_ round-robin 0 [prio=3D10][enabled]
- \_ 6:0:5:1 sdd 8:48  [active][ready]
 
-or, in device-mapper output:
-0 33554432 multipath 1 queue_if_no_path 0 2 1 round-robin 0 1 1 8:64 100 ro=
-und-robin 0 1 1 8:48 100
+Also, please post your path-selector patch if you already have,
+so that people can understand your needs much correctly.
 
-With referrals we just need to adjust the 'start' and 'length' parameter to=
- create _several_
-device-mapper tables, eg
-
-0 16777216 multipath 1 queue_if_no_path 0 2 1 round-robin 0 1 1 8:64 100 ro=
-und-robin 0 1 1 8:48 100
-16777217 33554432 multipath 1 queue_if_no_path 0 2 1 round-robin 0 1 1 8:48=
- 100 round-robin 0 1 1 8:64 100
-
-which would route the first half of the resulting multipath device to path =
-'8:64' and the second half
-to path '8:48'.
-
-Which I think is far more logical and in match with the current device-mapp=
-er architecture.
-
-But no, I don't have a patch for this. I've yet to see an array supporting =
-referrals.
-I might be tempted to do something here if I had one ...
-
-And if your firmware does _not_ support referrals I would strongly advise t=
-o reimplement your
-mechanism in the context of referrals.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+Thanks,
+Kiyoshi Ueda
