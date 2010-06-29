@@ -1,15 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v5 2/2 "v12"] dm: only initialize full
-	request_queue for request-based device
-Date: Tue, 29 Jun 2010 13:40:23 -0400
-Message-ID: <1277833223-4618-2-git-send-email-snitzer@redhat.com>
-References: <1277833223-4618-1-git-send-email-snitzer@redhat.com>
+From: "Narendran Ganapathy" <Narendran_Ganapathy@Dell.com>
+Subject: Re: [PATCH 1/1] dm-mpath: Extend path selector interface
+	for	supporting Dell EqualLogic path selector
+Date: Tue, 29 Jun 2010 17:30:19 -0400
+Message-ID: <86A3089001A44141B76B882059E7E53B05968CCB@M31.equallogic.com>
+References: <86A3089001A44141B76B882059E7E53B01E87A3B@M31.equallogic.com>
+	<4C29D489.3040801@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1277833223-4618-1-git-send-email-snitzer@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <4C29D489.3040801@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,217 +21,158 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Parind Shah <Parind_Shah@Dell.com>, Jason Shamberger <Jason_Shamberger@Dell.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-A bio-based DM device no longer defaults to having a fully initialized
-request_queue (request_fn, elevator, etc).  This means bio-based DM
-devices no longer register elevator sysfs attributes ('iosched/' tree
-or 'scheduler' other than "none").
+Hi,
 
-In contrast, a request-based DM device will always have a full
-request_queue and will register elevator sysfs attributes.  Therefore
-a user can determine a DM device's type by checking if elevator sysfs
-attributes exist.
+Thanks for the feedback..  
 
-First allocate a minimalist request_queue structure for a DM device
-(needed for both bio and request-based DM).
+> Interesting.
+> How can the path-selector know which path owns which location?
 
-Initialization of a full request_queue is deferred until it is known
-that the DM device is request-based -- at the end of the table load
-sequence.
+Path selector obtains the "path-location mappings" through a user land
+helper application that queries the storage group. To explain further,
+Path-Location mappings are nothing but relationships between the SCSI
+minor and LBA ranges. 
+ 
+> I can just see "it's invisible from initiator" from your explanation
+> above, so I can't understand why the path-selector can choose the best
+> path which is directly connected to the member owning the location.
+> It can just guess using the new path-selector parameters below?
 
-Factor DM device's request_queue initialization:
-- common to both request-based and bio-based into dm_init_md_queue().
-- specific to request-based into dm_init_request_based_queue().
+By using the address parameter the path selector can choose the optimal
+path to the member where the requested data is located and increase the
+performance instead of getting forwarded from one member to another
+member. 
 
-The md->type_lock mutex is used to protect md->queue, in addition to
-md->type, during table_load().
+> I disagree with passing 'struct request' directly to path-selector.
+> As I said at http://marc.info/?l=dm-devel&m=123330286327402&w=2,
+> I think we should keep independency of path-selector from the type of
+> I/O structure as much as possible, since bio-based targets may want
+> to use them in the future (e.g. read balancing of dm-mirror).
 
-A DM device's first table_load will establish the immutable md->type.
-But md->queue initialization, based on md->type, may fail at that time
-(because blk_init_allocated_queue cannot allocate memory).  Therefore
-any subsequent table_load must (re)try dm_setup_md_queue independent of
-establishing md->type.
+> So I would prefer the way below:
+>  o define what parameters are needed (now and in the future)
+>  o pass them to path-selector
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Acked-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
----
-v5: revised patch header, no code changes
+Ok. We thought passing the request pointer would allow extra flexibility
+in the case of future path selectors who could choose a path based on
+different criteria (like the direction of request, read goes to a
+separate path, write goes to another path etc..). For our path selector,
+we need the starting address of the request. 
 
- drivers/md/dm-ioctl.c |   11 +++++
- drivers/md/dm.c       |   94 ++++++++++++++++++++++++++++++++++++--------------
- drivers/md/dm.h       |    2 +
- 3 files changed, 80 insertions(+), 27 deletions(-)
+> Also, please post your path-selector patch if you already have,
+> so that people can understand your needs much correctly.
 
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c
-+++ linux-2.6/drivers/md/dm-ioctl.c
-@@ -1176,7 +1176,7 @@ static int table_load(struct dm_ioctl *p
- 		goto out;
- 	}
- 
--	/* Protect md->type against concurrent table loads. */
-+	/* Protect md->type and md->queue against concurrent table loads. */
- 	dm_lock_md_type(md);
- 	if (dm_get_md_type(md) == DM_TYPE_NONE) {
- 		/* initial table load, set md's type based on table's type */
-@@ -1188,6 +1188,15 @@ static int table_load(struct dm_ioctl *p
- 		r = -EINVAL;
- 		goto out;
- 	}
-+
-+	/* setup md->queue to reflect md's type (may block) */
-+	r = dm_setup_md_queue(md);
-+	if (r) {
-+		DMWARN("unable to setup device queue for this table.");
-+		dm_table_destroy(t);
-+		dm_unlock_md_type(md);
-+		goto out;
-+	}
- 	dm_unlock_md_type(md);
- 
- 	/* stage inactive table */
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c
-+++ linux-2.6/drivers/md/dm.c
-@@ -124,7 +124,7 @@ struct mapped_device {
- 
- 	struct request_queue *queue;
- 	unsigned type;
--	/* Protect type against concurrent access. */
-+	/* Protect queue and type against concurrent access. */
- 	struct mutex type_lock;
- 
- 	struct gendisk *disk;
-@@ -1853,6 +1853,28 @@ static const struct block_device_operati
- static void dm_wq_work(struct work_struct *work);
- static void dm_rq_barrier_work(struct work_struct *work);
- 
-+static void dm_init_md_queue(struct mapped_device *md)
-+{
-+	/*
-+	 * Request-based dm devices cannot be stacked on top of bio-based dm
-+	 * devices.  The type of this dm device has not been decided yet.
-+	 * The type is decided at the first table loading time.
-+	 * To prevent problematic device stacking, clear the queue flag
-+	 * for request stacking support until then.
-+	 *
-+	 * This queue is new, so no concurrency on the queue_flags.
-+	 */
-+	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
-+
-+	md->queue->queuedata = md;
-+	md->queue->backing_dev_info.congested_fn = dm_any_congested;
-+	md->queue->backing_dev_info.congested_data = md;
-+	blk_queue_make_request(md->queue, dm_request);
-+	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
-+	md->queue->unplug_fn = dm_unplug_all;
-+	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
-+}
-+
- /*
-  * Allocate and initialise a blank device with a given minor.
-  */
-@@ -1892,34 +1914,11 @@ static struct mapped_device *alloc_dev(i
- 	INIT_LIST_HEAD(&md->uevent_list);
- 	spin_lock_init(&md->uevent_lock);
- 
--	md->queue = blk_init_queue(dm_request_fn, NULL);
-+	md->queue = blk_alloc_queue(GFP_KERNEL);
- 	if (!md->queue)
- 		goto bad_queue;
- 
--	/*
--	 * Request-based dm devices cannot be stacked on top of bio-based dm
--	 * devices.  The type of this dm device has not been decided yet,
--	 * although we initialized the queue using blk_init_queue().
--	 * The type is decided at the first table loading time.
--	 * To prevent problematic device stacking, clear the queue flag
--	 * for request stacking support until then.
--	 *
--	 * This queue is new, so no concurrency on the queue_flags.
--	 */
--	queue_flag_clear_unlocked(QUEUE_FLAG_STACKABLE, md->queue);
--	md->saved_make_request_fn = md->queue->make_request_fn;
--	md->queue->queuedata = md;
--	md->queue->backing_dev_info.congested_fn = dm_any_congested;
--	md->queue->backing_dev_info.congested_data = md;
--	blk_queue_make_request(md->queue, dm_request);
--	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
--	md->queue->unplug_fn = dm_unplug_all;
--	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
--	blk_queue_softirq_done(md->queue, dm_softirq_done);
--	blk_queue_prep_rq(md->queue, dm_prep_fn);
--	blk_queue_lld_busy(md->queue, dm_lld_busy);
--	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN_FLUSH,
--			  dm_rq_prepare_flush);
-+	dm_init_md_queue(md);
- 
- 	md->disk = alloc_disk(1);
- 	if (!md->disk)
-@@ -2158,6 +2157,49 @@ unsigned dm_get_md_type(struct mapped_de
- 	return md->type;
- }
- 
-+/*
-+ * Fully initialize a request-based queue (->elevator, ->request_fn, etc).
-+ */
-+static int dm_init_request_based_queue(struct mapped_device *md)
-+{
-+	struct request_queue *q = NULL;
-+
-+	if (md->queue->elevator)
-+		return 1;
-+
-+	/* Fully initialize the queue */
-+	q = blk_init_allocated_queue(md->queue, dm_request_fn, NULL);
-+	if (!q)
-+		return 0;
-+
-+	md->queue = q;
-+	md->saved_make_request_fn = md->queue->make_request_fn;
-+	dm_init_md_queue(md);
-+	blk_queue_softirq_done(md->queue, dm_softirq_done);
-+	blk_queue_prep_rq(md->queue, dm_prep_fn);
-+	blk_queue_lld_busy(md->queue, dm_lld_busy);
-+	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN_FLUSH,
-+			  dm_rq_prepare_flush);
-+
-+	elv_register_queue(md->queue);
-+
-+	return 1;
-+}
-+
-+/*
-+ * Setup the DM device's queue based on md's type
-+ */
-+int dm_setup_md_queue(struct mapped_device *md)
-+{
-+	if ((dm_get_md_type(md) == DM_TYPE_REQUEST_BASED) &&
-+	    !dm_init_request_based_queue(md)) {
-+		DMWARN("Cannot initialize queue for Request-based dm");
-+		return -EINVAL;
-+	}
-+
-+	return 0;
-+}
-+
- static struct mapped_device *dm_find_md(dev_t dev)
- {
- 	struct mapped_device *md;
-Index: linux-2.6/drivers/md/dm.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm.h
-+++ linux-2.6/drivers/md/dm.h
-@@ -71,6 +71,8 @@ void dm_unlock_md_type(struct mapped_dev
- void dm_set_md_type(struct mapped_device *md, unsigned type);
- unsigned dm_get_md_type(struct mapped_device *md);
- 
-+int dm_setup_md_queue(struct mapped_device *md);
-+
- /*
-  * To check the return value from dm_table_find_target().
-  */
+We are working on it and would post the path-selector patch soon. 
+
+Thanks,
+ Naren.
+
+
+
+-----Original Message-----
+From: Kiyoshi Ueda [mailto:k-ueda@ct.jp.nec.com] 
+Sent: Tuesday, June 29, 2010 7:10 AM
+To: Narendran Ganapathy
+Cc: device-mapper development; Parind Shah; Jason Shamberger;
+agk@redhat.com
+Subject: Re: [dm-devel] [PATCH 1/1] dm-mpath: Extend path selector
+interface for supporting Dell EqualLogic path selector
+
+Hi,
+
+On 06/28/2010 10:53 PM +0900, Narendran Ganapathy wrote:
+> This patch extends the dm-path-selector interface to allow path
+> selectors to use extra information from the IO request when selecting
+> a path.
+>
+> Dell EqualLogic and other iSCSI storage arrays use a distributed
+> frameless architecture.  In this architecture, the storage group
+> consists of a number of distinct storage arrays ("members"),
+> each having independent controllers, disk storage and network
+adapters.
+> When a LUN is created it is spread across multiple members.
+> The details of the distribution are hidden from initiators connected
+to
+> this storage system.  The storage group exposes a single target
+> discovery portal, no matter how many members are being used.
+> When iSCSI sessions are created, each session is connected to an eth
+> port on a single member.  Data to a LUN can be sent on any iSCSI
+> session, and if the blocks being accessed are stored on another
+> member the IO will be forwarded as required.  This forwarding is
+> invisible to the initiator.  The storage layout is also dynamic,
+> and the blocks stored on disk may be moved from member to member
+> as needed to balance the load.
+>
+> This architecture simplifies the management and configuration of both
+> the storage group and initiators.  In a multipathing configuration,
+> it is possible to set up multiple iSCSI sessions to use multiple
+> network interfaces on both the host and target to take advantage of
+> the increased network bandwidth.  An initiator can use a simple round
+> robin algorithm to send IO on all paths and let the storage array
+> members forward it as necessary.  However, there is a performance
+> advantage to sending data directly to the correct member.
+> At the same time, the existing techniques of building a separate
+> priority group for paths to each controller does not fit this model,
+> because the block ranges may be moved at any time from member to
+member,
+> and it is also acceptable to send IO to any member in the group when
+> no direct path exists or there is a path error.
+>
+> We propose to develop a new path selector to perform this
+location-based
+> routing.  The basic idea is to use knowledge about the current
+location
+> of data to prefer paths directly to the owning member, but fall back
+to
+> use any available path when no direct path is available.
+> This submission includes the necessary changes to the dm-path-selector
+> interface.  In the current interface, the only information passed
+> to the select_path routine is the path_selector struct and the number
+> of bytes in the request.  To do location based routing, we need
+> the address information of the request.
+
+Interesting.
+How can the path-selector know which path owns which location?
+
+I can just see "it's invisible from initiator" from your explanation
+above, so I can't understand why the path-selector can choose the best
+path which is directly connected to the member owning the location.
+It can just guess using the new path-selector parameters below?
+
+
+> We propose to extend the path selector interface to pass the entire
+> request pointer to the 'select_path' / 'start_io' /  'end_io'
+functions
+> so that the path selector can use any information therein to route
+> the I/O.
+>
+> We also propose extending the dm_mpath_io structure used to hold
+> information about each I/O to include extra fields for the path
+> selector to store I/O specific flags and a timestamp, so the path
+> selector can determine the latency of I/Os on different paths and
+> that information is passed to the 'select_path' / 'start_io' /
+'end_io'
+> functions for path selector usage. These additions to the dm_mpath_io
+> allow future flexibility in developing algorithms that route IO based
+> on other information from the request in the future.
+
+I disagree with passing 'struct request' directly to path-selector.
+As I said at http://marc.info/?l=dm-devel&m=123330286327402&w=2,
+I think we should keep independency of path-selector from the type of
+I/O structure as much as possible, since bio-based targets may want
+to use them in the future (e.g. read balancing of dm-mirror).
+
+So I would prefer the way below:
+  o define what parameters are needed (now and in the future)
+  o pass them to path-selector
+
+
+Also, please post your path-selector patch if you already have,
+so that people can understand your needs much correctly.
+
+Thanks,
+Kiyoshi Ueda
