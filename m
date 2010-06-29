@@ -1,52 +1,34 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] [RFC] [PATCH] Add alias_prefix to get
- multipath names based on	storage type
-Date: Tue, 29 Jun 2010 07:57:18 +0200
-Message-ID: <4C298B3E.7030907@suse.de>
-References: <b4d519b4bbc657671382.1277260053@malahal>
-	<20100628230737.GA17462@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Boaz Harrosh <bharrosh@panasas.com>
+Subject: Re: [PATCH 1/2] block: fix leaks associated with discard request
+ payload
+Date: Tue, 29 Jun 2010 11:00:51 +0300
+Message-ID: <4C29A833.1060704@panasas.com>
+References: <20100622180029.GA15950@redhat.com>	<1277582211-10725-1-git-send-email-snitzer@redhat.com>	<1277652576.4366.19.camel@mulgrave.site> <yq1sk47dqmd.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100628230737.GA17462@us.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@free.fr, dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <yq1sk47dqmd.fsf@sermon.lab.mkp.net>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: James Bottomley <James.Bottomley@suse.de>, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, axboe@kernel.dk, dm-devel@redhat.com, linux-kernel@vger.kernel.org, akpm@linux-foundation.org, linux-scsi@vger.kernel.org, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 List-Id: dm-devel.ids
 
-Malahal Naineni wrote:
-> Any comments??
-> =
+On 06/28/2010 08:16 PM, Martin K. Petersen wrote:
+> I'm still dreaming of the day where libata moves out from under SCSI so
+> we don't have to translate square pegs into round holes...
+> 
 
-> Malahal Naineni [malahal@us.ibm.com] wrote:
->> The current multipath tools use "mpath" prefix for all LUNs when
->> user_friendly_names is set. It would be nice if the names are generated
->> based on the storage subsystem. For example, all EMC LUNs would be named
->> emc_a, emc_b, elm_c etc., and all IBM's SVC LUNs would be named svc_a,
->> svc_b, svc_c. This patch attempts to do that using only multipath.conf.
->> Patches can be added to the internal hardware table, if needed.
->>
-I like it. Having an option to modify the alias prefix is something
-I always wanted to have.
-You could update the manpage, though.
+Hi Martin.
 
-Acked-by: Hannes Reinecke <hare@suse.de>
+Is that on the Radar still? what would you say are the major issues holding
+it back?
 
-Cheers,
+* Is it just the missing new ULD, Will we be using a new ULD?
+* Is it the ata midlayer that would duplicate some of scsi-midlayer.
+  (Not so much these days, lots of good code went into blk_rq_)
+* Is it the distro's setup procedures changing yet again back to the
+  hd vs sd times.
 
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+Thanks
+Boaz
