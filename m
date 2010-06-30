@@ -1,22 +1,20 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [RFC 1/2] block: implement an unprep function corresponding
  directly to prep
-Date: Wed, 30 Jun 2010 13:23:09 -0400
-Message-ID: <20100630172308.GA14409@redhat.com>
+Date: Wed, 30 Jun 2010 19:51:14 +0200
+Message-ID: <4C2B8412.6040807@kernel.dk>
 References: <1277917264.2839.153.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <1277917264.2839.153.camel@mulgrave.site>
 Sender: linux-scsi-owner@vger.kernel.org
 To: James Bottomley <James.Bottomley@suse.de>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, linux-scsi <linux-scsi@vger.kernel.org>, dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, linux-scsi <linux-scsi@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jun 30 2010 at  1:01pm -0400,
-James Bottomley <James.Bottomley@suse.de> wrote:
-
+On 30/06/10 19.01, James Bottomley wrote:
 > So this is more directly what I'm thinking.  It gives us an exactly
 > correct place to hang the discard allocation in SCSI.  The next patch
 > shows a potential implementation in sd.
@@ -25,13 +23,8 @@ James Bottomley <James.Bottomley@suse.de> wrote:
 > move the discard allocation/free into scsi.  I also think it should
 > facilitate sending discard through SCSI as a REQ_TYPE_FS.
 
-Thanks james!
+This is so much better than the other hacks, thanks for doing this.
 
-I'll look to take this template and layer in Christoph's approach to
-pushing the page allocation down into SCSI.
+-- 
+Jens Axboe
 
-I'll also look at Tomo's REQ_TYPE_FS changes for discard.
-
-I'll report back as soon as I have something.
-
-Mike
