@@ -1,17 +1,15 @@
-From: "Riches Jr, RobertX M" <robertx.m.riches.jr@intel.com>
-Subject: Re: Is there a way to see updated contents of a
-	DM	target's underlying device while the DM target is in use?
-Date: Wed, 30 Jun 2010 16:53:23 -0700
-Message-ID: <4BD43A85686FC34D819098DB1C3999D99E419AA2@orsmsx502.amr.corp.intel.com>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: Is there a way to see updated contents of a DM
+ target's underlying device while the DM target is in use?
+Date: Thu, 1 Jul 2010 10:22:03 +1000
+Message-ID: <20100701102203.51d9a8fc@notabene.brown>
 References: <4BD43A85686FC34D819098DB1C3999D99E4199BA@orsmsx502.amr.corp.intel.com>
-	<20100630230828.GX23989@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="_002_4BD43A85686FC34D819098DB1C3999D99E419AA2orsmsx502amrcor_"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100630230828.GX23989@agk-dp.fab.redhat.com>
-Content-Language: en-US
+In-Reply-To: <4BD43A85686FC34D819098DB1C3999D99E4199BA@orsmsx502.amr.corp.intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,81 +19,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: "Dm-Devel Mailing List Send-To Address (dm-devel@redhat.com)" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: robertx.m.riches.jr@intel.com
 List-Id: dm-devel.ids
 
---_002_4BD43A85686FC34D819098DB1C3999D99E419AA2orsmsx502amrcor_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+On Wed, 30 Jun 2010 15:54:08 -0700
+"Riches Jr, RobertX M" <robertx.m.riches.jr@intel.com> wrote:
 
-Thank you for the wise council to carefully check my code.  I certainly int=
-end to do that.
+> (New list member, just subscribed.  Apologies if this is not the right list for this question.)
+> 
+> Is there a way to see the updated contents of a DM target's underlying device while the DM target is in use?  I Googled and searched in documentation and existing code for an answer but was not able to find it.
+> 
+> Background:
+> 
+> I'm debugging a DM target that does change-tracking.  It's a combination of code from dm-linear, Alberto Bertogli's dm-csum, dm-delay, and some original code.  (The project architect does intend to properly release it under GPL per the license of the incorporated GPL pieces.)  The target reserves an early portion of the underlying device and exposes/creates/supports a device that is a linear mapping of the rest of the underlying device.  The idea is each write to the exposed device sets a corresponding bit in the reserved portion, using the write barrier trick from dm-csum's 'same' mode, to indicate which parts of the exposed device have been modified and which have not.  (I had earlier tried to use the userspace dirty-logging facility but found it to not meet our needs.)
+> 
+> The target is intended to be used with LVM snapshots to do block-device-level backups.  (I'm aware of filesystem-level issues with that, but the requirement is the requirement.)  The underlying device for the DM target will be an LVM logical volume.  The backup manager will send a dmsetup message to the DM target to hold all writes (and maybe reads) on indefinite delay, create an LVM snapshot of the DM target's underlying device, then flush the held bios and resume normal operation.
+> 
+> Problem:
+> 
+> The current problem I have is many updates are not visible in the DM target's underlying device until I do a 'dmsetup remove'.  When I look at the underlying device (an LVM LV) prior to 'dmsetup remove', it's not reliable whether I see what has been written by the DM target.  I have verified that the bios go out and the callbacks are called.
 
-However, I am able to reproduce the symptom using the standard dm-linear mo=
-dule supplied with the x86_64 kernel that comes with Ubuntu Karmic.  With t=
-he attached script, the first 'od' on /dev/vg1/lv1, done before 'dmsetup re=
-move', shows the first part of the file contains 0x00.  A second 'od' after=
- 'dmsetup remove' shows the file contains random data.
+try blockdev --flushbufs
+on the device before reading it.
+Or issue the ioctl yourself.
+Or use O_DIRECT to read.
 
-I didn't see any queues or caches in dm-linear that would need to be flushe=
-d.
+I suspect you are reading from the page cache for the device, while dm-linear
+reads/writes directly to the device avoiding the page cache.
 
-Any other suggestions?
-
-Thanks,
-
-Robert Riches
-Azad Consultant at Intel
-=20
------Original Message-----
-From: Alasdair G Kergon [mailto:agk@redhat.com]=20
-Sent: Wednesday, June 30, 2010 4:08 PM
-To: Riches Jr, RobertX M
-Cc: Dm-Devel Mailing List Send-To Address (dm-devel@redhat.com)
-Subject: Re: [dm-devel] Is there a way to see updated contents of a DM targ=
-et's underlying device while the DM target is in use?
-
-Sounds like a coding problem you need to debug...check your device stack - =
-and the
-code you are using to look for the change - carefully, check where you are
-queueing/flushing/caching etc.
-
-Alasdair
+NeilBrown
 
 
---_002_4BD43A85686FC34D819098DB1C3999D99E419AA2orsmsx502amrcor_
-Content-Type: application/octet-stream; name="test02linear"
-Content-Description: test02linear
-Content-Disposition: attachment; filename="test02linear"; size=1013;
-	creation-date="Wed, 30 Jun 2010 16:50:52 GMT";
-	modification-date="Wed, 30 Jun 2010 16:50:52 GMT"
-Content-Transfer-Encoding: base64
-
-IyEvYmluL2NzaCAtZgoKIyBDLXNoZWxsIHNjcmlwdCB0byBydW4gcGFydCBBIG9mIHRlc3QgMDIg
-YnV0IHVzaW5nIHRoZSBfTElORUFSXyB0YXJnZXQuCgplY2hvICdjcmVhdGluZyBuZXcgcHYgZmls
-ZScKZGQgaWY9L2Rldi96ZXJvIG9mPWRldjAxIGJzPTUxMiBjb3VudD0yMTA1MzQ0CmVjaG8gJycK
-CmVjaG8gJ3NldHRpbmcgdXAgbHYnCmxvc2V0dXAgL2Rldi9sb29wMCBkZXYwMQpwdmNyZWF0ZSAv
-ZGV2L2xvb3AwCnZnY3JlYXRlIHZnMSAvZGV2L2xvb3AwCmx2Y3JlYXRlIC1MIDEwMjRNIC1uIGx2
-MSB2ZzEKCmVjaG8gJ3NldHRpbmcgdXAgbGluZWFyIG1hcHBpbmcnCmRtc2V0dXAgY3JlYXRlIGZy
-ZWQwMSAtLXRhYmxlICcwIDIwOTcxNTIgbGluZWFyIC9kZXYvdmcxL2x2MSAwJwoKZWNobyAnd3Jp
-dGluZyB0aGUgd2hvbGUgdGhpbmcnCnNsZWVwIDMKZGQgaWY9L2Rldi91cmFuZG9tIG9mPS9kZXYv
-bWFwcGVyL2ZyZWQwMSBicz04MTkyCmVjaG8gJycKCmVjaG8gJ21ha2luZyBhIGNvcHknCnNsZWVw
-IDMKY3AgLWkgL2Rldi92ZzEvbHYxIHp6LmZpbGUKZWNobyAnJwoKZWNobyAnZG9pbmcgYSBmaXJz
-dCBkaWZmJwpzbGVlcCAzCmRpZmYgL2Rldi92ZzEvbHYxIHp6LmZpbGUKZWNobyBmaXJzdCBkaWZm
-IHN0YXR1cyB3YXMgJHN0YXR1cwplY2hvICcnCgplY2hvICdzaG93aW5nIHRoZSBmaXJzdCBjb250
-ZW50cycKb2QgLUEgeCAteGMgL2Rldi92ZzEvbHYxIHwgaGVhZAplY2hvICcnCgplY2hvICdyZW1v
-dmluZyB0aGUgbGluZWFyIG1hcHBpbmcgc28gdGhlIGNoYW5nZXMgY2FuIGJlIHNlZW4nCnNsZWVw
-IDMKZG1zZXR1cCByZW1vdmUgZnJlZDAxCmVjaG8gJycKCmVjaG8gJ3Nob3dpbmcgdGhlIHNlY29u
-ZCBjb250ZW50cycKb2QgLUEgeCAteGMgL2Rldi92ZzEvbHYxIHwgaGVhZAplY2hvICcnCgplY2hv
-ICdkb2luZyBhIHNlY29uZCBkaWZmJwpzbGVlcCAzCmRpZmYgL2Rldi92ZzEvbHYxIHp6LmZpbGUK
-ZWNobyBzZWNvbmQgZGlmZiBzdGF0dXMgd2FzICRzdGF0dXMKZWNobyAnJwo=
-
---_002_4BD43A85686FC34D819098DB1C3999D99E419AA2orsmsx502amrcor_
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---_002_4BD43A85686FC34D819098DB1C3999D99E419AA2orsmsx502amrcor_--
+> 
+> Any suggestions toward being able to reliably see (as in copy out) data from the underlying device or making an LVM snapshot of it while my change-tracking DM target module is still in use?
+> 
+> Thanks,
+> 
+> Robert Riches
+> Azad Consultant at Intel
+> 
+> 
