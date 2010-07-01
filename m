@@ -1,42 +1,31 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re:
-Date: Thu, 01 Jul 2010 14:29:48 +0200
-Message-ID: <4C2C8A3C.8000803@kernel.dk>
-References: <1277981359-10717-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Avoiding lvm shell crashes on white space only line
+Date: Thu, 1 Jul 2010 12:05:35 +0100
+Message-ID: <20100701110535.GC23989@agk-dp.fab.redhat.com>
+References: <AANLkTinXwJwplPoZw-AtbzuzKTMuYl6D5x_VbxvKZq7G@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1277981359-10717-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-Sender: linux-scsi-owner@vger.kernel.org
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Cc: snitzer@redhat.com, hch@lst.de, James.Bottomley@suse.de, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <AANLkTinXwJwplPoZw-AtbzuzKTMuYl6D5x_VbxvKZq7G@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Xinwei Hu <hxinwei@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2010-07-01 12:49, FUJITA Tomonori wrote:
-> This patchset fixes page leak issue in discard commands with unprep
-> facility that James posted:
-> 
-> http://marc.info/?l=linux-scsi&m=127791727508214&w=2
-> 
-> The 1/3 patch adds unprep facility to the block layer (identical to
-> what James posted).
-> 
-> The 2/3 patch frees a page for discard commands by using the unprep
-> facility. James' original patch doesn't work since it accesses to
-> rq->bio in q->unprep_rq_fn. We hit oops since q->unprep_rq_fn is
-> called when all the data buffer (req->bio and scsi_data_buffer) in the
-> request is freed.
-> 
-> I use rq->buffer to keep track of an allocated page as the block layer
-> sets rq->buffer to the address of bio's page. scsi-ml (and llds) don't
-> use rq->buffer (rq->buffer is set to NULL). So I can't say that I like
-> it lots. Any other way to do that?
-> 
-> The 3/3 path just removes the dead code.
+On Thu, Jul 01, 2010 at 02:32:48PM +0800, Xinwei Hu wrote:
+>   lvm shell crashes on white-space only lines.
 
-I've queued up these three for 2.6.36.
-
--- 
-Jens Axboe
-
+Well-spotted!
+ 
+Alasdair
