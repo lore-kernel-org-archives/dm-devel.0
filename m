@@ -1,38 +1,60 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Is there a way to see updated contents of a
-	DM	target's underlying device while the DM target is in use?
-Date: Thu, 1 Jul 2010 02:49:36 +0100
-Message-ID: <20100701014936.GA23989@agk-dp.fab.redhat.com>
-References: <4BD43A85686FC34D819098DB1C3999D99E4199BA@orsmsx502.amr.corp.intel.com>
-	<20100630230828.GX23989@agk-dp.fab.redhat.com>
-	<4BD43A85686FC34D819098DB1C3999D99E419AA2@orsmsx502.amr.corp.intel.com>
-	<20100701005156.GY23989@agk-dp.fab.redhat.com>
-	<20100701010309.GC24284@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [RFC 1/2] block: implement an unprep function corresponding
+ directly to prep
+Date: Wed, 30 Jun 2010 23:47:31 -0400
+Message-ID: <20100701034731.GA9499@redhat.com>
+References: <1277917264.2839.153.camel@mulgrave.site>
+ <20100701104653O.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20100701010309.GC24284@us.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <20100701104653O.fujita.tomonori@lab.ntt.co.jp>
+Sender: linux-scsi-owner@vger.kernel.org
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: James.Bottomley@suse.de, hch@lst.de, axboe@kernel.dk, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jun 30, 2010 at 06:03:09PM -0700, Malahal Naineni wrote:
-> Alasdair G Kergon [agk@redhat.com] wrote:
-> > Add conv=odirect to dd
+Hi,
+
+On Wed, Jun 30 2010 at  9:47pm -0400,
+FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp> wrote:
+
+> On Wed, 30 Jun 2010 12:01:04 -0500
+> James Bottomley <James.Bottomley@suse.de> wrote:
+> 
+> > So this is more directly what I'm thinking.  It gives us an exactly
+> > correct place to hang the discard allocation in SCSI.  The next patch
+> > shows a potential implementation in sd.
+> 
+> Yeah, making the prep_rq_fn API symmetrical makes sense lots.
+> 
+>  
+> > I think it should avoid all the leaks people have been seeing trying to
+> > move the discard allocation/free into scsi.  I also think it should
+> > facilitate sending discard through SCSI as a REQ_TYPE_FS.
+> 
+> I think so. If I can figure out why qemu scsi driver is broken, the
+> job is done.
+
+When I combine this patch 1/2 and patch 2/2 with Christoph's discard
+payload rework (a1d949f5f448) already staged in for-2.6.36 I'm finding
+that: sd_unprep_fn's __free_page causes the system to hard hang/crash.
+I need to get serial connected and/or kdump configured to see if I can
+catch what is happening.
+
+But if I comment out sd_unprep_fn's __free_page() from James' patch 2/2
+I don't see a crash.  Seems some other code is altering the request
+before James' new sd_unprep_fn hhook?
+
+Are James' patches meant to be dependent on your REQ_TYPE_FS conversion
+work?  I wouldn't think so.. but I haven't traced the call chains close
+enough to know.
  
-> You mean flags 
+> I'll see how this patchset works and update my FS discard patchset on
+> the top of this.
 
-Yeah - it's getting late here...
+I look forward to your results!
 
-Alasdair
+Thanks,
+Mike
