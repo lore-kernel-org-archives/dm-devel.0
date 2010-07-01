@@ -1,19 +1,19 @@
-From: "Riches Jr, RobertX M" <robertx.m.riches.jr@intel.com>
-Subject: Re: Is there a way to see updated contents of a
-	DM	target's underlying device while the DM target is in use?
-Date: Thu, 1 Jul 2010 09:46:07 -0700
-Message-ID: <4BD43A85686FC34D819098DB1C3999D99E591E16@orsmsx502.amr.corp.intel.com>
-References: <4BD43A85686FC34D819098DB1C3999D99E4199BA@orsmsx502.amr.corp.intel.com>
-	<20100630230828.GX23989@agk-dp.fab.redhat.com>
-	<4BD43A85686FC34D819098DB1C3999D99E419AA2@orsmsx502.amr.corp.intel.com>
-	<20100701005156.GY23989@agk-dp.fab.redhat.com>
+From: "Allen, Jack" <Jack.Allen@mckesson.com>
+Subject: Re: Rescan for new LUNs
+Date: Thu, 1 Jul 2010 13:38:07 -0400
+Message-ID: <230ED15F81AFD3409345FFA4E565F0E50B8B588B@NDHV3000.na.corp.mckesson.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100701005156.GY23989@agk-dp.fab.redhat.com>
-Content-Language: en-US
+Content-class: Produced By Microsoft Exchange V6.5
+In-Reply-To: Produced By Microsoft Exchange V6.5
+References: Produced By Microsoft Exchange V6.5
+Content-class: urn:content-classes:message
+In-Reply-To: <20100701010738.GA24883@us.ibm.com>
+References: <230ED15F81AFD3409345FFA4E565F0E50B83D8E1@NDHV3000.na.corp.mckesson.com>
+	<20100701010738.GA24883@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,47 +23,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: "Dm-Devel Mailing List Send-To Address (dm-devel@redhat.com)" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Many thanks to those who responded with helpful suggestions.  A couple of the suggestions were sufficient to make my test script behave as I expect--to liberate the data that had been stuck in the page cache twilight zone.  :-)
+ =
 
-For the benefit of anyone who might come across the archives with a similar problem, here's what worked and what didn't, with all actions taken between writing and reading:
 
-  - Using 'dd -iflag=direct' to read from /dev/vg1/lv1 (the underlying device) worked.
-
-  - Doing 'blockdev --flushbufs /dev/vg1/lv1' (on the underlying device) worked.
-
-  - Doing 'blockdev --flushbufs /dev/mapper/fred01' (on the device exposed by dm-linear or my module) did not solve the problem.
-
-  - Doing 'dmsetup suspend fred01' did not work.
-
-  - Doing fsync() on /dev/mapper/fred01 did not work.
-
-  - Doing fsync() on /dev/vg1/lv1 did not work.
-
-Of those above that "worked", each was independently sufficient to solve the problematic symptoms. IOW, I only had to apply one solution, not all of them.
-
-Again, thanks for all the solutions.
-
-Robert Riches
-Azad Consultant at Intel
- 
 -----Original Message-----
-From: Alasdair G Kergon [mailto:agk@redhat.com] 
-Sent: Wednesday, June 30, 2010 5:52 PM
-To: Riches Jr, RobertX M
-Cc: Dm-Devel Mailing List Send-To Address (dm-devel@redhat.com)
-Subject: Re: [dm-devel] Is there a way to see updated contents of a DM target's underlying device while the DM target is in use?
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On B=
+ehalf Of Malahal Naineni
+Sent: Wednesday, June 30, 2010 9:08 PM
+To: dm-devel@redhat.com
+Subject: Re: [dm-devel] Rescan for new LUNs
 
-On Wed, Jun 30, 2010 at 04:53:23PM -0700, Riches Jr, RobertX M wrote:
-> I didn't see any queues or caches in dm-linear that would need to be flushed.
- 
-It's your test script that is not behaving as you expect:)
+Allen, Jack [Jack.Allen@mckesson.com] wrote:
+>    Hello:
+>    =A0=A0=A0=A0=A0=A0=A0 What is the best way to cause the system to resc=
+an for new LUNs,
+>    other than rebooting?
 
-Add conv=odirect to dd
+Writing something to some files in sysfs. If none of the LUNs are in
+use, "modprobe -r <module>" followed by "modprobe <module>" will also
+work.
 
-Add blockdev --flushbufs after other writes.
+Thanks, Malahal.
 
-Alasdair
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Something to some file is not very helpful. And the other LUNs are in use. =
+I am just trying to keep from having to reboot if I really do not need to.
+
+----
+Jack Allen
