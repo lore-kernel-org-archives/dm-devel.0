@@ -1,35 +1,38 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [RFC 1/2] block: implement an unprep function corresponding
- directly to prep
-Date: Thu, 1 Jul 2010 10:47:12 +0900
-Message-ID: <20100701104653O.fujita.tomonori@lab.ntt.co.jp>
-References: <1277917264.2839.153.camel@mulgrave.site>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Is there a way to see updated contents of a
+	DM	target's underlying device while the DM target is in use?
+Date: Thu, 1 Jul 2010 02:49:36 +0100
+Message-ID: <20100701014936.GA23989@agk-dp.fab.redhat.com>
+References: <4BD43A85686FC34D819098DB1C3999D99E4199BA@orsmsx502.amr.corp.intel.com>
+	<20100630230828.GX23989@agk-dp.fab.redhat.com>
+	<4BD43A85686FC34D819098DB1C3999D99E419AA2@orsmsx502.amr.corp.intel.com>
+	<20100701005156.GY23989@agk-dp.fab.redhat.com>
+	<20100701010309.GC24284@us.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1277917264.2839.153.camel@mulgrave.site>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James.Bottomley@suse.de
-Cc: snitzer@redhat.com, hch@lst.de, axboe@kernel.dk, fujita.tomonori@lab.ntt.co.jp, linux-scsi@vger.kernel.org, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20100701010309.GC24284@us.ibm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 30 Jun 2010 12:01:04 -0500
-James Bottomley <James.Bottomley@suse.de> wrote:
-
-> So this is more directly what I'm thinking.  It gives us an exactly
-> correct place to hang the discard allocation in SCSI.  The next patch
-> shows a potential implementation in sd.
-
-Yeah, making the prep_rq_fn API symmetrical makes sense lots.
-
+On Wed, Jun 30, 2010 at 06:03:09PM -0700, Malahal Naineni wrote:
+> Alasdair G Kergon [agk@redhat.com] wrote:
+> > Add conv=odirect to dd
  
-> I think it should avoid all the leaks people have been seeing trying to
-> move the discard allocation/free into scsi.  I also think it should
-> facilitate sending discard through SCSI as a REQ_TYPE_FS.
+> You mean flags 
 
-I think so. If I can figure out why qemu scsi driver is broken, the
-job is done.
+Yeah - it's getting late here...
 
-I'll see how this patchset works and update my FS discard patchset on
-the top of this.
+Alasdair
