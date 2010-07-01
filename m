@@ -1,13 +1,17 @@
-From: Oren Held <oren@held.org.il>
-Subject: Re: Rescan for new LUNs
-Date: Thu, 01 Jul 2010 09:55:13 +0300
-Message-ID: <4C2C3BD1.2070207@held.org.il>
-References: <230ED15F81AFD3409345FFA4E565F0E50B83D8E1@NDHV3000.na.corp.mckesson.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 1/1] dm-mpath: Extend path selector interface
+ for	supporting Dell EqualLogic path selector
+Date: Thu, 01 Jul 2010 09:01:55 +0200
+Message-ID: <4C2C3D63.1030605@suse.de>
+References: <86A3089001A44141B76B882059E7E53B01E87A3B@M31.equallogic.com>
+	<4C29AF82.7020703@suse.de>
+	<86A3089001A44141B76B882059E7E53B05968CCF@M31.equallogic.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4642562786948755840=="
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-reply-to: <230ED15F81AFD3409345FFA4E565F0E50B83D8E1@NDHV3000.na.corp.mckesson.com>
+In-Reply-To: <86A3089001A44141B76B882059E7E53B05968CCF@M31.equallogic.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,94 +21,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Jason Shamberger <Jason_Shamberger@Dell.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Parind Shah <Parind_Shah@Dell.com>, Narendran Ganapathy <Narendran_Ganapathy@Dell.com>, agk@redhat.com, christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+Jason Shamberger wrote:
+> Hannes,
+> =
 
---===============4642562786948755840==
-Content-type: multipart/alternative;
-	boundary="Boundary_(ID_SBHBWzhYYm0SJ01PiiGpbA)"
-
-This is a multi-part message in MIME format.
-
---Boundary_(ID_SBHBWzhYYm0SJ01PiiGpbA)
-Content-type: text/plain; charset=ISO-8859-1; format=flowed
-Content-transfer-encoding: 7BIT
-
-It's not an easy process.
-
-The rescan-scsi-bus.sh script was added in recent RHEL5 updates, already 
-in old SLES. I guess it's becoming kind of a standard.
-
-On 07/01/10 04:00, Allen, Jack wrote:
->
-> Hello:
-> What is the best way to cause the system to rescan for new LUNs, other 
-> than rebooting?
->
-> -----
-> Jack Allen
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> Thanks for the feedback.  I looked through the spec you mentioned, and th=
+e logical block dependent ALUA
+> functionality is similar to what we are trying to accomplish, however it =
+is not a good fit with our storage
+> array architecture.  Our storage array exposes all LUNs through a single =
+Target Port Group, whereas multiple
+> TPGs are needed for the ALUA functionality.  The design choice of a singl=
+e TPG was made to simplify the
+> logic on the initiator side.  The client does not need to decide which TP=
+G(s) to connect to, it always
+> connects to the single Target Port Group and the storage array decides wh=
+ere to place the connections
+> through use of iSCSI redirection.
+> =
 
 
---Boundary_(ID_SBHBWzhYYm0SJ01PiiGpbA)
-Content-type: text/html; charset=ISO-8859-1
-Content-transfer-encoding: 7BIT
+I still think it should be possible to use the ALUA infrastructure here.
+As you are using iSCSI redirection _all_ nodes in you storage cluster alrea=
+dy will have to have
+an iSCSI interface. To have your proposed functionality mapped on LB-ALUA y=
+ou only have to
+expose each of these interfaces, and have the mapping shared between all of=
+ these
+nodes (which you have to do anyway).
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-  <meta content="text/html; charset=ISO-8859-1"
- http-equiv="Content-Type">
-  <title></title>
-</head>
-<body text="#000000" bgcolor="#ffffff">
-It's not an easy process.<br>
-<br>
-The rescan-scsi-bus.sh script was added in recent RHEL5 updates,
-already in old SLES. I guess it's becoming kind of a standard.<br>
-<br>
-On 07/01/10 04:00, Allen, Jack wrote:
-<blockquote
- cite="mid:230ED15F81AFD3409345FFA4E565F0E50B83D8E1@NDHV3000.na.corp.mckesson.com"
- type="cite">
-  <meta name="Generator" content="MS Exchange Server version 6.5.7655.4">
-  <title>Rescan for new LUNs</title>
-<!-- Converted from text/rtf format -->
-  <p><font face="Arial" size="2">Hello:</font>
-  <br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <font face="Arial" size="2">What is the best way to cause the
-system to rescan for new LUNs, other than rebooting?</font>
-  </p>
-  <p><font face="Arial" size="2">-----</font>
-  <br>
-  <font face="Arial" size="2">Jack Allen</font>
-  </p>
-  <pre wrap="">
-<fieldset class="mimeAttachmentHeader"></fieldset>
---
-dm-devel mailing list
-<a class="moz-txt-link-abbreviated" href="mailto:dm-devel@redhat.com">dm-devel@redhat.com</a>
-<a class="moz-txt-link-freetext" href="https://www.redhat.com/mailman/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a></pre>
-</blockquote>
-<br>
-</body>
-</html>
+Assume two nodes A and B with iSCSI interfaces A1 and B1 both serving LUN1.
+One part LUN1a residing on node A and the other part LUN1b residing on node=
+ B.
 
---Boundary_(ID_SBHBWzhYYm0SJ01PiiGpbA)--
+Each node (and every interface on that node) would reside in it's own SCSI =
+Target Port Group,
+exposing _the entire_ LUN as LB-ALUA capable. Node A would mark LUN1a as 'a=
+ctive/optimized' and
+LUN1b as 'active/non-optimized', node B would mark LUN1b as 'active/optimiz=
+ed' and LUN1a as
+'active/non-optimized'. Any accesses to the 'non-optimized' sections would =
+be forwarded
+to the other nodes via iSCSI redirection.
 
+In effect access would work even when connecting to a single node, and a go=
+od speedup would
+be observed when using an LB-ALUA capable initiator.
 
---===============4642562786948755840==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Yes, you would have to expose several TPGs (basically one group per node), =
+but each LUN would
+be present in each TPG. So it wouldn't matter much to the functionality her=
+e.
 
+> Our goal with this project is to keep the simplicity aspects of our stora=
+ge array architecture,
+> but add a path selector on the linux initiator to choose the optimal path=
+ for each IO.
+> In this framework, we need additional information to be passed to the pat=
+h selector to
+> aid it in choosing the optimal path.
+>  =
 
---===============4642562786948755840==--
+But you have to fight for it, as you're the only one using this infrastruct=
+ure.
+If you would support LB-ALUA you wouldn't be alone in this, as we (as the l=
+inux
+community) would have to support it eventually.
+Plus it's simply is more fun to code against an official standard; propriet=
+ary
+interfaces are a pain to support properly.
+
+And I'd be glad to help in converting multipathing to make it LB-ALUA capab=
+le,
+but my interest in proprietary interfaces is close to zero :-)
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
