@@ -1,42 +1,153 @@
-From: Malahal Naineni <malahal@us.ibm.com>
-Subject: Re: Is there a way to see updated contents of a	DM
- target's underlying device while the DM target is in use?
-Date: Thu, 1 Jul 2010 12:00:17 -0700
-Message-ID: <20100701190017.GC12613@us.ibm.com>
-References: <4BD43A85686FC34D819098DB1C3999D99E4199BA@orsmsx502.amr.corp.intel.com>
-	<20100630230828.GX23989@agk-dp.fab.redhat.com>
-	<4BD43A85686FC34D819098DB1C3999D99E419AA2@orsmsx502.amr.corp.intel.com>
-	<20100701005156.GY23989@agk-dp.fab.redhat.com>
-	<4BD43A85686FC34D819098DB1C3999D99E591E16@orsmsx502.amr.corp.intel.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: scsi: address leak in the error path of discard page allocation
+Date: Thu, 1 Jul 2010 16:15:08 -0400
+Message-ID: <20100701201508.GA28546@redhat.com>
+References: <1277981359-10717-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+ <1277981359-10717-3-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+ <20100701130328.GB19605@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4BD43A85686FC34D819098DB1C3999D99E591E16@orsmsx502.amr.corp.intel.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+In-Reply-To: <20100701130328.GB19605@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: axboe@kernel.dk, hch@lst.de, James.Bottomley@suse.de, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Riches Jr, RobertX M [robertx.m.riches.jr@intel.com] wrote:
-> Many thanks to those who responded with helpful suggestions.  A couple of the suggestions were sufficient to make my test script behave as I expect--to liberate the data that had been stuck in the page cache twilight zone.  :-)
-> 
-> For the benefit of anyone who might come across the archives with a similar problem, here's what worked and what didn't, with all actions taken between writing and reading:
-> 
->   - Using 'dd -iflag=direct' to read from /dev/vg1/lv1 (the underlying device) worked.
-> 
->   - Doing 'blockdev --flushbufs /dev/vg1/lv1' (on the underlying device) worked.
-> 
->   - Doing 'blockdev --flushbufs /dev/mapper/fred01' (on the device exposed by dm-linear or my module) did not solve the problem.
+On Thu, Jul 01 2010 at  9:03am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-I wonder why flushing the underlying device worked but not the actual
-device itself. I expected the opposite! :-(
+> On Thu, Jul 01 2010 at  6:49am -0400,
+> FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp> wrote:
+> 
+> > This fixes discard page leak by using q->unprep_rq_fn facility.
+> > 
+> > q->unprep_rq_fn is called when all the data buffer (req->bio and
+> > scsi_data_buffer) in the request is freed.
+> > 
+> > sd_unprep() uses rq->buffer to free discard page allocated in
+> > sd_prepare_discard().
+> > 
+> > Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+> 
+> Thanks for sorting this out Tomo, all 3 patches work great!
+> 
+> BTW, there is one remaining (rare) leak in the allocation path.
+> 
+> The following patch serves to fix it but I'm not sure if there is a more
+> elegant way to address this.
+
+I've continued to look at this to arrive at alternative implementation.
+Here is a summary of the problem:
+
+A 'scsi_setup_discard_cmnd' return other than BLKPREP_OK will not cause
+a discard request to get completely stripped down ('blk_finish_request'
+isn't calling 'blk_unprep_request' because REQ_DONTPREP is not set by
+'scsi_prep_return' for none BLKPREP_OK return).  Therefore the discard
+request's page will _not_ get cleaned up.
+
+Aside from code inspection, I confirmed this by adding some test code to
+force a one-time initial BLKPREP_DEFER return from
+'scsi_setup_discard_cmnd'.
+
+> An alternative would be to check if the page is already allocated
+> (before allocating the page in scsi_setup_discard_cmnd)?
+
+Unfortunatey this "alternative" won't work because it completely ignores
+the case where BLKPREP_KILL is returned from scsi_setup_discard_cmnd'.
+ 
+> Please advise, thanks.
+
+In short, I'm not too happy that the following patch doesn't allow for
+centralized cleanup of the discard request's page (via sd_unprep_fn).
+But in order to do that we'd likely have to:
+1) relax blk_finish_request's REQ_DONTPREP constraint
+2) add other weird conditionals within blk_unprep_request because
+   the discard request wasn't _really_ prepared?
+
+So given this I'm inclined to stick with the following patch.
+
+Jens and/or James, what do you think?
+
+Mike
+
+> From: Mike Snitzer <snitzer@redhat.com>
+> Subject: scsi: address leak in the error path of discard page allocation
+> 
+> Be sure to free the discard page if scsi_setup_blk_pc_cmnd fails.
+> E.g. Returning BLKPREP_DEFER from scsi_setup_blk_pc_cmnd will not cause
+> the request to be processed by sd_unprep_fn before the request is
+> retried (preparation included).
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> 
+> ---
+>  block/blk-core.c       |   23 +++++++++++++++++++++++
+>  drivers/scsi/sd.c      |    6 +++++-
+>  include/linux/blkdev.h |    1 +
+>  3 files changed, 29 insertions(+), 1 deletion(-)
+> 
+> Index: linux-2.6/drivers/scsi/sd.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/scsi/sd.c
+> +++ linux-2.6/drivers/scsi/sd.c
+> @@ -466,7 +466,11 @@ static int scsi_setup_discard_cmnd(struc
+>  
+>  	blk_add_request_payload(rq, page, len);
+>  	ret = scsi_setup_blk_pc_cmnd(sdp, rq);
+> -	rq->buffer = page_address(page);
+> +	if (ret != BLKPREP_OK) {
+> +		blk_clear_request_payload(rq);
+> +		__free_page(page);
+> +	} else
+> +		rq->buffer = page_address(page);
+>  	return ret;
+>  }
+>  
+> Index: linux-2.6/block/blk-core.c
+> ===================================================================
+> --- linux-2.6.orig/block/blk-core.c
+> +++ linux-2.6/block/blk-core.c
+> @@ -1164,6 +1164,29 @@ void blk_add_request_payload(struct requ
+>  }
+>  EXPORT_SYMBOL_GPL(blk_add_request_payload);
+>  
+> +/**
+> + * blk_clear_request_payload - clear a request's payload
+> + * @rq: request to update
+> + *
+> + * The driver needs to take care of freeing the payload itself.
+> + */
+> +void blk_clear_request_payload(struct request *rq)
+> +{
+> +	struct bio *bio = rq->bio;
+> +
+> +	rq->__data_len = rq->resid_len = 0;
+> +	rq->nr_phys_segments = 0;
+> +	rq->buffer = NULL;
+> +
+> +	bio->bi_size = 0;
+> +	bio->bi_vcnt = 0;
+> +	bio->bi_phys_segments = 0;
+> +
+> +	bio->bi_io_vec->bv_page = NULL;
+> +	bio->bi_io_vec->bv_len = 0;
+> +}
+> +EXPORT_SYMBOL_GPL(blk_clear_request_payload);
+> +
+>  void init_request_from_bio(struct request *req, struct bio *bio)
+>  {
+>  	req->cpu = bio->bi_comp_cpu;
+> Index: linux-2.6/include/linux/blkdev.h
+> ===================================================================
+> --- linux-2.6.orig/include/linux/blkdev.h
+> +++ linux-2.6/include/linux/blkdev.h
+> @@ -781,6 +781,7 @@ extern void blk_insert_request(struct re
+>  extern void blk_requeue_request(struct request_queue *, struct request *);
+>  extern void blk_add_request_payload(struct request *rq, struct page *page,
+>  		unsigned int len);
+> +extern void blk_clear_request_payload(struct request *rq);
+>  extern int blk_rq_check_limits(struct request_queue *q, struct request *rq);
+>  extern int blk_lld_busy(struct request_queue *q);
+>  extern int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
