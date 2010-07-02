@@ -1,60 +1,59 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 4/4] Support discard if at least one
- underlying device supports it
-Date: Fri, 2 Jul 2010 14:14:30 -0400
-Message-ID: <20100702181430.GD26916@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 4/4] Support discard if at least one underlying device
+ supports it
+Date: Fri, 2 Jul 2010 15:49:49 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.1007021107420.7296@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1007021112340.7296@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1007021117580.7296@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+ <Pine.LNX.4.64.1007021112340.7296@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021117580.7296@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
+ <20100702181430.GD26916@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20100702181430.GD26916@redhat.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Jul 02 2010 at 11:19am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
-
-> Support discard if at least one underlying device supports it
+> As we discussed, we have a challenge where we need DM to avoid issuing
+> a barrier before the discard IFF a target doesn't support the discard
+> (which the barrier is paired with).
 > 
-> The previous code was too restrictive. It required that every underlying
-> device supports discard to advertise discard support.
+> My understanding is that blkdev_issue_discard() only cares if the
+> discard was supported.  Barrier is used just to decorate the discard
+> (for correctness).  So by returning -EOPNOTSUPP we're saying the discard
+> isn't supported; we're not making any claims about the implict barrier,
+> so best to avoid the barrier entirely.
 > 
-> If one of the underlying devices doesn't support discard and other does,
-> it makes still sense to advertise discard support and forward discards only
-> to the device that supports them.
+> Otherwise we'll be issuing unnecessary barriers (and associated
+> performance loss).
 > 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> So yet another TODO item... Anyway:
+> 
+> Acked-by: Mike Snitzer <snitzer@redhat.com>
 
-As we discussed, we have a challenge where we need DM to avoid issuing
-a barrier before the discard IFF a target doesn't support the discard
-(which the barrier is paired with).
+Unnecessary barriers are issued anyway. With each freed extent.
 
-My understanding is that blkdev_issue_discard() only cares if the
-discard was supported.  Barrier is used just to decorate the discard
-(for correctness).  So by returning -EOPNOTSUPP we're saying the discard
-isn't supported; we're not making any claims about the implict barrier,
-so best to avoid the barrier entirely.
+The code must issue a "SYNCHRONIZE CACHE" to flush cache for previous 
+writes, then "UNMAP" and then another "SYNCHRONIZE CACHE" to commit that 
+unmap to disk. And this in loop for all extents in 
+"release_blocks_on_commit".
 
-Otherwise we'll be issuing unnecessary barriers (and associated
-performance loss).
+One idea behind "discard barriers" was to submit a discard request and not 
+wait for it. Then the request would need a barrier so that it doesn't get 
+reordered with further writes (that may potentially write to the same area 
+as the discarded area). But discard isn't used this way anyway, 
+sb_issue_discard waits for completion, so the barrier isn't needed.
 
-So yet another TODO item... Anyway:
+Even if ext4 developers wanted asynchronous discard requests, they should 
+fire all the discards at once and then submit one zero-sized barrier. Not 
+barrier with each discard request.
 
-Acked-by: Mike Snitzer <snitzer@redhat.com>
+This is up to ext4 developers to optimize and remove the barriers and we 
+can't do anything with it. Just send "SYNCHRONIZE 
+CACHE"+"UNMAP"+"SYNCHRONIZE CACHE" like the barrier specification wants...
+
+Mikulas
