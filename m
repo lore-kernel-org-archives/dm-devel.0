@@ -1,23 +1,21 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 Subject: Re: scsi: address leak in the error path of discard page allocation
-Date: Thu, 1 Jul 2010 17:07:49 -0400
-Message-ID: <20100701210749.GB28546@redhat.com>
-References: <1277981359-10717-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
- <1277981359-10717-3-git-send-email-fujita.tomonori@lab.ntt.co.jp>
- <20100701130328.GB19605@redhat.com>
- <20100701201508.GA28546@redhat.com>
- <1278015548.2813.147.camel@mulgrave.site>
+Date: Fri, 2 Jul 2010 13:53:14 +0900
+Message-ID: <20100702135300U.fujita.tomonori@lab.ntt.co.jp>
+References: <20100701130328.GB19605@redhat.com>
+	<20100701201508.GA28546@redhat.com>
+	<1278015548.2813.147.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <1278015548.2813.147.camel@mulgrave.site>
 Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@suse.de>
-Cc: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, axboe@kernel.dk, hch@lst.de, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: James.Bottomley@suse.de
+Cc: snitzer@redhat.com, fujita.tomonori@lab.ntt.co.jp, axboe@kernel.dk, hch@lst.de, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Jul 01 2010 at  4:19pm -0400,
+On Thu, 01 Jul 2010 15:19:08 -0500
 James Bottomley <James.Bottomley@suse.de> wrote:
 
 > On Thu, 2010-07-01 at 16:15 -0400, Mike Snitzer wrote:
@@ -81,16 +79,19 @@ James Bottomley <James.Bottomley@suse.de> wrote:
 > assume there's no teardown to do, so the allocation (if it took place)
 > must be reversed before returning them
 
-OK, thanks for clarifying.  This confirms that the general approach I
-took in this patch is correct.  It remains to be seen if Jens is
-agreeable with blk_clear_request_payload.
+Seems that scsi-ml calls scsi_unprep_request() for not-prepped
+requests in scsi_init_io error path. So we could move that
+scsi_unprep_request() to the error path in scsi_prep_return(). Then we
+can free discard page in the single place.
 
-I know Christoph thought my introduction and use of
-blk_clear_request_payload was reasonable.  Christoph, please feel free
-to add your Ack to this patch if you approve.
+Applying the rule strictly is fine by me too; we remove
+scsi_unprep_request() in scsi_init_io error path and clean up things
+in each prep function's error path.
 
-I look forward to feedback from Tomo and Jens now too.  Hopefully Jens
-will pick this patch up.
 
-regards,
-Mike
+Btw, blk_clear_request_payload() is necessary?
+
+Making sure that a request is clean is not a bad idea but if we hit
+BLKPREP_KILL or BLKPREP_DEFER, we call
+blk_end_request(). blk_end_request() can free a request properly even
+if we don't do something like blk_clear_request_payload?
