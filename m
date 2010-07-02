@@ -1,56 +1,69 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: scsi: address leak in the error path of discard page allocation
-Date: Fri, 2 Jul 2010 09:08:56 -0400
-Message-ID: <20100702130855.GA6058@redhat.com>
-References: <20100701130328.GB19605@redhat.com>
- <20100701201508.GA28546@redhat.com>
- <1278015548.2813.147.camel@mulgrave.site>
- <20100702135300U.fujita.tomonori@lab.ntt.co.jp>
- <20100702105241.GD26318@lst.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Is there a way to see updated contents of a	DM
+ target's underlying device while the DM target is in use?
+Date: Fri, 02 Jul 2010 16:52:19 +0200
+Message-ID: <4C2DFD23.6070500@suse.de>
+References: <4BD43A85686FC34D819098DB1C3999D99E4199BA@orsmsx502.amr.corp.intel.com>	<20100630230828.GX23989@agk-dp.fab.redhat.com>	<4BD43A85686FC34D819098DB1C3999D99E419AA2@orsmsx502.amr.corp.intel.com>	<20100701005156.GY23989@agk-dp.fab.redhat.com>	<4BD43A85686FC34D819098DB1C3999D99E591E16@orsmsx502.amr.corp.intel.com>
+	<20100701190017.GC12613@us.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100702105241.GD26318@lst.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, James.Bottomley@suse.de, axboe@kernel.dk, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20100701190017.GC12613@us.ibm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jul 02 2010 at  6:52am -0400,
-Christoph Hellwig <hch@lst.de> wrote:
+Malahal Naineni wrote:
+> Riches Jr, RobertX M [robertx.m.riches.jr@intel.com] wrote:
+>> Many thanks to those who responded with helpful suggestions.  A couple o=
+f the suggestions were sufficient to make my test script behave as I expect=
+--to liberate the data that had been stuck in the page cache twilight zone.=
+  :-)
+>>
+>> For the benefit of anyone who might come across the archives with a simi=
+lar problem, here's what worked and what didn't, with all actions taken bet=
+ween writing and reading:
+>>
+>>   - Using 'dd -iflag=3Ddirect' to read from /dev/vg1/lv1 (the underlying=
+ device) worked.
+>>
+>>   - Doing 'blockdev --flushbufs /dev/vg1/lv1' (on the underlying device)=
+ worked.
+>>
+>>   - Doing 'blockdev --flushbufs /dev/mapper/fred01' (on the device expos=
+ed by dm-linear or my module) did not solve the problem.
+> =
 
-> On Fri, Jul 02, 2010 at 01:53:14PM +0900, FUJITA Tomonori wrote:
-> > Seems that scsi-ml calls scsi_unprep_request() for not-prepped
-> > requests in scsi_init_io error path. So we could move that
-> > scsi_unprep_request() to the error path in scsi_prep_return(). Then we
-> > can free discard page in the single place.
-> > 
-> > Applying the rule strictly is fine by me too; we remove
-> > scsi_unprep_request() in scsi_init_io error path and clean up things
-> > in each prep function's error path.
-> 
-> That would be my preference.  Making sure a function cleans up all
-> allocations / state changes on errors means code is a lot fragile and
-> easier to understand.
-> 
-> > Btw, blk_clear_request_payload() is necessary?
-> > 
-> > Making sure that a request is clean is not a bad idea but if we hit
-> > BLKPREP_KILL or BLKPREP_DEFER, we call
-> > blk_end_request(). blk_end_request() can free a request properly even
-> > if we don't do something like blk_clear_request_payload?
-> 
-> For BLKPREP_KILL we do call __blk_end_request_all, but for
-> BLKPREP_DEFER we don't.  In that case we just leave it on the queue for
-> a later retry.  So we either have to clean it up, or leave the detect
-> the case of a partially constructed command in ->prep_fn.  I think
-> cleaning up properly and having defined state when entering ->prep_fn is
-> the better variant.
+> I wonder why flushing the underlying device worked but not the actual
+> device itself. I expected the opposite! :-(
+> =
 
-Right, I shared the same opinion earlier in this thread, so please let
-your ACKs fly now that we seem to all be in agreement.
+Why, no. That's exactly the point.
+The device keeps the underlying block devices pinned in the cache, so any p=
+age invalidation can only be triggered
+by the device itself, not the underlying ones. Any writes to the underlying=
+ devices won't trigger a page
+invalidation, so they'll stay in the cache forever.
+Hence you need to flush them explicitely.
 
-I'd like Jens to pick this patch up now-ish ;)
+Not that I'll recommend that. It'll play silly buggers with the page cache.
 
-Mike
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
