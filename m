@@ -1,46 +1,84 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: GFP_KERNEL in ext4 (was: [PATCH 4/4] Support discard if at least
- one underlying device supports it)
-Date: Fri, 2 Jul 2010 16:08:09 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1007021605410.13662@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 4/4] Support discard if at least one underlying device
+ supports it
+Date: Fri, 2 Jul 2010 16:29:07 -0400
+Message-ID: <20100702202907.GA21915@redhat.com>
 References: <Pine.LNX.4.64.1007021107420.7296@hs20-bc2-1.build.redhat.com>
  <Pine.LNX.4.64.1007021112340.7296@hs20-bc2-1.build.redhat.com>
  <Pine.LNX.4.64.1007021117580.7296@hs20-bc2-1.build.redhat.com>
  <Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com>
  <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
- <20100702181430.GD26916@redhat.com> <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021554550.11102@hs20-bc2-1.build.redhat.com>
+ <20100702181430.GD26916@redhat.com>
+ <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1007021554550.11102@hs20-bc2-1.build.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
 Sender: linux-ext4-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-> ---
->  include/linux/blkdev.h |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+On Fri, Jul 02 2010 at  3:49pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
+
+> > As we discussed, we have a challenge where we need DM to avoid issuing
+> > a barrier before the discard IFF a target doesn't support the discard
+> > (which the barrier is paired with).
+> > 
+> > My understanding is that blkdev_issue_discard() only cares if the
+> > discard was supported.  Barrier is used just to decorate the discard
+> > (for correctness).  So by returning -EOPNOTSUPP we're saying the discard
+> > isn't supported; we're not making any claims about the implict barrier,
+> > so best to avoid the barrier entirely.
+> > 
+> > Otherwise we'll be issuing unnecessary barriers (and associated
+> > performance loss).
+> > 
+> > So yet another TODO item... Anyway:
+> > 
+> > Acked-by: Mike Snitzer <snitzer@redhat.com>
 > 
-> Index: linux-2.6.35-rc3-fast/include/linux/blkdev.h
-> ===================================================================
-> --- linux-2.6.35-rc3-fast.orig/include/linux/blkdev.h	2010-07-02 21:59:21.000000000 +0200
-> +++ linux-2.6.35-rc3-fast/include/linux/blkdev.h	2010-07-02 21:59:37.000000000 +0200
-> @@ -1021,7 +1021,7 @@ static inline int sb_issue_discard(struc
->  	block <<= (sb->s_blocksize_bits - 9);
->  	nr_blocks <<= (sb->s_blocksize_bits - 9);
->  	return blkdev_issue_discard(sb->s_bdev, block, nr_blocks, GFP_KERNEL,
-> 				   BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
->  }
->  
->  extern int blk_verify_command(unsigned char *cmd, fmode_t has_write_perm);
+> Unnecessary barriers are issued anyway. With each freed extent.
+>
+> The code must issue a "SYNCHRONIZE CACHE" to flush cache for previous 
+> writes, then "UNMAP" and then another "SYNCHRONIZE CACHE" to commit that 
+> unmap to disk. And this in loop for all extents in 
+> "release_blocks_on_commit".
+
+You're delving into the mechanics of the discard when it is supported;
+which is fine but tangential to my point above.  My point was DM
+shouldn't issue any barrier(s) at all if it the discard will not be sent
+(because a device doesn't support discards).
+
+> One idea behind "discard barriers" was to submit a discard request and not 
+> wait for it. Then the request would need a barrier so that it doesn't get 
+> reordered with further writes (that may potentially write to the same area 
+> as the discarded area). But discard isn't used this way anyway, 
+> sb_issue_discard waits for completion, so the barrier isn't needed.
 > 
+> Even if ext4 developers wanted asynchronous discard requests, they should 
+> fire all the discards at once and then submit one zero-sized barrier. Not 
+> barrier with each discard request.
 
-A note for ext4 developers: is that GFP_KERNEL safe? Can't it recurse back 
-to ext4 and attempt to flush more data?
+sb_issue_discard() is the block layer api that ext4 uses for discards.
+Ext4, or any other filesystem that uses sb_issue_discard(), has no
+control over the barriers that are issued.
+ 
+> This is up to ext4 developers to optimize and remove the barriers and we 
+> can't do anything with it. Just send "SYNCHRONIZE 
+> CACHE"+"UNMAP"+"SYNCHRONIZE CACHE" like the barrier specification wants...
 
-I'm not familiar enough with ext4 to declare that it is/isn't a bug, but 
-it looks suspicious.
+In practice that is what I see when I remove a file in ext4:
 
-Mikulas
+        kdmflush-2537  [000] 911436.484481: scsi_dispatch_cmd_start: host_no=5 channel=0 id=0 lun=0 data_sgl=0 prot_sgl=0 cmnd=(SYNCHRONIZE_CACHE - raw=35 00 00 00 00 00 00 00 00 00)
+        kdmflush-2537  [000] 911436.484482: scsi_dispatch_cmd_done: host_no=5 channel=0 id=0 lun=0 data_sgl=0 prot_sgl=0 cmnd=(SYNCHRONIZE_CACHE - raw=35 00 00 00 00 00 00 00 00 00) result=(driver=DRIVER_OK host=DID_OK message=COMMAND_COMPLETE status=SAM_STAT_GOOD)
+
+        kdmflush-2537  [000] 911436.484500: scsi_dispatch_cmd_start: host_no=5 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00)
+          <idle>-0     [000] 911436.485238: scsi_dispatch_cmd_done: host_no=5 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00) result=(driver=DRIVER_OK host=DID_OK message=COMMAND_COMPLETE status=SAM_STAT_GOOD)
+
+        kdmflush-2537  [000] 911436.485283: scsi_dispatch_cmd_start: host_no=5 channel=0 id=0 lun=0 data_sgl=0 prot_sgl=0 cmnd=(SYNCHRONIZE_CACHE - raw=35 00 00 00 00 00 00 00 00 00)
+        kdmflush-2537  [000] 911436.485284: scsi_dispatch_cmd_done: host_no=5 channel=0 id=0 lun=0 data_sgl=0 prot_sgl=0 cmnd=(SYNCHRONIZE_CACHE - raw=35 00 00 00 00 00 00 00 00 00) result=(driver=DRIVER_OK host=DID_OK message=COMMAND_COMPLETE status=SAM_STAT_GOOD)
+
+Mike
