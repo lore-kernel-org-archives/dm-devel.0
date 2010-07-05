@@ -1,39 +1,83 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: scsi: unify the error handling of the prep functions
-Date: Mon, 5 Jul 2010 09:45:29 -0400
-Message-ID: <20100705134529.GA18645@redhat.com>
-References: <20100705125651R.fujita.tomonori@lab.ntt.co.jp>
+From: Bart Coninckx <bart.coninckx@telenet.be>
+Subject: understanding of multipathing and speed
+Date: Mon, 5 Jul 2010 20:37:39 +0200
+Message-ID: <201007052037.39362.bart.coninckx@telenet.be>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100705125651R.fujita.tomonori@lab.ntt.co.jp>
-Sender: linux-scsi-owner@vger.kernel.org
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Cc: axboe@kernel.dk, James.Bottomley@suse.de, linux-scsi@vger.kernel.org, hch@lst.de, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 05 2010 at 12:00am -0400,
-FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp> wrote:
+Hi,
 
-> This can be applied to the block's for-2.6.36.
-> 
-> =
-> From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-> Subject: [PATCH] scsi: unify the error handling of the prep functions
-> 
-> This unifies the error handling of the prep functions (and fix the
-> leak of a page allocated for discard in the case of BLKPREP_KILL or
-> BLK_PREP_DEFER).
-> 
-> The error handling of the prep path is very messy. Some errors are
-> handled in the prep functions while some are in scsi_prep_return().
-> 
-> Let's handle all the errors in scsi_prep_return().
-> 
-> Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+I would like to run my ideas by this list about multipathing and the results 
+as far as storage speed is concerned.
 
-This patch addresses the discard page leak too (scsi_prep_error calls
-scsi_unprep_request which calls blk_unprep_request).
+I'm using multipathing to two iSCSI targets pointing to the same storage. It 
+was my understanding that this provides for network path redundancy (and it 
+does, I tested this) but also for added speed. 
+I did some tests with Bonnie++ however while both paths were active and one 
+path was down and the results are basically the same. 
 
-Acked-by: Mike Snitzer <snitzer@redhat.com>
+Am I assuming wrong things? Or have I configured things wrong?
+
+This is my config for now:
+
+defaults {
+        udev_dir                /dev
+        polling_interval        10
+        selector                "round-robin 0"
+        path_grouping_policy    multibus
+        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+        prio                    const
+        path_checker            directio
+        rr_min_io               100
+        max_fds                 8192
+        rr_weight               priorities
+        failback                immediate
+        no_path_retry           5
+        user_friendly_names     no
+}
+blacklist {
+       wwid 26353900f02796769
+        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+        devnode "^hd[a-z][[0-9]*]"
+        devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
+        device {
+                vendor DEC.*
+                product MSA[15]00
+        }
+}
+multipaths {
+ multipath {
+                wwid                    
+1494554000000000000000000010000000000000002000000
+  alias                   lx03
+  }
+ multipath {
+                wwid                    
+1494554000000000000000000010000000100000002000000
+  alias                   ws033
+  }
+ multipath {
+                wwid                    
+1494554000000000000000000010000000200000002000000
+  alias                   ms01
+  }
+}
+
+
+Thank you!!
+
+B.
