@@ -1,45 +1,27 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: understanding of multipathing and speed
-Date: Mon, 05 Jul 2010 20:58:30 +0200
-Message-ID: <1278356310.30539.606.camel@localhost>
-References: <201007052037.39362.bart.coninckx@telenet.be>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [RFC 1/2] block: implement an unprep function corresponding directly to prep
+Date: Mon, 5 Jul 2010 21:24:13 +0200
+Message-ID: <20100705192413.GA24189@lst.de>
+References: <1277917264.2839.153.camel@mulgrave.site> <20100701104653O.fujita.tomonori@lab.ntt.co.jp> <20100702110343.GA27159@lst.de> <20100705160023S.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <201007052037.39362.bart.coninckx@telenet.be>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ide-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100705160023S.fujita.tomonori@lab.ntt.co.jp>
+Sender: linux-ide-owner@vger.kernel.org
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: hch@lst.de, James.Bottomley@suse.de, snitzer@redhat.com, axboe@kernel.dk, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-ide@vger.kernel.org
 List-Id: dm-devel.ids
 
-On lun., 2010-07-05 at 20:37 +0200, Bart Coninckx wrote:
-> Hi,
-> 
-> I would like to run my ideas by this list about multipathing and the results 
-> as far as storage speed is concerned.
-> 
-> I'm using multipathing to two iSCSI targets pointing to the same storage. It 
-> was my understanding that this provides for network path redundancy (and it 
-> does, I tested this) but also for added speed. 
-> I did some tests with Bonnie++ however while both paths were active and one 
-> path was down and the results are basically the same. 
-> 
-> Am I assuming wrong things? Or have I configured things wrong?
-> 
-can you also include a 'multipath -l' output and sketch the
-hba/switch/controller physical connections ?
+On Mon, Jul 05, 2010 at 04:00:44PM +0900, FUJITA Tomonori wrote:
+> Did you tested my discard branch, right?
 
-thanks,
--- 
-Christophe Varoqui <christophe.varoqui@opensvc.com>
-OpenSVC
+I tested the patch that you sent out back then.
+
+> Wired, I've just got Intel SSD X25-M drives and mkfs.xfs worked well.
+
+What codebase were you testing on?  Sorry, but curently I'm a bit lost
+in the maze of patches.  I've got both and intel and an OCZ SSD (right
+now I'm travelling with only access to the OCZ actually) and I'd like
+to test the latest variant again.
+
