@@ -1,120 +1,112 @@
-From: Boaz Harrosh <bharrosh@panasas.com>
-Subject: Re: [PATCH 2/3] scsi: add sd_unprep_fn to free discard page
-Date: Mon, 05 Jul 2010 13:07:26 +0300
-Message-ID: <4C31AEDE.7050008@panasas.com>
-References: <1277981359-10717-1-git-send-email-fujita.tomonori@lab.ntt.co.jp> <1277981359-10717-3-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 4/4] Support discard if at least one underlying device
+ supports it
+Date: Mon, 5 Jul 2010 07:32:26 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1007050718250.17168@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1007021107420.7296@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021112340.7296@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021117580.7296@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
+ <20100702181430.GD26916@redhat.com> <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021554550.11102@hs20-bc2-1.build.redhat.com>
+ <20100702204709.GB21915@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1277981359-10717-3-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, Christoph Hellwig <hch@lst.de>
-Cc: axboe@kernel.dk, snitzer@redhat.com, James.Bottomley@suse.de, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20100702204709.GB21915@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, axboe@kernel.dk, dmonakhov@openvz.org
 List-Id: dm-devel.ids
 
-On 07/01/2010 01:49 PM, FUJITA Tomonori wrote:
-> This fixes discard page leak by using q->unprep_rq_fn facility.
+
+
+On Fri, 2 Jul 2010, Mike Snitzer wrote:
+
+> On Fri, Jul 02 2010 at  4:00pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
 > 
-> q->unprep_rq_fn is called when all the data buffer (req->bio and
-> scsi_data_buffer) in the request is freed.
+> > 
+> > 
+> > On Fri, 2 Jul 2010, Mikulas Patocka wrote:
+> > 
+> > > > As we discussed, we have a challenge where we need DM to avoid issuing
+> > > > a barrier before the discard IFF a target doesn't support the discard
+> > > > (which the barrier is paired with).
+> > > > 
+> > > > My understanding is that blkdev_issue_discard() only cares if the
+> > > > discard was supported.  Barrier is used just to decorate the discard
+> > > > (for correctness).  So by returning -EOPNOTSUPP we're saying the discard
+> > > > isn't supported; we're not making any claims about the implict barrier,
+> > > > so best to avoid the barrier entirely.
+> > > > 
+> > > > Otherwise we'll be issuing unnecessary barriers (and associated
+> > > > performance loss).
+> > > > 
+> > > > So yet another TODO item... Anyway:
+> > > > 
+> > > > Acked-by: Mike Snitzer <snitzer@redhat.com>
+> > > 
+> > > Unnecessary barriers are issued anyway. With each freed extent.
+> > > 
+> > > The code must issue a "SYNCHRONIZE CACHE" to flush cache for previous 
+> > > writes, then "UNMAP" and then another "SYNCHRONIZE CACHE" to commit that 
+> > > unmap to disk. And this in loop for all extents in 
+> > > "release_blocks_on_commit".
+> > > 
+> > > One idea behind "discard barriers" was to submit a discard request and not 
+> > > wait for it. Then the request would need a barrier so that it doesn't get 
+> > > reordered with further writes (that may potentially write to the same area 
+> > > as the discarded area). But discard isn't used this way anyway, 
+> > > sb_issue_discard waits for completion, so the barrier isn't needed.
+> > > 
+> > > Even if ext4 developers wanted asynchronous discard requests, they should 
+> > > fire all the discards at once and then submit one zero-sized barrier. Not 
+> > > barrier with each discard request.
+> > > 
+> > > This is up to ext4 developers to optimize and remove the barriers and we 
+> > > can't do anything with it. Just send "SYNCHRONIZE 
+> > > CACHE"+"UNMAP"+"SYNCHRONIZE CACHE" like the barrier specification wants...
+> > > 
+> > > Mikulas
+> > 
+> > BTW. I understand that the current dm implementation will send two useless 
+> > consecutive "SYNCHRONIZE CACHE" commands discard is directed to the part 
+> > of the device that doesn't support it.
 > 
-> sd_unprep() uses rq->buffer to free discard page allocated in
-> sd_prepare_discard().
+> Issue 1 ^^^
 > 
-> Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-
-Sorry for thinking about this just now. It was on the tip of my
-mind, but I was too busy with other things to notice.
-
-There is a simple more STD way to solve all this without the need
-for any new API.
-
-*Use the bio destructor to also deallocate it's pages*
-
-Now that is not such a novel idea, it's used all over the place.
-Well it's the proper way to submit a bio and be notified on done.
-Since there are no bio leaks, we know all error paths are just
-as covered.
-
-For this to work all these patches could be removed and the
-blk_add_request_payload need to change to recieve a bio destructor
-pointer.
-
-If you ask me I hate what was done with discard at the block layer
-since it's only in Jens tree for-next I think it is good time to change
-it. What is this alloc the bio in one place and add it's pages in another
-place. Rrrrr
-
-to quote from the author himself:
-<block-core.c>
-/**
- * blk_add_request_payload - add a payload to a request
- <snip>
- *
- * Note that this is a quite horrible hack and nothing but handling of
- * discard requests should ever use it.
- */
-void blk_add_request_payload(struct request *rq, struct page *page,
-		unsigned int len)
-</block-core.c>
-
-The block-layer users think of a discard as zero-load, so should the
-block-layer. The block driver like sd that needs to add a payload can
-set in a bio just like any other place. when allocating the bio, set
-it's destructor and be done with it. All allocations and cleanups are
-done at one place, at same level.
-
-As it stands now blk_add_request_payload will have to either chain the
-bio destructors and/or if it knows where it's allocated then chain to
-the proper bio_free, after calling the block-driver supplied callback.
-
-BTW where is that zero-pages discard bio allocated. Why is it not allocated
-inside blk_add_request_payload? What is the meaning of zero length bio?
-I though everywhere we check for "if (req->bio)" not "if (bio_size(req_bio))"
-isn't all this asking for trouble?
-
-my $0.017
-Boaz
-
-> ---
->  drivers/scsi/sd.c |   12 +++++++++++-
->  1 files changed, 11 insertions(+), 1 deletions(-)
+> > But the problem is that when you use discard on a part of the device that 
+> > supports discard, it also sends two useless "SYNCHRONIZE CACHE" commands 
+> > --- they are useless for functionality, but mandated by the barrier 
+> > specification.
 > 
-> diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-> index 86da819..2d4e3a8 100644
-> --- a/drivers/scsi/sd.c
-> +++ b/drivers/scsi/sd.c
-> @@ -425,6 +425,7 @@ static int scsi_setup_discard_cmnd(struct scsi_device *sdp, struct request *rq)
->  	sector_t sector = bio->bi_sector;
->  	unsigned int nr_sectors = bio_sectors(bio);
->  	unsigned int len;
-> +	int ret;
->  	struct page *page;
->  
->  	if (sdkp->device->sector_size == 4096) {
-> @@ -465,7 +466,15 @@ static int scsi_setup_discard_cmnd(struct scsi_device *sdp, struct request *rq)
->  	}
->  
->  	blk_add_request_payload(rq, page, len);
-> -	return scsi_setup_blk_pc_cmnd(sdp, rq);
-> +	ret = scsi_setup_blk_pc_cmnd(sdp, rq);
-> +	rq->buffer = page_address(page);
-> +	return ret;
-> +}
-> +
-> +static void sd_unprep_fn(struct request_queue *q, struct request *rq)
-> +{
-> +	if (rq->cmd_flags & REQ_DISCARD)
-> +		__free_page(virt_to_page(rq->buffer));
->  }
->  
->  /**
-> @@ -2242,6 +2251,7 @@ static void sd_probe_async(void *data, async_cookie_t cookie)
->  	sd_revalidate_disk(gd);
->  
->  	blk_queue_prep_rq(sdp->request_queue, sd_prep_fn);
-> +	blk_queue_unprep_rq(sdp->request_queue, sd_unprep_fn);
->  
->  	gd->driverfs_dev = &sdp->sdev_gendev;
->  	gd->flags = GENHD_FL_EXT_DEVT;
+> Issue 2 ^^^
+> 
+> Those are 2 different issues.  Please don't join them as if they are one
+> in the same.  DM should treat a discard as a first class request (which
+> may or may not have a barrier).
+
+What I mean --- if you fix Issue 2, Issue 1 is no longer a problem.
+
+> If a region doesn't support the discard
+> DM has no business processing anything related to the discard (barriers
+> included).  It is as simple as that.
+
+You can optimize out the second SYNCHRONIZE CACHE, but not the first one 
+(because when it is sent, we don't know if the discard will succeed or 
+not).
+
+Basically, the fix is to prefix the second dm_flush in process_barrier 
+with if (md->barrier_error != -EOPNOTSUPP).
+
+The "barrier+discard" concept is problematic anyway. If we specify that 
+"barrier+discard" request doesn't have to do the barrier if discard fails 
+(as it is currently), then the request is useless to maintain disk 
+integrity because the discard may fail anytime (and so the barrier).
+
+I think they will eventually remove "barrier+discard" from the filesystems 
+at all.
+
+Mikulas
