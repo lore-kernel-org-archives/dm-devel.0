@@ -1,113 +1,113 @@
-From: brem belguebli <brem.belguebli@gmail.com>
-Subject: Re: Rescan for new LUNs
-Date: Tue, 6 Jul 2010 12:49:22 +0200
-Message-ID: <AANLkTimhhdTh5fybO1cfP3-v7eUjz41zadOpqY2rhiLy@mail.gmail.com>
-References: <230ED15F81AFD3409345FFA4E565F0E50B83D8E1@NDHV3000.na.corp.mckesson.com>
-	<4C2C3BD1.2070207@held.org.il>
-	<230ED15F81AFD3409345FFA4E565F0E50B8B58D4@NDHV3000.na.corp.mckesson.com>
-	<4C33059D.5030708@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] scsi: address leak in scsi_setup_discard_cmnd error path
+ (was: Re: scsi: unify the error handling of the prep functions)
+Date: Tue, 6 Jul 2010 09:59:58 -0400
+Message-ID: <20100706135958.GA10772@redhat.com>
+References: <20100705125651R.fujita.tomonori@lab.ntt.co.jp>
+ <20100705134529.GA18645@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4C33059D.5030708@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100705134529.GA18645@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: jaxboe@fusionio.com, James.Bottomley@suse.de, linux-scsi@vger.kernel.org, hch@lst.de, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-echo '- - -' > /sys/class/scsi_host/hostX/scan should be enough to
-discover new Luns.
+On Mon, Jul 05 2010 at  9:45am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-For some unknown reason, with some specific SAN storage  arrays (HP XP
-in my case) , for newly SAN connected servers (new  zoning), it is not
-enough.
+> On Mon, Jul 05 2010 at 12:00am -0400,
+> FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp> wrote:
+> 
+> > This can be applied to the block's for-2.6.36.
+> > 
+> > =
+> > From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+> > Subject: [PATCH] scsi: unify the error handling of the prep functions
+> > 
+> > This unifies the error handling of the prep functions (and fix the
+> > leak of a page allocated for discard in the case of BLKPREP_KILL or
+> > BLK_PREP_DEFER).
+> > 
+> > The error handling of the prep path is very messy. Some errors are
+> > handled in the prep functions while some are in scsi_prep_return().
+> > 
+> > Let's handle all the errors in scsi_prep_return().
+> > 
+> > Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+> 
+> This patch addresses the discard page leak too (scsi_prep_error calls
+> scsi_unprep_request which calls blk_unprep_request).
+> 
+> Acked-by: Mike Snitzer <snitzer@redhat.com>
 
-I have to  issue lip (loop init) to my FC hosts
+Hi,
 
-echo 1 > /sys/class/fc_host/hostX/issue_lip
+Your unified error handling forces a BLKPREP_KILL or BLKPREP_DEFER
+return from scsi_setup_discard_cmnd to depend on prep cleanup even
+though BLKPREP_OK was not returned.  And this works, but it runs counter
+to the rules James previously shared: http://lkml.org/lkml/2010/7/1/512
 
-This lip command can be destructive(and is asynchronous) , so use it
-only before first SAN discovery. After that as I said, scan is enough.
+"The rules are pretty clear:  Unprep is only called if the request gets
+prepped ... that means you have to return BLKPREP_OK.  Defer or kill
+assume there's no teardown to do, so the allocation (if it took place)
+must be reversed before returning them."
 
-Brem
+All this being said, I'm OK with your patch (as my ack implies) but I
+can see that it will take the request prep error handling in a direction
+James may prefer to avoid.
 
-2010/7/6 Bryn M. Reeves <bmr@redhat.com>:
-> On 07/01/2010 06:43 PM, Allen, Jack wrote:
->> That sounds more like what I am looking for. But I can not find the scri=
-pt on my
->> system or what provides it via "yum provides". I am running RHEL 5.5.
->> We have customers that run an Application that needs to be up 24*7. They=
- some
->> times need to add additional storage and when attached to a SAN they wou=
-ld
->> prefer not to have to take the Application down and reboot the system ju=
-st to
->> make the new LUNs be seen by the system.
->> -----
->> Jack Allen
->>
->> ------------------------------------------------------------------------=
---------
->> *From:* dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]=
- *On
->> Behalf Of *Oren Held
->> *Sent:* Thursday, July 01, 2010 2:55 AM
->> *To:* dm-devel@redhat.com
->> *Subject:* Re: [dm-devel] Rescan for new LUNs
->>
->> It's not an easy process.
->>
->> The rescan-scsi-bus.sh script was added in recent RHEL5 updates, already=
- in old
->> SLES. I guess it's becoming kind of a standard.
->
-> The script was originally written by Kurt Garloff but it's been included
-> in the sg3_utils tarball for years:
->
-> Changelog for sg3_utils-0.99 [20020317]
-> ----------------------------
-> =A0- add 'fua' and 'sync' arguments to sg_dd, sgp_dd and sgm_dd
-> =A0- improve sg_inq, add "-cl" and "-36" arguments
-> =A0- add sg_modes + sg_logs for MODE SENSE and LOG SENSE queries
-> =A0- add rescan-scsi-bus.sh [Kurt Garloff] to archive director
->
-> It's only recently been included in the build for RHEL packages though
-> (5.3 iirc) - just yum install sg3_utils to get the script on a RHEL-5
-> system (as well as other useful bits like sg_map and friends).
->
-> The script may work for some combinations of storage and controller in
-> earlier RHEL versions but isn't included in the distribution and is not
-> always perfectly reliable.
->
-> If you need to add/remove storage on these older releases you can use
-> the simple scsi-add/remove-single-device interface via /proc/scsi/scsi.
->
-> If you have access to the Red Hat knowledge base (RHN login) there's an
-> article that explains the options on RHEL systems:
->
-> https://access.redhat.com/kb/docs/DOC-3942
->
-> And there's the RHEL5 Online Storage Reconfiguration Guide here:
->
-> http://tinyurl.com/ya6wmce [www.redhat.com]
->
-> That documents these interfaces as well as the FC and iSCSI APIs and
-> their relation to other components such as multipath.
->
-> Regards,
-> Bryn.
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+Here is a minimalist patch that 1) removes the discard request's page
+leak 2) preserves the prep cleanup rules covered above.  Fixing the leak
+is a priority, introducing additional error path code sharing/cleanup is
+secondary and can come later.
+
+=
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] scsi: address leak in scsi_setup_discard_cmnd error path
+
+Currently, a discard request's page will not get cleaned up in the
+scsi_setup_discard_cmnd error path.  A scsi_setup_discard_cmnd return
+other than BLKPREP_OK will not cause a discard request to get completely
+cleaned up (scsi_prep_return will not set REQ_DONTPREP unless BLKPREP_OK
+was returned).
+
+This fix eliminates the leak while preserving the rule that:
+Unprep is only called if the request gets prepped (meaning a return
+BLKPREP_OK).  Defer or kill assume there's no teardown to do, so any
+allocation must be reversed before returning them.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/scsi/sd.c |    8 +++++++-
+ 1 files changed, 7 insertions(+), 1 deletions(-)
+
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index 0994ab6..08e08bd 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -468,6 +468,10 @@ static int scsi_setup_discard_cmnd(struct scsi_device *sdp, struct request *rq)
+ 	blk_add_request_payload(rq, page, len);
+ 	ret = scsi_setup_blk_pc_cmnd(sdp, rq);
+ 	rq->buffer = page_address(page);
++	if (ret != BLKPREP_OK) {
++		__free_page(page);
++		rq->buffer = NULL;
++	}
+ 	return ret;
+ }
+ 
+@@ -485,8 +489,10 @@ static int scsi_setup_flush_cmnd(struct scsi_device *sdp, struct request *rq)
+ 
+ static void sd_unprep_fn(struct request_queue *q, struct request *rq)
+ {
+-	if (rq->cmd_flags & REQ_DISCARD)
++	if (rq->cmd_flags & REQ_DISCARD) {
+ 		__free_page(virt_to_page(rq->buffer));
++		rq->buffer = NULL;
++	}
+ }
+ 
+ /**
