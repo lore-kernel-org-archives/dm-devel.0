@@ -1,7 +1,7 @@
-From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
+From: Bart Coninckx <bart.coninckx@telenet.be>
 Subject: Re: understanding of multipathing and speed
-Date: Mon, 05 Jul 2010 15:41:46 -0400
-Message-ID: <1278358906.3323.18.camel@localhost>
+Date: Tue, 6 Jul 2010 06:16:55 +0200
+Message-ID: <201007060616.55657.bart.coninckx@telenet.be>
 References: <201007052037.39362.bart.coninckx@telenet.be>
 	<1278356310.30539.606.camel@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -19,64 +19,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
 List-Id: dm-devel.ids
 
-On Mon, 2010-07-05 at 20:58 +0200, Christophe Varoqui wrote:
+On Monday 05 July 2010 20:58:30 Christophe Varoqui wrote:
 > On lun., 2010-07-05 at 20:37 +0200, Bart Coninckx wrote:
 > > Hi,
-> > 
-> > I would like to run my ideas by this list about multipathing and the results 
-> > as far as storage speed is concerned.
-> > 
-> > I'm using multipathing to two iSCSI targets pointing to the same storage. It 
-> > was my understanding that this provides for network path redundancy (and it 
-> > does, I tested this) but also for added speed. 
-> > I did some tests with Bonnie++ however while both paths were active and one 
-> > path was down and the results are basically the same. 
-> > 
+> >
+> > I would like to run my ideas by this list about multipathing and the
+> > results as far as storage speed is concerned.
+> >
+> > I'm using multipathing to two iSCSI targets pointing to the same storage.
+> > It was my understanding that this provides for network path redundancy
+> > (and it does, I tested this) but also for added speed.
+> > I did some tests with Bonnie++ however while both paths were active and
+> > one path was down and the results are basically the same.
+> >
 > > Am I assuming wrong things? Or have I configured things wrong?
-> > 
+> 
 > can you also include a 'multipath -l' output and sketch the
 > hba/switch/controller physical connections ?
 > 
 > thanks,
-I am by no means an expert but I did find a significant speed advantage
-but it depended on how we tested.  We found if we sent a single thread
-of reads or writes, there was no gain. However, as we started adding
-multiple, simultaneous reads and writes, there was a dramatic gain.
+> 
 
-We were actually testing two different scenarios:
-1) dm-multipath for both fault tolerance and load balancing
-2) dm-multipath for fault-tolerance and software RAID0 for load
-balancing
+Sure,
 
+xen3:~ # multipath -l
+lx03 (1494554000000000000000000010000000000000002000000) dm-3 IET,VIRTUAL-DISK
+[size=10G][features=1 queue_if_no_path][hwhandler=0]
+\_ round-robin 0 [prio=-2][active]
+ \_ 2:0:0:0 sdc 8:32  [active][undef]
+ \_ 1:0:0:0 sdb 8:16  [active][undef]
+ws033 (1494554000000000000000000010000000100000002000000) dm-2 IET,VIRTUAL-
+DISK
+[size=15G][features=1 queue_if_no_path][hwhandler=0]
+\_ round-robin 0 [prio=-2][active]
+ \_ 2:0:0:1 sde 8:64  [active][undef]
+ \_ 1:0:0:1 sdd 8:48  [active][undef]
+ms01 (1494554000000000000000000010000000200000002000000) dm-1 IET,VIRTUAL-DISK
+[size=40G][features=1 queue_if_no_path][hwhandler=0]
+\_ round-robin 0 [prio=-2][active]
+ \_ 1:0:0:2 sdf 8:80  [active][undef]
+ \_ 2:0:0:2 sdg 8:96  [active][undef]
 
-This testing was mostly performed using Linux File I/O or by imitating
-Linux File I/O by setting the maximum block size to 4KB. That meant our
-iSCSI connection was limited more by latency than throughput.
+I have two Gigabit NICs in this server each running over a separate switch to 
+a separate gigabit NIC with a unique IP address on the storage IET iSCSI 
+target.
 
-We found the latter gave more well rounded performance, i.e., over a
-wide range of I/O characteristics.  However, we subsequently learned
-that it created a consistency problem for snapshooting on the SAN
-back-end.  We could not guarantee that the snapshot would be in a
-consistent RAID0 state.  Thus, we plan to convert our systems back to
-multibus for load balancing.
+Is this sufficient info?
 
-Another item that surprised us was the setting for how many commands
-should be issued before switching paths (I forget the parameter name).
-I would have expected a lower number to give better throughput but to
-drive up CPU utilization.  That did not turn out to be true even on
-systems with plenty of CPU power to spare.  We found that a setting of
-100 performed marginally but consistently better than a setting of 10.
-I do not know why that is.  Perhaps this is again because we were
-latency and not throughput bound.  Perhaps the switching adds latency.
+Thx,
 
-I do not know the internals to know if multibus could possibly help for
-a single iSCSI conversation.  The blocks must still be sent in series (I
-assume) so I would think the packets would just round robin around the
-NICS but not be sent in parallel.  When loading multiple iSCSI
-conversation, I would think all the NICs could be firing at the same
-time with different iSCSI series. Again, I am guessing in my ignorance.
-
-Can anyone else confirm or refute these deductions? Thanks - John
+Bart
