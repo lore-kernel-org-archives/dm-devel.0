@@ -1,47 +1,34 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] disallow FS recursion from sb_issue_discard allocation
-Date: Tue, 6 Jul 2010 12:11:56 -0400
-Message-ID: <20100706161155.GA24461@redhat.com>
-References: <Pine.LNX.4.64.1007021107420.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021112340.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021117580.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
- <20100702181430.GD26916@redhat.com>
- <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021554550.11102@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021605410.13662@hs20-bc2-1.build.redhat.com>
+From: Brian Jackson <iggy@theiggy.com>
+Subject: Any way to access start/len of i/o from path selector?
+Date: Tue, 6 Jul 2010 13:07:52 -0500
+Message-ID: <201007061307.52934.iggy@theiggy.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1007021605410.13662@hs20-bc2-1.build.redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jens Axboe <jaxboe@fusionio.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Filesystems can call sb_issue_discard on a memory reclaim path
-(e.g. ext4 calls sb_issue_discard during journal commit).
+I have a group of storage appliances that implement raid over the network. The 
+data is spread out redundantly over the entire group of appliances. I can 
+access the entire array from each member. When you access a block that isn't 
+physically on that host, that appliance proxies the request to the device that 
+does have the block. So every block is accessible on every appliance, but it 
+would be best to request the block from the box that actually has it. Since 
+the blocks are evenly striped across the appliances, it's pretty easy to 
+mathematically figure out which appliance to ask. The only problem I'm having 
+is trying to access info about the request (start/len) from the path selector. 
+Realistically I just need the start address. I can't see breaking the i/o 
+across "array block boundaries" being a huge win.
 
-Use GFP_NOFS in sb_issue_discard to avoid recursing back into the FS.
-
-Reported-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- include/linux/blkdev.h |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
-
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index baf5258..dbb510c 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -933,7 +933,7 @@ static inline int sb_issue_discard(struct super_block *sb,
- {
- 	block <<= (sb->s_blocksize_bits - 9);
- 	nr_blocks <<= (sb->s_blocksize_bits - 9);
--	return blkdev_issue_discard(sb->s_bdev, block, nr_blocks, GFP_KERNEL,
-+	return blkdev_issue_discard(sb->s_bdev, block, nr_blocks, GFP_NOFS,
- 				   BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
- }
- 
+Is there maybe another way to do this that would work better?
