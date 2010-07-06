@@ -1,11 +1,14 @@
-From: bart.coninckx@telenet.be
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
 Subject: Re: understanding of multipathing and speed
-Date: Tue, 6 Jul 2010 10:07:06 +0200 (CEST)
-Message-ID: <485728250.294571278403626576.JavaMail.root@tendai.telenet-ops.be>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Date: Tue, 06 Jul 2010 10:25:00 +0200
+Message-ID: <1278404700.26874.5.camel@Nokia-N900-42-11>
+References: <485728250.294571278403626576.JavaMail.root@tendai.telenet-ops.be>
+Reply-To: Christophe Varoqui <christophe.varoqui@gmail.com>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2165792103679848681=="
+Content-Type: multipart/mixed; boundary="===============3072300428871280329=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <485728250.294571278403626576.JavaMail.root@tendai.telenet-ops.be>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,126 +18,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
+To: bart.coninckx@telenet.be
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============2165792103679848681==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_15124_491955600.1278403626574"
 
-------=_Part_15124_491955600.1278403626574
+--===============3072300428871280329==
+Content-Type: multipart/alternative; boundary="=-Fw3dy9m6bg0lUcp79Dw1"
+
+
+--=-Fw3dy9m6bg0lUcp79Dw1
 Content-Type: text/plain; charset=utf-8
+Content-ID: <1278404698.26874.2.camel@Nokia-N900-42-11>
 Content-Transfer-Encoding: 7bit
 
-
-
-On Tuesday 06 July 2010 09:21:51 Christophe Varoqui wrote: 
-
-> (1494554000000000000000000010000000200000002000000) dm-1 
-
+> routing points to the correct interface per network. Maybe my test
+> (bonnie++) 
 > 
-
-> > IET,VIRTUAL-DISK [size=40G][features=1 queue_if_no_path][hwhandler=0] 
-
-> > \_ round-robin 0 [prio=-2][active] 
-
-> > \_ 1:0:0:2 sdf 8:80 [active][undef] 
-
-> > \_ 2:0:0:2 sdg 8:96 [active][undef] 
-
-> > 
-
-> > I have two Gigabit NICs in this server each running over a separate 
-
-> > switch to a separate gigabit NIC with a unique IP address on the 
-
-> > storage IET iSCSI target. 
-
+> is not an appropriate one to show the difference in speed? 
 > 
+an interesting data point would be a perf run when iet target has only one target port on a bonded interface a multipath on client side.
 
-> did you setup different ip networks for each independant lan ? You may want 
+And maybe the other combinations. Th eset combinations would be :
+- client bonded, target not bonded
+- client bonded, target bonded (i understand this is the scenario with good performance you reported earlier)
+- client not bonded, target not bonded (perf expected from a single path in your testing)
+- client not bonded, target bonded
 
-> to verify the ip routing is not sending every other packet through the 
+the mixed setup would not be adequate for production as they require linked or single switch setups, but the information might help determine if the performance drop is due to multipath or iet multi-target.
 
-> wrong interface ? 
-
-> 
-
-> Bye 
-
-> 
-
-
-
-
-
-
-
-Hi Christophe, 
-
-
-
-yes I did, the two initiators and targets have there own IP network. IP 
-
-routing points to the correct interface per network. Maybe my test (bonnie++) 
-
-is not an appropriate one to show the difference in speed? 
-
-
-
-thx, 
-
-
-
-Bart 
-
-
-------=_Part_15124_491955600.1278403626574
+Bye.
+--=-Fw3dy9m6bg0lUcp79Dw1
 Content-Type: text/html; charset=utf-8
+Content-ID: <1278404698.26874.4.camel@Nokia-N900-42-11>
 Content-Transfer-Encoding: 7bit
 
-<html><head><style type='text/css'>p { margin: 0; }</style></head><body><div style='font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 10pt; color: #000000'>
-<meta name="qrichtext" content="1"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><style type="text/css">
-p, li { white-space: pre-wrap; }
-</style>
-<p style="margin: 0px; text-indent: 0px;"><!--StartFragment-->On Tuesday 06 July 2010 09:21:51 Christophe Varoqui wrote:</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; (1494554000000000000000000010000000200000002000000) dm-1</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; </p>
-<p style="margin: 0px; text-indent: 0px;">&gt; &gt; IET,VIRTUAL-DISK [size=40G][features=1 queue_if_no_path][hwhandler=0]</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; &gt; \_ round-robin 0 [prio=-2][active]</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; &gt;   \_ 1:0:0:2 sdf 8:80   [active][undef]</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; &gt;   \_ 2:0:0:2 sdg 8:96   [active][undef]</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; &gt;</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; &gt; I have two Gigabit NICs in this server each running over a separate</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; &gt; switch to   a separate gigabit NIC with a unique IP address on the</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; &gt; storage IET iSCSI   target.</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; </p>
-<p style="margin: 0px; text-indent: 0px;">&gt; did you setup different ip networks for each independant lan ? You may want</p>
-<p style="margin: 0px; text-indent: 0px;">&gt;  to verify the ip routing is not sending every other packet through the</p>
-<p style="margin: 0px; text-indent: 0px;">&gt;  wrong interface ?</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; </p>
-<p style="margin: 0px; text-indent: 0px;">&gt; Bye</p>
-<p style="margin: 0px; text-indent: 0px;">&gt; <br></p><p style="margin: 0px; text-indent: 0px;"><br></p>
-<p style="margin: 0px; text-indent: 0px;"></p>
-<p style="margin: 0px; text-indent: 0px;">Hi Christophe,</p>
-<p style="margin: 0px; text-indent: 0px;"></p>
-<p style="margin: 0px; text-indent: 0px;">yes I did, the two initiators and targets have there own IP network.  IP </p>
-<p style="margin: 0px; text-indent: 0px;">routing points to the correct interface per network. Maybe my test (bonnie++) </p>
-<p style="margin: 0px; text-indent: 0px;">is not an appropriate one to show the difference in speed?</p>
-<p style="margin: 0px; text-indent: 0px;"></p>
-<p style="margin: 0px; text-indent: 0px;">thx,</p>
-<p style="margin: 0px; text-indent: 0px;"></p>
-<p style="margin: 0px; text-indent: 0px;">Bart</p>
-<p style="margin: 0px; text-indent: 0px;"><!--EndFragment--></p></div></body></html>
-------=_Part_15124_491955600.1278403626574--
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="generator" content="Osso Notes">
+    <title></title></head>
+<body>
+<p>&gt; routing points to the correct interface per network. Maybe my test
+<br>&gt; (bonnie++) 
+<br>&gt; 
+<br>&gt; is not an appropriate one to show the difference in speed? 
+<br>&gt; 
+<br>an interesting data point would be a perf run when iet target has only one target port on a bonded interface a multipath on client side.
+<br>
+<br>And maybe the other combinations. Th eset combinations would be :
+<br>- client bonded, target not bonded
+<br>- client bonded, target bonded (i understand this is the scenario with good performance you reported earlier)
+<br>- client not bonded, target not bonded (perf expected from a single path in your testing)
+<br>- client not bonded, target bonded
+<br>
+<br>the mixed setup would not be adequate for production as they require linked or single switch setups, but the information might help determine if the performance drop is due to multipath or iet multi-target.
+<br>
+<br>Bye.</p>
+</body>
+</html>
+
+--=-Fw3dy9m6bg0lUcp79Dw1--
 
 
---===============2165792103679848681==
+--===============3072300428871280329==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2165792103679848681==--
+--===============3072300428871280329==--
