@@ -1,13 +1,16 @@
-From: "Riches Jr, RobertX M" <robertx.m.riches.jr@intel.com>
-Subject: any known problems when doing bio_clone() over an LVM
-	snapshot?
-Date: Wed, 7 Jul 2010 13:39:21 -0700
-Message-ID: <4BD43A85686FC34D819098DB1C3999D99E777071@orsmsx502.amr.corp.intel.com>
+From: Bart Coninckx <bart.coninckx@telenet.be>
+Subject: Re: understanding of multipathing and speed
+Date: Wed, 7 Jul 2010 23:01:47 +0200
+Message-ID: <201007072301.48042.bart.coninckx@telenet.be>
+References: <201007052037.39362.bart.coninckx@telenet.be>
+	<201007060616.55657.bart.coninckx@telenet.be>
+	<201007071918.48557.bart.coninckx@telenet.be>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6777304786004263256=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <201007071918.48557.bart.coninckx@telenet.be>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,239 +20,184 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Dm-Devel Mailing List Send-To Address (dm-devel@redhat.com)" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============6777304786004263256==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_4BD43A85686FC34D819098DB1C3999D99E777071orsmsx502amrcor_"
+On Wednesday 07 July 2010 19:18:48 Bart Coninckx wrote:
+> On Tuesday 06 July 2010 06:16:55 Bart Coninckx wrote:
+> > On Monday 05 July 2010 20:58:30 Christophe Varoqui wrote:
+> > > On lun., 2010-07-05 at 20:37 +0200, Bart Coninckx wrote:
+> > > > Hi,
+> > > >
+> > > > I would like to run my ideas by this list about multipathing and the
+> > > > results as far as storage speed is concerned.
+> > > >
+> > > > I'm using multipathing to two iSCSI targets pointing to the same
+> > > > storage. It was my understanding that this provides for network path
+> > > > redundancy (and it does, I tested this) but also for added speed.
+> > > > I did some tests with Bonnie++ however while both paths were active
+> > > > and one path was down and the results are basically the same.
+> > > >
+> > > > Am I assuming wrong things? Or have I configured things wrong?
+> > >
+> > > can you also include a 'multipath -l' output and sketch the
+> > > hba/switch/controller physical connections ?
+> > >
+> > > thanks,
+> >
+> > Sure,
+> >
+> > xen3:~ # multipath -l
+> > lx03 (1494554000000000000000000010000000000000002000000) dm-3
+> >  IET,VIRTUAL-DISK [size=10G][features=1 queue_if_no_path][hwhandler=0]
+> > \_ round-robin 0 [prio=-2][active]
+> >  \_ 2:0:0:0 sdc 8:32  [active][undef]
+> >  \_ 1:0:0:0 sdb 8:16  [active][undef]
+> > ws033 (1494554000000000000000000010000000100000002000000) dm-2
+> > IET,VIRTUAL- DISK
+> > [size=15G][features=1 queue_if_no_path][hwhandler=0]
+> > \_ round-robin 0 [prio=-2][active]
+> >  \_ 2:0:0:1 sde 8:64  [active][undef]
+> >  \_ 1:0:0:1 sdd 8:48  [active][undef]
+> > ms01 (1494554000000000000000000010000000200000002000000) dm-1
+> >  IET,VIRTUAL-DISK [size=40G][features=1 queue_if_no_path][hwhandler=0]
+> > \_ round-robin 0 [prio=-2][active]
+> >  \_ 1:0:0:2 sdf 8:80  [active][undef]
+> >  \_ 2:0:0:2 sdg 8:96  [active][undef]
+> >
+> > I have two Gigabit NICs in this server each running over a separate
+> > switch to a separate gigabit NIC with a unique IP address on the storage
+> > IET iSCSI target.
+> >
+> > Is this sufficient info?
+> >
+> > Thx,
+> >
+> > Bart
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> Hi all,
+> 
+> to show my point, these are the results of running bonnie++ locally on the
+> storage - the values I look at are Block values in K/sec in both sequential
+> output (writing) and sequential input (reading):
+> 
+> Version 1.03e       ------Sequential Output------ --Sequential Input- --
+> Random-
+>                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --
+> Seeks--
+> Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec
+> %CP
+> iscsi3           8G 69351  96 116112  32 41128  10 57874  82 107721  16
+>  418.2 0
+>                     ------Sequential Create------ --------Random
+> Create--------
+>                     -Create-- --Read--- -Delete-- -Create-- --Read--- -
+> Delete--
+>               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec
+> %CP
+>                  16  4533  99 +++++ +++ +++++ +++  4395  99 +++++ +++ 17122
+> 99
+> iscsi3,8G,69351,96,116112,32,41128,10,57874,82,107721,16,418.2,0,16,4533,99
+> , +++++,+++,+++++,+++,4395,99,+++++,+++,17122,99
+> 
+> 
+> 
+> So were are hitting roughly 110 MB/sec locally on the storage server.
+> 
+> Now these are the results do doing the same over multipath with two paths
+> enabled:
+> 
+> Version 1.03e       ------Sequential Output------ --Sequential Input- --
+> Random-
+>                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --
+> Seeks--
+> Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec
+> %CP
+> xen3             8G 63953  92 100525  26 26885   2 41957  55 68184   2
+>  357.9 0
+>                     ------Sequential Create------ --------Random
+> Create--------
+>                     -Create-- --Read--- -Delete-- -Create-- --Read--- -
+> Delete--
+>               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec
+> %CP
+>                  16  5326  98 +++++ +++ +++++ +++  5333  97 +++++ +++ 17179
+> 100
+> xen3,8G,63953,92,100525,26,26885,2,41957,55,68184,2,357.9,0,16,5326,98,++++
+> +, +++,+++++,+++,5333,97,+++++,+++,17179,100
+> 
+> You can see we hit somewhat less, probably due to TCP overhead (though this
+> should cut things with 30%). Now the same with one path down:
+> 
+> Version 1.03e       ------Sequential Output------ --Sequential Input- --
+> Random-
+>                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --
+> Seeks--
+> Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec
+> %CP
+> xen3             8G 33214  46 113811  29 27917   1 44474  58 68812   2
+>  362.8 0
+>                     ------Sequential Create------ --------Random
+> Create--------
+>                     -Create-- --Read--- -Delete-- -Create-- --Read--- -
+> Delete--
+>               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec
+> %CP
+>                  16  5294  98 +++++ +++ +++++ +++  5337  97 +++++ +++ 17183
+> 99
+> xen3,8G,33214,46,113811,29,27917,1,44474,58,68812,2,362.8,0,16,5294,98,++++
+> +, +++,+++++,+++,5337,97,+++++,+++,17183,99
+> 
+> As you can see, roughly the same K/sec for both output and input. Actually
+> writing is even faster with one path down!
+> Can anyone make sense of these values?
+> 
+> thx!
+> 
+> B.
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
 
---_000_4BD43A85686FC34D819098DB1C3999D99E777071orsmsx502amrcor_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Maybe adding this one while doing a test with both paths active during "off 
+hours", so no other intrusive factors: 
 
-Are there any known problems with using bio_clone() in a DM target module w=
-hen the underlying block device is an LVM logical volume and a snapshot has=
- been created on said logical volume while the DM target module is active?
-
-I'm developing a DM target module to do block-based change tracking.  It in=
-cludes code from dm-linear, Alberto Bertogli's dm-csum, dm-delay, and some =
-original code, and it appears to be fairly functional.  With the underlying=
- device (the one in the table entry) being an LVM logical volume.  I have c=
-reated an ext2/3 filesystem, copied all ~775MB of /usr/lib to it, and diff'=
-ed the original /usr/lib with the copy.  My module includes the parts of dm=
--csum that call bio_clone() to clone the original bio into one or more piec=
-es to convert 'evil' bios into 'nice' ones and then to convert an original =
-'nice' bio into the one that will be used in a bio_submit() call.
-
-However, if I create an LVM snapshot of the underlying LV while my module i=
-s active, and then I write to the device created by my module, after my mod=
-ule has called bio_submit() for a metadata write to sector 256 and a data w=
-rite to a higher-numbered sector, some portions of my write requests do not=
- complete, and I see the following error messages in /var/log/syslog:
-
-            __ratelimit: 33 callbacks suppressed
-            Buffer I/O error on device dm-1, logical block 256
-            lost page write due to I/O error on dm-1
-
-If I use dm-linear, dm-delay, or dm-crypt instead of my module, there are n=
-o errors reported, and the writes appear to go through.  The main differenc=
-e appears to be my use (from dm-csum) of bio_clone().  However, my module, =
-even with bio_clone(), appears to work fine except when an LVM snapshot is =
-created underneath it.
-
-Any ideas on whether bio_clone() and LVM snapshots don't play well together=
-?
-
-Thank you,
-
-Robert Riches
-Azad Consultant at Intel
-
-
-
---_000_4BD43A85686FC34D819098DB1C3999D99E777071orsmsx502amrcor_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" xmlns:w=3D"urn:sc=
-hemas-microsoft-com:office:word" xmlns=3D"http://www.w3.org/TR/REC-html40">
-
-<head>
-<meta http-equiv=3DContent-Type content=3D"text/html; charset=3Dus-ascii">
-<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
-<style>
-<!--
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:Arial;
-	color:windowtext;}
-@page Section1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.25in 1.0in 1.25in;}
-div.Section1
-	{page:Section1;}
--->
-</style>
-
-</head>
-
-<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
-
-<div class=3DSection1>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>Are there any known problems with using bio_clone() in a=
- DM
-target module when the underlying block device is an LVM logical volume and=
- a
-snapshot has been created on said logical volume while the DM target module=
- is
-active?<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>I&#8217;m developing a DM target module to do block-base=
-d
-change tracking.&nbsp; It includes code from dm-linear, Alberto Bertogli&#8=
-217;s
-dm-csum, dm-delay, and some original code, and it appears to be fairly
-functional.&nbsp; With the underlying device (the one in the table entry) b=
-eing
-an LVM logical volume.&nbsp; I have created an ext2/3 filesystem, copied al=
-l ~775MB
-of /usr/lib to it, and diff&#8217;ed the original /usr/lib with the copy.&n=
-bsp;
-My module includes the parts of dm-csum that call bio_clone() to clone the
-original bio into one or more pieces to convert &#8216;evil&#8217; bios int=
-o &#8216;nice&#8217;
-ones and then to convert an original &#8216;nice&#8217; bio into the one th=
-at
-will be used in a bio_submit() call.<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>However, if I create an LVM snapshot of the underlying L=
-V
-while my module is active, and then I write to the device created by my mod=
-ule,
-after my module has called bio_submit() for a metadata write to sector 256 =
-and
-a data write to a higher-numbered sector, some portions of my write request=
-s do
-not complete, and I see the following error messages in /var/log/syslog:<o:=
-p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp; __ratelimit:
-33 callbacks suppressed<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp; Buffer
-I/O error on device dm-1, logical block 256<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp; lost
-page write due to I/O error on dm-1<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>If I use dm-linear, dm-delay, or dm-crypt instead of my
-module, there are no errors reported, and the writes appear to go
-through.&nbsp; The main difference appears to be my use (from dm-csum) of
-bio_clone().&nbsp; However, my module, even with bio_clone(), appears to wo=
-rk
-fine except when an LVM snapshot is created underneath it.<o:p></o:p></span=
-></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>Any ideas on whether bio_clone() and LVM snapshots don&#=
-8217;t
-play well together?<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>Thank you,<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>Robert Riches</span></font><o:p></o:p></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=3D'font-size:1=
-0.0pt;
-font-family:Arial'>Azad Consultant at Intel</span></font><o:p></o:p></p>
-
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span style=3D=
-'font-size:
-12.0pt'>&nbsp;</span><o:p></o:p></font></p>
-
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span style=3D=
-'font-size:
-12.0pt'><o:p>&nbsp;</o:p></span></font></p>
-
-</div>
-
-</body>
-
-</html>
-
---_000_4BD43A85686FC34D819098DB1C3999D99E777071orsmsx502amrcor_--
+Version 1.03e       ------Sequential Output------ --Sequential Input- --
+Random-
+                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --
+Seeks--
+Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec 
+%CP
+xen3             8G 66510  93 80841  21 26821   1 45368  58 72095   2 361.2   
+0
+                    ------Sequential Create------ --------Random 
+Create--------
+                    -Create-- --Read--- -Delete-- -Create-- --Read--- -
+Delete--
+              files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec 
+%CP
+                 16  5295  98 +++++ +++ +++++ +++  5318  98 +++++ +++ 17089 
+100
+xen3,8G,66510,93,80841,21,26821,1,45368,58,72095,2,361.2,0,16,5295,98,+++++,
++++,+++++,+++,5318,98,+++++,+++,17089,100
 
 
---===============6777304786004263256==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+it show that the speed is exactly 70% of the speed when doing tests locally. 
+So this might be the iSCSI TCP overhead. 
+
+Should the speed of two round robin paths not compensate for this loss? Or is 
+my local storage just to slow to have multipath having any benefit speed wise?
 
 
---===============6777304786004263256==--
+thx!
+
+B.
