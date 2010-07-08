@@ -1,96 +1,66 @@
-From: Bart Coninckx <bart.coninckx@telenet.be>
-Subject: Re: understanding of multipathing and speed
-Date: Thu, 8 Jul 2010 08:35:39 +0200
-Message-ID: <201007080835.39825.bart.coninckx@telenet.be>
-References: <201007052037.39362.bart.coninckx@telenet.be>
-	<201007072301.48042.bart.coninckx@telenet.be>
-	<1278540399.3454.18.camel@newgen.localdomain>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] scsi: address leak in scsi_setup_discard_cmnd error
+ path (was: Re: scsi: unify the error handling of the prep functions)
+Date: Thu, 8 Jul 2010 08:06:03 -0400
+Message-ID: <20100708120602.GA28083@redhat.com>
+References: <20100705125651R.fujita.tomonori@lab.ntt.co.jp>
+ <20100705134529.GA18645@redhat.com>
+ <20100706135958.GA10772@redhat.com>
+ <20100708131726C.fujita.tomonori@lab.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1278540399.3454.18.camel@newgen.localdomain>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Brem Belguebli <brem.belguebli@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100708131726C.fujita.tomonori@lab.ntt.co.jp>
+Sender: linux-scsi-owner@vger.kernel.org
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: jaxboe@fusionio.com, James.Bottomley@suse.de, linux-scsi@vger.kernel.org, hch@lst.de, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thursday 08 July 2010 00:06:39 Brem Belguebli wrote:
+On Thu, Jul 08 2010 at 12:17am -0400,
+FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp> wrote:
 
-> > > --
-> > > dm-devel mailing list
-> > > dm-devel@redhat.com
-> > > https://www.redhat.com/mailman/listinfo/dm-devel
-> >
-> > Maybe adding this one while doing a test with both paths active during
-> > "off hours", so no other intrusive factors:
-> >
-> > Version 1.03e       ------Sequential Output------ --Sequential Input- --
-> > Random-
-> >                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --
-> > Seeks--
-> > Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP 
-> > /sec %CP
-> > xen3             8G 66510  93 80841  21 26821   1 45368  58 72095   2
-> > 361.2 0
-> >                     ------Sequential Create------ --------Random
-> > Create--------
-> >                     -Create-- --Read--- -Delete-- -Create-- --Read--- -
-> > Delete--
-> >               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP 
-> > /sec %CP
-> >                  16  5295  98 +++++ +++ +++++ +++  5318  98 +++++ +++
-> > 17089 100
-> > xen3,8G,66510,93,80841,21,26821,1,45368,58,72095,2,361.2,0,16,5295,98,+++
-> >++, +++,+++++,+++,5318,98,+++++,+++,17089,100
-> >
-> >
-> > it show that the speed is exactly 70% of the speed when doing tests
-> > locally. So this might be the iSCSI TCP overhead.
-> >
-> > Should the speed of two round robin paths not compensate for this loss?
-> > Or is my local storage just to slow to have multipath having any benefit
-> > speed wise?
+> On Tue, 6 Jul 2010 09:59:58 -0400
+> Mike Snitzer <snitzer@redhat.com> wrote:
 > 
-> To calculate your theoretical TCP throughput, a simple formula can be
-> applied : TP= TCP Window size / RTT
+> > Here is a minimalist patch that 1) removes the discard request's page
+> > leak 2) preserves the prep cleanup rules covered above.  Fixing the leak
+> > is a priority, introducing additional error path code sharing/cleanup is
+> > secondary and can come later.
 > 
-> In addition to this generally, you can take advantage of path
-> load-balancing IO's to capable to multiplex IO's devices , such as SAN
-> arrays with cache frontend.
-> Trying to load-balance on a single physical device, won't be, IMHO, of
-> any help except for pure failover purposes.
-> 
-> > thx!
-> >
-> > B.
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+> This patch doesn't work. I hit kernel oops since now this patch frees
+> a discard page twice.
 
-Hi Brem,
+I load tested my v2 patch quite a bit but didn't hit the oops.  Guess
+you're just lucky ;)
 
-are you talking about storage with a sort of built-in active/active storage 
-cluster? Do you think I don't have added speed because if the fact that both 
-iSCSI targets point to the same storage device?
+> If scsi_init_io hits BLKPREP_DEFER (e.g. due to scsi_init_sgtable),
+> scsi_setup_blk_pc_cmnd calls scsi_unprep_request. So sd_unprep_fn
+> frees a page. Then, scsi_setup_discard_cmnd frees the same page again.
 
+OK, thanks for catching this.
 
-thx!!
-Bart
+> From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+> Subject: [PATCH] scsi: fix discard page leak
+> 
+> We leak a page allocated for discard on some error conditions
+> (e.g. scsi_prep_state_check returns BLKPREP_DEFER in
+> scsi_setup_blk_pc_cmnd).
+> 
+> We unprep on requests that weren't prepped in the error path of
+> scsi_init_io. It makes the error path to clean up scsi commands messy.
+> 
+> Let's strictly apply the rule that we can't unprep on a request that
+> wasn't prepped.
+> 
+> Calling just scsi_put_command() in the error path of scsi_init_io() is
+> enough. We don't set REQ_DONTPREP yet.
+> 
+> scsi_setup_discard_cmnd can safely free a page on the error case with
+> the above rule.
+> 
+> Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+
+Acked-by: Mike Snitzer <snitzer@redhat.com>
+
+Jens, it'd be great if we could get this fix in now.
