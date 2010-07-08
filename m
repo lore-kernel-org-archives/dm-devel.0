@@ -1,115 +1,96 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH v2] scsi: address leak in scsi_setup_discard_cmnd error
- path (was: Re: scsi: unify the error handling of the prep functions)
-Date: Thu, 8 Jul 2010 13:17:47 +0900
-Message-ID: <20100708131726C.fujita.tomonori@lab.ntt.co.jp>
-References: <20100705125651R.fujita.tomonori@lab.ntt.co.jp>
-	<20100705134529.GA18645@redhat.com>
-	<20100706135958.GA10772@redhat.com>
+From: Bart Coninckx <bart.coninckx@telenet.be>
+Subject: Re: understanding of multipathing and speed
+Date: Thu, 8 Jul 2010 08:35:39 +0200
+Message-ID: <201007080835.39825.bart.coninckx@telenet.be>
+References: <201007052037.39362.bart.coninckx@telenet.be>
+	<201007072301.48042.bart.coninckx@telenet.be>
+	<1278540399.3454.18.camel@newgen.localdomain>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20100706135958.GA10772@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: snitzer@redhat.com, jaxboe@fusionio.com
-Cc: fujita.tomonori@lab.ntt.co.jp, James.Bottomley@suse.de, linux-scsi@vger.kernel.org, hch@lst.de, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1278540399.3454.18.camel@newgen.localdomain>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Brem Belguebli <brem.belguebli@gmail.com>
 List-Id: dm-devel.ids
 
-On Tue, 6 Jul 2010 09:59:58 -0400
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Thursday 08 July 2010 00:06:39 Brem Belguebli wrote:
 
-> Here is a minimalist patch that 1) removes the discard request's page
-> leak 2) preserves the prep cleanup rules covered above.  Fixing the leak
-> is a priority, introducing additional error path code sharing/cleanup is
-> secondary and can come later.
+> > > --
+> > > dm-devel mailing list
+> > > dm-devel@redhat.com
+> > > https://www.redhat.com/mailman/listinfo/dm-devel
+> >
+> > Maybe adding this one while doing a test with both paths active during
+> > "off hours", so no other intrusive factors:
+> >
+> > Version 1.03e       ------Sequential Output------ --Sequential Input- --
+> > Random-
+> >                     -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --
+> > Seeks--
+> > Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP 
+> > /sec %CP
+> > xen3             8G 66510  93 80841  21 26821   1 45368  58 72095   2
+> > 361.2 0
+> >                     ------Sequential Create------ --------Random
+> > Create--------
+> >                     -Create-- --Read--- -Delete-- -Create-- --Read--- -
+> > Delete--
+> >               files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP 
+> > /sec %CP
+> >                  16  5295  98 +++++ +++ +++++ +++  5318  98 +++++ +++
+> > 17089 100
+> > xen3,8G,66510,93,80841,21,26821,1,45368,58,72095,2,361.2,0,16,5295,98,+++
+> >++, +++,+++++,+++,5318,98,+++++,+++,17089,100
+> >
+> >
+> > it show that the speed is exactly 70% of the speed when doing tests
+> > locally. So this might be the iSCSI TCP overhead.
+> >
+> > Should the speed of two round robin paths not compensate for this loss?
+> > Or is my local storage just to slow to have multipath having any benefit
+> > speed wise?
+> 
+> To calculate your theoretical TCP throughput, a simple formula can be
+> applied : TP= TCP Window size / RTT
+> 
+> In addition to this generally, you can take advantage of path
+> load-balancing IO's to capable to multiplex IO's devices , such as SAN
+> arrays with cache frontend.
+> Trying to load-balance on a single physical device, won't be, IMHO, of
+> any help except for pure failover purposes.
+> 
+> > thx!
+> >
+> > B.
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
 
-This patch doesn't work. I hit kernel oops since now this patch frees
-a discard page twice.
+Hi Brem,
 
-If scsi_init_io hits BLKPREP_DEFER (e.g. due to scsi_init_sgtable),
-scsi_setup_blk_pc_cmnd calls scsi_unprep_request. So sd_unprep_fn
-frees a page. Then, scsi_setup_discard_cmnd frees the same page again.
+are you talking about storage with a sort of built-in active/active storage 
+cluster? Do you think I don't have added speed because if the fact that both 
+iSCSI targets point to the same storage device?
 
 
-I talked to James on irc, he prefers to strictly apply the rule that
-we should unprep on only the requests that got prepped.
-
-So we need to remove scsi_unprep_request in scsi_init_io error
-path. The following patch solves all the issues (hopefully).
-
-=
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH] scsi: fix discard page leak
-
-We leak a page allocated for discard on some error conditions
-(e.g. scsi_prep_state_check returns BLKPREP_DEFER in
-scsi_setup_blk_pc_cmnd).
-
-We unprep on requests that weren't prepped in the error path of
-scsi_init_io. It makes the error path to clean up scsi commands messy.
-
-Let's strictly apply the rule that we can't unprep on a request that
-wasn't prepped.
-
-Calling just scsi_put_command() in the error path of scsi_init_io() is
-enough. We don't set REQ_DONTPREP yet.
-
-scsi_setup_discard_cmnd can safely free a page on the error case with
-the above rule.
-
-Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
----
- drivers/scsi/scsi_lib.c |    7 ++-----
- drivers/scsi/sd.c       |   10 ++++++++--
- 2 files changed, 10 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-index ee83619..b8de389 100644
---- a/drivers/scsi/scsi_lib.c
-+++ b/drivers/scsi/scsi_lib.c
-@@ -1011,11 +1011,8 @@ int scsi_init_io(struct scsi_cmnd *cmd, gfp_t gfp_mask)
- 
- err_exit:
- 	scsi_release_buffers(cmd);
--	if (error == BLKPREP_KILL)
--		scsi_put_command(cmd);
--	else /* BLKPREP_DEFER */
--		scsi_unprep_request(cmd->request);
--
-+	scsi_put_command(cmd);
-+	cmd->request->special = NULL;
- 	return error;
- }
- EXPORT_SYMBOL(scsi_init_io);
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index 0994ab6..1d0c4b7 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -468,6 +468,10 @@ static int scsi_setup_discard_cmnd(struct scsi_device *sdp, struct request *rq)
- 	blk_add_request_payload(rq, page, len);
- 	ret = scsi_setup_blk_pc_cmnd(sdp, rq);
- 	rq->buffer = page_address(page);
-+	if (ret != BLKPREP_OK) {
-+		__free_page(page);
-+		rq->buffer = NULL;
-+	}
- 	return ret;
- }
- 
-@@ -485,8 +489,10 @@ static int scsi_setup_flush_cmnd(struct scsi_device *sdp, struct request *rq)
- 
- static void sd_unprep_fn(struct request_queue *q, struct request *rq)
- {
--	if (rq->cmd_flags & REQ_DISCARD)
--		__free_page(virt_to_page(rq->buffer));
-+	if (rq->cmd_flags & REQ_DISCARD) {
-+		free_page((unsigned long)rq->buffer);
-+		rq->buffer = NULL;
-+	}
- }
- 
- /**
--- 
-1.6.5
-
+thx!!
+Bart
