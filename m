@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid Makefile.in
-Date: 13 Jul 2010 20:23:34 -0000
-Message-ID: <20100713202334.25145.qmail@sourceware.org>
+Subject: dmraid/lib/activate activate.h activate.c
+Date: 13 Jul 2010 20:25:10 -0000
+Message-ID: <20100713202510.26146.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,38 +21,38 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-07-13 20:23:33
+Changes by:	zkabelac@sourceware.org	2010-07-13 20:25:09
 
 Modified files:
-	.              : Makefile.in 
+	lib/activate   : activate.h activate.c 
 
 Log message:
-	Add make tags  target
+	Add missing declaration of libdmraid_make_table
+	FIXME - should be using dmraid.h
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/Makefile.in.diff?cvsroot=dm&r1=1.3&r2=1.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/activate/activate.h.diff?cvsroot=dm&r1=1.3&r2=1.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/activate/activate.c.diff?cvsroot=dm&r1=1.7&r2=1.8
 
---- dmraid/Makefile.in	2010/07/13 19:09:04	1.3
-+++ dmraid/Makefile.in	2010/07/13 20:23:33	1.4
-@@ -10,7 +10,7 @@
- SUBDIRS = include lib man tools
+--- dmraid/lib/activate/activate.h	2009/09/16 11:45:13	1.3
++++ dmraid/lib/activate/activate.h	2010/07/13 20:25:09	1.4
+@@ -16,6 +16,9 @@
+ 	A_RELOAD,
+ };
  
- DISTCLEAN_TARGETS = autom4te.cache make.tmpl core cscope.out \
-- config.cache config.log config.status
-+ config.cache config.log config.status tags
- 
- all: tools
- 
-@@ -23,3 +23,12 @@
- 
- srpm:
- 	rpmbuild -bs dmraid.spec
++/* FIXME - dmraid.h */
++extern char *libdmraid_make_table(struct lib_context *lc, struct raid_set *rs);
 +
-+ifneq ($(shell which ctags),)
-+.PHONY: tags
-+all: tags
-+tags:
-+	$(RM) -f tags
-+	find $(top_srcdir) -type f \( -name '*.c' -o -name '*.h' \) | xargs ctags -a
-+endif
-+
+ int change_set(struct lib_context *lc, enum activate_type what, void *rs);
+ void delete_error_target(struct lib_context *lc, struct raid_set *rs);
+ 
+--- dmraid/lib/activate/activate.c	2010/03/18 13:10:42	1.7
++++ dmraid/lib/activate/activate.c	2010/07/13 20:25:09	1.8
+@@ -20,6 +20,7 @@
+ 
+ #include "internal.h"
+ #include "devmapper.h"
++//#include "dmraid/dmraid.h"
+ 
+ static int
+ valid_rd(struct raid_dev *rd)
