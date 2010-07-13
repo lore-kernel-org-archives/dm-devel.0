@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/tools dmevent_tool.c
-Date: 13 Jul 2010 20:15:35 -0000
-Message-ID: <20100713201535.22558.qmail@sourceware.org>
+Subject: dmraid/tools toollib.c
+Date: 13 Jul 2010 20:16:47 -0000
+Message-ID: <20100713201647.23088.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,25 +21,25 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-07-13 20:15:35
+Changes by:	zkabelac@sourceware.org	2010-07-13 20:16:47
 
 Modified files:
-	tools          : dmevent_tool.c 
+	tools          : toollib.c 
 
 Log message:
-	Use static for _test_user_id()
+	dbg_strdup accepts const char*
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/dmevent_tool.c.diff?cvsroot=dm&r1=1.2&r2=1.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/toollib.c.diff?cvsroot=dm&r1=1.2&r2=1.3
 
---- dmraid/tools/dmevent_tool.c	2010/05/27 20:56:36	1.2
-+++ dmraid/tools/dmevent_tool.c	2010/07/13 20:15:31	1.3
-@@ -114,7 +114,7 @@
- 		"\n" , cmd, options, cmd, cmd, cmd, cmd, cmd, cmd, cmd);
- }
+--- dmraid/tools/toollib.c	2008/06/20 21:52:19	1.2
++++ dmraid/tools/toollib.c	2010/07/13 20:16:47	1.3
+@@ -108,7 +108,7 @@
+ 	char *p, *p_sav, *sep;
+ 	const char delim = *OPT_STR_SEPARATOR(lc);
  
--void _test_user_id(void)
-+static void _test_user_id(void)
- {
- 	if (geteuid()) {
- 		fprintf(stderr, "This utility needs to be run as root.\n");
+-	if (!(p_sav = dbg_strdup((char *) fmt)))
++	if (!(p_sav = dbg_strdup(fmt)))
+ 		return log_alloc_err(lc, __func__);
+ 
+ 	sep = p_sav;
