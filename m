@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/lib/format/ddf ddf1_dump.c
-Date: 13 Jul 2010 20:22:38 -0000
-Message-ID: <20100713202238.24799.qmail@sourceware.org>
+Subject: dmraid Makefile.in
+Date: 13 Jul 2010 20:23:34 -0000
+Message-ID: <20100713202334.25145.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,24 +21,38 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-07-13 20:22:38
+Changes by:	zkabelac@sourceware.org	2010-07-13 20:23:33
 
 Modified files:
-	lib/format/ddf : ddf1_dump.c 
+	.              : Makefile.in 
 
 Log message:
-	Add missing #include "ddf1_dump.h"
+	Add make tags  target
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ddf/ddf1_dump.c.diff?cvsroot=dm&r1=1.2&r2=1.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/Makefile.in.diff?cvsroot=dm&r1=1.3&r2=1.4
 
---- dmraid/lib/format/ddf/ddf1_dump.c	2008/06/20 21:52:17	1.2
-+++ dmraid/lib/format/ddf/ddf1_dump.c	2010/07/13 20:22:38	1.3
-@@ -16,6 +16,7 @@
- #define FORMAT_HANDLER
- #include "ddf1.h"
- #include "ddf1_lib.h"
-+#include "ddf1_dump.h"
+--- dmraid/Makefile.in	2010/07/13 19:09:04	1.3
++++ dmraid/Makefile.in	2010/07/13 20:23:33	1.4
+@@ -10,7 +10,7 @@
+ SUBDIRS = include lib man tools
  
- /* Print DDF GUIDs. */
- #ifdef  NATIVE_LOG_OFFSET
+ DISTCLEAN_TARGETS = autom4te.cache make.tmpl core cscope.out \
+- config.cache config.log config.status
++ config.cache config.log config.status tags
+ 
+ all: tools
+ 
+@@ -23,3 +23,12 @@
+ 
+ srpm:
+ 	rpmbuild -bs dmraid.spec
++
++ifneq ($(shell which ctags),)
++.PHONY: tags
++all: tags
++tags:
++	$(RM) -f tags
++	find $(top_srcdir) -type f \( -name '*.c' -o -name '*.h' \) | xargs ctags -a
++endif
++
