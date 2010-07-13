@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/lib/format/ataraid asr.c
-Date: 13 Jul 2010 20:18:19 -0000
-Message-ID: <20100713201819.23521.qmail@sourceware.org>
+Subject: dmraid/tools dmevent_tool.c
+Date: 13 Jul 2010 20:15:35 -0000
+Message-ID: <20100713201535.22558.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,25 +21,25 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-07-13 20:18:19
+Changes by:	zkabelac@sourceware.org	2010-07-13 20:15:35
 
 Modified files:
-	lib/format/ataraid: asr.c 
+	tools          : dmevent_tool.c 
 
 Log message:
-	Add void to definition of create_drivemagic()
+	Use static for _test_user_id()
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ataraid/asr.c.diff?cvsroot=dm&r1=1.7&r2=1.8
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/dmevent_tool.c.diff?cvsroot=dm&r1=1.2&r2=1.3
 
---- dmraid/lib/format/ataraid/asr.c	2010/03/18 16:53:17	1.7
-+++ dmraid/lib/format/ataraid/asr.c	2010/07/13 20:18:19	1.8
-@@ -763,7 +763,7 @@
+--- dmraid/tools/dmevent_tool.c	2010/05/27 20:56:36	1.2
++++ dmraid/tools/dmevent_tool.c	2010/07/13 20:15:31	1.3
+@@ -114,7 +114,7 @@
+ 		"\n" , cmd, options, cmd, cmd, cmd, cmd, cmd, cmd, cmd);
+ }
  
- /* Creates a random integer for a drive magic section */
- static uint32_t
--create_drivemagic()
-+create_drivemagic(void)
+-void _test_user_id(void)
++static void _test_user_id(void)
  {
- 
- 	srand(time(NULL));
+ 	if (geteuid()) {
+ 		fprintf(stderr, "This utility needs to be run as root.\n");
