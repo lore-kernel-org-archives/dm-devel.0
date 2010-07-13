@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/lib misc/misc.c locking/locking.c
-Date: 13 Jul 2010 20:21:20 -0000
-Message-ID: <20100713202120.24585.qmail@sourceware.org>
+Subject: dmraid/lib/format/ddf ddf1_dump.c
+Date: 13 Jul 2010 20:22:38 -0000
+Message-ID: <20100713202238.24799.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,47 +21,24 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-07-13 20:21:20
+Changes by:	zkabelac@sourceware.org	2010-07-13 20:22:38
 
 Modified files:
-	lib/misc       : misc.c 
-	lib/locking    : locking.c 
+	lib/format/ddf : ddf1_dump.c 
 
 Log message:
-	dbg_strdup, get_dirname accepts const char*
+	Add missing #include "ddf1_dump.h"
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/misc/misc.c.diff?cvsroot=dm&r1=1.4&r2=1.5
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/locking/locking.c.diff?cvsroot=dm&r1=1.4&r2=1.5
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ddf/ddf1_dump.c.diff?cvsroot=dm&r1=1.2&r2=1.3
 
---- dmraid/lib/misc/misc.c	2010/03/12 11:33:02	1.4
-+++ dmraid/lib/misc/misc.c	2010/07/13 20:21:19	1.5
-@@ -45,7 +45,7 @@
+--- dmraid/lib/format/ddf/ddf1_dump.c	2008/06/20 21:52:17	1.2
++++ dmraid/lib/format/ddf/ddf1_dump.c	2010/07/13 20:22:38	1.3
+@@ -16,6 +16,7 @@
+ #define FORMAT_HANDLER
+ #include "ddf1.h"
+ #include "ddf1_lib.h"
++#include "ddf1_dump.h"
  
- /* Return the dirname of a path. */
- char *
--get_dirname(struct lib_context *lc, char *str)
-+get_dirname(struct lib_context *lc, const char *str)
- {
- 	char *ret = strrchr(str, '/');
- 	size_t len = ret ? ret - str : strlen(str);
-@@ -228,7 +228,7 @@
- 	char *b, *f, *f_sav;
- 	va_list ap;
- 
--	if (!(f = f_sav = dbg_strdup((char *) fmt)))
-+	if (!(f = f_sav = dbg_strdup(fmt)))
- 		return 0;
- 
- 	va_start(ap, fmt);
---- dmraid/lib/locking/locking.c	2009/09/16 11:45:15	1.4
-+++ dmraid/lib/locking/locking.c	2010/07/13 20:21:20	1.5
-@@ -68,7 +68,7 @@
- 	int ret = 0;
- 	char *dir;
- 
--	if (!(dir = get_dirname(lc, (char *) lock_file)))
-+	if (!(dir = get_dirname(lc, lock_file)))
- 		return 0;
- 
- 	if (!mk_dir(lc, dir))
+ /* Print DDF GUIDs. */
+ #ifdef  NATIVE_LOG_OFFSET
