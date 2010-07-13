@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/lib/metadata reconfig.c
-Date: 13 Jul 2010 20:19:40 -0000
-Message-ID: <20100713201940.23942.qmail@sourceware.org>
+Subject: dmraid/lib misc/misc.c locking/locking.c
+Date: 13 Jul 2010 20:21:20 -0000
+Message-ID: <20100713202120.24585.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,64 +21,47 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-07-13 20:19:40
+Changes by:	zkabelac@sourceware.org	2010-07-13 20:21:20
 
 Modified files:
-	lib/metadata   : reconfig.c 
+	lib/misc       : misc.c 
+	lib/locking    : locking.c 
 
 Log message:
-	Add static to local functions
+	dbg_strdup, get_dirname accepts const char*
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/metadata/reconfig.c.diff?cvsroot=dm&r1=1.3&r2=1.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/misc/misc.c.diff?cvsroot=dm&r1=1.4&r2=1.5
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/locking/locking.c.diff?cvsroot=dm&r1=1.4&r2=1.5
 
---- dmraid/lib/metadata/reconfig.c	2009/09/16 11:45:16	1.3
-+++ dmraid/lib/metadata/reconfig.c	2010/07/13 20:19:40	1.4
-@@ -87,7 +87,7 @@
+--- dmraid/lib/misc/misc.c	2010/03/12 11:33:02	1.4
++++ dmraid/lib/misc/misc.c	2010/07/13 20:21:19	1.5
+@@ -45,7 +45,7 @@
  
- int rebuild_config_raidset(struct lib_context *lc, struct raid_set *rs);
- 
--void
-+static void
- show_raid_stack(struct lib_context *lc)
+ /* Return the dirname of a path. */
+ char *
+-get_dirname(struct lib_context *lc, char *str)
++get_dirname(struct lib_context *lc, const char *str)
  {
- 	struct raid_set *_rs;
-@@ -268,10 +268,8 @@
- 	return ret;
- }
+ 	char *ret = strrchr(str, '/');
+ 	size_t len = ret ? ret - str : strlen(str);
+@@ -228,7 +228,7 @@
+ 	char *b, *f, *f_sav;
+ 	va_list ap;
  
--struct dev_info *find_disk(struct lib_context *lc, char *dp);
--
- /* check if disk is under a raid set */
--int
-+static int
- check_busy_disk(struct lib_context *lc, struct raid_dev *check_rd)
- {
- 	struct raid_dev *rd;
-@@ -290,7 +288,7 @@
- 	return 1;
- }
+-	if (!(f = f_sav = dbg_strdup((char *) fmt)))
++	if (!(f = f_sav = dbg_strdup(fmt)))
+ 		return 0;
  
--int
-+static int
- add_dev_to_array(struct lib_context *lc, struct raid_set *rs,
- 		 uint build_metadata, struct raid_dev *hot_spare_rd)
- {
-@@ -543,7 +541,7 @@
- struct raid_dev *find_spare(struct lib_context *lc, struct raid_set *sub_rs,
- 			    struct raid_set **spare_set);
+ 	va_start(ap, fmt);
+--- dmraid/lib/locking/locking.c	2009/09/16 11:45:15	1.4
++++ dmraid/lib/locking/locking.c	2010/07/13 20:21:20	1.5
+@@ -68,7 +68,7 @@
+ 	int ret = 0;
+ 	char *dir;
  
--int
-+static int
- _rebuild_raidset(struct lib_context *lc, struct raid_set *sub_rs,
- 		 char *set_name)
- {
-@@ -704,7 +702,7 @@
- }
+-	if (!(dir = get_dirname(lc, (char *) lock_file)))
++	if (!(dir = get_dirname(lc, lock_file)))
+ 		return 0;
  
- 
--int
-+static int
- write_set_spare(struct lib_context *lc, void *v)
- {
- 	int ret = 1;
+ 	if (!mk_dir(lc, dir))
