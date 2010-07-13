@@ -1,7 +1,7 @@
 From: zkabelac@sourceware.org
-Subject: dmraid/tools commands.c
-Date: 13 Jul 2010 20:14:41 -0000
-Message-ID: <20100713201441.22021.qmail@sourceware.org>
+Subject: dmraid/lib/format/ataraid asr.c
+Date: 13 Jul 2010 20:18:19 -0000
+Message-ID: <20100713201819.23521.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,25 +21,25 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	zkabelac@sourceware.org	2010-07-13 20:14:41
+Changes by:	zkabelac@sourceware.org	2010-07-13 20:18:19
 
 Modified files:
-	tools          : commands.c 
+	lib/format/ataraid: asr.c 
 
 Log message:
-	Use static for save_drive_name()
+	Add void to definition of create_drivemagic()
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/commands.c.diff?cvsroot=dm&r1=1.10&r2=1.11
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ataraid/asr.c.diff?cvsroot=dm&r1=1.7&r2=1.8
 
---- dmraid/tools/commands.c	2010/05/30 22:12:43	1.10
-+++ dmraid/tools/commands.c	2010/07/13 20:14:41	1.11
-@@ -639,7 +639,7 @@
- }
+--- dmraid/lib/format/ataraid/asr.c	2010/03/18 16:53:17	1.7
++++ dmraid/lib/format/ataraid/asr.c	2010/07/13 20:18:19	1.8
+@@ -763,7 +763,7 @@
  
- /* Save name of rebuild disk. */
--int
-+static int
- save_drive_name(struct lib_context *lc, char *drive)
+ /* Creates a random integer for a drive magic section */
+ static uint32_t
+-create_drivemagic()
++create_drivemagic(void)
  {
- 	lc->options[LC_REBUILD_DISK].opt++;
+ 
+ 	srand(time(NULL));
