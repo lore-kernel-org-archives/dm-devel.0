@@ -1,17 +1,16 @@
-From: "Jason Shamberger" <Jason_Shamberger@Dell.com>
-Subject: Re: [PATCH 1/1] dm-mpath: Extend path selectorinterface
-	for supporting Dell EqualLogic path selector
-Date: Wed, 14 Jul 2010 17:34:18 -0400
-Message-ID: <86A3089001A44141B76B882059E7E53B059FDD48@M31.equallogic.com>
-References: <86A3089001A44141B76B882059E7E53B01E87A3B@M31.equallogic.com>
-	<20100712223449.GP26290@agk-dp.fab.redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: Re: [PATCH v4] dm: Add Dell MD36xxi controller into
+	RDAC	device list
+Date: Thu, 15 Jul 2010 09:17:52 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4D036F9EB@cosmail01.lsi.com>
+References: <F757EE5C3631ED4DBDFD7709119219FE03BBD8CF4C@AUSX7MCPS302.AMER.DELL.COM>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <20100712223449.GP26290@agk-dp.fab.redhat.com>
+In-Reply-To: <F757EE5C3631ED4DBDFD7709119219FE03BBD8CF4C@AUSX7MCPS302.AMER.DELL.COM>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,92 +20,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Parind Shah <Parind_Shah@Dell.com>, Narendran Ganapathy <Narendran_Ganapathy@Dell.com>, Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: James Bottomley <James.Bottomley@suse.de>
 List-Id: dm-devel.ids
 
-Thanks, all, for the feedback.
+James,  Can you please include this patch in next kernel update..  
 
-We will update our proposed patch to pass individual parameters to the
-path
-selector instead of the entire struct request *, so it is compatible
-with 
-either request-based or bio-based usage.  I do feel it makes sense to
-define
-a struct that will be passed through, now that we have more than just 
-nr_bytes.  Mike, you have a  good point about not using a union, this
-has 
-been removed.
+Thanks
+Babu Moger 
 
-> What other inputs - in addition to offset - will the path selector
-need to take
-> into account to make its decision and how will it get those inputs?
-> Presumably you envisage some sort of semi-static or cached
-information,
-> and not asking the hardware before every piece of I/O?
- 
-The additional parameters we would like to pass to the path selectors
-are:
--	Start address
--	Whether the IO is a read or write.  This will be stored in a
-flags 
-field.
--	Timestamp of when the IO started, so the path selector can
-calculate 
-the latency in end_io()
-
-We understand the full path selector code is necessary before this patch
-
-can be accepted, and will post it in the near future.
-
-> How many ranges are there likely to be in this offset-based routing
-table?
-> How frequently is the offset-based routing table likely to change?
-
-> As Hannes points out, the dm table layer is already designed to handle
-> offset-based routing, so I'll need some convincing there's a need to
-duplicate
-> part of this inside path selectors.
- 
-> If this information is rapidly changing - many reconfigurations per
-minute,
-> then we may need to consider some in-kernel solution.  Otherwise I'll
-be
-> seeking solutions performing the reconfiguration from userspace first.
-
-We agree with doing much of the work in userspace, such as reading the 
-information from the storage array.  The routing table can change at any
-
-time, but is not likely to be changing frequently, so a userspace
-solution 
-is adequate.  This information will be cached on the host so only a
-quick 
-lookup is necessary in the IO path.
-
-There are many ranges in our routing table - when we spread data across
-the 
-arrays in our group, each range is typically only 10s of MB, so it is
-typical 
-to have thousands of these ranges per LUN. 
-
-Our initial design was to use a single entry in the dm table and a path 
-selector that routed amongst paths based on the additional info proposed
-above.
-Based on Alasdair's and Hannes' feedback we have done some
-experimentation 
-with the dm table layer offset based routing and it seems a viable
-alternative, 
-but we hit a couple of problems.  In the current kernel the DM is
-rejecting our 
-table - the multipath target is request based, and it seems the request
-based 
-dm only supports tables that have a single target.  We have also tested
-on an 
-older kernel that uses a bio-based dm-multipath, and are able to load a
-table 
-with dmsetup.  However, we seem to be bumping into a scalability limit
-when 
-the table exceeds a few thousand lines.
-
-Thanks,
-Jason
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+> On Behalf Of Yanqing_Liu@Dell.com
+> Sent: Wednesday, May 19, 2010 12:32 PM
+> To: dm-devel@redhat.com; linux-scsi@vger.kernel.org
+> Cc: Charles_Rose@Dell.com
+> Subject: [dm-devel] [PATCH v4] dm: Add Dell MD36xxi controller into
+> RDAC device list
+> 
+> Hi all,
+> 
+> This patch is to add next generation of Dell iSCSI PowerVault
+> controller MD36xxi into RDAC device list.
+> 
+> Thanks,
+> Yanqing
+> 
+> Signed off by: Yanqing Liu <Yanqing_Liu@Dell.com>
+> ---
+> Index: linux-2.6.34/drivers/scsi/device_handler/scsi_dh_rdac.c
+> =======================================================================
+> =
+> --- linux-2.6.34.orig/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-
+> 05-19 09:03:34.000000000 -0400
+> +++ linux-2.6.34/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-05-19
+> 09:01:06.000000000 -0400
+> @@ -768,6 +768,7 @@
+>  	{"DELL", "MD3000i"},
+>  	{"DELL", "MD32xx"},
+>  	{"DELL", "MD32xxi"},
+> +	{"DELL", "MD36xxi"},
+>  	{"LSI", "INF-01-00"},
+>  	{"ENGENIO", "INF-01-00"},
+>  	{"STK", "FLEXLINE 380"},
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
