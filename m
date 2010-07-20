@@ -1,66 +1,57 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [BUG] multipath-tools: uuid has become meaningless
-Date: Tue, 20 Jul 2010 09:17:30 +0200
-Message-ID: <4C454D8A.3020203@suse.de>
-References: <20100719224528.GA23414@us.ibm.com>	<1279604124.2841.5.camel@Nokia-N900-42-11>
-	<20100720065410.GA3166@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: Re: [dm-devel] [PATCH] DM-CRYPT: Scale to multiple CPUs v2
+Date: Tue, 20 Jul 2010 09:26:22 +0200
+Message-ID: <20100720072621.GB30592@basil.fritz.box>
+References: <20100601075259.GA13333@basil.fritz.box>
+ <4C4444C2.6040607@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100720065410.GA3166@us.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4C4444C2.6040607@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, agk@redhat.com, linux-kernel@vger.kernel.org, eric.dumazet@gmail.com
 List-Id: dm-devel.ids
 
-Malahal Naineni wrote:
-> Christophe Varoqui [christophe.varoqui@gmail.com] wrote:
->>    > 3. We could rename the devices instead of reload -- really fixing t=
-his!
->>    >
->>
->>    This one seems safe.
-> =
+On Mon, Jul 19, 2010 at 02:27:46PM +0200, Milan Broz wrote:
+>  On 06/01/2010 09:52 AM, Andi Kleen wrote:
+> > DM-CRYPT: Scale to multiple CPUs v2
+> >
+> > Updated version with the per CPU access improvements Eric suggested.
+> Hi,
+> 
+> seems that this approach is probably the best one we can use now...
+> (I would better see threads in crypto layer but that's taken of
+> the programme for today, seems.)
+> 
+> I did some tests and it works for me, even tries some strange stacked
+> mapping etc.
+> Do you have some exact numbers for particular tests btw?
 
-> This is where I was heading. I did some investigation and found that we
-> really need to rename to wwid based names before we finally rename to
-> the intended name. So we may actually have two passes just to rename
-> (first to wwid based names and then to actual names).  Also the current
-> code doesn't do rename followed by reload even if it is needed. Someone
-> sets friendly name and some other defaults that need reload like path
-> grouping policy etc, we just rename! Probably a bug in itself.
-> =
+I had some, but can't find them right now, sorry.
 
-You sure? I would rather rely on device-mapper uuids here.
-Point is that we
-a) use 'mpath-<wwid>' as uuid for multipath generated tables anyway
-and
-b) uuids are a primary key for device-mapper, too.
+The original motivation was one benchmark on encrypted fs 
+which gave terrible results. But unfortunately I didn't get updated
+numbers with the patch for that one.
 
-So we can use the known naming scheme for the uuid to regenerate the
-wwid; with this we can identify/access the device and we should be able to
-make do with just one pass.
+The patch also seems to already have a small user base,
+at least I got a few requests for it.
 
-Two passes have the serious disadvantage of generating yet another set
-of meaningless uevents, which then again have to be handled/ignored etc.
+> 
+> Anyway, I have just one comment - please can we make the per-cpu attribute
+> for IV generic? IOW not add explicit ie (ESSIV) but void * iv_private
+> - see attached patch.
 
-I'll be sending a patch to simplify dm_get_name() to illustrate my point.
+Fine for me.
 
-Cheers,
+> 
+> (I'll try discuss this with Alasdair to review for next merge
+> window, I think you requested that already in some private mail...)
 
-Hannes
--- =
+Yes. Thanks.
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+-Andi
+
+-- 
+ak@linux.intel.com -- Speaking for myself only.
