@@ -1,12 +1,17 @@
-From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH] libmultipath: always allocate space for alias
-Date: Tue, 20 Jul 2010 10:10:14 +0200
-Message-ID: <20100720081014.5885D29D22@ochil.suse.de>
+From: Malahal Naineni <malahal@us.ibm.com>
+Subject: Re: [BUG] multipath-tools: uuid has become meaningless
+Date: Tue, 20 Jul 2010 15:06:44 -0700
+Message-ID: <20100720220644.GA25337@us.ibm.com>
+References: <20100719224528.GA23414@us.ibm.com>
+	<1279604124.2841.5.camel@Nokia-N900-42-11>
+	<20100720065410.GA3166@us.ibm.com> <4C454D8A.3020203@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4C454D8A.3020203@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,95 +21,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hannes Reinecke [hare@suse.de] wrote:
+> Malahal Naineni wrote:
+> > This is where I was heading. I did some investigation and found that we
+> > really need to rename to wwid based names before we finally rename to
+> > the intended name. So we may actually have two passes just to rename
+> > (first to wwid based names and then to actual names).  Also the current
+> > code doesn't do rename followed by reload even if it is needed. Someone
+> > sets friendly name and some other defaults that need reload like path
+> > grouping policy etc, we just rename! Probably a bug in itself.
 
-We should always allocating space for alias. This makes
-freeing up and allocation tracking far easier.
+> You sure? I would rather rely on device-mapper uuids here.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- libmultipath/propsel.c     |    6 +++---
- libmultipath/structs.c     |    4 +---
- libmultipath/structs_vec.c |   10 ++++++++--
- 3 files changed, 12 insertions(+), 8 deletions(-)
+Hannes, I am not sure what you are referring to when you say, "You
+sure?" Are you saying if I am sure about this bug? If so, you can see
+yourself by swapping couple entries in the bindings file. As I said,
+you will notice this bug only when you enable 'user_friendly_names' in
+initrd in real life!
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index ee4109e..3074ce1 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -239,7 +239,7 @@ extern int
- select_alias (struct multipath * mp)
- {
- 	if (mp->mpe && mp->mpe->alias)
--		mp->alias = mp->mpe->alias;
-+		mp->alias = STRDUP(mp->mpe->alias);
- 	else {
- 		mp->alias = NULL;
- 		if (conf->user_friendly_names) {
-@@ -257,7 +257,7 @@ select_alias (struct multipath * mp)
- 			}
- 		}
- 		if (mp->alias == NULL)
--			mp->alias = mp->wwid;
-+			mp->alias = STRDUP(mp->wwid);
- 	}
+> So we can use the known naming scheme for the uuid to regenerate the
+> wwid; with this we can identify/access the device and we should be able to
+> make do with just one pass.
+
+Say, you have "mpath0[uuid0]" and "mpath1[uuid1]" loaded currently.  How
+can we rename mpath0 to mpath1 and vice-versa? It does require an
+intermediate step of renaming to something else, right? 
  
- 	return 0;
-@@ -472,7 +472,7 @@ select_pg_timeout(struct multipath *mp)
- 		return 0;
- 	}
- 	mp->pg_timeout = PGTIMEOUT_UNDEF;
--	condlog(3, "pg_timeout = NONE (internal default)");
-+	condlog(3, "%s: pg_timeout = NONE (internal default)", mp->alias);
- 	return 0;
- }
- 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index a4b86d2..82df680 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -163,9 +163,7 @@ free_multipath (struct multipath * mpp, int free_paths)
- 
- 	free_multipath_attributes(mpp);
- 
--	if (mpp->alias &&
--	    (!mpp->mpe || (mpp->mpe && mpp->alias != mpp->mpe->alias)) &&
--	    (mpp->wwid && mpp->alias != mpp->wwid)) {
-+	if (mpp->alias) {
- 		FREE(mpp->alias);
- 		mpp->alias = NULL;
- 	}
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 699efa1..51c41e8 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -335,8 +335,13 @@ retry:
- 	condlog(3, "%s: discover", mpp->alias);
- 
- 	if (update_multipath_strings(mpp, vecs->pathvec)) {
--		char new_alias[WWID_SIZE];
-+		char *new_alias;
- 
-+		new_alias = MALLOC(WWID_SIZE);
-+		if (!new_alias) {
-+			condlog(0, "%s: failed to allocate alias", mpp->alias);
-+			goto out;
-+		}
- 		/*
- 		 * detect an external rename of the multipath device
- 		 */
-@@ -344,7 +349,8 @@ retry:
- 			condlog(3, "%s multipath mapped device name has "
- 				"changed from %s to %s", mpp->wwid,
- 				mpp->alias, new_alias);
--			strcpy(mpp->alias, new_alias);
-+			FREE(mpp->alias);
-+			mpp->alias = new_alias;
- 
- 			if (mpp->waiter)
- 				strncpy(((struct event_thread *)mpp->waiter)->mapname,
--- 
-1.6.0.2
+Thanks, Malahal.
