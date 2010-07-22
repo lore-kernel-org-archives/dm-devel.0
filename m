@@ -1,15 +1,12 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [BUG] multipath-tools: uuid has become meaningless
-Date: Wed, 21 Jul 2010 12:44:02 +0200
-Message-ID: <4C46CF72.3020101@suse.de>
-References: <20100719224528.GA23414@us.ibm.com>	<1279604124.2841.5.camel@Nokia-N900-42-11>	<20100720065410.GA3166@us.ibm.com>
-	<4C454D8A.3020203@suse.de> <20100720220644.GA25337@us.ibm.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/2] dm-kcopyd: Remove BIO_RW_SYNCIO flag
+Date: Thu, 22 Jul 2010 11:23:08 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1007221121500.19285@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100720220644.GA25337@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,56 +17,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: ejt@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Malahal Naineni wrote:
-> Hannes Reinecke [hare@suse.de] wrote:
->> Malahal Naineni wrote:
->>> This is where I was heading. I did some investigation and found that we
->>> really need to rename to wwid based names before we finally rename to
->>> the intended name. So we may actually have two passes just to rename
->>> (first to wwid based names and then to actual names).  Also the current
->>> code doesn't do rename followed by reload even if it is needed. Someone
->>> sets friendly name and some other defaults that need reload like path
->>> grouping policy etc, we just rename! Probably a bug in itself.
-> =
+Remove BIO_RW_SYNCIO flag from kcopyd
 
->> You sure? I would rather rely on device-mapper uuids here.
-> =
+This improves write throughput twice when writing to the origin with snapshot
+on the same device.
 
-> Hannes, I am not sure what you are referring to when you say, "You
-> sure?" Are you saying if I am sure about this bug? If so, you can see
-> yourself by swapping couple entries in the bindings file. As I said,
-> you will notice this bug only when you enable 'user_friendly_names' in
-> initrd in real life!
-> =
+I don't know the exact reason, BIO_RW_SYNCIO is not documented and
+its effects on queueing are not obvious from the code. There seem to
+be two sets of limits, one for sync and the other for async requests.
 
-Well, I wanted to inquire about the double renaming thing.
-But
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
->> So we can use the known naming scheme for the uuid to regenerate the
->> wwid; with this we can identify/access the device and we should be able =
-to
->> make do with just one pass.
-> =
+---
+ drivers/md/dm-kcopyd.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> Say, you have "mpath0[uuid0]" and "mpath1[uuid1]" loaded currently.  How
-> can we rename mpath0 to mpath1 and vice-versa? It does require an
-> intermediate step of renaming to something else, right? =
-
->  =
-
-is a valid point. So yes, we have to put in a renaming mechanism.
-So falling back to wwid should work here.
-
-Sorry for the noise, you are correct here.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+Index: linux-2.6.34-fast/drivers/md/dm-kcopyd.c
+===================================================================
+--- linux-2.6.34-fast.orig/drivers/md/dm-kcopyd.c	2010-07-21 17:57:35.000000000 +0200
++++ linux-2.6.34-fast/drivers/md/dm-kcopyd.c	2010-07-22 15:24:02.000000000 +0200
+@@ -345,7 +345,7 @@ static int run_io_job(struct kcopyd_job 
+ {
+ 	int r;
+ 	struct dm_io_request io_req = {
+-		.bi_rw = job->rw | (1 << BIO_RW_SYNCIO) | (1 << BIO_RW_UNPLUG),
++		.bi_rw = job->rw | (1 << BIO_RW_UNPLUG),
+ 		.mem.type = DM_IO_PAGE_LIST,
+ 		.mem.ptr.pl = job->pages,
+ 		.mem.offset = job->offset,
