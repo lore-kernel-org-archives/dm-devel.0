@@ -1,14 +1,12 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 12/12] dm stripe: enable efficient discard support
-Date: Fri, 23 Jul 2010 19:24:03 -0400
-Message-ID: <1279927443-1780-13-git-send-email-snitzer@redhat.com>
-References: <1279927443-1780-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 00/12] dm: enable discard support for more targets
+Date: Fri, 23 Jul 2010 19:23:51 -0400
+Message-ID: <1279927443-1780-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1279927443-1780-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,229 +19,54 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The DM core will submit a discard bio to the stripe target for each
-stripe in a striped DM device.  The stripe target will determine
-stripe-specific portions of the supplied bio to be remapped into
-individual (at most 'num_discard_requests' extents).  If a given
-stripe-specific discard bio doesn't touch a particular stripe the bio
-will be dropped.
+This patchset enables discard support for most of the DM targets that
+discards are intended to be supported on.
 
-Various useful DMDEBUG messages will be printed if CONFIG_DM_DEBUG is
-enabled and a discard is issued to a striped DM device.
+This patchset is also available here:
+http://people.redhat.com/msnitzer/patches/dm-discard-advanced/latest/
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-stripe.c |  174 +++++++++++++++++++++++++++++++++++++++++++++--
- 1 files changed, 166 insertions(+), 8 deletions(-)
+The stripe target's discard support was the most tedious and
+challenging to implement.  It may see further edits before it lands
+upstream.
 
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index 2d6baae..8d370ec 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -167,11 +167,10 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	sc->stripe_width = width;
- 	ti->split_io = chunk_size;
- 	ti->num_flush_requests = stripes;
-+	ti->num_discard_requests = stripes;
- 
- 	sc->chunk_mask = ((sector_t) chunk_size) - 1;
--	for (sc->chunk_shift = 0; chunk_size; sc->chunk_shift++)
--		chunk_size >>= 1;
--	sc->chunk_shift--;
-+	sc->chunk_shift = ffs(chunk_size) - 1;
- 
- 	/*
- 	 * Get the stripe destinations.
-@@ -207,12 +206,167 @@ static void stripe_dtr(struct dm_target *ti)
- 	kfree(sc);
- }
- 
-+static void map_bio_to_stripe(struct bio *bio, struct stripe_c *sc,
-+			      sector_t chunk, sector_t offset)
-+{
-+	uint32_t stripe = sector_div(chunk, sc->stripes);
-+
-+	bio->bi_bdev = sc->stripe[stripe].dev->bdev;
-+	bio->bi_sector = sc->stripe[stripe].physical_start +
-+	    (chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
-+}
-+
-+/*
-+ * Set the bio's bi_size based on only the space allocated to 'stripe'.
-+ * - first_chunk and last_chunk belong to 'stripe'.
-+ * - first_offset and last_offset are only relevant if non-zero.
-+ */
-+static void set_stripe_bio_size(struct bio *bio, uint32_t stripe,
-+				struct stripe_c *sc,
-+				sector_t first_chunk, sector_t last_chunk,
-+				sector_t first_offset, sector_t last_offset)
-+{
-+	sector_t temp, stripe_chunks, unused_sectors = 0;
-+
-+	/*
-+	 * Determine the number of chunks used from the specified 'stripe'.
-+	 * stripe_chunks * chunk_size is the upper bound on the 'stripe'
-+	 * specific bio->bi_size
-+	 * - requires absolute first_chunk and last_chunk
-+	 */
-+	stripe_chunks = last_chunk - first_chunk + 1;
-+	temp = sector_div(stripe_chunks, sc->stripes);
-+	stripe_chunks += temp;
-+	DMDEBUG("%s: stripe=%u stripe_chunks=%lu",
-+		__func__, stripe, stripe_chunks);
-+
-+	/* Set bi_size based on only the space allocated to 'stripe' */
-+	bio->bi_size = to_bytes(stripe_chunks * (sc->chunk_mask + 1));
-+	/* must reduce bi_size if first and/or last chunk was partially used */
-+	if (first_offset) {
-+		unused_sectors += (first_offset & sc->chunk_mask);
-+		DMDEBUG("%s: adjusting for first_stripe=%u, unused_sectors=%lu",
-+			__func__, stripe, unused_sectors);
-+	}
-+	if (last_offset) {
-+		temp = last_offset & sc->chunk_mask;
-+		if (temp)
-+			unused_sectors += ((sc->chunk_mask + 1) - temp);
-+		DMDEBUG("%s: adjusting for last_stripe=%u, unused_sectors=%lu",
-+			__func__, stripe, unused_sectors);
-+	}
-+	if (unused_sectors)
-+		bio->bi_size -= to_bytes(unused_sectors);
-+}
-+
-+/*
-+ * Determine the chunk closest to 'chunk' that belongs to 'stripe':
-+ * - return first chunk belonging to stripe if 'first_offset' was provided.
-+ *   - also adjust 'first_offset' accordingly.
-+ *   - returned chunk may exceed bio or target boundary; caller must check
-+ *     the return and react accordingly (e.g. drop the bio).
-+ * - otherwise return last chunk belonging to stripe
-+ * Also return the 'chunk_stripe' associated with the original 'chunk'.
-+ */
-+static sector_t get_stripe_chunk(struct stripe_c *sc, uint32_t stripe,
-+				 sector_t chunk, sector_t *first_offset,
-+				 uint32_t *chunk_stripe)
-+{
-+	sector_t ret_chunk = chunk;
-+	uint32_t stripe_chunk_offset;
-+
-+	*chunk_stripe = sector_div(chunk, sc->stripes);
-+	/* Get absolute offset (in chunks) from 'chunk' to desired 'stripe' */
-+	stripe_chunk_offset = abs((long)stripe - *chunk_stripe);
-+
-+	if (first_offset) {
-+		/* first chunk */
-+		if (stripe < *chunk_stripe)
-+			stripe_chunk_offset = sc->stripes - stripe_chunk_offset;
-+		if (stripe_chunk_offset) {
-+			ret_chunk += stripe_chunk_offset;
-+			*first_offset = ret_chunk << sc->chunk_shift;
-+			DMDEBUG("%s: stripe=%u shifted first_offset=%lu",
-+				__func__, stripe, *first_offset);
-+		}
-+	} else {
-+		/* last chunk */
-+		if (*chunk_stripe < stripe)
-+			stripe_chunk_offset = sc->stripes - stripe_chunk_offset;
-+		ret_chunk -= stripe_chunk_offset;
-+	}
-+
-+	DMDEBUG("%s: stripe=%u stripe_chunk_offset=%u shifted %s_chunk=%lu",
-+		__func__, stripe, stripe_chunk_offset,
-+		(first_offset ? "first" : "last"), ret_chunk);
-+
-+	return ret_chunk;
-+}
-+
-+/*
-+ * Confine mapping a bio to an extent of the specified stripe.
-+ * If bio doesn't touch stripe drop the bio and return immediately.
-+ */
-+static int map_stripe_extent(uint32_t stripe, struct bio *bio,
-+			     struct dm_target *ti, struct stripe_c *sc)
-+{
-+	sector_t first_offset, last_offset, first_chunk, last_chunk;
-+	uint32_t first_stripe, last_stripe;
-+
-+	DMDEBUG("%s: discard stripe=%u bi_sector=%lu bi_size=%u, bio_sectors=%u",
-+		__func__, stripe, bio->bi_sector, bio->bi_size, bio_sectors(bio));
-+
-+	first_offset = bio->bi_sector - ti->begin;
-+	first_chunk = first_offset >> sc->chunk_shift;
-+	last_offset = first_offset + to_sector(bio->bi_size);
-+	/* Get the last chunk associated with this bio (-1 required) */
-+	last_chunk = (last_offset - 1) >> sc->chunk_shift;
-+
-+	DMDEBUG("%s: first_offset=%lu last_offset=%lu, "
-+		"first_chunk=%lu last_chunk=%lu", __func__,
-+		first_offset, last_offset, first_chunk, last_chunk);
-+
-+	/* Determine first_chunk (and first_offset) belonging to 'stripe' */
-+	first_chunk = get_stripe_chunk(sc, stripe, first_chunk,
-+				       &first_offset, &first_stripe);
-+
-+	if (first_chunk > last_chunk) {
-+		/* Drop bio because it doesn't touch desired 'stripe' */
-+		bio_endio(bio, 0);
-+		DMDEBUG("%s: dropping bio because it doesn't touch stripe=%u\n",
-+			__func__, stripe);
-+		return DM_MAPIO_SUBMITTED;
-+	}
-+
-+	/* Determine last_chunk belonging to 'stripe' */
-+	last_chunk = get_stripe_chunk(sc, stripe, last_chunk,
-+				      NULL, &last_stripe);
-+	BUG_ON(last_chunk < first_chunk);
-+
-+	DMDEBUG("%s: BEFORE bi_sector=%lu, bi_size=%u, bio_sectors=%u",
-+		__func__, bio->bi_sector, bio->bi_size, bio_sectors(bio));
-+
-+	map_bio_to_stripe(bio, sc, first_chunk, first_offset);
-+
-+	/* Only account for offsets that impact the 'stripe' bio->bi_size */
-+	if (stripe != first_stripe)
-+		first_offset = 0;
-+	if (stripe != last_stripe)
-+		last_offset = 0;
-+	set_stripe_bio_size(bio, stripe, sc, first_chunk, last_chunk,
-+			    first_offset, last_offset);
-+
-+	DMDEBUG("%s: AFTER bi_sector=%lu, bi_size=%u, bio_sectors=%u\n",
-+		__func__, bio->bi_sector, bio->bi_size, bio_sectors(bio));
-+
-+	return DM_MAPIO_REMAPPED;
-+}
-+
- static int stripe_map(struct dm_target *ti, struct bio *bio,
- 		      union map_info *map_context)
- {
- 	struct stripe_c *sc = (struct stripe_c *) ti->private;
- 	sector_t offset, chunk;
--	uint32_t stripe;
- 	unsigned target_request_nr;
- 
- 	if (unlikely(bio_empty_barrier(bio))) {
-@@ -222,13 +376,17 @@ static int stripe_map(struct dm_target *ti, struct bio *bio,
- 		return DM_MAPIO_REMAPPED;
- 	}
- 
-+	if (unlikely(bio_rw_flagged(bio, BIO_RW_DISCARD))) {
-+		target_request_nr = map_context->target_request_nr;
-+		BUG_ON(target_request_nr >= sc->stripes);
-+		return map_stripe_extent(target_request_nr, bio, ti, sc);
-+	}
-+
- 	offset = bio->bi_sector - ti->begin;
- 	chunk = offset >> sc->chunk_shift;
--	stripe = sector_div(chunk, sc->stripes);
- 
--	bio->bi_bdev = sc->stripe[stripe].dev->bdev;
--	bio->bi_sector = sc->stripe[stripe].physical_start +
--	    (chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
-+	map_bio_to_stripe(bio, sc, chunk, offset);
-+
- 	return DM_MAPIO_REMAPPED;
- }
- 
--- 
-1.6.6.1
+The mirror target still needs discard support.  Either I or someone
+else (nudge: Mikulas and/or Jon? :) will need to implement that.
+
+The snapshot and crypt targets will not have discard support.
+
+Snapshots must preserve any data that is deleted so the value of
+discard is negligible.  Discard support for the origin target may be
+considered in the future (could be especially useful if origin and COW
+are different devices and origin is a thinly provisioned LUN).
+
+Crypt devices are concerned with security and, until proven otherwise,
+it is believed that discards will leak too much pattern information to
+the crypt device's underlying storage (especially when underlying
+storage uses discards that zero data).
+
+Mike Snitzer (12):
+  dm: rename map_info flush_request to target_request_nr
+  dm: introduce num_discard_requests in dm_target structure
+  dm: remove the DM_TARGET_SUPPORTS_DISCARDS feature flag
+  dm: use common __issue_target_request for flush and discard support
+  dm: factor max_io_len for code reuse
+  dm: split discard requests on target boundaries
+  dm zero: silently drop discards too
+  dm error: return error for discards too
+  dm delay: enable discard support
+  block: update request stacking methods to support discards
+  dm mpath: enable discard support
+  dm stripe: enable efficient discard support
+
+ block/blk-core.c              |    5 +
+ drivers/md/dm-delay.c         |    1 +
+ drivers/md/dm-linear.c        |    2 +-
+ drivers/md/dm-mpath.c         |    1 +
+ drivers/md/dm-snap.c          |    2 +-
+ drivers/md/dm-stripe.c        |  180 ++++++++++++++++++++++++++++++++++++++---
+ drivers/md/dm-table.c         |    2 +-
+ drivers/md/dm-target.c        |    3 +
+ drivers/md/dm-zero.c          |    3 +
+ drivers/md/dm.c               |   89 +++++++++++++-------
+ include/linux/device-mapper.h |   11 ++-
+ 11 files changed, 253 insertions(+), 46 deletions(-)
