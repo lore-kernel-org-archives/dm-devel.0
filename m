@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 07/12] dm zero: silently drop discards too
-Date: Fri, 23 Jul 2010 19:23:58 -0400
-Message-ID: <1279927443-1780-8-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 10/12] block: update request stacking methods to
+	support discards
+Date: Fri, 23 Jul 2010 19:24:01 -0400
+Message-ID: <1279927443-1780-11-git-send-email-snitzer@redhat.com>
 References: <1279927443-1780-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,29 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Jens Axboe <jaxboe@fusionio.com>, Christoph Hellwig <hch@lst.de>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 List-Id: dm-devel.ids
 
-Have the zero target silently drop a discard rather than fail the
-request with -EOPNOTSUPP.
+Propagate REQ_DISCARD in cmd_flags when cloning a discard request.
+Skip blk_rq_check_limits's existing checks for discard requests because
+discard limits will have already been checked in blkdev_issue_discard.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <jaxboe@fusionio.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 ---
- drivers/md/dm-zero.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ block/blk-core.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm-zero.c b/drivers/md/dm-zero.c
-index bbc9703..8bd76e0 100644
---- a/drivers/md/dm-zero.c
-+++ b/drivers/md/dm-zero.c
-@@ -22,6 +22,9 @@ static int zero_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		return -EINVAL;
- 	}
- 
-+	/* silently drop discards (this avoids -EOPNOTSUPP) */
-+	ti->num_discard_requests = 1;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 9922a9b..292fc58 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1655,6 +1655,9 @@ EXPORT_SYMBOL(submit_bio);
+  */
+ int blk_rq_check_limits(struct request_queue *q, struct request *rq)
+ {
++	if (blk_discard_rq(rq))
++		return 0;
 +
- 	return 0;
- }
- 
+ 	if (blk_rq_sectors(rq) > queue_max_sectors(q) ||
+ 	    blk_rq_bytes(rq) > queue_max_hw_sectors(q) << 9) {
+ 		printk(KERN_ERR "%s: over max size limit.\n", __func__);
+@@ -2499,6 +2502,8 @@ static void __blk_rq_prep_clone(struct request *dst, struct request *src)
+ {
+ 	dst->cpu = src->cpu;
+ 	dst->cmd_flags = (rq_data_dir(src) | REQ_NOMERGE);
++	if (blk_discard_rq(src))
++		dst->cmd_flags |= REQ_DISCARD;
+ 	dst->cmd_type = src->cmd_type;
+ 	dst->__sector = blk_rq_pos(src);
+ 	dst->__data_len = blk_rq_bytes(src);
 -- 
 1.6.6.1
