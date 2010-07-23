@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 10/12] block: update request stacking methods to
-	support discards
-Date: Fri, 23 Jul 2010 19:24:01 -0400
-Message-ID: <1279927443-1780-11-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 06/12] dm: split discard requests on target
+	boundaries
+Date: Fri, 23 Jul 2010 19:23:57 -0400
+Message-ID: <1279927443-1780-7-git-send-email-snitzer@redhat.com>
 References: <1279927443-1780-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,43 +20,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Jens Axboe <jaxboe@fusionio.com>, Christoph Hellwig <hch@lst.de>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 List-Id: dm-devel.ids
 
-Propagate REQ_DISCARD in cmd_flags when cloning a discard request.
-Skip blk_rq_check_limits's existing checks for discard requests because
-discard limits will have already been checked in blkdev_issue_discard.
+Update __clone_and_map_discard to loop across all targets in a DM
+device's table when it processes a discard bio.  If a discard crosses a
+target boundary it must be split accordingly.
+
+Update __issue_target_requests and __issue_target_request to allow a
+cloned discard bio to have a custom start sector and size.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <jaxboe@fusionio.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 ---
- block/blk-core.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ drivers/md/dm.c |   40 +++++++++++++++++++++++-----------------
+ 1 files changed, 23 insertions(+), 17 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 9922a9b..292fc58 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1655,6 +1655,9 @@ EXPORT_SYMBOL(submit_bio);
-  */
- int blk_rq_check_limits(struct request_queue *q, struct request *rq)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 8723572..539d820 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1184,7 +1184,7 @@ static struct dm_target_io *alloc_tio(struct clone_info *ci,
+ }
+ 
+ static void __issue_target_request(struct clone_info *ci, struct dm_target *ti,
+-				   unsigned request_nr)
++				   unsigned request_nr, sector_t len)
  {
-+	if (blk_discard_rq(rq))
-+		return 0;
-+
- 	if (blk_rq_sectors(rq) > queue_max_sectors(q) ||
- 	    blk_rq_bytes(rq) > queue_max_hw_sectors(q) << 9) {
- 		printk(KERN_ERR "%s: over max size limit.\n", __func__);
-@@ -2499,6 +2502,8 @@ static void __blk_rq_prep_clone(struct request *dst, struct request *src)
+ 	struct dm_target_io *tio = alloc_tio(ci, ti);
+ 	struct bio *clone;
+@@ -1199,17 +1199,21 @@ static void __issue_target_request(struct clone_info *ci, struct dm_target *ti,
+ 	clone = bio_alloc_bioset(GFP_NOIO, ci->bio->bi_max_vecs, ci->md->bs);
+ 	__bio_clone(clone, ci->bio);
+ 	clone->bi_destructor = dm_bio_destructor;
++	if (len) {
++		clone->bi_sector = ci->sector;
++		clone->bi_size = to_bytes(len);
++	}
+ 
+ 	__map_bio(ti, clone, tio);
+ }
+ 
+ static void __issue_target_requests(struct clone_info *ci, struct dm_target *ti,
+-				    unsigned num_requests)
++				    unsigned num_requests, sector_t len)
  {
- 	dst->cpu = src->cpu;
- 	dst->cmd_flags = (rq_data_dir(src) | REQ_NOMERGE);
-+	if (blk_discard_rq(src))
-+		dst->cmd_flags |= REQ_DISCARD;
- 	dst->cmd_type = src->cmd_type;
- 	dst->__sector = blk_rq_pos(src);
- 	dst->__data_len = blk_rq_bytes(src);
+ 	unsigned request_nr;
+ 
+ 	for (request_nr = 0; request_nr < num_requests; request_nr++)
+-		__issue_target_request(ci, ti, request_nr);
++		__issue_target_request(ci, ti, request_nr, len);
+ }
+ 
+ static int __clone_and_map_empty_barrier(struct clone_info *ci)
+@@ -1218,7 +1222,7 @@ static int __clone_and_map_empty_barrier(struct clone_info *ci)
+ 	struct dm_target *ti;
+ 
+ 	while ((ti = dm_table_get_target(ci->map, target_nr++)))
+-		__issue_target_requests(ci, ti, ti->num_flush_requests);
++		__issue_target_requests(ci, ti, ti->num_flush_requests, 0);
+ 
+ 	ci->sector_count = 0;
+ 
+@@ -1244,24 +1248,26 @@ static void __clone_and_map_simple(struct clone_info *ci, struct dm_target *ti)
+ static int __clone_and_map_discard(struct clone_info *ci)
+ {
+ 	struct dm_target *ti;
+-	sector_t max;
++	sector_t max, len, remaining = ci->sector_count;
++	unsigned offset = 0;
+ 
+-	ti = dm_table_find_target(ci->map, ci->sector);
+-	if (!dm_target_is_valid(ti))
+-		return -EIO;
++	do {
++		ti = dm_table_find_target(ci->map, ci->sector);
++		if (!dm_target_is_valid(ti))
++			return -EIO;
+ 
+-	if (!ti->num_discard_requests)
+-		return -EOPNOTSUPP;
++		if (!ti->num_discard_requests)
++			return -EOPNOTSUPP;
+ 
+-	max = max_io_len(ci->sector, ti);
++		max = max_io_len_target_boundary(ci->sector, ti, NULL);
++		len = min(remaining, max);
+ 
+-	if (ci->sector_count > max)
+-		/*
+-		 * FIXME: Handle a discard that spans two or more targets.
+-		 */
+-		return -EOPNOTSUPP;
++		__issue_target_requests(ci, ti, ti->num_discard_requests, len);
+ 
+-	__issue_target_requests(ci, ti, ti->num_discard_requests);
++		ci->sector += len;
++		ci->sector_count -= len;
++		offset += to_bytes(len);
++	} while (remaining -= len);
+ 
+ 	ci->sector_count = 0;
+ 
 -- 
 1.6.6.1
