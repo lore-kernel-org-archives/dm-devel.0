@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 05/12] dm: factor max_io_len for code reuse
-Date: Fri, 23 Jul 2010 19:23:56 -0400
-Message-ID: <1279927443-1780-6-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 07/12] dm zero: silently drop discards too
+Date: Fri, 23 Jul 2010 19:23:58 -0400
+Message-ID: <1279927443-1780-8-git-send-email-snitzer@redhat.com>
 References: <1279927443-1780-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,81 +21,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Split max_io_len_target_boundary out of max_io_len so that the discard
-support can make use of it without duplicating max_io_len code.
-
-Avoiding max_io_len's split_io logic enables DM's discard support to
-submit the entire discard request to a target.  But discards must still
-be split on target boundaries.
+Have the zero target silently drop a discard rather than fail the
+request with -EOPNOTSUPP.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c |   23 ++++++++++++++++-------
- 1 files changed, 16 insertions(+), 7 deletions(-)
+ drivers/md/dm-zero.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index a9a0625..8723572 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1022,11 +1022,20 @@ static void end_clone_request(struct request *clone, int error)
- 	dm_complete_request(clone, error);
+diff --git a/drivers/md/dm-zero.c b/drivers/md/dm-zero.c
+index bbc9703..8bd76e0 100644
+--- a/drivers/md/dm-zero.c
++++ b/drivers/md/dm-zero.c
+@@ -22,6 +22,9 @@ static int zero_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		return -EINVAL;
+ 	}
+ 
++	/* silently drop discards (this avoids -EOPNOTSUPP) */
++	ti->num_discard_requests = 1;
++
+ 	return 0;
  }
  
--static sector_t max_io_len(struct mapped_device *md,
--			   sector_t sector, struct dm_target *ti)
-+static sector_t max_io_len_target_boundary(sector_t sector, struct dm_target *ti,
-+					   sector_t *offset_p)
- {
- 	sector_t offset = sector - ti->begin;
--	sector_t len = ti->len - offset;
-+	if (offset_p)
-+		*offset_p = offset;
-+
-+	return ti->len - offset;
-+}
-+
-+static sector_t max_io_len(sector_t sector, struct dm_target *ti)
-+{
-+	sector_t offset;
-+	sector_t len = max_io_len_target_boundary(sector, ti, &offset);
- 
- 	/*
- 	 * Does the target need to split even further ?
-@@ -1244,7 +1253,7 @@ static int __clone_and_map_discard(struct clone_info *ci)
- 	if (!ti->num_discard_requests)
- 		return -EOPNOTSUPP;
- 
--	max = max_io_len(ci->md, ci->sector, ti);
-+	max = max_io_len(ci->sector, ti);
- 
- 	if (ci->sector_count > max)
- 		/*
-@@ -1276,7 +1285,7 @@ static int __clone_and_map(struct clone_info *ci)
- 	if (!dm_target_is_valid(ti))
- 		return -EIO;
- 
--	max = max_io_len(ci->md, ci->sector, ti);
-+	max = max_io_len(ci->sector, ti);
- 
- 	if (ci->sector_count <= max) {
- 		/*
-@@ -1327,7 +1336,7 @@ static int __clone_and_map(struct clone_info *ci)
- 				if (!dm_target_is_valid(ti))
- 					return -EIO;
- 
--				max = max_io_len(ci->md, ci->sector, ti);
-+				max = max_io_len(ci->sector, ti);
- 			}
- 
- 			len = min(remaining, max);
-@@ -1414,7 +1423,7 @@ static int dm_merge_bvec(struct request_queue *q,
- 	/*
- 	 * Find maximum amount of I/O that won't need splitting
- 	 */
--	max_sectors = min(max_io_len(md, bvm->bi_sector, ti),
-+	max_sectors = min(max_io_len(bvm->bi_sector, ti),
- 			  (sector_t) BIO_MAX_SECTORS);
- 	max_size = (max_sectors << SECTOR_SHIFT) - bvm->bi_size;
- 	if (max_size < 0)
 -- 
 1.6.6.1
