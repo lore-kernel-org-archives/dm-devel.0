@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 02/12] dm: introduce num_discard_requests in
-	dm_target structure
-Date: Fri, 23 Jul 2010 19:23:53 -0400
-Message-ID: <1279927443-1780-3-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 01/12] dm: rename map_info flush_request to
+	target_request_nr
+Date: Fri, 23 Jul 2010 19:23:52 -0400
+Message-ID: <1279927443-1780-2-git-send-email-snitzer@redhat.com>
 References: <1279927443-1780-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,44 +22,130 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A target with num_discard_requests > 0 supports discard requests.
-The configured number of discard requests will be submitted to the
-target.
+'target_request_nr' is a more generic name that reflects the fact that
+it will be used for both flush and discard support.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-linear.c        |    1 +
- include/linux/device-mapper.h |    6 ++++++
- 2 files changed, 7 insertions(+), 0 deletions(-)
+ drivers/md/dm-snap.c          |    2 +-
+ drivers/md/dm-stripe.c        |    6 ++++--
+ drivers/md/dm.c               |   18 +++++++++---------
+ include/linux/device-mapper.h |    4 ++--
+ 4 files changed, 16 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 7071f17..8e925fa 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -53,6 +53,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 5485377..9f074a4 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1686,7 +1686,7 @@ static int snapshot_merge_map(struct dm_target *ti, struct bio *bio,
+ 	chunk_t chunk;
+ 
+ 	if (unlikely(bio_empty_barrier(bio))) {
+-		if (!map_context->flush_request)
++		if (!map_context->target_request_nr)
+ 			bio->bi_bdev = s->origin->bdev;
+ 		else
+ 			bio->bi_bdev = s->cow->bdev;
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index e610725..2d6baae 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -213,10 +213,12 @@ static int stripe_map(struct dm_target *ti, struct bio *bio,
+ 	struct stripe_c *sc = (struct stripe_c *) ti->private;
+ 	sector_t offset, chunk;
+ 	uint32_t stripe;
++	unsigned target_request_nr;
+ 
+ 	if (unlikely(bio_empty_barrier(bio))) {
+-		BUG_ON(map_context->flush_request >= sc->stripes);
+-		bio->bi_bdev = sc->stripe[map_context->flush_request].dev->bdev;
++		target_request_nr = map_context->target_request_nr;
++		BUG_ON(target_request_nr >= sc->stripes);
++		bio->bi_bdev = sc->stripe[target_request_nr].dev->bdev;
+ 		return DM_MAPIO_REMAPPED;
  	}
  
- 	ti->num_flush_requests = 1;
-+	ti->num_discard_requests = 1;
- 	ti->private = lc;
- 	return 0;
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 09ce3d5..84a349a 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1175,12 +1175,12 @@ static struct dm_target_io *alloc_tio(struct clone_info *ci,
+ }
  
+ static void __flush_target(struct clone_info *ci, struct dm_target *ti,
+-			  unsigned flush_nr)
++			  unsigned request_nr)
+ {
+ 	struct dm_target_io *tio = alloc_tio(ci, ti);
+ 	struct bio *clone;
+ 
+-	tio->info.flush_request = flush_nr;
++	tio->info.target_request_nr = request_nr;
+ 
+ 	clone = bio_alloc_bioset(GFP_NOIO, 0, ci->md->bs);
+ 	__bio_clone(clone, ci->bio);
+@@ -1191,13 +1191,13 @@ static void __flush_target(struct clone_info *ci, struct dm_target *ti,
+ 
+ static int __clone_and_map_empty_barrier(struct clone_info *ci)
+ {
+-	unsigned target_nr = 0, flush_nr;
++	unsigned target_nr = 0, request_nr;
+ 	struct dm_target *ti;
+ 
+ 	while ((ti = dm_table_get_target(ci->map, target_nr++)))
+-		for (flush_nr = 0; flush_nr < ti->num_flush_requests;
+-		     flush_nr++)
+-			__flush_target(ci, ti, flush_nr);
++		for (request_nr = 0; request_nr < ti->num_flush_requests;
++		     request_nr++)
++			__flush_target(ci, ti, request_nr);
+ 
+ 	ci->sector_count = 0;
+ 
+@@ -2433,11 +2433,11 @@ static void dm_queue_flush(struct mapped_device *md)
+ 	queue_work(md->wq, &md->work);
+ }
+ 
+-static void dm_rq_set_flush_nr(struct request *clone, unsigned flush_nr)
++static void dm_rq_set_target_request_nr(struct request *clone, unsigned request_nr)
+ {
+ 	struct dm_rq_target_io *tio = clone->end_io_data;
+ 
+-	tio->info.flush_request = flush_nr;
++	tio->info.target_request_nr = request_nr;
+ }
+ 
+ /* Issue barrier requests to targets and wait for their completion. */
+@@ -2455,7 +2455,7 @@ static int dm_rq_barrier(struct mapped_device *md)
+ 		ti = dm_table_get_target(map, i);
+ 		for (j = 0; j < ti->num_flush_requests; j++) {
+ 			clone = clone_rq(md->flush_request, md, GFP_NOIO);
+-			dm_rq_set_flush_nr(clone, j);
++			dm_rq_set_target_request_nr(clone, j);
+ 			atomic_inc(&md->pending[rq_data_dir(clone)]);
+ 			map_request(ti, clone, md);
+ 		}
 diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 87beab7..0fe597d 100644
+index e44cbcb..87beab7 100644
 --- a/include/linux/device-mapper.h
 +++ b/include/linux/device-mapper.h
-@@ -181,6 +181,12 @@ struct dm_target {
+@@ -22,7 +22,7 @@ typedef enum { STATUSTYPE_INFO, STATUSTYPE_TABLE } status_type_t;
+ union map_info {
+ 	void *ptr;
+ 	unsigned long long ll;
+-	unsigned flush_request;
++	unsigned target_request_nr;
+ };
+ 
+ /*
+@@ -175,7 +175,7 @@ struct dm_target {
+ 	 * A number of zero-length barrier requests that will be submitted
+ 	 * to the target for the purpose of flushing cache.
+ 	 *
+-	 * The request number will be placed in union map_info->flush_request.
++	 * The request number will be placed in union map_info->target_request_nr.
+ 	 * It is a responsibility of the target driver to remap these requests
+ 	 * to the real underlying devices.
  	 */
- 	unsigned num_flush_requests;
- 
-+	/*
-+	 * The number of discard requests that will be submitted to the
-+	 * target.  map_info->request_nr is used just like num_flush_requests.
-+	 */
-+	unsigned num_discard_requests;
-+
- 	/* target specific data */
- 	void *private;
- 
 -- 
 1.6.6.1
