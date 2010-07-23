@@ -1,15 +1,16 @@
-From: Christof Schmitt <christof.schmitt@de.ibm.com>
-Subject: [patch 2/2] multipath-tools: Intialize pointer passed to
-	get_cmdvec
-Date: Thu, 22 Jul 2010 18:36:48 +0200
-Message-ID: <20100722163918.296646000@de.ibm.com>
-References: <20100722163646.585967000@de.ibm.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 3/3] dm: separate device deletion
+	from	dm_put()
+Date: Fri, 23 Jul 2010 18:59:01 +0100
+Message-ID: <20100723175901.GO19063@agk-dp.fab.redhat.com>
+References: <4C0E19A0.1040804@ct.jp.nec.com> <4C0E1B08.7060201@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=init-ptr.diff
+Content-Disposition: inline
+In-Reply-To: <4C0E1B08.7060201@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,39 +20,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: Christof Schmitt <christof.schmitt@de.ibm.com>, dm-devel@redhat.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Christof Schmitt <christof.schmitt@de.ibm.com>
+On Tue, Jun 08, 2010 at 07:27:20PM +0900, Kiyoshi Ueda wrote:
+> For the unlikely case of the forced module unload, dm_destroy_nowait(),
+> which doesn't wait and forcibly deletes the mapped_device, is also
+> introduced and used in dm_hash_remove_all().  Otherwise, "rmmod -f"
+> may be stuck and never return.
 
-get_cmdvec can return before the vector argument has been initialized. Fix this
-by initializing the pointer before passing it to get_cmdvec. This fixes a
-segfault in the interactive mode when hitting the tab key directly on the
-command prompt.
+> And now, because the mapped_device is deleted at this point, subsequent
+> accesses to the mapped_device may cause NULL pointer references.
 
-Signed-off-by: Christof Schmitt <christof.schmitt@de.ibm.com>
----
- multipathd/cli.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+Do we get a warning message logged when this situation occurs
+and md->holders is still set or should we add one?
 
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -363,7 +363,7 @@ parse_cmd (char * cmd, char ** reply, in
- {
- 	int r;
- 	struct handler * h;
--	vector cmdvec;
-+	vector cmdvec = NULL;
- 
- 	r = get_cmdvec(cmd, &cmdvec);
- 
-@@ -467,7 +467,7 @@ key_generator (const char * str, int sta
- 	struct key * kw;
- 	int i;
- 	struct handler *h;
--	vector v;
-+	vector v = NULL;
- 
- 	if (!state) {
- 		index = 0;
+> +	if (wait) {
+> +		while (atomic_read(&md->holders))
+> +			msleep(1);
+
+Alasdair
