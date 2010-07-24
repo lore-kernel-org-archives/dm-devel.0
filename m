@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 09/12] dm delay: enable discard support
-Date: Sat, 24 Jul 2010 12:09:25 -0400
-Message-ID: <1279987768-13275-10-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 07/12] dm zero: silently drop discards too
+Date: Sat, 24 Jul 2010 12:09:23 -0400
+Message-ID: <1279987768-13275-8-git-send-email-snitzer@redhat.com>
 References: <1279987768-13275-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,24 +21,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Enable discard support for the delay target.
+Have the zero target silently drop a discard rather than fail the
+request with -EOPNOTSUPP.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-delay.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ drivers/md/dm-zero.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
-index 8520528..cdb7757 100644
---- a/drivers/md/dm-delay.c
-+++ b/drivers/md/dm-delay.c
-@@ -198,6 +198,7 @@ out:
- 	atomic_set(&dc->may_delay, 1);
+diff --git a/drivers/md/dm-zero.c b/drivers/md/dm-zero.c
+index bbc9703..8bd76e0 100644
+--- a/drivers/md/dm-zero.c
++++ b/drivers/md/dm-zero.c
+@@ -22,6 +22,9 @@ static int zero_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		return -EINVAL;
+ 	}
  
- 	ti->num_flush_requests = 1;
++	/* silently drop discards (this avoids -EOPNOTSUPP) */
 +	ti->num_discard_requests = 1;
- 	ti->private = dc;
++
  	return 0;
+ }
  
 -- 
 1.6.6.1
