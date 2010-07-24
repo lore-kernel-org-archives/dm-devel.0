@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 02/12] dm: introduce num_discard_requests in
-	dm_target structure
-Date: Sat, 24 Jul 2010 12:09:18 -0400
-Message-ID: <1279987768-13275-3-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 03/12] dm: remove the
+	DM_TARGET_SUPPORTS_DISCARDS feature flag
+Date: Sat, 24 Jul 2010 12:09:19 -0400
+Message-ID: <1279987768-13275-4-git-send-email-snitzer@redhat.com>
 References: <1279987768-13275-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,44 +22,65 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A target with num_discard_requests > 0 supports discard requests.
-The configured number of discard requests will be submitted to the
-target.
+Eliminate the DM_TARGET_SUPPORTS_DISCARDS feature flag now that
+dm_target's 'num_discard_requests' provides the mechanism to enable
+discards on a per target basis.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-linear.c        |    1 +
- include/linux/device-mapper.h |    6 ++++++
- 2 files changed, 7 insertions(+), 0 deletions(-)
+ drivers/md/dm-linear.c        |    1 -
+ drivers/md/dm-table.c         |    2 +-
+ drivers/md/dm.c               |    2 +-
+ include/linux/device-mapper.h |    1 -
+ 4 files changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 7071f17..8e925fa 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -53,6 +53,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	}
+Index: linux-2.6-block/drivers/md/dm-linear.c
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm-linear.c
++++ linux-2.6-block/drivers/md/dm-linear.c
+@@ -153,7 +153,6 @@ static struct target_type linear_target 
+ 	.ioctl  = linear_ioctl,
+ 	.merge  = linear_merge,
+ 	.iterate_devices = linear_iterate_devices,
+-	.features = DM_TARGET_SUPPORTS_DISCARDS,
+ };
  
- 	ti->num_flush_requests = 1;
-+	ti->num_discard_requests = 1;
- 	ti->private = lc;
+ int __init dm_linear_init(void)
+Index: linux-2.6-block/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm-table.c
++++ linux-2.6-block/drivers/md/dm-table.c
+@@ -773,7 +773,7 @@ int dm_table_add_target(struct dm_table 
+ 
+ 	t->highs[t->num_targets++] = tgt->begin + tgt->len - 1;
+ 
+-	if (!(tgt->type->features & DM_TARGET_SUPPORTS_DISCARDS))
++	if (!tgt->num_discard_requests)
+ 		t->discards_supported = 0;
+ 
  	return 0;
- 
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 87beab7..0fe597d 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -181,6 +181,12 @@ struct dm_target {
+Index: linux-2.6-block/drivers/md/dm.c
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm.c
++++ linux-2.6-block/drivers/md/dm.c
+@@ -1242,7 +1242,7 @@ static int __clone_and_map_discard(struc
+ 	 * check was performed.
  	 */
- 	unsigned num_flush_requests;
  
-+	/*
-+	 * The number of discard requests that will be submitted to the
-+	 * target.  map_info->request_nr is used just like num_flush_requests.
-+	 */
-+	unsigned num_discard_requests;
-+
- 	/* target specific data */
- 	void *private;
+-	if (!(ti->type->features & DM_TARGET_SUPPORTS_DISCARDS))
++	if (!ti->num_discard_requests)
+ 		return -EOPNOTSUPP;
  
--- 
-1.6.6.1
+ 	max = max_io_len(ci->md, ci->sector, ti);
+Index: linux-2.6-block/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6-block.orig/include/linux/device-mapper.h
++++ linux-2.6-block/include/linux/device-mapper.h
+@@ -130,7 +130,6 @@ void dm_put_device(struct dm_target *ti,
+ /*
+  * Target features
+  */
+-#define DM_TARGET_SUPPORTS_DISCARDS 0x00000001
+ 
+ struct target_type {
+ 	uint64_t features;
