@@ -1,7 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 05/12] dm: factor max_io_len for code reuse
-Date: Sat, 24 Jul 2010 12:09:21 -0400
-Message-ID: <1279987768-13275-6-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 12/12] dm stripe: enable efficient discard
+	support
+Date: Sat, 24 Jul 2010 12:09:28 -0400
+Message-ID: <1279987768-13275-13-git-send-email-snitzer@redhat.com>
 References: <1279987768-13275-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,79 +22,227 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Split max_io_len_target_boundary out of max_io_len so that the discard
-support can make use of it without duplicating max_io_len code.
+The DM core will submit a discard bio to the stripe target for each
+stripe in a striped DM device.  The stripe target will determine
+stripe-specific portions of the supplied bio to be remapped into
+individual (at most 'num_discard_requests' extents).  If a given
+stripe-specific discard bio doesn't touch a particular stripe the bio
+will be dropped.
 
-Avoiding max_io_len's split_io logic enables DM's discard support to
-submit the entire discard request to a target.  But discards must still
-be split on target boundaries.
+Various useful DMDEBUG messages will be printed if CONFIG_DM_DEBUG is
+enabled and a discard is issued to a striped DM device.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c |   23 ++++++++++++++++-------
- 1 file changed, 16 insertions(+), 7 deletions(-)
+ drivers/md/dm-stripe.c |  174 ++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 166 insertions(+), 8 deletions(-)
 
-Index: linux-2.6-block/drivers/md/dm.c
+Index: linux-2.6-block/drivers/md/dm-stripe.c
 ===================================================================
---- linux-2.6-block.orig/drivers/md/dm.c
-+++ linux-2.6-block/drivers/md/dm.c
-@@ -1029,11 +1029,20 @@ static void end_clone_request(struct req
- 	dm_complete_request(clone, error);
+--- linux-2.6-block.orig/drivers/md/dm-stripe.c
++++ linux-2.6-block/drivers/md/dm-stripe.c
+@@ -167,11 +167,10 @@ static int stripe_ctr(struct dm_target *
+ 	sc->stripe_width = width;
+ 	ti->split_io = chunk_size;
+ 	ti->num_flush_requests = stripes;
++	ti->num_discard_requests = stripes;
+ 
+ 	sc->chunk_mask = ((sector_t) chunk_size) - 1;
+-	for (sc->chunk_shift = 0; chunk_size; sc->chunk_shift++)
+-		chunk_size >>= 1;
+-	sc->chunk_shift--;
++	sc->chunk_shift = ffs(chunk_size) - 1;
+ 
+ 	/*
+ 	 * Get the stripe destinations.
+@@ -207,12 +206,167 @@ static void stripe_dtr(struct dm_target 
+ 	kfree(sc);
  }
  
--static sector_t max_io_len(struct mapped_device *md,
--			   sector_t sector, struct dm_target *ti)
-+static sector_t max_io_len_target_boundary(sector_t sector, struct dm_target *ti,
-+					   sector_t *offset_p)
- {
- 	sector_t offset = sector - ti->begin;
--	sector_t len = ti->len - offset;
-+	if (offset_p)
-+		*offset_p = offset;
++static void map_bio_to_stripe(struct bio *bio, struct stripe_c *sc,
++			      sector_t chunk, sector_t offset)
++{
++	uint32_t stripe = sector_div(chunk, sc->stripes);
 +
-+	return ti->len - offset;
++	bio->bi_bdev = sc->stripe[stripe].dev->bdev;
++	bio->bi_sector = sc->stripe[stripe].physical_start +
++	    (chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
 +}
 +
-+static sector_t max_io_len(sector_t sector, struct dm_target *ti)
++/*
++ * Set the bio's bi_size based on only the space allocated to 'stripe'.
++ * - first_chunk and last_chunk belong to 'stripe'.
++ * - first_offset and last_offset are only relevant if non-zero.
++ */
++static void set_stripe_bio_size(struct bio *bio, uint32_t stripe,
++				struct stripe_c *sc,
++				sector_t first_chunk, sector_t last_chunk,
++				sector_t first_offset, sector_t last_offset)
 +{
-+	sector_t offset;
-+	sector_t len = max_io_len_target_boundary(sector, ti, &offset);
++	sector_t temp, stripe_chunks, unused_sectors = 0;
++
++	/*
++	 * Determine the number of chunks used from the specified 'stripe'.
++	 * stripe_chunks * chunk_size is the upper bound on the 'stripe'
++	 * specific bio->bi_size
++	 * - requires absolute first_chunk and last_chunk
++	 */
++	stripe_chunks = last_chunk - first_chunk + 1;
++	temp = sector_div(stripe_chunks, sc->stripes);
++	stripe_chunks += temp;
++	DMDEBUG("%s: stripe=%u stripe_chunks=%lu",
++		__func__, stripe, stripe_chunks);
++
++	/* Set bi_size based on only the space allocated to 'stripe' */
++	bio->bi_size = to_bytes(stripe_chunks * (sc->chunk_mask + 1));
++	/* must reduce bi_size if first and/or last chunk was partially used */
++	if (first_offset) {
++		unused_sectors += (first_offset & sc->chunk_mask);
++		DMDEBUG("%s: adjusting for first_stripe=%u, unused_sectors=%lu",
++			__func__, stripe, unused_sectors);
++	}
++	if (last_offset) {
++		temp = last_offset & sc->chunk_mask;
++		if (temp)
++			unused_sectors += ((sc->chunk_mask + 1) - temp);
++		DMDEBUG("%s: adjusting for last_stripe=%u, unused_sectors=%lu",
++			__func__, stripe, unused_sectors);
++	}
++	if (unused_sectors)
++		bio->bi_size -= to_bytes(unused_sectors);
++}
++
++/*
++ * Determine the chunk closest to 'chunk' that belongs to 'stripe':
++ * - return first chunk belonging to stripe if 'first_offset' was provided.
++ *   - also adjust 'first_offset' accordingly.
++ *   - returned chunk may exceed bio or target boundary; caller must check
++ *     the return and react accordingly (e.g. drop the bio).
++ * - otherwise return last chunk belonging to stripe
++ * Also return the 'chunk_stripe' associated with the original 'chunk'.
++ */
++static sector_t get_stripe_chunk(struct stripe_c *sc, uint32_t stripe,
++				 sector_t chunk, sector_t *first_offset,
++				 uint32_t *chunk_stripe)
++{
++	sector_t ret_chunk = chunk;
++	uint32_t stripe_chunk_offset;
++
++	*chunk_stripe = sector_div(chunk, sc->stripes);
++	/* Get absolute offset (in chunks) from 'chunk' to desired 'stripe' */
++	stripe_chunk_offset = abs((long)stripe - *chunk_stripe);
++
++	if (first_offset) {
++		/* first chunk */
++		if (stripe < *chunk_stripe)
++			stripe_chunk_offset = sc->stripes - stripe_chunk_offset;
++		if (stripe_chunk_offset) {
++			ret_chunk += stripe_chunk_offset;
++			*first_offset = ret_chunk << sc->chunk_shift;
++			DMDEBUG("%s: stripe=%u shifted first_offset=%lu",
++				__func__, stripe, *first_offset);
++		}
++	} else {
++		/* last chunk */
++		if (*chunk_stripe < stripe)
++			stripe_chunk_offset = sc->stripes - stripe_chunk_offset;
++		ret_chunk -= stripe_chunk_offset;
++	}
++
++	DMDEBUG("%s: stripe=%u stripe_chunk_offset=%u shifted %s_chunk=%lu",
++		__func__, stripe, stripe_chunk_offset,
++		(first_offset ? "first" : "last"), ret_chunk);
++
++	return ret_chunk;
++}
++
++/*
++ * Confine mapping a bio to an extent of the specified stripe.
++ * If bio doesn't touch stripe drop the bio and return immediately.
++ */
++static int map_stripe_extent(uint32_t stripe, struct bio *bio,
++			     struct dm_target *ti, struct stripe_c *sc)
++{
++	sector_t first_offset, last_offset, first_chunk, last_chunk;
++	uint32_t first_stripe, last_stripe;
++
++	DMDEBUG("%s: discard stripe=%u bi_sector=%lu bi_size=%u, bio_sectors=%u",
++		__func__, stripe, bio->bi_sector, bio->bi_size, bio_sectors(bio));
++
++	first_offset = bio->bi_sector - ti->begin;
++	first_chunk = first_offset >> sc->chunk_shift;
++	last_offset = first_offset + to_sector(bio->bi_size);
++	/* Get the last chunk associated with this bio (-1 required) */
++	last_chunk = (last_offset - 1) >> sc->chunk_shift;
++
++	DMDEBUG("%s: first_offset=%lu last_offset=%lu, "
++		"first_chunk=%lu last_chunk=%lu", __func__,
++		first_offset, last_offset, first_chunk, last_chunk);
++
++	/* Determine first_chunk (and first_offset) belonging to 'stripe' */
++	first_chunk = get_stripe_chunk(sc, stripe, first_chunk,
++				       &first_offset, &first_stripe);
++
++	if (first_chunk > last_chunk) {
++		/* Drop bio because it doesn't touch desired 'stripe' */
++		bio_endio(bio, 0);
++		DMDEBUG("%s: dropping bio because it doesn't touch stripe=%u\n",
++			__func__, stripe);
++		return DM_MAPIO_SUBMITTED;
++	}
++
++	/* Determine last_chunk belonging to 'stripe' */
++	last_chunk = get_stripe_chunk(sc, stripe, last_chunk,
++				      NULL, &last_stripe);
++	BUG_ON(last_chunk < first_chunk);
++
++	DMDEBUG("%s: BEFORE bi_sector=%lu, bi_size=%u, bio_sectors=%u",
++		__func__, bio->bi_sector, bio->bi_size, bio_sectors(bio));
++
++	map_bio_to_stripe(bio, sc, first_chunk, first_offset);
++
++	/* Only account for offsets that impact the 'stripe' bio->bi_size */
++	if (stripe != first_stripe)
++		first_offset = 0;
++	if (stripe != last_stripe)
++		last_offset = 0;
++	set_stripe_bio_size(bio, stripe, sc, first_chunk, last_chunk,
++			    first_offset, last_offset);
++
++	DMDEBUG("%s: AFTER bi_sector=%lu, bi_size=%u, bio_sectors=%u\n",
++		__func__, bio->bi_sector, bio->bi_size, bio_sectors(bio));
++
++	return DM_MAPIO_REMAPPED;
++}
++
+ static int stripe_map(struct dm_target *ti, struct bio *bio,
+ 		      union map_info *map_context)
+ {
+ 	struct stripe_c *sc = (struct stripe_c *) ti->private;
+ 	sector_t offset, chunk;
+-	uint32_t stripe;
+ 	unsigned target_request_nr;
  
- 	/*
- 	 * Does the target need to split even further ?
-@@ -1257,7 +1266,7 @@ static int __clone_and_map_discard(struc
- 	if (!ti->num_discard_requests)
- 		return -EOPNOTSUPP;
+ 	if (unlikely(bio_empty_barrier(bio))) {
+@@ -222,13 +376,17 @@ static int stripe_map(struct dm_target *
+ 		return DM_MAPIO_REMAPPED;
+ 	}
  
--	max = max_io_len(ci->md, ci->sector, ti);
-+	max = max_io_len(ci->sector, ti);
++	if (unlikely(bio->bi_rw & REQ_DISCARD)) {
++		target_request_nr = map_context->target_request_nr;
++		BUG_ON(target_request_nr >= sc->stripes);
++		return map_stripe_extent(target_request_nr, bio, ti, sc);
++	}
++
+ 	offset = bio->bi_sector - ti->begin;
+ 	chunk = offset >> sc->chunk_shift;
+-	stripe = sector_div(chunk, sc->stripes);
  
- 	if (ci->sector_count > max)
- 		/*
-@@ -1289,7 +1298,7 @@ static int __clone_and_map(struct clone_
- 	if (!dm_target_is_valid(ti))
- 		return -EIO;
+-	bio->bi_bdev = sc->stripe[stripe].dev->bdev;
+-	bio->bi_sector = sc->stripe[stripe].physical_start +
+-	    (chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
++	map_bio_to_stripe(bio, sc, chunk, offset);
++
+ 	return DM_MAPIO_REMAPPED;
+ }
  
--	max = max_io_len(ci->md, ci->sector, ti);
-+	max = max_io_len(ci->sector, ti);
- 
- 	if (ci->sector_count <= max) {
- 		/*
-@@ -1340,7 +1349,7 @@ static int __clone_and_map(struct clone_
- 				if (!dm_target_is_valid(ti))
- 					return -EIO;
- 
--				max = max_io_len(ci->md, ci->sector, ti);
-+				max = max_io_len(ci->sector, ti);
- 			}
- 
- 			len = min(remaining, max);
-@@ -1427,7 +1436,7 @@ static int dm_merge_bvec(struct request_
- 	/*
- 	 * Find maximum amount of I/O that won't need splitting
- 	 */
--	max_sectors = min(max_io_len(md, bvm->bi_sector, ti),
-+	max_sectors = min(max_io_len(bvm->bi_sector, ti),
- 			  (sector_t) BIO_MAX_SECTORS);
- 	max_size = (max_sectors << SECTOR_SHIFT) - bvm->bi_size;
- 	if (max_size < 0)
