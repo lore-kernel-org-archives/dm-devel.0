@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 03/12] dm: remove the
-	DM_TARGET_SUPPORTS_DISCARDS feature flag
-Date: Sat, 24 Jul 2010 12:09:19 -0400
-Message-ID: <1279987768-13275-4-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2 04/12] dm: use common __issue_target_request
+	for flush and discard support
+Date: Sat, 24 Jul 2010 12:09:20 -0400
+Message-ID: <1279987768-13275-5-git-send-email-snitzer@redhat.com>
 References: <1279987768-13275-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,65 +22,80 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Eliminate the DM_TARGET_SUPPORTS_DISCARDS feature flag now that
-dm_target's 'num_discard_requests' provides the mechanism to enable
-discards on a per target basis.
+Rename __flush_target to __issue_target_request now that it is used to
+issue both flush and discard requests.
+
+Introduce __issue_target_requests as a convenient wrapper to
+__issue_target_request 'num_flush_requests' or 'num_discard_requests'
+times per target.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-linear.c        |    1 -
- drivers/md/dm-table.c         |    2 +-
- drivers/md/dm.c               |    2 +-
- include/linux/device-mapper.h |    1 -
- 4 files changed, 2 insertions(+), 4 deletions(-)
+ drivers/md/dm.c |   30 ++++++++++++++++++++++--------
+ 1 file changed, 22 insertions(+), 8 deletions(-)
 
-Index: linux-2.6-block/drivers/md/dm-linear.c
-===================================================================
---- linux-2.6-block.orig/drivers/md/dm-linear.c
-+++ linux-2.6-block/drivers/md/dm-linear.c
-@@ -153,7 +153,6 @@ static struct target_type linear_target 
- 	.ioctl  = linear_ioctl,
- 	.merge  = linear_merge,
- 	.iterate_devices = linear_iterate_devices,
--	.features = DM_TARGET_SUPPORTS_DISCARDS,
- };
- 
- int __init dm_linear_init(void)
-Index: linux-2.6-block/drivers/md/dm-table.c
-===================================================================
---- linux-2.6-block.orig/drivers/md/dm-table.c
-+++ linux-2.6-block/drivers/md/dm-table.c
-@@ -773,7 +773,7 @@ int dm_table_add_target(struct dm_table 
- 
- 	t->highs[t->num_targets++] = tgt->begin + tgt->len - 1;
- 
--	if (!(tgt->type->features & DM_TARGET_SUPPORTS_DISCARDS))
-+	if (!tgt->num_discard_requests)
- 		t->discards_supported = 0;
- 
- 	return 0;
 Index: linux-2.6-block/drivers/md/dm.c
 ===================================================================
 --- linux-2.6-block.orig/drivers/md/dm.c
 +++ linux-2.6-block/drivers/md/dm.c
-@@ -1242,7 +1242,7 @@ static int __clone_and_map_discard(struc
- 	 * check was performed.
- 	 */
+@@ -1181,30 +1181,42 @@ static struct dm_target_io *alloc_tio(st
+ 	return tio;
+ }
  
--	if (!(ti->type->features & DM_TARGET_SUPPORTS_DISCARDS))
-+	if (!ti->num_discard_requests)
+-static void __flush_target(struct clone_info *ci, struct dm_target *ti,
+-			  unsigned request_nr)
++static void __issue_target_request(struct clone_info *ci, struct dm_target *ti,
++				   unsigned request_nr)
+ {
+ 	struct dm_target_io *tio = alloc_tio(ci, ti);
+ 	struct bio *clone;
+ 
+ 	tio->info.target_request_nr = request_nr;
+ 
+-	clone = bio_alloc_bioset(GFP_NOIO, 0, ci->md->bs);
++	/*
++	 * Discard requests require the bio's inline iovecs be initialized.
++	 * ci->bio->bi_max_vecs is BIO_INLINE_VECS anyway, for both flush
++	 * and discard, so no need for concern about wasted bvec allocations.
++	 */
++	clone = bio_alloc_bioset(GFP_NOIO, ci->bio->bi_max_vecs, ci->md->bs);
+ 	__bio_clone(clone, ci->bio);
+ 	clone->bi_destructor = dm_bio_destructor;
+ 
+ 	__map_bio(ti, clone, tio);
+ }
+ 
++static void __issue_target_requests(struct clone_info *ci, struct dm_target *ti,
++				    unsigned num_requests)
++{
++	unsigned request_nr;
++
++	for (request_nr = 0; request_nr < num_requests; request_nr++)
++		__issue_target_request(ci, ti, request_nr);
++}
++
+ static int __clone_and_map_empty_barrier(struct clone_info *ci)
+ {
+-	unsigned target_nr = 0, request_nr;
++	unsigned target_nr = 0;
+ 	struct dm_target *ti;
+ 
+ 	while ((ti = dm_table_get_target(ci->map, target_nr++)))
+-		for (request_nr = 0; request_nr < ti->num_flush_requests;
+-		     request_nr++)
+-			__flush_target(ci, ti, request_nr);
++		__issue_target_requests(ci, ti, ti->num_flush_requests);
+ 
+ 	ci->sector_count = 0;
+ 
+@@ -1253,7 +1265,9 @@ static int __clone_and_map_discard(struc
+ 		 */
  		return -EOPNOTSUPP;
  
- 	max = max_io_len(ci->md, ci->sector, ti);
-Index: linux-2.6-block/include/linux/device-mapper.h
-===================================================================
---- linux-2.6-block.orig/include/linux/device-mapper.h
-+++ linux-2.6-block/include/linux/device-mapper.h
-@@ -130,7 +130,6 @@ void dm_put_device(struct dm_target *ti,
- /*
-  * Target features
-  */
--#define DM_TARGET_SUPPORTS_DISCARDS 0x00000001
+-	__clone_and_map_simple(ci, ti);
++	__issue_target_requests(ci, ti, ti->num_discard_requests);
++
++	ci->sector_count = 0;
  
- struct target_type {
- 	uint64_t features;
+ 	return 0;
+ }
