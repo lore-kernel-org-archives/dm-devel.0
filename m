@@ -1,8 +1,8 @@
 From: NeilBrown <nfbrown@novell.com>
-Subject: [PATCH 7/8] dm-dirty-log: allow log size to be different from target
-	size.
+Subject: [PATCH 8/8] dm-raid456: switch to use dm_dirty_log for tracking dirty
+	regions.
 Date: Mon, 26 Jul 2010 13:24:35 +1000
-Message-ID: <20100726032435.29687.63934.stgit@localhost.localdomain>
+Message-ID: <20100726032435.29687.88509.stgit@localhost.localdomain>
 References: <20100726032230.29687.5366.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,194 +14,157 @@ To: Heinz Mauelshagen <heinzm@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-With RAID1, the dirty log covers the size of the target - the number
-of bits is the target size divided by the region size.
-
-For RAID5 and similar the dirty log needs to cover the parity blocks,
-so it is best to base the dirty log size on the size of the component
-devices rather than the size of the array.
-
-So when creating a dirty log, allow the log_size to be specified
-separately from the target, and in raid1, set it to the target length.
+Rather than faking a 'core' dirty log, we can now use the dm_dirty_log
+mechanism directly and thus potentially benefit from a permanent dirty
+log.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/dm-log-userspace-base.c |   11 +++++++----
- drivers/md/dm-log.c                |   18 +++++++++++-------
- drivers/md/dm-raid1.c              |    4 ++--
- include/linux/dm-dirty-log.h       |    3 ++-
- 4 files changed, 22 insertions(+), 14 deletions(-)
+ drivers/md/dm-raid456.c |   46 +++++++++++++++++++++++++++++++++++++---------
+ 1 files changed, 37 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/md/dm-log-userspace-base.c b/drivers/md/dm-log-userspace-base.c
-index 1ed0094..935a49b 100644
---- a/drivers/md/dm-log-userspace-base.c
-+++ b/drivers/md/dm-log-userspace-base.c
-@@ -94,7 +94,7 @@ retry:
- 	return -ESRCH;
- }
+diff --git a/drivers/md/dm-raid456.c b/drivers/md/dm-raid456.c
+index a2567b0..5355342 100644
+--- a/drivers/md/dm-raid456.c
++++ b/drivers/md/dm-raid456.c
+@@ -7,6 +7,8 @@
+ #include "md.h"
+ #include "raid5.h"
+ #include "dm.h"
++#include "bitmap.h"
++#include <linux/dm-dirty-log.h>
  
--static int build_constructor_string(struct dm_target *ti,
-+static int build_constructor_string(sector_t log_size,
- 				    unsigned argc, char **argv,
- 				    char **ctr_str)
+ struct raid_dev {
+ 	struct dm_dev *dev;
+@@ -183,7 +185,8 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
  {
-@@ -114,7 +114,7 @@ static int build_constructor_string(struct dm_target *ti,
- 		return -ENOMEM;
- 	}
+ 	char *err = NULL;
+ 	int errnum = -EINVAL;
+-	unsigned long cnt;
++	unsigned long cnt, log_cnt;
++	char **log_argv;
+ 	struct raid_type *rt;
+ 	unsigned long chunk_size;
+ 	int recovery = 1;
+@@ -192,16 +195,18 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	sector_t sectors_per_dev, chunks;
+ 	struct raid_set *rs = NULL;
+ 	int in_sync, i;
++	struct dm_dirty_log *log = NULL;
  
--	str_size = sprintf(str, "%llu", (unsigned long long)ti->len);
-+	str_size = sprintf(str, "%llu", (unsigned long long)log_size);
- 	for (i = 0; i < argc; i++)
- 		str_size += sprintf(str + str_size, " %s", argv[i]);
+-	/* log type - core XXX [no]sync */
++	/* log type - type arg-count args */
+ 	err = "Cannot parse log type";
+ 	if (argc < 2 ||
+-	    strcmp(argv[0], "core") != 0 ||
+ 	    strict_strtoul(argv[1], 10, &cnt) < 0 ||
+ 	    cnt + 2 > argc)
+ 		goto err;
+-	if (cnt >= 2 && strcmp(argv[3], "sync") == 0)
+-		recovery = 0;
++
++	log_cnt = cnt;
++	log_argv = argv;
++
+ 	argc -= cnt+2;
+ 	argv += cnt+2;
  
-@@ -136,6 +136,7 @@ static int build_constructor_string(struct dm_target *ti,
-  * else.
-  */
- static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
-+			 sector_t log_size,
- 			 unsigned argc, char **argv)
- {
- 	int r = 0;
-@@ -171,7 +172,9 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
- 	spin_lock_init(&lc->flush_lock);
- 	INIT_LIST_HEAD(&lc->flush_list);
+@@ -276,6 +281,11 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	if (sector_div(chunks, chunk_size))
+ 		goto err;
  
--	str_size = build_constructor_string(ti, argc - 1, argv + 1, &ctr_str);
-+	str_size = build_constructor_string(log_size,
-+					    argc - 1, argv + 1,
-+					    &ctr_str);
- 	if (str_size < 0) {
- 		kfree(lc);
- 		return str_size;
-@@ -197,7 +200,7 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
- 	}
++	log = dm_dirty_log_create(log_argv[0], ti, sectors_per_dev,
++				  NULL, log_cnt, log_argv+2);
++	err = "Error creating dirty log";
++	if (!log)
++		goto err;
  
- 	lc->region_size = (uint32_t)rdata;
--	lc->region_count = dm_sector_div_up(ti->len, lc->region_size);
-+	lc->region_count = dm_sector_div_up(log_size, lc->region_size);
+ 	/* Now the devices: three words each */
+ 	rs = context_alloc(rt, chunk_size, recovery,
+@@ -318,6 +328,11 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	ti->split_io = rs->md.chunk_sectors;
+ 	ti->private = rs;
  
- out:
- 	if (r) {
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 5a08be0..a232c14 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -146,6 +146,7 @@ EXPORT_SYMBOL(dm_dirty_log_type_unregister);
++	rs->md.bitmap_info.log = log;
++	rs->md.bitmap_info.daemon_sleep = 10 * HZ;
++	rs->md.bitmap_info.chunksize = log->type->get_region_size(log) * 512;
++	rs->md.bitmap_info.external = 1;
++
+ 	mutex_lock(&rs->md.reconfig_mutex);
+ 	err = "Fail to run raid array";
+ 	errnum = md_run(&rs->md);
+@@ -332,6 +347,8 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
  
- struct dm_dirty_log *dm_dirty_log_create(const char *type_name,
- 			struct dm_target *ti,
-+			sector_t log_size,
- 			int (*flush_callback_fn)(struct dm_target *ti),
- 			unsigned int argc, char **argv)
- {
-@@ -164,7 +165,7 @@ struct dm_dirty_log *dm_dirty_log_create(const char *type_name,
- 
- 	log->flush_callback_fn = flush_callback_fn;
- 	log->type = type;
--	if (type->ctr(log, ti, argc, argv)) {
-+	if (type->ctr(log, ti, log_size, argc, argv)) {
- 		kfree(log);
- 		put_type(type);
- 		return NULL;
-@@ -335,9 +336,9 @@ static int read_header(struct log_c *log)
  	return 0;
+ err:
++	if (log)
++		dm_dirty_log_destroy(log);
+ 	if (rs)
+ 		context_free(rs);
+ 	ti->error = err;
+@@ -343,6 +360,7 @@ static void raid_dtr(struct dm_target *ti)
+ 	struct raid_set *rs = ti->private;
+ 
+ 	list_del_init(&rs->callbacks.list);
++	dm_dirty_log_destroy(rs->md.bitmap_info.log);
+ 	md_stop(&rs->md);
+ 	context_free(rs);
+ }
+@@ -362,6 +380,7 @@ static int raid_status(struct dm_target *ti, status_type_t type,
+ {
+ 	struct raid_set *rs = ti->private;
+ 	struct raid5_private_data *conf = rs->md.private;
++	struct dm_dirty_log *log = conf->mddev->bitmap_info.log;
+ 	int sz = 0;
+ 	int rbcnt;
+ 	int i;
+@@ -394,14 +413,14 @@ static int raid_status(struct dm_target *ti, status_type_t type,
+ 		DMEMIT("%llu/%llu ",
+ 		       (unsigned long long) sync,
+ 		       (unsigned long long) rs->md.resync_max_sectors);
+-		DMEMIT("1 core");
++
++		sz += log->type->status(log, type, result + sz, maxlen - sz);
+ 
+ 		break;
+ 	case STATUSTYPE_TABLE:
+ 		/* The string you would use to construct this array */
+-		/* Pretend to use a core log with a region size of 1 sector */
+-		DMEMIT("core 2 %u %ssync ", 1,
+-		       rs->md.recovery_cp == MaxSector ? "" : "no");
++		sz += log->type->status(log, type, result + sz, maxlen - sz);
++
+ 		DMEMIT("%s ", rs->raid_type->name);
+ 		DMEMIT("1 %u ", rs->md.chunk_sectors);
+ 
+@@ -469,19 +488,28 @@ static void raid_io_hints(struct dm_target *ti,
+ static void raid_presuspend(struct dm_target *ti)
+ {
+ 	struct raid_set *rs = ti->private;
++	struct dm_dirty_log *log = rs->md.bitmap_info.log;
++
+ 	md_stop_writes(&rs->md);
++	log->type->presuspend(log);
  }
  
--static int _check_region_size(struct dm_target *ti, uint32_t region_size)
-+static int _check_region_size(sector_t log_size, uint32_t region_size)
+ static void raid_postsuspend(struct dm_target *ti)
  {
--	if (region_size < 2 || region_size > ti->len)
-+	if (region_size < 2 || region_size > log_size)
- 		return 0;
- 
- 	if (!is_power_of_2(region_size))
-@@ -353,6 +354,7 @@ static int _check_region_size(struct dm_target *ti, uint32_t region_size)
-  *--------------------------------------------------------------*/
- #define BYTE_SHIFT 3
- static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
-+			      sector_t log_size,
- 			      unsigned int argc, char **argv,
- 			      struct dm_dev *dev)
- {
-@@ -382,12 +384,12 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
- 	}
- 
- 	if (sscanf(argv[0], "%u", &region_size) != 1 ||
--	    !_check_region_size(ti, region_size)) {
-+	    !_check_region_size(log_size, region_size)) {
- 		DMWARN("invalid region size %s", argv[0]);
- 		return -EINVAL;
- 	}
- 
--	region_count = dm_sector_div_up(ti->len, region_size);
-+	region_count = dm_sector_div_up(log_size, region_size);
- 
- 	lc = kmalloc(sizeof(*lc), GFP_KERNEL);
- 	if (!lc) {
-@@ -507,9 +509,10 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
+ 	struct raid_set *rs = ti->private;
++	struct dm_dirty_log *log = rs->md.bitmap_info.log;
++
+ 	mddev_suspend(&rs->md);
++	log->type->postsuspend(log);
  }
  
- static int core_ctr(struct dm_dirty_log *log, struct dm_target *ti,
-+		    sector_t log_size,
- 		    unsigned int argc, char **argv)
+ static void raid_resume(struct dm_target *ti)
  {
--	return create_log_context(log, ti, argc, argv, NULL);
-+	return create_log_context(log, ti, log_size, argc, argv, NULL);
+ 	struct raid_set *rs = ti->private;
++	struct dm_dirty_log *log = rs->md.bitmap_info.log;
+ 
++	log->type->resume(log);
++	bitmap_load(&rs->md);
+ 	mddev_resume(&rs->md);
  }
  
- static void destroy_log_context(struct log_c *lc)
-@@ -533,6 +536,7 @@ static void core_dtr(struct dm_dirty_log *log)
-  * argv contains log_device region_size followed optionally by [no]sync
-  *--------------------------------------------------------------*/
- static int disk_ctr(struct dm_dirty_log *log, struct dm_target *ti,
-+		    sector_t log_size,
- 		    unsigned int argc, char **argv)
- {
- 	int r;
-@@ -547,7 +551,7 @@ static int disk_ctr(struct dm_dirty_log *log, struct dm_target *ti,
- 	if (r)
- 		return r;
- 
--	r = create_log_context(log, ti, argc - 1, argv + 1, dev);
-+	r = create_log_context(log, ti, log_size, argc - 1, argv + 1, dev);
- 	if (r) {
- 		dm_put_device(ti, dev);
- 		return r;
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index ddda531..ea732fc 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -968,8 +968,8 @@ static struct dm_dirty_log *create_dirty_log(struct dm_target *ti,
- 		return NULL;
- 	}
- 
--	dl = dm_dirty_log_create(argv[0], ti, mirror_flush, param_count,
--				 argv + 2);
-+	dl = dm_dirty_log_create(argv[0], ti, ti->len, mirror_flush,
-+				 param_count, argv + 2);
- 	if (!dl) {
- 		ti->error = "Error creating mirror dirty log";
- 		return NULL;
-diff --git a/include/linux/dm-dirty-log.h b/include/linux/dm-dirty-log.h
-index 7084503..641419f 100644
---- a/include/linux/dm-dirty-log.h
-+++ b/include/linux/dm-dirty-log.h
-@@ -33,6 +33,7 @@ struct dm_dirty_log_type {
- 	struct list_head list;
- 
- 	int (*ctr)(struct dm_dirty_log *log, struct dm_target *ti,
-+		   sector_t log_size,
- 		   unsigned argc, char **argv);
- 	void (*dtr)(struct dm_dirty_log *log);
- 
-@@ -137,7 +138,7 @@ int dm_dirty_log_type_unregister(struct dm_dirty_log_type *type);
-  * type->constructor/destructor() directly.
-  */
- struct dm_dirty_log *dm_dirty_log_create(const char *type_name,
--			struct dm_target *ti,
-+			struct dm_target *ti, sector_t log_size,
- 			int (*flush_callback_fn)(struct dm_target *ti),
- 			unsigned argc, char **argv);
- void dm_dirty_log_destroy(struct dm_dirty_log *log);
 
 
