@@ -1,17 +1,17 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 06/12] dm: split discard requests on target
-	boundaries
-Date: Mon, 26 Jul 2010 17:41:22 -0400
-Message-ID: <20100726214122.GC20849@redhat.com>
-References: <1279987768-13275-1-git-send-email-snitzer@redhat.com>
-	<1279987768-13275-7-git-send-email-snitzer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: BIO_RW_SYNCIO
+Date: Mon, 26 Jul 2010 17:53:40 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1007261747560.12939@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0904161948420.312@hs20-bc2-1.build.redhat.com>
+	<20090417063615.GE4593@kernel.dk>
+	<Pine.LNX.4.64.0904200220290.22707@hs20-bc2-1.build.redhat.com>
+	<20090421072903.GY4593@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1279987768-13275-7-git-send-email-snitzer@redhat.com>
+In-Reply-To: <20090421072903.GY4593@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,115 +21,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Update __clone_and_map_discard to loop across all targets in a DM
-device's table when it processes a discard bio.  If a discard crosses a
-target boundary it must be split accordingly.
+Hi Jens
 
-Update __issue_target_requests and __issue_target_request to allow a
-cloned discard bio to have a custom start sector and size.
+I found out that when I remove BIO_RW_SYNCIO from dm-kcopyd.c, performance 
+when writing to the snapshot origin is increased twice. In this workload, 
+snapshot driver reads a lot of 8k chunks from one place on the disk and 
+writes them to the other place on the same disk. Without BIO_RW_SYNCIO, it 
+is twice faster with CFQ scheduler.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm.c |   51 ++++++++++++++++++++++++++++-----------------------
- 1 file changed, 28 insertions(+), 23 deletions(-)
+What does BIO_RW_SYNCIO exactly do? Does it attempt to decrease latency 
+and decrease throughput? (so that disk head seeks more between the source 
+and destination and it causes performance degradation) Is there some 
+general guidance, when use BIO_RW_SYNCIO and when not?
 
-Index: linux-2.6-block/drivers/md/dm.c
-===================================================================
---- linux-2.6-block.orig/drivers/md/dm.c
-+++ linux-2.6-block/drivers/md/dm.c
-@@ -1188,7 +1188,7 @@ static struct dm_target_io *alloc_tio(st
- }
- 
- static void __issue_target_request(struct clone_info *ci, struct dm_target *ti,
--				   unsigned request_nr)
-+				   unsigned request_nr, sector_t len)
- {
- 	struct dm_target_io *tio = alloc_tio(ci, ti);
- 	struct bio *clone;
-@@ -1203,17 +1203,21 @@ static void __issue_target_request(struc
- 	clone = bio_alloc_bioset(GFP_NOIO, ci->bio->bi_max_vecs, ci->md->bs);
- 	__bio_clone(clone, ci->bio);
- 	clone->bi_destructor = dm_bio_destructor;
-+	if (len) {
-+		clone->bi_sector = ci->sector;
-+		clone->bi_size = to_bytes(len);
-+	}
- 
- 	__map_bio(ti, clone, tio);
- }
- 
- static void __issue_target_requests(struct clone_info *ci, struct dm_target *ti,
--				    unsigned num_requests)
-+				    unsigned num_requests, sector_t len)
- {
- 	unsigned request_nr;
- 
- 	for (request_nr = 0; request_nr < num_requests; request_nr++)
--		__issue_target_request(ci, ti, request_nr);
-+		__issue_target_request(ci, ti, request_nr, len);
- }
- 
- static int __clone_and_map_empty_barrier(struct clone_info *ci)
-@@ -1222,7 +1226,7 @@ static int __clone_and_map_empty_barrier
- 	struct dm_target *ti;
- 
- 	while ((ti = dm_table_get_target(ci->map, target_nr++)))
--		__issue_target_requests(ci, ti, ti->num_flush_requests);
-+		__issue_target_requests(ci, ti, ti->num_flush_requests, 0);
- 
- 	ci->sector_count = 0;
- 
-@@ -1248,30 +1252,31 @@ static void __clone_and_map_simple(struc
- static int __clone_and_map_discard(struct clone_info *ci)
- {
- 	struct dm_target *ti;
--	sector_t max;
--
--	ti = dm_table_find_target(ci->map, ci->sector);
--	if (!dm_target_is_valid(ti))
--		return -EIO;
--
--	/*
--	 * Even though the device advertised discard support,
--	 * reconfiguration might have changed that since the
--	 * check was performed.
--	 */
--
--	if (!ti->num_discard_requests)
--		return -EOPNOTSUPP;
-+	sector_t max, len, remaining = ci->sector_count;
-+	unsigned offset = 0;
- 
--	max = max_io_len(ci->sector, ti);
-+	do {
-+		ti = dm_table_find_target(ci->map, ci->sector);
-+		if (!dm_target_is_valid(ti))
-+			return -EIO;
- 
--	if (ci->sector_count > max)
- 		/*
--		 * FIXME: Handle a discard that spans two or more targets.
-+		 * Even though the device advertised discard support,
-+		 * reconfiguration might have changed that since the
-+		 * check was performed.
- 		 */
--		return -EOPNOTSUPP;
-+		if (!ti->num_discard_requests)
-+			return -EOPNOTSUPP;
-+
-+		max = max_io_len_target_boundary(ci->sector, ti);
-+		len = min(remaining, max);
- 
--	__issue_target_requests(ci, ti, ti->num_discard_requests);
-+		__issue_target_requests(ci, ti, ti->num_discard_requests, len);
-+
-+		ci->sector += len;
-+		ci->sector_count -= len;
-+		offset += to_bytes(len);
-+	} while (remaining -= len);
- 
- 	ci->sector_count = 0;
- 
+Mikulas
