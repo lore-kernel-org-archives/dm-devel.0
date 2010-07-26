@@ -1,59 +1,72 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: rq-based mpath failed path on SCSI target failure (malformed
- discard)
-Date: Mon, 26 Jul 2010 13:40:31 -0400
-Message-ID: <20100726174031.GA11088@redhat.com>
-References: <20100726133008.GA26771@redhat.com>
- <20100726150000.GA31293@redhat.com>
- <4C4DB67D.1070903@cs.wisc.edu>
+Subject: [PATCH v3 11/12] dm mpath: enable discard support
+Date: Mon, 26 Jul 2010 16:41:23 -0400
+Message-ID: <20100726204123.GA20849@redhat.com>
+References: <1279987768-13275-1-git-send-email-snitzer@redhat.com>
+	<1279987768-13275-12-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4C4DB67D.1070903@cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com
+In-Reply-To: <1279987768-13275-12-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 List-Id: dm-devel.ids
 
-On Mon, Jul 26 2010 at 12:23pm -0400,
-Mike Christie <michaelc@cs.wisc.edu> wrote:
+Enable discard support in the DM multipath target.
 
-> On 07/26/2010 10:00 AM, Mike Snitzer wrote:
-> >
-> >diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> >index ec2b43e..125c80f 100644
-> >--- a/drivers/md/dm-mpath.c
-> >+++ b/drivers/md/dm-mpath.c
-> >@@ -1272,6 +1272,9 @@ static int do_end_io(struct multipath *m, struct request *clone,
-> >  	if (error == -EOPNOTSUPP)
-> >  		return error;
-> >
-> >+	if (clone->cmd_flags&  REQ_DISCARD)
-> >+		return error;   /* pass all discard request failures up */
-> >+
-> 
-> 
-> If a discard where failed due to a transport problem then you are
-> going to fail the IO instead of just retrying on another path.
-> 
-> You need something like Hannes's work to pass up the sense, or
-> something like generic block error codes like I started to work on,
-> so you know why the IO failed.
+This discard support depends on a few discard-specific fixes to the
+block layer's request stacking driver methods.
 
-Thanks for reminding me about previous work done in the area of error
-propagation.
+Discard requests are optional so don't allow a failed discard to trigger
+path failures.  If there is a real problem with a given path the
+barriers associated with the discard (either before or after the
+discard) will cause path failure.  That said, unconditionally passing
+discard failures up the stack is not ideal.  This must be fixed once DM
+has more information about the nature of the underlying storage failure.
 
-Yes, we certainly need a more intelligent check but since neither of the
-solutions you referenced are available yet we're better off failing the
-discard in the near-term.  Clearly not ideal but failing a path when an
-optional discard IO failure occurs isn't going to fly either.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+---
+ drivers/md/dm-mpath.c |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-I'll slap a FIXME on this interim "fix".
-
-In parallel I'll see if I can track down Hannes' and/or your work,
-rebase it as needed, etc.  If you have updated patches please let me
-know.
-
-Thanks,
-Mike
+Index: linux-2.6-block/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm-mpath.c
++++ linux-2.6-block/drivers/md/dm-mpath.c
+@@ -893,6 +893,7 @@ static int multipath_ctr(struct dm_targe
+ 	}
+ 
+ 	ti->num_flush_requests = 1;
++	ti->num_discard_requests = 1;
+ 
+ 	return 0;
+ 
+@@ -1272,6 +1273,15 @@ static int do_end_io(struct multipath *m
+ 	if (error == -EOPNOTSUPP)
+ 		return error;
+ 
++	if (clone->cmd_flags & REQ_DISCARD)
++		/*
++		 * Pass all discard request failures up.
++		 * FIXME: only fail_path if the discard failed due to a
++		 * transport problem.  This requires precise understanding
++		 * of the underlying failure (e.g. the SCSI sense).
++		 */
++		return error;
++
+ 	if (mpio->pgpath)
+ 		fail_path(mpio->pgpath);
+ 
