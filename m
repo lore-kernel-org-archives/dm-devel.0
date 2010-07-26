@@ -1,16 +1,17 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 05/12] dm: factor max_io_len for code reuse
-Date: Mon, 26 Jul 2010 17:36:54 -0400
-Message-ID: <20100726213654.GB20849@redhat.com>
+Subject: [PATCH v3 06/12] dm: split discard requests on target
+	boundaries
+Date: Mon, 26 Jul 2010 17:41:22 -0400
+Message-ID: <20100726214122.GC20849@redhat.com>
 References: <1279987768-13275-1-git-send-email-snitzer@redhat.com>
-	<1279987768-13275-6-git-send-email-snitzer@redhat.com>
+	<1279987768-13275-7-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1279987768-13275-6-git-send-email-snitzer@redhat.com>
+In-Reply-To: <1279987768-13275-7-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,97 +24,112 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Split max_io_len_target_boundary out of max_io_len so that the discard
-support can make use of it without duplicating max_io_len code.
+Update __clone_and_map_discard to loop across all targets in a DM
+device's table when it processes a discard bio.  If a discard crosses a
+target boundary it must be split accordingly.
 
-Avoiding max_io_len's split_io logic enables DM's discard support to
-submit the entire discard request to a target.  But discards must still
-be split on target boundaries.
+Update __issue_target_requests and __issue_target_request to allow a
+cloned discard bio to have a custom start sector and size.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c               |   22 ++++++++++++++--------
- include/linux/device-mapper.h |    2 ++
- 2 files changed, 16 insertions(+), 8 deletions(-)
+ drivers/md/dm.c |   51 ++++++++++++++++++++++++++++-----------------------
+ 1 file changed, 28 insertions(+), 23 deletions(-)
 
 Index: linux-2.6-block/drivers/md/dm.c
 ===================================================================
 --- linux-2.6-block.orig/drivers/md/dm.c
 +++ linux-2.6-block/drivers/md/dm.c
-@@ -1029,17 +1029,23 @@ static void end_clone_request(struct req
- 	dm_complete_request(clone, error);
+@@ -1188,7 +1188,7 @@ static struct dm_target_io *alloc_tio(st
  }
  
--static sector_t max_io_len(struct mapped_device *md,
--			   sector_t sector, struct dm_target *ti)
-+static sector_t max_io_len_target_boundary(sector_t sector, struct dm_target *ti)
+ static void __issue_target_request(struct clone_info *ci, struct dm_target *ti,
+-				   unsigned request_nr)
++				   unsigned request_nr, sector_t len)
  {
--	sector_t offset = sector - ti->begin;
--	sector_t len = ti->len - offset;
-+	sector_t target_offset = dm_target_offset(ti, sector);
-+
-+	return ti->len - target_offset;
-+}
-+
-+static sector_t max_io_len(sector_t sector, struct dm_target *ti)
-+{
-+	sector_t len = max_io_len_target_boundary(sector, ti);
+ 	struct dm_target_io *tio = alloc_tio(ci, ti);
+ 	struct bio *clone;
+@@ -1203,17 +1203,21 @@ static void __issue_target_request(struc
+ 	clone = bio_alloc_bioset(GFP_NOIO, ci->bio->bi_max_vecs, ci->md->bs);
+ 	__bio_clone(clone, ci->bio);
+ 	clone->bi_destructor = dm_bio_destructor;
++	if (len) {
++		clone->bi_sector = ci->sector;
++		clone->bi_size = to_bytes(len);
++	}
  
- 	/*
- 	 * Does the target need to split even further ?
- 	 */
- 	if (ti->split_io) {
- 		sector_t boundary;
-+		sector_t offset = dm_target_offset(ti, sector);
- 		boundary = ((offset + ti->split_io) & ~(ti->split_io - 1))
- 			   - offset;
- 		if (len > boundary)
-@@ -1257,7 +1263,7 @@ static int __clone_and_map_discard(struc
- 	if (!ti->num_discard_requests)
- 		return -EOPNOTSUPP;
+ 	__map_bio(ti, clone, tio);
+ }
  
--	max = max_io_len(ci->md, ci->sector, ti);
-+	max = max_io_len(ci->sector, ti);
- 
- 	if (ci->sector_count > max)
- 		/*
-@@ -1289,7 +1295,7 @@ static int __clone_and_map(struct clone_
- 	if (!dm_target_is_valid(ti))
- 		return -EIO;
- 
--	max = max_io_len(ci->md, ci->sector, ti);
-+	max = max_io_len(ci->sector, ti);
- 
- 	if (ci->sector_count <= max) {
- 		/*
-@@ -1340,7 +1346,7 @@ static int __clone_and_map(struct clone_
- 				if (!dm_target_is_valid(ti))
- 					return -EIO;
- 
--				max = max_io_len(ci->md, ci->sector, ti);
-+				max = max_io_len(ci->sector, ti);
- 			}
- 
- 			len = min(remaining, max);
-@@ -1427,7 +1433,7 @@ static int dm_merge_bvec(struct request_
- 	/*
- 	 * Find maximum amount of I/O that won't need splitting
- 	 */
--	max_sectors = min(max_io_len(md, bvm->bi_sector, ti),
-+	max_sectors = min(max_io_len(bvm->bi_sector, ti),
- 			  (sector_t) BIO_MAX_SECTORS);
- 	max_size = (max_sectors << SECTOR_SHIFT) - bvm->bi_size;
- 	if (max_size < 0)
-Index: linux-2.6-block/include/linux/device-mapper.h
-===================================================================
---- linux-2.6-block.orig/include/linux/device-mapper.h
-+++ linux-2.6-block/include/linux/device-mapper.h
-@@ -398,6 +398,8 @@ void *dm_vcalloc(unsigned long nmemb, un
- #define dm_array_too_big(fixed, obj, num) \
- 	((num) > (UINT_MAX - (fixed)) / (obj))
- 
-+#define dm_target_offset(ti, sector) ((sector) - (ti)->begin)
-+
- static inline sector_t to_sector(unsigned long n)
+ static void __issue_target_requests(struct clone_info *ci, struct dm_target *ti,
+-				    unsigned num_requests)
++				    unsigned num_requests, sector_t len)
  {
- 	return (n >> SECTOR_SHIFT);
+ 	unsigned request_nr;
+ 
+ 	for (request_nr = 0; request_nr < num_requests; request_nr++)
+-		__issue_target_request(ci, ti, request_nr);
++		__issue_target_request(ci, ti, request_nr, len);
+ }
+ 
+ static int __clone_and_map_empty_barrier(struct clone_info *ci)
+@@ -1222,7 +1226,7 @@ static int __clone_and_map_empty_barrier
+ 	struct dm_target *ti;
+ 
+ 	while ((ti = dm_table_get_target(ci->map, target_nr++)))
+-		__issue_target_requests(ci, ti, ti->num_flush_requests);
++		__issue_target_requests(ci, ti, ti->num_flush_requests, 0);
+ 
+ 	ci->sector_count = 0;
+ 
+@@ -1248,30 +1252,31 @@ static void __clone_and_map_simple(struc
+ static int __clone_and_map_discard(struct clone_info *ci)
+ {
+ 	struct dm_target *ti;
+-	sector_t max;
+-
+-	ti = dm_table_find_target(ci->map, ci->sector);
+-	if (!dm_target_is_valid(ti))
+-		return -EIO;
+-
+-	/*
+-	 * Even though the device advertised discard support,
+-	 * reconfiguration might have changed that since the
+-	 * check was performed.
+-	 */
+-
+-	if (!ti->num_discard_requests)
+-		return -EOPNOTSUPP;
++	sector_t max, len, remaining = ci->sector_count;
++	unsigned offset = 0;
+ 
+-	max = max_io_len(ci->sector, ti);
++	do {
++		ti = dm_table_find_target(ci->map, ci->sector);
++		if (!dm_target_is_valid(ti))
++			return -EIO;
+ 
+-	if (ci->sector_count > max)
+ 		/*
+-		 * FIXME: Handle a discard that spans two or more targets.
++		 * Even though the device advertised discard support,
++		 * reconfiguration might have changed that since the
++		 * check was performed.
+ 		 */
+-		return -EOPNOTSUPP;
++		if (!ti->num_discard_requests)
++			return -EOPNOTSUPP;
++
++		max = max_io_len_target_boundary(ci->sector, ti);
++		len = min(remaining, max);
+ 
+-	__issue_target_requests(ci, ti, ti->num_discard_requests);
++		__issue_target_requests(ci, ti, ti->num_discard_requests, len);
++
++		ci->sector += len;
++		ci->sector_count -= len;
++		offset += to_bytes(len);
++	} while (remaining -= len);
+ 
+ 	ci->sector_count = 0;
+ 
