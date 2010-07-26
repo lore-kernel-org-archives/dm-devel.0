@@ -1,59 +1,37 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
 Subject: Re: rq-based mpath failed path on SCSI target failure (malformed
  discard)
-Date: Mon, 26 Jul 2010 11:00:00 -0400
-Message-ID: <20100726150000.GA31293@redhat.com>
-References: <20100726133008.GA26771@redhat.com>
+Date: Mon, 26 Jul 2010 11:23:25 -0500
+Message-ID: <4C4DB67D.1070903@cs.wisc.edu>
+References: <20100726133008.GA26771@redhat.com> <20100726150000.GA31293@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100726133008.GA26771@redhat.com>
+In-Reply-To: <20100726150000.GA31293@redhat.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi@vger.kernel.org
-Cc: michaelc@cs.wisc.edu, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jul 26 2010 at  9:30am -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On 07/26/2010 10:00 AM, Mike Snitzer wrote:
+>
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index ec2b43e..125c80f 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -1272,6 +1272,9 @@ static int do_end_io(struct multipath *m, struct request *clone,
+>   	if (error == -EOPNOTSUPP)
+>   		return error;
+>
+> +	if (clone->cmd_flags&  REQ_DISCARD)
+> +		return error;   /* pass all discard request failures up */
+> +
 
-> Hi,
-> 
-> I have been implementing discard support for the various DM targets.  I
-> have a LUN that requires a 4K alignment for all discard requests.  I
-> forced the issue (by misconfiguring the alignment such that discards
-> would be misaligned).  Multipath failed the path once the SCSI layer got
-> the following error.
-> 
-> My question: shouldn't mpath _not_ fail the path for "Illegal
-> Request".. "Parameter value invalid"?  The same request would fail on
-> any path given that the failure is on the target side (rejecting the
-> malformed discard request).  Following setup is ext4 FS ontop of linear
-> DM mapping (dm-2) ontop of request-based mpath mapping (dm-1):
-> 
-> EXT4-fs (dm-2): mounted filesystem with ordered data mode
-> sd 3:0:0:0: [sda] Result: hostbyte=DID_OK driverbyte=DRIVER_SENSE
-> sd 3:0:0:0: [sda] Sense Key : Illegal Request [current] 
-> Info fld=0x0
-> sd 3:0:0:0: [sda] Add. Sense: Parameter value invalid
-> sd 3:0:0:0: [sda] CDB: Write same(16): 93 08 00 00 00 00 00 00 45 82 00 00 03 00 00 00
-> end_request: I/O error, dev sda, sector 17794
-> device-mapper: multipath: Failing path 8:0.
 
-The following patch sorts this out in multipath; special-cases discard
-requests so that they don't enduce path failures:
+If a discard where failed due to a transport problem then you are going 
+to fail the IO instead of just retrying on another path.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index ec2b43e..125c80f 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1272,6 +1272,9 @@ static int do_end_io(struct multipath *m, struct request *clone,
- 	if (error == -EOPNOTSUPP)
- 		return error;
- 
-+	if (clone->cmd_flags & REQ_DISCARD)
-+		return error;   /* pass all discard request failures up */
-+
- 	if (mpio->pgpath)
- 		fail_path(mpio->pgpath);
- 
+You need something like Hannes's work to pass up the sense, or something 
+like generic block error codes like I started to work on, so you know 
+why the IO failed.
