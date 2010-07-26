@@ -1,7 +1,7 @@
 From: NeilBrown <nfbrown@novell.com>
-Subject: [PATCH 3/8] dm-raid456: support unplug
+Subject: [PATCH 4/8] dm-raid456: add support for setting IO hints.
 Date: Mon, 26 Jul 2010 13:24:35 +1000
-Message-ID: <20100726032435.29687.63743.stgit@localhost.localdomain>
+Message-ID: <20100726032435.29687.50704.stgit@localhost.localdomain>
 References: <20100726032230.29687.5366.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,76 +13,61 @@ To: Heinz Mauelshagen <heinzm@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-In a similar manner to congestion checking, per-target
-unplug support for raid456 under dm.
-
 Signed-off-by: NeilBrown <neilb@suse.de>
 ---
- drivers/md/dm-raid456.c       |    9 +++++++++
- drivers/md/dm-table.c         |    4 ++++
- include/linux/device-mapper.h |    1 +
- 3 files changed, 14 insertions(+), 0 deletions(-)
+ drivers/md/dm-raid456.c |   33 +++++++++++++++++++++++++++++++++
+ 1 files changed, 33 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/md/dm-raid456.c b/drivers/md/dm-raid456.c
-index 0e3922a..47db9d4 100644
+index 47db9d4..4ffd654 100644
 --- a/drivers/md/dm-raid456.c
 +++ b/drivers/md/dm-raid456.c
-@@ -154,6 +154,14 @@ static int raid_is_congested(void *v, int bits)
- 					   callbacks);
- 	return md_raid5_congested(&rs->md, bits);
+@@ -435,6 +435,37 @@ static int raid_status(struct dm_target *ti, status_type_t type,
+ 	return 0;
  }
-+static void raid_unplug(void *v)
+ 
++static int raid_iterate_devices(struct dm_target *ti,
++				iterate_devices_callout_fn fn,
++				void *data)
 +{
-+	struct target_callbacks *cb = v;
-+	struct raid_set *rs = container_of(cb, struct raid_set,
-+					   callbacks);
-+	md_raid5_unplug_device(rs->md.private);
++	struct raid_set *rs = ti->private;
++	int ret = 0;
++	unsigned i = 0;
++
++	for (i = 0; !ret && i < rs->md.raid_disks; i++)
++		if (rs->dev[i].dev)
++			ret = fn(ti,
++				 rs->dev[i].dev,
++				 rs->dev[i].rdev.data_offset,
++				 rs->md.dev_sectors,
++				 data);
++
++	return ret;
 +}
 +
- /*
-  * Construct a RAID4/5/6 mapping:
-  * Args:
-@@ -289,6 +297,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 			goto err;
- 		clear_bit(In_sync, &rs->dev[rebuildA].rdev.flags);
- 		rs->dev[rebuildA].rdev.recovery_offset = 0;
-+	rs->callbacks.unplug_fn = raid_unplug;
- 	}
- 	if (rebuildB >= 0) {
- 		if (rs->dev[rebuildB].dev == NULL)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index b856340..cad4992 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1228,6 +1228,7 @@ void dm_table_unplug_all(struct dm_table *t)
- {
- 	struct dm_dev_internal *dd;
- 	struct list_head *devices = dm_table_get_devices(t);
-+	struct target_callbacks *cb;
- 
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->dm_dev.bdev);
-@@ -1240,6 +1241,9 @@ void dm_table_unplug_all(struct dm_table *t)
- 				     dm_device_name(t->md),
- 				     bdevname(dd->dm_dev.bdev, b));
- 	}
-+	list_for_each_entry(cb, &t->target_callbacks, list)
-+		if (cb->unplug_fn)
-+			cb->unplug_fn(cb);
- }
- 
- struct mapped_device *dm_table_get_md(struct dm_table *t)
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 2b0f538..5b8ac19 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -191,6 +191,7 @@ struct dm_target {
- struct target_callbacks {
- 	struct list_head list;
- 	congested_fn *congested_fn;
-+	void (*unplug_fn)(void *);
++static void raid_io_hints(struct dm_target *ti,
++			  struct queue_limits *limits)
++{
++	struct raid_set *rs = ti->private;
++	unsigned chunk_size = rs->md.chunk_sectors << 9;
++	raid5_conf_t *conf = rs->md.private;
++
++	blk_limits_io_min(limits, chunk_size);
++	blk_limits_io_opt(limits, chunk_size *
++			  (conf->raid_disks - conf->max_degraded));
++}
++
+ static struct target_type raid_target = {
+ 	.name = "raid45",
+ 	.version = {1, 0, 0},
+@@ -443,6 +474,8 @@ static struct target_type raid_target = {
+ 	.dtr = raid_dtr,
+ 	.map = raid_map,
+ 	.status = raid_status,
++	.iterate_devices = raid_iterate_devices,
++	.io_hints = raid_io_hints,
  };
  
- int dm_register_target(struct target_type *t);
+ static int __init dm_raid_init(void)
 
 
