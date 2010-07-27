@@ -1,65 +1,36 @@
-From: Ted Ts'o <tytso@mit.edu>
-Subject: Re: [PATCH] disallow FS recursion from sb_issue_discard allocation
-Date: Tue, 27 Jul 2010 09:44:14 -0400
-Message-ID: <20100727134414.GC18966@thunk.org>
-References: <Pine.LNX.4.64.1007021107420.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021112340.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021117580.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
- <20100702181430.GD26916@redhat.com>
- <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021554550.11102@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021605410.13662@hs20-bc2-1.build.redhat.com>
- <20100706161155.GA24461@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH v2 10/12] block: update request stacking
+ methods to support discards
+Date: Tue, 27 Jul 2010 10:54:36 -0400
+Message-ID: <20100727145436.GA25210@infradead.org>
+References: <1279987768-13275-1-git-send-email-snitzer@redhat.com>
+	<1279987768-13275-11-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20100706161155.GA24461@redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <jaxboe@fusionio.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
+In-Reply-To: <1279987768-13275-11-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Jens Axboe <jaxboe@fusionio.com>, Christoph Hellwig <hch@lst.de>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 List-Id: dm-devel.ids
 
-On Tue, Jul 06, 2010 at 12:11:56PM -0400, Mike Snitzer wrote:
-> Filesystems can call sb_issue_discard on a memory reclaim path
-> (e.g. ext4 calls sb_issue_discard during journal commit).
-> 
-> Use GFP_NOFS in sb_issue_discard to avoid recursing back into the FS.
-> 
-> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+On Sat, Jul 24, 2010 at 12:09:26PM -0400, Mike Snitzer wrote:
+> Propagate REQ_DISCARD in cmd_flags when cloning a discard request.
+> Skip blk_rq_check_limits's existing checks for discard requests because
+> discard limits will have already been checked in blkdev_issue_discard.
 
-Hi Jens,
-
-I never saw an ack from you on this patch.  Are you ok with it, and
-have you grabbed it for your tree?  Do you want me to include this in
-the ext4 tree, even though it's a patch to include/linux/blkdev.h?
-
-Thanks,
-
-						- Ted
+Looks good,
 
 
-> ---
->  include/linux/blkdev.h |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> 
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index baf5258..dbb510c 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -933,7 +933,7 @@ static inline int sb_issue_discard(struct super_block *sb,
->  {
->  	block <<= (sb->s_blocksize_bits - 9);
->  	nr_blocks <<= (sb->s_blocksize_bits - 9);
-> -	return blkdev_issue_discard(sb->s_bdev, block, nr_blocks, GFP_KERNEL,
-> +	return blkdev_issue_discard(sb->s_bdev, block, nr_blocks, GFP_NOFS,
->  				   BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
->  }
->  
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-ext4" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Reviewed-by: Christoph Hellwig <hch@lst.de>
