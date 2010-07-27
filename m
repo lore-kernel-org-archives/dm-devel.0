@@ -1,17 +1,19 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: BIO_RW_SYNCIO
-Date: Mon, 26 Jul 2010 17:53:40 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1007261747560.12939@hs20-bc2-1.build.redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: BIO_RW_SYNCIO
+Date: Mon, 26 Jul 2010 22:09:19 -0400
+Message-ID: <20100727020919.GC18940@redhat.com>
 References: <Pine.LNX.4.64.0904161948420.312@hs20-bc2-1.build.redhat.com>
 	<20090417063615.GE4593@kernel.dk>
 	<Pine.LNX.4.64.0904200220290.22707@hs20-bc2-1.build.redhat.com>
 	<20090421072903.GY4593@kernel.dk>
+	<Pine.LNX.4.64.1007261747560.12939@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090421072903.GY4593@kernel.dk>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1007261747560.12939@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,21 +23,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Jens
+On Mon, Jul 26, 2010 at 05:53:40PM -0400, Mikulas Patocka wrote:
+> Hi Jens
+> 
+[ Jens's mail id has changed. Ccing him on different mail id ]
 
-I found out that when I remove BIO_RW_SYNCIO from dm-kcopyd.c, performance 
-when writing to the snapshot origin is increased twice. In this workload, 
-snapshot driver reads a lot of 8k chunks from one place on the disk and 
-writes them to the other place on the same disk. Without BIO_RW_SYNCIO, it 
-is twice faster with CFQ scheduler.
+> I found out that when I remove BIO_RW_SYNCIO from dm-kcopyd.c, performance 
+> when writing to the snapshot origin is increased twice. In this workload, 
+> snapshot driver reads a lot of 8k chunks from one place on the disk and 
+> writes them to the other place on the same disk. Without BIO_RW_SYNCIO, it 
+> is twice faster with CFQ scheduler.
+> 
+> What does BIO_RW_SYNCIO exactly do?  Does it attempt to decrease latency 
+> and decrease throughput? (so that disk head seeks more between the source 
+> and destination and it causes performance degradation) Is there some 
+> general guidance, when use BIO_RW_SYNCIO and when not?
 
-What does BIO_RW_SYNCIO exactly do? Does it attempt to decrease latency 
-and decrease throughput? (so that disk head seeks more between the source 
-and destination and it causes performance degradation) Is there some 
-general guidance, when use BIO_RW_SYNCIO and when not?
+BIO_RW_SYNC marks a request as SYNC. reads are by default sync. Writes
+can be marked as SYNC so that they get priority of ASYNC WRITES.
 
-Mikulas
+Marking writes as SYNC has advantage that it gets its own queue, it can
+preempt ASYNC WRITES and CFQ also idles on the cfq queue waiting for
+more requests.
+
+I suspect if it is idling on SYNC WRITES which is a problem here.
+
+- Is it the same thread which is submitting both read and write requests?
+- Are you interleaving reads and writes. Like reading some data, then
+  writting it and reading again...
+
+I guess after writting some data, CFQ is idling on WRITE_SYNC and next
+READ does not get dispatched immediately to the disk.
+
+Is it possible to provide some 30 second blktrace of the underlying device
+where CFQ is running. You can also try setting slice_idle to 0 and see if
+it helps.
+
+If setting slice_idle=0 helps you, can you please also give a try to
+following patch.
+
+https://patchwork.kernel.org/patch/113061/
+
+Thanks
+Vivek
