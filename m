@@ -1,50 +1,99 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: disallow FS recursion from sb_issue_discard allocation
-Date: Tue, 27 Jul 2010 11:33:52 -0400
-Message-ID: <20100727153352.GA5574@redhat.com>
-References: <Pine.LNX.4.64.1007021112340.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021117580.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
- <20100702181430.GD26916@redhat.com>
- <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021554550.11102@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021605410.13662@hs20-bc2-1.build.redhat.com>
- <20100706161155.GA24461@redhat.com>
- <20100727134414.GC18966@thunk.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: BIO_RW_SYNCIO
+Date: Tue, 27 Jul 2010 15:48:52 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1007271452180.1954@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0904161948420.312@hs20-bc2-1.build.redhat.com>
+	<20090417063615.GE4593@kernel.dk>
+	<Pine.LNX.4.64.0904200220290.22707@hs20-bc2-1.build.redhat.com>
+	<20090421072903.GY4593@kernel.dk>
+	<Pine.LNX.4.64.1007261747560.12939@hs20-bc2-1.build.redhat.com>
+	<20100727020919.GC18940@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100727134414.GC18966@thunk.org>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Ted Ts'o <tytso@mit.edu>
-Cc: Jens Axboe <jaxboe@fusionio.com>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20100727020919.GC18940@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jul 27 2010 at  9:44am -0400,
-Ted Ts'o <tytso@mit.edu> wrote:
 
-> On Tue, Jul 06, 2010 at 12:11:56PM -0400, Mike Snitzer wrote:
-> > Filesystems can call sb_issue_discard on a memory reclaim path
-> > (e.g. ext4 calls sb_issue_discard during journal commit).
+
+On Mon, 26 Jul 2010, Vivek Goyal wrote:
+
+> On Mon, Jul 26, 2010 at 05:53:40PM -0400, Mikulas Patocka wrote:
+> > Hi Jens
 > > 
-> > Use GFP_NOFS in sb_issue_discard to avoid recursing back into the FS.
+> [ Jens's mail id has changed. Ccing him on different mail id ]
+> 
+> > I found out that when I remove BIO_RW_SYNCIO from dm-kcopyd.c, performance 
+> > when writing to the snapshot origin is increased twice. In this workload, 
+> > snapshot driver reads a lot of 8k chunks from one place on the disk and 
+> > writes them to the other place on the same disk. Without BIO_RW_SYNCIO, it 
+> > is twice faster with CFQ scheduler.
 > > 
-> > Reported-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > What does BIO_RW_SYNCIO exactly do?  Does it attempt to decrease latency 
+> > and decrease throughput? (so that disk head seeks more between the source 
+> > and destination and it causes performance degradation) Is there some 
+> > general guidance, when use BIO_RW_SYNCIO and when not?
 > 
-> Hi Jens,
+> BIO_RW_SYNC marks a request as SYNC. reads are by default sync. Writes
+> can be marked as SYNC so that they get priority of ASYNC WRITES.
 > 
-> I never saw an ack from you on this patch.  Are you ok with it, and
-> have you grabbed it for your tree?  Do you want me to include this in
-> the ext4 tree, even though it's a patch to include/linux/blkdev.h?
+> Marking writes as SYNC has advantage that it gets its own queue, it can
+> preempt ASYNC WRITES and CFQ also idles on the cfq queue waiting for
+> more requests.
+> 
+> I suspect if it is idling on SYNC WRITES which is a problem here.
+> 
+> - Is it the same thread which is submitting both read and write requests?
 
-Hi Ted,
+Yes.
 
-Thanks for following up on this.  In my experience, Jens is more apt to
-pick up a patch if it gets explicitly 'Acked-by' other stake-holders
-(especially when a patch is motivated by another subsystem, in this case
-the proposed block change addresses a problem unique to fs/ext4).
+> - Are you interleaving reads and writes. Like reading some data, then
+>   writting it and reading again...
 
-Mike
+I issue write immediatelly when read finishes.
+
+> I guess after writting some data, CFQ is idling on WRITE_SYNC and next
+> READ does not get dispatched immediately to the disk.
+> 
+> Is it possible to provide some 30 second blktrace of the underlying device
+> where CFQ is running. You can also try setting slice_idle to 0 and see if
+> it helps.
+> 
+> If setting slice_idle=0 helps you, can you please also give a try to
+> following patch.
+> 
+> https://patchwork.kernel.org/patch/113061/
+> 
+> Thanks
+> Vivek
+
+I took the traces and placed them at 
+http://people.redhat.com/mpatocka/data/blktrace/
+
+It shows that WRITE requests are merged without SYNCIO flags and are not 
+merged if SYNCIO is used.
+
+slice_idle=0 or the patch don't help.
+
+
+BTW. blkparse ignores the input file, when I use "blkparse -i 
+sda.blktrace.0.sync", blkparse still displays content of "sda.blktrace.0" 
+and not "sda.blktrace.0.sync".
+
+I have to use "cat sda.blktrace.0.sync|blkparse -i -" to read th trace. Is 
+it a blkparse bug? I use blkparse from Debian Lenny.
+
+Mikulas
