@@ -1,13 +1,22 @@
-From: Malahal Naineni <malahal@us.ibm.com>
-Subject: [PATCH] [RFC] dm-multipath: typo,
-	strncat instead of strncpy
-Date: Tue, 27 Jul 2010 17:46:19 -0700
-Message-ID: <07a9bab4a67f78564b22.1280277979@malahal>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: BIO_RW_SYNCIO
+Date: Tue, 27 Jul 2010 21:33:45 -0400
+Message-ID: <20100728013345.GB12642@redhat.com>
+References: <Pine.LNX.4.64.0904161948420.312@hs20-bc2-1.build.redhat.com>
+	<20090417063615.GE4593@kernel.dk>
+	<Pine.LNX.4.64.0904200220290.22707@hs20-bc2-1.build.redhat.com>
+	<20090421072903.GY4593@kernel.dk>
+	<Pine.LNX.4.64.1007261747560.12939@hs20-bc2-1.build.redhat.com>
+	<20100727020919.GC18940@redhat.com>
+	<Pine.LNX.4.64.1007271452180.1954@hs20-bc2-1.build.redhat.com>
+	<20100727230950.GI7347@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20100727230950.GI7347@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,26 +26,103 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@free.fr, dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-strncat here doesn't seem right, strncpy should be correct!
+On Tue, Jul 27, 2010 at 07:09:50PM -0400, Vivek Goyal wrote:
+> On Tue, Jul 27, 2010 at 03:48:52PM -0400, Mikulas Patocka wrote:
+> > 
+> > 
+> > On Mon, 26 Jul 2010, Vivek Goyal wrote:
+> > 
+> > > On Mon, Jul 26, 2010 at 05:53:40PM -0400, Mikulas Patocka wrote:
+> > > > Hi Jens
+> > > > 
+> > > [ Jens's mail id has changed. Ccing him on different mail id ]
+> > > 
+> > > > I found out that when I remove BIO_RW_SYNCIO from dm-kcopyd.c, performance 
+> > > > when writing to the snapshot origin is increased twice. In this workload, 
+> > > > snapshot driver reads a lot of 8k chunks from one place on the disk and 
+> > > > writes them to the other place on the same disk. Without BIO_RW_SYNCIO, it 
+> > > > is twice faster with CFQ scheduler.
+> > > > 
+> > > > What does BIO_RW_SYNCIO exactly do?  Does it attempt to decrease latency 
+> > > > and decrease throughput? (so that disk head seeks more between the source 
+> > > > and destination and it causes performance degradation) Is there some 
+> > > > general guidance, when use BIO_RW_SYNCIO and when not?
+> > > 
+> > > BIO_RW_SYNC marks a request as SYNC. reads are by default sync. Writes
+> > > can be marked as SYNC so that they get priority of ASYNC WRITES.
+> > > 
+> > > Marking writes as SYNC has advantage that it gets its own queue, it can
+> > > preempt ASYNC WRITES and CFQ also idles on the cfq queue waiting for
+> > > more requests.
+> > > 
+> > > I suspect if it is idling on SYNC WRITES which is a problem here.
+> > > 
+> > > - Is it the same thread which is submitting both read and write requests?
+> > 
+> > Yes.
+> > 
+> > > - Are you interleaving reads and writes. Like reading some data, then
+> > >   writting it and reading again...
+> > 
+> > I issue write immediatelly when read finishes.
+> > 
+> > > I guess after writting some data, CFQ is idling on WRITE_SYNC and next
+> > > READ does not get dispatched immediately to the disk.
+> > > 
+> > > Is it possible to provide some 30 second blktrace of the underlying device
+> > > where CFQ is running. You can also try setting slice_idle to 0 and see if
+> > > it helps.
+> > > 
+> > > If setting slice_idle=0 helps you, can you please also give a try to
+> > > following patch.
+> > > 
+> > > https://patchwork.kernel.org/patch/113061/
+> > > 
+> > > Thanks
+> > > Vivek
+> > 
+> > I took the traces and placed them at 
+> > http://people.redhat.com/mpatocka/data/blktrace/
+> > 
+> > It shows that WRITE requests are merged without SYNCIO flags and are not 
+> > merged if SYNCIO is used.
+> 
+> Yes you are right. So I think following is happening.
+> 
+> Key is that requests don't get merged once they are on dispatch list. They
+> get merged only when they are still sitting in some cfq queue and are with
+> elevator.
+> 
+> In case of sync IO, both reads and writes are on single cfq queue. We are
+> driving good dispatch list depth (drv=65). That means there are 65 reads
+> and writes on dispatch list and none of the new requests can be merged with
+> those.
+> 
+> In case of async IO, reads and writes are going on different cfq queues.
+> While reads are being dispatched from one queue, writes are sitting in 
+> CFQ and are open to merge. That's the reason we are seeing lot more WRITE
+> merging with async case.
+> 
+> Not sure what we can do about it though. But had a couple of questions.
+> 
+> - You seem to be issuing lots of 4K size adjacent READS and WRITES. Is
+>   there a way that you can club these together and issue a bigger request.
+> 
+> - What kind of device this is where request queue depth is 65. Can you
+>   try reducing request queue depth to say 16 and see if things improve
+>   a bit. (/sys/block/<dev>/device/queue_depth).
+> 
 
-Signed-off-by: Malahal Naineni (malahal@us.ibm.com)
+One more thing. Have you change the "quantum" tunable of CFQ? Looking
+at the traces of SYNC case, CFQ seems to be allowing up to 65 requests
+from a single cfq queue. But that does not happen. It is limited to 8
+requests max from a cfq queue.
 
-PS: But why bother correcting an entry that is going to be deleted
-anyway? IMO, just deleting the strncat/strncpy line should be fine too.
-Any comments???
+Which kernel version are you using?
 
-diff -r 62c20b65bffe -r 07a9bab4a67f libmultipath/configure.c
---- a/libmultipath/configure.c	Tue Jul 20 17:08:44 2010 -0700
-+++ b/libmultipath/configure.c	Tue Jul 27 17:45:48 2010 -0700
-@@ -170,7 +170,7 @@ select_action (struct multipath * mpp, v
- 	if (!find_mp_by_wwid(curmp, mpp->wwid)) {
- 		condlog(2, "%s: remove (wwid changed)", cmpp->alias);
- 		dm_flush_map(mpp->alias);
--		strncat(cmpp->wwid, mpp->wwid, WWID_SIZE);
-+		strncpy(cmpp->wwid, mpp->wwid, WWID_SIZE);
- 		drop_multipath(curmp, cmpp->wwid, KEEP_PATHS);
- 		mpp->action = ACT_CREATE;
- 		condlog(3, "%s: set ACT_CREATE (map wwid change)",
+Thanks
+Vivek
