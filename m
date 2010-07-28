@@ -1,17 +1,16 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1.5/2] dm-stripe: optimize sector division
-Date: Tue, 27 Jul 2010 19:10:36 -0400
-Message-ID: <20100727231036.GA5563@redhat.com>
+Subject: [PATCH 2/2 v2] dm stripe: enable discard support
+Date: Tue, 27 Jul 2010 20:03:24 -0400
+Message-ID: <20100728000324.GA8281@redhat.com>
 References: <Pine.LNX.4.64.1007271737310.14765@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.1007271738500.14765@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1007271811220.21698@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1007271811220.21698@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1007271738500.14765@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,16 +24,80 @@ To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jul 27 2010 at  6:12pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+The DM core will submit a discard bio to the stripe target for each
+stripe in a striped DM device.  The stripe target will determine
+stripe-specific portions of the supplied bio to be remapped into
+individual (at most 'num_discard_requests' extents).  If a given
+stripe-specific discard bio doesn't touch a particular stripe the bio
+will be dropped.
 
-> Optimize sector division
-> 
-> Optimize sector division --- if the number of stripes is a power of two,
-> we don't have to do expensive division and can do shift and mask instead.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-stripe.c |   39 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
 
-(Tested and)
-
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+Index: linux-2.6-block/drivers/md/dm-stripe.c
+===================================================================
+--- linux-2.6-block.orig/drivers/md/dm-stripe.c
++++ linux-2.6-block/drivers/md/dm-stripe.c
+@@ -167,6 +167,7 @@ static int stripe_ctr(struct dm_target *
+ 	sc->stripe_width = width;
+ 	ti->split_io = chunk_size;
+ 	ti->num_flush_requests = stripes;
++	ti->num_discard_requests = stripes;
+ 
+ 	sc->chunk_mask = ((sector_t) chunk_size) - 1;
+ 	for (sc->chunk_shift = 0; chunk_size; sc->chunk_shift++)
+@@ -216,6 +217,39 @@ static void stripe_map_sector(struct str
+ 	*result = (chunk << sc->chunk_shift) | (offset & sc->chunk_mask);
+ }
+ 
++static void stripe_map_range_sector(struct stripe_c *sc, sector_t sector,
++				    uint32_t target_stripe, sector_t *result)
++{
++	uint32_t stripe;
++
++	stripe_map_sector(sc, sector, &stripe, result);
++	if (stripe == target_stripe)
++		return;
++	*result &= ~sc->chunk_mask;			/* round down */
++	if (target_stripe < stripe)
++		*result += sc->chunk_mask + 1;		/* next chunk */
++}
++
++static int stripe_map_discard(struct stripe_c *sc, struct bio *bio,
++			      uint32_t target_stripe)
++{
++	sector_t begin, end;
++
++	stripe_map_range_sector(sc, bio->bi_sector, target_stripe, &begin);
++	stripe_map_range_sector(sc, bio->bi_sector + bio_sectors(bio),
++				target_stripe, &end);
++	if (begin < end) {
++		bio->bi_bdev = sc->stripe[target_stripe].dev->bdev;
++		bio->bi_sector = begin + sc->stripe[target_stripe].physical_start;
++		bio->bi_size = to_bytes(end - begin);
++		return DM_MAPIO_REMAPPED;
++	} else {
++		/* The range doesn't map to the target stripe */
++		bio_endio(bio, 0);
++		return DM_MAPIO_SUBMITTED;
++	}
++}
++
+ static int stripe_map(struct dm_target *ti, struct bio *bio,
+ 		      union map_info *map_context)
+ {
+@@ -229,6 +263,11 @@ static int stripe_map(struct dm_target *
+ 		bio->bi_bdev = sc->stripe[target_request_nr].dev->bdev;
+ 		return DM_MAPIO_REMAPPED;
+ 	}
++	if (unlikely(bio->bi_rw & REQ_DISCARD)) {
++		target_request_nr = map_context->target_request_nr;
++		BUG_ON(target_request_nr >= sc->stripes);
++		return stripe_map_discard(sc, bio, target_request_nr);
++	}
+ 
+ 	stripe_map_sector(sc, bio->bi_sector, &stripe, &bio->bi_sector);
+ 
