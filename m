@@ -1,35 +1,33 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH] scsi_dh_rdac : Adding  MODULE VERSION for rdac device
- handler
-Date: Wed, 28 Jul 2010 17:00:33 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4D05DC427@cosmail01.lsi.com>
+From: Ted Ts'o <tytso@mit.edu>
+Subject: Re: disallow FS recursion from sb_issue_discard allocation
+Date: Wed, 28 Jul 2010 19:15:13 -0400
+Message-ID: <20100728231513.GB4506@thunk.org>
+References: <Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
+ <20100702181430.GD26916@redhat.com>
+ <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021554550.11102@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1007021605410.13662@hs20-bc2-1.build.redhat.com>
+ <20100706161155.GA24461@redhat.com>
+ <20100727134414.GC18966@thunk.org>
+ <20100727153352.GA5574@redhat.com>
+ <4C5072FF.6010009@fusionio.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
-Cc: "Qi, Yanling" <Yanling.Qi@lsi.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4C5072FF.6010009@fusionio.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Jens Axboe <jaxboe@fusionio.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Adding MODULE_VERSION for scsi_dh_rdac. This will be helpful to differentiate between the previous(non async) versions and the current versions.
+On Wed, Jul 28, 2010 at 08:12:15PM +0200, Jens Axboe wrote:
+> 
+> I'll pick this up. I've been away for a few weeks and I'm currently
+> on vacation, but I'll push this with a few other pending patches
+> for .35 on monday.
 
-Version format aa.bb.ccdd.eeff
-aa   - major version(01 for now)
-bb   - minor version(for minor bugfixes)
-ccdd - can be used to differentiate between distros
-eeff - reserved for future
+Great, thanks!!
 
-Signed-off-by: Babu Moger <babu.moger@lsi.com>
----
---- linux-2.6.35-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2010-07-23 06:06:24.000000000 -0500
-+++ linux-2.6.35-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-07-23 06:07:07.000000000 -0500
-@@ -904,3 +904,4 @@ module_exit(rdac_exit);
- MODULE_DESCRIPTION("Multipath LSI/Engenio RDAC driver");
- MODULE_AUTHOR("Mike Christie, Chandra Seetharaman");
- MODULE_LICENSE("GPL");
-+MODULE_VERSION("01.00.0000.0000");
-
-
-
+					- Ted
