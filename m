@@ -1,63 +1,50 @@
-From: Vladislav Bolkhovitin <vst@vlnb.net>
-Subject: RAID/block regression starting from 2.6.32, bisected
-Date: Wed, 28 Jul 2010 22:16:19 +0400
-Message-ID: <4C5073F3.1060406@vlnb.net>
-References: <20100628010346.GA2376@atlantis.cc.ndsu.nodak.edu>	<4C28EFD6.2070203@vlnb.net>	<20100714190325.GA25148@atlantis.cc.ndsu.nodak.edu>	<4C3EF3AD.5070509@vlnb.net>	<20100723191844.GB31152@atlantis.cc.ndsu.nodak.edu>	<4C4D7DF5.9060909@vlnb.net> <20100727220110.GF31152@atlantis.cc.ndsu.nodak.edu>
+From: Jens Axboe <jaxboe@fusionio.com>
+Subject: Re: disallow FS recursion from sb_issue_discard allocation
+Date: Wed, 28 Jul 2010 20:12:15 +0200
+Message-ID: <4C5072FF.6010009@fusionio.com>
+References: <Pine.LNX.4.64.1007021112340.7296@hs20-bc2-1.build.redhat.com> <Pine.LNX.4.64.1007021117580.7296@hs20-bc2-1.build.redhat.com> <Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com> <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com> <20100702181430.GD26916@redhat.com> <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com> <Pine.LNX.4.64.1007021554550.11102@hs20-bc2-1.build.redhat.com> <Pine.LNX.4.64.1007021605410.13662@hs20-bc2-1.build.redhat.com> <20100706161155.GA24461@redhat.com> <20100727134414.GC18966@thunk.org> <20100727153352.GA5574@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20100727220110.GF31152@atlantis.cc.ndsu.nodak.edu>
-Sender: linux-raid-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Bryan Mesich <bryan.mesich@ndsu.edu>, scst-devel@lists.sourceforge.net, Jens Axboe <jens.axboe@oracle.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20100727153352.GA5574@redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Ted Ts'o <tytso@mit.edu>, Mikulas Patocka <mpatocka@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hello,
+On 07/27/2010 05:33 PM, Mike Snitzer wrote:
+> On Tue, Jul 27 2010 at  9:44am -0400,
+> Ted Ts'o <tytso@mit.edu> wrote:
+> 
+>> On Tue, Jul 06, 2010 at 12:11:56PM -0400, Mike Snitzer wrote:
+>>> Filesystems can call sb_issue_discard on a memory reclaim path
+>>> (e.g. ext4 calls sb_issue_discard during journal commit).
+>>>
+>>> Use GFP_NOFS in sb_issue_discard to avoid recursing back into the FS.
+>>>
+>>> Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+>>> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+>>
+>> Hi Jens,
+>>
+>> I never saw an ack from you on this patch.  Are you ok with it, and
+>> have you grabbed it for your tree?  Do you want me to include this in
+>> the ext4 tree, even though it's a patch to include/linux/blkdev.h?
+> 
+> Hi Ted,
+> 
+> Thanks for following up on this.  In my experience, Jens is more apt to
+> pick up a patch if it gets explicitly 'Acked-by' other stake-holders
+> (especially when a patch is motivated by another subsystem, in this case
+> the proposed block change addresses a problem unique to fs/ext4).
 
-In recent kernels we are experiencing a problem that in our setup using SCST BLOCKIO backend some BIOs are finished, i.e. the finish callback called for them, with error -EIO. It happens quite often, much more often than one would expect to have an actual IO error. (BLOCKIO backend just converts all incoming SCSI commands to the corresponding block requests.)
+I'll pick this up. I've been away for a few weeks and I'm currently
+on vacation, but I'll push this with a few other pending patches
+for .35 on monday.
 
-After some investigation, we figured out, that, most likely, raid5.c::make_request() for some reason sometimes calls bio_endio() with not BIO_UPTODATE bios.
-
-We bisected it to commit: 
-
-commit a82afdfcb8c0df09776b6458af6b68fc58b2e87b
-Author: Tejun Heo <tj@kernel.org>
-Date:   Fri Jul 3 17:48:16 2009 +0900
-
-    block: use the same failfast bits for bio and request
-    
-    bio and request use the same set of failfast bits.  This patch makes
-    the following changes to simplify things.
-    
-    * enumify BIO_RW* bits and reorder bits such that BIOS_RW_FAILFAST_*
-      bits coincide with __REQ_FAILFAST_* bits.
-    
-    * The above pushes BIO_RW_AHEAD out of sync with __REQ_FAILFAST_DEV
-      but the matching is useless anyway.  init_request_from_bio() is
-      responsible for setting FAILFAST bits on FS requests and non-FS
-      requests never use BIO_RW_AHEAD.  Drop the code and comment from
-      blk_rq_bio_prep().
-    
-    * Define REQ_FAILFAST_MASK which is OR of all FAILFAST bits and
-      simplify FAILFAST flags handling in init_request_from_bio().
-    
-    Signed-off-by: Tejun Heo <tj@kernel.org>
-    Signed-off-by: Jens Axboe <jens.axboe@oracle.com>
-
-After looking at it I can't see how it can lead to the effect we are experiencing. Could anybody comment on this, please? Is it a known problem?
-
-The error can be only reproduced when running RAID 5. The general layout is:
-
-Disks --> RAID5 --> LVM --> BLOCKIO VDISK
-
-The problem is easy to reproduce by forcing the RAID 5 array to re-sync its members, eg just fail out one member and add it back into the array and then generate some IO using dd. In fact, just writing out to the partition table on the exported block device is usually enough to provoke the error.
-
-The complete thread about the topic you can find in http://sourceforge.net/mailarchive/forum.php?thread_name=20100727220110.GF31152%40atlantis.cc.ndsu.nodak.edu&forum_name=scst-devel
-
-If any additional information is needed we would be glad to provide it.
-
-Thanks,
-Vlad
+-- 
+Jens Axboe
 
 
+Confidentiality Notice: This e-mail message, its contents and any attachments to it are confidential to the intended recipient, and may contain information that is privileged and/or exempt from disclosure under applicable law. If you are not the intended recipient, please immediately notify the sender and destroy the original e-mail message and any attachments (and any copies that may have been made) from your system or otherwise. Any unauthorized use, copying, disclosure or distribution of this information is strictly prohibited.
