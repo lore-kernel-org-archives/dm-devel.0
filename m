@@ -1,7 +1,8 @@
 From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH 2/6] scsi_dh : increment the refcounts while calling activate
-Date: Wed, 28 Jul 2010 16:59:06 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4D05DC422@cosmail01.lsi.com>
+Subject: [PATCH 4/6] scsi_dh : release the refcounts in scsi_dh_emc handler
+ when activate is complete
+Date: Wed, 28 Jul 2010 16:59:43 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4D05DC424@cosmail01.lsi.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7BIT
@@ -12,46 +13,21 @@ To: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org
 Cc: "Qi, Yanling" <Yanling.Qi@lsi.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
 List-Id: dm-devel.ids
 
-Hold the refcounts for device and scsi_dh_data while calling handler's activate. This will make sure that devices and scsi_dh_data are not removed while activate is still in progress. Make sure to call put_device and kref_put in the handler after activate is complete.
+This patch releases the refcounts when activate is complete in emc handler.
 
 Signed-off-by: Babu Moger <babu.moger@lsi.com>
 ---
---- linux-2.6.35-rc5/drivers/scsi/device_handler/scsi_dh.c.orig	2010-07-23 05:40:11.000000000 -0500
-+++ linux-2.6.35-rc5/drivers/scsi/device_handler/scsi_dh.c	2010-07-23 05:48:53.000000000 -0500
-@@ -228,7 +228,8 @@ store_dh_state(struct device *dev, struc
- 			 * Activate a device handler
- 			 */
- 			if (scsi_dh->activate)
--				err = scsi_dh->activate(sdev, NULL, NULL);
-+				err = scsi_dh_activate(sdev->request_queue,
-+							NULL, NULL);
- 			else
- 				err = 0;
- 		}
-@@ -431,6 +432,8 @@ EXPORT_SYMBOL_GPL(scsi_unregister_device
-  *         do not hold the lock in the caller which may be needed in fn.
-  * @data - data passed to the function fn upon completion.
-  *
-+ * NOTE  - Remember to call put_device and kref_put in the handler after
-+ *         calling the callback function. Otherwise things could become messy.
-  */
- int scsi_dh_activate(struct request_queue *q, activate_complete fn, void *data)
- {
-@@ -450,9 +453,12 @@ int scsi_dh_activate(struct request_queu
- 	if (err)
- 		return err;
+--- linux-2.6.35-rc5/drivers/scsi/device_handler/scsi_dh_emc.c.orig	2010-07-23 05:56:50.000000000 -0500
++++ linux-2.6.35-rc5/drivers/scsi/device_handler/scsi_dh_emc.c	2010-07-23 05:57:08.000000000 -0500
+@@ -563,6 +563,9 @@ done:
  
--	if (scsi_dh->activate)
-+	if (scsi_dh->activate) {
-+		kref_get(&sdev->scsi_dh_data->kref);
- 		err = scsi_dh->activate(sdev, fn, data);
--	put_device(&sdev->sdev_gendev);
-+	} else
-+		put_device(&sdev->sdev_gendev);
+ 	if (fn)
+ 		fn(data, result);
 +
- 	return err;
++	kref_put(&sdev->scsi_dh_data->kref, scsi_dh_handler_cleanup);
++	put_device(&sdev->sdev_gendev);
+ 	return 0;
  }
- EXPORT_SYMBOL_GPL(scsi_dh_activate);
-
+ /*
 
 
