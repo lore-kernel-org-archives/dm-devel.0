@@ -1,19 +1,23 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1.5/2 v2] dm stripe: optimize sector division
-Date: Wed, 28 Jul 2010 11:21:04 -0400
-Message-ID: <20100728152104.GA5607@redhat.com>
-References: <Pine.LNX.4.64.1007271737310.14765@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1007271738500.14765@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1007271811220.21698@hs20-bc2-1.build.redhat.com>
-	<20100728135332.GA31387@redhat.com>
-	<Pine.LNX.4.64.1007281029440.22479@hs20-bc2-1.build.redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: BIO_RW_SYNCIO
+Date: Wed, 28 Jul 2010 11:44:23 -0400
+Message-ID: <20100728154423.GC16314@redhat.com>
+References: <Pine.LNX.4.64.0904161948420.312@hs20-bc2-1.build.redhat.com>
+	<20090417063615.GE4593@kernel.dk>
+	<Pine.LNX.4.64.0904200220290.22707@hs20-bc2-1.build.redhat.com>
+	<20090421072903.GY4593@kernel.dk>
+	<Pine.LNX.4.64.1007261747560.12939@hs20-bc2-1.build.redhat.com>
+	<20100727020919.GC18940@redhat.com>
+	<Pine.LNX.4.64.1007271452180.1954@hs20-bc2-1.build.redhat.com>
+	<20100727230950.GI7347@redhat.com>
+	<Pine.LNX.4.64.1007271935180.4811@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1007281029440.22479@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1007271935180.4811@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,56 +28,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+On Wed, Jul 28, 2010 at 08:42:06AM -0400, Mikulas Patocka wrote:
+> > > I took the traces and placed them at 
+> > > http://people.redhat.com/mpatocka/data/blktrace/
+> > > 
+> > > It shows that WRITE requests are merged without SYNCIO flags and are not 
+> > > merged if SYNCIO is used.
+> > 
+> > Yes you are right. So I think following is happening.
+> > 
+> > Key is that requests don't get merged once they are on dispatch list. They
+> > get merged only when they are still sitting in some cfq queue and are with
+> > elevator.
+> >
+> > In case of sync IO, both reads and writes are on single cfq queue. We are
+> > driving good dispatch list depth (drv=65). That means there are 65 reads
+> > and writes on dispatch list and none of the new requests can be merged with
+> > those.
+> > 
+> > In case of async IO, reads and writes are going on different cfq queues.
+> > While reads are being dispatched from one queue, writes are sitting in 
+> > CFQ and are open to merge. That's the reason we are seeing lot more WRITE
+> > merging with async case.
+> > 
+> > Not sure what we can do about it though. But had a couple of questions.
+> > 
+> > - You seem to be issuing lots of 4K size adjacent READS and WRITES. Is
+> >   there a way that you can club these together and issue a bigger request.
+> 
+> It is possible, but it would mean major code size increase (replicate the 
+> merge functionality in dm-kcopyd). We don't have problems with CPU time 
+> consumption, so we are not planning it now.
+> 
+> It just simpler to turn off BIO_RW_SYNCIO. I also turned off BIO_RW_UNPLUG 
+> and unplug the queue after more requests. It improves performance to 
+> 22MB/s.
+> 
 
-Optimize sector division --- if the number of stripes is a power of two,
-we don't have to do expensive division and can do shift and mask instead.
+I am not very sure how effective unplug thing is because it works only
+if there is no IO happening in device. From blktraces it looks that device
+is continuously busy.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-stripe.c |   12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
+I guess that not marking writes as sync is probably best in this case.
+Though it will be interesting how does this look in presence of other
+buffered writers on some other partition on device. I am not sure how
+common case that is.
 
-v2: minor code cleanup in stripe_map_sector
+Are you seeing same issue with deadline also? I guess deadline might
+run into same issue and beacause there is no idling logic there, I 
+think even turning off BIO_RW_SYNCIO is not going to help.
 
-Index: linux-2.6-block/drivers/md/dm-stripe.c
-===================================================================
---- linux-2.6-block.orig/drivers/md/dm-stripe.c
-+++ linux-2.6-block/drivers/md/dm-stripe.c
-@@ -25,6 +25,7 @@ struct stripe {
- 
- struct stripe_c {
- 	uint32_t stripes;
-+	int stripes_shift;
- 
- 	/* The size of this target / num. stripes */
- 	sector_t stripe_width;
-@@ -164,6 +165,10 @@ static int stripe_ctr(struct dm_target *
- 	sc->ti = ti;
- 
- 	sc->stripes = stripes;
-+	if (!(stripes & (stripes - 1)))
-+		sc->stripes_shift = ffs(stripes) - 1;
-+	else
-+		sc->stripes_shift = -1;
- 	sc->stripe_width = width;
- 	ti->split_io = chunk_size;
- 	ti->num_flush_requests = stripes;
-@@ -213,7 +218,12 @@ static void stripe_map_sector(struct str
- {
- 	sector_t offset = sector - sc->ti->begin;
- 	sector_t chunk = offset >> sc->chunk_shift;
--	*stripe = sector_div(chunk, sc->stripes);
-+
-+	if (likely(sc->stripes_shift >= 0)) {
-+		*stripe = chunk & ((1 << sc->stripes_shift) - 1);
-+		chunk >>= sc->stripes_shift;
-+	} else
-+		*stripe = sector_div(chunk, sc->stripes);
- 	*result = (chunk << sc->chunk_shift) | (offset & sc->chunk_mask);
- }
- 
+> > - What kind of device this is where request queue depth is 65. Can you
+> >   try reducing request queue depth to say 16 and see if things improve
+> >   a bit. (/sys/block/<dev>/device/queue_depth).
+> 
+> Seagate U320 SCSI disk on MPT controller. It has 64 tags.
+> 
+> When I reduced the number of tags, it improved performance, 16 was good 
+> (19MB/s), reducing it to 4 or 1 improved it even more (22MB/s).
+
+Ok. I looked at the code again and realized that cfq allows unlimited dispatch
+from a queue if there are no other competing queues. That's the reason in this
+case we are allowing 64 request dispatch from single queue at a time.
+
+Vivek
