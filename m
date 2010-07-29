@@ -1,33 +1,74 @@
-From: Ted Ts'o <tytso@mit.edu>
-Subject: Re: disallow FS recursion from sb_issue_discard allocation
-Date: Wed, 28 Jul 2010 19:15:13 -0400
-Message-ID: <20100728231513.GB4506@thunk.org>
-References: <Pine.LNX.4.64.1007021118340.7296@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021119070.7296@hs20-bc2-1.build.redhat.com>
- <20100702181430.GD26916@redhat.com>
- <Pine.LNX.4.64.1007021540150.6197@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021554550.11102@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1007021605410.13662@hs20-bc2-1.build.redhat.com>
- <20100706161155.GA24461@redhat.com>
- <20100727134414.GC18966@thunk.org>
- <20100727153352.GA5574@redhat.com>
- <4C5072FF.6010009@fusionio.com>
+From: Shyam Iyer <shyam_iyer@dell.com>
+Subject: Re: [dm-devel] [PATCH 2/6] scsi_dh : increment the refcounts while
+ calling activate
+Date: Thu, 29 Jul 2010 00:46:51 -0400
+Message-ID: <4C5107BB.8020201@dell.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF4D05DC422@cosmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4C5072FF.6010009@fusionio.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Jens Axboe <jaxboe@fusionio.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF4D05DC422@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Moger, Babu" <Babu.Moger@lsi.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Stankey, Robert" <Robert.Stankey@lsi.com>
 List-Id: dm-devel.ids
 
-On Wed, Jul 28, 2010 at 08:12:15PM +0200, Jens Axboe wrote:
-> 
-> I'll pick this up. I've been away for a few weeks and I'm currently
-> on vacation, but I'll push this with a few other pending patches
-> for .35 on monday.
+On 07/28/2010 06:59 PM, Moger, Babu wrote:
+> Hold the refcounts for device and scsi_dh_data while calling handler's activate. This will make sure that devices and scsi_dh_data are not removed while activate is still in progress. Make sure to call put_device and kref_put in the handler after activate is complete.
+>
+> Signed-off-by: Babu Moger<babu.moger@lsi.com>
+> ---
+> --- linux-2.6.35-rc5/drivers/scsi/device_handler/scsi_dh.c.orig	2010-07-23 05:40:11.000000000 -0500
+> +++ linux-2.6.35-rc5/drivers/scsi/device_handler/scsi_dh.c	2010-07-23 05:48:53.000000000 -0500
+> @@ -228,7 +228,8 @@ store_dh_state(struct device *dev, struc
+>   			 * Activate a device handler
+>   			 */
+>   			if (scsi_dh->activate)
+> -				err = scsi_dh->activate(sdev, NULL, NULL);
+> +				err = scsi_dh_activate(sdev->request_queue,
+> +							NULL, NULL);
+>   			else
+>   				err = 0;
+>   		}
+> @@ -431,6 +432,8 @@ EXPORT_SYMBOL_GPL(scsi_unregister_device
+>    *         do not hold the lock in the caller which may be needed in fn.
+>    * @data - data passed to the function fn upon completion.
+>    *
+> + * NOTE  - Remember to call put_device and kref_put in the handler after
+> + *         calling the callback function. Otherwise things could become messy.
+>    */
+>   int scsi_dh_activate(struct request_queue *q, activate_complete fn, void *data)
+>   {
+> @@ -450,9 +453,12 @@ int scsi_dh_activate(struct request_queu
+>   	if (err)
+>   		return err;
+>
+> -	if (scsi_dh->activate)
+> +	if (scsi_dh->activate) {
+> +		kref_get(&sdev->scsi_dh_data->kref);
+>   		err = scsi_dh->activate(sdev, fn, data);
+>    
+Why not kref_put here instead of in the device handler.. It is easier to 
+associate the ref counts..
 
-Great, thanks!!
+Also, you are removing the put_device here and adding them to the device 
+handler which can be avoided ..
+> -	put_device(&sdev->sdev_gendev);
+> +	} else
+> +		put_device(&sdev->sdev_gendev);
+> +
+>   	return err;
+>   }
+>   EXPORT_SYMBOL_GPL(scsi_dh_activate);
+>
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>    
 
-					- Ted
+-Shyam Iyer
