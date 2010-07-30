@@ -1,131 +1,66 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 Subject: RE: [PATCH 0/6] scsi_dh : Couple of fixes for scsi device handlers
-Date: Thu, 29 Jul 2010 16:35:59 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4D0663845@cosmail01.lsi.com>
+Date: Thu, 29 Jul 2010 17:04:36 -0700
+Message-ID: <1280448276.17620.80.camel@chandra-lucid.beaverton.ibm.com>
 References: <E463DF2B2E584B4A82673F53D62C2EF4D05DC420@cosmail01.lsi.com>
- <1280440444.17620.72.camel@chandra-lucid.beaverton.ibm.com>
+	 <1280440444.17620.72.camel@chandra-lucid.beaverton.ibm.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF4D0663845@cosmail01.lsi.com>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1280440444.17620.72.camel@chandra-lucid.beaverton.ibm.com>
-Content-Language: en-US
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF4D0663845@cosmail01.lsi.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: "sekharan@us.ibm.com" <sekharan@us.ibm.com>, device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Shyam_Iyer@Dell.com" <Shyam_I>
-Cc: "Qi, Yanling" <Yanling.Qi@lsi.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Shyam_Iyer@Dell.com" <Shyam_Iyer@Dell.com>, "Qi, Yanling" <Yanling.Qi@lsi.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>
 List-Id: dm-devel.ids
 
-Q2hhbmRyYSwgU2h5YW0sICANCiBUaGFua3MgZm9yIHlvdXIgY29tbWVudHMuLiBQbGVhc2Ugc2Vl
-IG15IHJlc3BvbnNlLg0KDQo+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IENo
-YW5kcmEgU2VldGhhcmFtYW4gW21haWx0bzpzZWtoYXJhbkB1cy5pYm0uY29tXQ0KPiBTZW50OiBU
-aHVyc2RheSwgSnVseSAyOSwgMjAxMCA0OjU0IFBNDQo+IFRvOiBNb2dlciwgQmFidQ0KPiBDYzog
-ZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudDsgbGludXgtc2NzaUB2Z2VyLmtlcm5lbC5vcmc7IFFp
-LCBZYW5saW5nOw0KPiBDaGF1aGFuLCBWaWpheTsgRGFjaGVwYWxsaSwgU3VkaGlyOyBTdGFua2V5
-LCBSb2JlcnQNCj4gU3ViamVjdDogUmU6IFtQQVRDSCAwLzZdIHNjc2lfZGggOiBDb3VwbGUgb2Yg
-Zml4ZXMgZm9yIHNjc2kgZGV2aWNlDQo+IGhhbmRsZXJzDQo+IA0KPiBCYWJ1LA0KPiANCj4gWW91
-ciBtYWluIG9iamVjdCBpcyB0byBwcm90ZWN0IHNjc2lfZGhfZGF0YSBhY3Jvc3Mgc2NzaV9kaF9h
-Y3RpdmF0ZSgpDQo+IGJ5DQo+IHdheSBvZiBnZXR0aW5nIGtyZWYgYXJvdW5kIHNjc2lfZGhfYWN0
-aXZhdGUoKSwgcmlnaHQgPw0KPiANCg0KICBZZXMsIFRoYXQgaXMgY29ycmVjdC4gDQoNCj4gV291
-bGRuJ3QgZG9pbmcgd2hhdCBTaHlhbSBzdWdnZXN0ZWQgKGRvaW5nIGtyZWZfcHV0KCkgYW5kIHB1
-dF9kZXZpY2UoKSkNCj4gaW4gc2NzaV9hY3RpdmF0ZSgpIG1ha2UgaXQgc2ltcGxlciBhbmQgY29k
-ZSBzdGlsbCBiZSByZWFkYWJsZSA/IChpdA0KPiB3b3VsZCBtYWtlIGFsbCB0aGUgcGF0Y2hlcyBl
-eGNlcHQgMi82IG5vdCBuZWVkZWQpLg0KPiANCj4gRGlkIHlvdSBoaXQgd2l0aCBhbnkgcHJvYmxl
-bXMgZG9pbmcgaXQgdGhhdCB3YXkgPw0KPg0KDQogIFllcywgV2UgY2FuIGRvIHRoYXQuICBQcm9i
-bGVtIGlzIEkgYW0gaGl0dGluZyB0aGUgaXNzdWUgd2l0aCBCVUdfT04gaW4gZ2V0X3JkYWNfZGF0
-YSB3aGljaCBpcyB0aGVyZSBpbiB0aGUgYmVnaW5uaW5nIG9mIHJkYWNfYWN0aXZhdGUuDQogIElm
-IEkgaGF2ZSB0byBnbyB0aGlzIHdheSwgdGhlbiBJIG5lZWQgdG8gcmVtb3ZlIGEgY2FsbCBnZXRf
-cmRhY19kYXRhIGFuZCBqdXN0IHZhbGlkYXRlIHBvaW50ZXJzLiBSZXBvcnQgZXJyb3IoU0NTSV9E
-SF9JTykgaWYgcG9pbnRlciBpcyBub3QgdmFsaWQuDQogIFRoZW4gaG9sZCB0aGUgcmVmZXJlbmNl
-IGNvdW50cyBhbmQgY29udGludWUgaWYgZXZlcnl0aGluZyBpcyBhbHJpZ2h0LiAgSSB3aWxsIHNl
-bmQgdGhlIG5ldyBwYXRjaGVzIGFzIHNvb24gYXMgSSBjYW4uICANCg0KPiBBbHNvIHRoZSBzbmlw
-cGV0IChpbiAyLzYpDQo+IC0tLS0tLS0tLS0tLS0tLQ0KPiBAQCAtMjI4LDcgKzIyOCw4IEBAIHN0
-b3JlX2RoX3N0YXRlKHN0cnVjdCBkZXZpY2UgKmRldiwgc3RydWMNCj4gICAgICAgICAgICAgICAg
-ICAgICAgICAgICogQWN0aXZhdGUgYSBkZXZpY2UgaGFuZGxlcg0KPiAgICAgICAgICAgICAgICAg
-ICAgICAgICAgKi8NCj4gICAgICAgICAgICAgICAgICAgICAgICAgaWYgKHNjc2lfZGgtPmFjdGl2
-YXRlKQ0KPiAtICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGVyciA9IHNjc2lfZGgtPmFj
-dGl2YXRlKHNkZXYsIE5VTEwsDQo+IE5VTEwpOw0KPiArICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgIGVyciA9IHNjc2lfZGhfYWN0aXZhdGUoc2Rldi0NCj4gPnJlcXVlc3RfcXVldWUsDQo+
-ICsgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-TlVMTCwgTlVMTCk7DQo+ICAgICAgICAgICAgICAgICAgICAgICAgIGVsc2UNCj4gICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICBlcnIgPSAwOw0KPiAgICAgICAgICAgICAgICAgfQ0KPiAt
-LS0tLS0tLS0tLS0tLS0tLS0NCj4gY2FuIGJlIG1hZGUgYXMgYSBwYXRjaCBpbiBpdHNlbGYuDQo+
-IA0KPiBUaGFua3MgZm9yIGZpeGluZyB0aGUgcHJvYmxlbS4NCg0KIE9rLi4gSSB3aWxsIG1ha2Ug
-dGhpcyBhcyBzZXBhcmF0ZSBwYXRjaC4uIA0KDQo+DQo+IHJlZ2FyZHMsDQo+IA0KPiBjaGFuZHJh
-DQo+IE9uIFdlZCwgMjAxMC0wNy0yOCBhdCAxNjo1OCAtMDYwMCwgTW9nZXIsIEJhYnUgd3JvdGU6
-DQo+ID4gVGhlc2UgcGF0Y2hlcyBmaXggdGhlIGZvbGxvd2luZyB0d28gY2FzZXMuDQo+ID4gMS4g
-RGV2aWNlcyBnb2luZyBhd2F5IHdoaWxlIHNjc2kgZGV2aWNlIGhhbmRlcidzIGFjdGl2YXRlIGlz
-IHN0aWxsIGluDQo+IHByb2dyZXNzLg0KPiA+DQo+ID4gMi4gUmVtb3ZhbCBvZiBzY3NpX2RoX2Rh
-dGEoY2FsbGluZyBkZXRhY2ggaGFuZGxlcikgd2hlbiBzY3NpIGRldmljZQ0KPiBoYW5kZXIncyBh
-Y3RpdmF0ZSBpcyBzdGlsbCBpbiBwcm9ncmVzcy4NCj4gPg0KPiA+IFdlIGhhdmUgYmVlbiBzZWVp
-bmcgdGhlc2UgcHJvYmxlbXMgd2hpbGUgcnVubmluZyBtdWx0aXBhdGggZmFpbG92ZXINCj4gdGVz
-dHMgb24gTFNJIHN0b3JhZ2UuIFRoZXNlIHBhdGNoZXMgZml4IHRoZSBwcm9ibGVtLiBXZSBoYXZl
-IHZlcmlmaWVkDQo+IGl0Lg0KPiA+DQo+ID4gSGVyZSBpcyB0aGUgcGFuaWMgd2UgaGF2ZSBiZWVu
-IHNlZWluZyB3aGlsZSBydW5uaW5nIGZhaWxvdmVyIGZhaWxiYWNrDQo+IHRlc3RzLg0KPiA+DQo+
-ID4gPiAwMDo0MDo0Mjo4NjkgIENPTTEgPi0tLS0tLS0tLS0tLVsgY3V0IGhlcmUgXS0tLS0tLS0t
-LS0tLQ0KPiA+ID4gMDA6NDA6NDI6ODY5ICBDT00xID5rZXJuZWwgQlVHIGF0IC91c3Ivc3JjL3Bh
-Y2thZ2VzL0JVSUxEL2xzaS0NCj4gPiA+IHNjc2lfZGhfcmRhYy0wMS4wMC9vYmovZGVmYXVsdC9z
-Y3NpX2RoX3JkYWMuYzoyMzIhDQo+ID4gPiAwMDo0MDo0Mjo4NjkgIENPTTEgPmludmFsaWQgb3Bj
-b2RlOiAwMDAwIFsxXSBTTVANCj4gPiA+IDAwOjQwOjQyOjg4NSAgQ09NMSA+bGFzdCBzeXNmcyBm
-aWxlOiAvc3lzL2tlcm5lbC91ZXZlbnRfc2VxbnVtDQo+ID4gPiAwMDo0MDo0Mjo4ODUgIENPTTEg
-PkNQVSAzDQo+ID4gPiAwMDo0MDo0Mjo4ODUgIENPTTEgPk1vZHVsZXMgbGlua2VkIGluOiBkbV9y
-b3VuZF9yb2JpbiBkbV9tdWx0aXBhdGgNCj4gPiA+IG5sc191dGY4IGNpZnMoWCkgbWljcm9jb2Rl
-IGFmX3BhY2tldCBpcHY2IGZ1c2UgbG9vcCBkbV9tb2QgaVRDT193ZHQNCj4gPiA+IGlUQ09fdmVu
-ZG9yX3N1cHBvcnQgZGNkYmFzKFgpIHBjc3BrciBydGNfY21vcyBydGNfY29yZSBzZXJpb19yYXcN
-Cj4gPiA+IHJ0Y19saWIgaTUwMDBfZWRhYyBlZGFjX2NvcmUgYm54MiBzaHBjaHAgc2cgcGNpX2hv
-dHBsdWcgYnV0dG9uDQo+ID4gPiBtcHRjdGwgdXNiaGlkIGhpZCBmZl9tZW1sZXNzIHVoY2lfaGNk
-IGVoY2lfaGNkIHVzYmNvcmUgc2RfbW9kDQo+ID4gPiBjcmNfdDEwZGlmIG1wdDJzYXMoTikgcmFp
-ZF9jbGFzcyBlZGQgZXh0MyBtYmNhY2hlIGpiZCBmYW4NCj4gPiA+IGlkZV9wY2lfZ2VuZXJpYyBw
-aWl4IGlkZV9jb3JlIGF0YV9nZW5lcmljIGF0YV9waWl4IGxpYmF0YSBkb2NrDQo+ID4gPiBtcHRz
-YXMgbXB0c2NzaWggbXB0YmFzZSBzY3NpX3RyYW5zcG9ydF9zYXMgdGhlcm1hbCBwcm9jZXNzb3IN
-Cj4gPiA+IHRoZXJtYWxfc3lzIGh3bW9uIHNjc2lfZGhfcmRhYyhYKSBzY3NpX2RoIHNjc2lfbW9k
-DQo+ID4gPiAwMDo0MDo0Mjo5MzIgIENPTTEgPlN1cHBvcnRlZDogTm8NCj4gPiA+IDAwOjQwOjQy
-OjkzMiAgQ09NMSA+UGlkOiAxNDA0NCwgY29tbToga21wYXRoX2hhbmRsZXJkIFRhaW50ZWQ6IEcN
-Cj4gPiA+IDIuNi4yNy4zOS0wLjMtZGVmYXVsdCAjMQ0KPiA+ID4gMDA6NDA6NDI6OTMyICBDT00x
-ID5SSVA6IDAwMTA6DQo+ID4gPiByZGFjX2FjdGl2YXRlKzB4MjU3LzB4Mzg3IFtzY3NpX2RoX3Jk
-YWNdDQo+ID4gPiAwMDo0MDo0Mjo5NDcgIENPTTEgPlJTUDogMDAxODpmZmZmODgwMTI3MTA5ZGMw
-ICBFRkxBR1M6IDAwMDEwMjQ2DQo+ID4gPiAwMDo0MDo0Mjo5NDcgIENPTTEgPlJBWDogZmZmZjg4
-MDBhZTAyZjAwMCBSQlg6IDAwMDAwMDAwMDAwMDAwMDENCj4gUkNYOg0KPiA+ID4gMDAwMDAwMDAw
-MDAwMDAxOA0KPiA+ID4gMDA6NDA6NDI6OTYzICBDT00xID5SRFg6IDAwMDAwMDAwMDAwMDFiYmMg
-UlNJOiAwMDAwMDAwMDAwMDAwMjgyDQo+IFJESToNCj4gPiA+IGZmZmY4ODAwYzJjY2Q5MTgNCj4g
-PiA+IDAwOjQwOjQyOjk2MyAgQ09NMSA+UkJQOiAwMDAwMDAwMGZmZmZmZmZiIFIwODogZmZmZmZm
-ZmY4MDZlYWY3OA0KPiBSMDk6DQo+ID4gPiBmZmZmODgwMDI4MDg3NzIwDQo+ID4gPiAwMDo0MDo0
-Mjo5NjMgIENPTTEgPlIxMDogMDAwMDAwMDAwMDAwMDAwMCBSMTE6IGZmZmZmZmZmODAyODRlYmUN
-Cj4gUjEyOg0KPiA+ID4gZmZmZmZmZmZhMDAzMGZiZQ0KPiA+ID4gMDA6NDA6NDI6OTc4ICBDT00x
-ID5SMTM6IDAwMDAwMDAwMDAwMDAwMDAgUjE0OiAwMDAwMDAwMDAwMDAwMjgyDQo+IFIxNToNCj4g
-PiA+IDAwMDAwMDAwMDAwMDAwMDANCj4gPiA+IDAwOjQwOjQyOjk3OCAgQ09NMSA+RlM6ICAwMDAw
-MDAwMDAwMDAwMDAwKDAwMDApIEdTOmZmZmY4ODAxMmZiODFlYzANCj4gPiA+ICgwMDAwKSBrbmxH
-UzowMDAwMDAwMDAwMDAwMDAwDQo+ID4gPiAwMDo0MDo0Mjo5NzggIENPTTEgPkNTOiAgMDAxMCBE
-UzogMDAxOCBFUzogMDAxOCBDUjA6DQo+IDAwMDAwMDAwODAwNTAwM2INCj4gPiA+IDAwOjQwOjQy
-Ojk5NCAgQ09NMSA+Q1IyOiAwMDAwMDAwMGY3NzAxNjMwIENSMzogMDAwMDAwMDEwMWQ1ZTAwMA0K
-PiBDUjQ6DQo+ID4gPiAwMDAwMDAwMDAwMDAwNmUwDQo+ID4gPiAwMDo0MDo0Mjo5OTQgIENPTTEg
-PkRSMDogMDAwMDAwMDAwMDAwMDAwMCBEUjE6IDAwMDAwMDAwMDAwMDAwMDANCj4gRFIyOg0KPiA+
-ID4gMDAwMDAwMDAwMDAwMDAwMA0KPiA+ID4gMDA6NDA6NDM6MDEwICBDT00xID5EUjM6IDAwMDAw
-MDAwMDAwMDAwMDAgRFI2OiAwMDAwMDAwMGZmZmYwZmYwDQo+IERSNzoNCj4gPiA+IDAwMDAwMDAw
-MDAwMDA0MDANCj4gPiA+IDAwOjQwOjQzOjAxMCAgQ09NMSA+UHJvY2VzcyBrbXBhdGhfaGFuZGxl
-cmQgKHBpZDogMTQwNDQsIHRocmVhZGluZm8NCj4gPiA+IGZmZmY4ODAxMjcxMDgwMDAsIHRhc2sg
-ZmZmZjg4MDEyNzEwZTY4MCkNCj4gPiA+IDAwOjQwOjQzOjAxMCAgQ09NMSA+U3RhY2s6ICBmZmZm
-ODgwMTI3MTA5ZWMwIGZmZmZmZmZmODA0OWM0MzENCj4gPiA+IDAwMDAwMDAwMDAwMDAwMDAgZmZm
-Zjg4MDEyNzEwOWU1MA0KPiA+ID4gMDA6NDA6NDM6MDI1ICBDT00xID4gZmZmZjg4MDBhZTAyZjAw
-MCBmZmZmODgwMGI1MDMyMjA4DQo+ID4gPiBmZmZmODgwMGI1MDMyMjAwIGZmZmY4ODAwYWUwMmYy
-NTANCj4gPiA+IDAwOjQwOjQzOjAyNSAgQ09NMSA+IGZmZmY4ODAwYjUwMzIyMTYgMDAwMDAwMDU4
-MGEzMzY4MA0KPiA+ID4gZmZmZjg4MDBjMmNjZDZiMCBmZmZmODgwMGFlMDJmMTIwDQo+ID4gPiAw
-MDo0MDo0MzowNDEgIENPTTEgPkNhbGwgVHJhY2U6DQo+ID4gPiAwMDo0MDo0MzowNDEgIENPTTEg
-PiBzY3NpX2RoX2FjdGl2YXRlKzB4ODEvMHg5YltzY3NpX2RoXQ0KPiA+ID4gMDA6NDA6NDM6MDQx
-ICBDT00xID4gYWN0aXZhdGVfcGF0aCsweDIyLzB4NDYNCj4gPiA+IFtkbV9tdWx0aXBhdGhdDQo+
-ID4gPiAwMDo0MDo0MzowNDEgIENPTTEgPiBydW5fd29ya3F1ZXVlKzB4N2EvMHgxMDANCj4gPiA+
-IDAwOjQwOjQzOjA1NyAgQ09NMSA+IHdvcmtlcl90aHJlYWQrMHhkOC8weGU3DQo+ID4gPiAwMDo0
-MDo0MzowNTcgIENPTTEgPiBrdGhyZWFkKzB4NDcvMHg3Mw0KPiA+ID4gMDA6NDA6NDM6MDU3ICBD
-T00xID4gY2hpbGRfcmlwKzB4YS8weDExDQo+ID4gPiAwMDo0MDo0MzowNTcgIENPTTEgPg0KPiA+
-ID4gMDA6NDA6NDM6MDU3ICBDT00xID4NCj4gPiA+IDAwOjQwOjQzOjA1NyAgQ09NMSA+Q29kZTog
-NGMgODkgZWEgZTggNzggZGQgMzAgZTAgNGMgODkgZWYgODkgYzUgZTgNCj4gPiA+IGRiIGE4IDMw
-IGUwIDg1IGVkIDBmIDg0IGRhIDAwIDAwIDAwIDQ4IDhiIDQ0IDI0IDIwIDRjIDhiIGE4IGQwIDA1
-DQo+IDAwDQo+ID4gPiAwMCA0ZCA4NSBlZCA3NSAwNCA8MGY+IDBiIGViIGZlIDQ4IDhiIDdjIDI0
-IDQwIDQ4IDhkIDU0IDI0IDYwIGJlIDYwDQo+ID4gPiAwMCAwMCAwMCBlOCBhZQ0KPiA+ID4gMDA6
-NDA6NDM6MDcyICBDT00xID5SSVAgICByZGFjX2FjdGl2YXRlKzB4MjU3Lw0KPiA+ID4gMHgzODcg
-W3Njc2lfZGhfcmRhY10NCj4gPiA+IDAwOjQwOjQzOjA4OCAgQ09NMSA+IFJTUCA8ZmZmZjg4MDEy
-NzEwOWRjMD4NCj4gPiA+IDAwOjQwOjQzOjA4OCAgQ09NMSA+LS0tWyBlbmQgdHJhY2UgMDBlODlj
-NTk4YzgyNDgzYiBdLS0tDQo+ID4gLS0NCj4gPiBUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlz
-dDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtc2NzaSINCj4gaW4NCj4gPiB0aGUg
-Ym9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZw0KPiA+IE1vcmUg
-bWFqb3Jkb21vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21vLWluZm8u
-aHRtbA0KPiANCg0K
+See comment below
+
+On Thu, 2010-07-29 at 16:35 -0600, Moger, Babu wrote:
+> Chandra, Shyam,  
+>  Thanks for your comments.. Please see my response.
+> 
+> > -----Original Message-----
+> > From: Chandra Seetharaman [mailto:sekharan@us.ibm.com]
+> > Sent: Thursday, July 29, 2010 4:54 PM
+> > To: Moger, Babu
+> > Cc: device-mapper development; linux-scsi@vger.kernel.org; Qi, Yanling;
+> > Chauhan, Vijay; Dachepalli, Sudhir; Stankey, Robert
+> > Subject: Re: [PATCH 0/6] scsi_dh : Couple of fixes for scsi device
+> > handlers
+> > 
+> > Babu,
+> > 
+> > Your main object is to protect scsi_dh_data across scsi_dh_activate()
+> > by
+> > way of getting kref around scsi_dh_activate(), right ?
+> > 
+> 
+>   Yes, That is correct. 
+> 
+> > Wouldn't doing what Shyam suggested (doing kref_put() and put_device())
+> > in scsi_activate() make it simpler and code still be readable ? (it
+> > would make all the patches except 2/6 not needed).
+> > 
+> > Did you hit with any problems doing it that way ?
+> >
+> 
+>   Yes, We can do that.  Problem is I am hitting the issue with BUG_ON
+>  in get_rdac_data which is there in the beginning of rdac_activate.
+
+I do not understand the problem.
+
+If the BUG_ON on get_rdac_data() is being triggered, that means
+sdev->scsi_dh_data is NULL, if that is the case, how can you access
+sdev->scsi_dh_data->kref in scsi_dh_activate (in patch 2/6) ? Wouldn't
+it trip a oops ?
+
+
+>   If I have to go this way, then I need to remove a call get_rdac_data
+>  and just validate pointers. Report error(SCSI_DH_IO) if pointer is not valid.
+>   Then hold the reference counts and continue if everything is alright.
+>   I will send the new patches as soon as I can.  
+
+
