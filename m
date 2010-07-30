@@ -1,40 +1,143 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH 2/6] scsi_dh : increment the refcounts while calling
- activate
-Date: Fri, 30 Jul 2010 12:15:38 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4D0663A34@cosmail01.lsi.com>
-References: <E463DF2B2E584B4A82673F53D62C2EF4D05DC422@cosmail01.lsi.com>
- <1280448520.4441.930.camel@mulgrave.site>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: RE: [PATCH 0/6] scsi_dh : Couple of fixes for scsi device handlers
+Date: Fri, 30 Jul 2010 16:56:28 -0700
+Message-ID: <1280534189.17620.284.camel@chandra-lucid.beaverton.ibm.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF4D05DC420@cosmail01.lsi.com>
+	 <1280440444.17620.72.camel@chandra-lucid.beaverton.ibm.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF4D0663845@cosmail01.lsi.com>
+	 <1280448276.17620.80.camel@chandra-lucid.beaverton.ibm.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF4D0663A2C@cosmail01.lsi.com>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1280448520.4441.930.camel@mulgrave.site>
-Content-Language: en-US
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF4D0663A2C@cosmail01.lsi.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Qi, Yanling" <Yanling.Qi@lsi.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Shyam_Iyer@Dell.com" <Shyam_Iyer@Dell.com>, "Qi, Yanling" <Yanling.Qi@lsi.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>
 List-Id: dm-devel.ids
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBKYW1lcyBCb3R0b21sZXkgW21h
-aWx0bzpKYW1lcy5Cb3R0b21sZXlAc3VzZS5kZV0NCj4gU2VudDogVGh1cnNkYXksIEp1bHkgMjks
-IDIwMTAgNzowOSBQTQ0KPiBUbzogTW9nZXIsIEJhYnUNCj4gQ2M6IGRldmljZS1tYXBwZXIgZGV2
-ZWxvcG1lbnQ7IGxpbnV4LXNjc2lAdmdlci5rZXJuZWwub3JnOyBRaSwgWWFubGluZzsNCj4gQ2hh
-dWhhbiwgVmlqYXk7IFN0YW5rZXksIFJvYmVydDsgRGFjaGVwYWxsaSwgU3VkaGlyDQo+IFN1Ympl
-Y3Q6IFJlOiBbUEFUQ0ggMi82XSBzY3NpX2RoIDogaW5jcmVtZW50IHRoZSByZWZjb3VudHMgd2hp
-bGUNCj4gY2FsbGluZyBhY3RpdmF0ZQ0KPiANCj4gT24gV2VkLCAyMDEwLTA3LTI4IGF0IDE2OjU5
-IC0wNjAwLCBNb2dlciwgQmFidSB3cm90ZToNCj4gPiBIb2xkIHRoZSByZWZjb3VudHMgZm9yIGRl
-dmljZSBhbmQgc2NzaV9kaF9kYXRhIHdoaWxlIGNhbGxpbmcNCj4gaGFuZGxlcidzDQo+ID4gYWN0
-aXZhdGUuIFRoaXMgd2lsbCBtYWtlIHN1cmUgdGhhdCBkZXZpY2VzIGFuZCBzY3NpX2RoX2RhdGEg
-YXJlIG5vdA0KPiA+IHJlbW92ZWQgd2hpbGUgYWN0aXZhdGUgaXMgc3RpbGwgaW4gcHJvZ3Jlc3Mu
-IE1ha2Ugc3VyZSB0byBjYWxsDQo+ID4gcHV0X2RldmljZSBhbmQga3JlZl9wdXQgaW4gdGhlIGhh
-bmRsZXIgYWZ0ZXIgYWN0aXZhdGUgaXMgY29tcGxldGUuDQo+IA0KPiBUaGlzIGlzIGEgY29tcGxl
-dGUgbm8tbm8uICBZb3UgY2FuJ3QgdGFrZSB1bnJlbGVhc2VkIHJlZmVyZW5jZXMgaW4gYQ0KPiBz
-aW5nbGUgcGF0Y2guICBJIGtub3cgdGhlIHJlbGVhc2VzIGNvbWUgaW4gc3Vic2VxdWVudCBwYXRj
-aGVzLCBidXQNCj4gdGhhdCdzIG5vdCB0aGUgd2F5IHRvIGRvIGl0LiAgWW91IGhhdmUgdG8gaGF2
-ZSBhbiBhdG9taWMgY2hhbmdlIChhcyBpbg0KPiBhbGwgcmVmY291bnRzIG11c3QgYmFsYW5jZSBv
-biBlaXRoZXIgc2lkZSBvZiB0aGUgcGF0Y2gpLiAgSWYgc29tZW9uZQ0KPiBiaXNlY3RlZCBpbnRv
-IHRoaXMsIGl0IHdvdWxkIGxpa2VseSBuZXZlciByZWxlYXNlIHN0dWZmIC4uLiB3aGljaCBjb3Vs
-ZA0KPiBsZWFkIHRvIHNvbWUgdW5uZWNlc3NhcnkgZGVidWdnaW5nLg0KDQogIFllcy4uIFVuZGVy
-c3Rvb2QuIFN0aWxsIGludmVzdGlnYXRpbmcgdG8gc2VlIGlmIEkgY291bGQgYXZvaWQgdGhpcy4u
-DQogDQo+IEphbWVzDQo+IA0KDQo=
+
+On Fri, 2010-07-30 at 12:12 -0600, Moger, Babu wrote:
+
+> > >
+> > >   Yes, We can do that.  Problem is I am hitting the issue with BU=
+G_ON
+> > >  in get_rdac_data which is there in the beginning of rdac_activat=
+e.
+> >=20
+> > I do not understand the problem.
+> >=20
+> > If the BUG_ON on get_rdac_data() is being triggered, that means
+> > sdev->scsi_dh_data is NULL, if that is the case, how can you access
+> > sdev->scsi_dh_data->kref in scsi_dh_activate (in patch 2/6) ? Would=
+n't
+> > it trip a oops ?
+>=20
+> Test case is deleting both active and passive paths almost together d=
+uring
+>  the multipath testing.  Looks like DM picked up the active path fail=
+ure=20
+> first. Then failed the active path and started scheduling activate_pa=
+th to=20
+> failover to passive path. Passive path is also about to go down prett=
+y soon.=20
+> When the control was in scsi_dh_activate, Looks like scsi_dh_data was=
+ still=20
+> valid because I did not see panic here.  But scsi_dh_data became NULL=
+ when=20
+> control went to rdac_activate. That is when I hit the bug on.=20
+>=20
+> kernel BUG at /usr/src/packages/BUILD/lsi-scsi_dh_rdac-01.00/obj/defa=
+ult/scsi_dh_rdac.c:232!
+> RIP: 0010:  rdac_activate+0x257/0x387 [scsi_dh_rdac]
+>=20
+> My understanding is someone triggered scsi_dh->detach for passive pat=
+h during
+>  this small window.  Only way I could see problem go away is holding =
+reference=20
+> counts between these calls.  Did i miss anything here? See the code s=
+nippet below..=20
+
+So, basically, the new patch just reduces the window of race. IOW, if i=
+t
+just spins for few seconds (or preempted) just before calling the
+kref_get() in the new patch, it will generate an oops as scsi_dh_data
+would be NULL.
+
+Looks like you have to create a lock to protect scsi_dh_data and then
+call kref_get() with the protection of lock.
+
+>=20
+> int scsi_dh_activate(struct request_queue *q, activate_complete fn, v=
+oid *data)
+>  {
+>          int err =3D 0;
+>          unsigned long flags;
+>          struct scsi_device *sdev;
+>          struct scsi_device_handler *scsi_dh =3D NULL;
+> =20
+>          spin_lock_irqsave(q->queue_lock, flags);
+>          sdev =3D q->queuedata;
+>          if (sdev && sdev->scsi_dh_data)
+>                  scsi_dh =3D sdev->scsi_dh_data->scsi_dh;
+>          if (!scsi_dh || !get_device(&sdev->sdev_gendev))
+>                  err =3D SCSI_DH_NOSYS;
+>          spin_unlock_irqrestore(q->queue_lock, flags);
+> =20
+>          if (err)
+>                  return err;
+> =20
+>          if (scsi_dh->activate)
+>                  err =3D scsi_dh->activate(sdev, fn, data);
+>          put_device(&sdev->sdev_gendev);
+>          return err;
+>  }
+>  EXPORT_SYMBOL_GPL(scsi_dh_activate);
+> =20
+>=20
+> static int rdac_activate(struct scsi_device *sdev,
+>                          activate_complete fn, void *data)
+>  {
+>          struct rdac_dh_data *h =3D get_rdac_data(sdev); *******  I h=
+it BUG_ON here *********
+>          int err =3D SCSI_DH_OK;
+> =20
+>          err =3D check_ownership(sdev, h);
+>          if (err !=3D SCSI_DH_OK)
+>                  goto done;
+> =20
+>          if (h->lun_state =3D=3D RDAC_LUN_UNOWNED) {
+>                  err =3D queue_mode_select(sdev, fn, data);
+>                  if (err =3D=3D SCSI_DH_OK)
+>                          return 0;
+>          }
+>  done:
+>          if (fn)
+>                  fn(data, err);
+>          return 0;
+>  }
+>=20
+>=20
+> >=20
+> >=20
+> > >   If I have to go this way, then I need to remove a call
+> > get_rdac_data
+> > >  and just validate pointers. Report error(SCSI_DH_IO) if pointer =
+is
+> > not valid.
+> > >   Then hold the reference counts and continue if everything is
+> > alright.
+> > >   I will send the new patches as soon as I can.
+> >=20
+>=20
+> NrybX=C7=A7v^)=DE=BA{.n+{"{ay=1D=CA=87=DA=99,j=07fhz=1Ew=0Cj:+vwjm=07=
+zZ+=DD=A2j"!
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
