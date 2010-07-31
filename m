@@ -1,69 +1,69 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH 0/6] scsi_dh : Couple of fixes for scsi device handlers
-Date: Fri, 30 Jul 2010 23:02:09 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4D0663B70@cosmail01.lsi.com>
-References: <E463DF2B2E584B4A82673F53D62C2EF4D05DC420@cosmail01.lsi.com>
-	 <1280440444.17620.72.camel@chandra-lucid.beaverton.ibm.com>
-	 <E463DF2B2E584B4A82673F53D62C2EF4D0663845@cosmail01.lsi.com>
-	 <1280448276.17620.80.camel@chandra-lucid.beaverton.ibm.com>
-	 <E463DF2B2E584B4A82673F53D62C2EF4D0663A2C@cosmail01.lsi.com>
- <1280534189.17620.284.camel@chandra-lucid.beaverton.ibm.com>
- <4C536CB4.6090108@dell.com>
+From: "Justin P. Mattock" <justinmattock@gmail.com>
+Subject: Re: [PATCH]md:dm.c Fix warning: statement with no effect
+Date: Sat, 31 Jul 2010 12:05:04 -0700
+Message-ID: <4C5473E0.308@gmail.com>
+References: <1278984400-8837-1-git-send-email-justinmattock@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4C536CB4.6090108@dell.com>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: Shyam Iyer <shyam_iyer@dell.com>, "sekharan@us.ibm.com" <sekharan@us.ibm.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Qi, Yanling" <Yanling.Qi@lsi.com>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "Dachepalli, Sudhir" <Sudhir.Dachepalli@lsi.com>, "Stankey, Robert" <Robert.Stankey@lsi.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1278984400-8837-1-git-send-email-justinmattock@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Justin P. Mattock" <justinmattock@gmail.com>
+Cc: dm-devel@redhat.com, neilb@suse.de, agk@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-DQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogU2h5YW0gSXllciBbbWFp
-bHRvOnNoeWFtX2l5ZXJAZGVsbC5jb21dDQo+IFNlbnQ6IEZyaWRheSwgSnVseSAzMCwgMjAxMCA3
-OjIyIFBNDQo+IFRvOiBzZWtoYXJhbkB1cy5pYm0uY29tDQo+IENjOiBNb2dlciwgQmFidTsgZGV2
-aWNlLW1hcHBlciBkZXZlbG9wbWVudDsgbGludXgtc2NzaUB2Z2VyLmtlcm5lbC5vcmc7DQo+IFFp
-LCBZYW5saW5nOyBDaGF1aGFuLCBWaWpheTsgRGFjaGVwYWxsaSwgU3VkaGlyOyBTdGFua2V5LCBS
-b2JlcnQNCj4gU3ViamVjdDogUmU6IFtQQVRDSCAwLzZdIHNjc2lfZGggOiBDb3VwbGUgb2YgZml4
-ZXMgZm9yIHNjc2kgZGV2aWNlDQo+IGhhbmRsZXJzDQo+IA0KPiBPbiAwNy8zMC8yMDEwIDA3OjU2
-IFBNLCBDaGFuZHJhIFNlZXRoYXJhbWFuIHdyb3RlOg0KPiA+IE9uIEZyaSwgMjAxMC0wNy0zMCBh
-dCAxMjoxMiAtMDYwMCwgTW9nZXIsIEJhYnUgd3JvdGU6DQo+ID4NCj4gPg0KPiA+Pj4+ICAgIFll
-cywgV2UgY2FuIGRvIHRoYXQuICBQcm9ibGVtIGlzIEkgYW0gaGl0dGluZyB0aGUgaXNzdWUgd2l0
-aA0KPiBCVUdfT04NCj4gPj4+PiAgIGluIGdldF9yZGFjX2RhdGEgd2hpY2ggaXMgdGhlcmUgaW4g
-dGhlIGJlZ2lubmluZyBvZiByZGFjX2FjdGl2YXRlLg0KPiA+Pj4+DQo+ID4+PiBJIGRvIG5vdCB1
-bmRlcnN0YW5kIHRoZSBwcm9ibGVtLg0KPiA+Pj4NCj4gPj4+IElmIHRoZSBCVUdfT04gb24gZ2V0
-X3JkYWNfZGF0YSgpIGlzIGJlaW5nIHRyaWdnZXJlZCwgdGhhdCBtZWFucw0KPiA+Pj4gc2Rldi0+
-c2NzaV9kaF9kYXRhIGlzIE5VTEwsIGlmIHRoYXQgaXMgdGhlIGNhc2UsIGhvdyBjYW4geW91IGFj
-Y2Vzcw0KPiA+Pj4gc2Rldi0+c2NzaV9kaF9kYXRhLT5rcmVmIGluIHNjc2lfZGhfYWN0aXZhdGUg
-KGluIHBhdGNoIDIvNikgPyBXb3VsZG4ndA0KPiA+Pj4gaXQgdHJpcCBhIG9vcHMgPw0KPiA+Pj4N
-Cj4gPj4gVGVzdCBjYXNlIGlzIGRlbGV0aW5nIGJvdGggYWN0aXZlIGFuZCBwYXNzaXZlIHBhdGhz
-IGFsbW9zdCB0b2dldGhlcg0KPiBkdXJpbmcNCj4gPj4gICB0aGUgbXVsdGlwYXRoIHRlc3Rpbmcu
-ICBMb29rcyBsaWtlIERNIHBpY2tlZCB1cCB0aGUgYWN0aXZlIHBhdGgNCj4gZmFpbHVyZQ0KPiA+
-PiBmaXJzdC4gVGhlbiBmYWlsZWQgdGhlIGFjdGl2ZSBwYXRoIGFuZCBzdGFydGVkIHNjaGVkdWxp
-bmcgYWN0aXZhdGVfcGF0aA0KPiB0bw0KPiA+PiBmYWlsb3ZlciB0byBwYXNzaXZlIHBhdGguIFBh
-c3NpdmUgcGF0aCBpcyBhbHNvIGFib3V0IHRvIGdvIGRvd24gcHJldHR5DQo+IHNvb24uDQo+ID4+
-IFdoZW4gdGhlIGNvbnRyb2wgd2FzIGluIHNjc2lfZGhfYWN0aXZhdGUsIExvb2tzIGxpa2Ugc2Nz
-aV9kaF9kYXRhIHdhcw0KPiBzdGlsbA0KPiA+PiB2YWxpZCBiZWNhdXNlIEkgZGlkIG5vdCBzZWUg
-cGFuaWMgaGVyZS4gIEJ1dCBzY3NpX2RoX2RhdGEgYmVjYW1lIE5VTEwNCj4gd2hlbg0KPiA+PiBj
-b250cm9sIHdlbnQgdG8gcmRhY19hY3RpdmF0ZS4gVGhhdCBpcyB3aGVuIEkgaGl0IHRoZSBidWcg
-b24uDQo+ID4+DQo+ID4+IGtlcm5lbCBCVUcgYXQgL3Vzci9zcmMvcGFja2FnZXMvQlVJTEQvbHNp
-LXNjc2lfZGhfcmRhYy0NCj4gMDEuMDAvb2JqL2RlZmF1bHQvc2NzaV9kaF9yZGFjLmM6MjMyIQ0K
-PiA+PiBSSVA6IDAwMTA6ICByZGFjX2FjdGl2YXRlKzB4MjU3LzB4Mzg3IFtzY3NpX2RoX3JkYWNd
-DQo+ID4+DQo+ID4+IE15IHVuZGVyc3RhbmRpbmcgaXMgc29tZW9uZSB0cmlnZ2VyZWQgc2NzaV9k
-aC0+ZGV0YWNoIGZvciBwYXNzaXZlIHBhdGgNCj4gZHVyaW5nDQo+ID4+ICAgdGhpcyBzbWFsbCB3
-aW5kb3cuICBPbmx5IHdheSBJIGNvdWxkIHNlZSBwcm9ibGVtIGdvIGF3YXkgaXMgaG9sZGluZw0K
-PiByZWZlcmVuY2UNCj4gPj4gY291bnRzIGJldHdlZW4gdGhlc2UgY2FsbHMuICBEaWQgaSBtaXNz
-IGFueXRoaW5nIGhlcmU/IFNlZSB0aGUgY29kZQ0KPiBzbmlwcGV0IGJlbG93Li4NCj4gPj4NCj4g
-PiBTbywgYmFzaWNhbGx5LCB0aGUgbmV3IHBhdGNoIGp1c3QgcmVkdWNlcyB0aGUgd2luZG93IG9m
-IHJhY2UuIElPVywgaWYgaXQNCj4gPiBqdXN0IHNwaW5zIGZvciBmZXcgc2Vjb25kcyAob3IgcHJl
-ZW1wdGVkKSBqdXN0IGJlZm9yZSBjYWxsaW5nIHRoZQ0KPiA+IGtyZWZfZ2V0KCkgaW4gdGhlIG5l
-dyBwYXRjaCwgaXQgd2lsbCBnZW5lcmF0ZSBhbiBvb3BzIGFzIHNjc2lfZGhfZGF0YQ0KPiA+IHdv
-dWxkIGJlIE5VTEwuDQoNCiAgVGhhdCBpcyBjb3JyZWN0LiANCg0KPiA+DQo+ID4gTG9va3MgbGlr
-ZSB5b3UgaGF2ZSB0byBjcmVhdGUgYSBsb2NrIHRvIHByb3RlY3Qgc2NzaV9kaF9kYXRhIGFuZCB0
-aGVuDQo+ID4gY2FsbCBrcmVmX2dldCgpIHdpdGggdGhlIHByb3RlY3Rpb24gb2YgbG9jay4NCj4g
-Pg0KPiA+DQo+IFNlY29uZCB0aGF0Li4gU291bmRzIGxpa2UgZWFjaCBrcmVmX2dldC9rcmVmX3B1
-dCAuLiBuZWVkcyBhIGxvY2sNCj4gcHJvdGVjdGlvbiBub3QganVzdCB0aGlzIHNjZW5hcmlvLg0K
-DQogIEkgYWdyZWUuIEkgd2lsbCBhdHRlbXB0IG9uZSBtb3JlIHNldCBvZiBwYXRjaGVzLiBUaGlz
-IHRpbWUgSSB3aWxsIHRyeSB0byBtYXRjaCBnZXQgYW5kIHB1dCBzZXF1ZW5jZSBpbiBhIG9uZSBm
-aWxlLiBQbGVhc2UgZmVlbCBmcmVlIHRvIGNvbW1lbnQuDQoNCg==
+haven't heard any feedback on this any ideas?
+
+> Ive noticed that having CONFIG_BLK_DEV_INTEGRITY=n I get warning messages generated by GCC(below)
+>    CC      drivers/md/dm.o
+> drivers/md/dm.c: In function 'split_bvec':
+> drivers/md/dm.c:1117:3: warning: statement with no effect
+> drivers/md/dm.c: In function 'clone_bio':
+> drivers/md/dm.c:1145:3: warning: statement with no effect
+>
+> adding in some #ifdef's fixes this warning if someone chooses not to have
+> CONFIG_BLK_DEV_INTEGRITY turned on. but keep in mind not sure if this is the best approach
+> i.e. should something be done in bio.h?
+> Also this patch fixes a comment which was hard to read at first. Anyways have a look
+> when you have time, and let me know.
+>
+> Signed-off-by: Justin P. Mattock<justinmattock@gmail.com>
+>
+> ---
+>   drivers/md/dm.c |    6 +++++-
+>   1 files changed, 5 insertions(+), 1 deletions(-)
+>
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index d21e128..7c1cb04 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1091,7 +1091,7 @@ static void dm_bio_destructor(struct bio *bio)
+>   }
+>
+>   /*
+> - * Creates a little bio that is just does part of a bvec.
+> + * Create a little bio that just does part of a bvec.
+>    */
+>   static struct bio *split_bvec(struct bio *bio, sector_t sector,
+>   			      unsigned short idx, unsigned int offset,
+> @@ -1114,7 +1114,9 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
+>   	clone->bi_flags |= 1<<  BIO_CLONED;
+>
+>   	if (bio_integrity(bio)) {
+> +#ifdef CONFIG_BLK_DEV_INTEGRITY
+>   		bio_integrity_clone(clone, bio, GFP_NOIO, bs);
+> +#endif
+>   		bio_integrity_trim(clone,
+>   				   bio_sector_offset(bio, idx, offset), len);
+>   	}
+> @@ -1142,7 +1144,9 @@ static struct bio *clone_bio(struct bio *bio, sector_t sector,
+>   	clone->bi_flags&= ~(1<<  BIO_SEG_VALID);
+>
+>   	if (bio_integrity(bio)) {
+> +#ifdef CONFIG_BLK_DEV_INTEGRITY
+>   		bio_integrity_clone(clone, bio, GFP_NOIO, bs);
+> +#endif
+>
+>   		if (idx != bio->bi_idx || clone->bi_size<  bio->bi_size)
+>   			bio_integrity_trim(clone,
