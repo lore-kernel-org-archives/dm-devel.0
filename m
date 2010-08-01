@@ -1,14 +1,14 @@
 From: "Justin P. Mattock" <justinmattock@gmail.com>
 Subject: Re: [PATCH]md:dm.c Fix warning: statement with no effect
-Date: Sat, 31 Jul 2010 12:13:52 -0700
-Message-ID: <4C5475F0.90104@gmail.com>
+Date: Sun, 01 Aug 2010 15:23:39 -0700
+Message-ID: <4C55F3EB.6000903@gmail.com>
 References: <1278984400-8837-1-git-send-email-justinmattock@gmail.com> <4C5473E0.308@gmail.com> <20100731190757.GC9734@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-raid-owner@vger.kernel.org>
 In-Reply-To: <20100731190757.GC9734@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-raid-owner@vger.kernel.org
 To: dm-devel@redhat.com, neilb@suse.de, agk@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
@@ -30,6 +30,57 @@ On 07/31/2010 12:07 PM, Alasdair G Kergon wrote:
 >
 
 
-cool thanks.. I'll have a look and see if I can come up with something.
+o.k. this ones a bit tricky.. but I did finally get this to build clean.
+below is an updated patch that gets me to build clean. Let me know if 
+something other than this should be used.(or if this is a good solution 
+then let me know and I'll resend)
 
-Justin P. Mattock
+<---cut--->
+
+When building the kernel with CONFIG_BLK_DEV_INTEGRITY=n everything
+gets sent(if Im reading this correctly) too:
+(line #660 bio.h)
+#else /* CONFIG_BLK_DEV_INTEGRITY */
+
+#define bio_integrity(a)		(0)
+#define bioset_integrity_create(a, b)	(0)
+#define bio_integrity_prep(a)		(0)
+#define bio_integrity_enabled(a)	(0)
+#define bio_integrity_clone(a, b, c, d)	(0)
+#define bioset_integrity_free(a)	do { } while (0)
+#define bio_integrity_free(a, b)	do { } while (0)
+#define bio_integrity_endio(a, b)	do { } while (0)
+#define bio_integrity_advance(a, b)	do { } while (0)
+#define bio_integrity_trim(a, b, c)	do { } while (0)
+#define bio_integrity_split(a, b, c)	do { } while (0)
+#define bio_integrity_set_tag(a, b, c)	do { } while (0)
+#define bio_integrity_get_tag(a, b, c)	do { } while (0)
+#define bio_integrity_init(a)		do { } while (0)
+
+changing #else preprocessor to #elif !defined(CONFIG_BLK_DEV_INTEGRITY)
+opposite of #if defined(CONFIG_BLK_DEV_INTEGRITY)
+gets me to build dm.c without the warning message.
+please have a look when you have time and let me know if this is a good
+solution to this.
+
+Signed-off-by: Justin P. Mattock <justinmattock@gmail.com>
+
+---
+  include/linux/bio.h |    2 +-
+  1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 7fc5606..a8259c8 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -657,7 +657,7 @@ extern int bioset_integrity_create(struct bio_set *, 
+int);
+  extern void bioset_integrity_free(struct bio_set *);
+  extern void bio_integrity_init(void);
+
+-#else /* CONFIG_BLK_DEV_INTEGRITY */
++#elif !defined(CONFIG_BLK_DEV_INTEGRITY) /* CONFIG_BLK_DEV_INTEGRITY */
+
+  #define bio_integrity(a)		(0)
+  #define bioset_integrity_create(a, b)	(0)
+-- 1.7.1.rc1.21.gf3bd6
