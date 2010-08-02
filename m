@@ -1,76 +1,50 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: RAID/block regression starting from 2.6.32, bisected
-Date: Mon, 2 Aug 2010 10:42:27 +1000
-Message-ID: <20100802104227.79340b49@notabene>
-References: <20100628010346.GA2376@atlantis.cc.ndsu.nodak.edu>
-	<4C28EFD6.2070203@vlnb.net>
-	<20100714190325.GA25148@atlantis.cc.ndsu.nodak.edu>
-	<4C3EF3AD.5070509@vlnb.net>
-	<20100723191844.GB31152@atlantis.cc.ndsu.nodak.edu>
-	<4C4D7DF5.9060909@vlnb.net>
-	<20100727220110.GF31152@atlantis.cc.ndsu.nodak.edu>
-	<4C5073F3.1060406@vlnb.net>
-	<4C52A98A.7060507@kernel.org>
+From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Subject: [Patch] scsi_dh_rdac: retry IO for 06/3f/03 in
+	rdac_check_sense fn
+Date: Mon, 2 Aug 2010 13:07:25 +0530
+Message-ID: <1C9608B8A4CD534FB19C7C7543CBB24902991CCA21@inbmail02.lsi.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4C52A98A.7060507@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Vladislav Bolkhovitin <vst@vlnb.net>, Bryan Mesich <bryan.mesich@ndsu.edu>, scst-devel@lists.sourceforge.net, Jens Axboe <jens.axboe@oracle.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Chandra Seetharaman <sekharan@us.ibm.com>, device-mapper development <dm-devel@redhat.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Fri, 30 Jul 2010 12:29:30 +0200
-Tejun Heo <tj@kernel.org> wrote:
+Hi,
 
-> Hello,
-> 
-> On 07/28/2010 08:16 PM, Vladislav Bolkhovitin wrote:
-> > In recent kernels we are experiencing a problem that in our setup
-> > using SCST BLOCKIO backend some BIOs are finished, i.e. the finish
-> > callback called for them, with error -EIO. It happens quite often,
-> > much more often than one would expect to have an actual IO
-> > error. (BLOCKIO backend just converts all incoming SCSI commands to
-> > the corresponding block requests.)
-> > 
-> > After some investigation, we figured out, that, most likely,
-> > raid5.c::make_request() for some reason sometimes calls bio_endio()
-> > with not BIO_UPTODATE bios.
-> > 
-> > We bisected it to commit: 
-> > 
-> > commit a82afdfcb8c0df09776b6458af6b68fc58b2e87b
-> > Author: Tejun Heo <tj@kernel.org>
-> > Date:   Fri Jul 3 17:48:16 2009 +0900
-> > 
-> >     block: use the same failfast bits for bio and request
-> 
-> That commit doesn't (or at least isn't supposed to) make any behavior
-> difference.  It's just repositioning flag bits.  If the commit is
-> actually causing the problem, I think one possibility is that whatever
-> code could be using hard coded constants which now are mapped to
-> different flags.  The mixed merge changes have been in mainline for
-> quite some time and shipping in all major distros too and this is the
-> first time this is reported, so I don't think it could be a widespread
-> problem.
-> 
-> Thanks.
-> 
+This patch adds retry for the IO returned with 06/3f/03((INQUIRY_DATA_CHANGED)) sense code  in rdac_check_sense(). IO returned with 06/3f/03 from controller are currently failed by scsi mid layer, as a reason momentarily path failure is noticed by DM multipath. 
 
-The problem is that md/raid5 tests bio->bi_rw against RWA_MASK, which used to
-align with BIO_RW_AHEAD, and now doesn't.
-However the definition of bio_rw() in fs.h seems to justify that RWA_MASK
-should align with BIO_RW_AHEAD, as does the definition of READA.
+Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
+Reviewed-by: Babu Moger <babu.moger@lsi.com>
+Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
+---
 
-Given the current definitions, any WRITE request with BIO_RW_FAILFAST_DEV
-set is going to confused a number of drives which test
-     bio_rw(bio) == WRITE
+diff -uprN linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh_rdac.c linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c
+--- linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-07-22 15:13:38.000000000 -0400
++++ linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-07-27 12:13:58.000000000 -0400
+@@ -738,6 +738,11 @@ static int rdac_check_sense(struct scsi_
+ 			 * Quiescence in progress , just retry.
+ 			 */
+ 			return ADD_TO_MLQUEUE;
++		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x03)
++			/*
++			 * INQUIRY DATA has changed, retry again.
++			 */
++			return ADD_TO_MLQUEUE;
+ 		break;
+ 	}
+ 	/* success just means we do not care what scsi-ml does */
 
-I guess RWA_MASK needs to be changed to (1<<BIO_RW_AHEAD), and READA need to
-be change to that value too.
-
-Can I leave that to you Tejun?
-
-Thanks,
-NeilBrown
+--
