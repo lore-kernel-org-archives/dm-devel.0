@@ -1,45 +1,76 @@
-From: Ted Ts'o <tytso@mit.edu>
-Subject: Re: [PATCH] ext4: fix freeze deadlock under IO
-Date: Sun, 1 Aug 2010 17:41:32 -0400
-Message-ID: <20100801214132.GA27573@thunk.org>
-References: <4C1A2839.5010407@cfl.rr.com>
- <20100617142731.GA10071@redhat.com>
- <4C1A4A74.9070105@cfl.rr.com>
- <20100617162747.GA21336@redhat.com>
- <4C1ACBF1.3050603@cfl.rr.com>
- <4C1BC125.4090902@sandeen.net>
- <4C1BC6D0.2030203@sandeen.net>
- <4C1BC7AD.1060900@sandeen.net>
- <4C226277.4060505@sandeen.net>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: RAID/block regression starting from 2.6.32, bisected
+Date: Mon, 2 Aug 2010 10:42:27 +1000
+Message-ID: <20100802104227.79340b49@notabene>
+References: <20100628010346.GA2376@atlantis.cc.ndsu.nodak.edu>
+	<4C28EFD6.2070203@vlnb.net>
+	<20100714190325.GA25148@atlantis.cc.ndsu.nodak.edu>
+	<4C3EF3AD.5070509@vlnb.net>
+	<20100723191844.GB31152@atlantis.cc.ndsu.nodak.edu>
+	<4C4D7DF5.9060909@vlnb.net>
+	<20100727220110.GF31152@atlantis.cc.ndsu.nodak.edu>
+	<4C5073F3.1060406@vlnb.net>
+	<4C52A98A.7060507@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4C226277.4060505@sandeen.net>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Eric Sandeen <sandeen@sandeen.net>
-Cc: Phillip Susi <psusi@cfl.rr.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, Eric Sandeen <sandeen@redhat.com>, ext4 development <linux-ext4@vger.kernel.org>, Dave Chinner <dchinner@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4C52A98A.7060507@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Vladislav Bolkhovitin <vst@vlnb.net>, Bryan Mesich <bryan.mesich@ndsu.edu>, scst-devel@lists.sourceforge.net, Jens Axboe <jens.axboe@oracle.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jun 23, 2010 at 02:37:27PM -0500, Eric Sandeen wrote:
-> Commit 6b0310fbf087ad6 caused a regression resulting in deadlocks
-> when freezing a filesystem which had active IO; the vfs_check_frozen
-> level (SB_FREEZE_WRITE) did not let the freeze-related IO syncing
-> through.  Duh.
-> 
-> Changing the test to FREEZE_TRANS should let the normal freeze
-> syncing get through the fs, but still block any transactions from
-> starting once the fs is completely frozen.
-> 
-> I tested this by running fsstress in the background while periodically
-> snapshotting the fs and running fsck on the result.  I ran into
-> occasional deadlocks, but different ones.  I think this is a
-> fine fix for the problem at hand, and the other deadlocky things
-> will need more investigation.
-> 
-> Reported-by: Phillip Susi <psusi@cfl.rr.com>
-> Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+On Fri, 30 Jul 2010 12:29:30 +0200
+Tejun Heo <tj@kernel.org> wrote:
 
-Applied to the ext4 patch queue.  Sorry for missing this earier.
+> Hello,
+> 
+> On 07/28/2010 08:16 PM, Vladislav Bolkhovitin wrote:
+> > In recent kernels we are experiencing a problem that in our setup
+> > using SCST BLOCKIO backend some BIOs are finished, i.e. the finish
+> > callback called for them, with error -EIO. It happens quite often,
+> > much more often than one would expect to have an actual IO
+> > error. (BLOCKIO backend just converts all incoming SCSI commands to
+> > the corresponding block requests.)
+> > 
+> > After some investigation, we figured out, that, most likely,
+> > raid5.c::make_request() for some reason sometimes calls bio_endio()
+> > with not BIO_UPTODATE bios.
+> > 
+> > We bisected it to commit: 
+> > 
+> > commit a82afdfcb8c0df09776b6458af6b68fc58b2e87b
+> > Author: Tejun Heo <tj@kernel.org>
+> > Date:   Fri Jul 3 17:48:16 2009 +0900
+> > 
+> >     block: use the same failfast bits for bio and request
+> 
+> That commit doesn't (or at least isn't supposed to) make any behavior
+> difference.  It's just repositioning flag bits.  If the commit is
+> actually causing the problem, I think one possibility is that whatever
+> code could be using hard coded constants which now are mapped to
+> different flags.  The mixed merge changes have been in mainline for
+> quite some time and shipping in all major distros too and this is the
+> first time this is reported, so I don't think it could be a widespread
+> problem.
+> 
+> Thanks.
+> 
 
-	       	    	  	  	    - Ted
+The problem is that md/raid5 tests bio->bi_rw against RWA_MASK, which used to
+align with BIO_RW_AHEAD, and now doesn't.
+However the definition of bio_rw() in fs.h seems to justify that RWA_MASK
+should align with BIO_RW_AHEAD, as does the definition of READA.
+
+Given the current definitions, any WRITE request with BIO_RW_FAILFAST_DEV
+set is going to confused a number of drives which test
+     bio_rw(bio) == WRITE
+
+I guess RWA_MASK needs to be changed to (1<<BIO_RW_AHEAD), and READA need to
+be change to that value too.
+
+Can I leave that to you Tejun?
+
+Thanks,
+NeilBrown
