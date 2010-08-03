@@ -1,97 +1,49 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH] multipath: add fast_io_fail and dev_loss_tmo
- config	parameters
-Date: Tue, 03 Aug 2010 10:18:48 +0900
-Message-ID: <4C576E78.9020700@ce.jp.nec.com>
-References: <4C5297AA.4070708@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mark Lord <kernel@teksavvy.com>
+Subject: Re: [RFC 1/2] block: implement an unprep function corresponding directly
+ to prep
+Date: Mon, 02 Aug 2010 23:01:23 -0400
+Message-ID: <4C578683.5010409@teksavvy.com>
+References: <1277917264.2839.153.camel@mulgrave.site> <20100701104653O.fujita.tomonori@lab.ntt.co.jp> <20100702110343.GA27159@lst.de> <20100705160023S.fujita.tomonori@lab.ntt.co.jp> <20100705192413.GA24189@lst.de> <4C3253C0.8040900@teksavvy.com> <4C3254A3.6080709@teksavvy.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4C5297AA.4070708@ce.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Michael Christie <mchristi@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <4C3254A3.6080709@teksavvy.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, James.Bottomley@suse.de, snitzer@redhat.com, axboe@kernel.dk, linux-scsi@vger.kernel.org, dm-devel@redhat.com, linux-ide@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi,
+On 10-07-05 05:54 PM, Mark Lord wrote:
+>> On 05/07/10 03:24 PM, Christoph Hellwig wrote:
+>>>
+>>> What codebase were you testing on? Sorry, but curently I'm a bit lost
+>>> in the maze of patches. I've got both and intel and an OCZ SSD
+> ..
+>
+> Do you, or anyone else with one, know what the upper limit is on
+> TRIM operations with the Intel SSDs ?
+>
+> I need to know the maximum amount of TRIM ranges they will process
+> in a single command.
+>
+> Eg. Indilinx-based SSDs don't appear to have a limit -- they'll accept
+> a TRIM command with thousands of LBA ranges included.
+>
+> Sandforce-based SSDs appear to restrict things to max 4KB of range data.
+>
+> So.. what about Intel?
 
-(07/30/10 18:13), Jun'ichi Nomura wrote:
-> (03/23/10 11:44), Benjamin Marzinski wrote:
->> This patch adds two new configuration parameters to multipath.conf,
->> fast_io_fail_tmo and dev_loss_tmo which set
->>
->> /sys/class/fc_remote_ports/rport-<host>:<channel>-<rport_id>/fast_io_fail_tmo and
->> /sys/class/fc_remote_ports/rport-<host>:<channel>-<rport_id>/dev_loss_tmo
-> ...
-> 
-> This is nice feature but the code uses scsi_id instead of rport_id:
-> 
->> +sysfs_set_scsi_tmo (struct multipath *mpp)
-> ...
->> +	vector_foreach_slot(mpp->paths, pp, i) {
->> +		if (safe_snprintf(attr_path, SYSFS_PATH_SIZE,
->> +	        	          "/class/fc_remote_ports/rport-%d:%d-%d",
->> +				  pp->sg_id.host_no, pp->sg_id.channel,
->> +				  pp->sg_id.scsi_id)) {
->> +			condlog(0, "attr_path '/class/fc_remote_ports/rport-%d:%d-%d' too large", pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.scsi_id);
->> +			return 1;
->> +		}
-> 
-> So it sets fast_io_fail_tmo/dev_loss_tmo for wrong rport.
-> 
-> For example, I have a storage with node_id 0x2000003013842bcb
-> connected via switch, whose node_id is 0x100000051e09ee30.
-> When I set 'fast_io_fail_tmo = 8' in multipath.conf,
-> multipath command sets the timeout like this:
->   # for f in /sys/class/fc_remote_ports/rport-*/fast_io_fail_tmo; do d=$(dirname $f); echo $(basename $d):$(cat $d/node_name):$(cat $f); done
->   rport-0:0-0:0x100000051e09ee30:8
->   rport-0:0-1:0x100000051e09ee30:8
->   rport-0:0-2:0x2000003013842bcb:off
->   rport-0:0-3:0x2000003013842bcb:off
->   rport-1:0-0:0x100000051e09ee30:8
->   rport-1:0-1:0x100000051e09ee30:8
->   rport-1:0-2:0x2000003013842bcb:off
->   rport-1:0-3:0x2000003013842bcb:off
-> As a result, when a link is down for the storage and fast_io_fail_tmo
-> has passed, I/O will be still blocked.
-> 
-> 
-> Attached is a quick patch for this problem.
-> 
-> With this patch, fast_io_fail_tmo is set like this:
->   rport-0:0-0:0x100000051e09ee30:8
->   rport-0:0-1:0x100000051e09ee30:8
->   rport-0:0-2:0x2000003013842bcb:off
->   rport-0:0-3:0x2000003013842bcb:off
->   rport-1:0-0:0x100000051e09ee30:8
->   rport-1:0-1:0x100000051e09ee30:8
->   rport-1:0-2:0x2000003013842bcb:off
->   rport-1:0-3:0x2000003013842bcb:off
 
-Sorry, I pasted the original result twice..
-With the patch, fast_io_fail_tmo is set like this:
-  rport-0:0-0:0x100000051e09ee30:off
-  rport-0:0-1:0x100000051e09ee30:off
-  rport-0:0-2:0x2000003013842bcb:8
-  rport-0:0-3:0x2000003013842bcb:8
-  rport-1:0-0:0x100000051e09ee30:off
-  rport-1:0-1:0x100000051e09ee30:off
-  rport-1:0-2:0x2000003013842bcb:8
-  rport-1:0-3:0x2000003013842bcb:8
+Well, I still don't know about Intel drives -- anyone?
 
-> Others might have better idea about resolving rport_id from target.
-> Mike, Hannes, any comments?
+But for the latest hardware, some manufacturers are now reporting
+their TRIM limits in word[105] of the identify data,
+as described (optional) in the latest draft ATA ACS-2 specs.
 
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation
+It appears that Sandforce drives officially only allow 512-bytes of range data.
+So I'll limit hdparm's TRIM functions to match word[105] when it is specified.
+
+The Indilinx drives I have here don't report anything in word[105], though.
+
+Cheers
