@@ -1,87 +1,97 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [PATCH RESEND 1/2 block#for-linus] bio, fs: update READA and
- SWRITE to match the corresponding BIO_RW_* bits
-Date: Tue, 3 Aug 2010 07:52:10 +1000
-Message-ID: <20100803075210.22c7bd30@notabene>
-References: <20100628010346.GA2376@atlantis.cc.ndsu.nodak.edu>
-	<4C28EFD6.2070203@vlnb.net>
-	<20100714190325.GA25148@atlantis.cc.ndsu.nodak.edu>
-	<4C3EF3AD.5070509@vlnb.net>
-	<20100723191844.GB31152@atlantis.cc.ndsu.nodak.edu>
-	<4C4D7DF5.9060909@vlnb.net>
-	<20100727220110.GF31152@atlantis.cc.ndsu.nodak.edu>
-	<4C5073F3.1060406@vlnb.net>
-	<4C52A98A.7060507@kernel.org>
-	<20100802104227.79340b49@notabene>
-	<4C56D30A.3000403@kernel.org>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH] multipath: add fast_io_fail and dev_loss_tmo
+ config	parameters
+Date: Tue, 03 Aug 2010 10:18:48 +0900
+Message-ID: <4C576E78.9020700@ce.jp.nec.com>
+References: <4C5297AA.4070708@ce.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4C56D30A.3000403@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Jens Axboe <jens.axboe@kernel.dk>, stable@kernel.org, Vladislav Bolkhovitin <vst@vlnb.net>, Bryan Mesich <bryan.mesich@ndsu.edu>, scst-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4C5297AA.4070708@ce.jp.nec.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Michael Christie <mchristi@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 02 Aug 2010 16:15:38 +0200
-Tejun Heo <tj@kernel.org> wrote:
+Hi,
 
-> Commit a82afdf (block: use the same failfast bits for bio and request)
-> moved BIO_RW_* bits around such that they match up with REQ_* bits.
-> Unfortunately, fs.h hard coded READ, WRITE, READA and SWRITE as 0, 1,
-> 2 and 3, and expected them to match with BIO_RW_* bits.  READ/WRITE
-> didn't change but BIO_RW_AHEAD was moved to bit 4 instead of bit 1,
-> breaking READA and SWRITE.
+(07/30/10 18:13), Jun'ichi Nomura wrote:
+> (03/23/10 11:44), Benjamin Marzinski wrote:
+>> This patch adds two new configuration parameters to multipath.conf,
+>> fast_io_fail_tmo and dev_loss_tmo which set
+>>
+>> /sys/class/fc_remote_ports/rport-<host>:<channel>-<rport_id>/fast_io_fail_tmo and
+>> /sys/class/fc_remote_ports/rport-<host>:<channel>-<rport_id>/dev_loss_tmo
+> ...
 > 
-> This patch updates READA and SWRITE such that they match the BIO_RW_*
-> bits again.  A follow up patch will update the definitions to directly
-> use BIO_RW_* bits so that this kind of breakage won't happen again.
+> This is nice feature but the code uses scsi_id instead of rport_id:
 > 
-> Stable: The offending commit a82afdf was released with v2.6.32, so
-> this patch should be applied to all kernels since then but it must
-> _NOT_ be applied to kernels earlier than that.
+>> +sysfs_set_scsi_tmo (struct multipath *mpp)
+> ...
+>> +	vector_foreach_slot(mpp->paths, pp, i) {
+>> +		if (safe_snprintf(attr_path, SYSFS_PATH_SIZE,
+>> +	        	          "/class/fc_remote_ports/rport-%d:%d-%d",
+>> +				  pp->sg_id.host_no, pp->sg_id.channel,
+>> +				  pp->sg_id.scsi_id)) {
+>> +			condlog(0, "attr_path '/class/fc_remote_ports/rport-%d:%d-%d' too large", pp->sg_id.host_no, pp->sg_id.channel, pp->sg_id.scsi_id);
+>> +			return 1;
+>> +		}
 > 
-> Signed-off-by: Tejun Heo <tj@kernel.org>
-> Reported-and-bisected-by: Vladislav Bolkhovitin <vst@vlnb.net>
-> Root-caused-by: Neil Brown <neilb@suse.de>
-> Cc: Jens Axobe <axboe@kernel.dk>
-> Cc: stable@kernel.org
-> ---
-> Aieee... thanks for root causing it Neil.  That was a stupid bug.  I
-> knew that READ/WRITE were hardcoded but forgot about READA.  :-(
-> Moving BIO_RW_AHEAD back to bit 1 might be a better solution but I'm
-> afraid that would cause more confusions downstream.  This patch
-> updates READA and SWRITE to match BIO_RW_AHEAD and should also appear
-> in -stable releases.  The next patch will create bio_types.h and
-> define all constants in terms of BIO_RW_*.
+> So it sets fast_io_fail_tmo/dev_loss_tmo for wrong rport.
 > 
-> Thanks.
+> For example, I have a storage with node_id 0x2000003013842bcb
+> connected via switch, whose node_id is 0x100000051e09ee30.
+> When I set 'fast_io_fail_tmo = 8' in multipath.conf,
+> multipath command sets the timeout like this:
+>   # for f in /sys/class/fc_remote_ports/rport-*/fast_io_fail_tmo; do d=$(dirname $f); echo $(basename $d):$(cat $d/node_name):$(cat $f); done
+>   rport-0:0-0:0x100000051e09ee30:8
+>   rport-0:0-1:0x100000051e09ee30:8
+>   rport-0:0-2:0x2000003013842bcb:off
+>   rport-0:0-3:0x2000003013842bcb:off
+>   rport-1:0-0:0x100000051e09ee30:8
+>   rport-1:0-1:0x100000051e09ee30:8
+>   rport-1:0-2:0x2000003013842bcb:off
+>   rport-1:0-3:0x2000003013842bcb:off
+> As a result, when a link is down for the storage and fast_io_fail_tmo
+> has passed, I/O will be still blocked.
 > 
-> (resending w/ Jens' new address)
 > 
->  include/linux/fs.h |    4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+> Attached is a quick patch for this problem.
 > 
-> Index: work/include/linux/fs.h
-> ===================================================================
-> --- work.orig/include/linux/fs.h
-> +++ work/include/linux/fs.h
-> @@ -148,8 +148,8 @@ struct inodes_stat_t {
->  #define RWA_MASK	2
+> With this patch, fast_io_fail_tmo is set like this:
+>   rport-0:0-0:0x100000051e09ee30:8
+>   rport-0:0-1:0x100000051e09ee30:8
+>   rport-0:0-2:0x2000003013842bcb:off
+>   rport-0:0-3:0x2000003013842bcb:off
+>   rport-1:0-0:0x100000051e09ee30:8
+>   rport-1:0-1:0x100000051e09ee30:8
+>   rport-1:0-2:0x2000003013842bcb:off
+>   rport-1:0-3:0x2000003013842bcb:off
 
-Close, but not quite there - RWA_MASK must be 16 too !!
+Sorry, I pasted the original result twice..
+With the patch, fast_io_fail_tmo is set like this:
+  rport-0:0-0:0x100000051e09ee30:off
+  rport-0:0-1:0x100000051e09ee30:off
+  rport-0:0-2:0x2000003013842bcb:8
+  rport-0:0-3:0x2000003013842bcb:8
+  rport-1:0-0:0x100000051e09ee30:off
+  rport-1:0-1:0x100000051e09ee30:off
+  rport-1:0-2:0x2000003013842bcb:8
+  rport-1:0-3:0x2000003013842bcb:8
+
+> Others might have better idea about resolving rport_id from target.
+> Mike, Hannes, any comments?
 
 Thanks,
-NeilBrown
-
-
->  #define READ 0
->  #define WRITE 1
-> -#define READA 2		/* read-ahead  - don't block if no resources */
-> -#define SWRITE 3	/* for ll_rw_block() - wait for buffer lock */
-> +#define READA 16	/* read-ahead  - don't block if no resources */
-> +#define SWRITE 17	/* for ll_rw_block() - wait for buffer lock */
->  #define READ_SYNC	(READ | (1 << BIO_RW_SYNCIO) | (1 << BIO_RW_UNPLUG))
->  #define READ_META	(READ | (1 << BIO_RW_META))
->  #define WRITE_SYNC_PLUG	(WRITE | (1 << BIO_RW_SYNCIO) | (1 << BIO_RW_NOIDLE))
+-- 
+Jun'ichi Nomura, NEC Corporation
