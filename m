@@ -1,8 +1,8 @@
-From: Valdis.Kletnieks@vt.edu
-Subject: Re: How to track down abysmal performance ata - raid1 -
-	crypto - vg/lv - xfs
-Date: Wed, 04 Aug 2010 16:33:06 -0400
-Message-ID: <15446.1280953986@localhost>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: How to track down abysmal performance ata - raid1 - crypto -
+ vg/lv - xfs
+Date: Thu, 5 Aug 2010 08:24:38 +1000
+Message-ID: <20100805082438.0b476adb@notabene>
 References: <20100804073546.GA7494@comet.dominikbrodowski.net>
 	<20100804085039.GA11671@infradead.org>
 	<20100804091317.GA27779@isilmar-3.linta.de>
@@ -10,86 +10,55 @@ References: <20100804073546.GA7494@comet.dominikbrodowski.net>
 	<20100804073546.GA7494@comet.dominikbrodowski.net>
 	<201008041116.09822@zmi.at>
 	<20100804102526.GB13766@isilmar-3.linta.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<20100804111803.GA32643@infradead.org>
+	<alpine.DEB.1.10.1008041351100.19930@uplift.swm.pp.se>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1967100432796027674=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: Your message of "Wed, 04 Aug 2010 12:25:26 +0200."
-	<20100804102526.GB13766@isilmar-3.linta.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Dominik Brodowski <linux@dominikbrodowski.net>
-Cc: Michael Monnerie <michael.monnerie@is.it-management.at>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.1.10.1008041351100.19930@uplift.swm.pp.se>
+Sender: linux-raid-owner@vger.kernel.org
+To: Mikael Abrahamsson <swmike@swm.pp.se>
+Cc: Christoph Hellwig <hch@infradead.org>, Dominik Brodowski <linux@dominikbrodowski.net>, Michael Monnerie <michael.monnerie@is.it-management.at>, linux-raid@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1967100432796027674==
-Content-Type: multipart/signed; boundary="==_Exmh_1280953986_3909P";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
-Content-Transfer-Encoding: 7bit
+On Wed, 4 Aug 2010 13:53:03 +0200 (CEST)
+Mikael Abrahamsson <swmike@swm.pp.se> wrote:
 
---==_Exmh_1280953986_3909P
-Content-Type: text/plain; charset="us-ascii"
-Content-Id: <15440.1280953986.1@localhost>
-
-On Wed, 04 Aug 2010 12:25:26 +0200, Dominik Brodowski said:
-
-> The "good" news: it also happens on my notebook, even though it has a
-> different setup (no raid, disk -> lv/vg -> crypt). On my notebook, I'm
-> more than happy to test out different kernel versions, patches etc.
+> On Wed, 4 Aug 2010, Christoph Hellwig wrote:
 > 
-> /dev/sd*                17.7 MB/s       (100 %)
-> /dev/mapper/vg1-*       16.2 MB/s       ( 92 %)
-> /dev/mapper/*_crypt      3.1 MB/s       ( 18 %)
+> > The good news is that you have it tracked down, the bad news is that I 
+> > know very little about dm-crypt.  Maybe the issue is the single threaded 
+> > decryption in dm-crypt?  Can you check how much CPU time the dm crypt 
+> > kernel thread uses?
+> 
+> I'm not sure it's that. I have a Core i5 with AES-NI and that didn't 
+> significantly increase my overall performance, as it's not there the 
+> bottleneck is (at least in my system).
+> 
+> I earlier sent out an email wondering if someone could shed some light on 
+> how scheduling, block caching and read-ahead works together when one does 
+> disks->md->crypto->lvm->fs, becase that's a lot of layers and potentially 
+> a lot of unneeded buffering, readahead and scheduling magic?
+> 
 
-Unfortunately, on my laptop with a similar config, I'm seeing this:
+Both page-cache and read-ahead work at the filesystem level, so only the
+device in the stack that the filesystem mounts from is relevant for these.
+Any read-ahead setting on other devices are ignored.
+Other levels only have a cache if they explicitly need one.  e.g. raid5 has a
+stripe-cache to allow parity calculations across all blocks in a stripe.
 
-# dd if=/dev/sda bs=8k count=1000000 of=/dev/null
-1000000+0 records in
-1000000+0 records out
-8192000000 bytes (8.2 GB) copied, 108.352 s, 75.6 MB/s
-# dd if=/dev/sda2 bs=8k count=1000000 of=/dev/null
-1000000+0 records in
-1000000+0 records out
-8192000000 bytes (8.2 GB) copied, 105.105 s, 77.9 MB/s
-# dd if=/dev/mapper/vg_blackice-root bs=8k count=100000 of=/dev/null
-100000+0 records in
-100000+0 records out
-819200000 bytes (819 MB) copied, 11.6469 s, 70.3 MB/s
+Scheduling can potentially happen at every layer, but it takes very different
+forms.  Crypto, lvm, raid0 etc don't do any scheduling - it is just
+first-in-first-out.
+RAID5 does some scheduling for writes (but not reads) to try to gather full
+stripes.  If you write 2 of 3 blocks in a stripe, then 3 of 3 in another
+stripe, the 3 of 3 will be processed immediately while the 2 of 3 might be
+delayed a little in the hope that the third will arrive.
 
-The raw disk, the LUKS-encrypted partition that's got a LVM on it, and a
-crypted LVM partition. The last run spikes both CPUs up to about 50%CPU each.
-So whatever it is, it's somehow more subtle than that.  Maybe the fact that
-in my case, it's disk, crypto, and LVM on the crypted partition, rather than
-crypted filesystems on an LVM volume?
+The sys/block/XXX/queue/scheduler setting only applies at the bottom of the
+stack (though when you have dm-multipath it is actually one step above the
+bottom).
 
-
---==_Exmh_1280953986_3909P
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.10 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
-
-iD8DBQFMWc6CcC3lWbTT17ARAiAuAKCfL5NTEQUgaL9kVy6x0SN/ryDfbgCg9vhS
-WfKyIOBnRrmDh2eZQDebem0=
-=iHTW
------END PGP SIGNATURE-----
-
---==_Exmh_1280953986_3909P--
-
-
---===============1967100432796027674==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1967100432796027674==--
+Hope that helps,
+NeilBrown
