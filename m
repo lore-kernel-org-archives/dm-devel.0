@@ -1,35 +1,68 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH, RFC 2/2] dm: support REQ_FLUSH directly
-Date: Wed, 4 Aug 2010 10:54:23 +0200
-Message-ID: <20100804085423.GA15687@lst.de>
-References: <20100727165627.GA474@lst.de> <20100727175418.GF6820@quack.suse.cz> <20100803184939.GA12198@lst.de> <20100803185148.GA12258@lst.de> <4C58F341.9060605@ct.jp.nec.com>
+From: Dominik Brodowski <linux@dominikbrodowski.net>
+Subject: Re: How to track down abysmal performance ata - raid1 - crypto -
+	vg/lv - xfs
+Date: Wed, 4 Aug 2010 12:25:26 +0200
+Message-ID: <20100804102526.GB13766@isilmar-3.linta.de>
+References: <20100804073546.GA7494@comet.dominikbrodowski.net> <20100804085039.GA11671@infradead.org> <20100804091317.GA27779@isilmar-3.linta.de> <20100804092122.GA2998@infradead.org> <20100804073546.GA7494@comet.dominikbrodowski.net> <201008041116.09822@zmi.at>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4C58F341.9060605@ct.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: Christoph Hellwig <hch@lst.de>, Jan Kara <jack@suse.cz>, jaxboe@fusionio.com, tj@kernel.org, James.Bottomley@suse.de, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, linux-raid@vger.kernel.org
+In-Reply-To: <20100804092122.GA2998@infradead.org> <201008041116.09822@zmi.at>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Monnerie <michael.monnerie@is.it-management.at>, Christoph Hellwig <hch@infradead.org>
+Cc: linux-raid@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Aug 04, 2010 at 01:57:37PM +0900, Kiyoshi Ueda wrote:
-> > -		if (unlikely(dm_rq_is_flush_request(rq))) {
-> > +		if (rq->cmd_flags & REQ_FLUSH) {
-> >  			BUG_ON(md->flush_request);
-> >  			md->flush_request = rq;
-> >  			blk_start_request(rq);
-> 
-> Current request-based device-mapper's flush code depends on
-> the block-layer's barrier behavior which dispatches only one request
-> at a time when flush is needed.
-> In other words, current request-based device-mapper can't handle
-> other requests while a flush request is in progress.
-> 
-> I'll take a look how I can fix the request-based device-mapper to
-> cope with it.  I think it'll take time for carefull investigation.
+Hey,
 
-Given that request based device mapper doesn't even look at the
-block numbers from what I can see just removing any special casing
-for REQ_FLUSH should probably do it.
+many thanks for your feedback. It seems the crypto step is the culprit:
 
+Reading 1.1 GB with dd, iflag=direct, bs=8k:
+
+/dev/sd*                35.3 MB/s       ( 90 %)
+/dev/md*                39.1 MB/s       (100 %)
+/dev/mapper/md*_crypt    3.9 MB/s       ( 10 %)
+/dev/mapper/vg1-*        3.9 MB/s       ( 10 %)
+
+The "good" news: it also happens on my notebook, even though it has a
+different setup (no raid, disk -> lv/vg -> crypt). On my notebook, I'm
+more than happy to test out different kernel versions, patches etc.
+
+/dev/sd*                17.7 MB/s       (100 %)
+/dev/mapper/vg1-*       16.2 MB/s       ( 92 %)
+/dev/mapper/*_crypt      3.1 MB/s       ( 18 %)
+
+On a different system, a friend of mine reported (with 2.6.33):
+
+/dev/sd*		51.9 MB/s	(100 %)
+dm-crypt		32.9 MB/s	( 64 %)
+
+This shows that the speed drop when using dmcrypt is not always a factor of
+5 to 10... Btw, it occurs both with aes-lrw-benbi and aes-cbc-essiv:sha256 ,
+and (on my notebook) the CPU is mostly idling or waiting. 
+
+Best,
+	Dominik
+
+PS: Bonnie output:
+
+Writing intelligently...done
+Rewriting...done
+Reading intelligently...done
+start 'em...done...done...done...
+Create files in sequential order...done.
+Stat files in sequential order...done.
+Delete files in sequential order...done.
+Create files in random order...done.
+Stat files in random order...done.
+Delete files in random order...done.
+Version 1.03d       ------Sequential Output------ --Sequential Input- --Random-
+                    -Per Chr- --Block-- -Rewrite- -Per Chr- --Block-- --Seeks--
+Machine        Size K/sec %CP K/sec %CP K/sec %CP K/sec %CP K/sec %CP  /sec %CP
+ABCABCABCABCABC 16G           60186   4 24796   4           53386   5 281.1   1
+                    ------Sequential Create------ --------Random Create--------
+                    -Create-- --Read--- -Delete-- -Create-- --Read--- -Delete--
+              files  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP  /sec %CP
+                 16  3176  16 +++++ +++  4641  28  5501  20 +++++ +++  2286   9
+ABCABCABCABCABCABC,16G,,,60186,4,24796,4,,,53386,5,281.1,1,16,3176,16,+++++,+++,4641,28,5501,20,+++++,+++,2286,9
