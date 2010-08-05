@@ -1,130 +1,70 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 2/2] dm-kcopyd: Delayed unplug of queues
-Date: Thu, 5 Aug 2010 10:50:19 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1008051048160.21069@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1007221121500.19285@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.1007221123170.19285@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dominik Brodowski <linux@dominikbrodowski.net>
+Subject: Re: direct-io regression [Was: How to track down abysmal
+ performance ata - raid1 - crypto - vg/lv - xfs]
+Date: Thu, 5 Aug 2010 17:35:19 +0200
+Message-ID: <20100805153519.GA7242@comet.dominikbrodowski.net>
+References: <20100805123649.GA18672@dhcp231-156.rdu.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1007221123170.19285@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100805123649.GA18672@dhcp231-156.rdu.redhat.com>
+ <20100805113240.GA29846@think>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Chris Mason <chris.mason@oracle.com>, josef@redhat.com
+Cc: Valdis.Kletnieks@vt.edu, Michael Monnerie <michael.monnerie@is.it-management.at>, Christoph Hellwig <hch@infradead.org>, linux-raid@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 22 Jul 2010, Mikulas Patocka wrote:
+Hey,
 
-> dm-kcopyd: Delayed unplug of queues
-> 
-> This patch improves performance aby about 20% when writing to the snapshot
-> origin. We keep track of two block devices to unplug (one for read and the
-> other for write) and unplug them when exiting "do_work" thread. If there are
-> more devices used (in theory it could happen, in practice it is rare), we
-> unplug immediatelly.
+On Thu, Aug 05, 2010 at 07:32:40AM -0400, Chris Mason wrote:
+> But, I'm surprised your drive is doing 8K dio reads at 16MB/s, that
+> seems a little high.  
 
-BTW. There is even bigger improvement for noop and deadline schedulers. 
-This patch makes them join read and write requests.
+Well, that's what it does:
 
-Mikulas
+# $ dd if=/dev/mapper/vg0-home_crypt of=/dev/zero iflag=direct bs=8k count=131072 seek=131072
+# 131072+0 records in
+# 131072+0 records out
+# 1073741824 bytes (1.1 GB) copied, 62.0177 s, 17.3 MB/s
 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+On Thu, Aug 05, 2010 at 08:36:49AM -0400, Josef Bacik wrote:
+> Hrm, I made sure there were no perf regressions when I wast testing this stuff,
+> though I think I only tested xfs and ext4.
+
+For this test, I'm not doing dio on filesystem level, but on block level
+(/dev/mapper/vg0-*_crypt). It seems that dm-crypt creates such offending
+holes, which cause this huge performance drop.
+
+>  Originally I had a test where if we
+> provided our own submit_io, so maybe as a workaround just make
 > 
-> ---
->  drivers/md/dm-kcopyd.c |   35 ++++++++++++++++++++++++++++++++---
->  1 file changed, 32 insertions(+), 3 deletions(-)
+> if (dio->final_block_in_bio != dio->cur_page_block ||
+>                     cur_offset != bio_next_offset) 
 > 
-> Index: linux-2.6.34-fast/drivers/md/dm-kcopyd.c
-> ===================================================================
-> --- linux-2.6.34-fast.orig/drivers/md/dm-kcopyd.c	2010-07-22 16:08:36.000000000 +0200
-> +++ linux-2.6.34-fast/drivers/md/dm-kcopyd.c	2010-07-22 16:40:19.000000000 +0200
-> @@ -37,6 +37,8 @@ struct dm_kcopyd_client {
->  	unsigned int nr_pages;
->  	unsigned int nr_free_pages;
->  
-> +	struct block_device *unplug[2];
-> +
->  	struct dm_io_client *io_client;
->  
->  	wait_queue_head_t destroyq;
-> @@ -308,6 +310,23 @@ static int run_complete_job(struct kcopy
->  	return 0;
->  }
->  
-> +static void unplug(struct dm_kcopyd_client *kc, int queue)
-> +{
-> +	if (kc->unplug[queue] != NULL) {
-> +		blk_unplug(bdev_get_queue(kc->unplug[queue]));
-> +		kc->unplug[queue] = NULL;
-> +	}
-> +}
-> +
-> +static void prepare_unplug(struct dm_kcopyd_client *kc, int queue,
-> +			   struct block_device *bdev)
-> +{
-> +	if (likely(kc->unplug[queue] == bdev))
-> +		return;
-> +	unplug(kc, queue);
-> +	kc->unplug[queue] = bdev;
-> +}
-> +
->  static void complete_io(unsigned long error, void *context)
->  {
->  	struct kcopyd_job *job = (struct kcopyd_job *) context;
-> @@ -345,7 +364,7 @@ static int run_io_job(struct kcopyd_job 
->  {
->  	int r;
->  	struct dm_io_request io_req = {
-> -		.bi_rw = job->rw | (1 << BIO_RW_UNPLUG),
-> +		.bi_rw = job->rw,
->  		.mem.type = DM_IO_PAGE_LIST,
->  		.mem.ptr.pl = job->pages,
->  		.mem.offset = job->offset,
-> @@ -354,10 +373,16 @@ static int run_io_job(struct kcopyd_job 
->  		.client = job->kc->io_client,
->  	};
->  
-> -	if (job->rw == READ)
-> +	if (job->rw == READ) {
->  		r = dm_io(&io_req, 1, &job->source, NULL);
-> -	else
-> +		prepare_unplug(job->kc, READ, job->source.bdev);
-> +	} else {
-> +		if (unlikely(job->num_dests > 1))
-> +			io_req.bi_rw |= 1 << BIO_RW_UNPLUG;
->  		r = dm_io(&io_req, job->num_dests, job->dests, NULL);
-> +		if (likely(!(io_req.bi_rw & (1 << BIO_RW_UNPLUG))))
-> +			prepare_unplug(job->kc, WRITE, job->dests[0].bdev);
-> +	}
->  
->  	return r;
->  }
-> @@ -439,6 +464,8 @@ static void do_work(struct work_struct *
->  	process_jobs(&kc->complete_jobs, kc, run_complete_job);
->  	process_jobs(&kc->pages_jobs, kc, run_pages_job);
->  	process_jobs(&kc->io_jobs, kc, run_io_job);
-> +	unplug(kc, READ);
-> +	unplug(kc, WRITE);
->  }
->  
->  /*
-> @@ -619,6 +646,8 @@ int dm_kcopyd_client_create(unsigned int
->  	INIT_LIST_HEAD(&kc->io_jobs);
->  	INIT_LIST_HEAD(&kc->pages_jobs);
->  
-> +	memset(kc->unplug, 0, sizeof kc->unplug);
-> +
->  	kc->job_pool = mempool_create_slab_pool(MIN_JOBS, _job_cache);
->  	if (!kc->job_pool)
->  		goto bad_slab;
+> look like this
 > 
-> 
+> if (dio->final_block_in_bio != dio->cur_page_block ||
+>     (dio->submit_io && cur_offset != bio_next_offset))
+
+Tested-by: Dominik Brodowski <linux@dominikbrodowski.net>
+
+With this fix, I get proper speeds when doing dio reads from
+/dev/mapper/vg0-*_crypt; see the 17.3 MB/s above. Most strangely,
+also accesing /dev/mapper/vg0-* (un-encrypted) and the raw
+device at /dev/sda* speeds up (to up to 28 MB/s). Was only seeing around
+16 to 18 MB/s without this patch for unencrypted access.
+
+> I know why it could cause a problem, but this change shouldn't be
+> causing a 400% regression.
+
+Well, it seems to cause -- at least on my notebook -- a 150% regression on
+unencrypted LVM2 access; and this > 400% on encrypted LVM2 access...
+
+> I suspect something else is afoot here.
+
+There is, probably. But the fix you propose helps a lot, already.
+
+Thanks & best,
+
+	Dominik
