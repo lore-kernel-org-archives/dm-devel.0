@@ -1,90 +1,53 @@
-From: Shahzad Hussain Bangash <ext-shahzad.bangash@nokia.com>
-Subject: [PATCH] : Fix for memory leak in setup indexes
-Date: Thu, 05 Aug 2010 09:57:41 +0300
-Message-ID: <1280991461.2281.5.camel@sbangash-desktop>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dominik Brodowski <linux@dominikbrodowski.net>
+Subject: direct-io regression [Was: How to track down abysmal performance
+ ata - raid1 - crypto - vg/lv - xfs]
+Date: Thu, 5 Aug 2010 11:31:00 +0200
+Message-ID: <20100805093100.GA3001@comet.dominikbrodowski.net>
+References: <20100804073546.GA7494@comet.dominikbrodowski.net>
+ <20100804085039.GA11671@infradead.org>
+ <20100804091317.GA27779@isilmar-3.linta.de>
+ <20100804092122.GA2998@infradead.org>
+ <20100804073546.GA7494@comet.dominikbrodowski.net>
+ <201008041116.09822@zmi.at>
+ <20100804102526.GB13766@isilmar-3.linta.de>
+ <15446.1280953986@localhost>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-EuQOx/0TIITU4YSwU1N1"
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: neilb <neilb@suse.de>, dm-devel <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <15446.1280953986@localhost>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Valdis.Kletnieks@vt.edu, josef@redhat.com, chris.mason@oracle.com
+Cc: Michael Monnerie <michael.monnerie@is.it-management.at>, Christoph Hellwig <hch@infradead.org>, linux-raid@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hey,
 
---=-EuQOx/0TIITU4YSwU1N1
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+when attempting to track down insufficient I/O performance, I found the
+following reression relating to direct-io on my notebook, where an
+ata device, which consists of several partitions, is combined to a lvm
+volume, and one logical volume is then encrypted using dm-crypt. Test case
+was the following command:
 
+$ dd if=/dev/mapper/vg0-root_crypt of=/dev/zero iflag=direct bs=8k count=131072
 
+2.6.34 results in ~16 MB/s,
+2.6.35 results in ~ 3.1 MB/s
 
--- 
-Shahzad Hussain Bangash <ext-shahzad.bangash@nokia.com>
+The regression was bisected down to the follwoing commit:
 
---=-EuQOx/0TIITU4YSwU1N1
-Content-Disposition: attachment;
-	filename="0001-Fixes-memory-leak-in-setup_indexes.patch"
-Content-Type: text/x-patch;
-	name="0001-Fixes-memory-leak-in-setup_indexes.patch";
-	charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+commit c2c6ca417e2db7a519e6e92c82f4a933d940d076
+Author: Josef Bacik <josef@redhat.com>
+Date:   Sun May 23 11:00:55 2010 -0400
 
-From 57da07e6847cedd14d54ba1675264377846a026c Mon Sep 17 00:00:00 2001
-From: Shahzad Bangash <ext-shahzad.bangash@nokia.com>
-Date: Tue, 3 Aug 2010 13:58:48 +0300
-Subject: [PATCH] Fixes memory leak in setup_indexes
+    direct-io: do not merge logically non-contiguous requests
+    
+...
 
-Signed-off-by: Shahzad Bangash <ext-shahzad.bangash@nokia.com>
----
- drivers/md/dm-table.c |    5 ++++-
- 1 files changed, 4 insertions(+), 1 deletions(-)
+How to fix this? I do not use btrfs, but ext3 (and the access was down on
+the block level, not on the fs level, so this btrs-related commit should not
+cause such a regression).
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e869128..05691f2 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -876,7 +876,7 @@ static int setup_indexes(struct dm_table *t)
- {
- 	int i;
- 	unsigned int total = 0;
--	sector_t *indexes;
-+	sector_t *indexes, *indexes_head;
- 
- 	/* allocate the space for *all* the indexes */
- 	for (i = t->depth - 2; i >= 0; i--) {
-@@ -888,6 +888,8 @@ static int setup_indexes(struct dm_table *t)
- 	if (!indexes)
- 		return -ENOMEM;
- 
-+	indexes_head = indexes;
-+
- 	/* set up internal nodes, bottom-up */
- 	for (i = t->depth - 2; i >= 0; i--) {
- 		t->index[i] = indexes;
-@@ -895,6 +897,7 @@ static int setup_indexes(struct dm_table *t)
- 		setup_btree_index(i, t);
- 	}
- 
-+	vfree(indexes_head);
- 	return 0;
- }
- 
--- 
-1.6.3.3
+Best,
 
-
---=-EuQOx/0TIITU4YSwU1N1
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=-EuQOx/0TIITU4YSwU1N1--
+	Dominik
