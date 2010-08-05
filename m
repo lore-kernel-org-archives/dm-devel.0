@@ -1,55 +1,46 @@
-From: Dominik Brodowski <linux@dominikbrodowski.net>
-Subject: Re: direct-io regression [Was: How to track down abysmal
- performance ata - raid1 - crypto - vg/lv - xfs]
-Date: Thu, 5 Aug 2010 17:53:57 +0200
-Message-ID: <20100805155357.GA8245@comet.dominikbrodowski.net>
-References: <20100805123649.GA18672@dhcp231-156.rdu.redhat.com>
- <20100805113240.GA29846@think>
- <20100805153519.GA7242@comet.dominikbrodowski.net>
- <20100805153943.GO29846@think>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH RESEND 1/2 block#for-linus] bio, fs: update READA and SWRITE to match the corresponding BIO_RW_* bits
+Date: Thu, 05 Aug 2010 14:45:33 -0400
+Message-ID: <x49y6ckc302.fsf@segfault.boston.devel.redhat.com>
+References: <20100628010346.GA2376@atlantis.cc.ndsu.nodak.edu>
+	<4C28EFD6.2070203@vlnb.net>
+	<20100714190325.GA25148@atlantis.cc.ndsu.nodak.edu>
+	<4C3EF3AD.5070509@vlnb.net>
+	<20100723191844.GB31152@atlantis.cc.ndsu.nodak.edu>
+	<4C4D7DF5.9060909@vlnb.net>
+	<20100727220110.GF31152@atlantis.cc.ndsu.nodak.edu>
+	<4C5073F3.1060406@vlnb.net> <4C52A98A.7060507@kernel.org>
+	<20100802104227.79340b49@notabene> <4C56D30A.3000403@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100805153943.GO29846@think>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chris Mason <chris.mason@oracle.com>
-Cc: josef@redhat.com, Valdis.Kletnieks@vt.edu, Michael Monnerie <michael.monnerie@is.it-management.at>, Christoph Hellwig <hch@infradead.org>, linux-raid@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <4C56D30A.3000403@kernel.org> (Tejun Heo's message of "Mon, 02
+	Aug 2010 16:15:38 +0200")
+Sender: linux-raid-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Jens Axboe <jens.axboe@kernel.dk>, stable@kernel.org, Vladislav Bolkhovitin <vst@vlnb.net>, Bryan Mesich <bryan.mesich@ndsu.edu>, scst-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-On Thu, Aug 05, 2010 at 11:39:43AM -0400, Chris Mason wrote:
-> On Thu, Aug 05, 2010 at 05:35:19PM +0200, Dominik Brodowski wrote:
-> > On Thu, Aug 05, 2010 at 07:32:40AM -0400, Chris Mason wrote:
-> > > But, I'm surprised your drive is doing 8K dio reads at 16MB/s, that
-> > > seems a little high.  
-> > 
-> > Well, that's what it does:
-> > 
-> > # $ dd if=/dev/mapper/vg0-home_crypt of=/dev/zero iflag=direct bs=8k count=131072 seek=131072
-> > # 131072+0 records in
-> > # 131072+0 records out
-> > # 1073741824 bytes (1.1 GB) copied, 62.0177 s, 17.3 MB/s
-> 
-> Can I ask you to do the test directly to the real honest to goodness
-> drive?   If it were an SSD I'd be less surprised, but then the extra
-> submits shouldn't hurt the ssd that much either.
+Tejun Heo <tj@kernel.org> writes:
 
-From lower the chain up to the device:
+> Commit a82afdf (block: use the same failfast bits for bio and request)
+> moved BIO_RW_* bits around such that they match up with REQ_* bits.
+> Unfortunately, fs.h hard coded READ, WRITE, READA and SWRITE as 0, 1,
+> 2 and 3, and expected them to match with BIO_RW_* bits.  READ/WRITE
+> didn't change but BIO_RW_AHEAD was moved to bit 4 instead of bit 1,
+> breaking READA and SWRITE.
+>
+> This patch updates READA and SWRITE such that they match the BIO_RW_*
+> bits again.  A follow up patch will update the definitions to directly
+> use BIO_RW_* bits so that this kind of breakage won't happen again.
+>
+> Stable: The offending commit a82afdf was released with v2.6.32, so
+> this patch should be applied to all kernels since then but it must
+> _NOT_ be applied to kernels earlier than that.
 
-# LANG=EN dd if=/dev/mapper/vg0-root_crypt of=/dev/zero bs=8k count=131072 seek=393300 iflag=direct
-131072+0 records in
-131072+0 records out
-1073741824 bytes (1.1 GB) copied, 63.1217 s, 17.0 MB/s
+Would someone be so kind as to remind me how this problem manifests
+itself?  I know I read this recently, but my memory and googling skills
+are both failing me.  :(
 
-# LANG=EN dd if=/dev/mapper/vg0-root of=/dev/zero bs=8k count=131072 seek=393300 iflag=direct
-131072+0 records in
-131072+0 records out
-1073741824 bytes (1.1 GB) copied, 43.2335 s, 24.8 MB/s
-
-# LANG=EN dd if=/dev/sda5 of=/dev/zero bs=8k count=131072 seek=393300 iflag=direct
-131072+0 records in
-131072+0 records out
-1073741824 bytes (1.1 GB) copied, 42.0868 s, 25.5 MB/s
-
-Best,
-	Dominik
+Cheers,
+Jeff
