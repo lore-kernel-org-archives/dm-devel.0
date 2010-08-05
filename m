@@ -1,64 +1,45 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: How to track down abysmal performance ata - raid1 - crypto -
- vg/lv - xfs
-Date: Thu, 5 Aug 2010 08:24:38 +1000
-Message-ID: <20100805082438.0b476adb@notabene>
-References: <20100804073546.GA7494@comet.dominikbrodowski.net>
-	<20100804085039.GA11671@infradead.org>
-	<20100804091317.GA27779@isilmar-3.linta.de>
-	<20100804092122.GA2998@infradead.org>
-	<20100804073546.GA7494@comet.dominikbrodowski.net>
-	<201008041116.09822@zmi.at>
-	<20100804102526.GB13766@isilmar-3.linta.de>
-	<20100804111803.GA32643@infradead.org>
-	<alpine.DEB.1.10.1008041351100.19930@uplift.swm.pp.se>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH, RFC 2/2] dm: support REQ_FLUSH directly
+Date: Thu, 05 Aug 2010 11:16:37 +0900
+Message-ID: <4C5A1F05.40308@ce.jp.nec.com>
+References: <20100727165627.GA474@lst.de> <20100727175418.GF6820@quack.suse.cz> <20100803184939.GA12198@lst.de> <20100803185148.GA12258@lst.de> <4C58F341.9060605@ct.jp.nec.com> <20100804085423.GA15687@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.1.10.1008041351100.19930@uplift.swm.pp.se>
-Sender: linux-raid-owner@vger.kernel.org
-To: Mikael Abrahamsson <swmike@swm.pp.se>
-Cc: Christoph Hellwig <hch@infradead.org>, Dominik Brodowski <linux@dominikbrodowski.net>, Michael Monnerie <michael.monnerie@is.it-management.at>, linux-raid@vger.kernel.org, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20100804085423.GA15687@lst.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Jan Kara <jack@suse.cz>, jaxboe@fusionio.com, tj@kernel.org, James.Bottomley@suse.de, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, 4 Aug 2010 13:53:03 +0200 (CEST)
-Mikael Abrahamsson <swmike@swm.pp.se> wrote:
+Hi Christoph,
 
-> On Wed, 4 Aug 2010, Christoph Hellwig wrote:
+(08/04/10 17:54), Christoph Hellwig wrote:
+> On Wed, Aug 04, 2010 at 01:57:37PM +0900, Kiyoshi Ueda wrote:
+>>> -		if (unlikely(dm_rq_is_flush_request(rq))) {
+>>> +		if (rq->cmd_flags & REQ_FLUSH) {
+>>>  			BUG_ON(md->flush_request);
+>>>  			md->flush_request = rq;
+>>>  			blk_start_request(rq);
+>>
+>> Current request-based device-mapper's flush code depends on
+>> the block-layer's barrier behavior which dispatches only one request
+>> at a time when flush is needed.
+>> In other words, current request-based device-mapper can't handle
+>> other requests while a flush request is in progress.
+>>
+>> I'll take a look how I can fix the request-based device-mapper to
+>> cope with it.  I think it'll take time for carefull investigation.
 > 
-> > The good news is that you have it tracked down, the bad news is that I 
-> > know very little about dm-crypt.  Maybe the issue is the single threaded 
-> > decryption in dm-crypt?  Can you check how much CPU time the dm crypt 
-> > kernel thread uses?
-> 
-> I'm not sure it's that. I have a Core i5 with AES-NI and that didn't 
-> significantly increase my overall performance, as it's not there the 
-> bottleneck is (at least in my system).
-> 
-> I earlier sent out an email wondering if someone could shed some light on 
-> how scheduling, block caching and read-ahead works together when one does 
-> disks->md->crypto->lvm->fs, becase that's a lot of layers and potentially 
-> a lot of unneeded buffering, readahead and scheduling magic?
-> 
+> Given that request based device mapper doesn't even look at the
+> block numbers from what I can see just removing any special casing
+> for REQ_FLUSH should probably do it.
 
-Both page-cache and read-ahead work at the filesystem level, so only the
-device in the stack that the filesystem mounts from is relevant for these.
-Any read-ahead setting on other devices are ignored.
-Other levels only have a cache if they explicitly need one.  e.g. raid5 has a
-stripe-cache to allow parity calculations across all blocks in a stripe.
+Special casing is necessary because device-mapper may have to
+send multiple copies of REQ_FLUSH request to multiple
+targets, while normal request is just sent to single target.
 
-Scheduling can potentially happen at every layer, but it takes very different
-forms.  Crypto, lvm, raid0 etc don't do any scheduling - it is just
-first-in-first-out.
-RAID5 does some scheduling for writes (but not reads) to try to gather full
-stripes.  If you write 2 of 3 blocks in a stripe, then 3 of 3 in another
-stripe, the 3 of 3 will be processed immediately while the 2 of 3 might be
-delayed a little in the hope that the third will arrive.
-
-The sys/block/XXX/queue/scheduler setting only applies at the bottom of the
-stack (though when you have dm-multipath it is actually one step above the
-bottom).
-
-Hope that helps,
-NeilBrown
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation
