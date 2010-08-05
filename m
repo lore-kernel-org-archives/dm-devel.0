@@ -1,54 +1,48 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH RESEND 1/2 block#for-linus] bio, fs: update READA and SWRITE to match the corresponding BIO_RW_* bits
-Date: Thu, 05 Aug 2010 15:30:20 -0400
-Message-ID: <x49lj8kc0xf.fsf@segfault.boston.devel.redhat.com>
-References: <20100628010346.GA2376@atlantis.cc.ndsu.nodak.edu>
-	<4C28EFD6.2070203@vlnb.net>
-	<20100714190325.GA25148@atlantis.cc.ndsu.nodak.edu>
-	<4C3EF3AD.5070509@vlnb.net>
-	<20100723191844.GB31152@atlantis.cc.ndsu.nodak.edu>
-	<4C4D7DF5.9060909@vlnb.net>
-	<20100727220110.GF31152@atlantis.cc.ndsu.nodak.edu>
-	<4C5073F3.1060406@vlnb.net> <4C52A98A.7060507@kernel.org>
-	<20100802104227.79340b49@notabene> <4C56D30A.3000403@kernel.org>
-	<x49y6ckc302.fsf@segfault.boston.devel.redhat.com>
-	<4C5B0994.1070203@vlnb.net>
+From: Dominik Brodowski <linux@dominikbrodowski.net>
+Subject: Performance impact of CONFIG_DEBUG? direct-io test case
+Date: Thu, 5 Aug 2010 22:47:49 +0200
+Message-ID: <20100805204749.GA6318@comet.dominikbrodowski.net>
+References: <20100805123649.GA18672@dhcp231-156.rdu.redhat.com>
+ <20100805113240.GA29846@think>
+ <20100805153519.GA7242@comet.dominikbrodowski.net>
+ <20100805163519.GA6604@comet.dominikbrodowski.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <4C5B0994.1070203@vlnb.net> (Vladislav Bolkhovitin's message of
-	"Thu, 05 Aug 2010 22:57:24 +0400")
+Content-Disposition: inline
+In-Reply-To: <20100805163519.GA6604@comet.dominikbrodowski.net>
 Sender: linux-raid-owner@vger.kernel.org
-To: Vladislav Bolkhovitin <vst@vlnb.net>
-Cc: Tejun Heo <tj@kernel.org>, Jens Axboe <jens.axboe@kernel.dk>, stable@kernel.org, Bryan Mesich <bryan.mesich@ndsu.edu>, scst-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
+To: linux-kernel@vger.kernel.org, mingo@redhat.com, peterz@infradead.org
+Cc: Chris Mason <chris.mason@oracle.com>, josef@redhat.com, Valdis.Kletnieks@vt.edu, Michael Monnerie <michael.monnerie@is.it-management.at>, Christoph Hellwig <hch@infradead.org>, linux-raid@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Vladislav Bolkhovitin <vst@vlnb.net> writes:
 
-> Jeff Moyer, on 08/05/2010 10:45 PM wrote:
->> Tejun Heo<tj@kernel.org>  writes:
->>
->>> Commit a82afdf (block: use the same failfast bits for bio and request)
->>> moved BIO_RW_* bits around such that they match up with REQ_* bits.
->>> Unfortunately, fs.h hard coded READ, WRITE, READA and SWRITE as 0, 1,
->>> 2 and 3, and expected them to match with BIO_RW_* bits.  READ/WRITE
->>> didn't change but BIO_RW_AHEAD was moved to bit 4 instead of bit 1,
->>> breaking READA and SWRITE.
->>>
->>> This patch updates READA and SWRITE such that they match the BIO_RW_*
->>> bits again.  A follow up patch will update the definitions to directly
->>> use BIO_RW_* bits so that this kind of breakage won't happen again.
->>>
->>> Stable: The offending commit a82afdf was released with v2.6.32, so
->>> this patch should be applied to all kernels since then but it must
->>> _NOT_ be applied to kernels earlier than that.
->>
->> Would someone be so kind as to remind me how this problem manifests
->> itself?  I know I read this recently, but my memory and googling skills
->> are both failing me.  :(
->
-> See http://lkml.org/lkml/2010/7/28/315 and link inside.
+How large is the performance impact of CONFIG_DEBUG? Well, for the test
+workload I've been working with lately,
 
-Thanks a ton!
+dd if=<device> of=/dev/zero bs=8k count=100000 iflag=direct
 
--Jeff
+where <device> is a dm-crypted LVM volume consisting of several
+partitions on a notebook pata harddisk, I get the following results:
+
+1) best results are ~ 28 MB/s
+
+2) Enabling CONFIG_DEBUG_LOCK_ALLOC, which also means CONFIG_LOCKDEP
+   being enabled, causes the transfer rate to decrease by ~ 1.2 MB/s
+
+3) Enabling CONFIG_DEBUG_SPINLOCK && CONFIG_DEBUG_MUTEXTES or
+   CONFIG_DEBUG_SPINLOCK_SLEEP=y costs about ~ 0.4 MB/s each
+
+4) Enabling all of the following options:
+	CONFIG_DEBUG_RT_MUTEXES
+	CONFIG_DEBUG_PI_LIST
+	CONFIG_PROVE_LOCKING
+	CONFIG_LOCK_STAT
+	CONFIG_DEBUG_LOCKDEP
+   costs another ~ 5 MB/s.
+
+So, for this test case, the performance impact of (some) CONFIG_DEBUG
+options is highly significant, here by about 25 %.
+
+Best,
+	Dominik
