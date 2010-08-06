@@ -1,15 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: Fixes memory leak in setup_indexes function
-Date: Fri, 6 Aug 2010 08:29:21 -0400
-Message-ID: <20100806122921.GB32629@redhat.com>
-References: <1281087367.2262.44.camel@sbangash-desktop>
+From: tormen <tormen@gmx.net>
+Subject: How does dm-raid isw compare to other linux software
+ raid solutions (e.g. mdadm)?
+Date: Fri, 06 Aug 2010 11:13:03 -0400
+Message-ID: <4C5C267F.8040700@gmx.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1281087367.2262.44.camel@sbangash-desktop>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,24 +17,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Shahzad Hussain Bangash <ext-shahzad.bangash@nokia.com>
-Cc: dm-devel <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Aug 06 2010 at  5:36am -0400,
-Shahzad Hussain Bangash <ext-shahzad.bangash@nokia.com> wrote:
+ Hi everybody,
 
-> Sorry for multiple patches. This patch fixes memory leak in
-> setup_indexes function where memory is allocated for indexes pointer by
-> dm_vcalloc with the size of NODE_size and is not freed after that
-> through the end of the function.
+It seems that the only way to have Windows and Linux
+use the same software RAID would be through dm-raid isw
+(for my intel fake hardware raid).
+Is this correct or did I miss something?
 
-There isn't a leak.
+Are there any (other) advantages using dm-raid isw over
+any other linux based software raid solution (e.g. mdadm)?
+    E.g. is it faster (speed / throughput)?
+    Or more stable?
+    Or more powerful?
 
-The 2nd loop's "t->index[i] = indexes;" takes ownership of the
-dm_vcalloc'd memory.  dm_table_destroy() will later free that memory.
+I tried to google  comparisons of dmraid isw vs. e.g. mdadm
+software RAID 0 (stripe), but was not very successful :(
 
-Your patch actually introduces a use after free bug.
+I also wonder why no where on the intel pages they refer to dm-raid isw...
+they just mention that there is no linux support.
+Only reason I can think of: They don't because dmraid isw is not
+developed by them, or ?
+I mean they have Linux resources for so many topics. Or did I miss
+something?
 
-Regards,
-Mike
+Thanks a lot for any hint!
+
+tormen
