@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/multipathd main.c
-Date: 9 Aug 2010 16:16:10 -0000
-Message-ID: <20100809161610.8643.qmail@sourceware.org>
+Subject: multipath-tools ./multipath.conf.defaults libm ...
+Date: 9 Aug 2010 18:38:22 -0000
+Message-ID: <20100809183822.11463.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,41 +22,47 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-08-09 16:16:10
+Changes by:	bmarzins@sourceware.org	2010-08-09 18:38:21
 
 Modified files:
-	multipathd     : main.c 
+	.              : multipath.conf.defaults 
+	libmultipath   : hwtable.c 
 
 Log message:
-	Fix for bz #614966
+	Fix for bz #562967
 	
-	Occasionally, the kernel sends out remove uevents when the multipath device
-	hasn't been removed.  multipathd should never remove the device when it gets
-	these events, since they are only suspposed to be generated after the device
-	has already been removed.
+	It is now possible for all Symmetrix paths to go down on a NDU, so the config
+	needs to set no_path_retry.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.27&r2=1.69.2.28
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.20&r2=1.5.4.21
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.27&r2=1.20.2.28
 
---- multipath-tools/multipathd/main.c	2010/06/23 16:28:08	1.69.2.27
-+++ multipath-tools/multipathd/main.c	2010/08/09 16:16:10	1.69.2.28
-@@ -299,8 +299,18 @@
- static int
- uev_remove_map (char * devname, struct vectors * vecs)
- {
-+	struct multipath * mpp;
-+
- 	condlog(2, "%s: remove map (uevent)", devname);
--	return ev_remove_map(devname, vecs);
-+
-+	mpp = find_mp_by_str(vecs->mpvec, devname);
-+	if (!mpp) {
-+		condlog(2, "%s: devmap not registered, can't remove", devname);
-+		return 0;
-+	}
-+	orphan_paths(vecs->pathvec, mpp);
-+	remove_map(mpp, vecs, stop_waiter_thread, 1);
-+	return 0;
- }
- 
- int
+--- multipath-tools/multipath.conf.defaults	2010/02/10 04:11:18	1.5.4.20
++++ multipath-tools/multipath.conf.defaults	2010/08/09 18:38:21	1.5.4.21
+@@ -233,9 +233,10 @@
+ #		features		"0"
+ #		hardware_handler	"0"
+ #               path_grouping_policy    multibus
++#		no_path_retry		6
+ #		rr_weight		uniform
+ #		rr_min_io		1000
+-#		path_checker		readsector0
++#		path_checker		tur
+ #       }
+ #      device {
+ #               vendor                  "EMC"
+--- multipath-tools/libmultipath/hwtable.c	2010/02/10 04:11:18	1.20.2.27
++++ multipath-tools/libmultipath/hwtable.c	2010/08/09 18:38:21	1.20.2.28
+@@ -223,9 +223,9 @@
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.no_path_retry = 6,
+ 		.minio         = DEFAULT_MINIO,
+-		.checker_name  = READSECTOR0,
++		.checker_name  = TUR,
+ 	},
+ 	{
+ 		.vendor        = "DGC",
