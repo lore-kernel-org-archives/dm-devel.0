@@ -1,111 +1,55 @@
-From: Neil Brown <neilb@suse.de>
-Subject: [REVISED PULL REQUEST] md updates for 2.6.36
-Date: Tue, 10 Aug 2010 10:14:31 +1000
-Message-ID: <19552.39399.490494.51990@notabene.brown>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [Patch] scsi_dh_rdac: retry IO for 06/3f/03 in
+ rdac_check_sense fn
+Date: Mon, 09 Aug 2010 18:47:38 -0700
+Message-ID: <1281404858.23351.6.camel@chandra-lucid.beaverton.ibm.com>
+References: <1C9608B8A4CD534FB19C7C7543CBB24902991CCA21@inbmail02.lsi.com>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, David Woodhouse <dwmw2@infradead.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1C9608B8A4CD534FB19C7C7543CBB24902991CCA21@inbmail02.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, James Bottomley <James.Bottomley@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
+Vijay,
 
-Hi Linus,
- here is a revised pull request for md updates for 2.6.36.
+Since it has to be handled at SCSI (and it is a SCSI sense), shouldn't
+we be retrying it at SCSI level. James, what is your opinion ?
 
- To the previous patches (which are unchanged) it adds some work by
- David Woodhouse which moves the RAID6 computations out of drivers/md/
- and places them in /lib so they can be used by other code -
- e.g. btrfs.
- The RAID6 code is completely unchanged (it was already accessed under
- the async-crypto interface so not changes are need to the API).  Only
- it's location and the fact that it can be a stand alone module
- (rather than being in the same module as the rest of md/raid6) has
- changed.
+It looks good to me as the effect is local to LSI rdac storage.
 
-Thanks,
-NeilBrown
+chandra
+
+On Mon, 2010-08-02 at 13:07 +0530, Chauhan, Vijay wrote:
+> Hi,
+> 
+> This patch adds retry for the IO returned with 06/3f/03((INQUIRY_DATA_CHANGED)) sense code  in rdac_check_sense(). IO returned with 06/3f/03 from controller are currently failed by scsi mid layer, as a reason momentarily path failure is noticed by DM multipath. 
+> 
+> Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
+> Reviewed-by: Babu Moger <babu.moger@lsi.com>
+> Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
+> ---
+> 
+> diff -uprN linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh_rdac.c linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c
+> --- linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-07-22 15:13:38.000000000 -0400
+> +++ linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-07-27 12:13:58.000000000 -0400
+> @@ -738,6 +738,11 @@ static int rdac_check_sense(struct scsi_
+>  			 * Quiescence in progress , just retry.
+>  			 */
+>  			return ADD_TO_MLQUEUE;
+> +		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x03)
+> +			/*
+> +			 * INQUIRY DATA has changed, retry again.
+> +			 */
+> +			return ADD_TO_MLQUEUE;
+>  		break;
+>  	}
+>  	/* success just means we do not care what scsi-ml does */
+> 
+> --
 
 
-
-The following changes since commit 45d7f32c7a43cbb9592886d38190e379e2eb2226:
-
-  Merge git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile (2010-08-08 10:10:11 -0700)
-
-are available in the git repository at:
-
-  git://neil.brown.name/md for-linus
-
-Dan Williams (1):
-      md: move revalidate_disk() back outside open_mutex
-
-David Woodhouse (3):
-      md: Factor out RAID6 algorithms into lib/
-      async_tx: Move ASYNC_RAID6_TEST option to crypto/async_tx/, fix dependencies
-      Merge branch 'async' of macbook:git/btrfs-unstable
-
-NeilBrown (22):
-      md: reduce dependence on sysfs.
-      md/raid5: factor out code for changing size of stripe cache.
-      md/raid5: ensure we create a unique name for kmem_cache when mddev has no gendisk
-      md: be more careful setting MD_CHANGE_CLEAN
-      md: split out md_rdev_init
-      md: export various start/stop interfaces
-      md: add support for raising dm events.
-      raid5: Don't set read-ahead when there is no queue
-      md/raid5: export is_congested test
-      md/raid5: add simple plugging infrastructure.
-      md/plug: optionally use plugger to unplug an array during resync/recovery.
-      md/raid5: export raid5 unplugging interface.
-      md/bitmap: white space clean up and similar.
-      md/bitmap: reduce dependence on sysfs.
-      md/bitmap: clean up plugging calls.
-      md/bitmap: optimise scanning of empty bitmaps.
-      md/bitmap: prepare for storing write-intent-bitmap via dm-dirty-log.
-      md/bitmap:  separate out loading a bitmap from initialising the structures.
-      md/raid10: fix deadlock with unaligned read during resync
-      md: fix another deadlock with removing sysfs attributes.
-      md: clean up do_md_stop
-      Merge git://git.infradead.org/users/dwmw2/libraid-2.6 into for-linus
-
- crypto/async_tx/Kconfig                      |   14 +
- drivers/md/Kconfig                           |   18 +-
- drivers/md/Makefile                          |   77 ----
- drivers/md/bitmap.c                          |  508 ++++++++++++++------------
- drivers/md/bitmap.h                          |    6 +
- drivers/md/md.c                              |  286 +++++++++------
- drivers/md/md.h                              |   55 +++-
- drivers/md/raid10.c                          |   18 +
- drivers/md/raid5.c                           |  168 +++++----
- drivers/md/raid5.h                           |    9 +-
- lib/Kconfig                                  |    3 +
- lib/Makefile                                 |    1 +
- lib/raid6/Makefile                           |   78 ++++
- {drivers/md => lib/raid6}/mktables.c         |    0
- {drivers/md => lib/raid6}/raid6algos.c       |    0
- {drivers/md => lib/raid6}/raid6altivec.uc    |    0
- {drivers/md => lib/raid6}/raid6int.uc        |    0
- {drivers/md => lib/raid6}/raid6mmx.c         |    0
- {drivers/md => lib/raid6}/raid6recov.c       |    0
- {drivers/md => lib/raid6}/raid6sse1.c        |    0
- {drivers/md => lib/raid6}/raid6sse2.c        |    0
- {drivers/md => lib/raid6}/raid6test/Makefile |    0
- {drivers/md => lib/raid6}/raid6test/test.c   |    0
- {drivers/md => lib/raid6}/raid6x86.h         |    0
- {drivers/md => lib/raid6}/unroll.awk         |    0
- 25 files changed, 740 insertions(+), 501 deletions(-)
- create mode 100644 lib/raid6/Makefile
- rename {drivers/md => lib/raid6}/mktables.c (100%)
- rename {drivers/md => lib/raid6}/raid6algos.c (100%)
- rename {drivers/md => lib/raid6}/raid6altivec.uc (100%)
- rename {drivers/md => lib/raid6}/raid6int.uc (100%)
- rename {drivers/md => lib/raid6}/raid6mmx.c (100%)
- rename {drivers/md => lib/raid6}/raid6recov.c (100%)
- rename {drivers/md => lib/raid6}/raid6sse1.c (100%)
- rename {drivers/md => lib/raid6}/raid6sse2.c (100%)
- rename {drivers/md => lib/raid6}/raid6test/Makefile (100%)
- rename {drivers/md => lib/raid6}/raid6test/test.c (100%)
- rename {drivers/md => lib/raid6}/raid6x86.h (100%)
- rename {drivers/md => lib/raid6}/unroll.awk (100%)
