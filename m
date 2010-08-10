@@ -1,89 +1,43 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH} dm-throttle: new device mapper target to
- throttle reads and writes
-Date: Tue, 10 Aug 2010 14:41:38 -0400
-Message-ID: <20100810184138.GC9028@redhat.com>
-References: <1281447742.4964.46.camel@o>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [REVISED PULL REQUEST] md updates for 2.6.36
+Date: Tue, 10 Aug 2010 15:47:21 -0700
+Message-ID: <AANLkTinbCHAB3tPos1sp078maWaHAQbRM8oWMOiF1U8D@mail.gmail.com>
+References: <19552.39399.490494.51990@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1281447742.4964.46.camel@o>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <19552.39399.490494.51990@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: Neil Brown <neilb@suse.de>
+Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, David Woodhouse <dwmw2@infradead.org>
 List-Id: dm-devel.ids
 
-On Tue, Aug 10, 2010 at 03:42:22PM +0200, Heinz Mauelshagen wrote:
+On Mon, Aug 9, 2010 at 5:14 PM, Neil Brown <neilb@suse.de> wrote:
+>
+> =A0create mode 100644 lib/raid6/Makefile
+> =A0rename {drivers/md =3D> lib/raid6}/mktables.c (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6algos.c (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6altivec.uc (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6int.uc (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6mmx.c (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6recov.c (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6sse1.c (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6sse2.c (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6test/Makefile (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6test/test.c (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/raid6x86.h (100%)
+> =A0rename {drivers/md =3D> lib/raid6}/unroll.awk (100%)
 
-[..]
-> +/* Decide about throttling (ie. deferring bios). */
-> +static int throttle(struct throttle_c *tc, struct bio *bio)
-> +{
-> +	int rw = (bio_data_dir(bio) == WRITE);
-> +	unsigned bps; /* Bytes per second. */
-> +
-> +	smp_rmb();
-> +	bps = tc->params.bs[rw];
-> +	if (bps) {
-> +		unsigned size;
-> +		struct account *ac = &tc->account;
-> +		struct ac_rw *ac_rw = ac->rw + rw;
-> +
-> +		if (time_after(jiffies, ac_rw->end_jiffies))
-> +			/* Measure time exceeded. */
-> +			account_reset(rw, tc);
-> +		else if (test_bit(rw, &ac->flags))
-> +			/* In case we're throttled already. */
-> +			return 1;
-> +
-> +		/* Account I/O size. */
-> +		size = ac_rw->size + bio->bi_size;
-> +		if (size > bps) {
-> +			/* Hit kilobytes per second threshold. */
-> +			set_bit(rw, &ac->flags);
-> +			return 1;
+Hmm. Why "lib/raid6/raid6sse2.c" and friends? Why "raid6" twice? You
+don't mean "raid6+1" (mirrored raid6 ;), so why not just remove the
+second "raid6", and call it "lib/raid6/sse2.c"
 
-If bio->bi_size is greate than bps, will I always keep on throttling
-and hang?
+But I pulled. Just in case there was some logic to the duplication.
 
-[..]
-> +/* Map a throttle io. */
-> +static int throttle_map(struct dm_target *ti, struct bio *bio,
-> +			union map_info *map_context)
-> +{
-> +	int r, rw = (bio_data_dir(bio) == WRITE);
-> +	struct throttle_c *tc = ti->private;
-> +	struct ac_rw *ac_rw = tc->account.rw + rw;
-> +
-> +	mutex_lock(&ac_rw->mutex);
-> +	do {
-> +		r = throttle(tc, bio);
-> +		if (r) {
-> +			long end = ac_rw->end_jiffies, j = jiffies;
-> +
-> +			/* Wait till next second when KB/s reached. */
-> +			if (j < end)
-> +				schedule_timeout_uninterruptible(end - j);
-> +		}
-
-So a thread is blocked if it crossed the IO rate. There is no such mechanism
-to take the bio, statsh away somewhere and dispatch it to disk later. The
-way request queue descriptors work. Processes are blocked only if queue
-is congested otherwise one allows processes to submit requests and go
-back and do other work.
-
-I am assuming that this will be bad for AIO.
-
-Thanks
-Vivek
+                               Linus
+--
+To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
