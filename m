@@ -1,136 +1,111 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults libm ...
-Date: 9 Aug 2010 21:35:58 -0000
-Message-ID: <20100809213558.25495.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Neil Brown <neilb@suse.de>
+Subject: [REVISED PULL REQUEST] md updates for 2.6.36
+Date: Tue, 10 Aug 2010 10:14:31 +1000
+Message-ID: <19552.39399.490494.51990@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, David Woodhouse <dwmw2@infradead.org>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-08-09 21:35:58
 
-Modified files:
-	.              : multipath.conf.defaults 
-	libmultipath   : hwtable.c 
+Hi Linus,
+ here is a revised pull request for md updates for 2.6.36.
 
-Log message:
-	Fix for bz565579  New default configurations.
+ To the previous patches (which are unchanged) it adds some work by
+ David Woodhouse which moves the RAID6 computations out of drivers/md/
+ and places them in /lib so they can be used by other code -
+ e.g. btrfs.
+ The RAID6 code is completely unchanged (it was already accessed under
+ the async-crypto interface so not changes are need to the API).  Only
+ it's location and the fact that it can be a stand alone module
+ (rather than being in the same module as the rest of md/raid6) has
+ changed.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.21&r2=1.5.4.22
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.28&r2=1.20.2.29
+Thanks,
+NeilBrown
 
---- multipath-tools/multipath.conf.defaults	2010/08/09 18:38:21	1.5.4.21
-+++ multipath-tools/multipath.conf.defaults	2010/08/09 21:35:58	1.5.4.22
-@@ -490,6 +490,46 @@
- #		rr_min_io		1000
- #               path_checker            tur
- #	}
-+#	device {
-+#		vendor			"IBM"
-+#		product			"3303      NVDISK"
-+#		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
-+#		features		"0"
-+#		hardware_handler	"0"
-+#               path_grouping_policy    failover
-+#		failback		immediate
-+#		no_path_retry		60
-+#		rr_weight		uniform
-+#		rr_min_io		1000
-+#               path_checker            tur
-+#	}
-+#	device {
-+#		vendor			"AIX"
-+#		product			"VDASD"
-+#		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
-+#		features		"0"
-+#		hardware_handler	"0"
-+#               path_grouping_policy    multibus
-+#		failback		immediate
-+#		no_path_retry		60
-+#		rr_weight		uniform
-+#		rr_min_io		1000
-+#               path_checker            directio
-+#	}
-+#	device {
-+#		vendor			"AIX"
-+#		product			"NVDISK"
-+#		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
-+#		prio_callout		"/sbin/mpath_prio_alua /dev/%n"
-+#		features		"0"
-+#		hardware_handler	"1 alua"
-+#               path_grouping_policy    group_by_prio
-+#		failback		immediate
-+#		no_path_retry		60
-+#		rr_weight		uniform
-+#		rr_min_io		1000
-+#               path_checker            tur
-+#	}
- #       device {
- #               vendor                  "SGI"
- #               product                 "TP9[13]00"
---- multipath-tools/libmultipath/hwtable.c	2010/08/09 18:38:21	1.20.2.28
-+++ multipath-tools/libmultipath/hwtable.c	2010/08/09 21:35:58	1.20.2.29
-@@ -657,6 +657,23 @@
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
- 	},
-+	{
-+		/* IBM 3303      NVDISK */
-+		.vendor        = "IBM",
-+		.product       = "3303      NVDISK",
-+		.getuid        = DEFAULT_GETUID,
-+		.getprio       = NULL,
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = FAILOVER,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = (300 / DEFAULT_CHECKINT),
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = TUR,
-+	},
-+
- 	/*
- 	 * IBM Power Virtual SCSI Devices
- 	 *
-@@ -679,6 +696,23 @@
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = DIRECTIO,
- 	},
-+	{
-+		/* AIX NVDISK */
-+		.vendor        = "AIX",
-+		.product       = "NVDISK",
-+		.getuid        = DEFAULT_GETUID,
-+		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = "1 alua",
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = (300 / DEFAULT_CHECKINT),
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = TUR,
-+	},
-+
- 	/*
- 	 * SGI arrays
- 	 *
+
+
+The following changes since commit 45d7f32c7a43cbb9592886d38190e379e2eb2226:
+
+  Merge git://git.kernel.org/pub/scm/linux/kernel/git/cmetcalf/linux-tile (2010-08-08 10:10:11 -0700)
+
+are available in the git repository at:
+
+  git://neil.brown.name/md for-linus
+
+Dan Williams (1):
+      md: move revalidate_disk() back outside open_mutex
+
+David Woodhouse (3):
+      md: Factor out RAID6 algorithms into lib/
+      async_tx: Move ASYNC_RAID6_TEST option to crypto/async_tx/, fix dependencies
+      Merge branch 'async' of macbook:git/btrfs-unstable
+
+NeilBrown (22):
+      md: reduce dependence on sysfs.
+      md/raid5: factor out code for changing size of stripe cache.
+      md/raid5: ensure we create a unique name for kmem_cache when mddev has no gendisk
+      md: be more careful setting MD_CHANGE_CLEAN
+      md: split out md_rdev_init
+      md: export various start/stop interfaces
+      md: add support for raising dm events.
+      raid5: Don't set read-ahead when there is no queue
+      md/raid5: export is_congested test
+      md/raid5: add simple plugging infrastructure.
+      md/plug: optionally use plugger to unplug an array during resync/recovery.
+      md/raid5: export raid5 unplugging interface.
+      md/bitmap: white space clean up and similar.
+      md/bitmap: reduce dependence on sysfs.
+      md/bitmap: clean up plugging calls.
+      md/bitmap: optimise scanning of empty bitmaps.
+      md/bitmap: prepare for storing write-intent-bitmap via dm-dirty-log.
+      md/bitmap:  separate out loading a bitmap from initialising the structures.
+      md/raid10: fix deadlock with unaligned read during resync
+      md: fix another deadlock with removing sysfs attributes.
+      md: clean up do_md_stop
+      Merge git://git.infradead.org/users/dwmw2/libraid-2.6 into for-linus
+
+ crypto/async_tx/Kconfig                      |   14 +
+ drivers/md/Kconfig                           |   18 +-
+ drivers/md/Makefile                          |   77 ----
+ drivers/md/bitmap.c                          |  508 ++++++++++++++------------
+ drivers/md/bitmap.h                          |    6 +
+ drivers/md/md.c                              |  286 +++++++++------
+ drivers/md/md.h                              |   55 +++-
+ drivers/md/raid10.c                          |   18 +
+ drivers/md/raid5.c                           |  168 +++++----
+ drivers/md/raid5.h                           |    9 +-
+ lib/Kconfig                                  |    3 +
+ lib/Makefile                                 |    1 +
+ lib/raid6/Makefile                           |   78 ++++
+ {drivers/md => lib/raid6}/mktables.c         |    0
+ {drivers/md => lib/raid6}/raid6algos.c       |    0
+ {drivers/md => lib/raid6}/raid6altivec.uc    |    0
+ {drivers/md => lib/raid6}/raid6int.uc        |    0
+ {drivers/md => lib/raid6}/raid6mmx.c         |    0
+ {drivers/md => lib/raid6}/raid6recov.c       |    0
+ {drivers/md => lib/raid6}/raid6sse1.c        |    0
+ {drivers/md => lib/raid6}/raid6sse2.c        |    0
+ {drivers/md => lib/raid6}/raid6test/Makefile |    0
+ {drivers/md => lib/raid6}/raid6test/test.c   |    0
+ {drivers/md => lib/raid6}/raid6x86.h         |    0
+ {drivers/md => lib/raid6}/unroll.awk         |    0
+ 25 files changed, 740 insertions(+), 501 deletions(-)
+ create mode 100644 lib/raid6/Makefile
+ rename {drivers/md => lib/raid6}/mktables.c (100%)
+ rename {drivers/md => lib/raid6}/raid6algos.c (100%)
+ rename {drivers/md => lib/raid6}/raid6altivec.uc (100%)
+ rename {drivers/md => lib/raid6}/raid6int.uc (100%)
+ rename {drivers/md => lib/raid6}/raid6mmx.c (100%)
+ rename {drivers/md => lib/raid6}/raid6recov.c (100%)
+ rename {drivers/md => lib/raid6}/raid6sse1.c (100%)
+ rename {drivers/md => lib/raid6}/raid6sse2.c (100%)
+ rename {drivers/md => lib/raid6}/raid6test/Makefile (100%)
+ rename {drivers/md => lib/raid6}/raid6test/test.c (100%)
+ rename {drivers/md => lib/raid6}/raid6x86.h (100%)
+ rename {drivers/md => lib/raid6}/unroll.awk (100%)
