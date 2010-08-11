@@ -1,108 +1,59 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [REVISED PULL REQUEST] md updates for 2.6.36
-Date: Thu, 12 Aug 2010 06:49:26 +1000
-Message-ID: <20100812064926.15dafbf7@notabene>
-References: <19552.39399.490494.51990@notabene.brown>
-	<AANLkTinbCHAB3tPos1sp078maWaHAQbRM8oWMOiF1U8D@mail.gmail.com>
-	<1281482611.5887.38.camel@localhost>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath discovery.c
+Date: 11 Aug 2010 23:05:50 -0000
+Message-ID: <20100811230550.32654.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1281482611.5887.38.camel@localhost>
-Sender: linux-raid-owner@vger.kernel.org
-To: David Woodhouse <dwmw2@infradead.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 11 Aug 2010 00:23:31 +0100
-David Woodhouse <dwmw2@infradead.org> wrote:
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2010-08-11 23:05:50
 
-> On Tue, 2010-08-10 at 15:47 -0700, Linus Torvalds wrote:
-> >=20
-> > Hmm. Why "lib/raid6/raid6sse2.c" and friends? Why "raid6" twice? Yo=
-u
-> > don't mean "raid6+1" (mirrored raid6 ;), so why not just remove the
-> > second "raid6", and call it "lib/raid6/sse2.c"
-> >=20
-> > But I pulled. Just in case there was some logic to the duplication.=
-=20
->=20
-> No particular reason -- I just wanted the initial move to be as simpl=
-e
-> as possible. Since it all gets built into raid6_pq.ko and we never se=
-e
-> these filenames even in module names, it does make sense to rename th=
-em.
->=20
-> If Neil approves, git://git.infradead.org/~dwmw2/libraid-2.6.git
+Modified files:
+	libmultipath   : discovery.c 
 
-Looks good,thanks.  There are a few comments still say "raid6xxx.c" and=
- there
-is a .h file (raid6x86.h) which you didn't rename but probably should b=
-e.
+Log message:
+	Fix for bz #576600
+	Patch to allow multipath to handle virtio devices. Mostly for testing purposes.
 
-I've added a patch to clean these up.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.14&r2=1.32.2.15
 
->=20
-> The userspace test/ (ne=C3=A9 raid6test/) directory doesn't build, bu=
-t it
-> didn't before. At least I fixed the awk incantations.
->=20
-Yep, there is some bit rot in there.  Fixed that too.
-
-Linus, you can get all this from
-    git://neil.brown.name/md for-linus
-
-Thanks.
-
-The following changes since commit 3d30701b58970425e1d45994d6cb82f82892=
-4fdd:
-
-  Merge branch 'for-linus' of git://neil.brown.name/md (2010-08-10 15:3=
-8:19 -0700)
-
-are available in the git repository at:
-
-  git://neil.brown.name/md for-linus
-
-David Woodhouse (1):
-      Rename raid6 files now they're in a 'raid6' directory.
-
-NeilBrown (2):
-      Make lib/raid6/test build correctly.
-      Further tidyup of raid6 naming in lib/raid6
-
- include/linux/raid/pq.h                   |    2 +
- lib/raid6/Makefile                        |   81 ++++++++++++++-------=
---------
- lib/raid6/{raid6algos.c =3D> algos.c}       |    4 +-
- lib/raid6/{raid6altivec.uc =3D> altivec.uc} |    0
- lib/raid6/{raid6int.uc =3D> int.uc}         |    0
- lib/raid6/{raid6mmx.c =3D> mmx.c}           |    6 +-
- lib/raid6/raid6test/Makefile              |   75 ---------------------=
------
- lib/raid6/{raid6recov.c =3D> recov.c}       |    2 +-
- lib/raid6/{raid6sse1.c =3D> sse1.c}         |    6 +-
- lib/raid6/{raid6sse2.c =3D> sse2.c}         |    4 +-
- lib/raid6/test/Makefile                   |   72 +++++++++++++++++++++=
-++++
- lib/raid6/{raid6test =3D> test}/test.c      |    0
- lib/raid6/{raid6x86.h =3D> x86.h}           |    2 +-
- 13 files changed, 125 insertions(+), 129 deletions(-)
- rename lib/raid6/{raid6algos.c =3D> algos.c} (99%)
- rename lib/raid6/{raid6altivec.uc =3D> altivec.uc} (100%)
- rename lib/raid6/{raid6int.uc =3D> int.uc} (100%)
- rename lib/raid6/{raid6mmx.c =3D> mmx.c} (98%)
- delete mode 100644 lib/raid6/raid6test/Makefile
- rename lib/raid6/{raid6recov.c =3D> recov.c} (99%)
- rename lib/raid6/{raid6sse1.c =3D> sse1.c} (98%)
- rename lib/raid6/{raid6sse2.c =3D> sse2.c} (99%)
- create mode 100644 lib/raid6/test/Makefile
- rename lib/raid6/{raid6test =3D> test}/test.c (100%)
- rename lib/raid6/{raid6x86.h =3D> x86.h} (99%)
---
-To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--- multipath-tools/libmultipath/discovery.c	2010/06/23 16:28:07	1.32.2.14
++++ multipath-tools/libmultipath/discovery.c	2010/08/11 23:05:50	1.32.2.15
+@@ -481,6 +481,7 @@
+ 	char attr_path[FILE_NAME_SIZE];
+ 	char attr_buff[FILE_NAME_SIZE];
+ 	unsigned int unused;
++	char vdisk;
+ 
+ 	pp->bus = SYSFS_BUS_UNDEF;
+ 
+@@ -489,6 +490,12 @@
+ 		strcpy(pp->product_id, "GNBD");
+ 		pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id);
+ 		return 0;
++	} else if (sscanf(pp->dev, "vd%c", &vdisk) == 1 &&
++		   'a' <= vdisk && vdisk <= 'z'){
++		strcpy(pp->vendor_id,  "VIRTIO");
++		strcpy(pp->product_id, "VIRTIO");
++		pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id);
++		return 0;
+ 	}
+ 	/*
+ 	 * This is ugly : we should be able to do a simple
