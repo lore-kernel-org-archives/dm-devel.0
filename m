@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath discovery.c
-Date: 11 Aug 2010 23:05:50 -0000
-Message-ID: <20100811230550.32654.qmail@sourceware.org>
+Subject: multipath-tools/multipath multipath.conf.5
+Date: 11 Aug 2010 23:18:45 -0000
+Message-ID: <20100811231845.6945.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,38 +22,27 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-08-11 23:05:50
+Changes by:	bmarzins@sourceware.org	2010-08-11 23:18:43
 
 Modified files:
-	libmultipath   : discovery.c 
+	multipath      : multipath.conf.5 
 
 Log message:
-	Fix for bz #576600
-	Patch to allow multipath to handle virtio devices. Mostly for testing purposes.
+	Fix for bz #599686
+	Small manpage clarification.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.14&r2=1.32.2.15
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.5.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1.2.3&r2=1.1.2.4
 
---- multipath-tools/libmultipath/discovery.c	2010/06/23 16:28:07	1.32.2.14
-+++ multipath-tools/libmultipath/discovery.c	2010/08/11 23:05:50	1.32.2.15
-@@ -481,6 +481,7 @@
- 	char attr_path[FILE_NAME_SIZE];
- 	char attr_buff[FILE_NAME_SIZE];
- 	unsigned int unused;
-+	char vdisk;
- 
- 	pp->bus = SYSFS_BUS_UNDEF;
- 
-@@ -489,6 +490,12 @@
- 		strcpy(pp->product_id, "GNBD");
- 		pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id);
- 		return 0;
-+	} else if (sscanf(pp->dev, "vd%c", &vdisk) == 1 &&
-+		   'a' <= vdisk && vdisk <= 'z'){
-+		strcpy(pp->vendor_id,  "VIRTIO");
-+		strcpy(pp->product_id, "VIRTIO");
-+		pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id);
-+		return 0;
- 	}
- 	/*
- 	 * This is ugly : we should be able to do a simple
+--- multipath-tools/multipath/Attic/multipath.conf.5	2010/02/10 04:11:18	1.1.2.3
++++ multipath-tools/multipath/Attic/multipath.conf.5	2010/08/11 23:18:43	1.1.2.4
+@@ -40,7 +40,8 @@
+ .TP 17
+ .B defaults
+ This section defines default values for attributes which are used
+-whenever no specific setting is given.
++whenever no values are given in the appropriate device or multipath
++sections.
+ .TP
+ .B blacklist
+ This section defines which devices should be excluded from the
