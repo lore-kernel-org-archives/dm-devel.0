@@ -1,8 +1,8 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 09/11] block: implement REQ_FLUSH/FUA based
-	interface for FLUSH/FUA requests
-Date: Thu, 12 Aug 2010 14:41:29 +0200
-Message-ID: <1281616891-5691-10-git-send-email-tj__22569.8548289531$1281617261$gmane$org@kernel.org>
+Subject: [PATCH 04/11] block: remove spurious uses of
+	REQ_HARDBARRIER
+Date: Thu, 12 Aug 2010 14:41:24 +0200
+Message-ID: <1281616891-5691-5-git-send-email-tj__3312.65266654572$1281617285$gmane$org@kernel.org>
 References: <1281616891-5691-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,271 +20,153 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
-Cc: Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@infradead.org>
+Cc: Tejun Heo <tj@kernel.org>, Peter Osterlund <petero2@telia.com>, Boaz Harrosh <bharrosh@panasas.com>
 List-Id: dm-devel.ids
 
-Now that the backend conversion is complete, export sequenced
-FLUSH/FUA capability through REQ_FLUSH/FUA flags.  REQ_FLUSH means the
-device cache should be flushed before executing the request.  REQ_FUA
-means that the data in the request should be on non-volatile media on
-completion.
+REQ_HARDBARRIER is deprecated.  Remove spurious uses in the following
+users.  Please note that other than osdblk, all other uses were
+already spurious before deprecation.
 
-Block layer will choose the correct way of implementing the semantics
-and execute it.  The request may be passed to the device directly if
-the device can handle it; otherwise, it will be sequenced using one or
-more proxy requests.  Devices will never see REQ_FLUSH and/or FUA
-which it doesn't support.
+* osdblk: osdblk_rq_fn() won't receive any request with
+  REQ_HARDBARRIER set.  Remove the test for it.
 
-* QUEUE_ORDERED_* are removed and QUEUE_FSEQ_* are moved into
-  blk-flush.c.
+* pktcdvd: use of REQ_HARDBARRIER in pkt_generic_packet() doesn't mean
+  anything.  Removed.
 
-* REQ_FLUSH w/o data can also be directly passed to drivers without
-  sequencing but some drivers assume that zero length requests don't
-  have rq->bio which isn't true for these requests requiring the use
-  of proxy requests.
+* aic7xxx_old: Setting MSG_ORDERED_Q_TAG on REQ_HARDBARRIER is
+  spurious.  Removed.
+
+* sas_scsi_host: Setting TASK_ATTR_ORDERED on REQ_HARDBARRIER is
+  spurious.  Removed.
+
+* scsi_tcq: The ordered tag path wasn't being used anyway.  Removed.
 
 Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Christoph Hellwig <hch@infradead.org>
+Cc: Boaz Harrosh <bharrosh@panasas.com>
+Cc: James Bottomley <James.Bottomley@suse.de>
+Cc: Peter Osterlund <petero2@telia.com>
 ---
- block/blk-core.c       |    2 +-
- block/blk-flush.c      |   85 ++++++++++++++++++++++++++----------------------
- block/blk.h            |    3 ++
- include/linux/blkdev.h |   38 +--------------------
- 4 files changed, 52 insertions(+), 76 deletions(-)
+ drivers/block/osdblk.c              |    3 +--
+ drivers/block/pktcdvd.c             |    1 -
+ drivers/scsi/aic7xxx_old.c          |   21 ++-------------------
+ drivers/scsi/libsas/sas_scsi_host.c |   13 +------------
+ include/scsi/scsi_tcq.h             |    6 +-----
+ 5 files changed, 5 insertions(+), 39 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index efe391b..c00ace2 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1204,7 +1204,7 @@ static int __make_request(struct request_queue *q, struct bio *bio)
+diff --git a/drivers/block/osdblk.c b/drivers/block/osdblk.c
+index 72d6246..87311eb 100644
+--- a/drivers/block/osdblk.c
++++ b/drivers/block/osdblk.c
+@@ -310,8 +310,7 @@ static void osdblk_rq_fn(struct request_queue *q)
+ 			break;
  
- 	spin_lock_irq(q->queue_lock);
+ 		/* filter out block requests we don't understand */
+-		if (rq->cmd_type != REQ_TYPE_FS &&
+-		    !(rq->cmd_flags & REQ_HARDBARRIER)) {
++		if (rq->cmd_type != REQ_TYPE_FS) {
+ 			blk_end_request_all(rq, 0);
+ 			continue;
+ 		}
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index b1cbeb5..0166ea1 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -753,7 +753,6 @@ static int pkt_generic_packet(struct pktcdvd_device *pd, struct packet_command *
  
--	if (bio->bi_rw & REQ_HARDBARRIER) {
-+	if (bio->bi_rw & (REQ_FLUSH | REQ_FUA)) {
- 		where = ELEVATOR_INSERT_FRONT;
- 		goto get_rq;
- 	}
-diff --git a/block/blk-flush.c b/block/blk-flush.c
-index dd87322..452c552 100644
---- a/block/blk-flush.c
-+++ b/block/blk-flush.c
-@@ -1,5 +1,5 @@
- /*
-- * Functions related to barrier IO handling
-+ * Functions to sequence FLUSH and FUA writes.
-  */
- #include <linux/kernel.h>
- #include <linux/module.h>
-@@ -9,6 +9,15 @@
+ 	rq->timeout = 60*HZ;
+ 	rq->cmd_type = REQ_TYPE_BLOCK_PC;
+-	rq->cmd_flags |= REQ_HARDBARRIER;
+ 	if (cgc->quiet)
+ 		rq->cmd_flags |= REQ_QUIET;
  
- #include "blk.h"
- 
-+/* FLUSH/FUA sequences */
-+enum {
-+	QUEUE_FSEQ_STARTED	= (1 << 0), /* flushing in progress */
-+	QUEUE_FSEQ_PREFLUSH	= (1 << 1), /* pre-flushing in progress */
-+	QUEUE_FSEQ_DATA		= (1 << 2), /* data write in progress */
-+	QUEUE_FSEQ_POSTFLUSH	= (1 << 3), /* post-flushing in progress */
-+	QUEUE_FSEQ_DONE		= (1 << 4),
-+};
-+
- static struct request *queue_next_fseq(struct request_queue *q);
- 
- unsigned blk_flush_cur_seq(struct request_queue *q)
-@@ -79,6 +88,7 @@ static void queue_flush(struct request_queue *q, struct request *rq,
- 
- static struct request *queue_next_fseq(struct request_queue *q)
- {
-+	struct request *orig_rq = q->orig_flush_rq;
- 	struct request *rq = &q->flush_rq;
- 
- 	switch (blk_flush_cur_seq(q)) {
-@@ -87,12 +97,11 @@ static struct request *queue_next_fseq(struct request_queue *q)
- 		break;
- 
- 	case QUEUE_FSEQ_DATA:
--		/* initialize proxy request and queue it */
-+		/* initialize proxy request, inherit FLUSH/FUA and queue it */
- 		blk_rq_init(q, rq);
--		init_request_from_bio(rq, q->orig_flush_rq->bio);
--		rq->cmd_flags &= ~REQ_HARDBARRIER;
--		if (q->ordered & QUEUE_ORDERED_DO_FUA)
--			rq->cmd_flags |= REQ_FUA;
-+		init_request_from_bio(rq, orig_rq->bio);
-+		rq->cmd_flags &= ~(REQ_FLUSH | REQ_FUA);
-+		rq->cmd_flags |= orig_rq->cmd_flags & (REQ_FLUSH | REQ_FUA);
- 		rq->end_io = flush_data_end_io;
- 
- 		elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
-@@ -110,60 +119,58 @@ static struct request *queue_next_fseq(struct request_queue *q)
- 
- struct request *blk_do_flush(struct request_queue *q, struct request *rq)
- {
-+	unsigned int fflags = q->flush_flags; /* may change, cache it */
-+	bool has_flush = fflags & REQ_FLUSH, has_fua = fflags & REQ_FUA;
-+	bool do_preflush = has_flush && (rq->cmd_flags & REQ_FLUSH);
-+	bool do_postflush = has_flush && !has_fua && (rq->cmd_flags & REQ_FUA);
- 	unsigned skip = 0;
- 
--	if (!(rq->cmd_flags & REQ_HARDBARRIER))
-+	/*
-+	 * Special case.  If there's data but flush is not necessary,
-+	 * the request can be issued directly.
-+	 *
-+	 * Flush w/o data should be able to be issued directly too but
-+	 * currently some drivers assume that rq->bio contains
-+	 * non-zero data if it isn't NULL and empty FLUSH requests
-+	 * getting here usually have bio's without data.
-+	 */
-+	if (blk_rq_sectors(rq) && !do_preflush && !do_postflush) {
-+		rq->cmd_flags &= ~REQ_FLUSH;
-+		if (!has_fua)
-+			rq->cmd_flags &= ~REQ_FUA;
- 		return rq;
-+	}
- 
-+	/*
-+	 * Sequenced flushes can't be processed in parallel.  If
-+	 * another one is already in progress, queue for later
-+	 * processing.
-+	 */
- 	if (q->flush_seq) {
--		/*
--		 * Sequenced flush is already in progress and they
--		 * can't be processed in parallel.  Queue for later
--		 * processing.
--		 */
- 		list_move_tail(&rq->queuelist, &q->pending_flushes);
- 		return NULL;
- 	}
- 
--	if (unlikely(q->next_ordered == QUEUE_ORDERED_NONE)) {
--		/*
--		 * Queue ordering not supported.  Terminate
--		 * with prejudice.
--		 */
--		blk_dequeue_request(rq);
--		__blk_end_request_all(rq, -EOPNOTSUPP);
--		return NULL;
+diff --git a/drivers/scsi/aic7xxx_old.c b/drivers/scsi/aic7xxx_old.c
+index 93984c9..e1cd606 100644
+--- a/drivers/scsi/aic7xxx_old.c
++++ b/drivers/scsi/aic7xxx_old.c
+@@ -2850,12 +2850,6 @@ aic7xxx_done(struct aic7xxx_host *p, struct aic7xxx_scb *scb)
+       aic_dev->r_total++;
+       ptr = aic_dev->r_bins;
+     }
+-    if(cmd->device->simple_tags && cmd->request->cmd_flags & REQ_HARDBARRIER)
+-    {
+-      aic_dev->barrier_total++;
+-      if(scb->tag_action == MSG_ORDERED_Q_TAG)
+-        aic_dev->ordered_total++;
+-    }
+     x = scb->sg_length;
+     x >>= 10;
+     for(i=0; i<6; i++)
+@@ -10144,19 +10138,8 @@ static void aic7xxx_buildscb(struct aic7xxx_host *p, struct scsi_cmnd *cmd,
+     /* We always force TEST_UNIT_READY to untagged */
+     if (cmd->cmnd[0] != TEST_UNIT_READY && sdptr->simple_tags)
+     {
+-      if (req->cmd_flags & REQ_HARDBARRIER)
+-      {
+-	if(sdptr->ordered_tags)
+-	{
+-          hscb->control |= MSG_ORDERED_Q_TAG;
+-          scb->tag_action = MSG_ORDERED_Q_TAG;
 -	}
--
- 	/*
- 	 * Start a new flush sequence
- 	 */
- 	q->flush_err = 0;
--	q->ordered = q->next_ordered;
- 	q->flush_seq |= QUEUE_FSEQ_STARTED;
- 
--	/*
--	 * For an empty barrier, there's no actual BAR request, which
--	 * in turn makes POSTFLUSH unnecessary.  Mask them off.
--	 */
--	if (!blk_rq_sectors(rq))
--		q->ordered &= ~(QUEUE_ORDERED_DO_BAR |
--				QUEUE_ORDERED_DO_POSTFLUSH);
--
--	/* stash away the original request */
-+	/* adjust FLUSH/FUA of the original request and stash it away */
-+	rq->cmd_flags &= ~REQ_FLUSH;
-+	if (!has_fua)
-+		rq->cmd_flags &= ~REQ_FUA;
- 	blk_dequeue_request(rq);
- 	q->orig_flush_rq = rq;
- 
--	if (!(q->ordered & QUEUE_ORDERED_DO_PREFLUSH))
-+	/* skip unneded sequences and return the first one */
-+	if (!do_preflush)
- 		skip |= QUEUE_FSEQ_PREFLUSH;
--
--	if (!(q->ordered & QUEUE_ORDERED_DO_BAR))
-+	if (!blk_rq_sectors(rq))
- 		skip |= QUEUE_FSEQ_DATA;
--
--	if (!(q->ordered & QUEUE_ORDERED_DO_POSTFLUSH))
-+	if (!do_postflush)
- 		skip |= QUEUE_FSEQ_POSTFLUSH;
--
--	/* complete skipped sequences and return the first sequence */
- 	return blk_flush_complete_seq(q, skip, 0);
+-      }
+-      else
+-      {
+-        hscb->control |= MSG_SIMPLE_Q_TAG;
+-        scb->tag_action = MSG_SIMPLE_Q_TAG;
+-      }
++      hscb->control |= MSG_SIMPLE_Q_TAG;
++      scb->tag_action = MSG_SIMPLE_Q_TAG;
+     }
+   }
+   if ( !(aic_dev->dtr_pending) &&
+diff --git a/drivers/scsi/libsas/sas_scsi_host.c b/drivers/scsi/libsas/sas_scsi_host.c
+index f0cfba9..535085c 100644
+--- a/drivers/scsi/libsas/sas_scsi_host.c
++++ b/drivers/scsi/libsas/sas_scsi_host.c
+@@ -130,17 +130,6 @@ static void sas_scsi_task_done(struct sas_task *task)
+ 	sc->scsi_done(sc);
  }
  
-diff --git a/block/blk.h b/block/blk.h
-index 24b92bd..a09c18b 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -60,6 +60,9 @@ static inline struct request *__elv_next_request(struct request_queue *q)
- 	while (1) {
- 		while (!list_empty(&q->queue_head)) {
- 			rq = list_entry_rq(q->queue_head.next);
-+			if (!(rq->cmd_flags & (REQ_FLUSH | REQ_FUA)) ||
-+			    rq == &q->flush_rq)
-+				return rq;
- 			rq = blk_do_flush(q, rq);
- 			if (rq)
- 				return rq;
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 87e58f0..5ce0696 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -357,7 +357,6 @@ struct request_queue
- 	/*
- 	 * for flush operations
- 	 */
--	unsigned int		ordered, next_ordered;
- 	unsigned int		flush_flags;
- 	unsigned int		flush_seq;
- 	int			flush_err;
-@@ -464,40 +463,6 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
- 	__clear_bit(flag, &q->queue_flags);
- }
+-static enum task_attribute sas_scsi_get_task_attr(struct scsi_cmnd *cmd)
+-{
+-	enum task_attribute ta = TASK_ATTR_SIMPLE;
+-	if (cmd->request && blk_rq_tagged(cmd->request)) {
+-		if (cmd->device->ordered_tags &&
+-		    (cmd->request->cmd_flags & REQ_HARDBARRIER))
+-			ta = TASK_ATTR_ORDERED;
+-	}
+-	return ta;
+-}
+-
+ static struct sas_task *sas_create_task(struct scsi_cmnd *cmd,
+ 					       struct domain_device *dev,
+ 					       gfp_t gfp_flags)
+@@ -160,7 +149,7 @@ static struct sas_task *sas_create_task(struct scsi_cmnd *cmd,
+ 	task->ssp_task.retry_count = 1;
+ 	int_to_scsilun(cmd->device->lun, &lun);
+ 	memcpy(task->ssp_task.LUN, &lun.scsi_lun, 8);
+-	task->ssp_task.task_attr = sas_scsi_get_task_attr(cmd);
++	task->ssp_task.task_attr = TASK_ATTR_SIMPLE;
+ 	memcpy(task->ssp_task.cdb, cmd->cmnd, 16);
  
--enum {
--	/*
--	 * Hardbarrier is supported with one of the following methods.
--	 *
--	 * NONE		: hardbarrier unsupported
--	 * DRAIN	: ordering by draining is enough
--	 * DRAIN_FLUSH	: ordering by draining w/ pre and post flushes
--	 * DRAIN_FUA	: ordering by draining w/ pre flush and FUA write
--	 */
--	QUEUE_ORDERED_DO_PREFLUSH	= 0x10,
--	QUEUE_ORDERED_DO_BAR		= 0x20,
--	QUEUE_ORDERED_DO_POSTFLUSH	= 0x40,
--	QUEUE_ORDERED_DO_FUA		= 0x80,
--
--	QUEUE_ORDERED_NONE		= 0x00,
--
--	QUEUE_ORDERED_DRAIN		= QUEUE_ORDERED_DO_BAR,
--	QUEUE_ORDERED_DRAIN_FLUSH	= QUEUE_ORDERED_DRAIN |
--					  QUEUE_ORDERED_DO_PREFLUSH |
--					  QUEUE_ORDERED_DO_POSTFLUSH,
--	QUEUE_ORDERED_DRAIN_FUA		= QUEUE_ORDERED_DRAIN |
--					  QUEUE_ORDERED_DO_PREFLUSH |
--					  QUEUE_ORDERED_DO_FUA,
--
--	/*
--	 * FLUSH/FUA sequences.
--	 */
--	QUEUE_FSEQ_STARTED	= (1 << 0), /* flushing in progress */
--	QUEUE_FSEQ_PREFLUSH	= (1 << 1), /* pre-flushing in progress */
--	QUEUE_FSEQ_DATA		= (1 << 2), /* data write in progress */
--	QUEUE_FSEQ_POSTFLUSH	= (1 << 3), /* post-flushing in progress */
--	QUEUE_FSEQ_DONE		= (1 << 4),
--};
--
- #define blk_queue_plugged(q)	test_bit(QUEUE_FLAG_PLUGGED, &(q)->queue_flags)
- #define blk_queue_tagged(q)	test_bit(QUEUE_FLAG_QUEUED, &(q)->queue_flags)
- #define blk_queue_stopped(q)	test_bit(QUEUE_FLAG_STOPPED, &(q)->queue_flags)
-@@ -576,7 +541,8 @@ static inline void blk_clear_queue_full(struct request_queue *q, int sync)
-  * it already be started by driver.
-  */
- #define RQ_NOMERGE_FLAGS	\
--	(REQ_NOMERGE | REQ_STARTED | REQ_HARDBARRIER | REQ_SOFTBARRIER)
-+	(REQ_NOMERGE | REQ_STARTED | REQ_HARDBARRIER | REQ_SOFTBARRIER | \
-+	 REQ_FLUSH | REQ_FUA)
- #define rq_mergeable(rq)	\
- 	(!((rq)->cmd_flags & RQ_NOMERGE_FLAGS) && \
- 	 (((rq)->cmd_flags & REQ_DISCARD) || \
+ 	task->scatter = scsi_sglist(cmd);
+diff --git a/include/scsi/scsi_tcq.h b/include/scsi/scsi_tcq.h
+index 1723138..d6e7994 100644
+--- a/include/scsi/scsi_tcq.h
++++ b/include/scsi/scsi_tcq.h
+@@ -97,13 +97,9 @@ static inline void scsi_deactivate_tcq(struct scsi_device *sdev, int depth)
+ static inline int scsi_populate_tag_msg(struct scsi_cmnd *cmd, char *msg)
+ {
+         struct request *req = cmd->request;
+-	struct scsi_device *sdev = cmd->device;
+ 
+         if (blk_rq_tagged(req)) {
+-		if (sdev->ordered_tags && req->cmd_flags & REQ_HARDBARRIER)
+-        	        *msg++ = MSG_ORDERED_TAG;
+-        	else
+-        	        *msg++ = MSG_SIMPLE_TAG;
++		*msg++ = MSG_SIMPLE_TAG;
+         	*msg++ = req->tag;
+         	return 2;
+ 	}
 -- 
 1.7.1
