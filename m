@@ -1,15 +1,14 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH} dm-throttle: new device mapper target to
- throttle reads and writes
-Date: Thu, 12 Aug 2010 11:08:09 +0200
-Message-ID: <1281604089.4964.346.camel@o>
-References: <1281447742.4964.46.camel@o>  <20100810144457.GA9028@redhat.com>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: [PATCH 08/11] block: rename barrier/ordered to flush
+Date: Thu, 12 Aug 2010 14:41:28 +0200
+Message-ID: <1281616891-5691-9-git-send-email-tj@kernel.org>
+References: <1281616891-5691-1-git-send-email-tj@kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100810144457.GA9028@redhat.com>
+In-Reply-To: <1281616891-5691-1-git-send-email-tj@kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,639 +18,354 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
+Cc: Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-On Tue, 2010-08-10 at 10:44 -0400, Vivek Goyal wrote:
-> On Tue, Aug 10, 2010 at 03:42:22PM +0200, Heinz Mauelshagen wrote:
-> > 
-> > This is a new device mapper "throttle" target which allows for
-> > throttling reads and writes (ie. enforcing throughput limits) in units
-> > of kilobytes per second.
-> > 
-> 
-> Hi Heinz,
-> 
-> How about extending this stuff to handle cgroups also. So instead of
-> having deivice wide throttling policy, we throttle cgroups. That will
-> be a much more useful thing and will serve well the use case of throttling
-> virtual machines in cgroup.
+With ordering requirements dropped, barrier and ordered are misnomers.
+Now all block layer does is sequencing FLUSH and FUA.  Rename them to
+flush.
 
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: Christoph Hellwig <hch@infradead.org>
+---
+ block/blk-core.c       |   21 +++++-----
+ block/blk-flush.c      |   98 +++++++++++++++++++++++------------------------
+ block/blk.h            |    4 +-
+ include/linux/blkdev.h |   26 ++++++------
+ 4 files changed, 73 insertions(+), 76 deletions(-)
 
-Hi Vivek,
-
-needs a serious design discussion but I think we could leverage it to
-allow for throttling of cgroups.
-
-> 
-> Yesterday I had raised the issue of cgroup IO bandwidth throttling at
-> Linux Storage and Filesystem session. I thought that a device mapper
-> target will be the easiest thing to because I can make use of lots
-> of existing infrastructure.
-> 
-> Christoph did not like it because of configuration concerns. He preferred
-> something in block layer/request queue. It was also hinted that there
-> were some ideas floating of better integation of device mapper
-> infrastructure with request queue and this thing should go behind that.
-
-Right, if a block layer change of that kind will be pending, we should
-wait for it to settle.
-
-> But the problem is I am not sure how long it is going to take before
-> this new infrastructure becomes a reality and it will not be practical
-> to wait for that.
-
-Did any reliable plans come out of the discussion or will there be any
-in the near future?
-
-> 
-> There is a possibility that we can put a hook in __make_request function
-> and first take out all the bios and subject them to bandwidth limitation
-> and then pass it to lower layers. But that will mean redoing lots of
-> common infrastructure which has already been done. For example,
-> 
-> - What happens to queue congestion semantics.
-> 
-> 	- Request queue already has it based on requests and device mapper
-> 	  seems to have its own congestion functions.
-
-Yes, dm does.
-
-> 
-> 	- If I go for taking the bio out on request queue and hold them
->    	  back then I am not sure how to define congestion semantics.
-> 	  To keep congestion semantcs simple, it would make sense to
->  	  create a new request queue (with the help of dm target), and
-> 	  use that.
-
-Yes, that's an obvious approach to stay with the same congestion
-semantics.
-
-> 
-> - I have yet to think through it but I think I wil be doing other common
->   operations like holding back requests in internal queues, dispatching
->   these later with the help of a kernel thread, allowing some to dispatch
->   immediately as these come in, Putting processes to sleep and waking
->   them later if we are already holding too many bios etc.
-> 
-> To me it sounds that doing it is lot simpler with the help of device
-> mapper target. Though the not so nice part is the need of configuring
-> another device mapper target on every block device we want to control.
-
-Yes, we'd need identity mappings in the stack to be prepared.
-
-Or we need some __generic_make_request() hack ala bcache to hijack the
-request function on the fly.
-
-> 
-> Christoph, would it make sense to currently go ahead with device mapper
-> target and later convert that to whenever request queue and device mapper
-> fusion thing happens. Or, do you have other ideas which I have not been
-> able to grasp....
-
-Let's see what he wants to fill in.
-
-Cheers,
-Heinz
-
-> 
-> Thanks
-> Vivek  
-> 
-> 
-> 
-> 
-> > I've been using it for a while in testing configurations and think it's
-> > valuable for many people requiring simulation of low bandwidth
-> > interconnects or simulating different throughput characteristics on
-> > distinct address segments of a device (eg. fast outer disk spindles vs.
-> > slower inner ones).
-> > 
-> > Please read Documentation/device-mapper/throttle.txt for how to use it.
-> > 
-> > Note: this target can be combined with the "delay" target, which is
-> > already upstream in order to set io delays in addition to throttling,
-> > again valuable for long distance transport simulations.
-> > 
-> > 
-> > This target should stay separate rather than merged IMO, because it
-> > basically serves testing purposes and hence should not complicate any
-> > production mapping target. A potential merge with the "delay" target is
-> > subject to discussion.
-> > 
-> > 
-> > Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-> > 
-> >  Documentation/device-mapper/throttle.txt |   68 ++++++
-> >  drivers/md/Kconfig                       |    8 +
-> >  drivers/md/Makefile                      |    1 +
-> >  drivers/md/dm-throttle.c                 |  389 ++++++++++++++++++++++++++++++
-> >  4 files changed, 466 insertions(+), 0 deletions(-)
-> > 
-> > diff --git a/Documentation/device-mapper/throttle.txt b/Documentation/device-mapper/throttle.txt
-> > new file mode 100644
-> > index 0000000..9deea6e
-> > --- /dev/null
-> > +++ b/Documentation/device-mapper/throttle.txt
-> > @@ -0,0 +1,68 @@
-> > +dm-throttle
-> > +===========
-> > +
-> > +Device-Mapper's "throttle" target maps a linear range of the Device-Mapper
-> > +device onto a linear range of another device providing the option to throttle
-> > +read and write ios seperately.
-> > +
-> > +This target provides the ability to simulate low bandwidth transports to
-> > +devices or different throughput to seperate address segements of a device.
-> > +
-> > +Parameters: <#variable params> <read kbs> <write kbs> <dev path> <offset>
-> > +    <#variable params> number of variable paramaters to set read and
-> > +		       write throttling kilobytes per second limits.
-> > +		       Range: 0 - 2 with
-> > +		       0 = no throttling,
-> > +		       1 and <read kbs> = read throttling only and
-> > +		       2 and <read kbs> <write kbs> = read and write throttling.
-> > +    <read kbs> read kilobatyes per second limit
-> > +    <write kbs> write kilobatyes per second limit
-> > +    <dev path>: Full pathname to the underlying block-device, or a
-> > +                "major:minor" device-number.
-> > +    <offset>: Starting sector within the device.
-> > +
-> > +Throttling read and write values can be adjusted through the constructor
-> > +by reloading a mapping table with the respective parameters or without
-> > +reloading through the message interface:
-> > +
-> > +dmsetup message <mapped device name> <offset> read_kbs <read kbs>
-> > +dmsetup message <mapped device name> <offset> write_kbs <read kbs>
-> > +
-> > +The target provides status information via its status interface:
-> > +
-> > +dmsetup status <mapped device name>
-> > +
-> > +Output includes the target version, the actual read and write kilobytes
-> > +per second limits used, how many read and write ios have been processed,
-> > +deferred and accounted for.
-> > +
-> > +Status can be reset without reloading the mapping table via the message
-> > +interface as well:
-> > +
-> > +dmsetup message <mapped device name> <offset> stats reset
-> > +
-> > +
-> > +Example scripts
-> > +===============
-> > +[[
-> > +#!/bin/sh
-> > +# Create an identity mapping for a device
-> > +# setting 1MB/s read and write throttling
-> > +echo "0 `blockdev --getsize $1` throttle 2 1024 1024 $1 0" | \
-> > +dmsetup create throttle_identity
-> > +]]
-> > +
-> > +[[
-> > +#!/bin/sh
-> > +# Set different throughput to first and second half of a device
-> > +let size=`blockdev --getsize $1`/2
-> > +echo "0 $size throttle 2 10480 8192 $1 0
-> > +$size $size throttle 2 2048 1024 $1 $size" | \
-> > +dmsetup create throttle_segmented
-> > +]]
-> > +
-> > +[[
-> > +#!/bin/sh
-> > +# Change read throughput on 2nd segment of previous segemented mapping
-> > +dmsetup message throttle_segmented $size 1 4096"
-> > +]]
-> > diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-> > index 4a6feac..9c3cbe0 100644
-> > --- a/drivers/md/Kconfig
-> > +++ b/drivers/md/Kconfig
-> > @@ -313,6 +313,14 @@ config DM_DELAY
-> >  
-> >  	If unsure, say N.
-> >  
-> > +config DM_THROTTLE
-> > +	tristate "Throttling target (EXPERIMENTAL)"
-> > +	depends on BLK_DEV_DM && EXPERIMENTAL
-> > +	---help---
-> > +
-> > +	A target that supports device throughput throttling
-> > +	with bandwidth selection for reads and writes.
-> > +
-> >  config DM_UEVENT
-> >  	bool "DM uevents (EXPERIMENTAL)"
-> >  	depends on BLK_DEV_DM && EXPERIMENTAL
-> > diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-> > index e355e7f..6ea2598 100644
-> > --- a/drivers/md/Makefile
-> > +++ b/drivers/md/Makefile
-> > @@ -37,6 +37,7 @@ obj-$(CONFIG_BLK_DEV_MD)	+= md-mod.o
-> >  obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
-> >  obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
-> >  obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
-> > +obj-$(CONFIG_DM_THROTTLE)	+= dm-throttle.o
-> >  obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
-> >  obj-$(CONFIG_DM_MULTIPATH_QL)	+= dm-queue-length.o
-> >  obj-$(CONFIG_DM_MULTIPATH_ST)	+= dm-service-time.o
-> > diff --git a/drivers/md/dm-throttle.c b/drivers/md/dm-throttle.c
-> > new file mode 100644
-> > index 0000000..bc000d0
-> > --- /dev/null
-> > +++ b/drivers/md/dm-throttle.c
-> > @@ -0,0 +1,389 @@
-> > +/*
-> > + * Copyright (C) 2010 Red Hat GmbH
-> > + *
-> > + * Module Author: Heinz Mauelshagen <heinzm@redhat.com>
-> > + *
-> > + * This file is released under the GPL.
-> > + *
-> > + * Test target to stack on top of arbitrary other block
-> > + * device to throttle io in units of kilobyes per second.
-> > + *
-> > + * Throttling is configurable separately for reads and write
-> > + * via the constructor and the message interfaces.
-> > + */
-> > +
-> > +#include "dm.h"
-> > +#include <linux/slab.h>
-> > +
-> > +static const char *version = "1.0";
-> > +
-> > +#define	DM_MSG_PREFIX	"dm-throttle"
-> > +#define	TI_ERR_RET(str, ret) \
-> > +	do { ti->error = DM_MSG_PREFIX ": " str; return ret; } while (0);
-> > +#define	TI_ERR(str)	TI_ERR_RET(str, -EINVAL)
-> > +
-> > +/* Statistics for target status output (see throttle_status()). */
-> > +struct stats {
-> > +	atomic_t accounted[2];
-> > +	atomic_t deferred_io[2];
-> > +	atomic_t io[2];
-> > +};
-> > +
-> > +/* Reset statistics variables. */
-> > +static void stats_reset(struct stats *stats)
-> > +{
-> > +	int i = 2;
-> > +
-> > +	while (i--) {
-> > +		atomic_set(&stats->accounted[i], 0);
-> > +		atomic_set(&stats->deferred_io[i], 0);
-> > +		atomic_set(&stats->io[i], 0);
-> > +	}
-> > +}
-> > +
-> > +/* Throttle context. */
-> > +struct throttle_c {
-> > +	/* Device to throttle. */
-> > +	struct {
-> > +		struct dm_dev *dev;
-> > +		sector_t start;
-> > +	} dev;
-> > +
-> > +	/* ctr parameters. */
-> > +	struct params {
-> > +		unsigned bs[2];		/* Bytes per second. */
-> > +		unsigned kbs_ctr[2];	/* To save kb/s constructor args. */
-> > +		unsigned params;	/* # of variable parameters. */
-> > +	} params;
-> > +
-> > +	struct account {
-> > +		/* Accounting for reads and writes. */
-> > +		struct ac_rw {
-> > +			struct mutex mutex;
-> > +
-> > +			unsigned long end_jiffies;
-> > +			unsigned size;
-> > +		} rw[2];
-> > +
-> > +		unsigned long flags;
-> > +	} account;
-> > +
-> > +	struct stats stats;
-> > +};
-> > +
-> > +/* Return bytes/s value for kilobytes/s. */
-> > +static inline unsigned to_bs(unsigned kbs)
-> > +{
-> > +	return kbs << 10;
-> > +}
-> > +
-> > +static inline unsigned to_kbs(unsigned bs)
-> > +{
-> > +	return bs >> 10;
-> > +}
-> > +
-> > +/* Reset account. */
-> > +static void account_reset(int rw, struct throttle_c *tc)
-> > +{
-> > +	struct account *ac = &tc->account;
-> > +	struct ac_rw *ac_rw = ac->rw + rw;
-> > +
-> > +	ac_rw->size = 0;
-> > +	ac_rw->end_jiffies = jiffies + HZ;
-> > +	clear_bit(rw, &ac->flags);
-> > +	smp_wmb();
-> > +}
-> > +
-> > +/* Decide about throttling (ie. deferring bios). */
-> > +static int throttle(struct throttle_c *tc, struct bio *bio)
-> > +{
-> > +	int rw = (bio_data_dir(bio) == WRITE);
-> > +	unsigned bps; /* Bytes per second. */
-> > +
-> > +	smp_rmb();
-> > +	bps = tc->params.bs[rw];
-> > +	if (bps) {
-> > +		unsigned size;
-> > +		struct account *ac = &tc->account;
-> > +		struct ac_rw *ac_rw = ac->rw + rw;
-> > +
-> > +		if (time_after(jiffies, ac_rw->end_jiffies))
-> > +			/* Measure time exceeded. */
-> > +			account_reset(rw, tc);
-> > +		else if (test_bit(rw, &ac->flags))
-> > +			/* In case we're throttled already. */
-> > +			return 1;
-> > +
-> > +		/* Account I/O size. */
-> > +		size = ac_rw->size + bio->bi_size;
-> > +		if (size > bps) {
-> > +			/* Hit kilobytes per second threshold. */
-> > +			set_bit(rw, &ac->flags);
-> > +			return 1;
-> > +		} else {
-> > +			ac_rw->size = size;
-> > +			smp_wmb();
-> > +		}
-> > +
-> > +		atomic_inc(tc->stats.accounted + rw); /* Statistics. */
-> > +	}
-> > +
-> > +	return 0;
-> > +}
-> > +
-> > +/*
-> > + * Destruct a throttle mapping.
-> > + */
-> > +static void throttle_dtr(struct dm_target *ti)
-> > +{
-> > +	struct throttle_c *tc = ti->private;
-> > +
-> > +	if (tc->dev.dev)
-> > +		dm_put_device(ti, tc->dev.dev);
-> > +
-> > +	kfree(tc);
-> > +}
-> > +
-> > +/* Check @arg to be >= @min && <= @max. */
-> > +static inline int range_ok(int arg, int min, int max)
-> > +{
-> > +	return !(arg < min || arg > max);
-> > +}
-> > +
-> > +/* Return "write" or "read" string for @write */
-> > +static const char *rw_str(int write)
-> > +{
-> > +	return write ? "write" : "read";
-> > +}
-> > +
-> > +/*
-> > + * Construct a throttle mapping:
-> > + *
-> > + * <start> <len> throttle \
-> > + * #throttle_params <throttle_params> \
-> > + * orig_dev_name orig_dev_start
-> > + *
-> > + * #throttle_params = 0 - 2
-> > + * throttle_parms = [read_kbs [write_kbs]]
-> > + *
-> > + */
-> > +static int throttle_ctr(struct dm_target *ti, unsigned argc, char **argv)
-> > +{
-> > +	int i, kbs[] = { 0, 0 }, r, throttle_params;
-> > +	unsigned long long tmp;
-> > +	sector_t start;
-> > +	struct throttle_c *tc;
-> > +	struct params *params;
-> > +
-> > +	if (!range_ok(argc, 3, 5))
-> > +		TI_ERR("Invalid argument count");
-> > +
-> > +	/* Get #throttle_params. */
-> > +	if (sscanf(argv[0], "%d", &throttle_params) != 1 ||
-> > +	    !range_ok(throttle_params, 0, 2))
-> > +		TI_ERR("Invalid throttle parameter number argument");
-> > +
-> > +	/* Handle any variable throttle parameters. */
-> > +	for (i = 0; i < throttle_params; i++) {
-> > +		/* Get throttle read/write kilobytes per second. */
-> > +		if (sscanf(argv[i + 1], "%d", kbs + i) != 1 || kbs[i] < 0) {
-> > +			static char msg[60];
-> > +
-> > +			snprintf(msg, sizeof(msg),
-> > +				 "Invalid throttle %s kilobytes per second",
-> > +				 rw_str(i));
-> > +			ti->error = msg;
-> > +			return -EINVAL;
-> > +		}
-> > +	}
-> > +
-> > +	if (sscanf(argv[2 + throttle_params], "%llu", &tmp) != 1)
-> > +		TI_ERR("Invalid throttle device offset");
-> > +
-> > +	start = tmp;
-> > +
-> > +	/* Allocate throttle context. */
-> > +	tc = ti->private = kzalloc(sizeof(*tc), GFP_KERNEL);
-> > +	if (!tc)
-> > +		TI_ERR_RET("Cannot allocate throttle context", -ENOMEM);
-> > +
-> > +	/* Aquire throttle device. */
-> > +	r = dm_get_device(ti, argv[1 + throttle_params],
-> > +			  dm_table_get_mode(ti->table), &tc->dev.dev);
-> > +	if (r) {
-> > +		DMERR("Throttle device lookup failed");
-> > +		goto err;
-> > +	}
-> > +
-> > +	/* Check throttled device length. */
-> > +	if (ti->len >
-> > +	    i_size_read(tc->dev.dev->bdev->bd_inode) >> SECTOR_SHIFT) {
-> > +		DMERR("Throttled device too small for mapping");
-> > +		goto err;
-> > +	}
-> > +
-> > +	tc->dev.start = start;
-> > +	params = &tc->params;
-> > +	params->params = throttle_params;
-> > +
-> > +	i = ARRAY_SIZE(kbs);
-> > +	while (i--) {
-> > +		params->kbs_ctr[i] = kbs[i];
-> > +		params->bs[i] = to_bs(kbs[i]);
-> > +		mutex_init(&tc->account.rw[i].mutex);
-> > +	}
-> > +
-> > +	stats_reset(&tc->stats);
-> > +	return 0;
-> > +err:
-> > +	throttle_dtr(ti);
-> > +	return -EINVAL;
-> > +}
-> > +
-> > +/* Map a throttle io. */
-> > +static int throttle_map(struct dm_target *ti, struct bio *bio,
-> > +			union map_info *map_context)
-> > +{
-> > +	int r, rw = (bio_data_dir(bio) == WRITE);
-> > +	struct throttle_c *tc = ti->private;
-> > +	struct ac_rw *ac_rw = tc->account.rw + rw;
-> > +
-> > +	mutex_lock(&ac_rw->mutex);
-> > +	do {
-> > +		r = throttle(tc, bio);
-> > +		if (r) {
-> > +			long end = ac_rw->end_jiffies, j = jiffies;
-> > +
-> > +			/* Wait till next second when KB/s reached. */
-> > +			if (j < end)
-> > +				schedule_timeout_uninterruptible(end - j);
-> > +		}
-> > +	} while (r);
-> > +
-> > +	mutex_unlock(&ac_rw->mutex);
-> > +
-> > +	/* Remap. */
-> > +	bio->bi_bdev = tc->dev.dev->bdev;
-> > +	bio->bi_sector = bio->bi_sector - ti->begin + tc->dev.start;
-> > +
-> > +	atomic_inc(&tc->stats.io[rw]); /* Statistics */
-> > +	return 1; /* Done with the bio; let dm core submit it. */
-> > +}
-> > +
-> > +/* Message method. */
-> > +static int throttle_message(struct dm_target *ti, unsigned argc, char **argv)
-> > +{
-> > +	int kbs, rw;
-> > +	struct throttle_c *tc = ti->private;
-> > +
-> > +	if (argc == 2) {
-> > +		if (!strcmp(argv[0], "stats") &&
-> > +		    !strcmp(argv[1], "reset")) {
-> > +			/* Reset statistics. */
-> > +			stats_reset(&tc->stats);
-> > +			goto out;
-> > +		} else if (!strcmp(argv[0], "read_kbs"))
-> > +			/* Adjust read kilobytes per second. */
-> > +			rw = 0;
-> > +		else if (!strcmp(argv[0], "write_kbs"))
-> > +			/* Adjust write kilobytes per second. */
-> > +			rw = 1;
-> > +		else
-> > +			goto err;
-> > +
-> > +		/* Read r/w kbs paramater. */
-> > +		if (sscanf(argv[1], "%d", &kbs) != 1 || kbs < 0) {
-> > +			DMWARN("Unrecognised throttle %s_kbs parameter.",
-> > +			       rw_str(rw));
-> > +			return -EINVAL;
-> > +		}
-> > +
-> > +		/* Update settings. */
-> > +		mutex_lock(&tc->account.rw[rw].mutex);
-> > +		tc->params.bs[rw] = to_bs(kbs);
-> > +		account_reset(rw, tc);
-> > +		mutex_unlock(&tc->account.rw[rw].mutex);
-> > +out:
-> > +		return 0;
-> > +	}
-> > +err:
-> > +	DMWARN("Unrecognised throttle message received.");
-> > +	return -EINVAL;
-> > +}
-> > +
-> > +/* Status output method. */
-> > +static int throttle_status(struct dm_target *ti, status_type_t type,
-> > +			   char *result, unsigned maxlen)
-> > +{
-> > +	ssize_t sz = 0;
-> > +	struct throttle_c *tc = ti->private;
-> > +	struct stats *s = &tc->stats;
-> > +	struct params *p = &tc->params;
-> > +
-> > +	switch (type) {
-> > +	case STATUSTYPE_INFO:
-> > +		DMEMIT("v=%s rkb=%u wkb=%u r=%u w=%u rd=%u wd=%u "
-> > +		       "acr=%u acw=%u",
-> > +		       version,
-> > +		       to_kbs(p->bs[0]), to_kbs(p->bs[1]),
-> > +		       atomic_read(s->io), atomic_read(s->io + 1),
-> > +		       atomic_read(s->deferred_io),
-> > +		       atomic_read(s->deferred_io + 1),
-> > +		       atomic_read(s->accounted),
-> > +		       atomic_read(s->accounted + 1));
-> > +		break;
-> > +
-> > +	case STATUSTYPE_TABLE:
-> > +		DMEMIT("%u", p->params);
-> > +
-> > +		if (p->params) {
-> > +			DMEMIT(" %u", p->kbs_ctr[0]);
-> > +
-> > +			if (p->params > 1)
-> > +				DMEMIT(" %u", p->kbs_ctr[1]);
-> > +		}
-> > +
-> > +		DMEMIT(" %s %llu",
-> > +		       tc->dev.dev->name,
-> > +		       (unsigned long long) tc->dev.start);
-> > +	}
-> > +
-> > +	return 0;
-> > +}
-> > +
-> > +static struct target_type throttle_target = {
-> > +	.name		= "throttle",
-> > +	.version	= {1, 0, 0},
-> > +	.module		= THIS_MODULE,
-> > +	.ctr		= throttle_ctr,
-> > +	.dtr		= throttle_dtr,
-> > +	.map		= throttle_map,
-> > +	.message	= throttle_message,
-> > +	.status		= throttle_status,
-> > +};
-> > +
-> > +int __init dm_throttle_init(void)
-> > +{
-> > +	int r = dm_register_target(&throttle_target);
-> > +
-> > +	if (r)
-> > +		DMERR("Failed to register %s [%d]", DM_MSG_PREFIX, r);
-> > +	else
-> > +		DMINFO("registered %s %s", DM_MSG_PREFIX, version);
-> > +
-> > +	return r;
-> > +}
-> > +
-> > +void dm_throttle_exit(void)
-> > +{
-> > +	dm_unregister_target(&throttle_target);
-> > +	DMINFO("unregistered %s %s", DM_MSG_PREFIX, version);
-> > +}
-> > +
-> > +/* Module hooks */
-> > +module_init(dm_throttle_init);
-> > +module_exit(dm_throttle_exit);
-> > +
-> > +MODULE_DESCRIPTION(DM_NAME "device-mapper throttle target");
-> > +MODULE_AUTHOR("Heinz Mauelshagen <heinzm@redhat.com>");
-> > +MODULE_LICENSE("GPL");
-> > 
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 82bd6d9..efe391b 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -136,7 +136,7 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
+ {
+ 	struct request_queue *q = rq->q;
+ 
+-	if (&q->bar_rq != rq) {
++	if (&q->flush_rq != rq) {
+ 		if (error)
+ 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
+ 		else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+@@ -160,13 +160,12 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
+ 		if (bio->bi_size == 0)
+ 			bio_endio(bio, error);
+ 	} else {
+-
+ 		/*
+-		 * Okay, this is the barrier request in progress, just
+-		 * record the error;
++		 * Okay, this is the sequenced flush request in
++		 * progress, just record the error;
+ 		 */
+-		if (error && !q->orderr)
+-			q->orderr = error;
++		if (error && !q->flush_err)
++			q->flush_err = error;
+ 	}
+ }
+ 
+@@ -520,7 +519,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+ 	init_timer(&q->unplug_timer);
+ 	setup_timer(&q->timeout, blk_rq_timed_out_timer, (unsigned long) q);
+ 	INIT_LIST_HEAD(&q->timeout_list);
+-	INIT_LIST_HEAD(&q->pending_barriers);
++	INIT_LIST_HEAD(&q->pending_flushes);
+ 	INIT_WORK(&q->unplug_work, blk_unplug_work);
+ 
+ 	kobject_init(&q->kobj, &blk_queue_ktype);
+@@ -1758,11 +1757,11 @@ static void blk_account_io_completion(struct request *req, unsigned int bytes)
+ static void blk_account_io_done(struct request *req)
+ {
+ 	/*
+-	 * Account IO completion.  bar_rq isn't accounted as a normal
+-	 * IO on queueing nor completion.  Accounting the containing
+-	 * request is enough.
++	 * Account IO completion.  flush_rq isn't accounted as a
++	 * normal IO on queueing nor completion.  Accounting the
++	 * containing request is enough.
+ 	 */
+-	if (blk_do_io_stat(req) && req != &req->q->bar_rq) {
++	if (blk_do_io_stat(req) && req != &req->q->flush_rq) {
+ 		unsigned long duration = jiffies - req->start_time;
+ 		const int rw = rq_data_dir(req);
+ 		struct hd_struct *part;
+diff --git a/block/blk-flush.c b/block/blk-flush.c
+index e8b2e5c..dd87322 100644
+--- a/block/blk-flush.c
++++ b/block/blk-flush.c
+@@ -9,41 +9,38 @@
+ 
+ #include "blk.h"
+ 
+-static struct request *queue_next_ordseq(struct request_queue *q);
++static struct request *queue_next_fseq(struct request_queue *q);
+ 
+-/*
+- * Cache flushing for ordered writes handling
+- */
+-unsigned blk_ordered_cur_seq(struct request_queue *q)
++unsigned blk_flush_cur_seq(struct request_queue *q)
+ {
+-	if (!q->ordseq)
++	if (!q->flush_seq)
+ 		return 0;
+-	return 1 << ffz(q->ordseq);
++	return 1 << ffz(q->flush_seq);
+ }
+ 
+-static struct request *blk_ordered_complete_seq(struct request_queue *q,
+-						unsigned seq, int error)
++static struct request *blk_flush_complete_seq(struct request_queue *q,
++					      unsigned seq, int error)
+ {
+ 	struct request *next_rq = NULL;
+ 
+-	if (error && !q->orderr)
+-		q->orderr = error;
++	if (error && !q->flush_err)
++		q->flush_err = error;
+ 
+-	BUG_ON(q->ordseq & seq);
+-	q->ordseq |= seq;
++	BUG_ON(q->flush_seq & seq);
++	q->flush_seq |= seq;
+ 
+-	if (blk_ordered_cur_seq(q) != QUEUE_ORDSEQ_DONE) {
+-		/* not complete yet, queue the next ordered sequence */
+-		next_rq = queue_next_ordseq(q);
++	if (blk_flush_cur_seq(q) != QUEUE_FSEQ_DONE) {
++		/* not complete yet, queue the next flush sequence */
++		next_rq = queue_next_fseq(q);
+ 	} else {
+-		/* complete this barrier request */
+-		__blk_end_request_all(q->orig_bar_rq, q->orderr);
+-		q->orig_bar_rq = NULL;
+-		q->ordseq = 0;
+-
+-		/* dispatch the next barrier if there's one */
+-		if (!list_empty(&q->pending_barriers)) {
+-			next_rq = list_entry_rq(q->pending_barriers.next);
++		/* complete this flush request */
++		__blk_end_request_all(q->orig_flush_rq, q->flush_err);
++		q->orig_flush_rq = NULL;
++		q->flush_seq = 0;
++
++		/* dispatch the next flush if there's one */
++		if (!list_empty(&q->pending_flushes)) {
++			next_rq = list_entry_rq(q->pending_flushes.next);
+ 			list_move(&next_rq->queuelist, &q->queue_head);
+ 		}
+ 	}
+@@ -53,19 +50,19 @@ static struct request *blk_ordered_complete_seq(struct request_queue *q,
+ static void pre_flush_end_io(struct request *rq, int error)
+ {
+ 	elv_completed_request(rq->q, rq);
+-	blk_ordered_complete_seq(rq->q, QUEUE_ORDSEQ_PREFLUSH, error);
++	blk_flush_complete_seq(rq->q, QUEUE_FSEQ_PREFLUSH, error);
+ }
+ 
+-static void bar_end_io(struct request *rq, int error)
++static void flush_data_end_io(struct request *rq, int error)
+ {
+ 	elv_completed_request(rq->q, rq);
+-	blk_ordered_complete_seq(rq->q, QUEUE_ORDSEQ_BAR, error);
++	blk_flush_complete_seq(rq->q, QUEUE_FSEQ_DATA, error);
+ }
+ 
+ static void post_flush_end_io(struct request *rq, int error)
+ {
+ 	elv_completed_request(rq->q, rq);
+-	blk_ordered_complete_seq(rq->q, QUEUE_ORDSEQ_POSTFLUSH, error);
++	blk_flush_complete_seq(rq->q, QUEUE_FSEQ_POSTFLUSH, error);
+ }
+ 
+ static void queue_flush(struct request_queue *q, struct request *rq,
+@@ -74,34 +71,34 @@ static void queue_flush(struct request_queue *q, struct request *rq,
+ 	blk_rq_init(q, rq);
+ 	rq->cmd_type = REQ_TYPE_FS;
+ 	rq->cmd_flags = REQ_FLUSH;
+-	rq->rq_disk = q->orig_bar_rq->rq_disk;
++	rq->rq_disk = q->orig_flush_rq->rq_disk;
+ 	rq->end_io = end_io;
+ 
+ 	elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
+ }
+ 
+-static struct request *queue_next_ordseq(struct request_queue *q)
++static struct request *queue_next_fseq(struct request_queue *q)
+ {
+-	struct request *rq = &q->bar_rq;
++	struct request *rq = &q->flush_rq;
+ 
+-	switch (blk_ordered_cur_seq(q)) {
+-	case QUEUE_ORDSEQ_PREFLUSH:
++	switch (blk_flush_cur_seq(q)) {
++	case QUEUE_FSEQ_PREFLUSH:
+ 		queue_flush(q, rq, pre_flush_end_io);
+ 		break;
+ 
+-	case QUEUE_ORDSEQ_BAR:
++	case QUEUE_FSEQ_DATA:
+ 		/* initialize proxy request and queue it */
+ 		blk_rq_init(q, rq);
+-		init_request_from_bio(rq, q->orig_bar_rq->bio);
++		init_request_from_bio(rq, q->orig_flush_rq->bio);
+ 		rq->cmd_flags &= ~REQ_HARDBARRIER;
+ 		if (q->ordered & QUEUE_ORDERED_DO_FUA)
+ 			rq->cmd_flags |= REQ_FUA;
+-		rq->end_io = bar_end_io;
++		rq->end_io = flush_data_end_io;
+ 
+ 		elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
+ 		break;
+ 
+-	case QUEUE_ORDSEQ_POSTFLUSH:
++	case QUEUE_FSEQ_POSTFLUSH:
+ 		queue_flush(q, rq, post_flush_end_io);
+ 		break;
+ 
+@@ -111,19 +108,20 @@ static struct request *queue_next_ordseq(struct request_queue *q)
+ 	return rq;
+ }
+ 
+-struct request *blk_do_ordered(struct request_queue *q, struct request *rq)
++struct request *blk_do_flush(struct request_queue *q, struct request *rq)
+ {
+ 	unsigned skip = 0;
+ 
+ 	if (!(rq->cmd_flags & REQ_HARDBARRIER))
+ 		return rq;
+ 
+-	if (q->ordseq) {
++	if (q->flush_seq) {
+ 		/*
+-		 * Barrier is already in progress and they can't be
+-		 * processed in parallel.  Queue for later processing.
++		 * Sequenced flush is already in progress and they
++		 * can't be processed in parallel.  Queue for later
++		 * processing.
+ 		 */
+-		list_move_tail(&rq->queuelist, &q->pending_barriers);
++		list_move_tail(&rq->queuelist, &q->pending_flushes);
+ 		return NULL;
+ 	}
+ 
+@@ -138,11 +136,11 @@ struct request *blk_do_ordered(struct request_queue *q, struct request *rq)
+ 	}
+ 
+ 	/*
+-	 * Start a new ordered sequence
++	 * Start a new flush sequence
+ 	 */
+-	q->orderr = 0;
++	q->flush_err = 0;
+ 	q->ordered = q->next_ordered;
+-	q->ordseq |= QUEUE_ORDSEQ_STARTED;
++	q->flush_seq |= QUEUE_FSEQ_STARTED;
+ 
+ 	/*
+ 	 * For an empty barrier, there's no actual BAR request, which
+@@ -154,19 +152,19 @@ struct request *blk_do_ordered(struct request_queue *q, struct request *rq)
+ 
+ 	/* stash away the original request */
+ 	blk_dequeue_request(rq);
+-	q->orig_bar_rq = rq;
++	q->orig_flush_rq = rq;
+ 
+ 	if (!(q->ordered & QUEUE_ORDERED_DO_PREFLUSH))
+-		skip |= QUEUE_ORDSEQ_PREFLUSH;
++		skip |= QUEUE_FSEQ_PREFLUSH;
+ 
+ 	if (!(q->ordered & QUEUE_ORDERED_DO_BAR))
+-		skip |= QUEUE_ORDSEQ_BAR;
++		skip |= QUEUE_FSEQ_DATA;
+ 
+ 	if (!(q->ordered & QUEUE_ORDERED_DO_POSTFLUSH))
+-		skip |= QUEUE_ORDSEQ_POSTFLUSH;
++		skip |= QUEUE_FSEQ_POSTFLUSH;
+ 
+ 	/* complete skipped sequences and return the first sequence */
+-	return blk_ordered_complete_seq(q, skip, 0);
++	return blk_flush_complete_seq(q, skip, 0);
+ }
+ 
+ static void bio_end_empty_barrier(struct bio *bio, int err)
+diff --git a/block/blk.h b/block/blk.h
+index 08081e4..24b92bd 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -51,7 +51,7 @@ static inline void blk_clear_rq_complete(struct request *rq)
+  */
+ #define ELV_ON_HASH(rq)		(!hlist_unhashed(&(rq)->hash))
+ 
+-struct request *blk_do_ordered(struct request_queue *q, struct request *rq);
++struct request *blk_do_flush(struct request_queue *q, struct request *rq);
+ 
+ static inline struct request *__elv_next_request(struct request_queue *q)
+ {
+@@ -60,7 +60,7 @@ static inline struct request *__elv_next_request(struct request_queue *q)
+ 	while (1) {
+ 		while (!list_empty(&q->queue_head)) {
+ 			rq = list_entry_rq(q->queue_head.next);
+-			rq = blk_do_ordered(q, rq);
++			rq = blk_do_flush(q, rq);
+ 			if (rq)
+ 				return rq;
+ 		}
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 522ecda..87e58f0 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -357,13 +357,13 @@ struct request_queue
+ 	/*
+ 	 * for flush operations
+ 	 */
++	unsigned int		ordered, next_ordered;
+ 	unsigned int		flush_flags;
+-
+-	unsigned int		ordered, next_ordered, ordseq;
+-	int			orderr;
+-	struct request		bar_rq;
+-	struct request		*orig_bar_rq;
+-	struct list_head	pending_barriers;
++	unsigned int		flush_seq;
++	int			flush_err;
++	struct request		flush_rq;
++	struct request		*orig_flush_rq;
++	struct list_head	pending_flushes;
+ 
+ 	struct mutex		sysfs_lock;
+ 
+@@ -489,13 +489,13 @@ enum {
+ 					  QUEUE_ORDERED_DO_FUA,
+ 
+ 	/*
+-	 * Ordered operation sequence
++	 * FLUSH/FUA sequences.
+ 	 */
+-	QUEUE_ORDSEQ_STARTED	= (1 << 0), /* flushing in progress */
+-	QUEUE_ORDSEQ_PREFLUSH	= (1 << 1), /* pre-flushing in progress */
+-	QUEUE_ORDSEQ_BAR	= (1 << 2), /* barrier write in progress */
+-	QUEUE_ORDSEQ_POSTFLUSH	= (1 << 3), /* post-flushing in progress */
+-	QUEUE_ORDSEQ_DONE	= (1 << 4),
++	QUEUE_FSEQ_STARTED	= (1 << 0), /* flushing in progress */
++	QUEUE_FSEQ_PREFLUSH	= (1 << 1), /* pre-flushing in progress */
++	QUEUE_FSEQ_DATA		= (1 << 2), /* data write in progress */
++	QUEUE_FSEQ_POSTFLUSH	= (1 << 3), /* post-flushing in progress */
++	QUEUE_FSEQ_DONE		= (1 << 4),
+ };
+ 
+ #define blk_queue_plugged(q)	test_bit(QUEUE_FLAG_PLUGGED, &(q)->queue_flags)
+@@ -507,7 +507,7 @@ enum {
+ #define blk_queue_nonrot(q)	test_bit(QUEUE_FLAG_NONROT, &(q)->queue_flags)
+ #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flags)
+ #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
+-#define blk_queue_flushing(q)	((q)->ordseq)
++#define blk_queue_flushing(q)	((q)->flush_seq)
+ #define blk_queue_stackable(q)	\
+ 	test_bit(QUEUE_FLAG_STACKABLE, &(q)->queue_flags)
+ #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
+-- 
+1.7.1
