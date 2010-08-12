@@ -1,14 +1,16 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 05/11] block: misc cleanups in barrier code
-Date: Thu, 12 Aug 2010 14:41:25 +0200
-Message-ID: <1281616891-5691-6-git-send-email-tj@kernel.org>
-References: <1281616891-5691-1-git-send-email-tj@kernel.org>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH] dm-throttle: new device mapper target to
+ throttle reads and writes
+Date: Thu, 12 Aug 2010 10:23:36 -0400
+Message-ID: <20100812142336.GB8831@redhat.com>
+References: <1281541513.4964.332.camel@o>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1281616891-5691-1-git-send-email-tj@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1281541513.4964.332.camel@o>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,203 +20,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
-Cc: Tejun Heo <tj@kernel.org>
+To: Heinz Mauelshagen <heinzm@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Make the following cleanups in preparation of barrier/flush update.
+On Wed, Aug 11, 2010 at 05:45:13PM +0200, Heinz Mauelshagen wrote:
 
-* blk_do_ordered() declaration is moved from include/linux/blkdev.h to
-  block/blk.h.
+[..]
+> > [..]
+> > > +/* Decide about throttling (ie. deferring bios). */
+> > > +static int throttle(struct throttle_c *tc, struct bio *bio)
+> > > +{
+> > > +	int rw = (bio_data_dir(bio) == WRITE);
+> > > +	unsigned bps; /* Bytes per second. */
+> > > +
+> > > +	smp_rmb();
+> > > +	bps = tc->params.bs[rw];
+> > > +	if (bps) {
+> > > +		unsigned size;
+> > > +		struct account *ac = &tc->account;
+> > > +		struct ac_rw *ac_rw = ac->rw + rw;
+> > > +
+> > > +		if (time_after(jiffies, ac_rw->end_jiffies))
+> > > +			/* Measure time exceeded. */
+> > > +			account_reset(rw, tc);
+> > > +		else if (test_bit(rw, &ac->flags))
+> > > +			/* In case we're throttled already. */
+> > > +			return 1;
+> > > +
+> > > +		/* Account I/O size. */
+> > > +		size = ac_rw->size + bio->bi_size;
+> > > +		if (size > bps) {
+> > > +			/* Hit kilobytes per second threshold. */
+> > > +			set_bit(rw, &ac->flags);
+> > > +			return 1;
+> > 
+> > If bio->bi_size is greate than bps, will I always keep on throttling
+> > and hang?
+> 
+> bps needs to be set larger than the bio maximum size expected with the
+> current implementatio, right. The algorithm needs changing to cope with
+> bi_size larger than bps (see below).
+> 
+> > 
+> > [..]
+> > > +/* Map a throttle io. */
+> > > +static int throttle_map(struct dm_target *ti, struct bio *bio,
+> > > +			union map_info *map_context)
+> > > +{
+> > > +	int r, rw = (bio_data_dir(bio) == WRITE);
+> > > +	struct throttle_c *tc = ti->private;
+> > > +	struct ac_rw *ac_rw = tc->account.rw + rw;
+> > > +
+> > > +	mutex_lock(&ac_rw->mutex);
+> > > +	do {
+> > > +		r = throttle(tc, bio);
+> > > +		if (r) {
+> > > +			long end = ac_rw->end_jiffies, j = jiffies;
+> > > +
+> > > +			/* Wait till next second when KB/s reached. */
+> > > +			if (j < end)
+> > > +				schedule_timeout_uninterruptible(end - j);
+> > > +		}
+> > 
+> > So a thread is blocked if it crossed the IO rate. There is no such
+> mechanism
+> > to take the bio, statsh away somewhere and dispatch it to disk later.
+> The
+> > way request queue descriptors work.
+> 
+> Right, the aim for this testing target was to keep it as simple as
+> possible to solve the purpose of simulating low bandwidth transports or
+> varying device throughput properties.
+> 
+> Cheap approaches to tackle this issue include to set ti->split_io based
+> on bps < BIO_MAX_SIZE (units ignored) in the ctr/message interface,
+> to prohibit bps smaller than BIO_MAX_SIZE altogether or to change the
+> throttle() algorithm to allow for > 1s measurement periods based on
+> bi_size maximum vs. bps ratios.
+> 
+> The 1st one obviously causing more bio splits, the 2nd one prohibiting
+> small bandwidth simulation and the last one causing io peeks, which is
+> actually not what I wanted.
 
-* blk_do_ordered() now returns pointer to struct request, with %NULL
-  meaning "try the next request" and ERR_PTR(-EAGAIN) "try again
-  later".  The third case will be dropped with further changes.
+Can't we just wait for enough number of seconds to allow bigger bio to
+pass. So if bio size is 4MB and rate limit is 1MB/s then wait for 4 
+seconds. That way there are no splits, and no io peeks?
 
-* In the initialization of proxy barrier request, data direction is
-  already set by init_request_from_bio().  Drop unnecessary explicit
-  REQ_WRITE setting and move init_request_from_bio() above REQ_FUA
-  flag setting.
-
-* add_request() is collapsed into __make_request().
-
-These changes don't make any functional difference.
-
-Signed-off-by: Tejun Heo <tj@kernel.org>
----
- block/blk-barrier.c    |   32 ++++++++++++++------------------
- block/blk-core.c       |   21 ++++-----------------
- block/blk.h            |    7 +++++--
- include/linux/blkdev.h |    1 -
- 4 files changed, 23 insertions(+), 38 deletions(-)
-
-diff --git a/block/blk-barrier.c b/block/blk-barrier.c
-index ed0aba5..f1be85b 100644
---- a/block/blk-barrier.c
-+++ b/block/blk-barrier.c
-@@ -110,9 +110,9 @@ static void queue_flush(struct request_queue *q, unsigned which)
- 	elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
- }
- 
--static inline bool start_ordered(struct request_queue *q, struct request **rqp)
-+static inline struct request *start_ordered(struct request_queue *q,
-+					    struct request *rq)
- {
--	struct request *rq = *rqp;
- 	unsigned skip = 0;
- 
- 	q->orderr = 0;
-@@ -149,11 +149,9 @@ static inline bool start_ordered(struct request_queue *q, struct request **rqp)
- 
- 		/* initialize proxy request and queue it */
- 		blk_rq_init(q, rq);
--		if (bio_data_dir(q->orig_bar_rq->bio) == WRITE)
--			rq->cmd_flags |= REQ_WRITE;
-+		init_request_from_bio(rq, q->orig_bar_rq->bio);
- 		if (q->ordered & QUEUE_ORDERED_DO_FUA)
- 			rq->cmd_flags |= REQ_FUA;
--		init_request_from_bio(rq, q->orig_bar_rq->bio);
- 		rq->end_io = bar_end_io;
- 
- 		elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
-@@ -171,27 +169,26 @@ static inline bool start_ordered(struct request_queue *q, struct request **rqp)
- 	else
- 		skip |= QUEUE_ORDSEQ_DRAIN;
- 
--	*rqp = rq;
--
- 	/*
- 	 * Complete skipped sequences.  If whole sequence is complete,
--	 * return false to tell elevator that this request is gone.
-+	 * return %NULL to tell elevator that this request is gone.
- 	 */
--	return !blk_ordered_complete_seq(q, skip, 0);
-+	if (blk_ordered_complete_seq(q, skip, 0))
-+		rq = NULL;
-+	return rq;
- }
- 
--bool blk_do_ordered(struct request_queue *q, struct request **rqp)
-+struct request *blk_do_ordered(struct request_queue *q, struct request *rq)
- {
--	struct request *rq = *rqp;
- 	const int is_barrier = rq->cmd_type == REQ_TYPE_FS &&
- 				(rq->cmd_flags & REQ_HARDBARRIER);
- 
- 	if (!q->ordseq) {
- 		if (!is_barrier)
--			return true;
-+			return rq;
- 
- 		if (q->next_ordered != QUEUE_ORDERED_NONE)
--			return start_ordered(q, rqp);
-+			return start_ordered(q, rq);
- 		else {
- 			/*
- 			 * Queue ordering not supported.  Terminate
-@@ -199,8 +196,7 @@ bool blk_do_ordered(struct request_queue *q, struct request **rqp)
- 			 */
- 			blk_dequeue_request(rq);
- 			__blk_end_request_all(rq, -EOPNOTSUPP);
--			*rqp = NULL;
--			return false;
-+			return NULL;
- 		}
- 	}
- 
-@@ -211,14 +207,14 @@ bool blk_do_ordered(struct request_queue *q, struct request **rqp)
- 	/* Special requests are not subject to ordering rules. */
- 	if (rq->cmd_type != REQ_TYPE_FS &&
- 	    rq != &q->pre_flush_rq && rq != &q->post_flush_rq)
--		return true;
-+		return rq;
- 
- 	/* Ordered by draining.  Wait for turn. */
- 	WARN_ON(blk_ordered_req_seq(rq) < blk_ordered_cur_seq(q));
- 	if (blk_ordered_req_seq(rq) > blk_ordered_cur_seq(q))
--		*rqp = NULL;
-+		rq = ERR_PTR(-EAGAIN);
- 
--	return true;
-+	return rq;
- }
- 
- static void bio_end_empty_barrier(struct bio *bio, int err)
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 3f802dd..ed8ef89 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1037,22 +1037,6 @@ void blk_insert_request(struct request_queue *q, struct request *rq,
- }
- EXPORT_SYMBOL(blk_insert_request);
- 
--/*
-- * add-request adds a request to the linked list.
-- * queue lock is held and interrupts disabled, as we muck with the
-- * request queue list.
-- */
--static inline void add_request(struct request_queue *q, struct request *req)
--{
--	drive_stat_acct(req, 1);
--
--	/*
--	 * elevator indicated where it wants this request to be
--	 * inserted at elevator_merge time
--	 */
--	__elv_add_request(q, req, ELEVATOR_INSERT_SORT, 0);
--}
--
- static void part_round_stats_single(int cpu, struct hd_struct *part,
- 				    unsigned long now)
- {
-@@ -1316,7 +1300,10 @@ get_rq:
- 		req->cpu = blk_cpu_to_group(smp_processor_id());
- 	if (queue_should_plug(q) && elv_queue_empty(q))
- 		blk_plug_device(q);
--	add_request(q, req);
-+
-+	/* insert the request into the elevator */
-+	drive_stat_acct(req, 1);
-+	__elv_add_request(q, req, ELEVATOR_INSERT_SORT, 0);
- out:
- 	if (unplug || !queue_should_plug(q))
- 		__generic_unplug_device(q);
-diff --git a/block/blk.h b/block/blk.h
-index 6e7dc87..874eb4e 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -51,6 +51,8 @@ static inline void blk_clear_rq_complete(struct request *rq)
-  */
- #define ELV_ON_HASH(rq)		(!hlist_unhashed(&(rq)->hash))
- 
-+struct request *blk_do_ordered(struct request_queue *q, struct request *rq);
-+
- static inline struct request *__elv_next_request(struct request_queue *q)
- {
- 	struct request *rq;
-@@ -58,8 +60,9 @@ static inline struct request *__elv_next_request(struct request_queue *q)
- 	while (1) {
- 		while (!list_empty(&q->queue_head)) {
- 			rq = list_entry_rq(q->queue_head.next);
--			if (blk_do_ordered(q, &rq))
--				return rq;
-+			rq = blk_do_ordered(q, rq);
-+			if (rq)
-+				return !IS_ERR(rq) ? rq : NULL;
- 		}
- 
- 		if (!q->elevator->ops->elevator_dispatch_fn(q, 0))
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 6003f7c..21baa19 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -867,7 +867,6 @@ extern void blk_queue_rq_timed_out(struct request_queue *, rq_timed_out_fn *);
- extern void blk_queue_rq_timeout(struct request_queue *, unsigned int);
- extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
- extern struct backing_dev_info *blk_get_backing_dev_info(struct block_device *bdev);
--extern bool blk_do_ordered(struct request_queue *, struct request **);
- extern unsigned blk_ordered_cur_seq(struct request_queue *);
- extern unsigned blk_ordered_req_seq(struct request *);
- extern bool blk_ordered_complete_seq(struct request_queue *, unsigned, int);
--- 
-1.7.1
+Thanks
+Vivek
