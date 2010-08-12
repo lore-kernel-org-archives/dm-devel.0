@@ -1,48 +1,103 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/multipath multipath.conf.5
-Date: 11 Aug 2010 23:18:45 -0000
-Message-ID: <20100811231845.6945.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper patches for 2.6.36
+Date: Thu, 12 Aug 2010 06:59:26 +0100
+Message-ID: <20100812055926.GF4535@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Takahiro Yasui <tyasui@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>, Arnd Bergmann <arnd@relay.de.ibm.com>, Julia Lawall <julia@diku.dk>, Tomohiro Kusumi <kusumi.tomohiro@jp.fujitsu.com>, Will Drewry <wad@chromium.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-08-11 23:18:43
+[Resent with mailing lists I lost from the cc - again...]
 
-Modified files:
-	multipath      : multipath.conf.5 
+Please pull from:
 
-Log message:
-	Fix for bz #599686
-	Small manpage clarification.
+  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.5.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1.2.3&r2=1.1.2.4
+to get the following device-mapper fixes and enhancements for inclusion in
+2.6.36.
 
---- multipath-tools/multipath/Attic/multipath.conf.5	2010/02/10 04:11:18	1.1.2.3
-+++ multipath-tools/multipath/Attic/multipath.conf.5	2010/08/11 23:18:43	1.1.2.4
-@@ -40,7 +40,8 @@
- .TP 17
- .B defaults
- This section defines default values for attributes which are used
--whenever no specific setting is given.
-+whenever no values are given in the appropriate device or multipath
-+sections.
- .TP
- .B blacklist
- This section defines which devices should be excluded from the
+The main enhancement here is discard support.  We left the dm-crypt target out
+of this for now, hoping we might find some cryptographers to help us consider
+this.
+ 
+Alasdair G Kergon (3):
+      dm mpath: fix NULL pointer dereference when path parameters missing
+      dm ioctl: make __dev_status void
+      dm: use dm_target_offset macro
+
+Arnd Bergmann (1):
+      dm ioctl: use nonseekable_open
+
+Julia Lawall (1):
+      dm crypt: use kstrdup
+
+Kiyoshi Ueda (3):
+      dm: prevent access to md being deleted
+      dm ioctl: release _hash_lock between devices in remove_all
+      dm: separate device deletion from dm_put
+
+Mike Snitzer (11):
+      dm ioctl: make bio or request based device type immutable
+      dm: do not initialise full request queue when bio based
+      dm: rename map_info flush_request to target_request_nr
+      dm: linear support discard
+      dm: use common __issue_target_request for flush and discard support
+      dm: factor out max_io_len_target_boundary
+      dm: zero silently drop discards
+      dm delay: support discard
+      dm: error return error for discards
+      dm: split discard requests on target boundaries
+      dm mpath: support discard
+
+Mikulas Patocka (7):
+      dm snapshot: iterate origin and cow devices
+      dm snapshot: test chunk size against both origin and snapshot
+      dm: skip second flush on bio unsupported error
+      dm snapshot: implement merge
+      dm stripe: move sector translation to a function
+      dm stripe: optimize sector division
+      dm stripe: support discards
+
+Milan Broz (2):
+      dm crypt: simplify crypt_config destruction logic
+      dm crypt: simplify crypt_ctr
+
+Peter Rajnoha (3):
+      dm ioctl: remove __dev_status from geometry and target message
+      dm ioctl: return uevent flag after rename
+      dm: allow autoloading of dm mod
+
+Tomohiro Kusumi (1):
+      dm snapshot: persistent use define for disk header chunk size
+
+Will Drewry (1):
+      dm ioctl: refactor dm_table_complete
+
+ Documentation/devices.txt       |    1 +
+ drivers/md/dm-crypt.c           |  342 +++++++++++++++++++++------------------
+ drivers/md/dm-delay.c           |    6 +-
+ drivers/md/dm-exception-store.c |    4 +-
+ drivers/md/dm-exception-store.h |    3 +-
+ drivers/md/dm-ioctl.c           |  207 ++++++++++++------------
+ drivers/md/dm-linear.c          |    3 +-
+ drivers/md/dm-mpath.c           |   11 ++
+ drivers/md/dm-raid1.c           |    2 +-
+ drivers/md/dm-snap-persistent.c |    6 +-
+ drivers/md/dm-snap.c            |   62 +++++--
+ drivers/md/dm-stripe.c          |   87 +++++++++--
+ drivers/md/dm-table.c           |   99 +++++++++++-
+ drivers/md/dm-target.c          |    5 +
+ drivers/md/dm-zero.c            |    5 +
+ drivers/md/dm.c                 |  329 ++++++++++++++++++++++++++++---------
+ drivers/md/dm.h                 |   14 ++-
+ include/linux/device-mapper.h   |   16 ++-
+ include/linux/dm-ioctl.h        |    5 +-
+ include/linux/miscdevice.h      |    1 +
+ 20 files changed, 822 insertions(+), 386 deletions(-)
+
+Thanks,
+Alasdair.
