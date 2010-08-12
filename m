@@ -1,15 +1,13 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 11/11] block: use REQ_FLUSH in
-	blkdev_issue_flush()
-Date: Thu, 12 Aug 2010 14:41:31 +0200
-Message-ID: <1281616891-5691-12-git-send-email-tj__41686.2592370764$1281617240$gmane$org@kernel.org>
-References: <1281616891-5691-1-git-send-email-tj@kernel.org>
+Subject: [PATCHSET block#for-2.6.36-post] block: replace barrier
+	with sequenced flush
+Date: Thu, 12 Aug 2010 14:41:20 +0200
+Message-ID: <1281616891-5691-1-git-send-email-tj__24481.2832949266$1281617250$gmane$org@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1281616891-5691-1-git-send-email-tj@kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,70 +18,95 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
-Cc: Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-Update blkdev_issue_flush() to use new REQ_FLUSH interface.
+Hello,
 
-Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Christoph Hellwig <hch@infradead.org>
----
- block/blk-flush.c |   17 ++++++-----------
- 1 files changed, 6 insertions(+), 11 deletions(-)
+This patchset replaces the current barrier implementation with
+sequenced flush which doesn't impose any restriction on ordering
+around the flush requests.  This patchst is result of the following
+discussion thread.
 
-diff --git a/block/blk-flush.c b/block/blk-flush.c
-index 452c552..ab765c2 100644
---- a/block/blk-flush.c
-+++ b/block/blk-flush.c
-@@ -174,13 +174,10 @@ struct request *blk_do_flush(struct request_queue *q, struct request *rq)
- 	return blk_flush_complete_seq(q, skip, 0);
- }
- 
--static void bio_end_empty_barrier(struct bio *bio, int err)
-+static void bio_end_flush(struct bio *bio, int err)
- {
--	if (err) {
--		if (err == -EOPNOTSUPP)
--			set_bit(BIO_EOPNOTSUPP, &bio->bi_flags);
-+	if (err)
- 		clear_bit(BIO_UPTODATE, &bio->bi_flags);
--	}
- 	if (bio->bi_private)
- 		complete(bio->bi_private);
- 	bio_put(bio);
-@@ -218,19 +215,19 @@ int blkdev_issue_flush(struct block_device *bdev, gfp_t gfp_mask,
- 	 * some block devices may not have their queue correctly set up here
- 	 * (e.g. loop device without a backing file) and so issuing a flush
- 	 * here will panic. Ensure there is a request function before issuing
--	 * the barrier.
-+	 * the flush.
- 	 */
- 	if (!q->make_request_fn)
- 		return -ENXIO;
- 
- 	bio = bio_alloc(gfp_mask, 0);
--	bio->bi_end_io = bio_end_empty_barrier;
-+	bio->bi_end_io = bio_end_flush;
- 	bio->bi_bdev = bdev;
- 	if (test_bit(BLKDEV_WAIT, &flags))
- 		bio->bi_private = &wait;
- 
- 	bio_get(bio);
--	submit_bio(WRITE_BARRIER, bio);
-+	submit_bio(WRITE_FLUSH, bio);
- 	if (test_bit(BLKDEV_WAIT, &flags)) {
- 		wait_for_completion(&wait);
- 		/*
-@@ -242,9 +239,7 @@ int blkdev_issue_flush(struct block_device *bdev, gfp_t gfp_mask,
- 			*error_sector = bio->bi_sector;
- 	}
- 
--	if (bio_flagged(bio, BIO_EOPNOTSUPP))
--		ret = -EOPNOTSUPP;
--	else if (!bio_flagged(bio, BIO_UPTODATE))
-+	if (!bio_flagged(bio, BIO_UPTODATE))
- 		ret = -EIO;
- 
- 	bio_put(bio);
--- 
-1.7.1
+  http://thread.gmane.org/gmane.linux.file-systems/43877
+
+In summary, filesystems can take over the ordering of requests around
+commit writes and the block layer should just supply a mechanism to
+perform the commit writes themselves.  This would greatly lessen tha
+stall caused by queue dumping and draining used by the current barrier
+implementation for request ordering.
+
+This patchset converts barrier mechanism to sequenced flush/fua
+mechanism in the following steps.
+
+1. Kill the mostly unused ORDERED_BY_TAG support.
+
+2. Deprecate REQ_HARDBARRIER support.  All hard barrier requests are
+   failed with -EOPNOTSUPP.
+
+3. Drop barrier ordering by queue draining mechanism.
+
+4. Rename barrier to flush and implement new interface based on
+   REQ_FLUSH and REQ_FUA as suggested by Christoph.
+
+blkdev_issue_flush() is converted to use the new mechanism but all the
+filesystems still use the deprecated REQ_HARDBARRIER which always
+fails.  Each filesystem needs to be updated to enforce request
+ordering themselves and then to use REQ_FLUSH/FUA mechanism.
+
+loop, md, dm, etc... haven't been converted yet and REQ_FLUSH/FUA
+doesn't work with them yet.  I'll convert most of them soonish if this
+patchset is generally agreed upon.
+
+This patchset contains the following patches.
+
+  0001-block-loop-queue-ordered-mode-should-be-DRAIN_FLUSH.patch
+  0002-block-kill-QUEUE_ORDERED_BY_TAG.patch
+  0003-block-deprecate-barrier-and-replace-blk_queue_ordere.patch
+  0004-block-remove-spurious-uses-of-REQ_HARDBARRIER.patch
+  0005-block-misc-cleanups-in-barrier-code.patch
+  0006-block-drop-barrier-ordering-by-queue-draining.patch
+  0007-block-rename-blk-barrier.c-to-blk-flush.c.patch
+  0008-block-rename-barrier-ordered-to-flush.patch
+  0009-block-implement-REQ_FLUSH-FUA-based-interface-for-FL.patch
+  0010-fs-block-propagate-REQ_FLUSH-FUA-interface-to-upper-.patch
+  0011-block-use-REQ_FLUSH-in-blkdev_issue_flush.patch
+
+and is also available in the following git tree.
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/tj/misc.git flush-fua
+
+and contains the following changes.
+
+ block/Makefile                      |    2 
+ block/blk-barrier.c                 |  350 ------------------------------------
+ block/blk-core.c                    |   55 ++---
+ block/blk-flush.c                   |  248 +++++++++++++++++++++++++
+ block/blk-settings.c                |   20 ++
+ block/blk.h                         |    8 
+ block/elevator.c                    |   79 --------
+ drivers/block/brd.c                 |    1 
+ drivers/block/loop.c                |    2 
+ drivers/block/osdblk.c              |    5 
+ drivers/block/pktcdvd.c             |    1 
+ drivers/block/ps3disk.c             |    2 
+ drivers/block/virtio_blk.c          |   34 ---
+ drivers/block/xen-blkfront.c        |   47 +---
+ drivers/ide/ide-disk.c              |   13 -
+ drivers/md/dm.c                     |    2 
+ drivers/mmc/card/queue.c            |    1 
+ drivers/s390/block/dasd.c           |    1 
+ drivers/scsi/aic7xxx_old.c          |   21 --
+ drivers/scsi/libsas/sas_scsi_host.c |   13 -
+ drivers/scsi/sd.c                   |   18 -
+ fs/buffer.c                         |   27 +-
+ include/linux/blk_types.h           |    4 
+ include/linux/blkdev.h              |   73 +------
+ include/linux/buffer_head.h         |    8 
+ include/linux/fs.h                  |   20 +-
+ include/scsi/scsi_tcq.h             |    6 
+ 27 files changed, 402 insertions(+), 659 deletions(-)
+
+Thanks.
+
+--
+tejun
