@@ -1,121 +1,45 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: [PATCH] dm-throttle: new device mapper target to
- throttle reads and writes
-Date: Thu, 12 Aug 2010 23:23:21 +0200
-Message-ID: <1281648201.4964.437.camel@o>
-References: <1281541513.4964.332.camel@o> <20100812142336.GB8831@redhat.com>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH 10/11] fs, block: propagate REQ_FLUSH/FUA interface to
+ upper layers
+Date: Fri, 13 Aug 2010 09:19:57 +0200
+Message-ID: <4C64F21D.7010409@kernel.org>
+References: <1281616891-5691-1-git-send-email-tj@kernel.org> <1281616891-5691-11-git-send-email-tj@kernel.org> <20100812212404.GB3665@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100812142336.GB8831@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-ide-owner@vger.kernel.org>
+In-Reply-To: <20100812212404.GB3665@quack.suse.cz>
+Sender: linux-ide-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, rwheeler@redhat.com, hare@suse.de, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-On Thu, 2010-08-12 at 10:23 -0400, Vivek Goyal wrote:
-> On Wed, Aug 11, 2010 at 05:45:13PM +0200, Heinz Mauelshagen wrote:
-> 
-> [..]
-> > > [..]
-> > > > +/* Decide about throttling (ie. deferring bios). */
-> > > > +static int throttle(struct throttle_c *tc, struct bio *bio)
-> > > > +{
-> > > > +	int rw = (bio_data_dir(bio) == WRITE);
-> > > > +	unsigned bps; /* Bytes per second. */
-> > > > +
-> > > > +	smp_rmb();
-> > > > +	bps = tc->params.bs[rw];
-> > > > +	if (bps) {
-> > > > +		unsigned size;
-> > > > +		struct account *ac = &tc->account;
-> > > > +		struct ac_rw *ac_rw = ac->rw + rw;
-> > > > +
-> > > > +		if (time_after(jiffies, ac_rw->end_jiffies))
-> > > > +			/* Measure time exceeded. */
-> > > > +			account_reset(rw, tc);
-> > > > +		else if (test_bit(rw, &ac->flags))
-> > > > +			/* In case we're throttled already. */
-> > > > +			return 1;
-> > > > +
-> > > > +		/* Account I/O size. */
-> > > > +		size = ac_rw->size + bio->bi_size;
-> > > > +		if (size > bps) {
-> > > > +			/* Hit kilobytes per second threshold. */
-> > > > +			set_bit(rw, &ac->flags);
-> > > > +			return 1;
-> > > 
-> > > If bio->bi_size is greate than bps, will I always keep on throttling
-> > > and hang?
-> > 
-> > bps needs to be set larger than the bio maximum size expected with the
-> > current implementatio, right. The algorithm needs changing to cope with
-> > bi_size larger than bps (see below).
-> > 
-> > > 
-> > > [..]
-> > > > +/* Map a throttle io. */
-> > > > +static int throttle_map(struct dm_target *ti, struct bio *bio,
-> > > > +			union map_info *map_context)
-> > > > +{
-> > > > +	int r, rw = (bio_data_dir(bio) == WRITE);
-> > > > +	struct throttle_c *tc = ti->private;
-> > > > +	struct ac_rw *ac_rw = tc->account.rw + rw;
-> > > > +
-> > > > +	mutex_lock(&ac_rw->mutex);
-> > > > +	do {
-> > > > +		r = throttle(tc, bio);
-> > > > +		if (r) {
-> > > > +			long end = ac_rw->end_jiffies, j = jiffies;
-> > > > +
-> > > > +			/* Wait till next second when KB/s reached. */
-> > > > +			if (j < end)
-> > > > +				schedule_timeout_uninterruptible(end - j);
-> > > > +		}
-> > > 
-> > > So a thread is blocked if it crossed the IO rate. There is no such
-> > mechanism
-> > > to take the bio, statsh away somewhere and dispatch it to disk later.
-> > The
-> > > way request queue descriptors work.
-> > 
-> > Right, the aim for this testing target was to keep it as simple as
-> > possible to solve the purpose of simulating low bandwidth transports or
-> > varying device throughput properties.
-> > 
-> > Cheap approaches to tackle this issue include to set ti->split_io based
-> > on bps < BIO_MAX_SIZE (units ignored) in the ctr/message interface,
-> > to prohibit bps smaller than BIO_MAX_SIZE altogether or to change the
-> > throttle() algorithm to allow for > 1s measurement periods based on
-> > bi_size maximum vs. bps ratios.
-> > 
-> > The 1st one obviously causing more bio splits, the 2nd one prohibiting
-> > small bandwidth simulation and the last one causing io peeks, which is
-> > actually not what I wanted.
-> 
-> Can't we just wait for enough number of seconds to allow bigger bio to
-> pass. So if bio size is 4MB and rate limit is 1MB/s then wait for 4 
-> seconds. That way there are no splits, and no io peeks?
+Hello, Jan.
 
-No, that'd cause what I meant with io peeks.
-4s w/o io and then a 4MB burst.
+On 08/12/2010 11:24 PM, Jan Kara wrote:
+> On Thu 12-08-10 14:41:30, Tejun Heo wrote:
+>> Propagate deprecation of REQ_HARDBARRIER and new REQ_FLUSH/FUA
+>> interface to upper layers.
+>>
+>> * WRITE_BARRIER is marked deprecated and WRITE_FLUSH, WRITE_FUA and
+>>   WRITE_FLUSH_FUA are added.
+>>
+>> * REQ_COMMON_MASK now includes REQ_FLUSH | REQ_FUA so that they are
+>>   copied from bio to request.
+>>
+>> * BH_Ordered is marked deprecated and BH_Flush and BH_FUA are added.
+>
+>   Deprecating BH_Ordered is fine but I wouldn't introduce new BH flags for
+> this. BH flags should be used for buffer state, not for encoding how the
+> buffer should be written (there were actually bugs in the past because of
+> this). Being able to set proper flags when calling submit_bh() in the rw
+> parameter is enough.
 
-Heinz
+Ah, okay, I was just trying to match the BH_Ordered usage but you're
+saying just requiring submit_bh() users to specify appropriate REQ_*
+(or WRITE_*) in @rw is okay, right?  I'll drop the bh part then.
 
-> 
-> Thanks
-> Vivek
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Thanks.
+
+-- 
+tejun
