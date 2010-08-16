@@ -1,14 +1,13 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 2/5] virtio_blk: implement REQ_FLUSH/FUA support
-Date: Mon, 16 Aug 2010 18:52:00 +0200
-Message-ID: <1281977523-19335-3-git-send-email-tj__38285.4195814163$1281978054$gmane$org@kernel.org>
-References: <1281977523-19335-1-git-send-email-tj@kernel.org>
+Subject: [RFC PATCHSET block#for-2.6.36-post] block: convert to
+	REQ_FLUSH/FUA
+Date: Mon, 16 Aug 2010 18:51:58 +0200
+Message-ID: <1281977523-19335-1-git-send-email-tj__38656.1973755763$1281978057$gmane$org@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1281977523-19335-1-git-send-email-tj@kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,111 +18,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
-Cc: Tejun Heo <tj@kernel.org>, Tejun Heo <tj@kernle.org>
 List-Id: dm-devel.ids
 
-From: Tejun Heo <tj@kernle.org>
+Hello,
 
-Remove now unused REQ_HARDBARRIER support and implement REQ_FLUSH/FUA
-support instead.  A new feature flag VIRTIO_BLK_F_FUA is added to
-indicate the support for FUA.
+This patchset contains five patches to convert block drivers
+implementing REQ_HARDBARRIER to support REQ_FLUSH/FUA.
 
-Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Michael S. Tsirkin <mst@redhat.com>
----
- drivers/block/virtio_blk.c |   26 ++++++++++++--------------
- include/linux/virtio_blk.h |    6 +++++-
- 2 files changed, 17 insertions(+), 15 deletions(-)
+  0001-block-loop-implement-REQ_FLUSH-FUA-support.patch
+  0002-virtio_blk-implement-REQ_FLUSH-FUA-support.patch
+  0003-lguest-replace-VIRTIO_F_BARRIER-support-with-VIRTIO_.patch
+  0004-md-implment-REQ_FLUSH-FUA-support.patch
+  0005-dm-implement-REQ_FLUSH-FUA-support.patch
 
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index d10b635..ed0fb7d 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -128,9 +128,6 @@ static bool do_req(struct request_queue *q, struct virtio_blk *vblk,
- 		}
- 	}
- 
--	if (vbr->req->cmd_flags & REQ_HARDBARRIER)
--		vbr->out_hdr.type |= VIRTIO_BLK_T_BARRIER;
--
- 	sg_set_buf(&vblk->sg[out++], &vbr->out_hdr, sizeof(vbr->out_hdr));
- 
- 	/*
-@@ -157,6 +154,8 @@ static bool do_req(struct request_queue *q, struct virtio_blk *vblk,
- 		if (rq_data_dir(vbr->req) == WRITE) {
- 			vbr->out_hdr.type |= VIRTIO_BLK_T_OUT;
- 			out += num;
-+			if (req->cmd_flags & REQ_FUA)
-+				vbr->out_hdr.type |= VIRTIO_BLK_T_FUA;
- 		} else {
- 			vbr->out_hdr.type |= VIRTIO_BLK_T_IN;
- 			in += num;
-@@ -307,6 +306,7 @@ static int __devinit virtblk_probe(struct virtio_device *vdev)
- {
- 	struct virtio_blk *vblk;
- 	struct request_queue *q;
-+	unsigned int flush;
- 	int err;
- 	u64 cap;
- 	u32 v, blk_size, sg_elems, opt_io_size;
-@@ -388,15 +388,13 @@ static int __devinit virtblk_probe(struct virtio_device *vdev)
- 	vblk->disk->driverfs_dev = &vdev->dev;
- 	index++;
- 
--	/*
--	 * If the FLUSH feature is supported we do have support for
--	 * flushing a volatile write cache on the host.  Use that to
--	 * implement write barrier support; otherwise, we must assume
--	 * that the host does not perform any kind of volatile write
--	 * caching.
--	 */
-+	/* configure queue flush support */
-+	flush = 0;
- 	if (virtio_has_feature(vdev, VIRTIO_BLK_F_FLUSH))
--		blk_queue_flush(q, REQ_FLUSH);
-+		flush |= REQ_FLUSH;
-+	if (virtio_has_feature(vdev, VIRTIO_BLK_F_FUA))
-+		flush |= REQ_FUA;
-+	blk_queue_flush(q, flush);
- 
- 	/* If disk is read-only in the host, the guest should obey */
- 	if (virtio_has_feature(vdev, VIRTIO_BLK_F_RO))
-@@ -515,9 +513,9 @@ static const struct virtio_device_id id_table[] = {
- };
- 
- static unsigned int features[] = {
--	VIRTIO_BLK_F_BARRIER, VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX,
--	VIRTIO_BLK_F_GEOMETRY, VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE,
--	VIRTIO_BLK_F_SCSI, VIRTIO_BLK_F_FLUSH, VIRTIO_BLK_F_TOPOLOGY
-+	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
-+	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE, VIRTIO_BLK_F_SCSI,
-+	VIRTIO_BLK_F_FLUSH, VIRTIO_BLK_F_TOPOLOGY, VIRTIO_BLK_F_FUA,
- };
- 
- /*
-diff --git a/include/linux/virtio_blk.h b/include/linux/virtio_blk.h
-index 167720d..f453f3c 100644
---- a/include/linux/virtio_blk.h
-+++ b/include/linux/virtio_blk.h
-@@ -16,6 +16,7 @@
- #define VIRTIO_BLK_F_SCSI	7	/* Supports scsi command passthru */
- #define VIRTIO_BLK_F_FLUSH	9	/* Cache flush command support */
- #define VIRTIO_BLK_F_TOPOLOGY	10	/* Topology information is available */
-+#define VIRTIO_BLK_F_FUA	11	/* Forced Unit Access write support */
- 
- #define VIRTIO_BLK_ID_BYTES	20	/* ID string length */
- 
-@@ -70,7 +71,10 @@ struct virtio_blk_config {
- #define VIRTIO_BLK_T_FLUSH	4
- 
- /* Get device ID command */
--#define VIRTIO_BLK_T_GET_ID    8
-+#define VIRTIO_BLK_T_GET_ID	8
-+
-+/* FUA command */
-+#define VIRTIO_BLK_T_FUA	16
- 
- /* Barrier before this op. */
- #define VIRTIO_BLK_T_BARRIER	0x80000000
--- 
-1.7.1
+I'm fairly sure about conversions 0001-0003.  0004 should be okay
+although multipath wasn't tested.  0005, I'm not quite sure about.  It
+works fine for the tests I've done but there are many other targets
+and code paths that I didn't test.  So, please be careful with the
+last patch.  I think it would be best to route the last two through
+the respective md/dm trees after the core part is merged and pulled
+into those trees.
+
+The nice thing about the conversion is that in many cases it replaces
+postflush with FUA writes which can be handled by request queues lower
+in the chain.  For md/dm, this replaces an array wide cacheflush with
+FUA writes to only affected member devices.
+
+After this patchset, the followings remain to be converted.
+
+* blktrace
+
+* scsi_error.c for some reason tests REQ_HARDBARRIER.  I think this
+  part can be dropped altogether but am not sure.
+
+* drbd and xen.  I have no idea.
+
+These patches are on top of
+
+  block#for-2.6.36-post (c047ab2dddeeafbd6f7c00e45a13a5c4da53ea0b)
++ block-replace-barrier-with-sequenced-flush patchset[1]
++ block-fix-incorrect-bio-request-flag-conversion-in-md patch[2]
+
+and available in the following git tree.
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/tj/misc.git flush-fua
+
+and contain the following changes.
+
+ Documentation/lguest/lguest.c   |   36 +++-----
+ drivers/block/loop.c            |   18 ++--
+ drivers/block/virtio_blk.c      |   26 ++---
+ drivers/md/dm-crypt.c           |    2 
+ drivers/md/dm-io.c              |   20 ----
+ drivers/md/dm-log.c             |    2 
+ drivers/md/dm-raid1.c           |    8 -
+ drivers/md/dm-region-hash.c     |   16 +--
+ drivers/md/dm-snap-persistent.c |    2 
+ drivers/md/dm-snap.c            |    6 -
+ drivers/md/dm-stripe.c          |    2 
+ drivers/md/dm.c                 |  180 ++++++++++++++++++++--------------------
+ drivers/md/linear.c             |    4 
+ drivers/md/md.c                 |  117 +++++---------------------
+ drivers/md/md.h                 |   23 +----
+ drivers/md/multipath.c          |    4 
+ drivers/md/raid0.c              |    4 
+ drivers/md/raid1.c              |  175 +++++++++++++-------------------------
+ drivers/md/raid1.h              |    2 
+ drivers/md/raid10.c             |    7 -
+ drivers/md/raid5.c              |   38 ++++----
+ drivers/md/raid5.h              |    1 
+ include/linux/virtio_blk.h      |    6 +
+ 23 files changed, 278 insertions(+), 421 deletions(-)
+
+--
+tejun
+
+[1] http://thread.gmane.org/gmane.linux.kernel/1022363
+[2] http://thread.gmane.org/gmane.linux.kernel/1023435
