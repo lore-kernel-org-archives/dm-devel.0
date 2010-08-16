@@ -1,108 +1,106 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH UPDATED 10/11] fs, block: propagate REQ_FLUSH/FUA interface
- to upper layers
-Date: Mon, 16 Aug 2010 18:33:22 +0200
-Message-ID: <4C696852.1080709@kernel.org>
-References: <1281616891-5691-1-git-send-email-tj@kernel.org> <1281616891-5691-11-git-send-email-tj@kernel.org>
+Subject: [PATCH 3/5] lguest: replace VIRTIO_F_BARRIER support
+	with VIRTIO_F_FLUSH/FUA support
+Date: Mon, 16 Aug 2010 18:52:01 +0200
+Message-ID: <1281977523-19335-4-git-send-email-tj__28293.6291456737$1281977849$gmane$org@kernel.org>
+References: <1281977523-19335-1-git-send-email-tj@kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <1281616891-5691-11-git-send-email-tj@kernel.org>
-Sender: linux-ide-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de, Christoph Hellwig <hch@infradead.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1281977523-19335-1-git-send-email-tj@kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
+Cc: Tejun Heo <tj@kernel.org>, Tejun Heo <tj@kernle.org>
 List-Id: dm-devel.ids
 
-Propagate deprecation of REQ_HARDBARRIER and new REQ_FLUSH/FUA
-interface to upper layers.
+From: Tejun Heo <tj@kernle.org>
 
-* WRITE_BARRIER is marked deprecated and WRITE_FLUSH, WRITE_FUA and
-  WRITE_FLUSH_FUA are added.
-
-* REQ_COMMON_MASK now includes REQ_FLUSH | REQ_FUA so that they are
-  copied from bio to request.
-
-* BH_Ordered and BH_Eopnotsupp are marked deprecated.  BH_Flush/FUA
-  are _NOT_ added as they can and should be specified when calling
-  submit_bh() as @rw parameter as suggested by Jan Kara.
+VIRTIO_F_BARRIER is deprecated.  Replace it with VIRTIO_F_FLUSH/FUA
+support.
 
 Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Christoph Hellwig <hch@infradead.org>
-Cc: Jan Kara <jack@suse.cz>
+Cc: Rusty Russell <rusty@rustcorp.com.au>
 ---
-Dropped BH_Flush/FUA as suggested.
+ Documentation/lguest/lguest.c |   36 ++++++++++++++++--------------------
+ 1 files changed, 16 insertions(+), 20 deletions(-)
 
-Thanks.
-
- include/linux/blk_types.h   |    2 +-
- include/linux/buffer_head.h |    4 ++--
- include/linux/fs.h          |   20 +++++++++++++-------
- 3 files changed, 16 insertions(+), 10 deletions(-)
-
-Index: block/include/linux/fs.h
-===================================================================
---- block.orig/include/linux/fs.h
-+++ block/include/linux/fs.h
-@@ -138,13 +138,13 @@ struct inodes_stat_t {
-  * SWRITE_SYNC
-  * SWRITE_SYNC_PLUG	Like WRITE_SYNC/WRITE_SYNC_PLUG, but locks the buffer.
-  *			See SWRITE.
-- * WRITE_BARRIER	Like WRITE_SYNC, but tells the block layer that all
-- *			previously submitted writes must be safely on storage
-- *			before this one is started. Also guarantees that when
-- *			this write is complete, it itself is also safely on
-- *			storage. Prevents reordering of writes on both sides
-- *			of this IO.
-- *
-+ * WRITE_BARRIER	DEPRECATED. Always fails. Use FLUSH/FUA instead.
-+ * WRITE_FLUSH		Like WRITE_SYNC but with preceding cache flush.
-+ * WRITE_FUA		Like WRITE_SYNC but data is guaranteed to be on
-+ *			non-volatile media on completion.
-+ * WRITE_FLUSH_FUA	Combination of WRITE_FLUSH and FUA.  The IO is preceded
-+ *			by a cache flush and data is guaranteed to be on
-+ *			non-volatile media on completion.
-  */
- #define RW_MASK			REQ_WRITE
- #define RWA_MASK		REQ_RAHEAD
-@@ -162,6 +162,12 @@ struct inodes_stat_t {
- #define WRITE_META		(WRITE | REQ_META)
- #define WRITE_BARRIER		(WRITE | REQ_SYNC | REQ_NOIDLE | REQ_UNPLUG | \
- 				 REQ_HARDBARRIER)
-+#define WRITE_FLUSH		(WRITE | REQ_SYNC | REQ_NOIDLE | REQ_UNPLUG | \
-+				 REQ_FLUSH)
-+#define WRITE_FUA		(WRITE | REQ_SYNC | REQ_NOIDLE | REQ_UNPLUG | \
-+				 REQ_FUA)
-+#define WRITE_FLUSH_FUA		(WRITE | REQ_SYNC | REQ_NOIDLE | REQ_UNPLUG | \
-+				 REQ_FLUSH | REQ_FUA)
- #define SWRITE_SYNC_PLUG	(SWRITE | REQ_SYNC | REQ_NOIDLE)
- #define SWRITE_SYNC		(SWRITE | REQ_SYNC | REQ_NOIDLE | REQ_UNPLUG)
-
-Index: block/include/linux/blk_types.h
-===================================================================
---- block.orig/include/linux/blk_types.h
-+++ block/include/linux/blk_types.h
-@@ -164,7 +164,7 @@ enum rq_flag_bits {
- 	(REQ_FAILFAST_DEV | REQ_FAILFAST_TRANSPORT | REQ_FAILFAST_DRIVER)
- #define REQ_COMMON_MASK \
- 	(REQ_WRITE | REQ_FAILFAST_MASK | REQ_HARDBARRIER | REQ_SYNC | \
--	 REQ_META| REQ_DISCARD | REQ_NOIDLE)
-+	 REQ_META | REQ_DISCARD | REQ_NOIDLE | REQ_FLUSH | REQ_FUA)
-
- #define REQ_UNPLUG		(1 << __REQ_UNPLUG)
- #define REQ_RAHEAD		(1 << __REQ_RAHEAD)
-Index: block/include/linux/buffer_head.h
-===================================================================
---- block.orig/include/linux/buffer_head.h
-+++ block/include/linux/buffer_head.h
-@@ -32,8 +32,8 @@ enum bh_state_bits {
- 	BH_Delay,	/* Buffer is not yet allocated on disk */
- 	BH_Boundary,	/* Block is followed by a discontiguity */
- 	BH_Write_EIO,	/* I/O error on write */
--	BH_Ordered,	/* ordered write */
--	BH_Eopnotsupp,	/* operation not supported (barrier) */
-+	BH_Ordered,	/* DEPRECATED: ordered write */
-+	BH_Eopnotsupp,	/* DEPRECATED: operation not supported (barrier) */
- 	BH_Unwritten,	/* Buffer is allocated on disk but not written */
- 	BH_Quiet,	/* Buffer Error Prinks to be quiet */
-
+diff --git a/Documentation/lguest/lguest.c b/Documentation/lguest/lguest.c
+index e9ce3c5..3be47d4 100644
+--- a/Documentation/lguest/lguest.c
++++ b/Documentation/lguest/lguest.c
+@@ -1639,15 +1639,6 @@ static void blk_request(struct virtqueue *vq)
+ 	off = out->sector * 512;
+ 
+ 	/*
+-	 * The block device implements "barriers", where the Guest indicates
+-	 * that it wants all previous writes to occur before this write.  We
+-	 * don't have a way of asking our kernel to do a barrier, so we just
+-	 * synchronize all the data in the file.  Pretty poor, no?
+-	 */
+-	if (out->type & VIRTIO_BLK_T_BARRIER)
+-		fdatasync(vblk->fd);
+-
+-	/*
+ 	 * In general the virtio block driver is allowed to try SCSI commands.
+ 	 * It'd be nice if we supported eject, for example, but we don't.
+ 	 */
+@@ -1679,6 +1670,19 @@ static void blk_request(struct virtqueue *vq)
+ 			/* Die, bad Guest, die. */
+ 			errx(1, "Write past end %llu+%u", off, ret);
+ 		}
++
++		/* Honor FUA by syncing everything. */
++		if (ret >= 0 && (out->type & VIRTIO_BLK_T_FUA)) {
++			ret = fdatasync(vblk->fd);
++			verbose("FUA fdatasync: %i\n", ret);
++		}
++
++		wlen = sizeof(*in);
++		*in = (ret >= 0 ? VIRTIO_BLK_S_OK : VIRTIO_BLK_S_IOERR);
++	} else if (out->type & VIRTIO_BLK_T_FLUSH) {
++		/* Flush */
++		ret = fdatasync(vblk->fd);
++		verbose("FLUSH fdatasync: %i\n", ret);
+ 		wlen = sizeof(*in);
+ 		*in = (ret >= 0 ? VIRTIO_BLK_S_OK : VIRTIO_BLK_S_IOERR);
+ 	} else {
+@@ -1702,15 +1706,6 @@ static void blk_request(struct virtqueue *vq)
+ 		}
+ 	}
+ 
+-	/*
+-	 * OK, so we noted that it was pretty poor to use an fdatasync as a
+-	 * barrier.  But Christoph Hellwig points out that we need a sync
+-	 * *afterwards* as well: "Barriers specify no reordering to the front
+-	 * or the back."  And Jens Axboe confirmed it, so here we are:
+-	 */
+-	if (out->type & VIRTIO_BLK_T_BARRIER)
+-		fdatasync(vblk->fd);
+-
+ 	/* Finished that request. */
+ 	add_used(vq, head, wlen);
+ }
+@@ -1735,8 +1730,9 @@ static void setup_block_file(const char *filename)
+ 	vblk->fd = open_or_die(filename, O_RDWR|O_LARGEFILE);
+ 	vblk->len = lseek64(vblk->fd, 0, SEEK_END);
+ 
+-	/* We support barriers. */
+-	add_feature(dev, VIRTIO_BLK_F_BARRIER);
++	/* We support FLUSH and FUA. */
++	add_feature(dev, VIRTIO_BLK_F_FLUSH);
++	add_feature(dev, VIRTIO_BLK_F_FUA);
+ 
+ 	/* Tell Guest how many sectors this device has. */
+ 	conf.capacity = cpu_to_le64(vblk->len / 512);
+-- 
+1.7.1
