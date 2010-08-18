@@ -1,90 +1,52 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: snapshots of mirror problems
-Date: Wed, 18 Aug 2010 10:50:34 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1008181021460.7416@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Vladislav Bolkhovitin <vst@vlnb.net>
+Subject: Re: [PATCHSET block#for-2.6.36-post] block: replace barrier with
+ sequenced flush
+Date: Wed, 18 Aug 2010 23:29:05 +0400
+Message-ID: <4C6C3481.7000302@vlnb.net>
+References: <1281616891-5691-1-git-send-email-tj@kernel.org> <4C6540C5.8070108@vlnb.net> <20100813131722.GB4140@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20100813131722.GB4140@lst.de>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Tejun Heo <tj@kernel.org>, jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, jack@suse.cz, rwheeler@redhat.com, hare@suse.de
 List-Id: dm-devel.ids
 
-The problem is this:
+Christoph Hellwig, on 08/13/2010 05:17 PM wrote:
+> As far as playing with ordered tags it's just adding a new flag for
+> it on the bio that gets passed down to the driver.  For a final version
+> you'd need a queue-level feature if it's supported, but you don't
+> even need that for the initial work.  Then you can implement a
+> variant of blk_do_flush that does away with queueing additional requests
+> once finish but queues all two or three at the same time with your
+> new ordered flag set, at which point you are back to the level or
+> ordered tag usage that the old code allows.  You're still left with
+> all the hard problems of actually implementing error handling for it
+> and using it higher up in the filesystem and generic page cache code.
 
-Creating the first snapshot:
-----------------------------
+But how about file systems doing internal local order-by-drain? Without 
+converting them to use ordered commands it would be impossible to show 
+full potential of them and to make the conversion one would need deep 
+internal FS knowledge. That's my point. But if there's a trivial way to 
+see all such places in the filesystems code and convert, then OK, I agree.
 
-- preloads -cow, -real devices and origin and snapshot targets
+> I'd really love to see your results, up to the point of just trying
+> that once I get a little spare time.  But my theory is that it won't
+> help us - the problem with ordered tags is that they enforce global
+> ordering while we currently have local ordering.  While it will reduce
+> the latency for the process waiting for an fsync or similar it will
+> affect other I/O going on in the background and reduce the devices
+> ability to reorder that I/O.
 
-- suspends the underlying lv (mirror in this case) without 
-DM_SUSPEND_NOFLUSH_FLAG and with DM_SUSPEND_LOCKFS_FLAG. This waits for 
-all bios to drain and calls a filesystem driver to bring it to consistent 
-state.
+The local ordering vs global ordering is relevant only if you have 
+several applications/threads load. But how about a single 
+application/thread?
 
-- swap table with origin targets
+Another point, for which, AFAIU, the ORDERED commands were invented, is 
+that they make ordering on the _another_ side of the link _after_ all 
+link/transfer latencies. This is why it's hard to see advantage of them 
+on local disks.
 
-- resumes the underlying lv, the snapshot target and the origin target
-
-Handing a mirror failure:
--------------------------
-
-- preload the new table with linear volume or a mirror with reduced number 
-of legs or a mirror with new legs allocated according to the allocation 
-policy
-
-- suspend the mirror with "noflush" flag, "noflush" causes that failing 
-bios are queued in device mapper
-
-- swap table with the new one
-
-- resume the mirror, queued buis are dequeued and passed to the new device
-
-
-Now, the problem:
------------------
-
-1. If you say that these two operations are independednt, two processes 
-will race with suspend and resume on the same device. Bad.
-
-2. If you put lock around, it changes into deadlock possibility: if during 
-bio draining or filesystem cleanup dm-raid1 suffers a failure, the failure 
-can't be recovered.
-
-3. If you are suspending without DM_SUSPEND_NOFLUSH_FLAG, DM_ENDIO_REQUEUE 
-is not allowd and requests returned with DM_ENDIO_REQUEUE are returned 
-with -EIO (see function dec_pending). So if mirror leg or log failure 
-happens, dm-raid1 returns DM_ENDIO_REQUEUE and the I/O is incorrectly 
-finished with -EIO. If you remove this DM_ENDIO_REQUEUE->-EIO logic from 
-dec_pending, go to case 2 above (deadlock).
-
-
-As of the possibility "it is very improbable" --- I think there is one 
-case where the probability may be more than minimal. If the user has a 
-mounted filesystem and doesn't use it for long time, the disk may have 
-failed (or be unplugged) and the system doesn't notice it because the disk 
-isn't used. Now, if the user creates a snapshot of mirror and it starts 
-cleaning up filesystem journal, it may be the point where the disk error 
-is detected. But it can't be repaired.
-
-I think it isn't easy to fix (see those 3 points above), the only possible 
-ways to fix it would be:
-
-- make the mirror self-sufficient (integrate md) 
-or
-- attach dummy dm-linear (or snapshot-origin) passthrough target on the 
-top of each mirror. If we do it, snapshot creation could suspend this 
-dummy passthrough target and simultaneously dmeventd could suspend the 
-underlying mirror and there would be no race or deadlock.
-
-Mikulas
+Vlad
