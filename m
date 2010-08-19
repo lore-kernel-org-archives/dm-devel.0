@@ -1,61 +1,71 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 5/5] dm: implement REQ_FLUSH/FUA support
-Date: Thu, 19 Aug 2010 19:32:04 +0900
-Message-ID: <4C6D0824.3070908@ct.jp.nec.com>
-References: <1281977523-19335-1-git-send-email-tj@kernel.org> <1281977523-19335-6-git-send-email-tj@kernel.org> <20100816190203.GA22299@redhat.com> <4C6A5780.2090100@kernel.org> <20100817140734.GA30768@redhat.com> <4C6ABE12.40705@kernel.org>
+From: Tejun Heo <tj@kernel.org>
+Subject: [PATCH 2/5 UPDATED] virtio_blk: drop REQ_HARDBARRIER support
+Date: Thu, 19 Aug 2010 17:14:21 +0200
+Message-ID: <4C6D4A4D.7090501@kernel.org>
+References: <1281977523-19335-1-git-send-email-tj@kernel.org> <1281977523-19335-3-git-send-email-tj@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <4C6ABE12.40705@kernel.org>
-Sender: linux-ide-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>, Mike Snitzer <snitzer@redhat.com>
-Cc: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de, neilb@suse.de, rusty@rustcorp.com.au, mst@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1281977523-19335-3-git-send-email-tj@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de, neilb@suse.de, rusty@rustcorp.com.au, mst@redhat.com, Tejun Heo <tj@kernle.org>
 List-Id: dm-devel.ids
 
-Hi Tejun, Mike,
+Remove now unused REQ_HARDBARRIER support.  virtio_blk already
+supports REQ_FLUSH and the usefulness of REQ_FUA for virtio_blk is
+questionable at this point, so there's nothing else to do to support
+new REQ_FLUSH/FUA interface.
 
-On 08/18/2010 01:51 AM +0900, Tejun Heo wrote:
-> On 08/17/2010 04:07 PM, Mike Snitzer wrote:
->> NOTE: NEC has already given some preliminary feedback to hch in the
->> "[PATCH, RFC 2/2] dm: support REQ_FLUSH directly" thread:
->> https://www.redhat.com/archives/dm-devel/2010-August/msg00026.html
->> https://www.redhat.com/archives/dm-devel/2010-August/msg00033.html
-> 
-> Hmmm... I think both issues don't exist in this incarnation of
-> conversion although I'm fairly sure there will be other issues.  :-)
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: Michael S. Tsirkin <mst@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>
+---
+REQ_FUA support dropped as suggested by Christoph.
 
-The same issue is still there for request-based dm.  See below.
+ drivers/block/virtio_blk.c |   17 ++++-------------
+ 1 file changed, 4 insertions(+), 13 deletions(-)
 
+Index: block/drivers/block/virtio_blk.c
+===================================================================
+--- block.orig/drivers/block/virtio_blk.c
++++ block/drivers/block/virtio_blk.c
+@@ -128,9 +128,6 @@ static bool do_req(struct request_queue
+ 		}
+ 	}
 
->>>     A related question: Is dm_wait_for_completion() used in
->>>     process_flush() safe against starvation under continuous influx of
->>>     other commands?
->> As for your specific dm_wait_for_completion() concern -- I'll defer to
->> Mikulas.  But I'll add: we haven't had any reported starvation issues
->> with DM's existing barrier support.  DM uses a mempool for its clones,
->> so it should naturally throttle (without starvation) when memory gets
->> low.
-> 
-> I see but single pending flush and steady write streams w/o saturating
-> the mempool would be able to stall dm_wait_for_completeion(), no?  Eh
-> well, it's a separate issue, I guess.
+-	if (vbr->req->cmd_flags & REQ_HARDBARRIER)
+-		vbr->out_hdr.type |= VIRTIO_BLK_T_BARRIER;
+-
+ 	sg_set_buf(&vblk->sg[out++], &vbr->out_hdr, sizeof(vbr->out_hdr));
 
-Your understanding is correct, dm_wait_for_completion() for flush
-will stall in such cases for request-based dm.
-That's why I mentioned below in
-https://www.redhat.com/archives/dm-devel/2010-August/msg00026.html.
+ 	/*
+@@ -388,13 +385,7 @@ static int __devinit virtblk_probe(struc
+ 	vblk->disk->driverfs_dev = &vdev->dev;
+ 	index++;
 
-    In other words, current request-based device-mapper can't handle
-    other requests while a flush request is in progress.
+-	/*
+-	 * If the FLUSH feature is supported we do have support for
+-	 * flushing a volatile write cache on the host.  Use that to
+-	 * implement write barrier support; otherwise, we must assume
+-	 * that the host does not perform any kind of volatile write
+-	 * caching.
+-	 */
++	/* configure queue flush support */
+ 	if (virtio_has_feature(vdev, VIRTIO_BLK_F_FLUSH))
+ 		blk_queue_flush(q, REQ_FLUSH);
 
-In flush request handling, request-based dm uses dm_wait_for_completion()
-to wait for the completion of cloned flush requests, depending on
-the fact that there should be only flush requests in flight owning
-to the block layer sequencing.
+@@ -515,9 +506,9 @@ static const struct virtio_device_id id_
+ };
 
-It's not a separate issue and we need to resolve it at least.
-I'm still considering how I can fix the request-based dm.
+ static unsigned int features[] = {
+-	VIRTIO_BLK_F_BARRIER, VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX,
+-	VIRTIO_BLK_F_GEOMETRY, VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE,
+-	VIRTIO_BLK_F_SCSI, VIRTIO_BLK_F_FLUSH, VIRTIO_BLK_F_TOPOLOGY
++	VIRTIO_BLK_F_SEG_MAX, VIRTIO_BLK_F_SIZE_MAX, VIRTIO_BLK_F_GEOMETRY,
++	VIRTIO_BLK_F_RO, VIRTIO_BLK_F_BLK_SIZE, VIRTIO_BLK_F_SCSI,
++	VIRTIO_BLK_F_FLUSH, VIRTIO_BLK_F_TOPOLOGY
+ };
 
-Thanks,
-Kiyoshi Ueda
+ /*
