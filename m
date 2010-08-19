@@ -1,52 +1,37 @@
-From: Dominik Brodowski <linux@dominikbrodowski.net>
-Subject: Re: direct-io regression [Was: How to track down abysmal
- performance ata - raid1 - crypto - vg/lv - xfs]
-Date: Thu, 5 Aug 2010 18:35:19 +0200
-Message-ID: <20100805163519.GA6604__47918.1218812757$1282181827$gmane$org@comet.dominikbrodowski.net>
-References: <20100805123649.GA18672@dhcp231-156.rdu.redhat.com>
-	<20100805113240.GA29846@think>
-	<20100805153519.GA7242@comet.dominikbrodowski.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [dm-devel] [PATCH RESEND 1/2 block#for-linus] bio, fs: update
+ READA and SWRITE to match the corresponding BIO_RW_* bits
+Date: Thu, 19 Aug 2010 04:38:39 -0400
+Message-ID: <20100819083839.GA32336@infradead.org>
+References: <4C3EF3AD.5070509@vlnb.net>
+ <20100723191844.GB31152@atlantis.cc.ndsu.nodak.edu>
+ <4C4D7DF5.9060909@vlnb.net>
+ <20100727220110.GF31152@atlantis.cc.ndsu.nodak.edu>
+ <4C5073F3.1060406@vlnb.net>
+ <4C52A98A.7060507@kernel.org>
+ <20100802104227.79340b49@notabene>
+ <4C56D30A.3000403@kernel.org>
+ <x49y6ckc302.fsf@segfault.boston.devel.redhat.com>
+ <4C5B89DB.5050106@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20100805153519.GA7242@comet.dominikbrodowski.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Chris Mason <chris.mason@oracle.com>, josef@redhat.com, Valdis.Kletnieks@vt.edu, Michael Monnerie <michael.monnerie@is.it-management.at>, Christoph Hellwig <hch@i>
+In-Reply-To: <4C5B89DB.5050106@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Tejun Heo <tj@kernel.org>, Vladislav Bolkhovitin <vst@vlnb.net>, linux-kernel@vger.kernel.org, Bryan Mesich <bryan.mesich@ndsu.edu>, Jens Axboe <jens.axboe@kernel.dk>, linux-raid@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, scst-devel@lists.sourceforge.net, stable@kernel.org
 List-Id: dm-devel.ids
 
-Small correction:
+On Fri, Aug 06, 2010 at 12:04:43PM +0800, Tao Ma wrote:
+> >>Stable: The offending commit a82afdf was released with v2.6.32, so
+> >>this patch should be applied to all kernels since then but it must
+> >>_NOT_ be applied to kernels earlier than that.
+> If only this patch goes into stable, do we need to change RWA_MASK
+> in this patch also(I have seen you change it the 2/2)?
+> 
+> -#define RWA_MASK        2
+> +#define RWA_MASK        16
 
-On Thu, Aug 05, 2010 at 05:35:19PM +0200, Dominik Brodowski wrote:
-> With this fix, I get proper speeds when doing dio reads from
-> /dev/mapper/vg0-*_crypt; see the 17.3 MB/s above. Most strangely,
-> also accesing /dev/mapper/vg0-* (un-encrypted) and the raw
-> device at /dev/sda* speeds up (to up to 28 MB/s). Was only seeing around
-> 16 to 18 MB/s without this patch for unencrypted access.
-
-The speed-up of the unencrypted access (18 -> 28 MB/s) is caused by using a
-different configuration for kernel 2.6.35; and seems to be unrelated to your
-patch. Will try to track down which config option is the culprit.
-
-
-kernel, dmcrypt?	| good config | bad config
--------------------------------------------------
-patched 2.6.35, dmcrypt	  ~ 18 MB/s	~ 13 MB/s
-patched 2.6.35		  ~ 28 MB/s	~ 18 MB/s
--------------------------------------------------
-plain 2.6.35, dmcrypt	  ~  3 MB/s	~  3 MB/s
-plain 2.6.35		  <not tested>	~ 16 MB/s	
-
-
-Best,
-	Dominik
+I think RW_MASK and RWA_MASK should simply go away, they don't server
+any use over just masking the correct REQ_* flags.
