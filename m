@@ -1,57 +1,59 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH 5/5] dm: implement REQ_FLUSH/FUA support
-Date: Thu, 19 Aug 2010 17:45:51 +0200
-Message-ID: <4C6D51AF.3050008@kernel.org>
-References: <1281977523-19335-1-git-send-email-tj@kernel.org> <1281977523-19335-6-git-send-email-tj@kernel.org> <20100816190203.GA22299@redhat.com> <4C6A5780.2090100@kernel.org> <20100817140734.GA30768@redhat.com> <4C6ABE12.40705@kernel.org> <4C6D0824.3070908@ct.jp.nec.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCHSET block#for-2.6.36-post] block: replace barrier with
+ sequenced flush
+Date: Fri, 20 Aug 2010 17:26:02 +0900
+Message-ID: <4C6E3C1A.50205@ct.jp.nec.com>
+References: <1281616891-5691-1-git-send-email-tj@kernel.org> <20100813114858.GA31937@lst.de> <4C654D4B.1030507@kernel.org> <20100813143820.GA7931@lst.de> <4C655BE5.4070809@kernel.org> <20100814103654.GA13292@lst.de> <4C6A5D8A.4010205@kernel.org> <20100817131915.GB2963@lst.de> <4C6ABBCB.9030306@kernel.org> <20100817165929.GB13800@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4C6D0824.3070908@ct.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de, neilb@suse.de, rusty@rustcorp.com.au, mst@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Return-path: <linux-ide-owner@vger.kernel.org>
+In-Reply-To: <20100817165929.GB13800@lst.de>
+Sender: linux-ide-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Tejun Heo <tj@kernel.org>
+Cc: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de
 List-Id: dm-devel.ids
 
-Hello,
+Hi Tejun, Christoph,
 
-On 08/19/2010 12:32 PM, Kiyoshi Ueda wrote:
->> I see but single pending flush and steady write streams w/o saturating
->> the mempool would be able to stall dm_wait_for_completeion(), no?  Eh
->> well, it's a separate issue, I guess.
-> 
-> Your understanding is correct, dm_wait_for_completion() for flush
-> will stall in such cases for request-based dm.
-> That's why I mentioned below in
-> https://www.redhat.com/archives/dm-devel/2010-August/msg00026.html.
-> 
->     In other words, current request-based device-mapper can't handle
->     other requests while a flush request is in progress.
+On Tue, Aug 17, 2010 at 06:41:47PM +0200, Tejun Heo wrote:
+>>> I wasn't sure about that part.  You removed store_flush_error(), but
+>>> DM_ENDIO_REQUEUE should still have higher priority than other
+>>> failures, no?
+>>
+>> Which priority?
 >
-> In flush request handling, request-based dm uses dm_wait_for_completion()
-> to wait for the completion of cloned flush requests, depending on
-> the fact that there should be only flush requests in flight owning
-> to the block layer sequencing.
+> IIUC, when any of flushes get DM_ENDIO_REQUEUE (which tells the dm
+> core layer to retry the whole bio later), it trumps all other failures
+> and the bio is retried later.  That was why DM_ENDIO_REQUEUE was
+> prioritized over other error codes, which actually is sort of
+> incorrect in that once a FLUSH fails, it _MUST_ be reported to upper
+> layers as FLUSH failure implies data already lost.  So,
+> DM_ENDIO_REQUEUE actually should have lower priority than other
+> failures.  But, then again, the error codes still need to be
+> prioritized.
 
-I see.  bio based implementation also uses dm_wait_for_completion()
-but it also has DMF_QUEUE_IO_TO_THREAD to plug all the follow up bio's
-while flush is in progress, which sucks for throughput but
-successfully avoids starvation.
+I think that's correct and changing the priority of DM_ENDIO_REQUEUE
+for REQ_FLUSH down to the lowest should be fine.
+(I didn't know that FLUSH failure implies data loss possibility.)
 
-> It's not a separate issue and we need to resolve it at least.
-> I'm still considering how I can fix the request-based dm.
+But the patch is not enough, you have to change target drivers, too.
+E.g. As for multipath, you need to change
+     drivers/md/dm-mpath.c:do_end_io() to return error for REQ_FLUSH
+     like the REQ_DISCARD support included in 2.6.36-rc1.
 
-Right, I thought you were talking about REQ_FLUSHes not sycnhronized
-against barrier write.  Anyways, yeah, it's a problem.  I don't think
-not being able to handle multiple flushes concurrently would be a
-major issue.  The problem is not being able to process other
-bios/requests while a flush is in progress.  All that's necessary is
-making the completion detection a bit more fine grained so that it
-counts the number of in flight flush bios/requests and completes when
-it reaches zero instead of waiting for all outstanding commands.
-Shouldn't be too hard.
 
-Thanks.
+By the way, if these patch-set with the change above are included,
+even one path failure for REQ_FLUSH on multipath configuration will
+be reported to upper layer as error, although it's retried using
+other paths currently.
+Then, if an upper layer won't take correct recovery action for the error,
+it would be seen as a regression for users. (e.g. Frequent EXT3-error
+resulting in read-only mount on multipath configuration.)
 
--- 
-tejun
+Although I think the explicit error is fine rather than implicit data
+corruption, please check upper layers carefully so that users won't see
+such errors as much as possible.
+
+Thanks,
+Kiyoshi Ueda
