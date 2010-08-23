@@ -1,195 +1,54 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: [just.for.lkml@googlemail.com: 2.6.36-rc1 hangs during
- XFS barrier test for /]
-Date: Sat, 21 Aug 2010 06:34:56 -0400
-Message-ID: <20100821103456.GA10671@infradead.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCHSET block#for-2.6.36-post] block: replace barrier with
+ sequenced flush
+Date: Mon, 23 Aug 2010 14:14:02 +0200
+Message-ID: <4C72660A.7070009@kernel.org>
+References: <1281616891-5691-1-git-send-email-tj@kernel.org> <20100813114858.GA31937@lst.de> <4C654D4B.1030507@kernel.org> <20100813143820.GA7931@lst.de> <4C655BE5.4070809@kernel.org> <20100814103654.GA13292@lst.de> <4C6A5D8A.4010205@kernel.org> <20100817131915.GB2963@lst.de> <4C6ABBCB.9030306@kernel.org> <20100817165929.GB13800@lst.de> <4C6E3C1A.50205@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <linux-ide-owner@vger.kernel.org>
+In-Reply-To: <4C6E3C1A.50205@ct.jp.nec.com>
+Sender: linux-ide-owner@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: Christoph Hellwig <hch@lst.de>, jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de
 List-Id: dm-devel.ids
-
------ Forwarded message from Torsten Kaiser <just.for.lkml@googlemail.com> -----
-
-Date: Fri, 20 Aug 2010 17:08:17 +0200
-From: Torsten Kaiser <just.for.lkml@googlemail.com>
-Subject: 2.6.36-rc1 hangs during XFS barrier test for /
-To: linux-kernel@vger.kernel.org
 
 Hello,
 
-after installing 2.6.36-rc1 my system gets stuck during "Mounting root..."
+On 08/20/2010 10:26 AM, Kiyoshi Ueda wrote:
+> I think that's correct and changing the priority of DM_ENDIO_REQUEUE
+> for REQ_FLUSH down to the lowest should be fine.
+> (I didn't know that FLUSH failure implies data loss possibility.)
 
-I'm using an initramfs to mount the root fs, because I'm using a
-stacked setup with md (raid1) -> dm-crypt -> xfs.
+At least on ATA, FLUSH failure implies that data is already lost, so
+the error can't be ignored or retried.
 
-Strange side effect: sometimes the cursor stops blinking for a few
-seconds, but then resumes blinking. Each of these blinking stalls are
-accompanied by a RCU stall message.
+> But the patch is not enough, you have to change target drivers, too.
+> E.g. As for multipath, you need to change
+>      drivers/md/dm-mpath.c:do_end_io() to return error for REQ_FLUSH
+>      like the REQ_DISCARD support included in 2.6.36-rc1.
 
-From the serial console:
-[    8.039603] Freeing unused kernel memory: 564k freed
-[    8.049070] Write protecting the kernel read-only data: 10240k
-[    8.059173] Freeing unused kernel memory: 604k freed
-[    8.068930] Freeing unused kernel memory: 1732k freed
-[   40.364439] SysRq : Changing Loglevel
-[   40.371605] Loglevel set to 6
-[   56.760017] INFO: rcu_sched_state detected stalls on CPUs/tasks: {
-2} (detected by 0, t=4004 jiffies)
-[   86.780016] INFO: rcu_sched_state detected stalls on CPUs/tasks: {
-2} (detected by 0, t=7006 jiffies)
-[  116.800018] INFO: rcu_sched_state detected stalls on CPUs/tasks: {
-2} (detected by 0, t=10008 jiffies)
-[  146.820018] INFO: rcu_sched_state detected stalls on CPUs/tasks: {
-2} (detected by 0, t=13010 jiffies)
-[  159.135015] SysRq : Show Blocked State
-[  159.142014]  ffff88007f7449f0 0000000000000046 ffff8800071abd10
-ffff880000000000
-[  159.145007]  ffff88007ff4f770 0000000000012740 ffff8800071abfd8
-0000000000012740
-[  159.145007]  ffff8800071abfd8 ffff88007f744c50 ffff8800071abfd8
-ffff88007f744c48
-[  159.145007] Call Trace:
-[  159.145007]  [<ffffffff8143ef40>] ? dm_wq_work+0x0/0x1a0
-[  159.145007]  [<ffffffff8155e7fd>] ? io_schedule+0x3d/0x60
-[  159.145007]  [<ffffffff8143e13a>] ? dm_wait_for_completion+0xba/0x150
-[  159.145007]  [<ffffffff81035870>] ? default_wake_function+0x0/0x20
-[  159.145007]  [<ffffffff8143ef40>] ? dm_wq_work+0x0/0x1a0
-[  159.145007]  [<ffffffff8143ef40>] ? dm_wq_work+0x0/0x1a0
-[  159.230029]  [<ffffffff8143ef82>] ? dm_wq_work+0x42/0x1a0
-[  159.230029]  [<ffffffff8104d21b>] ? process_one_work+0xfb/0x370
-[  159.230029]  [<ffffffff8104ed7c>] ? worker_thread+0x16c/0x360
-[  159.230029]  [<ffffffff8104ec10>] ? worker_thread+0x0/0x360
-[  159.230029]  [<ffffffff8104ec10>] ? worker_thread+0x0/0x360
-[  159.230029]  [<ffffffff81052926>] ? kthread+0x96/0xa0
-[  159.230029]  [<ffffffff81003194>] ? kernel_thread_helper+0x4/0x10
-[  159.230029]  [<ffffffff81052890>] ? kthread+0x0/0xa0
-[  159.230029]  [<ffffffff81003190>] ? kernel_thread_helper+0x0/0x10
-[  159.230029]  ffff88011eda5b00 0000000000000086 0000000000012740
-ffffffff00000000
-[  159.230029]  ffffffff81a0d020 0000000000012740 ffff88011ed33fd8
-0000000000012740
-[  159.230029]  ffff88011ed33fd8 ffff88011eda5d60 ffff88011ed33fd8
-ffff88011eda5d58
-[  159.230029] Call Trace:
-[  159.230029]  [<ffffffff8155eae5>] ? schedule_timeout+0x1c5/0x220
-[  159.230029]  [<ffffffff8102d6c0>] ? __wake_up_common+0x50/0x80
-[  159.230029]  [<ffffffff8155df7d>] ? wait_for_common+0x11d/0x190
-[  159.230029]  [<ffffffff81035870>] ? default_wake_function+0x0/0x20
-[  159.230029]  [<ffffffff811b0e6a>] ? xfs_buf_iowait+0x1a/0x60
-[  159.230029]  [<ffffffff811b97d2>] ? xfs_barrier_test+0x42/0x90
-[  159.230029]  [<ffffffff811b9874>] ? xfs_mountfs_check_barriers+0x54/0x70
-[  159.230029]  [<ffffffff811b9b1d>] ? xfs_fs_fill_super+0x28d/0x2f0
-[  159.230029]  [<ffffffff810c1511>] ? get_sb_bdev+0x1a1/0x1e0
-[  159.230029]  [<ffffffff811b9890>] ? xfs_fs_fill_super+0x0/0x2f0
-[  159.230029]  [<ffffffff810c0b83>] ? vfs_kern_mount+0x83/0x1f0
-[  159.230029]  [<ffffffff810c0d63>] ? do_kern_mount+0x53/0x120
-[  159.230029]  [<ffffffff810d8aba>] ? do_mount+0x28a/0x890
-[  159.230029]  [<ffffffff8109211f>] ? memdup_user+0x3f/0x80
-[  159.230029]  [<ffffffff810d915a>] ? sys_mount+0x9a/0x100
-[  159.230029]  [<ffffffff8100246b>] ? system_call_fastpath+0x16/0x1b
-[  161.529671] SysRq : Emergency Sync
-[  164.016470] SysRq : Emergency Remount R/O
-[  166.492523] SysRq : Emergency Sync
-[  168.415529] SysRq : Resetting
+I'll take a look but is there an easy to test mpath other than having
+fancy hardware?
 
-The system is stuck at this point, with just the RCU messages
-repeating until I reboot.
-I did not see any OOPS or other error messages in the dmesg before this point.
+> By the way, if these patch-set with the change above are included,
+> even one path failure for REQ_FLUSH on multipath configuration will
+> be reported to upper layer as error, although it's retried using
+> other paths currently.
+> Then, if an upper layer won't take correct recovery action for the error,
+> it would be seen as a regression for users. (e.g. Frequent EXT3-error
+> resulting in read-only mount on multipath configuration.)
+> 
+> Although I think the explicit error is fine rather than implicit data
+> corruption, please check upper layers carefully so that users won't see
+> such errors as much as possible.
 
+Argh... then it will have to discern why FLUSH failed.  It can retry
+for transport errors but if it got aborted by the device it should
+report upwards.  Maybe just turn off barrier support in mpath for now?
 
-Unrelated additional problem: On bootup with 2.6.36-rc1 I get ~800
-bytes of random binary garbage via early_printk=serial. This does not
-happen with 2.6.35 and earlier kernels.
+Thanks.
 
-Restart with earlier kernel:
-[ 7816.426238] Restarting system.
-[    0.000000] Linux version 2.6.34-rc7 (root@treogen) (gcc version
-4.4.3 (Gentoo 4.4.3-r2 p1.2) ) #1 SMP Mon May 10 19:45:19 CEST 2010
-[    0.000000] Command line: fastboot earlyprintk=serial,ttyS0,115200
-console=ttyS0,115200 console=tty1 crypt_root=/dev/md3 radeon.modeset=1
-video=1280x1024
-[    0.000000] BIOS-provided physical RAM map:
-[    0.000000]  BIOS-e820: 0000000000000000 - 000000000009fc00 (usable)
-[    0.000000]  BIOS-e820: 000000000009fc00 - 00000000000a0000 (reserved)
-[    0.000000]  BIOS-e820: 00000000000e4000 - 0000000000100000 (reserved)
-[    0.000000]  BIOS-e820: 0000000000100000 - 00000000dffd0000 (usable)
-[    0.000000]  BIOS-e820: 00000000dffd0000 - 00000000dffde000 (ACPI data)
-[    0.000000]  BIOS-e820: 00000000dffde000 - 00000000e0000000 (ACPI NVS)
-[    0.000000]  BIOS-e820: 00000000fec00000 - 00000000fec01000 (reserved)
-[    0.000000]  BIOS-e820: 00000000fee00000 - 00000000fef00000 (reserved)
-[    0.000000]  BIOS-e820: 00000000ff700000 - 0000000100000000 (reserved)
-[    0.000000]  BIOS-e820: 0000000100000000 - 0000000120000000 (usable)
-[    0.000000] bootconsole [earlyser0] enabled
-[    0.000000] NX (Execute Disable) protection: active
-[    0.000000] DMI present.
-
-Restart with 2.6.36-rc1:
-[202944.603598] Restarting system.
-{~800 byte of binary garbage}000100000 - 00000000dffd0000 (usable)
-[    0.000000]  BIOS-e820: 00000000dffd0000 - 00000000dffde000 (ACPI data)
-[    0.000000]  BIOS-e820: 00000000dffde000 - 00000000e0000000 (ACPI NVS)
-[    0.000000]  BIOS-e820: 00000000fec00000 - 00000000fec01000 (reserved)
-[    0.000000]  BIOS-e820: 00000000fee00000 - 00000000fef00000 (reserved)
-[    0.000000]  BIOS-e820: 00000000ff700000 - 0000000100000000 (reserved)
-[    0.000000]  BIOS-e820: 0000000100000000 - 0000000120000000 (usable)
-[    0.000000] bootconsole [earlyser0] enabled
-[    0.000000] NX (Execute Disable) protection: active
-[    0.000000] DMI present.
-[    0.000000] No AGP bridge found
-[    0.000000] last_pfn = 0x120000 max_arch_pfn = 0x400000000
-[    0.000000] x86 PAT enabled: cpu 0, old 0x7040600070406, new 0x7010600070106
-
-The later repeat is OK (even on 2.6.36-rc1), so I suspect some problem
-during the early init of the serial console, not some corruption of
-the dmesg itself:
-[    0.000000] Extended CMOS year: 2000
-[    0.000000] Console: colour VGA+ 80x25
-[    0.000000] console [tty1] enabled, bootconsole disabled
-[    0.000000] Linux version 2.6.36-rc1 (root@treogen) (gcc version
-4.4.4 (Gentoo 4.4.4-r1 p1.0, pie-0.4.5) ) #1 SMP Thu Aug 19 21:58:14
-CEST 2010
-[    0.000000] Command line: fastboot earlyprintk=serial,ttyS0,115200
-console=ttyS0,115200 console=tty1 crypt_root=/dev/md3 radeon.modeset=1
-video=1280x1024
-[    0.000000] BIOS-provided physical RAM map:
-[    0.000000]  BIOS-e820: 0000000000000000 - 000000000009fc00 (usable)
-[    0.000000]  BIOS-e820: 000000000009fc00 - 00000000000a0000 (reserved)
-[    0.000000]  BIOS-e820: 00000000000e4000 - 0000000000100000 (reserved)
-[    0.000000]  BIOS-e820: 0000000000100000 - 00000000dffd0000 (usable)
-[    0.000000]  BIOS-e820: 00000000dffd0000 - 00000000dffde000 (ACPI data)
-[    0.000000]  BIOS-e820: 00000000dffde000 - 00000000e0000000 (ACPI NVS)
-[    0.000000]  BIOS-e820: 00000000fec00000 - 00000000fec01000 (reserved)
-[    0.000000]  BIOS-e820: 00000000fee00000 - 00000000fef00000 (reserved)
-[    0.000000]  BIOS-e820: 00000000ff700000 - 0000000100000000 (reserved)
-[    0.000000]  BIOS-e820: 0000000100000000 - 0000000120000000 (usable)
-[    0.000000] bootconsole [earlyser0] enabled
-[    0.000000] NX (Execute Disable) protection: active
-[    0.000000] DMI present.
-[    0.000000] No AGP bridge found
-[    0.000000] last_pfn = 0x120000 max_arch_pfn = 0x400000000
-[    0.000000] x86 PAT enabled: cpu 0, old 0x7040600070406, new 0x7010600070106
-
-
-Thanks for looking at this.
-
-Torsten
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
-
------ End forwarded message -----
+-- 
+tejun
