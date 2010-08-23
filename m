@@ -1,12 +1,12 @@
-From: <Yanqing_Liu@Dell.com>
-Subject: DM manual failback doesn't work on RHEL5
-Date: Mon, 23 Aug 2010 15:31:32 -0500
-Message-ID: <F757EE5C3631ED4DBDFD7709119219FE03C4B50BF7@AUSX7MCPS302.AMER.DELL.COM>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipath mpath_wait multipath ...
+Date: 23 Aug 2010 22:06:59 -0000
+Message-ID: <20100823220659.26161.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4279627175415415210=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,160 +16,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Ashokan_Vellimalai@Dell.com, Charles_Rose@Dell.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============4279627175415415210==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_F757EE5C3631ED4DBDFD7709119219FE03C4B50BF7AUSX7MCPS302A_"
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2010-08-23 22:06:59
 
---_000_F757EE5C3631ED4DBDFD7709119219FE03C4B50BF7AUSX7MCPS302A_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Modified files:
+	multipath      : mpath_wait multipath.rules 
 
-Hi all,
+Log message:
+	Fix for bz #568127. mpathwait will now wait for /dev/mapper/<mutipath_dev_name>
+	to be created before calling kpartx on it.  This fixes a race condition. Not
+	applicable upstream.
 
-In our testing with DM RDAC stack with RHEL 5 (including 5.5 and 5.4), we f=
-ound that manual failback doesn't work as expected.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/mpath_wait.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1&r2=1.1.2.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.rules.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.2&r2=1.11.2.3
 
-What we did is to connect the host to Dell PowerVault 3200/i array. After e=
-verything is configured, we changed "failback" value for our device from "i=
-mmediate" to "manual". Then the host is rebooted for the new value to take =
-effect. However, automatic failback still happens once failed path is resto=
-red. It seems failback "manual" doesn't work.
-
-We've also verified deferred failback works as expected. So "manual" failba=
-ck seems to be the only issue.
-
-Our device section in multipath.conf is as follows:
-
-...
-device {
-                vendor                "DELL"
-                product               "MD32xxi"
-                path_grouping_policy  group_by_prio
-                prio                  rdac
-                polling_interval      5
-                path_checker          rdac
-                path-selector         "round-robin 0"
-                hardware_handler      "1 rdac"
-                failback              manual
-                features              "2 pg_init_retries 50"
-                no_path_retry         30
-                rr_min_io             100
-                prio_callout          "/sbin/mpath_prio_rdac /dev/%n"
-        }
-...
-
-Any sugegstion or insight on this issue?
-
-Thanks,
-Yanqing
-
-
---_000_F757EE5C3631ED4DBDFD7709119219FE03C4B50BF7AUSX7MCPS302A_
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html>
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dus-ascii"=
->
-<meta name=3D"Generator" content=3D"Microsoft Exchange Server">
-<!-- converted from rtf -->
-<style><!-- .EmailQuote { margin-left: 1pt; padding-left: 4pt; border-left:=
- #800000 2px solid; } --></style>
-</head>
-<body>
-<font face=3D"Arial, sans-serif" size=3D"2">
-<div>Hi all,</div>
-<div>&nbsp;</div>
-<div>In our testing with DM RDAC stack with RHEL 5 (including 5.5 and 5.4),=
- we found that manual failback doesn't work as expected.</div>
-<div>&nbsp;</div>
-<div>What we did is to connect the host to Dell PowerVault 3200/i array. Af=
-ter everything is configured, we changed &quot;failback&quot; value for our=
- device from &quot;immediate&quot; to &quot;manual&quot;. Then the host is =
-rebooted for the new value to take effect. However, automatic
-failback still happens once failed path is restored. It seems failback &quo=
-t;manual&quot; doesn't work.</div>
-<div>&nbsp;</div>
-<div>We've also verified deferred failback works as expected. So &quot;manu=
-al&quot; failback seems to be the only issue. </div>
-<div>&nbsp;</div>
-<div>Our device section in multipath.conf is as follows:</div>
-<div>&nbsp;</div>
-<div>...</div>
-<div><font face=3D"Courier New">device {</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; vendor&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot=
-;DELL&quot;</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; product&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;MD32=
-xxi&quot;</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; path_grouping_policy&nbsp; =
-group_by_prio</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; prio&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp; rdac</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; polling_interval&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp; 5</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; path_checker&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rdac</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; path-selector&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;round-robin 0&quot;</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; hardware_handler&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp; &quot;1 rdac&quot;</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; failback&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; manual</font></=
-div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; features&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;2 pg_init=
-_retries 50&quot;</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; no_path_retry&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 30</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rr_min_io&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; prio_callout&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;/sbin/mpath_prio_rdac /dev/%n=
-&quot;</font></div>
-<div><font face=3D"Courier New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-}</font></div>
-<div>&#8230;<br>
-
-</div>
-<div>Any sugegstion or insight on this issue?</div>
-<div>&nbsp;</div>
-<div>Thanks,</div>
-<div>Yanqing</div>
-<div>&nbsp;</div>
-</font>
-</body>
-</html>
-
---_000_F757EE5C3631ED4DBDFD7709119219FE03C4B50BF7AUSX7MCPS302A_--
-
-
---===============4279627175415415210==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4279627175415415210==--
+--- multipath-tools/multipath/mpath_wait	2006/10/06 16:38:01	1.1
++++ multipath-tools/multipath/mpath_wait	2010/08/23 22:06:58	1.1.2.1
+@@ -3,6 +3,18 @@
+ retry=3
+ sec=1
+ 
++if  [ $# -eq 1 ]
++then
++	while [ ! -e $1 -a "$retry" -gt 0 ]
++	do
++		retry=$(($retry - 1))
++		sleep $sec
++	done
++	[ -e $1 ]
++	ret=$?
++	exit $ret
++fi
++
+ /sbin/dmsetup info -c --noheadings -j $1 -m $2 2> /dev/null | grep -q .*:${1}:${2}:L.*:.*:.*:.*:.*
+ ret=$?
+ 
+--- multipath-tools/multipath/multipath.rules	2009/09/29 17:52:27	1.11.2.2
++++ multipath-tools/multipath/multipath.rules	2010/08/23 22:06:58	1.11.2.3
+@@ -6,7 +6,7 @@
+ PROGRAM!="/sbin/mpath_wait %M %m", GOTO="end_mpath"
+ PROGRAM!="/sbin/dmsetup info -c --noheadings -j %M -m %m", GOTO="end_mpath"
+ RESULT!="*:*:*:*:*:*:*:mpath-*", GOTO="kpartx_check"
+-PROGRAM=="/sbin/dmsetup info -c --noheadings -o name -j %M -m %m", RESULT=="?*", NAME="%k", SYMLINK="mpath/%c", RUN+="/sbin/kpartx -a -p p /dev/mapper/%c"
++PROGRAM=="/sbin/dmsetup info -c --noheadings -o name -j %M -m %m", RESULT=="?*", NAME="%k", SYMLINK="mpath/%c", RUN+="/bin/bash -c '/sbin/mpath_wait /dev/mapper/%c; /sbin/kpartx -a -p p /dev/mapper/%c'"
+ OPTIONS="last_rule"
+ LABEL="kpartx_check"
+ RESULT!="*:*:*:*:*:*:*:part*-mpath-*", GOTO="end_mpath"
