@@ -1,83 +1,66 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [PATCH 4/5] md: implment REQ_FLUSH/FUA support
-Date: Tue, 24 Aug 2010 15:41:02 +1000
-Message-ID: <20100824154102.7b68818b@notabene>
-References: <1281977523-19335-1-git-send-email-tj@kernel.org>
-	<1281977523-19335-5-git-send-email-tj@kernel.org>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCHSET block#for-2.6.36-post] block: replace barrier with
+ sequenced flush
+Date: Tue, 24 Aug 2010 19:24:41 +0900
+Message-ID: <4C739DE9.5070803@ct.jp.nec.com>
+References: <4C654D4B.1030507@kernel.org> <20100813143820.GA7931@lst.de> <4C655BE5.4070809@kernel.org> <20100814103654.GA13292@lst.de> <4C6A5D8A.4010205@kernel.org> <20100817131915.GB2963@lst.de> <4C6ABBCB.9030306@kernel.org> <20100817165929.GB13800@lst.de> <4C6E3C1A.50205@ct.jp.nec.com> <4C72660A.7070009@kernel.org> <20100823141733.GA21158@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <1281977523-19335-5-git-send-email-tj@kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20100823141733.GA21158@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
 To: Tejun Heo <tj@kernel.org>
-Cc: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de, rusty@rustcorp.com.au, mst@redhat.com, Tejun Heo <tj@kernle.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>, tytso@mit.edu, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, jack@suse.cz, linux-kernel@vger.kernel.org, swhiteho@redhat.com, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, vst@vlnb.net, rwheeler@redhat.com, Christoph Hellwig <hch@lst.de>, chris.mason@oracle.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 16 Aug 2010 18:52:02 +0200
-Tejun Heo <tj@kernel.org> wrote:
-
-
 Hi Tejun,
- thanks for doing this.
- It mostly looks good, especially ...
+
+On 08/23/2010 11:17 PM +0900, Mike Snitzer wrote:
+> On Mon, Aug 23 2010 at  8:14am -0400, Tejun Heo <tj@kernel.org> wrote:
+>> On 08/20/2010 10:26 AM, Kiyoshi Ueda wrote:
+>>> By the way, if these patch-set with the change above are included,
+>>> even one path failure for REQ_FLUSH on multipath configuration will
+>>> be reported to upper layer as error, although it's retried using
+>>> other paths currently.
+>>> Then, if an upper layer won't take correct recovery action for the error,
+>>> it would be seen as a regression for users. (e.g. Frequent EXT3-error
+>>> resulting in read-only mount on multipath configuration.)
+>>>
+>>> Although I think the explicit error is fine rather than implicit data
+>>> corruption, please check upper layers carefully so that users won't see
+>>> such errors as much as possible.
+>> 
+>> Argh... then it will have to discern why FLUSH failed.  It can retry
+>> for transport errors but if it got aborted by the device it should
+>> report upwards.
+> 
+> Yes, we discussed this issue of needing to train dm-multipath to know if
+> there was a transport failure or not (at LSF).  But I'm not sure when
+> Hannes intends to repost his work in this area (updated to account for
+> feedback from LSF).
+
+Yes, checking whether it's a transport error in lower layer is
+the right solution.
+(Since I know it's not available yet, I just hoped if upper layers
+ had some other options.)
+
+Anyway, only reporting errors for REQ_FLUSH to upper layer without
+such a solution would make dm-multipath almost unusable in real world,
+although it's better than implicit data loss.
 
 
-> * REQ_FLUSH/FUA failures are final and its users don't need retry
->   logic.  Retry logic is removed.
+>> Maybe just turn off barrier support in mpath for now?
 
-This bit - all that retry logic felt so clumsy :-)
+If it's possible, it could be a workaround for a short term.
+But how can you do that?
 
-Only change I would make is:
+I think it's not enough to just drop REQ_FLUSH flag from q->flush_flags.
+Underlying devices of a mpath device may have write-back cache and
+it may be enabled.
+So if a mpath device doesn't set REQ_FLUSH flag in q->flush_flags, it
+becomes a device which has write-back cache but doesn't support flush.
+Then, upper layer can do nothing to ensure cache flush?
 
->  
-> @@ -4083,7 +4089,7 @@ static int make_request(mddev_t *mddev, struct bio * bi)
->  			finish_wait(&conf->wait_for_overlap, &w);
->  			set_bit(STRIPE_HANDLE, &sh->state);
->  			clear_bit(STRIPE_DELAYED, &sh->state);
-> -			if (mddev->barrier && 
-> +			if (mddev->flush_bio &&
->  			    !test_and_set_bit(STRIPE_PREREAD_ACTIVE, &sh->state))
->  				atomic_inc(&conf->preread_active_stripes);
->  			release_stripe(sh);
-> @@ -4106,7 +4112,7 @@ static int make_request(mddev_t *mddev, struct bio * bi)
->  		bio_endio(bi, 0);
->  	}
->  
-> -	if (mddev->barrier) {
-> +	if (mddev->flush_bio) {
->  		/* We need to wait for the stripes to all be handled.
->  		 * So: wait for preread_active_stripes to drop to 0.
->  		 */
-
-These two in raid5.c aren't quite right.
-The first should be changed to test
-   bi->bi_rw & REQ_SYNC
-rather than
-   mddev->flush_bio.
-(Assuming the REQ_SYNC means "don't bother waiting for more requests that
-might combine with this one to make it all go faster" which I think it does.)
-
-For the second we can just drop the whole if statement.
-It was needed so that the all the writes would go done to the underlying
-devices so that the null-barrier which would subsequently be passed to all
-those devices would go *after* the writes for the barrier request.
-As there is no longer a post-flush, that code can go.
-
-Thanks a lot, and sorry for the delay in reviewing it.
-NeilBrown
-
-
-> diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
-> index 0f86f5e..ff9cad2 100644
-> --- a/drivers/md/raid5.h
-> +++ b/drivers/md/raid5.h
-> @@ -275,6 +275,7 @@ struct r6_state {
->  				    * filling
->  				    */
->  #define R5_Wantdrain	13 /* dev->towrite needs to be drained */
-> +#define R5_WantFUA	14	/* Write should be FUA */
->  /*
->   * Write method
->   */
-
+Thanks,
+Kiyoshi Ueda
