@@ -1,70 +1,83 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/multipath mpath_wait multipath ...
-Date: 23 Aug 2010 22:06:59 -0000
-Message-ID: <20100823220659.26161.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: [PATCH 4/5] md: implment REQ_FLUSH/FUA support
+Date: Tue, 24 Aug 2010 15:41:02 +1000
+Message-ID: <20100824154102.7b68818b@notabene>
+References: <1281977523-19335-1-git-send-email-tj@kernel.org>
+	<1281977523-19335-5-git-send-email-tj@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <1281977523-19335-5-git-send-email-tj@kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de, rusty@rustcorp.com.au, mst@redhat.com, Tejun Heo <tj@kernle.org>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-08-23 22:06:59
+On Mon, 16 Aug 2010 18:52:02 +0200
+Tejun Heo <tj@kernel.org> wrote:
 
-Modified files:
-	multipath      : mpath_wait multipath.rules 
 
-Log message:
-	Fix for bz #568127. mpathwait will now wait for /dev/mapper/<mutipath_dev_name>
-	to be created before calling kpartx on it.  This fixes a race condition. Not
-	applicable upstream.
+Hi Tejun,
+ thanks for doing this.
+ It mostly looks good, especially ...
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/mpath_wait.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1&r2=1.1.2.1
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.rules.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.2&r2=1.11.2.3
 
---- multipath-tools/multipath/mpath_wait	2006/10/06 16:38:01	1.1
-+++ multipath-tools/multipath/mpath_wait	2010/08/23 22:06:58	1.1.2.1
-@@ -3,6 +3,18 @@
- retry=3
- sec=1
- 
-+if  [ $# -eq 1 ]
-+then
-+	while [ ! -e $1 -a "$retry" -gt 0 ]
-+	do
-+		retry=$(($retry - 1))
-+		sleep $sec
-+	done
-+	[ -e $1 ]
-+	ret=$?
-+	exit $ret
-+fi
-+
- /sbin/dmsetup info -c --noheadings -j $1 -m $2 2> /dev/null | grep -q .*:${1}:${2}:L.*:.*:.*:.*:.*
- ret=$?
- 
---- multipath-tools/multipath/multipath.rules	2009/09/29 17:52:27	1.11.2.2
-+++ multipath-tools/multipath/multipath.rules	2010/08/23 22:06:58	1.11.2.3
-@@ -6,7 +6,7 @@
- PROGRAM!="/sbin/mpath_wait %M %m", GOTO="end_mpath"
- PROGRAM!="/sbin/dmsetup info -c --noheadings -j %M -m %m", GOTO="end_mpath"
- RESULT!="*:*:*:*:*:*:*:mpath-*", GOTO="kpartx_check"
--PROGRAM=="/sbin/dmsetup info -c --noheadings -o name -j %M -m %m", RESULT=="?*", NAME="%k", SYMLINK="mpath/%c", RUN+="/sbin/kpartx -a -p p /dev/mapper/%c"
-+PROGRAM=="/sbin/dmsetup info -c --noheadings -o name -j %M -m %m", RESULT=="?*", NAME="%k", SYMLINK="mpath/%c", RUN+="/bin/bash -c '/sbin/mpath_wait /dev/mapper/%c; /sbin/kpartx -a -p p /dev/mapper/%c'"
- OPTIONS="last_rule"
- LABEL="kpartx_check"
- RESULT!="*:*:*:*:*:*:*:part*-mpath-*", GOTO="end_mpath"
+> * REQ_FLUSH/FUA failures are final and its users don't need retry
+>   logic.  Retry logic is removed.
+
+This bit - all that retry logic felt so clumsy :-)
+
+Only change I would make is:
+
+>  
+> @@ -4083,7 +4089,7 @@ static int make_request(mddev_t *mddev, struct bio * bi)
+>  			finish_wait(&conf->wait_for_overlap, &w);
+>  			set_bit(STRIPE_HANDLE, &sh->state);
+>  			clear_bit(STRIPE_DELAYED, &sh->state);
+> -			if (mddev->barrier && 
+> +			if (mddev->flush_bio &&
+>  			    !test_and_set_bit(STRIPE_PREREAD_ACTIVE, &sh->state))
+>  				atomic_inc(&conf->preread_active_stripes);
+>  			release_stripe(sh);
+> @@ -4106,7 +4112,7 @@ static int make_request(mddev_t *mddev, struct bio * bi)
+>  		bio_endio(bi, 0);
+>  	}
+>  
+> -	if (mddev->barrier) {
+> +	if (mddev->flush_bio) {
+>  		/* We need to wait for the stripes to all be handled.
+>  		 * So: wait for preread_active_stripes to drop to 0.
+>  		 */
+
+These two in raid5.c aren't quite right.
+The first should be changed to test
+   bi->bi_rw & REQ_SYNC
+rather than
+   mddev->flush_bio.
+(Assuming the REQ_SYNC means "don't bother waiting for more requests that
+might combine with this one to make it all go faster" which I think it does.)
+
+For the second we can just drop the whole if statement.
+It was needed so that the all the writes would go done to the underlying
+devices so that the null-barrier which would subsequently be passed to all
+those devices would go *after* the writes for the barrier request.
+As there is no longer a post-flush, that code can go.
+
+Thanks a lot, and sorry for the delay in reviewing it.
+NeilBrown
+
+
+> diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
+> index 0f86f5e..ff9cad2 100644
+> --- a/drivers/md/raid5.h
+> +++ b/drivers/md/raid5.h
+> @@ -275,6 +275,7 @@ struct r6_state {
+>  				    * filling
+>  				    */
+>  #define R5_Wantdrain	13 /* dev->towrite needs to be drained */
+> +#define R5_WantFUA	14	/* Write should be FUA */
+>  /*
+>   * Write method
+>   */
+
