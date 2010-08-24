@@ -1,60 +1,134 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCHSET block#for-2.6.36-post] block: replace barrier with
- sequenced flush
-Date: Tue, 24 Aug 2010 20:14:07 +0200
-Message-ID: <4C740BEF.2010806@kernel.org>
-References: <20100814103654.GA13292@lst.de> <4C6A5D8A.4010205@kernel.org> <20100817131915.GB2963@lst.de> <4C6ABBCB.9030306@kernel.org> <20100817165929.GB13800@lst.de> <4C6E3C1A.50205@ct.jp.nec.com> <4C72660A.7070009@kernel.org> <20100823141733.GA21158@redhat.com> <4C739DE9.5070803@ct.jp.nec.com> <4C73FA8F.5080800@kernel.org> <20100824175215.GA29409@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools ./multipath.conf.defaults libm ...
+Date: 24 Aug 2010 21:51:11 -0000
+Message-ID: <20100824215111.17381.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <20100824175215.GA29409@redhat.com>
-Sender: linux-ide-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Hannes Reinecke <hare@suse.de>, tytso@mit.edu, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, jack@suse.cz, linux-kernel@vger.kernel.org, swhiteho@redhat.com, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, vst@vlnb.net, rwheeler@redhat.com, Christoph Hellwig <hch@lst.de>, chris.mason@oracle.com, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2010-08-24 21:51:10
 
-On 08/24/2010 07:52 PM, Mike Snitzer wrote:
->> If it can't be done quickly enough the retry logic can be kept around
->> to keep the old behavior but that already was a broken behavior, so...
->> :-(
-> 
-> I'll have to review this thread again to understand why mpath's existing
-> retry logic is broken behavior.  mpath is used with more capable SCSI
-> devices so I'm missing why a failed FLUSH implies data loss.
+Modified files:
+	.              : multipath.conf.defaults 
+	libmultipath   : hwtable.c 
+	path_priority/pp_hds_modular: pp_hds_modular.c 
 
-SBC doesn't specify the failure behavior, so it could be that retrying
-flush could be safe.  But for most disk type devices, flush failure
-usually indicates that the device exhausted all the options to commit
-some of pending data to NV media - ie. even remapping failed for
-whatever reason.  Even if retry is safe, it's more likely to simply
-delay notification of failure.
+Log message:
+	Fix for bz #559852.  mpath_prio_hds_modular can now accept a pathname as well
+	as the major:minor.  The default config has been switched to use this.  This
+	allows the callout to work even if they can't create any files on /tmp. Not
+	Applicable upstream.
 
-In ATA, the situation is clearer, when a device actively fails a
-flush, the drive reports the first failed sector it failed to commit
-and the next flush will continue _after_ the sector - IOW, data is
-already lost.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.22&r2=1.5.4.23
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.29&r2=1.20.2.30
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_hds_modular/pp_hds_modular.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2&r2=1.2.2.1
 
-<speculation>
-I think there's no reason mpath should be tasked with retrying flush
-failure.  That's upto the SCSI EH.  If the command failed in 'safe'
-transient way - ie. device busy or whatnot, SCSI EH can and does retry
-the command.  There are several FAILFAST bits already and SCSI EH can
-avoid retrying transport errors for mpath (maybe it already does
-that?) and just need to be able to tell upper layer that the failure
-was a fast one and upper layer is responsible for retrying?  Is there
-any reason to pass the whole sense information upwards?
-</speculation>
-
-Anyways, flush failure is different from read/write failures.
-Read/writes can always be retried cleanly.  They are stateless.  I
-don't know how SCSI devices would actually behavior but it's a bit
-scary to retry SYNCHRONIZE_CACHE a device failed and report success
-upwards.
-
-Thanks.
-
--- 
-tejun
+--- multipath-tools/multipath.conf.defaults	2010/08/09 21:35:58	1.5.4.22
++++ multipath-tools/multipath.conf.defaults	2010/08/24 21:51:10	1.5.4.23
+@@ -267,7 +267,7 @@
+ #               vendor                  "HITACHI"
+ #               product                 "DF.*"
+ #		getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+-#		prio_callout		"/sbin/mpath_prio_hds_modular %d"
++#		prio_callout		"/sbin/mpath_prio_hds_modular /dev/%n"
+ #		features		"0"
+ #		hardware_handler	"0"
+ #		path_grouping_policy	group_by_prio
+@@ -395,7 +395,7 @@
+ #		vendor			"IBM"
+ #		product			"1750500"
+ #		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
+-#               prio_callout            "/sbin/mpath_prio_alua %d"	
++#               prio_callout            "/sbin/mpath_prio_alua /dev/%n"
+ #		features		"1 queue_if_no_path"
+ #		hardware_handler	"0"
+ #               path_grouping_policy    group_by_prio
+@@ -482,7 +482,7 @@
+ #		vendor			"Pillar"
+ #		product			"Axiom [35]00"
+ #		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
+-#               prio_callout            "/sbin/mpath_prio_alua %d"	
++#               prio_callout            "/sbin/mpath_prio_alua /dev/%n"
+ #		features		"0"
+ #		hardware_handler	"0"
+ #               path_grouping_policy    group_by_prio
+--- multipath-tools/libmultipath/hwtable.c	2010/08/09 21:35:58	1.20.2.29
++++ multipath-tools/libmultipath/hwtable.c	2010/08/24 21:51:10	1.20.2.30
+@@ -289,7 +289,7 @@
+ 		.vendor        = "HITACHI",
+ 		.product       = "DF.*",
+ 		.getuid        = DEFAULT_GETUID,
+-		.getprio       = "/sbin/mpath_prio_hds_modular %d",
++		.getprio       = "/sbin/mpath_prio_hds_modular /dev/%n",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+ 		.selector      = DEFAULT_SELECTOR,
+@@ -646,7 +646,7 @@
+ 		.vendor        = "Pillar",
+ 		.product       = "Axiom [35]00",
+ 		.getuid        = DEFAULT_GETUID,
+-		.getprio       = "/sbin/mpath_prio_alua %d",
++		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+ 		.selector      = DEFAULT_SELECTOR,
+--- multipath-tools/path_priority/pp_hds_modular/pp_hds_modular.c	2006/06/06 18:32:44	1.2
++++ multipath-tools/path_priority/pp_hds_modular/pp_hds_modular.c	2010/08/24 21:51:10	1.2.2.1
+@@ -99,7 +99,7 @@
+ 
+ int verbose;
+ 
+-int hds_modular_prio(char * major_minor)
++int hds_modular_prio(char * device)
+ {
+ 	int sg_fd, k, i;
+ 	char vendor[32];
+@@ -117,16 +117,24 @@
+ 	unsigned char sense_buffer[32];
+ 	sg_io_hdr_t io_hdr;
+ 
+-	sscanf(major_minor, "%u:%u", &major, &minor);
+ 	memset(devpath, 0, FILE_NAME_SIZE);
++	if (sscanf(device, "%u:%u", &major, &minor) == 2) {
+ 
+-	if (safe_sprintf(devpath, "/tmp/.pp_balance.%u.%u.devnode",
+-			 major, minor))
+-		exit(1);
+-
+-	unlink (devpath);
+-	mknod(devpath, S_IFBLK|S_IRUSR|S_IWUSR, makedev(major, minor));
++		if (safe_sprintf(devpath, "/tmp/.pp_balance.%u.%u.devnode",
++				 major, minor))
++			exit(1);
+ 
++		unlink (devpath);
++		mknod(devpath, S_IFBLK|S_IRUSR|S_IWUSR, makedev(major, minor));
++	}
++	else if (device[0] == '/') {
++		if (safe_sprintf(devpath, "%s", device))
++			exit(1);
++	}
++	else {
++		if (safe_sprintf(devpath, "/dev/%s", device))
++			exit(1);
++	}
+ 	if ((sg_fd = open(devpath, O_RDONLY)) < 0) exit(1);
+ 	if ((ioctl(sg_fd, SG_GET_VERSION_NUM, &k) < 0) || (k < 30000))
+ 		exit(1);
