@@ -1,8 +1,8 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 24/30] jbd: replace barriers with explicit flush
+Subject: [PATCH 19/30] xfs: replace barriers with explicit flush
 	/ FUA usage
-Date: Wed, 25 Aug 2010 17:47:41 +0200
-Message-ID: <1282751267-3530-25-git-send-email-tj__49547.9750833057$1282751942$gmane$org@kernel.org>
+Date: Wed, 25 Aug 2010 17:47:36 +0200
+Message-ID: <1282751267-3530-20-git-send-email-tj__23965.9976367422$1282751955$gmane$org@kernel.org>
 References: <1282751267-3530-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,57 +25,117 @@ List-Id: dm-devel.ids
 
 From: Christoph Hellwig <hch@infradead.org>
 
-Switch to the WRITE_FLUSH_FUA flag for journal commits and remove the
-EOPNOTSUPP detection for barriers.
+Switch to the WRITE_FLUSH_FUA flag for log writes and remove the EOPNOTSUPP
+detection for barriers.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Dave Chinner <dchinner@redhat.com>
 Signed-off-by: Tejun Heo <tj@kernel.org>
 ---
- fs/jbd/commit.c |   30 +++---------------------------
- 1 files changed, 3 insertions(+), 27 deletions(-)
+ fs/xfs/linux-2.6/xfs_buf.c   |   16 ++--------------
+ fs/xfs/linux-2.6/xfs_buf.h   |   11 +----------
+ fs/xfs/linux-2.6/xfs_trace.h |    1 -
+ fs/xfs/xfs_log.c             |   13 -------------
+ 4 files changed, 3 insertions(+), 38 deletions(-)
 
-diff --git a/fs/jbd/commit.c b/fs/jbd/commit.c
-index 95d8c11..484c5e5 100644
---- a/fs/jbd/commit.c
-+++ b/fs/jbd/commit.c
-@@ -137,34 +137,10 @@ static int journal_write_commit_record(journal_t *journal,
- 	JBUFFER_TRACE(descriptor, "write commit block");
- 	set_buffer_dirty(bh);
+diff --git a/fs/xfs/linux-2.6/xfs_buf.c b/fs/xfs/linux-2.6/xfs_buf.c
+index ea79072..b93ea33 100644
+--- a/fs/xfs/linux-2.6/xfs_buf.c
++++ b/fs/xfs/linux-2.6/xfs_buf.c
+@@ -929,19 +929,7 @@ xfs_buf_iodone_work(
+ 	xfs_buf_t		*bp =
+ 		container_of(work, xfs_buf_t, b_iodone_work);
  
--	if (journal->j_flags & JFS_BARRIER) {
--		ret = __sync_dirty_buffer(bh, WRITE_SYNC | WRITE_BARRIER);
+-	/*
+-	 * We can get an EOPNOTSUPP to ordered writes.  Here we clear the
+-	 * ordered flag and reissue them.  Because we can't tell the higher
+-	 * layers directly that they should not issue ordered I/O anymore, they
+-	 * need to check if the _XFS_BARRIER_FAILED flag was set during I/O completion.
+-	 */
+-	if ((bp->b_error == EOPNOTSUPP) &&
+-	    (bp->b_flags & (XBF_ORDERED|XBF_ASYNC)) == (XBF_ORDERED|XBF_ASYNC)) {
+-		trace_xfs_buf_ordered_retry(bp, _RET_IP_);
+-		bp->b_flags &= ~XBF_ORDERED;
+-		bp->b_flags |= _XFS_BARRIER_FAILED;
+-		xfs_buf_iorequest(bp);
+-	} else if (bp->b_iodone)
++	if (bp->b_iodone)
+ 		(*(bp->b_iodone))(bp);
+ 	else if (bp->b_flags & XBF_ASYNC)
+ 		xfs_buf_relse(bp);
+@@ -1200,7 +1188,7 @@ _xfs_buf_ioapply(
+ 
+ 	if (bp->b_flags & XBF_ORDERED) {
+ 		ASSERT(!(bp->b_flags & XBF_READ));
+-		rw = WRITE_BARRIER;
++		rw = WRITE_FLUSH_FUA;
+ 	} else if (bp->b_flags & XBF_LOG_BUFFER) {
+ 		ASSERT(!(bp->b_flags & XBF_READ_AHEAD));
+ 		bp->b_flags &= ~_XBF_RUN_QUEUES;
+diff --git a/fs/xfs/linux-2.6/xfs_buf.h b/fs/xfs/linux-2.6/xfs_buf.h
+index d072e5f..d533d64 100644
+--- a/fs/xfs/linux-2.6/xfs_buf.h
++++ b/fs/xfs/linux-2.6/xfs_buf.h
+@@ -86,14 +86,6 @@ typedef enum {
+  */
+ #define _XBF_PAGE_LOCKED	(1 << 22)
+ 
+-/*
+- * If we try a barrier write, but it fails we have to communicate
+- * this to the upper layers.  Unfortunately b_error gets overwritten
+- * when the buffer is re-issued so we have to add another flag to
+- * keep this information.
+- */
+-#define _XFS_BARRIER_FAILED	(1 << 23)
 -
--		/*
--		 * Is it possible for another commit to fail at roughly
--		 * the same time as this one?  If so, we don't want to
--		 * trust the barrier flag in the super, but instead want
--		 * to remember if we sent a barrier request
--		 */
--		if (ret == -EOPNOTSUPP) {
--			char b[BDEVNAME_SIZE];
--
--			printk(KERN_WARNING
--				"JBD: barrier-based sync failed on %s - "
--				"disabling barriers\n",
--				bdevname(journal->j_dev, b));
--			spin_lock(&journal->j_state_lock);
--			journal->j_flags &= ~JFS_BARRIER;
--			spin_unlock(&journal->j_state_lock);
--
--			/* And try again, without the barrier */
--			set_buffer_uptodate(bh);
--			set_buffer_dirty(bh);
--			ret = sync_dirty_buffer(bh);
--		}
--	} else {
-+	if (journal->j_flags & JFS_BARRIER)
-+		ret = __sync_dirty_buffer(bh, WRITE_SYNC | WRITE_FLUSH_FUA);
-+	else
- 		ret = sync_dirty_buffer(bh);
+ typedef unsigned int xfs_buf_flags_t;
+ 
+ #define XFS_BUF_FLAGS \
+@@ -114,8 +106,7 @@ typedef unsigned int xfs_buf_flags_t;
+ 	{ _XBF_PAGES,		"PAGES" }, \
+ 	{ _XBF_RUN_QUEUES,	"RUN_QUEUES" }, \
+ 	{ _XBF_DELWRI_Q,	"DELWRI_Q" }, \
+-	{ _XBF_PAGE_LOCKED,	"PAGE_LOCKED" }, \
+-	{ _XFS_BARRIER_FAILED,	"BARRIER_FAILED" }
++	{ _XBF_PAGE_LOCKED,	"PAGE_LOCKED" }
+ 
+ 
+ typedef enum {
+diff --git a/fs/xfs/linux-2.6/xfs_trace.h b/fs/xfs/linux-2.6/xfs_trace.h
+index be5dffd..8fe311a 100644
+--- a/fs/xfs/linux-2.6/xfs_trace.h
++++ b/fs/xfs/linux-2.6/xfs_trace.h
+@@ -325,7 +325,6 @@ DEFINE_BUF_EVENT(xfs_buf_lock);
+ DEFINE_BUF_EVENT(xfs_buf_lock_done);
+ DEFINE_BUF_EVENT(xfs_buf_cond_lock);
+ DEFINE_BUF_EVENT(xfs_buf_unlock);
+-DEFINE_BUF_EVENT(xfs_buf_ordered_retry);
+ DEFINE_BUF_EVENT(xfs_buf_iowait);
+ DEFINE_BUF_EVENT(xfs_buf_iowait_done);
+ DEFINE_BUF_EVENT(xfs_buf_delwri_queue);
+diff --git a/fs/xfs/xfs_log.c b/fs/xfs/xfs_log.c
+index 925d572..430a8fc 100644
+--- a/fs/xfs/xfs_log.c
++++ b/fs/xfs/xfs_log.c
+@@ -917,19 +917,6 @@ xlog_iodone(xfs_buf_t *bp)
+ 	l = iclog->ic_log;
+ 
+ 	/*
+-	 * If the _XFS_BARRIER_FAILED flag was set by a lower
+-	 * layer, it means the underlying device no longer supports
+-	 * barrier I/O. Warn loudly and turn off barriers.
+-	 */
+-	if (bp->b_flags & _XFS_BARRIER_FAILED) {
+-		bp->b_flags &= ~_XFS_BARRIER_FAILED;
+-		l->l_mp->m_flags &= ~XFS_MOUNT_BARRIER;
+-		xfs_fs_cmn_err(CE_WARN, l->l_mp,
+-				"xlog_iodone: Barriers are no longer supported"
+-				" by device. Disabling barriers\n");
 -	}
- 
- 	put_bh(bh);		/* One for getblk() */
- 	journal_put_journal_head(descriptor);
+-
+-	/*
+ 	 * Race to shutdown the filesystem if we see an error.
+ 	 */
+ 	if (XFS_TEST_ERROR((XFS_BUF_GETERROR(bp)), l->l_mp,
 -- 
 1.7.1
