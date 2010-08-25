@@ -1,8 +1,8 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 25/30] jbd2: replace barriers with explicit flush
+Subject: [PATCH 21/30] gfs2: replace barriers with explicit flush
 	/ FUA usage
-Date: Wed, 25 Aug 2010 17:47:42 +0200
-Message-ID: <1282751267-3530-26-git-send-email-tj__9040.68675959042$1282751752$gmane$org@kernel.org>
+Date: Wed, 25 Aug 2010 17:47:38 +0200
+Message-ID: <1282751267-3530-22-git-send-email-tj__22147.1180012033$1282751756$gmane$org@kernel.org>
 References: <1282751267-3530-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,79 +25,72 @@ List-Id: dm-devel.ids
 
 From: Christoph Hellwig <hch@infradead.org>
 
-Switch to the WRITE_FLUSH_FUA flag for journal commits and remove the
-EOPNOTSUPP detection for barriers.
+Switch to the WRITE_FLUSH_FUA flag for log writes, remove the EOPNOTSUPP
+detection for barriers and stop setting the barrier flag for discards.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Jan Kara <jack@suse.cz>
+Acked-by: Steven Whitehouse <swhiteho@redhat.com>
+Acked-by: Bob Peterson <rpeterso@redhat.com>
 Signed-off-by: Tejun Heo <tj@kernel.org>
 ---
- fs/jbd2/commit.c |   43 ++++---------------------------------------
- 1 files changed, 4 insertions(+), 39 deletions(-)
+ fs/gfs2/log.c  |   19 +++++--------------
+ fs/gfs2/rgrp.c |    5 ++---
+ 2 files changed, 7 insertions(+), 17 deletions(-)
 
-diff --git a/fs/jbd2/commit.c b/fs/jbd2/commit.c
-index 7c068c1..db99ecb 100644
---- a/fs/jbd2/commit.c
-+++ b/fs/jbd2/commit.c
-@@ -134,25 +134,11 @@ static int journal_submit_commit_record(journal_t *journal,
+diff --git a/fs/gfs2/log.c b/fs/gfs2/log.c
+index cde1248..9c65170 100644
+--- a/fs/gfs2/log.c
++++ b/fs/gfs2/log.c
+@@ -592,22 +592,13 @@ static void log_write_header(struct gfs2_sbd *sdp, u32 flags, int pull)
+ 	lh->lh_hash = cpu_to_be32(hash);
  
- 	if (journal->j_flags & JBD2_BARRIER &&
- 	    !JBD2_HAS_INCOMPAT_FEATURE(journal,
--				       JBD2_FEATURE_INCOMPAT_ASYNC_COMMIT)) {
--		ret = submit_bh(WRITE_SYNC_PLUG | WRITE_BARRIER, bh);
--		if (ret == -EOPNOTSUPP) {
--			printk(KERN_WARNING
--			       "JBD2: Disabling barriers on %s, "
--			       "not supported by device\n", journal->j_devname);
--			write_lock(&journal->j_state_lock);
--			journal->j_flags &= ~JBD2_BARRIER;
--			write_unlock(&journal->j_state_lock);
--
--			/* And try again, without the barrier */
--			lock_buffer(bh);
--			set_buffer_uptodate(bh);
--			clear_buffer_dirty(bh);
--			ret = submit_bh(WRITE_SYNC_PLUG, bh);
--		}
--	} else {
-+				       JBD2_FEATURE_INCOMPAT_ASYNC_COMMIT))
-+		ret = submit_bh(WRITE_SYNC_PLUG | WRITE_FLUSH_FUA, bh);
-+	else
- 		ret = submit_bh(WRITE_SYNC_PLUG, bh);
--	}
-+
- 	*cbh = bh;
- 	return ret;
- }
-@@ -166,29 +152,8 @@ static int journal_wait_on_commit_record(journal_t *journal,
- {
- 	int ret = 0;
- 
--retry:
- 	clear_buffer_dirty(bh);
- 	wait_on_buffer(bh);
--	if (buffer_eopnotsupp(bh) && (journal->j_flags & JBD2_BARRIER)) {
--		printk(KERN_WARNING
--		       "JBD2: %s: disabling barries on %s - not supported "
--		       "by device\n", __func__, journal->j_devname);
--		write_lock(&journal->j_state_lock);
--		journal->j_flags &= ~JBD2_BARRIER;
--		write_unlock(&journal->j_state_lock);
--
--		lock_buffer(bh);
--		clear_buffer_dirty(bh);
+ 	bh->b_end_io = end_buffer_write_sync;
+-	if (test_bit(SDF_NOBARRIERS, &sdp->sd_flags))
+-		goto skip_barrier;
+ 	get_bh(bh);
+-	submit_bh(WRITE_BARRIER | REQ_META, bh);
+-	wait_on_buffer(bh);
+-	if (buffer_eopnotsupp(bh)) {
+-		clear_buffer_eopnotsupp(bh);
 -		set_buffer_uptodate(bh);
--		bh->b_end_io = journal_end_buffer_io_sync;
--
--		ret = submit_bh(WRITE_SYNC_PLUG, bh);
--		if (ret) {
--			unlock_buffer(bh);
--			return ret;
--		}
--		goto retry;
+-		fs_info(sdp, "barrier sync failed - disabling barriers\n");
+-		set_bit(SDF_NOBARRIERS, &sdp->sd_flags);
+-		lock_buffer(bh);
+-skip_barrier:
+-		get_bh(bh);
++	if (test_bit(SDF_NOBARRIERS, &sdp->sd_flags))
+ 		submit_bh(WRITE_SYNC | REQ_META, bh);
+-		wait_on_buffer(bh);
 -	}
- 
- 	if (unlikely(!buffer_uptodate(bh)))
- 		ret = -EIO;
++	else
++		submit_bh(WRITE_FLUSH_FUA | REQ_META, bh);
++	wait_on_buffer(bh);
++
+ 	if (!buffer_uptodate(bh))
+ 		gfs2_io_error_bh(sdp, bh);
+ 	brelse(bh);
+diff --git a/fs/gfs2/rgrp.c b/fs/gfs2/rgrp.c
+index 171a744..3793164 100644
+--- a/fs/gfs2/rgrp.c
++++ b/fs/gfs2/rgrp.c
+@@ -854,8 +854,7 @@ static void gfs2_rgrp_send_discards(struct gfs2_sbd *sdp, u64 offset,
+ 				if ((start + nr_sects) != blk) {
+ 					rv = blkdev_issue_discard(bdev, start,
+ 							    nr_sects, GFP_NOFS,
+-							    BLKDEV_IFL_WAIT |
+-							    BLKDEV_IFL_BARRIER);
++							    BLKDEV_IFL_WAIT);
+ 					if (rv)
+ 						goto fail;
+ 					nr_sects = 0;
+@@ -870,7 +869,7 @@ start_new_extent:
+ 	}
+ 	if (nr_sects) {
+ 		rv = blkdev_issue_discard(bdev, start, nr_sects, GFP_NOFS,
+-					 BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
++					 BLKDEV_IFL_WAIT);
+ 		if (rv)
+ 			goto fail;
+ 	}
 -- 
 1.7.1
