@@ -1,7 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 30/30] block: remove the BH_Eopnotsupp flag
-Date: Wed, 25 Aug 2010 17:47:47 +0200
-Message-ID: <1282751267-3530-31-git-send-email-tj@kernel.org>
+Subject: [PATCH 14/30] block/loop: implement REQ_FLUSH/FUA support
+Date: Wed, 25 Aug 2010 17:47:31 +0200
+Message-ID: <1282751267-3530-15-git-send-email-tj@kernel.org>
 References: <1282751267-3530-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,89 +19,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
-Cc: Christoph Hellwig <hch@infradead.org>, Tejun Heo <tj@kernel.org>
+Cc: Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-From: Christoph Hellwig <hch@infradead.org>
+Deprecate REQ_HARDBARRIER and implement REQ_FLUSH/FUA instead.  Also,
+instead of checking file->f_op->fsync() directly, look at the value of
+vfs_fsync() and ignore -EINVAL return.
 
-This flag was only set for barrier buffers, which we don't submit
-anymore.
-
-Signed-off-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Tejun Heo <tj@kernel.org>
 ---
- fs/buffer.c                 |    7 +------
- fs/fat/misc.c               |    5 +----
- include/linux/buffer_head.h |    2 --
- 3 files changed, 2 insertions(+), 12 deletions(-)
+ drivers/block/loop.c |   18 +++++++++---------
+ 1 files changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/fs/buffer.c b/fs/buffer.c
-index 3e7dca2..7f0b9b0 100644
---- a/fs/buffer.c
-+++ b/fs/buffer.c
-@@ -156,7 +156,7 @@ void end_buffer_write_sync(struct buffer_head *bh, int uptodate)
- 	if (uptodate) {
- 		set_buffer_uptodate(bh);
- 	} else {
--		if (!buffer_eopnotsupp(bh) && !quiet_error(bh)) {
-+		if (!quiet_error(bh)) {
- 			buffer_io_error(bh);
- 			printk(KERN_WARNING "lost page write due to "
- 					"I/O error on %s\n",
-@@ -2891,7 +2891,6 @@ static void end_bio_bh_io_sync(struct bio *bio, int err)
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 953d1e1..5d27bc6 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -477,17 +477,17 @@ static int do_bio_filebacked(struct loop_device *lo, struct bio *bio)
+ 	pos = ((loff_t) bio->bi_sector << 9) + lo->lo_offset;
  
- 	if (err == -EOPNOTSUPP) {
- 		set_bit(BIO_EOPNOTSUPP, &bio->bi_flags);
--		set_bit(BH_Eopnotsupp, &bh->b_state);
- 	}
+ 	if (bio_rw(bio) == WRITE) {
+-		bool barrier = (bio->bi_rw & REQ_HARDBARRIER);
+ 		struct file *file = lo->lo_backing_file;
  
- 	if (unlikely (test_bit(BIO_QUIET,&bio->bi_flags)))
-@@ -3031,10 +3030,6 @@ int __sync_dirty_buffer(struct buffer_head *bh, int rw)
- 		bh->b_end_io = end_buffer_write_sync;
- 		ret = submit_bh(rw, bh);
- 		wait_on_buffer(bh);
--		if (buffer_eopnotsupp(bh)) {
--			clear_buffer_eopnotsupp(bh);
--			ret = -EOPNOTSUPP;
--		}
- 		if (!ret && !buffer_uptodate(bh))
- 			ret = -EIO;
- 	} else {
-diff --git a/fs/fat/misc.c b/fs/fat/misc.c
-index 1736f23..970e682 100644
---- a/fs/fat/misc.c
-+++ b/fs/fat/misc.c
-@@ -255,10 +255,7 @@ int fat_sync_bhs(struct buffer_head **bhs, int nr_bhs)
+-		if (barrier) {
+-			if (unlikely(!file->f_op->fsync)) {
+-				ret = -EOPNOTSUPP;
+-				goto out;
+-			}
++		/* REQ_HARDBARRIER is deprecated */
++		if (bio->bi_rw & REQ_HARDBARRIER) {
++			ret = -EOPNOTSUPP;
++			goto out;
++		}
  
- 	for (i = 0; i < nr_bhs; i++) {
- 		wait_on_buffer(bhs[i]);
--		if (buffer_eopnotsupp(bhs[i])) {
--			clear_buffer_eopnotsupp(bhs[i]);
--			err = -EOPNOTSUPP;
--		} else if (!err && !buffer_uptodate(bhs[i]))
-+		if (!err && !buffer_uptodate(bhs[i]))
- 			err = -EIO;
- 	}
- 	return err;
-diff --git a/include/linux/buffer_head.h b/include/linux/buffer_head.h
-index fc999f5..dd1b25b 100644
---- a/include/linux/buffer_head.h
-+++ b/include/linux/buffer_head.h
-@@ -32,7 +32,6 @@ enum bh_state_bits {
- 	BH_Delay,	/* Buffer is not yet allocated on disk */
- 	BH_Boundary,	/* Block is followed by a discontiguity */
- 	BH_Write_EIO,	/* I/O error on write */
--	BH_Eopnotsupp,	/* DEPRECATED: operation not supported (barrier) */
- 	BH_Unwritten,	/* Buffer is allocated on disk but not written */
- 	BH_Quiet,	/* Buffer Error Prinks to be quiet */
++		if (bio->bi_rw & REQ_FLUSH) {
+ 			ret = vfs_fsync(file, 0);
+-			if (unlikely(ret)) {
++			if (unlikely(ret && ret != -EINVAL)) {
+ 				ret = -EIO;
+ 				goto out;
+ 			}
+@@ -495,9 +495,9 @@ static int do_bio_filebacked(struct loop_device *lo, struct bio *bio)
  
-@@ -124,7 +123,6 @@ BUFFER_FNS(Async_Write, async_write)
- BUFFER_FNS(Delay, delay)
- BUFFER_FNS(Boundary, boundary)
- BUFFER_FNS(Write_EIO, write_io_error)
--BUFFER_FNS(Eopnotsupp, eopnotsupp)
- BUFFER_FNS(Unwritten, unwritten)
+ 		ret = lo_send(lo, bio, pos);
  
- #define bh_offset(bh)		((unsigned long)(bh)->b_data & ~PAGE_MASK)
+-		if (barrier && !ret) {
++		if ((bio->bi_rw & REQ_FUA) && !ret) {
+ 			ret = vfs_fsync(file, 0);
+-			if (unlikely(ret))
++			if (unlikely(ret && ret != -EINVAL))
+ 				ret = -EIO;
+ 		}
+ 	} else
 -- 
 1.7.1
