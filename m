@@ -1,8 +1,8 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 21/30] gfs2: replace barriers with explicit flush
-	/ FUA usage
-Date: Wed, 25 Aug 2010 17:47:38 +0200
-Message-ID: <1282751267-3530-22-git-send-email-tj__22147.1180012033$1282751756$gmane$org@kernel.org>
+Subject: [PATCH 01/30] ide: remove unnecessary
+	blk_queue_flushing() test in do_ide_request()
+Date: Wed, 25 Aug 2010 17:47:18 +0200
+Message-ID: <1282751267-3530-2-git-send-email-tj@kernel.org>
 References: <1282751267-3530-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,77 +20,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
-Cc: Christoph Hellwig <hch@infradead.org>, Tejun Heo <tj@kernel.org>
+Cc: Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-From: Christoph Hellwig <hch@infradead.org>
+Unplugging from a request function doesn't really help much (it's
+already in the request_fn) and soon block layer will be updated to mix
+barrier sequence with other commands, so there's no need to treat
+queue flushing any differently.
 
-Switch to the WRITE_FLUSH_FUA flag for log writes, remove the EOPNOTSUPP
-detection for barriers and stop setting the barrier flag for discards.
+ide was the only user of blk_queue_flushing().  Remove it.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Steven Whitehouse <swhiteho@redhat.com>
-Acked-by: Bob Peterson <rpeterso@redhat.com>
 Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>
+Acked-by: David S. Miller <davem@davemloft.net>
 ---
- fs/gfs2/log.c  |   19 +++++--------------
- fs/gfs2/rgrp.c |    5 ++---
- 2 files changed, 7 insertions(+), 17 deletions(-)
+ drivers/ide/ide-io.c   |   13 -------------
+ include/linux/blkdev.h |    1 -
+ 2 files changed, 0 insertions(+), 14 deletions(-)
 
-diff --git a/fs/gfs2/log.c b/fs/gfs2/log.c
-index cde1248..9c65170 100644
---- a/fs/gfs2/log.c
-+++ b/fs/gfs2/log.c
-@@ -592,22 +592,13 @@ static void log_write_header(struct gfs2_sbd *sdp, u32 flags, int pull)
- 	lh->lh_hash = cpu_to_be32(hash);
+diff --git a/drivers/ide/ide-io.c b/drivers/ide/ide-io.c
+index a381be8..999dac0 100644
+--- a/drivers/ide/ide-io.c
++++ b/drivers/ide/ide-io.c
+@@ -441,19 +441,6 @@ void do_ide_request(struct request_queue *q)
+ 	struct request	*rq = NULL;
+ 	ide_startstop_t	startstop;
  
- 	bh->b_end_io = end_buffer_write_sync;
--	if (test_bit(SDF_NOBARRIERS, &sdp->sd_flags))
--		goto skip_barrier;
- 	get_bh(bh);
--	submit_bh(WRITE_BARRIER | REQ_META, bh);
--	wait_on_buffer(bh);
--	if (buffer_eopnotsupp(bh)) {
--		clear_buffer_eopnotsupp(bh);
--		set_buffer_uptodate(bh);
--		fs_info(sdp, "barrier sync failed - disabling barriers\n");
--		set_bit(SDF_NOBARRIERS, &sdp->sd_flags);
--		lock_buffer(bh);
--skip_barrier:
--		get_bh(bh);
-+	if (test_bit(SDF_NOBARRIERS, &sdp->sd_flags))
- 		submit_bh(WRITE_SYNC | REQ_META, bh);
--		wait_on_buffer(bh);
--	}
-+	else
-+		submit_bh(WRITE_FLUSH_FUA | REQ_META, bh);
-+	wait_on_buffer(bh);
-+
- 	if (!buffer_uptodate(bh))
- 		gfs2_io_error_bh(sdp, bh);
- 	brelse(bh);
-diff --git a/fs/gfs2/rgrp.c b/fs/gfs2/rgrp.c
-index 171a744..3793164 100644
---- a/fs/gfs2/rgrp.c
-+++ b/fs/gfs2/rgrp.c
-@@ -854,8 +854,7 @@ static void gfs2_rgrp_send_discards(struct gfs2_sbd *sdp, u64 offset,
- 				if ((start + nr_sects) != blk) {
- 					rv = blkdev_issue_discard(bdev, start,
- 							    nr_sects, GFP_NOFS,
--							    BLKDEV_IFL_WAIT |
--							    BLKDEV_IFL_BARRIER);
-+							    BLKDEV_IFL_WAIT);
- 					if (rv)
- 						goto fail;
- 					nr_sects = 0;
-@@ -870,7 +869,7 @@ start_new_extent:
- 	}
- 	if (nr_sects) {
- 		rv = blkdev_issue_discard(bdev, start, nr_sects, GFP_NOFS,
--					 BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
-+					 BLKDEV_IFL_WAIT);
- 		if (rv)
- 			goto fail;
- 	}
+-	/*
+-	 * drive is doing pre-flush, ordered write, post-flush sequence. even
+-	 * though that is 3 requests, it must be seen as a single transaction.
+-	 * we must not preempt this drive until that is complete
+-	 */
+-	if (blk_queue_flushing(q))
+-		/*
+-		 * small race where queue could get replugged during
+-		 * the 3-request flush cycle, just yank the plug since
+-		 * we want it to finish asap
+-		 */
+-		blk_remove_plug(q);
+-
+ 	spin_unlock_irq(q->queue_lock);
+ 
+ 	/* HLD do_request() callback might sleep, make sure it's okay */
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 2c54906..015375c 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -521,7 +521,6 @@ enum {
+ #define blk_queue_nonrot(q)	test_bit(QUEUE_FLAG_NONROT, &(q)->queue_flags)
+ #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flags)
+ #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
+-#define blk_queue_flushing(q)	((q)->ordseq)
+ #define blk_queue_stackable(q)	\
+ 	test_bit(QUEUE_FLAG_STACKABLE, &(q)->queue_flags)
+ #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
 -- 
 1.7.1
