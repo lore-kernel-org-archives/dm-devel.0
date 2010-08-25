@@ -1,8 +1,8 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 16/30] lguest: replace VIRTIO_F_BARRIER support
-	with VIRTIO_F_FLUSH support
-Date: Wed, 25 Aug 2010 17:47:33 +0200
-Message-ID: <1282751267-3530-17-git-send-email-tj__18589.9151525975$1282751811$gmane$org@kernel.org>
+Subject: [PATCH 12/30] block: use REQ_FLUSH in
+	blkdev_issue_flush()
+Date: Wed, 25 Aug 2010 17:47:29 +0200
+Message-ID: <1282751267-3530-13-git-send-email-tj@kernel.org>
 References: <1282751267-3530-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,79 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
-Cc: Tejun Heo <tj@kernel.org>
+Cc: Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-VIRTIO_F_BARRIER is deprecated.  Replace it with VIRTIO_F_FLUSH
-support.
+Update blkdev_issue_flush() to use new REQ_FLUSH interface.
 
 Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Rusty Russell <rusty@rustcorp.com.au>
-Cc: Christoph Hellwig <hch@lst.de>
+Cc: Christoph Hellwig <hch@infradead.org>
 ---
- Documentation/lguest/lguest.c |   29 +++++++++--------------------
- 1 files changed, 9 insertions(+), 20 deletions(-)
+ block/blk-flush.c |   17 ++++++-----------
+ 1 files changed, 6 insertions(+), 11 deletions(-)
 
-diff --git a/Documentation/lguest/lguest.c b/Documentation/lguest/lguest.c
-index e9ce3c5..fbc64b3 100644
---- a/Documentation/lguest/lguest.c
-+++ b/Documentation/lguest/lguest.c
-@@ -1639,15 +1639,6 @@ static void blk_request(struct virtqueue *vq)
- 	off = out->sector * 512;
+diff --git a/block/blk-flush.c b/block/blk-flush.c
+index 452c552..ab765c2 100644
+--- a/block/blk-flush.c
++++ b/block/blk-flush.c
+@@ -174,13 +174,10 @@ struct request *blk_do_flush(struct request_queue *q, struct request *rq)
+ 	return blk_flush_complete_seq(q, skip, 0);
+ }
  
- 	/*
--	 * The block device implements "barriers", where the Guest indicates
--	 * that it wants all previous writes to occur before this write.  We
--	 * don't have a way of asking our kernel to do a barrier, so we just
--	 * synchronize all the data in the file.  Pretty poor, no?
--	 */
--	if (out->type & VIRTIO_BLK_T_BARRIER)
--		fdatasync(vblk->fd);
--
--	/*
- 	 * In general the virtio block driver is allowed to try SCSI commands.
- 	 * It'd be nice if we supported eject, for example, but we don't.
+-static void bio_end_empty_barrier(struct bio *bio, int err)
++static void bio_end_flush(struct bio *bio, int err)
+ {
+-	if (err) {
+-		if (err == -EOPNOTSUPP)
+-			set_bit(BIO_EOPNOTSUPP, &bio->bi_flags);
++	if (err)
+ 		clear_bit(BIO_UPTODATE, &bio->bi_flags);
+-	}
+ 	if (bio->bi_private)
+ 		complete(bio->bi_private);
+ 	bio_put(bio);
+@@ -218,19 +215,19 @@ int blkdev_issue_flush(struct block_device *bdev, gfp_t gfp_mask,
+ 	 * some block devices may not have their queue correctly set up here
+ 	 * (e.g. loop device without a backing file) and so issuing a flush
+ 	 * here will panic. Ensure there is a request function before issuing
+-	 * the barrier.
++	 * the flush.
  	 */
-@@ -1679,6 +1670,13 @@ static void blk_request(struct virtqueue *vq)
- 			/* Die, bad Guest, die. */
- 			errx(1, "Write past end %llu+%u", off, ret);
- 		}
-+
-+		wlen = sizeof(*in);
-+		*in = (ret >= 0 ? VIRTIO_BLK_S_OK : VIRTIO_BLK_S_IOERR);
-+	} else if (out->type & VIRTIO_BLK_T_FLUSH) {
-+		/* Flush */
-+		ret = fdatasync(vblk->fd);
-+		verbose("FLUSH fdatasync: %i\n", ret);
- 		wlen = sizeof(*in);
- 		*in = (ret >= 0 ? VIRTIO_BLK_S_OK : VIRTIO_BLK_S_IOERR);
- 	} else {
-@@ -1702,15 +1700,6 @@ static void blk_request(struct virtqueue *vq)
- 		}
+ 	if (!q->make_request_fn)
+ 		return -ENXIO;
+ 
+ 	bio = bio_alloc(gfp_mask, 0);
+-	bio->bi_end_io = bio_end_empty_barrier;
++	bio->bi_end_io = bio_end_flush;
+ 	bio->bi_bdev = bdev;
+ 	if (test_bit(BLKDEV_WAIT, &flags))
+ 		bio->bi_private = &wait;
+ 
+ 	bio_get(bio);
+-	submit_bio(WRITE_BARRIER, bio);
++	submit_bio(WRITE_FLUSH, bio);
+ 	if (test_bit(BLKDEV_WAIT, &flags)) {
+ 		wait_for_completion(&wait);
+ 		/*
+@@ -242,9 +239,7 @@ int blkdev_issue_flush(struct block_device *bdev, gfp_t gfp_mask,
+ 			*error_sector = bio->bi_sector;
  	}
  
--	/*
--	 * OK, so we noted that it was pretty poor to use an fdatasync as a
--	 * barrier.  But Christoph Hellwig points out that we need a sync
--	 * *afterwards* as well: "Barriers specify no reordering to the front
--	 * or the back."  And Jens Axboe confirmed it, so here we are:
--	 */
--	if (out->type & VIRTIO_BLK_T_BARRIER)
--		fdatasync(vblk->fd);
--
- 	/* Finished that request. */
- 	add_used(vq, head, wlen);
- }
-@@ -1735,8 +1724,8 @@ static void setup_block_file(const char *filename)
- 	vblk->fd = open_or_die(filename, O_RDWR|O_LARGEFILE);
- 	vblk->len = lseek64(vblk->fd, 0, SEEK_END);
+-	if (bio_flagged(bio, BIO_EOPNOTSUPP))
+-		ret = -EOPNOTSUPP;
+-	else if (!bio_flagged(bio, BIO_UPTODATE))
++	if (!bio_flagged(bio, BIO_UPTODATE))
+ 		ret = -EIO;
  
--	/* We support barriers. */
--	add_feature(dev, VIRTIO_BLK_F_BARRIER);
-+	/* We support FLUSH. */
-+	add_feature(dev, VIRTIO_BLK_F_FLUSH);
- 
- 	/* Tell Guest how many sectors this device has. */
- 	conf.capacity = cpu_to_le64(vblk->len / 512);
+ 	bio_put(bio);
 -- 
 1.7.1
