@@ -1,7 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 28/30] swap: do not send discards as barriers
-Date: Wed, 25 Aug 2010 17:47:45 +0200
-Message-ID: <1282751267-3530-29-git-send-email-tj__8365.45912684432$1282751905$gmane$org@kernel.org>
+Subject: [PATCH 27/30] fat: do not send discards as barriers
+Date: Wed, 25 Aug 2010 17:47:44 +0200
+Message-ID: <1282751267-3530-28-git-send-email-tj@kernel.org>
 References: <1282751267-3530-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,51 +24,26 @@ List-Id: dm-devel.ids
 
 From: Christoph Hellwig <hch@infradead.org>
 
-The swap code already uses synchronous discards, no need to add I/O barriers.
-
-tj: superflous newlines removed.
+fat already uses synchronous discards, no need to add I/O barriers.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Hugh Dickins <hughd@google.com>
-Tested-by: Nigel Cunningham <nigel@tuxonice.net>
 Signed-off-by: Tejun Heo <tj@kernel.org>
 ---
- mm/swapfile.c |    9 +++------
- 1 files changed, 3 insertions(+), 6 deletions(-)
+ fs/fat/fatent.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/mm/swapfile.c b/mm/swapfile.c
-index 1f3f9c5..68cda16 100644
---- a/mm/swapfile.c
-+++ b/mm/swapfile.c
-@@ -141,8 +141,7 @@ static int discard_swap(struct swap_info_struct *si)
- 	nr_blocks = ((sector_t)se->nr_pages - 1) << (PAGE_SHIFT - 9);
- 	if (nr_blocks) {
- 		err = blkdev_issue_discard(si->bdev, start_block,
--				nr_blocks, GFP_KERNEL,
--				BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
-+				nr_blocks, GFP_KERNEL, BLKDEV_IFL_WAIT);
- 		if (err)
- 			return err;
- 		cond_resched();
-@@ -153,8 +152,7 @@ static int discard_swap(struct swap_info_struct *si)
- 		nr_blocks = (sector_t)se->nr_pages << (PAGE_SHIFT - 9);
+diff --git a/fs/fat/fatent.c b/fs/fat/fatent.c
+index 3a56a82..f9a0b7a 100644
+--- a/fs/fat/fatent.c
++++ b/fs/fat/fatent.c
+@@ -579,7 +579,7 @@ int fat_free_clusters(struct inode *inode, int cluster)
+ 					fat_clus_to_blknr(sbi, first_cl),
+ 					nr_clus * sbi->sec_per_clus,
+ 					GFP_NOFS,
+-					BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
++					BLKDEV_IFL_WAIT);
  
- 		err = blkdev_issue_discard(si->bdev, start_block,
--				nr_blocks, GFP_KERNEL,
--				BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
-+				nr_blocks, GFP_KERNEL, BLKDEV_IFL_WAIT);
- 		if (err)
- 			break;
- 
-@@ -193,8 +191,7 @@ static void discard_swap_cluster(struct swap_info_struct *si,
- 			start_block <<= PAGE_SHIFT - 9;
- 			nr_blocks <<= PAGE_SHIFT - 9;
- 			if (blkdev_issue_discard(si->bdev, start_block,
--				    nr_blocks, GFP_NOIO, BLKDEV_IFL_WAIT |
--							BLKDEV_IFL_BARRIER))
-+				    nr_blocks, GFP_NOIO, BLKDEV_IFL_WAIT))
- 				break;
- 		}
- 
+ 				first_cl = cluster;
+ 			}
 -- 
 1.7.1
