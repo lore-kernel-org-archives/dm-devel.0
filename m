@@ -1,8 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 20/30] btrfs: replace barriers with explicit
-	flush / FUA usage
-Date: Wed, 25 Aug 2010 17:47:37 +0200
-Message-ID: <1282751267-3530-21-git-send-email-tj@kernel.org>
+Subject: [PATCH 03/30] block: kill QUEUE_ORDERED_BY_TAG
+Date: Wed, 25 Aug 2010 17:47:20 +0200
+Message-ID: <1282751267-3530-4-git-send-email-tj__34919.3215872676$1282751969$gmane$org@kernel.org>
 References: <1282751267-3530-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,122 +19,225 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
-Cc: Christoph Hellwig <hch@infradead.org>, Tejun Heo <tj@kernel.org>
+Cc: Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@infradead.org>, Nick Piggin <npiggin@kernel.dk>, Chris Wright <chrisw@sous-sol.org>, Jeremy Fitzhardinge <jeremy@xensource.com>
 List-Id: dm-devel.ids
 
-From: Christoph Hellwig <hch@infradead.org>
+Nobody is making meaningful use of ORDERED_BY_TAG now and queue
+draining for barrier requests will be removed soon which will render
+the advantage of tag ordering moot.  Kill ORDERED_BY_TAG.  The
+following users are affected.
 
-Switch to the WRITE_FLUSH_FUA flag for log writes, remove the EOPNOTSUPP
-detection for barriers and stop setting the barrier flag for discards.
+* brd: converted to ORDERED_DRAIN.
+* virtio_blk: ORDERED_TAG path was already marked deprecated.  Removed.
+* xen-blkfront: ORDERED_TAG case dropped.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Chris Mason <chris.mason@oracle.com>
 Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: Christoph Hellwig <hch@infradead.org>
+Cc: Nick Piggin <npiggin@kernel.dk>
+Cc: Michael S. Tsirkin <mst@redhat.com>
+Cc: Jeremy Fitzhardinge <jeremy@xensource.com>
+Cc: Chris Wright <chrisw@sous-sol.org>
 ---
- fs/btrfs/disk-io.c     |   19 ++++---------------
- fs/btrfs/extent-tree.c |    2 +-
- fs/btrfs/volumes.c     |    4 ----
- fs/btrfs/volumes.h     |    1 -
- 4 files changed, 5 insertions(+), 21 deletions(-)
+ block/blk-barrier.c          |   35 +++++++----------------------------
+ drivers/block/brd.c          |    2 +-
+ drivers/block/virtio_blk.c   |    9 ---------
+ drivers/block/xen-blkfront.c |    8 +++-----
+ drivers/scsi/sd.c            |    4 +---
+ include/linux/blkdev.h       |   17 +----------------
+ 6 files changed, 13 insertions(+), 62 deletions(-)
 
-diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
-index 64f1008..5e789f4 100644
---- a/fs/btrfs/disk-io.c
-+++ b/fs/btrfs/disk-io.c
-@@ -2063,7 +2063,7 @@ static void btrfs_end_buffer_write_sync(struct buffer_head *bh, int uptodate)
- 	if (uptodate) {
- 		set_buffer_uptodate(bh);
- 	} else {
--		if (!buffer_eopnotsupp(bh) && printk_ratelimit()) {
-+		if (printk_ratelimit()) {
- 			printk(KERN_WARNING "lost page write due to "
- 					"I/O error on %s\n",
- 				       bdevname(bh->b_bdev, b));
-@@ -2200,21 +2200,10 @@ static int write_dev_supers(struct btrfs_device *device,
- 			bh->b_end_io = btrfs_end_buffer_write_sync;
- 		}
- 
--		if (i == last_barrier && do_barriers && device->barriers) {
--			ret = submit_bh(WRITE_BARRIER, bh);
--			if (ret == -EOPNOTSUPP) {
--				printk("btrfs: disabling barriers on dev %s\n",
--				       device->name);
--				set_buffer_uptodate(bh);
--				device->barriers = 0;
--				/* one reference for submit_bh */
--				get_bh(bh);
--				lock_buffer(bh);
--				ret = submit_bh(WRITE_SYNC, bh);
--			}
--		} else {
-+		if (i == last_barrier && do_barriers)
-+			ret = submit_bh(WRITE_FLUSH_FUA, bh);
-+		else
- 			ret = submit_bh(WRITE_SYNC, bh);
+diff --git a/block/blk-barrier.c b/block/blk-barrier.c
+index f0faefc..c807e9c 100644
+--- a/block/blk-barrier.c
++++ b/block/blk-barrier.c
+@@ -26,10 +26,7 @@ int blk_queue_ordered(struct request_queue *q, unsigned ordered)
+ 	if (ordered != QUEUE_ORDERED_NONE &&
+ 	    ordered != QUEUE_ORDERED_DRAIN &&
+ 	    ordered != QUEUE_ORDERED_DRAIN_FLUSH &&
+-	    ordered != QUEUE_ORDERED_DRAIN_FUA &&
+-	    ordered != QUEUE_ORDERED_TAG &&
+-	    ordered != QUEUE_ORDERED_TAG_FLUSH &&
+-	    ordered != QUEUE_ORDERED_TAG_FUA) {
++	    ordered != QUEUE_ORDERED_DRAIN_FUA) {
+ 		printk(KERN_ERR "blk_queue_ordered: bad value %d\n", ordered);
+ 		return -EINVAL;
+ 	}
+@@ -155,21 +152,9 @@ static inline bool start_ordered(struct request_queue *q, struct request **rqp)
+ 	 * For an empty barrier, there's no actual BAR request, which
+ 	 * in turn makes POSTFLUSH unnecessary.  Mask them off.
+ 	 */
+-	if (!blk_rq_sectors(rq)) {
++	if (!blk_rq_sectors(rq))
+ 		q->ordered &= ~(QUEUE_ORDERED_DO_BAR |
+ 				QUEUE_ORDERED_DO_POSTFLUSH);
+-		/*
+-		 * Empty barrier on a write-through device w/ ordered
+-		 * tag has no command to issue and without any command
+-		 * to issue, ordering by tag can't be used.  Drain
+-		 * instead.
+-		 */
+-		if ((q->ordered & QUEUE_ORDERED_BY_TAG) &&
+-		    !(q->ordered & QUEUE_ORDERED_DO_PREFLUSH)) {
+-			q->ordered &= ~QUEUE_ORDERED_BY_TAG;
+-			q->ordered |= QUEUE_ORDERED_BY_DRAIN;
 -		}
+-	}
  
- 		if (ret)
- 			errors++;
-diff --git a/fs/btrfs/extent-tree.c b/fs/btrfs/extent-tree.c
-index 32d0940..43dc9ea 100644
---- a/fs/btrfs/extent-tree.c
-+++ b/fs/btrfs/extent-tree.c
-@@ -1696,7 +1696,7 @@ static void btrfs_issue_discard(struct block_device *bdev,
- 				u64 start, u64 len)
- {
- 	blkdev_issue_discard(bdev, start >> 9, len >> 9, GFP_KERNEL,
--			BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
-+			BLKDEV_IFL_WAIT);
+ 	/* stash away the original request */
+ 	blk_dequeue_request(rq);
+@@ -210,7 +195,7 @@ static inline bool start_ordered(struct request_queue *q, struct request **rqp)
+ 	} else
+ 		skip |= QUEUE_ORDSEQ_PREFLUSH;
+ 
+-	if ((q->ordered & QUEUE_ORDERED_BY_DRAIN) && queue_in_flight(q))
++	if (queue_in_flight(q))
+ 		rq = NULL;
+ 	else
+ 		skip |= QUEUE_ORDSEQ_DRAIN;
+@@ -257,16 +242,10 @@ bool blk_do_ordered(struct request_queue *q, struct request **rqp)
+ 	    rq != &q->pre_flush_rq && rq != &q->post_flush_rq)
+ 		return true;
+ 
+-	if (q->ordered & QUEUE_ORDERED_BY_TAG) {
+-		/* Ordered by tag.  Blocking the next barrier is enough. */
+-		if (is_barrier && rq != &q->bar_rq)
+-			*rqp = NULL;
+-	} else {
+-		/* Ordered by draining.  Wait for turn. */
+-		WARN_ON(blk_ordered_req_seq(rq) < blk_ordered_cur_seq(q));
+-		if (blk_ordered_req_seq(rq) > blk_ordered_cur_seq(q))
+-			*rqp = NULL;
+-	}
++	/* Ordered by draining.  Wait for turn. */
++	WARN_ON(blk_ordered_req_seq(rq) < blk_ordered_cur_seq(q));
++	if (blk_ordered_req_seq(rq) > blk_ordered_cur_seq(q))
++		*rqp = NULL;
+ 
+ 	return true;
  }
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index 1c7f637..47a4127 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -482,7 +482,7 @@ static struct brd_device *brd_alloc(int i)
+ 	if (!brd->brd_queue)
+ 		goto out_free_dev;
+ 	blk_queue_make_request(brd->brd_queue, brd_make_request);
+-	blk_queue_ordered(brd->brd_queue, QUEUE_ORDERED_TAG);
++	blk_queue_ordered(brd->brd_queue, QUEUE_ORDERED_DRAIN);
+ 	blk_queue_max_hw_sectors(brd->brd_queue, 1024);
+ 	blk_queue_bounce_limit(brd->brd_queue, BLK_BOUNCE_ANY);
  
- static int btrfs_discard_extent(struct btrfs_root *root, u64 bytenr,
-diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index dd318ff..e25e46a 100644
---- a/fs/btrfs/volumes.c
-+++ b/fs/btrfs/volumes.c
-@@ -398,7 +398,6 @@ static noinline int device_list_add(const char *path,
- 		device->work.func = pending_bios_fn;
- 		memcpy(device->uuid, disk_super->dev_item.uuid,
- 		       BTRFS_UUID_SIZE);
--		device->barriers = 1;
- 		spin_lock_init(&device->io_lock);
- 		device->name = kstrdup(path, GFP_NOFS);
- 		if (!device->name) {
-@@ -462,7 +461,6 @@ static struct btrfs_fs_devices *clone_fs_devices(struct btrfs_fs_devices *orig)
- 		device->devid = orig_dev->devid;
- 		device->work.func = pending_bios_fn;
- 		memcpy(device->uuid, orig_dev->uuid, sizeof(device->uuid));
--		device->barriers = 1;
- 		spin_lock_init(&device->io_lock);
- 		INIT_LIST_HEAD(&device->dev_list);
- 		INIT_LIST_HEAD(&device->dev_alloc_list);
-@@ -1489,7 +1487,6 @@ int btrfs_init_new_device(struct btrfs_root *root, char *device_path)
- 	trans = btrfs_start_transaction(root, 0);
- 	lock_chunks(root);
+diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+index 2aafafc..7965280 100644
+--- a/drivers/block/virtio_blk.c
++++ b/drivers/block/virtio_blk.c
+@@ -395,15 +395,6 @@ static int __devinit virtblk_probe(struct virtio_device *vdev)
+ 		 * to implement write barrier support.
+ 		 */
+ 		blk_queue_ordered(q, QUEUE_ORDERED_DRAIN_FLUSH);
+-	} else if (virtio_has_feature(vdev, VIRTIO_BLK_F_BARRIER)) {
+-		/*
+-		 * If the BARRIER feature is supported the host expects us
+-		 * to order request by tags.  This implies there is not
+-		 * volatile write cache on the host, and that the host
+-		 * never re-orders outstanding I/O.  This feature is not
+-		 * useful for real life scenarious and deprecated.
+-		 */
+-		blk_queue_ordered(q, QUEUE_ORDERED_TAG);
+ 	} else {
+ 		/*
+ 		 * If the FLUSH feature is not supported we must assume that
+diff --git a/drivers/block/xen-blkfront.c b/drivers/block/xen-blkfront.c
+index ab735a6..8341862 100644
+--- a/drivers/block/xen-blkfront.c
++++ b/drivers/block/xen-blkfront.c
+@@ -424,8 +424,7 @@ static int xlvbd_barrier(struct blkfront_info *info)
+ 	const char *barrier;
  
--	device->barriers = 1;
- 	device->writeable = 1;
- 	device->work.func = pending_bios_fn;
- 	generate_random_uuid(device->uuid);
-@@ -3084,7 +3081,6 @@ static struct btrfs_device *add_missing_dev(struct btrfs_root *root,
- 		return NULL;
- 	list_add(&device->dev_list,
- 		 &fs_devices->devices);
--	device->barriers = 1;
- 	device->dev_root = root->fs_info->dev_root;
- 	device->devid = devid;
- 	device->work.func = pending_bios_fn;
-diff --git a/fs/btrfs/volumes.h b/fs/btrfs/volumes.h
-index 31b0fab..2b638b6 100644
---- a/fs/btrfs/volumes.h
-+++ b/fs/btrfs/volumes.h
-@@ -42,7 +42,6 @@ struct btrfs_device {
- 	int running_pending;
- 	u64 generation;
+ 	switch (info->feature_barrier) {
+-	case QUEUE_ORDERED_DRAIN:	barrier = "enabled (drain)"; break;
+-	case QUEUE_ORDERED_TAG:		barrier = "enabled (tag)"; break;
++	case QUEUE_ORDERED_DRAIN:	barrier = "enabled"; break;
+ 	case QUEUE_ORDERED_NONE:	barrier = "disabled"; break;
+ 	default:			return -EINVAL;
+ 	}
+@@ -1078,8 +1077,7 @@ static void blkfront_connect(struct blkfront_info *info)
+ 	 * we're dealing with a very old backend which writes
+ 	 * synchronously; draining will do what needs to get done.
+ 	 *
+-	 * If there are barriers, then we can do full queued writes
+-	 * with tagged barriers.
++	 * If there are barriers, then we use flush.
+ 	 *
+ 	 * If barriers are not supported, then there's no much we can
+ 	 * do, so just set ordering to NONE.
+@@ -1087,7 +1085,7 @@ static void blkfront_connect(struct blkfront_info *info)
+ 	if (err)
+ 		info->feature_barrier = QUEUE_ORDERED_DRAIN;
+ 	else if (barrier)
+-		info->feature_barrier = QUEUE_ORDERED_TAG;
++		info->feature_barrier = QUEUE_ORDERED_DRAIN_FLUSH;
+ 	else
+ 		info->feature_barrier = QUEUE_ORDERED_NONE;
  
--	int barriers;
- 	int writeable;
- 	int in_fs_metadata;
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index 2714bec..cdfc51a 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -2151,9 +2151,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
  
+ 	/*
+ 	 * We now have all cache related info, determine how we deal
+-	 * with ordered requests.  Note that as the current SCSI
+-	 * dispatch function can alter request order, we cannot use
+-	 * QUEUE_ORDERED_TAG_* even when ordered tag is supported.
++	 * with ordered requests.
+ 	 */
+ 	if (sdkp->WCE)
+ 		ordered = sdkp->DPOFUA
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 015375c..7077bc0 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -470,12 +470,7 @@ enum {
+ 	 * DRAIN	: ordering by draining is enough
+ 	 * DRAIN_FLUSH	: ordering by draining w/ pre and post flushes
+ 	 * DRAIN_FUA	: ordering by draining w/ pre flush and FUA write
+-	 * TAG		: ordering by tag is enough
+-	 * TAG_FLUSH	: ordering by tag w/ pre and post flushes
+-	 * TAG_FUA	: ordering by tag w/ pre flush and FUA write
+ 	 */
+-	QUEUE_ORDERED_BY_DRAIN		= 0x01,
+-	QUEUE_ORDERED_BY_TAG		= 0x02,
+ 	QUEUE_ORDERED_DO_PREFLUSH	= 0x10,
+ 	QUEUE_ORDERED_DO_BAR		= 0x20,
+ 	QUEUE_ORDERED_DO_POSTFLUSH	= 0x40,
+@@ -483,8 +478,7 @@ enum {
+ 
+ 	QUEUE_ORDERED_NONE		= 0x00,
+ 
+-	QUEUE_ORDERED_DRAIN		= QUEUE_ORDERED_BY_DRAIN |
+-					  QUEUE_ORDERED_DO_BAR,
++	QUEUE_ORDERED_DRAIN		= QUEUE_ORDERED_DO_BAR,
+ 	QUEUE_ORDERED_DRAIN_FLUSH	= QUEUE_ORDERED_DRAIN |
+ 					  QUEUE_ORDERED_DO_PREFLUSH |
+ 					  QUEUE_ORDERED_DO_POSTFLUSH,
+@@ -492,15 +486,6 @@ enum {
+ 					  QUEUE_ORDERED_DO_PREFLUSH |
+ 					  QUEUE_ORDERED_DO_FUA,
+ 
+-	QUEUE_ORDERED_TAG		= QUEUE_ORDERED_BY_TAG |
+-					  QUEUE_ORDERED_DO_BAR,
+-	QUEUE_ORDERED_TAG_FLUSH		= QUEUE_ORDERED_TAG |
+-					  QUEUE_ORDERED_DO_PREFLUSH |
+-					  QUEUE_ORDERED_DO_POSTFLUSH,
+-	QUEUE_ORDERED_TAG_FUA		= QUEUE_ORDERED_TAG |
+-					  QUEUE_ORDERED_DO_PREFLUSH |
+-					  QUEUE_ORDERED_DO_FUA,
+-
+ 	/*
+ 	 * Ordered operation sequence
+ 	 */
 -- 
 1.7.1
