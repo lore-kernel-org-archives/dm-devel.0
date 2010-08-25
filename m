@@ -1,8 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 23/30] nilfs2: replace barriers with explicit
-	flush / FUA usage
-Date: Wed, 25 Aug 2010 17:47:40 +0200
-Message-ID: <1282751267-3530-24-git-send-email-tj__5934.39733279428$1282751785$gmane$org@kernel.org>
+Subject: [PATCH 30/30] block: remove the BH_Eopnotsupp flag
+Date: Wed, 25 Aug 2010 17:47:47 +0200
+Message-ID: <1282751267-3530-31-git-send-email-tj@kernel.org>
 References: <1282751267-3530-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,67 +24,84 @@ List-Id: dm-devel.ids
 
 From: Christoph Hellwig <hch@infradead.org>
 
-Switch to the WRITE_FLUSH_FUA flag for log writes, remove the EOPNOTSUPP
-detection for barriers and stop setting the barrier flag for discards.
-
-tj: nilfs is now fixed to wait for discard completion.  Updated this
-    patch accordingly and dropped warning about it.
+This flag was only set for barrier buffers, which we don't submit
+anymore.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
 Signed-off-by: Tejun Heo <tj@kernel.org>
 ---
- fs/nilfs2/super.c     |   10 +---------
- fs/nilfs2/the_nilfs.c |    7 ++-----
- 2 files changed, 3 insertions(+), 14 deletions(-)
+ fs/buffer.c                 |    7 +------
+ fs/fat/misc.c               |    5 +----
+ include/linux/buffer_head.h |    2 --
+ 3 files changed, 2 insertions(+), 12 deletions(-)
 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 9222633..faa5078 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -178,17 +178,9 @@ static int nilfs_sync_super(struct nilfs_sb_info *sbi, int flag)
- 
-  retry:
- 	set_buffer_dirty(nilfs->ns_sbh[0]);
--
- 	if (nilfs_test_opt(sbi, BARRIER)) {
- 		err = __sync_dirty_buffer(nilfs->ns_sbh[0],
--					  WRITE_SYNC | WRITE_BARRIER);
--		if (err == -EOPNOTSUPP) {
--			nilfs_warning(sbi->s_super, __func__,
--				      "barrier-based sync failed. "
--				      "disabling barriers\n");
--			nilfs_clear_opt(sbi, BARRIER);
--			goto retry;
--		}
-+					  WRITE_SYNC | WRITE_FLUSH_FUA);
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 3e7dca2..7f0b9b0 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -156,7 +156,7 @@ void end_buffer_write_sync(struct buffer_head *bh, int uptodate)
+ 	if (uptodate) {
+ 		set_buffer_uptodate(bh);
  	} else {
- 		err = sync_dirty_buffer(nilfs->ns_sbh[0]);
- 	}
-diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-index 4317f17..400b2ca 100644
---- a/fs/nilfs2/the_nilfs.c
-+++ b/fs/nilfs2/the_nilfs.c
-@@ -774,9 +774,7 @@ int nilfs_discard_segments(struct the_nilfs *nilfs, __u64 *segnump,
- 			ret = blkdev_issue_discard(nilfs->ns_bdev,
- 						   start * sects_per_block,
- 						   nblocks * sects_per_block,
--						   GFP_NOFS,
--						   BLKDEV_IFL_WAIT |
--						   BLKDEV_IFL_BARRIER);
-+						   GFP_NOFS, BLKDEV_IFL_WAIT);
- 			if (ret < 0)
- 				return ret;
- 			nblocks = 0;
-@@ -786,8 +784,7 @@ int nilfs_discard_segments(struct the_nilfs *nilfs, __u64 *segnump,
- 		ret = blkdev_issue_discard(nilfs->ns_bdev,
- 					   start * sects_per_block,
- 					   nblocks * sects_per_block,
--					   GFP_NOFS,
--					  BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
-+					   GFP_NOFS, BLKDEV_IFL_WAIT);
- 	return ret;
- }
+-		if (!buffer_eopnotsupp(bh) && !quiet_error(bh)) {
++		if (!quiet_error(bh)) {
+ 			buffer_io_error(bh);
+ 			printk(KERN_WARNING "lost page write due to "
+ 					"I/O error on %s\n",
+@@ -2891,7 +2891,6 @@ static void end_bio_bh_io_sync(struct bio *bio, int err)
  
+ 	if (err == -EOPNOTSUPP) {
+ 		set_bit(BIO_EOPNOTSUPP, &bio->bi_flags);
+-		set_bit(BH_Eopnotsupp, &bh->b_state);
+ 	}
+ 
+ 	if (unlikely (test_bit(BIO_QUIET,&bio->bi_flags)))
+@@ -3031,10 +3030,6 @@ int __sync_dirty_buffer(struct buffer_head *bh, int rw)
+ 		bh->b_end_io = end_buffer_write_sync;
+ 		ret = submit_bh(rw, bh);
+ 		wait_on_buffer(bh);
+-		if (buffer_eopnotsupp(bh)) {
+-			clear_buffer_eopnotsupp(bh);
+-			ret = -EOPNOTSUPP;
+-		}
+ 		if (!ret && !buffer_uptodate(bh))
+ 			ret = -EIO;
+ 	} else {
+diff --git a/fs/fat/misc.c b/fs/fat/misc.c
+index 1736f23..970e682 100644
+--- a/fs/fat/misc.c
++++ b/fs/fat/misc.c
+@@ -255,10 +255,7 @@ int fat_sync_bhs(struct buffer_head **bhs, int nr_bhs)
+ 
+ 	for (i = 0; i < nr_bhs; i++) {
+ 		wait_on_buffer(bhs[i]);
+-		if (buffer_eopnotsupp(bhs[i])) {
+-			clear_buffer_eopnotsupp(bhs[i]);
+-			err = -EOPNOTSUPP;
+-		} else if (!err && !buffer_uptodate(bhs[i]))
++		if (!err && !buffer_uptodate(bhs[i]))
+ 			err = -EIO;
+ 	}
+ 	return err;
+diff --git a/include/linux/buffer_head.h b/include/linux/buffer_head.h
+index fc999f5..dd1b25b 100644
+--- a/include/linux/buffer_head.h
++++ b/include/linux/buffer_head.h
+@@ -32,7 +32,6 @@ enum bh_state_bits {
+ 	BH_Delay,	/* Buffer is not yet allocated on disk */
+ 	BH_Boundary,	/* Block is followed by a discontiguity */
+ 	BH_Write_EIO,	/* I/O error on write */
+-	BH_Eopnotsupp,	/* DEPRECATED: operation not supported (barrier) */
+ 	BH_Unwritten,	/* Buffer is allocated on disk but not written */
+ 	BH_Quiet,	/* Buffer Error Prinks to be quiet */
+ 
+@@ -124,7 +123,6 @@ BUFFER_FNS(Async_Write, async_write)
+ BUFFER_FNS(Delay, delay)
+ BUFFER_FNS(Boundary, boundary)
+ BUFFER_FNS(Write_EIO, write_io_error)
+-BUFFER_FNS(Eopnotsupp, eopnotsupp)
+ BUFFER_FNS(Unwritten, unwritten)
+ 
+ #define bh_offset(bh)		((unsigned long)(bh)->b_data & ~PAGE_MASK)
 -- 
 1.7.1
