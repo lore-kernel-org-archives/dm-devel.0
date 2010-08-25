@@ -1,8 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 19/30] xfs: replace barriers with explicit flush
-	/ FUA usage
-Date: Wed, 25 Aug 2010 17:47:36 +0200
-Message-ID: <1282751267-3530-20-git-send-email-tj__23965.9976367422$1282751955$gmane$org@kernel.org>
+Subject: [PATCH 09/30] block: rename barrier/ordered to flush
+Date: Wed, 25 Aug 2010 17:47:26 +0200
+Message-ID: <1282751267-3530-10-git-send-email-tj__10441.0045584247$1282751965$gmane$org@kernel.org>
 References: <1282751267-3530-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,122 +19,344 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, hch@l
-Cc: Christoph Hellwig <hch@infradead.org>, Tejun Heo <tj@kernel.org>
+Cc: Tejun Heo <tj@kernel.org>, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-From: Christoph Hellwig <hch@infradead.org>
+With ordering requirements dropped, barrier and ordered are misnomers.
+Now all block layer does is sequencing FLUSH and FUA.  Rename them to
+flush.
 
-Switch to the WRITE_FLUSH_FUA flag for log writes and remove the EOPNOTSUPP
-detection for barriers.
-
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Dave Chinner <dchinner@redhat.com>
 Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: Christoph Hellwig <hch@infradead.org>
 ---
- fs/xfs/linux-2.6/xfs_buf.c   |   16 ++--------------
- fs/xfs/linux-2.6/xfs_buf.h   |   11 +----------
- fs/xfs/linux-2.6/xfs_trace.h |    1 -
- fs/xfs/xfs_log.c             |   13 -------------
- 4 files changed, 3 insertions(+), 38 deletions(-)
+ block/blk-core.c       |   21 +++++-----
+ block/blk-flush.c      |   98 +++++++++++++++++++++++------------------------
+ block/blk.h            |    4 +-
+ include/linux/blkdev.h |   24 ++++++------
+ 4 files changed, 72 insertions(+), 75 deletions(-)
 
-diff --git a/fs/xfs/linux-2.6/xfs_buf.c b/fs/xfs/linux-2.6/xfs_buf.c
-index ea79072..b93ea33 100644
---- a/fs/xfs/linux-2.6/xfs_buf.c
-+++ b/fs/xfs/linux-2.6/xfs_buf.c
-@@ -929,19 +929,7 @@ xfs_buf_iodone_work(
- 	xfs_buf_t		*bp =
- 		container_of(work, xfs_buf_t, b_iodone_work);
+diff --git a/block/blk-core.c b/block/blk-core.c
+index d316662..8870ae4 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -136,7 +136,7 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
+ {
+ 	struct request_queue *q = rq->q;
  
--	/*
--	 * We can get an EOPNOTSUPP to ordered writes.  Here we clear the
--	 * ordered flag and reissue them.  Because we can't tell the higher
--	 * layers directly that they should not issue ordered I/O anymore, they
--	 * need to check if the _XFS_BARRIER_FAILED flag was set during I/O completion.
--	 */
--	if ((bp->b_error == EOPNOTSUPP) &&
--	    (bp->b_flags & (XBF_ORDERED|XBF_ASYNC)) == (XBF_ORDERED|XBF_ASYNC)) {
--		trace_xfs_buf_ordered_retry(bp, _RET_IP_);
--		bp->b_flags &= ~XBF_ORDERED;
--		bp->b_flags |= _XFS_BARRIER_FAILED;
--		xfs_buf_iorequest(bp);
--	} else if (bp->b_iodone)
-+	if (bp->b_iodone)
- 		(*(bp->b_iodone))(bp);
- 	else if (bp->b_flags & XBF_ASYNC)
- 		xfs_buf_relse(bp);
-@@ -1200,7 +1188,7 @@ _xfs_buf_ioapply(
+-	if (&q->bar_rq != rq) {
++	if (&q->flush_rq != rq) {
+ 		if (error)
+ 			clear_bit(BIO_UPTODATE, &bio->bi_flags);
+ 		else if (!test_bit(BIO_UPTODATE, &bio->bi_flags))
+@@ -160,13 +160,12 @@ static void req_bio_endio(struct request *rq, struct bio *bio,
+ 		if (bio->bi_size == 0)
+ 			bio_endio(bio, error);
+ 	} else {
+-
+ 		/*
+-		 * Okay, this is the barrier request in progress, just
+-		 * record the error;
++		 * Okay, this is the sequenced flush request in
++		 * progress, just record the error;
+ 		 */
+-		if (error && !q->orderr)
+-			q->orderr = error;
++		if (error && !q->flush_err)
++			q->flush_err = error;
+ 	}
+ }
  
- 	if (bp->b_flags & XBF_ORDERED) {
- 		ASSERT(!(bp->b_flags & XBF_READ));
--		rw = WRITE_BARRIER;
-+		rw = WRITE_FLUSH_FUA;
- 	} else if (bp->b_flags & XBF_LOG_BUFFER) {
- 		ASSERT(!(bp->b_flags & XBF_READ_AHEAD));
- 		bp->b_flags &= ~_XBF_RUN_QUEUES;
-diff --git a/fs/xfs/linux-2.6/xfs_buf.h b/fs/xfs/linux-2.6/xfs_buf.h
-index d072e5f..d533d64 100644
---- a/fs/xfs/linux-2.6/xfs_buf.h
-+++ b/fs/xfs/linux-2.6/xfs_buf.h
-@@ -86,14 +86,6 @@ typedef enum {
-  */
- #define _XBF_PAGE_LOCKED	(1 << 22)
+@@ -520,7 +519,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+ 	init_timer(&q->unplug_timer);
+ 	setup_timer(&q->timeout, blk_rq_timed_out_timer, (unsigned long) q);
+ 	INIT_LIST_HEAD(&q->timeout_list);
+-	INIT_LIST_HEAD(&q->pending_barriers);
++	INIT_LIST_HEAD(&q->pending_flushes);
+ 	INIT_WORK(&q->unplug_work, blk_unplug_work);
+ 
+ 	kobject_init(&q->kobj, &blk_queue_ktype);
+@@ -1764,11 +1763,11 @@ static void blk_account_io_completion(struct request *req, unsigned int bytes)
+ static void blk_account_io_done(struct request *req)
+ {
+ 	/*
+-	 * Account IO completion.  bar_rq isn't accounted as a normal
+-	 * IO on queueing nor completion.  Accounting the containing
+-	 * request is enough.
++	 * Account IO completion.  flush_rq isn't accounted as a
++	 * normal IO on queueing nor completion.  Accounting the
++	 * containing request is enough.
+ 	 */
+-	if (blk_do_io_stat(req) && req != &req->q->bar_rq) {
++	if (blk_do_io_stat(req) && req != &req->q->flush_rq) {
+ 		unsigned long duration = jiffies - req->start_time;
+ 		const int rw = rq_data_dir(req);
+ 		struct hd_struct *part;
+diff --git a/block/blk-flush.c b/block/blk-flush.c
+index e8b2e5c..dd87322 100644
+--- a/block/blk-flush.c
++++ b/block/blk-flush.c
+@@ -9,41 +9,38 @@
+ 
+ #include "blk.h"
+ 
+-static struct request *queue_next_ordseq(struct request_queue *q);
++static struct request *queue_next_fseq(struct request_queue *q);
  
 -/*
-- * If we try a barrier write, but it fails we have to communicate
-- * this to the upper layers.  Unfortunately b_error gets overwritten
-- * when the buffer is re-issued so we have to add another flag to
-- * keep this information.
+- * Cache flushing for ordered writes handling
 - */
--#define _XFS_BARRIER_FAILED	(1 << 23)
+-unsigned blk_ordered_cur_seq(struct request_queue *q)
++unsigned blk_flush_cur_seq(struct request_queue *q)
+ {
+-	if (!q->ordseq)
++	if (!q->flush_seq)
+ 		return 0;
+-	return 1 << ffz(q->ordseq);
++	return 1 << ffz(q->flush_seq);
+ }
+ 
+-static struct request *blk_ordered_complete_seq(struct request_queue *q,
+-						unsigned seq, int error)
++static struct request *blk_flush_complete_seq(struct request_queue *q,
++					      unsigned seq, int error)
+ {
+ 	struct request *next_rq = NULL;
+ 
+-	if (error && !q->orderr)
+-		q->orderr = error;
++	if (error && !q->flush_err)
++		q->flush_err = error;
+ 
+-	BUG_ON(q->ordseq & seq);
+-	q->ordseq |= seq;
++	BUG_ON(q->flush_seq & seq);
++	q->flush_seq |= seq;
+ 
+-	if (blk_ordered_cur_seq(q) != QUEUE_ORDSEQ_DONE) {
+-		/* not complete yet, queue the next ordered sequence */
+-		next_rq = queue_next_ordseq(q);
++	if (blk_flush_cur_seq(q) != QUEUE_FSEQ_DONE) {
++		/* not complete yet, queue the next flush sequence */
++		next_rq = queue_next_fseq(q);
+ 	} else {
+-		/* complete this barrier request */
+-		__blk_end_request_all(q->orig_bar_rq, q->orderr);
+-		q->orig_bar_rq = NULL;
+-		q->ordseq = 0;
 -
- typedef unsigned int xfs_buf_flags_t;
+-		/* dispatch the next barrier if there's one */
+-		if (!list_empty(&q->pending_barriers)) {
+-			next_rq = list_entry_rq(q->pending_barriers.next);
++		/* complete this flush request */
++		__blk_end_request_all(q->orig_flush_rq, q->flush_err);
++		q->orig_flush_rq = NULL;
++		q->flush_seq = 0;
++
++		/* dispatch the next flush if there's one */
++		if (!list_empty(&q->pending_flushes)) {
++			next_rq = list_entry_rq(q->pending_flushes.next);
+ 			list_move(&next_rq->queuelist, &q->queue_head);
+ 		}
+ 	}
+@@ -53,19 +50,19 @@ static struct request *blk_ordered_complete_seq(struct request_queue *q,
+ static void pre_flush_end_io(struct request *rq, int error)
+ {
+ 	elv_completed_request(rq->q, rq);
+-	blk_ordered_complete_seq(rq->q, QUEUE_ORDSEQ_PREFLUSH, error);
++	blk_flush_complete_seq(rq->q, QUEUE_FSEQ_PREFLUSH, error);
+ }
  
- #define XFS_BUF_FLAGS \
-@@ -114,8 +106,7 @@ typedef unsigned int xfs_buf_flags_t;
- 	{ _XBF_PAGES,		"PAGES" }, \
- 	{ _XBF_RUN_QUEUES,	"RUN_QUEUES" }, \
- 	{ _XBF_DELWRI_Q,	"DELWRI_Q" }, \
--	{ _XBF_PAGE_LOCKED,	"PAGE_LOCKED" }, \
--	{ _XFS_BARRIER_FAILED,	"BARRIER_FAILED" }
-+	{ _XBF_PAGE_LOCKED,	"PAGE_LOCKED" }
+-static void bar_end_io(struct request *rq, int error)
++static void flush_data_end_io(struct request *rq, int error)
+ {
+ 	elv_completed_request(rq->q, rq);
+-	blk_ordered_complete_seq(rq->q, QUEUE_ORDSEQ_BAR, error);
++	blk_flush_complete_seq(rq->q, QUEUE_FSEQ_DATA, error);
+ }
  
+ static void post_flush_end_io(struct request *rq, int error)
+ {
+ 	elv_completed_request(rq->q, rq);
+-	blk_ordered_complete_seq(rq->q, QUEUE_ORDSEQ_POSTFLUSH, error);
++	blk_flush_complete_seq(rq->q, QUEUE_FSEQ_POSTFLUSH, error);
+ }
  
- typedef enum {
-diff --git a/fs/xfs/linux-2.6/xfs_trace.h b/fs/xfs/linux-2.6/xfs_trace.h
-index be5dffd..8fe311a 100644
---- a/fs/xfs/linux-2.6/xfs_trace.h
-+++ b/fs/xfs/linux-2.6/xfs_trace.h
-@@ -325,7 +325,6 @@ DEFINE_BUF_EVENT(xfs_buf_lock);
- DEFINE_BUF_EVENT(xfs_buf_lock_done);
- DEFINE_BUF_EVENT(xfs_buf_cond_lock);
- DEFINE_BUF_EVENT(xfs_buf_unlock);
--DEFINE_BUF_EVENT(xfs_buf_ordered_retry);
- DEFINE_BUF_EVENT(xfs_buf_iowait);
- DEFINE_BUF_EVENT(xfs_buf_iowait_done);
- DEFINE_BUF_EVENT(xfs_buf_delwri_queue);
-diff --git a/fs/xfs/xfs_log.c b/fs/xfs/xfs_log.c
-index 925d572..430a8fc 100644
---- a/fs/xfs/xfs_log.c
-+++ b/fs/xfs/xfs_log.c
-@@ -917,19 +917,6 @@ xlog_iodone(xfs_buf_t *bp)
- 	l = iclog->ic_log;
+ static void queue_flush(struct request_queue *q, struct request *rq,
+@@ -74,34 +71,34 @@ static void queue_flush(struct request_queue *q, struct request *rq,
+ 	blk_rq_init(q, rq);
+ 	rq->cmd_type = REQ_TYPE_FS;
+ 	rq->cmd_flags = REQ_FLUSH;
+-	rq->rq_disk = q->orig_bar_rq->rq_disk;
++	rq->rq_disk = q->orig_flush_rq->rq_disk;
+ 	rq->end_io = end_io;
+ 
+ 	elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
+ }
+ 
+-static struct request *queue_next_ordseq(struct request_queue *q)
++static struct request *queue_next_fseq(struct request_queue *q)
+ {
+-	struct request *rq = &q->bar_rq;
++	struct request *rq = &q->flush_rq;
+ 
+-	switch (blk_ordered_cur_seq(q)) {
+-	case QUEUE_ORDSEQ_PREFLUSH:
++	switch (blk_flush_cur_seq(q)) {
++	case QUEUE_FSEQ_PREFLUSH:
+ 		queue_flush(q, rq, pre_flush_end_io);
+ 		break;
+ 
+-	case QUEUE_ORDSEQ_BAR:
++	case QUEUE_FSEQ_DATA:
+ 		/* initialize proxy request and queue it */
+ 		blk_rq_init(q, rq);
+-		init_request_from_bio(rq, q->orig_bar_rq->bio);
++		init_request_from_bio(rq, q->orig_flush_rq->bio);
+ 		rq->cmd_flags &= ~REQ_HARDBARRIER;
+ 		if (q->ordered & QUEUE_ORDERED_DO_FUA)
+ 			rq->cmd_flags |= REQ_FUA;
+-		rq->end_io = bar_end_io;
++		rq->end_io = flush_data_end_io;
+ 
+ 		elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
+ 		break;
+ 
+-	case QUEUE_ORDSEQ_POSTFLUSH:
++	case QUEUE_FSEQ_POSTFLUSH:
+ 		queue_flush(q, rq, post_flush_end_io);
+ 		break;
+ 
+@@ -111,19 +108,20 @@ static struct request *queue_next_ordseq(struct request_queue *q)
+ 	return rq;
+ }
+ 
+-struct request *blk_do_ordered(struct request_queue *q, struct request *rq)
++struct request *blk_do_flush(struct request_queue *q, struct request *rq)
+ {
+ 	unsigned skip = 0;
+ 
+ 	if (!(rq->cmd_flags & REQ_HARDBARRIER))
+ 		return rq;
+ 
+-	if (q->ordseq) {
++	if (q->flush_seq) {
+ 		/*
+-		 * Barrier is already in progress and they can't be
+-		 * processed in parallel.  Queue for later processing.
++		 * Sequenced flush is already in progress and they
++		 * can't be processed in parallel.  Queue for later
++		 * processing.
+ 		 */
+-		list_move_tail(&rq->queuelist, &q->pending_barriers);
++		list_move_tail(&rq->queuelist, &q->pending_flushes);
+ 		return NULL;
+ 	}
+ 
+@@ -138,11 +136,11 @@ struct request *blk_do_ordered(struct request_queue *q, struct request *rq)
+ 	}
  
  	/*
--	 * If the _XFS_BARRIER_FAILED flag was set by a lower
--	 * layer, it means the underlying device no longer supports
--	 * barrier I/O. Warn loudly and turn off barriers.
--	 */
--	if (bp->b_flags & _XFS_BARRIER_FAILED) {
--		bp->b_flags &= ~_XFS_BARRIER_FAILED;
--		l->l_mp->m_flags &= ~XFS_MOUNT_BARRIER;
--		xfs_fs_cmn_err(CE_WARN, l->l_mp,
--				"xlog_iodone: Barriers are no longer supported"
--				" by device. Disabling barriers\n");
--	}
--
--	/*
- 	 * Race to shutdown the filesystem if we see an error.
+-	 * Start a new ordered sequence
++	 * Start a new flush sequence
  	 */
- 	if (XFS_TEST_ERROR((XFS_BUF_GETERROR(bp)), l->l_mp,
+-	q->orderr = 0;
++	q->flush_err = 0;
+ 	q->ordered = q->next_ordered;
+-	q->ordseq |= QUEUE_ORDSEQ_STARTED;
++	q->flush_seq |= QUEUE_FSEQ_STARTED;
+ 
+ 	/*
+ 	 * For an empty barrier, there's no actual BAR request, which
+@@ -154,19 +152,19 @@ struct request *blk_do_ordered(struct request_queue *q, struct request *rq)
+ 
+ 	/* stash away the original request */
+ 	blk_dequeue_request(rq);
+-	q->orig_bar_rq = rq;
++	q->orig_flush_rq = rq;
+ 
+ 	if (!(q->ordered & QUEUE_ORDERED_DO_PREFLUSH))
+-		skip |= QUEUE_ORDSEQ_PREFLUSH;
++		skip |= QUEUE_FSEQ_PREFLUSH;
+ 
+ 	if (!(q->ordered & QUEUE_ORDERED_DO_BAR))
+-		skip |= QUEUE_ORDSEQ_BAR;
++		skip |= QUEUE_FSEQ_DATA;
+ 
+ 	if (!(q->ordered & QUEUE_ORDERED_DO_POSTFLUSH))
+-		skip |= QUEUE_ORDSEQ_POSTFLUSH;
++		skip |= QUEUE_FSEQ_POSTFLUSH;
+ 
+ 	/* complete skipped sequences and return the first sequence */
+-	return blk_ordered_complete_seq(q, skip, 0);
++	return blk_flush_complete_seq(q, skip, 0);
+ }
+ 
+ static void bio_end_empty_barrier(struct bio *bio, int err)
+diff --git a/block/blk.h b/block/blk.h
+index 08081e4..24b92bd 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -51,7 +51,7 @@ static inline void blk_clear_rq_complete(struct request *rq)
+  */
+ #define ELV_ON_HASH(rq)		(!hlist_unhashed(&(rq)->hash))
+ 
+-struct request *blk_do_ordered(struct request_queue *q, struct request *rq);
++struct request *blk_do_flush(struct request_queue *q, struct request *rq);
+ 
+ static inline struct request *__elv_next_request(struct request_queue *q)
+ {
+@@ -60,7 +60,7 @@ static inline struct request *__elv_next_request(struct request_queue *q)
+ 	while (1) {
+ 		while (!list_empty(&q->queue_head)) {
+ 			rq = list_entry_rq(q->queue_head.next);
+-			rq = blk_do_ordered(q, rq);
++			rq = blk_do_flush(q, rq);
+ 			if (rq)
+ 				return rq;
+ 		}
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 20a3710..1cd83ec 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -357,13 +357,13 @@ struct request_queue
+ 	/*
+ 	 * for flush operations
+ 	 */
++	unsigned int		ordered, next_ordered;
+ 	unsigned int		flush_flags;
+-
+-	unsigned int		ordered, next_ordered, ordseq;
+-	int			orderr;
+-	struct request		bar_rq;
+-	struct request		*orig_bar_rq;
+-	struct list_head	pending_barriers;
++	unsigned int		flush_seq;
++	int			flush_err;
++	struct request		flush_rq;
++	struct request		*orig_flush_rq;
++	struct list_head	pending_flushes;
+ 
+ 	struct mutex		sysfs_lock;
+ 
+@@ -490,13 +490,13 @@ enum {
+ 					  QUEUE_ORDERED_DO_FUA,
+ 
+ 	/*
+-	 * Ordered operation sequence
++	 * FLUSH/FUA sequences.
+ 	 */
+-	QUEUE_ORDSEQ_STARTED	= (1 << 0), /* flushing in progress */
+-	QUEUE_ORDSEQ_PREFLUSH	= (1 << 1), /* pre-flushing in progress */
+-	QUEUE_ORDSEQ_BAR	= (1 << 2), /* barrier write in progress */
+-	QUEUE_ORDSEQ_POSTFLUSH	= (1 << 3), /* post-flushing in progress */
+-	QUEUE_ORDSEQ_DONE	= (1 << 4),
++	QUEUE_FSEQ_STARTED	= (1 << 0), /* flushing in progress */
++	QUEUE_FSEQ_PREFLUSH	= (1 << 1), /* pre-flushing in progress */
++	QUEUE_FSEQ_DATA		= (1 << 2), /* data write in progress */
++	QUEUE_FSEQ_POSTFLUSH	= (1 << 3), /* post-flushing in progress */
++	QUEUE_FSEQ_DONE		= (1 << 4),
+ };
+ 
+ #define blk_queue_plugged(q)	test_bit(QUEUE_FLAG_PLUGGED, &(q)->queue_flags)
 -- 
 1.7.1
