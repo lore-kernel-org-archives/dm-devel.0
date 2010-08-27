@@ -1,150 +1,66 @@
-From: "Stamper, Brian P. (ARC-D)[Logyx LLC]" <brian.p.stamper@nasa.gov>
-Subject: Re: oblem with lvm and multipath on fedora 13
-Date: Fri, 27 Aug 2010 16:48:55 -0500
-Message-ID: <C89D80D7.10732%brian.p.stamper@nasa.gov>
-References: <20100827182634.GB31618@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH 2/4] dm: implement REQ_FLUSH/FUA support
+Date: Sat, 28 Aug 2010 01:28:28 +0200
+Message-ID: <4C784A1C.8030602@kernel.org>
+References: <1282929060-23663-1-git-send-email-tj@kernel.org> <1282929060-23663-3-git-send-email-tj@kernel.org> <20100827202403.GD23680@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3246361058636824756=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20100827182634.GB31618@us.ibm.com>
-Content-Language: en
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20100827202403.GD23680@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: jaxboe@fusionio.com, k-ueda@ct.jp.nec.com, j-nomura@ce.jp.nec.com, jamie@shareable.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============3246361058636824756==
-Content-Language: en
-Content-Type: multipart/alternative;
-	boundary="_000_C89D80D710732brianpstampernasagov_"
+Hello,
 
---_000_C89D80D710732brianpstampernasagov_
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+On 08/27/2010 10:24 PM, Mike Snitzer wrote:
+>> * As __blk_rq_prep_clone() copies REQ_FUA, just advertising FUA
+>>   support is enough to pass through REQ_FUA to targets.
+> 
+> You're doing blk_queue_flush(md->queue, REQ_FLUSH | REQ_FUA); in 2
+> places:
+> 1) generic dm_init_md_queue -- used for bio-based and request-based
+> 2) request-based specific dm_init_request_based_queue.
 
+Well, there are two places creating queues.
 
-Here's what I've found:
+> Interestingly, we never used the old blk_queue_ordered() method for
+> bio-based DM yet it is now using blk_queue_flush().
 
-If I vgchange the 2 affected VGs to inactive, multipath will pick up the de=
-vices.  However, once I do that, I can't seem to get the VGs reactivated in=
- such a way to make the volumes mountable.  I use vgchange -a y to make the=
- VG active, then do "vgscan -mknodes".  That doesn't seem to create the dev=
-ices in /dev, only in /dev/mapper, so I've tried issuing /etc/init.d/udev-p=
-ost reload, which does create the volumes in /dev/<vg>/<lv>.  The issue is,=
- it has no blkid.  And if I try to mount the mapper device directly, mount =
-doesn't know what filesystem type it is.  I'm not an lvm pro, so it's possi=
-ble I'm missing a step or two, but in the past when moving around snapshots=
- of lvms, vgscan -mknodes has always been sufficient.
+Yeap, because now __make_request() filters out REQ_FLUSH bio's.
 
-As for not having multipath in initrd, I have created an initrd image with =
-the following:
-
-mkinitrd /boot/initramfs-with-multipath.img 2.6.33.8-149.fc13.x86_64 --with=
-=3Ddm-multipath
-
-I then created a grub entry for it, booted off it, and no change in behavio=
-r.  Is that what you had in mind?
-
--Brian
-
-On 8/27/10 11:26 AM, "Malahal Naineni" <malahal@us.ibm.com> wrote:
-
-If you can, deactivate the affected VG, restart multipath (it should be
-able to load maps now) and then activate the VG. If this works, then
-there is something that is causing LVM to claim devices before multipath
-does.
-
-Thanks, Malahal.
-PS: If you don't have multipath in initrd, LVM *may* claim paths as PV's
-before the multipath from active root can claim them. Don't have enough
-info on Fedora13 initrd if this can happen though.
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
-
-
---_000_C89D80D710732brianpstampernasagov_
-Content-Type: text/html; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-<HTML>
-<HEAD>
-<TITLE>Re: [dm-devel] oblem with lvm and multipath on fedora 13</TITLE>
-</HEAD>
-<BODY>
-<FONT FACE=3D"Calibri, Verdana, Helvetica, Arial"><SPAN STYLE=3D'font-size:=
-11pt'><BR>
-Here&#8217;s what I&#8217;ve found:<BR>
-<BR>
-If I vgchange the 2 affected VGs to inactive, multipath will pick up the de=
-vices. &nbsp;However, once I do that, I can&#8217;t seem to get the VGs rea=
-ctivated in such a way to make the volumes mountable. &nbsp;I use vgchange =
-&#8211;a y to make the VG active, then do &#8220;vgscan &#8212;mknodes&#822=
-1;. &nbsp;That doesn&#8217;t seem to create the devices in /dev, only in /d=
-ev/mapper, so I&#8217;ve tried issuing /etc/init.d/udev-post reload, which =
-does create the volumes in /dev/&lt;vg&gt;/&lt;lv&gt;. &nbsp;The issue is, =
-it has no blkid. &nbsp;And if I try to mount the mapper device directly, mo=
-unt doesn&#8217;t know what filesystem type it is. &nbsp;I&#8217;m not an l=
-vm pro, so it&#8217;s possible I&#8217;m missing a step or two, but in the =
-past when moving around snapshots of lvms, vgscan &#8212;mknodes has always=
- been sufficient.<BR>
-<BR>
-As for not having multipath in initrd, I have created an initrd image with =
-the following:<BR>
-<BR>
-mkinitrd /boot/initramfs-with-multipath.img 2.6.33.8-149.fc13.x86_64 --with=
-=3Ddm-multipath<BR>
-<BR>
-I then created a grub entry for it, booted off it, and no change in behavio=
-r. &nbsp;Is that what you had in mind?<BR>
-<BR>
--Brian<BR>
-<BR>
-On 8/27/10 11:26 AM, &quot;Malahal Naineni&quot; &lt;<a href=3D"malahal@us.=
-ibm.com">malahal@us.ibm.com</a>&gt; wrote:<BR>
-</SPAN></FONT><BLOCKQUOTE><FONT FACE=3D"Calibri, Verdana, Helvetica, Arial"=
-><SPAN STYLE=3D'font-size:11pt'><BR>
-If you can, deactivate the affected VG, restart multipath (it should be<BR>
-able to load maps now) and then activate the VG. If this works, then<BR>
-there is something that is causing LVM to claim devices before multipath<BR=
+> But how can we blindly assume/advertise REQ_FUA?
 >
-does.<BR>
-<BR>
-Thanks, Malahal.<BR>
-PS: If you don't have multipath in initrd, LVM *may* claim paths as PV's<BR=
->
-before the multipath from active root can claim them. Don't have enough<BR>
-info on Fedora13 initrd if this can happen though.<BR>
-<BR>
---<BR>
-dm-devel mailing list<BR>
-<a href=3D"dm-devel@redhat.com">dm-devel@redhat.com</a><BR>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel">https://www.re=
-dhat.com/mailman/listinfo/dm-devel</a><BR>
-<BR>
-</SPAN></FONT></BLOCKQUOTE>
-</BODY>
-</HTML>
+> Should we be taking more care to check each block device that DM
+> consumes to see if FUA is supported and only then advertise REQ_FUA?
+> DM already does this for discard support (see:
+> dm_table_supports_discards).
 
+Nope, REQ_FUA will be interpreted by queues lower in the stack.
+Drivers in the middle just need to pass them through.
 
---_000_C89D80D710732brianpstampernasagov_--
+>> Lightly tested linear, stripe, raid1, snap and crypt targets.
+> 
+> I tested the bio-based code with the LVM2 test suite and all tests
+> passed.
+> 
+>> Please proceed with caution as I'm not familiar with the code base.
+> 
+> As I shared in an earlier (private) mail, I'm unfortunately having
+> problems with request-based DM (when all patches in this series are
+> applied).  I'll be working on that more.
 
+Heh... I probably should set up a simple dm-mpath and test it.  I'll
+do it this weekend.
 
---===============3246361058636824756==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> BTW, we can eliminate the dm_rq_is_flush_request() wrapper right?  I
+> think hch mentioned this at some point in one of the various threads.
 
+Sure, that's a rather silly wrapper at this point.
 
---===============3246361058636824756==--
+Thanks.
+
+-- 
+tejun
