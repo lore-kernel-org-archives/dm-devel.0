@@ -1,86 +1,166 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH, RFC 2/2] dm: support REQ_FLUSH directly
-Date: Fri, 27 Aug 2010 00:08:08 -0400
-Message-ID: <20100827040808.GA19488@redhat.com>
-References: <20100727165627.GA474@lst.de>
- <20100727175418.GF6820@quack.suse.cz>
- <20100803184939.GA12198@lst.de>
- <20100803185148.GA12258@lst.de>
- <4C58F341.9060605@ct.jp.nec.com>
- <20100804085423.GA15687@lst.de>
- <4C5A1F05.40308@ce.jp.nec.com>
- <20100826225024.GB17832@redhat.com>
- <4C771852.3050500@ce.jp.nec.com>
+From: Malahal Naineni <malahal@us.ibm.com>
+Subject: Re: [PATCH] [PATCH] option to multipath to not modify
+ the bindinfs file
+Date: Thu, 26 Aug 2010 22:39:36 -0700
+Message-ID: <20100827053936.GA15962@us.ibm.com>
+References: <e2c6d0d327f64431e5b0.1281999422@malahal>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4C771852.3050500@ce.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Christoph Hellwig <hch@lst.de>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Jan Kara <jack@suse.cz>, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, tj@kernel.org, tytso@mit.edu, swhiteho@redhat.com, chris.mason@oracle.com, dm-devel@redhat.com
+In-Reply-To: <e2c6d0d327f64431e5b0.1281999422@malahal>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 26 2010 at  9:43pm -0400,
-Jun'ichi Nomura <j-nomura@ce.jp.nec.com> wrote:
+Christophe, Hannes: any comments on this approach to fix the uuid issue
+reported earlier here
+http://permalink.gmane.org/gmane.linux.kernel.device-mapper.devel/12027
 
-> Hi Mike,
+Thanks, Malahal.
+
+Malahal Naineni [malahal@us.ibm.com] wrote:
+> initramfs is mounted read-write causing multipath to update the
+> initramfs bindings file and name all multipath devices it finds using
+> friendly names. The actual changes to the file are thrown away as they
+> are only written to the memory image rather than to the disk image. This
+> may cause the in memory updated initramfs bindings file inconsistent
+> with the actual bindings file in the active root file system image when
+> devices are added or removed.
 > 
-> (08/27/10 07:50), Mike Snitzer wrote:
-> >> Special casing is necessary because device-mapper may have to
-> >> send multiple copies of REQ_FLUSH request to multiple
-> >> targets, while normal request is just sent to single target.
-> > 
-> > Yes, request-based DM is meant to have all the same capabilities as
-> > bio-based DM.  So in theory it should support multiple targets but in
-> > practice it doesn't.  DM's multipath target is the only consumer of
-> > request-based DM and it only ever clones a single flush request
-> > (num_flush_requests = 1).
+> In other words, the boot time updated initramfs bindings file may have
+> 'uuid1 map to mpatha' and 'uuid2 map to mpathb', but the active root fs
+> bindings file may have 'uuid1 map to mpathb' and 'uuid2 map to mpatha'
 > 
-> This is correct. But,
+> The option, -B, will not modify the bindings file. It will only use the
+> bindings file if needed.  This option to multipath should be used when
+> invoked in the initramfs context to avoid the inconsistency.
 > 
-> > So why not remove all of request-based DM's barrier infrastructure and
-> > simply rely on the revised block layer to sequence the FLUSH+WRITE
-> > request for request-based DM?
-> > 
-> > Given that we do not have a request-based DM target that requires
-> > cloning multiple FLUSH requests its unused code that is delaying DM
-> > support for the new FLUSH+FUA work (NOTE: bio-based DM obviously still
-> > needs work in this area).
+> Signed-off-by: Malahal Naineni (malahal@us.ibm.com)
 > 
-> the above mentioned 'special casing' is not a hard part.
-> See the attached patch.
-
-Yes, Tejun suggested something like this in one of the threads.  Thanks
-for implementing it.
-
-But do you agree that the request-based barrier code (added in commit
-d0bcb8786) could be reverted given the new FLUSH work?
-
-We no longer need waiting now that ordering isn't a concern.  Especially
-so given rq-based doesn't support multiple targets.  As you know, from
-dm_table_set_type:
-
-        /*
-         * Request-based dm supports only tables that have a single target now.
-         * To support multiple targets, request splitting support is needed,
-         * and that needs lots of changes in the block-layer.
-         * (e.g. request completion process for partial completion.)
-         */
-
-I think we need to at least benchmark the performance of dm-mpath
-without any of this extra, soon to be unnecessary, code.
-
-Maybe my concern is overblown...
-
-> The hard part is discerning the error type for flush failure
-> as discussed in the other thread.
-> And as Kiyoshi wrote, that's an existing problem so it can
-> be worked on as a separate issue than the new FLUSH work.
-
-Right, Mike Christie will be refreshing his patchset that should enable
-us to resolve that separate issue.
-
-Thanks,
-Mike
-
+> diff -r b359f4953289 -r e2c6d0d327f6 libmultipath/alias.c
+> --- a/libmultipath/alias.c	Sun Aug 15 10:48:09 2010 -0700
+> +++ b/libmultipath/alias.c	Mon Aug 16 13:02:41 2010 -0700
+> @@ -353,7 +353,8 @@ allocate_binding(int fd, char *wwid, int
+>  }
+> 
+>  char *
+> -get_user_friendly_alias(char *wwid, char *file, char *prefix)
+> +get_user_friendly_alias(char *wwid, char *file, char *prefix,
+> +			int bindings_read_only)
+>  {
+>  	char *alias;
+>  	int fd, scan_fd, id;
+> @@ -394,7 +395,7 @@ get_user_friendly_alias(char *wwid, char
+>  		return NULL;
+>  	}
+> 
+> -	if (!alias && can_write)
+> +	if (!alias && can_write && !bindings_read_only)
+>  		alias = allocate_binding(fd, wwid, id, prefix);
+> 
+>  	fclose(f);
+> diff -r b359f4953289 -r e2c6d0d327f6 libmultipath/alias.h
+> --- a/libmultipath/alias.h	Sun Aug 15 10:48:09 2010 -0700
+> +++ b/libmultipath/alias.h	Mon Aug 16 13:02:41 2010 -0700
+> @@ -8,5 +8,6 @@
+>  "# alias wwid\n" \
+>  "#\n"
+> 
+> -char *get_user_friendly_alias(char *wwid, char *file, char *prefix);
+> +char *get_user_friendly_alias(char *wwid, char *file, char *prefix,
+> +			      int bindings_readonly);
+>  char *get_user_friendly_wwid(char *alias, char *file);
+> diff -r b359f4953289 -r e2c6d0d327f6 libmultipath/config.c
+> --- a/libmultipath/config.c	Sun Aug 15 10:48:09 2010 -0700
+> +++ b/libmultipath/config.c	Mon Aug 16 13:02:41 2010 -0700
+> @@ -458,6 +458,7 @@ load_config (char * file)
+>  	conf->minio = 1000;
+>  	conf->max_fds = 0;
+>  	conf->bindings_file = DEFAULT_BINDINGS_FILE;
+> +	conf->bindings_read_only = 0;
+>  	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
+>  	conf->flush_on_last_del = 0;
+>  	conf->attribute_flags = 0;
+> diff -r b359f4953289 -r e2c6d0d327f6 libmultipath/config.h
+> --- a/libmultipath/config.h	Sun Aug 15 10:48:09 2010 -0700
+> +++ b/libmultipath/config.h	Mon Aug 16 13:02:41 2010 -0700
+> @@ -74,6 +74,7 @@ struct config {
+>  	int rr_weight;
+>  	int no_path_retry;
+>  	int user_friendly_names;
+> +	int bindings_read_only;
+>  	int pg_timeout;
+>  	int max_fds;
+>  	int force_reload;
+> diff -r b359f4953289 -r e2c6d0d327f6 libmultipath/propsel.c
+> --- a/libmultipath/propsel.c	Sun Aug 15 10:48:09 2010 -0700
+> +++ b/libmultipath/propsel.c	Mon Aug 16 13:02:41 2010 -0700
+> @@ -245,7 +245,7 @@ select_alias (struct multipath * mp)
+>  		if (conf->user_friendly_names) {
+>  			select_alias_prefix(mp);
+>  			mp->alias = get_user_friendly_alias(mp->wwid,
+> -					conf->bindings_file, mp->alias_prefix);
+> +					conf->bindings_file, mp->alias_prefix, conf->bindings_read_only);
+>  		}
+>  		if (mp->alias == NULL)
+>  			mp->alias = dm_get_name(mp->wwid);
+> diff -r b359f4953289 -r e2c6d0d327f6 multipath/main.c
+> --- a/multipath/main.c	Sun Aug 15 10:48:09 2010 -0700
+> +++ b/multipath/main.c	Mon Aug 16 13:02:41 2010 -0700
+> @@ -350,7 +350,7 @@ main (int argc, char *argv[])
+>  		condlog(0, "multipath tools need sysfs mounted");
+>  		exit(1);
+>  	}
+> -	while ((arg = getopt(argc, argv, ":dhl::FfM:v:p:b:r")) != EOF ) {
+> +	while ((arg = getopt(argc, argv, ":dhl::FfM:v:p:b:Br")) != EOF ) {
+>  		switch(arg) {
+>  		case 1: printf("optarg : %s\n",optarg);
+>  			break;
+> @@ -364,6 +364,9 @@ main (int argc, char *argv[])
+>  		case 'b':
+>  			conf->bindings_file = optarg;
+>  			break;
+> +		case 'B':
+> +			conf->bindings_read_only = 1;
+> +			break;
+>  		case 'd':
+>  			conf->dry_run = 1;
+>  			break;
+> diff -r b359f4953289 -r e2c6d0d327f6 multipath/multipath.8
+> --- a/multipath/multipath.8	Sun Aug 15 10:48:09 2010 -0700
+> +++ b/multipath/multipath.8	Mon Aug 16 13:02:41 2010 -0700
+> @@ -6,7 +6,7 @@ multipath \- Device mapper target autoco
+>  .RB [\| \-v\ \c
+>  .IR verbosity \|]
+>  .RB [\| \-d \|]
+> -.RB [\| \-h | \-l | \-ll | \-f | \-F \|]
+> +.RB [\| \-h | \-l | \-ll | \-f | \-F | \-B \|]
+>  .RB [\| \-p\ \c
+>  .BR failover | multibus | group_by_serial | group_by_prio | group_by_node_name \|]
+>  .RB [\| device \|]
+> @@ -47,6 +47,9 @@ flush a multipath device map specified a
+>  .B \-F
+>  flush all unused multipath device maps
+>  .TP
+> +.B \-B
+> +treat the bindings file as read only
+> +.TP
+>  .BI \-p " policy"
+>  force maps to specified policy:
+>  .RS 1.2i
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
