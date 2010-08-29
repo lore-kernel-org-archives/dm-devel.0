@@ -1,20 +1,16 @@
 From: Malahal Naineni <malahal@us.ibm.com>
-Subject: Re: oblem with lvm and multipath on fedora 13
-Date: Sun, 29 Aug 2010 13:27:17 -0700
-Message-ID: <20100829202717.GA24466@us.ibm.com>
-References: <20100827182634.GB31618@us.ibm.com>
-	<C89D80D7.10732%brian.p.stamper@nasa.gov>
-	<20100828174751.GA31397@us.ibm.com>
-	<12DC34690DFFAC4FACD7A7255FC5E14A131BCDE0DB@NDJSSCC07.ndc.nasa.gov>
-	<20100829183943.GA22562@us.ibm.com>
-	<12DC34690DFFAC4FACD7A7255FC5E14A131BCDE0DE@NDJSSCC07.ndc.nasa.gov>
+Subject: Re: [PATCH] block: Set stacked device's bounce_gfp same
+ as that of the underlying device
+Date: Sun, 29 Aug 2010 13:30:33 -0700
+Message-ID: <20100829203033.GB24466@us.ibm.com>
+References: <8305d08f6ecf4245e8f9.1283104828@malahal>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <12DC34690DFFAC4FACD7A7255FC5E14A131BCDE0DE@NDJSSCC07.ndc.nasa.gov>
+In-Reply-To: <8305d08f6ecf4245e8f9.1283104828@malahal>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,67 +20,158 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: jaxboe@fusionio.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Stamper, Brian P. (ARC-D)[Logyx LLC] [brian.p.stamper@nasa.gov] wrote:
-> Yes, it's chkconfig'ed on, and I bumped forward its start order to
-> start up prior to lvm2-monitor, thinking lvm2-monitor (which does
-> vgscan) might be part of the problem.
+Ops, my bad for missing the header. Here is the header:
 
-Don't change any default orders. That is not a proper fix even if it
-works and you may break other things.
+Stacked device (dm-multipath etc) doen't get its bounce_gfp set to that
+of the bottom device. The stacked device needs call
+blk_queue_bounce_limit() with correct limits.bounce_pfn or move the
+bounce_gfp field from the request_queue to request_limits structure.
+This patch acomplishes the latter. The manifestation of this issue is
+system panic with multipath devices attached to HBA's with
+BLK_BOUNCE_ISA
 
-> >> [root@testfs foo]# find . -print | grep -i multi
-> >> ./lib/modules/2.6.33.8-149.fc13.x86_64/kernel/drivers/md/dm-multipath.ko
-> >The dm-multipath.ko kernel module is present. It needs multipath command
-> >calling from an initrd script (/init ???)
+Signed-off-by: Malahal Naineni (malahal@us.ibm.com)
+
+
+Malahal Naineni [malahal@us.ibm.com] wrote:
+> diff -r 5d97698a7bc5 -r 8305d08f6ecf block/blk-settings.c
+> --- a/block/blk-settings.c	Wed Aug 25 13:44:33 2010 -0700
+> +++ b/block/blk-settings.c	Wed Aug 25 13:44:33 2010 -0700
+> @@ -126,6 +126,7 @@ void blk_set_default_limits(struct queue
+>  	lim->io_opt = 0;
+>  	lim->misaligned = 0;
+>  	lim->no_cluster = 0;
+> +	lim->bounce_gfp = 0;
+>  }
+>  EXPORT_SYMBOL(blk_set_default_limits);
 > 
-> I'm not positive that I'm sure what you're asking.  Do you mean the
-> init.d script I reference above, or is there some other configuration
-> change to call mulitpath from initrd?
+> @@ -204,7 +205,7 @@ void blk_queue_bounce_limit(struct reque
+>  	unsigned long b_pfn = dma_mask >> PAGE_SHIFT;
+>  	int dma = 0;
 > 
-
-What I was trying to say is that dm-multipath.ko is included in the
-initrd image, but there are other things that need to be included in the
-initrd image to make the multipath configuration work in the initrd. For
-example, you need multipath.conf in the initrd image as well as some
-script in the initrd image calling 'multipath' binary.
-
-> I feel much better knowing that I can get back to a proper
-> configuration manually, but any ideas about why this is happening on
-> bootup? 
-
-My best guess is that LVM gets configured in initrd and multipath is not
-there until the active root FS. Your best bet would be to include
-multipath in the initrd (I have no working instructions on how to build
-initrd with multipath on recent RedHat distros).
-
-You may be able to get around the problem by restricting LVM in the
-initrd image by doing this:
-
-1. Modify the filter in /etc/lvm.conf file to include only the root/swap
-   devices
-2. Make a new initrd image. Use this to boot now onwards
-   Since your filter only includes root/swap paths, LVM won't find or
-   configure logical volumes other than root and swap at initrd time!
-3. Change the filter to what it should be (the distro default should be
-   fine)
-4. Now reboot.
-
-
-> FYI, I played around with filtering in lvm.conf in my first
-> night of troubleshooting and tried filtering out all /dev/sd.* drives
-> other than /dev/sda, but it seems like dracut was ignoring the lvm
-> filters, despite the lvm.conf.  With the filter in place a pvscan
-> would find no duplicates (and no sd.* devices) but on reboot dracut
-> would find them all and report the dupes.
-
-Did you make a new initrd after changing the lvm.conf file? Your initrd
-will have a copy of lvm.conf file (it would be some old file unless you
-made a new initrd image) and that would be used at boot up as you have
-configured LVM in initrd.
- 
-> Thanks for your help so far Malahal.
-
-You are welcome.
+> -	q->bounce_gfp = GFP_NOIO;
+> +	q->limits.bounce_gfp = GFP_NOIO;
+>  #if BITS_PER_LONG == 64
+>  	/*
+>  	 * Assume anything <= 4GB can be handled by IOMMU.  Actually
+> @@ -221,7 +222,7 @@ void blk_queue_bounce_limit(struct reque
+>  #endif
+>  	if (dma) {
+>  		init_emergency_isa_pool();
+> -		q->bounce_gfp = GFP_NOIO | GFP_DMA;
+> +		q->limits.bounce_gfp = GFP_NOIO | GFP_DMA;
+>  		q->limits.bounce_pfn = b_pfn;
+>  	}
+>  }
+> @@ -549,6 +550,7 @@ int blk_stack_limits(struct queue_limits
+> 
+>  	t->no_cluster |= b->no_cluster;
+>  	t->discard_zeroes_data &= b->discard_zeroes_data;
+> +	t->bounce_gfp |= b->bounce_gfp;
+> 
+>  	/* Physical block size a multiple of the logical block size? */
+>  	if (t->physical_block_size & (t->logical_block_size - 1)) {
+> diff -r 5d97698a7bc5 -r 8305d08f6ecf block/scsi_ioctl.c
+> --- a/block/scsi_ioctl.c	Wed Aug 25 13:44:33 2010 -0700
+> +++ b/block/scsi_ioctl.c	Wed Aug 25 13:44:33 2010 -0700
+> @@ -436,7 +436,7 @@ int sg_scsi_ioctl(struct request_queue *
+> 
+>  	bytes = max(in_len, out_len);
+>  	if (bytes) {
+> -		buffer = kzalloc(bytes, q->bounce_gfp | GFP_USER| __GFP_NOWARN);
+> +		buffer = kzalloc(bytes, q->limits.bounce_gfp | GFP_USER| __GFP_NOWARN);
+>  		if (!buffer)
+>  			return -ENOMEM;
+> 
+> diff -r 5d97698a7bc5 -r 8305d08f6ecf drivers/ata/libata-scsi.c
+> --- a/drivers/ata/libata-scsi.c	Wed Aug 25 13:44:33 2010 -0700
+> +++ b/drivers/ata/libata-scsi.c	Wed Aug 25 13:44:33 2010 -0700
+> @@ -1140,7 +1140,7 @@ static int ata_scsi_dev_config(struct sc
+>  					 ATA_DMA_PAD_SZ - 1);
+> 
+>  		/* configure draining */
+> -		buf = kmalloc(ATAPI_MAX_DRAIN, q->bounce_gfp | GFP_KERNEL);
+> +		buf = kmalloc(ATAPI_MAX_DRAIN, q->limits.bounce_gfp | GFP_KERNEL);
+>  		if (!buf) {
+>  			ata_dev_printk(dev, KERN_ERR,
+>  				       "drain buffer allocation failed\n");
+> diff -r 5d97698a7bc5 -r 8305d08f6ecf fs/bio-integrity.c
+> --- a/fs/bio-integrity.c	Wed Aug 25 13:44:33 2010 -0700
+> +++ b/fs/bio-integrity.c	Wed Aug 25 13:44:33 2010 -0700
+> @@ -413,7 +413,7 @@ int bio_integrity_prep(struct bio *bio)
+> 
+>  	/* Allocate kernel buffer for protection data */
+>  	len = sectors * blk_integrity_tuple_size(bi);
+> -	buf = kmalloc(len, GFP_NOIO | __GFP_NOFAIL | q->bounce_gfp);
+> +	buf = kmalloc(len, GFP_NOIO | __GFP_NOFAIL | q->limits.bounce_gfp);
+>  	if (unlikely(buf == NULL)) {
+>  		printk(KERN_ERR "could not allocate integrity buffer\n");
+>  		return -EIO;
+> diff -r 5d97698a7bc5 -r 8305d08f6ecf fs/bio.c
+> --- a/fs/bio.c	Wed Aug 25 13:44:33 2010 -0700
+> +++ b/fs/bio.c	Wed Aug 25 13:44:33 2010 -0700
+> @@ -871,7 +871,7 @@ struct bio *bio_copy_user_iov(struct req
+> 
+>  			i++;
+>  		} else {
+> -			page = alloc_page(q->bounce_gfp | gfp_mask);
+> +			page = alloc_page(q->limits.bounce_gfp | gfp_mask);
+>  			if (!page) {
+>  				ret = -ENOMEM;
+>  				break;
+> diff -r 5d97698a7bc5 -r 8305d08f6ecf include/linux/blkdev.h
+> --- a/include/linux/blkdev.h	Wed Aug 25 13:44:33 2010 -0700
+> +++ b/include/linux/blkdev.h	Wed Aug 25 13:44:33 2010 -0700
+> @@ -248,6 +248,11 @@ struct queue_limits {
+>  	unsigned char		discard_misaligned;
+>  	unsigned char		no_cluster;
+>  	signed char		discard_zeroes_data;
+> +
+> +	/*
+> +	 * queue needs bounce pages for pages above this limit
+> +	 */
+> +	gfp_t			bounce_gfp;
+>  };
+> 
+>  struct request_queue
+> @@ -298,11 +303,6 @@ struct request_queue
+>  	void			*queuedata;
+> 
+>  	/*
+> -	 * queue needs bounce pages for pages above this limit
+> -	 */
+> -	gfp_t			bounce_gfp;
+> -
+> -	/*
+>  	 * various queue flags, see QUEUE_* below
+>  	 */
+>  	unsigned long		queue_flags;
+> diff -r 5d97698a7bc5 -r 8305d08f6ecf mm/bounce.c
+> --- a/mm/bounce.c	Wed Aug 25 13:44:33 2010 -0700
+> +++ b/mm/bounce.c	Wed Aug 25 13:44:33 2010 -0700
+> @@ -207,7 +207,7 @@ static void __blk_queue_bounce(struct re
+> 
+>  		to = bio->bi_io_vec + i;
+> 
+> -		to->bv_page = mempool_alloc(pool, q->bounce_gfp);
+> +		to->bv_page = mempool_alloc(pool, q->limits.bounce_gfp);
+>  		to->bv_len = from->bv_len;
+>  		to->bv_offset = from->bv_offset;
+>  		inc_zone_page_state(to->bv_page, NR_BOUNCE);
+> @@ -282,7 +282,7 @@ void blk_queue_bounce(struct request_que
+>  	 * to or bigger than the highest pfn in the system -- in that case,
+>  	 * don't waste time iterating over bio segments
+>  	 */
+> -	if (!(q->bounce_gfp & GFP_DMA)) {
+> +	if (!(q->limits.bounce_gfp & GFP_DMA)) {
+>  		if (queue_bounce_pfn(q) >= blk_max_pfn)
+>  			return;
+>  		pool = page_pool;
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
