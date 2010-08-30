@@ -1,45 +1,85 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH, RFC 2/2] dm: support REQ_FLUSH directly
-Date: Mon, 30 Aug 2010 10:33:12 +0200
-Message-ID: <4C7B6CC8.5080609@kernel.org>
-References: <20100727175418.GF6820@quack.suse.cz> <20100803184939.GA12198@lst.de> <20100803185148.GA12258@lst.de> <4C58F341.9060605@ct.jp.nec.com> <20100804085423.GA15687@lst.de> <4C5A1F05.40308@ce.jp.nec.com> <20100826225024.GB17832@redhat.com> <4C771852.3050500@ce.jp.nec.com> <20100827040808.GA19488@redhat.com> <4C7752B5.3020905@ce.jp.nec.com> <20100827141314.GB22504@redhat.com> <4C7B3760.2070201@ce.jp.nec.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCHSET block#for-2.6.36-post] block: replace barrier with
+ sequenced flush
+Date: Mon, 30 Aug 2010 11:54:11 +0200
+Message-ID: <4C7B7FC3.1050701@suse.de>
+References: <1281616891-5691-1-git-send-email-tj@kernel.org> <4C6540C5.8070108@vlnb.net> <4C6546E0.7070208@kernel.org> <4C6C34E0.3050601@vlnb.net> <4C6CFEAA.1060004@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <4C7B3760.2070201@ce.jp.nec.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Jan Kara <jack@suse.cz>, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, tytso@mit.edu, swhiteho@redhat.com, chris.mason@oracle.com, dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-ide-owner@vger.kernel.org>
+In-Reply-To: <4C6CFEAA.1060004@kernel.org>
+Sender: linux-ide-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Vladislav Bolkhovitin <vst@vlnb.net>, jaxboe@fusionio.com, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, jack@suse.cz, rwheeler@redhat.com
 List-Id: dm-devel.ids
 
-On 08/30/2010 06:45 AM, Jun'ichi Nomura wrote:
-> Hi Mike,
-> 
-> (08/27/10 23:13), Mike Snitzer wrote:
->>> If there will be no need for supporting a request-based target
->>> with num_flush_requests > 1, the special handling of flush
->>> can be removed.
->>>
->>> And since there is no such target in the current tree,
->>> I don't object if you remove that part of code for good reason.
+Tejun Heo wrote:
+> Hello,
+>=20
+> On 08/18/2010 09:30 PM, Vladislav Bolkhovitin wrote:
+>> Basically, I measured how iSCSI link utilization depends from amount
+>> of queued commands and queued data size. This is why I made it as a
+>> table. From it you can see which improvement you will have removing
+>> queue draining after 1, 2, 4, etc. commands depending of commands
+>> sizes.
 >>
->> OK, certainly something to keep in mind.  But _really_ knowing the
->> multipath FLUSH+FUA performance difference (extra special-case code vs
->> none) requires a full FLUSH conversion of request-based DM anyway.
->>
->> In general, request-based DM's barrier/flush code does carry a certain
->> maintenance overhead.  It is quite a bit of distracting code in the core
->> DM which isn't buying us anything.. so we _could_ just remove it and
->> never look back (until we have some specific need for num_flush_requests
->>> 1 in rq-based DM).
-> 
-> So, I'm not objecting to your idea.
-> Could you please create a patch to remove that?
+>> For instance, on my previous XFS rm example, where rm of 4 files
+>> took 3.5 minutes with nobarrier option, I could see that XFS was
+>> sending 1-3 32K commands in a row. From my table you can see that if
+>> it sent all them at once without draining, it would have about
+>> 150-200% speed increase.
+>=20
+> You compared barrier off/on.  Of course, it will make a big
+> difference.  I think good part of that gain should be realized by the
+> currently proposed patchset which removes draining.  What's needed to
+> be demonstrated is the difference between ordered-by-waiting and
+> ordered-by-tag.  We've never had code to do that properly.
+>=20
+> The original ordered-by-tag we had only applied tag ordering to two o=
+r
+> three command sequences inside a barrier, which doesn't amount to muc=
+h
+> (and could even be harmful as it imposes draining of all simple
+> commands inside the device only to reduce issue latencies for a few
+> commands).  You'll need to hook into filesystem and somehow export th=
+e
+> ordering information down to the driver so that whatever needs
+> ordering is sent out as ordered commands.
+>=20
+> As I've wrote multiple times, I'm pretty skeptical it will bring much=
+=2E
+> Ordered tag mandates draining inside the device just like the origina=
+l
+> barrier implementation.  Sure, it's done at a lower layer and command
+> issue latencies will be reduced thanks to that but ordered-by-waiting
+> doesn't require _any_ draining at all.  The whole pipeline can be kep=
+t
+> full all the time.  I'm often wrong tho, so please feel free to go
+> ahead and prove me wrong.  :-)
+>=20
+Actually, I thought about ordered tag writes, too.
+But eventually I had to give up on this for a simple reason:
+Ordered tag controls the ordering on the SCSI _TARGET_. But for a
+meaningful implementation we need to control the ordering all the way
+down from ->queuecommand(). Which means we have three areas we need
+to cover here:
+- driver (ie between ->queuecommand() and passing it off to the firmwar=
+e)
+- firmware
+- fabric
 
-I did that yesterday.  Will post the patch soon.
+Sadly, the latter two are really hard to influence. And, what's more,
+with the new/modern CNAs with multiple queues and possible multiple
+routes to the target it becomes impossible to guarantee ordering.
+So using ordered tags for FibreChannel is not going to work, which
+makes implementing it a bit of a pointless exercise for me.
 
-Thanks.
+Cheers,
 
--- 
-tejun
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
+GF: Markus Rex, HRB 16746 (AG N=C3=BCrnberg)
