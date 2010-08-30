@@ -1,21 +1,19 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH UPDATED 4/5] dm: implement REQ_FLUSH/FUA
- support for request-based dm
-Date: Mon, 30 Aug 2010 15:18:29 -0400
-Message-ID: <20100830191829.GB8458__31725.0957167291$1283196337$gmane$org@redhat.com>
+Subject: Re: [PATCH 4/5] dm: implement REQ_FLUSH/FUA support for
+ request-based dm
+Date: Mon, 30 Aug 2010 09:28:36 -0400
+Message-ID: <20100830132836.GB5283__6915.72144064612$1283196338$gmane$org@redhat.com>
 References: <1283162296-13650-1-git-send-email-tj@kernel.org>
 	<1283162296-13650-5-git-send-email-tj@kernel.org>
-	<20100830132836.GB5283@redhat.com> <4C7BB932.1070405@kernel.org>
-	<4C7BD202.4040700@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Resent-Message-ID: <20100830192345.GC9195@redhat.com>
+Resent-Message-ID: <20100830192342.GA9195@redhat.com>
 Resent-To: dm-devel@redhat.com
 Content-Disposition: inline
-In-Reply-To: <4C7BD202.4040700@kernel.org>
+In-Reply-To: <1283162296-13650-5-git-send-email-tj@kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,41 +27,109 @@ To: Tejun Heo <tj@kernel.org>
 Cc: k-ueda@ct.jp.nec.com, jaxboe@fusionio.com, jamie@shareable.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, j-nomura@ce.jp.nec.com, hch@lst.de
 List-Id: dm-devel.ids
 
-On Mon, Aug 30 2010 at 11:45am -0400,
+On Mon, Aug 30 2010 at  5:58am -0400,
 Tejun Heo <tj@kernel.org> wrote:
 
 > This patch converts request-based dm to support the new REQ_FLUSH/FUA.
-> 
-> The original request-based flush implementation depended on
-> request_queue blocking other requests while a barrier sequence is in
-> progress, which is no longer true for the new REQ_FLUSH/FUA.
-> 
-> In general, request-based dm doesn't have infrastructure for cloning
-> one source request to multiple targets, but the original flush
-> implementation had a special mostly independent path which can issue
-> flushes to multiple targets and sequence them.  However, the
-> capability isn't currently in use and adds a lot of complexity.
-> Moreoever, it's unlikely to be useful in its current form as it
-> doesn't make sense to be able to send out flushes to multiple targets
-> when write requests can't be.
-> 
+...
 > This patch rips out special flush code path and deals handles
 > REQ_FLUSH/FUA requests the same way as other requests.  The only
 > special treatment is that REQ_FLUSH requests use the block address 0
 > when finding target, which is enough for now.
-> 
-> * added BUG_ON(!dm_target_is_valid(ti)) in dm_request_fn() as
->   suggested by Mike Snitzer
-> 
-> Signed-off-by: Tejun Heo <tj@kernel.org>
 
-Looks good.
+Looks very comparable to the patch I prepared but I have 2 observations
+below (based on my findings from testing my patch).
 
-Acked-by: Mike Snitzer <snitzer@redhat.com>
+> @@ -1562,22 +1483,15 @@ static int setup_clone(struct request *clone, struct request *rq,
+>  {
+>  	int r;
+>  
+> -	if (dm_rq_is_flush_request(rq)) {
+> -		blk_rq_init(NULL, clone);
+> -		clone->cmd_type = REQ_TYPE_FS;
+> -		clone->cmd_flags |= (REQ_HARDBARRIER | WRITE);
+> -	} else {
+> -		r = blk_rq_prep_clone(clone, rq, tio->md->bs, GFP_ATOMIC,
+> -				      dm_rq_bio_constructor, tio);
+> -		if (r)
+> -			return r;
+> -
+> -		clone->cmd = rq->cmd;
+> -		clone->cmd_len = rq->cmd_len;
+> -		clone->sense = rq->sense;
+> -		clone->buffer = rq->buffer;
+> -	}
+> +	r = blk_rq_prep_clone(clone, rq, tio->md->bs, GFP_ATOMIC,
+> +			      dm_rq_bio_constructor, tio);
+> +	if (r)
+> +		return r;
+>  
+> +	clone->cmd = rq->cmd;
+> +	clone->cmd_len = rq->cmd_len;
+> +	clone->sense = rq->sense;
+> +	clone->buffer = rq->buffer;
+>  	clone->end_io = end_clone_request;
+>  	clone->end_io_data = tio;
 
-Junichi and/or Kiyoshi,
-Could you please review this patch and add your Acked-by if it is OK?
-(Alasdair will want to see NEC's Ack to accept this patch).
+blk_rq_prep_clone() of a REQ_FLUSH request will result in a
+rq_data_dir(clone) of read.
+
+I still had the following:
+
+        if (rq->cmd_flags & REQ_FLUSH) {
+                blk_rq_init(NULL, clone);
+                clone->cmd_type = REQ_TYPE_FS;
+                /* without this the clone has a rq_data_dir of 0 */
+                clone->cmd_flags |= WRITE_FLUSH;
+        } else {
+                r = blk_rq_prep_clone(clone, rq, tio->md->bs, GFP_ATOMIC,
+                                      dm_rq_bio_constructor, tio);
+                ...
+
+Request-based DM's REQ_FLUSH still works without this special casing but
+I figured I'd raise this to ask: what is the proper rq_data_dir() is for
+a REQ_FLUSH?
+
+> @@ -1709,15 +1621,12 @@ static void dm_request_fn(struct request_queue *q)
+>  		if (!rq)
+>  			goto plug_and_out;
+>  
+> -		if (unlikely(dm_rq_is_flush_request(rq))) {
+> -			BUG_ON(md->flush_request);
+> -			md->flush_request = rq;
+> -			blk_start_request(rq);
+> -			queue_work(md->wq, &md->barrier_work);
+> -			goto out;
+> -		}
+> +		/* always use block 0 to find the target for flushes for now */
+> +		pos = 0;
+> +		if (!(rq->cmd_flags & REQ_FLUSH))
+> +			pos = blk_rq_pos(rq);
+>  
+> -		ti = dm_table_find_target(map, blk_rq_pos(rq));
+> +		ti = dm_table_find_target(map, pos);
+
+I added the following here: BUG_ON(!dm_target_is_valid(ti));
+
+>  		if (ti->type->busy && ti->type->busy(ti))
+>  			goto plug_and_out;
+
+I also needed to avoid the ->busy call for REQ_FLUSH:
+
+                if (!(rq->cmd_flags & REQ_FLUSH)) {
+                        ti = dm_table_find_target(map, blk_rq_pos(rq));
+                        BUG_ON(!dm_target_is_valid(ti));
+                        if (ti->type->busy && ti->type->busy(ti))
+                                goto plug_and_out;
+                } else {
+                        /* rq-based only ever has one target! leverage this for FLUSH */
+                        ti = dm_table_get_target(map, 0);
+                }
+
+If I allowed ->busy to be called for REQ_FLUSH it would result in a
+deadlock.  I haven't identified where/why yet.
+
+Other than these remaining issues this patch looks good.
 
 Thanks,
 Mike
