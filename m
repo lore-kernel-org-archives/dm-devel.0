@@ -1,117 +1,69 @@
-From: Boaz Harrosh <bharrosh@panasas.com>
-Subject: Re: [PATCH 04/30] block: deprecate barrier and replace blk_queue_ordered()
- with blk_queue_flush()
-Date: Mon, 30 Aug 2010 18:37:53 +0300
-Message-ID: <4C7BD051.70302@panasas.com>
-References: <1282751267-3530-1-git-send-email-tj@kernel.org> <1282751267-3530-5-git-send-email-tj@kernel.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH UPDATED 4/5] dm: implement REQ_FLUSH/FUA
+ support for request-based dm
+Date: Mon, 30 Aug 2010 15:18:29 -0400
+Message-ID: <20100830191829.GB8458__31725.0957167291$1283196337$gmane$org@redhat.com>
+References: <1283162296-13650-1-git-send-email-tj@kernel.org>
+	<1283162296-13650-5-git-send-email-tj@kernel.org>
+	<20100830132836.GB5283@redhat.com> <4C7BB932.1070405@kernel.org>
+	<4C7BD202.4040700@kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <1282751267-3530-5-git-send-email-tj@kernel.org>
-Sender: linux-ide-owner@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Resent-Message-ID: <20100830192345.GC9195@redhat.com>
+Resent-To: dm-devel@redhat.com
+Content-Disposition: inline
+In-Reply-To: <4C7BD202.4040700@kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Tejun Heo <tj@kernel.org>
-Cc: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de, neilb@suse.de, rusty@rustcorp.com.au, mst@redhat.com, jeremy@goop.org, snitzer@redhat.com, k-ueda@ct.jp.nec.com, Christoph Hellwig <hch@infradead.org>, Nick Piggin <npiggin@kernel.dk>, Jeremy Fitzhardinge <jeremy@xensource.com>, Chris Wright <chrisw@sous-sol.org>, FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>, Geert Uytterhoeven <Geert.Uytterhoeven@sonycom.com>, "David S. Miller" <davem@davemloft.net>, Alasdair G Kergon <agk@redhat.com>, Pierre Ossman <drzeus@drzeus.cx>, Stefan Weinhuber <wein@>
+Cc: k-ueda@ct.jp.nec.com, jaxboe@fusionio.com, jamie@shareable.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, j-nomura@ce.jp.nec.com, hch@lst.de
 List-Id: dm-devel.ids
 
-On 08/25/2010 06:47 PM, Tejun Heo wrote:
-> Barrier is deemed too heavy and will soon be replaced by FLUSH/FUA
-> requests.  Deprecate barrier.  All REQ_HARDBARRIERs are failed with
-> -EOPNOTSUPP and blk_queue_ordered() is replaced with simpler
-> blk_queue_flush().
+On Mon, Aug 30 2010 at 11:45am -0400,
+Tejun Heo <tj@kernel.org> wrote:
+
+> This patch converts request-based dm to support the new REQ_FLUSH/FUA.
 > 
-> blk_queue_flush() takes combinations of REQ_FLUSH and FUA.  If a
-> device has write cache and can flush it, it should set REQ_FLUSH.  If
-> the device can handle FUA writes, it should also set REQ_FUA.
+> The original request-based flush implementation depended on
+> request_queue blocking other requests while a barrier sequence is in
+> progress, which is no longer true for the new REQ_FLUSH/FUA.
 > 
-> All blk_queue_ordered() users are converted.
+> In general, request-based dm doesn't have infrastructure for cloning
+> one source request to multiple targets, but the original flush
+> implementation had a special mostly independent path which can issue
+> flushes to multiple targets and sequence them.  However, the
+> capability isn't currently in use and adds a lot of complexity.
+> Moreoever, it's unlikely to be useful in its current form as it
+> doesn't make sense to be able to send out flushes to multiple targets
+> when write requests can't be.
 > 
-> * ORDERED_DRAIN is mapped to 0 which is the default value.
-> * ORDERED_DRAIN_FLUSH is mapped to REQ_FLUSH.
-> * ORDERED_DRAIN_FLUSH_FUA is mapped to REQ_FLUSH | REQ_FUA.
+> This patch rips out special flush code path and deals handles
+> REQ_FLUSH/FUA requests the same way as other requests.  The only
+> special treatment is that REQ_FLUSH requests use the block address 0
+> when finding target, which is enough for now.
+> 
+> * added BUG_ON(!dm_target_is_valid(ti)) in dm_request_fn() as
+>   suggested by Mike Snitzer
 > 
 > Signed-off-by: Tejun Heo <tj@kernel.org>
-> Cc: Christoph Hellwig <hch@infradead.org>
-> Cc: Nick Piggin <npiggin@kernel.dk>
-> Cc: Michael S. Tsirkin <mst@redhat.com>
-> Cc: Jeremy Fitzhardinge <jeremy@xensource.com>
-> Cc: Chris Wright <chrisw@sous-sol.org>
-> Cc: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-> Cc: Boaz Harrosh <bharrosh@panasas.com>
 
-Acked-by: Boaz Harrosh <bharrosh@panasas.com>
+Looks good.
 
-Actually osd as support for FUA as well. It's on my todo
-to implement it.
+Acked-by: Mike Snitzer <snitzer@redhat.com>
 
-Thanks Tejun, as usual, after your visit there is more room
-in the house.
+Junichi and/or Kiyoshi,
+Could you please review this patch and add your Acked-by if it is OK?
+(Alasdair will want to see NEC's Ack to accept this patch).
 
-> Cc: Geert Uytterhoeven <Geert.Uytterhoeven@sonycom.com>
-> Cc: David S. Miller <davem@davemloft.net>
-> Cc: Alasdair G Kergon <agk@redhat.com>
-> Cc: Pierre Ossman <drzeus@drzeus.cx>
-> Cc: Stefan Weinhuber <wein@de.ibm.com>
-> ---
-<snip>
->  drivers/block/osdblk.c       |    2 +-
-> diff --git a/drivers/block/osdblk.c b/drivers/block/osdblk.c
-> index 2284b4f..72d6246 100644
-> --- a/drivers/block/osdblk.c
-> +++ b/drivers/block/osdblk.c
-> @@ -439,7 +439,7 @@ static int osdblk_init_disk(struct osdblk_device *osdev)
->  	blk_queue_stack_limits(q, osd_request_queue(osdev->osd));
->  
->  	blk_queue_prep_rq(q, blk_queue_start_tag);
-> -	blk_queue_ordered(q, QUEUE_ORDERED_DRAIN_FLUSH);
-> +	blk_queue_flush(q, REQ_FLUSH);
->  
->  	disk->queue = q;
->  
-<snip>
-
-Also this mail
-On 08/25/2010 06:47 PM, Tejun Heo wrote:
-> REQ_HARDBARRIER is deprecated.  Remove spurious uses in the following
-> users.  Please note that other than osdblk, all other uses were
-> already spurious before deprecation.
-> 
-> * osdblk: osdblk_rq_fn() won't receive any request with
->   REQ_HARDBARRIER set.  Remove the test for it.
-> 
-> * pktcdvd: use of REQ_HARDBARRIER in pkt_generic_packet() doesn't mean
->   anything.  Removed.
-> 
-> * aic7xxx_old: Setting MSG_ORDERED_Q_TAG on REQ_HARDBARRIER is
->   spurious.  Removed.
-> 
-> * sas_scsi_host: Setting TASK_ATTR_ORDERED on REQ_HARDBARRIER is
->   spurious.  Removed.
-> 
-> * scsi_tcq: The ordered tag path wasn't being used anyway.  Removed.
-> 
-> Signed-off-by: Tejun Heo <tj@kernel.org>
-> Cc: Boaz Harrosh <bharrosh@panasas.com>
-
-Acked-by: Boaz Harrosh <bharrosh@panasas.com>
-
-> Cc: James Bottomley <James.Bottomley@suse.de>
-> Cc: Peter Osterlund <petero2@telia.com>
-> ---
->  drivers/block/osdblk.c              |    3 +--
-<snip>
-> diff --git a/drivers/block/osdblk.c b/drivers/block/osdblk.c
-> index 72d6246..87311eb 100644
-> --- a/drivers/block/osdblk.c
-> +++ b/drivers/block/osdblk.c
-> @@ -310,8 +310,7 @@ static void osdblk_rq_fn(struct request_queue *q)
->  			break;
->  
->  		/* filter out block requests we don't understand */
-> -		if (rq->cmd_type != REQ_TYPE_FS &&
-> -		    !(rq->cmd_flags & REQ_HARDBARRIER)) {
-> +		if (rq->cmd_type != REQ_TYPE_FS) {
->  			blk_end_request_all(rq, 0);
->  			continue;
->  		}
-
+Thanks,
+Mike
