@@ -1,23 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH UPDATED 4/5] dm: implement REQ_FLUSH/FUA
- support for request-based dm
-Date: Wed, 1 Sep 2010 13:07:43 -0400
-Message-ID: <20100901170743.GB25644@redhat.com>
-References: <1283162296-13650-5-git-send-email-tj@kernel.org>
-	<20100830132836.GB5283@redhat.com> <4C7BB932.1070405@kernel.org>
-	<4C7BD202.4040700@kernel.org> <20100830194731.GA10702@redhat.com>
-	<Pine.LNX.4.64.1009010625070.16035@hs20-bc2-1.build.redhat.com>
-	<4C7E36E8.2000705@kernel.org>
-	<Pine.LNX.4.64.1009010811001.23591@hs20-bc2-1.build.redhat.com>
-	<20100901152053.GA25644@redhat.com>
-	<Pine.LNX.4.64.1009011133300.21130@hs20-bc2-1.build.redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipathd main.c
+Date: 1 Sep 2010 18:29:19 -0000
+Message-ID: <20100901182919.24882.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1009011133300.21130@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,69 +16,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Tejun Heo <tj@kernel.org>, dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 01 2010 at 11:35am -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2010-09-01 18:29:19
 
-> 
-> 
-> On Wed, 1 Sep 2010, Mike Snitzer wrote:
-> 
-> > On Wed, Sep 01 2010 at  8:12am -0400,
-> > Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > 
-> > > On Wed, 1 Sep 2010, Tejun Heo wrote:
-> > > 
-> > > > Hello,
-> > > > 
-> > > > On 09/01/2010 12:31 PM, Mikulas Patocka wrote:
-> > > > > My recommended approach to this (on non-request-based dm) is to simply let 
-> > > > > the current barrier infrastructure be as it is --- you don't need to 
-> > > > > change it now, you can simply map FUA write to barrier write and FLUSH to 
-> > > > > zero-data barrier --- and it won't cause any data corruption. It will just 
-> > > > > force unneeded I/O queue draining.
-> > > > > 
-> > > > > Once FLUSH+FUA interface is finalized and committed upstream, we can 
-> > > > > remove that I/O queue draining from dm to improve performance.
-> > > > 
-> > > > Unfortunately, it doesn't work that way.  The current dm
-> > > > implementation depends on block layer holding the queue while a
-> > > > barrier sequence is in progress which the new implementation doesn't
-> > > > do anymore (the whole point of this conversion BTW).
-> > > 
-> > > That may be true for request-based dm (I don't know).
-> > > 
-> > > But bio-based dm doesn't depend on it, I wrote it and I didn't rely on 
-> > > that.
-> > 
-> > Mikulas,
-> > 
-> > Current bio-based barrier support also defers IO if a flush is in
-> > progress.  See _dm_request:
-> 
-> I know. But it doesn't hurt with flush/fua requests. It just lowers 
-> performance (it defers i/os when it doesn't have to) but doesn't damage 
-> data.
-> 
-> So I think that we can let it be this way until flush/fua patch is 
-> finalized.
+Modified files:
+	multipathd     : main.c 
 
-Neither Tejun nor I see the point in waiting when we have a window of
-time to address the issues now.  We want DM to realize the benefit
-associated with the kernel-wide FLUSH+FUA conversion too.
+Log message:
+	Fix for bz #566685. Multipathd now will reload the device if it notices that
+	the priorities have changed during the checkerloop.
 
-You're not explaining your reluctance to tackle review of this DM
-FLUSH+FUA conversion.  Converting DM can (and already has) exposed some
-shortcomings in the the kernel-wide FLUSH+FUA conversion.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.28&r2=1.69.2.29
 
-We can't afford for these kernel-wide changes to go in and have DM left
-trying to fix some fundamental kernel issue outside of DM after the
-fact.
-
-So why wait?  This debate has distracted you from just reviewing the
-code.  The bio-based DM changes are fairly straight-forward.
-
-Mike
+--- multipath-tools/multipathd/main.c	2010/08/09 16:16:10	1.69.2.28
++++ multipath-tools/multipathd/main.c	2010/09/01 18:29:18	1.69.2.29
+@@ -52,6 +52,7 @@
+ #include <switchgroup.h>
+ #include <print.h>
+ #include <configure.h>
++#include <pgpolicies.h>
+ 
+ #include "main.h"
+ #include "pidfile.h"
+@@ -933,6 +934,29 @@
+ 	return 0;
+ }
+ 
++int update_path_groups(struct multipath *mpp, struct vectors *vecs)
++{
++	int i;
++	struct path * pp;
++
++	update_mpp_paths(mpp, vecs->pathvec);
++	vector_foreach_slot (mpp->paths, pp, i)
++		pathinfo(pp, conf->hwtable, DI_PRIO);
++	setup_map(mpp);
++	mpp->action = ACT_RELOAD;
++	if (domap(mpp) <= 0) {
++		condlog(0, "%s: failed to update map : %s", mpp->alias,
++				strerror(errno));
++		return 1;
++	}
++	dm_lib_release();
++	setup_multipath(vecs, mpp);
++	sync_map_state(mpp);
++
++	return 0;
++}
++
++
+ static void *
+ checkerloop (void *ap)
+ {
+@@ -942,6 +966,7 @@
+ 	int newstate;
+ 	unsigned int i;
+ 	sigset_t old;
++	int oldpriority;
+ 
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	vecs = (struct vectors *)ap;
+@@ -1095,9 +1120,13 @@
+ 			 * path prio refreshing
+ 			 */
+ 			condlog(4, "path prio refresh");
++			oldpriority = pp->priority;
+ 			pathinfo(pp, conf->hwtable, DI_PRIO);
+ 
+-			if (need_switch_pathgroup(pp->mpp, 0)) {
++			if (pp->priority != oldpriority &&
++			    pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio)
++				update_path_groups(pp->mpp, vecs);
++			else if (need_switch_pathgroup(pp->mpp, 0)) {
+ 				if (pp->mpp->pgfailback > 0 &&
+ 				    pp->mpp->failback_tick <= 0)
+ 					pp->mpp->failback_tick =
