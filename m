@@ -1,39 +1,111 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH 4/5] dm: implement REQ_FLUSH/FUA support for request-based
- dm
-Date: Tue, 31 Aug 2010 15:14:42 +0200
-Message-ID: <4C7D0042.3000607@kernel.org>
-References: <1283162296-13650-1-git-send-email-tj@kernel.org> <1283162296-13650-5-git-send-email-tj@kernel.org> <20100830132836.GB5283@redhat.com> <4C7BB932.1070405@kernel.org> <4C7BC942.7070703@kernel.org> <20100830190835.GA8458@redhat.com> <20100830212819.GA12522@redhat.com> <4C7CD9A7.4030901@kernel.org> <20100831130242.GB17505@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: safety of retrying SYNCHRONIZE CACHE [was: Re: [PATCHSET
+ block#for-2.6.36-post] block: replace barrier with sequenced flush]
+Date: Tue, 31 Aug 2010 20:55:37 -0400
+Message-ID: <20100901005537.GA21466@redhat.com>
+References: <4C6E3C1A.50205@ct.jp.nec.com>
+ <4C72660A.7070009@kernel.org>
+ <20100823141733.GA21158@redhat.com>
+ <4C739DE9.5070803@ct.jp.nec.com>
+ <4C73FA8F.5080800@kernel.org>
+ <4C74CD95.1000208@ct.jp.nec.com>
+ <20100825152831.GA8509@redhat.com>
+ <4C7789BE.1060609@ct.jp.nec.com>
+ <20100827134940.GA22504@redhat.com>
+ <4C7B4C23.8020100@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20100831130242.GB17505@redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: jaxboe@fusionio.com, k-ueda@ct.jp.nec.com, j-nomura@ce.jp.nec.com, jamie@shareable.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4C7B4C23.8020100@ct.jp.nec.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: Tejun Heo <tj@kernel.org>, Hannes Reinecke <hare@suse.de>, tytso@mit.edu, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, jack@suse.cz, linux-kernel@vger.kernel.org, swhiteho@redhat.com, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, vst@vlnb.net, rwheeler@redhat.com, Christoph Hellwig <hch@lst.de>, chris.mason@oracle.com, dm-devel@redhat.com, Frederick.Knight@netapp.com
 List-Id: dm-devel.ids
 
-Hello,
+Hi Kiyoshi,
 
-On 08/31/2010 03:02 PM, Mike Snitzer wrote:
-> On Tue, Aug 31 2010 at  6:29am -0400,
-> Tejun Heo <tj@kernel.org> wrote:
-> 
->> On 08/30/2010 11:28 PM, Mike Snitzer wrote:
->>> Hmm, but unfortunately I was too quick to say the patch fixed the hang.
->>>
->>> It is much more rare, but I can still get a hang.  I just got the
->>> following running vgcreate against an DM mpath (rq-based) device:
->>
->> Can you please try this one instead?
-> 
-> Still hit the hang on the 5th iteration of my test:
-> while true ; do ./test_dm_discard_mpath.sh && sleep 1 ; done
-> 
-> Would you like me to (re)send my test script offlist?
+On Mon, Aug 30 2010 at  2:13am -0400,
+Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
 
-Yes, please.  Thanks.
+> > That does seem like a valid concern.  But I'm not seeing why its unique
+> > to SYNCHRONIZE CACHE.  Any IO that fails on the target side should be
+> > passed up once the error gets to DM.
+> 
+> See the Tejun's explanation again:
+>     http://marc.info/?l=linux-kernel&m=128267361813859&w=2
+> What I'm concerning is whether the same thing as Tejun explained
+> for ATA can happen on other types of devices.
+> 
+> 
+> Normal write command has data and no data loss happens on error.
+> So it can be retried cleanly, and if the result of the retry is
+> success, it's really success, no implicit data loss.
+> 
+> Normal read command has a sector to read.  If the sector is broken,
+> all retries will fail and the error will be reported upwards.
+> So it can be retried cleanly as well.
 
--- 
-tejun
+I reached out to Fred Knight on this, to get a more insight from a pure
+SCSI SBC perspective, and he shared the following:
+
+----- Forwarded message from "Knight, Frederick" <Frederick.Knight@netapp.com> -----
+
+> Date: Tue, 31 Aug 2010 13:24:15 -0400
+> From: "Knight, Frederick" <Frederick.Knight@netapp.com>
+> To: Mike Snitzer <snitzer@redhat.com>
+> Subject: RE: safety of retrying SYNCHRONIZE CACHE?
+>
+> There are requirements in SBC to maintain data integrity.  If you WRITE
+> a block and READ that block, you must get the data you sent in the
+> WRITE.  This will be synchronized around the completion of the WRITE.
+> Before the WRITE completes, who knows what a READ will return.  Maybe
+> all the old data, maybe all the new data, maybe some mix of old and new
+> data.  Once the WRITE ends successful, all READs of those LBAs (from any
+> port) will always get the same data.
+>
+> As for errors, SBC describes how the deferred errors are reported (like
+> when a CACHE tries to flush but fails).  So if a write from cache to
+> media does have problems, the device would tell you via a CHECK
+> CONDITION (with the first byte of the sense data set to 71h or 73h.  SBC
+> clause 4.12 and 4.13 cover a lot of this information.  It is these error
+> codes that prevent silent loss of data.  And, in this case, when the
+> CHECK CONDITION is delivered, it will have nothing to do with the
+> command that was issued (the victim command).  If you look into the
+> sense data, you will see the deferred error flag, and all the additional
+> information fields will relate to the original I/O
+>
+> SYNCHRONIZE CACHE is not substantially different than a WRITE (it puts
+> data on the media).  So issuing it multiple times wouldn't be any
+> different than issuing multiple WRITES (it might put a temporary dent in
+> performance as everything flushes out to media).  If it or any other
+> commands fail with 71h/73h, then you have to dig down into the sense
+> data buffer to find out what happened.  For example, if you issue a
+> WRITE command, and it completes into write back cache but later (before
+> being written to the media), some of the cache breaks and looses data,
+> then the device must signal a deferred error to tell the host, and cause
+> a forced error on the LBA in question.
+>
+> Does that help?
+>
+>       Fred
+----- End forwarded message -----
+
+Seems like verifying/improving the handling of CHECK CONDITION is a more
+pressing concern than silent data loss purely due to SYNCHRONIZE CACHE
+retries.  Without proper handling we could completely miss these
+deferred errors.
+
+But how to effectively report such errors to upper layers is unclear to
+me given that a particular SCSI command can carry error information for
+IO that was already acknowledged successful (e.g. to the FS).
+
+drivers/scsi/scsi_error.c's various calls to scsi_check_sense()
+illustrate Linux's current CHECK CONDITION handling.  I need to look
+closer at how deferred errors propagate to upper layers.  After an
+initial look it seems scsi_error.c does handle retrying commands where
+appropriate.
+
+I believe Hannes has concerns/insight here.
+
+Mike
