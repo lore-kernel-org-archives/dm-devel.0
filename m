@@ -1,8 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 01/41] ide: remove unnecessary
-	blk_queue_flushing() test in do_ide_request()
-Date: Fri,  3 Sep 2010 12:29:16 +0200
-Message-ID: <1283509796-1510-2-git-send-email-tj__35329.1756044657$1283509967$gmane$org@kernel.org>
+Subject: [PATCH 12/41] block: simplify queue_next_fseq
+Date: Fri,  3 Sep 2010 12:29:27 +0200
+Message-ID: <1283509796-1510-13-git-send-email-tj@kernel.org>
 References: <1283509796-1510-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,56 +22,79 @@ To: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel
 Cc: Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-Unplugging from a request function doesn't really help much (it's
-already in the request_fn) and soon block layer will be updated to mix
-barrier sequence with other commands, so there's no need to treat
-queue flushing any differently.
+From: Christoph Hellwig <hch@lst.de>
 
-ide was the only user of blk_queue_flushing().  Remove it.
+We need to call blk_rq_init and elv_insert for all cases in queue_next_fseq,
+so take these calls into common code.  Also move the end_io initialization
+from queue_flush into queue_next_fseq and rename queue_flush to
+init_flush_request now that it's old name doesn't apply anymore.
 
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>
-Acked-by: David S. Miller <davem@davemloft.net>
 ---
- drivers/ide/ide-io.c   |   13 -------------
- include/linux/blkdev.h |    1 -
- 2 files changed, 0 insertions(+), 14 deletions(-)
+ block/blk-flush.c |   26 ++++++++++----------------
+ 1 files changed, 10 insertions(+), 16 deletions(-)
 
-diff --git a/drivers/ide/ide-io.c b/drivers/ide/ide-io.c
-index a381be8..999dac0 100644
---- a/drivers/ide/ide-io.c
-+++ b/drivers/ide/ide-io.c
-@@ -441,19 +441,6 @@ void do_ide_request(struct request_queue *q)
- 	struct request	*rq = NULL;
- 	ide_startstop_t	startstop;
+diff --git a/block/blk-flush.c b/block/blk-flush.c
+index 452c552..72905f8 100644
+--- a/block/blk-flush.c
++++ b/block/blk-flush.c
+@@ -74,16 +74,11 @@ static void post_flush_end_io(struct request *rq, int error)
+ 	blk_flush_complete_seq(rq->q, QUEUE_FSEQ_POSTFLUSH, error);
+ }
  
--	/*
--	 * drive is doing pre-flush, ordered write, post-flush sequence. even
--	 * though that is 3 requests, it must be seen as a single transaction.
--	 * we must not preempt this drive until that is complete
--	 */
--	if (blk_queue_flushing(q))
--		/*
--		 * small race where queue could get replugged during
--		 * the 3-request flush cycle, just yank the plug since
--		 * we want it to finish asap
--		 */
--		blk_remove_plug(q);
+-static void queue_flush(struct request_queue *q, struct request *rq,
+-			rq_end_io_fn *end_io)
++static void init_flush_request(struct request *rq, struct gendisk *disk)
+ {
+-	blk_rq_init(q, rq);
+ 	rq->cmd_type = REQ_TYPE_FS;
+ 	rq->cmd_flags = REQ_FLUSH;
+-	rq->rq_disk = q->orig_flush_rq->rq_disk;
+-	rq->end_io = end_io;
 -
- 	spin_unlock_irq(q->queue_lock);
+-	elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
++	rq->rq_disk = disk;
+ }
  
- 	/* HLD do_request() callback might sleep, make sure it's okay */
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 2c54906..015375c 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -521,7 +521,6 @@ enum {
- #define blk_queue_nonrot(q)	test_bit(QUEUE_FLAG_NONROT, &(q)->queue_flags)
- #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flags)
- #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
--#define blk_queue_flushing(q)	((q)->ordseq)
- #define blk_queue_stackable(q)	\
- 	test_bit(QUEUE_FLAG_STACKABLE, &(q)->queue_flags)
- #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
+ static struct request *queue_next_fseq(struct request_queue *q)
+@@ -91,29 +86,28 @@ static struct request *queue_next_fseq(struct request_queue *q)
+ 	struct request *orig_rq = q->orig_flush_rq;
+ 	struct request *rq = &q->flush_rq;
+ 
++	blk_rq_init(q, rq);
++
+ 	switch (blk_flush_cur_seq(q)) {
+ 	case QUEUE_FSEQ_PREFLUSH:
+-		queue_flush(q, rq, pre_flush_end_io);
++		init_flush_request(rq, orig_rq->rq_disk);
++		rq->end_io = pre_flush_end_io;
+ 		break;
+-
+ 	case QUEUE_FSEQ_DATA:
+-		/* initialize proxy request, inherit FLUSH/FUA and queue it */
+-		blk_rq_init(q, rq);
+ 		init_request_from_bio(rq, orig_rq->bio);
+ 		rq->cmd_flags &= ~(REQ_FLUSH | REQ_FUA);
+ 		rq->cmd_flags |= orig_rq->cmd_flags & (REQ_FLUSH | REQ_FUA);
+ 		rq->end_io = flush_data_end_io;
+-
+-		elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
+ 		break;
+-
+ 	case QUEUE_FSEQ_POSTFLUSH:
+-		queue_flush(q, rq, post_flush_end_io);
++		init_flush_request(rq, orig_rq->rq_disk);
++		rq->end_io = post_flush_end_io;
+ 		break;
+-
+ 	default:
+ 		BUG();
+ 	}
++
++	elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
+ 	return rq;
+ }
+ 
 -- 
 1.7.1
