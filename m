@@ -1,12 +1,14 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults libm ...
-Date: 3 Sep 2010 03:46:13 -0000
-Message-ID: <20100903034613.9341.qmail@sourceware.org>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Discard support for dm-snap
+Date: Fri, 3 Sep 2010 07:45:58 +0200
+Message-ID: <20100903054557.GA30704@ochil.arch.suse.de>
+References: <4C7F5AE2.9020908@suse.de>
+	<4C7FEB11.8090903@filteredperception.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============4298412847465815568=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4C7FEB11.8090903@filteredperception.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,180 +18,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-09-03 03:46:12
+--===============4298412847465815568==
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+X-MIME-Autoconverted: from 8bit to quoted-printable by mx01.colomx.prod.int.phx2.redhat.com id o835kEhx003721
 
-Modified files:
-	.              : multipath.conf.defaults 
-	libmultipath   : discovery.c discovery.h hwtable.c 
+On Thu, Sep 02, 2010 at 01:21:05PM -0500, Douglas McClendon wrote:
+> On 09/02/2010 03:05 AM, Hannes Reinecke wrote:
+>> Hi all,
+>>
+>> now that we've got discard support in the block layer, are there plans
+>> to update dm-snap to actually implement discard?
+>> Looks like a valid addendum here; we could be freeing up unused blocks
+>> thus freeing up space.
+>> Especially helpful when using dm-snap to create a sparse device;
+>> cf
+>> http://www.mjmwired.net/kernel/Documentation/device-mapper/zero.txt
+>>
+>> Thoughts?
+>
+> Here was my similar suggestion and the discussion with Mike that follow=
+ed-
+>
+> http://www.spinics.net/lists/dm-devel/msg11632.html
+>
+> I still feel like there is a disconnect between my thinking and Mike's,=
+ as=20
+> I think I have the same fundamental interest as you do Hannes.
+>
+Yes and no. Snapshotting is similar but not identical to a sparse device.
 
-Log message:
-	Fix for bz #484419. Now that the RHEL5 kernel exports everything necessary
-	to sysfs, get all the cciss specific sysfs pathinfo correctly.
+> I.e. a perfect example is a simple dm-snapshot used for a livecd root=20
+> filesystem.  In that case, after boot, the user creates a new file in t=
+he=20
+> rootfs, and that causes exception chunks (terminology?) to be created i=
+n=20
+> the cow device of the dm-snapshot.  Then, at a later point, the user=20
+> deletes that file.  It then seems 100% reasonable for the discard reque=
+st=20
+> to result in freeing the used resources in the cow device.  I see no=20
+> semantic reason why that data need be kept around any more than it need=
+ be=20
+> kept around on an SSD after a file is deleted.
+>
+It has to be for snapshotting. The main idea of snapshotting is the
+possibility to do a rollback, ie that you can mount an earlier snapshot
+instead of the current one and re-start from there.
+This ability is lost if a later snapshot deletes blocks permanently;
+these blocks would have to be removed from _all_ snapshots to really
+free up space. But this would make rollback impossible.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.23&r2=1.5.4.24
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.15&r2=1.32.2.16
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.14.2.4&r2=1.14.2.5
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.30&r2=1.20.2.31
+Tempting as it may sound, I fear it's not going to work in general.
 
---- multipath-tools/multipath.conf.defaults	2010/08/24 21:51:10	1.5.4.23
-+++ multipath-tools/multipath.conf.defaults	2010/09/03 03:46:11	1.5.4.24
-@@ -150,6 +150,19 @@
- #		path_checker		tur
- #	}
- #       device {
-+#		vendor			"HP"
-+#		product			"LOGICAL VOLUME.*"
-+#		getuid_callout		"/sbin/cciss_id /dev/%n"
-+#		features		"0"
-+#		hardware_handler	"0"
-+#               path_grouping_policy    multibus
-+#		failback		immediate
-+#		rr_weight		uniform
-+#		no_path_retry		12
-+#		rr_min_io		1000
-+#		path_checker		cciss_tur
-+#	}
-+#       device {
- #               vendor                  "DDN"
- #               product                 "SAN DataDirector"
- #		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
---- multipath-tools/libmultipath/discovery.c	2010/08/11 23:05:50	1.32.2.15
-+++ multipath-tools/libmultipath/discovery.c	2010/09/03 03:46:12	1.32.2.16
-@@ -250,8 +250,10 @@
- declare_sysfs_get_str(model, "%s/block/%s/device/model", 1);
- declare_sysfs_get_str(rev, "%s/block/%s/device/rev", 1);
- declare_sysfs_get_str(dev, "%s/block/%s/dev", 1);
--declare_sysfs_get_str(bustype, "%s/block/%s/device/bus", 1);
- declare_sysfs_get_str(state, "%s/block/%s/device/state", 0);
-+declare_sysfs_get_str(cciss_vendor, "%s/block/%s/vendor", 1);
-+declare_sysfs_get_str(cciss_model, "%s/block/%s/model", 1);
-+declare_sysfs_get_str(cciss_rev, "%s/block/%s/rev", 1);
- 
- int
- sysfs_get_timeout (char * sysfs_path, char * dev, unsigned int *timeout)
-@@ -475,6 +477,24 @@
- }
- 
- static int
-+sysfs_get_driver (char *sysfs_path, char * dev, char *driver)
-+{
-+	char path[FILE_NAME_SIZE];
-+	char buff[SYSFS_NAME_LEN];
-+
-+	if (safe_sprintf(path, "%s/block/%s/device/driver", sysfs_path, dev)) {
-+		condlog(0, "driver path too small");
-+		return 1;
-+	}
-+	if (sysfs_get_link(path, buff, SYSFS_NAME_LEN) < 0) {
-+		condlog(0, "can't get driver link: %s", strerror(errno));
-+		return 1;
-+	}
-+	basename(buff, driver);
-+	return 0;
-+}
-+
-+static int
- sysfs_get_bus (char * sysfs_path, struct path * pp)
- {
- 	struct sysfs_device *sdev;
-@@ -517,8 +537,8 @@
- 	while (loop--) {
- 		sdev = sysfs_open_device_path(attr_buff);
- 		if(!strncmp(pp->dev,"cciss",5)) 
--                         sysfs_get_bustype(sysfs_path,pp->dev,
--                             sdev->bus,5);
-+                         sysfs_get_driver(sysfs_path, pp->dev,
-+                             sdev->bus);
- 
- 		if (strlen(sdev->bus))
- 			break;
-@@ -529,8 +549,8 @@
- #else
- 	sdev = sysfs_open_device_path(attr_buff);
- 	if(!strncmp(pp->dev,"cciss",5))
--                  sysfs_get_bustype(sysfs_path, pp->dev,
--                     sdev->bus,5);
-+                  sysfs_get_driver(sysfs_path, pp->dev,
-+                     sdev->bus);
- #endif
- 
- 	if (!strncmp(sdev->bus, "scsi", 4))
-@@ -692,20 +712,33 @@
- static int
- cciss_sysfs_pathinfo (struct path * curpath)
- {
-+	unsigned int controller, lun;
-+	char dev_path[FILE_NAME_SIZE];
-+
-+	if (sscanf(curpath->dev, "cciss!c%ud%u", &controller, &lun) != 2) {
-+		condlog(0, "invalid cciss device name : '%s'", curpath->dev);
-+		return 1;
-+	}
-+
-+	if(safe_sprintf(dev_path, "%s/device/cciss%u/c%ud%u", curpath->dev,
-+			controller, controller, lun)) {
-+		condlog(0, "dev_path too small");
-+		return 1;
-+	}
- 
--        if (sysfs_get_vendor(sysfs_path, curpath->dev,
-+        if (sysfs_get_cciss_vendor(sysfs_path, dev_path,
-                              curpath->vendor_id, SCSI_VENDOR_SIZE))
-                 return 1;
- 
-         condlog(3, "vendor = %s", curpath->vendor_id);
- 
--        if (sysfs_get_model(sysfs_path, curpath->dev,
-+        if (sysfs_get_cciss_model(sysfs_path, dev_path,
-                             curpath->product_id,  SCSI_PRODUCT_SIZE))
-                 return 1;
- 
-         condlog(3, "product = %s", curpath->product_id);
- 
--        if (sysfs_get_rev(sysfs_path, curpath->dev,
-+        if (sysfs_get_cciss_rev(sysfs_path, dev_path,
-                           curpath->rev, SCSI_REV_SIZE))
-                 return 1;
- 
---- multipath-tools/libmultipath/discovery.h	2010/06/23 16:28:07	1.14.2.4
-+++ multipath-tools/libmultipath/discovery.h	2010/09/03 03:46:12	1.14.2.5
-@@ -30,7 +30,6 @@
- int sysfs_get_model (char * sysfs_path, char * dev, char * buff, int len);
- int sysfs_get_rev (char * sysfs_path, char * dev, char * buff, int len);
- int sysfs_get_dev (char * sysfs_path, char * dev, char * buff, int len);
--int sysfs_get_bustype (char * sysfs_path, char * dev, char * buff, int len);
- int sysfs_get_state (char * sysfs_path, char * dev, char * buff, int len);
- int sysfs_get_size (char * sysfs_path, char * dev, unsigned long long *);
- int sysfs_get_timeout (char * sysfs_path, char * dev, unsigned int *timeout);
---- multipath-tools/libmultipath/hwtable.c	2010/08/24 21:51:10	1.20.2.30
-+++ multipath-tools/libmultipath/hwtable.c	2010/09/03 03:46:12	1.20.2.31
-@@ -185,6 +185,22 @@
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = READSECTOR0,
- 	},
-+	{
-+		/* HP Smart Array */
-+		.vendor        = "HP",
-+		.product       = "LOGICAL VOLUME.*",
-+		.getuid        = "/sbin/cciss_id /dev/%n",
-+		.getprio       = NULL,
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = MULTIBUS,
-+		.pgfailback    = FAILBACK_UNDEF,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = 12,
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = CCISS_TUR,
-+	},
- 	/*
- 	 * DDN controller family
- 	 *
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+
+
+--===============4298412847465815568==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Transfer-Encoding: 7bit
+
+
+--===============4298412847465815568==--
