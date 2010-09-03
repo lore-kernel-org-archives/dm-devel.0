@@ -1,8 +1,8 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 34/41] jbd2: Modify ASYNC_COMMIT code to not rely
-	on queue draining on barrier
-Date: Fri,  3 Sep 2010 12:29:49 +0200
-Message-ID: <1283509796-1510-35-git-send-email-tj@kernel.org>
+Subject: [PATCH 29/41] btrfs: replace barriers with explicit
+	flush / FUA usage
+Date: Fri,  3 Sep 2010 12:29:44 +0200
+Message-ID: <1283509796-1510-30-git-send-email-tj__46816.6923187256$1283509997$gmane$org@kernel.org>
 References: <1283509796-1510-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,74 +20,122 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org
-Cc: Tejun Heo <tj@kernel.org>
+Cc: Christoph Hellwig <hch@infradead.org>, Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-From: Jan Kara <jack@suse.cz>
+From: Christoph Hellwig <hch@infradead.org>
 
-Currently JBD2 relies blkdev_issue_flush() draining the queue when ASYNC_COMMIT
-feature is set. This property is going away so make JBD2 wait for buffers it
-needs on its own before submitting the cache flush.
+Switch to the WRITE_FLUSH_FUA flag for log writes, remove the EOPNOTSUPP
+detection for barriers and stop setting the barrier flag for discards.
 
-Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Chris Mason <chris.mason@oracle.com>
 Signed-off-by: Tejun Heo <tj@kernel.org>
 ---
- fs/jbd2/commit.c |   29 ++++++++++++++++-------------
- 1 files changed, 16 insertions(+), 13 deletions(-)
+ fs/btrfs/disk-io.c     |   19 ++++---------------
+ fs/btrfs/extent-tree.c |    2 +-
+ fs/btrfs/volumes.c     |    4 ----
+ fs/btrfs/volumes.h     |    1 -
+ 4 files changed, 5 insertions(+), 21 deletions(-)
 
-diff --git a/fs/jbd2/commit.c b/fs/jbd2/commit.c
-index 7c068c1..d6aeb1f 100644
---- a/fs/jbd2/commit.c
-+++ b/fs/jbd2/commit.c
-@@ -701,6 +701,16 @@ start_journal_io:
+diff --git a/fs/btrfs/disk-io.c b/fs/btrfs/disk-io.c
+index 64f1008..5e789f4 100644
+--- a/fs/btrfs/disk-io.c
++++ b/fs/btrfs/disk-io.c
+@@ -2063,7 +2063,7 @@ static void btrfs_end_buffer_write_sync(struct buffer_head *bh, int uptodate)
+ 	if (uptodate) {
+ 		set_buffer_uptodate(bh);
+ 	} else {
+-		if (!buffer_eopnotsupp(bh) && printk_ratelimit()) {
++		if (printk_ratelimit()) {
+ 			printk(KERN_WARNING "lost page write due to "
+ 					"I/O error on %s\n",
+ 				       bdevname(bh->b_bdev, b));
+@@ -2200,21 +2200,10 @@ static int write_dev_supers(struct btrfs_device *device,
+ 			bh->b_end_io = btrfs_end_buffer_write_sync;
  		}
- 	}
  
-+	err = journal_finish_inode_data_buffers(journal, commit_transaction);
-+	if (err) {
-+		printk(KERN_WARNING
-+			"JBD2: Detected IO errors while flushing file data "
-+		       "on %s\n", journal->j_devname);
-+		if (journal->j_flags & JBD2_ABORT_ON_SYNCDATA_ERR)
-+			jbd2_journal_abort(journal, err);
-+		err = 0;
-+	}
-+
- 	/* 
- 	 * If the journal is not located on the file system device,
- 	 * then we must flush the file system device before we issue
-@@ -719,19 +729,6 @@ start_journal_io:
- 						 &cbh, crc32_sum);
- 		if (err)
- 			__jbd2_journal_abort_hard(journal);
--		if (journal->j_flags & JBD2_BARRIER)
--			blkdev_issue_flush(journal->j_dev, GFP_KERNEL, NULL,
--				BLKDEV_IFL_WAIT);
--	}
--
--	err = journal_finish_inode_data_buffers(journal, commit_transaction);
--	if (err) {
--		printk(KERN_WARNING
--			"JBD2: Detected IO errors while flushing file data "
--		       "on %s\n", journal->j_devname);
--		if (journal->j_flags & JBD2_ABORT_ON_SYNCDATA_ERR)
--			jbd2_journal_abort(journal, err);
--		err = 0;
- 	}
+-		if (i == last_barrier && do_barriers && device->barriers) {
+-			ret = submit_bh(WRITE_BARRIER, bh);
+-			if (ret == -EOPNOTSUPP) {
+-				printk("btrfs: disabling barriers on dev %s\n",
+-				       device->name);
+-				set_buffer_uptodate(bh);
+-				device->barriers = 0;
+-				/* one reference for submit_bh */
+-				get_bh(bh);
+-				lock_buffer(bh);
+-				ret = submit_bh(WRITE_SYNC, bh);
+-			}
+-		} else {
++		if (i == last_barrier && do_barriers)
++			ret = submit_bh(WRITE_FLUSH_FUA, bh);
++		else
+ 			ret = submit_bh(WRITE_SYNC, bh);
+-		}
  
- 	/* Lo and behold: we have just managed to send a transaction to
-@@ -845,6 +842,12 @@ wait_for_iobuf:
- 	}
- 	if (!err && !is_journal_aborted(journal))
- 		err = journal_wait_on_commit_record(journal, cbh);
-+	if (JBD2_HAS_INCOMPAT_FEATURE(journal,
-+				      JBD2_FEATURE_INCOMPAT_ASYNC_COMMIT) &&
-+	    journal->j_flags & JBD2_BARRIER) {
-+		blkdev_issue_flush(journal->j_dev, GFP_KERNEL, NULL,
-+				   BLKDEV_IFL_WAIT);
-+	}
+ 		if (ret)
+ 			errors++;
+diff --git a/fs/btrfs/extent-tree.c b/fs/btrfs/extent-tree.c
+index 32d0940..43dc9ea 100644
+--- a/fs/btrfs/extent-tree.c
++++ b/fs/btrfs/extent-tree.c
+@@ -1696,7 +1696,7 @@ static void btrfs_issue_discard(struct block_device *bdev,
+ 				u64 start, u64 len)
+ {
+ 	blkdev_issue_discard(bdev, start >> 9, len >> 9, GFP_KERNEL,
+-			BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
++			BLKDEV_IFL_WAIT);
+ }
  
- 	if (err)
- 		jbd2_journal_abort(journal, err);
+ static int btrfs_discard_extent(struct btrfs_root *root, u64 bytenr,
+diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
+index dd318ff..e25e46a 100644
+--- a/fs/btrfs/volumes.c
++++ b/fs/btrfs/volumes.c
+@@ -398,7 +398,6 @@ static noinline int device_list_add(const char *path,
+ 		device->work.func = pending_bios_fn;
+ 		memcpy(device->uuid, disk_super->dev_item.uuid,
+ 		       BTRFS_UUID_SIZE);
+-		device->barriers = 1;
+ 		spin_lock_init(&device->io_lock);
+ 		device->name = kstrdup(path, GFP_NOFS);
+ 		if (!device->name) {
+@@ -462,7 +461,6 @@ static struct btrfs_fs_devices *clone_fs_devices(struct btrfs_fs_devices *orig)
+ 		device->devid = orig_dev->devid;
+ 		device->work.func = pending_bios_fn;
+ 		memcpy(device->uuid, orig_dev->uuid, sizeof(device->uuid));
+-		device->barriers = 1;
+ 		spin_lock_init(&device->io_lock);
+ 		INIT_LIST_HEAD(&device->dev_list);
+ 		INIT_LIST_HEAD(&device->dev_alloc_list);
+@@ -1489,7 +1487,6 @@ int btrfs_init_new_device(struct btrfs_root *root, char *device_path)
+ 	trans = btrfs_start_transaction(root, 0);
+ 	lock_chunks(root);
+ 
+-	device->barriers = 1;
+ 	device->writeable = 1;
+ 	device->work.func = pending_bios_fn;
+ 	generate_random_uuid(device->uuid);
+@@ -3084,7 +3081,6 @@ static struct btrfs_device *add_missing_dev(struct btrfs_root *root,
+ 		return NULL;
+ 	list_add(&device->dev_list,
+ 		 &fs_devices->devices);
+-	device->barriers = 1;
+ 	device->dev_root = root->fs_info->dev_root;
+ 	device->devid = devid;
+ 	device->work.func = pending_bios_fn;
+diff --git a/fs/btrfs/volumes.h b/fs/btrfs/volumes.h
+index 31b0fab..2b638b6 100644
+--- a/fs/btrfs/volumes.h
++++ b/fs/btrfs/volumes.h
+@@ -42,7 +42,6 @@ struct btrfs_device {
+ 	int running_pending;
+ 	u64 generation;
+ 
+-	int barriers;
+ 	int writeable;
+ 	int in_fs_metadata;
+ 
 -- 
 1.7.1
