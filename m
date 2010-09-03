@@ -1,8 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 11/41] block: filter flush bio's in
-	__generic_make_request()
-Date: Fri,  3 Sep 2010 12:29:26 +0200
-Message-ID: <1283509796-1510-12-git-send-email-tj@kernel.org>
+Subject: [PATCH 06/41] block: misc cleanups in barrier code
+Date: Fri,  3 Sep 2010 12:29:21 +0200
+Message-ID: <1283509796-1510-7-git-send-email-tj__24346.9312823892$1283510075$gmane$org@kernel.org>
 References: <1283509796-1510-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,40 +22,199 @@ To: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel
 Cc: Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-There are a number of make_request based drivers which don't support
-cache flushes.  Filter out flush bio's in __generic_make_request() so
-that they don't have to worry about them.  All FLUSH/FUA requests with
-data are converted to regular IO requests and empty ones are completed
-immediately.
+Make the following cleanups in preparation of barrier/flush update.
+
+* blk_do_ordered() declaration is moved from include/linux/blkdev.h to
+  block/blk.h.
+
+* blk_do_ordered() now returns pointer to struct request, with %NULL
+  meaning "try the next request" and ERR_PTR(-EAGAIN) "try again
+  later".  The third case will be dropped with further changes.
+
+* In the initialization of proxy barrier request, data direction is
+  already set by init_request_from_bio().  Drop unnecessary explicit
+  REQ_WRITE setting and move init_request_from_bio() above REQ_FUA
+  flag setting.
+
+* add_request() is collapsed into __make_request().
+
+These changes don't make any functional difference.
 
 Signed-off-by: Tejun Heo <tj@kernel.org>
 ---
- block/blk-core.c |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+ block/blk-barrier.c    |   32 ++++++++++++++------------------
+ block/blk-core.c       |   21 ++++-----------------
+ block/blk.h            |    7 +++++--
+ include/linux/blkdev.h |    1 -
+ 4 files changed, 23 insertions(+), 38 deletions(-)
 
+diff --git a/block/blk-barrier.c b/block/blk-barrier.c
+index ed0aba5..f1be85b 100644
+--- a/block/blk-barrier.c
++++ b/block/blk-barrier.c
+@@ -110,9 +110,9 @@ static void queue_flush(struct request_queue *q, unsigned which)
+ 	elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
+ }
+ 
+-static inline bool start_ordered(struct request_queue *q, struct request **rqp)
++static inline struct request *start_ordered(struct request_queue *q,
++					    struct request *rq)
+ {
+-	struct request *rq = *rqp;
+ 	unsigned skip = 0;
+ 
+ 	q->orderr = 0;
+@@ -149,11 +149,9 @@ static inline bool start_ordered(struct request_queue *q, struct request **rqp)
+ 
+ 		/* initialize proxy request and queue it */
+ 		blk_rq_init(q, rq);
+-		if (bio_data_dir(q->orig_bar_rq->bio) == WRITE)
+-			rq->cmd_flags |= REQ_WRITE;
++		init_request_from_bio(rq, q->orig_bar_rq->bio);
+ 		if (q->ordered & QUEUE_ORDERED_DO_FUA)
+ 			rq->cmd_flags |= REQ_FUA;
+-		init_request_from_bio(rq, q->orig_bar_rq->bio);
+ 		rq->end_io = bar_end_io;
+ 
+ 		elv_insert(q, rq, ELEVATOR_INSERT_FRONT);
+@@ -171,27 +169,26 @@ static inline bool start_ordered(struct request_queue *q, struct request **rqp)
+ 	else
+ 		skip |= QUEUE_ORDSEQ_DRAIN;
+ 
+-	*rqp = rq;
+-
+ 	/*
+ 	 * Complete skipped sequences.  If whole sequence is complete,
+-	 * return false to tell elevator that this request is gone.
++	 * return %NULL to tell elevator that this request is gone.
+ 	 */
+-	return !blk_ordered_complete_seq(q, skip, 0);
++	if (blk_ordered_complete_seq(q, skip, 0))
++		rq = NULL;
++	return rq;
+ }
+ 
+-bool blk_do_ordered(struct request_queue *q, struct request **rqp)
++struct request *blk_do_ordered(struct request_queue *q, struct request *rq)
+ {
+-	struct request *rq = *rqp;
+ 	const int is_barrier = rq->cmd_type == REQ_TYPE_FS &&
+ 				(rq->cmd_flags & REQ_HARDBARRIER);
+ 
+ 	if (!q->ordseq) {
+ 		if (!is_barrier)
+-			return true;
++			return rq;
+ 
+ 		if (q->next_ordered != QUEUE_ORDERED_NONE)
+-			return start_ordered(q, rqp);
++			return start_ordered(q, rq);
+ 		else {
+ 			/*
+ 			 * Queue ordering not supported.  Terminate
+@@ -199,8 +196,7 @@ bool blk_do_ordered(struct request_queue *q, struct request **rqp)
+ 			 */
+ 			blk_dequeue_request(rq);
+ 			__blk_end_request_all(rq, -EOPNOTSUPP);
+-			*rqp = NULL;
+-			return false;
++			return NULL;
+ 		}
+ 	}
+ 
+@@ -211,14 +207,14 @@ bool blk_do_ordered(struct request_queue *q, struct request **rqp)
+ 	/* Special requests are not subject to ordering rules. */
+ 	if (rq->cmd_type != REQ_TYPE_FS &&
+ 	    rq != &q->pre_flush_rq && rq != &q->post_flush_rq)
+-		return true;
++		return rq;
+ 
+ 	/* Ordered by draining.  Wait for turn. */
+ 	WARN_ON(blk_ordered_req_seq(rq) < blk_ordered_cur_seq(q));
+ 	if (blk_ordered_req_seq(rq) > blk_ordered_cur_seq(q))
+-		*rqp = NULL;
++		rq = ERR_PTR(-EAGAIN);
+ 
+-	return true;
++	return rq;
+ }
+ 
+ static void bio_end_empty_barrier(struct bio *bio, int err)
 diff --git a/block/blk-core.c b/block/blk-core.c
-index 18455c4..495bdc4 100644
+index f063541..f8d37a8 100644
 --- a/block/blk-core.c
 +++ b/block/blk-core.c
-@@ -1509,6 +1509,19 @@ static inline void __generic_make_request(struct bio *bio)
- 		if (bio_check_eod(bio, nr_sectors))
- 			goto end_io;
+@@ -1037,22 +1037,6 @@ void blk_insert_request(struct request_queue *q, struct request *rq,
+ }
+ EXPORT_SYMBOL(blk_insert_request);
  
-+		/*
-+		 * Filter flush bio's early so that make_request based
-+		 * drivers without flush support don't have to worry
-+		 * about them.
-+		 */
-+		if ((bio->bi_rw & (REQ_FLUSH | REQ_FUA)) && !q->flush_flags) {
-+			bio->bi_rw &= ~(REQ_FLUSH | REQ_FUA);
-+			if (!nr_sectors) {
-+				err = 0;
-+				goto end_io;
-+			}
-+		}
+-/*
+- * add-request adds a request to the linked list.
+- * queue lock is held and interrupts disabled, as we muck with the
+- * request queue list.
+- */
+-static inline void add_request(struct request_queue *q, struct request *req)
+-{
+-	drive_stat_acct(req, 1);
+-
+-	/*
+-	 * elevator indicated where it wants this request to be
+-	 * inserted at elevator_merge time
+-	 */
+-	__elv_add_request(q, req, ELEVATOR_INSERT_SORT, 0);
+-}
+-
+ static void part_round_stats_single(int cpu, struct hd_struct *part,
+ 				    unsigned long now)
+ {
+@@ -1316,7 +1300,10 @@ get_rq:
+ 		req->cpu = blk_cpu_to_group(smp_processor_id());
+ 	if (queue_should_plug(q) && elv_queue_empty(q))
+ 		blk_plug_device(q);
+-	add_request(q, req);
 +
- 		if ((bio->bi_rw & REQ_DISCARD) &&
- 		    (!blk_queue_discard(q) ||
- 		     ((bio->bi_rw & REQ_SECURE) &&
++	/* insert the request into the elevator */
++	drive_stat_acct(req, 1);
++	__elv_add_request(q, req, ELEVATOR_INSERT_SORT, 0);
+ out:
+ 	if (unplug || !queue_should_plug(q))
+ 		__generic_unplug_device(q);
+diff --git a/block/blk.h b/block/blk.h
+index 6e7dc87..874eb4e 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -51,6 +51,8 @@ static inline void blk_clear_rq_complete(struct request *rq)
+  */
+ #define ELV_ON_HASH(rq)		(!hlist_unhashed(&(rq)->hash))
+ 
++struct request *blk_do_ordered(struct request_queue *q, struct request *rq);
++
+ static inline struct request *__elv_next_request(struct request_queue *q)
+ {
+ 	struct request *rq;
+@@ -58,8 +60,9 @@ static inline struct request *__elv_next_request(struct request_queue *q)
+ 	while (1) {
+ 		while (!list_empty(&q->queue_head)) {
+ 			rq = list_entry_rq(q->queue_head.next);
+-			if (blk_do_ordered(q, &rq))
+-				return rq;
++			rq = blk_do_ordered(q, rq);
++			if (rq)
++				return !IS_ERR(rq) ? rq : NULL;
+ 		}
+ 
+ 		if (!q->elevator->ops->elevator_dispatch_fn(q, 0))
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index e97911d..996549d 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -869,7 +869,6 @@ extern void blk_queue_rq_timed_out(struct request_queue *, rq_timed_out_fn *);
+ extern void blk_queue_rq_timeout(struct request_queue *, unsigned int);
+ extern void blk_queue_flush(struct request_queue *q, unsigned int flush);
+ extern struct backing_dev_info *blk_get_backing_dev_info(struct block_device *bdev);
+-extern bool blk_do_ordered(struct request_queue *, struct request **);
+ extern unsigned blk_ordered_cur_seq(struct request_queue *);
+ extern unsigned blk_ordered_req_seq(struct request *);
+ extern bool blk_ordered_complete_seq(struct request_queue *, unsigned, int);
 -- 
 1.7.1
