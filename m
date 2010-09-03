@@ -1,7 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 38/41] swap: do not send discards as barriers
-Date: Fri,  3 Sep 2010 12:29:53 +0200
-Message-ID: <1283509796-1510-39-git-send-email-tj__33208.6411923685$1283510079$gmane$org@kernel.org>
+Subject: [PATCH 18/41] block/loop: implement REQ_FLUSH/FUA support
+Date: Fri,  3 Sep 2010 12:29:33 +0200
+Message-ID: <1283509796-1510-19-git-send-email-tj@kernel.org>
 References: <1283509796-1510-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,56 +19,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org
-Cc: Christoph Hellwig <hch@infradead.org>, Tejun Heo <tj@kernel.org>
+Cc: Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-From: Christoph Hellwig <hch@infradead.org>
+Deprecate REQ_HARDBARRIER and implement REQ_FLUSH/FUA instead.  Also,
+instead of checking file->f_op->fsync() directly, look at the value of
+vfs_fsync() and ignore -EINVAL return.
 
-The swap code already uses synchronous discards, no need to add I/O barriers.
-
-tj: superflous newlines removed.
-
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Hugh Dickins <hughd@google.com>
-Tested-by: Nigel Cunningham <nigel@tuxonice.net>
 Signed-off-by: Tejun Heo <tj@kernel.org>
 ---
- mm/swapfile.c |    9 +++------
- 1 files changed, 3 insertions(+), 6 deletions(-)
+ drivers/block/loop.c |   18 +++++++++---------
+ 1 files changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/mm/swapfile.c b/mm/swapfile.c
-index 1f3f9c5..68cda16 100644
---- a/mm/swapfile.c
-+++ b/mm/swapfile.c
-@@ -141,8 +141,7 @@ static int discard_swap(struct swap_info_struct *si)
- 	nr_blocks = ((sector_t)se->nr_pages - 1) << (PAGE_SHIFT - 9);
- 	if (nr_blocks) {
- 		err = blkdev_issue_discard(si->bdev, start_block,
--				nr_blocks, GFP_KERNEL,
--				BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
-+				nr_blocks, GFP_KERNEL, BLKDEV_IFL_WAIT);
- 		if (err)
- 			return err;
- 		cond_resched();
-@@ -153,8 +152,7 @@ static int discard_swap(struct swap_info_struct *si)
- 		nr_blocks = (sector_t)se->nr_pages << (PAGE_SHIFT - 9);
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 953d1e1..5d27bc6 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -477,17 +477,17 @@ static int do_bio_filebacked(struct loop_device *lo, struct bio *bio)
+ 	pos = ((loff_t) bio->bi_sector << 9) + lo->lo_offset;
  
- 		err = blkdev_issue_discard(si->bdev, start_block,
--				nr_blocks, GFP_KERNEL,
--				BLKDEV_IFL_WAIT | BLKDEV_IFL_BARRIER);
-+				nr_blocks, GFP_KERNEL, BLKDEV_IFL_WAIT);
- 		if (err)
- 			break;
+ 	if (bio_rw(bio) == WRITE) {
+-		bool barrier = (bio->bi_rw & REQ_HARDBARRIER);
+ 		struct file *file = lo->lo_backing_file;
  
-@@ -193,8 +191,7 @@ static void discard_swap_cluster(struct swap_info_struct *si,
- 			start_block <<= PAGE_SHIFT - 9;
- 			nr_blocks <<= PAGE_SHIFT - 9;
- 			if (blkdev_issue_discard(si->bdev, start_block,
--				    nr_blocks, GFP_NOIO, BLKDEV_IFL_WAIT |
--							BLKDEV_IFL_BARRIER))
-+				    nr_blocks, GFP_NOIO, BLKDEV_IFL_WAIT))
- 				break;
+-		if (barrier) {
+-			if (unlikely(!file->f_op->fsync)) {
+-				ret = -EOPNOTSUPP;
+-				goto out;
+-			}
++		/* REQ_HARDBARRIER is deprecated */
++		if (bio->bi_rw & REQ_HARDBARRIER) {
++			ret = -EOPNOTSUPP;
++			goto out;
++		}
+ 
++		if (bio->bi_rw & REQ_FLUSH) {
+ 			ret = vfs_fsync(file, 0);
+-			if (unlikely(ret)) {
++			if (unlikely(ret && ret != -EINVAL)) {
+ 				ret = -EIO;
+ 				goto out;
+ 			}
+@@ -495,9 +495,9 @@ static int do_bio_filebacked(struct loop_device *lo, struct bio *bio)
+ 
+ 		ret = lo_send(lo, bio, pos);
+ 
+-		if (barrier && !ret) {
++		if ((bio->bi_rw & REQ_FUA) && !ret) {
+ 			ret = vfs_fsync(file, 0);
+-			if (unlikely(ret))
++			if (unlikely(ret && ret != -EINVAL))
+ 				ret = -EIO;
  		}
- 
+ 	} else
 -- 
 1.7.1
