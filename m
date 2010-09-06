@@ -1,67 +1,55 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools multipath.conf.annotated multi ...
-Date: 3 Sep 2010 22:23:22 -0000
-Message-ID: <20100903222322.1889.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [dm-devel] [PATCH 23/41] dm: implement REQ_FLUSH/FUA support
+ for	bio-based dm
+Date: Mon, 06 Sep 2010 13:14:32 +0200
+Message-ID: <4C84CD18.6060906@redhat.com>
+References: <1283509796-1510-1-git-send-email-tj@kernel.org> <1283509796-1510-24-git-send-email-tj@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <1283509796-1510-24-git-send-email-tj@kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Tejun Heo <tj@kernel.org>, jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, hch@lst.de, konishi.ryusuke@lab.ntt.co.jp, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de, neilb@suse.de, rusty@rustcorp.com.au, mst@redhat.com, snitzer@redhat.com, k-ueda@ct.jp.nec.com, mpatocka@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-09-03 22:23:22
+On 09/03/2010 12:29 PM, Tejun Heo wrote:
 
-Modified files:
-	.              : multipath.conf.annotated 
-	                 multipath.conf.defaults 
+> +++ b/drivers/md/dm-crypt.c
+> @@ -1278,7 +1278,7 @@ static int crypt_map(struct dm_target *ti, struct bio *bio,
+>  	struct dm_crypt_io *io;
+>  	struct crypt_config *cc;
+>  
+> -	if (unlikely(bio_empty_barrier(bio))) {
+> +	if (bio->bi_rw & REQ_FLUSH) {
+>  		cc = ti->private;
+>  		bio->bi_bdev = cc->dev->bdev;
+>  		return DM_MAPIO_REMAPPED;
 
-Log message:
-	doc file changes for bz #570513
+...
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.annotated.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.16&r2=1.18.2.17
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.24&r2=1.5.4.25
+> +++ b/drivers/md/dm.c
+> @@ -1400,14 +1391,22 @@ static void __split_and_process_bio(struct mapped_device *md, struct bio *bio)
+>  	ci.io->md = md;
+>  	spin_lock_init(&ci.io->endio_lock);
+>  	ci.sector = bio->bi_sector;
+> -	ci.sector_count = bio_sectors(bio);
+> -	if (unlikely(bio_empty_barrier(bio)))
+> +	if (!(bio->bi_rw & REQ_FLUSH))
+> +		ci.sector_count = bio_sectors(bio);
+> +	else {
+> +		/* all FLUSH bio's reaching here should be empty */
+> +		WARN_ON_ONCE(bio_has_data(bio));
+>  		ci.sector_count = 1;
+> +	}
 
---- multipath-tools/multipath.conf.annotated	2010/04/08 19:31:49	1.18.2.16
-+++ multipath-tools/multipath.conf.annotated	2010/09/03 22:23:22	1.18.2.17
-@@ -186,6 +186,17 @@
- #	user_friendly_names no
- #
- #	#
-+#	# name    : pg_prio_calc
-+#	# scope   : multipath & multipathd
-+#	# desc    : If set to "avg", multipath sets the priority of path groups
-+#	#           to the average of the priorities of the included paths.
-+#	#           If set to "sum", multipath sets the priority of path groups
-+#	#           to the sum of the priorities of the included paths.
-+#	# values  : "sum"|"avg"
-+#	# default : "sum"
-+#	pg_prio_calc "avg"
-+#
-+#	#
- #	# name    : bindings_file
- #	# scope   : multipath
- #	# desc    : The location of the bindings file that is used with
---- multipath-tools/multipath.conf.defaults	2010/09/03 03:46:11	1.5.4.24
-+++ multipath-tools/multipath.conf.defaults	2010/09/03 22:23:22	1.5.4.25
-@@ -14,6 +14,7 @@
- #	failback		manual
- #	no_path_retry		fail
- #	user_friendly_names	no
-+#	pg_prio_calc		sum
- #	bindings_file           "/var/lib/multipath/bindings"
- #}
- #
+
+I would add BUG_ON(bio_has_data(bio)) either to dm-crypt target or directly to DM core
+in this path.
+
+Note that empty barrier request bypass encryption layer now in dm-crypt, so if some bio
+with data payload reach it after the change, it causes data corruption
+(moreover plain data reach the disk directly).
+
+Milan
