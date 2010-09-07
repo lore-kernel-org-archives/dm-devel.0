@@ -1,75 +1,94 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 23/41] dm: implement REQ_FLUSH/FUA support for bio-based
- dm
-Date: Tue, 7 Sep 2010 18:15:43 -0400
-Message-ID: <20100907221543.GB22525@redhat.com>
+Subject: [PATCH 42/41] dm: convey that all flushes are processed as empty
+Date: Tue, 7 Sep 2010 19:49:18 -0400
+Message-ID: <20100907234918.GA23921@redhat.com>
 References: <1283509796-1510-1-git-send-email-tj@kernel.org>
  <1283509796-1510-24-git-send-email-tj@kernel.org>
  <4C84CD18.6060906@redhat.com>
  <20100907211724.GA22525@redhat.com>
+ <20100907221543.GB22525@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Return-path: <linux-ide-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20100907211724.GA22525@redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: jack@suse.cz, mst@redhat.com, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, hch@lst.de, k-ueda@ct.jp.nec.com, vst@vlnb.net, linux-scsi@vger.kernel.org, rusty@rustcorp.com.au, linux-raid@vger.kernel.org, Tejun Heo <tj@kernel.org>, mpatocka@redhat.com, swhiteho@redhat.com, chris.mason@oracle.com, tytso@mit.edu, jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, rwheeler@redhat.com
+In-Reply-To: <20100907221543.GB22525@redhat.com>
+Sender: linux-ide-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: jack@suse.cz, mst@redhat.com, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, hch@lst.de, k-ueda@ct.jp.nec.com, vst@vlnb.net, linux-scsi@vger.kernel.org, rusty@rustcorp.com.au, linux-raid@vger.kernel.org, mpatocka@redhat.com, swhiteho@redhat.com, chris.mason@oracle.com, tytso@mit.edu, jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, rwheeler@redhat.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 07 2010 at  5:17pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Rename __clone_and_map_flush to __clone_and_map_empty_flush for added
+clarity.
 
-> On Mon, Sep 06 2010 at  7:14am -0400,
-> Milan Broz <mbroz@redhat.com> wrote:
-> 
-> > On 09/03/2010 12:29 PM, Tejun Heo wrote:
-> > 
-> > > +++ b/drivers/md/dm-crypt.c
-> > > @@ -1278,7 +1278,7 @@ static int crypt_map(struct dm_target *ti, struct bio *bio,
-> > >  	struct dm_crypt_io *io;
-> > >  	struct crypt_config *cc;
-> > >  
-> > > -	if (unlikely(bio_empty_barrier(bio))) {
-> > > +	if (bio->bi_rw & REQ_FLUSH) {
-> > >  		cc = ti->private;
-> > >  		bio->bi_bdev = cc->dev->bdev;
-> > >  		return DM_MAPIO_REMAPPED;
-> > 
-> > ...
-> > 
-> > > +++ b/drivers/md/dm.c
-> > > @@ -1400,14 +1391,22 @@ static void __split_and_process_bio(struct mapped_device *md, struct bio *bio)
-> > >  	ci.io->md = md;
-> > >  	spin_lock_init(&ci.io->endio_lock);
-> > >  	ci.sector = bio->bi_sector;
-> > > -	ci.sector_count = bio_sectors(bio);
-> > > -	if (unlikely(bio_empty_barrier(bio)))
-> > > +	if (!(bio->bi_rw & REQ_FLUSH))
-> > > +		ci.sector_count = bio_sectors(bio);
-> > > +	else {
-> > > +		/* all FLUSH bio's reaching here should be empty */
-> > > +		WARN_ON_ONCE(bio_has_data(bio));
-> > >  		ci.sector_count = 1;
-> > > +	}
-> > 
-> > 
-> > I would add BUG_ON(bio_has_data(bio)) either to dm-crypt target or directly to DM core
-> > in this path.
-> 
-> I agree, that WARN_ON_ONCE should be changed to BUG_ON.  This is a
-> guarantee that the block layer now provides so it seems correct to have
-> the DM core bug if that guarantee isn't actually provided.
+Reintroduce a BUG_ON() and add a few more helpful comments to the code
+so that it is clear that all flushes are empty.
 
-I was mistaken, DM enforces that guarantee... ;)
+Cleanup __split_and_process_bio() so that an empty flush isn't processed
+by a 'sector_count' focused while loop.
 
-(but block layer will also enforce empty flush for request-based)
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c |   21 +++++++++------------
+ 1 files changed, 9 insertions(+), 12 deletions(-)
 
-But it wasn't clear until Christoph and I looked closer.  The point
-stands though; we should BUG_ON rather than WARN_ON_ONCE.
+Tejun, please feel free to fold this patch into (or insert after)
+0025-dm-relax-ordering-of-bio-based-flush-implementation.patch
 
-I'll send a follow-on patch to help clean this code up a bit more (based
-on Christoph's suggestions).  Mainly just making the flush paths a bit
-more distinct and adding some comments.
-
-Mike
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index cd2f7e7..9a852ee 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -622,6 +622,7 @@ static void dec_pending(struct dm_io *io, int error)
+ 			return;
+ 
+ 		if (!(bio->bi_rw & REQ_FLUSH) || !bio->bi_size) {
++			/* done with normal IO or empty flush */
+ 			trace_block_bio_complete(md->queue, bio);
+ 			bio_endio(bio, io_error);
+ 		} else {
+@@ -1132,16 +1133,15 @@ static void __issue_target_requests(struct clone_info *ci, struct dm_target *ti,
+ 		__issue_target_request(ci, ti, request_nr, len);
+ }
+ 
+-static int __clone_and_map_flush(struct clone_info *ci)
++static int __clone_and_map_empty_flush(struct clone_info *ci)
+ {
+ 	unsigned target_nr = 0;
+ 	struct dm_target *ti;
+ 
++	BUG_ON(bio_has_data(ci->bio));
+ 	while ((ti = dm_table_get_target(ci->map, target_nr++)))
+ 		__issue_target_requests(ci, ti, ti->num_flush_requests, 0);
+ 
+-	ci->sector_count = 0;
+-
+ 	return 0;
+ }
+ 
+@@ -1302,20 +1302,17 @@ static void __split_and_process_bio(struct mapped_device *md, struct bio *bio)
+ 	ci.sector = bio->bi_sector;
+ 	ci.idx = bio->bi_idx;
+ 
++	start_io_acct(ci.io);
+ 	if (!is_flush) {
+ 		ci.bio = bio;
+ 		ci.sector_count = bio_sectors(bio);
++		while (ci.sector_count && !error)
++			error = __clone_and_map(&ci);
+ 	} else {
+ 		ci.bio = &ci.md->flush_bio;
+-		ci.sector_count = 1;
+-	}
+-
+-	start_io_acct(ci.io);
+-	while (ci.sector_count && !error) {
+-		if (!is_flush)
+-			error = __clone_and_map(&ci);
+-		else
+-			error = __clone_and_map_flush(&ci);
++		ci.sector_count = 0;
++		error = __clone_and_map_empty_flush(&ci);
++		/* dec_pending submits any data associated with flush */
+ 	}
+ 
+ 	/* drop the extra reference count */
