@@ -1,89 +1,46 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: use cpu_relax when busy waiting for condition
-Date: Thu, 9 Sep 2010 18:07:16 -0400
-Message-ID: <20100909220716.GA27774@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH 26/30] ext4: do not send discards as barriers
+Date: Fri, 10 Sep 2010 00:53:13 +0200
+Message-ID: <20100909225313.GB29405@quack.suse.cz>
+References: <1282751267-3530-27-git-send-email-tj@kernel.org>
+ <20100825155842.GA3229@lst.de>
+ <20100825160032.GC3229@lst.de>
+ <4C753D75.2010305@kernel.org>
+ <20100825200223.GE2738@quack.suse.cz>
+ <4C76250B.6060800@kernel.org>
+ <20100827173147.GA12374@quack.suse.cz>
+ <x4939tv98n8.fsf@segfault.boston.devel.redhat.com>
+ <20100830202034.GB12226@quack.quadriga.com>
+ <4C7CB936.8010509@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+In-Reply-To: <4C7CB936.8010509@kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Jan Kara <jack@suse.cz>, Jeff Moyer <jmoyer@redhat.com>, Christoph Hellwig <hch@lst.de>, jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, konishi.ryusuke@lab.ntt.co.jp, dm-devel@redhat.com, vst@vlnb.net, rwheeler@redhat.com, hare@suse.de, neilb@suse.de, rusty@rustcorp.com.au, mst@redhat.com, jeremy@goop.org, snitzer@redhat.com, k-ueda@ct.jp.nec.com, Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-Switch busy loops from using msleep(1) to cpu_relax().
+On Tue 31-08-10 10:11:34, Tejun Heo wrote:
+> On 08/30/2010 10:20 PM, Jan Kara wrote:
+> >   My setup is that I have a dedicated partition / drive for a filesystem
+> > which is written to from a guest kernel running under KVM. I have set it up
+> > using virtio driver with cache=writeback so that the host caches the writes
+> > in a similar way disk caches them. At some point I just kill the qemu-kvm
+> > process and at that point I'd like to also throw away data cached by the
+> > host...
+> 
+> $ echo 1 > /sys/block/sdX/device/delete
+> $ echo - - - > /sys/class/scsi_host/hostX/scan
+> 
+> should do the trick.
+  I've tested that when mounting with barrier=0 option inside KVM, this indeed
+does destroy the filesystem rather badly. With the barrier option, ext4 has
+already survived several crash cycles while running fsstress with
+journal_async_commit option. So the patch seems to work as expected.
 
-Any improvement is negligible given the rare nature of these busy wait
-conditions -- but cpu_relax() is considered the more polite method to
-use for busy loops.
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-snap.c  |    6 +++---
- drivers/md/dm-table.c |    2 +-
- drivers/md/dm.c       |    2 +-
- 3 files changed, 5 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index eed2101..d1f44c1 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -264,12 +264,12 @@ static int __chunk_is_tracked(struct dm_snapshot *s, chunk_t chunk)
- 
- /*
-  * This conflicting I/O is extremely improbable in the caller,
-- * so msleep(1) is sufficient and there is no need for a wait queue.
-+ * so cpu_relax() is sufficient and there is no need for a wait queue.
-  */
- static void __check_for_conflicting_io(struct dm_snapshot *s, chunk_t chunk)
- {
- 	while (__chunk_is_tracked(s, chunk))
--		msleep(1);
-+		cpu_relax();
- }
- 
- /*
-@@ -1302,7 +1302,7 @@ static void snapshot_dtr(struct dm_target *ti)
- 	unregister_snapshot(s);
- 
- 	while (atomic_read(&s->pending_exceptions_count))
--		msleep(1);
-+		cpu_relax();
- 	/*
- 	 * Ensure instructions in mempool_destroy aren't reordered
- 	 * before atomic_read.
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index f9fc07d..2955d46 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -245,7 +245,7 @@ void dm_table_destroy(struct dm_table *t)
- 		return;
- 
- 	while (atomic_read(&t->holders))
--		msleep(1);
-+		cpu_relax();
- 	smp_mb();
- 
- 	/* free the indexes */
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index f934e98..4e699e4 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2228,7 +2228,7 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
- 	 */
- 	if (wait)
- 		while (atomic_read(&md->holders))
--			msleep(1);
-+			cpu_relax();
- 	else if (atomic_read(&md->holders))
- 		DMWARN("%s: Forcibly removing mapped_device still in use! (%d users)",
- 		       dm_device_name(md), atomic_read(&md->holders));
+									Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
