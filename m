@@ -1,145 +1,146 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools libmultipath/config.h libmulti ...
-Date: 8 Sep 2010 21:40:30 -0000
-Message-ID: <20100908214030.2514.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [REGRESSION][BISECTED] virtio-blk serial attribute causes guest to
+ hang [Was: Re: [PATCH UPDATED 4/5] dm: implement REQ_FLUSH/FUA support for
+ request-based dm]
+Date: Thu, 9 Sep 2010 11:26:58 -0400
+Message-ID: <20100909152658.GA8118@redhat.com>
+References: <20100902032246.GA31484@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="7AUc2qLy4jB3hD7Z"
+Return-path: <kvm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100902032246.GA31484@redhat.com>
+Sender: kvm-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Vivek Goyal <vgoyal@redhat.com>, ryanh@us.ibm.com, john.cooper@redhat.com, rusty@rustcorp.com.au, hch@infradead.org, kvm@vger.kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-09-08 21:40:30
 
-Modified files:
-	libmultipath   : config.h dict.c structs.h 
-	multipathd     : main.c 
+--7AUc2qLy4jB3hD7Z
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Log message:
-	fix for bz #574813.  There is a new default multipath configuration option,
-	"log_checker_err", setting this to "once" will cause multipathd to only log the
-	first path failure message at verbosity 2.  Further path failure messages are
-	logged at verbosity 3.
+On Wed, Sep 01 2010 at 11:22pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/config.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.12&r2=1.18.2.13
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/dict.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.17.2.14&r2=1.17.2.15
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/structs.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.7&r2=1.18.2.8
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.29&r2=1.69.2.30
+> On Wed, Sep 01 2010 at  2:59pm -0400,
+> Mike Snitzer <snitzer@redhat.com> wrote:
+> 
+> > My hope was that the request-based deadlock I'm seeing would disappear
+> > if that relaxed ordering patch wasn't applied.  Unfortunately, I still
+> > see the hang.
+> 
+> Turns out I can reproduce the hang on a stock 2.6.36-rc3 (without _any_
+> FLUSH+FUA patches)!
+> 
+> I'll try to pin-point the root cause but I think my test is somehow
+> exposing a bug in my virt setup.
 
---- multipath-tools/libmultipath/config.h	2010/09/03 20:59:14	1.18.2.12
-+++ multipath-tools/libmultipath/config.h	2010/09/08 21:40:29	1.18.2.13
-@@ -80,6 +80,7 @@
- 	int checker_timeout;
- 	int allow_queueing;
- 	int pg_prio_calc;
-+	int log_checker_err;
- 	uid_t uid;
- 	gid_t gid;
- 	mode_t mode;
---- multipath-tools/libmultipath/dict.c	2010/09/03 20:59:14	1.17.2.14
-+++ multipath-tools/libmultipath/dict.c	2010/09/08 21:40:30	1.17.2.15
-@@ -435,7 +435,24 @@
- 	return 0;
- }
- 	
-+static int
-+def_log_checker_err_handler(vector strvec)
-+{
-+	char * buff;
-+
-+	buff = set_value(strvec);
-+
-+	if (!buff)
-+		return 1;
- 
-+	if (strlen(buff) == 4 && !strcmp(buff, "once"))
-+		conf->log_checker_err = LOG_CHKR_ERR_ONCE;
-+	else if (strlen(buff) == 6 && !strcmp(buff, "always"))
-+		conf->log_checker_err = LOG_CHKR_ERR_ALWAYS;
-+
-+	free(buff);
-+	return 0;
-+}
- static int
- bindings_file_handler(vector strvec)
- {
-@@ -2004,6 +2021,14 @@
- }
- 
- static int
-+snprint_def_log_checker_err (char *buff, int len, void *data)
-+{
-+	if (conf->log_checker_err == LOG_CHKR_ERR_ONCE)
-+		return snprintf(buff, len, "once");
-+	return snprintf(buff, len, "always");
-+}
-+
-+static int
- snprint_def_bindings_file (char * buff, int len, void * data)
- {
- 	if (conf->bindings_file == NULL)
-@@ -2066,6 +2091,7 @@
- 	install_keyword("pg_timeout", &def_pg_timeout_handler, &snprint_def_pg_timeout);
- 	install_keyword("user_friendly_names", &names_handler, &snprint_def_user_friendly_names);
- 	install_keyword("pg_prio_calc", &def_pg_prio_calc_handler, &snprint_def_pg_prio_calc);
-+	install_keyword("log_checker_err", &def_log_checker_err_handler, &snprint_def_log_checker_err);
- 	install_keyword("bindings_file", &bindings_file_handler, &snprint_def_bindings_file);
- 	install_keyword("mode", &def_mode_handler, &snprint_def_mode);
- 	install_keyword("uid", &def_uid_handler, &snprint_def_uid);
---- multipath-tools/libmultipath/structs.h	2010/09/03 20:59:14	1.18.2.7
-+++ multipath-tools/libmultipath/structs.h	2010/09/08 21:40:30	1.18.2.8
-@@ -89,6 +89,11 @@
- 	PG_PRIO_CALC_AVG,
- };
- 
-+enum log_checker_err_states {
-+	LOG_CHKR_ERR_ALWAYS,
-+	LOG_CHKR_ERR_ONCE,
-+};
-+
- struct scsi_idlun {
- 	int dev_id;
- 	int host_unique_id;
---- multipath-tools/multipathd/main.c	2010/09/01 18:29:18	1.69.2.29
-+++ multipath-tools/multipathd/main.c	2010/09/08 21:40:30	1.69.2.30
-@@ -74,7 +74,10 @@
- #define CALLOUT_DIR "/var/cache/multipathd"
- 
- #define LOG_MSG(a,b) \
--	if (strlen(b)) condlog(a, "%s: %s", pp->dev, b);
-+do { \
-+	if (strlen(b)) \
-+		condlog(a, "%s: %s", pp->dev, b); \
-+} while(0)
- 
- pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
- pthread_mutex_t exit_mutex = PTHREAD_MUTEX_INITIALIZER;
-@@ -1111,8 +1114,12 @@
- 				condlog(4, "%s: delay next check %is",
- 						pp->dev_t, pp->tick);
- 			}
--			else if (newstate == PATH_DOWN)
--				LOG_MSG(2, checker_message(&pp->checker));
-+			else if (newstate == PATH_DOWN) {
-+				if (conf->log_checker_err == LOG_CHKR_ERR_ONCE)
-+					LOG_MSG(3, checker_message(&pp->checker));
-+				else
-+					LOG_MSG(2, checker_message(&pp->checker));
-+			}
- 
- 			pp->state = newstate;
- 
+[my virt setup == single kvm guest (RHEL6) with F13 host]
+
+My gut turned out to be correct.  I finally tracked down the regression
+point to the following commit (cc'ing appropriate people):
+
+commit a5eb9e4ff18a33e43557d44b205f953b0c1efade
+Author: Ryan Harper <ryanh@us.ibm.com>
+Date:   Wed Jun 23 22:19:57 2010 -0500
+
+    virtio_blk: Add 'serial' attribute to virtio-blk devices (v2)
+    
+    Create a new attribute for virtio-blk devices that will fetch the serial number
+    of the block device.  This attribute can be used by udev to create disk/by-id
+    symlinks for devices that don't have a UUID (filesystem) associated with them.
+    
+    ATA_IDENTIFY strings are special in that they can be up to 20 chars long
+    and aren't required to be nul-terminated.  The buffer is also zero-padded
+    meaning that if the serial is 19 chars or less that we get a nul-terminated
+    string.  When copying this value into a string buffer, we must be careful to
+    copy up to the nul (if it present) and only 20 if it is longer and not to
+    attempt to nul terminate; this isn't needed.
+    
+    Changes since v1:
+    - Added BUILD_BUG_ON() for PAGE_SIZE check
+    - Removed min() since BUILD_BUG_ON() handles the check
+    - Replaced serial_sysfs() by copying id directly to buffer
+    
+    Signed-off-by: Ryan Harper <ryanh@us.ibm.com>
+    Signed-off-by: john cooper <john.cooper@redhat.com>
+    Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
+
+So the first released kernel to have this regression is 2.6.36-rc1.
+
+Some background:
+I have been working with Tejun to test the barrier to FLUSH+FUA
+conversion patchset.  I crafted the attached script to test the DM
+changes that are part of the FLUSH+FUA patchset.
+
+Using this script with:
+while true ; do ./test_dm_discard_mpath_scsi_debug.sh ; done
+
+I can reliably trigger the following hang, always on the 5th iteration
+in my testing, IFF commit a5eb9e4ff18a33e43557d44b205f953b0c1efade is
+applied:
+
+INFO: task lvcreate:2484 blocked for more than 120 seconds.
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this
+message.
+lvcreate      D 0000000100064871  4960  2484   2350 0x00000080
+ ffff88007b87b978 0000000000000046 ffff88007b87b8e8 ffff880000000000
+ ffff88007b87bfd8 ffff8800724fa400 00000000001d4040 ffff88007b87bfd8
+ 00000000001d4040 00000000001d4040 00000000001d4040 00000000001d4040
+Call Trace:
+ [<ffffffff8136de23>] io_schedule+0x73/0xb5
+ [<ffffffff811b6882>] get_request_wait+0xf2/0x180
+ [<ffffffff8105d8da>] ? autoremove_wake_function+0x0/0x39
+ [<ffffffff811b6deb>] __make_request+0x310/0x434
+ [<ffffffff811b5442>] generic_make_request+0x2f1/0x36e
+ [<ffffffff81062f78>] ? cpu_clock+0x43/0x5e
+ [<ffffffff811b559d>] submit_bio+0xde/0xfb
+ [<ffffffff8106e459>] ? trace_hardirqs_on+0xd/0xf
+ [<ffffffff81129332>] dio_bio_submit+0x7b/0x9c
+ [<ffffffff8112939d>] dio_send_cur_page+0x4a/0xb0
+ [<ffffffff81129f1c>] __blockdev_direct_IO_newtrunc+0x7c5/0x97d
+ [<ffffffff81127f4f>] blkdev_direct_IO+0x57/0x59
+ [<ffffffff81127080>] ? blkdev_get_blocks+0x0/0x90
+ [<ffffffff810c2eee>] generic_file_aio_read+0xed/0x5b4
+ [<ffffffff810d70d4>] ? might_fault+0x5c/0xac
+ [<ffffffff810242bd>] ? pvclock_clocksource_read+0x50/0xb9
+ [<ffffffff81100813>] do_sync_read+0xcb/0x108
+ [<ffffffff8136e5ad>] ? __mutex_unlock_slowpath+0x119/0x12b
+ [<ffffffff8106e428>] ? trace_hardirqs_on_caller+0x11d/0x141
+ [<ffffffff8106e459>] ? trace_hardirqs_on+0xd/0xf
+ [<ffffffff8118cae7>] ? security_file_permission+0x16/0x18
+ [<ffffffff81100e7a>] vfs_read+0xab/0x108
+ [<ffffffff8106e428>] ? trace_hardirqs_on_caller+0x11d/0x141
+ [<ffffffff81100f97>] sys_read+0x4a/0x6e
+ [<ffffffff81002bf2>] system_call_fastpath+0x16/0x1b
+no locks held by lvcreate/2484.
+
+
+lvcreate is just the first victim (sometimes it is the vgcreate).  But
+if the guest is left running other new processes get hung with
+comparable traces (w/ get_request_wait).  Until eventually the guest is
+completely unresponsive.
+
+Mike
+
+--7AUc2qLy4jB3hD7Z
+Content-Type: application/x-sh
+Content-Disposition: attachment; filename="test_dm_discard_mpath_scsi_debug.sh"
+Content-Transfer-Encoding: quoted-printable
+
+#!/bin/bash=0A=0Aset -xv=0A=0AMNTPT=3D/mnt/test=0A=0Aumount $MNTPT=0Avgchan=
+ge -an=0Asleep 1=0Amultipath -F=0A/etc/init.d/multipathd stop=0A=0Amodprobe=
+ -r scsi_debug=0Asleep 1=0A=0A# 4K/4K -- UNMAP=0Amodprobe scsi_debug dev_si=
+ze_mb=3D100 unmap_max_desc=3D16 unmap_granularity=3D2048 sector_size=3D4096=
+=0A# 512K=0A#modprobe scsi_debug dev_size_mb=3D100 unmap_max_desc=3D16 unma=
+p_granularity=3D2048=0A=0A/etc/init.d/multipathd restart=0Asleep 3=0Amultip=
+ath -ll=0A=0ADEVICE=3D/dev/mapper/`multipath -ll | grep scsi_debug | cut -d=
+' ' -f1`=0A=0Alvremove discard_vg/lv=0Avgremove discard_vg=0Apvremove $DEVI=
+CE=0A=0Apvcreate $DEVICE=0Avgcreate discard_vg $DEVICE=0Alvcreate -L 96M -n=
+ lv discard_vg=0Alvchange -ay discard_vg/lv=0Amkfs.ext4 -b 4096 /dev/discar=
+d_vg/lv =0Amount -o discard /dev/discard_vg/lv $MNTPT=0A=0Async=0A=0Add if=
+=3D/dev/zero of=3D${MNTPT}/hmm bs=3D384k oflag=3Ddirect count=3D1=0Async; s=
+ync=0Afilefrag -v ${MNTPT}/hmm=0A=0Arm -f ${MNTPT}/hmm; sync; sync=0A=0Asle=
+ep 5=0A
+--7AUc2qLy4jB3hD7Z--
