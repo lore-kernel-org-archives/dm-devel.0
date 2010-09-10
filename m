@@ -1,11 +1,11 @@
-From: Sethuraman Subbiah <ssubbia2@ncsu.edu>
-Subject: Help ! : device-mapper: reload ioctl failed: Invalid
-	argument
-Date: Thu, 16 Sep 2010 19:08:03 -0400
-Message-ID: <AANLkTi=jPyz77ZSC64w6K_vHYU1JxsNjooY1PECNO_F8@mail.gmail.com>
+From: Philip Vossler <philvossler@googlemail.com>
+Subject: OT: device mapper development/testing.
+Date: Fri, 10 Sep 2010 20:04:40 +0100
+Message-ID: <AANLkTi=1ZTOodvDAnF4FNR0+GAv2rTGhpnB-+99H5afC@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7331936917291961112=="
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,78 +19,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============7331936917291961112==
-Content-Type: multipart/alternative; boundary=0016e64ca94e6ed86c04906886a3
+Is there any way I can assist in the development of device mapper
+(particularly dmraid)? I have limited programming skills - I am a Test
+Engineer primarily involved with hardware working for a small computer
+company that manufactures a variety of  systems.
 
---0016e64ca94e6ed86c04906886a3
-Content-Type: text/plain; charset=ISO-8859-1
+I have used and supported the use of Linux for some time. I have
+access to a wide range of hardware mostly based on Intel cpu's and
+chipsets.
 
-Hi ,
+If there is anyway I can contribute by testing software on a variety
+of hardware please email me off list. I would very much like to put
+something back into Linux as I have benefited in so many ways from
+it's availability.
 
-This is Sethuraman Subbiah , a student at NCState. I installed DM-IOBAND. I
-needed that for a project.
+(I only wish I had the time to furher develop my limited programming
+skills in order to be of greater use to the community)
 
-I downloaded a kernel module binary and used insmod to insert the module. It
-worked and i did modprobe.
+Sincerely
 
-When I gave dmsetup targets | grep ioband
-I got ioband v1.14.0
+Phil Vossler
+-- =
 
-It was fine till that step.
-
-When I try to associate /dev/sda3 with ioband1 :
-
-echo "0 $(blockdev --getsize /dev/sda3) ioband /dev/sda3 1 0 0 none weight 0
-:40" | dmsetup create ioband1
-
-I keep getting this error :
-device-mapper: reload ioctl failed: Invalid argument
-Command failed
-
-
-Can someone help me out ? Thanks !
-
--
-Regards,
-Sethuraman Subbiah
-
-Graduate Student - NC state University
-M.S in Computer Science
-
---0016e64ca94e6ed86c04906886a3
-Content-Type: text/html; charset=ISO-8859-1
-
-Hi , <br>
-<br>
-This is Sethuraman Subbiah , a student at NCState. I installed DM-IOBAND. I needed that for a project. <br>
-<br>
-I downloaded a kernel module binary and used insmod to insert the module. It worked and i did modprobe. <br>
-<br>
-When I gave dmsetup targets | grep ioband <br>
-I got ioband    v1.14.0<br>
-<br>
-It was fine till that step. <br>
-<br>
-When I try to associate /dev/sda3 with ioband1 : <br>
-<br>
-echo &quot;0 $(blockdev --getsize /dev/sda3) ioband /dev/sda3 1 0 0 none weight 0 :40&quot; | dmsetup create ioband1<br>
-<br>
-I keep getting this error : <br>
-device-mapper: reload ioctl failed: Invalid argument<br>
-Command failed<br>
-<br>
-<br>
-Can someone help me out ? Thanks !<br>
-<br>-<br>Regards,<br>Sethuraman Subbiah<br><br>Graduate Student - NC state University<br>M.S in Computer Science<br>
-
---0016e64ca94e6ed86c04906886a3--
-
-
---===============7331936917291961112==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7331936917291961112==--
+"of all the paths you choose in life,
+=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 make sure some of them are dirt..."
