@@ -1,50 +1,51 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 23/41] dm: implement REQ_FLUSH/FUA support for bio-based
- dm
-Date: Mon, 13 Sep 2010 15:01:38 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1009131456100.14720@hs20-bc2-1.build.redhat.com>
-References: <1283509796-1510-1-git-send-email-tj@kernel.org>
- <1283509796-1510-24-git-send-email-tj@kernel.org>
- <Pine.LNX.4.64.1009101410570.7839@hs20-bc2-1.build.redhat.com>
- <20100910184652.GA24470@redhat.com> <Pine.LNX.4.64.1009101456220.21834@hs20-bc2-1.build.redhat.com>
- <20100910192403.GA24582@redhat.com> <Pine.LNX.4.64.1009101554300.5286@hs20-bc2-1.build.redhat.com>
- <4C8AC0F5.5080206@kernel.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 23/41] dm: implement REQ_FLUSH/FUA support
+ for bio-based dm
+Date: Mon, 13 Sep 2010 16:54:31 -0400
+Message-ID: <20100913205431.GA12374@redhat.com>
+References: <Pine.LNX.4.64.1009101456220.21834@hs20-bc2-1.build.redhat.com>
+	<20100910192403.GA24582@redhat.com>
+	<Pine.LNX.4.64.1009101554300.5286@hs20-bc2-1.build.redhat.com>
+	<4C8AC0F5.5080206@kernel.org> <20100911014612.GA26517@redhat.com>
+	<Pine.LNX.4.64.1009110500070.27949@hs20-bc2-1.build.redhat.com>
+	<20100911132102.GA29631@redhat.com>
+	<Pine.LNX.4.64.1009111251470.22177@hs20-bc2-1.build.redhat.com>
+	<20100911201758.GB31324@redhat.com>
+	<Pine.LNX.4.64.1009131424020.14720@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <4C8AC0F5.5080206@kernel.org>
-Sender: linux-ide-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, jaxboe@fusionio.com, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, hch@lst.de, konishi.ryusuke@lab.ntt.co.jp, James.Bottomley@suse.de, tytso@mit.edu, chris.mason@oracle.com, swhiteho@redhat.com, vst@vlnb.net, jack@suse.cz, rwheeler@redhat.com, hare@suse.de, neilb@suse.de, rusty@rustcorp.com.au, mst@redhat.com, k-ueda@ct.jp.nec.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1009131424020.14720@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Tejun Heo <tj@kernel.org>, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
+On Mon, Sep 13 2010 at  2:55pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
+> But I think the correct solution would be to take the other patches 
+> (except the first essential one to make it compile & work) from Tejun's 
+> tree and put them to Alasdair's tree, so that it undergoes some review 
+> from us. I think there are some things that need consideration.
 
-On Sat, 11 Sep 2010, Tejun Heo wrote:
+If you could enumerate these things that'd be helpful.
 
-> On 09/10/2010 10:06 PM, Mikulas Patocka wrote:
-> > But I have my work rules that I learned: I use no git kernels and no 
-> > external patches (except Alasdair's patchset that I want to test). I only 
-> > use -rc or final kernels. I need a stable computer --- I don't want to 
-> > solve problems like "does it crash because I pulled something or does it 
-> > crash because I made a bug in my code?" So, put that into 2.6.37-rc1 and 
-> > I'll optimize flushes in dm for -rc2 or -rc3.
-> 
-> Alright, I'm sorry but this is as far as I would go for dm conversion
-> patches.  If you wanna split it further or do it your way, please feel
-> free to.  I think it would be beneficial to do things now but, hey,
-> you guys are maintaining dm part of the kernel, so it's up to you
-> guys.  But, I think it would be silly for everyone else to wait for
-> the rather special requirement for dm, so if we have to go forward
-> without dm updates, I suppose we will have to.  Jens, please feel free
-> to drop dm conversion patches.
-> 
-> Thanks.
-> -- 
-> tejun
+The current plan, based on discussion from today's lvm call, is to
+continue with the existing patches that are now staged in Jens' block
+tree.  If flaw(s) are found with some aspect of the current patches
+we'll obviously work to fix them.
 
-I think: take the first patch and submit it on your own, and send the rest 
-of patches to Alasdair to his tree. If I get such big patches I am unable 
-to immediatelly say if they are correct or not.
-
-Mikulas
+Thanks,
+Mike
