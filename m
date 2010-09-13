@@ -1,95 +1,65 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: i_size misuses
-Date: Sun, 12 Sep 2010 08:05:43 +1000
-Message-ID: <20100912080543.34650074@notabene>
-References: <Pine.LNX.4.64.1009080833180.16126@hs20-bc2-1.build.redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: Combined storage tree
+Date: Mon, 13 Sep 2010 12:58:07 +1000
+Message-ID: <20100913025807.GD411@dastard>
+References: <1284143247.6551.23.camel@mulgrave.site>
+ <20100911082054.GF705@dastard>
+ <1284213316.2986.7.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1009080833180.16126@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, jaxboe@fusionio.com, Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1284213316.2986.7.camel@mulgrave.site>
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@suse.de>
+Cc: linux-scsi <linux-scsi@vger.kernel.org>, linux-ide <linux-ide@vger.kernel.org>, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-kernel <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, 8 Sep 2010 09:32:13 -0400 (EDT)
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Sat, Sep 11, 2010 at 08:55:16AM -0500, James Bottomley wrote:
+> On Sat, 2010-09-11 at 18:20 +1000, Dave Chinner wrote:
+> > On Fri, Sep 10, 2010 at 01:27:27PM -0500, James Bottomley wrote:
+> > > One of the requests from LSF10 in August was the production of a
+> > > combined storage tree.  This is now ready at
+> > > 
+> > > git://git.kernel.org/pub/scm/linux/kernel/git/jejb/storage-tree
+> > > 
+> > > It's actually a nightly built merge tree consisting of
+> > > 
+> > > scsi-misc; scsi-rc-fixes
+> > > libata#upstream-fixes, libata#upstream
+> > > block#for-linus, block#for-next
+> > > and the dm quilt (which is empty at the moment).
+> > > 
+> > > I haven't yet added vfs or any of the fs trees, but if necessary, I can.
+> > > 
+> > > Note, because it's built nightly, like linux-next, it's hard (but not
+> > > impossible) to use it as a basis for git trees (it is much easier to use
+> > > it as a basis for quilts).
+> > 
+> > Hmmm. I was kind of hoping for an upstream maintainer tree, kind of
+> > like the netdev tree.  I really don't see a tree like this getting
+> > wide use - if I enjoyed the pain of rebasing against throw-away
+> > merge trees every day, then I'd already be using linux-next....
+> 
+> Well, to be honest, that's what people wanted when the issue was raised
+> at LSF10.  However, unlike net, storage has never had a single
+> maintainer, so it's a bit more political than just doing that by fiat,
 
-> Hi
-> 
-> when reviewing some i_size problem, I searched the kernel for i_size usage 
-> (the variable should really be written with i_size_write and read with 
-> i_size_read).
-> 
-> Properly locked direct use of "i_size" inside memory management or 
-> filesystems may not be a problem, but there are many problems in general 
-> code outside mm.
-> 
-> The misuses are:
-> SOUND/SOUND_FIRMWARE.C:l = filp->f_path.dentry->d_inode->i_size;
-> KERNEL/RELAY.C:buf->dentry->d_inode->i_size = buf->early_bytes;
-> KERNEL/RELAY.C:buf->dentry->d_inode->i_size += buf->chan->subbuf_size 
-> -buf->padding[old_subbuf];
-> DRIVERS/USB/CORE/INODE.C:dev->usbfs_dentry->d_inode->i_size = i_size;
-> DRIVERS/MTD/DEVICES/BLOCK2MTD.C:dev->mtd.size = 
-> dev->blkdev->bd_inode->i_size & PAGE_MASK;
-> DRIVERS/MD/MD.C: many reads of i_size 
-> DRIVERS/BLOCK/NBD.C: many writes to i_size without i_size_write
-> DRIVERS/BLOCK/DRBD/DRBD_INT.H: return bdev ? bdev->bd_inode->i_size >> 9 : 0;
-> DRIVERS/BLOCK/DRBD/DRBD_WRAPPERS.H: mdev->this_bdev->bd_inode->i_size = 
-> (loff_t)size << 9;
-> BLOCK/BLK-CORE.C:printk(KERN_INFO "%s: rw=%ld, want=%Lu, limit=%Lu\n",
->                 bdevname(bio->bi_bdev, b),
->                 bio->bi_rw,
->                 (unsigned long long)bio->bi_sector + bio_sectors(bio),
->                 (long long)(bio->bi_bdev->bd_inode->i_size >> 9));
-> maxsector = bio->bi_bdev->bd_inode->i_size >> 9;
-> BLOCK/COMPAT_IOCTL.C: size = bdev->bd_inode->i_size;
-> return compat_put_u64(arg, bdev->bd_inode->i_size);
-> BLOCK/IOCTL.C: if (start + len > (bdev->bd_inode->i_size >> 9))
-> size = bdev->bd_inode->i_size;
-> return put_u64(arg, bdev->bd_inode->i_size);
-> 
-> The problem with this code is that if you read i_size without i_size_read 
-> and the size wraps around 32 bits, for example from 0xffffffff to 
-> 0x100000000 , there is a possibility on 32-bit machines to read an invalid 
-> value (either 0 or 0x1ffffffff). Similarly, if you write i_size without 
-> i_size_write, the readers can see intermediate invalid values.
-> 
-> 
-> The original problem that caused this investigation is the question, how a 
-> block device driver can change the size of its device. Normal method (used 
-> in a few drivers, including dm), consists of
-> mutex_lock(&inode->i_mutex);
-> i_size_write(inode, new_size);
-> mutex_unlock(&inode->i_mutex);
+Bah. Technical arguments win here, not politics. Besides, what
+possible political concern can anyone have about using a different
+upstream tree for development? A storage maintainer tree would not
+replace anyone's little fiefdom; what we need is an integration point
+long before stuff gets to Linus....
 
-Don't you just do
+> plus not all of the current maintainers with storage trees were there.
 
-  set_capacity(gendisk, sectors);
-  revalidate(gendisk);
+If that's the barrier to discussion, then where else but a dedicated
+storage workshop are you going to get a more representative sample
+of storage developers in the same room?
 
-??
+Cheers,
 
-NeilBrown
-
-> 
-> This is deadlock-prone, because i_mutex is also held on fsync path. 
-> Therefore, this deadlock happens: fsync takes i_mutex and issues I/Os, 
-> block device driver wants to change its size, so it waits on i_mutex, 
-> the I/Os wait until the device driver did its internal maintenance and 
-> changed the inode size. The driver doesn't change the size until fsync 
-> finished.
-> 
-> Jens, as a block maintainer, please think about it and propose some 
-> specification how to clean this up. Also a clean verifiable rule regarding 
-> i_size should be specified and the code should be fixed to conform to the 
-> rule: maybe we could rename i_size to __i_size and ban its using.
-> 
-> Mikulas
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
