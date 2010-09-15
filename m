@@ -1,60 +1,59 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults libm ...
-Date: 14 Sep 2010 19:42:38 -0000
-Message-ID: <20100914194238.9633.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: new "multi-version snapshot target" [was: Re: [PATCH] vfs: calculate
+ block-size correctly]
+Date: Wed, 15 Sep 2010 10:20:29 -0400
+Message-ID: <AANLkTinpFpAdiU=kNTmL4FNn4kTyRUiVcKxnq=mi2O2D@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: McPacino <mcpacino@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@lst.de>, Nick Piggin <npiggin@kernel.dk>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-09-14 19:42:38
+On Wed, Sep 15, 2010 at 4:14 AM, McPacino <mcpacino@gmail.com> wrote:
+> On Tue, Sep 14, 2010 at 7:09 AM, Andrew Morton
+> <akpm@linux-foundation.org> wrote:
+>>
+>> On Wed, 8 Sep 2010 18:07:10 +0800
+>> Cong Meng <mcpacino@gmail.com> wrote:
+>>
+>> > I sent this patch half mount ago, but no response at all. If anyth=
+ing is
+>> > wrong, please tell me. Thanks a lots. This is my first time to sen=
+d patch
+>> > to linux kernel.
+>> >
+>> > The invocation of __getblk(bdev, block, size) will cause kernel st=
+all if
+>> > the @size parameter is not equal to the blockr-size of @bdev, whic=
+h is saved
+>> > in bdev->bd_inode->i_blkbits.
+>> >
+>> > submit_bh() has the similar problem.
+>> >
+>> > This patch calculates the block-size using i_blkbits.
+>> > So that, for example, __getblk() can get a 4K buffer head while th=
+e
+>> > block-size of @bdev is 1K.
+>> >
+>>
+>> This comes up every couple of years and iirc we always decided that
+>> it's a bug in the calling code somewhere. =A0How did you hit it?
+>>
+>
+> I am working on a new multi-version snapshot target module for device=
+-mapper
+> which is almost done.
 
-Modified files:
-	.              : multipath.conf.defaults 
-	libmultipath   : hwtable.c 
+And you hope to have this code included upstream?  Do you intend to
+post your patches to dm-devel?
 
-Log message:
-	Fix for bz #580729.  Removed the /bin/true prio callout.  It works the same as
-	not having one, and it's not statically compiled, and thus can cause problems on
-	RHEL 5.
-
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.25&r2=1.5.4.26
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.31&r2=1.20.2.32
-
---- multipath-tools/multipath.conf.defaults	2010/09/03 22:23:22	1.5.4.25
-+++ multipath-tools/multipath.conf.defaults	2010/09/14 19:42:37	1.5.4.26
-@@ -89,7 +89,6 @@
- #		vendor			"HP"
- #		product			"MSA2[02]12fc|MSA2012i"
- #		getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
--#		prio_callout		"/bin/true"    
- #		features		"0"
- #		hardware_handler	"0"
- #		path_grouping_policy	multibus 
---- multipath-tools/libmultipath/hwtable.c	2010/09/03 03:46:12	1.20.2.31
-+++ multipath-tools/libmultipath/hwtable.c	2010/09/14 19:42:37	1.20.2.32
-@@ -127,7 +127,7 @@
- 		.vendor        = "HP",
- 		.product       = "MSA2[02]12fc|MSA2012i",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/bin/true",
-+		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
+Thanks,
+Mike
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
