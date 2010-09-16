@@ -1,41 +1,96 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Is it deliberate that the device mapper is not passing the
- DISCARD ioctls
-Date: Tue, 21 Sep 2010 15:47:16 -0400
-Message-ID: <AANLkTinuaJnKe21m7Pu9ht0+swE8zZQOSO==myWc=08X@mail.gmail.com>
-References: <E1OxgCu-0000XW-29@tytso-glaptop> <alpine.LFD.2.00.1009211232010.3008@dhcp-lab-213.englab.brq.redhat.com>
+From: Sethuraman Subbiah <ssubbia2@ncsu.edu>
+Subject: Help ! : device-mapper: reload ioctl failed: Invalid
+	argument
+Date: Thu, 16 Sep 2010 19:08:03 -0400
+Message-ID: <AANLkTi=jPyz77ZSC64w6K_vHYU1JxsNjooY1PECNO_F8@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.00.1009211232010.3008@dhcp-lab-213.englab.brq.redhat.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Lukas Czerner <lczerner@redhat.com>
-Cc: Theodore Ts'o <tytso@mit.edu>, linux-ext4@vger.kernel.org, dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="===============7331936917291961112=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Sep 21, 2010 at 6:42 AM, Lukas Czerner <lczerner@redhat.com> wrote:
-> On Mon, 20 Sep 2010, Theodore Ts'o wrote:
->
->> Hi there,
->>
->> I was just testing discard support in mke2fs, and I was surprised that
->> although the dm layer appears to pass discard requests through to the
->> underlying block device driver when submitted through the bio layer
->> (i.e., from kernel file systems), apparently the discard ioctls (i.e.,
->> BLKDISCARD, BLKDISCARDSEC, BLKDISCARDZEROES) are not currently wired up
->> in the dm layer.
->>
->> Is this deliberate, or an oversight?
->>
->> Thanks, regards,
->
-> Hi Ted,
->
-> I have tested this with 2.6.35 and it really did not work for me as
-> well, but with 2.6.36-rc5 (latests kernel) it works just fine. Though,
-> not sure when it was added. But according to the log it seems it was
-> merged in with 8357422d4bf33bc2c35884d4016c3fc9efbbc1d2.
+--===============7331936917291961112==
+Content-Type: multipart/alternative; boundary=0016e64ca94e6ed86c04906886a3
 
-Makes sense, DM's discard support was added during the 2.6.36 merge window.
+--0016e64ca94e6ed86c04906886a3
+Content-Type: text/plain; charset=ISO-8859-1
 
-Mike
+Hi ,
+
+This is Sethuraman Subbiah , a student at NCState. I installed DM-IOBAND. I
+needed that for a project.
+
+I downloaded a kernel module binary and used insmod to insert the module. It
+worked and i did modprobe.
+
+When I gave dmsetup targets | grep ioband
+I got ioband v1.14.0
+
+It was fine till that step.
+
+When I try to associate /dev/sda3 with ioband1 :
+
+echo "0 $(blockdev --getsize /dev/sda3) ioband /dev/sda3 1 0 0 none weight 0
+:40" | dmsetup create ioband1
+
+I keep getting this error :
+device-mapper: reload ioctl failed: Invalid argument
+Command failed
+
+
+Can someone help me out ? Thanks !
+
+-
+Regards,
+Sethuraman Subbiah
+
+Graduate Student - NC state University
+M.S in Computer Science
+
+--0016e64ca94e6ed86c04906886a3
+Content-Type: text/html; charset=ISO-8859-1
+
+Hi , <br>
+<br>
+This is Sethuraman Subbiah , a student at NCState. I installed DM-IOBAND. I needed that for a project. <br>
+<br>
+I downloaded a kernel module binary and used insmod to insert the module. It worked and i did modprobe. <br>
+<br>
+When I gave dmsetup targets | grep ioband <br>
+I got ioband    v1.14.0<br>
+<br>
+It was fine till that step. <br>
+<br>
+When I try to associate /dev/sda3 with ioband1 : <br>
+<br>
+echo &quot;0 $(blockdev --getsize /dev/sda3) ioband /dev/sda3 1 0 0 none weight 0 :40&quot; | dmsetup create ioband1<br>
+<br>
+I keep getting this error : <br>
+device-mapper: reload ioctl failed: Invalid argument<br>
+Command failed<br>
+<br>
+<br>
+Can someone help me out ? Thanks !<br>
+<br>-<br>Regards,<br>Sethuraman Subbiah<br><br>Graduate Student - NC state University<br>M.S in Computer Science<br>
+
+--0016e64ca94e6ed86c04906886a3--
+
+
+--===============7331936917291961112==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============7331936917291961112==--
