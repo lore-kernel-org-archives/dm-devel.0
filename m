@@ -1,64 +1,48 @@
-From: McPacino <mcpacino@gmail.com>
-Subject: Re: new "multi-version snapshot target" [was: Re: [PATCH] vfs:
- calculate block-size correctly]
-Date: Wed, 15 Sep 2010 23:44:03 +0800
-Message-ID: <AANLkTinJ4nDfSKTPoN=OXDR+tUum8KjPQy-ZrmoE=5UM@mail.gmail.com>
-References: <AANLkTinpFpAdiU=kNTmL4FNn4kTyRUiVcKxnq=mi2O2D@mail.gmail.com>
+From: Ryan Harper <ryanh@us.ibm.com>
+Subject: Re: [PATCH] virtio-blk: put request that was created to retrieve the device id
+Date: Fri, 17 Sep 2010 09:58:48 -0500
+Message-ID: <20100917145848.GK30086@us.ibm.com>
+References: <20100909155726.GA9081@redhat.com> <20100909160324.GJ30086@us.ibm.com> <20100909175537.GA9589@redhat.com> <20100909183554.GK30086@us.ibm.com> <20100909191555.GA14486@redhat.com> <20100909194300.GA16908@redhat.com> <20100909201445.GA19656@redhat.com> <20100909203052.GL30086@us.ibm.com> <20100909210042.GA22092@redhat.com> <20100909211504.GA24506@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <AANLkTinpFpAdiU=kNTmL4FNn4kTyRUiVcKxnq=mi2O2D@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@lst.de>, Nick Piggin <npiggin@kernel.dk>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <kvm-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100909211504.GA24506@infradead.org>
+Sender: kvm-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Mike Snitzer <snitzer@redhat.com>, Ryan Harper <ryanh@us.ibm.com>, Tejun Heo <tj@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Vivek Goyal <vgoyal@redhat.com>, john.cooper@redhat.com, rusty@rustcorp.com.au, kvm@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Sep 15, 2010 at 10:20 PM, Mike Snitzer <snitzer@redhat.com> wro=
-te:
-> On Wed, Sep 15, 2010 at 4:14 AM, McPacino <mcpacino@gmail.com> wrote:
->> On Tue, Sep 14, 2010 at 7:09 AM, Andrew Morton
->> <akpm@linux-foundation.org> wrote:
->>>
->>> On Wed, 8 Sep 2010 18:07:10 +0800
->>> Cong Meng <mcpacino@gmail.com> wrote:
->>>
->>> > I sent this patch half mount ago, but no response at all. If anyt=
-hing is
->>> > wrong, please tell me. Thanks a lots. This is my first time to se=
-nd patch
->>> > to linux kernel.
->>> >
->>> > The invocation of __getblk(bdev, block, size) will cause kernel s=
-tall if
->>> > the @size parameter is not equal to the blockr-size of @bdev, whi=
-ch is saved
->>> > in bdev->bd_inode->i_blkbits.
->>> >
->>> > submit_bh() has the similar problem.
->>> >
->>> > This patch calculates the block-size using i_blkbits.
->>> > So that, for example, __getblk() can get a 4K buffer head while t=
-he
->>> > block-size of @bdev is 1K.
->>> >
->>>
->>> This comes up every couple of years and iirc we always decided that
->>> it's a bug in the calling code somewhere. =A0How did you hit it?
->>>
->>
->> I am working on a new multi-version snapshot target module for devic=
-e-mapper
->> which is almost done.
->
-> And you hope to have this code included upstream? =A0Do you intend to
-> post your patches to dm-devel?
->
+* Christoph Hellwig <hch@infradead.org> [2010-09-09 16:18]:
+> On Thu, Sep 09, 2010 at 05:00:42PM -0400, Mike Snitzer wrote:
+> > diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+> > index 1260628..831e75c 100644
+> > --- a/drivers/block/virtio_blk.c
+> > +++ b/drivers/block/virtio_blk.c
+> > @@ -199,6 +199,7 @@ static int virtblk_get_id(struct gendisk *disk, char *id_str)
+> >  	struct virtio_blk *vblk = disk->private_data;
+> >  	struct request *req;
+> >  	struct bio *bio;
+> > +	int err;
+> >  
+> >  	bio = bio_map_kern(vblk->disk->queue, id_str, VIRTIO_BLK_ID_BYTES,
+> >  			   GFP_KERNEL);
+> > @@ -212,7 +213,10 @@ static int virtblk_get_id(struct gendisk *disk, char *id_str)
+> >  	}
+> >  
+> >  	req->cmd_type = REQ_TYPE_SPECIAL;
+> > -	return blk_execute_rq(vblk->disk->queue, vblk->disk, req, false);
+> > +	err = blk_execute_rq(vblk->disk->queue, vblk->disk, req, false);
+> > +	blk_put_request(req);
+> 
+> This looks correct as far as the request is concerned, but we're still
+> leaking the bio.
 
-Of course, yes.
-The code is almost finished and is being tested.
-I will post it few weeks later if everything goes well.
+Since __bio_map_kern() sets up bio->bi_end_io = bio_map_kern_endio
+(which does a bio_put(bio)) doesn't that ensure we don't leak?
 
-> Thanks,
-> Mike
->
+-- 
+Ryan Harper
+Software Engineer; Linux Technology Center
+IBM Corp., Austin, Tx
+ryanh@us.ibm.com
