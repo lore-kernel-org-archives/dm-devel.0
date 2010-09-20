@@ -1,54 +1,50 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Is it deliberate that the device mapper is not passing the
- DISCARD ioctls
-Date: Mon, 20 Sep 2010 14:55:41 -0400
-Message-ID: <20100920185541.GA29770@redhat.com>
-References: <E1OxgCu-0000XW-29@tytso-glaptop>
- <20100920174043.GA29057@redhat.com>
+From: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: idr_get_new_exact ?
+Date: Mon, 20 Sep 2010 12:31:40 -0700
+Message-ID: <20100920123140.f524de79.akpm@linux-foundation.org>
+References: <AANLkTi=ZLupVyFR0e2v-TLpeNWdw1bVMZUAhgyxLJ7OV@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100920174043.GA29057@redhat.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: linux-ext4@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <AANLkTi=ZLupVyFR0e2v-TLpeNWdw1bVMZUAhgyxLJ7OV-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ohad Ben-Cohen <ohad-Ix1uc/W3ht7QT0dZR+AlfA@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Jean Delvare (PC drivers, core)" <khali-PUYAD+kWke1g9hUCZPvPmw@public.gmane.org>, "Ben Dooks (embedded platforms)" <ben-linux-elnMNo+KYs3YtjvyW6yDsg@public.gmane.org>, Roland Dreier <rolandd-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steve Wise <swise-ut6Up61K2wZBDgjK7y7TUQ@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ppp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-On Mon, Sep 20 2010 at  1:40pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Mon, 20 Sep 2010 16:11:31 +0200
+Ohad Ben-Cohen <ohad-Ix1uc/W3ht7QT0dZR+AlfA@public.gmane.org> wrote:
 
-> Hi Ted,
+> Occasionally, drivers care about the value that idr associates with
+> their pointers.
 > 
-> On Mon, Sep 20 2010 at  9:14am -0400,
-> Theodore Ts'o <tytso@mit.edu> wrote:
+> Today we have idr_get_new_above() which allocates a new idr entry
+> above or equal to a given starting id, but sometimes drivers need to
+> force an exact value.
 > 
-> > Hi there,
-> > 
-> > I was just testing discard support in mke2fs, and I was surprised that
-> > although the dm layer appears to pass discard requests through to the
-> > underlying block device driver when submitted through the bio layer
-> > (i.e., from kernel file systems), apparently the discard ioctls (i.e.,
-> > BLKDISCARD, BLKDISCARDSEC, BLKDISCARDZEROES) are not currently wired up
-> > in the dm layer.
+> To overcome this small API gap, drivers are wrapping idr_get_new_above
+> and then either BUG_ON() or just call idr_remove() and returns -EBUSY
+> when idr allocates them an id which is different than their requested
+> value.
 > 
-> After enabling scsi tracing:
-> # mount -t debugfs none /sys/kernel/debug
-> # cd /sys/kernel/debug/tracing/
-> # echo "scsi:*" > set_event
-> # cat trace_pipe
+> There are only a handful of users who need this (see below. especially
+> note the i2c comment :), but it might be nice to have such an API (a
+> bit less of code, and a bit less error prone).
 > 
-> I'm not seeing a problem with BLKDISCARD (via mkfs.ext4) for either
-> request-based DM (this is on a 2.6.36-rc4 kernel w/ the FLUSH+FUA patchset):
+> Would something like the below be desirable/acceptable ?
 
-Here is a trace during mkfs.ext4 of a bio-based striped DM device (with
-4 stripes) on a stock 2.6.36-rc4:
+It seems OK to me - it's an improvement over what we have now.
 
-       mkfs.ext4-3835  [000] 6050624.201765: scsi_dispatch_cmd_start: host_no=10 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00)
-       mkfs.ext4-3835  [000] 6050624.201790: scsi_dispatch_cmd_start: host_no=10 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00)
-       mkfs.ext4-3835  [000] 6050624.201806: scsi_dispatch_cmd_start: host_no=10 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00)
-       mkfs.ext4-3835  [000] 6050624.201823: scsi_dispatch_cmd_start: host_no=10 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00)
-          <idle>-0     [000] 6050624.202772: scsi_dispatch_cmd_done: host_no=10 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00) result=(driver=DRIVER_OK host=DID_OK message=COMMAND_COMPLETE status=SAM_STAT_GOOD)
-          <idle>-0     [000] 6050624.202774: scsi_dispatch_cmd_done: host_no=10 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00) result=(driver=DRIVER_OK host=DID_OK message=COMMAND_COMPLETE status=SAM_STAT_GOOD)
-          <idle>-0     [000] 6050624.202775: scsi_dispatch_cmd_done: host_no=10 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00) result=(driver=DRIVER_OK host=DID_OK message=COMMAND_COMPLETE status=SAM_STAT_GOOD)
-          <idle>-0     [000] 6050624.202775: scsi_dispatch_cmd_done: host_no=10 channel=0 id=0 lun=0 data_sgl=1 prot_sgl=0 cmnd=(UNMAP regions=1 raw=42 00 00 00 00 00 00 00 18 00) result=(driver=DRIVER_OK host=DID_OK message=COMMAND_COMPLETE status=SAM_STAT_GOOD)
+> (untested. and i just picked the simplest and straight-forward way to
+> implement this; obviously it's not optimal since there's no reason to
+> even allocate an id if we know it's not the id we're looking for. but
+> it's enough to get the idea, it's not a hot path, and it's what
+> drivers are doing today)
+
+Sure, we can speed it up later if that appears to be necessary.
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
