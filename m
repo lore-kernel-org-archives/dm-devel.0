@@ -1,12 +1,16 @@
-From: Philip Vossler <philvossler@googlemail.com>
-Subject: OT: device mapper development/testing.
-Date: Fri, 10 Sep 2010 20:04:40 +0100
-Message-ID: <AANLkTi=1ZTOodvDAnF4FNR0+GAv2rTGhpnB-+99H5afC@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Help ! : device-mapper: reload ioctl failed: Invalid
+	argument
+Date: Tue, 21 Sep 2010 16:15:37 -0400
+Message-ID: <20100921201537.GA5298@redhat.com>
+References: <AANLkTi=jPyz77ZSC64w6K_vHYU1JxsNjooY1PECNO_F8@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <AANLkTi=jPyz77ZSC64w6K_vHYU1JxsNjooY1PECNO_F8@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,30 +20,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Sethuraman Subbiah <ssubbia2@ncsu.edu>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Is there any way I can assist in the development of device mapper
-(particularly dmraid)? I have limited programming skills - I am a Test
-Engineer primarily involved with hardware working for a small computer
-company that manufactures a variety of  systems.
+On Thu, Sep 16 2010 at  7:08pm -0400,
+Sethuraman Subbiah <ssubbia2@ncsu.edu> wrote:
 
-I have used and supported the use of Linux for some time. I have
-access to a wide range of hardware mostly based on Intel cpu's and
-chipsets.
+> Hi ,
+> 
+> This is Sethuraman Subbiah , a student at NCState. I installed DM-IOBAND. I
+> needed that for a project.
+> 
+> I downloaded a kernel module binary and used insmod to insert the module. It
+> worked and i did modprobe.
+> 
+> When I gave dmsetup targets | grep ioband
+> I got ioband v1.14.0
+> 
+> It was fine till that step.
+> 
+> When I try to associate /dev/sda3 with ioband1 :
+> 
+> echo "0 $(blockdev --getsize /dev/sda3) ioband /dev/sda3 1 0 0 none weight 0
+> :40" | dmsetup create ioband1
+> 
+> I keep getting this error :
+> device-mapper: reload ioctl failed: Invalid argument
+> Command failed
+> 
+>
+> Can someone help me out ? Thanks !
 
-If there is anyway I can contribute by testing software on a variety
-of hardware please email me off list. I would very much like to put
-something back into Linux as I have benefited in so many ways from
-it's availability.
+dm-ioband isn't upstream.  Best to ping original authors from valinux if
+you're still interested in it.
 
-(I only wish I had the time to furher develop my limited programming
-skills in order to be of greater use to the community)
+If you have a need for bandwidth control Vivek Goyal has developed
+throttling support in the block layer.  Vivek's work has been merged for
+upstream inclusion in Linux 2.6.37.
 
-Sincerely
+See the following for documentation on throttling support:
+http://git.kernel.org/?p=linux/kernel/git/axboe/linux-2.6-block.git;a=commit;h=2786c4e5e54802c3
 
-Phil Vossler
--- =
+If you'd like to try it, it is available with the following:
 
-"of all the paths you choose in life,
-=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 make sure some of them are dirt..."
+git clone git://git.kernel.org/pub/scm/linux/kernel/git/axboe/linux-2.6-block.git
+cd linux-2.6-block
+git checkout -b my_for-next origin/for-next
+
+Mike
