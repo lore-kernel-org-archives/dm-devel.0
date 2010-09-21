@@ -1,23 +1,46 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] idr_get_new_exact ?
-Date: Mon, 20 Sep 2010 22:38:25 +0100
-Message-ID: <20100920213825.GF30622@agk-dp.fab.redhat.com>
-References: <AANLkTi=ZLupVyFR0e2v-TLpeNWdw1bVMZUAhgyxLJ7OV@mail.gmail.com> <adaiq20f90h.fsf@cisco.com> <4C97D197.9070703@gmail.com>
+From: Lukas Czerner <lczerner@redhat.com>
+Subject: Re: Is it deliberate that the device mapper is not passing the
+ DISCARD ioctls
+Date: Tue, 21 Sep 2010 12:42:25 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1009211232010.3008@dhcp-lab-213.englab.brq.redhat.com>
+References: <E1OxgCu-0000XW-29@tytso-glaptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4C97D197.9070703@gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, Roland Dreier <rdreier@cisco.com>, Ohad Ben-Cohen <ohad@wizery.com>, akpm@linux-foundation.org, Steve Wise <swise@chelsio.com>linux-
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <E1OxgCu-0000XW-29@tytso-glaptop>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: linux-ext4@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Sep 20, 2010 at 11:26:47PM +0200, Tejun Heo wrote:
-> I agree.  Wouldn't those users better off simply using radix tree?
- 
-Can't speak for the other users, but dm uses it both ways - normally
-happy with any id (minor number), but sometimes user requires a specific
-one.
+On Mon, 20 Sep 2010, Theodore Ts'o wrote:
 
-Alasdair
+> Hi there,
+> 
+> I was just testing discard support in mke2fs, and I was surprised that
+> although the dm layer appears to pass discard requests through to the
+> underlying block device driver when submitted through the bio layer
+> (i.e., from kernel file systems), apparently the discard ioctls (i.e.,
+> BLKDISCARD, BLKDISCARDSEC, BLKDISCARDZEROES) are not currently wired up
+> in the dm layer.
+> 
+> Is this deliberate, or an oversight?
+> 
+> Thanks, regards,
 
+Hi Ted,
+
+I have tested this with 2.6.35 and it really did not work for me as
+well, but with 2.6.36-rc5 (latests kernel) it works just fine. Though,
+not sure when it was added. But according to the log it seems it was
+merged in with 8357422d4bf33bc2c35884d4016c3fc9efbbc1d2.
+
+-Lukas
+
+> 
+> 					- Ted
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-ext4" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
