@@ -1,31 +1,43 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] virtio-blk: put request that was created to retrieve the
- device id
-Date: Tue, 21 Sep 2010 17:00:33 -0400
-Message-ID: <20100921210033.GA24729@infradead.org>
-References: <20100909160324.GJ30086@us.ibm.com>
- <20100909175537.GA9589@redhat.com>
- <20100909183554.GK30086@us.ibm.com>
- <20100909191555.GA14486@redhat.com>
- <20100909194300.GA16908@redhat.com>
- <20100909201445.GA19656@redhat.com>
- <20100909203052.GL30086@us.ibm.com>
- <20100909210042.GA22092@redhat.com>
- <20100909211504.GA24506@infradead.org>
- <20100917145848.GK30086@us.ibm.com>
+From: Malahal Naineni <malahal@us.ibm.com>
+Subject: [PATCH] block: set the bounce_pfn to the actual DMA limit rather than
+	to max memory
+Date: Tue, 21 Sep 2010 15:22:30 -0700
+Message-ID: <c9516154fabc03112353.1285107750@malahal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kvm-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100917145848.GK30086@us.ibm.com>
-Sender: kvm-owner@vger.kernel.org
-To: Ryan Harper <ryanh@us.ibm.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, Tejun Heo <tj@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Vivek Goyal <vgoyal@redhat.com>, john.cooper@redhat.com, rusty@rustcorp.com.au, kvm@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: jaxboe@fusionio.com, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Sep 17, 2010 at 09:58:48AM -0500, Ryan Harper wrote:
-> Since __bio_map_kern() sets up bio->bi_end_io = bio_map_kern_endio
-> (which does a bio_put(bio)) doesn't that ensure we don't leak?
+The bounce_pfn of the request queue in 64 bit systems is set to the
+current max_low_pfn. Adding more memory later makes this incorrect.
+Memory allocated beyond this boot time max_low_pfn appear to require
+bounce buffers (bounce buffers are actually not allocated but used in
+calculating segments that may result in "over max segments limit"
+errors).
 
-Indeed, that should take care of it.
+Signed-off-by: Malahal Naineni (malahal@us.ibm.com)
 
+diff -r 09daf852c1c5 -r c9516154fabc block/blk-settings.c
+--- a/block/blk-settings.c	Thu Sep 09 12:10:43 2010 -0700
++++ b/block/blk-settings.c	Mon Sep 13 10:15:24 2010 -0700
+@@ -214,16 +214,14 @@ void blk_queue_bounce_limit(struct reque
+ 	 */
+ 	if (b_pfn < (min_t(u64, 0xffffffffUL, BLK_BOUNCE_HIGH) >> PAGE_SHIFT))
+ 		dma = 1;
+-	q->limits.bounce_pfn = max_low_pfn;
+ #else
+ 	if (b_pfn < blk_max_low_pfn)
+ 		dma = 1;
++#endif
+ 	q->limits.bounce_pfn = b_pfn;
+-#endif
+ 	if (dma) {
+ 		init_emergency_isa_pool();
+ 		q->limits.bounce_gfp = GFP_NOIO | GFP_DMA;
+-		q->limits.bounce_pfn = b_pfn;
+ 	}
+ }
+ EXPORT_SYMBOL(blk_queue_bounce_limit);
