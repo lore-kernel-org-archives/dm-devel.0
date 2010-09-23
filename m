@@ -1,65 +1,31 @@
-From: Brian De Wolf <bldewolf@csupomona.edu>
-Subject: scsi_dh_emc vs scsi_dh_alua in RHEL5.5
-Date: Wed, 22 Sep 2010 16:44:38 -0700
-Message-ID: <20100922164438.33e6ae04@csupomona.edu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Paul Mundt <lethal-M7jkjyW5wf5g9hUCZPvPmw@public.gmane.org>
+Subject: Re: idr_get_new_exact ?
+Date: Thu, 23 Sep 2010 20:42:55 +0900
+Message-ID: <20100923114255.GB27960@linux-sh.org>
+References: <AANLkTi=ZLupVyFR0e2v-TLpeNWdw1bVMZUAhgyxLJ7OV@mail.gmail.com> <adaiq20f90h.fsf@cisco.com> <4C97D197.9070703@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <4C97D197.9070703-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <htejun-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Roland Dreier <rdreier-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Ohad Ben-Cohen <ohad-Ix1uc/W3ht7QT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Jean Delvare (PC drivers, core)" <khali-PUYAD+kWke1g9hUCZPvPmw@public.gmane.org>, "Ben Dooks (embedded platforms)" <ben-linux-elnMNo+KYs3YtjvyW6yDsg@public.gmane.org>, Roland Dreier <rolandd-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>, Sean Hefty <sean.hefty-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Hal Rosenstock <hal.rosenstock-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Steve Wise <swise-ut6Up61K2wZBDgjK7y7TUQ@public.gmane.org>, Neil Brown <neilb-l3A5Bk7waGM@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ppp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
 List-Id: dm-devel.ids
 
-Greetings,
-
-In our environment we have hosts with two qla2xxx HBAs crossing a SAN
-to our Clariion CX4-480, no clustering, configured with ALUA (failover
-mode 4).  The CX4-480 has two controllers so each host sees four
-paths for each volume.  The original configuration worked great using
-the multipath defaults in RHEL5.4, using dm-emc.  All path priorities
-picked up correctly, all paths responded to I/O, failover worked, etc.
-
-However, once we upgraded to 5.5, we now default to using scsi_dh_emc,
-which doesn't behave quite the same as dm-emc used to.  The non-optimal
-paths fail I/O as though they aren't in ALUA mode.  This is despite
-output from the device handler:
-
-Sep 15 17:15:20 victoria kernel: sd 2:0:1:0: emc: ALUA failover mode detected
-
-It's still able to fail over though, so all is not lost.  The ALUA
-handler behaves like our old setup, so it seems that's the way to go.
-I wanted to clear up a few questions before I stuck with that though:
-
-For an ALUA setup with EMC hardware, is scsi_dh_alua the way to go?
-
-Is the EMC handler supposed to support ALUA?  If not, why doesn't it
-suggest using scsi_dh_alua when it detects an ALUA configuration?
-
-Is multipath not capable of detecting ALUA, and that's why it uses the
-EMC handler for EMC volumes that are configured for ALUA?  Will this
-ever be automatic?
-
-While testing, it was not possible to change the handler on a volume by
-flushing and re-detecting the path in multipath, the slave devices had
-to be deleted in sysfs and the scsi_dh_emc module had to be removed.
-Is this intentional?  Both modules seem rather "aggressive" about
-claiming devices.
-
-Is it possible to have two multipath devices with different hardware
-handlers?  If I had an existing multipath using scsi_dh_emc, it
-prevented other multipaths from appearing using scsi_dh_alua and vice
-versa.  I don't plan on mixing device handlers, but it means that I
-can't leave the config change in place until the next reboot, lest I
-have to add volumes before then.
-
-
-Thanks for any help you can provide.
+On Mon, Sep 20, 2010 at 11:26:47PM +0200, Tejun Heo wrote:
+> Hello,
+> 
+> On 09/20/2010 10:35 PM, Roland Dreier wrote:
+> > Looks fine to me as an improvement over the status quo, but I wonder how
+> > many of these places could use the radix_tree stuff instead?  If you're
+> > not using the ability of the idr code to assign an id for you, then it
+> > seems the radix_tree API is a better fit.
+> 
+> I agree.  Wouldn't those users better off simply using radix tree?
+> 
+It could go either way. I was about to write the same function when
+playing with it for IRQ mapping, the idea being to propagate the initial
+tree with sparse static vectors and then switch over to dynamic IDs for
+virtual IRQ creation. I ended up going with a radix tree for other
+reasons, though.
