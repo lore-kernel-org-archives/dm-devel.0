@@ -1,36 +1,62 @@
-From: Jens Axboe <jaxboe@fusionio.com>
-Subject: Re: [PATCH] block: set the bounce_pfn to the actual DMA limit   rather
- than to max memory
-Date: Fri, 24 Sep 2010 21:26:03 +0200
-Message-ID: <4C9CFB4B.10404@fusionio.com>
-References: <c9516154fabc03112353.1285107750@malahal> <4C9CAE68.4060706@fusionio.com> <20100924170532.GA29071@us.ibm.com> <4C9CEDE5.902@fusionio.com> <20100924192059.GA550@us.ibm.com>
+From: baishakhi ray <bray.cs.colorado@gmail.com>
+Subject: SMP aware kcryptd
+Date: Mon, 27 Sep 2010 00:37:43 -0500
+Message-ID: <AANLkTimbeL_MONiXUeR12c1aT2kXtVvVc0AZpV5VpWd0@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20100924192059.GA550@us.ibm.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Malahal Naineni <malahal@us.ibm.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="===============0644282330477820206=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2010-09-24 21:20, Malahal Naineni wrote:
-> Jens Axboe [jaxboe@fusionio.com] wrote:
->>> This patch also _fixed_ our problem. So we are fine with either patch,
->>> but this patch is preferred as it enables more request merges. Also,
->>> both patches maybe needed for some configurations.
->>
->> Plus it doesn't needlessly bounce, that's the real problem you want to
->> fix. I have applied this thread patch to for-2.6.37/core, thanks.
-> 
-> There is a shortcut check in blk_queue_bounce() that uses blk_max_pfn to
-> return without doing anything.  blk_max_pfn is not updated when we do
-> hot-plug memory add, so bounce buffers are NOT really used in our case
-> (thankfully)! 
+--===============0644282330477820206==
+Content-Type: multipart/alternative; boundary=001636eefa24a4711f049137204b
 
-Any reason we can't just add a hot mem add notifier and update the block
-copies when we need to?
+--001636eefa24a4711f049137204b
+Content-Type: text/plain; charset=ISO-8859-1
 
--- 
-Jens Axboe
+Hi,
+I was looking for some patch which enables multicore support for dm-crypt.
+I came to see this mail in your archive.
+http://www.redhat.com/archives/dm-devel/2009-April/msg00151.html
 
+<http://www.redhat.com/archives/dm-devel/2009-April/msg00151.html>Any update
+on this?
+
+--
+Thanks,
+Baishakhi Ray
+
+--001636eefa24a4711f049137204b
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hi,<div>I was looking for some patch which enables multicore support for dm=
+-crypt.</div><div>I came to see this mail in your archive.</div><div><a hre=
+f=3D"http://www.redhat.com/archives/dm-devel/2009-April/msg00151.html">http=
+://www.redhat.com/archives/dm-devel/2009-April/msg00151.html</a></div>
+<div><br></div><div><a href=3D"http://www.redhat.com/archives/dm-devel/2009=
+-April/msg00151.html"></a>Any update on this?</div><div><br>--</div><div>Th=
+anks, =A0<br>Baishakhi Ray<br>
+</div>
+
+--001636eefa24a4711f049137204b--
+
+
+--===============0644282330477820206==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0644282330477820206==--
