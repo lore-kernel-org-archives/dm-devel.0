@@ -1,44 +1,52 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: SMP aware kcryptd
-Date: Mon, 27 Sep 2010 13:20:12 +0200
-Message-ID: <4CA07DEC.3090806@redhat.com>
-References: <AANLkTimbeL_MONiXUeR12c1aT2kXtVvVc0AZpV5VpWd0@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] block: eliminate potential for infinite loop in
+ blkdev_issue_discard
+Date: Mon, 27 Sep 2010 14:13:22 -0400
+Message-ID: <20100927181321.GC14180@redhat.com>
+References: <1285605664-27027-1-git-send-email-martin.petersen@oracle.com>
+ <1285605664-27027-3-git-send-email-martin.petersen@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AANLkTimbeL_MONiXUeR12c1aT2kXtVvVc0AZpV5VpWd0@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: baishakhi ray <bray.cs.colorado@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1285605664-27027-3-git-send-email-martin.petersen@oracle.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: jaxboe@fusionio.com, James.Bottomley@hansenpartnership.com, linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 09/27/2010 07:37 AM, baishakhi ray wrote:
-> I was looking for some patch which enables multicore support for dm-crypt.
-> I came to see this mail in your archive.
-> http://www.redhat.com/archives/dm-devel/2009-April/msg00151.html
+Due to the recently identified overflow in read_capacity_16() it was
+possible for max_discard_sectors to be zero but still have discards
+enabled on the associated device's queue.
 
-Search for the thread from Andi Kleen on this list and my answer
-https://www.redhat.com/archives/dm-devel/2010-July/msg00118.html
+Eliminate the possibility for blkdev_issue_discard to infinitely loop.
 
-Mentioned patches are still not in Alasdair's tree but I have version
-for (ongoing) review and for older kernels (with some small fixes I found)
-here http://mbroz.fedorapeople.org/dm-crypt/
+Interestingly this issue wasn't identified until a device, whose
+discard_granularity was 0 due to read_capacity_16 overflow, was consumed
+by blk_stack_limits() to construct limits for a higher-level DM
+multipath device.  The multipath device's resulting limits never had the
+discard limits stacked because blk_stack_limits() will only do so if
+the bottom device's discard_granularity != 0.  This resulted in the
+multipath device's limits.max_discard_sectors being 0.
 
-There is one problem with async crypto left but otherwise it is stable
-(I am using it myself for weeks).
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ block/blk-lib.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
 
-I hope it will reach 2.6.37 (with some other changes I want to do in dm-crypt).
-(Also read the discussion I mentioned - it will not help in situation when only
-one process generates all crypt IOs.)
-
-Milan
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index c392029..186f249 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -56,7 +56,10 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ 	 * granularity
+ 	 */
+ 	max_discard_sectors = min(q->limits.max_discard_sectors, UINT_MAX >> 9);
+-	if (q->limits.discard_granularity) {
++	if (unlikely(!max_discard_sectors)) {
++		/* Avoid infinite loop (below) */
++		return -EOPNOTSUPP;
++	} else if (q->limits.discard_granularity) {
+ 		unsigned int disc_sects = q->limits.discard_granularity >> 9;
+ 
+ 		max_discard_sectors &= ~(disc_sects - 1);
