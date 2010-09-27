@@ -1,11 +1,14 @@
-From: baishakhi ray <bray.cs.colorado@gmail.com>
-Subject: SMP aware kcryptd
-Date: Mon, 27 Sep 2010 00:37:43 -0500
-Message-ID: <AANLkTimbeL_MONiXUeR12c1aT2kXtVvVc0AZpV5VpWd0@mail.gmail.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: SMP aware kcryptd
+Date: Mon, 27 Sep 2010 13:20:12 +0200
+Message-ID: <4CA07DEC.3090806@redhat.com>
+References: <AANLkTimbeL_MONiXUeR12c1aT2kXtVvVc0AZpV5VpWd0@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0644282330477820206=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <AANLkTimbeL_MONiXUeR12c1aT2kXtVvVc0AZpV5VpWd0@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,48 +18,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: baishakhi ray <bray.cs.colorado@gmail.com>
 List-Id: dm-devel.ids
 
---===============0644282330477820206==
-Content-Type: multipart/alternative; boundary=001636eefa24a4711f049137204b
+On 09/27/2010 07:37 AM, baishakhi ray wrote:
+> I was looking for some patch which enables multicore support for dm-crypt.
+> I came to see this mail in your archive.
+> http://www.redhat.com/archives/dm-devel/2009-April/msg00151.html
 
---001636eefa24a4711f049137204b
-Content-Type: text/plain; charset=ISO-8859-1
+Search for the thread from Andi Kleen on this list and my answer
+https://www.redhat.com/archives/dm-devel/2010-July/msg00118.html
 
-Hi,
-I was looking for some patch which enables multicore support for dm-crypt.
-I came to see this mail in your archive.
-http://www.redhat.com/archives/dm-devel/2009-April/msg00151.html
+Mentioned patches are still not in Alasdair's tree but I have version
+for (ongoing) review and for older kernels (with some small fixes I found)
+here http://mbroz.fedorapeople.org/dm-crypt/
 
-<http://www.redhat.com/archives/dm-devel/2009-April/msg00151.html>Any update
-on this?
+There is one problem with async crypto left but otherwise it is stable
+(I am using it myself for weeks).
 
---
-Thanks,
-Baishakhi Ray
+I hope it will reach 2.6.37 (with some other changes I want to do in dm-crypt).
+(Also read the discussion I mentioned - it will not help in situation when only
+one process generates all crypt IOs.)
 
---001636eefa24a4711f049137204b
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-Hi,<div>I was looking for some patch which enables multicore support for dm=
--crypt.</div><div>I came to see this mail in your archive.</div><div><a hre=
-f=3D"http://www.redhat.com/archives/dm-devel/2009-April/msg00151.html">http=
-://www.redhat.com/archives/dm-devel/2009-April/msg00151.html</a></div>
-<div><br></div><div><a href=3D"http://www.redhat.com/archives/dm-devel/2009=
--April/msg00151.html"></a>Any update on this?</div><div><br>--</div><div>Th=
-anks, =A0<br>Baishakhi Ray<br>
-</div>
-
---001636eefa24a4711f049137204b--
-
-
---===============0644282330477820206==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0644282330477820206==--
+Milan
