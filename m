@@ -1,87 +1,55 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Subject: Re: [Patch] scsi_dh_rdac: retry IO for 06/3f/03 in
- rdac_check_sense fn
-Date: Wed, 29 Sep 2010 22:09:08 +0530
-Message-ID: <B2FD678A64EAAD45B089B123FDFC3ED704B593B6@inbmail01.lsi.com>
-References: <1281404858.23351.6.camel@chandra-lucid.beaverton.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Malahal Naineni <malahal@us.ibm.com>
+Subject: Re: [PATCH] block: set the bounce_pfn to the actual DMA limit
+ rather than to max memory
+Date: Thu, 30 Sep 2010 19:30:24 -0700
+Message-ID: <20101001023024.GA1828@us.ibm.com>
+References: <c9516154fabc03112353.1285107750@malahal>
+ <4C9CAE68.4060706@fusionio.com>
+ <20100924170532.GA29071@us.ibm.com>
+ <4C9CEDE5.902@fusionio.com>
+ <20100924192059.GA550@us.ibm.com>
+ <4C9CFB4B.10404@fusionio.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1281404858.23351.6.camel@chandra-lucid.beaverton.ibm.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "sekharan@us.ibm.com" <sekharan@us.ibm.com>, James Bottomley <James.Bottomley@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4C9CFB4B.10404@fusionio.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Jens Axboe <jaxboe@fusionio.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi James,
-
-For 06/3f/03 scsi sense, SUCCESS status is returned by scsi_check_sense. scsi_io_completion fn should have retried this check condition but some how it is not happening. IMO, command should be either retried by scsi or scsi dh rather than failing it (for this check condition). Can you please comment on this patch.  
-
-Thanks,
-Vijay
-
------Original Message-----
-From: Chandra Seetharaman [mailto:sekharan@us.ibm.com] 
-Sent: Tuesday, August 10, 2010 7:18 AM
-To: Chauhan, Vijay; James Bottomley
-Cc: device-mapper development; linux-scsi@vger.kernel.org
-Subject: Re: [Patch] scsi_dh_rdac: retry IO for 06/3f/03 in 
-rdac_check_sense fn
-
-Vijay,
-
-Since it has to be handled at SCSI (and it is a SCSI sense), shouldn't
-we be retrying it at SCSI level. James, what is your opinion ?
-
-It looks good to me as the effect is local to LSI rdac storage.
-
-chandra
-
-On Mon, 2010-08-02 at 13:07 +0530, Chauhan, Vijay wrote:
-> Hi,
+Jens Axboe [jaxboe@fusionio.com] wrote:
+> On 2010-09-24 21:20, Malahal Naineni wrote:
+> > Jens Axboe [jaxboe@fusionio.com] wrote:
+> >>> This patch also _fixed_ our problem. So we are fine with either patch,
+> >>> but this patch is preferred as it enables more request merges. Also,
+> >>> both patches maybe needed for some configurations.
+> >>
+> >> Plus it doesn't needlessly bounce, that's the real problem you want to
+> >> fix. I have applied this thread patch to for-2.6.37/core, thanks.
+> > 
+> > There is a shortcut check in blk_queue_bounce() that uses blk_max_pfn to
+> > return without doing anything.  blk_max_pfn is not updated when we do
+> > hot-plug memory add, so bounce buffers are NOT really used in our case
+> > (thankfully)! 
 > 
-> This patch adds retry for the IO returned with 
-06/3f/03((INQUIRY_DATA_CHANGED)) sense code  in 
-rdac_check_sense(). IO returned with 06/3f/03 from controller 
-are currently failed by scsi mid layer, as a reason momentarily 
-path failure is noticed by DM multipath. 
-> 
-> Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
-> Reviewed-by: Babu Moger <babu.moger@lsi.com>
-> Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
-> ---
-> 
-> diff -uprN 
-linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh_rdac.c
- linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c
-> --- 
-linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh
-_rdac.c	2010-07-22 15:13:38.000000000 -0400
-> +++ 
-linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c	
-2010-07-27 12:13:58.000000000 -0400
-> @@ -738,6 +738,11 @@ static int rdac_check_sense(struct scsi_
->  			 * Quiescence in progress , just retry.
->  			 */
->  			return ADD_TO_MLQUEUE;
-> +		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x03)
-> +			/*
-> +			 * INQUIRY DATA has changed, retry again.
-> +			 */
-> +			return ADD_TO_MLQUEUE;
->  		break;
->  	}
->  	/* success just means we do not care what scsi-ml does */
-> 
-> --
+> Any reason we can't just add a hot mem add notifier and update the block
+> copies when we need to?
+
+Actually it is quite simple, but power arch guys decided not to update
+max_pfn and max_low_pfn when someone adds or removes memory. They do
+seem to indicate that it is not an over sight! On the other hand, x86
+arch does update those.
+
+Another approach would be defining max_possible_pfn (maximum allowable
+memory) which would be constant (based on architecture) and hopefully
+adapters that we care still take the short-cut.
+
+Also, this patch broke some USB hosts. Can you please back out this
+patch and apply the one below instead:
+
+http://thread.gmane.org/gmane.linux.kernel.next/14158
+
+Thank you very much,
+Malahal.
