@@ -1,54 +1,52 @@
-From: Jens Axboe <jaxboe@fusionio.com>
-Subject: Re: [PATCH] block: set the bounce_pfn to the actual DMA limit  rather
- than to max memory
-Date: Fri, 01 Oct 2010 14:46:10 +0200
-Message-ID: <4CA5D812.9040809@fusionio.com>
-References: <c9516154fabc03112353.1285107750@malahal> <4C9CAE68.4060706@fusionio.com> <20100924170532.GA29071@us.ibm.com> <4C9CEDE5.902@fusionio.com> <20100924192059.GA550@us.ibm.com> <4C9CFB4B.10404@fusionio.com> <20101001023024.GA1828@us.ibm.com>
+From: James Bottomley <James.Bottomley@suse.de>
+Subject: Re: [Bug 19642] New: 2.6.36-rc6 BUG at drivers/scsi/scsi_lib.c:1113
+Date: Sun, 03 Oct 2010 13:53:26 -0500
+Message-ID: <1286132006.2984.32.camel@mulgrave.site>
+References: <bug-19642-11613@https.bugzilla.kernel.org/>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20101001023024.GA1828@us.ibm.com>
+In-Reply-To: <bug-19642-11613@https.bugzilla.kernel.org/>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Malahal Naineni <malahal@us.ibm.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+To: bugzilla-daemon@bugzilla.kernel.org
+Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2010-10-01 04:30, Malahal Naineni wrote:
-> Jens Axboe [jaxboe@fusionio.com] wrote:
->> On 2010-09-24 21:20, Malahal Naineni wrote:
->>> Jens Axboe [jaxboe@fusionio.com] wrote:
->>>>> This patch also _fixed_ our problem. So we are fine with either patch,
->>>>> but this patch is preferred as it enables more request merges. Also,
->>>>> both patches maybe needed for some configurations.
->>>>
->>>> Plus it doesn't needlessly bounce, that's the real problem you want to
->>>> fix. I have applied this thread patch to for-2.6.37/core, thanks.
->>>
->>> There is a shortcut check in blk_queue_bounce() that uses blk_max_pfn to
->>> return without doing anything.  blk_max_pfn is not updated when we do
->>> hot-plug memory add, so bounce buffers are NOT really used in our case
->>> (thankfully)! 
->>
->> Any reason we can't just add a hot mem add notifier and update the block
->> copies when we need to?
+On Sun, 2010-10-03 at 18:37 +0000, bugzilla-daemon@bugzilla.kernel.org
+wrote:
+> https://bugzilla.kernel.org/show_bug.cgi?id=19642
 > 
-> Actually it is quite simple, but power arch guys decided not to update
-> max_pfn and max_low_pfn when someone adds or removes memory. They do
-> seem to indicate that it is not an over sight! On the other hand, x86
-> arch does update those.
-> 
-> Another approach would be defining max_possible_pfn (maximum allowable
-> memory) which would be constant (based on architecture) and hopefully
-> adapters that we care still take the short-cut.
-> 
-> Also, this patch broke some USB hosts. Can you please back out this
-> patch and apply the one below instead:
-> 
-> http://thread.gmane.org/gmane.linux.kernel.next/14158
+>            Summary: 2.6.36-rc6 BUG at drivers/scsi/scsi_lib.c:1113
+>            Product: IO/Storage
+>            Version: 2.5
+>     Kernel Version: 2.6.36-rc6
+>           Platform: All
+>         OS/Version: Linux
+>               Tree: Mainline
+>             Status: NEW
+>           Severity: normal
+>           Priority: P1
+>          Component: SCSI
+>         AssignedTo: linux-scsi@vger.kernel.org
 
-Done, thanks.
+I think this is wrong.
 
--- 
-Jens Axboe
+>         ReportedBy: maciej.rutecki@gmail.com
+>                 CC: rjw@sisk.pl, maciej.rutecki@gmail.com,
+>                     linux@horizon.com
+>         Regression: Yes
+> 
+> 
+> Subject    : 2.6.36-rc6 BUG at drivers/scsi/scsi_lib.c:1113
+> Submitter  : "George Spelvin" <linux@horizon.com>
+> Date       : 2010-09-30 21:10
+> Message-ID : 20100930211006.27449.qmail@science.horizon.com
+> References : http://marc.info/?l=linux-kernel&m=128588102620299&w=2
+
+That looks like a zero length barrier send down to SCSI with the RW flag
+set (hence we try to map a buffer that has nothing to map).  I cc'd
+dm-devel to see what their opinion is.
+
+James
 
