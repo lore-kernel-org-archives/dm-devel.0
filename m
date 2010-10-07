@@ -1,15 +1,15 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: Linux 2.6.36-rc7
-Date: Thu, 07 Oct 2010 22:13:00 +0200
-Message-ID: <4CAE29CC.8030702@redhat.com>
-References: <AANLkTi=LsBNU+O2hqZUcM2nYM_ze6qPq3thwSZBMtY_v@mail.gmail.com>
-	<4CAE1F47.3050105@kernel.org>
+From: Daniel Phillips <phillips@phunq.net>
+Subject: Re: introduce dm-snap-mv
+Date: Thu, 7 Oct 2010 14:31:14 -0700
+Message-ID: <201010071431.14937.phillips@phunq.net>
+References: <20101006083150.GA15758@zhongling>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4CAE1F47.3050105@kernel.org>
+In-Reply-To: <20101006083150.GA15758@zhongling>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,36 +19,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, just.for.lkml@googlemail.com, hch@infradead.org, herbert@gondor.hengli.com.au, Tejun Heo <tj@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>
+To: Cong Meng <mcpacino@gmail.com>
+Cc: Nick Piggin <npiggin@kernel.dk>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-On 10/07/2010 09:28 PM, Tejun Heo wrote:
+Hi Meng,
 
-> I'm afraid there is a possibly workqueue related deadlock under high
-> memory pressure.  It happens on dm-crypt + md raid1 configuration.
-> I'm not yet sure whether this is caused by workqueue failing to kick
-> rescuers under memory pressure or the shared workqueue is making an
-> already existing problem more visible and in the process of setting up
-> an environment to reproduce the problem.
+The patch looks sensible, however the question is: why do you want to
+do this?  Would it not be better to generalize your metadata format to
+accomodate the device's native blocksize?
+
+Regards,
+
+Daniel
+
+> a kernel patch
+> --------------
+> Now, dm-snap-mv highly depends on a kernel patch below, which make __getblk()
+> can get a 4K buffer head while block size of the disk is NOT 4K.
 > 
->  http://thread.gmane.org/gmane.comp.file-systems.xfs.general/34922/focus=1044784
-
-Yes, XFS is very good to show up problems in dm-crypt:)
-
-But there was no change in dm-crypt which can itself cause such problem,
-planned workqueue changes are not in 2.6.36 yet.
-Code is basically the same for the last few releases.
-
-So it seems that workqueue processing really changed here under memory pressure.
-
-Milan
-
-p.s.
-Anyway, if you are able to reproduce it and you think that there is problem
-in per-device dm-crypt workqueue, there are patches from Andi for shared
-per-cpu workqueue, maybe it can help here. (But this is really not RC material.)
-
-Unfortunately not yet in dm-devel tree, but I have them here ready for review:
-http://mbroz.fedorapeople.org/dm-crypt/2.6.36-devel/
-(all 4 patches must be applied, I hope Alasdair will put them in dm quilt soon.)
+> Signed-off-by: Cong Meng <mcpacino@gmail.com>
+> ---
+>  fs/buffer.c |    7 ++-----
+>  1 files changed, 2 insertions(+), 5 deletions(-)
+> 
+> diff --git a/fs/buffer.c b/fs/buffer.c
+> index 3e7dca2..f7f9d33 100644
+> --- a/fs/buffer.c
+> +++ b/fs/buffer.c
+> @@ -1051,10 +1051,7 @@ grow_buffers(struct block_device *bdev, sector_t block, int size)
+>  	pgoff_t index;
+>  	int sizebits;
+>  
+> -	sizebits = -1;
+> -	do {
+> -		sizebits++;
+> -	} while ((size << sizebits) < PAGE_SIZE);
+> +	sizebits = PAGE_CACHE_SHIFT - bdev->bd_inode->i_blkbits;
+>  
+>  	index = block >> sizebits;
+>  
+> @@ -2924,7 +2921,7 @@ int submit_bh(int rw, struct buffer_head * bh)
+>  	 */
+>  	bio = bio_alloc(GFP_NOIO, 1);
+>  
+> -	bio->bi_sector = bh->b_blocknr * (bh->b_size >> 9);
+> +	bio->bi_sector = bh->b_blocknr << (bh->b_bdev->bd_inode->i_blkbits - 9);
+>  	bio->bi_bdev = bh->b_bdev;
+>  	bio->bi_io_vec[0].bv_page = bh->b_page;
+>  	bio->bi_io_vec[0].bv_len = bh->b_size;
