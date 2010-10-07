@@ -1,8 +1,8 @@
 From: Peter Jones <pjones@redhat.com>
 Subject: [PATCH] Make it possible to set a uuid if one was not
 	set during DM_DEV_CREATE.
-Date: Thu,  7 Oct 2010 13:54:46 -0400
-Message-ID: <1286474086-13390-1-git-send-email-pjones@redhat.com>
+Date: Thu,  7 Oct 2010 15:28:38 -0400
+Message-ID: <1286479718-18274-1-git-send-email-pjones@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,10 +24,12 @@ List-Id: dm-devel.ids
 This makes it possible to use DM_DEV_RENAME to add a uuid to a device so
 long as one has not been previously set either with DM_DEV_CREATE or
 with DM_DEV_RENAME.
+
+Also bump the minor number to 19.
 ---
  drivers/md/dm-ioctl.c    |  113 ++++++++++++++++++++++++++++++++-------------
- include/linux/dm-ioctl.h |    5 ++
- 2 files changed, 85 insertions(+), 33 deletions(-)
+ include/linux/dm-ioctl.h |    9 +++-
+ 2 files changed, 87 insertions(+), 35 deletions(-)
 
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
 index 3e39193..bd76846 100644
@@ -196,9 +198,21 @@ index 3e39193..bd76846 100644
  		return PTR_ERR(md);
  
 diff --git a/include/linux/dm-ioctl.h b/include/linux/dm-ioctl.h
-index 49eab36..8f1a610 100644
+index 49eab36..e369460 100644
 --- a/include/linux/dm-ioctl.h
 +++ b/include/linux/dm-ioctl.h
+@@ -267,9 +267,9 @@ enum {
+ #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
+ 
+ #define DM_VERSION_MAJOR	4
+-#define DM_VERSION_MINOR	18
++#define DM_VERSION_MINOR	19
+ #define DM_VERSION_PATCHLEVEL	0
+-#define DM_VERSION_EXTRA	"-ioctl (2010-06-29)"
++#define DM_VERSION_EXTRA	"-ioctl (2010-10-07)"
+ 
+ /* Status bits */
+ #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
 @@ -322,4 +322,9 @@ enum {
   */
  #define DM_UEVENT_GENERATED_FLAG	(1 << 13) /* Out */
