@@ -1,227 +1,40 @@
-From: Peter Jones <pjones@redhat.com>
-Subject: [PATCH] Make it possible to set a uuid if one was not
-	set during DM_DEV_CREATE.
-Date: Thu,  7 Oct 2010 15:28:38 -0400
-Message-ID: <1286479718-18274-1-git-send-email-pjones@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: Linux 2.6.36-rc7
+Date: Thu, 07 Oct 2010 21:28:07 +0200
+Message-ID: <4CAE1F47.3050105@kernel.org>
+References: <AANLkTi=LsBNU+O2hqZUcM2nYM_ze6qPq3thwSZBMtY_v@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Peter Jones <pjones@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <AANLkTi=LsBNU+O2hqZUcM2nYM_ze6qPq3thwSZBMtY_v@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, just.for.lkml@googlemail.com, herbert@gondor.hengli.com.au, hch@infradead.org, neilb@suse.de, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This makes it possible to use DM_DEV_RENAME to add a uuid to a device so
-long as one has not been previously set either with DM_DEV_CREATE or
-with DM_DEV_RENAME.
+Hello, Linus.
 
-Also bump the minor number to 19.
----
- drivers/md/dm-ioctl.c    |  113 ++++++++++++++++++++++++++++++++-------------
- include/linux/dm-ioctl.h |    9 +++-
- 2 files changed, 87 insertions(+), 35 deletions(-)
+On 10/06/2010 11:45 PM, Linus Torvalds wrote:
+> So I decided to break my a-week-is-eight-days rut, and actually
+> release -rc7 after a proper seven-day week instead. Wo-oo!
+> 
+> And yes, that's probably as exciting as it gets, which is just fine by
+> me. This should be the last -rc, I'm not seeing any reason to keep
+> delaying a real release. There was still more changes to
+> drivers/gpu/drm than I really would have hoped for, but they all look
+> harmless and good. Famous last words.
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 3e39193..bd76846 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -298,7 +298,7 @@ retry:
- static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
- 					    const char *new)
- {
--	char *new_name, *old_name;
-+	char *new_data, *old_data;
- 	struct hash_cell *hc;
- 	struct dm_table *table;
- 	struct mapped_device *md;
-@@ -306,8 +306,8 @@ static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
- 	/*
- 	 * duplicate new.
- 	 */
--	new_name = kstrdup(new, GFP_KERNEL);
--	if (!new_name)
-+	new_data = kstrdup(new, GFP_KERNEL);
-+	if (!new_data)
- 		return ERR_PTR(-ENOMEM);
- 
- 	down_write(&_hash_lock);
-@@ -315,14 +315,28 @@ static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
- 	/*
- 	 * Is new free ?
- 	 */
--	hc = __get_name_cell(new);
--	if (hc) {
--		DMWARN("asked to rename to an already-existing name %s -> %s",
--		       param->name, new);
--		dm_put(hc->md);
--		up_write(&_hash_lock);
--		kfree(new_name);
--		return ERR_PTR(-EBUSY);
-+	if (param->flags & DM_NEW_UUID_FLAG) {
-+		hc = __get_uuid_cell(new);
-+		if (hc) {
-+			DMWARN("asked to change uuid to an already-existing uuid"
-+			       " %s -> %s",
-+			       param->name, new);
-+			dm_put(hc->md);
-+			up_write(&_hash_lock);
-+			kfree(new_data);
-+			return ERR_PTR(-EBUSY);
-+		}
-+	} else {
-+		hc = __get_name_cell(new);
-+		if (hc) {
-+			DMWARN("asked to rename to an already-existing name "
-+			       "%s -> %s",
-+			       param->name, new);
-+			dm_put(hc->md);
-+			up_write(&_hash_lock);
-+			kfree(new_data);
-+			return ERR_PTR(-EBUSY);
-+		}
- 	}
- 
- 	/*
-@@ -333,19 +347,42 @@ static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
- 		DMWARN("asked to rename a non-existent device %s -> %s",
- 		       param->name, new);
- 		up_write(&_hash_lock);
--		kfree(new_name);
-+		kfree(new_data);
- 		return ERR_PTR(-ENXIO);
- 	}
- 
--	/*
--	 * rename and move the name cell.
--	 */
--	list_del(&hc->name_list);
--	old_name = hc->name;
--	mutex_lock(&dm_hash_cells_mutex);
--	hc->name = new_name;
--	mutex_unlock(&dm_hash_cells_mutex);
--	list_add(&hc->name_list, _name_buckets + hash_str(new_name));
-+	if (param->flags & DM_NEW_UUID_FLAG) {
-+		/*
-+		 * Does this device already have a uuid?
-+		 */
-+		if (hc->uuid) {
-+			DMWARN("asked to change uuid of device with uuid "
-+			       "already set %s %s -> %s",
-+			       param->name, hc->uuid, param->uuid);
-+			up_write(&_hash_lock);
-+			kfree(new_uuid);
-+			return ERR_PTR(-EINVAL);
-+		}
-+		/*
-+		 * reuuid and move the uuid cell.
-+		 */
-+		list_del(&hc->uuid_list);
-+		old_data = hc->uuid;
-+		mutex_lock(&dm_hash_cells_mutex);
-+		hc->uuid = new_data;
-+		mutex_unlock(&dm_hash_cells_mutex);
-+		list_add(&hc->uuid_list, _uuid_buckets + hash_str(new_data));
-+	} else {
-+		/*
-+		 * rename and move the name cell.
-+		 */
-+		list_del(&hc->name_list);
-+		old_data = hc->name;
-+		mutex_lock(&dm_hash_cells_mutex);
-+		hc->name = new_data;
-+		mutex_unlock(&dm_hash_cells_mutex);
-+		list_add(&hc->name_list, _name_buckets + hash_str(new_data));
-+	}
- 
- 	/*
- 	 * Wake up any dm event waiters.
-@@ -361,7 +398,7 @@ static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
- 
- 	md = hc->md;
- 	up_write(&_hash_lock);
--	kfree(old_name);
-+	kfree(old_data);
- 
- 	return md;
- }
-@@ -774,21 +811,31 @@ static int invalid_str(char *str, void *end)
- static int dev_rename(struct dm_ioctl *param, size_t param_size)
- {
- 	int r;
--	char *new_name = (char *) param + param->data_start;
-+	char *new_data = (char *) param + param->data_start;
- 	struct mapped_device *md;
- 
--	if (new_name < param->data ||
--	    invalid_str(new_name, (void *) param + param_size) ||
--	    strlen(new_name) > DM_NAME_LEN - 1) {
--		DMWARN("Invalid new logical volume name supplied.");
--		return -EINVAL;
--	}
-+	if (param->flags & DM_NEW_UUID_FLAG) {
-+		struct hash_cell *hc;
-+		if (new_data < param->data ||
-+		    invalid_str(new_data, (void *) param + param_size) ||
-+		    strlen(new_data) > DM_UUID_LEN - 1) {
-+			DMWARN("Invalid new logical volume uuid supplied.");
-+			return -EINVAL;
-+		}
-+	} else {
-+		if (new_data < param->data ||
-+		    invalid_str(new_data, (void *) param + param_size) ||
-+		    strlen(new_data) > DM_NAME_LEN - 1) {
-+			DMWARN("Invalid new logical volume name supplied.");
-+			return -EINVAL;
-+		}
- 
--	r = check_name(new_name);
--	if (r)
--		return r;
-+		r = check_name(new_data);
-+		if (r)
-+			return r;
-+	}
- 
--	md = dm_hash_rename(param, new_name);
-+	md = dm_hash_rename(param, new_data);
- 	if (IS_ERR(md))
- 		return PTR_ERR(md);
- 
-diff --git a/include/linux/dm-ioctl.h b/include/linux/dm-ioctl.h
-index 49eab36..e369460 100644
---- a/include/linux/dm-ioctl.h
-+++ b/include/linux/dm-ioctl.h
-@@ -267,9 +267,9 @@ enum {
- #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
- 
- #define DM_VERSION_MAJOR	4
--#define DM_VERSION_MINOR	18
-+#define DM_VERSION_MINOR	19
- #define DM_VERSION_PATCHLEVEL	0
--#define DM_VERSION_EXTRA	"-ioctl (2010-06-29)"
-+#define DM_VERSION_EXTRA	"-ioctl (2010-10-07)"
- 
- /* Status bits */
- #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
-@@ -322,4 +322,9 @@ enum {
-  */
- #define DM_UEVENT_GENERATED_FLAG	(1 << 13) /* Out */
- 
-+/*
-+ * If set, rename operates on uuid, not name.
-+ */
-+#define DM_NEW_UUID_FLAG        (1 << 14) /* In */
-+
- #endif				/* _LINUX_DM_IOCTL_H */
+I'm afraid there is a possibly workqueue related deadlock under high
+memory pressure.  It happens on dm-crypt + md raid1 configuration.
+I'm not yet sure whether this is caused by workqueue failing to kick
+rescuers under memory pressure or the shared workqueue is making an
+already existing problem more visible and in the process of setting up
+an environment to reproduce the problem.
+
+ http://thread.gmane.org/gmane.comp.file-systems.xfs.general/34922/focus=1044784
+
+Thanks.
+
 -- 
-1.7.2.2
+tejun
