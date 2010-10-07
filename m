@@ -1,11 +1,15 @@
-From: Diego Elio =?ISO-8859-1?Q?Petten=F2?= <flameeyes@gmail.com>
-Subject: multipath-tools comments and licensing status?
-Date: Thu, 04 Nov 2010 12:52:46 +0100
-Message-ID: <1288871566.4517.149.camel@yamato.local>
+From: <wayne.berthiaume@emc.com>
+Subject: Re: scsi_dh_emc vs scsi_dh_alua in RHEL5.5
+Date: Thu, 7 Oct 2010 09:53:33 -0400
+Message-ID: <8F08A56613D77044BD153E2AC5DA0F840518B72A@CORPUSMX40A.corp.emc.com>
+References: <20100922164438.33e6ae04@csupomona.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1836579999533248280=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <20100922164438.33e6ae04@csupomona.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,97 +22,96 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi Brian.
 
---===============1836579999533248280==
-Content-Type: multipart/signed; micalg="pgp-sha256";
-	protocol="application/pgp-signature";
-	boundary="=-VnushPc7LYRP3fv9e0Pe"
+	You are correct that you should configure /etc/multipath.conf
+for ALUA. Presently, the default handler for when an EMC CLARiiON is
+detected is scsi_dh_emc. What follows would be used for ALUA.
 
+# Device attribute for EMC CLARiiON with ALUA
+	device {
+	vendor "DGC"
+	product "*"
+	prio_callout "/sbin/mpath_prio_alua /dev/%n"
+	path_grouping_policy group_by_prio
+	features "1 queue_if_no_path"
+	failback immediate
+	hardware_handler "1 alua"
+	}
+}
 
---=-VnushPc7LYRP3fv9e0Pe
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+	A method to detect and use scsi_dh_emc for PNR or scsi_dh_alua
+for ALUA is under investigation. Presently the scsi_dh_emc only supports
+the PNR mode; however, the array will use implicit ALUA so it will work
+when configured to use scsi_dh_emc. You won't gain the full benefits of
+ALUA, however.
 
-Hi,
+	 Is it possible to have two multipath devices with different
+hardware handlers? Yes but it will be painful. =;^) You would need to
+create an individual stanza filtering on the WWID of the devices. The
+array will not allow you to set each LUN as ALUA or PNR, it's policy is
+host based; therefore, this would only be possible if you had multiple
+arrays. EMC's present policy is if there is one PNR array connected to
+the server you need to use the PNR policy for all the storage attached
+to that server. 
 
-I've been looking at multipath-tools as I was suggested to look at
-kpartx to mount partitioned disk images. It doesn't install in my Gentoo
-because of two problems: buffer overflows reported by _FORTIFY_SOURCE
-and --as-needed failures. Both are trivial to fix but there are other
-problems.
+Regards,
+Wayne.
 
-a) buildsystem
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Brian De Wolf
+Sent: Wednesday, September 22, 2010 7:45 PM
+To: dm-devel@redhat.com
+Subject: [dm-devel] scsi_dh_emc vs scsi_dh_alua in RHEL5.5
 
-While it's trivial to fix the build, I wonder if it wouldn't make more
-sense to simply rewrite it with classical autotools, I can do that quite
-easily, and it would have better results on the long run most likely,
-especially for distributions.
+Greetings,
 
-b) general code string handling
+In our environment we have hosts with two qla2xxx HBAs crossing a SAN
+to our Clariion CX4-480, no clustering, configured with ALUA (failover
+mode 4).  The CX4-480 has two controllers so each host sees four
+paths for each volume.  The original configuration worked great using
+the multipath defaults in RHEL5.4, using dm-emc.  All path priorities
+picked up correctly, all paths responded to I/O, failover worked, etc.
 
-There are two sure buffer overflows in datacore.c and hds.c when setting
-vendor, as it'll be trying to write the null termination outside of te
-buffer; it's trivial to fix, but actually the vendor array is only
-filled in for hds.c to log it out (why not printing the expression
-directly?) and not used at all in datacore.c; the same is true of the
-other buffers.
+However, once we upgraded to 5.5, we now default to using scsi_dh_emc,
+which doesn't behave quite the same as dm-emc used to.  The non-optimal
+paths fail I/O as though they aren't in ALUA mode.  This is despite
+output from the device handler:
 
-In configure.c (and other files) WWID_LEN is improperly handled because
-the various arrays don't consider NULL-termination, and in particular at
-configure.c:173 the strncat() is using the totally wrong size and will
-almost certainly always overflow if hit.
+Sep 15 17:15:20 victoria kernel: sd 2:0:1:0: emc: ALUA failover mode
+detected
 
-c) licensing.
+It's still able to fail over though, so all is not lost.  The ALUA
+handler behaves like our old setup, so it seems that's the way to go.
+I wanted to clear up a few questions before I stuck with that though:
 
-This seems to be the most serious problem here: it doesn't seem like
-there is a clear license on the software! There is a COPYING file with
-LGPL 2 (not 2.1, but the Library version itself), most of the files
-don't seem to declare a license at all, hbs.c declares itself to be GPL
-(but not v2), while datacore.c declares itself as GPLv2. In Gentoo, the
-package is listed as having GPL-2 license.
+For an ALUA setup with EMC hardware, is scsi_dh_alua the way to go?
 
-I'll be honest, I don't have any particular interest in fixing all of
-this myself; I can send you the two patches for the issue above, not
-particularly caring for the licensing situation. If you sort out the
-licensing situation I can take care of rebuilding the build system
-during free time. But if this is intended for production use somebody
-should really review the code, professionally.
+Is the EMC handler supposed to support ALUA?  If not, why doesn't it
+suggest using scsi_dh_alua when it detects an ALUA configuration?
 
-Sorry if it sounds harsh, I'm just not one for sugar-coating quick code
-reviews.
+Is multipath not capable of detecting ALUA, and that's why it uses the
+EMC handler for EMC volumes that are configured for ALUA?  Will this
+ever be automatic?
 
---=20
-Diego Elio Petten=C3=B2 =E2=80=94 =E2=80=9CFlameeyes=E2=80=9D
-http://blog.flameeyes.eu/
+While testing, it was not possible to change the handler on a volume by
+flushing and re-detecting the path in multipath, the slave devices had
+to be deleted in sysfs and the scsi_dh_emc module had to be removed.
+Is this intentional?  Both modules seem rather "aggressive" about
+claiming devices.
 
-If you found a .asc file in this mail and know not what it is,
-it's a GnuPG digital signature: http://www.gnupg.org/
-
-
---=-VnushPc7LYRP3fv9e0Pe
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.16 (GNU/Linux)
-
-iQEcBAABCAAGBQJM0p6LAAoJEBqCrVe7WSRD8WIH/AhzVxBuBnZsVKuZMitJAEos
-3TZC4AMwHl3DfvykkR7wMArcXI5ZFMrf0YI6lQZu3CCICh/LWzeJqWjOaATuY5Mj
-Hx1Xu7Fi1Whh5SRQwGHmA/v+EkF9oN7G0k9aNunI3LsfUmCnIXWa0E90k5abRGZw
-HZqkPgZNPthVF06J+KVZFA1i343QrCBTKyRdl5SeHWsJ5Vj2peuc7DzMKfERH1Lm
-CCghwyjiBMVaaZ1EhAJLtH1P6ceXyL874NegymPUQC51I0h0J6EyXTRaLBfVbrtM
-0RISuZP0+WbIMpoX/1Nc6eji624hLza2LHYtBIqvLGXK/2PDpw0PgNvYENXKPWA=
-=Ov25
------END PGP SIGNATURE-----
-
---=-VnushPc7LYRP3fv9e0Pe--
-
-
---===============1836579999533248280==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Is it possible to have two multipath devices with different hardware
+handlers?  If I had an existing multipath using scsi_dh_emc, it
+prevented other multipaths from appearing using scsi_dh_alua and vice
+versa.  I don't plan on mixing device handlers, but it means that I
+can't leave the config change in place until the next reboot, lest I
+have to add volumes before then.
 
 
---===============1836579999533248280==--
+Thanks for any help you can provide.
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
