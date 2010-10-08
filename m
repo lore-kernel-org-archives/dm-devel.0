@@ -1,39 +1,46 @@
-From: Daniel Phillips <phillips@phunq.net>
-Subject: Re: introduce dm-snap-mv
-Date: Fri, 8 Oct 2010 06:22:57 -0700
-Message-ID: <201010080622.58095.phillips@phunq.net>
-References: <20101006083150.GA15758@zhongling> <AANLkTim9KFuP1_mrUUsMOEspxkfA=SZW2dmTX4WJbfep@mail.gmail.com> <20101008092427.GA5426@lst.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [2.6.36 REGRESSION] Re: virtio-blk: put request that was created to
+ retrieve the device id
+Date: Fri, 8 Oct 2010 12:06:44 -0400
+Message-ID: <20101008160643.GA32005@redhat.com>
+References: <20100909175537.GA9589@redhat.com>
+ <20100909183554.GK30086@us.ibm.com>
+ <20100909191555.GA14486@redhat.com>
+ <20100909194300.GA16908@redhat.com>
+ <20100909201445.GA19656@redhat.com>
+ <20100909203052.GL30086@us.ibm.com>
+ <20100909210042.GA22092@redhat.com>
+ <20100909211504.GA24506@infradead.org>
+ <20100917145848.GK30086@us.ibm.com>
+ <20100921210033.GA24729@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20101008092427.GA5426@lst.de>
 Content-Disposition: inline
+In-Reply-To: <20100921210033.GA24729@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: McPacino <mcpacino@gmail.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Nick Piggin <npiggin@kernel.dk>
+To: rusty@rustcorp.com.au
+Cc: Christoph Hellwig <hch@infradead.org>, Ryan Harper <ryanh@us.ibm.com>, Tejun Heo <tj@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Vivek Goyal <vgoyal@redhat.com>, john.cooper@redhat.com, kvm@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Friday 08 October 2010, Christoph Hellwig wrote:
-> On Fri, Oct 08, 2010 at 05:14:27PM +0800, McPacino wrote:
-> > Hi Christoph,
-> > 
-> > I have to take care the cache problem If using the bio directly.
-> > BHs can be released by kernel when necessary.
-> > 
-> > Is there any existing code using bio to read/write metadata
-> > blocks? How do they handle the timing freeing bios? I really
-> > wish to learn something form it.
+Hi Rusty,
+
+On Tue, Sep 21 2010 at  5:00pm -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
+
+> On Fri, Sep 17, 2010 at 09:58:48AM -0500, Ryan Harper wrote:
+> > Since __bio_map_kern() sets up bio->bi_end_io = bio_map_kern_endio
+> > (which does a bio_put(bio)) doesn't that ensure we don't leak?
 > 
-> If you actually need caching just use the pagecache, e.g.
-> read_mapping_page to read in your data.  That completely abstracts
-> away the underlying block size.
+> Indeed, that should take care of it.
+> 
 
-And that will automatically give him the PAGE_CACHE_SIZE objects he
-wants.  I still don't understand why his model cannot be generalized
-to arbitrary block size specifiable at create time.
+We need to fix this regression for 2.6.36.  Not sure what else I need to
+do to get this on your radar.  It's a pretty significant show-stopper
+for 2.6.36 guests that use virtio-blk with a udev enabled distro.
 
-Regards,
+Here is a reference to my original patch (which Ryan and hch have both
+reviewed): https://patchwork.kernel.org/patch/165571/
 
-Daniel
+Thanks,
+Mike
