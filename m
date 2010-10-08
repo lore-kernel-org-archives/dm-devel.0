@@ -1,8 +1,7 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] device-mapper: Allow setting of UUID via rename
-	if not	already set
-Date: Fri, 08 Oct 2010 16:33:22 -0500
-Message-ID: <1286573602.9513.8.camel@hydrogen.msp.redhat.com>
+From: Daniel Stodden <daniel.stodden@citrix.com>
+Subject: Q: Device mapper core and private biosets
+Date: Fri, 8 Oct 2010 15:20:39 -0700
+Message-ID: <1286576439.16468.71.camel@agari.van.xensource.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,206 +16,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, pjones@redhat.com
+To: DM-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Peter, please add your "signed-off-by" if you approve of the changes
-(above my signed-off-by, because you are the creator).  It still would
-be nice to have a better header - not too many people will look at the
-bz, I think.  Better to say "There are times when we need to be able to
-set device UUIDs, like when...".
 
-Looks like I had in mind the same things as Mike.  :)
+Hi.
 
- brassow
+I'm presently trying to fix a couple issues in a kernel module which
+shares some properties with DM. It's called blktap and used quite
+extensively in Xen. It's basically I/O virtualization in userspace, and
+so it forwards I/O on block devices to a userspace app. The userspace
+part would commonly translate requests to one or a number of disk nodes.
 
+The common base is stacking devices. Without precautions, the result is
+a number of deadlock hazards when memory congestion comes into play.
 
-This makes it possible to use DM_DEV_RENAME to add a uuid to a device so
-long as one has not been previously set either with DM_DEV_CREATE or
-with DM_DEV_RENAME. This is proposed as a fix to rhbz#584328 .
+Can maybe someone help me on how this was dealt with in DM? I couldn't
+explain a couple things looking at DM code so I'm wondering if maybe
+even DM still has a problem. It's mainly about mempools involved. Not
+necessarily limited to bio_alloc.
 
-Also bump the minor number to 19.
+I found a couple DM patch on those matters, eg.
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+http://www.spinics.net/lists/dm-devel/msg03578.html
 
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c
-+++ linux-2.6/drivers/md/dm-ioctl.c
-@@ -298,7 +298,7 @@ retry:
- static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
- 					    const char *new)
- {
--	char *new_name, *old_name;
-+	char *new_data, *old_data;
- 	struct hash_cell *hc;
- 	struct dm_table *table;
- 	struct mapped_device *md;
-@@ -306,8 +306,8 @@ static struct mapped_device *dm_hash_ren
- 	/*
- 	 * duplicate new.
- 	 */
--	new_name = kstrdup(new, GFP_KERNEL);
--	if (!new_name)
-+	new_data = kstrdup(new, GFP_KERNEL);
-+	if (!new_data)
- 		return ERR_PTR(-ENOMEM);
- 
- 	down_write(&_hash_lock);
-@@ -315,13 +315,19 @@ static struct mapped_device *dm_hash_ren
- 	/*
- 	 * Is new free ?
- 	 */
--	hc = __get_name_cell(new);
-+	if (param->flags & DM_NEW_UUID_FLAG)
-+		hc = __get_uuid_cell(new);
-+	else
-+		hc = __get_name_cell(new);
-+
- 	if (hc) {
--		DMWARN("asked to rename to an already-existing name %s -> %s",
-+		DMWARN("Unable to change %s on device, %s to one that "
-+		       "already exists: %s",
-+		       (param->flags & DM_NEW_UUID_FLAG) ? "uuid" : "name",
- 		       param->name, new);
- 		dm_put(hc->md);
- 		up_write(&_hash_lock);
--		kfree(new_name);
-+		kfree(new_data);
- 		return ERR_PTR(-EBUSY);
- 	}
- 
-@@ -330,22 +336,45 @@ static struct mapped_device *dm_hash_ren
- 	 */
- 	hc = __get_name_cell(param->name);
- 	if (!hc) {
--		DMWARN("asked to rename a non-existent device %s -> %s",
-+		DMWARN("Unable to rename non-existent device, %s to %s",
- 		       param->name, new);
- 		up_write(&_hash_lock);
--		kfree(new_name);
-+		kfree(new_data);
- 		return ERR_PTR(-ENXIO);
- 	}
- 
--	/*
--	 * rename and move the name cell.
--	 */
--	list_del(&hc->name_list);
--	old_name = hc->name;
--	mutex_lock(&dm_hash_cells_mutex);
--	hc->name = new_name;
--	mutex_unlock(&dm_hash_cells_mutex);
--	list_add(&hc->name_list, _name_buckets + hash_str(new_name));
-+	if (param->flags & DM_NEW_UUID_FLAG) {
-+		/*
-+		 * Does this device already have a uuid?
-+		 */
-+		if (hc->uuid) {
-+			DMWARN("Unable to change uuid of device, %s because "
-+			       "uuid is already set to %s",
-+			       param->name, hc->uuid);
-+			up_write(&_hash_lock);
-+			kfree(new_data);
-+			return ERR_PTR(-EINVAL);
-+		}
-+		/*
-+		 * change uuid and move the uuid cell.
-+		 */
-+		list_del(&hc->uuid_list);
-+		old_data = hc->uuid;
-+		mutex_lock(&dm_hash_cells_mutex);
-+		hc->uuid = new_data;
-+		mutex_unlock(&dm_hash_cells_mutex);
-+		list_add(&hc->uuid_list, _uuid_buckets + hash_str(new_data));
-+	} else {
-+		/*
-+		 * rename and move the name cell.
-+		 */
-+		list_del(&hc->name_list);
-+		old_data = hc->name;
-+		mutex_lock(&dm_hash_cells_mutex);
-+		hc->name = new_data;
-+		mutex_unlock(&dm_hash_cells_mutex);
-+		list_add(&hc->name_list, _name_buckets + hash_str(new_data));
-+	}
- 
- 	/*
- 	 * Wake up any dm event waiters.
-@@ -361,7 +390,7 @@ static struct mapped_device *dm_hash_ren
- 
- 	md = hc->md;
- 	up_write(&_hash_lock);
--	kfree(old_name);
-+	kfree(old_data);
- 
- 	return md;
- }
-@@ -774,21 +803,30 @@ static int invalid_str(char *str, void *
- static int dev_rename(struct dm_ioctl *param, size_t param_size)
- {
- 	int r;
--	char *new_name = (char *) param + param->data_start;
-+	char *new_data = (char *) param + param->data_start;
- 	struct mapped_device *md;
- 
--	if (new_name < param->data ||
--	    invalid_str(new_name, (void *) param + param_size) ||
--	    strlen(new_name) > DM_NAME_LEN - 1) {
--		DMWARN("Invalid new logical volume name supplied.");
--		return -EINVAL;
--	}
-+	if (param->flags & DM_NEW_UUID_FLAG) {
-+		if (new_data < param->data ||
-+		    invalid_str(new_data, (void *) param + param_size) ||
-+		    strlen(new_data) > DM_UUID_LEN - 1) {
-+			DMWARN("Invalid new device uuid supplied.");
-+			return -EINVAL;
-+		}
-+	} else {
-+		if (new_data < param->data ||
-+		    invalid_str(new_data, (void *) param + param_size) ||
-+		    strlen(new_data) > DM_NAME_LEN - 1) {
-+			DMWARN("Invalid new device name supplied.");
-+			return -EINVAL;
-+		}
- 
--	r = check_name(new_name);
--	if (r)
--		return r;
-+		r = check_name(new_data);
-+		if (r)
-+			return r;
-+	}
- 
--	md = dm_hash_rename(param, new_name);
-+	md = dm_hash_rename(param, new_data);
- 	if (IS_ERR(md))
- 		return PTR_ERR(md);
- 
-Index: linux-2.6/include/linux/dm-ioctl.h
-===================================================================
---- linux-2.6.orig/include/linux/dm-ioctl.h
-+++ linux-2.6/include/linux/dm-ioctl.h
-@@ -267,9 +267,9 @@ enum {
- #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
- 
- #define DM_VERSION_MAJOR	4
--#define DM_VERSION_MINOR	18
-+#define DM_VERSION_MINOR	19
- #define DM_VERSION_PATCHLEVEL	0
--#define DM_VERSION_EXTRA	"-ioctl (2010-06-29)"
-+#define DM_VERSION_EXTRA	"-ioctl (2010-10-07)"
- 
- /* Status bits */
- #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
-@@ -322,4 +322,9 @@ enum {
-  */
- #define DM_UEVENT_GENERATED_FLAG	(1 << 13) /* Out */
- 
-+/*
-+ * If set, rename operates on uuid, not name.
-+ */
-+#define DM_NEW_UUID_FLAG        (1 << 14) /* In */
-+
- #endif				/* _LINUX_DM_IOCTL_H */
+So one obvious problem is bio allocation above and below the upper level
+request queue. (That's the one addressed above.) If both ends allocate
+from the same bio pool, the upper layer exhausts it, and free memory is
+short, then the the lower levels will starve, and both get stuck that
+way.
+
+The way this is commonly dealt with is to separate biosets between
+layers, which ensures that both can always make progress. DM does it, as
+does blk-core. Cool.
+
+Now, one potential problem I still see is is the following: Imagine a
+large number of dirty pages over a DM node. So some thread starts
+queueing those pages. Requests get translated, translated request are
+allocated. When allocating from the pooled objects, I can see stuff like
+the following happen. All in mempool_alloc.
+
+   1. First iteration is set ~__GFP_WAIT.
+   2. Still no memory, so it fails, and falls back to the pool.
+   3. pool curr_nr is 0, so we got to sleep on pool->wait.
+   4. I/O was in flight, and will complete, so once objects
+      get returned, pool->wait wakes us.
+
+   Now the interesting bit:
+
+   5. Next iteration resets __GFP_WAIT to 1.
+   6. The mempool retries the (slab) allocator first, not the pool.
+
+Seen on 2.6.32, but I don't think that code moved a lot recently.
+
+So I got two questions:
+
+When retrying, is the __GFP_WAIT being reset even desirable? It means
+the calling thread is likely to wait on disk I/O. The pool is known to
+have seen a refill through mempool_free, so that waiting pool->alloc can
+get much slower than wanted. The pool->alloc itself is fine, it's that
+wait bit which scares me.
+
+Second, when waiting, how does DM make sure the private bioset
+allocations never block on a page queued on its own device? That would
+be a (potential) deadlock scenario again, the most simple case is when
+that page entry directly depends on the lower level object to make
+progress.
+
+To me this all seems to boil down to that gfp_temp = gfp_mask line in
+mempool_alloc.
+
+Any good idea on this would be very much appreciated.
+
+Thanks.
+
+Daniel
