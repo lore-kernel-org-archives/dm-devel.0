@@ -1,46 +1,75 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [2.6.36 REGRESSION] Re: virtio-blk: put request that was created to
- retrieve the device id
-Date: Fri, 8 Oct 2010 12:06:44 -0400
-Message-ID: <20101008160643.GA32005@redhat.com>
-References: <20100909175537.GA9589@redhat.com>
- <20100909183554.GK30086@us.ibm.com>
- <20100909191555.GA14486@redhat.com>
- <20100909194300.GA16908@redhat.com>
- <20100909201445.GA19656@redhat.com>
- <20100909203052.GL30086@us.ibm.com>
- <20100909210042.GA22092@redhat.com>
- <20100909211504.GA24506@infradead.org>
- <20100917145848.GK30086@us.ibm.com>
- <20100921210033.GA24729@infradead.org>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [dm-devel] Linux 2.6.36-rc7
+Date: Fri, 08 Oct 2010 19:02:11 +0200
+Message-ID: <4CAF4E93.1040101@kernel.org>
+References: <AANLkTi=LsBNU+O2hqZUcM2nYM_ze6qPq3thwSZBMtY_v@mail.gmail.com> <4CAE1F47.3050105@kernel.org> <4CAE29CC.8030702@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20100921210033.GA24729@infradead.org>
+In-Reply-To: <4CAE29CC.8030702@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: rusty@rustcorp.com.au
-Cc: Christoph Hellwig <hch@infradead.org>, Ryan Harper <ryanh@us.ibm.com>, Tejun Heo <tj@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, dm-devel@redhat.com, Vivek Goyal <vgoyal@redhat.com>, john.cooper@redhat.com, kvm@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, just.for.lkml@googlemail.com, hch@infradead.org, herbert@gondor.hengli.com.au
 List-Id: dm-devel.ids
 
-Hi Rusty,
+Hello, again.
 
-On Tue, Sep 21 2010 at  5:00pm -0400,
-Christoph Hellwig <hch@infradead.org> wrote:
-
-> On Fri, Sep 17, 2010 at 09:58:48AM -0500, Ryan Harper wrote:
-> > Since __bio_map_kern() sets up bio->bi_end_io = bio_map_kern_endio
-> > (which does a bio_put(bio)) doesn't that ensure we don't leak?
+On 10/07/2010 10:13 PM, Milan Broz wrote:
+> Yes, XFS is very good to show up problems in dm-crypt:)
 > 
-> Indeed, that should take care of it.
+> But there was no change in dm-crypt which can itself cause such problem,
+> planned workqueue changes are not in 2.6.36 yet.
+> Code is basically the same for the last few releases.
 > 
+> So it seems that workqueue processing really changed here under memory pressure.
+> 
+> Milan
+> 
+> p.s.
+> Anyway, if you are able to reproduce it and you think that there is problem
+> in per-device dm-crypt workqueue, there are patches from Andi for shared
+> per-cpu workqueue, maybe it can help here. (But this is really not RC material.)
+> 
+> Unfortunately not yet in dm-devel tree, but I have them here ready for review:
+> http://mbroz.fedorapeople.org/dm-crypt/2.6.36-devel/
+> (all 4 patches must be applied, I hope Alasdair will put them in dm quilt soon.)
 
-We need to fix this regression for 2.6.36.  Not sure what else I need to
-do to get this on your radar.  It's a pretty significant show-stopper
-for 2.6.36 guests that use virtio-blk with a udev enabled distro.
+Okay, spent the whole day reproduing the problem and trying to
+determine what's going on.  In the process, I've found a bug and a
+potential issue (not sure whether it's an actual issue which should be
+fixed for this release yet) but the hang doesn't seem to have anything
+to do with workqueue update.  All the queues are behaving exactly as
+expected during hang.
 
-Here is a reference to my original patch (which Ryan and hch have both
-reviewed): https://patchwork.kernel.org/patch/165571/
+Also, it isn't a regression.  I can reliably trigger the same deadlock
+on v2.6.35.
 
-Thanks,
-Mike
+Here's the setup, which should be mostly similar to Torsten's setup I
+used to trigger the problem.
+
+The machine is dual quad-core Opteron (8 phys cores) w/ 4GiB memory.
+
+* 80GB raid1 of two SATA disks
+* On top of that, luks encrypted device w/ twofish-cbc-essiv:sha256
+* In the encrypted device, xfs filesystem which hosts 8GiB swapfile
+* 12GiB tmpfs
+
+The workload is v2.6.35 allyesconfig -j 128 build in the tmpfs.  Not
+too long after swap starts being used (several tens of secs), the
+system hangs.  IRQ handling and all are fine but no IO gets through
+with a lot of tasks stuck in bio allocation somewhere.
+
+I suspected that with md and dm stacked together, something in the
+upper layer ended up exhausting a shared bio pool and tried a couple
+of things but haven't succeeded at finding where the culprit is.  It
+probably would be best to run blktrace together and analyze how IO
+gets stuck.
+
+So, well, we seem to be broken the same way as before.  No need to
+delay release for this one.
+
+Thanks.
+
+-- 
+tejun
