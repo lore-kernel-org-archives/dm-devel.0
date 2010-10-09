@@ -1,93 +1,93 @@
-From: Daniel Stodden <daniel.stodden@citrix.com>
-Subject: Q: Device mapper core and private biosets
-Date: Fri, 8 Oct 2010 15:20:39 -0700
-Message-ID: <1286576439.16468.71.camel@agari.van.xensource.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Rusty Russell <rusty@rustcorp.com.au>
+Subject: Re: [PATCH] virtio-blk: put request that was created to retrieve the device id
+Date: Sat, 9 Oct 2010 12:11:04 +1030
+Message-ID: <201010091211.05478.rusty@rustcorp.com.au>
+References: <20100909152658.GA8118@redhat.com> <20100909203052.GL30086@us.ibm.com> <20100909210042.GA22092@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: Text/Plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: DM-devel <dm-devel@redhat.com>
+Return-path: <kvm-owner@vger.kernel.org>
+In-Reply-To: <20100909210042.GA22092@redhat.com>
+Sender: kvm-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Ryan Harper <ryanh@us.ibm.com>, dm-devel@redhat.com, kvm@vger.kernel.org, john.cooper@redhat.com
 List-Id: dm-devel.ids
 
+On Fri, 10 Sep 2010 06:30:42 am Mike Snitzer wrote:
+> On Thu, Sep 09 2010 at  4:30pm -0400,
+> Ryan Harper <ryanh@us.ibm.com> wrote:
+> 
+> > * Mike Snitzer <snitzer@redhat.com> [2010-09-09 15:15]:
+> > > On Thu, Sep 09 2010 at  3:43pm -0400,
+> > > Mike Snitzer <snitzer@redhat.com> wrote:
+> > > # while true ; do cat /sys/block/vda/queue/nr_requests_used && cat /sys/block/vda/serial && date && sleep 1 ; done
+> > > 10
+> > > Thu Sep  9 16:04:40 EDT 2010
+> > > 11
+...
+> > The qemu on the host isn't new enough to handle the request.  This
+> > serial attribute should have had a feature bit with it (it did at one
+> > point in one of the previous forms of the virtio-blk serial patch
+> > series, but it isn't present now) so we don't expose the attribute
+> > unless backend can handle the request type.
+> 
+> Be that as it may, it doesn't change the fact that the request created
+> in virtblk_get_id (via blk_make_request) isn't being properly cleaned
+> up.
 
-Hi.
+Thanks for re-sending Mike.
 
-I'm presently trying to fix a couple issues in a kernel module which
-shares some properties with DM. It's called blktap and used quite
-extensively in Xen. It's basically I/O virtualization in userspace, and
-so it forwards I/O on block devices to a userspace app. The userspace
-part would commonly translate requests to one or a number of disk nodes.
+This patch confused me at first, but it's correct.  Took me a few
+minutes of checking though.
 
-The common base is stacking devices. Without precautions, the result is
-a number of deadlock hazards when memory congestion comes into play.
+For those not familiar with the block layer, here are the key points:
 
-Can maybe someone help me on how this was dealt with in DM? I couldn't
-explain a couple things looking at DM code so I'm wondering if maybe
-even DM still has a problem. It's mainly about mempools involved. Not
-necessarily limited to bio_alloc.
+1) blk_execute_rq waits for the request to finish.
+2) blk_execute_rq grabs its own reference to the req.
+3) Once qemu finishes with it and sends an interrupt blk_done()
+   releases that reference via __blk_end_request_all()
+4) As caller of blk_make_request, it is our responsibility to
+   free it after it's finished, ie. after blk_execute_rq.
 
-I found a couple DM patch on those matters, eg.
+> This patch fixes the issue for me; Rusty and/or Christoph please
+> review/advise.
 
-http://www.spinics.net/lists/dm-devel/msg03578.html
+Thanks, applied, and CC'd stable@kernel.org (it's in 2.6.35 as well).
 
-So one obvious problem is bio allocation above and below the upper level
-request queue. (That's the one addressed above.) If both ends allocate
-from the same bio pool, the upper layer exhausts it, and free memory is
-short, then the the lower levels will starve, and both get stuck that
-way.
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: virtio-blk: fix request leak.
 
-The way this is commonly dealt with is to separate biosets between
-layers, which ensures that both can always make progress. DM does it, as
-does blk-core. Cool.
+Must drop reference taken by blk_make_request().
 
-Now, one potential problem I still see is is the following: Imagine a
-large number of dirty pages over a DM node. So some thread starts
-queueing those pages. Requests get translated, translated request are
-allocated. When allocating from the pooled objects, I can see stuff like
-the following happen. All in mempool_alloc.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
+Cc: stable@kernel.org # .35.x
+---
+ drivers/block/virtio_blk.c |    6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-   1. First iteration is set ~__GFP_WAIT.
-   2. Still no memory, so it fails, and falls back to the pool.
-   3. pool curr_nr is 0, so we got to sleep on pool->wait.
-   4. I/O was in flight, and will complete, so once objects
-      get returned, pool->wait wakes us.
-
-   Now the interesting bit:
-
-   5. Next iteration resets __GFP_WAIT to 1.
-   6. The mempool retries the (slab) allocator first, not the pool.
-
-Seen on 2.6.32, but I don't think that code moved a lot recently.
-
-So I got two questions:
-
-When retrying, is the __GFP_WAIT being reset even desirable? It means
-the calling thread is likely to wait on disk I/O. The pool is known to
-have seen a refill through mempool_free, so that waiting pool->alloc can
-get much slower than wanted. The pool->alloc itself is fine, it's that
-wait bit which scares me.
-
-Second, when waiting, how does DM make sure the private bioset
-allocations never block on a page queued on its own device? That would
-be a (potential) deadlock scenario again, the most simple case is when
-that page entry directly depends on the lower level object to make
-progress.
-
-To me this all seems to boil down to that gfp_temp = gfp_mask line in
-mempool_alloc.
-
-Any good idea on this would be very much appreciated.
-
-Thanks.
-
-Daniel
+diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+index 1260628..831e75c 100644
+--- a/drivers/block/virtio_blk.c
++++ b/drivers/block/virtio_blk.c
+@@ -199,6 +199,7 @@ static int virtblk_get_id(struct gendisk *disk, char *id_str)
+ 	struct virtio_blk *vblk = disk->private_data;
+ 	struct request *req;
+ 	struct bio *bio;
++	int err;
+ 
+ 	bio = bio_map_kern(vblk->disk->queue, id_str, VIRTIO_BLK_ID_BYTES,
+ 			   GFP_KERNEL);
+@@ -212,7 +213,10 @@ static int virtblk_get_id(struct gendisk *disk, char *id_str)
+ 	}
+ 
+ 	req->cmd_type = REQ_TYPE_SPECIAL;
+-	return blk_execute_rq(vblk->disk->queue, vblk->disk, req, false);
++	err = blk_execute_rq(vblk->disk->queue, vblk->disk, req, false);
++	blk_put_request(req);
++
++	return err;
+ }
+ 
+ static int virtblk_locked_ioctl(struct block_device *bdev, fmode_t mode,
