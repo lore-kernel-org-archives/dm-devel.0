@@ -1,55 +1,34 @@
-From: Milan Broz <mbroz@redhat.com>
+From: Andi Kleen <andi@firstfloor.org>
 Subject: Re: [dm-devel] DM-CRYPT: Scale to multiple CPUs v3
-Date: Sun, 10 Oct 2010 21:31:30 +0200
-Message-ID: <4CB21492.8050101@redhat.com>
-References: <20101010115941.GA8539@basil.fritz.box> <4CB1B3B9.4030205@redhat.com> <20101010130842.GE8256@basil.fritz.box> <4CB1DD1A.5080906@redhat.com> <20101010162257.GA1272@redhat.com> <20101010170151.GD28828@agk-dp.fab.redhat.com> <20101010174454.GA21681@basil.fritz.box> <20101010181736.GE28828@agk-dp.fab.redhat.com> <20101010185100.GB21681@basil.fritz.box> <20101010190734.GH28828@agk-dp.fab.redhat.com> <20101010191640.GC21681@basil.fritz.box>
+Date: Sun, 10 Oct 2010 22:20:31 +0200
+Message-ID: <20101010202031.GD21681@basil.fritz.box>
+References: <20101010130842.GE8256@basil.fritz.box>
+ <4CB1DD1A.5080906@redhat.com>
+ <20101010162257.GA1272@redhat.com>
+ <20101010170151.GD28828@agk-dp.fab.redhat.com>
+ <20101010174454.GA21681@basil.fritz.box>
+ <20101010181736.GE28828@agk-dp.fab.redhat.com>
+ <20101010185100.GB21681@basil.fritz.box>
+ <20101010190734.GH28828@agk-dp.fab.redhat.com>
+ <20101010191640.GC21681@basil.fritz.box>
+ <4CB21492.8050101@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20101010191640.GC21681@basil.fritz.box>
+Content-Disposition: inline
+In-Reply-To: <4CB21492.8050101@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andi Kleen <andi@firstfloor.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, Andi Kleen <ak@linux.intel.com>, device-mapper development <dm-devel@redhat.com>, pedrib@gmail.com, linux-kernel@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>
+Cc: Andi Kleen <andi@firstfloor.org>, Mike Snitzer <snitzer@redhat.com>, Andi Kleen <ak@linux.intel.com>, device-mapper development <dm-devel@redhat.com>, pedrib@gmail.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 10/10/2010 09:16 PM, Andi Kleen wrote:
->> Not if in_interrupt is set though?
->> +       if (per_cpu(io_wq_cpu, cpu) == current && !in_interrupt()) {
->>
->> What I am missing here?
-> 
-> The interrupt doesn't block on the task.
-> 
-> Actually most likely that check isn't needed anyways because
-> that should not happen, was just pure paranoia from my side.
+> But previously, there were threads per device, so if one IO thread blocks,
+> others stacked mappings can continue
+> Now I see possibility for deadlock there because we have one io thread now
+> (assuming that 1 CPU situation Alasdair mentioned).
 
-I don't think so. If you run crypto in async mode, you get asynchronous
-callback (kcryptd_asynnc_done() here).
+That path calls the crypto worker thread, not the IO worker thread?
+crypto worker should be fine here, only IO worker would be a problem
+I think because crypto doesn't really block on nested IO.
 
-AFAIK this callback is called in interrupt context. This callback
-decreases pending counter and if it reach zero it calls
-kcryptd_crypt_write_io_submit() -> kcryptd_queue_io().
-
-You cannot call direct encryption if it is called from async callback,
-so the IO must be always queued to IO workqueue for later.
-
-So the in_interrupt() is IMHO equivalent of async flag and it is
-properly placed there.
-
-But previously, there were threads per device, so if one IO thread blocks,
-others stacked mappings can continue
-Now I see possibility for deadlock there because we have one io thread now
-(assuming that 1 CPU situation Alasdair mentioned).
-
-Or is there a mistake in my analysis?
-
-> 
->>
->> (And assume there is only 1 CPU too for worst case behaviour, presumably.)
-> 
-> One per process, previously it was always one per CPU.
-
-Nope, one singlethread per crypt device (resp. two: io + crypt).
-
-Milan
+-Andi
