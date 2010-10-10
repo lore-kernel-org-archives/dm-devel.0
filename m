@@ -1,37 +1,25 @@
-From: Andi Kleen <andi@firstfloor.org>
+From: Milan Broz <mbroz@redhat.com>
 Subject: Re: [dm-devel] [PATCH] DM-CRYPT: Scale to multiple CPUs v3
-Date: Sun, 10 Oct 2010 15:09:41 +0200
-Message-ID: <20101010130941.GF8256@basil.fritz.box>
-References: <20101010115941.GA8539@basil.fritz.box>
- <4CB1B3B9.4030205@redhat.com>
- <4CB1B762.90900@redhat.com>
+Date: Sun, 10 Oct 2010 17:34:50 +0200
+Message-ID: <4CB1DD1A.5080906@redhat.com>
+References: <20101010115941.GA8539@basil.fritz.box> <4CB1B3B9.4030205@redhat.com> <20101010130842.GE8256@basil.fritz.box>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4CB1B762.90900@redhat.com>
+In-Reply-To: <20101010130842.GE8256@basil.fritz.box>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: Andi Kleen <ak@linux.intel.com>, device-mapper development <dm-devel@redhat.com>, Mike Snitzer <msnitzer@redhat.com>, linux-kernel@vger.kernel.org, Andi Kleen <andi@firstfloor.org>, pedrib@gmail.com, Alasdair G Kergon <agk@redhat.com>
+To: Andi Kleen <andi@firstfloor.org>
+Cc: Andi Kleen <ak@linux.intel.com>, device-mapper development <dm-devel@redhat.com>, pedrib@gmail.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <msnitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Sun, Oct 10, 2010 at 02:53:54PM +0200, Milan Broz wrote:
-> On 10/10/2010 02:38 PM, Milan Broz wrote:
-> 
-> > is there some change in your new version?
-> Of course I mean except the changes you mentioned which are easy
-> to change in my patchset:-)
-> 
-> (There was requirement from agk to have several simple
-> bisectable patches.)
+On 10/10/2010 03:08 PM, Andi Kleen wrote:
+> I did it intentionally not split up because a split up is unlikely
+> to be bisectable. I think there is no need for any splitups.
 
-Well my patch is bisectable.
+Shrug. The main encryption thread and ESSIV per-cpu are two separate
+things from my point of view.
 
-I don't see how it can be split up without being not functional
-in the middle.
+Anyway, the ball is on DM maintainer's playground now.
 
-Either you have per cpu data or you don't.
-
--Andi
--- 
-ak@linux.intel.com -- Speaking for myself only.
+Milan
