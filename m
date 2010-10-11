@@ -1,67 +1,240 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH wq#for-next] workqueue: fix HIGHPRI handling in keep_working()
-Date: Mon, 11 Oct 2010 12:09:18 +0200
-Message-ID: <4CB2E24E.3020209@kernel.org>
-References: <AANLkTi=LsBNU+O2hqZUcM2nYM_ze6qPq3thwSZBMtY_v@mail.gmail.com> <4CAE1F47.3050105@kernel.org> <4CAE29CC.8030702@redhat.com> <4CAF4E93.1040101@kernel.org>
+From: Peter Jones <pjones@redhat.com>
+Subject: Re: [PATCH] device-mapper: Allow setting of UUID via
+ rename if not already set
+Date: Mon, 11 Oct 2010 15:49:28 -0400
+Message-ID: <4CB36A48.3000309@redhat.com>
+References: <1286573602.9513.8.camel@hydrogen.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4CAF4E93.1040101@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, just.for.lkml@googlemail.com, hch@infradead.org, herbert@gondor.hengli.com.au
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1286573602.9513.8.camel@hydrogen.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jonathan Brassow <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The policy function keep_working() didn't check GCWQ_HIGHPRI_PENDING
-and could return %false with highpri work pending.  This could lead to
-late execution of a highpri work which was delayed due to @max_active
-throttling if other works are actively consuming CPU cycles.
+On 10/08/2010 05:33 PM, Jonathan Brassow wrote:
+> Peter, please add your "signed-off-by" if you approve of the changes
+> (above my signed-off-by, because you are the creator).  It still would
+> be nice to have a better header - not too many people will look at the
+> bz, I think.  Better to say "There are times when we need to be able to
+> set device UUIDs, like when...".
+> 
+> Looks like I had in mind the same things as Mike.  :)
+> 
+>  brassow
+> 
+How about:
+ 
+This makes it possible to use DM_DEV_RENAME to add a uuid to a device so
+long as one has not been previously set either with DM_DEV_CREATE or
+with DM_DEV_RENAME. This is needed because sometimes in it's necessary
+to create the device before the uuid is known, and in such cases the
+uuid must be filled in after the creation.
 
-For example, the following could happen.
+Also bump the minor number to 19.
 
-1. Work W0 which burns CPU cycles.
+Signed-off-by: Peter Jones <pjones@redhat.com>
+> Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+> 
+> Index: linux-2.6/drivers/md/dm-ioctl.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-ioctl.c
+> +++ linux-2.6/drivers/md/dm-ioctl.c
+> @@ -298,7 +298,7 @@ retry:
+>  static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
+>  					    const char *new)
+>  {
+> -	char *new_name, *old_name;
+> +	char *new_data, *old_data;
+>  	struct hash_cell *hc;
+>  	struct dm_table *table;
+>  	struct mapped_device *md;
+> @@ -306,8 +306,8 @@ static struct mapped_device *dm_hash_ren
+>  	/*
+>  	 * duplicate new.
+>  	 */
+> -	new_name = kstrdup(new, GFP_KERNEL);
+> -	if (!new_name)
+> +	new_data = kstrdup(new, GFP_KERNEL);
+> +	if (!new_data)
+>  		return ERR_PTR(-ENOMEM);
+>  
+>  	down_write(&_hash_lock);
+> @@ -315,13 +315,19 @@ static struct mapped_device *dm_hash_ren
+>  	/*
+>  	 * Is new free ?
+>  	 */
+> -	hc = __get_name_cell(new);
+> +	if (param->flags & DM_NEW_UUID_FLAG)
+> +		hc = __get_uuid_cell(new);
+> +	else
+> +		hc = __get_name_cell(new);
+> +
+>  	if (hc) {
+> -		DMWARN("asked to rename to an already-existing name %s -> %s",
+> +		DMWARN("Unable to change %s on device, %s to one that "
+> +		       "already exists: %s",
+> +		       (param->flags & DM_NEW_UUID_FLAG) ? "uuid" : "name",
+>  		       param->name, new);
+>  		dm_put(hc->md);
+>  		up_write(&_hash_lock);
+> -		kfree(new_name);
+> +		kfree(new_data);
+>  		return ERR_PTR(-EBUSY);
+>  	}
+>  
+> @@ -330,22 +336,45 @@ static struct mapped_device *dm_hash_ren
+>  	 */
+>  	hc = __get_name_cell(param->name);
+>  	if (!hc) {
+> -		DMWARN("asked to rename a non-existent device %s -> %s",
+> +		DMWARN("Unable to rename non-existent device, %s to %s",
+>  		       param->name, new);
+>  		up_write(&_hash_lock);
+> -		kfree(new_name);
+> +		kfree(new_data);
+>  		return ERR_PTR(-ENXIO);
+>  	}
+>  
+> -	/*
+> -	 * rename and move the name cell.
+> -	 */
+> -	list_del(&hc->name_list);
+> -	old_name = hc->name;
+> -	mutex_lock(&dm_hash_cells_mutex);
+> -	hc->name = new_name;
+> -	mutex_unlock(&dm_hash_cells_mutex);
+> -	list_add(&hc->name_list, _name_buckets + hash_str(new_name));
+> +	if (param->flags & DM_NEW_UUID_FLAG) {
+> +		/*
+> +		 * Does this device already have a uuid?
+> +		 */
+> +		if (hc->uuid) {
+> +			DMWARN("Unable to change uuid of device, %s because "
+> +			       "uuid is already set to %s",
+> +			       param->name, hc->uuid);
+> +			up_write(&_hash_lock);
+> +			kfree(new_data);
+> +			return ERR_PTR(-EINVAL);
+> +		}
+> +		/*
+> +		 * change uuid and move the uuid cell.
+> +		 */
+> +		list_del(&hc->uuid_list);
+> +		old_data = hc->uuid;
+> +		mutex_lock(&dm_hash_cells_mutex);
+> +		hc->uuid = new_data;
+> +		mutex_unlock(&dm_hash_cells_mutex);
+> +		list_add(&hc->uuid_list, _uuid_buckets + hash_str(new_data));
+> +	} else {
+> +		/*
+> +		 * rename and move the name cell.
+> +		 */
+> +		list_del(&hc->name_list);
+> +		old_data = hc->name;
+> +		mutex_lock(&dm_hash_cells_mutex);
+> +		hc->name = new_data;
+> +		mutex_unlock(&dm_hash_cells_mutex);
+> +		list_add(&hc->name_list, _name_buckets + hash_str(new_data));
+> +	}
+>  
+>  	/*
+>  	 * Wake up any dm event waiters.
+> @@ -361,7 +390,7 @@ static struct mapped_device *dm_hash_ren
+>  
+>  	md = hc->md;
+>  	up_write(&_hash_lock);
+> -	kfree(old_name);
+> +	kfree(old_data);
+>  
+>  	return md;
+>  }
+> @@ -774,21 +803,30 @@ static int invalid_str(char *str, void *
+>  static int dev_rename(struct dm_ioctl *param, size_t param_size)
+>  {
+>  	int r;
+> -	char *new_name = (char *) param + param->data_start;
+> +	char *new_data = (char *) param + param->data_start;
+>  	struct mapped_device *md;
+>  
+> -	if (new_name < param->data ||
+> -	    invalid_str(new_name, (void *) param + param_size) ||
+> -	    strlen(new_name) > DM_NAME_LEN - 1) {
+> -		DMWARN("Invalid new logical volume name supplied.");
+> -		return -EINVAL;
+> -	}
+> +	if (param->flags & DM_NEW_UUID_FLAG) {
+> +		if (new_data < param->data ||
+> +		    invalid_str(new_data, (void *) param + param_size) ||
+> +		    strlen(new_data) > DM_UUID_LEN - 1) {
+> +			DMWARN("Invalid new device uuid supplied.");
+> +			return -EINVAL;
+> +		}
+> +	} else {
+> +		if (new_data < param->data ||
+> +		    invalid_str(new_data, (void *) param + param_size) ||
+> +		    strlen(new_data) > DM_NAME_LEN - 1) {
+> +			DMWARN("Invalid new device name supplied.");
+> +			return -EINVAL;
+> +		}
+>  
+> -	r = check_name(new_name);
+> -	if (r)
+> -		return r;
+> +		r = check_name(new_data);
+> +		if (r)
+> +			return r;
+> +	}
+>  
+> -	md = dm_hash_rename(param, new_name);
+> +	md = dm_hash_rename(param, new_data);
+>  	if (IS_ERR(md))
+>  		return PTR_ERR(md);
+>  
+> Index: linux-2.6/include/linux/dm-ioctl.h
+> ===================================================================
+> --- linux-2.6.orig/include/linux/dm-ioctl.h
+> +++ linux-2.6/include/linux/dm-ioctl.h
+> @@ -267,9 +267,9 @@ enum {
+>  #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
+>  
+>  #define DM_VERSION_MAJOR	4
+> -#define DM_VERSION_MINOR	18
+> +#define DM_VERSION_MINOR	19
+>  #define DM_VERSION_PATCHLEVEL	0
+> -#define DM_VERSION_EXTRA	"-ioctl (2010-06-29)"
+> +#define DM_VERSION_EXTRA	"-ioctl (2010-10-07)"
+>  
+>  /* Status bits */
+>  #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
+> @@ -322,4 +322,9 @@ enum {
+>   */
+>  #define DM_UEVENT_GENERATED_FLAG	(1 << 13) /* Out */
+>  
+> +/*
+> + * If set, rename operates on uuid, not name.
+> + */
+> +#define DM_NEW_UUID_FLAG        (1 << 14) /* In */
+> +
+>  #endif				/* _LINUX_DM_IOCTL_H */
+> 
+> 
 
-2. Two works W1 and W2 are queued to a highpri wq w/ @max_active of 1.
 
-3. W1 starts executing and W2 is put to delayed queue.  W0 and W1 are
-   both runnable.
-
-4. W1 finishes which puts W2 to pending queue but keep_working()
-   incorrectly returns %false and the worker goes to sleep.
-
-5. W0 finishes and W2 starts execution.
-
-With this patch applied, W2 starts execution as soon as W1 finishes.
-
-Signed-off-by: Tejun Heo <tj@kernel.org>
----
-This is the workqueue bug I've found while trying to debug the dm/raid
-hang.  Although the bug may introduce unexpected delay in scheduling a
-highpri work, the delay can only be as long as the combined length of
-CPU cycle burns of the already running works.  Given that HIGHPRI is
-currently only used by xfs and its usage, I don't think it's likely to
-cause an actual issue.  I'll queue it for #for-next.
-
-Thank you.
-
- kernel/workqueue.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
-
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index f77afd9..d355278 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -604,7 +604,9 @@ static bool keep_working(struct global_cwq *gcwq)
- {
- 	atomic_t *nr_running = get_gcwq_nr_running(gcwq->cpu);
-
--	return !list_empty(&gcwq->worklist) && atomic_read(nr_running) <= 1;
-+	return !list_empty(&gcwq->worklist) &&
-+		(atomic_read(nr_running) <= 1 ||
-+		 gcwq->flags & GCWQ_HIGHPRI_PENDING);
- }
-
- /* Do we need a new worker?  Called from manager. */
 -- 
-1.7.1
+        Peter
+
+Growth for the sake of growth is the ideology of the cancer cell.
+
+01234567890123456789012345678901234567890123456789012345678901234567890123456789
