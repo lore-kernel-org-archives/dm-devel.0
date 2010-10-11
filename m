@@ -1,52 +1,67 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] DM-CRYPT: Scale to multiple CPUs v3
-Date: Mon, 11 Oct 2010 11:32:09 +0200
-Message-ID: <4CB2D999.9080002@redhat.com>
-References: <20101010130842.GE8256@basil.fritz.box> <4CB1DD1A.5080906@redhat.com> <20101010162257.GA1272@redhat.com> <20101010170151.GD28828@agk-dp.fab.redhat.com> <20101010174454.GA21681@basil.fritz.box> <20101010181736.GE28828@agk-dp.fab.redhat.com> <20101010185100.GB21681@basil.fritz.box> <20101010190734.GH28828@agk-dp.fab.redhat.com> <20101010191640.GC21681@basil.fritz.box> <4CB21492.8050101@redhat.com> <20101010202031.GD21681@basil.fritz.box>
+From: Tejun Heo <tj@kernel.org>
+Subject: [PATCH wq#for-next] workqueue: fix HIGHPRI handling in keep_working()
+Date: Mon, 11 Oct 2010 12:09:18 +0200
+Message-ID: <4CB2E24E.3020209@kernel.org>
+References: <AANLkTi=LsBNU+O2hqZUcM2nYM_ze6qPq3thwSZBMtY_v@mail.gmail.com> <4CAE1F47.3050105@kernel.org> <4CAE29CC.8030702@redhat.com> <4CAF4E93.1040101@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20101010202031.GD21681@basil.fritz.box>
+In-Reply-To: <4CAF4E93.1040101@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andi Kleen <andi@firstfloor.org>
-Cc: Mike Snitzer <snitzer@redhat.com>, Andi Kleen <ak@linux.intel.com>, device-mapper development <dm-devel@redhat.com>, pedrib@gmail.com, linux-kernel@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>
+Cc: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, just.for.lkml@googlemail.com, hch@infradead.org, herbert@gondor.hengli.com.au
 List-Id: dm-devel.ids
 
-On 10/10/2010 10:20 PM, Andi Kleen wrote:
->> But previously, there were threads per device, so if one IO thread blocks,
->> others stacked mappings can continue
->> Now I see possibility for deadlock there because we have one io thread now
->> (assuming that 1 CPU situation Alasdair mentioned).
-> 
-> That path calls the crypto worker thread, not the IO worker thread?
-> crypto worker should be fine here, only IO worker would be a problem
-> I think because crypto doesn't really block on nested IO.
+The policy function keep_working() didn't check GCWQ_HIGHPRI_PENDING
+and could return %false with highpri work pending.  This could lead to
+late execution of a highpri work which was delayed due to @max_active
+throttling if other works are actively consuming CPU cycles.
 
-Well, crypt thread can block, this is surely not what we want in async callback
-and IO thread cannot call generic_make_request() from this context as well...
+For example, the following could happen.
 
-But the reads are not problem - system queues IO, then after completion
-it calls async crypt. When async crypt is done, kcrypt_crypt_read_done()
-is called - and it is safe, there is just bio_endio().
+1. Work W0 which burns CPU cycles.
 
-The problem is write path - it allocates bio clone, run async crypto on it
-and the final callback queues cloned bio to underlying device.
-Because code cannot call generic_make_request() directly here (assuming
-it still runs in interrupt mode), it submits new work to io thread.
+2. Two works W1 and W2 are queued to a highpri wq w/ @max_active of 1.
 
-So there the code behaves the same as before - just instead of queueing into
-separate per-device io workqueue we have now just one common queue...
-So question is, if this is safe in all stacked situations and cannot deadlock.
+3. W1 starts executing and W2 is put to delayed queue.  W0 and W1 are
+   both runnable.
 
-Imagine you have stacked one dm-crypt device, which implements uses
-alg in sync mode over another one, which run in async mode.
-So the common io thread runs both encryption and make_request...
-If it can lock itself here, it is regression from previous version here.
+4. W1 finishes which puts W2 to pending queue but keep_working()
+   incorrectly returns %false and the worker goes to sleep.
 
-(Note I am not blocking the patch - I think this can be solved later somehow,
-but either we should know about this problem or prove it is safe.
-In normal (sync) mode this path is not used at all - and this is the most
-common situation.)
+5. W0 finishes and W2 starts execution.
 
-Milan
+With this patch applied, W2 starts execution as soon as W1 finishes.
+
+Signed-off-by: Tejun Heo <tj@kernel.org>
+---
+This is the workqueue bug I've found while trying to debug the dm/raid
+hang.  Although the bug may introduce unexpected delay in scheduling a
+highpri work, the delay can only be as long as the combined length of
+CPU cycle burns of the already running works.  Given that HIGHPRI is
+currently only used by xfs and its usage, I don't think it's likely to
+cause an actual issue.  I'll queue it for #for-next.
+
+Thank you.
+
+ kernel/workqueue.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
+
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index f77afd9..d355278 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -604,7 +604,9 @@ static bool keep_working(struct global_cwq *gcwq)
+ {
+ 	atomic_t *nr_running = get_gcwq_nr_running(gcwq->cpu);
+
+-	return !list_empty(&gcwq->worklist) && atomic_read(nr_running) <= 1;
++	return !list_empty(&gcwq->worklist) &&
++		(atomic_read(nr_running) <= 1 ||
++		 gcwq->flags & GCWQ_HIGHPRI_PENDING);
+ }
+
+ /* Do we need a new worker?  Called from manager. */
+-- 
+1.7.1
