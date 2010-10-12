@@ -1,15 +1,14 @@
-From: Peter Jones <pjones@redhat.com>
-Subject: Re: [PATCH] device-mapper: Allow setting of UUID via
- rename if not already set
-Date: Mon, 11 Oct 2010 15:49:28 -0400
-Message-ID: <4CB36A48.3000309@redhat.com>
-References: <1286573602.9513.8.camel@hydrogen.msp.redhat.com>
+From: Mike Snitzer <snitzer@gmail.com>
+Subject: Re: raid0 and discard/trim - current state?
+Date: Tue, 12 Oct 2010 16:57:39 -0400
+Message-ID: <AANLkTinB+uM2oiW496U4Cu51pHPiW=ATvnG099GWf=-K@mail.gmail.com>
+References: <4CB0A4B5.4010009@bakke.com> <4CB0B5B9.8070409@bakke.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1286573602.9513.8.camel@hydrogen.msp.redhat.com>
+In-Reply-To: <4CB0B5B9.8070409@bakke.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,222 +18,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com
+To: DagB <dag@bakke.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-On 10/08/2010 05:33 PM, Jonathan Brassow wrote:
-> Peter, please add your "signed-off-by" if you approve of the changes
-> (above my signed-off-by, because you are the creator).  It still would
-> be nice to have a better header - not too many people will look at the
-> bz, I think.  Better to say "There are times when we need to be able to
-> set device UUIDs, like when...".
-> 
-> Looks like I had in mind the same things as Mike.  :)
-> 
->  brassow
-> 
-How about:
- 
-This makes it possible to use DM_DEV_RENAME to add a uuid to a device so
-long as one has not been previously set either with DM_DEV_CREATE or
-with DM_DEV_RENAME. This is needed because sometimes in it's necessary
-to create the device before the uuid is known, and in such cases the
-uuid must be filled in after the creation.
+On Sat, Oct 9, 2010 at 2:34 PM, DagB <dag@bakke.com> wrote:
+> On 10/09/2010 07:21 PM, DagB wrote:
+>> Hi.
+>>
+>> I wonder about the current state of affairs regarding striping over
+>> multiple SSDs.
+>>
+>> Found this thread:
+>> http://marc.info/?t=126787186000002&r=1&w=2
+>>
+>> but nothing after that. Was this problem to hard to handle?
+>>
+>
+> Bad form to reply to self.
+>
+> More googling finally turned up this commit:
+>
+> http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=8357422d4bf33bc2c35884d4016c3fc9efbbc1d2
 
-Also bump the minor number to 19.
-
-Signed-off-by: Peter Jones <pjones@redhat.com>
-> Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-> 
-> Index: linux-2.6/drivers/md/dm-ioctl.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-ioctl.c
-> +++ linux-2.6/drivers/md/dm-ioctl.c
-> @@ -298,7 +298,7 @@ retry:
->  static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
->  					    const char *new)
->  {
-> -	char *new_name, *old_name;
-> +	char *new_data, *old_data;
->  	struct hash_cell *hc;
->  	struct dm_table *table;
->  	struct mapped_device *md;
-> @@ -306,8 +306,8 @@ static struct mapped_device *dm_hash_ren
->  	/*
->  	 * duplicate new.
->  	 */
-> -	new_name = kstrdup(new, GFP_KERNEL);
-> -	if (!new_name)
-> +	new_data = kstrdup(new, GFP_KERNEL);
-> +	if (!new_data)
->  		return ERR_PTR(-ENOMEM);
->  
->  	down_write(&_hash_lock);
-> @@ -315,13 +315,19 @@ static struct mapped_device *dm_hash_ren
->  	/*
->  	 * Is new free ?
->  	 */
-> -	hc = __get_name_cell(new);
-> +	if (param->flags & DM_NEW_UUID_FLAG)
-> +		hc = __get_uuid_cell(new);
-> +	else
-> +		hc = __get_name_cell(new);
-> +
->  	if (hc) {
-> -		DMWARN("asked to rename to an already-existing name %s -> %s",
-> +		DMWARN("Unable to change %s on device, %s to one that "
-> +		       "already exists: %s",
-> +		       (param->flags & DM_NEW_UUID_FLAG) ? "uuid" : "name",
->  		       param->name, new);
->  		dm_put(hc->md);
->  		up_write(&_hash_lock);
-> -		kfree(new_name);
-> +		kfree(new_data);
->  		return ERR_PTR(-EBUSY);
->  	}
->  
-> @@ -330,22 +336,45 @@ static struct mapped_device *dm_hash_ren
->  	 */
->  	hc = __get_name_cell(param->name);
->  	if (!hc) {
-> -		DMWARN("asked to rename a non-existent device %s -> %s",
-> +		DMWARN("Unable to rename non-existent device, %s to %s",
->  		       param->name, new);
->  		up_write(&_hash_lock);
-> -		kfree(new_name);
-> +		kfree(new_data);
->  		return ERR_PTR(-ENXIO);
->  	}
->  
-> -	/*
-> -	 * rename and move the name cell.
-> -	 */
-> -	list_del(&hc->name_list);
-> -	old_name = hc->name;
-> -	mutex_lock(&dm_hash_cells_mutex);
-> -	hc->name = new_name;
-> -	mutex_unlock(&dm_hash_cells_mutex);
-> -	list_add(&hc->name_list, _name_buckets + hash_str(new_name));
-> +	if (param->flags & DM_NEW_UUID_FLAG) {
-> +		/*
-> +		 * Does this device already have a uuid?
-> +		 */
-> +		if (hc->uuid) {
-> +			DMWARN("Unable to change uuid of device, %s because "
-> +			       "uuid is already set to %s",
-> +			       param->name, hc->uuid);
-> +			up_write(&_hash_lock);
-> +			kfree(new_data);
-> +			return ERR_PTR(-EINVAL);
-> +		}
-> +		/*
-> +		 * change uuid and move the uuid cell.
-> +		 */
-> +		list_del(&hc->uuid_list);
-> +		old_data = hc->uuid;
-> +		mutex_lock(&dm_hash_cells_mutex);
-> +		hc->uuid = new_data;
-> +		mutex_unlock(&dm_hash_cells_mutex);
-> +		list_add(&hc->uuid_list, _uuid_buckets + hash_str(new_data));
-> +	} else {
-> +		/*
-> +		 * rename and move the name cell.
-> +		 */
-> +		list_del(&hc->name_list);
-> +		old_data = hc->name;
-> +		mutex_lock(&dm_hash_cells_mutex);
-> +		hc->name = new_data;
-> +		mutex_unlock(&dm_hash_cells_mutex);
-> +		list_add(&hc->name_list, _name_buckets + hash_str(new_data));
-> +	}
->  
->  	/*
->  	 * Wake up any dm event waiters.
-> @@ -361,7 +390,7 @@ static struct mapped_device *dm_hash_ren
->  
->  	md = hc->md;
->  	up_write(&_hash_lock);
-> -	kfree(old_name);
-> +	kfree(old_data);
->  
->  	return md;
->  }
-> @@ -774,21 +803,30 @@ static int invalid_str(char *str, void *
->  static int dev_rename(struct dm_ioctl *param, size_t param_size)
->  {
->  	int r;
-> -	char *new_name = (char *) param + param->data_start;
-> +	char *new_data = (char *) param + param->data_start;
->  	struct mapped_device *md;
->  
-> -	if (new_name < param->data ||
-> -	    invalid_str(new_name, (void *) param + param_size) ||
-> -	    strlen(new_name) > DM_NAME_LEN - 1) {
-> -		DMWARN("Invalid new logical volume name supplied.");
-> -		return -EINVAL;
-> -	}
-> +	if (param->flags & DM_NEW_UUID_FLAG) {
-> +		if (new_data < param->data ||
-> +		    invalid_str(new_data, (void *) param + param_size) ||
-> +		    strlen(new_data) > DM_UUID_LEN - 1) {
-> +			DMWARN("Invalid new device uuid supplied.");
-> +			return -EINVAL;
-> +		}
-> +	} else {
-> +		if (new_data < param->data ||
-> +		    invalid_str(new_data, (void *) param + param_size) ||
-> +		    strlen(new_data) > DM_NAME_LEN - 1) {
-> +			DMWARN("Invalid new device name supplied.");
-> +			return -EINVAL;
-> +		}
->  
-> -	r = check_name(new_name);
-> -	if (r)
-> -		return r;
-> +		r = check_name(new_data);
-> +		if (r)
-> +			return r;
-> +	}
->  
-> -	md = dm_hash_rename(param, new_name);
-> +	md = dm_hash_rename(param, new_data);
->  	if (IS_ERR(md))
->  		return PTR_ERR(md);
->  
-> Index: linux-2.6/include/linux/dm-ioctl.h
-> ===================================================================
-> --- linux-2.6.orig/include/linux/dm-ioctl.h
-> +++ linux-2.6/include/linux/dm-ioctl.h
-> @@ -267,9 +267,9 @@ enum {
->  #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
->  
->  #define DM_VERSION_MAJOR	4
-> -#define DM_VERSION_MINOR	18
-> +#define DM_VERSION_MINOR	19
->  #define DM_VERSION_PATCHLEVEL	0
-> -#define DM_VERSION_EXTRA	"-ioctl (2010-06-29)"
-> +#define DM_VERSION_EXTRA	"-ioctl (2010-10-07)"
->  
->  /* Status bits */
->  #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
-> @@ -322,4 +322,9 @@ enum {
->   */
->  #define DM_UEVENT_GENERATED_FLAG	(1 << 13) /* Out */
->  
-> +/*
-> + * If set, rename operates on uuid, not name.
-> + */
-> +#define DM_NEW_UUID_FLAG        (1 << 14) /* In */
-> +
->  #endif				/* _LINUX_DM_IOCTL_H */
-> 
-> 
-
-
--- 
-        Peter
-
-Growth for the sake of growth is the ideology of the cancer cell.
-
-01234567890123456789012345678901234567890123456789012345678901234567890123456789
+To be clear: DM's striped target does support discards.  MD's raid0
+(or any MD raid level) does not.
