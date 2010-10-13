@@ -1,45 +1,52 @@
-From: Mike Snitzer <snitzer@gmail.com>
-Subject: Re: raid0 and discard/trim - current state?
-Date: Tue, 12 Oct 2010 16:57:39 -0400
-Message-ID: <AANLkTinB+uM2oiW496U4Cu51pHPiW=ATvnG099GWf=-K@mail.gmail.com>
-References: <4CB0A4B5.4010009@bakke.com> <4CB0B5B9.8070409@bakke.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: McPacino <mcpacino@gmail.com>
+Subject: Re: introduce dm-snap-mv
+Date: Thu, 14 Oct 2010 00:45:35 +0800
+Message-ID: <AANLkTinOLSJuYs7NsgMZ3+EyNLz_wxpgka8G7ScWG+9V@mail.gmail.com>
+References: <20101006083150.GA15758@zhongling>
+	<201010071431.14937.phillips@phunq.net>
+	<20101008082231.GA2054@lst.de>
+	<AANLkTim9KFuP1_mrUUsMOEspxkfA=SZW2dmTX4WJbfep@mail.gmail.com>
+	<20101008092427.GA5426@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4CB0B5B9.8070409@bakke.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: DagB <dag@bakke.com>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-lvm@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20101008092427.GA5426@lst.de>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Daniel Phillips <phillips@phunq.net>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Nick Piggin <npiggin@kernel.dk>
 List-Id: dm-devel.ids
 
-On Sat, Oct 9, 2010 at 2:34 PM, DagB <dag@bakke.com> wrote:
-> On 10/09/2010 07:21 PM, DagB wrote:
->> Hi.
+On Fri, Oct 8, 2010 at 5:24 PM, Christoph Hellwig <hch@lst.de> wrote:
+> On Fri, Oct 08, 2010 at 05:14:27PM +0800, McPacino wrote:
+>> Hi Christoph,
 >>
->> I wonder about the current state of affairs regarding striping over
->> multiple SSDs.
+>> I have to take care the cache problem If using the bio directly.
+>> BHs can be released by kernel when necessary.
 >>
->> Found this thread:
->> http://marc.info/?t=126787186000002&r=1&w=2
->>
->> but nothing after that. Was this problem to hard to handle?
->>
+>> Is there any existing code using bio to read/write metadata
+>> blocks? How do they handle the timing freeing bios? I really
+>> wish to learn something form it.
 >
-> Bad form to reply to self.
->
-> More googling finally turned up this commit:
->
-> http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=8357422d4bf33bc2c35884d4016c3fc9efbbc1d2
+> If you actually need caching just use the pagecache, e.g.
+> read_mapping_page to read in your data. =A0That completely abstracts
+> away the underlying block size.
 
-To be clear: DM's striped target does support discards.  MD's raid0
-(or any MD raid level) does not.
+Hi Christoph,
+
+My understanding is that, read_mapping_page_async() works in submit-wai=
+t
+way. But whatI want is some function works in submit-callback way, just=
+ like
+sumbit_bh(). Is there something like it in kernel?
+
+thanks.
+cong meng.
+
+>
+>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
