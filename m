@@ -1,39 +1,71 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] [PATCH] Fix double free and use generic private pointer
- in per-cpu struct
-Date: Thu, 14 Oct 2010 21:26:20 +0200
-Message-ID: <4CB7595C.4000801@redhat.com>
-References: <20101010115941.GA8539@basil.fritz.box>	<4CB1B3B9.4030205@redhat.com>	<20101010130842.GE8256@basil.fritz.box>	<4CB1DD1A.5080906@redhat.com> <20101010162257.GA1272@redhat.com>	<4CB1ECCA.8040801@redhat.com> <20101010170750.GA1475@redhat.com> <4CB20C72.3030504@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: block: eliminate potential for infinite loop in
+ blkdev_issue_discard
+Date: Thu, 14 Oct 2010 17:37:44 -0400
+Message-ID: <20101014213744.GA24959@redhat.com>
+References: <1285605664-27027-1-git-send-email-martin.petersen@oracle.com>
+ <1285605664-27027-3-git-send-email-martin.petersen@oracle.com>
+ <20100927181321.GC14180@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4CB20C72.3030504@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andi Kleen <ak@linux.intel.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Andi Kleen <andi@firstfloor.org>, pedrib@gmail.com, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100927181321.GC14180@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: jaxboe@fusionio.com
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 10/10/2010 08:56 PM, Milan Broz wrote:
-> On 10/10/2010 07:07 PM, Mike Snitzer wrote:
-> 
->> I'll send patch on top of Andi's v3 if it helps something. (When back to my devel machine).
->> That'll be helpful (I'm sure Andi is interested).
-> ok here are my changes on top of v3 - one bugfix and generic IV pointer.
-> If you merge it to v4 and it appears in git as one patch I have no problem with that.
-> 
-> Thanks,
-> Milan
-> 
-> 
-> [PATCH] Use generic private pointer in per-cpu struct
+On Mon, Sep 27 2010 at  2:13pm -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Hi Andi,
+> Due to the recently identified overflow in read_capacity_16() it was
+> possible for max_discard_sectors to be zero but still have discards
+> enabled on the associated device's queue.
+> 
+> Eliminate the possibility for blkdev_issue_discard to infinitely loop.
+> 
+> Interestingly this issue wasn't identified until a device, whose
+> discard_granularity was 0 due to read_capacity_16 overflow, was consumed
+> by blk_stack_limits() to construct limits for a higher-level DM
+> multipath device.  The multipath device's resulting limits never had the
+> discard limits stacked because blk_stack_limits() will only do so if
+> the bottom device's discard_granularity != 0.  This resulted in the
+> multipath device's limits.max_discard_sectors being 0.
 
-any progress here?
-I would like to achieve some consensus and merge some version
-of patch to dm tree...
-Maybe with known problems if there is no better solution for now.
+Hi Jens,
+
+This patch would only serve as a future safety-net now that the
+elimination of the overflow in read_capacity_16() has been staged for
+2.6.37.  Defensive programming and all...
+
+What do you (and others) think about this patch?
 
 Thanks,
-Milan
+Mike
+
+> ---
+>  block/blk-lib.c |    5 ++++-
+>  1 files changed, 4 insertions(+), 1 deletions(-)
+> 
+> diff --git a/block/blk-lib.c b/block/blk-lib.c
+> index c392029..186f249 100644
+> --- a/block/blk-lib.c
+> +++ b/block/blk-lib.c
+> @@ -56,7 +56,10 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+>  	 * granularity
+>  	 */
+>  	max_discard_sectors = min(q->limits.max_discard_sectors, UINT_MAX >> 9);
+> -	if (q->limits.discard_granularity) {
+> +	if (unlikely(!max_discard_sectors)) {
+> +		/* Avoid infinite loop (below) */
+> +		return -EOPNOTSUPP;
+> +	} else if (q->limits.discard_granularity) {
+>  		unsigned int disc_sects = q->limits.discard_granularity >> 9;
+>  
+>  		max_discard_sectors &= ~(disc_sects - 1);
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
