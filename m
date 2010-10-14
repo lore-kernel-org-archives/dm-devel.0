@@ -1,52 +1,39 @@
-From: McPacino <mcpacino@gmail.com>
-Subject: Re: introduce dm-snap-mv
-Date: Thu, 14 Oct 2010 00:45:35 +0800
-Message-ID: <AANLkTinOLSJuYs7NsgMZ3+EyNLz_wxpgka8G7ScWG+9V@mail.gmail.com>
-References: <20101006083150.GA15758@zhongling>
-	<201010071431.14937.phillips@phunq.net>
-	<20101008082231.GA2054@lst.de>
-	<AANLkTim9KFuP1_mrUUsMOEspxkfA=SZW2dmTX4WJbfep@mail.gmail.com>
-	<20101008092427.GA5426@lst.de>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [dm-devel] [PATCH] Fix double free and use generic private pointer
+ in per-cpu struct
+Date: Thu, 14 Oct 2010 21:26:20 +0200
+Message-ID: <4CB7595C.4000801@redhat.com>
+References: <20101010115941.GA8539@basil.fritz.box>	<4CB1B3B9.4030205@redhat.com>	<20101010130842.GE8256@basil.fritz.box>	<4CB1DD1A.5080906@redhat.com> <20101010162257.GA1272@redhat.com>	<4CB1ECCA.8040801@redhat.com> <20101010170750.GA1475@redhat.com> <4CB20C72.3030504@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20101008092427.GA5426@lst.de>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Daniel Phillips <phillips@phunq.net>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Nick Piggin <npiggin@kernel.dk>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4CB20C72.3030504@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andi Kleen <ak@linux.intel.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Andi Kleen <andi@firstfloor.org>, pedrib@gmail.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 8, 2010 at 5:24 PM, Christoph Hellwig <hch@lst.de> wrote:
-> On Fri, Oct 08, 2010 at 05:14:27PM +0800, McPacino wrote:
->> Hi Christoph,
->>
->> I have to take care the cache problem If using the bio directly.
->> BHs can be released by kernel when necessary.
->>
->> Is there any existing code using bio to read/write metadata
->> blocks? How do they handle the timing freeing bios? I really
->> wish to learn something form it.
->
-> If you actually need caching just use the pagecache, e.g.
-> read_mapping_page to read in your data. =A0That completely abstracts
-> away the underlying block size.
+On 10/10/2010 08:56 PM, Milan Broz wrote:
+> On 10/10/2010 07:07 PM, Mike Snitzer wrote:
+> 
+>> I'll send patch on top of Andi's v3 if it helps something. (When back to my devel machine).
+>> That'll be helpful (I'm sure Andi is interested).
+> ok here are my changes on top of v3 - one bugfix and generic IV pointer.
+> If you merge it to v4 and it appears in git as one patch I have no problem with that.
+> 
+> Thanks,
+> Milan
+> 
+> 
+> [PATCH] Use generic private pointer in per-cpu struct
 
-Hi Christoph,
+Hi Andi,
 
-My understanding is that, read_mapping_page_async() works in submit-wai=
-t
-way. But whatI want is some function works in submit-callback way, just=
- like
-sumbit_bh(). Is there something like it in kernel?
+any progress here?
+I would like to achieve some consensus and merge some version
+of patch to dm tree...
+Maybe with known problems if there is no better solution for now.
 
-thanks.
-cong meng.
-
->
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks,
+Milan
