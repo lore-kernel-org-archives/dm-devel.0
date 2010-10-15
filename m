@@ -1,46 +1,45 @@
-From: Jens Axboe <jaxboe@fusionio.com>
-Subject: Re: block: eliminate potential for infinite loop in  blkdev_issue_discard
-Date: Fri, 15 Oct 2010 13:05:48 +0200
-Message-ID: <4CB8358C.8060405@fusionio.com>
-References: <1285605664-27027-1-git-send-email-martin.petersen@oracle.com> <1285605664-27027-3-git-send-email-martin.petersen@oracle.com> <20100927181321.GC14180@redhat.com> <20101014213744.GA24959@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] Make it possible to set a uuid if one
+	was	not set during DM_DEV_CREATE.
+Date: Fri, 15 Oct 2010 16:11:01 +0100
+Message-ID: <20101015151101.GI32395@agk-dp.fab.redhat.com>
+References: <1286560423-12748-1-git-send-email-pjones@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20101014213744.GA24959@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1286560423-12748-1-git-send-email-pjones@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Peter Jones <pjones@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2010-10-14 23:37, Mike Snitzer wrote:
-> On Mon, Sep 27 2010 at  2:13pm -0400,
-> Mike Snitzer <snitzer@redhat.com> wrote:
-> 
->> Due to the recently identified overflow in read_capacity_16() it was
->> possible for max_discard_sectors to be zero but still have discards
->> enabled on the associated device's queue.
->>
->> Eliminate the possibility for blkdev_issue_discard to infinitely loop.
->>
->> Interestingly this issue wasn't identified until a device, whose
->> discard_granularity was 0 due to read_capacity_16 overflow, was consumed
->> by blk_stack_limits() to construct limits for a higher-level DM
->> multipath device.  The multipath device's resulting limits never had the
->> discard limits stacked because blk_stack_limits() will only do so if
->> the bottom device's discard_granularity != 0.  This resulted in the
->> multipath device's limits.max_discard_sectors being 0.
-> 
-> Hi Jens,
-> 
-> This patch would only serve as a future safety-net now that the
-> elimination of the overflow in read_capacity_16() has been staged for
-> 2.6.37.  Defensive programming and all...
-> 
-> What do you (and others) think about this patch?
+Peter Rajnoha tested this this morning and 'dmsetup remove' hung.
 
-Agree, may as well play it safe(r).
+On Fri, Oct 08, 2010 at 01:53:43PM -0400, Peter Jones wrote:
+> +	if (param->flags & DM_NEW_UUID_FLAG) {
+> +		/*
+> +		 * Does this device already have a uuid?
+> +		 */
+> +		if (hc->uuid) {
+> +			DMWARN("asked to change uuid of device with uuid "
+> +			       "already set %s %s -> %s",
+> +			       param->name, hc->uuid, param->uuid);
 
--- 
-Jens Axboe
+It's missing dm_put(hd->md) here.
 
+> +			up_write(&_hash_lock);
+> +			kfree(new_data);
+> +			return ERR_PTR(-EINVAL);
+
+Alasdair
