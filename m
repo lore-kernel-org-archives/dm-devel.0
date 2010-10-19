@@ -1,126 +1,48 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] introduce dm-snap-mv
-Date: Tue, 19 Oct 2010 15:58:17 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1010191551540.19443@hs20-bc2-1.build.redhat.com>
-References: <20101006083150.GA15758@zhongling>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm: use revalidate_disk to update device size
+ after set_capacity
+Date: Tue, 19 Oct 2010 18:07:11 -0400
+Message-ID: <20101019220711.GA25169@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20101006083150.GA15758@zhongling>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Cong Meng <mcpacino@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@lst.de>, Nick Piggin <npiggin@kernel.dk>, Daniel Phillips <phillips@phunq.net>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+Avoid taking md->bdev->bd_inode->i_mutex to update the DM block device's
+size.  Doing so eliminates the potential for deadlock if an fsync is
+racing with a device resize.
 
-Thanks for the development!
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c |    5 +----
+ 1 files changed, 1 insertions(+), 4 deletions(-)
 
-I'm already developing something similar 
-paper: http://people.redhat.com/mpatocka/papers/shared-snapshots.pdf
-kernel code: http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/r22/
-user code: http://people.redhat.com/mpatocka/patches/userspace/new-snapshots/lvm-2.02.73/
-
-Please change your code to conform to the existing interface. My kernel 
-code is extendible, you can plug arbitrary on-disk formats to it, there's 
-another example of Daniel Phillips' zumastore snapshots. Use this 
-interface so that it could be used with the existing userspace 
-infrastructure.
-
-Mikulas
-
-On Wed, 6 Oct 2010, Cong Meng wrote:
-
-> Hello everyone,
-> 
-> I am very glad to introduce my work dm-snap-mv here.
-> 
-> 
-> what is dm-snap-mv
-> -------------------
-> The dm-snap-mv is a target module for device-mapper, which can take
-> multiple snapshots against an existing block device(origin device).
-> 
-> All snapshots are saved in an independent block device(COW device).
-> 
-> The copy-on-write is used, so only diff-data will be saved in the COW device.
-> 
-> 
-> features
-> --------
-> 1. snapshot of origin
-> 2. snapshot of snapshot
-> 3. instant snapshot creation and deletion
-> 4. origin and snapshots are concurrent readable/writable
-> 5. rollback snapshot to origin
-> 6. multiple origin devices share a COW device
-> 7. multiple COW devices are supported
-> 
-> 
-> diagram
-> -------
-> 
->            +---------------------+    +---------------+     +--------------+
->    read <--|                     |-----               |     |              |
->            |    origin dm_dev    |    |   origin_dev  | COW |              |
->   write ---|                     |---->               |----->  snapshot-1  |
->            +---------------------+    +--|------------+     |     ...      | 
->                                          |                  |     ...      |        
->            +---------------------+    +--|------------------+     ...      |
->    read <--|                     |-------?-                    snapshot-N  |
->            |  snapshot-X dm_dev  |    |         cow_dev                    |
->   write ---|                     |---->                                    |
->            +---------------------+    +------------------------------------+
-> 
->   dm_dev: device-mapper device, created by "dmsetup create ..."
->      COW: copy-on-write
-> 
-> 
-> download the source
-> -----------------------
-> http://github.com/mcpacino/dm-snap-mv
-> 
-> git clone git://github.com/mcpacino/dm-snap-mv.git
-> 
-> 
-> a kernel patch
-> --------------
-> Now, dm-snap-mv highly depends on a kernel patch below, which make __getblk()
-> can get a 4K buffer head while block size of the disk is NOT 4K.
-> 
-> Signed-off-by: Cong Meng <mcpacino@gmail.com>
-> ---
->  fs/buffer.c |    7 ++-----
->  1 files changed, 2 insertions(+), 5 deletions(-)
-> 
-> diff --git a/fs/buffer.c b/fs/buffer.c
-> index 3e7dca2..f7f9d33 100644
-> --- a/fs/buffer.c
-> +++ b/fs/buffer.c
-> @@ -1051,10 +1051,7 @@ grow_buffers(struct block_device *bdev, sector_t block, int size)
->  	pgoff_t index;
->  	int sizebits;
->  
-> -	sizebits = -1;
-> -	do {
-> -		sizebits++;
-> -	} while ((size << sizebits) < PAGE_SIZE);
-> +	sizebits = PAGE_CACHE_SHIFT - bdev->bd_inode->i_blkbits;
->  
->  	index = block >> sizebits;
->  
-> @@ -2924,7 +2921,7 @@ int submit_bh(int rw, struct buffer_head * bh)
->  	 */
->  	bio = bio_alloc(GFP_NOIO, 1);
->  
-> -	bio->bi_sector = bh->b_blocknr * (bh->b_size >> 9);
-> +	bio->bi_sector = bh->b_blocknr << (bh->b_bdev->bd_inode->i_blkbits - 9);
->  	bio->bi_bdev = bh->b_bdev;
->  	bio->bi_io_vec[0].bv_page = bh->b_page;
->  	bio->bi_io_vec[0].bv_len = bh->b_size;
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index f934e98..fd315a7 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1995,10 +1995,7 @@ static void event_callback(void *context)
+ static void __set_size(struct mapped_device *md, sector_t size)
+ {
+ 	set_capacity(md->disk, size);
+-
+-	mutex_lock(&md->bdev->bd_inode->i_mutex);
+-	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
+-	mutex_unlock(&md->bdev->bd_inode->i_mutex);
++	revalidate_disk(md->disk);
+ }
+ 
+ /*
