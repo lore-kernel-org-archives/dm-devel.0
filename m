@@ -1,87 +1,126 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: i_size misuses
-Date: Tue, 19 Oct 2010 14:55:31 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1010191450240.9738@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1009080833180.16126@hs20-bc2-1.build.redhat.com>
- <20100912080543.34650074@notabene>
+Subject: Re: [dm-devel] introduce dm-snap-mv
+Date: Tue, 19 Oct 2010 15:58:17 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1010191551540.19443@hs20-bc2-1.build.redhat.com>
+References: <20101006083150.GA15758@zhongling>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20100912080543.34650074@notabene>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, jaxboe@fusionio.com, Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20101006083150.GA15758@zhongling>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Cong Meng <mcpacino@gmail.com>
+Cc: linux-fsdevel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@lst.de>, Nick Piggin <npiggin@kernel.dk>, Daniel Phillips <phillips@phunq.net>
 List-Id: dm-devel.ids
 
+Hi
 
+Thanks for the development!
 
-On Sun, 12 Sep 2010, Neil Brown wrote:
+I'm already developing something similar 
+paper: http://people.redhat.com/mpatocka/papers/shared-snapshots.pdf
+kernel code: http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/r22/
+user code: http://people.redhat.com/mpatocka/patches/userspace/new-snapshots/lvm-2.02.73/
 
-> On Wed, 8 Sep 2010 09:32:13 -0400 (EDT)
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > Hi
-> > 
-> > when reviewing some i_size problem, I searched the kernel for i_size usage 
-> > (the variable should really be written with i_size_write and read with 
-> > i_size_read).
-> > 
-> > Properly locked direct use of "i_size" inside memory management or 
-> > filesystems may not be a problem, but there are many problems in general 
-> > code outside mm.
-> > 
-> > The misuses are:
-> > SOUND/SOUND_FIRMWARE.C:l = filp->f_path.dentry->d_inode->i_size;
-> > KERNEL/RELAY.C:buf->dentry->d_inode->i_size = buf->early_bytes;
-> > KERNEL/RELAY.C:buf->dentry->d_inode->i_size += buf->chan->subbuf_size 
-> > -buf->padding[old_subbuf];
-> > DRIVERS/USB/CORE/INODE.C:dev->usbfs_dentry->d_inode->i_size = i_size;
-> > DRIVERS/MTD/DEVICES/BLOCK2MTD.C:dev->mtd.size = 
-> > dev->blkdev->bd_inode->i_size & PAGE_MASK;
-> > DRIVERS/MD/MD.C: many reads of i_size 
-> > DRIVERS/BLOCK/NBD.C: many writes to i_size without i_size_write
-> > DRIVERS/BLOCK/DRBD/DRBD_INT.H: return bdev ? bdev->bd_inode->i_size >> 9 : 0;
-> > DRIVERS/BLOCK/DRBD/DRBD_WRAPPERS.H: mdev->this_bdev->bd_inode->i_size = 
-> > (loff_t)size << 9;
-> > BLOCK/BLK-CORE.C:printk(KERN_INFO "%s: rw=%ld, want=%Lu, limit=%Lu\n",
-> >                 bdevname(bio->bi_bdev, b),
-> >                 bio->bi_rw,
-> >                 (unsigned long long)bio->bi_sector + bio_sectors(bio),
-> >                 (long long)(bio->bi_bdev->bd_inode->i_size >> 9));
-> > maxsector = bio->bi_bdev->bd_inode->i_size >> 9;
-> > BLOCK/COMPAT_IOCTL.C: size = bdev->bd_inode->i_size;
-> > return compat_put_u64(arg, bdev->bd_inode->i_size);
-> > BLOCK/IOCTL.C: if (start + len > (bdev->bd_inode->i_size >> 9))
-> > size = bdev->bd_inode->i_size;
-> > return put_u64(arg, bdev->bd_inode->i_size);
-> > 
-> > The problem with this code is that if you read i_size without i_size_read 
-> > and the size wraps around 32 bits, for example from 0xffffffff to 
-> > 0x100000000 , there is a possibility on 32-bit machines to read an invalid 
-> > value (either 0 or 0x1ffffffff). Similarly, if you write i_size without 
-> > i_size_write, the readers can see intermediate invalid values.
-> > 
-> > 
-> > The original problem that caused this investigation is the question, how a 
-> > block device driver can change the size of its device. Normal method (used 
-> > in a few drivers, including dm), consists of
-> > mutex_lock(&inode->i_mutex);
-> > i_size_write(inode, new_size);
-> > mutex_unlock(&inode->i_mutex);
-> 
-> Don't you just do
-> 
->   set_capacity(gendisk, sectors);
->   revalidate(gendisk);
-> 
-> ??
-> 
-> NeilBrown
-
-revalidate_disk() has still the problem that it changes i_size without 
-holding i_mutex and other kernel parts (for example generic_file_llseek) 
-assume that if we hold the lock, i_size_can't be changed.
-
-The rules for accessing i_size must be specified and followed.
+Please change your code to conform to the existing interface. My kernel 
+code is extendible, you can plug arbitrary on-disk formats to it, there's 
+another example of Daniel Phillips' zumastore snapshots. Use this 
+interface so that it could be used with the existing userspace 
+infrastructure.
 
 Mikulas
+
+On Wed, 6 Oct 2010, Cong Meng wrote:
+
+> Hello everyone,
+> 
+> I am very glad to introduce my work dm-snap-mv here.
+> 
+> 
+> what is dm-snap-mv
+> -------------------
+> The dm-snap-mv is a target module for device-mapper, which can take
+> multiple snapshots against an existing block device(origin device).
+> 
+> All snapshots are saved in an independent block device(COW device).
+> 
+> The copy-on-write is used, so only diff-data will be saved in the COW device.
+> 
+> 
+> features
+> --------
+> 1. snapshot of origin
+> 2. snapshot of snapshot
+> 3. instant snapshot creation and deletion
+> 4. origin and snapshots are concurrent readable/writable
+> 5. rollback snapshot to origin
+> 6. multiple origin devices share a COW device
+> 7. multiple COW devices are supported
+> 
+> 
+> diagram
+> -------
+> 
+>            +---------------------+    +---------------+     +--------------+
+>    read <--|                     |-----               |     |              |
+>            |    origin dm_dev    |    |   origin_dev  | COW |              |
+>   write ---|                     |---->               |----->  snapshot-1  |
+>            +---------------------+    +--|------------+     |     ...      | 
+>                                          |                  |     ...      |        
+>            +---------------------+    +--|------------------+     ...      |
+>    read <--|                     |-------?-                    snapshot-N  |
+>            |  snapshot-X dm_dev  |    |         cow_dev                    |
+>   write ---|                     |---->                                    |
+>            +---------------------+    +------------------------------------+
+> 
+>   dm_dev: device-mapper device, created by "dmsetup create ..."
+>      COW: copy-on-write
+> 
+> 
+> download the source
+> -----------------------
+> http://github.com/mcpacino/dm-snap-mv
+> 
+> git clone git://github.com/mcpacino/dm-snap-mv.git
+> 
+> 
+> a kernel patch
+> --------------
+> Now, dm-snap-mv highly depends on a kernel patch below, which make __getblk()
+> can get a 4K buffer head while block size of the disk is NOT 4K.
+> 
+> Signed-off-by: Cong Meng <mcpacino@gmail.com>
+> ---
+>  fs/buffer.c |    7 ++-----
+>  1 files changed, 2 insertions(+), 5 deletions(-)
+> 
+> diff --git a/fs/buffer.c b/fs/buffer.c
+> index 3e7dca2..f7f9d33 100644
+> --- a/fs/buffer.c
+> +++ b/fs/buffer.c
+> @@ -1051,10 +1051,7 @@ grow_buffers(struct block_device *bdev, sector_t block, int size)
+>  	pgoff_t index;
+>  	int sizebits;
+>  
+> -	sizebits = -1;
+> -	do {
+> -		sizebits++;
+> -	} while ((size << sizebits) < PAGE_SIZE);
+> +	sizebits = PAGE_CACHE_SHIFT - bdev->bd_inode->i_blkbits;
+>  
+>  	index = block >> sizebits;
+>  
+> @@ -2924,7 +2921,7 @@ int submit_bh(int rw, struct buffer_head * bh)
+>  	 */
+>  	bio = bio_alloc(GFP_NOIO, 1);
+>  
+> -	bio->bi_sector = bh->b_blocknr * (bh->b_size >> 9);
+> +	bio->bi_sector = bh->b_blocknr << (bh->b_bdev->bd_inode->i_blkbits - 9);
+>  	bio->bi_bdev = bh->b_bdev;
+>  	bio->bi_io_vec[0].bv_page = bh->b_page;
+>  	bio->bi_io_vec[0].bv_len = bh->b_size;
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
