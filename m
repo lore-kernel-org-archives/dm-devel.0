@@ -1,115 +1,87 @@
-From: McPacino <mcpacino@gmail.com>
-Subject: dm-snap-mv update
-Date: Wed, 20 Oct 2010 02:13:41 +0800
-Message-ID: <AANLkTi=SA6w6DaM=9HojUDsosTXDhrdXLk7cRAa=hUHo@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: i_size misuses
+Date: Tue, 19 Oct 2010 14:55:31 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1010191450240.9738@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1009080833180.16126@hs20-bc2-1.build.redhat.com>
+ <20100912080543.34650074@notabene>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20100912080543.34650074@notabene>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org
-Cc: Mike Snitzer <snitzer@redhat.com>
+To: Neil Brown <neilb@suse.de>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, jaxboe@fusionio.com, Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi all,
-
-I removed the dependence on my block-size kernel patch by calling
-set_blocksize(cow_dev, 4096). Ext FS does something like this
-too while mounting if the blocksize of FS is not equal to the
-blocksize of block device.
-
-Now, dm-snap-mv can well run in kernel >= 2.6.33.
-
-I built KMP rpm packages for the origin kernels of OpenSUSE 11.3
-and Fedora 13 in opnesuse build service. Ubuntu and Debian are
-on the way.
-
-Hi Mike, Is it possible and how could I make my code included in
-upstream device-mapper? Desire your reply and thanks in advance.
-
-The built rpm can be downloaded on:
-https://build.opensuse.org/package/show?package=dm-snap-mv&project=home%3Amcpacino
-or
-http://download.opensuse.org/repositories/home:/mcpacino/
 
 
-The new home page of dm-snap-mv is:
-http://mcpacino.github.com/dm-snap-mv/
+On Sun, 12 Sep 2010, Neil Brown wrote:
 
+> On Wed, 8 Sep 2010 09:32:13 -0400 (EDT)
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> > Hi
+> > 
+> > when reviewing some i_size problem, I searched the kernel for i_size usage 
+> > (the variable should really be written with i_size_write and read with 
+> > i_size_read).
+> > 
+> > Properly locked direct use of "i_size" inside memory management or 
+> > filesystems may not be a problem, but there are many problems in general 
+> > code outside mm.
+> > 
+> > The misuses are:
+> > SOUND/SOUND_FIRMWARE.C:l = filp->f_path.dentry->d_inode->i_size;
+> > KERNEL/RELAY.C:buf->dentry->d_inode->i_size = buf->early_bytes;
+> > KERNEL/RELAY.C:buf->dentry->d_inode->i_size += buf->chan->subbuf_size 
+> > -buf->padding[old_subbuf];
+> > DRIVERS/USB/CORE/INODE.C:dev->usbfs_dentry->d_inode->i_size = i_size;
+> > DRIVERS/MTD/DEVICES/BLOCK2MTD.C:dev->mtd.size = 
+> > dev->blkdev->bd_inode->i_size & PAGE_MASK;
+> > DRIVERS/MD/MD.C: many reads of i_size 
+> > DRIVERS/BLOCK/NBD.C: many writes to i_size without i_size_write
+> > DRIVERS/BLOCK/DRBD/DRBD_INT.H: return bdev ? bdev->bd_inode->i_size >> 9 : 0;
+> > DRIVERS/BLOCK/DRBD/DRBD_WRAPPERS.H: mdev->this_bdev->bd_inode->i_size = 
+> > (loff_t)size << 9;
+> > BLOCK/BLK-CORE.C:printk(KERN_INFO "%s: rw=%ld, want=%Lu, limit=%Lu\n",
+> >                 bdevname(bio->bi_bdev, b),
+> >                 bio->bi_rw,
+> >                 (unsigned long long)bio->bi_sector + bio_sectors(bio),
+> >                 (long long)(bio->bi_bdev->bd_inode->i_size >> 9));
+> > maxsector = bio->bi_bdev->bd_inode->i_size >> 9;
+> > BLOCK/COMPAT_IOCTL.C: size = bdev->bd_inode->i_size;
+> > return compat_put_u64(arg, bdev->bd_inode->i_size);
+> > BLOCK/IOCTL.C: if (start + len > (bdev->bd_inode->i_size >> 9))
+> > size = bdev->bd_inode->i_size;
+> > return put_u64(arg, bdev->bd_inode->i_size);
+> > 
+> > The problem with this code is that if you read i_size without i_size_read 
+> > and the size wraps around 32 bits, for example from 0xffffffff to 
+> > 0x100000000 , there is a possibility on 32-bit machines to read an invalid 
+> > value (either 0 or 0x1ffffffff). Similarly, if you write i_size without 
+> > i_size_write, the readers can see intermediate invalid values.
+> > 
+> > 
+> > The original problem that caused this investigation is the question, how a 
+> > block device driver can change the size of its device. Normal method (used 
+> > in a few drivers, including dm), consists of
+> > mutex_lock(&inode->i_mutex);
+> > i_size_write(inode, new_size);
+> > mutex_unlock(&inode->i_mutex);
+> 
+> Don't you just do
+> 
+>   set_capacity(gendisk, sectors);
+>   revalidate(gendisk);
+> 
+> ??
+> 
+> NeilBrown
 
-Following is some usage examples to illustrate what does dm-snap-mv do:
+revalidate_disk() has still the problem that it changes i_size without 
+holding i_mutex and other kernel parts (for example generic_file_llseek) 
+assume that if we hold the lock, i_size_can't be changed.
 
-(origin device: sdb1     COW device: sdc1)
+The rules for accessing i_size must be specified and followed.
 
-# Init COW device, bind origin device to it. Create orig dm_dev
-    # dms create orig sdb1 sdc1 -bF
-    # mount /dev/mapper/orig /mnt/orig
-    # touch /mnt/orig/this-is-orig
-    # ll /mnt/orig/
-    -rw-r--r-- 1 root root 0 2010-10-19 21:39 this-is-orig
-
-
-# Take a snapshot of origin. Create snap1 dm_dev
-    # dms snapshot orig -m snap1
-    # dms create snap1 sdb1 sdc1 1
-    # mount /dev/mapper/snap1 /mnt/snap1/
-    # touch /mnt/snap1/this-is-snap1
-    # ll /mnt/snap1/
-    -rw-r--r-- 1 root root 0 2010-10-19 21:39 this-is-orig
-    -rw-r--r-- 1 root root 0 2010-10-19 21:42 this-is-snap1
-
-
-# Take a snapshot of snap1. Create snap2 dm_dev
-    # dms snapshot orig 1 -m snap2
-    # dms create snap2 sdb1 sdc1 2
-    # mount /dev/mapper/snap2 /mnt/snap2/
-    # touch /mnt/snap2/this-is-snap2
-    # ll /mnt/snap2/
-    -rw-r--r-- 1 root root 0 2010-10-19 21:39 this-is-orig
-    -rw-r--r-- 1 root root 0 2010-10-19 21:42 this-is-snap1
-    -rw-r--r-- 1 root root 0 2010-10-19 21:43 this-is-snap2
-
-
-# List all snapshots
-    # dms list
-          origin-device : sdb1 (8:17)
-             cow-device : sdc1 (8:33)
-             chunk-size : 1 page(s)
-          used-versions : 0% (3/640)
-            used-chunks : 0% (946/7865817)
-             cow-status : valid
-               cleaning : no
-            rollbacking : no
-    YYYY/MM/DD HH:MM:SS   Tag   R   Chunks   DM_Dev   Memo
-    2010/10/19 21:38:37   0     .   0        orig     "ORIGIN"
-    2010/10/19 21:41:28   1     .   5        snap1    "snap1"
-    2010/10/19 21:42:57   2     .   5        snap2    "snap2"
-
-
-# Rollback snap2 to origin
-    # umount /mnt/orig
-    # dms remove orig
-    # dms rollback snap2 2
-    # dms create orig sdb1 sdc1
-    # mount /dev/mapper/orig /mnt/orig
-    # touch /mnt/orig/this-is-orig-after-rollback
-    # ll /mnt/orig
-    -rw-r--r-- 1 root root 0 2010-10-19 21:39 this-is-orig
-    -rw-r--r-- 1 root root 0 2010-10-19 22:04 this-is-orig-after-rollback
-    -rw-r--r-- 1 root root 0 2010-10-19 21:42 this-is-snap1
-    -rw-r--r-- 1 root root 0 2010-10-19 21:43 this-is-snap2
-
-
-# Stop dm-snap-mv. Take a look at origin device sdb2
-    # umount /mnt/orig /mnt/snap1 /mnt/snap2
-    # dmsetup remove_all
-    # mount /dev/sdb1 /mnt/
-    # ll /mnt/
-    -rw-r--r-- 1 root root 0 2010-10-19 21:39 this-is-orig
-    -rw-r--r-- 1 root root 0 2010-10-19 22:04 this-is-orig-after-rollback
-    -rw-r--r-- 1 root root 0 2010-10-19 21:42 this-is-snap1
-    -rw-r--r-- 1 root root 0 2010-10-19 21:43 this-is-snap2
-
-
-Regards.
-
-cong meng
+Mikulas
