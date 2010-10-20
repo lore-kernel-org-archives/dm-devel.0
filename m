@@ -1,81 +1,80 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH] dm: use revalidate_disk to update device
- size after set_capacity
-Date: Wed, 20 Oct 2010 14:42:19 +0900
-Message-ID: <4CBE813B.6050105@ce.jp.nec.com>
-References: <20101019220711.GA25169@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [dm-devel] [PATCH] DM-CRYPT: Scale to multiple CPUs v3
+Date: Wed, 20 Oct 2010 16:20:44 +0200
+Message-ID: <4CBEFABC.3030400@redhat.com>
+References: <20101010115941.GA8539@basil.fritz.box>	<4CB1B3B9.4030205@redhat.com>	<20101010130842.GE8256@basil.fritz.box>	<4CB1DD1A.5080906@redhat.com> <20101010162257.GA1272@redhat.com>	<4CB1ECCA.8040801@redhat.com> <20101010170750.GA1475@redhat.com> <4CB20C72.3030504@redhat.com> <4CB7595C.4000801@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20101019220711.GA25169@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4CB7595C.4000801@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andi Kleen <ak@linux.intel.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, Andi Kleen <andi@firstfloor.org>, pedrib@gmail.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
 
-(10/20/10 07:07), Mike Snitzer wrote:
-> Avoid taking md->bdev->bd_inode->i_mutex to update the DM block device's
-> size.  Doing so eliminates the potential for deadlock if an fsync is
-> racing with a device resize.
-> 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm.c |    5 +----
->  1 files changed, 1 insertions(+), 4 deletions(-)
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index f934e98..fd315a7 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1995,10 +1995,7 @@ static void event_callback(void *context)
->  static void __set_size(struct mapped_device *md, sector_t size)
->  {
->  	set_capacity(md->disk, size);
-> -
-> -	mutex_lock(&md->bdev->bd_inode->i_mutex);
-> -	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
-> -	mutex_unlock(&md->bdev->bd_inode->i_mutex);
-> +	revalidate_disk(md->disk);
->  }
 
-Some concerns/questions:
+> any progress here?
+> I would like to achieve some consensus and merge some version
+> of patch to dm tree...
+> Maybe with known problems if there is no better solution for now. 
 
-- revalidate_disk() calls bdget() inside it.
-  Does bdget() no longer block on I/O?
-  Sometime ago, bdget() has been blocked by I_LOCK,
-  where process holding I_LOCK blocked by resize.
-  Since I_LOCK has disappeared, I suspect this might not
-  be a valid concern anymore.
-  FYI, past discussion on this topic:
-  http://www.redhat.com/archives/dm-devel/2007-October/msg00134.html
-  (it's not my intention to push the patch in the above URL)
+I have to reply to myself:
+this patch introduces apparent regressions in async crypto mode.
 
-- revalidate_disk() ends up with get_super():
-    revalidate_disk
-      check_disk_size_change
-        flush_disk
-          __invalidate_device
-            get_super
-  and get_super() takes sb->s_umount.
-  OTOH, there are codes which wait on I/O holding s_umount
-  exclusively. E.g. freeze_super() calls sync_filesystem().
-  So it seems there is a possible deadlock if you use
-  revalidate_disk from dm_swap_table.
+- Without per-cpu patch applied, the test script runs fine even
+with >16 levels stacked devices, both in sync/forced async crypto
 
-I've been away from that part of the code for a while.
-So it's nice if the above is just a false alarm...
+- With the per-cpu patch it seems to deadlocks if the stacked
+devices level is more than 16 levels, even in crypto sync mode
 
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation
+- With added force async patch below it deadlocks even for
+10 level stacked device (maybe even less)
+
+Tested on VM with 256M RAM and Linus' tree from today...
+
+But is it possible that there is another problem related.
+
+You can easily test it using this patch, which forces dmcrypt to use
+cryptd (thus async crypto):
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 88a2a05..1d8ddc1 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1267,7 +1267,7 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 		goto bad_mem;
+ 
+ 	ret = snprintf(cipher_api, CRYPTO_MAX_ALG_NAME,
+-		       "%s(%s)", chainmode, cipher);
++		       "cryptd(%s(%s-generic))", chainmode, cipher);
+ 	if (ret < 0) {
+ 		kfree(cipher_api);
+ 		goto bad_mem;
+
+
+And this test script (maybe some parameters mangling needed):
+
+#!/bin/bash
+
+DEVICE=/dev/sde
+NUM=10
+
+echo xxx | cryptsetup create -c aes-xts-plain64 -s 256 CTEST1 $DEVICE
+for i in $(seq 1 $NUM); do
+	j=$i
+	i=$(($i + 1))
+	echo xxx | cryptsetup create -c aes-xts-plain64 -s 256 CTEST$i /dev/mapper/CTEST$j
+done
+
+NUM=$(($NUM + 1))
+
+dd if=/dev/zero of=/dev/mapper/CTEST$NUM bs=512 count=102400
+
+for i in $(seq $NUM -1 1); do
+	dmsetup remove CTEST$i
+done
+
+
+Milan
