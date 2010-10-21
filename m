@@ -1,64 +1,50 @@
-From: Akinobu Mita <akinobu.mita@gmail.com>
-Subject: [PATCH v2 19/22] dm: use little-endian bit operations
-Date: Thu, 21 Oct 2010 23:41:14 +0900
-Message-ID: <1287672077-5797-20-git-send-email-akinobu.mita@gmail.com>
-References: <1287672077-5797-1-git-send-email-akinobu.mita@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1287672077-5797-1-git-send-email-akinobu.mita@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>
-Cc: Akinobu Mita <akinobu.mita@gmail.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
+From: Rudy Gevaert <Rudy.Gevaert@UGent.be>
+Subject: Re: unmapping luns doesn't work (good)
+Date: Thu, 21 Oct 2010 16:52:23 +0200
+Message-ID: <4CC053A7.5060906@UGent.be>
+References: <B2FD678A64EAAD45B089B123FDFC3ED704BAAFE3@inbmail01.lsi.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <B2FD678A64EAAD45B089B123FDFC3ED704BAAFE3@inbmail01.lsi.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-As a preparation for removing ext2 non-atomic bit operations from
-asm/bitops.h. This converts ext2 non-atomic bit operations to
-little-endian bit operations.
+On 10/21/2010 09:28 AM, Chauhan, Vijay wrote:
 
-Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
----
-No change from previous submission
+> Try with disabling the queuing before removing the map.
+>
+> dmsetup message mail14r-ds3400-1 0 "fail_if_no_path"
 
- drivers/md/dm-log.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+Hi
 
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 5a08be0..9a61fbc 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -251,20 +251,20 @@ struct log_c {
-  */
- static inline int log_test_bit(uint32_t *bs, unsigned bit)
- {
--	return ext2_test_bit(bit, (unsigned long *) bs) ? 1 : 0;
-+	return test_le_bit(bit, (unsigned long *) bs) ? 1 : 0;
- }
- 
- static inline void log_set_bit(struct log_c *l,
- 			       uint32_t *bs, unsigned bit)
- {
--	ext2_set_bit(bit, (unsigned long *) bs);
-+	__test_and_set_le_bit(bit, (unsigned long *) bs);
- 	l->touched_cleaned = 1;
- }
- 
- static inline void log_clear_bit(struct log_c *l,
- 				 uint32_t *bs, unsigned bit)
- {
--	ext2_clear_bit(bit, (unsigned long *) bs);
-+	__test_and_clear_le_bit(bit, (unsigned long *) bs);
- 	l->touched_dirtied = 1;
- }
- 
-@@ -740,7 +740,7 @@ static int core_get_resync_work(struct dm_dirty_log *log, region_t *region)
- 		return 0;
- 
- 	do {
--		*region = ext2_find_next_zero_bit(
-+		*region = find_next_zero_le_bit(
- 					     (unsigned long *) lc->sync_bits,
- 					     lc->region_count,
- 					     lc->sync_search);
--- 
-1.7.1.231.gd0b16
+When I do that, and then unmap the lun.
+
+If I then rescan an issue multipath I get:
+
+root@cyrprd1:~# multipath
+create: 1                 undef IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=undef
+`-+- policy='round-robin 0' prio=0 status=undef
+   |- 0:0:0:3 sdd 8:48  undef faulty running
+   `- 5:0:0:3 sdl 8:176 undef faulty running
+<hang>
+
+
+
+Any ideas?
+
+Thanks!
+
+Rudy
