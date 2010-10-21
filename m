@@ -1,34 +1,56 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH] DM-CRYPT: Scale to multiple CPUs v3
-Date: Wed, 20 Oct 2010 18:32:31 +0100
-Message-ID: <20101020173231.GP3935@agk-dp.fab.redhat.com>
-References: <20101010115941.GA8539@basil.fritz.box> <4CB1B3B9.4030205@redhat.com> <20101010130842.GE8256@basil.fritz.box> <4CB1DD1A.5080906@redhat.com> <20101010162257.GA1272@redhat.com> <4CB1ECCA.8040801@redhat.com> <20101010170750.GA1475@redhat.com> <4CB20C72.3030504@redhat.com> <4CB7595C.4000801@redhat.com> <4CBEFABC.3030400@redhat.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Subject: Re: unmapping luns doesn't work (good)
+Date: Thu, 21 Oct 2010 12:58:36 +0530
+Message-ID: <B2FD678A64EAAD45B089B123FDFC3ED704BAAFE3@inbmail01.lsi.com>
+References: <4CBC66A3.7020207@UGent.be>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4CBEFABC.3030400@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: Andi Kleen <ak@linux.intel.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, pedrib@gmail.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4CBC66A3.7020207@UGent.be>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 20, 2010 at 04:20:44PM +0200, Milan Broz wrote:
-> this patch introduces apparent regressions in async crypto mode.
+On  Monday, October 18, 2010 8:54 PM, Rudy Gevaert wrote:
+> Case 1:
+> -------
+> multipath -l
+> 
+> mail17r-ds3400-1 (3600a0b80005a67b6000004764cac4912) dm-2 
+> IBM,1726-4xx 
+> FAStT
+> size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+> |-+- policy='round-robin 0' prio=-1 status=active
+> | `- 0:0:0:6 sde 8:64  active undef running
+> `-+- policy='round-robin 0' prio=-1 status=enabled
+>    `- 5:0:0:6 sdj 8:144 active undef running
+> 
+> root@cyrprd1:~# dmsetup table
+> mail17r-ds3400-1: 0 1153433600 multipath 1 queue_if_no_path 1 
+> rdac 2 1 
+> round-robin 0 1 1 8:64 1000 round-robin 0 1 1 8:144 1000
+> 
+> I now remove mapping through the storage software.
+
+Try with disabling the queuing before removing the map. 
  
-OK, thanks for performing those tests.
+dmsetup message mail14r-ds3400-1 0 "fail_if_no_path"
+ 
+> 
+> root@cyrprd1:~# multipath -f mail14r-ds3400-1
+> Oct 18 17:07:09 | mail14r-ds3400-1: map in use
+> 
 
-This patch is stalled until these problems are understood properly and
-solutions are proposed.  I was prepared to overlook the regression in
-stacked 'async' provided there was an inline FIXME explaining clearly
-how to fix it in future should we need to, but I can't support a patch that
-apparently breaks stacked sync encryption.
-
-One solution might be to make the proposed changes only for non-stacked
-configurations and leave stacks to work as they do today - either
-detecting that automatically or having userspace supply a target
-parameter to say whether or not to turn it on.  (For that, would need
-tests to show a stack of many layers where only one is a crypt target
-continues to work after the change.)
-
-Alasdair
+Regards,
+Vijay
