@@ -1,41 +1,36 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: Re: CFQ and dm-crypt
-Date: Sun, 24 Oct 2010 18:15:41 +0200
-Message-ID: <4CC45BAD.2060308@redhat.com>
-References: <4CC439ED.8090400@dcs.fmph.uniba.sk>
+Subject: Re: Fwd: [dm-crypt] [BUG] bad performance and system stalls when
+ using dm-crypt
+Date: Sun, 24 Oct 2010 18:31:18 +0200
+Message-ID: <4CC45F56.7010305@redhat.com>
+References: <AANLkTinbeAn4ObFSb4f4znjYHGNKTMnfV7eQja+cnsLe@mail.gmail.com> <20100911065725.GA6279@fancy-poultry.org> <AANLkTikTq=GTy-XPD6ye6kStASNL4Pa07wHhH_ABmpm1@mail.gmail.com> <AANLkTim7RvpOcBajyqCkrBP8EW-FwNysvwuF5MaDJiFV@mail.gmail.com> <AANLkTi=PCd1=w-mkc=Sj4EEda=PnTv0JGyV1Ysxq4ej4@mail.gmail.com> <AANLkTikLSFFpbgX+rBR5banBygmB6rRvzMBYKfPcFPuJ@mail.gmail.com> <4C8C9834.8060201@redhat.com> <AANLkTi=8jJMz3f0VGwg+6P+BJEfxj6i-jBkGmqx8hCVg@mail.gmail.com> <AANLkTinohRReVsYoetEjqAp-XrL9C2jxGgXLVnLafSUM@mail.gmail.com> <AANLkTikqhMbW7sWbbU_we5YE9Y9U=MPUTm553AmCyH51@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-2
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4CC439ED.8090400@dcs.fmph.uniba.sk>
+In-Reply-To: <AANLkTikqhMbW7sWbbU_we5YE9Y9U=MPUTm553AmCyH51@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Kralovic <Richard.Kralovic@dcs.fmph.uniba.sk>
-Cc: linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+To: dave b <db.pub.mail@gmail.com>
+Cc: Linux Kernel <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/24/2010 03:51 PM, Richard Kralovic wrote:
-> CFQ io scheduler relies on using task_struct current to determine which
-> process makes the io request. On the other hand, some dm modules (such
-> as dm-crypt) use separate threads for doing io. As CFQ sees only these
-> threads, it provides a very poor performance in such a case.
-> 
-> IMHO the correct solution for this would be to store, for every io
-> request, the process that initiated it (and preserve this information
-> while the request is processed by device mapper). Would that be feasible?
+On 10/24/2010 05:32 PM, dave b wrote:
+> I am forwarding this to the linux kernel mailing list to see if anyone
+> is actually interested with this bug or not. I suspect that the patch
+> to allow DM-CRYPT to use multiple cpus(Scale to multiple CPUs) will
+> remove most of the problem but *not* all of it. As I previously was
+> triggering the bug on a single core system.
 
-Yes, this seems to be correct solution. I think this should be
-handled by core device-mapper (as you noted, more dm targets using
-threads to process.)
+Hi,
+sorry for not updating the bug. We know about this.
 
+Fix was expected to be based on top of the Andi's dm-crypt per-cpu
+patch but unfortunately I found serious problems there
+(see this thread http://lkml.org/lkml/2010/10/20/215 )
 
-> Other possibility is to avoid using separate threads for doing io in dm
-> modules. The attached patch (against 2.6.36) modifies dm-crypt in this
-> way, what results into much better behavior of cfq (e.g., io priorities
-> work correctly).
-
-Sorry, this completely dismantles the way how dm-crypt solves problems
-with stacking dm devices.
-Basically it reintroduces possible deadlocks for low memory
-situations (the reason why there are these threads).
+So there are now several known situations when dm-crypt doesn't
+perform as expected (another problem just appeared when using CFQ,
+(because dm(-crypt) lost the issuing process reference)
+see http://lkml.org/lkml/2010/10/24/59).
 
 Milan
