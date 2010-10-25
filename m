@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] Remove BIO_RW_SYNCIO flag from kcopyd
-Date: Sun, 24 Oct 2010 21:02:23 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1010242101590.6231@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH] dm-kcopyd: Delayed unplug of the queues
+Date: Sun, 24 Oct 2010 21:03:06 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1010242102240.6231@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,32 +20,100 @@ To: dm-devel@redhat.com
 Cc: Alasdair Graeme Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Remove BIO_RW_SYNCIO flag from kcopyd
+dm-kcopyd: Delayed unplug of the queues
 
-This improves write throughput twice when writing to the origin with snapshot
-on the same device.
-
-This helps for CFQ I/O scheduler that has separate queues for sync and async
-I/O, async is optimized for throughput, sync for latency.
-Reallocations are triggered by writes that are usually async, so mark it
-as async as well.
+This patch improves performance aby about 20% when writing to the snapshot
+origin. We keep track of two block devices to unplug (one for read and the
+other for write) and unplug them when exiting "do_work" thread. If there are
+more devices used (in theory it could happen, in practice it is rare), we
+unplug immediatelly.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-kcopyd.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-kcopyd.c |   35 ++++++++++++++++++++++++++++++++---
+ 1 file changed, 32 insertions(+), 3 deletions(-)
 
 Index: linux-2.6.36-rc7-fast/drivers/md/dm-kcopyd.c
 ===================================================================
---- linux-2.6.36-rc7-fast.orig/drivers/md/dm-kcopyd.c	2010-10-07 16:09:13.000000000 +0200
-+++ linux-2.6.36-rc7-fast/drivers/md/dm-kcopyd.c	2010-10-15 03:18:52.000000000 +0200
-@@ -345,7 +345,7 @@ static int run_io_job(struct kcopyd_job 
+--- linux-2.6.36-rc7-fast.orig/drivers/md/dm-kcopyd.c	2010-10-14 00:35:28.000000000 +0200
++++ linux-2.6.36-rc7-fast/drivers/md/dm-kcopyd.c	2010-10-14 00:35:31.000000000 +0200
+@@ -37,6 +37,8 @@ struct dm_kcopyd_client {
+ 	unsigned int nr_pages;
+ 	unsigned int nr_free_pages;
+ 
++	struct block_device *unplug[2];
++
+ 	struct dm_io_client *io_client;
+ 
+ 	wait_queue_head_t destroyq;
+@@ -308,6 +310,23 @@ static int run_complete_job(struct kcopy
+ 	return 0;
+ }
+ 
++static void unplug(struct dm_kcopyd_client *kc, int queue)
++{
++	if (kc->unplug[queue] != NULL) {
++		blk_unplug(bdev_get_queue(kc->unplug[queue]));
++		kc->unplug[queue] = NULL;
++	}
++}
++
++static void prepare_unplug(struct dm_kcopyd_client *kc, int queue,
++			   struct block_device *bdev)
++{
++	if (likely(kc->unplug[queue] == bdev))
++		return;
++	unplug(kc, queue);
++	kc->unplug[queue] = bdev;
++}
++
+ static void complete_io(unsigned long error, void *context)
+ {
+ 	struct kcopyd_job *job = (struct kcopyd_job *) context;
+@@ -345,7 +364,7 @@ static int run_io_job(struct kcopyd_job 
  {
  	int r;
  	struct dm_io_request io_req = {
--		.bi_rw = job->rw | REQ_SYNC | REQ_UNPLUG,
-+		.bi_rw = job->rw | REQ_UNPLUG,
+-		.bi_rw = job->rw | REQ_UNPLUG,
++		.bi_rw = job->rw,
  		.mem.type = DM_IO_PAGE_LIST,
  		.mem.ptr.pl = job->pages,
  		.mem.offset = job->offset,
+@@ -354,10 +373,16 @@ static int run_io_job(struct kcopyd_job 
+ 		.client = job->kc->io_client,
+ 	};
+ 
+-	if (job->rw == READ)
++	if (job->rw == READ) {
+ 		r = dm_io(&io_req, 1, &job->source, NULL);
+-	else
++		prepare_unplug(job->kc, READ, job->source.bdev);
++	} else {
++		if (unlikely(job->num_dests > 1))
++			io_req.bi_rw |= REQ_UNPLUG;
+ 		r = dm_io(&io_req, job->num_dests, job->dests, NULL);
++		if (likely(!(io_req.bi_rw & REQ_UNPLUG)))
++			prepare_unplug(job->kc, WRITE, job->dests[0].bdev);
++	}
+ 
+ 	return r;
+ }
+@@ -439,6 +464,8 @@ static void do_work(struct work_struct *
+ 	process_jobs(&kc->complete_jobs, kc, run_complete_job);
+ 	process_jobs(&kc->pages_jobs, kc, run_pages_job);
+ 	process_jobs(&kc->io_jobs, kc, run_io_job);
++	unplug(kc, READ);
++	unplug(kc, WRITE);
+ }
+ 
+ /*
+@@ -619,6 +646,8 @@ int dm_kcopyd_client_create(unsigned int
+ 	INIT_LIST_HEAD(&kc->io_jobs);
+ 	INIT_LIST_HEAD(&kc->pages_jobs);
+ 
++	memset(kc->unplug, 0, sizeof kc->unplug);
++
+ 	kc->job_pool = mempool_create_slab_pool(MIN_JOBS, _job_cache);
+ 	if (!kc->job_pool)
+ 		goto bad_slab;
