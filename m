@@ -1,40 +1,51 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: Fwd: [dm-crypt] [BUG] bad performance and system stalls when
- using dm-crypt
-Date: Sun, 24 Oct 2010 19:05:55 +0200
-Message-ID: <4CC46773.2000606@redhat.com>
-References: <AANLkTinbeAn4ObFSb4f4znjYHGNKTMnfV7eQja+cnsLe@mail.gmail.com> <20100911065725.GA6279@fancy-poultry.org> <AANLkTikTq=GTy-XPD6ye6kStASNL4Pa07wHhH_ABmpm1@mail.gmail.com> <AANLkTim7RvpOcBajyqCkrBP8EW-FwNysvwuF5MaDJiFV@mail.gmail.com> <AANLkTi=PCd1=w-mkc=Sj4EEda=PnTv0JGyV1Ysxq4ej4@mail.gmail.com> <AANLkTikLSFFpbgX+rBR5banBygmB6rRvzMBYKfPcFPuJ@mail.gmail.com> <4C8C9834.8060201@redhat.com> <AANLkTi=8jJMz3f0VGwg+6P+BJEfxj6i-jBkGmqx8hCVg@mail.gmail.com> <AANLkTinohRReVsYoetEjqAp-XrL9C2jxGgXLVnLafSUM@mail.gmail.com> <AANLkTikqhMbW7sWbbU_we5YE9Y9U=MPUTm553AmCyH51@mail.gmail.com> <4CC45F56.7010305@redhat.com> <AANLkTi=Hw-iU98rTjyDFAPSqqrWvzhOnE_0UBV-tMeie@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] Remove BIO_RW_SYNCIO flag from kcopyd
+Date: Sun, 24 Oct 2010 21:02:23 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1010242101590.6231@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <AANLkTi=Hw-iU98rTjyDFAPSqqrWvzhOnE_0UBV-tMeie@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: dave b <db.pub.mail@gmail.com>
-Cc: Linux Kernel <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Alasdair Graeme Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 10/24/2010 06:52 PM, dave b wrote:
->> So there are now several known situations when dm-crypt doesn't
->> perform as expected (another problem just appeared when using CFQ,
->> (because dm(-crypt) lost the issuing process reference)
->> see http://lkml.org/lkml/2010/10/24/59).
-> 
-> Thank for you replying  ^ ^
-> I was aware with the problems and I am following Andi's dm-crypt
-> per-cpu patch (I haven't applied or tested it). However, I didn't know
-> about http://lkml.org/lkml/2010/10/24/59 -->
-> So this may well be the root of the problem!
-> Also, won't http://lkml.org/lkml/2010/10/24/59  need to be altered
-> (again) to work with Andi's patch ?
+Remove BIO_RW_SYNCIO flag from kcopyd
 
-CFQ related problem should be solved - probably device-mapper core
-have to provide some help. (It is not only about dm-crypt,
-lot of situations when IO is submitted from different internal process.
-The proposed patch is not the proper and complete way how to solve it.)
+This improves write throughput twice when writing to the origin with snapshot
+on the same device.
 
-For the per-cpu patch - I am waiting for replay, apparently some
-additional work there is needed.
-But I would like to solve it ASAP.
+This helps for CFQ I/O scheduler that has separate queues for sync and async
+I/O, async is optimized for throughput, sync for latency.
+Reallocations are triggered by writes that are usually async, so mark it
+as async as well.
 
-Milan
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-kcopyd.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6.36-rc7-fast/drivers/md/dm-kcopyd.c
+===================================================================
+--- linux-2.6.36-rc7-fast.orig/drivers/md/dm-kcopyd.c	2010-10-07 16:09:13.000000000 +0200
++++ linux-2.6.36-rc7-fast/drivers/md/dm-kcopyd.c	2010-10-15 03:18:52.000000000 +0200
+@@ -345,7 +345,7 @@ static int run_io_job(struct kcopyd_job 
+ {
+ 	int r;
+ 	struct dm_io_request io_req = {
+-		.bi_rw = job->rw | REQ_SYNC | REQ_UNPLUG,
++		.bi_rw = job->rw | REQ_UNPLUG,
+ 		.mem.type = DM_IO_PAGE_LIST,
+ 		.mem.ptr.pl = job->pages,
+ 		.mem.offset = job->offset,
