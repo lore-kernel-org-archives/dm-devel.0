@@ -1,42 +1,30 @@
-From: Malahal Naineni <malahal@us.ibm.com>
-Subject: Re: [RESUBMIT][Patch] scsi_dh_rdac: retry IO for 06/3f/03 in
- rdac_check_sense fn
-Date: Tue, 26 Oct 2010 11:55:28 -0700
-Message-ID: <20101026185527.GB32464@us.ibm.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [dm-devel] [RESUBMIT][Patch] scsi_dh_rdac: retry IO for 06/3f/03
+ in rdac_check_sense fn
+Date: Tue, 26 Oct 2010 14:18:54 -0500
+Message-ID: <4CC7299E.2030508@cs.wisc.edu>
 References: <B2FD678A64EAAD45B089B123FDFC3ED704BFE578@inbmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <B2FD678A64EAAD45B089B123FDFC3ED704BFE578@inbmail01.lsi.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, James Bottomley <jejb@kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Chauhan, Vijay [Vijay.Chauhan@lsi.com] wrote:
+On 10/26/2010 08:53 AM, Chauhan, Vijay wrote:
 > Resubmitting this patch to get the attention.
-> 
-> This patch adds retry for the IO returned with 06/3f/03((INQUIRY_DATA_CHANGED)) sense code  in rdac_check_sense(). IO returned with 06/3f/03 from controller are currently failed by scsi mid layer, as a reason momentarily path failure is noticed by DM multipath. 
-> 
-> Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
-> Reviewed-by: Babu Moger <babu.moger@lsi.com>
-> Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
-> ---
-> 
-> diff -uprN linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh_rdac.c linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c
-> --- linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-07-22 15:13:38.000000000 -0400
-> +++ linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-07-27 12:13:58.000000000 -0400
-> @@ -738,6 +738,11 @@ static int rdac_check_sense(struct scsi_
->  			 * Quiescence in progress , just retry.
->  			 */
->  			return ADD_TO_MLQUEUE;
-> +		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x03)
-> +			/*
-> +			 * INQUIRY DATA has changed, retry again.
-> +			 */
-> +			return ADD_TO_MLQUEUE;
+>
+> This patch adds retry for the IO returned with 06/3f/03((INQUIRY_DATA_CHANGED)) sense code  in rdac_check_sense(). IO returned with 06/3f/03 from controller are currently failed by scsi mid layer, as a reason momentarily path failure is noticed by DM multipath.
+>
 
-The code looks fine.  Is this ASC/ASCQ code specific to RDAC devices? If
-not, how about changing the scsi_error.c itself?
+Is it getting failed by accident? In scsi_io_completion we check for UAs 
+and will retry if the removable bit is not set. That check is after 
+scsi_end_request though (is the scsi_end_request call failing the IO).
 
-Thanks, Malahal.
+Did you guys also want REPORTED_LUNS_DATA_HAS_CHANGED to be retried too. 
+I think scsi_dh_alua's REPORTED_LUNS_DATA_HAS_CHANGED maybe should be 
+genericly retried, because it seems for both errors we will want to 
+retry for all devices.
