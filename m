@@ -1,95 +1,53 @@
-From: Vivek Goyal <vgoyal@redhat.com>
+From: Richard Kralovic <Richard.Kralovic@dcs.fmph.uniba.sk>
 Subject: Re: CFQ and dm-crypt
-Date: Mon, 25 Oct 2010 16:59:34 -0400
-Message-ID: <20101025205934.GC23426@redhat.com>
-References: <4CC439ED.8090400@dcs.fmph.uniba.sk>
- <4CC45BAD.2060308@redhat.com>
- <4CC553A3.5070308@dcs.fmph.uniba.sk>
+Date: Tue, 26 Oct 2010 10:37:09 +0200
+Message-ID: <4CC69335.4090301@dcs.fmph.uniba.sk>
+References: <4CC439ED.8090400@dcs.fmph.uniba.sk> <4CC45BAD.2060308@redhat.com> <4CC553A3.5070308@dcs.fmph.uniba.sk> <20101025205934.GC23426@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4CC553A3.5070308@dcs.fmph.uniba.sk>
+In-Reply-To: <20101025205934.GC23426@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Kralovic <Richard.Kralovic@dcs.fmph.uniba.sk>
+To: Vivek Goyal <vgoyal@redhat.com>
 Cc: Milan Broz <mbroz@redhat.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Greg Thelen <gthelen@google.com>, KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 25, 2010 at 11:53:39AM +0200, Richard Kralovic wrote:
-> On 10/24/10 18:15, Milan Broz wrote:
-> > On 10/24/2010 03:51 PM, Richard Kralovic wrote:
-> >> CFQ io scheduler relies on using task_struct current to determine which
-> >> process makes the io request. On the other hand, some dm modules (such
-> >> as dm-crypt) use separate threads for doing io. As CFQ sees only these
-> >> threads, it provides a very poor performance in such a case.
-> >>
-> >> IMHO the correct solution for this would be to store, for every io
-> >> request, the process that initiated it (and preserve this information
-> >> while the request is processed by device mapper). Would that be feasible?
-> > 
-> > Yes, this seems to be correct solution. I think this should be
-> > handled by core device-mapper (as you noted, more dm targets using
-> > threads to process.)
+On 10/25/10 22:59, Vivek Goyal wrote:
+> Richard,
 > 
+> So what problem are you facing? I know you are referring to CFQ ioprio not
+> working with dm targets but how does it impact you? So it is not about
+> overall disk performance or any slow down with dm-crypt target but just
+> about prioritizing your IO over other?
 
-Richard,
+The ioprio not working is probably the biggest problem (since it is used
+quite a lot for background tasks like desktop indexing services). But
+also the overall performance is worse. I didn't do a rigorous
+benchmarking, but tried a following simple test to see the impact of my
+dm-crypt patch:
 
-So what problem are you facing? I know you are referring to CFQ ioprio not
-working with dm targets but how does it impact you? So it is not about
-overall disk performance or any slow down with dm-crypt target but just
-about prioritizing your IO over other?
+test-write:
 
-> Do you think it is possible to handle this in device-mapper, without any
-> support from the cfq code?
-> 
-> I also noticed that a solution for this problem was proposed a few years
-> ago by Hirokazu Takahashi (a patch for linux-2.6.25,
-> http://lkml.org/lkml/2008/4/22/193), but there was no response to it. Is
-> such an approach wrong?
+SIZE=640
 
-Conceptually it makes sense to put some kind of info in bio so that we
-can associate with right context. I think above thread kind of of died
-down.
 
-Re-reading the thread now, and it looks like that Hirokazu also planned
-to use this info for associating IO to right cgroup for WRITES. There
-was alternative approach of "IO tracking" where IO controller cgroup
-info was to be put in page_cgroup structure and once the bio is submitted
-to CFQ, it will trace the page/page_cgroup for bio and extract the 
-cgroup info and attribute IO to right group.
+KERN=`uname -r`
+((time /bin/bash -c "dd if=/dev/zero bs=1M count=64 \
+   of=normal.tst oflag=direct") 1>$KERN-write-normal 2>&1) |
+((time /bin/bash -c "ionice -c 3 dd if=/dev/zero bs=1M \
+   count=64 of=idle.tst oflag=direct") 1>$KERN-write-idle 2>&1)
 
-Storing some info in page_cgroup makes it dependent on memory controller
-and which should not be a necessary thing for READS. For WRITES it probably
-is still a necessary thing as it also provides (work in progress from greg)
-per cgroup dirty ratio.
+Times for vanilla kernel (with CFQ) were 5.24s for idle and 5.38s for
+normal, times for patched kernel were 4.9s for idle and 3.13s for
+normal. A similar test for reading showed even bigger differences:
+vanilla kernel has 8.5s for idle as well as 8.5s for normal, patched
+kernel has 4.2s for idle and 2.1s for normal.
 
-Storing some kind of io context info in bio makes sense to me. Not sure
-if Jens has other ideas.
+So it seems that CFQ is behaving really badly if it is not able to see
+which process is doing the IO (and sees kcryptd everywhere). As far as I
+understood, there is no point in using CFQ in that case and it is much
+better to use other scheduler in this situation.
 
-Thanks
-Vivek
- 
 
-> 
-> >> Other possibility is to avoid using separate threads for doing io in dm
-> >> modules. The attached patch (against 2.6.36) modifies dm-crypt in this
-> >> way, what results into much better behavior of cfq (e.g., io priorities
-> >> work correctly).
-> > 
-> > Sorry, this completely dismantles the way how dm-crypt solves problems
-> > with stacking dm devices.
-> > Basically it reintroduces possible deadlocks for low memory
-> > situations (the reason why there are these threads).
-> 
-> Would the problem with deadlock be still present if the io worker queue
-> was used for writes only, but reads were issued directly? (Even this
-> would be a significant improvement for people using cfq and a full-disk
-> encryption over dm-crypt, since asynchronous writes are not supported by
-> cfq anyway.)
-> 
-> 	Richard
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+	Richard
