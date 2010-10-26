@@ -1,84 +1,40 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: CFQ and dm-crypt
-Date: Tue, 26 Oct 2010 06:57:13 -0400
-Message-ID: <20101026105713.GA29672@redhat.com>
-References: <4CC439ED.8090400@dcs.fmph.uniba.sk>
- <4CC45BAD.2060308@redhat.com>
- <4CC553A3.5070308@dcs.fmph.uniba.sk>
- <20101025205934.GC23426@redhat.com>
- <4CC69335.4090301@dcs.fmph.uniba.sk>
+From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Subject: [RESUBMIT][Patch] scsi_dh_rdac: retry IO for 06/3f/03 in
+  rdac_check_sense fn
+Date: Tue, 26 Oct 2010 19:23:11 +0530
+Message-ID: <B2FD678A64EAAD45B089B123FDFC3ED704BFE578@inbmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4CC69335.4090301@dcs.fmph.uniba.sk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Kralovic <Richard.Kralovic@dcs.fmph.uniba.sk>
-Cc: Milan Broz <mbroz@redhat.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Greg Thelen <gthelen@google.com>, KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <jejb@kernel.org>, device-mapper development <dm-devel@redhat.com>
+Cc: "sekharan@us.ibm.com" <sekharan@us.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, Oct 26, 2010 at 10:37:09AM +0200, Richard Kralovic wrote:
-> On 10/25/10 22:59, Vivek Goyal wrote:
-> > Richard,
-> > 
-> > So what problem are you facing? I know you are referring to CFQ ioprio not
-> > working with dm targets but how does it impact you? So it is not about
-> > overall disk performance or any slow down with dm-crypt target but just
-> > about prioritizing your IO over other?
-> 
-> The ioprio not working is probably the biggest problem (since it is used
-> quite a lot for background tasks like desktop indexing services). But
-> also the overall performance is worse. I didn't do a rigorous
-> benchmarking, but tried a following simple test to see the impact of my
-> dm-crypt patch:
-> 
-> test-write:
-> 
-> SIZE=640
-> 
-> 
-> KERN=`uname -r`
-> ((time /bin/bash -c "dd if=/dev/zero bs=1M count=64 \
->    of=normal.tst oflag=direct") 1>$KERN-write-normal 2>&1) |
-> ((time /bin/bash -c "ionice -c 3 dd if=/dev/zero bs=1M \
->    count=64 of=idle.tst oflag=direct") 1>$KERN-write-idle 2>&1)
-> 
-> Times for vanilla kernel (with CFQ) were 5.24s for idle and 5.38s for
-> normal, times for patched kernel were 4.9s for idle and 3.13s for
-> normal. A similar test for reading showed even bigger differences:
-> vanilla kernel has 8.5s for idle as well as 8.5s for normal, patched
-> kernel has 4.2s for idle and 2.1s for normal.
-> 
-> So it seems that CFQ is behaving really badly if it is not able to see
-> which process is doing the IO (and sees kcryptd everywhere). As far as I
-> understood, there is no point in using CFQ in that case and it is much
-> better to use other scheduler in this situation.
+Resubmitting this patch to get the attention.
 
-Ok, so are you getting better results with noop and deadline?
+This patch adds retry for the IO returned with 06/3f/03((INQUIRY_DATA_CHANGED)) sense code  in rdac_check_sense(). IO returned with 06/3f/03 from controller are currently failed by scsi mid layer, as a reason momentarily path failure is noticed by DM multipath. 
 
-So your bigger concerns seems to be not necessarily making ioprio and
-class working but why there is a performance drop when dm-crypt starts
-submitting IOs with the help of a worker thread and we lose original
-context.
+Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
+Reviewed-by: Babu Moger <babu.moger@lsi.com>
+Reviewed-by: Bob Stankey <Robert.stankey@lsi.com>
+---
 
-If you are getting better numbers say with noop, then I would think that
-somehow we are idling a lot in CFQ (with dm-crypt) and it is overshadowing
-the benefits of reduced seeks due to idling (if any). 
+diff -uprN linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh_rdac.c linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c
+--- linux-2.6.35-rc6-orig/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-07-22 15:13:38.000000000 -0400
++++ linux-2.6.35-rc6/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-07-27 12:13:58.000000000 -0400
+@@ -738,6 +738,11 @@ static int rdac_check_sense(struct scsi_
+ 			 * Quiescence in progress , just retry.
+ 			 */
+ 			return ADD_TO_MLQUEUE;
++		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x03)
++			/*
++			 * INQUIRY DATA has changed, retry again.
++			 */
++			return ADD_TO_MLQUEUE;
+ 		break;
+ 	}
+ 	/* success just means we do not care what scsi-ml does */
 
-Is it possible to capture a trace with CFQ using blktrace. Say 30 second
-trace for two cases. Vanilla CFQ and patched CFQ with normal case (Will
-look into the case of IDLE later). I want to compare two traces and see
-what changed in terms of idling.
-
-One explanation could that your workload is sequential (dd case), and
-by exposing the context to CFQ you are getting the idling right and
-reducing some seeks. By submitting everything from kcryptd, I think it
-practically becomes a seeky traffic (read/write intermixed) and increased
-seeks reduce throughput. But if this is the case, same should be true
-for noop and i do not understand why you would get better performance
-with noop.
-
-Anyway, looking at blktrace might give some idea.
-
-Thanks
-Vivek
