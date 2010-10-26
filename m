@@ -1,76 +1,88 @@
-From: James Bottomley <James.Bottomley@suse.de>
+From: <Shyam_Iyer@Dell.com>
 Subject: RE: [dm-devel] [RESUBMIT][Patch] scsi_dh_rdac: retry IO for
  06/3f/03 in rdac_check_sense fn
-Date: Tue, 26 Oct 2010 14:58:59 -0500
-Message-ID: <1288123139.8283.509.camel@mulgrave.site>
+Date: Tue, 26 Oct 2010 13:27:21 -0700
+Message-ID: <DBFB1B45AF80394ABD1C807E9F28D1570262E39FBB@BLRX7MCDC203.AMER.DELL.COM>
 References: <B2FD678A64EAAD45B089B123FDFC3ED704BFE578@inbmail01.lsi.com>
 	 <4CC7299E.2030508@cs.wisc.edu> <1288120911.8283.441.camel@mulgrave.site>
 	 <DBFB1B45AF80394ABD1C807E9F28D1570262E39FAA@BLRX7MCDC203.AMER.DELL.COM>
+ <1288123139.8283.509.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <DBFB1B45AF80394ABD1C807E9F28D1570262E39FAA@BLRX7MCDC203.AMER.DELL.COM>
+In-Reply-To: <1288123139.8283.509.camel@mulgrave.site>
+Content-Language: en-US
 Sender: linux-scsi-owner@vger.kernel.org
-To: Shyam_Iyer@Dell.com
+To: James.Bottomley@suse.de
 Cc: michaelc@cs.wisc.edu, dm-devel@redhat.com, Vijay.Chauhan@lsi.com, jejb@kernel.org, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, 2010-10-27 at 01:02 +0530, Shyam_Iyer@Dell.com wrote:
-> -----Original Message-----
-> > From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-owner@vger.kernel.org] On Behalf Of James
-> > Bottomley
-> > Sent: Tuesday, October 26, 2010 3:22 PM
-> > To: Mike Christie
-> > Cc: device-mapper development; Chauhan, Vijay; James Bottomley; linux-scsi@vger.kernel.org
-> > Subject: Re: [dm-devel] [RESUBMIT][Patch] scsi_dh_rdac: retry IO for 06/3f/03 in rdac_check_sense fn
-> > 
-> > On Tue, 2010-10-26 at 14:18 -0500, Mike Christie wrote:
-> > > On 10/26/2010 08:53 AM, Chauhan, Vijay wrote:
-> > > > Resubmitting this patch to get the attention.
-> > > >
-> > > > This patch adds retry for the IO returned with 06/3f/03((INQUIRY_DATA_CHANGED)) sense code  in
-> > rdac_check_sense(). IO returned with 06/3f/03 from controller are currently failed by scsi mid layer,
-> > as a reason momentarily path failure is noticed by DM multipath.
-> > > >
-> > >
-> > > Is it getting failed by accident? In scsi_io_completion we check for UAs
-> > > and will retry if the removable bit is not set. That check is after
-> > > scsi_end_request though (is the scsi_end_request call failing the IO).
-> > >
-> > > Did you guys also want REPORTED_LUNS_DATA_HAS_CHANGED to be retried too.
-> > > I think scsi_dh_alua's REPORTED_LUNS_DATA_HAS_CHANGED maybe should be
-> > > genericly retried, because it seems for both errors we will want to
-> > > retry for all devices.
-> > 
-> > So my primary worry about patches like this is that it eats AENs ...
-> > this is fine because, as Mike says, we should just ignore them.
-> > 
-> > However, the moment we start processing AENs (as another set of dm
-> > people promise they have in process) we'll lose them from rdac arrays
-> > and people will get unhappy.
-> > 
-> > If the generic UA retry isn't working, let's fix it there rather than
-> > these hacks that would be hard to spot and pull out when (if) we ever
-> > get a generic AEN infrastructure.
-> > 
-> > James
-> 
-> Sometimes the default way to handle a UA may be not the correct one.
-> One arrays implementation to respond to the UA could be different from
-> another array.
-
-I don't quite understand this observation in the context of this patch.
-What the patch does is retry the command (i.e. ignore the UA) which
-should pretty much be our default response.
-
-> Example: A thin provisioning threshold exceed check condition. The
-> device handler infrastructure can be a savior with such hacks.. 
-
-I'm going to regret asking this (especially given all the noise there's
-been on thin provisioning thresholds):  Which arrays don't actually
-issue them correctly?
-
-James
-
-
+PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBKYW1lcyBCb3R0b21sZXkgW21h
+aWx0bzpKYW1lcy5Cb3R0b21sZXlAc3VzZS5kZV0NCj4gU2VudDogVHVlc2RheSwgT2N0b2JlciAy
+NiwgMjAxMCAzOjU5IFBNDQo+IFRvOiBJeWVyLCBTaHlhbQ0KPiBDYzogbWljaGFlbGNAY3Mud2lz
+Yy5lZHU7IGRtLWRldmVsQHJlZGhhdC5jb207IFZpamF5LkNoYXVoYW5AbHNpLmNvbTsgamVqYkBr
+ZXJuZWwub3JnOyBsaW51eC0NCj4gc2NzaUB2Z2VyLmtlcm5lbC5vcmcNCj4gU3ViamVjdDogUkU6
+IFtkbS1kZXZlbF0gW1JFU1VCTUlUXVtQYXRjaF0gc2NzaV9kaF9yZGFjOiByZXRyeSBJTyBmb3Ig
+MDYvM2YvMDMgaW4gcmRhY19jaGVja19zZW5zZSBmbg0KPiANCj4gT24gV2VkLCAyMDEwLTEwLTI3
+IGF0IDAxOjAyICswNTMwLCBTaHlhbV9JeWVyQERlbGwuY29tIHdyb3RlOg0KPiA+IC0tLS0tT3Jp
+Z2luYWwgTWVzc2FnZS0tLS0tDQo+ID4gPiBGcm9tOiBsaW51eC1zY3NpLW93bmVyQHZnZXIua2Vy
+bmVsLm9yZyBbbWFpbHRvOmxpbnV4LXNjc2ktb3duZXJAdmdlci5rZXJuZWwub3JnXSBPbiBCZWhh
+bGYgT2YNCj4gSmFtZXMNCj4gPiA+IEJvdHRvbWxleQ0KPiA+ID4gU2VudDogVHVlc2RheSwgT2N0
+b2JlciAyNiwgMjAxMCAzOjIyIFBNDQo+ID4gPiBUbzogTWlrZSBDaHJpc3RpZQ0KPiA+ID4gQ2M6
+IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQ7IENoYXVoYW4sIFZpamF5OyBKYW1lcyBCb3R0b21s
+ZXk7IGxpbnV4LXNjc2lAdmdlci5rZXJuZWwub3JnDQo+ID4gPiBTdWJqZWN0OiBSZTogW2RtLWRl
+dmVsXSBbUkVTVUJNSVRdW1BhdGNoXSBzY3NpX2RoX3JkYWM6IHJldHJ5IElPIGZvciAwNi8zZi8w
+MyBpbiByZGFjX2NoZWNrX3NlbnNlDQo+IGZuDQo+ID4gPg0KPiA+ID4gT24gVHVlLCAyMDEwLTEw
+LTI2IGF0IDE0OjE4IC0wNTAwLCBNaWtlIENocmlzdGllIHdyb3RlOg0KPiA+ID4gPiBPbiAxMC8y
+Ni8yMDEwIDA4OjUzIEFNLCBDaGF1aGFuLCBWaWpheSB3cm90ZToNCj4gPiA+ID4gPiBSZXN1Ym1p
+dHRpbmcgdGhpcyBwYXRjaCB0byBnZXQgdGhlIGF0dGVudGlvbi4NCj4gPiA+ID4gPg0KPiA+ID4g
+PiA+IFRoaXMgcGF0Y2ggYWRkcyByZXRyeSBmb3IgdGhlIElPIHJldHVybmVkIHdpdGggMDYvM2Yv
+MDMoKElOUVVJUllfREFUQV9DSEFOR0VEKSkgc2Vuc2UgY29kZSAgaW4NCj4gPiA+IHJkYWNfY2hl
+Y2tfc2Vuc2UoKS4gSU8gcmV0dXJuZWQgd2l0aCAwNi8zZi8wMyBmcm9tIGNvbnRyb2xsZXIgYXJl
+IGN1cnJlbnRseSBmYWlsZWQgYnkgc2NzaSBtaWQNCj4gbGF5ZXIsDQo+ID4gPiBhcyBhIHJlYXNv
+biBtb21lbnRhcmlseSBwYXRoIGZhaWx1cmUgaXMgbm90aWNlZCBieSBETSBtdWx0aXBhdGguDQo+
+ID4gPiA+ID4NCj4gPiA+ID4NCj4gPiA+ID4gSXMgaXQgZ2V0dGluZyBmYWlsZWQgYnkgYWNjaWRl
+bnQ/IEluIHNjc2lfaW9fY29tcGxldGlvbiB3ZSBjaGVjayBmb3IgVUFzDQo+ID4gPiA+IGFuZCB3
+aWxsIHJldHJ5IGlmIHRoZSByZW1vdmFibGUgYml0IGlzIG5vdCBzZXQuIFRoYXQgY2hlY2sgaXMg
+YWZ0ZXINCj4gPiA+ID4gc2NzaV9lbmRfcmVxdWVzdCB0aG91Z2ggKGlzIHRoZSBzY3NpX2VuZF9y
+ZXF1ZXN0IGNhbGwgZmFpbGluZyB0aGUgSU8pLg0KPiA+ID4gPg0KPiA+ID4gPiBEaWQgeW91IGd1
+eXMgYWxzbyB3YW50IFJFUE9SVEVEX0xVTlNfREFUQV9IQVNfQ0hBTkdFRCB0byBiZSByZXRyaWVk
+IHRvby4NCj4gPiA+ID4gSSB0aGluayBzY3NpX2RoX2FsdWEncyBSRVBPUlRFRF9MVU5TX0RBVEFf
+SEFTX0NIQU5HRUQgbWF5YmUgc2hvdWxkIGJlDQo+ID4gPiA+IGdlbmVyaWNseSByZXRyaWVkLCBi
+ZWNhdXNlIGl0IHNlZW1zIGZvciBib3RoIGVycm9ycyB3ZSB3aWxsIHdhbnQgdG8NCj4gPiA+ID4g
+cmV0cnkgZm9yIGFsbCBkZXZpY2VzLg0KPiA+ID4NCj4gPiA+IFNvIG15IHByaW1hcnkgd29ycnkg
+YWJvdXQgcGF0Y2hlcyBsaWtlIHRoaXMgaXMgdGhhdCBpdCBlYXRzIEFFTnMgLi4uDQo+ID4gPiB0
+aGlzIGlzIGZpbmUgYmVjYXVzZSwgYXMgTWlrZSBzYXlzLCB3ZSBzaG91bGQganVzdCBpZ25vcmUg
+dGhlbS4NCj4gPiA+DQo+ID4gPiBIb3dldmVyLCB0aGUgbW9tZW50IHdlIHN0YXJ0IHByb2Nlc3Np
+bmcgQUVOcyAoYXMgYW5vdGhlciBzZXQgb2YgZG0NCj4gPiA+IHBlb3BsZSBwcm9taXNlIHRoZXkg
+aGF2ZSBpbiBwcm9jZXNzKSB3ZSdsbCBsb3NlIHRoZW0gZnJvbSByZGFjIGFycmF5cw0KPiA+ID4g
+YW5kIHBlb3BsZSB3aWxsIGdldCB1bmhhcHB5Lg0KPiA+ID4NCj4gPiA+IElmIHRoZSBnZW5lcmlj
+IFVBIHJldHJ5IGlzbid0IHdvcmtpbmcsIGxldCdzIGZpeCBpdCB0aGVyZSByYXRoZXIgdGhhbg0K
+PiA+ID4gdGhlc2UgaGFja3MgdGhhdCB3b3VsZCBiZSBoYXJkIHRvIHNwb3QgYW5kIHB1bGwgb3V0
+IHdoZW4gKGlmKSB3ZSBldmVyDQo+ID4gPiBnZXQgYSBnZW5lcmljIEFFTiBpbmZyYXN0cnVjdHVy
+ZS4NCj4gPiA+DQo+ID4gPiBKYW1lcw0KPiA+DQo+ID4gU29tZXRpbWVzIHRoZSBkZWZhdWx0IHdh
+eSB0byBoYW5kbGUgYSBVQSBtYXkgYmUgbm90IHRoZSBjb3JyZWN0IG9uZS4NCj4gPiBPbmUgYXJy
+YXlzIGltcGxlbWVudGF0aW9uIHRvIHJlc3BvbmQgdG8gdGhlIFVBIGNvdWxkIGJlIGRpZmZlcmVu
+dCBmcm9tDQo+ID4gYW5vdGhlciBhcnJheS4NCj4gDQo+IEkgZG9uJ3QgcXVpdGUgdW5kZXJzdGFu
+ZCB0aGlzIG9ic2VydmF0aW9uIGluIHRoZSBjb250ZXh0IG9mIHRoaXMgcGF0Y2guDQo+IFdoYXQg
+dGhlIHBhdGNoIGRvZXMgaXMgcmV0cnkgdGhlIGNvbW1hbmQgKGkuZS4gaWdub3JlIHRoZSBVQSkg
+d2hpY2gNCj4gc2hvdWxkIHByZXR0eSBtdWNoIGJlIG91ciBkZWZhdWx0IHJlc3BvbnNlLg0KPiAN
+Cg0KT2JzZXJ2YXRpb24gaW4gdGhpcyBjb250ZXh0IGlzIGJhc2VkIG9uIHRoZSBtb3ZlIGhlcmUg
+dG8gbWFrZSBVQSBoYW5kbGluZyBnZW5lcmljLg0KIA0KPiA+IEV4YW1wbGU6IEEgdGhpbiBwcm92
+aXNpb25pbmcgdGhyZXNob2xkIGV4Y2VlZCBjaGVjayBjb25kaXRpb24uIFRoZQ0KPiA+IGRldmlj
+ZSBoYW5kbGVyIGluZnJhc3RydWN0dXJlIGNhbiBiZSBhIHNhdmlvciB3aXRoIHN1Y2ggaGFja3Mu
+Lg0KPiANCj4gSSdtIGdvaW5nIHRvIHJlZ3JldCBhc2tpbmcgdGhpcyAoZXNwZWNpYWxseSBnaXZl
+biBhbGwgdGhlIG5vaXNlIHRoZXJlJ3MNCj4gYmVlbiBvbiB0aGluIHByb3Zpc2lvbmluZyB0aHJl
+c2hvbGRzKTogIFdoaWNoIGFycmF5cyBkb24ndCBhY3R1YWxseQ0KPiBpc3N1ZSB0aGVtIGNvcnJl
+Y3RseT8NCj4gDQoNCg0KSXRzIG5vdCBhIHF1ZXN0aW9uIG9mIGNvcnJlY3QgdnMgaW5jb3JyZWN0
+LiBUaGUgaW1wbGVtZW50YXRpb24gZGV0YWlsIG9mIGhvdyBhIHRoaW4gcHJvdmlzaW9uaW5nIHRo
+cmVzaG9sZCBVQSBzaG91bGQgYmUgaGFuZGxlZCBpcyBvdXRzaWRlIHRoZSBzY29wZSBvZiBUMTAg
+YW5kIHNvIHRoZXJlIGFyZSBkaWZmZXJlbnQgYXJjaGl0ZWN0dXJlcyB3aGljaCBkZWFsIHdpdGgg
+dGhpcyBzaXR1YXRpb24gZGlmZmVyZW50bHkuIFZpZXdpbmcgdGhlbSBhbGwgd2l0aCB0aGUgc2Ft
+ZSBwcmlzbSBtYXkgY2F1c2UgaXNzdWVzLg0KDQpUaGUgc3BlYyBvbmx5IHNheXMgaXQgc2hvdWxk
+IGJlIHJldHJpZWQuLiBhbmQgbm8gbW9yZS4gV2hhdCBhZG1pbmlzdHJhdGl2ZSBhY3Rpb25zIG5l
+ZWQgdG8gYmUgdGFrZW4gYmFzZWQgb24gdGhlIGV2ZW50IGlzIG91dHNpZGUgdGhlIHNjb3BlIG9m
+IFQxMC4uLg0KDQpJdCBpcyBtb3JlIG9mIGEgZmxleGliaWxpdHkgdG8gaGFuZGxlIHRoZSByZXRy
+aWVzIGJhc2VkIG9uIHRoZSBhcnJheSBhcmNoaXRlY3R1cmUuLg0KDQoNClNoeWFtDQoNCj4gSmFt
+ZXMNCj4gDQoNCg==
