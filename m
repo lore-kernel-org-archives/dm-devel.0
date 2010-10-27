@@ -1,88 +1,135 @@
-From: <Shyam_Iyer@Dell.com>
-Subject: RE: [dm-devel] [RESUBMIT][Patch] scsi_dh_rdac: retry IO for
- 06/3f/03 in rdac_check_sense fn
-Date: Tue, 26 Oct 2010 13:27:21 -0700
-Message-ID: <DBFB1B45AF80394ABD1C807E9F28D1570262E39FBB@BLRX7MCDC203.AMER.DELL.COM>
-References: <B2FD678A64EAAD45B089B123FDFC3ED704BFE578@inbmail01.lsi.com>
-	 <4CC7299E.2030508@cs.wisc.edu> <1288120911.8283.441.camel@mulgrave.site>
-	 <DBFB1B45AF80394ABD1C807E9F28D1570262E39FAA@BLRX7MCDC203.AMER.DELL.COM>
- <1288123139.8283.509.camel@mulgrave.site>
+From: Rudy Gevaert <Rudy.Gevaert@UGent.be>
+Subject: Re: unmapping luns doesn't work (good)
+Date: Wed, 27 Oct 2010 15:26:32 +0200
+Message-ID: <4CC82888.90505@UGent.be>
+References: <B2FD678A64EAAD45B089B123FDFC3ED704BFE2C0@inbmail01.lsi.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1288123139.8283.509.camel@mulgrave.site>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: James.Bottomley@suse.de
-Cc: michaelc@cs.wisc.edu, dm-devel@redhat.com, Vijay.Chauhan@lsi.com, jejb@kernel.org, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <B2FD678A64EAAD45B089B123FDFC3ED704BFE2C0@inbmail01.lsi.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBKYW1lcyBCb3R0b21sZXkgW21h
-aWx0bzpKYW1lcy5Cb3R0b21sZXlAc3VzZS5kZV0NCj4gU2VudDogVHVlc2RheSwgT2N0b2JlciAy
-NiwgMjAxMCAzOjU5IFBNDQo+IFRvOiBJeWVyLCBTaHlhbQ0KPiBDYzogbWljaGFlbGNAY3Mud2lz
-Yy5lZHU7IGRtLWRldmVsQHJlZGhhdC5jb207IFZpamF5LkNoYXVoYW5AbHNpLmNvbTsgamVqYkBr
-ZXJuZWwub3JnOyBsaW51eC0NCj4gc2NzaUB2Z2VyLmtlcm5lbC5vcmcNCj4gU3ViamVjdDogUkU6
-IFtkbS1kZXZlbF0gW1JFU1VCTUlUXVtQYXRjaF0gc2NzaV9kaF9yZGFjOiByZXRyeSBJTyBmb3Ig
-MDYvM2YvMDMgaW4gcmRhY19jaGVja19zZW5zZSBmbg0KPiANCj4gT24gV2VkLCAyMDEwLTEwLTI3
-IGF0IDAxOjAyICswNTMwLCBTaHlhbV9JeWVyQERlbGwuY29tIHdyb3RlOg0KPiA+IC0tLS0tT3Jp
-Z2luYWwgTWVzc2FnZS0tLS0tDQo+ID4gPiBGcm9tOiBsaW51eC1zY3NpLW93bmVyQHZnZXIua2Vy
-bmVsLm9yZyBbbWFpbHRvOmxpbnV4LXNjc2ktb3duZXJAdmdlci5rZXJuZWwub3JnXSBPbiBCZWhh
-bGYgT2YNCj4gSmFtZXMNCj4gPiA+IEJvdHRvbWxleQ0KPiA+ID4gU2VudDogVHVlc2RheSwgT2N0
-b2JlciAyNiwgMjAxMCAzOjIyIFBNDQo+ID4gPiBUbzogTWlrZSBDaHJpc3RpZQ0KPiA+ID4gQ2M6
-IGRldmljZS1tYXBwZXIgZGV2ZWxvcG1lbnQ7IENoYXVoYW4sIFZpamF5OyBKYW1lcyBCb3R0b21s
-ZXk7IGxpbnV4LXNjc2lAdmdlci5rZXJuZWwub3JnDQo+ID4gPiBTdWJqZWN0OiBSZTogW2RtLWRl
-dmVsXSBbUkVTVUJNSVRdW1BhdGNoXSBzY3NpX2RoX3JkYWM6IHJldHJ5IElPIGZvciAwNi8zZi8w
-MyBpbiByZGFjX2NoZWNrX3NlbnNlDQo+IGZuDQo+ID4gPg0KPiA+ID4gT24gVHVlLCAyMDEwLTEw
-LTI2IGF0IDE0OjE4IC0wNTAwLCBNaWtlIENocmlzdGllIHdyb3RlOg0KPiA+ID4gPiBPbiAxMC8y
-Ni8yMDEwIDA4OjUzIEFNLCBDaGF1aGFuLCBWaWpheSB3cm90ZToNCj4gPiA+ID4gPiBSZXN1Ym1p
-dHRpbmcgdGhpcyBwYXRjaCB0byBnZXQgdGhlIGF0dGVudGlvbi4NCj4gPiA+ID4gPg0KPiA+ID4g
-PiA+IFRoaXMgcGF0Y2ggYWRkcyByZXRyeSBmb3IgdGhlIElPIHJldHVybmVkIHdpdGggMDYvM2Yv
-MDMoKElOUVVJUllfREFUQV9DSEFOR0VEKSkgc2Vuc2UgY29kZSAgaW4NCj4gPiA+IHJkYWNfY2hl
-Y2tfc2Vuc2UoKS4gSU8gcmV0dXJuZWQgd2l0aCAwNi8zZi8wMyBmcm9tIGNvbnRyb2xsZXIgYXJl
-IGN1cnJlbnRseSBmYWlsZWQgYnkgc2NzaSBtaWQNCj4gbGF5ZXIsDQo+ID4gPiBhcyBhIHJlYXNv
-biBtb21lbnRhcmlseSBwYXRoIGZhaWx1cmUgaXMgbm90aWNlZCBieSBETSBtdWx0aXBhdGguDQo+
-ID4gPiA+ID4NCj4gPiA+ID4NCj4gPiA+ID4gSXMgaXQgZ2V0dGluZyBmYWlsZWQgYnkgYWNjaWRl
-bnQ/IEluIHNjc2lfaW9fY29tcGxldGlvbiB3ZSBjaGVjayBmb3IgVUFzDQo+ID4gPiA+IGFuZCB3
-aWxsIHJldHJ5IGlmIHRoZSByZW1vdmFibGUgYml0IGlzIG5vdCBzZXQuIFRoYXQgY2hlY2sgaXMg
-YWZ0ZXINCj4gPiA+ID4gc2NzaV9lbmRfcmVxdWVzdCB0aG91Z2ggKGlzIHRoZSBzY3NpX2VuZF9y
-ZXF1ZXN0IGNhbGwgZmFpbGluZyB0aGUgSU8pLg0KPiA+ID4gPg0KPiA+ID4gPiBEaWQgeW91IGd1
-eXMgYWxzbyB3YW50IFJFUE9SVEVEX0xVTlNfREFUQV9IQVNfQ0hBTkdFRCB0byBiZSByZXRyaWVk
-IHRvby4NCj4gPiA+ID4gSSB0aGluayBzY3NpX2RoX2FsdWEncyBSRVBPUlRFRF9MVU5TX0RBVEFf
-SEFTX0NIQU5HRUQgbWF5YmUgc2hvdWxkIGJlDQo+ID4gPiA+IGdlbmVyaWNseSByZXRyaWVkLCBi
-ZWNhdXNlIGl0IHNlZW1zIGZvciBib3RoIGVycm9ycyB3ZSB3aWxsIHdhbnQgdG8NCj4gPiA+ID4g
-cmV0cnkgZm9yIGFsbCBkZXZpY2VzLg0KPiA+ID4NCj4gPiA+IFNvIG15IHByaW1hcnkgd29ycnkg
-YWJvdXQgcGF0Y2hlcyBsaWtlIHRoaXMgaXMgdGhhdCBpdCBlYXRzIEFFTnMgLi4uDQo+ID4gPiB0
-aGlzIGlzIGZpbmUgYmVjYXVzZSwgYXMgTWlrZSBzYXlzLCB3ZSBzaG91bGQganVzdCBpZ25vcmUg
-dGhlbS4NCj4gPiA+DQo+ID4gPiBIb3dldmVyLCB0aGUgbW9tZW50IHdlIHN0YXJ0IHByb2Nlc3Np
-bmcgQUVOcyAoYXMgYW5vdGhlciBzZXQgb2YgZG0NCj4gPiA+IHBlb3BsZSBwcm9taXNlIHRoZXkg
-aGF2ZSBpbiBwcm9jZXNzKSB3ZSdsbCBsb3NlIHRoZW0gZnJvbSByZGFjIGFycmF5cw0KPiA+ID4g
-YW5kIHBlb3BsZSB3aWxsIGdldCB1bmhhcHB5Lg0KPiA+ID4NCj4gPiA+IElmIHRoZSBnZW5lcmlj
-IFVBIHJldHJ5IGlzbid0IHdvcmtpbmcsIGxldCdzIGZpeCBpdCB0aGVyZSByYXRoZXIgdGhhbg0K
-PiA+ID4gdGhlc2UgaGFja3MgdGhhdCB3b3VsZCBiZSBoYXJkIHRvIHNwb3QgYW5kIHB1bGwgb3V0
-IHdoZW4gKGlmKSB3ZSBldmVyDQo+ID4gPiBnZXQgYSBnZW5lcmljIEFFTiBpbmZyYXN0cnVjdHVy
-ZS4NCj4gPiA+DQo+ID4gPiBKYW1lcw0KPiA+DQo+ID4gU29tZXRpbWVzIHRoZSBkZWZhdWx0IHdh
-eSB0byBoYW5kbGUgYSBVQSBtYXkgYmUgbm90IHRoZSBjb3JyZWN0IG9uZS4NCj4gPiBPbmUgYXJy
-YXlzIGltcGxlbWVudGF0aW9uIHRvIHJlc3BvbmQgdG8gdGhlIFVBIGNvdWxkIGJlIGRpZmZlcmVu
-dCBmcm9tDQo+ID4gYW5vdGhlciBhcnJheS4NCj4gDQo+IEkgZG9uJ3QgcXVpdGUgdW5kZXJzdGFu
-ZCB0aGlzIG9ic2VydmF0aW9uIGluIHRoZSBjb250ZXh0IG9mIHRoaXMgcGF0Y2guDQo+IFdoYXQg
-dGhlIHBhdGNoIGRvZXMgaXMgcmV0cnkgdGhlIGNvbW1hbmQgKGkuZS4gaWdub3JlIHRoZSBVQSkg
-d2hpY2gNCj4gc2hvdWxkIHByZXR0eSBtdWNoIGJlIG91ciBkZWZhdWx0IHJlc3BvbnNlLg0KPiAN
-Cg0KT2JzZXJ2YXRpb24gaW4gdGhpcyBjb250ZXh0IGlzIGJhc2VkIG9uIHRoZSBtb3ZlIGhlcmUg
-dG8gbWFrZSBVQSBoYW5kbGluZyBnZW5lcmljLg0KIA0KPiA+IEV4YW1wbGU6IEEgdGhpbiBwcm92
-aXNpb25pbmcgdGhyZXNob2xkIGV4Y2VlZCBjaGVjayBjb25kaXRpb24uIFRoZQ0KPiA+IGRldmlj
-ZSBoYW5kbGVyIGluZnJhc3RydWN0dXJlIGNhbiBiZSBhIHNhdmlvciB3aXRoIHN1Y2ggaGFja3Mu
-Lg0KPiANCj4gSSdtIGdvaW5nIHRvIHJlZ3JldCBhc2tpbmcgdGhpcyAoZXNwZWNpYWxseSBnaXZl
-biBhbGwgdGhlIG5vaXNlIHRoZXJlJ3MNCj4gYmVlbiBvbiB0aGluIHByb3Zpc2lvbmluZyB0aHJl
-c2hvbGRzKTogIFdoaWNoIGFycmF5cyBkb24ndCBhY3R1YWxseQ0KPiBpc3N1ZSB0aGVtIGNvcnJl
-Y3RseT8NCj4gDQoNCg0KSXRzIG5vdCBhIHF1ZXN0aW9uIG9mIGNvcnJlY3QgdnMgaW5jb3JyZWN0
-LiBUaGUgaW1wbGVtZW50YXRpb24gZGV0YWlsIG9mIGhvdyBhIHRoaW4gcHJvdmlzaW9uaW5nIHRo
-cmVzaG9sZCBVQSBzaG91bGQgYmUgaGFuZGxlZCBpcyBvdXRzaWRlIHRoZSBzY29wZSBvZiBUMTAg
-YW5kIHNvIHRoZXJlIGFyZSBkaWZmZXJlbnQgYXJjaGl0ZWN0dXJlcyB3aGljaCBkZWFsIHdpdGgg
-dGhpcyBzaXR1YXRpb24gZGlmZmVyZW50bHkuIFZpZXdpbmcgdGhlbSBhbGwgd2l0aCB0aGUgc2Ft
-ZSBwcmlzbSBtYXkgY2F1c2UgaXNzdWVzLg0KDQpUaGUgc3BlYyBvbmx5IHNheXMgaXQgc2hvdWxk
-IGJlIHJldHJpZWQuLiBhbmQgbm8gbW9yZS4gV2hhdCBhZG1pbmlzdHJhdGl2ZSBhY3Rpb25zIG5l
-ZWQgdG8gYmUgdGFrZW4gYmFzZWQgb24gdGhlIGV2ZW50IGlzIG91dHNpZGUgdGhlIHNjb3BlIG9m
-IFQxMC4uLg0KDQpJdCBpcyBtb3JlIG9mIGEgZmxleGliaWxpdHkgdG8gaGFuZGxlIHRoZSByZXRy
-aWVzIGJhc2VkIG9uIHRoZSBhcnJheSBhcmNoaXRlY3R1cmUuLg0KDQoNClNoeWFtDQoNCj4gSmFt
-ZXMNCj4gDQoNCg==
+Hello Vijay,
+
+On 10/22/2010 10:35 AM, Chauhan, Vijay wrote:
+>
+> On Thur, October 21, 2010 8:22 PM, Rudy Gevaert wrote:
+>> On 10/21/2010 09:28 AM, Chauhan, Vijay wrote:
+>>
+>>> Try with disabling the queuing before removing the map.
+>>>
+>>> dmsetup message mail14r-ds3400-1 0 "fail_if_no_path"
+>>
+>> Hi
+>>
+>> When I do that, and then unmap the lun.
+>>
+>> If I then rescan an issue multipath I get:
+>>
+>> root@cyrprd1:~# multipath
+>> create: 1                 undef IBM,1726-4xx  FAStT
+>> size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=undef
+>> `-+- policy='round-robin 0' prio=0 status=undef
+>>     |- 0:0:0:3 sdd 8:48  undef faulty running
+>>     `- 5:0:0:3 sdl 8:176 undef faulty running
+>> <hang>
+>>
+>>
+>
+> You may not get into this issue if you follow these steps:
+>
+> step 1) Delete the paths for the dm device to be unmapped. (Ensure that this dm device is not being used for IO)
+> 	  Once the last path is deleted, multipathd will remove this map.
+>
+> step 2) Unmap the LUN from storage.
+>
+> Hope this helps.
+>
+> Regards,
+> Vijay
+
+Unfortunately I then get up with:
+root@cyrprd3:~# multipath -l
+1                 dm-3 IBM,1726-4xx  FAStT
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+`-+- policy='round-robin 0' prio=-30 status=enabled
+   |- 5:0:0:10 sdb  8:16   failed undef running
+   |- 6:0:0:10 sdc  8:32   failed undef running
+   |- 5:0:0:12 sdd  8:48   failed undef running
+   |- 6:0:0:12 sde  8:64   failed undef running
+   |- 5:0:0:20 sdf  8:80   failed undef running
+   |- 6:0:0:20 sdg  8:96   failed undef running
+   |- 5:0:0:9  sdh  8:112  failed undef running
+   |- 6:0:0:9  sdi  8:128  failed undef running
+   |- 5:0:0:11 sdj  8:144  failed undef running
+   |- 6:0:0:11 sdk  8:160  failed undef running
+   |- 5:0:0:13 sdl  8:176  failed undef running
+   |- 6:0:0:13 sdm  8:192  failed undef running
+   |- 5:0:0:8  sdn  8:208  failed undef running
+   |- 6:0:0:8  sdo  8:224  failed undef running
+   |- 5:0:0:21 sdp  8:240  failed undef running
+   |- 6:0:0:21 sdq  65:0   failed undef running
+   |- 5:0:0:19 sdr  65:16  failed undef running
+   |- 6:0:0:19 sds  65:32  failed undef running
+   |- 5:0:0:18 sdt  65:48  failed undef running
+   |- 6:0:0:18 sdu  65:64  failed undef running
+   |- 5:0:0:17 sdv  65:80  failed undef running
+   |- 6:0:0:17 sdw  65:96  failed undef running
+   |- 5:0:0:22 sdx  65:112 failed undef running
+   |- 6:0:0:22 sdy  65:128 failed undef running
+   |- 5:0:0:16 sdz  65:144 failed undef running
+   |- 6:0:0:16 sdaa 65:160 failed undef running
+   |- 5:0:0:15 sdab 65:176 failed undef running
+   |- 6:0:0:15 sdac 65:192 failed undef running
+   |- 5:0:0:14 sdad 65:208 failed undef running
+   `- #:#:#:#  -    #:#    failed undef running
+
+
+
+(for the last line, I also echo'd 1 to the remove file.  Doing for all 
+devices gets me:
+1                 dm-3 ,
+size=550G features='1 queue_if_no_path' hwhandler='1 rdac' wp=rw
+`-+- policy='round-robin 0' prio=-30 status=active
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# active undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   |- #:#:#:# -   #:# failed undef running
+   `- #:#:#:# -   #:# failed undef running
