@@ -1,12 +1,17 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools libcheckers/directio.c libchec ...
-Date: 27 Oct 2010 18:55:57 -0000
-Message-ID: <20101027185557.10625.qmail@sourceware.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: use revalidate_disk to update device size after
+	set_capacity
+Date: Wed, 27 Oct 2010 21:16:59 -0400
+Message-ID: <20101028011658.GA13690@redhat.com>
+References: <20101019220711.GA25169@redhat.com>
+	<4CBE813B.6050105@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4CBE813B.6050105@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,285 +21,160 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2010-10-27 18:55:56
+Hi Jun'ichi,
 
-Modified files:
-	libcheckers    : directio.c path_state.h 
-	libmultipath   : config.h dict.c discovery.c hwtable.c structs.h 
-	multipathd     : main.c 
+Thanks for your note.  It took me a while to set aside some time to look
+at this closer.  Please see my response inlined below.
 
-Log message:
-	Fixes for bz #488921, #500580, #511034, #623468
-	Ported the queue_without_daemon code from RHEL5 (488921).  Changed the directio
-	path checker to wait asychronously in multipathd and added the PATH_PENDING
-	state like in RHEL5 (500580).  Change the sysfs wait time from 5 seconds to
-	a minute, but make it quit early if it notices that the sys/block/<devname>
-	directory doesn't exist, like in RHEL 5 (511034). Add autoconfiguration for
-	the HP HSVX700 (623468).
+On Wed, Oct 20 2010 at  1:42am -0400,
+Jun'ichi Nomura <j-nomura@ce.jp.nec.com> wrote:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/directio.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.2.2.1&r2=1.2.2.2
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/path_state.h.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.2&r2=1.2.2.1
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/config.h.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.17.2.5&r2=1.17.2.6
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/dict.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.16.2.7&r2=1.16.2.8
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.28.2.9&r2=1.28.2.10
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.16.2.17&r2=1.16.2.18
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/structs.h.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.17.2.10&r2=1.17.2.11
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.66.2.8&r2=1.66.2.9
+> Hi Mike,
+> 
+> (10/20/10 07:07), Mike Snitzer wrote:
+> > Avoid taking md->bdev->bd_inode->i_mutex to update the DM block device's
+> > size.  Doing so eliminates the potential for deadlock if an fsync is
+> > racing with a device resize.
+> > 
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > ---
+> >  drivers/md/dm.c |    5 +----
+> >  1 files changed, 1 insertions(+), 4 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > index f934e98..fd315a7 100644
+> > --- a/drivers/md/dm.c
+> > +++ b/drivers/md/dm.c
+> > @@ -1995,10 +1995,7 @@ static void event_callback(void *context)
+> >  static void __set_size(struct mapped_device *md, sector_t size)
+> >  {
+> >  	set_capacity(md->disk, size);
+> > -
+> > -	mutex_lock(&md->bdev->bd_inode->i_mutex);
+> > -	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
+> > -	mutex_unlock(&md->bdev->bd_inode->i_mutex);
+> > +	revalidate_disk(md->disk);
+> >  }
+> 
+> Some concerns/questions:
+> 
+> - revalidate_disk() calls bdget() inside it.
+>   Does bdget() no longer block on I/O?
+>   Sometime ago, bdget() has been blocked by I_LOCK,
+>   where process holding I_LOCK blocked by resize.
+>   Since I_LOCK has disappeared, I suspect this might not
+>   be a valid concern anymore.
+>   FYI, past discussion on this topic:
+>   http://www.redhat.com/archives/dm-devel/2007-October/msg00134.html
+>   (it's not my intention to push the patch in the above URL)
 
---- multipath-tools/libcheckers/directio.c	2007/07/26 19:27:13	1.2.2.1
-+++ multipath-tools/libcheckers/directio.c	2010/10/27 18:55:55	1.2.2.2
-@@ -20,9 +20,12 @@
- #include "checkers.h"
- #include "../libmultipath/debug.h"
- 
-+#define DIRECTIO_TIMEOUT       30
-+
- #define MSG_DIRECTIO_UNKNOWN	"directio checker is not available"
- #define MSG_DIRECTIO_UP		"directio checker reports path is up"
- #define MSG_DIRECTIO_DOWN	"directio checker reports path is down"
-+#define MSG_DIRECTIO_PENDING   "directio checker waits for I/O"
- 
- struct directio_context {
- 	int             running;
-@@ -34,11 +37,11 @@
- };
- 
- static int
--check_state(int fd, struct directio_context *ct)
-+check_state(int fd, struct directio_context *ct, int sync)
+OK, thanks for the pointer.
+
+Yes, I agree with you, seems there is no longer any obvious potential
+for bdget to block on IO.
+
+> - revalidate_disk() ends up with get_super():
+>     revalidate_disk
+>       check_disk_size_change
+>         flush_disk
+>           __invalidate_device
+>             get_super
+>   and get_super() takes sb->s_umount.
+>   OTOH, there are codes which wait on I/O holding s_umount
+>   exclusively. E.g. freeze_super() calls sync_filesystem().
+>   So it seems there is a possible deadlock if you use
+>   revalidate_disk from dm_swap_table.
+
+Doesn't seem like a freeze_super of a particular DM device would
+conflict with revalidate_disk relative to sb->s_umount.  But it is
+concerning that revalidate_disk is calling flush_disk while the DM
+device is suspended (though in practice this doesn't cause a problem):
+
+dm_suspend() - flushes any outstanding IO.
+  lock_fs
+    freeze_bdev
+      freeze_super
+	down_write(&sb->s_umount);
+        sync_filesystem
+	up_write(&sb->s_umount);
+
+dm_swap_table()
+  __bind
+    __set_size
+      revalidate_disk
+        check_disk_size_change
+          flush_disk
+            __invalidate_device
+              get_super
+	        down_read(&sb->s_umount);
+		up_read(&sb->s_umount);
+
+dm_resume()
+  unlock_fs
+    thaw_bdev
+      thaw_super
+        down_write(&sb->s_umount);
+	deactivate_locked_super
+	  up_write(&s->s_umount);
+
+> I've been away from that part of the code for a while.
+> So it's nice if the above is just a false alarm...
+
+Clearly warrants further analysis.
+
+check_disk_size_change() takes bdev->bd_mutex while changing
+bdev->bd_inode->i_size (rather than bdev->bd_inode->i_mutex). This is
+what attracted me to revalidate_disk (in addition to the rest of the
+block drivers using it for resize -- thanks to Neil Brown for pointing
+it out).
+
+But in my limited testing of the proposed patch (above), using linear DM
+target over DM mpath, I haven't seen any problems.  I was doing IO in
+parallel to the resize.  Notice with the patch we now see the following
+messages (dm-0 is the mpath device, dm-1 is the linear):
+
+dm-0: detected capacity change from 0 to 10737418240
+dm-1: detected capacity change from 0 to 8589934592
+...
+dm-1: detected capacity change from 8589934592 to 9663676416
+dm-1: detected capacity change from 9663676416 to 9667870720
+
+But I haven't yet fully understood why check_disk_size_change's use of
+bdev->bd_mutex sufficiently protects access to bdev->bd_inode->i_size
+(unless all access to bdev->bd_inode->i_size takes bdev->bd_mutex; DM
+being an exception?).
+
+Given how naive I am on these core block paths there is more analysis
+needed to verify/determine the proper fix for DM device resize (while
+the device is suspended).
+
+Could be the following patch be sufficient? (avoids potential for IO
+while device is suspended -- final patch would need comments explaining
+why revalidate_disk was avoided)
+
+Mike
+
+---
+ drivers/md/dm.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7cb1352..248794a 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1996,9 +1996,9 @@ static void __set_size(struct mapped_device *md, sector_t size)
  {
- 	long flags;
- 	int reset_flags = 0;
--	struct timespec timeout = { .tv_sec = 2 };
-+	struct timespec timeout = { .tv_sec = 1 };
- 	struct io_event event;
- 	struct stat     sb;
- 	int             rc = PATH_UNCHECKED;
-@@ -59,6 +62,11 @@
- 		condlog(4, "directio: called for %x", (unsigned) sb.st_rdev);
- 	}
+ 	set_capacity(md->disk, size);
  
-+	if (sync) {
-+		condlog(4, "directio: synchronous mode");
-+		timeout.tv_sec = DIRECTIO_TIMEOUT;
-+	}
-+
- 	if (!ct->running) {
- 		struct iocb *ios[1] = { &ct->io };
- 
-@@ -71,10 +79,14 @@
- 			goto out;
- 		}
- 	}
--	ct->running = 1;
-+	ct->running++;
- 
- 	r = syscall(__NR_io_getevents, ct->ioctx, 1L, 1L, &event, &timeout);
- 	if (r < 1L) {
-+		if (ct->running < DIRECTIO_TIMEOUT && !sync)
-+			return PATH_PENDING;
-+		ct->running = DIRECTIO_TIMEOUT;
-+
- 		condlog(3, "directio: timeout r=%li errno=%i", r, errno);
- 		rc = PATH_DOWN;
- 	} else {
-@@ -163,7 +175,7 @@
- 		ret = -1;
- 		goto out;
- 	}
--	ret = check_state(fd, ctxt);
-+	ret = check_state(fd, ctxt, (context == NULL));
- 
- 	switch (ret)
- 	{
-@@ -176,6 +188,9 @@
- 	case PATH_UP:
- 		MSG(MSG_DIRECTIO_UP);
- 		break;
-+	case PATH_PENDING:
-+		MSG(MSG_DIRECTIO_PENDING);
-+		break;
- 	default:
- 		break;
- 	}
---- multipath-tools/libcheckers/Attic/path_state.h	2005/07/20 19:44:54	1.2
-+++ multipath-tools/libcheckers/Attic/path_state.h	2010/10/27 18:55:55	1.2.2.1
-@@ -3,3 +3,4 @@
- #define PATH_UP		2
- #define PATH_SHAKY	3
- #define PATH_GHOST	4
-+#define PATH_PENDING	5
---- multipath-tools/libmultipath/config.h	2010/04/07 06:37:49	1.17.2.5
-+++ multipath-tools/libmultipath/config.h	2010/10/27 18:55:55	1.17.2.6
-@@ -79,6 +79,7 @@
- 	int attribute_flags;
- 	int flush_on_last_del;
- 	int override_queueing;
-+	int queue_without_daemon;
- 	uid_t uid;
- 	gid_t gid;
- 	mode_t mode;
---- multipath-tools/libmultipath/dict.c	2009/01/17 00:46:51	1.16.2.7
-+++ multipath-tools/libmultipath/dict.c	2010/10/27 18:55:55	1.16.2.8
-@@ -314,6 +314,28 @@
+-	mutex_lock(&md->bdev->bd_inode->i_mutex);
++	mutex_lock(&md->bdev->bd_mutex);
+ 	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
+-	mutex_unlock(&md->bdev->bd_inode->i_mutex);
++	mutex_unlock(&md->bdev->bd_mutex);
  }
  
- static int
-+def_queue_without_daemon(vector strvec)
-+{
-+	char * buff;
-+
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
-+
-+	if (!strncmp(buff, "off", 3) || !strncmp(buff, "no", 2) ||
-+	    !strncmp(buff, "0", 1))
-+		conf->queue_without_daemon = QUE_NO_DAEMON_OFF;
-+	else if (!strncmp(buff, "on", 2) || !strncmp(buff, "yes", 3) ||
-+		 !strncmp(buff, "1", 1))
-+		conf->queue_without_daemon = QUE_NO_DAEMON_ON;
-+	else
-+		conf->queue_without_daemon = QUE_NO_DAEMON_UNDEF;
-+
-+	free(buff);
-+	return 0;
-+}
-+
-+static int
- default_pg_timeout_handler(vector strvec)
- {
- 	int pg_timeout;
-@@ -1097,6 +1119,7 @@
- 	install_keyword("no_path_retry", &def_no_path_retry_handler);
- 	install_keyword("flush_on_last_del", &def_flush_on_last_del_handler);
- 	install_keyword("pg_timeout", &default_pg_timeout_handler);
-+	install_keyword("queue_without_daemon", &def_queue_without_daemon);
- 	install_keyword("user_friendly_names", &names_handler);
- 	install_keyword("bindings_file", &bindings_file_handler);
- 	install_keyword("mode", &def_mode_handler);
---- multipath-tools/libmultipath/discovery.c	2010/05/28 04:53:25	1.28.2.9
-+++ multipath-tools/libmultipath/discovery.c	2010/10/27 18:55:55	1.28.2.10
-@@ -170,15 +170,18 @@
- 	return r;
- }
- 
--#define WAIT_MAX_SECONDS 5
-+#define WAIT_MAX_SECONDS 60
- #define WAIT_LOOP_PER_SECOND 5
- 
- static int
--wait_for_file (char * filename)
-+wait_for_file (char * filename, char * sysfs_path, char * dev)
- {
- 	int loop;
- 	struct stat stats;
--	
-+	char dev_dir[SYSFS_PATH_SIZE];
-+
-+	if (sysfs_path && safe_sprintf(dev_dir, "%s/block/%s", sysfs_path, dev))
-+		return 1;
- 	loop = WAIT_MAX_SECONDS * WAIT_LOOP_PER_SECOND;
- 	
- 	while (--loop) {
-@@ -188,6 +191,9 @@
- 		if (errno != ENOENT)
- 			return 1;
- 
-+		if (sysfs_path && stat(dev_dir, &stats) != 0)
-+			return 1;
-+
- 		usleep(1000 * 1000 / WAIT_LOOP_PER_SECOND);
- 	}
- 	return 1;
-@@ -204,7 +210,7 @@
- 	if (safe_sprintf(attr_path, fmt, sysfs_path, dev)) \
- 		return 1; \
- \
--	if (wait_for_file(attr_path)) \
-+	if (wait_for_file(attr_path, sysfs_path, dev)) \
- 		return 1; \
- \
- 	if (0 > sysfs_read_attribute_value(attr_path, attr_buff, sizeof(attr_buff))) \
-@@ -269,7 +275,7 @@
- 		return -1;
- 	}
- 
--	if (wait_for_file(devpath)) {
-+	if (wait_for_file(devpath, NULL, NULL)) {
- 		condlog(3, "failed to open %s", devpath);
- 		return -1;
- 	}
---- multipath-tools/libmultipath/hwtable.c	2009/09/11 15:19:50	1.16.2.17
-+++ multipath-tools/libmultipath/hwtable.c	2010/10/27 18:55:55	1.16.2.18
-@@ -39,6 +39,10 @@
- 			   GROUP_BY_PRIO, DEFAULT_GETUID,
- 			   "/sbin/mpath_prio_alua /dev/%n", "0", "0", "tur",
- 			   -FAILBACK_IMMEDIATE, NULL, 12, 0, 100);
-+	r += store_hwe_ext(hw, "HP", "HSVX700", GROUP_BY_PRIO,
-+                           DEFAULT_GETUID, "/sbin/mpath_prio_hp_sw /dev/%n",
-+                           "0", "0", "hp_sw", -FAILBACK_IMMEDIATE, NULL, 12, 0,
-+                           100);
- 	r += store_hwe_ext(hw, "COMPAQ", "MSA|HSV1.0.*", GROUP_BY_PRIO,
-                            DEFAULT_GETUID, "/sbin/mpath_prio_hp_sw /dev/%n",
-                            "1 hp-sw", "0", "hp_sw", FAILBACK_UNDEF, NULL, 12, 0,
---- multipath-tools/libmultipath/structs.h	2010/05/28 04:53:25	1.17.2.10
-+++ multipath-tools/libmultipath/structs.h	2010/10/27 18:55:55	1.17.2.11
-@@ -77,6 +77,12 @@
- 	FLUSH_ENABLED,
- };
- 
-+enum queue_without_daemon_states {
-+	QUE_NO_DAEMON_UNDEF,
-+	QUE_NO_DAEMON_OFF,
-+	QUE_NO_DAEMON_ON,
-+};
-+
- struct scsi_idlun {
- 	int dev_id;
- 	int host_unique_id;
---- multipath-tools/multipathd/main.c	2009/09/11 15:19:50	1.66.2.8
-+++ multipath-tools/multipathd/main.c	2010/10/27 18:55:56	1.66.2.9
-@@ -1368,6 +1368,16 @@
- 				continue;
- 			}
- 
-+			/*
-+			 * Async IO in flight. Keep the previous path state
-+			 * and reschedule as soon as possible.
-+			 */
-+			if (newstate == PATH_PENDING) {
-+				condlog(4, "%s: pending path", pp->dev);
-+				pp->tick = 1;
-+				continue;
-+			}
-+
- 			if (newstate != pp->state) {
- 				int oldstate = pp->state;
- 				pp->state = newstate;
-@@ -1621,6 +1631,8 @@
- 	pthread_t check_thr, uevent_thr, uxlsnr_thr;
- 	pthread_attr_t log_attr, misc_attr;
- 	struct vectors * vecs;
-+	struct multipath * mpp;
-+	int i;
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 
-@@ -1702,6 +1714,9 @@
- 	 * exit path
- 	 */
- 	lock(vecs->lock);
-+	if (conf->queue_without_daemon == QUE_NO_DAEMON_OFF)
-+		vector_foreach_slot(vecs->mpvec, mpp, i)
-+			dm_queue_if_no_path(mpp->alias, 0);
- 	remove_maps(vecs);
- 	free_pathvec(vecs->pathvec, FREE_PATHS);
- 
+ /*
