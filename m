@@ -1,8 +1,8 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
 Subject: Re: dm: use revalidate_disk to update device size after
 	set_capacity
-Date: Thu, 28 Oct 2010 18:18:02 -0400
-Message-ID: <20101028221802.GA1364@redhat.com>
+Date: Fri, 29 Oct 2010 12:00:10 +0900
+Message-ID: <4CCA38BA.3070406@ce.jp.nec.com>
 References: <20101019220711.GA25169@redhat.com>
 	<4CBE813B.6050105@ce.jp.nec.com>
 	<20101028011658.GA13690@redhat.com>
@@ -13,7 +13,6 @@ Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 In-Reply-To: <20101028195432.GA23063@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,63 +23,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+To: Mike Snitzer <snitzer@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Oct 28 2010 at  3:54pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Hi Mike,
 
-> On Thu, Oct 28 2010 at  8:15am -0400,
-> Jun'ichi Nomura <j-nomura@ce.jp.nec.com> wrote:
-
-> > Though I can't point out actual problem,
-> > I think it's deadlock-prone to take bd_mutex in dm_swap_table.
-> > 
-> > There are already codes which do I/O while holding bd_mutex,
-> > e.g. block/ioctl.c, though the code is not called for dm,
-> > so we can' just set a general rule "Don't do I/O while holding bd_mutex".
+(10/29/10 04:54), Mike Snitzer wrote:
+>> If __set_size() could be done in later stage of do_resume(),
+>> we can use revalidate_disk() for dm, too.
+>> What do you think?
 > 
-> Right, it would work provided we had that understanding within DM.
+> I think it would be incorrect to make a new DM table live without first
+> adjusting the size of the DM device to reflect the new table.  Could
+> result in racing IO to the end of a device which would cause IO errors
+> like "access beyond end of device".
 
-I think I misunderstood what you were saying as: no code does I/O to DM
-while holding bd_mutex so we _can_ just set the general rule....
-
-But re-reading your mail made me realize you were likely saying the
-opposite?  e.g. your can' was meant to be can't.
-
-So even though we currently can't see a real deadlock associated with
-using ->bd_mutex directly you're contending there is potential for one
-(may already be one in hiding or one could be introduced in the future).
-
-That is fine, best to be conservative.
+Yes, but at that point, resume ioctl is still in progress.
+Doesn't that mean "the resize is still in progress"?
+If so, who cares that I/O while the resize is not yet completed?
 
 > I'll cleanup the patch from my previous mail to include some in-code
 > comments and re-post it.  Please ack it if you agree that direct use of
 > bd_mutex in __set_size() is a reasonable fix given the current code.
 
-Taking a step back, don't we already have adequate locking for
-__set_size's i_size_write() via dm_swap_table's md->suspend_lock?
+My point is that it's better to avoid having a code with
+special assumption on generic code, either "any codes don't do
+I/O while holding bd_mutex" or "dm_resume is the only code
+which calls i_size_write() for dm device".
+I think it's prone for someone who don't care dm specifics
+to introduce a new code that breaks such an assumption.
 
-So something like the following?
+Anyway, I think your bd_mutex patch should be fine for now and
+is better than the current code with i_mutex, which has a real deadlock issue.
 
-Mike
----
- drivers/md/dm.c |    3 +--
- 1 files changed, 1 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 7cb1352..e71b8a1 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1996,9 +1996,8 @@ static void __set_size(struct mapped_device *md, sector_t size)
- {
- 	set_capacity(md->disk, size);
- 
--	mutex_lock(&md->bdev->bd_inode->i_mutex);
-+	/* i_size_write() is protected by md->suspend_lock */
- 	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
--	mutex_unlock(&md->bdev->bd_inode->i_mutex);
- }
- 
- /*
+-- 
+Jun'ichi Nomura, NEC Corporation
