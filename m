@@ -1,19 +1,15 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: dm: use revalidate_disk to update device size after
-	set_capacity
-Date: Fri, 29 Oct 2010 12:00:10 +0900
-Message-ID: <4CCA38BA.3070406@ce.jp.nec.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: dm: lock bd_mutex when setting device size
+Date: Fri, 29 Oct 2010 17:50:01 -0400
+Message-ID: <20101029215001.GA4827@redhat.com>
 References: <20101019220711.GA25169@redhat.com>
-	<4CBE813B.6050105@ce.jp.nec.com>
-	<20101028011658.GA13690@redhat.com>
-	<4CC96970.7010903@ce.jp.nec.com>
-	<20101028195432.GA23063@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20101028195432.GA23063@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20101019220711.GA25169@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,39 +19,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
+Avoid taking md->bdev->bd_inode->i_mutex to update the DM block device's
+size.  Using md->bdev->bd_mutex eliminates the potential for deadlock if
+an fsync is racing with a device resize.
 
-(10/29/10 04:54), Mike Snitzer wrote:
->> If __set_size() could be done in later stage of do_resume(),
->> we can use revalidate_disk() for dm, too.
->> What do you think?
-> 
-> I think it would be incorrect to make a new DM table live without first
-> adjusting the size of the DM device to reflect the new table.  Could
-> result in racing IO to the end of a device which would cause IO errors
-> like "access beyond end of device".
+revalidate_disk() was avoided because it would flush_disk() while the DM
+device is suspended.
 
-Yes, but at that point, resume ioctl is still in progress.
-Doesn't that mean "the resize is still in progress"?
-If so, who cares that I/O while the resize is not yet completed?
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+---
+ drivers/md/dm.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-> I'll cleanup the patch from my previous mail to include some in-code
-> comments and re-post it.  Please ack it if you agree that direct use of
-> bd_mutex in __set_size() is a reasonable fix given the current code.
+Jun'ichi, was the following your implict Acked-by?  Care to make it
+explicit?
+"Anyway, I think your bd_mutex patch should be fine for now and is
+better than the current code with i_mutex, which has a real deadlock
+issue."
 
-My point is that it's better to avoid having a code with
-special assumption on generic code, either "any codes don't do
-I/O while holding bd_mutex" or "dm_resume is the only code
-which calls i_size_write() for dm device".
-I think it's prone for someone who don't care dm specifics
-to introduce a new code that breaks such an assumption.
-
-Anyway, I think your bd_mutex patch should be fine for now and
-is better than the current code with i_mutex, which has a real deadlock issue.
-
--- 
-Jun'ichi Nomura, NEC Corporation
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7cb1352..248794a 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1996,9 +1996,9 @@ static void __set_size(struct mapped_device *md, sector_t size)
+ {
+ 	set_capacity(md->disk, size);
+ 
+-	mutex_lock(&md->bdev->bd_inode->i_mutex);
++	mutex_lock(&md->bdev->bd_mutex);
+ 	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
+-	mutex_unlock(&md->bdev->bd_inode->i_mutex);
++	mutex_unlock(&md->bdev->bd_mutex);
+ }
+ 
+ /*
