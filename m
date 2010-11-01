@@ -1,105 +1,195 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [PATCHSET] block: clean up bdev claim/release handling
-Date: Tue, 2 Nov 2010 06:49:18 +1100
-Message-ID: <20101102064918.4c6037d2@nbeee.brown>
-References: <1288628129-12811-1-git-send-email-tj@kernel.org>
+From: "David C. Rankin" <drankinatty@suddenlinkmail.com>
+Subject: kernel update and dmraid causing grub errors
+Date: Mon, 01 Nov 2010 17:27:16 -0500
+Message-ID: <4CCF3EC4.1020708@suddenlinkmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <reiserfs-devel-owner@vger.kernel.org>
-In-Reply-To: <1288628129-12811-1-git-send-email-tj@kernel.org>
-Sender: reiserfs-devel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: axboe@kernel.dk, hch@infradead.org, linux-kernel@vger.kernel.org, petero2@telia.com, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, jack@suse.cz, akpm@linux-foundation.org, adilger.kernel@dilger.ca, tytso@mit.edu, mfasheh@suse.com, joel.becker@oracle.com, aelder@sgi.com, dm-devel@redhat.com, drbd-dev@lists.linbit.com, leochen@broadcom.com, sbranden@broadcom.com, chris.mason@oracle.com, swhiteho@redhat.com, shaggy@linux.vnet.ibm.com, joern@logfs.org, konishi.ryusuke@lab.ntt.co.jp, reiserfs-devel@vger.kernel.org, viro@zeniv.linux.org.uk
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon,  1 Nov 2010 17:15:24 +0100
-Tejun Heo <tj@kernel.org> wrote:
+dmraid devs,
 
-> bdev exclusive access handling is somewhat clumsy.  The primary
-> interface is bd_claim() and bd_release() but there also are
-> open_bdev_exclusive(), close_bdev_exclusive() and bd_claim_by_disk()
-> and bd_release_from_disk().
-> 
-> Gaining exclusive access as a separate step from open itself also has
-> the inherent problem that the block layer doesn't know whether the
-> current open attempt is for an exclusive access or not.  The action of
-> open itself may affect the existing exclusive access but there's no
-> way to prevent it.
-> 
-> This patchset simplifies the claim/release handling by folding it into
-> blkdev_get/put() and making others simple wrappers around them.  This
-> simplifies code and removes strange corner cases like the
-> non-atomicity of exclusive open described above.
+	Over the past 8-9 months, I have had numerous dmraid related boot failures with
+the past 6-8 kernels. It seems like a Russian-roulette type problem. Some
+kernels work with dmraid, some cause grub errors. The problem is most acute on
+an MSI SLI Platinum Based board (MS-7374), Phenom X4 (9850), with the following
+pci bus config:
 
-He Tejun,
- This looks like a really nice clean-up!  Thanks.
-Definitely
-  Acked-by: NeilBrown <neilb@suse.de>
-for the md parts.
+[15:48 archangel:/home/david/bugs/aa] # lspci
+00:00.0 RAM memory: nVidia Corporation MCP78S [GeForce 8200] Memory Controller
+(rev a2)
+00:01.0 ISA bridge: nVidia Corporation MCP78S [GeForce 8200] LPC Bridge (rev a2)
+00:01.1 SMBus: nVidia Corporation MCP78S [GeForce 8200] SMBus (rev a1)
+00:01.2 RAM memory: nVidia Corporation MCP78S [GeForce 8200] Memory Controller
+(rev a1)
+00:01.3 Co-processor: nVidia Corporation MCP78S [GeForce 8200] Co-Processor (rev a2)
+00:01.4 RAM memory: nVidia Corporation MCP78S [GeForce 8200] Memory Controller
+(rev a1)
+00:02.0 USB Controller: nVidia Corporation MCP78S [GeForce 8200] OHCI USB 1.1
+Controller (rev a1)
+00:02.1 USB Controller: nVidia Corporation MCP78S [GeForce 8200] EHCI USB 2.0
+Controller (rev a1)
+00:04.0 USB Controller: nVidia Corporation MCP78S [GeForce 8200] OHCI USB 1.1
+Controller (rev a1)
+00:04.1 USB Controller: nVidia Corporation MCP78S [GeForce 8200] EHCI USB 2.0
+Controller (rev a1)
+00:06.0 IDE interface: nVidia Corporation MCP78S [GeForce 8200] IDE (rev a1)
+00:07.0 Audio device: nVidia Corporation MCP72XE/MCP72P/MCP78U/MCP78S High
+Definition Audio (rev a1)
+00:08.0 PCI bridge: nVidia Corporation MCP78S [GeForce 8200] PCI Bridge (rev a1)
+00:09.0 RAID bus controller: nVidia Corporation MCP78S [GeForce 8200] SATA
+Controller (RAID mode) (rev a2)
+00:0a.0 Ethernet controller: nVidia Corporation MCP77 Ethernet (rev a2)
+00:10.0 PCI bridge: nVidia Corporation MCP78S [GeForce 8200] PCI Express Bridge
+(rev a1)
+00:12.0 PCI bridge: nVidia Corporation MCP78S [GeForce 8200] PCI Express Bridge
+(rev a1)
+00:13.0 PCI bridge: nVidia Corporation MCP78S [GeForce 8200] PCI Bridge (rev a1)
+00:14.0 PCI bridge: nVidia Corporation MCP78S [GeForce 8200] PCI Bridge (rev a1)
+00:18.0 Host bridge: Advanced Micro Devices [AMD] K10 [Opteron, Athlon64,
+Sempron] HyperTransport Configuration
+00:18.1 Host bridge: Advanced Micro Devices [AMD] K10 [Opteron, Athlon64,
+Sempron] Address Map
+00:18.2 Host bridge: Advanced Micro Devices [AMD] K10 [Opteron, Athlon64,
+Sempron] DRAM Controller
+00:18.3 Host bridge: Advanced Micro Devices [AMD] K10 [Opteron, Athlon64,
+Sempron] Miscellaneous Control
+00:18.4 Host bridge: Advanced Micro Devices [AMD] K10 [Opteron, Athlon64,
+Sempron] Link Control
+01:06.0 Serial controller: 3Com Corp, Modem Division 56K FaxModem Model 5610
+(rev 01)
+01:09.0 FireWire (IEEE 1394): VIA Technologies, Inc. VT6306/7/8 [Fire II(M)]
+IEEE 1394 OHCI Controller (rev c0)
+02:00.0 VGA compatible controller: nVidia Corporation G92 [GeForce 8800 GT] (rev a2)
+04:00.0 SATA controller: JMicron Technology Corp. JMB362/JMB363 Serial ATA
+Controller (rev 03)
+04:00.1 IDE interface: JMicron Technology Corp. JMB362/JMB363 Serial ATA
+Controller (rev 03)
 
-Thanks,
-NeilBrown
+full dmidecode information at:
+  http://www.3111skyline.com/dl/Archlinux/bugs/aa-dmidecode.txt
+
+	Booting the current Arch Linux kernel (2.6.35.8-1) fails and the boot hangs at
+the very start. The kernel line I use hasn't changed in a long time:
+
+  kernel /vmlinuz root=/dev/mapper/nvidia_baaccajap5 ro vga=0x31a
+
+	Booting first stopped with the following error:
+
+Booting 'Arch Linux on Archangel'
+
+root (hd1,5)
+  Filesystem type is ext2fs, Partition type 0x83
+Kernel /vmlinuz26 root=/dev/mapper/nvidia_baacca_jap5 ro vga=794
+
+Error 24: Attempt to access block outside partition
+
+Press any key to continue...
+
+	Upgrading to device-mapper-2.02.75-1 completely changes the error to:
+
+Error 5: Partition table invalid or corrupt
+
+	Rebooting to 2.6.35.7-1, or 2.6.32.25-1 (the Arch LTS kernel) works just fine.
+So the problem is not a partition or partition table problem. The Arch Linux
+developer (Tobias Powalowski) has referred me here as the problem isn't a kernel
+problem, but something strange that is happening with dmraid.
+
+	The only guess I have is that it is a dmraid/GeForce controller issue that is
+triggered when dmraid loads under certain circumstances.
+
+	This box has 2 dmraid arrays:
+
+[17:15 archangel:/home/david/bugs/aa] # dmraid -r
+/dev/sdd: nvidia, "nvidia_baaccaja", mirror, ok, 1465149166 sectors, data@ 0
+/dev/sda: nvidia, "nvidia_fdaacfde", mirror, ok, 976773166 sectors, data@ 0
+/dev/sdb: nvidia, "nvidia_baaccaja", mirror, ok, 1465149166 sectors, data@ 0
+/dev/sdc: nvidia, "nvidia_fdaacfde", mirror, ok, 976773166 sectors, data@ 0
+
+[17:15 archangel:/home/david/bugs/aa] # dmraid -s
+*** Active Set
+name   : nvidia_baaccaja
+size   : 1465149056
+stride : 128
+type   : mirror
+status : ok
+subsets: 0
+devs   : 2
+spares : 0
+*** Active Set
+name   : nvidia_fdaacfde
+size   : 976773120
+stride : 128
+type   : mirror
+status : ok
+subsets: 0
+devs   : 2
+spares : 0
+
+	All disks check out fine with smartctl, so it isn't a disk-hardware problem.
+The detailed information on the GeForce controller (lspci -vv) is:
+
+00:09.0 RAID bus controller: nVidia Corporation MCP78S [GeForce 8200] SATA
+Controller (RAID mode) (rev a2)
+        Subsystem: Micro-Star International Co., Ltd. Device 7374
+        Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr-
+Stepping- SERR+ FastB2B- DisINTx+
+        Status: Cap+ 66MHz+ UDF- FastB2B+ ParErr- DEVSEL=fast >TAbort- <TAbort-
+<MAbort- >SERR- <PERR- INTx-
+        Latency: 0 (750ns min, 250ns max)
+        Interrupt: pin A routed to IRQ 28
+        Region 0: I/O ports at b080 [size=8]
+        Region 1: I/O ports at b000 [size=4]
+        Region 2: I/O ports at ac00 [size=8]
+        Region 3: I/O ports at a880 [size=4]
+        Region 4: I/O ports at a800 [size=16]
+        Region 5: Memory at f9e76000 (32-bit, non-prefetchable) [size=8K]
+        Capabilities: [44] Power Management version 2
+                Flags: PMEClk- DSI- D1- D2- AuxCurrent=0mA
+PME(D0-,D1-,D2-,D3hot-,D3cold-)
+                Status: D0 NoSoftRst- PME-Enable- DSel=0 DScale=0 PME-
+        Capabilities: [8c] SATA HBA v1.0 InCfgSpace
+        Capabilities: [b0] MSI: Enable+ Count=1/8 Maskable- 64bit+
+                Address: 00000000fee0f00c  Data: 4191
+        Capabilities: [ec] HyperTransport: MSI Mapping Enable+ Fixed+
+        Kernel driver in use: ahci
+        Kernel modules: ahci
 
 
-> 
-> There are five patches in this series.
-> 
->  0001-mtd-fix-bdev-exclusive-open-bugs-in-block2mtd-add_de.patch
->  0002-btrfs-close_bdev_exclusive-should-use-the-same-flags.patch
->  0003-block-simplify-holder-symlink-handling.patch
->  0004-block-make-blkdev_get-put-handle-exclusive-access.patch
->  0005-block-reorganize-claim-release-implementation.patch
-> 
-> 0001-0002 are fixes regarding exclusive bdev opens.  0003 simplifies
-> holder/slave symlink handling.  0004 folds bdev claim/release into
-> blkdev_get/put().  0005 reorganizes implementation a bit.
-> 
-> Cleaning up claim/release handling enables implementation of in-kernel
-> disk event polling which be posted soon.  Although this patchset
-> touches various files including drivers and filesystems, the changes
-> there are mostly trivial and I think it would be best to route these
-> through the block tree.
-> 
-> This patchset is on top of 2.6.37-rc1 and available in the following
-> git tree.
-> 
->  git://git.kernel.org/pub/scm/linux/kernel/git/tj/misc.git
-> cleanup-bd_claim
-> 
-> This patchset reduces about 400 lines of code.
-> 
-> Thanks.
-> 
->  block/ioctl.c                   |    5 
->  drivers/block/drbd/drbd_int.h   |    2 
->  drivers/block/drbd/drbd_main.c  |    7 
->  drivers/block/drbd/drbd_nl.c    |  103 ++-----
->  drivers/block/pktcdvd.c         |   22 -
->  drivers/char/raw.c              |   14 
->  drivers/md/dm-table.c           |   20 -
->  drivers/md/md.c                 |   16 -
->  drivers/mtd/devices/block2mtd.c |   10 
->  drivers/s390/block/dasd_genhd.c |    2 
->  fs/block_dev.c                  |  576
-> +++++++++-------------------------------
-> fs/btrfs/volumes.c              |   14
-> fs/ext3/super.c                 |   12
-> fs/ext4/super.c                 |   12
-> fs/gfs2/ops_fstype.c            |    4
-> fs/jfs/jfs_logmgr.c             |   17 -
-> fs/logfs/dev_bdev.c             |    4
-> fs/nilfs2/super.c               |    4
-> fs/ocfs2/cluster/heartbeat.c    |    2
-> fs/partitions/check.c           |    2
-> fs/reiserfs/journal.c           |   17 -
-> fs/super.c                      |   14
-> fs/xfs/linux-2.6/xfs_super.c    |    2
-> include/linux/fs.h              |   22 -
-> kernel/power/swap.c             |    5
-> mm/swapfile.c                   |    7 26 files changed, 260
-> insertions(+), 655 deletions(-)
-> 
-> --
-> tejun
+    Basically, I'm stumped here. Nothing has changed with this box in over a
+year (same grub menu.lst, same hardware), the only oddity is that in 4 of the
+last 6 kernels or so have failed to boot with this weird grub error, that has
+nothing to do with grub (because it boots all other kernels fine), but is
+something that results from dmraid and the way it gets initialized (which I'm
+clueless about).
 
+    Let me know what you think and let me know what data or testing you want me
+to do. I'll be happy to do it. I last filed this bug with Arch against 2.6.35-1
+and the problem was never fixed, but (solved) by upgrading to the (next -
+testing kernel), so the actual problem was never found. The url to the closed
+report is:
+
+https://bugs.archlinux.org/task/20918?
+
+    Thanks for any ideas or help you can give.
+
+-- 
+David C. Rankin, J.D.,P.E.
+Rankin Law Firm, PLLC
+510 Ochiltree Street
+Nacogdoches, Texas 75961
+Telephone: (936) 715-9333
+Facsimile: (936) 715-9339
+www.rankinlawfirm.com
