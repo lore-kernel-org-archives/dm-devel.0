@@ -1,17 +1,21 @@
-From: Mike Christie <mchristi@redhat.com>
-Subject: Re: dm mpath: delay retry activate_path on SCSI_DH_RETRY
-Date: Tue, 02 Nov 2010 16:02:53 -0500
-Message-ID: <4CD07C7D.2090509@redhat.com>
-References: <1241493497.8721.60.camel@chandra-ubuntu>
-	<1242357018.15931.14.camel@chandra-ubuntu>
-	<1244580864.11385.4.camel@chandra-ubuntu>
-	<20101102193217.GA23680@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: cmwq and dm-crypt devices? (was: Re: md: dm-crypt: Add
+ option to re-use a new global work-queue.)
+Date: Tue, 2 Nov 2010 18:02:07 -0400
+Message-ID: <20101102220207.GD23680@redhat.com>
+References: <1271958538-11193-1-git-send-email-san@google.com>
+	<4BD08F78.4000701@redhat.com>
+	<q2q236ccac1004221108y276b7e27x2a30e8a1eef77b03@mail.gmail.com>
+	<4BD099DB.2020108@redhat.com>
+	<s2p236ccac1004221242z4b0a8f68pbf7887e741a56af1@mail.gmail.com>
+	<x2h236ccac1004271358o90a80b6bi1b4099865abc81e8@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20101102193217.GA23680@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <x2h236ccac1004271358o90a80b6bi1b4099865abc81e8@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,47 +25,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Nikanth Karthikesan <knikanth@suse.de>, device-mapper development <dm-devel@redhat.com>, sekharan@linux.vnet.ibm.com
+To: San Mehat <san@google.com>
+Cc: Christophe Saout <christophe@saout.de>, Brian Swetland <swetland@google.com>, device-mapper development <dm-devel@redhat.com>, andi@firstfloor.org, tj@kernel.org, Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/02/2010 02:32 PM, Mike Snitzer wrote:
-> On Tue, Jun 09 2009 at  4:54pm -0400,
-> Chandra Seetharaman<sekharan@us.ibm.com>  wrote:
->
->> No functional change.
->>
->> Repost with changes made to apply cleanly on top of the patch
->> (http://marc.info/?l=dm-devel&m=124424663327710&w=2) that changed
->> dm-mpath.c
->>
->> -----------------
->> From: Chandra Seetharaman<sekharan@us.ibm.com>
->>
->> SCSI Device Handlers return SCSI_DH_IMM_RETRY if we could retry
->> immediately and SCSI_DH_RETRY in cases where it is better to retry
->> after some delay.
->>
->> Currently we retry immediately irrespective of SCSI_DH_IMM_RETRY and
->> SCSI_DH_RETRY. This patch adds a user configurable attribute
->> pg_init_delay_secs which specifies the number of seconds to delay
->> before retrying scsi_dh_activate, when it returned SCSI_DH_RETRY.
->>
->> Default for this attribute is set to 2 seconds.
->>
->> Signed-off-by: Nikanth Karthikesan<knikanth@suse.de>
->> Signed-off-by: Chandra Seetharaman<sekharan@us.ibm.com>
->
-> I'm auditing dm-devel's patchwork and would just like to confirm that
-> others would still like to see this go in?
->
-> Patch in question is captured here:
-> https://patchwork.kernel.org/patch/29088/
->
-> Mike C.,
-> An earlier version of this patch got your "Looks ok.":
-> https://patchwork.kernel.org/patch/23946/
-> Can I translate that to your "Acked-by:" if/when I rebase and repost?
->
+Hi,
 
-Yeah.
+On Tue, Apr 27 2010 at  4:58pm -0400,
+San Mehat <san@google.com> wrote:
+
+> *ping* Any word on my previous counter-proposal? Shall I prepare
+> another patch for consideration?
+
+The new concurrency managed workqueues (cmwq) that went in to 2.6.36
+_should_ hopefully obviate the need for the patch you proposed:
+https://patchwork.kernel.org/patch/94179/
+
+Some background on cmwq:
+Documentation/workqueue.txt
+http://lwn.net/Articles/403891/
+
+We on the DM team haven't explored the impact cmwq has on dm-crypt
+devices yet so more research and testing is needed here.  But it'd be
+nice to have a hypothesis on how much cmwq will help us solve the
+our dm-crypt goals "for free".
+
+[Cc'ing Tejun]
+
+Tejun,
+
+Your insight on how dm-crypt should be using cmwq to achieve the
+following conflicting goals would be appreciated:
+
+1) scale down the number of workqueue threads associated with N devices
+   (w/ 2 workqueue threads per device) so that the number of threads is
+   reasonable ("reasonable" is TBD but I'd imagine it doesn't buy us a
+   lot to have 2 single thread workqueues dedicated to each dm-crypt
+   device).
+
+   [seems dm-crypt will already get this "for free" using
+    create_singlethread_workqueue's WQ_UNBOUND?]
+
+2) scale up the number of workqueue threads used for a single dm-crypt
+   device so that a device can realize per-cpu concurrency (to address
+   Andi's scalability concerns: https://patchwork.kernel.org/patch/244031/)
+
+   [the desired locality is currently missing due to dm-crypt's current
+    use of WQ_UNBOUND; so it is clear the way the workqueues are created
+    will be important]
+
+Regards,
+Mike
