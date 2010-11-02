@@ -1,72 +1,61 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: dm mpath: delay retry activate_path on SCSI_DH_RETRY
-Date: Tue, 02 Nov 2010 12:56:57 -0700
-Message-ID: <1288727817.5228.6.camel@chandra-lucid.beaverton.ibm.com>
-References: <1241493497.8721.60.camel@chandra-ubuntu>
-	<1242357018.15931.14.camel@chandra-ubuntu>
-	<1244580864.11385.4.camel@chandra-ubuntu>
-	<20101102193217.GA23680@redhat.com>
-Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: block: QUEUE_FLAG_CLUSTER and no_cluster are NOT in sync
+Date: Tue, 2 Nov 2010 16:21:59 -0400
+Message-ID: <20101102202159.GC23680@redhat.com>
+References: <5e7598cf7714083ffd84.1283104752@malahal>
+ <20100829203149.GC24466@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20101102193217.GA23680@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Nikanth Karthikesan <knikanth@suse.de>, device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20100829203149.GC24466@us.ibm.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Malahal Naineni <malahal@us.ibm.com>
+Cc: linux-scsi@vger.kernel.org, jaxboe@fusionio.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Yes, I would like to see this go in.
+Malahal,
 
-Thanks for cleaning it up.
+This patch should go through the scsi tree.  Please update the patch (so
+it includes the patch header) and repost to linux-scsi.
 
-chandra
-On Tue, 2010-11-02 at 15:32 -0400, Mike Snitzer wrote:
-> On Tue, Jun 09 2009 at  4:54pm -0400,
-> Chandra Seetharaman <sekharan@us.ibm.com> wrote:
+Thanks,
+Mike
+
+On Sun, Aug 29 2010 at  4:31pm -0400,
+Malahal Naineni <malahal@us.ibm.com> wrote:
+
+> Here is the missing header:
 > 
-> > No functional change.
-> > 
-> > Repost with changes made to apply cleanly on top of the patch
-> > (http://marc.info/?l=dm-devel&m=124424663327710&w=2) that changed
-> > dm-mpath.c
-> > 
-> > -----------------
-> > From: Chandra Seetharaman <sekharan@us.ibm.com>
-> > 
-> > SCSI Device Handlers return SCSI_DH_IMM_RETRY if we could retry
-> > immediately and SCSI_DH_RETRY in cases where it is better to retry
-> > after some delay.
-> > 
-> > Currently we retry immediately irrespective of SCSI_DH_IMM_RETRY and
-> > SCSI_DH_RETRY. This patch adds a user configurable attribute
-> > pg_init_delay_secs which specifies the number of seconds to delay
-> > before retrying scsi_dh_activate, when it returned SCSI_DH_RETRY.
-> > 
-> > Default for this attribute is set to 2 seconds.
-> > 
-> > Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
-> > Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+> no_cluster is used by device mapper (may be others) resulting in
+> multipath devices setting QUEUE_FLAG_CLUSTER flag even though the
+> underlying devices (e.g. open iscsi virtual adapter) don't support it.
 > 
-> I'm auditing dm-devel's patchwork and would just like to confirm that
-> others would still like to see this go in?
+> Signed-off-by: Malahal Naineni (malahal@us.ibm.com)
 > 
-> Patch in question is captured here:
-> https://patchwork.kernel.org/patch/29088/
+> Malahal Naineni [malahal@us.ibm.com] wrote:
+> > diff -r 8305d08f6ecf -r 5e7598cf7714 drivers/scsi/scsi_lib.c
+> > --- a/drivers/scsi/scsi_lib.c	Wed Aug 25 13:44:33 2010 -0700
+> > +++ b/drivers/scsi/scsi_lib.c	Wed Aug 25 13:44:33 2010 -0700
+> > @@ -1633,8 +1633,10 @@ struct request_queue *__scsi_alloc_queue
+> >  	blk_queue_max_segment_size(q, dma_get_max_seg_size(dev));
+> > 
+> >  	/* New queue, no concurrency on queue_flags */
+> > -	if (!shost->use_clustering)
+> > +	if (!shost->use_clustering) {
+> >  		queue_flag_clear_unlocked(QUEUE_FLAG_CLUSTER, q);
+> > +		q->limits.no_cluster = 1;
+> > +	}
+> > 
+> >  	/*
+> >  	 * set a reasonable default alignment on word boundaries: the
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
 > 
-> Mike C.,
-> An earlier version of this patch got your "Looks ok.":
-> https://patchwork.kernel.org/patch/23946/
-> Can I translate that to your "Acked-by:" if/when I rebase and repost?
-> 
-> Please advise,
-> Mike
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
