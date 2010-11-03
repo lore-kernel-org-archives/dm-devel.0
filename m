@@ -1,24 +1,18 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: cmwq and dm-crypt devices?
-Date: Wed, 03 Nov 2010 17:22:07 +0100
-Message-ID: <4CD18C2F.2070408@redhat.com>
-References: <q2q236ccac1004221108y276b7e27x2a30e8a1eef77b03@mail.gmail.com>
-	<4BD099DB.2020108@redhat.com>
-	<s2p236ccac1004221242z4b0a8f68pbf7887e741a56af1@mail.gmail.com>
-	<x2h236ccac1004271358o90a80b6bi1b4099865abc81e8@mail.gmail.com>
-	<20101102220207.GD23680@redhat.com> <4CD12F6E.8040501@kernel.org>
-	<20101103115144.GA18935@basil.fritz.box>
-	<4CD14DF1.90601@redhat.com>
-	<20101103123347.GB18935@basil.fritz.box>
-	<20101103131835.GB5833@agk-dp.fab.redhat.com>
-	<20101103161327.GC18935@basil.fritz.box>
-	<4CD18B24.2010602@kernel.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm: remove extra locking when changing device
+	size
+Date: Wed, 3 Nov 2010 14:06:12 -0400
+Message-ID: <20101103180611.GA15355@redhat.com>
+References: <20101019220711.GA25169@redhat.com>
+	<20101029215001.GA4827@redhat.com> <4CCE69E4.9030406@ce.jp.nec.com>
+	<20101101131455.GA30753@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4CD18B24.2010602@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20101101131455.GA30753@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,25 +22,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Tejun Heo <tj@kernel.org>
-Cc: Christophe Saout <christophe@saout.de>, Mike Snitzer <snitzer@redhat.com>, Brian Swetland <swetland@google.com>, San Mehat <san@google.com>, device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/03/2010 05:17 PM, Tejun Heo wrote:
->> The old stacking relies on per device threads. Per device threads
->> cannot be combined with per CPU threads, because that would lead
->> to a thread explosion for large device counts.
-> 
-> Dunno the context here but creating WQ_NON_REENTRANT | WQ_MEM_RECLAIM
-> workqueue per device should achieve what you want.  It will be per-cpu
-> while reserving only one worker per workqueue, so there won't be
-> explosion of threads.
+DM no longer needlessly holds md->bdev->bd_inode->i_mutex when changing
+the size of a DM device.  This additional locking is unnecessary because
+i_size_write() is already protected by the existing critical section in
+dm_swap_table().  DM already has a reference on md->bdev so the
+associated bd_inode may be changed without lifetime concerns.
 
-Thanks for answer,
+A negative side-effect of having held md->bdev->bd_inode->i_mutex was
+that a concurrent DM device resize and flush (via fsync) would
+deadlock.  Dropping md->bdev->bd_inode->i_mutex eliminates this
+potential for deadlock.  The following reproducer no longer deadlocks:
+https://www.redhat.com/archives/dm-devel/2009-July/msg00284.html
 
-Yes, that is exactly what I was looking for but was not sure if possible.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+---
+ drivers/md/dm.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
 
-So switch to normal per device device threads (not singlethreaded as now)
-combined with the Andi's fixes and it should work for everyone?
-
-Milan
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7cb1352..1794dee 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1996,9 +1996,12 @@ static void __set_size(struct mapped_device *md, sector_t size)
+ {
+ 	set_capacity(md->disk, size);
+ 
+-	mutex_lock(&md->bdev->bd_inode->i_mutex);
++	/*
++	 * Only DM is allowed to change the size of a DM device.
++	 * i_size_write() is protected by the dm_swap_table() critical
++	 * section that uses md->suspend_lock.
++	 */
+ 	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
+-	mutex_unlock(&md->bdev->bd_inode->i_mutex);
+ }
+ 
+ /*
