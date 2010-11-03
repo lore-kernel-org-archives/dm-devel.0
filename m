@@ -1,47 +1,57 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 4/5] block: make blkdev_get/put() handle exclusive access
-Date: Wed, 3 Nov 2010 12:10:59 -0400
-Message-ID: <20101103161059.GA13621@infradead.org>
-References: <1288628129-12811-1-git-send-email-tj@kernel.org>
- <1288628129-12811-5-git-send-email-tj@kernel.org>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: Re: cmwq and dm-crypt devices?
+Date: Wed, 3 Nov 2010 17:13:27 +0100
+Message-ID: <20101103161327.GC18935@basil.fritz.box>
+References: <q2q236ccac1004221108y276b7e27x2a30e8a1eef77b03@mail.gmail.com>
+	<4BD099DB.2020108@redhat.com>
+	<s2p236ccac1004221242z4b0a8f68pbf7887e741a56af1@mail.gmail.com>
+	<x2h236ccac1004271358o90a80b6bi1b4099865abc81e8@mail.gmail.com>
+	<20101102220207.GD23680@redhat.com> <4CD12F6E.8040501@kernel.org>
+	<20101103115144.GA18935@basil.fritz.box>
+	<4CD14DF1.90601@redhat.com>
+	<20101103123347.GB18935@basil.fritz.box>
+	<20101103131835.GB5833@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <reiserfs-devel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1288628129-12811-5-git-send-email-tj@kernel.org>
-Sender: reiserfs-devel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: axboe@kernel.dk, hch@infradead.org, linux-kernel@vger.kernel.org, petero2@telia.com, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, jack@suse.cz, akpm@linux-foundation.org, adilger.kernel@dilger.ca, tytso@mit.edu, mfasheh@suse.com, joel.becker@oracle.com, aelder@sgi.com, dm-devel@redhat.com, drbd-dev@lists.linbit.com, neilb@suse.de, leochen@broadcom.com, sbranden@broadcom.com, chris.mason@oracle.com, swhiteho@redhat.com, shaggy@linux.vnet.ibm.com, joern@logfs.org, konishi.ryusuke@lab.ntt.co.jp, reiserfs-devel@vger.kernel.org, viro@zeniv.linux.org.uk
+In-Reply-To: <20101103131835.GB5833@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Andi Kleen <andi@firstfloor.org>, Milan Broz <mbroz@redhat.com>, Christophe Saout <christophe@saout.de>, Mike Snitzer <snitzer@redhat.com>, Brian Swetland <swetla>
 List-Id: dm-devel.ids
 
-On Mon, Nov 01, 2010 at 05:15:28PM +0100, Tejun Heo wrote:
-> * blkdev_get() is extended to include exclusive access management.
->   @holder argument is added and, if is @FMODE_EXCL specified, it will
->   gain exclusive access atomically w.r.t. other exclusive accesses.
-> 
-> * blkdev_put() is similarly extended.  It now takes @mode argument and
->   if @FMODE_EXCL is set, it releases an exclusive access.  Also, when
->   the last exclusive claim is released, the holder/slave symlinks are
->   removed automatically.
+> Please fix this regression the patch causes then or give some
+> fundamental arguments why we can't satisfy the two requirements
+> simultaneously: I just don't understand why it is necessary to cause a
+> regression in stacking/low memory support in order to provide the
+> performance boost in the way you desire.  The two things ought to be
+> independent of each other.
 
-Could we get rid of FMODE_EXCL and just make a non-NULL holder field
-mean to open it exlusively (and pass a holder to the blkdev_put to
-release it)?
+The old stacking relies on per device threads. Per device threads
+cannot be combined with per CPU threads, because that would lead
+to a thread explosion for large device counts.
 
-> * bd_link_disk_holder() remains the same but bd_unlink_disk_holder()
->   is no longer necessary and removed.
+I thought I had handled stacking, but my implementation doesn't
+seem to fully work. Most likely it needs a fallback thread
+or using one of the available workqueues.
+ 
+> (And I remain sceptical about the suitability of the patch even with a
+> stack of just two or three layers as I don't see anything in the failed
+> tests that shows why similar failures couldn't in principle affect
 
-That's a rather asymetric interface.  What about having
-blkdev_get_stacked that require a gendisk as holder and set up the
-links underneath?
+Yes most likely the problem happens with any stacking > 0.
 
+-Andi
 
-> open_bdev_exclusive() and open_by_devnum() can use further cleanup -
-> rename to blkdev_get_by_path() and blkdev_get_by_devt() and drop
-> special features.  Well, let's leave them for another day.
-
-s/blkdev_get_by_devt/blkdev_get_by_dev/
-
-And yes, that rename is a good idea and should go in ASAP after this
-patch.
-
+-- 
+ak@linux.intel.com -- Speaking for myself only.
