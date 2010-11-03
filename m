@@ -1,15 +1,20 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: Re: Can't seem to set features=1 queue_if_no_path
-Date: Tue, 2 Nov 2010 21:10:58 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4F508E906@cosmail01.lsi.com>
-References: <201011021624.04519.npf-mlists@eurotux.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: cmwq and dm-crypt devices?
+Date: Wed, 03 Nov 2010 10:46:22 +0100
+Message-ID: <4CD12F6E.8040501@kernel.org>
+References: <1271958538-11193-1-git-send-email-san@google.com>
+	<4BD08F78.4000701@redhat.com>
+	<q2q236ccac1004221108y276b7e27x2a30e8a1eef77b03@mail.gmail.com>
+	<4BD099DB.2020108@redhat.com>
+	<s2p236ccac1004221242z4b0a8f68pbf7887e741a56af1@mail.gmail.com>
+	<x2h236ccac1004271358o90a80b6bi1b4099865abc81e8@mail.gmail.com>
+	<20101102220207.GD23680@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <201011021624.04519.npf-mlists@eurotux.com>
-Content-Language: en-US
+In-Reply-To: <20101102220207.GD23680@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,87 +24,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christophe Saout <christophe@saout.de>, Brian Swetland <swetland@google.com>, San Mehat <san@google.com>, device-mapper development <dm-devel@redhat.com>, andi@firstfloor.org, Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-I wonder if  it is picking the values from internal table..  Try passing the vendor and product ids as below..
-device {
-        vendor                  "IBM"
-        product                 "1814"
-       ..
-If this does not work then add  "verbosity       5" in default section..  This might produce some useful information..
+Hello, Mike.
 
-________________________________________
-From: dm-devel-bounces@redhat.com [dm-devel-bounces@redhat.com] On Behalf Of Nuno Fernandes [npf-mlists@eurotux.com]
-Sent: Tuesday, November 02, 2010 11:24 AM
-To: device-mapper development
-Subject: [dm-devel] Can't seem to set features=1 queue_if_no_path
+On 11/02/2010 11:02 PM, Mike Snitzer wrote:
+> 1) scale down the number of workqueue threads associated with N devices
+>    (w/ 2 workqueue threads per device) so that the number of threads is
+>    reasonable ("reasonable" is TBD but I'd imagine it doesn't buy us a
+>    lot to have 2 single thread workqueues dedicated to each dm-crypt
+>    device).
+> 
+>    [seems dm-crypt will already get this "for free" using
+>     create_singlethread_workqueue's WQ_UNBOUND?]
 
-Hi,
+Workqueues no longer need dedicated worker threads for usual cases.
+Dedicated threads are only necessary to guarantee forward progress
+under memory pressure.  So, unless dm crypts are stacked, there only
+needs to be one rescuer.  If dm crypts are stacked, you would need
+single workqueue w/ WQ_MEM_RECLAIM set at each level.  If figuring
+that out is too cumbersome, it might make sense to use one per
+instance tho.
 
-I have the following multipath.conf
+Also, unless you need strict execution ordering of queued works,
+there's no reason to use alloc_ordered_workqueue().  It probably is a
+better idea to use non-reentrant workqueue.  I'm not quite sure
+whether using unbound would be better or not tho.
 
-[root@blade01 ~]# cat /etc/multipath.conf
-defaults {
-        user_friendly_names yes
-}
-blacklist {
-        devnode "^sda$"
-}
-device {
-        vendor                  "*"
-        product                 "*"
-        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-        prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
-        hardware_handler        "1 rdac"
-        features                "1 queue_if_no_path"
-        path_grouping_policy    group_by_prio
-        failback                immediate
-        no_path_retry           queue
-        rr_min_io               1000
-        path_checker            rdac
-}
-multipaths {
-        multipath {
-                wwid                    360080e5000183dfe000003754ccffae5
-                alias                   red
-        }
-        multipath {
-                wwid                    360080e5000183c88000003734ccffa68
-                alias                   blue
-        }
-}
+> 2) scale up the number of workqueue threads used for a single dm-crypt
+>    device so that a device can realize per-cpu concurrency (to address
+>    Andi's scalability concerns: https://patchwork.kernel.org/patch/244031/)
+> 
+>    [the desired locality is currently missing due to dm-crypt's current
+>     use of WQ_UNBOUND; so it is clear the way the workqueues are created
+>     will be important]
 
-I have both "no_path_retry           queue" and 'features                "1
-queue_if_no_path"'.
+I don't know enough about dm-crypt workload to tell whether per-cpu
+affinity would be better or not, but it's really a simple matter of
+adding or omitting WQ_UNBOUND, so playing with it is very easy.  I
+think the flags to use would be WQ_MEM_RECLAIM | WQ_NON_REENTRANT |
+WQ_CPU_INTENSIVE (| WQ_UNBOUND).
 
-Nevertheless, it doens't get applied:
+I wish I could be more helpful but I would need a bit more details.
+If you have some design on mind, please let me know.
 
-[root@blade01 ~]# multipath -ll
-blue (360080e5000183c88000003734ccffa68) dm-1 IBM,1814      FAStT
-[size=100G][features=0][hwhandler=1 rdac][rw]
-\_ round-robin 0 [prio=200][active]
- \_ 2:0:1:2 sde 8:64  [active][ready]
- \_ 1:0:1:2 sdi 8:128 [active][ready]
-\_ round-robin 0 [prio=0][enabled]
- \_ 2:0:0:2 sdc 8:32  [active][ghost]
- \_ 1:0:0:2 sdg 8:96  [active][ghost]
-red (360080e5000183dfe000003754ccffae5) dm-0 IBM,1814      FAStT
-[size=100G][features=0][hwhandler=1 rdac][rw]
-\_ round-robin 0 [prio=200][active]
- \_ 2:0:0:1 sdb 8:16  [active][ready]
- \_ 1:0:0:1 sdf 8:80  [active][ready]
-\_ round-robin 0 [prio=0][enabled]
- \_ 2:0:1:1 sdd 8:48  [active][ghost]
- \_ 1:0:1:1 sdh 8:112 [active][ghost]
+Thanks.
 
-Using kernel 2.6.18-194.17.4.el5xen 64 bits from centos.
-
-Any ideas?
-Thanks,
-Nuno Fernandes
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+tejun
