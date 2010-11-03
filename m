@@ -1,56 +1,49 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: kernel update and dmraid causing grub errors
-Date: Thu, 04 Nov 2010 13:32:32 +0100
-Message-ID: <1288873952.26244.39.camel@o>
-References: <4CCF3EC4.1020708@suddenlinkmail.com>
-	<1288785893.25565.42.camel@o>  <4CD1E8BC.4060806@suddenlinkmail.com>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH 4/5] block: make blkdev_get/put() handle exclusive
+ access
+Date: Wed, 3 Nov 2010 16:06:58 +0100
+Message-ID: <20101103150658.GA5627@quack.suse.cz>
+References: <1288628129-12811-1-git-send-email-tj@kernel.org>
+ <1288628129-12811-5-git-send-email-tj@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4CD1E8BC.4060806@suddenlinkmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1288628129-12811-5-git-send-email-tj@kernel.org>
+Sender: reiserfs-devel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: axboe@kernel.dk, hch@infradead.org, linux-kernel@vger.kernel.org, petero2@telia.com, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, jack@suse.cz, akpm@linux-foundation.org, adilger.kernel@dilger.ca, tytso@mit.edu, mfasheh@suse.com, joel.becker@oracle.com, aelder@sgi.com, dm-devel@redhat.com, drbd-dev@lists.linbit.com, neilb@suse.de, leochen@broadcom.com, sbranden@broadcom.com, chris.mason@oracle.com, swhiteho@redhat.com, shaggy@linux.vnet.ibm.com, joern@logfs.org, konishi.ryusuke@lab.ntt.co.jp, reiserfs-devel@vger.kernel.org, viro@zeniv.linux.org.uk
 List-Id: dm-devel.ids
 
-On Wed, 2010-11-03 at 17:57 -0500, David C. Rankin wrote:
-> On 11/03/2010 07:04 AM, Heinz Mauelshagen wrote:
-> > - host protected area changes going together with the kernel changes
-> >   (eg. the "Error 24: Attempt to access block outside partition");
-> >   try the libata.ignore_hpa kernel paramaters described
-> >   in the kernel source Documentation/kernel-parameters.txt
-> >   to test for this one
+On Mon 01-11-10 17:15:28, Tejun Heo wrote:
+> Over time, block layer has accumulated a set of APIs dealing with bdev
+> open, close, claim and release.
 > 
-> Heinz,
+> * blkdev_get/put() are the primary open and close functions.
 > 
-> 	I have testing with both libata.ignore_hpa=0 (default) and libata.ignore_hpa=1
-> (ignore limits, using full disk), but there is no change. I still get grub Error
-> 24: (this is also with a newer 2.6.36-3 kernel). So I'm stumped again. If you
-> have any other ideas, please let me know. I'm happy to test on this end.
+> * bd_claim/release() deal with exclusive open.
+> 
+> * open/close_bdev_exclusive() are combination of open and claim and
+>   the other way around, respectively.
+> 
+> * bd_link/unlink_disk_holder() to create and remove holder/slave
+>   symlinks.
+> 
+> * open_by_devnum() wraps bdget() + blkdev_get().
+> 
+> The interface is a bit confusing and the decoupling of open and claim
+> makes it impossible to properly guarantee exclusive access as
+> in-kernel open + claim sequence can disturb the existing exclusive
+> open even before the block layer knows the current open if for another
+> exclusive access.  Reorganize the interface such that,
+...
+  The patch looks OK to me as far as ext3, ext4, and reiserfs are
+concerned. One thing I wondered about when I looked at it - does someone
+use the 'mode' argument of the blkdev_put() function (well, apart from the
+exclusive flag)? Because I've looked at a few random disk ->release()
+functions and none of them used it...
 
-I overlooked you said it's a grub error, which occurs before any kernel
-argument is being processed. Hmm, this could be a grub flaw then
-identifying the disk size wrong or getting an offset wrong to load data
-from. Did grub change with the kernel installed?
-
-Heinz
-
-> 
-> 	I have gone ahead and made the metadata available in case it will help. I have
-> also included the fdisk info as well:
-> 
->   http://www.3111skyline.com/dl/bugs/dmraid/dmraid.nvidia/
-> 
->   http://www.3111skyline.com/dl/bugs/dmraid/fdisk-l-info-20100817.txt
-> 
-> Thank you for your help.
-> 
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
