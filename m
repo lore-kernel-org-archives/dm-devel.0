@@ -1,18 +1,15 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: remove extra locking when changing device
-	size
-Date: Wed, 3 Nov 2010 14:06:12 -0400
-Message-ID: <20101103180611.GA15355@redhat.com>
-References: <20101019220711.GA25169@redhat.com>
-	<20101029215001.GA4827@redhat.com> <4CCE69E4.9030406@ce.jp.nec.com>
-	<20101101131455.GA30753@redhat.com>
+Subject: Re: Memory leak if failed to do RTPG.
+Date: Wed, 3 Nov 2010 16:53:46 -0400
+Message-ID: <20101103205346.GA26473@redhat.com>
+References: <1239228685-5658-1-git-send-email-konrad@virtualiron.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20101101131455.GA30753@redhat.com>
+In-Reply-To: <1239228685-5658-1-git-send-email-konrad@virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,43 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-DM no longer needlessly holds md->bdev->bd_inode->i_mutex when changing
-the size of a DM device.  This additional locking is unnecessary because
-i_size_write() is already protected by the existing critical section in
-dm_swap_table().  DM already has a reference on md->bdev so the
-associated bd_inode may be changed without lifetime concerns.
+This patch is still queued in dm-devel's patchwork and is still relevant
+to upstream's multipath-tools:
+https://patchwork.kernel.org/patch/17280/
 
-A negative side-effect of having held md->bdev->bd_inode->i_mutex was
-that a concurrent DM device resize and flush (via fsync) would
-deadlock.  Dropping md->bdev->bd_inode->i_mutex eliminates this
-potential for deadlock.  The following reproducer no longer deadlocks:
-https://www.redhat.com/archives/dm-devel/2009-July/msg00284.html
+On Wed, Apr 08 2009 at  6:11pm -0400,
+Konrad Rzeszutek <konrad@virtualiron.com> wrote:
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
----
- drivers/md/dm.c |    7 +++++--
- 1 files changed, 5 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 7cb1352..1794dee 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1996,9 +1996,12 @@ static void __set_size(struct mapped_device *md, sector_t size)
- {
- 	set_capacity(md->disk, size);
- 
--	mutex_lock(&md->bdev->bd_inode->i_mutex);
-+	/*
-+	 * Only DM is allowed to change the size of a DM device.
-+	 * i_size_write() is protected by the dm_swap_table() critical
-+	 * section that uses md->suspend_lock.
-+	 */
- 	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
--	mutex_unlock(&md->bdev->bd_inode->i_mutex);
- }
- 
- /*
+> We don't de-alloc the buf variable if we fail on the first
+> do_rtpg call.
+> ---
+>  libmultipath/prioritizers/alua_rtpg.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> 
+> diff --git a/libmultipath/prioritizers/alua_rtpg.c b/libmultipath/prioritizers/alua_rtpg.c
+> index 7151cdd..5a8a59f 100644
+> --- a/libmultipath/prioritizers/alua_rtpg.c
+> +++ b/libmultipath/prioritizers/alua_rtpg.c
+> @@ -263,7 +263,7 @@ get_asymmetric_access_state(int fd, unsigned int tpg)
+>  	}
+>  	rc = do_rtpg(fd, buf, buflen);
+>  	if (rc < 0)
+> -		return rc;
+> +		goto out;
+>  	scsi_buflen = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
+>  	if (buflen < (scsi_buflen + 4)) {
+>  		free(buf);
+> -- 
+> 1.5.4.1
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
