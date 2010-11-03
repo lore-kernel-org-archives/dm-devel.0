@@ -1,7 +1,7 @@
 From: "David C. Rankin" <drankinatty@suddenlinkmail.com>
 Subject: Re: kernel update and dmraid causing grub errors
-Date: Wed, 03 Nov 2010 17:19:07 -0500
-Message-ID: <4CD1DFDB.50907@suddenlinkmail.com>
+Date: Wed, 03 Nov 2010 17:57:00 -0500
+Message-ID: <4CD1E8BC.4060806@suddenlinkmail.com>
 References: <4CCF3EC4.1020708@suddenlinkmail.com> <1288785893.25565.42.camel@o>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,47 +22,27 @@ To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On 11/03/2010 07:04 AM, Heinz Mauelshagen wrote:
-> Hi David,
-> 
-> because you're able to access your config fine with some arch LTS
-> kernels, it doesn't make sense to analyze your metadata upfront and the
-> following reasons may cause the failures:
-> 
-> - initramfs issue not activating ATARAID mappings properly via dmraid
-> 
-> - drivers missing to access the mappings
-> 
 > - host protected area changes going together with the kernel changes
 >   (eg. the "Error 24: Attempt to access block outside partition");
 >   try the libata.ignore_hpa kernel paramaters described
 >   in the kernel source Documentation/kernel-parameters.txt
 >   to test for this one
-> 
-> FYI: in general dmraid doesn't rely on a particular controller, just
-> metadata signatures it discovers. You could attach the disks to some
-> other SATA controller and still access your RAID sets.
-> 
-> Regards,
-> Heinz
 
 Heinz,
 
-	Thank you for your reply. The LTS kernel is just there (long term support)
-kernel (2.6.32.25-2). I can boot the SuSE kernels fine, and the immediately
-prior Arch kernel just fine as well (2.6.35.7-1).
+	I have testing with both libata.ignore_hpa=0 (default) and libata.ignore_hpa=1
+(ignore limits, using full disk), but there is no change. I still get grub Error
+24: (this is also with a newer 2.6.36-3 kernel). So I'm stumped again. If you
+have any other ideas, please let me know. I'm happy to test on this end.
 
-	I will try the libata.ignore_hpa setting and let you know and I'll pass this
-info to the Arch devs to see if they can help as well.
+	I have gone ahead and made the metadata available in case it will help. I have
+also included the fdisk info as well:
 
-	This has really been a strange issue. It seems like every other kernel (1 out
-of every 2 new releases) just won't boot and stops at the very beginning with
-either grub Error 24: or Error 5: (Nothing has changed otherwise and simply
-booting another kernel works fine). I'll keep plugging away at trying to find an
-answer.
+  http://www.3111skyline.com/dl/bugs/dmraid/dmraid.nvidia/
 
-	If you can think of any other tests or helpful diagnostics, please let me know.
-Since this occurs at the very beginning of boot, there is no logging which makes
-this tough to figure out. (not to mention dmraid is just voodoo to me. ;-)
+  http://www.3111skyline.com/dl/bugs/dmraid/fdisk-l-info-20100817.txt
+
+Thank you for your help.
 
 -- 
 David C. Rankin, J.D.,P.E.
