@@ -1,94 +1,73 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 3/5] block: simplify holder symlink handling
-Date: Thu, 4 Nov 2010 11:06:58 -0400
-Message-ID: <20101104150657.GB32504@redhat.com>
-References: <1288628129-12811-1-git-send-email-tj@kernel.org>
-	<1288628129-12811-4-git-send-email-tj@kernel.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: scsi_dh_rdac: Changing the memory allocation flag from
+ GFP_KERNEL to GFP_NOIO
+Date: Thu, 4 Nov 2010 11:14:37 -0400
+Message-ID: <20101104151436.GA1026@redhat.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF4877BC7E8@cosmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1288628129-12811-4-git-send-email-tj@kernel.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF4877BC7E8@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
-Cc: jack@suse.cz, leochen@broadcom.com, heiko.carstens@de.ibm.com, adilger.kernel@dilger.ca, konishi.ryusuke@lab.ntt.co.jp, shaggy@linux.vnet.ibm.com, drbd-dev@lists.linbit.com, joel.becker@oracle.com, hch@infradead.org, aelder@sgi.com, mfasheh@suse.com, joern@logfs.org, reiserfs-devel@vger.kernel.org, Tejun Heo <tj@kernel.org>, viro@zeniv.linux.org.uk, swhiteho@redhat.com, chris.mason@oracle.com, axboe@kernel.dk, tytso@mit.edu, sbranden@broadcom.com, petero2@telia.com, linux-kernel@vger.kernel.org, schwidefsky@de.ibm.com, akpm@linux-foundation.org
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Chandra Seetharaman <chandra.seetharaman@us.ibm.com>, "michaelc@cs.wisc.edu" <michaelc@cs.wisc.edu>, Rob Evers <revers@redhat.com>, Babu.Moger@lsi.com
 List-Id: dm-devel.ids
 
-On Mon, Nov 01 2010 at 12:15pm -0400,
-Tejun Heo <tj@kernel.org> wrote:
+This patch appears to have gotten lost in the shuffle but still seems
+relevant.  I found it while auditing dm-devel's patchwork, patch is
+here: https://patchwork.kernel.org/patch/71073/
 
-> Code to manage symlinks in /sys/block/*/{holders|slaves} are overly
-> complex with multiple holder considerations, redundant extra
-> references to all involved kobjects, unused generic kobject holder
-> support and unnecessary mixup with bd_claim/release functionalities.
+On Tue, Jan 05 2010 at 12:20pm -0500,
+Moger, Babu <Babu.Moger@lsi.com> wrote:
+
+> This patch changes the memory allocation flag from GFP_KERNEL to GFP_NOIO which is more appropriate.
 > 
-> Strip it down to what's necessary (single gendisk holder) and make it
-> use a separate interface.  This is a step for cleaning up
-> bd_claim/release.  This patch makes dm-table slightly more complex but
-> it will be simplified again with further changes.
+> This was noticed by Mike Christie and Rob Evers.. 
+> Mike Christie wrote:
+> > Rob Evers wrote:
+> >> +
+> >> +static int queue_mode_select(struct scsi_device *sdev,
+> >> +                activate_complete fn, void *data)
+> >> +{
+> >> +    struct rdac_queue_data *qdata;
+> >> +    struct rdac_controller *ctlr;
+> >> +
+> >> +    qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
+> >> +    if (!qdata)
+> >> +        return SCSI_DH_RETRY;
+> >> +
+> >
+> > It looks like this is called in the main IO path. A failed IO could cause, the path to go down,
+> > then we would call this to active a new path. If the system needed to write out pages to the same
+> > disk that just had the failed path so it can allocate memory then GFP_KERNEL would be bad to use here.
+> > You would use a mempool and still use something like GFP_NOIO. If a mempool is not possible for some 
+> > reason, then you would want to still use GFP_NOIO.
 > 
-> Signed-off-by: Tejun Heo <tj@kernel.org>
-> Cc: Neil Brown <neilb@suse.de>
-> Cc: dm-devel@redhat.com
-
-Acked-by: Mike Snitzer <snitzer@redhat.com>
-
+> Using mempool would become bit more complex here because I cannot assume about the number of elements
+> during the allocation. I would use GFP_NOIO.
+> 
+> CC: Mike Christie <michaelc@cs.wisc.edu>
+> CC: Rob Evers <revers@redhat.com>
+> CC: Chandra Seetharaman <chandra.seetharaman@us.ibm.com>
+> Signed-off-by: Babu Moger <babu.moger@lsi.com>
+> 
 > ---
->  drivers/md/dm-table.c |   23 +++-
->  drivers/md/md.c       |    4 +-
->  fs/block_dev.c        |  322 +++++++------------------------------------------
->  include/linux/fs.h    |   16 ++-
->  4 files changed, 74 insertions(+), 291 deletions(-)
+> --- linux-2.6.33-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2010-01-05 11:49:22.000000000 -0400
+> +++ linux-2.6.33-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c	2010-01-05 11:53:13.000000000 -0400
+> @@ -624,7 +624,7 @@ static int queue_mode_select(struct scsi
+>  	struct rdac_queue_data *qdata;
+>  	struct rdac_controller *ctlr;
+>  
+> -	qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
+> +	qdata = kzalloc(sizeof(*qdata), GFP_NOIO);
+>  	if (!qdata)
+>  		return SCSI_DH_RETRY;
+>  
 > 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 90267f8..2c876ff 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -328,12 +328,22 @@ static int open_dev(struct dm_dev_internal *d, dev_t dev,
->  	bdev = open_by_devnum(dev, d->dm_dev.mode);
->  	if (IS_ERR(bdev))
->  		return PTR_ERR(bdev);
-> -	r = bd_claim_by_disk(bdev, _claim_ptr, dm_disk(md));
-> -	if (r)
-> +
-> +	r = bd_claim(bdev, _claim_ptr);
-> +	if (r) {
->  		blkdev_put(bdev, d->dm_dev.mode);
-> -	else
-> -		d->dm_dev.bdev = bdev;
-> -	return r;
-> +		return r;
-> +	}
-> +
-> +	r = bd_link_disk_holder(bdev, dm_disk(md));
-> +	if (r) {
-> +		bd_release(bdev);
-> +		blkdev_put(bdev, d->dm_dev.mode);
-> +		return r;
-> +	}
-> +
-> +	d->dm_dev.bdev = bdev;
-> +	return 0;
->  }
->  
->  /*
-> @@ -344,7 +354,8 @@ static void close_dev(struct dm_dev_internal *d, struct mapped_device *md)
->  	if (!d->dm_dev.bdev)
->  		return;
->  
-> -	bd_release_from_disk(d->dm_dev.bdev, dm_disk(md));
-> +	bd_unlink_disk_holder(d->dm_dev.bdev);
-> +	bd_release(d->dm_dev.bdev);
->  	blkdev_put(d->dm_dev.bdev, d->dm_dev.mode);
->  	d->dm_dev.bdev = NULL;
->  }
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
