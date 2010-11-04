@@ -1,22 +1,15 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: cmwq and dm-crypt devices?
-Date: Thu, 4 Nov 2010 10:55:25 +0100
-Message-ID: <20101104095525.GB32383@basil.fritz.box>
-References: <x2h236ccac1004271358o90a80b6bi1b4099865abc81e8@mail.gmail.com>
-	<20101102220207.GD23680@redhat.com> <4CD12F6E.8040501@kernel.org>
-	<20101103115144.GA18935@basil.fritz.box>
-	<4CD14DF1.90601@redhat.com>
-	<20101103123347.GB18935@basil.fritz.box>
-	<20101103131835.GB5833@agk-dp.fab.redhat.com>
-	<20101103161327.GC18935@basil.fritz.box>
-	<4CD18B24.2010602@kernel.org> <4CD18C2F.2070408@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: kernel update and dmraid causing grub errors
+Date: Thu, 04 Nov 2010 13:32:32 +0100
+Message-ID: <1288873952.26244.39.camel@o>
+References: <4CCF3EC4.1020708@suddenlinkmail.com>
+	<1288785893.25565.42.camel@o>  <4CD1E8BC.4060806@suddenlinkmail.com>
+Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4CD18C2F.2070408@redhat.com>
+In-Reply-To: <4CD1E8BC.4060806@suddenlinkmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,20 +19,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <mbroz@redhat.com>
-Cc: Christophe Saout <christophe@saout.de>, Mike Snitzer <snitzer@redhat.com>, Brian Swetland <swetland@google.com>, San Mehat <san@google.com>, device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, Tejun Heo <tj@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> Yes, that is exactly what I was looking for but was not sure if possible.
+On Wed, 2010-11-03 at 17:57 -0500, David C. Rankin wrote:
+> On 11/03/2010 07:04 AM, Heinz Mauelshagen wrote:
+> > - host protected area changes going together with the kernel changes
+> >   (eg. the "Error 24: Attempt to access block outside partition");
+> >   try the libata.ignore_hpa kernel paramaters described
+> >   in the kernel source Documentation/kernel-parameters.txt
+> >   to test for this one
 > 
-> So switch to normal per device device threads (not singlethreaded as now)
-> combined with the Andi's fixes and it should work for everyone?
+> Heinz,
+> 
+> 	I have testing with both libata.ignore_hpa=0 (default) and libata.ignore_hpa=1
+> (ignore limits, using full disk), but there is no change. I still get grub Error
+> 24: (this is also with a newer 2.6.36-3 kernel). So I'm stumped again. If you
+> have any other ideas, please let me know. I'm happy to test on this end.
 
-Sounds like it could handle this.
+I overlooked you said it's a grub error, which occurs before any kernel
+argument is being processed. Hmm, this could be a grub flaw then
+identifying the disk size wrong or getting an offset wrong to load data
+from. Did grub change with the kernel installed?
 
-You'll need to revert some of the hunks in my patch, I ripped out some
-of the per device work queue code. It should not be very hard.
+Heinz
 
--Andi
--- 
-ak@linux.intel.com -- Speaking for myself only.
+> 
+> 	I have gone ahead and made the metadata available in case it will help. I have
+> also included the fdisk info as well:
+> 
+>   http://www.3111skyline.com/dl/bugs/dmraid/dmraid.nvidia/
+> 
+>   http://www.3111skyline.com/dl/bugs/dmraid/fdisk-l-info-20100817.txt
+> 
+> Thank you for your help.
+> 
