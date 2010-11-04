@@ -1,49 +1,51 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 4/5] block: make blkdev_get/put() handle exclusive
- access
-Date: Wed, 3 Nov 2010 16:06:58 +0100
-Message-ID: <20101103150658.GA5627@quack.suse.cz>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 4/5] block: make blkdev_get/put() handle
+	exclusive access
+Date: Thu, 4 Nov 2010 11:04:00 -0400
+Message-ID: <20101104150400.GA32504@redhat.com>
 References: <1288628129-12811-1-git-send-email-tj@kernel.org>
- <1288628129-12811-5-git-send-email-tj@kernel.org>
+	<1288628129-12811-5-git-send-email-tj@kernel.org>
+	<20101103161059.GA13621@infradead.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <reiserfs-devel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1288628129-12811-5-git-send-email-tj@kernel.org>
-Sender: reiserfs-devel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: axboe@kernel.dk, hch@infradead.org, linux-kernel@vger.kernel.org, petero2@telia.com, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, jack@suse.cz, akpm@linux-foundation.org, adilger.kernel@dilger.ca, tytso@mit.edu, mfasheh@suse.com, joel.becker@oracle.com, aelder@sgi.com, dm-devel@redhat.com, drbd-dev@lists.linbit.com, neilb@suse.de, leochen@broadcom.com, sbranden@broadcom.com, chris.mason@oracle.com, swhiteho@redhat.com, shaggy@linux.vnet.ibm.com, joern@logfs.org, konishi.ryusuke@lab.ntt.co.jp, reiserfs-devel@vger.kernel.org, viro@zeniv.linux.org.uk
+In-Reply-To: <20101103161059.GA13621@infradead.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: jack@suse.cz, leochen@broadcom.com, heiko.carstens@de.ibm.com, adilger.kernel@dilger.ca, konishi.ryusuke@lab.ntt.co.jp, shaggy@linux.vnet.ibm.com, drbd-dev@lists.linbit.com, joel.becker@oracle.com, hch@infradead.org, aelder@sgi.com, mfasheh@suse.com, joern@logfs.org, reiserfs-devel@vger.kernel.org, schwidefsky@de.ibm.com, viro@zeniv.linux.org.uk, swhiteho@redhat.com, chris.mason@oracle.com, axboe@kernel.dk, tytso@mit.edu, sbranden@broadcom.com, petero2@telia.com, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>, akpm@linux-foundation.org
 List-Id: dm-devel.ids
 
-On Mon 01-11-10 17:15:28, Tejun Heo wrote:
-> Over time, block layer has accumulated a set of APIs dealing with bdev
-> open, close, claim and release.
-> 
-> * blkdev_get/put() are the primary open and close functions.
-> 
-> * bd_claim/release() deal with exclusive open.
-> 
-> * open/close_bdev_exclusive() are combination of open and claim and
->   the other way around, respectively.
-> 
-> * bd_link/unlink_disk_holder() to create and remove holder/slave
->   symlinks.
-> 
-> * open_by_devnum() wraps bdget() + blkdev_get().
-> 
-> The interface is a bit confusing and the decoupling of open and claim
-> makes it impossible to properly guarantee exclusive access as
-> in-kernel open + claim sequence can disturb the existing exclusive
-> open even before the block layer knows the current open if for another
-> exclusive access.  Reorganize the interface such that,
-...
-  The patch looks OK to me as far as ext3, ext4, and reiserfs are
-concerned. One thing I wondered about when I looked at it - does someone
-use the 'mode' argument of the blkdev_put() function (well, apart from the
-exclusive flag)? Because I've looked at a few random disk ->release()
-functions and none of them used it...
+On Wed, Nov 03 2010 at 12:10pm -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
-								Honza
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+> On Mon, Nov 01, 2010 at 05:15:28PM +0100, Tejun Heo wrote:
+> > * blkdev_get() is extended to include exclusive access management.
+> >   @holder argument is added and, if is @FMODE_EXCL specified, it will
+> >   gain exclusive access atomically w.r.t. other exclusive accesses.
+> > 
+> > * blkdev_put() is similarly extended.  It now takes @mode argument and
+> >   if @FMODE_EXCL is set, it releases an exclusive access.  Also, when
+> >   the last exclusive claim is released, the holder/slave symlinks are
+> >   removed automatically.
+> 
+> Could we get rid of FMODE_EXCL and just make a non-NULL holder field
+> mean to open it exlusively (and pass a holder to the blkdev_put to
+> release it)?
+
+I agree that the need for a FMODE_EXCL flag is awkward.  Christoph's
+proposed change should clean things up nicely.
+
+Other than that, for the DM bits:
+
+Acked-by: Mike Snitzer <snitzer@redhat.com>
