@@ -1,131 +1,174 @@
-From: "David C. Rankin" <drankinatty@suddenlinkmail.com>
-Subject: Re: kernel update and dmraid causing grub errors
-Date: Thu, 04 Nov 2010 11:17:31 -0500
-Message-ID: <4CD2DC9B.8010302@suddenlinkmail.com>
-References: <4CCF3EC4.1020708@suddenlinkmail.com>	<1288785893.25565.42.camel@o>
-	<4CD1E8BC.4060806@suddenlinkmail.com> <1288873952.26244.39.camel@o>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1288873952.26244.39.camel@o>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Joe Perches <joe@perches.com>
+Subject: [PATCH 00/49] Use vzalloc not vmalloc/kmemset
+Date: Thu,  4 Nov 2010 20:07:24 -0700
+Message-ID: <cover.1288925424.git.joe@perches.com>
+References: <alpine.DEB.2.00.1011031108260.11625@router.home>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <alpine.DEB.2.00.1011031108260.11625@router.home>
+Sender: owner-linux-mm@kvack.org
+To: Jiri Kosina <trivial@kernel.org>
+Cc: linux-ia64@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@linux-mips.org, kvm@vger.kernel.org, kvm-ppc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, cbe-oss-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, amd64-microcode@amd64.org, linux-crypto@vger.kernel.org, linux-atm-general@lists.sourceforge.net, netdev@vger.kernel.org, drbd-user@lists.linbit.com, dri-devel@lists.freedesktop.org, linux-input@vger.kernel.org, linux-rdma@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-media@vger.kernel.org, linux-mtd@lists.infradead.org, e1000-devel@lists.sourceforge.net, linux-scsi@vger.kernel.org, osst-users@lists.sourceforge.net, devel@driverdev.osuosl.org, xen-devel@lists.xen.org, virtualization@lists.osdl.org, linux-ext4@vger.kernel.org, reiserfs-devel@vger.kernel.org, xfs@oss.sgi.com, codalist@coda.cs.cmu.edu, linux-mm@kvac
 List-Id: dm-devel.ids
 
-On 11/04/2010 07:32 AM, Heinz Mauelshagen wrote:
-> I overlooked you said it's a grub error, which occurs before any kernel
-> argument is being processed. Hmm, this could be a grub flaw then
-> identifying the disk size wrong or getting an offset wrong to load data
-> from. Did grub change with the kernel installed?
-> 
+Converted vmalloc/memset and vmalloc_node/memset to
+vzalloc or vzalloc_node using a cocci script and some editing
 
-Hi Heinz,
+Reduces text a little bit.
 
-	No, grub is (grub-0.97-17) and it hasn't changed since April 25, 2010. So
-whatever is happening, isn't due to a grub change. Some of the Arch devs think
-it might be a kernel issue. Last night, I posted the issue to the kernel list at
-kernel.org and we will see what response we get back. The post to kernel.org was
-pretty much the complete history of the issue, so I'll include the additional
-information posted to the kernel list below for completeness:
+Compiled x86 only.
 
-Hardware:
+There are still vmalloc_32 with memset calls still around.
 
-  lspci -vv info
+Broken out to multiple patches to cc appropriate maintainers.
 
-    http://www.3111skyline.com/dl/bugs/dmraid/lspci-vv.txt
+Joe Perches (49):
+  arch/ia64: Use vzalloc
+  arch/mips: Use vzalloc
+  arch/powerpc: Use vzalloc
+  arch/s390: Use vzalloc
+  arch/x86: Use vzalloc
+  crypto: Use vzalloc
+  drivers/atm: Use vzalloc
+  drivers/block: Use vzalloc
+  drivers/char: Use vzalloc
+  drivers/gpu: Use vzalloc
+  drivers/hid: Use vzalloc
+  drivers/infiniband: Use vzalloc
+  drivers/isdn: Use vzalloc
+  drivers/md: Use vzalloc
+  drivers/media: Use vzalloc
+  drivers/mtd: Use vzalloc
+  drivers/net/cxgb3: Use vzalloc
+  drivers/net/cxgb4: Use vzalloc
+  drivers/net/e1000: Use vzalloc
+  drivers/net/e1000e: Use vzalloc
+  drivers/net/ehea: Use vzalloc
+  drivers/net/igb: Use vzalloc
+  drivers/net/igbvf: Use vzalloc
+  drivers/net/ixgb: Use vzalloc
+  drivers/net/ixgbe: Use vzalloc
+  drivers/net/ixgbevf: Use vzalloc
+  drivers/net/netxen: Use vzalloc
+  drivers/net/pch_gbe: Use vzalloc
+  drivers/net/qlcnic: Use vzalloc
+  drivers/net/sfc: Use vzalloc
+  drivers/net/vxge: Use vzalloc
+  drivers/net/bnx2.c: Use vzalloc
+  drivers/s390: Use vzalloc
+  drivers/scsi: Use vzalloc
+  drivers/staging: Use vzalloc
+  drivers/video: Use vzalloc
+  fs/ext4: Use vzalloc
+  fs/jffs2: Use vzalloc
+  fs/reiserfs: Use vzalloc
+  fs/udf: Use vzalloc
+  fs/xfs: Use vzalloc
+  include/linux/coda_linux.h: Use vzalloc
+  kernel: Use vzalloc
+  mm: Use vzalloc
+  net/core/pktgen.c: Use vzalloc
+  net/netfilter: Use vzalloc
+  net/rds: Use vzalloc
+  sound/oss/dev_table.c: Use vzalloc
+  virt/kvm/kvm_main.c: Use vzalloc
 
-  dmidecode info
-
-    http://www.3111skyline.com/dl/bugs/Archlinux/aa-dmidecode.txt
-
-  dmraid metadata and fdisk info
-
-    http://www.3111skyline.com/dl/bugs/dmraid/dmraid.nvidia/
-
-    http://www.3111skyline.com/dl/bugs/dmraid/fdisk-l-info-20100817.txt
-
-Thoughts from the Arch Devs:
-
-  post 1:
-
-    These error are semi-random, they probably depend on where the kernel and
-initramfs files are physically located in the file system.
-
-    Grub (and all other bootloaders for that matter) use BIOS calls to access
-files on the hard drive - they rely on the BIOS (and in your case, the jmicron
-dmraid BIOS) for file access. This access seems to fail for certain areas on
-your file system.
-
-  post 2:
-
-    Aah, it just hit me: the problem may in fact be fairly random in that it may
-depend on where the initramfs is stored.  So, if the BIOS is broken, you may be
-lucky to be able to boot under one kernel, and the next upgrade places things in
-a place on disk where the BIOS bug kicks in, and you're screwed.  So it has
-nothing to do with the kernel version, grub or dmraid in this case.  Do I
-understand this correctly?
-
-  post 3:
-
-    I guess there has been something changed in the kernel26 2.6.35.8 and above
-which doesn't work with your BIOS or your RAID. Either this is a bug in kernel26
-2.6.35.8 and newer or it is not a bug but a new feature or a change which
-doesn't work with your probably outdated BIOS.
-
-    I'd suggest asking kernel upstream by either filing a bug report at
-kernel.org or asking on their mailing list.
-
-    It definitely must have something to do with the kernel. Otherwise it
-wouldn't work again after a kernel downgrade.
-
-Further tests I've done:
-
-    Per the suggestions of the dm-devel list, I have tested with both
-libata.ignore_hpa=0 (default) and libata.ignore_hpa=1 (ignore limits, using full
-disk), but there is no change. I still get grub Error 24: (this is with the
-2.6.36-3 kernel)
-
-    I did another test starting with 2.6.35-7 (working), upgrade to 2.6.35-8
-(expect failure -- it did), then upgrade directly to 2.6.36-3 and (expect
-success if it was an initramfs location issue -- it failed too). Just to be
-sure, I re-made the initramfs a couple of times and tried booting with them -
-they all failed as well.
-
-    Then downgraded to 2.6.35-7 -> it works like a champ -- no matter what order
-it gets installed in.
-
-Just FYI, the BIOS is current for the board and information on both can be found at:
-
-
-http://www.msi.com/index.php?func=downloaddetail&type=bios&maincat_no=1&prod_no=1443
-
-direct download:
-
-  http://www.msi.com/index.php?func=downloadfile&dno=12299&type=bios
-
-    So, I'm stumped again. With your help, the help of the Arch developers, and
-the help of the guys at kernel.org, we should be able to isolate the issue and
-figure out where the problem is. If you have any other ideas, please let me know
-and I'll pass that information back to Arch and the kernel list. With all the
-smart people involved, I'll bet we get this thing sorted out. Thanks.
-
-
+ arch/ia64/kernel/perfmon.c                      |    3 +-
+ arch/mips/sibyte/common/sb_tbprof.c             |    3 +-
+ arch/powerpc/kvm/book3s.c                       |    6 +--
+ arch/powerpc/platforms/cell/spufs/lscsa_alloc.c |    3 +-
+ arch/s390/hypfs/hypfs_diag.c                    |    3 +-
+ arch/x86/kernel/microcode_amd.c                 |    3 +-
+ arch/x86/kvm/x86.c                              |    3 +-
+ arch/x86/mm/pageattr-test.c                     |    3 +-
+ crypto/deflate.c                                |    3 +-
+ crypto/zlib.c                                   |    3 +-
+ drivers/atm/idt77252.c                          |   11 ++++---
+ drivers/atm/lanai.c                             |    3 +-
+ drivers/block/drbd/drbd_bitmap.c                |    5 +--
+ drivers/char/agp/backend.c                      |    3 +-
+ drivers/char/mspec.c                            |    5 +--
+ drivers/gpu/drm/via/via_dmablit.c               |    4 +-
+ drivers/hid/hid-core.c                          |    3 +-
+ drivers/infiniband/hw/amso1100/c2_rnic.c        |    5 +--
+ drivers/infiniband/hw/ehca/ipz_pt_fn.c          |    5 +--
+ drivers/infiniband/hw/ipath/ipath_driver.c      |    3 +-
+ drivers/infiniband/hw/ipath/ipath_file_ops.c    |   11 ++-----
+ drivers/infiniband/hw/ipath/ipath_init_chip.c   |    5 +--
+ drivers/infiniband/hw/qib/qib_init.c            |    7 +---
+ drivers/infiniband/ulp/ipoib/ipoib_cm.c         |   10 ++----
+ drivers/infiniband/ulp/ipoib/ipoib_main.c       |    3 +-
+ drivers/isdn/i4l/isdn_common.c                  |    4 +-
+ drivers/isdn/mISDN/dsp_core.c                   |    3 +-
+ drivers/isdn/mISDN/l1oip_codec.c                |    6 +--
+ drivers/md/dm-log.c                             |    3 +-
+ drivers/md/dm-snap-persistent.c                 |    3 +-
+ drivers/md/dm-table.c                           |    4 +--
+ drivers/media/dvb/ngene/ngene-core.c            |    3 +-
+ drivers/media/video/mx3_camera.c                |    3 +-
+ drivers/media/video/pwc/pwc-if.c                |    3 +-
+ drivers/media/video/videobuf-dma-sg.c           |    3 +-
+ drivers/mtd/nand/nandsim.c                      |    3 +-
+ drivers/mtd/ubi/vtbl.c                          |    6 +--
+ drivers/net/bnx2.c                              |   10 +-----
+ drivers/net/cxgb3/cxgb3_offload.c               |    7 ++--
+ drivers/net/cxgb4/cxgb4_main.c                  |    7 ++--
+ drivers/net/e1000/e1000_main.c                  |    6 +--
+ drivers/net/e1000e/netdev.c                     |    6 +--
+ drivers/net/ehea/ehea_main.c                    |    4 +--
+ drivers/net/igb/igb_main.c                      |    6 +--
+ drivers/net/igbvf/netdev.c                      |    6 +--
+ drivers/net/ixgb/ixgb_main.c                    |    6 +--
+ drivers/net/ixgbe/ixgbe_main.c                  |   10 ++----
+ drivers/net/ixgbevf/ixgbevf_main.c              |    6 +--
+ drivers/net/netxen/netxen_nic_init.c            |    7 +---
+ drivers/net/pch_gbe/pch_gbe_main.c              |    6 +--
+ drivers/net/qlcnic/qlcnic_init.c                |    7 +---
+ drivers/net/sfc/filter.c                        |    3 +-
+ drivers/net/vxge/vxge-config.c                  |   37 +++++-----------------
+ drivers/s390/cio/blacklist.c                    |    3 +-
+ drivers/scsi/bfa/bfad.c                         |    3 +-
+ drivers/scsi/bfa/bfad_debugfs.c                 |    8 +----
+ drivers/scsi/cxgbi/libcxgbi.h                   |    9 ++----
+ drivers/scsi/osst.c                             |    3 +-
+ drivers/scsi/qla2xxx/qla_attr.c                 |    3 +-
+ drivers/scsi/qla2xxx/qla_bsg.c                  |    3 +-
+ drivers/scsi/scsi_debug.c                       |    7 +---
+ drivers/staging/comedi/drivers.c                |    4 +--
+ drivers/staging/rtl8192e/r8192E_core.c          |    4 +--
+ drivers/staging/udlfb/udlfb.c                   |    5 +--
+ drivers/staging/xgifb/XGI_main_26.c             |    3 +-
+ drivers/staging/zram/zram_drv.c                 |    3 +-
+ drivers/video/arcfb.c                           |    5 +--
+ drivers/video/broadsheetfb.c                    |    4 +--
+ drivers/video/hecubafb.c                        |    5 +--
+ drivers/video/metronomefb.c                     |    4 +--
+ drivers/video/xen-fbfront.c                     |    3 +-
+ fs/ext4/super.c                                 |    4 +--
+ fs/jffs2/build.c                                |    5 +--
+ fs/reiserfs/journal.c                           |    9 ++----
+ fs/reiserfs/resize.c                            |    4 +--
+ fs/udf/super.c                                  |    5 +--
+ fs/xfs/linux-2.6/kmem.h                         |    7 +----
+ include/linux/coda_linux.h                      |   26 ++++++++++------
+ kernel/profile.c                                |    6 +--
+ kernel/relay.c                                  |    4 +--
+ mm/memcontrol.c                                 |    5 +--
+ mm/page_cgroup.c                                |    3 +-
+ mm/percpu.c                                     |    8 +----
+ mm/swapfile.c                                   |    3 +-
+ net/core/pktgen.c                               |    3 +-
+ net/netfilter/x_tables.c                        |    5 +--
+ net/rds/ib_cm.c                                 |    6 +--
+ sound/oss/dev_table.c                           |    6 +--
+ virt/kvm/kvm_main.c                             |   13 ++------
+ 89 files changed, 167 insertions(+), 328 deletions(-)
 
 -- 
-David C. Rankin, J.D.,P.E.
-Rankin Law Firm, PLLC
-510 Ochiltree Street
-Nacogdoches, Texas 75961
-Telephone: (936) 715-9333
-Facsimile: (936) 715-9339
-www.rankinlawfirm.com
+1.7.3.1.g432b3.dirty
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Fight unfair telecom policy in Canada: sign http://dissolvethecrtc.ca/
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
