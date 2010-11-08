@@ -1,42 +1,63 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: [PATCH] DM-CRYPT: Scale to multiple CPUs v3 on 2.6.37-rc* ?
-Date: Mon, 8 Nov 2010 00:05:09 +0100
-Message-ID: <20101107230508.GB17592@basil.fritz.box>
-References: <AANLkTim6WTCChWGbTb-PUGd2AERGibeRtgan-WDznf2s@mail.gmail.com>
- <4CD6B7FA.3050005@redhat.com>
- <AANLkTikbsU+SGAaoq_oek=7tfDdjg+0wFoydhA+K9ZU+@mail.gmail.com>
- <AANLkTinna7BiGHogXnn1iEG6ccUAjFM3p3S3aHpv=h-E@mail.gmail.com>
- <20101107194547.GA12521@basil.fritz.box>
- <4CD71C8B.1050604@redhat.com>
+From: Lars Marowsky-Bree <lmb@novell.com>
+Subject: Re: RFC: multipath IO multiplex
+Date: Mon, 8 Nov 2010 12:50:28 +0100
+Message-ID: <20101108115028.GH16210@suse.de>
+References: <20101105183946.GG25992@suse.de> <20101106053203.7e4ef435@notabene>
+	<20101106115102.GF10171@agk-dp.fab.redhat.com>
+	<20101106165743.GE30809@suse.de>
+	<1289125849.2821.5.camel@Nokia-N900-42-11>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4CD71C8B.1050604@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: Andi Kleen <andi@firstfloor.org>, Matt <jackdachef@gmail.com>, Linux Kernel <linux-kernel@vger.kernel.org>, dm-devel@redhat.com, htd@fancy-poultry.org
+In-Reply-To: <1289125849.2821.5.camel@Nokia-N900-42-11>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Varoqui <christophe.varoqui@gmail.com>, device-mapper development <dm-devel@redhat.com>, Neil Brown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-On Sun, Nov 07, 2010 at 10:39:23PM +0100, Milan Broz wrote:
-> On 11/07/2010 08:45 PM, Andi Kleen wrote:
-> >> I read about barrier-problems and data getting to the partition when
-> >> using dm-crypt and several layers so I don't know if that could be
-> >> related
-> > 
-> > Barriers seem to be totally broken on dm-crypt currently.
-> 
-> Can you explain it?
+On 2010-11-07T11:30:49, Christophe Varoqui <christophe.varoqui@gmail.com> w=
+rote:
 
-e.g. the btrfs mailing list is full of corruption reports
-on dm-crypt and most of the symptoms point to broken barriers.
+> Wouldn't it practical to bypass mpio completely on submit your io to the =
+paths instead ?
 
-> Barriers/flush change should work, if it is broken, it is not only dm-crypt.
-> (dm-crypt simply relies on dm-core implementation, when barrier/flush
-> request come to dmcrypt, all previous IO must be already finished).
+Yes - and no.
 
-Possibly, at least it doesn't seem to work.
+Yes: I could do that, and send my IO down all paths via async IO. It was
+actually the first direction I looked into, however I abandoned it after
+a while (see below). And yes, it's the first thing everyone recommends
+;-)
 
--Andi
--- 
-ak@linux.intel.com -- Speaking for myself only.
+No: It would mean I'd have to query multipathd for every IO, to learn
+which devices currently are active and linked to the right storage. (The
+idea of hooking into udev myself or scanning partitions seems a bit of a
+non-starter.) Alternatively, I could probably try and monitor the
+mapping for changes, but then would have to parse that syntax. Not to
+mention I'd have to handle my own partitioning, LVM mapping, etc too.
+
+So, it seems somewhat inefficient and inelegant.
+
+I think handling this at the dm-multipath level is cleaner; similarly
+how we handle network bonding (which incidentally has a broadcast mode
+too), instead of requiring every application to go out and open N
+independent channels.
+
+
+Regards,
+    Lars
+
+-- =
+
+Architect Storage/HA, OPS Engineering, Novell, Inc.
+SUSE LINUX Products GmbH, GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+"Experience is the name everyone gives to their mistakes." -- Oscar Wilde
