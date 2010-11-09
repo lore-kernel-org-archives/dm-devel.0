@@ -1,34 +1,50 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 4/5] block: make blkdev_get/put() handle exclusive access
-Date: Tue, 9 Nov 2010 05:36:20 -0500
-Message-ID: <20101109103620.GA18355@infradead.org>
-References: <1288628129-12811-1-git-send-email-tj@kernel.org>
- <1288628129-12811-5-git-send-email-tj@kernel.org>
- <20101103161059.GA13621@infradead.org>
- <4CD9239E.2080209@kernel.org>
+From: "David C. Rankin" <drankinatty@suddenlinkmail.com>
+Subject: Re: kernel update and dmraid causing grub errors
+Date: Tue, 09 Nov 2010 11:55:38 -0600
+Message-ID: <4CD98B1A.3080401@suddenlinkmail.com>
+References: <4CCF3EC4.1020708@suddenlinkmail.com>	<1288785893.25565.42.camel@o>	<4CD1E8BC.4060806@suddenlinkmail.com>
+	<1288873952.26244.39.camel@o> <4CD2DC9B.8010302@suddenlinkmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <reiserfs-devel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4CD9239E.2080209@kernel.org>
-Sender: reiserfs-devel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk, linux-kernel@vger.kernel.org, petero2@telia.com, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, jack@suse.cz, akpm@linux-foundation.org, adilger.kernel@dilger.ca, tytso@mit.edu, mfasheh@suse.com, joel.becker@oracle.com, aelder@sgi.com, dm-devel@redhat.com, drbd-dev@lists.linbit.com, neilb@suse.de, leochen@broadcom.com, sbranden@broadcom.com, chris.mason@oracle.com, swhiteho@redhat.com, shaggy@linux.vnet.ibm.com, joern@logfs.org, konishi.ryusuke@lab.ntt.co.jp, reiserfs-devel@vger.kernel.org, viro@zeniv.linux.org.uk
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4CD2DC9B.8010302@suddenlinkmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 09, 2010 at 11:34:06AM +0100, Tejun Heo wrote:
-> So, after the above points, I decided to keep @mode.  It is a bit
-> awkward but the other way didn't seem too hip either.  Any better
-> ideas?
+On 11/04/2010 11:17 AM, David C. Rankin wrote:
+> Hi Heinz,
+> 
+> 	No, grub is (grub-0.97-17) and it hasn't changed since April 25, 2010. So
+> whatever is happening, isn't due to a grub change. Some of the Arch devs think
+> it might be a kernel issue. Last night, I posted the issue to the kernel list at
+> kernel.org and we will see what response we get back. The post to kernel.org was
+> pretty much the complete history of the issue, so I'll include the additional
+> information posted to the kernel list below for completeness:
 
-Let's keep it for now and revisit it later.
+Heinz,
 
-> That will make the number of functions multiplied by two -
-> blkdev_get_by_path_stacked() and blkdev_get_by_dev_stacked().  The
-> symlinking for stacked drivers is an oddball feature which is and will
-> be only used by md and dm.  So, I think it's better to keep it
-> separate and oddball.
+	Just as a follow-up, I didn't get a response from the kernel.org list on the
+issue. In fact the only dm related post on the list in the past week was the CFQ
+dm-crypt post that I also see was cc'ed here. I'll try the grub list and see if
+they have any ideas. If I get a response, I'll let you know. If you have any
+epiphanies on the issue, please let me know. Thanks.
 
-Oh well.  I still don't like it, but let keeps it simple to make
-progress for now.
-
+-- 
+David C. Rankin, J.D.,P.E.
+Rankin Law Firm, PLLC
+510 Ochiltree Street
+Nacogdoches, Texas 75961
+Telephone: (936) 715-9333
+Facsimile: (936) 715-9339
+www.rankinlawfirm.com
