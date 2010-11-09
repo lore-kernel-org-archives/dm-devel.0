@@ -1,91 +1,76 @@
-From: Chris Mason <chris.mason@oracle.com>
-Subject: Re: DM-CRYPT: Scale to multiple CPUs v3 on 2.6.37-rc* ?
-Date: Mon, 08 Nov 2010 12:59:45 -0500
-Message-ID: <1289238930-sup-9765@think>
-References: <AANLkTim6WTCChWGbTb-PUGd2AERGibeRtgan-WDznf2s@mail.gmail.com> <4CD6B7FA.3050005@redhat.com> <AANLkTikbsU+SGAaoq_oek=7tfDdjg+0wFoydhA+K9ZU+@mail.gmail.com> <AANLkTinna7BiGHogXnn1iEG6ccUAjFM3p3S3aHpv=h-E@mail.gmail.com> <20101107194547.GA12521@basil.fritz.box> <4CD71C8B.1050604@redhat.com> <20101107230508.GB17592@basil.fritz.box> <20101108145809.GD29714@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <20101108145809.GD29714@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Milan Broz <mbroz@redhat.com>, Matt <jackdachef@gmail.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>
+From: Malahal Naineni <malahal@us.ibm.com>
+Subject: [PATCH] [RFC] multipath: multipath command pathgroup
+	compare problem
+Date: Tue, 09 Nov 2010 00:30:36 -0800
+Message-ID: <53a3cae5dc7a1d1c3e37.1289291436@malahal>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Excerpts from Mike Snitzer's message of 2010-11-08 09:58:09 -0500:
-> On Sun, Nov 07 2010 at  6:05pm -0500,
-> Andi Kleen <andi@firstfloor.org> wrote:
-> 
-> > On Sun, Nov 07, 2010 at 10:39:23PM +0100, Milan Broz wrote:
-> > > On 11/07/2010 08:45 PM, Andi Kleen wrote:
-> > > >> I read about barrier-problems and data getting to the partition when
-> > > >> using dm-crypt and several layers so I don't know if that could be
-> > > >> related
-> > > > 
-> > > > Barriers seem to be totally broken on dm-crypt currently.
-> > > 
-> > > Can you explain it?
-> > 
-> > e.g. the btrfs mailing list is full of corruption reports
-> > on dm-crypt and most of the symptoms point to broken barriers.
-> 
-> [cc'ing linux-btrfs, hopefully in the future dm-devel will get cc'd when
-> concerns about DM come up on linux-btrfs (or other lists)]
-> 
-> I spoke with Josef Bacik and these corruption reports are apparently
-> against older kernels (e.g. <= 2.6.33).  I say <= 2.6.33 because:
+I have 2 pathgroups to a LUN and each pathgroup has 2 paths. Say P1,P2
+belong to PG1 and P3,P4 belong to PG2.
 
-We've consistently seen reports about corruptions on power hits with
-dm-crypt.  The logs didn't have any messages about barriers failing, but
-the corruptions were still there.  The most likely cause is that
-barriers just aren't getting through somehow.
+I deleted P2 from the system and added it back. I also stopped
+multipathd on purpose. Now, running multipath command is not adding the
+new path P3 back to the table.
 
-> 
-> https://btrfs.wiki.kernel.org/index.php/Gotchas states:
-> "btrfs volumes on top of dm-crypt block devices (and possibly LVM)
-> require write-caching to be turned off on the underlying HDD. Failing to
-> do so, in the event of a power failure, may result in corruption not yet
-> handled by btrfs code. (2.6.33)"
-> 
-> But Josef was not aware of any reports with kernels newer than 2.6.32
-> (F12).
-> 
-> Josef also noted that until last week btrfs wouldn't retry another
-> mirror in the face of some corruption, the fix is here:
-> http://git.kernel.org/?p=linux/kernel/git/mason/btrfs-unstable.git;a=commit;h=cb44921a09221
-> 
-> This obviously doesn't fix any source of corruption but it makes btrfs
-> more resilient when it encounters the corruption.
+After some debugging, I found that both the pathgroups in mpp->pg
+compute their ids to be same and is 20020. The actual loaded table's
+pathgroup ids are computed as 61E860 and 20020. The pgcmp() returns 0
+here as the same pathgroup PG2 from the loaded table (cmpp) is compared
+against PG1 and PG2 of intended table (mpp)
 
-Right.
+Added a found field to avoid using the same pathgroup multiple times.
 
-> 
-> > > Barriers/flush change should work, if it is broken, it is not only dm-crypt.
-> > > (dm-crypt simply relies on dm-core implementation, when barrier/flush
-> > > request come to dmcrypt, all previous IO must be already finished).
-> > 
-> > Possibly, at least it doesn't seem to work.
-> 
-> Can you please be more specific?  What test(s)?  What kernel(s)?
-> 
-> Any pointers to previous (and preferably: recent) reports would be
-> appreciated.
-> 
-> The DM barrier code has seen considerable change recently (via flush+fua
-> changes in 2.6.37).  Those changes have been tested quite a bit
-> (including ext4 consistency after a crash).
-> 
-> But even prior to those flush+fua changes DM's support for barriers
-> (Linux >= 2.6.31) was held to be robust.  No known (at least no
-> reported) issues with DM's barrier support.
+The fact that the exclusive ORing computation of path address can
+evaluate to the same value for two different pathgroups indicates that
+we may a hit different problem in the future. The best way to do this is
+sorting pathgroups and paths within the pathgroup and just compare path
+by path. Any suggestions or am I missing something here?
 
-I think it would be best to move forward with just hammering on the
-dm-crypt barriers:
+Signed-off-by: Malahal Naineni (malahal@us.ibm.com)
 
-http://oss.oracle.com/~mason/barrier-test
-
-This script is the best I've found so far to reliably trigger
-corruptions with barriers off.  I'd start with ext3 + barriers off just
-to prove it corrupts things, then move to ext3 + barriers on.
-
--chris
+diff -r 1dc078c2002f -r 53a3cae5dc7a libmultipath/configure.c
+--- a/libmultipath/configure.c	Tue Nov 09 00:07:04 2010 -0800
++++ b/libmultipath/configure.c	Tue Nov 09 00:30:17 2010 -0800
+@@ -125,11 +125,14 @@ pgcmp (struct multipath * mpp, struct mu
+ 	if (!mpp)
+ 		return 0;
+ 
++	vector_foreach_slot (cmpp->pg, cpgp, j) {
++		cpgp->found = 0;
++	}
+ 	vector_foreach_slot (mpp->pg, pgp, i) {
+ 		compute_pgid(pgp);
+-
+ 		vector_foreach_slot (cmpp->pg, cpgp, j) {
+-			if (pgp->id == cpgp->id) {
++			if (!cpgp->found && pgp->id == cpgp->id) {
++				cpgp->found = 1;
+ 				r = 0;
+ 				break;
+ 			}
+diff -r 1dc078c2002f -r 53a3cae5dc7a libmultipath/structs.h
+--- a/libmultipath/structs.h	Tue Nov 09 00:07:04 2010 -0800
++++ b/libmultipath/structs.h	Tue Nov 09 00:30:17 2010 -0800
+@@ -210,6 +210,7 @@ struct multipath {
+ 
+ struct pathgroup {
+ 	long id;
++	int found;
+ 	int status;
+ 	int priority;
+ 	int enabled_paths;
