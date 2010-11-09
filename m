@@ -1,76 +1,35 @@
-From: Malahal Naineni <malahal@us.ibm.com>
-Subject: [PATCH] [RFC] multipath: multipath command pathgroup
-	compare problem
-Date: Tue, 09 Nov 2010 00:30:36 -0800
-Message-ID: <53a3cae5dc7a1d1c3e37.1289291436@malahal>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH 4/5] block: make blkdev_get/put() handle exclusive access
+Date: Tue, 09 Nov 2010 11:18:05 +0100
+Message-ID: <4CD91FDD.3030603@kernel.org>
+References: <1288628129-12811-1-git-send-email-tj@kernel.org> <1288628129-12811-5-git-send-email-tj@kernel.org> <20101103150658.GA5627@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <reiserfs-devel-owner@vger.kernel.org>
+In-Reply-To: <20101103150658.GA5627@quack.suse.cz>
+Sender: reiserfs-devel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: axboe@kernel.dk, hch@infradead.org, linux-kernel@vger.kernel.org, petero2@telia.com, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, akpm@linux-foundation.org, adilger.kernel@dilger.ca, tytso@mit.edu, mfasheh@suse.com, joel.becker@oracle.com, aelder@sgi.com, dm-devel@redhat.com, drbd-dev@lists.linbit.com, neilb@suse.de, leochen@broadcom.com, sbranden@broadcom.com, chris.mason@oracle.com, swhiteho@redhat.com, shaggy@linux.vnet.ibm.com, joern@logfs.org, konishi.ryusuke@lab.ntt.co.jp, reiserfs-devel@vger.kernel.org, viro@zeniv.linux.org.uk
 List-Id: dm-devel.ids
 
-I have 2 pathgroups to a LUN and each pathgroup has 2 paths. Say P1,P2
-belong to PG1 and P3,P4 belong to PG2.
+Hello,
 
-I deleted P2 from the system and added it back. I also stopped
-multipathd on purpose. Now, running multipath command is not adding the
-new path P3 back to the table.
+On 11/03/2010 04:06 PM, Jan Kara wrote:
+> On Mon 01-11-10 17:15:28, Tejun Heo wrote:
+>   The patch looks OK to me as far as ext3, ext4, and reiserfs are
+> concerned. One thing I wondered about when I looked at it - does someone
+> use the 'mode' argument of the blkdev_put() function (well, apart from the
+> exclusive flag)? Because I've looked at a few random disk ->release()
+> functions and none of them used it...
 
-After some debugging, I found that both the pathgroups in mpp->pg
-compute their ids to be same and is 20020. The actual loaded table's
-pathgroup ids are computed as 61E860 and 20020. The pgcmp() returns 0
-here as the same pathgroup PG2 from the loaded table (cmpp) is compared
-against PG1 and PG2 of intended table (mpp)
+Yeah, I thought about removing @mode and make blkdev_put() take
+@holder for exclusive releases.  From what I can see, it doesn't seem
+like any implementation cares but it's customary to have access to
+@mode on ->release(), so I decided to keep it.  It's rather flaky as
+there's no mechanism to check or enforce it tho.
 
-Added a found field to avoid using the same pathgroup multiple times.
+Thanks.
 
-The fact that the exclusive ORing computation of path address can
-evaluate to the same value for two different pathgroups indicates that
-we may a hit different problem in the future. The best way to do this is
-sorting pathgroups and paths within the pathgroup and just compare path
-by path. Any suggestions or am I missing something here?
-
-Signed-off-by: Malahal Naineni (malahal@us.ibm.com)
-
-diff -r 1dc078c2002f -r 53a3cae5dc7a libmultipath/configure.c
---- a/libmultipath/configure.c	Tue Nov 09 00:07:04 2010 -0800
-+++ b/libmultipath/configure.c	Tue Nov 09 00:30:17 2010 -0800
-@@ -125,11 +125,14 @@ pgcmp (struct multipath * mpp, struct mu
- 	if (!mpp)
- 		return 0;
- 
-+	vector_foreach_slot (cmpp->pg, cpgp, j) {
-+		cpgp->found = 0;
-+	}
- 	vector_foreach_slot (mpp->pg, pgp, i) {
- 		compute_pgid(pgp);
--
- 		vector_foreach_slot (cmpp->pg, cpgp, j) {
--			if (pgp->id == cpgp->id) {
-+			if (!cpgp->found && pgp->id == cpgp->id) {
-+				cpgp->found = 1;
- 				r = 0;
- 				break;
- 			}
-diff -r 1dc078c2002f -r 53a3cae5dc7a libmultipath/structs.h
---- a/libmultipath/structs.h	Tue Nov 09 00:07:04 2010 -0800
-+++ b/libmultipath/structs.h	Tue Nov 09 00:30:17 2010 -0800
-@@ -210,6 +210,7 @@ struct multipath {
- 
- struct pathgroup {
- 	long id;
-+	int found;
- 	int status;
- 	int priority;
- 	int enabled_paths;
+-- 
+tejun
