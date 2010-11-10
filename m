@@ -1,136 +1,201 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: [dm-devel] block_abort_queue (blk_abort_request) racing with
- scsi_request_fn
-Date: Wed, 10 Nov 2010 08:30:47 -0800
-Message-ID: <20101110163047.GA26201@linux.vnet.ibm.com>
-References: <20100512052336.GB15240@linux.vnet.ibm.com>
- <4CDA4524.4010204@cs.wisc.edu>
- <4CDA49F8.9050406@cs.wisc.edu>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: sort all pathgroups by priority
+Date: Wed, 10 Nov 2010 12:52:20 -0600
+Message-ID: <20101110185220.GN13763@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4CDA49F8.9050406@cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: James Bottomley <James.Bottomley@suse.de>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Mike Christie <michaelc@cs.wisc.edu> wrote:
-> On 11/10/2010 01:09 AM, Mike Christie wrote:
-> >On 05/12/2010 12:23 AM, Mike Anderson wrote:
-> >>I was looking at a dump from a weekend run and I believe I am seeing a
-> >>case where blk_abort_request through blk_abort_queue picked up a request
-> >>for timeout that scsi_request_fn decided not to start. This test was
-> >>under
-> >>error injection.
-> >>
-> >>I assume the case in scsi_request_fn this is hitting is that a request
-> >>has
-> >>been put on the timeout_list with blk_start_request and then one of the
-> >>not_ready checks is hit and the request is decided not to be started. I
-> >>believe the drop
-> >>
-> >>It appears that my usage of walking the timeout_list in block_abort_queue
-> >>and using blk_mark_rq_complete in block_abort_request will not work in
-> >>this case.
-> >>
-> >>While it would be good to have way to ensure a command is started, it is
-> >>unclear if even at a low timeout of 1 second that a user other than
-> >>blk_abort_queue would hit this race.
-> >>
-> >>The dropping / acquiring of host_lock and queue_lock in scsi_request_fn
-> >>and scsi_dispatch_cmd make it unclear to me if usage of
-> >>blk_mark_rq_complete will cover all cases.
-> >>
-> >>I looked at checking serial_number in scsi_times_out along with a couple
-> >>blk_mark_rq_complete additions, but unclear if this would be good and
-> >>/ or
-> >>work in all cases.
-> >>
-> >>I looked at just accelerating deadline by some default value but unclear
-> >>if that would be acceptable.
-> >>
-> >>I also looked at just using just the mark interface I previously posted
-> >>and not calling blk_abort_request at all, but that would change current
-> >>behavior that has been in use for a while.
-> >>
-> >
-> >Did you ever solve this? I am hitting this with the dm-multipath
-> >blk_abort_queue case (the email I sent you a couple weeks ago).
-> >
+Right now, the only path grouping policy that sorts pathgroups by priority is
+group_by_prio.  For the others, the pathgroups are setup in the order that
+their paths are discovered.  This can cause a problem when the kernel needs to
+switch pathgroups, such as when a path fails.  The kernel will simply pick the
+first valid pathgroup.  If failback isn't set to manual, this can cause
+needless pathgroup switching.  Even worse, with failback set to manual, which
+is the default, the kernel will just continue to use the non-optimal pathgroup
+until it fails.  This patch makes all path grouping policies except multibus
+sort the pathgroups by priority.
 
-No. I am also not seeing it in my recent error injection testing.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/pgpolicies.c  |   32 ++++++++++++++++++++++++++++++++
+ libmultipath/print.c       |    5 +----
+ libmultipath/switchgroup.c |   14 ++++++++------
+ libmultipath/vector.c      |   16 ++++++++++++++++
+ 4 files changed, 57 insertions(+), 10 deletions(-)
 
-Is your test configuration / error injection testing able to reproduce
-fairly reliably. If so can you provide some general details on how you
-are generating this error.
-
-> >It seems we could fix this by just having blk_requeue_request do a check
-> >for if the request timedout similar to what scsi used to do. A hacky way
-> >might be to have 2 requeue functions.
-> >
-> >blk_requeue_completed_request - This is the blk_requeue_request we have
-> >today. It unconditionally requeues the request. It should only be used
-> >if the command has been completed either from blk_complete_request or
-> >from block layer timeout handling
-> >(blk_rq_timed_out_timer->blk_rq_timed_out->rq_timed_out_fn).
-> >
-> >blk_requeue_running_request - This checks if the timer is running before
-> >requeueing the request. If blk_rq_timed_out_timer/blk_rq_timed_out has
-> >taken over the request and is going to handle it then this function just
-> >returns and does not requeue. So for this we could just have it check if
-> >the queue has a rq_timed_out_fn and if rq->timeout_list is empty or not.
-> >
-> >I think this might be confusing to use, so I tried something slightly
-> >different below.
-> >
-> >
-> >I also tried a patch where we just add another req bit. We set it in
-> >blk_rq_timed_out_timer and clear it in a new function that clears it
-> >then calls blk_requeue_reqeust. The new function:
-> >
-> >blk_requeue_timedout_request - used when request is to be requeued if a
-> >LLD q->rq_timed_out_fn returned BLK_EH_NOT_HANDLED and has resolved the
-> >problem and wants the request to be requeued. This function clears
-> >REQ_ATOM_TIMEDOUT and then calls blk_requeue_request.
-> >
-> >blk_reqeuue_request would then check if REQ_ATOM_TIMEDOUT is set and if
-> >it was just drop the request assuming the rq_timed_out_fn was handling
-> >it. This still requires the caller to know how the command is supposed
-> >to be reqeueud. But I think it might be easier since the driver here has
-> >returned BLK_EH_NOT_HANDLED in the q timeout fn so they know that they
-> >are going to be handling the request in a special way.
-> >
-> >I attached the last idea here. Made over Linus's tree. Only compile tested.
-> >
-> 
-> Oops, nevermind. I think this is trying to solve a slightly
-> different problem. I saw your other mail. My patch will not handle
-> the case where:
-> 
-> 1. cmd is in scsi_reqeust_fn has run blk_start_request and dropped
-> the queue_lock. Has not yet taken the host lock and incremented host
-> busy counters.
-> 2. blk_abort_queue runs q->rq_timed_out_fn and adds cmd to host eh list.
-> 3. Somehow scsi eh runs and is finishing its stuff before #1 has
-> done anything, so the cmd was just processed by scsi eh *and* at the
-> same time is still lingering in scsi_request_fn (somehow #1 has
-> still not taken the host lock).
-> 
-
-While #1 could also return with a busy from queuecommand which will call
-scsi_queue_insert with no check for complete. One could add a
-blk_mark_rq_complete check prior to calling scsi_queue_insert. This does
-not cover the not_ready label case in scsi_request_fn.
-
-Another option might be to make blk_abort less aggressive if we cannot
-close all the paths and switch it to more of a drain model, but then we
-may be in the same boat in selecting how fast we can drain based what we
-perceive to be a safe time value. This option leaves the existing races
-open in the scsi_request_fn / scsi_dispatch_cmd.
-
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+Index: multipath-tools-101104/libmultipath/pgpolicies.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/pgpolicies.c
++++ multipath-tools-101104/libmultipath/pgpolicies.c
+@@ -11,6 +11,7 @@
+ #include "vector.h"
+ #include "structs.h"
+ #include "pgpolicies.h"
++#include "switchgroup.h"
+ 
+ extern int
+ get_pgpolicy_id (char * str)
+@@ -57,6 +58,34 @@ get_pgpolicy_name (char * buff, int len,
+ 	return snprintf(buff, POLICY_NAME_SIZE, "%s", s);
+ }
+ 
++
++void
++sort_pathgroups (struct multipath *mp) {
++	int i, j;
++	struct pathgroup * pgp1, * pgp2;
++
++	if (!mp->pg)
++		return;
++
++	vector_foreach_slot(mp->pg, pgp1, i) {
++		path_group_prio_update(pgp1);
++		for (j = i - 1; j >= 0; j--) {
++			pgp2 = VECTOR_SLOT(mp->pg, j);
++			if (!pgp2)
++				continue;
++			if (pgp2->priority > pgp1->priority ||
++			    (pgp2->priority == pgp1->priority &&
++			     pgp2->enabled_paths >= pgp1->enabled_paths)) {
++				vector_move_up(mp->pg, i, j + 1);
++				break;
++			}
++		}
++		if (j < 0 && i != 0)
++		vector_move_up(mp->pg, i, 0);
++	}
++}
++
++
+ /*
+  * One path group per unique tgt_node_name present in the path vector
+  */
+@@ -119,6 +148,7 @@ group_by_node_name (struct multipath * m
+ 		}
+ 	}
+ 	FREE(bitmap);
++	sort_pathgroups(mp);
+ 	free_pathvec(mp->paths, KEEP_PATHS);
+ 	mp->paths = NULL;
+ 	return 0;
+@@ -191,6 +221,7 @@ group_by_serial (struct multipath * mp) 
+ 		}
+ 	}
+ 	FREE(bitmap);
++	sort_pathgroups(mp);
+ 	free_pathvec(mp->paths, KEEP_PATHS);
+ 	mp->paths = NULL;
+ 	return 0;
+@@ -228,6 +259,7 @@ one_path_per_group (struct multipath * m
+ 		if (store_path(pgp->paths, pp))
+ 			goto out;
+ 	}
++	sort_pathgroups(mp);
+ 	free_pathvec(mp->paths, KEEP_PATHS);
+ 	mp->paths = NULL;
+ 	return 0;
+Index: multipath-tools-101104/libmultipath/print.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/print.c
++++ multipath-tools-101104/libmultipath/print.c
+@@ -379,7 +379,6 @@ snprint_pg_selector (char * buff, size_t
+ static int
+ snprint_pg_pri (char * buff, size_t len, struct pathgroup * pgp)
+ {
+-	int avg_priority = 0;
+ 	/*
+ 	 * path group priority is not updated for every path prio change,
+ 	 * but only on switch group code path.
+@@ -387,9 +386,7 @@ snprint_pg_pri (char * buff, size_t len,
+ 	 * Printing is another reason to update.
+ 	 */
+ 	path_group_prio_update(pgp);
+-	if (pgp->enabled_paths)
+-		avg_priority = pgp->priority / pgp->enabled_paths;
+-	return snprint_int(buff, len, avg_priority);
++	return snprint_int(buff, len, pgp->priority);
+ }
+ 
+ static int
+Index: multipath-tools-101104/libmultipath/switchgroup.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/switchgroup.c
++++ multipath-tools-101104/libmultipath/switchgroup.c
+@@ -25,14 +25,17 @@ path_group_prio_update (struct pathgroup
+ 			pgp->enabled_paths++;
+ 		}
+ 	}
+-	pgp->priority = priority;
++	if (pgp->enabled_paths)
++		pgp->priority = priority / pgp->enabled_paths;
++	else
++		pgp->priority = 0;
+ }
+ 
+ extern int
+ select_path_group (struct multipath * mpp)
+ {
+ 	int i;
+-	int max_priority = 0, avg_priority;
++	int max_priority = 0;
+ 	int bestpg = 1;
+ 	int max_enabled_paths = 1;
+ 	struct pathgroup * pgp;
+@@ -46,12 +49,11 @@ select_path_group (struct multipath * mp
+ 
+ 		path_group_prio_update(pgp);
+ 		if (pgp->enabled_paths) {
+-			avg_priority = pgp->priority / pgp->enabled_paths;
+-			if (avg_priority > max_priority) {
+-				max_priority = avg_priority;
++			if (pgp->priority > max_priority) {
++				max_priority = pgp->priority;
+ 				max_enabled_paths = pgp->enabled_paths;
+ 				bestpg = i + 1;
+-			} else if (avg_priority == max_priority) {
++			} else if (pgp->priority == max_priority) {
+ 				if (pgp->enabled_paths > max_enabled_paths) {
+ 					max_enabled_paths = pgp->enabled_paths;
+ 					bestpg = i + 1;
+Index: multipath-tools-101104/libmultipath/vector.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/vector.c
++++ multipath-tools-101104/libmultipath/vector.c
+@@ -50,6 +50,22 @@ vector_alloc_slot(vector v)
+ 	return v->slot;
+ }
+ 
++int
++vector_move_up(vector v, int src, int dest)
++{
++	void *value;
++	int i;
++	if (dest == src)
++		return 0;
++	if (dest > src || src >= v->allocated)
++		return -1;
++	value = v->slot[src];
++	for (i = src - 1; i >= dest; i--)
++		v->slot[i + 1] = v->slot[i];
++	v->slot[dest] = value;
++	return 0;
++}
++
+ void *
+ vector_insert_slot(vector v, int slot, void *value)
+ {
