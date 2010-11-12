@@ -1,165 +1,626 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: [dm-devel] block_abort_queue (blk_abort_request) racing with
- scsi_request_fn
-Date: Fri, 12 Nov 2010 09:54:40 -0800
-Message-ID: <20101112175440.GA3978@linux.vnet.ibm.com>
-References: <20100512052336.GB15240@linux.vnet.ibm.com>
- <4CDA4524.4010204@cs.wisc.edu>
- <4CDA49F8.9050406@cs.wisc.edu>
- <20101110163047.GA26201@linux.vnet.ibm.com>
- <4CDB0BAA.8060801@cs.wisc.edu>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH v5] dm crypt: scale to multiple CPUs
+Date: Fri, 12 Nov 2010 19:51:50 +0100
+Message-ID: <4CDD8CC6.3070108@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4CDB0BAA.8060801@cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: device-mapper development <dm-devel@redhat.com>, James Bottomley <James.Bottomley@suse.de>, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Andi Kleen <andi@firstfloor.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Mike Christie <michaelc@cs.wisc.edu> wrote:
-> On 11/10/2010 10:30 AM, Mike Anderson wrote:
-> >
-> >Is your test configuration / error injection testing able to reproduce
-> >fairly reliably. If so can you provide some general details on how you
-> >are generating this error.
-> 
-> In one test we just run dm-mutlipath over FC with the default
-> timeouts, then disable the target controller. This leads to IO
-> timing out and the scsi eh running. We then bring the controller
-> back up and depending on timing that then can lead to either the
-> scsi eh failing and IO being failed upwards or the scsi eh
-> succeeding and IO retried.
-> 
-> Also a really easy way, but probably unrealistic, to hit something
-> similar (more like what you hit in your 1 second timeout case in the
-> other mail) is if you just set the queue timeout to 0, the
-> queue_depth lower than the number of commands you are sending and
-> let the IO test run on the scsi disk. This sort of replicates the
-> problem because the request timesout while it is in the
-> scsi_request_fn similar to how the blk_abort_queue can be called on
-> the cmd while is in there.
-> 
+Hi,
+finally I found some time and tried to fix that Andi's dm-crypt patch
+to not break stacking.
 
-I ran the timeout set to zero test using "modprobe scsi_debug
-max_queue=2 virtual_gb=20" along with fio. Wihtout any changes the I/O
-locks up in with in a minute. I applied your patch and the I/O locked up
-in near the same amount of time which based on your previously mail I
-think this is to be expected. I then reordered scsi_request_fn to do the
-host_busy work up front prior to getting a request and starting it. It
-has been running for ~ 18 hours (although it is slow due to all the
-timeouts occurring).
+Here is what I have:
+ - it still keeps two per device threads, with WQ_NON_REENTRANT set
+ - only crypt thread is cpu intensive
 
-The reordering in scsi_request_fn concerns me as we are bouncing the
-locks more and unclear how much impact the reordering has on I/O rates. I
-did not attach a patch as currently it does not look very good and I think
-I am missing the handling of a couple of error cases.
+There is for sure space for additional optimisations (that reentrant flags
+must limit it) but I think it fixes exactly the same problem without breaking
+other things.
 
-> 
-> >>>
-> >>>I also tried a patch where we just add another req bit. We set it in
-> >>>blk_rq_timed_out_timer and clear it in a new function that clears it
-> >>>then calls blk_requeue_reqeust. The new function:
-> >>>
-> >>>blk_requeue_timedout_request - used when request is to be requeued if a
-> >>>LLD q->rq_timed_out_fn returned BLK_EH_NOT_HANDLED and has resolved the
-> >>>problem and wants the request to be requeued. This function clears
-> >>>REQ_ATOM_TIMEDOUT and then calls blk_requeue_request.
-> >>>
-> >>>blk_reqeuue_request would then check if REQ_ATOM_TIMEDOUT is set and if
-> >>>it was just drop the request assuming the rq_timed_out_fn was handling
-> >>>it. This still requires the caller to know how the command is supposed
-> >>>to be reqeueud. But I think it might be easier since the driver here has
-> >>>returned BLK_EH_NOT_HANDLED in the q timeout fn so they know that they
-> >>>are going to be handling the request in a special way.
-> >>>
-> >>>I attached the last idea here. Made over Linus's tree. Only compile tested.
-> >>>
-> >>
-> >>Oops, nevermind. I think this is trying to solve a slightly
-> >>different problem. I saw your other mail. My patch will not handle
-> >>the case where:
-> >>
-> >>1. cmd is in scsi_reqeust_fn has run blk_start_request and dropped
-> >>the queue_lock. Has not yet taken the host lock and incremented host
-> >>busy counters.
-> >>2. blk_abort_queue runs q->rq_timed_out_fn and adds cmd to host eh list.
-> >>3. Somehow scsi eh runs and is finishing its stuff before #1 has
-> >>done anything, so the cmd was just processed by scsi eh *and* at the
-> >>same time is still lingering in scsi_request_fn (somehow #1 has
-> >>still not taken the host lock).
-> >>
-> >
-> >While #1 could also return with a busy from queuecommand which will call
-> >scsi_queue_insert with no check for complete. One could add a
-> >blk_mark_rq_complete check prior to calling scsi_queue_insert. This does
-> >not cover the not_ready label case in scsi_request_fn.
-> >
-> 
-> Yeah, I was trying to not to have to add blk_mark_rq_complete checks
-> in the scsi layer and just have the block layer handle it. I think
-> my patch in the previous mail covers both the scsi_request_fn and
-> scsi_dispatch_cmd/queuecommand cases. The patch should work as long
-> as the scsi eh has not already completed and run blk_requeue_request
-> on it. The problem with my patch is only that case above where the
-> cmd gets blk_abort_queued/timedout run on it and the scsi eh somehow
-> is able to complete and run scsi_queue_insert while scsi_request_fn
-> is still trying to process the request.
-> 
-> This could be solved by just having the scsi eh thread flush the
-> queue before running. This would make sure the cmd is not running in
-> scsi_request_fn while the scsi the scsi is also processing it. We
-> sort of do this today with the host_busy checks in
-> scsi_error_handler. The problem is that window from the time
-> scsi_request_fn drops the queue_lock and grabs the host_lock to
-> increment host_busy. In the window, blk_abort_request can run, the
-> scsi_eh thread can see host_busy == host_failed, start the scsi eh,
-> run to completion and hit the problem I described above.
-> 
-> 
-> 
-> 
-> >Another option might be to make blk_abort less aggressive if we cannot
-> >close all the paths and switch it to more of a drain model, but then we
-> >may be in the same boat in selecting how fast we can drain based what we
-> >perceive to be a safe time value. This option leaves the existing races
-> >open in the scsi_request_fn / scsi_dispatch_cmd.
+I got very similar results with this patch compared to original Andi's v3 patch.
+
+All stacking and async crypto problems are gone, even 20 dm-crypt devices
+stacked works for me now.
+
+Some numbers - really stupid test, run 4 threads on 2.6.37-rc1+ 2xdualcore CPU
+with aes-xts-plain64/256bit encrypted block device like this
+
+fio --rw=$1 --size=1G --bsrange=1k-128k --filename=$2 --name=1 --name=2 --name=3 --name=4
+
+(similar is cbs-ESSIV, but I want to test just per-cpu worker changes)
+
+values below are just aggregated numbers (aggrb) from fio output.
+
+1) device backed by dm-zero (reads/writes -> noop)
+(so there no real device, it should measure just dm-crypt performance)
+
+			old code 	new (per cpu)
+zero-read		117205KB/s	193866KB/s
+zero-write		160572KB/s	324109KB/s
+zero-randread		137829KB/s	180477KB/s
+zero-randwrite		 56088KB/s	206158KB/s
+zero-rw READS		 39192KB/s	 52667KB/s
+zero-rw WRITES		 39534KB/s	 52746KB/s
+zero-randrw READS	 43220KB/s	103868KB/s
+zero-randrw WRITES	 43322KB/s	104192KB/s
+
+2) and the same test backed by MD/RAID0
+(no tuning here, drives use CFQ, but I have no better
+machine for now)
+
+disk-read		100598KB/s	141802KB/s
+disk-write		 78848KB/s	178102KB/s
+disk-randread		 51148KB/s	 49378KB/s
+disk-randwrite		 32679KB/s	 49560KB/s
+disk-rw	READS		 36812KB/s	 40575KB/s
+disk-rw	WRITES		 36506KB/s	 40552KB/s
+disk-randrw READS	 19426KB/s	 24603KB/s
+disk-randrw WRITES	 19402KB/s	 24479KB/s
 
 
-With the lock push down work and other clean ups I assume some of the lock / unlocks in scsi_request_fn might be reduced making a reordering / addressing this issue less impact to the I/O path. This might be incorrect.
+Andi, is this version ok for you?
 
-As mentioned above an option might be to provide a floor for the timeout
-part of the abort instead of calling a timeout directly. 
+So we can move forward, and finally include this.
+(There should be some other optimisations but I would like
+to commit this first and all changes do as following patches.)
 
-While this seems like leaving a hole for others to fall into, it might
-be the least disruptive to most users and may have the side effect of
-avoiding a eh wakeup in some cases. At the same time a safe in all cases
-value cannot really be selected.
+Thanks,
+Milan
 
-We currently are providing some protection to the SG interfaces from
-hitting this race by providing a floor for a timeout value of
-BLK_MIN_SG_TIMEOUT. We also default the sd interface to SD_TIMEOUT
-making it unlikely that a user would hit this case unless they modified
-the timeout to low value like in the experiment above.
-
-By not directly timing out the I/O but accelerating the timeout by a
-factor. The value could be calculated as a percentage of the queue timeout
-value for a default with the option of exposing a sysfs attribute
-similar to fast_io_fail_tmo. The attribute could also provide a off
-method which we do not have today and is my bad that we do not have one
-(I posted the features patch to multipath but did not followup which
-would have provided a off).  Since the queue is cleared increasing the
-lifetime of the I/O a small amount should still provide good latency
-reduction. The intent was to reduce high I/O latency during some failure
-cases (since we do not fast fail timeouts anymore the timeout * N
-retries plus a large number of I/Os queue case). At the same time this
-interface needs to safe.
-
-Is this pushing off the real fix a bad idea to consider / direction to
-look at?
-
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index d5b0e4c..b4dac68 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -18,6 +18,7 @@
+ #include <linux/crypto.h>
+ #include <linux/workqueue.h>
+ #include <linux/backing-dev.h>
++#include <linux/percpu.h>
+ #include <asm/atomic.h>
+ #include <linux/scatterlist.h>
+ #include <asm/page.h>
+@@ -77,7 +78,6 @@ struct crypt_iv_operations {
+ };
+ 
+ struct iv_essiv_private {
+-	struct crypto_cipher *tfm;
+ 	struct crypto_hash *hash_tfm;
+ 	u8 *salt;
+ };
+@@ -91,6 +91,20 @@ struct iv_benbi_private {
+  * and encrypts / decrypts at the same time.
+  */
+ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID };
++
++/* Duplicated per CPU state for cipher */
++struct crypt_cpu {
++	struct ablkcipher_request *req;
++	struct crypto_ablkcipher *tfm;
++
++	/* ESSIV: struct crypto_cipher *essiv_tfm */
++	void *iv_private;
++};
++
++/*
++ * The fields in here must be read only after initialization,
++ * changing state should be in crypt_cpu.
++ */
+ struct crypt_config {
+ 	struct dm_dev *dev;
+ 	sector_t start;
+@@ -119,6 +133,12 @@ struct crypt_config {
+ 	unsigned int iv_size;
+ 
+ 	/*
++	 * Duplicated per cpu state. Access through
++	 * per_cpu_ptr() only.
++	 */
++	struct crypt_cpu __percpu *cpu;
++
++	/*
+ 	 * Layout of each crypto request:
+ 	 *
+ 	 *   struct ablkcipher_request
+@@ -132,9 +152,7 @@ struct crypt_config {
+ 	 * correctly aligned.
+ 	 */
+ 	unsigned int dmreq_start;
+-	struct ablkcipher_request *req;
+ 
+-	struct crypto_ablkcipher *tfm;
+ 	unsigned long flags;
+ 	unsigned int key_size;
+ 	u8 key[0];
+@@ -149,6 +167,20 @@ static struct kmem_cache *_crypt_io_pool;
+ static void clone_init(struct dm_crypt_io *, struct bio *);
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io);
+ 
++static struct crypt_cpu *crypt_me(struct crypt_config *cc)
++{
++	return this_cpu_ptr(cc->cpu);
++}
++
++/* Use this for cipher attributes that are the same for all cpus */
++static struct crypto_ablkcipher *any_tfm(struct crypt_config *cc)
++{
++	struct crypto_ablkcipher *tfm;
++	/* cpu doesn't matter, output is always the same */
++	tfm = __this_cpu_ptr(cc->cpu)->tfm;
++	return tfm;
++}
++
+ /*
+  * Different IV generation algorithms:
+  *
+@@ -195,7 +227,9 @@ static int crypt_iv_essiv_init(struct crypt_config *cc)
+ 	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+ 	struct hash_desc desc;
+ 	struct scatterlist sg;
+-	int err;
++	struct crypt_cpu *cs;
++	struct crypto_cipher *essiv_tfm;
++	int err, n, cpu;
+ 
+ 	sg_init_one(&sg, cc->key, cc->key_size);
+ 	desc.tfm = essiv->hash_tfm;
+@@ -205,8 +239,19 @@ static int crypt_iv_essiv_init(struct crypt_config *cc)
+ 	if (err)
+ 		return err;
+ 
+-	return crypto_cipher_setkey(essiv->tfm, essiv->salt,
++	for_each_possible_cpu (cpu) {
++		cs = per_cpu_ptr(cc->cpu, cpu);
++		essiv_tfm = cs->iv_private,
++
++		n = crypto_cipher_setkey(essiv_tfm, essiv->salt,
+ 				    crypto_hash_digestsize(essiv->hash_tfm));
++		if (n) {
++			err = n;
++			break;
++		}
++	}
++
++	return err;
+ }
+ 
+ /* Wipe salt and reset key derived from volume key */
+@@ -214,24 +259,75 @@ static int crypt_iv_essiv_wipe(struct crypt_config *cc)
+ {
+ 	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+ 	unsigned salt_size = crypto_hash_digestsize(essiv->hash_tfm);
++	struct crypt_cpu *cs;
++	struct crypto_cipher *essiv_tfm;
++	int cpu, err, n;
+ 
+ 	memset(essiv->salt, 0, salt_size);
+ 
+-	return crypto_cipher_setkey(essiv->tfm, essiv->salt, salt_size);
++	err = 0;
++	for_each_possible_cpu (cpu) {
++		cs = per_cpu_ptr(cc->cpu, cpu);
++		essiv_tfm = cs->iv_private;
++		n = crypto_cipher_setkey(essiv_tfm, essiv->salt, salt_size);
++		if (n)
++			err = n;
++	}
++	return err;
++}
++
++/* Set up per cpu cipher state */
++static struct crypto_cipher *setup_essiv_cpu(struct crypt_config *cc,
++					     struct dm_target *ti,
++					     u8 *salt, unsigned saltsize)
++{
++	struct crypto_cipher *essiv_tfm;
++	int err;
++
++	/* Setup the essiv_tfm with the given salt */
++	essiv_tfm = crypto_alloc_cipher(cc->cipher, 0, CRYPTO_ALG_ASYNC);
++	if (IS_ERR(essiv_tfm)) {
++		ti->error = "Error allocating crypto tfm for ESSIV";
++		return essiv_tfm;
++	}
++
++	if (crypto_cipher_blocksize(essiv_tfm) !=
++	    crypto_ablkcipher_ivsize(any_tfm(cc))) {
++		ti->error = "Block size of ESSIV cipher does "
++			    "not match IV size of block cipher";
++		crypto_free_cipher(essiv_tfm);
++		return ERR_PTR(-EINVAL);
++	}
++	err = crypto_cipher_setkey(essiv_tfm, salt, saltsize);
++	if (err) {
++		ti->error = "Failed to set key for ESSIV cipher";
++		crypto_free_cipher(essiv_tfm);
++		return ERR_PTR(err);
++	}
++
++	return essiv_tfm;
+ }
+ 
+ static void crypt_iv_essiv_dtr(struct crypt_config *cc)
+ {
++	int cpu;
++	struct crypt_cpu *cs;
++	struct crypto_cipher *essiv_tfm;
+ 	struct iv_essiv_private *essiv = &cc->iv_gen_private.essiv;
+ 
+-	crypto_free_cipher(essiv->tfm);
+-	essiv->tfm = NULL;
+-
+ 	crypto_free_hash(essiv->hash_tfm);
+ 	essiv->hash_tfm = NULL;
+ 
+ 	kzfree(essiv->salt);
+ 	essiv->salt = NULL;
++
++	for_each_possible_cpu (cpu) {
++		cs = per_cpu_ptr(cc->cpu, cpu);
++		essiv_tfm = cs->iv_private;
++		if (essiv_tfm)
++			crypto_free_cipher(essiv_tfm);
++		cs->iv_private = NULL;
++	}
+ }
+ 
+ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+@@ -240,7 +336,7 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 	struct crypto_cipher *essiv_tfm = NULL;
+ 	struct crypto_hash *hash_tfm = NULL;
+ 	u8 *salt = NULL;
+-	int err;
++	int err, cpu;
+ 
+ 	if (!opts) {
+ 		ti->error = "Digest algorithm missing for ESSIV mode";
+@@ -262,30 +358,21 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 		goto bad;
+ 	}
+ 
+-	/* Allocate essiv_tfm */
+-	essiv_tfm = crypto_alloc_cipher(cc->cipher, 0, CRYPTO_ALG_ASYNC);
+-	if (IS_ERR(essiv_tfm)) {
+-		ti->error = "Error allocating crypto tfm for ESSIV";
+-		err = PTR_ERR(essiv_tfm);
+-		goto bad;
+-	}
+-	if (crypto_cipher_blocksize(essiv_tfm) !=
+-	    crypto_ablkcipher_ivsize(cc->tfm)) {
+-		ti->error = "Block size of ESSIV cipher does "
+-			    "not match IV size of block cipher";
+-		err = -EINVAL;
+-		goto bad;
+-	}
+-
+ 	cc->iv_gen_private.essiv.salt = salt;
+-	cc->iv_gen_private.essiv.tfm = essiv_tfm;
+ 	cc->iv_gen_private.essiv.hash_tfm = hash_tfm;
+ 
++	for_each_possible_cpu (cpu) {
++		essiv_tfm = setup_essiv_cpu(cc, ti, salt,
++					crypto_hash_digestsize(hash_tfm));
++		if (IS_ERR(essiv_tfm)) {
++			crypt_iv_essiv_dtr(cc);
++			return PTR_ERR(essiv_tfm);
++		}
++		per_cpu_ptr(cc->cpu, cpu)->iv_private = essiv_tfm;
++	}
+ 	return 0;
+ 
+ bad:
+-	if (essiv_tfm && !IS_ERR(essiv_tfm))
+-		crypto_free_cipher(essiv_tfm);
+ 	if (hash_tfm && !IS_ERR(hash_tfm))
+ 		crypto_free_hash(hash_tfm);
+ 	kfree(salt);
+@@ -294,16 +381,18 @@ bad:
+ 
+ static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
+ {
++	struct crypto_cipher *essiv_tfm = crypt_me(cc)->iv_private;
++
+ 	memset(iv, 0, cc->iv_size);
+ 	*(u64 *)iv = cpu_to_le64(sector);
+-	crypto_cipher_encrypt_one(cc->iv_gen_private.essiv.tfm, iv, iv);
++	crypto_cipher_encrypt_one(essiv_tfm, iv, iv);
+ 	return 0;
+ }
+ 
+ static int crypt_iv_benbi_ctr(struct crypt_config *cc, struct dm_target *ti,
+ 			      const char *opts)
+ {
+-	unsigned bs = crypto_ablkcipher_blocksize(cc->tfm);
++	unsigned bs = crypto_ablkcipher_blocksize(any_tfm(cc));
+ 	int log = ilog2(bs);
+ 
+ 	/* we need to calculate how far we must shift the sector count
+@@ -412,7 +501,7 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 
+ 	dmreq = dmreq_of_req(cc, req);
+ 	iv = (u8 *)ALIGN((unsigned long)(dmreq + 1),
+-			 crypto_ablkcipher_alignmask(cc->tfm) + 1);
++			 crypto_ablkcipher_alignmask(any_tfm(cc)) + 1);
+ 
+ 	dmreq->ctx = ctx;
+ 	sg_init_table(&dmreq->sg_in, 1);
+@@ -457,13 +546,14 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ static void crypt_alloc_req(struct crypt_config *cc,
+ 			    struct convert_context *ctx)
+ {
+-	if (!cc->req)
+-		cc->req = mempool_alloc(cc->req_pool, GFP_NOIO);
+-	ablkcipher_request_set_tfm(cc->req, cc->tfm);
+-	ablkcipher_request_set_callback(cc->req, CRYPTO_TFM_REQ_MAY_BACKLOG |
++	struct crypt_cpu *cs = crypt_me(cc);
++	if (!cs->req)
++		cs->req = mempool_alloc(cc->req_pool, GFP_NOIO);
++	ablkcipher_request_set_tfm(cs->req, cs->tfm);
++	ablkcipher_request_set_callback(cs->req, CRYPTO_TFM_REQ_MAY_BACKLOG |
+ 					CRYPTO_TFM_REQ_MAY_SLEEP,
+ 					kcryptd_async_done,
+-					dmreq_of_req(cc, cc->req));
++					dmreq_of_req(cc, cs->req));
+ }
+ 
+ /*
+@@ -472,6 +562,7 @@ static void crypt_alloc_req(struct crypt_config *cc,
+ static int crypt_convert(struct crypt_config *cc,
+ 			 struct convert_context *ctx)
+ {
++	struct crypt_cpu *cs = crypt_me(cc);
+ 	int r;
+ 
+ 	atomic_set(&ctx->pending, 1);
+@@ -483,7 +574,7 @@ static int crypt_convert(struct crypt_config *cc,
+ 
+ 		atomic_inc(&ctx->pending);
+ 
+-		r = crypt_convert_block(cc, ctx, cc->req);
++		r = crypt_convert_block(cc, ctx, cs->req);
+ 
+ 		switch (r) {
+ 		/* async */
+@@ -492,7 +583,7 @@ static int crypt_convert(struct crypt_config *cc,
+ 			INIT_COMPLETION(ctx->restart);
+ 			/* fall through*/
+ 		case -EINPROGRESS:
+-			cc->req = NULL;
++			cs->req = NULL;
+ 			ctx->sector++;
+ 			continue;
+ 
+@@ -651,6 +742,9 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
+  * They must be separated as otherwise the final stages could be
+  * starved by new requests which can block in the first stages due
+  * to memory allocation.
++ *
++ * The work is done per CPU global for all dmcrypt instances.
++ * They should not depend on each other and do not block.
+  */
+ static void crypt_endio(struct bio *clone, int error)
+ {
+@@ -971,6 +1065,22 @@ static void crypt_encode_key(char *hex, u8 *key, unsigned int size)
+ 	}
+ }
+ 
++static int crypt_setkey_allcpus(struct crypt_config *cc)
++{
++	struct crypt_cpu *cs;
++	int cpu, n, err;
++
++	err = 0;
++	for_each_possible_cpu(cpu) {
++		cs = per_cpu_ptr(cc->cpu, cpu);
++		n = crypto_ablkcipher_setkey(cs->tfm, cc->key, cc->key_size);
++		if (n)
++			err = n;
++	}
++	return err;
++}
++
++
+ static int crypt_set_key(struct crypt_config *cc, char *key)
+ {
+ 	unsigned key_size = strlen(key) >> 1;
+@@ -986,19 +1096,35 @@ static int crypt_set_key(struct crypt_config *cc, char *key)
+ 
+ 	set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
+ 
+-	return crypto_ablkcipher_setkey(cc->tfm, cc->key, cc->key_size);
++	return crypt_setkey_allcpus(cc);
+ }
+ 
+ static int crypt_wipe_key(struct crypt_config *cc)
+ {
+ 	clear_bit(DM_CRYPT_KEY_VALID, &cc->flags);
+ 	memset(&cc->key, 0, cc->key_size * sizeof(u8));
+-	return crypto_ablkcipher_setkey(cc->tfm, cc->key, cc->key_size);
++	return crypt_setkey_allcpus(cc);
++}
++
++static void crypt_dtr_cpus(struct crypt_config *cc)
++{
++	struct crypt_cpu *cs;
++	int cpu;
++
++	for_each_possible_cpu(cpu) {
++		cs = per_cpu_ptr(cc->cpu, cpu);
++		if (cs->tfm) {
++			crypto_free_ablkcipher(cs->tfm);
++			cs->tfm = NULL;
++		}
++	}
+ }
+ 
+ static void crypt_dtr(struct dm_target *ti)
+ {
+ 	struct crypt_config *cc = ti->private;
++	struct crypt_cpu *cs;
++	int cpu;
+ 
+ 	ti->private = NULL;
+ 
+@@ -1010,6 +1136,12 @@ static void crypt_dtr(struct dm_target *ti)
+ 	if (cc->crypt_queue)
+ 		destroy_workqueue(cc->crypt_queue);
+ 
++	for_each_possible_cpu(cpu) {
++		cs = per_cpu_ptr(cc->cpu, cpu);
++		if (cs->req)
++			mempool_free(cs->req, cc->req_pool);
++	}
++
+ 	if (cc->bs)
+ 		bioset_free(cc->bs);
+ 
+@@ -1023,12 +1155,14 @@ static void crypt_dtr(struct dm_target *ti)
+ 	if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
+ 		cc->iv_gen_ops->dtr(cc);
+ 
+-	if (cc->tfm && !IS_ERR(cc->tfm))
+-		crypto_free_ablkcipher(cc->tfm);
+-
+ 	if (cc->dev)
+ 		dm_put_device(ti, cc->dev);
+ 
++	crypt_dtr_cpus(cc);
++
++	if (cc->cpu)
++		free_percpu(cc->cpu);
++
+ 	kzfree(cc->cipher);
+ 	kzfree(cc->cipher_mode);
+ 
+@@ -1040,9 +1174,10 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 			    char *cipher_in, char *key)
+ {
+ 	struct crypt_config *cc = ti->private;
++	struct crypto_ablkcipher *tfm;
+ 	char *tmp, *cipher, *chainmode, *ivmode, *ivopts;
+ 	char *cipher_api = NULL;
+-	int ret = -EINVAL;
++	int cpu, ret = -EINVAL;
+ 
+ 	/* Convert to crypto api definition? */
+ 	if (strchr(cipher_in, '(')) {
+@@ -1074,6 +1209,12 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 	if (tmp)
+ 		DMWARN("Ignoring unexpected additional cipher options");
+ 
++	cc->cpu = alloc_percpu(struct crypt_cpu);
++	if (!cc->cpu) {
++		ti->error = "Cannot allocate per cpu state";
++		goto bad_mem;
++	}
++
+ 	/* Compatibility mode for old dm-crypt mappings */
+ 	if (!chainmode || (!strcmp(chainmode, "plain") && !ivmode)) {
+ 		kfree(cc->cipher_mode);
+@@ -1099,12 +1240,16 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 	}
+ 
+ 	/* Allocate cipher */
+-	cc->tfm = crypto_alloc_ablkcipher(cipher_api, 0, 0);
+-	if (IS_ERR(cc->tfm)) {
+-		ret = PTR_ERR(cc->tfm);
+-		ti->error = "Error allocating crypto tfm";
+-		goto bad;
+-	}
++	for_each_possible_cpu (cpu) {
++		tfm = crypto_alloc_ablkcipher(cipher_api, 0, 0);
++		if (IS_ERR(tfm)) {
++			ret = PTR_ERR(tfm);
++			ti->error = "Error allocating crypto tfm";
++			goto bad;
++		}
++		per_cpu_ptr(cc->cpu, cpu)->tfm = tfm;
++ 	}
++	tfm = any_tfm(cc);
+ 
+ 	/* Initialize and set key */
+ 	ret = crypt_set_key(cc, key);
+@@ -1114,7 +1259,7 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 	}
+ 
+ 	/* Initialize IV */
+-	cc->iv_size = crypto_ablkcipher_ivsize(cc->tfm);
++	cc->iv_size = crypto_ablkcipher_ivsize(tfm);
+ 	if (cc->iv_size)
+ 		/* at least a 64 bit sector number should fit in our buffer */
+ 		cc->iv_size = max(cc->iv_size,
+@@ -1178,9 +1323,10 @@ bad_mem:
+ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
+ 	struct crypt_config *cc;
++	struct crypt_cpu *cs;
+ 	unsigned int key_size;
+ 	unsigned long long tmpll;
+-	int ret;
++	int ret, cpu;
+ 
+ 	if (argc != 5) {
+ 		ti->error = "Not enough arguments";
+@@ -1208,9 +1354,9 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 
+ 	cc->dmreq_start = sizeof(struct ablkcipher_request);
+-	cc->dmreq_start += crypto_ablkcipher_reqsize(cc->tfm);
++	cc->dmreq_start += crypto_ablkcipher_reqsize(any_tfm(cc));
+ 	cc->dmreq_start = ALIGN(cc->dmreq_start, crypto_tfm_ctx_alignment());
+-	cc->dmreq_start += crypto_ablkcipher_alignmask(cc->tfm) &
++	cc->dmreq_start += crypto_ablkcipher_alignmask(any_tfm(cc)) &
+ 			   ~(crypto_tfm_ctx_alignment() - 1);
+ 
+ 	cc->req_pool = mempool_create_kmalloc_pool(MIN_IOS, cc->dmreq_start +
+@@ -1219,7 +1365,6 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		ti->error = "Cannot allocate crypt request mempool";
+ 		goto bad;
+ 	}
+-	cc->req = NULL;
+ 
+ 	cc->page_pool = mempool_create_page_pool(MIN_POOL_PAGES, 0);
+ 	if (!cc->page_pool) {
+@@ -1233,6 +1378,14 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad;
+ 	}
+ 
++	for_each_possible_cpu(cpu) {
++		cs = per_cpu_ptr(cc->cpu, cpu);
++		if (crypto_ablkcipher_setkey(cs->tfm, cc->key, key_size) < 0) {
++			ti->error = "Error setting key";
++			goto bad;
++		}
++	}
++
+ 	ret = -EINVAL;
+ 	if (sscanf(argv[2], "%llu", &tmpll) != 1) {
+ 		ti->error = "Invalid iv_offset sector";
+@@ -1252,13 +1405,20 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	cc->start = tmpll;
+ 
+ 	ret = -ENOMEM;
+-	cc->io_queue = create_singlethread_workqueue("kcryptd_io");
++	cc->io_queue = alloc_workqueue("kcryptd_io",
++				       WQ_NON_REENTRANT|
++				       WQ_MEM_RECLAIM,
++				       1);
+ 	if (!cc->io_queue) {
+ 		ti->error = "Couldn't create kcryptd io queue";
+ 		goto bad;
+ 	}
+ 
+-	cc->crypt_queue = create_singlethread_workqueue("kcryptd");
++	cc->crypt_queue = alloc_workqueue("kcryptd",
++					  WQ_NON_REENTRANT|
++					  WQ_CPU_INTENSIVE|
++					  WQ_MEM_RECLAIM,
++					  1);
+ 	if (!cc->crypt_queue) {
+ 		ti->error = "Couldn't create kcryptd queue";
+ 		goto bad;
