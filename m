@@ -1,219 +1,191 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: clean up path orphaning and adoption
-Date: Sun, 14 Nov 2010 15:02:14 -0600
-Message-ID: <20101114210214.GR13763@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Matt <jackdachef@gmail.com>
+Subject: Re: dm-crypt barrier support is effective (was: Re: DM-CRYPT: Scale
+ to multiple CPUs v3 on 2.6.37-rc* ?)
+Date: Sun, 14 Nov 2010 22:49:12 +0100
+Message-ID: <AANLkTi=rVyozmvqCJD1kGqnV3uEn-0ak6B12-O_9XOKJ@mail.gmail.com>
+References: <AANLkTim6WTCChWGbTb-PUGd2AERGibeRtgan-WDznf2s@mail.gmail.com>
+	<4CD6B7FA.3050005@redhat.com>
+	<AANLkTikbsU+SGAaoq_oek=7tfDdjg+0wFoydhA+K9ZU+@mail.gmail.com>
+	<AANLkTinna7BiGHogXnn1iEG6ccUAjFM3p3S3aHpv=h-E@mail.gmail.com>
+	<20101107194547.GA12521@basil.fritz.box>
+	<4CD71C8B.1050604@redhat.com>
+	<20101107230508.GB17592@basil.fritz.box>
+	<20101108145809.GD29714@redhat.com>
+	<1289238930-sup-9765@think>
+	<20101114205925.GA20451@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20101114205925.GA20451@redhat.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Milan Broz <mbroz@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, Chris Mason <chris.mason@oracle.com>
 List-Id: dm-devel.ids
 
-Make sure that multipathd orphans paths when they don't get included in maps,
-to reset them to a consistent state, and make sure that multipath adopts paths
-that get picked up during a table reload. However, multipathd shouldn't change
-the state or priority of paths when it's updating due to a table reload,
-since this can interfere with the checkerloop.
+On Sun, Nov 14, 2010 at 9:59 PM, Mike Snitzer <snitzer@redhat.com> wrot=
+e:
+> On Mon, Nov 08 2010 at 12:59pm -0500,
+> Chris Mason <chris.mason@oracle.com> wrote:
+>
+>> Excerpts from Mike Snitzer's message of 2010-11-08 09:58:09 -0500:
+>> > On Sun, Nov 07 2010 at =A06:05pm -0500,
+>> > Andi Kleen <andi@firstfloor.org> wrote:
+>> >
+>> > > On Sun, Nov 07, 2010 at 10:39:23PM +0100, Milan Broz wrote:
+>> > > > On 11/07/2010 08:45 PM, Andi Kleen wrote:
+>> > > > >> I read about barrier-problems and data getting to the parti=
+tion when
+>> > > > >> using dm-crypt and several layers so I don't know if that c=
+ould be
+>> > > > >> related
+>> > > > >
+>> > > > > Barriers seem to be totally broken on dm-crypt currently.
+>> > > >
+>> > > > Can you explain it?
+>> > >
+>> > > e.g. the btrfs mailing list is full of corruption reports
+>> > > on dm-crypt and most of the symptoms point to broken barriers.
+>> >
+>> > [cc'ing linux-btrfs, hopefully in the future dm-devel will get cc'=
+d when
+>> > concerns about DM come up on linux-btrfs (or other lists)]
+>> >
+>> > I spoke with Josef Bacik and these corruption reports are apparent=
+ly
+>> > against older kernels (e.g. <=3D 2.6.33). =A0I say <=3D 2.6.33 bec=
+ause:
+>>
+>> We've consistently seen reports about corruptions on power hits with
+>> dm-crypt. =A0The logs didn't have any messages about barriers failin=
+g, but
+>> the corruptions were still there. =A0The most likely cause is that
+>> barriers just aren't getting through somehow.
+>
+> Can't blame anyone for assuming as much (although it does create FUD)
+> but in practice (testing dm-crypt with ext4 using your barrier-test
+> script) I have not been able to see any evidence that dm-crypt's barr=
+ier
+> support is ineffective.
+>
+> Could be that the barrier-test script isn't able to reproduce the uni=
+que
+> failure case that btrfs does (on power failure)?
+>
+>> > > > Barriers/flush change should work, if it is broken, it is not =
+only dm-crypt.
+>> > > > (dm-crypt simply relies on dm-core implementation, when barrie=
+r/flush
+>> > > > request come to dmcrypt, all previous IO must be already finis=
+hed).
+>> > >
+>> > > Possibly, at least it doesn't seem to work.
+>> >
+>> > Can you please be more specific? =A0What test(s)? =A0What kernel(s=
+)?
+>> >
+>> > Any pointers to previous (and preferably: recent) reports would be
+>> > appreciated.
+>
+> I still think we need specific bug reports that detail workloads and =
+if
+> possible reproducers.
+>
+>> > The DM barrier code has seen considerable change recently (via flu=
+sh+fua
+>> > changes in 2.6.37). =A0Those changes have been tested quite a bit
+>> > (including ext4 consistency after a crash).
+>> >
+>> > But even prior to those flush+fua changes DM's support for barrier=
+s
+>> > (Linux >=3D 2.6.31) was held to be robust. =A0No known (at least n=
+o
+>> > reported) issues with DM's barrier support.
+>>
+>> I think it would be best to move forward with just hammering on the
+>> dm-crypt barriers:
+>>
+>> http://oss.oracle.com/~mason/barrier-test
+>>
+>> This script is the best I've found so far to reliably trigger
+>> corruptions with barriers off. =A0I'd start with ext3 + barriers off=
+ just
+>> to prove it corrupts things, then move to ext3 + barriers on.
+>
+> I started with ext4 + barrier=3D0,journal_async_commit and could reli=
+ably
+> cause directory corruption (~75% of the time). =A0I then switched to
+> barrier=3D1 and could not cause corruption.
+>
+> I then added dm-crypt and got the same results: with barrier=3D1 I co=
+uld
+> not cause directory corruption. =A0barrier=3D0 resulted in directory
+> corruption (again ~75% of the time), no corruption occurred with
+> barrier=3D1.
+>
+> Both 2.6.36 (original barrier code) and latest 2.6.37-rc1+ (new
+> flush+fua code) were tested. =A06 iterations of barrier=3D0 and 10
+> iterations of barrier=3D1.
+>
+> So my hope is we can now put this general dm-crypt barrier doubt to o=
+ne
+> side and work together on identifying the cause of corruption when
+> dm-crypt is paired with btrfs.
+>
+> Thanks,
+> Mike
+>
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/configure.c   |    8 ++++++--
- libmultipath/structs_vec.c |   12 +++++++-----
- libmultipath/structs_vec.h |    2 +-
- multipathd/main.c          |   22 ++++++++++++----------
- 4 files changed, 26 insertions(+), 18 deletions(-)
+Hi Mike,
 
-Index: multipath-tools-101104/libmultipath/configure.c
-===================================================================
---- multipath-tools-101104.orig/libmultipath/configure.c
-+++ multipath-tools-101104/libmultipath/configure.c
-@@ -472,16 +472,20 @@ coalesce_paths (struct vectors * vecs, v
- 
- 		/* 1. if path has no unique id or wwid blacklisted */
- 		if (memcmp(empty_buff, pp1->wwid, WWID_SIZE) == 0 ||
--		    filter_path(conf, pp1) > 0)
-+		    filter_path(conf, pp1) > 0) {
-+			orphan_path(pp1);
- 			continue;
-+		}
- 
- 		/* 2. if path already coalesced */
- 		if (pp1->mpp)
- 			continue;
- 
- 		/* 3. if path has disappeared */
--		if (!pp1->size)
-+		if (!pp1->size) {
-+			orphan_path(pp1);
- 			continue;
-+		}
- 
- 		/* 4. path is out of scope */
- 		if (refwwid && strncmp(pp1->wwid, refwwid, WWID_SIZE))
-Index: multipath-tools-101104/multipathd/main.c
-===================================================================
---- multipath-tools-101104.orig/multipathd/main.c
-+++ multipath-tools-101104/multipathd/main.c
-@@ -387,7 +387,7 @@ ev_add_path (char * devname, struct vect
- 	 */
- 	if (memcmp(empty_buff, pp->wwid, WWID_SIZE) == 0) {
- 		condlog(0, "%s: failed to get path uid", devname);
--		return 1; /* leave path added to pathvec */
-+		goto fail; /* leave path added to pathvec */
- 	}
- 	if (filter_path(conf, pp) > 0){
- 		int i = find_slot(vecs->pathvec, (void *)pp);
-@@ -417,8 +417,8 @@ rescan:
- 
- 		condlog(4,"%s: adopting all paths for path %s",
- 			mpp->alias, pp->dev);
--		if (adopt_paths(vecs->pathvec, mpp))
--			return 1; /* leave path added to pathvec */
-+		if (adopt_paths(vecs->pathvec, mpp, 1))
-+			goto fail; /* leave path added to pathvec */
- 
- 		verify_paths(mpp, vecs, NULL);
- 		mpp->flush_on_last_del = FLUSH_UNDEF;
-@@ -439,7 +439,7 @@ rescan:
- 		if ((mpp = add_map_with_path(vecs, pp, 1)))
- 			mpp->action = ACT_CREATE;
- 		else
--			return 1; /* leave path added to pathvec */
-+			goto fail; /* leave path added to pathvec */
- 	}
- 
- 	/*
-@@ -448,7 +448,7 @@ rescan:
- 	if (setup_map(mpp)) {
- 		condlog(0, "%s: failed to setup map for addition of new "
- 			"path %s", mpp->alias, devname);
--		goto out;
-+		goto fail_map;
- 	}
- 	/*
- 	 * reload the map for the multipath mapped device
-@@ -466,7 +466,7 @@ rescan:
- 			goto rescan;
- 		}
- 		else
--			goto out;
-+			goto fail_map;
- 	}
- 	dm_lib_release();
- 
-@@ -474,19 +474,21 @@ rescan:
- 	 * update our state from kernel regardless of create or reload
- 	 */
- 	if (setup_multipath(vecs, mpp))
--		goto out;
-+		goto fail_map;
- 
- 	sync_map_state(mpp);
- 
- 	if (mpp->action == ACT_CREATE &&
- 	    start_waiter_thread(mpp, vecs))
--			goto out;
-+			goto fail_map;
- 
- 	condlog(2, "%s path added to devmap %s", devname, mpp->alias);
- 	return 0;
- 
--out:
-+fail_map:
- 	remove_map(mpp, vecs, 1);
-+fail:
-+	orphan_path(pp);
- 	return 1;
- }
- 
-@@ -1161,7 +1163,7 @@ configure (struct vectors * vecs, int st
- 	/*
- 	 * create new set of maps & push changed ones into dm
- 	 */
--	if (coalesce_paths(vecs, mpvec, NULL, 0))
-+	if (coalesce_paths(vecs, mpvec, NULL, 1))
- 		return 1;
- 
- 	/*
-Index: multipath-tools-101104/libmultipath/structs_vec.c
-===================================================================
---- multipath-tools-101104.orig/libmultipath/structs_vec.c
-+++ multipath-tools-101104/libmultipath/structs_vec.c
-@@ -46,7 +46,7 @@ update_mpp_paths(struct multipath * mpp,
- }
- 
- extern int
--adopt_paths (vector pathvec, struct multipath * mpp)
-+adopt_paths (vector pathvec, struct multipath * mpp, int get_info)
- {
- 	int i;
- 	struct path * pp;
-@@ -69,7 +69,9 @@ adopt_paths (vector pathvec, struct mult
- 			if (!find_path_by_dev(mpp->paths, pp->dev) &&
- 			    store_path(mpp->paths, pp))
- 					return 1;
--			pathinfo(pp, conf->hwtable, DI_PRIO | DI_CHECKER);
-+			if (get_info)
-+				pathinfo(pp, conf->hwtable,
-+					 DI_PRIO | DI_CHECKER);
- 		}
- 	}
- 	return 0;
-@@ -357,7 +359,6 @@ retry:
- 		goto out;
- 	}
- 
--	//adopt_paths(vecs->pathvec, mpp);
- 	if (!mpp->hwe)
- 		mpp->hwe = extract_hwe_from_path(mpp);
- 	if (!mpp->hwe) {
-@@ -392,7 +393,7 @@ add_map_without_path (struct vectors * v
- 		return NULL; /* mpp freed in setup_multipath */
- 	}
- 
--	if (adopt_paths(vecs->pathvec, mpp))
-+	if (adopt_paths(vecs->pathvec, mpp, 1))
- 		goto out;
- 
- 	if (!vector_alloc_slot(vecs->mpvec))
-@@ -425,7 +426,7 @@ add_map_with_path (struct vectors * vecs
- 	select_alias(mpp);
- 	mpp->size = pp->size;
- 
--	if (adopt_paths(vecs->pathvec, mpp))
-+	if (adopt_paths(vecs->pathvec, mpp, 1))
- 		goto out;
- 
- 	if (add_vec) {
-@@ -500,6 +501,7 @@ int update_multipath (struct vectors *ve
- 	if (setup_multipath(vecs, mpp))
- 		return 1; /* mpp freed in setup_multipath */
- 
-+	adopt_paths(vecs->pathvec, mpp, 0);
- 	/*
- 	 * compare checkers states with DM states
- 	 */
-Index: multipath-tools-101104/libmultipath/structs_vec.h
-===================================================================
---- multipath-tools-101104.orig/libmultipath/structs_vec.h
-+++ multipath-tools-101104/libmultipath/structs_vec.h
-@@ -15,7 +15,7 @@ struct vectors {
- 
- void set_no_path_retry(struct multipath *mpp);
- 
--int adopt_paths (vector pathvec, struct multipath * mpp);
-+int adopt_paths (vector pathvec, struct multipath * mpp, int get_info);
- void orphan_paths (vector pathvec, struct multipath * mpp);
- void orphan_path (struct path * pp);
- 
+I'm pretty sure that dm-crypt is rockstable :)
+
+My report wasn't meant to be / cause FUD sorry if it got picked up that=
+ way:
+
+with the vanilla dm-crypt implementation I saw *NO* corruption at all
+in the small testing amount of time I ran it
+however as soon as I applied the
+
+[dm-devel] [PATCH] DM-CRYPT: Scale to multiple CPUs v3
+and
+[PATCH] Fix double free and use generic private pointer in per-cpu
+
+patches, recompiled the kernel and rebooted into that new environment
+
+it seemingly caused corruptions right from the start (the mentioned
+corruption /etc/env.d/02opengl to be the most obvious candidate and
+probably even more)
+with those corruptions being anticipated over longer uptime and heavy
+use-patterns (such as re-compiling the whole system).
+
+I don't know if the new multi-cpu scaling patch for dm-crypt makes a
+change (since I can't test it right now due to a busy schedule)
+
+[PATCH v5] dm crypt: scale to multiple CPUs
+
+I however have a request:
+
+could you guys please take this patch through a "battery of heavy
+tests" until it's included in mainline ?
+
+so that you can spot any issues (races, BUGs, etc.) which might be
+inherent/triggered in current dm-crypt so that my reported corruptions
+might be prevented in the future ?
+
+Again:
+
+the vanilla kernel and dm-crypt are perfectly stable !
+
+only with the dm-crypt scaling patch I could observe the data-corruptio=
+n
+
+
+Thanks !
+
+Matt
+--
+To unsubscribe from this list: send the line "unsubscribe linux-btrfs" =
+in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
