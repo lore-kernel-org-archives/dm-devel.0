@@ -1,48 +1,897 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: block_abort_queue (blk_abort_request) racing with scsi_request_fn
-Date: Tue, 16 Nov 2010 16:39:05 -0500
-Message-ID: <20101116213904.GA470@redhat.com>
-References: <20100512052336.GB15240@linux.vnet.ibm.com>
- <4CDA4524.4010204@cs.wisc.edu>
- <4CDA49F8.9050406@cs.wisc.edu>
- <20101110163047.GA26201@linux.vnet.ibm.com>
- <4CDB0BAA.8060801@cs.wisc.edu>
- <20101112175440.GA3978@linux.vnet.ibm.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: add find_multipaths feature.
+Date: Tue, 16 Nov 2010 17:25:46 -0600
+Message-ID: <20101116232546.GU13763@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20101112175440.GA3978@linux.vnet.ibm.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Anderson <andmike@linux.vnet.ibm.com>
-Cc: Mike Christie <michaelc@cs.wisc.edu>, James Bottomley <James.Bottomley@suse.de>, linux-scsi@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
+This adds a new default feature, find_multipaths. When this is set to yes,
+multipath will no longer try to create multipath devices using every
+non-blacklisted device. Instead, it will only create a device when one of
+three conditions are met.
 
-On Fri, Nov 12 2010 at 12:54pm -0500,
-Mike Anderson <andmike@linux.vnet.ibm.com> wrote:
+1. Three are at least two non-blacklisted paths with the same wwid
+2. The user manually forces the creation, by specifying a device with the
+   multipath command.
+3. A path has the same wwid as a multipath device that was previously crreated
+   (even if that multipath device doesn't currently exist).
 
-> By not directly timing out the I/O but accelerating the timeout by a
-> factor. The value could be calculated as a percentage of the queue timeout
-> value for a default with the option of exposing a sysfs attribute
-> similar to fast_io_fail_tmo. The attribute could also provide a off
-> method which we do not have today and is my bad that we do not have one
-> (I posted the features patch to multipath but did not followup which
-> would have provided a off).
+To do 3, multipath stores the wwid of every path that it creates in
+/etc/multipath/wwids. Whenever a path is added, its wwid is checked against
+this file.  If there's a match, it is multipathed, even if it's the only path.
+This should allow multipath to automatically choose the correct paths to make
+into multipath devics in most cases, without needing the user to edit the
+blacklist.
 
-You're referring to these patches:
-https://patchwork.kernel.org/patch/96674/
-https://patchwork.kernel.org/patch/96673/
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/Makefile      |    2 
+ libmultipath/alias.c       |  152 --------------------------------------
+ libmultipath/alias.h       |    1 
+ libmultipath/config.c      |    1 
+ libmultipath/config.h      |    1 
+ libmultipath/configure.c   |   14 +++
+ libmultipath/defaults.h    |    2 
+ libmultipath/dict.c        |   34 ++++++++
+ libmultipath/file.c        |  178 +++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/file.h        |   11 ++
+ libmultipath/finder.c      |  165 +++++++++++++++++++++++++++++++++++++++++
+ libmultipath/finder.h      |   18 ++++
+ multipath/main.c           |    4 -
+ multipath/multipath.conf.5 |   19 ++++
+ multipathd/main.c          |    6 +
+ 15 files changed, 456 insertions(+), 152 deletions(-)
 
-Do you have an interest in pursuing these further?  In the near-term
-should we default to off (so introduce MP_FEATURE_ABORT_Q) -- given the
-current race which exposes corruption?
-
-Or are you now interested in accelerating the timeout?  I'd need to
-review this thread in more detail to give you an opinion.  But I do know
-that simply disabling dm-mpath's call to blk_abort_queue() enables some
-extensive path failure load testing to _not_ cause the list corruption
-that leads to a crash.
-
-Mike
+Index: multipath-tools-101104/libmultipath/alias.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/alias.c
++++ multipath-tools-101104/libmultipath/alias.c
+@@ -3,19 +3,16 @@
+  * Copyright (c) 2005 Benjamin Marzinski, Redhat
+  */
+ #include <stdlib.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <fcntl.h>
+ #include <errno.h>
+ #include <unistd.h>
+ #include <string.h>
+ #include <limits.h>
+ #include <stdio.h>
+-#include <signal.h>
+ 
+ #include "debug.h"
+ #include "uxsock.h"
+ #include "alias.h"
++#include "file.h"
+ 
+ 
+ /*
+@@ -37,149 +34,6 @@
+  */
+ 
+ static int
+-ensure_directories_exist(char *str, mode_t dir_mode)
+-{
+-	char *pathname;
+-	char *end;
+-	int err;
+-
+-	pathname = strdup(str);
+-	if (!pathname){
+-		condlog(0, "Cannot copy bindings file pathname : %s",
+-			strerror(errno));
+-		return -1;
+-	}
+-	end = pathname;
+-	/* skip leading slashes */
+-	while (end && *end && (*end == '/'))
+-		end++;
+-
+-	while ((end = strchr(end, '/'))) {
+-		/* if there is another slash, make the dir. */
+-		*end = '\0';
+-		err = mkdir(pathname, dir_mode);
+-		if (err && errno != EEXIST) {
+-			condlog(0, "Cannot make directory [%s] : %s",
+-				pathname, strerror(errno));
+-			free(pathname);
+-			return -1;
+-		}
+-		if (!err)
+-			condlog(3, "Created dir [%s]", pathname);
+-		*end = '/';
+-		end++;
+-	}
+-	free(pathname);
+-	return 0;
+-}
+-
+-static void
+-sigalrm(int sig)
+-{
+-	/* do nothing */
+-}
+-
+-static int
+-lock_bindings_file(int fd)
+-{
+-	struct sigaction act, oldact;
+-	sigset_t set, oldset;
+-	struct flock lock;
+-	int err;
+-
+-	memset(&lock, 0, sizeof(lock));
+-	lock.l_type = F_WRLCK;
+-	lock.l_whence = SEEK_SET;
+-
+-	act.sa_handler = sigalrm;
+-	sigemptyset(&act.sa_mask);
+-	act.sa_flags = 0;
+-	sigemptyset(&set);
+-	sigaddset(&set, SIGALRM);
+-
+-	sigaction(SIGALRM, &act, &oldact);
+-	sigprocmask(SIG_UNBLOCK, &set, &oldset);
+-
+-	alarm(BINDINGS_FILE_TIMEOUT);
+-	err = fcntl(fd, F_SETLKW, &lock);
+-	alarm(0);
+-
+-	if (err) {
+-		if (errno != EINTR)
+-			condlog(0, "Cannot lock bindings file : %s",
+-					strerror(errno));
+-		else
+-			condlog(0, "Bindings file is locked. Giving up.");
+-	}
+-
+-	sigprocmask(SIG_SETMASK, &oldset, NULL);
+-	sigaction(SIGALRM, &oldact, NULL);
+-	return err;
+-
+-}
+-
+-
+-static int
+-open_bindings_file(char *file, int *can_write)
+-{
+-	int fd;
+-	struct stat s;
+-
+-	if (ensure_directories_exist(file, 0700))
+-		return -1;
+-	*can_write = 1;
+-	fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+-	if (fd < 0) {
+-		if (errno == EROFS) {
+-			*can_write = 0;
+-			condlog(3, "Cannot open bindings file [%s] read/write. "
+-				" trying readonly", file);
+-			fd = open(file, O_RDONLY);
+-			if (fd < 0) {
+-				condlog(0, "Cannot open bindings file [%s] "
+-					"readonly : %s", file, strerror(errno));
+-				return -1;
+-			}
+-		}
+-		else {
+-			condlog(0, "Cannot open bindings file [%s] : %s", file,
+-				strerror(errno));
+-			return -1;
+-		}
+-	}
+-	if (*can_write && lock_bindings_file(fd) < 0)
+-		goto fail;
+-
+-	memset(&s, 0, sizeof(s));
+-	if (fstat(fd, &s) < 0){
+-		condlog(0, "Cannot stat bindings file : %s", strerror(errno));
+-		goto fail;
+-	}
+-	if (s.st_size == 0) {
+-		if (*can_write == 0)
+-			goto fail;
+-		/* If bindings file is empty, write the header */
+-		size_t len = strlen(BINDINGS_FILE_HEADER);
+-		if (write_all(fd, BINDINGS_FILE_HEADER, len) != len) {
+-			condlog(0,
+-				"Cannot write header to bindings file : %s",
+-				strerror(errno));
+-			/* cleanup partially written header */
+-			ftruncate(fd, 0);
+-			goto fail;
+-		}
+-		fsync(fd);
+-		condlog(3, "Initialized new bindings file [%s]", file);
+-	}
+-
+-	return fd;
+-
+-fail:
+-	close(fd);
+-	return -1;
+-}
+-
+-static int
+ format_devname(char *name, int id, int len, char *prefix)
+ {
+ 	int pos;
+@@ -366,7 +220,7 @@ get_user_friendly_alias(char *wwid, char
+ 		return NULL;
+ 	}
+ 
+-	fd = open_bindings_file(file, &can_write);
++	fd = open_file(file, &can_write, BINDINGS_FILE_HEADER);
+ 	if (fd < 0)
+ 		return NULL;
+ 
+@@ -416,7 +270,7 @@ get_user_friendly_wwid(char *alias, char
+ 		return NULL;
+ 	}
+ 
+-	fd = open_bindings_file(file, &unused);
++	fd = open_file(file, &unused, BINDINGS_FILE_HEADER);
+ 	if (fd < 0)
+ 		return NULL;
+ 
+Index: multipath-tools-101104/libmultipath/alias.h
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/alias.h
++++ multipath-tools-101104/libmultipath/alias.h
+@@ -1,4 +1,3 @@
+-#define BINDINGS_FILE_TIMEOUT 30
+ #define BINDINGS_FILE_HEADER \
+ "# Multipath bindings, Version : 1.0\n" \
+ "# NOTE: this file is automatically maintained by the multipath program.\n" \
+Index: multipath-tools-101104/libmultipath/config.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/config.c
++++ multipath-tools-101104/libmultipath/config.c
+@@ -462,6 +462,7 @@ load_config (char * file)
+ 	conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
+ 	conf->flush_on_last_del = 0;
+ 	conf->attribute_flags = 0;
++	conf->find_multipaths = DEFAULT_FIND_MULTIPATHS;
+ 
+ 	/*
+ 	 * preload default hwtable
+Index: multipath-tools-101104/libmultipath/config.h
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/config.h
++++ multipath-tools-101104/libmultipath/config.h
+@@ -84,6 +84,7 @@ struct config {
+ 	int attribute_flags;
+ 	int fast_io_fail;
+ 	unsigned int dev_loss;
++	int find_multipaths;
+ 	uid_t uid;
+ 	gid_t gid;
+ 	mode_t mode;
+Index: multipath-tools-101104/libmultipath/configure.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/configure.c
++++ multipath-tools-101104/libmultipath/configure.c
+@@ -35,6 +35,7 @@
+ #include "alias.h"
+ #include "prio.h"
+ #include "util.h"
++#include "finder.h"
+ 
+ extern int
+ setup_map (struct multipath * mpp)
+@@ -403,6 +404,8 @@ domap (struct multipath * mpp)
+ 		 * DM_DEVICE_CREATE, DM_DEVICE_RENAME, or DM_DEVICE_RELOAD
+ 		 * succeeded
+ 		 */
++		if (mpp->action == ACT_CREATE)
++			remember_wwid(mpp->wwid);
+ 		if (!conf->daemon) {
+ 			/* multipath client mode */
+ 			dm_switchgroup(mpp->alias, mpp->bestpg);
+@@ -462,6 +465,10 @@ coalesce_paths (struct vectors * vecs, v
+ 
+ 	memset(empty_buff, 0, WWID_SIZE);
+ 
++	/* ignore refwwid if it's empty */
++	if (refwwid && !strlen(refwwid))
++		refwwid = NULL;
++
+ 	if (force_reload) {
+ 		vector_foreach_slot (pathvec, pp1, k) {
+ 			pp1->mpp = NULL;
+@@ -491,6 +498,13 @@ coalesce_paths (struct vectors * vecs, v
+ 		if (refwwid && strncmp(pp1->wwid, refwwid, WWID_SIZE))
+ 			continue;
+ 
++		/* If find_multipaths was selected check if the path is valid */
++		if (conf->find_multipaths && !refwwid &&
++		    !should_multipath(pp1, pathvec)){
++			orphan_path(pp1);
++			continue;
++		}
++
+ 		/*
+ 		 * at this point, we know we really got a new mp
+ 		 */
+Index: multipath-tools-101104/libmultipath/defaults.h
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/defaults.h
++++ multipath-tools-101104/libmultipath/defaults.h
+@@ -13,6 +13,7 @@
+ #define DEFAULT_PGTIMEOUT      -PGTIMEOUT_NONE
+ #define DEFAULT_USER_FRIENDLY_NAMES    0
+ #define DEFAULT_VERBOSITY	2
++#define DEFAULT_FIND_MULTIPATHS 0
+ 
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
+@@ -21,5 +22,6 @@
+ #define DEFAULT_SOCKET		"/var/run/multipathd.sock"
+ #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
+ #define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
++#define DEFAULT_WWIDS_FILE	"/etc/multipath/wwids"
+ 
+ char * set_default (char * str);
+Index: multipath-tools-101104/libmultipath/dict.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/dict.c
++++ multipath-tools-101104/libmultipath/dict.c
+@@ -454,6 +454,27 @@ def_flush_on_last_del_handler(vector str
+ }
+ 
+ static int
++def_find_multipaths_handler(vector strvec)
++{
++	char * buff;
++
++	buff = set_value(strvec);
++
++	if (!buff)
++		return 1;
++
++	if ((strlen(buff) == 2 && !strcmp(buff, "no")) ||
++	    (strlen(buff) == 1 && !strcmp(buff, "0")))
++		conf->find_multipaths = 0;
++	else if ((strlen(buff) == 3 && !strcmp(buff, "yes")) ||
++		 (strlen(buff) == 1 && !strcmp(buff, "1")))
++		conf->find_multipaths = 1;
++
++	FREE(buff);
++	return 0;
++}
++
++static int
+ names_handler(vector strvec)
+ {
+ 	char * buff;
+@@ -2105,6 +2126,18 @@ snprint_def_flush_on_last_del (char * bu
+ }
+ 
+ static int
++snprint_def_find_multipaths (char * buff, int len, void * data)
++{
++	if (conf->find_multipaths == DEFAULT_FIND_MULTIPATHS)
++		return 0;
++	if (!conf->find_multipaths)
++		return snprintf(buff, len, "no");
++
++	return snprintf(buff, len, "yes");
++}
++
++
++static int
+ snprint_def_user_friendly_names (char * buff, int len, void * data)
+ {
+ 	if (conf->user_friendly_names == DEFAULT_USER_FRIENDLY_NAMES)
+@@ -2182,6 +2215,7 @@ init_keywords(void)
+ 	install_keyword("gid", &def_gid_handler, &snprint_def_gid);
+ 	install_keyword("fast_io_fail_tmo", &def_fast_io_fail_handler, &snprint_def_fast_io_fail);
+ 	install_keyword("dev_loss_tmo", &def_dev_loss_handler, &snprint_def_dev_loss);
++	install_keyword("find_multipaths", &def_find_multipaths_handler, &snprint_def_find_multipaths);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_getuid_callout", &def_getuid_callout_handler, NULL);
+Index: multipath-tools-101104/libmultipath/file.c
+===================================================================
+--- /dev/null
++++ multipath-tools-101104/libmultipath/file.c
+@@ -0,0 +1,178 @@
++/*
++ * Copyright (c) 2005 Christophe Varoqui
++ * Copyright (c) 2005 Benjamin Marzinski, Redhat
++ */
++#include <stdlib.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <errno.h>
++#include <unistd.h>
++#include <string.h>
++#include <limits.h>
++#include <stdio.h>
++#include <signal.h>
++
++#include "file.h"
++#include "debug.h"
++#include "uxsock.h"
++
++
++/*
++ * significant parts of this file were taken from iscsi-bindings.c of the
++ * linux-iscsi project.
++ * Copyright (C) 2002 Cisco Systems, Inc.
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published
++ * by the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License for more details.
++ *
++ * See the file COPYING included with this distribution for more details.
++ */
++
++static int
++ensure_directories_exist(char *str, mode_t dir_mode)
++{
++	char *pathname;
++	char *end;
++	int err;
++
++	pathname = strdup(str);
++	if (!pathname){
++		condlog(0, "Cannot copy file pathname %s : %s",
++			str, strerror(errno));
++		return -1;
++	}
++	end = pathname;
++	/* skip leading slashes */
++	while (end && *end && (*end == '/'))
++		end++;
++
++	while ((end = strchr(end, '/'))) {
++		/* if there is another slash, make the dir. */
++		*end = '\0';
++		err = mkdir(pathname, dir_mode);
++		if (err && errno != EEXIST) {
++			condlog(0, "Cannot make directory [%s] : %s",
++				pathname, strerror(errno));
++			free(pathname);
++			return -1;
++		}
++		if (!err)
++			condlog(3, "Created dir [%s]", pathname);
++		*end = '/';
++		end++;
++	}
++	free(pathname);
++	return 0;
++}
++
++static void
++sigalrm(int sig)
++{
++	/* do nothing */
++}
++
++static int
++lock_file(int fd, char *file_name)
++{
++	struct sigaction act, oldact;
++	sigset_t set, oldset;
++	struct flock lock;
++	int err;
++
++	memset(&lock, 0, sizeof(lock));
++	lock.l_type = F_WRLCK;
++	lock.l_whence = SEEK_SET;
++
++	act.sa_handler = sigalrm;
++	sigemptyset(&act.sa_mask);
++	act.sa_flags = 0;
++	sigemptyset(&set);
++	sigaddset(&set, SIGALRM);
++
++	sigaction(SIGALRM, &act, &oldact);
++	sigprocmask(SIG_UNBLOCK, &set, &oldset);
++
++	alarm(FILE_TIMEOUT);
++	err = fcntl(fd, F_SETLKW, &lock);
++	alarm(0);
++
++	if (err) {
++		if (errno != EINTR)
++			condlog(0, "Cannot lock %s : %s", file_name,
++				strerror(errno));
++		else
++			condlog(0, "%s is locked. Giving up.", file_name);
++	}
++
++	sigprocmask(SIG_SETMASK, &oldset, NULL);
++	sigaction(SIGALRM, &oldact, NULL);
++	return err;
++}
++
++int
++open_file(char *file, int *can_write, char *header)
++{
++	int fd;
++	struct stat s;
++
++	if (ensure_directories_exist(file, 0700))
++		return -1;
++	*can_write = 1;
++	fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
++	if (fd < 0) {
++		if (errno == EROFS) {
++			*can_write = 0;
++			condlog(3, "Cannot open file [%s] read/write. "
++				" trying readonly", file);
++			fd = open(file, O_RDONLY);
++			if (fd < 0) {
++				condlog(0, "Cannot open file [%s] "
++					"readonly : %s", file, strerror(errno));
++				return -1;
++			}
++		}
++		else {
++			condlog(0, "Cannot open file [%s] : %s", file,
++				strerror(errno));
++			return -1;
++		}
++	}
++	if (*can_write && lock_file(fd, file) < 0)
++		goto fail;
++
++	memset(&s, 0, sizeof(s));
++	if (fstat(fd, &s) < 0){
++		condlog(0, "Cannot stat file %s : %s", file, strerror(errno));
++		goto fail;
++	}
++	if (s.st_size == 0) {
++		if (*can_write == 0)
++			goto fail;
++		/* If file is empty, write the header */
++		size_t len = strlen(header);
++		if (write_all(fd, header, len) != len) {
++			condlog(0,
++				"Cannot write header to file %s : %s", file,
++				strerror(errno));
++			/* cleanup partially written header */
++			ftruncate(fd, 0);
++			goto fail;
++		}
++		fsync(fd);
++		condlog(3, "Initialized new file [%s]", file);
++	}
++
++	return fd;
++
++fail:
++	close(fd);
++	return -1;
++}
+Index: multipath-tools-101104/libmultipath/file.h
+===================================================================
+--- /dev/null
++++ multipath-tools-101104/libmultipath/file.h
+@@ -0,0 +1,11 @@
++/*
++ * Copyright (c) 2010 Benjamin Marzinski, Redhat
++ */
++
++#ifndef _FILE_H
++#define _FILE_H
++
++#define FILE_TIMEOUT 30
++int open_file(char *file, int *can_write, char *header);
++
++#endif /* _FILE_H */
+Index: multipath-tools-101104/libmultipath/finder.c
+===================================================================
+--- /dev/null
++++ multipath-tools-101104/libmultipath/finder.c
+@@ -0,0 +1,165 @@
++#include <stdlib.h>
++#include <errno.h>
++#include <unistd.h>
++#include <string.h>
++#include <limits.h>
++#include <stdio.h>
++
++#include "checkers.h"
++#include "vector.h"
++#include "structs.h"
++#include "debug.h"
++#include "uxsock.h"
++#include "file.h"
++#include "finder.h"
++#include "defaults.h"
++
++/*
++ * Copyright (c) 2010 Benjamin Marzinski, Redhat
++ */
++
++static int
++lookup_wwid(FILE *f, char *wwid) {
++	int c;
++	char buf[LINE_MAX];
++	int count;
++
++	while ((c = fgetc(f)) != EOF){
++		if (c != '/') {
++			if (fgets(buf, LINE_MAX, f) == NULL)
++				return 0;
++			else
++				continue;
++		}
++		count = 0;
++		while ((c = fgetc(f)) != '/') {
++			if (c == EOF)
++				return 0;
++			if (count >= WWID_SIZE - 1)
++				goto next;
++			if (wwid[count] == '\0')
++				goto next;
++			if (c != wwid[count++])
++				goto next;
++		}
++		if (wwid[count] == '\0')
++			return 1;
++next:
++		if (fgets(buf, LINE_MAX, f) == NULL)
++			return 0;
++	}
++	return 0;
++}
++
++static int
++write_out_wwid(int fd, char *wwid) {
++	int ret;
++	off_t offset;
++	char buf[WWID_SIZE + 3];
++
++	ret = snprintf(buf, WWID_SIZE + 3, "/%s/\n", wwid);
++	if (ret >= (WWID_SIZE + 3) || ret < 0){
++		condlog(0, "can't format wwid for writing (%d) : %s",
++			ret, strerror(errno));
++		return -1;
++	}
++	offset = lseek(fd, 0, SEEK_END);
++	if (offset < 0) {
++		condlog(0, "can't seek to the end of wwids file : %s",
++			strerror(errno));
++		return -1;
++	}
++	if (write_all(fd, buf, strlen(buf)) != strlen(buf)) {
++		condlog(0, "cannot write wwid to wwids file : %s",
++			strerror(errno));
++		ftruncate(fd, offset);
++		return -1;
++	}
++	return 1;
++}
++
++static int
++check_wwids_file(char *wwid, int write_wwid)
++{
++	int scan_fd, fd, can_write, found, ret;
++	FILE *f;
++	fd = open_file(DEFAULT_WWIDS_FILE, &can_write, WWIDS_FILE_HEADER);
++	if (fd < 0)
++		return -1;
++
++	scan_fd = dup(fd);
++	if (scan_fd < 0) {
++		condlog(0, "can't dup wwids file descriptor : %s",
++			strerror(errno));
++		close(fd);
++		return -1;
++	}
++	f = fdopen(scan_fd, "r");
++	if (!f) {
++		condlog(0,"can't fdopen wwids file : %s", strerror(errno));
++		close(fd);
++		close(scan_fd);
++		return -1;
++	}
++	found = lookup_wwid(f, wwid);
++	if (found) {
++		ret = 0;
++		goto out;
++	}
++	if (!write_wwid) {
++		ret = -1;
++		goto out;
++	}
++	if (!can_write) {
++		condlog(0, "wwids file is read-only. Can't write wwid");
++		ret = -1;
++		goto out;
++	}
++	ret = write_out_wwid(fd, wwid);
++out:
++	fclose(f);
++	close(scan_fd);
++	close(fd);
++	return ret;
++}
++
++int
++should_multipath(struct path *pp1, vector pathvec)
++{
++	int i;
++	struct path *pp2;
++
++	condlog(4, "checking if %s should be multipathed", pp1->dev);
++	vector_foreach_slot(pathvec, pp2, i) {
++		if (pp1->dev == pp2->dev)
++			continue;
++		if (strncmp(pp1->wwid, pp2->wwid, WWID_SIZE) == 0) {
++			condlog(3, "found multiple paths with wwid %s, "
++				"multipathing %s", pp1->wwid, pp1->dev);
++			return 1;
++		}
++	}
++	if (check_wwids_file(pp1->wwid, 0) < 0) {
++		condlog(3, "wwid %s not in wwids file, skipping %s",
++			pp1->wwid, pp1->dev);
++		return 0;
++	}
++	condlog(3, "found wwid %s in wwids file, multipathing %s", pp1->wwid,
++		pp1->dev);
++	return 1;
++}
++
++int
++remember_wwid(char *wwid)
++{
++	int ret = check_wwids_file(wwid, 1);
++	if (ret < 0){
++		condlog(3, "failed writing wwid %s to wwids file", wwid);
++		return -1;
++	}
++	if (ret == 1)
++		condlog(3, "wrote wwid %s to wwids file", wwid);
++	else
++		condlog(4, "wwid %s already in wwids file", wwid);
++	return 0;
++}
+Index: multipath-tools-101104/libmultipath/finder.h
+===================================================================
+--- /dev/null
++++ multipath-tools-101104/libmultipath/finder.h
+@@ -0,0 +1,18 @@
++/*
++ * Copyright (c) 2010 Benjamin Marzinski, Redhat
++ */
++
++#ifndef _FINDER_H
++#define _FINDER_H
++
++#define WWIDS_FILE_HEADER \
++"# Multipath wwids, Version : 1.0\n" \
++"# NOTE: This file is automatically maintained by multipath and multipathd.\n" \
++"# You should not need to edit this file in normal circumstances.\n" \
++"#\n" \
++"# Valid WWIDs:\n"
++
++int should_multipath(struct path *pp, vector pathvec);
++int remember_wwid(char *wwid);
++
++#endif /* _FINDER_H */
+Index: multipath-tools-101104/multipath/main.c
+===================================================================
+--- multipath-tools-101104.orig/multipath/main.c
++++ multipath-tools-101104/multipath/main.c
+@@ -51,6 +51,7 @@
+ #include <errno.h>
+ #include <sys/time.h>
+ #include <sys/resource.h>
++#include <finder.h>
+ 
+ int logsink;
+ 
+@@ -200,6 +201,7 @@ get_dm_mpvec (vector curmp, vector pathv
+ 
+ 		if (!conf->dry_run)
+ 			reinstate_paths(mpp);
++		remember_wwid(mpp->wwid);
+ 	}
+ 	return 0;
+ }
+@@ -307,7 +309,7 @@ configure (void)
+ 	/*
+ 	 * core logic entry point
+ 	 */
+-	r = coalesce_paths(&vecs, NULL, NULL, conf->force_reload);
++	r = coalesce_paths(&vecs, NULL, refwwid, conf->force_reload);
+ 
+ out:
+ 	if (refwwid)
+Index: multipath-tools-101104/multipathd/main.c
+===================================================================
+--- multipath-tools-101104.orig/multipathd/main.c
++++ multipath-tools-101104/multipathd/main.c
+@@ -48,6 +48,7 @@
+ #include <configure.h>
+ #include <prio.h>
+ #include <pgpolicies.h>
++#include <finder.h>
+ 
+ #include "main.h"
+ #include "pidfile.h"
+@@ -425,6 +426,11 @@ rescan:
+ 		mpp->action = ACT_RELOAD;
+ 	}
+ 	else {
++		if (conf->find_multipaths &&
++		    !should_multipath(pp, vecs->pathvec)) {
++			orphan_path(pp);
++			return 0;
++		}
+ 		if (!pp->size) {
+ 			condlog(0, "%s: failed to create new map,"
+ 				" %s device size is 0 ", devname, pp->dev);
+Index: multipath-tools-101104/libmultipath/Makefile
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/Makefile
++++ multipath-tools-101104/libmultipath/Makefile
+@@ -15,7 +15,7 @@ OBJS = memory.o parser.o vector.o devmap
+        pgpolicies.o debug.o regex.o defaults.o uevent.o \
+        switchgroup.o uxsock.o print.o alias.o log_pthread.o \
+        log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
+-       lock.o waiter.o
++       lock.o waiter.o file.o finder.o
+ 
+ LIBDM_API_FLUSH = $(shell grep -Ecs '^[a-z]*[[:space:]]+dm_task_no_flush' /usr/include/libdevmapper.h)
+ 
+Index: multipath-tools-101104/multipath/multipath.conf.5
+===================================================================
+--- multipath-tools-101104.orig/multipath/multipath.conf.5
++++ multipath-tools-101104/multipath/multipath.conf.5
+@@ -77,6 +77,25 @@ default is
+ directory where udev creates its device nodes; default is
+ .I /dev
+ .TP
++.B find_multipaths
++If set to
++.I yes
++, instead of trying to create a multipath device for every non-blacklisted
++path, multipath will only create a device if one of three condidions are
++met.
++.I 1
++There are at least two non-blacklisted paths with the same wwid,
++.I 2
++the user manually forces the creation, by specifying a device with the multipath
++command, or
++.I 3
++a path has the same WWID as a multipath device that was previously created
++(even if that multipath device doesn't currently exist).
++Whenever a multipath device is created, multipath will remeber the WWID of the
++device, so that it will automatically create the device again, as soon as it
++sees a path with that WWID. This should allow most users to have multipath automatically choose the correct paths to make intousers to have multipath automatically choose the correct paths to make into multipath devices, without having to edit the blacklist; Default is
++.I no
++.TP
+ .B verbosity
+ default verbosity. Higher values increase the verbosity level. Valid
+ levels are between 0 and 6; default is
