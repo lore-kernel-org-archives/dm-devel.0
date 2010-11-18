@@ -1,70 +1,90 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: [dm-devel] block_abort_queue (blk_abort_request) racing with
- scsi_request_fn
-Date: Wed, 17 Nov 2010 09:49:25 -0800
-Message-ID: <20101117174925.GA2176@linux.vnet.ibm.com>
-References: <20100512052336.GB15240@linux.vnet.ibm.com>
- <4CDA4524.4010204@cs.wisc.edu>
- <4CDA49F8.9050406@cs.wisc.edu>
- <20101110163047.GA26201@linux.vnet.ibm.com>
- <4CDB0BAA.8060801@cs.wisc.edu>
- <20101112175440.GA3978@linux.vnet.ibm.com>
- <20101116213904.GA470@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] dm mpath: add feature flag to control call to blk_abort_queue
+Date: Wed, 17 Nov 2010 23:40:22 -0500
+Message-ID: <1290055222-12320-1-git-send-email-snitzer@redhat.com>
+References: <20101117215541.GA7785@redhat.com>
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20101116213904.GA470@redhat.com>
+In-Reply-To: <20101117215541.GA7785@redhat.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Christie <michaelc@cs.wisc.edu>, James Bottomley <James.Bottomley@suse.de>, linux-scsi@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: linux-scsi@vger.kernel.org, Mike Anderson <andmike@linux.vnet.ibm.com>, Mike Christie <michaelc@cs.wisc.edu>
 List-Id: dm-devel.ids
 
-Mike Snitzer <snitzer@redhat.com> wrote:
-> Hi Mike,
-> 
-> On Fri, Nov 12 2010 at 12:54pm -0500,
-> Mike Anderson <andmike@linux.vnet.ibm.com> wrote:
-> 
-> > By not directly timing out the I/O but accelerating the timeout by a
-> > factor. The value could be calculated as a percentage of the queue timeout
-> > value for a default with the option of exposing a sysfs attribute
-> > similar to fast_io_fail_tmo. The attribute could also provide a off
-> > method which we do not have today and is my bad that we do not have one
-> > (I posted the features patch to multipath but did not followup which
-> > would have provided a off).
-> 
-> You're referring to these patches:
-> https://patchwork.kernel.org/patch/96674/
-> https://patchwork.kernel.org/patch/96673/
-> 
+Add 'features' member to 'struct multipath' and introduce
+MPF_ABORT_QUEUE as the first feature flag.  If "abort_queue_on_failure"
+is provided during mpath device configuration the MPF_ABORT_QUEUE
+feature flag will be set and blk_abort_queue() will be called during
+path failure to allow for lower latency path failures.
 
-Yes these are the patches that I was referring to.
+But this feature has been disabled by default due to a race (between
+blk_abort_queue and scsi_request_fn) that can lead to list corruption,
+from: https://www.redhat.com/archives/dm-devel/2010-November/msg00085.html
 
-> Do you have an interest in pursuing these further? 
+"the cmd gets blk_abort_queued/timedout run on it and the scsi eh
+somehow is able to complete and run scsi_queue_insert while
+scsi_request_fn is still trying to process the request."
 
-Yes.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Mike Anderson <andmike@linux.vnet.ibm.com>
+Cc: Mike Christie <michaelc@cs.wisc.edu>
+---
+ drivers/md/dm-mpath.c |   19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
 
-> In the near-term
-> should we default to off (so introduce MP_FEATURE_ABORT_Q) -- given the
-> current race which exposes corruption?
-> 
-
-Given the current race exposure default to off might be the best choice.
-
-> Or are you now interested in accelerating the timeout?  I'd need to
-> review this thread in more detail to give you an opinion.  But I do know
-> that simply disabling dm-mpath's call to blk_abort_queue() enables some
-> extensive path failure load testing to _not_ cause the list corruption
-> that leads to a crash.
-
-I think the on/off control plus a fix to address the issue when it is on
-would be good. Since I do not believe we want the impact the normal IO
-path by more lock bouncing adding modification of the blk_abort_queue
-function appeared like one of the least distributive options. There might
-be others.
-
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+Index: linux-2.6/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-mpath.c
++++ linux-2.6/drivers/md/dm-mpath.c
+@@ -56,8 +56,14 @@ struct priority_group {
+ 	struct list_head pgpaths;
+ };
+ 
++/*
++ * Bits for the m->features
++ */
++#define MPF_ABORT_QUEUE 0
++
+ /* Multipath context */
+ struct multipath {
++	unsigned long features;
+ 	struct list_head list;
+ 	struct dm_target *ti;
+ 
+@@ -146,7 +152,8 @@ static void deactivate_path(struct work_
+ 	struct pgpath *pgpath =
+ 		container_of(work, struct pgpath, deactivate_path);
+ 
+-	blk_abort_queue(pgpath->path.dev->bdev->bd_disk->queue);
++	if (test_bit(MPF_ABORT_QUEUE, &pgpath->pg->m->features))
++		blk_abort_queue(pgpath->path.dev->bdev->bd_disk->queue);
+ }
+ 
+ static struct priority_group *alloc_priority_group(void)
+@@ -813,6 +820,11 @@ static int parse_features(struct arg_set
+ 			continue;
+ 		}
+ 
++		if (!strnicmp(param_name, MESG_STR("abort_queue_on_failure"))) {
++			set_bit(MPF_ABORT_QUEUE, &m->features);
++			continue;
++		}
++
+ 		if (!strnicmp(param_name, MESG_STR("pg_init_retries")) &&
+ 		    (argc >= 1)) {
+ 			r = read_param(_params + 1, shift(as),
+@@ -1382,11 +1394,14 @@ static int multipath_status(struct dm_ta
+ 		DMEMIT("2 %u %u ", m->queue_size, m->pg_init_count);
+ 	else {
+ 		DMEMIT("%u ", m->queue_if_no_path +
+-			      (m->pg_init_retries > 0) * 2);
++			      (m->pg_init_retries > 0) * 2 +
++			      test_bit(MPF_ABORT_QUEUE, &m->features));
+ 		if (m->queue_if_no_path)
+ 			DMEMIT("queue_if_no_path ");
+ 		if (m->pg_init_retries)
+ 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
++		if (test_bit(MPF_ABORT_QUEUE, &m->features))
++			DMEMIT("abort_queue_on_failure ");
+ 	}
+ 
+ 	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
