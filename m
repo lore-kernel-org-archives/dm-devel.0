@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 7 of 9] dm raid iterate_devices and io_hints
-Date: Thu, 18 Nov 2010 17:43:24 -0600
-Message-ID: <201011182343.oAINhOHF010893@hydrogen.msp.redhat.com>
+Subject: [PATCH 9 of 9] dm raid message fn
+Date: Thu, 18 Nov 2010 17:43:45 -0600
+Message-ID: <201011182343.oAINhjN6011041@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,63 +19,59 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-raid-iterate_devices-and-io_hints.patch
+Patch name: dm-raid-message-fn.patch
 
-Addition of .iterate_devices and .io_hints function required
-by device-mapper target implementations... further fleshing
-out the new target.
+Addition of the .message function to provide the
+ability to:
+ - change the size of the stripe cache
+ - change the speed limiter on resync.
+
+<JB> Would it make sense to provide a way to set these
+     via the CTR also?
 
 Signed-off-by: NeilBrown <neilb@suse.de>
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-
+RFC-by: Jonathan Brassow <jbrassow@redhat.com>
 Index: linux-2.6/drivers/md/dm-raid.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-raid.c
 +++ linux-2.6/drivers/md/dm-raid.c
-@@ -454,6 +454,37 @@ static int raid_status(struct dm_target 
- 	return 0;
+@@ -504,6 +504,31 @@ static void raid_resume(struct dm_target
+ 	mddev_resume(&rs->md);
  }
  
-+static int raid_iterate_devices(struct dm_target *ti,
-+				iterate_devices_callout_fn fn,
-+				void *data)
++/* Parse and handle a message from userspace
++ * Messages are:
++ *    stripecache  N  (pages per devices)
++ *    minspeed  N          (kibibytes per seconds)
++ */
++static int raid_message(struct dm_target *ti, unsigned argc, char **argv)
 +{
 +	struct raid_set *rs = ti->private;
-+	int ret = 0;
-+	unsigned i = 0;
 +
-+	for (i = 0; !ret && i < rs->md.raid_disks; i++)
-+		if (rs->dev[i].data_dev)
-+			ret = fn(ti,
-+				 rs->dev[i].data_dev,
-+				 0, /* No offset on data devs */
-+				 rs->md.dev_sectors,
-+				 data);
-+
-+	return ret;
-+}
-+
-+static void raid_io_hints(struct dm_target *ti,
-+			  struct queue_limits *limits)
-+{
-+	struct raid_set *rs = ti->private;
-+	unsigned chunk_size = rs->md.chunk_sectors << 9;
-+	raid5_conf_t *conf = rs->md.private;
-+
-+	blk_limits_io_min(limits, chunk_size);
-+	blk_limits_io_opt(limits, chunk_size *
-+			  (conf->raid_disks - conf->max_degraded));
++	if (argc == 2 && strcmp(argv[0], "stripecache") == 0) {
++		unsigned long size;
++		if (strict_strtoul(argv[1], 10, &size))
++			return -EINVAL;
++		return raid5_set_cache_size(&rs->md, size);
++	}
++	if (argc == 2 && strcmp(argv[0], "minspeed") == 0) {
++		unsigned long speed;
++		if (strict_strtoul(argv[1], 10, &speed))
++			return -EINVAL;
++		rs->md.sync_speed_min = speed;
++		return 0;
++	}
++	return -EINVAL;
 +}
 +
  static struct target_type raid_target = {
  	.name = "raid",
  	.version = {1, 0, 0},
-@@ -462,6 +493,8 @@ static struct target_type raid_target = 
- 	.dtr = raid_dtr,
- 	.map = raid_map,
- 	.status = raid_status,
-+	.iterate_devices = raid_iterate_devices,
-+	.io_hints = raid_io_hints,
+@@ -517,6 +542,7 @@ static struct target_type raid_target = 
+ 	.presuspend = raid_presuspend,
+ 	.postsuspend = raid_postsuspend,
+ 	.resume = raid_resume,
++	.message = raid_message,
  };
  
  static int __init dm_raid_init(void)
