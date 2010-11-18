@@ -1,46 +1,38 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: [PATCH v2] dm mpath: add feature flag to control call to
- blk_abort_queue
-Date: Wed, 17 Nov 2010 23:20:32 -0800
-Message-ID: <20101118072032.GA13390@linux.vnet.ibm.com>
-References: <20101117215541.GA7785@redhat.com>
- <1290055222-12320-1-git-send-email-snitzer@redhat.com>
+From: =?ISO-8859-1?Q?Jonas_Bj=F6rklund?= <jonas@bjorklund.cn>
+Subject: Split load balanced paths into two groups
+Date: Thu, 18 Nov 2010 09:03:52 +0100 (CET)
+Message-ID: <Pine.LNX.4.64.1011180859480.5714@crisp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1290055222-12320-1-git-send-email-snitzer@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Mike Christie <michaelc@cs.wisc.edu>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mike S,
+Hello,
 
-Thanks for doing the refresh / update of the patch.
-I just did a quick test and did not see any issues but did have a couple
-of questions.
+Is it possible to split load balanced paths into two groups?
 
-Two questions:
+mpath3 (222df000155433964) dm-2 Brand,Model
+[size=3.6T][features=1 queue_if_no_path][hwhandler=0][rw]
+\_ round-robin 0 [prio=0][active]
+  \_ 10:0:0:21 sde 8:64  [active][undef]
+  \_ 11:0:0:21 sdf 8:80  [active][undef]
+  \_ 12:0:0:21 sdh 8:112 [active][undef]
+  \_ 13:0:0:21 sdj 8:144 [active][undef]
 
-1.) Should we bump the multipath targets version for this change?
+I would like to have two failover groups. And then load balance between two paths in each group.
 
-2.) A general question on the length of the feature name
-"abort_queue_on_failure" while the descriptive name is nice I noticed if
-I have two features that the multipath output line starts wrapping. I
-guess we could make the feature name shorter, but eventually if we added
-more features the line would eventually wrap so a shorted name will just
-stop wrapping now.
+Is that possible?
 
-(I had a old experimental patch where I was trying to use the feature
-flags to control the selection of fast fail flags to use and if full
-recovery was done on the IO. The output was kinda messy, but that is to
-be expected with this type of text interface vs a attribute based
-alternative.)
-
-Thanks,
-
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+/Jonas
