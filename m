@@ -1,55 +1,119 @@
-From: Malahal Naineni <malahal@us.ibm.com>
-Subject: Re: [dm-devel] [RFC] training mpath to discern between SCSI errors
-Date: Thu, 18 Nov 2010 19:11:49 -0800
-Message-ID: <20101119031149.GA28455@us.ibm.com>
-References: <20100825155918.GB8509@redhat.com>
- <4C7B984E.4070802@suse.de>
- <4C7B9F14.9080900@mvista.com>
- <4C7BA670.2060303@suse.de>
- <4C7BC5B4.3010707@suse.de>
- <4CBC00B3.7090603@ce.jp.nec.com>
- <4CBC35AE.9050002@suse.de>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: update default configurations
+Date: Thu, 18 Nov 2010 21:33:18 -0600
+Message-ID: <20101119033318.GB13763@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ide-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4CBC35AE.9050002@suse.de>
-Sender: linux-ide-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, michaelc@cs.wisc.edu, tytso@mit.edu, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, jaxboe@fusionio.com, vst@vlnb.net, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, James.Bottomley@suse.de, Sergei Shtylyov <sshtylyov@mvista.com>, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, jack@suse.cz, rwheeler@redhat.com, swhiteho@redhat.com, chris.mason@oracle.com, Tejun Heo <tj@kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hannes Reinecke [hare@suse.de] wrote:
-> > Also (although this might be a bit off topic from your patch),
-> > can we expand such a distinction to what should be logged?
-> > Currently, it's difficult to distinguish important SCSI/block errors
-> > and less important ones in kernel log.
-> > For example, when I get a link failure on sda, kernel prints something
-> > like below, regardless of whether the I/O is recovered by multipathing or not:
-> >   end_request: I/O error, dev sda, sector XXXXX
-> > 
-> Indeed, when using the above we could be modifying the above
-> message, eg by
-> 
-> end_request: transport error, dev sda, sector XXXXX
-> 
-> or
-> 
-> end_request: target error, dev sda, sector XXXXX
-> 
-> which would improve the output noticeable.
-> 
-> > Setting REQ_QUIET in dm-multipath could mask the message
-> > but also other important ones in SCSI.
-> > 
-> Hmm. Not sure about that, but I think the above modifications will
-> be useful already.
-> 
-> I'll be sending an updated patch.
+Here are some default configuration changes that I've been sent.
 
-Hannes, is there an updated version of this patch? It applied fine with
-Linus git tree with a minor reject! I would like to test an updated
-version if you have one (the update seems to refer to better logging
-only, right?).
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/hwtable.c  |   21 ++++++++++++++++++---
+ multipath.conf.defaults |   17 +++++++++++++++--
+ 2 files changed, 33 insertions(+), 5 deletions(-)
 
-Thanks, Malahal.
+Index: multipath-tools-101104/libmultipath/hwtable.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/hwtable.c
++++ multipath-tools-101104/libmultipath/hwtable.c
+@@ -232,7 +232,7 @@ static struct hwentry default_hw[] = {
+ 		.rr_weight     = RR_WEIGHT_NONE,
+ 		.no_path_retry = 12,
+ 		.minio         = DEFAULT_MINIO,
+-		.checker_name  = CCISS_TUR,
++		.checker_name  = TUR,
+ 		.prio_name     = DEFAULT_PRIO,
+ 		.prio_args     = NULL,
+ 	},
+@@ -975,13 +975,13 @@ static struct hwentry default_hw[] = {
+ 		.vendor        = "SGI",
+ 		.product       = "IS.*",
+ 		.getuid        = DEFAULT_GETUID,
+-		.features      = DEFAULT_FEATURES,
++		.features      = "2 pg_init_retries 50",
+ 		.hwhandler     = "1 rdac",
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.no_path_retry = 15,
+ 		.minio         = DEFAULT_MINIO,
+ 		.checker_name  = RDAC,
+ 		.prio_name     = PRIO_RDAC,
+@@ -1031,6 +1031,21 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = DEFAULT_PRIO,
+ 		.prio_args     = NULL,
+ 	},
++	{
++		.vendor        = "EUROLOGC",
++		.product       = "FC2502",
++		.getuid        ="/lib/udev/scsi_id --page=0x80 --whitelisted --device=/dev/%n",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = FAILBACK_UNDEF,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = DEFAULT_CHECKER,
++		.prio_name     = DEFAULT_PRIO,
++	},
+ 	/*
+ 	 * Pivot3 RAIGE
+ 	 *
+Index: multipath-tools-101104/multipath.conf.defaults
+===================================================================
+--- multipath-tools-101104.orig/multipath.conf.defaults
++++ multipath-tools-101104/multipath.conf.defaults
+@@ -626,13 +626,13 @@
+ #		vendor			"SGI"
+ #		product			"IS.*"
+ #		getuid_callout		"/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+-#		features		"0"
++#		features		"2 pg_init_retries 50"
+ #		hardware_handler	"1 rdac"
+ #		path_selector		"round-robin 0"
+ #		path_grouping_policy	group_by_prio
+ #		failback		immediate
+ #		rr_weight		uniform
+-#		no_path_retry		queue
++#		no_path_retry		15
+ #		rr_min_io		1000
+ #		path_checker		rdac
+ #		prio			rdac
+@@ -730,4 +730,17 @@
+ #		prio			rdac
+ #		prio_args		""
+ #	}
++#	device {
++#		vendor			"EUROLOGC"
++#		product			"FC2502"
++#		getuid_callout		"/lib/udev/scsi_id --page=0x80 --whitelisted --device=/dev/%n"
++#		features                "0"
++#		hardware_handler        "0"
++#		path_selector           "round-robin 0"
++#		path_grouping_policy    group_by_prio
++#		rr_weight               uniform
++#		rr_min_io               1000
++#		path_checker		directio
++#		prio			const
++#	}
+ #}
