@@ -1,90 +1,55 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 6 of 9] dm unplug callback
-Date: Thu, 18 Nov 2010 17:43:13 -0600
-Message-ID: <201011182343.oAINhDrL010820@hydrogen.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Malahal Naineni <malahal@us.ibm.com>
+Subject: Re: [dm-devel] [RFC] training mpath to discern between SCSI errors
+Date: Thu, 18 Nov 2010 19:11:49 -0800
+Message-ID: <20101119031149.GA28455@us.ibm.com>
+References: <20100825155918.GB8509@redhat.com>
+ <4C7B984E.4070802@suse.de>
+ <4C7B9F14.9080900@mvista.com>
+ <4C7BA670.2060303@suse.de>
+ <4C7BC5B4.3010707@suse.de>
+ <4CBC00B3.7090603@ce.jp.nec.com>
+ <4CBC35AE.9050002@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ide-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4CBC35AE.9050002@suse.de>
+Sender: linux-ide-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, michaelc@cs.wisc.edu, tytso@mit.edu, linux-scsi@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, jaxboe@fusionio.com, vst@vlnb.net, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, James.Bottomley@suse.de, Sergei Shtylyov <sshtylyov@mvista.com>, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, jack@suse.cz, rwheeler@redhat.com, swhiteho@redhat.com, chris.mason@oracle.com, Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-Patch name: dm-unplug-callback.patch
+Hannes Reinecke [hare@suse.de] wrote:
+> > Also (although this might be a bit off topic from your patch),
+> > can we expand such a distinction to what should be logged?
+> > Currently, it's difficult to distinguish important SCSI/block errors
+> > and less important ones in kernel log.
+> > For example, when I get a link failure on sda, kernel prints something
+> > like below, regardless of whether the I/O is recovered by multipathing or not:
+> >   end_request: I/O error, dev sda, sector XXXXX
+> > 
+> Indeed, when using the above we could be modifying the above
+> message, eg by
+> 
+> end_request: transport error, dev sda, sector XXXXX
+> 
+> or
+> 
+> end_request: target error, dev sda, sector XXXXX
+> 
+> which would improve the output noticeable.
+> 
+> > Setting REQ_QUIET in dm-multipath could mask the message
+> > but also other important ones in SCSI.
+> > 
+> Hmm. Not sure about that, but I think the above modifications will
+> be useful already.
+> 
+> I'll be sending an updated patch.
 
+Hannes, is there an updated version of this patch? It applied fine with
+Linus git tree with a minor reject! I would like to test an updated
+version if you have one (the update seems to refer to better logging
+only, right?).
 
-In a similar manner to congestion checking, per-target
-unplug support for raid456 under dm.
-
-Signed-off-by: NeilBrown <neilb@suse.de>
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-Index: linux-2.6/drivers/md/dm-raid.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-raid.c
-+++ linux-2.6/drivers/md/dm-raid.c
-@@ -258,6 +258,14 @@ static int raid_is_congested(void *v, in
- 					   callbacks);
- 	return md_raid5_congested(&rs->md, bits);
- }
-+static void raid_unplug(void *v)
-+{
-+	struct target_callbacks *cb = v;
-+	struct raid_set *rs = container_of(cb, struct raid_set,
-+					   callbacks);
-+	md_raid5_unplug_device(rs->md.private);
-+}
-+
- /*
-  * Construct a RAID4/5/6 mapping:
-  * Args:
-@@ -341,6 +349,7 @@ static int raid_ctr(struct dm_target *ti
- 	if (errnum)
- 		goto err;
- 
-+	rs->callbacks.unplug_fn = raid_unplug;
- 	rs->callbacks.congested_fn = raid_is_congested;
- 	dm_table_add_callbacks(ti->table, &rs->callbacks);
- 
-Index: linux-2.6/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c
-+++ linux-2.6/drivers/md/dm-table.c
-@@ -1283,6 +1283,7 @@ void dm_table_unplug_all(struct dm_table
- {
- 	struct dm_dev_internal *dd;
- 	struct list_head *devices = dm_table_get_devices(t);
-+	struct target_callbacks *cb;
- 
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->dm_dev.bdev);
-@@ -1295,6 +1296,9 @@ void dm_table_unplug_all(struct dm_table
- 				     dm_device_name(t->md),
- 				     bdevname(dd->dm_dev.bdev, b));
- 	}
-+	list_for_each_entry(cb, &t->target_callbacks, list)
-+		if (cb->unplug_fn)
-+			cb->unplug_fn(cb);
- }
- 
- struct mapped_device *dm_table_get_md(struct dm_table *t)
-Index: linux-2.6/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.orig/include/linux/device-mapper.h
-+++ linux-2.6/include/linux/device-mapper.h
-@@ -197,6 +197,7 @@ struct dm_target {
- struct target_callbacks {
- 	struct list_head list;
- 	congested_fn *congested_fn;
-+	void (*unplug_fn)(void *);
- };
- 
- int dm_register_target(struct target_type *t);
+Thanks, Malahal.
