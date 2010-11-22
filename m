@@ -1,87 +1,105 @@
-From: Ben Hutchings <ben@decadent.org.uk>
-Subject: Bug#604049: linux-image-2.6.32-5-amd64: data corruption with promise stex driver and use of device-mapper layers (lvm/dm-crypt/..)
-Date: Sat, 20 Nov 2010 05:33:42 +0000
-Message-ID: <1290231222.3818.167.camel@localhost>
-References: <20101119192614.1895.78157.reportbug@niassan.19.ros.03046.com>
-Reply-To: Ben Hutchings <ben@decadent.org.uk>, 604049@bugs.debian.org
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Remove BIO_RW_SYNCIO flag from kcopyd
+Date: Mon, 22 Nov 2010 08:45:28 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1011220836001.14802@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1010242101590.6231@hs20-bc2-1.build.redhat.com>
+	<20101119221725.GA25730@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature"; boundary="=-zmrLZQ71yAdbSY+ONj3h"
-Return-path: <bounce-debian-bugs-rc=glddbr-debian-bugs-rc=gmane.org@lists.debian.org>
-Resent-To: debian-bugs-dist@lists.debian.org
-Resent-Message-ID: <handler.604049.B604049.129023125817348@bugs.debian.org>
-In-Reply-To: <20101119192614.1895.78157.reportbug@niassan.19.ros.03046.com>
-List-Post: <mailto:debian-bugs-rc@lists.debian.org>
-List-Help: <mailto:debian-bugs-rc-request@lists.debian.org?subject=help>
-List-Subscribe: <mailto:debian-bugs-rc-request@lists.debian.org?subject=subscribe>
-List-Unsubscribe: <mailto:debian-bugs-rc-request@lists.debian.org?subject=unsubscribe>
-To: Ed Lin - PTU <ed.lin@promise.com>, Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com
-Cc: Markus Schulz <msc@antzsystem.de>, 604049@bugs.debian.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20101119221725.GA25730@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+Hi
 
---=-zmrLZQ71yAdbSY+ONj3h
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+On Fri, 19 Nov 2010, Mike Snitzer wrote:
 
-On Fri, 2010-11-19 at 20:26 +0100, Markus Schulz wrote:
-> Package: linux-2.6
-> Version: 2.6.32-27
-> Severity: critical
-> Tags: d-i upstream
-> Justification: causes serious data loss
->=20
-> any use of the stex.ko promise hw-raid controller driver with a
-> device-mapper layer produces data corruption (or filesystem corruption
-> like you can see in my dmesg).
-[...]
-> i've asked Ed Lin (Maintainer of stex.c from promise) on lkml and got the=
- following answer:
->=20
-> > We found similar problem during test.
->=20
-> > The stex driver sets sg_tablesize as 32 (for st_yel it's 38) in the pro=
-be
-> > entry. It seems that this value was overridden by the system if using
-> > dm/lvm, for unknown reason. The driver received requests with more
-> > sg items than registered. Sg item number could be as high as 64. This
-> > is completely unexpected. The firmware could not handle such
-> > requests, and error occurred.
-[..]
+> Hi Mikulas,
+> 
+> On Sun, Oct 24 2010 at  9:02pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> > Remove BIO_RW_SYNCIO flag from kcopyd
+> > 
+> > This improves write throughput twice when writing to the origin with snapshot
+> > on the same device.
+> 
+> Can you please be more specific on the performance improvement you
+> observed?  You're saying something like: baseline=10MB/s patched=20MB/s?
 
-I have little idea how this stuff is supposed to work, but it looks like
-dm_dispatch_request() calls blk_insert_cloned_request() which calls
-blk_rq_check_limits() which checks the request against the maximum
-number of segments initialised from sg_tablesize.
+Yes. I rechecked it now, and it is approximatelly so:
+(for chunk size 4k, 32k, 512k)
+unpatched: 8.5, 8.6, 9.3 MB/s
+this patch: 15.2, 18.5, 17.5 MB/s
 
-We can perhaps mitigate the data loss by checking the number of segments
-again in scsi_dispatch_cmd(), but it won't really solve the problem.
+> Did you use a larger chunk_size for the snapshot device (e.g. 512K)?
 
-Ben.
+It has effect for all chunk sizes.
 
---=20
-Ben Hutchings
-Once a job is fouled up, anything done to improve it makes it worse.
+> I can't reproduce such significant performance improvements but my testbed
+> may be overly constrained (I'm passing an entire disk from host into KVM
+> guest using virtio).  I can look to test on bare metal early next week
+> (unless you have more insight that would obviate the need to do so).
 
---=-zmrLZQ71yAdbSY+ONj3h
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+My scenario is: LSI MPT controller, U320 15k SCSI disk, 64GiB file mapped 
+with dm-loop, volume group on dm-loop, with both snapshot and origin in 
+it.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.10 (GNU/Linux)
+> > This helps for CFQ I/O scheduler that has separate queues for sync and async
+> > I/O, async is optimized for throughput, sync for latency.
+> > Reallocations are triggered by writes that are usually async, so mark it
+> > as async as well.
+> 
+> This change is at odds with a previous patch you made to reduce latency
+> of SYNC IO, see linux-2.6 commit:
+> 7ff14a36159d947872870  "dm: unplug queues in threads"
+> 
+> So we're now trading latency for throughput?
 
-iQIVAwUATOddsOe/yOyVhhEJAQI8+w//Uhtvs7vJcbZrdLKn0L2UeKoaa8U8cV/O
-4aVIfDQYzdKo/HV9eKfb8vH8vKh5ZkeslQOd9TGpqACyo+OBs0ga4DnwSuOhQqSg
-I1w0ZXDQzSgiAP4/bXVME0SRlhSzKHNxBwPrqWzGT0bZYjUXUWAlaQy5wdIOjfrJ
-w6SPLA88bxm1w9b8182b5zDNHOB1FtdrkVTULFK8FwxmcjQvzuEhe5wEtkcL5ryI
-IwyNthyLwwlbASxTBbfrG2GMqtqhVr1ocnbs/BfyDoLS9hieD715htdKLW6dJ6Bz
-g8/PbbJtB7wQE/xXpErBSvhd3ZpF4RkIioWeYfA7cwPZqG8N6U7PndwdSjEDP06o
-bQATKIgTz1FpBCs4UT0b9RQrzJmJY+BfKsXroQj4SihPEwd3R1ticIJAad2ie4QO
-X/TbQEtzvArFhVVvssSnJK+a540i/zNuvJT8el2fqEEa6MVXwigT4KhOKcVk0Xdu
-EjWYWKcxfGWjWdvpmO2OyjNsQN7oWRyGg6lzmzjj996mwFuWzBN9kfY0h2MKPG2r
-WtpwdVppFWsYIV0pUrHlIcBnSpSdhV6UPENmlM0GwmkpZEeJXMVFl9ZqatBhNmwY
-UR/qHnLj44eTdQIWZgqT0Jkd50QG/4XMmyQVVStnZYLJXmcCCFcrEkI+ELft8853
-I+2XkqnyIbE=
-=qSm1
------END PGP SIGNATURE-----
+Yes. I think throughput matters more than latency for writes.
 
---=-zmrLZQ71yAdbSY+ONj3h--
+> Given the concerns about
+> snapshot-origin throughput (on lvm-general) I think that is reasonable.
+> But I just want to make sure we're consciously favoring throughput over
+> latency (I'll likely update the patch header to explicitly say as much).
+
+Yes. Write it there.
+
+If someone need latency for writes, we could propagate the SYNC flag from 
+the original write bio here. But if no one needs it, it would be needless 
+complication.
+
+Mikulas
+
+> > Index: linux-2.6.36-rc7-fast/drivers/md/dm-kcopyd.c
+> > ===================================================================
+> > --- linux-2.6.36-rc7-fast.orig/drivers/md/dm-kcopyd.c	2010-10-07 16:09:13.000000000 +0200
+> > +++ linux-2.6.36-rc7-fast/drivers/md/dm-kcopyd.c	2010-10-15 03:18:52.000000000 +0200
+> > @@ -345,7 +345,7 @@ static int run_io_job(struct kcopyd_job 
+> >  {
+> >  	int r;
+> >  	struct dm_io_request io_req = {
+> > -		.bi_rw = job->rw | REQ_SYNC | REQ_UNPLUG,
+> > +		.bi_rw = job->rw | REQ_UNPLUG,
+> >  		.mem.type = DM_IO_PAGE_LIST,
+> >  		.mem.ptr.pl = job->pages,
+> >  		.mem.offset = job->offset,
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> 
