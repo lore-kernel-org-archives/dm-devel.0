@@ -1,83 +1,99 @@
-From: "Ed Lin - PTU" <ed.lin@promise.com>
-Subject: Bug#604049: linux-image-2.6.32-5-amd64: data corruption with promise stex driver and use of device-mapper layers (lvm/dm-crypt/..)
-Date: Mon, 22 Nov 2010 10:33:27 -0800
-Message-ID: <85ABFDC4641C4847BA6088F2982EFD8F049D500A@nonamew.ptu.promise.com>
-References: <1290231222.3818.167.camel@localhost>
-Reply-To: "Ed Lin - PTU" <ed.lin@promise.com>, 604049@bugs.debian.org
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] dm mpath: revert "dm: Call blk_abort_queue on
+ failed paths"
+Date: Mon, 22 Nov 2010 20:00:25 -0500
+Message-ID: <20101123010025.GA18584@redhat.com>
+References: <20101118201841.GE30435@agk-dp.fab.redhat.com>
+	<1290116896-18209-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="ISO-2022-JP"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <bounce-debian-bugs-dist=glddb-debian-bugs-dist=m.gmane.org@lists.debian.org>
-Resent-To: debian-bugs-dist@lists.debian.org
-Resent-Message-ID: <handler.604049.B604049.12904515318737@bugs.debian.org>
-Content-class: urn:content-classes:message
-In-Reply-To: <1290231222.3818.167.camel@localhost>
-List-Post: <mailto:debian-bugs-dist@lists.debian.org>
-List-Help: <mailto:debian-bugs-dist-request@lists.debian.org?subject=help>
-List-Subscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=subscribe>
-List-Unsubscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=unsubscribe>
-To: Ben Hutchings <ben@decadent.org.uk>, Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com
-Cc: Markus Schulz <msc@antzsystem.de>, 604049@bugs.debian.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1290116896-18209-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Mike Christie <michaelc@cs.wisc.edu>, Mike Anderson <andmike@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
+This reverts commit 224cb3e981f1b2f9f93dbd49eaef505d17d894c2.
 
+Multipath was previously made to use blk_abort_queue() to allow for
+lower latency path deactivation.  The call to blk_abort_queue has proven
+to be unsafe due to a race (between blk_abort_queue and scsi_request_fn)
+that can lead to list corruption, from:
+https://www.redhat.com/archives/dm-devel/2010-November/msg00085.html
 
->-----Original Message-----
->From: Ben Hutchings [mailto:ben@decadent.org.uk] 
->Sent: 2010年11月19日 21:34
->To: Ed Lin - PTU; Jens Axboe; dm-devel@redhat.com
->Cc: Markus Schulz; 604049@bugs.debian.org
->Subject: Re: Bug#604049: linux-image-2.6.32-5-amd64: data 
->corruption with promise stex driver and use of device-mapper 
->layers (lvm/dm-crypt/..)
->
->
->On Fri, 2010-11-19 at 20:26 +0100, Markus Schulz wrote:
->> Package: linux-2.6
->> Version: 2.6.32-27
->> Severity: critical
->> Tags: d-i upstream
->> Justification: causes serious data loss
->> 
->> any use of the stex.ko promise hw-raid controller driver with a
->> device-mapper layer produces data corruption (or filesystem 
->corruption
->> like you can see in my dmesg).
->[...]
->> i've asked Ed Lin (Maintainer of stex.c from promise) on 
->lkml and got the following answer:
->> 
->> > We found similar problem during test.
->> 
->> > The stex driver sets sg_tablesize as 32 (for st_yel it's 
->38) in the probe
->> > entry. It seems that this value was overridden by the 
->system if using
->> > dm/lvm, for unknown reason. The driver received requests with more
->> > sg items than registered. Sg item number could be as high 
->as 64. This
->> > is completely unexpected. The firmware could not handle such
->> > requests, and error occurred.
->[..]
->
->I have little idea how this stuff is supposed to work, but it 
->looks like
->dm_dispatch_request() calls blk_insert_cloned_request() which calls
->blk_rq_check_limits() which checks the request against the maximum
->number of segments initialised from sg_tablesize.
->
->We can perhaps mitigate the data loss by checking the number 
->of segments
->again in scsi_dispatch_cmd(), but it won't really solve the problem.
->
+"the cmd gets blk_abort_queued/timedout run on it and the scsi eh
+somehow is able to complete and run scsi_queue_insert while
+scsi_request_fn is still trying to process the request."
 
-I believe the cause of the problem has been found. An explanation
-and a possible solution was posted at the linux-scsi mail list
-and dm-devel@redhat.com.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Mike Anderson <andmike@linux.vnet.ibm.com>
+Cc: Mike Christie <michaelc@cs.wisc.edu>
+---
+ drivers/md/dm-mpath.c |   12 ------------
+ 1 file changed, 12 deletions(-)
 
-The link is http://marc.info/?l=linux-scsi&m=129021716922966&w=2
-So far no one responded. Any comment is welcome.
+v2: revert commit rather than #if 0 the code in question
 
-Thanks,
-Ed Lin
+Index: linux-2.6/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-mpath.c
++++ linux-2.6/drivers/md/dm-mpath.c
+@@ -33,7 +33,6 @@ struct pgpath {
+ 	unsigned fail_count;		/* Cumulative failure count */
+ 
+ 	struct dm_path path;
+-	struct work_struct deactivate_path;
+ 	struct work_struct activate_path;
+ };
+ 
+@@ -116,7 +115,6 @@ static struct workqueue_struct *kmultipa
+ static void process_queued_ios(struct work_struct *work);
+ static void trigger_event(struct work_struct *work);
+ static void activate_path(struct work_struct *work);
+-static void deactivate_path(struct work_struct *work);
+ 
+ 
+ /*-----------------------------------------------
+@@ -129,7 +127,6 @@ static struct pgpath *alloc_pgpath(void)
+ 
+ 	if (pgpath) {
+ 		pgpath->is_active = 1;
+-		INIT_WORK(&pgpath->deactivate_path, deactivate_path);
+ 		INIT_WORK(&pgpath->activate_path, activate_path);
+ 	}
+ 
+@@ -141,14 +138,6 @@ static void free_pgpath(struct pgpath *p
+ 	kfree(pgpath);
+ }
+ 
+-static void deactivate_path(struct work_struct *work)
+-{
+-	struct pgpath *pgpath =
+-		container_of(work, struct pgpath, deactivate_path);
+-
+-	blk_abort_queue(pgpath->path.dev->bdev->bd_disk->queue);
+-}
+-
+ static struct priority_group *alloc_priority_group(void)
+ {
+ 	struct priority_group *pg;
+@@ -995,7 +984,6 @@ static int fail_path(struct pgpath *pgpa
+ 		      pgpath->path.dev->name, m->nr_valid_paths);
+ 
+ 	schedule_work(&m->trigger_event);
+-	queue_work(kmultipathd, &pgpath->deactivate_path);
+ 
+ out:
+ 	spin_unlock_irqrestore(&m->lock, flags);
