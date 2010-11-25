@@ -1,28 +1,38 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: data corruption with stex (Promise HW-Raid) driver and device-mapper
-Date: Thu, 25 Nov 2010 10:57:04 +0100
-Message-ID: <4CEE32F0.4030302@redhat.com>
-References: <85ABFDC4641C4847BA6088F2982EFD8F049D4273@nonamew.ptu.promise.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [dm-devel] QUEUE_FLAG_CLUSTER?
+Date: Thu, 25 Nov 2010 10:21:43 -0500
+Message-ID: <yq14ob5o2d4.fsf@sermon.lab.mkp.net>
+References: <85ABFDC4641C4847BA6088F2982EFD8F049D4EB8@nonamew.ptu.promise.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <85ABFDC4641C4847BA6088F2982EFD8F049D4273@nonamew.ptu.promise.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ed Lin - PTU <ed.lin@promise.com>
-Cc: Dan Carpenter <error27@gmail.com>, Markus Schulz <msc@antzsystem.de>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <85ABFDC4641C4847BA6088F2982EFD8F049D4EB8@nonamew.ptu.promise.com> (Ed
+	Lin's message of "Fri, 19 Nov 2010 17:24:14 -0800")
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: linux-scsi@vger.kernel.org, Promise_Linux <Promise_Linux@promise.com>
 List-Id: dm-devel.ids
 
-On 11/16/2010 02:35 AM, Ed Lin - PTU wrote:
-> The stex driver sets sg_tablesize as 32 (for st_yel it's 38) in the probe
-> entry. It seems that this value was overridden by the system if using
-> dm/lvm, for unknown reason. The driver received requests with more
-> sg items than registered. Sg item number could be as high as 64. This
-> is completely unexpected. The firmware could not handle such
-> requests, and error occurred.
+>>>>> "Ed" == "Ed Lin <- PTU" <ed.lin@promise.com>> writes:
 
-Device-mapper respects hw restrictions, so it must be bug somewhere.
+Ed,
 
-Please cc dm-devel if you think that problem is there.
+Ed> The dm already has function to adjust limits based on underlying
+Ed> device limits. So, is it good to add the no_cluster setting to the
+Ed> queue limits at the scsi side? For example, some code change like
+Ed> the following?
 
-Milan
+We should never issue a command that does not adhere to the limits set
+by the device driver. Upon inspection I agree this is busted and it's my
+fault.
+
+DM does not have a request_queue when stacking and as a result we ended
+up with two entities tracking whether a device supports clustering or
+not. And as it turns out the queue flag and the queue limits are not
+always in agreement.
+
+I've coded up a proper fix for this and will post a patch shortly. I'm
+just running a bunch of tests to ensure we do the right thing...
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
