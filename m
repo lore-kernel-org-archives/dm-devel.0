@@ -1,16 +1,13 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2] dm kcopyd: remove SYNC from flags used in
-	dm_io_request
-Date: Tue, 23 Nov 2010 18:31:24 -0500
-Message-ID: <20101123233124.GC24962@redhat.com>
-References: <Pine.LNX.4.64.1010242101590.6231@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH] dm raid1: support discard
+Date: Wed, 24 Nov 2010 21:46:59 -0500
+Message-ID: <20101125024659.GA4590@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1010242101590.6231@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +17,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+Enable discard support in the DM mirror target.
 
-Removing the REQ_SYNC flag improves write throughput twice when writing
-to the origin with a snapshot on the same device (using the CFQ I/O
-scheduler).
-
-Sequential write throughput (chunksize of 4k, 32k, 512k)
-unpatched:  8.5,  8.6,  9.3 MB/s
-patched:   15.2, 18.5, 17.5 MB/s
-
-Snapshot exception reallocations are triggered by writes that are
-usually async, so mark the associated dm_io_request as async as well.
-This helps when using the CFQ I/O scheduler because it has separate
-queues for sync and async I/O, async is optimized for throughput, sync
-for latency.  With this change we're consciously favoring throughput
-over latency.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-kcopyd.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-raid1.c |   10 +++++++++-
+ 1 files changed, 9 insertions(+), 1 deletions(-)
 
-v2: updated patch header
-
-Index: linux-2.6.36-rc7-fast/drivers/md/dm-kcopyd.c
-===================================================================
---- linux-2.6.36-rc7-fast.orig/drivers/md/dm-kcopyd.c	2010-10-07 16:09:13.000000000 +0200
-+++ linux-2.6.36-rc7-fast/drivers/md/dm-kcopyd.c	2010-10-15 03:18:52.000000000 +0200
-@@ -345,7 +345,7 @@ static int run_io_job(struct kcopyd_job 
- {
- 	int r;
- 	struct dm_io_request io_req = {
--		.bi_rw = job->rw | REQ_SYNC | REQ_UNPLUG,
-+		.bi_rw = job->rw | REQ_UNPLUG,
- 		.mem.type = DM_IO_PAGE_LIST,
- 		.mem.ptr.pl = job->pages,
- 		.mem.offset = job->offset,
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index 19a59b0..de69ca6 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -637,6 +637,12 @@ static void do_write(struct mirror_set *ms, struct bio *bio)
+ 		.client = ms->io_client,
+ 	};
+ 
++	if (bio->bi_rw & REQ_DISCARD) {
++		io_req.bi_rw |= REQ_DISCARD;
++		io_req.mem.type = DM_IO_KMEM;
++		io_req.mem.ptr.bvec = NULL;
++	}
++
+ 	for (i = 0, m = ms->mirror; i < ms->nr_mirrors; i++, m++)
+ 		map_region(dest++, m, bio);
+ 
+@@ -670,7 +676,8 @@ static void do_writes(struct mirror_set *ms, struct bio_list *writes)
+ 	bio_list_init(&requeue);
+ 
+ 	while ((bio = bio_list_pop(writes))) {
+-		if (bio->bi_rw & REQ_FLUSH) {
++		if ((bio->bi_rw & REQ_FLUSH) ||
++		    (bio->bi_rw & REQ_DISCARD)) {
+ 			bio_list_add(&sync, bio);
+ 			continue;
+ 		}
+@@ -1076,6 +1083,7 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	ti->private = ms;
+ 	ti->split_io = dm_rh_get_region_size(ms->rh);
+ 	ti->num_flush_requests = 1;
++	ti->num_discard_requests = 1;
+ 
+ 	ms->kmirrord_wq = create_singlethread_workqueue("kmirrord");
+ 	if (!ms->kmirrord_wq) {
