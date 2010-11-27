@@ -1,30 +1,42 @@
-From: Jens Axboe <jaxboe@fusionio.com>
-Subject: Re: block: Deprecate QUEUE_FLAG_CLUSTER and use queue_limits instead
-Date: Fri, 26 Nov 2010 10:00:13 +0100
-Message-ID: <4CEF771D.4010805@fusionio.com>
-References: <85ABFDC4641C4847BA6088F2982EFD8F049D4EB8@nonamew.ptu.promise.com> <yq14ob5o2d4.fsf@sermon.lab.mkp.net> <yq1vd3lmkdt.fsf_-_@sermon.lab.mkp.net> <4CEEAE35.5060805@fusionio.com> <yq1r5e8ncmz.fsf@sermon.lab.mkp.net> <20101126022804.GA15662@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCHSET] block: clean up bdev claim/release
+	handling
+Date: Sat, 27 Nov 2010 17:01:15 +0100
+Message-ID: <4CF12B4B.2050909__43835.9472355389$1290873839$gmane$org@kernel.org>
+References: <1288628129-12811-1-git-send-email-tj@kernel.org>
+	<4CDC2488.1030801@kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20101126022804.GA15662@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Promise_Linux <Promise_Linux@promise.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4CDC2488.1030801@kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: axboe@kernel.dk, hch@infradead.org, linux-kernel@vger.kernel.org, petero2@telia.com, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, jack@suse.cz, akpm@linux-foundatio
 List-Id: dm-devel.ids
 
-On 2010-11-26 03:28, Mike Snitzer wrote:
-> This patch's header could stand to be a bit more explicit about where
-> the real problem was ...
-
-Indeed, it seems to miss that. I'll add that bit.
-
-> But I agree that this patch cleans things up nicely.
+On 11/11/2010 06:14 PM, Tejun Heo wrote:
+> Hello,
 > 
-> Acked-by: Mike Snitzer <snitzer@redhat.com>
+> I just appended two patches to the series.  These two are the
+> blkdev_get_by_*() cleanup patches suggested in the fourth patch which
+> Christoph liked.
+> 
+> I updated the git tree accordingly and added acked-by's.
+> 
+>   git://git.kernel.org/pub/scm/linux/kernel/git/tj/misc.git cleanup-bd_claim
+> 
+> Jens, if you want the whole series resent, please let me know.
 
-Thanks, added.
+Ping.
 
 -- 
-Jens Axboe
-
+tejun
