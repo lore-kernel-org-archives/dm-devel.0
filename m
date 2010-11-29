@@ -1,43 +1,53 @@
 From: "Ed Lin - PTU" <ed.lin@promise.com>
-Subject: RE: [dm-devel] QUEUE_FLAG_CLUSTER?
-Date: Mon, 29 Nov 2010 11:08:50 -0800
-Message-ID: <85ABFDC4641C4847BA6088F2982EFD8F04A4A669@nonamew.ptu.promise.com>
-References: <yq14ob5o2d4.fsf@sermon.lab.mkp.net>
+Subject: RE: data corruption with stex (Promise HW-Raid) driver and device-mapper
+Date: Mon, 29 Nov 2010 11:35:37 -0800
+Message-ID: <85ABFDC4641C4847BA6088F2982EFD8F04A4A6A1@nonamew.ptu.promise.com>
+References: <4CEE32F0.4030302@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
+	charset="ISO-2022-JP"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-class: urn:content-classes:message
-In-Reply-To: <yq14ob5o2d4.fsf@sermon.lab.mkp.net>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>, device-mapper development <dm-devel@redhat.com>
-Cc: linux-scsi@vger.kernel.org, Promise_Linux <Promise_Linux@promise.com>
+In-Reply-To: <4CEE32F0.4030302@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>
+Cc: Dan Carpenter <error27@gmail.com>, Markus Schulz <msc@antzsystem.de>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
->We should never issue a command that does not adhere to the limits set
->by the device driver. Upon inspection I agree this is busted 
->and it's my
->fault.
+
+>-----Original Message-----
+>From: Milan Broz [mailto:mbroz@redhat.com] 
+>Sent: 2010年11月25日 1:57
+>To: Ed Lin - PTU
+>Cc: Dan Carpenter; Markus Schulz; 
+>linux-kernel@vger.kernel.org; device-mapper development
+>Subject: Re: data corruption with stex (Promise HW-Raid) 
+>driver and device-mapper
 >
->DM does not have a request_queue when stacking and as a result we ended
->up with two entities tracking whether a device supports clustering or
->not. And as it turns out the queue flag and the queue limits are not
->always in agreement.
 >
->I've coded up a proper fix for this and will post a patch shortly. I'm
->just running a bunch of tests to ensure we do the right thing...
+>On 11/16/2010 02:35 AM, Ed Lin - PTU wrote:
+>> The stex driver sets sg_tablesize as 32 (for st_yel it's 38) 
+>in the probe
+>> entry. It seems that this value was overridden by the system if using
+>> dm/lvm, for unknown reason. The driver received requests with more
+>> sg items than registered. Sg item number could be as high as 64. This
+>> is completely unexpected. The firmware could not handle such
+>> requests, and error occurred.
+>
+>Device-mapper respects hw restrictions, so it must be bug somewhere.
+>
+>Please cc dm-devel if you think that problem is there.
 >
 
-Hi Martin,
+Hello,
 
-I will do some test with your later patch. But obviously it is a
-thorough fix of the problem, eliminating all the confusing dual flag
-thing in the original code.
+This problem is fixed. Martin Petersen proposed a thorough cleaning at
+http://marc.info/?l=dm-devel&m=129070330506836&w=2 .
+My original patch is at
+http://marc.info/?l=dm-devel&m=129067980708110&w=2 ,
+which is a simplified minimum version.
 
-Is it possible to port the patch to previous kernels?
-
-Thanks, much appreciated.
-
+Thanks,
 Ed Lin
