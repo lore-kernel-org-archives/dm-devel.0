@@ -1,100 +1,33 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath discovery.c switc ...
-Date: 30 Nov 2010 17:21:21 -0000
-Message-ID: <20101130172121.26737.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [dm-devel] QUEUE_FLAG_CLUSTER?
+Date: Tue, 30 Nov 2010 13:40:56 -0500
+Message-ID: <yq11v627iyv.fsf@sermon.lab.mkp.net>
+References: <85ABFDC4641C4847BA6088F2982EFD8F04A4A669@nonamew.ptu.promise.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <85ABFDC4641C4847BA6088F2982EFD8F04A4A669@nonamew.ptu.promise.com> (Ed
+	Lin's message of "Mon, 29 Nov 2010 11:08:50 -0800")
+Sender: linux-scsi-owner@vger.kernel.org
+To: Ed Lin - PTU <ed.lin@promise.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org, Promise_Linux <Promise_Linux@promise.com>, stable@kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-11-30 17:21:20
+>>>>> "Ed" == "Ed Lin <- PTU" <ed.lin@promise.com>> writes:
 
-Modified files:
-	libmultipath   : discovery.c switchgroup.c 
+Ed> Is it possible to port the patch to previous kernels?
 
-Log message:
-	updated fix for bzs #484419 and #570513.
-	simplified cciss handling to mirror what upstream does. Simply assume that
-	devices named like a cciss device are a cciss device.
-	Also, don't divide the priority by the number of enabled paths if that number
-	is 0.  Not applicable upstream.
+There's a bit of fuzz due to some of the discard changes and the sysfs
+export of the segment size. But the core of the patch is the same.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.16&r2=1.32.2.17
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/switchgroup.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.3&r2=1.5.2.4
+http://git.kernel.org/pub/scm/linux/kernel/git/mkp/linux-2.6-mkp.git
+git://git.kernel.org/pub/scm/linux/kernel/git/mkp/linux-2.6-mkp.git
 
---- multipath-tools/libmultipath/discovery.c	2010/09/03 03:46:12	1.32.2.16
-+++ multipath-tools/libmultipath/discovery.c	2010/11/30 17:21:19	1.32.2.17
-@@ -477,24 +477,6 @@
- }
- 
- static int
--sysfs_get_driver (char *sysfs_path, char * dev, char *driver)
--{
--	char path[FILE_NAME_SIZE];
--	char buff[SYSFS_NAME_LEN];
--
--	if (safe_sprintf(path, "%s/block/%s/device/driver", sysfs_path, dev)) {
--		condlog(0, "driver path too small");
--		return 1;
--	}
--	if (sysfs_get_link(path, buff, SYSFS_NAME_LEN) < 0) {
--		condlog(0, "can't get driver link: %s", strerror(errno));
--		return 1;
--	}
--	basename(buff, driver);
--	return 0;
--}
--
--static int
- sysfs_get_bus (char * sysfs_path, struct path * pp)
- {
- 	struct sysfs_device *sdev;
-@@ -536,9 +518,8 @@
- 
- 	while (loop--) {
- 		sdev = sysfs_open_device_path(attr_buff);
--		if(!strncmp(pp->dev,"cciss",5)) 
--                         sysfs_get_driver(sysfs_path, pp->dev,
--                             sdev->bus);
-+		if(!strncmp(pp->dev,"cciss",5))
-+			strcpy(sdev->bus, "cciss");
- 
- 		if (strlen(sdev->bus))
- 			break;
-@@ -549,8 +530,7 @@
- #else
- 	sdev = sysfs_open_device_path(attr_buff);
- 	if(!strncmp(pp->dev,"cciss",5))
--                  sysfs_get_driver(sysfs_path, pp->dev,
--                     sdev->bus);
-+		strcpy(sdev->bus, "cciss");
- #endif
- 
- 	if (!strncmp(sdev->bus, "scsi", 4))
---- multipath-tools/libmultipath/switchgroup.c	2010/09/03 20:59:14	1.5.2.3
-+++ multipath-tools/libmultipath/switchgroup.c	2010/11/30 17:21:19	1.5.2.4
-@@ -36,7 +36,7 @@
- 				enabled_paths++;
- 			}
- 		}
--		if (conf->pg_prio_calc == PG_PRIO_CALC_AVG)
-+		if (conf->pg_prio_calc == PG_PRIO_CALC_AVG && enabled_paths)
- 			pgp->priority = priority / enabled_paths;
- 		else
- 			pgp->priority = priority;
+I've created three branches:
+
+for-stable-2.6.32.y
+for-stable-2.6.35.y
+for-stable-2.6.36.y
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
