@@ -1,30 +1,100 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v6 0/4] ext4: Coordinate data-only flush requests sent by fsync
-Date: Tue, 30 Nov 2010 17:43:01 +0100
-Message-ID: <20101130164301.GB30858@lst.de>
-References: <20101129220536.12401.16581.stgit@elm3b57.beaverton.ibm.com> <20101130113906.176ffcad@notabene.brown>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath discovery.c switc ...
+Date: 30 Nov 2010 17:21:21 -0000
+Message-ID: <20101130172121.26737.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20101130113906.176ffcad@notabene.brown>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>
-Cc: "Darrick J. Wong" <djwong@us.ibm.com>, Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Alasdair G Kergon <agk@redhat.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Keith Mannthey <kmannth@us.ibm.com>, dm-devel@redhat.com, Mingming Cao <cmm@us.ibm.com>, Tejun Heo <tj@kernel.org>, linux-ext4@vger.kernel.org, Ric Wheeler <rwheeler@redhat.com>, Christoph Hellwig <hch@lst.de>, Josef Bacik <josef@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Nov 30, 2010 at 11:39:06AM +1100, Neil Brown wrote:
-> Would it not be sufficient to simply gather flushes while a flush is pending.
-> i.e
->   - if no flush is pending, set the 'flush pending' flag, submit a flush,
->     then clear the flag.
->   - if a flush is pending, then wait for it to complete, and then submit a
->     single flush on behalf of all pending flushes.
->
-> That way when flush is fast, you do a flush every time, and when it is slow
-> you gather multiple flushes together.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2010-11-30 17:21:20
 
-We can even optimize the second flush away if no other I/O has
-completed since the first flush has started.  That will always be the
-case for SATA devices as the cache flush command is not queued.
+Modified files:
+	libmultipath   : discovery.c switchgroup.c 
 
+Log message:
+	updated fix for bzs #484419 and #570513.
+	simplified cciss handling to mirror what upstream does. Simply assume that
+	devices named like a cciss device are a cciss device.
+	Also, don't divide the priority by the number of enabled paths if that number
+	is 0.  Not applicable upstream.
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.16&r2=1.32.2.17
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/switchgroup.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.3&r2=1.5.2.4
+
+--- multipath-tools/libmultipath/discovery.c	2010/09/03 03:46:12	1.32.2.16
++++ multipath-tools/libmultipath/discovery.c	2010/11/30 17:21:19	1.32.2.17
+@@ -477,24 +477,6 @@
+ }
+ 
+ static int
+-sysfs_get_driver (char *sysfs_path, char * dev, char *driver)
+-{
+-	char path[FILE_NAME_SIZE];
+-	char buff[SYSFS_NAME_LEN];
+-
+-	if (safe_sprintf(path, "%s/block/%s/device/driver", sysfs_path, dev)) {
+-		condlog(0, "driver path too small");
+-		return 1;
+-	}
+-	if (sysfs_get_link(path, buff, SYSFS_NAME_LEN) < 0) {
+-		condlog(0, "can't get driver link: %s", strerror(errno));
+-		return 1;
+-	}
+-	basename(buff, driver);
+-	return 0;
+-}
+-
+-static int
+ sysfs_get_bus (char * sysfs_path, struct path * pp)
+ {
+ 	struct sysfs_device *sdev;
+@@ -536,9 +518,8 @@
+ 
+ 	while (loop--) {
+ 		sdev = sysfs_open_device_path(attr_buff);
+-		if(!strncmp(pp->dev,"cciss",5)) 
+-                         sysfs_get_driver(sysfs_path, pp->dev,
+-                             sdev->bus);
++		if(!strncmp(pp->dev,"cciss",5))
++			strcpy(sdev->bus, "cciss");
+ 
+ 		if (strlen(sdev->bus))
+ 			break;
+@@ -549,8 +530,7 @@
+ #else
+ 	sdev = sysfs_open_device_path(attr_buff);
+ 	if(!strncmp(pp->dev,"cciss",5))
+-                  sysfs_get_driver(sysfs_path, pp->dev,
+-                     sdev->bus);
++		strcpy(sdev->bus, "cciss");
+ #endif
+ 
+ 	if (!strncmp(sdev->bus, "scsi", 4))
+--- multipath-tools/libmultipath/switchgroup.c	2010/09/03 20:59:14	1.5.2.3
++++ multipath-tools/libmultipath/switchgroup.c	2010/11/30 17:21:19	1.5.2.4
+@@ -36,7 +36,7 @@
+ 				enabled_paths++;
+ 			}
+ 		}
+-		if (conf->pg_prio_calc == PG_PRIO_CALC_AVG)
++		if (conf->pg_prio_calc == PG_PRIO_CALC_AVG && enabled_paths)
+ 			pgp->priority = priority / enabled_paths;
+ 		else
+ 			pgp->priority = priority;
