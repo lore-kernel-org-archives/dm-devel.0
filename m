@@ -1,68 +1,75 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: training mpath to discern between SCSI errors
-Date: Tue, 30 Nov 2010 17:59:56 -0500
-Message-ID: <20101130225956.GA8882@redhat.com>
-References: <20100825155918.GB8509@redhat.com>
- <4C7B984E.4070802@suse.de>
- <4C7B9F14.9080900@mvista.com>
- <4C7BA670.2060303@suse.de>
- <4C7BC5B4.3010707@suse.de>
- <4CBC00B3.7090603@ce.jp.nec.com>
- <4CBC35AE.9050002@suse.de>
- <20101119031149.GA28455@us.ibm.com>
+From: "Darrick J. Wong" <djwong@us.ibm.com>
+Subject: Re: [PATCH v6 0/4] ext4: Coordinate data-only flush requests sent
+	by fsync
+Date: Tue, 30 Nov 2010 15:31:30 -0800
+Message-ID: <20101130233130.GG18195@tux1.beaverton.ibm.com>
+References: <20101129220536.12401.16581.stgit@elm3b57.beaverton.ibm.com> <20101130113906.176ffcad@notabene.brown>
+Reply-To: djwong@us.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ide-owner@vger.kernel.org>
+Return-path: <linux-ext4-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20101119031149.GA28455@us.ibm.com>
-Sender: linux-ide-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, michaelc@cs.wisc.edu, tytso@mit.edu, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, vst@vlnb.net, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, James.Bottomley@suse.de, Sergei Shtylyov <sshtylyov@mvista.com>, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, jack@suse.cz, rwheeler@redhat.com, swhiteho@redhat.com, chris.mason@oracle.com, Tejun Heo <tj@kernel.org>
+In-Reply-To: <20101130113906.176ffcad@notabene.brown>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Neil Brown <neilb@suse.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Alasdair G Kergon <agk@redhat.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Keith Mannthey <kmannth@us.ibm.com>, dm-devel@redhat.com, Mingming Cao <cmm@us.ibm.com>, Tejun Heo <tj@kernel.org>, linux-ext4@vger.kernel.org, Ric Wheeler <rwheeler@redhat.com>, Christoph Hellwig <hch@lst.de>, Josef Bacik <josef@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Nov 18 2010 at 10:11pm -0500,
-Malahal Naineni <malahal@us.ibm.com> wrote:
-
-> Hannes Reinecke [hare@suse.de] wrote:
-> > > Also (although this might be a bit off topic from your patch),
-> > > can we expand such a distinction to what should be logged?
-> > > Currently, it's difficult to distinguish important SCSI/block errors
-> > > and less important ones in kernel log.
-> > > For example, when I get a link failure on sda, kernel prints something
-> > > like below, regardless of whether the I/O is recovered by multipathing or not:
-> > >   end_request: I/O error, dev sda, sector XXXXX
-> > > 
-> > Indeed, when using the above we could be modifying the above
-> > message, eg by
-> > 
-> > end_request: transport error, dev sda, sector XXXXX
-> > 
-> > or
-> > 
-> > end_request: target error, dev sda, sector XXXXX
-> > 
-> > which would improve the output noticeable.
-> > 
-> > > Setting REQ_QUIET in dm-multipath could mask the message
-> > > but also other important ones in SCSI.
-> > > 
-> > Hmm. Not sure about that, but I think the above modifications will
-> > be useful already.
-> > 
-> > I'll be sending an updated patch.
+On Tue, Nov 30, 2010 at 11:39:06AM +1100, Neil Brown wrote:
+> On Mon, 29 Nov 2010 14:05:36 -0800 "Darrick J. Wong" <djwong@us.ibm.com>
+> wrote:
 > 
-> Hannes, is there an updated version of this patch? It applied fine with
-> Linus git tree with a minor reject! I would like to test an updated
-> version if you have one (the update seems to refer to better logging
-> only, right?).
+> > On certain types of hardware, issuing a write cache flush takes a considerable
+> > amount of time.  Typically, these are simple storage systems with write cache
+> > enabled and no battery to save that cache after a power failure.  When we
+> > encounter a system with many I/O threads that write data and then call fsync
+> > after more transactions accumulate, ext4_sync_file performs a data-only flush,
+> > the performance of which is suboptimal because each of those threads issues its
+> > own flush command to the drive instead of trying to coordinate the flush,
+> > thereby wasting execution time.
+> > 
+> > Instead of each fsync call initiating its own flush, there's now a flag to
+> > indicate if (0) no flushes are ongoing, (1) we're delaying a short time to
+> > collect other fsync threads, or (2) we're actually in-progress on a flush.
+> > 
+> > So, if someone calls ext4_sync_file and no flushes are in progress, the flag
+> > shifts from 0->1 and the thread delays for a short time to see if there are any
+> > other threads that are close behind in ext4_sync_file.  After that wait, the
+> > state transitions to 2 and the flush is issued.  Once that's done, the state
+> > goes back to 0 and a completion is signalled.
+> 
+> I haven't seen any of the preceding discussion do I might be missing
+> something important, but this seems needlessly complex and intrusive.
+> In particular, I don't like adding code to md to propagate these timings up
+> to the fs, and I don't the arbitrary '2ms' number.
+> 
+> Would it not be sufficient to simply gather flushes while a flush is pending.
+> i.e
+>   - if no flush is pending, set the 'flush pending' flag, submit a flush,
+>     then clear the flag.
+>   - if a flush is pending, then wait for it to complete, and then submit a
+>     single flush on behalf of all pending flushes.
+> 
+> That way when flush is fast, you do a flush every time, and when it is slow
+> you gather multiple flushes together.
+> I think it would issues a few more flushes than your scheme, but it would be
+> a much neater solution.  Have you tried that and found it to be insufficient?
 
-Hannes,
+Some time ago I actually did test the patchset with the schedule_hrtimeout
+removed, which I think is fairly close to what you've suggested.  As I recall,
+it did help a bit, though not as much as also instituting the wait to limit the
+% of disk execution time spent on flushes.  That said, I think you might be
+right about the completion races, so I'll try to code up your suggestion to
+see what happens with a newer kernel.
 
-Any chance you've had time to fold your proposed logging changes in and
-rebase this patch?  Could you post that updated patch?
-
-I'd like to help see this patch through to inclussion when 2.6.38 merge
-window opens.  I can help with further review, testing and development.
-
-Please advise, thanks.
-Mike
+--D
+> 
+> Thanks,
+> NeilBrown
+> 
+> 
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-ext4" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
