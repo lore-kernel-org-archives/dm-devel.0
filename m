@@ -1,51 +1,48 @@
-From: Chaskiel Grundman <cg2v@andrew.cmu.edu>
-Subject: rdac.c patch not quite right.
-Date: Mon, 29 Nov 2010 19:03:47 -0500 (EST)
-Message-ID: <alpine.DEB.2.00.1011291838420.15702@sphinx.andrew.cmu.edu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH v6 0/4] ext4: Coordinate data-only flush requests sent
+ by fsync
+Date: Tue, 30 Nov 2010 14:45:05 +0100
+Message-ID: <4CF4FFE1.9060507@kernel.org>
+References: <20101129220536.12401.16581.stgit@elm3b57.beaverton.ibm.com> <20101130113906.176ffcad@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20101130113906.176ffcad@notabene.brown>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Neil Brown <neilb@suse.de>
+Cc: "Darrick J. Wong" <djwong@us.ibm.com>, Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Alasdair G Kergon <agk@redhat.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Keith Mannthey <kmannth@us.ibm.com>, dm-devel@redhat.com, Mingming Cao <cmm@us.ibm.com>, linux-ext4@vger.kernel.org, Ric Wheeler <rwheeler@redhat.com>, Christoph Hellwig <hch@lst.de>, Josef Bacik <josef@redhat.com>
 List-Id: dm-devel.ids
 
-commit 362d2e5f215894818b52a0d03b723b75917390fb
-added the following block to rdac.c:
+Hello,
 
-        } else if ((inq.PQ_PDT & 0x20) || (inq.PQ_PDT & 0x7f)) {
-                /* LUN not connected*/
-                ret = PATH_DOWN;
-                goto done;
-        }
+On 11/30/2010 01:39 AM, Neil Brown wrote:
+> I haven't seen any of the preceding discussion do I might be missing
+> something important, but this seems needlessly complex and intrusive.
+> In particular, I don't like adding code to md to propagate these timings up
+> to the fs, and I don't the arbitrary '2ms' number.
+> 
+> Would it not be sufficient to simply gather flushes while a flush is pending.
+> i.e
+>   - if no flush is pending, set the 'flush pending' flag, submit a flush,
+>     then clear the flag.
+>   - if a flush is pending, then wait for it to complete, and then submit a
+>     single flush on behalf of all pending flushes.
 
-I don't know what the intended effect actually was, but since
-(inq.PQ_PDT & 0x20) will be true if (inq.PQ_PDT & 0x7f), the code is
-incorrect as-is. I have some dell RDAC devices, but I cannot delete
-targets on any of them to test this.
+Heh, I was about to suggest exactly the same thing.  Unless the delay
+is gonna be multiple times longer than avg flush time, I don't think
+the difference between the above scheme and the one w/ preemptive
+delay would be anything significant especially now that the cost of
+flush is much lower.  Also, as Neil pointed out in another message,
+the above scheme will result in lower latency for flushes issued while
+no flush is in progress.
 
-Update, after reading some scsi docs: If RDAC is using the standard
-peripheral qualifier semantics, I think the following is what should be
-used instead
+IMO, this kind of optimization is gonna make noticeable difference
+only when there are a lot of simulatenous fsyncs, in which case the
+above would behave in mostly identical way with the more elaborate
+timer based one anyway.
 
+Thanks.
 
-        } else if ((inq.PQ_PDT & 0xE0) == 0x20 || inq.PQ_PDT == 0x7f) {
-
-This form checks for the PQ bits being 001 or 011, and if 011, also
-that the device type has the standard value for an unsupported
-lun.
-
-Alternatively,
-
-        } else if ((inq.PQ_PDT & 0xC0) == 0x20) {
-
-does not validate the device type bits in case the PQ is 011
+-- 
+tejun
