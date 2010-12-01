@@ -1,35 +1,43 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: dm-crypt barrier support is effective
-Date: Wed, 01 Dec 2010 19:24:17 +0100
-Message-ID: <4CF692D1.1010906@redhat.com>
-References: <20101107194547.GA12521@basil.fritz.box>	<4CD71C8B.1050604@redhat.com>	<20101107230508.GB17592@basil.fritz.box>	<20101108145809.GD29714@redhat.com>	<1289238930-sup-9765@think>	<20101114205925.GA20451@redhat.com>	<AANLkTi=rVyozmvqCJD1kGqnV3uEn-0ak6B12-O_9XOKJ@mail.gmail.com>	<4CE05A9E.9090204@redhat.com>	<AANLkTimT0t3xqgKdAn7MBPD7ED-9uPS+WJE0z+K8tciu@mail.gmail.com>	<AANLkTik_p0yxQBQ3ehHWYPLfiqxGbSNUT5XUk9dC5-x6@mail.gmail.com>	<20101201165229.GC13415@redhat.com> <AANLkTinG209iRAXgpNC0vNpn1C02wkYmVfveXRBqsKV-@mail.gmail.com>
+From: Jens Axboe <jaxboe@fusionio.com>
+Subject: Re: block: Deprecate QUEUE_FLAG_CLUSTER and use queue_limits instead
+Date: Wed, 1 Dec 2010 19:43:36 +0100
+Message-ID: <4CF69758.40900@fusionio.com>
+References: <85ABFDC4641C4847BA6088F2982EFD8F049D4EB8@nonamew.ptu.promise.com>	<yq14ob5o2d4.fsf@sermon.lab.mkp.net>	<yq1vd3lmkdt.fsf_-_@sermon.lab.mkp.net>	<4CEEAE35.5060805@fusionio.com> <yq1r5e8ncmz.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <AANLkTinG209iRAXgpNC0vNpn1C02wkYmVfveXRBqsKV-@mail.gmail.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Matt <jackdachef@gmail.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, Chris Mason <chris.mason@oracle.com>, htejun@gmail.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <yq1r5e8ncmz.fsf@sermon.lab.mkp.net>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Promise_Linux <Promise_Linux@promise.com>
 List-Id: dm-devel.ids
 
-On 12/01/2010 06:35 PM, Matt wrote:
-> Thanks for pointing to v6 ! I hadn't noticed that there was a new one :)
+On 2010-11-26 01:37, Martin K. Petersen wrote:
+>>>>>> "Jens" == Jens Axboe <jaxboe@fusionio.com> writes:
 > 
-> Well, so I'll restore my box to a working/productive state and will
-> try out v6 (I'm pretty confident that it'll work without problems).
+> Jens> Great, the two different values and needing to sync them was
+> Jens> horrible.  What kind of testing did you do? Have to be a little
+> Jens> extra careful at this point.
+> 
+> Yeah, we should probably let it soak a bit in -next just to make sure.
+> 
+> There really aren't many devices from this millennium that don't support
+> clustering. Which I guess is why we haven't seen any problems.
+> 
+> I ended up disabling clustering in one of the FC drivers to test with a
+> real workload. Threw in a BUG_ON(nsegs > queue_max_segments(q)) for good
+> measure.
+> 
+> I also tested mixing and matching clustered and non-clustered bottom
+> devices while stacking with DM.
+> 
+> New version below, fixing the things you and Matthew pointed out...
 
-It's the same as previous, just with fixed header (to track it properly
-in patchwork) , second patch adds some read optimisation, nothing what
-should help here.
+Thanks applied. Small plea for the future - please rewrite the subject
+line to indicate a v2 (or whatever) of the patch. That will make them
+harder to miss.
 
-Anyway, I run several tests on 2.6.37-rc3+ and see no integrity
-problems (using xfs,ext3 and ext4 over dmcrypt).
+-- 
+Jens Axboe
 
-So please try to check which change causes these problems for you,
-it can be something completely unrelated to these patches.
-
-(If if anyone know how to trigger some corruption with btrfs/dmcrypt,
-let me know I am not able to reproduce it either.)
-
-Milan
