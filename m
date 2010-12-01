@@ -1,88 +1,43 @@
-From: Mingming Cao <cmm@us.ibm.com>
-Subject: Re: [PATCH v6 0/4] ext4: Coordinate data-only flush requests sent
- by fsync
-Date: Tue, 30 Nov 2010 16:14:39 -0800
-Message-ID: <1291162479.2419.179.camel@mingming-laptop>
-References: <20101129220536.12401.16581.stgit@elm3b57.beaverton.ibm.com>
-	 <4CF43BC9.8040603@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: ioctl HDIO_GETGEO to device mapper devpath
+Date: Wed, 01 Dec 2010 09:58:46 +0100
+Message-ID: <1291193926.13116.0.camel@zezette>
+References: <AANLkTikBJzQM7gPPo-Wj1-2cfUqzUDa31W9gw=zZGwO4@mail.gmail.com>
+	<4CF4A8D7.1020802@suse.de>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <4CF43BC9.8040603@redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Ric Wheeler <rwheeler@redhat.com>
-Cc: "Darrick J. Wong" <djwong@us.ibm.com>, Jens Axboe <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>, Neil Brown <neilb@suse.de>, Andreas Dilger <adilger.kernel@dilger.ca>, Alasdair G Kergon <agk@redhat.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Keith Mannthey <kmannth@us.ibm.com>, dm-devel@redhat.com, Tejun Heo <tj@kernel.org>, linux-ext4@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Josef Bacik <josef@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4CF4A8D7.1020802@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2010-11-29 at 18:48 -0500, Ric Wheeler wrote:
-> On 11/29/2010 05:05 PM, Darrick J. Wong wrote:
-> > On certain types of hardware, issuing a write cache flush takes a considerable
-> > amount of time.  Typically, these are simple storage systems with write cache
-> > enabled and no battery to save that cache after a power failure.  When we
-> > encounter a system with many I/O threads that write data and then call fsync
-> > after more transactions accumulate, ext4_sync_file performs a data-only flush,
-> > the performance of which is suboptimal because each of those threads issues its
-> > own flush command to the drive instead of trying to coordinate the flush,
-> > thereby wasting execution time.
-> >
-> > Instead of each fsync call initiating its own flush, there's now a flag to
-> > indicate if (0) no flushes are ongoing, (1) we're delaying a short time to
-> > collect other fsync threads, or (2) we're actually in-progress on a flush.
-> >
-> > So, if someone calls ext4_sync_file and no flushes are in progress, the flag
-> > shifts from 0->1 and the thread delays for a short time to see if there are any
-> > other threads that are close behind in ext4_sync_file.  After that wait, the
-> > state transitions to 2 and the flush is issued.  Once that's done, the state
-> > goes back to 0 and a completion is signalled.
-> >
-> > Those close-behind threads see the flag is already 1, and go to sleep until the
-> > completion is signalled.  Instead of issuing a flush themselves, they simply
-> > wait for that first thread to do it for them.  If they see that the flag is 2,
-> > they wait for the current flush to finish, and start over.
-> >
-> > However, there are a couple of exceptions to this rule.  First, there exist
-> > high-end storage arrays with battery-backed write caches for which flush
-> > commands take very little time (<  2ms); on these systems, performing the
-> > coordination actually lowers performance.  Given the earlier patch to the block
-> > layer to report low-level device flush times, we can detect this situation and
-> > have all threads issue flushes without coordinating, as we did before.  The
-> > second case is when there's a single thread issuing flushes, in which case it
-> > can skip the coordination.
-> >
-> > This author of this patch is aware that jbd2 has a similar flush coordination
-> > scheme for journal commits.  An earlier version of this patch simply created a
-> > new empty journal transaction and committed it, but that approach was shown to
-> > increase the amount of write traffic heading towards the disk, which in turn
-> > lowered performance considerably, especially in the case where directio was in
-> > use.  Therefore, this patch adds the coordination code directly to ext4.
+On mar., 2010-11-30 at 08:33 +0100, Hannes Reinecke wrote:
+> On 10/14/2010 11:40 AM, Santosh Sarangi wrote:
+> > Hi,
+> > I have a linux  mapper device on the host, I would like to get the start
+> > offset.
+> > I get this by the following ioctl . Although the call succeeds but it sets
+> > the hd_geometry_rec to "0"
+> > 
+> > I checked through gdb , the ioctl call suceeds ,but sets all the field of
+> > hd_geometry to "0"
+> > 
+> Yep. Device-mapper device are able to report the geometry, but you
+> have to set it first :-)
 > 
-> Hi Darrick,
+> The attached patch should fix this.
 > 
-> Just curious why we would need to have batching in both places? Doesn't your 
-> patch set make the jbd2 transaction batching redundant?
-> 
-
-We hoped JBD2 could take care of the batching too. But ftrace shows
-there are a fair amount of barriers (440 barriers/second, if I remember
-right) sending from ext4_sync_file(), but not coming from jbd2 side. :(
-
-> I noticed that the patches have a default delay and a mount option to override 
-> that default. The jbd2 code today tries to measure the average time needed in a 
-> transaction and automatically tune itself. Can't we do something similar with 
-> your patch set? (I hate to see yet another mount option added!)
-> 
-
-I don't like a new mount option too. Darrick's new mount option is for
-the threshold to turn on/off batching. Probably could make it a tunables
-instead of a mount option.
-
-Regards,
-Mingming
-> Regards,
-> 
-> Ric
-> 
-> 
-
-
+Applied.
+Thanks.
