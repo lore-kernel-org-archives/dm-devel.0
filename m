@@ -1,92 +1,71 @@
-From: Matt <jackdachef@gmail.com>
-Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
- barrier support is effective)
-Date: Thu, 2 Dec 2010 22:30:16 +0100
-Message-ID: <AANLkTi=mi53SLEGisC5BXbJO0-BXWG_THjH84uum2Com@mail.gmail.com>
-References: <20101114205925.GA20451@redhat.com>
-	<AANLkTi=rVyozmvqCJD1kGqnV3uEn-0ak6B12-O_9XOKJ@mail.gmail.com>
-	<4CE05A9E.9090204@redhat.com>
-	<AANLkTimT0t3xqgKdAn7MBPD7ED-9uPS+WJE0z+K8tciu@mail.gmail.com>
-	<AANLkTik_p0yxQBQ3ehHWYPLfiqxGbSNUT5XUk9dC5-x6@mail.gmail.com>
-	<20101201165229.GC13415@redhat.com>
-	<AANLkTinG209iRAXgpNC0vNpn1C02wkYmVfveXRBqsKV-@mail.gmail.com>
-	<4CF692D1.1010906@redhat.com>
-	<AANLkTimA2PPXZoOHYgeOEV2ocrojeuBby8MYDYJ1yjx1@mail.gmail.com>
-	<4CF6B3E8.2000406@redhat.com>
-	<20101201212310.GA15648@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Bugs in mkfs.xfs, device mapper, xfs, and /dev/ram
+Date: Thu, 2 Dec 2010 17:08:05 -0500
+Message-ID: <20101202220805.GA23388@redhat.com>
+References: <4CF7A539.1050206@shiftmail.org>
+ <20101202141134.GA22012@infradead.org>
+ <4CF7A9C4.2040607@shiftmail.org>
+ <20101202141737.GA29799@infradead.org>
+ <20101202212227.GA22703@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20101201212310.GA15648@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20101202212227.GA22703@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Milan Broz <mbroz@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, Chris Mason <chris.mason@oracle.com>, htejun@gmail.com, linux-ext4@vger.kernel.org, Jon Nelson <jnelson@jamponi.net>
+To: LVM general discussion and development <linux-lvm@redhat.com>
+Cc: Spelic <spelic@shiftmail.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com, npiggin@kernel.dk, dm-devel@redhat.com, tytso@mit.edu
 List-Id: dm-devel.ids
 
-On Wed, Dec 1, 2010 at 10:23 PM, Mike Snitzer <snitzer@redhat.com> wrot=
-e:
-> On Wed, Dec 01 2010 at =A03:45pm -0500,
-> Milan Broz <mbroz@redhat.com> wrote:
->
->>
->> On 12/01/2010 08:34 PM, Jon Nelson wrote:
->> > Perhaps this is useful: for myself, I found that when I started us=
-ing
->> > 2.6.37rc3 that postgresql starting having a *lot* of problems with
->> > corruption. Specifically, I noted zeroed pages, corruption in head=
-ers,
->> > all sorts of stuff on /newly created/ tables, especially during in=
-dex
->> > creation. I had a fairly high hit rate of failure. I backed off to
->> > 2.6.34.7 and have *zero* problems (in fact, prior to 2.6.37rc3, I =
-had
->> > never had a corruption issue with postgresql). I ran on 2.6.36 for=
- a
->> > few weeks as well, without issue.
->> >
->> > I am using kcrypt with lvm on top of that, and ext4 on top of that=
-=2E
->>
->> With unpatched dmcrypt (IOW with Linus' git)? Then it must be ext4 o=
-r
->> dm-core problem because there were no patches for dm-crypt...
->
-> Matt and Jon,
->
-> If you'd be up to it: could you try testing your dm-crypt+ext4
-> corruption reproducers against the following two 2.6.37-rc commits:
->
-> 1) 1de3e3df917459422cb2aecac440febc8879d410
-> then
-> 2) bd2d0210cf22f2bd0cef72eb97cf94fc7d31d8cc
->
-> Then, depending on results of no corruption for those commits, bonus
-> points for testing the same commits but with Andi and Milan's latest
-> dm-crypt cpu scalability patch applied too:
-> https://patchwork.kernel.org/patch/365542/
->
-> Thanks!
-> Mike
->
+On Thu, Dec 02 2010 at  4:22pm -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Yeah sure,
+> On Thu, Dec 02 2010 at  9:17am -0500,
+> Christoph Hellwig <hch@infradead.org> wrote:
+> 
+> > On Thu, Dec 02, 2010 at 03:14:28PM +0100, Spelic wrote:
+> > > On 12/02/2010 03:11 PM, Christoph Hellwig wrote:
+> > > >I'm pretty sure you have CONFIG_DEBUG_BLOCK_EXT_DEVT enabled.  This
+> > > >option must never be enabled, as it causes block devices to be
+> > > >randomly renumered.  Together with the ramdisk driver overloading
+> > > >the BLKFLSBUF ioctl to discard all data it guarantees you to get
+> > > >data loss like yours.
+> > > 
+> > > Nope...
+> > > 
+> > > # CONFIG_DEBUG_BLOCK_EXT_DEVT is not set
+> > 
+> > Hmm, I suspect dm-linear's dumb forwarding of ioctls has the same
+> > effect.
+> 
+> For the benefit of others:
+> - mkfs.xfs will avoid sending BLKFLSBUF to any device whose major is
+>   ramdisk's major, this dates back to 2004:
+>   http://oss.sgi.com/archives/xfs/2004-08/msg00463.html
+> - but because a kpartx partition overlay (linear DM mapping) is used for
+>   the /dev/ram0p1 device, mkfs.xfs only sees a device with DM's major 
+> - so mkfs.xfs sends BLKFLSBUF to the DM device blissfully unaware that
+>   the backing device (behind the DM linear target) is a brd device
+> - DM will forward the BLKFLSBUF ioctl to brd, which triggers
+>   drivers/block/brd.c:brd_ioctl (nuking the entire ramdisk in the
+>   process)
+> 
+> So coming full circle this is what hch was referring to when he
+> mentioned:
+> 1) "ramdisk driver overloading the BLKFLSBUF ioctl ..."
+> 2) "dm-linear's dumb forwarding of ioctls ..."
+> 
+> I really can't see DM adding a specific check for ramdisk's major when
+> forwarding the BLKFLSBUF ioctl.
+> 
+> brd has direct partition support (see commit d7853d1f8932c) so maybe
+> kpartx should just blacklist /dev/ram devices?
+> 
+> Alternatively, what about switching brd away from overloading BLKFLSBUF
+> to a real implementation of (overloaded) BLKDISCARD support in brd.c?
+> One that doesn't blindly nuke the entire device but that properly
+> processes the discard request.
 
-I'll have to set up another testing system (on a separate partition /
-volume group) for its own so that will take some time,
-first tests will be run probably in the weekend,
+Hmm, any chance we could revisit this approach?
 
-thanks for those pointers !
-
-I took a look at git-web - you think
-5a87b7a5da250c9be6d757758425dfeaf8ed3179 might be relevant, too ?
-
-the others seem rather minor compared to those you posted
-
-Afaik last time I run vanilla 2.6.37-rc* (which was probably around
-rc1) I saw no corruption at all but I'll give it a test-run without
-the dm-crypt patch anyway
-
-Thanks & Regards
-
-Matt
+http://lkml.indiana.edu/hypermail/linux/kernel/0405.3/0998.html
