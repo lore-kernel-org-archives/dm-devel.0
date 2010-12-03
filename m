@@ -1,7 +1,7 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Nick Piggin <npiggin@kernel.dk>
 Subject: Re: Bugs in mkfs.xfs, device mapper, xfs, and /dev/ram
-Date: Thu, 2 Dec 2010 17:08:05 -0500
-Message-ID: <20101202220805.GA23388@redhat.com>
+Date: Sat, 4 Dec 2010 04:11:40 +1100
+Message-ID: <20101203171140.GA11889@amd>
 References: <4CF7A539.1050206@shiftmail.org>
  <20101202141134.GA22012@infradead.org>
  <4CF7A9C4.2040607@shiftmail.org>
@@ -13,13 +13,11 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <20101202212227.GA22703@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: LVM general discussion and development <linux-lvm@redhat.com>
-Cc: Spelic <spelic@shiftmail.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com, npiggin@kernel.dk, dm-devel@redhat.com, tytso@mit.edu
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: LVM general discussion and development <linux-lvm@redhat.com>, Spelic <spelic@shiftmail.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com, npiggin@kernel.dk, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Dec 02 2010 at  4:22pm -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
-
+On Thu, Dec 02, 2010 at 04:22:27PM -0500, Mike Snitzer wrote:
 > On Thu, Dec 02 2010 at  9:17am -0500,
 > Christoph Hellwig <hch@infradead.org> wrote:
 > 
@@ -66,6 +64,17 @@ Mike Snitzer <snitzer@redhat.com> wrote:
 > One that doesn't blindly nuke the entire device but that properly
 > processes the discard request.
 
-Hmm, any chance we could revisit this approach?
+Yeah the situation really sucks (mkfs.jfs doesn't work on ramdisk
+for the same reason).
 
-http://lkml.indiana.edu/hypermail/linux/kernel/0405.3/0998.html
+I want to unfortunately keep ioctl for compatibility, but adding new
+saner ones would be welcome. Also, having a non-default config or
+load time parameter for brd, to skip the special case, if that would
+help testing on older userspace.
+
+DISCARD is actually a problem for rd. To actually get proper
+correctness, you need to preload brd with pages, otherwise when
+doing stress tests, IO can require memory allocations and deadlock.
+If we add a discard that frees pages, that introduces the same problem.
+If you find any option useful for testing, however, patches are fine --
+brd pretty much is only useful for testing nowadays.
