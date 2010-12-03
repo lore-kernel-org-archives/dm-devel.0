@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 13 of 15] dm raid allow metadata devices
-Date: Fri, 3 Dec 2010 13:55:52 -0600
-Message-ID: <201012031955.oB3Jtq7j003709@hydrogen.msp.redhat.com>
+Subject: [PATCH 14 of 15] md new superblock type
+Date: Fri, 3 Dec 2010 13:56:03 -0600
+Message-ID: <201012031956.oB3Ju333003782@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,208 +19,233 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-raid-allow-metadata-devices.patch
+Patch name: md-new-superblock-type.patch
 
-Add the ability to parse and use metadata devices.  Metadata
-devices are not required.  If they are provided, they are used
-to store a (minimal) superblock and bitmap.
+New MD superblock methods that will be used by device-mapper.
+The new format will contain the bare minimum to connote
+device health, presence of bitmap, and (possibly) reshaping
+information.
 
 RFC-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-raid.c
+Index: linux-2.6/drivers/md/md.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-raid.c
-+++ linux-2.6/drivers/md/dm-raid.c
-@@ -7,6 +7,7 @@
- #include "md.h"
- #include "raid5.h"
- #include "dm.h"
-+#include "bitmap.h"
+--- linux-2.6.orig/drivers/md/md.c
++++ linux-2.6/drivers/md/md.c
+@@ -1723,6 +1723,171 @@ super_1_rdev_size_change(mdk_rdev_t *rde
+ 	return num_sectors;
+ }
  
- #define DM_MSG_PREFIX "raid"
- 
-@@ -32,6 +33,13 @@ struct raid_set {
- 	struct dm_target *ti;
- 	struct mddev_s md;
- 	struct raid_type *raid_type;
-+
-+	enum sync {
-+		DEFAULTSYNC,    /* Synchronize if necessary */
-+		NOSYNC,         /* Devices known to be already in sync */
-+		FORCESYNC,      /* Force a sync to happen */
-+	} sync;
-+
- 	struct target_callbacks callbacks;
- 	struct raid_dev dev[0];
- };
-@@ -115,6 +123,12 @@ static void context_free(struct raid_set
- {
- 	int i;
- 	for (i = 0; i < rs->md.raid_disks; i++) {
-+		if (rs->dev[i].meta_dev)
-+			dm_put_device(rs->ti, rs->dev[i].meta_dev);
-+		if (rs->dev[i].rdev.sb_page)
-+			put_page(rs->dev[i].rdev.sb_page);
-+		rs->dev[i].rdev.sb_page = NULL;
-+		rs->dev[i].rdev.sb_loaded = 0;
- 		if (rs->dev[i].data_dev)
- 			dm_put_device(rs->ti, rs->dev[i].data_dev);
- 	}
-@@ -125,11 +139,20 @@ static void context_free(struct raid_set
-  *  <meta_dev>: meta device name or '-' if missing
-  *  <data_dev>: data device name or '-' if missing
-  *
-- * This code parses those words.
-+ * The following are acceptable:
-+ *	- -
-+ *	- <data_dev>
-+ *	<meta_dev> <data_dev>
-+ * The following is not allowed:
-+ *	<meta_dev> -
++/*
++ * This structure is never used by userspace.  It is only ever
++ * used in these particular super block accessing functions.
++ * Therefore, we don't put it in any .h file.
 + *
-+ * This code parses those words.  If there is a failure,
-+ * context_free must be used to unwind the operations.
-  */
- static int dev_parms(struct raid_set *rs, char **argv)
- {
- 	int i;
-+	int metadata_available = 0;
- 
- 	for (i = 0; i < rs->md.raid_disks; i++, argv += 2) {
- 		int err = 0;
-@@ -147,8 +170,16 @@ static int dev_parms(struct raid_set *rs
- 		rs->dev[i].rdev.mddev = &rs->md;
- 
- 		if (strcmp(argv[0], "-") != 0) {
--			rs->ti->error = "Metadata devices not supported";
--			return -EINVAL;
-+			err = dm_get_device(rs->ti, argv[0],
-+					    dm_table_get_mode(rs->ti->table),
-+					    &rs->dev[i].meta_dev);
-+			rs->ti->error = "RAID metadata device lookup failure";
-+			if (err)
-+				return err;
++ * It makes sense to define a new magic number here.  This way,
++ * no userspace application will confuse the device as a device
++ * that is accessible through MD operations.  Devices with this
++ * superblock should only ever be accessed via device-mapper.
++ */
++#define MD_DM_SB_MAGIC 0x426E6F4A
++struct mdp_superblock_2 {
++	__le32 magic;
++	__le32 flags;
 +
-+			rs->dev[i].rdev.sb_page = alloc_page(GFP_KERNEL);
-+			if (!rs->dev[i].rdev.sb_page)
-+				return -ENOMEM;
- 		}
- 
- 		if (strcmp(argv[1], "-") == 0) {
-@@ -157,6 +188,10 @@ static int dev_parms(struct raid_set *rs
- 			    (rs->dev[i].rdev.recovery_offset == 0))
- 				return -EINVAL;
- 
-+			rs->ti->error = "No data device supplied with metadata device";
-+			if (rs->dev[i].meta_dev)
-+				return -EINVAL;
++	__le64 events;
++	__le64 reshape_position;
 +
- 			continue;
- 		}
- 
-@@ -167,10 +202,44 @@ static int dev_parms(struct raid_set *rs
- 		if (err)
- 			return err;
- 
-+		if (rs->dev[i].meta_dev) {
-+			metadata_available = 1;
-+			rs->dev[i].rdev.meta_bdev = rs->dev[i].meta_dev->bdev;
++	__le32 num_devices;     /* Number of devs in RAID, Max = 32 */
++	__le32 failed_devices;  /* bitmap of devs used to indicate a failure */
++
++	__le32 reserved[120];   /* Round out the struct to 512 bytes */
++};
++
++static void super_2_sync(mddev_t *mddev, mdk_rdev_t *rdev)
++{
++	mdk_rdev_t *r, *t;
++	uint32_t failed_devices;
++	struct mdp_superblock_2 *sb;
++
++	sb = (struct mdp_superblock_2 *)page_address(rdev->sb_page);
++	failed_devices = le32_to_cpu(sb->failed_devices);
++
++	rdev_for_each(r, t, mddev)
++		if ((r->raid_disk >= 0) && test_bit(Faulty, &r->flags)) {
++			printk(KERN_INFO "  Dev #%d is faulty\n",
++			       (r->raid_disk < 0) ?
++			       r->saved_raid_disk : r->raid_disk);
++			failed_devices |= (1 << r->raid_disk);
 +		}
- 		rs->dev[i].rdev.bdev = rs->dev[i].data_dev->bdev;
- 		list_add(&rs->dev[i].rdev.same_set, &rs->md.disks);
- 	}
- 
-+	if (metadata_available) {
-+		rs->md.external = 0;
-+		rs->md.persistent = 1;
-+		rs->md.major_version = 2;
++
++	memset(sb, 0, sizeof(*sb));
++
++	sb->magic  = cpu_to_le32(MD_DM_SB_MAGIC);
++	sb->events = cpu_to_le64(mddev->events);
++	sb->num_devices = cpu_to_le32(mddev->raid_disks);
++	sb->failed_devices = cpu_to_le32(failed_devices);
++}
++
++/*
++ * super_2_load
++ *
++ * This function creates a superblock if one is not found on the device
++ * and will indicate the more appropriate device whose superblock should
++ * be used - if given two.
++ *
++ * Return: 1 if use rdev, 0 if use refdev, -Exxx otherwise
++ */
++static int super_2_load(mdk_rdev_t *rdev, mdk_rdev_t *refdev, int minor_version)
++{
++	int r;
++	uint64_t ev1, ev2;
++	struct mdp_superblock_2 *sb;
++	struct mdp_superblock_2 *refsb;
++
++	if (sizeof(*sb) & (sizeof(*sb) - 1)) {
++		printk(KERN_ERR "Programmer error: Bad sized superblock (%lu)\n",
++		       sizeof(*sb));
++		return -EIO;
 +	}
++
++	rdev->sb_start = 0;
++	rdev->sb_size  = sizeof(*sb);
++	r = read_disk_sb(rdev, rdev->sb_size);
++	if (r)
++		return r;
++
++	sb = (struct mdp_superblock_2 *)page_address(rdev->sb_page);
++	if (sb->magic != cpu_to_le32(MD_DM_SB_MAGIC)) {
++		printk(KERN_INFO "  Superblock not found: creating new\n");
++		super_2_sync(rdev->mddev, rdev);
++
++		/* Force new superblocks to disk */
++		set_bit(MD_CHANGE_DEVS, &rdev->mddev->flags);
++
++		/* Any superblock is better than none, choose that if given */
++		return refdev ? 0 : 1;
++	}
++
++	ev1 = le64_to_cpu(sb->events);
++	if (!refdev) {
++		if (le32_to_cpu(sb->num_devices) != rdev->mddev->raid_disks) {
++			/*
++			 * User should clear device of old superblocks before
++			 * attempting to create something different.
++			 */
++
++			printk(KERN_ERR "Configuration incompatible with on-disk information\n");
++			return -EINVAL;
++		}
++		return 1;
++	}
++
++	refsb = (struct mdp_superblock_2 *)page_address(refdev->sb_page);
++	ev2 = le64_to_cpu(refsb->events);
++
++	if (ev1 != ev2)
++		printk(KERN_INFO "Comparing event counts [%llu %llu], choosing dev #%d\n",
++		       ev1, ev2, (ev1 > ev2) ? rdev->raid_disk :
++		       refdev->raid_disk);
++
++	return (ev1 > ev2) ? 1 : 0;
++}
++
++static int super_2_validate(mddev_t *mddev, mdk_rdev_t *rdev)
++{
++	uint64_t ev1;
++	uint32_t failed_devices;
++	struct mdp_superblock_2 *sb;
++
++	sb = (struct mdp_superblock_2 *)page_address(rdev->sb_page);
++	ev1 = le64_to_cpu(sb->events);
++	failed_devices = le32_to_cpu(sb->failed_devices);
++
++	if (!mddev->events) {
++		mdk_rdev_t *r, *t;
++		struct mdp_superblock_2 *sb2;
++
++		mddev->events = ev1;
++		rdev_for_each(r, t, mddev) {
++			if (!r->sb_page)
++				continue;
++			sb2 = (struct mdp_superblock_2 *)
++				page_address(r->sb_page);
++			sb2->failed_devices = 0;
++
++			if ((r->raid_disk >= 0) &&
++			    (failed_devices & (1 << r->raid_disk)))
++				set_bit(Faulty, &r->flags);
++		}
++	}
++
++	rdev->mddev->bitmap_info.offset = 0; /* disable bitmap creation */
++	rdev->mddev->bitmap_info.default_offset = 1024 >> 9;
++
 +	/*
-+	 * Now we know if there were any metadata devices specified.
-+	 * DEFAULTSYNC is to perform the sync if there are no metadata
-+	 * devices, but to defer judgement (not perform the sync) if
-+	 * there are metadata devices.
-+	 *
-+	 * FIXME: make sure we don't need to make further adjustments if
-+	 *        there are devices to rebuild (that should be handled
-+	 *        independently by rdev's recovery_offset)
++	 * If the device was marked as failed when the array
++	 * was previously active, we must mark the device as
++	 * not In_sync
 +	 */
-+	switch (rs->sync) {
-+	case NOSYNC:
-+		rs->md.recovery_cp = MaxSector;
-+		break;
-+	case FORCESYNC:
-+		rs->md.recovery_cp = 0;
-+		break;
-+	case DEFAULTSYNC:
-+		rs->md.recovery_cp = (metadata_available) ? MaxSector : 0;
-+		break;
-+	default:
-+		BUG();
++	if (test_bit(Faulty, &rdev->flags)) {
++		printk(KERN_INFO "  Dev #%d marked as failed, clearing In_sync\n",
++		       rdev->raid_disk);
++		clear_bit(Faulty, &rdev->flags);
++		clear_bit(In_sync, &rdev->flags);
++		rdev->recovery_offset = 0;
 +	}
 +
++	/* FIXME: Pull these debug statements */
++	if (test_bit(In_sync, &rdev->flags))
++		printk(KERN_INFO "  In_sync flag set\n");
 +
- 	rs->ti->error = NULL;
- 	return 0;
++	return 0;
++}
++
+ static struct super_type super_types[] = {
+ 	[0] = {
+ 		.name	= "0.90.0",
+@@ -1740,6 +1905,14 @@ static struct super_type super_types[] =
+ 		.sync_super	    = super_1_sync,
+ 		.rdev_size_change   = super_1_rdev_size_change,
+ 	},
++	[2] = {
++		.name	= "dm",
++		.owner	= THIS_MODULE,
++		.load_super	    = super_2_load,
++		.validate_super	    = super_2_validate,
++		.sync_super	    = super_2_sync,
++		.rdev_size_change   = super_1_rdev_size_change,
++	},
+ };
+ 
+ static int match_mddev_units(mddev_t *mddev1, mddev_t *mddev2)
+@@ -4408,6 +4581,20 @@ static void md_safemode_timeout(unsigned
+ 	md_wakeup_thread(mddev->thread);
  }
-@@ -228,17 +297,27 @@ static int parse_raid_params(struct raid
- 		return -EINVAL;
  
- 	rs->ti->error = "Bad RAID option";
-+	/*
-+	 * Default behavior is to treat as in-sync
-+	 * FIXME: Might be better to default to MaxSector
-+	 *        if there are metadata disks, but 0 otherwise
-+	 */
-+	rs->sync = DEFAULTSYNC;
- 	if (num_raid_params) {
- 		if (!strcmp(argv[0], "nosync"))
--			rs->md.recovery_cp = MaxSector;
-+			rs->sync = NOSYNC;
- 		else if (!strcmp(argv[0], "sync"))
--			rs->md.recovery_cp = 0;
--		else
-+			rs->sync = FORCESYNC;
-+		else /* No other valid options yet */
++static int should_read_super(mddev_t *mddev)
++{
++	mdk_rdev_t *rdev, *tmp;
++
++	if (!mddev->raid_disks)
++		return 1;
++
++	rdev_for_each(rdev, tmp, mddev)
++		if (rdev->meta_bdev)
++			return 1;
++
++	return 0;
++}
++
+ static int start_dirty_degraded;
+ 
+ int md_run(mddev_t *mddev)
+@@ -4429,7 +4616,7 @@ int md_run(mddev_t *mddev)
+ 	/*
+ 	 * Analyze all RAID superblock(s)
+ 	 */
+-	if (!mddev->raid_disks) {
++	if (should_read_super(mddev)) {
+ 		if (!mddev->persistent)
  			return -EINVAL;
- 	}
- 
--	rs->md.persistent = 0;
-+	/*
-+	 * These will be adjusted in dev_parms if
-+	 * metadata devices are provided.
-+	 */
- 	rs->md.external = 1;
-+	rs->md.persistent = 0;
- 
- 	rs->ti->error = NULL;
- 	return 0;
-@@ -272,8 +351,6 @@ static void raid_unplug(void *v)
-  *	<raid_type> <#raid_params> <raid_params>		\
-  *	<#raid_devs> { <meta_dev1> <dev1> .. <meta_devN> <devN> }
-  *
-- * ** metadata devices are not supported yet, use '-' instead **
-- *
-  * <raid_params> varies by <raid_type>.  See 'parse_raid_params' for
-  * details on possible <raid_params>.
-  */
-@@ -442,7 +519,10 @@ static int raid_status(struct dm_target 
- 
- 		DMEMIT("%d ", rs->md.raid_disks);
- 		for (i = 0; i < rs->md.raid_disks; i++) {
--			DMEMIT("- "); /* metadata device */
-+			if (rs->dev[i].meta_dev)
-+				DMEMIT("%s ", rs->dev[i].meta_dev->name);
-+			else
-+				DMEMIT("- ");
- 
- 			if (rs->dev[i].data_dev)
- 				DMEMIT("%s ", rs->dev[i].data_dev->name);
-@@ -501,6 +581,7 @@ static void raid_resume(struct dm_target
- {
- 	struct raid_set *rs = ti->private;
- 
-+	bitmap_load(&rs->md);
- 	mddev_resume(&rs->md);
- }
- 
+ 		analyze_sbs(mddev);
