@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 5 of 15] dm target callbacks and congestion fn
-Date: Fri, 3 Dec 2010 13:54:26 -0600
-Message-ID: <201012031954.oB3JsQ3C003072@hydrogen.msp.redhat.com>
+Subject: [PATCH 9 of 15] dm raid message fn
+Date: Fri, 3 Dec 2010 13:55:09 -0600
+Message-ID: <201012031955.oB3Jt9Zm003389@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,150 +19,59 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-target-callbacks-and-congestion-fn.patch
+Patch name: dm-raid-message-fn.patch
 
+Addition of the .message function to provide the
+ability to:
+ - change the size of the stripe cache
+ - change the speed limiter on resync.
 
-dm currently implements congestion checking by checking on congestion
-in each component device.
-
-For raid456 we need to also check if the stripe cache is congested.
-So add support to dm for a target to register a congestion checker,
-then registered such a checker for dm-raid.
-
-We add support for multiple callbacks as we will need one for unplug
-too.
+<JB> Would it make sense to provide a way to set these
+     via the CTR also?
 
 Signed-off-by: NeilBrown <neilb@suse.de>
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-
+RFC-by: Jonathan Brassow <jbrassow@redhat.com>
 Index: linux-2.6/drivers/md/dm-raid.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-raid.c
 +++ linux-2.6/drivers/md/dm-raid.c
-@@ -32,6 +32,7 @@ struct raid_set {
- 	struct dm_target *ti;
- 	struct mddev_s md;
- 	struct raid_type *raid_type;
-+	struct target_callbacks callbacks;
- 	struct raid_dev dev[0];
- };
- 
-@@ -250,6 +251,13 @@ static void do_table_event(struct work_s
- 	dm_table_event(rs->ti->table);
+@@ -504,6 +504,31 @@ static void raid_resume(struct dm_target
+ 	mddev_resume(&rs->md);
  }
  
-+static int raid_is_congested(void *v, int bits)
-+{
-+	struct target_callbacks *cb = v;
-+	struct raid_set *rs = container_of(cb, struct raid_set,
-+					   callbacks);
-+	return md_raid5_congested(&rs->md, bits);
-+}
- /*
-  * Construct a RAID4/5/6 mapping:
-  * Args:
-@@ -330,8 +338,13 @@ static int raid_ctr(struct dm_target *ti
- 	rs->md.in_sync = 0; /* Assume already marked dirty */
- 	mutex_unlock(&rs->md.reconfig_mutex);
- 
--	if (!errnum)
--		return 0;
-+	if (errnum)
-+		goto err;
-+
-+	rs->callbacks.congested_fn = raid_is_congested;
-+	dm_table_add_callbacks(ti->table, &rs->callbacks);
-+
-+	return 0;
- 
- err:
- 	if (rs)
-@@ -344,6 +357,7 @@ static void raid_dtr(struct dm_target *t
- {
- 	struct raid_set *rs = ti->private;
- 
-+	list_del_init(&rs->callbacks.list);
- 	md_stop(&rs->md);
- 	context_free(rs);
- }
-Index: linux-2.6/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c
-+++ linux-2.6/drivers/md/dm-table.c
-@@ -70,6 +70,8 @@ struct dm_table {
- 	void (*event_fn)(void *);
- 	void *event_context;
- 
-+	struct list_head target_callbacks;
-+
- 	struct dm_md_mempools *mempools;
- };
- 
-@@ -204,6 +206,7 @@ int dm_table_create(struct dm_table **re
- 		return -ENOMEM;
- 
- 	INIT_LIST_HEAD(&t->devices);
-+	INIT_LIST_HEAD(&t->target_callbacks);
- 	atomic_set(&t->holders, 0);
- 	t->discards_supported = 1;
- 
-@@ -1229,10 +1232,18 @@ int dm_table_resume_targets(struct dm_ta
- 	return 0;
- }
- 
-+void dm_table_add_callbacks(struct dm_table *t,
-+			    struct target_callbacks *cb)
-+{
-+	list_add(&cb->list, &t->target_callbacks);
-+}
-+EXPORT_SYMBOL_GPL(dm_table_add_callbacks);
-+
- int dm_table_any_congested(struct dm_table *t, int bdi_bits)
- {
- 	struct dm_dev_internal *dd;
- 	struct list_head *devices = dm_table_get_devices(t);
-+	struct target_callbacks *cb;
- 	int r = 0;
- 
- 	list_for_each_entry(dd, devices, list) {
-@@ -1247,6 +1258,10 @@ int dm_table_any_congested(struct dm_tab
- 				     bdevname(dd->dm_dev.bdev, b));
- 	}
- 
-+	list_for_each_entry(cb, &t->target_callbacks, list)
-+		if (cb->congested_fn)
-+			r |= cb->congested_fn(cb, bdi_bits);
-+
- 	return r;
- }
- 
-Index: linux-2.6/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.orig/include/linux/device-mapper.h
-+++ linux-2.6/include/linux/device-mapper.h
-@@ -193,6 +193,12 @@ struct dm_target {
- 	char *error;
- };
- 
-+/* Each target can link one of these into the table */
-+struct target_callbacks {
-+	struct list_head list;
-+	congested_fn *congested_fn;
-+};
-+
- int dm_register_target(struct target_type *t);
- void dm_unregister_target(struct target_type *t);
- 
-@@ -269,6 +275,12 @@ int dm_table_add_target(struct dm_table 
- 			sector_t start, sector_t len, char *params);
- 
- /*
-+ * Target_ctr should call this if they need to add any
-+ * callback
++/* Parse and handle a message from userspace
++ * Messages are:
++ *    stripecache  N  (pages per devices)
++ *    minspeed  N          (kibibytes per seconds)
 + */
-+void dm_table_add_callbacks(struct dm_table *t,
-+			    struct target_callbacks *cb);
-+/*
-  * Finally call this to make the table ready for use.
-  */
- int dm_table_complete(struct dm_table *t);
++static int raid_message(struct dm_target *ti, unsigned argc, char **argv)
++{
++	struct raid_set *rs = ti->private;
++
++	if (argc == 2 && strcmp(argv[0], "stripecache") == 0) {
++		unsigned long size;
++		if (strict_strtoul(argv[1], 10, &size))
++			return -EINVAL;
++		return raid5_set_cache_size(&rs->md, size);
++	}
++	if (argc == 2 && strcmp(argv[0], "minspeed") == 0) {
++		unsigned long speed;
++		if (strict_strtoul(argv[1], 10, &speed))
++			return -EINVAL;
++		rs->md.sync_speed_min = speed;
++		return 0;
++	}
++	return -EINVAL;
++}
++
+ static struct target_type raid_target = {
+ 	.name = "raid",
+ 	.version = {1, 0, 0},
+@@ -517,6 +542,7 @@ static struct target_type raid_target = 
+ 	.presuspend = raid_presuspend,
+ 	.postsuspend = raid_postsuspend,
+ 	.resume = raid_resume,
++	.message = raid_message,
+ };
+ 
+ static int __init dm_raid_init(void)
