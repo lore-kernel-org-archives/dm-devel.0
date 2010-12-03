@@ -1,80 +1,46 @@
-From: Nick Piggin <npiggin@kernel.dk>
+From: Ted Ts'o <tytso@mit.edu>
 Subject: Re: Bugs in mkfs.xfs, device mapper, xfs, and /dev/ram
-Date: Sat, 4 Dec 2010 04:11:40 +1100
-Message-ID: <20101203171140.GA11889@amd>
+Date: Fri, 3 Dec 2010 13:15:20 -0500
+Message-ID: <20101203181520.GA26906@thunk.org>
 References: <4CF7A539.1050206@shiftmail.org>
  <20101202141134.GA22012@infradead.org>
  <4CF7A9C4.2040607@shiftmail.org>
  <20101202141737.GA29799@infradead.org>
  <20101202212227.GA22703@redhat.com>
+ <20101203171140.GA11889@amd>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20101202212227.GA22703@redhat.com>
+In-Reply-To: <20101203171140.GA11889@amd>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: LVM general discussion and development <linux-lvm@redhat.com>, Spelic <spelic@shiftmail.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com, npiggin@kernel.dk, dm-devel@redhat.com
+To: Nick Piggin <npiggin@kernel.dk>
+Cc: Mike Snitzer <snitzer@redhat.com>, LVM general discussion and development <linux-lvm@redhat.com>, Spelic <spelic@shiftmail.org>, Christoph Hellwig <hch@infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Dec 02, 2010 at 04:22:27PM -0500, Mike Snitzer wrote:
-> On Thu, Dec 02 2010 at  9:17am -0500,
-> Christoph Hellwig <hch@infradead.org> wrote:
+On Sat, Dec 04, 2010 at 04:11:40AM +1100, Nick Piggin wrote:
+> > Alternatively, what about switching brd away from overloading BLKFLSBUF
+> > to a real implementation of (overloaded) BLKDISCARD support in brd.c?
+> > One that doesn't blindly nuke the entire device but that properly
+> > processes the discard request.
 > 
-> > On Thu, Dec 02, 2010 at 03:14:28PM +0100, Spelic wrote:
-> > > On 12/02/2010 03:11 PM, Christoph Hellwig wrote:
-> > > >I'm pretty sure you have CONFIG_DEBUG_BLOCK_EXT_DEVT enabled.  This
-> > > >option must never be enabled, as it causes block devices to be
-> > > >randomly renumered.  Together with the ramdisk driver overloading
-> > > >the BLKFLSBUF ioctl to discard all data it guarantees you to get
-> > > >data loss like yours.
-> > > 
-> > > Nope...
-> > > 
-> > > # CONFIG_DEBUG_BLOCK_EXT_DEVT is not set
-> > 
-> > Hmm, I suspect dm-linear's dumb forwarding of ioctls has the same
-> > effect.
+> Yeah the situation really sucks (mkfs.jfs doesn't work on ramdisk
+> for the same reason).
 > 
-> For the benefit of others:
-> - mkfs.xfs will avoid sending BLKFLSBUF to any device whose major is
->   ramdisk's major, this dates back to 2004:
->   http://oss.sgi.com/archives/xfs/2004-08/msg00463.html
-> - but because a kpartx partition overlay (linear DM mapping) is used for
->   the /dev/ram0p1 device, mkfs.xfs only sees a device with DM's major 
-> - so mkfs.xfs sends BLKFLSBUF to the DM device blissfully unaware that
->   the backing device (behind the DM linear target) is a brd device
-> - DM will forward the BLKFLSBUF ioctl to brd, which triggers
->   drivers/block/brd.c:brd_ioctl (nuking the entire ramdisk in the
->   process)
-> 
-> So coming full circle this is what hch was referring to when he
-> mentioned:
-> 1) "ramdisk driver overloading the BLKFLSBUF ioctl ..."
-> 2) "dm-linear's dumb forwarding of ioctls ..."
-> 
-> I really can't see DM adding a specific check for ramdisk's major when
-> forwarding the BLKFLSBUF ioctl.
-> 
-> brd has direct partition support (see commit d7853d1f8932c) so maybe
-> kpartx should just blacklist /dev/ram devices?
-> 
-> Alternatively, what about switching brd away from overloading BLKFLSBUF
-> to a real implementation of (overloaded) BLKDISCARD support in brd.c?
-> One that doesn't blindly nuke the entire device but that properly
-> processes the discard request.
+> I want to unfortunately keep ioctl for compatibility, but adding new
+> saner ones would be welcome. Also, having a non-default config or
+> load time parameter for brd, to skip the special case, if that would
+> help testing on older userspace.
 
-Yeah the situation really sucks (mkfs.jfs doesn't work on ramdisk
-for the same reason).
+How many programs actually depend on BLKFLSBUF dropping the pages used
+in /dev/ram?  The fact that it did this at all was a historical
+accident of how the original /dev/ram was implemented (in the buffer
+cache directly), and not anything that was intended.  I think that's
+something that we should be able to fix, since the number of programs
+that knowly operate on the ramdisk is quite small.  Just a few system
+programs used by distributions in their early boot scripts....
 
-I want to unfortunately keep ioctl for compatibility, but adding new
-saner ones would be welcome. Also, having a non-default config or
-load time parameter for brd, to skip the special case, if that would
-help testing on older userspace.
+So I would argue for dropping the "special" behavior of BLKFLSBUF for
+/dev/ram.
 
-DISCARD is actually a problem for rd. To actually get proper
-correctness, you need to preload brd with pages, otherwise when
-doing stress tests, IO can require memory allocations and deadlock.
-If we add a discard that frees pages, that introduces the same problem.
-If you find any option useful for testing, however, patches are fine --
-brd pretty much is only useful for testing nowadays.
+							- Ted
