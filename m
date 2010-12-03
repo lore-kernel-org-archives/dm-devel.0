@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 14 of 15] md new superblock type
-Date: Fri, 3 Dec 2010 13:56:03 -0600
-Message-ID: <201012031956.oB3Ju333003782@hydrogen.msp.redhat.com>
+Subject: [PATCH 15 of 15] md add bitmap support
+Date: Fri, 3 Dec 2010 13:56:14 -0600
+Message-ID: <201012031956.oB3JuEs3003855@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,12 +19,12 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: md-new-superblock-type.patch
+Patch name: md-add-bitmap-support.patch
 
-New MD superblock methods that will be used by device-mapper.
-The new format will contain the bare minimum to connote
-device health, presence of bitmap, and (possibly) reshaping
-information.
+Add bitmap support to the device-mapper specific metadata area.
+
+Bitmaps are now created and written, but they are not honored when the
+array is started and I don't know why yet.
 
 RFC-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -32,220 +32,165 @@ Index: linux-2.6/drivers/md/md.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/md.c
 +++ linux-2.6/drivers/md/md.c
-@@ -1723,6 +1723,171 @@ super_1_rdev_size_change(mdk_rdev_t *rde
- 	return num_sectors;
- }
+@@ -1802,9 +1802,24 @@ static int super_2_load(mdk_rdev_t *rdev
  
-+/*
-+ * This structure is never used by userspace.  It is only ever
-+ * used in these particular super block accessing functions.
-+ * Therefore, we don't put it in any .h file.
-+ *
-+ * It makes sense to define a new magic number here.  This way,
-+ * no userspace application will confuse the device as a device
-+ * that is accessible through MD operations.  Devices with this
-+ * superblock should only ever be accessed via device-mapper.
-+ */
-+#define MD_DM_SB_MAGIC 0x426E6F4A
-+struct mdp_superblock_2 {
-+	__le32 magic;
-+	__le32 flags;
-+
-+	__le64 events;
-+	__le64 reshape_position;
-+
-+	__le32 num_devices;     /* Number of devs in RAID, Max = 32 */
-+	__le32 failed_devices;  /* bitmap of devs used to indicate a failure */
-+
-+	__le32 reserved[120];   /* Round out the struct to 512 bytes */
-+};
-+
-+static void super_2_sync(mddev_t *mddev, mdk_rdev_t *rdev)
-+{
-+	mdk_rdev_t *r, *t;
-+	uint32_t failed_devices;
-+	struct mdp_superblock_2 *sb;
-+
-+	sb = (struct mdp_superblock_2 *)page_address(rdev->sb_page);
-+	failed_devices = le32_to_cpu(sb->failed_devices);
-+
-+	rdev_for_each(r, t, mddev)
-+		if ((r->raid_disk >= 0) && test_bit(Faulty, &r->flags)) {
-+			printk(KERN_INFO "  Dev #%d is faulty\n",
-+			       (r->raid_disk < 0) ?
-+			       r->saved_raid_disk : r->raid_disk);
-+			failed_devices |= (1 << r->raid_disk);
-+		}
-+
-+	memset(sb, 0, sizeof(*sb));
-+
-+	sb->magic  = cpu_to_le32(MD_DM_SB_MAGIC);
-+	sb->events = cpu_to_le64(mddev->events);
-+	sb->num_devices = cpu_to_le32(mddev->raid_disks);
-+	sb->failed_devices = cpu_to_le32(failed_devices);
-+}
-+
-+/*
-+ * super_2_load
-+ *
-+ * This function creates a superblock if one is not found on the device
-+ * and will indicate the more appropriate device whose superblock should
-+ * be used - if given two.
-+ *
-+ * Return: 1 if use rdev, 0 if use refdev, -Exxx otherwise
-+ */
-+static int super_2_load(mdk_rdev_t *rdev, mdk_rdev_t *refdev, int minor_version)
-+{
-+	int r;
-+	uint64_t ev1, ev2;
-+	struct mdp_superblock_2 *sb;
-+	struct mdp_superblock_2 *refsb;
-+
-+	if (sizeof(*sb) & (sizeof(*sb) - 1)) {
-+		printk(KERN_ERR "Programmer error: Bad sized superblock (%lu)\n",
-+		       sizeof(*sb));
-+		return -EIO;
-+	}
-+
-+	rdev->sb_start = 0;
-+	rdev->sb_size  = sizeof(*sb);
-+	r = read_disk_sb(rdev, rdev->sb_size);
-+	if (r)
-+		return r;
-+
-+	sb = (struct mdp_superblock_2 *)page_address(rdev->sb_page);
-+	if (sb->magic != cpu_to_le32(MD_DM_SB_MAGIC)) {
-+		printk(KERN_INFO "  Superblock not found: creating new\n");
-+		super_2_sync(rdev->mddev, rdev);
-+
-+		/* Force new superblocks to disk */
-+		set_bit(MD_CHANGE_DEVS, &rdev->mddev->flags);
-+
-+		/* Any superblock is better than none, choose that if given */
-+		return refdev ? 0 : 1;
-+	}
-+
-+	ev1 = le64_to_cpu(sb->events);
-+	if (!refdev) {
-+		if (le32_to_cpu(sb->num_devices) != rdev->mddev->raid_disks) {
-+			/*
-+			 * User should clear device of old superblocks before
-+			 * attempting to create something different.
-+			 */
-+
-+			printk(KERN_ERR "Configuration incompatible with on-disk information\n");
-+			return -EINVAL;
-+		}
-+		return 1;
-+	}
-+
-+	refsb = (struct mdp_superblock_2 *)page_address(refdev->sb_page);
-+	ev2 = le64_to_cpu(refsb->events);
-+
-+	if (ev1 != ev2)
-+		printk(KERN_INFO "Comparing event counts [%llu %llu], choosing dev #%d\n",
-+		       ev1, ev2, (ev1 > ev2) ? rdev->raid_disk :
-+		       refdev->raid_disk);
-+
-+	return (ev1 > ev2) ? 1 : 0;
-+}
-+
-+static int super_2_validate(mddev_t *mddev, mdk_rdev_t *rdev)
-+{
-+	uint64_t ev1;
-+	uint32_t failed_devices;
-+	struct mdp_superblock_2 *sb;
-+
-+	sb = (struct mdp_superblock_2 *)page_address(rdev->sb_page);
-+	ev1 = le64_to_cpu(sb->events);
-+	failed_devices = le32_to_cpu(sb->failed_devices);
-+
-+	if (!mddev->events) {
-+		mdk_rdev_t *r, *t;
-+		struct mdp_superblock_2 *sb2;
-+
-+		mddev->events = ev1;
-+		rdev_for_each(r, t, mddev) {
-+			if (!r->sb_page)
-+				continue;
-+			sb2 = (struct mdp_superblock_2 *)
-+				page_address(r->sb_page);
-+			sb2->failed_devices = 0;
-+
-+			if ((r->raid_disk >= 0) &&
-+			    (failed_devices & (1 << r->raid_disk)))
-+				set_bit(Faulty, &r->flags);
-+		}
-+	}
-+
-+	rdev->mddev->bitmap_info.offset = 0; /* disable bitmap creation */
-+	rdev->mddev->bitmap_info.default_offset = 1024 >> 9;
-+
-+	/*
-+	 * If the device was marked as failed when the array
-+	 * was previously active, we must mark the device as
-+	 * not In_sync
-+	 */
-+	if (test_bit(Faulty, &rdev->flags)) {
-+		printk(KERN_INFO "  Dev #%d marked as failed, clearing In_sync\n",
-+		       rdev->raid_disk);
-+		clear_bit(Faulty, &rdev->flags);
-+		clear_bit(In_sync, &rdev->flags);
-+		rdev->recovery_offset = 0;
-+	}
-+
-+	/* FIXME: Pull these debug statements */
-+	if (test_bit(In_sync, &rdev->flags))
-+		printk(KERN_INFO "  In_sync flag set\n");
-+
-+	return 0;
-+}
-+
- static struct super_type super_types[] = {
- 	[0] = {
- 		.name	= "0.90.0",
-@@ -1740,6 +1905,14 @@ static struct super_type super_types[] =
- 		.sync_super	    = super_1_sync,
- 		.rdev_size_change   = super_1_rdev_size_change,
- 	},
-+	[2] = {
-+		.name	= "dm",
-+		.owner	= THIS_MODULE,
-+		.load_super	    = super_2_load,
-+		.validate_super	    = super_2_validate,
-+		.sync_super	    = super_2_sync,
-+		.rdev_size_change   = super_1_rdev_size_change,
-+	},
- };
+ 	sb = (struct mdp_superblock_2 *)page_address(rdev->sb_page);
+ 	if (sb->magic != cpu_to_le32(MD_DM_SB_MAGIC)) {
++		/*
++		 * If we are in this function at all, it means that
++		 * the device-mapper interface is being used /and/
++		 * metadata devices have been allocated and specified.
++		 *
++		 * If no superblock has been found, then we must create
++		 * a new one - including a new bitmap.  First, populate
++		 * the superblock with good info.  Then set the bitmap's
++		 * chunksize, which has the effect of notifying 'bitmap_create'
++		 * to allocate the bitmap's superblock page.  Finally,
++		 * ensure that the changes will be written by setting
++		 * MD_CHANGE_DEVS.
++		 */
+ 		printk(KERN_INFO "  Superblock not found: creating new\n");
+ 		super_2_sync(rdev->mddev, rdev);
  
- static int match_mddev_units(mddev_t *mddev1, mddev_t *mddev2)
-@@ -4408,6 +4581,20 @@ static void md_safemode_timeout(unsigned
- 	md_wakeup_thread(mddev->thread);
- }
++		rdev->mddev->bitmap_info.chunksize = rdev->mddev->chunk_sectors;
++
+ 		/* Force new superblocks to disk */
+ 		set_bit(MD_CHANGE_DEVS, &rdev->mddev->flags);
  
-+static int should_read_super(mddev_t *mddev)
-+{
-+	mdk_rdev_t *rdev, *tmp;
-+
-+	if (!mddev->raid_disks)
-+		return 1;
-+
-+	rdev_for_each(rdev, tmp, mddev)
-+		if (rdev->meta_bdev)
-+			return 1;
-+
-+	return 0;
-+}
-+
- static int start_dirty_degraded;
+@@ -1865,7 +1880,7 @@ static int super_2_validate(mddev_t *mdd
+ 		}
+ 	}
  
- int md_run(mddev_t *mddev)
-@@ -4429,7 +4616,7 @@ int md_run(mddev_t *mddev)
+-	rdev->mddev->bitmap_info.offset = 0; /* disable bitmap creation */
++	mddev->bitmap_info.offset = 1024 >> 9; /* enable bitmap creation */
+ 	rdev->mddev->bitmap_info.default_offset = 1024 >> 9;
+ 
  	/*
- 	 * Analyze all RAID superblock(s)
- 	 */
--	if (!mddev->raid_disks) {
-+	if (should_read_super(mddev)) {
- 		if (!mddev->persistent)
- 			return -EINVAL;
- 		analyze_sbs(mddev);
+Index: linux-2.6/drivers/md/bitmap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/bitmap.c
++++ linux-2.6/drivers/md/bitmap.c
+@@ -533,6 +533,90 @@ void bitmap_print_sb(struct bitmap *bitm
+ 	kunmap_atomic(sb, KM_USER0);
+ }
+ 
++/*
++ * bitmap_new_disk_sb
++ * @bitmap
++ *
++ * This function is somewhat the reverse of bitmap_read_sb.  bitmap_read_sb
++ * reads and verifies the on-disk bitmap superblock and populates bitmap_info.
++ * This function verifies 'bitmap_info' and populates the on-disk bitmap
++ * structure, which is to be written to disk.
++ *
++ * Returns: 0 on success, -Exxx on error
++ */
++static int bitmap_new_disk_sb(struct bitmap *bitmap)
++{
++	char *reason = NULL;
++	bitmap_super_t *sb;
++	unsigned long chunksize, daemon_sleep, write_behind;
++	unsigned long long events;
++	int err = -EINVAL;
++
++	printk("CREATING NEW BITMAP SUPERBLOCK\n");
++
++	/* page 0 is the superblock, read it... */
++	/* FIXME:  It's probably enough to just allocate the page */
++	bitmap->sb_page = read_sb_page(bitmap->mddev,
++				       bitmap->mddev->bitmap_info.offset,
++				       NULL, 0, sizeof(bitmap_super_t));
++
++	if (IS_ERR(bitmap->sb_page)) {
++		err = PTR_ERR(bitmap->sb_page);
++		bitmap->sb_page = NULL;
++		return err;
++	}
++
++	sb = kmap_atomic(bitmap->sb_page, KM_USER0);
++
++	sb->magic = cpu_to_le32(BITMAP_MAGIC);
++	sb->version = cpu_to_le32(BITMAP_MAJOR_HI);
++
++	chunksize = bitmap->mddev->bitmap_info.chunksize;
++	BUG_ON(!chunksize);
++	if ((1 << ffz(~chunksize)) != chunksize) {
++		kunmap_atomic(sb, KM_USER0);
++		printk(KERN_ERR "bitmap chunksize not a power of 2\n");
++		return -EINVAL;
++	}
++	sb->chunksize = cpu_to_le32(chunksize);
++
++	daemon_sleep = bitmap->mddev->bitmap_info.daemon_sleep;
++	if (!daemon_sleep ||
++	    (daemon_sleep < 1) || (daemon_sleep > MAX_SCHEDULE_TIMEOUT)) {
++		/* FIXME: A guess */
++		printk(KERN_INFO "Guessing at good daemon_sleep default\n");
++		daemon_sleep = MAX_SCHEDULE_TIMEOUT / 2;
++	}
++	sb->daemon_sleep = cpu_to_le32(daemon_sleep);
++	bitmap->mddev->bitmap_info.daemon_sleep = daemon_sleep;
++
++	write_behind = bitmap->mddev->bitmap_info.max_write_behind;
++	if (write_behind > COUNTER_MAX) {
++		/* FIXME: A guess */
++		printk(KERN_INFO "Guessing at good write_behind default\n");
++		write_behind = COUNTER_MAX / 2;
++	}
++	sb->write_behind = cpu_to_le32(write_behind);
++	bitmap->mddev->bitmap_info.max_write_behind = write_behind;
++
++	/* keep the array size field of the bitmap superblock up to date */
++	sb->sync_size = cpu_to_le64(bitmap->mddev->resync_max_sectors);
++
++	memcpy(sb->uuid, bitmap->mddev->uuid, 16);
++
++	/* Force full recovery? */
++	bitmap->flags |= BITMAP_STALE;
++	sb->state |= cpu_to_le32(BITMAP_STALE);
++	bitmap->events_cleared = bitmap->mddev->events;
++	sb->events_cleared = cpu_to_le64(bitmap->mddev->events);
++
++	bitmap->flags |= BITMAP_HOSTENDIAN;
++	sb->version = cpu_to_le32(BITMAP_MAJOR_HOSTENDIAN);
++
++	kunmap_atomic(sb, KM_USER0);
++	return 0;
++}
++
+ /* read the superblock from the bitmap file and initialize some bitmap fields */
+ static int bitmap_read_sb(struct bitmap *bitmap)
+ {
+@@ -542,6 +626,8 @@ static int bitmap_read_sb(struct bitmap 
+ 	unsigned long long events;
+ 	int err = -EINVAL;
+ 
++	printk("READING OLD BITMAP\n");
++
+ 	/* page 0 is the superblock, read it... */
+ 	if (bitmap->file) {
+ 		loff_t isize = i_size_read(bitmap->file->f_mapping->host);
+@@ -1687,9 +1773,20 @@ int bitmap_create(mddev_t *mddev)
+ 		vfs_fsync(file, 1);
+ 	}
+ 	/* read superblock from bitmap file (this sets mddev->bitmap_info.chunksize) */
+-	if (!mddev->bitmap_info.external)
+-		err = bitmap_read_sb(bitmap);
+-	else {
++	if (!mddev->bitmap_info.external) {
++		/*
++		 * If the bitmap is internal and persistent and the chunksize
++		 * is already set, then we know we are being called through
++		 * device-mapper and that this is the first time the array
++		 * is being activated.  We must create a new on-disk bitmap
++		 * instance.
++		 */
++		if (!bitmap->file && bitmap->mddev->persistent &&
++		    mddev->bitmap_info.chunksize)
++			err = bitmap_new_disk_sb(bitmap);
++		else
++			err = bitmap_read_sb(bitmap);
++	} else {
+ 		err = 0;
+ 		if (mddev->bitmap_info.chunksize == 0 ||
+ 		    mddev->bitmap_info.daemon_sleep == 0)
