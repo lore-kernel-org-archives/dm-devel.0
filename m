@@ -1,8 +1,8 @@
-From: Don Hoover <dxh@yahoo.com>
-Subject: How about adding an include directive in multipath.conf
-	file?
-Date: Fri, 3 Dec 2010 13:18:38 -0800 (PST)
-Message-ID: <583709.74205.qm@web120705.mail.ne1.yahoo.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2 0/4] dm log userspace: a fix and other
+	improvements
+Date: Fri,  3 Dec 2010 18:12:46 -0500
+Message-ID: <1291417970-5626-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,14 +17,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: agk@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-It sure would be nice to add an include directive to the multipath.conf file.
+Alasdair,
 
+I've reviewed all of these patches from Jon:
+- cleaned up all patch headers and subjects a bit
+- patch 1 is a fix that should go to 2.6.37
+- the others are fine to go to linux-next (and queue for 2.6.38)
+- made some changes to patch 3 (uninit 'type' warning, move 'group'
+  from end of 'log_c' structure to flush_by_group's stack). Jon may
+  clean up the flush_by_group() list processing further but I've added
+  a useful comment about the final list_splice_init.
 
-Almost all the stuff in there is defaults that you use for your entire environment and can be pushed out from a central configuration management system, but as soon as you want to add alias entries for a particular system it breaks this.
+Thanks,
+Mike
 
-It sure is nice when daemons allow %includes in their configuration files for those of us that do centralized configuration management of our systems because you can then separate the common from the specific stuff.
+Jonathan Brassow (4):
+  dm log userspace: trap all errors from failed log construction
+  dm log userspace: split flush queue
+  dm log userspace: group clear and mark requests
+  dm log userspace: add version number to communication structure
 
-I am looking at the config code now and what it would take to add a include keyword and process an additional config file, I might be able to work on a patch to accomplish this but, I thought maybe anyone who has worked on that code before might have a quick idea on how to accomplish this.
+ drivers/md/dm-log-userspace-base.c     |  130 ++++++++++++++++++++++++++------
+ drivers/md/dm-log-userspace-transfer.c |    1 +
+ include/linux/dm-log-userspace.h       |   13 +++-
+ 3 files changed, 119 insertions(+), 25 deletions(-)
+
+-- 
+1.7.2.3
