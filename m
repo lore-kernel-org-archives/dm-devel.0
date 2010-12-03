@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 15] md minor updates
-Date: Fri, 3 Dec 2010 13:53:54 -0600
-Message-ID: <201012031953.oB3JrsAF002837@hydrogen.msp.redhat.com>
+Subject: [PATCH 8 of 15] dm raid suspend and resume fns
+Date: Fri, 3 Dec 2010 13:54:58 -0600
+Message-ID: <201012031954.oB3JswbC003306@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,29 +19,52 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: md-minor-updates.patch
+Patch name: dm-raid-suspend-and-resume-fns.patch
 
-Changes from e384e58549a2e9a83071ad80280c1a9053cfd84c that should
-be kept.  (i.e. those cosmetic changes that are unrelated to 
-dm dirty log support.
+Addition of .*suspend and .resume functions required
+by device-mapper target implementations... further fleshing
+out the new target.
 
+Signed-off-by: NeilBrown <neilb@suse.de>
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/bitmap.c
+Index: linux-2.6/drivers/md/dm-raid.c
 ===================================================================
---- linux-2.6.orig/drivers/md/bitmap.c
-+++ linux-2.6/drivers/md/bitmap.c
-@@ -925,11 +925,11 @@ static int bitmap_init_from_disk(struct 
- 		printk(KERN_INFO "%s: bitmap file is out of date, doing full "
- 			"recovery\n", bmname(bitmap));
+--- linux-2.6.orig/drivers/md/dm-raid.c
++++ linux-2.6/drivers/md/dm-raid.c
+@@ -485,6 +485,25 @@ static void raid_io_hints(struct dm_targ
+ 			  (conf->raid_disks - conf->max_degraded));
+ }
  
--	bytes = (chunks + 7) / 8;
-+	bytes = DIV_ROUND_UP(bitmap->chunks, 8);
- 	if (!bitmap->mddev->bitmap_info.external)
- 		bytes += sizeof(bitmap_super_t);
++static void raid_presuspend(struct dm_target *ti)
++{
++	struct raid_set *rs = ti->private;
++	md_stop_writes(&rs->md);
++}
++
++static void raid_postsuspend(struct dm_target *ti)
++{
++	struct raid_set *rs = ti->private;
++	mddev_suspend(&rs->md);
++}
++
++static void raid_resume(struct dm_target *ti)
++{
++	struct raid_set *rs = ti->private;
++
++	mddev_resume(&rs->md);
++}
++
+ static struct target_type raid_target = {
+ 	.name = "raid",
+ 	.version = {1, 0, 0},
+@@ -495,6 +514,9 @@ static struct target_type raid_target = 
+ 	.status = raid_status,
+ 	.iterate_devices = raid_iterate_devices,
+ 	.io_hints = raid_io_hints,
++	.presuspend = raid_presuspend,
++	.postsuspend = raid_postsuspend,
++	.resume = raid_resume,
+ };
  
--	num_pages = (bytes + PAGE_SIZE - 1) / PAGE_SIZE;
-+	num_pages = DIV_ROUND_UP(bytes, PAGE_SIZE);
- 
- 	if (file && i_size_read(file->f_mapping->host) < bytes) {
- 		printk(KERN_INFO "%s: bitmap file too short %lu < %lu\n",
+ static int __init dm_raid_init(void)
