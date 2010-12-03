@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 12 of 15] md separate meta and data devs
-Date: Fri, 3 Dec 2010 13:55:42 -0600
-Message-ID: <201012031955.oB3JtgiV003636@hydrogen.msp.redhat.com>
+Subject: [PATCH 11 of 15] md new param to_sync_page_io
+Date: Fri, 3 Dec 2010 13:55:31 -0600
+Message-ID: <201012031955.oB3JtV1K003563@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,188 +19,150 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: md-separate-meta-and-data-devs.patch
+Patch name: md-new-param-to_sync_page_io.patch
 
-Allow the metadata to be on a separate device from the
-data.
+Add new parameter to 'sync_page_io'.
 
-This doesn't mean the data and metadata will by on separate
-physical devices - it simply gives device-mapper and userspace
-tools more flexibility.
+The new parameter allows us to distinguish between metadata and data
+operations.  This becomes important later when we add the ability to
+use separate devices for data and metadata.
 
-RFC-by: Jonathan Brassow <jbrassow@redhat.com>
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
 Index: linux-2.6/drivers/md/bitmap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/bitmap.c
 +++ linux-2.6/drivers/md/bitmap.c
-@@ -263,14 +263,18 @@ static mdk_rdev_t *next_active_rdev(mdk_
- static int write_sb_page(struct bitmap *bitmap, struct page *page, int wait)
- {
- 	mdk_rdev_t *rdev = NULL;
-+	struct block_device *bdev;
- 	mddev_t *mddev = bitmap->mddev;
+@@ -213,7 +213,7 @@ static struct page *read_sb_page(mddev_t
  
- 	while ((rdev = next_active_rdev(rdev, mddev)) != NULL) {
- 		int size = PAGE_SIZE;
- 		loff_t offset = mddev->bitmap_info.offset;
-+
-+		bdev = (rdev->meta_bdev) ? rdev->meta_bdev : rdev->bdev;
-+
- 		if (page->index == bitmap->file_pages-1)
- 			size = roundup(bitmap->last_page_size,
--				       bdev_logical_block_size(rdev->bdev));
-+				       bdev_logical_block_size(bdev));
- 		/* Just make sure we aren't corrupting data or
- 		 * metadata
- 		 */
+ 		if (sync_page_io(rdev, target,
+ 				 roundup(size, bdev_logical_block_size(rdev->bdev)),
+-				 page, READ)) {
++				 page, READ, 1)) {
+ 			page->index = index;
+ 			attach_page_buffers(page, NULL); /* so that free_buffer will
+ 							  * quietly no-op */
 Index: linux-2.6/drivers/md/md.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/md.c
 +++ linux-2.6/drivers/md/md.c
-@@ -707,6 +707,20 @@ static struct mdk_personality *find_pers
- static inline sector_t calc_dev_sboffset(mdk_rdev_t *rdev)
- {
- 	sector_t num_sectors = i_size_read(rdev->bdev->bd_inode) / 512;
-+
-+	if (rdev->meta_bdev)
-+		return 0;
-+
-+	return MD_NEW_SIZE_SECTORS(num_sectors);
-+}
-+
-+static inline sector_t calc_dev_sectors(mdk_rdev_t *rdev)
-+{
-+	sector_t num_sectors = i_size_read(rdev->bdev->bd_inode) / 512;
-+
-+	if (rdev->meta_bdev)
-+		return num_sectors;
-+
- 	return MD_NEW_SIZE_SECTORS(num_sectors);
+@@ -794,7 +794,7 @@ static void bi_complete(struct bio *bio,
  }
  
-@@ -764,7 +778,7 @@ void md_super_write(mddev_t *mddev, mdk_
- 	 */
- 	struct bio *bio = bio_alloc_mddev(GFP_NOIO, 1, mddev);
- 
--	bio->bi_bdev = rdev->bdev;
-+	bio->bi_bdev = (rdev->meta_bdev) ? rdev->meta_bdev : rdev->bdev;
- 	bio->bi_sector = sector;
- 	bio_add_page(bio, page, size, 0);
- 	bio->bi_private = rdev;
-@@ -802,7 +816,8 @@ int sync_page_io(mdk_rdev_t *rdev, secto
- 
- 	rw |= REQ_SYNC | REQ_UNPLUG;
- 
--	bio->bi_bdev = rdev->bdev;
-+	bio->bi_bdev = (metadata_op && rdev->meta_bdev) ?
-+		rdev->meta_bdev : rdev->bdev;
- 	bio->bi_sector = sector;
- 	bio_add_page(bio, page, size, 0);
- 	init_completion(&event);
-@@ -820,6 +835,7 @@ EXPORT_SYMBOL_GPL(sync_page_io);
- static int read_disk_sb(mdk_rdev_t * rdev, int size)
+ int sync_page_io(mdk_rdev_t *rdev, sector_t sector, int size,
+-		 struct page *page, int rw)
++		 struct page *page, int rw, int metadata_op)
  {
- 	char b[BDEVNAME_SIZE];
-+
- 	if (!rdev->sb_page) {
- 		MD_BUG();
- 		return -EINVAL;
-@@ -1678,7 +1694,7 @@ super_1_rdev_size_change(mdk_rdev_t *rde
- 	sector_t max_sectors;
- 	if (num_sectors && num_sectors < rdev->mddev->dev_sectors)
- 		return 0; /* component must fit device */
--	if (rdev->sb_start < rdev->data_offset) {
-+	if (rdev->meta_bdev || rdev->sb_start < rdev->data_offset) {
- 		/* minor versions 1 and 2; superblock before data */
- 		max_sectors = i_size_read(rdev->bdev->bd_inode) >> 9;
- 		max_sectors -= rdev->data_offset;
-@@ -1769,6 +1785,7 @@ int md_integrity_register(mddev_t *mddev
- 		 * If at least one rdev is not integrity capable, we can not
- 		 * enable data integrity for the md device.
- 		 */
-+		/* FIXME (brassow): check both [meta_]bdev ? */
- 		if (!bdev_get_integrity(rdev->bdev))
- 			return -EINVAL;
- 		if (!reference) {
-@@ -1935,6 +1952,8 @@ static int lock_rdev(mdk_rdev_t *rdev, d
- 	struct block_device *bdev;
- 	char b[BDEVNAME_SIZE];
+ 	struct bio *bio = bio_alloc_mddev(GFP_NOIO, 1, rdev->mddev);
+ 	struct completion event;
+@@ -828,7 +828,7 @@ static int read_disk_sb(mdk_rdev_t * rde
+ 		return 0;
  
-+	/* FIXME (brassow): [un]lock all both [meta_]bdev ? */
-+
- 	bdev = open_by_devnum(dev, FMODE_READ|FMODE_WRITE);
- 	if (IS_ERR(bdev)) {
- 		printk(KERN_ERR "md: could not open %s.\n",
-@@ -1957,6 +1976,8 @@ static int lock_rdev(mdk_rdev_t *rdev, d
- static void unlock_rdev(mdk_rdev_t *rdev)
- {
- 	struct block_device *bdev = rdev->bdev;
-+
-+	/* FIXME brassow: end here on 'bdev' search */
- 	rdev->bdev = NULL;
- 	if (!bdev)
- 		MD_BUG();
-@@ -4434,7 +4455,18 @@ int md_run(mddev_t *mddev)
- 		 * We don't want the data to overlap the metadata,
- 		 * Internal Bitmap issues have been handled elsewhere.
- 		 */
--		if (rdev->data_offset < rdev->sb_start) {
-+		if (rdev->meta_bdev) {
-+			/* Metadata is on a separate device */
-+			if (rdev->data_offset) {
-+				printk(KERN_ERR "md: data_offset should be 0\n");
-+				return -EINVAL;
-+			}
-+
-+			if (rdev->sb_start) {
-+				printk(KERN_ERR "md: sb_start should be 0\n");
-+				return -EINVAL;
-+			}
-+		} else if (rdev->data_offset < rdev->sb_start) {
- 			if (mddev->dev_sectors &&
- 			    rdev->data_offset + mddev->dev_sectors
- 			    > rdev->sb_start) {
-@@ -5240,7 +5272,7 @@ static int add_new_disk(mddev_t * mddev,
- 			rdev->sb_start = i_size_read(rdev->bdev->bd_inode) / 512;
- 		} else
- 			rdev->sb_start = calc_dev_sboffset(rdev);
--		rdev->sectors = rdev->sb_start;
-+		rdev->sectors = calc_dev_sectors(rdev);
  
- 		err = bind_rdev_to_array(rdev, mddev);
- 		if (err) {
-@@ -5310,7 +5342,7 @@ static int hot_add_disk(mddev_t * mddev,
- 	else
- 		rdev->sb_start = i_size_read(rdev->bdev->bd_inode) / 512;
- 
--	rdev->sectors = rdev->sb_start;
-+	rdev->sectors = calc_dev_sectors(rdev);
- 
- 	if (test_bit(Faulty, &rdev->flags)) {
- 		printk(KERN_WARNING 
-@@ -5519,7 +5551,6 @@ static int update_size(mddev_t *mddev, s
- 	 * sb_start or, if that is <data_offset, it must fit before the size
- 	 * of each device.  If num_sectors is zero, we find the largest size
- 	 * that fits.
--
- 	 */
- 	if (mddev->sync_thread)
- 		return -EBUSY;
+-	if (!sync_page_io(rdev, rdev->sb_start, size, rdev->sb_page, READ))
++	if (!sync_page_io(rdev, rdev->sb_start, size, rdev->sb_page, READ, 1))
+ 		goto fail;
+ 	rdev->sb_loaded = 1;
+ 	return 0;
 Index: linux-2.6/drivers/md/md.h
 ===================================================================
 --- linux-2.6.orig/drivers/md/md.h
 +++ linux-2.6/drivers/md/md.h
-@@ -60,6 +60,12 @@ struct mdk_rdev_s
- 	mddev_t *mddev;			/* RAID array if running */
- 	int last_events;		/* IO event timestamp */
- 
-+	/*
-+	 * If meta_bdev is non-NULL, it means that a separate device is
-+	 * being used to store the metadata (superblock/bitmap) which
-+	 * would otherwise be contained on the same device as the data (bdev).
-+	 */
-+	struct block_device *meta_bdev;
- 	struct block_device *bdev;	/* block device handle */
- 
- 	struct page	*sb_page;
+@@ -493,7 +493,7 @@ extern void md_super_write(mddev_t *mdde
+ 			   sector_t sector, int size, struct page *page);
+ extern void md_super_wait(mddev_t *mddev);
+ extern int sync_page_io(mdk_rdev_t *rdev, sector_t sector, int size,
+-			struct page *page, int rw);
++			struct page *page, int rw, int metadata_op);
+ extern void md_do_sync(mddev_t *mddev);
+ extern void md_new_event(mddev_t *mddev);
+ extern int md_allow_write(mddev_t *mddev);
+Index: linux-2.6/drivers/md/raid1.c
+===================================================================
+--- linux-2.6.orig/drivers/md/raid1.c
++++ linux-2.6/drivers/md/raid1.c
+@@ -1366,7 +1366,7 @@ static void sync_request_write(mddev_t *
+ 							 sect + rdev->data_offset,
+ 							 s<<9,
+ 							 bio->bi_io_vec[idx].bv_page,
+-							 READ)) {
++							 READ, 0)) {
+ 						success = 1;
+ 						break;
+ 					}
+@@ -1392,7 +1392,7 @@ static void sync_request_write(mddev_t *
+ 							 sect + rdev->data_offset,
+ 							 s<<9,
+ 							 bio->bi_io_vec[idx].bv_page,
+-							 WRITE) == 0)
++							 WRITE, 0) == 0)
+ 						md_error(mddev, rdev);
+ 				}
+ 				d = start;
+@@ -1407,7 +1407,7 @@ static void sync_request_write(mddev_t *
+ 							 sect + rdev->data_offset,
+ 							 s<<9,
+ 							 bio->bi_io_vec[idx].bv_page,
+-							 READ) == 0)
++							 READ, 0) == 0)
+ 						md_error(mddev, rdev);
+ 				}
+ 			} else {
+@@ -1490,7 +1490,7 @@ static void fix_read_error(conf_t *conf,
+ 			    sync_page_io(rdev,
+ 					 sect + rdev->data_offset,
+ 					 s<<9,
+-					 conf->tmppage, READ))
++					 conf->tmppage, READ, 0))
+ 				success = 1;
+ 			else {
+ 				d++;
+@@ -1515,7 +1515,7 @@ static void fix_read_error(conf_t *conf,
+ 			    test_bit(In_sync, &rdev->flags)) {
+ 				if (sync_page_io(rdev,
+ 						 sect + rdev->data_offset,
+-						 s<<9, conf->tmppage, WRITE)
++						 s<<9, conf->tmppage, WRITE, 0)
+ 				    == 0)
+ 					/* Well, this device is dead */
+ 					md_error(mddev, rdev);
+@@ -1532,7 +1532,7 @@ static void fix_read_error(conf_t *conf,
+ 			    test_bit(In_sync, &rdev->flags)) {
+ 				if (sync_page_io(rdev,
+ 						 sect + rdev->data_offset,
+-						 s<<9, conf->tmppage, READ)
++						 s<<9, conf->tmppage, READ, 0)
+ 				    == 0)
+ 					/* Well, this device is dead */
+ 					md_error(mddev, rdev);
+Index: linux-2.6/drivers/md/raid10.c
+===================================================================
+--- linux-2.6.orig/drivers/md/raid10.c
++++ linux-2.6/drivers/md/raid10.c
+@@ -1561,7 +1561,7 @@ static void fix_read_error(conf_t *conf,
+ 						       r10_bio->devs[sl].addr +
+ 						       sect + rdev->data_offset,
+ 						       s<<9,
+-						       conf->tmppage, READ);
++						       conf->tmppage, READ, 0);
+ 				rdev_dec_pending(rdev, mddev);
+ 				rcu_read_lock();
+ 				if (success)
+@@ -1599,7 +1599,7 @@ static void fix_read_error(conf_t *conf,
+ 				if (sync_page_io(rdev,
+ 						 r10_bio->devs[sl].addr +
+ 						 sect + rdev->data_offset,
+-						 s<<9, conf->tmppage, WRITE)
++						 s<<9, conf->tmppage, WRITE, 0)
+ 				    == 0) {
+ 					/* Well, this device is dead */
+ 					printk(KERN_NOTICE
+@@ -1637,7 +1637,7 @@ static void fix_read_error(conf_t *conf,
+ 						 r10_bio->devs[sl].addr +
+ 						 sect + rdev->data_offset,
+ 						 s<<9, conf->tmppage,
+-						 READ) == 0) {
++						 READ, 0) == 0) {
+ 					/* Well, this device is dead */
+ 					printk(KERN_NOTICE
+ 					       "md/raid10:%s: unable to read back "
