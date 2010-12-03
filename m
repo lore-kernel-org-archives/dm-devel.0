@@ -1,10 +1,11 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 0 of 15] DM RAID: a wrapper target for MD RAID456
-Date: Fri, 03 Dec 2010 13:53:19 -0600
-Message-ID: <1291406002.32354.6.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH 4 of 15] dm raid seed module
+Date: Fri, 3 Dec 2010 13:54:15 -0600
+Message-ID: <201012031954.oB3JsFJR002992@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-+ApX7dhgxqZR0Qozd5Xn"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,455 +19,530 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
---=-+ApX7dhgxqZR0Qozd5Xn
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-
-The forthcoming patches are the second iteration (3rd when including
-Neil's original drop) of the DM -> MD translation module, "dm-raid".
-There have been some minor changes to some of the 9 patches I posted
-last time, so I'm just including all of them along with the new patches
-I have.
-MD patch reversals and fixes (these can go upstream now):
-	md-backout-dm-dirty-log.patch
-	md-minor-updates.patch
-	md-fix-null-pointer-deref.patch
-dm-raid module (some reworking of Neil's original patches):
-	dm-raid-seed-module.patch
-	dm-target-callbacks-and-congestion-fn.patch
-	dm-unplug-callback.patch
-	dm-raid-iterate_devices-and-io_hints.patch
-	dm-raid-suspend-and-resume-fns.patch
-	dm-raid-message-fn.patch
-New patches for support of separate metadata devices:
-	md-new-param-to-calc_dev_sboffset.patch
-	md-new-param-to_sync_page_io.patch
-	md-separate-meta-and-data-devs.patch
-	dm-raid-allow-metadata-devices.patch
-	md-new-superblock-type.patch
-	md-add-bitmap-support.patch
-
-So far, the metadata stuff (superblock and bitmaps) is partially working.
-The work I'm suffering on right now is the bitmap work.  The bitmap is
-being created and updated, but I don't know why it is not being consulted
-when the array is activated.  For example, if I kill a machine in the 
-middle of write operations, I would expect the bitmap to show that there
-is some recovery work to be done, but it does not.  So, I have yet to
-figure this out.
-
-I've included below a document that describes some of the dm-raid
-design and some of the additional work that remains.  I've also attached 
-a script that can be used to create RAID devices through device-mapper 
-after the kernel patches have been compiled and built.
-
-If your going to start testing, the non-persistent metadata cases should
-be pretty solid.  The persistent metadata cases should work except for
-full bitmap support.
-
- brassow
-
-
-** preliminary design/descriptive doc **
-
-The dm-raid.c code provides a why to access the functionality of MD
-through device-mapper.  This allows us to create RAID4/5/6 (and possibly
-MD's RAID1) through device-mapper.  Some of the difficult things to get
-straight are translating device-mapper's CTR arguments into the proper
-MD settings and making sure we are able to access and configure MD's
-various options (recovery speed, write_back settings, etc).  The current
-proposed dm-raid CTR arguments are:
-
-	The standard first three device-mapper table arguments, where
-	the target_type field is "raid"
-		<start> <len> raid \
-
-	This is followed by the parameters that specify the RAID type
-	and that RAID type's required and optional arguments.
-		<raid_type> <#raid_params> <raid_params> \
-	The required arguments for each RAID type may be different.
-	Currently, they are ('*' indicates currently unsupported RAID):
-		*raid1   <#parms> <chunk_size>
-		raid4    <#parms> <chunk_size> <rebuild_A>
-		raid5_la <#parms> <chunk_size> <rebuild_A>
-		raid5_ra <#parms> <chunk_size> <rebuild_A>
-		raid5_ls <#parms> <chunk_size> <rebuild_A>
-		raid5_rs <#parms> <chunk_size> <rebuild_A>
-		raid6_zr <#parms> <chunk_size> <rebuild_A> <rebuild_B>
-		raid6_nr <#parms> <chunk_size> <rebuild_A> <rebuild_B>
-		raid6_nc <#parms> <chunk_size> <rebuild_A> <rebuild_B>
-	Chunk size is in sectors and the 'rebuild' arguments are used to
-	specify that a new device has been added to the array and must
-	be rebuilt by parity calculations (or copying if RAID1).  The
-	'rebuild' arguments are specified as an index of the array
-	elements.
-	**FIXME: I'd like to remove the 'rebuild' arguments as required
-		 arguments and make them optional - specified as
-		 'rebuild=<dev index>'.
-	Optional arguments include ('*' indicates not implemented):
-		[[no]sync]	Force/Prevent RAID initialization 
-		*[write_back=<int>]
-		*[daemon_sleep=<int>]
-		*[stripecache=<int>]
-		*[minspeed=<int>]
-		*[maxspeed=<int>]
-		**[rebuild=<idx>]	**if moved from required args
-
-	Finally, we have the devices that compose the RAID array.  Each
-	array element is given as a metadata device and data device pair.
-	If there is no metadata device, a '-' is given for the metadata
-	device argument.  If a device is known to have failed, a '- -'
-	pair can be specified indicating that there is no data or 
-	metadata device available for that position in the array.
-	#raid_devs refers to the number of pairings.
-		<#raid_devs> { <meta_dev1> <dev1> .. <meta_devN> <devN> }
-
-
-When translating the device-mapper CTR arguments to MD settings, there
-are three arguments that /must/ be set by device-mapper (dm-raid.c) at
-CTR time.  They are:
-
-* mddev->recovery_cp:
-Determines the initialization state of the array.  The value determines
-how far the array has processed the initial recovery.  (Initial recovery
-can be parity calculation for RAID456 or copying drives for RAID1.)
-
-* rdev->flags/In_sync:
-Determines the state of an individual device.  If !In_sync, then the
-device needs to be rebuilt - until then, it is not a useful member
-of the array.
-
-* rdev->recovery_offset:
-Like mddev->recovery_cp, only for a single device.
-
-Note that even if the array has not yet been initialized, the 
-rdev->flags/In_sync bit is still set if the drives are healthy.  If the
-array has not been initialized, you would not want to have a device that
-is not 'In_sync'.  This is because no trustworthy recovery could occur
-for the device because the array had not yet reached a coherent state.
-
-From dm-raid.c, the CTR arguments that control the above are '[no]sync'
-and the rebuild parameters.  There is also a slight difference in
-behavior depending on whether metadata devices are specified or not.
-When there are no metadata devices specified, we won't be able to tell
-if the array was shutdown cleanly, so we must assume recovery_cp = 0.
-If there is metadata, we will be able to find out if the array was
-shutdown cleanly, so we can set 'recovery_cp = MaxSector' and let the
-settings change if the metadata requires it.
-
-Translations when metadata devices are not specified:
-					[ per device setings  ]
-nosync	sync	rebuild | recovery_cp	In_sync	recovery_offset
-------------------------|-------------------------------------
-0	0	0	| 0		1	MaxSector
-0	0	1	| 0		0	0 (INVALID)
-0	1	0	| 0		1	MaxSector
-0	1	1	| 0		0	0 (INVALID)
-1	0	0	| MaxSector	1	MaxSector
-1	0	1	| MaxSector	0	0
-
-Translations when metadata devices are specified:
-					[ per device setings  ]
-nosync	sync	rebuild | recovery_cp	In_sync	recovery_offset
-------------------------|-------------------------------------
-0	0	0	| MaxSector	1	MaxSector
-0	0	1	| MaxSector	0	0
-0	1	0	| 0		1	MaxSector
-0	1	1	| 0		0	0 (INVALID)
-1	0	0	| MaxSector	1	MaxSector
-1	0	1	| MaxSector	0	0
-
-
-
---=-+ApX7dhgxqZR0Qozd5Xn
-Content-Disposition: attachment; filename=gime_raid.pl
-Content-Type: application/x-perl; name=gime_raid.pl
-Content-Transfer-Encoding: 7bit
-
-#!/usr/bin/perl -w
-
-$name="raid";
-$raid_type="";
-$mdp="none";
-$sync="";
-$chunk_size="";
-$device_size="";
-$chunk_size_bb = 2048; # 1M (2048 * 512)
-$device_size_bb = 0;   # As large as possible
-@devices = ();
-@rebuild = ();
-
-##
-# MAIN
-##
-foreach (@ARGV) {
-	($a, $b) = split(/=/, $_);
-
-	for ($a) {
-		(/help/ || /-h/) && do { &usage(); exit(0); };
-		(/^raid[1456]/) && do { $raid_type=$a; last; };
-		(/^rebuild$/) && do { @rebuild = (@rebuild, $b); last; };
-		(/^sync$/ || /^nosync$/) && do { $sync = $a; last; };
-		(/^chunk_size$/) && do { $chunk_size = $b; last; };
-		(/^size$/) && do { $device_size = $b; last; };
-		(/^mdp$/) && do { $mdp = $b; last; };
-
-		(-b $a) && do { @devices = (@devices, $a); last; };
-
-		die "Unknown argument: $a\n";
-	}
-}
-
-&verify_args();
-&print_specs();
-&build_raid();
-
-exit(0);
-
-
-##
-# SUB-ROUTINES
-##
-sub usage()
-{
-	print "$0 <raid_type> [options] <dev1> .. <devN>\n";
-	print "RAID types:\n";
-	print "  raid4\n";
-	print "  raid5 (raid5_la* raid5_ra raid5_ls raid5_rs)\n";
-	print "  raid6 (raid6_zr* raid6_nr raid6_cr)\n";
-	print "Options:\n";
-	print "  [no]sync          Force either sync or no sync\n";
-	print "  chunk_size=<arg>  Specify chunk size.  Default: 1M\n";
-	print "  rebuild=<arg>     Index of drive needing rebuild.\n";
-	print "  mdp=<arg>         none*, start, middle, or end.\n";
-}
-
-sub shorthand_to_bb ($)
-{
-	my $str = shift;
-	my $bb = 0;
-	my @suf = ("-", "k", "M", "G", "T");
-
-	if (!($str =~ /^(\d+)(\w*)$/)) {
-		die "Unable to parse argument, $str\n";
-	}
-	$bb = $1;
-
-	for ($i = 0; $2 && (exists $suf[$i]) && ($suf[$i] ne $2); $i++) {}
-
-	$bb *= 2**(10 * $i);
-
-	# Convert to BB
-	$bb /= 512;
-
-	return $bb;
-}
-
-sub max ($$) { $_[$_[0] < $_[1]] }
-sub min ($$) { $_[$_[0] > $_[1]] }
-
-sub calc_max_device_bb ($)
-{
-	my $rt = shift;
-	my $min_bb = 0;
-	my $bb;
-
-	foreach (@devices) {
-		$bb = `blockdev --getsz $_`;
-		chomp $bb;
-		$min_bb = ($min_bb) ? min($min_bb, $bb) : $bb;
-	}
-
-	if ($mdp ne "none") {
-		$min_bb -= 2048;  # 1MB reserve for Metadata
-	}
-
-	if ($rt eq "raid1") {
-		return $min_bb;
-	}
-
-	if ($rt =~ /raid6/) {
-		return $min_bb * (@devices - 2);
-	}
-
-	return $min_bb * $#devices;
-}
-
-sub make_good_size($)
-{
-	my $o1 = shift;
-	my $n1 = $o1;
-
-	if ($o1 > calc_max_device_bb($raid_type)) {
-		die "Specified device size too large for devices.\n";
-	}
-
-	if ($raid_type =~ /raid6/) {
-		$n1 /= (@devices - 2);
-		$n1 = int($n1);
-		$n1 *= (@devices - 2);
-	}		
-
-	if ($raid_type =~ /raid5/) {
-		$n1 /= (@devices - 1);
-		$n1 = int($n1);
-		$n1 *= (@devices - 1);
-	}		
-
-	if ($o1 != $n1) {
-		print "Size adjusted $o1 -> $n1\n";
-	}
-	return $n1;
-}
-
-sub verify_args()
-{
-	my $i;
-	my $tmp = 0;
-
-	if (!$raid_type) {
-		die "Supported RAID type not specified.\n";
-	}
-
-	if ($raid_type =~ /^raid5$/) {
-		# Need to pick an algorithm for them
-		$raid_type = "raid5_la";
-	}
-
-	if ($raid_type =~ /^raid6$/) {
-		# Need to pick an algorithm for them
-		$raid_type = "raid6_zr";
-	}
-
-	if ($mdp !~ /none|start|middle|end/) {
-		die "Persistent metadata not supported\n";
-	}
-
-	if (!@devices) {
-		die "No valid block devices given.\n";
-	}
-
-	$tmp = ($raid_type =~ /raid6/) ? 2 : ($raid_type eq raid1) ? 0 : 1;
-	if ($tmp < @rebuild) {
-		die "RAID type \"$raid_type\" cannot rebuild that many drives\n";
-	}
-	for ($i = 0; $i < $tmp; $i++) {
-		if (! exists $rebuild[$i]) {
-			$rebuild[$i] = -1;
-			next;
-		}
-		if (($rebuild[$i] < 0) || (! exists $devices[$rebuild[$i]])) {
-			die "Bad rebuild index\n";
-		}
-	}
-
-	if ($chunk_size) {
-		$tmp = shorthand_to_bb($chunk_size);
-		die "Bad chunk_size\n" unless ($tmp > 0);
-
-		# FIXME: check size and power of 2
-		$chunk_size_bb = $tmp;
-	}
-
-	if ($device_size) {
-		$tmp = shorthand_to_bb($device_size);
-		die "Bad device size argument\n" unless ($tmp > 0);
-
-		$device_size_bb = make_good_size($tmp);
-	}
-
-	if (!$device_size_bb) {
-		$device_size_bb = calc_max_device_bb($raid_type);
-		$device_size = "${device_size_bb}BB";
-	}
-}
-
-sub print_specs()
-{
-	print "RAID type    : $raid_type\n";
-	print "Block devices: @devices\n";
-	foreach (@rebuild) {
-		print "Rebuilding   : $devices[$_]\n" unless ($_ == -1);
-	}
-	($sync) && print "Sync         : $sync\n";
-	print "Chunk size   : $chunk_size\n" unless (!$chunk_size);
-	print "Device size  : $device_size\n";
-	print "MDP          : $mdp\n" unless ($mdp eq "none");
-	print "\n";
-}
-
-sub create_device($$)
-{
-	my ($name, $table) = @_;
-
-	`echo $table | dmsetup create $name >& /dev/null`;
-	if ($?) {
-		print STDERR "Failed to create \"$name\":\n";
-		die "  $table\n";
-	}
-}
-
-sub build_raid ()
-{
-	my ($i, $n, $core_args, $raid_args, $dev_args);
-	my $table;
-
-	$core_args = "0 $device_size_bb raid";
-
-	$n = 1;  # chunk_size is manditory
-	$n += ($sync) ? 1 : 0;
-	$n += @rebuild;	
-	$raid_args = "$raid_type $n $chunk_size_bb @rebuild $sync";
-
-	$n = @devices;
-	$dev_args = "$n";
-
-	# Calculating max allowable raid1 size
-	#  is the same as max single device size
-	$n = calc_max_device_bb("raid1");
-	for ($i = 0; $i < @devices; $i++) {
-		if ($mdp eq "none") {
-			$dev_args .= " - $devices[$i]";
-			next;
-		}
-
-		if ($mdp eq "start") {
-			# 1MB metadata areas
-			$table="0 2048 linear $devices[$i] 0";
-			create_device("${name}_meta$i", $table);
-			
-			$table = "0 $n linear $devices[$i] 2048";
-			create_device("${name}_data$i", $table);
-		} elsif ($mdp eq "middle") {
-			my $j = $n / 2;
-			my $k = $j + 2048;
-
-			$table = "0 2048 linear $devices[$i] $j";
-			create_device("${name}_meta$i", $table);
-
-			$table = "0 $j linear $devices[$i] 0\n";
-			$table .= "0 $j linear $devices[$i] $k";
-			create_device("${name}_data$i", $table);
-		} else { # end
-			$table = "0 2048 linear $devices[$i] $n";
-			create_device("${name}_meta$i", $table);
-
-			$table = "0 $n linear $devices[$i] 0";
-			create_device("${name}_data$i", $table);
-		}
-		$dev_args .= " /dev/mapper/${name}_meta$i";
-		$dev_args .= " /dev/mapper/${name}_data$i";
-	}
-
-	$table = "$core_args $raid_args $dev_args";
-	create_device($name, $table);
-}
-
---=-+ApX7dhgxqZR0Qozd5Xn
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=-+ApX7dhgxqZR0Qozd5Xn--
+Patch name: dm-raid-seed-module.patch
+
+This patch is the skeleton for the DM target that will be
+the bridge from DM to MD (specifically, RAID456).  It
+provides a way to use device-mapper interfaces to the MD
+RAID456 drivers.
+
+The original patch came from Neil Brown.  I've changed a
+bit of the patch, but left the original 'Signed-off-by'.
+
+<JB> I also basically copied the RAID descriptions from
+     MD for the Kconfig entry...
+
+Signed-off-by: NeilBrown <neilb@suse.de>
+RFC-by: Jonathan Brassow <jbrassow@redhat.com>
+Index: linux-2.6/drivers/md/Kconfig
+===================================================================
+--- linux-2.6.orig/drivers/md/Kconfig
++++ linux-2.6/drivers/md/Kconfig
+@@ -240,6 +240,28 @@ config DM_MIRROR
+          Allow volume managers to mirror logical volumes, also
+          needed for live data migration tools such as 'pvmove'.
+ 
++config DM_RAID
++       tristate "RAID 4/5/6 target (EXPERIMENTAL)"
++       depends on BLK_DEV_DM && MD_RAID456 && EXPERIMENTAL
++       ---help---
++	 A dm target that supports RAID4, RAID5 and RAID6 mappings
++
++	 A RAID-5 set of N drives with a capacity of C MB per drive provides
++	 the capacity of C * (N - 1) MB, and protects against a failure
++	 of a single drive. For a given sector (row) number, (N - 1) drives
++	 contain data sectors, and one drive contains the parity protection.
++	 For a RAID-4 set, the parity blocks are present on a single drive,
++	 while a RAID-5 set distributes the parity across the drives in one
++	 of the available parity distribution methods.
++
++	 A RAID-6 set of N drives with a capacity of C MB per drive
++	 provides the capacity of C * (N - 2) MB, and protects
++	 against a failure of any two drives. For a given sector
++	 (row) number, (N - 2) drives contain data sectors, and two
++	 drives contains two independent redundancy syndromes.  Like
++	 RAID-5, RAID-6 distributes the syndromes across the drives
++	 in one of the available parity distribution methods.
++
+ config DM_LOG_USERSPACE
+ 	tristate "Mirror userspace logging (EXPERIMENTAL)"
+ 	depends on DM_MIRROR && EXPERIMENTAL && NET
+Index: linux-2.6/drivers/md/Makefile
+===================================================================
+--- linux-2.6.orig/drivers/md/Makefile
++++ linux-2.6/drivers/md/Makefile
+@@ -36,6 +36,7 @@ obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot
+ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o dm-region-hash.o
+ obj-$(CONFIG_DM_LOG_USERSPACE)	+= dm-log-userspace.o
+ obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
++obj-$(CONFIG_DM_RAID)	+= dm-raid.o
+ 
+ ifeq ($(CONFIG_DM_UEVENT),y)
+ dm-mod-objs			+= dm-uevent.o
+Index: linux-2.6/drivers/md/dm-raid.c
+===================================================================
+--- /dev/null
++++ linux-2.6/drivers/md/dm-raid.c
+@@ -0,0 +1,462 @@
++
++/*
++ * dm-raid - implemented as wrapper for md/raid456
++ *
++ */
++#include <linux/slab.h>
++#include "md.h"
++#include "raid5.h"
++#include "dm.h"
++
++#define DM_MSG_PREFIX "raid"
++
++struct raid_dev {
++	/*
++	 * Two DM devices, one to hold metadata and one to hold the
++	 * actual data/parity.  The reason for this is to not confuse
++	 * ti->len and give more flexibility in altering size and
++	 * characteristics.
++	 *
++	 * While it is possible for this device to be associated
++	 * with a different physical device than the data_dev, it
++	 * is intended for it to be the same.
++	 *    |--------- Physical Device ---------|
++	 *    |- meta_dev -|------ data_dev ------|
++	 */
++	struct dm_dev *meta_dev;
++	struct dm_dev *data_dev;
++	struct mdk_rdev_s rdev;
++};
++
++struct raid_set {
++	struct dm_target *ti;
++	struct mddev_s md;
++	struct raid_type *raid_type;
++	struct raid_dev dev[0];
++};
++
++/* Supported raid types and properties. */
++static struct raid_type {
++	const char *name;		/* RAID algorithm. */
++	const char *descr;		/* Descriptor text for logging. */
++	const unsigned parity_devs;	/* # of parity devices. */
++	const unsigned minimal_devs;	/* minimal # of devices in set. */
++	const unsigned level;		/* RAID level. */
++	const unsigned algorithm;	/* RAID algorithm. */
++} raid_types[] = {
++	{"raid4",    "RAID4 (dedicated parity disk)",	1, 2, 5, ALGORITHM_PARITY_0},
++	{"raid5_la", "RAID5 (left asymmetric)",		1, 2, 5, ALGORITHM_LEFT_ASYMMETRIC},
++	{"raid5_ra", "RAID5 (right asymmetric)",	1, 2, 5, ALGORITHM_RIGHT_ASYMMETRIC},
++	{"raid5_ls", "RAID5 (left symmetric)",		1, 2, 5, ALGORITHM_LEFT_SYMMETRIC},
++	{"raid5_rs", "RAID5 (right symmetric)",		1, 2, 5, ALGORITHM_RIGHT_SYMMETRIC},
++	{"raid6_zr", "RAID6 (zero restart)",		2, 4, 6, ALGORITHM_ROTATING_ZERO_RESTART},
++	{"raid6_nr", "RAID6 (N restart)",		2, 4, 6, ALGORITHM_ROTATING_N_RESTART},
++	{"raid6_nc", "RAID6 (N continue)",		2, 4, 6, ALGORITHM_ROTATING_N_CONTINUE}
++};
++
++static struct raid_type *get_raid_type(char *name)
++{
++	int i;
++
++	for (i = 0; i < ARRAY_SIZE(raid_types); i++)
++		if (strcmp(raid_types[i].name, name) == 0)
++			return &raid_types[i];
++	return NULL;
++}
++
++static struct raid_set *
++context_alloc(struct dm_target *ti, struct raid_type *raid_type, long raid_devs)
++{
++	int i;
++	struct raid_set *rs;
++	sector_t sectors_per_dev;
++
++	sectors_per_dev = ti->len;
++	if (sector_div(sectors_per_dev, (raid_devs - raid_type->parity_devs))) {
++		ti->error = "Target length not divisible by number of data devices";
++		return ERR_PTR(-EINVAL);
++	}
++
++	rs = kzalloc(sizeof(*rs) + raid_devs * sizeof(rs->dev[0]), GFP_KERNEL);
++	if (!rs) {
++		ti->error = "Cannot allocate raid context";
++		return ERR_PTR(-ENOMEM);
++	}
++
++	mddev_init(&rs->md);
++
++	rs->ti = ti;
++	rs->raid_type = raid_type;
++	rs->md.raid_disks = raid_devs;
++	rs->md.level = raid_type->level;
++	rs->md.new_level = rs->md.level;
++	rs->md.dev_sectors = sectors_per_dev;
++	rs->md.layout = raid_type->algorithm;
++	rs->md.new_layout = rs->md.layout;
++	rs->md.delta_disks = 0;
++
++	for (i = 0; i < raid_devs; i++)
++		md_rdev_init(&rs->dev[i].rdev);
++
++	/*
++	 * Remaining items to be initialized by further RAID params:
++	 *  rs->md.persistent
++	 *  rs->md.external
++	 *  rs->md.chunk_sectors
++	 *  rs->md.new_chunk_sectors
++	 *  rs->md.recovery_cp
++	 */
++
++	return rs;
++}
++
++static void context_free(struct raid_set *rs)
++{
++	int i;
++	for (i = 0; i < rs->md.raid_disks; i++) {
++		if (rs->dev[i].data_dev)
++			dm_put_device(rs->ti, rs->dev[i].data_dev);
++	}
++	kfree(rs);
++}
++
++/* For every device we have two words
++ *  <meta_dev>: meta device name or '-' if missing
++ *  <data_dev>: data device name or '-' if missing
++ *
++ * This code parses those words.
++ */
++static int dev_parms(struct raid_set *rs, char **argv)
++{
++	int i;
++
++	for (i = 0; i < rs->md.raid_disks; i++, argv += 2) {
++		int err = 0;
++
++		rs->dev[i].rdev.raid_disk = i;
++
++		rs->dev[i].meta_dev = NULL;
++		rs->dev[i].data_dev = NULL;
++
++		/*
++		 * There are no offsets, since there is a separate device
++		 * for data and metadata.
++		 */
++		rs->dev[i].rdev.data_offset = 0;
++		rs->dev[i].rdev.mddev = &rs->md;
++
++		if (strcmp(argv[0], "-") != 0) {
++			rs->ti->error = "Metadata devices not supported";
++			return -EINVAL;
++		}
++
++		if (strcmp(argv[1], "-") == 0) {
++			rs->ti->error = "Drive designated for rebuild not specified";
++			if (!test_bit(In_sync, &rs->dev[i].rdev.flags) &&
++			    (rs->dev[i].rdev.recovery_offset == 0))
++				return -EINVAL;
++
++			continue;
++		}
++
++		err = dm_get_device(rs->ti, argv[1],
++				    dm_table_get_mode(rs->ti->table),
++				    &rs->dev[i].data_dev);
++		rs->ti->error = "RAID device lookup failure";
++		if (err)
++			return err;
++
++		rs->dev[i].rdev.bdev = rs->dev[i].data_dev->bdev;
++		list_add(&rs->dev[i].rdev.same_set, &rs->md.disks);
++	}
++
++	rs->ti->error = NULL;
++	return 0;
++}
++
++/*
++ * Possible arguments are...
++ * RAID4:
++ *	<chunk_size> <parity_rebuild> [[no]sync]
++ * RAID5*:
++ *	<chunk_size> <parity_rebuild> [[no]sync]
++ * RAID6*:
++ *	<chunk_size> <parity_rebuildA> <parity_rebuildB> [[no]sync]
++ *
++ * The <parity_rebuild> argument causes the parity drive(s) to be rebuilt
++ * if they are specified (as an index to the device list).  -1 indicates
++ * the parity drive does not need to be rebuilt.
++ */
++static int parse_raid_params(struct raid_set *rs, char **argv,
++			     unsigned long num_raid_params)
++{
++	int i, in_sync;
++	unsigned long chunk_size;
++	long rebuild;
++
++	rs->ti->error = "Bad chunk size";
++	if ((strict_strtoul(argv[0], 10, &chunk_size) < 0) ||
++	    !is_power_of_2(chunk_size) || (chunk_size < 8))
++		return -EINVAL;
++	rs->md.new_chunk_sectors = rs->md.chunk_sectors = chunk_size;
++	argv++;
++	num_raid_params--;
++
++	for (i = 0; i < rs->md.raid_disks; i++)
++		set_bit(In_sync, &rs->dev[i].rdev.flags);
++
++	rs->ti->error = "Cannot parse rebuild-drives";
++	for (i = 0; i < rs->raid_type->parity_devs; i++) {
++		if ((strict_strtol(argv[i], 10, &rebuild) < 0) ||
++		    (rebuild < -1) || (rebuild >= rs->md.raid_disks))
++			return -EINVAL;
++		if (rebuild >= 0) {
++			clear_bit(In_sync, &rs->dev[rebuild].rdev.flags);
++			rs->dev[rebuild].rdev.recovery_offset = 0;
++		}
++	}
++	argv += i;
++	num_raid_params -= i;
++
++	in_sync = 0;
++	for (i = 0; i < rs->md.raid_disks; i++)
++		if (test_bit(In_sync, &rs->dev[i].rdev.flags))
++			in_sync++;
++	rs->ti->error = "Insufficient active RAID devices";
++	if (rs->md.raid_disks - in_sync > rs->raid_type->parity_devs)
++		return -EINVAL;
++
++	rs->ti->error = "Bad RAID option";
++	if (num_raid_params) {
++		if (!strcmp(argv[0], "nosync"))
++			rs->md.recovery_cp = MaxSector;
++		else if (!strcmp(argv[0], "sync"))
++			rs->md.recovery_cp = 0;
++		else
++			return -EINVAL;
++	}
++
++	rs->md.persistent = 0;
++	rs->md.external = 1;
++
++	rs->ti->error = NULL;
++	return 0;
++}
++
++static void do_table_event(struct work_struct *ws)
++{
++	struct raid_set *rs = container_of(ws, struct raid_set,
++					   md.event_work);
++	dm_table_event(rs->ti->table);
++}
++
++/*
++ * Construct a RAID4/5/6 mapping:
++ * Args:
++ *	<raid_type> <#raid_params> <raid_params>		\
++ *	<#raid_devs> { <meta_dev1> <dev1> .. <meta_devN> <devN> }
++ *
++ * ** metadata devices are not supported yet, use '-' instead **
++ *
++ * <raid_params> varies by <raid_type>.  See 'parse_raid_params' for
++ * details on possible <raid_params>.
++ */
++static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
++{
++	char *err = NULL;
++	int errnum = -EINVAL;
++	struct raid_type *rt;
++	unsigned long num_raid_params, num_raid_devs;
++	struct raid_set *rs = NULL;
++
++	/* Must have at least <raid_type> <#raid_params> */
++	err = "Too few arguments";
++	if (argc < 2)
++		goto err;
++
++	/* raid type */
++	err = "Cannot find raid_type";
++	rt = get_raid_type(argv[0]);
++	if (!rt)
++		goto err;
++	argc--; argv++;
++
++	/* number of RAID parameters */
++	err = "Cannot understand number of RAID parameters";
++	if (strict_strtoul(argv[0], 10, &num_raid_params) < 0)
++		goto err;
++	argc--; argv++;
++
++	/* Skip over RAID params for now and find out # of devices */
++	err = "Arguments do not agree with counts given";
++	if (num_raid_params + 1 > argc)
++		goto err;
++
++	err = "Bad number of raid devices";
++	if (strict_strtol(argv[num_raid_params], 10, &num_raid_devs) < 0)
++		goto err;
++
++	rs = context_alloc(ti, rt, num_raid_devs);
++	if (IS_ERR(rs))
++		return PTR_ERR(rs);
++
++	errnum = parse_raid_params(rs, argv, num_raid_params);
++	if (errnum) {
++		err = ti->error;
++		goto err;
++	}
++	errnum = -EINVAL;
++
++	argc -= num_raid_params + 1; /* +1: we already have num_raid_devs */
++	argv += num_raid_params + 1;
++
++	err = "Supplied RAID devices does not match the count given";
++	if (argc != (num_raid_devs * 2))
++		goto err;
++
++	errnum = dev_parms(rs, argv);
++	if (errnum) {
++		err = ti->error;
++		goto err;
++	}
++
++	INIT_WORK(&rs->md.event_work, do_table_event);
++	ti->split_io = rs->md.chunk_sectors;
++	ti->private = rs;
++
++	mutex_lock(&rs->md.reconfig_mutex);
++	err = "Fail to run raid array";
++	errnum = md_run(&rs->md);
++	rs->md.in_sync = 0; /* Assume already marked dirty */
++	mutex_unlock(&rs->md.reconfig_mutex);
++
++	if (!errnum)
++		return 0;
++
++err:
++	if (rs)
++		context_free(rs);
++	ti->error = err;
++	return errnum;
++}
++
++static void raid_dtr(struct dm_target *ti)
++{
++	struct raid_set *rs = ti->private;
++
++	md_stop(&rs->md);
++	context_free(rs);
++}
++
++static int raid_map(struct dm_target *ti, struct bio *bio,
++		    union map_info *map_context)
++{
++	struct raid_set *rs = ti->private;
++	mddev_t *mddev = &rs->md;
++
++	mddev->pers->make_request(mddev, bio);
++	return DM_MAPIO_SUBMITTED;
++}
++
++static int raid_status(struct dm_target *ti, status_type_t type,
++		       char *result, unsigned maxlen)
++{
++	struct raid_set *rs = ti->private;
++	struct raid5_private_data *conf = rs->md.private;
++	int sz = 0;
++	int rbcnt;
++	int i;
++	sector_t sync;
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		DMEMIT("%d ", rs->md.raid_disks);
++		for (i = 0; i < rs->md.raid_disks; i++) {
++			if (rs->dev[i].data_dev)
++				DMEMIT("%s ", rs->dev[i].data_dev->name);
++			else
++				DMEMIT("- ");
++		}
++		for (i = 0; i < rs->md.raid_disks; i++) {
++			if (test_bit(Faulty, &rs->dev[i].rdev.flags))
++				DMEMIT("D");
++			else if (test_bit(In_sync, &rs->dev[i].rdev.flags))
++				DMEMIT("A");
++			else
++				DMEMIT("Ai");
++		}
++		DMEMIT(" %u ", conf->max_nr_stripes);
++		if (test_bit(MD_RECOVERY_RUNNING, &rs->md.recovery))
++			sync = rs->md.curr_resync_completed;
++		else
++			sync = rs->md.recovery_cp;
++		if (sync > rs->md.resync_max_sectors)
++			sync = rs->md.resync_max_sectors;
++		DMEMIT("%llu/%llu ",
++		       (unsigned long long) sync,
++		       (unsigned long long) rs->md.resync_max_sectors);
++
++		break;
++	case STATUSTYPE_TABLE:
++		/* The string you would use to construct this array */
++		DMEMIT("%s ", rs->raid_type->name);
++		DMEMIT("1 %u ", rs->md.chunk_sectors);
++
++		/* Print 1 or 2 rebuild_dev numbers */
++		rbcnt = 0;
++		for (i = 0; i < rs->md.raid_disks; i++)
++			if (rs->dev[i].data_dev &&
++			    !test_bit(In_sync, &rs->dev[i].rdev.flags) &&
++			    rbcnt < rs->raid_type->parity_devs) {
++				DMEMIT("%u ", i);
++				rbcnt++;
++			}
++		while (rbcnt < rs->raid_type->parity_devs) {
++			DMEMIT("-1 ");
++			rbcnt++;
++		}
++
++		DMEMIT("%d ", rs->md.raid_disks);
++		for (i = 0; i < rs->md.raid_disks; i++) {
++			DMEMIT("- "); /* metadata device */
++
++			if (rs->dev[i].data_dev)
++				DMEMIT("%s ", rs->dev[i].data_dev->name);
++			else
++				DMEMIT("- ");
++		}
++		break;
++	}
++	return 0;
++}
++
++static struct target_type raid_target = {
++	.name = "raid",
++	.version = {1, 0, 0},
++	.module = THIS_MODULE,
++	.ctr = raid_ctr,
++	.dtr = raid_dtr,
++	.map = raid_map,
++	.status = raid_status,
++};
++
++static int __init dm_raid_init(void)
++{
++	int r = dm_register_target(&raid_target);
++
++	return r;
++}
++
++static void __exit dm_raid_exit(void)
++{
++	dm_unregister_target(&raid_target);
++}
++
++module_init(dm_raid_init);
++module_exit(dm_raid_exit);
++
++MODULE_DESCRIPTION(DM_NAME " raid4/5/6 target");
++MODULE_LICENSE("GPL");
++MODULE_ALIAS("dm-raid4");
++MODULE_ALIAS("dm-raid5");
++MODULE_ALIAS("dm-raid6");
