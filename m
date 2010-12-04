@@ -1,142 +1,121 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: Re: [PATCH] dm: check max_sectors in dm_merge_bvec  (was: Re: dm:
- max_segments=1 if merge_bvec_fn is not supported)
-Date: Sat, 4 Dec 2010 17:03:35 +0100
-Message-ID: <20101204160334.GD6034@barkeeper1-xen.linbit>
-References: <20100306211012.GA9689@racke>
- <20100308163345.42841480@notabene.brown>
- <Pine.LNX.4.64.1003080321190.25635@hs20-bc2-1.build.redhat.com>
- <20100308131449.GA15156@racke>
- <20101204064308.GA7639@redhat.com>
+From: Matt <jackdachef@gmail.com>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
+ barrier support is effective)
+Date: Sat, 4 Dec 2010 20:18:02 +0100
+Message-ID: <AANLkTimQtMvPVafWG_DffF-zXXpz1vBPXdCCwxRnzSGr@mail.gmail.com>
+References: <20101114205925.GA20451@redhat.com>
+	<AANLkTi=rVyozmvqCJD1kGqnV3uEn-0ak6B12-O_9XOKJ@mail.gmail.com>
+	<4CE05A9E.9090204@redhat.com>
+	<AANLkTimT0t3xqgKdAn7MBPD7ED-9uPS+WJE0z+K8tciu@mail.gmail.com>
+	<AANLkTik_p0yxQBQ3ehHWYPLfiqxGbSNUT5XUk9dC5-x6@mail.gmail.com>
+	<20101201165229.GC13415@redhat.com>
+	<AANLkTinG209iRAXgpNC0vNpn1C02wkYmVfveXRBqsKV-@mail.gmail.com>
+	<4CF692D1.1010906@redhat.com>
+	<AANLkTimA2PPXZoOHYgeOEV2ocrojeuBby8MYDYJ1yjx1@mail.gmail.com>
+	<4CF6B3E8.2000406@redhat.com>
+	<20101201212310.GA15648@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20101204064308.GA7639@redhat.com>
+In-Reply-To: <20101201212310.GA15648@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, jaxboe@fusionio.com
+Cc: Milan Broz <mbroz@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, Chris Mason <chris.mason@oracle.com>, htejun@gmail.com, linux-ext4@vger.kernel.org, Jon Nelson <jnelson@jamponi.net>
 List-Id: dm-devel.ids
 
-On Sat, Dec 04, 2010 at 01:43:08AM -0500, Mike Snitzer wrote:
-> I'm late to this old thread but I stumbled across it while auditing the
-> various dm-devel patchwork patches, e.g.:
-> https://patchwork.kernel.org/patch/83666/
-> https://patchwork.kernel.org/patch/83932/
-> 
-> On Mon, Mar 08 2010 at  8:14am -0500,
-> Lars Ellenberg <lars.ellenberg@linbit.com> wrote:
-> 
-> > On Mon, Mar 08, 2010 at 03:35:37AM -0500, Mikulas Patocka wrote:
-> > > Hi
-> > > 
-> > > That patch with limits->max_segments = 1; is wrong. It fixes this bug 
-> > > sometimes and sometimes not.
-> > > 
-> > > The problem is, if someone attempts to create a bio with two vector 
-> > > entries, the first maps the last sector contained in some page and the 
-> > > second maps the first sector of the next physical page: it has one 
-> > > segment, it has size <= PAGE_SIZE, but it still may cross raid stripe and 
-> > > the raid driver will reject it.
-> > 
-> > Now that you put it that way ;)
-> > You are right.
-> > 
-> > My asumption that "single segment" was  
-> > equalvalent in practice with "single bvec"
-> > does not hold true in that case.
-> > 
-> > Then, what about adding seg_boundary_mask restrictions as well?
-> > 	max_sectors = PAGE_SIZE >> 9;
-> > 	max_segments = 1;
-> > 	seg_boundary_mask = PAGE_SIZE -1;
-> > or some such.
-> > 
-> > > > > This is not the first time this has been patched, btw.
-> > > > > See https://bugzilla.redhat.com/show_bug.cgi?id=440093
-> > > > > and the patch by Mikulas:
-> > > > > https://bugzilla.redhat.com/attachment.cgi?id=342638&action=diff
-> > > 
-> > > Look at this patch, it is the proper way how to fix it: create a 
-> > > merge_bvec_fn that reject more than one biovec entry.
-> > 
-> > If adding seg_boundary_mask is still not sufficient,
-> > lets merge that patch instead?
-> > Why has it been dropped, respectively never been merged?
-> > It became obsolete for dm-linear by 7bc3447b,
-> > but in general the bug is still there, or am I missing something?
-> 
-> No it _should_ be fixed in general given DM's dm_merge_bvec() _but_ I
-> did uncover what I think is a subtle oversight in its implementation.
-> 
-> Given dm_set_device_limits() sets q->limits->max_sectors,
-> shouldn't dm_merge_bvec() be using queue_max_sectors rather than
-> queue_max_hw_sectors?
-> 
-> blk_queue_max_hw_sectors() establishes that max_hw_sectors is the hard
-> limit and max_sectors the soft.  But AFAICT no relation is maintained
-> between the two over time (even though max_sectors <= max_hw_sectors
-> _should_ be enforced; in practice there is no blk_queue_max_sectors
-> setter that uniformly enforces as much).
+On Wed, Dec 1, 2010 at 10:23 PM, Mike Snitzer <snitzer@redhat.com> wrot=
+e:
+> On Wed, Dec 01 2010 at =A03:45pm -0500,
+> Milan Broz <mbroz@redhat.com> wrote:
+>
+>>
+>> On 12/01/2010 08:34 PM, Jon Nelson wrote:
+>> > Perhaps this is useful: for myself, I found that when I started us=
+ing
+>> > 2.6.37rc3 that postgresql starting having a *lot* of problems with
+>> > corruption. Specifically, I noted zeroed pages, corruption in head=
+ers,
+>> > all sorts of stuff on /newly created/ tables, especially during in=
+dex
+>> > creation. I had a fairly high hit rate of failure. I backed off to
+>> > 2.6.34.7 and have *zero* problems (in fact, prior to 2.6.37rc3, I =
+had
+>> > never had a corruption issue with postgresql). I ran on 2.6.36 for=
+ a
+>> > few weeks as well, without issue.
+>> >
+>> > I am using kcrypt with lvm on top of that, and ext4 on top of that=
+=2E
+>>
+>> With unpatched dmcrypt (IOW with Linus' git)? Then it must be ext4 o=
+r
+>> dm-core problem because there were no patches for dm-crypt...
+>
+> Matt and Jon,
+>
+> If you'd be up to it: could you try testing your dm-crypt+ext4
+> corruption reproducers against the following two 2.6.37-rc commits:
+>
+> 1) 1de3e3df917459422cb2aecac440febc8879d410
+> then
+> 2) bd2d0210cf22f2bd0cef72eb97cf94fc7d31d8cc
+>
+> Then, depending on results of no corruption for those commits, bonus
+> points for testing the same commits but with Andi and Milan's latest
+> dm-crypt cpu scalability patch applied too:
+> https://patchwork.kernel.org/patch/365542/
+>
+> Thanks!
+> Mike
+>
 
-Just for the record, in case someone finds this in the archives,
-and wants to backport or base his own work on this:
+Hi Mike,
 
- A long time ago, there was no .max_hw_sectors.  Then max_hw_sectors got
- introduced, but without accessor function.
+it seems like there isn't even much testing to do:
 
- Before 2.6.31, there was no blk_queue_max_hw_sectors(),
- only blk_queue_max_sectors(), which set both.
+I tested all 3 commits / checkouts by re-compiling gcc which was/is
+the 2nd easy way to trigger this "corruption", compiling google's
+chromium (v9) and looking at the output/existance of gcc, g++ and
+eselect opengl list
 
- 2.6.31 introduced some blk_queue_max_hw_sectors(), which _only_ set
- max_hw_sectors, and enforced a lower limit of BLK_DEF_MAX_SECTORS, so
- using that only, you have not been able to actually set lower limits
- than 512 kB. With 2.6.31 to 2.6.33, inclusive, you still need to use
- blk_queue_max_sectors() to set your limits.
+so far everything went fine
 
- 2.6.34 finally dropped the newly introduced function again,
- but renamed the other, so starting with 2.6.34 you need to use
- blk_queue_max_hw_sectors(), which now basically has the function body
- blk_queue_max_sectors() had up until 2.6.33.
+After that I used the new patch (v6 or pre-v6), before that I had to
 
-> dm_set_device_limits() will set q->limits->max_sectors to <= PAGE_SIZE
-> if an underlying device has a merge_bvec_fn.  Therefore, dm_merge_bvec()
-> must use queue_max_sectors() rather than queue_max_hw_sectors() to check
-> the appropriate limit.
+replace WQ_MEM_RECLAIM with WQ_RESCUER
 
-IMO, you should not do this.
-max_sectors is a user tunable, capped by max_hw_sectors.
-max_hw_sectors is the driver limit.
+and, re-compiled the kernels
 
-Please set max_hw_sectors in dm_set_device_limits instead.
+shortly after I had booted up the system with the first kernel
+(http://git.eu.kernel.org/?p=3Dlinux/kernel/git/torvalds/linux-2.6.git;=
+a=3Dcommit;h=3D5a87b7a5da250c9be6d757758425dfeaf8ed3179)
+the output of 'eselect opengl list' did show no opengl backend
+selected
 
-BTW, e.g.  o_direct will adhere to max_hw_limits,
-but happily ignore max_sectors, I think.
+so it seems to manifest itself even earlier (ext4: call
+mpage_da_submit_io() from mpage_da_map_blocks()) even if only subtly
+and over time -
+I'm still currently running that kernel and posting from it & having te=
+sts run
 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> ---
->  drivers/md/dm.c |    5 ++---
->  1 files changed, 2 insertions(+), 3 deletions(-)
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 7cb1352..e83dcc8 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1358,12 +1358,11 @@ static int dm_merge_bvec(struct request_queue *q,
->  	/*
->  	 * If the target doesn't support merge method and some of the devices
->  	 * provided their merge_bvec method (we know this by looking at
-> -	 * queue_max_hw_sectors), then we can't allow bios with multiple vector
-> +	 * queue_max_sectors), then we can't allow bios with multiple vector
->  	 * entries.  So always set max_size to 0, and the code below allows
->  	 * just one page.
->  	 */
-> -	else if (queue_max_hw_sectors(q) <= PAGE_SIZE >> 9)
-> -
-> +	else if (queue_max_sectors(q) <= PAGE_SIZE >> 9)
->  		max_size = 0;
->  
->  out_table:
+I'm not sure if it's even a problem with ext4 - I haven't had the time
+to test with XFS yet - maybe it's also happening with that so it more
+likely would be dm-core, like Milan suspected
+(http://marc.info/?l=3Dlinux-kernel&m=3D129123636223477&w=3D2) :(
 
+@Jon,
 
-	Lars
+you had time to do some tests meanwhile ? what did you find out ?
+
+even though most of the time it's compiling I don't need to do much -
+I need the box for work so if my time allows next tests would be next
+weekend and I'm back to my other partition
+
+I really do hope that this bugger can be nailed down ASAP - I like the
+improvements made in 2.6.37 but without the dm-crypt multi-cpu patch
+it's only half the "fun" ;)
+
+Thanks & Regards
+
+Matt
