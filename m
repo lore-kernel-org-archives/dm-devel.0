@@ -1,61 +1,110 @@
-From: Oliver Rojo <orojo.horus@gmail.com>
-Subject: multipathing in debian lenny with sychronized data
-	between 2 servers
-Date: Mon, 6 Dec 2010 10:28:53 -0800
-Message-ID: <AANLkTik9tVk9sY-YyC+uAOTnMOuBw8DU3sozE2o=DKk1@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH for-2.6.37] block: max hardware sectors limit wrapper
+Date: Mon, 6 Dec 2010 13:43:46 -0500
+Message-ID: <20101206184346.GA13582@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3441464894297284126=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <jaxboe@fusionio.com>
+Cc: Lars Ellenberg <lars.ellenberg@linbit.com>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, stable@kernel.org
 List-Id: dm-devel.ids
 
---===============3441464894297284126==
-Content-Type: multipart/alternative; boundary=485b3973e9d76f2f7c0496c20f9c
+Implement blk_limits_max_hw_sectors() and make
+blk_queue_max_hw_sectors() a wrapper around it.
 
---485b3973e9d76f2f7c0496c20f9c
-Content-Type: text/plain; charset=ISO-8859-1
+DM needs this to avoid setting queue_limits' max_hw_sectors and
+max_sectors directly.  dm_set_device_limits() now leverages
+blk_limits_max_hw_sectors() logic to establish the appropriate
+max_hw_sectors minimum (PAGE_SIZE).  Fixes issue where DM was
+incorrectly setting max_sectors rather than max_hw_sectors (which
+caused dm_merge_bvec()'s max_hw_sectors check to be ineffective).
 
-hi!
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@kernel.org
+---
+ block/blk-settings.c   |   26 ++++++++++++++++++++------
+ drivers/md/dm-table.c  |    5 ++---
+ include/linux/blkdev.h |    1 +
+ 3 files changed, 23 insertions(+), 9 deletions(-)
 
-I'm having issues right now using HP Storageworks P2000 G3 MSA with Dual
-Fiber Channel connected on each host (2 Servers). I've already configure
-multipathing and mounted my multipath alias (/dev/mapper/data to /data) but
-everytime I put some data inside /data/ on Server 1, it doesn't reflect on
-Server2 and vice versa. Is there any tweak on this?
-
-Regards,
-
-Oliver
-
---485b3973e9d76f2f7c0496c20f9c
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-hi!<br><br>I&#39;m having issues right now using HP Storageworks P2000 G3 M=
-SA with Dual Fiber Channel connected on each host (2 Servers). I&#39;ve alr=
-eady configure multipathing and mounted my multipath alias (/dev/mapper/dat=
-a to /data) but everytime I put some data inside /data/ on Server 1, it doe=
-sn&#39;t reflect on Server2 and vice versa. Is there any tweak on this?<br>
-<br>Regards,<br><br>Oliver<br>
-
---485b3973e9d76f2f7c0496c20f9c--
-
-
---===============3441464894297284126==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3441464894297284126==--
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 701859f..6a2ac23 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -229,8 +229,8 @@ void blk_queue_bounce_limit(struct request_queue *q, u64 dma_mask)
+ EXPORT_SYMBOL(blk_queue_bounce_limit);
+ 
+ /**
+- * blk_queue_max_hw_sectors - set max sectors for a request for this queue
+- * @q:  the request queue for the device
++ * blk_limits_max_hw_sectors - set hard and soft limit of max sectors for request
++ * @limits: the queue limits
+  * @max_hw_sectors:  max hardware sectors in the usual 512b unit
+  *
+  * Description:
+@@ -244,7 +244,7 @@ EXPORT_SYMBOL(blk_queue_bounce_limit);
+  *    per-device basis in /sys/block/<device>/queue/max_sectors_kb.
+  *    The soft limit can not exceed max_hw_sectors.
+  **/
+-void blk_queue_max_hw_sectors(struct request_queue *q, unsigned int max_hw_sectors)
++void blk_limits_max_hw_sectors(struct queue_limits *limits, unsigned int max_hw_sectors)
+ {
+ 	if ((max_hw_sectors << 9) < PAGE_CACHE_SIZE) {
+ 		max_hw_sectors = 1 << (PAGE_CACHE_SHIFT - 9);
+@@ -252,9 +252,23 @@ void blk_queue_max_hw_sectors(struct request_queue *q, unsigned int max_hw_secto
+ 		       __func__, max_hw_sectors);
+ 	}
+ 
+-	q->limits.max_hw_sectors = max_hw_sectors;
+-	q->limits.max_sectors = min_t(unsigned int, max_hw_sectors,
+-				      BLK_DEF_MAX_SECTORS);
++	limits->max_hw_sectors = max_hw_sectors;
++	limits->max_sectors = min_t(unsigned int, max_hw_sectors,
++				    BLK_DEF_MAX_SECTORS);
++}
++EXPORT_SYMBOL(blk_limits_max_hw_sectors);
++
++/**
++ * blk_queue_max_hw_sectors - set max sectors for a request for this queue
++ * @q:  the request queue for the device
++ * @max_hw_sectors:  max hardware sectors in the usual 512b unit
++ *
++ * Description:
++ *    See description for blk_limits_max_hw_sectors().
++ **/
++void blk_queue_max_hw_sectors(struct request_queue *q, unsigned int max_hw_sectors)
++{
++	blk_limits_max_hw_sectors(&q->limits, max_hw_sectors);
+ }
+ EXPORT_SYMBOL(blk_queue_max_hw_sectors);
+ 
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 90267f8..3d098ce 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -517,9 +517,8 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 	 */
+ 
+ 	if (q->merge_bvec_fn && !ti->type->merge)
+-		limits->max_sectors =
+-			min_not_zero(limits->max_sectors,
+-				     (unsigned int) (PAGE_SIZE >> 9));
++		blk_limits_max_hw_sectors(limits,
++					  (unsigned int) (PAGE_SIZE >> 9));
+ 	return 0;
+ }
+ EXPORT_SYMBOL_GPL(dm_set_device_limits);
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index aae86fd..f599dbc 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -805,6 +805,7 @@ extern struct request_queue *blk_init_allocated_queue(struct request_queue *,
+ extern void blk_cleanup_queue(struct request_queue *);
+ extern void blk_queue_make_request(struct request_queue *, make_request_fn *);
+ extern void blk_queue_bounce_limit(struct request_queue *, u64);
++extern void blk_limits_max_hw_sectors(struct queue_limits *, unsigned int);
+ extern void blk_queue_max_hw_sectors(struct request_queue *, unsigned int);
+ extern void blk_queue_max_segments(struct request_queue *, unsigned short);
+ extern void blk_queue_max_segment_size(struct request_queue *, unsigned int);
