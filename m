@@ -1,138 +1,95 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/multipathd main.c
-Date: 7 Dec 2010 06:02:24 -0000
-Message-ID: <20101207060224.20389.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chris Mason <chris.mason@oracle.com>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
+ barrier support is effective)
+Date: Tue, 7 Dec 2010 09:21:45 -0500
+Message-ID: <20101207142145.GA27861@think>
+References: <AANLkTik_p0yxQBQ3ehHWYPLfiqxGbSNUT5XUk9dC5-x6@mail.gmail.com>
+ <20101201165229.GC13415@redhat.com>
+ <AANLkTinG209iRAXgpNC0vNpn1C02wkYmVfveXRBqsKV-@mail.gmail.com>
+ <4CF692D1.1010906@redhat.com>
+ <AANLkTimA2PPXZoOHYgeOEV2ocrojeuBby8MYDYJ1yjx1@mail.gmail.com>
+ <4CF6B3E8.2000406@redhat.com>
+ <20101201212310.GA15648@redhat.com>
+ <AANLkTimQtMvPVafWG_DffF-zXXpz1vBPXdCCwxRnzSGr@mail.gmail.com>
+ <20101204193828.GB13871@redhat.com>
+ <AANLkTin3A_ySn_sZQPqZMn-NORnteQZwTVVSiW_=r3sO@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <AANLkTin3A_ySn_sZQPqZMn-NORnteQZwTVVSiW_=r3sO@mail.gmail.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Matt <jackdachef@gmail.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun@gmail.com, linux-ext4@vger.kernel.org, Jon Nelson <jnelson@jamponi.net>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2010-12-07 06:02:24
+On Sun, Dec 05, 2010 at 12:47:11AM +0100, Matt wrote:
+> > OK.
+> 
+> meanwhile I think I got some interesting news:
+> 
+> after some time of running (around 1 to 1.5 hours) I noticed the
+> following BUG with ext4:
+> 
+> [ 4421.503477] ------------[ cut here ]------------
+> [ 4421.503482] kernel BUG at fs/ext4/inode.c:2714!
+>
+> kernel compiled was from sources checked out at
+> 1de3e3df917459422cb2aecac440febc8879d410
 
-Modified files:
-	multipathd     : main.c 
+Looking at 1de3e3df917459422cb2aecac440febc8879d410:
 
-Log message:
-	Fix for bug 650801.  Multipathd wasn't checking checking all the paths to see
-	if it needed to update the pathgroups after a new path came back online.
-	This could lead to paths accidentally ending up in the wrong pathgroup.
+Line 2714 in fs/ext4/inode.c is this:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.30&r2=1.69.2.31
+       /*
+         * If the page does not have buffers (for whatever reason),
+         * try to create them using block_prepare_write.  If this
+         * fails, redirty the page and move on.
+         */
+        if (!page_buffers(page)) {
+	^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                if (block_prepare_write(page, 0, len,
+                                        noalloc_get_block_write)) {
+                redirty_page:
+                        redirty_page_for_writepage(wbc, page);
+                        unlock_page(page);
+                        return 0;
+                }
+                commit_write = 1;
+        }
 
---- multipath-tools/multipathd/main.c	2010/09/08 21:40:30	1.69.2.30
-+++ multipath-tools/multipathd/main.c	2010/12/07 06:02:23	1.69.2.31
-@@ -937,14 +937,41 @@
- 	return 0;
- }
- 
--int update_path_groups(struct multipath *mpp, struct vectors *vecs)
-+int update_prio(struct path *pp, int refresh_all)
-+{
-+	int oldpriority;
-+	struct pathgroup * pgp;
-+	int i, j, changed = 0;
-+
-+	if (refresh_all) {
-+		vector_foreach_slot (pp->mpp->pg, pgp, i) {
-+			vector_foreach_slot (pgp->paths, pp, j) {
-+				oldpriority = pp->priority;
-+				pathinfo(pp, conf->hwtable, DI_PRIO);
-+				if (pp->priority != oldpriority)
-+					changed = 1;
-+			}
-+		}
-+		return changed;
-+	}
-+	oldpriority = pp->priority;
-+	pathinfo(pp, conf->hwtable, DI_PRIO);
-+
-+	if (pp->priority == oldpriority)
-+		return 0;
-+	return 1;
-+}
-+
-+int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
- {
- 	int i;
- 	struct path * pp;
- 
- 	update_mpp_paths(mpp, vecs->pathvec);
--	vector_foreach_slot (mpp->paths, pp, i)
--		pathinfo(pp, conf->hwtable, DI_PRIO);
-+	if (refresh) {
-+		vector_foreach_slot (mpp->paths, pp, i)
-+			pathinfo(pp, conf->hwtable, DI_PRIO);
-+	}
- 	setup_map(mpp);
- 	mpp->action = ACT_RELOAD;
- 	if (domap(mpp) <= 0) {
-@@ -969,7 +996,6 @@
- 	int newstate;
- 	unsigned int i;
- 	sigset_t old;
--	int oldpriority;
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	vecs = (struct vectors *)ap;
-@@ -989,6 +1015,7 @@
- 		condlog(4, "tick");
- 
- 		vector_foreach_slot (vecs->pathvec, pp, i) {
-+			int new_path_up = 0;
- 			if (!pp->mpp)
- 				continue;
- 
-@@ -1081,16 +1108,7 @@
- 					reinstate_path(pp, 1);
- 				else
- 					reinstate_path(pp, 0);
--
--				/*
--				 * schedule [defered] failback
--				 */
--				if (pp->mpp->pgfailback > 0)
--					pp->mpp->failback_tick =
--						pp->mpp->pgfailback + 1;
--				else if (pp->mpp->pgfailback == -FAILBACK_IMMEDIATE &&
--				    need_switch_pathgroup(pp->mpp, 1))
--					switch_pathgroup(pp->mpp);
-+				new_path_up = 1;
- 
- 				/*
- 				 * if at least one path is up in a group, and
-@@ -1127,15 +1145,13 @@
- 			 * path prio refreshing
- 			 */
- 			condlog(4, "path prio refresh");
--			oldpriority = pp->priority;
--			pathinfo(pp, conf->hwtable, DI_PRIO);
--
--			if (pp->priority != oldpriority &&
-+			if (update_prio(pp, new_path_up) &&
- 			    pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio)
--				update_path_groups(pp->mpp, vecs);
-+				update_path_groups(pp->mpp, vecs, !new_path_up);
- 			else if (need_switch_pathgroup(pp->mpp, 0)) {
- 				if (pp->mpp->pgfailback > 0 &&
--				    pp->mpp->failback_tick <= 0)
-+				    (new_path_up ||
-+				     pp->mpp->failback_tick <= 0))
- 					pp->mpp->failback_tick =
- 						pp->mpp->pgfailback + 1;
- 				else if (pp->mpp->pgfailback ==
+Which means we're really hitting this:
+
+/* If we *know* page->private refers to buffer_heads */
+#define page_buffers(page)                                      \
+        ({                                                      \
+                BUG_ON(!PagePrivate(page));                     \
+		^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                ((struct buffer_head *)page_private(page));     \
+        })
+#define page_has_buffers(page)  PagePrivate(page)
+
+Looks like Ted fixed it here:
+
+commit b1142e8fec6a594723e5054055a7b53379b90490
+Author: Theodore Ts'o <tytso@mit.edu>
+Date:   Thu Oct 28 17:33:57 2010 -0400
+
+    ext4: BUG_ON fix: check if page has buffers before calling page_buffers()
+
+
+Basically, once you hit this oops, ext4 is done.  No files you created
+after the oops will be there when you reboot, and the rest of your
+lockups etc are because the jbd process had some locks held when it
+crashed.
+
+Was there also a report of corruption w/dm-crypt and XFS?
+
+Last night I ran dm-crypt + the cpu scalability patch + ext4 +
+2.6.37-rc3 in a long stress, and it passed without any problems.  If
+dm-crypt were not doing the IO properly, this test probably would have
+found it (+/- strange block sizes, races with O_DIRECT and other exotic
+fun).
+
+-chris
+
