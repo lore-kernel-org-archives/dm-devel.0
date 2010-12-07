@@ -1,16 +1,12 @@
-From: Oliver Rojo <orojo.horus@gmail.com>
-Subject: Re: multipathing in debian lenny with sychronized data
- between 2 servers
-Date: Mon, 6 Dec 2010 11:14:50 -0800
-Message-ID: <AANLkTim73=wunhQXpU4hxcTu=mtttwDCLL+f1g59x6Hw@mail.gmail.com>
-References: <AANLkTik9tVk9sY-YyC+uAOTnMOuBw8DU3sozE2o=DKk1@mail.gmail.com>
-	<1291662074.1518.5.camel@Nokia-N900-42-11>
-	<AANLkTing+Kw2g9WMjM7EL4zSpM4kqzZXV0xkcg1fmq94@mail.gmail.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipathd main.c
+Date: 7 Dec 2010 06:02:24 -0000
+Message-ID: <20101207060224.20389.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1188061551796989225=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AANLkTing+Kw2g9WMjM7EL4zSpM4kqzZXV0xkcg1fmq94@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,115 +16,123 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1188061551796989225==
-Content-Type: multipart/alternative; boundary=001636498bb9c7d5820496c2b3ad
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2010-12-07 06:02:24
 
---001636498bb9c7d5820496c2b3ad
-Content-Type: text/plain; charset=ISO-8859-1
+Modified files:
+	multipathd     : main.c 
 
-By the way, I'm using RAID-6 on my Data Storage.
+Log message:
+	Fix for bug 650801.  Multipathd wasn't checking checking all the paths to see
+	if it needed to update the pathgroups after a new path came back online.
+	This could lead to paths accidentally ending up in the wrong pathgroup.
 
-On Mon, Dec 6, 2010 at 11:13 AM, Oliver Rojo <orojo.horus@gmail.com> wrote:
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.30&r2=1.69.2.31
 
-> Yes I've tested without multipathing.
->
-> On Server A, it shows /dev/dm-0 as the fs to mount and /dev/dm-3 on Server
-> B.
->
-> Mounting it on /data and writing files into Server A, all those files
-> written are not reflecting on Server B and vice versa. Do I need to use GFS2
-> on this scenario?
->
->
-> On Mon, Dec 6, 2010 at 11:01 AM, Christophe Varoqui <
-> christophe.varoqui@gmail.com> wrote:
->
->>
->> > I'm having issues right now using HP Storageworks P2000 G3 MSA with Dual
->>
->> > Fiber Channel connected on each host (2 Servers). I've already configure
->>
->> > multipathing and mounted my multipath alias (/dev/mapper/data to /data)
->> > but everytime I put some data inside /data/ on Server 1, it doesn't
->> > reflect on Server2 and vice versa. Is there any tweak on this?
->> >
->> have you tested that without multipathing ?
->>
->> I understand you use a filesystem there ... A clustered fs like ocfs2 or
->> gfs2 would be necessary to synchronize your caches. If you are not using one
->> of those, the fs should be mounted on a single node at a time.
->>
->> Regards,
->> cvaroqui,
->> opensvc
->>
->
->
-
---001636498bb9c7d5820496c2b3ad
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-By the way, I&#39;m using RAID-6 on my Data Storage.<br><br><div class=3D"g=
-mail_quote">On Mon, Dec 6, 2010 at 11:13 AM, Oliver Rojo <span dir=3D"ltr">=
-&lt;<a href=3D"mailto:orojo.horus@gmail.com">orojo.horus@gmail.com</a>&gt;<=
-/span> wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"border-left: 1px solid rgb(204, =
-204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">Yes I&#39;ve test=
-ed without multipathing. <br><br>On Server A, it shows /dev/dm-0 as the fs =
-to mount and /dev/dm-3 on Server B. <br>
-<br>Mounting it on /data and writing files into Server A, all those files w=
-ritten are not reflecting on Server B and vice versa. Do I need to use GFS2=
- on this scenario?<div><div></div><div class=3D"h5"><br>
-<br><div class=3D"gmail_quote">On Mon, Dec 6, 2010 at 11:01 AM, Christophe =
-Varoqui <span dir=3D"ltr">&lt;<a href=3D"mailto:christophe.varoqui@gmail.co=
-m" target=3D"_blank">christophe.varoqui@gmail.com</a>&gt;</span> wrote:<br>=
-<blockquote class=3D"gmail_quote" style=3D"border-left: 1px solid rgb(204, =
-204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
-
-
-
-   =20
-   =20
-   =20
-<div>
-<p></p><div><div></div><div>
-<br>&gt; I&#39;m having issues right now using HP Storageworks P2000 G3 MSA=
- with Dual
-<br>&gt; Fiber Channel connected on each host (2 Servers). I&#39;ve already=
- configure
-<br>&gt; multipathing and mounted my multipath alias (/dev/mapper/data to /=
-data)
-<br>&gt; but everytime I put some data inside /data/ on Server 1, it doesn&=
-#39;t
-<br>&gt; reflect on Server2 and vice versa. Is there any tweak on this?
-<br>&gt;=20
-<br></div></div>have you tested that without multipathing ?
-<br>
-<br>I understand you use a filesystem there ... A clustered fs like ocfs2 o=
-r gfs2 would be necessary to synchronize your caches. If you are not using =
-one of those, the fs should be mounted on a single node at a time.
-<br>
-<br>Regards,
-<br>cvaroqui,
-<br>opensvc
-</div>
-
-</blockquote></div><br>
-</div></div></blockquote></div><br>
-
---001636498bb9c7d5820496c2b3ad--
-
-
---===============1188061551796989225==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1188061551796989225==--
+--- multipath-tools/multipathd/main.c	2010/09/08 21:40:30	1.69.2.30
++++ multipath-tools/multipathd/main.c	2010/12/07 06:02:23	1.69.2.31
+@@ -937,14 +937,41 @@
+ 	return 0;
+ }
+ 
+-int update_path_groups(struct multipath *mpp, struct vectors *vecs)
++int update_prio(struct path *pp, int refresh_all)
++{
++	int oldpriority;
++	struct pathgroup * pgp;
++	int i, j, changed = 0;
++
++	if (refresh_all) {
++		vector_foreach_slot (pp->mpp->pg, pgp, i) {
++			vector_foreach_slot (pgp->paths, pp, j) {
++				oldpriority = pp->priority;
++				pathinfo(pp, conf->hwtable, DI_PRIO);
++				if (pp->priority != oldpriority)
++					changed = 1;
++			}
++		}
++		return changed;
++	}
++	oldpriority = pp->priority;
++	pathinfo(pp, conf->hwtable, DI_PRIO);
++
++	if (pp->priority == oldpriority)
++		return 0;
++	return 1;
++}
++
++int update_path_groups(struct multipath *mpp, struct vectors *vecs, int refresh)
+ {
+ 	int i;
+ 	struct path * pp;
+ 
+ 	update_mpp_paths(mpp, vecs->pathvec);
+-	vector_foreach_slot (mpp->paths, pp, i)
+-		pathinfo(pp, conf->hwtable, DI_PRIO);
++	if (refresh) {
++		vector_foreach_slot (mpp->paths, pp, i)
++			pathinfo(pp, conf->hwtable, DI_PRIO);
++	}
+ 	setup_map(mpp);
+ 	mpp->action = ACT_RELOAD;
+ 	if (domap(mpp) <= 0) {
+@@ -969,7 +996,6 @@
+ 	int newstate;
+ 	unsigned int i;
+ 	sigset_t old;
+-	int oldpriority;
+ 
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	vecs = (struct vectors *)ap;
+@@ -989,6 +1015,7 @@
+ 		condlog(4, "tick");
+ 
+ 		vector_foreach_slot (vecs->pathvec, pp, i) {
++			int new_path_up = 0;
+ 			if (!pp->mpp)
+ 				continue;
+ 
+@@ -1081,16 +1108,7 @@
+ 					reinstate_path(pp, 1);
+ 				else
+ 					reinstate_path(pp, 0);
+-
+-				/*
+-				 * schedule [defered] failback
+-				 */
+-				if (pp->mpp->pgfailback > 0)
+-					pp->mpp->failback_tick =
+-						pp->mpp->pgfailback + 1;
+-				else if (pp->mpp->pgfailback == -FAILBACK_IMMEDIATE &&
+-				    need_switch_pathgroup(pp->mpp, 1))
+-					switch_pathgroup(pp->mpp);
++				new_path_up = 1;
+ 
+ 				/*
+ 				 * if at least one path is up in a group, and
+@@ -1127,15 +1145,13 @@
+ 			 * path prio refreshing
+ 			 */
+ 			condlog(4, "path prio refresh");
+-			oldpriority = pp->priority;
+-			pathinfo(pp, conf->hwtable, DI_PRIO);
+-
+-			if (pp->priority != oldpriority &&
++			if (update_prio(pp, new_path_up) &&
+ 			    pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio)
+-				update_path_groups(pp->mpp, vecs);
++				update_path_groups(pp->mpp, vecs, !new_path_up);
+ 			else if (need_switch_pathgroup(pp->mpp, 0)) {
+ 				if (pp->mpp->pgfailback > 0 &&
+-				    pp->mpp->failback_tick <= 0)
++				    (new_path_up ||
++				     pp->mpp->failback_tick <= 0))
+ 					pp->mpp->failback_tick =
+ 						pp->mpp->pgfailback + 1;
+ 				else if (pp->mpp->pgfailback ==
