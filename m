@@ -1,60 +1,82 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [RFC PATCH v2 2/3] dm mpath: propagate target errors
-	immediately
-Date: Tue,  7 Dec 2010 18:16:41 -0500
-Message-ID: <1291763802-8251-3-git-send-email-snitzer@redhat.com>
-References: <1291763802-8251-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jon Nelson <jnelson@jamponi.net>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
+ barrier support is effective)
+Date: Tue, 7 Dec 2010 21:29:26 -0600
+Message-ID: <AANLkTi=OC9Z68U-j8s6vfU-_-6tkg5W7aUz9HEupidX9@mail.gmail.com>
+References: <AANLkTinG209iRAXgpNC0vNpn1C02wkYmVfveXRBqsKV-@mail.gmail.com>
+ <4CF692D1.1010906@redhat.com> <AANLkTimA2PPXZoOHYgeOEV2ocrojeuBby8MYDYJ1yjx1@mail.gmail.com>
+ <4CF6B3E8.2000406@redhat.com> <20101201212310.GA15648@redhat.com>
+ <AANLkTimQtMvPVafWG_DffF-zXXpz1vBPXdCCwxRnzSGr@mail.gmail.com>
+ <20101204193828.GB13871@redhat.com> <AANLkTin3A_ySn_sZQPqZMn-NORnteQZwTVVSiW_=r3sO@mail.gmail.com>
+ <20101207142145.GA27861@think> <AANLkTikJt-ZOmzj68Jw92rjGHzu0EP-uCVD+eNSO=vGd@mail.gmail.com>
+ <20101207182243.GB21112@redhat.com> <AANLkTikOXjh+D25=7Mzwn7bFN+a9xQSimPHs22q4o2TK@mail.gmail.com>
+ <1291747731-sup-3099@think> <AANLkTin-Bvq9bNgarZGZhbK_2EONdu8x-qaLCLFcc1F_@mail.gmail.com>
+ <1291751698-sup-9297@think> <AANLkTin79GzUbfuZNKyTtqcyoUSO9AJimO77_ZOvqggH@mail.gmail.com>
+ <1291754340-sup-1631@think> <AANLkTim8uCmFK=LjkMmq_1O0KE3AiN_7g41AO0woxMv7@mail.gmail.com>
+ <1291755258-sup-8760@think>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1291763802-8251-1-git-send-email-snitzer@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: k-ueda@ct.jp.nec.com, michaelc@cs.wisc.edu, tytso@mit.edu, sshtylyov@mvista.com, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, vst@vlnb.net, linux-kernel@vger.kernel.org, hch@lst.de, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, jack@suse.cz, j-nomura@ce.jp.nec.com, rwheeler@redhat.com, swhiteho@redhat.com, chris.mason@oracle.com, tj@kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <1291755258-sup-8760@think>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Chris Mason <chris.mason@oracle.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Matt <jackdachef@gmail.com>, Milan Broz <mbroz@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun <htejun@gmail.com>, linux-ext4 <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
-DM now has more information about the nature of the underlying storage
-failure.  Path failure is avoided if a request failed due to a target
-error.  Instead the target error is immediately passed up the stack.
+On Tue, Dec 7, 2010 at 3:02 PM, Chris Mason <chris.mason@oracle.com> wr=
+ote:
+> Excerpts from Jon Nelson's message of 2010-12-07 15:48:58 -0500:
+>> On Tue, Dec 7, 2010 at 2:41 PM, Chris Mason <chris.mason@oracle.com>=
+ wrote:
+>> > Excerpts from Jon Nelson's message of 2010-12-07 15:25:47 -0500:
+>> >> On Tue, Dec 7, 2010 at 2:02 PM, Chris Mason <chris.mason@oracle.c=
+om> wrote:
+>> >> > Excerpts from Jon Nelson's message of 2010-12-07 14:34:40 -0500=
+:
+>> >> >> On Tue, Dec 7, 2010 at 12:52 PM, Chris Mason <chris.mason@orac=
+le.com> wrote:
+>> >> >> >> postgresql errors. Typically, header corruption but from th=
+e limited
+>> >> >> >> visibility I've had into this via strace, what I see is zer=
+oed pages
+>> >> >> >> where there shouldn't be.
+>> >> >> >
+>> >> >> > This sounds a lot like a bug higher up than dm-crypt. =C2=A0=
+Zeros tend to
+>> >> >> > come from some piece of code explicitly filling a page with =
+zeros, and
+>> >> >> > that often happens in the corner cases for O_DIRECT and a fe=
+w other
+>> >> >> > places in the filesystem.
+>> >> >> >
+>> >> >> > Have you tried triggering this with a regular block device?
+>> >> >>
+>> >> >> I just tried the whole set of tests, but with /dev/sdb directl=
+y (as
+>> >> >> ext4) without any crypt-y bits.
+>> >> >> It takes more iterations but out of 6 tests I had one failure:=
+ same
+>> >> >> type of thing, 'invalid page header in block ....'.
+>> >> >>
+>> >> >> I can't guarantee that it is a full-page of zeroes, just what =
+I saw
+>> >> >> from the (limited) stracing I did.
+>> >> >
+>> >> > Fantastic. Now for our usual suspects:
 
-Discard requests that fail due to non-target errors may now be retried.
+Maybe not so fantastic. I kept testing and had no more failures. At
+all. After 40+ iterations I gave up.
+I went back to trying ext4 on a LUKS volume. The 'hit' ratio went to
+something like 1 in 3, or better.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-mpath.c |   11 +----------
- 1 files changed, 1 insertions(+), 10 deletions(-)
+I will continue to do testing with and without LUKS. I did /not/
+reboot between tests, but I do start with a fresh postgres database.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 487ecda..071529a 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1270,16 +1270,7 @@ static int do_end_io(struct multipath *m, struct request *clone,
- 	if (!error && !clone->errors)
- 		return 0;	/* I/O complete */
- 
--	if (error == -EOPNOTSUPP)
--		return error;
--
--	if (clone->cmd_flags & REQ_DISCARD)
--		/*
--		 * Pass all discard request failures up.
--		 * FIXME: only fail_path if the discard failed due to a
--		 * transport problem.  This requires precise understanding
--		 * of the underlying failure (e.g. the SCSI sense).
--		 */
-+	if (error == -EOPNOTSUPP || error == -EREMOTEIO)
- 		return error;
- 
- 	if (mpio->pgpath)
--- 
-1.7.2.3
+--=20
+Jon
+--
+To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
