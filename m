@@ -1,92 +1,35 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Subject: Re: rdac.c patch not quite right.
-Date: Wed, 8 Dec 2010 11:43:59 +0530
-Message-ID: <B2FD678A64EAAD45B089B123FDFC3ED709113EE5@inbmail01.lsi.com>
-References: <alpine.DEB.2.00.1011291838420.15702@sphinx.andrew.cmu.edu>
-	<1291759024.4430.2.camel@zezette>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption?
+Date: Wed, 08 Dec 2010 09:03:51 +0100
+Message-ID: <4CFF3BE7.40007@redhat.com>
+References: <AANLkTinG209iRAXgpNC0vNpn1C02wkYmVfveXRBqsKV-@mail.gmail.com> <4CF692D1.1010906@redhat.com> <AANLkTimA2PPXZoOHYgeOEV2ocrojeuBby8MYDYJ1yjx1@mail.gmail.com> <4CF6B3E8.2000406@redhat.com> <20101201212310.GA15648@redhat.com> <AANLkTimQtMvPVafWG_DffF-zXXpz1vBPXdCCwxRnzSGr@mail.gmail.com> <20101204193828.GB13871@redhat.com> <AANLkTin3A_ySn_sZQPqZMn-NORnteQZwTVVSiW_=r3sO@mail.gmail.com> <20101207142145.GA27861@think> <AANLkTikJt-ZOmzj68Jw92rjGHzu0EP-uCVD+eNSO=vGd@mail.gmail.com> <20101207182243.GB21112@redhat.com> <AANLkTikOXjh+D25=7Mzwn7bFN+a9xQSimPHs22q4o2TK@mail.gmail.com> <1291747731-sup-3099@think> <AANLkTin-Bvq9bNgarZGZhbK_2EONdu8x-qaLCLFcc1F_@mail.gmail.com> <1291751698-sup-9297@think> <AANLkTin79GzUbfuZNKyTtqcyoUSO9AJimO77_ZOvqggH@mail.gmail.com> <1291754340-sup-1631@think> <
+ AANLkTim8uCmFK=LjkMmq_1O0KE3AiN_7g41AO0woxMv7@mail.gmail.com> <1291755258-sup-8760@think> <AANLkTi=OC9Z68U-j8s6vfU-_-6tkg5W7aUz9HEupidX9@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1291759024.4430.2.camel@zezette>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <AANLkTi=OC9Z68U-j8s6vfU-_-6tkg5W7aUz9HEupidX9@mail.gmail.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Jon Nelson <jnelson@jamponi.net>
+Cc: Chris Mason <chris.mason@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Matt <jackdachef@gmail.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun <htejun@gmail.com>, linux-ext4 <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed December 08, 2010 3:27 AM, Christophe Varoqui Wrote:
-> On lun., 2010-11-29 at 19:03 -0500, Chaskiel Grundman wrote:
-> > commit 362d2e5f215894818b52a0d03b723b75917390fb
-> > added the following block to rdac.c:
-> >
-> >         } else if ((inq.PQ_PDT & 0x20) || (inq.PQ_PDT & 0x7f)) {
-> >                 /* LUN not connected*/
-> >                 ret = PATH_DOWN;
-> >                 goto done;
-> >         }
-> >
-> > I don't know what the intended effect actually was, but since
-> > (inq.PQ_PDT & 0x20) will be true if (inq.PQ_PDT & 0x7f), the code is
-> > incorrect as-is. I have some dell RDAC devices, but I cannot delete
-> > targets on any of them to test this.
-> >
-> > Update, after reading some scsi docs: If RDAC is using the standard
-> > peripheral qualifier semantics, I think the following is what should be
-> > used instead
-> >
-> >
-> >         } else if ((inq.PQ_PDT & 0xE0) == 0x20 || inq.PQ_PDT == 0x7f) {
-> >
-> > This form checks for the PQ bits being 001 or 011, and if 011, also
-> > that the device type has the standard value for an unsupported
-> > lun.
-> >
-> > Alternatively,
-> >
-> >         } else if ((inq.PQ_PDT & 0xC0) == 0x20) {
-> >
-> > does not validate the device type bits in case the PQ is 011
-> >
-> As the original author of the aforementioned change, do you ack this
-> patch ?
 
-Chaskiel,
+On 12/08/2010 04:29 AM, Jon Nelson wrote:
+> Maybe not so fantastic. I kept testing and had no more failures. At
+> all. After 40+ iterations I gave up.
+> I went back to trying ext4 on a LUKS volume. The 'hit' ratio went to
+> something like 1 in 3, or better.
 
-Thanks for your findings and inputs.
+Encryption usually propagates bit corruption (not sure if it is
+in this case). But in principle if there is one bit corrupted,
+after decryption the whole sector is corrupted.
+(That's why bit media errors have usually more serious impact
+with FDE.)
 
-Christophe,
+Isn't there random noise instead of zeroes when reading
+sparse files?
+We should probably write some test focusing on sparse files
+handling here...
 
-Please include this fix in rdac path checker.
-
-Thanks,
-Vijay
-
----
-
-In case of not connected device, only first condition is checked for PQ in rdac path checker. This patch
-corrects the check by masking MSB 3 bits and comparing it with 0x20. 
-
-Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
----
---- multipath-tools-orig/libmultipath/checkers/rdac.c	2010-12-06 02:59:40.000000000 -0600
-+++ multipath-tools/libmultipath/checkers/rdac.c	2010-12-06 04:01:37.000000000 -0600
-@@ -107,7 +107,7 @@ libcheck_check (struct checker * c)
- 	if (0 != do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq))) {
- 		ret = PATH_DOWN;
- 		goto done;
--	} else if ((inq.PQ_PDT & 0x20) || (inq.PQ_PDT & 0x7f)) {
-+	} else if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
- 		/* LUN not connected*/
- 		ret = PATH_DOWN;
- 		goto done;
---
+Milan
