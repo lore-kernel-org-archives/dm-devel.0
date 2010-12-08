@@ -1,35 +1,45 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption?
-Date: Wed, 08 Dec 2010 09:03:51 +0100
-Message-ID: <4CFF3BE7.40007@redhat.com>
-References: <AANLkTinG209iRAXgpNC0vNpn1C02wkYmVfveXRBqsKV-@mail.gmail.com> <4CF692D1.1010906@redhat.com> <AANLkTimA2PPXZoOHYgeOEV2ocrojeuBby8MYDYJ1yjx1@mail.gmail.com> <4CF6B3E8.2000406@redhat.com> <20101201212310.GA15648@redhat.com> <AANLkTimQtMvPVafWG_DffF-zXXpz1vBPXdCCwxRnzSGr@mail.gmail.com> <20101204193828.GB13871@redhat.com> <AANLkTin3A_ySn_sZQPqZMn-NORnteQZwTVVSiW_=r3sO@mail.gmail.com> <20101207142145.GA27861@think> <AANLkTikJt-ZOmzj68Jw92rjGHzu0EP-uCVD+eNSO=vGd@mail.gmail.com> <20101207182243.GB21112@redhat.com> <AANLkTikOXjh+D25=7Mzwn7bFN+a9xQSimPHs22q4o2TK@mail.gmail.com> <1291747731-sup-3099@think> <AANLkTin-Bvq9bNgarZGZhbK_2EONdu8x-qaLCLFcc1F_@mail.gmail.com> <1291751698-sup-9297@think> <AANLkTin79GzUbfuZNKyTtqcyoUSO9AJimO77_ZOvqggH@mail.gmail.com> <1291754340-sup-1631@think> <
- AANLkTim8uCmFK=LjkMmq_1O0KE3AiN_7g41AO0woxMv7@mail.gmail.com> <1291755258-sup-8760@think> <AANLkTi=OC9Z68U-j8s6vfU-_-6tkg5W7aUz9HEupidX9@mail.gmail.com>
+From: Sergei Shtylyov <sshtylyov@mvista.com>
+Subject: Re: [RFC PATCH 3/3] block: improve detail in I/O error messages
+Date: Wed, 08 Dec 2010 14:28:32 +0300
+Message-ID: <4CFF6BE0.4090109@ru.mvista.com>
+References: <1291763802-8251-1-git-send-email-snitzer@redhat.com> <1291763802-8251-4-git-send-email-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <AANLkTi=OC9Z68U-j8s6vfU-_-6tkg5W7aUz9HEupidX9@mail.gmail.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Jon Nelson <jnelson@jamponi.net>
-Cc: Chris Mason <chris.mason@oracle.com>, Mike Snitzer <snitzer@redhat.com>, Matt <jackdachef@gmail.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun <htejun@gmail.com>, linux-ext4 <linux-ext4@vger.kernel.org>
+Return-path: <linux-ide-owner@vger.kernel.org>
+In-Reply-To: <1291763802-8251-4-git-send-email-snitzer@redhat.com>
+Sender: linux-ide-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>, k-ueda@ct.jp.nec.com, michaelc@cs.wisc.edu, tytso@mit.edu, sshtylyov@mvista.com, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, jack@suse.cz, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, swhiteho@redhat.com, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, j-nomura@ce.jp.nec.com, vst@vlnb.net, rwheeler@redhat.com, hch@lst.de, chris.mason@oracle.com, tj@kernel.org
 List-Id: dm-devel.ids
 
+Hello.
 
-On 12/08/2010 04:29 AM, Jon Nelson wrote:
-> Maybe not so fantastic. I kept testing and had no more failures. At
-> all. After 40+ iterations I gave up.
-> I went back to trying ext4 on a LUKS volume. The 'hit' ratio went to
-> something like 1 in 3, or better.
+On 08-12-2010 2:16, Mike Snitzer wrote:
 
-Encryption usually propagates bit corruption (not sure if it is
-in this case). But in principle if there is one bit corrupted,
-after decryption the whole sector is corrupted.
-(That's why bit media errors have usually more serious impact
-with FDE.)
+> Classify severity of I/O errors for target and transport errors.
 
-Isn't there random noise instead of zeroes when reading
-sparse files?
-We should probably write some test focusing on sparse files
-handling here...
+> Signed-off-by: Mike Snitzer<snitzer@redhat.com>
+[...]
 
-Milan
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index 4ce953f..ab8c776 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -2028,9 +2028,15 @@ bool blk_update_request(struct request *req, int error, unsigned int nr_bytes)
+>
+>   	if (error&&  req->cmd_type == REQ_TYPE_FS&&
+>   	!(req->cmd_flags&  REQ_QUIET)) {
+> -		printk(KERN_ERR "end_request: I/O error, dev %s, sector %llu\n",
+> -				req->rq_disk ? req->rq_disk->disk_name : "?",
+> -				(unsigned long long)blk_rq_pos(req));
+> +		char *error_type = "I/O";
+> +
+> +		if (error == -ENOLINK)
+> +			error_type = "recoverable transport";
+> +		else if (error == -EREMOTEIO)
+> +			error_type = "critical target";
+
+    *switch* would be more natural here.
+
+WBR, Sergei
