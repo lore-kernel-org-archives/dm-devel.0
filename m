@@ -1,24 +1,17 @@
-From: Jon Nelson <jnelson@jamponi.net>
-Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re:
- dm-crypt barrier support is effective)
-Date: Wed, 8 Dec 2010 09:26:25 -0600
-Message-ID: <AANLkTinQw6DZuTiKzmJFo10snbSX9r6+eWuTA8tt3J95__32221.7932939113$1291822110$gmane$org@mail.gmail.com>
-References: <4CF692D1.1010906@redhat.com>
-	<AANLkTimA2PPXZoOHYgeOEV2ocrojeuBby8MYDYJ1yjx1@mail.gmail.com>
-	<4CF6B3E8.2000406@redhat.com> <20101201212310.GA15648@redhat.com>
-	<AANLkTimQtMvPVafWG_DffF-zXXpz1vBPXdCCwxRnzSGr@mail.gmail.com>
-	<20101204193828.GB13871@redhat.com>
-	<AANLkTin3A_ySn_sZQPqZMn-NORnteQZwTVVSiW_=r3sO@mail.gmail.com>
-	<20101207142145.GA27861@think>
-	<AANLkTikJt-ZOmzj68Jw92rjGHzu0EP-uCVD+eNSO=vGd@mail.gmail.com>
-	<20101207182243.GB21112@redhat.com> <20101207193514.GA2921@thunk.org>
-	<AANLkTim8UTkfxXV0AkEfjNq3tcmnrXdh6BQ1ibY5iYPy@mail.gmail.com>
+From: Malahal Naineni <malahal@us.ibm.com>
+Subject: Re: rdac.c patch not quite right.
+Date: Wed, 8 Dec 2010 13:39:36 -0800
+Message-ID: <20101208213936.GB5205@us.ibm.com>
+References: <alpine.DEB.2.00.1011291838420.15702@sphinx.andrew.cmu.edu>
+	<1291759024.4430.2.camel@zezette>
+	<B2FD678A64EAAD45B089B123FDFC3ED709113EE5@inbmail01.lsi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AANLkTim8UTkfxXV0AkEfjNq3tcmnrXdh6BQ1ibY5iYPy@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <B2FD678A64EAAD45B089B123FDFC3ED709113EE5@inbmail01.lsi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,54 +21,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ted Ts'o <tytso@mit.edu>, Mike Snitzer <snitzer@redhat.com>, Jon Nelson <jnelson@jamponi.net>, Chris Mason <chris.mason@oracle.com>, Matt <jackdachef@gmail.com>, Milan
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gVHVlLCBEZWMgNywgMjAxMCBhdCA5OjM3IFBNLCBKb24gTmVsc29uIDxqbmVsc29uQGphbXBv
-bmkubmV0PiB3cm90ZToKPiBPbiBUdWUsIERlYyA3LCAyMDEwIGF0IDE6MzUgUE0sIFRlZCBUcydv
-IDx0eXRzb0BtaXQuZWR1PiB3cm90ZToKPj4gT24gVHVlLCBEZWMgMDcsIDIwMTAgYXQgMDE6MjI6
-NDNQTSAtMDUwMCwgTWlrZSBTbml0emVyIHdyb3RlOgo+Pj4gPiAxLiBjcmVhdGUgYSBkYXRhYmFz
-ZSAoZnJvbSBiYXNoKToKPj4+ID4KPj4+ID4gY3JlYXRlZGIgdGVzdAo+Pj4gPgo+Pj4gPiAyLiBw
-bGFjZSB0aGUgZm9sbG93aW5nIGNvbnRlbnRzIGluIGEgZmlsZSAoSSB1c2VkICd0LnNxbCcpOgo+
-Pj4gPgo+Pj4gPiBiZWdpbjsKPj4+ID4gY3JlYXRlIHRlbXBvcmFyeSB0YWJsZSBmb28gYXMgc2Vs
-ZWN0IHggYXMgYSwgQVJSQVlbeF0gYXMgYiBGUk9NCj4+PiA+IGdlbmVyYXRlX3NlcmllcygxLCAx
-MDAwMDAwMCApIEFTIHg7Cj4+PiA+IGNyZWF0ZSBpbmRleCBmb29fYV9pZHggb24gZm9vIChhKTsK
-Pj4+ID4gY3JlYXRlIGluZGV4IGZvb19iX2lkeCBvbiBmb28gVVNJTkcgR0lOIChiKTsKPj4+ID4g
-cm9sbGJhY2s7Cj4+PiA+Cj4+PiA+IDMuIGV4ZWN1dGUgdGhhdCBzcWw6Cj4+PiA+Cj4+PiA+IHBz
-cWwgLWYgdC5zcWwgLS1lY2hvLWFsbCB0ZXN0Cj4+PiA+Cj4+PiA+IFdpdGggMi42LjM0LjcgSSBj
-YW4gcmUtcnVuIFszXSBhbGwgZGF5IGxvbmcsIGFzIG1hbnkgdGltZXMgYXMgSSB3YW50LAo+Pj4g
-PiB3aXRob3V0IGlzc3VlLgo+Pj4gPgo+Pj4gPiBXaXRoIDIuNi4zNy1yYzQtMTMgKHRoZSBjdXJy
-ZW50bHktaW5zdGFsbGVkIEtPVEQga2VybmVsKSBpZiB0YWlscwo+Pj4gPiBwcmV0dHkgZnJlcXVl
-bnRseS4KPj4KPj4gU28gSSBqdXN0IHRyaWVkIHRvIHJlcHJvZHVjZSB0aGlzIG9uIGFuIFVidW50
-dSAxMC4wNCBzeXN0ZW0gcnVubmluZwo+PiAyLjYuMzctcmM1IChjb21wbGV0ZWx5IHN0b2NrIGV4
-Y2VwdCBmb3IgYSBmZXcgYXBwYXJtb3IgcGF0Y2hlcyB0aGF0IEkKPj4gbmVlZGVkIHRvIGtlZXAg
-dGhlIGFwcGFybW9yIHVzZXJzcGFjZSBmcm9tIGNvbXBsYWluaW5nKS4gwqBJJ20gdXNpbmcKPj4g
-UG9zdGdyZXMgOC40LjUtMHVidW50dTEwLjA0Lgo+Pgo+PiBVc2luZyB0aGUgYWJvdmUgcHJvY2Vk
-dXJlLCBJIHdhc24ndCBhYmxlIHRvIHJlcHJvZHVjZS4gwqBUaGVuIEkKPj4gcmVhbGl6ZWQgdGhp
-cyBtaWdodCBoYXZlIGJlZW4gYmVjYXVzZSBJIHdhcyB1c2luZyBhbiBTU0Qgcm9vdCBmaWxlCj4+
-IHN5c3RlbSAod2hpY2ggaXMgc2VjdXJlZCB1c2luZyBMVUtTL2RtLWNyeXB0LCB3aXRoIExWTSBv
-biB0b3Agb2YKPj4gZG0tY3J5cHQpLiDCoFNvIEkgbW91bnRlZCBhIGZpbGUgc3lzdGVtIG9uIGEg
-NTQwMCBycG0gU1NEIGRpc2ssIHdoaWNoCj4+IGlzIGFsc28gcHJvdGVjdGVkIHVzaW5nIExVS1Mv
-ZG0tY3J5cHQgd2l0aCBMVk0gb24gdG9wLiDCoEkgdGhlbgo+PiBleGVjdXRlZCB0aGUgUG9zdGdy
-ZXNRTCBjb21tYW5kczoKPj4KPj4gQ1JFQVRFIFRBQkxFU1BBQ0UgdGVzdCBMT0NBVElPTiAnL2ti
-dWlsZC9wb3N0Z3Jlcyc7Cj4+IFNFVCBkZWZhdWx0X3RhYmxlc3BhY2UgPSB0ZXN0Owo+PiBDT01N
-SVQKPj4gXHF1aXQKPj4KPj4gSSB0aGVuIHJlLXJhbiB0aGUgYWJvdmUgcHJvY2VkdWluZywgYW5k
-IHZlcmlmaWVkIHRoYXQgYWxsIG9mIHRoZSBJL08KPj4gd2FzIGdvaW5nIHRvIHRoZSA1NDAwcnBt
-IGxhcHRvcCBkaXNrLgo+Pgo+PiBJIHRoZW4gcmFuIHRoZSBhYm92ZSBwcm9jZWR1cmUgYSBoYWxm
-LWRvemVuIHRpbWVzLCBhbmQgSSBzdGlsbCBoYXZlbid0Cj4+IGJlZW4gYWJsZSB0byByZXByb2R1
-Y2UgYW55IFBvc3RncmVzcWwgZXJyb3JzIG9yIGtlcm5lbCBlcnJvcnMuCj4+Cj4+IEpvbiwgY2Fu
-IHlvdSBoZWxwIG1lIGlkZW50aWZ5IHdoYXQgbWlnaHQgYmUgZGlmZmVyZW50IHdpdGggeW91ciBy
-dW4KPj4gYW5kIG1pbmU/IMKgV2hhdCB2ZXJzaW9uIG9mIFBvc3RncmVzIGFyZSB5b3UgdXNpbmc/
-Cj4KPiBPbmUgZGlmZmVyZW5jZSBpcyB0aGUgbG9jYXRpb24gb2YgdGhlIHRyYW5zYWN0aW9uIGxv
-Z3MgKHBnX3hsb2cpLiBJbgo+IG15IGNhc2UsIC92YXIvbGliL3Bnc3FsL2RhdGEgKmlzKiBtb3Vu
-dHBvaW50IGZvciB0aGUgdGVzdCB2b2x1bWUKPiAoYWN0dWFsbHksIGl0J3MgYSBzeW1saW5rIHRv
-IHRoZSBtb3VudCBwb2ludCkuIEluIHlvdXIgY2FzZSwgdGhhdCBpcwo+IG5vdCBzby4gUGVyaGFw
-cyB0aGF0IG1ha2VzIGEgZGlmZmVyZW5jZT8gwqBwZ3NxbF90bXAgbWlnaHQgYWxzbyBiZSBvbgo+
-IHR3byBkaWZmZXJlbnQgdm9sdW1lcyBpbiB5b3VyIGNhc2UgKEkgY2FuJ3QgYmUgc3VyZSkuCgoK
-SSBncmFiYmVkIGEgS3VidW50dSBpc28gYW5kIGluc3RhbGxlZCBLdWJ1bnR1IDEwLjEwLCBhbmQg
-dGhlbiB1cGdyYWRlZAp0byAnbmF0dHknLCBhbmQgZXZlbnR1YWxseSB0byAyLjYuMzctOC1nZW5l
-cmljLgoKV2l0aCB0aGF0IGluc3RhbGwsIGFuZCBwb3N0Z3Jlc3FsJ3MgImRhdGEiICgvdmFyL2xp
-Yi9wb3N0Z3Jlc3FsL2RhdGEpCmJlaW5nIGxvY2F0ZWQgb24gYSBMVUtTK2V4dDQgdm9sdW1lLCBJ
-IGVhc2lseSBvYnNlcnZlIHRoZSBiZWhhdmlvci4KCkRvZXMgdGhpcyBoZWxwPwoKLS0gCkpvbgoK
-LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+Chauhan, Vijay [Vijay.Chauhan@lsi.com] wrote:
+> 
+> In case of not connected device, only first condition is checked for PQ in rdac path checker. This patch
+> corrects the check by masking MSB 3 bits and comparing it with 0x20. 
+> 
+> Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
+> ---
+> --- multipath-tools-orig/libmultipath/checkers/rdac.c	2010-12-06 02:59:40.000000000 -0600
+> +++ multipath-tools/libmultipath/checkers/rdac.c	2010-12-06 04:01:37.000000000 -0600
+> @@ -107,7 +107,7 @@ libcheck_check (struct checker * c)
+>  	if (0 != do_inq(c->fd, 0xC9, &inq, sizeof(struct volume_access_inq))) {
+>  		ret = PATH_DOWN;
+>  		goto done;
+> -	} else if ((inq.PQ_PDT & 0x20) || (inq.PQ_PDT & 0x7f)) {
+> +	} else if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x7f)) {
+>  		/* LUN not connected*/
+>  		ret = PATH_DOWN;
+>  		goto done;
+
+I think this new patch has the same issue as the old one. In  other
+words, the second expression in the parenthesis is true if the first one
+is true. So you could as well just use the second expression. If you
+really want to use PQ as well as PDT with separate checks, you can do
+something like this:
+
+
+	} else if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x1F)) {
+		/* LUN not connected or not a Direct Access device */
+		ret = PATH_DOWN;
+		goto done;
+
+Please note the 7f to 1F change and the comment change to reflect the code
+check.
+
+Thanks, Malahal.
