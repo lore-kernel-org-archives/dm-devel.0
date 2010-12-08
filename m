@@ -1,73 +1,82 @@
 From: Jon Nelson <jnelson@jamponi.net>
-Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re:
- dm-crypt barrier support is effective)
-Date: Tue, 7 Dec 2010 21:37:20 -0600
-Message-ID: <AANLkTim8UTkfxXV0AkEfjNq3tcmnrXdh6BQ1ibY5iYPy__27947.1809896224$1291779571$gmane$org@mail.gmail.com>
-References: <4CF692D1.1010906@redhat.com>
-	<AANLkTimA2PPXZoOHYgeOEV2ocrojeuBby8MYDYJ1yjx1@mail.gmail.com>
-	<4CF6B3E8.2000406@redhat.com> <20101201212310.GA15648@redhat.com>
-	<AANLkTimQtMvPVafWG_DffF-zXXpz1vBPXdCCwxRnzSGr@mail.gmail.com>
-	<20101204193828.GB13871@redhat.com>
-	<AANLkTin3A_ySn_sZQPqZMn-NORnteQZwTVVSiW_=r3sO@mail.gmail.com>
-	<20101207142145.GA27861@think>
-	<AANLkTikJt-ZOmzj68Jw92rjGHzu0EP-uCVD+eNSO=vGd@mail.gmail.com>
-	<20101207182243.GB21112@redhat.com> <20101207193514.GA2921@thunk.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
+ barrier support is effective)
+Date: Tue, 7 Dec 2010 21:55:13 -0600
+Message-ID: <AANLkTimoPvLpUW3a7D6maCR-e2u-KpBKNNmvSzsivSoz@mail.gmail.com>
+References: <AANLkTinG209iRAXgpNC0vNpn1C02wkYmVfveXRBqsKV-@mail.gmail.com>
+ <4CF692D1.1010906@redhat.com> <AANLkTimA2PPXZoOHYgeOEV2ocrojeuBby8MYDYJ1yjx1@mail.gmail.com>
+ <4CF6B3E8.2000406@redhat.com> <20101201212310.GA15648@redhat.com>
+ <AANLkTimQtMvPVafWG_DffF-zXXpz1vBPXdCCwxRnzSGr@mail.gmail.com>
+ <20101204193828.GB13871@redhat.com> <AANLkTin3A_ySn_sZQPqZMn-NORnteQZwTVVSiW_=r3sO@mail.gmail.com>
+ <20101207142145.GA27861@think> <AANLkTikJt-ZOmzj68Jw92rjGHzu0EP-uCVD+eNSO=vGd@mail.gmail.com>
+ <20101207182243.GB21112@redhat.com> <AANLkTikOXjh+D25=7Mzwn7bFN+a9xQSimPHs22q4o2TK@mail.gmail.com>
+ <1291747731-sup-3099@think> <AANLkTin-Bvq9bNgarZGZhbK_2EONdu8x-qaLCLFcc1F_@mail.gmail.com>
+ <1291751698-sup-9297@think> <AANLkTin79GzUbfuZNKyTtqcyoUSO9AJimO77_ZOvqggH@mail.gmail.com>
+ <1291754340-sup-1631@think>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20101207193514.GA2921@thunk.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ted Ts'o <tytso@mit.edu>, Mike Snitzer <snitzer@redhat.com>, Jon Nelson <jnelson@jamponi.net>, Chris Mason <chris.mason@oracle.com>, Matt <jackdachef@gmail.com>, Milan
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1291754340-sup-1631@think>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Chris Mason <chris.mason@oracle.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, Matt <jackdachef@gmail.com>, Milan Broz <mbroz@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun <htejun@gmail.com>, linux-ext4 <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gVHVlLCBEZWMgNywgMjAxMCBhdCAxOjM1IFBNLCBUZWQgVHMnbyA8dHl0c29AbWl0LmVkdT4g
-d3JvdGU6Cj4gT24gVHVlLCBEZWMgMDcsIDIwMTAgYXQgMDE6MjI6NDNQTSAtMDUwMCwgTWlrZSBT
-bml0emVyIHdyb3RlOgo+PiA+IDEuIGNyZWF0ZSBhIGRhdGFiYXNlIChmcm9tIGJhc2gpOgo+PiA+
-Cj4+ID4gY3JlYXRlZGIgdGVzdAo+PiA+Cj4+ID4gMi4gcGxhY2UgdGhlIGZvbGxvd2luZyBjb250
-ZW50cyBpbiBhIGZpbGUgKEkgdXNlZCAndC5zcWwnKToKPj4gPgo+PiA+IGJlZ2luOwo+PiA+IGNy
-ZWF0ZSB0ZW1wb3JhcnkgdGFibGUgZm9vIGFzIHNlbGVjdCB4IGFzIGEsIEFSUkFZW3hdIGFzIGIg
-RlJPTQo+PiA+IGdlbmVyYXRlX3NlcmllcygxLCAxMDAwMDAwMCApIEFTIHg7Cj4+ID4gY3JlYXRl
-IGluZGV4IGZvb19hX2lkeCBvbiBmb28gKGEpOwo+PiA+IGNyZWF0ZSBpbmRleCBmb29fYl9pZHgg
-b24gZm9vIFVTSU5HIEdJTiAoYik7Cj4+ID4gcm9sbGJhY2s7Cj4+ID4KPj4gPiAzLiBleGVjdXRl
-IHRoYXQgc3FsOgo+PiA+Cj4+ID4gcHNxbCAtZiB0LnNxbCAtLWVjaG8tYWxsIHRlc3QKPj4gPgo+
-PiA+IFdpdGggMi42LjM0LjcgSSBjYW4gcmUtcnVuIFszXSBhbGwgZGF5IGxvbmcsIGFzIG1hbnkg
-dGltZXMgYXMgSSB3YW50LAo+PiA+IHdpdGhvdXQgaXNzdWUuCj4+ID4KPj4gPiBXaXRoIDIuNi4z
-Ny1yYzQtMTMgKHRoZSBjdXJyZW50bHktaW5zdGFsbGVkIEtPVEQga2VybmVsKSBpZiB0YWlscwo+
-PiA+IHByZXR0eSBmcmVxdWVudGx5Lgo+Cj4gU28gSSBqdXN0IHRyaWVkIHRvIHJlcHJvZHVjZSB0
-aGlzIG9uIGFuIFVidW50dSAxMC4wNCBzeXN0ZW0gcnVubmluZwo+IDIuNi4zNy1yYzUgKGNvbXBs
-ZXRlbHkgc3RvY2sgZXhjZXB0IGZvciBhIGZldyBhcHBhcm1vciBwYXRjaGVzIHRoYXQgSQo+IG5l
-ZWRlZCB0byBrZWVwIHRoZSBhcHBhcm1vciB1c2Vyc3BhY2UgZnJvbSBjb21wbGFpbmluZykuIMKg
-SSdtIHVzaW5nCj4gUG9zdGdyZXMgOC40LjUtMHVidW50dTEwLjA0Lgo+Cj4gVXNpbmcgdGhlIGFi
-b3ZlIHByb2NlZHVyZSwgSSB3YXNuJ3QgYWJsZSB0byByZXByb2R1Y2UuIMKgVGhlbiBJCj4gcmVh
-bGl6ZWQgdGhpcyBtaWdodCBoYXZlIGJlZW4gYmVjYXVzZSBJIHdhcyB1c2luZyBhbiBTU0Qgcm9v
-dCBmaWxlCj4gc3lzdGVtICh3aGljaCBpcyBzZWN1cmVkIHVzaW5nIExVS1MvZG0tY3J5cHQsIHdp
-dGggTFZNIG9uIHRvcCBvZgo+IGRtLWNyeXB0KS4gwqBTbyBJIG1vdW50ZWQgYSBmaWxlIHN5c3Rl
-bSBvbiBhIDU0MDAgcnBtIFNTRCBkaXNrLCB3aGljaAo+IGlzIGFsc28gcHJvdGVjdGVkIHVzaW5n
-IExVS1MvZG0tY3J5cHQgd2l0aCBMVk0gb24gdG9wLiDCoEkgdGhlbgo+IGV4ZWN1dGVkIHRoZSBQ
-b3N0Z3Jlc1FMIGNvbW1hbmRzOgo+Cj4gQ1JFQVRFIFRBQkxFU1BBQ0UgdGVzdCBMT0NBVElPTiAn
-L2tidWlsZC9wb3N0Z3Jlcyc7Cj4gU0VUIGRlZmF1bHRfdGFibGVzcGFjZSA9IHRlc3Q7Cj4gQ09N
-TUlUCj4gXHF1aXQKPgo+IEkgdGhlbiByZS1yYW4gdGhlIGFib3ZlIHByb2NlZHVpbmcsIGFuZCB2
-ZXJpZmllZCB0aGF0IGFsbCBvZiB0aGUgSS9PCj4gd2FzIGdvaW5nIHRvIHRoZSA1NDAwcnBtIGxh
-cHRvcCBkaXNrLgo+Cj4gSSB0aGVuIHJhbiB0aGUgYWJvdmUgcHJvY2VkdXJlIGEgaGFsZi1kb3pl
-biB0aW1lcywgYW5kIEkgc3RpbGwgaGF2ZW4ndAo+IGJlZW4gYWJsZSB0byByZXByb2R1Y2UgYW55
-IFBvc3RncmVzcWwgZXJyb3JzIG9yIGtlcm5lbCBlcnJvcnMuCj4KPiBKb24sIGNhbiB5b3UgaGVs
-cCBtZSBpZGVudGlmeSB3aGF0IG1pZ2h0IGJlIGRpZmZlcmVudCB3aXRoIHlvdXIgcnVuCj4gYW5k
-IG1pbmU/IMKgV2hhdCB2ZXJzaW9uIG9mIFBvc3RncmVzIGFyZSB5b3UgdXNpbmc/CgpPbmUgZGlm
-ZmVyZW5jZSBpcyB0aGUgbG9jYXRpb24gb2YgdGhlIHRyYW5zYWN0aW9uIGxvZ3MgKHBnX3hsb2cp
-LiBJbgpteSBjYXNlLCAvdmFyL2xpYi9wZ3NxbC9kYXRhICppcyogbW91bnRwb2ludCBmb3IgdGhl
-IHRlc3Qgdm9sdW1lCihhY3R1YWxseSwgaXQncyBhIHN5bWxpbmsgdG8gdGhlIG1vdW50IHBvaW50
-KS4gSW4geW91ciBjYXNlLCB0aGF0IGlzCm5vdCBzby4gUGVyaGFwcyB0aGF0IG1ha2VzIGEgZGlm
-ZmVyZW5jZT8gIHBnc3FsX3RtcCBtaWdodCBhbHNvIGJlIG9uCnR3byBkaWZmZXJlbnQgdm9sdW1l
-cyBpbiB5b3VyIGNhc2UgKEkgY2FuJ3QgYmUgc3VyZSkuCgoKLS0gCkpvbgoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Tue, Dec 7, 2010 at 2:41 PM, Chris Mason <chris.mason@oracle.com> wr=
+ote:
+> Excerpts from Jon Nelson's message of 2010-12-07 15:25:47 -0500:
+>> On Tue, Dec 7, 2010 at 2:02 PM, Chris Mason <chris.mason@oracle.com>=
+ wrote:
+>> > Excerpts from Jon Nelson's message of 2010-12-07 14:34:40 -0500:
+>> >> On Tue, Dec 7, 2010 at 12:52 PM, Chris Mason <chris.mason@oracle.=
+com> wrote:
+>> >> >> postgresql errors. Typically, header corruption but from the l=
+imited
+>> >> >> visibility I've had into this via strace, what I see is zeroed=
+ pages
+>> >> >> where there shouldn't be.
+>> >> >
+>> >> > This sounds a lot like a bug higher up than dm-crypt. =C2=A0Zer=
+os tend to
+>> >> > come from some piece of code explicitly filling a page with zer=
+os, and
+>> >> > that often happens in the corner cases for O_DIRECT and a few o=
+ther
+>> >> > places in the filesystem.
+>> >> >
+>> >> > Have you tried triggering this with a regular block device?
+>> >>
+>> >> I just tried the whole set of tests, but with /dev/sdb directly (=
+as
+>> >> ext4) without any crypt-y bits.
+>> >> It takes more iterations but out of 6 tests I had one failure: sa=
+me
+>> >> type of thing, 'invalid page header in block ....'.
+>> >>
+>> >> I can't guarantee that it is a full-page of zeroes, just what I s=
+aw
+>> >> from the (limited) stracing I did.
+>> >
+>> > Fantastic. Now for our usual suspects:
+>> >
+>> > 1) Is postgres using O_DIRECT? =C2=A0If yes, please turn it off
+>>
+>> According to strace, O_DIRECT didn't show up once during the test.
+>>
+>> > 2) Is postgres allocating sparse files? =C2=A0If yes, please have =
+it fully
+>> > allocate the file instead.
+>>
+>> That's a tough one. I don't think postgresql does that, but I'm not =
+an
+>> expert here.
+>
+> Ok, please compare du -k and du -k --apparent-size for each of the
+> files involved in the postgres run.
+
+One of the files (the table itself) is very slightly sparse:
+588240 (apparent) vs 588244
+
+--=20
+Jon
