@@ -1,61 +1,43 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Subject: Re: rdac.c patch not quite right.
-Date: Thu, 9 Dec 2010 21:11:16 +0530
-Message-ID: <B2FD678A64EAAD45B089B123FDFC3ED709114065@inbmail01.lsi.com>
-References: <alpine.DEB.2.00.1011291838420.15702@sphinx.andrew.cmu.edu>
-	<1291759024.4430.2.camel@zezette>
-	<B2FD678A64EAAD45B089B123FDFC3ED709113EE5@inbmail01.lsi.com>
-	<20101208213936.GB5205@us.ibm.com>
-	<B2FD678A64EAAD45B089B123FDFC3ED709114050@inbmail01.lsi.com>
-	<20101209151742.GA25922@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ted Ts'o <tytso@mit.edu>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
+ barrier support is effective)
+Date: Thu, 9 Dec 2010 13:01:11 -0500
+Message-ID: <20101209180111.GF2921@thunk.org>
+References: <4CF6B3E8.2000406@redhat.com>
+ <20101201212310.GA15648@redhat.com>
+ <AANLkTimQtMvPVafWG_DffF-zXXpz1vBPXdCCwxRnzSGr@mail.gmail.com>
+ <20101204193828.GB13871@redhat.com>
+ <AANLkTin3A_ySn_sZQPqZMn-NORnteQZwTVVSiW_=r3sO@mail.gmail.com>
+ <20101207142145.GA27861@think>
+ <AANLkTikJt-ZOmzj68Jw92rjGHzu0EP-uCVD+eNSO=vGd@mail.gmail.com>
+ <20101207182243.GB21112@redhat.com>
+ <20101207193514.GA2921@thunk.org>
+ <AANLkTim8UTkfxXV0AkEfjNq3tcmnrXdh6BQ1ibY5iYPy@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20101209151742.GA25922@us.ibm.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <AANLkTim8UTkfxXV0AkEfjNq3tcmnrXdh6BQ1ibY5iYPy@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jon Nelson <jnelson@jamponi.net>
+Cc: Mike Snitzer <snitzer@redhat.com>, Chris Mason <chris.mason@oracle.com>, Matt <jackdachef@gmail.com>, Milan Broz <mbroz@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun@gmail.com, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thurs December 09, 2010 8:48 PM, Malahal Naineni wrote:
-> > > I think this new patch has the same issue as the old one. In  other
-> > > words, the second expression in the parenthesis is true if the first
-> one
-> > > is true. So you could as well just use the second expression. If you
-> > > really want to use PQ as well as PDT with separate checks, you can do
-> > > something like this:
-> > >
-> > >
-> > > 	} else if (((inq.PQ_PDT & 0xE0) == 0x20) || (inq.PQ_PDT & 0x1F)) {
-> > > 		/* LUN not connected or not a Direct Access device */
-> > > 		ret = PATH_DOWN;
-> > > 		goto done;
-> > >
-> > > Please note the 7f to 1F change and the comment change to reflect the
-> code
-> > > check.
-> >
-> > Malahal, Thanks for your review comment. First and second expression
-> > are two different comparisons. In First expression we are explicitly
-> > checking if PQ==001b. If the first expression is _FALSE_ then we check
-> > for second expression in which we compare if PQ==011b and PDT==11111b
-> > (i.e PQ_PDT = 01111111b=0x7F).
-> 
-> Vijay, in your patch, the second expression is not a comparison to be
-> precise!  Based on your explanation, you really want (inq.PQ_PDT ==
-> 0x7F) rather than the current expression (inq.PQ_PDT & 0x7F).
-Yes, I agree with you. I will correct the patch with your inputs. Thanks.
+On Tue, Dec 07, 2010 at 09:37:20PM -0600, Jon Nelson wrote:
+> One difference is the location of the transaction logs (pg_xlog). In
+> my case, /var/lib/pgsql/data *is* mountpoint for the test volume
+> (actually, it's a symlink to the mount point). In your case, that is
+> not so. Perhaps that makes a difference?  pgsql_tmp might also be on
+> two different volumes in your case (I can't be sure).
 
+I just tried tried to run t.sql five times with /var/lib/postgres as a
+mountpoint for a 5400 rpm disk, and I still haven't been able to
+replicate it.
 
-Thanks,
-Vijay
+If you can point out how to query pgsql_tmp (I'm using a completely
+default postgres install), that would be helpful, but I don't think it
+would be going anywhere else.
+
+Still trying....
+
+						- Ted
