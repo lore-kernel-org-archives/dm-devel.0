@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 7 of 8] dm raid iterate_devices and io_hints
-Date: Fri, 10 Dec 2010 17:24:42 -0600
-Message-ID: <201012102324.oBANOgWC019909@hydrogen.msp.redhat.com>
+Subject: [PATCH <missing> of 8: MD new mddev flag value
+Date: Fri, 10 Dec 2010 17:37:16 -0600
+Message-ID: <1292024236.15299.29.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,63 +20,41 @@ To: dm-devel@redhat.com
 Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-raid-iterate_devices-and-io_hints.patch
+Sorry, I missed a patch that should have gone in-between the MD and DM
+patches:
 
-Addition of .iterate_devices and .io_hints function required
-by device-mapper target implementations... further fleshing
-out the new target.
+	md-backout-dm-dirty-log.patch
+	md-minor-updates.patch
+	md-fix-null-pointer-deref.patch
 
-Signed-off-by: NeilBrown <neilb@suse.de>
+->	md-new-mddev-flag-value.patch
+
+	dm-raid-seed-module.patch
+	dm-target-callbacks-and-congestion-fn.patch
+	dm-unplug-callback.patch
+	dm-raid-iterate_devices-and-io_hints.patch
+	dm-raid-suspend-and-resume-fns.patch
+
+Mea Culpa,
+ brassow
+
+Add a new possible flag for the mddev structure.
+
+The flag is used by device-mapper to tell MD to override the
+information it finds in the superblock/bitmap WRT the
+overall [re]sync of the array.
+
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-raid.c
+Index: linux-2.6/drivers/md/md.h
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-raid.c
-+++ linux-2.6/drivers/md/dm-raid.c
-@@ -540,6 +540,37 @@ static int raid_status(struct dm_target 
- 	return 0;
- }
+--- linux-2.6.orig/drivers/md/md.h
++++ linux-2.6/drivers/md/md.h
+@@ -140,6 +140,7 @@ struct mddev_s
+ #define MD_CHANGE_DEVS	0	/* Some device status has changed */
+ #define MD_CHANGE_CLEAN 1	/* transition to or from 'clean' */
+ #define MD_CHANGE_PENDING 2	/* switch from 'clean' to 'active' in progress */
++#define MD_SYNC_STATE_FORCED 4  /* recovery_cp is set and must be honored */
  
-+static int raid_iterate_devices(struct dm_target *ti,
-+				iterate_devices_callout_fn fn,
-+				void *data)
-+{
-+	struct raid_set *rs = ti->private;
-+	int ret = 0;
-+	unsigned i = 0;
-+
-+	for (i = 0; !ret && i < rs->md.raid_disks; i++)
-+		if (rs->dev[i].data_dev)
-+			ret = fn(ti,
-+				 rs->dev[i].data_dev,
-+				 0, /* No offset on data devs */
-+				 rs->md.dev_sectors,
-+				 data);
-+
-+	return ret;
-+}
-+
-+static void raid_io_hints(struct dm_target *ti,
-+			  struct queue_limits *limits)
-+{
-+	struct raid_set *rs = ti->private;
-+	unsigned chunk_size = rs->md.chunk_sectors << 9;
-+	raid5_conf_t *conf = rs->md.private;
-+
-+	blk_limits_io_min(limits, chunk_size);
-+	blk_limits_io_opt(limits, chunk_size *
-+			  (conf->raid_disks - conf->max_degraded));
-+}
-+
- static struct target_type raid_target = {
- 	.name = "raid",
- 	.version = {1, 0, 0},
-@@ -548,6 +579,8 @@ static struct target_type raid_target = 
- 	.dtr = raid_dtr,
- 	.map = raid_map,
- 	.status = raid_status,
-+	.iterate_devices = raid_iterate_devices,
-+	.io_hints = raid_io_hints,
- };
- 
- static int __init dm_raid_init(void)
+ 	int				suspended;
+ 	atomic_t			active_io;
