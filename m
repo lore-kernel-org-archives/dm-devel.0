@@ -1,35 +1,84 @@
-From: Malahal Naineni <malahal@us.ibm.com>
-Subject: Re: [RFC PATCH 0/3] differentiate between I/O errors
-Date: Fri, 10 Dec 2010 15:40:36 -0800
-Message-ID: <20101210234036.GA4841@us.ibm.com>
-References: <20101130225956.GA8882@redhat.com>
- <1291763802-8251-1-git-send-email-snitzer@redhat.com>
+From: Jon Nelson <jnelson@jamponi.net>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re:
+ dm-crypt barrier support is effective)
+Date: Fri, 10 Dec 2010 20:14:56 -0600
+Message-ID: <AANLkTi=cn04WZGMnVX6ie5PSM+9v0tJSSg0kD8_W5N11__33047.2289155752$1292033834$gmane$org@mail.gmail.com>
+References: <20101207182243.GB21112@redhat.com>
+	<20101207193514.GA2921@thunk.org>
+	<AANLkTim8UTkfxXV0AkEfjNq3tcmnrXdh6BQ1ibY5iYPy@mail.gmail.com>
+	<20101209180111.GF2921@thunk.org>
+	<AANLkTimAUB5L5Ptm4Fv=sQUmL9_P5azPRCKQnmU89xs8@mail.gmail.com>
+	<20101209201359.GG2921@thunk.org>
+	<AANLkTik=ivDrBEzg1wQAp5AFzNtRRq1=NpvnowggU=_0@mail.gmail.com>
+	<20101209231616.GA12515@basil.fritz.box> <1291945065-sup-1838@think>
+	<AANLkTi=SgzVcOwqJfAHBe5U+1CuhPnm0eKet4hRM2JKz@mail.gmail.com>
+	<20101210023852.GB3059@thunk.org>
+	<AANLkTikJ1Q=L15wcMLn=U8-Qx9PbppY-AX=LpmjDkk2V@mail.gmail.com>
+	<AANLkTikeiv2jQM5hhghs1Zd2d=5CbRLKMgYvqHqpm76m@mail.gmail.com>
+	<AANLkTinMt6saGeeX3MbwAzZ-+f6AL5BegeFqyPgGwiDo@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ide-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1291763802-8251-1-git-send-email-snitzer@redhat.com>
-Sender: linux-ide-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Hannes Reinecke <hare@suse.de>, k-ueda@ct.jp.nec.com, michaelc@cs.wisc.edu, tytso@mit.edu, sshtylyov@mvista.com, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, jack@suse.cz, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, swhiteho@redhat.com, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, James.Bottomley@suse.de, konishi.ryusuke@lab.ntt.co.jp, j-nomura@ce.jp.nec.com, vst@vlnb.net, rwheeler@redhat.com, hch@lst.de, chris.mason@oracle.com, tj@kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <AANLkTinMt6saGeeX3MbwAzZ-+f6AL5BegeFqyPgGwiDo@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ted Ts'o <tytso@mit.edu>, Matt <jackdachef@gmail.com>, Chris Mason <chris.mason@oracle.com>, Andi Kleen <andi@firstfloor.org>, Jon Nelson <jnelson@jamponi.net>, Mike
 List-Id: dm-devel.ids
 
-Mike Snitzer [snitzer@redhat.com] wrote:
-> Refreshed Hannes' initial "scsi: Detailed I/O errors" patch against
-> v2.6.37-rc5.  v2 introduces __scsi_error_from_host_byte to avoid
-> the duplicate switch statement.  Also a few whitespace and comment
-> changes.
-> 
-> Split DM mpath change out to separate v2 patch; failed discard is now
-> retryable in the face of a non-target IO error.
-> 
-> Added improved block layer's I/O error message (based on the finer
-> grained I/O error returns afforded by SCSI).
-> 
-> Comments/suggestions are welcome.
-
-I did test the Hannes original patch with the latest Linus' git tree! I
-used scsi_debug to simulate path failures as well as 'Media' failures
-and it did work as expected. I will test your patches soon.
-
-Thanks, Malahal.
+T24gRnJpLCBEZWMgMTAsIDIwMTAgYXQgMTA6NTQgQU0sIEpvbiBOZWxzb24gPGpuZWxzb25AamFt
+cG9uaS5uZXQ+IHdyb3RlOgo+IE9uIEZyaSwgRGVjIDEwLCAyMDEwIGF0IDg6NTggQU0sIEpvbiBO
+ZWxzb24gPGpuZWxzb25AamFtcG9uaS5uZXQ+IHdyb3RlOgo+PiBPbiBGcmksIERlYyAxMCwgMjAx
+MCBhdCAxMjo1MiBBTSwgSm9uIE5lbHNvbiA8am5lbHNvbkBqYW1wb25pLm5ldD4gd3JvdGU6Cj4+
+PiBPbiBUaHUsIERlYyA5LCAyMDEwIGF0IDg6MzggUE0sIFRlZCBUcydvIDx0eXRzb0BtaXQuZWR1
+PiB3cm90ZToKPj4+PiBPbiBGcmksIERlYyAxMCwgMjAxMCBhdCAwMjo1MzozMEFNICswMTAwLCBN
+YXR0IHdyb3RlOgo+Pj4+Pgo+Pj4+PiBUcnkgYSBrZXJuZWwgYmVmb3JlIDVhODdiN2E1ZGEyNTBj
+OWJlNmQ3NTc3NTg0MjVkZmVhZjhlZDMxNzkKPj4+Pj4KPj4+Pj4gZnJvbSB0aGUgdGVzdHMgSSd2
+ZSBkb25lIHRoYXQgb25lIHNob3dlZCB0aGUgbGVhc3Qgb3Igbm8gY29ycnVwdGlvbiBpZgo+Pj4+
+PiB5b3UgY291bnQgdGhlIGVtcHR5IC9ldGMvZW52LmQvMDNvcGVuZ2wgYXMgYW4gYXJ0ZWZhY3QK
+Pj4+Pgo+Pj4+IFllcywgdGhhdCdzIGEgZ29vZCB0ZXN0LiDCoEFsc28gdHJ5IGNvbW1pdCBiZDJk
+MDIxMGNmLiDCoFRoZSBwYXRjaAo+Pj4+IHNlcmllcyB0aGF0IGlzIG1vc3QgbGlrZWx5IHRvIGJl
+IGF0IGZhdWx0IGlmIHRoZXJlIGlzIGEgcmVncmVzc2lvbiBpbgo+Pj4+IGJldHdlZW4gNWE4N2I3
+YTVkIGFuZCBiZDJkMDIxMGNmIGluY2x1c2l2ZS4KPj4+Pgo+Pj4+IEkgZGlkIGEgbG90IG9mIHRl
+c3RpbmcgYmVmb3JlIHN1Ym1pdHRpbmcgaXQsIGJ1dCB0aGF0IHdhIGEgdHJpY2t5Cj4+Pj4gcmV3
+cml0ZS4gwqBJZiB5b3UgY2FuIHJlcHJvZHVjZSB0aGUgcHJvYmxlbSByZWxpYWJseSwgaXQgbWln
+aHQgYmUgZ29vZAo+Pj4+IHRvIHRyeSBjb21taXQgMTY4MjgwODhmOSAodGhlIGNvbW1pdCBiZWZv
+cmUgNWE4N2I3YTVkKSBhbmQgY29tbWl0Cj4+Pj4gYmQyZDAyMTBjZi4gwqBJZiBpdCByZWxpYWJs
+eSByZXByb2R1Y2VzIG9uIGJkMmQwMjEwY2YsIGJ1dCBpcyBjbGVhbiBvbgo+Pj4+IDE2ODI4MDg4
+ZjksIHRoZW4gaXQncyBteSBleHQ0IGJsb2NrIGkvbyBzdWJtaXNzaW9uIHBhdGNoZXMsIGFuZCB3
+ZSdsbAo+Pj4+IG5lZWQgdG8gZWl0aGVyIGZpZ3VyZSBvdXQgd2hhdCdzIGdvaW5nIG9uIG9yIGJh
+Y2sgb3V0IHRoYXQgc2V0IG9mCj4+Pj4gY2hhbmdlcy4KPj4+Pgo+Pj4+IElmIHRoYXQncyB0aGUg
+Y2FzZSwgYSBiaXNlY3Qgb2YgdGhvc2UgY2hhbmdlcyAoaXQncyBvbmx5IDYgY29tbWl0cywgc28K
+Pj4+PiBpdCBzaG91bGRuJ3QgdGFrZSBsb25nKSB3b3VsZCBiZSBtb3N0IGFwcHJlY2lhdGVkLgo+
+Pj4KPj4+IEkgb2JzZXJ2ZWQgdGhlIGJlaGF2aW9yIG9uIGJkMmQwMjEwY2YgaW4gYSBxZW11LWt2
+bSBpbnN0YWxsIG9mCj4+PiBvcGVuU1VTRSAxMS4zICh4ODZfNjQpIG9uICp0b3RhbGx5KiBkaWZm
+ZXJlbnQgaG9zdCAtIGFuIEFNRCBxdWFkLWNvcmUuCj4+Pgo+Pj4gSSBkaWQgL25vdC8gb2JzZXJ2
+ZSB0aGUgYmVoYXZpb3Igb24gMTY4MjgwODhmOSAoeWV0KS4gSSdsbCBydW4gdGhlCj4+PiB0ZXN0
+IGEgZmV3IG1vcmUgdGltZXMgb24gMTY4Mi4uCj4+Pgo+Pj4gQWRkaXRpb25hbGx5LCBJIGFtIGJ1
+aWxkaW5nIGEgYmlzZWN0ZWQga2VybmVsIG5vdyAoCj4+PiBjYjIwZDUxODgzNjZmMDRkOTZkMmUw
+N2IxMjQwY2M5MjE3MGFkZTQwICksIGJ1dCB3b24ndCBiZSBhYmxlIHRvIGdldAo+Pj4gYmFjayBh
+dCBpdCBmb3IgYSB3aGlsZS4KPj4KPj4gY2IyMGQ1MTg4MzY2ZjA0ZDk2ZDJlMDdiMTI0MGNjOTIx
+NzBhZGU0MCBzZWVtcyBPSyBzbyBmYXIuIEknbSBnb2luZyB0bwo+PiB0cnkgMWRlM2UzZGY5MTc0
+NTk0MjJjYjJhZWNhYzQ0MGZlYmM4ODc5ZDQxMCBzb29uLgo+Cj4gQmFycmluZyBmYWxzZSBuZWdh
+dGl2ZXMsIGJkMmQwMjEwY2YyMmYyYmQwY2VmNzJlYjk3Y2Y5NGZjN2QzMWQ4Y2MKPiBhcHBlYXJz
+IHRvIGJlIHRoZSBjdWxwcml0IChhY2NvcmRpbmcgdG8gZ2l0IGJpc2VjdCkuCj4gSSB3aWxsIHRl
+c3QgYmQyZDAyMTBjZjIyZjJiZDBjZWY3MmViOTdjZjk0ZmM3ZDMxZDhjYyBhZ2FpbiwgY29uZmly
+bQo+IHRoZSBiZWhhdmlvciwgYW5kIHdvcmsgYmFja3dhcmRzIHRvIHRyeSB0byByZWR1Y2UgdGhl
+IHBvc3NpYmlsaXR5IG9mCj4gZmFsc2UgbmVnYXRpdmVzLgoKQSBmZXcgYWRkaXRpb25hbCBub3Rl
+cywgaW4gbm8gcGFydGljdWxhciBvcmRlcjoKCi0gRm9yIG1lLCB0cmlnZ2VyaW5nIHRoZSBwcm9i
+bGVtIGlzIGZhaXJseSBlYXN5IHdoZW4gZW5jcnlwdGlvbiBpcyBpbnZvbHZlZC4KLSBJJ20gbm93
+IDgxIGl0ZXJhdGlvbnMgaW50byB0ZXN0aW5nCmJkMmQwMjEwY2YyMmYyYmQwY2VmNzJlYjk3Y2Y5
+NGZjN2QzMWQ4Y2MgKndpdGhvdXQqIGVuY3J5cHRpb24uICBPdXQgb2YKODEgaXRlcmF0aW9ucywg
+SSBoYXZlIDQgZmFpbHVyZXM6ICMxNiwgNDAsIDYyLCBhbmQgNjQuCgpJIHdpbGwgbm93IHRyeSAx
+ZGUzZTNkZjkxNzQ1OTQyMmNiMmFlY2FjNDQwZmViYzg4NzlkNDEwIG11Y2ggbW9yZSBleHRlbnNp
+dmVseS4KCklzIHRoaXMgdXNlZnVsIGluZm9ybWF0aW9uPwoKLS0gCkpvbgoKLS0KZG0tZGV2ZWwg
+bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
+YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
