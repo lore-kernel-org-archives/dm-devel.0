@@ -1,12 +1,15 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCHSET] dm: update workqueue usages
-Date: Sun, 12 Dec 2010 20:10:49 +0100
-Message-ID: <1292181055-25696-1-git-send-email-tj@kernel.org>
+Subject: [PATCH 2/6] dm-snap: kill unused
+	dm_snapshot->queued_bios_work and ksnapd
+Date: Sun, 12 Dec 2010 20:10:51 +0100
+Message-ID: <1292181055-25696-3-git-send-email-tj@kernel.org>
+References: <1292181055-25696-1-git-send-email-tj@kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1292181055-25696-1-git-send-email-tj@kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,59 +20,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, snitzer@redhat.com
+Cc: Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-Hello,
+dm_snapshot->queued_bios_work isn't used anywhere.  Remove
+->queued_bios[_work], the work function and ksnapd.
 
-This patchset updates workqueue usages in dm and contains the
-following six patches.
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com
+---
+ drivers/md/dm-snap.c |   38 --------------------------------------
+ 1 files changed, 0 insertions(+), 38 deletions(-)
 
- 0001-dm-stripe-drop-kstriped.patch
- 0002-dm-snap-kill-unused-dm_snapshot-queued_bios_work-and.patch
- 0003-dm-snap-convert-to-alloc-_ordered-_workqueue.patch
- 0004-dm-don-t-use-flush_scheduled_work.patch
- 0005-dm-use-non-reentrant-workqueues-if-equivalent.patch
- 0006-dm-snap-persistent-make-metadata_wq-multithreaded.patch
-
-0001-0002 drop unnecessary workqueues.  0003-0004 conver to the new
-APIs.  0005-0006 relax ordering requirement of some workqueues.
-
-All patches in this series shouldn't introduce any noticeable
-difference in work execution ordering.  I stayed away from more
-difficult ones like...
-
-* Can the workqueues converted by 0005 be multithreaded instead of
-  non-reentrant?
-
-* Does dm-mpath::kmpath_handlerd need WQ_RESCUER?  I suspect not but
-  not sure.  If not, it can be dropped and system_wq or kmultipathd
-  can be used instead.  Another curious thing here is that while
-  activate_path work is queued to kmpath_handlerd, deactivate_path is
-  queued to kmultipathd.  Is this intentional?  If so, it might be a
-  good idea to comment why it's done that way as it's a bit confusing.
-
-* I'm pretty sure workqueues in dm-crypt would benefit from using
-  multithreaded workqueue but people already seem to be working on it
-  so I left it alone.
-
-This patchset is on top of 2.6.37-rc5 (6313e3c2).  If it needs to be
-against a different tree, please let me know.  The patches are also
-available in the following git tree.
-
- git://git.kernel.org/pub/scm/linux/kernel/git/tj/wq.git update-dm
-
-and contains the following changes.  Thanks.
-
- drivers/md/dm-crypt.c           |    4 ++--
- drivers/md/dm-delay.c           |    2 +-
- drivers/md/dm-kcopyd.c          |    3 ++-
- drivers/md/dm-mpath.c           |    7 ++++---
- drivers/md/dm-raid1.c           |    5 +++--
- drivers/md/dm-snap-persistent.c |    4 ++--
- drivers/md/dm-snap.c            |   38 --------------------------------------
- drivers/md/dm-stripe.c          |   25 ++++++-------------------
- drivers/md/dm.c                 |    3 ++-
- 9 files changed, 22 insertions(+), 69 deletions(-)
-
---
-tejun
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 53cf79d..0f47698 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -19,7 +19,6 @@
+ #include <linux/vmalloc.h>
+ #include <linux/log2.h>
+ #include <linux/dm-kcopyd.h>
+-#include <linux/workqueue.h>
+ 
+ #include "dm-exception-store.h"
+ 
+@@ -106,10 +105,6 @@ struct dm_snapshot {
+ 
+ 	struct dm_kcopyd_client *kcopyd_client;
+ 
+-	/* Queue of snapshot writes for ksnapd to flush */
+-	struct bio_list queued_bios;
+-	struct work_struct queued_bios_work;
+-
+ 	/* Wait for events based on state_bits */
+ 	unsigned long state_bits;
+ 
+@@ -160,9 +155,6 @@ struct dm_dev *dm_snap_cow(struct dm_snapshot *s)
+ }
+ EXPORT_SYMBOL(dm_snap_cow);
+ 
+-static struct workqueue_struct *ksnapd;
+-static void flush_queued_bios(struct work_struct *work);
+-
+ static sector_t chunk_to_sector(struct dm_exception_store *store,
+ 				chunk_t chunk)
+ {
+@@ -1153,9 +1145,6 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	spin_lock_init(&s->tracked_chunk_lock);
+ 
+-	bio_list_init(&s->queued_bios);
+-	INIT_WORK(&s->queued_bios_work, flush_queued_bios);
+-
+ 	ti->private = s;
+ 	ti->num_flush_requests = num_flush_requests;
+ 
+@@ -1279,8 +1268,6 @@ static void snapshot_dtr(struct dm_target *ti)
+ 	struct dm_snapshot *s = ti->private;
+ 	struct dm_snapshot *snap_src = NULL, *snap_dest = NULL;
+ 
+-	flush_workqueue(ksnapd);
+-
+ 	down_read(&_origins_lock);
+ 	/* Check whether exception handover must be cancelled */
+ 	(void) __find_snapshots_sharing_cow(s, &snap_src, &snap_dest, NULL);
+@@ -1342,20 +1329,6 @@ static void flush_bios(struct bio *bio)
+ 	}
+ }
+ 
+-static void flush_queued_bios(struct work_struct *work)
+-{
+-	struct dm_snapshot *s =
+-		container_of(work, struct dm_snapshot, queued_bios_work);
+-	struct bio *queued_bios;
+-	unsigned long flags;
+-
+-	spin_lock_irqsave(&s->pe_lock, flags);
+-	queued_bios = bio_list_get(&s->queued_bios);
+-	spin_unlock_irqrestore(&s->pe_lock, flags);
+-
+-	flush_bios(queued_bios);
+-}
+-
+ static int do_origin(struct dm_dev *origin, struct bio *bio);
+ 
+ /*
+@@ -2291,17 +2264,8 @@ static int __init dm_snapshot_init(void)
+ 		goto bad_tracked_chunk_cache;
+ 	}
+ 
+-	ksnapd = create_singlethread_workqueue("ksnapd");
+-	if (!ksnapd) {
+-		DMERR("Failed to create ksnapd workqueue.");
+-		r = -ENOMEM;
+-		goto bad_pending_pool;
+-	}
+-
+ 	return 0;
+ 
+-bad_pending_pool:
+-	kmem_cache_destroy(tracked_chunk_cache);
+ bad_tracked_chunk_cache:
+ 	kmem_cache_destroy(pending_cache);
+ bad_pending_cache:
+@@ -2322,8 +2286,6 @@ bad_register_snapshot_target:
+ 
+ static void __exit dm_snapshot_exit(void)
+ {
+-	destroy_workqueue(ksnapd);
+-
+ 	dm_unregister_target(&snapshot_target);
+ 	dm_unregister_target(&origin_target);
+ 	dm_unregister_target(&merge_target);
+-- 
+1.7.1
