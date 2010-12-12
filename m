@@ -1,40 +1,67 @@
-From: Ted Ts'o <tytso@mit.edu>
-Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
- barrier support is effective)
-Date: Sat, 11 Dec 2010 21:34:15 -0500
-Message-ID: <20101212023415.GG3059@thunk.org>
+From: Jon Nelson <jnelson@jamponi.net>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re:
+ dm-crypt barrier support is effective)
+Date: Sat, 11 Dec 2010 21:16:18 -0600
+Message-ID: <AANLkTim=i8wDnML+K4uGK_neNDCiWxtKGDx01O+3joaE__2124.85618326372$1292123923$gmane$org@mail.gmail.com>
 References: <20101209201359.GG2921@thunk.org>
- <AANLkTik=ivDrBEzg1wQAp5AFzNtRRq1=NpvnowggU=_0@mail.gmail.com>
- <20101209231616.GA12515@basil.fritz.box>
- <1291945065-sup-1838@think>
- <AANLkTi=SgzVcOwqJfAHBe5U+1CuhPnm0eKet4hRM2JKz@mail.gmail.com>
- <20101210023852.GB3059@thunk.org>
- <AANLkTikJ1Q=L15wcMLn=U8-Qx9PbppY-AX=LpmjDkk2V@mail.gmail.com>
- <AANLkTikeiv2jQM5hhghs1Zd2d=5CbRLKMgYvqHqpm76m@mail.gmail.com>
- <AANLkTinMt6saGeeX3MbwAzZ-+f6AL5BegeFqyPgGwiDo@mail.gmail.com>
- <AANLkTi=cn04WZGMnVX6ie5PSM+9v0tJSSg0kD8_W5N11@mail.gmail.com>
+	<AANLkTik=ivDrBEzg1wQAp5AFzNtRRq1=NpvnowggU=_0@mail.gmail.com>
+	<20101209231616.GA12515@basil.fritz.box> <1291945065-sup-1838@think>
+	<AANLkTi=SgzVcOwqJfAHBe5U+1CuhPnm0eKet4hRM2JKz@mail.gmail.com>
+	<20101210023852.GB3059@thunk.org>
+	<AANLkTikJ1Q=L15wcMLn=U8-Qx9PbppY-AX=LpmjDkk2V@mail.gmail.com>
+	<AANLkTikeiv2jQM5hhghs1Zd2d=5CbRLKMgYvqHqpm76m@mail.gmail.com>
+	<AANLkTinMt6saGeeX3MbwAzZ-+f6AL5BegeFqyPgGwiDo@mail.gmail.com>
+	<AANLkTi=cn04WZGMnVX6ie5PSM+9v0tJSSg0kD8_W5N11@mail.gmail.com>
+	<20101212023415.GG3059@thunk.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <AANLkTi=cn04WZGMnVX6ie5PSM+9v0tJSSg0kD8_W5N11@mail.gmail.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Jon Nelson <jnelson@jamponi.net>
-Cc: Matt <jackdachef@gmail.com>, Chris Mason <chris.mason@oracle.com>, Andi Kleen <andi@firstfloor.org>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun <htejun@gmail.com>, linux-ext4 <linux-ext4@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20101212023415.GG3059@thunk.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ted Ts'o <tytso@mit.edu>, Jon Nelson <jnelson@jamponi.net>, Matt <jackdachef@gmail.com>, Chris Mason <chris.mason@oracle.com>, Andi Kleen <andi@firstfloor.org>, Mike
 List-Id: dm-devel.ids
 
-One experiment --- can you try this with the file system mounted with
-data=writeback, and see if the problem reproduces in that journalling
-mode?
-
-I want to rule out (if possible) journal_submit_inode_data_buffers()
-racing with mpage_da_submit_io().  I don't think that's the issue, but
-I'd prefer to do the experiment to make sure.  So if you can use a
-kernel and system configuration which triggers the problem, and then
-try changing the mount options to include data=writeback, and then
-rerun the test, and let me know if the problem still reproduces, I'd
-be really grateful.
-
-Thanks,
-
-					- Ted
+T24gU2F0LCBEZWMgMTEsIDIwMTAgYXQgNzo0MCBQTSwgVGVkIFRzJ28gPHR5dHNvQG1pdC5lZHU+
+IHdyb3RlOgo+IFllcywgaW5kZWVkLiAgSXMgdGhpcyBpbiB0aGUgdmlydHVhbGl6ZWQgZW52aXJv
+bm1lbnQgb3Igb24gcmVhbAo+IGhhcmR3YXJlIGF0IHRoaXMgcG9pbnQ/ICBBbmQgaG93IG1hbnkg
+Q1BVJ3MgZG8geW91IGhhdmUgY29uZmlndXJlZCBpbgo+IHlvdXIgdmlydHVhbGl6ZWQgZW52aXJv
+bm1lbnQsIGFuZCBob3cgbWVtb3J5IG1lbW9yeT8gIElzIGhhdmluZyBhCj4gY2VydGFpbiBudW1i
+ZXIgb2YgQ1BVJ3MgY3JpdGljYWwgZm9yIHJlcHJvZHVjaW5nIHRoZSBwcm9ibGVtPyAgSXMKPiBj
+b25zdHJpY3RpbmcgdGhlIGFtb3VudCBvZiBtZW1vcnkgaW1wb3J0YW50PwoKT3JpZ2luYWxseSwg
+SSBvYnNlcnZlZCB0aGUgYmVoYXZpb3Igb24gcmVhbGx5IHJlYWwgaGFyZHdhcmUuCgpTaW5jZSB0
+aGVuLCBJIGhhdmUgYmVlbiBhYmxlIHRvIHJlcHJvZHVjZSBpdCBpbiBWaXJ0dWFsQm94IGFuZApx
+ZW11LWt2bSwgd2l0aCBvcGVuU1VTRSAxMS4zIGFuZCBLVWJ1bnR1LiBBbGwgb2YgdGhlIG1vcmUg
+cmVjZW50IHRlc3RzCmhhdmUgYmVlbiB3aXRoIHFlbXUta3ZtLgoKSSBoYXZlIG9uZSBDUFUgY29u
+ZmlndXJlZCBpbiB0aGUgZW52aXJvbm1lbnQsIDUxMk1CIG9mIG1lbW9yeS4KSSBoYXZlIG5vdCBk
+b25lIGFueSBtZW1vcnktY29uc3RyaWN0aW9uIHRlc3RzIHdoYXRzb2V2ZXIuCgo+IEl0J2xsIGJl
+IGEgbG90IGVhc2llciBpZiBJIGNhbiByZXByb2R1Y2UgaXQgbG9jYWxseSwgd2hpY2ggaXMgd2h5
+IEknbQo+IGFza2luZyBhbGwgb2YgdGhlc2UgcXVlc3Rpb25zLgoKT24gU2F0LCBEZWMgMTEsIDIw
+MTAgYXQgODozNCBQTSwgVGVkIFRzJ28gPHR5dHNvQG1pdC5lZHU+IHdyb3RlOgo+IE9uZSBleHBl
+cmltZW50IC0tLSBjYW4geW91IHRyeSB0aGlzIHdpdGggdGhlIGZpbGUgc3lzdGVtIG1vdW50ZWQg
+d2l0aAo+IGRhdGE9d3JpdGViYWNrLCBhbmQgc2VlIGlmIHRoZSBwcm9ibGVtIHJlcHJvZHVjZXMg
+aW4gdGhhdCBqb3VybmFsbGluZwo+IG1vZGU/CgpUaGF0IHRlc3QgaXMgcnVubmluZyBub3csIGZp
+cnN0IHdpdGggZW5jcnlwdGlvbi4gSSB3aWxsIHJlcG9ydCBpZiBpdApzaG93cyBwcm9ibGVtcy4g
+SWYgaXQgZG9lcywgSSB3aWxsIHdhaXQgdW50aWwgSSBoYXZlIGJlZW4gYWJsZSB0byBzZWUKdGhh
+dCBhIGZldyB0aW1lcywgYW5kIG1vdmUgdG8gYSBuby1lbmNyeXB0aW9uIHRlc3QuIFR5cGljYWxs
+eSwgSSBoYXZlCnRvIHJ1biBxdWl0ZSBhIGZldyBtb3JlIGl0ZXJhdGlvbnMgb2YgdGhhdCB0ZXN0
+IGJlZm9yZSBwcm9ibGVtcyBzaG93CnVwIChpZiB0aGV5IHdpbGwgYXQgYWxsKS4KCj4gSSB3YW50
+IHRvIHJ1bGUgb3V0IChpZiBwb3NzaWJsZSkgam91cm5hbF9zdWJtaXRfaW5vZGVfZGF0YV9idWZm
+ZXJzKCkKPiByYWNpbmcgd2l0aCBtcGFnZV9kYV9zdWJtaXRfaW8oKS4gwqBJIGRvbid0IHRoaW5r
+IHRoYXQncyB0aGUgaXNzdWUsIGJ1dAo+IEknZCBwcmVmZXIgdG8gZG8gdGhlIGV4cGVyaW1lbnQg
+dG8gbWFrZSBzdXJlLiDCoFNvIGlmIHlvdSBjYW4gdXNlIGEKPiBrZXJuZWwgYW5kIHN5c3RlbSBj
+b25maWd1cmF0aW9uIHdoaWNoIHRyaWdnZXJzIHRoZSBwcm9ibGVtLCBhbmQgdGhlbgo+IHRyeSBj
+aGFuZ2luZyB0aGUgbW91bnQgb3B0aW9ucyB0byBpbmNsdWRlIGRhdGE9d3JpdGViYWNrLCBhbmQg
+dGhlbgo+IHJlcnVuIHRoZSB0ZXN0LCBhbmQgbGV0IG1lIGtub3cgaWYgdGhlIHByb2JsZW0gc3Rp
+bGwgcmVwcm9kdWNlcywgSSdkCj4gYmUgcmVhbGx5IGdyYXRlZnVsLgoKCi0tIApKb24KCi0tCmRt
+LWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhh
+dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
