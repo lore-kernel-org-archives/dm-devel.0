@@ -1,72 +1,48 @@
-From: Jon Nelson <jnelson@jamponi.net>
-Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re:
- dm-crypt barrier support is effective)
-Date: Sun, 12 Dec 2010 04:18:29 -0600
-Message-ID: <AANLkTinhHTqqpP=pQ8Foyc9xeaZi65GHGHGY51OyZtvF__44303.926829207$1292149248$gmane$org@mail.gmail.com>
-References: <20101209201359.GG2921@thunk.org>
-	<AANLkTik=ivDrBEzg1wQAp5AFzNtRRq1=NpvnowggU=_0@mail.gmail.com>
-	<20101209231616.GA12515@basil.fritz.box> <1291945065-sup-1838@think>
-	<AANLkTi=SgzVcOwqJfAHBe5U+1CuhPnm0eKet4hRM2JKz@mail.gmail.com>
-	<20101210023852.GB3059@thunk.org>
-	<AANLkTikJ1Q=L15wcMLn=U8-Qx9PbppY-AX=LpmjDkk2V@mail.gmail.com>
-	<AANLkTikeiv2jQM5hhghs1Zd2d=5CbRLKMgYvqHqpm76m@mail.gmail.com>
-	<AANLkTinMt6saGeeX3MbwAzZ-+f6AL5BegeFqyPgGwiDo@mail.gmail.com>
-	<AANLkTi=cn04WZGMnVX6ie5PSM+9v0tJSSg0kD8_W5N11@mail.gmail.com>
-	<20101212023415.GG3059@thunk.org>
-	<AANLkTim=i8wDnML+K4uGK_neNDCiWxtKGDx01O+3joaE@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ted Ts'o <tytso@mit.edu>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
+ barrier support is effective)
+Date: Sun, 12 Dec 2010 07:43:54 -0500
+Message-ID: <20101212124354.GA4513@thunk.org>
+References: <1291945065-sup-1838@think>
+ <AANLkTi=SgzVcOwqJfAHBe5U+1CuhPnm0eKet4hRM2JKz@mail.gmail.com>
+ <20101210023852.GB3059@thunk.org>
+ <AANLkTikJ1Q=L15wcMLn=U8-Qx9PbppY-AX=LpmjDkk2V@mail.gmail.com>
+ <AANLkTikeiv2jQM5hhghs1Zd2d=5CbRLKMgYvqHqpm76m@mail.gmail.com>
+ <AANLkTinMt6saGeeX3MbwAzZ-+f6AL5BegeFqyPgGwiDo@mail.gmail.com>
+ <AANLkTi=cn04WZGMnVX6ie5PSM+9v0tJSSg0kD8_W5N11@mail.gmail.com>
+ <20101212023415.GG3059@thunk.org>
+ <AANLkTim=i8wDnML+K4uGK_neNDCiWxtKGDx01O+3joaE@mail.gmail.com>
+ <AANLkTinhHTqqpP=pQ8Foyc9xeaZi65GHGHGY51OyZtvF@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AANLkTim=i8wDnML+K4uGK_neNDCiWxtKGDx01O+3joaE@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ted Ts'o <tytso@mit.edu>, Jon Nelson <jnelson@jamponi.net>, Matt <jackdachef@gmail.com>, Chris Mason <chris.mason@oracle.com>, Andi Kleen <andi@firstfloor.org>, Mike
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <AANLkTinhHTqqpP=pQ8Foyc9xeaZi65GHGHGY51OyZtvF@mail.gmail.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Jon Nelson <jnelson@jamponi.net>
+Cc: Matt <jackdachef@gmail.com>, Chris Mason <chris.mason@oracle.com>, Andi Kleen <andi@firstfloor.org>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun <htejun@gmail.com>, linux-ext4 <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gU2F0LCBEZWMgMTEsIDIwMTAgYXQgOToxNiBQTSwgSm9uIE5lbHNvbiA8am5lbHNvbkBqYW1w
-b25pLm5ldD4gd3JvdGU6Cj4gT24gU2F0LCBEZWMgMTEsIDIwMTAgYXQgNzo0MCBQTSwgVGVkIFRz
-J28gPHR5dHNvQG1pdC5lZHU+IHdyb3RlOgo+PiBZZXMsIGluZGVlZC4gwqBJcyB0aGlzIGluIHRo
-ZSB2aXJ0dWFsaXplZCBlbnZpcm9ubWVudCBvciBvbiByZWFsCj4+IGhhcmR3YXJlIGF0IHRoaXMg
-cG9pbnQ/IMKgQW5kIGhvdyBtYW55IENQVSdzIGRvIHlvdSBoYXZlIGNvbmZpZ3VyZWQgaW4KPj4g
-eW91ciB2aXJ0dWFsaXplZCBlbnZpcm9ubWVudCwgYW5kIGhvdyBtZW1vcnkgbWVtb3J5PyDCoElz
-IGhhdmluZyBhCj4+IGNlcnRhaW4gbnVtYmVyIG9mIENQVSdzIGNyaXRpY2FsIGZvciByZXByb2R1
-Y2luZyB0aGUgcHJvYmxlbT8gwqBJcwo+PiBjb25zdHJpY3RpbmcgdGhlIGFtb3VudCBvZiBtZW1v
-cnkgaW1wb3J0YW50Pwo+Cj4gT3JpZ2luYWxseSwgSSBvYnNlcnZlZCB0aGUgYmVoYXZpb3Igb24g
-cmVhbGx5IHJlYWwgaGFyZHdhcmUuCj4KPiBTaW5jZSB0aGVuLCBJIGhhdmUgYmVlbiBhYmxlIHRv
-IHJlcHJvZHVjZSBpdCBpbiBWaXJ0dWFsQm94IGFuZAo+IHFlbXUta3ZtLCB3aXRoIG9wZW5TVVNF
-IDExLjMgYW5kIEtVYnVudHUuIEFsbCBvZiB0aGUgbW9yZSByZWNlbnQgdGVzdHMKPiBoYXZlIGJl
-ZW4gd2l0aCBxZW11LWt2bS4KPgo+IEkgaGF2ZSBvbmUgQ1BVIGNvbmZpZ3VyZWQgaW4gdGhlIGVu
-dmlyb25tZW50LCA1MTJNQiBvZiBtZW1vcnkuCj4gSSBoYXZlIG5vdCBkb25lIGFueSBtZW1vcnkt
-Y29uc3RyaWN0aW9uIHRlc3RzIHdoYXRzb2V2ZXIuCj4KPj4gSXQnbGwgYmUgYSBsb3QgZWFzaWVy
-IGlmIEkgY2FuIHJlcHJvZHVjZSBpdCBsb2NhbGx5LCB3aGljaCBpcyB3aHkgSSdtCj4+IGFza2lu
-ZyBhbGwgb2YgdGhlc2UgcXVlc3Rpb25zLgo+Cj4gT24gU2F0LCBEZWMgMTEsIDIwMTAgYXQgODoz
-NCBQTSwgVGVkIFRzJ28gPHR5dHNvQG1pdC5lZHU+IHdyb3RlOgo+PiBPbmUgZXhwZXJpbWVudCAt
-LS0gY2FuIHlvdSB0cnkgdGhpcyB3aXRoIHRoZSBmaWxlIHN5c3RlbSBtb3VudGVkIHdpdGgKPj4g
-ZGF0YT13cml0ZWJhY2ssIGFuZCBzZWUgaWYgdGhlIHByb2JsZW0gcmVwcm9kdWNlcyBpbiB0aGF0
-IGpvdXJuYWxsaW5nCj4+IG1vZGU/Cj4KPiBUaGF0IHRlc3QgaXMgcnVubmluZyBub3csIGZpcnN0
-IHdpdGggZW5jcnlwdGlvbi4gSSB3aWxsIHJlcG9ydCBpZiBpdAo+IHNob3dzIHByb2JsZW1zLiBJ
-ZiBpdCBkb2VzLCBJIHdpbGwgd2FpdCB1bnRpbCBJIGhhdmUgYmVlbiBhYmxlIHRvIHNlZQo+IHRo
-YXQgYSBmZXcgdGltZXMsIGFuZCBtb3ZlIHRvIGEgbm8tZW5jcnlwdGlvbiB0ZXN0LiBUeXBpY2Fs
-bHksIEkgaGF2ZQo+IHRvIHJ1biBxdWl0ZSBhIGZldyBtb3JlIGl0ZXJhdGlvbnMgb2YgdGhhdCB0
-ZXN0IGJlZm9yZSBwcm9ibGVtcyBzaG93Cj4gdXAgKGlmIHRoZXkgd2lsbCBhdCBhbGwpLgo+Cj4+
-IEkgd2FudCB0byBydWxlIG91dCAoaWYgcG9zc2libGUpIGpvdXJuYWxfc3VibWl0X2lub2RlX2Rh
-dGFfYnVmZmVycygpCj4+IHJhY2luZyB3aXRoIG1wYWdlX2RhX3N1Ym1pdF9pbygpLiDCoEkgZG9u
-J3QgdGhpbmsgdGhhdCdzIHRoZSBpc3N1ZSwgYnV0Cj4+IEknZCBwcmVmZXIgdG8gZG8gdGhlIGV4
-cGVyaW1lbnQgdG8gbWFrZSBzdXJlLiDCoFNvIGlmIHlvdSBjYW4gdXNlIGEKPj4ga2VybmVsIGFu
-ZCBzeXN0ZW0gY29uZmlndXJhdGlvbiB3aGljaCB0cmlnZ2VycyB0aGUgcHJvYmxlbSwgYW5kIHRo
-ZW4KPj4gdHJ5IGNoYW5naW5nIHRoZSBtb3VudCBvcHRpb25zIHRvIGluY2x1ZGUgZGF0YT13cml0
-ZWJhY2ssIGFuZCB0aGVuCj4+IHJlcnVuIHRoZSB0ZXN0LCBhbmQgbGV0IG1lIGtub3cgaWYgdGhl
-IHByb2JsZW0gc3RpbGwgcmVwcm9kdWNlcywgSSdkCj4+IGJlIHJlYWxseSBncmF0ZWZ1bC4KClVz
-aW5nIDIuNi4zNy1yYzUgYW5kIGRhdGE9d3JpdGViYWNrLG5vYXRpbWUgYW5kIExVS1MgZW5jcnlw
-dGlvbiBJIGhpdAp0aGUgcHJvYmxlbSA3MSB0aW1lcyBvdXQgb2YgMTczLgoKLS0gCkpvbgoKLS0K
-ZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVk
-aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Sun, Dec 12, 2010 at 04:18:29AM -0600, Jon Nelson wrote:
+> > I have one CPU configured in the environment, 512MB of memory.
+> > I have not done any memory-constriction tests whatsoever.
+
+I've finally been able to reproduce it myself, on real hardware.  SMP
+is not necessary to reproduce it, although having more than one CPU
+doesn't hurt.  What I did need to do (on real hardware with 4 gigs of
+memory) was to turn off swap and pin enough memory so that free memory
+was around 200megs or so before the start of the test.  (This is the
+natural amount of free memory that the system would try to reach,
+since 200 megs is about 5% of 4 gigs.)
+
+Then, during the test, free memory would drop to 50-70 megabytes,
+forcing writeback to run, and then I could trigger it about 1-2 times
+out of three.
+
+I'm guessing that when you used 512mb of memory, that was in effect a
+memory-constriction test, and if you were to push the memory down a
+little further, it might reproduce even more quickly.  My next step is
+to try to reproduce this in a VM, and then I can start probing to see
+what might be going on.
+
+						- Ted
