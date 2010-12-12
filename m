@@ -1,84 +1,55 @@
-From: Jon Nelson <jnelson@jamponi.net>
-Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re:
- dm-crypt barrier support is effective)
-Date: Fri, 10 Dec 2010 20:14:56 -0600
-Message-ID: <AANLkTi=cn04WZGMnVX6ie5PSM+9v0tJSSg0kD8_W5N11__33047.2289155752$1292033834$gmane$org@mail.gmail.com>
-References: <20101207182243.GB21112@redhat.com>
-	<20101207193514.GA2921@thunk.org>
-	<AANLkTim8UTkfxXV0AkEfjNq3tcmnrXdh6BQ1ibY5iYPy@mail.gmail.com>
-	<20101209180111.GF2921@thunk.org>
-	<AANLkTimAUB5L5Ptm4Fv=sQUmL9_P5azPRCKQnmU89xs8@mail.gmail.com>
-	<20101209201359.GG2921@thunk.org>
-	<AANLkTik=ivDrBEzg1wQAp5AFzNtRRq1=NpvnowggU=_0@mail.gmail.com>
-	<20101209231616.GA12515@basil.fritz.box> <1291945065-sup-1838@think>
-	<AANLkTi=SgzVcOwqJfAHBe5U+1CuhPnm0eKet4hRM2JKz@mail.gmail.com>
-	<20101210023852.GB3059@thunk.org>
-	<AANLkTikJ1Q=L15wcMLn=U8-Qx9PbppY-AX=LpmjDkk2V@mail.gmail.com>
-	<AANLkTikeiv2jQM5hhghs1Zd2d=5CbRLKMgYvqHqpm76m@mail.gmail.com>
-	<AANLkTinMt6saGeeX3MbwAzZ-+f6AL5BegeFqyPgGwiDo@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ted Ts'o <tytso@mit.edu>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
+ barrier support is effective)
+Date: Sat, 11 Dec 2010 20:40:13 -0500
+Message-ID: <20101212014013.GF3059@thunk.org>
+References: <20101209201359.GG2921@thunk.org>
+ <AANLkTik=ivDrBEzg1wQAp5AFzNtRRq1=NpvnowggU=_0@mail.gmail.com>
+ <20101209231616.GA12515@basil.fritz.box>
+ <1291945065-sup-1838@think>
+ <AANLkTi=SgzVcOwqJfAHBe5U+1CuhPnm0eKet4hRM2JKz@mail.gmail.com>
+ <20101210023852.GB3059@thunk.org>
+ <AANLkTikJ1Q=L15wcMLn=U8-Qx9PbppY-AX=LpmjDkk2V@mail.gmail.com>
+ <AANLkTikeiv2jQM5hhghs1Zd2d=5CbRLKMgYvqHqpm76m@mail.gmail.com>
+ <AANLkTinMt6saGeeX3MbwAzZ-+f6AL5BegeFqyPgGwiDo@mail.gmail.com>
+ <AANLkTi=cn04WZGMnVX6ie5PSM+9v0tJSSg0kD8_W5N11@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AANLkTinMt6saGeeX3MbwAzZ-+f6AL5BegeFqyPgGwiDo@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ted Ts'o <tytso@mit.edu>, Matt <jackdachef@gmail.com>, Chris Mason <chris.mason@oracle.com>, Andi Kleen <andi@firstfloor.org>, Jon Nelson <jnelson@jamponi.net>, Mike
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <AANLkTi=cn04WZGMnVX6ie5PSM+9v0tJSSg0kD8_W5N11@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jon Nelson <jnelson@jamponi.net>
+Cc: Matt <jackdachef@gmail.com>, Chris Mason <chris.mason@oracle.com>, Andi Kleen <andi@firstfloor.org>, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun <htejun@gmail.com>, linux-ext4 <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
-T24gRnJpLCBEZWMgMTAsIDIwMTAgYXQgMTA6NTQgQU0sIEpvbiBOZWxzb24gPGpuZWxzb25AamFt
-cG9uaS5uZXQ+IHdyb3RlOgo+IE9uIEZyaSwgRGVjIDEwLCAyMDEwIGF0IDg6NTggQU0sIEpvbiBO
-ZWxzb24gPGpuZWxzb25AamFtcG9uaS5uZXQ+IHdyb3RlOgo+PiBPbiBGcmksIERlYyAxMCwgMjAx
-MCBhdCAxMjo1MiBBTSwgSm9uIE5lbHNvbiA8am5lbHNvbkBqYW1wb25pLm5ldD4gd3JvdGU6Cj4+
-PiBPbiBUaHUsIERlYyA5LCAyMDEwIGF0IDg6MzggUE0sIFRlZCBUcydvIDx0eXRzb0BtaXQuZWR1
-PiB3cm90ZToKPj4+PiBPbiBGcmksIERlYyAxMCwgMjAxMCBhdCAwMjo1MzozMEFNICswMTAwLCBN
-YXR0IHdyb3RlOgo+Pj4+Pgo+Pj4+PiBUcnkgYSBrZXJuZWwgYmVmb3JlIDVhODdiN2E1ZGEyNTBj
-OWJlNmQ3NTc3NTg0MjVkZmVhZjhlZDMxNzkKPj4+Pj4KPj4+Pj4gZnJvbSB0aGUgdGVzdHMgSSd2
-ZSBkb25lIHRoYXQgb25lIHNob3dlZCB0aGUgbGVhc3Qgb3Igbm8gY29ycnVwdGlvbiBpZgo+Pj4+
-PiB5b3UgY291bnQgdGhlIGVtcHR5IC9ldGMvZW52LmQvMDNvcGVuZ2wgYXMgYW4gYXJ0ZWZhY3QK
-Pj4+Pgo+Pj4+IFllcywgdGhhdCdzIGEgZ29vZCB0ZXN0LiDCoEFsc28gdHJ5IGNvbW1pdCBiZDJk
-MDIxMGNmLiDCoFRoZSBwYXRjaAo+Pj4+IHNlcmllcyB0aGF0IGlzIG1vc3QgbGlrZWx5IHRvIGJl
-IGF0IGZhdWx0IGlmIHRoZXJlIGlzIGEgcmVncmVzc2lvbiBpbgo+Pj4+IGJldHdlZW4gNWE4N2I3
-YTVkIGFuZCBiZDJkMDIxMGNmIGluY2x1c2l2ZS4KPj4+Pgo+Pj4+IEkgZGlkIGEgbG90IG9mIHRl
-c3RpbmcgYmVmb3JlIHN1Ym1pdHRpbmcgaXQsIGJ1dCB0aGF0IHdhIGEgdHJpY2t5Cj4+Pj4gcmV3
-cml0ZS4gwqBJZiB5b3UgY2FuIHJlcHJvZHVjZSB0aGUgcHJvYmxlbSByZWxpYWJseSwgaXQgbWln
-aHQgYmUgZ29vZAo+Pj4+IHRvIHRyeSBjb21taXQgMTY4MjgwODhmOSAodGhlIGNvbW1pdCBiZWZv
-cmUgNWE4N2I3YTVkKSBhbmQgY29tbWl0Cj4+Pj4gYmQyZDAyMTBjZi4gwqBJZiBpdCByZWxpYWJs
-eSByZXByb2R1Y2VzIG9uIGJkMmQwMjEwY2YsIGJ1dCBpcyBjbGVhbiBvbgo+Pj4+IDE2ODI4MDg4
-ZjksIHRoZW4gaXQncyBteSBleHQ0IGJsb2NrIGkvbyBzdWJtaXNzaW9uIHBhdGNoZXMsIGFuZCB3
-ZSdsbAo+Pj4+IG5lZWQgdG8gZWl0aGVyIGZpZ3VyZSBvdXQgd2hhdCdzIGdvaW5nIG9uIG9yIGJh
-Y2sgb3V0IHRoYXQgc2V0IG9mCj4+Pj4gY2hhbmdlcy4KPj4+Pgo+Pj4+IElmIHRoYXQncyB0aGUg
-Y2FzZSwgYSBiaXNlY3Qgb2YgdGhvc2UgY2hhbmdlcyAoaXQncyBvbmx5IDYgY29tbWl0cywgc28K
-Pj4+PiBpdCBzaG91bGRuJ3QgdGFrZSBsb25nKSB3b3VsZCBiZSBtb3N0IGFwcHJlY2lhdGVkLgo+
-Pj4KPj4+IEkgb2JzZXJ2ZWQgdGhlIGJlaGF2aW9yIG9uIGJkMmQwMjEwY2YgaW4gYSBxZW11LWt2
-bSBpbnN0YWxsIG9mCj4+PiBvcGVuU1VTRSAxMS4zICh4ODZfNjQpIG9uICp0b3RhbGx5KiBkaWZm
-ZXJlbnQgaG9zdCAtIGFuIEFNRCBxdWFkLWNvcmUuCj4+Pgo+Pj4gSSBkaWQgL25vdC8gb2JzZXJ2
-ZSB0aGUgYmVoYXZpb3Igb24gMTY4MjgwODhmOSAoeWV0KS4gSSdsbCBydW4gdGhlCj4+PiB0ZXN0
-IGEgZmV3IG1vcmUgdGltZXMgb24gMTY4Mi4uCj4+Pgo+Pj4gQWRkaXRpb25hbGx5LCBJIGFtIGJ1
-aWxkaW5nIGEgYmlzZWN0ZWQga2VybmVsIG5vdyAoCj4+PiBjYjIwZDUxODgzNjZmMDRkOTZkMmUw
-N2IxMjQwY2M5MjE3MGFkZTQwICksIGJ1dCB3b24ndCBiZSBhYmxlIHRvIGdldAo+Pj4gYmFjayBh
-dCBpdCBmb3IgYSB3aGlsZS4KPj4KPj4gY2IyMGQ1MTg4MzY2ZjA0ZDk2ZDJlMDdiMTI0MGNjOTIx
-NzBhZGU0MCBzZWVtcyBPSyBzbyBmYXIuIEknbSBnb2luZyB0bwo+PiB0cnkgMWRlM2UzZGY5MTc0
-NTk0MjJjYjJhZWNhYzQ0MGZlYmM4ODc5ZDQxMCBzb29uLgo+Cj4gQmFycmluZyBmYWxzZSBuZWdh
-dGl2ZXMsIGJkMmQwMjEwY2YyMmYyYmQwY2VmNzJlYjk3Y2Y5NGZjN2QzMWQ4Y2MKPiBhcHBlYXJz
-IHRvIGJlIHRoZSBjdWxwcml0IChhY2NvcmRpbmcgdG8gZ2l0IGJpc2VjdCkuCj4gSSB3aWxsIHRl
-c3QgYmQyZDAyMTBjZjIyZjJiZDBjZWY3MmViOTdjZjk0ZmM3ZDMxZDhjYyBhZ2FpbiwgY29uZmly
-bQo+IHRoZSBiZWhhdmlvciwgYW5kIHdvcmsgYmFja3dhcmRzIHRvIHRyeSB0byByZWR1Y2UgdGhl
-IHBvc3NpYmlsaXR5IG9mCj4gZmFsc2UgbmVnYXRpdmVzLgoKQSBmZXcgYWRkaXRpb25hbCBub3Rl
-cywgaW4gbm8gcGFydGljdWxhciBvcmRlcjoKCi0gRm9yIG1lLCB0cmlnZ2VyaW5nIHRoZSBwcm9i
-bGVtIGlzIGZhaXJseSBlYXN5IHdoZW4gZW5jcnlwdGlvbiBpcyBpbnZvbHZlZC4KLSBJJ20gbm93
-IDgxIGl0ZXJhdGlvbnMgaW50byB0ZXN0aW5nCmJkMmQwMjEwY2YyMmYyYmQwY2VmNzJlYjk3Y2Y5
-NGZjN2QzMWQ4Y2MgKndpdGhvdXQqIGVuY3J5cHRpb24uICBPdXQgb2YKODEgaXRlcmF0aW9ucywg
-SSBoYXZlIDQgZmFpbHVyZXM6ICMxNiwgNDAsIDYyLCBhbmQgNjQuCgpJIHdpbGwgbm93IHRyeSAx
-ZGUzZTNkZjkxNzQ1OTQyMmNiMmFlY2FjNDQwZmViYzg4NzlkNDEwIG11Y2ggbW9yZSBleHRlbnNp
-dmVseS4KCklzIHRoaXMgdXNlZnVsIGluZm9ybWF0aW9uPwoKLS0gCkpvbgoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
-YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Fri, Dec 10, 2010 at 08:14:56PM -0600, Jon Nelson wrote:
+> > Barring false negatives, bd2d0210cf22f2bd0cef72eb97cf94fc7d31d8cc
+> > appears to be the culprit (according to git bisect).
+> > I will test bd2d0210cf22f2bd0cef72eb97cf94fc7d31d8cc again, confirm
+> > the behavior, and work backwards to try to reduce the possibility of
+> > false negatives.
+> 
+> A few additional notes, in no particular order:
+> 
+> - For me, triggering the problem is fairly easy when encryption is involved.
+> - I'm now 81 iterations into testing
+> bd2d0210cf22f2bd0cef72eb97cf94fc7d31d8cc *without* encryption.  Out of
+> 81 iterations, I have 4 failures: #16, 40, 62, and 64.
+> 
+> I will now try 1de3e3df917459422cb2aecac440febc8879d410 much more extensively.
+> 
+> Is this useful information?
+
+Yes, indeed.  Is this in the virtualized environment or on real
+hardware at this point?  And how many CPU's do you have configured in
+your virtualized environment, and how memory memory?  Is having a
+certain number of CPU's critical for reproducing the problem?  Is
+constricting the amount of memory important?
+
+It'll be a lot easier if I can reproduce it locally, which is why I'm
+asking all of these questions.
+
+Thanks,
+
+					- Ted
