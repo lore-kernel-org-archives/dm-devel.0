@@ -1,11 +1,12 @@
 From: <Menny_Hamburger@Dell.com>
-Subject: [PATCH 1/1]: missing call to pg_init_done causes I/O to
- be hung forever
-Date: Mon, 13 Dec 2010 15:35:17 +0000
-Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AF923A3@DUBX7MCDUB01.EMEA.DELL.COM>
+Subject: dm-devel] [PATCH 1/1]: dm+dh: missing call to
+ pg_init_done causes I/O to be hung forever
+Date: Mon, 13 Dec 2010 16:12:37 +0000
+Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AF92400@DUBX7MCDUB01.EMEA.DELL.COM>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2786052642258559216=="
+Content-Type: multipart/mixed;
+	boundary="_004_D8C50530D6022F40A817A35C40CC06A7064AF92400DUBX7MCDUB01E_"
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -20,97 +21,17 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============2786052642258559216==
-Content-Language: en-US
+--_004_D8C50530D6022F40A817A35C40CC06A7064AF92400DUBX7MCDUB01E_
 Content-Type: multipart/alternative;
-	boundary="_000_D8C50530D6022F40A817A35C40CC06A7064AF923A3DUBX7MCDUB01E_"
+	boundary="_000_D8C50530D6022F40A817A35C40CC06A7064AF92400DUBX7MCDUB01E_"
 
---_000_D8C50530D6022F40A817A35C40CC06A7064AF923A3DUBX7MCDUB01E_
+--_000_D8C50530D6022F40A817A35C40CC06A7064AF92400DUBX7MCDUB01E_
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-When scsi_dh_activate returns SCSI_DH_NOSYS the H/W handler callback is not=
- called, pg_init_done is not called in
-the multipath layer and pending I/O is requeued forever; this situation cau=
-ses all userland processes currently performing I/O
-on the device to I/O hang. A similar situation occurs when the device has t=
-ransitioned to SDEV_CANCEL/SDEV_DEL and the device
-handler data had not yet been deleted.
+Attached is a clean patch file.
 
-The easiest way to reproduce this is in an ISCSI environment:
-  dd if=3D/dev/dm-0 of=3D/dev/zero bs=3D8k count=3D1000000 &
-  /etc/init.d/iscsi stop
-In this example, dd will I/O hang forever and the only way to release it wi=
-ll be to reboot the machine
-
-This patch calls pg_init_done directly from the mpath code when the scsi_dh=
-_activate returns a non SCSI_DH_OK error.
-
-Note:
-The patch is over RHEL5.5.
-When running an upstream kernel, the above scenario may not occur because t=
-he request queue is aborted in dm-mpath.c:fail_path.
-This patch makes sure the problem does not occur at all, rather than handli=
-ng it when it does. In addition, it seems too risky to apply
-request queue abort functionality on RHEL5 at this stage.
-
-diff -r -U 2 a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
---- a/drivers/md/dm-mpath.c   2010-12-13 09:16:31.358858000 +0200
-+++ b/drivers/md/dm-mpath.c   2010-12-13 09:16:31.796998000 +0200
-@@ -1190,4 +1190,5 @@
-      case SCSI_DH_OK:
-            break;
-+     case SCSI_DH_DEV_OFFLINED:
-      case SCSI_DH_NOSYS:
-            if (!m->hw_handler_name) {
-@@ -1252,7 +1253,15 @@
- {
-      struct pgpath *pgpath =3D (struct pgpath *) data;
-+     int err;
-
--     scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
-+     err =3D scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
-                        pg_init_done, &pgpath->path);
-+
-+     /*
-+     * If error is not SCSI_DH_OK, we have not entered the scsi_dh H/W han=
-dler and did not call pg_init_done -
-+     * need to call pg_init_done directly.
-+     */
-+     if (err)
-+           pg_init_done(&pgpath->path, err);
- }
-
-diff -r -U 2 a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_=
-handler/scsi_dh.c
---- a/drivers/scsi/device_handler/scsi_dh.c     2010-12-13 09:16:31.6165540=
-00 +0200
-+++ b/drivers/scsi/device_handler/scsi_dh.c     2010-12-13 09:16:31.8781700=
-00 +0200
-@@ -443,4 +443,9 @@
-      spin_unlock_irqrestore(q->queue_lock, flags);
-
-+     if (sdev->sdev_state =3D=3D SDEV_CANCEL ||
-+         sdev->sdev_state =3D=3D SDEV_DEL ||
-+         sdev->sdev_state =3D=3D SDEV_OFFLINE)
-+           err =3D SCSI_DH_DEV_OFFLINED;
-+
-      if (err)
-            return err;
-diff -r -U 2 a/drivers/scsi/device_handler/scsi_dh_rdac.c b/drivers/scsi/de=
-vice_handler/scsi_dh_rdac.c
---- a/drivers/scsi/device_handler/scsi_dh_rdac.c      2010-12-13 09:16:31.7=
-47755000 +0200
-+++ b/drivers/scsi/device_handler/scsi_dh_rdac.c      2010-12-13 09:16:31.9=
-12827000 +0200
-@@ -665,4 +665,5 @@
-      if (fn)
-            fn(data, err);
-+
-      return 0;
- }
-
-
+Menny.
 
 Menny Hamburger
 Engineer
@@ -119,7 +40,7 @@ office +972 97698789,  fax +972 97698889
 Dell IDC. 4 Hacharoshet St, Raanana 43657, Israel
 
 
---_000_D8C50530D6022F40A817A35C40CC06A7064AF923A3DUBX7MCDUB01E_
+--_000_D8C50530D6022F40A817A35C40CC06A7064AF92400DUBX7MCDUB01E_
 Content-Type: text/html; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
@@ -129,7 +50,8 @@ xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
 //www.w3.org/TR/REC-html40">
 
 <head>
-<meta http-equiv=3DContent-Type content=3D"text/html; charset=3Dus-ascii">
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; charset=3Dus-ascii"=
+>
 <meta name=3DGenerator content=3D"Microsoft Word 12 (filtered medium)">
 <style>
 <!--
@@ -182,356 +104,21 @@ div.WordSection1
 
 <div class=3DWordSection1>
 
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>When scsi_dh_activate returns SCSI_DH_NOSYS the =
-H/W
-handler callback is not called, pg_init_done is not called in <o:p></o:p></=
-span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>the multipath layer and pending I/O is requeued
-forever; this situation causes all userland processes currently performing =
-I/O<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>on the device to I/O hang. A similar situation
-occurs when the device has transitioned to SDEV_CANCEL/SDEV_DEL and the dev=
-ice<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>handler data had not yet been deleted.<o:p></o:p=
-></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>The easiest way to reproduce this is in an ISCSI
-environment:<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp; dd if=3D/dev/dm-0 of=3D/dev/zero bs=3D8k
-count=3D1000000 &amp;<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp; /etc/init.d/iscsi stop<o:p></o:p></span><=
-/p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>In this example, dd will I/O hang forever and th=
-e
-only way to release it will be to reboot the machine<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>This patch calls pg_init_done directly from the
-mpath code when the scsi_dh_activate returns a non SCSI_DH_OK error.<o:p></=
-o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>Note:<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>The patch is over RHEL5.5.<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>When running an upstream kernel, the above scena=
-rio
-may not occur because the request queue is aborted in dm-mpath.c:fail_path.=
-<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>This patch makes sure the problem does not occur=
- at
-all, rather than handling it when it does. In addition, it seems too risky =
-to
-apply <o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>request queue abort functionality on RHEL5 at th=
-is
-stage.<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>diff -r -U 2 a/drivers/md/dm-mpath.c
-b/drivers/md/dm-mpath.c<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>--- a/drivers/md/dm-mpath.c&nbsp;&nbsp; 2010-12-=
-13
-09:16:31.358858000 +0200<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+++ b/drivers/md/dm-mpath.c&nbsp;&nbsp; 2010-12-=
-13
-09:16:31.796998000 +0200<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>@@ -1190,4 +1190,5 @@<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; case SCSI_DH_OK:<=
-o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp; break;<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp; case SCSI_DH_DEV_OFFLI=
-NED:<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; case SCSI_DH_NOSY=
-S:<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp; if
-(!m-&gt;hw_handler_name) {<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>@@ -1252,7 +1253,15 @@<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;{<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; struct pgpath *pg=
-path
-=3D (struct pgpath *) data;<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp; int err;<o:p></o:p></s=
-pan></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>-&nbsp;&nbsp;&nbsp;&nbsp; scsi_dh_activate(bdev_=
-get_queue(pgpath-&gt;path.dev-&gt;bdev),<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp; err =3D
-scsi_dh_activate(bdev_get_queue(pgpath-&gt;path.dev-&gt;bdev),<o:p></o:p></=
-span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp; pg_init_done,
-&amp;pgpath-&gt;path);<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp; /*<o:p></o:p></span></=
-p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp;  * If error is not
-SCSI_DH_OK, we have not entered the scsi_dh H/W handler and did not call
-pg_init_done - <o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp;  * need to call
-pg_init_done directly.<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp;  */<o:p></o:p></span><=
-/p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp; if (err) <o:p></o:p></=
-span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp; pg_init_done(&amp;pgpath-&gt;path,
-err);<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;}<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>diff -r -U 2 a/drivers/scsi/device_handler/scsi_=
-dh.c
-b/drivers/scsi/device_handler/scsi_dh.c<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>--- a/drivers/scsi/device_handler/scsi_dh.c&nbsp=
-;&nbsp;&nbsp;&nbsp; 2010-12-13
-09:16:31.616554000 +0200<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+++ b/drivers/scsi/device_handler/scsi_dh.c&nbsp=
-;&nbsp;&nbsp;&nbsp; 2010-12-13
-09:16:31.878170000 +0200<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>@@ -443,4 +443,9 @@<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; spin_unlock_irqre=
-store(q-&gt;queue_lock,
-flags);<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp; if (sdev-&gt;sdev_stat=
-e =3D=3D
-SDEV_CANCEL ||<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
-sdev-&gt;sdev_state =3D=3D SDEV_DEL ||<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
-sdev-&gt;sdev_state =3D=3D SDEV_OFFLINE)<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp; err
-=3D SCSI_DH_DEV_OFFLINED;<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (err)<o:p></o:=
-p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp; return
-err;<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>diff -r -U 2
-a/drivers/scsi/device_handler/scsi_dh_rdac.c b/drivers/scsi/device_handler/=
-scsi_dh_rdac.c<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>--- a/drivers/scsi/device_handler/scsi_dh_rdac.c=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2010-12-13
-09:16:31.747755000 +0200<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+++ b/drivers/scsi/device_handler/scsi_dh_rdac.c=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2010-12-13
-09:16:31.912827000 +0200<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>@@ -665,4 +665,5 @@<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (fn)<o:p></o:p=
-></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp; fn(data,
-err);<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>+<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return 0;<o:p></o=
-:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'>&nbsp;}<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-size=
-:10.0pt;
-font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
-
-<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
-
-<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+<p class=3DMsoNormal><b><span style=3D'font-size:10.0pt;font-family:"Trebuc=
+het MS","sans-serif";
+color:#444444'>Attached is a clean patch file.<o:p></o:p></span></b></p>
+
+<p class=3DMsoNormal><b><span style=3D'font-size:10.0pt;font-family:"Trebuc=
+het MS","sans-serif";
+color:#444444'><o:p>&nbsp;</o:p></span></b></p>
+
+<p class=3DMsoNormal><b><span style=3D'font-size:10.0pt;font-family:"Trebuc=
+het MS","sans-serif";
+color:#444444'>Menny.<o:p></o:p></span></b></p>
+
+<p class=3DMsoNormal><b><span style=3D'font-size:10.0pt;font-family:"Trebuc=
+het MS","sans-serif";
+color:#444444'><o:p>&nbsp;</o:p></span></b></p>
 
 <p class=3DMsoNormal><b><span style=3D'font-size:10.0pt;font-family:"Trebuc=
 het MS","sans-serif";
@@ -570,14 +157,68 @@ style=3D'color:#1F497D'><o:p></o:p></span></p>
 
 </html>
 
---_000_D8C50530D6022F40A817A35C40CC06A7064AF923A3DUBX7MCDUB01E_--
+--_000_D8C50530D6022F40A817A35C40CC06A7064AF92400DUBX7MCDUB01E_--
 
+--_004_D8C50530D6022F40A817A35C40CC06A7064AF92400DUBX7MCDUB01E_
+Content-Type: application/octet-stream; name="missing_pg_init_done.patch"
+Content-Description: missing_pg_init_done.patch
+Content-Disposition: attachment; filename="missing_pg_init_done.patch";
+	size=2571; creation-date="Mon, 13 Dec 2010 16:09:38 GMT";
+	modification-date="Mon, 13 Dec 2010 16:06:15 GMT"
+Content-Transfer-Encoding: base64
 
---===============2786052642258559216==
+RnJvbTogTWVubnkgSGFtYnVyZ2VyIDxNZW5ueV9IYW1idXJnZXJARGVsbC5jb20+ClN1YmplY3Q6
+IFttZF0gW3Njc2lfZGhdIGNhbGwgcGdfaW5pdF9kb25lIGluIG1wYXRoIGFjdGl2YXRlIHdoZW4g
+dGhlIGRldmljZSBpcyByZW1vdmVkLgpCdWd6aWxsYTogNjQ1MzQzCgpXaGVuIHNjc2lfZGhfYWN0
+aXZhdGUgcmV0dXJucyBTQ1NJX0RIX05PU1lTIHRoZSBIL1cgaGFuZGxlciBjYWxsYmFjayBpcyBu
+b3QgY2FsbGVkLCBwZ19pbml0X2RvbmUgaXMgbm90IGNhbGxlZCBpbiAKdGhlIG11bHRpcGF0aCBs
+YXllciBhbmQgcGVuZGluZyBJL08gaXMgcmVxdWV1ZWQgZm9yZXZlcjsgdGhpcyBzaXR1YXRpb24g
+Y2F1c2VzIGFsbCB1c2VybGFuZCBwcm9jZXNzZXMgY3VycmVudGx5IHBlcmZvcm1pbmcgSS9PCm9u
+IHRoZSBkZXZpY2UgdG8gSS9PIGhhbmcuIEEgc2ltaWxhciBzaXR1YXRpb24gb2NjdXJzIHdoZW4g
+dGhlIGRldmljZSBoYXMgdHJhbnNpdGlvbmVkIHRvIFNERVZfQ0FOQ0VML1NERVZfREVMIGFuZCB0
+aGUgZGV2aWNlCmhhbmRsZXIgZGF0YSBoYWQgbm90IHlldCBiZWVuIGRlbGV0ZWQuCgpUaGUgZWFz
+aWVzdCB3YXkgdG8gcmVwcm9kdWNlIHRoaXMgaXMgaW4gYW4gSVNDU0kgZW52aXJvbm1lbnQ6CiAg
+ZGQgaWY9L2Rldi9kbS0wIG9mPS9kZXYvemVybyBicz04ayBjb3VudD0xMDAwMDAwICYKICAvZXRj
+L2luaXQuZC9pc2NzaSBzdG9wCkluIHRoaXMgZXhhbXBsZSwgZGQgd2lsbCBJL08gaGFuZyBmb3Jl
+dmVyIGFuZCB0aGUgb25seSB3YXkgdG8gcmVsZWFzZSBpdCB3aWxsIGJlIHRvIHJlYm9vdCB0aGUg
+bWFjaGluZQoKVGhpcyBwYXRjaCBjYWxscyBwZ19pbml0X2RvbmUgZGlyZWN0bHkgZnJvbSB0aGUg
+bXBhdGggY29kZSB3aGVuIHRoZSBzY3NpX2RoX2FjdGl2YXRlIHJldHVybnMgYSBub24gU0NTSV9E
+SF9PSyBlcnJvci4KCk5vdGU6ClRoaXMgcGF0Y2ggaXMgb3ZlciBSSEVMNS41LgpXaGVuIHJ1bm5p
+bmcgYW4gdXBzdHJlYW0ga2VybmVsLCB0aGUgYWJvdmUgc2NlbmFyaW8gbWF5IG5vdCBvY2N1ciBi
+ZWNhdXNlIHRoZSByZXF1ZXN0IHF1ZXVlIGlzIGFib3J0ZWQgaW4gZG0tbXBhdGguYzpmYWlsX3Bh
+dGguClRoaXMgcGF0Y2ggbWFrZXMgc3VyZSB0aGUgcHJvYmxlbSBkb2VzIG5vdCBvY2N1ciBhdCBh
+bGwsIHJhdGhlciB0aGFuIGhhbmRsaW5nIGl0IHdoZW4gaXQgZG9lcy4gSW4gYWRkaXRpb24sIGl0
+IHNlZW1zIHRvbyByaXNreSB0byBhcHBseSAKcmVxdWVzdCBxdWV1ZSBhYm9ydCBmdW5jdGlvbmFs
+aXR5IG9uIFJIRUw1IGF0IHRoaXMgc3RhZ2UuCgpkaWZmIC1yIC1VIDIgYS9kcml2ZXJzL21kL2Rt
+LW1wYXRoLmMgYi9kcml2ZXJzL21kL2RtLW1wYXRoLmMKLS0tIGEvZHJpdmVycy9tZC9kbS1tcGF0
+aC5jCTIwMTAtMTItMTMgMTg6MDY6MTUuMzQyOTIwMDAwICswMjAwCisrKyBiL2RyaXZlcnMvbWQv
+ZG0tbXBhdGguYwkyMDEwLTEyLTEzIDE4OjA2OjE1LjQ1MzA5MjAwMCArMDIwMApAQCAtMTE5MCw0
+ICsxMTkwLDUgQEAKIAljYXNlIFNDU0lfREhfT0s6CiAJCWJyZWFrOworCWNhc2UgU0NTSV9ESF9E
+RVZfT0ZGTElORUQ6CiAJY2FzZSBTQ1NJX0RIX05PU1lTOgogCQlpZiAoIW0tPmh3X2hhbmRsZXJf
+bmFtZSkgewpAQCAtMTI1Miw3ICsxMjUzLDE1IEBACiB7CiAJc3RydWN0IHBncGF0aCAqcGdwYXRo
+ID0gKHN0cnVjdCBwZ3BhdGggKikgZGF0YTsKKwlpbnQgZXJyOwogCi0Jc2NzaV9kaF9hY3RpdmF0
+ZShiZGV2X2dldF9xdWV1ZShwZ3BhdGgtPnBhdGguZGV2LT5iZGV2KSwKKwllcnIgPSBzY3NpX2Ro
+X2FjdGl2YXRlKGJkZXZfZ2V0X3F1ZXVlKHBncGF0aC0+cGF0aC5kZXYtPmJkZXYpLAogCQkJCXBn
+X2luaXRfZG9uZSwgJnBncGF0aC0+cGF0aCk7CisKKwkvKgorCSAqIElmIGVycm9yIGlzIG5vdCBT
+Q1NJX0RIX09LLCB3ZSBoYXZlIG5vdCBlbnRlcmVkIHRoZSBzY3NpX2RoIEgvVyBoYW5kbGVyIGFu
+ZCBkaWQgbm90IGNhbGwgcGdfaW5pdF9kb25lIC0gCisJICogbmVlZCB0byBjYWxsIHBnX2luaXRf
+ZG9uZSBkaXJlY3RseS4KKwkgKi8KKwlpZiAoZXJyKSAKKwkJcGdfaW5pdF9kb25lKCZwZ3BhdGgt
+PnBhdGgsIGVycik7CiB9CiAKZGlmZiAtciAtVSAyIGEvZHJpdmVycy9zY3NpL2RldmljZV9oYW5k
+bGVyL3Njc2lfZGguYyBiL2RyaXZlcnMvc2NzaS9kZXZpY2VfaGFuZGxlci9zY3NpX2RoLmMKLS0t
+IGEvZHJpdmVycy9zY3NpL2RldmljZV9oYW5kbGVyL3Njc2lfZGguYwkyMDEwLTEyLTEzIDE4OjA2
+OjE1LjM5MzcxMjAwMCArMDIwMAorKysgYi9kcml2ZXJzL3Njc2kvZGV2aWNlX2hhbmRsZXIvc2Nz
+aV9kaC5jCTIwMTAtMTItMTMgMTg6MDY6MTUuNTAwOTA3MDAwICswMjAwCkBAIC00NDMsNCArNDQz
+LDkgQEAKIAlzcGluX3VubG9ja19pcnFyZXN0b3JlKHEtPnF1ZXVlX2xvY2ssIGZsYWdzKTsKIAor
+CWlmIChzZGV2LT5zZGV2X3N0YXRlID09IFNERVZfQ0FOQ0VMIHx8CisJICAgIHNkZXYtPnNkZXZf
+c3RhdGUgPT0gU0RFVl9ERUwgfHwKKwkgICAgc2Rldi0+c2Rldl9zdGF0ZSA9PSBTREVWX09GRkxJ
+TkUpCisJCWVyciA9IFNDU0lfREhfREVWX09GRkxJTkVEOworCiAJaWYgKGVycikKIAkJcmV0dXJu
+IGVycjsK
+
+--_004_D8C50530D6022F40A817A35C40CC06A7064AF92400DUBX7MCDUB01E_
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2786052642258559216==--
+--_004_D8C50530D6022F40A817A35C40CC06A7064AF92400DUBX7MCDUB01E_--
