@@ -1,86 +1,46 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH][rfc] md: Close mem leak in userspace_ctr()
-Date: Tue, 14 Dec 2010 17:18:16 -0500
-Message-ID: <20101214221816.GA14227@redhat.com>
-References: <alpine.LNX.2.00.1012140034300.26491@swampdragon.chaosbits.net>
+Subject: Re: [PATCH 1/6] dm-stripe: drop kstriped
+Date: Tue, 14 Dec 2010 18:59:35 -0500
+Message-ID: <20101214235935.GB14227@redhat.com>
+References: <1292181055-25696-1-git-send-email-tj@kernel.org>
+	<1292181055-25696-2-git-send-email-tj@kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1012140034300.26491@swampdragon.chaosbits.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jesper Juhl <jj@chaosbits.net>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
+In-Reply-To: <1292181055-25696-2-git-send-email-tj@kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Tejun Heo <tj@kernel.org>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Dec 13 2010 at  6:40pm -0500,
-Jesper Juhl <jj@chaosbits.net> wrote:
+On Sun, Dec 12 2010 at  2:10pm -0500,
+Tejun Heo <tj@kernel.org> wrote:
 
-> Hi,
-> 
-> There's a small memory leak in 
-> drivers/md/dm-log-userspace-base.c::userspace_ctr().
-> 
-> The call to build_constructor_string() dynamically allocates memory for 
-> its last argument, but we do not always clean up that allocated memory.
+> kstriped only serves sc->kstriped_ws which runs dm_table_event().
+> This doesn't need to be executed from an ordered workqueue w/ rescuer.
+> Drop kstriped and use the system_wq instead.
 
-I'm not seeing a leak.
+What might look unnecessary at first glance is a bit more nuanced than
+we'd both like...
 
-The kfree() that you've added to the build_constructor_string() failure
-path isn't needed because build_constructor_string() only returns error
-if the kzalloc() failed.
+I'm concerned about switching to using the global system_wq and calling
+flush_scheduled_work() when resuming a DM table (calls a DM target's
+->dtr() via dm_table_destroy in drivers/md/dm-ioctl.c:do_resume).
+
+This introduces potential for a DM table swap performing a storm of
+additional unrelated works.
+
+Definitely needs further review.
 
 Mike
-
-> diff --git a/drivers/md/dm-log-userspace-base.c b/drivers/md/dm-log-userspace-base.c
-> index 1ed0094..71a3049 100644
-> --- a/drivers/md/dm-log-userspace-base.c
-> +++ b/drivers/md/dm-log-userspace-base.c
-> @@ -99,26 +99,22 @@ static int build_constructor_string(struct dm_target *ti,
->  				    char **ctr_str)
->  {
->  	int i, str_size;
-> -	char *str = NULL;
-> -
-> -	*ctr_str = NULL;
->  
->  	for (i = 0, str_size = 0; i < argc; i++)
->  		str_size += strlen(argv[i]) + 1; /* +1 for space between args */
->  
->  	str_size += 20; /* Max number of chars in a printed u64 number */
->  
-> -	str = kzalloc(str_size, GFP_KERNEL);
-> -	if (!str) {
-> +	*ctr_str = kzalloc(str_size, GFP_KERNEL);
-> +	if (!*ctr_str) {
->  		DMWARN("Unable to allocate memory for constructor string");
->  		return -ENOMEM;
->  	}
->  
-> -	str_size = sprintf(str, "%llu", (unsigned long long)ti->len);
-> +	str_size = sprintf(*ctr_str, "%llu", (unsigned long long)ti->len);
->  	for (i = 0; i < argc; i++)
-> -		str_size += sprintf(str + str_size, " %s", argv[i]);
-> +		str_size += sprintf(*ctr_str + str_size, " %s", argv[i]);
->  
-> -	*ctr_str = str;
->  	return str_size;
->  }
->  
-> @@ -140,7 +136,7 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
->  {
->  	int r = 0;
->  	int str_size;
-> -	char *ctr_str = NULL;
-> +	char *ctr_str;
->  	struct log_c *lc = NULL;
->  	uint64_t rdata;
->  	size_t rdata_size = sizeof(rdata);
-> @@ -173,6 +169,7 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
->  
->  	str_size = build_constructor_string(ti, argc - 1, argv + 1, &ctr_str);
->  	if (str_size < 0) {
-> +		kfree(ctr_str);
->  		kfree(lc);
->  		return str_size;
->  	}
