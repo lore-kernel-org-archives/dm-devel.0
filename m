@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 5 of 8] dm target callbacks and congestion fn
-Date: Tue, 14 Dec 2010 15:16:51 -0600
-Message-ID: <201012142116.oBELGp34015598@hydrogen.msp.redhat.com>
+Subject: [PATCH 6 of 8] dm unplug callback
+Date: Tue, 14 Dec 2010 15:17:02 -0600
+Message-ID: <201012142117.oBELH2tX015673@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,150 +19,72 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-target-callbacks-and-congestion-fn.patch
+Patch name: dm-unplug-callback.patch
 
 
-dm currently implements congestion checking by checking on congestion
-in each component device.
-
-For raid456 we need to also check if the stripe cache is congested.
-So add support to dm for a target to register a congestion checker,
-then registered such a checker for dm-raid.
-
-We add support for multiple callbacks as we will need one for unplug
-too.
+In a similar manner to congestion checking, per-target
+unplug support for raid456 under dm.
 
 Signed-off-by: NeilBrown <neilb@suse.de>
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-
 Index: linux-2.6/drivers/md/dm-raid.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-raid.c
 +++ linux-2.6/drivers/md/dm-raid.c
-@@ -51,6 +51,7 @@ struct raid_set {
- 
- 	struct mddev_s md;
- 	struct raid_type *raid_type;
-+	struct target_callbacks callbacks;
- 
- 	struct raid_dev dev[0];
- };
-@@ -355,6 +356,13 @@ static void do_table_event(struct work_s
- 	dm_table_event(rs->ti->table);
+@@ -363,6 +363,14 @@ static int raid_is_congested(void *v, in
+ 					   callbacks);
+ 	return md_raid5_congested(&rs->md, bits);
  }
- 
-+static int raid_is_congested(void *v, int bits)
++static void raid_unplug(void *v)
 +{
 +	struct target_callbacks *cb = v;
 +	struct raid_set *rs = container_of(cb, struct raid_set,
 +					   callbacks);
-+	return md_raid5_congested(&rs->md, bits);
++	md_raid5_unplug_device(rs->md.private);
 +}
++
  /*
   * Construct a RAID4/5/6 mapping:
   * Args:
-@@ -435,8 +443,13 @@ static int raid_ctr(struct dm_target *ti
- 	rs->md.in_sync = 0; /* Assume already marked dirty */
- 	mutex_unlock(&rs->md.reconfig_mutex);
+@@ -446,6 +454,7 @@ static int raid_ctr(struct dm_target *ti
+ 	if (errnum)
+ 		goto err;
  
--	if (!errnum)
--		return 0;
-+	if (errnum)
-+		goto err;
-+
-+	rs->callbacks.congested_fn = raid_is_congested;
-+	dm_table_add_callbacks(ti->table, &rs->callbacks);
-+
-+	return 0;
++	rs->callbacks.unplug_fn = raid_unplug;
+ 	rs->callbacks.congested_fn = raid_is_congested;
+ 	dm_table_add_callbacks(ti->table, &rs->callbacks);
  
- err:
- 	if (rs)
-@@ -449,6 +462,7 @@ static void raid_dtr(struct dm_target *t
- {
- 	struct raid_set *rs = ti->private;
- 
-+	list_del_init(&rs->callbacks.list);
- 	md_stop(&rs->md);
- 	context_free(rs);
- }
 Index: linux-2.6/drivers/md/dm-table.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-table.c
 +++ linux-2.6/drivers/md/dm-table.c
-@@ -70,6 +70,8 @@ struct dm_table {
- 	void (*event_fn)(void *);
- 	void *event_context;
- 
-+	struct list_head target_callbacks;
-+
- 	struct dm_md_mempools *mempools;
- };
- 
-@@ -204,6 +206,7 @@ int dm_table_create(struct dm_table **re
- 		return -ENOMEM;
- 
- 	INIT_LIST_HEAD(&t->devices);
-+	INIT_LIST_HEAD(&t->target_callbacks);
- 	atomic_set(&t->holders, 0);
- 	t->discards_supported = 1;
- 
-@@ -1229,10 +1232,18 @@ int dm_table_resume_targets(struct dm_ta
- 	return 0;
- }
- 
-+void dm_table_add_callbacks(struct dm_table *t,
-+			    struct target_callbacks *cb)
-+{
-+	list_add(&cb->list, &t->target_callbacks);
-+}
-+EXPORT_SYMBOL_GPL(dm_table_add_callbacks);
-+
- int dm_table_any_congested(struct dm_table *t, int bdi_bits)
+@@ -1283,6 +1283,7 @@ void dm_table_unplug_all(struct dm_table
  {
  	struct dm_dev_internal *dd;
  	struct list_head *devices = dm_table_get_devices(t);
 +	struct target_callbacks *cb;
- 	int r = 0;
  
  	list_for_each_entry(dd, devices, list) {
-@@ -1247,6 +1258,10 @@ int dm_table_any_congested(struct dm_tab
+ 		struct request_queue *q = bdev_get_queue(dd->dm_dev.bdev);
+@@ -1295,6 +1296,9 @@ void dm_table_unplug_all(struct dm_table
+ 				     dm_device_name(t->md),
  				     bdevname(dd->dm_dev.bdev, b));
  	}
- 
 +	list_for_each_entry(cb, &t->target_callbacks, list)
-+		if (cb->congested_fn)
-+			r |= cb->congested_fn(cb, bdi_bits);
-+
- 	return r;
++		if (cb->unplug_fn)
++			cb->unplug_fn(cb);
  }
  
+ struct mapped_device *dm_table_get_md(struct dm_table *t)
 Index: linux-2.6/include/linux/device-mapper.h
 ===================================================================
 --- linux-2.6.orig/include/linux/device-mapper.h
 +++ linux-2.6/include/linux/device-mapper.h
-@@ -193,6 +193,12 @@ struct dm_target {
- 	char *error;
+@@ -197,6 +197,7 @@ struct dm_target {
+ struct target_callbacks {
+ 	struct list_head list;
+ 	congested_fn *congested_fn;
++	void (*unplug_fn)(void *);
  };
  
-+/* Each target can link one of these into the table */
-+struct target_callbacks {
-+	struct list_head list;
-+	congested_fn *congested_fn;
-+};
-+
  int dm_register_target(struct target_type *t);
- void dm_unregister_target(struct target_type *t);
- 
-@@ -269,6 +275,12 @@ int dm_table_add_target(struct dm_table 
- 			sector_t start, sector_t len, char *params);
- 
- /*
-+ * Target_ctr should call this if they need to add any
-+ * callback
-+ */
-+void dm_table_add_callbacks(struct dm_table *t,
-+			    struct target_callbacks *cb);
-+/*
-  * Finally call this to make the table ready for use.
-  */
- int dm_table_complete(struct dm_table *t);
