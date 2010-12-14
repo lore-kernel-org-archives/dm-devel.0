@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 8] md minor updates
-Date: Tue, 14 Dec 2010 15:16:19 -0600
-Message-ID: <201012142116.oBELGJ1m015372@hydrogen.msp.redhat.com>
+Subject: [PATCH 3 of 8] md fix null pointer deref
+Date: Tue, 14 Dec 2010 15:16:30 -0600
+Message-ID: <201012142116.oBELGUWP015448@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,29 +19,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: md-minor-updates.patch
+Patch name: md-fix-null-pointer-deref.patch
 
-Changes from e384e58549a2e9a83071ad80280c1a9053cfd84c that should
-be kept.  (i.e. those cosmetic changes that are unrelated to 
-dm dirty log support.
+Fix NULL pointer dereference.
+
+When the module parameter 'start_dirty_degraded' is set, the
+RAID is not in sync, and a drive needs to be rebuilt, there
+will be BUG() called when finished because 'sysfs_notify_dirent'
+is called with a NULL argument.  (rdev->sysfs_state is not
+always set.)
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/bitmap.c
+Index: linux-2.6/drivers/md/md.c
 ===================================================================
---- linux-2.6.orig/drivers/md/bitmap.c
-+++ linux-2.6/drivers/md/bitmap.c
-@@ -925,11 +925,11 @@ static int bitmap_init_from_disk(struct 
- 		printk(KERN_INFO "%s: bitmap file is out of date, doing full "
- 			"recovery\n", bmname(bitmap));
+--- linux-2.6.orig/drivers/md/md.c
++++ linux-2.6/drivers/md/md.c
+@@ -7311,6 +7311,8 @@ static int __init md_init(void)
+ 	raid_table_header = register_sysctl_table(raid_root_table);
  
--	bytes = (chunks + 7) / 8;
-+	bytes = DIV_ROUND_UP(bitmap->chunks, 8);
- 	if (!bitmap->mddev->bitmap_info.external)
- 		bytes += sizeof(bitmap_super_t);
+ 	md_geninit();
++	if (start_dirty_degraded)
++		printk(KERN_INFO "md: start_dirty_degraded set\n");
+ 	return 0;
  
--	num_pages = (bytes + PAGE_SIZE - 1) / PAGE_SIZE;
-+	num_pages = DIV_ROUND_UP(bytes, PAGE_SIZE);
- 
- 	if (file && i_size_read(file->f_mapping->host) < bytes) {
- 		printk(KERN_INFO "%s: bitmap file too short %lu < %lu\n",
+ err_mdp:
+Index: linux-2.6/drivers/md/raid5.c
+===================================================================
+--- linux-2.6.orig/drivers/md/raid5.c
++++ linux-2.6/drivers/md/raid5.c
+@@ -5339,7 +5339,7 @@ static int raid5_spare_active(mddev_t *m
+ 		    && !test_bit(Faulty, &tmp->rdev->flags)
+ 		    && !test_and_set_bit(In_sync, &tmp->rdev->flags)) {
+ 			count++;
+-			sysfs_notify_dirent(tmp->rdev->sysfs_state);
++			sysfs_notify_dirent_safe(tmp->rdev->sysfs_state);
+ 		}
+ 	}
+ 	spin_lock_irqsave(&conf->device_lock, flags);
