@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 7 of 8] dm raid iterate_devices and io_hints
-Date: Tue, 14 Dec 2010 15:17:13 -0600
-Message-ID: <201012142117.oBELHDR0015746@hydrogen.msp.redhat.com>
+Subject: [PATCH 8 of 8] dm raid suspend and resume fns
+Date: Tue, 14 Dec 2010 15:17:24 -0600
+Message-ID: <201012142117.oBELHOHt015819@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,9 +19,9 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-raid-iterate_devices-and-io_hints.patch
+Patch name: dm-raid-suspend-and-resume-fns.patch
 
-Addition of .iterate_devices and .io_hints function required
+Addition of .*suspend and .resume functions required
 by device-mapper target implementations... further fleshing
 out the new target.
 
@@ -32,50 +32,39 @@ Index: linux-2.6/drivers/md/dm-raid.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-raid.c
 +++ linux-2.6/drivers/md/dm-raid.c
-@@ -569,6 +569,37 @@ static int raid_status(struct dm_target 
- 	return 0;
+@@ -600,6 +600,25 @@ static void raid_io_hints(struct dm_targ
+ 			  (conf->raid_disks - conf->max_degraded));
  }
  
-+static int raid_iterate_devices(struct dm_target *ti,
-+				iterate_devices_callout_fn fn,
-+				void *data)
++static void raid_presuspend(struct dm_target *ti)
 +{
 +	struct raid_set *rs = ti->private;
-+	int ret = 0;
-+	unsigned i = 0;
-+
-+	for (i = 0; !ret && i < rs->md.raid_disks; i++)
-+		if (rs->dev[i].data_dev)
-+			ret = fn(ti,
-+				 rs->dev[i].data_dev,
-+				 0, /* No offset on data devs */
-+				 rs->md.dev_sectors,
-+				 data);
-+
-+	return ret;
++	md_stop_writes(&rs->md);
 +}
 +
-+static void raid_io_hints(struct dm_target *ti,
-+			  struct queue_limits *limits)
++static void raid_postsuspend(struct dm_target *ti)
 +{
 +	struct raid_set *rs = ti->private;
-+	unsigned chunk_size = rs->md.chunk_sectors << 9;
-+	raid5_conf_t *conf = rs->md.private;
++	mddev_suspend(&rs->md);
++}
 +
-+	blk_limits_io_min(limits, chunk_size);
-+	blk_limits_io_opt(limits, chunk_size *
-+			  (conf->raid_disks - conf->max_degraded));
++static void raid_resume(struct dm_target *ti)
++{
++	struct raid_set *rs = ti->private;
++
++	mddev_resume(&rs->md);
 +}
 +
  static struct target_type raid_target = {
  	.name = "raid",
  	.version = {1, 0, 0},
-@@ -577,6 +608,8 @@ static struct target_type raid_target = 
- 	.dtr = raid_dtr,
- 	.map = raid_map,
+@@ -610,6 +629,9 @@ static struct target_type raid_target = 
  	.status = raid_status,
-+	.iterate_devices = raid_iterate_devices,
-+	.io_hints = raid_io_hints,
+ 	.iterate_devices = raid_iterate_devices,
+ 	.io_hints = raid_io_hints,
++	.presuspend = raid_presuspend,
++	.postsuspend = raid_postsuspend,
++	.resume = raid_resume,
  };
  
  static int __init dm_raid_init(void)
