@@ -1,16 +1,16 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: Re: [Patch 1 of 2]: scsi-dh + dm-mpath: propagate SCSI
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI
  device deletion to multipath
-Date: Wed, 15 Dec 2010 09:03:15 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4F5440A5B@cosmail01.lsi.com>
-References: <D8C50530D6022F40A817A35C40CC06A7064AFC9440@DUBX7MCDUB01.EMEA.DELL.COM>
+Date: Wed, 15 Dec 2010 11:09:53 -0500
+Message-ID: <20101215160952.GA20869@redhat.com>
+References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <D8C50530D6022F40A817A35C40CC06A7064AFC9440@DUBX7MCDUB01.EMEA.DELL.COM>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Menny_Hamburger@dell.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patches look good.
+On Wed, Dec 15 2010 at  3:31am -0500,
+Menny_Hamburger@dell.com <Menny_Hamburger@dell.com> wrote:
 
-Reviewed-by: Babu Moger <babu.moger@lsi.com>
+> The problem:
+> When a SCSI device attached to a device handler is deleted, userland processes currently performing I/O on the device will I/O hang forever.
+> 
+> Attached is the multipath layer part of the patch.
 
-________________________________________
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On Behalf Of Menny_Hamburger@Dell.com
-Sent: Wednesday, December 15, 2010 2:29 AM
-To: dm-devel@redhat.com
-Subject: [dm-devel] [Patch 1 of 2]: scsi-dh + dm-mpath: propagate SCSI device deletion to multipath
+Please do not use attachments when submitting patches.  Please inline
+the patch in the body of the mail.  Also please trim extraneous info
+when you reply to mails and please do not top-post.
 
-The problem:
-When a SCSI device attached to a device handler is deleted, userland processes currently performing I/O on the device will I/O hang forever.
+Your patch submissions were not well received by the dm-devel patchwork
+(which automatically collects submitted dm-devel patches so they don't
+get lost in the shuffle).
 
-The root cause:
-When scsi_dh_activate returns SCSI_DH_NOSYS the activate_complete callback is not called and the error is not propagated to the
-multipath layer. A similar situation occurs when the handler is in the process of being deleted (e.g. the SCSI device is in a SDEV_CANCEL or SDEV_DEL state).
+Also, please use unique and descriptive subjects for the patches in a
+multipatch series.
 
-Attached is the SCSI H/W handler part of this patch.
+As for the proposed mpath change: Babu already pointed out that you
+don't need this mpath change as the default case already performs
+fail_path().
 
-Menny Hamburger
-Engineer
-Dell | IDC
-office +972 97698789,  fax +972 97698889
-Dell IDC. 4 Hacharoshet St, Raanana 43657, Israel
+So all you need is that scsi_dh patch to get upstream.  But to do that
+you'll need to:
+1) create a patch against the upstream scsi-misc tree (not RHEL5.5):
+   git://git.kernel.org/pub/scm/linux/kernel/git/jejb/scsi-misc-2.6.git
+
+2) send the patch to the linux-scsi@vger.kernel.org mailing list (feel
+   free to cc dm-devel too).
+
+Once this change is in the upstream scsi tree it'll propagate to RHEL
+releases.
+
+Thanks,
+Mike
