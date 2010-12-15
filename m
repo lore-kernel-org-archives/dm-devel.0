@@ -1,12 +1,12 @@
 From: <Menny_Hamburger@Dell.com>
-Subject: [Patch 1 of 2]: scsi-dh + dm-mpath: propagate SCSI
+Subject: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI
  device deletion to multipath
-Date: Wed, 15 Dec 2010 08:28:55 +0000
-Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AFC9440@DUBX7MCDUB01.EMEA.DELL.COM>
+Date: Wed, 15 Dec 2010 08:31:24 +0000
+Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: multipart/mixed;
-	boundary="_004_D8C50530D6022F40A817A35C40CC06A7064AFC9440DUBX7MCDUB01E_"
+	boundary="_004_D8C50530D6022F40A817A35C40CC06A7064AFC9450DUBX7MCDUB01E_"
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
@@ -21,11 +21,11 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---_004_D8C50530D6022F40A817A35C40CC06A7064AFC9440DUBX7MCDUB01E_
+--_004_D8C50530D6022F40A817A35C40CC06A7064AFC9450DUBX7MCDUB01E_
 Content-Type: multipart/alternative;
-	boundary="_000_D8C50530D6022F40A817A35C40CC06A7064AFC9440DUBX7MCDUB01E_"
+	boundary="_000_D8C50530D6022F40A817A35C40CC06A7064AFC9450DUBX7MCDUB01E_"
 
---_000_D8C50530D6022F40A817A35C40CC06A7064AFC9440DUBX7MCDUB01E_
+--_000_D8C50530D6022F40A817A35C40CC06A7064AFC9450DUBX7MCDUB01E_
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
@@ -33,14 +33,7 @@ The problem:
 When a SCSI device attached to a device handler is deleted, userland proces=
 ses currently performing I/O on the device will I/O hang forever.
 
-The root cause:
-When scsi_dh_activate returns SCSI_DH_NOSYS the activate_complete callback =
-is not called and the error is not propagated to the
-multipath layer. A similar situation occurs when the handler is in the proc=
-ess of being deleted (e.g. the SCSI device is in a SDEV_CANCEL or SDEV_DEL =
-state).
-
-Attached is the SCSI H/W handler part of this patch.
+Attached is the multipath layer part of the patch.
 
 Menny Hamburger
 Engineer
@@ -49,7 +42,7 @@ office +972 97698789,  fax +972 97698889
 Dell IDC. 4 Hacharoshet St, Raanana 43657, Israel
 
 
---_000_D8C50530D6022F40A817A35C40CC06A7064AFC9440DUBX7MCDUB01E_
+--_000_D8C50530D6022F40A817A35C40CC06A7064AFC9450DUBX7MCDUB01E_
 Content-Type: text/html; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
@@ -59,7 +52,8 @@ xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" xmlns=3D"http:=
 //www.w3.org/TR/REC-html40">
 
 <head>
-<meta http-equiv=3DContent-Type content=3D"text/html; charset=3Dus-ascii">
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; charset=3Dus-ascii"=
+>
 <meta name=3DGenerator content=3D"Microsoft Word 12 (filtered medium)">
 <style>
 <!--
@@ -118,36 +112,14 @@ problem:<o:p></o:p></span></p>
 
 <p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-fami=
 ly:"Courier New"'>When
-a SCSI device attached to a device handler is deleted, userland processes
-currently performing I/O on the device will I/O hang forever.<o:p></o:p></s=
-pan></p>
+a SCSI device attached to a device handler is deleted, userland processes c=
+urrently
+performing I/O on the device will I/O hang forever.<o:p></o:p></span></p>
 
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-fami=
-ly:"Courier New"'><o:p>&nbsp;</o:p></span></p>
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
 
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-fami=
-ly:"Courier New"'>The
-root cause:<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-fami=
-ly:"Courier New"'>When
-scsi_dh_activate returns SCSI_DH_NOSYS the activate_complete callback is no=
-t
-called and the error is not propagated to the<o:p></o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-fami=
-ly:"Courier New"'>multipath
-layer. A similar situation occurs when the handler is in the process of bei=
-ng
-deleted (e.g. the SCSI device is in a SDEV_CANCEL or SDEV_DEL state).<o:p><=
-/o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-fami=
-ly:"Courier New"'><o:p>&nbsp;</o:p></span></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><span style=3D'font-fami=
-ly:"Courier New"'>Attached
-is the SCSI H/W handler part of this patch.<o:p></o:p></span></p>
+<p class=3DMsoNormal>Attached is the multipath layer part of the patch.<o:p=
+></o:p></p>
 
 <p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
 
@@ -188,68 +160,35 @@ style=3D'color:#1F497D'><o:p></o:p></span></p>
 
 </html>
 
---_000_D8C50530D6022F40A817A35C40CC06A7064AFC9440DUBX7MCDUB01E_--
+--_000_D8C50530D6022F40A817A35C40CC06A7064AFC9450DUBX7MCDUB01E_--
 
---_004_D8C50530D6022F40A817A35C40CC06A7064AFC9440DUBX7MCDUB01E_
-Content-Type: application/octet-stream;
-	name="scsi-scsi_dh-handle_device-deletion.patch"
-Content-Description: scsi-scsi_dh-handle_device-deletion.patch
-Content-Disposition: attachment;
-	filename="scsi-scsi_dh-handle_device-deletion.patch"; size=2489;
-	creation-date="Wed, 15 Dec 2010 08:20:37 GMT";
-	modification-date="Wed, 15 Dec 2010 08:19:25 GMT"
+--_004_D8C50530D6022F40A817A35C40CC06A7064AFC9450DUBX7MCDUB01E_
+Content-Type: application/octet-stream; name="md-handle-device-deletion.patch"
+Content-Description: md-handle-device-deletion.patch
+Content-Disposition: attachment; filename="md-handle-device-deletion.patch";
+	size=687; creation-date="Wed, 15 Dec 2010 08:30:02 GMT";
+	modification-date="Wed, 15 Dec 2010 08:08:13 GMT"
 Content-Transfer-Encoding: base64
 
 RnJvbTogTWVubnkgSGFtYnVyZ2VyIDxNZW5ueV9IYW1idXJnZXJARGVsbC5jb20+ClN1YmplY3Q6
-IFtzY3NpXSBzY3NpX2RoOiBoYW5kbGVyIFNDU0kgZGV2aWNlIGRlbGV0aW9uIGNvcnJlY3RseSBi
-eSB0aGUgU0NTSSBkZXZpY2UgaGFuZGxlcgpCdWd6aWxsYTogNjQ1MzQzCgpXaGVuIGEgU0NTSSBk
-ZXZpY2UgYXR0YWNoZWQgdG8gYSBkZXZpY2UgaGFuZGxlciBpcyBkZWxldGVkLCB1c2VybGFuZCBw
-cm9jZXNzZXMgY3VycmVudGx5IHBlcmZvcm1pbmcgSS9PIG9uIHRoZSBkZXZpY2Ugd2lsbCBJL08g
-aGFuZyBmb3JldmVyLgoKV2hlbiBzY3NpX2RoX2FjdGl2YXRlIHJldHVybnMgU0NTSV9ESF9OT1NZ
-UyB0aGUgYWN0aXZhdGVfY29tcGxldGUgY2FsbGJhY2sgaXMgbm90IGNhbGxlZCBhbmQgdGhlIGVy
-cm9yIGlzIG5vdCBwcm9wYWdhdGVkIHRvIHRoZSBtZCBsYXllci4KQSBzaW1pbGFyIHNpdHVhdGlv
-biBvY2N1cnMgd2hlbiB0aGUgaGFuZGxlciBpcyBpbiB0aGUgcHJvY2VzcyBvZiBiZWluZyBkZWxl
-dGVkIChlLmcuIHRoZSBTQ1NJIGRldmljZSBpcyBpbiBhIFNERVZfQ0FOQ0VMIG9yIFNERVZfREVM
-IHN0YXRlKS4KClRoZSBwYXRjaCB3YXMgdGVzdGVkIGluIGFuIElTQ1NJIGVudmlyb25tZW50LCBS
-REFDIEgvVyBoYW5kbGVyIGFuZCBtdWx0aXBhdGguCkluIHRoZSBmb2xsb3dpbmcgcmVwcm9kdWN0
-aW9uIHByb2Nlc3MsIGRkIHdpbGwgSS9PIGhhbmcgZm9yZXZlciBhbmQgdGhlIG9ubHkgd2F5IHRv
-IHJlbGVhc2UgaXQgd2lsbCBiZSB0byByZWJvb3QgdGhlIG1hY2hpbmU6CjEpIFBlcmZvcm0gSS9P
-IG9uIGEgbXVsdGlwYXRoIGRldmljZToKICAgIGRkIGlmPS9kZXYvZG0tMCBvZj0vZGV2L3plcm8g
-YnM9OGsgY291bnQ9MTAwMDAwMCAmCjIpIERlbGV0ZSBhbGwgc2xhdmUgU0NTSSBkZXZpY2VzIGNv
-bnRhaW5lZCBpbiB0aGUgZG06CiAgIEkpICBJbiBhbiBJU0NTSSBlbnZpcm9ubWVudCwgdGhlIGVh
-c2llc3Qgd2F5IHRvIGRvIHRoaXMgaXMgYnkgc3RvcHBpbmcgSVNDU0k6CiAgICAgICAvZXRjL2lu
-aXQuZC9pc2NzaSBzdG9wCiAgIElJKSBBbm90aGVyIHdheSB0byBkZWxldGUgdGhlIGRldmljZXMg
-aXMgYnkgYXBwbHlpbmcgdGhlIGZvbGxvd2luZyBiYXNoIHNjcmlwdGxldDoKICAgICAgIGRtX2Rl
-dnM9JChscyAvc3lzL2Jsb2NrLyB8IGdyZXAgZG0tIHwgeGFyZ3MpCiAgICAgICBmb3IgZG1fZGV2
-IGluICRkbV9kZXZzOyBkbwogICAgICAgICBkZXZpY2VzPSQobHMgL3N5cy9ibG9jay8kZG1fZGV2
-L3NsYXZlcykKICAgICAgICAgZm9yIGRldmljZSBpbiAkZGV2aWNlczsgZG8KICAgICAgICAgICAg
-ZWNobyAxID4gL3N5cy9ibG9jay8kZGV2aWNlL2RldmljZS9kZWxldGUKICAgICAgICAgZG9uZQog
-ICAgICAgZG9uZQoKVGhpcyBwYXRjaCBjYWxscyB0aGUgYWN0aXZhdGVfY29tcGxldGUgY2FsbGJh
-Y2sgZnVuY3Rpb24gZGlyZWN0bHkgZnJvbSBzY3NpX2RoX2FjdGl2YXRlIHdoZW4gZWl0aGVyIHRo
-ZSBzY3NpX2RoIGludGVybmFsIGRhdGEgaGFzIGFscmVhZHkgCmJlZW4gZGVsZXRlZCBvciBpcyBp
-biB0aGUgcHJvY2VzcyBvZiBiZWluZyBkZWxldGVkLgoKTm90ZToKVGhlIHBhdGNoIGlzIG92ZXIg
-UkhFTDUuNSwgd2hpY2ggZG9lcyBub3QgaW5jbHVkZSBibG9jayBkZXZpY2UgcmVxdWVzdCBxdWV1
-ZSBhYm9ydCBmdW5jdGlvbmFsaXR5LgpXaGVuIHJ1bm5pbmcgYW4gdXBzdHJlYW0ga2VybmVsLCB0
-aGUgYWJvdmUgc2NlbmFyaW8gbWF5IG5vdCBvY2N1ciBiZWNhdXNlIHRoZSByZXF1ZXN0IHF1ZXVl
-IGlzIGFib3J0ZWQgd2hlbiB0aGUgbXVsdGlwYXRoIGZhaWxzIHRoZSBwYXRoLgpUaGlzIHBhdGNo
-IG1ha2VzIHN1cmUgdGhlIHByb2JsZW0gZG9lcyBub3QgaGFwcGVuIGF0IGFsbCwgcmF0aGVyIHRo
-YW4gaGFuZGxlIGl0IHdoZW4gaXQgZG9lcy4gCgpkaWZmIC1yIC1VIDIgYS9kcml2ZXJzL3Njc2kv
-ZGV2aWNlX2hhbmRsZXIvc2NzaV9kaC5jIGIvZHJpdmVycy9zY3NpL2RldmljZV9oYW5kbGVyL3Nj
-c2lfZGguYwotLS0gYS9kcml2ZXJzL3Njc2kvZGV2aWNlX2hhbmRsZXIvc2NzaV9kaC5jCTIwMTAt
-MTItMTUgMTA6MTk6MjUuNjg1ODkzMDAwICswMjAwCisrKyBiL2RyaXZlcnMvc2NzaS9kZXZpY2Vf
-aGFuZGxlci9zY3NpX2RoLmMJMjAxMC0xMi0xNSAxMDoxOToyNS43Mzg3ODQwMDAgKzAyMDAKQEAg
-LTQ0Myw2ICs0NDMsMTQgQEAKIAlzcGluX3VubG9ja19pcnFyZXN0b3JlKHEtPnF1ZXVlX2xvY2ss
-IGZsYWdzKTsKIAotCWlmIChlcnIpCisJaWYgKHNkZXYtPnNkZXZfc3RhdGUgPT0gU0RFVl9DQU5D
-RUwgfHwKKwkgICAgc2Rldi0+c2Rldl9zdGF0ZSA9PSBTREVWX0RFTCB8fAorCSAgICBzZGV2LT5z
-ZGV2X3N0YXRlID09IFNERVZfT0ZGTElORSkKKwkJZXJyID0gU0NTSV9ESF9ERVZfT0ZGTElORUQ7
-CisKKwlpZiAoZXJyKSB7CisJCWlmIChmbikKKwkJCWZuKGZuX2RhdGEsIGVycik7CiAJCXJldHVy
-biBlcnI7CisJfQogCiAJaWYgKHNjc2lfZGgtPmFjdGl2YXRlKQo=
+IFttZF0gZG0tbXVsdGlwYXRoOiBIYW5kbGUgaGFyZHdhcmUgaGFuZGxlciBkZWxldGlvbiBpbiBw
+Z19pbml0X2RvbmUKQnVnemlsbGE6IDY0NTM0MwoKV2hlbiB0aGUgU0NTSSBkZXZpY2UgSC9XIGhh
+bmRsZXIgaXMgZGVsZXRlZCBvciBvZmZsaW5lZCwgcGdfaW5pdF9kb25lIHNob3VsZCBmYWlsIHRo
+ZSBwYXRoLgpGYWlsaW5nIGFsbCB0aGUgcGF0aHMgYXNzb2NpYXRlZCB3aXRoIHRoZSBIL1cgaGFu
+ZGxlciB3aWxsIGV2ZW50dWFsbHkgdGVybWluYXRlIGFsbCBJL08gcmVxdWVzdHMgcXVldWVkIG9u
+IHRoZSBtdWx0aXBhdGggZGV2aWNlCgoKZGlmZiAtciAtVSAyIGEvZHJpdmVycy9tZC9kbS1tcGF0
+aC5jIGIvZHJpdmVycy9tZC9kbS1tcGF0aC5jCi0tLSBhL2RyaXZlcnMvbWQvZG0tbXBhdGguYwky
+MDEwLTEyLTE1IDEwOjA4OjEzLjI0Mzk5MTAwMCArMDIwMAorKysgYi9kcml2ZXJzL21kL2RtLW1w
+YXRoLmMJMjAxMC0xMi0xNSAxMDowODoxMy4zMjk3MzYwMDAgKzAyMDAKQEAgLTExOTAsNCArMTE5
+MCw1IEBACiAJY2FzZSBTQ1NJX0RIX09LOgogCQlicmVhazsKKwljYXNlIFNDU0lfREhfREVWX09G
+RkxJTkVEOgogCWNhc2UgU0NTSV9ESF9OT1NZUzoKIAkJaWYgKCFtLT5od19oYW5kbGVyX25hbWUp
+IHsK
 
---_004_D8C50530D6022F40A817A35C40CC06A7064AFC9440DUBX7MCDUB01E_
+--_004_D8C50530D6022F40A817A35C40CC06A7064AFC9450DUBX7MCDUB01E_
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---_004_D8C50530D6022F40A817A35C40CC06A7064AFC9440DUBX7MCDUB01E_--
+--_004_D8C50530D6022F40A817A35C40CC06A7064AFC9450DUBX7MCDUB01E_--
