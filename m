@@ -1,106 +1,36 @@
-From: <Menny_Hamburger@Dell.com>
-Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI
- device deletion to multipath
-Date: Thu, 16 Dec 2010 07:32:27 +0000
-Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AFFCA3E@DUBX7MCDUB01.EMEA.DELL.COM>
-References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
-	<20101215160952.GA20869@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20101215160952.GA20869@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: snitzer@redhat.com
-Cc: dm-devel@redhat.com, Itay_Dar@Dell.com, Rob_Thomas@Dell.com
+From: Chris Mason <chris.mason@oracle.com>
+Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt barrier support is effective)
+Date: Thu, 16 Dec 2010 07:29:58 -0500
+Message-ID: <1292502095-sup-3835@think>
+References: <AANLkTikOXjh+D25=7Mzwn7bFN+a9xQSimPHs22q4o2TK@mail.gmail.com> <1291747731-sup-3099@think> <AANLkTin-Bvq9bNgarZGZhbK_2EONdu8x-qaLCLFcc1F_@mail.gmail.com> <1291751698-sup-9297@think> <AANLkTin79GzUbfuZNKyTtqcyoUSO9AJimO77_ZOvqggH@mail.gmail.com> <1291754340-sup-1631@think> <AANLkTim8uCmFK=LjkMmq_1O0KE3AiN_7g41AO0woxMv7@mail.gmail.com> <1291755258-sup-8760@think> <AANLkTi=OC9Z68U-j8s6vfU-_-6tkg5W7aUz9HEupidX9@mail.gmail.com> <1291810586-sup-8211@think> <20101216033718.GM9925@dastard>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-reply-to: <20101216033718.GM9925@dastard>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Jon Nelson <jnelson@jamponi.net>, Mike Snitzer <snitzer@redhat.com>, Matt <jackdachef@gmail.com>, Milan Broz <mbroz@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun <htejun@gmail.com>, linux-ext4 <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Mike,
-
-I am sorry about the submission problems, there's a first time for everything...
-
-I know this sounds superstitious but I did run quite thorough tests on this issue and I would really prefer that the proposed patch 
-would go through the same code path as the one I have tested.
-
-My suggestion is to modify the scsi_dh code as follows:
-
-if (!scsi_dh || !get_device(&sdev->sdev_gendev) ||
-    sdev->sdev_state == SDEV_CANCEL ||
-    sdev->sdev_state == SDEV_DEL)
-       err = SCSI_DH_NOSYS;   
-
-if (sdev->sdev_state == SDEV_OFFLINE)
-       err = SCSI_DH_DEV_OFFLINED;
-
-if (err) {
-    if (fn)
-        fn(fn_data, err);
-
-    return err;
-} 
-
-There is logic and benefits here:
-1) SDEV_CANCEL/SDEV_DEV are just a stage before the DH is deleted so we can respond with the same SCSI_DH_NOSYS.
-   I think it's best here to handle these together, since they are in fact the same thing. 
-   In addition, when we delete a device, I don't think it goes through an offline state.
-2) SDEV_OFFLINE is easily reverted by echoing to the state of the device - it's not like detaching.
-   Returning SCSI_DH_DEV_OFFLINED will just call the default case and perform fail_path - no need to worry about any handler issues here.
-3) It will let me sleep better at night...
-
-
-Best Regards,
-Menny
-
------Original Message-----
-From: Mike Snitzer [mailto:snitzer@redhat.com] 
-Sent: 15 December, 2010 18:10
-To: Hamburger, Menny
-Cc: dm-devel@redhat.com
-Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI device deletion to multipath
-
-On Wed, Dec 15 2010 at  3:31am -0500,
-Menny_Hamburger@dell.com <Menny_Hamburger@dell.com> wrote:
-
-> The problem:
-> When a SCSI device attached to a device handler is deleted, userland processes currently performing I/O on the device will I/O hang forever.
+Excerpts from Dave Chinner's message of 2010-12-15 22:37:18 -0500:
+> On Wed, Dec 08, 2010 at 07:20:24AM -0500, Chris Mason wrote:
+> > 
+> > Usually the trick to reproducing filesystem corruptions is adding memory
+> > pressure.  The corruption is probably a bad interaction between reads
+> > and writes, and we need to make sure the reads actually happen.
+> > 
+> > http://oss.oracle.com/~mason/pin_ram.c
+> > 
+> > gcc -Wall -o pin_ram pin_ram.c
+> > 
+> > pin_ram -m 80%-of-your-ram-in-mb
 > 
-> Attached is the multipath layer part of the patch.
+> Implemented in xfstests about 10 years ago:
+> 
+> http://git.kernel.org/?p=fs/xfs/xfstests-dev.git;a=blob;f=src/usemem.c;h=b8794a6b209cebf8dbf312a8ef131e2e54b18d29;hb=HEAD
 
-Please do not use attachments when submitting patches.  Please inline
-the patch in the body of the mail.  Also please trim extraneous info
-when you reply to mails and please do not top-post.
+But mine can use shm! I don't remember adding it, so it must have grown
+there while it sat on the oracle servers.  Our own special Christmas
+magic.
 
-Your patch submissions were not well received by the dm-devel patchwork
-(which automatically collects submitted dm-devel patches so they don't
-get lost in the shuffle).
-
-Also, please use unique and descriptive subjects for the patches in a
-multipatch series.
-
-As for the proposed mpath change: Babu already pointed out that you
-don't need this mpath change as the default case already performs
-fail_path().
-
-So all you need is that scsi_dh patch to get upstream.  But to do that
-you'll need to:
-1) create a patch against the upstream scsi-misc tree (not RHEL5.5):
-   git://git.kernel.org/pub/scm/linux/kernel/git/jejb/scsi-misc-2.6.git
-
-2) send the patch to the linux-scsi@vger.kernel.org mailing list (feel
-   free to cc dm-devel too).
-
-Once this change is in the upstream scsi tree it'll propagate to RHEL
-releases.
-
-Thanks,
-Mike
+-chris
