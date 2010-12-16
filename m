@@ -1,19 +1,21 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2][SCSI] scsi_dh: propagate SCSI device deletion
-Date: Thu, 16 Dec 2010 10:29:31 -0500
-Message-ID: <20101216152930.GB23507@redhat.com>
+From: <Menny_Hamburger@Dell.com>
+Subject: Re: [PATCH v2][SCSI] scsi_dh: propagate SCSI device
+	deletion
+Date: Thu, 16 Dec 2010 15:52:08 +0000
+Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AFFD030@DUBX7MCDUB01.EMEA.DELL.COM>
 References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
 	<20101215160952.GA20869@redhat.com>
 	<D8C50530D6022F40A817A35C40CC06A7064AFFCA3E@DUBX7MCDUB01.EMEA.DELL.COM>
 	<20101216140209.GA23507@redhat.com>
 	<D8C50530D6022F40A817A35C40CC06A7064AFFCF09@DUBX7MCDUB01.EMEA.DELL.COM>
+	<20101216152930.GB23507@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <D8C50530D6022F40A817A35C40CC06A7064AFFCF09@DUBX7MCDUB01.EMEA.DELL.COM>
+In-Reply-To: <20101216152930.GB23507@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,9 +25,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Menny_Hamburger@Dell.com
+To: snitzer@redhat.com
 Cc: dm-devel@redhat.com, Itay_Dar@Dell.com, Rob_Thomas@Dell.com
 List-Id: dm-devel.ids
+
+1) When  I tested this problem, deleting the device set it temporarily to SDEV_DEL (sometimes SDEV_CANCEL) state. So the main issue should be solved
+   with the function returning SCSI_DH_NOSYS.
+   Failing to the default on offline is OK with me since there is no issue with !mw_handler_name because the device still exists.
+2) Aborting the request queue does not obviate the need for this patch, it's just that in a system where abort queue exists, the I/O hang will not occur.
+   Another way to say this is that the abort queue functionality (if it worked OK - which it doesn't) hides the problem from the user experience 
+   by forcing all the queues to be flushed. My preference was always to make sure a problem (in this case the I/O hang) does not occur in the first place
+   rather than take actions when it does.
+
+Hope this answers your questions.
+
+Menny
+
+-----Original Message-----
+From: Mike Snitzer [mailto:snitzer@redhat.com] 
+Sent: 16 December, 2010 17:30
+To: Hamburger, Menny
+Cc: dm-devel@redhat.com; Thomas, Rob; Dar, Itay
+Subject: [PATCH v2][SCSI] scsi_dh: propagate SCSI device deletion
 
 On Thu, Dec 16 2010 at  9:21am -0500,
 Menny_Hamburger@Dell.com <Menny_Hamburger@Dell.com> wrote:
