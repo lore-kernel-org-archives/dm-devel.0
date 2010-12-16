@@ -1,18 +1,19 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: <Menny_Hamburger@Dell.com>
 Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI
  device deletion to multipath
-Date: Thu, 16 Dec 2010 09:02:10 -0500
-Message-ID: <20101216140209.GA23507@redhat.com>
+Date: Thu, 16 Dec 2010 14:21:45 +0000
+Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AFFCF09@DUBX7MCDUB01.EMEA.DELL.COM>
 References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
 	<20101215160952.GA20869@redhat.com>
 	<D8C50530D6022F40A817A35C40CC06A7064AFFCA3E@DUBX7MCDUB01.EMEA.DELL.COM>
+	<20101216140209.GA23507@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <D8C50530D6022F40A817A35C40CC06A7064AFFCA3E@DUBX7MCDUB01.EMEA.DELL.COM>
+In-Reply-To: <20101216140209.GA23507@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,9 +23,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Menny_Hamburger@Dell.com
+To: snitzer@redhat.com
 Cc: dm-devel@redhat.com, Itay_Dar@Dell.com, Rob_Thomas@Dell.com
 List-Id: dm-devel.ids
+
+Mike,
+
+What I meant is that removing the dm-mpath change from the patch makes the operation path go into an area that I did not test (the default case).
+I know it's only a !hw_handler_name and a printk (as I said before - this might sound superstitious), however I did my tests with the dm-mpath part,
+and I prefer to send a 100% tested patch then to add something I did not test.
+My suggestion was to supply a scsi_dh only patch that goes through the same operation path as the one I tested - via the SCSI_DH_NOSYS case in pg_init_done. In addition, the separation of offline from cancel/del also seems the correct way to do this.
+
+Hope this makes sense,
+Menny
+
+
+
+
+
+-----Original Message-----
+From: Mike Snitzer [mailto:snitzer@redhat.com] 
+Sent: 16 December, 2010 16:02
+To: Hamburger, Menny
+Cc: dm-devel@redhat.com; Thomas, Rob; Dar, Itay
+Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI device deletion to multipath
 
 On Thu, Dec 16 2010 at  2:32am -0500,
 Menny_Hamburger@Dell.com <Menny_Hamburger@Dell.com> wrote:
