@@ -1,104 +1,43 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3][SCSI] scsi_dh: propagate SCSI device deletion
-Date: Thu, 16 Dec 2010 14:57:07 -0500
-Message-ID: <20101216195707.GB25957@redhat.com>
-References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
- <20101215160952.GA20869@redhat.com>
- <D8C50530D6022F40A817A35C40CC06A7064AFFCA3E@DUBX7MCDUB01.EMEA.DELL.COM>
- <20101216140209.GA23507@redhat.com>
- <D8C50530D6022F40A817A35C40CC06A7064AFFCF09@DUBX7MCDUB01.EMEA.DELL.COM>
- <20101216152930.GB23507@redhat.com>
- <D8C50530D6022F40A817A35C40CC06A7064AFFD030@DUBX7MCDUB01.EMEA.DELL.COM>
- <20101216162951.GE23507@redhat.com>
- <D8C50530D6022F40A817A35C40CC06A7064AFFD087@DUBX7MCDUB01.EMEA.DELL.COM>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH for-2.6.37] block: max hardware sectors limit
+	wrapper
+Date: Thu, 16 Dec 2010 18:49:18 -0500
+Message-ID: <yq1wrn92s8x.fsf@sermon.lab.mkp.net>
+References: <20101206184346.GA13582@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <D8C50530D6022F40A817A35C40CC06A7064AFFD087@DUBX7MCDUB01.EMEA.DELL.COM>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi@vger.kernel.org
-Cc: Menny_Hamburger@dell.com, Itay_Dar@dell.com, Rob_Thomas@dell.com, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <stable-bounces@linux.kernel.org>
+In-Reply-To: <20101206184346.GA13582@redhat.com> (Mike Snitzer's message of
+	"Mon, 6 Dec 2010 13:43:46 -0500")
+List-Unsubscribe: <http://linux.kernel.org/mailman/options/stable>,
+	<mailto:stable-request@linux.kernel.org?subject=unsubscribe>
+List-Archive: <http://linux.kernel.org/mailman/private/stable/>
+List-Post: <mailto:stable@linux.kernel.org>
+List-Help: <mailto:stable-request@linux.kernel.org?subject=help>
+List-Subscribe: <http://linux.kernel.org/mailman/listinfo/stable>,
+	<mailto:stable-request@linux.kernel.org?subject=subscribe>
+Sender: stable-bounces@linux.kernel.org
+Errors-To: stable-bounces@linux.kernel.org
+To: Jens Axboe <jaxboe@fusionio.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Lars Ellenberg <lars.ellenberg@linbit.com>, stable@kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-From: Menny Hamburger <Menny_Hamburger@Dell.com>
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-Currently, when scsi_dh_activate() returns with an error
-(e.g. SCSI_DH_NOSYS) the activate_complete callback is not called and
-the error is not propagated to DM mpath.
+Mike> Implement blk_limits_max_hw_sectors() and make
+Mike> blk_queue_max_hw_sectors() a wrapper around it.
 
-When a SCSI device attached to a device handler is deleted, userland
-processes currently performing I/O on the device will have their I/O
-hang forever.  
+Mike> DM needs this to avoid setting queue_limits' max_hw_sectors and
+Mike> max_sectors directly.  dm_set_device_limits() now leverages
+Mike> blk_limits_max_hw_sectors() logic to establish the appropriate
+Mike> max_hw_sectors minimum (PAGE_SIZE).  Fixes issue where DM was
+Mike> incorrectly setting max_sectors rather than max_hw_sectors (which
+Mike> caused dm_merge_bvec()'s max_hw_sectors check to be ineffective).
 
-- Set SCSI_DH_NOSYS error when the handler is in the process of being
-  deleted (e.g. the SCSI device is in a SDEV_CANCEL or SDEV_DEL state).
+Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
 
-- Set SCSI_DH_DEV_OFFLINED error when device is in SDEV_OFFLINE state.
+Jens, please apply.
 
-- Call the activate_complete callback function directly from
-  scsi_dh_activate if an error has been set (when either the scsi_dh
-  internal data has already been deleted or is in the process of being
-  deleted).
-
-The patch was tested in an iSCSI environment, RDAC H/W handler and
-multipath.  In the following reproduction process, dd will I/O hang
-forever and the only way to release it will be to reboot the machine:
-1) Perform I/O on a multipath device:
-    dd if=/dev/dm-0 of=/dev/zero bs=8k count=1000000 &
-2) Delete all slave SCSI devices contained in the mpath device:
-   I)  In an iSCSI environment, the easiest way to do this is by
-   stopping iSCSI:
-       /etc/init.d/iscsi stop
-   II) Another way to delete the devices is by applying the following
-   bash scriptlet:
-       dm_devs=$(ls /sys/block/ | grep dm- | xargs)
-       for dm_dev in $dm_devs; do
-         devices=$(ls /sys/block/$dm_dev/slaves)
-         for device in $devices; do
-            echo 1 > /sys/block/$device/device/delete
-         done
-       done
-
-NOTE: when DM mpath's fail_path uses blk_abort_queue this scsi_dh change
-isn't strictly required.  However, DM mpath's call to blk_abort_queue
-will soon be reverted because it has proven to be unsafe due to a race
-(between blk_abort_queue and scsi_request_fn) that can lead to list
-corruption.  Therefore we cannot rely on blk_abort_queue via fail_path,
-but even if we could this scsi_dh change is still preferrable.
-
-Signed-off-by: Menny Hamburger <Menny_Hamburger@Dell.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/scsi/device_handler/scsi_dh.c |   11 +++++++++--
- 1 files changed, 9 insertions(+), 2 deletions(-)
-
-v1 and v2 were posted/discussed on dm-devel
-v3: just tweaked the patch header a bit
-
-diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_handler/scsi_dh.c
-index 6fae3d2..b0c56f6 100644
---- a/drivers/scsi/device_handler/scsi_dh.c
-+++ b/drivers/scsi/device_handler/scsi_dh.c
-@@ -442,12 +442,19 @@ int scsi_dh_activate(struct request_queue *q, activate_complete fn, void *data)
- 	sdev = q->queuedata;
- 	if (sdev && sdev->scsi_dh_data)
- 		scsi_dh = sdev->scsi_dh_data->scsi_dh;
--	if (!scsi_dh || !get_device(&sdev->sdev_gendev))
-+	if (!scsi_dh || !get_device(&sdev->sdev_gendev) ||
-+	    sdev->sdev_state == SDEV_CANCEL ||
-+	    sdev->sdev_state == SDEV_DEL)
- 		err = SCSI_DH_NOSYS;
-+	if (sdev->sdev_state == SDEV_OFFLINE)
-+		err = SCSI_DH_DEV_OFFLINED;
- 	spin_unlock_irqrestore(q->queue_lock, flags);
- 
--	if (err)
-+	if (err) {
-+		if (fn)
-+			fn(data, err);
- 		return err;
-+	}
- 
- 	if (scsi_dh->activate)
- 		err = scsi_dh->activate(sdev, fn, data);
+-- 
+Martin K. Petersen	Oracle Linux Engineering
