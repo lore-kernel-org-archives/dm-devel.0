@@ -1,117 +1,106 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: hunt for 2.6.37 dm-crypt+ext4 corruption? (was: Re: dm-crypt
- barrier support is effective)
-Date: Thu, 16 Dec 2010 14:37:18 +1100
-Message-ID: <20101216033718.GM9925@dastard>
-References: <AANLkTikOXjh+D25=7Mzwn7bFN+a9xQSimPHs22q4o2TK@mail.gmail.com>
- <1291747731-sup-3099@think>
- <AANLkTin-Bvq9bNgarZGZhbK_2EONdu8x-qaLCLFcc1F_@mail.gmail.com>
- <1291751698-sup-9297@think>
- <AANLkTin79GzUbfuZNKyTtqcyoUSO9AJimO77_ZOvqggH@mail.gmail.com>
- <1291754340-sup-1631@think>
- <AANLkTim8uCmFK=LjkMmq_1O0KE3AiN_7g41AO0woxMv7@mail.gmail.com>
- <1291755258-sup-8760@think>
- <AANLkTi=OC9Z68U-j8s6vfU-_-6tkg5W7aUz9HEupidX9@mail.gmail.com>
- <1291810586-sup-8211@think>
+From: <Menny_Hamburger@Dell.com>
+Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI
+ device deletion to multipath
+Date: Thu, 16 Dec 2010 07:32:27 +0000
+Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AFFCA3E@DUBX7MCDUB01.EMEA.DELL.COM>
+References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
+	<20101215160952.GA20869@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1291810586-sup-8211@think>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Chris Mason <chris.mason@oracle.com>
-Cc: Jon Nelson <jnelson@jamponi.net>, Mike Snitzer <snitzer@redhat.com>, Matt <jackdachef@gmail.com>, Milan Broz <mbroz@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, dm-devel <dm-devel@redhat.com>, Linux Kernel <linux-kernel@vger.kernel.org>, htd <htd@fancy-poultry.org>, htejun <htejun@gmail.com>, linux-ext4 <linux-ext4@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20101215160952.GA20869@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: snitzer@redhat.com
+Cc: dm-devel@redhat.com, Itay_Dar@Dell.com, Rob_Thomas@Dell.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 08, 2010 at 07:20:24AM -0500, Chris Mason wrote:
-> Excerpts from Jon Nelson's message of 2010-12-07 22:29:26 -0500:
-> > On Tue, Dec 7, 2010 at 3:02 PM, Chris Mason <chris.mason@oracle.com=
-> wrote:
-> > > Excerpts from Jon Nelson's message of 2010-12-07 15:48:58 -0500:
-> > >> On Tue, Dec 7, 2010 at 2:41 PM, Chris Mason <chris.mason@oracle.=
-com> wrote:
-> > >> > Excerpts from Jon Nelson's message of 2010-12-07 15:25:47 -050=
-0:
-> > >> >> On Tue, Dec 7, 2010 at 2:02 PM, Chris Mason <chris.mason@orac=
-le.com> wrote:
-> > >> >> > Excerpts from Jon Nelson's message of 2010-12-07 14:34:40 -=
-0500:
-> > >> >> >> On Tue, Dec 7, 2010 at 12:52 PM, Chris Mason <chris.mason@=
-oracle.com> wrote:
-> > >> >> >> >> postgresql errors. Typically, header corruption but fro=
-m the limited
-> > >> >> >> >> visibility I've had into this via strace, what I see is=
- zeroed pages
-> > >> >> >> >> where there shouldn't be.
-> > >> >> >> >
-> > >> >> >> > This sounds a lot like a bug higher up than dm-crypt. =A0=
-Zeros tend to
-> > >> >> >> > come from some piece of code explicitly filling a page w=
-ith zeros, and
-> > >> >> >> > that often happens in the corner cases for O_DIRECT and =
-a few other
-> > >> >> >> > places in the filesystem.
-> > >> >> >> >
-> > >> >> >> > Have you tried triggering this with a regular block devi=
-ce?
-> > >> >> >>
-> > >> >> >> I just tried the whole set of tests, but with /dev/sdb dir=
-ectly (as
-> > >> >> >> ext4) without any crypt-y bits.
-> > >> >> >> It takes more iterations but out of 6 tests I had one fail=
-ure: same
-> > >> >> >> type of thing, 'invalid page header in block ....'.
-> > >> >> >>
-> > >> >> >> I can't guarantee that it is a full-page of zeroes, just w=
-hat I saw
-> > >> >> >> from the (limited) stracing I did.
-> > >> >> >
-> > >> >> > Fantastic. Now for our usual suspects:
-> >=20
-> > Maybe not so fantastic. I kept testing and had no more failures. At
-> > all. After 40+ iterations I gave up.
-> > I went back to trying ext4 on a LUKS volume. The 'hit' ratio went t=
-o
-> > something like 1 in 3, or better.
-> >=20
-> > I will continue to do testing with and without LUKS. I did /not/
-> > reboot between tests, but I do start with a fresh postgres database=
-=2E
-> >=20
->=20
-> Once we trigger once without dm-crypt, dm-crypt is off the hook.  Jus=
-t
-> to verify, when you say without luks, you mean without any crypto bit=
-s
-> in use at all on the filesystems postgres uses?
->=20
-> Usually the trick to reproducing filesystem corruptions is adding mem=
-ory
-> pressure.  The corruption is probably a bad interaction between reads
-> and writes, and we need to make sure the reads actually happen.
->=20
-> http://oss.oracle.com/~mason/pin_ram.c
->=20
-> gcc -Wall -o pin_ram pin_ram.c
->=20
-> pin_ram -m 80%-of-your-ram-in-mb
+Hi Mike,
 
-Implemented in xfstests about 10 years ago:
+I am sorry about the submission problems, there's a first time for everything...
 
-http://git.kernel.org/?p=3Dfs/xfs/xfstests-dev.git;a=3Dblob;f=3Dsrc/use=
-mem.c;h=3Db8794a6b209cebf8dbf312a8ef131e2e54b18d29;hb=3DHEAD
+I know this sounds superstitious but I did run quite thorough tests on this issue and I would really prefer that the proposed patch 
+would go through the same code path as the one I have tested.
 
-:P
+My suggestion is to modify the scsi_dh code as follows:
 
-Cheers,
+if (!scsi_dh || !get_device(&sdev->sdev_gendev) ||
+    sdev->sdev_state == SDEV_CANCEL ||
+    sdev->sdev_state == SDEV_DEL)
+       err = SCSI_DH_NOSYS;   
 
-Dave.
---=20
-Dave Chinner
-david@fromorbit.com
---
-To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+if (sdev->sdev_state == SDEV_OFFLINE)
+       err = SCSI_DH_DEV_OFFLINED;
+
+if (err) {
+    if (fn)
+        fn(fn_data, err);
+
+    return err;
+} 
+
+There is logic and benefits here:
+1) SDEV_CANCEL/SDEV_DEV are just a stage before the DH is deleted so we can respond with the same SCSI_DH_NOSYS.
+   I think it's best here to handle these together, since they are in fact the same thing. 
+   In addition, when we delete a device, I don't think it goes through an offline state.
+2) SDEV_OFFLINE is easily reverted by echoing to the state of the device - it's not like detaching.
+   Returning SCSI_DH_DEV_OFFLINED will just call the default case and perform fail_path - no need to worry about any handler issues here.
+3) It will let me sleep better at night...
+
+
+Best Regards,
+Menny
+
+-----Original Message-----
+From: Mike Snitzer [mailto:snitzer@redhat.com] 
+Sent: 15 December, 2010 18:10
+To: Hamburger, Menny
+Cc: dm-devel@redhat.com
+Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI device deletion to multipath
+
+On Wed, Dec 15 2010 at  3:31am -0500,
+Menny_Hamburger@dell.com <Menny_Hamburger@dell.com> wrote:
+
+> The problem:
+> When a SCSI device attached to a device handler is deleted, userland processes currently performing I/O on the device will I/O hang forever.
+> 
+> Attached is the multipath layer part of the patch.
+
+Please do not use attachments when submitting patches.  Please inline
+the patch in the body of the mail.  Also please trim extraneous info
+when you reply to mails and please do not top-post.
+
+Your patch submissions were not well received by the dm-devel patchwork
+(which automatically collects submitted dm-devel patches so they don't
+get lost in the shuffle).
+
+Also, please use unique and descriptive subjects for the patches in a
+multipatch series.
+
+As for the proposed mpath change: Babu already pointed out that you
+don't need this mpath change as the default case already performs
+fail_path().
+
+So all you need is that scsi_dh patch to get upstream.  But to do that
+you'll need to:
+1) create a patch against the upstream scsi-misc tree (not RHEL5.5):
+   git://git.kernel.org/pub/scm/linux/kernel/git/jejb/scsi-misc-2.6.git
+
+2) send the patch to the linux-scsi@vger.kernel.org mailing list (feel
+   free to cc dm-devel too).
+
+Once this change is in the upstream scsi tree it'll propagate to RHEL
+releases.
+
+Thanks,
+Mike
