@@ -1,19 +1,19 @@
-From: <Menny_Hamburger@Dell.com>
-Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI
- device deletion to multipath
-Date: Thu, 16 Dec 2010 14:21:45 +0000
-Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AFFCF09@DUBX7MCDUB01.EMEA.DELL.COM>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2][SCSI] scsi_dh: propagate SCSI device deletion
+Date: Thu, 16 Dec 2010 10:29:31 -0500
+Message-ID: <20101216152930.GB23507@redhat.com>
 References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
 	<20101215160952.GA20869@redhat.com>
 	<D8C50530D6022F40A817A35C40CC06A7064AFFCA3E@DUBX7MCDUB01.EMEA.DELL.COM>
 	<20101216140209.GA23507@redhat.com>
+	<D8C50530D6022F40A817A35C40CC06A7064AFFCF09@DUBX7MCDUB01.EMEA.DELL.COM>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20101216140209.GA23507@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <D8C50530D6022F40A817A35C40CC06A7064AFFCF09@DUBX7MCDUB01.EMEA.DELL.COM>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,125 +23,124 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer@redhat.com
+To: Menny_Hamburger@Dell.com
 Cc: dm-devel@redhat.com, Itay_Dar@Dell.com, Rob_Thomas@Dell.com
 List-Id: dm-devel.ids
 
-Mike,
-
-What I meant is that removing the dm-mpath change from the patch makes the operation path go into an area that I did not test (the default case).
-I know it's only a !hw_handler_name and a printk (as I said before - this might sound superstitious), however I did my tests with the dm-mpath part,
-and I prefer to send a 100% tested patch then to add something I did not test.
-My suggestion was to supply a scsi_dh only patch that goes through the same operation path as the one I tested - via the SCSI_DH_NOSYS case in pg_init_done. In addition, the separation of offline from cancel/del also seems the correct way to do this.
-
-Hope this makes sense,
-Menny
-
-
-
-
-
------Original Message-----
-From: Mike Snitzer [mailto:snitzer@redhat.com] 
-Sent: 16 December, 2010 16:02
-To: Hamburger, Menny
-Cc: dm-devel@redhat.com; Thomas, Rob; Dar, Itay
-Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI device deletion to multipath
-
-On Thu, Dec 16 2010 at  2:32am -0500,
+On Thu, Dec 16 2010 at  9:21am -0500,
 Menny_Hamburger@Dell.com <Menny_Hamburger@Dell.com> wrote:
 
-> Hi Mike,
+> Mike,
 > 
-> I am sorry about the submission problems, there's a first time for everything...
-> 
-> I know this sounds superstitious but I did run quite thorough tests on
-> this issue and I would really prefer that the proposed patch would go
-> through the same code path as the one I have tested.
-> 
-> My suggestion is to modify the scsi_dh code as follows:
-> 
-> if (!scsi_dh || !get_device(&sdev->sdev_gendev) ||
->     sdev->sdev_state == SDEV_CANCEL ||
->     sdev->sdev_state == SDEV_DEL)
->        err = SCSI_DH_NOSYS;   
-> 
-> if (sdev->sdev_state == SDEV_OFFLINE)
->        err = SCSI_DH_DEV_OFFLINED;
-> 
-> if (err) {
->     if (fn)
->         fn(fn_data, err);
-> 
->     return err;
-> } 
-> 
-> There is logic and benefits here:
-> 1) SDEV_CANCEL/SDEV_DEV are just a stage before the DH is deleted so we can respond with the same SCSI_DH_NOSYS.
->    I think it's best here to handle these together, since they are in fact the same thing. 
->    In addition, when we delete a device, I don't think it goes through an offline state.
-> 2) SDEV_OFFLINE is easily reverted by echoing to the state of the device - it's not like detaching.
->    Returning SCSI_DH_DEV_OFFLINED will just call the default case and perform fail_path - no need to worry about any handler issues here.
-> 3) It will let me sleep better at night...
+> What I meant is that removing the dm-mpath change from the patch makes
+> the operation path go into an area that I did not test (the default
+> case). 
+> I know it's only a !hw_handler_name and a printk (as I said before -
+> this might sound superstitious), however I did my tests with the
+> dm-mpath part, and I prefer to send a 100% tested patch then to add
+> something I did not test.
+> My suggestion was to supply a scsi_dh only patch that goes through the
+> same operation path as the one I tested - via the SCSI_DH_NOSYS case
+> in pg_init_done. In addition, the separation of offline from
+> cancel/del also seems the correct way to do this.
 
-I think you misunderstood me.
+I see, my misunderstanding.
 
-We had a bugzilla exchange yesterday (and as you stated above):  the
-dm-mpath change isn't required so it is only the scsi_dh patch that
-needs to go upstream.
+- But you're still returning SCSI_DH_DEV_OFFLINED; so if dm mpath's
+  pg_init_done isn't updated to explicitly handle it it'll just
+  fail_path() via the default case.  Are you OK with that?
 
-I didn't take issue with your scsi_dh patch.  What I shared (below) was
-that dm-devel isn't the appropriate place to email a patch that is
-exclussively for scsi_dh.  (This is just the tedious bit of "how does
-this change go upstream?").
+- In your initial patch you said: "When running an upstream kernel,
+  the above scenario may not occur because the request queue is aborted
+  when the multipath fails the path."
 
-I'll take care of rebasing your scsi_dh patch to the scsi-misc git tree
-I referenced and then send the patch to linux-scsi on your behalf.
+  I'm missing _why_ fail_path's call to blk_abort_queue() would obviate
+  the need for this patch.  blk_abort_queue() is only called from
+  fail_path().  But I thought the problem is fail_path() isn't called in
+  this case where the device is SCSI_DH_NOSYS or SCSI_DH_DEV_OFFLINED?
+  -- due to the missing call to activate_complete callback (pg_init_done)
+  (again, I'm very interested in this because we'll be reverting DM
+   mpath's call to blk_abort_queue in the near future). 
 
-Regards,
-Mike
+But this would be the revised scsi_dh patch (I'm not sending to
+linux-scsi until I have an answer for the above concerns):
 
 
-> -----Original Message-----
-> From: Mike Snitzer [mailto:snitzer@redhat.com] 
-> Sent: 15 December, 2010 18:10
-> To: Hamburger, Menny
-> Cc: dm-devel@redhat.com
-> Subject: Re: [Patch 2 of 2]: scsi-dh + dm-mpath: propagate SCSI device deletion to multipath
-> 
-> On Wed, Dec 15 2010 at  3:31am -0500,
-> Menny_Hamburger@dell.com <Menny_Hamburger@dell.com> wrote:
-> 
-> > The problem:
-> > When a SCSI device attached to a device handler is deleted, userland processes currently performing I/O on the device will I/O hang forever.
-> > 
-> > Attached is the multipath layer part of the patch.
-> 
-> Please do not use attachments when submitting patches.  Please inline
-> the patch in the body of the mail.  Also please trim extraneous info
-> when you reply to mails and please do not top-post.
-> 
-> Your patch submissions were not well received by the dm-devel patchwork
-> (which automatically collects submitted dm-devel patches so they don't
-> get lost in the shuffle).
-> 
-> Also, please use unique and descriptive subjects for the patches in a
-> multipatch series.
-> 
-> As for the proposed mpath change: Babu already pointed out that you
-> don't need this mpath change as the default case already performs
-> fail_path().
-> 
-> So all you need is that scsi_dh patch to get upstream.  But to do that
-> you'll need to:
-> 1) create a patch against the upstream scsi-misc tree (not RHEL5.5):
->    git://git.kernel.org/pub/scm/linux/kernel/git/jejb/scsi-misc-2.6.git
-> 
-> 2) send the patch to the linux-scsi@vger.kernel.org mailing list (feel
->    free to cc dm-devel too).
-> 
-> Once this change is in the upstream scsi tree it'll propagate to RHEL
-> releases.
-> 
-> Thanks,
-> Mike
+From: Menny Hamburger <Menny_Hamburger@Dell.com>
+
+When the scsi_dh_activate returns SCSI_DH_NOSYS the activate_complete
+callback is not called and the error is not propagated to DM mpath.
+
+When a SCSI device attached to a device handler is deleted, userland
+processes currently performing I/O on the device will have their I/O
+hang forever.  
+
+- Set SCSI_DH_NOSYS error when the handler is in the process of being
+  deleted (e.g. the SCSI device is in a SDEV_CANCEL or SDEV_DEL state).
+
+- Set SCSI_DH_DEV_OFFLINED error when device is in SDEV_OFFLINE state.
+
+- Call the activate_complete callback function directly from
+  scsi_dh_activate if an error has been set (when either the scsi_dh
+  internal data has already been deleted or is in the process of being
+  deleted).
+
+The patch was tested in an ISCSI environment, RDAC H/W handler and
+multipath.
+In the following reproduction process, dd will I/O hang forever and the
+only way to release it will be to reboot the machine:
+1) Perform I/O on a multipath device:
+    dd if=/dev/dm-0 of=/dev/zero bs=8k count=1000000 &
+2) Delete all slave SCSI devices contained in the mpath device:
+   I)  In an ISCSI environment, the easiest way to do this is by
+   stopping ISCSI:
+       /etc/init.d/iscsi stop
+   II) Another way to delete the devices is by applying the following
+   bash scriptlet:
+       dm_devs=$(ls /sys/block/ | grep dm- | xargs)
+       for dm_dev in $dm_devs; do
+         devices=$(ls /sys/block/$dm_dev/slaves)
+         for device in $devices; do
+            echo 1 > /sys/block/$device/device/delete
+         done
+       done
+
+NOTE: when DM mpath uses blk_abort_queue this scsi_dh change isn't
+required.  However, DM mpath's call to blk_abort_queue has proven to be
+unsafe due to a race (between blk_abort_queue and scsi_request_fn) that
+can lead to list corruption.  Therefore we cannot rely on
+blk_abort_queue (dm mpath's blk_abort_queue call will be reverted and
+will only be restored once the race with scsi_request_fn is fixed).
+
+Signed-off-by: Menny Hamburger <Menny_Hamburger@Dell.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/scsi/device_handler/scsi_dh.c |   11 +++++++++--
+ 1 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_handler/scsi_dh.c
+index 6fae3d2..b0c56f6 100644
+--- a/drivers/scsi/device_handler/scsi_dh.c
++++ b/drivers/scsi/device_handler/scsi_dh.c
+@@ -442,12 +442,19 @@ int scsi_dh_activate(struct request_queue *q, activate_complete fn, void *data)
+ 	sdev = q->queuedata;
+ 	if (sdev && sdev->scsi_dh_data)
+ 		scsi_dh = sdev->scsi_dh_data->scsi_dh;
+-	if (!scsi_dh || !get_device(&sdev->sdev_gendev))
++	if (!scsi_dh || !get_device(&sdev->sdev_gendev) ||
++	    sdev->sdev_state == SDEV_CANCEL ||
++	    sdev->sdev_state == SDEV_DEL)
+ 		err = SCSI_DH_NOSYS;
++	if (sdev->sdev_state == SDEV_OFFLINE)
++		err = SCSI_DH_DEV_OFFLINED;
+ 	spin_unlock_irqrestore(q->queue_lock, flags);
+ 
+-	if (err)
++	if (err) {
++		if (fn)
++			fn(data, err);
+ 		return err;
++	}
+ 
+ 	if (scsi_dh->activate)
+ 		err = scsi_dh->activate(sdev, fn, data);
