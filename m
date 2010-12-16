@@ -1,8 +1,8 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: <Menny_Hamburger@Dell.com>
 Subject: Re: [PATCH v2][SCSI] scsi_dh: propagate SCSI device
 	deletion
-Date: Thu, 16 Dec 2010 11:29:51 -0500
-Message-ID: <20101216162951.GE23507@redhat.com>
+Date: Thu, 16 Dec 2010 16:42:19 +0000
+Message-ID: <D8C50530D6022F40A817A35C40CC06A7064AFFD087@DUBX7MCDUB01.EMEA.DELL.COM>
 References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
 	<20101215160952.GA20869@redhat.com>
 	<D8C50530D6022F40A817A35C40CC06A7064AFFCA3E@DUBX7MCDUB01.EMEA.DELL.COM>
@@ -10,13 +10,14 @@ References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.C
 	<D8C50530D6022F40A817A35C40CC06A7064AFFCF09@DUBX7MCDUB01.EMEA.DELL.COM>
 	<20101216152930.GB23507@redhat.com>
 	<D8C50530D6022F40A817A35C40CC06A7064AFFD030@DUBX7MCDUB01.EMEA.DELL.COM>
+	<20101216162951.GE23507@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <D8C50530D6022F40A817A35C40CC06A7064AFFD030@DUBX7MCDUB01.EMEA.DELL.COM>
+In-Reply-To: <20101216162951.GE23507@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,9 +27,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Menny_Hamburger@dell.com
-Cc: Itay_Dar@dell.com, device-mapper development <dm-devel@redhat.com>, Rob_Thomas@dell.com
+To: snitzer@redhat.com
+Cc: Itay_Dar@Dell.com, dm-devel@redhat.com, Rob_Thomas@Dell.com
 List-Id: dm-devel.ids
+
+Mike,
+
+Don't forget you have multipathd running in userland that tests each path from user space:
+When multipathd detects a path failure it tells the driver to call fail_path on that path - on a system with blk abort this should be enough
+(although again - you are making the problem go away instead of preventing it) since all processing doing I/O will be stopped on I/O error.
+On a system without blk_abort, doing fail_path is not enough - it just fails the path but does not flush the request queue.
+pg_init_done does other things in addition to failing the path - specifically it schedules process_queued_ios that flushes the request queue.
+
+Menny
+
+
+
+-----Original Message-----
+From: Mike Snitzer [mailto:snitzer@redhat.com] 
+Sent: 16 December, 2010 18:30
+To: Hamburger, Menny
+Cc: Dar, Itay; Thomas, Rob; device-mapper development
+Subject: Re: [PATCH v2][SCSI] scsi_dh: propagate SCSI device deletion
 
 On Thu, Dec 16 2010 at 10:52am -0500,
 Menny_Hamburger@dell.com <Menny_Hamburger@dell.com> wrote:
