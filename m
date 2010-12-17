@@ -1,125 +1,116 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH v3][SCSI] scsi_dh: propagate SCSI device deletion
-Date: Fri, 17 Dec 2010 08:46:58 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4F54410DB@cosmail01.lsi.com>
-References: <D8C50530D6022F40A817A35C40CC06A7064AFC9450@DUBX7MCDUB01.EMEA.DELL.COM>
- <20101215160952.GA20869@redhat.com>
- <D8C50530D6022F40A817A35C40CC06A7064AFFCA3E@DUBX7MCDUB01.EMEA.DELL.COM>
- <20101216140209.GA23507@redhat.com>
- <D8C50530D6022F40A817A35C40CC06A7064AFFCF09@DUBX7MCDUB01.EMEA.DELL.COM>
- <20101216152930.GB23507@redhat.com>
- <D8C50530D6022F40A817A35C40CC06A7064AFFD030@DUBX7MCDUB01.EMEA.DELL.COM>
- <20101216162951.GE23507@redhat.com>
- <D8C50530D6022F40A817A35C40CC06A7064AFFD087@DUBX7MCDUB01.EMEA.DELL.COM>
- <20101216195707.GB25957@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 1/1] RFC: scsi/dm-mpath: return -EACCES on reservation
+ conflict
+Date: Fri, 17 Dec 2010 11:59:57 -0500
+Message-ID: <20101217165957.GB1934@redhat.com>
+References: <1255406553-7054-1-git-send-email-michaelc@cs.wisc.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20101216195707.GB25957@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <1255406553-7054-1-git-send-email-michaelc@cs.wisc.edu>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
-Cc: "Menny_Hamburger@dell.com" <Menny_Hamburger@dell.com>, "Itay_Dar@dell.com" <Itay_Dar@dell.com>, "Rob_Thomas@dell.com" <Rob_Thomas@dell.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: linux-scsi@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.de>
 List-Id: dm-devel.ids
 
-Patches look good..
+On Tue, Oct 13 2009 at 12:02am -0400,
+michaelc@cs.wisc.edu <michaelc@cs.wisc.edu> wrote:
 
-Reviewed-by: Babu Moger <babu.moger@lsi.com>
-
-> -----Original Message-----
-> From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-
-> owner@vger.kernel.org] On Behalf Of Mike Snitzer
-> Sent: Thursday, December 16, 2010 1:57 PM
-> To: linux-scsi@vger.kernel.org
-> Cc: Menny_Hamburger@dell.com; Itay_Dar@dell.com; Rob_Thomas@dell.com; dm-
-> devel@redhat.com
-> Subject: [PATCH v3][SCSI] scsi_dh: propagate SCSI device deletion
+> From: Mike Christie <michaelc@cs.wisc.edu>
 > 
-> From: Menny Hamburger <Menny_Hamburger@Dell.com>
+> This patch was made over this patch
+> http://marc.info/?l=linux-scsi&m=125417106125449&w=2
 > 
-> Currently, when scsi_dh_activate() returns with an error
-> (e.g. SCSI_DH_NOSYS) the activate_complete callback is not called and
-> the error is not propagated to DM mpath.
+> The basic problem is that we do not want dm-multipath to retry
+> this error, but the scsi layer returns -EIO or -EILSEQ, so
+> dm-multipath cannot distinguish between a reservation conflict
+> and other errors.
 > 
-> When a SCSI device attached to a device handler is deleted, userland
-> processes currently performing I/O on the device will have their I/O
-> hang forever.
+> This problem was originally discussed here
+> http://www.linux-archive.org/device-mapper-development/180290-dm-mpath-scsi-persistent-reservation.html
 > 
-> - Set SCSI_DH_NOSYS error when the handler is in the process of being
->   deleted (e.g. the SCSI device is in a SDEV_CANCEL or SDEV_DEL state).
+> I have considered adding new blk error values (I have sent pactches
+> for this before and can send updated ones if we want to go this route),
+> and even just using more -EXYZ values for scsi errors, but in the end I am
+> just not sure it ended up being worth it, so this patch just
+> handles the one error.
 > 
-> - Set SCSI_DH_DEV_OFFLINED error when device is in SDEV_OFFLINE state.
+> The problem with adding new blk errors is that it seems only dm-multipath
+> knows what it wants (have not seen anything from the FS or RAID people),
+> and I also do not know what every device is sending so I cannot completely
+> clean up cases like where a device returns a error (check condition
+> and sense) indicating a controller port is temporarily unavialable.
+> For example, I do not know if I am getting a ILLEGAL request for some
+> non retryable device error vs the controller is getting its FW updated
+> (for a non retryable device error case we do not want to fail the path
+> and just want to fail the IO, but for FW update we just want to fail
+> the path), so I have to treat those device errors like a transport error
+> and just fail the path.
 > 
-> - Call the activate_complete callback function directly from
->   scsi_dh_activate if an error has been set (when either the scsi_dh
->   internal data has already been deleted or is in the process of being
->   deleted).
+> So, I did another take just using lots of different -EXYZ values. See
+> this patch
 > 
-> The patch was tested in an iSCSI environment, RDAC H/W handler and
-> multipath.  In the following reproduction process, dd will I/O hang
-> forever and the only way to release it will be to reboot the machine:
-> 1) Perform I/O on a multipath device:
->     dd if=/dev/dm-0 of=/dev/zero bs=8k count=1000000 &
-> 2) Delete all slave SCSI devices contained in the mpath device:
->    I)  In an iSCSI environment, the easiest way to do this is by
->    stopping iSCSI:
->        /etc/init.d/iscsi stop
->    II) Another way to delete the devices is by applying the following
->    bash scriptlet:
->        dm_devs=$(ls /sys/block/ | grep dm- | xargs)
->        for dm_dev in $dm_devs; do
->          devices=$(ls /sys/block/$dm_dev/slaves)
->          for device in $devices; do
->             echo 1 > /sys/block/$device/device/delete
->          done
->        done
+> for an example. The problem is still that the transport error
+> and generic error cases are the same so all I bought was the handling
+> of the reservation conflict.
 > 
-> NOTE: when DM mpath's fail_path uses blk_abort_queue this scsi_dh change
-> isn't strictly required.  However, DM mpath's call to blk_abort_queue
-> will soon be reverted because it has proven to be unsafe due to a race
-> (between blk_abort_queue and scsi_request_fn) that can lead to list
-> corruption.  Therefore we cannot rely on blk_abort_queue via fail_path,
-> but even if we could this scsi_dh change is still preferrable.
+> And, that is how I ended up here where I am only handling the one
+> error I know for sure will cause problems with the infrastructure we have.
+> I am  not in love with this patch, so please give me any other
+> suggestions.
 > 
-> Signed-off-by: Menny Hamburger <Menny_Hamburger@Dell.com>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
 > ---
->  drivers/scsi/device_handler/scsi_dh.c |   11 +++++++++--
->  1 files changed, 9 insertions(+), 2 deletions(-)
+>  drivers/md/dm-mpath.c   |    2 +-
+>  drivers/scsi/scsi_lib.c |    4 ++++
+>  2 files changed, 5 insertions(+), 1 deletions(-)
 > 
-> v1 and v2 were posted/discussed on dm-devel
-> v3: just tweaked the patch header a bit
-> 
-> diff --git a/drivers/scsi/device_handler/scsi_dh.c
-> b/drivers/scsi/device_handler/scsi_dh.c
-> index 6fae3d2..b0c56f6 100644
-> --- a/drivers/scsi/device_handler/scsi_dh.c
-> +++ b/drivers/scsi/device_handler/scsi_dh.c
-> @@ -442,12 +442,19 @@ int scsi_dh_activate(struct request_queue *q,
-> activate_complete fn, void *data)
->  	sdev = q->queuedata;
->  	if (sdev && sdev->scsi_dh_data)
->  		scsi_dh = sdev->scsi_dh_data->scsi_dh;
-> -	if (!scsi_dh || !get_device(&sdev->sdev_gendev))
-> +	if (!scsi_dh || !get_device(&sdev->sdev_gendev) ||
-> +	    sdev->sdev_state == SDEV_CANCEL ||
-> +	    sdev->sdev_state == SDEV_DEL)
->  		err = SCSI_DH_NOSYS;
-> +	if (sdev->sdev_state == SDEV_OFFLINE)
-> +		err = SCSI_DH_DEV_OFFLINED;
->  	spin_unlock_irqrestore(q->queue_lock, flags);
-> 
-> -	if (err)
-> +	if (err) {
-> +		if (fn)
-> +			fn(data, err);
->  		return err;
-> +	}
-> 
->  	if (scsi_dh->activate)
->  		err = scsi_dh->activate(sdev, fn, data);
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index 32d0b87..93e6ce5 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -1214,7 +1214,7 @@ static int do_end_io(struct multipath *m, struct request *clone,
+>  	if (!error && !clone->errors)
+>  		return 0;	/* I/O complete */
+>  
+> -	if (error == -EOPNOTSUPP)
+> +	if (error == -EOPNOTSUPP || error == -EACCES)
+>  		return error;
+>  
+>  	if (mpio->pgpath)
+> diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+> index 1086552..5635035 100644
+> --- a/drivers/scsi/scsi_lib.c
+> +++ b/drivers/scsi/scsi_lib.c
+> @@ -797,6 +797,10 @@ void scsi_io_completion(struct scsi_cmnd *cmd, unsigned int good_bytes)
+>  		 * happens.
+>  		 */
+>  		action = ACTION_RETRY;
+> +	else if (status_byte(cmd->result) == RESERVATION_CONFLICT) {
+> +		error = -EACCES;
+> +		description = "Could not access device";
+> +		action = ACTION_FAIL;
+>  	} else if (sense_valid && !sense_deferred) {
+>  		switch (sshdr.sense_key) {
+>  		case UNIT_ATTENTION:
+> -- 
+> 1.6.2.2
+
+Hi Mike,
+
+Just a reminder that Hannes has proposed a slightly different approach
+(returning -EREMOTEIO instead of -EACCES).  Here is the version of
+Hannes' patch that I reviewed/rebased/tweaked last week:
+https://patchwork.kernel.org/patch/384612/
+
+(NOTE: the scsi_decide_disposition() change relative to
+RESERVATION_CONFLICT).
+
+And here is the corresponding DM mpath change:
+https://patchwork.kernel.org/patch/384602/
+
+If you agree with this approach your ack would be appreciated.
+
+Thanks,
+Mike
