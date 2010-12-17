@@ -1,79 +1,44 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: training mpath to discern between SCSI errors
-Date: Fri, 17 Dec 2010 10:47:33 +0100
-Message-ID: <4D0B31B5.101@suse.de>
-References: <20100825155918.GB8509@redhat.com> <4C7B984E.4070802@suse.de> <4C7B9F14.9080900@mvista.com> <4C7BA670.2060303@suse.de> <4C7BC5B4.3010707@suse.de> <4CBC00B3.7090603@ce.jp.nec.com> <4CBC35AE.9050002@suse.de> <20101119031149.GA28455@us.ibm.com> <20101130225956.GA8882@redhat.com>
+From: Jesper Juhl <jj@chaosbits.net>
+Subject: Re: [PATCH][rfc] md: Close mem leak in userspace_ctr()
+Date: Fri, 17 Dec 2010 13:18:55 +0100 (CET)
+Message-ID: <alpine.LNX.2.00.1012171315330.4638@swampdragon.chaosbits.net>
+References: <alpine.LNX.2.00.1012140034300.26491@swampdragon.chaosbits.net> <20101214221816.GA14227@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <20101130225956.GA8882@redhat.com>
-Sender: linux-ide-owner@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20101214221816.GA14227@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, michaelc@cs.wisc.edu, tytso@mit.edu, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, vst@vlnb.net, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, James.Bottomley@suse.de, Sergei Shtylyov <sshtylyov@mvista.com>, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, jack@suse.cz, rwheeler@redhat.com, swhiteho@redhat.com, chris.mason@oracle.com, Tejun Heo <tj@kernel.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 11/30/2010 11:59 PM, Mike Snitzer wrote:
-> On Thu, Nov 18 2010 at 10:11pm -0500,
-> Malahal Naineni <malahal@us.ibm.com> wrote:
->=20
->> Hannes Reinecke [hare@suse.de] wrote:
->>>> Also (although this might be a bit off topic from your patch),
->>>> can we expand such a distinction to what should be logged?
->>>> Currently, it's difficult to distinguish important SCSI/block erro=
-rs
->>>> and less important ones in kernel log.
->>>> For example, when I get a link failure on sda, kernel prints somet=
-hing
->>>> like below, regardless of whether the I/O is recovered by multipat=
-hing or not:
->>>>   end_request: I/O error, dev sda, sector XXXXX
->>>>
->>> Indeed, when using the above we could be modifying the above
->>> message, eg by
->>>
->>> end_request: transport error, dev sda, sector XXXXX
->>>
->>> or
->>>
->>> end_request: target error, dev sda, sector XXXXX
->>>
->>> which would improve the output noticeable.
->>>
->>>> Setting REQ_QUIET in dm-multipath could mask the message
->>>> but also other important ones in SCSI.
->>>>
->>> Hmm. Not sure about that, but I think the above modifications will
->>> be useful already.
->>>
->>> I'll be sending an updated patch.
->>
->> Hannes, is there an updated version of this patch? It applied fine w=
-ith
->> Linus git tree with a minor reject! I would like to test an updated
->> version if you have one (the update seems to refer to better logging
->> only, right?).
->=20
-> Hannes,
->=20
-> Any chance you've had time to fold your proposed logging changes in a=
-nd
-> rebase this patch?  Could you post that updated patch?
->=20
-yes, will be following shortly.
+On Tue, 14 Dec 2010, Mike Snitzer wrote:
 
-> I'd like to help see this patch through to inclussion when 2.6.38 mer=
-ge
-> window opens.  I can help with further review, testing and developmen=
-t.
->=20
-Ok, thanks.
+> On Mon, Dec 13 2010 at  6:40pm -0500,
+> Jesper Juhl <jj@chaosbits.net> wrote:
+> 
+> > Hi,
+> > 
+> > There's a small memory leak in 
+> > drivers/md/dm-log-userspace-base.c::userspace_ctr().
+> > 
+> > The call to build_constructor_string() dynamically allocates memory for 
+> > its last argument, but we do not always clean up that allocated memory.
+> 
+> I'm not seeing a leak.
+> 
+> The kfree() that you've added to the build_constructor_string() failure
+> path isn't needed because build_constructor_string() only returns error
+> if the kzalloc() failed.
+> 
 
-Cheers,
+Hmm, that's true, assuming that there are no bugs (and never will be) in 
+strlen() or sprintf() that result in 'str_size' becoming negative the code 
+is safe. That's probably a safe assumption ;-)
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+Sorry about the noise.
+
+-- 
+Jesper Juhl <jj@chaosbits.net>            http://www.chaosbits.net/
+Don't top-post http://www.catb.org/~esr/jargon/html/T/top-post.html
+Plain text mails only, please.
