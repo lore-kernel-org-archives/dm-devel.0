@@ -1,88 +1,62 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: reproducer for DM on MD flush deadlock? (was: Re: [PULL
- REQUEST] md bug fixes)
-Date: Sat, 18 Dec 2010 08:01:58 +1100
-Message-ID: <20101218080158.58e17c21@notabene.brown>
-References: <AANLkTi=H3-GrEZVWzmHyHvyx93HU6x=t_n6TBqCiEwxX@mail.gmail.com>
+From: Kent Overstreet <kent.overstreet@gmail.com>
+Subject: Trying to figure out how/whether to use device mapper
+	with bcache
+Date: Sat, 18 Dec 2010 01:56:22 -0800
+Message-ID: <4D0C8546.7010702@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <AANLkTi=H3-GrEZVWzmHyHvyx93HU6x=t_n6TBqCiEwxX@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 17 Dec 2010 13:13:47 -0500 Mike Snitzer <snitzer@redhat.com> wr=
-ote:
+If you haven't seen it, bcache is a patch to cache arbitrary block
+devices with your SSD: http://bcache.evilpiepirate.org
 
-> On Tue, Dec 14, 2010 at 2:22 AM, Neil Brown <neilb@suse.de> wrote:
-> >
-> >
-> > Hi Linus,
-> > =A0here are a few bug fixes for md.
-> > =A0Some of the patches are actually clean-up rather than bug-fix,
-> > =A0but I that make the bugfix simpler to review.
-> >
-> > Thanks,
-> > NeilBrown
-> >
-> >
-> > The following changes since commit 6313e3c21743cc88bb5bd8aa72948ee1=
-e83937b6:
-> >
-> > =A0Merge branches 'x86-fixes-for-linus', 'perf-fixes-for-linus' and=
- 'sched-fixes-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/g=
-it/tip/linux-2.6-tip (2010-12-08 06:40:59 -0800)
-> >
-> > are available in the git repository at:
-> >
-> > =A0git://neil.brown.name/md/ for-linus
-> >
-> > NeilBrown (5):
-> > =A0 =A0 =A0md: remove handling of flush_pending in md_submit_flush_=
-data
-> > =A0 =A0 =A0md: move code in to submit_flushes.
-> > =A0 =A0 =A0md: fix possible deadlock in handling flush requests.
->=20
-> Hi Neil,
->=20
-> Thanks for fixing this DM on MD flush issue.  But my attempts to
-> reproduce it have been unsuccessful.
->=20
-> I've tried ext4 w/ barriers to a DM device above a 2 member MD RAID1.
-> The DM device has a table with 2 linear targets to the same md0
-> device:
->=20
-> # dmsetup table
-> multiple_targets: 0 24576 linear 9:0 2048
-> multiple_targets: 24576 49152 linear 9:0 26624
->=20
-> No amount of IO with flushes has enabled me to hit a deadlock (in
-> md_flush_request,  md_write_start, etc).
->=20
-> Do you have a simple reproducer for this issue?
+It currently does the actual caching via a hook in
+__generic_make_request(). This means you can transparently enable and
+disable caching on a block device while it's mounted and in use, and you
+don't have to change anything else to use caching... It's all quite
+handy, but the hooks themselves were a dirty hack and need to be gotten
+rid of.
 
-No.  I think the issue is very sensitive to the exact placement of the =
-border
-between the two dm targets.  You need to be able to produce a flush req=
-uest
-that crosses that border.
+It doesn't look like it's going to be possible to do the transparent
+part in a way that'll be suitable for mainline any time soon... not
+without deep surgery, at least not on arbitrary block devices. That's
+not the end of the world though, it's not a vital feature - you don't
+want transparent caching if you don't need it, so you don't accidentally
+use your backing device without the cache and make the cache go stale or
+worse, use it when the cache has dirty data in it.
 
-So to reproduce it I would:
+So all I really need is a way, from bcache, to create a new block device
+when it opens a backing device. It doesn't even have to be a dm device,
+I just want whatever's going to be simplest at this point... But after
+quite a bit of time looking through various headers and other code, I
+still haven't figured out how to do this with device mapper, nor have I
+even found a basic glossary for the dm specific terms. Maybe I've gotten
+lazy, but I would really appreciate someone pointing me in the right
+direction :)
 
- Create an ext4 filesystem of some known size.
- Impose some simple easily reproducible load and use e.g. blktrace to g=
-ets a
- log of the flush requests.
- Choose on such request that is larger than a sector and note it's loca=
-tion
- Create a DM device of the same size with two targets on md devices whe=
-re the
- first target ends in the middle of where the flush request was
- Repeat the above sequence on the dm device.  That should result in a f=
-lush
- request overlapping both targets and thus triggering the issue.
+Further off, I'm planning on adding volume management to bcache, to do
+thin provisioning and tiered storage. The idea is that I've got this
+index I have to consult for every IO to do caching... may as well put
+the index for the backing device in the same btree, won't be any extra
+runtime overhead and I should be able to reuse the allocator and other
+bits too.
 
-NeilBrown
+The implementation looks plenty straightforward, but I don't have any
+burning desire to implement a bunch of stuff from scratch that lives in
+isolation. I don't really know anything about the implementation of LVM
+or the existing DM userspace interface, but if it'd be possible for it
+to play nicely with existing stuff I'm all for that. So if anyone's got
+any input on how to achieve that, I'm all ears :)
