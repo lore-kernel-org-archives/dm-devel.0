@@ -1,13 +1,14 @@
-From: Miles Taylor <Miles.Taylor@maxim-ic.com>
-Subject: mpath_ctl syntax
-Date: Fri, 17 Dec 2010 18:44:15 -0600
-Message-ID: <FD82D8ED07BC7248BA2BC888CD8736BF07CD607AD5@ITDALEX06.it.maxim-ic.internal>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: add allow users to set revision
+	in	multipath.conf
+Date: Mon, 20 Dec 2010 00:02:09 -0600
+Message-ID: <20101220060209.GN25172@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,21 +18,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Am I correct in assuming that mpath_ctl can remove a single path from an multipath device that consists of four paths?  
+Since multipath is able to select hardware entries based on the revision
+parameter, users should be allowed to set it in their devices configurations.
 
-If so, would someone let me know what the syntax is or where I can find documentation for mpath_ctl?   I've tried multiple permutations of what mpath_ctl says it wants when run with no arguments without luck.  
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/dict.c        |   28 ++++++++++++++++++++++++++++
+ multipath/multipath.conf.5 |    5 ++++-
+ 2 files changed, 32 insertions(+), 1 deletion(-)
 
-I've tried 
-
-mpath_ctl remove map dm-110
-mpath_ctl remove map mpath71
-mpath_ctl remove path sdz
-
-as well as others
-
-If this is not the correct forum would you please point me in the correct direction?
-
-Thanks.
+Index: multipath-tools-101104/libmultipath/dict.c
+===================================================================
+--- multipath-tools-101104.orig/libmultipath/dict.c
++++ multipath-tools-101104/libmultipath/dict.c
+@@ -730,6 +730,22 @@ product_handler(vector strvec)
+ }
+ 
+ static int
++revision_handler(vector strvec)
++{
++	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
++
++	if (!hwe)
++		return 1;
++
++	hwe->revision = set_value(strvec);
++
++	if (!hwe->revision)
++		return 1;
++
++	return 0;
++}
++
++static int
+ bl_product_handler(vector strvec)
+ {
+ 	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
+@@ -1617,6 +1633,17 @@ snprint_hw_product (char * buff, int len
+ }
+ 
+ static int
++snprint_hw_revision (char * buff, int len, void * data)
++{
++	struct hwentry * hwe = (struct hwentry *)data;
++
++	if (!hwe->revision)
++		return 0;
++
++	return snprintf(buff, len, "\"%s\"", hwe->revision);
++}
++
++static int
+ snprint_hw_bl_product (char * buff, int len, void * data)
+ {
+ 	struct hwentry * hwe = (struct hwentry *)data;
+@@ -2212,6 +2239,7 @@ init_keywords(void)
+ 	install_sublevel();
+ 	install_keyword("vendor", &vendor_handler, &snprint_hw_vendor);
+ 	install_keyword("product", &product_handler, &snprint_hw_product);
++	install_keyword("revision", &revision_handler, &snprint_hw_revision);
+ 	install_keyword("product_blacklist", &bl_product_handler, &snprint_hw_bl_product);
+ 	install_keyword("path_grouping_policy", &hw_pgpolicy_handler, &snprint_hw_path_grouping_policy);
+ 	install_keyword("getuid_callout", &hw_getuid_callout_handler, &snprint_hw_getuid_callout);
+Index: multipath-tools-101104/multipath/multipath.conf.5
+===================================================================
+--- multipath-tools-101104.orig/multipath/multipath.conf.5
++++ multipath-tools-101104/multipath/multipath.conf.5
+@@ -406,8 +406,11 @@ subsection recognizes the following attr
+ .B product
+ (Mandatory) Product identifier
+ .TP
++.B revision
++(Optional) Revision identfier
++.TP
+ .B product_blacklist
+-Product strings to blacklist for this vendor
++(Optional) Product strings to blacklist for this vendor
+ .TP
+ .B hardware_handler
+ (Optional) The hardware handler to use for this device type.
