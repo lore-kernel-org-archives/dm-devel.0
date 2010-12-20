@@ -1,172 +1,54 @@
-From: Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [ANNOUNCE] cryptsetup 1.2.0
-Date: Mon, 20 Dec 2010 13:41:42 +0100
-Message-ID: <4D0F4F06.1030300@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: update workqueue usages
+Date: Mon, 20 Dec 2010 09:14:48 -0500
+Message-ID: <20101220141448.GA27280@redhat.com>
+References: <1292181055-25696-1-git-send-email-tj@kernel.org>
+	<4D053D49.1010605@redhat.com> <4D079205.3010204@kernel.org>
+	<20101214160324.GB7944@redhat.com> <4D0795B2.7010606@kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://www.saout.de/pipermail/dm-crypt>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4D0795B2.7010606@kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Tejun Heo <tj@kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On Tue, Dec 14 2010 at 11:05am -0500,
+Tejun Heo <tj@kernel.org> wrote:
 
-The stable cryptsetup 1.2.0 release is available at
+> Hello,
+> 
+> On 12/14/2010 05:03 PM, Mike Snitzer wrote:
+> > I'll be reviewing your workqueue patches today.  I can take care of
+> > rebasing the patches as needed ontop of Alasdair's quilt tree (up to
+> > dm-raid1-support-discard.patch):
+> > http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/series
+> > 
+> > Once I've folded your patches in I will share the url for resulting
+> > quilt tree.
+> 
+> Thanks.  I'll hold off for now then.
 
-   http://code.google.com/p/cryptsetup/
+Hi Tejun,
 
-Feedback and bug reports are welcomed.
+I've refreshed your patches, tweaked the patch headers and subjects a
+bit and added my Signed-off-by.  I've staged them in a quilt tree for
+Alasdair to pick up here:
+http://people.redhat.com/msnitzer/patches/upstream/for-agk/series.html
 
-Milan
-mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+(your patches are at the end, 0005-0010).
 
-
-Cryptsetup 1.2.0 Release Notes
-==============================
-
-Changes since version 1.2.0-rc1
-
- * Fix crypt_activate_by_keyfile() to work with PLAIN devices.
- * Fix plain create command to properly handle keyfile size.
- * Update translations.
-
-Changes since version 1.1.3
-
-Important changes
-~~~~~~~~~~~~~~~~~
-
- * Add text version of *FAQ* (Frequently Asked Questions) to distribution.
-
- * Add selection of random/urandom number generator for luksFormat
- (option --use-random and --use-urandom).
-
- (This affects only long term volume key in *luksFormat*,
- not RNG used for salt and AF splitter).
-
-  You can also set the default to /dev/random during compilation with
-  --enable-dev-random. Compiled-in default is printed in --help output.
-
-  Be very careful before changing default to blocking /dev/random use here.
-
- * Fix *luksRemoveKey* to not ask for remaining keyslot passphrase,
- only for removed one.
-
- * No longer support *luksDelKey* (replaced with luksKillSlot).
-  * if you want to remove particular passphrase, use *luksKeyRemove*
-  * if you want to remove particular keyslot, use *luksKillSlot*
-
- Note that in batch mode *luksKillSlot* allows removing of any keyslot
- without question, in normal mode requires passphrase or keyfile from
- other keyslot.
-
- * *Default alignment* for device (if not overridden by topology info)
- is now (multiple of) *1MiB*.
- This reflects trends in storage technologies and aligns to the same
- defaults for partitions and volume management.
-
- * Allow explicit UUID setting in *luksFormat* and allow change it later
- in *luksUUID* (--uuid parameter).
-
- * All commands using key file now allows limited read from keyfile using
- --keyfile-size and --new-keyfile-size parameters (in bytes).
-
- This change also disallows overloading of --key-size parameter which
- is now exclusively used for key size specification (in bits.)
-
- * *luksFormat* using pre-generated master key now properly allows
- using key file (only passphrase was allowed prior to this update).
-
- * Add --dump-master-key option for *luksDump* to perform volume (master)
- key dump. Note that printed information allows accessing device without
- passphrase so it must be stored encrypted.
-
- This operation is useful for simple Key Escrow function (volume key and
- encryption parameters printed on paper on safe place).
-
- This operation requires passphrase or key file.
-
- * The reload command is no longer supported.
- (Use dmsetup reload instead if needed. There is no real use for this
- function except explicit data corruption:-)
-
- * Cryptsetup now properly checks if underlying device is in use and
- disallows *luksFormat*, *luksOpen* and *create* commands on open
- (e.g. already mapped or mounted) device.
-
- * Option --non-exclusive (already deprecated) is removed.
-
-Libcryptsetup API additions:
-
- * new functions
-  * crypt_get_type() - explicit query to crypt device context type
-  * crypt_resize() - new resize command using context
-  * crypt_keyslot_max() - helper to get number of supported keyslots
-  * crypt_get_active_device() - get active device info
-  * crypt_set/get_rng_type() - random/urandom RNG setting
-  * crypt_set_uuid() - explicit UUID change of existing device
-  * crypt_get_device_name() - get underlying device name
-
- * Fix optional password callback handling.
-
- * Allow to activate by internally cached volume key immediately after
- crypt_format() without active slot (for temporary devices with
- on-disk metadata)
-
- * libcryptsetup is binary compatible with 1.1.x release and still
- supports legacy API calls
-
- * cryptsetup binary now uses only new API calls.
-
- * Static compilation of both library (--enable-static) and cryptsetup
- binary (--enable-static-cryptsetup) is now properly implemented by common
- libtool logic.
-
- Prior to this it produced miscompiled dynamic cryptsetup binary with
- statically linked libcryptsetup.
-
- The static binary is compiled as src/cryptsetup.static in parallel
- with dynamic build if requested.
-
-Other changes
-~~~~~~~~~~~~~
- * Fix default plain password entry from terminal in activate_by_passphrase.
- * Initialize volume key from active device in crypt_init_by_name()
- * Fix cryptsetup binary exit codes.
-   0 - success, otherwise fail
-   1 - wrong parameters
-   2 - no permission
-   3 - out of memory
-   4 - wrong device specified
-   5 - device already exists or device is busy
- * Remove some obsolete info from man page.
- * Add more regression tests for commands.
- * Fix possible double free when handling master key file.
- * Fix pkg-config use in automake scripts.
- * Wipe iteration and salt after luksKillSlot in LUKS header.
- * Rewrite file differ test to C (and fix it to really work).
- * Do not query non-existent device twice (cryptsetup status /dev/nonexistent).
- * Check if requested hash is supported before writing LUKS header.
- * Fix problems reported by clang scan-build.
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.10 (GNU/Linux)
-
-iEYEARECAAYFAk0PTwYACgkQf1Jlc7shgi+sLQCfWcBluCbSPb0IrDz5lAqyW+qK
-FL0An009iGV5/In9RRRqJZWuufnCiQU8
-=InBh
------END PGP SIGNATURE-----
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-http://www.saout.de/mailman/listinfo/dm-crypt
+Thanks,
+Mike
