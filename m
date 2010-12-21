@@ -1,8 +1,7 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH 5/7] dm crypt: redefine IV generator function and
-	add post IV call
-Date: Tue, 21 Dec 2010 16:28:17 +0100
-Message-ID: <3f1f72e99321e472c29d3b8bb47f03b5a5468358.1292944625.git.mbroz@redhat.com>
+Subject: [PATCH 7/7] [RFC]dm crypt: add loop-aes LMK IV generator
+Date: Tue, 21 Dec 2010 16:28:19 +0100
+Message-ID: <835cd3199623a472a627f143ce6573b064d0c5a8.1292944625.git.mbroz@redhat.com>
 References: <cover.1292944625.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,183 +21,282 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>
+Cc: Max Vozeler <max@hinterhof.net>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-IV (initialisation vector) can in principle depend not only
-on sector but also on plaintext data (or other attributes).
+This IV is designed by Jari Ruusu and is used
+in loop-aes package.
 
-Change IV generator interface to work directly with dmreq
-structure to allow such dependence in generator.
+This patch just adds compatibility mode to dmcrypt
+for this IV scheme.
 
-Also add post() function which is called after the crypto
-operation.
+(N.B it is not meant as loop-aes replacement which
+here provides better perfomance but just to provide
+compatible mappings for people which are unable to patch
+kernel and userspace to access loop-aes devices.)
 
-This allows tricky modification of decrypted data or IV
-internals. (If not suitable directly in crypto API.)
+loop-aes can use three encryption schemes:
+ version 1: is plain aes-cbc mode (already compatible)
+ version 2: uses 64 multikey scheme with LMK IV
+ version 3: the same as version 2 with additional IV seed
+ (so v3 uses 65 keys, last key is used as IV seed)
 
-In asynchronous mode the post() can be called after
-ctx->sector count was increased so it is needed
-to add iv_sector copy directly to dmreq structure.
-(N.B. dmreq always include only one sector in scatterlists)
+For v2/3 the cipher specification looks like: aes:64-cbc-lmk
+
+In fact, LMK is not only IV generator but also slight
+modification to CBC encryption mode - the first block
+of CBC mode depends not only on sector and optional
+IV seed, but also on plainext data of this sector.
+
+This means that after decryption the first block of sector
+must be tweaked according to decrypted data.
+
+The format of key is just hexa encoded "raw key"
+used in loop-aes ioctl.
+
+There is needed small userspace utility which gpg decrypts
+the file with key and performs simple hash operation to generate
+raw keys.
+(It will be added to cryptsetup once if this patch is accepted.)
+
+Code is inspired by Max Vozeler cryptoAPI implementation
+(which was not accepted some time ago.)
 
 Signed-off-by: Milan Broz <mbroz@redhat.com>
+CC: Max Vozeler <max@hinterhof.net>
 ---
- drivers/md/dm-crypt.c |   48 +++++++++++++++++++++++++++++++++++-------------
- 1 files changed, 35 insertions(+), 13 deletions(-)
+ drivers/md/dm-crypt.c |  184 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 183 insertions(+), 1 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 863e412..451a743 100644
+index 3b9d3a0..c36b977 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -64,6 +64,7 @@ struct dm_crypt_request {
- 	struct convert_context *ctx;
- 	struct scatterlist sg_in;
- 	struct scatterlist sg_out;
-+	sector_t iv_sector;
+@@ -23,6 +23,9 @@
+ #include <linux/scatterlist.h>
+ #include <asm/page.h>
+ #include <asm/unaligned.h>
++#include <crypto/hash.h>
++#include <crypto/md5.h>
++#include <crypto/algapi.h>
+ 
+ #include <linux/device-mapper.h>
+ 
+@@ -90,6 +93,12 @@ struct iv_benbi_private {
+ 	int shift;
  };
  
- struct crypt_config;
-@@ -74,7 +75,10 @@ struct crypt_iv_operations {
- 	void (*dtr)(struct crypt_config *cc);
- 	int (*init)(struct crypt_config *cc);
- 	int (*wipe)(struct crypt_config *cc);
--	int (*generator)(struct crypt_config *cc, u8 *iv, sector_t sector);
-+	int (*generator)(struct crypt_config *cc, u8 *iv,
-+			 struct dm_crypt_request *dmreq);
-+	int (*post)(struct crypt_config *cc, u8 *iv,
-+		    struct dm_crypt_request *dmreq);
- };
- 
- struct iv_essiv_private {
-@@ -166,6 +170,7 @@ static struct kmem_cache *_crypt_io_pool;
- 
- static void clone_init(struct dm_crypt_io *, struct bio *);
- static void kcryptd_queue_crypt(struct dm_crypt_io *io);
-+static u8 *iv_of_dmreq(struct crypt_config *cc, struct dm_crypt_request *dmreq);
- 
- static struct crypt_cpu *crypt_me(struct crypt_config *cc)
- {
-@@ -204,19 +209,20 @@ static struct crypto_ablkcipher *any_tfm(struct crypt_config *cc)
-  * http://article.gmane.org/gmane.linux.kernel.device-mapper.dm-crypt/454
-  */
- 
--static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
-+static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv,
-+			      struct dm_crypt_request *dmreq)
- {
- 	memset(iv, 0, cc->iv_size);
--	*(u32 *)iv = cpu_to_le32(sector & 0xffffffff);
-+	*(u32 *)iv = cpu_to_le32(dmreq->iv_sector & 0xffffffff);
- 
++#define LMK_SEED_SIZE 64 /* hash + 0 */
++struct iv_lmk_private {
++	struct crypto_shash *hash_tfm;
++	u8 *seed;
++};
++
+ /*
+  * Crypt: maps a linear range of a block device
+  * and encrypts / decrypts at the same time.
+@@ -131,6 +140,7 @@ struct crypt_config {
+ 	union {
+ 		struct iv_essiv_private essiv;
+ 		struct iv_benbi_private benbi;
++		struct iv_lmk_private lmk;
+ 	} iv_gen_private;
+ 	sector_t iv_offset;
+ 	unsigned int iv_size;
+@@ -446,6 +456,164 @@ static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv,
  	return 0;
  }
  
- static int crypt_iv_plain64_gen(struct crypt_config *cc, u8 *iv,
--				sector_t sector)
-+				struct dm_crypt_request *dmreq)
- {
- 	memset(iv, 0, cc->iv_size);
--	*(u64 *)iv = cpu_to_le64(sector);
-+	*(u64 *)iv = cpu_to_le64(dmreq->iv_sector);
- 
- 	return 0;
- }
-@@ -379,12 +385,13 @@ bad:
- 	return err;
- }
- 
--static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
-+static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv,
-+			      struct dm_crypt_request *dmreq)
- {
- 	struct crypto_cipher *essiv_tfm = crypt_me(cc)->iv_private;
- 
- 	memset(iv, 0, cc->iv_size);
--	*(u64 *)iv = cpu_to_le64(sector);
-+	*(u64 *)iv = cpu_to_le64(dmreq->iv_sector);
- 	crypto_cipher_encrypt_one(essiv_tfm, iv, iv);
- 	return 0;
- }
-@@ -417,19 +424,21 @@ static void crypt_iv_benbi_dtr(struct crypt_config *cc)
- {
- }
- 
--static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
-+static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *iv,
-+			      struct dm_crypt_request *dmreq)
- {
- 	__be64 val;
- 
- 	memset(iv, 0, cc->iv_size - sizeof(u64)); /* rest is cleared below */
- 
--	val = cpu_to_be64(((u64)sector << cc->iv_gen_private.benbi.shift) + 1);
-+	val = cpu_to_be64(((u64)dmreq->iv_sector << cc->iv_gen_private.benbi.shift) + 1);
- 	put_unaligned(val, (__be64 *)(iv + cc->iv_size - sizeof(u64)));
- 
- 	return 0;
- }
- 
--static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
-+static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv,
-+			     struct dm_crypt_request *dmreq)
- {
- 	memset(iv, 0, cc->iv_size);
- 
-@@ -489,6 +498,13 @@ static struct ablkcipher_request *req_of_dmreq(struct crypt_config *cc,
- 	return (struct ablkcipher_request *)((char *)dmreq - cc->dmreq_start);
- }
- 
-+static u8 *iv_of_dmreq(struct crypt_config *cc,
-+		       struct dm_crypt_request *dmreq)
++static void crypt_iv_lmk_dtr(struct crypt_config *cc)
 +{
-+	return (u8 *)ALIGN((unsigned long)(dmreq + 1),
-+		crypto_ablkcipher_alignmask(any_tfm(cc)) + 1);
++	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
++
++	if (lmk->hash_tfm && !IS_ERR(lmk->hash_tfm))
++		crypto_free_shash(lmk->hash_tfm);
++	lmk->hash_tfm = NULL;
++
++	kzfree(lmk->seed);
++	lmk->seed = NULL;
 +}
 +
- static int crypt_convert_block(struct crypt_config *cc,
++static int crypt_iv_lmk_ctr(struct crypt_config *cc, struct dm_target *ti,
++			    const char *opts)
++{
++	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
++
++	lmk->hash_tfm = crypto_alloc_shash("md5", 0, 0);
++	if (IS_ERR(lmk->hash_tfm)) {
++		ti->error = "Error initializing LMK hash";
++		return PTR_ERR(lmk->hash_tfm);
++	}
++
++	/* No seed in LMK version 2 */
++	if (cc->key_parts == cc->tfms_count) {
++		lmk->seed = NULL;
++		return 0;
++	}
++
++	lmk->seed = kzalloc(LMK_SEED_SIZE, GFP_KERNEL);
++	if (!lmk->seed) {
++		crypt_iv_lmk_dtr(cc);
++		ti->error = "Error kmallocing seed storage in LMK";
++		return -ENOMEM;
++	}
++
++	return 0;
++}
++
++static int crypt_iv_lmk_init(struct crypt_config *cc)
++{
++	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
++	int subkey_size = cc->key_size / cc->key_parts;
++
++	/* LMK seed is on the position of LMK_KEYS + 1 key */
++	if (lmk->seed)
++		memcpy(lmk->seed, cc->key + (cc->tfms_count * subkey_size),
++		       crypto_shash_digestsize(lmk->hash_tfm));
++
++	return 0;
++}
++
++static int crypt_iv_lmk_wipe(struct crypt_config *cc)
++{
++	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
++
++	if (lmk->seed)
++		memset(lmk->seed, 0, LMK_SEED_SIZE);
++
++	return 0;
++}
++
++static inline void cpu_to_le32_array(u32 *buf, unsigned int words)
++{
++	while (words--) {
++		__cpu_to_le32s(buf);
++		buf++;
++	}
++}
++
++static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
++			    struct dm_crypt_request *dmreq,
++			    u8 *data)
++{
++	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
++	struct {
++		struct shash_desc desc;
++		char ctx[crypto_shash_descsize(lmk->hash_tfm)];
++	} sdesc;
++	struct md5_state md5state;
++	u32 buf[4];
++	int r;
++
++	sdesc.desc.tfm = lmk->hash_tfm;
++	sdesc.desc.flags = CRYPTO_TFM_REQ_MAY_SLEEP;
++
++	r = crypto_shash_init(&sdesc.desc);
++	if (r)
++		return r;
++
++	if (lmk->seed) {
++		r = crypto_shash_update(&sdesc.desc, lmk->seed, LMK_SEED_SIZE);
++		if (r)
++			return r;
++	}
++
++	/* Sector is always 512B, block size 16, add data of blocks 1-31 */
++	r = crypto_shash_update(&sdesc.desc, data + 16, 16 * 31);
++	if (r)
++		return r;
++
++	/* Sector is cropped to 56 bits here */
++	buf[0] = dmreq->iv_sector & 0xFFFFFFFF;
++	buf[1] = ((dmreq->iv_sector >> 32) & 0x00FFFFFF) | 0x80000000;
++	buf[2] = 4024;
++	buf[3] = 0;
++	cpu_to_le32_array(buf, 4);
++
++	r = crypto_shash_update(&sdesc.desc, (u8 *)buf, sizeof(buf));
++	if (r)
++		return r;
++
++	/* No MD5 padding here */
++	r = crypto_shash_export(&sdesc.desc, &md5state);
++	if (r)
++		return r;
++
++	cpu_to_le32_array(md5state.hash, 4);
++	memcpy(iv, &md5state.hash, cc->iv_size);
++	return 0;
++}
++
++static int crypt_iv_lmk_gen(struct crypt_config *cc, u8 *iv,
++			    struct dm_crypt_request *dmreq)
++{
++	u8 *src;
++	int r = 0;
++
++	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
++		src = kmap_atomic(sg_page(&dmreq->sg_in), KM_USER0);
++		r = crypt_iv_lmk_one(cc, iv, dmreq, src + dmreq->sg_in.offset);
++		kunmap_atomic(src, KM_USER0);
++	} else
++		memset(iv, 0, cc->iv_size);
++
++	return r;
++}
++
++static int crypt_iv_lmk_post(struct crypt_config *cc, u8 *iv,
++			     struct dm_crypt_request *dmreq)
++{
++	u8 *dst;
++	int r;
++
++	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE)
++		return 0;
++
++	dst = kmap_atomic(sg_page(&dmreq->sg_out), KM_USER0);
++	r = crypt_iv_lmk_one(cc, iv, dmreq, dst + dmreq->sg_out.offset);
++
++	/* Code must fix the first block of plaintext sector */
++	if (!r)
++		crypto_xor(dst + dmreq->sg_out.offset, iv, cc->iv_size);
++
++	kunmap_atomic(dst, KM_USER0);
++	return r;
++}
++
+ static struct crypt_iv_operations crypt_iv_plain_ops = {
+ 	.generator = crypt_iv_plain_gen
+ };
+@@ -472,6 +640,15 @@ static struct crypt_iv_operations crypt_iv_null_ops = {
+ 	.generator = crypt_iv_null_gen
+ };
+ 
++static struct crypt_iv_operations crypt_iv_lmk_ops = {
++	.ctr	   = crypt_iv_lmk_ctr,
++	.dtr	   = crypt_iv_lmk_dtr,
++	.init	   = crypt_iv_lmk_init,
++	.wipe	   = crypt_iv_lmk_wipe,
++	.generator = crypt_iv_lmk_gen,
++	.post	   = crypt_iv_lmk_post
++};
++
+ static void crypt_convert_init(struct crypt_config *cc,
  			       struct convert_context *ctx,
- 			       struct ablkcipher_request *req)
-@@ -500,9 +516,9 @@ static int crypt_convert_block(struct crypt_config *cc,
- 	int r = 0;
- 
- 	dmreq = dmreq_of_req(cc, req);
--	iv = (u8 *)ALIGN((unsigned long)(dmreq + 1),
--			 crypto_ablkcipher_alignmask(any_tfm(cc)) + 1);
-+	iv = iv_of_dmreq(cc, dmreq);
- 
-+	dmreq->iv_sector = ctx->sector;
- 	dmreq->ctx = ctx;
- 	sg_init_table(&dmreq->sg_in, 1);
- 	sg_set_page(&dmreq->sg_in, bv_in->bv_page, 1 << SECTOR_SHIFT,
-@@ -525,7 +541,7 @@ static int crypt_convert_block(struct crypt_config *cc,
- 	}
- 
- 	if (cc->iv_gen_ops) {
--		r = cc->iv_gen_ops->generator(cc, iv, ctx->sector);
-+		r = cc->iv_gen_ops->generator(cc, iv, dmreq);
- 		if (r < 0)
- 			return r;
- 	}
-@@ -538,6 +554,9 @@ static int crypt_convert_block(struct crypt_config *cc,
- 	else
- 		r = crypto_ablkcipher_decrypt(req);
- 
-+	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
-+		r = cc->iv_gen_ops->post(cc, iv, dmreq);
-+
- 	return r;
- }
- 
-@@ -1003,6 +1022,9 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
- 		return;
- 	}
- 
-+	if (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
-+		error = cc->iv_gen_ops->post(cc, iv_of_dmreq(cc, dmreq), dmreq);
-+
- 	mempool_free(req_of_dmreq(cc, dmreq), cc->req_pool);
- 
- 	if (!atomic_dec_and_test(&ctx->pending))
+ 			       struct bio *bio_out, struct bio *bio_in,
+@@ -1349,7 +1526,12 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 		cc->iv_gen_ops = &crypt_iv_benbi_ops;
+ 	else if (strcmp(ivmode, "null") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_null_ops;
+-	else {
++	else if (strcmp(ivmode, "lmk") == 0) {
++		cc->iv_gen_ops = &crypt_iv_lmk_ops;
++		/* loop-aes multikey version 3 - last key used for IV seed */
++		if (cc->key_size % cc->key_parts)
++			cc->key_parts++;
++	} else {
+ 		ret = -EINVAL;
+ 		ti->error = "Invalid IV mode";
+ 		goto bad;
 -- 
 1.7.2.3
