@@ -1,8 +1,8 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH 1/7] dm crypt: fix per cpu struct dereference in
-	destructor
-Date: Tue, 21 Dec 2010 16:28:13 +0100
-Message-ID: <c718a9b949f971d43980ec91e55b3111aac5c7fa.1292944625.git.mbroz@redhat.com>
+Subject: [PATCH 5/7] dm crypt: redefine IV generator function and
+	add post IV call
+Date: Tue, 21 Dec 2010 16:28:17 +0100
+Message-ID: <3f1f72e99321e472c29d3b8bb47f03b5a5468358.1292944625.git.mbroz@redhat.com>
 References: <cover.1292944625.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,81 +25,180 @@ To: dm-devel@redhat.com
 Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-If destructor is called early (e.g. wrong cipher format)
-the destructor tries to access nonexistent per cpu struct
-and causes OOps.
+IV (initialisation vector) can in principle depend not only
+on sector but also on plaintext data (or other attributes).
 
-Patch adds check for struct existence (and simplifies
-tfm destructor as well).
+Change IV generator interface to work directly with dmreq
+structure to allow such dependence in generator.
 
-(introduced in per cpu patch)
+Also add post() function which is called after the crypto
+operation.
+
+This allows tricky modification of decrypted data or IV
+internals. (If not suitable directly in crypto API.)
+
+In asynchronous mode the post() can be called after
+ctx->sector count was increased so it is needed
+to add iv_sector copy directly to dmreq structure.
+(N.B. dmreq always include only one sector in scatterlists)
 
 Signed-off-by: Milan Broz <mbroz@redhat.com>
 ---
- drivers/md/dm-crypt.c |   30 ++++++++----------------------
- 1 files changed, 8 insertions(+), 22 deletions(-)
+ drivers/md/dm-crypt.c |   48 +++++++++++++++++++++++++++++++++++-------------
+ 1 files changed, 35 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 98a7ad0..6aeb1fe 100644
+index 863e412..451a743 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -1088,7 +1088,6 @@ static int crypt_setkey_allcpus(struct crypt_config *cc)
+@@ -64,6 +64,7 @@ struct dm_crypt_request {
+ 	struct convert_context *ctx;
+ 	struct scatterlist sg_in;
+ 	struct scatterlist sg_out;
++	sector_t iv_sector;
+ };
+ 
+ struct crypt_config;
+@@ -74,7 +75,10 @@ struct crypt_iv_operations {
+ 	void (*dtr)(struct crypt_config *cc);
+ 	int (*init)(struct crypt_config *cc);
+ 	int (*wipe)(struct crypt_config *cc);
+-	int (*generator)(struct crypt_config *cc, u8 *iv, sector_t sector);
++	int (*generator)(struct crypt_config *cc, u8 *iv,
++			 struct dm_crypt_request *dmreq);
++	int (*post)(struct crypt_config *cc, u8 *iv,
++		    struct dm_crypt_request *dmreq);
+ };
+ 
+ struct iv_essiv_private {
+@@ -166,6 +170,7 @@ static struct kmem_cache *_crypt_io_pool;
+ 
+ static void clone_init(struct dm_crypt_io *, struct bio *);
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io);
++static u8 *iv_of_dmreq(struct crypt_config *cc, struct dm_crypt_request *dmreq);
+ 
+ static struct crypt_cpu *crypt_me(struct crypt_config *cc)
+ {
+@@ -204,19 +209,20 @@ static struct crypto_ablkcipher *any_tfm(struct crypt_config *cc)
+  * http://article.gmane.org/gmane.linux.kernel.device-mapper.dm-crypt/454
+  */
+ 
+-static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
++static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv,
++			      struct dm_crypt_request *dmreq)
+ {
+ 	memset(iv, 0, cc->iv_size);
+-	*(u32 *)iv = cpu_to_le32(sector & 0xffffffff);
++	*(u32 *)iv = cpu_to_le32(dmreq->iv_sector & 0xffffffff);
+ 
+ 	return 0;
+ }
+ 
+ static int crypt_iv_plain64_gen(struct crypt_config *cc, u8 *iv,
+-				sector_t sector)
++				struct dm_crypt_request *dmreq)
+ {
+ 	memset(iv, 0, cc->iv_size);
+-	*(u64 *)iv = cpu_to_le64(sector);
++	*(u64 *)iv = cpu_to_le64(dmreq->iv_sector);
+ 
+ 	return 0;
+ }
+@@ -379,12 +385,13 @@ bad:
  	return err;
  }
  
--
- static int crypt_set_key(struct crypt_config *cc, char *key)
+-static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
++static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv,
++			      struct dm_crypt_request *dmreq)
  {
- 	unsigned key_size = strlen(key) >> 1;
-@@ -1114,20 +1113,6 @@ static int crypt_wipe_key(struct crypt_config *cc)
- 	return crypt_setkey_allcpus(cc);
+ 	struct crypto_cipher *essiv_tfm = crypt_me(cc)->iv_private;
+ 
+ 	memset(iv, 0, cc->iv_size);
+-	*(u64 *)iv = cpu_to_le64(sector);
++	*(u64 *)iv = cpu_to_le64(dmreq->iv_sector);
+ 	crypto_cipher_encrypt_one(essiv_tfm, iv, iv);
+ 	return 0;
+ }
+@@ -417,19 +424,21 @@ static void crypt_iv_benbi_dtr(struct crypt_config *cc)
+ {
  }
  
--static void crypt_dtr_cpus(struct crypt_config *cc)
--{
--	struct crypt_cpu *cs;
--	int cpu;
--
--	for_each_possible_cpu(cpu) {
--		cs = per_cpu_ptr(cc->cpu, cpu);
--		if (cs->tfm) {
--			crypto_free_ablkcipher(cs->tfm);
--			cs->tfm = NULL;
--		}
--	}
--}
--
- static void crypt_dtr(struct dm_target *ti)
+-static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
++static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *iv,
++			      struct dm_crypt_request *dmreq)
  {
- 	struct crypt_config *cc = ti->private;
-@@ -1144,11 +1129,14 @@ static void crypt_dtr(struct dm_target *ti)
- 	if (cc->crypt_queue)
- 		destroy_workqueue(cc->crypt_queue);
+ 	__be64 val;
  
--	for_each_possible_cpu(cpu) {
--		cs = per_cpu_ptr(cc->cpu, cpu);
--		if (cs->req)
--			mempool_free(cs->req, cc->req_pool);
--	}
-+	if (cc->cpu)
-+		for_each_possible_cpu(cpu) {
-+			cs = per_cpu_ptr(cc->cpu, cpu);
-+			if (cs->req)
-+				mempool_free(cs->req, cc->req_pool);
-+			if (cs->tfm)
-+				crypto_free_ablkcipher(cs->tfm);
-+		}
+ 	memset(iv, 0, cc->iv_size - sizeof(u64)); /* rest is cleared below */
  
- 	if (cc->bs)
- 		bioset_free(cc->bs);
-@@ -1166,8 +1154,6 @@ static void crypt_dtr(struct dm_target *ti)
- 	if (cc->dev)
- 		dm_put_device(ti, cc->dev);
+-	val = cpu_to_be64(((u64)sector << cc->iv_gen_private.benbi.shift) + 1);
++	val = cpu_to_be64(((u64)dmreq->iv_sector << cc->iv_gen_private.benbi.shift) + 1);
+ 	put_unaligned(val, (__be64 *)(iv + cc->iv_size - sizeof(u64)));
  
--	crypt_dtr_cpus(cc);
--
- 	if (cc->cpu)
- 		free_percpu(cc->cpu);
+ 	return 0;
+ }
  
+-static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
++static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv,
++			     struct dm_crypt_request *dmreq)
+ {
+ 	memset(iv, 0, cc->iv_size);
+ 
+@@ -489,6 +498,13 @@ static struct ablkcipher_request *req_of_dmreq(struct crypt_config *cc,
+ 	return (struct ablkcipher_request *)((char *)dmreq - cc->dmreq_start);
+ }
+ 
++static u8 *iv_of_dmreq(struct crypt_config *cc,
++		       struct dm_crypt_request *dmreq)
++{
++	return (u8 *)ALIGN((unsigned long)(dmreq + 1),
++		crypto_ablkcipher_alignmask(any_tfm(cc)) + 1);
++}
++
+ static int crypt_convert_block(struct crypt_config *cc,
+ 			       struct convert_context *ctx,
+ 			       struct ablkcipher_request *req)
+@@ -500,9 +516,9 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 	int r = 0;
+ 
+ 	dmreq = dmreq_of_req(cc, req);
+-	iv = (u8 *)ALIGN((unsigned long)(dmreq + 1),
+-			 crypto_ablkcipher_alignmask(any_tfm(cc)) + 1);
++	iv = iv_of_dmreq(cc, dmreq);
+ 
++	dmreq->iv_sector = ctx->sector;
+ 	dmreq->ctx = ctx;
+ 	sg_init_table(&dmreq->sg_in, 1);
+ 	sg_set_page(&dmreq->sg_in, bv_in->bv_page, 1 << SECTOR_SHIFT,
+@@ -525,7 +541,7 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 	}
+ 
+ 	if (cc->iv_gen_ops) {
+-		r = cc->iv_gen_ops->generator(cc, iv, ctx->sector);
++		r = cc->iv_gen_ops->generator(cc, iv, dmreq);
+ 		if (r < 0)
+ 			return r;
+ 	}
+@@ -538,6 +554,9 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 	else
+ 		r = crypto_ablkcipher_decrypt(req);
+ 
++	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
++		r = cc->iv_gen_ops->post(cc, iv, dmreq);
++
+ 	return r;
+ }
+ 
+@@ -1003,6 +1022,9 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 		return;
+ 	}
+ 
++	if (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
++		error = cc->iv_gen_ops->post(cc, iv_of_dmreq(cc, dmreq), dmreq);
++
+ 	mempool_free(req_of_dmreq(cc, dmreq), cc->req_pool);
+ 
+ 	if (!atomic_dec_and_test(&ctx->pending))
 -- 
 1.7.2.3
