@@ -1,7 +1,8 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH 2/7] dm crypt: remove redundant setkey call
-Date: Tue, 21 Dec 2010 16:28:14 +0100
-Message-ID: <96a50ca507cdb1433729f5321136d159ea5fd3f4.1292944625.git.mbroz@redhat.com>
+Subject: [PATCH 4/7] dm crypt: remove unused compatible table
+	output
+Date: Tue, 21 Dec 2010 16:28:16 +0100
+Message-ID: <6d942218774967849021d96a0d4cd4174a4163ac.1292944625.git.mbroz@redhat.com>
 References: <cover.1292944625.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,46 +25,51 @@ To: dm-devel@redhat.com
 Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-All keys are already set in crypt_ctr_cipher() call,
-no need set the key again later.
+cc->cipher_mode is always set in constructor
 
-(introduced in per cpu patch)
+dm-crypt still can use compatible mode without IV
+or blockmode set but it is already internaly converted
+to "cbc-plain" so we can remove unused table output.
+
+(Also simplify tfm variable which will be removed later.)
 
 Signed-off-by: Milan Broz <mbroz@redhat.com>
 ---
- drivers/md/dm-crypt.c |   11 +----------
- 1 files changed, 1 insertions(+), 10 deletions(-)
+ drivers/md/dm-crypt.c |    8 ++------
+ 1 files changed, 2 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 6aeb1fe..dbed83d 100644
+index 5c04196..863e412 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -1317,10 +1317,9 @@ bad_mem:
- static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
- 	struct crypt_config *cc;
--	struct crypt_cpu *cs;
- 	unsigned int key_size;
- 	unsigned long long tmpll;
--	int ret, cpu;
-+	int ret;
+@@ -1241,7 +1241,6 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 		}
+ 		per_cpu_ptr(cc->cpu, cpu)->tfm = tfm;
+  	}
+-	tfm = any_tfm(cc);
  
- 	if (argc != 5) {
- 		ti->error = "Not enough arguments";
-@@ -1372,14 +1371,6 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
+ 	/* Initialize and set key */
+ 	ret = crypt_set_key(cc, key);
+@@ -1251,7 +1250,7 @@ static int crypt_ctr_cipher(struct dm_target *ti,
  	}
  
--	for_each_possible_cpu(cpu) {
--		cs = per_cpu_ptr(cc->cpu, cpu);
--		if (crypto_ablkcipher_setkey(cs->tfm, cc->key, key_size) < 0) {
--			ti->error = "Error setting key";
--			goto bad;
--		}
--	}
--
- 	ret = -EINVAL;
- 	if (sscanf(argv[2], "%llu", &tmpll) != 1) {
- 		ti->error = "Invalid iv_offset sector";
+ 	/* Initialize IV */
+-	cc->iv_size = crypto_ablkcipher_ivsize(tfm);
++	cc->iv_size = crypto_ablkcipher_ivsize(any_tfm(cc));
+ 	if (cc->iv_size)
+ 		/* at least a 64 bit sector number should fit in our buffer */
+ 		cc->iv_size = max(cc->iv_size,
+@@ -1451,10 +1450,7 @@ static int crypt_status(struct dm_target *ti, status_type_t type,
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE:
+-		if (cc->cipher_mode)
+-			DMEMIT("%s-%s ", cc->cipher, cc->cipher_mode);
+-		else
+-			DMEMIT("%s ", cc->cipher);
++		DMEMIT("%s-%s ", cc->cipher, cc->cipher_mode);
+ 
+ 		if (cc->key_size > 0) {
+ 			if ((maxlen - sz) < ((cc->key_size << 1) + 1))
 -- 
 1.7.2.3
