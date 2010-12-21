@@ -1,43 +1,55 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: dm: update workqueue usages
-Date: Mon, 20 Dec 2010 17:03:40 +0100
-Message-ID: <4D0F7E5C.3010704@kernel.org>
-References: <1292181055-25696-1-git-send-email-tj@kernel.org>
-	<4D053D49.1010605@redhat.com> <4D079205.3010204@kernel.org>
-	<20101214160324.GB7944@redhat.com> <4D0795B2.7010606@kernel.org>
-	<20101220141448.GA27280@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20101220141448.GA27280@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Milan Broz <mbroz@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v3 0/8] dm-raid (raid456) target
+Date: Mon, 20 Dec 2010 21:37:37 -0500
+Message-ID: <1292899065-31943-1-git-send-email-snitzer@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: jbrassow@redhat.com, neilb@suse.de
+Cc: agk@redhat.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hello,
+I reviewed all patches and adjusted patch headers in preparation for
+inclusion in Alasdair's tree (upstream target being v2.6.38).  The 2
+md/bitmap changes can obviously go through Neil's MD tree if that is
+preferred.
 
-On 12/20/2010 03:14 PM, Mike Snitzer wrote:
-> I've refreshed your patches, tweaked the patch headers and subjects a
-> bit and added my Signed-off-by.  I've staged them in a quilt tree for
-> Alasdair to pick up here:
-> http://people.redhat.com/msnitzer/patches/upstream/for-agk/series.html
-> 
-> (your patches are at the end, 0005-0010).
+- added Copyright to the top of dm-raid.c
+- fixed drivers/md/Kconfig so that DM_RAID will select MD_RAID456
+- removed unused 'conf' variable in raid_status()
+- few misc style and whitespace changes
 
-Great, looks good to me.
+Neil,
+Hopefully you're comfortable with the authorship of most of these
+patches still being attributed to you (despite Jon's changes to your
+original patches).
 
-Thank you.
+Please advise, thanks!
+Mike
+
+Jonathan Brassow (2):
+  md/bitmap: revert dm-dirty-log preparation
+  md/raid5: use sysfs_notify_dirent_safe to avoid NULL pointer
+
+NeilBrown (6):
+  md/bitmap: use DIV_ROUND_UP in bitmap_init_from_disk
+  dm raid: skeleton raid456 target support
+  dm: introduce target callbacks and congestion fn
+  dm: unplug callback
+  dm raid: add iterate_devices and io_hints functions
+  dm raid: add suspend and resume functions
+
+ drivers/md/Kconfig            |   23 ++
+ drivers/md/Makefile           |    1 +
+ drivers/md/bitmap.c           |  139 +++------
+ drivers/md/bitmap.h           |    5 -
+ drivers/md/dm-raid.c          |  664 +++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-table.c         |   19 ++
+ drivers/md/md.h               |    5 -
+ drivers/md/raid5.c            |    2 +-
+ include/linux/device-mapper.h |   13 +
+ 9 files changed, 766 insertions(+), 105 deletions(-)
+ create mode 100644 drivers/md/dm-raid.c
 
 -- 
-tejun
+1.7.2.3
+
