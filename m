@@ -1,91 +1,79 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 6/8] dm: per-target unplug callback support
-Date: Mon, 20 Dec 2010 21:37:43 -0500
-Message-ID: <1292899065-31943-7-git-send-email-snitzer@redhat.com>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: [PATCH v3 0/8] dm-raid (raid456) target
+Date: Tue, 21 Dec 2010 14:14:43 +1100
+Message-ID: <20101221141443.5aea0b12@notabene.brown>
 References: <1292899065-31943-1-git-send-email-snitzer@redhat.com>
-Return-path: <linux-raid-owner@vger.kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <1292899065-31943-1-git-send-email-snitzer@redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: jbrassow@redhat.com, neilb@suse.de
-Cc: agk@redhat.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-From: NeilBrown <neilb@suse.de>
+On Mon, 20 Dec 2010 21:37:37 -0500 Mike Snitzer <snitzer@redhat.com> wrote:
 
-Add per-target unplug callback support and establish the raid_unplug()
-callback for dm-raid.
+> I reviewed all patches and adjusted patch headers in preparation for
+> inclusion in Alasdair's tree (upstream target being v2.6.38).  The 2
+> md/bitmap changes can obviously go through Neil's MD tree if that is
+> preferred.
+> 
+> - added Copyright to the top of dm-raid.c
+> - fixed drivers/md/Kconfig so that DM_RAID will select MD_RAID456
+> - removed unused 'conf' variable in raid_status()
+> - few misc style and whitespace changes
+> 
+> Neil,
+> Hopefully you're comfortable with the authorship of most of these
+> patches still being attributed to you (despite Jon's changes to your
+> original patches).
+> 
+> Please advise, thanks!
 
-Signed-off-by: NeilBrown <neilb@suse.de>
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-raid.c          |   10 ++++++++++
- drivers/md/dm-table.c         |    4 ++++
- include/linux/device-mapper.h |    1 +
- 3 files changed, 15 insertions(+), 0 deletions(-)
+I haven't had a chance to have a proper look yet, and I'm about to go on
+leave for a couple of weeks.
+I'm probably happy with the authorship remaining as-is, but I reserve the
+right to change my mind (about anything) once I've had a chance to have a
+proper look.
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 962f88f..4db3eab 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -371,6 +371,15 @@ static int raid_is_congested(void *v, int bits)
- 					   callbacks);
- 	return md_raid5_congested(&rs->md, bits);
- }
-+
-+static void raid_unplug(void *v)
-+{
-+	struct target_callbacks *cb = v;
-+	struct raid_set *rs = container_of(cb, struct raid_set,
-+					   callbacks);
-+	md_raid5_unplug_device(rs->md.private);
-+}
-+
- /*
-  * Construct a RAID4/5/6 mapping:
-  * Args:
-@@ -455,6 +464,7 @@ static int raid_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		goto err;
- 
- 	rs->callbacks.congested_fn = raid_is_congested;
-+	rs->callbacks.unplug_fn = raid_unplug;
- 	dm_table_add_callbacks(ti->table, &rs->callbacks);
- 
- 	return 0;
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 88df831..bd4c4ef 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1283,6 +1283,7 @@ void dm_table_unplug_all(struct dm_table *t)
- {
- 	struct dm_dev_internal *dd;
- 	struct list_head *devices = dm_table_get_devices(t);
-+	struct target_callbacks *cb;
- 
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->dm_dev.bdev);
-@@ -1295,6 +1296,9 @@ void dm_table_unplug_all(struct dm_table *t)
- 				     dm_device_name(t->md),
- 				     bdevname(dd->dm_dev.bdev, b));
- 	}
-+	list_for_each_entry(cb, &t->target_callbacks, list)
-+		if (cb->unplug_fn)
-+			cb->unplug_fn(cb);
- }
- 
- struct mapped_device *dm_table_get_md(struct dm_table *t)
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 77e2e78..92511d2f 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -197,6 +197,7 @@ struct dm_target {
- struct target_callbacks {
- 	struct list_head list;
- 	congested_fn *congested_fn;
-+	void (*unplug_fn)(void *);
- };
- 
- int dm_register_target(struct target_type *t);
--- 
-1.7.2.3
+Thanks,
+NeilBrown
 
+
+> Mike
+> 
+> Jonathan Brassow (2):
+>   md/bitmap: revert dm-dirty-log preparation
+>   md/raid5: use sysfs_notify_dirent_safe to avoid NULL pointer
+> 
+> NeilBrown (6):
+>   md/bitmap: use DIV_ROUND_UP in bitmap_init_from_disk
+>   dm raid: skeleton raid456 target support
+>   dm: introduce target callbacks and congestion fn
+>   dm: unplug callback
+>   dm raid: add iterate_devices and io_hints functions
+>   dm raid: add suspend and resume functions
+> 
+>  drivers/md/Kconfig            |   23 ++
+>  drivers/md/Makefile           |    1 +
+>  drivers/md/bitmap.c           |  139 +++------
+>  drivers/md/bitmap.h           |    5 -
+>  drivers/md/dm-raid.c          |  664 +++++++++++++++++++++++++++++++++++++++++
+>  drivers/md/dm-table.c         |   19 ++
+>  drivers/md/md.h               |    5 -
+>  drivers/md/raid5.c            |    2 +-
+>  include/linux/device-mapper.h |   13 +
+>  9 files changed, 766 insertions(+), 105 deletions(-)
+>  create mode 100644 drivers/md/dm-raid.c
+> 
