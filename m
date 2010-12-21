@@ -1,7 +1,8 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH 3/7] dm crypt: set key size early
-Date: Tue, 21 Dec 2010 16:28:15 +0100
-Message-ID: <35a68fc8c918e6b99f06dc9fbe6a17c21e778389.1292944625.git.mbroz@redhat.com>
+Subject: [PATCH 1/7] dm crypt: fix per cpu struct dereference in
+	destructor
+Date: Tue, 21 Dec 2010 16:28:13 +0100
+Message-ID: <c718a9b949f971d43980ec91e55b3111aac5c7fa.1292944625.git.mbroz@redhat.com>
 References: <cover.1292944625.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,51 +25,81 @@ To: dm-devel@redhat.com
 Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Simplify key size verification (hexa string) and
-set key size early in constructor.
+If destructor is called early (e.g. wrong cipher format)
+the destructor tries to access nonexistent per cpu struct
+and causes OOps.
 
-(The "-" string means no key - this is just
-for compatibility reasons. Because of shift it properly
-decodes to zero key size.)
+Patch adds check for struct existence (and simplifies
+tfm destructor as well).
 
-(Patch required by later changes.)
+(introduced in per cpu patch)
 
 Signed-off-by: Milan Broz <mbroz@redhat.com>
 ---
- drivers/md/dm-crypt.c |   11 +++++------
- 1 files changed, 5 insertions(+), 6 deletions(-)
+ drivers/md/dm-crypt.c |   30 ++++++++----------------------
+ 1 files changed, 8 insertions(+), 22 deletions(-)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index dbed83d..5c04196 100644
+index 98a7ad0..6aeb1fe 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -1090,15 +1090,13 @@ static int crypt_setkey_allcpus(struct crypt_config *cc)
+@@ -1088,7 +1088,6 @@ static int crypt_setkey_allcpus(struct crypt_config *cc)
+ 	return err;
+ }
  
+-
  static int crypt_set_key(struct crypt_config *cc, char *key)
  {
--	unsigned key_size = strlen(key) >> 1;
+ 	unsigned key_size = strlen(key) >> 1;
+@@ -1114,20 +1113,6 @@ static int crypt_wipe_key(struct crypt_config *cc)
+ 	return crypt_setkey_allcpus(cc);
+ }
+ 
+-static void crypt_dtr_cpus(struct crypt_config *cc)
+-{
+-	struct crypt_cpu *cs;
+-	int cpu;
 -
--	if (cc->key_size && cc->key_size != key_size)
-+	if (cc->key_size != (strlen(key) >> 1))
- 		return -EINVAL;
+-	for_each_possible_cpu(cpu) {
+-		cs = per_cpu_ptr(cc->cpu, cpu);
+-		if (cs->tfm) {
+-			crypto_free_ablkcipher(cs->tfm);
+-			cs->tfm = NULL;
+-		}
+-	}
+-}
+-
+ static void crypt_dtr(struct dm_target *ti)
+ {
+ 	struct crypt_config *cc = ti->private;
+@@ -1144,11 +1129,14 @@ static void crypt_dtr(struct dm_target *ti)
+ 	if (cc->crypt_queue)
+ 		destroy_workqueue(cc->crypt_queue);
  
--	cc->key_size = key_size; /* initial settings */
-+	if (!cc->key_size && strcmp(key, "-"))
-+		return -EINVAL;
+-	for_each_possible_cpu(cpu) {
+-		cs = per_cpu_ptr(cc->cpu, cpu);
+-		if (cs->req)
+-			mempool_free(cs->req, cc->req_pool);
+-	}
++	if (cc->cpu)
++		for_each_possible_cpu(cpu) {
++			cs = per_cpu_ptr(cc->cpu, cpu);
++			if (cs->req)
++				mempool_free(cs->req, cc->req_pool);
++			if (cs->tfm)
++				crypto_free_ablkcipher(cs->tfm);
++		}
  
--	if ((!key_size && strcmp(key, "-")) ||
--	   (key_size && crypt_decode_key(cc->key, key, key_size) < 0))
-+	if (cc->key_size && crypt_decode_key(cc->key, key, cc->key_size) < 0)
- 		return -EINVAL;
+ 	if (cc->bs)
+ 		bioset_free(cc->bs);
+@@ -1166,8 +1154,6 @@ static void crypt_dtr(struct dm_target *ti)
+ 	if (cc->dev)
+ 		dm_put_device(ti, cc->dev);
  
- 	set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
-@@ -1333,6 +1331,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		ti->error = "Cannot allocate encryption context";
- 		return -ENOMEM;
- 	}
-+	cc->key_size = key_size;
+-	crypt_dtr_cpus(cc);
+-
+ 	if (cc->cpu)
+ 		free_percpu(cc->cpu);
  
- 	ti->private = cc;
- 	ret = crypt_ctr_cipher(ti, argv[0], argv[1]);
 -- 
 1.7.2.3
