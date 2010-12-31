@@ -1,58 +1,95 @@
-From: Kent Overstreet <kent.overstreet@gmail.com>
-Subject: Refcounting (and other) questions
-Date: Thu, 30 Dec 2010 12:30:18 -0800
-Message-ID: <ifiq5h$obd$1@dough.gmane.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: [PATCH wq#for-2.6.38] workqueue: use WQ_MEM_RECLAIM instead of
+ WQ_RESCUER
+Date: Fri, 31 Dec 2010 15:01:09 +0100
+Message-ID: <20101231140109.GL18831@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: dm-devel@redhat.com, Steven Whitehouse <swhiteho@redhat.com>, Neil Brown <neilb@suse.de>
 List-Id: dm-devel.ids
 
-I got bcache functioning with dm... it's buggy, but it runs. _Much_ 
-thanks to akg for educating me, I now have a vague idea of how dm is 
-structured.
+WQ_RESCUER is now an internal flag and should only be used in the
+workqueue implementation proper.  Use WQ_MEM_RECLAIM instead.
 
-My most immediate problem is what to do in the target destructor. It 
-looks like when the destructor returns, the dm_target is gone. This an 
-issue if I use dm_get_device() and dm_put_device() - if writeback is 
-going on in the background I can't just close the backing device 
-arbitrarily, I've got refcounting that I need to use.
+This doesn't introduce any functional difference.
 
-So I could just not use dm_get_device and instead use 
-open_bdev_exclusive - like I do for caches, but I was hoping to get some 
-input on the subject.
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: dm-devel@redhat.com
+Cc: Steven Whitehouse <swhiteho@redhat.com>
+Cc: Neil Brown <neilb@suse.de>
+---
+As this is trivial, I'd like to carry this through the wq tree if
+there's no objection.
 
-I may have to do that anyways; the way bcache + dm is structed currently 
-is basically a stopgap. I'm planning on starting on volume management + 
-thin provisioning soon; what this means is that it doesn't really make 
-sense for userspace to arbitrarily create and remove targets. Rather, 
-the kernel knows what volumes are available (and their sizes and labels).
+Thank you.
 
-It seems to me that there's going to be some moderately painful... model 
-mismatch if I try to do this with device mapper. OTOH, I've heard 
-references of some standard interface for managing volumes that's in the 
-works; I haven't been able to find out anything more about it but it 
-sounds like it might be relevant, if someone wanted to point me at it.
+ drivers/md/md.c    |    2 +-
+ fs/gfs2/glock.c    |    8 ++++----
+ fs/nfs/inode.c     |    2 +-
+ net/sunrpc/sched.c |    2 +-
+ 4 files changed, 7 insertions(+), 7 deletions(-)
 
-Last question: Right now I'm doing
-# dmsetup foo
-0 10000 bcache /dev/vdb
-^D
-
-for testing. The problem is userspace has no idea how big the target 
-should be; that's not just dependent on the size of the backing device 
-but the start of actual data (for alignment, mainly) is stored in the 
-superblock which the kernel reads. I can't be the first person to run 
-into this issue - how should bcache convey the actual size of the target 
-to dm/somewhere where it can be useful?
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 84c46a1..66a01f7 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -7287,7 +7287,7 @@ static int __init md_init(void)
+ {
+ 	int ret = -ENOMEM;
+ 
+-	md_wq = alloc_workqueue("md", WQ_RESCUER, 0);
++	md_wq = alloc_workqueue("md", WQ_MEM_RECLAIM, 0);
+ 	if (!md_wq)
+ 		goto err_wq;
+ 
+diff --git a/fs/gfs2/glock.c b/fs/gfs2/glock.c
+index f92c177..beea184 100644
+--- a/fs/gfs2/glock.c
++++ b/fs/gfs2/glock.c
+@@ -1782,12 +1782,12 @@ int __init gfs2_glock_init(void)
+ 	}
+ #endif
+ 
+-	glock_workqueue = alloc_workqueue("glock_workqueue", WQ_RESCUER |
+-					  WQ_HIGHPRI | WQ_FREEZEABLE, 0);
++	glock_workqueue = alloc_workqueue("glock_workqueue",
++				WQ_MEM_RECLAIM | WQ_HIGHPRI | WQ_FREEZEABLE, 0);
+ 	if (IS_ERR(glock_workqueue))
+ 		return PTR_ERR(glock_workqueue);
+-	gfs2_delete_workqueue = alloc_workqueue("delete_workqueue", WQ_RESCUER |
+-						WQ_FREEZEABLE, 0);
++	gfs2_delete_workqueue = alloc_workqueue("delete_workqueue",
++					WQ_MEM_RECLAIM | WQ_FREEZEABLE, 0);
+ 	if (IS_ERR(gfs2_delete_workqueue)) {
+ 		destroy_workqueue(glock_workqueue);
+ 		return PTR_ERR(gfs2_delete_workqueue);
+diff --git a/fs/nfs/inode.c b/fs/nfs/inode.c
+index 314f571..9403f3f 100644
+--- a/fs/nfs/inode.c
++++ b/fs/nfs/inode.c
+@@ -1497,7 +1497,7 @@ static int nfsiod_start(void)
+ {
+ 	struct workqueue_struct *wq;
+ 	dprintk("RPC:       creating workqueue nfsiod\n");
+-	wq = alloc_workqueue("nfsiod", WQ_RESCUER, 0);
++	wq = alloc_workqueue("nfsiod", WQ_MEM_RECLAIM, 0);
+ 	if (wq == NULL)
+ 		return -ENOMEM;
+ 	nfsiod_workqueue = wq;
+diff --git a/net/sunrpc/sched.c b/net/sunrpc/sched.c
+index 243fc09..2841cc6 100644
+--- a/net/sunrpc/sched.c
++++ b/net/sunrpc/sched.c
+@@ -908,7 +908,7 @@ static int rpciod_start(void)
+ 	 * Create the rpciod thread and wait for it to start.
+ 	 */
+ 	dprintk("RPC:       creating workqueue rpciod\n");
+-	wq = alloc_workqueue("rpciod", WQ_RESCUER, 0);
++	wq = alloc_workqueue("rpciod", WQ_MEM_RECLAIM, 0);
+ 	rpciod_workqueue = wq;
+ 	return rpciod_workqueue != NULL;
+ }
