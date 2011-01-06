@@ -1,7 +1,7 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH 2/3] dm crypt: add multi-key capability
-Date: Thu,  6 Jan 2011 21:04:01 +0100
-Message-ID: <0c5d8390ede21657d3dab5ec412ed2fa4c1cdbac.1294344057.git.mbroz@redhat.com>
+Subject: [PATCH 1/3] dm crypt: add post IV call to IV generator
+Date: Thu,  6 Jan 2011 21:04:00 +0100
+Message-ID: <cd304295ff45ec4ff3f6f5b3979e8c9d01da29b6.1294344057.git.mbroz@redhat.com>
 References: <cover.1294344057.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,246 +21,183 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Max Vozeler <max@hinterhof.net>, Milan Broz <mbroz@redhat.com>
+Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds generic multikey handling to be used
-in following patch for Loop-AES mode compatibility.
+IV (initialisation vector) can in principle depend not only
+on sector but also on plaintext data (or other attributes).
 
-This patch extends mapping table to optional keycount and
-implements generic multi-key capability.
+Change IV generator interface to work directly with dmreq
+structure to allow such dependence in generator.
 
-With more keys defined the <key> string is divided into
-several <keycount> sections and these are used for tfms.
+Also add post() function which is called after the crypto
+operation.
 
-The tfm is used according to sector offset
-(sector 0->tfm[0], sector 1->tfm[1], sector N->tfm[N modulo keycount])
-(only power of two values supported for keycount here).
+This allows tricky modification of decrypted data or IV
+internals.
 
-Because of tfms per-cpu allocation, this mode can be take
-a lot of memory on large smp systems.
+In asynchronous mode the post() can be called after
+ctx->sector count was increased so it is needed
+to add iv_sector copy directly to dmreq structure.
+(N.B. dmreq always include only one sector in scatterlists)
 
 Signed-off-by: Milan Broz <mbroz@redhat.com>
-CC: Max Vozeler <max@hinterhof.net>
 ---
- Documentation/device-mapper/dm-crypt.txt |    7 ++-
- drivers/md/dm-crypt.c                    |   85 +++++++++++++++++++++++-------
- 2 files changed, 71 insertions(+), 21 deletions(-)
+ drivers/md/dm-crypt.c |   48 +++++++++++++++++++++++++++++++++++-------------
+ 1 files changed, 35 insertions(+), 13 deletions(-)
 
-diff --git a/Documentation/device-mapper/dm-crypt.txt b/Documentation/device-mapper/dm-crypt.txt
-index 524de92..6ed2312 100644
---- a/Documentation/device-mapper/dm-crypt.txt
-+++ b/Documentation/device-mapper/dm-crypt.txt
-@@ -8,7 +8,7 @@ Parameters: <cipher> <key> <iv_offset> <device path> <offset>
- 
- <cipher>
-     Encryption cipher and an optional IV generation mode.
--    (In format cipher-chainmode-ivopts:ivmode).
-+    (In format cipher[:keycount]-chainmode-ivopts:ivmode).
-     Examples:
-        des
-        aes-cbc-essiv:sha256
-@@ -20,6 +20,11 @@ Parameters: <cipher> <key> <iv_offset> <device path> <offset>
-     Key used for encryption. It is encoded as a hexadecimal number.
-     You can only use key sizes that are valid for the selected cipher.
- 
-+<keycount>
-+    Multi-key compatibility mode - you can define different keys and
-+    the sectors are according its offset (sector 0 -> key0, 1 -> key1 etc).
-+    Keycount value must be power of two.
-+
- <iv_offset>
-     The IV offset is a sector count that is added to the sector number
-     before creating the IV.
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 9678701..eba9b43 100644
+index 08b4749..9678701 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -101,10 +101,9 @@ enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID };
-  */
- struct crypt_cpu {
- 	struct ablkcipher_request *req;
--	struct crypto_ablkcipher *tfm;
--
- 	/* ESSIV: struct crypto_cipher *essiv_tfm */
- 	void *iv_private;
-+	struct crypto_ablkcipher *tfms[0];
+@@ -64,6 +64,7 @@ struct dm_crypt_request {
+ 	struct convert_context *ctx;
+ 	struct scatterlist sg_in;
+ 	struct scatterlist sg_out;
++	sector_t iv_sector;
  };
  
- /*
-@@ -143,6 +142,7 @@ struct crypt_config {
- 	 * per_cpu_ptr() only.
- 	 */
- 	struct crypt_cpu __percpu *cpu;
-+	unsigned int tfms_count;
- 
- 	/*
- 	 * Layout of each crypto request:
-@@ -161,6 +161,7 @@ struct crypt_config {
- 
- 	unsigned long flags;
- 	unsigned int key_size;
-+	unsigned int key_parts;
- 	u8 key[0];
+ struct crypt_config;
+@@ -74,7 +75,10 @@ struct crypt_iv_operations {
+ 	void (*dtr)(struct crypt_config *cc);
+ 	int (*init)(struct crypt_config *cc);
+ 	int (*wipe)(struct crypt_config *cc);
+-	int (*generator)(struct crypt_config *cc, u8 *iv, sector_t sector);
++	int (*generator)(struct crypt_config *cc, u8 *iv,
++			 struct dm_crypt_request *dmreq);
++	int (*post)(struct crypt_config *cc, u8 *iv,
++		    struct dm_crypt_request *dmreq);
  };
  
-@@ -184,7 +185,7 @@ static struct crypt_cpu *this_crypt_config(struct crypt_config *cc)
+ struct iv_essiv_private {
+@@ -168,6 +172,7 @@ static struct kmem_cache *_crypt_io_pool;
+ 
+ static void clone_init(struct dm_crypt_io *, struct bio *);
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io);
++static u8 *iv_of_dmreq(struct crypt_config *cc, struct dm_crypt_request *dmreq);
+ 
+ static struct crypt_cpu *this_crypt_config(struct crypt_config *cc)
+ {
+@@ -205,19 +210,20 @@ static struct crypto_ablkcipher *this_tfm(struct crypt_config *cc)
+  * http://article.gmane.org/gmane.linux.kernel.device-mapper.dm-crypt/454
   */
- static struct crypto_ablkcipher *this_tfm(struct crypt_config *cc)
+ 
+-static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
++static int crypt_iv_plain_gen(struct crypt_config *cc, u8 *iv,
++			      struct dm_crypt_request *dmreq)
  {
--	return __this_cpu_ptr(cc->cpu)->tfm;
-+	return __this_cpu_ptr(cc->cpu)->tfms[0];
+ 	memset(iv, 0, cc->iv_size);
+-	*(u32 *)iv = cpu_to_le32(sector & 0xffffffff);
++	*(u32 *)iv = cpu_to_le32(dmreq->iv_sector & 0xffffffff);
+ 
+ 	return 0;
  }
  
- /*
-@@ -567,11 +568,12 @@ static void crypt_alloc_req(struct crypt_config *cc,
- 			    struct convert_context *ctx)
+ static int crypt_iv_plain64_gen(struct crypt_config *cc, u8 *iv,
+-				sector_t sector)
++				struct dm_crypt_request *dmreq)
  {
- 	struct crypt_cpu *this_cc = this_crypt_config(cc);
-+	unsigned key_index = ctx->sector & (cc->tfms_count - 1);
+ 	memset(iv, 0, cc->iv_size);
+-	*(u64 *)iv = cpu_to_le64(sector);
++	*(u64 *)iv = cpu_to_le64(dmreq->iv_sector);
  
- 	if (!this_cc->req)
- 		this_cc->req = mempool_alloc(cc->req_pool, GFP_NOIO);
- 
--	ablkcipher_request_set_tfm(this_cc->req, this_cc->tfm);
-+	ablkcipher_request_set_tfm(this_cc->req, this_cc->tfms[key_index]);
- 	ablkcipher_request_set_callback(this_cc->req,
- 	    CRYPTO_TFM_REQ_MAY_BACKLOG | CRYPTO_TFM_REQ_MAY_SLEEP,
- 	    kcryptd_async_done, dmreq_of_req(cc, this_cc->req));
-@@ -1097,15 +1099,48 @@ static void crypt_encode_key(char *hex, u8 *key, unsigned int size)
- 	}
+ 	return 0;
  }
- 
-+static void crypt_free_tfms(struct crypt_config *cc, int cpu)
-+{
-+	struct crypt_cpu *cpu_cc = per_cpu_ptr(cc->cpu, cpu);
-+	int i;
-+
-+	for (i = 0; i < cc->tfms_count; i++)
-+		if (cpu_cc->tfms[i] && !IS_ERR(cpu_cc->tfms[i])) {
-+			crypto_free_ablkcipher(cpu_cc->tfms[i]);
-+			cpu_cc->tfms[i] = NULL;
-+		}
-+}
-+
-+static int crypt_alloc_tfms(struct crypt_config *cc, int cpu, char *ciphermode)
-+{
-+	struct crypt_cpu *cpu_cc = per_cpu_ptr(cc->cpu, cpu);
-+	int i, err;
-+
-+	for (i = 0; i < cc->tfms_count; i++) {
-+		cpu_cc->tfms[i] = crypto_alloc_ablkcipher(ciphermode, 0, 0);
-+		if (IS_ERR(cpu_cc->tfms[i])) {
-+			err = PTR_ERR(cpu_cc->tfms[i]);
-+			crypt_free_tfms(cc, cpu);
-+			return err;
-+		}
-+	}
-+
-+	return 0;
-+}
-+
- static int crypt_setkey_allcpus(struct crypt_config *cc)
- {
--	int cpu, err = 0, r;
-+	unsigned subkey_size = cc->key_size >> ilog2(cc->tfms_count);
-+	int cpu, err = 0, i, r;
- 
- 	for_each_possible_cpu(cpu) {
--		r = crypto_ablkcipher_setkey(per_cpu_ptr(cc->cpu, cpu)->tfm,
--					       cc->key, cc->key_size);
--		if (r)
--			err = r;
-+		for (i = 0; i < cc->tfms_count; i++) {
-+			r = crypto_ablkcipher_setkey(
-+				per_cpu_ptr(cc->cpu, cpu)->tfms[i],
-+				cc->key + (i * subkey_size), subkey_size);
-+			if (r)
-+				err = r;
-+		}
- 	}
- 
+@@ -378,12 +384,13 @@ bad:
  	return err;
-@@ -1158,8 +1193,7 @@ static void crypt_dtr(struct dm_target *ti)
- 			cpu_cc = per_cpu_ptr(cc->cpu, cpu);
- 			if (cpu_cc->req)
- 				mempool_free(cpu_cc->req, cc->req_pool);
--			if (cpu_cc->tfm)
--				crypto_free_ablkcipher(cpu_cc->tfm);
-+			crypt_free_tfms(cc, cpu);
- 		}
+ }
  
- 	if (cc->bs)
-@@ -1192,8 +1226,7 @@ static int crypt_ctr_cipher(struct dm_target *ti,
- 			    char *cipher_in, char *key)
+-static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
++static int crypt_iv_essiv_gen(struct crypt_config *cc, u8 *iv,
++			      struct dm_crypt_request *dmreq)
  {
- 	struct crypt_config *cc = ti->private;
--	struct crypto_ablkcipher *tfm;
--	char *tmp, *cipher, *chainmode, *ivmode, *ivopts;
-+	char *tmp, *cipher, *chainmode, *ivmode, *ivopts, *keycount;
- 	char *cipher_api = NULL;
- 	int cpu, ret = -EINVAL;
+ 	struct crypto_cipher *essiv_tfm = this_crypt_config(cc)->iv_private;
  
-@@ -1209,11 +1242,23 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 	memset(iv, 0, cc->iv_size);
+-	*(u64 *)iv = cpu_to_le64(sector);
++	*(u64 *)iv = cpu_to_le64(dmreq->iv_sector);
+ 	crypto_cipher_encrypt_one(essiv_tfm, iv, iv);
  
- 	/*
- 	 * Legacy dm-crypt cipher specification
--	 * cipher-mode-iv:ivopts
-+	 * cipher[:keycount]-mode-iv:ivopts
- 	 */
- 	tmp = cipher_in;
- 	cipher = strsep(&tmp, "-");
+ 	return 0;
+@@ -417,19 +424,21 @@ static void crypt_iv_benbi_dtr(struct crypt_config *cc)
+ {
+ }
  
-+	keycount = cipher;
-+	cipher = strsep(&keycount, ":");
+-static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
++static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *iv,
++			      struct dm_crypt_request *dmreq)
+ {
+ 	__be64 val;
+ 
+ 	memset(iv, 0, cc->iv_size - sizeof(u64)); /* rest is cleared below */
+ 
+-	val = cpu_to_be64(((u64)sector << cc->iv_gen_private.benbi.shift) + 1);
++	val = cpu_to_be64(((u64)dmreq->iv_sector << cc->iv_gen_private.benbi.shift) + 1);
+ 	put_unaligned(val, (__be64 *)(iv + cc->iv_size - sizeof(u64)));
+ 
+ 	return 0;
+ }
+ 
+-static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
++static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv,
++			     struct dm_crypt_request *dmreq)
+ {
+ 	memset(iv, 0, cc->iv_size);
+ 
+@@ -489,6 +498,13 @@ static struct ablkcipher_request *req_of_dmreq(struct crypt_config *cc,
+ 	return (struct ablkcipher_request *)((char *)dmreq - cc->dmreq_start);
+ }
+ 
++static u8 *iv_of_dmreq(struct crypt_config *cc,
++		       struct dm_crypt_request *dmreq)
++{
++	return (u8 *)ALIGN((unsigned long)(dmreq + 1),
++		crypto_ablkcipher_alignmask(this_tfm(cc)) + 1);
++}
 +
-+	if (!keycount)
-+		cc->tfms_count = 1;
-+	else if (sscanf(keycount, "%u", &cc->tfms_count) != 1 ||
-+		 !is_power_of_2(cc->tfms_count)) {
-+		ti->error = "Bad cipher key count specification";
-+		return -EINVAL;
-+	}
-+	cc->key_parts = cc->tfms_count;
-+
- 	cc->cipher = kstrdup(cipher, GFP_KERNEL);
- 	if (!cc->cipher)
- 		goto bad_mem;
-@@ -1225,7 +1270,9 @@ static int crypt_ctr_cipher(struct dm_target *ti,
- 	if (tmp)
- 		DMWARN("Ignoring unexpected additional cipher options");
+ static int crypt_convert_block(struct crypt_config *cc,
+ 			       struct convert_context *ctx,
+ 			       struct ablkcipher_request *req)
+@@ -500,9 +516,9 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 	int r = 0;
  
--	cc->cpu = alloc_percpu(struct crypt_cpu);
-+	cc->cpu = __alloc_percpu(sizeof(*(cc->cpu)) +
-+				 cc->tfms_count * sizeof(*(cc->cpu->tfms)),
-+				 __alignof__(struct crypt_cpu));
- 	if (!cc->cpu) {
- 		ti->error = "Cannot allocate per cpu state";
- 		goto bad_mem;
-@@ -1258,13 +1305,11 @@ static int crypt_ctr_cipher(struct dm_target *ti,
+ 	dmreq = dmreq_of_req(cc, req);
+-	iv = (u8 *)ALIGN((unsigned long)(dmreq + 1),
+-			 crypto_ablkcipher_alignmask(this_tfm(cc)) + 1);
++	iv = iv_of_dmreq(cc, dmreq);
  
- 	/* Allocate cipher */
- 	for_each_possible_cpu(cpu) {
--		tfm = crypto_alloc_ablkcipher(cipher_api, 0, 0);
--		if (IS_ERR(tfm)) {
--			ret = PTR_ERR(tfm);
-+		ret = crypt_alloc_tfms(cc, cpu, cipher_api);
-+		if (ret < 0) {
- 			ti->error = "Error allocating crypto tfm";
- 			goto bad;
- 		}
--		per_cpu_ptr(cc->cpu, cpu)->tfm = tfm;
++	dmreq->iv_sector = ctx->sector;
+ 	dmreq->ctx = ctx;
+ 	sg_init_table(&dmreq->sg_in, 1);
+ 	sg_set_page(&dmreq->sg_in, bv_in->bv_page, 1 << SECTOR_SHIFT,
+@@ -525,7 +541,7 @@ static int crypt_convert_block(struct crypt_config *cc,
  	}
  
- 	/* Initialize and set key */
-@@ -1587,7 +1632,7 @@ static int crypt_iterate_devices(struct dm_target *ti,
+ 	if (cc->iv_gen_ops) {
+-		r = cc->iv_gen_ops->generator(cc, iv, ctx->sector);
++		r = cc->iv_gen_ops->generator(cc, iv, dmreq);
+ 		if (r < 0)
+ 			return r;
+ 	}
+@@ -538,6 +554,9 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 	else
+ 		r = crypto_ablkcipher_decrypt(req);
  
- static struct target_type crypt_target = {
- 	.name   = "crypt",
--	.version = {1, 7, 0},
-+	.version = {1, 8, 0},
- 	.module = THIS_MODULE,
- 	.ctr    = crypt_ctr,
- 	.dtr    = crypt_dtr,
++	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
++		r = cc->iv_gen_ops->post(cc, iv, dmreq);
++
+ 	return r;
+ }
+ 
+@@ -1005,6 +1024,9 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 		return;
+ 	}
+ 
++	if (!error && cc->iv_gen_ops && cc->iv_gen_ops->post)
++		error = cc->iv_gen_ops->post(cc, iv_of_dmreq(cc, dmreq), dmreq);
++
+ 	mempool_free(req_of_dmreq(cc, dmreq), cc->req_pool);
+ 
+ 	if (!atomic_dec_and_test(&ctx->pending))
 -- 
 1.7.2.3
