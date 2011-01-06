@@ -1,8 +1,8 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] dm: move device check warning messages into
-	debug level
-Date: Thu,  6 Jan 2011 21:02:49 +0100
-Message-ID: <1294344169-26950-1-git-send-email-mbroz@redhat.com>
+Subject: [PATCH 0/3 v2] dm crypt: add Loop-AES compatibility mode
+	support
+Date: Thu,  6 Jan 2011 21:03:59 +0100
+Message-ID: <cover.1294344057.git.mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,57 +21,20 @@ To: dm-devel@redhat.com
 Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-The device-mapper should not send warning messages to syslog
-if device is not found. This should be done in userspace
-according to returned dm-ioctl error code.
+These patches add compatibility mode support for Loop-AES encryption
+system, see http://loop-aes.sourceforge.net/
 
-Move these messages into debug level and use rate limiting
-to not flood syslog.
+Note: the patchset is based on top of dm devel queue,
+http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/series.html
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
----
- drivers/md/dm-ioctl.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+Milan Broz (3):
+  dm crypt: add post IV call to IV generator
+  dm crypt: add multi-key capability
+  dm crypt: add Loop-AES IV generator
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index f3481d9..6d12775 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -779,7 +779,7 @@ static int dev_remove(struct dm_ioctl *param, size_t param_size)
- 	hc = __find_device_hash_cell(param);
- 
- 	if (!hc) {
--		DMWARN("device doesn't appear to be in the dev hash table.");
-+		DMDEBUG_LIMIT("device doesn't appear to be in the dev hash table.");
- 		up_write(&_hash_lock);
- 		return -ENXIO;
- 	}
-@@ -791,7 +791,7 @@ static int dev_remove(struct dm_ioctl *param, size_t param_size)
- 	 */
- 	r = dm_lock_for_deletion(md);
- 	if (r) {
--		DMWARN("unable to remove open device %s", hc->name);
-+		DMDEBUG_LIMIT("unable to remove open device %s", hc->name);
- 		up_write(&_hash_lock);
- 		dm_put(md);
- 		return r;
-@@ -938,7 +938,7 @@ static int do_resume(struct dm_ioctl *param)
- 
- 	hc = __find_device_hash_cell(param);
- 	if (!hc) {
--		DMWARN("device doesn't appear to be in the dev hash table.");
-+		DMDEBUG_LIMIT("device doesn't appear to be in the dev hash table.");
- 		up_write(&_hash_lock);
- 		return -ENXIO;
- 	}
-@@ -1265,7 +1265,7 @@ static int table_clear(struct dm_ioctl *param, size_t param_size)
- 
- 	hc = __find_device_hash_cell(param);
- 	if (!hc) {
--		DMWARN("device doesn't appear to be in the dev hash table.");
-+		DMDEBUG_LIMIT("device doesn't appear to be in the dev hash table.");
- 		up_write(&_hash_lock);
- 		return -ENXIO;
- 	}
+ Documentation/device-mapper/dm-crypt.txt |    7 +-
+ drivers/md/dm-crypt.c                    |  313 ++++++++++++++++++++++++++----
+ 2 files changed, 285 insertions(+), 35 deletions(-)
+
 -- 
 1.7.2.3
