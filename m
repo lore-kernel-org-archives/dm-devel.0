@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3] dm mpath: delay retry of activate_path on
-	SCSI_DH_RETRY
-Date: Fri,  7 Jan 2011 13:29:19 -0500
-Message-ID: <1294424959-4958-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH v2] dm: remove superfluous irq disablement in
+	dm_request_fn
+Date: Fri,  7 Jan 2011 14:22:36 -0500
+Message-ID: <1294428156-5791-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,207 +18,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Nikanth Karthikesan <knikanth@suse.de>, Mike Christie <michaelc@cs.wisc.edu>, Mike Snitzer <snitzer@redhat.com>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-From: Chandra Seetharaman <sekharan@us.ibm.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 
-SCSI Device Handlers return SCSI_DH_IMM_RETRY if we could retry
-activation immediately and SCSI_DH_RETRY in cases where it is better to
-retry after some delay.
+This patch changes spin_lock_irq() to spin_lock() in dm_request_fn().
+This patch is just a clean-up and no functional change.
 
-Currently we immediately retry scsi_dh_activate irrespective of
-SCSI_DH_IMM_RETRY and SCSI_DH_RETRY.  This patch adds a user
-configurable 'pg_init_delay_msecs' feature which specifies the number
-of milliseconds to delay before retrying scsi_dh_activate, when it
-returned SCSI_DH_RETRY.
+The spin_lock_irq() was leftover from the early request-based dm code,
+where map_request() used to enable interrupts.
+Since current map_request() never enables interrupts, we can change it
+to spin_lock() to match the prior spin_unlock().
 
-The default for 'pg_init_delay_msecs' is 2000 milliseconds.
-Maximum configurable delay is 60000 milliseconds.
+Auditing through the dm and block-layer code called from
+map_request(), I confirmed all functions save/restore interrupt
+status, so no function returning with interrupts enabled.
+Also I haven't observed any problem on my test environment which
+uses scsi and lpfc driver after heavy I/O testing with occasional
+path down/up.
 
-Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-Acked-by: Mike Christie <michaelc@cs.wisc.edu>
+Added BUG_ON() to detect breakage in future.
+
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-mpath.c |   45 ++++++++++++++++++++++++++++++++++++---------
- 1 file changed, 36 insertions(+), 9 deletions(-)
+ drivers/md/dm.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-v3:
-. renamed 'pg_init_delay' to 'pg_init_delay_retry'
-. switched 'pg_init_delay_secs' to 'pg_init_delay_msecs' and use
-  msecs_to_jiffies() -- DM targets expect time in milliseconds
-. moved 'pg_init_wait' in 'struct multipath' to avoid creating 2 new
-  4-byte holes when introducing new members
-
-Index: linux-2.6/drivers/md/dm-mpath.c
+v2: just refreshed to avoid offset and made slight changes to patch header
+    - v1 is here: https://patchwork.kernel.org/patch/86694/
+Index: linux-2.6/drivers/md/dm.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-mpath.c
-+++ linux-2.6/drivers/md/dm-mpath.c
-@@ -23,6 +23,7 @@
+--- linux-2.6.orig/drivers/md/dm.c
++++ linux-2.6/drivers/md/dm.c
+@@ -1637,13 +1637,15 @@ static void dm_request_fn(struct request
+ 		if (map_request(ti, clone, md))
+ 			goto requeued;
  
- #define DM_MSG_PREFIX "multipath"
- #define MESG_STR(x) x, sizeof(x)
-+#define DM_PG_INIT_DELAY_MSECS 2000
- 
- /* Path properties */
- struct pgpath {
-@@ -33,7 +34,7 @@ struct pgpath {
- 	unsigned fail_count;		/* Cumulative failure count */
- 
- 	struct dm_path path;
--	struct work_struct activate_path;
-+	struct delayed_work activate_path;
- };
- 
- #define path_to_pgpath(__pgp) container_of((__pgp), struct pgpath, path)
-@@ -64,11 +65,15 @@ struct multipath {
- 
- 	const char *hw_handler_name;
- 	char *hw_handler_params;
-+
- 	unsigned nr_priority_groups;
- 	struct list_head priority_groups;
-+
-+	wait_queue_head_t pg_init_wait;	/* Wait for pg_init completion */
-+
- 	unsigned pg_init_required;	/* pg_init needs calling? */
- 	unsigned pg_init_in_progress;	/* Only one pg_init allowed at once */
--	wait_queue_head_t pg_init_wait;	/* Wait for pg_init completion */
-+	unsigned pg_init_delay_retry;	/* Delay pg_init retry? */
- 
- 	unsigned nr_valid_paths;	/* Total number of usable paths */
- 	struct pgpath *current_pgpath;
-@@ -81,6 +86,7 @@ struct multipath {
- 	unsigned saved_queue_if_no_path;/* Saved state during suspension */
- 	unsigned pg_init_retries;	/* Number of times to retry pg_init */
- 	unsigned pg_init_count;		/* Number of times pg_init called */
-+	unsigned pg_init_delay_msecs;	/* Number of msecs before pg_init retry */
- 
- 	struct work_struct process_queued_ios;
- 	struct list_head queued_ios;
-@@ -127,7 +133,7 @@ static struct pgpath *alloc_pgpath(void)
- 
- 	if (pgpath) {
- 		pgpath->is_active = 1;
--		INIT_WORK(&pgpath->activate_path, activate_path);
-+		INIT_DELAYED_WORK(&pgpath->activate_path, activate_path);
+-		spin_lock_irq(q->queue_lock);
++		BUG_ON(!irqs_disabled());
++		spin_lock(q->queue_lock);
  	}
  
- 	return pgpath;
-@@ -188,6 +194,7 @@ static struct multipath *alloc_multipath
- 		INIT_LIST_HEAD(&m->queued_ios);
- 		spin_lock_init(&m->lock);
- 		m->queue_io = 1;
-+		m->pg_init_delay_msecs = DM_PG_INIT_DELAY_MSECS;
- 		INIT_WORK(&m->process_queued_ios, process_queued_ios);
- 		INIT_WORK(&m->trigger_event, trigger_event);
- 		init_waitqueue_head(&m->pg_init_wait);
-@@ -227,14 +234,18 @@ static void free_multipath(struct multip
- static void __pg_init_all_paths(struct multipath *m)
- {
- 	struct pgpath *pgpath;
-+	unsigned long pg_init_delay = 0;
+ 	goto out;
  
- 	m->pg_init_count++;
- 	m->pg_init_required = 0;
-+	if (m->pg_init_delay_retry)
-+		pg_init_delay = msecs_to_jiffies(m->pg_init_delay_msecs);
- 	list_for_each_entry(pgpath, &m->current_pg->pgpaths, list) {
- 		/* Skip failed paths */
- 		if (!pgpath->is_active)
- 			continue;
--		if (queue_work(kmpath_handlerd, &pgpath->activate_path))
-+		if (queue_delayed_work(kmpath_handlerd, &pgpath->activate_path,
-+				       pg_init_delay))
- 			m->pg_init_in_progress++;
- 	}
- }
-@@ -782,8 +793,9 @@ static int parse_features(struct arg_set
- 	const char *param_name;
+ requeued:
+-	spin_lock_irq(q->queue_lock);
++	BUG_ON(!irqs_disabled());
++	spin_lock(q->queue_lock);
  
- 	static struct param _params[] = {
--		{0, 3, "invalid number of feature args"},
-+		{0, 5, "invalid number of feature args"},
- 		{1, 50, "pg_init_retries must be between 1 and 50"},
-+		{1, 60000, "pg_init_delay_msecs must be between 1 and 60000"},
- 	};
- 
- 	r = read_param(_params, shift(as), &argc, &ti->error);
-@@ -810,6 +822,14 @@ static int parse_features(struct arg_set
- 			continue;
- 		}
- 
-+		if (!strnicmp(param_name, MESG_STR("pg_init_delay_msecs")) &&
-+		    (argc >= 1)) {
-+			r = read_param(_params + 1, shift(as),
-+				       &m->pg_init_delay_msecs, &ti->error);
-+			argc--;
-+			continue;
-+		}
-+
- 		ti->error = "Unrecognised multipath feature request";
- 		r = -EINVAL;
- 	} while (argc && !r);
-@@ -1022,7 +1042,7 @@ static int reinstate_path(struct pgpath 
- 		m->current_pgpath = NULL;
- 		queue_work(kmultipathd, &m->process_queued_ios);
- 	} else if (m->hw_handler_name && (m->current_pg == pgpath->pg)) {
--		if (queue_work(kmpath_handlerd, &pgpath->activate_path))
-+		if (queue_work(kmpath_handlerd, &pgpath->activate_path.work))
- 			m->pg_init_in_progress++;
- 	}
- 
-@@ -1157,6 +1177,7 @@ static void pg_init_done(void *data, int
- 	struct priority_group *pg = pgpath->pg;
- 	struct multipath *m = pg->m;
- 	unsigned long flags;
-+	unsigned delay_retry = 0;
- 
- 	/* device or driver problems */
- 	switch (errors) {
-@@ -1181,8 +1202,9 @@ static void pg_init_done(void *data, int
- 		 */
- 		bypass_pg(m, pg, 1);
- 		break;
--	/* TODO: For SCSI_DH_RETRY we should wait a couple seconds */
- 	case SCSI_DH_RETRY:
-+		/* Wait before retrying. */
-+		delay_retry = 1;
- 	case SCSI_DH_IMM_RETRY:
- 	case SCSI_DH_RES_TEMP_UNAVAIL:
- 		if (pg_init_limit_reached(m, pgpath))
-@@ -1215,6 +1237,7 @@ static void pg_init_done(void *data, int
- 	if (!m->pg_init_required)
- 		m->queue_io = 0;
- 
-+	m->pg_init_delay_retry = delay_retry;
- 	queue_work(kmultipathd, &m->process_queued_ios);
- 
- 	/*
-@@ -1229,7 +1252,7 @@ out:
- static void activate_path(struct work_struct *work)
- {
- 	struct pgpath *pgpath =
--		container_of(work, struct pgpath, activate_path);
-+		container_of(work, struct pgpath, activate_path.work);
- 
- 	scsi_dh_activate(bdev_get_queue(pgpath->path.dev->bdev),
- 				pg_init_done, pgpath);
-@@ -1370,11 +1393,15 @@ static int multipath_status(struct dm_ta
- 		DMEMIT("2 %u %u ", m->queue_size, m->pg_init_count);
- 	else {
- 		DMEMIT("%u ", m->queue_if_no_path +
--			      (m->pg_init_retries > 0) * 2);
-+			      (m->pg_init_retries > 0) * 2 +
-+			      (m->pg_init_delay_msecs !=
-+						DM_PG_INIT_DELAY_MSECS) * 2);
- 		if (m->queue_if_no_path)
- 			DMEMIT("queue_if_no_path ");
- 		if (m->pg_init_retries)
- 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
-+		if (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_MSECS)
-+			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
- 	}
- 
- 	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
+ plug_and_out:
+ 	if (!elv_queue_empty(q))
