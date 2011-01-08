@@ -1,95 +1,52 @@
-From: Greg KH <gregkh@suse.de>
-Subject: Re: kobject_put vs module unload
-Date: Sat, 8 Jan 2011 15:49:49 -0800
-Message-ID: <20110108234949.GA4262@suse.de>
-References: <Pine.LNX.4.64.1101072234040.382@hs20-bc2-1.build.redhat.com>
- <20110108055621.GB10391@suse.de>
- <Pine.LNX.4.64.1101080811400.29089@hs20-bc2-1.build.redhat.com>
- <AANLkTikg7vAG4-E=BD_sC=63R8fDCfEi_wiqnxDnUnK=@mail.gmail.com>
- <Pine.LNX.4.64.1101081258560.24933@hs20-bc2-1.build.redhat.com>
- <AANLkTi=hZ_W877QOwNK3=1-2S03VsKOXF_cVno_ReyrY@mail.gmail.com>
- <Pine.LNX.4.64.1101081340250.1879@hs20-bc2-1.build.redhat.com>
+From: Jens Kasten <jens@kasten-edv.de>
+Subject: trim support (discard)
+Date: Sat, 08 Jan 2011 20:45:16 +0100
+Message-ID: <1294515916.5136.6.camel@jaschtschik-pc>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1101081340250.1879@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Kay Sievers <kay.sievers@vrfy.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Jan 08, 2011 at 01:50:50PM -0500, Mikulas Patocka wrote:
->=20
->=20
-> On Sat, 8 Jan 2011, Kay Sievers wrote:
->=20
-> > On Sat, Jan 8, 2011 at 19:01, Mikulas Patocka <mpatocka@redhat.com>=
- wrote:
-> > > On Sat, 8 Jan 2011, Kay Sievers wrote:
-> > >> On Sat, Jan 8, 2011 at 14:19, Mikulas Patocka <mpatocka@redhat.c=
-om> wrote:
-> > >> > On Fri, 7 Jan 2011, Greg KH wrote:
-> > >>
-> > >> >> > 4) the reference obtained at point 1) is dropped, kobject r=
-eference count
-> > >> >> > reaches zero and the release callback is called. But that c=
-allback points
-> > >> >> > to an unloaded module and causes a crash.
-> > >> >> >
-> > >> >> > How is it solved? Am I missing something?
-> > >> >>
-> > >> >> You have the code that creates and frees the object, to not b=
-e in the
-> > >> >> module that could have been unloaded. =A0It's really just tha=
-t simple.
-> > >> >
-> > >> > If the whole device mapper subsystem can be a module, where ca=
-n I put the
-> > >> > code?
-> > >> >
-> > >> > I think a similar bug exists in md, it can also be unloaded as=
- a module
-> > >> > and it has "release" method in its module code.
-> > >>
-> > >> If you still have data structures hanging around, these structur=
-es are
-> > >> supposed to take a reference on the module -- and you can not un=
-load
-> > >> the module as long as this is the case.
-> > >>
-> > >> Kay
-> > >
-> > > kobject references don't increase module reference count. If kobj=
-ect held
-> > > module references, it would be a fix for this bug, but could caus=
-e other
-> > > bugs (some modules could be unloadable due to self-references to =
-its own
-> > > kobjects).
-> >=20
-> > Sure, they don't automatically take references. It's the job of the
-> > driver/module, to make sure to pin the module for any data of it,
-> > which might be still in use.
-> >=20
-> > Kay
->=20
-> A module can't unpin itself. If it does, the module can be unloaded=20
-> immediatelly after module_put(THIS_MODULE) call and the function that=
-=20
-> called module_put crashes.
->=20
-> A module must be unpinned by someone else. The question is: who unpin=
-s the=20
-> module when kobject references are gone?
-
-Who ever you decide to have unpin it.
-
-Seriously, it's up to you to handle this properly, it's not something
-built into the kobject/driver model at all due to it being something
-that can be done in a number of different ways.
-
-thanks,
-
-greg k-h
+SGkgbGlzdCwKCkl0IGlzIHRoZSBmaXJzdCB0aW1lIHRoZSBpIHdyaXRlIHRvIHRoaXMgbGlzdC4K
+SSBhc2tlZCBvbiB0aGUgZXh0NCBtbCBhbmQgdGhleSB0b2xkIG1lIHRvIGFzayBoZXJlLgoKSSB1
+c2UgdGhlIGtlcm5lbCAyLjYuMzcgd2l0aCBjcnlwdHNldHVwIGFuZCBsdm0gb24gYSBpbnRlbCBz
+c2QuIApJbiB0aGUgbG9nZmlsZSBhZnRlciBib290aW5nIGkgc2VlIHRoaXMgZW50cnk6CkVYVDQt
+ZnMgKGRtLTEpOiByZS1tb3VudGVkLiBPcHRzOiBkaXNjYXJkLGVycm9ycz1yZW1vdW50LXJvCkVY
+VDQtZnMgKHNkYTEpOiBtb3VudGVkIGZpbGVzeXN0ZW0gd2l0aCBvcmRlcmVkIGRhdGEgbW9kZS4g
+T3B0czogZGlzY2FyZApFWFQ0LWZzIChkbS0zKTogbW91bnRlZCBmaWxlc3lzdGVtIHdpdGggb3Jk
+ZXJlZCBkYXRhIG1vZGUuIE9wdHM6IGRpc2NhcmQKRVhUNC1mcyAoZG0tMik6IG1vdW50ZWQgZmls
+ZXN5c3RlbSB3aXRoIG9yZGVyZWQgZGF0YSBtb2RlLiBPcHRzOiBkaXNjYXJkCkVYVDQtZnMgd2Fy
+bmluZyAoZGV2aWNlIGRtLTEpOiBleHQ0X2lzc3VlX2Rpc2NhcmQ6MjYxOTogZGlzY2FyZCBub3QK
+c3VwcG9ydGVkLCBkaXNhYmxpbmcKRVhUNC1mcyB3YXJuaW5nIChkZXZpY2UgZG0tMyk6IGV4dDRf
+aXNzdWVfZGlzY2FyZDoyNjE5OiBkaXNjYXJkIG5vdApzdXBwb3J0ZWQsIGRpc2FibGluZwpFWFQ0
+LWZzIHdhcm5pbmcgKGRldmljZSBkbS0zKTogZXh0NF9pc3N1ZV9kaXNjYXJkOjI2MTk6IGRpc2Nh
+cmQgbm90CnN1cHBvcnRlZCwgZGlzYWJsaW5nCkVYVDQtZnMgd2FybmluZyAoZGV2aWNlIGRtLTMp
+OiBleHQ0X2lzc3VlX2Rpc2NhcmQ6MjYxOTogZGlzY2FyZCBub3QKc3VwcG9ydGVkLCBkaXNhYmxp
+bmcKRVhUNC1mcyAoc2RhMSk6IHJlLW1vdW50ZWQuIE9wdHM6IGRpc2NhcmQsY29tbWl0PTAKRVhU
+NC1mcyAoZG0tMyk6IHJlLW1vdW50ZWQuIE9wdHM6IGRpc2NhcmQsY29tbWl0PTAKRVhUNC1mcyAo
+ZG0tMik6IHJlLW1vdW50ZWQuIE9wdHM6IGRpc2NhcmQsY29tbWl0PTAKClRoZSBtb3VudCBjb21t
+YW5kIHNob3dzOgovZGV2L21hcHBlci9TeXN0ZW0yLXJvb3Rfc3NkIG9uIC8gdHlwZSBleHQyCihy
+dyxub2F0aW1lLGVycm9ycz1yZW1vdW50LXJvLGJhcnJpZXI9MSxzdHJpcGU9MzIsZGF0YT1vcmRl
+cmVkLGRpc2NhcmQpCmFuZCB0aGUgY29ycmVzcG9uZGluZyBlbnRyeSBmcm9tIGZzdGFiOgpVVUlE
+PSI2MzVhMWFkOS05ZWJiLTRkMWUtYjhjMy0zMGUxMTE0OGJkOTIiICAgICAvICAgICAgICAgICAg
+ICAgICAgIGV4dDQKbm9hdGltZSxkaXNjYXJkLGVycm9ycz1yZW1vdW50LXJvICAgICAgICAgICAg
+ICAgMCAgICAgICAxCgpTbywgbm8gZGlzY2FyZCBzdXBwb3J0IHNvIGZhci4KVGhlbiBpIHRyeSB0
+aGUgd2lwZXIuc2ggc2NyaXB0IGFuZCBpIGdldDoKd2lwZXIuc2g6IExpbnV4IFNBVEEgU1NEIFRS
+SU0gdXRpbGl0eSwgdmVyc2lvbiAzLjEsIGJ5IE1hcmsgTG9yZC4KL2Rldi9kbS0xOiB1bmFibGUg
+dG8gcmVsaWFibHkgZGV0ZXJtaW5lIHRoZSB1bmRlcmx5aW5nIHBoeXNpY2FsIGRldmljZQpuYW1l
+LCBhYm9ydGluZwoKSXRzIHRoZXJlIGluIG5lYXIgZnV0dXJlIHRoZSBkaXNjYXJkIHN1cHBvcnQg
+b24gdGhlIExWTT8KClZpZWxlIEdyw7xzc2UKSmVucyBLYXN0ZW4KCi0tCmRtLWRldmVsIG1haWxp
+bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
+bi9saXN0aW5mby9kbS1kZXZlbA==
