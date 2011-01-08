@@ -1,70 +1,78 @@
-From: Ted Ts'o <tytso@mit.edu>
-Subject: Patch to issue pure flushes directly (Was: Re: [PATCH v6 0/4]
- ext4: Coordinate data-only flush requests sent) by fsync
-Date: Fri, 7 Jan 2011 18:54:49 -0500
-Message-ID: <20110107235449.GT21922@thunk.org>
-References: <20101129220536.12401.16581.stgit@elm3b57.beaverton.ibm.com>
- <20101130164124.GA30858@lst.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 6/6] dm-snap-persistent: make metadata_wq
+ multithreaded
+Date: Fri, 7 Jan 2011 22:31:06 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1101072228360.28699@hs20-bc2-1.build.redhat.com>
+References: <1292181055-25696-1-git-send-email-tj@kernel.org>
+	<1292181055-25696-7-git-send-email-tj@kernel.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20101130164124.GA30858@lst.de>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: "Darrick J. Wong" <djwong@us.ibm.com>, Jens Axboe <axboe@kernel.dk>, Neil Brown <neilb@suse.de>, Andreas Dilger <adilger.kernel@dilger.ca>, Alasdair G Kergon <agk@redhat.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Keith Mannthey <kmannth@us.ibm.com>, dm-devel@redhat.com, Mingming Cao <cmm@us.ibm.com>, Tejun Heo <tj@kernel.org>, linux-ext4@vger.kernel.org, Ric Wheeler <rwheeler@redhat.com>, Josef Bacik <josef@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1292181055-25696-7-git-send-email-tj@kernel.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Tejun Heo <tj@kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>, snitzer@redhat.com
 List-Id: dm-devel.ids
 
-This patch seemed like a good idea to me; I just checked linux-next,
-and looks like nothing like this is planned to be merged.  Just
-thought I would send a prod-o-gram to see what the current thinking
-was around adding something like this.
 
-Thanks,
+On Sun, 12 Dec 2010, Tejun Heo wrote:
 
-						- Ted
-
-
-On Tue, Nov 30, 2010 at 05:41:24PM +0100, Christoph Hellwig wrote:
-> FYI, here's an updated version of my patch to not run pure flushes
-> that also works on SCSI/ATA and not just virtio.  I suspect the patch
-> alone might not be enough, but together with a variant of Neil's
-> suggestion might do the trick, with my patch taking care of the
-> highend-devices and Neil's scheme of taking care of stupid SATA disks.
+> metadata_wq serves on-stack work items from chunk_io().  Even if
+> multiple chunk_io() are simultaneously in progress, each is
+> independent and queued only once, so multithreaded workqueue can be
+> safely used.
 > 
+> Switch metadata_wq to multithread and flush the work item instead of
+> the workqueue in chunk_io().
 > 
-> Index: linux-2.6/block/blk-flush.c
-> ===================================================================
-> --- linux-2.6.orig/block/blk-flush.c	2010-11-30 17:27:33.108254088 +0100
-> +++ linux-2.6/block/blk-flush.c	2010-11-30 17:27:38.790004333 +0100
-> @@ -143,6 +143,17 @@ struct request *blk_do_flush(struct requ
->  	unsigned skip = 0;
->  
->  	/*
-> +	 * Just issue pure flushes directly.
-> +	 */
-> +	if (!blk_rq_sectors(rq)) {
-> +		if (!do_preflush) {
-> +			__blk_end_request_all(rq, 0);
-> +			return NULL;
-> +		}
-> +		return rq;
-> +	}
-> +
-> +	/*
->  	 * Special case.  If there's data but flush is not necessary,
->  	 * the request can be issued directly.
->  	 *
-> Index: linux-2.6/drivers/scsi/scsi_lib.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/scsi/scsi_lib.c	2010-11-30 17:27:33.120254298 +0100
-> +++ linux-2.6/drivers/scsi/scsi_lib.c	2010-11-30 17:27:38.791003634 +0100
-> @@ -1060,7 +1060,7 @@ int scsi_setup_blk_pc_cmnd(struct scsi_d
->  	 * that does not transfer data, in which case they may optionally
->  	 * submit a request without an attached bio.
+> Signed-off-by: Tejun Heo <tj@kernel.org>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: dm-devel@redhat.com
+
+Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
+Acked-by: Mikulas Patocka <mpatocka@redhat.com>
+
+> ---
+>  drivers/md/dm-snap-persistent.c |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+> index d3021a6..95891df 100644
+> --- a/drivers/md/dm-snap-persistent.c
+> +++ b/drivers/md/dm-snap-persistent.c
+> @@ -256,7 +256,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, int rw,
 >  	 */
-> -	if (req->bio) {
-> +	if (req->bio && !(req->cmd_flags & REQ_FLUSH)) {
->  		int ret;
+>  	INIT_WORK_ONSTACK(&req.work, do_metadata);
+>  	queue_work(ps->metadata_wq, &req.work);
+> -	flush_workqueue(ps->metadata_wq);
+> +	flush_work(&req.work);
 >  
->  		BUG_ON(!req->nr_phys_segments);
+>  	return req.result;
+>  }
+> @@ -818,7 +818,7 @@ static int persistent_ctr(struct dm_exception_store *store,
+>  	atomic_set(&ps->pending_count, 0);
+>  	ps->callbacks = NULL;
+>  
+> -	ps->metadata_wq = alloc_ordered_workqueue("ksnaphd", WQ_MEM_RECLAIM);
+> +	ps->metadata_wq = alloc_workqueue("ksnaphd", WQ_MEM_RECLAIM, 0);
+>  	if (!ps->metadata_wq) {
+>  		kfree(ps);
+>  		DMERR("couldn't start header metadata update thread");
+> -- 
+> 1.7.1
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
