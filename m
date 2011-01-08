@@ -1,78 +1,35 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 6/6] dm-snap-persistent: make metadata_wq
- multithreaded
-Date: Fri, 7 Jan 2011 22:31:06 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1101072228360.28699@hs20-bc2-1.build.redhat.com>
-References: <1292181055-25696-1-git-send-email-tj@kernel.org>
-	<1292181055-25696-7-git-send-email-tj@kernel.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: kobject_put vs module unload
+Date: Fri, 7 Jan 2011 22:42:22 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1101072234040.382@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1292181055-25696-7-git-send-email-tj@kernel.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Tejun Heo <tj@kernel.org>, "Alasdair G. Kergon" <agk@redhat.com>, snitzer@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@suse.de>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi
 
-On Sun, 12 Dec 2010, Tejun Heo wrote:
+I'm looking at some kobject problem in device mapper and I came across 
+this problem:
 
-> metadata_wq serves on-stack work items from chunk_io().  Even if
-> multiple chunk_io() are simultaneously in progress, each is
-> independent and queued only once, so multithreaded workqueue can be
-> safely used.
-> 
-> Switch metadata_wq to multithread and flush the work item instead of
-> the workqueue in chunk_io().
-> 
-> Signed-off-by: Tejun Heo <tj@kernel.org>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: dm-devel@redhat.com
+According to kobject interface specification, If we embed a kobject into 
+the device structure, we shouldn't free the device structure when the 
+device is unloaded, but we should register a "release" callback in 
+kobj_type that will actually free the device structure.
 
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
-Acked-by: Mikulas Patocka <mpatocka@redhat.com>
+What happens in this scenario?:
 
-> ---
->  drivers/md/dm-snap-persistent.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-> index d3021a6..95891df 100644
-> --- a/drivers/md/dm-snap-persistent.c
-> +++ b/drivers/md/dm-snap-persistent.c
-> @@ -256,7 +256,7 @@ static int chunk_io(struct pstore *ps, void *area, chunk_t chunk, int rw,
->  	 */
->  	INIT_WORK_ONSTACK(&req.work, do_metadata);
->  	queue_work(ps->metadata_wq, &req.work);
-> -	flush_workqueue(ps->metadata_wq);
-> +	flush_work(&req.work);
->  
->  	return req.result;
->  }
-> @@ -818,7 +818,7 @@ static int persistent_ctr(struct dm_exception_store *store,
->  	atomic_set(&ps->pending_count, 0);
->  	ps->callbacks = NULL;
->  
-> -	ps->metadata_wq = alloc_ordered_workqueue("ksnaphd", WQ_MEM_RECLAIM);
-> +	ps->metadata_wq = alloc_workqueue("ksnaphd", WQ_MEM_RECLAIM, 0);
->  	if (!ps->metadata_wq) {
->  		kfree(ps);
->  		DMERR("couldn't start header metadata update thread");
-> -- 
-> 1.7.1
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+1) someone references a device kobject
+2) the device is unloaded (but the device structure is still in memory 
+because of that reference)
+3) the driver module is unloaded
+4) the reference obtained at point 1) is dropped, kobject reference count 
+reaches zero and the release callback is called. But that callback points 
+to an unloaded module and causes a crash.
+
+How is it solved? Am I missing something?
+
+Mikulas
