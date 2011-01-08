@@ -1,56 +1,37 @@
-From: Greg KH <gregkh@suse.de>
-Subject: Re: kobject_put vs module unload
-Date: Fri, 7 Jan 2011 21:56:21 -0800
-Message-ID: <20110108055621.GB10391@suse.de>
-References: <Pine.LNX.4.64.1101072234040.382@hs20-bc2-1.build.redhat.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: Patch to issue pure flushes directly (Was: Re:
+	[PATCH v6 0/4] ext4: Coordinate data-only flush requests
+	sent) by fsync
+Date: Sat, 8 Jan 2011 08:45:24 +0100
+Message-ID: <20110108074524.GA13024__10258.9307622567$1294472852$gmane$org@lst.de>
+References: <20101129220536.12401.16581.stgit@elm3b57.beaverton.ibm.com>
+	<20101130164124.GA30858@lst.de> <20110107235449.GT21922@thunk.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1101072234040.382@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+In-Reply-To: <20110107235449.GT21922@thunk.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ted Ts'o <tytso@mit.edu>, Christoph Hellwig <hch@lst.de>, "Darrick J. Wong" <djwong@us.ibm.com>, Jens Axboe <axboe@kernel.dk>, Neil Brown <neilb@suse.de>, Andreas
 List-Id: dm-devel.ids
 
-On Fri, Jan 07, 2011 at 10:42:22PM -0500, Mikulas Patocka wrote:
-> Hi
-> 
-> I'm looking at some kobject problem in device mapper and I came across 
-> this problem:
-> 
-> According to kobject interface specification, If we embed a kobject into 
-> the device structure, we shouldn't free the device structure when the 
-> device is unloaded, but we should register a "release" callback in 
-> kobj_type that will actually free the device structure.
+On Fri, Jan 07, 2011 at 06:54:49PM -0500, Ted Ts'o wrote:
+> This patch seemed like a good idea to me; I just checked linux-next,
+> and looks like nothing like this is planned to be merged.  Just
+> thought I would send a prod-o-gram to see what the current thinking
+> was around adding something like this.
 
-That is correct.
-
-What does "device is unloaded" mean?  That really doesn't mean anything
-in reference to the driver model/kobject code.
-
-> What happens in this scenario?:
-> 
-> 1) someone references a device kobject
-> 2) the device is unloaded (but the device structure is still in memory 
-> because of that reference)
-
-What do you mean here?  How can a device be "unloaded"?  Is it just
-unregistered?
-
-> 3) the driver module is unloaded
-
-Oops, you just lost.
-
-> 4) the reference obtained at point 1) is dropped, kobject reference count 
-> reaches zero and the release callback is called. But that callback points 
-> to an unloaded module and causes a crash.
-> 
-> How is it solved? Am I missing something?
-
-You have the code that creates and frees the object, to not be in the
-module that could have been unloaded.  It's really just that simple.
-
-Hope this helps,
-
-greg k-h
+I haven't really gotten any feedback on the patch, so it fell on the
+floor for a while.  I've managed to get some big system resources to
+test the impact of it, and once I've got numbers I'll resend it as
+separate patches for scsi and the block layer.
