@@ -1,52 +1,46 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH 1/6] dm-stripe: drop kstriped
-Date: Sat, 8 Jan 2011 12:16:47 -0500
-Message-ID: <20110108171647.GE13269@mtj.dyndns.org>
-References: <1292181055-25696-1-git-send-email-tj@kernel.org>
-	<1292181055-25696-2-git-send-email-tj@kernel.org>
-	<20101214235935.GB14227@redhat.com>
-	<20101215013457.GA16210@redhat.com>
-	<20110107230231.GO5910@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: Re: kobject_put vs module unload
+Date: Sat, 8 Jan 2011 18:23:16 +0100
+Message-ID: <AANLkTikg7vAG4-E=BD_sC=63R8fDCfEi_wiqnxDnUnK=@mail.gmail.com>
+References: <Pine.LNX.4.64.1101072234040.382@hs20-bc2-1.build.redhat.com>
+ <20110108055621.GB10391@suse.de> <Pine.LNX.4.64.1101080811400.29089@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20110107230231.GO5910@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.1101080811400.29089@hs20-bc2-1.build.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Greg KH <gregkh@suse.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+On Sat, Jan 8, 2011 at 14:19, Mikulas Patocka <mpatocka@redhat.com> wro=
+te:
+> On Fri, 7 Jan 2011, Greg KH wrote:
 
-On Fri, Jan 07, 2011 at 11:02:31PM +0000, Alasdair G Kergon wrote:
-> On Tue, Dec 14, 2010 at 08:34:58PM -0500, Mike Snitzer wrote:
-> > On Tue, Dec 14 2010 at  6:59pm -0500,
-> > Mike Snitzer <snitzer@redhat.com> wrote:
-> > > I'm concerned about switching to using the global system_wq and calling
-> > > flush_scheduled_work() when resuming a DM table (calls a DM target's
-> > > ->dtr() via dm_table_destroy in drivers/md/dm-ioctl.c:do_resume).
->  
-> Absolutely.
-> 
-> I'm not taking patch 1 in its current form - it introduces a problem
-> that was not present before.  Probably part of patch 4 needs moving
-> into patch 1.
+>> > 4) the reference obtained at point 1) is dropped, kobject referenc=
+e count
+>> > reaches zero and the release callback is called. But that callback=
+ points
+>> > to an unloaded module and causes a crash.
+>> >
+>> > How is it solved? Am I missing something?
+>>
+>> You have the code that creates and frees the object, to not be in th=
+e
+>> module that could have been unloaded. =C2=A0It's really just that si=
+mple.
+>
+> If the whole device mapper subsystem can be a module, where can I put=
+ the
+> code?
+>
+> I think a similar bug exists in md, it can also be unloaded as a modu=
+le
+> and it has "release" method in its module code.
 
-I can just combine 1 and 4 then or reorder them such that
-flush_work_sync() conversion happens first and then the dedicated wq
-is dropped.  Which one would you prefer?
+If you still have data structures hanging around, these structures are
+supposed to take a reference on the module -- and you can not unload
+the module as long as this is the case.
 
-Thanks.
-
--- 
-tejun
+Kay
