@@ -1,42 +1,50 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: Re: Patch to issue pure flushes directly (Was: Re: [PATCH v6 0/4]
- ext4: Coordinate data-only flush requests sent) by fsync
-Date: Sat, 8 Jan 2011 09:08:01 -0500
-Message-ID: <20110108140801.GB13269@mtj.dyndns.org>
-References: <20101129220536.12401.16581.stgit@elm3b57.beaverton.ibm.com>
- <20101130164124.GA30858@lst.de>
- <20110107235449.GT21922@thunk.org>
- <20110108074524.GA13024@lst.de>
+Subject: Re: [PATCH 1/6] dm-stripe: drop kstriped
+Date: Sat, 8 Jan 2011 12:16:47 -0500
+Message-ID: <20110108171647.GE13269@mtj.dyndns.org>
+References: <1292181055-25696-1-git-send-email-tj@kernel.org>
+	<1292181055-25696-2-git-send-email-tj@kernel.org>
+	<20101214235935.GB14227@redhat.com>
+	<20101215013457.GA16210@redhat.com>
+	<20110107230231.GO5910@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20110108074524.GA13024@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Ted Ts'o <tytso@mit.edu>, "Darrick J. Wong" <djwong@us.ibm.com>, Jens Axboe <axboe@kernel.dk>, Neil Brown <neilb@suse.de>, Andreas Dilger <adilger.kernel@dilger.ca>, Alasdair G Kergon <agk@redhat.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org, Keith Mannthey <kmannth@us.ibm.com>, dm-devel@redhat.com, Mingming Cao <cmm@us.ibm.com>, linux-ext4@vger.kernel.org, Ric Wheeler <rwheeler@redhat.com>, Josef Bacik <josef@redhat.com>
+In-Reply-To: <20110107230231.GO5910@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 Hello,
 
-On Sat, Jan 08, 2011 at 08:45:24AM +0100, Christoph Hellwig wrote:
-> On Fri, Jan 07, 2011 at 06:54:49PM -0500, Ted Ts'o wrote:
-> > This patch seemed like a good idea to me; I just checked linux-next,
-> > and looks like nothing like this is planned to be merged.  Just
-> > thought I would send a prod-o-gram to see what the current thinking
-> > was around adding something like this.
+On Fri, Jan 07, 2011 at 11:02:31PM +0000, Alasdair G Kergon wrote:
+> On Tue, Dec 14, 2010 at 08:34:58PM -0500, Mike Snitzer wrote:
+> > On Tue, Dec 14 2010 at  6:59pm -0500,
+> > Mike Snitzer <snitzer@redhat.com> wrote:
+> > > I'm concerned about switching to using the global system_wq and calling
+> > > flush_scheduled_work() when resuming a DM table (calls a DM target's
+> > > ->dtr() via dm_table_destroy in drivers/md/dm-ioctl.c:do_resume).
+>  
+> Absolutely.
 > 
-> I haven't really gotten any feedback on the patch, so it fell on the
-> floor for a while.  I've managed to get some big system resources to
-> test the impact of it, and once I've got numbers I'll resend it as
-> separate patches for scsi and the block layer.
+> I'm not taking patch 1 in its current form - it introduces a problem
+> that was not present before.  Probably part of patch 4 needs moving
+> into patch 1.
 
-But would it actually make any difference?  It's not like the usual
-completion path in the optimized case is much longer.  It will set all
-the skip bits, try to determine the next step which is completion and
-then complete the flush request.  It'll sure occupy the CPU for a
-little bit longer but I don't think it will be anything measureable.
-Is there a workload that this can actually help?
+I can just combine 1 and 4 then or reorder them such that
+flush_work_sync() conversion happens first and then the dedicated wq
+is dropped.  Which one would you prefer?
 
 Thanks.
 
