@@ -1,12 +1,14 @@
-From: Jens Kasten <jens@kasten-edv.de>
-Subject: trim support (discard)
-Date: Sat, 08 Jan 2011 20:45:16 +0100
-Message-ID: <1294515916.5136.6.camel@jaschtschik-pc>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: trim support (discard)
+Date: Sun, 09 Jan 2011 14:28:16 +0100
+Message-ID: <4D29B7F0.4050001@redhat.com>
+References: <1294515916.5136.6.camel@jaschtschik-pc>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1294515916.5136.6.camel@jaschtschik-pc>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,37 +18,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Jens Kasten <jens@kasten-edv.de>
 List-Id: dm-devel.ids
 
-SGkgbGlzdCwKCkl0IGlzIHRoZSBmaXJzdCB0aW1lIHRoZSBpIHdyaXRlIHRvIHRoaXMgbGlzdC4K
-SSBhc2tlZCBvbiB0aGUgZXh0NCBtbCBhbmQgdGhleSB0b2xkIG1lIHRvIGFzayBoZXJlLgoKSSB1
-c2UgdGhlIGtlcm5lbCAyLjYuMzcgd2l0aCBjcnlwdHNldHVwIGFuZCBsdm0gb24gYSBpbnRlbCBz
-c2QuIApJbiB0aGUgbG9nZmlsZSBhZnRlciBib290aW5nIGkgc2VlIHRoaXMgZW50cnk6CkVYVDQt
-ZnMgKGRtLTEpOiByZS1tb3VudGVkLiBPcHRzOiBkaXNjYXJkLGVycm9ycz1yZW1vdW50LXJvCkVY
-VDQtZnMgKHNkYTEpOiBtb3VudGVkIGZpbGVzeXN0ZW0gd2l0aCBvcmRlcmVkIGRhdGEgbW9kZS4g
-T3B0czogZGlzY2FyZApFWFQ0LWZzIChkbS0zKTogbW91bnRlZCBmaWxlc3lzdGVtIHdpdGggb3Jk
-ZXJlZCBkYXRhIG1vZGUuIE9wdHM6IGRpc2NhcmQKRVhUNC1mcyAoZG0tMik6IG1vdW50ZWQgZmls
-ZXN5c3RlbSB3aXRoIG9yZGVyZWQgZGF0YSBtb2RlLiBPcHRzOiBkaXNjYXJkCkVYVDQtZnMgd2Fy
-bmluZyAoZGV2aWNlIGRtLTEpOiBleHQ0X2lzc3VlX2Rpc2NhcmQ6MjYxOTogZGlzY2FyZCBub3QK
-c3VwcG9ydGVkLCBkaXNhYmxpbmcKRVhUNC1mcyB3YXJuaW5nIChkZXZpY2UgZG0tMyk6IGV4dDRf
-aXNzdWVfZGlzY2FyZDoyNjE5OiBkaXNjYXJkIG5vdApzdXBwb3J0ZWQsIGRpc2FibGluZwpFWFQ0
-LWZzIHdhcm5pbmcgKGRldmljZSBkbS0zKTogZXh0NF9pc3N1ZV9kaXNjYXJkOjI2MTk6IGRpc2Nh
-cmQgbm90CnN1cHBvcnRlZCwgZGlzYWJsaW5nCkVYVDQtZnMgd2FybmluZyAoZGV2aWNlIGRtLTMp
-OiBleHQ0X2lzc3VlX2Rpc2NhcmQ6MjYxOTogZGlzY2FyZCBub3QKc3VwcG9ydGVkLCBkaXNhYmxp
-bmcKRVhUNC1mcyAoc2RhMSk6IHJlLW1vdW50ZWQuIE9wdHM6IGRpc2NhcmQsY29tbWl0PTAKRVhU
-NC1mcyAoZG0tMyk6IHJlLW1vdW50ZWQuIE9wdHM6IGRpc2NhcmQsY29tbWl0PTAKRVhUNC1mcyAo
-ZG0tMik6IHJlLW1vdW50ZWQuIE9wdHM6IGRpc2NhcmQsY29tbWl0PTAKClRoZSBtb3VudCBjb21t
-YW5kIHNob3dzOgovZGV2L21hcHBlci9TeXN0ZW0yLXJvb3Rfc3NkIG9uIC8gdHlwZSBleHQyCihy
-dyxub2F0aW1lLGVycm9ycz1yZW1vdW50LXJvLGJhcnJpZXI9MSxzdHJpcGU9MzIsZGF0YT1vcmRl
-cmVkLGRpc2NhcmQpCmFuZCB0aGUgY29ycmVzcG9uZGluZyBlbnRyeSBmcm9tIGZzdGFiOgpVVUlE
-PSI2MzVhMWFkOS05ZWJiLTRkMWUtYjhjMy0zMGUxMTE0OGJkOTIiICAgICAvICAgICAgICAgICAg
-ICAgICAgIGV4dDQKbm9hdGltZSxkaXNjYXJkLGVycm9ycz1yZW1vdW50LXJvICAgICAgICAgICAg
-ICAgMCAgICAgICAxCgpTbywgbm8gZGlzY2FyZCBzdXBwb3J0IHNvIGZhci4KVGhlbiBpIHRyeSB0
-aGUgd2lwZXIuc2ggc2NyaXB0IGFuZCBpIGdldDoKd2lwZXIuc2g6IExpbnV4IFNBVEEgU1NEIFRS
-SU0gdXRpbGl0eSwgdmVyc2lvbiAzLjEsIGJ5IE1hcmsgTG9yZC4KL2Rldi9kbS0xOiB1bmFibGUg
-dG8gcmVsaWFibHkgZGV0ZXJtaW5lIHRoZSB1bmRlcmx5aW5nIHBoeXNpY2FsIGRldmljZQpuYW1l
-LCBhYm9ydGluZwoKSXRzIHRoZXJlIGluIG5lYXIgZnV0dXJlIHRoZSBkaXNjYXJkIHN1cHBvcnQg
-b24gdGhlIExWTT8KClZpZWxlIEdyw7xzc2UKSmVucyBLYXN0ZW4KCi0tCmRtLWRldmVsIG1haWxp
-bmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1h
-bi9saXN0aW5mby9kbS1kZXZlbA==
+On 01/08/2011 08:45 PM, Jens Kasten wrote:
+> 
+> I use the kernel 2.6.37 with cryptsetup and lvm on a intel ssd. 
+
+Device-mapper targets supports discards in 2.6.37 with exception
+of dm-crypt target (that's why you see that message).
+
+Supporting discards in dm-crypt means that information
+about unused blocks is leaked (SSD ususally returns zeroes instead
+of expected random data for discarded blocks) and it it can be
+security problem in some situations.
+
+We will probably add discard support in dm-crypt later but as optional
+parameter (admin must decide that leaking allocated block info
+is not problem and must explicitly enable it).
+Probably 2.6.39 material.
+
+> Then i try the wiper.sh script and i get:
+> wiper.sh: Linux SATA SSD TRIM utility, version 3.1, by Mark Lord.
+> /dev/dm-1: unable to reliably determine the underlying physical device
+> name, aborting
+
+That seems like bug in that script btw, it should understand DM devices.
+
+> Its there in near future the discard support on the LVM?
+
+LVM/DM itself should fully support discards now.
+Exception is stacking with dm-crypt devices.
+
+Milan
