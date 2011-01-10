@@ -1,62 +1,146 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] PROBLEM: SSD access time with dm-crypt is way too
- high
-Date: Sun, 09 Jan 2011 15:05:27 +0100
-Message-ID: <4D29C0A7.5010209@redhat.com>
-References: <1294580107.2076.89.camel@vpcz1maverick>
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [PATCH v3 0/8] dm-raid (raid456) target
+Date: Mon, 10 Jan 2011 11:37:18 +1100
+Message-ID: <20110110113718.1e042548@notabene.brown>
+References: <1292899065-31943-1-git-send-email-snitzer@redhat.com>
+	<20101221141443.5aea0b12@notabene.brown>
+	<20110105223628.GA13164@redhat.com>
+	<20110106214645.2bd321f4@notabene.brown>
+	<D3D5994A-7CA9-43BE-8B81-A09139220A9E@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-net-owner@vger.kernel.org>
-In-Reply-To: <1294580107.2076.89.camel@vpcz1maverick>
-Sender: linux-net-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Michael Zugelder <michaelzugelder@googlemail.com>, linux-net@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <D3D5994A-7CA9-43BE-8B81-A09139220A9E@redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Jonathan Brassow <jbrassow@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 01/09/2011 02:35 PM, Michael Zugelder wrote:
+On Thu, 6 Jan 2011 08:43:35 -0600 Jonathan Brassow <jbrassow@redhat.com>
+wrote:
 
-Hi,
-
-> Just to be clear: This isn't about a dm-crypt encrypted disk being
-> slower that an unencrypted disk. It's about the access time of the same
-> encrypted disk rising to >= 10ms, which is at least an order of
-> magnitude for an SSD. I suspect with an HDD, the difference isn't much
-> noticeable.
-
-yep, it was reported several times, thanks for that bisect.
-We will need to retest it with per-cpu dm-crypt patches
-(should be in linux-next soon) but I expect that this problem remains.
-
-> I filed a bugreport on the Ubuntu bugtracker with a few pretty graphs,
-> vmstat and LatencyTOP output. If that would be useful, see
-> https://bugs.launchpad.net/ubuntu/+source/linux/+bug/653611 .
-
-(Maybe Ubuntu people can forward issue to upstream list next time?)
-
-> A bisect between .32 and .33 revealed some more information. I arrived
-> at 79da064, which is a revert of fb1e753 (block: improve
-> queue_should_plug() by looking at IO depths), so I compiled fb1e753.
-> With this 2.6.31 kernel, the problem was gone. One step back to 1f98a13,
-> the access time was high again.
 > 
-> So, it seems that fb1e753 (block: improve queue_should_plug() by looking
-> at IO depths) improves dm-crypt access time on SSDs (by a factor of over
-> 40 here), but (as in the revert commit stated) reduces sequential
-> throughput in some cases. I applied fb1e753 to 2.6.37 and the access
-> time went down to the .32 value.
+> On Jan 6, 2011, at 4:46 AM, NeilBrown wrote:
+> >
+> > Patches 1 and 2 aren't really needed - I feel inclined not to remove  
+> > that
+> > stuff until all the dust settles..  So I'll put them at the bottom  
+> > of my
+> > queue and bring them forward in a couple of releases if that seems
+> > appropriate.
 > 
-> For me, it seems that dm-crypt interferes with queuing, which totally
-> destroys access time.
+> No problem.
+> 
+> > Patch 3 I'll push out through my tree shortly.
+> 
+> thanks
+> 
+> > The rest I am happy with going out through 'dm' to -next and beyond  
+> > whenever
+> > you like.
+> >
+> > However I will take this opportunity to suggest that the raid  
+> > parameters
+> > might need a bit of review before they are finalised.
+> >
+> > The possible parameters are as follows:
+> > <chunk_size>		Chunk size in sectors.
+> > [[no]sync]		Force/Prevent RAID initialization
+> > [rebuild <idx>]	Rebuild the drive indicated by the index
+> > [daemon_sleep <ms>]	Time between bitmap daemon work to clear bits
+> > [min_recovery_rate <kB/sec/disk>]	Throttle RAID initialization
+> > [max_recovery_rate <kB/sec/disk>]	Throttle RAID initialization
+> > [max_write_behind <value>]		See '-write-behind=' (man mdadm)
+> > [stripe_cache <sectors>]		Stripe cache size for higher RAIDs
+> >
+> >
+> > 'rebuild idx' only allows one device to be rebuilt at a time.  With  
+> > RAID6 it
+> > is possible that two devices can be ready for rebuild, in which case  
+> > we would
+> > want to rebuild both of them.
+> 
+> In which case, you can specify the parameter twice:
+> "... rebuild 0 rebuild 1..."
+> No problem there, I think.
 
-Yes, dm-crypt clones requests and process them in its own queue so there
-is some interference.
+Yes, I see.  I'm use to seeing positional parameter in dm tables and didn't
+process properly that these are key/value parameters.
 
-I am not sure if this is fixable by block layer only patch (like fb1e753),
 
-Maybe dm-crypt should call unplug explicitly, flush crypt workqueue
-explicitly or something like that... dunno
+> 
+> > Also if you stop an array during a rebuild you really want to start  
+> > again
+> > where you were up to.
+> 
+> This is kept in the superblock (forthcoming patches).  In the case  
+> where metadata devices are not specified (or can't be specified, as in  
+> this initial set of patches), the user has two choices: 1) allow the  
+> array to completely resync, or 2) specify [no]sync.
 
-Jens, do you have an idea how to improve it and not lose throughput?
+OK... though 'resync' and 'rebuild' are very different things and should not
+be confused.  So the [no]sync option should not affect rebuild of new devices.
 
-Milan
+
+
+> 
+> > Most general solution would be to combine the rebuild information  
+> > with the
+> > list of component devices - either a sector number or something to  
+> > indicate
+> > that the rebuild it complete (which could be just a v.big sector  
+> > number).
+> 
+> Is there something more to this, or is the above comment suitable for  
+> this also?
+
+No, I think you've address it all.
+
+
+> 
+> > I'd much prefer 'daemon_sleep' to be in seconds, we decimals  
+> > supported if
+> > needed.
+> 
+> I had this in seconds originally, but device-mapper tables already  
+> have a precedent for specifying things in ms.  We don't want to have  
+> each target pick their own units.  (A similar thing can be said for  
+> values given in sectors.  We may have wanted kiB or B, but sectors is  
+> the standard.)
+
+Fair enough.
+
+
+> 
+> >
+> > Also:
+> >
+> > 3:	<#raid_devs> <meta_dev1> <dev1> .. <meta_devN> <devN>
+> >
+> > This doesn't allow offsets into the various devices like dm-stripe,
+> > dm-linear, dm-raid1 all do.
+> 
+> This is a conscious choice.  The offset was discarded because it is  
+> unneeded.
+
+Famous last words!!!
+
+When reshaping a RAID5/6 to change the chunk size or layout, or when
+converting an N drive RAID5 to N+1 drive RAID6, it makes it a lot easier if
+you can can change the data offset at the same time.  Then you don't have to
+keep backing up data.  md cannot do this yet but I hope to add the code soon
+and because 'data_offset' is a distinct value it is conceptually easy to do.
+If 'data_offset' is assumed to be zero, then it isn't.
+
+But I don't know to what extent you are planning on supporting reshaping of
+arrays....
+
+Thanks,
+
+NeilBrown
+
+
+
+> 
+>   brassow
