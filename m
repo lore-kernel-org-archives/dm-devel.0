@@ -1,47 +1,56 @@
-From: Michael Zugelder <michaelzugelder@googlemail.com>
-Subject: Re: [PATCH] PROBLEM: SSD access time with dm-crypt is way too high
-Date: Mon, 10 Jan 2011 21:06:24 +0100
-Message-ID: <1294689984.2619.21.camel@vpcz1maverick>
-References: <1294580107.2076.89.camel@vpcz1maverick>
-	 <4D29C0A7.5010209@redhat.com>
-	 <Pine.LNX.4.64.1101101216430.26990@hs20-bc2-1.build.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: [PATCH v3 0/8] dm-raid (raid456) target
+Date: Mon, 10 Jan 2011 14:14:59 -0600
+Message-ID: <5F7256B3-BE4F-489F-8B2B-0E830A8BBE0B@redhat.com>
+References: <1292899065-31943-1-git-send-email-snitzer@redhat.com> <20101221141443.5aea0b12@notabene.brown> <20110105223628.GA13164@redhat.com> <20110106214645.2bd321f4@notabene.brown> <D3D5994A-7CA9-43BE-8B81-A09139220A9E@redhat.com> <20110110113718.1e042548@notabene.brown>
+Mime-Version: 1.0 (Apple Message framework v936)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-net-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1101101216430.26990@hs20-bc2-1.build.redhat.com>
-Sender: linux-net-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Michael Zugelder <michaelzugelder@googlemail.com>, linux-net@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>, Milan Broz <mbroz@redhat.com>
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20110110113718.1e042548@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, agk@redhat.com, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, 2011-01-10 at 12:19 -0500, Mikulas Patocka wrote: 
-> Try this patch.
 
-Hi,
+On Jan 9, 2011, at 6:37 PM, NeilBrown wrote:
 
-just compiled it on top of 2.6.37 without the fb1e753 and ran seeker [1]
-for 100 seconds:
+>>> Also:
+>>>
+>>> 3:	<#raid_devs> <meta_dev1> <dev1> .. <meta_devN> <devN>
+>>>
+>>> This doesn't allow offsets into the various devices like dm-stripe,
+>>> dm-linear, dm-raid1 all do.
+>>
+>> This is a conscious choice.  The offset was discarded because it is
+>> unneeded.
+>
+> Famous last words!!!
 
-raw disk:       0.2173ms
-fb1e753 patch:  0.2643ms
-your patch:	0.2676ms
+:)
 
-Throughput is within 5% of max, even with the 10ms access time.
+>
+> When reshaping a RAID5/6 to change the chunk size or layout, or when
+> converting an N drive RAID5 to N+1 drive RAID6, it makes it a lot  
+> easier if
+> you can can change the data offset at the same time.  Then you don't  
+> have to
+> keep backing up data.  md cannot do this yet but I hope to add the  
+> code soon
+> and because 'data_offset' is a distinct value it is conceptually  
+> easy to do.
+> If 'data_offset' is assumed to be zero, then it isn't.
 
-On Mon, 2011-01-10 at 18:50 +0100, Milan Broz wrote:
-> We can now process ios in parallel on different CPUs, that code will
-> rewrite the context struct on every IO and at least it will cause cache bouncing.
+I guess I don't understand this part.  Why would you need to change  
+the data offset?  Especially the offset as it relates to the  
+individual drives?
 
-I should say that those numbers come from a CRYPTO_PCRYPT=n kernel.
+> But I don't know to what extent you are planning on supporting  
+> reshaping of
+> arrays....
 
+I don't see a reason why this can't be completely supported...
 
-Anyone got an idea for a good testcase? I tried replicating the issues
-with with a loop'd file on a tmpfs and failed. Using a usb-attached HDD
-also didn't work.
-
-
-Michael
-
-[1] http://www.linuxinsight.com/how_fast_is_your_disk.html
+  brassow
 
