@@ -1,12 +1,14 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Fw: linux-next - WARNING: at fs/block_dev.c:824
- bd_link_disk_holder+0x92/0x1ac()
-Date: Thu, 13 Jan 2011 07:09:08 +1100
-Message-ID: <20110113070908.7b1a0de9@notabene.brown>
+From: Mantas =?utf-8?B?S3JpYXXEjWnFq25hcw==?= <mantas@akl.lt>
+Subject: What is the status of RAID5 support with pdc (AMD SB850
+	Southbridge) hardware?
+Date: Wed, 12 Jan 2011 23:16:20 +0200
+Message-ID: <20110112211620.GD3909@diedas.soften.ktu.lt>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7169114591768861119=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,83 +18,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: ataraid-list@redhat.com
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============7169114591768861119==
-Content-Type: multipart/signed; micalg=PGP-SHA1;
-	boundary="Sig_/SNmP0=JWvHsCHG2XenjkC46";
-	protocol="application/pgp-signature"
-
---Sig_/SNmP0=JWvHsCHG2XenjkC46
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
-
-
-
-Begin forwarded message:
-
-Date: Wed, 12 Jan 2011 12:34:33 -0500
-From: Valdis.Kletnieks@vt.edu
-To: Alexander Viro <viro@zeniv.linux.org.uk>, Neil Brown <neilb@suse.de>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-linux-raid@vger.kernel.org Subject: linux-next - WARNING: at
-fs/block_dev.c:824 bd_link_disk_holder+0x92/0x1ac()
-
-
-Seen in a boot of yesterday's linux-next.   The 'W' flag was due to the
-already-reported 'WARNING: at kernel/workqueue.c:1202 worker_enter_idle'.
-Not sure if it's a block_dev or dm/LVM issue, so I'm cc:'ing both groups.  I
-wonder if the fact I still have 'CONFIG_DEVTMPFS=3Dn' is involved (it's
-apparently ticking off dracut before and after the warning).
-
-[   16.840333] dracut: Found volume group "vg_blackice" using metadata type
-lvm2 [   16.892282] dracut: The link /dev/vg_blackice/opt should had been
-created by udev but it was not found.  Falling back to direct link creation.
-[   16.912627] ------------[ cut here ]------------ [   16.912635] WARNING:
-at fs/block_dev.c:824 bd_link_disk_holder+0x92/0x1ac() [   16.912638]
-Hardware name: Latitude E6500 [   16.912640] Modules linked in:
-[   16.912644] Pid: 1920, comm: lvm Tainted: G        W
-2.6.37-next-20110111 #1 [   16.912647] Call Trace:
-[   16.912653]  [<ffffffff8103a989>] ? warn_slowpath_common+0x80/0x98
-[   16.912657]  [<ffffffff8103a9b6>] ? warn_slowpath_null+0x15/0x17
-[   16.912660]  [<ffffffff8111fb03>] ? bd_link_disk_holder+0x92/0x1ac
-[   16.912665]  [<ffffffff8139b875>] ? open_dev+0x76/0x9e
-[   16.912668]  [<ffffffff8139bc9d>] ? dm_get_device+0x147/0x1dc
-[   16.912672]  [<ffffffff8139d088>] ? linear_ctr+0x98/0xd4
-[   16.912676]  [<ffffffff8139c289>] ? dm_table_add_target+0x149/0x1d4
-[   16.912679]  [<ffffffff8139e57c>] ? table_load+0xf0/0x27b
-[   16.912683]  [<ffffffff8139e48c>] ? table_load+0x0/0x27b
-[   16.912686]  [<ffffffff8139f326>] ? ctl_ioctl+0x1c6/0x21e
-[   16.912690]  [<ffffffff8139f38c>] ? dm_ctl_ioctl+0xe/0x12
-[   16.912695]  [<ffffffff8110258e>] ? do_vfs_ioctl+0x4c4/0x505
-[   16.912699]  [<ffffffff81102626>] ? sys_ioctl+0x57/0x95
-[   16.912703]  [<ffffffff8100253b>] ? system_call_fastpath+0x16/0x1b
-[   16.912706] ---[ end trace 4eaa2a86a8e2da24 ]---
-[   16.925289] dracut: The link /dev/vg_blackice/src should had been created
-by udev but it was not found.  Falling back to direct link creation.
-
-
---Sig_/SNmP0=JWvHsCHG2XenjkC46
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.15 (GNU/Linux)
-
-iD8DBQFNLgppG5fc6gV+Wb0RAuiKAKCSp+Hwl7OsRbZyQKDAbt5eIxG6+wCg1q6u
-iZrUiEsCBBI7o46xjs8cMpI=
-=WKzW
------END PGP SIGNATURE-----
-
---Sig_/SNmP0=JWvHsCHG2XenjkC46--
-
-
---===============7169114591768861119==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7169114591768861119==--
+SGkgZG1yYWlkIGRldmVsb3BlcnMsCgpUaGFua3MgZm9yIGltcHJvdmluZyBmcmVlIHNvZnR3YXJl
+IDopCkkgd29uZGVyIHdoYXQgaXMgdGhlIHN0YXR1cyBvZiBSQUlENSBzdXBwb3J0IHdpdGggcGRj
+IChBTUQgU0I4NTAgU291dGhicmlkZ2UpIGhhcmR3YXJlPwoKQUZBSUsgY3VycmVudGx5IGRtcmFp
+ZCBkb2Vzbid0IHN1cHBvcnQgUkFJRDUgb24gcGRjIGFjY29yZGluZyB0byAKJ2RtcmFpZCAtbCB8
+Z3JlcCBwZGMnIG91dHB1dDoKcGRjICAgIDogUHJvbWlzZSBGYXN0VHJhY2sgKFMsMCwxLDEwKQoK
+VGhlcmUgYXJlIGEgbG90IG9mIHBlb3BsZSwgd2hvIGFyZSBmb3JjZWQgdG8gdXNlIGR1YWwgYm9v
+dCB3aXRoIG5vbmZyZWUgCm9wZXJhdGluZyBzeXN0ZW0sIHNvIHdlIG5lZWQgbW9yZSBpbmZvIGFi
+b3V0IGRtcmFpZCBSQUlENSBzdXBwb3J0IHdpdGggCkFNRCBTQjg1MCBoYXJkd2FyZSAtIGxvb2sg
+Zm9yIGV4YW1wbGUgYXQgdGhlc2UgbGlua3M6Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2
+ZXMvYXRhcmFpZC1saXN0LzIwMTEtSmFudWFyeS9tc2cwMDAwMS5odG1sCmh0dHA6Ly91YnVudHVm
+b3J1bXMub3JnL2FyY2hpdmUvaW5kZXgucGhwL3QtMTUzMTAzMi5odG1sCmh0dHBzOi8vYnVnemls
+bGEubm92ZWxsLmNvbS9zaG93X2J1Zy5jZ2k/aWQ9NjM0ODM4CgooaXQgc2VlbXMgdGhlcmUgaXMg
+aW1wb3J0YW50IGluZm9ybWF0aW9uIGF0IFN1c2UgYnVnemlsbGE6IHdoZW4gUkFJRDUgaXMgCmNy
+ZWF0ZWQgaW4gQklPUyB0aGVuIGRtcmFpZCB1dGlsaXR5IHByb2R1Y2VzICdFUlJPUjogcGRjOiBS
+QUlEIHR5cGUgNCBub3QgCnN1cHBvcnRlZCcgZHVyaW5nIHNlYXJjaCBvZiBSQUlEIHBhcnRpdGlv
+bnMpCgpJdCB3b3VsZCBiZSBuaWNlIHRvIGtub3cgd2hlcmUgaXMgdGhlIHByb2JsZW0gLSBpbiBk
+bXJhaWQgdXRpbGl0eSBvciAKaW4ga2VybmVsIGRtLXJhaWQ0NSBtb2R1bGUgYW5kIHdoZW4gd2Ug
+Y291bGQgZXhwZWN0IHBkYyBSQUlENSBzdXBwb3J0PwoKSXQgc2VlbXMgSSBmb3VuZCAib2ZmaWNp
+YWwiIHRlY2huaWNhbCBkb2N1bWVudGF0aW9uIGFib3V0IEFNRCBTQjg1MCBmYWtlUkFJRCAKKGFm
+dGVyIDYgaG91cnMgc2VhcmNoaW5nKSAtIHNlZSAiUkFJREJJT1NfU0I4NTBfMy4yLjE1NDAuMzEu
+emlwIiBhbmQKIlJBSUQgT3B0aW9uIFJPTSBJbXBsZW1lbnRhdGlvbiBHdWlkZSBWMS44LnBkZiIg
+YXQgCmh0dHA6Ly9mdHAuYWtsLmx0L0xpbnV4L0JhbHRpeC9kZXZlbC9BTUQtU0I4NTAtUkFJRC1Q
+Uk9NSVNFLwoKSSd2ZSBkb3dubG9hZGVkIHRoaXMgZG9jdW1lbnRhdG9uIGZyb20gb2ZmaWNpYWwg
+QU1EIHNvZnR3YXJlIHBhZ2U6Cmh0dHA6Ly93d3dkLmFtZC5jb20vQU1EL1NSZWxlYXNlRi5uc2Yv
+c29mdHdhcmVwYWdlcy9PcHRpb25ST01zP09wZW5Eb2N1bWVudAooY2xpY2sgYXQgIk1vcmUgSW5m
+byIgbmVhciB0aGUgdGV4dCAiQU1EIFNCODUwIENoaXBzZXQgU0FUQSBSQUlEIE9wdGlvbiBST00g
+djMuMi4xNTQwLjMxIC0gU0FUQSBSQUlEIE9wdGlvbiBST00gZm9yIFNCODUwIGNoaXBzZXQuIikK
+CkhvcGUgUkFJREJJT1NfU0I4NTAgYmluYXJ5IGZpbGVzIGFuZCBkb2N1bWVudGF0aW9uIHdpbGwg
+YmUgdXNlZnVsbCBmb3IgeW91IAphbmQgeW91IHdpbGwgZmluZCBzb21lIHRpbWUgdG8gaW1wbGVt
+ZW50IFJBSUQ1IHN1cHBvcnQgb3IgYXQgbGVhc3QgdGVsbCAKbWUgd2hlbiB3ZSBjb3VsZCBleHBl
+Y3QgUkFJRDUgc3VwcG9ydCBmb3IgdGhpcyBmYWtlUkFJRC4KCkkgY2FuIGhlbHAgeW91IHRvIHRl
+c3QsIGJ1dCBJIGRvbid0IGtub3cgaG93IHRvIGltcGxlbWVudCB0aGlzLCBzbywgSSdtIAphc2tp
+bmcgZm9yIGhlbHAuCgpXYWl0aW5nIGZvciBhbnN3ZXIgYW5kIGdvb2QgbHVjaywKCi0tCk1hbnRh
+cyBLcmlhdcSNacWrbmFzCSBKYWJiZXIgSUQ6IG1hbnRhc0Bha2wubHQgCSBHUEcgSUQ6IDQzNTM1
+QkQ1CkRldmVsb3BlciBvZiBCYWx0aXggR05VL0xpbnV4IE9TIC0gaHR0cDovL2VuLndpa2lwZWRp
+YS5vcmcvd2lraS9CYWx0aXgKUHVibGljIG9yZ2FuaXphdGlvbiAiT3BlbiBTb3VyY2UgZm9yIExp
+dGh1YW5pYSIgLSB3d3cuYWtsLmx0ClVzZSBCYWx0aXggR05VL0xpbnV4IE9TIC0gaHR0cDovL2Jh
+bHRpeC5sdApHZXJpYXVzaW9zIGJpdXJvIHByb2dyYW1vcyB2ZXJzbHVpIGlyIG5hbWFtcyAtIGh0
+dHA6Ly9vcGVub2ZmaWNlLmx0ClByZWt5YmEgbmF1amFpcyBpciBhdG5hdWppbnRhaXMga29tcGl1
+dGVyaWFpcyBzdSBMaW51eCBPUyAtIGh0dHA6Ly90aW5rbGFzLmV1CgotLQpkbS1kZXZlbCBtYWls
+aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
+YW4vbGlzdGluZm8vZG0tZGV2ZWw=
