@@ -1,66 +1,24 @@
-From: Mantas =?utf-8?B?S3JpYXXEjWnFq25hcw==?= <mantas@akl.lt>
-Subject: What is the status of RAID5 support with pdc (AMD SB850
-	Southbridge) hardware?
-Date: Wed, 12 Jan 2011 23:16:20 +0200
-Message-ID: <20110112211620.GD3909@diedas.soften.ktu.lt>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] linux-next: Tree for January 12 (dm-crypt)
+Date: Wed, 12 Jan 2011 23:12:15 +0000
+Message-ID: <20110112231215.GC9501@agk-dp.fab.redhat.com>
+References: <20110112141822.c29314c4.sfr@canb.auug.org.au> <20110112100121.ba610465.randy.dunlap@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-next-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: ataraid-list@redhat.com
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
+In-Reply-To: <20110112100121.ba610465.randy.dunlap@oracle.com>
+Sender: linux-next-owner@vger.kernel.org
+To: Randy Dunlap <randy.dunlap@oracle.com>
+Cc: Stephen Rothwell <sfr@canb.auug.org.au>, dm-devel@redhat.com, linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-SGkgZG1yYWlkIGRldmVsb3BlcnMsCgpUaGFua3MgZm9yIGltcHJvdmluZyBmcmVlIHNvZnR3YXJl
-IDopCkkgd29uZGVyIHdoYXQgaXMgdGhlIHN0YXR1cyBvZiBSQUlENSBzdXBwb3J0IHdpdGggcGRj
-IChBTUQgU0I4NTAgU291dGhicmlkZ2UpIGhhcmR3YXJlPwoKQUZBSUsgY3VycmVudGx5IGRtcmFp
-ZCBkb2Vzbid0IHN1cHBvcnQgUkFJRDUgb24gcGRjIGFjY29yZGluZyB0byAKJ2RtcmFpZCAtbCB8
-Z3JlcCBwZGMnIG91dHB1dDoKcGRjICAgIDogUHJvbWlzZSBGYXN0VHJhY2sgKFMsMCwxLDEwKQoK
-VGhlcmUgYXJlIGEgbG90IG9mIHBlb3BsZSwgd2hvIGFyZSBmb3JjZWQgdG8gdXNlIGR1YWwgYm9v
-dCB3aXRoIG5vbmZyZWUgCm9wZXJhdGluZyBzeXN0ZW0sIHNvIHdlIG5lZWQgbW9yZSBpbmZvIGFi
-b3V0IGRtcmFpZCBSQUlENSBzdXBwb3J0IHdpdGggCkFNRCBTQjg1MCBoYXJkd2FyZSAtIGxvb2sg
-Zm9yIGV4YW1wbGUgYXQgdGhlc2UgbGlua3M6Cmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vYXJjaGl2
-ZXMvYXRhcmFpZC1saXN0LzIwMTEtSmFudWFyeS9tc2cwMDAwMS5odG1sCmh0dHA6Ly91YnVudHVm
-b3J1bXMub3JnL2FyY2hpdmUvaW5kZXgucGhwL3QtMTUzMTAzMi5odG1sCmh0dHBzOi8vYnVnemls
-bGEubm92ZWxsLmNvbS9zaG93X2J1Zy5jZ2k/aWQ9NjM0ODM4CgooaXQgc2VlbXMgdGhlcmUgaXMg
-aW1wb3J0YW50IGluZm9ybWF0aW9uIGF0IFN1c2UgYnVnemlsbGE6IHdoZW4gUkFJRDUgaXMgCmNy
-ZWF0ZWQgaW4gQklPUyB0aGVuIGRtcmFpZCB1dGlsaXR5IHByb2R1Y2VzICdFUlJPUjogcGRjOiBS
-QUlEIHR5cGUgNCBub3QgCnN1cHBvcnRlZCcgZHVyaW5nIHNlYXJjaCBvZiBSQUlEIHBhcnRpdGlv
-bnMpCgpJdCB3b3VsZCBiZSBuaWNlIHRvIGtub3cgd2hlcmUgaXMgdGhlIHByb2JsZW0gLSBpbiBk
-bXJhaWQgdXRpbGl0eSBvciAKaW4ga2VybmVsIGRtLXJhaWQ0NSBtb2R1bGUgYW5kIHdoZW4gd2Ug
-Y291bGQgZXhwZWN0IHBkYyBSQUlENSBzdXBwb3J0PwoKSXQgc2VlbXMgSSBmb3VuZCAib2ZmaWNp
-YWwiIHRlY2huaWNhbCBkb2N1bWVudGF0aW9uIGFib3V0IEFNRCBTQjg1MCBmYWtlUkFJRCAKKGFm
-dGVyIDYgaG91cnMgc2VhcmNoaW5nKSAtIHNlZSAiUkFJREJJT1NfU0I4NTBfMy4yLjE1NDAuMzEu
-emlwIiBhbmQKIlJBSUQgT3B0aW9uIFJPTSBJbXBsZW1lbnRhdGlvbiBHdWlkZSBWMS44LnBkZiIg
-YXQgCmh0dHA6Ly9mdHAuYWtsLmx0L0xpbnV4L0JhbHRpeC9kZXZlbC9BTUQtU0I4NTAtUkFJRC1Q
-Uk9NSVNFLwoKSSd2ZSBkb3dubG9hZGVkIHRoaXMgZG9jdW1lbnRhdG9uIGZyb20gb2ZmaWNpYWwg
-QU1EIHNvZnR3YXJlIHBhZ2U6Cmh0dHA6Ly93d3dkLmFtZC5jb20vQU1EL1NSZWxlYXNlRi5uc2Yv
-c29mdHdhcmVwYWdlcy9PcHRpb25ST01zP09wZW5Eb2N1bWVudAooY2xpY2sgYXQgIk1vcmUgSW5m
-byIgbmVhciB0aGUgdGV4dCAiQU1EIFNCODUwIENoaXBzZXQgU0FUQSBSQUlEIE9wdGlvbiBST00g
-djMuMi4xNTQwLjMxIC0gU0FUQSBSQUlEIE9wdGlvbiBST00gZm9yIFNCODUwIGNoaXBzZXQuIikK
-CkhvcGUgUkFJREJJT1NfU0I4NTAgYmluYXJ5IGZpbGVzIGFuZCBkb2N1bWVudGF0aW9uIHdpbGwg
-YmUgdXNlZnVsbCBmb3IgeW91IAphbmQgeW91IHdpbGwgZmluZCBzb21lIHRpbWUgdG8gaW1wbGVt
-ZW50IFJBSUQ1IHN1cHBvcnQgb3IgYXQgbGVhc3QgdGVsbCAKbWUgd2hlbiB3ZSBjb3VsZCBleHBl
-Y3QgUkFJRDUgc3VwcG9ydCBmb3IgdGhpcyBmYWtlUkFJRC4KCkkgY2FuIGhlbHAgeW91IHRvIHRl
-c3QsIGJ1dCBJIGRvbid0IGtub3cgaG93IHRvIGltcGxlbWVudCB0aGlzLCBzbywgSSdtIAphc2tp
-bmcgZm9yIGhlbHAuCgpXYWl0aW5nIGZvciBhbnN3ZXIgYW5kIGdvb2QgbHVjaywKCi0tCk1hbnRh
-cyBLcmlhdcSNacWrbmFzCSBKYWJiZXIgSUQ6IG1hbnRhc0Bha2wubHQgCSBHUEcgSUQ6IDQzNTM1
-QkQ1CkRldmVsb3BlciBvZiBCYWx0aXggR05VL0xpbnV4IE9TIC0gaHR0cDovL2VuLndpa2lwZWRp
-YS5vcmcvd2lraS9CYWx0aXgKUHVibGljIG9yZ2FuaXphdGlvbiAiT3BlbiBTb3VyY2UgZm9yIExp
-dGh1YW5pYSIgLSB3d3cuYWtsLmx0ClVzZSBCYWx0aXggR05VL0xpbnV4IE9TIC0gaHR0cDovL2Jh
-bHRpeC5sdApHZXJpYXVzaW9zIGJpdXJvIHByb2dyYW1vcyB2ZXJzbHVpIGlyIG5hbWFtcyAtIGh0
-dHA6Ly9vcGVub2ZmaWNlLmx0ClByZWt5YmEgbmF1amFpcyBpciBhdG5hdWppbnRhaXMga29tcGl1
-dGVyaWFpcyBzdSBMaW51eCBPUyAtIGh0dHA6Ly90aW5rbGFzLmV1CgotLQpkbS1kZXZlbCBtYWls
-aW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxt
-YW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Wed, Jan 12, 2011 at 10:01:21AM -0800, Randy Dunlap wrote:
+> When CONFIG_LBDAF is not enabled (build on i386):
+> (sector_t is 32 bits)
+> 
+> drivers/md/dm-crypt.c:568: warning:right shift count >= width of type
+ 
+Thanks - being fixed.
+
+Alasdair
