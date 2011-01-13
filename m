@@ -1,47 +1,68 @@
-From: Karel Zak <kzak@redhat.com>
+From: Tejun Heo <tj@kernel.org>
 Subject: Re: [dm-devel] linux-next - WARNING: at fs/block_dev.c:824
-	bd_link_disk_holder+0x92/0x1ac()
-Date: Thu, 13 Jan 2011 14:26:37 +0100
-Message-ID: <20110113132637.GH16523@nb.net.home>
-References: <16069.1294853673@localhost> <4D2E4611.90002@redhat.com> <4D2E6129.8000700@ce.jp.nec.com> <20110113110640.GC30719@htj.dyndns.org> <4D2EE156.1050006@redhat.com> <20110113122701.GG16523@nb.net.home> <20110113131216.GF30719@htj.dyndns.org>
+ bd_link_disk_holder+0x92/0x1ac()
+Date: Thu, 13 Jan 2011 14:37:22 +0100
+Message-ID: <20110113133722.GG30719@htj.dyndns.org>
+References: <16069.1294853673@localhost>
+ <4D2E4611.90002@redhat.com>
+ <4D2E6129.8000700@ce.jp.nec.com>
+ <20110113110640.GC30719@htj.dyndns.org>
+ <4D2EE156.1050006@redhat.com>
+ <20110113122701.GG16523@nb.net.home>
+ <20110113131216.GF30719@htj.dyndns.org>
+ <20110113132637.GH16523@nb.net.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20110113131216.GF30719@htj.dyndns.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
+In-Reply-To: <20110113132637.GH16523@nb.net.home>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Karel Zak <kzak@redhat.com>
 Cc: Milan Broz <mbroz@redhat.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Valdis.Kletnieks@vt.edu, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Kay Sievers <kay.sievers@vrfy.org>
 List-Id: dm-devel.ids
 
-On Thu, Jan 13, 2011 at 02:12:16PM +0100, Tejun Heo wrote:
-> Hello,
+Hello, Karel.
+
+On Thu, Jan 13, 2011 at 02:26:37PM +0100, Karel Zak wrote:
+> > Yeah, sure, it's not like I can afford to avoid fixing it at this
+> > point anyway, but I still want to point out it's at the wrong layer
+> > and shouldn't have been added like this, really.  If you want blkid to
+> > identify it, the proper thing to do would be querying blk device for
+> > the claimer and then use claimer-specific method to query them.  It's
 > 
-> On Thu, Jan 13, 2011 at 01:27:01PM +0100, Karel Zak wrote:
-> >  We also use holders/slaves links in libblkid to evaluate dependencies
-> >  between devices (since 2008).
-> > 
-> > > Whatever changes are needed, please keep this functionality, it
-> > > can be useful.
-> > 
-> >  Definitely.
+>  It seems that dependencies (holders/slaves) between devices is pretty
+>  generic thing. Why do you think that we need claimer-specific method?
+>  The /sys filesystem is better that ictls in many ways.
+
+Because sysfs is already complex enough without representing
+dependency information without strictly defined strcture in it.  It's
+for exporting the device tree to users.  We have developed interesting
+ways to exploit it but it generally has proven to be a bad idea to add
+symlinks without clearly defined structure beneath it.  People end up
+using them differently and often they don't understand how the kobject
+sysfs things are wired and it ends up with a lot of cruft exporting
+something which is designed by small number of people without really
+considering what's going on in the rest of the hierarchy.
+
+> > not like the current method would make sense for btrfs or whatnot.
 > 
-> Yeah, sure, it's not like I can afford to avoid fixing it at this
-> point anyway, but I still want to point out it's at the wrong layer
-> and shouldn't have been added like this, really.  If you want blkid to
-> identify it, the proper thing to do would be querying blk device for
-> the claimer and then use claimer-specific method to query them.  It's
+>  Could you be more verbose, please?
 
- It seems that dependencies (holders/slaves) between devices is pretty
- generic thing. Why do you think that we need claimer-specific method?
- The /sys filesystem is better that ictls in many ways.
+If the symlinkery was something which could properly replace
+configuration and query, sure, let's standardize it and share it among
+all possible claimers of block devices, but it's not.  md, dm, btrfs
+need to export and process way more information than can be represnted
+in these symlinks and it's there more as a pretty thing than anything
+which is actually necessary and useful.  And the original
+implementation directly played with kobjects (in an unnecessarily
+complicated way too) and allowed any kobject to be linked.  Things
+like that just never end up pretty.
 
-> not like the current method would make sense for btrfs or whatnot.
+So, just don't do it.  Sysfs is for device hierarchy.  Don't try to
+shove pretty looking things there (unless it's something widely agreed
+on and necessary, of course).
 
- Could you be more verbose, please?
-
-    Karel
+Thanks.
 
 -- 
- Karel Zak  <kzak@redhat.com>
- http://karelzak.blogspot.com
+tejun
