@@ -1,39 +1,32 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [dm-devel] linux-next - WARNING: at fs/block_dev.c:824
- bd_link_disk_holder+0x92/0x1ac()
-Date: Thu, 13 Jan 2011 14:52:10 +0100
-Message-ID: <20110113135210.GH30719@htj.dyndns.org>
-References: <16069.1294853673@localhost>
- <4D2E4611.90002@redhat.com>
- <4D2E6129.8000700@ce.jp.nec.com>
- <20110113110640.GC30719@htj.dyndns.org>
- <4D2EE156.1050006@redhat.com>
- <20110113122701.GG16523@nb.net.home>
- <20110113131216.GF30719@htj.dyndns.org>
- <20110113132637.GH16523@nb.net.home>
- <20110113133722.GG30719@htj.dyndns.org>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [dm-devel] linux-next - WARNING: at fs/block_dev.c:824 bd_link_disk_holder+0x92/0x1ac()
+Date: Thu, 13 Jan 2011 14:58:23 +0100
+Message-ID: <4D2F04FF.1070309@redhat.com>
+References: <16069.1294853673@localhost> <4D2E4611.90002@redhat.com> <4D2E6129.8000700@ce.jp.nec.com> <20110113110640.GC30719@htj.dyndns.org> <4D2EE156.1050006@redhat.com> <20110113122701.GG16523@nb.net.home> <20110113131216.GF30719@htj.dyndns.org> <20110113132637.GH16523@nb.net.home> <20110113133722.GG30719@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 In-Reply-To: <20110113133722.GG30719@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Karel Zak <kzak@redhat.com>
-Cc: Milan Broz <mbroz@redhat.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Valdis.Kletnieks@vt.edu, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Kay Sievers <kay.sievers@vrfy.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Karel Zak <kzak@redhat.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Valdis.Kletnieks@vt.edu, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Kay Sievers <kay.sievers@vrfy.org>
 List-Id: dm-devel.ids
 
-On Thu, Jan 13, 2011 at 02:37:22PM +0100, Tejun Heo wrote:
-> >  It seems that dependencies (holders/slaves) between devices is pretty
-> >  generic thing. Why do you think that we need claimer-specific method?
-> >  The /sys filesystem is better that ictls in many ways.
+On 01/13/2011 02:37 PM, Tejun Heo wrote:
 
-Also, one more thing.  In btrfs, there's no block device for the
-master device.  You can add the slaves directory somewhere and your
-choice would be as good as any other's but it just will not be generic
-while being superflous exactly the same way it's superflous for md and
-dm devices.
+> So, just don't do it.  Sysfs is for device hierarchy.  Don't try to
+> shove pretty looking things there (unless it's something widely agreed
+> on and necessary, of course).
 
-Thanks.
+Hi,
 
--- 
-tejun
+I think that it is exactly what holders/slaves do - displaying device
+hierarchy. So application can check which underlying device are related
+and ask them for more info if needed (=> with system specific call,
+it can be simple sysfs attribute, ioctl, whatever).
+
+So the only request here is to keep these symlinks correct, nothing more.
+Or am I missing anything?
+
+Milan
