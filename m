@@ -1,65 +1,59 @@
-From: Karel Zak <kzak@redhat.com>
-Subject: Re: linux-next - WARNING: at
-	fs/block_dev.c:824	bd_link_disk_holder+0x92/0x1ac()
-Date: Thu, 13 Jan 2011 16:59:55 +0100
-Message-ID: <20110113155955.GI16523@nb.net.home>
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: Re: [dm-devel] linux-next - WARNING: at fs/block_dev.c:824 bd_link_disk_holder+0x92/0x1ac()
+Date: Thu, 13 Jan 2011 17:10:02 +0100
+Message-ID: <AANLkTimXkF-JNaU12wLecdszMLZkfTh405tNabzEF4L_@mail.gmail.com>
 References: <4D2EE156.1050006@redhat.com> <20110113122701.GG16523@nb.net.home>
-	<20110113131216.GF30719@htj.dyndns.org>
-	<20110113132637.GH16523@nb.net.home>
-	<20110113133722.GG30719@htj.dyndns.org>
-	<4D2F04FF.1070309@redhat.com>
-	<20110113141107.GI30719@htj.dyndns.org>
-	<4D2F0B6A.6010201@redhat.com>
-	<AANLkTinJ68D6Yc-U-Q=ZfS9mqozj5qtHPtySZHOgjcgP@mail.gmail.com>
-	<AANLkTi=LKYzrNsU7jc1Nr4W4CaQ_dmBGeQAquSCp_yAX@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+ <20110113131216.GF30719@htj.dyndns.org> <20110113132637.GH16523@nb.net.home>
+ <20110113133722.GG30719@htj.dyndns.org> <4D2F04FF.1070309@redhat.com>
+ <20110113141107.GI30719@htj.dyndns.org> <4D2F0B6A.6010201@redhat.com>
+ <AANLkTinJ68D6Yc-U-Q=ZfS9mqozj5qtHPtySZHOgjcgP@mail.gmail.com>
+ <AANLkTi=LKYzrNsU7jc1Nr4W4CaQ_dmBGeQAquSCp_yAX@mail.gmail.com> <20110113155955.GI16523@nb.net.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <AANLkTi=LKYzrNsU7jc1Nr4W4CaQ_dmBGeQAquSCp_yAX@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kay Sievers <kay.sievers@vrfy.org>
-Cc: Valdis.Kletnieks@vt.edu, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, device-mapper development <dm-devel@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Tejun Heo <tj@kernel.org>, linux-fsdevel@vger.kernel.org, Milan Broz <mbroz@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20110113155955.GI16523@nb.net.home>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Karel Zak <kzak@redhat.com>
+Cc: Tejun Heo <tj@kernel.org>, Milan Broz <mbroz@redhat.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Valdis.Kletnieks@vt.edu, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org
 List-Id: dm-devel.ids
 
-T24gVGh1LCBKYW4gMTMsIDIwMTEgYXQgMDM6NDM6MzhQTSArMDEwMCwgS2F5IFNpZXZlcnMgd3Jv
-dGU6Cj4gT24gVGh1LCBKYW4gMTMsIDIwMTEgYXQgMTU6MzAsIFRlanVuIEhlbyA8dGpAa2VybmVs
-Lm9yZz4gd3JvdGU6Cj4gPiBPbiBUaHUsIEphbiAxMywgMjAxMSBhdCAzOjI1IFBNLCBNaWxhbiBC
-cm96IDxtYnJvekByZWRoYXQuY29tPiB3cm90ZToKPiA+PiBNYXliZSwgYnV0IHRoaXMgd2FzIG5v
-dCBpbnZlbnRlZCBpbiBETS9NRCBjYW1wOi0pCj4gPj4gUHJvYmFibHkgS2F5IG9yIEdyZWcgY2Fu
-IGFuc3dlciB3aHkgaXQgd2FzIGRvbmUgdGhpcyB3YXk/Cj4gCj4gSXQncyBub3QgZnJvbSBHcmVn
-IG9yIEtheS4gSXQganVzdCBhcHBlYXJlZCBzb21lIGRheSBpbiB0aGUgY29udGV4dCBvZiBkbS4g
-OikKPiAKPiBBbmQgeWVzLCBzeW1saW5rcyAqbG9vayogbmljZSBhbmQgc2ltcGxlIGZvciB0aGUg
-b3V0c2lkZSwgYnV0IHRoZXkgYXJlCj4gbm90LCBhbmQgaGF2ZSBhbGwgc29ydHMgb2YgcHJvYmxl
-bXMgbGlrZSBub24tYXRvbWljIHVwZGF0ZXMsIG1ha2UgaXQKCiBTb3VuZHMgbGlrZSBzeXNmcyBp
-bXBsZW1lbnRhdGlvbiBwcm9ibGVtLCByaWdodD8KCiBJZiB0aGVyZSBpcyBub3dheSB0byBmaXgg
-c3lzZnMgdGhlbiB3ZSBjYW4gYWRkIGEgZ2VuZXJpYyBpb2N0bCBvcgogL3N5cy9ibG9jay88ZGV2
-aWNlPi97c2xhdmUsaG9sZGVyfV9saXN0IGZpbGVzIHdpdGggbGlzdCBvZgogaG9sZGVycy9zbGF2
-ZXMuCiAKIEJ1dCBwbGVhc2UsIGRvbid0IGZvcmNlIHVzZXJzcGFjZSB0byB1c2UgKmNsYWltZXIt
-c3BlY2lmaWMqCiBtZXRob2RzIHRvIGFuc3dlciAqZ2VuZXJpYyBxdWVzdGlvbnMqIGxpa2Ugc2xh
-dmUvaG9sZGVyIGRlcGVuZGVuY2llcwogYmV0d2VlbiBkZXZpY2VzLgogCj4gaW1wb3NzaWJsZSB0
-byBldmVyIHJlbmFtZSBhIGRldmljZSAoYXMgbG9uZyBhcyB0aGV5IGNvcHkgdGhlIGRldmljZQo+
-IG5hbWUpLCBhbmQgYW5kIGFuZCAuLi4uIHdlIHNob3VsZCBub3QgYWRkIG1vcmUgb2YgdGhpcy4K
-PiAKPiA+PiBJZiBidHJmcyBpbnRlcm5hbGx5IGNyZWF0ZXMgc29tZSB2aXJ0dWFsIF9ibG9ja18g
-ZGV2aWNlIGZvciBpdHMgcG9vbCwgaXQgc2hvdWxkCj4gPj4gcHJlc2VudCBpdCBoZXJlIHRvbyB3
-aXRoIHNsYXZlcy9ob2xkZXJzLiBJZiBub3QsIHdoeSBpdCBzaG91bGQgY3JlYXRlIGFueSBsaW5r
-cyB0aGVyZT8KPiA+Cj4gPiBZZWFoLCB0aGF0J3MgdGhlIG1vc3QgYm90aGVyaW5nIHBhcnQgZm9y
-IG1lLiDCoFRoZSBiaWdnZXN0IGN1c3RvbWVycyBvZgo+ID4gYmRfY2xhaW0gYXJlIGZpbGVzeXN0
-ZW1zIGFuZCBhbGwgdGhlc2UgY3VzdG9tIHN5bWxpbmtlcmllcyBkb24ndCBkbwo+ID4gbm90aGlu
-ZyBmb3IgdGhlbS4gwqBJdCBqdXN0IGRvZXNuJ3QgbWFrZSBhIHdob2xlIGxvdCBvZiBzZW5zZSB0
-byBtZS4KPiAKPiBCdHJmcyBkb2VzIG5vdCB1c2UgYW55IGJsb2NrZGV2IGFzIHRoZSBtYXN0ZXIg
-Zm9yIGdvb2QgcmVhc29uLCBhbmQgaXQKPiBjYW4gbmV2ZXIgbWFwIGl0cyBzbGF2ZXMgaW5zaWRl
-IG9mIC9zeXMvYmxvY2suIAoKIFllcCwgZXhwZWN0ZWQgYW5kIGNvcnJlY3QgcmVzcG9uc2UgOi0p
-CgogICAgS2FyZWwKCi0tIAogS2FyZWwgWmFrICA8a3pha0ByZWRoYXQuY29tPgogaHR0cDovL2th
-cmVsemFrLmJsb2dzcG90LmNvbQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
-ZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Thu, Jan 13, 2011 at 16:59, Karel Zak <kzak@redhat.com> wrote:
+> On Thu, Jan 13, 2011 at 03:43:38PM +0100, Kay Sievers wrote:
+>> On Thu, Jan 13, 2011 at 15:30, Tejun Heo <tj@kernel.org> wrote:
+>> > On Thu, Jan 13, 2011 at 3:25 PM, Milan Broz <mbroz@redhat.com> wro=
+te:
+>> >> Maybe, but this was not invented in DM/MD camp:-)
+>> >> Probably Kay or Greg can answer why it was done this way?
+>>
+>> It's not from Greg or Kay. It just appeared some day in the context =
+of dm. :)
+>>
+>> And yes, symlinks *look* nice and simple for the outside, but they a=
+re
+>> not, and have all sorts of problems like non-atomic updates, make it
+>
+> =C2=A0Sounds like sysfs implementation problem, right?
+
+It's a normal multi-file problem. It can by-definition not be atomic
+without doing really weird locking things.
+
+> =C2=A0If there is noway to fix sysfs then we can add a generic ioctl =
+or
+> =C2=A0/sys/block/<device>/{slave,holder}_list files with list of
+> =C2=A0holders/slaves.
+
+Yeah, we've been there with the btrfs problem. For btrfs it woud
+probably need to be something statfs()-like.
+
+> =C2=A0But please, don't force userspace to use *claimer-specific*
+> =C2=A0methods to answer *generic questions* like slave/holder depende=
+ncies
+> =C2=A0between devices.
+
+The links exist only for dm and md so far, I think. It's the classical
+multiple-parents-in-a-tree problem. We have that for bonded network
+devices and some IO buses too. There is no nice representation for
+these reversed-trees-in-the-tree so far.
+
+Kay
