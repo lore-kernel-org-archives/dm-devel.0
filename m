@@ -1,24 +1,58 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] linux-next: Tree for January 12 (dm-crypt)
-Date: Wed, 12 Jan 2011 23:12:15 +0000
-Message-ID: <20110112231215.GC9501@agk-dp.fab.redhat.com>
-References: <20110112141822.c29314c4.sfr@canb.auug.org.au> <20110112100121.ba610465.randy.dunlap@oracle.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: linux-next - WARNING: at fs/block_dev.c:824 bd_link_disk_holder+0x92/0x1ac()
+Date: Thu, 13 Jan 2011 01:23:45 +0100
+Message-ID: <4D2E4611.90002@redhat.com>
+References: <16069.1294853673@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-next-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20110112100121.ba610465.randy.dunlap@oracle.com>
-Sender: linux-next-owner@vger.kernel.org
-To: Randy Dunlap <randy.dunlap@oracle.com>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, dm-devel@redhat.com, linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <16069.1294853673@localhost>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Valdis.Kletnieks@vt.edu
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Neil Brown <neilb@suse.de>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, Jan 12, 2011 at 10:01:21AM -0800, Randy Dunlap wrote:
-> When CONFIG_LBDAF is not enabled (build on i386):
-> (sector_t is 32 bits)
+On 01/12/2011 06:34 PM, Valdis.Kletnieks@vt.edu wrote:
+> Seen in a boot of yesterday's linux-next.   The 'W' flag was due to the
+> already-reported 'WARNING: at kernel/workqueue.c:1202 worker_enter_idle'.
+> Not sure if it's a block_dev or dm/LVM issue, so I'm cc:'ing both groups.  I wonder
+> if the fact I still have 'CONFIG_DEVTMPFS=n' is involved (it's apparently ticking off
+> dracut before and after the warning).
 > 
-> drivers/md/dm-crypt.c:568: warning:right shift count >= width of type
- 
-Thanks - being fixed.
+> [   16.840333] dracut: Found volume group "vg_blackice" using metadata type lvm2
+> [   16.892282] dracut: The link /dev/vg_blackice/opt should had been created by udev but it was not found.  Falling back to direct link creation.
+> [   16.912627] ------------[ cut here ]------------
+> [   16.912635] WARNING: at fs/block_dev.c:824 bd_link_disk_holder+0x92/0x1ac()
 
-Alasdair
+That seems to be
+WARN_ON_ONCE(!bdev->bd_holder || bdev->bd_holder_disk);
+added in patch
+http://git.kernel.org/?p=linux/kernel/git/next/linux-next.git;a=commitdiff;h=e09b457bdb7e8d23fc54dcef0930ac697d8de895
+"block: simplify holder symlink handling"
+
+dm linear just claims device in table constructor, I don't think it is bug in DM code.
+
+> [   16.912638] Hardware name: Latitude E6500
+> [   16.912640] Modules linked in:
+> [   16.912644] Pid: 1920, comm: lvm Tainted: G        W   2.6.37-next-20110111 #1
+> [   16.912647] Call Trace:
+> [   16.912653]  [<ffffffff8103a989>] ? warn_slowpath_common+0x80/0x98
+> [   16.912657]  [<ffffffff8103a9b6>] ? warn_slowpath_null+0x15/0x17
+> [   16.912660]  [<ffffffff8111fb03>] ? bd_link_disk_holder+0x92/0x1ac
+> [   16.912665]  [<ffffffff8139b875>] ? open_dev+0x76/0x9e
+> [   16.912668]  [<ffffffff8139bc9d>] ? dm_get_device+0x147/0x1dc
+> [   16.912672]  [<ffffffff8139d088>] ? linear_ctr+0x98/0xd4
+> [   16.912676]  [<ffffffff8139c289>] ? dm_table_add_target+0x149/0x1d4
+> [   16.912679]  [<ffffffff8139e57c>] ? table_load+0xf0/0x27b
+> [   16.912683]  [<ffffffff8139e48c>] ? table_load+0x0/0x27b
+> [   16.912686]  [<ffffffff8139f326>] ? ctl_ioctl+0x1c6/0x21e
+> [   16.912690]  [<ffffffff8139f38c>] ? dm_ctl_ioctl+0xe/0x12
+> [   16.912695]  [<ffffffff8110258e>] ? do_vfs_ioctl+0x4c4/0x505
+> [   16.912699]  [<ffffffff81102626>] ? sys_ioctl+0x57/0x95
+> [   16.912703]  [<ffffffff8100253b>] ? system_call_fastpath+0x16/0x1b
+> [   16.912706] ---[ end trace 4eaa2a86a8e2da24 ]---
+> [   16.925289] dracut: The link /dev/vg_blackice/src should had been created by udev but it was not found.  Falling back to direct link creation.
+> 
+
+Milan
