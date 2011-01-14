@@ -1,86 +1,82 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: What is the status of RAID5 support with pdc (AMD SB850
-	Southbridge) hardware?
-Date: Fri, 14 Jan 2011 14:02:57 +0100
-Message-ID: <1295010177.9627.11.camel@o>
-References: <20110112211620.GD3909@diedas.soften.ktu.lt>
-Reply-To: heinzm@redhat.com,
-        "ATARAID \(eg, Promise Fasttrak,
-	Highpoint 370\) related discussions" <ataraid-list@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: training mpath to discern between SCSI errors
+Date: Fri, 14 Jan 2011 08:59:17 -0500
+Message-ID: <20110114135917.GA25506@redhat.com>
+References: <4C7BA670.2060303@suse.de>
+ <4C7BC5B4.3010707@suse.de>
+ <4CBC00B3.7090603@ce.jp.nec.com>
+ <4CBC35AE.9050002@suse.de>
+ <20101119031149.GA28455@us.ibm.com>
+ <20101130225956.GA8882@redhat.com>
+ <4D0B31B5.101@suse.de>
+ <20101217140605.GA740@redhat.com>
+ <20110114010948.GA21818@redhat.com>
+ <4D2FFF00.8020702@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <ataraid-list-bounces@redhat.com>
-In-Reply-To: <20110112211620.GD3909@diedas.soften.ktu.lt>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/ataraid-list>,
-	<mailto:ataraid-list-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/ataraid-list>
-List-Post: <mailto:ataraid-list@redhat.com>
-List-Help: <mailto:ataraid-list-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
-	<mailto:ataraid-list-request@redhat.com?subject=subscribe>
-Sender: ataraid-list-bounces@redhat.com
-Errors-To: ataraid-list-bounces@redhat.com
-To: Mantas =?UTF-8?Q?Kriau=C4=8Di=C5=ABnas?= <mantas@akl.lt>
-Cc: neilb@suse.de, ataraid-list@redhat.com, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ide-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4D2FFF00.8020702@suse.de>
+Sender: linux-ide-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, michaelc@cs.wisc.edu, tytso@mit.edu, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, vst@vlnb.net, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, James.Bottomley@suse.de, Sergei Shtylyov <sshtylyov@mvista.com>, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, jack@suse.cz, rwheeler@redhat.com, swhiteho@redhat.com, chris.mason@oracle.com, Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-T24gV2VkLCAyMDExLTAxLTEyIGF0IDIzOjE2ICswMjAwLCBNYW50YXMgS3JpYXXEjWnFq25hcyB3
-cm90ZToKPiBIaSBkbXJhaWQgZGV2ZWxvcGVycywKPiAKPiBUaGFua3MgZm9yIGltcHJvdmluZyBm
-cmVlIHNvZnR3YXJlIDopCgo6KQoKPiBJIHdvbmRlciB3aGF0IGlzIHRoZSBzdGF0dXMgb2YgUkFJ
-RDUgc3VwcG9ydCB3aXRoIHBkYyAoQU1EIFNCODUwIFNvdXRoYnJpZGdlKSBoYXJkd2FyZT8KCmRt
-cmFpZCBpcyBsZXNzIGFib3V0IGhhcmR3YXJlLCBpdCdzIGFib3V0IFJBSUQgbWV0YWRhdGEgc3Vw
-cG9ydCBvbgphcmJpdHJhcnkgaGFyZHdhcmUuCgo+IAo+IEFGQUlLIGN1cnJlbnRseSBkbXJhaWQg
-ZG9lc24ndCBzdXBwb3J0IFJBSUQ1IG9uIHBkYyBhY2NvcmRpbmcgdG8gCj4gJ2RtcmFpZCAtbCB8
-Z3JlcCBwZGMnIG91dHB1dDoKPiBwZGMgICAgOiBQcm9taXNlIEZhc3RUcmFjayAoUywwLDEsMTAp
-CgpUcnVlLgoKPiAKPiBUaGVyZSBhcmUgYSBsb3Qgb2YgcGVvcGxlLCB3aG8gYXJlIGZvcmNlZCB0
-byB1c2UgZHVhbCBib290IHdpdGggbm9uZnJlZSAKPiBvcGVyYXRpbmcgc3lzdGVtLCBzbyB3ZSBu
-ZWVkIG1vcmUgaW5mbyBhYm91dCBkbXJhaWQgUkFJRDUgc3VwcG9ydCB3aXRoIAo+IEFNRCBTQjg1
-MCBoYXJkd2FyZSAtIGxvb2sgZm9yIGV4YW1wbGUgYXQgdGhlc2UgbGlua3M6Cj4gaHR0cHM6Ly93
-d3cucmVkaGF0LmNvbS9hcmNoaXZlcy9hdGFyYWlkLWxpc3QvMjAxMS1KYW51YXJ5L21zZzAwMDAx
-Lmh0bWwKPiBodHRwOi8vdWJ1bnR1Zm9ydW1zLm9yZy9hcmNoaXZlL2luZGV4LnBocC90LTE1MzEw
-MzIuaHRtbAo+IGh0dHBzOi8vYnVnemlsbGEubm92ZWxsLmNvbS9zaG93X2J1Zy5jZ2k/aWQ9NjM0
-ODM4Cj4gCj4gKGl0IHNlZW1zIHRoZXJlIGlzIGltcG9ydGFudCBpbmZvcm1hdGlvbiBhdCBTdXNl
-IGJ1Z3ppbGxhOiB3aGVuIFJBSUQ1IGlzIAo+IGNyZWF0ZWQgaW4gQklPUyB0aGVuIGRtcmFpZCB1
-dGlsaXR5IHByb2R1Y2VzICdFUlJPUjogcGRjOiBSQUlEIHR5cGUgNCBub3QgCj4gc3VwcG9ydGVk
-JyBkdXJpbmcgc2VhcmNoIG9mIFJBSUQgcGFydGl0aW9ucykKClllcywgNCBpcyB0aGUgbWV0YWRh
-dGEgdHlwZSBjb2RlIGZvciBSQUlEIDUgaW4gcGRjLgoKPiAKPiBJdCB3b3VsZCBiZSBuaWNlIHRv
-IGtub3cgd2hlcmUgaXMgdGhlIHByb2JsZW0gLSBpbiBkbXJhaWQgdXRpbGl0eSBvciAKPiBpbiBr
-ZXJuZWwgZG0tcmFpZDQ1IG1vZHVsZSBhbmQgd2hlbiB3ZSBjb3VsZCBleHBlY3QgcGRjIFJBSUQ1
-IHN1cHBvcnQ/CgpGb3Igb25lIHRoZSBkbXJhaWQgcGRjIG1ldGFkYXRhIGZvcm1hdCBoYW5kbGVy
-IGluCmxpYi9mb3JtYXQvYXRhcmFpZC9wZGMuW2NoXSBuZWVkcyBhbiBlbmhhbmNlbWVudCB0byBz
-dXBwb3J0CnRoZSBSQUlENSBtYXBwaW5nLiBZb3VyIGxpbmtzIHdpbGwgaGVscCB3aXRoIHRoYXQs
-IHRoYW5rcwoKRm9yIHR3bywgd2UgbmVlZCBSQUlENSBzdXBwb3J0IGluIGN1c3RvbSBrZXJuZWxz
-IHdoaWNoIHdpbGwgYmUgZ2l2ZW4Kb25lcyB0aGUgZGV2aWNlLW1hcHBlciBSQUlEIDQsNSw2IHRh
-cmdldCBnb2VzIHVwc3RyZWFtIGZvciBkaXN0cm9zIHRvCmdldCBpdCBkb3duLgoKVGhlIGZvcm1l
-ciBpc24ndCBwbGFubmVkIHNvIGZhci4gUkFJRDUgbWV0YWRhdGEgc2FtcGxlcyBhcmUgbmVlZGVk
-IHRvCmJhc2Ugc3VjaCBkZXZlbG9wbWVudCBvbiB0aG9zZS4gWW91IGNhbiBjcmVhdGUgdGhlbSB3
-aXRoICJkbXJhaWQgLXJEIiwKdGFyIHRoZW0gdXAgYnppcCdlZCBhbmQgc2VuZCB0aGVtIHRvIG1l
-IGZvciBmdXJ0aGVyIGFuYWx5c2lzLgoKVGhlIGxhdGVyIGlzIGdvaW5nIHRvIGhhcHBlbiBsYXRl
-ciB0aGlzIHllYXIuCgpSZWdhcmRzLApIZWluegoKPiAKPiBJdCBzZWVtcyBJIGZvdW5kICJvZmZp
-Y2lhbCIgdGVjaG5pY2FsIGRvY3VtZW50YXRpb24gYWJvdXQgQU1EIFNCODUwIGZha2VSQUlEIAo+
-IChhZnRlciA2IGhvdXJzIHNlYXJjaGluZykgLSBzZWUgIlJBSURCSU9TX1NCODUwXzMuMi4xNTQw
-LjMxLnppcCIgYW5kCj4gIlJBSUQgT3B0aW9uIFJPTSBJbXBsZW1lbnRhdGlvbiBHdWlkZSBWMS44
-LnBkZiIgYXQgCj4gaHR0cDovL2Z0cC5ha2wubHQvTGludXgvQmFsdGl4L2RldmVsL0FNRC1TQjg1
-MC1SQUlELVBST01JU0UvCj4gCj4gSSd2ZSBkb3dubG9hZGVkIHRoaXMgZG9jdW1lbnRhdG9uIGZy
-b20gb2ZmaWNpYWwgQU1EIHNvZnR3YXJlIHBhZ2U6Cj4gaHR0cDovL3d3d2QuYW1kLmNvbS9BTUQv
-U1JlbGVhc2VGLm5zZi9zb2Z0d2FyZXBhZ2VzL09wdGlvblJPTXM/T3BlbkRvY3VtZW50Cj4gKGNs
-aWNrIGF0ICJNb3JlIEluZm8iIG5lYXIgdGhlIHRleHQgIkFNRCBTQjg1MCBDaGlwc2V0IFNBVEEg
-UkFJRCBPcHRpb24gUk9NIHYzLjIuMTU0MC4zMSAtIFNBVEEgUkFJRCBPcHRpb24gUk9NIGZvciBT
-Qjg1MCBjaGlwc2V0LiIpCj4gCj4gSG9wZSBSQUlEQklPU19TQjg1MCBiaW5hcnkgZmlsZXMgYW5k
-IGRvY3VtZW50YXRpb24gd2lsbCBiZSB1c2VmdWxsIGZvciB5b3UgCj4gYW5kIHlvdSB3aWxsIGZp
-bmQgc29tZSB0aW1lIHRvIGltcGxlbWVudCBSQUlENSBzdXBwb3J0IG9yIGF0IGxlYXN0IHRlbGwg
-Cj4gbWUgd2hlbiB3ZSBjb3VsZCBleHBlY3QgUkFJRDUgc3VwcG9ydCBmb3IgdGhpcyBmYWtlUkFJ
-RC4KPiAKPiBJIGNhbiBoZWxwIHlvdSB0byB0ZXN0LCBidXQgSSBkb24ndCBrbm93IGhvdyB0byBp
-bXBsZW1lbnQgdGhpcywgc28sIEknbSAKPiBhc2tpbmcgZm9yIGhlbHAuCj4gCj4gV2FpdGluZyBm
-b3IgYW5zd2VyIGFuZCBnb29kIGx1Y2ssCj4gCj4gLS0KPiBNYW50YXMgS3JpYXXEjWnFq25hcwkg
-SmFiYmVyIElEOiBtYW50YXNAYWtsLmx0IAkgR1BHIElEOiA0MzUzNUJENQo+IERldmVsb3BlciBv
-ZiBCYWx0aXggR05VL0xpbnV4IE9TIC0gaHR0cDovL2VuLndpa2lwZWRpYS5vcmcvd2lraS9CYWx0
-aXgKPiBQdWJsaWMgb3JnYW5pemF0aW9uICJPcGVuIFNvdXJjZSBmb3IgTGl0aHVhbmlhIiAtIHd3
-dy5ha2wubHQKPiBVc2UgQmFsdGl4IEdOVS9MaW51eCBPUyAtIGh0dHA6Ly9iYWx0aXgubHQKPiBH
-ZXJpYXVzaW9zIGJpdXJvIHByb2dyYW1vcyB2ZXJzbHVpIGlyIG5hbWFtcyAtIGh0dHA6Ly9vcGVu
-b2ZmaWNlLmx0Cj4gUHJla3liYSBuYXVqYWlzIGlyIGF0bmF1amludGFpcyBrb21waXV0ZXJpYWlz
-IHN1IExpbnV4IE9TIC0gaHR0cDovL3RpbmtsYXMuZXUKCgpfX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fXwpBdGFyYWlkLWxpc3QgbWFpbGluZyBsaXN0CkF0YXJh
-aWQtbGlzdEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9hdGFyYWlkLWxpc3Q=
+On Fri, Jan 14 2011 at  2:45am -0500,
+Hannes Reinecke <hare@suse.de> wrote:
+
+> On 01/14/2011 02:09 AM, Mike Snitzer wrote:
+> > On Fri, Dec 17 2010 at  9:06am -0500,
+> > Mike Snitzer <snitzer@redhat.com> wrote:
+> > 
+> >> On Fri, Dec 17 2010 at  4:47am -0500,
+> >> Hannes Reinecke <hare@suse.de> wrote:
+> >>
+> >>> On 11/30/2010 11:59 PM, Mike Snitzer wrote:
+> >>>> Hannes,
+> >>>>
+> >>>> Any chance you've had time to fold your proposed logging changes in and
+> >>>> rebase this patch?  Could you post that updated patch?
+> >>>>
+> >>> yes, will be following shortly.
+> >>>
+> >>>> I'd like to help see this patch through to inclussion when 2.6.38 merge
+> >>>> window opens.  I can help with further review, testing and development.
+> >>>>
+> >>> Ok, thanks.
+> >>
+> >> I took some steps at furthering your work.  Here is the cover letter to
+> >> the patches I resently sent to dm-devel:
+> >> https://www.redhat.com/archives/dm-devel/2010-December/msg00090.html
+> >>
+> >> And here are the patches:
+> >> https://patchwork.kernel.org/patch/384612/
+> >> https://patchwork.kernel.org/patch/384602/
+> >> https://patchwork.kernel.org/patch/390882/
+> >>
+> >> Please feel free to change these how ever you see fit but your feedback
+> >> is really appreciated.
+> > 
+> > Hannes,
+> > 
+> > Any update?  I'd really like to see this work get upstream ASAP.  I'm
+> > doubtful that is possible for 2.6.38 given the merge window is likely to
+> > close shortly.
+> > 
+> Sorry for the late answer; the above patches somehow got lost in my
+> various mail folders :-(
+> 
+> But yes, the patchset looks okay.
+> Feel free to add my Acked-by: to last two.
+
+OK.
+
+> > Regardless, if we could get consensus on this work now and then stage it
+> > with James that would be great.
+> > 
+> Indeed. Will you resend it to linux-scsi or shall I do it?
+
+I can resend, will do so shortly.
+
+Thanks!
+Mike
