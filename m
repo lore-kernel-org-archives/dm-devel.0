@@ -1,82 +1,59 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: training mpath to discern between SCSI errors
-Date: Fri, 14 Jan 2011 08:59:17 -0500
-Message-ID: <20110114135917.GA25506@redhat.com>
-References: <4C7BA670.2060303@suse.de>
- <4C7BC5B4.3010707@suse.de>
- <4CBC00B3.7090603@ce.jp.nec.com>
- <4CBC35AE.9050002@suse.de>
- <20101119031149.GA28455@us.ibm.com>
- <20101130225956.GA8882@redhat.com>
- <4D0B31B5.101@suse.de>
- <20101217140605.GA740@redhat.com>
- <20110114010948.GA21818@redhat.com>
- <4D2FFF00.8020702@suse.de>
+From: Karel Zak <kzak@redhat.com>
+Subject: Re: [dm-devel] linux-next - WARNING: at fs/block_dev.c:824
+	bd_link_disk_holder+0x92/0x1ac()
+Date: Fri, 14 Jan 2011 16:07:36 +0100
+Message-ID: <20110114150736.GJ16523@nb.net.home>
+References: <20110113131216.GF30719@htj.dyndns.org> <20110113132637.GH16523@nb.net.home> <20110113133722.GG30719@htj.dyndns.org> <4D2F04FF.1070309@redhat.com> <20110113141107.GI30719@htj.dyndns.org> <4D2F0B6A.6010201@redhat.com> <AANLkTinJ68D6Yc-U-Q=ZfS9mqozj5qtHPtySZHOgjcgP@mail.gmail.com> <AANLkTi=LKYzrNsU7jc1Nr4W4CaQ_dmBGeQAquSCp_yAX@mail.gmail.com> <20110113155955.GI16523@nb.net.home> <AANLkTimXkF-JNaU12wLecdszMLZkfTh405tNabzEF4L_@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ide-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4D2FFF00.8020702@suse.de>
-Sender: linux-ide-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, michaelc@cs.wisc.edu, tytso@mit.edu, linux-scsi@vger.kernel.org, jaxboe@fusionio.com, vst@vlnb.net, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-raid@vger.kernel.org, linux-ide@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, James.Bottomley@suse.de, Sergei Shtylyov <sshtylyov@mvista.com>, konishi.ryusuke@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, jack@suse.cz, rwheeler@redhat.com, swhiteho@redhat.com, chris.mason@oracle.com, Tejun Heo <tj@kernel.org>
+In-Reply-To: <AANLkTimXkF-JNaU12wLecdszMLZkfTh405tNabzEF4L_@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Kay Sievers <kay.sievers@vrfy.org>
+Cc: Tejun Heo <tj@kernel.org>, Milan Broz <mbroz@redhat.com>, device-mapper development <dm-devel@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Valdis.Kletnieks@vt.edu, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Jan 14 2011 at  2:45am -0500,
-Hannes Reinecke <hare@suse.de> wrote:
-
-> On 01/14/2011 02:09 AM, Mike Snitzer wrote:
-> > On Fri, Dec 17 2010 at  9:06am -0500,
-> > Mike Snitzer <snitzer@redhat.com> wrote:
-> > 
-> >> On Fri, Dec 17 2010 at  4:47am -0500,
-> >> Hannes Reinecke <hare@suse.de> wrote:
+On Thu, Jan 13, 2011 at 05:10:02PM +0100, Kay Sievers wrote:
+> On Thu, Jan 13, 2011 at 16:59, Karel Zak <kzak@redhat.com> wrote:
+> > On Thu, Jan 13, 2011 at 03:43:38PM +0100, Kay Sievers wrote:
+> >> On Thu, Jan 13, 2011 at 15:30, Tejun Heo <tj@kernel.org> wrote:
+> >> > On Thu, Jan 13, 2011 at 3:25 PM, Milan Broz <mbroz@redhat.com> w=
+rote:
+> >> >> Maybe, but this was not invented in DM/MD camp:-)
+> >> >> Probably Kay or Greg can answer why it was done this way?
 > >>
-> >>> On 11/30/2010 11:59 PM, Mike Snitzer wrote:
-> >>>> Hannes,
-> >>>>
-> >>>> Any chance you've had time to fold your proposed logging changes in and
-> >>>> rebase this patch?  Could you post that updated patch?
-> >>>>
-> >>> yes, will be following shortly.
-> >>>
-> >>>> I'd like to help see this patch through to inclussion when 2.6.38 merge
-> >>>> window opens.  I can help with further review, testing and development.
-> >>>>
-> >>> Ok, thanks.
+> >> It's not from Greg or Kay. It just appeared some day in the contex=
+t of dm. :)
 > >>
-> >> I took some steps at furthering your work.  Here is the cover letter to
-> >> the patches I resently sent to dm-devel:
-> >> https://www.redhat.com/archives/dm-devel/2010-December/msg00090.html
-> >>
-> >> And here are the patches:
-> >> https://patchwork.kernel.org/patch/384612/
-> >> https://patchwork.kernel.org/patch/384602/
-> >> https://patchwork.kernel.org/patch/390882/
-> >>
-> >> Please feel free to change these how ever you see fit but your feedback
-> >> is really appreciated.
-> > 
-> > Hannes,
-> > 
-> > Any update?  I'd really like to see this work get upstream ASAP.  I'm
-> > doubtful that is possible for 2.6.38 given the merge window is likely to
-> > close shortly.
-> > 
-> Sorry for the late answer; the above patches somehow got lost in my
-> various mail folders :-(
-> 
-> But yes, the patchset looks okay.
-> Feel free to add my Acked-by: to last two.
+> >> And yes, symlinks *look* nice and simple for the outside, but they=
+ are
+> >> not, and have all sorts of problems like non-atomic updates, make =
+it
+> >
+> > =C2=A0Sounds like sysfs implementation problem, right?
+>=20
+> It's a normal multi-file problem. It can by-definition not be atomic
+> without doing really weird locking things.
 
-OK.
+ BTW, lsblk(8) and libblkid don't depend on the fact that slaves/holder=
+s=20
+ files are symlinks.
+=20
+ The important thing is the filename (/sys/block/.../slaves/<name>)=20
+ only. We don't follow the symlinks and we don't use readlink() there.
+=20
+ It means that you can replace the symlinks with regular files where
+ in the file contents is for example maj:min, etc.
 
-> > Regardless, if we could get consensus on this work now and then stage it
-> > with James that would be great.
-> > 
-> Indeed. Will you resend it to linux-scsi or shall I do it?
+    Karel
 
-I can resend, will do so shortly.
-
-Thanks!
-Mike
+--=20
+ Karel Zak  <kzak@redhat.com>
+ http://karelzak.blogspot.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
