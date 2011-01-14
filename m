@@ -1,39 +1,86 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [dm-devel] linux-next - WARNING: at fs/block_dev.c:824 bd_link_disk_holder+0x92/0x1ac()
-Date: Fri, 14 Jan 2011 16:38:05 +0900
-Message-ID: <4D2FFD5D.9070709@ce.jp.nec.com>
-References: <16069.1294853673@localhost> <4D2E4611.90002@redhat.com> <4D2E6129.8000700@ce.jp.nec.com> <20110113110640.GC30719@htj.dyndns.org> <4D2EE156.1050006@redhat.com> <20110113122701.GG16523@nb.net.home> <20110113131216.GF30719@htj.dyndns.org> <20110113132637.GH16523@nb.net.home> <20110113133722.GG30719@htj.dyndns.org> <4D2F04FF.1070309@redhat.com> <20110113141107.GI30719@htj.dyndns.org> <4D2F0B6A.6010201@redhat.com> <AANLkTinJ68D6Yc-U-Q=ZfS9mqozj5qtHPtySZHOgjcgP@mail.gmail.com> <AANLkTi=LKYzrNsU7jc1Nr4W4CaQ_dmBGeQAquSCp_yAX@mail.gmail.com> <4D2F1430.50906@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: What is the status of RAID5 support with pdc (AMD SB850
+	Southbridge) hardware?
+Date: Fri, 14 Jan 2011 14:02:57 +0100
+Message-ID: <1295010177.9627.11.camel@o>
+References: <20110112211620.GD3909@diedas.soften.ktu.lt>
+Reply-To: heinzm@redhat.com,
+        "ATARAID \(eg, Promise Fasttrak,
+	Highpoint 370\) related discussions" <ataraid-list@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <4D2F1430.50906@redhat.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, Tejun Heo <tj@kernel.org>
-Cc: Karel Zak <kzak@redhat.com>, device-mapper development <dm-devel@redhat.com>, Valdis.Kletnieks@vt.edu, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <ataraid-list-bounces@redhat.com>
+In-Reply-To: <20110112211620.GD3909@diedas.soften.ktu.lt>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/ataraid-list>
+List-Post: <mailto:ataraid-list@redhat.com>
+List-Help: <mailto:ataraid-list-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=subscribe>
+Sender: ataraid-list-bounces@redhat.com
+Errors-To: ataraid-list-bounces@redhat.com
+To: Mantas =?UTF-8?Q?Kriau=C4=8Di=C5=ABnas?= <mantas@akl.lt>
+Cc: neilb@suse.de, ataraid-list@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 01/14/11 00:03, Milan Broz wrote:
-> On 01/13/2011 03:43 PM, Kay Sievers wrote:
-> 
->>> On Thu, Jan 13, 2011 at 3:25 PM, Milan Broz <mbroz@redhat.com> wrote:
->>>> Maybe, but this was not invented in DM/MD camp:-)
->>>> Probably Kay or Greg can answer why it was done this way?
->>
->> It's not from Greg or Kay. It just appeared some day in the context of dm. :)
-> 
-> ah, then sorry, I am just confused:-)
-> But DM does not need it for operation at all so it must had some other reason.
-> (We have dmsetup ls --tree using dm-ioctls for years.)
-
-Sorry. It's from me 5 years ago. :)
-
-See this for backgrounds:
-  [PATCH 0/3] sysfs representation of stacked devices (dm/md)
-  http://lwn.net/Articles/172689/
-
-And I don't adhere to my implementation if there's better one.
-
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation
+T24gV2VkLCAyMDExLTAxLTEyIGF0IDIzOjE2ICswMjAwLCBNYW50YXMgS3JpYXXEjWnFq25hcyB3
+cm90ZToKPiBIaSBkbXJhaWQgZGV2ZWxvcGVycywKPiAKPiBUaGFua3MgZm9yIGltcHJvdmluZyBm
+cmVlIHNvZnR3YXJlIDopCgo6KQoKPiBJIHdvbmRlciB3aGF0IGlzIHRoZSBzdGF0dXMgb2YgUkFJ
+RDUgc3VwcG9ydCB3aXRoIHBkYyAoQU1EIFNCODUwIFNvdXRoYnJpZGdlKSBoYXJkd2FyZT8KCmRt
+cmFpZCBpcyBsZXNzIGFib3V0IGhhcmR3YXJlLCBpdCdzIGFib3V0IFJBSUQgbWV0YWRhdGEgc3Vw
+cG9ydCBvbgphcmJpdHJhcnkgaGFyZHdhcmUuCgo+IAo+IEFGQUlLIGN1cnJlbnRseSBkbXJhaWQg
+ZG9lc24ndCBzdXBwb3J0IFJBSUQ1IG9uIHBkYyBhY2NvcmRpbmcgdG8gCj4gJ2RtcmFpZCAtbCB8
+Z3JlcCBwZGMnIG91dHB1dDoKPiBwZGMgICAgOiBQcm9taXNlIEZhc3RUcmFjayAoUywwLDEsMTAp
+CgpUcnVlLgoKPiAKPiBUaGVyZSBhcmUgYSBsb3Qgb2YgcGVvcGxlLCB3aG8gYXJlIGZvcmNlZCB0
+byB1c2UgZHVhbCBib290IHdpdGggbm9uZnJlZSAKPiBvcGVyYXRpbmcgc3lzdGVtLCBzbyB3ZSBu
+ZWVkIG1vcmUgaW5mbyBhYm91dCBkbXJhaWQgUkFJRDUgc3VwcG9ydCB3aXRoIAo+IEFNRCBTQjg1
+MCBoYXJkd2FyZSAtIGxvb2sgZm9yIGV4YW1wbGUgYXQgdGhlc2UgbGlua3M6Cj4gaHR0cHM6Ly93
+d3cucmVkaGF0LmNvbS9hcmNoaXZlcy9hdGFyYWlkLWxpc3QvMjAxMS1KYW51YXJ5L21zZzAwMDAx
+Lmh0bWwKPiBodHRwOi8vdWJ1bnR1Zm9ydW1zLm9yZy9hcmNoaXZlL2luZGV4LnBocC90LTE1MzEw
+MzIuaHRtbAo+IGh0dHBzOi8vYnVnemlsbGEubm92ZWxsLmNvbS9zaG93X2J1Zy5jZ2k/aWQ9NjM0
+ODM4Cj4gCj4gKGl0IHNlZW1zIHRoZXJlIGlzIGltcG9ydGFudCBpbmZvcm1hdGlvbiBhdCBTdXNl
+IGJ1Z3ppbGxhOiB3aGVuIFJBSUQ1IGlzIAo+IGNyZWF0ZWQgaW4gQklPUyB0aGVuIGRtcmFpZCB1
+dGlsaXR5IHByb2R1Y2VzICdFUlJPUjogcGRjOiBSQUlEIHR5cGUgNCBub3QgCj4gc3VwcG9ydGVk
+JyBkdXJpbmcgc2VhcmNoIG9mIFJBSUQgcGFydGl0aW9ucykKClllcywgNCBpcyB0aGUgbWV0YWRh
+dGEgdHlwZSBjb2RlIGZvciBSQUlEIDUgaW4gcGRjLgoKPiAKPiBJdCB3b3VsZCBiZSBuaWNlIHRv
+IGtub3cgd2hlcmUgaXMgdGhlIHByb2JsZW0gLSBpbiBkbXJhaWQgdXRpbGl0eSBvciAKPiBpbiBr
+ZXJuZWwgZG0tcmFpZDQ1IG1vZHVsZSBhbmQgd2hlbiB3ZSBjb3VsZCBleHBlY3QgcGRjIFJBSUQ1
+IHN1cHBvcnQ/CgpGb3Igb25lIHRoZSBkbXJhaWQgcGRjIG1ldGFkYXRhIGZvcm1hdCBoYW5kbGVy
+IGluCmxpYi9mb3JtYXQvYXRhcmFpZC9wZGMuW2NoXSBuZWVkcyBhbiBlbmhhbmNlbWVudCB0byBz
+dXBwb3J0CnRoZSBSQUlENSBtYXBwaW5nLiBZb3VyIGxpbmtzIHdpbGwgaGVscCB3aXRoIHRoYXQs
+IHRoYW5rcwoKRm9yIHR3bywgd2UgbmVlZCBSQUlENSBzdXBwb3J0IGluIGN1c3RvbSBrZXJuZWxz
+IHdoaWNoIHdpbGwgYmUgZ2l2ZW4Kb25lcyB0aGUgZGV2aWNlLW1hcHBlciBSQUlEIDQsNSw2IHRh
+cmdldCBnb2VzIHVwc3RyZWFtIGZvciBkaXN0cm9zIHRvCmdldCBpdCBkb3duLgoKVGhlIGZvcm1l
+ciBpc24ndCBwbGFubmVkIHNvIGZhci4gUkFJRDUgbWV0YWRhdGEgc2FtcGxlcyBhcmUgbmVlZGVk
+IHRvCmJhc2Ugc3VjaCBkZXZlbG9wbWVudCBvbiB0aG9zZS4gWW91IGNhbiBjcmVhdGUgdGhlbSB3
+aXRoICJkbXJhaWQgLXJEIiwKdGFyIHRoZW0gdXAgYnppcCdlZCBhbmQgc2VuZCB0aGVtIHRvIG1l
+IGZvciBmdXJ0aGVyIGFuYWx5c2lzLgoKVGhlIGxhdGVyIGlzIGdvaW5nIHRvIGhhcHBlbiBsYXRl
+ciB0aGlzIHllYXIuCgpSZWdhcmRzLApIZWluegoKPiAKPiBJdCBzZWVtcyBJIGZvdW5kICJvZmZp
+Y2lhbCIgdGVjaG5pY2FsIGRvY3VtZW50YXRpb24gYWJvdXQgQU1EIFNCODUwIGZha2VSQUlEIAo+
+IChhZnRlciA2IGhvdXJzIHNlYXJjaGluZykgLSBzZWUgIlJBSURCSU9TX1NCODUwXzMuMi4xNTQw
+LjMxLnppcCIgYW5kCj4gIlJBSUQgT3B0aW9uIFJPTSBJbXBsZW1lbnRhdGlvbiBHdWlkZSBWMS44
+LnBkZiIgYXQgCj4gaHR0cDovL2Z0cC5ha2wubHQvTGludXgvQmFsdGl4L2RldmVsL0FNRC1TQjg1
+MC1SQUlELVBST01JU0UvCj4gCj4gSSd2ZSBkb3dubG9hZGVkIHRoaXMgZG9jdW1lbnRhdG9uIGZy
+b20gb2ZmaWNpYWwgQU1EIHNvZnR3YXJlIHBhZ2U6Cj4gaHR0cDovL3d3d2QuYW1kLmNvbS9BTUQv
+U1JlbGVhc2VGLm5zZi9zb2Z0d2FyZXBhZ2VzL09wdGlvblJPTXM/T3BlbkRvY3VtZW50Cj4gKGNs
+aWNrIGF0ICJNb3JlIEluZm8iIG5lYXIgdGhlIHRleHQgIkFNRCBTQjg1MCBDaGlwc2V0IFNBVEEg
+UkFJRCBPcHRpb24gUk9NIHYzLjIuMTU0MC4zMSAtIFNBVEEgUkFJRCBPcHRpb24gUk9NIGZvciBT
+Qjg1MCBjaGlwc2V0LiIpCj4gCj4gSG9wZSBSQUlEQklPU19TQjg1MCBiaW5hcnkgZmlsZXMgYW5k
+IGRvY3VtZW50YXRpb24gd2lsbCBiZSB1c2VmdWxsIGZvciB5b3UgCj4gYW5kIHlvdSB3aWxsIGZp
+bmQgc29tZSB0aW1lIHRvIGltcGxlbWVudCBSQUlENSBzdXBwb3J0IG9yIGF0IGxlYXN0IHRlbGwg
+Cj4gbWUgd2hlbiB3ZSBjb3VsZCBleHBlY3QgUkFJRDUgc3VwcG9ydCBmb3IgdGhpcyBmYWtlUkFJ
+RC4KPiAKPiBJIGNhbiBoZWxwIHlvdSB0byB0ZXN0LCBidXQgSSBkb24ndCBrbm93IGhvdyB0byBp
+bXBsZW1lbnQgdGhpcywgc28sIEknbSAKPiBhc2tpbmcgZm9yIGhlbHAuCj4gCj4gV2FpdGluZyBm
+b3IgYW5zd2VyIGFuZCBnb29kIGx1Y2ssCj4gCj4gLS0KPiBNYW50YXMgS3JpYXXEjWnFq25hcwkg
+SmFiYmVyIElEOiBtYW50YXNAYWtsLmx0IAkgR1BHIElEOiA0MzUzNUJENQo+IERldmVsb3BlciBv
+ZiBCYWx0aXggR05VL0xpbnV4IE9TIC0gaHR0cDovL2VuLndpa2lwZWRpYS5vcmcvd2lraS9CYWx0
+aXgKPiBQdWJsaWMgb3JnYW5pemF0aW9uICJPcGVuIFNvdXJjZSBmb3IgTGl0aHVhbmlhIiAtIHd3
+dy5ha2wubHQKPiBVc2UgQmFsdGl4IEdOVS9MaW51eCBPUyAtIGh0dHA6Ly9iYWx0aXgubHQKPiBH
+ZXJpYXVzaW9zIGJpdXJvIHByb2dyYW1vcyB2ZXJzbHVpIGlyIG5hbWFtcyAtIGh0dHA6Ly9vcGVu
+b2ZmaWNlLmx0Cj4gUHJla3liYSBuYXVqYWlzIGlyIGF0bmF1amludGFpcyBrb21waXV0ZXJpYWlz
+IHN1IExpbnV4IE9TIC0gaHR0cDovL3RpbmtsYXMuZXUKCgpfX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fXwpBdGFyYWlkLWxpc3QgbWFpbGluZyBsaXN0CkF0YXJh
+aWQtbGlzdEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
+by9hdGFyYWlkLWxpc3Q=
