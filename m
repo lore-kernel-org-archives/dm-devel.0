@@ -1,68 +1,50 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: linux-next - WARNING: at fs/block_dev.c:824
-	bd_link_disk_holder+0x92/0x1ac()
-Date: Fri, 14 Jan 2011 19:23:40 +0100
-Message-ID: <AANLkTinj49yFOhomPuAO-X5GU6wM0yi4jDZyer63RnjJ__11555.6497978561$1295029534$gmane$org@mail.gmail.com>
-References: <20110113132637.GH16523@nb.net.home>
-	<20110113133722.GG30719@htj.dyndns.org>
-	<4D2F04FF.1070309@redhat.com>
-	<20110113141107.GI30719@htj.dyndns.org>
-	<4D2F0B6A.6010201@redhat.com>
-	<AANLkTinJ68D6Yc-U-Q=ZfS9mqozj5qtHPtySZHOgjcgP@mail.gmail.com>
-	<656A2F9B-4E1C-44AA-80CB-9E3428E26CDE@mit.edu>
-	<20110114071858.7eee145c@notabene.brown>
-	<20110113204145.GC31800@thunk.org>
-	<20110114162022.GC978@htj.dyndns.org>
-	<20110114175942.GK31800@thunk.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [PATCH UPDATED] block: restore multiple bd_link_disk_holder()
+ support
+Date: Fri, 14 Jan 2011 22:09:12 +0100
+Message-ID: <4D30BB78.5020101@redhat.com>
+References: <16069.1294853673@localhost> <4D2E4611.90002@redhat.com> <4D2E6129.8000700@ce.jp.nec.com> <20110113172133.GE14096@htj.dyndns.org> <4D2F4799.5030901@redhat.com> <4D2FFBED.6010406@ce.jp.nec.com> <20110114161043.GB978@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110114175942.GK31800@thunk.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ted Ts'o <tytso@mit.edu>, Tejun Heo <tj@kernel.org>, NeilBrown <neilb@suse.de>, Milan Broz <mbroz@redhat.com>, Karel Zak <kzak@redhat.com>, device-mapper
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20110114161043.GB978@htj.dyndns.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Jens Axboe <axboe@kernel.dk>, Valdis.Kletnieks@vt.edu, Alexander Viro <viro@zeniv.linux.org.uk>, Neil Brown <neilb@suse.de>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hello, Ted.
+On 01/14/2011 05:10 PM, Tejun Heo wrote:
+> Commit e09b457b (block: simplify holder symlink handling) incorrectly
+> assumed that there is only one link at maximum.  dm may use multiple
+> links and expects block layer to track reference count for each link,
+> which is different from and unrelated to the exclusive device holder
+> identified by @holder when the device is opened.
+> 
+> Remove the single holder assumption and automatic removal of the link
+> and revive the per-link reference count tracking.  The code
+> essentially behaves the same as before commit e09b457b sans the
+> unnecessary kobject reference count dancing.
+> 
+> While at it, note that this facility should not be used by anyone else
+> than the current ones.  Sysfs symlinks shouldn't be abused like this
+> and the whole thing doesn't belong in the block layer at all.
+> 
+> Signed-off-by: Tejun Heo <tj@kernel.org>
+> Reported-by: Milan Broz <mbroz@redhat.com>
+> Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> Cc: Neil Brown <neilb@suse.de>
+> Cc: linux-raid@vger.kernel.org
+> Cc: Kay Sievers <kay.sievers@vrfy.org>
+> ---
+> Thanks for the test commands.  They were very helpful.  Can you please
+> test this one?
 
-On Fri, Jan 14, 2011 at 6:59 PM, Ted Ts'o <tytso@mit.edu> wrote:
-> Yes, agreed. =A0My point was that if we have a better system, we could
-> migrate blkid and other users to new interface, and maybe in a few
-> years, we can deprecate that interface. =A0So we do have to maintain
-> them for at least the medium term, but that shouldn't stop us from
-> divising a better interface, and then gradually migrating systems to
-> use that newer and better interface.
+Hi,
 
-Oh yeah, fully agreed there and the implementation at the block layer
-isn't even gonna be difficult.  Just a single attribute which contains
-a string which can be specified at the time of claiming.  We probably
-can introduce a new interface where the @holder is always a string the
-content of which should uniquely identify the holder in human/machine
-readable form and add a few helpers to format those strings so that
-the same type of usages use consistently formatted strings.  For
-nested devices, kdev should do.  For filesystems, the mount point
-maybe (it should be something which identifies it absolutely)?  For
-specific programs (cd burner, whatnot), pid and so on.
+yes, this one works for me. I run full lvm2 testsuite and no warnings.
+Thanks!
 
-The only question is, would that be actually necessary?  By now, we
-already have mostly working reverse mapping for most things which
-matter through blkid, fs information, fd listing under proc and so on.
- They sure are ugly and probably unreliable at times but is it
-pressing enough to introduce new interface and migrate things over or
-would we be just creating churns?  I don't really know how these
-things look from userland so am genuinely unsure what the answer is.
+Tested-by: Milan Broz <mbroz@redhat.com>
 
-Thanks.
-
--- =
-
-tejun
+Milan
