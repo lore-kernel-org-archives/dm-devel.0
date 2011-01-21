@@ -1,19 +1,19 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
 Subject: Re: multipath: change the DEFAULT_MINIO for the request
  based multipath
-Date: Fri, 21 Jan 2011 09:12:05 -0500
-Message-ID: <20110121141204.GE30411@redhat.com>
+Date: Fri, 21 Jan 2011 15:46:33 +0100
+Message-ID: <1295621193.23625.37.camel@zezette>
 References: <91d6dae7d88296d8a1fe.1295472607@malahal>
 	<4D37E513.3070506@suse.de> <20110120160726.GA23529@redhat.com>
-	<4D392FBD.5080207@ce.jp.nec.com>
-	<1295599627.23625.16.camel@zezette>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<4D392FBD.5080207@ce.jp.nec.com> <1295599627.23625.16.camel@zezette>
+	<20110121141204.GE30411@redhat.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1295599627.23625.16.camel@zezette>
+In-Reply-To: <20110121141204.GE30411@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,34 +23,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 21 2011 at  3:47am -0500,
-Christophe Varoqui <christophe.varoqui@gmail.com> wrote:
 
+> I'm not following why we'd need a different configuration parameter.
+> It is just that the default rr_min_io that would be used would be
+> conditional on the multipath target version being >= 1.1.0.
 > 
-> > 
-> > Fortunately, the target version of multipath was also bumped
-> > in 2.6.31, from 1.0.5 to 1.1.0 by this commit:
-> > 
-> > af4874e v2.6.31-rc1 dm target:s introduce iterate devices fn
-> > 
-> Fortunate indeed.
-> 
-> Should the 'minio' be a tunable in the request-based multipath context,
-> or should we hardcode its value to '1' ?
+Defaults are layered. For current minio, we have :
+[1] one top level default (hardcoded, superseded by config)
+[2] per hardware default (hardcoded, superseded by config)
+[3] per multipath value (none hardcoded, defined by config)
 
-As my earlier response indicated: I'm not convinced _always_ using 1 for
-request-based is appropriate/best.
- 
-> If we keep it a tunable, I guess we'll have to introduce a different
-> 'minio' configuration parameter ('rr_min_io_rq' for example) to permit
-> vendors to set their defaults for distributions shipping a rq-capable
-> kernel or not. This change would be pretty invasive.
+You suggest multipath-tools to adapt only the top level minio default
+depending on dm-rq availability [1], but what of the hwtable defaults
+[2] ? Should we provide vendors with a way to describe a with-rq minio
+default *and* a without-rq minio default (a new parameter in the hwentry
+struct) ? If so, we should also provide a new config file keyword to
+override this new hwentry parameter hardcoded value ... then the
+reasoning cascades to the mpentry struct minio setting [3].
 
-I'm not following why we'd need a different configuration parameter.
-It is just that the default rr_min_io that would be used would be
-conditional on the multipath target version being >= 1.1.0.
+Actually, [1] is hardly the common case : only unknown hardware resort
+to these defaults.
 
-Mike
+Is my reasoning flawed ?
