@@ -1,12 +1,21 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults libm ...
-Date: 21 Jan 2011 16:57:45 -0000
-Message-ID: <20110121165745.25363.qmail@sourceware.org>
+From: Malahal Naineni <malahal@us.ibm.com>
+Subject: Re: multipath: change the DEFAULT_MINIO for the request
+ based multipath
+Date: Fri, 21 Jan 2011 09:39:30 -0800
+Message-ID: <20110121173930.GB20278@us.ibm.com>
+References: <91d6dae7d88296d8a1fe.1295472607@malahal>
+	<4D37E513.3070506@suse.de> <20110120160726.GA23529@redhat.com>
+	<4D392FBD.5080207@ce.jp.nec.com>
+	<1295599627.23625.16.camel@zezette>
+	<20110121141204.GE30411@redhat.com>
+	<1295621193.23625.37.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1295621193.23625.37.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,50 +25,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2011-01-21 16:57:44
+Christophe Varoqui [christophe.varoqui@gmail.com] wrote:
+> 
+> > I'm not following why we'd need a different configuration parameter.
+> > It is just that the default rr_min_io that would be used would be
+> > conditional on the multipath target version being >= 1.1.0.
+> > 
+> Defaults are layered. For current minio, we have :
+> [1] one top level default (hardcoded, superseded by config)
+> [2] per hardware default (hardcoded, superseded by config)
+> [3] per multipath value (none hardcoded, defined by config)
+> 
+> You suggest multipath-tools to adapt only the top level minio default
+> depending on dm-rq availability [1], but what of the hwtable defaults
+> [2] ? Should we provide vendors with a way to describe a with-rq minio
+> default *and* a without-rq minio default (a new parameter in the hwentry
+> struct) ? If so, we should also provide a new config file keyword to
+> override this new hwentry parameter hardcoded value ... then the
+> reasoning cascades to the mpentry struct minio setting [3].
+> 
+> Actually, [1] is hardly the common case : only unknown hardware resort
+> to these defaults.
+> 
+> Is my reasoning flawed ?
 
-Modified files:
-	.              : multipath.conf.defaults 
-	libmultipath   : hwtable.c 
+I don't think so. Your reasoning is right. How about this:
 
-Log message:
-	Remove old config entry, and update multipath.conf.defaults
+1. Set DEFAULT_MINIO to -1
+2. If bio based mapping and the value is -1, set it to 1000
+   (DEFAULT_BIO_MINIO)
+3. If request based mapping, set it to DEFAULT_REQUEST_MINIO.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5.2.13&r2=1.5.2.14
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.16.2.18&r2=1.16.2.19
+Note that devices can't have individual hardware default for request
+based mappings in this method and I think that should be OK. They are
+allowed to individual hardware based default for BIO based mappings as
+they have now. I will code it up if everyone agrees.
 
---- multipath-tools/multipath.conf.defaults	2009/09/11 15:19:50	1.5.2.13
-+++ multipath-tools/multipath.conf.defaults	2011/01/21 16:57:43	1.5.2.14
-@@ -87,9 +87,9 @@
- #               vendor                  "HP"
- #               product                 "HSVX700"
- #               path_grouping_policy    group_by_prio
--#               prio_callout            "/sbin/mpath_prio_alua /dev/%n"
--#		hardware_handler	"1 alua"
--#               path_checker            tur
-+#               prio_callout            "/sbin/mpath_prio_hp_sw /dev/%n"
-+#		hardware_handler	"0"
-+#               path_checker            hp_sw
- #		failback		immediate
- #               no_path_retry           12
- #		rr_min_io		100
---- multipath-tools/libmultipath/hwtable.c	2010/10/27 18:55:55	1.16.2.18
-+++ multipath-tools/libmultipath/hwtable.c	2011/01/21 16:57:44	1.16.2.19
-@@ -54,10 +54,6 @@
- 			   GROUP_BY_PRIO, DEFAULT_GETUID,
- 			   "/sbin/mpath_prio_alua /dev/%n", "0", "0", "tur",
- 			   -FAILBACK_IMMEDIATE, NULL, 18, 0, 100);
--        r += store_hwe_ext(hw, "HP", "HSVX700",
--			   GROUP_BY_PRIO, DEFAULT_GETUID,
--			   "/sbin/mpath_prio_alua /dev/%n", "1 alua", "0",
--			   "tur", -FAILBACK_IMMEDIATE, NULL, 12, 0, 100);
- 	r += store_hwe_ext(hw, "HP", "MSA2000s*", MULTIBUS, "/sbin/cciss_id %n",
- 	                   NULL, "0", "0", "cciss_tur", FAILBACK_UNDEF, NULL,
- 	                   12, 0, 0);
+Thanks, Malahal.
