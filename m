@@ -1,12 +1,13 @@
 From: nishant mungse <nishantmungse@gmail.com>
-Subject: device-mapper,
-	nishant mungse has invited you to open a Gmail account
-Date: Wed, 26 Jan 2011 12:25:36 -0500
-Message-ID: <AANLkTi=hBydpgdBbj_sg-G0wd3aU_9MJewoE1rP-rK=W@mail.gmail.com>
+Subject: Re: Improving dm-mirror as a final year project
+Date: Wed, 26 Jan 2011 12:24:59 -0500
+Message-ID: <AANLkTinK6u8zJyJn8f5j0jVPBQgstPVPFftfQfCw5vuH@mail.gmail.com>
+References: <20110125155342.GG26864@genesis.frugalware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5413909944365843727=="
+Content-Type: multipart/mixed; boundary="===============2226289234271101398=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20110125155342.GG26864@genesis.frugalware.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,139 +20,161 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============5413909944365843727==
-Content-Type: multipart/alternative; boundary=90e6ba1819e205e8b9049ac31ff5
+--===============2226289234271101398==
+Content-Type: multipart/alternative; boundary=90e6ba6153ded8dd6b049ac31cb9
 
---90e6ba1819e205e8b9049ac31ff5
+--90e6ba6153ded8dd6b049ac31cb9
 Content-Type: text/plain; charset=ISO-8859-1
 
-I've been using Gmail and thought you might like to try it out. Here's an
-invitation to create an account.
+On Tue, Jan 25, 2011 at 10:53 AM, Miklos Vajna <vmiklos@frugalware.org>wrote:
+
+> Hi,
+>
+> I got the possibility to work on dm-mirror as a final year project at
+> ULX, the Hungarian distributor of Red Hat.
+>
+> Get my feet wet, I created two small patches:
+>
+> 1) dm-mirror: allow setting ios count to 0
+>
+> Always read from the default_mirror in that case.
+>
+> 2) dm-mirror: allow setting the default mirror
+>
+> These can help in case one data leg of a mirror is a remote (iSCSI) one,
+> so the default RR aproach is not optimal for reading. (One may set the
+> ios count to 0, set the default mirror to the local one, and that will
+> cause a read speedup.)
+>
+> I do not yet have the right to send those patches (I do this in
+> university time, so the copyright is not mine), but I hope to be able to
+> do so - to get them reviewed.
+>
+> So the final year project's aim is to improve "the fault tolerance and
+> performance of dm-mirror". We (I and my mentors) have two ideas in that
+> area, not counting the above patches:
+>
+> 1) Make the currently hardwired RR read approach modular, that would
+> allow implementing for example a weighted RR algorithm. (In case one
+> disk is two times faster than the other one, etc.)
+>
+> 2) From our experiments, it seems that in case the dm-mirror looses one
+> of its legs and there is a write to the mirror, it gets converted to a
+> linear volume. It would be nice (not sure how easy) to use the mirror
+> log to mark the dirty blocks, so that the volume would not be converted
+> to a linear one: once the other leg is back, it could be updated based
+> on the mirror log.
+>
+> The question: what do you (who have much more experience with dm-mirror
+> than me) think - are these reasonable goals? If not, what would you
+> improve/change/add/remove to the above list?
+>
+> Thanks,
+>
+> Miklos
+>
+> PS: I'm not subscribed, please keep me in CC.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
 
 
-  You're Invited to Gmail!
+hello all,
+There is one doubt regarding the dm-raid1. As far as i know, in dm-raid1 the
+data is written parallelly  on all the mirrors of mirrorset and if any of
+the mirror fails to write the data then dm-mirror adds this mirror to fail
+list by increasing the error count in "fail mirror" function in dm-raid1.
+Actually my doubt is where this error count is decremented? i.e after kcpyd
+or before and where exactly this error count is decremented?
 
-nishant mungse has invited you to open a Gmail account.
 
-Gmail is Google's free email service, built on the idea that email can be
-intuitive, efficient, and fun. Gmail has:
+Regards,
+Nishant.
 
- *Less spam*
-Keep unwanted messages out of your inbox with Google's innovative
-technology.
-
-*Lots of space*
-Enough storage so that you'll never have to delete another message.
-
-*Built-in chat*
-Text or video chat with nishant mungse and other friends in real time.
-
-*Mobile access*
-Get your email anywhere with Gmail on your mobile phone.
-
-You can even import your contacts and email from Yahoo!, Hotmail, AOL, or
-any other web mail or POP accounts.
-
-Once you create your account, nishant mungse will be notified of your new
-Gmail address so you can stay in touch. Learn
-more<http://mail.google.com/mail/help/intl/en/about.html>or get
-started<http://mail.google.com/mail/a-7b9376528e-9d6183929f-NKui7lUGuuocOq2SHaLFqYm1fzU>
-!
-        Sign up<http://mail.google.com/mail/a-7b9376528e-9d6183929f-NKui7lUGuuocOq2SHaLFqYm1fzU>
-
-Google Inc. | 1600 Ampitheatre Parkway | Mountain View, California 94043
-
---90e6ba1819e205e8b9049ac31ff5
+--90e6ba6153ded8dd6b049ac31cb9
 Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-<div dir="ltr">I&#39;ve been using Gmail and thought you might like to try it out. Here&#39;s an invitation to create an account.
-
-<div>
+<br><br><div class=3D"gmail_quote">On Tue, Jan 25, 2011 at 10:53 AM, Miklos=
+ Vajna <span dir=3D"ltr">&lt;<a href=3D"mailto:vmiklos@frugalware.org">vmik=
+los@frugalware.org</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quot=
+e" style=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt =
+0.8ex; padding-left: 1ex;">
+<div><div></div><div class=3D"h5">Hi,<br>
 <br>
+I got the possibility to work on dm-mirror as a final year project at<br>
+ULX, the Hungarian distributor of Red Hat.<br>
 <br>
-<table width="650px" cellpadding="0" cellspacing="0" style="margin-left:auto; margin-right:auto; font-family:arial,sans-serif;">
-<tr><td style="border:1px solid #cccccc; padding:10px;">
-	<table width="100%" cellpadding="0" cellspacing="0">
-		<tr><td width="1%"><img src="http://www.gstatic.com/mail/messages/mvelope2.gif" width="95" height="77" style="padding-right:10px;"></td>
-		<td width="99%" colspan="2"><h1 style="font-size:28px; font-weight:normal; color:#2461AA; padding-bottom:0em;">You&#39;re Invited to Gmail!</h1></td></tr>
-	</table>
-	<table width="100%"><tr><td>
-	<table width="450px" border="0" cellpadding="0" cellspacing="0" style="padding:12px; padding-top:0;">
-	  <tr><td colspan="2">
-	        <p>
-	        nishant mungse has invited you to open a Gmail account.
-	        </p>
-	        <p>Gmail is Google&#39;s free email service, built on the idea that email can be intuitive, efficient, and fun. Gmail has:</p><br></td></tr>
-		<tr>
-		<td valign="top" style="padding-bottom:5px;"><img src="http://www.gstatic.com/mail/messages/spam_new.gif" style="padding-right:5px;"></td>
-		<td valign="top" style="padding-bottom:5px;"><p style="margin-top:0px; padding-top:0px;"><strong>Less spam</strong><br>
-		Keep unwanted messages out of your inbox with Google&#39;s innovative technology.</p></td>
-		</tr>
-		<tr>
-		<td valign="top" style="padding-bottom:5px;"><img src="http://www.gstatic.com/mail/messages/storage.gif" style="padding-right:5px;"></td>
-		<td valign="top" style="padding-bottom:5px;"><p style="margin-top:0px; padding-top:0px;"><strong>Lots of space</strong><br>
-		Enough storage so that you&#39;ll never have to delete another message.</p></td>
-		</tr>
-		<tr>
-		<td valign="top" style="padding-bottom:5px;"><img src="http://www.gstatic.com/mail/messages/chat.gif" style="padding-right:5px;"></td>
-		<td valign="top" style="padding-bottom:5px;"><p style="margin-top:0px; padding-top:0px;"><strong>Built-in chat</strong><br>
-		Text or video chat with nishant mungse and other friends in real time.</p></td>
-		</tr>
-		<tr>
-		<td valign="top"><img src="http://www.gstatic.com/mail/messages/cell.gif" style="padding-right:5px;"></td>
-		<td valign="top"><p style="margin-top:0px; padding-top:0px;"><strong>Mobile access</strong><br>
-		Get your email anywhere with Gmail on your mobile phone.</p></td>
-		</tr>
-		<tr><td colspan="2" style="padding-top:15px;">
-                <p>You can even import your contacts and email from Yahoo!, Hotmail, AOL, or any other web mail or POP accounts.</p>
-		<p>Once you create your account, nishant mungse will be notified of your new Gmail address so you can stay in touch.
-		<a href="http://mail.google.com/mail/help/intl/en/about.html">Learn more</a> or <a href="http://mail.google.com/mail/a-7b9376528e-9d6183929f-NKui7lUGuuocOq2SHaLFqYm1fzU">get started</a>!</p></td></tr>
-	</table>
-	</td>
-	<td valign="top">
-	<table cellpadding="0" cellspacing="0">
-          <col style="width: 1px;">
-          <col>
-          <col style="width: 1px;">
-          <tr>
-            <td></td>
-            <td height="1px" style="background-color: #ddd"></td>
-            <td></td>
-          </tr>
-          <tr>
-            <td style="background-color: #ddd"></td>
-            <td background="http://www.gstatic.com/mail/messages/welcome-button-background.png" style="background-color: #ddd; background-repeat: repeat-x;
-                    padding: 10px; font-size: 130%" align="center">
-                  <a href="http://mail.google.com/mail/a-7b9376528e-9d6183929f-NKui7lUGuuocOq2SHaLFqYm1fzU" style="font-weight: bold; color: #000; text-decoration: none;
-                    display: block;">Sign up</a>
-            </td>
-            <td style="background-color: #ddd"></td>
-          </tr>
-         <tr>
-            <td></td>
-            <td height="1px" style="background-color: #ddd"></td>
-            <td></td>
-          </tr>
-        </table>
-	</td></tr></table>
-</td></tr>
+Get my feet wet, I created two small patches:<br>
+<br>
+1) dm-mirror: allow setting ios count to 0<br>
+<br>
+Always read from the default_mirror in that case.<br>
+<br>
+2) dm-mirror: allow setting the default mirror<br>
+<br>
+These can help in case one data leg of a mirror is a remote (iSCSI) one,<br=
+>
+so the default RR aproach is not optimal for reading. (One may set the<br>
+ios count to 0, set the default mirror to the local one, and that will<br>
+cause a read speedup.)<br>
+<br>
+I do not yet have the right to send those patches (I do this in<br>
+university time, so the copyright is not mine), but I hope to be able to<br=
+>
+do so - to get them reviewed.<br>
+<br>
+So the final year project&#39;s aim is to improve &quot;the fault tolerance=
+ and<br>
+performance of dm-mirror&quot;. We (I and my mentors) have two ideas in tha=
+t<br>
+area, not counting the above patches:<br>
+<br>
+1) Make the currently hardwired RR read approach modular, that would<br>
+allow implementing for example a weighted RR algorithm. (In case one<br>
+disk is two times faster than the other one, etc.)<br>
+<br>
+2) From our experiments, it seems that in case the dm-mirror looses one<br>
+of its legs and there is a write to the mirror, it gets converted to a<br>
+linear volume. It would be nice (not sure how easy) to use the mirror<br>
+log to mark the dirty blocks, so that the volume would not be converted<br>
+to a linear one: once the other leg is back, it could be updated based<br>
+on the mirror log.<br>
+<br>
+The question: what do you (who have much more experience with dm-mirror<br>
+than me) think - are these reasonable goals? If not, what would you<br>
+improve/change/add/remove to the above list?<br>
+<br>
+Thanks,<br>
+<br>
+Miklos<br>
+<br>
+</div></div>PS: I&#39;m not subscribed, please keep me in CC.<br>
+<br>--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
+nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br></blockquote></=
+div><br><br>hello all,<br>There is one doubt regarding the dm-raid1. As far=
+ as i know, in dm-raid1 the data is written parallelly=A0 on all the mirror=
+s of mirrorset and if any of the mirror fails to write the data then dm-mir=
+ror adds this mirror to fail list by increasing the error count in &quot;fa=
+il mirror&quot; function in dm-raid1. <br>
+Actually my doubt is where this error count is decremented? i.e after kcpyd=
+ or before and where exactly this error count is decremented?<br><br><br>Re=
+gards,<br>Nishant.<br>
 
-<tr><td>
-<div style="width:100%; margin-top:10px; color:#666666; font-size:10px;"><center><br>
-Google Inc. | 1600 Ampitheatre Parkway | Mountain View, California 94043</center></div>
-</td></tr>
-</table>
-</div>
-</div>
-
---90e6ba1819e205e8b9049ac31ff5--
+--90e6ba6153ded8dd6b049ac31cb9--
 
 
---===============5413909944365843727==
+--===============2226289234271101398==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============5413909944365843727==--
+--===============2226289234271101398==--
