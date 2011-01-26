@@ -1,10 +1,11 @@
-From: Miklos Vajna <vmiklos@frugalware.org>
-Subject: Improving dm-mirror as a final year project
-Date: Tue, 25 Jan 2011 16:53:43 +0100
-Message-ID: <20110125155342.GG26864@genesis.frugalware.org>
+From: nishant mungse <nishantmungse@gmail.com>
+Subject: device-mapper,
+	nishant mungse has invited you to open a Gmail account
+Date: Wed, 26 Jan 2011 12:25:36 -0500
+Message-ID: <AANLkTi=hBydpgdBbj_sg-G0wd3aU_9MJewoE1rP-rK=W@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5335719872117699520=="
+Content-Type: multipart/mixed; boundary="===============5413909944365843727=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,87 +16,142 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+--===============5413909944365843727==
+Content-Type: multipart/alternative; boundary=90e6ba1819e205e8b9049ac31ff5
 
---===============5335719872117699520==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="peRj85VDUce1fu/0"
-Content-Disposition: inline
+--90e6ba1819e205e8b9049ac31ff5
+Content-Type: text/plain; charset=ISO-8859-1
 
-
---peRj85VDUce1fu/0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-
-Hi,
-
-I got the possibility to work on dm-mirror as a final year project at
-ULX, the Hungarian distributor of Red Hat.
-
-Get my feet wet, I created two small patches:
-
-1) dm-mirror: allow setting ios count to 0
-
-Always read from the default_mirror in that case.
-
-2) dm-mirror: allow setting the default mirror
-
-These can help in case one data leg of a mirror is a remote (iSCSI) one,
-so the default RR aproach is not optimal for reading. (One may set the
-ios count to 0, set the default mirror to the local one, and that will
-cause a read speedup.)
-
-I do not yet have the right to send those patches (I do this in
-university time, so the copyright is not mine), but I hope to be able to
-do so - to get them reviewed.
-
-So the final year project's aim is to improve "the fault tolerance and
-performance of dm-mirror". We (I and my mentors) have two ideas in that
-area, not counting the above patches:
-
-1) Make the currently hardwired RR read approach modular, that would
-allow implementing for example a weighted RR algorithm. (In case one
-disk is two times faster than the other one, etc.)
-
-2) From our experiments, it seems that in case the dm-mirror looses one
-of its legs and there is a write to the mirror, it gets converted to a
-linear volume. It would be nice (not sure how easy) to use the mirror
-log to mark the dirty blocks, so that the volume would not be converted
-to a linear one: once the other leg is back, it could be updated based
-on the mirror log.
-
-The question: what do you (who have much more experience with dm-mirror
-than me) think - are these reasonable goals? If not, what would you
-improve/change/add/remove to the above list?
-
-Thanks,
-
-Miklos
-
-PS: I'm not subscribed, please keep me in CC.
-
---peRj85VDUce1fu/0
-Content-Type: application/pgp-signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.10 (GNU/Linux)
-
-iEYEARECAAYFAk0+8gYACgkQe81tAgORUJaTIgCfct6eQRFHCPEr4WIG2nsi4GAZ
-ZvsAoKVLfWoGC1tPqc472ZTTKeXM9+RK
-=nQa6
------END PGP SIGNATURE-----
-
---peRj85VDUce1fu/0--
+I've been using Gmail and thought you might like to try it out. Here's an
+invitation to create an account.
 
 
---===============5335719872117699520==
+  You're Invited to Gmail!
+
+nishant mungse has invited you to open a Gmail account.
+
+Gmail is Google's free email service, built on the idea that email can be
+intuitive, efficient, and fun. Gmail has:
+
+ *Less spam*
+Keep unwanted messages out of your inbox with Google's innovative
+technology.
+
+*Lots of space*
+Enough storage so that you'll never have to delete another message.
+
+*Built-in chat*
+Text or video chat with nishant mungse and other friends in real time.
+
+*Mobile access*
+Get your email anywhere with Gmail on your mobile phone.
+
+You can even import your contacts and email from Yahoo!, Hotmail, AOL, or
+any other web mail or POP accounts.
+
+Once you create your account, nishant mungse will be notified of your new
+Gmail address so you can stay in touch. Learn
+more<http://mail.google.com/mail/help/intl/en/about.html>or get
+started<http://mail.google.com/mail/a-7b9376528e-9d6183929f-NKui7lUGuuocOq2SHaLFqYm1fzU>
+!
+        Sign up<http://mail.google.com/mail/a-7b9376528e-9d6183929f-NKui7lUGuuocOq2SHaLFqYm1fzU>
+
+Google Inc. | 1600 Ampitheatre Parkway | Mountain View, California 94043
+
+--90e6ba1819e205e8b9049ac31ff5
+Content-Type: text/html; charset=ISO-8859-1
+
+<div dir="ltr">I&#39;ve been using Gmail and thought you might like to try it out. Here&#39;s an invitation to create an account.
+
+<div>
+<br>
+<br>
+<table width="650px" cellpadding="0" cellspacing="0" style="margin-left:auto; margin-right:auto; font-family:arial,sans-serif;">
+<tr><td style="border:1px solid #cccccc; padding:10px;">
+	<table width="100%" cellpadding="0" cellspacing="0">
+		<tr><td width="1%"><img src="http://www.gstatic.com/mail/messages/mvelope2.gif" width="95" height="77" style="padding-right:10px;"></td>
+		<td width="99%" colspan="2"><h1 style="font-size:28px; font-weight:normal; color:#2461AA; padding-bottom:0em;">You&#39;re Invited to Gmail!</h1></td></tr>
+	</table>
+	<table width="100%"><tr><td>
+	<table width="450px" border="0" cellpadding="0" cellspacing="0" style="padding:12px; padding-top:0;">
+	  <tr><td colspan="2">
+	        <p>
+	        nishant mungse has invited you to open a Gmail account.
+	        </p>
+	        <p>Gmail is Google&#39;s free email service, built on the idea that email can be intuitive, efficient, and fun. Gmail has:</p><br></td></tr>
+		<tr>
+		<td valign="top" style="padding-bottom:5px;"><img src="http://www.gstatic.com/mail/messages/spam_new.gif" style="padding-right:5px;"></td>
+		<td valign="top" style="padding-bottom:5px;"><p style="margin-top:0px; padding-top:0px;"><strong>Less spam</strong><br>
+		Keep unwanted messages out of your inbox with Google&#39;s innovative technology.</p></td>
+		</tr>
+		<tr>
+		<td valign="top" style="padding-bottom:5px;"><img src="http://www.gstatic.com/mail/messages/storage.gif" style="padding-right:5px;"></td>
+		<td valign="top" style="padding-bottom:5px;"><p style="margin-top:0px; padding-top:0px;"><strong>Lots of space</strong><br>
+		Enough storage so that you&#39;ll never have to delete another message.</p></td>
+		</tr>
+		<tr>
+		<td valign="top" style="padding-bottom:5px;"><img src="http://www.gstatic.com/mail/messages/chat.gif" style="padding-right:5px;"></td>
+		<td valign="top" style="padding-bottom:5px;"><p style="margin-top:0px; padding-top:0px;"><strong>Built-in chat</strong><br>
+		Text or video chat with nishant mungse and other friends in real time.</p></td>
+		</tr>
+		<tr>
+		<td valign="top"><img src="http://www.gstatic.com/mail/messages/cell.gif" style="padding-right:5px;"></td>
+		<td valign="top"><p style="margin-top:0px; padding-top:0px;"><strong>Mobile access</strong><br>
+		Get your email anywhere with Gmail on your mobile phone.</p></td>
+		</tr>
+		<tr><td colspan="2" style="padding-top:15px;">
+                <p>You can even import your contacts and email from Yahoo!, Hotmail, AOL, or any other web mail or POP accounts.</p>
+		<p>Once you create your account, nishant mungse will be notified of your new Gmail address so you can stay in touch.
+		<a href="http://mail.google.com/mail/help/intl/en/about.html">Learn more</a> or <a href="http://mail.google.com/mail/a-7b9376528e-9d6183929f-NKui7lUGuuocOq2SHaLFqYm1fzU">get started</a>!</p></td></tr>
+	</table>
+	</td>
+	<td valign="top">
+	<table cellpadding="0" cellspacing="0">
+          <col style="width: 1px;">
+          <col>
+          <col style="width: 1px;">
+          <tr>
+            <td></td>
+            <td height="1px" style="background-color: #ddd"></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td style="background-color: #ddd"></td>
+            <td background="http://www.gstatic.com/mail/messages/welcome-button-background.png" style="background-color: #ddd; background-repeat: repeat-x;
+                    padding: 10px; font-size: 130%" align="center">
+                  <a href="http://mail.google.com/mail/a-7b9376528e-9d6183929f-NKui7lUGuuocOq2SHaLFqYm1fzU" style="font-weight: bold; color: #000; text-decoration: none;
+                    display: block;">Sign up</a>
+            </td>
+            <td style="background-color: #ddd"></td>
+          </tr>
+         <tr>
+            <td></td>
+            <td height="1px" style="background-color: #ddd"></td>
+            <td></td>
+          </tr>
+        </table>
+	</td></tr></table>
+</td></tr>
+
+<tr><td>
+<div style="width:100%; margin-top:10px; color:#666666; font-size:10px;"><center><br>
+Google Inc. | 1600 Ampitheatre Parkway | Mountain View, California 94043</center></div>
+</td></tr>
+</table>
+</div>
+</div>
+
+--90e6ba1819e205e8b9049ac31ff5--
+
+
+--===============5413909944365843727==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============5335719872117699520==--
+--===============5413909944365843727==--
