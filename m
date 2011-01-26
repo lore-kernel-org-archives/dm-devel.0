@@ -1,13 +1,21 @@
 From: nishant mungse <nishantmungse@gmail.com>
-Subject: Re: Improving dm-mirror as a final year project
-Date: Wed, 26 Jan 2011 12:24:59 -0500
-Message-ID: <AANLkTinK6u8zJyJn8f5j0jVPBQgstPVPFftfQfCw5vuH@mail.gmail.com>
-References: <20110125155342.GG26864@genesis.frugalware.org>
+Subject: Re: multipath: change the DEFAULT_MINIO for the request
+ based multipath
+Date: Wed, 26 Jan 2011 12:27:43 -0500
+Message-ID: <AANLkTi=kDz5MpdQNBQcvaQUubmjeR2+Qx4bzVkie=6SC@mail.gmail.com>
+References: <91d6dae7d88296d8a1fe.1295472607@malahal>
+	<4D37E513.3070506@suse.de> <20110120160726.GA23529@redhat.com>
+	<4D392FBD.5080207@ce.jp.nec.com>
+	<1295599627.23625.16.camel@zezette>
+	<20110121141204.GE30411@redhat.com>
+	<1295621193.23625.37.camel@zezette>
+	<20110121173930.GB20278@us.ibm.com>
+	<4D3E9020.6010009@ce.jp.nec.com> <20110126022307.GA512@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2226289234271101398=="
+Content-Type: multipart/mixed; boundary="===============7827909090524080782=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110125155342.GG26864@genesis.frugalware.org>
+In-Reply-To: <20110126022307.GA512@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,60 +28,73 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============2226289234271101398==
-Content-Type: multipart/alternative; boundary=90e6ba6153ded8dd6b049ac31cb9
+--===============7827909090524080782==
+Content-Type: multipart/alternative; boundary=90e6ba6150c28f268b049ac32642
 
---90e6ba6153ded8dd6b049ac31cb9
+--90e6ba6150c28f268b049ac32642
 Content-Type: text/plain; charset=ISO-8859-1
 
-On Tue, Jan 25, 2011 at 10:53 AM, Miklos Vajna <vmiklos@frugalware.org>wrote:
+On Tue, Jan 25, 2011 at 9:23 PM, Malahal Naineni <malahal@us.ibm.com> wrote:
 
-> Hi,
+> Jun'ichi Nomura [j-nomura@ce.jp.nec.com] wrote:
+> > >> Defaults are layered. For current minio, we have :
+> > >> [1] one top level default (hardcoded, superseded by config)
+> > >> [2] per hardware default (hardcoded, superseded by config)
+> > >> [3] per multipath value (none hardcoded, defined by config)
+> > >>
+> > >> You suggest multipath-tools to adapt only the top level minio default
+> > >> depending on dm-rq availability [1], but what of the hwtable defaults
+> > >> [2] ? Should we provide vendors with a way to describe a with-rq minio
+> > >> default *and* a without-rq minio default (a new parameter in the
+> hwentry
+> > >> struct) ? If so, we should also provide a new config file keyword to
+> > >> override this new hwentry parameter hardcoded value ... then the
+> > >> reasoning cascades to the mpentry struct minio setting [3].
+> > >>
+> > >> Actually, [1] is hardly the common case : only unknown hardware resort
+> > >> to these defaults.
+> >
+> > Do we really need [2]?
+> >
+> > Currently, there seem only 3 minio values in per-hardware default:
+> >   - 1000 (DEFAULT_MINIO)
+> >   - 128
+> >   - 100
+> >
+> > I think both 128 and 100 are based on that, in many systems/cases,
+> > max request size (max_sectors) is 512KB and BIO submission
+> > is done in page-size unit (4KB).
+> >
+> > If there isn't strong reason for the current default (1000)
+> > (and I think there isn't), it seems we can remove [2]
+> > after changing the default to 128 (or 100).
+> >
+> > > 1. Set DEFAULT_MINIO to -1
+> > > 2. If bio based mapping and the value is -1, set it to 1000
+> > >    (DEFAULT_BIO_MINIO)
+> > > 3. If request based mapping, set it to DEFAULT_REQUEST_MINIO.
+> >
+> > Does it mean users can't change rr_min_io value for request-based dm?
+> > I suspect it is possible that someone wants to set non-default
+> > value to minio for request-based dm.
 >
-> I got the possibility to work on dm-mirror as a final year project at
-> ULX, the Hungarian distributor of Red Hat.
+> Your reading is correct that my proposal doesn't allow it. If we get away
+> with [2] above (hwatable.c based values), then we can have something
+> like this:
 >
-> Get my feet wet, I created two small patches:
+> 1. Remove it from hwentry structure or set it to -1
+> 2. If rr_minio is specified in the conf file (either through default or
+>   device section etc), use it.
+> 3. If not specified in the config file, use DEFAULT_BIO_MINIO or
+>   DEFAULT_REQUEST_MINIO based on the multipath module version.
 >
-> 1) dm-mirror: allow setting ios count to 0
+> In other words, every device out there uses DEFAULT_BIO_MINIO or
+> DEFAULT_REQUEST_MINIO if not specified by the administrator.
+> Admin can override it in /etc/multipath.conf file.
 >
-> Always read from the default_mirror in that case.
+> CON: No per device controller default  (aka hwtable entry value)
 >
-> 2) dm-mirror: allow setting the default mirror
->
-> These can help in case one data leg of a mirror is a remote (iSCSI) one,
-> so the default RR aproach is not optimal for reading. (One may set the
-> ios count to 0, set the default mirror to the local one, and that will
-> cause a read speedup.)
->
-> I do not yet have the right to send those patches (I do this in
-> university time, so the copyright is not mine), but I hope to be able to
-> do so - to get them reviewed.
->
-> So the final year project's aim is to improve "the fault tolerance and
-> performance of dm-mirror". We (I and my mentors) have two ideas in that
-> area, not counting the above patches:
->
-> 1) Make the currently hardwired RR read approach modular, that would
-> allow implementing for example a weighted RR algorithm. (In case one
-> disk is two times faster than the other one, etc.)
->
-> 2) From our experiments, it seems that in case the dm-mirror looses one
-> of its legs and there is a write to the mirror, it gets converted to a
-> linear volume. It would be nice (not sure how easy) to use the mirror
-> log to mark the dirty blocks, so that the volume would not be converted
-> to a linear one: once the other leg is back, it could be updated based
-> on the mirror log.
->
-> The question: what do you (who have much more experience with dm-mirror
-> than me) think - are these reasonable goals? If not, what would you
-> improve/change/add/remove to the above list?
->
-> Thanks,
->
-> Miklos
->
-> PS: I'm not subscribed, please keep me in CC.
+> Thanks, Malahal.
 >
 > --
 > dm-devel mailing list
@@ -83,6 +104,7 @@ On Tue, Jan 25, 2011 at 10:53 AM, Miklos Vajna <vmiklos@frugalware.org>wrote:
 
 
 hello all,
+
 There is one doubt regarding the dm-raid1. As far as i know, in dm-raid1 the
 data is written parallelly  on all the mirrors of mirrorset and if any of
 the mirror fails to write the data then dm-mirror adds this mirror to fail
@@ -90,91 +112,114 @@ list by increasing the error count in "fail mirror" function in dm-raid1.
 Actually my doubt is where this error count is decremented? i.e after kcpyd
 or before and where exactly this error count is decremented?
 
-
 Regards,
 Nishant.
 
---90e6ba6153ded8dd6b049ac31cb9
+--90e6ba6150c28f268b049ac32642
 Content-Type: text/html; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-<br><br><div class=3D"gmail_quote">On Tue, Jan 25, 2011 at 10:53 AM, Miklos=
- Vajna <span dir=3D"ltr">&lt;<a href=3D"mailto:vmiklos@frugalware.org">vmik=
-los@frugalware.org</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quot=
-e" style=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt =
-0.8ex; padding-left: 1ex;">
-<div><div></div><div class=3D"h5">Hi,<br>
-<br>
-I got the possibility to work on dm-mirror as a final year project at<br>
-ULX, the Hungarian distributor of Red Hat.<br>
-<br>
-Get my feet wet, I created two small patches:<br>
-<br>
-1) dm-mirror: allow setting ios count to 0<br>
-<br>
-Always read from the default_mirror in that case.<br>
-<br>
-2) dm-mirror: allow setting the default mirror<br>
-<br>
-These can help in case one data leg of a mirror is a remote (iSCSI) one,<br=
+<br><br><div class=3D"gmail_quote">On Tue, Jan 25, 2011 at 9:23 PM, Malahal=
+ Naineni <span dir=3D"ltr">&lt;<a href=3D"mailto:malahal@us.ibm.com">malaha=
+l@us.ibm.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" sty=
+le=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex;=
+ padding-left: 1ex;">
+Jun&#39;ichi Nomura [<a href=3D"mailto:j-nomura@ce.jp.nec.com">j-nomura@ce.=
+jp.nec.com</a>] wrote:<br>
+&gt; &gt;&gt; Defaults are layered. For current minio, we have :<br>
+&gt; &gt;&gt; [1] one top level default (hardcoded, superseded by config)<b=
+r>
+&gt; &gt;&gt; [2] per hardware default (hardcoded, superseded by config)<br=
 >
-so the default RR aproach is not optimal for reading. (One may set the<br>
-ios count to 0, set the default mirror to the local one, and that will<br>
-cause a read speedup.)<br>
+&gt; &gt;&gt; [3] per multipath value (none hardcoded, defined by config)<b=
+r>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; You suggest multipath-tools to adapt only the top level minio=
+ default<br>
+&gt; &gt;&gt; depending on dm-rq availability [1], but what of the hwtable =
+defaults<br>
+&gt; &gt;&gt; [2] ? Should we provide vendors with a way to describe a with=
+-rq minio<br>
+&gt; &gt;&gt; default *and* a without-rq minio default (a new parameter in =
+the hwentry<br>
+&gt; &gt;&gt; struct) ? If so, we should also provide a new config file key=
+word to<br>
+&gt; &gt;&gt; override this new hwentry parameter hardcoded value ... then =
+the<br>
+&gt; &gt;&gt; reasoning cascades to the mpentry struct minio setting [3].<b=
+r>
+&gt; &gt;&gt;<br>
+&gt; &gt;&gt; Actually, [1] is hardly the common case : only unknown hardwa=
+re resort<br>
+&gt; &gt;&gt; to these defaults.<br>
+&gt;<br>
+&gt; Do we really need [2]?<br>
+&gt;<br>
+&gt; Currently, there seem only 3 minio values in per-hardware default:<br>
+&gt; =A0 - 1000 (DEFAULT_MINIO)<br>
+&gt; =A0 - 128<br>
+&gt; =A0 - 100<br>
+&gt;<br>
+&gt; I think both 128 and 100 are based on that, in many systems/cases,<br>
+&gt; max request size (max_sectors) is 512KB and BIO submission<br>
+&gt; is done in page-size unit (4KB).<br>
+&gt;<br>
+&gt; If there isn&#39;t strong reason for the current default (1000)<br>
+&gt; (and I think there isn&#39;t), it seems we can remove [2]<br>
+&gt; after changing the default to 128 (or 100).<br>
+&gt;<br>
+&gt; &gt; 1. Set DEFAULT_MINIO to -1<br>
+&gt; &gt; 2. If bio based mapping and the value is -1, set it to 1000<br>
+&gt; &gt; =A0 =A0(DEFAULT_BIO_MINIO)<br>
+&gt; &gt; 3. If request based mapping, set it to DEFAULT_REQUEST_MINIO.<br>
+&gt;<br>
+&gt; Does it mean users can&#39;t change rr_min_io value for request-based =
+dm?<br>
+&gt; I suspect it is possible that someone wants to set non-default<br>
+&gt; value to minio for request-based dm.<br>
 <br>
-I do not yet have the right to send those patches (I do this in<br>
-university time, so the copyright is not mine), but I hope to be able to<br=
->
-do so - to get them reviewed.<br>
+Your reading is correct that my proposal doesn&#39;t allow it. If we get aw=
+ay<br>
+with [2] above (hwatable.c based values), then we can have something<br>
+like this:<br>
 <br>
-So the final year project&#39;s aim is to improve &quot;the fault tolerance=
- and<br>
-performance of dm-mirror&quot;. We (I and my mentors) have two ideas in tha=
-t<br>
-area, not counting the above patches:<br>
+1. Remove it from hwentry structure or set it to -1<br>
+2. If rr_minio is specified in the conf file (either through default or<br>
+ =A0 device section etc), use it.<br>
+3. If not specified in the config file, use DEFAULT_BIO_MINIO or<br>
+ =A0 DEFAULT_REQUEST_MINIO based on the multipath module version.<br>
 <br>
-1) Make the currently hardwired RR read approach modular, that would<br>
-allow implementing for example a weighted RR algorithm. (In case one<br>
-disk is two times faster than the other one, etc.)<br>
+In other words, every device out there uses DEFAULT_BIO_MINIO or<br>
+DEFAULT_REQUEST_MINIO if not specified by the administrator.<br>
+Admin can override it in /etc/multipath.conf file.<br>
 <br>
-2) From our experiments, it seems that in case the dm-mirror looses one<br>
-of its legs and there is a write to the mirror, it gets converted to a<br>
-linear volume. It would be nice (not sure how easy) to use the mirror<br>
-log to mark the dirty blocks, so that the volume would not be converted<br>
-to a linear one: once the other leg is back, it could be updated based<br>
-on the mirror log.<br>
+CON: No per device controller default =A0(aka hwtable entry value)<br>
 <br>
-The question: what do you (who have much more experience with dm-mirror<br>
-than me) think - are these reasonable goals? If not, what would you<br>
-improve/change/add/remove to the above list?<br>
-<br>
-Thanks,<br>
-<br>
-Miklos<br>
-<br>
-</div></div>PS: I&#39;m not subscribed, please keep me in CC.<br>
-<br>--<br>
+Thanks, Malahal.<br>
+<font color=3D"#888888"><br>
+--<br>
 dm-devel mailing list<br>
 <a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>
 <a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
-nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br></blockquote></=
-div><br><br>hello all,<br>There is one doubt regarding the dm-raid1. As far=
- as i know, in dm-raid1 the data is written parallelly=A0 on all the mirror=
-s of mirrorset and if any of the mirror fails to write the data then dm-mir=
-ror adds this mirror to fail list by increasing the error count in &quot;fa=
-il mirror&quot; function in dm-raid1. <br>
-Actually my doubt is where this error count is decremented? i.e after kcpyd=
- or before and where exactly this error count is decremented?<br><br><br>Re=
-gards,<br>Nishant.<br>
+nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br>
+</font></blockquote></div><br><br>hello all,<br><br>
+There is one doubt regarding the dm-raid1. As far as i know, in
+dm-raid1 the data is written parallelly=A0 on all the mirrors of
+mirrorset and if any of the mirror fails to write the data then
+dm-mirror adds this mirror to fail list by increasing the error count
+in &quot;fail mirror&quot; function in dm-raid1. <br>
+Actually my doubt is where this error count is decremented? i.e after
+kcpyd or before and where exactly this error count is decremented?<br><br>R=
+egards,<br>Nishant.<br>
 
---90e6ba6153ded8dd6b049ac31cb9--
+--90e6ba6150c28f268b049ac32642--
 
 
---===============2226289234271101398==
+--===============7827909090524080782==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2226289234271101398==--
+--===============7827909090524080782==--
