@@ -1,10 +1,11 @@
 From: nishant mungse <nishantmungse@gmail.com>
-Subject: How to find last sector of bio.
-Date: Sat, 29 Jan 2011 15:16:24 -0500
-Message-ID: <AANLkTi=eVMtjo593a9KSijfXMFoqewgKXGO-ADGXgzo4@mail.gmail.com>
+Subject: nishant mungse wants to chat
+Date: Sat, 29 Jan 2011 12:17:21 -0800
+Message-ID: <AANLkTikUWsdWV39-fDFn_DXd2D+-KLCBRUsZO-1RNsDb@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5195926968882956124=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,63 +16,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============5195926968882956124==
-Content-Type: multipart/alternative; boundary=90e6ba6153de595e64049b01db77
+-----------------------------------------------------------------------
 
---90e6ba6153de595e64049b01db77
-Content-Type: text/plain; charset=ISO-8859-1
+nishant mungse wants to stay in better touch using some of Google's coolest new
+products.
 
-Hi Malahal
+If you already have Gmail or Google Talk, visit:
+http://mail.google.com/mail/b-7b9376528e-430e84b8ea-N31q5dGTmy3niAs7u2CGqN6zxww
+You'll need to click this link to be able to chat with nishant mungse.
 
-Is there any way to find the last sector of bio.
-Is this a correct way to find last sector of bio
+To get Gmail - a free email account from Google with over 2,800 megabytes of
+storage - and chat with nishant mungse, visit:
+http://mail.google.com/mail/a-7b9376528e-430e84b8ea-N31q5dGTmy3niAs7u2CGqN6zxww
 
-"bio->bi_sector=bio->bi_sector + (bio->bi_size >> 9)-1"
+Gmail offers:
+- Instant messaging right inside Gmail
+- Powerful spam protection
+- Built-in search for finding your messages and a helpful way of organizing
+  emails into "conversations"
+- No pop-up ads or untargeted banners - just text ads and related information
+  that are relevant to the content of your messages
 
-or
+All this, and its yours for free. But wait, there's more! By opening a Gmail
+account, you also get access to Google Talk, Google's instant messaging
+service:
 
-bio_for_each_segment(bvec,bio,idx)
-{
- bio->bi_sector=bio->bi_sector + (bvec->bv_len >> 9) -1;
-}
-Will this bio->bi_sector point to last sector of bio if bio->bi_vcnt is
-greater than 1.
+http://www.google.com/talk/
 
-Regards,
-Nishant.
+Google Talk offers:
+- Web-based chat that you can use anywhere, without a download
+- A contact list that's synchronized with your Gmail account
+- Free, high quality PC-to-PC voice calls when you download the Google Talk
+  client
 
---90e6ba6153de595e64049b01db77
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+We're working hard to add new features and make improvements, so we might also
+ask for your comments and suggestions periodically. We appreciate your help in
+making our products even better!
 
-Hi Malahal<br>
-<br>
-Is there any way to find the last sector of bio. <br>
-Is this a correct way to find last sector of bio <br><br>&quot;bio-&gt;bi_s=
-ector=3Dbio-&gt;bi_sector + (bio-&gt;bi_size &gt;&gt; 9)-1&quot;<br>
-<br>or<br>
-<br>bio_for_each_segment(bvec,bio,idx)<br>
-{<br>
-=A0bio-&gt;bi_sector=3Dbio-&gt;bi_sector + (bvec-&gt;bv_len &gt;&gt; 9) -1;=
-<br>
-}<br>
-Will this bio-&gt;bi_sector point to last sector of bio if bio-&gt;bi_vcnt =
-is greater than 1.<br>
-<br>
-Regards,<br>
-Nishant.<br>
+Thanks,
+The Google Team
 
---90e6ba6153de595e64049b01db77--
+To learn more about Gmail and Google Talk, visit:
+http://mail.google.com/mail/help/about.html
+http://www.google.com/talk/about.html
 
-
---===============5195926968882956124==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5195926968882956124==--
+(If clicking the URLs in this message does not work, copy and paste them into
+the address bar of your browser).
