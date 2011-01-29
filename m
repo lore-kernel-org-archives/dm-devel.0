@@ -1,15 +1,11 @@
-From: Malahal Naineni <malahal@us.ibm.com>
-Subject: Re: Doubt regarding dm-raid1
-Date: Fri, 28 Jan 2011 11:38:41 -0800
-Message-ID: <20110128193841.GA4616@us.ibm.com>
-References: <AANLkTi=ryfEU9VOBE7qBaecWnJ93h9tdYt0cNb388vXC@mail.gmail.com>
+From: nishant mungse <nishantmungse@gmail.com>
+Subject: How to find last sector of bio.
+Date: Sat, 29 Jan 2011 15:16:24 -0500
+Message-ID: <AANLkTi=eVMtjo593a9KSijfXMFoqewgKXGO-ADGXgzo4@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============5195926968882956124=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <AANLkTi=ryfEU9VOBE7qBaecWnJ93h9tdYt0cNb388vXC@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,25 +15,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-nishant mungse [nishantmungse@gmail.com] wrote:
->    Hi Malahal
-> 
->     Thanks for reply. I am not able to understand what  this
->     "INIT_WORK(&ms->kmirrord_work, do_mirror)" function does. It  is written
->     in mirror_ctr of dm-raid1. What i think is whenever a bio comes dm_mirror
->     will be called if that is case then why this is written in mirror_ctr.
+--===============5195926968882956124==
+Content-Type: multipart/alternative; boundary=90e6ba6153de595e64049b01db77
 
-INIT_WORK just initializes the work structure. When it is queued by calling
-queue_work() (e.g. from wakeup_mirrord) the actual function do_mirror() gets
-called. It is called in a different thread context though!
+--90e6ba6153de595e64049b01db77
+Content-Type: text/plain; charset=ISO-8859-1
 
-The following article is a bit outdated, but it gives what a work queue
-is and its API:
+Hi Malahal
 
-http://lwn.net/Articles/23634/
+Is there any way to find the last sector of bio.
+Is this a correct way to find last sector of bio
 
-Hope that helps,
-Malahal.
+"bio->bi_sector=bio->bi_sector + (bio->bi_size >> 9)-1"
+
+or
+
+bio_for_each_segment(bvec,bio,idx)
+{
+ bio->bi_sector=bio->bi_sector + (bvec->bv_len >> 9) -1;
+}
+Will this bio->bi_sector point to last sector of bio if bio->bi_vcnt is
+greater than 1.
+
+Regards,
+Nishant.
+
+--90e6ba6153de595e64049b01db77
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hi Malahal<br>
+<br>
+Is there any way to find the last sector of bio. <br>
+Is this a correct way to find last sector of bio <br><br>&quot;bio-&gt;bi_s=
+ector=3Dbio-&gt;bi_sector + (bio-&gt;bi_size &gt;&gt; 9)-1&quot;<br>
+<br>or<br>
+<br>bio_for_each_segment(bvec,bio,idx)<br>
+{<br>
+=A0bio-&gt;bi_sector=3Dbio-&gt;bi_sector + (bvec-&gt;bv_len &gt;&gt; 9) -1;=
+<br>
+}<br>
+Will this bio-&gt;bi_sector point to last sector of bio if bio-&gt;bi_vcnt =
+is greater than 1.<br>
+<br>
+Regards,<br>
+Nishant.<br>
+
+--90e6ba6153de595e64049b01db77--
+
+
+--===============5195926968882956124==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5195926968882956124==--
