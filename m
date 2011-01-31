@@ -1,7 +1,7 @@
-From: Milan Broz <mbroz@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
 Subject: Re: Possible severe bug in the device mapper?
-Date: Mon, 31 Jan 2011 12:13:09 +0100
-Message-ID: <4D469945.9000401@redhat.com>
+Date: Mon, 31 Jan 2011 11:20:45 +0000
+Message-ID: <1296472845.2642.2.camel@ubuntu>
 References: <4D46811C.9050506@gmx.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -19,36 +19,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Andreas Heinlein <aheinlein@gmx.com>
 List-Id: dm-devel.ids
 
+On Mon, 2011-01-31 at 10:30 +0100, Andreas Heinlein wrote:
+> 2. Create a loopback device with this file (losetup -f
+> /media/somedrive/testfile) 
 
-On 01/31/2011 10:30 AM, Andreas Heinlein wrote:
+I'm just trying to understand your complaint here.  If device-mapper
+wasn't in the equation here, and you were using the loop-back device
+directly (i.e. by putting a filesystem on it and mounting).  Then you
+pulled the removable device, what happens?
 
-> Expected behavior: Writing to the still mounted mapping should at least
-> give an error
-
-It should, at least the first flush must return error.
-
-Reading from page cache will probably not hit DM code at all, so it 
-is possible that you can read some data without failure.
-
-Can you reproduce this on recent kernel? 2.6.32 is quite old and I expect
-it is some heavy patches distro kernel.
-
-> This does not happen with whole block devices as targets, which is AFAIK
-> the case in most uses of the device mapper.
-
-What do you mean by "whole block devices" here? Like not partitioned disk?
-
-> Since this is reproducible with other device mapper targets, I am sure
-> this is not a truecrypt problem. It might be related to udev, which
-> AFAIK should notify higher levels when a device is removed.
-
-Yes, Truecrypt uses dm-crypt here. Udev should get remove event and remove
-all symlinks, also there can be some higher level (udisks) which forcily
-removes crypt mapping when underlying device disappears.
-
-But it still must return error on write when underlying device disappeared.
-
-Milan
+- Joe
