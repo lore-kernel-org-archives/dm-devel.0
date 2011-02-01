@@ -1,16 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 2/2] dm mpath: allow table load with 0
- priority groups
-Date: Tue, 01 Feb 2011 16:40:30 +0100
-Message-ID: <4D48296E.2070205@suse.de>
-References: <1296490458-12910-1-git-send-email-snitzer@redhat.com>
-	<1296490458-12910-2-git-send-email-snitzer@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: Improving dm-mirror as a final year project
+Date: Tue, 1 Feb 2011 10:12:36 -0600
+Message-ID: <63C70D40-54EE-40A2-98B9-82E06A956941@redhat.com>
+References: <20110125155342.GG26864@genesis.frugalware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0 (Apple Message framework v936)
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"; DelSp="yes"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1296490458-12910-2-git-send-email-snitzer@redhat.com>
+In-Reply-To: <20110125155342.GG26864@genesis.frugalware.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,49 +19,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 01/31/2011 05:14 PM, Mike Snitzer wrote:
-> If an mpath device is held open when all paths in the last priority
-> group have failed userspace multipathd will attempt to reload the
-> associated DM table to reflect that the device no longer has any
-> priority groups.  But the reload attempt always failed because the
-> multipath target did not allow 0 priority groups.
-> =
+On Jan 25, 2011, at 9:53 AM, Miklos Vajna wrote:
 
-> Adjust multipath target to allow a table with both 0 priority groups
-> and 0 for the initial priority group number.
-> =
+> Hi,
+>
+> I got the possibility to work on dm-mirror as a final year project at
+> ULX, the Hungarian distributor of Red Hat.
+>
+> Get my feet wet, I created two small patches:
+>
+> 1) dm-mirror: allow setting ios count to 0
+>
+> Always read from the default_mirror in that case.
+>
+> 2) dm-mirror: allow setting the default mirror
+>
+> These can help in case one data leg of a mirror is a remote (iSCSI)  
+> one,
+> so the default RR aproach is not optimal for reading. (One may set the
+> ios count to 0, set the default mirror to the local one, and that will
+> cause a read speedup.)
+>
+> I do not yet have the right to send those patches (I do this in
+> university time, so the copyright is not mine), but I hope to be  
+> able to
+> do so - to get them reviewed.
+>
+> So the final year project's aim is to improve "the fault tolerance and
+> performance of dm-mirror". We (I and my mentors) have two ideas in  
+> that
+> area, not counting the above patches:
+>
+> 1) Make the currently hardwired RR read approach modular, that would
+> allow implementing for example a weighted RR algorithm. (In case one
+> disk is two times faster than the other one, etc.)
+>
+> 2) From our experiments, it seems that in case the dm-mirror looses  
+> one
+> of its legs and there is a write to the mirror, it gets converted to a
+> linear volume. It would be nice (not sure how easy) to use the mirror
+> log to mark the dirty blocks, so that the volume would not be  
+> converted
+> to a linear one: once the other leg is back, it could be updated based
+> on the mirror log.
+>
+> The question: what do you (who have much more experience with dm- 
+> mirror
+> than me) think - are these reasonable goals? If not, what would you
+> improve/change/add/remove to the above list?
 
-> All multipath target messages related to priority group (enable_group,
-> disable_group, switch_group) will properly handle a priority group of
-> 0 (will cause error).
-> =
+Would you consider working on the recently added dm-raid.c?  It is an  
+attempt to access the MD personalities through device-mapper.  As  
+such, RAID456 (the initial drop) will be available - in addition to  
+RAID1.  There is much to be done in this area - large projects as well  
+as small - encompassing performance issues, metadata layout, testing,  
+etc...  There is also a lot of attention being paid to this area.
 
-> When reloading a multipath table with 0 priority groups, userspace
-> multipathd must be updated to specify an initial priority group number
-> of 0 (rather than 1).
-> =
+I think device-mapper mirroring will be used for a while, but it will  
+likely become deprecated.
 
-I actually send a similar patch way back, but Alasdair refused to
-take it as he still had to mull them over.
-
-And, as mentioned in my other mail, to properly support maps with no
-paths there are quite a few changes required in multipath-tools itself.
-
-But other than that: Congrats. One patchset less in my queue.
-
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> Cc: Babu Moger <babu.moger@lsi.com>
-Acked-by: Hannes Reinecke <hare@suse.de>
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+  brassow
