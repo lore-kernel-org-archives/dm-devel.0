@@ -1,18 +1,12 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: Re: [PATCH]: scsi_dh_rdac: fix BUG_ON in get_rdac_data
- from within send_mode_select
-Date: Tue, 1 Feb 2011 13:39:08 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4FF37311A@cosmail01.lsi.com>
-References: <D8C50530D6022F40A817A35C40CC06A7064B3773D8@DUBX7MCDUB01.EMEA.DELL.COM>
-	<E463DF2B2E584B4A82673F53D62C2EF4FF372CBD@cosmail01.lsi.com>
-	<D8C50530D6022F40A817A35C40CC06A7064B377EFA@DUBX7MCDUB01.EMEA.DELL.COM>
+From: Ritesh Raj Sarraf <rrs@researchut.com>
+Subject: [PATCH] add -r to make resulting device read-only
+Date: Wed,  2 Feb 2011 19:51:46 +0530
+Message-ID: <1296656506-29628-1-git-send-email-rsarraf@netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <D8C50530D6022F40A817A35C40CC06A7064B377EFA@DUBX7MCDUB01.EMEA.DELL.COM>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,96 +16,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Menny_Hamburger@Dell.com" <Menny_Hamburger@Dell.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: rrs@debian.org, Wakko Warner <wakko@animx.eu.org>, Ritesh Raj Sarraf <rsarraf@netapp.com>
 List-Id: dm-devel.ids
 
+This patch adds the ability to create targets which are read-only to
+keep from accidentally modifying the newly created device.  In some cases,
+mounting with -o ro still modifies the device (in the case of ext3
+filesystems).  I created a small patch that will do this.  I have tested it
+only to the point that using -a with or without -r produces the desired
+effects.
 
+Signed-off-by: Ritesh Raj Sarraf <rsarraf@netapp.com>
+Signed-off-by: Wakko Warner <wakko@animx.eu.org>
+---
+ kpartx/devmapper.c |    5 ++++-
+ kpartx/devmapper.h |    2 +-
+ kpartx/kpartx.c    |   12 ++++++++----
+ 3 files changed, 13 insertions(+), 6 deletions(-)
 
-> -----Original Message-----
-> From: Menny_Hamburger@Dell.com [mailto:Menny_Hamburger@Dell.com]
-> Sent: Tuesday, February 01, 2011 2:03 AM
-> To: Moger, Babu
-> Cc: dm-devel@redhat.com
-> Subject: RE: [dm-devel] [PATCH]: scsi_dh_rdac: fix BUG_ON in get_rdac_data
-> from within send_mode_select
-> 
-> Hi Babu,
-> 
-> I ran the tests with my earlier patch intact.
-> 
-> I reviewed your patches and I can see how they solve the same issue.
-> I also acknowledge that we have two different approaches here:
-> 1) The patches you suggest solves the issue in a wider range (for all SCSI
-> device handlers).
->    The patches are quite complex (several pieces of code) so the potential
-> for bugs is higher, and they will require a wider range of testing.
-> 2) The patch I submitted solves this issue only in the RDAC hardware
-> driver.
->    Since we do have time to market issues involved, if the patch has no
-> logical flaws and solves the problem locally I think I will apply it
->    on our side.
-> 
-> I would like to suggest these action items:
-> 1) After you modify the patches to fit the current code, I will test the
-> patches here with our RDAC environment that seems quite adequate for
-> detecting
->    these problems.
-> 2) Please review my patch and see if it has any logical flaws. I tested
-> the patch in our test scenario a few hundreds of times and it
->    I seems to be doing what it's supposed to.
-> 
-> Best Regards,
-> Menny
-> This panic comes from get_rdac_data, which is called from within the
-> send_mode_select code.
-> My analysis picked up the following problem:
-> The RDAC detach code nullifies the scsi_dh_data before flushing the mode
-> select workqueue, and as result a pending send_mode_select will BUG_ON in
-> get_rdac_data.
-> The following patch (tested over RHEL54) flushes the workqueue before
-> setting scsi_dh_data to NULL:
-
-
-Your code looks bit different than what I have. I don't have RHEL5.4. I looked at RHEL 5.3. I don't see get_rdac_data in send_mode_select. However, I got the logic behind your code. Your logic helps in cases where get_rdac_data is used in the same context as mode select submission. But, if you use get_rdac_data in other places then this code does not help.  I see get_rdac_data in rdac_activate which is used before send_mode_select.
-
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index f884511..7ebc5b6 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -81,7 +81,7 @@ dm_simplecmd (int task, const char *name, int no_flush, uint32_t *cookie) {
  
-> diff -r -U 2 a/drivers/scsi/device_handler/scsi_dh_rdac.c
-> b/drivers/scsi/device_handler/scsi_dh_rdac.c
-> --- a/drivers/scsi/device_handler/scsi_dh_rdac.c        2011-01-30
-> 11:02:31.271426000 +0200
-> +++ b/drivers/scsi/device_handler/scsi_dh_rdac.c        2011-01-30
-> 11:02:31.327069000 +0200
-> @@ -853,8 +853,22 @@
->         spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
->         scsi_dh_data = retrieve_scsi_dh_data(sdev);
-> -       store_scsi_dh_data(sdev, NULL);
->         spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
-> 
->         h = (struct rdac_dh_data *) scsi_dh_data->buf;
-> +       if (h->ctlr) {
-> +               int flush;
-> +
-> +               spin_lock(&h->ctlr->ms_lock);
-> +               flush = (h->ctlr->ms_sdev == sdev);
-> +               spin_unlock(&h->ctlr->ms_lock);
-> +
-> +               if (flush)
-> +                       flush_workqueue(kmpath_rdacd);
-> +       }
-> +
-> +       spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
-> +       store_scsi_dh_data(sdev, NULL);
-> +       spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
-> +
->         if (h->ctlr)
->                 kref_put(&h->ctlr->kref, release_controller);
-> 
-> 
-> 
-> The patch ensures that we run flush only when detaching the device the
-> "owns" the send_mode_select (ms_sdev).
-> 
-> Menny
-> 
-> 
+ extern int
+ dm_addmap (int task, const char *name, const char *target,
+-	   const char *params, uint64_t size, const char *uuid, int part,
++	   const char *params, uint64_t size, int ro, const char *uuid, int part,
+ 	   mode_t mode, uid_t uid, gid_t gid, uint32_t *cookie) {
+ 	int r = 0;
+ 	struct dm_task *dmt;
+@@ -96,6 +96,9 @@ dm_addmap (int task, const char *name, const char *target,
+ 	if (!dm_task_add_target (dmt, 0, size, target, params))
+ 		goto addout;
+ 
++	if (ro && !dm_task_set_ro (dmt))
++			goto addout;
++
+ 	if (task == DM_DEVICE_CREATE && uuid) {
+ 		prefixed_uuid = malloc(MAX_PREFIX_LEN + strlen(uuid) + 1);
+ 		if (!prefixed_uuid) {
+diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
+index f8692cc..6226129 100644
+--- a/kpartx/devmapper.h
++++ b/kpartx/devmapper.h
+@@ -5,7 +5,7 @@
+ int dm_prereq (char *, int, int, int);
+ int dm_simplecmd (int, const char *, int, uint32_t *);
+ int dm_addmap (int, const char *, const char *, const char *, uint64_t,
+-	       const char *, int, mode_t, uid_t, gid_t, uint32_t *);
++	       int, const char *, int, mode_t, uid_t, gid_t, uint32_t *);
+ int dm_map_present (char *);
+ char * dm_mapname(int major, int minor);
+ dev_t dm_get_first_dep(char *devname);
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 3d33990..f518aa0 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -82,7 +82,7 @@ initpts(void)
+ 	addpts("sun", read_sun_pt);
+ }
+ 
+-static char short_opts[] = "ladgvp:t:s";
++static char short_opts[] = "rladgvp:t:s";
+ 
+ /* Used in gpt.c */
+ int force_gpt=0;
+@@ -91,6 +91,7 @@ static int
+ usage(void) {
+ 	printf("usage : kpartx [-a|-d|-l] [-v] wholedisk\n");
+ 	printf("\t-a add partition devmappings\n");
++	printf("\t-r devmappings will be readonly\n");
+ 	printf("\t-d del partition devmappings\n");
+ 	printf("\t-l list partitions devmappings that would be added by -a\n");
+ 	printf("\t-p set device name-partition number delimiter\n");
+@@ -185,7 +186,7 @@ get_hotplug_device(void)
+ 
+ int
+ main(int argc, char **argv){
+-	int fd, i, j, m, n, op, off, arg, c, d;
++	int fd, i, j, m, n, op, off, arg, c, d, ro=0;
+ 	struct slice all;
+ 	struct pt *ptp;
+ 	enum action what = LIST;
+@@ -233,6 +234,9 @@ main(int argc, char **argv){
+ 	}
+ 
+ 	while ((arg = getopt(argc, argv, short_opts)) != EOF) switch(arg) {
++		case 'r':
++			ro=1;
++			break;
+ 		case 'g':
+ 			force_gpt=1;
+ 			break;
+@@ -470,7 +474,7 @@ main(int argc, char **argv){
+ 					DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
+ 
+ 				if (!dm_addmap(op, partname, DM_TARGET, params,
+-					       slices[j].size, uuid, j+1,
++					       slices[j].size, ro, uuid, j+1,
+ 					       buf.st_mode & 0777, buf.st_uid,
+ 					       buf.st_gid, &cookie)) {
+ 					fprintf(stderr, "create/reload failed on %s\n",
+@@ -536,7 +540,7 @@ main(int argc, char **argv){
+ 					      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
+ 
+ 					dm_addmap(op, partname, DM_TARGET, params,
+-						  slices[j].size, uuid, j+1,
++						  slices[j].size, ro, uuid, j+1,
+ 						  buf.st_mode & 0777,
+ 						  buf.st_uid, buf.st_gid,
+ 						  &cookie);
+-- 
+1.7.2.3
