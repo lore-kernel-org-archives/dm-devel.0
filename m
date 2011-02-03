@@ -1,8 +1,8 @@
-From: Anders Andersson <pipatron@gmail.com>
-Subject: Using the dm tools to create a writable "mirror" of a
-	physical disk
-Date: Wed, 2 Feb 2011 23:31:06 +0100
-Message-ID: <AANLkTinqdTZnqX7qXthQHqa+bFmonCJOJ1ShpkAosB_T@mail.gmail.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH 1/3] dm crypt: wipe keys string immediately after
+	key is set
+Date: Thu,  3 Feb 2011 01:08:14 +0100
+Message-ID: <1296691696-23722-1-git-send-email-mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,22 +18,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Good evening! I was recently given the task of trying to salvage files
-from a 1.5TB harddrive that was accidentally formatted and/or
-repartitioned. Normally I would do a 1:1 copy of the whole drive to a
-file and operate on that, but I simply do not have that much room this
-time.
+If the tfm key was set up correctly, do not keep another
+copy of key and immediately replace it with zero string.
 
-Ideally I would like to create a writable snapshot in the same way as
-I do with my LVM volumes, storing the changes in a smaller file or in
-another block device so that I can experiment freely without worrying
-about destroying anything else on the drive. Is this possible
-(probably) and easy (probably not?) with any device mapper tools? I'm
-not really sure where I should begin looking, because dmsetup is
-probably pretty low-level.
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+---
+ drivers/md/dm-crypt.c |   16 +++++++++++-----
+ 1 files changed, 11 insertions(+), 5 deletions(-)
 
-Thanks for any pointers and ideas.
-
-// Anders
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 4e054bd..d748433 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1331,20 +1331,26 @@ static int crypt_setkey_allcpus(struct crypt_config *cc)
+ 
+ static int crypt_set_key(struct crypt_config *cc, char *key)
+ {
++	int r = -EINVAL, key_string_len = strlen(key);
++
+ 	/* The key size may not be changed. */
+-	if (cc->key_size != (strlen(key) >> 1))
+-		return -EINVAL;
++	if (cc->key_size != (key_string_len >> 1))
++		goto out;
+ 
+ 	/* Hyphen (which gives a key_size of zero) means there is no key. */
+ 	if (!cc->key_size && strcmp(key, "-"))
+-		return -EINVAL;
++		goto out;
+ 
+ 	if (cc->key_size && crypt_decode_key(cc->key, key, cc->key_size) < 0)
+-		return -EINVAL;
++		goto out;
+ 
+ 	set_bit(DM_CRYPT_KEY_VALID, &cc->flags);
+ 
+-	return crypt_setkey_allcpus(cc);
++	r = crypt_setkey_allcpus(cc);
++out:
++	/* Wipe hexa key string as soon as possible */
++	memset(key, '0', key_string_len);
++	return r;
+ }
+ 
+ static int crypt_wipe_key(struct crypt_config *cc)
+-- 
+1.7.2.3
