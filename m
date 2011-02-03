@@ -1,7 +1,7 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH 2/3] dm ioctl: tidy code for next change
-Date: Thu,  3 Feb 2011 01:08:15 +0100
-Message-ID: <1296691696-23722-2-git-send-email-mbroz@redhat.com>
+Subject: [PATCH 3/3] dm ioctl: add data secure (bufer wipe) flag
+Date: Thu,  3 Feb 2011 01:08:16 +0100
+Message-ID: <1296691696-23722-3-git-send-email-mbroz@redhat.com>
 References: <1296691696-23722-1-git-send-email-mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,76 +22,84 @@ To: dm-devel@redhat.com
 Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Prepare code for implementing buffer wipe flag.
-No functional change in this patch.
+Add DM_SECURE_DATA_FLAG which userspace can use to control
+that all allocated buffers for dm-ioctl are wiped
+immediatelly after use.
+
+The user buffer is wipes as well (we do not want to keep
+and return sensitive data back to userspace if flag is set).
+
+Wiping is useful mainly for cryptsetup to control that key
+is present in memory only on defined places and only
+for time needed.
+
+(For crypt, key can be present in table during load ot table
+status, wait and message command).
 
 Signed-off-by: Milan Broz <mbroz@redhat.com>
 ---
- drivers/md/dm-ioctl.c |   21 ++++++++-------------
- 1 files changed, 8 insertions(+), 13 deletions(-)
+ drivers/md/dm-ioctl.c    |   10 ++++++++++
+ include/linux/dm-ioctl.h |   12 +++++++++---
+ 2 files changed, 19 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 6d12775..189c7ab 100644
+index 189c7ab..9284c38 100644
 --- a/drivers/md/dm-ioctl.c
 +++ b/drivers/md/dm-ioctl.c
-@@ -1501,11 +1501,6 @@ static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
- 	return r;
- }
+@@ -1518,9 +1518,16 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl **param)
+ 	if (copy_from_user(dmi, user, tmp.data_size))
+ 		goto fail;
  
--static void free_params(struct dm_ioctl *param)
--{
--	vfree(param);
--}
--
- static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl **param)
- {
- 	struct dm_ioctl tmp, *dmi;
-@@ -1520,13 +1515,14 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl **param)
- 	if (!dmi)
- 		return -ENOMEM;
- 
--	if (copy_from_user(dmi, user, tmp.data_size)) {
--		vfree(dmi);
--		return -EFAULT;
--	}
-+	if (copy_from_user(dmi, user, tmp.data_size))
++	/* Wipe the user buffer so we do not return it to userspace */
++	if ((tmp.flags & DM_SECURE_DATA_FLAG) &&
++	    clear_user(user, tmp.data_size))
 +		goto fail;
- 
++
  	*param = dmi;
  	return 0;
-+fail:
-+	vfree(dmi);
-+	return -EFAULT;
+ fail:
++	if (tmp.flags & DM_SECURE_DATA_FLAG)
++		memset(dmi, 0, tmp.data_size);
+ 	vfree(dmi);
+ 	return -EFAULT;
  }
- 
- static int validate_params(uint cmd, struct dm_ioctl *param)
-@@ -1605,6 +1601,7 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
- 	 * Copy the parameters into kernel space.
- 	 */
- 	r = copy_params(user, &param);
-+	param_size = param->data_size;
- 
- 	current->flags &= ~PF_MEMALLOC;
- 
-@@ -1615,7 +1612,6 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
- 	if (r)
- 		goto out;
- 
--	param_size = param->data_size;
- 	param->data_size = sizeof(*param);
- 	r = fn(param, param_size);
- 
-@@ -1624,9 +1620,8 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
- 	 */
+@@ -1621,6 +1628,9 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
  	if (!r && copy_to_user(user, param, param->data_size))
  		r = -EFAULT;
--
-- out:
--	free_params(param);
-+out:
-+	vfree(param);
+ out:
++	if (param->flags & DM_SECURE_DATA_FLAG)
++		memset(param, 0, param_size);
++
+ 	vfree(param);
  	return r;
  }
+diff --git a/include/linux/dm-ioctl.h b/include/linux/dm-ioctl.h
+index 78bbf47..c314198 100644
+--- a/include/linux/dm-ioctl.h
++++ b/include/linux/dm-ioctl.h
+@@ -267,9 +267,9 @@ enum {
+ #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
  
+ #define DM_VERSION_MAJOR	4
+-#define DM_VERSION_MINOR	19
+-#define DM_VERSION_PATCHLEVEL	1
+-#define DM_VERSION_EXTRA	"-ioctl (2011-01-07)"
++#define DM_VERSION_MINOR	20
++#define DM_VERSION_PATCHLEVEL	0
++#define DM_VERSION_EXTRA	"-ioctl (2011-02-02)"
+ 
+ /* Status bits */
+ #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
+@@ -328,4 +328,10 @@ enum {
+  */
+ #define DM_UUID_FLAG			(1 << 14) /* In */
+ 
++/*
++ * If set, all buffers are wiped after use. Used when sending
++ * or requesting sensitive data like crypt key.
++ */
++#define DM_SECURE_DATA_FLAG		(1 << 15) /* In */
++
+ #endif				/* _LINUX_DM_IOCTL_H */
 -- 
 1.7.2.3
