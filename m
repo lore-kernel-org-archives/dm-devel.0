@@ -1,15 +1,19 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Re: Using the dm tools to create a writable "mirror" of
- a	physical disk
-Date: Wed, 02 Feb 2011 19:17:41 -0500
-Message-ID: <4D49F425.1000203@cfl.rr.com>
-References: <AANLkTinqdTZnqX7qXthQHqa+bFmonCJOJ1ShpkAosB_T@mail.gmail.com>
+From: <Menny_Hamburger@Dell.com>
+Subject: Re: [PATCH]: scsi_dh_rdac: fix BUG_ON in get_rdac_data
+ from within send_mode_select
+Date: Thu, 3 Feb 2011 08:49:06 +0000
+Message-ID: <D8C50530D6022F40A817A35C40CC06A7064B3B69D5@DUBX7MCDUB01.EMEA.DELL.COM>
+References: <D8C50530D6022F40A817A35C40CC06A7064B3773D8@DUBX7MCDUB01.EMEA.DELL.COM>
+	<E463DF2B2E584B4A82673F53D62C2EF4FF372CBD@cosmail01.lsi.com>
+	<D8C50530D6022F40A817A35C40CC06A7064B377EFA@DUBX7MCDUB01.EMEA.DELL.COM>
+	<E463DF2B2E584B4A82673F53D62C2EF4FF37311A@cosmail01.lsi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AANLkTinqdTZnqX7qXthQHqa+bFmonCJOJ1ShpkAosB_T@mail.gmail.com>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF4FF37311A@cosmail01.lsi.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,24 +23,117 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Anders Andersson <pipatron@gmail.com>
+To: Babu.Moger@lsi.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 02/02/2011 05:31 PM, Anders Andersson wrote:
-> Good evening! I was recently given the task of trying to salvage files
-> from a 1.5TB harddrive that was accidentally formatted and/or
-> repartitioned. Normally I would do a 1:1 copy of the whole drive to a
-> file and operate on that, but I simply do not have that much room this
-> time.
->
-> Ideally I would like to create a writable snapshot in the same way as
-> I do with my LVM volumes, storing the changes in a smaller file or in
-> another block device so that I can experiment freely without worrying
-> about destroying anything else on the drive. Is this possible
-> (probably) and easy (probably not?) with any device mapper tools? I'm
-> not really sure where I should begin looking, because dmsetup is
-> probably pretty low-level.
+Hi Babu,
 
-Yep, you need to use dmsetup.  Documentation/device-mapper/snapshot.txt 
-in the kernel sources documents how.
+We are using RHEL54 with all the RHEL55 scsi/rdac/md patches; however the problem was also detected on a clean RHEL55 system.
+
+I think the del/offline/cancel patch on activate handles situations where we get into the RDAC device handler although device is deleted.
+The patch handles this scenario:
+We get an activation before the device is deleted
+We queue the MODE_SELECT
+We get a detach and nullify the scsi_dh_data
+MODE_SELECT is called with a NULL scsi_dh_data.
+
+Thanks,
+Menny
+
+-----Original Message-----
+From: Moger, Babu [mailto:Babu.Moger@lsi.com] 
+Sent: 01 February, 2011 22:39
+To: Hamburger, Menny
+Cc: dm-devel@redhat.com
+Subject: RE: [dm-devel] [PATCH]: scsi_dh_rdac: fix BUG_ON in get_rdac_data from within send_mode_select
+
+
+
+> -----Original Message-----
+> From: Menny_Hamburger@Dell.com [mailto:Menny_Hamburger@Dell.com]
+> Sent: Tuesday, February 01, 2011 2:03 AM
+> To: Moger, Babu
+> Cc: dm-devel@redhat.com
+> Subject: RE: [dm-devel] [PATCH]: scsi_dh_rdac: fix BUG_ON in get_rdac_data
+> from within send_mode_select
+> 
+> Hi Babu,
+> 
+> I ran the tests with my earlier patch intact.
+> 
+> I reviewed your patches and I can see how they solve the same issue.
+> I also acknowledge that we have two different approaches here:
+> 1) The patches you suggest solves the issue in a wider range (for all SCSI
+> device handlers).
+>    The patches are quite complex (several pieces of code) so the potential
+> for bugs is higher, and they will require a wider range of testing.
+> 2) The patch I submitted solves this issue only in the RDAC hardware
+> driver.
+>    Since we do have time to market issues involved, if the patch has no
+> logical flaws and solves the problem locally I think I will apply it
+>    on our side.
+> 
+> I would like to suggest these action items:
+> 1) After you modify the patches to fit the current code, I will test the
+> patches here with our RDAC environment that seems quite adequate for
+> detecting
+>    these problems.
+> 2) Please review my patch and see if it has any logical flaws. I tested
+> the patch in our test scenario a few hundreds of times and it
+>    I seems to be doing what it's supposed to.
+> 
+> Best Regards,
+> Menny
+> This panic comes from get_rdac_data, which is called from within the
+> send_mode_select code.
+> My analysis picked up the following problem:
+> The RDAC detach code nullifies the scsi_dh_data before flushing the mode
+> select workqueue, and as result a pending send_mode_select will BUG_ON in
+> get_rdac_data.
+> The following patch (tested over RHEL54) flushes the workqueue before
+> setting scsi_dh_data to NULL:
+
+
+Your code looks bit different than what I have. I don't have RHEL5.4. I looked at RHEL 5.3. I don't see get_rdac_data in send_mode_select. However, I got the logic behind your code. Your logic helps in cases where get_rdac_data is used in the same context as mode select submission. But, if you use get_rdac_data in other places then this code does not help.  I see get_rdac_data in rdac_activate which is used before send_mode_select.
+
+ 
+> diff -r -U 2 a/drivers/scsi/device_handler/scsi_dh_rdac.c
+> b/drivers/scsi/device_handler/scsi_dh_rdac.c
+> --- a/drivers/scsi/device_handler/scsi_dh_rdac.c        2011-01-30
+> 11:02:31.271426000 +0200
+> +++ b/drivers/scsi/device_handler/scsi_dh_rdac.c        2011-01-30
+> 11:02:31.327069000 +0200
+> @@ -853,8 +853,22 @@
+>         spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
+>         scsi_dh_data = retrieve_scsi_dh_data(sdev);
+> -       store_scsi_dh_data(sdev, NULL);
+>         spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+> 
+>         h = (struct rdac_dh_data *) scsi_dh_data->buf;
+> +       if (h->ctlr) {
+> +               int flush;
+> +
+> +               spin_lock(&h->ctlr->ms_lock);
+> +               flush = (h->ctlr->ms_sdev == sdev);
+> +               spin_unlock(&h->ctlr->ms_lock);
+> +
+> +               if (flush)
+> +                       flush_workqueue(kmpath_rdacd);
+> +       }
+> +
+> +       spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
+> +       store_scsi_dh_data(sdev, NULL);
+> +       spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+> +
+>         if (h->ctlr)
+>                 kref_put(&h->ctlr->kref, release_controller);
+> 
+> 
+> 
+> The patch ensures that we run flush only when detaching the device the
+> "owns" the send_mode_select (ms_sdev).
+> 
+> Menny
+> 
+> 
