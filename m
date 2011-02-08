@@ -1,16 +1,14 @@
-From: Peter Volkov <peter.volkov@gmail.com>
-Subject: Re: multipath: rdac on IBM 1746 (SAS connection to
- DS3512)
-Date: Wed, 09 Feb 2011 13:08:55 +0300
-Message-ID: <1297246135.13836.6.camel@tablet>
-References: <1297244251.10348.14.camel@tablet>
-	<1297244976.29348.9.camel@zezette>
+From: bart.coninckx@telenet.be
+Subject: dd slow while reading on multipathing, writing is fast
+Date: Tue, 8 Feb 2011 15:44:06 +0100 (CET)
+Message-ID: <638331349.4388161297176246800.JavaMail.root@tendai.telenet-ops.be>
+References: <315312316.4387891297176180905.JavaMail.root@tendai.telenet-ops.be>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1297244976.29348.9.camel@zezette>
+In-Reply-To: <315312316.4387891297176180905.JavaMail.root@tendai.telenet-ops.be>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,56 +18,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-VGhhbmsgeW91IGZvciBkZXRhaWxlZCBhbnN3ZXIgQ2hyaXN0b3BoZS4KCtCSINCh0YDQtCwgMDkv
-MDIvMjAxMSDQsiAxMDo0OSArMDEwMCwgQ2hyaXN0b3BoZSBWYXJvcXVpINC/0LjRiNC10YI6Cj4g
-T24geW91ciB1YnVudHUgc2V0dXAsIG11bHRpcGF0aCB0b29scyBwaWNrZWQgdGhlIGRlZmF1bHQg
-aGFyZHdhcmUKPiBoYW5kbGVyIChub25lLCBpZSAwKSB3aGVyZWFzIG9uIHlvdXIgZ2VudG9vIHNl
-dHVwIHRoZSBoYXJkd2FyZSBoYW5kbGVyCj4gaXMgZXhwbGljaXRlbHkgc2V0IGZvciB1c2Ugd2l0
-aCB5b3VyIHN0b3JhZ2UgZGV2aWNlLgo+IAo+IE5vdyAyIGNob2ljZXMgOgo+IDEvIHVwZ3JhZGUg
-bXVsdGlwYXRoLXRvb2xzCj4gb3IKPiAyLyBzZXQgdXAgeW91ciBkZXZpY2UgZGVmaW5pdGlvbiBp
-biBtdWx0aXBhdGguY29uZiB0byBvdmVycmlkZSBpbnRlcm5hbAo+IGRlZmF1bHRzCgpJJ2xsIHRy
-eSB0byB1cGdyYWRlIG11bHRpcGF0aC10b29scywgYnV0IGFzIGZvciBzZWNvbmQgY2hvaWNlIGl0
-IGxvb2tzCmxpa2UgZm9sbG93aW5nIGNvbmZpZ3VyYXRpb24gc2hvdWxkIHdvcms6Cgpyb290QGJ0
-djE6fiMgY2F0IC9ldGMvbXVsdGlwYXRoLmNvbmYgCmRlZmF1bHRzIHsKCXBhdGhfY2hlY2tlcgly
-ZGFjCn0KCmJsYWNrbGlzdCB7CglkZXZub2RlICJec2RbYS1iXSIKfQoKbXVsdGlwYXRocyB7Cglt
-dWx0aXBhdGggewoJCXd3aWQJCQkzNjAwODBlNTAwMDFiYWE0NjAwMDAyNTgzNGQ1MDE3OTgKCQlh
-bGlhcwkJCXZvZAoJCXBhdGhfY2hlY2tlciAgICByZGFjCgl9Cn0KCkkgZXZlbiB0aGluayB0aGF0
-IHJkYWMgZGVmaW5pdGlvbiBpbiBpbnNpZGUgbXVsdGlwYXRoIGlzIHJlZHVuZGFudCBidXQKaWYg
-SSByZW1vdmUgaXQgbm90aGluZyBjaGFuZ2VzLiBBbmQgbG9va2luZyBhdCB2ZXJib3NlIG91dHB1
-dCBpdCBsb29rcwpsaWtlIGl0IHJlYWRzIGNvbmZpZ2ZpbGUgKGF0IGxlYXN0IHNkYSBhbmQgc2Ri
-IGRldmljZXMgYXJlIGJsYWNrbGlzdGVkCmFuZCBpdCB0ZWxscyB0aGF0IEkgaGF2ZSByZGFjIGRl
-ZmluZWQgaW4gY29uZmlnZmlsZSkuCgpyb290QGJ0djE6fiMgbXVsdGlwYXRoIC12MyAtbGwKcmFt
-MDogZGV2aWNlIG5vZGUgbmFtZSBibGFja2xpc3RlZApbLi4uc25pcC4uLl0KcmFtMTU6IGRldmlj
-ZSBub2RlIG5hbWUgYmxhY2tsaXN0ZWQKbG9vcDA6IGRldmljZSBub2RlIG5hbWUgYmxhY2tsaXN0
-ZWQKWy4uLnNuaXAuLi5dCmxvb3A3OiBkZXZpY2Ugbm9kZSBuYW1lIGJsYWNrbGlzdGVkCnNkYTog
-ZGV2aWNlIG5vZGUgbmFtZSBibGFja2xpc3RlZApzZGI6IGRldmljZSBub2RlIG5hbWUgYmxhY2ts
-aXN0ZWQKc2RjOiBub3QgZm91bmQgaW4gcGF0aHZlYwpzZGM6IG1hc2sgPSAweDUKc2RjOiBkZXZf
-dCA9IDg6MzIKc2RjOiBzaXplID0gMjczNDE4NDg1NzYKc2RjOiBzdWJzeXN0ZW0gPSBzY3NpCnNk
-YzogdmVuZG9yID0gSUJNICAgICAKc2RjOiBwcm9kdWN0ID0gMTc0NiAgICAgIEZBU3RUIApzZGM6
-IHJldiA9IDEwNzAKc2RjOiBoOmI6dDpsID0gMDowOjI6MQpzZGQ6IG5vdCBmb3VuZCBpbiBwYXRo
-dmVjCnNkZDogbWFzayA9IDB4NQpzZGQ6IGRldl90ID0gODo0OApzZGQ6IHNpemUgPSAyNzM0MTg0
-ODU3NgpzZGQ6IHN1YnN5c3RlbSA9IHNjc2kKc2RkOiB2ZW5kb3IgPSBJQk0gICAgIApzZGQ6IHBy
-b2R1Y3QgPSAxNzQ2ICAgICAgRkFTdFQgCnNkZDogcmV2ID0gMTA3MApzZGQ6IGg6Yjp0OmwgPSAw
-OjA6MzoxCm1kMDogZGV2aWNlIG5vZGUgbmFtZSBibGFja2xpc3RlZApkbS0wOiBkZXZpY2Ugbm9k
-ZSBuYW1lIGJsYWNrbGlzdGVkCj09PT09IHBhdGhzIGxpc3QgPT09PT0KdXVpZCBoY2lsICAgIGRl
-diBkZXZfdCBwcmkgZG1fc3QgIGNoa19zdCAgdmVuZC9wcm9kL3JldiAgICAgICAgICAgIAogICAg
-IDA6MDoyOjEgc2RjIDg6MzIgIC0xICBbdW5kZWZdW3VuZGVmXSBJQk0gICAgICwxNzQ2ICAgICAg
-RkFTdFQgCiAgICAgMDowOjM6MSBzZGQgODo0OCAgLTEgIFt1bmRlZl1bdW5kZWZdIElCTSAgICAg
-LDE3NDYgICAgICBGQVN0VCAKcGFyYW1zID0gMCAwIDIgMSByb3VuZC1yb2JpbiAwIDEgMSA4OjMy
-IDEwMDAgcm91bmQtcm9iaW4gMCAxIDEgODo0OAoxMDAwIApzdGF0dXMgPSAyIDAgMCAwIDIgMSBB
-IDAgMSAwIDg6MzIgQSAwIEUgMCAxIDAgODo0OCBBIDAgCnNkYzogbWFzayA9IDB4NApzZGM6IHBh
-dGggY2hlY2tlciA9IHJkYWMgKGNvbmZpZyBmaWxlIGRlZmF1bHQpCnNkYzogc3RhdGUgPSAyCnNk
-YzogbWFzayA9IDB4OApzZGM6IGdldHByaW8gPSBOVUxMIChpbnRlcm5hbCBkZWZhdWx0KQpzZGM6
-IHByaW8gPSAxCnNkZDogbWFzayA9IDB4NApzZGQ6IHBhdGggY2hlY2tlciA9IHJkYWMgKGNvbmZp
-ZyBmaWxlIGRlZmF1bHQpCnNkZDogc3RhdGUgPSA0CnNkZDogbWFzayA9IDB4OApzZGQ6IGdldHBy
-aW8gPSBOVUxMIChpbnRlcm5hbCBkZWZhdWx0KQpzZGQ6IHByaW8gPSAxCnZvZCAoMzYwMDgwZTUw
-MDAxYmFhNDYwMDAwMjU4MzRkNTAxNzk4KSBkbS0wIElCTSAgICAgLDE3NDYgICAgICBGQVN0Cltz
-aXplPTEzVF1bZmVhdHVyZXM9MF1baHdoYW5kbGVyPTBdClxfIHJvdW5kLXJvYmluIDAgW3ByaW89
-MV1bYWN0aXZlXQogXF8gMDowOjI6MSBzZGMgODozMiAgW2FjdGl2ZV1bcmVhZHldClxfIHJvdW5k
-LXJvYmluIDAgW3ByaW89MV1bZW5hYmxlZF0KIFxfIDA6MDozOjEgc2RkIDg6NDggIFthY3RpdmVd
-W2dob3N0XQoKCi0tIApQZXRlci4KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
-ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
-bA==
+Hi all,
+
+something peculiar I cannot get my head round.
+I have a setup where a backup server connects to iSCSI LUNs over multipathing.
+While dd-ing to it, I get a spiffing 200 MB/sec, while reading it drops to 70 MB/sec. Local storage where I write the image onto is sufficiently fast.
+
+Do you think this is multipathing related? I'm running the latest version from source.
+
+
+
+
+Thx!
+
+
+B.
