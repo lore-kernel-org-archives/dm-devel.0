@@ -1,16 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
+From: Peter Volkov <peter.volkov@gmail.com>
 Subject: Re: multipath: rdac on IBM 1746 (SAS connection to
-	DS3512)
-Date: Wed, 09 Feb 2011 10:49:36 +0100
-Message-ID: <1297244976.29348.9.camel@zezette>
+ DS3512)
+Date: Wed, 09 Feb 2011 13:08:55 +0300
+Message-ID: <1297246135.13836.6.camel@tablet>
 References: <1297244251.10348.14.camel@tablet>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+	<1297244976.29348.9.camel@zezette>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1297244251.10348.14.camel@tablet>
+In-Reply-To: <1297244976.29348.9.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +20,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Peter Volkov <peter.volkov@gmail.com>
-Cc: dm-devel@redhat.com
+To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-> root@btv1:~# multipath -l
-> vod (360080e50001baa46000025834d501798) dm-0 IBM     ,1746      FASt
-> [size=13T][features=0][hwhandler=0]
-> \_ round-robin 0 [prio=0][active]
->  \_ 0:0:2:1 sdc 8:32  [active][undef]
-> \_ round-robin 0 [prio=0][enabled]
->  \_ 0:0:3:1 sdd 8:48  [active][undef]
-> 
-> 
-> Is this normal? On Gentoo system connected to the same DS I see:
-> 
-There you can say the multipath tools version is outdated on your ubuntu
-version (still old output tree format).
-
-> mon1 ~ # multipath -l
-> vod (360080e50001baa46000025834d501798) dm-0 IBM,1746      FAStT
-> size=13T features='3 queue_if_no_path pg_init_retries 50' hwhandler='1
-> rdac' wp=rw
-> |-+- policy='round-robin 0' prio=-1 status=active
-> | `- 0:0:2:1 sdc 8:32 active undef running
-> `-+- policy='round-robin 0' prio=-1 status=enabled
->   `- 0:0:3:1 sdd 8:48 active undef running
-> 
-> Could you tell me what's hwhandler and why it's 0 in one case and 1 in
-> another.
-> 
-Here the multipath tools version is more recent. More storage device
-definitions get added every month. The hardware handler is one of the
-properties of such a storage device definition. This property is used to
-format the multipath device mapper string.
-
-On your ubuntu setup, multipath tools picked the default hardware
-handler (none, ie 0) whereas on your gentoo setup the hardware handler
-is explicitely set for use with your storage device.
-
-Now 2 choices :
-1/ upgrade multipath-tools
-or
-2/ set up your device definition in multipath.conf to override internal
-defaults
-
-Regards,
--- 
-Christophe Varoqui <christophe.varoqui@opensvc.com>
-OpenSVC
+VGhhbmsgeW91IGZvciBkZXRhaWxlZCBhbnN3ZXIgQ2hyaXN0b3BoZS4KCtCSINCh0YDQtCwgMDkv
+MDIvMjAxMSDQsiAxMDo0OSArMDEwMCwgQ2hyaXN0b3BoZSBWYXJvcXVpINC/0LjRiNC10YI6Cj4g
+T24geW91ciB1YnVudHUgc2V0dXAsIG11bHRpcGF0aCB0b29scyBwaWNrZWQgdGhlIGRlZmF1bHQg
+aGFyZHdhcmUKPiBoYW5kbGVyIChub25lLCBpZSAwKSB3aGVyZWFzIG9uIHlvdXIgZ2VudG9vIHNl
+dHVwIHRoZSBoYXJkd2FyZSBoYW5kbGVyCj4gaXMgZXhwbGljaXRlbHkgc2V0IGZvciB1c2Ugd2l0
+aCB5b3VyIHN0b3JhZ2UgZGV2aWNlLgo+IAo+IE5vdyAyIGNob2ljZXMgOgo+IDEvIHVwZ3JhZGUg
+bXVsdGlwYXRoLXRvb2xzCj4gb3IKPiAyLyBzZXQgdXAgeW91ciBkZXZpY2UgZGVmaW5pdGlvbiBp
+biBtdWx0aXBhdGguY29uZiB0byBvdmVycmlkZSBpbnRlcm5hbAo+IGRlZmF1bHRzCgpJJ2xsIHRy
+eSB0byB1cGdyYWRlIG11bHRpcGF0aC10b29scywgYnV0IGFzIGZvciBzZWNvbmQgY2hvaWNlIGl0
+IGxvb2tzCmxpa2UgZm9sbG93aW5nIGNvbmZpZ3VyYXRpb24gc2hvdWxkIHdvcms6Cgpyb290QGJ0
+djE6fiMgY2F0IC9ldGMvbXVsdGlwYXRoLmNvbmYgCmRlZmF1bHRzIHsKCXBhdGhfY2hlY2tlcgly
+ZGFjCn0KCmJsYWNrbGlzdCB7CglkZXZub2RlICJec2RbYS1iXSIKfQoKbXVsdGlwYXRocyB7Cglt
+dWx0aXBhdGggewoJCXd3aWQJCQkzNjAwODBlNTAwMDFiYWE0NjAwMDAyNTgzNGQ1MDE3OTgKCQlh
+bGlhcwkJCXZvZAoJCXBhdGhfY2hlY2tlciAgICByZGFjCgl9Cn0KCkkgZXZlbiB0aGluayB0aGF0
+IHJkYWMgZGVmaW5pdGlvbiBpbiBpbnNpZGUgbXVsdGlwYXRoIGlzIHJlZHVuZGFudCBidXQKaWYg
+SSByZW1vdmUgaXQgbm90aGluZyBjaGFuZ2VzLiBBbmQgbG9va2luZyBhdCB2ZXJib3NlIG91dHB1
+dCBpdCBsb29rcwpsaWtlIGl0IHJlYWRzIGNvbmZpZ2ZpbGUgKGF0IGxlYXN0IHNkYSBhbmQgc2Ri
+IGRldmljZXMgYXJlIGJsYWNrbGlzdGVkCmFuZCBpdCB0ZWxscyB0aGF0IEkgaGF2ZSByZGFjIGRl
+ZmluZWQgaW4gY29uZmlnZmlsZSkuCgpyb290QGJ0djE6fiMgbXVsdGlwYXRoIC12MyAtbGwKcmFt
+MDogZGV2aWNlIG5vZGUgbmFtZSBibGFja2xpc3RlZApbLi4uc25pcC4uLl0KcmFtMTU6IGRldmlj
+ZSBub2RlIG5hbWUgYmxhY2tsaXN0ZWQKbG9vcDA6IGRldmljZSBub2RlIG5hbWUgYmxhY2tsaXN0
+ZWQKWy4uLnNuaXAuLi5dCmxvb3A3OiBkZXZpY2Ugbm9kZSBuYW1lIGJsYWNrbGlzdGVkCnNkYTog
+ZGV2aWNlIG5vZGUgbmFtZSBibGFja2xpc3RlZApzZGI6IGRldmljZSBub2RlIG5hbWUgYmxhY2ts
+aXN0ZWQKc2RjOiBub3QgZm91bmQgaW4gcGF0aHZlYwpzZGM6IG1hc2sgPSAweDUKc2RjOiBkZXZf
+dCA9IDg6MzIKc2RjOiBzaXplID0gMjczNDE4NDg1NzYKc2RjOiBzdWJzeXN0ZW0gPSBzY3NpCnNk
+YzogdmVuZG9yID0gSUJNICAgICAKc2RjOiBwcm9kdWN0ID0gMTc0NiAgICAgIEZBU3RUIApzZGM6
+IHJldiA9IDEwNzAKc2RjOiBoOmI6dDpsID0gMDowOjI6MQpzZGQ6IG5vdCBmb3VuZCBpbiBwYXRo
+dmVjCnNkZDogbWFzayA9IDB4NQpzZGQ6IGRldl90ID0gODo0OApzZGQ6IHNpemUgPSAyNzM0MTg0
+ODU3NgpzZGQ6IHN1YnN5c3RlbSA9IHNjc2kKc2RkOiB2ZW5kb3IgPSBJQk0gICAgIApzZGQ6IHBy
+b2R1Y3QgPSAxNzQ2ICAgICAgRkFTdFQgCnNkZDogcmV2ID0gMTA3MApzZGQ6IGg6Yjp0OmwgPSAw
+OjA6MzoxCm1kMDogZGV2aWNlIG5vZGUgbmFtZSBibGFja2xpc3RlZApkbS0wOiBkZXZpY2Ugbm9k
+ZSBuYW1lIGJsYWNrbGlzdGVkCj09PT09IHBhdGhzIGxpc3QgPT09PT0KdXVpZCBoY2lsICAgIGRl
+diBkZXZfdCBwcmkgZG1fc3QgIGNoa19zdCAgdmVuZC9wcm9kL3JldiAgICAgICAgICAgIAogICAg
+IDA6MDoyOjEgc2RjIDg6MzIgIC0xICBbdW5kZWZdW3VuZGVmXSBJQk0gICAgICwxNzQ2ICAgICAg
+RkFTdFQgCiAgICAgMDowOjM6MSBzZGQgODo0OCAgLTEgIFt1bmRlZl1bdW5kZWZdIElCTSAgICAg
+LDE3NDYgICAgICBGQVN0VCAKcGFyYW1zID0gMCAwIDIgMSByb3VuZC1yb2JpbiAwIDEgMSA4OjMy
+IDEwMDAgcm91bmQtcm9iaW4gMCAxIDEgODo0OAoxMDAwIApzdGF0dXMgPSAyIDAgMCAwIDIgMSBB
+IDAgMSAwIDg6MzIgQSAwIEUgMCAxIDAgODo0OCBBIDAgCnNkYzogbWFzayA9IDB4NApzZGM6IHBh
+dGggY2hlY2tlciA9IHJkYWMgKGNvbmZpZyBmaWxlIGRlZmF1bHQpCnNkYzogc3RhdGUgPSAyCnNk
+YzogbWFzayA9IDB4OApzZGM6IGdldHByaW8gPSBOVUxMIChpbnRlcm5hbCBkZWZhdWx0KQpzZGM6
+IHByaW8gPSAxCnNkZDogbWFzayA9IDB4NApzZGQ6IHBhdGggY2hlY2tlciA9IHJkYWMgKGNvbmZp
+ZyBmaWxlIGRlZmF1bHQpCnNkZDogc3RhdGUgPSA0CnNkZDogbWFzayA9IDB4OApzZGQ6IGdldHBy
+aW8gPSBOVUxMIChpbnRlcm5hbCBkZWZhdWx0KQpzZGQ6IHByaW8gPSAxCnZvZCAoMzYwMDgwZTUw
+MDAxYmFhNDYwMDAwMjU4MzRkNTAxNzk4KSBkbS0wIElCTSAgICAgLDE3NDYgICAgICBGQVN0Cltz
+aXplPTEzVF1bZmVhdHVyZXM9MF1baHdoYW5kbGVyPTBdClxfIHJvdW5kLXJvYmluIDAgW3ByaW89
+MV1bYWN0aXZlXQogXF8gMDowOjI6MSBzZGMgODozMiAgW2FjdGl2ZV1bcmVhZHldClxfIHJvdW5k
+LXJvYmluIDAgW3ByaW89MV1bZW5hYmxlZF0KIFxfIDA6MDozOjEgc2RkIDg6NDggIFthY3RpdmVd
+W2dob3N0XQoKCi0tIApQZXRlci4KCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEBy
+ZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bA==
