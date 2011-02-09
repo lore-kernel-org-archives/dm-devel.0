@@ -1,14 +1,12 @@
-From: bart.coninckx@telenet.be
-Subject: dd slow while reading on multipathing, writing is fast
-Date: Tue, 8 Feb 2011 15:44:06 +0100 (CET)
-Message-ID: <638331349.4388161297176246800.JavaMail.root@tendai.telenet-ops.be>
-References: <315312316.4387891297176180905.JavaMail.root@tendai.telenet-ops.be>
+From: Peter Volkov <peter.volkov@gmail.com>
+Subject: multipath: rdac on IBM 1746 (SAS connection to DS3512)
+Date: Wed, 09 Feb 2011 12:37:31 +0300
+Message-ID: <1297244251.10348.14.camel@tablet>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <315312316.4387891297176180905.JavaMail.root@tendai.telenet-ops.be>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,18 +19,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
+Hi. We have Bladecenter H with HS22 servers inside. All servers have 
+0b:00.0 SCSI storage controller: LSI Logic / Symbios Logic SAS1064ET
+PCI-Express Fusion-MPT SAS (rev 10)
+with two possible external SAS connections which we use to connect them
+with DS3512 (IBM datastorage) using two SAS cables and thus multipath
+configuration is in place. We use ubuntu 10.04 here and since in-stock
+scsi_dh_rdac kernel module does not support IBM 1746 devices I've
+patched it and rebuild kernel. Now, as I modproble module I see the
+following in dmesg:
 
-something peculiar I cannot get my head round.
-I have a setup where a backup server connects to iSCSI LUNs over multipathing.
-While dd-ing to it, I get a spiffing 200 MB/sec, while reading it drops to 70 MB/sec. Local storage where I write the image onto is sufficiently fast.
+[   27.861388] sd 0:0:2:1: rdac: LUN 1 (owned)
+[   27.861836] sd 0:0:3:1: rdac: LUN 1 (unowned)
+[   27.861840] rdac: device handler registered
 
-Do you think this is multipathing related? I'm running the latest version from source.
+That's Ok, but multipath output does not have rdac:
+
+root@btv1:~# multipath -l
+vod (360080e50001baa46000025834d501798) dm-0 IBM     ,1746      FASt
+[size=13T][features=0][hwhandler=0]
+\_ round-robin 0 [prio=0][active]
+ \_ 0:0:2:1 sdc 8:32  [active][undef]
+\_ round-robin 0 [prio=0][enabled]
+ \_ 0:0:3:1 sdd 8:48  [active][undef]
 
 
+Is this normal? On Gentoo system connected to the same DS I see:
 
+mon1 ~ # multipath -l
+vod (360080e50001baa46000025834d501798) dm-0 IBM,1746      FAStT
+size=13T features='3 queue_if_no_path pg_init_retries 50' hwhandler='1
+rdac' wp=rw
+|-+- policy='round-robin 0' prio=-1 status=active
+| `- 0:0:2:1 sdc 8:32 active undef running
+`-+- policy='round-robin 0' prio=-1 status=enabled
+  `- 0:0:3:1 sdd 8:48 active undef running
 
-Thx!
+Could you tell me what's hwhandler and why it's 0 in one case and 1 in
+another.
 
-
-B.
+Many thanks for any explanations in advance,
+-- 
+Peter.
