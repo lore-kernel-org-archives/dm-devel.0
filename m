@@ -1,11 +1,16 @@
-From: xiaoli zhu <xiao001li@gmail.com>
-Subject: Where can I get thin provisioning target sources?
-Date: Tue, 22 Feb 2011 12:06:47 +0800
-Message-ID: <AANLkTikCFbN_XKDOZHRDnidp1QXfEj-4CEiC+QrLWWyH@mail.gmail.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: call for slideware ;)
+Date: Thu, 10 Feb 2011 14:59:26 +0000
+Message-ID: <1297349966.309.9.camel@ubuntu>
+References: <20110209231656.GB5193@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7378814950925842748=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Resent-Message-ID: <20110223123439.GK17591@redhat.com>
+Resent-To: dm-devel@redhat.com
+In-Reply-To: <20110209231656.GB5193@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,32 +20,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
---===============7378814950925842748==
-Content-Type: multipart/alternative; boundary=20cf304341baec4b18049cd71b7b
+Hi Mike,
 
---20cf304341baec4b18049cd71b7b
-Content-Type: text/plain; charset=ISO-8859-1
+On Wed, 2011-02-09 at 18:16 -0500, Mike Snitzer wrote:
+> Joe and/or Heinz,
+> 
+> Could you provide a few slides on the thinp and shared snapshot
+> infrastructure and targets?  Planned features and performance
+> benefits,
+> etc.
+> 
+> 
 
-Could any body tell me where can I get the thin provisioning target patch?
-I am interested in dm-thinp module.
-Thanks~
+I've started a new project on GitHub:
 
---20cf304341baec4b18049cd71b7b
-Content-Type: text/html; charset=ISO-8859-1
+https://github.com/jthornber/storage-papers
 
-Could any body tell me where can I get the thin provisioning target patch?<br>I am interested in dm-thinp module.<br>Thanks~<br>
+Heinz and I have started putting stuff in there.  We'll add more content
+this afternoon.  I'm using a text format with svg files for the
+diagrams.  Currently just generating html which I'll try and upload
+somewhere.
 
---20cf304341baec4b18049cd71b7b--
-
-
---===============7378814950925842748==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============7378814950925842748==--
+- Joe
