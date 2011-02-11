@@ -1,175 +1,99 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [RFC PATCH] multipathd: use 0 for initial pg if
-	nr_priority_groups=0
-Date: Fri, 11 Feb 2011 16:44:17 +0100
-Message-ID: <4D555951.2030307@suse.de>
-References: <1296490458-12910-1-git-send-email-snitzer@redhat.com>
-	<1296490458-12910-2-git-send-email-snitzer@redhat.com>
-	<E463DF2B2E584B4A82673F53D62C2EF4FF372B9C@cosmail01.lsi.com>
-	<20110131183445.GA13689@redhat.com> <4D482912.2020203@suse.de>
-	<20110210220003.GA13661@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: [PATCH} scsi_dh_rdac: fix for lun_table update for rdac device
+ handler
+Date: Fri, 11 Feb 2011 15:14:08 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4FF60C1F1@cosmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110210220003.GA13661@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: "Qi, Yanling" <Yanling.Qi@lsi.com>, "Krishnasamy, Somasundaram" <Somasundaram.Krishnasamy@lsi.com>
 List-Id: dm-devel.ids
 
-On 02/10/2011 11:00 PM, Mike Snitzer wrote:
-> On Tue, Feb 01 2011 at 10:38am -0500,
-> Hannes Reinecke <hare@suse.de> wrote:
-> =
+During one of our testing, we noticed that mode select command sent from the host did not have the lun_table updated.
 
->> On 01/31/2011 07:34 PM, Mike Snitzer wrote:
->>> On Mon, Jan 31 2011 at  1:09pm -0500,
->>> Moger, Babu <Babu.Moger@lsi.com> wrote:
->>>
->>>> Looks good to me. =
+Problem is root caused to the way lun table is updated. Lun table update was done after the call to blk_rq_map_kern is made. This was causing problem because kernel uses bounce buffer(bio_copy_kern) if the address is not aligned.  The command buffer updated after the call(blk_rq_map_kern) was not going on the wire. Moved the code to update the lun_table before the call to fix the problem.
 
->>>>
->>>>> -----Original Message-----
->>>>> From: Mike Snitzer [mailto:snitzer@redhat.com]
->>>>> Sent: Monday, January 31, 2011 10:14 AM
->>>>> To: dm-devel@redhat.com
->>>>> Cc: Mike Snitzer; Moger, Babu
->>>>> Subject: [PATCH 2/2] dm mpath: allow table load with 0 priority groups
->>>>>
->>>>> If an mpath device is held open when all paths in the last priority
->>>>> group have failed userspace multipathd will attempt to reload the
->>>>> associated DM table to reflect that the device no longer has any
->>>>> priority groups.  But the reload attempt always failed because the
->>>>> multipath target did not allow 0 priority groups.
->>>>>
->>>>> Adjust multipath target to allow a table with both 0 priority groups
->>>>> and 0 for the initial priority group number.
->>>>>
->>>>> All multipath target messages related to priority group (enable_group,
->>>>> disable_group, switch_group) will properly handle a priority group of
->>>>> 0 (will cause error).
->>>>>
->>>>> When reloading a multipath table with 0 priority groups, userspace
->>>>> multipathd must be updated to specify an initial priority group number
->>>>> of 0 (rather than 1).
->>>>
->>>>  Looks like we still have some action from multipath tool. CCing Ben..
->>>
->>> Right, I looked in to the multipath-tools change.  Here is an RFC patch.
->>>
->>> Inlined "FIXME"s pose the relevant questions.  I held off on having
->>> select_path_group() return 0 when !mpp->pg because I wasn't confident
->>> that I wouldn't break multipathd in some unintuitive way.
->>>
->>> I did audit the various callers (indirect through setup_map call):
->>>
->>> update_path_groups
->>> ev_add_path
->>> ev_remove_path
->>>
->>> (all above first call setup_map)
->>>
->>> setup_map()
->>>   - mpp->bestpg =3D select_path_group()
->>>   - assemble_map() -- establishes mp->params
->>>
->>> do_map()
->>>
->>> Even though I verified that much I wasn't completely confident in
->>> changing select_path_group()'s defualt return of 1 -- so I localized the
->>> change to where I _knew_ it was safe (assemble_map):
->>>
->>> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
->>> index 1ef3aad..97b6420 100644
->>> --- a/libmultipath/dmparser.c
->>> +++ b/libmultipath/dmparser.c
->>> @@ -52,6 +52,7 @@ assemble_map (struct multipath * mp)
->>>  	int i, j;
->>>  	int shift, freechar;
->>>  	int minio;
->>> +	int nr_priority_groups, initial_pg_nr;
->>>  	char * p;
->>>  	struct pathgroup * pgp;
->>>  	struct path * pp;
->>> @@ -60,9 +61,19 @@ assemble_map (struct multipath * mp)
->>>  	p =3D mp->params;
->>>  	freechar =3D sizeof(mp->params);
->>>  =
+Signed-off-by: Babu Moger <babu.moger@lsi.com>
+Signed-off-by: Somasundaram Krishnasamy <Somasundaram.Krishnasamy@lsi.com>
+Signed-off-by: Yanling Qi <Yanling.Qi@lsi.com>
 
->>> +	nr_priority_groups =3D VECTOR_SIZE(mp->pg);
->>> +	/*
->>> +	 * FIXME: make this conditional on multipath target version?
->>> +	 * - but no existing code is conditional on multipath target version,
->>> +	 *   nor does dm_drvprereq() store the version for code to do so.
->>> +	 * - thing is older multipath never allowed nr_priority_groups=3D0 so
->>> +	 *   it doesn't _really_ matter if initial_pg_nr=3D0 here...
->>> +	 */
->>> +	initial_pg_nr =3D (nr_priority_groups ? mp->bestpg : 0);
->>> +
->>>  	shift =3D snprintf(p, freechar, "%s %s %i %i",
->>>  			 mp->features, mp->hwhandler,
->>> -			 VECTOR_SIZE(mp->pg), mp->bestpg);
->>> +			 nr_priority_groups, initial_pg_nr);
->>>  =
+---
+--- linux-2.6.38-rc4/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2011-02-11 12:41:27.000000000 -0600
++++ linux-2.6.38-rc4/drivers/scsi/device_handler/scsi_dh_rdac.c	2011-02-11 14:04:23.000000000 -0600
+@@ -281,11 +281,13 @@ static struct request *get_rdac_req(stru
+ }
+ 
+ static struct request *rdac_failover_get(struct scsi_device *sdev,
+-					 struct rdac_dh_data *h)
++			struct rdac_dh_data *h, struct list_head *list)
+ {
+ 	struct request *rq;
+ 	struct rdac_mode_common *common;
+ 	unsigned data_size;
++	struct rdac_queue_data *qdata;
++	u8 *lun_table;
+ 
+ 	if (h->ctlr->use_ms10) {
+ 		struct rdac_pg_expanded *rdac_pg;
+@@ -298,6 +300,7 @@ static struct request *rdac_failover_get
+ 		rdac_pg->subpage_code = 0x1;
+ 		rdac_pg->page_len[0] = 0x01;
+ 		rdac_pg->page_len[1] = 0x28;
++		lun_table = rdac_pg->lun_table;
+ 	} else {
+ 		struct rdac_pg_legacy *rdac_pg;
+ 
+@@ -307,11 +310,16 @@ static struct request *rdac_failover_get
+ 		common = &rdac_pg->common;
+ 		rdac_pg->page_code = RDAC_PAGE_CODE_REDUNDANT_CONTROLLER;
+ 		rdac_pg->page_len = 0x68;
++		lun_table = rdac_pg->lun_table;
+ 	}
+ 	common->rdac_mode[1] = RDAC_MODE_TRANSFER_SPECIFIED_LUNS;
+ 	common->quiescence_timeout = RDAC_QUIESCENCE_TIME;
+ 	common->rdac_options = RDAC_FORCED_QUIESENCE;
+ 
++	list_for_each_entry(qdata, list, entry) {
++		lun_table[qdata->h->lun] = 0x81;
++	}
++
+ 	/* get request for block layer packet command */
+ 	rq = get_rdac_req(sdev, &h->ctlr->mode_select, data_size, WRITE);
+ 	if (!rq)
+@@ -565,7 +573,6 @@ static void send_mode_select(struct work
+ 	int err, retry_cnt = RDAC_RETRY_COUNT;
+ 	struct rdac_queue_data *tmp, *qdata;
+ 	LIST_HEAD(list);
+-	u8 *lun_table;
+ 
+ 	spin_lock(&ctlr->ms_lock);
+ 	list_splice_init(&ctlr->ms_head, &list);
+@@ -573,21 +580,12 @@ static void send_mode_select(struct work
+ 	ctlr->ms_sdev = NULL;
+ 	spin_unlock(&ctlr->ms_lock);
+ 
+-	if (ctlr->use_ms10)
+-		lun_table = ctlr->mode_select.expanded.lun_table;
+-	else
+-		lun_table = ctlr->mode_select.legacy.lun_table;
+-
+ retry:
+ 	err = SCSI_DH_RES_TEMP_UNAVAIL;
+-	rq = rdac_failover_get(sdev, h);
++	rq = rdac_failover_get(sdev, h, &list);
+ 	if (!rq)
+ 		goto done;
+ 
+-	list_for_each_entry(qdata, &list, entry) {
+-		lun_table[qdata->h->lun] = 0x81;
+-	}
+-
+ 	RDAC_LOG(RDAC_LOG_FAILOVER, sdev, "array %s, ctlr %d, "
+ 		"%s MODE_SELECT command",
+ 		(char *) h->ctlr->array_name, h->ctlr->index,
 
->>>  	if (shift >=3D freechar) {
->>>  		fprintf(stderr, "mp->params too small\n");
->>> diff --git a/libmultipath/switchgroup.c b/libmultipath/switchgroup.c
->>> index 025a95d..82c30ad 100644
->>> --- a/libmultipath/switchgroup.c
->>> +++ b/libmultipath/switchgroup.c
->>> @@ -41,7 +41,7 @@ select_path_group (struct multipath * mpp)
->>>  	struct pathgroup * pgp;
->>>  =
 
->>>  	if (!mpp->pg)
->>> -		return 1;
->>> +		return 1; /* FIXME: return 0 here? */
->>>  =
-
->>>  	vector_foreach_slot (mpp->pg, pgp, i) {
->>>  		if (!pgp->paths)
->>>
->> I have a similar patchset in my multipath-tools tree, to allow maps
->> with zero paths, too.
->> However, there are quite a few places which required checking, as
->> we're basically _never_ check if a pointer is NULL before accessing
->> it. With a bit of luck I'll find some time to send out the patchset.
->>
->> Otherwise you could have a look at
->>
->> git://git.kernel.org/pub/scm/linux/kernel/git/hare/multipath-tools.git
->> branch sles11-sp1 will have the most recent stuff.
-> =
-
-> I found the following commit but it doesn't have any meaningful changes:
-> 1e53326 Allow zero paths for device-mapper strings
-> =
-
-> Could you be more explicit on which commits you're thinking of?
-
-Ah, I just rechecked the code. There used to be quite a few missing
-NULL pointer checks, especially if mpp->pg or mpp->paths are NULL.
-But they seem to have been fixed now.
-
-So ignore my objection here.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
