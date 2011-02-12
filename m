@@ -1,30 +1,60 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH v2] scsi_dh_rdac : Adding MODULE VERSION for rdac device
- handler
-Date: Fri, 11 Feb 2011 16:12:44 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4FF60C22E@cosmail01.lsi.com>
+From: Peter Volkov <peter.volkov@gmail.com>
+Subject: Re: multipath: partitions are not created on IBM 1746
+ (SAS connection to DS3512)
+Date: Sat, 12 Feb 2011 12:12:05 +0300
+Message-ID: <1297501926.23532.15.camel@tablet>
+References: <1297244251.10348.14.camel@tablet>
+	<1297244976.29348.9.camel@zezette>  <1297246135.13836.6.camel@tablet>
+	<1297246940.29348.11.camel@zezette>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1297246940.29348.11.camel@zezette>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Resubmitting again.
-Adding MODULE_VERSION for scsi_dh_rdac. This will be helpful sometimes to get the code level without looking at the code. 
-Original patch is here.. http://marc.info/?l=linux-scsi&m=128035804231431&w=2
-
-Signed-off-by: Babu Moger <babu.moger@lsi.com>
----
---- linux-2.6.38-rc4-new/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2011-02-11 12:41:27.000000000 -0600
-+++ linux-2.6.38-rc4-new/drivers/scsi/device_handler/scsi_dh_rdac.c	2011-02-11 16:48:11.000000000 -0600
-@@ -906,4 +906,5 @@ module_exit(rdac_exit);
- 
- MODULE_DESCRIPTION("Multipath LSI/Engenio RDAC driver");
- MODULE_AUTHOR("Mike Christie, Chandra Seetharaman");
-+MODULE_VERSION("01.00.0000.0000");
- MODULE_LICENSE("GPL");
-
-
+VGhhbmsgeW91IENocmlzdG9waGUgYW5kIE1hbGFoYWwuCgrQkiDQodGA0LQsIDA5LzAyLzIwMTEg
+0LIgMTE6MjIgKzAxMDAsIENocmlzdG9waGUgVmFyb3F1aSDQv9C40YjQtdGCOgo+IE9uIG1lci4s
+IDIwMTEtMDItMDkgYXQgMTM6MDggKzAzMDAsIFBldGVyIFZvbGtvdiB3cm90ZToKPiA+IHJvb3RA
+YnR2MTp+IyBjYXQgL2V0Yy9tdWx0aXBhdGguY29uZiAKPiA+IGRlZmF1bHRzIHsKPiA+IAlwYXRo
+X2NoZWNrZXIJcmRhYwo+ID4gfQo+ID4gCj4gdGhlICdwYXRoX2NoZWNrZXInIHBhcmFtIGRvZXMg
+bm90IHNldCB0aGUgaHdoYW5kbGVyLgo+IHRoZSBrZXl3b3JkIGZvciB0aGF0IGlzICdoYXJkd2Fy
+ZV9oYW5kbGVyJy4KCklzIHRoaXMgYW4gZXJyb3IgaW4gbWFuIG11bHRpcGF0aC5jb25mIHRoZW4g
+KGl0IG1lbnRpb25zIHJkYWMgaW4KcGF0aF9jaGVja2VyIHNlY3Rpb24pPwoKQW55d2F5IEkndmUg
+dXBkYXRlZCBtdWx0aXBhdGgtdG9vbHMgb24gdWJ1bnR1IGFuZCB0aGlzIGZpeGVkIGluaXRpYWwK
+aXNzdWUsIGJ1dCBub3cgSSBleHBlcmllbmNlIGRpZmZlcmVudCBwcm9ibGVtIHdpdGggbXVsdGlw
+YXRoLiBGb3IKdW5rbm93biByZWFzb25zIG11bHRpcGF0aCBkb2VzIG5vdCBhdXRvbWFnaWNhbGx5
+IGNyZWF0ZSBwYXJ0aXRpb25zIG9uCkdlbnRvbyBzeXN0ZW0sIGFsdGhvdWdoIGV2ZXJ5dGhpbmcg
+d29ya3MgaWYgSSBydW4gYGtwYXJ0eCAtYSAvZGV2L2RtLTBgCm1hbnVhbGx5LiBDb3VsZCB5b3Ug
+aGVscCBtZSB0byBpbnZlc3RpZ2F0ZSB0aGlzIGlzc3VlPwoKSSd2ZSB1cGdyYWRlZCBtdWx0aXBh
+dGggdG9vbHMgdG8gdGhlIGN1cnJlbnQgZ2l0IHdpdGggbm8gR2VudG9vIHBhdGNoZXMKYXBwbGll
+ZCwgdWRldiB0byAxNjQsIGFuZCBsdm0yIHRvIDIuMDIuODQgYnV0IHN0aWxsIG11bHRpcGF0aCBl
+dmVuCndpdGhvdXQgY29uZmlndXJhdGlvbiBmaWxlIChkZWZhdWx0cykgY3JlYXRlcyBvbmx5IGZv
+bGxvd2luZyBkZXZpY2VzOgoKICMgbHMgLWwgL2Rldi9tYXBwZXIvMzYwMDgwZTUwMDAxYmFhNDYw
+MDAwMjU4MzRkNTAxNzk4KiAKbHJ3eHJ3eHJ3eCAxIHJvb3Qgcm9vdCA3IEZlYiAxMiAxNzowMSAv
+ZGV2L21hcHBlci8zNjAwODBlNTAwMDFiYWE0NjAwMDAyNTgzNGQ1MDE3OTggLT4gLi4vZG0tMAog
+IyBscyAtbCAvZGV2L2RtKiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCmJy
+dy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAwIEZlYiAxMiAxNzowMSAvZGV2L2RtLTAKCmFuZCBh
+ZnRlcgoKICMga3BhcnR4IC1hIC9kZXYvZG0tMAoKcGFydGl0aW9uIGFwcGVhcjoKCiAjIGxzIC1s
+IC9kZXYvbWFwcGVyLzM2MDA4MGU1MDAwMWJhYTQ2MDAwMDI1ODM0ZDUwMTc5OCoKbHJ3eHJ3eHJ3
+eCAxIHJvb3Qgcm9vdCA3IEZlYiAxMiAxNzowMSAvZGV2L21hcHBlci8zNjAwODBlNTAwMDFiYWE0
+NjAwMDAyNTgzNGQ1MDE3OTggLT4gLi4vZG0tMApscnd4cnd4cnd4IDEgcm9vdCByb290IDcgRmVi
+IDEyIDE3OjAzIC9kZXYvbWFwcGVyLzM2MDA4MGU1MDAwMWJhYTQ2MDAwMDI1ODM0ZDUwMTc5OHAx
+IC0+IC4uL2RtLTEKClRoaXMgY2FuIGJlIHByb2JsZW0gaW4gbXkga2VybmVsIGNvbmZpZ3VyYXRp
+b24gYnV0IEkndmUgY29tcGFyZWQgd2l0aAp1YnVudHUgY29uZmlnIGFuZCBmYWlsZWQgdG8gZmlu
+ZCBhbnkgZXZpZGVudCBkaWZmZXJlbmNlcy4gQ291bGQgeW91CnN1Z2dlc3QgaG93IHRvIGRlYnVn
+IHRoaXM/CgoKSGF2ZSBhIG5pY2Ugd2Vla2VuZCwKLS0gClBldGVyLgoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVs
