@@ -1,18 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: multipath: partitions are not created on IBM 1746
- (SAS connection to DS3512)
-Date: Sat, 12 Feb 2011 12:12:23 +0100
-Message-ID: <1297509143.25123.3.camel@zezette>
-References: <1297244251.10348.14.camel@tablet>
-	<1297244976.29348.9.camel@zezette>  <1297246135.13836.6.camel@tablet>
-	<1297246940.29348.11.camel@zezette> <1297501926.23532.15.camel@tablet>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: "rkliese@gmx.de" <rkliese@gmx.de>
+Subject: What is the status of RAID5 support with pdc (AMD SB850
+ Southbridge) hardware? dmraid -rD output
+Date: Mon, 14 Feb 2011 00:17:58 +0100
+Message-ID: <4D5866A6.7020207@gmx.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/mixed; boundary="------------000500070608090403090806"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1297501926.23532.15.camel@tablet>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,31 +16,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Peter Volkov <peter.volkov@gmail.com>
-Cc: dm-devel <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gc2FtLiwgMjAxMS0wMi0xMiBhdCAxMjoxMiArMDMwMCwgUGV0ZXIgVm9sa292IHdyb3RlOgo+
-IFRoYW5rIHlvdSBDaHJpc3RvcGhlIGFuZCBNYWxhaGFsLgo+IAo+INCSINCh0YDQtCwgMDkvMDIv
-MjAxMSDQsiAxMToyMiArMDEwMCwgQ2hyaXN0b3BoZSBWYXJvcXVpINC/0LjRiNC10YI6Cj4gPiBP
-biBtZXIuLCAyMDExLTAyLTA5IGF0IDEzOjA4ICswMzAwLCBQZXRlciBWb2xrb3Ygd3JvdGU6Cj4g
-PiA+IHJvb3RAYnR2MTp+IyBjYXQgL2V0Yy9tdWx0aXBhdGguY29uZiAKPiA+ID4gZGVmYXVsdHMg
-ewo+ID4gPiAJcGF0aF9jaGVja2VyCXJkYWMKPiA+ID4gfQo+ID4gPiAKPiA+IHRoZSAncGF0aF9j
-aGVja2VyJyBwYXJhbSBkb2VzIG5vdCBzZXQgdGhlIGh3aGFuZGxlci4KPiA+IHRoZSBrZXl3b3Jk
-IGZvciB0aGF0IGlzICdoYXJkd2FyZV9oYW5kbGVyJy4KPiAKPiBJcyB0aGlzIGFuIGVycm9yIGlu
-IG1hbiBtdWx0aXBhdGguY29uZiB0aGVuIChpdCBtZW50aW9ucyByZGFjIGluCj4gcGF0aF9jaGVj
-a2VyIHNlY3Rpb24pPwo+IApObywgcmRhYyBpcyBhbHNvIGEgdmFsaWQgdmFsaWQgdmFsdWUgZm9y
-IHBhdGhfY2hlY2tlci4KCj4gQW55d2F5IEkndmUgdXBkYXRlZCBtdWx0aXBhdGgtdG9vbHMgb24g
-dWJ1bnR1IGFuZCB0aGlzIGZpeGVkIGluaXRpYWwKPiBpc3N1ZSwgYnV0IG5vdyBJIGV4cGVyaWVu
-Y2UgZGlmZmVyZW50IHByb2JsZW0gd2l0aCBtdWx0aXBhdGguIEZvcgo+IHVua25vd24gcmVhc29u
-cyBtdWx0aXBhdGggZG9lcyBub3QgYXV0b21hZ2ljYWxseSBjcmVhdGUgcGFydGl0aW9ucyBvbgo+
-IEdlbnRvbyBzeXN0ZW0sIGFsdGhvdWdoIGV2ZXJ5dGhpbmcgd29ya3MgaWYgSSBydW4gYGtwYXJ0
-eCAtYSAvZGV2L2RtLTBgCj4gbWFudWFsbHkuIENvdWxkIHlvdSBoZWxwIG1lIHRvIGludmVzdGln
-YXRlIHRoaXMgaXNzdWU/Cj4gCllvdSBtdXN0IGtlZXAgdGhlIGRpc3RyaWJ1dGlvbiB1ZGV2IHJ1
-bGVzLiBBbmQgcmVwb3J0IGJ1Z3MgdG8gdGhlbS4gTm9yCm11bHRpcGF0aCBvciBtdWx0aXBhdGhk
-IGNhcmUgYWJvdXQgcGFydGl0aW9ucy4gVGhvc2UgY3JlYXRlIG11bHRpcGF0aApkZXZpY2UgbWFw
-cyBhbmQgdXBvbiBjcmVhdGlvbiB1ZGV2IGlzIHJlc3BvbnNpYmxlIGZvciBjYWxsaW5nIGtwYXJ0
-eC4KCkNoZWNrIHRoZSBtdWx0aXBhdGgtdG9vbHMgJ21ha2UgaW5zdGFsbCcgb3V0cHV0IHRvIHNl
-ZSB3aGF0IGl0IG1heQp1bmR1bHkgaW5zdGFsbCBhcyB1ZGV2IHJ1bGVzLgoKUmVnYXJkcywKY3Zh
-cm9xdWkKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+This is a multi-part message in MIME format.
+--------------000500070608090403090806
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
+
+Hello together,
+
+I read in the linux archive of this list in a message form the 
+14/Jan/2011 that the developers would appreciate the output
+of dmraid -rD of a system which sb850 chipset and valid configured RAID5.
+
+I hope this is the right way to send it and that it is not obsolete, so 
+I have attached the output.
+
+The system is a GA-890FXA-UD5 system with 5 2TB disk configured to a 
+RAID5 on kernel level.
+The RAID is used so far with Windows 7 and seems to be full operational 
+with that.
+
+I hope this input helps to develop support of dmraid RAID5 configuration 
+for sb850 chip sets!
+
+Kind regards
+Rainer Kliese
+
+
+--------------000500070608090403090806
+Content-Type: application/x-compressed-tar;
+ name="dmraid.pdc.tgz"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="dmraid.pdc.tgz"
+
+H4sIAGJhWE0AA+2bd1hTVxjG700CceNs3cYJrniTkBuJA2fVuiiljroak6CoEE1w702rFlx1
+j5aqbW2rHdZttY669957te69wBtAQq4+4vMIh5uc9/dPTm7Ok5yTc97zjftdS6TdFGFR97SY
+qzGZBSdg0OuTXgXEr0ltjUav5TmeC9QZGE54w+sZlT7TRpSG3o5ok12lYuw2W/Tb+qX3uYdi
+ca2/w2JWOyIGWDP8N5wLzL++7q711+jSrD8vrL9OK1xScRk+kjdA+frrgjgDpw3S8NVzZPVQ
+QBbgpn+T2mLKhE2ejv4DXz//dZyGg/5JEGK3RUY4rKowq7lrlK2HrUv/KqomUWY1w8iYixfO
+nzt75vSpkyeOHzt6hGWYA/v37d2ze9fOHdu3bf13y+ZNG//ZsP7vdWvXrF61csXyv5b9+cfv
+vy1d8usvPy/+6ccfFi1c8H38d9/Onzd3zuxZM2dMn/bN1CmTJ02Mi/16wvhxX30ZM3bM6FEj
+RwwfNnTI4EEDB/Tv17dP72iHvVdPW1Rkj+7dIrp2CbdazJ1NX3Tq2KF9u8/btmnd6rOwT0M/
+CWnZonmzph83adzoo4YN6terWye4dq2aNYxB1Q28PlAwG1w1ddUqlStVDPCvUL5c2TKlVaVK
+liherGiRwh9+UKhggfz58vrlyZ0rZ47s2ZS+Pgq5jGUSE148f/b0yeNHDx/cv3f3zu1bN2/8
+/9/1a1evXL7kPv/Dhw564fzXC/NXCvvAl/WTvdoTS2NOX00UYBk/hY/Sh2GmhMYnJCYE+7JJ
+XRVp+yuFvzC5zTJKhUxol5Q7947SV57SljPKbAqhnU/oo3inPRkqnEjv6fvJE1NgWTb5wvt9
+XybgHJ37lSzZ/yBD8TT9037+0Tx/Y7lasW7+X2e1LTzcYc1oPyfd+I/TiuM/vTYQ/h8JOIR9
+VOOmf4uE8j/QPxGQ/6EbUf5XOvZfD/2TAPafbtz0b5WQ/Yf+iQD7Tzci/UvH/hugfxLA/tON
+6P6vBOy/Idn+a6F/EsD+040o/y+B+g8e9R8EQf0Hvff/Uus/WFcNhxPUf5AA9R/eiKfpn/bz
+j+b5G8sHx4ryP9Lx/1D/TwT4f/TqP9X/U7j7Z/D/SAD/zxvxNP3Tfv7RPH9jQKNYUf2fdPw/
+5P+JAP+PXv2n+n9yl6/mBP4fCeD/eSOepn/azz+a52/0D40T1X9IoP7LgOe/CIL6L7oRPf8h
+nfhPA/2TAPEfvfY/Nf6TueI2J4j/SID4zxvxNP3Tfv7RPH9jhZA4Uf2vBOr/edT/EwT1/3Qj
+uv8ngfxPyvN/PPRPAuR/AAAAAAAAAAAAAAAAAAAAAADAO3gJvbDrmQB4AAA=
+--------------000500070608090403090806
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------000500070608090403090806--
