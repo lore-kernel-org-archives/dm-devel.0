@@ -1,79 +1,55 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [PATCH] loop: clear read-only flag in loop_clr_fd.
-Date: Mon, 14 Feb 2011 12:47:48 +0100
-Message-ID: <4D591664.6090203@redhat.com>
-References: <4D573BBB.6090200@redhat.com> <1297594735-5593-1-git-send-email-tm@tao.ma> <4D57E67E.1030707@redhat.com> <4D57F357.6060708@tao.ma> <4D580A8B.5050508@redhat.com> <20110214103026.GA18742@htj.dyndns.org>
+Subject: [PATCH][RFC] dm: Do not open log and cow device read-write for read-only
+ mappings
+Date: Mon, 14 Feb 2011 14:14:57 +0100
+Message-ID: <4D592AD1.6020500@redhat.com>
+References: <4D573BBB.6090200@redhat.com> <1297594735-5593-1-git-send-email-tm@tao.ma> <4D57E67E.1030707@redhat.com> <4D57F357.6060708@tao.ma> <4D580A8B.5050508@redhat.com> <20110214103026.GA18742@htj.dyndns.org> <4D591664.6090203@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110214103026.GA18742@htj.dyndns.org>
+In-Reply-To: <4D591664.6090203@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Tejun Heo <tj@kernel.org>
 Cc: Tao Ma <tm@tao.ma>, linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-On 02/14/2011 11:30 AM, Tejun Heo wrote:
-> Umm... This was reported some time ago and patches were already
-> posted.  Milan, can you test whether the following two patches fix the
-> problems you're seeing?  Jens, what's the status of these patches?
->
->   http://thread.gmane.org/gmane.linux.kernel/1090211/focus=1090666
->
-With patch below (loop cannot be built as module) it fixes the loop problem.
-
-But it doesn't fix the read-only snapshot issue and I guess there will be
-the same problem with read-only MD code too.
-(so the 2) issue here https://lkml.org/lkml/2011/2/12/209).
-
-If the call is changed intentionally, we have to fix unconditional blkdev open
-calls with read-write flag in this code.
-Before doing that I would like to know if it was intentional change or not...
-
-You can simple try this reproducer (works on older kernel, second readonly
-snapshot create fails now with permission denied)
-+ dmsetup create x --readonly --table '0 131072 snapshot /dev/loop0 /dev/loop1 p 8'
-device-mapper: reload ioctl failed: Permission denied
-
-#!/bin/bash -x
-modprobe loop
-
-dd if=/dev/zero of=/x.img bs=1M count=64
-dd if=/dev/zero of=/xs.img bs=1M count=64
-losetup /dev/loop0 /x.img
-losetup /dev/loop1 /xs.img
-sync
-dmsetup create x --table "0 131072 snapshot /dev/loop0 /dev/loop1 p 8"
-udevadm settle
-dmsetup remove x
-
-losetup -d /dev/loop0
-losetup -d /dev/loop1
-losetup -r /dev/loop0 /x.img
-losetup -r /dev/loop1 /xs.img
-dmsetup create x --readonly --table "0 131072 snapshot /dev/loop0 /dev/loop1 p 8"
-dmsetup table
-
-dmsetup remove x
-losetup -d /dev/loop0
-losetup -d /dev/loop1
-
+> But it doesn't fix the read-only snapshot issue and I guess there will be
+> the same problem with read-only MD code too.
+> (so the 2) issue here https://lkml.org/lkml/2011/2/12/209).
+I am not sure if this is complete fix... note that:
+- what happens during mirror resync and read-only log?
+- for COW, it there situation we need to update header in read-oly mode? (invalidated snap?)
 Milan
-
 --
-Export bdgrap to allow loop module build 
+
+[RFC] Do not open log and cow device read-write for read-only mappings
 
 Signed-off-by: Milan Broz <mbroz@redhat.com> 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 333a7bb..c9cf9f7 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -574,6 +574,7 @@ struct block_device *bdgrab(struct block_device *bdev)
- 	ihold(bdev->bd_inode);
- 	return bdev;
- }
-+EXPORT_SYMBOL(bdgrab);
+
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 6951536..8e8a868 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -543,7 +543,7 @@ static int disk_ctr(struct dm_dirty_log *log, struct dm_target *ti,
+ 		return -EINVAL;
+ 	}
  
- long nr_blockdev_pages(void)
- {
+-	r = dm_get_device(ti, argv[0], FMODE_READ | FMODE_WRITE, &dev);
++	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &dev);
+ 	if (r)
+ 		return r;
+ 
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index fdde53c..a2d3309 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1080,7 +1080,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	argv++;
+ 	argc--;
+ 
+-	r = dm_get_device(ti, cow_path, FMODE_READ | FMODE_WRITE, &s->cow);
++	r = dm_get_device(ti, cow_path, dm_table_get_mode(ti->table), &s->cow);
+ 	if (r) {
+ 		ti->error = "Cannot get COW device";
+ 		goto bad_cow;
