@@ -1,55 +1,47 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH][RFC] dm: Do not open log and cow device read-write for read-only
- mappings
-Date: Mon, 14 Feb 2011 14:14:57 +0100
-Message-ID: <4D592AD1.6020500@redhat.com>
-References: <4D573BBB.6090200@redhat.com> <1297594735-5593-1-git-send-email-tm@tao.ma> <4D57E67E.1030707@redhat.com> <4D57F357.6060708@tao.ma> <4D580A8B.5050508@redhat.com> <20110214103026.GA18742@htj.dyndns.org> <4D591664.6090203@redhat.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH] loop: clear read-only flag in loop_clr_fd.
+Date: Mon, 14 Feb 2011 15:07:55 +0100
+Message-ID: <20110214140755.GL18742@htj.dyndns.org>
+References: <4D573BBB.6090200@redhat.com>
+ <1297594735-5593-1-git-send-email-tm@tao.ma>
+ <4D57E67E.1030707@redhat.com>
+ <4D57F357.6060708@tao.ma>
+ <4D580A8B.5050508@redhat.com>
+ <20110214103026.GA18742@htj.dyndns.org>
+ <4D591664.6090203@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <4D591664.6090203@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
+To: Milan Broz <mbroz@redhat.com>
 Cc: Tao Ma <tm@tao.ma>, linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+Hello, Milan.
+
+On Mon, Feb 14, 2011 at 12:47:48PM +0100, Milan Broz wrote:
+> With patch below (loop cannot be built as module) it fixes the loop problem.
+
+Okay.
 
 > But it doesn't fix the read-only snapshot issue and I guess there will be
 > the same problem with read-only MD code too.
 > (so the 2) issue here https://lkml.org/lkml/2011/2/12/209).
-I am not sure if this is complete fix... note that:
-- what happens during mirror resync and read-only log?
-- for COW, it there situation we need to update header in read-oly mode? (invalidated snap?)
-Milan
---
+> 
+> If the call is changed intentionally, we have to fix unconditional blkdev open
+> calls with read-write flag in this code.
+> Before doing that I would like to know if it was intentional change or not...
 
-[RFC] Do not open log and cow device read-write for read-only mappings
+Yeap, the change was intentional.  It was part of effort to make bdev
+usages more consistent as before there was no mechanism enforcing ro.
+It's still problematic as bdev users can clear ro without consulting
+the actual device driver.  Device driver's ->open() is called w/ ro
+flag but the resulting bdev can be used rw.  I wanted to remove that
+too but filesystems depend on it so maybe later.
 
-Signed-off-by: Milan Broz <mbroz@redhat.com> 
+Thanks.
 
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 6951536..8e8a868 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -543,7 +543,7 @@ static int disk_ctr(struct dm_dirty_log *log, struct dm_target *ti,
- 		return -EINVAL;
- 	}
- 
--	r = dm_get_device(ti, argv[0], FMODE_READ | FMODE_WRITE, &dev);
-+	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &dev);
- 	if (r)
- 		return r;
- 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index fdde53c..a2d3309 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1080,7 +1080,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	argv++;
- 	argc--;
- 
--	r = dm_get_device(ti, cow_path, FMODE_READ | FMODE_WRITE, &s->cow);
-+	r = dm_get_device(ti, cow_path, dm_table_get_mode(ti->table), &s->cow);
- 	if (r) {
- 		ti->error = "Cannot get COW device";
- 		goto bad_cow;
+-- 
+tejun
