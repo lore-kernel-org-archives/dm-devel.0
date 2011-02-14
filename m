@@ -1,83 +1,73 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: Improving dm-mirror as a final year project
-Date: Mon, 14 Feb 2011 15:31:00 -0600
-Message-ID: <2D45663B-1CE9-4266-97FF-C2C6A959EA64@redhat.com>
-References: <20110125155342.GG26864@genesis.frugalware.org>
-	<63C70D40-54EE-40A2-98B9-82E06A956941@redhat.com>
-	<20110214173352.GJ5980@genesis.frugalware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v936)
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"; DelSp="yes"
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [PATCH][RFC] dm: Do not open log and cow device read-write for
+ read-only mappings
+Date: Tue, 15 Feb 2011 10:15:06 +1100
+Message-ID: <20110215101506.43d41ca8@notabene.brown>
+References: <4D573BBB.6090200@redhat.com>
+	<1297594735-5593-1-git-send-email-tm@tao.ma>
+	<4D57E67E.1030707@redhat.com>
+	<4D57F357.6060708@tao.ma>
+	<4D580A8B.5050508@redhat.com>
+	<20110214103026.GA18742@htj.dyndns.org>
+	<4D591664.6090203@redhat.com>
+	<4D592AD1.6020500@redhat.com>
+	<20110214140940.GM18742@htj.dyndns.org>
+	<4D593AD8.7070901@redhat.com>
+	<20110214154430.GR18742@htj.dyndns.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110214173352.GJ5980@genesis.frugalware.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20110214154430.GR18742@htj.dyndns.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Milan Broz <mbroz@redhat.com>, Tao Ma <tm@tao.ma>, linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Mon, 14 Feb 2011 16:44:30 +0100 Tejun Heo <tj@kernel.org> wrote:
 
-On Feb 14, 2011, at 11:33 AM, Miklos Vajna wrote:
+> Hello,
+> 
+> On Mon, Feb 14, 2011 at 03:23:20PM +0100, Milan Broz wrote:
+> > >> I am not sure if this is complete fix... note that:
+> > >> - what happens during mirror resync and read-only log?
+> > >> - for COW, it there situation we need to update header in read-oly mode? (invalidated snap?)
+> > > 
+> > > But if the underlying device is marked ro, dm shouldn't update it at
+> > > all.  The device should be opened ro and ro policy should be enforced.
+> > 
+> > Sure. So we need to check these situations I described.
+> 
+> Yeap, it seems dm folks are gonna take care of dm part.
+> 
+> > Btw the same pattern is in MD code in lock_rdev() ...
+> 
+> Indeed, cc'ing Neil.  Hi, the whole thread can be read from the
+> following URL.
+> 
+>   http://thread.gmane.org/gmane.linux.kernel/1099399/focus=1099735
+> 
+> blkdev_get() now rejects rw open of devices which are marked
+> read-only.  I think the right thing to do would be opening the member
+> devices ro if the array is assembled for ro access (similar to Milan's
+> patch for dm).  How does that sound?
+> 
+> Thanks.
+> 
 
-> On Tue, Feb 01, 2011 at 10:12:36AM -0600, Jonathan Brassow <jbrassow@redhat.com 
-> > wrote:
->>> I do not yet have the right to send those patches (I do this in
->>> university time, so the copyright is not mine), but I hope to be
->>> able to
->>> do so - to get them reviewed.
->
-> Hi,
->
-> I'm attaching the two patches. I tested these on RHEL5, but I don't
-> think there are major changes in newer versions, either.
->
-> If that's the only problem, I can test it on latest linux-2.6.git.
->
-> Any feedback is welcome. :)
+Sounds sensible ... though it is not all that easy to assemble an
+array as 'read-only'....  it is possible though.
 
-Thanks for the patches.  I've seen the first one before (slightly  
-different) - I'll discuss it with others whether to include in rhel5.   
-There is no read-balancing in rhel6/upstream.
+When the array is switched to read-write, do I have to call blkdev_get again
+asking for rw access, then close the old blkdev, or can I 'upgrade'?
 
-The second patch addresses which device should be primary.  This can  
-be done when creating the mirror.  I'm not sure how much benefit there  
-is to doing this additional step.  Most people will access dm mirrors  
-through LVM - not through the dm message interface.  If it makes sense  
-upstream - and you can argue for it - though, I would consider it.
+If a device has multiple opens: some read-only and some read-write, can I
+find out when the last read-write close is gone?  That would be really useful,
+especially if a filesystem down-graded its open to read-only when it is
+remounted read-only..
 
-Wether changes are going into rhel5 or rhel6, we still like it when  
-they go upstream first.  We generally don't like feature inversion.
+[[And if filesystems could be convinced to open the device read-only when the
+  fs is mounted read-only (and just do journal replay to internal data
+  structures) that would be really awesome!!]]
 
-If you have any interest in dm-raid, these are some of the things that  
-need to be done:
-1) Definition of new MD superblock:  Some of this is started, and I've  
-got a working version, but I'm sure there are pieces missing related  
-to offsets that must be tracked for RAID type conversion, etc.
-2) Bitmap work:  The bitmap keeps track of which areas of the array  
-are being written.  Right now, I take all the bitmap code "as-is".   
-There are a number of things in this area to be improved.  Firstly, we  
-don't necessarily need all the fields in the bitmap superblock -  
-perhaps this could be streamlined and added to the new MD superblock.   
-Secondly, things are way too slow.  I get a 10x slowdown when using a  
-bitmap with RAID1 through device-mapper.  This could be due to  the  
-region-size chosen, the bitmap being at a stupid offset, or something  
-else.  This problem could be solved by trial-and-error or through  
-profiling and reason... seems like a great small project.
-3) Conversion code:  New device-mapper targets (very simple small  
-ones) must be written to engage the MD RAID conversion code (like when  
-you change RAID4 to RAID5, for example)
-4) Failure testing
-5) LVM code: to handle creation of RAID devices
-6) dmeventd code: to handle device failures
-
-This is an incomplete list, but does have a variety of complexity and  
-duration.
-
-  brassow
+NeilBrown
