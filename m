@@ -1,49 +1,45 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] [PATCH][RFC] dm: Do not open log and cow device	read-write
- for read-only mappings
-Date: Tue, 15 Feb 2011 13:17:56 +0100
-Message-ID: <4D5A6EF4.3030905@redhat.com>
-References: <4D57E67E.1030707@redhat.com> <4D57F357.6060708@tao.ma> <4D580A8B.5050508@redhat.com> <20110214103026.GA18742@htj.dyndns.org> <4D591664.6090203@redhat.com> <4D592AD1.6020500@redhat.com> <20110214140940.GM18742@htj.dyndns.org> <4D593AD8.7070901@redhat.com> <20110214154430.GR18742@htj.dyndns.org> <20110215101506.43d41ca8@notabene.brown> <20110215020351.GD5825@agk-dp.fab.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH][RFC] dm: Do not open log and cow device
+	read-write for read-only mappings
+Date: Tue, 15 Feb 2011 12:46:29 +0000
+Message-ID: <20110215124629.GF5825@agk-dp.fab.redhat.com>
+References: <4D5A6EF4.3030905@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110215020351.GD5825@agk-dp.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4D5A6EF4.3030905@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, Tejun Heo <tj@kernel.org>, Jens Axboe <axboe@kernel.dk>, Tao Ma <tm@tao.ma>, linux-kernel@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>, Milan Broz <mbroz@redhat.com>, Jens Axboe <axboe@kernel.dk>, Tao Ma <tm@tao.ma>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 02/15/2011 03:03 AM, Alasdair G Kergon wrote:
-> On Tue, Feb 15, 2011 at 10:15:06AM +1100, Neil Brown wrote:
->> Sounds sensible ... though it is not all that easy to assemble an
->> array as 'read-only'....  it is possible though.
->  
-> For dm, it is looking like this change will *require* an upgrade to
-> userspace LVM tools: some people who just update their kernels without
-> updating their LVM tools too may find booting their machine fails.  We
-> are still evaluating exactly which parts of LVM and which classes of
-> users are affected and how best to deal with this, but I know from
-> experience that changes where a kernel update requires an associated
-> userspace update are never well-received and we would normally try to
-> give plenty of lead time by updating the userspace tools and starting to
-> get them into the distributions before imposing the kernel change.
+On Tue, Feb 15, 2011 at 01:17:56PM +0100, Milan Broz wrote:
+>         fd =3D open(device, O_RDWR | flags);
+>         if (fd =3D=3D -1 && errno =3D=3D EROFS) {
+>                 *readonly =3D 1;
+>                 fd =3D open(device, O_RDONLY | flags);
+>         }
 
-This little change is really problematic.
+Would it be reasonable for your patch to return EROFS rather than
+EACCES?
 
-Not only lvm userspace has problems here, also cryptsetup is broken
-for read-only mappings.
+man 2 open:
+       int open(const char *pathname, int flags, mode_t mode);
 
-Of course this it can be easily fixed, but it take some time until
-the new userspace is propagated to distros.
+       EROFS  pathname  refers  to a file on a read-only file system an=
+d write
+              access was requested.
 
-Seems it changed userspace API here. For example, this is no longer
-working now:
+       EACCES The requested access to the file is not allowed, or searc=
+h  per=E2=80=90
+              mission  is denied for one of the directories in the path=
+ prefix
+              of pathname, or the file did not exist yet and write  acc=
+ess  to
+              the  parent  directory  is  not allowed.  (See also path_=
+resolu=E2=80=90
+              tion(7).)
 
-        fd = open(device, O_RDWR | flags);
-        if (fd == -1 && errno == EROFS) {
-                *readonly = 1;
-                fd = open(device, O_RDONLY | flags);
-        }
-
-
-Milan
+Alasdair
