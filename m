@@ -1,14 +1,16 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] Use only specific errors when failing dm-ioctl
-Date: Wed, 16 Feb 2011 18:32:05 +0100
-Message-ID: <1297877525-10163-1-git-send-email-mbroz@redhat.com>
-References: <1297777960-22662-2-git-send-email-mbroz@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: timestamp for shared snapshot
+Date: Wed, 16 Feb 2011 17:55:44 +0000
+Message-ID: <20110216175544.GB28729@agk-dp.fab.redhat.com>
+References: <AANLkTinLFoOQ-mbPMAHQ0RCObyrWH0jMP4qQ0wsC4uaU@mail.gmail.com>
+	<20110216143641.GA28595@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1297777960-22662-2-git-send-email-mbroz@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20110216143641.GA28595@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,46 +20,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: devicemapper niko <devicemapper.niko@gmail.com>
 List-Id: dm-devel.ids
 
-The return codes of ioctl are part of device-mapper
-API and only defined errno should be returned.
+> > Is it possible to add timestamp and comment for each snapshots ?
 
-Unify return codes for device lookup function on one place
-and allow ENOMEM and ENXIO for now.
+Good idea - as a userspace lvm2 feature, yes.
 
-(Later it can be added more codes as userspace is prepared
-to handle them.)
+We currently store creation details for each VG.
+I agree we should also store such details for each LV.
+This should be optional, but default to enabled.
+(People short of space can perhaps turn it off, discarding any existing
+details.)
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
----
- drivers/md/dm-table.c |   12 +++++++++++-
- 1 files changed, 11 insertions(+), 1 deletions(-)
+Storing a comment is perhaps an extension to tag support that's been discussed,
+to allow longer tags with a wider character set.
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 38e4eb1..ca19e4d 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -532,7 +532,17 @@ EXPORT_SYMBOL_GPL(dm_set_device_limits);
- int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 		  struct dm_dev **result)
- {
--	return __table_get_device(ti->table, ti, path, mode, result);
-+	int r = __table_get_device(ti->table, ti, path, mode, result);
-+
-+	/*
-+	 * Return code is directly used for dm ioctl.
-+	 * Allow only ENOMEM here, all other codes
-+	 * means device lookup failed.
-+	 */
-+	if (r && r != -ENOMEM)
-+		r = -ENXIO;
-+
-+	return r;
- }
- 
- 
--- 
-1.7.2.3
+> It should be noted that the above shared snapshot work is unlikely to
+> make it upstream (portions of it likely will, for instance the lvm2
+> userspace changes).  A new shared snapshot implementation is in
+> development.
+
+Different snapshot implementations are optimised for different types of usage.
+Each one involves choosing between different trade-offs.  We're unlikely ever
+to have one solution that is optimal for everyone.
+
+In that spirit, I hope to be submitting more than one shared snapshot
+implementation upstream, including *both* of the ones referred to in this
+message.  But I want the interfaces used by these implementations to be
+basically compatible so that the same userspace tools can make use of them.
+
+Alasdair
