@@ -1,16 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: timestamp for shared snapshot
-Date: Wed, 16 Feb 2011 17:55:44 +0000
-Message-ID: <20110216175544.GB28729@agk-dp.fab.redhat.com>
-References: <AANLkTinLFoOQ-mbPMAHQ0RCObyrWH0jMP4qQ0wsC4uaU@mail.gmail.com>
-	<20110216143641.GA28595@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath configure.c struc ...
+Date: 16 Feb 2011 19:00:53 -0000
+Message-ID: <20110216190053.12944.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20110216143641.GA28595@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,35 +16,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: devicemapper niko <devicemapper.niko@gmail.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> > Is it possible to add timestamp and comment for each snapshots ?
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2011-02-16 19:00:52
 
-Good idea - as a userspace lvm2 feature, yes.
+Modified files:
+	libmultipath   : configure.c structs_vec.c 
 
-We currently store creation details for each VG.
-I agree we should also store such details for each LV.
-This should be optional, but default to enabled.
-(People short of space can perhaps turn it off, discarding any existing
-details.)
+Log message:
+	Fix for bz 677821.  Multipathd was not aways going into recovery mode when all
+	paths went down, and no_path_retry was set to timeout because of two bugs.
+	First off, multipathd was always resetting the hardware entry when it was
+	updating the multipath device.  This caused problems when no paths were
+	available to get the hardware information from.  Second, in one place,
+	multipathd forgot to count ghost paths in nr_active paths, this allowed
+	nr_active paths to go negative.
 
-Storing a comment is perhaps an extension to tag support that's been discussed,
-to allow longer tags with a wider character set.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.9&r2=1.2.2.10
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/structs_vec.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1.2.5&r2=1.1.2.6
 
-> It should be noted that the above shared snapshot work is unlikely to
-> make it upstream (portions of it likely will, for instance the lvm2
-> userspace changes).  A new shared snapshot implementation is in
-> development.
-
-Different snapshot implementations are optimised for different types of usage.
-Each one involves choosing between different trade-offs.  We're unlikely ever
-to have one solution that is optimal for everyone.
-
-In that spirit, I hope to be submitting more than one shared snapshot
-implementation upstream, including *both* of the ones referred to in this
-message.  But I want the interfaces used by these implementations to be
-basically compatible so that the same userspace tools can make use of them.
-
-Alasdair
+--- multipath-tools/libmultipath/configure.c	2010/06/23 16:28:07	1.2.2.9
++++ multipath-tools/libmultipath/configure.c	2011/02/16 19:00:51	1.2.2.10
+@@ -77,7 +77,7 @@
+ 	if (mpp->pgpolicyfn && mpp->pgpolicyfn(mpp))
+ 		return 1;
+ 
+-	mpp->nr_active = pathcount(mpp, PATH_UP);
++	mpp->nr_active = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
+ 
+ 	/*
+ 	 * ponders each path group and determine highest prio pg
+--- multipath-tools/libmultipath/structs_vec.c	2010/06/23 16:28:07	1.1.2.5
++++ multipath-tools/libmultipath/structs_vec.c	2011/02/16 19:00:51	1.1.2.6
+@@ -285,7 +285,8 @@
+ 	}
+ 
+ 	//adopt_paths(vecs->pathvec, mpp);
+-	mpp->hwe = extract_hwe_from_path(mpp);
++	if (!mpp->hwe)
++		mpp->hwe = extract_hwe_from_path(mpp);
+ 	select_rr_weight(mpp);
+ 	select_pgfailback(mpp);
+ 	set_no_path_retry(mpp);
