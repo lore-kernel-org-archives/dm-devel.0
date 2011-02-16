@@ -1,71 +1,101 @@
-From: Miklos Vajna <vmiklos@ulx.hu>
-Subject: Re: Improving dm-mirror as a final year project
-Date: Wed, 16 Feb 2011 18:12:19 +0100
-Message-ID: <20110216171219.GA5980@genesis.frugalware.org>
-References: <20110125155342.GG26864@genesis.frugalware.org>
-	<63C70D40-54EE-40A2-98B9-82E06A956941@redhat.com>
-	<20110214173352.GJ5980@genesis.frugalware.org>
-	<2D45663B-1CE9-4266-97FF-C2C6A959EA64@redhat.com>
-	<20110215125214.GR5980@genesis.frugalware.org>
-	<1DF24E8A-B258-4F95-BE8D-15C8EB311748@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Curtis Gedak <gedakc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [dm-devel] What is the deal with the partition
+	separator?
+Date: Wed, 16 Feb 2011 10:19:59 -0700
+Message-ID: <4D5C073F.3020502@gmail.com>
+References: <4D5B42BE.3050301@cfl.rr.com> <4D5B7ED9.20304@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1DF24E8A-B258-4F95-BE8D-15C8EB311748@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
+In-Reply-To: <4D5B7ED9.20304-l3A5Bk7waGM@public.gmane.org>
+List-Unsubscribe: <http://lists.alioth.debian.org/mailman/options/parted-devel>,
+	<mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.alioth.debian.org/pipermail/parted-devel>
+List-Post: <mailto:parted-devel-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
+List-Help: <mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.alioth.debian.org/mailman/listinfo/parted-devel>,
+	<mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=subscribe>
+Sender: parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org
+Errors-To: parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org
+To: Hannes Reinecke <hare-l3A5Bk7waGM@public.gmane.org>
+Cc: parted-devel-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, Phillip Susi <psusi-3tLf1voIkJTQT0dZR+AlfA@public.gmane.org>, Debian LVM Team <pkg-lvm-maintainers-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Tue, Feb 15, 2011 at 04:13:15PM -0600, Jonathan Brassow <jbrassow@redhat.com> wrote:
-> > Oh, do I read the code correctly that rhel6/upstream always reads from
-> > the first mirror and switches only in case there is a read failure?
-> 
-> yes
+On 11-02-16 12:38 AM, Hannes Reinecke wrote:
+> On 02/16/2011 04:21 AM, Phillip Susi wrote:
+>> It used to be that partitions device names just had a digit added on to
+>> the base disk device name.  It seems that this became problematic at
+>> some point with device mapper and oddly named disks, and there have been
+>> several responses to it:
+>>
+>> 1)  dmraid and (lib)parted now always add a 'p' between the base name
+>> and the partition number
 
-Hm, was the was reason for dropping the round robin feature? I thought
-that round robin causes better performance, given that IO reads are done
-in an async way. Did I miss something or just nobody ported the patch to
-RHEL6/upstream?
+Only newer versions of (lib)parted which link with the dmraid library 
+work this way with dmraid devices.  In this situation it is the dmraid 
+library that is coming up with the device names.  For all other devices, 
+(lib)parted uses the "linux scheme since the dawn of time" mentioned 
+below.  Older versions of (lib)parted follow the "linux scheme since the 
+dawn of time".
 
-> Perhaps, but if you don't encode this in the LVM metadata, you will  
-> have to perform the action every time you reboot.  Instead, you could  
-> reorder the devices in userspace and reload the table.
+>> 2)  kpartx from multipath-tools adds the 'p' only if the base name ends
+>> in a digit
 
-I was not aware such a reorder is possible. That patch then does not
-make too much sense, agreed. ;) (Do you have a pointer to some
-documentation on how that reorder can be done? I can't find anything
-about reorder in the lvconvert/dmsetup manpage.
+kpartx follows the "linux scheme since the dawn of time" mentioned below.
 
-> The basic component that covers RAID456 is available upstream, as you  
-> saw.  I have an additional set of ~12 (reasonably small) patches that  
-> add RAID1 and superblock/bitmap support.  These patches are not yet  
-> upstream nor are they in any RHEL product.
+>> 4)  gparted now explicitly tells dmraid to not use any character so that
+>> it behaves like older versions and is therefore compatible with the
+>> kpartx method that gparted has adopted, at least when the base name does
+>> not end with a digit.
+>>
 
-Then what is the recommended platform to hack dm-raid? I have RHEL6 at
-the moment. Is it OK to try to cherry-pick the single commit from
-upstream + apply your patches or is it better to install rawhide where
-the kernel is already 2.6.38rc5 (as far as I see) and only apply your
-patches there?
+GParted uses (lib)parted to come up with device names, except in the 
+case of dmraid devices.  Because dmraid does not follow the "linux 
+scheme since the dawn of time", gparted calls dmraid directly to create 
+names following the old dmraid standard (only append partition number to 
+device name).  If kpartx is available, then GParted will call kpartx to 
+ensure that dmraid device names follow the "linux scheme since the dawn 
+of time".  This behaviour enables GParted to work with all versions of 
+dmraid, and maintain compatibility with (lib)parted versions 1.7.1 and 
+higher.
 
-> Yes, I have a script called 'gime_raid.pl' that creates the device- 
-> mapper tables for dm-raid.  Eventually, this will be pushed into LVM,  
-> but it was much easier (for testing purposes) to start with a perl  
-> script.
+>> Each of these components needs to agree on what the correct name is or
+>> chaos ensues.  I would like to discuss the merits of each and try to
+>> decide on a standard.
+>>
+>> Having thought about it for a moment, it seems to me that deciding on
+>> always adding the 'p' is the way to go, since the 'art' just makes
+>> things longer for no good reason, and if you only sometimes add the 'p'
+>> then you can't tell if a device name that ends in a digit that does not
+>> follow a 'p' is a whole disk, or a partition.
+>>
+> No.
+>
+> The linux scheme since the dawn of time is to
+> a) Add the partition number to the device node name
+> b) If last letter of the device node name is a number, insert a 'p'
+> between device node name and partition number
+>
+> with the advent of persistent device names (via udev) the partition
+> separator (for persistent links only!) is '-part'.
+>
+> So you have
+>
+> /dev/sda
+> /dev/sda1
+> /dev/disk/by-id/scsi-0WhatAStupidName
+> /dev/disk/by-id/scsi-0WhatAStupidName-part1
+>
+> persistent device names are longish anyway, so we can as well use
+> something readable for partitions.
+>
+>
 
-Sure. :)
+My thoughts are that if possible, tools should try to create partition 
+names using the "linux scheme since the dawn of time", unless there are 
+good reasons to not do this.
 
-> For convenience, I've attached the patches I'm working on (quilt  
-> directory) and the latest gime_raid.pl script.
-
-Thanks!
+Regards,
+Curtis Gedak
+(Maintainer of GParted)
