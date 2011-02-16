@@ -1,101 +1,63 @@
-From: Curtis Gedak <gedakc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [dm-devel] What is the deal with the partition
-	separator?
-Date: Wed, 16 Feb 2011 10:19:59 -0700
-Message-ID: <4D5C073F.3020502@gmail.com>
-References: <4D5B42BE.3050301@cfl.rr.com> <4D5B7ED9.20304@suse.de>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH] Use only specific errors when failing dm-ioctl
+Date: Wed, 16 Feb 2011 18:32:05 +0100
+Message-ID: <1297877525-10163-1-git-send-email-mbroz@redhat.com>
+References: <1297777960-22662-2-git-send-email-mbroz@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
-In-Reply-To: <4D5B7ED9.20304-l3A5Bk7waGM@public.gmane.org>
-List-Unsubscribe: <http://lists.alioth.debian.org/mailman/options/parted-devel>,
-	<mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.alioth.debian.org/pipermail/parted-devel>
-List-Post: <mailto:parted-devel-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
-List-Help: <mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.alioth.debian.org/mailman/listinfo/parted-devel>,
-	<mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=subscribe>
-Sender: parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org
-Errors-To: parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org
-To: Hannes Reinecke <hare-l3A5Bk7waGM@public.gmane.org>
-Cc: parted-devel-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, Phillip Susi <psusi-3tLf1voIkJTQT0dZR+AlfA@public.gmane.org>, Debian LVM Team <pkg-lvm-maintainers-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1297777960-22662-2-git-send-email-mbroz@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 11-02-16 12:38 AM, Hannes Reinecke wrote:
-> On 02/16/2011 04:21 AM, Phillip Susi wrote:
->> It used to be that partitions device names just had a digit added on to
->> the base disk device name.  It seems that this became problematic at
->> some point with device mapper and oddly named disks, and there have been
->> several responses to it:
->>
->> 1)  dmraid and (lib)parted now always add a 'p' between the base name
->> and the partition number
+The return codes of ioctl are part of device-mapper
+API and only defined errno should be returned.
 
-Only newer versions of (lib)parted which link with the dmraid library 
-work this way with dmraid devices.  In this situation it is the dmraid 
-library that is coming up with the device names.  For all other devices, 
-(lib)parted uses the "linux scheme since the dawn of time" mentioned 
-below.  Older versions of (lib)parted follow the "linux scheme since the 
-dawn of time".
+Unify return codes for device lookup function on one place
+and allow ENOMEM and ENXIO for now.
 
->> 2)  kpartx from multipath-tools adds the 'p' only if the base name ends
->> in a digit
+(Later it can be added more codes as userspace is prepared
+to handle them.)
 
-kpartx follows the "linux scheme since the dawn of time" mentioned below.
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+---
+ drivers/md/dm-table.c |   12 +++++++++++-
+ 1 files changed, 11 insertions(+), 1 deletions(-)
 
->> 4)  gparted now explicitly tells dmraid to not use any character so that
->> it behaves like older versions and is therefore compatible with the
->> kpartx method that gparted has adopted, at least when the base name does
->> not end with a digit.
->>
-
-GParted uses (lib)parted to come up with device names, except in the 
-case of dmraid devices.  Because dmraid does not follow the "linux 
-scheme since the dawn of time", gparted calls dmraid directly to create 
-names following the old dmraid standard (only append partition number to 
-device name).  If kpartx is available, then GParted will call kpartx to 
-ensure that dmraid device names follow the "linux scheme since the dawn 
-of time".  This behaviour enables GParted to work with all versions of 
-dmraid, and maintain compatibility with (lib)parted versions 1.7.1 and 
-higher.
-
->> Each of these components needs to agree on what the correct name is or
->> chaos ensues.  I would like to discuss the merits of each and try to
->> decide on a standard.
->>
->> Having thought about it for a moment, it seems to me that deciding on
->> always adding the 'p' is the way to go, since the 'art' just makes
->> things longer for no good reason, and if you only sometimes add the 'p'
->> then you can't tell if a device name that ends in a digit that does not
->> follow a 'p' is a whole disk, or a partition.
->>
-> No.
->
-> The linux scheme since the dawn of time is to
-> a) Add the partition number to the device node name
-> b) If last letter of the device node name is a number, insert a 'p'
-> between device node name and partition number
->
-> with the advent of persistent device names (via udev) the partition
-> separator (for persistent links only!) is '-part'.
->
-> So you have
->
-> /dev/sda
-> /dev/sda1
-> /dev/disk/by-id/scsi-0WhatAStupidName
-> /dev/disk/by-id/scsi-0WhatAStupidName-part1
->
-> persistent device names are longish anyway, so we can as well use
-> something readable for partitions.
->
->
-
-My thoughts are that if possible, tools should try to create partition 
-names using the "linux scheme since the dawn of time", unless there are 
-good reasons to not do this.
-
-Regards,
-Curtis Gedak
-(Maintainer of GParted)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 38e4eb1..ca19e4d 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -532,7 +532,17 @@ EXPORT_SYMBOL_GPL(dm_set_device_limits);
+ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 		  struct dm_dev **result)
+ {
+-	return __table_get_device(ti->table, ti, path, mode, result);
++	int r = __table_get_device(ti->table, ti, path, mode, result);
++
++	/*
++	 * Return code is directly used for dm ioctl.
++	 * Allow only ENOMEM here, all other codes
++	 * means device lookup failed.
++	 */
++	if (r && r != -ENOMEM)
++		r = -ENXIO;
++
++	return r;
+ }
+ 
+ 
+-- 
+1.7.2.3
