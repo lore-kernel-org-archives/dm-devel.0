@@ -1,74 +1,70 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH] Fix over-zealous flush_disk when changing device size.
-Date: Thu, 17 Feb 2011 12:03:48 -0500
-Message-ID: <x494o82wq2z.fsf@segfault.boston.devel.redhat.com>
-References: <20110217165057.5c50e566@notabene.brown>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20110217165057.5c50e566@notabene.brown> (NeilBrown's message of
-	"Thu, 17 Feb 2011 16:50:57 +1100")
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: Andrew Patterson <andrew.patterson@hp.com>, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: Improving dm-mirror as a final year project
+Date: Thu, 17 Feb 2011 15:02:04 -0600
+Message-ID: <D19C1F43-C452-4F3C-9975-1A11680724D1@redhat.com>
+References: <20110125155342.GG26864@genesis.frugalware.org>
+	<63C70D40-54EE-40A2-98B9-82E06A956941@redhat.com>
+	<20110214173352.GJ5980@genesis.frugalware.org>
+	<2D45663B-1CE9-4266-97FF-C2C6A959EA64@redhat.com>
+	<20110215125214.GR5980@genesis.frugalware.org>
+	<1DF24E8A-B258-4F95-BE8D-15C8EB311748@redhat.com>
+	<20110216171219.GA5980@genesis.frugalware.org>
+	<20110217104926.GG5980@genesis.frugalware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v936)
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"; DelSp="yes"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20110217104926.GG5980@genesis.frugalware.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-NeilBrown <neilb@suse.de> writes:
 
-> Hi Andrew (and others)
->  I wonder if you would review the following for me and comment.
->
-> Thanks,
-> NeilBrown
->
->
->
-> From e7f75c2a757108cdd83ce8c808a16bf27686c95f Mon Sep 17 00:00:00 2001
-> From: NeilBrown <neilb@suse.de>
-> Date: Thu, 17 Feb 2011 16:37:30 +1100
-> Subject: [PATCH] Fix over-zealous flush_disk when changing device size.
->
-> There are two cases when we call flush_disk.
-> In one, the device has disappeared (check_disk_change) so any
-> data will hold becomes irrelevant.
-> In the oter, the device has changed size (check_disk_size_change)
-> so data we hold may be irrelevant.
->
-> In both cases it makes sense to discard any 'clean' buffers,
-> so they will be read back from the device if needed.
->
-> In the former case it makes sense to discard 'dirty' buffers
-> as there will never be anywhere safe to write the data.  In the
-> second case it *does*not* make sense to discard dirty buffers
-> as that will lead to file system corruption when you simply enlarge
-> the containing devices.
->
-> flush_disk calls __invalidate_devices.
-> __invalidate_device calls both invalidate_inodes and invalidate_bdev.
->
-> invalidate_inodes *does* discard I_DIRTY inodes and this does lead
-> to fs corruption.
->
-> invalidate_bev *does*not* discard dirty pages, but I don't really care
-> about that at present.
->
-> So this patch adds a flag to __invalidate_device (calling it
-> __invalidate_device2) to indicate whether dirty buffers should be
-> killed, and this is passed to invalidate_inodes which can choose to
-> skip dirty inodes.
->
-> flusk_disk then passes true from check_disk_change and false from
-> check_disk_size_change.
->
-> dm avoids tripping over this problem by calling i_size_write directly
-> rathher than using check_disk_size_change.
->
-> md does use check_disk_size_change and so is affected.
->
-> This regression was introduced by commit 608aeef17a
-> which causes check_disk_size_change to call
-> flush_disk.
+On Feb 17, 2011, at 4:49 AM, Miklos Vajna wrote:
 
-This makes sense to me.  Nice write-up, Neil.
+> On Wed, Feb 16, 2011 at 06:12:19PM +0100, Miklos Vajna  
+> <vmiklos@ulx.hu> wrote:
+>>> The basic component that covers RAID456 is available upstream, as  
+>>> you
+>>> saw.  I have an additional set of ~12 (reasonably small) patches  
+>>> that
+>>> add RAID1 and superblock/bitmap support.  These patches are not yet
+>>> upstream nor are they in any RHEL product.
+>>
+>> Then what is the recommended platform to hack dm-raid? I have RHEL6  
+>> at
+>> the moment. Is it OK to try to cherry-pick the single commit from
+>> upstream + apply your patches or is it better to install rawhide  
+>> where
+>> the kernel is already 2.6.38rc5 (as far as I see) and only apply your
+>> patches there?
 
-Acked-by: Jeff Moyer <jmoyer@redhat.com>
+I tend to use RHEL6 + the latest upstream kernel.  I would /not/  
+cherry-pick the upstream dm-raid patch and then add my next set - you  
+might miss some other valuable MD patches (there have been a couple).
+
+>>
+>>> For convenience, I've attached the patches I'm working on (quilt
+>>> directory) and the latest gime_raid.pl script.
+>
+> I tried these on Fedora 15 with mixed results.
+>
+> I prepared a kernel source tree:
+>
+> ----
+> $ wget http://download.fedora.redhat.com/pub/fedora/linux/development/15/source/SRPMS/kernel-2.6.38-0.rc4.git0.2.fc15.src.rpm
+
+Please use upstream (kernel.org) kernel.
+
+Contact me with any trouble.
+
+  brassow
