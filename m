@@ -1,39 +1,45 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: What is the deal with the partition separator?
-Date: Thu, 17 Feb 2011 16:53:32 +0000
-Message-ID: <20110217165332.GE28729@agk-dp.fab.redhat.com>
+From: Curtis Gedak <gedakc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [dm-devel] What is the deal with the partition
+	separator?
+Date: Thu, 17 Feb 2011 09:54:32 -0700
+Message-ID: <4D5D52C8.3080706@gmail.com>
 References: <4D5B42BE.3050301@cfl.rr.com> <4D5B7ED9.20304@suse.de>
 	<4D5C2793.1020601@cfl.rr.com> <4D5CCE75.5090202@suse.de>
 	<4D5D375F.9070106@cfl.rr.com> <4D5D3B34.4000005@suse.de>
-	<4D5D3B0F.3050708@cfl.rr.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4D5D3B0F.3050708@cfl.rr.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Curtis Gedak <gedakc@gmail.com>, serge.hallyn@ubuntu.com, parted-devel@lists.alioth.debian.org, Debian LVM Team <pkg-lvm-maintainers@lists.alioth.debian.org>
+Return-path: <parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
+In-Reply-To: <4D5D3B34.4000005-l3A5Bk7waGM@public.gmane.org>
+List-Unsubscribe: <http://lists.alioth.debian.org/mailman/options/parted-devel>,
+	<mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.alioth.debian.org/pipermail/parted-devel>
+List-Post: <mailto:parted-devel-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
+List-Help: <mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.alioth.debian.org/mailman/listinfo/parted-devel>,
+	<mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=subscribe>
+Sender: parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org
+Errors-To: parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org
+To: Hannes Reinecke <hare-l3A5Bk7waGM@public.gmane.org>
+Cc: parted-devel-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org, device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, Phillip Susi <psusi-3tLf1voIkJTQT0dZR+AlfA@public.gmane.org>, Debian LVM Team <pkg-lvm-maintainers-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
 List-Id: dm-devel.ids
 
-Partitions should be created only once, in one place.
+On 11-02-17 08:13 AM, Hannes Reinecke wrote:
+> So whichever way you proceed, you should avoid using a naming scheme
+> which resembles the linux one.
 
-If a second instance of anything tries to create them too, it should,
-by default, detect that they are already there and not proceed.
+ From my perspective as a maintainer of partitioning software it would 
+be nice if given the device name and partition number I could easily 
+determine the partition name.
 
-You should not be able to run kpartx twice on the same underlying
-disk with different delimiters without some sort of 'force' option.
+Unfortunately this is not easily done when there are deviations from the 
+linux model ("insert a 'p' between the device name and the partition 
+number when the device name ends in a number").
 
-(Check by querying /sys/.../holders ?)
+Each deviation from the linux partition naming model results in more 
+code to handle the deviation, and a corresponding increased number of 
+test cases to avoid errors.
 
-Alasdair
+Regards,
+Curtis Gedak
+(Maintainer of GParted)
