@@ -1,35 +1,74 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: What is the deal with the partition separator?
-Date: Thu, 17 Feb 2011 16:58:43 +0000
-Message-ID: <20110217165843.GA27449@agk-dp.fab.redhat.com>
-References: <4D5B42BE.3050301@cfl.rr.com> <4D5B7ED9.20304@suse.de>
-	<4D5C2793.1020601@cfl.rr.com> <4D5CCE75.5090202@suse.de>
-	<4D5D375F.9070106@cfl.rr.com> <4D5D3B34.4000005@suse.de>
-	<4D5D3B0F.3050708@cfl.rr.com>
-	<20110217165332.GE28729@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH] Fix over-zealous flush_disk when changing device size.
+Date: Thu, 17 Feb 2011 12:03:48 -0500
+Message-ID: <x494o82wq2z.fsf@segfault.boston.devel.redhat.com>
+References: <20110217165057.5c50e566@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20110217165332.GE28729@agk-dp.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.de>, Curtis Gedak <gedakc@gmail.com>, serge.hallyn@ubuntu.com, parted-devel@lists.alioth.debia
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20110217165057.5c50e566@notabene.brown> (NeilBrown's message of
+	"Thu, 17 Feb 2011 16:50:57 +1100")
+Sender: linux-raid-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: Andrew Patterson <andrew.patterson@hp.com>, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Feb 17, 2011 at 04:53:32PM +0000, Alasdair G Kergon wrote:
-> (Check by querying /sys/.../holders ?)
- 
-Actually, would it be sufficient for kpartx to attempt an exclusive
-open?
+NeilBrown <neilb@suse.de> writes:
 
-Alasdair
+> Hi Andrew (and others)
+>  I wonder if you would review the following for me and comment.
+>
+> Thanks,
+> NeilBrown
+>
+>
+>
+> From e7f75c2a757108cdd83ce8c808a16bf27686c95f Mon Sep 17 00:00:00 2001
+> From: NeilBrown <neilb@suse.de>
+> Date: Thu, 17 Feb 2011 16:37:30 +1100
+> Subject: [PATCH] Fix over-zealous flush_disk when changing device size.
+>
+> There are two cases when we call flush_disk.
+> In one, the device has disappeared (check_disk_change) so any
+> data will hold becomes irrelevant.
+> In the oter, the device has changed size (check_disk_size_change)
+> so data we hold may be irrelevant.
+>
+> In both cases it makes sense to discard any 'clean' buffers,
+> so they will be read back from the device if needed.
+>
+> In the former case it makes sense to discard 'dirty' buffers
+> as there will never be anywhere safe to write the data.  In the
+> second case it *does*not* make sense to discard dirty buffers
+> as that will lead to file system corruption when you simply enlarge
+> the containing devices.
+>
+> flush_disk calls __invalidate_devices.
+> __invalidate_device calls both invalidate_inodes and invalidate_bdev.
+>
+> invalidate_inodes *does* discard I_DIRTY inodes and this does lead
+> to fs corruption.
+>
+> invalidate_bev *does*not* discard dirty pages, but I don't really care
+> about that at present.
+>
+> So this patch adds a flag to __invalidate_device (calling it
+> __invalidate_device2) to indicate whether dirty buffers should be
+> killed, and this is passed to invalidate_inodes which can choose to
+> skip dirty inodes.
+>
+> flusk_disk then passes true from check_disk_change and false from
+> check_disk_size_change.
+>
+> dm avoids tripping over this problem by calling i_size_write directly
+> rathher than using check_disk_size_change.
+>
+> md does use check_disk_size_change and so is affected.
+>
+> This regression was introduced by commit 608aeef17a
+> which causes check_disk_size_change to call
+> flush_disk.
+
+This makes sense to me.  Nice write-up, Neil.
+
+Acked-by: Jeff Moyer <jmoyer@redhat.com>
