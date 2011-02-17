@@ -1,68 +1,185 @@
-From: Curtis Gedak <gedakc-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [dm-devel] What is the deal with the partition
-	separator?
-Date: Wed, 16 Feb 2011 13:18:47 -0700
-Message-ID: <4D5C3127.7050304@gmail.com>
-References: <4D5B42BE.3050301@cfl.rr.com> <4D5B7ED9.20304@suse.de>
-	<4D5C073F.3020502@gmail.com> <4D5C268B.6070507@cfl.rr.com>
+From: NeilBrown <neilb@suse.de>
+Subject: [PATCH] Fix over-zealous flush_disk when changing device size.
+Date: Thu, 17 Feb 2011 16:50:57 +1100
+Message-ID: <20110217165057.5c50e566@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
-In-Reply-To: <4D5C268B.6070507-3tLf1voIkJTQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <http://lists.alioth.debian.org/mailman/options/parted-devel>,
-	<mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.alioth.debian.org/pipermail/parted-devel>
-List-Post: <mailto:parted-devel-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
-List-Help: <mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.alioth.debian.org/mailman/listinfo/parted-devel>,
-	<mailto:parted-devel-request-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org?subject=subscribe>
-Sender: parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org
-Errors-To: parted-devel-bounces+gcgpd-parted-devel=m.gmane.org-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org
-To: Phillip Susi <psusi-3tLf1voIkJTQT0dZR+AlfA@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, serge.hallyn-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org, parted-devel-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org, Hannes Reinecke <hare-l3A5Bk7waGM@public.gmane.org>, Debian LVM Team <pkg-lvm-maintainers-XbBxUvOt3X2LieD7tvxI8l/i77bcL1HB@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Andrew Patterson <andrew.patterson@hp.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 11-02-16 12:33 PM, Phillip Susi wrote:
-> On 2/16/2011 12:19 PM, Curtis Gedak wrote:
->> Only newer versions of (lib)parted which link with the dmraid library
->> work this way with dmraid devices.  In this situation it is the dmraid
->> library that is coming up with the device names.  For all other devices,
->> (lib)parted uses the "linux scheme since the dawn of time" mentioned
->> below.  Older versions of (lib)parted follow the "linux scheme since the
->> dawn of time".
-> (lib)parted does not link to dmraid; it contains its own code to
-> generate the name by always adding the 'p' in libparted/arch/linux.c.
 
-My bad.  (lib)parted does not link with dmraid.  It has been a while 
-since I looked deeply into the libparted code.
+Hi Andrew (and others)
+ I wonder if you would review the following for me and comment.
 
-I do know that the current version of parted in git has a 
-"--enable-device-mapper" option for configure that is enabled by default.
-http://git.debian.org/?p=parted/parted.git;a=blob;f=configure.ac;h=25960a74abe909f7b11580aa053c0689a966820d;hb=HEAD#l81
-
-The function _device_get_part_path in libparted/arc/linux.c, does appear 
-to always insert a 'p'  for devices such as PED_DEVICE_DM and 
-PED_DEVICE_ATARAID.
-http://git.debian.org/?p=parted/parted.git;a=blob;f=libparted/arch/linux.c;h=0288a150769298b92f06d96f8515f96bc27066ea;hb=HEAD#l2198
+Thanks,
+NeilBrown
 
 
-Regarding the GParted code, it has been written to will work with dmraid 
-devices regardless of whether the "--enable-device-mapper" configure 
-option is enabled or disabled.
 
->> GParted uses (lib)parted to come up with device names, except in the
->> case of dmraid devices.  Because dmraid does not follow the "linux
->> scheme since the dawn of time", gparted calls dmraid directly to create
->> names following the old dmraid standard (only append partition number to
->> device name).  If kpartx is available, then GParted will call kpartx to
->> ensure that dmraid device names follow the "linux scheme since the dawn
->> of time".  This behaviour enables GParted to work with all versions of
->> dmraid, and maintain compatibility with (lib)parted versions 1.7.1 and
->> higher.
-> It shouldn't be using both dmraid and kpartx to create the partition
-> devices.  If dmraid does it, then calling kpartx at best does nothing,
-> and at worst creates duplicate devices.
+From e7f75c2a757108cdd83ce8c808a16bf27686c95f Mon Sep 17 00:00:00 2001
+From: NeilBrown <neilb@suse.de>
+Date: Thu, 17 Feb 2011 16:37:30 +1100
+Subject: [PATCH] Fix over-zealous flush_disk when changing device size.
 
-It would be easy in GParted to not call kpartx at all.  This is in the 
-code to try to follow the normal partition naming standards for GNU/Linux.
+There are two cases when we call flush_disk.
+In one, the device has disappeared (check_disk_change) so any
+data will hold becomes irrelevant.
+In the oter, the device has changed size (check_disk_size_change)
+so data we hold may be irrelevant.
+
+In both cases it makes sense to discard any 'clean' buffers,
+so they will be read back from the device if needed.
+
+In the former case it makes sense to discard 'dirty' buffers
+as there will never be anywhere safe to write the data.  In the
+second case it *does*not* make sense to discard dirty buffers
+as that will lead to file system corruption when you simply enlarge
+the containing devices.
+
+flush_disk calls __invalidate_devices.
+__invalidate_device calls both invalidate_inodes and invalidate_bdev.
+
+invalidate_inodes *does* discard I_DIRTY inodes and this does lead
+to fs corruption.
+
+invalidate_bev *does*not* discard dirty pages, but I don't really care
+about that at present.
+
+So this patch adds a flag to __invalidate_device (calling it
+__invalidate_device2) to indicate whether dirty buffers should be
+killed, and this is passed to invalidate_inodes which can choose to
+skip dirty inodes.
+
+flusk_disk then passes true from check_disk_change and false from
+check_disk_size_change.
+
+dm avoids tripping over this problem by calling i_size_write directly
+rathher than using check_disk_size_change.
+
+md does use check_disk_size_change and so is affected.
+
+This regression was introduced by commit 608aeef17a
+which causes check_disk_size_change to call
+flush_disk.
+
+Cc: stable@kernel.org
+Cc: Andrew Patterson <andrew.patterson@hp.com>
+Cc: Jens Axboe <axboe@kernel.dk>
+Signed-off-by: NeilBrown <neilb@suse.de>
+---
+ fs/block_dev.c     |   12 ++++++------
+ fs/inode.c         |    6 +++++-
+ fs/internal.h      |    2 +-
+ include/linux/fs.h |    6 +++++-
+ 4 files changed, 17 insertions(+), 9 deletions(-)
+
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 333a7bb..1575034 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -927,9 +927,9 @@ EXPORT_SYMBOL_GPL(bd_unlink_disk_holder);
+  * when a disk has been changed -- either by a media change or online
+  * resize.
+  */
+-static void flush_disk(struct block_device *bdev)
++static void flush_disk(struct block_device *bdev, bool kill_dirty)
+ {
+-	if (__invalidate_device(bdev)) {
++	if (__invalidate_device2(bdev, kill_dirty)) {
+ 		char name[BDEVNAME_SIZE] = "";
+ 
+ 		if (bdev->bd_disk)
+@@ -966,7 +966,7 @@ void check_disk_size_change(struct gendisk *disk, struct block_device *bdev)
+ 		       "%s: detected capacity change from %lld to %lld\n",
+ 		       name, bdev_size, disk_size);
+ 		i_size_write(bdev->bd_inode, disk_size);
+-		flush_disk(bdev);
++		flush_disk(bdev, false);
+ 	}
+ }
+ EXPORT_SYMBOL(check_disk_size_change);
+@@ -1019,7 +1019,7 @@ int check_disk_change(struct block_device *bdev)
+ 	if (!(events & DISK_EVENT_MEDIA_CHANGE))
+ 		return 0;
+ 
+-	flush_disk(bdev);
++	flush_disk(bdev, true);
+ 	if (bdops->revalidate_disk)
+ 		bdops->revalidate_disk(bdev->bd_disk);
+ 	return 1;
+@@ -1601,7 +1601,7 @@ fail:
+ }
+ EXPORT_SYMBOL(lookup_bdev);
+ 
+-int __invalidate_device(struct block_device *bdev)
++int __invalidate_device2(struct block_device *bdev, bool kill_dirty)
+ {
+ 	struct super_block *sb = get_super(bdev);
+ 	int res = 0;
+@@ -1614,7 +1614,7 @@ int __invalidate_device(struct block_device *bdev)
+ 		 * hold).
+ 		 */
+ 		shrink_dcache_sb(sb);
+-		res = invalidate_inodes(sb);
++		res = invalidate_inodes(sb, kill_dirty);
+ 		drop_super(sb);
+ 	}
+ 	invalidate_bdev(bdev);
+diff --git a/fs/inode.c b/fs/inode.c
+index da85e56..8352e06 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -544,7 +544,7 @@ void evict_inodes(struct super_block *sb)
+  * Attempts to free all inodes for a given superblock.  If there were any
+  * busy inodes return a non-zero value, else zero.
+  */
+-int invalidate_inodes(struct super_block *sb)
++int invalidate_inodes(struct super_block *sb, bool kill_dirty)
+ {
+ 	int busy = 0;
+ 	struct inode *inode, *next;
+@@ -556,6 +556,10 @@ int invalidate_inodes(struct super_block *sb)
+ 	list_for_each_entry_safe(inode, next, &sb->s_inodes, i_sb_list) {
+ 		if (inode->i_state & (I_NEW | I_FREEING | I_WILL_FREE))
+ 			continue;
++		if (inode->i_state & I_DIRTY && !kill_dirty) {
++			busy = 1;
++			continue;
++		}
+ 		if (atomic_read(&inode->i_count)) {
+ 			busy = 1;
+ 			continue;
+diff --git a/fs/internal.h b/fs/internal.h
+index 0663568..9b976b5 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -112,4 +112,4 @@ extern void release_open_intent(struct nameidata *);
+  */
+ extern int get_nr_dirty_inodes(void);
+ extern void evict_inodes(struct super_block *);
+-extern int invalidate_inodes(struct super_block *);
++extern int invalidate_inodes(struct super_block *, bool);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index bd32159..f8e2323 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2139,7 +2139,11 @@ extern void check_disk_size_change(struct gendisk *disk,
+ 				   struct block_device *bdev);
+ extern int revalidate_disk(struct gendisk *);
+ extern int check_disk_change(struct block_device *);
+-extern int __invalidate_device(struct block_device *);
++extern int __invalidate_device2(struct block_device *, bool);
++static inline int __invalidate_device(struct block_device *b)
++{
++	return __invalidate_device2(b, true);
++}
+ extern int invalidate_partition(struct gendisk *, int);
+ #endif
+ unsigned long invalidate_mapping_pages(struct address_space *mapping,
+-- 
+1.7.1
+
