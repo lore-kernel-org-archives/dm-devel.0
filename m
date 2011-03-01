@@ -1,15 +1,12 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: clustered snapshots status,
-	LVM on shared storage without CLVM?
-Date: Mon, 28 Feb 2011 15:49:57 -0600
-Message-ID: <0BCB9055-CE24-41FB-B110-A0159A9A28FE@redhat.com>
-References: <20110228212844.GB2173@nik-comp.lan>
+From: "Eli Malul" <eli.malul@kaminario.com>
+Subject: Huge memory allocation
+Date: Tue, 1 Mar 2011 15:04:56 +0200
+Message-ID: <E04C10E329E0CD40816C9C17AE53BBD301863B7E@kit001.kaminario.local>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v936)
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"; DelSp="yes"
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0505688097858785216=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110228212844.GB2173@nik-comp.lan>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,62 +16,129 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A true active/active cluster snapshot is not currently planned.  There  
-is some discussion from time to time about whether it is appropriate  
-or not, but even this is idle chatter until the new (single-machine)  
-shared snapshot implementation is completed.
+This is a multi-part message in MIME format.
 
-However, you will be able to take snapshots in a cluster in the next  
-RHEL releases (or if you use upstream sources) if the volume you are  
-snapshotting is activated exclusively.
+--===============0505688097858785216==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01CBD811.456E0704"
 
-It is possible to use LVM in a cluster without CLVM.  I don't think it  
-would be smart though.  You are essentially trying to do clvmd's job.   
-Do you know everything that it does?  Are you sure you won't ever make  
-a mistake?
+This is a multi-part message in MIME format.
 
-  brassow
+------_=_NextPart_001_01CBD811.456E0704
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-On Feb 28, 2011, at 3:28 PM, Nikola Ciprich wrote:
+dm_malloc_aux do not allow memory allocation greater than 50000000.
 
-> Hello,
-> I'd like to ask, what is the current status of cluster locking  
-> patches?
-> I'm especially interested in clustered snapshots, is there some
-> estimate on when I could be suitable for testing and possibly
-> closer to production?
-> I'd like to use DMLoop on my clustered storage (as well as snapshots
-> in general), but with CLVM it's not really possible.
-> If the time is not close yet, my second question is - is it
-> dangerous to use LVM on top of shared storage without using CLVM?
-> If I'll take care to not run lvm commands from more then one node?
-> I'll be gratefull for any reply from more more experienced users
-> in this area.
-> thanks a lot in advance!
-> with best regards
-> nik
->
->
-> -- 
-> -------------------------------------
-> Ing. Nikola CIPRICH
-> LinuxBox.cz, s.r.o.
-> 28. rijna 168, 709 01 Ostrava
->
-> tel.:   +420 596 603 142
-> fax:    +420 596 621 273
-> mobil:  +420 777 093 799
->
-> www.linuxbox.cz
->
-> mobil servis: +420 737 238 656
-> email servis: servis@linuxbox.cz
-> -------------------------------------
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+=20
+
+Is there a reason for that?
+
+=20
+
+I would like to change this limitation to  100000000.
+
+=20
+
+Do you see a problem with that?
+
+=20
+
+Thanks,
+
+Eli
+
+
+------_=_NextPart_001_01CBD811.456E0704
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
+xmlns=3D"http://www.w3.org/TR/REC-html40"><head><META =
+HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Dus-ascii"><meta name=3DGenerator content=3D"Microsoft Word 12 =
+(filtered medium)"><style><!--
+/* Font Definitions */
+@font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-align:right;
+	direction:rtl;
+	unicode-bidi:embed;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+.MsoChpDefault
+	{mso-style-type:export-only;}
+@page WordSection1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
+div.WordSection1
+	{page:WordSection1;}
+--></style><!--[if gte mso 9]><xml>
+<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+<o:shapelayout v:ext=3D"edit">
+<o:idmap v:ext=3D"edit" data=3D"1" />
+</o:shapelayout></xml><![endif]--></head><body lang=3DEN-US link=3Dblue =
+vlink=3Dpurple><div class=3DWordSection1><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>dm_malloc_aux =
+do not allow memory allocation greater than 50000000.<o:p></o:p></p><p =
+class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'><o:p>&nbsp;</o=
+:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>Is there a =
+reason for that?<o:p></o:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'><o:p>&nbsp;</o=
+:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>I would like =
+to change this limitation to&nbsp; 100000000.<o:p></o:p></p><p =
+class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'><o:p>&nbsp;</o=
+:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>Do you see a =
+problem with that?<o:p></o:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'><o:p>&nbsp;</o=
+:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>Thanks,<o:p></=
+o:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>Eli<o:p></o:p>=
+</p></div></body></html>
+------_=_NextPart_001_01CBD811.456E0704--
+
+
+--===============0505688097858785216==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0505688097858785216==--
