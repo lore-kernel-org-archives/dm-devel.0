@@ -1,14 +1,12 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH] multipath: Retry host transient errors for rdac
-	checker
-Date: Tue, 1 Mar 2011 12:08:24 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4FF7DC637@cosmail01.lsi.com>
+From: Greg Stark <stark@mit.edu>
+Subject: How to resize a snapshot to hold a larger filesystem
+Date: Tue, 1 Mar 2011 20:28:02 +0000
+Message-ID: <AANLkTi=YyOHG48cjvnxzExB+NnZkWTM4JP26ryRgcRvL@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,47 +16,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Sometimes if the host is in transient state, we need to wait till the devloss timeout to
-expire before switching path group. We have seen in some cases path group switch happens
-even before the devloss timeout expire. This patch fixes the problem for rdac checker..
+I wanted to resize a filesystem in both the underlying device and a
+snapshot recently. Doing this for the underlying device was a bit of a
+hassle but basically straightforward. I figured doing it for the
+snapshot should be trivial since it's COW anyways and I should be able
+to just change the logical size of the device and have the newly added
+space come from the snapshot COW space.
 
-Signed-off-by: Babu Moger <babu.moger@lsi.com>
----
---- multipath-tools/libmultipath/checkers/rdac.c.orig	2011-02-16 13:58:06.000000000 -0600
-+++ multipath-tools/libmultipath/checkers/rdac.c	2011-02-17 12:01:23.000000000 -0600
-@@ -48,7 +48,9 @@
- 	unsigned char inqCmdBlk[INQUIRY_CMDLEN] = { INQUIRY_CMD, 1, 0, 0, 0, 0 };
- 	unsigned char sense_b[SENSE_BUFF_LEN];
- 	struct sg_io_hdr io_hdr;
-+	int retry_rdac = 5;
- 
-+retry:
- 	inqCmdBlk[2] = (unsigned char) pg_op;
- 	inqCmdBlk[4] = (unsigned char) (mx_resp_len & 0xff);
- 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
-@@ -72,6 +74,22 @@
- 	if ((0 == io_hdr.status) && (0 == io_hdr.host_status) &&
- 	    (0 == io_hdr.driver_status))
- 		return 0;
-+
-+	/* check if we need to retry this error */
-+	if (io_hdr.info & SG_INFO_OK_MASK) {
-+		switch (io_hdr.host_status) {
-+		case DID_BUS_BUSY:
-+		case DID_ERROR:
-+		case DID_TRANSPORT_DISRUPTED:
-+			/* Transport error, retry */
-+			if (--retry_rdac)
-+				goto retry;
-+			break;
-+		default:
-+			break;
-+		}
-+	}
-+
- 	if ((SCSI_CHECK_CONDITION == io_hdr.status) ||
- 	    (SCSI_COMMAND_TERMINATED == io_hdr.status) ||
- 	    (SG_ERR_DRIVER_SENSE == (0xf & io_hdr.driver_status))) {
+It doesn't seem to work that way and I'm surprised. lvmextend just
+adds the space to the COW space, which isn't what I want at all. And
+it looks like dmsetup can load a table but only into an unactived
+slot, not replace an existing table for an existing volume.
+
+What I would expect to do is replace the table for the snapshot volume
+with a table using the same snapshot for the existing space and a new
+snapshot with /dev/zero as the underlying volume for the new space. I
+could create a whole new volume but I don't see any unique identifier
+in the snapshot table entry to specify what point in time the snapshot
+is for so I don't see how to specify the snapshot in the replacement
+table so it will match the existing snapshot.
+
+-- 
+greg
