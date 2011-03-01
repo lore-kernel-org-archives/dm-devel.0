@@ -1,7 +1,7 @@
 From: Greg Stark <stark@mit.edu>
-Subject: How to resize a snapshot to hold a larger filesystem
-Date: Tue, 1 Mar 2011 20:28:02 +0000
-Message-ID: <AANLkTi=YyOHG48cjvnxzExB+NnZkWTM4JP26ryRgcRvL@mail.gmail.com>
+Subject: How to change the size of a snapshot device?
+Date: Tue, 1 Mar 2011 18:23:30 +0000
+Message-ID: <AANLkTimybLnLo2ZEDbj_KzMmRuQEqh-FzRBSHFCp8sjh@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -37,7 +37,7 @@ snapshot with /dev/zero as the underlying volume for the new space. I
 could create a whole new volume but I don't see any unique identifier
 in the snapshot table entry to specify what point in time the snapshot
 is for so I don't see how to specify the snapshot in the replacement
-table so it will match the existing snapshot.
+table though.
 
 -- 
 greg
