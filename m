@@ -1,48 +1,64 @@
-From: Chris Wright <chrisw@sous-sol.org>
-Subject: Re: [PATCH 2/2] netlink: kill eff_cap from struct netlink_skb_parms
-Date: Thu, 3 Mar 2011 09:32:30 -0800
-Message-ID: <20110303173230.GP4988@sequoia.sous-sol.org>
-References: <4D6F6180.5030903@trash.net>
+From: <Yanqing_Liu@Dell.com>
+Subject: Re: Dell MD3200 - sd: Current: sense key: Illegal
+Date: Thu, 3 Mar 2011 12:30:15 -0600
+Message-ID: <DB6E482E89290547898851B8CC9D81100142CFBE@AUSX7MCPS302.AMER.DELL.COM>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-security-module-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4D6F6180.5030903@trash.net>
-Sender: linux-security-module-owner@vger.kernel.org
-To: Patrick McHardy <kaber@trash.net>
-Cc: NetDev <netdev@vger.kernel.org>, dm-devel@redhat.com, "David S. Miller" <davem@davemloft.net>, Chris Wright <chrisw@sous-sol.org>, "linux-security-module@vger.kernel.org" <linux-security-module@vger.kernel.org>, drbd-dev@lists.linbit.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: slivkoff@cmu.edu
 List-Id: dm-devel.ids
 
-* Patrick McHardy (kaber@trash.net) wrote:
+Charles,
 
-> commit 8ff259625f0ab295fa085b0718eed13093813fbc
-> Author: Patrick McHardy <kaber@trash.net>
-> Date:   Thu Mar 3 10:17:31 2011 +0100
-> 
->     netlink: kill eff_cap from struct netlink_skb_parms
->     
->     Netlink message processing in the kernel is synchronous these days,
->     capabilities can be checked directly in security_netlink_recv() from
->     the current process.
->     
->     Signed-off-by: Patrick McHardy <kaber@trash.net>
+It seems that you mapped your LUNs some time after host bootup. That causes pseudo LUN 0 to be created. If you lay down DM using Dell software package, please invoke "rescan_dm_devs" for re-configuration.
 
-Thanks for doing that Patrick.  I looked at this earlier and thought
-there was still an async path, but I guess that's just to another
-userspace process.
+We may need your related kernel message for further analysis. As to why setting "failback" to manual doesn't work on MD3200, the problem may be in multipathing daemon, in combination with SAS tranpportation trearing down all devices immediately after path loss. We've filed a bugzilla for this.
 
-BTW, I think you missed a couple connector based callers:
+BTW, what is your LVM setting for these devices?
 
-drivers/staging/pohmelfs/config.c:      if (!cap_raised(nsp->eff_cap, CAP_SYS_AD
-drivers/video/uvesafb.c:        if (!cap_raised(nsp->eff_cap, CAP_SYS_ADMIN))
+Thanks,
+Yanqing
 
-Fix those and:
 
-Acked-by: Chris Wright <chrisw@sous-sol.org>
+Date: Wed, 02 Mar 2011 13:52:23 -0500
+From: Charles Slivkoff <slivkoff@cmu.edu>
+To: dm-devel@redhat.com
+Subject: Re: [dm-devel] Dell MD3200 - sd: Current: sense key: Illegal
+	Request ASC=0x94 ASCQ=0x1ASC=0x94 ASCQ=0x1
+Message-ID: <4D6E91E7.4010305@cmu.edu>
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
 
-Ideally, we'd consolidate those into a variant of security_netlink_recv().
-However the issue is with types.  Inside connector callback we only have
-netlink_skb_params (seems inapproriate to cast back out to skb).
+Hello Babu. Thanks for responding.
 
-We could change the lsm hook to only pass nsp, but SELinux actually
-cares about the netlink type.  Any ideas?
+> You said "The array is split into 2 virtual disk, each assigned to one 
+> of the RAID controllers". Did you mean you redistributed the two 
+> luns(one is owned by controller A and one by controller B)?
+
+Yes. I have assigned 1 LUN to each of the controllers.
+
+> It appears that your luns are moving back and forth between two 
+> controllers.. You can try setting failback to manual(failback manual).  
+> This is not a solution but to understand the problem.
+
+I changed to "failback manual" in /etc/multipath.conf and rebooted. I'm not sure if the reboot was necessary or not. This does not appear to have changed the behavior.
+
+> Are you seeing "MODE_SELECT" messages in the logs..  Can you paste 
+> snippet of log messages..
+
+There are no "MODE_SELECT" messages in syslog. Would these be appearing elsewhere? The syslog from the last reboot up until I started receiving the "Illegal Request" messages is available here http://tinypaste.com/f7f413
+
+
+-Charles
