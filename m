@@ -1,16 +1,17 @@
-From: Charles Slivkoff <slivkoff@cmu.edu>
+From: <Menny_Hamburger@Dell.com>
 Subject: Re: Dell MD3200 - sd: Current: sense key: Illegal
  Request ASC=0x94 ASCQ=0x1ASC=0x94 ASCQ=0x1
-Date: Thu, 03 Mar 2011 11:14:17 -0500
-Message-ID: <4D6FBE59.9040000@cmu.edu>
+Date: Thu, 3 Mar 2011 16:47:55 +0000
+Message-ID: <D8C50530D6022F40A817A35C40CC06A7065777D7C3@DUBX7MCDUB01.EMEA.DELL.COM>
 References: <4D6BFCF9.4080809@cmu.edu> <4D6E91E7.4010305@cmu.edu>
-	<4D6ECAD2.4040807@cmu.edu>
+	<4D6ECAD2.4040807@cmu.edu> <4D6FBE59.9040000@cmu.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4D6ECAD2.4040807@cmu.edu>
+In-Reply-To: <4D6FBE59.9040000@cmu.edu>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,6 +23,19 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
+
+Hi,
+
+I know this is usually a wild goose chase, but what about the controller firmware?
+I can see from the profile that the controller FW is 07.70.06.63, while the latest according to the Dell compatibility matrix is 07.75.14.60
+
+Menny
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On Behalf Of Charles Slivkoff
+Sent: 03 March, 2011 18:14
+To: dm-devel@redhat.com
+Subject: Re: [dm-devel] Dell MD3200 - sd: Current: sense key: Illegal Request ASC=0x94 ASCQ=0x1ASC=0x94 ASCQ=0x1
 
 The host type for my host (rman-ss-03) was set to "Linux", BTW.
 
@@ -84,3 +98,9 @@ Mar  3 11:13:53 rman-ss-03 kernel:
  > Can you set it to "Linux" and see if your problem goes away.
 > I am yet to look at messages file.. Please try this and let me know..
 >  Thanks Babu
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
