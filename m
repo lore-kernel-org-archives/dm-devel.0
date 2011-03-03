@@ -1,53 +1,86 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] Fix over-zealous flush_disk when changing device size.
-Date: Thu, 3 Mar 2011 09:31:20 -0500
-Message-ID: <20110303143120.GA8134@infradead.org>
-References: <20110217165057.5c50e566@notabene.brown>
+From: Charles Slivkoff <slivkoff@cmu.edu>
+Subject: Re: Dell MD3200 - sd: Current: sense key: Illegal
+ Request ASC=0x94 ASCQ=0x1ASC=0x94 ASCQ=0x1
+Date: Thu, 03 Mar 2011 11:14:17 -0500
+Message-ID: <4D6FBE59.9040000@cmu.edu>
+References: <4D6BFCF9.4080809@cmu.edu> <4D6E91E7.4010305@cmu.edu>
+	<4D6ECAD2.4040807@cmu.edu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20110217165057.5c50e566@notabene.brown>
-Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: Andrew Patterson <andrew.patterson@hp.com>, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, James.Bottomley@suse.de
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4D6ECAD2.4040807@cmu.edu>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Feb 17, 2011 at 04:50:57PM +1100, NeilBrown wrote:
-> 
-> Hi Andrew (and others)
->  I wonder if you would review the following for me and comment.
+The host type for my host (rman-ss-03) was set to "Linux", BTW.
 
-Please send think in this area through -fsdevel next time, thanks!
+...
+      STORAGE ARRAY
+         Default type:                Windows
 
-> There are two cases when we call flush_disk.
-> In one, the device has disappeared (check_disk_change) so any
-> data will hold becomes irrelevant.
-> In the oter, the device has changed size (check_disk_size_change)
-> so data we hold may be irrelevant.
-> 
-> In both cases it makes sense to discard any 'clean' buffers,
-> so they will be read back from the device if needed.
+         Default Group
 
-Does it?  If the device has disappeared we can't read them back anyway.
-If the device has resized to a smaller size the same is true about
-those buffers that have gone away, and if it has resized to a larger
-size invalidating anything doesn't make sense at all.  I think this
-area needs more love than a quick kill_dirty hackjob.
+         Host:                        rman-ss-03
+            Host type:                Linux
+            Interface type:           SAS
+               Host port identifier:  5a:4b:ad:b0:44:65:8e:00
+               Alias:                 Port0
+               Host port identifier:  5a:4b:ad:b0:44:65:60:00
+               Alias:                 Port1
+...
 
-> In the former case it makes sense to discard 'dirty' buffers
-> as there will never be anywhere safe to write the data.  In the
-> second case it *does*not* make sense to discard dirty buffers
-> as that will lead to file system corruption when you simply enlarge
-> the containing devices.
+Regardless, I changed the default host type to "Linux" and rebooted.
 
-Doing anything like this at the buffer cache layer or inode cache layer
-doesn't make any sense.  If a device goes away or shrinks below the
-filesystem size the filesystem simply needs to be shut down and in te
-former size the admin needs to start a manual repair.  Trying to do
-any botch jobs in lower layer never works in practice.
+No change in behavior. The "phantom" LUNs are still listed and the 
+errors are still being logged.
 
-For now I think the best short term fix is to simply revert commit
-608aeef17a91747d6303de4df5e2c2e6899a95e8
+$ lsscsi
+[0:0:32:0]   enclosu DP       BACKPLANE        1.07  -
+[0:2:0:0]    disk    DELL     PERC H700        2.30  /dev/sda
+[0:2:1:0]    disk    DELL     PERC H700        2.30  /dev/sdb
+[1:0:0:0]    disk    DELL     MD32xx           0770  -
+[1:0:0:1]    disk    DELL     MD32xx           0770  /dev/sdc
+[1:0:0:2]    disk    DELL     MD32xx           0770  /dev/sdd
+[1:0:0:31]   disk    DELL     Universal Xport  0770  /dev/sde
+[2:0:0:0]    disk    DELL     MD32xx           0770  -
+[2:0:0:1]    disk    DELL     MD32xx           0770  /dev/sdf
+[2:0:0:2]    disk    DELL     MD32xx           0770  /dev/sdg
+[2:0:0:31]   disk    DELL     Universal Xport  0770  /dev/sdh
+[3:0:0:0]    cd/dvd  TEAC     DVD-ROM DV-28SW  R.2A  /dev/scd0
 
-	"Call flush_disk() after detecting an online resize."
+$ tail /var/log/messages
+Mar  3 11:13:48 rman-ss-03 kernel: FAILED
+Mar  3 11:13:48 rman-ss-03 kernel:   status = 1, message = 00, host = 0, 
+driver = 08
+Mar  3 11:13:48 rman-ss-03 kernel:   <6>sd: Current: sense key: Illegal 
+Request
+Mar  3 11:13:48 rman-ss-03 kernel:     <<vendor>> ASC=0x94 
+ASCQ=0x1ASC=0x94 ASCQ=0x1
+Mar  3 11:13:48 rman-ss-03 kernel:
+Mar  3 11:13:53 rman-ss-03 kernel: FAILED
+Mar  3 11:13:53 rman-ss-03 kernel:   status = 1, message = 00, host = 0, 
+driver = 08
+Mar  3 11:13:53 rman-ss-03 kernel:   <6>sd: Current: sense key: Illegal 
+Request
+Mar  3 11:13:53 rman-ss-03 kernel:     <<vendor>> ASC=0x94 
+ASCQ=0x1ASC=0x94 ASCQ=0x1
+Mar  3 11:13:53 rman-ss-03 kernel:
+
+
+> I looked at your storage profile.. Noticed  that your host type
+> setting is wrong.. See below. 
+ > Default host OS:      Windows (Host OS index 0)
+ > Can you set it to "Linux" and see if your problem goes away.
+> I am yet to look at messages file.. Please try this and let me know..
+>  Thanks Babu
