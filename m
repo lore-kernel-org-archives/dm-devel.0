@@ -1,117 +1,53 @@
-From: Mustafa Mesanovic <mume@linux.vnet.ibm.com>
-Subject: Re: [RFC][PATCH] dm: improve read performance
-Date: Mon, 07 Mar 2011 11:10:01 +0100
-Message-ID: <4D74AEF9.7050108@linux.vnet.ibm.com>
-References: <201012271219.56476.mume@linux.vnet.ibm.com> <20101227225459.5a5150ab@notabene.brown> <201012271323.13406.mume@linux.vnet.ibm.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: mirrored device with thousand of mappingtableentries
+Date: Mon, 07 Mar 2011 15:24:23 +0100
+Message-ID: <4D74EA97.5080209@redhat.com>
+References: <E04C10E329E0CD40816C9C17AE53BBD3018639C2@kit001.kaminario.local>	<20110228114801.GZ3626@agk-dp.fab.redhat.com>	<E04C10E329E0CD40816C9C17AE53BBD3018639CE@kit001.kaminario.local>	<20110228121149.GA3626@agk-dp.fab.redhat.com>	<E04C10E329E0CD40816C9C17AE53BBD3018639D7@kit001.kaminario.local>	<20110228131028.GB3626@agk-dp.fab.redhat.com>	<E04C10E329E0CD40816C9C17AE53BBD301863A00@kit001.kaminario.local>	<4D6BA566.1050305@redhat.com>
+	<yq1oc5wp5i3.fsf@sermon.lab.mkp.net>	<4D73F104.2050807@redhat.com>
+	<yq1y64reiu8.fsf@sermon.lab.mkp.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201012271323.13406.mume@linux.vnet.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>, akpm@linux-foundation.org, snitzer@redhat.com
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, heiko.carstens@de.ibm.com, cotte@de.ibm.com, ehrhardt@linux.vnet.ibm.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <yq1y64reiu8.fsf@sermon.lab.mkp.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 12/27/2010 01:23 PM, Mustafa Mesanovic wrote:
-> On Mon December 27 2010 12:54:59 Neil Brown wrote:
->> On Mon, 27 Dec 2010 12:19:55 +0100 Mustafa Mesanovic
->>
->> <mume@linux.vnet.ibm.com>  wrote:
->>> From: Mustafa Mesanovic<mume@linux.vnet.ibm.com>
->>>
->>> A short explanation in prior: in this case we have "stacked" dm devices.
->>> Two multipathed luns combined together to one striped logical volume.
->>>
->>> I/O throughput degradation happens at __bio_add_page when bio's get
->>> checked upon max_sectors. In this setup max_sectors is always set to 8
->>> ->  what is 4KiB.
->>> A standalone striped logical volume on luns which are not multipathed do
->>> not have the problem: the logical volume will take over the max_sectors
->>> from luns below.
-[...]
+Dne 7.3.2011 03:59, Martin K. Petersen napsal(a):
+>>>>>> "Zdenek" == Zdenek Kabelac <zkabelac@redhat.com> writes:
+> 
+> Zdenek> My finding seems to show that BIP-256 slabtop segment grow by
+> Zdenek> ~73KB per each device (while dm-io is ab out ~26KB)
+> 
+> Ok, I see it now that I tried with a bunch of DM devices.
+> 
+> DM allocates a bioset per volume. And since each bioset has an integrity
+> mempool you'll end up with a bunch of memory locked down. It seems like
+> a lot but it's actually the same amount as we reserve for the data path
+> (bio-0 + biovec-256).
+> 
+> Since a bioset is not necessarily tied to a single block device we can't
+> automatically decide whether to allocate the integrity pool or not. In
+> the DM case, however, we just set up the integrity profile so the
+> information is available.
+> 
+> Can you please try the following patch? This will change things so we
+> only attach an integrity pool to the bioset if the logical volume is
+> integrity-capable.
+> 
 
->>> Using the patch improves read I/O up to 3x. In this specific case from
->>> 600MiB/s up to 1800MiB/s.
->> and using this patch will cause IO to fail sometimes.
->> If an IO request which is larger than a page crosses a device boundary in
->> the underlying e.g. RAID0, the RAID0 will return an error as such things
->> should not happen - they are prevented by merge_bvec_fn.
->>
->> If merge_bvec_fn is not being honoured, then you MUST limit requests to a
->> single entry iovec of at most one page.
->>
->> NeilBrown
->>
-> Thank you for that hint, I will try to write a merge_bvec_fn for dm-stripe.c
-> which solves the problem, if that is ok?
->
-> Mustafa Mesanovic
->
-Now here my new suggestion to fix this issue, what is your opinion?
-I tested this with different setups, and it worked fine and I had
-very good performance improvements.
+Yep - patch seems to fix the problem with wasted memory.
 
-[RFC][PATCH] dm: improve read performance - v2
+Thanks
 
-This patch adds a merge_fn for the dm stripe target. This merge_fn
-prevents dm_set_device_limits() setting the max_sectors to 4KiB
-(PAGE_SIZE). (As in a prior patch already mentioned.)
-Now the read performance improved up to 3x higher compared to before.
-
-What happened before:
-I/O throughput degradation happened at __bio_add_page() when bio's got checked
-at the very beginning upon max_sectors. In this setup max_sectors is always
-set to 8. So bio's entered the dm target with a max of 4KiB.
-
-Now dm-stripe target will have its own merge_fn so max_sectors will not
-pushed down to 8 (4KiB), and bio's can get bigger than 4KiB.
-
-Signed-off-by: Mustafa Mesanovic<mume@linux.vnet.ibm.com>
----
-
-  dm-stripe.c |   24 ++++++++++++++++++++++++
-  1 file changed, 24 insertions(+)
-
-Index: linux-2.6/drivers/md/dm-stripe.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-stripe.c	2011-02-28 10:23:37.000000000 +0100
-+++ linux-2.6/drivers/md/dm-stripe.c	2011-02-28 10:24:29.000000000 +0100
-@@ -396,6 +396,29 @@
-  	blk_limits_io_opt(limits, chunk_size * sc->stripes);
-  }
-
-+static int stripe_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
-+			struct bio_vec *biovec, int max_size)
-+{
-+	struct stripe_c *sc = (struct stripe_c *) ti->private;
-+	sector_t offset, chunk;
-+	uint32_t stripe;
-+	struct request_queue *q;
-+
-+	offset = bvm->bi_sector - ti->begin;
-+	chunk = offset>>  sc->chunk_shift;
-+	stripe = sector_div(chunk, sc->stripes);
-+
-+	if (!bdev_get_queue(sc->stripe[stripe].dev->bdev)->merge_bvec_fn)
-+			return max_size;
-+
-+	bvm->bi_bdev = sc->stripe[stripe].dev->bdev;
-+	q = bdev_get_queue(bvm->bi_bdev);
-+	bvm->bi_sector = sc->stripe[stripe].physical_start +
-+			(chunk<<  sc->chunk_shift) + (offset&  sc->chunk_mask);
-+
-+	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
-+}
-+
-  static struct target_type stripe_target = {
-  	.name   = "striped",
-  	.version = {1, 3, 1},
-@@ -403,6 +426,7 @@
-  	.ctr    = stripe_ctr,
-  	.dtr    = stripe_dtr,
-  	.map    = stripe_map,
-+	.merge  = stripe_merge,
-  	.end_io = stripe_end_io,
-  	.status = stripe_status,
-  	.iterate_devices = stripe_iterate_devices,
+tested-by: zkabelac@redhat.com
