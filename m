@@ -1,47 +1,105 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: mirrored device with thousand of mappingtableentries
-Date: Mon, 07 Mar 2011 15:22:33 -0500
-Message-ID: <yq1r5aiel4m.fsf@sermon.lab.mkp.net>
-References: <20110228114801.GZ3626@agk-dp.fab.redhat.com>
-	<E04C10E329E0CD40816C9C17AE53BBD3018639CE@kit001.kaminario.local>
-	<20110228121149.GA3626@agk-dp.fab.redhat.com>
-	<E04C10E329E0CD40816C9C17AE53BBD3018639D7@kit001.kaminario.local>
-	<20110228131028.GB3626@agk-dp.fab.redhat.com>
-	<E04C10E329E0CD40816C9C17AE53BBD301863A00@kit001.kaminario.local>
-	<4D6BA566.1050305@redhat.com> <yq1oc5wp5i3.fsf@sermon.lab.mkp.net>
-	<4D73F104.2050807@redhat.com> <yq1y64reiu8.fsf@sermon.lab.mkp.net>
-	<20110307201027.GB31194@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: NeilBrown <neilb@suse.de>
+Subject: Re: [dm-devel] [PATCH] Fix over-zealous flush_disk when changing
+ device size.
+Date: Tue, 8 Mar 2011 09:44:12 +1100
+Message-ID: <20110308094412.1c45b277@notabene.brown>
+References: <20110217165057.5c50e566@notabene.brown>
+	<20110303143120.GA8134@infradead.org>
+	<20110304111624.4be27aaf@notabene.brown>
+	<1299259506.2118.24.camel@grinch>
+	<20110306174755.49404c8e@notabene.brown>
+	<1299471771.2228.11.camel@grinch>
+	<1299516418.15258.4.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110307201027.GB31194@redhat.com> (Mike Snitzer's message of
-	"Mon, 7 Mar 2011 15:10:27 -0500")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1299516418.15258.4.camel@mulgrave.site>
+Sender: linux-kernel-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+(linux-fsdevel added - seems relevant)
 
-Mike> So it seems we need to establish bi->sector_size during the final
-Mike> stage of blk_integrity_register(), e.g. when a template is passed.
-Mike> Not sure if you'd agree with that change in general but it'll work
-Mike> for DM because the queue_limits are established before
-Mike> dm_table_set_integrity() is set.
+On Mon, 07 Mar 2011 10:46:58 -0600 James Bottomley <James.Bottomley@suse.de>
+wrote:
 
-Let me contemplate a bit since I already have some changes brewing in
-this area (T10 now permits protection information to be placed at
-non-logical block size intervals).
+> On Sun, 2011-03-06 at 21:22 -0700, Andrew Patterson wrote:
+> > On Sun, 2011-03-06 at 17:47 +1100, NeilBrown wrote:
+> > >  Would you be uncomfortable if I asked Linus to revert both my fix and your
+> > >  original patch??
+> > 
+> > James Bottomley wanted me to put this functionality in. I have no
+> > problem with reverting it myself, especially if it is causing other
+> > problems.  I would have to say that you need to ask him (or rather, I am
+> > not qualified to render an opinion here).
+> 
+> So it seems we have a couple of problems: the first being that
+> flush_disk() doesn't actually do what it says (flush the disk).  If it's
+> just discarding all data, dirty or clean, then its use in the
+> grow/shrink interface is definitely wrong.
+> 
+> The idea is that before we complete the grow/shrink, we make sure that
+> the device doesn't have any errors, so we want to try to write out all
+> dirty buffers to make sure they still have a home.  If flush_disk()
+> doesn't do that, then we need to use a different interface ... what's
+> the interface to flush a disk?
+> 
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+Hi James,
+
+I *always* want to make sure that my device doesn't have any errors, not just
+when it changes size... but I'm not sure that regularly flushing out data is
+the right way to do it.
+But maybe I still misunderstand what the real point of this is.
+
+As for the correct interface to flush a disk - there isn't one.
+One doesn't flush a storage device, one flushes a cache - to a storage
+device.  And there is not a 1-to-1 mapping.
+
+A block device *is* associated with one cache - one which is used for
+caching accesses through /dev/XXX and also by some filesystems to cache some
+metadata.  You can flush this cache with sync_blockdev().  This just
+flushes out dirty pages in that cache, it doesn't discard clean pages.
+invalidate_bdev() can discard clean pages.  Call both, and get both outcomes.
+
+If a filesystem is mounted directly on a given block_device, then it
+should have a valid s_bdev pointer and it is possible to find that filesystem
+from the block_device using get_active_super().  You could then call
+sync_filesystem() to flush out dirty data.  There isn't really a good
+interface to discard clean data. shrink_dcache_sb() does some of it, other
+bits of code do other bits.
+
+Note that a block_device also can have a pointer to a super_block (bd_super).
+This does not seem to be widely used .... ext3 and ext4 use it so that memory
+pressure felt by the block-device cache can transmitted to the fs, so the
+fs can associate private data with the block device's cache I guess.
+I don't think bd_super is sufficiently persistent reference to be usable
+for sync_filesystems (it could race with unmount).
+
+
+But if the block device is within a dm or md device, or is an external
+journal for e.g. ext3, or is in some more complex relationship with a
+filesystem, then there is no way to request that any particular cache get
+flushed to the block device.  And if some user-space app has cached data
+for the device .... there is no way to get at that either.
+
+If we wanted a "proper" solution for this we probably need to leverage
+the 'bd_claim' concept.  When a device is claimed, allow an 'operations'
+structure to be provided with operations like:
+   flush_caches  (writes out data)
+   purge_caches  (discards clean data)
+   discard_caches  (discards all data)
+   prepare_resize (is allowed to fail)
+   commit_resize
+   freeze_io
+   thaw_io
+
+But flush_disk is definitely a wrong interface.  It has a meaningless name
+(as discussed above), and purges some caches while discarding others.
+
+What do we *really* lose if we just revert that original patch?
+
+Thanks,
+NeilBrown
