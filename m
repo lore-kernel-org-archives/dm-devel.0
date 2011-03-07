@@ -1,41 +1,47 @@
-From: James Bottomley <James.Bottomley@suse.de>
-Subject: Re: [dm-devel] [PATCH] Fix over-zealous flush_disk when changing
- device size.
-Date: Mon, 07 Mar 2011 10:46:58 -0600
-Message-ID: <1299516418.15258.4.camel@mulgrave.site>
-References: <20110217165057.5c50e566@notabene.brown>
-	 <20110303143120.GA8134@infradead.org>
-	 <20110304111624.4be27aaf@notabene.brown> <1299259506.2118.24.camel@grinch>
-	 <20110306174755.49404c8e@notabene.brown>  <1299471771.2228.11.camel@grinch>
+From: bmarzins@sourceware.org
+Subject: multipath-tools multipath.conf.synthetic
+Date: 7 Mar 2011 18:42:04 -0000
+Message-ID: <20110307184204.25414.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1299471771.2228.11.camel@grinch>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: NeilBrown <neilb@suse.de>, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, 2011-03-06 at 21:22 -0700, Andrew Patterson wrote:
-> On Sun, 2011-03-06 at 17:47 +1100, NeilBrown wrote:
-> >  Would you be uncomfortable if I asked Linus to revert both my fix and your
-> >  original patch??
-> 
-> James Bottomley wanted me to put this functionality in. I have no
-> problem with reverting it myself, especially if it is causing other
-> problems.  I would have to say that you need to ask him (or rather, I am
-> not qualified to render an opinion here).
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2011-03-07 18:42:03
 
-So it seems we have a couple of problems: the first being that
-flush_disk() doesn't actually do what it says (flush the disk).  If it's
-just discarding all data, dirty or clean, then its use in the
-grow/shrink interface is definitely wrong.
+Modified files:
+	.              : multipath.conf.synthetic 
 
-The idea is that before we complete the grow/shrink, we make sure that
-the device doesn't have any errors, so we want to try to write out all
-dirty buffers to make sure they still have a home.  If flush_disk()
-doesn't do that, then we need to use a different interface ... what's
-the interface to flush a disk?
+Log message:
+	Forgot to remove /bin/true reference from multipath.conf.synthetic. Removing.
+	Not applicable upstream.
 
-James
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.synthetic.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.6&r2=1.11.2.7
+
+--- multipath-tools/multipath.conf.synthetic	2008/09/08 22:01:19	1.11.2.6
++++ multipath-tools/multipath.conf.synthetic	2011/03/07 18:42:03	1.11.2.7
+@@ -8,7 +8,7 @@
+ #	selector		"round-robin 0"
+ #	path_grouping_policy	multibus
+ #	getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
+-#	prio_callout		/bin/true
++#	prio_callout		none
+ #	path_checker		readsector0
+ #	rr_min_io		100
+ #	max_fds			8192
