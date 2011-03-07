@@ -1,289 +1,117 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults kpar ...
-Date: 7 Mar 2011 05:19:39 -0000
-Message-ID: <20110307051939.24609.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mustafa Mesanovic <mume@linux.vnet.ibm.com>
+Subject: Re: [RFC][PATCH] dm: improve read performance
+Date: Mon, 07 Mar 2011 11:10:01 +0100
+Message-ID: <4D74AEF9.7050108@linux.vnet.ibm.com>
+References: <201012271219.56476.mume@linux.vnet.ibm.com> <20101227225459.5a5150ab@notabene.brown> <201012271323.13406.mume@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <201012271323.13406.mume@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Neil Brown <neilb@suse.de>, akpm@linux-foundation.org, snitzer@redhat.com
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, heiko.carstens@de.ibm.com, cotte@de.ibm.com, ehrhardt@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2011-03-07 05:19:38
+On 12/27/2010 01:23 PM, Mustafa Mesanovic wrote:
+> On Mon December 27 2010 12:54:59 Neil Brown wrote:
+>> On Mon, 27 Dec 2010 12:19:55 +0100 Mustafa Mesanovic
+>>
+>> <mume@linux.vnet.ibm.com>  wrote:
+>>> From: Mustafa Mesanovic<mume@linux.vnet.ibm.com>
+>>>
+>>> A short explanation in prior: in this case we have "stacked" dm devices.
+>>> Two multipathed luns combined together to one striped logical volume.
+>>>
+>>> I/O throughput degradation happens at __bio_add_page when bio's get
+>>> checked upon max_sectors. In this setup max_sectors is always set to 8
+>>> ->  what is 4KiB.
+>>> A standalone striped logical volume on luns which are not multipathed do
+>>> not have the problem: the logical volume will take over the max_sectors
+>>> from luns below.
+[...]
 
-Modified files:
-	.              : multipath.conf.defaults 
-	kpartx         : kpartx.c 
-	libmultipath   : hwtable.c parser.c 
-	multipathd     : main.c 
+>>> Using the patch improves read I/O up to 3x. In this specific case from
+>>> 600MiB/s up to 1800MiB/s.
+>> and using this patch will cause IO to fail sometimes.
+>> If an IO request which is larger than a page crosses a device boundary in
+>> the underlying e.g. RAID0, the RAID0 will return an error as such things
+>> should not happen - they are prevented by merge_bvec_fn.
+>>
+>> If merge_bvec_fn is not being honoured, then you MUST limit requests to a
+>> single entry iovec of at most one page.
+>>
+>> NeilBrown
+>>
+> Thank you for that hint, I will try to write a merge_bvec_fn for dm-stripe.c
+> which solves the problem, if that is ok?
+>
+> Mustafa Mesanovic
+>
+Now here my new suggestion to fix this issue, what is your opinion?
+I tested this with different setups, and it worked fine and I had
+very good performance improvements.
 
-Log message:
-	Fix for bugs 502813, 578109, 676165, 663179.  Multiple small cleanup bugzillas. Not applicable or already present upstream.
+[RFC][PATCH] dm: improve read performance - v2
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.28&r2=1.5.4.29
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/kpartx.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.9.2.3&r2=1.9.2.4
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.34&r2=1.20.2.35
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/parser.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.2&r2=1.18.2.3
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.32&r2=1.69.2.33
+This patch adds a merge_fn for the dm stripe target. This merge_fn
+prevents dm_set_device_limits() setting the max_sectors to 4KiB
+(PAGE_SIZE). (As in a prior patch already mentioned.)
+Now the read performance improved up to 3x higher compared to before.
 
---- multipath-tools/multipath.conf.defaults	2010/11/12 20:17:09	1.5.4.28
-+++ multipath-tools/multipath.conf.defaults	2011/03/07 05:19:36	1.5.4.29
-@@ -81,7 +81,7 @@
- #               path_grouping_policy    group_by_prio
- #		failback		immediate
- #		rr_weight		uniform
--#               no_path_retry		12 
-+#               no_path_retry		18
- #		rr_min_io		100
- #		path_checker		tur
- #	}
-@@ -100,7 +100,35 @@
- #        }
- #       device {
- #               vendor                  "HP"
--#               product                 "MSA2012sa|MSA23(12|24)(fc|i|sa)|MSA2000s VOLUME"
-+#               product                 "MSA2012sa|MSA2312sa|MSA2324sa"
-+#               getuid_callout          "/sbin/scsi_id -g -u -n -s /block/%n"
-+#               prio_callout            "/sbin/mpath_prio_alua /dev/%n"
-+#               features                "0"
-+#               hardware_handler        "0"
-+#               path_grouping_policy    group_by_prio
-+#               failback                immediate
-+#               rr_weight               uniform
-+#               no_path_retry           18
-+#               rr_min_io               100
-+#               path_checker            tur
-+#        }
-+#       device {
-+#               vendor                  "HP"
-+#               product                 "MSA2312fc|MSA2324fc|MSA2312i|MSA2324i|MSA2000s VOLUME"
-+#               getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-+#               prio_callout            "/sbin/mpath_prio_alua /dev/%n"
-+#               features                "0"
-+#               hardware_handler        "0"
-+#               path_grouping_policy    group_by_prio
-+#               failback                immediate
-+#               rr_weight               uniform
-+#               no_path_retry           18
-+#               rr_min_io               100
-+#               path_checker            tur
-+#        }
-+#       device {
-+#               vendor                  "HP"
-+#               product                 "P2000 G3 FC"
- #               getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
- #               prio_callout            "/sbin/mpath_prio_alua /dev/%n"
- #               features                "0"
-@@ -122,7 +150,21 @@
- #               path_grouping_policy    group_by_prio
- #               failback                immediate
- #               rr_weight               uniform
--#               no_path_retry           12
-+#               no_path_retry           18
-+#               rr_min_io               100
-+#               path_checker            tur
-+#        }
-+#       device {
-+#               vendor                  "HP"
-+#               product                 "HSVX740"
-+#               getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-+#               prio_callout            "/sbin/mpath_prio_alua /dev/%n"
-+#               features                "0"
-+#               hardware_handler        "0"
-+#               path_grouping_policy    group_by_prio
-+#               failback                immediate
-+#               rr_weight               uniform
-+#               no_path_retry           18
- #               rr_min_io               100
- #               path_checker            tur
- #        }
-@@ -146,6 +188,7 @@
- #               path_grouping_policy    multibus
- #		failback		immediate
- #		rr_weight		uniform
-+#		no_path_retry		18
- #		rr_min_io		1000
- #		path_checker		tur
- #	}
---- multipath-tools/kpartx/kpartx.c	2009/10/01 22:53:11	1.9.2.3
-+++ multipath-tools/kpartx/kpartx.c	2011/03/07 05:19:37	1.9.2.4
-@@ -195,6 +195,7 @@
- 	char *uuid = NULL;
- 	int loopro = 0;
- 	int hotplug = 0;
-+	int loopcreated = 0;
- 	struct stat buf;
- 
- 	initpts();
-@@ -298,6 +299,7 @@
- 				fprintf(stderr, "can't set up loop\n");
- 				exit (1);
- 			}
-+			loopcreated = 1;
- 		}
- 		device = loopdev;
- 	}
-@@ -369,6 +371,15 @@
- 					slices[j].size, device,
- 				        slices[j].start);
- 			}
-+			if (loopcreated && S_ISREG (buf.st_mode)) {
-+				if (del_loop(device)) {
-+					if (verbose)
-+						printf("can't del loop : %s\n",
-+						       device);
-+					exit(1);
-+				}
-+				printf("loop deleted : %s\n", device);
-+			}
- 			break;
- 
- 		case DELETE:
---- multipath-tools/libmultipath/hwtable.c	2010/11/12 20:17:12	1.20.2.34
-+++ multipath-tools/libmultipath/hwtable.c	2011/03/07 05:19:38	1.20.2.35
-@@ -118,7 +118,7 @@
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = 12,
-+		.no_path_retry = 18,
- 		.minio         = 100,
- 		.checker_name  = TUR,
- 	},
-@@ -139,9 +139,41 @@
- 		.checker_name  = TUR,
- 	},
- 	{
--                 /* HP MSA2000 product family with new firmware */
-+                 /* HP MSA2000sa product family with new firmware */
-+                .vendor        = "HP",
-+                .product       = "MSA2012sa|MSA2312sa|MSA2324sa",
-+                .getuid        = "/sbin/scsi_id -g -u -n -s /block/%n",
-+                .getprio       = "/sbin/mpath_prio_alua /dev/%n",
-+                .features      = DEFAULT_FEATURES,
-+                .hwhandler     = DEFAULT_HWHANDLER,
-+                .selector      = DEFAULT_SELECTOR,
-+                .pgpolicy      = GROUP_BY_PRIO,
-+                .pgfailback    = -FAILBACK_IMMEDIATE,
-+                .rr_weight     = RR_WEIGHT_NONE,
-+                .no_path_retry = 18,
-+                .minio         = 100,
-+                .checker_name  = TUR,
-+        },
-+	{
-+                 /* HP MSA2000fc and MSA2000i product family with new firmware */
-+                .vendor        = "HP",
-+                .product       = "MSA2312fc|MSA2324fc|MSA2312i|MSA2324i|MSA2000s VOLUME",
-+                .getuid        = DEFAULT_GETUID,
-+                .getprio       = "/sbin/mpath_prio_alua /dev/%n",
-+                .features      = DEFAULT_FEATURES,
-+                .hwhandler     = DEFAULT_HWHANDLER,
-+                .selector      = DEFAULT_SELECTOR,
-+                .pgpolicy      = GROUP_BY_PRIO,
-+                .pgfailback    = -FAILBACK_IMMEDIATE,
-+                .rr_weight     = RR_WEIGHT_NONE,
-+                .no_path_retry = 18,
-+                .minio         = 100,
-+                .checker_name  = TUR,
-+        },
-+	{
-+                 /* HP P2000 product family */
-                 .vendor        = "HP",
--                .product       = "MSA2012sa|MSA23(12|24)(fc|i|sa)|MSA2000s VOLUME",
-+                .product       = "P2000 G3 FC",
-                 .getuid        = DEFAULT_GETUID,
-                 .getprio       = "/sbin/mpath_prio_alua /dev/%n",
-                 .features      = DEFAULT_FEATURES,
-@@ -155,7 +187,7 @@
-                 .checker_name  = TUR,
-         },
- 	{
--                 /* HP SVSP */
-+                 /* HP SVSP Active-Standby */
-                 .vendor        = "HP",
-                 .product       = "HSVX700",
-                 .getuid        = DEFAULT_GETUID,
-@@ -166,11 +198,27 @@
-                 .pgpolicy      = GROUP_BY_PRIO,
-                 .pgfailback    = -FAILBACK_IMMEDIATE,
-                 .rr_weight     = RR_WEIGHT_NONE,
--                .no_path_retry = 12,
-+                .no_path_retry = 18,
-                 .minio         = 100,
-                 .checker_name  = TUR,
- 	},
- 	{
-+                 /* HP SVSP Active-Active*/
-+                .vendor        = "HP",
-+                .product       = "HSVX740",
-+                .getuid        = DEFAULT_GETUID,
-+                .getprio       = "/sbin/mpath_prio_alua /dev/%n",
-+                .features      = DEFAULT_FEATURES,
-+                .hwhandler     = DEFAULT_HWHANDLER,
-+                .selector      = DEFAULT_SELECTOR,
-+                .pgpolicy      = GROUP_BY_PRIO,
-+                .pgfailback    = -FAILBACK_IMMEDIATE,
-+                .rr_weight     = RR_WEIGHT_NONE,
-+                .no_path_retry = 18,
-+                .minio         = 100,
-+                .checker_name  = TUR,
-+        },
-+	{
- 		.vendor        = "HP",
- 		.product       = "A6189A",
- 		.getuid        = DEFAULT_GETUID,
-@@ -313,7 +361,7 @@
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = 12,
-+		.no_path_retry = 18,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
- 	},
---- multipath-tools/libmultipath/parser.c	2010/08/27 21:02:08	1.18.2.2
-+++ multipath-tools/libmultipath/parser.c	2011/03/07 05:19:38	1.18.2.3
-@@ -2,7 +2,7 @@
-  * Part:        Configuration file parser/reader. Place into the dynamic
-  *              data structure representation the conf file
-  *  
-- * Version:     $Id: parser.c,v 1.18.2.2 2010/08/27 21:02:08 bmarzins Exp $
-+ * Version:     $Id: parser.c,v 1.18.2.3 2011/03/07 05:19:38 bmarzins Exp $
-  * 
-  * Author:      Alexandre Cassen, <acassen@linux-vs.org>
-  *              
-@@ -501,7 +501,7 @@
- 			}
- 		}
- 		if (i >= VECTOR_SIZE(keywords))
--			condlog(1, "mulipath.conf line %d, invalid keyword: %s",
-+			condlog(1, "multipath.conf line %d, invalid keyword: %s",
- 				line_nr, str);
- 		
- 		free_strvec(strvec);
---- multipath-tools/multipathd/main.c	2011/02/18 18:27:00	1.69.2.32
-+++ multipath-tools/multipathd/main.c	2011/03/07 05:19:38	1.69.2.33
-@@ -1356,7 +1356,8 @@
- 		    strncmp(mnt, "/dev", 4) == 0 || strncmp(mnt, "/sys", 4) == 0 ||
- 		    strcmp(mnt, "/var") == 0 || strncmp(mnt, "/var/lib", 8) == 0 ||
- 		    strncmp(mnt, "/var/run", 8) == 0 || strncmp(mnt, "/lib", 4) == 0 ||
--		    strncmp(mnt, "/lib64", 6) == 0 || strncmp(mnt, "/usr/lib64", 10) == 0)
-+		    strncmp(mnt, "/lib64", 6) == 0 || strncmp(mnt, "/usr/lib64", 10) == 0 ||
-+		    strncmp(mnt, "/ram", 4) == 0)
- 			continue;
- 		if (umount2(mnt, MNT_DETACH) < 0 && errno != ENOENT) {
- 			condlog(0, "failed to umount '%s' (%s). skipping", mnt, strerror(errno));
+What happened before:
+I/O throughput degradation happened at __bio_add_page() when bio's got checked
+at the very beginning upon max_sectors. In this setup max_sectors is always
+set to 8. So bio's entered the dm target with a max of 4KiB.
+
+Now dm-stripe target will have its own merge_fn so max_sectors will not
+pushed down to 8 (4KiB), and bio's can get bigger than 4KiB.
+
+Signed-off-by: Mustafa Mesanovic<mume@linux.vnet.ibm.com>
+---
+
+  dm-stripe.c |   24 ++++++++++++++++++++++++
+  1 file changed, 24 insertions(+)
+
+Index: linux-2.6/drivers/md/dm-stripe.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-stripe.c	2011-02-28 10:23:37.000000000 +0100
++++ linux-2.6/drivers/md/dm-stripe.c	2011-02-28 10:24:29.000000000 +0100
+@@ -396,6 +396,29 @@
+  	blk_limits_io_opt(limits, chunk_size * sc->stripes);
+  }
+
++static int stripe_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
++			struct bio_vec *biovec, int max_size)
++{
++	struct stripe_c *sc = (struct stripe_c *) ti->private;
++	sector_t offset, chunk;
++	uint32_t stripe;
++	struct request_queue *q;
++
++	offset = bvm->bi_sector - ti->begin;
++	chunk = offset>>  sc->chunk_shift;
++	stripe = sector_div(chunk, sc->stripes);
++
++	if (!bdev_get_queue(sc->stripe[stripe].dev->bdev)->merge_bvec_fn)
++			return max_size;
++
++	bvm->bi_bdev = sc->stripe[stripe].dev->bdev;
++	q = bdev_get_queue(bvm->bi_bdev);
++	bvm->bi_sector = sc->stripe[stripe].physical_start +
++			(chunk<<  sc->chunk_shift) + (offset&  sc->chunk_mask);
++
++	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
++}
++
+  static struct target_type stripe_target = {
+  	.name   = "striped",
+  	.version = {1, 3, 1},
+@@ -403,6 +426,7 @@
+  	.ctr    = stripe_ctr,
+  	.dtr    = stripe_dtr,
+  	.map    = stripe_map,
++	.merge  = stripe_merge,
+  	.end_io = stripe_end_io,
+  	.status = stripe_status,
+  	.iterate_devices = stripe_iterate_devices,
