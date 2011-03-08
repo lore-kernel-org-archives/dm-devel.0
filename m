@@ -1,72 +1,33 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v3] dm stripe: implement merge method
-Date: Tue, 8 Mar 2011 11:48:49 -0500
-Message-ID: <20110308164849.GA5692@redhat.com>
-References: <201012271219.56476.mume@linux.vnet.ibm.com>
- <20101227225459.5a5150ab@notabene.brown>
- <201012271323.13406.mume@linux.vnet.ibm.com>
- <4D74AEF9.7050108@linux.vnet.ibm.com>
- <20110308022158.GA663@redhat.com>
- <4D76051E.5060303@linux.vnet.ibm.com>
+From: Ric Wheeler <ricwheeler@gmail.com>
+Subject: generic wrappers for multi-device FS operations
+Date: Tue, 08 Mar 2011 12:04:25 -0500
+Message-ID: <4D766199.4010307@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4D76051E.5060303@linux.vnet.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mustafa Mesanovic <mume@linux.vnet.ibm.com>
-Cc: Neil Brown <neilb@suse.de>, akpm@linux-foundation.org, dm-devel@redhat.com, cotte@de.ibm.com, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, ehrhardt@linux.vnet.ibm.com, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Linux FS Devel <linux-fsdevel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Karel Zak <kzak@redhat.com>, Jim Meyering <jim@meyering.net>, Chris Mason <chris.mason>
 List-Id: dm-devel.ids
 
-On Tue, Mar 08 2011 at  5:29am -0500,
-Mustafa Mesanovic <mume@linux.vnet.ibm.com> wrote:
 
-> On 03/08/2011 03:21 AM, Mike Snitzer wrote:
->
-> >Here is a revised version of your patch that uses the relatively new
-> >stripe_map_sector(), removes an unnecessary cast, and a few other
-> >cleanups.
-> >
-> >This v3 should work as well as your v2 but should be suitable for
-> >upstream inclusion -- authorship of the change is still attributed to
-> >you as I only updated the code slightly.  I'd appreciate it if you could
-> >verify your config still performs as expected.
->
-> Mike,
-> 
-> your changes are working well and performing even a bit better.
+After seeing some of the feedback and confusion that happened in the fedora 
+community after Josef suggestion that we default to btrfs in an upcoming Fedora 
+release, it became clear to me that many users are incredibly unaware of the 
+common features that we have across file systems today given LVM/device mapper 
+support.
 
-Good to know.
+btrfs will make multi-volume/multi-disk operations common place and easy to do, 
+but there is no reason not to do most/all of this today with ext4, xfs, etc on 
+top of lvm.
 
-> Are there any further comments from others, or can consider putting it
-> upstream.
+To make this trivial to do for users, I think that it would be really nice to 
+have a two-level wrappers for things like resize, add a volume, shrink, etc. 
+Similar to the way we have mount or fsck invoke file system specific bits.
 
-I chatted with Alasdair and one concern he had was: does the existence
-of stripe_merge() ever hurt due to the fact that stripe_map_sector() is
-performed twice (once for .merge and again for .map)?  May be that a
-really small chuck_size proves to be more problematic but using a small
-chunk_size generally isn't productive to begin with.
+Good idea? Bad idea?
 
-In any case, it clearly helps your workload.
+Thanks!
 
-Could you explain your config in more detail?
-- what is your chunk_size?
-- how many stripes (how many mpath devices)?
-- what is the performance, of your test workload, of a single underlying
-  mpath device?
+Ric
 
-And, in particular, what is your test workload?
-- What is the nature of your IO (are you using a particular tool)?
-- Are you using AIO?
-- How many threads?
-- Are you driving deep queue depths? Etc.
-
-I have various configs that I'll be testing to help verify the benefit.
-The only other change Alasdair request is that the target version should
-be bumped to 1.4 (rather than 1.3.2).
-
-Given that I can put some time to this now: we should be able to sort
-all this out for upstream inclusion in 2.6.39.
-
-Thanks,
-Mike
