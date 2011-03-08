@@ -1,38 +1,37 @@
-From: Ric Wheeler <ricwheeler@gmail.com>
-Subject: Re: [dm-devel] generic wrappers for multi-device FS operations
-Date: Tue, 08 Mar 2011 13:13:51 -0500
-Message-ID: <4D7671DF.4060108@gmail.com>
-References: <4D766199.4010307@gmail.com>	<20110308174308.GP10767@agk-dp.fab.redhat.com> <AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com>
+From: Evgeniy Polyakov <zbr@ioremap.net>
+Subject: Re: [Drbd-dev] [PATCH 2/2 v2] netlink: kill eff_cap from struct
+ netlink_skb_parms
+Date: Tue, 8 Mar 2011 21:32:46 +0300
+Message-ID: <20110308183246.GA17412@ioremap.net>
+References: <4D6F6180.5030903@trash.net>
+ <20110303173230.GP4988@sequoia.sous-sol.org>
+ <20110303.105655.189705829.davem@davemloft.net>
+ <20110303201522.GT4988@sequoia.sous-sol.org>
+ <20110303223746.GI25069@barkeeper1-xen.linbit>
+ <20110304012956.GA13573@ioremap.net>
+ <4D764247.9080509@trash.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Wendy Cheng <s.wendy.cheng@gmail.com>
-Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Karel Zak <kzak@redhat.com>, Jim Meyering <jim@meyering.net>, Chris Mason <chris.mason@oracle.com>, Josef Bacik <josef@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4D764247.9080509@trash.net>
+Sender: linux-security-module-owner@vger.kernel.org
+To: Patrick McHardy <kaber@trash.net>
+Cc: Chris Wright <chrisw@sous-sol.org>, David Miller <davem@davemloft.net>, linux-fbdev@vger.kernel.org, netdev@vger.kernel.org, linux-security-module@vger.kernel.org, dm-devel@redhat.com, drbd-dev@lists.linbit.com
 List-Id: dm-devel.ids
 
-On 03/08/2011 01:05 PM, Wendy Cheng wrote:
->> On Tue, Mar 08, 2011 at 12:04:25PM -0500, Ric Wheeler wrote:
->>> To make this trivial to do for users, I think that it would be really
->>> nice to have a two-level wrappers for things like resize, add a volume,
->>> shrink, etc. Similar to the way we have mount or fsck invoke file system
->>> specific bits.
->>> Good idea? Bad idea?
-> So the "resize" is on the filesystem, not the volume ? The "grow" part
-> is probably easy. Unfortunately, the "shrink" may not be easy for some
-> of the filesystems:
->
-> -- Wendy
+Hi Patrick.
 
-I think any "standard" operation would be allowed to fail with "notsupported" 
-effectively. Shrink is definitely a challenge & even when it works, it often has 
-performance implications.
+On Tue, Mar 08, 2011 at 03:50:47PM +0100, Patrick McHardy (kaber@trash.net) wrote:
+> > Yup, connector is very async at that place, but I wonder why the hell I
+> > ever made that decision. I believe we can replace it with pure sync call
+> > of the registered connector callback, since netlink is synchronous and
+> > no one has any problem with it.
+> 
+> Are you going to do this or do you want me to take care of it?
 
-I think that adding support to fsadm might be the easy path forward, but we 
-would need to be able to do at least a handful of more advanced things (add a 
-whole device for example).
+I will return back at the end of the week and will take care of this
+problem. I will not mind if you complete it first though :)
 
-Ric
-
+-- 
+	Evgeniy Polyakov
