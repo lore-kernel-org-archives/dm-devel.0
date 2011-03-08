@@ -1,62 +1,72 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: Integrity errors should not cause failover
-Date: Tue, 8 Mar 2011 10:30:52 -0500
-Message-ID: <20110308153052.GC4669@redhat.com>
-References: <yq1aah6drw7.fsf@sermon.lab.mkp.net>
- <20110308151430.GB4669@redhat.com>
- <1299597625.2476.23.camel@mulgrave.site>
+Subject: Re: [PATCH v3] dm stripe: implement merge method
+Date: Tue, 8 Mar 2011 11:48:49 -0500
+Message-ID: <20110308164849.GA5692@redhat.com>
+References: <201012271219.56476.mume@linux.vnet.ibm.com>
+ <20101227225459.5a5150ab@notabene.brown>
+ <201012271323.13406.mume@linux.vnet.ibm.com>
+ <4D74AEF9.7050108@linux.vnet.ibm.com>
+ <20110308022158.GA663@redhat.com>
+ <4D76051E.5060303@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1299597625.2476.23.camel@mulgrave.site>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@suse.de>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
+In-Reply-To: <4D76051E.5060303@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mustafa Mesanovic <mume@linux.vnet.ibm.com>
+Cc: Neil Brown <neilb@suse.de>, akpm@linux-foundation.org, dm-devel@redhat.com, cotte@de.ibm.com, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, ehrhardt@linux.vnet.ibm.com, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Mar 08 2011 at 10:20am -0500,
-James Bottomley <James.Bottomley@suse.de> wrote:
+On Tue, Mar 08 2011 at  5:29am -0500,
+Mustafa Mesanovic <mume@linux.vnet.ibm.com> wrote:
 
-> On Tue, 2011-03-08 at 10:14 -0500, Mike Snitzer wrote:
-> > On Tue, Mar 08 2011 at  1:54am -0500,
-> > Martin K. Petersen <martin.petersen@oracle.com> wrote:
-> > 
-> > > 
-> > > Integrity errors need to be passed to the owner of the integrity
-> > > metadata for processing. Consequently EILSEQ should be passed up the
-> > > stack.
-> > > 
-> > > Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
-> > 
-> > Acked-by: Mike Snitzer <snitzer@redhat.com>
-> > 
-> > Thanks Martin.  But James has already staged a few patches associated
-> > with IO error differentation for 2.6.39.  Your dm-mpath patch will need
-> > to be rebased on that work; best to feed it to James too.
-> > 
-> > (we were gambling that there wouldn't be additional DM or block changes
-> > related to this work and figured it safe to have James carry all the
-> > SCSI, block and DM changes... ;)
-> > 
-> > Problem is I'm not seeing a 2.6.39 branch in James' scsi-2.6-misc.git
-> > (even though I know the changes are staged there ;)
-> > 
-> > See:
-> > http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-2.6.git;a=commit;h=79775567e0439ca47eb9f501e52c4b713d44cf89
-> > http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-2.6.git;a=commit;h=751b2a7d623ead9e55f751a6087efeab454b5659
-> > http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-2.6.git;a=commit;h=63583cca745f440167bf27877182dc13e19d4bcf
-> > 
-> > James,
-> > Any easy way to get Martin your 2.6.39 tree?  Do you have a branch (just
-> > the tag isn't exposed)?
+> On 03/08/2011 03:21 AM, Mike Snitzer wrote:
+>
+> >Here is a revised version of your patch that uses the relatively new
+> >stripe_map_sector(), removes an unnecessary cast, and a few other
+> >cleanups.
+> >
+> >This v3 should work as well as your v2 but should be suitable for
+> >upstream inclusion -- authorship of the change is still attributed to
+> >you as I only updated the code slightly.  I'd appreciate it if you could
+> >verify your config still performs as expected.
+>
+> Mike,
 > 
-> Branch for what?  It's a linear tree with all the SCSI patches on
-> master.
+> your changes are working well and performing even a bit better.
 
-Ah.. good to know.  I hadn't looked that closely ;)
+Good to know.
 
-But now that I look, you've been quite busy!  The above commits are
-buried pretty deep by now.
+> Are there any further comments from others, or can consider putting it
+> upstream.
 
+I chatted with Alasdair and one concern he had was: does the existence
+of stripe_merge() ever hurt due to the fact that stripe_map_sector() is
+performed twice (once for .merge and again for .map)?  May be that a
+really small chuck_size proves to be more problematic but using a small
+chunk_size generally isn't productive to begin with.
+
+In any case, it clearly helps your workload.
+
+Could you explain your config in more detail?
+- what is your chunk_size?
+- how many stripes (how many mpath devices)?
+- what is the performance, of your test workload, of a single underlying
+  mpath device?
+
+And, in particular, what is your test workload?
+- What is the nature of your IO (are you using a particular tool)?
+- Are you using AIO?
+- How many threads?
+- Are you driving deep queue depths? Etc.
+
+I have various configs that I'll be testing to help verify the benefit.
+The only other change Alasdair request is that the target version should
+be bumped to 1.4 (rather than 1.3.2).
+
+Given that I can put some time to this now: we should be able to sort
+all this out for upstream inclusion in 2.6.39.
+
+Thanks,
 Mike
