@@ -1,59 +1,46 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] Fix using of possible uninitialised params
-	struct (secure flag)
-Date: Tue,  8 Mar 2011 20:35:45 +0100
-Message-ID: <1299612945-6900-1-git-send-email-mbroz@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Lars Marowsky-Bree <lmb@novell.com>
+Subject: Re: [dm-devel] generic wrappers for multi-device FS operations
+Date: Tue, 8 Mar 2011 21:16:01 +0100
+Message-ID: <20110308201601.GR28182@suse.de>
+References: <4D766199.4010307@gmail.com>
+ <20110308174308.GP10767@agk-dp.fab.redhat.com>
+ <AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com>
+ <4D7671DF.4060108@gmail.com>
+ <1299609274.2476.180.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1299609274.2476.180.camel@mulgrave.site>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, Ric Wheeler <ricwheeler@gmail.com>
+Cc: Karel Zak <kzak@redhat.com>, Josef Bacik <josef@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Wendy Cheng <s.wendy.cheng@gmail.com>, Chris Mason <chris.mason@oracle.com>
 List-Id: dm-devel.ids
 
-If copy_param() fails, we cannot trust param structure,
-so access it only if this call returned success.
+On 2011-03-08T12:34:34, James Bottomley <James.Bottomley@suse.de> wrote=
+:
 
-Bug introduced in patch adding secure flag to dm-ioctl (currently in linux-next).
+> There's still the problem of moving the underlying device from being =
+a
+> plain block device to being a dm one ... what happened to the idea of
+> presenting all devices as dm ones to solve this?
 
-Found during regression tests.
+Giving remapping abilities to every block device certainly would be
+extremly useful.
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
----
- drivers/md/dm-ioctl.c |    5 +++--
- 1 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index e7af88b..516def2 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1611,14 +1611,15 @@ static int ctl_ioctl(uint command, struct dm_ioctl __user *user)
- 	 * Copy the parameters into kernel space.
- 	 */
- 	r = copy_params(user, &param);
--	input_param_size = param->data_size;
--	wipe_buffer = param->flags & DM_SECURE_DATA_FLAG;
- 
- 	current->flags &= ~PF_MEMALLOC;
- 
- 	if (r)
- 		return r;
- 
-+	input_param_size = param->data_size;
-+	wipe_buffer = param->flags & DM_SECURE_DATA_FLAG;
-+
- 	r = validate_params(cmd, param);
- 	if (r)
- 		goto out;
--- 
-1.7.2.3
+Regards,
+    Lars
+
+--=20
+Architect Storage/HA, OPS Engineering, Novell, Inc.
+SUSE LINUX Products GmbH, GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+"Experience is the name everyone gives to their mistakes." -- Oscar Wil=
+de
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
