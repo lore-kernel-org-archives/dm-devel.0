@@ -1,46 +1,52 @@
-From: Lars Marowsky-Bree <lmb@novell.com>
-Subject: Re: [dm-devel] generic wrappers for multi-device FS operations
-Date: Tue, 8 Mar 2011 21:16:01 +0100
-Message-ID: <20110308201601.GR28182@suse.de>
+From: Andreas Dilger <adilger@dilger.ca>
+Subject: Re: generic wrappers for multi-device FS operations
+Date: Tue, 8 Mar 2011 13:54:37 -0700
+Message-ID: <B2CB305A-1268-4F0A-98AA-CA08FA10FDE8@dilger.ca>
 References: <4D766199.4010307@gmail.com>
- <20110308174308.GP10767@agk-dp.fab.redhat.com>
- <AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com>
- <4D7671DF.4060108@gmail.com>
- <1299609274.2476.180.camel@mulgrave.site>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Mime-Version: 1.0 (Apple Message framework v1082)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1299609274.2476.180.camel@mulgrave.site>
+In-Reply-To: <4D766199.4010307@gmail.com>
 Sender: linux-fsdevel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, Ric Wheeler <ricwheeler@gmail.com>
-Cc: Karel Zak <kzak@redhat.com>, Josef Bacik <josef@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Wendy Cheng <s.wendy.cheng@gmail.com>, Chris Mason <chris.mason@oracle.com>
+To: Ric Wheeler <ricwheeler@gmail.com>
+Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Karel Zak <kzak@redhat.com>, Jim Meyering <jim@meyering.net>, Chris Mason <chris.mason@oracle.com>, Josef Bacik <josef@redhat.com>
 List-Id: dm-devel.ids
 
-On 2011-03-08T12:34:34, James Bottomley <James.Bottomley@suse.de> wrote=
-:
+On 2011-03-08, at 10:04 AM, Ric Wheeler wrote:
+> After seeing some of the feedback and confusion that happened in the fedora community after Josef suggestion that we default to btrfs in an upcoming Fedora release, it became clear to me that many users are incredibly unaware of the common features that we have across file systems today given LVM/device mapper support.
+> 
+> btrfs will make multi-volume/multi-disk operations common place and easy to do, but there is no reason not to do most/all of this today with ext4, xfs, etc on top of lvm.
+> 
+> To make this trivial to do for users, I think that it would be really nice to have a two-level wrappers for things like resize, add a volume, shrink, etc. Similar to the way we have mount or fsck invoke file system specific bits.
 
-> There's still the problem of moving the underlying device from being =
-a
-> plain block device to being a dm one ... what happened to the idea of
-> presenting all devices as dm ones to solve this?
+I definitely think this makes sense.  However, taking a quick look at fsadm,
+I don't think it is the right starting point for this work.  It is essentially
+a single script that is special-casing each filesystem it is touching, which
+makes it a maintenance nightmare to add in support for different filesystems.
 
-Giving remapping abilities to every block device certainly would be
-extremly useful.
+A better structure is the mkfs.* and fsck.* tools that extend the basic
+mkfs/fsck functionality for each new filesystem.  That allows new filesystems
+to be added without the requirement to modify the upstream fsadm script.
 
 
-Regards,
-    Lars
+Another tool similar to this that I've been trying to push upstream for some
+time is the "lvcheck" script, which is essentially a wrapper for online
+filesystem checking.  It is currently structured as an extension to the LVM
+tools, since it depends on creating a snapshot of an LV and does a check on
+the snapshot.  If the snapshot is clean the original filesystem is marked
+checked as well, which avoids the "slow ext* check on boot" problem, while
+still ensuring that periodic filesystem checks will catch latent errors.
 
---=20
-Architect Storage/HA, OPS Engineering, Novell, Inc.
-SUSE LINUX Products GmbH, GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
-"Experience is the name everyone gives to their mistakes." -- Oscar Wil=
-de
+It wouldn't be unreasonable to have a new wrapper for online filesystem
+checking (e.g. ofsck) or just an extension to fsck that does this in a more
+"plug-in" manner like fsck.* does today.  It would naturally progress into
+real online checking for filesystems that support this (e.g. btrfs, and I
+think XFS is going in this direction as well).
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Cheers, Andreas
+
+
+
+
+
