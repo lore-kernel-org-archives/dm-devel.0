@@ -1,50 +1,36 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: How does dm-thinp handle the our of space error?
-Date: Wed, 09 Mar 2011 09:56:19 +0100
-Message-ID: <1299660979.3310.5.camel@o>
-References: <AANLkTi=HYPv+U-JiBbjrhAHrZOXVihs2LaGniA_m=r5O@mail.gmail.com>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] generic wrappers for multi-device FS operations
+Date: Wed, 9 Mar 2011 14:23:26 +0000
+Message-ID: <20110309142325.GA11312@agk-dp.fab.redhat.com>
+References: <4D766199.4010307@gmail.com> <20110308174308.GP10767@agk-dp.fab.redhat.com> <AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AANLkTi=HYPv+U-JiBbjrhAHrZOXVihs2LaGniA_m=r5O@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Wendy Cheng <s.wendy.cheng@gmail.com>, Ric Wheeler <ricwheeler@gmail.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Karel
 List-Id: dm-devel.ids
 
-On Wed, 2011-03-09 at 11:59 +0800, Xie Gang wrote:
-> Hi,
->  
-> The storage may run out of space and could not provision the space.
-> So, how does thinp handle such error since thinp is transparent to
-> uper layer filesystem?
+On Tue, Mar 08, 2011 at 10:05:40AM -0800, Wendy Cheng wrote:
+> So the "resize" is on the filesystem, not the volume ? The "grow" part
+> is probably easy. Unfortunately, the "shrink" may not be easy for some
+> of the filesystems:
 
-It either postpones the bios until userspace has reacted growing the
-pool _or_ it errors the ios depending on the related policy set.
+The LVM situation today works both ways around.
 
-This is defined by constructore parameter
- * 4: policy = "error|postpone":
- *             if pool runs full, bios will be errored or postponed
- *             (ie. application writes will stall)
+You can use 'lvresize' with an option to resize the filesystem too,
+or use 'fsadm' with an option to resize the LV.  We felt that 'fsadm'
+was a more-natural approach: allow the user to resize their filesystem 
+and automatically adjust the things underneath as necessary.
 
-Heinz
+Long term, we'd like it to be possible to configure a system for resizing
+entire device stacks both top down (fsadm) and bottom up (triggered by the
+appropriate Unit Attention).
+ 
+(The current fsadm script was written as a proof-of-concept under the
+constraint of just wrapping existing binaries. Of course there are cleaner
+ways to do it when you allow filesystem-specific code.)
 
->  
-> Thanks,
-> 
-> -- 
-> Xie Gang
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Alasdair
+
