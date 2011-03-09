@@ -1,11 +1,14 @@
-From: yue <ooolinux@163.com>
-Subject: dmsetup do not know sda*
-Date: Wed, 9 Mar 2011 14:47:25 +0800 (CST)
-Message-ID: <f96803.54a6.12e995ebbc4.Coremail.ooolinux@163.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: How does dm-thinp handle the our of space error?
+Date: Wed, 09 Mar 2011 09:56:19 +0100
+Message-ID: <1299660979.3310.5.camel@o>
+References: <AANLkTi=HYPv+U-JiBbjrhAHrZOXVihs2LaGniA_m=r5O@mail.gmail.com>
+Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4838354946241316401=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <AANLkTi=HYPv+U-JiBbjrhAHrZOXVihs2LaGniA_m=r5O@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,49 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4838354946241316401==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_57712_8809542.1299653245891"
+On Wed, 2011-03-09 at 11:59 +0800, Xie Gang wrote:
+> Hi,
+>  
+> The storage may run out of space and could not provision the space.
+> So, how does thinp handle such error since thinp is transparent to
+> uper layer filesystem?
 
-------=_Part_57712_8809542.1299653245891
-Content-Type: text/plain; charset=GBK
-Content-Transfer-Encoding: 7bit
+It either postpones the bios until userspace has reacted growing the
+pool _or_ it errors the ios depending on the related policy set.
 
-1.i install multipath,configure
-multipath -ll
-vg_spare-lv_spare       (253, 0)
-why no sda* device's map.
- 
-2.if multipath.ko  is must in initrd?
-how to do ?
- 
- 
-thanks
-------=_Part_57712_8809542.1299653245891
-Content-Type: text/html; charset=GBK
-Content-Transfer-Encoding: 7bit
+This is defined by constructore parameter
+ * 4: policy = "error|postpone":
+ *             if pool runs full, bios will be errored or postponed
+ *             (ie. application writes will stall)
 
-<DIV>1.i install multipath,configure</DIV>
-<DIV>multipath -ll </DIV>
-<DIV>vg_spare-lv_spare&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (253, 0)</DIV>
-<DIV>why no sda* device's map.</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>2.if multipath.ko&nbsp; is must in initrd?</DIV>
-<DIV>how to do ?</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>thanks</DIV><br><br><span title="neteasefooter"><span id="netease_mail_footer"></span></span>
-------=_Part_57712_8809542.1299653245891--
+Heinz
 
-
---===============4838354946241316401==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4838354946241316401==--
+>  
+> Thanks,
+> 
+> -- 
+> Xie Gang
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
