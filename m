@@ -1,78 +1,51 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] Wipe buffer even if vamlloc fails
-Date: Wed,  9 Mar 2011 17:51:56 +0100
-Message-ID: <1299689516-2295-1-git-send-email-mbroz@redhat.com>
-References: <1299612945-6900-1-git-send-email-mbroz@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [dm-devel] generic wrappers for multi-device FS operations
+Date: Thu, 10 Mar 2011 08:36:29 +1100
+Message-ID: <20110309213629.GV15097@dastard>
+References: <4D766199.4010307@gmail.com>
+ <20110308174308.GP10767@agk-dp.fab.redhat.com>
+ <AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com>
+ <20110309142325.GA11312@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1299612945-6900-1-git-send-email-mbroz@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20110309142325.GA11312@agk-dp.fab.redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Wendy Cheng <s.wendy.cheng@gmail.com>, Ric Wheeler <ricwheeler@gmail.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Karel
 List-Id: dm-devel.ids
 
-We can honor secure data flag even when allocation
-of local buffer fails but user params is valid.
+On Wed, Mar 09, 2011 at 02:23:26PM +0000, Alasdair G Kergon wrote:
+> On Tue, Mar 08, 2011 at 10:05:40AM -0800, Wendy Cheng wrote:
+> > So the "resize" is on the filesystem, not the volume ? The "grow" part
+> > is probably easy. Unfortunately, the "shrink" may not be easy for some
+> > of the filesystems:
+> 
+> The LVM situation today works both ways around.
+> 
+> You can use 'lvresize' with an option to resize the filesystem too,
+> or use 'fsadm' with an option to resize the LV.  We felt that 'fsadm'
+> was a more-natural approach: allow the user to resize their filesystem 
+> and automatically adjust the things underneath as necessary.
+> 
+> Long term, we'd like it to be possible to configure a system for resizing
+> entire device stacks both top down (fsadm) and bottom up (triggered by the
+> appropriate Unit Attention).
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
----
- drivers/md/dm-ioctl.c |   13 +++++++++----
- 1 files changed, 9 insertions(+), 4 deletions(-)
+I can see how this would be advantageous from a management
+perspective for growing LVM pools, but I can see quite a few
+problems with extending that to automatically growing filesystems
+above LVM. e.g. The LUN resizes, the PV is expanded, the VG is
+expanded, but which LV in the VG is going to make use the new space?
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 516def2..4cacdad 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1504,6 +1504,7 @@ static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
- static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl **param)
- {
- 	struct dm_ioctl tmp, *dmi;
-+	int secure_data;
- 
- 	if (copy_from_user(&tmp, user, sizeof(tmp) - sizeof(tmp.data)))
- 		return -EFAULT;
-@@ -1511,23 +1512,27 @@ static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl **param)
- 	if (tmp.data_size < (sizeof(tmp) - sizeof(tmp.data)))
- 		return -EINVAL;
- 
-+	secure_data = tmp.flags & DM_SECURE_DATA_FLAG;
-+
- 	dmi = vmalloc(tmp.data_size);
--	if (!dmi)
-+	if (!dmi) {
-+		if (secure_data && clear_user(user, tmp.data_size))
-+			return -EFAULT;
- 		return -ENOMEM;
-+	}
- 
- 	if (copy_from_user(dmi, user, tmp.data_size))
- 		goto bad;
- 
- 	/* Wipe the user buffer so we do not return it to userspace */
--	if ((tmp.flags & DM_SECURE_DATA_FLAG) &&
--	    clear_user(user, tmp.data_size))
-+	if (secure_data && clear_user(user, tmp.data_size))
- 		goto bad;
- 
- 	*param = dmi;
- 	return 0;
- 
- bad:
--	if (tmp.flags & DM_SECURE_DATA_FLAG)
-+	if (secure_data)
- 		memset(dmi, 0, tmp.data_size);
- 	vfree(dmi);
- 	return -EFAULT;
+Similarly, you can't safely shrink a filesystem from the bottom up -
+the filesystem has to empty the space first before it is safe to
+shrink it.  How would you handle this from a bottom-up driven
+change?
+
+Cheers,
+
+Dave.
 -- 
-1.7.2.3
+Dave Chinner
+david@fromorbit.com
