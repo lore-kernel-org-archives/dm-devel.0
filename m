@@ -1,35 +1,84 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] generic wrappers for multi-device FS operations
-Date: Wed, 9 Mar 2011 21:49:28 +0000
-Message-ID: <20110309214927.GI11312@agk-dp.fab.redhat.com>
-References: <4D766199.4010307@gmail.com> <20110308174308.GP10767@agk-dp.fab.redhat.com> <AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com> <20110309142325.GA11312@agk-dp.fab.redhat.com> <20110309213629.GV15097@dastard>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH 05/10] block: remove per-queue plugging
+Date: Wed, 9 Mar 2011 19:58:10 -0500
+Message-ID: <20110310005810.GA17911@redhat.com>
+References: <1295659049-2688-1-git-send-email-jaxboe@fusionio.com>
+ <1295659049-2688-6-git-send-email-jaxboe@fusionio.com>
+ <AANLkTin8FoXX6oqUyW+scwhadyX-TfW16_oKjvngU9-m@mail.gmail.com>
+ <20110303221353.GA10366@redhat.com>
+ <4D761E0D.8050200@fusionio.com>
+ <20110308202100.GA31744@redhat.com>
+ <4D76912C.9040705@fusionio.com>
+ <20110308220526.GA393@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20110309213629.GV15097@dastard>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, Wendy Cheng <s.wendy.cheng@gmail.com>, Ric Wheeler <ricwheeler@gmail.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Karel
+In-Reply-To: <20110308220526.GA393@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <jaxboe@fusionio.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, dm-devel@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-On Thu, Mar 10, 2011 at 08:36:29AM +1100, Dave Chinner wrote:
-> I can see how this would be advantageous from a management
-> perspective for growing LVM pools, but I can see quite a few
-> problems with extending that to automatically growing filesystems
-> above LVM. e.g. The LUN resizes, the PV is expanded, the VG is
-> expanded, but which LV in the VG is going to make use the new space?
- 
-You'd handle that by configuration settings under sysadmin control.
-There are plenty of situations where there would be an 'obvious' LV 
-to extend.
+On Tue, Mar 08 2011 at  5:05pm -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-> Similarly, you can't safely shrink a filesystem from the bottom up -
-> the filesystem has to empty the space first before it is safe to
-> shrink it.  How would you handle this from a bottom-up driven
-> change?
- 
-Obviously there are limits, and passing a message "Prepare to
-be made smaller by X" up the stack probably isn't very feasible.
+> On Tue, Mar 08 2011 at  3:27pm -0500,
+> Jens Axboe <jaxboe@fusionio.com> wrote:
+> 
+> > On 2011-03-08 21:21, Mike Snitzer wrote:
+> > > On Tue, Mar 08 2011 at  7:16am -0500,
+> > > Jens Axboe <jaxboe@fusionio.com> wrote:
+> > > 
+> > >> On 2011-03-03 23:13, Mike Snitzer wrote:
+> > >>> I'm now hitting a lockdep issue, while running a 'for-2.6.39/stack-plug'
+> > >>> kernel, when I try an fsync heavy workload to a request-based mpath
+> > >>> device (the kernel ultimately goes down in flames, I've yet to look at
+> > >>> the crashdump I took)
+> > >>
+> > >> Mike, can you re-run with the current stack-plug branch? I've fixed the
+> > >> !CONFIG_BLOCK and rebase issues, and also added a change for this flush
+> > >> on schedule event. It's run outside of the runqueue lock now, so
+> > >> hopefully that should solve this one.
+> > > 
+> > > Works for me, thanks.
+> > 
+> > Super, thanks! Out of curiousity, did you use dm/md?
+> 
+> Yes, I've been using a request-based DM multipath device.
 
-Alasdair
+Hi Jens,
 
+I just got to reviewing your onstack plugging DM changes (I looked at
+the core block layer changes for additional context and also had a brief
+look at MD).
+
+I need to put more time to the review of all this code but one thing
+that is immediately apparent is that after these changes DM only has one
+onstack plug/unplug -- in drivers/md/dm-kcopyd.c:do_work()
+
+You've removed a considerable amount of implicit plug/explicit unplug
+code from DM (and obviously elsewhere but I have my DM hat on ;).
+
+First question: is relying on higher-level (aio, fs, read-ahead)
+explicit plugging/unplugging sufficient?  Seems odd to not have the
+control/need to unplug the DM device upon resume (after a suspend).
+
+(this naive question/concern stems from me needing to understand the
+core block layer's onstack plugging changes better)
+
+(but if those higher-level explicit onstack plug changes make all this
+code removal possible shouldn't those commits come before changing
+underlying block drivers like DM, MD, etc?)
+
+I noticed that driver/md/dm-raid1.c:do_mirror() seems to follow the same
+pattern of drivers/md/dm-kcopyd.c:do_work().. so rather than remove
+dm_table_unplug_all() shouldn't it be replaced with a
+blk_start_plug/blk_finish_plug?
+
+Also, in your MD changes, you removed all calls to md_unplug() but
+didn't remove md_unplug().  Seems it should be removed along with the
+'plug' member of 'struct mddev_t'?  Neil?
+
+Thanks,
+Mike
