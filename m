@@ -1,95 +1,70 @@
-From: Mustafa Mesanovic <mume@linux.vnet.ibm.com>
-Subject: Re: [PATCH v3] dm stripe: implement merge method
-Date: Thu, 10 Mar 2011 15:02:55 +0100
-Message-ID: <4D78DA0F.4000001@linux.vnet.ibm.com>
-References: <201012271219.56476.mume@linux.vnet.ibm.com> <20101227225459.5a5150ab@notabene.brown> <201012271323.13406.mume@linux.vnet.ibm.com> <4D74AEF9.7050108@linux.vnet.ibm.com> <20110308022158.GA663@redhat.com> <4D76051E.5060303@linux.vnet.ibm.com> <20110308164849.GA5692@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] generic wrappers for multi-device FS operations
+Date: Thu, 10 Mar 2011 16:28:39 +0100
+Message-ID: <4D78EE27.8070005@suse.de>
+References: <4D766199.4010307@gmail.com>	<20110308174308.GP10767@agk-dp.fab.redhat.com>	<AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com>	<20110309142325.GA11312@agk-dp.fab.redhat.com> <4D77992E.1020909@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110308164849.GA5692@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Cc: Neil Brown <neilb@suse.de>, akpm@linux-foundation.org, cotte@de.ibm.com, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, ehrhardt@linux.vnet.ibm.com, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <4D77992E.1020909@gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Ric Wheeler <ricwheeler@gmail.com>, Wendy Cheng <s.wendy.cheng@gmail.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Karel Zak <kzak@redhat.com>, Jim Meyering <jim@meyering.net>, Chris Mason <chris.mason@oracle.com>, Josef Bacik <josef@redhat.com>
 List-Id: dm-devel.ids
 
-On 03/08/2011 05:48 PM, Mike Snitzer wrote:
-> On Tue, Mar 08 2011 at  5:29am -0500,
-> Mustafa Mesanovic<mume@linux.vnet.ibm.com>  wrote:
->
->> On 03/08/2011 03:21 AM, Mike Snitzer wrote:
+On 03/09/2011 04:13 PM, Ric Wheeler wrote:
+> On 03/09/2011 09:23 AM, Alasdair G Kergon wrote:
+>> On Tue, Mar 08, 2011 at 10:05:40AM -0800, Wendy Cheng wrote:
+>>> So the "resize" is on the filesystem, not the volume ? The "grow" p=
+art
+>>> is probably easy. Unfortunately, the "shrink" may not be easy for s=
+ome
+>>> of the filesystems:
+>> The LVM situation today works both ways around.
 >>
->>> Here is a revised version of your patch that uses the relatively new
->>> stripe_map_sector(), removes an unnecessary cast, and a few other
->>> cleanups.
->>>
->>> This v3 should work as well as your v2 but should be suitable for
->>> upstream inclusion -- authorship of the change is still attributed to
->>> you as I only updated the code slightly.  I'd appreciate it if you could
->>> verify your config still performs as expected.
->> Mike,
+>> You can use 'lvresize' with an option to resize the filesystem too,
+>> or use 'fsadm' with an option to resize the LV.  We felt that 'fsadm=
+'
+>> was a more-natural approach: allow the user to resize their filesyst=
+em
+>> and automatically adjust the things underneath as necessary.
 >>
->> your changes are working well and performing even a bit better.
-> Good to know.
->
->> Are there any further comments from others, or can consider putting it
->> upstream.
-> I chatted with Alasdair and one concern he had was: does the existence
-> of stripe_merge() ever hurt due to the fact that stripe_map_sector() is
-> performed twice (once for .merge and again for .map)?  May be that a
-> really small chuck_size proves to be more problematic but using a small
-> chunk_size generally isn't productive to begin with.
->
-> In any case, it clearly helps your workload.
->
-> Could you explain your config in more detail?
-> - what is your chunk_size?
-> - how many stripes (how many mpath devices)?
-> - what is the performance, of your test workload, of a single underlying
->    mpath device?
->
-> And, in particular, what is your test workload?
-> - What is the nature of your IO (are you using a particular tool)?
-> - Are you using AIO?
-> - How many threads?
-> - Are you driving deep queue depths? Etc.
->
-> I have various configs that I'll be testing to help verify the benefit.
-> The only other change Alasdair request is that the target version should
-> be bumped to 1.4 (rather than 1.3.2).
->
-> Given that I can put some time to this now: we should be able to sort
-> all this out for upstream inclusion in 2.6.39.
->
-> Thanks,
-> Mike
-Mike,
+>> Long term, we'd like it to be possible to configure a system for res=
+izing
+>> entire device stacks both top down (fsadm) and bottom up (triggered =
+by
+>> the
+>> appropriate Unit Attention).
+>>
+>> (The current fsadm script was written as a proof-of-concept under th=
+e
+>> constraint of just wrapping existing binaries. Of course there are
+>> cleaner
+>> ways to do it when you allow filesystem-specific code.)
+>>
+>> Alasdair
+>=20
+> Is anyone actively looking at taken it beyond proof of concept?
+>=20
+I'm working on the kernel-side parts, namely pushing unit attention
+events out to userspace via debugfs.
+There'll be daemon reading those and eventually triggering the
+appropriate action.
 
-the setup that I have used to verify and check upon the changes
-consisted of:
+We could hold a BoF at LSF or Collab summit, seeing that there is
+quite some interest in these kind of things.
 
-- Benchmark
-iozone (seq write, seq read, random read and write),
-filesize 2000m, with 32 processes (no AIO used).
+Cheers,
 
-- Disk-Setup
-2 disks (queue_depth=192) ->  each disk with 8 paths
-->  multipathed (multibus, rr_min_io=1)
-
-And a striped LVM out of these two (chunk_size=64KiB).
-
-The benchmark then runs on this LV.
-
-In detail: I was previosly working on a 2.6.32.x-stable kernel, thats
-where I created the stripe_merge function for. There I have seen
-improvements up to 3x ->  ~600MiB ->  ~1800MiB
-
-With the git-kernel only 1.25x better when applying the patch, but its still
-significantly better!
-
-   ~990MiB ->  ~1300MiB
-
-A single mpath device has ~1300MiB throughput.
-
-Regards,
-Mustafa
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
+" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
