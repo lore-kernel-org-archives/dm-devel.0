@@ -1,60 +1,95 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [dm-devel] generic wrappers for multi-device FS operations
-Date: Thu, 10 Mar 2011 16:04:12 +1100
-Message-ID: <20110310050412.GZ15097@dastard>
-References: <4D766199.4010307@gmail.com>
- <20110308174308.GP10767@agk-dp.fab.redhat.com>
- <AANLkTi=uMMN3jEdh3auijdxM+1ZR529oPri4HqRaasYx@mail.gmail.com>
- <20110309142325.GA11312@agk-dp.fab.redhat.com>
- <20110309213629.GV15097@dastard>
- <20110309214927.GI11312@agk-dp.fab.redhat.com>
+From: Mustafa Mesanovic <mume@linux.vnet.ibm.com>
+Subject: Re: [PATCH v3] dm stripe: implement merge method
+Date: Thu, 10 Mar 2011 15:02:55 +0100
+Message-ID: <4D78DA0F.4000001@linux.vnet.ibm.com>
+References: <201012271219.56476.mume@linux.vnet.ibm.com> <20101227225459.5a5150ab@notabene.brown> <201012271323.13406.mume@linux.vnet.ibm.com> <4D74AEF9.7050108@linux.vnet.ibm.com> <20110308022158.GA663@redhat.com> <4D76051E.5060303@linux.vnet.ibm.com> <20110308164849.GA5692@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20110309214927.GI11312@agk-dp.fab.redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, Wendy Cheng <s.wendy.cheng@gmail.com>, Ric Wheeler <ricwheeler@gmail.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Karel
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20110308164849.GA5692@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+Cc: Neil Brown <neilb@suse.de>, akpm@linux-foundation.org, cotte@de.ibm.com, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, ehrhardt@linux.vnet.ibm.com, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Mar 09, 2011 at 09:49:28PM +0000, Alasdair G Kergon wrote:
-> On Thu, Mar 10, 2011 at 08:36:29AM +1100, Dave Chinner wrote:
-> > I can see how this would be advantageous from a management
-> > perspective for growing LVM pools, but I can see quite a few
-> > problems with extending that to automatically growing filesystems
-> > above LVM. e.g. The LUN resizes, the PV is expanded, the VG is
-> > expanded, but which LV in the VG is going to make use the new space?
->  
-> You'd handle that by configuration settings under sysadmin control.
+On 03/08/2011 05:48 PM, Mike Snitzer wrote:
+> On Tue, Mar 08 2011 at  5:29am -0500,
+> Mustafa Mesanovic<mume@linux.vnet.ibm.com>  wrote:
+>
+>> On 03/08/2011 03:21 AM, Mike Snitzer wrote:
+>>
+>>> Here is a revised version of your patch that uses the relatively new
+>>> stripe_map_sector(), removes an unnecessary cast, and a few other
+>>> cleanups.
+>>>
+>>> This v3 should work as well as your v2 but should be suitable for
+>>> upstream inclusion -- authorship of the change is still attributed to
+>>> you as I only updated the code slightly.  I'd appreciate it if you could
+>>> verify your config still performs as expected.
+>> Mike,
+>>
+>> your changes are working well and performing even a bit better.
+> Good to know.
+>
+>> Are there any further comments from others, or can consider putting it
+>> upstream.
+> I chatted with Alasdair and one concern he had was: does the existence
+> of stripe_merge() ever hurt due to the fact that stripe_map_sector() is
+> performed twice (once for .merge and again for .map)?  May be that a
+> really small chuck_size proves to be more problematic but using a small
+> chunk_size generally isn't productive to begin with.
+>
+> In any case, it clearly helps your workload.
+>
+> Could you explain your config in more detail?
+> - what is your chunk_size?
+> - how many stripes (how many mpath devices)?
+> - what is the performance, of your test workload, of a single underlying
+>    mpath device?
+>
+> And, in particular, what is your test workload?
+> - What is the nature of your IO (are you using a particular tool)?
+> - Are you using AIO?
+> - How many threads?
+> - Are you driving deep queue depths? Etc.
+>
+> I have various configs that I'll be testing to help verify the benefit.
+> The only other change Alasdair request is that the target version should
+> be bumped to 1.4 (rather than 1.3.2).
+>
+> Given that I can put some time to this now: we should be able to sort
+> all this out for upstream inclusion in 2.6.39.
+>
+> Thanks,
+> Mike
+Mike,
 
-So you have to set it up ahead of time, and then remember that you
-have set it up to automatically expand LV X when PV Y expands
-because device Z was expanded.
+the setup that I have used to verify and check upon the changes
+consisted of:
 
-> There are plenty of situations where there would be an 'obvious' LV 
-> to extend.
+- Benchmark
+iozone (seq write, seq read, random read and write),
+filesize 2000m, with 32 processes (no AIO used).
 
-Sure, but that's the easy case. My concern is always the hard cases
-- what to do when there isn't an obvious LV to expand, or you want
-an LV that isn't the obvious or configured LV to expand when the
-PV is grown, or you just want to grow the PV ready to add new LVs
-rather than expand an LV....
+- Disk-Setup
+2 disks (queue_depth=192) ->  each disk with 8 paths
+->  multipathed (multibus, rr_min_io=1)
 
-> > Similarly, you can't safely shrink a filesystem from the bottom up -
-> > the filesystem has to empty the space first before it is safe to
-> > shrink it.  How would you handle this from a bottom-up driven
-> > change?
->  
-> Obviously there are limits, and passing a message "Prepare to
-> be made smaller by X" up the stack probably isn't very feasible.
+And a striped LVM out of these two (chunk_size=64KiB).
 
-Agreed, especially as it can take hours of IO before an "ok to be
-made smaller now " message can be sent or the attempt to shrink the
-filesystem fails...
+The benchmark then runs on this LV.
 
-Cheers,
+In detail: I was previosly working on a 2.6.32.x-stable kernel, thats
+where I created the stripe_merge function for. There I have seen
+improvements up to 3x ->  ~600MiB ->  ~1800MiB
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+With the git-kernel only 1.25x better when applying the patch, but its still
+significantly better!
+
+   ~990MiB ->  ~1300MiB
+
+A single mpath device has ~1300MiB throughput.
+
+Regards,
+Mustafa
