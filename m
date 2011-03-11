@@ -1,44 +1,36 @@
-From: Guillaume Camera <camera.g@gmail.com>
-Subject: [MULTIPATH] Help to understand some points
-Date: Thu, 10 Mar 2011 17:46:43 +0100
-Message-ID: <AANLkTikMNMZ10epfGhRm+fB7BtfBYXyrRE-_9Q-EYd8a@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: <Yanqing_Liu@Dell.com>
+Subject: [patch] Add MD36xxf into RDAC device list
+Date: Fri, 11 Mar 2011 09:47:11 -0600
+Message-ID: <DB6E482E89290547898851B8CC9D81100161718E@AUSX7MCPS302.AMER.DELL.COM>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: Amer_Hadba@Dell.com, Clayton_Walther@Dell.com, Joel_S@Dell.com, Sudhir.Dachepalli@lsi.com, Babu.Moger@lsi.com, Shyam_Iyer@Dell.com, Narayanan_D@Dell.com
 List-Id: dm-devel.ids
 
-Hello all,
+Hi,
 
-I have some problems to understand some few things with multipaths. If
-I'm wrong to send my email here, can you redirect me where I can get
-the information ?
+This patch is to add Dell MD36xxf array into the RDAC handler device list.
 
-I try to use multipath to setup something like that :
-
-I have two iscsi targets, synchronized in activ/activ mode with drbd,
-and I get It with iscsi initiator on another server.  These devices
-are available under sdb and sdc. I would like to "multipath" those
-device under one path, /dev/mapper/mpath0 for example.
-
-Is it possible ?  How can you gather those devices, how to group
-chosen device under one group priority ?
-
-Thank you in advance.
-
-Regards,
+Thanks,
+Yanqing
 
 
--- 
-Guillaume Camera
+Singed-off-by Yanqing Liu <Yanqing_Liu@Dell.com>
+---
+
+--- drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2011-02-05 09:12:39.355376053 -0600
++++ drivers/scsi/device_handler/scsi_dh_rdac.c	2011-02-05 09:12:53.749455577 -0600
+@@ -769,6 +769,7 @@
+ 	{"DELL", "MD32xx"},
+ 	{"DELL", "MD32xxi"},
+ 	{"DELL", "MD36xxi"},
++	{"DELL", "MD36xxf"},
+ 	{"LSI", "INF-01-00"},
+ 	{"ENGENIO", "INF-01-00"},
+ 	{"STK", "FLEXLINE 380"},
+
