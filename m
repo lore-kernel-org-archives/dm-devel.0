@@ -1,203 +1,145 @@
-From: devicemapper niko <devicemapper.niko@gmail.com>
-Subject: shared snapshot LVM patch compile error
-Date: Mon, 14 Mar 2011 20:32:57 +0800
-Message-ID: <AANLkTimx6jE0_aHh=pVQp9OgzcX8vFZiYJts-3cn2mwO@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v3] dm stripe: implement merge method
+Date: Mon, 14 Mar 2011 10:33:06 -0400
+Message-ID: <20110314143305.GA16939@redhat.com>
+References: <201012271219.56476.mume@linux.vnet.ibm.com>
+ <20101227225459.5a5150ab@notabene.brown>
+ <201012271323.13406.mume@linux.vnet.ibm.com>
+ <4D74AEF9.7050108@linux.vnet.ibm.com>
+ <20110308022158.GA663@redhat.com>
+ <4D76051E.5060303@linux.vnet.ibm.com>
+ <20110308164849.GA5692@redhat.com>
+ <4D78DA0F.4000001@linux.vnet.ibm.com>
+ <20110312224222.GA6176@redhat.com>
+ <4D7E020A.1020708@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5899063547003196953=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4D7E020A.1020708@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mustafa Mesanovic <mume@linux.vnet.ibm.com>
+Cc: dm-devel@redhat.com, Neil Brown <neilb@suse.de>, akpm@linux-foundation.org, cotte@de.ibm.com, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, ehrhardt@linux.vnet.ibm.com, "Alasdair G. Kergon" <agk@redhat.com>, Jeff Moyer <jmoyer@redhat.com>
 List-Id: dm-devel.ids
 
---===============5899063547003196953==
-Content-Type: multipart/alternative; boundary=0015175ca98cf0a00d049e7082a6
+On Mon, Mar 14 2011 at  7:54am -0400,
+Mustafa Mesanovic <mume@linux.vnet.ibm.com> wrote:
 
---0015175ca98cf0a00d049e7082a6
-Content-Type: text/plain; charset=ISO-8859-1
+> On 03/12/2011 11:42 PM, Mike Snitzer wrote:
+> >What record size are you using?
+> >Which filesystem are you using?
+> >Also, were you using O_DIRECT?  If not then I'm having a hard time
+> >understanding why implementing stripe_merge was so beneficial for you.
+> >stripe_merge doesn't help buffered IO.
 
-less arguments of lv_info in lvm-shared-merge-dont-delete.patch caused this
-error,
-origin_only should be 0 ? I didn't look inside the code,so ask you guys
+To clarify (thanks to the clue about dropping caches):
+stripe_merge doesn't help _cached_ buffered IO ;)
 
-in lvm-shared-merge-dont-delete.patch
-Index: LVM2.2.02.73/lib/metadata/lv_manip.c
-===================================================================
---- LVM2.2.02.73.orig/lib/metadata/lv_manip.c   2010-09-10
-19:15:20.000000000 +0200
-+++ LVM2.2.02.73/lib/metadata/lv_manip.c        2010-09-10
-19:15:33.000000000 +0200
-@@ -2354,6 +2354,38 @@ int lv_remove_with_dependencies(struct c
-                struct logical_volume *origin = origin_from_cow(lv);
-                /* Remove shared snapshot's virtual snapshots first */
-                if (lv_is_multisnap_origin(origin)) {
-+                       if (!level) {
-+                               int origin_active, merging;
-+                               struct lvinfo info;
-+                               if (!lv_info(cmd, origin, &info, 0, 0))
-{                            -----------------> here
-+                                       log_error("Check for existence of
-snapshot "
-+                                                 "origin '%s' failed.",
-origin->name);
-+                                       return 0;
-+                               }
-
-
-gcc -c -I. -I../include -DHAVE_CONFIG_H -DDM_IOCTLS -O2 -g -pipe -Wall
--Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector
---param=ssp-buffer-size=4 -m64 -mtune=generic -O2 -g -pipe -Wall
--Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector
---param=ssp-buffer-size=4 -m64 -mtune=generic -fPIC -Wall -Wundef -Wshadow
--Wcast-align -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations
--Wnested-externs -Winline -Wmissing-noreturn -Wformat-security
--Wredundant-decls -O2 -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2
--fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic
--fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwrite-strings
--Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline
--Wmissing-noreturn -Wformat-security -Wredundant-decls -O2
-locking/no_locking.c -o locking/no_locking.o
-gcc -c -I. -I../include -DHAVE_CONFIG_H -DDM_IOCTLS -O2 -g -pipe -Wall
--Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector
---param=ssp-buffer-size=4 -m64 -mtune=generic -O2 -g -pipe -Wall
--Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector
---param=ssp-buffer-size=4 -m64 -mtune=generic -fPIC -Wall -Wundef -Wshadow
--Wcast-align -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations
--Wnested-externs -Winline -Wmissing-noreturn -Wformat-security
--Wredundant-decls -O2 -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2
--fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic
--fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwrite-strings
--Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline
--Wmissing-noreturn -Wformat-security -Wredundant-decls -O2 log/log.c -o
-log/log.o
-gcc -c -I. -I../include -DHAVE_CONFIG_H -DDM_IOCTLS -O2 -g -pipe -Wall
--Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector
---param=ssp-buffer-size=4 -m64 -mtune=generic -O2 -g -pipe -Wall
--Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector
---param=ssp-buffer-size=4 -m64 -mtune=generic -fPIC -Wall -Wundef -Wshadow
--Wcast-align -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations
--Wnested-externs -Winline -Wmissing-noreturn -Wformat-security
--Wredundant-decls -O2 -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2
--fexceptions -fstack-protector --param=ssp-buffer-size=4 -m64 -mtune=generic
--fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwrite-strings
--Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline
--Wmissing-noreturn -Wformat-security -Wredundant-decls -O2
-metadata/lv_manip.c -o metadata/lv_manip.o
-metadata/lv_manip.c: In function 'lv_remove_with_dependencies':
-metadata/lv_manip.c:2360: warning: passing argument 3 of 'lv_info' makes
-integer from pointer without a cast
-../include/activate.h:80: note: expected 'unsigned int' but argument is of
-type 'struct lvinfo *'
-metadata/lv_manip.c:2360: error: too few arguments to function 'lv_info'
-make[1]: *** [metadata/lv_manip.o] Error 1
-make[1]: Leaving directory `/root/rpmbuild/BUILD/LVM2.2.02.72/lib'
-make: *** [lib] Error 2
-error: Bad exit status from /var/tmp/rpm-tmp.RpT3fj (%build)
-
---0015175ca98cf0a00d049e7082a6
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div>less arguments of lv_info in lvm-shared-merge-dont-delete.patch caused=
- this error,</div>
-<div>origin_only should be 0 ? I didn&#39;t look inside the code,so ask you=
- guys</div>
-<div>=A0</div>
-<div>in lvm-shared-merge-dont-delete.patch</div>
-<div>Index: LVM2.2.02.73/lib/metadata/lv_manip.c<br>=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<br>--- LVM2.2.02.73.orig/lib/metadata/lv_man=
-ip.c=A0=A0 2010-09-10 19:15:20.000000000 +0200<br>+++ LVM2.2.02.73/lib/meta=
-data/lv_manip.c=A0=A0=A0=A0=A0=A0=A0 2010-09-10 19:15:33.000000000 +0200<br=
+> I used 64k record size, and ext3 as filesystem.
+> 
+> No, I was not using O_DIRECT. But I have measured as well with O_DIRECT, and
+> the benefits there are significant too.
+> 
+> stripe_merge() helps a lot. The reason of splitting I/O records into 4KiB
+> chunks happens at dm_set_device_limits(), thats what I explained in my v1 patch.
+> If the target has no own merge_fn, max_sectors will be set to PAGE_SIZE, what
+> in my case is 4KiB. Then __bio_add_page checks upon max_sectors and does not
+> add any more pages to a bio. The bio stays at 4KiB.
 >
-@@ -2354,6 +2354,38 @@ int lv_remove_with_dependencies(struct c<br>=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 struct logical_volume *origin =3D o=
-rigin_from_cow(lv);<br>=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 /* Rem=
-ove shared snapshot&#39;s virtual snapshots first */<br>=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (lv_is_multisnap_origin(origin)) {<br>
-+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (!le=
-vel) {<br>+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0 int origin_active, merging;<br>+=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
- struct lvinfo info;<br>+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (!lv_info(cmd, origin, &amp;i=
-nfo, 0, 0)) {=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 -----------------&gt; here<br>
-+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 log_error(&quot;Check for existe=
-nce of snapshot &quot;<br>+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 &quot;origin &#39;%s&#39; failed.&quot;, origin-&gt;n=
-ame);<br>+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 return 0;<br>
-+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0 }<br></div>
-<div>=A0</div>
-<div>=A0</div>
-<div>gcc -c -I. -I../include -DHAVE_CONFIG_H -DDM_IOCTLS -O2 -g -pipe -Wall=
- -Wp,-D_FORTIFY_SOURCE=3D2 -fexceptions -fstack-protector --param=3Dssp-buf=
-fer-size=3D4 -m64 -mtune=3Dgeneric -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=
-=3D2 -fexceptions -fstack-protector --param=3Dssp-buffer-size=3D4 -m64 -mtu=
-ne=3Dgeneric -fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwrite-strings -Wmi=
-ssing-prototypes -Wmissing-declarations -Wnested-externs -Winline -Wmissing=
--noreturn -Wformat-security -Wredundant-decls -O2 -O2 -g -pipe -Wall -Wp,-D=
-_FORTIFY_SOURCE=3D2 -fexceptions -fstack-protector --param=3Dssp-buffer-siz=
-e=3D4 -m64 -mtune=3Dgeneric -fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwri=
-te-strings -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Wi=
-nline -Wmissing-noreturn -Wformat-security -Wredundant-decls -O2 locking/no=
-_locking.c -o locking/no_locking.o<br>
-gcc -c -I. -I../include -DHAVE_CONFIG_H -DDM_IOCTLS -O2 -g -pipe -Wall -Wp,=
--D_FORTIFY_SOURCE=3D2 -fexceptions -fstack-protector --param=3Dssp-buffer-s=
-ize=3D4 -m64 -mtune=3Dgeneric -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=3D2 =
--fexceptions -fstack-protector --param=3Dssp-buffer-size=3D4 -m64 -mtune=3D=
-generic -fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwrite-strings -Wmissing=
--prototypes -Wmissing-declarations -Wnested-externs -Winline -Wmissing-nore=
-turn -Wformat-security -Wredundant-decls -O2 -O2 -g -pipe -Wall -Wp,-D_FORT=
-IFY_SOURCE=3D2 -fexceptions -fstack-protector --param=3Dssp-buffer-size=3D4=
- -m64 -mtune=3Dgeneric -fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwrite-st=
-rings -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline=
- -Wmissing-noreturn -Wformat-security -Wredundant-decls -O2 log/log.c -o lo=
-g/log.o<br>
-gcc -c -I. -I../include -DHAVE_CONFIG_H -DDM_IOCTLS -O2 -g -pipe -Wall -Wp,=
--D_FORTIFY_SOURCE=3D2 -fexceptions -fstack-protector --param=3Dssp-buffer-s=
-ize=3D4 -m64 -mtune=3Dgeneric -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=3D2 =
--fexceptions -fstack-protector --param=3Dssp-buffer-size=3D4 -m64 -mtune=3D=
-generic -fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwrite-strings -Wmissing=
--prototypes -Wmissing-declarations -Wnested-externs -Winline -Wmissing-nore=
-turn -Wformat-security -Wredundant-decls -O2 -O2 -g -pipe -Wall -Wp,-D_FORT=
-IFY_SOURCE=3D2 -fexceptions -fstack-protector --param=3Dssp-buffer-size=3D4=
- -m64 -mtune=3Dgeneric -fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwrite-st=
-rings -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline=
- -Wmissing-noreturn -Wformat-security -Wredundant-decls -O2 metadata/lv_man=
-ip.c -o metadata/lv_manip.o<br>
-metadata/lv_manip.c: In function &#39;lv_remove_with_dependencies&#39;:<br>=
-metadata/lv_manip.c:2360: warning: passing argument 3 of &#39;lv_info&#39; =
-makes integer from pointer without a cast<br>../include/activate.h:80: note=
-: expected &#39;unsigned int&#39; but argument is of type &#39;struct lvinf=
-o *&#39;<br>
-metadata/lv_manip.c:2360: error: too few arguments to function &#39;lv_info=
-&#39;<br>make[1]: *** [metadata/lv_manip.o] Error 1<br>make[1]: Leaving dir=
-ectory `/root/rpmbuild/BUILD/LVM2.2.02.72/lib&#39;<br>make: *** [lib] Error=
- 2<br>
-error: Bad exit status from /var/tmp/rpm-tmp.RpT3fj (%build)<br></div>
+> Now by avoiding the "wrong" setting of max_sectors for the dm target,
+> __bio_add_page will be able to add more than one page to the bios.
 
---0015175ca98cf0a00d049e7082a6--
+Right, I understand the limitation that the patch addresses.  But given
+that I hadn't dropped caches I was missing _why_ it was helping you so
+much for buffered IO.
 
+> So this is my iozone call:
+>  # iozone -s 2000m -r 64k -t 32 -e -w -R -C -i 0
+>                                         -F<mntpt>/Child0 ....<mntpt>/Child31
+> For direct I/O (O_DIRECT) add '-I'.
 
---===============5899063547003196953==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+I've been using a comparable iozone commandline (except I was using -i 0
+-i 1 -i 2 in a single iozone run).  If I write (-i 0), drop caches, and
+then read (-i 1) I see the benefit associated with stripe_merge() and
+buffered reads:
 
+iozone -s 2000m -r 64k -t 8 -e -w -i 0 -F ...
 
---===============5899063547003196953==--
+dm_merge_bvec_count calls: 192
+stripe_map_sector calls: 8192527
+stripe_map calls: 8192921
+
+(do _not_ drop_caches)
+
+iozone -s 2000m -r 64k -t 8 -e -w -i 1 -F ...
+
+dm_merge_bvec_count calls: 0
+stripe_map_sector calls: 6
+stripe_map calls: 262
+
+echo 3 > /proc/sys/vm/drop_caches
+iozone -s 2000m -r 64k -t 8 -e -w -i 1 -F ...
+...
+
+dm_merge_bvec_count calls: 8147899
+stripe_map_sector calls: 4205979
+stripe_map calls: 247675
+
+> dm_merge_bvec/stripe_merge is being called only on reads, thats what I have
+> observed when I was testing the patch on my 2.6.32.x-stable kernel. Maybe it
+> depends if the I/O is page cached or aio based...this might be worth a
+> further analysis. On writes another path must be walked through, but I have
+> not further analysed it so far.
+
+Direct I/O (and AIO) writes do use dm_merge_bvec/stripe_merge:
+
+iozone -s 2000m -r 64k -t 8 -e -w -I -i 0 -F ...
+
+dm_merge_bvec_count calls: 16344806
+stripe_map_sector calls: 8683179
+stripe_map calls: 511595
+
+> In think it helps to avoid "overhead" in passing always 4KiB bios to the
+> dm target. In my opinion it is "cheaper"/"faster" to pass one big bio
+> down to the dm target instead of passing 4KiB max each bio.
+> 
+> I used iostat to check on the devices and the sizes of the requests, just try
+> to start an iostat process which collects I/O statistics during your
+> runs. e.g. 'iostat -dmx 2>  outfile&' - check out "avgrq-sz".
+> 
+> And yes during my iostat runs I figured out that the writes are still dropping
+> into the dm in 4KiB chunks, this is what I will analyse next.
+
+Yes, for buffered writes that is definitely the case.
+
+My iostat runs show this too, e.g.:
+
+Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util
+dm-50             0.00 11970.00    0.00   45.50     0.00 23264.00  1022.59   175.31 1398.88  21.98 100.00
+dm-52             0.00 11967.50    0.00   41.50     0.00 20742.00   999.61   170.87 1330.83  24.10 100.00
+dm-56             0.00 11962.00    0.00   47.50     0.00 24320.00  1024.00   167.65 1324.91  21.05 100.00
+dm-57             0.00 11970.00    0.00   45.00     0.00 23040.00  1024.00   174.03 1409.62  22.22 100.00
+dm-58             0.00 11970.00    0.00   47.00     0.00 23808.00  1013.11   176.86 1415.36  21.28 100.00
+dm-60             0.00 11962.00    0.00   45.00     0.00 23040.00  1024.00   171.99 1375.34  22.22 100.00
+dm-62             0.00 11962.00    0.00   59.50     0.00 29952.00  1006.79   139.20 1129.12  16.81 100.00
+dm-64             0.00 11967.50    0.00   63.50     0.00 32510.00  1023.94   136.29 1116.40  15.75 100.00
+dm-66             0.00     0.00    0.00 96459.50     0.00 385838.00     8.00 167097.20  675.99   0.01 100.00
+
+NOTE: dm-66 is the bio-based striped_lv volume, the other dm-* are the
+underlying request-based mpath devices.
+
+> Maybe there will be another patch(es) to fix that.
+
+Doubtful, and it certainly isn't a DM-only phenomenon.  writeback is
+always done in terms of PAGE_SIZE IOs.
+
+> Mustafa
+> 
+> ps:
+> aio-stress did not work for me, sorry but I did not have the time to check on that
+> and to search where the error might be...
+
+Odd, works fine for me.  I'm using the following commndline:
+aio-stress -O -o 0 -o 1 -r 64 -d 128 -b 16 -i 16 -s 2048 /dev/snitm/striped_lv
+
+Can you share how you're using it and what the error is?
