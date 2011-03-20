@@ -1,12 +1,12 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools libmultipath/dict.c libmultipa ...
-Date: 18 Mar 2011 19:50:42 -0000
-Message-ID: <20110318195042.15638.qmail@sourceware.org>
+From: "Eli Malul" <eli.malul@kaminario.com>
+Subject: the mirror log is NOT kept on disk
+Date: Sun, 20 Mar 2011 18:19:02 +0200
+Message-ID: <E04C10E329E0CD40816C9C17AE53BBD301950D67@kit001.kaminario.local>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============3605396107181320678=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,163 +16,152 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2011-03-18 19:50:41
+This is a multi-part message in MIME format.
 
-Modified files:
-	libmultipath   : dict.c parser.c 
-	multipath      : multipath.conf.redhat 
+--===============3605396107181320678==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01CBE71A.871DA92C"
 
-Log message:
-	Fix for bz#675369. Multipath now uses set_value to get the value in all the
-	handler functions, and set_value now makes sure that there is value for the
-	option before trying to get its length.
+This is a multi-part message in MIME format.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/dict.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.17.2.17&r2=1.17.2.18
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/parser.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.3&r2=1.18.2.4
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.7&r2=1.6.2.8
+------_=_NextPart_001_01CBE71A.871DA92C
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
---- multipath-tools/libmultipath/dict.c	2011/02/18 18:27:00	1.17.2.17
-+++ multipath-tools/libmultipath/dict.c	2011/03/18 19:50:40	1.17.2.18
-@@ -27,10 +27,13 @@
- {
- 	char * buff;
- 
--	buff = VECTOR_SLOT(strvec, 1);
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
- 	conf->checkint = atoi(buff);
- 	conf->max_checkint = MAX_CHECKINT(conf->checkint);
- 
-+	FREE(buff);
- 	return 0;
- }
- 
-@@ -40,6 +43,8 @@
- 	char * buff;
- 
- 	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
- 	if (strlen(buff) == 3 && !strcmp(buff, "off"))
- 		conf->fast_io_fail = -1;
- 	else if (sscanf(buff, "%d", &conf->fast_io_fail) != 1 ||
-@@ -56,6 +61,8 @@
- 	char * buff;
- 
- 	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
- 	if (sscanf(buff, "%u", &conf->dev_loss) != 1)
- 		conf->dev_loss = 0;
- 
-@@ -68,9 +75,12 @@
- {
- 	char * buff;
- 
--	buff = VECTOR_SLOT(strvec, 1);
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
- 	conf->verbosity = atoi(buff);
- 
-+	FREE(buff);
- 	return 0;
- }
- 
-@@ -306,6 +316,8 @@
- 	char * buff;
- 
- 	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
- 
- 	if (strlen(buff) == 6 && !strcmp(buff, "manual"))
- 		conf->pgfailback = -FAILBACK_MANUAL;
-@@ -729,6 +741,8 @@
- 	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
- 
- 	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
- 	if (strlen(buff) == 3 && !strcmp(buff, "off"))
- 		hwe->fast_io_fail = -1;
- 	else if (sscanf(buff, "%d", &hwe->fast_io_fail) != 1 ||
-@@ -746,6 +760,8 @@
- 	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
- 
- 	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
- 	if (sscanf(buff, "%u", &hwe->dev_loss) != 1)
- 		hwe->dev_loss = 0;
- 
-@@ -883,7 +899,8 @@
- 		return 1;
- 
- 	buff = set_value(strvec);
--
-+	if (!buff)
-+		return 1;
- 	if (strlen(buff) == 6 && !strcmp(buff, "manual"))
- 		hwe->pgfailback = -FAILBACK_MANUAL;
- 	else if (strlen(buff) == 9 && !strcmp(buff, "immediate"))
-@@ -1155,7 +1172,8 @@
- 		return 1;
- 
- 	buff = set_value(strvec);
--
-+	if (!buff)
-+		return 1;
- 	if (strlen(buff) == 6 && !strcmp(buff, "manual"))
- 		mpe->pgfailback = -FAILBACK_MANUAL;
- 	else if (strlen(buff) == 9 && !strcmp(buff, "immediate"))
---- multipath-tools/libmultipath/parser.c	2011/03/07 05:19:38	1.18.2.3
-+++ multipath-tools/libmultipath/parser.c	2011/03/18 19:50:40	1.18.2.4
-@@ -2,7 +2,7 @@
-  * Part:        Configuration file parser/reader. Place into the dynamic
-  *              data structure representation the conf file
-  *  
-- * Version:     $Id: parser.c,v 1.18.2.3 2011/03/07 05:19:38 bmarzins Exp $
-+ * Version:     $Id: parser.c,v 1.18.2.4 2011/03/18 19:50:40 bmarzins Exp $
-  * 
-  * Author:      Alexandre Cassen, <acassen@linux-vs.org>
-  *              
-@@ -374,13 +374,17 @@
- void *
- set_value(vector strvec)
- {
--	char *str = VECTOR_SLOT(strvec, 1);
--	int size = strlen(str);
-+	char *str;
-+	int size;
- 	int i = 0;
- 	int len = 0;
- 	char *alloc = NULL;
- 	char *tmp;
- 
-+	if (VECTOR_SIZE(strvec) < 2)
-+		return NULL;
-+	str = VECTOR_SLOT(strvec, 1);
-+	size = strlen(str);
- 	if (*str == '"') {
- 		for (i = 2; i < VECTOR_SIZE(strvec); i++) {
- 			str = VECTOR_SLOT(strvec, i);
---- multipath-tools/multipath/multipath.conf.redhat	2008/01/15 01:34:36	1.6.2.7
-+++ multipath-tools/multipath/multipath.conf.redhat	2011/03/18 19:50:41	1.6.2.8
-@@ -36,7 +36,7 @@
- #	selector		"round-robin 0"
- #	path_grouping_policy	multibus
- #	getuid_callout		"/sbin/scsi_id -g -u -s /block/%n"
--#	prio_callout		/bin/true
-+#	prio_callout		none
- #	path_checker		readsector0
- #	rr_min_io		100
- #	max_fds			8192
+Hi,
+
+=20
+
+I tried a small test where I suspended and resumed a mirrored device
+without IO going on.
+
+My expectation was that the mirror set will not get re-synced but
+unfortunately it did.
+
+=20
+
+According the documentation the mirror log is kept on disk when creating
+a mirror logical device with 'disk' log type as an input parameter.
+
+I looked at the code and I didn't see where the sync_bits are being
+written to the disk or read from the disk but only the number of regions
+is being saved.
+
+=20
+
+How should a mirror device survive reboots/crashes without syncing the
+entire mirror set?
+
+=20
+
+BTW - another problem is that after reboot the created logical device
+disappears, is there an easy way to keep it persistent or should I
+create at each boot?
+
+=20
+
+
+------_=_NextPart_001_01CBE71A.871DA92C
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
+xmlns=3D"http://www.w3.org/TR/REC-html40"><head><meta =
+http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii"><meta name=3DGenerator content=3D"Microsoft Word 12 =
+(filtered medium)"><style><!--
+/* Font Definitions */
+@font-face
+	{font-family:"Cambria Math";
+	panose-1:2 4 5 3 5 4 6 3 2 4;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-align:right;
+	direction:rtl;
+	unicode-bidi:embed;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+.MsoChpDefault
+	{mso-style-type:export-only;}
+@page WordSection1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
+div.WordSection1
+	{page:WordSection1;}
+--></style><!--[if gte mso 9]><xml>
+<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+<o:shapelayout v:ext=3D"edit">
+<o:idmap v:ext=3D"edit" data=3D"1" />
+</o:shapelayout></xml><![endif]--></head><body lang=3DEN-US link=3Dblue =
+vlink=3Dpurple><div class=3DWordSection1><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>Hi,<o:p></o:p>=
+</p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'><o:p>&nbsp;</o=
+:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>I tried a =
+small test where I suspended and resumed a mirrored device without IO =
+going on.<o:p></o:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>My =
+expectation was that the mirror set will not get re-synced but =
+unfortunately it did.<o:p></o:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'><o:p>&nbsp;</o=
+:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>According the =
+documentation the mirror log is kept on disk when creating a mirror =
+logical device with 'disk' log type as an input =
+parameter.<o:p></o:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>I looked at =
+the code and I didn't see where the sync_bits are being written to the =
+disk or read from the disk but only the number of regions is being =
+saved.<o:p></o:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'><o:p>&nbsp;</o=
+:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>How should a =
+mirror device survive reboots/crashes without syncing the entire mirror =
+set?<o:p></o:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'><o:p>&nbsp;</o=
+:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'>BTW &#8211; =
+another problem is that after reboot the created logical device =
+disappears, is there an easy way to keep it persistent or should I =
+create at each boot?<o:p></o:p></p><p class=3DMsoNormal =
+style=3D'text-align:left;direction:ltr;unicode-bidi:embed'><o:p>&nbsp;</o=
+:p></p></div></body></html>
+------_=_NextPart_001_01CBE71A.871DA92C--
+
+
+--===============3605396107181320678==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3605396107181320678==--
