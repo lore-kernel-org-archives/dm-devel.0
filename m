@@ -1,7 +1,7 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: multipath-tools and IBM 2810 XIV
-Date: Tue, 22 Mar 2011 17:42:35 +0000
-Message-ID: <4D88DF8B.4020600@redhat.com>
+From: Bart Coninckx <bart.coninckx@telenet.be>
+Subject: difference in running multipathd in console versus cron
+Date: Wed, 23 Mar 2011 11:27:23 +0100
+Message-ID: <201103231127.23386.bart.coninckx@telenet.be>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,29 +16,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Folks,
+Hi all,
 
-Wondered if anyone had any experience with multipath-tools and the IBM XIV
-storage (2810 range, possibly others)?
+I've written backup scripts where for a snapshot LV on a iSCSI target 
+dynamically an iSCSI LUN and according multipath devices are created. To 
+properly clean them up and create them, multipathd is restarted quite a fiew 
+times in the script. 
+When doing this manually this works very well, and you see the multipath 
+devices being created and disappear again.
+Running the same from cron, leads to a lot times where the devices are not 
+cleaned up, preventing them to be created again for the second run, which then 
+fails.
+I seem to have messages like "backup_DomU: map in use". 
 
-They look like this:
+This is in SLES11SP1 with multipath-tools-0.4.8-40.25.1.
 
-Host: scsi8 Channel: 00 Id: 01 Lun: 01
-  Vendor: IBM      Model: 2810XIV          Rev: 10.1
-  Type:   Direct-Access                    ANSI SCSI revision: 05
+What could I do to get this running properly from cron as well?
 
-There's an IBM document that describes the configuration of these arrays under
-Linux here:
+Thank you,
 
-http://publib.boulder.ibm.com/infocenter/ibmxiv/r2/topic/com.ibm.help.xiv.doc/docs/hsag_older_than_1_1/Host_System_Attachment_Guide_for_Linux.pdf
 
-Which provides a multipath.conf that appears to work fine but I was wondering if
-anyone has experience of using these arrays with multipath-tools - in particular
-I'd like to know what the "host_connect" packages contain and whether you can
-avoid installing them with a few manual steps.
 
-Regards,
-Bryn.
+B.
