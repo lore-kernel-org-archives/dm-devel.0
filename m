@@ -1,14 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Milan Broz <mbroz@redhat.com>
 Subject: Re: Differentiating between dm devices
-Date: Thu, 24 Mar 2011 08:23:45 +0100
-Message-ID: <4D8AF181.4050004@suse.de>
-References: <4D8A2E53.10401@cfl.rr.com>
+Date: Thu, 24 Mar 2011 09:32:25 +0100
+Message-ID: <4D8B0199.20806@redhat.com>
+References: <4D8A2E53.10401@cfl.rr.com> <4D8AF181.4050004@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4D8A2E53.10401@cfl.rr.com>
+In-Reply-To: <4D8AF181.4050004@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,45 +22,53 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Phillip Susi <psusi@cfl.rr.com>
 List-Id: dm-devel.ids
 
-On 03/23/2011 06:30 PM, Phillip Susi wrote:
-> There are different classes of dm devices that different utilities may
-> or may not care about.  Some are intended to represent whole disks (
-> dmraid ) that can be partitioned.  Some ARE partitions and should
-> contain filesystems.  Still others are used only internally by the tools
-> ( -real, -cow for lvm, and raid10 subvolumes for dmraid ).  I can not
-> find any good way to differentiate between these types.
-> =
+On 03/24/2011 08:23 AM, Hannes Reinecke wrote:
 
-And indeed you are right, there is none.
+> That is the approach I've been following for SUSE.
+> The UUID is assumed to be of this syntax:
+> 
+> <type>-<identifier>
 
-> One way of fixing this is to add a new attribute to the device where the
-> tools creating them can specify a hint about what they are and how they
-> should be used.  Another way is to embed that information in the UUID.
-> For instance, logical volumes have UUIDs that start with "LVM-" and
-> dmraid disks start with "DMRAID-".  Perhaps dmraid partitions could have
-> their uuids changed to "DMRAIDP-" and internal devices changed to
-> "DMRAIDI-" and "LVMI-" for dmraid and lvm respectively.
-> =
+There were several discussions, I think even unofficial definition
+tries but nobody documented that properly.
 
-That is the approach I've been following for SUSE.
-The UUID is assumed to be of this syntax:
+So thanks for opening this here, it should be formalized (Alasdair?).
 
-<type>-<identifier>
+What I remember from discussions:
 
-where <type> is defined by the program creating the mapping.
-EG 'mpath' for multipath, 'partX' (where 'X' is the partition
-number) for kpartx etc.
+- all devices should set DM-UUID (not required still though)
+(btw available now in sysfs /sys/block/dm-X/dm/uuid in udev db,
+no need to use dm-ioctl)
 
-Not that these prefixes are registered in any way; would be nice
-to have them registered / documented somewhere.
-Cool would be to have them build into the module :-)
+- everything is supposed to set a prefix to identify subsystem (owner)
 
-Cheers,
+- DM-UUID can contain multiple namespaces
 
-Hannes
--- =
+- first part (prefix) says which the second part belongs to
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+(e.g. CRYPT-PLAIN-blabla - CRYPT is says it was cryptsetup namespace,
+it is up subsystem to handle content, here we can parse crypt device
+type from it it for example.)
+
+- you can stack it (like partition/kpartx over other subsystem)
+(problem of prefix separator, now we will get
+probably something like part1-CRYPT-LUKS-00000000...)
+
+- kpartx uses prefix in format (part%N- where
+N is part number - my opinion it is bug but that up to discussion.
+My suggestion is to use KPARTX-part%N*)
+
+- some uses lowercase here
+
+- there is limit of 128 characters for DM-UUID
+(so stacking should handle this somehow)
+
+To my knowledge, these prefixes are in the wild:
+
+LVM- (lvm2)
+DMRAID- (dmraid)
+CRYPT- (cryptsetup)
+mpath- (multipath)
+part%N- (kpartx)
+
+Milan
