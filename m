@@ -1,7 +1,7 @@
 From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Differentiating between dm devices
-Date: Wed, 23 Mar 2011 13:30:59 -0400
-Message-ID: <4D8A2E53.10401@cfl.rr.com>
+Subject: UUID homogenization
+Date: Wed, 23 Mar 2011 21:59:59 -0400
+Message-ID: <4D8AA59F.40700@cfl.rr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,20 +19,17 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-There are different classes of dm devices that different utilities may
-or may not care about.  Some are intended to represent whole disks (
-dmraid ) that can be partitioned.  Some ARE partitions and should
-contain filesystems.  Still others are used only internally by the tools
-( -real, -cow for lvm, and raid10 subvolumes for dmraid ).  I can not
-find any good way to differentiate between these types.
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-One way of fixing this is to add a new attribute to the device where the
-tools creating them can specify a hint about what they are and how they
-should be used.  Another way is to embed that information in the UUID.
-For instance, logical volumes have UUIDs that start with "LVM-" and
-dmraid disks start with "DMRAID-".  Perhaps dmraid partitions could have
-their uuids changed to "DMRAIDP-" and internal devices changed to
-"DMRAIDI-" and "LVMI-" for dmraid and lvm respectively.
+I have noticed that LVM and dmraid use upper case prefixes to uuids (
+LVM- and DMRAID- ) but multipath-tools uses lower case ( mpath- ).
+Shouldn't they be the same?
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.10 (GNU/Linux)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
 
-Which of these ways sounds best, or is there a better one I have not
-thought of?
+iEYEARECAAYFAk2KpZ8ACgkQJ4UciIs+XuJeKACgpt0xY9K3XPUrtp7shsxgucIo
+os0AnAnEyu4behUF7t6+tx+f0IzXe/3J
+=GO7r
+-----END PGP SIGNATURE-----
