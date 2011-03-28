@@ -1,12 +1,14 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] dm table: Reject unconfigured device
-Date: Tue, 29 Mar 2011 19:19:32 +0200
-Message-ID: <1301419172-10489-1-git-send-email-mbroz@redhat.com>
+From: =?KOI8-R?B?89TF0MHOIOajxM/Sz9c=?= <stepan.fedorov@clodo.ru>
+Subject: Re: dm-ioband max-bw and min-bw
+Date: Tue, 29 Mar 2011 00:06:00 +0400
+Message-ID: <AANLkTinwHppXtJnmab2J0SmcDFFA4rQqCKXKW28oSvag@mail.gmail.com>
+References: <AANLkTikQDe-fbSD+nvQ44OSGFY1_80eSG8ZA-Oiw0O5Z@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="koi8-r"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <AANLkTikQDe-fbSD+nvQ44OSGFY1_80eSG8ZA-Oiw0O5Z@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,77 +19,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>, zkabelac@redhat.com
 List-Id: dm-devel.ids
 
-Some block devices exist but have request function undefined
-(e.g. loop device without backing file).
-
-Because we are allowing  devices with zero size
-(offline device in multipath, see commit
-2cd54d9bedb79a97f014e86c0da393416b264eb3, there should be
-additional check if device is initialised.
-
-This patch adds check that block device has request function
-defined, otherwise it rejects mapped area as invalid.
-
-Reproducer is trivial: dm-mirror on unbound loop device
-(no backing file on loop devices)
-
-dmsetup create x --table "0 8 mirror core 2 8 sync 2 /dev/loop0 0 /dev/loop1 0"
-
-and mirror resync will immediatelly cause OOps.
-
-BUG: unable to handle kernel NULL pointer dereference at   (null)
- ? generic_make_request+0x2bd/0x590
- ? kmem_cache_alloc+0xad/0x190
- submit_bio+0x53/0xe0
- ? bio_add_page+0x3b/0x50
- dispatch_io+0x1ca/0x210 [dm_mod]
- ? read_callback+0x0/0xd0 [dm_mirror]
- dm_io+0xbb/0x290 [dm_mod]
- do_mirror+0x1e0/0x748 [dm_mirror]
-
-Signed-off-by: Milan Broz <mbroz@redhat.com>
-Reported-by: Zdenek Kabelac <zkabelac@redhat.com>
----
- drivers/md/dm-table.c |   17 +++++++++++++++++
- 1 files changed, 17 insertions(+), 0 deletions(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 38e4eb1..12caa66 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -361,6 +361,7 @@ static void close_dev(struct dm_dev_internal *d, struct mapped_device *md)
- static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
- 				  sector_t start, sector_t len, void *data)
- {
-+	struct request_queue *q;
- 	struct queue_limits *limits = data;
- 	struct block_device *bdev = dev->bdev;
- 	sector_t dev_size =
-@@ -369,6 +370,22 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
- 		limits->logical_block_size >> SECTOR_SHIFT;
- 	char b[BDEVNAME_SIZE];
- 
-+	/*
-+	 * Some devices exist but have not yet request function defined
-+	 * (e.g. loop with not bounded backing file)
-+	 * Do not allow using such devices.
-+	 */
-+	q = bdev_get_queue(bdev);
-+	if (!q || !q->make_request_fn) {
-+		DMWARN("%s: %s is not yet initialised: "
-+		       "start=%llu, len=%llu, dev_size=%llu",
-+		       dm_device_name(ti->table->md), bdevname(bdev, b),
-+		       (unsigned long long)start,
-+		       (unsigned long long)len,
-+		       (unsigned long long)dev_size);
-+		return 1;
-+	}
-+
- 	if (!dev_size)
- 		return 0;
- 
--- 
-1.7.4.1
+TWF5IGJlIG15IHByZXZpb3VzIG1lc3NhZ2Ugd2FzIG5vdCBkZWxpdmVyZWQsIHNvIGkgcmVwZWF0
+IGl0IG5vdzoKCjIwMTEvMy8yMyDz1MXQwc4g5qPEz9LP1yA8c3RlcGFuLmZlZG9yb3ZAY2xvZG8u
+cnU+Ogo+IEhlbGxvIQo+IEkgaGF2ZSBzb21lIHF1ZXN0aW9ucyBhYm91dCBkbS1pb2JhbmQgbW9k
+dWxlLgo+IE15IG0taW9iYW5kIHBhdGNoIHZlcnNpb24gaXMgMS4xNC4wIG9uIFNMRVMxMVNQMZoy
+LjYuMzIuMjktMC4zLXhlbiBrZXJuZWwuCj4gL2Rldi9tYXBwZXIvMWlkLTIyLTEwOSBpcyBhIG11
+bHRpcGF0aCBkZXZpY2UuIEluIG5vcm1hbCBjYXNlLCBibG9jayBkZXZpY2UKPiBwZXJmb3JtYW5j
+ZSB0ZXN0IHNob3dzIDUwMC02MDBNYi9zZWMgb24gdGhpcyBkZXZpY2UuCj4gTmV4dCBpIGRvIG5l
+eHQgY29tbWFuZHM6Cj4gZWNobyAiMCAkKGJsb2NrZGV2IC0tZ2V0c2l6ZSAvZGV2L21hcHBlci8x
+aWQtMjItMTA5KSBpb2JhbmQKPiAvZGV2L21hcHBlci8xaWQtMjItMTA5IDAgMCAwIG5vbmUgcmFu
+Z2UtYncgMCA6MTAwMDA6NTAwMDAiIHxkbXNldHVwIGNyZWF0ZQo+IGlvYi0yMi0xMDkKPiBpbiAv
+ZGV2L21hcHBlciBpIHNlZSBpb2ItMjItMTA5IGRldmljZS4gT0suCj4gTXmaYmxvY2sgZGV2aWNl
+IHBlcmZvcm1hbmNlIHRlc3Qgc2hvd3Mgb24gdGhpcyBkZXZpY2UgYWJvdXQgNTBNYi9zZWMuCj4g
+ZG1zZXR1cCB0YWJsZSBzaG93cyBtZToKPiBpb2ItMjItMTA5OiAwIDEwNDg1NzYwIGlvYmFuZCAy
+NTM6NSAwIDQgMTkyIG5vbmUgcmFuZ2UtYncgMTIyODggOjEwMDAwOjUwMDAwCj4gZm9yIHRoaXMg
+ZGV2aWNlLgo+IEFsbCB0aGlzIGlzIE9LLCBhbmQgbmV4dCBpIHdhbnQgdG8gY2hhbmdlIHNvbXRo
+aW5nLiBJmmRvOgo+IGRtc2V0dXAgbWVzc2FnZSBpb2ItMjItMTA5IDAgbWF4LWJ3IDcwMDAwCj4g
+TXkgYmxvY2sgZGV2aWNlIHBlcmZvcm1hbmNlIHRlc3Qgc2hvd3Mgbm93IG9uIHRoaXMgZGV2aWNl
+IGFib3V0Cj4gNTAwLTYwME1iL3NlYywgYW5kIGRtc2V0dXAgdGFibGUgc2hvd3M6Cj4gaW9iLTIy
+LTEwOTogMCAxMDQ4NTc2MCBpb2JhbmQgMjUzOjUgMCA0IDE5MiBub25lIHJhbmdlLWJ3IDEyMjg4
+IDoxMDAwMDowCj4gQXMgeW91IGNhbiBzZWUgLSBtYXhpbXVtIGJhbmR3aWR0aCB2YWx1ZSwgcmVz
+ZXRzIHRvIHplcm8gYWZ0ZXIgc2V0dGluZyBpdCB0bwo+IDcwTWIgYnkgImRtc2V0dXAgbWVzc2Fn
+ZSAuLi4iIGNvbW1hbmQuCj4gSWYgbmV4dCBpIGNoYW5nZSBtaW4tYncgYnkgc2FtZSB3YXkgLSBp
+dCBhbHNvIHJlc3RzIHRvIHplcm8gaW5zdGVhZCByaWdodAo+IHZhbHVlLgo+IE15IHF1ZXN0aW9u
+OiBpcyB0aGlzIGEgYnVnIGluIHNvbWUgc29mdHdhcmUsIG9yIGp1c3QgYSByZXN1bHQgb2Ygc29t
+ZXRoaW5nCj4gd3JvbmcgaW4gbXkgYWN0aW9ucz8KPiBUaGFuayB5b3UhCj4KCi0tCmRtLWRldmVs
+IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
