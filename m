@@ -1,36 +1,66 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: dm mpath: integrity errors should not cause failover
-Date: Mon, 28 Mar 2011 20:13:28 -0400
-Message-ID: <yq14o6mkclz.fsf@sermon.lab.mkp.net>
-References: <1301341030-28997-1-git-send-email-snitzer@redhat.com>
-	<20110328194831.GA29351@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ric Wheeler <rwheeler@redhat.com>
+Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
+Date: Tue, 29 Mar 2011 07:16:32 -0400
+Message-ID: <4D91BF90.8070909@redhat.com>
+References: <1301373398.2590.20.camel@mulgrave.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110328194831.GA29351@redhat.com> (Mike Snitzer's message of
-	"Mon, 28 Mar 2011 15:48:32 -0400")
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, James Bottomley <James.Bottomley@suse.de>, "Martin K. Petersen" <martin.petersen@oracle.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1301373398.2590.20.camel@mulgrave.site>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@hansenpartnership.com>
+Cc: lsf@lists.linux-foundation.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+On 03/29/2011 12:36 AM, James Bottomley wrote:
+> Hi All,
+>
+> Since LSF is less than a week away, the programme committee put together
+> a just in time preliminary agenda for LSF.  As you can see there is
+> still plenty of empty space, which you can make suggestions (to this
+> list with appropriate general list cc's) for filling:
+>
+> https://spreadsheets.google.com/pub?hl=en&hl=en&key=0AiQMl7GcVa7OdFdNQzM5UDRXUnVEbHlYVmZUVHQ2amc&output=html
+>
+> If you don't make suggestions, the programme committee will feel
+> empowered to make arbitrary assignments based on your topic and attendee
+> email requests ...
+>
+> We're still not quite sure what rooms we will have at the Kabuki, but
+> we'll add them to the spreadsheet when we know (they should be close to
+> each other).
+>
+> The spreadsheet above also gives contact information for all the
+> attendees and the programme committee.
+>
+> Yours,
+>
+> James Bottomley
+> on behalf of LSF/MM Programme Committee
+>
 
-Mike> Though this change could easily be considered a fix (for those
-Mike> lucky enough to even have a DIF/DIX capable mpath
-Mike> configuration)...
+Here are a few topic ideas:
 
-Yeah, I actually fixed this in my tree as a result of a user bug report.
+(1)  The first topic that might span IO & FS tracks (or just pull in device 
+mapper people to an FS track) could be adding new commands that would allow 
+users to grow/shrink/etc file systems in a generic way.  The thought I had was 
+that we have a reasonable model that we could reuse for these new commands like 
+mount and mount.fs or fsck and fsck.fs. With btrfs coming down the road, it 
+could be nice to identify exactly what common operations users want to do and 
+agree on how to implement them. Alasdair pointed out in the upstream thread that 
+we had a prototype here in fsadm.
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+(2) Very high speed, low latency SSD devices and testing. Have we settled on the 
+need for these devices to all have block level drivers? For S-ATA or SAS 
+devices, are there known performance issues that require enhancements in 
+somewhere in the stack?
+
+(3) The union mount versus overlayfs debate - pros and cons. What each do well, 
+what needs doing. Do we want/need both upstream? (Maybe this can get 10 minutes 
+in Al's VFS session?)
+
+Thanks!
+
+Ric
+
