@@ -1,104 +1,93 @@
-From: <Shyam_Iyer@Dell.com>
-Subject: RE: [Lsf] Preliminary Agenda and Activities for LSF
-Date: Tue, 29 Mar 2011 10:20:57 -0700
-Message-ID: <DBFB1B45AF80394ABD1C807E9F28D15702659CFFED@BLRX7MCDC203.AMER.DELL.COM>
-References: <1301373398.2590.20.camel@mulgrave.site>
- <4D91BF90.8070909@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH] dm table: Reject unconfigured device
+Date: Tue, 29 Mar 2011 19:19:32 +0200
+Message-ID: <1301419172-10489-1-git-send-email-mbroz@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4D91BF90.8070909@redhat.com>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: rwheeler@redhat.com, James.Bottomley@hansenpartnership.com
-Cc: lsf@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Milan Broz <mbroz@redhat.com>, zkabelac@redhat.com
 List-Id: dm-devel.ids
 
+Some block devices exist but have request function undefined
+(e.g. loop device without backing file).
 
+Because we are allowing  devices with zero size
+(offline device in multipath, see commit
+2cd54d9bedb79a97f014e86c0da393416b264eb3, there should be
+additional check if device is initialised.
 
-> -----Original Message-----
-> From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-
-> owner@vger.kernel.org] On Behalf Of Ric Wheeler
-> Sent: Tuesday, March 29, 2011 7:17 AM
-> To: James Bottomley
-> Cc: lsf@lists.linux-foundation.org; linux-fsdevel; linux-
-> scsi@vger.kernel.org; device-mapper development
-> Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
-> 
-> On 03/29/2011 12:36 AM, James Bottomley wrote:
-> > Hi All,
-> >
-> > Since LSF is less than a week away, the programme committee put
-> together
-> > a just in time preliminary agenda for LSF.  As you can see there is
-> > still plenty of empty space, which you can make suggestions (to this
-> > list with appropriate general list cc's) for filling:
-> >
-> >
-> https://spreadsheets.google.com/pub?hl=en&hl=en&key=0AiQMl7GcVa7OdFdNQz
-> M5UDRXUnVEbHlYVmZUVHQ2amc&output=html
-> >
-> > If you don't make suggestions, the programme committee will feel
-> > empowered to make arbitrary assignments based on your topic and
-> attendee
-> > email requests ...
-> >
-> > We're still not quite sure what rooms we will have at the Kabuki, but
-> > we'll add them to the spreadsheet when we know (they should be close
-> to
-> > each other).
-> >
-> > The spreadsheet above also gives contact information for all the
-> > attendees and the programme committee.
-> >
-> > Yours,
-> >
-> > James Bottomley
-> > on behalf of LSF/MM Programme Committee
-> >
-> 
-> Here are a few topic ideas:
-> 
-> (1)  The first topic that might span IO & FS tracks (or just pull in
-> device
-> mapper people to an FS track) could be adding new commands that would
-> allow
-> users to grow/shrink/etc file systems in a generic way.  The thought I
-> had was
-> that we have a reasonable model that we could reuse for these new
-> commands like
-> mount and mount.fs or fsck and fsck.fs. With btrfs coming down the
-> road, it
-> could be nice to identify exactly what common operations users want to
-> do and
-> agree on how to implement them. Alasdair pointed out in the upstream
-> thread that
-> we had a prototype here in fsadm.
-> 
-> (2) Very high speed, low latency SSD devices and testing. Have we
-> settled on the
-> need for these devices to all have block level drivers? For S-ATA or
-> SAS
-> devices, are there known performance issues that require enhancements
-> in
-> somewhere in the stack?
-> 
-> (3) The union mount versus overlayfs debate - pros and cons. What each
-> do well,
-> what needs doing. Do we want/need both upstream? (Maybe this can get 10
-> minutes
-> in Al's VFS session?)
-> 
-> Thanks!
-> 
-> Ric
+This patch adds check that block device has request function
+defined, otherwise it rejects mapped area as invalid.
 
-A few others that I think may span across I/O, Block fs..layers.
+Reproducer is trivial: dm-mirror on unbound loop device
+(no backing file on loop devices)
 
-1) Dm-thinp target vs File system thin profile vs block map based thin/trim profile. Facilitate I/O throttling for thin/trimmable storage. Online and Offline profil.
-2) Interfaces for SCSI, Ethernet/*transport configuration parameters floating around in sysfs, procfs. Architecting guidelines for accepting patches for hybrid devices.
-3) DM snapshot vs FS snapshots vs H/W snapshots. There is room for all and they have to help each other
-4) B/W control - VM->DM->Block->Ethernet->Switch->Storage. Pick your subsystem and there are many non-cooperating B/W control constructs in each subsystem.
+dmsetup create x --table "0 8 mirror core 2 8 sync 2 /dev/loop0 0 /dev/loop1 0"
 
--Shyam
+and mirror resync will immediatelly cause OOps.
+
+BUG: unable to handle kernel NULL pointer dereference at   (null)
+ ? generic_make_request+0x2bd/0x590
+ ? kmem_cache_alloc+0xad/0x190
+ submit_bio+0x53/0xe0
+ ? bio_add_page+0x3b/0x50
+ dispatch_io+0x1ca/0x210 [dm_mod]
+ ? read_callback+0x0/0xd0 [dm_mirror]
+ dm_io+0xbb/0x290 [dm_mod]
+ do_mirror+0x1e0/0x748 [dm_mirror]
+
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+Reported-by: Zdenek Kabelac <zkabelac@redhat.com>
+---
+ drivers/md/dm-table.c |   17 +++++++++++++++++
+ 1 files changed, 17 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 38e4eb1..12caa66 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -361,6 +361,7 @@ static void close_dev(struct dm_dev_internal *d, struct mapped_device *md)
+ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+ 				  sector_t start, sector_t len, void *data)
+ {
++	struct request_queue *q;
+ 	struct queue_limits *limits = data;
+ 	struct block_device *bdev = dev->bdev;
+ 	sector_t dev_size =
+@@ -369,6 +370,22 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+ 		limits->logical_block_size >> SECTOR_SHIFT;
+ 	char b[BDEVNAME_SIZE];
+ 
++	/*
++	 * Some devices exist but have not yet request function defined
++	 * (e.g. loop with not bounded backing file)
++	 * Do not allow using such devices.
++	 */
++	q = bdev_get_queue(bdev);
++	if (!q || !q->make_request_fn) {
++		DMWARN("%s: %s is not yet initialised: "
++		       "start=%llu, len=%llu, dev_size=%llu",
++		       dm_device_name(ti->table->md), bdevname(bdev, b),
++		       (unsigned long long)start,
++		       (unsigned long long)len,
++		       (unsigned long long)dev_size);
++		return 1;
++	}
++
+ 	if (!dev_size)
+ 		return 0;
+ 
+-- 
+1.7.4.1
