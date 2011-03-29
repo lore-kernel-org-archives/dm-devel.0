@@ -1,34 +1,50 @@
-From: James Bottomley <James.Bottomley@suse.de>
-Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
-Date: Tue, 29 Mar 2011 08:38:52 -0500
-Message-ID: <1301405932.2582.5.camel@mulgrave.site>
-References: <1301373398.2590.20.camel@mulgrave.site>
-	 <4D91BF90.8070909@redhat.com> <20110329112252.GO13806@parisc-linux.org>
-	 <4D91CDBD.40109@fusionio.com>  <yq1sju6hy3j.fsf@sermon.lab.mkp.net>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: Please revert a91a2785b20
+Date: Tue, 29 Mar 2011 09:42:08 -0400
+Message-ID: <yq1lizyhwlr.fsf@sermon.lab.mkp.net>
+References: <alpine.LFD.2.00.1103290006070.2774@localhost6.localdomain6>
+	<alpine.LFD.2.00.1103290040300.2774@localhost6.localdomain6>
+	<20110328230319.GA12790@redhat.com> <4D918347.7050500@fusionio.com>
+	<20110329132032.GA22921@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <yq1sju6hy3j.fsf@sermon.lab.mkp.net>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Jens Axboe <jaxboe@fusionio.com>, Matthew Wilcox <matthew@wil.cx>, lsf@lists.linux-foundation.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Ric Wheeler <rwheeler@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20110329132032.GA22921@redhat.com> (Mike Snitzer's message of
+	"Tue, 29 Mar 2011 09:20:32 -0400")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <jaxboe@fusionio.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>, James Bottomley <James.Bottomley@suse.de>, "Rafael J. Wysocki" <rjw@sisk.pl>, Ingo Molnar <mingo@elte.hu>, dm-devel@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-On Tue, 2011-03-29 at 09:09 -0400, Martin K. Petersen wrote:
-> >>>>> "Jens" == Jens Axboe <jaxboe@fusionio.com> writes:
-> 
-> >> I can throw together a quick presentation on this topic.
-> 
-> Jens> I'll join that too.
-> 
-> Stack tuning aside, maybe Matthew can speak a bit about NVMe and I'll
-> cover what's going on with the SCSI over PCIe efforts...
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-OK, I put you down for a joint sessions with FS and IO after the tea
-break on Tuesday.
+Mike,
 
-James
+Mike> But I think we have a related issue that needs discussion, given
+Mike> that an integrity profile mismatch will cause MD's assemble to
+Mike> fail (rather than warn and continue to assemble without integrity
+Mike> support).
 
+Mike> DM doesn't fail to load a DM device due to a integrity profile
+Mike> mismatch; it just emits a warning and continues.
 
+Mike> In contrast, MD will now disallow adding a normal disk (without
+Mike> integrity support) to an array that has historically had a
+Mike> symmetric integrity profile across all members.
 
+You would invalidate all your existing integrity metadata, tagging,
+etc. on existing metadevice members. That seems to be a policy decision,
+so if we go down that path it would have to be keyed off a force
+assembly option passed down from userland tooling. Turning off features
+and/or losing metadata really should not be done without the user's
+explicit consent.
+
+Also, let's assume you run an integrity-aware app on a DM device and you
+add a non-integrity drive. The DM device is then no longer capable of
+carrying integrity metadata out to storage. What happens to the app?
+What about outstanding writes with metadata attached?
+
+Good discussion topic for next week, methinks...
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
