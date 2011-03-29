@@ -1,50 +1,114 @@
-From: =?KOI8-R?B?89TF0MHOIOajxM/Sz9c=?= <stepan.fedorov@clodo.ru>
-Subject: Re: dm-ioband max-bw and min-bw
-Date: Tue, 29 Mar 2011 00:06:00 +0400
-Message-ID: <AANLkTinwHppXtJnmab2J0SmcDFFA4rQqCKXKW28oSvag@mail.gmail.com>
-References: <AANLkTikQDe-fbSD+nvQ44OSGFY1_80eSG8ZA-Oiw0O5Z@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
+Date: Tue, 29 Mar 2011 13:33:38 -0400
+Message-ID: <20110329173338.GD24485@redhat.com>
+References: <1301373398.2590.20.camel@mulgrave.site>
+ <4D91BF90.8070909@redhat.com>
+ <DBFB1B45AF80394ABD1C807E9F28D15702659CFFED@BLRX7MCDC203.AMER.DELL.COM>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="koi8-r"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AANLkTikQDe-fbSD+nvQ44OSGFY1_80eSG8ZA-Oiw0O5Z@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <DBFB1B45AF80394ABD1C807E9F28D15702659CFFED@BLRX7MCDC203.AMER.DELL.COM>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Shyam_Iyer@dell.com
+Cc: rwheeler@redhat.com, James.Bottomley@hansenpartnership.com, lsf@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-TWF5IGJlIG15IHByZXZpb3VzIG1lc3NhZ2Ugd2FzIG5vdCBkZWxpdmVyZWQsIHNvIGkgcmVwZWF0
-IGl0IG5vdzoKCjIwMTEvMy8yMyDz1MXQwc4g5qPEz9LP1yA8c3RlcGFuLmZlZG9yb3ZAY2xvZG8u
-cnU+Ogo+IEhlbGxvIQo+IEkgaGF2ZSBzb21lIHF1ZXN0aW9ucyBhYm91dCBkbS1pb2JhbmQgbW9k
-dWxlLgo+IE15IG0taW9iYW5kIHBhdGNoIHZlcnNpb24gaXMgMS4xNC4wIG9uIFNMRVMxMVNQMZoy
-LjYuMzIuMjktMC4zLXhlbiBrZXJuZWwuCj4gL2Rldi9tYXBwZXIvMWlkLTIyLTEwOSBpcyBhIG11
-bHRpcGF0aCBkZXZpY2UuIEluIG5vcm1hbCBjYXNlLCBibG9jayBkZXZpY2UKPiBwZXJmb3JtYW5j
-ZSB0ZXN0IHNob3dzIDUwMC02MDBNYi9zZWMgb24gdGhpcyBkZXZpY2UuCj4gTmV4dCBpIGRvIG5l
-eHQgY29tbWFuZHM6Cj4gZWNobyAiMCAkKGJsb2NrZGV2IC0tZ2V0c2l6ZSAvZGV2L21hcHBlci8x
-aWQtMjItMTA5KSBpb2JhbmQKPiAvZGV2L21hcHBlci8xaWQtMjItMTA5IDAgMCAwIG5vbmUgcmFu
-Z2UtYncgMCA6MTAwMDA6NTAwMDAiIHxkbXNldHVwIGNyZWF0ZQo+IGlvYi0yMi0xMDkKPiBpbiAv
-ZGV2L21hcHBlciBpIHNlZSBpb2ItMjItMTA5IGRldmljZS4gT0suCj4gTXmaYmxvY2sgZGV2aWNl
-IHBlcmZvcm1hbmNlIHRlc3Qgc2hvd3Mgb24gdGhpcyBkZXZpY2UgYWJvdXQgNTBNYi9zZWMuCj4g
-ZG1zZXR1cCB0YWJsZSBzaG93cyBtZToKPiBpb2ItMjItMTA5OiAwIDEwNDg1NzYwIGlvYmFuZCAy
-NTM6NSAwIDQgMTkyIG5vbmUgcmFuZ2UtYncgMTIyODggOjEwMDAwOjUwMDAwCj4gZm9yIHRoaXMg
-ZGV2aWNlLgo+IEFsbCB0aGlzIGlzIE9LLCBhbmQgbmV4dCBpIHdhbnQgdG8gY2hhbmdlIHNvbXRo
-aW5nLiBJmmRvOgo+IGRtc2V0dXAgbWVzc2FnZSBpb2ItMjItMTA5IDAgbWF4LWJ3IDcwMDAwCj4g
-TXkgYmxvY2sgZGV2aWNlIHBlcmZvcm1hbmNlIHRlc3Qgc2hvd3Mgbm93IG9uIHRoaXMgZGV2aWNl
-IGFib3V0Cj4gNTAwLTYwME1iL3NlYywgYW5kIGRtc2V0dXAgdGFibGUgc2hvd3M6Cj4gaW9iLTIy
-LTEwOTogMCAxMDQ4NTc2MCBpb2JhbmQgMjUzOjUgMCA0IDE5MiBub25lIHJhbmdlLWJ3IDEyMjg4
-IDoxMDAwMDowCj4gQXMgeW91IGNhbiBzZWUgLSBtYXhpbXVtIGJhbmR3aWR0aCB2YWx1ZSwgcmVz
-ZXRzIHRvIHplcm8gYWZ0ZXIgc2V0dGluZyBpdCB0bwo+IDcwTWIgYnkgImRtc2V0dXAgbWVzc2Fn
-ZSAuLi4iIGNvbW1hbmQuCj4gSWYgbmV4dCBpIGNoYW5nZSBtaW4tYncgYnkgc2FtZSB3YXkgLSBp
-dCBhbHNvIHJlc3RzIHRvIHplcm8gaW5zdGVhZCByaWdodAo+IHZhbHVlLgo+IE15IHF1ZXN0aW9u
-OiBpcyB0aGlzIGEgYnVnIGluIHNvbWUgc29mdHdhcmUsIG9yIGp1c3QgYSByZXN1bHQgb2Ygc29t
-ZXRoaW5nCj4gd3JvbmcgaW4gbXkgYWN0aW9ucz8KPiBUaGFuayB5b3UhCj4KCi0tCmRtLWRldmVs
-IG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20v
-bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Tue, Mar 29, 2011 at 10:20:57AM -0700, Shyam_Iyer@dell.com wrote:
+> 
+> 
+> > -----Original Message-----
+> > From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-
+> > owner@vger.kernel.org] On Behalf Of Ric Wheeler
+> > Sent: Tuesday, March 29, 2011 7:17 AM
+> > To: James Bottomley
+> > Cc: lsf@lists.linux-foundation.org; linux-fsdevel; linux-
+> > scsi@vger.kernel.org; device-mapper development
+> > Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
+> > 
+> > On 03/29/2011 12:36 AM, James Bottomley wrote:
+> > > Hi All,
+> > >
+> > > Since LSF is less than a week away, the programme committee put
+> > together
+> > > a just in time preliminary agenda for LSF.  As you can see there is
+> > > still plenty of empty space, which you can make suggestions (to this
+> > > list with appropriate general list cc's) for filling:
+> > >
+> > >
+> > https://spreadsheets.google.com/pub?hl=en&hl=en&key=0AiQMl7GcVa7OdFdNQz
+> > M5UDRXUnVEbHlYVmZUVHQ2amc&output=html
+> > >
+> > > If you don't make suggestions, the programme committee will feel
+> > > empowered to make arbitrary assignments based on your topic and
+> > attendee
+> > > email requests ...
+> > >
+> > > We're still not quite sure what rooms we will have at the Kabuki, but
+> > > we'll add them to the spreadsheet when we know (they should be close
+> > to
+> > > each other).
+> > >
+> > > The spreadsheet above also gives contact information for all the
+> > > attendees and the programme committee.
+> > >
+> > > Yours,
+> > >
+> > > James Bottomley
+> > > on behalf of LSF/MM Programme Committee
+> > >
+> > 
+> > Here are a few topic ideas:
+> > 
+> > (1)  The first topic that might span IO & FS tracks (or just pull in
+> > device
+> > mapper people to an FS track) could be adding new commands that would
+> > allow
+> > users to grow/shrink/etc file systems in a generic way.  The thought I
+> > had was
+> > that we have a reasonable model that we could reuse for these new
+> > commands like
+> > mount and mount.fs or fsck and fsck.fs. With btrfs coming down the
+> > road, it
+> > could be nice to identify exactly what common operations users want to
+> > do and
+> > agree on how to implement them. Alasdair pointed out in the upstream
+> > thread that
+> > we had a prototype here in fsadm.
+> > 
+> > (2) Very high speed, low latency SSD devices and testing. Have we
+> > settled on the
+> > need for these devices to all have block level drivers? For S-ATA or
+> > SAS
+> > devices, are there known performance issues that require enhancements
+> > in
+> > somewhere in the stack?
+> > 
+> > (3) The union mount versus overlayfs debate - pros and cons. What each
+> > do well,
+> > what needs doing. Do we want/need both upstream? (Maybe this can get 10
+> > minutes
+> > in Al's VFS session?)
+> > 
+> > Thanks!
+> > 
+> > Ric
+> 
+> A few others that I think may span across I/O, Block fs..layers.
+> 
+> 1) Dm-thinp target vs File system thin profile vs block map based thin/trim profile.
+
+> Facilitate I/O throttling for thin/trimmable storage. Online and Offline profil.
+
+Is above any different from block IO throttling we have got for block
+devices?
+
+> 2) Interfaces for SCSI, Ethernet/*transport configuration parameters floating around in sysfs, procfs. Architecting guidelines for accepting patches for hybrid devices.
+> 3) DM snapshot vs FS snapshots vs H/W snapshots. There is room for all and they have to help each other
+> 4) B/W control - VM->DM->Block->Ethernet->Switch->Storage. Pick your subsystem and there are many non-cooperating B/W control constructs in each subsystem.
+
+Above is pretty generic. Do you have specific needs/ideas/concerns?
+
+Thanks
+Vivek
