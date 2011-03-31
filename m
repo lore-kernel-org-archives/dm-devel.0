@@ -1,8 +1,12 @@
-From: Matthew Wilcox <matthew@wil.cx>
+From: Joel Becker <jlbec@evilplan.org>
 Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
-Date: Wed, 30 Mar 2011 18:05:08 -0600
-Message-ID: <20110331000508.GV13806@parisc-linux.org>
-References: <1301373398.2590.20.camel@mulgrave.site> <4D91BF90.8070909@redhat.com> <1301445210.2731.14.camel@mingming-laptop> <20110330021742.GL3008@dastard> <1301521798.7449.65.camel@mingming-laptop>
+Date: Wed, 30 Mar 2011 18:00:50 -0700
+Message-ID: <20110331010049.GA7794@noexit>
+References: <1301373398.2590.20.camel@mulgrave.site>
+ <4D91BF90.8070909@redhat.com>
+ <1301445210.2731.14.camel@mingming-laptop>
+ <20110330021742.GL3008@dastard>
+ <1301521798.7449.65.camel@mingming-laptop>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
@@ -14,11 +18,24 @@ Cc: Dave Chinner <david@fromorbit.com>, Ric Wheeler <rwheeler@redhat.com>, James
 List-Id: dm-devel.ids
 
 On Wed, Mar 30, 2011 at 02:49:58PM -0700, Mingming Cao wrote:
+> On Wed, 2011-03-30 at 13:17 +1100, Dave Chinner wrote:
+> > For direct IO, the IO lock is always taken in shared mode, so we can
+> > have concurrent read and write operations taking place at once
+> > regardless of the offset into the file.
+> > 
+> 
+> thanks for reminding me,in xfs concurrent direct IO write to the same
+> offset is allowed.
+
+	ocfs2 as well, with the same sort of strategem (including across
+the cluster).
+
 > > Direct IO semantics have always been that the application is allowed
 > > to overlap IO to the same range if it wants to. The result is
 > > undefined (just like issuing overlapping reads and writes to a disk
 > > at the same time) so it's the application's responsibility to avoid
 > > overlapping IO if it is a problem.
+> > 
 > 
 > I was thinking along the line to provide finer granularity lock to allow
 > concurrent direct IO to different offset/range, but to same offset, they
@@ -27,11 +44,17 @@ On Wed, Mar 30, 2011 at 02:49:58PM -0700, Mingming Cao wrote:
 > if any apps currently using DIO aware of the ordering has to be done at
 > the application level. 
 
-Yes, they're aware of it.  And they consider it a bug if they ever do
-concurrent I/O to the same sector.
+	Oh dear God no.  One of the major DIO use cases is to tell the
+kernel, "I know I won't do that, so don't spend any effort protecting
+me."
+
+Joel
 
 -- 
-Matthew Wilcox				Intel Open Source Technology Centre
-"Bill, look, we understand that you're interested in selling us this
-operating system, but compare it to ours.  We can't possibly take such
-a retrograde step."
+
+"I don't want to achieve immortality through my work; I want to
+ achieve immortality through not dying."
+        - Woody Allen
+
+			http://www.jlbec.org/
+			jlbec@evilplan.org
