@@ -1,50 +1,57 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: multipath -ll output discrepancy for IBM 1818 on
- SLES 11	SP1....
-Date: Fri, 01 Apr 2011 15:58:52 +0100
-Message-ID: <4D95E82C.4010805@redhat.com>
-References: <889038.49843.qm@web112308.mail.gq1.yahoo.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ted Ts'o <tytso@mit.edu>
+Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
+Date: Fri, 1 Apr 2011 11:19:07 -0400
+Message-ID: <20110401151907.GG21075@thunk.org>
+References: <1301373398.2590.20.camel@mulgrave.site>
+ <4D91BF90.8070909@redhat.com>
+ <1301445210.2731.14.camel@mingming-laptop>
+ <20110330021742.GL3008@dastard>
+ <E32BEFA9-15DE-4169-B313-095920A4DF7A@mit.edu>
+ <4D9313E2.6080006@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <889038.49843.qm@web112308.mail.gq1.yahoo.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Dharmesh Kamdar <kamdard71@yahoo.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4D9313E2.6080006@gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Ric Wheeler <ricwheeler@gmail.com>
+Cc: Dave Chinner <david@fromorbit.com>, lsf@lists.linux-foundation.org, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ric Wheeler <rwheeler@redhat.com>
 List-Id: dm-devel.ids
 
-On 04/01/2011 03:31 PM, Dharmesh Kamdar wrote:
-> So, my question is : even if we mention 
->                              features "2 pg_init_retries 50" 
+On Wed, Mar 30, 2011 at 07:28:34AM -0400, Ric Wheeler wrote:
 > 
-> why are we seeing " features='3 queue_if_no_path pg_init_retries 50' 
-> hwhandler='1 rdac' wp=rw" in the multipath -ll output ?
+> What possible semantics could you have?
 > 
-> 1) Where is this "3" coming from  ? and what is it's significance ?? 
+> If you ever write concurrently from multiple processes without
+> locking, you clearly are at the mercy of the scheduler and the
+> underlying storage which could fragment a single write into multiple
+> IO's sent to the backend device.
+> 
+> I would agree with Dave, let's not make it overly complicated or try
+> to give people "atomic" unbounded size writes just because they set
+> the O_DIRECT flag :)
 
-It's the count if items to parse on the rest of the features line.
+I just want to have it written down.  After getting burned with ext3's
+semantics promising more than what the standard guaranteed, I've just
+gotten paranoid about application programmers getting upset when
+things change on them --- and in the case of direct I/O, this stuff
+isn't even clearly documented anywhere official.
 
-> 2) Is this "3" next to the features in "multipath -ll" output as expected (even 
-> though we mention "2 pg_init_retries 50" ) in our multipath.conf ??
+I just think it's best that we document it the fact that concurrent
+DIO's to the same region may result in completely arbitrary behaviour,
+make sure it's well publicized to likely users (and I'm more worried
+about the open source code bases than Oracle DB), and then call it a day.
 
-The format of the features field is:
+The closest place that we have to any official documentation about
+O_DIRECT semantics is the open(2) man page in the Linux manpages, and
+it doesn't say anything about this.  It does give a recommendation
+against not mixing buffered and O_DIRECT accesses to the same file,
+but it does promise that things will work in that case.  (Even if it
+does, do we really want to make the promise that it will always work?)
 
-FeatureCount# Feature/param0 Feature/param1 ... Feature/paramN
+In any case, adding some text in that paragraph, or just after that
+paragraph, to the effect that two concurrent DIO accesses to the same
+file block, even by two different processes will result in undefined
+behavior would be a good start.
 
-The 3 indicates three features/parameters. The first is "queue_if_no_path"
-(which is implied by the "no_path_retry 30" in your device block - no_path_retry
-requires the queue_if_no_path feature be enabled at the device-mapper level).
-The 2nd and 3rd are the pg_init_retries feature and its parameter.
-
-Regards,
-Bryn.
+      	       	      	   	      	     - Ted
