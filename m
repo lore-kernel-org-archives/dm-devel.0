@@ -1,93 +1,256 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
-Date: Fri, 1 Apr 2011 09:30:04 -0700
-Message-ID: <AANLkTinZCx3gq-iDjPLzkvSFQNqAc1-bGN8xgzRz_=yj@mail.gmail.com>
-References: <1301373398.2590.20.camel@mulgrave.site>
-	<4D91BF90.8070909@redhat.com>
-	<1301445210.2731.14.camel@mingming-laptop>
-	<20110330021742.GL3008@dastard>
-	<E32BEFA9-15DE-4169-B313-095920A4DF7A@mit.edu>
-	<4D9313E2.6080006@gmail.com>
-	<20110401151907.GG21075@thunk.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm: improve block integrity support
+Date: Fri, 1 Apr 2011 13:42:59 -0400
+Message-ID: <20110401174259.GA22598@redhat.com>
+References: <alpine.LFD.2.00.1103290006070.2774@localhost6.localdomain6>
+ <alpine.LFD.2.00.1103290040300.2774@localhost6.localdomain6>
+ <20110328230319.GA12790@redhat.com>
+ <4D918347.7050500@fusionio.com>
+ <20110329132032.GA22921@redhat.com>
+ <yq1lizyhwlr.fsf@sermon.lab.mkp.net>
+ <20110329135800.GB23508@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20110401151907.GG21075@thunk.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Theodore Tso <tytso@mit.edu>
-Cc: Ric Wheeler <ricwheeler@gmail.com>, Dave Chinner <david@fromorbit.com>, lsf@lists.linux-foundation.org, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ric Wheeler <rwheeler@redhat.com>, Yongqiang Yang <xiaoqiangnk@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20110329135800.GB23508@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Jens Axboe <jaxboe@fusionio.com>, Ingo Molnar <mingo@elte.hu>, LKML <linux-kernel@vger.kernel.org>, "Rafael J. Wysocki" <rjw@sisk.pl>, James Bottomley <James.Bottomley@suse.de>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-On Fri, Apr 1, 2011 at 8:19 AM, Ted Ts'o <tytso@mit.edu> wrote:
-> On Wed, Mar 30, 2011 at 07:28:34AM -0400, Ric Wheeler wrote:
->>
->> What possible semantics could you have?
->>
->> If you ever write concurrently from multiple processes without
->> locking, you clearly are at the mercy of the scheduler and the
->> underlying storage which could fragment a single write into multiple
->> IO's sent to the backend device.
->>
->> I would agree with Dave, let's not make it overly complicated or try
->> to give people "atomic" unbounded size writes just because they set
->> the O_DIRECT flag :)
->
-> I just want to have it written down. =A0After getting burned with ext=
-3's
-> semantics promising more than what the standard guaranteed, I've just
-> gotten paranoid about application programmers getting upset when
-> things change on them --- and in the case of direct I/O, this stuff
-> isn't even clearly documented anywhere official.
->
-> I just think it's best that we document it the fact that concurrent
-> DIO's to the same region may result in completely arbitrary behaviour=
-,
-> make sure it's well publicized to likely users (and I'm more worried
-> about the open source code bases than Oracle DB), and then call it a =
-day.
->
-> The closest place that we have to any official documentation about
-> O_DIRECT semantics is the open(2) man page in the Linux manpages, and
-> it doesn't say anything about this. =A0It does give a recommendation
-> against not mixing buffered and O_DIRECT accesses to the same file,
-> but it does promise that things will work in that case. =A0(Even if i=
-t
-> does, do we really want to make the promise that it will always work?=
-)
+The current block integrity (DIF/DIX) support in DM is verifying that
+all devices' integrity profiles match during DM device resume (which
+is past the point of no return).  To some degree that is unavoidable
+(stacked DM devices force this late checking).  But for most DM
+devices (which aren't stacking on other DM devices) the ideal time to
+verify all integrity profiles match is during table load.
 
-when writing DIO to indirect mapped file holes, we fall back to buffere=
-d write
-(so we won't expose stale data in the case of a crash) concurrent DIO r=
-eads
-to that file (before data writeback) can expose stale data. right?
-do you consider this case mixing buffered and DIO access?
-do you consider that as a problem?
+Introduce the notion of an "initialized" integrity profile: a profile
+that was blk_integrity_register()'d with a non-NULL 'blk_integrity'
+template.  Add blk_integrity_is_initialized() to allow checking if a
+profile was initialized.
 
-the case interests me because I am afraid we may have to use the fallba=
-ck
-trick for extent move on write from DIO (we did so in current
-implementation anyway).
+Update DM integrity support to:
+- check all devices with _initialized_ integrity profiles match
+  during table load; uninitialized profiles (e.g. for underlying DM
+  device(s) of a stacked DM device) are ignored.
+- disallow a table load that would result in an integrity profile that
+  conflicts with a DM device's existing (in-use) integrity profile
+- avoid clearing an existing integrity profile
+- validate all integrity profiles match during resume; but if they
+  don't all we can do is report the mismatch (during resume we're past
+  the point of no return)
 
-of course, if we end up implementing in-memory extent tree, we will pro=
-bably be
-able to cope with DIO MOW without fallback to buffered IO.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+---
+ block/blk-integrity.c  |   12 +++++-
+ drivers/md/dm-table.c  |  114 +++++++++++++++++++++++++++++++++--------------
+ include/linux/blkdev.h |    2 +
+ 3 files changed, 93 insertions(+), 35 deletions(-)
 
->
-> In any case, adding some text in that paragraph, or just after that
-> paragraph, to the effect that two concurrent DIO accesses to the same
-> file block, even by two different processes will result in undefined
-> behavior would be a good start.
->
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0=
- =A0 =A0 =A0 =A0 - Ted
-> _______________________________________________
-> Lsf mailing list
-> Lsf@lists.linux-foundation.org
-> https://lists.linux-foundation.org/mailman/listinfo/lsf
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-fsdevel=
-" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/block/blk-integrity.c b/block/blk-integrity.c
+index 54bcba6..129b9e2 100644
+--- a/block/blk-integrity.c
++++ b/block/blk-integrity.c
+@@ -30,6 +30,8 @@
+ 
+ static struct kmem_cache *integrity_cachep;
+ 
++static const char *bi_unsupported_name = "unsupported";
++
+ /**
+  * blk_rq_count_integrity_sg - Count number of integrity scatterlist elements
+  * @q:		request queue
+@@ -358,6 +360,14 @@ static struct kobj_type integrity_ktype = {
+ 	.release	= blk_integrity_release,
+ };
+ 
++bool blk_integrity_is_initialized(struct gendisk *disk)
++{
++	struct blk_integrity *bi = blk_get_integrity(disk);
++
++	return (bi && bi->name && strcmp(bi->name, bi_unsupported_name) != 0);
++}
++EXPORT_SYMBOL(blk_integrity_is_initialized);
++
+ /**
+  * blk_integrity_register - Register a gendisk as being integrity-capable
+  * @disk:	struct gendisk pointer to make integrity-aware
+@@ -407,7 +417,7 @@ int blk_integrity_register(struct gendisk *disk, struct blk_integrity *template)
+ 		bi->get_tag_fn = template->get_tag_fn;
+ 		bi->tag_size = template->tag_size;
+ 	} else
+-		bi->name = "unsupported";
++		bi->name = bi_unsupported_name;
+ 
+ 	return 0;
+ }
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 416d4e2..cb8380c 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -927,20 +927,80 @@ static int dm_table_build_index(struct dm_table *t)
+ }
+ 
+ /*
++ * Get a disk whose integrity profile reflects the table's profile.
++ * If %match_all is true, all devices' profiles must match.
++ * If %match_all is false, all devices must at least have an
++ * allocated integrity profile; but uninitialized is ok.
++ * Returns NULL if integrity support was inconsistent or unavailable.
++ */
++static struct gendisk * dm_table_get_integrity_disk(struct dm_table *t,
++						    bool match_all)
++{
++	struct list_head *devices = dm_table_get_devices(t);
++	struct dm_dev_internal *dd = NULL;
++	struct gendisk *prev_disk = NULL, *template_disk = NULL;
++
++	list_for_each_entry(dd, devices, list) {
++		template_disk = dd->dm_dev.bdev->bd_disk;
++		if (!blk_get_integrity(template_disk))
++			goto no_integrity;
++		if (!match_all && !blk_integrity_is_initialized(template_disk))
++			continue; /* skip uninitialized profiles */
++		else if (prev_disk &&
++			 blk_integrity_compare(prev_disk, template_disk) < 0)
++			goto no_integrity;
++		prev_disk = template_disk;
++	}
++
++	return template_disk;
++
++no_integrity:
++	if (prev_disk)
++		DMWARN("%s: integrity not set: %s and %s profile mismatch",
++		       dm_device_name(t->md),
++		       prev_disk->disk_name,
++		       template_disk->disk_name);
++	return NULL;
++}
++
++/*
+  * Register the mapped device for blk_integrity support if
+- * the underlying devices support it.
++ * the underlying devices have an integrity profile.  But all devices
++ * may not have matching profiles (checking all devices isn't reliable
++ * during table load because this table may use other DM device(s) which
++ * must be resumed before they will have an initialized integity profile).
++ * Stacked DM devices force a 2 stage integrity profile validation:
++ * 1 - during load, validate all initialized integrity profiles match
++ * 2 - during resume, validate all integrity profiles match
+  */
+ static int dm_table_prealloc_integrity(struct dm_table *t, struct mapped_device *md)
+ {
+-	struct list_head *devices = dm_table_get_devices(t);
+-	struct dm_dev_internal *dd;
++	struct gendisk *template_disk = NULL;
+ 
+-	list_for_each_entry(dd, devices, list)
+-		if (bdev_get_integrity(dd->dm_dev.bdev)) {
+-			t->integrity_supported = 1;
+-			return blk_integrity_register(dm_disk(md), NULL);
+-		}
++	template_disk = dm_table_get_integrity_disk(t, false);
++	if (!template_disk)
++		return 0;
+ 
++	if (!blk_integrity_is_initialized(dm_disk(md))) {
++		t->integrity_supported = 1;
++		return blk_integrity_register(dm_disk(md), NULL);
++	}
++
++	/*
++	 * If DM device already has an initalized integrity
++	 * profile the new profile should not conflict.
++	 */
++	if (blk_integrity_is_initialized(template_disk) &&
++	    blk_integrity_compare(dm_disk(md), template_disk) < 0) {
++		DMWARN("%s: conflict with existing integrity profile: "
++		       "%s profile mismatch",
++		       dm_device_name(t->md),
++		       template_disk->disk_name);
++		return 1;
++	}
++
++	/* Preserve existing initialized integrity profile */
++	t->integrity_supported = 1;
+ 	return 0;
+ }
+ 
+@@ -1094,41 +1154,27 @@ combine_limits:
+ 
+ /*
+  * Set the integrity profile for this device if all devices used have
+- * matching profiles.
++ * matching profiles.  We're quite deep in the resume path but still
++ * don't know if all devices (particularly DM devices this device
++ * may be stacked on) have matching profiles.  Even if the profiles
++ * don't match we have no way to fail (to resume) at this point.
+  */
+ static void dm_table_set_integrity(struct dm_table *t)
+ {
+-	struct list_head *devices = dm_table_get_devices(t);
+-	struct dm_dev_internal *prev = NULL, *dd = NULL;
++	struct gendisk *template_disk = NULL;
+ 
+ 	if (!blk_get_integrity(dm_disk(t->md)))
+ 		return;
+ 
+-	list_for_each_entry(dd, devices, list) {
+-		if (prev &&
+-		    blk_integrity_compare(prev->dm_dev.bdev->bd_disk,
+-					  dd->dm_dev.bdev->bd_disk) < 0) {
+-			DMWARN("%s: integrity not set: %s and %s mismatch",
+-			       dm_device_name(t->md),
+-			       prev->dm_dev.bdev->bd_disk->disk_name,
+-			       dd->dm_dev.bdev->bd_disk->disk_name);
+-			goto no_integrity;
+-		}
+-		prev = dd;
++	template_disk = dm_table_get_integrity_disk(t, true);
++	if (!template_disk &&
++	    blk_integrity_is_initialized(dm_disk(t->md))) {
++		DMWARN("%s: device no longer has a valid integrity profile",
++		       dm_device_name(t->md));
++		return;
+ 	}
+-
+-	if (!prev || !bdev_get_integrity(prev->dm_dev.bdev))
+-		goto no_integrity;
+-
+ 	blk_integrity_register(dm_disk(t->md),
+-			       bdev_get_integrity(prev->dm_dev.bdev));
+-
+-	return;
+-
+-no_integrity:
+-	blk_integrity_register(dm_disk(t->md), NULL);
+-
+-	return;
++			       blk_get_integrity(template_disk));
+ }
+ 
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 16a902f..32176cc 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1206,6 +1206,7 @@ struct blk_integrity {
+ 	struct kobject		kobj;
+ };
+ 
++extern bool blk_integrity_is_initialized(struct gendisk *);
+ extern int blk_integrity_register(struct gendisk *, struct blk_integrity *);
+ extern void blk_integrity_unregister(struct gendisk *);
+ extern int blk_integrity_compare(struct gendisk *, struct gendisk *);
+@@ -1262,6 +1263,7 @@ queue_max_integrity_segments(struct request_queue *q)
+ #define queue_max_integrity_segments(a)		(0)
+ #define blk_integrity_merge_rq(a, b, c)		(0)
+ #define blk_integrity_merge_bio(a, b, c)	(0)
++#define blk_integrity_is_initialized(a)		(0)
+ 
+ #endif /* CONFIG_BLK_DEV_INTEGRITY */
+ 
