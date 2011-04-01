@@ -1,55 +1,56 @@
 From: Joel Becker <jlbec@evilplan.org>
 Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
-Date: Fri, 1 Apr 2011 14:49:23 -0700
-Message-ID: <20110401214923.GD25355@noexit>
+Date: Fri, 1 Apr 2011 14:43:03 -0700
+Message-ID: <20110401214302.GB25355__39423.7474691637$1301695478$gmane$org@noexit>
 References: <1301373398.2590.20.camel@mulgrave.site>
- <4D91BF90.8070909@redhat.com>
- <1301445210.2731.14.camel@mingming-laptop>
- <20110330021742.GL3008@dastard>
- <1301521798.7449.65.camel@mingming-laptop>
- <20110331010049.GA7794@noexit>
- <1301693666.2720.257.camel@mingming-laptop>
+	<4D91BF90.8070909@redhat.com>
+	<1301445210.2731.14.camel@mingming-laptop>
+	<20110330021742.GL3008@dastard>
+	<E32BEFA9-15DE-4169-B313-095920A4DF7A@mit.edu>
+	<4D9313E2.6080006@gmail.com> <20110401151907.GG21075@thunk.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1301693666.2720.257.camel@mingming-laptop>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mingming Cao <cmm@us.ibm.com>
-Cc: Dave Chinner <david@fromorbit.com>, Ric Wheeler <rwheeler@redhat.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, lsf@lists.linux-foundation.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <20110401151907.GG21075@thunk.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ted Ts'o <tytso@mit.edu>, Ric Wheeler <ricwheeler@gmail.com>, Dave Chinner <david@fromorbit.com>, lsf@lists.linux-foundation.org, "linux-scsi@vger.kernel.org" <linux-sc>
 List-Id: dm-devel.ids
 
-On Fri, Apr 01, 2011 at 02:34:26PM -0700, Mingming Cao wrote:
-> > > I was thinking along the line to provide finer granularity lock to allow
-> > > concurrent direct IO to different offset/range, but to same offset, they
-> > > have to be serialized. If it's undefined behavior, i.e. overlapping is
-> > > allowed, then concurrent dio implementation is much easier. But not sure
-> > > if any apps currently using DIO aware of the ordering has to be done at
-> > > the application level. 
-> > 
-> > 	Oh dear God no.  One of the major DIO use cases is to tell the
-> > kernel, "I know I won't do that, so don't spend any effort protecting
-> > me."
-> > 
-> > Joel
-> > 
-> 
-> Looks like so -
-> 
-> So I think we could have a mode to turn on/off concurrent dio if the non
-> heavy duty applications relies on filesystem to take care of the
-> serialization.
+On Fri, Apr 01, 2011 at 11:19:07AM -0400, Ted Ts'o wrote:
+> The closest place that we have to any official documentation about
+> O_DIRECT semantics is the open(2) man page in the Linux manpages, and
+> it doesn't say anything about this.  It does give a recommendation
+> against not mixing buffered and O_DIRECT accesses to the same file,
+> but it does promise that things will work in that case.  (Even if it
+> does, do we really want to make the promise that it will always work?)
 
-	I would prefer to leave this complexity out.  If you must have
-it, unsafe, concurrent DIO must be the default.  Let the people who
-really want it turn on serialized DIO.
+	No, we do not.  Some OSes will silently turn buffered I/O into
+direct I/O if another file already has it opened O_DIRECT.  Some OSes
+will fail the write, or the open, or both, if it doesn't match the mode
+of an existing fd.  Some just leave O_DIRECT and buffered access
+inconsistent.
+	I think that Linux should strive to make the mixed
+buffered/direct case work; it's the nicest thing we can do.  But we
+should not promise it.
 
 Joel
 
 -- 
 
-"Get right to the heart of matters.
- It's the heart that matters more."
+Life's Little Instruction Book #24
+
+	"Drink champagne for no reason at all."
 
 			http://www.jlbec.org/
 			jlbec@evilplan.org
