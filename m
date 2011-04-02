@@ -1,56 +1,71 @@
-From: Joel Becker <jlbec@evilplan.org>
+From: Amir Goldstein <amir73il@gmail.com>
 Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
-Date: Fri, 1 Apr 2011 14:43:03 -0700
-Message-ID: <20110401214302.GB25355__39423.7474691637$1301695478$gmane$org@noexit>
+Date: Fri, 1 Apr 2011 20:26:13 -0700
+Message-ID: <BANLkTinzi=5ACgyU17-xFV+PwvAz+u1bQQ@mail.gmail.com>
 References: <1301373398.2590.20.camel@mulgrave.site>
 	<4D91BF90.8070909@redhat.com>
 	<1301445210.2731.14.camel@mingming-laptop>
 	<20110330021742.GL3008@dastard>
 	<E32BEFA9-15DE-4169-B313-095920A4DF7A@mit.edu>
-	<4D9313E2.6080006@gmail.com> <20110401151907.GG21075@thunk.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<4D9313E2.6080006@gmail.com>
+	<20110401151907.GG21075@thunk.org>
+	<AANLkTinZCx3gq-iDjPLzkvSFQNqAc1-bGN8xgzRz_=yj@mail.gmail.com>
+	<20110401214652.GC25355@noexit>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20110401151907.GG21075@thunk.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Ted Ts'o <tytso@mit.edu>, Ric Wheeler <ricwheeler@gmail.com>, Dave Chinner <david@fromorbit.com>, lsf@lists.linux-foundation.org, "linux-scsi@vger.kernel.org" <linux-sc>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20110401214652.GC25355@noexit>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Joel Becker <jlbec@evilplan.org>
+Cc: Theodore Tso <tytso@mit.edu>, Ric Wheeler <ricwheeler@gmail.com>, Dave Chinner <david@fromorbit.com>, lsf@lists.linux-foundation.org, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ric Wheeler <rwheeler@redhat.com>, Yongqiang Yang <xiaoqiangnk@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, Apr 01, 2011 at 11:19:07AM -0400, Ted Ts'o wrote:
-> The closest place that we have to any official documentation about
-> O_DIRECT semantics is the open(2) man page in the Linux manpages, and
-> it doesn't say anything about this.  It does give a recommendation
-> against not mixing buffered and O_DIRECT accesses to the same file,
-> but it does promise that things will work in that case.  (Even if it
-> does, do we really want to make the promise that it will always work?)
+On Fri, Apr 1, 2011 at 2:46 PM, Joel Becker <jlbec@evilplan.org> wrote:
+> On Fri, Apr 01, 2011 at 09:30:04AM -0700, Amir Goldstein wrote:
+>> when writing DIO to indirect mapped file holes, we fall back to buff=
+ered write
+>> (so we won't expose stale data in the case of a crash) concurrent DI=
+O reads
+>> to that file (before data writeback) can expose stale data. right?
+>> do you consider this case mixing buffered and DIO access?
+>> do you consider that as a problem?
+>
+> =A0 =A0 =A0 =A0I do not consider this 'mixing', nor do I consider it =
+a problem.
+> ocfs2 does exactly this for holes, unwritten extents, and CoW. =A0It =
+does
+> not violate the user's expectation that the data will be on disk when
+> the write(2) returns.
+> =A0 =A0 =A0 =A0Falling back to buffered on read(2) is a different sto=
+ry; the
+> caller wants the current state of the disk block, not five minutes ag=
+o.
+> So we can't do that. =A0But we also don't need to.
 
-	No, we do not.  Some OSes will silently turn buffered I/O into
-direct I/O if another file already has it opened O_DIRECT.  Some OSes
-will fail the write, or the open, or both, if it doesn't match the mode
-of an existing fd.  Some just leave O_DIRECT and buffered access
-inconsistent.
-	I think that Linux should strive to make the mixed
-buffered/direct case work; it's the nicest thing we can do.  But we
-should not promise it.
+the issue is with DIO read exposing uninitialized data on disk
+is a security issue.
+it's not about giving the read what is expects to see.
 
-Joel
-
--- 
-
-Life's Little Instruction Book #24
-
-	"Drink champagne for no reason at all."
-
-			http://www.jlbec.org/
-			jlbec@evilplan.org
+> =A0 =A0 =A0 =A0O_DIRECT users that are worried about any possible spa=
+ce usage in
+> the page cache have already pre-allocated their disk blocks and don't
+> get here.
+>
+> Joel
+>
+> --
+>
+> "Under capitalism, man exploits man. =A0Under Communism, it's just
+> =A0 the opposite."
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 - Joh=
+n Kenneth Galbraith
+>
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0http://www.jlbec.org/
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0jlbec@evilplan.org
+>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
