@@ -1,71 +1,165 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [Lsf] Preliminary Agenda and Activities for LSF
-Date: Fri, 1 Apr 2011 20:26:13 -0700
-Message-ID: <BANLkTinzi=5ACgyU17-xFV+PwvAz+u1bQQ@mail.gmail.com>
-References: <1301373398.2590.20.camel@mulgrave.site>
-	<4D91BF90.8070909@redhat.com>
-	<1301445210.2731.14.camel@mingming-laptop>
-	<20110330021742.GL3008@dastard>
-	<E32BEFA9-15DE-4169-B313-095920A4DF7A@mit.edu>
-	<4D9313E2.6080006@gmail.com>
-	<20110401151907.GG21075@thunk.org>
-	<AANLkTinZCx3gq-iDjPLzkvSFQNqAc1-bGN8xgzRz_=yj@mail.gmail.com>
-	<20110401214652.GC25355@noexit>
+From: bmarzins@sourceware.org
+Subject: multipath-tools libmultipath/lock.h libmultipa ...
+Date: 4 Apr 2011 19:48:48 -0000
+Message-ID: <20110404194848.3889.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20110401214652.GC25355@noexit>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Joel Becker <jlbec@evilplan.org>
-Cc: Theodore Tso <tytso@mit.edu>, Ric Wheeler <ricwheeler@gmail.com>, Dave Chinner <david@fromorbit.com>, lsf@lists.linux-foundation.org, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Ric Wheeler <rwheeler@redhat.com>, Yongqiang Yang <xiaoqiangnk@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Apr 1, 2011 at 2:46 PM, Joel Becker <jlbec@evilplan.org> wrote:
-> On Fri, Apr 01, 2011 at 09:30:04AM -0700, Amir Goldstein wrote:
->> when writing DIO to indirect mapped file holes, we fall back to buff=
-ered write
->> (so we won't expose stale data in the case of a crash) concurrent DI=
-O reads
->> to that file (before data writeback) can expose stale data. right?
->> do you consider this case mixing buffered and DIO access?
->> do you consider that as a problem?
->
-> =A0 =A0 =A0 =A0I do not consider this 'mixing', nor do I consider it =
-a problem.
-> ocfs2 does exactly this for holes, unwritten extents, and CoW. =A0It =
-does
-> not violate the user's expectation that the data will be on disk when
-> the write(2) returns.
-> =A0 =A0 =A0 =A0Falling back to buffered on read(2) is a different sto=
-ry; the
-> caller wants the current state of the disk block, not five minutes ag=
-o.
-> So we can't do that. =A0But we also don't need to.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2011-04-04 19:48:47
 
-the issue is with DIO read exposing uninitialized data on disk
-is a security issue.
-it's not about giving the read what is expects to see.
+Modified files:
+	libmultipath   : lock.h uevent.c 
+	multipathd     : main.c 
 
-> =A0 =A0 =A0 =A0O_DIRECT users that are worried about any possible spa=
-ce usage in
-> the page cache have already pre-allocated their disk blocks and don't
-> get here.
->
-> Joel
->
-> --
->
-> "Under capitalism, man exploits man. =A0Under Communism, it's just
-> =A0 the opposite."
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 - Joh=
-n Kenneth Galbraith
->
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0http://www.jlbec.org/
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0jlbec@evilplan.org
->
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Log message:
+	Fix for bz #639429.  It was possible for multipathd threads to access freed
+	data during shutdown. Now the threads call pthread_testcancel() after acquiring
+	the vecs->lock to make sure they immediately shutdown.
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/lock.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1.2.1&r2=1.1.2.2
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/uevent.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.4&r2=1.4.2.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.33&r2=1.69.2.34
+
+--- multipath-tools/libmultipath/lock.h	2008/08/27 19:14:57	1.1.2.1
++++ multipath-tools/libmultipath/lock.h	2011/04/04 19:48:46	1.1.2.2
+@@ -16,7 +16,7 @@
+ #else
+ #define lock(a) pthread_mutex_lock(a)
+ #define unlock(a) pthread_mutex_unlock(a)
+-#define lock_cleanup_pop(a) pthread_cleanup_pop(1);
++#define lock_cleanup_pop(a) pthread_cleanup_pop(1) 
+ #endif
+ 
+ void cleanup_lock (void * data);
+--- multipath-tools/libmultipath/uevent.c	2006/06/06 18:32:43	1.4
++++ multipath-tools/libmultipath/uevent.c	2011/04/04 19:48:46	1.4.2.1
+@@ -100,6 +100,11 @@
+ 	}
+ }
+ 
++void cancel_thread(void * data)
++{
++	pthread_cancel((pthread_t)data);
++}
++
+ int uevent_listen(int (*uev_trigger)(struct uevent *, void * trigger_data),
+ 		  void * trigger_data)
+ {
+@@ -130,6 +135,7 @@
+ 	pthread_attr_init(&attr);
+ 	pthread_attr_setstacksize(&attr, 64 * 1024);
+ 	pthread_create(&uevq_thr, &attr, uevq_thread, NULL);
++	pthread_cleanup_push(cancel_thread, (void *)uevq_thr);
+ 
+ 	memset(&snl, 0x00, sizeof(struct sockaddr_nl));
+ 	snl.nl_family = AF_NETLINK;
+@@ -255,7 +261,7 @@
+ 	close(sock);
+ 
+ 	pthread_mutex_lock(uevq_lockp);
+-	pthread_cancel(uevq_thr);
++	pthread_cleanup_pop(1);
+ 	pthread_mutex_unlock(uevq_lockp);
+ 
+ 	pthread_mutex_destroy(uevq_lockp);
+--- multipath-tools/multipathd/main.c	2011/03/07 05:19:38	1.69.2.33
++++ multipath-tools/multipathd/main.c	2011/04/04 19:48:46	1.69.2.34
+@@ -82,6 +82,7 @@
+ pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
+ pthread_mutex_t exit_mutex = PTHREAD_MUTEX_INITIALIZER;
+ 
++int exitting = 0;
+ /*
+  * global copy of vecs for use in sig handlers
+  */
+@@ -648,6 +649,7 @@
+ 
+ 	pthread_cleanup_push(cleanup_lock, vecs->lock);
+ 	lock(vecs->lock);
++	pthread_testcancel();
+ 
+ 	r = parse_cmd(str, reply, len, vecs);
+ 
+@@ -696,7 +698,9 @@
+ 		return 0;
+ 
+ 	basenamecpy(uev->devpath, devname);
++	pthread_cleanup_push(cleanup_lock, vecs->lock);
+ 	lock(vecs->lock);
++	pthread_testcancel();
+ 
+ 	/*
+ 	 * device map event
+@@ -736,6 +740,8 @@
+ 
+ out:
+ 	unlock(vecs->lock);
++	lock_cleanup_pop(vecs->lock);
++/*	; */
+ 	return r;
+ }
+ 
+@@ -941,14 +947,15 @@
+ {
+ 	int oldpriority;
+ 	struct pathgroup * pgp;
++	struct path *pp1;
+ 	int i, j, changed = 0;
+ 
+ 	if (refresh_all) {
+ 		vector_foreach_slot (pp->mpp->pg, pgp, i) {
+-			vector_foreach_slot (pgp->paths, pp, j) {
+-				oldpriority = pp->priority;
+-				pathinfo(pp, conf->hwtable, DI_PRIO);
+-				if (pp->priority != oldpriority)
++			vector_foreach_slot (pgp->paths, pp1, j) {
++				oldpriority = pp1->priority;
++				pathinfo(pp1, conf->hwtable, DI_PRIO);
++				if (pp1->priority != oldpriority)
+ 					changed = 1;
+ 			}
+ 		}
+@@ -1012,6 +1019,7 @@
+ 		block_signal(SIGHUP, &old);
+ 		pthread_cleanup_push(cleanup_lock, vecs->lock);
+ 		lock(vecs->lock);
++		pthread_testcancel();
+ 		condlog(4, "tick");
+ 
+ 		vector_foreach_slot (vecs->pathvec, pp, i) {
+@@ -1497,7 +1505,8 @@
+ 	condlog(2, "reconfigure (SIGHUP)");
+ 
+ 	lock(gvecs->lock);
+-	reconfigure(gvecs);
++	if (!exitting);
++		reconfigure(gvecs);
+ 	unlock(gvecs->lock);
+ 
+ #ifdef _DEBUG_
+@@ -1698,6 +1707,7 @@
+ 	 */
+ 	block_signal(SIGHUP, NULL);
+ 	lock(vecs->lock);
++	exitting = 1;
+ 	if (conf->queue_without_daemon == QUE_NO_DAEMON_OFF)
+ 		vector_foreach_slot(vecs->mpvec, mpp, i)
+ 			dm_queue_if_no_path(mpp->alias, 0);
