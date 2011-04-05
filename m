@@ -1,147 +1,40 @@
-From: Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [ANNOUNCE] cryptsetup 1.3.0
-Date: Tue, 05 Apr 2011 22:02:30 +0200
-Message-ID: <4D9B7556.40907@redhat.com>
-References: <4D7E53E5.3040007@redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: [PATCH] scsi_dh_rdac: Adding couple more vendor product ids
+Date: Tue, 5 Apr 2011 14:35:25 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4FFAC8CFB@cosmail01.lsi.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF4FF7DC637@cosmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-In-Reply-To: <4D7E53E5.3040007-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://www.saout.de/pipermail/dm-crypt>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>
-Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF4FF7DC637@cosmail01.lsi.com>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+This patch adds couple more Vendor/Product IDs for RDAC.. There are no functional changes.
 
-The stable cryptsetup 1.3.0 release is available at
+Signed-off-by: Babu Moger <babu.moger@lsi.com>
+---
+--- linux-2.6.39-rc1/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2011-04-05 15:01:52.000000000 -0500
++++ linux-2.6.39-rc1/drivers/scsi/device_handler/scsi_dh_rdac.c	2011-04-05 15:06:18.000000000 -0500
+@@ -755,6 +755,7 @@ static const struct scsi_dh_devlist rdac
+ 	{"IBM", "3526"},
+ 	{"SGI", "TP9400"},
+ 	{"SGI", "TP9500"},
++	{"SGI", "TP9700"},
+ 	{"SGI", "IS"},
+ 	{"STK", "OPENstorage D280"},
+ 	{"SUN", "CSM200_R"},
+@@ -774,6 +775,7 @@ static const struct scsi_dh_devlist rdac
+ 	{"SUN", "CSM100_R_FC"},
+ 	{"SUN", "STK6580_6780"},
+ 	{"SUN", "SUN_6180"},
++	{"SUN", "ArrayStorage"},
+ 	{NULL, NULL},
+ };
+ 
 
-   http://code.google.com/p/cryptsetup/
 
-Feedback and bug reports are welcomed.
-
-Milan
-
-Cryptsetup 1.3.0 Release Notes
-==============================
-
-Changes since version 1.2.0
-
-Important changes
-~~~~~~~~~~~~~~~~~
- * Several userspace crypto backends support
-
-   cryptsetup now supports generic crypto backend interface which allows
-   compile package with various crypto libraries, these are already implemented:
-
-   * gcrypt (default, used in previous versions)
-   * OpenSSL
-   * NSS (because of missing ripemd160 it cannot provide full backward compatibility)
-   * kernel userspace API (provided by kernel 2.6.38 and above)
-     (Note that kernel userspace backend is very slow for this type of operation.
-      But it can be usefull for embedded systems, because you can avoid userspace
-      crypto library completely.)
-
-   Backend is selected during configure time, using --with-crypto_backend option.
-
-   configure --with-crypto_backend=BACKEND (gcrypt/openssl/nss/kernel) [gcrypt]
-
-   Note that performance checked (iterations) in LUKS header will cause that
-   real iteration time will differ with different backends.
-   (There are huge differences in speed between libraries.)
-
- * Cryptsetup now automatically allocates loopback device (/dev/loop) if device
-   argument is file and not plain device.
-
-   This require Linux kernel 2.6.25 and above (which implements loop autoclear flag).
-
-   You can see backing file in cryptsetup status output if underlying device is loopback.
-
- * Introduce maximum default keyfile size, add configure option, visible in --help.
-
-   Cryptsetup now fails if read from keyfile exceeds internal limit.
-   You can always specify keyfile size (overrides limit) by using --keyfile-size option.
-
- * Adds luksChangeKey command
-
-    cryptestup luksChangeKey --key-file <old keyfile> <new keyfile> [--key-slot X]
-    cryptestup luksChangeKey [--key-slot X]  (for passphrase change)
-
-   This command allows passphrase/keyfile change in one step. If no key slot is
-   specified (and there is still free key slot on device) new slot is allocated before
-   the old is purged.
-
-   If --key-slot option is specified (or there is no free slot) command will overwrite
-   existing slot.
-   WARNING: Be sure you have another slot active or header backup when using explicit
-            key slot (so you can unlock the device even after possible media failure).
-
- * Adds compatible support for loop-AES encryption type in loopaesOpen command.
-
-   Linux dm-crypt in 2.6.38 and above supports loop-AES compatible mapping
-   (including multi-key and special CBC mode, all three modes are supported).
-
-   If you have raw loop-AES keyfile (text file with uuencoded per-line keys), you can
-   access loop-AES volume using
-     cryptsetup loopaesOpen <device> <name> [--key-size 128] --key-file <key-file>
-
-   If you are using GPG encrypted keyfile
-     gpg --decrypt <key-file> | cryptsetup loopaesOpen --key-file=- <device> <name>
-
-   Do not forget to specify key size. Version and hash is automatically detected
-   according to number of lines in key file. For special configuration you can
-   override IV sector offset using --skip option, device offset with --offset
-   and hash algorithm using --hash, see man page for details.
-
-   Please note that loopAES dm-crypt mode is provided for compatibility reasons
-   (so you do not need to patch kernel and util-linux to map existing volumes)
-   but it is not, and never will be, optimized for speed.
-   It is experimental feature for now.
-
- * Require the whole key read from keyfile in create command (regression in 1.2.0).
-
- * WARNING: This is the last cryptsetup release which supports library with
-            old API (using struct crypt_options).
-            These calls are deprecated since 1.1.0 and AFAIK no application
-            is using it in recent distros. Removing compatible code will allow
-            new features to be implemented easily.
-
-Other changes
-~~~~~~~~~~~~~
- * Lock memory also in luksDump command.
- * Fix return code when passphrase is read from pipe.
- * Increase libcryptsetup version (loopAES change), still fully backward compatible.
- * Fixes static build (--disable-static-cryptsetup now works properly).
- * Supports secure data flag for device-mapper ioctl (will be in 2.6.39,
-   forcing kernel to wipe all ioctl buffers with possible key data).
-   To enable this flag you need new device-mapper library, in LVM2 2.02.84.
- * Add copyright texts into some files and adds GPL exception allowing
-   to distribute resulting binaries linked with OpenSSL.
- * Update FAQ.
- * Fix message when locking memory fails.
- * Fix luksAddKey return code if master key is used.
- * Update some text files in distributions.
- * Add docs directory with Release Notes archive.
- * Do not hardcode loopback device name in tests, use internal loopback library.
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-
-iEYEARECAAYFAk2bdVYACgkQf1Jlc7shgi+0kACfWl6r6PW4drgs+gg/Dp2LJswF
-ov4An1xyiyv2fXBXXsyyTAhF47dGFr41
-=wjM/
------END PGP SIGNATURE-----
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-http://www.saout.de/mailman/listinfo/dm-crypt
