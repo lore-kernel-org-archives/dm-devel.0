@@ -1,144 +1,147 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath config.c config.h ...
-Date: 5 Apr 2011 18:41:46 -0000
-Message-ID: <20110405184146.1540.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [ANNOUNCE] cryptsetup 1.3.0
+Date: Tue, 05 Apr 2011 22:02:30 +0200
+Message-ID: <4D9B7556.40907@redhat.com>
+References: <4D7E53E5.3040007@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+In-Reply-To: <4D7E53E5.3040007-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://www.saout.de/pipermail/dm-crypt>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
+List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
+Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+Sender: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+To: dm-crypt <dm-crypt-4q3lyFh4P1g@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2011-04-05 18:41:45
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-Modified files:
-	libmultipath   : config.c config.h defaults.h dict.c discovery.c 
+The stable cryptsetup 1.3.0 release is available at
 
-Log message:
-	Fix for bz #674366.  Multipath has a new defaults config value file_timeout.
-	This allows users to set the length of time multipathd will wait for a necessary
-	file to appear. Previously, it used the hardcoded value, WAIT_MAX_SECONDS.
+   http://code.google.com/p/cryptsetup/
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/config.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.19.2.9&r2=1.19.2.10
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/config.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.14&r2=1.18.2.15
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/defaults.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7.2.1&r2=1.7.2.2
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/dict.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.17.2.18&r2=1.17.2.19
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.19&r2=1.32.2.20
+Feedback and bug reports are welcomed.
 
---- multipath-tools/libmultipath/config.c	2009/05/15 21:01:26	1.19.2.9
-+++ multipath-tools/libmultipath/config.c	2011/04/05 18:41:45	1.19.2.10
-@@ -417,6 +417,7 @@
- 	conf->max_fds = 0;
- 	conf->attribute_flags = 0;
- 	conf->flush_on_last_del = 0;
-+	conf->file_timeout = DEFAULT_FILE_TIMEOUT;
- 
- 	/*
- 	 * read the config file
---- multipath-tools/libmultipath/config.h	2011/02/18 18:27:00	1.18.2.14
-+++ multipath-tools/libmultipath/config.h	2011/04/05 18:41:45	1.18.2.15
-@@ -84,6 +84,7 @@
- 	int pg_prio_calc;
- 	int log_checker_err;
- 	int fast_io_fail;
-+	int file_timeout;
- 	unsigned int dev_loss;
- 	uid_t uid;
- 	gid_t gid;
---- multipath-tools/libmultipath/defaults.h	2009/04/29 04:41:33	1.7.2.1
-+++ multipath-tools/libmultipath/defaults.h	2011/04/05 18:41:45	1.7.2.2
-@@ -12,6 +12,7 @@
- #define DEFAULT_PGTIMEOUT      -PGTIMEOUT_NONE
- #define DEFAULT_USER_FRIENDLY_NAMES    0
- #define DEFAULT_VERBOSITY      2
-+#define DEFAULT_FILE_TIMEOUT	90
- 
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
---- multipath-tools/libmultipath/dict.c	2011/03/18 19:50:40	1.17.2.18
-+++ multipath-tools/libmultipath/dict.c	2011/04/05 18:41:45	1.17.2.19
-@@ -85,6 +85,21 @@
- }
- 
- static int
-+file_timeout_handler(vector strvec)
-+{
-+	char * buff;
-+	buff = set_value(strvec);
-+	if (!buff)
-+		return 1;
-+	conf->file_timeout = atoi(buff);
-+	if (conf->file_timeout < 0)
-+		 conf->file_timeout = DEFAULT_FILE_TIMEOUT;
-+
-+	FREE(buff);
-+	return 0;
-+}
-+
-+static int
- udev_dir_handler(vector strvec)
- {
- 	conf->udev_dir = set_value(strvec);
-@@ -1848,6 +1863,12 @@
- }
- 
- static int
-+snprint_file_timeout(char * buff, int len, void * data)
-+{
-+	return snprintf(buff, len, "%i", conf->file_timeout);
-+}
-+
-+static int
- snprint_def_udev_dir (char * buff, int len, void * data)
- {
- 	if (!conf->udev_dir)
-@@ -2153,6 +2174,7 @@
- 	install_keyword("gid", &def_gid_handler, &snprint_def_gid);
- 	install_keyword("fast_io_fail_tmo", &def_fast_io_fail_handler, &snprint_def_fast_io_fail);
- 	install_keyword("dev_loss_tmo", &def_dev_loss_handler, &snprint_def_dev_loss);
-+	install_keyword("file_timeout", &file_timeout_handler, &snprint_file_timeout);
- 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
- 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
- 	__deprecated install_keyword("default_getuid_callout", &def_getuid_callout_handler, NULL);
---- multipath-tools/libmultipath/discovery.c	2011/03/07 15:45:15	1.32.2.19
-+++ multipath-tools/libmultipath/discovery.c	2011/04/05 18:41:45	1.32.2.20
-@@ -181,7 +181,6 @@
-  * not multipath(8), ran by udev
-  */
- #if DAEMON
--#define WAIT_MAX_SECONDS 90
- #define WAIT_LOOP_PER_SECOND 5
- 
- static int
-@@ -190,7 +189,7 @@
- 	int loop;
- 	struct stat stats;
- 
--	loop = WAIT_MAX_SECONDS * WAIT_LOOP_PER_SECOND;
-+	loop = conf->file_timeout * WAIT_LOOP_PER_SECOND;
- 	
- 	while (--loop) {
- 		if (stat(filename, &stats) == 0)
-@@ -632,7 +631,7 @@
- 		return 1;
- 
- #if DAEMON
--	int loop = WAIT_MAX_SECONDS * WAIT_LOOP_PER_SECOND;
-+	int loop = conf->file_timeout * WAIT_LOOP_PER_SECOND;
- 
- 	while (loop--) {
- 		sdev = sysfs_open_device_path(attr_buff);
+Milan
+
+Cryptsetup 1.3.0 Release Notes
+==============================
+
+Changes since version 1.2.0
+
+Important changes
+~~~~~~~~~~~~~~~~~
+ * Several userspace crypto backends support
+
+   cryptsetup now supports generic crypto backend interface which allows
+   compile package with various crypto libraries, these are already implemented:
+
+   * gcrypt (default, used in previous versions)
+   * OpenSSL
+   * NSS (because of missing ripemd160 it cannot provide full backward compatibility)
+   * kernel userspace API (provided by kernel 2.6.38 and above)
+     (Note that kernel userspace backend is very slow for this type of operation.
+      But it can be usefull for embedded systems, because you can avoid userspace
+      crypto library completely.)
+
+   Backend is selected during configure time, using --with-crypto_backend option.
+
+   configure --with-crypto_backend=BACKEND (gcrypt/openssl/nss/kernel) [gcrypt]
+
+   Note that performance checked (iterations) in LUKS header will cause that
+   real iteration time will differ with different backends.
+   (There are huge differences in speed between libraries.)
+
+ * Cryptsetup now automatically allocates loopback device (/dev/loop) if device
+   argument is file and not plain device.
+
+   This require Linux kernel 2.6.25 and above (which implements loop autoclear flag).
+
+   You can see backing file in cryptsetup status output if underlying device is loopback.
+
+ * Introduce maximum default keyfile size, add configure option, visible in --help.
+
+   Cryptsetup now fails if read from keyfile exceeds internal limit.
+   You can always specify keyfile size (overrides limit) by using --keyfile-size option.
+
+ * Adds luksChangeKey command
+
+    cryptestup luksChangeKey --key-file <old keyfile> <new keyfile> [--key-slot X]
+    cryptestup luksChangeKey [--key-slot X]  (for passphrase change)
+
+   This command allows passphrase/keyfile change in one step. If no key slot is
+   specified (and there is still free key slot on device) new slot is allocated before
+   the old is purged.
+
+   If --key-slot option is specified (or there is no free slot) command will overwrite
+   existing slot.
+   WARNING: Be sure you have another slot active or header backup when using explicit
+            key slot (so you can unlock the device even after possible media failure).
+
+ * Adds compatible support for loop-AES encryption type in loopaesOpen command.
+
+   Linux dm-crypt in 2.6.38 and above supports loop-AES compatible mapping
+   (including multi-key and special CBC mode, all three modes are supported).
+
+   If you have raw loop-AES keyfile (text file with uuencoded per-line keys), you can
+   access loop-AES volume using
+     cryptsetup loopaesOpen <device> <name> [--key-size 128] --key-file <key-file>
+
+   If you are using GPG encrypted keyfile
+     gpg --decrypt <key-file> | cryptsetup loopaesOpen --key-file=- <device> <name>
+
+   Do not forget to specify key size. Version and hash is automatically detected
+   according to number of lines in key file. For special configuration you can
+   override IV sector offset using --skip option, device offset with --offset
+   and hash algorithm using --hash, see man page for details.
+
+   Please note that loopAES dm-crypt mode is provided for compatibility reasons
+   (so you do not need to patch kernel and util-linux to map existing volumes)
+   but it is not, and never will be, optimized for speed.
+   It is experimental feature for now.
+
+ * Require the whole key read from keyfile in create command (regression in 1.2.0).
+
+ * WARNING: This is the last cryptsetup release which supports library with
+            old API (using struct crypt_options).
+            These calls are deprecated since 1.1.0 and AFAIK no application
+            is using it in recent distros. Removing compatible code will allow
+            new features to be implemented easily.
+
+Other changes
+~~~~~~~~~~~~~
+ * Lock memory also in luksDump command.
+ * Fix return code when passphrase is read from pipe.
+ * Increase libcryptsetup version (loopAES change), still fully backward compatible.
+ * Fixes static build (--disable-static-cryptsetup now works properly).
+ * Supports secure data flag for device-mapper ioctl (will be in 2.6.39,
+   forcing kernel to wipe all ioctl buffers with possible key data).
+   To enable this flag you need new device-mapper library, in LVM2 2.02.84.
+ * Add copyright texts into some files and adds GPL exception allowing
+   to distribute resulting binaries linked with OpenSSL.
+ * Update FAQ.
+ * Fix message when locking memory fails.
+ * Fix luksAddKey return code if master key is used.
+ * Update some text files in distributions.
+ * Add docs directory with Release Notes archive.
+ * Do not hardcode loopback device name in tests, use internal loopback library.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+iEYEARECAAYFAk2bdVYACgkQf1Jlc7shgi+0kACfWl6r6PW4drgs+gg/Dp2LJswF
+ov4An1xyiyv2fXBXXsyyTAhF47dGFr41
+=wjM/
+-----END PGP SIGNATURE-----
+_______________________________________________
+dm-crypt mailing list
+dm-crypt-4q3lyFh4P1g@public.gmane.org
+http://www.saout.de/mailman/listinfo/dm-crypt
