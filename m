@@ -1,63 +1,144 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: [PATCH 05/10] block: remove per-queue plugging
-Date: Tue, 5 Apr 2011 13:05:41 +1000
-Message-ID: <20110405130541.6c2b5f86@notabene.brown>
-References: <1295659049-2688-1-git-send-email-jaxboe@fusionio.com>
-	<1295659049-2688-6-git-send-email-jaxboe@fusionio.com>
-	<AANLkTin8FoXX6oqUyW+scwhadyX-TfW16_oKjvngU9-m@mail.gmail.com>
-	<20110303221353.GA10366@redhat.com>
-	<4D761E0D.8050200@fusionio.com>
-	<20110308202100.GA31744@redhat.com>
-	<4D76912C.9040705@fusionio.com>
-	<20110308220526.GA393@redhat.com>
-	<20110310005810.GA17911@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath config.c config.h ...
+Date: 5 Apr 2011 18:41:46 -0000
+Message-ID: <20110405184146.1540.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110310005810.GA17911@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <jaxboe@fusionio.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 9 Mar 2011 19:58:10 -0500 Mike Snitzer <snitzer@redhat.com> wrote:
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2011-04-05 18:41:45
 
-> Also, in your MD changes, you removed all calls to md_unplug() but
-> didn't remove md_unplug().  Seems it should be removed along with the
-> 'plug' member of 'struct mddev_t'?  Neil?
+Modified files:
+	libmultipath   : config.c config.h defaults.h dict.c discovery.c 
 
-I've been distracted by other things and only just managed to have a look at
-this.
+Log message:
+	Fix for bz #674366.  Multipath has a new defaults config value file_timeout.
+	This allows users to set the length of time multipathd will wait for a necessary
+	file to appear. Previously, it used the hardcoded value, WAIT_MAX_SECONDS.
 
-The new plugging code seems to completely ignore the needs of stacked devices
-- or at least my needs in md.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/config.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.19.2.9&r2=1.19.2.10
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/config.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.14&r2=1.18.2.15
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/defaults.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7.2.1&r2=1.7.2.2
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/dict.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.17.2.18&r2=1.17.2.19
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.19&r2=1.32.2.20
 
-For RAID1 with a write-intent-bitmap, I queue all write requests and then on
-an unplug I update the write-intent-bitmap to mark all the relevant blocks
-and then release the writes.
-
-With the new code there is no way for an unplug event to wake up the raid1d
-thread to start the writeout - I haven't tested it but I suspect it will just
-hang.
-
-Similarly for RAID5 I gather write bios (long before they become 'struct
-request' which is what the plugging code understands) and on an unplug event
-I release the writes - hopefully with enough bios per stripe so that we don't
-need to pre-read.
-
-Possibly the simplest fix would be to have a second list_head in 'struct
-blk_plug' which contained callbacks (a function pointer a list_head in a
-struct which is passed as an arg to the function!).
-blk_finish_plug could then walk the list and call the call-backs.
-It would be quite easy to hook into that.
-
-
-I suspect I also need to add blk_start_plug/blk_finish_plug around the loop
-in raid1d/raid5d/raid10d, but that is pretty straight forward.
-
-Am I missing something important?
-Is there a better way to get an unplug event to md?
-
-Thanks,
-NeilBrown
+--- multipath-tools/libmultipath/config.c	2009/05/15 21:01:26	1.19.2.9
++++ multipath-tools/libmultipath/config.c	2011/04/05 18:41:45	1.19.2.10
+@@ -417,6 +417,7 @@
+ 	conf->max_fds = 0;
+ 	conf->attribute_flags = 0;
+ 	conf->flush_on_last_del = 0;
++	conf->file_timeout = DEFAULT_FILE_TIMEOUT;
+ 
+ 	/*
+ 	 * read the config file
+--- multipath-tools/libmultipath/config.h	2011/02/18 18:27:00	1.18.2.14
++++ multipath-tools/libmultipath/config.h	2011/04/05 18:41:45	1.18.2.15
+@@ -84,6 +84,7 @@
+ 	int pg_prio_calc;
+ 	int log_checker_err;
+ 	int fast_io_fail;
++	int file_timeout;
+ 	unsigned int dev_loss;
+ 	uid_t uid;
+ 	gid_t gid;
+--- multipath-tools/libmultipath/defaults.h	2009/04/29 04:41:33	1.7.2.1
++++ multipath-tools/libmultipath/defaults.h	2011/04/05 18:41:45	1.7.2.2
+@@ -12,6 +12,7 @@
+ #define DEFAULT_PGTIMEOUT      -PGTIMEOUT_NONE
+ #define DEFAULT_USER_FRIENDLY_NAMES    0
+ #define DEFAULT_VERBOSITY      2
++#define DEFAULT_FILE_TIMEOUT	90
+ 
+ #define DEFAULT_CHECKINT	5
+ #define MAX_CHECKINT(a)		(a << 2)
+--- multipath-tools/libmultipath/dict.c	2011/03/18 19:50:40	1.17.2.18
++++ multipath-tools/libmultipath/dict.c	2011/04/05 18:41:45	1.17.2.19
+@@ -85,6 +85,21 @@
+ }
+ 
+ static int
++file_timeout_handler(vector strvec)
++{
++	char * buff;
++	buff = set_value(strvec);
++	if (!buff)
++		return 1;
++	conf->file_timeout = atoi(buff);
++	if (conf->file_timeout < 0)
++		 conf->file_timeout = DEFAULT_FILE_TIMEOUT;
++
++	FREE(buff);
++	return 0;
++}
++
++static int
+ udev_dir_handler(vector strvec)
+ {
+ 	conf->udev_dir = set_value(strvec);
+@@ -1848,6 +1863,12 @@
+ }
+ 
+ static int
++snprint_file_timeout(char * buff, int len, void * data)
++{
++	return snprintf(buff, len, "%i", conf->file_timeout);
++}
++
++static int
+ snprint_def_udev_dir (char * buff, int len, void * data)
+ {
+ 	if (!conf->udev_dir)
+@@ -2153,6 +2174,7 @@
+ 	install_keyword("gid", &def_gid_handler, &snprint_def_gid);
+ 	install_keyword("fast_io_fail_tmo", &def_fast_io_fail_handler, &snprint_def_fast_io_fail);
+ 	install_keyword("dev_loss_tmo", &def_dev_loss_handler, &snprint_def_dev_loss);
++	install_keyword("file_timeout", &file_timeout_handler, &snprint_file_timeout);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_getuid_callout", &def_getuid_callout_handler, NULL);
+--- multipath-tools/libmultipath/discovery.c	2011/03/07 15:45:15	1.32.2.19
++++ multipath-tools/libmultipath/discovery.c	2011/04/05 18:41:45	1.32.2.20
+@@ -181,7 +181,6 @@
+  * not multipath(8), ran by udev
+  */
+ #if DAEMON
+-#define WAIT_MAX_SECONDS 90
+ #define WAIT_LOOP_PER_SECOND 5
+ 
+ static int
+@@ -190,7 +189,7 @@
+ 	int loop;
+ 	struct stat stats;
+ 
+-	loop = WAIT_MAX_SECONDS * WAIT_LOOP_PER_SECOND;
++	loop = conf->file_timeout * WAIT_LOOP_PER_SECOND;
+ 	
+ 	while (--loop) {
+ 		if (stat(filename, &stats) == 0)
+@@ -632,7 +631,7 @@
+ 		return 1;
+ 
+ #if DAEMON
+-	int loop = WAIT_MAX_SECONDS * WAIT_LOOP_PER_SECOND;
++	int loop = conf->file_timeout * WAIT_LOOP_PER_SECOND;
+ 
+ 	while (loop--) {
+ 		sdev = sysfs_open_device_path(attr_buff);
