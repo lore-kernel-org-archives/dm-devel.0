@@ -1,8 +1,8 @@
 From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: [PATCH 1/2] multipath-tools: report PATH_UP for both
- path groups in rdac if io-shipping is enabled
-Date: Fri, 8 Apr 2011 13:04:45 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4FFAC96AE@cosmail01.lsi.com>
+Subject: [PATCH 2/2] multipath-tools: report different piority
+ value for rdac if io-shipping is enabled
+Date: Fri, 8 Apr 2011 13:06:15 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4FFAC96AF@cosmail01.lsi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,25 +23,24 @@ Cc: "Krishnasamy, Somasundaram" <Somasundaram.Krishnasamy@lsi.com>, "Stankey,
 	Robert" <Robert.Stankey@lsi.com>
 List-Id: dm-devel.ids
 
-This patch reports PATH_UP for both the path groups if the RDAC storage is configured with i/o shipping.
+This patch adds code to report different priority value if the storage is configured with io-shipping.
+It sets  the bit 3 if io-shipping is enabled. This is to differentiate between different modes.
 
 Signed-off-by: Babu Moger <babu.moger@lsi.com>
-Reviewed-by: Yanling Qi <yanling.qi@lsi.com> 
-Reviewed-by: Somasundaram Krishnasamy <Somasundaram.Krishnasamy@lsi.com>
+Reviewed-by : Yanling Qi <yanling.qi@lsi.com> 
+Reviewed-by : Somasundaram Krishnasamy <Somasundaram.Krishnasamy@lsi.com>
 
 ---
---- multipath-tools/libmultipath/checkers/rdac.c.orig	2011-04-01 16:45:38.000000000 -0500
-+++ multipath-tools/libmultipath/checkers/rdac.c	2011-04-01 16:58:43.000000000 -0500
-@@ -218,7 +218,11 @@ libcheck_check (struct checker * c)
- 		goto done;
+--- multipath-tools/libmultipath/prioritizers/rdac.c.orig	2011-04-01 17:06:25.000000000 -0500
++++ multipath-tools/libmultipath/prioritizers/rdac.c	2011-04-01 17:30:27.000000000 -0500
+@@ -81,6 +81,10 @@ int rdac_prio(const char *dev, int fd)
+ 		break;
  	}
  
--	ret = ((inq.avtcvp & 0x1) ? PATH_UP : PATH_GHOST);
-+	/* If owner set or ioship mode is enabled return PATH_UP always */
-+	if ((inq.avtcvp & 0x1) || ((inq.avtcvp >> 5) & 0x1))
-+		ret = PATH_UP;
-+	else
-+		ret = PATH_GHOST;
- 
- done:
- 	switch (ret) {
++	/* For ioship mode set the bit 3 (00001000) */
++	if ((sense_buffer[8] >> 5) & 0x01)
++		ret |= 0x08;
++
+ out:
+ 	return(ret);
+ }
