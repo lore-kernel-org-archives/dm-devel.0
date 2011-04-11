@@ -1,57 +1,46 @@
-From: "hch@infradead.org" <hch@infradead.org>
-Subject: Re: [PATCH 05/10] block: remove per-queue plugging
-Date: Mon, 11 Apr 2011 12:59:23 -0400
-Message-ID: <20110411165923.GA15442@infradead.org>
-References: <1295659049-2688-6-git-send-email-jaxboe@fusionio.com>
- <AANLkTin8FoXX6oqUyW+scwhadyX-TfW16_oKjvngU9-m@mail.gmail.com>
- <20110303221353.GA10366@redhat.com>
- <4D761E0D.8050200@fusionio.com>
- <20110308202100.GA31744@redhat.com>
- <4D76912C.9040705@fusionio.com>
- <20110308220526.GA393@redhat.com>
- <20110310005810.GA17911@redhat.com>
- <20110405130541.6c2b5f86@notabene.brown>
- <20110411145022.710c30e9@notabene.brown>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipathd main.c
+Date: 11 Apr 2011 17:01:09 -0000
+Message-ID: <20110411170109.1622.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20110411145022.710c30e9@notabene.brown>
-Sender: linux-raid-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.de>
-Cc: Mike Snitzer <snitzer@redhat.com>, Jens Axboe <jaxboe@fusionio.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, dm-devel@redhat.com, linux-raid@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Apr 11, 2011 at 02:50:22PM +1000, NeilBrown wrote:
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index 273d60b..903ce8d 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -2674,19 +2674,23 @@ static void flush_plug_list(struct blk_plug *plug)
->  	struct request_queue *q;
->  	unsigned long flags;
->  	struct request *rq;
-> +	struct list_head head;
->  
->  	BUG_ON(plug->magic != PLUG_MAGIC);
->  
->  	if (list_empty(&plug->list))
->  		return;
-> +	list_add(&head, &plug->list);
-> +	list_del_init(&plug->list);
->  
->  	if (plug->should_sort)
-> -		list_sort(NULL, &plug->list, plug_rq_cmp);
-> +		list_sort(NULL, &head, plug_rq_cmp);
-> +	plug->should_sort = 0;
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2011-04-11 17:01:08
 
-As Jens mentioned this should be list_splice_init.  But looking over
-flush_plug_list the code there seems strange to me.
+Modified files:
+	multipathd     : main.c 
 
-What does the local_irq_save in flush_plug_list protect?  Why don't
-we need it over the list_sort?  And do we still need it when first
-splicing the list to a local one?
+Log message:
+	Oops. stray semi-colon.
 
-It's one of these cases where I'd really like to see more comments
-explaining why the code is doing what it's doing.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.34&r2=1.69.2.35
 
+--- multipath-tools/multipathd/main.c	2011/04/04 19:48:46	1.69.2.34
++++ multipath-tools/multipathd/main.c	2011/04/11 17:01:08	1.69.2.35
+@@ -1505,7 +1505,7 @@
+ 	condlog(2, "reconfigure (SIGHUP)");
+ 
+ 	lock(gvecs->lock);
+-	if (!exitting);
++	if (!exitting)
+ 		reconfigure(gvecs);
+ 	unlock(gvecs->lock);
+ 
