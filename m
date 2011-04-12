@@ -1,47 +1,130 @@
-From: Jens Axboe <jaxboe@fusionio.com>
+From: "hch@infradead.org" <hch@infradead.org>
 Subject: Re: [PATCH 05/10] block: remove per-queue plugging
-Date: Tue, 12 Apr 2011 18:49:53 +0200
-Message-ID: <4DA482B1.5000005@fusionio.com>
-References: <20110411220505.1028816e@notabene.brown> <4DA2F00E.6010907@fusionio.com> <20110411223623.4278fad1@notabene.brown> <4DA2F8AD.1060605@fusionio.com> <20110412011255.GA29236@infradead.org> <4DA40F0E.1070903@fusionio.com> <20110412122248.GC31057@dastard> <4DA4456F.3070301@fusionio.com> <20110412124134.GD31057@dastard> <4DA44C86.3090305@fusionio.com> <20110412164417.GA13890@infradead.org>
+Date: Tue, 12 Apr 2011 12:50:42 -0400
+Message-ID: <20110412165042.GA23764@infradead.org>
+References: <20110411205928.13915719@notabene.brown>
+ <4DA2E03A.2080607@fusionio.com>
+ <20110411212635.7959de70@notabene.brown>
+ <4DA2E7F0.9010904@fusionio.com>
+ <20110411220505.1028816e@notabene.brown>
+ <4DA2F00E.6010907@fusionio.com>
+ <20110411223623.4278fad1@notabene.brown>
+ <4DA2F8AD.1060605@fusionio.com>
+ <20110412011255.GA29236@infradead.org>
+ <4DA40F0E.1070903@fusionio.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110412164417.GA13890@infradead.org>
+Content-Disposition: inline
+In-Reply-To: <4DA40F0E.1070903@fusionio.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "hch@infradead.org" <hch@infradead.org>
-Cc: Dave Chinner <david@fromorbit.com>, NeilBrown <neilb@suse.de>, Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
+To: Jens Axboe <jaxboe@fusionio.com>
+Cc: NeilBrown <neilb@suse.de>, Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 2011-04-12 18:44, hch@infradead.org wrote:
-> On Tue, Apr 12, 2011 at 02:58:46PM +0200, Jens Axboe wrote:
->> Supposedly it's faster to do it inline rather than punt the dispatch.
->> But that may actually not be true, if you have multiple plugs going (and
->> thus multiple contenders for the queue lock on dispatch). So lets play
->> it safe and punt to kblockd, we can always revisit this later.
-> 
-> Note that this can be optimized further by adding a new helper that just
-> queues up work on kblockd without taking the queue lock, e.g. adding a
-> new
-> 
-> void blk_run_queue_async(struct request_queue *q)
-> {
-> 	if (likely(!blk_queue_stopped(q)))
-> 		queue_delayed_work(kblockd_workqueue, &q->delay_work, 0);
-> }
-> 
-> And replacing all
-> 
-> 	__blk_run_queue(q, true);
-> 
-> callers with that, at which point they won't need the queuelock any
-> more.
+On Tue, Apr 12, 2011 at 10:36:30AM +0200, Jens Axboe wrote:
+> The existance and out-of-line is for the scheduler() hook. It should be
+> an unlikely event to schedule with a plug held, normally the plug should
+> have been explicitly unplugged before that happens.
 
-I realize that, in fact it's already safe as long as you pass in 'true'
-for __blk_run_queue(). Before I had rewritten it to move the running
-out, so that makes the trick a little difficult. This afternoon I also
-tested it and saw no noticable difference, but I'll probably just do it
-anyway as it makes sense.
+I still don't think unlikely() is the right thing to do.  The static
+branch prediction hints cause a real massive slowdown if taken.  For
+things like this that happen during normal operation you're much better
+off leaving the dynamic branch prediction in the CPU predicting what's
+going on.  And I don't think it's all that unlikely - e.g. for all the
+metadata during readpages/writepages schedule/io_schedule will be
+the unplugging point right now.  I'll see if I can run an I/O workload
+with Steve's likely/unlikely profiling turned on.
 
--- 
-Jens Axboe
+> > void __blk_flush_plug(struct task_struct *tsk, struct blk_plug *plug)
+> > {
+> > 	flush_plug_list(plug);
+> > 	if (plug == tsk->plug)
+> > 		tsk->plug = NULL;
+> > 	tsk->plug = plug;
+> > }
+> > 
+> >    it would seem much smarted to just call flush_plug_list directly.
+> >    In fact it seems like the tsk->plug is not nessecary at all and
+> >    all remaining __blk_flush_plug callers could be replaced with
+> >    flush_plug_list.
+> 
+> It depends on whether this was an explicit unplug (eg
+> blk_finish_plug()), or whether it was an implicit event (eg on
+> schedule()). If we do it on schedule(), then we retain the plug after
+> the flush. Otherwise we clear it.
+
+blk_finish_plug doesn't got through this codepath.
+
+This is an untested patch how the area should look to me:
+
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 90f22cc..6fa5ba1 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -2668,7 +2668,7 @@ static int plug_rq_cmp(void *priv, struct list_head *a, struct list_head *b)
+ 	return !(rqa->q <= rqb->q);
+ }
+ 
+-static void flush_plug_list(struct blk_plug *plug)
++void blk_flush_plug_list(struct blk_plug *plug)
+ {
+ 	struct request_queue *q;
+ 	unsigned long flags;
+@@ -2716,29 +2716,16 @@ static void flush_plug_list(struct blk_plug *plug)
+ 	BUG_ON(!list_empty(&plug->list));
+ 	local_irq_restore(flags);
+ }
+-
+-static void __blk_finish_plug(struct task_struct *tsk, struct blk_plug *plug)
+-{
+-	flush_plug_list(plug);
+-
+-	if (plug == tsk->plug)
+-		tsk->plug = NULL;
+-}
++EXPORT_SYMBOL_GPL(blk_flush_plug_list);
+ 
+ void blk_finish_plug(struct blk_plug *plug)
+ {
+-	if (plug)
+-		__blk_finish_plug(current, plug);
++	blk_flush_plug_list(plug);
++	if (plug == current->plug)
++		current->plug = NULL;
+ }
+ EXPORT_SYMBOL(blk_finish_plug);
+ 
+-void __blk_flush_plug(struct task_struct *tsk, struct blk_plug *plug)
+-{
+-	__blk_finish_plug(tsk, plug);
+-	tsk->plug = plug;
+-}
+-EXPORT_SYMBOL(__blk_flush_plug);
+-
+ int __init blk_dev_init(void)
+ {
+ 	BUILD_BUG_ON(__REQ_NR_BITS > 8 *
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 32176cc..fa6a4e1 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -862,14 +862,14 @@ struct blk_plug {
+ 
+ extern void blk_start_plug(struct blk_plug *);
+ extern void blk_finish_plug(struct blk_plug *);
+-extern void __blk_flush_plug(struct task_struct *, struct blk_plug *);
++extern void blk_flush_plug_list(struct blk_plug *);
+ 
+ static inline void blk_flush_plug(struct task_struct *tsk)
+ {
+ 	struct blk_plug *plug = tsk->plug;
+ 
+-	if (unlikely(plug))
+-		__blk_flush_plug(tsk, plug);
++	if (plug)
++		blk_flush_plug_list(plug);
+ }
+ 
+ static inline bool blk_needs_flush_plug(struct task_struct *tsk)
