@@ -1,32 +1,103 @@
-From: Jens Axboe <jaxboe@fusionio.com>
-Subject: Re: [PATCH 05/10] block: remove per-queue plugging
-Date: Wed, 13 Apr 2011 19:35:29 +0200
-Message-ID: <4DA5DEE1.9070803@fusionio.com>
-References: <20110411223623.4278fad1@notabene.brown> <4DA2F8AD.1060605@fusionio.com> <20110412011255.GA29236@infradead.org> <4DA40F0E.1070903@fusionio.com> <20110412122248.GC31057@dastard> <4DA4456F.3070301@fusionio.com> <20110412124134.GD31057@dastard> <4DA44C86.3090305@fusionio.com> <20110412133117.GE31057@dastard> <4DA45790.2010109@fusionio.com> <20110412143452.GH31057@dastard> <20110413070827.11b2a71d@notabene.brown> <BANLkTikBEJa7bJJoLFU7NoiEgOjVHVG08A@mail.gmail.com> <1302693122.2035.20.camel@laptop> <4DA587AF.2040308@fusionio.com> <BANLkTimTGGJjXGX96LqP0YL4dcdGONFyhA@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: add discard support to the
+ snapshot-origin target [was: Re: Testing TRIM with LVM]
+Date: Wed, 13 Apr 2011 18:40:25 -0400
+Message-ID: <20110413224025.GA18589@redhat.com>
+References: <20110412234706.GA11244@redhat.com>
+	<20cf301cbef67d323104a0c2ff52@google.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <BANLkTimTGGJjXGX96LqP0YL4dcdGONFyhA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Peter Zijlstra <peterz@infradead.org>, NeilBrown <neilb@suse.de>, Dave Chinner <david@fromorbit.com>, "hch@infradead.org" <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20cf301cbef67d323104a0c2ff52@google.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: DarkNovaNick@gmail.com
+Cc: dm-devel@redhat.com, LVM general discussion and development <linux-lvm@redhat.com>
 List-Id: dm-devel.ids
 
-On 2011-04-13 17:13, Linus Torvalds wrote:
-> On Wed, Apr 13, 2011 at 4:23 AM, Jens Axboe <jaxboe@fusionio.com> wrote:
->>
->> Linus, I've got a few other things queued up in the area, I'll add this
->> and send them off soon. Or feel free to add this one yourself, since you
->> already did it.
+On Tue, Apr 12 2011 at  9:47pm -0400,
+DarkNovaNick@gmail.com <DarkNovaNick@gmail.com> wrote:
+
+> I get 0 back when I do "cat
+> /sys/block/sda/queue/discard_zeroes_data" so does this mean that my
+> drive doesn't zero out the TRIMed blocks? I don't really care if it
+> does or does not, I just want to make sure the drive is getting the
+> TRIM commands as the benchmarks I've seen show performance
+> degradation if they aren't used.
+
+Right, means TRIM doesn't zero the TRIM'd blocks.
+
+But otherwise it looks like you're in good shape relative to TRIM.
+ 
+> Regarding snapshot targets, the only instance of "discard not
+> supported" came as I did a snapshot today:
 > 
-> Ok, I committed it with Peter's and your acks.
+> Apr 12 15:27:58 darknovanick kernel: [65147.211211] EXT4-fs warning
+> (device dm-0): release_blocks_on_commit:2672: discard not supported,
+> disabling
+> Apr 12 15:28:16 darknovanick kernel: [65166.103061] EXT4-fs (dm-1):
+> 72 orphan inodes deleted
+> Apr 12 15:28:16 darknovanick kernel: [65166.103062] EXT4-fs (dm-1):
+> recovery complete
+> Apr 12 15:28:17 darknovanick kernel: [65166.232257] EXT4-fs (dm-1):
+> mounted filesystem with ordered data mode. Opts: (null)
+> 
+> This snapshot was of a LV on the SSD, but the snapshot itself was
+> being stored on a mechanical hard drive. Does this message mean that
+> discard was just disabled for the snapshot itself (which was deleted
+> a half hour later), or is it now disabled for the entire volume now
+> that I've done a snapshot, even though its been removed?
 
-Great, thanks.
+Unfortunately, the failed discard to the snapshot-origin device disables
+ext4's discards for the entire volume (even after you remove the
+snapshot).
 
-> And if you already put it in your git tree too, git will merge it.
+But the following patch fixes that:
 
-I did not, I had a feeling you'd merge this one.
+Subject: dm snapshot: add discard support to the snapshot-origin target
 
--- 
-Jens Axboe
+Allow the snapshot-origin target to pass discards to the origin device
+(after any copyout of the region being discarded; but generally speaking
+that copyout won't be needed as the region will have already been copied
+to the cow).
+
+So for example, when you remove a file from an ext4 mounted origin
+volume it triggers copyout to the snapshot.  When the DISCARD is then
+issued during the subsequent journal commit no copyout is needed.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-snap.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index a2d3309..028d216 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -2076,6 +2076,7 @@ static int origin_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	ti->private = dev;
+ 	ti->num_flush_requests = 1;
++	ti->num_discard_requests = 1;
+ 
+ 	return 0;
+ }
+@@ -2153,7 +2154,7 @@ static int origin_iterate_devices(struct dm_target *ti,
+ 
+ static struct target_type origin_target = {
+ 	.name    = "snapshot-origin",
+-	.version = {1, 7, 1},
++	.version = {1, 8, 0},
+ 	.module  = THIS_MODULE,
+ 	.ctr     = origin_ctr,
+ 	.dtr     = origin_dtr,
