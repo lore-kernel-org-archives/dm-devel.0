@@ -1,120 +1,81 @@
-From: Dave Chinner <david@fromorbit.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH 05/10] block: remove per-queue plugging
-Date: Wed, 13 Apr 2011 09:35:36 +1000
-Message-ID: <20110412233536.GK31057@dastard>
-References: <20110411220505.1028816e@notabene.brown>
- <4DA2F00E.6010907@fusionio.com>
- <20110411223623.4278fad1@notabene.brown>
- <4DA2F8AD.1060605@fusionio.com>
- <20110412011255.GA29236@infradead.org>
- <4DA40F0E.1070903@fusionio.com>
- <20110412122248.GC31057@dastard>
- <4DA4456F.3070301@fusionio.com>
- <20110412134031.GF31057@dastard>
- <4DA4581A.4090600@fusionio.com>
+Date: Tue, 12 Apr 2011 19:23:52 -0700
+Message-ID: <BANLkTikBEJa7bJJoLFU7NoiEgOjVHVG08A@mail.gmail.com>
+References: <20110411223623.4278fad1@notabene.brown> <4DA2F8AD.1060605@fusionio.com>
+ <20110412011255.GA29236@infradead.org> <4DA40F0E.1070903@fusionio.com>
+ <20110412122248.GC31057@dastard> <4DA4456F.3070301@fusionio.com>
+ <20110412124134.GD31057@dastard> <4DA44C86.3090305@fusionio.com>
+ <20110412133117.GE31057@dastard> <4DA45790.2010109@fusionio.com>
+ <20110412143452.GH31057@dastard> <20110413070827.11b2a71d@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4DA4581A.4090600@fusionio.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Jens Axboe <jaxboe@fusionio.com>
-Cc: "hch@infradead.org" <hch@infradead.org>, NeilBrown <neilb@suse.de>, Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
+Content-Type: multipart/mixed; boundary=0022154012fa1cd2bd04a0c38101
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20110413070827.11b2a71d@notabene.brown>
+Sender: linux-kernel-owner@vger.kernel.org
+To: NeilBrown <neilb@suse.de>
+Cc: Dave Chinner <david@fromorbit.com>, Jens Axboe <jaxboe@fusionio.com>, "hch@infradead.org" <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, Apr 12, 2011 at 03:48:10PM +0200, Jens Axboe wrote:
-> On 2011-04-12 15:40, Dave Chinner wrote:
-> > On Tue, Apr 12, 2011 at 02:28:31PM +0200, Jens Axboe wrote:
-> >> On 2011-04-12 14:22, Dave Chinner wrote:
-> >>> On Tue, Apr 12, 2011 at 10:36:30AM +0200, Jens Axboe wrote:
-> >>>> On 2011-04-12 03:12, hch@infradead.org wrote:
-> >>>>> On Mon, Apr 11, 2011 at 02:48:45PM +0200, Jens Axboe wrote:
-> >>>>>    function calls.
-> >>>>>  - Why is having a plug in blk_flush_plug marked unlikely?  Note that
-> >>>>>    unlikely is the static branch prediction hint to mark the case
-> >>>>>    extremly unlikely and is even used for hot/cold partitioning.  But
-> >>>>>    when we call it we usually check beforehand if we actually have
-> >>>>>    plugs, so it's actually likely to happen.
-> >>>>
-> >>>> The existance and out-of-line is for the scheduler() hook. It should be
-> >>>> an unlikely event to schedule with a plug held, normally the plug should
-> >>>> have been explicitly unplugged before that happens.
-> >>>
-> >>> Though if it does, haven't you just added a significant amount of
-> >>> depth to the worst case stack usage? I'm seeing this sort of thing
-> >>> from io_schedule():
-> >>>
-> >>>         Depth    Size   Location    (40 entries)
-> >>>         -----    ----   --------
-> >>>   0)     4256      16   mempool_alloc_slab+0x15/0x20
-> >>>   1)     4240     144   mempool_alloc+0x63/0x160
-> >>>   2)     4096      16   scsi_sg_alloc+0x4c/0x60
-> >>>   3)     4080     112   __sg_alloc_table+0x66/0x140
-> >>>   4)     3968      32   scsi_init_sgtable+0x33/0x90
-> >>>   5)     3936      48   scsi_init_io+0x31/0xc0
-> >>>   6)     3888      32   scsi_setup_fs_cmnd+0x79/0xe0
-> >>>   7)     3856     112   sd_prep_fn+0x150/0xa90
-> >>>   8)     3744      48   blk_peek_request+0x6a/0x1f0
-> >>>   9)     3696      96   scsi_request_fn+0x60/0x510
-> >>>  10)     3600      32   __blk_run_queue+0x57/0x100
-> >>>  11)     3568      80   flush_plug_list+0x133/0x1d0
-> >>>  12)     3488      32   __blk_flush_plug+0x24/0x50
-> >>>  13)     3456      32   io_schedule+0x79/0x80
-> >>>
-> >>> (This is from a page fault on ext3 that is doing page cache
-> >>> readahead and blocking on a locked buffer.)
-> > 
-> > FYI, the next step in the allocation chain adds >900 bytes to that
-> > stack:
-> > 
-> > $ cat /sys/kernel/debug/tracing/stack_trace
-> >         Depth    Size   Location    (47 entries)
-> >         -----    ----   --------
-> >   0)     5176      40   zone_statistics+0xad/0xc0
-> >   1)     5136     288   get_page_from_freelist+0x2cf/0x840
-> >   2)     4848     304   __alloc_pages_nodemask+0x121/0x930
-> >   3)     4544      48   kmem_getpages+0x62/0x160
-> >   4)     4496      96   cache_grow+0x308/0x330
-> >   5)     4400      80   cache_alloc_refill+0x21c/0x260
-> >   6)     4320      64   kmem_cache_alloc+0x1b7/0x1e0
-> >   7)     4256      16   mempool_alloc_slab+0x15/0x20
-> >   8)     4240     144   mempool_alloc+0x63/0x160
-> >   9)     4096      16   scsi_sg_alloc+0x4c/0x60
-> >  10)     4080     112   __sg_alloc_table+0x66/0x140
-> >  11)     3968      32   scsi_init_sgtable+0x33/0x90
-> >  12)     3936      48   scsi_init_io+0x31/0xc0
-> >  13)     3888      32   scsi_setup_fs_cmnd+0x79/0xe0
-> >  14)     3856     112   sd_prep_fn+0x150/0xa90
-> >  15)     3744      48   blk_peek_request+0x6a/0x1f0
-> >  16)     3696      96   scsi_request_fn+0x60/0x510
-> >  17)     3600      32   __blk_run_queue+0x57/0x100
-> >  18)     3568      80   flush_plug_list+0x133/0x1d0
-> >  19)     3488      32   __blk_flush_plug+0x24/0x50
-> >  20)     3456      32   io_schedule+0x79/0x80
-> > 
-> > That's close to 1800 bytes now, and that's not entering the reclaim
-> > path. If i get one deeper than that, I'll be sure to post it. :)
-> 
-> Do you have traces from 2.6.38, or are you just doing them now?
+--0022154012fa1cd2bd04a0c38101
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-I do stack checks like this all the time. I generally don't keep
-them around, just pay attention to the path and depth. ext3 is used
-for / on my test VMs, and has never shown up as the worse case stack
-usage when running xfstests. As of the block plugging code, this
-trace is the top stack user for the first ~130 tests, and often for
-the entire test run on XFS....
+On Tue, Apr 12, 2011 at 2:08 PM, NeilBrown <neilb@suse.de> wrote:
+> On Wed, 13 Apr 2011 00:34:52 +1000 Dave Chinner <david@fromorbit.com> wro=
+te:
+>>
+>> Well, not really - now taking any sleeping lock or waiting on
+>> anything can trigger a plug flush where previously you had to
+>> explicitly issue them. I'm not saying what we had is better, just
+>> that there are implicit flushes with your changes that are
+>> inherently uncontrollable...
+>
+> It's not just sleeping locks - if preempt is enabled a schedule can happe=
+n at
+> any time - at any depth. =A0I've seen a spin_unlock do it.
 
-> The path you quote above should not go into reclaim, it's a GFP_ATOMIC
-> allocation.
+Hmm. I don't think we should flush IO in the preemption path. That
+smells wrong on many levels, just one of them being the "any time, any
+depth".
 
-Right. I'm still trying to produce a trace that shows more stack
-usage in the block layer. It's random chance as to what pops up most
-of the time. However, some of the stacks that are showing up in
-2.6.39 are quite different from any I've ever seen before...
+It also sounds really wrong from an IO pattern standpoint. The process
+is actually still running, and the IO flushing _already_ does the
+"only if it's going to sleep" test, but it actually does it _wrong_.
+The "current->state" check doesn't make sense for a preemption event,
+because it's not actually going to sleep there.
 
-Cheers,
+So a patch like the attached (UNTESTED!) sounds like the right thing to do.
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+Whether it makes any difference for any MD issues, who knows.. But
+considering that the unplugging already used to test for "prev->state
+!=3D TASK_RUNNING", this is absolutely the right thing to do - that old
+test was just broken.
+
+                                   Linus
+
+--0022154012fa1cd2bd04a0c38101
+Content-Type: text/x-patch; charset=US-ASCII; name="patch.diff"
+Content-Disposition: attachment; filename="patch.diff"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_gmfmyb2w0
+
+IGtlcm5lbC9zY2hlZC5jIHwgICAyMCArKysrKysrKysrLS0tLS0tLS0tLQogMSBmaWxlcyBjaGFu
+Z2VkLCAxMCBpbnNlcnRpb25zKCspLCAxMCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9rZXJu
+ZWwvc2NoZWQuYyBiL2tlcm5lbC9zY2hlZC5jCmluZGV4IDQ4MDEzNjMzZDc5Mi4uYTE4N2MzZmUw
+MjdiIDEwMDY0NAotLS0gYS9rZXJuZWwvc2NoZWQuYworKysgYi9rZXJuZWwvc2NoZWQuYwpAQCAt
+NDExMSwyMCArNDExMSwyMCBAQCBuZWVkX3Jlc2NoZWQ6CiAJCQkJCXRyeV90b193YWtlX3VwX2xv
+Y2FsKHRvX3dha2V1cCk7CiAJCQl9CiAJCQlkZWFjdGl2YXRlX3Rhc2socnEsIHByZXYsIERFUVVF
+VUVfU0xFRVApOworCisJCQkvKgorCQkJICogSWYgd2UgYXJlIGdvaW5nIHRvIHNsZWVwIGFuZCB3
+ZSBoYXZlIHBsdWdnZWQgSU8gcXVldWVkLCBtYWtlCisJCQkgKiBzdXJlIHRvIHN1Ym1pdCBpdCB0
+byBhdm9pZCBkZWFkbG9ja3MuCisJCQkgKi8KKwkJCWlmIChibGtfbmVlZHNfZmx1c2hfcGx1Zyhw
+cmV2KSkgeworCQkJCXJhd19zcGluX3VubG9jaygmcnEtPmxvY2spOworCQkJCWJsa19mbHVzaF9w
+bHVnKHByZXYpOworCQkJCXJhd19zcGluX2xvY2soJnJxLT5sb2NrKTsKKwkJCX0KIAkJfQogCQlz
+d2l0Y2hfY291bnQgPSAmcHJldi0+bnZjc3c7CiAJfQogCi0JLyoKLQkgKiBJZiB3ZSBhcmUgZ29p
+bmcgdG8gc2xlZXAgYW5kIHdlIGhhdmUgcGx1Z2dlZCBJTyBxdWV1ZWQsIG1ha2UKLQkgKiBzdXJl
+IHRvIHN1Ym1pdCBpdCB0byBhdm9pZCBkZWFkbG9ja3MuCi0JICovCi0JaWYgKHByZXYtPnN0YXRl
+ICE9IFRBU0tfUlVOTklORyAmJiBibGtfbmVlZHNfZmx1c2hfcGx1ZyhwcmV2KSkgewotCQlyYXdf
+c3Bpbl91bmxvY2soJnJxLT5sb2NrKTsKLQkJYmxrX2ZsdXNoX3BsdWcocHJldik7Ci0JCXJhd19z
+cGluX2xvY2soJnJxLT5sb2NrKTsKLQl9Ci0KIAlwcmVfc2NoZWR1bGUocnEsIHByZXYpOwogCiAJ
+aWYgKHVubGlrZWx5KCFycS0+bnJfcnVubmluZykpCg==
+--0022154012fa1cd2bd04a0c38101--
