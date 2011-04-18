@@ -1,7 +1,7 @@
 From: NeilBrown <neilb@suse.de>
 Subject: Re: [PATCH 05/10] block: remove per-queue plugging
-Date: Mon, 18 Apr 2011 08:19:22 +1000
-Message-ID: <20110418081922.1651474a@notabene.brown>
+Date: Mon, 18 Apr 2011 14:19:01 +1000
+Message-ID: <20110418141901.14e89cee@notabene.brown>
 References: <1295659049-2688-1-git-send-email-jaxboe@fusionio.com>
 	<1295659049-2688-6-git-send-email-jaxboe@fusionio.com>
 	<AANLkTin8FoXX6oqUyW+scwhadyX-TfW16_oKjvngU9-m@mail.gmail.com>
@@ -20,64 +20,31 @@ References: <1295659049-2688-1-git-send-email-jaxboe@fusionio.com>
 	<4DA2E7F0.9010904@fusionio.com>
 	<20110411220505.1028816e@notabene.brown>
 	<4DA2F00E.6010907@fusionio.com>
+	<20110418081922.1651474a@notabene.brown>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4DA2F00E.6010907@fusionio.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20110418081922.1651474a@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
 To: Jens Axboe <jaxboe@fusionio.com>
 Cc: Mike Snitzer <snitzer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "hch@infradead.org" <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Mon, 11 Apr 2011 14:11:58 +0200 Jens Axboe <jaxboe@fusionio.com> wrote:
+On Mon, 18 Apr 2011 08:19:22 +1000 NeilBrown <neilb@suse.de> wrote:
 
-> > Yes.  But I need to know when to release the requests that I have stored.
-> > I need to know when ->write_pages or ->read_pages or whatever has finished
-> > submitting a pile of pages so that I can start processing the request that I
-> > have put aside.  So I need a callback from blk_finish_plug.
-> 
-> OK fair enough, I'll add your callback patch.
-> 
+> So can we please have my original patch applied? (Revised version using
+> list_splice_init included below).
 
-But you didn't did you?  You added a completely different patch which is
-completely pointless.
-If you don't like my patch I would really prefer you said so rather than
-silently replace it with something completely different (and broken).
-
-I'll try to explain again.
-
-md does not use __make_request.  At all.
-md does not use 'struct request'.  At all.
-
-The 'list' in 'struct blk_plug' is a list of 'struct request'.
-
-Therefore md cannot put anything useful on the list in 'struct blk_plug'.
-
-So when blk_flush_plug_list calls queue_unplugged() on a queue that belonged
-to a request found on the blk_plug list, that queue cannot possibly ever be
-for an 'md' device (because no 'struct request' ever belongs to an md device,
-because md doesn't not use 'struct request').
-
-So your patch (commit f75664570d8b) doesn't help MD at all.
-
-For md, I need to attach something to blk_plug which somehow identifies an md
-device, so that blk_finish_plug can get to that device and let it unplug.
-The most sensible thing to have is a completely generic callback.  That way
-different block devices (which choose not to use __make_request) can attach
-different sorts of things to blk_plug.
-
-So can we please have my original patch applied? (Revised version using
-list_splice_init included below).
-
-Or if not, a clear explanation of why not?
+I hadn't adjusted that one properly for the recent code shuffling.
+This one is actually tested...
 
 Thanks,
 NeilBrown
 
-From 6a2aa888b855fd298c174bcee130cf43db0b3f7b Mon Sep 17 00:00:00 2001
+From 325b1c12b6165002022bd7b599f95c0331491cb3 Mon Sep 17 00:00:00 2001
 From: NeilBrown <neilb@suse.de>
-Date: Mon, 18 Apr 2011 08:15:45 +1000
+Date: Mon, 18 Apr 2011 14:06:05 +1000
 Subject: [PATCH] Enhance new plugging support to support general callbacks.
 
 md/raid requires an unplug callback, but as it does not uses
@@ -93,7 +60,7 @@ Signed-off-by: NeilBrown <neilb@suse.de>
  2 files changed, 26 insertions(+), 1 deletions(-)
 
 diff --git a/block/blk-core.c b/block/blk-core.c
-index 78b7b0c..c2b8006 100644
+index 78b7b0c..77edf05 100644
 --- a/block/blk-core.c
 +++ b/block/blk-core.c
 @@ -2638,6 +2638,7 @@ void blk_start_plug(struct blk_plug *plug)
@@ -104,9 +71,9 @@ index 78b7b0c..c2b8006 100644
  	plug->should_sort = 0;
  
  	/*
-@@ -2742,9 +2743,28 @@ void blk_flush_plug_list(struct blk_plug *plug, bool from_schedule)
+@@ -2678,6 +2679,24 @@ static void queue_unplugged(struct request_queue *q, unsigned int depth,
+ 		q->unplugged_fn(q);
  }
- EXPORT_SYMBOL(blk_flush_plug_list);
  
 +static void flush_plug_callbacks(struct blk_plug *plug)
 +{
@@ -126,13 +93,17 @@ index 78b7b0c..c2b8006 100644
 +	}
 +}
 +
- void blk_finish_plug(struct blk_plug *plug)
+ void blk_flush_plug_list(struct blk_plug *plug, bool from_schedule)
  {
- 	blk_flush_plug_list(plug, false);
-+	flush_plug_callbacks(plug);
+ 	struct request_queue *q;
+@@ -2688,6 +2707,7 @@ void blk_flush_plug_list(struct blk_plug *plug, bool from_schedule)
  
- 	if (plug == current->plug)
- 		current->plug = NULL;
+ 	BUG_ON(plug->magic != PLUG_MAGIC);
+ 
++	flush_plug_callbacks(plug);
+ 	if (list_empty(&plug->list))
+ 		return;
+ 
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
 index ec0357d..f3f7879 100644
 --- a/include/linux/blkdev.h
@@ -162,3 +133,4 @@ index ec0357d..f3f7879 100644
  /*
 -- 
 1.7.3.4
+
