@@ -1,81 +1,67 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH 3/3] scsi_dh_rdac : decide on whether to send mode
- select or not based on operating mode
-Date: Wed, 20 Apr 2011 09:11:37 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4FFC0B9A8@cosmail01.lsi.com>
-References: <E463DF2B2E584B4A82673F53D62C2EF4FFAC9628@cosmail01.lsi.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] multipathd: use 0 for initial pg if there are no
+ priority groups
+Date: Wed, 20 Apr 2011 17:24:00 -0400
+Message-ID: <20110420212400.GA6114@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF4FFAC9628@cosmail01.lsi.com>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
-Cc: "Cummins, Charles" <Charles.Cummins@lsi.com>, James Bottomley <James.Bottomley@suse.de>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: linux-scsi-owner@vger.kernel.org [mailto:linux-scsi-
-> owner@vger.kernel.org] On Behalf Of Moger, Babu
-> Sent: Friday, April 08, 2011 12:40 PM
-> To: linux-scsi@vger.kernel.org; device-mapper development
-> Cc: Dachepalli, Sudhir; Qi, Yanling; Chauhan, Vijay; Stankey, Robert;
-> Arumugam, Anburaja; Krishnasamy, Somasundaram
-> Subject: [PATCH 3/3] scsi_dh_rdac : decide on whether to send mode
-> select or not based on operating mode
-> 
-> Based on the operating modes, handler decides whether to send mode
-> select or not. Purpose here is to reduce
-> io-shipping as much as possible whenever there is an option.
-> 
-> Signed-off-by: Babu Moger <babu.moger@lsi.com>
-> Reviewed-by: Yanling Qi <yanling.qi@lsi.com>
-> Reviewed-by: Sudhir Dachepalli <Sudhir.Dachepalli@lis.com>
-> Reviewed-by: Somasundaram Krishnasamy <Somasundaram.Krishnasamy@lsi.com>
-> Reviewed-by: Bob Stankey <Robert.Stankey@lsi.com>
-> Reviewed-by: Vijay Chauhan <Vijay.Chauhan@lsi.com>
+dm-multipath now accommodates a DM table that doesn't have any priority
+groups, see: http://git.kernel.org/linus/a490a07a67b7a37
 
-Tested-by: Charles Cummins <Charles.cummins@lsi.com>
+That kernel change imposes that multipathd must pass 0 for the initial
+priority group if there aren't any priority groups (currently passes 1).
 
-> 
-> ---
-> --- linux-2.6.38/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2011-
-> 03-17 16:57:51.000000000 -0500
-> +++ linux-2.6.38/drivers/scsi/device_handler/scsi_dh_rdac.c	2011-03-17
-> 16:59:11.000000000 -0500
-> @@ -670,12 +670,27 @@ static int rdac_activate(struct scsi_dev
->  {
->  	struct rdac_dh_data *h = get_rdac_data(sdev);
->  	int err = SCSI_DH_OK;
-> +	int act = 0;
-> 
->  	err = check_ownership(sdev, h);
->  	if (err != SCSI_DH_OK)
->  		goto done;
-> 
-> -	if (h->lun_state == RDAC_LUN_UNOWNED) {
-> +	switch (h->mode) {
-> +	case RDAC_MODE:
-> +		if (h->lun_state == RDAC_LUN_UNOWNED)
-> +			act = 1;
-> +		break;
-> +	case RDAC_MODE_IOSHIP:
-> +		if ((h->lun_state == RDAC_LUN_UNOWNED) &&
-> +		    (h->preferred == RDAC_PREFERRED))
-> +			act = 1;
-> +		break;
-> +	default:
-> +		break;
-> +	}
-> +
-> +	if (act) {
->  		err = queue_mode_select(sdev, fn, data);
->  		if (err == SCSI_DH_OK)
->  			return 0;
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+There is no need to check the multipath target version to decide whether
+to pass an initial_pg of 0 or 1 because until recently dm-multipath
+never accommodated a DM table with no priority groups.
+
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ libmultipath/dmparser.c |    6 +++++-
+ 1 files changed, 5 insertions(+), 1 deletions(-)
+
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 1ef3aad..0803bec 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -52,6 +52,7 @@ assemble_map (struct multipath * mp)
+ 	int i, j;
+ 	int shift, freechar;
+ 	int minio;
++	int nr_priority_groups, initial_pg_nr;
+ 	char * p;
+ 	struct pathgroup * pgp;
+ 	struct path * pp;
+@@ -60,9 +61,12 @@ assemble_map (struct multipath * mp)
+ 	p = mp->params;
+ 	freechar = sizeof(mp->params);
+ 
++	nr_priority_groups = VECTOR_SIZE(mp->pg);
++	initial_pg_nr = (nr_priority_groups ? mp->bestpg : 0);
++
+ 	shift = snprintf(p, freechar, "%s %s %i %i",
+ 			 mp->features, mp->hwhandler,
+-			 VECTOR_SIZE(mp->pg), mp->bestpg);
++			 nr_priority_groups, initial_pg_nr);
+ 
+ 	if (shift >= freechar) {
+ 		fprintf(stderr, "mp->params too small\n");
+-- 
+1.7.3.4
