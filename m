@@ -1,14 +1,13 @@
-From: Juerg Haefliger <juergh@gmail.com>
-Subject: Re: RAID status, CSMI, and dmRAID
-Date: Tue, 19 Apr 2011 17:57:59 +0200
-Message-ID: <BANLkTinvCPN0u_ZKisty7H66FZoqFFxsrA@mail.gmail.com>
-References: <C70A636B101FD44999B82525C3E92AFABC2006@otis.burlington.evertz.tv>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH] multipath-tools: Add new NEC diskarray to
+ internal hardware table
+Date: Wed, 20 Apr 2011 18:20:09 +0900
+Message-ID: <4DAEA549.70702@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C70A636B101FD44999B82525C3E92AFABC2006@otis.burlington.evertz.tv>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,27 +17,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, christophe.varoqui@opensvc.com
 List-Id: dm-devel.ids
 
-Hi Sandra,
+Hi Christophe,
 
-> I=92ve recently been researching the issue of obtaining RAID status on Li=
-nux
-> (using a library or API, not through scripts). I=92ve read that CSMI code=
-s can
-> be issued (using ioctl() calls) to get RAID status, and from my
-> understanding (please correct me if I=92m wrong), dmraid doesn=92t use CS=
-MI at
-> all, and the status is obtained using the metadata on the member drives.
-> Does this mean that using CSMI and ioctl is not possible on Linux, or does
-> this mean that using CSMI and ioctl is a bad idea on Linux?
+This patch adds an entry for new NEC Storage M series to internal hwtable.
 
-CSMI is an interface introduced by Compaq which never gained traction
-nor was accepted as an industry standard. It's only supported by the
-low-level drivers that manage controllers sold by Compaq/HP. That is
-mptlinux, mpt2sas and probably the cciss driver as well which btw has
-been replaced by hpsa by now. Stay away from CSMI. It's proprietary
-and obsolete.
+Could you include this change in your tree?
+    
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+---
+ libmultipath/hwtable.c  |   18 ++++++++++++++++++
+ multipath.conf.defaults |   14 ++++++++++++++
+ 2 files changed, 32 insertions(+)
 
-...Juerg
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 9e6888e..c02caa8 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1031,6 +1031,24 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 		.prio_args     = NULL,
+ 	},
++	/* NEC Storage M Series */
++	{
++		.vendor        = "NEC",
++		.product       = "DISK ARRAY",
++		.getuid        = DEFAULT_GETUID,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = "1 alua",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.minio         = DEFAULT_MINIO,
++		.minio_rq      = DEFAULT_MINIO_RQ,
++		.checker_name  = TUR,
++		.prio_name     = PRIO_ALUA,
++		.prio_args     = NULL,
++	},
+ 	/*
+ 	 * STK arrays
+ 	 *
+diff --git a/multipath.conf.defaults b/multipath.conf.defaults
+index f8ca0a2..6daf812 100644
+--- a/multipath.conf.defaults
++++ b/multipath.conf.defaults
+@@ -743,4 +743,18 @@
+ #		path_checker		directio
+ #		prio			const
+ #	}
++#	device {
++#		vendor                  "NEC"
++#		product                 "DISK ARRAY"
++#		getuid_callout          "/lib/udev/scsi_id --whitelisted --device=/dev/%n"
++#		features                "0"
++#		hardware_handler        "1 alua"
++#		path_selector           "round-robin 0"
++#		path_grouping_policy    group_by_prio
++#		failback                immediate
++#		rr_weight               uniform
++#		rr_min_io               1000
++#		path_checker            tur
++#		prio                    alua
++#	}
+ #}
