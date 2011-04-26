@@ -1,14 +1,14 @@
-From: John Ruemker <jruemker@redhat.com>
-Subject: Re: multipath failover & rhcs
-Date: Mon, 25 Apr 2011 13:29:21 -0400
-Message-ID: <4DB5AF71.6060808@redhat.com>
-References: <4DB5A901.9040102@redhat.com>
+From: yue <ooolinux@163.com>
+Subject: Re: [PATCH] multipath: changes to NetApp's prioritizer
+Date: Tue, 26 Apr 2011 16:38:39 +0800 (CST)
+Message-ID: <616c89.7be2.12f90f5cfbc.Coremail.ooolinux@163.com>
+References: <1303732105.31907.22.camel@zezette>
+	<20110425040259.GC23657@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2555348546810280203=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4DB5A901.9040102@redhat.com>
+In-Reply-To: <1303732105.31907.22.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,102 +18,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dave Sullivan <dsulliva@redhat.com>
-Cc: lvm-team@redhat.com, dm-devel@redhat.com, Lon Hohberger <lhh@redhat.com>
+To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 04/25/2011 01:01 PM, Dave Sullivan wrote:
-> Hi Guys,
->
-> It seems recently that we have just run into this problem where we 
-> don't fully understand the timeouts that drive multipath fail-over.
->
-> We did thorough testing of pulling fibre/failing hbas manualling and 
-> multipath handled things perfectly.
->
-> Recently we enountered SCSI Block errors, where the multipath 
-> fail-over did not occur before the qdisk timeout.
->
-> This was attributed to the scsi block errors and the scsi lun timeout 
-> of 60 seconds which is set by default.
->
-> I added a comment to the first link below that discusses a situation 
-> that would cause this to occur.  We think that this was due to a 
-> defective HBA under high I/O load.
->
-> Once we get the HBA in question we will run some tests to validate 
-> that modifying the scsi block timeouts in fact allows multipath to 
-> fail-over in time to beat the qdisk timeout.
->
-> I'm getting ready to to take a look at the code to see if I can 
-> validate these theories.  The area that is still somewhat gray is the 
-> true definition for multipath timings for failover.
->
-> I don't think there is a true definition of a multipath timeout, per 
-> see.  I see it as the following:
->
-> multipath check   = every 20 seconds for no failed paths
-> multipath check (if failed paths)  = every 5 seconds on failed paths only
->
-> multipath failover occurs  =  driver timeout attribute met ( Emulex 
-> lpfc_devloss_tmo value)
->       --capture pulling fibre
->       --capture disabling hba
->
-> or (for other types of failures)
->
-> multipath failover occurs =scsi block timeout + driver timeout (not 
-> sure if the driver timeout attribute is a added)
->
-> https://access.redhat.com/kb/docs/DOC-2881
-> https://docspace.corp.redhat.com/docs/DOC-32822
->
-> Hmm, just found out that there was new fix in rhel5u5 for this it 
-> looks like from this case in salesforce 00085953.
->
-> -Dave
->
+--===============2555348546810280203==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_86183_9630081.1303807119291"
 
-Hi Dave,
-These are issues we have recently been working to resolve with this and 
-other qdisk articles.  The problem is as you described it: we don't have 
-an accurate definition of how long it will take multipath to fail a path 
-in all scenarios.  The formula used in the article is basically wrong, 
-and we're working to fix it, but coming up with a formula for a path 
-timeout has been difficult.  This calculation should not be based on 
-no_path_retry at all, as we are really only concerned in the amount of 
-time it takes for the scsi layer to return an error, allowing qdisk's 
-I/O operation to be sent down an alternate path.
+------=_Part_86183_9630081.1303807119291
+Content-Type: text/plain; charset=GBK
+Content-Transfer-Encoding: base64
 
-Regarding the formula you posted:
+d2hpY2ggdmVyc2lvbiBvZiBtdWx0aXBhdGg/Cm15IGludmlyb25tZW50IGlzIGZlZG9yYTEyICBt
+dWx0aXBhdGggMC40LjkuICBtdWx0aWJ1cyBmb3IgbmV0YXBwCnRoZXJlIGlzIG5vdCBpbXByb3Zt
+ZW50IGluIHRocm91Z2hwdXQ/CnRoYW5rcwoKCgoKQXQgMjAxMS0wNC0yNSAxOTo0ODoyNaOsIkNo
+cmlzdG9waGUgVmFyb3F1aSIgPGNocmlzdG9waGUudmFyb3F1aUBnbWFpbC5jb20+IHdyb3RlOgoK
+Pk9uIGRpbS4sIDIwMTEtMDQtMjQgYXQgMjM6MDIgLTA1MDAsIEJlbmphbWluIE1hcnppbnNraSB3
+cm90ZToKPj4gVGhpcyBpcyBhIHBhdGNoIHNlbnQgdG8gbWUgYnkgTWFydGluIEdlb3JnZSBmcm9t
+IE5ldEFwcC4KPgo+QXBwbGllZC4KPgo+PiAgSXQgY2hhbmdlcyB0aGUKPj4gcHJpb3Jpeml0ZXIg
+bmFtZSBmcm9tIG5ldGFwcCB0byBvbnRhcCwgYW5kIGFkZHMgc29tZSBtaW5vciBlbmNoYW5jZW1l
+bnRzIHRvCj4+IHRoZSBwcmlvcml0aXplci4gSSBjYW4gc2VuZCBhbm90aGVyIHBhdGNoIHRvIGNo
+YW5nZSB0aGUgZmlsZSBuYW1lcyB0byBtYXRjaCwKPj4gYnV0IHRoYXQgbWFrZXMgaXQgaGFyZGVy
+IHRvIHNlZSB0aGUgZnVsbCBmaWxlIGhpc3RvcnkgaW4gZ2l0Lgo+Cj5ZZXMsIHRoZSBmaWxlcyBy
+ZW5hbWUgaXMgd2VsY29tZSB0b28uCj4KPi0tIAo+Q2hyaXN0b3BoZSBWYXJvcXVpCj5PcGVuU1ZD
+IC0gU29mdHdhcmUgdG8gc2NhbGUKPmh0dHA6Ly93d3cub3BlbnN2Yy5jb20vCj4KPi0tCj5kbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKPmRtLWRldmVsQHJlZGhhdC5jb20KPmh0dHBzOi8vd3d3LnJlZGhh
+dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
+------=_Part_86183_9630081.1303807119291
+Content-Type: text/html; charset=GBK
+Content-Transfer-Encoding: base64
 
- >> multipath check   = every 20 seconds for no failed paths
- >> multipath check (if failed paths)  = every 5 seconds on failed paths 
-only
+PERJVj53aGljaCB2ZXJzaW9uIG9mIG11bHRpcGF0aD88L0RJVj4KPERJVj5teSBpbnZpcm9ubWVu
+dCBpcyBmZWRvcmExMiZuYnNwOyBtdWx0aXBhdGggMC40LjkuJm5ic3A7IG11bHRpYnVzIGZvciBu
+ZXRhcHA8L0RJVj4KPERJVj50aGVyZSBpcyBub3QgaW1wcm92bWVudCBpbiB0aHJvdWdocHV0Pzwv
+RElWPgo8RElWPnRoYW5rczxCUj48L0RJVj4KPERJVj48L0RJVj48QlI+PFBSRT48QlI+QXQmbmJz
+cDsyMDExLTA0LTI1Jm5ic3A7MTk6NDg6MjWjrCJDaHJpc3RvcGhlJm5ic3A7VmFyb3F1aSImbmJz
+cDsmbHQ7Y2hyaXN0b3BoZS52YXJvcXVpQGdtYWlsLmNvbSZndDsmbmJzcDt3cm90ZToKCiZndDtP
+biZuYnNwO2RpbS4sJm5ic3A7MjAxMS0wNC0yNCZuYnNwO2F0Jm5ic3A7MjM6MDImbmJzcDstMDUw
+MCwmbmJzcDtCZW5qYW1pbiZuYnNwO01hcnppbnNraSZuYnNwO3dyb3RlOgomZ3Q7Jmd0OyZuYnNw
+O1RoaXMmbmJzcDtpcyZuYnNwO2EmbmJzcDtwYXRjaCZuYnNwO3NlbnQmbmJzcDt0byZuYnNwO21l
+Jm5ic3A7YnkmbmJzcDtNYXJ0aW4mbmJzcDtHZW9yZ2UmbmJzcDtmcm9tJm5ic3A7TmV0QXBwLgom
+Z3Q7CiZndDtBcHBsaWVkLgomZ3Q7CiZndDsmZ3Q7Jm5ic3A7Jm5ic3A7SXQmbmJzcDtjaGFuZ2Vz
+Jm5ic3A7dGhlCiZndDsmZ3Q7Jm5ic3A7cHJpb3Jpeml0ZXImbmJzcDtuYW1lJm5ic3A7ZnJvbSZu
+YnNwO25ldGFwcCZuYnNwO3RvJm5ic3A7b250YXAsJm5ic3A7YW5kJm5ic3A7YWRkcyZuYnNwO3Nv
+bWUmbmJzcDttaW5vciZuYnNwO2VuY2hhbmNlbWVudHMmbmJzcDt0bwomZ3Q7Jmd0OyZuYnNwO3Ro
+ZSZuYnNwO3ByaW9yaXRpemVyLiZuYnNwO0kmbmJzcDtjYW4mbmJzcDtzZW5kJm5ic3A7YW5vdGhl
+ciZuYnNwO3BhdGNoJm5ic3A7dG8mbmJzcDtjaGFuZ2UmbmJzcDt0aGUmbmJzcDtmaWxlJm5ic3A7
+bmFtZXMmbmJzcDt0byZuYnNwO21hdGNoLAomZ3Q7Jmd0OyZuYnNwO2J1dCZuYnNwO3RoYXQmbmJz
+cDttYWtlcyZuYnNwO2l0Jm5ic3A7aGFyZGVyJm5ic3A7dG8mbmJzcDtzZWUmbmJzcDt0aGUmbmJz
+cDtmdWxsJm5ic3A7ZmlsZSZuYnNwO2hpc3RvcnkmbmJzcDtpbiZuYnNwO2dpdC4KJmd0OwomZ3Q7
+WWVzLCZuYnNwO3RoZSZuYnNwO2ZpbGVzJm5ic3A7cmVuYW1lJm5ic3A7aXMmbmJzcDt3ZWxjb21l
+Jm5ic3A7dG9vLgomZ3Q7CiZndDstLSZuYnNwOwomZ3Q7Q2hyaXN0b3BoZSZuYnNwO1Zhcm9xdWkK
+Jmd0O09wZW5TVkMmbmJzcDstJm5ic3A7U29mdHdhcmUmbmJzcDt0byZuYnNwO3NjYWxlCiZndDto
+dHRwOi8vd3d3Lm9wZW5zdmMuY29tLwomZ3Q7CiZndDstLQomZ3Q7ZG0tZGV2ZWwmbmJzcDttYWls
+aW5nJm5ic3A7bGlzdAomZ3Q7ZG0tZGV2ZWxAcmVkaGF0LmNvbQomZ3Q7aHR0cHM6Ly93d3cucmVk
+aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCjwvUFJFPjxicj48YnI+PHNwYW4gdGl0
+bGU9Im5ldGVhc2Vmb290ZXIiPjxzcGFuIGlkPSJuZXRlYXNlX21haWxfZm9vdGVyIj48aHIvPgo8
+YSBocmVmPSJodHRwOi8vbWFpbC4xNjMuY29tL2h0bWwvMTEwNDE0X2F0dGFjaG1lbnQvYXR0MS5o
+dG0iIHRhcmdldD0iX2JsYW5rIj7M5dHpzfjS19PKz+QyR7OstPO4vbz+o6zH4cvJt6LTxdbKtPO1
+59OwoaK089XVxqyjrMzhy9kzsbYhPC9hPgo8L3NwYW4+PC9zcGFuPg==
+------=_Part_86183_9630081.1303807119291--
 
-Just to clarify, the polling interval doubles after each successful path 
-check, up to 4 times the original.  So you're correct, that for a 
-healthy path you should see it checking every 20s after the first few 
-checks.  Likewise, your second statement is also accurate in that after 
-a failed check, it drops back to the configured polling interval until 
-the path returns to active status.
 
-Regarding case 00085953, I was actually the owner of that one.  There 
-was a change that went into 5.5 which lowered the default 
-tur/readsector0 SCSI I/O timeout down from 300 to the checker_timeout 
-value (which defaults to the timeout value in 
-/sys/block/sdX/device/timeout).
+--===============2555348546810280203==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-I am very interested in any information you come up with on the 
-calculation of how long a path failure will take.  We will integrate 
-that into this article if you can come up with anything.
 
-Let me know if you have any questions.
-
--- 
-John Ruemker, RHCA
-Technical Account Manager
-Global Support Services
-Red Hat, Inc.
-Office: 919-754-4941
-Cell: 919-793-8549
+--===============2555348546810280203==--
