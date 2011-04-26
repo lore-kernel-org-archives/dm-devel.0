@@ -1,14 +1,17 @@
-From: yue <ooolinux@163.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
 Subject: Re: [PATCH] multipath: changes to NetApp's prioritizer
-Date: Tue, 26 Apr 2011 16:38:39 +0800 (CST)
-Message-ID: <616c89.7be2.12f90f5cfbc.Coremail.ooolinux@163.com>
+Date: Tue, 26 Apr 2011 10:48:39 +0200
+Message-ID: <1303807719.31907.58.camel@zezette>
 References: <1303732105.31907.22.camel@zezette>
 	<20110425040259.GC23657@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<616c89.7be2.12f90f5cfbc.Coremail.ooolinux@163.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2555348546810280203=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1303732105.31907.22.camel@zezette>
+In-Reply-To: <616c89.7be2.12f90f5cfbc.Coremail.ooolinux@163.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,73 +21,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
+To: yue <ooolinux@163.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============2555348546810280203==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_86183_9630081.1303807119291"
+On mar., 2011-04-26 at 16:38 +0800, yue wrote:
+> which version of multipath?
 
-------=_Part_86183_9630081.1303807119291
-Content-Type: text/plain; charset=GBK
-Content-Transfer-Encoding: base64
+upstream. you'd have to compile the multipath-tools git head from
+git.kernel.org to test.
 
-d2hpY2ggdmVyc2lvbiBvZiBtdWx0aXBhdGg/Cm15IGludmlyb25tZW50IGlzIGZlZG9yYTEyICBt
-dWx0aXBhdGggMC40LjkuICBtdWx0aWJ1cyBmb3IgbmV0YXBwCnRoZXJlIGlzIG5vdCBpbXByb3Zt
-ZW50IGluIHRocm91Z2hwdXQ/CnRoYW5rcwoKCgoKQXQgMjAxMS0wNC0yNSAxOTo0ODoyNaOsIkNo
-cmlzdG9waGUgVmFyb3F1aSIgPGNocmlzdG9waGUudmFyb3F1aUBnbWFpbC5jb20+IHdyb3RlOgoK
-Pk9uIGRpbS4sIDIwMTEtMDQtMjQgYXQgMjM6MDIgLTA1MDAsIEJlbmphbWluIE1hcnppbnNraSB3
-cm90ZToKPj4gVGhpcyBpcyBhIHBhdGNoIHNlbnQgdG8gbWUgYnkgTWFydGluIEdlb3JnZSBmcm9t
-IE5ldEFwcC4KPgo+QXBwbGllZC4KPgo+PiAgSXQgY2hhbmdlcyB0aGUKPj4gcHJpb3Jpeml0ZXIg
-bmFtZSBmcm9tIG5ldGFwcCB0byBvbnRhcCwgYW5kIGFkZHMgc29tZSBtaW5vciBlbmNoYW5jZW1l
-bnRzIHRvCj4+IHRoZSBwcmlvcml0aXplci4gSSBjYW4gc2VuZCBhbm90aGVyIHBhdGNoIHRvIGNo
-YW5nZSB0aGUgZmlsZSBuYW1lcyB0byBtYXRjaCwKPj4gYnV0IHRoYXQgbWFrZXMgaXQgaGFyZGVy
-IHRvIHNlZSB0aGUgZnVsbCBmaWxlIGhpc3RvcnkgaW4gZ2l0Lgo+Cj5ZZXMsIHRoZSBmaWxlcyBy
-ZW5hbWUgaXMgd2VsY29tZSB0b28uCj4KPi0tIAo+Q2hyaXN0b3BoZSBWYXJvcXVpCj5PcGVuU1ZD
-IC0gU29mdHdhcmUgdG8gc2NhbGUKPmh0dHA6Ly93d3cub3BlbnN2Yy5jb20vCj4KPi0tCj5kbS1k
-ZXZlbCBtYWlsaW5nIGxpc3QKPmRtLWRldmVsQHJlZGhhdC5jb20KPmh0dHBzOi8vd3d3LnJlZGhh
-dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
-------=_Part_86183_9630081.1303807119291
-Content-Type: text/html; charset=GBK
-Content-Transfer-Encoding: base64
+> my invironment is fedora12  multipath 0.4.9.  multibus for netapp
+> there is not improvment in throughput?
 
-PERJVj53aGljaCB2ZXJzaW9uIG9mIG11bHRpcGF0aD88L0RJVj4KPERJVj5teSBpbnZpcm9ubWVu
-dCBpcyBmZWRvcmExMiZuYnNwOyBtdWx0aXBhdGggMC40LjkuJm5ic3A7IG11bHRpYnVzIGZvciBu
-ZXRhcHA8L0RJVj4KPERJVj50aGVyZSBpcyBub3QgaW1wcm92bWVudCBpbiB0aHJvdWdocHV0Pzwv
-RElWPgo8RElWPnRoYW5rczxCUj48L0RJVj4KPERJVj48L0RJVj48QlI+PFBSRT48QlI+QXQmbmJz
-cDsyMDExLTA0LTI1Jm5ic3A7MTk6NDg6MjWjrCJDaHJpc3RvcGhlJm5ic3A7VmFyb3F1aSImbmJz
-cDsmbHQ7Y2hyaXN0b3BoZS52YXJvcXVpQGdtYWlsLmNvbSZndDsmbmJzcDt3cm90ZToKCiZndDtP
-biZuYnNwO2RpbS4sJm5ic3A7MjAxMS0wNC0yNCZuYnNwO2F0Jm5ic3A7MjM6MDImbmJzcDstMDUw
-MCwmbmJzcDtCZW5qYW1pbiZuYnNwO01hcnppbnNraSZuYnNwO3dyb3RlOgomZ3Q7Jmd0OyZuYnNw
-O1RoaXMmbmJzcDtpcyZuYnNwO2EmbmJzcDtwYXRjaCZuYnNwO3NlbnQmbmJzcDt0byZuYnNwO21l
-Jm5ic3A7YnkmbmJzcDtNYXJ0aW4mbmJzcDtHZW9yZ2UmbmJzcDtmcm9tJm5ic3A7TmV0QXBwLgom
-Z3Q7CiZndDtBcHBsaWVkLgomZ3Q7CiZndDsmZ3Q7Jm5ic3A7Jm5ic3A7SXQmbmJzcDtjaGFuZ2Vz
-Jm5ic3A7dGhlCiZndDsmZ3Q7Jm5ic3A7cHJpb3Jpeml0ZXImbmJzcDtuYW1lJm5ic3A7ZnJvbSZu
-YnNwO25ldGFwcCZuYnNwO3RvJm5ic3A7b250YXAsJm5ic3A7YW5kJm5ic3A7YWRkcyZuYnNwO3Nv
-bWUmbmJzcDttaW5vciZuYnNwO2VuY2hhbmNlbWVudHMmbmJzcDt0bwomZ3Q7Jmd0OyZuYnNwO3Ro
-ZSZuYnNwO3ByaW9yaXRpemVyLiZuYnNwO0kmbmJzcDtjYW4mbmJzcDtzZW5kJm5ic3A7YW5vdGhl
-ciZuYnNwO3BhdGNoJm5ic3A7dG8mbmJzcDtjaGFuZ2UmbmJzcDt0aGUmbmJzcDtmaWxlJm5ic3A7
-bmFtZXMmbmJzcDt0byZuYnNwO21hdGNoLAomZ3Q7Jmd0OyZuYnNwO2J1dCZuYnNwO3RoYXQmbmJz
-cDttYWtlcyZuYnNwO2l0Jm5ic3A7aGFyZGVyJm5ic3A7dG8mbmJzcDtzZWUmbmJzcDt0aGUmbmJz
-cDtmdWxsJm5ic3A7ZmlsZSZuYnNwO2hpc3RvcnkmbmJzcDtpbiZuYnNwO2dpdC4KJmd0OwomZ3Q7
-WWVzLCZuYnNwO3RoZSZuYnNwO2ZpbGVzJm5ic3A7cmVuYW1lJm5ic3A7aXMmbmJzcDt3ZWxjb21l
-Jm5ic3A7dG9vLgomZ3Q7CiZndDstLSZuYnNwOwomZ3Q7Q2hyaXN0b3BoZSZuYnNwO1Zhcm9xdWkK
-Jmd0O09wZW5TVkMmbmJzcDstJm5ic3A7U29mdHdhcmUmbmJzcDt0byZuYnNwO3NjYWxlCiZndDto
-dHRwOi8vd3d3Lm9wZW5zdmMuY29tLwomZ3Q7CiZndDstLQomZ3Q7ZG0tZGV2ZWwmbmJzcDttYWls
-aW5nJm5ic3A7bGlzdAomZ3Q7ZG0tZGV2ZWxAcmVkaGF0LmNvbQomZ3Q7aHR0cHM6Ly93d3cucmVk
-aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCjwvUFJFPjxicj48YnI+PHNwYW4gdGl0
-bGU9Im5ldGVhc2Vmb290ZXIiPjxzcGFuIGlkPSJuZXRlYXNlX21haWxfZm9vdGVyIj48aHIvPgo8
-YSBocmVmPSJodHRwOi8vbWFpbC4xNjMuY29tL2h0bWwvMTEwNDE0X2F0dGFjaG1lbnQvYXR0MS5o
-dG0iIHRhcmdldD0iX2JsYW5rIj7M5dHpzfjS19PKz+QyR7OstPO4vbz+o6zH4cvJt6LTxdbKtPO1
-59OwoaK089XVxqyjrMzhy9kzsbYhPC9hPgo8L3NwYW4+PC9zcGFuPg==
-------=_Part_86183_9630081.1303807119291--
+don't get you expectation too high though ... this patch is only a
+rename from 'netapp' to 'ontap'. I can see no fonctional change except:
 
-
---===============2555348546810280203==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2555348546810280203==--
+@@ -194,14 +194,14 @@ static int netapp_prio(const char *dev, int fd)
+ 
+        memset(&results, 0, sizeof (results));
+        rc = send_gva(dev, fd, 0x41, results, &results_size);
+-       if (rc == 0) {
++       if (rc >= 0) {
+                tot_len = results[0] << 24 | results[1] << 16 |
+                          results[2] << 8 | results[3];
+                if (tot_len <= 8) {
