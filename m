@@ -1,67 +1,56 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm: allow a target to relax discard restrictions
-Date: Wed, 27 Apr 2011 17:55:38 -0400
-Message-ID: <20110427215537.GA13386@redhat.com>
-References: <20110427150623.GC13487@infradead.org>
-	<20110427151911.GF7294@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Thilo-Alexander Ginkel <thilo@ginkel.com>
+Subject: Re: Soft lockup during suspend since ~2.6.36 [bisected]
+Date: Thu, 28 Apr 2011 01:51:34 +0200
+Message-ID: <BANLkTin71zQH2qDNiwPp6vQppy3YWhbj2A@mail.gmail.com>
+References: <BANLkTi=kQgS62c7HwwFGhNCQzWr2N6kZjA@mail.gmail.com>
+ <BANLkTi=aED731W4WoKK1HUU88qR7RxpW6Q@mail.gmail.com> <BANLkTimDOz7M6m6Xo==DbLHP6q2pMBzd9g@mail.gmail.com>
+ <201104172135.40189.arnd@arndb.de> <BANLkTimS2DqZTjq3Kx-p8CfZ5iFra_M2DA@mail.gmail.com>
+ <20110426131132.GG878@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20110427151911.GF7294@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20110426131132.GG878@htj.dyndns.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, "Rafael J. Wysocki" <rjw@sisk.pl>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A target, like the upcoming thin provisioning target, may want to allow
-discards even if the underlying devices do not support them natively.
+On Tue, Apr 26, 2011 at 15:11, Tejun Heo <tj@kernel.org> wrote:
+> Hello, sorry about the delay. =C2=A0Was on the road and then sick.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-table.c         |    4 ++++
- include/linux/device-mapper.h |    6 ++++++
- 2 files changed, 10 insertions(+), 0 deletions(-)
+No problem. Thanks for getting back to me.
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index cb8380c..75b0430 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1354,6 +1354,10 @@ bool dm_table_supports_discards(struct dm_table *t)
- 	while (i < dm_table_get_num_targets(t)) {
- 		ti = dm_table_get_target(t, i++);
- 
-+		/* target supports discards even if underlying devices cannot */
-+		if (ti->discards_supported)
-+			return 1;
-+
- 		if (ti->type->iterate_devices &&
- 		    ti->type->iterate_devices(ti, device_discard_capable, NULL))
- 			return 1;
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 32a4423..c9e7ff5 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -191,6 +191,12 @@ struct dm_target {
- 
- 	/* Used to provide an error string from the ctr */
- 	char *error;
-+
-+	/*
-+	 * Enable discards even if the table's underlying devices
-+	 * do not have native discard support.
-+	 */
-+	unsigned discards_supported:1;
- };
- 
- /* Each target can link one of these into the table */
+>> In the meantime I also figured out that 2.6.39-rc3 seems to fix the
+>> issue (there have been some work queue changes, so this is somewhat
+>> sensible)
+>
+> Hmmm... that's a big demotivator. =C2=A0:-)
+
+Well, I get your point. ;-) Maybe this fact can help as a motivator: I
+ran some further tests and while -rc3 seems to be ok (and survived 100
+suspend/resume cycles), the issue strangely seems to be back with -rc4
+(the softlockup call stack that I can see is identical to the photos
+below; the lockup happened after only two cycles).
+
+> Before I go ahead and try that, do you happen to have softlockup dump=
+?
+> ie. stack traces of the stuck tasks? =C2=A0I can't find the original
+> posting.
+
+Sure:
+
+=46rom <BANLkTi=3Dn4jLsjOYCd0L3hYb30sgPmdv_WA@mail.gmail.com>:
+> Unfortunately, the output via a serial console becomes garbled after
+> "Entering mem sleep", so I went for patching dumpstack_64.c and a
+> couple of other source files to reduce the verbosity. I hope not to
+> have stripped any essential information. The result is available in
+> these pictures:
+>   https://secure.tgbyte.de/dropbox/IeZalo4t-1.jpg
+>   https://secure.tgbyte.de/dropbox/IeZalo4t-2.jpg
+>
+> For both traces, the printed error message reads: "BUG: soft lockup -
+> CPU#3 stuck for 67s! [kblockd:28]"
+
+Thanks,
+Thilo
