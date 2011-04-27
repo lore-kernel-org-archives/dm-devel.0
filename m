@@ -1,7 +1,7 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: dm-thinp bug
-Date: Tue, 26 Apr 2011 14:47:42 -0400
-Message-ID: <20110426184742.GA13880@infradead.org>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: rename netapp.c to ontap.c
+Date: Tue, 26 Apr 2011 22:23:57 -0500
+Message-ID: <20110427032357.GO23657@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,58 +17,530 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: ejt@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I can reproduce a bug in virtio triggered by running under dm-thinp by
-just copying lots of files from my home directory into a freshly created
-filesystem on dm-thinp.
+This is the second part of the NetApp patch from George Martin. It simply
+renames netapp.c to ontap.c and edits the Makefile to build it.
 
-The table setup I use for the thinly provisoned volume is:
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/prioritizers/Makefile |    3 
+ libmultipath/prioritizers/netapp.c |  245 -------------------------------------
+ libmultipath/prioritizers/ontap.c  |  245 +++++++++++++++++++++++++++++++++++++
+ 3 files changed, 245 insertions(+), 248 deletions(-)
 
-0 73400320 thin-prov /dev/vdc1 /dev/vdc2 1048576 32
-
-The virtio bug on says that it gets more segments than it allows to
-higher layers.
-
-[ 1944.721745] ------------[ cut here ]------------
-[ 1944.724771] kernel BUG at /home/hch/work/linux-2.6/drivers/block/virtio_blk.c:178!
-[ 1944.725511] invalid opcode: 0000 [#1] SMP 
-[ 1944.725511] last sysfs file: /sys/devices/virtual/block/dm-0/dm/name
-[ 1944.725511] Modules linked in:
-[ 1944.725511] 
-[ 1944.725511] Pid: 0, comm: swapper Not tainted 2.6.37+ #95 /Bochs
-[ 1944.725511] EIP: 0060:[<c06d6808>] EFLAGS: 00010002 CPU: 0
-[ 1944.725511] EIP is at do_virtblk_request+0x378/0x3a0
-[ 1944.725511] EAX: 00000081 EBX: f5df7980 ECX: 00000000 EDX: 00000000
-[ 1944.725511] ESI: f5dbf000 EDI: f5988670 EBP: f6409f6c ESP: f6409f28
-[ 1944.725511]  DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068
-[ 1944.725511] Process swapper (pid: 0, ti=f6408000 task=c0d30ee0 task.ti=c0d1c000)
-[ 1944.725511] Stack:
-[ 1944.725511]  00000001 f5df7980 00000020 f5dbf4d8 f5df79ac f5dbf010 f5dbf020 00000004
-[ 1944.725511]  f5c75bf0 0000003d f5dbf034 00000001 f77dda00 00000001 f5c75bf0 f5c75da8
-[ 1944.725511]  f6409f94 f6409f7c c063b055 f5c75bf0 f5dbf000 f6409f88 c063b215 00000000
-[ 1944.725511] Call Trace:
-[ 1944.725511]  [<c063b055>] __blk_run_queue+0x65/0x120
-[ 1944.725511]  [<c063b215>] blk_start_queue+0x35/0x70
-[ 1944.725511]  [<c06d68fe>] blk_done+0xce/0xe0
-[ 1944.725511]  [<c06a1594>] vring_interrupt+0x24/0x40
-[ 1944.725511]  [<c01ad594>] handle_IRQ_event+0x44/0x150
-[ 1944.725511]  [<c01ad594>] ? handle_IRQ_event+0x44/0x150
-[ 1944.725511]  [<c01b0884>] ? move_native_irq+0x14/0x50
-[ 1944.725511]  [<c01af42b>] handle_edge_irq+0x9b/0x130
-[ 1944.725511]  [<c01af53c>] ? handle_fasteoi_irq+0x7c/0xc0
-[ 1944.725511]  [<c01af390>] ? handle_edge_irq+0x0/0x130
-[ 1944.725511]  <IRQ> 
-[ 1944.725511]  [<c01377ed>] ? do_IRQ+0x3d/0xb0
-[ 1944.725511]  [<c016f136>] ? irq_exit+0x56/0x70
-[ 1944.725511]  [<c014c266>] ? smp_apic_timer_interrupt+0x56/0x90
-[ 1944.725511]  [<c0136aa9>] ? common_interrupt+0x29/0x30
-[ 1944.725511]  [<c0153525>] ? native_safe_halt+0x5/0x10
-[ 1944.725511]  [<c013d493>] ? default_idle+0x73/0x170
-[ 1944.725511]  [<c01353ea>] ? cpu_idle+0x4a/0x80
-[ 1944.725511]  [<c09810d8>] ? rest_init+0x58/0x60
-[ 1944.725511]  [<c0d858e3>] ? start_kernel+0x2e5/0x2eb
-[ 1944.725511]  [<c0d85428>] ? unknown_bootoption+0x0/0x1a0
-[ 1944.725511]  [<c0d850e0>] ? i386_start_kernel+0xe0/0xe8
+Index: multipath-tools-110412/libmultipath/prioritizers/Makefile
+===================================================================
+--- multipath-tools-110412.orig/libmultipath/prioritizers/Makefile
++++ multipath-tools-110412/libmultipath/prioritizers/Makefile
+@@ -22,9 +22,6 @@ all: $(LIBS)
+ libprioalua.so: alua.o alua_rtpg.o
+ 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
+ 
+-libprioontap.so: netapp.o
+-	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
+-
+ libprio%.so: %.o
+ 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -o $@ $^
+ 
+Index: multipath-tools-110412/libmultipath/prioritizers/netapp.c
+===================================================================
+--- multipath-tools-110412.orig/libmultipath/prioritizers/netapp.c
++++ /dev/null
+@@ -1,245 +0,0 @@
+-/*
+- * Copyright 2005 Network Appliance, Inc., All Rights Reserved
+- * Author:  David Wysochanski available at davidw@netapp.com
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * This program is distributed in the hope that it will be useful, but
+- * WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+- * General Public License v2 for more details.
+- */
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <sys/ioctl.h>
+-#include <errno.h>
+-#include <assert.h>
+-
+-#include <sg_include.h>
+-#include <debug.h>
+-#include <prio.h>
+-
+-#define INQUIRY_CMD	0x12
+-#define INQUIRY_CMDLEN	6
+-#define DEFAULT_PRIOVAL	10
+-#define RESULTS_MAX	256
+-#define SG_TIMEOUT	60000
+-
+-#define pp_ontap_log(prio, fmt, args...) \
+-        condlog(prio, "%s: ontap prio: " fmt, dev, ##args)
+-
+-static void dump_cdb(unsigned char *cdb, int size)
+-{
+-	int i;
+-	char buf[10*5+1];
+-	char * p = &buf[0];
+-
+-	condlog(0, "- SCSI CDB: ");
+-	for (i=0; i<size; i++) {
+-		p += snprintf(p, 10*(size-i), "0x%02x ", cdb[i]);
+-	}
+-	condlog(0, "%s", buf);
+-}
+-
+-static void process_sg_error(struct sg_io_hdr *io_hdr)
+-{
+-	int i;
+-	char buf[128*5+1];
+-	char * p = &buf[0];
+-
+-	condlog(0, "- masked_status=0x%02x, host_status=0x%02x, "
+-		"driver_status=0x%02x", io_hdr->masked_status,
+-		io_hdr->host_status, io_hdr->driver_status);
+-	if (io_hdr->sb_len_wr > 0) {
+-		condlog(0, "- SCSI sense data: ");
+-		for (i=0; i<io_hdr->sb_len_wr; i++) {
+-			p += snprintf(p, 128*(io_hdr->sb_len_wr-i), "0x%02x ",
+-				      io_hdr->sbp[i]);
+-		}
+-		condlog(0, "%s", buf);
+-	}
+-}
+-
+-/*
+- * Returns:
+- * -1: error, errno set
+- *  0: success
+- */
+-static int send_gva(const char *dev, int fd, unsigned char pg,
+-		    unsigned char *results, int *results_size)
+-{
+-	unsigned char sb[128];
+-	unsigned char cdb[10] = {0xc0, 0, 0x1, 0xa, 0x98, 0xa,
+-				 pg, sizeof(sb), 0, 0};
+-	struct sg_io_hdr io_hdr;
+-	int ret = -1;
+-
+-	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+-	io_hdr.interface_id = 'S';
+-	io_hdr.cmd_len = sizeof (cdb);
+-	io_hdr.mx_sb_len = sizeof (sb);
+-	io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
+-	io_hdr.dxfer_len = *results_size;
+-	io_hdr.dxferp = results;
+-	io_hdr.cmdp = cdb;
+-	io_hdr.sbp = sb;
+-	io_hdr.timeout = SG_TIMEOUT;
+-	io_hdr.pack_id = 0;
+-	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+-		pp_ontap_log(0, "SG_IO ioctl failed, errno=%d", errno);
+-		dump_cdb(cdb, sizeof(cdb));
+-		goto out;
+-	}
+-	if (io_hdr.info & SG_INFO_OK_MASK) {
+-		pp_ontap_log(0, "SCSI error");
+-		dump_cdb(cdb, sizeof(cdb));
+-		process_sg_error(&io_hdr);
+-		goto out;
+-	}
+-
+-	if (results[4] != 0x0a || results[5] != 0x98 ||
+-	    results[6] != 0x0a ||results[7] != 0x01) {
+-		dump_cdb(cdb, sizeof(cdb));
+-		pp_ontap_log(0, "GVA return wrong format ");
+-		pp_ontap_log(0, "results[4-7] = 0x%02x 0x%02x 0x%02x 0x%02x",
+-			results[4], results[5], results[6], results[7]);
+-		goto out;
+-	}
+-	ret = 0;
+- out:
+-	return(ret);
+-}
+-
+-/*
+- * Retuns:
+- * -1: Unable to obtain proxy info
+- *  0: Device _not_ proxy path
+- *  1: Device _is_ proxy path
+- */
+-static int get_proxy(const char *dev, int fd)
+-{
+-	unsigned char results[256];
+-	unsigned char sb[128];
+-	unsigned char cdb[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xc1, 0,
+-						   sizeof(sb), 0};
+-	struct sg_io_hdr io_hdr;
+-	int ret = -1;
+-
+-	memset(&results, 0, sizeof (results));
+-	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+-	io_hdr.interface_id = 'S';
+-	io_hdr.cmd_len = sizeof (cdb);
+-	io_hdr.mx_sb_len = sizeof (sb);
+-	io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
+-	io_hdr.dxfer_len = sizeof (results);
+-	io_hdr.dxferp = results;
+-	io_hdr.cmdp = cdb;
+-	io_hdr.sbp = sb;
+-	io_hdr.timeout = SG_TIMEOUT;
+-	io_hdr.pack_id = 0;
+-	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
+-		pp_ontap_log(0, "ioctl sending inquiry command failed, "
+-			"errno=%d", errno);
+-		dump_cdb(cdb, sizeof(cdb));
+-		goto out;
+-	}
+-	if (io_hdr.info & SG_INFO_OK_MASK) {
+-		pp_ontap_log(0, "SCSI error");
+-		dump_cdb(cdb, sizeof(cdb));
+-		process_sg_error(&io_hdr);
+-		goto out;
+-	}
+-
+-	if (results[1] != 0xc1 || results[8] != 0x0a ||
+-	    results[9] != 0x98 || results[10] != 0x0a ||
+-	    results[11] != 0x0 || results[12] != 0xc1 ||
+-	    results[13] != 0x0) {
+-		pp_ontap_log(0,"proxy info page in unknown format - ");
+-		pp_ontap_log(0,"results[8-13]=0x%02x 0x%02x 0x%02x 0x%02x "
+-			"0x%02x 0x%02x",
+-			results[8], results[9], results[10],
+-			results[11], results[12], results[13]);
+-		dump_cdb(cdb, sizeof(cdb));
+-		goto out;
+-	}
+-	ret = (results[19] & 0x02) >> 1;
+-
+- out:
+-	return(ret);
+-}
+-
+-/*
+- * Returns priority of device based on device info.
+- *
+- * 4: FCP non-proxy, FCP proxy unknown, or unable to determine protocol
+- * 3: iSCSI HBA
+- * 2: iSCSI software
+- * 1: FCP proxy
+- */
+-static int ontap_prio(const char *dev, int fd)
+-{
+-	unsigned char results[RESULTS_MAX];
+-	int results_size=RESULTS_MAX;
+-	int rc;
+-	int is_proxy;
+-	int is_iscsi_software;
+-	int is_iscsi_hardware;
+-	int tot_len;
+-
+-	is_iscsi_software = is_iscsi_hardware = is_proxy = 0;
+-
+-	memset(&results, 0, sizeof (results));
+-	rc = send_gva(dev, fd, 0x41, results, &results_size);
+-	if (rc >= 0) {
+-		tot_len = results[0] << 24 | results[1] << 16 |
+-			  results[2] << 8 | results[3];
+-		if (tot_len <= 8) {
+-			goto try_fcp_proxy;
+-		}
+-		if (results[8] != 0x41) {
+-			pp_ontap_log(0, "GVA page 0x41 error - "
+-				"results[8] = 0x%x", results[8]);
+-			goto try_fcp_proxy;
+-		}
+-		if ((strncmp((char *)&results[12], "ism_sw", 6) == 0) ||
+-		    (strncmp((char *)&results[12], "iswt", 4) == 0)) {
+-			is_iscsi_software = 1;
+-			goto prio_select;
+-		}
+-		else if (strncmp((char *)&results[12], "ism_sn", 6) == 0) {
+-			is_iscsi_hardware = 1;
+-			goto prio_select;
+-		}
+-	} else {
+-		return 0;
+-	}
+-
+- try_fcp_proxy:
+-	rc = get_proxy(dev, fd);
+-	if (rc >= 0) {
+-		is_proxy = rc;
+-	}
+-
+- prio_select:
+-	if (is_iscsi_hardware) {
+-		return 3;
+-	} else if (is_iscsi_software) {
+-		return 2;
+-	} else {
+-		if (is_proxy) {
+-			return 1;
+-		} else {
+-			/* Either non-proxy, or couldn't get proxy info */
+-			return 4;
+-		}
+-	}
+-}
+-
+-int getprio (struct path * pp, char * args)
+-{
+-	return ontap_prio(pp->dev, pp->fd);
+-}
+Index: multipath-tools-110412/libmultipath/prioritizers/ontap.c
+===================================================================
+--- /dev/null
++++ multipath-tools-110412/libmultipath/prioritizers/ontap.c
+@@ -0,0 +1,245 @@
++/*
++ * Copyright 2005 Network Appliance, Inc., All Rights Reserved
++ * Author:  David Wysochanski available at davidw@netapp.com
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License v2 for more details.
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/ioctl.h>
++#include <errno.h>
++#include <assert.h>
++
++#include <sg_include.h>
++#include <debug.h>
++#include <prio.h>
++
++#define INQUIRY_CMD	0x12
++#define INQUIRY_CMDLEN	6
++#define DEFAULT_PRIOVAL	10
++#define RESULTS_MAX	256
++#define SG_TIMEOUT	60000
++
++#define pp_ontap_log(prio, fmt, args...) \
++        condlog(prio, "%s: ontap prio: " fmt, dev, ##args)
++
++static void dump_cdb(unsigned char *cdb, int size)
++{
++	int i;
++	char buf[10*5+1];
++	char * p = &buf[0];
++
++	condlog(0, "- SCSI CDB: ");
++	for (i=0; i<size; i++) {
++		p += snprintf(p, 10*(size-i), "0x%02x ", cdb[i]);
++	}
++	condlog(0, "%s", buf);
++}
++
++static void process_sg_error(struct sg_io_hdr *io_hdr)
++{
++	int i;
++	char buf[128*5+1];
++	char * p = &buf[0];
++
++	condlog(0, "- masked_status=0x%02x, host_status=0x%02x, "
++		"driver_status=0x%02x", io_hdr->masked_status,
++		io_hdr->host_status, io_hdr->driver_status);
++	if (io_hdr->sb_len_wr > 0) {
++		condlog(0, "- SCSI sense data: ");
++		for (i=0; i<io_hdr->sb_len_wr; i++) {
++			p += snprintf(p, 128*(io_hdr->sb_len_wr-i), "0x%02x ",
++				      io_hdr->sbp[i]);
++		}
++		condlog(0, "%s", buf);
++	}
++}
++
++/*
++ * Returns:
++ * -1: error, errno set
++ *  0: success
++ */
++static int send_gva(const char *dev, int fd, unsigned char pg,
++		    unsigned char *results, int *results_size)
++{
++	unsigned char sb[128];
++	unsigned char cdb[10] = {0xc0, 0, 0x1, 0xa, 0x98, 0xa,
++				 pg, sizeof(sb), 0, 0};
++	struct sg_io_hdr io_hdr;
++	int ret = -1;
++
++	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
++	io_hdr.interface_id = 'S';
++	io_hdr.cmd_len = sizeof (cdb);
++	io_hdr.mx_sb_len = sizeof (sb);
++	io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
++	io_hdr.dxfer_len = *results_size;
++	io_hdr.dxferp = results;
++	io_hdr.cmdp = cdb;
++	io_hdr.sbp = sb;
++	io_hdr.timeout = SG_TIMEOUT;
++	io_hdr.pack_id = 0;
++	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
++		pp_ontap_log(0, "SG_IO ioctl failed, errno=%d", errno);
++		dump_cdb(cdb, sizeof(cdb));
++		goto out;
++	}
++	if (io_hdr.info & SG_INFO_OK_MASK) {
++		pp_ontap_log(0, "SCSI error");
++		dump_cdb(cdb, sizeof(cdb));
++		process_sg_error(&io_hdr);
++		goto out;
++	}
++
++	if (results[4] != 0x0a || results[5] != 0x98 ||
++	    results[6] != 0x0a ||results[7] != 0x01) {
++		dump_cdb(cdb, sizeof(cdb));
++		pp_ontap_log(0, "GVA return wrong format ");
++		pp_ontap_log(0, "results[4-7] = 0x%02x 0x%02x 0x%02x 0x%02x",
++			results[4], results[5], results[6], results[7]);
++		goto out;
++	}
++	ret = 0;
++ out:
++	return(ret);
++}
++
++/*
++ * Retuns:
++ * -1: Unable to obtain proxy info
++ *  0: Device _not_ proxy path
++ *  1: Device _is_ proxy path
++ */
++static int get_proxy(const char *dev, int fd)
++{
++	unsigned char results[256];
++	unsigned char sb[128];
++	unsigned char cdb[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xc1, 0,
++						   sizeof(sb), 0};
++	struct sg_io_hdr io_hdr;
++	int ret = -1;
++
++	memset(&results, 0, sizeof (results));
++	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
++	io_hdr.interface_id = 'S';
++	io_hdr.cmd_len = sizeof (cdb);
++	io_hdr.mx_sb_len = sizeof (sb);
++	io_hdr.dxfer_direction = SG_DXFER_FROM_DEV;
++	io_hdr.dxfer_len = sizeof (results);
++	io_hdr.dxferp = results;
++	io_hdr.cmdp = cdb;
++	io_hdr.sbp = sb;
++	io_hdr.timeout = SG_TIMEOUT;
++	io_hdr.pack_id = 0;
++	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
++		pp_ontap_log(0, "ioctl sending inquiry command failed, "
++			"errno=%d", errno);
++		dump_cdb(cdb, sizeof(cdb));
++		goto out;
++	}
++	if (io_hdr.info & SG_INFO_OK_MASK) {
++		pp_ontap_log(0, "SCSI error");
++		dump_cdb(cdb, sizeof(cdb));
++		process_sg_error(&io_hdr);
++		goto out;
++	}
++
++	if (results[1] != 0xc1 || results[8] != 0x0a ||
++	    results[9] != 0x98 || results[10] != 0x0a ||
++	    results[11] != 0x0 || results[12] != 0xc1 ||
++	    results[13] != 0x0) {
++		pp_ontap_log(0,"proxy info page in unknown format - ");
++		pp_ontap_log(0,"results[8-13]=0x%02x 0x%02x 0x%02x 0x%02x "
++			"0x%02x 0x%02x",
++			results[8], results[9], results[10],
++			results[11], results[12], results[13]);
++		dump_cdb(cdb, sizeof(cdb));
++		goto out;
++	}
++	ret = (results[19] & 0x02) >> 1;
++
++ out:
++	return(ret);
++}
++
++/*
++ * Returns priority of device based on device info.
++ *
++ * 4: FCP non-proxy, FCP proxy unknown, or unable to determine protocol
++ * 3: iSCSI HBA
++ * 2: iSCSI software
++ * 1: FCP proxy
++ */
++static int ontap_prio(const char *dev, int fd)
++{
++	unsigned char results[RESULTS_MAX];
++	int results_size=RESULTS_MAX;
++	int rc;
++	int is_proxy;
++	int is_iscsi_software;
++	int is_iscsi_hardware;
++	int tot_len;
++
++	is_iscsi_software = is_iscsi_hardware = is_proxy = 0;
++
++	memset(&results, 0, sizeof (results));
++	rc = send_gva(dev, fd, 0x41, results, &results_size);
++	if (rc >= 0) {
++		tot_len = results[0] << 24 | results[1] << 16 |
++			  results[2] << 8 | results[3];
++		if (tot_len <= 8) {
++			goto try_fcp_proxy;
++		}
++		if (results[8] != 0x41) {
++			pp_ontap_log(0, "GVA page 0x41 error - "
++				"results[8] = 0x%x", results[8]);
++			goto try_fcp_proxy;
++		}
++		if ((strncmp((char *)&results[12], "ism_sw", 6) == 0) ||
++		    (strncmp((char *)&results[12], "iswt", 4) == 0)) {
++			is_iscsi_software = 1;
++			goto prio_select;
++		}
++		else if (strncmp((char *)&results[12], "ism_sn", 6) == 0) {
++			is_iscsi_hardware = 1;
++			goto prio_select;
++		}
++	} else {
++		return 0;
++	}
++
++ try_fcp_proxy:
++	rc = get_proxy(dev, fd);
++	if (rc >= 0) {
++		is_proxy = rc;
++	}
++
++ prio_select:
++	if (is_iscsi_hardware) {
++		return 3;
++	} else if (is_iscsi_software) {
++		return 2;
++	} else {
++		if (is_proxy) {
++			return 1;
++		} else {
++			/* Either non-proxy, or couldn't get proxy info */
++			return 4;
++		}
++	}
++}
++
++int getprio (struct path * pp, char * args)
++{
++	return ontap_prio(pp->dev, pp->fd);
++}
