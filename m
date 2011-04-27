@@ -1,14 +1,14 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm-thinp: fix REQ_FLUSH semantics
-Date: Wed, 27 Apr 2011 11:09:16 +0100
-Message-ID: <1303898956.4679.58.camel@ubuntu>
-References: <20110427100246.GA22521@infradead.org>
+From: yue <ooolinux@163.com>
+Subject: what is the best configuration of NETAPP multipath
+Date: Wed, 27 Apr 2011 18:39:06 +0800 (CST)
+Message-ID: <139b704.8f67.12f968a719b.Coremail.ooolinux@163.com>
+References: <1303886997.31907.93.camel@zezette>
+	<20110427032357.GO23657@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============4647247310739034568=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110427100246.GA22521@infradead.org>
+In-Reply-To: <1303886997.31907.93.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,60 +18,127 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: device-mapper development <dm-devel@redhat.com>, ejt@redhat.com
+To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2011-04-27 at 06:02 -0400, Christoph Hellwig wrote:
-> REQ_FLUSH means the metadata needs to be flushed before the data payload
-> (if there is one), not after it.  And yes, this means the typical
-> REQ_FUA|REQ_FLUSH requests imply two flushes.
+--===============4647247310739034568==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_99578_7460693.1303900746138"
 
-Not sure what you're getting at here.  The bio wasn't issued until after
-the commit.
+------=_Part_99578_7460693.1303900746138
+Content-Type: text/plain; charset=GBK
+Content-Transfer-Encoding: base64
 
-			if ((bio->bi_rw & (REQ_FUA | REQ_FLUSH))) {
-				r = commit(tc);
-				if (r < 0) {
-					bio_io_error(bio);
-					continue;
-				}
-			}
+aSBoYXZlIGRlcGxveSBtdWx0aXBhdGggb24gbmV0YXBwIERBVEEgb250YXAsYnV0IHRoZXJlIGlz
+IG5vIGltcHJvdm1lbnQgb24gdGhyb3VnaHB1dC4KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpp
+Zj0vZGV2L3plcm8gb2Y9ZmMtbHYgYnM9NEsgY291bnQ9MU0gICAgIGFib3V0ICAyNzB+MjgwTS9z
+IChuZXRhcHAgbHVuIHdpdGggbXVsdGlwYXRoKQpkZCBpZj0vZGV2L3plcm8gb2Y9ZmMtbHYgYnM9
+NEsgY291bnQ9Mk0gIGFib3V0IDE1ME0vcyAobmV0YXBwIGx1biB3aXRoIG11bHRpcGF0aCkKIGhk
+cGFybSAtdCAvZGV2L3NkYSAzODAuNDAgTUIvc2VjIChsb2NhbCBkaXNrKQpoZHBhcm0gLXQgL2Rl
+di9zZGIgMTMxLjI0IE1CL3NlYyhuZXRhcHAgbHVuIHdpdGggbXVsdGlwYXRoKQotLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLQp0aGF0IGlzIHRoZSBjb25mCiBkZXZpY2UgewogICAgICAgICAgICAgICB2
+ZW5kb3IgICAgICAgICAgICAgICAgICAiTkVUQVBQIgogICAgICAgICAgICAgICBwcm9kdWN0ICAg
+ICAgICAgICAgICAgICAiTFVOLioiCiAgICAgICAgICAgICAgIGdldHVpZF9jYWxsb3V0ICAgICAg
+ICAgICIvbGliL3VkZXYvc2NzaV9pZCAtLXdoaXRlbGlzdGVkIC0tZGV2aWNlPS9kZXYvJW4iCiAg
+ICAgICAgICAgICAgIGZlYXR1cmVzICAgICAgICAgICAgICAgICIxIHF1ZXVlX2lmX25vX3BhdGgi
+CiAgICAgICAgICAgICAgIGhhcmR3YXJlX2hhbmRsZXIgICAgICAgICIwIgogICAgICAgICAgICAg
+ICBwYXRoX3NlbGVjdG9yICAgICAgICAgICAicm91bmQtcm9iaW4gMCIKICAgICAgICAgICAgICAg
+cGF0aF9ncm91cGluZ19wb2xpY3kgICAgbXVsdGlidXMKICAgICAgICAgICAgICAgZmFpbGJhY2sg
+ICAgICAgICAgICAgICAgaW1tZWRpYXRlCiAgICAgICAgICAgICAgIHJyX3dlaWdodCAgICAgICAg
+ICAgICAgIHVuaWZvcm0KICAgICAgICAgICAgICAgcnJfbWluX2lvICAgICAgICAgICAgICAgMTI4
+CiAgICAgICAgICAgICAgIHBhdGhfY2hlY2tlciAgICAgICAgICAgIGRpcmVjdGlvCiAgICAgICAg
+ICAgICAgIHByaW8gICAgICAgICAgICAgICAgICAgIG5ldGFwcAogICAgICAgfQoKCgoKCkF0IDIw
+MTEtMDQtMjcgMTQ6NDk6NTejrCJDaHJpc3RvcGhlIFZhcm9xdWkiIDxjaHJpc3RvcGhlLnZhcm9x
+dWlAZ21haWwuY29tPiB3cm90ZToKCj5PbiBtYXIuLCAyMDExLTA0LTI2IGF0IDIyOjIzIC0wNTAw
+LCBCZW5qYW1pbiBNYXJ6aW5za2kgd3JvdGU6Cj4+IFRoaXMgaXMgdGhlIHNlY29uZCBwYXJ0IG9m
+IHRoZSBOZXRBcHAgcGF0Y2ggZnJvbSBHZW9yZ2UgTWFydGluLiBJdCBzaW1wbHkKPj4gcmVuYW1l
+cyBuZXRhcHAuYyB0byBvbnRhcC5jIGFuZCBlZGl0cyB0aGUgTWFrZWZpbGUgdG8gYnVpbGQgaXQu
+Cj4+IAo+VGhhbmsgeW91LCBhcHBsaWVkLgo+Cj4tLSAKPkNocmlzdG9waGUgVmFyb3F1aQo+T3Bl
+blNWQyAtIFNvZnR3YXJlIHRvIHNjYWxlCj5odHRwOi8vd3d3Lm9wZW5zdmMuY29tLwo+Cj4tLQo+
+ZG0tZGV2ZWwgbWFpbGluZyBsaXN0Cj5kbS1kZXZlbEByZWRoYXQuY29tCj5odHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
+------=_Part_99578_7460693.1303900746138
+Content-Type: text/html; charset=GBK
+Content-Transfer-Encoding: base64
 
-			remap_bio(tc, bio, pool_block);
-			generic_make_request(bio);
+PERJVj5pIGhhdmUgZGVwbG95IG11bHRpcGF0aCBvbiBuZXRhcHAgREFUQSBvbnRhcCxidXQgdGhl
+cmUgaXMgbm8gaW1wcm92bWVudCBvbiB0aHJvdWdocHV0LjwvRElWPgo8RElWPi0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS08L0RJVj4KPERJVj5pZj0vZGV2L3plcm8gb2Y9ZmMtbHYgYnM9NEsgY291
+bnQ9MU0mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgYWJvdXQgJm5ic3A7MjcwfjI4ME0vcyAobmV0
+YXBwIGx1biB3aXRoIG11bHRpcGF0aCk8L0RJVj4KPERJVj5kZCBpZj0vZGV2L3plcm8gb2Y9ZmMt
+bHYgYnM9NEsgY291bnQ9Mk0mbmJzcDsgYWJvdXQgMTUwTS9zIChuZXRhcHAgbHVuIHdpdGggbXVs
+dGlwYXRoKTwvRElWPgo8RElWPiZuYnNwO2hkcGFybSAtdCAvZGV2L3NkYSAzODAuNDAgTUIvc2Vj
+IChsb2NhbCBkaXNrKTwvRElWPgo8RElWPmhkcGFybSAtdCAvZGV2L3NkYiAxMzEuMjQgTUIvc2Vj
+KG5ldGFwcCBsdW4gd2l0aCBtdWx0aXBhdGgpPC9ESVY+CjxESVY+LS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS08L0RJVj4KPERJVj50aGF0IGlzIHRoZSBjb25mPC9ESVY+CjxESVY+Jm5ic3A7ZGV2aWNl
+IHs8QlI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IHZlbmRvciZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyAiTkVUQVBQIjxCUj4mbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsgcHJvZHVjdCZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyAiTFVOLioiPEJSPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBnZXR1aWRfY2FsbG91dCZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyAiL2xp
+Yi91ZGV2L3Njc2lfaWQgLS13aGl0ZWxpc3RlZCAtLWRldmljZT0vZGV2LyVuIjxCUj4mbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsgZmVhdHVyZXMmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsgIjEgcXVldWVfaWZfbm9fcGF0aCI8QlI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+IGhhcmR3YXJlX2hhbmRsZXImbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsgIjAiPEJSPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBwYXRoX3NlbGVjdG9yJm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7ICJy
+b3VuZC1yb2JpbiAwIjxCUj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgcGF0aF9ncm91cGlu
+Z19wb2xpY3kmbmJzcDsmbmJzcDsmbmJzcDsgbXVsdGlidXM8QlI+Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7IGZhaWxiYWNrJm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IGltbWVk
+aWF0ZTxCUj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgcnJfd2VpZ2h0Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7IHVuaWZvcm08QlI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IHJy
+X21pbl9pbyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyAxMjg8QlI+Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7IHBhdGhfY2hlY2tlciZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBkaXJlY3RpbzxCUj4mbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsgcHJpbyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBuZXRhcHA8QlI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7IH08QlI+PEJSPjwvRElWPgo8RElWPjwvRElWPjxCUj48UFJFPjxCUj5BdCZu
+YnNwOzIwMTEtMDQtMjcmbmJzcDsxNDo0OTo1N6OsIkNocmlzdG9waGUmbmJzcDtWYXJvcXVpIiZu
+YnNwOyZsdDtjaHJpc3RvcGhlLnZhcm9xdWlAZ21haWwuY29tJmd0OyZuYnNwO3dyb3RlOgoKJmd0
+O09uJm5ic3A7bWFyLiwmbmJzcDsyMDExLTA0LTI2Jm5ic3A7YXQmbmJzcDsyMjoyMyZuYnNwOy0w
+NTAwLCZuYnNwO0JlbmphbWluJm5ic3A7TWFyemluc2tpJm5ic3A7d3JvdGU6CiZndDsmZ3Q7Jm5i
+c3A7VGhpcyZuYnNwO2lzJm5ic3A7dGhlJm5ic3A7c2Vjb25kJm5ic3A7cGFydCZuYnNwO29mJm5i
+c3A7dGhlJm5ic3A7TmV0QXBwJm5ic3A7cGF0Y2gmbmJzcDtmcm9tJm5ic3A7R2VvcmdlJm5ic3A7
+TWFydGluLiZuYnNwO0l0Jm5ic3A7c2ltcGx5CiZndDsmZ3Q7Jm5ic3A7cmVuYW1lcyZuYnNwO25l
+dGFwcC5jJm5ic3A7dG8mbmJzcDtvbnRhcC5jJm5ic3A7YW5kJm5ic3A7ZWRpdHMmbmJzcDt0aGUm
+bmJzcDtNYWtlZmlsZSZuYnNwO3RvJm5ic3A7YnVpbGQmbmJzcDtpdC4KJmd0OyZndDsmbmJzcDsK
+Jmd0O1RoYW5rJm5ic3A7eW91LCZuYnNwO2FwcGxpZWQuCiZndDsKJmd0Oy0tJm5ic3A7CiZndDtD
+aHJpc3RvcGhlJm5ic3A7VmFyb3F1aQomZ3Q7T3BlblNWQyZuYnNwOy0mbmJzcDtTb2Z0d2FyZSZu
+YnNwO3RvJm5ic3A7c2NhbGUKJmd0O2h0dHA6Ly93d3cub3BlbnN2Yy5jb20vCiZndDsKJmd0Oy0t
+CiZndDtkbS1kZXZlbCZuYnNwO21haWxpbmcmbmJzcDtsaXN0CiZndDtkbS1kZXZlbEByZWRoYXQu
+Y29tCiZndDtodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
+PC9QUkU+PGJyPjxicj48c3BhbiB0aXRsZT0ibmV0ZWFzZWZvb3RlciI+PHNwYW4gaWQ9Im5ldGVh
+c2VfbWFpbF9mb290ZXIiPjxoci8+CjxhIGhyZWY9Imh0dHA6Ly9tYWlsLjE2My5jb20vaHRtbC8x
+MTA0MTRfYXR0YWNobWVudC9hdHQxLmh0bSIgdGFyZ2V0PSJfYmxhbmsiPszl0enN+NLX08rP5DJH
+s6y087i9vP6jrMfhy8m3otPF1sq087Xn07ChorTz1dXGrKOszOHL2TOxtiE8L2E+Cjwvc3Bhbj48
+L3NwYW4+
+------=_Part_99578_7460693.1303900746138--
 
-- Joe
+
+--===============4647247310739034568==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> 
-> Index: linux-2.6/drivers/md/dm-thin-prov.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-thin-prov.c	2011-04-27 11:45:50.957995412 +0200
-> +++ linux-2.6/drivers/md/dm-thin-prov.c	2011-04-27 11:45:56.954629592 +0200
-> @@ -229,6 +229,14 @@ static void do_bios(struct thinp_c *tc,
->  	block_t thinp_block, pool_block;
->  
->  	while ((bio = bio_list_pop(bios))) {
-> +		if (bio->bi_rw & REQ_FLUSH) {
-> +			r = commit(tc);
-> +			if (r < 0) {
-> +				bio_io_error(bio);
-> +				continue;
-> +			}
-> +		}
-> +
->  		thinp_block = _sector_to_block(tc, bio->bi_sector);
->  		r = thinp_metadata_lookup(tc->tpm, thinp_block, 1, &pool_block);
->  		if (r == -ENODATA) {
-> @@ -258,7 +266,7 @@ static void do_bios(struct thinp_c *tc,
->  			 * whether the overhead of tracking pending blocks
->  			 * is worth it though.
->  			 */
-> -			if ((bio->bi_rw & (REQ_FUA | REQ_FLUSH))) {
-> +			if (bio->bi_rw & REQ_FUA) {
->  				r = commit(tc);
->  				if (r < 0) {
->  					bio_io_error(bio);
+--===============4647247310739034568==--
