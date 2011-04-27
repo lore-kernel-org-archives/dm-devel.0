@@ -1,16 +1,13 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-thinp bug
-Date: Wed, 27 Apr 2011 10:52:44 +0100
-Message-ID: <1303897964.4679.56.camel@ubuntu>
-References: <20110426184742.GA13880@infradead.org>
-	<1303895339.4679.51.camel@ubuntu>
-	<20110427093259.GA24141@infradead.org>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: [PATCH] dm-thinp: fix REQ_FLUSH semantics
+Date: Wed, 27 Apr 2011 06:02:46 -0400
+Message-ID: <20110427100246.GA22521@infradead.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110427093259.GA24141@infradead.org>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,52 +17,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: dm-devel@redhat.com, ejt@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2011-04-27 at 05:32 -0400, Christoph Hellwig wrote:
-> 
-> This patch already creashes when creating the table: 
+REQ_FLUSH means the metadata needs to be flushed before the data payload
+(if there is one), not after it.  And yes, this means the typical
+REQ_FUA|REQ_FLUSH requests imply two flushes.
 
-Sigh, it's revealed a bug in io_hints, which isn't ever run if there's
-no iterate_devices callback.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-The patch below has been regression tested, but not tried above a virtio
-device.  It's been pushed too.
-
-- Joe
-
-
-
-diff --git a/drivers/md/dm-thin-prov.c b/drivers/md/dm-thin-prov.c
-index 6ac802e..a168ee6 100644
---- a/drivers/md/dm-thin-prov.c
-+++ b/drivers/md/dm-thin-prov.c
-@@ -641,7 +641,15 @@ thinp_io_hints(struct dm_target *ti, struct
-queue_limits *limits)
-        struct thinp_c *tc = ti->private;
+Index: linux-2.6/drivers/md/dm-thin-prov.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-thin-prov.c	2011-04-27 11:45:50.957995412 +0200
++++ linux-2.6/drivers/md/dm-thin-prov.c	2011-04-27 11:45:56.954629592 +0200
+@@ -229,6 +229,14 @@ static void do_bios(struct thinp_c *tc,
+ 	block_t thinp_block, pool_block;
  
-        blk_limits_io_min(limits, 0);
--       blk_limits_io_opt(limits, data_dev_block_size(tc));
-+       blk_limits_io_opt(limits, tc->block_size << tc->block_shift);
-+}
+ 	while ((bio = bio_list_pop(bios))) {
++		if (bio->bi_rw & REQ_FLUSH) {
++			r = commit(tc);
++			if (r < 0) {
++				bio_io_error(bio);
++				continue;
++			}
++		}
 +
-+static int thinp_iterate_devices(struct dm_target *ti,
-+                                iterate_devices_callout_fn fn,
-+                                void *data)
-+{
-+       struct thinp_c *tc = ti->private;
-+       return fn(ti, tc->data_dev, 0, tc->data_size << tc->block_shift,
-data);
- }
- 
- /* Thinp pool control target interface. */
-@@ -659,6 +667,7 @@ static struct target_type thinp_target = {
-        .status = thinp_status,
-        .merge = thinp_bvec_merge,
-        .io_hints = thinp_io_hints,
-+       .iterate_devices = thinp_iterate_devices,
- };
- 
- static int __init dm_thinp_init(void)
+ 		thinp_block = _sector_to_block(tc, bio->bi_sector);
+ 		r = thinp_metadata_lookup(tc->tpm, thinp_block, 1, &pool_block);
+ 		if (r == -ENODATA) {
+@@ -258,7 +266,7 @@ static void do_bios(struct thinp_c *tc,
+ 			 * whether the overhead of tracking pending blocks
+ 			 * is worth it though.
+ 			 */
+-			if ((bio->bi_rw & (REQ_FUA | REQ_FLUSH))) {
++			if (bio->bi_rw & REQ_FUA) {
+ 				r = commit(tc);
+ 				if (r < 0) {
+ 					bio_io_error(bio);
