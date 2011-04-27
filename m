@@ -1,16 +1,13 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] dm-thinp: fix REQ_FLUSH semantics
-Date: Wed, 27 Apr 2011 08:20:46 -0400
-Message-ID: <20110427122046.GB20633@infradead.org>
-References: <20110427100246.GA22521@infradead.org>
-	<1303898956.4679.58.camel@ubuntu>
+Subject: [PATCH] dm-thinp: report correct optimal I/O size
+Date: Wed, 27 Apr 2011 09:41:50 -0400
+Message-ID: <20110427134150.GA15413@infradead.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1303898956.4679.58.camel@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,29 +18,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, ejt@redhat.com
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Apr 27, 2011 at 11:09:16AM +0100, Joe Thornber wrote:
-> On Wed, 2011-04-27 at 06:02 -0400, Christoph Hellwig wrote:
-> > REQ_FLUSH means the metadata needs to be flushed before the data payload
-> > (if there is one), not after it.  And yes, this means the typical
-> > REQ_FUA|REQ_FLUSH requests imply two flushes.
-> 
-> Not sure what you're getting at here.  The bio wasn't issued until after
-> the commit.
-> 
-> 			if ((bio->bi_rw & (REQ_FUA | REQ_FLUSH))) {
-> 				r = commit(tc);
-> 				if (r < 0) {
-> 					bio_io_error(bio);
-> 					continue;
-> 				}
-> 			}
-> 
-> 			remap_bio(tc, bio, pool_block);
-> 			generic_make_request(bio);
+tc->block_shift is the shift to get from a sector to the block_size,
+and it doesn't make any sense to apply that to the block size.
+Without this I get overflows of the optimal I/O size queue limit
+when using large block sizes in dm-thinp.
 
-Indeed.  Given that the metadata is on-disk and doesn't change by
-doing I/O to the newly mapped block always doing it before the
-I/O to the underlying device is fine.  I thus retract this patch.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+
+Index: linux-2.6/drivers/md/dm-thin-prov.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-thin-prov.c	2011-04-27 15:30:22.798345522 +0200
++++ linux-2.6/drivers/md/dm-thin-prov.c	2011-04-27 15:30:49.084869781 +0200
+@@ -641,7 +641,7 @@ thinp_io_hints(struct dm_target *ti, str
+ 	struct thinp_c *tc = ti->private;
+ 
+ 	blk_limits_io_min(limits, 0);
+-	blk_limits_io_opt(limits, tc->block_size << tc->block_shift);
++	blk_limits_io_opt(limits, tc->block_size);
+ }
+ 
+ static int thinp_iterate_devices(struct dm_target *ti,
