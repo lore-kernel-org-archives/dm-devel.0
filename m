@@ -1,15 +1,14 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] multipath: rename netapp.c to ontap.c
-Date: Wed, 27 Apr 2011 08:49:57 +0200
-Message-ID: <1303886997.31907.93.camel@zezette>
-References: <20110427032357.GO23657@ether.msp.redhat.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: dm-thinp bug
+Date: Wed, 27 Apr 2011 09:27:37 +0100
+Message-ID: <1303892857.4679.2.camel@ubuntu>
+References: <20110426184742.GA13880@infradead.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110427032357.GO23657@ether.msp.redhat.com>
+In-Reply-To: <20110426184742.GA13880@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,16 +18,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: dm-devel@redhat.com, ejt@redhat.com
 List-Id: dm-devel.ids
 
-On mar., 2011-04-26 at 22:23 -0500, Benjamin Marzinski wrote:
-> This is the second part of the NetApp patch from George Martin. It simply
-> renames netapp.c to ontap.c and edits the Makefile to build it.
-> 
-Thank you, applied.
+On Tue, 2011-04-26 at 14:47 -0400, Christoph Hellwig wrote:
+> I can reproduce a bug in virtio triggered by running under dm-thinp by
+> just copying lots of files from my home directory into a freshly created
+> filesystem on dm-thinp.
 
--- 
-Christophe Varoqui
-OpenSVC - Software to scale
-http://www.opensvc.com/
+Finally someone has tried using it!  I'll look into this today.
+
+- Joe
