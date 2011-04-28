@@ -1,71 +1,83 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: Soft lockup during suspend since ~2.6.36 [bisected]
-Date: Thu, 28 Apr 2011 12:30:36 +0200
-Message-ID: <20110428103036.GB10721@htj.dyndns.org>
-References: <BANLkTi=kQgS62c7HwwFGhNCQzWr2N6kZjA@mail.gmail.com>
- <BANLkTi=aED731W4WoKK1HUU88qR7RxpW6Q@mail.gmail.com>
- <BANLkTimDOz7M6m6Xo==DbLHP6q2pMBzd9g@mail.gmail.com>
- <201104172135.40189.arnd@arndb.de>
- <BANLkTimS2DqZTjq3Kx-p8CfZ5iFra_M2DA@mail.gmail.com>
- <20110426131132.GG878@htj.dyndns.org>
- <BANLkTin71zQH2qDNiwPp6vQppy3YWhbj2A@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: allow a target to relax discard restrictions
+Date: Thu, 28 Apr 2011 11:04:49 -0400
+Message-ID: <20110428150448.GA19853@redhat.com>
+References: <20110427150623.GC13487@infradead.org>
+	<20110427151911.GF7294@redhat.com>
+	<20110427215537.GA13386@redhat.com>
+	<20110428084117.GA32658@infradead.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <BANLkTin71zQH2qDNiwPp6vQppy3YWhbj2A@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thilo-Alexander Ginkel <thilo@ginkel.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, "Rafael J. Wysocki" <rjw@sisk.pl>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+In-Reply-To: <20110428084117.GA32658@infradead.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>
 List-Id: dm-devel.ids
 
-Hello,
+On Thu, Apr 28 2011 at  4:41am -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
-On Thu, Apr 28, 2011 at 01:51:34AM +0200, Thilo-Alexander Ginkel wrote:
-> Well, I get your point. ;-) Maybe this fact can help as a motivator: =
-I
-> ran some further tests and while -rc3 seems to be ok (and survived 10=
-0
-> suspend/resume cycles), the issue strangely seems to be back with -rc=
-4
-> (the softlockup call stack that I can see is identical to the photos
-> below; the lockup happened after only two cycles).
->=20
-> > Before I go ahead and try that, do you happen to have softlockup du=
-mp?
-> > ie. stack traces of the stuck tasks? =A0I can't find the original
-> > posting.
->=20
-> Sure:
->=20
-> From <BANLkTi=3Dn4jLsjOYCd0L3hYb30sgPmdv_WA@mail.gmail.com>:
-> > Unfortunately, the output via a serial console becomes garbled afte=
-r
-> > "Entering mem sleep", so I went for patching dumpstack_64.c and a
-> > couple of other source files to reduce the verbosity. I hope not to
-> > have stripped any essential information. The result is available in
-> > these pictures:
-> >   https://secure.tgbyte.de/dropbox/IeZalo4t-1.jpg
-> >   https://secure.tgbyte.de/dropbox/IeZalo4t-2.jpg
-> >
-> > For both traces, the printed error message reads: "BUG: soft lockup=
- -
-> > CPU#3 stuck for 67s! [kblockd:28]"
+> On Wed, Apr 27, 2011 at 05:55:38PM -0400, Mike Snitzer wrote:
+> > A target, like the upcoming thin provisioning target, may want to allow
+> > discards even if the underlying devices do not support them natively.
+> > 
+> > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> 
+> This would work, but I thing it's really confusing to have your
+> new discards_supported flag in the dm_target structure in addition
+> to the existing discards_supported in the dm_table and the
+> num_discard_requests field there.
 
-Does your kernel have preemption enabled?  If not, does the following
-patch fix the problem?
+It's only confusing if you allow it to be ;)  More seriously: I agree,
+the target override might lend itself to confusion.
 
-Thanks.
+> May we should allow the target to set a tristate
+> 
+> enum discard_enabled {
+> 	NEVER,
+> 	ALWAYS,
+> 	PASSTHROUGH
+> }
+> 
+> to indicate it's discard support?
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 04ef830..08c7334 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1293,6 +1293,7 @@ __acquires(&gcwq->lock)
-=20
- 		/* CPU has come up inbetween, retry migration */
- 		cpu_relax();
-+		cond_resched();
- 	}
- }
+[feel free to skip to my question at the very end if I'm boring]
+
+The above would require all targets with num_discard_requests!=0 to have
+an additional explicit PASSTHROUGH opt-in.  Seems like a bit much.
+Could fix that if we reordered PASSTHROUGH to be the default (0).
+
+But I don't think having an explicit NEVER buys us much; avoids checking
+the target for num_discard_requests>0 but that's not a huge win or
+anything.  And it would require each target to set NEVER to get that
+mini-optimization.
+
+So that leaves:
+enum discard_enabled {
+       PASSTHROUGH,
+       ALWAYS
+}
+
+Which is best expressed with a single flag.
+
+With existing code (and proposed target 'discards_supported' override)
+NEVER       = ti->num_discard_requests=0
+ALWAYS      = ti->discards_supported=1
+PASSTHROUGH = ti->num_discard_requests > 0
+
+Would just renaming the target's 'discards_supported' override to
+'discards_always_supported' help?  If not that name some other name?
+
+Mike
