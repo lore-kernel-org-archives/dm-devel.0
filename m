@@ -1,56 +1,76 @@
-From: Thilo-Alexander Ginkel <thilo@ginkel.com>
-Subject: Re: Soft lockup during suspend since ~2.6.36 [bisected]
-Date: Thu, 28 Apr 2011 01:51:34 +0200
-Message-ID: <BANLkTin71zQH2qDNiwPp6vQppy3YWhbj2A@mail.gmail.com>
-References: <BANLkTi=kQgS62c7HwwFGhNCQzWr2N6kZjA@mail.gmail.com>
- <BANLkTi=aED731W4WoKK1HUU88qR7RxpW6Q@mail.gmail.com> <BANLkTimDOz7M6m6Xo==DbLHP6q2pMBzd9g@mail.gmail.com>
- <201104172135.40189.arnd@arndb.de> <BANLkTimS2DqZTjq3Kx-p8CfZ5iFra_M2DA@mail.gmail.com>
- <20110426131132.GG878@htj.dyndns.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm snapshot: ignore discards issued to the
+ snapshot-origin target
+Date: Wed, 27 Apr 2011 20:19:13 -0400
+Message-ID: <20110428001912.GA14659@redhat.com>
+References: <20110412234706.GA11244@redhat.com>
+	<20cf301cbef67d323104a0c2ff52@google.com>
+	<20110413224025.GA18589@redhat.com>
+	<20110413234854.GA19793@redhat.com>
+	<20110426173213.GA19604@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110426131132.GG878@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, "Rafael J. Wysocki" <rjw@sisk.pl>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20110426173213.GA19604@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: DarkNovaNick@gmail.com, LVM general discussion and development <linux-lvm@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Apr 26, 2011 at 15:11, Tejun Heo <tj@kernel.org> wrote:
-> Hello, sorry about the delay. =C2=A0Was on the road and then sick.
+Discards pose a problem for the snapshot-origin target because they are
+treated as writes.  Treating a discard as a write would trigger a
+copyout to the snapshot.  Such copyout can prove too costly in the face
+of otherwise benign scenarios (e.g. create a snapshot and then mkfs.ext4
+the origin -- mkfs.ext4 discards the entire volume by default, which
+would copyout the entire origin volume to the snapshot).
 
-No problem. Thanks for getting back to me.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-snap.c |    9 ++++++++-
+ 1 files changed, 8 insertions(+), 1 deletions(-)
 
->> In the meantime I also figured out that 2.6.39-rc3 seems to fix the
->> issue (there have been some work queue changes, so this is somewhat
->> sensible)
->
-> Hmmm... that's a big demotivator. =C2=A0:-)
-
-Well, I get your point. ;-) Maybe this fact can help as a motivator: I
-ran some further tests and while -rc3 seems to be ok (and survived 100
-suspend/resume cycles), the issue strangely seems to be back with -rc4
-(the softlockup call stack that I can see is identical to the photos
-below; the lockup happened after only two cycles).
-
-> Before I go ahead and try that, do you happen to have softlockup dump=
-?
-> ie. stack traces of the stuck tasks? =C2=A0I can't find the original
-> posting.
-
-Sure:
-
-=46rom <BANLkTi=3Dn4jLsjOYCd0L3hYb30sgPmdv_WA@mail.gmail.com>:
-> Unfortunately, the output via a serial console becomes garbled after
-> "Entering mem sleep", so I went for patching dumpstack_64.c and a
-> couple of other source files to reduce the verbosity. I hope not to
-> have stripped any essential information. The result is available in
-> these pictures:
->   https://secure.tgbyte.de/dropbox/IeZalo4t-1.jpg
->   https://secure.tgbyte.de/dropbox/IeZalo4t-2.jpg
->
-> For both traces, the printed error message reads: "BUG: soft lockup -
-> CPU#3 stuck for 67s! [kblockd:28]"
-
-Thanks,
-Thilo
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index a2d3309..639af12 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -2076,6 +2076,7 @@ static int origin_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	ti->private = dev;
+ 	ti->num_flush_requests = 1;
++	ti->num_discard_requests = 1;
+ 
+ 	return 0;
+ }
+@@ -2095,6 +2096,12 @@ static int origin_map(struct dm_target *ti, struct bio *bio,
+ 	if (bio->bi_rw & REQ_FLUSH)
+ 		return DM_MAPIO_REMAPPED;
+ 
++	if (bio->bi_rw & REQ_DISCARD) {
++		/* ignore discard requests */
++		bio_endio(bio, 0);
++		return DM_MAPIO_SUBMITTED;
++	}
++
+ 	/* Only tell snapshots if this is a write */
+ 	return (bio_rw(bio) == WRITE) ? do_origin(dev, bio) : DM_MAPIO_REMAPPED;
+ }
+@@ -2153,7 +2160,7 @@ static int origin_iterate_devices(struct dm_target *ti,
+ 
+ static struct target_type origin_target = {
+ 	.name    = "snapshot-origin",
+-	.version = {1, 7, 1},
++	.version = {1, 8, 0},
+ 	.module  = THIS_MODULE,
+ 	.ctr     = origin_ctr,
+ 	.dtr     = origin_dtr,
