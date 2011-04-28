@@ -1,18 +1,16 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] dm: allow a target to relax discard
- restrictions
-Date: Thu, 28 Apr 2011 04:41:17 -0400
-Message-ID: <20110428084117.GA32658@infradead.org>
-References: <20110427150623.GC13487@infradead.org>
-	<20110427151911.GF7294@redhat.com>
-	<20110427215537.GA13386@redhat.com>
+Subject: Re: [PATCH] dm-thinp: report correct optimal I/O size
+Date: Thu, 28 Apr 2011 04:42:24 -0400
+Message-ID: <20110428084223.GB32658@infradead.org>
+References: <20110427134150.GA15413@infradead.org>
+	<1303925125.7049.9.camel@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20110427215537.GA13386@redhat.com>
+In-Reply-To: <1303925125.7049.9.camel@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,26 +21,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>
+Cc: ejt@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Apr 27, 2011 at 05:55:38PM -0400, Mike Snitzer wrote:
-> A target, like the upcoming thin provisioning target, may want to allow
-> discards even if the underlying devices do not support them natively.
+On Wed, Apr 27, 2011 at 06:25:25PM +0100, Joe Thornber wrote:
+> tc->block_size is in sectors (you are passing sectors on the target
+> line?).
 > 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> What's probably happening here is we should be doing:
+> 
+> blk_limits_io_opt(limits, min(<some theoretical max>, tc->block_size << SECTOR_SHIFT));
 
-This would work, but I thing it's really confusing to have your
-new discards_supported flag in the dm_target structure in addition
-to the existing discards_supported in the dm_table and the
-num_discard_requests field there.
-
-May we should allow the target to set a tristate
-
-enum discard_enabled {
-	NEVER,
-	ALWAYS,
-	PASSTHROUGH
-}
-
-to indicate it's discard support?
+Yes, that should do it.  I don't even think we need the max, the optimum
+I/O size is a 32-bit value and we'll reach the limit of the possible
+block sizes much earlier.
