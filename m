@@ -1,7 +1,7 @@
-From: Adam Chasen <adam@chasen.name>
-Subject: [Multipath] Round-robin performance limit
-Date: Thu, 28 Apr 2011 11:55:55 -0400
-Message-ID: <BANLkTikyCtPX8L=7h94hTm4TjOYDyb7nxQ@mail.gmail.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] DM RAID:  add write_mostly param
+Date: Thu, 28 Apr 2011 14:10:28 -0500
+Message-ID: <201104281910.p3SJASjp029774@localhost6.localdomain6>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,83 +19,80 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I am very pleased with the features and even some of the documentation
-(once I found the RedHat docs) surrounding the latest .49 multipath
-tools.
+Patch name: dm-raid-add-write_mostly-param.patch
 
-I would imagine that the multipath driver would attempt to max out the
-links available to it, but I am not seeing that behavior. I am unable
-to achieve bandwidth greater than the value of one of the four links.
-Is this the expected behavior?
+Add the write_mostly parameter to the dm-raid table constructor.
 
-It is balancing the traffic between the links and when a path fails
-the bandwidth increases proportionately between the remaining links. I
-originally thought this may be a problem outside of multipath, but
-accessing the devices directly allows me to max out all of my links.
+This allows the user to set the WriteMostly flag on a RAID1 device, so that
+it is normally avoided where read I/O is concerned.
 
-If there is a more appropriate venue for this question, I would
-appreciate a redirection.
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-The current setup is as follows:
-* iSCSI with 4 portals with two LUNs defined
-* server connected to each portal over 4 Gigabit ports (1 to 1 mapping
-of ports) yielding 4 devices for each LUN, 8 devices total
-
-There is one device per LUN per portal connection. Multipathing is
-enabled with multibus so the round robin will leverage all (4) devices
-available per LUN.
-
-I have experienced the following scenarios. I used dd (reading from
-device) and bmon (network interface monitor) for all of these tests.
-Note that the bandwidth never exceeds 113MB/s.
-* direct (no multipath)
-** all links fully saturated
-** bandwidth close to theoretical max of the gigabit connection (113MB/s).
-* all dvices active (multipath)
-** all links equally balanced
-** links show 1/4 saturation (~30MB/s)
-** bandwidth ~113MB/s
-* 3 of 4 devices active (multipath)
-** remaining links equally balanced
-** remaining links show 1/3 saturation (~40MB/s)
-** bandwidth ~113MB/s
-* 2 of 4 devices active (multipath)
-** active links equally balanced
-** active links show 1/2 saturation (~60MB/s)
-** bandwidth ~113MB/s
-* 1 of 4 devices active (multipath)
-** active links equally balanced
-** active link shows full saturation (~113MB/s)
-** bandwidth ~113MB/s
-
-To ensure that it is not the transport or backing storage, I dd from
-the direct device, during the tests where the links were not fully
-saturated and I was able to fully saturate the link.
-
-[root@zed ~]# multipath -ll
-3600c0ff000111346d473554d01000000 dm-3 DotHill,DH3000
-size=1.1T features='0' hwhandler='0' wp=rw
-`-+- policy='round-robin 0' prio=1 status=active
-  |- 88:0:0:0 sdd 8:48  active ready  running
-  |- 86:0:0:0 sdc 8:32  active ready  running
-  |- 89:0:0:0 sdg 8:96  active ready  running
-  `- 87:0:0:0 sdf 8:80  active ready  running
-3600c0ff00011148af973554d01000000 dm-2 DotHill,DH3000
-size=1.1T features='0' hwhandler='0' wp=rw
-`-+- policy='round-robin 0' prio=1 status=active
-  |- 89:0:0:1 sdk 8:160 active ready  running
-  |- 88:0:0:1 sdi 8:128 active ready  running
-  |- 86:0:0:1 sdh 8:112 active ready  running
-  `- 87:0:0:1 sdl 8:176 active ready  running
-
-/etc/multipath.conf
-defaults {
-        path_grouping_policy    multibus
-        rr_min_io 100
-}
-
-multipath-tools v0.4.9 (05/33, 2016)
-2.6.35.11-2-fl.smp.gcc4.4.x86_64
-
-Thanks,
-Adam
+Index: linux-2.6/drivers/md/dm-raid.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-raid.c
++++ linux-2.6/drivers/md/dm-raid.c
+@@ -296,6 +296,7 @@ static int validate_region_size(struct r
+  *    [daemon_sleep <ms>]		Time between bitmap daemon work to clear bits
+  *    [min_recovery_rate <kB/sec/disk>]	Throttle RAID initialization
+  *    [max_recovery_rate <kB/sec/disk>]	Throttle RAID initialization
++ *    [write_mostly <idx>]		Indicate a write mostly drive via index
+  *    [max_write_behind <sectors>]	See '-write-behind=' (man mdadm)
+  *    [stripe_cache <sectors>]		Stripe cache size for higher RAIDs
+  *    [region_size <sectors>]           Defines granularity of bitmap
+@@ -363,7 +364,21 @@ static int parse_raid_params(struct raid
+ 			}
+ 			clear_bit(In_sync, &rs->dev[value].rdev.flags);
+ 			rs->dev[value].rdev.recovery_offset = 0;
++		} else if (!strcmp(key, "write_mostly")) {
++			if (rs->raid_type->level != 1) {
++				rs->ti->error = "write_mostly option is only valid for RAID1";
++				return -EINVAL;
++			}
++			if (value > rs->md.raid_disks) {
++				rs->ti->error = "Invalid write_mostly index given";
++				return -EINVAL;
++			}
++			set_bit(WriteMostly, &rs->dev[value].rdev.flags);
+ 		} else if (!strcmp(key, "max_write_behind")) {
++			if (rs->raid_type->level != 1) {
++				rs->ti->error = "max_write_behind option is only valid for RAID1";
++				return -EINVAL;
++			}
+ 			rs->print_flags |= DMPF_MAX_WRITE_BEHIND;
+ 
+ 			/*
+@@ -616,11 +631,14 @@ static int raid_status(struct dm_target 
+ 		break;
+ 	case STATUSTYPE_TABLE:
+ 		/* The string you would use to construct this array */
+-		for (i = 0; i < rs->md.raid_disks; i++)
++		for (i = 0; i < rs->md.raid_disks; i++) {
+ 			if (rs->dev[i].data_dev &&
+ 			    !test_bit(In_sync, &rs->dev[i].rdev.flags))
+-				raid_param_cnt++; /* for rebuilds */
+-
++				raid_param_cnt += 2; /* for rebuilds */
++			if (rs->dev[i].data_dev &&
++			    test_bit(WriteMostly, &rs->dev[i].rdev.flags))
++				raid_param_cnt += 2;
++		}
+ 		raid_param_cnt += (hweight64(rs->print_flags) * 2);
+ 		if (rs->print_flags & (DMPF_SYNC | DMPF_NOSYNC))
+ 			raid_param_cnt--;
+@@ -633,10 +651,14 @@ static int raid_status(struct dm_target 
+ 			DMEMIT(" sync");
+ 		if (rs->print_flags & DMPF_NOSYNC)
+ 			DMEMIT(" nosync");
+-		for (i = 0; i < rs->md.raid_disks; i++)
++		for (i = 0; i < rs->md.raid_disks; i++) {
+ 			if (rs->dev[i].data_dev &&
+ 			    !test_bit(In_sync, &rs->dev[i].rdev.flags))
+ 				DMEMIT(" rebuild %u", i);
++			if (rs->dev[i].data_dev &&
++			    test_bit(WriteMostly, &rs->dev[i].rdev.flags))
++				DMEMIT(" write_mostly %u", i);
++		}
+ 
+ 		if (rs->print_flags & DMPF_DAEMON_SLEEP)
+ 			DMEMIT(" daemon_sleep %lu",
