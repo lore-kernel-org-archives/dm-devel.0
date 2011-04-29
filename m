@@ -1,24 +1,52 @@
-From: Eric Sandeen <sandeen@redhat.com>
-Subject: Re: [dm-devel] do not disable ext4 discards on first discard failure?
- [was: Re: dm snapshot: ignore discards issued to the snapshot-origin target]
-Date: Fri, 29 Apr 2011 09:28:51 -0500
-Message-ID: <4DBACB23.80607@redhat.com>
-References: <20110412234706.GA11244@redhat.com> <20cf301cbef67d323104a0c2ff52@google.com> <20110413224025.GA18589@redhat.com> <20110413234854.GA19793@redhat.com> <20110426173213.GA19604@redhat.com> <20110428001912.GA14659@redhat.com> <20110428075355.GA2190@infradead.org> <20110428205935.GA24979@redhat.com> <alpine.LFD.2.00.1104291117510.5496@dhcp-27-109.brq.redhat.com> <20110429122454.GL32370@agk-dp.fab.redhat.com> <20110429122906.GA7381@infradead.org>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: Soft lockup during suspend since ~2.6.36 [bisected]
+Date: Fri, 29 Apr 2011 18:00:39 +0200
+Message-ID: <20110429160039.GP16552@htj.dyndns.org>
+References: <BANLkTi=kQgS62c7HwwFGhNCQzWr2N6kZjA@mail.gmail.com>
+ <BANLkTi=aED731W4WoKK1HUU88qR7RxpW6Q@mail.gmail.com>
+ <BANLkTimDOz7M6m6Xo==DbLHP6q2pMBzd9g@mail.gmail.com>
+ <201104172135.40189.arnd@arndb.de>
+ <BANLkTimS2DqZTjq3Kx-p8CfZ5iFra_M2DA@mail.gmail.com>
+ <20110426131132.GG878@htj.dyndns.org>
+ <BANLkTin71zQH2qDNiwPp6vQppy3YWhbj2A@mail.gmail.com>
+ <20110428103036.GB10721@htj.dyndns.org>
+ <BANLkTinK3jZmKewkbtmOn54cRXhszh_5sQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20110429122906.GA7381@infradead.org>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Lukas Czerner <lczerner@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, DarkNovaNick@gmail.com, linux-lvm@redhat.com, linux-ext4@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <BANLkTinK3jZmKewkbtmOn54cRXhszh_5sQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thilo-Alexander Ginkel <thilo@ginkel.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, "Rafael J. Wysocki" <rjw@sisk.pl>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 4/29/11 7:29 AM, Christoph Hellwig wrote:
-> FYI, that disable discard on failure seems to be an ext4 special and no
-> one else picked up that stupid idea.  If ext4 wants to misbehave for
-> that just let them..
+Hello,
 
-It was my "stupid idea," and I'm ok with reverting it ;)
+On Fri, Apr 29, 2011 at 01:56:46AM +0200, Thilo-Alexander Ginkel wrote:
+> On Thu, Apr 28, 2011 at 12:30, Tejun Heo <tj@kernel.org> wrote:
+> > Does your kernel have preemption enabled?
+> 
+> CONFIG_PREEMPT is not set
+> 
+> > If not, does the following patch fix the problem?
+> 
+> Yep, looks good so far (at least in my virtualized test environment):
+> 2.6.39-rc4 with your patch applied survived 100 suspend/resume cycles
+> w/o locking up.
 
--Eric
+Awesome, I'll forward the patch to mainline and -stable.
+
+> Just out of curiosity: Was this a new issue in 2.6.39-rc4 ord could
+> this fix be backported to 2.6.38?
+
+This needs to be backported.  It's an issue which has been there from
+the initial implementation of cmwq.  It needs non-preemptive kernel
+and rescuer kicking in at a very bad timing, so not many people seem
+to have been affected by this.  Your setup somehow triggers it
+reliably.
+
+Thank you.
+
+-- 
+tejun
