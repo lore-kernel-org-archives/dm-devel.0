@@ -1,34 +1,65 @@
-From: Thilo-Alexander Ginkel <thilo@ginkel.com>
-Subject: Re: Soft lockup during suspend since ~2.6.36 [bisected]
-Date: Fri, 29 Apr 2011 01:56:46 +0200
-Message-ID: <BANLkTinK3jZmKewkbtmOn54cRXhszh_5sQ@mail.gmail.com>
-References: <BANLkTi=kQgS62c7HwwFGhNCQzWr2N6kZjA@mail.gmail.com>
- <BANLkTi=aED731W4WoKK1HUU88qR7RxpW6Q@mail.gmail.com> <BANLkTimDOz7M6m6Xo==DbLHP6q2pMBzd9g@mail.gmail.com>
- <201104172135.40189.arnd@arndb.de> <BANLkTimS2DqZTjq3Kx-p8CfZ5iFra_M2DA@mail.gmail.com>
- <20110426131132.GG878@htj.dyndns.org> <BANLkTin71zQH2qDNiwPp6vQppy3YWhbj2A@mail.gmail.com>
- <20110428103036.GB10721@htj.dyndns.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110428103036.GB10721@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, "Rafael J. Wysocki" <rjw@sisk.pl>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+From: Andreas Dilger <adilger.kernel@dilger.ca>
+Subject: Re: do not disable ext4 discards on first discard failure? [was: Re: dm snapshot: ignore discards issued to the snapshot-origin target]
+Date: Thu, 28 Apr 2011 19:12:54 -0600
+Message-ID: <1D2A9D06-CBD3-4DC8-B1D5-69DDCEB44238@dilger.ca>
+References: <20110412234706.GA11244@redhat.com> <20cf301cbef67d323104a0c2ff52@google.com> <20110413224025.GA18589@redhat.com> <20110413234854.GA19793@redhat.com> <20110426173213.GA19604@redhat.com> <20110428001912.GA14659@redhat.com> <20110428075355.GA2190@infradead.org> <20110428205935.GA24979@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v1082)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20110428205935.GA24979@redhat.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, DarkNovaNick@gmail.com, linux-lvm@redhat.com, sandeen@redhat.com, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Apr 28, 2011 at 12:30, Tejun Heo <tj@kernel.org> wrote:
-> Does your kernel have preemption enabled?
+On Apr 28, 2011, at 14:59, Mike Snitzer wrote:
+> On Thu, Apr 28 2011 at  3:53am -0400,
+> Christoph Hellwig <hch@infradead.org> wrote:
+>> On Wed, Apr 27, 2011 at 08:19:13PM -0400, Mike Snitzer wrote:
+>>> Discards pose a problem for the snapshot-origin target because they are
+>>> treated as writes.  Treating a discard as a write would trigger a
+>>> copyout to the snapshot.  Such copyout can prove too costly in the face
+>>> of otherwise benign scenarios (e.g. create a snapshot and then mkfs.ext4
+>>> the origin -- mkfs.ext4 discards the entire volume by default, which
+>>> would copyout the entire origin volume to the snapshot).
+>> 
+>> You also need to make sure that we don't claim discard_zeroes_data for
+>> the origin volume in this case.  Especially as ext4 started to rely
+>> on this actually working (very bad idea IMHO, but that's another story)
+> 
+> Eric Sandeen helped me see that having the DM snapshot-origin target
+> return success but actually ignore discards is just bad form.
+> 
+> Especially when you consider that this exercise was motivated by the
+> fact that ext4 will disable discards on the first discard failure, see:
+> http://www.redhat.com/archives/dm-devel/2011-April/msg00070.html
+> 
+> Eric and I think it is best to revert this commit:
+> a30eec2 ext4: stop issuing discards if not supported by device
+> 
+> (though ideally ext4 would still WARN_ONCE per superblock with something
+> like: "discard failed, please consider disabling discard support")
+> 
+> 1) The user asked for discards (with '-o discard' mount option)
+>   - what is the real harm in coninuing to issue them even if it _seems_
+>     they aren't supported?
 
-CONFIG_PREEMPT is not set
+Aren't discard operations considered barriers?  If there are needless discard operations being sent to the disk then it seems like this would have a non-zero performance penalty, just by virtue of blocking IO submissions at the block device layer.
 
-> If not, does the following patch fix the problem?
+If my understanding of the mechanics is flawed, then please ignore.
 
-Yep, looks good so far (at least in my virtualized test environment):
-2.6.39-rc4 with your patch applied survived 100 suspend/resume cycles
-w/o locking up.
+> 2) assuming the entire block device uniformly supports discards can
+>   be flawed (a DM device's discard support can vary based on logical
+>   offset).
 
-Just out of curiosity: Was this a new issue in 2.6.39-rc4 ord could
-this fix be backported to 2.6.38?
+Hybrid storage is potentially an increasingly popular configuration.  We've been looking at DM-mapped SSD RAID-1 + HDD RAID-6 arrays for ext4 to allow storing only the metadata on SSD.  That said, it may make sense to have the DM translation layer check the component devices of an LV to see if discard is supported on any of them, and only return -EOPNOTSUPP if none of them do.
 
-Thanks,
-Thilo
+While not a perfect solution for the case where an LV is migrated onto a device that does support discard, I don't think we have to handle every corner case perfectly to still handle reasonable use cases in a sensible manner.
+
+Cheers, Andreas
+
+
+
+
+
