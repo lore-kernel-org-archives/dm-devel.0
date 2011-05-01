@@ -1,78 +1,39 @@
-From: "Rafael J. Wysocki" <rjw@sisk.pl>
-Subject: Re: [PATCH] workqueue: fix deadlock in worker_maybe_bind_and_lock()
-Date: Fri, 29 Apr 2011 22:40:52 +0200
-Message-ID: <201104292240.52825.rjw@sisk.pl>
-References: <BANLkTi=kQgS62c7HwwFGhNCQzWr2N6kZjA@mail.gmail.com> <20110429160039.GP16552@htj.dyndns.org> <20110429161824.GQ16552@htj.dyndns.org>
+From: urgrue <urgrue@bulbous.org>
+Subject: SAN failover question
+Date: Sun, 01 May 2011 23:01:17 +0200
+Message-ID: <4DBDCA1D.3070500@bulbous.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110429161824.GQ16552@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Cc: Thilo-Alexander Ginkel <thilo@ginkel.com>, Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Friday, April 29, 2011, Tejun Heo wrote:
-> From 5035b20fa5cd146b66f5f89619c20a4177fb736d Mon Sep 17 00:00:00 2001
-> From: Tejun Heo <tj@kernel.org>
-> Date: Fri, 29 Apr 2011 18:08:37 +0200
-> 
-> If a rescuer and stop_machine() bringing down a CPU race with each
-> other, they may deadlock on non-preemptive kernel.  The CPU won't
-> accept a new task, so the rescuer can't migrate to the target CPU,
-> while stop_machine() can't proceed because the rescuer is holding one
-> of the CPU retrying migration.  GCWQ_DISASSOCIATED is never cleared
-> and worker_maybe_bind_and_lock() retries indefinitely.
-> 
-> This problem can be reproduced semi reliably while the system is
-> entering suspend.
-> 
->  http://thread.gmane.org/gmane.linux.kernel/1122051
-> 
-> A lot of kudos to Thilo-Alexander for reporting this tricky issue and
-> painstaking testing.
-> 
-> stable: This affects all kernels with cmwq, so all kernels since and
->         including v2.6.36 need this fix.
+I've tried all around to find a good solution for my conundrum, without 
+much luck.
 
-Well, _that_ explains quite a number of mysterious reports where
-suspend or poweroff hang randomly.
+The point is, multipath works nice. Until a bigger disaster comes along, 
+e.g. san or datacenter failure. Of course like most big environments you 
+have a synchronous replica of your SAN. But you have to "do stuff" to 
+get Linux to take that new LUN and get back to work. A reboot, or san 
+rescans, forcibly removing disks and so forth. It's not very pretty.
 
-Thanks a lot of fixing it!
-
-Rafael
-
-
-> Signed-off-by: Tejun Heo <tj@kernel.org>
-> Reported-by: Thilo-Alexander Ginkel <thilo@ginkel.com>
-> Tested-by: Thilo-Alexander Ginkel <thilo@ginkel.com>
-> Cc: stable@kernel.org
-> ---
-> Will soon send pull request to Linus.  Thank you very much.
-> 
->  kernel/workqueue.c |    8 +++++++-
->  1 files changed, 7 insertions(+), 1 deletions(-)
-> 
-> diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-> index 04ef830..e3378e8 100644
-> --- a/kernel/workqueue.c
-> +++ b/kernel/workqueue.c
-> @@ -1291,8 +1291,14 @@ __acquires(&gcwq->lock)
->  			return true;
->  		spin_unlock_irq(&gcwq->lock);
->  
-> -		/* CPU has come up inbetween, retry migration */
-> +		/*
-> +		 * We've raced with CPU hot[un]plug.  Give it a breather
-> +		 * and retry migration.  cond_resched() is required here;
-> +		 * otherwise, we might deadlock against cpu_stop trying to
-> +		 * bring down the CPU on non-preemptive kernel.
-> +		 */
->  		cpu_relax();
-> +		cond_resched();
->  	}
->  }
->  
-> 
+So my question is, is there any way to get multipath to treat both the 
+active lun and it's passive replica (usually in readonly or offline 
+state) as one and the same disk? The goal being, if your SAN fails, you 
+merely have to activate your DR replica, and multipath would pick it up 
+and all's well (except for the 30 sec to a few mins of I/O hanging until 
+the DR was online). In essence, you'd have four paths to a LUN - 2 to 
+the active one, 2 to the passive one, which is a different LUN 
+technically speaking (different serials, WWNs, etc), but an identical 
+synchronous replica (identical data, identical state, identical PVID, etc).
