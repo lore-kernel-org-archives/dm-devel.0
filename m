@@ -1,63 +1,81 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: SAN failover question
-Date: Sun, 01 May 2011 23:40:07 +0200
-Message-ID: <1304286007.11965.19.camel@zezette>
-References: <4DBDCA1D.3070500@bulbous.org>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Lukas Czerner <lczerner@redhat.com>
+Subject: Re: [dm-devel] do not disable ext4 discards on first discard failure?
+ [was: Re: dm snapshot: ignore discards issued to the snapshot-origin
+ target]
+Date: Mon, 2 May 2011 09:16:21 +0200 (CEST)
+Message-ID: <alpine.LFD.2.00.1105020857030.3778@dhcp-27-109.brq.redhat.com>
+References: <20110412234706.GA11244@redhat.com> <20cf301cbef67d323104a0c2ff52@google.com> <20110413224025.GA18589@redhat.com> <20110413234854.GA19793@redhat.com> <20110426173213.GA19604@redhat.com> <20110428001912.GA14659@redhat.com> <20110428075355.GA2190@infradead.org>
+ <20110428205935.GA24979@redhat.com> <alpine.LFD.2.00.1104291117510.5496@dhcp-27-109.brq.redhat.com> <20110429122454.GL32370@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4DBDCA1D.3070500@bulbous.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20110429122454.GL32370@agk-dp.fab.redhat.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Lukas Czerner <lczerner@redhat.com>, Mike Snitzer <snitzer@redhat.com>, sandeen@redhat.com, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, DarkNovaNick@gmail.com, linux-lvm@redhat.com, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-On dim., 2011-05-01 at 23:01 +0200, urgrue wrote:
-> I've tried all around to find a good solution for my conundrum, without 
-> much luck.
+On Fri, 29 Apr 2011, Alasdair G Kergon wrote:
+
+> On Fri, Apr 29, 2011 at 11:30:47AM +0200, Lukas Czerner wrote:
+> > 1. We need to honor all the "discard limits" so the discard bios does
+> > not actually fail.
+> > 2. If the device is composed of various other devices, we should return
+> > -EOPNOTSUPP is none of the devices support discard.
+> > 3. We should succeed, if at least one of the devices support discard and
+> > it does not fail for any reason.
+> > 4. We should not advertise discard_zeroes_data if any of the devices
+> > does not zero data or does not support discard.
+> > I am not sure how "hard" is to assure those conditions in DM. If those
+> > conditions are met, we can rely on consistent information in the layers
+> > above.
+>  
+> Remember that -EOPNOTSUPP return applies only to that one *specific*
+> discard.  It does not tell you for sure whether or not another future
+> discard to the device will succeed.  (It's a property of offset - if
+> there are several devices underneath - and of time - if the device or
+> one below it gets reconfigured.)
 > 
-> The point is, multipath works nice. Until a bigger disaster comes along, 
-> e.g. san or datacenter failure. Of course like most big environments you 
-> have a synchronous replica of your SAN. But you have to "do stuff" to 
-> get Linux to take that new LUN and get back to work. A reboot, or san 
-> rescans, forcibly removing disks and so forth. It's not very pretty.
+> The core issue here is whether a filesytem should decide that the
+> receipt of a single -EOPNOTSUPP is a reason never to send any more,
+> whether a more sophisticated algorithm should be used (considering 
+> the proportion/offsets of them over given periods of time and retrying
+> later), or whether more comprehensive information about the discard
+> capabilities of the device should be presented - and whether this should
+> be handled automatically or whether it should be under userspace control
+> (i.e. the sysadmin can instruct the filesystem what to do).
 > 
-> So my question is, is there any way to get multipath to treat both the 
-> active lun and it's passive replica (usually in readonly or offline 
-> state) as one and the same disk? The goal being, if your SAN fails, you 
-> merely have to activate your DR replica, and multipath would pick it up 
-> and all's well (except for the 30 sec to a few mins of I/O hanging until 
-> the DR was online). In essence, you'd have four paths to a LUN - 2 to 
-> the active one, 2 to the passive one, which is a different LUN 
-> technically speaking (different serials, WWNs, etc), but an identical 
-> synchronous replica (identical data, identical state, identical PVID, etc).
+> dm's role is simply to handle a discard if it can, and report back
+> if it couldn't.  Additionally it could provide more comprehensive
+> information about the discard capabilities of the device, but my sense
+> is that most consider this unnecessary as normally dm devices will have
+> a coherent behaviour throughout.
 > 
-You would have to :
+> Alasdair
+> 
+> 
 
-1/ setup a customized getuid program instead of the default scsi_id.
-(may be based on the pairing id if there is such thing in your context)
+Hi Alasdair,
 
-2/ set the 'group_by_prio' path grouping policy
+I like the last idea the best. Dm is the only one who has the
+overall information about the storage, hence it should provide
+some of that information for others to do the right thing.
 
-3/ develop a prioritizer shared object to assign path priorities based
-on the master/slave role of the logical unit. Paths to master get prio
-2, paths to slave get prio 1.
+Christoph mentioned that ext4 is the only one actually disabling
+discard on -EOPNOTSUPP, but firstly that's not true (gfs2 and
+nilfs does that as well) and secondly it is the right thing to
+do! What else  should we be doing when it tells us that "discard is
+not supported"? continue trying ? that does not make sense at all!
 
-May be someone else can comment on the specific ro->rw promotion issue
-upon path_group switching. I can't tell if it needs a hw_handler these
-days.
+However when we have dm device where part of the device supports
+discard due to underlying hardware capability we just can not return
+EOPNOTSUPP from blkdev_issue_discard, because it is just not true! It
+does support discard, but it is not consistent through the whole device
+and at some layer we should notice that and not let it through. How to
+do this is just implementation detail. We can either do it at dm level,
+while handling bios, or we can export "do not return eopnotsupp"
+information and blkdev_issue_discard() should use that information to do
+the right thing.
 
--- 
-Christophe Varoqui
-OpenSVC - Tools to scale
-http://www.opensvc.com/
+Thanks!
+-Lukas
