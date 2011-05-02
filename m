@@ -1,62 +1,28 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: [Multipath] Round-robin performance limit
-Date: Mon, 2 May 2011 10:25:28 +0300
-Message-ID: <20110502072528.GW32595@reaktio.net>
-References: <BANLkTikyCtPX8L=7h94hTm4TjOYDyb7nxQ@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] do not disable ext4 discards on first discard
+	failure? [was: Re: dm snapshot: ignore discards issued to the
+	snapshot-origin target]
+Date: Mon, 2 May 2011 09:13:08 +0100
+Message-ID: <20110502081308.GC8642@agk-dp.fab.redhat.com>
+References: <20cf301cbef67d323104a0c2ff52@google.com> <20110413224025.GA18589@redhat.com> <20110413234854.GA19793@redhat.com> <20110426173213.GA19604@redhat.com> <20110428001912.GA14659@redhat.com> <20110428075355.GA2190@infradead.org> <20110428205935.GA24979@redhat.com> <alpine.LFD.2.00.1104291117510.5496@dhcp-27-109.brq.redhat.com> <20110429122454.GL32370@agk-dp.fab.redhat.com> <alpine.LFD.2.00.1105020857030.3778@dhcp-27-109.brq.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <BANLkTikyCtPX8L=7h94hTm4TjOYDyb7nxQ@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <alpine.LFD.2.00.1105020857030.3778@dhcp-27-109.brq.redhat.com>
+Sender: linux-ext4-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, sandeen@redhat.com, Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>, DarkNovaNick@gmail.com, linux-lvm@redhat.com, Lukas Czerner <lczerner@redhat.com>, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Apr 28, 2011 at 11:55:55AM -0400, Adam Chasen wrote:
-> 
-> [root@zed ~]# multipath -ll
-> 3600c0ff000111346d473554d01000000 dm-3 DotHill,DH3000
-> size=1.1T features='0' hwhandler='0' wp=rw
-> `-+- policy='round-robin 0' prio=1 status=active
->   |- 88:0:0:0 sdd 8:48  active ready  running
->   |- 86:0:0:0 sdc 8:32  active ready  running
->   |- 89:0:0:0 sdg 8:96  active ready  running
->   `- 87:0:0:0 sdf 8:80  active ready  running
-> 3600c0ff00011148af973554d01000000 dm-2 DotHill,DH3000
-> size=1.1T features='0' hwhandler='0' wp=rw
-> `-+- policy='round-robin 0' prio=1 status=active
->   |- 89:0:0:1 sdk 8:160 active ready  running
->   |- 88:0:0:1 sdi 8:128 active ready  running
->   |- 86:0:0:1 sdh 8:112 active ready  running
->   `- 87:0:0:1 sdl 8:176 active ready  running
-> 
-> /etc/multipath.conf
-> defaults {
->         path_grouping_policy    multibus
->         rr_min_io 100
-> }
+On Mon, May 02, 2011 at 09:16:21AM +0200, Lukas Czerner wrote:
+> However when we have dm device where part of the device supports
+> discard due to underlying hardware capability we just can not return
+> EOPNOTSUPP from blkdev_issue_discard, because it is just not true! 
 
-Did you try a lower value for rr_min_io ?
+EOPNOTSUPP from dm means the operation was not supported on that *one* bio.
+It does *not* tell you anything in general about the device, or whether
+you'd get the same error from different bios in future.
 
--- Pasi
+Alasdair
 
-> 
-> multipath-tools v0.4.9 (05/33, 2016)
-> 2.6.35.11-2-fl.smp.gcc4.4.x86_64
-> 
-> Thanks,
-> Adam
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
