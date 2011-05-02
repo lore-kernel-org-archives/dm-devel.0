@@ -1,83 +1,101 @@
-From: Lukas Czerner <lczerner@redhat.com>
-Subject: Re: do not disable ext4 discards on first discard failure? [was:
- Re: dm snapshot: ignore discards issued to the snapshot-origin target]
-Date: Mon, 2 May 2011 15:05:30 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1105021458480.3778@dhcp-27-109.brq.redhat.com>
-References: <20110426173213.GA19604@redhat.com> <20110428001912.GA14659@redhat.com> <20110428075355.GA2190@infradead.org> <20110428205935.GA24979@redhat.com> <alpine.LFD.2.00.1104291117510.5496@dhcp-27-109.brq.redhat.com> <20110429122454.GL32370@agk-dp.fab.redhat.com>
- <alpine.LFD.2.00.1105020857030.3778@dhcp-27-109.brq.redhat.com> <20110502081308.GC8642@agk-dp.fab.redhat.com> <20110502081925.GA11312@infradead.org> <alpine.LFD.2.00.1105021217080.3778@dhcp-27-109.brq.redhat.com> <20110502124803.GA31034@redhat.com>
+From: Adam Chasen <adam@chasen.name>
+Subject: Re: [Multipath] Round-robin performance limit
+Date: Mon, 2 May 2011 09:36:35 -0400
+Message-ID: <BANLkTi=h0AwEy0S4Miv-SYTEu3jF0DXXJQ@mail.gmail.com>
+References: <BANLkTikyCtPX8L=7h94hTm4TjOYDyb7nxQ@mail.gmail.com>
+	<20110502072528.GW32595@reaktio.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20110502124803.GA31034@redhat.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Lukas Czerner <lczerner@redhat.com>, Christoph Hellwig <hch@infradead.org>, sandeen@redhat.com, DarkNovaNick@gmail.com, linux-lvm@redhat.com, linux-ext4@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20110502072528.GW32595@reaktio.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2 May 2011, Mike Snitzer wrote:
+Lowering rr_min_io provides marginal improvement. I see 6MB/s
+improvement at an rr_min_io of 3 vs 100. I played around with it
+before all the way down to 1. People seems to settle on 3. Still, I am
+not seeing the bandwidth I assume it should be (4 aggregated links).
 
-> On Mon, May 02 2011 at  6:24am -0400,
-> Lukas Czerner <lczerner@redhat.com> wrote:
-> 
-> > On Mon, 2 May 2011, Christoph Hellwig wrote:
-> > 
-> > > On Mon, May 02, 2011 at 09:13:08AM +0100, Alasdair G Kergon wrote:
-> > > > On Mon, May 02, 2011 at 09:16:21AM +0200, Lukas Czerner wrote:
-> > > > > However when we have dm device where part of the device supports
-> > > > > discard due to underlying hardware capability we just can not return
-> > > > > EOPNOTSUPP from blkdev_issue_discard, because it is just not true! 
-> > > > 
-> > > > EOPNOTSUPP from dm means the operation was not supported on that *one* bio.
-> > > > It does *not* tell you anything in general about the device, or whether
-> > > > you'd get the same error from different bios in future.
-> > > 
-> > > Exactly.  We already have the information in the queue limits to tell
-> > > the filesystem if discard is supported at all or not.
-> > > 
-> > 
-> > So I gave it a try. First of all the device composed of SSD and spinning
-> > disk does export discard_support information properly, however it also
-> > advertise discard_zeroes_data which is wrong and possibly dangerous and
-> > should be fixed!
-> 
-> You're effectively advocating that blk_stack_limits() needs to clear the
-> topmost device's discard_zeroes_data flag if any one bottom device does
-> not have discard_zeroes_data.
+Some additional information. If I attempt to pull from my two
+multipath devices simultaneously (different LUNs, but same iSCSI
+connections) then I can pull additional data (50MB/s vs 27-30MB/s
+from each link).
 
-Exactly.
+Adam
 
-> 
-> > And second of all, strictly speaking if EOPNOTSUPP from dm means that
-> > operation was not supported on that *one* bio, blkdev_issue_discard()
-> > should handle that and do not return EOPNOTSUPP further if queue limits
-> > tells that device has discard support. Is this acceptable solution for
-> > you guys ? I can make that change since I am changing blkdev_issue_discard()
-> > anyway. Or, we can make that change in filesystem where we disable
-> > discard on mount time, when we notice that discard mount option was
-> > specified, but the device does not support it (we should probably do
-> > this regardless on blkdev_issue_discard() change).
-> 
-> The blkdev_issue_discard() change you propose could be fine (mask
-> EOPNOTSUPP return if device advertises support for discards) -- though
-> Eric said we shouldn't ever say we did something when we didn't.
+This is a response to a direct email I sent to someone who had a
+similar issue on this list a while back:
+Date: Sat, 30 Apr 2011 00:13:20 +0200
+From: Bart Coninckx <bart.coninckx@telenet.be>
+Hi Adam,
 
-Exactly, so we should not say that it is not supported when it is, but
-we just hit the "wrong" part of the device:) I would just very much like
-to keep the abstraction of having one consistent device underneath the
-file system and not deal with several devices, or regions with different
-behaviour in the file system itself (let the pixies underneath deal with
-that, after all not all of us are btrfs:))
+I believe setting rr_min_io to 3 in stead of 100 improved things
+significantly.
+What is still an unexplainable issue though is dd-ing to the multipath
+device (very slow) while reading from it is very fast. Doing the same
+piped over SSH to the original devices on the iSCSI server was OK, so it
+seems like either an iSCSI or still a multipath issue.
 
-> 
-> But that blkdev_issue_discard() change is really only safe if the
-> discard_zeroes_data flag is cleared by blk_stack_limits() if finds
-> inconsistent discard_zeroes_data support.
+But I definitely remember that lowering rr_min_io helped quite a bit.
+I think the paths are switched faster in this way resulting into more speed.
 
-Agreed
+Good luck,
 
-> 
-> Mike
-> 
+b.
 
-Thanks!
--Lukas
+
+On Mon, May 2, 2011 at 3:25 AM, Pasi K=E4rkk=E4inen <pasik@iki.fi> wrote:
+> On Thu, Apr 28, 2011 at 11:55:55AM -0400, Adam Chasen wrote:
+>>
+>> [root@zed ~]# multipath -ll
+>> 3600c0ff000111346d473554d01000000 dm-3 DotHill,DH3000
+>> size=3D1.1T features=3D'0' hwhandler=3D'0' wp=3Drw
+>> `-+- policy=3D'round-robin 0' prio=3D1 status=3Dactive
+>> =A0 |- 88:0:0:0 sdd 8:48 =A0active ready =A0running
+>> =A0 |- 86:0:0:0 sdc 8:32 =A0active ready =A0running
+>> =A0 |- 89:0:0:0 sdg 8:96 =A0active ready =A0running
+>> =A0 `- 87:0:0:0 sdf 8:80 =A0active ready =A0running
+>> 3600c0ff00011148af973554d01000000 dm-2 DotHill,DH3000
+>> size=3D1.1T features=3D'0' hwhandler=3D'0' wp=3Drw
+>> `-+- policy=3D'round-robin 0' prio=3D1 status=3Dactive
+>> =A0 |- 89:0:0:1 sdk 8:160 active ready =A0running
+>> =A0 |- 88:0:0:1 sdi 8:128 active ready =A0running
+>> =A0 |- 86:0:0:1 sdh 8:112 active ready =A0running
+>> =A0 `- 87:0:0:1 sdl 8:176 active ready =A0running
+>>
+>> /etc/multipath.conf
+>> defaults {
+>> =A0 =A0 =A0 =A0 path_grouping_policy =A0 =A0multibus
+>> =A0 =A0 =A0 =A0 rr_min_io 100
+>> }
+>
+> Did you try a lower value for rr_min_io ?
+>
+> -- Pasi
+>
+>>
+>> multipath-tools v0.4.9 (05/33, 2016)
+>> 2.6.35.11-2-fl.smp.gcc4.4.x86_64
+>>
+>> Thanks,
+>> Adam
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
