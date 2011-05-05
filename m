@@ -1,69 +1,84 @@
-From: Lukas Czerner <lczerner@redhat.com>
-Subject: Re: [dm-devel] do not disable ext4 discards on first discard failure?
- [was: Re: dm snapshot: ignore discards issued to the snapshot-origin
- target]
-Date: Thu, 5 May 2011 12:48:41 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1105051248110.3760@dhcp-27-109.brq.redhat.com>
-References: <20110429122454.GL32370@agk-dp.fab.redhat.com> <alpine.LFD.2.00.1105020857030.3778@dhcp-27-109.brq.redhat.com> <20110502081308.GC8642@agk-dp.fab.redhat.com> <20110502081925.GA11312@infradead.org> <alpine.LFD.2.00.1105021217080.3778@dhcp-27-109.brq.redhat.com>
- <yq1bozl420p.fsf@sermon.lab.mkp.net> <alpine.LFD.2.00.1105021631590.3778@dhcp-27-109.brq.redhat.com> <yq1tydd2g5h.fsf@sermon.lab.mkp.net> <alpine.LFD.2.00.1105031036090.4250@dhcp-27-109.brq.redhat.com> <yq1sjsuzebu.fsf@sermon.lab.mkp.net>
- <20110505083344.GA1114@nb.net.home>
+From: Christian May <christian_may@de.ibm.com>
+Subject: RHEL 6 I/O error messages during booting
+Date: Thu, 5 May 2011 12:58:06 +0200
+Message-ID: <OF01186CE2.F2A5FC34-ONC1257887.00332068-C1257887.003C3C98@de.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-61399738-1304592526=:3760"
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20110505083344.GA1114@nb.net.home>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Karel Zak <kzak@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Lukas Czerner <lczerner@redhat.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, sandeen@redhat.com, Mike Snitzer <snitzer@redhat.com>, DarkNovaNick@gmail.com, linux-lvm@redhat.com, linux-ext4@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============7630194456985982138=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+This is a multipart message in MIME format.
+--===============7630194456985982138==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 003C3A82C1257887_="
 
---8323328-61399738-1304592526=:3760
-Content-Type: TEXT/PLAIN; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+This is a multipart message in MIME format.
+--=_alternative 003C3A82C1257887_=
+Content-Type: text/plain; charset="US-ASCII"
 
-On Thu, 5 May 2011, Karel Zak wrote:
+Hi,
 
-> On Wed, May 04, 2011 at 11:16:05AM -0400, Martin K. Petersen wrote:
-> > >>>>> "Lukas" == Lukas Czerner <lczerner@redhat.com> writes:
-> > 
-> > I got tired of poking around in sysfs to find the discard topology.
-> > Here's a patch against lsblk that adds a -D option to present this
-> > information in a human-readable form:
-> 
-> Applied, thanks.
-> 
-> > # lsblk -D
-> > NAME                  DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
-> > sda                          0        0B       0B         0
-> > └─sda1                       0        0B       0B         0
-> > sdb                          0      512B       2G         1
-> > └─sdb1                       0      512B       2G         1
-> 
-> I have a question, 2.6.35 on my ThinkPad, non-SSD disk:
-> 
-> NAME                   DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
-> sda                           0        0B       0B         0
-> ├─sda1               4294935040        0B       0B         0
-> ├─sda2               4188038656        0B       0B         0
-> ├─sda3               1346205184        0B       0B         0
-> ├─sda4               3231165440        0B       0B         0
-> ├─sda5               4188006400        0B       0B         0
-> │ └─kzak-home (dm-0)          0        0B       0B         0
-> └─sda6               2035725312        0B       0B         0
-> 
-> 
-> Does is make sense? The DISC-ALN is non-zero but DISC-GRAN is zero.
-> 
-> Note that cat /sys/block/sda/sda*/discard_alignment returns the same
-> numbers.
-> 
->     Karel
-> 
-> 
+I'm new to this community so maybe my question is alreayd answered/solved. 
+In that case please let me know how...
 
-That is fixed by the kernel patch posted above :)
+I have several IBM blades running RHEL6 and RHEL 6.1 attached via FC 
+switch to different FastT storage servers (prefered/non-prefered pathes).
+During booting  I've noticed billions of I/O error messages which extend 
+the boot process. I found that the scsi_dh_rdac
+driver is build into the initramfs, so it should be available when the 
+system is recognizing the SCSI LUNs. When taking a look to the messages
+I found this statement "kernel: rdac: device handler registered" after the 
+SCSI LUNs were recognized?!
 
--Lukas
---8323328-61399738-1304592526=:3760--
+Any ideas?
+
+Regards,
+
+Christian
+ 
+--=_alternative 003C3A82C1257887_=
+Content-Type: text/html; charset="US-ASCII"
+
+<font size=2 face="sans-serif">Hi,</font>
+<br>
+<br><font size=2 face="sans-serif">I'm new to this community so maybe my
+question is alreayd answered/solved. In that case please let me know how...</font>
+<br>
+<br><font size=2 face="sans-serif">I have several IBM blades running RHEL6
+and RHEL 6.1 attached via FC switch to different FastT storage servers
+(prefered/non-prefered pathes).</font>
+<br><font size=2 face="sans-serif">During booting &nbsp;I've noticed billions
+of I/O error messages which extend the boot process. I found that the scsi_dh_rdac</font>
+<br><font size=2 face="sans-serif">driver is build into the initramfs,
+so it should be available when the system is recognizing the SCSI LUNs.
+When taking a look to the messages</font>
+<br><font size=2 face="sans-serif">I found this statement &quot;kernel:
+rdac: device handler registered&quot; after the SCSI LUNs were recognized?!</font>
+<br>
+<br><font size=2 face="sans-serif">Any ideas?</font>
+<br>
+<br><font size=2 face="sans-serif">Regards,</font>
+<br>
+<br><font size=2 face="sans-serif">Christian</font>
+<p><font size=3>&nbsp;</font>
+--=_alternative 003C3A82C1257887_=--
+
+--===============7630194456985982138==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============7630194456985982138==--
