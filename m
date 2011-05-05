@@ -1,52 +1,71 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: SUSE multipath-tools resync
-Date: Thu, 05 May 2011 09:37:54 +0200
-Message-ID: <4DC253D2.1090907@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Karel Zak <kzak@redhat.com>
+Subject: Re: [dm-devel] do not disable ext4 discards on first discard
+	failure? [was: Re: dm snapshot: ignore discards issued to the
+	snapshot-origin target]
+Date: Thu, 5 May 2011 10:33:44 +0200
+Message-ID: <20110505083344.GA1114@nb.net.home>
+References: <20110429122454.GL32370@agk-dp.fab.redhat.com> <alpine.LFD.2.00.1105020857030.3778@dhcp-27-109.brq.redhat.com> <20110502081308.GC8642@agk-dp.fab.redhat.com> <20110502081925.GA11312@infradead.org> <alpine.LFD.2.00.1105021217080.3778@dhcp-27-109.brq.redhat.com> <yq1bozl420p.fsf@sermon.lab.mkp.net> <alpine.LFD.2.00.1105021631590.3778@dhcp-27-109.brq.redhat.com> <yq1tydd2g5h.fsf@sermon.lab.mkp.net> <alpine.LFD.2.00.1105031036090.4250@dhcp-27-109.brq.redhat.com> <yq1sjsuzebu.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <yq1sjsuzebu.fsf@sermon.lab.mkp.net>
+Sender: linux-ext4-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Lukas Czerner <lczerner@redhat.com>, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, sandeen@redhat.com, Mike Snitzer <snitzer@redhat.com>, DarkNovaNick@gmail.com, linux-lvm@redhat.com, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Christophe,
+On Wed, May 04, 2011 at 11:16:05AM -0400, Martin K. Petersen wrote:
+> >>>>> "Lukas" =3D=3D Lukas Czerner <lczerner@redhat.com> writes:
+>=20
+> I got tired of poking around in sysfs to find the discard topology.
+> Here's a patch against lsblk that adds a -D option to present this
+> information in a human-readable form:
 
-I'm currently rebasing my multipath-tools git tree to the latest =
+Applied, thanks.
 
-upstream version and planning on sending out the missing patches.
+> # lsblk -D
+> NAME                  DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
+> sda                          0        0B       0B         0
+> =E2=94=94=E2=94=80sda1                       0        0B       0B    =
+     0
+> sdb                          0      512B       2G         1
+> =E2=94=94=E2=94=80sdb1                       0      512B       2G    =
+     1
 
-However, I found that I should've done that far earlier; so far I've =
+I have a question, 2.6.35 on my ThinkPad, non-SSD disk:
 
-accumulated about 40-odd patches and I'm only halfway through the =
+NAME                   DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
+sda                           0        0B       0B         0
+=E2=94=9C=E2=94=80sda1               4294935040        0B       0B     =
+    0
+=E2=94=9C=E2=94=80sda2               4188038656        0B       0B     =
+    0
+=E2=94=9C=E2=94=80sda3               1346205184        0B       0B     =
+    0
+=E2=94=9C=E2=94=80sda4               3231165440        0B       0B     =
+    0
+=E2=94=9C=E2=94=80sda5               4188006400        0B       0B     =
+    0
+=E2=94=82 =E2=94=94=E2=94=80kzak-home (dm-0)          0        0B      =
+ 0B         0
+=E2=94=94=E2=94=80sda6               2035725312        0B       0B     =
+    0
 
-resulting diff :-(
 
-How do you prefer those patches? Should I send them off in one bulk =
+Does is make sense? The DISC-ALN is non-zero but DISC-GRAN is zero.
 
-or rather several smaller batches?
+Note that cat /sys/block/sda/sda*/discard_alignment returns the same
+numbers.
 
-Most of them are totally unrelated, just various fixes here and =
+    Karel
 
-there. So it doesn't really matter in which order they'll be applied.
-Only some patches are for infrastructure changes :-)
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+--=20
+ Karel Zak  <kzak@redhat.com>
+ http://karelzak.blogspot.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
