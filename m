@@ -1,77 +1,79 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: do not disable ext4 discards on first discard failure? [was: Re:
- dm snapshot: ignore discards issued to the snapshot-origin target]
-Date: Wed, 4 May 2011 14:03:44 -0400
-Message-ID: <20110504180343.GB558@redhat.com>
-References: <20110502081308.GC8642@agk-dp.fab.redhat.com>
- <20110502081925.GA11312@infradead.org>
- <alpine.LFD.2.00.1105021217080.3778@dhcp-27-109.brq.redhat.com>
- <yq1bozl420p.fsf@sermon.lab.mkp.net>
- <alpine.LFD.2.00.1105021631590.3778@dhcp-27-109.brq.redhat.com>
- <yq1tydd2g5h.fsf@sermon.lab.mkp.net>
- <alpine.LFD.2.00.1105031036090.4250@dhcp-27-109.brq.redhat.com>
- <yq1wri6zel9.fsf@sermon.lab.mkp.net>
- <20110504160231.GD31241@redhat.com>
- <yq1k4e6z9xq.fsf@sermon.lab.mkp.net>
+From: Martin Schwenke <martin@meltin.net>
+Subject: [PATCH] multipathd: Don't mark a virtio_blk path offline
+ if it has no sysfs "state" attribute
+Date: Thu, 5 May 2011 16:32:25 +1000
+Message-ID: <20110505163225.0a8a5257@martins.ozlabs.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <yq1k4e6z9xq.fsf@sermon.lab.mkp.net>
-Sender: linux-ext4-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: sandeen@redhat.com, Christoph Hellwig <hch@infradead.org>, device-mapper development <dm-devel@redhat.com>, DarkNovaNick@gmail.com, linux-lvm@redhat.com, Lukas Czerner <lczerner@redhat.com>, linux-ext4@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, May 04 2011 at 12:50pm -0400,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+multipathd currently marks paths as down if they don't have a sysfs
+"state" attribute.
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> Mike> lim->discard_zeroes_data = -1; was suspect to me too.
-> Mike> But why default to 1 here?
-> 
-> Because otherwise DM would default to having dzd to "unsupported",
-> meaning the feature would never be turned on regardless of the bottom
-> device capabilities.
-> 
-> The old approach used the -1 value to indicate "has not been set". That
-> was only really intended as a value for the stacking drivers, not for
-> the LLDs. It was a bit of a hack and I'd rather deal with dzd the same
-> way as we do with clustering.
-> 
-> 
-> >> @@ -166,6 +166,7 @@ void blk_queue_make_request(struct request_queue
-> >> *q, make_request_fn *mfn)
-> >> 
-> >> blk_set_default_limits(&q->limits);
-> >> blk_queue_max_hw_sectors(q, BLK_SAFE_MAX_SECTORS);
-> >> + q->limits.discard_zeroes_data = 0;
-> >> 
-> >> /*
-> >> * by default assume old behaviour and bounce for any highmem page
-> 
-> Mike> Only to then reset to 0 here?  Shouldn't we default to 0 and only
-> Mike> set to 1 where applicable (e.g. sd_config_discard)?
-> 
-> My first approach was to set it in dm-table.c before stacking. But I
-> thought it was icky to have the stacking driver ask for defaults and
-> then have to tweak them for things to work correctly.
-> 
-> The other option is to have blk_set_default_stacking_limits(). Or we
-> could add a flag to blk_set_default_limits to indicate whether this is a
-> LLD or a stacking driver.
-> 
-> We already special-case BLK_SAFE_MAX_SECTORS when setting the request
-> function. And that's the only non-stacking user of the default limits
-> call. So that's why I disabled dzd there. Since this is a stable bugfix
-> I also wanted to keep it small and simple. But I'm totally open to
-> suggestions.
+Unfortunately, this makes multipathd unusable with Linux virtio_blk
+devices, since they don't have this attribute.  I need to use multipath
+with virtio for consistency with a real configuration when testing a
+clustered NAS system - yeah, I'm that guy again...  :-)
 
-Your current approach sounds good.  Might be good to briefly speak to
-the duality of the stacking vs non-stacking approach in the associated
-patch header.
+One way of working around this might be to have path_offline() return
+PATH_UP for all devices that don't have a sysfs "state" attribute,
+instead of PATH_WILD.  However, I'm guessing the current behaviour might
+exist for a reason.
 
-Thanks for clarifying.
+The following patch makes path_offline() always return PATH_UP instead
+of PATH_WILD for virtio_blk devices.  I've implemented the nested if
+statements as below to change the code flow as little as possible
+when sysfs_get_state() actually succeeds, which I assume is usually the
+case.   If nobody is feeling paranoid then the check for virtio_blk
+could obviously be done before the call to sysfs_get_state().
 
-Mike
+If people think this patch is too specific then at least it can be
+used to start a discussion...  ;-)
+
+
+commit fc2eb79ba3bca70702568cce73be9daffaf3f149
+Author: Martin Schwenke <martin@meltin.net>
+Date:   Thu May 5 14:39:29 2011 +1000
+
+    Don't mark a virtio_blk path offline if it has no sysfs "state" attribute.
+    
+    Signed-off-by: Martin Schwenke <martin@meltin.net>
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index aa25cc4..1155f68 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -722,8 +722,15 @@ path_offline (struct path * pp)
+ 		return PATH_WILD;
+ 	}
+ 
+-	if (sysfs_get_state(parent, buff, SCSI_STATE_SIZE))
+-		return PATH_WILD;
++	if (sysfs_get_state(parent, buff, SCSI_STATE_SIZE)) {
++		if (!strncmp(parent->driver, "virtio_blk", 10)) {
++			condlog(3, "%s: virtio_blk is always up", pp->dev);
++			return PATH_UP;
++		} else {
++			condlog(3, "%s: failed to get \"state\"", pp->dev);
++			return PATH_WILD;
++		}
++	}
+ 
+ 	condlog(3, "%s: state = %s", pp->dev, buff);
+ 
+
+peace & happiness,
+martin
