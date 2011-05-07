@@ -1,15 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Gianluca Cecchi <gianluca.cecchi@gmail.com>
 Subject: Re: RHEL 6: Missing /dev/mpath directory
-Date: Fri, 6 May 2011 13:47:45 -0400
-Message-ID: <20110506174745.GA26776@redhat.com>
+Date: Sat, 7 May 2011 11:54:35 +0200
+Message-ID: <BANLkTi=+m2+SEONX7HMXoOF-TmonTeedJA@mail.gmail.com>
 References: <BANLkTimUvQu8zhLSyxiO3TP-uVV9Z4NEvQ@mail.gmail.com>
+	<20110506174745.GA26776@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <BANLkTimUvQu8zhLSyxiO3TP-uVV9Z4NEvQ@mail.gmail.com>
+In-Reply-To: <20110506174745.GA26776@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,69 +22,18 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, May 06 2011 at  1:13pm -0400,
-MOHAMMED FIRDOSH NASIM <firdosh.nasim@gmail.com> wrote:
-
-> Hi,
-> Apologies, as I am not sure whether my query fits into this mailing list. If
-> not, then please direct me to the correct mailing list.
-> 
-> I have configured RHEL 6 X86_64 host and have enabled multipath. As per the
-> DM Multipath documentation at "
-> http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/DM_Multipath/mpath_devices.html#multipath_device_id",
-> 
-> 
-> "When new devices are brought under the control of DM-Multipath, the new
-> devices may be seen in three different places under the /dev directory:
-> /dev/mapper/mpath*n*, /dev/mpath/mpath*n*, and /dev/dm-*n*. "
-> 
-> In my host I am seeing the devices only as /dev/dm-n and /dev/mapper/mpathx
-> symlink to /dev/dm-n. I am not seeing directory /dev/mpath.
-> ---------------------------- screen dump start ---------------------------
-> [root@sped10 ~]# cat /etc/issue
-> Red Hat Enterprise Linux Server release 6.0 (Santiago)
-> Kernel \r on an \m
-> 
-> [root@sped10 ~]# uname -a
-> Linux sped10 2.6.32-71.el6.x86_64 #1 SMP Wed Sep 1 01:33:01 EDT 2010 x86_64
-> x86_64 x86_64 GNU/Linux
-> [root@sped10 ~]# ls -l /dev/mapper/ | grep mpath
-> lrwxrwxrwx. 1 root root      7 May  6 22:34 mpatha -> ../dm-7
-> lrwxrwxrwx. 1 root root      7 May  6 22:34 mpathb -> ../dm-8
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathc -> ../dm-13
-> lrwxrwxrwx. 1 root root      7 May  6 22:34 mpathd -> ../dm-6
-> lrwxrwxrwx. 1 root root      7 May  6 22:34 mpathe -> ../dm-4
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathf -> ../dm-10
-> lrwxrwxrwx. 1 root root      7 May  6 22:34 mpathg -> ../dm-5
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathh -> ../dm-12
-> lrwxrwxrwx. 1 root root      7 May  6 22:34 mpathi -> ../dm-9
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathj -> ../dm-11
-> lrwxrwxrwx. 1 root root      7 May  6 22:34 mpathk -> ../dm-2
-> lrwxrwxrwx. 1 root root      7 May  6 22:34 mpathl -> ../dm-3
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathlp1 -> ../dm-16
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathm -> ../dm-15
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathmp1 -> ../dm-20
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathmp2 -> ../dm-21
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathmp3 -> ../dm-22
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathn -> ../dm-14
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathnp1 -> ../dm-17
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathnp2 -> ../dm-18
-> lrwxrwxrwx. 1 root root      8 May  6 22:34 mpathnp3 -> ../dm-19
-> [root@sped10 ~]# ls /dev/mpath
-> ls: cannot access /dev/mpath: No such file or directory
-> [root@sped10 ~]#
-> 
-> ---------------------------- screen dump end   ---------------------------
-> 
-> Am I missing something in configuring multipath? Please assist in this
-> regard.
-
-Seems we need to update the RHEL6 docs you referenced.
-
-/dev/mpath/ namespace is no longer maintained (afaik it was a "feature"
-of a udev rule.  But I could be mistaken.  Ben and/or others could
-correct me if I'm wrong).
-
-/dev/mapper/mpath* was always the preferred method of access (even when
-/dev/mpath/* did exist) -- reason is it was always available regardless
-of udev.
+T24gRnJpLCBNYXkgNiwgMjAxMSBhdCA3OjQ3IFBNLCBNaWtlIFNuaXR6ZXIgPHNuaXR6ZXJAcmVk
+aGF0LmNvbT4gd3JvdGU6Cgo+PiBJbiBteSBob3N0IEkgYW0gc2VlaW5nIHRoZSBkZXZpY2VzIG9u
+bHkgYXMgL2Rldi9kbS1uIGFuZCAvZGV2L21hcHBlci9tcGF0aHgKCj4KPiBTZWVtcyB3ZSBuZWVk
+IHRvIHVwZGF0ZSB0aGUgUkhFTDYgZG9jcyB5b3UgcmVmZXJlbmNlZC4KPgo+IC9kZXYvbXBhdGgv
+IG5hbWVzcGFjZSBpcyBubyBsb25nZXIgbWFpbnRhaW5lZCAoYWZhaWsgaXQgd2FzIGEgImZlYXR1
+cmUiCj4gb2YgYSB1ZGV2IHJ1bGUuIMKgQnV0IEkgY291bGQgYmUgbWlzdGFrZW4uIMKgQmVuIGFu
+ZC9vciBvdGhlcnMgY291bGQKPiBjb3JyZWN0IG1lIGlmIEknbSB3cm9uZykuCj4KPiAvZGV2L21h
+cHBlci9tcGF0aCogd2FzIGFsd2F5cyB0aGUgcHJlZmVycmVkIG1ldGhvZCBvZiBhY2Nlc3MgKGV2
+ZW4gd2hlbgo+IC9kZXYvbXBhdGgvKiBkaWQgZXhpc3QpIC0tIHJlYXNvbiBpcyBpdCB3YXMgYWx3
+YXlzIGF2YWlsYWJsZSByZWdhcmRsZXNzCj4gb2YgdWRldi4KPgoKQW0gSSBjb3JyZWN0IHRvIHNh
+eSB0aGF0IC9kZXYvZG0tKiBzaG91bGQgYmUgdXNlZCBvbmx5IGludGVybmFsbHkgYnkKZGV2aWNl
+LW1hcHBlciBhbmQgbm90IHJlZmVycmVkIHRvIGJ5IHVzZXIgcHJvZ3JhbXM/CkF0IGxlYXN0IEkg
+cmVtZW1iZXIgSSByZWFkIHNvbWV0aGluZyBzaW1pbGFyLi4uCgpHaWFubHVjYQoKLS0KZG0tZGV2
+ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNv
+bS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
