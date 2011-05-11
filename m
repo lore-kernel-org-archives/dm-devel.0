@@ -1,8 +1,8 @@
-From: Ankit Jain <jankit@suse.de>
-Subject: [PATCH] multipathd: Disassociate from /dev/console when
-	daemonizing
-Date: Wed, 11 May 2011 23:14:24 +0530
-Message-ID: <4DCACAF8.2080803@suse.de>
+From: Chris Lais <chris+linux@zenthought.org>
+Subject: dm-crypt on RAID5/6 write performance - cause & proposed
+	solutions
+Date: Wed, 11 May 2011 14:11:00 -0500
+Message-ID: <BANLkTin82MipJ1t3uExAHkgVP_09Q7+eWQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,84 +20,73 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Currently, multipathd redirects stdout/stderr to /dev/console,
-to be able to show error messages when all else fails.
+I've recently installed a system with dm-crypt placed over a software
+RAID5 array, and have noticed some very severe issues with write
+performance due to the way dm-crypt works.
 
-This patch redirects them to /dev/null instead, to make it a
-well behaving daemon. This corresponds to FATE request
-https://fate.novell.com/310684 .
+Almost all of these problems are caused by dm-crypt re-ordering bios
+to an extreme degree (as shown by blktrace), such that it is very hard
+for the raid layer to merge them in to full stripes, leading to many
+extra reads and writes.  There are minor problems with losing
+io_context and seeking for CFQ, but they have far less impact.
 
-This is based on -
-git://git.kernel.org/pub/scm/linux/storage/multipath-tools/
+I've worked around the reordering locally by increasing the size of
+the various queues to very nearly their maximum, and preferring to
+write full stripes before partial ones by such an extreme amount that
+partial stripe writes can take up to ~30 seconds to complete.  Some
+partial writes still get through where there should be none.
 
-----
-commit a3dd997d1b0b55a934103e0b28648003675743e3
-Author: Ankit Jain <jankit@suse.de>
-Date:   Wed May 11 22:18:33 2011 +0530
+This is sub-optimal for the intended use of the machine (an
+interactive workstation), and I'd like to open some discussion on
+possible solutions.
 
-    multipathd: Disassociate from /dev/console
+Increasing the queue sizes and preferring full stripe writes has
+increased sequential write performance roughly 6-fold, so this is a
+MAJOR issue with this configuration (dm-crypt on top of RAID5/6).
 
-    When daemonizing, redirect stdout/stderr to /dev/null
-    instead of /dev/console. Also, chdir("/") before the redirection,
-    so that any error can be reported.
-    FATE#310684.
+Using RAID5/6 without dm-crypt does /not/ have these problems in my
+setup, even with standard queue sizes, because the raid layer can
+handle the stripe merging when the bios are not so far out of order.
+Using lower RAID levels even with dm-crypt also does not have these
+problems to such an extreme degree, because they don't need
+read-parity-write cycles for partial stripes.
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index e8eee9e..cb77c82 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1540,7 +1540,7 @@ static int
- daemonize(void)
- {
- 	int pid;
--	int in_fd, out_fd;
-+	int dev_null_fd;
+Solution #1 -
+Don't re-order bios in dm-crypt.
+This would also have the side effect of making barriers work again,
+but would probably require a very large sorted queue on the kcryptd_io
+thread, would introduce some latency, would probably introduce memory
+starvation for some loads, and could potentially introduce deadlocks
+if not done properly.  It may also cause bursty output instead of
+sustained, even when the input is sustained.
 
- 	if( (pid = fork()) < 0){
- 		fprintf(stderr, "Failed first fork : %s\n", strerror(errno));
-@@ -1556,31 +1556,24 @@ daemonize(void)
- 	else if (pid != 0)
- 		_exit(0);
+Solution #2 -
+Merge stripes in dm-crypt, and submit an entire stripe at once.
+This is a huge hack, but it would use much smaller queues than would
+be required at a lower layer (i.e., the raid5/6 layer, where it is
+currently happening).  It would still produce out-of-order stripe
+writes, but the I/O scheduler would probably handle that with a large
+enough request queue, and seeking is much cheaper than multiple
+read-parity-write cycles per stripe.
 
--	in_fd = open("/dev/null", O_RDONLY);
--	if (in_fd < 0){
--		fprintf(stderr, "cannot open /dev/null for input : %s\n",
--			strerror(errno));
--		_exit(0);
--	}
--	out_fd = open("/dev/console", O_WRONLY);
--	if (out_fd < 0){
--		fprintf(stderr, "cannot open /dev/console for output : %s\n",
-+	if (chdir("/") < 0)
-+		fprintf(stderr, "cannot chdir to '/', continuing\n");
-+
-+	dev_null_fd = open("/dev/null", O_RDWR);
-+	if (dev_null_fd < 0){
-+		fprintf(stderr, "cannot open /dev/null for input & output : %s\n",
- 			strerror(errno));
- 		_exit(0);
- 	}
+Solution #3 -
+In the md layer, in addition to preread_bypass_threshold, add a
+preread_expire, to allow stripes that need pre-read to be submitted
+based on time, rather than skip count.
+Nothing more than triage for the partial stripe write delay when
+favoring full stripes.
 
- 	close(STDIN_FILENO);
--	dup(in_fd);
-+	dup(dev_null_fd);
- 	close(STDOUT_FILENO);
--	dup(out_fd);
-+	dup(dev_null_fd);
- 	close(STDERR_FILENO);
--	dup(out_fd);
--
--	close(in_fd);
--	close(out_fd);
--	if (chdir("/") < 0)
--		fprintf(stderr, "cannot chdir to '/', continuing\n");
-+	dup(dev_null_fd);
+Does anyone have any more ideas, or comments on these?
+Need logs?  I can produce them, just ask for what you want.
 
-+	close(dev_null_fd);
- 	return 0;
- }
-
+Setup:
+Linux version: 2.6.38
+Processor: i7-870 (2.93GHz with 4 cores + HT = 8 logical units)
+RAM: 8GB
+RAID5: 3x1.5TB w/ 512k chunks
+LVM2
+dm-crypt: LUKS with aes-cbc-essiv:sha256
+All layers are properly aligned.
 
 -- 
-Ankit Jain
-SUSE Labs
+Chris
