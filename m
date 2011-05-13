@@ -1,7 +1,7 @@
 From: sdrb <sdrb@onet.eu>
 Subject: Issue with dm snapshots
-Date: Fri, 13 May 2011 13:54:25 +0200
-Message-ID: <4DCD1BF1.4090009@onet.eu>
+Date: Fri, 13 May 2011 12:27:50 +0200
+Message-ID: <4DCD07A6.8020408@onet.eu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
