@@ -1,11 +1,11 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: SUSE multipath-tools patch resync
-Date: Wed, 18 May 2011 17:03:28 +0200
-Message-ID: <4DD3DFC0.9050300@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-io: flush CPU cache on vmalloc mappings
+Date: Wed, 18 May 2011 18:12:39 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1105181810380.1252@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,124 +16,116 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+To: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Christophe,
+dm-io: flush CPU cache on vmalloc mappings
 
-finally I've finished rebasing my patch queue for
-multipath-tools to the latest upstream git commit.
-The resulting tree is at:
+For normal kernel pages, CPU cache is synchronized by the dma layer.
+However, this is not done for pages allocated with vmalloc. If we do I/O
+to/from vmallocated pages, we must synchronize CPU cache explicitly.
 
-git.kernel.org:/pub/scm/linux/kernel/git/hare/multipath-tools.git
-branch for-christophe
+Prior to doing I/O on vmallocated page we must call
+flush_kernel_vmap_range to flush dirty cache on the virtual address.
+After finished read we must call invalidate_kernel_vmap_range to
+invalidate cache on the virtual address, so that accesses to the virtual
+address return newly read data and not stale data from CPU cache.
 
-Here are the summary lines of the patches:
-  * Reload map for device read-only setting changes
-  * Increase priority value for emc priority callout
-  * Allow dev_loss to be set to 'infinity'
-  * Update manpages
-  * multipath: add '-t' option to dump internal hwtable
-  * Reassign existing device-mapper maps
-  * alua: Handle LBA_DEPENDENT state
-  * Update multipathd init script for SuSE
-  * multipathd: Add PID to 'show daemon' cli command
-  * Update pid file handling
-  * Serialize startup on large machines
-  * Add 'shutdown' cli command
-  * multipathd: Update 'max_fds' handling
-  * multipathd: crash in reconfigure CLI command
-  * Add 'max_polling_interval' config variable
-  * libmultipath: Only count UP and GHOST paths for prio update
-  * Always synchronize with dm state
-  * multipathd is not starting waitevent checker for single paths
-  * More debugging output when synchronizing path states
-  * libmultipath: Make path state message unique
-  * Update dev_loss_tmo for no_path_retry
-  * Check for valid argument in update_multipath_strings()
-  * libmultipath: Remove duplicate calls to path_offline()
-  * Check for offline path in get_prio()
-  * Use state name in get_state()
-  * Only check offline status for SCSI devices
-  * libmultipath: zero out sense buffer in do_inq()
-  * multipathd: fix memory issues in cli.c
-  * multipathd: Remove handling of 'umount' events
-  * Safe memory allocation in cli_handlers
-  * multipathd: Fix uxlsnr race condition on shutdown
-  * Rework sysfs device handling in multipathd
-  * multipath: add SuSE init file
-  * Checker name is not displayed on failure
-  * Unload priority modules
-  * Display avg priority as group priority
-  * libmultipath: Improve debugging of log messages
-  * libmultipath: rework sysfs handling
-  * libmultipath: update waiter handling
-  * libmultipath: do not fallback to search /proc/partitions
-  * Start uevent service handler from main thread
-  * Use lists for uevent processing
-  * Remove sysfs_attr cache
-  * Fixup strip trailing whitespaces for getuid return value
-  * Check return value for select_alias()
-  * Use enum free_path_mode for free_paths argument
-  * vector paranoia
-  * Update cli request processing
-  * Implement 'bindings_file' option
-  * kpartx: Intendation fix in devmapper.c
-  * Use regmatch when checking for duplicates in hwtable
-  * Update hwtable factorization
-  * Specify prioritizer in the multipath section, too
-  * Static Load balancing prioritizer
-  * Synchronize dm states for IO errors
-  * Add 'max_polling_interval' config variable
-  * libmultipath: do not access dm structures after dm_task_destroy
-  * Correctly remove logical partition maps
-  * rdac checker: Whitespace cleanup
-  * libmultipath: Fix possible string overflow
-  * More debugging output for feature changes
-  * Fixup debugging in dmparser.c
-  * Correctly update feature strings
-  * Select 'features' from multipath configuration
-  * Increase uevent buffer size
-  * libmultipath: remove strcmp_chomp()
-  * Remove sysfs_lookup_devpath_by_subsys_id()
-  * libmultipath: resolve hash collisions in pgcmp()
-  * libmultipath: correct path count in setup_map()
-  * Make status variable local
-  * Make params variable local
-  * multipath segfaults if configuration file contains errors
-  * Use '--replace-whitespace' option for scsi_id
-  * Asynchronous mode for tur checker
-  * Move setup_thread_attr() to uevent.c
-  * TUR checker should not return 'failed' for reservation conflict
-  * directio: Reset 'running' parameter
-  * Use timeout parameter for directio
-  * libmultipath: check argument length in execute_program()
-  * readsector0: block count calculation wrong
-  * checkers: argument paranoia
-  * Use refcounting for checkers
-  * kpartx: Add option '-f' to force devmap creation
-  * Add 'no_partitions' feature
-  * Implement 'update' option for kpartx
-  * kpartx: Indentation fix
-  * Add compability flag LIBDM_API_COOKIE
+This patch fixes metadata corruption on dm-snapshots on PA-RISC and
+possibly other architectures with caches indexed by virtual address.
 
-(Did I mention I had quite a few outstanding?)
-They are ordered in reverse order, in case you'd want to
-cross-check against the git tree.
+Cc: stable <stable@kernel.org>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-How to proceed best here?
-Sending them all for review to the mailinglist seems a
-bit excessive, but then that'll be automated anyway,
-so I don't care.
-Just tell me what you prefer.
+---
+ drivers/md/dm-io.c |   29 +++++++++++++++++++++++++++--
+ 1 file changed, 27 insertions(+), 2 deletions(-)
 
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Index: linux-2.6.39-rc7-fast/drivers/md/dm-io.c
+===================================================================
+--- linux-2.6.39-rc7-fast.orig/drivers/md/dm-io.c	2011-05-18 19:14:52.000000000 +0200
++++ linux-2.6.39-rc7-fast/drivers/md/dm-io.c	2011-05-18 19:48:30.000000000 +0200
+@@ -36,6 +36,8 @@ struct io {
+ 	struct dm_io_client *client;
+ 	io_notify_fn callback;
+ 	void *context;
++	void *vma_invalidate_address;
++	unsigned long vma_invalidate_size;
+ } __attribute__((aligned(DM_IO_MAX_REGIONS)));
+ 
+ static struct kmem_cache *_dm_io_cache;
+@@ -133,6 +135,10 @@ static void dec_count(struct io *io, uns
+ 		set_bit(region, &io->error_bits);
+ 
+ 	if (atomic_dec_and_test(&io->count)) {
++		if (io->vma_invalidate_size)
++			invalidate_kernel_vmap_range(io->vma_invalidate_address,
++						     io->vma_invalidate_size);
++
+ 		if (io->sleeper)
+ 			wake_up_process(io->sleeper);
+ 
+@@ -176,6 +182,9 @@ struct dpages {
+ 
+ 	unsigned context_u;
+ 	void *context_ptr;
++
++	void *vma_invalidate_address;
++	unsigned long vma_invalidate_size;
+ };
+ 
+ /*
+@@ -394,6 +403,9 @@ static int sync_io(struct dm_io_client *
+ 	io->sleeper = current;
+ 	io->client = client;
+ 
++	io->vma_invalidate_address = dp->vma_invalidate_address;
++	io->vma_invalidate_size = dp->vma_invalidate_size;
++
+ 	dispatch_io(rw, num_regions, where, dp, io, 1);
+ 
+ 	while (1) {
+@@ -432,13 +444,21 @@ static int async_io(struct dm_io_client 
+ 	io->callback = fn;
+ 	io->context = context;
+ 
++	io->vma_invalidate_address = dp->vma_invalidate_address;
++	io->vma_invalidate_size = dp->vma_invalidate_size;
++
+ 	dispatch_io(rw, num_regions, where, dp, io, 0);
+ 	return 0;
+ }
+ 
+-static int dp_init(struct dm_io_request *io_req, struct dpages *dp)
++static int dp_init(struct dm_io_request *io_req, struct dpages *dp,
++		   unsigned long size)
+ {
+ 	/* Set up dpages based on memory type */
++
++	dp->vma_invalidate_address = NULL;
++	dp->vma_invalidate_size = 0;
++
+ 	switch (io_req->mem.type) {
+ 	case DM_IO_PAGE_LIST:
+ 		list_dp_init(dp, io_req->mem.ptr.pl, io_req->mem.offset);
+@@ -449,6 +469,11 @@ static int dp_init(struct dm_io_request 
+ 		break;
+ 
+ 	case DM_IO_VMA:
++		flush_kernel_vmap_range(io_req->mem.ptr.vma, size);
++		if ((io_req->bi_rw & RW_MASK) == READ) {
++			dp->vma_invalidate_address = io_req->mem.ptr.vma;
++			dp->vma_invalidate_size = size;
++		}
+ 		vm_dp_init(dp, io_req->mem.ptr.vma);
+ 		break;
+ 
+@@ -477,7 +502,7 @@ int dm_io(struct dm_io_request *io_req, 
+ 	int r;
+ 	struct dpages dp;
+ 
+-	r = dp_init(io_req, &dp);
++	r = dp_init(io_req, &dp, (unsigned long)where->count << SECTOR_SHIFT);
+ 	if (r)
+ 		return r;
+ 
