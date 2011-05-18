@@ -1,7 +1,7 @@
-From: saeed bishara <saeed.bishara@gmail.com>
-Subject: how to disable exclusive access
-Date: Sun, 15 May 2011 17:10:21 +0300
-Message-ID: <BANLkTimF39d9iwT=T_ShoGO10NksmuKXRg@mail.gmail.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: [PATCH] dm: Integrity errors should not cause failover
+Date: Wed, 18 May 2011 00:49:49 -0400
+Message-ID: <yq18vu4fw9e.fsf@sermon.lab.mkp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,16 +16,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-    I'm trying to do linear mapping for part of a disk that used also
-as boot device, but the dmsetup create fails as this disk is used.
-   is there any way to workaround that?
-   the partition that I'm using as rootfs and the part that will be
-used as linear device don't overlap, does that mean there will be no
-risk for data corruption if I modified the dm code to disable the
-exclusive access?
 
-saeed
+Integrity errors need to be passed to the owner of the integrity
+metadata for processing. Consequently EILSEQ should be passed up the
+stack.
+
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Acked-by: Mike Snitzer <snitzer@redhat.com>
+
+---
+
+Ping on this one?
+
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index a550a05..aa4e570 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1290,7 +1290,7 @@ static int do_end_io(struct multipath *m, struct request *clone,
+ 	if (!error && !clone->errors)
+ 		return 0;	/* I/O complete */
+ 
+-	if (error == -EOPNOTSUPP || error == -EREMOTEIO)
++	if (error == -EOPNOTSUPP || error == -EREMOTEIO || error == -EILSEQ)
+ 		return error;
+ 
+ 	if (mpio->pgpath)
