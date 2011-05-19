@@ -1,13 +1,13 @@
-From: Christian May <christian_may@de.ibm.com>
-Subject: Re: 2.6.32.28 - md resync + pvmove - crash
-Date: Thu, 19 May 2011 15:56:35 +0200
-Message-ID: <OFB3220E2E.60BE18D4-ONC1257895.004BE5D4-C1257895.004C97B5@de.ibm.com>
-References: <20110507103907.GA2712@nik-comp.lan>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] Fix a possible dm-kcopyd deadlock - preallocate
+	sub jobs
+Date: Thu, 19 May 2011 12:55:07 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1105191250440.17915@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6083439272338443202=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110507103907.GA2712@nik-comp.lan>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,114 +17,148 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============6083439272338443202==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 004C31DAC1257895_="
+Hi
 
-This is a multipart message in MIME format.
---=_alternative 004C31DAC1257895_=
-Content-Type: text/plain; charset="US-ASCII"
+Here I'm sending some patches for kcopyd. This first one fixes a 
+treoretical deadlock, the other patches are a code cleanup (removing some 
+"magic" numbers in mempool resrvations).
 
-Hi,
+Later, I will follow with patches that rework page reservations.
 
-currently I have a ppc64 IBM blade running with RHEL6.1 RC2 
-(2.6.32-131.0.13.el6.ppc64). Twelve multipath devices are attached and I/O 
-is running.
-I've checked dmesg and found:
+Mikulas
 
-[root@elm8a211 ~]# dmesg
-INFO: task kjournald:7938 blocked for more than 120 seconds.
-"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
-kjournald     D 0000000000000000     0  7938      2 0x00008080
-Call Trace:
-[c0000003c82f3420] [c0000003c82f34d0] 0xc0000003c82f34d0 (unreliable)
-[c0000003c82f35f0] [c000000000014288] .__switch_to+0xf8/0x1d0
-[c0000003c82f3680] [c00000000059cc18] .schedule+0x408/0xd30
-[c0000003c82f3960] [c00000000059d5d0] .io_schedule+0x90/0x110
-[c0000003c82f39f0] [c0000000001fc2f8] .sync_buffer+0x68/0x80
-[c0000003c82f3a60] [c00000000059e104] .__wait_on_bit+0xb4/0x130
-[c0000003c82f3b10] [c00000000059e1f0] .out_of_line_wait_on_bit+0x70/0x90
-[c0000003c82f3bf0] [c0000000001fc1b0] .__wait_on_buffer+0x30/0x50
-[c0000003c82f3c70] [d000000004043bc4] 
-.journal_commit_transaction+0x624/0x1630 [jbd]
-[c0000003c82f3de0] [d0000000040488fc] .kjournald+0x11c/0x330 [jbd]
-[c0000003c82f3ed0] [c0000000000bb02c] .kthread+0xbc/0xd0
-[c0000003c82f3f90] [c0000000000323f4] .kernel_thread+0x54/0x70
-[root@elm8a211 ~]# 
+---
 
-I have no idea where it's coming from..system i still up'n running.
+Fix a possible dm-kcopyd deadlock - preallocate sub jobs
 
+There's a possible theoretical deadlock in dm-kcopyd because multiple
+allocations from the same mempool are required to finish a request.
 
-Best regards,
+There is a mempool of 512 entries. Each request requires up to 9
+entries from the mempool. If we have at least 57 concurrent requests
+running, the mempool may overflow and mempool allocations may start
+blocking until another entry is freed to the mempool. Because the same
+thread is used to free entries to the mempool and allocate entries from
+the mempool, this may result in a deadlock.
 
-Christian May
-IBM
+This patch changes it so that one mempool entry contains all 9 "struct
+kcopyd_job" required to fulfill the whole request. The allocation is
+done only once in dm_kcopyd_copy and no further mempool allocations are
+done during request processing.
+
+If dm_kcopyd_copy is not run in the completion thread, this
+implementation is deadlock-free.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-kcopyd.c |   29 +++++++++++++++++++----------
+ 1 file changed, 19 insertions(+), 10 deletions(-)
+
+Index: linux-2.6.39-rc7-fast/drivers/md/dm-kcopyd.c
+===================================================================
+--- linux-2.6.39-rc7-fast.orig/drivers/md/dm-kcopyd.c	2011-05-18 18:03:13.000000000 +0200
++++ linux-2.6.39-rc7-fast/drivers/md/dm-kcopyd.c	2011-05-18 18:03:31.000000000 +0200
+@@ -27,6 +27,9 @@
  
---=_alternative 004C31DAC1257895_=
-Content-Type: text/html; charset="US-ASCII"
-
-<font size=2 face="sans-serif">Hi,</font>
-<br>
-<br><font size=2 face="sans-serif">currently I have a ppc64 IBM blade running
-with RHEL6.1 RC2 (2.6.32-131.0.13.el6.ppc64). Twelve multipath devices
-are attached and I/O is running.</font>
-<br><font size=2 face="sans-serif">I've checked dmesg and found:<br>
-<br>
-[root@elm8a211 ~]# dmesg</font>
-<br><font size=2 face="sans-serif">INFO: task kjournald:7938 blocked for
-more than 120 seconds.</font>
-<br><font size=2 face="sans-serif">&quot;echo 0 &gt; /proc/sys/kernel/hung_task_timeout_secs&quot;
-disables this message.</font>
-<br><font size=2 face="sans-serif">kjournald &nbsp; &nbsp; D 0000000000000000
-&nbsp; &nbsp; 0 &nbsp;7938 &nbsp; &nbsp; &nbsp;2 0x00008080</font>
-<br><font size=2 face="sans-serif">Call Trace:</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3420] [c0000003c82f34d0]
-0xc0000003c82f34d0 (unreliable)</font>
-<br><font size=2 face="sans-serif">[c0000003c82f35f0] [c000000000014288]
-.__switch_to+0xf8/0x1d0</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3680] [c00000000059cc18]
-.schedule+0x408/0xd30</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3960] [c00000000059d5d0]
-.io_schedule+0x90/0x110</font>
-<br><font size=2 face="sans-serif">[c0000003c82f39f0] [c0000000001fc2f8]
-.sync_buffer+0x68/0x80</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3a60] [c00000000059e104]
-.__wait_on_bit+0xb4/0x130</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3b10] [c00000000059e1f0]
-.out_of_line_wait_on_bit+0x70/0x90</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3bf0] [c0000000001fc1b0]
-.__wait_on_buffer+0x30/0x50</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3c70] [d000000004043bc4]
-.journal_commit_transaction+0x624/0x1630 [jbd]</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3de0] [d0000000040488fc]
-.kjournald+0x11c/0x330 [jbd]</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3ed0] [c0000000000bb02c]
-.kthread+0xbc/0xd0</font>
-<br><font size=2 face="sans-serif">[c0000003c82f3f90] [c0000000000323f4]
-.kernel_thread+0x54/0x70</font>
-<br><font size=2 face="sans-serif">[root@elm8a211 ~]# </font>
-<br>
-<br><font size=2 face="sans-serif">I have no idea where it's coming from..system
-i still up'n running.</font>
-<br>
-<br><font size=2 face="sans-serif"><br>
-Best regards,</font>
-<br>
-<br><font size=2 face="sans-serif">Christian May</font>
-<br><font size=2 face="sans-serif">IBM</font>
-<p><font size=3>&nbsp;</font>
---=_alternative 004C31DAC1257895_=--
-
-
---===============6083439272338443202==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6083439272338443202==--
+ #include "dm.h"
+ 
++#define SUB_JOB_SIZE	128
++#define SPLIT_COUNT	8
++
+ /*-----------------------------------------------------------------
+  * Each kcopyd client has its own little pool of preallocated
+  * pages for kcopyd io.
+@@ -216,6 +219,8 @@ struct kcopyd_job {
+ 	struct mutex lock;
+ 	atomic_t sub_jobs;
+ 	sector_t progress;
++
++	struct kcopyd_job *master_job;
+ };
+ 
+ /* FIXME: this should scale with the number of pages */
+@@ -225,7 +230,9 @@ static struct kmem_cache *_job_cache;
+ 
+ int __init dm_kcopyd_init(void)
+ {
+-	_job_cache = KMEM_CACHE(kcopyd_job, 0);
++	_job_cache = kmem_cache_create("kcopyd_job",
++				sizeof(struct kcopyd_job) * (SPLIT_COUNT + 1),
++				__alignof__(struct kcopyd_job), 0, NULL);
+ 	if (!_job_cache)
+ 		return -ENOMEM;
+ 
+@@ -299,7 +306,9 @@ static int run_complete_job(struct kcopy
+ 
+ 	if (job->pages)
+ 		kcopyd_put_pages(kc, job->pages);
+-	mempool_free(job, kc->job_pool);
++	/* Do not free sub-jobs */
++	if (context != job)
++		mempool_free(job, kc->job_pool);
+ 	fn(read_err, write_err, context);
+ 
+ 	if (atomic_dec_and_test(&kc->nr_jobs))
+@@ -460,14 +469,14 @@ static void dispatch_job(struct kcopyd_j
+ 	wake(kc);
+ }
+ 
+-#define SUB_JOB_SIZE 128
+ static void segment_complete(int read_err, unsigned long write_err,
+ 			     void *context)
+ {
+ 	/* FIXME: tidy this function */
+ 	sector_t progress = 0;
+ 	sector_t count = 0;
+-	struct kcopyd_job *job = (struct kcopyd_job *) context;
++	struct kcopyd_job *sub_job = (struct kcopyd_job *) context;
++	struct kcopyd_job *job = sub_job->master_job;
+ 	struct dm_kcopyd_client *kc = job->kc;
+ 
+ 	mutex_lock(&job->lock);
+@@ -498,10 +507,9 @@ static void segment_complete(int read_er
+ 
+ 	if (count) {
+ 		int i;
+-		struct kcopyd_job *sub_job = mempool_alloc(kc->job_pool,
+-							   GFP_NOIO);
+ 
+ 		*sub_job = *job;
++		sub_job->master_job = job;
+ 		sub_job->source.sector += progress;
+ 		sub_job->source.count = count;
+ 
+@@ -511,7 +519,7 @@ static void segment_complete(int read_er
+ 		}
+ 
+ 		sub_job->fn = segment_complete;
+-		sub_job->context = job;
++		sub_job->context = sub_job;
+ 		dispatch_job(sub_job);
+ 
+ 	} else if (atomic_dec_and_test(&job->sub_jobs)) {
+@@ -534,7 +542,6 @@ static void segment_complete(int read_er
+  * Create some little jobs that will do the move between
+  * them.
+  */
+-#define SPLIT_COUNT 8
+ static void split_job(struct kcopyd_job *job)
+ {
+ 	int i;
+@@ -542,8 +549,10 @@ static void split_job(struct kcopyd_job 
+ 	atomic_inc(&job->kc->nr_jobs);
+ 
+ 	atomic_set(&job->sub_jobs, SPLIT_COUNT);
+-	for (i = 0; i < SPLIT_COUNT; i++)
+-		segment_complete(0, 0u, job);
++	for (i = 0; i < SPLIT_COUNT; i++) {
++		job[i + 1].master_job = job;
++		segment_complete(0, 0u, &job[i + 1]);
++	}
+ }
+ 
+ int dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
