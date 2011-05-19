@@ -1,12 +1,13 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-io: flush CPU cache on vmalloc mappings
-Date: Wed, 18 May 2011 18:12:39 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1105181810380.1252@hs20-bc2-1.build.redhat.com>
+From: Christian May <christian_may@de.ibm.com>
+Subject: Re: 2.6.32.28 - md resync + pvmove - crash
+Date: Thu, 19 May 2011 15:56:35 +0200
+Message-ID: <OFB3220E2E.60BE18D4-ONC1257895.004BE5D4-C1257895.004C97B5@de.ibm.com>
+References: <20110507103907.GA2712@nik-comp.lan>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============6083439272338443202=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20110507103907.GA2712@nik-comp.lan>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,116 +17,114 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-dm-io: flush CPU cache on vmalloc mappings
+This is a multipart message in MIME format.
+--===============6083439272338443202==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 004C31DAC1257895_="
 
-For normal kernel pages, CPU cache is synchronized by the dma layer.
-However, this is not done for pages allocated with vmalloc. If we do I/O
-to/from vmallocated pages, we must synchronize CPU cache explicitly.
+This is a multipart message in MIME format.
+--=_alternative 004C31DAC1257895_=
+Content-Type: text/plain; charset="US-ASCII"
 
-Prior to doing I/O on vmallocated page we must call
-flush_kernel_vmap_range to flush dirty cache on the virtual address.
-After finished read we must call invalidate_kernel_vmap_range to
-invalidate cache on the virtual address, so that accesses to the virtual
-address return newly read data and not stale data from CPU cache.
+Hi,
 
-This patch fixes metadata corruption on dm-snapshots on PA-RISC and
-possibly other architectures with caches indexed by virtual address.
+currently I have a ppc64 IBM blade running with RHEL6.1 RC2 
+(2.6.32-131.0.13.el6.ppc64). Twelve multipath devices are attached and I/O 
+is running.
+I've checked dmesg and found:
 
-Cc: stable <stable@kernel.org>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+[root@elm8a211 ~]# dmesg
+INFO: task kjournald:7938 blocked for more than 120 seconds.
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+kjournald     D 0000000000000000     0  7938      2 0x00008080
+Call Trace:
+[c0000003c82f3420] [c0000003c82f34d0] 0xc0000003c82f34d0 (unreliable)
+[c0000003c82f35f0] [c000000000014288] .__switch_to+0xf8/0x1d0
+[c0000003c82f3680] [c00000000059cc18] .schedule+0x408/0xd30
+[c0000003c82f3960] [c00000000059d5d0] .io_schedule+0x90/0x110
+[c0000003c82f39f0] [c0000000001fc2f8] .sync_buffer+0x68/0x80
+[c0000003c82f3a60] [c00000000059e104] .__wait_on_bit+0xb4/0x130
+[c0000003c82f3b10] [c00000000059e1f0] .out_of_line_wait_on_bit+0x70/0x90
+[c0000003c82f3bf0] [c0000000001fc1b0] .__wait_on_buffer+0x30/0x50
+[c0000003c82f3c70] [d000000004043bc4] 
+.journal_commit_transaction+0x624/0x1630 [jbd]
+[c0000003c82f3de0] [d0000000040488fc] .kjournald+0x11c/0x330 [jbd]
+[c0000003c82f3ed0] [c0000000000bb02c] .kthread+0xbc/0xd0
+[c0000003c82f3f90] [c0000000000323f4] .kernel_thread+0x54/0x70
+[root@elm8a211 ~]# 
 
----
- drivers/md/dm-io.c |   29 +++++++++++++++++++++++++++--
- 1 file changed, 27 insertions(+), 2 deletions(-)
+I have no idea where it's coming from..system i still up'n running.
 
-Index: linux-2.6.39-rc7-fast/drivers/md/dm-io.c
-===================================================================
---- linux-2.6.39-rc7-fast.orig/drivers/md/dm-io.c	2011-05-18 19:14:52.000000000 +0200
-+++ linux-2.6.39-rc7-fast/drivers/md/dm-io.c	2011-05-18 19:48:30.000000000 +0200
-@@ -36,6 +36,8 @@ struct io {
- 	struct dm_io_client *client;
- 	io_notify_fn callback;
- 	void *context;
-+	void *vma_invalidate_address;
-+	unsigned long vma_invalidate_size;
- } __attribute__((aligned(DM_IO_MAX_REGIONS)));
+
+Best regards,
+
+Christian May
+IBM
  
- static struct kmem_cache *_dm_io_cache;
-@@ -133,6 +135,10 @@ static void dec_count(struct io *io, uns
- 		set_bit(region, &io->error_bits);
- 
- 	if (atomic_dec_and_test(&io->count)) {
-+		if (io->vma_invalidate_size)
-+			invalidate_kernel_vmap_range(io->vma_invalidate_address,
-+						     io->vma_invalidate_size);
-+
- 		if (io->sleeper)
- 			wake_up_process(io->sleeper);
- 
-@@ -176,6 +182,9 @@ struct dpages {
- 
- 	unsigned context_u;
- 	void *context_ptr;
-+
-+	void *vma_invalidate_address;
-+	unsigned long vma_invalidate_size;
- };
- 
- /*
-@@ -394,6 +403,9 @@ static int sync_io(struct dm_io_client *
- 	io->sleeper = current;
- 	io->client = client;
- 
-+	io->vma_invalidate_address = dp->vma_invalidate_address;
-+	io->vma_invalidate_size = dp->vma_invalidate_size;
-+
- 	dispatch_io(rw, num_regions, where, dp, io, 1);
- 
- 	while (1) {
-@@ -432,13 +444,21 @@ static int async_io(struct dm_io_client 
- 	io->callback = fn;
- 	io->context = context;
- 
-+	io->vma_invalidate_address = dp->vma_invalidate_address;
-+	io->vma_invalidate_size = dp->vma_invalidate_size;
-+
- 	dispatch_io(rw, num_regions, where, dp, io, 0);
- 	return 0;
- }
- 
--static int dp_init(struct dm_io_request *io_req, struct dpages *dp)
-+static int dp_init(struct dm_io_request *io_req, struct dpages *dp,
-+		   unsigned long size)
- {
- 	/* Set up dpages based on memory type */
-+
-+	dp->vma_invalidate_address = NULL;
-+	dp->vma_invalidate_size = 0;
-+
- 	switch (io_req->mem.type) {
- 	case DM_IO_PAGE_LIST:
- 		list_dp_init(dp, io_req->mem.ptr.pl, io_req->mem.offset);
-@@ -449,6 +469,11 @@ static int dp_init(struct dm_io_request 
- 		break;
- 
- 	case DM_IO_VMA:
-+		flush_kernel_vmap_range(io_req->mem.ptr.vma, size);
-+		if ((io_req->bi_rw & RW_MASK) == READ) {
-+			dp->vma_invalidate_address = io_req->mem.ptr.vma;
-+			dp->vma_invalidate_size = size;
-+		}
- 		vm_dp_init(dp, io_req->mem.ptr.vma);
- 		break;
- 
-@@ -477,7 +502,7 @@ int dm_io(struct dm_io_request *io_req, 
- 	int r;
- 	struct dpages dp;
- 
--	r = dp_init(io_req, &dp);
-+	r = dp_init(io_req, &dp, (unsigned long)where->count << SECTOR_SHIFT);
- 	if (r)
- 		return r;
- 
+--=_alternative 004C31DAC1257895_=
+Content-Type: text/html; charset="US-ASCII"
+
+<font size=2 face="sans-serif">Hi,</font>
+<br>
+<br><font size=2 face="sans-serif">currently I have a ppc64 IBM blade running
+with RHEL6.1 RC2 (2.6.32-131.0.13.el6.ppc64). Twelve multipath devices
+are attached and I/O is running.</font>
+<br><font size=2 face="sans-serif">I've checked dmesg and found:<br>
+<br>
+[root@elm8a211 ~]# dmesg</font>
+<br><font size=2 face="sans-serif">INFO: task kjournald:7938 blocked for
+more than 120 seconds.</font>
+<br><font size=2 face="sans-serif">&quot;echo 0 &gt; /proc/sys/kernel/hung_task_timeout_secs&quot;
+disables this message.</font>
+<br><font size=2 face="sans-serif">kjournald &nbsp; &nbsp; D 0000000000000000
+&nbsp; &nbsp; 0 &nbsp;7938 &nbsp; &nbsp; &nbsp;2 0x00008080</font>
+<br><font size=2 face="sans-serif">Call Trace:</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3420] [c0000003c82f34d0]
+0xc0000003c82f34d0 (unreliable)</font>
+<br><font size=2 face="sans-serif">[c0000003c82f35f0] [c000000000014288]
+.__switch_to+0xf8/0x1d0</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3680] [c00000000059cc18]
+.schedule+0x408/0xd30</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3960] [c00000000059d5d0]
+.io_schedule+0x90/0x110</font>
+<br><font size=2 face="sans-serif">[c0000003c82f39f0] [c0000000001fc2f8]
+.sync_buffer+0x68/0x80</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3a60] [c00000000059e104]
+.__wait_on_bit+0xb4/0x130</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3b10] [c00000000059e1f0]
+.out_of_line_wait_on_bit+0x70/0x90</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3bf0] [c0000000001fc1b0]
+.__wait_on_buffer+0x30/0x50</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3c70] [d000000004043bc4]
+.journal_commit_transaction+0x624/0x1630 [jbd]</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3de0] [d0000000040488fc]
+.kjournald+0x11c/0x330 [jbd]</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3ed0] [c0000000000bb02c]
+.kthread+0xbc/0xd0</font>
+<br><font size=2 face="sans-serif">[c0000003c82f3f90] [c0000000000323f4]
+.kernel_thread+0x54/0x70</font>
+<br><font size=2 face="sans-serif">[root@elm8a211 ~]# </font>
+<br>
+<br><font size=2 face="sans-serif">I have no idea where it's coming from..system
+i still up'n running.</font>
+<br>
+<br><font size=2 face="sans-serif"><br>
+Best regards,</font>
+<br>
+<br><font size=2 face="sans-serif">Christian May</font>
+<br><font size=2 face="sans-serif">IBM</font>
+<p><font size=3>&nbsp;</font>
+--=_alternative 004C31DAC1257895_=--
+
+
+--===============6083439272338443202==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6083439272338443202==--
