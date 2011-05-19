@@ -1,7 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-io: reserve just one bioset structure
-Date: Thu, 19 May 2011 12:57:41 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1105191257030.17915@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH] Remove the spinlock protecting the pages
+	allocation
+Date: Thu, 19 May 2011 12:58:28 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1105191257430.17915@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,34 +20,80 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-dm-io: reserve just one bioset structure
+Remove the spinlock protecting the pages allocation
 
-The number 16 was "magic" and meaningless. This patch changes it to reserve just
-one "struct bio", which is the minimum required.
+The spinlock is taken in kcopyd_get_pages and kcopyd_put_pages.
 
-If there is no memory pressure, the code can allocate arbitrary number of bios.
+kcopyd_get_pages is only called from run_pages_job, which is only
+called from process_jobs called from do_work.
 
-If there is memory pressure, the code can allocate just one bio. The code in
-"do_region" contains a loop, it allocates a bio, fills it and submits it. If we
-have just one bio available, the code wouldn't deadlock, it would just wait
-with the allocation of next bio until the previous bio finished.
+kcopyd_put_pages is called from client_alloc_pages (which is initialization
+function) or from run_complete_job. run_complete_job is only called from
+process_jobs called from do_work.
+
+The spinlock is only taken on initialization or from single-threaded workqueue.
+Therefore, the spinlock is useless.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-io.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-kcopyd.c |   11 +----------
+ 1 file changed, 1 insertion(+), 10 deletions(-)
 
-Index: linux-2.6.39-rc7-fast/drivers/md/dm-io.c
+Index: linux-2.6.39-rc7-fast/drivers/md/dm-kcopyd.c
 ===================================================================
---- linux-2.6.39-rc7-fast.orig/drivers/md/dm-io.c	2011-05-18 20:51:32.000000000 +0200
-+++ linux-2.6.39-rc7-fast/drivers/md/dm-io.c	2011-05-18 20:51:37.000000000 +0200
-@@ -57,7 +57,7 @@ struct dm_io_client *dm_io_client_create
- 	if (!client->pool)
- 		goto bad;
+--- linux-2.6.39-rc7-fast.orig/drivers/md/dm-kcopyd.c	2011-05-18 18:17:35.000000000 +0200
++++ linux-2.6.39-rc7-fast/drivers/md/dm-kcopyd.c	2011-05-18 18:19:01.000000000 +0200
+@@ -36,7 +36,6 @@
+  * pages for kcopyd io.
+  *---------------------------------------------------------------*/
+ struct dm_kcopyd_client {
+-	spinlock_t lock;
+ 	struct page_list *pages;
+ 	unsigned int nr_pages;
+ 	unsigned int nr_free_pages;
+@@ -99,11 +98,8 @@ static int kcopyd_get_pages(struct dm_kc
+ {
+ 	struct page_list *pl;
  
--	client->bios = bioset_create(16, 0);
-+	client->bios = bioset_create(1, 0);
- 	if (!client->bios)
- 		goto bad;
+-	spin_lock(&kc->lock);
+-	if (kc->nr_free_pages < nr) {
+-		spin_unlock(&kc->lock);
++	if (kc->nr_free_pages < nr)
+ 		return -ENOMEM;
+-	}
  
+ 	kc->nr_free_pages -= nr;
+ 	for (*pages = pl = kc->pages; --nr; pl = pl->next)
+@@ -112,8 +108,6 @@ static int kcopyd_get_pages(struct dm_kc
+ 	kc->pages = pl->next;
+ 	pl->next = NULL;
+ 
+-	spin_unlock(&kc->lock);
+-
+ 	return 0;
+ }
+ 
+@@ -121,14 +115,12 @@ static void kcopyd_put_pages(struct dm_k
+ {
+ 	struct page_list *cursor;
+ 
+-	spin_lock(&kc->lock);
+ 	for (cursor = pl; cursor->next; cursor = cursor->next)
+ 		kc->nr_free_pages++;
+ 
+ 	kc->nr_free_pages++;
+ 	cursor->next = kc->pages;
+ 	kc->pages = pl;
+-	spin_unlock(&kc->lock);
+ }
+ 
+ /*
+@@ -623,7 +615,6 @@ int dm_kcopyd_client_create(unsigned int
+ 	if (!kc)
+ 		return -ENOMEM;
+ 
+-	spin_lock_init(&kc->lock);
+ 	spin_lock_init(&kc->job_lock);
+ 	INIT_LIST_HEAD(&kc->complete_jobs);
+ 	INIT_LIST_HEAD(&kc->io_jobs);
