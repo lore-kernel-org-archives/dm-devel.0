@@ -1,12 +1,14 @@
-From: "=?gb2312?B?zfW1wLDu?=" <wangdb@toyou.com.cn>
-Subject: Issue occurred when fixed using mapped device and
-	software RAID
-Date: Thu, 19 May 2011 16:53:10 +0800
-Message-ID: <201105191653099689768@toyou.com.cn>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: dm snapshot diffs
+Date: Fri, 20 May 2011 09:53:55 +0200
+Message-ID: <1305878035.21413.5.camel@Nokia-N900-42-11>
+References: <120681305744449@web11.yandex.ru>
+Reply-To: Christophe Varoqui <christophe.varoqui@gmail.com>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2689642589104268062=="
+Content-Type: multipart/mixed; boundary="===============5094436857257373584=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <120681305744449@web11.yandex.ru>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,103 +18,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, Groshev Dmitry <a2alt@ya.ru>
 List-Id: dm-devel.ids
 
 
-This is a multi-part message in MIME format.
-
---===============2689642589104268062==
-Content-Type: multipart/alternative;
-	boundary="=====003_Dragon264107453551_====="
+--===============5094436857257373584==
+Content-Type: multipart/alternative; boundary="=-VknWFaurRpeUfBX/eAWq"
 
 
-This is a multi-part message in MIME format.
-
---=====003_Dragon264107453551_=====
-Content-Type: text/plain;
-	charset="gb2312"
+--=-VknWFaurRpeUfBX/eAWq
+Content-Type: text/plain; charset=utf-8
+Content-ID: <1305878034.21413.2.camel@Nokia-N900-42-11>
 Content-Transfer-Encoding: 7bit
 
-Hi All,
+On mer. 18 mai 2011 20:47:28 CEST, Groshev Dmitry <a2alt@ya.ru> wrote:
 
-    Is there anyone would help me? The issue is:
+> Hello. I' m using LVM with snapshots on a big storage and for some
+> reason I need to get some information that bare LVM doesn't provide. Is
+> there a way to get a list of blocks that was changed since the snapshot
+> was created? I see that snapshot-cow device if being filled, but how I
+> can find a "old block in origin -> new block in cow" mapping?
+> 
+you may want to look at dds in the www.opensvc.com git repo.
+This small tool parse the lvm2 snapshot cow table format.
 
-steps.
 
-a. created a software RAID5 with 4 disks
-b. created a volume group with the md in step a
-c. created a logical volume with vg in step b
-d. plugged out 2 physical drives, which were the member of the software RAID5 in step a, the software RAID5 was offline.
-
-there were two results:
-
-1. could not delete the logical volume and volume group, when the plugged out disks did not contain the lvm metadata.
-
-2. could not see the logical volume and volume group when i scan them, and could not delete the software RAID5, when the plugged out disks contained the lvm metadata.
-
-And i made the md driver, exported the mddev_s.openers, and found the openers is not zero, so I could not delete the software RAID5.
-
-Thank you very much.
-
-Best Wishes,
-Daobang Wang.
-
---=====003_Dragon264107453551_=====
-Content-Type: text/html;
-	charset="gb2312"
+--=-VknWFaurRpeUfBX/eAWq
+Content-Type: text/html; charset=utf-8
+Content-ID: <1305878034.21413.4.camel@Nokia-N900-42-11>
 Content-Transfer-Encoding: 7bit
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML xmlns:o = "urn:schemas-microsoft-com:office:office"><HEAD>
-<META http-equiv=Content-Type content="text/html; charset=gb2312">
-<META content="MSHTML 6.00.2900.6082" name=GENERATOR><LINK 
-href="BLOCKQUOTE{margin-Top: 0px; margin-Bottom: 0px; margin-Left: 2em}" 
-rel=stylesheet></HEAD>
-<BODY style="FONT-SIZE: 10pt; MARGIN: 10px; FONT-FAMILY: verdana">
-<DIV><FONT size=2><FONT color=#000080 size=2>Hi All,</FONT></FONT></DIV>
-<DIV><FONT color=#000080 size=2></FONT>&nbsp;</DIV>
-<DIV><FONT color=#000080 size=2>&nbsp;&nbsp;&nbsp;&nbsp;Is there anyone would 
-help me? The issue is:</FONT></DIV>
-<DIV><FONT color=#000080></FONT>&nbsp;</DIV>
-<DIV><FONT color=#000080>steps.</FONT></DIV>
-<DIV><FONT color=#000080></FONT>&nbsp;</DIV>
-<DIV><FONT color=#000080>a. created a software RAID5 with 4 disks</FONT></DIV>
-<DIV><FONT color=#000080>b. created a volume group with the md in step 
-a</FONT></DIV>
-<DIV><FONT color=#000080>c. created a logical volume with vg in step 
-b</FONT></DIV>
-<DIV><FONT color=#000080>d. plugged out 2 physical drives, which were the member 
-of the software RAID5 in step a, the software RAID5 was offline.</FONT></DIV>
-<DIV><FONT color=#000080></FONT>&nbsp;</DIV>
-<DIV><FONT color=#000080 size=2>there were two results:</FONT></DIV>
-<DIV><FONT color=#000080></FONT>&nbsp;</DIV>
-<DIV><FONT color=#000080 size=2>1. could not delete the logical volume and 
-volume group, when the plugged out disks did not contain the lvm 
-metadata.</FONT></DIV>
-<DIV><FONT color=#000080 size=2></FONT>&nbsp;</DIV>
-<DIV><FONT color=#000080 size=2>2. could not see the logical volume and volume 
-group when i scan them, and could not delete the software RAID5, when the 
-plugged out disks contained the lvm metadata.</FONT></DIV>
-<DIV><FONT color=#000080 size=2></FONT>&nbsp;</DIV>
-<DIV><FONT color=#000080 size=2>And&nbsp;i made the md driver, exported the 
-mddev_s.openers, and found the openers is not zero, so I could not delete the 
-software RAID5.</FONT></DIV>
-<DIV><FONT color=#000080 size=2></FONT>&nbsp;</DIV>
-<DIV><FONT color=#000080 size=2>Thank you very much.</FONT></DIV>
-<DIV><FONT color=#000080 size=2></FONT>&nbsp;</DIV>
-<DIV><FONT color=#000080 size=2>Best Wishes,</FONT></DIV>
-<DIV><FONT size=2><FONT color=#000080>Daobang 
-Wang.</FONT></DIV></FONT></BODY></HTML>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="generator" content="Osso Notes">
+    <title></title></head>
+<body>
+<p>On mer. 18 mai 2011 20:47:28 CEST, Groshev Dmitry &lt;<a href="mailto:a2alt@ya.ru">a2alt@ya.ru</a>&gt; wrote:
+<br>
+<br>&gt; Hello. I' m using LVM with snapshots on a big storage and for some
+<br>&gt; reason I need to get some information that bare LVM doesn't provide. Is
+<br>&gt; there a way to get a list of blocks that was changed since the snapshot
+<br>&gt; was created? I see that snapshot-cow device if being filled, but how I
+<br>&gt; can find a "old block in origin -&gt; new block in cow" mapping?
+<br>&gt; 
+<br>you may want to look at dds in the <a href="http://www.opensvc.com">www.opensvc.com</a> git repo.
+<br>This small tool parse the lvm2 snapshot cow table format.
+<br><br></p>
+</body>
+</html>
 
---=====003_Dragon264107453551_=====--
+--=-VknWFaurRpeUfBX/eAWq--
 
 
---===============2689642589104268062==
+--===============5094436857257373584==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2689642589104268062==--
+--===============5094436857257373584==--
