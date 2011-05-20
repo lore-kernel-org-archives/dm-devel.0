@@ -1,14 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: dm snapshot diffs
-Date: Fri, 20 May 2011 09:53:55 +0200
-Message-ID: <1305878035.21413.5.camel@Nokia-N900-42-11>
-References: <120681305744449@web11.yandex.ru>
-Reply-To: Christophe Varoqui <christophe.varoqui@gmail.com>,
+From: "--[ UxBoD ]--" <uxbod@splatnix.net>
+Subject: multipath produces a segmentation fault
+Date: Fri, 20 May 2011 15:19:18 +0100 (BST)
+Message-ID: <762c21e4-8c4d-4942-9477-c3f0e2d5f660@office.splatnix.net>
+Reply-To: "--\[ UxBoD \]--" <uxbod@splatnix.net>,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5094436857257373584=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <120681305744449@web11.yandex.ru>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,64 +17,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Groshev Dmitry <a2alt@ya.ru>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+CentOS 5.3 with kernel 2.6.37.6 and device-mapper-multipath-0.4.7-42.el5_6.2.
 
---===============5094436857257373584==
-Content-Type: multipart/alternative; boundary="=-VknWFaurRpeUfBX/eAWq"
+When I run multipath -v9 -d I get:
 
+sdg: not found in pathvec
+sdg: mask = 0x1f
+Segmentation fault
 
---=-VknWFaurRpeUfBX/eAWq
-Content-Type: text/plain; charset=utf-8
-Content-ID: <1305878034.21413.2.camel@Nokia-N900-42-11>
-Content-Transfer-Encoding: 7bit
+If I strace the command I see:
 
-On mer. 18 mai 2011 20:47:28 CEST, Groshev Dmitry <a2alt@ya.ru> wrote:
+stat("/sys/block/sdg/device", {st_mode=S_IFDIR|0755, st_size=0, ...}) = 0
+write(1, "sdg: not found in pathvec\n", 26sdg: not found in pathvec
+) = 26
+write(1, "sdg: mask = 0x1f\n", 17sdg: mask = 0x1f
+)      = 17
+readlink("/sys/block/sdg/device", "../../../6:0:0:16"..., 256) = 17
+lstat("/6:0:0:16", 0x7fff04d304c0)      = -1 ENOENT (No such file or directory)
+--- SIGSEGV (Segmentation fault) @ 0 (0) ---
++++ killed by SIGSEGV +++
 
-> Hello. I' m using LVM with snapshots on a big storage and for some
-> reason I need to get some information that bare LVM doesn't provide. Is
-> there a way to get a list of blocks that was changed since the snapshot
-> was created? I see that snapshot-cow device if being filled, but how I
-> can find a "old block in origin -> new block in cow" mapping?
-> 
-you may want to look at dds in the www.opensvc.com git repo.
-This small tool parse the lvm2 snapshot cow table format.
-
-
---=-VknWFaurRpeUfBX/eAWq
-Content-Type: text/html; charset=utf-8
-Content-ID: <1305878034.21413.4.camel@Nokia-N900-42-11>
-Content-Transfer-Encoding: 7bit
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html><head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="generator" content="Osso Notes">
-    <title></title></head>
-<body>
-<p>On mer. 18 mai 2011 20:47:28 CEST, Groshev Dmitry &lt;<a href="mailto:a2alt@ya.ru">a2alt@ya.ru</a>&gt; wrote:
-<br>
-<br>&gt; Hello. I' m using LVM with snapshots on a big storage and for some
-<br>&gt; reason I need to get some information that bare LVM doesn't provide. Is
-<br>&gt; there a way to get a list of blocks that was changed since the snapshot
-<br>&gt; was created? I see that snapshot-cow device if being filled, but how I
-<br>&gt; can find a "old block in origin -&gt; new block in cow" mapping?
-<br>&gt; 
-<br>you may want to look at dds in the <a href="http://www.opensvc.com">www.opensvc.com</a> git repo.
-<br>This small tool parse the lvm2 snapshot cow table format.
-<br><br></p>
-</body>
-</html>
-
---=-VknWFaurRpeUfBX/eAWq--
-
-
---===============5094436857257373584==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5094436857257373584==--
+Any ideas what is wrong please ?
+-- 
+Thanks, Phil
