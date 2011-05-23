@@ -1,66 +1,75 @@
-From: "--[ UxBoD ]--" <uxbod@splatnix.net>
-Subject: Re: multipath produces a segmentation fault
-Date: Mon, 23 May 2011 10:41:50 +0100 (BST)
-Message-ID: <133d4f30-8fcc-4127-a96c-ed9d94dd3c58@office.splatnix.net>
-References: <2ab11d3c-2038-498b-934f-9730ea010c25@office.splatnix.net>
-Reply-To: "--\[ UxBoD \]--" <uxbod@splatnix.net>,
-        device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: Integrity errors should not cause failover
+Date: Mon, 23 May 2011 14:17:24 -0400
+Message-ID: <20110523181723.GA18971@redhat.com>
+References: <yq18vu4fw9e.fsf@sermon.lab.mkp.net>
+ <20110518121156.GB18433@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2ab11d3c-2038-498b-934f-9730ea010c25@office.splatnix.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20110518121156.GB18433@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
------ Original Message -----
-> ----- Original Message -----
-> > CentOS 5.3 with kernel 2.6.37.6 and
-> > device-mapper-multipath-0.4.7-42.el5_6.2.
-> > 
-> > When I run multipath -v9 -d I get:
-> > 
-> > sdg: not found in pathvec
-> > sdg: mask = 0x1f
-> > Segmentation fault
-> > 
-> > If I strace the command I see:
-> > 
-> > stat("/sys/block/sdg/device", {st_mode=S_IFDIR|0755, st_size=0,
-> > ...})
-> > = 0
-> > write(1, "sdg: not found in pathvec\n", 26sdg: not found in pathvec
-> > ) = 26
-> > write(1, "sdg: mask = 0x1f\n", 17sdg: mask = 0x1f
-> > )      = 17
-> > readlink("/sys/block/sdg/device", "../../../6:0:0:16"..., 256) = 17
-> > lstat("/6:0:0:16", 0x7fff04d304c0)      = -1 ENOENT (No such file
-> > or
-> > directory)
-> > --- SIGSEGV (Segmentation fault) @ 0 (0) ---
-> > +++ killed by SIGSEGV +++
-> > 
-> > Any ideas what is wrong please ?
-> > --
-> > Thanks, Phil
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
-> 
-> Sorry, type the system is CentOS 5.6.
+On Wed, May 18 2011 at  8:11am -0400,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-Any thoughts on what the error could be, please ?
--- 
-Thanks, Phil
+> On Wed, May 18 2011 at 12:49am -0400,
+> Martin K. Petersen <martin.petersen@oracle.com> wrote:
+> 
+> > 
+> > Integrity errors need to be passed to the owner of the integrity
+> > metadata for processing. Consequently EILSEQ should be passed up the
+> > stack.
+> > 
+> > Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+> > Acked-by: Mike Snitzer <snitzer@redhat.com>
+> > 
+> > ---
+> > 
+> > Ping on this one?
+> 
+> It has been on my personal queue but I didn't push the issue with
+> Alasdair (for 2.6.39).
+> 
+> At this point seems we should be targetting this fix for 2.6.40 but I'll
+> defer to Alasdair on whether he'd like to push to .39 last minute.
+
+Hi Martin,
+
+Alasdair and I just chatted about this patch: it will always pass the
+the -EILSEQ up _without_ performing any mpath path failure.
+
+The newfound concern is: is there ever a benefit to failing the path
+before returning -EILSEQ?
+
+Or will -EILSEQ always imply there is nothing wrong with the path?
+E.g. a transport error cannot cause a CRC error -- the transport
+error is always trapped by SCSI and cannot result in continued
+processing of an IO (that goes on to have CRC error)?
+
+Thanks,
+Mike
+
+> 
+> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> > index a550a05..aa4e570 100644
+> > --- a/drivers/md/dm-mpath.c
+> > +++ b/drivers/md/dm-mpath.c
+> > @@ -1290,7 +1290,7 @@ static int do_end_io(struct multipath *m, struct request *clone,
+> >  	if (!error && !clone->errors)
+> >  		return 0;	/* I/O complete */
+> >  
+> > -	if (error == -EOPNOTSUPP || error == -EREMOTEIO)
+> > +	if (error == -EOPNOTSUPP || error == -EREMOTEIO || error == -EILSEQ)
+> >  		return error;
+> >  
+> >  	if (mpio->pgpath)
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
