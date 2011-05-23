@@ -1,15 +1,15 @@
-From: "--[ UxBoD ]--" <uxbod@splatnix.net>
-Subject: Re: multipath produces a segmentation fault
-Date: Fri, 20 May 2011 16:14:05 +0100 (BST)
-Message-ID: <2ab11d3c-2038-498b-934f-9730ea010c25@office.splatnix.net>
-References: <762c21e4-8c4d-4942-9477-c3f0e2d5f660@office.splatnix.net>
-Reply-To: "--\[ UxBoD \]--" <uxbod@splatnix.net>,
-        device-mapper development <dm-devel@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: [PATCH] Remove the spinlock protecting the pages
+ allocation
+Date: Mon, 23 May 2011 09:59:07 +0100
+Message-ID: <1306141147.3404.4.camel@ubuntu>
+References: <Pine.LNX.4.64.1105191257430.17915@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <762c21e4-8c4d-4942-9477-c3f0e2d5f660@office.splatnix.net>
+In-Reply-To: <Pine.LNX.4.64.1105191257430.17915@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +20,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
------ Original Message -----
-> CentOS 5.3 with kernel 2.6.37.6 and
-> device-mapper-multipath-0.4.7-42.el5_6.2.
-> 
-> When I run multipath -v9 -d I get:
-> 
-> sdg: not found in pathvec
-> sdg: mask = 0x1f
-> Segmentation fault
-> 
-> If I strace the command I see:
-> 
-> stat("/sys/block/sdg/device", {st_mode=S_IFDIR|0755, st_size=0, ...})
-> = 0
-> write(1, "sdg: not found in pathvec\n", 26sdg: not found in pathvec
-> ) = 26
-> write(1, "sdg: mask = 0x1f\n", 17sdg: mask = 0x1f
-> )      = 17
-> readlink("/sys/block/sdg/device", "../../../6:0:0:16"..., 256) = 17
-> lstat("/6:0:0:16", 0x7fff04d304c0)      = -1 ENOENT (No such file or
-> directory)
-> --- SIGSEGV (Segmentation fault) @ 0 (0) ---
-> +++ killed by SIGSEGV +++
-> 
-> Any ideas what is wrong please ?
-> --
-> Thanks, Phil
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+On Thu, 2011-05-19 at 12:58 -0400, Mikulas Patocka wrote:
+> The spinlock is only taken on initialization or from single-threaded
+> workqueue.
+> Therefore, the spinlock is useless. 
 
-Sorry, type the system is CentOS 5.6.
--- 
-Thanks, Phil
+The spinlock has memory barrier semantics as well.  How are you
+guaranteeing the changes from the initialisation thread are visible in
+the workqueue thread?
+
+- Joe
