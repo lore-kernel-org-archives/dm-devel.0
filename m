@@ -1,75 +1,36 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm: Integrity errors should not cause failover
-Date: Mon, 23 May 2011 14:17:24 -0400
-Message-ID: <20110523181723.GA18971@redhat.com>
-References: <yq18vu4fw9e.fsf@sermon.lab.mkp.net>
- <20110518121156.GB18433@redhat.com>
+From: Dharmesh Kamdar <kamdard71@yahoo.com>
+Subject: multipatd -k "show config" related query....
+Date: Mon, 23 May 2011 11:34:17 -0700 (PDT)
+Message-ID: <419659.13658.qm@web112317.mail.gq1.yahoo.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20110518121156.GB18433@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, May 18 2011 at  8:11am -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Hi,
 
-> On Wed, May 18 2011 at 12:49am -0400,
-> Martin K. Petersen <martin.petersen@oracle.com> wrote:
-> 
-> > 
-> > Integrity errors need to be passed to the owner of the integrity
-> > metadata for processing. Consequently EILSEQ should be passed up the
-> > stack.
-> > 
-> > Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
-> > Acked-by: Mike Snitzer <snitzer@redhat.com>
-> > 
-> > ---
-> > 
-> > Ping on this one?
-> 
-> It has been on my personal queue but I didn't push the issue with
-> Alasdair (for 2.6.39).
-> 
-> At this point seems we should be targetting this fix for 2.6.40 but I'll
-> defer to Alasdair on whether he'd like to push to .39 last minute.
+The "show config" option in the interactive multipath shell (multipathd -k), 
+scrolls up the screen...Even scrolling up using scroll-bar does NOT show 
+complete configuration since it is cut-off at the top of the screen (even with 
+the terminal window maximized).
 
-Hi Martin,
+Is there  any way to circumvent it (like piping it to "more" or "less" within  
+that multipath shell OR redirecting it a text  file from within that multipath 
+shell) ?
 
-Alasdair and I just chatted about this patch: it will always pass the
-the -EILSEQ up _without_ performing any mpath path failure.
-
-The newfound concern is: is there ever a benefit to failing the path
-before returning -EILSEQ?
-
-Or will -EILSEQ always imply there is nothing wrong with the path?
-E.g. a transport error cannot cause a CRC error -- the transport
-error is always trapped by SCSI and cannot result in continued
-processing of an IO (that goes on to have CRC error)?
+(running RHEl 5.5 x86-64, device-mapper-multipath-0.4.7-34.el5_5.1).
 
 Thanks,
-Mike
-
-> 
-> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > index a550a05..aa4e570 100644
-> > --- a/drivers/md/dm-mpath.c
-> > +++ b/drivers/md/dm-mpath.c
-> > @@ -1290,7 +1290,7 @@ static int do_end_io(struct multipath *m, struct request *clone,
-> >  	if (!error && !clone->errors)
-> >  		return 0;	/* I/O complete */
-> >  
-> > -	if (error == -EOPNOTSUPP || error == -EREMOTEIO)
-> > +	if (error == -EOPNOTSUPP || error == -EREMOTEIO || error == -EILSEQ)
-> >  		return error;
-> >  
-> >  	if (mpio->pgpath)
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Dharmesh.
