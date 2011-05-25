@@ -1,15 +1,15 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: SUSE multipath-tools patch resync
-Date: Wed, 25 May 2011 09:51:47 +0200
-Message-ID: <1306309907.2290.14.camel@lapoo.opensvc.com>
-References: <4DD3DFC0.9050300@suse.de>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH] DM RAID:  add RAID1 support
+Date: Wed, 25 May 2011 04:05:52 -0400
+Message-ID: <20110525080552.GB16582@infradead.org>
+References: <201105241931.p4OJVZWJ006336@localhost6.localdomain6>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4DD3DFC0.9050300@suse.de>
+Content-Disposition: inline
+In-Reply-To: <201105241931.p4OJVZWJ006336@localhost6.localdomain6>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,48 +19,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On mer., 2011-05-18 at 17:03 +0200, Hannes Reinecke wrote:
-> git.kernel.org:/pub/scm/linux/kernel/git/hare/multipath-tools.git
+> +#ifdef md_raid1_congested
+> +	if (rs->raid_type->level == 1)
+> +		return md_raid1_congested(&rs->md, bits);
+> +#endif
+> +
+>  	return md_raid5_congested(&rs->md, bits);
 
-I started the merge. I'll post comments along the reading. It seems
-there won't be much : this patchset is clearly a must-have.
+How well is this tested?  md_raid1_congested is a not a cpp macro
+in your md patch, so with that patch it never would be called.
 
-...
-
-Shouldn't this one be reverted ? Seems the real thing is
-10d68a92b2a0027d5468cf76656692f34f6dbc54
-
-
-commit efc8ace4b335e752a7d28aca6040af0f9fe37530
-Author: Hannes Reinecke <hare@suse.de>
-Date:   Mon Feb 1 09:46:57 2010 +0100
-
-    Add 'max_polling_interval' config variable
-    
-    We should be able to set the 'max_polling_interval' variable
-    manually. Especially systems requiring precise failover timing
-    will want to disable the automatic polling interval increase.
-    
-    Signed-off-by: Hannes Reinecke <hare@suse.de>
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 7659bb2..6867f23 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1096,9 +1096,9 @@ check_path (struct vectors * vecs, struct path *
-pp)
-                         * max at conf->max_checkint
-                         */
-                        if (pp->checkint < (conf->max_checkint / 2))
--                               pp->checkint = 2 * pp->checkint;
-+                           pp->checkint = 2 * pp->checkint;
-                        else
--                               pp->checkint = conf->max_checkint;
-+                           pp->checkint = conf->max_checkint;
- 
-                        pp->tick = pp->checkint;
-                        condlog(4, "%s: delay next check %is",
+Also I think the congested call really should go through function
+pointer indirections instead of opencoding all possible variants like
+this.
