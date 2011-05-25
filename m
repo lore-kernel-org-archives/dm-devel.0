@@ -1,12 +1,16 @@
-From: "--[ UxBoD ]--" <uxbod@splatnix.net>
-Subject: Compiling multipath-tools
-Date: Wed, 25 May 2011 11:56:17 +0100 (BST)
-Message-ID: <94282a07-09ae-454a-ad3d-d6ccae4e5d1e@office.splatnix.net>
-Reply-To: "--\[ UxBoD \]--" <uxbod@splatnix.net>,
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: SUSE multipath-tools patch resync
+Date: Wed, 25 May 2011 13:14:39 +0200
+Message-ID: <1306322079.2290.25.camel@lapoo.opensvc.com>
+References: <4DD3DFC0.9050300@suse.de>
+	<1306309907.2290.14.camel@lapoo.opensvc.com> <4DDCC72A.8000601@suse.de>
+Reply-To: christophe.varoqui@opensvc.com,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2765595415651560085=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4DDCC72A.8000601@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,62 +20,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============2765595415651560085==
-Content-Type: multipart/alternative;
-	boundary="=_e988ad7e-549c-4a61-84b7-9da71331d417"
+On mer., 2011-05-25 at 11:08 +0200, Hannes Reinecke wrote:
+> On 05/25/2011 09:51 AM, Christophe Varoqui wrote:
+> > On mer., 2011-05-18 at 17:03 +0200, Hannes Reinecke wrote:
+> >> git.kernel.org:/pub/scm/linux/kernel/git/hare/multipath-tools.git
+> >
+> > I started the merge. I'll post comments along the reading. It seems
+> > there won't be much : this patchset is clearly a must-have.
+> >
+> :-)
+> 
+> With some things so bloody obvious that I keep wondering if I'm the
+> only one seeing these ...
+> 
+The merge is done. No change wrt your branch. Still not pushed to korg.
+I struggle with a hwtable corruption with no /etc/multipath.conf ... can
+you reproduce that ?
 
---=_e988ad7e-549c-4a61-84b7-9da71331d417
-Content-Type: multipart/related;
-	boundary="=_d394dfa1-9739-445e-8a1e-d30a968e1c9a"
+For example, iterating through the hwtable and printing ->product from
+config.c:find_hwe() gives:
 
---=_d394dfa1-9739-445e-8a1e-d30a968e1c9a
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+...
+(StorEdge 3510|T4)
+FC2502
+RAIGE VOLUME
+CSM200_R
+LCSM100_[IEFS]
+INF-01-00
+FLEXLINE 380
+
+hd
+dcssblk
 
-Hi, I am trying to use kernel 2.6.37.6 and build the latest version of multipath-tools. I have downloaded the source from http://christophe.varoqui.free.fr/multipath-tools/multipath-tools-0.4.9.tar.bz2 which compiles fine; though when I try and create the RPM I see: 
+The final spurious entries are clearly from the blacklist mem region. I
+verified the hwtable is not corrupted after initialization. Corruption
+thus occurs between hwtable init and path discovery.
 
-Processing files: multipath-tools-__VERSION__-1 
-error: File not found by glob: /var/tmp/multipath-tools-__VERSION__-1-buildroot/lib/multipath/*.so 
-Checking for unpackaged file(s): /usr/lib/rpm/check-files /var/tmp/multipath-tools-__VERSION__-1-buildroot 
-error: Installed (but unpackaged) file(s) found: 
-/lib64/libmultipath.so.0 
-/lib64/multipath/libcheckcciss_tur.so 
-/lib64/multipath/libcheckdirectio.so 
-/lib64/multipath/libcheckemc_clariion.so 
-/lib64/multipath/libcheckhp_sw.so 
-/lib64/multipath/libcheckrdac.so 
-/lib64/multipath/libcheckreadsector0.so 
-/lib64/multipath/libchecktur.so 
-/lib64/multipath/libprioalua.so 
-/lib64/multipath/libprioconst.so 
-/lib64/multipath/libpriodatacore.so 
-/lib64/multipath/libprioemc.so 
-/lib64/multipath/libpriohds.so 
-/lib64/multipath/libpriohp_sw.so 
-/lib64/multipath/libprionetapp.so 
-/lib64/multipath/libpriorandom.so 
-/lib64/multipath/libpriordac.so 
-
-What I am attempting to achieve is the ability to use a newer kernel with the latest multipath and open-iscsi toolsets. 
-
-Any advice would be gratefully appreciated. 
-
--- 
-Thanks, Phil
-
---=_d394dfa1-9739-445e-8a1e-d30a968e1c9a--
-
---=_e988ad7e-549c-4a61-84b7-9da71331d417--
-
-
---===============2765595415651560085==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2765595415651560085==--
+I'll continue tracking it, but if you see something obvious ...
