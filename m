@@ -1,7 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-kcopyd: Introduce gfp flags for alloc_pl
-Date: Wed, 25 May 2011 12:47:03 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1105251245560.21920@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH] dm-kcopyd: alloc pages from the main page
+	allocator
+Date: Wed, 25 May 2011 12:48:00 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1105251247040.21920@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,45 +20,97 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-dm-kcopyd: Introduce gfp flags for alloc_pl
+dm-kcopyd: alloc pages from the main page allocator.
 
-It will be used in further patches.
+This patch changes dm-kcopyd so that it allocates pages with page
+allocator with __GFP_NOWARN | __GFP_NORETRY flags (so that it can fail
+in case of memory pressure). If the allocation fails, dm-kcopyd
+allocates pages from its own reserve.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-kcopyd.c |    8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/md/dm-kcopyd.c |   55 +++++++++++++++++++++++++++++--------------------
+ 1 file changed, 33 insertions(+), 22 deletions(-)
 
 Index: linux-2.6.39-fast/drivers/md/dm-kcopyd.c
 ===================================================================
---- linux-2.6.39-fast.orig/drivers/md/dm-kcopyd.c	2011-05-24 22:14:45.000000000 +0200
-+++ linux-2.6.39-fast/drivers/md/dm-kcopyd.c	2011-05-25 13:19:02.000000000 +0200
-@@ -70,15 +70,15 @@ static void wake(struct dm_kcopyd_client
- 	queue_work(kc->kcopyd_wq, &kc->kcopyd_work);
+--- linux-2.6.39-fast.orig/drivers/md/dm-kcopyd.c	2011-05-25 17:56:03.000000000 +0200
++++ linux-2.6.39-fast/drivers/md/dm-kcopyd.c	2011-05-25 18:29:11.000000000 +0200
+@@ -93,34 +93,45 @@ static void free_pl(struct page_list *pl
+ 	kfree(pl);
  }
  
--static struct page_list *alloc_pl(void)
-+static struct page_list *alloc_pl(gfp_t gfp)
++static void kcopyd_put_pages(struct dm_kcopyd_client *kc, struct page_list *pl)
++{
++	do {
++		struct page_list *next = pl->next;
++		if (kc->nr_free_pages < kc->nr_pages) {
++			pl->next = kc->pages;
++			kc->pages = pl;
++			kc->nr_free_pages++;
++		} else {
++			free_pl(pl);
++		}
++		pl = next;
++	} while (pl);
++}
++
+ static int kcopyd_get_pages(struct dm_kcopyd_client *kc,
+ 			    unsigned int nr, struct page_list **pages)
  {
  	struct page_list *pl;
  
--	pl = kmalloc(sizeof(*pl), GFP_KERNEL);
-+	pl = kmalloc(sizeof(*pl), gfp);
- 	if (!pl)
- 		return NULL;
+-	if (kc->nr_free_pages < nr)
+-		return -ENOMEM;
+-
+-	kc->nr_free_pages -= nr;
+-	for (*pages = pl = kc->pages; --nr; pl = pl->next)
+-		;
+-
+-	kc->pages = pl->next;
+-	pl->next = NULL;
+-
++	*pages = NULL;
++	do {
++		pl = alloc_pl(__GFP_NOWARN | __GFP_NORETRY);
++		if (unlikely(!pl)) {
++			pl = kc->pages;
++			if (unlikely(!pl))
++				goto not_enough_memory;
++			kc->pages = pl->next;
++			kc->nr_free_pages--;
++		}
++		pl->next = *pages;
++		*pages = pl;
++	} while (--nr);
+ 	return 0;
+-}
  
--	pl->page = alloc_page(GFP_KERNEL);
-+	pl->page = alloc_page(gfp);
- 	if (!pl->page) {
- 		kfree(pl);
- 		return NULL;
-@@ -143,7 +143,7 @@ static int client_alloc_pages(struct dm_
- 	struct page_list *pl = NULL, *next;
+-static void kcopyd_put_pages(struct dm_kcopyd_client *kc, struct page_list *pl)
+-{
+-	struct page_list *cursor;
+-
+-	for (cursor = pl; cursor->next; cursor = cursor->next)
+-		kc->nr_free_pages++;
+-
+-	kc->nr_free_pages++;
+-	cursor->next = kc->pages;
+-	kc->pages = pl;
++not_enough_memory:
++	if (*pages)
++		kcopyd_put_pages(kc, *pages);
++	return -ENOMEM;
+ }
  
- 	for (i = 0; i < nr; i++) {
--		next = alloc_pl();
-+		next = alloc_pl(GFP_KERNEL);
- 		if (!next) {
- 			if (pl)
- 				drop_pages(pl);
+ /*
+@@ -153,8 +164,8 @@ static int client_alloc_pages(struct dm_
+ 		pl = next;
+ 	}
+ 
+-	kcopyd_put_pages(kc, pl);
+ 	kc->nr_pages += nr;
++	kcopyd_put_pages(kc, pl);
+ 	return 0;
+ }
+ 
