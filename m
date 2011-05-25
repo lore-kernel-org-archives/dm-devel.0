@@ -1,19 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: SUSE multipath-tools patch resync
-Date: Wed, 25 May 2011 14:45:39 +0200
-Message-ID: <4DDCF9F3.50807@suse.de>
-References: <4DD3DFC0.9050300@suse.de>	
-	<1306309907.2290.14.camel@lapoo.opensvc.com>
-	<4DDCC72A.8000601@suse.de>	
-	<1306322079.2290.25.camel@lapoo.opensvc.com>	
-	<1306325431.2290.30.camel@lapoo.opensvc.com>
-	<1306326126.2290.33.camel@lapoo.opensvc.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] DM RAID: do not print rebuilds in table	line
+Date: Wed, 25 May 2011 15:05:26 +0100
+Message-ID: <20110525140526.GA872@agk-dp.fab.redhat.com>
+References: <201105231954.p4NJspjN019139@f14.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1306326126.2290.33.camel@lapoo.opensvc.com>
+Content-Disposition: inline
+In-Reply-To: <201105231954.p4NJspjN019139@f14.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,43 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Jonathan Brassow <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-T24gMDUvMjUvMjAxMSAwMjoyMiBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+PiBXZWxs
-LCBmb3JnZXQgaXQgLi4uIGl0IHdhcyBqdXN0IGEgbWF0dGVyIG9mICdtYWtlIGNsZWFuJiYgIG1h
-a2UnIGFzIHNvbWUKPj4gc3RydWN0dXJlcyBjaGFuZ2VkIGxlbmd0aC4KPj4KPj4gVGhlIG1lcmdl
-IGlzIG92ZXIgYW5kIHB1c2hlZCB0byBrb3JnLgo+PiBJIGNhdGNoZWQgb25seSB0byBwcm9ibGVt
-cy4KPj4gWW91IG1pZ2h0IHdhbnQgdG8gcmV2aWV3IHRoZSBmaXhlcy4KPj4KPiBIbW0sIHRoZXJl
-IG1pZ2h0IGJlIG90aGVyIHByb2JsZW1zLgo+Cj4gb24gYSAnbXVsdGlwYXRoZCByZWNvbmZpZ3Vy
-ZScgY29tbWFuZCwgdGhlIHV4Y2xpZW50IGdldHMgc3R1Y2sgYW5kIHRoZQo+IG11bHRpcGF0aGQg
-ZGFlbW9uIHN0cmFjZSBzaG93czoKPgo+ICQgc3VkbyBzdHJhY2UgLWYgLXAgMTc3MjEKPiBQcm9j
-ZXNzIDE3NzIxIGF0dGFjaGVkIHdpdGggNyB0aHJlYWRzIC0gaW50ZXJydXB0IHRvIHF1aXQKPiBb
-cGlkIDE3NzU3XSBmdXRleCgweDdmZGM2YTE1NDBhNCwgRlVURVhfV0FJVF9QUklWQVRFLCAzLCBO
-VUxMCj4gPHVuZmluaXNoZWQgLi4uPgo+IFtwaWQgMTc3NTZdIGZ1dGV4KDB4MTExNjdmMCwgRlVU
-RVhfV0FJVF9QUklWQVRFLCAyLCBOVUxMCj4gPHVuZmluaXNoZWQgLi4uPgo+IFtwaWQgMTc3NTVd
-IGlvY3RsKDMsIERNX0RFVl9XQUlUPHVuZmluaXNoZWQgLi4uPgo+IFtwaWQgMTc3MjRdIGZ1dGV4
-KDB4MTExNjdmMCwgRlVURVhfV0FJVF9QUklWQVRFLCAyLCBOVUxMCj4gPHVuZmluaXNoZWQgLi4u
-Pgo+IFtwaWQgMTc3MjNdIHJlY3Ztc2coNiw8dW5maW5pc2hlZCAuLi4+Cj4gW3BpZCAxNzcyMl0g
-ZnV0ZXgoMHgxMTBhMWI0LCBGVVRFWF9XQUlUX1BSSVZBVEUsIDE1LCBOVUxMCj4gPHVuZmluaXNo
-ZWQgLi4uPgo+IFtwaWQgMTc3MjFdIGZ1dGV4KDB4NjEyNjI0LCBGVVRFWF9XQUlUX1BSSVZBVEUs
-IDEsIE5VTEwKPgpJJ3ZlIGp1c3Qgc2VuZCBzb21lIG1vcmUgZml4ZXMgd2hpY2ggaGF2ZSBiZWVu
-IHVuY292ZXJlZCBkdXJpbmcKcmVjZW50IHRlc3RzLgoKLSBVc2UgcmVmY291bnRpbmcgZm9yIHN5
-c2ZzIGRldmljZXM6IFdlIGRvIHVzZSBzeXNkZXZfZ2V0KCkgYW5kCiAgIHN5c2Rldl9wdXQoKSwg
-YnV0IGZvcmdvdCB0byByZWZjb3VudCB0aGVtLiBTbyBvY2Nhc2lvbmFsbHkKICAgdWV2ZW50cyB3
-b3VsZCB0cnkgdG8gY2FsbCBzeXNkZXZfcHV0KCkgb24gYWxyZWFkeSBmcmVlZCBkZXZpY2VzLgot
-IFJhY2UgY29uZGl0aW9uIGR1cmluZyBzaHV0ZG93biB3aXRoIHN0b3Bfd2FpdGVyX3RocmVhZCgp
-OgogICBUcnlpbmcgdG8gYWNjZXNzIGFueXRoaW5nIGluc2lkZSB0aGUgd2FpdGVyIHN0cnVjdHVy
-ZSBpcwogICBzdWljaWRhbCwgYXMgdGhlIHdhaXRlciB0aHJlYWQgbWlnaHQgYmUgZ29uZSBhdCBh
-bnkgdGltZS4KLSBEbyBub3QgaGFuZGxlIGV4dGVybmFsIHJlbmFtZXMgZnJvbSBtdWx0aXBhdGhk
-IHRocmVhZDoKICAgRmFsbG91dCBmcm9tIHRoZSBhYm92ZSBwYXRjaDsgYW5kIHdoYXQncyBtb3Jl
-LCB0aGUgZXh0ZXJuYWwKICAgcmVuYW1lIHNob3VsZCBiZSBoYW5kbGVkIGJ5IHRoZSB3YWl0ZXIg
-dGhyZWFkIGFscmVhZHkuCiAgIFNvIG5vIHBvaW50IGluIGRvaW5nIHNvIGZyb20gdGhlIGRhZW1v
-biBpdHNlbGYuCgpQYXRjaGVzIHNob3VsZCBhcHBlYXIgb24gdGhlIG1haWxpbmcgbGlzdCBwcmV0
-dHkgc29vbi4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAg
-elNlcmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgK
-U1VTRSBMSU5VWCBQcm9kdWN0cyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcK
-R0Y6IEouIEhhd24sIEouIEd1aWxkLCBGLiBJbWVuZMO2cmZmZXIsIEhSQiAxNjc0NiAoQUcgTsO8
-cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
-cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Mon, May 23, 2011 at 02:54:51PM -0500, Jon Brassow wrote:
+> DM RAID table status should not include rebuild parameters.
+
+Please could you give an example of a sequence of actual 'dmsetup table' +
+'dmsetup status' lines after this change?  (Including reloads during and after
+rebuild.)
+
+Please update the documentation file too to mention the asymmetry, if some 
+parameter is now input-only.
+
++ Performing a 'dmsetup table' should display the CTR table used to
++ construct the mapping (with possible reordering of optional
++ parameters).
+
+BTW LVM2 is likely to rely on the order being preserved i.e. it must supply
+them to the kernel in the order it is known to print them.  (Remember that the
+'table' line gets compared as an unparsed string in userspace.)  Also update it
+to say what it does rather than what it 'should' do:)
+
+(We'll increment the API version too of course in the patch.)
+
+Thanks,
+Alasdair
