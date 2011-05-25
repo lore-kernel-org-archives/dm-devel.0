@@ -1,48 +1,45 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] DM RAID: do not print rebuilds in table	line
-Date: Wed, 25 May 2011 15:05:26 +0100
-Message-ID: <20110525140526.GA872@agk-dp.fab.redhat.com>
-References: <201105231954.p4NJspjN019139@f14.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: dm: Integrity errors should not cause failover
+Date: Wed, 25 May 2011 11:04:58 -0400
+Message-ID: <yq139k2akit.fsf@sermon.lab.mkp.net>
+References: <yq18vu4fw9e.fsf@sermon.lab.mkp.net>
+	<20110518121156.GB18433@redhat.com>
+	<20110523181723.GA18971@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <201105231954.p4NJspjN019139@f14.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20110523181723.GA18971@redhat.com> (Mike Snitzer's message of
+	"Mon, 23 May 2011 14:17:24 -0400")
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, May 23, 2011 at 02:54:51PM -0500, Jon Brassow wrote:
-> DM RAID table status should not include rebuild parameters.
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-Please could you give an example of a sequence of actual 'dmsetup table' +
-'dmsetup status' lines after this change?  (Including reloads during and after
-rebuild.)
+Mike,
 
-Please update the documentation file too to mention the asymmetry, if some 
-parameter is now input-only.
+Mike> Alasdair and I just chatted about this patch: it will always pass
+Mike> the the -EILSEQ up _without_ performing any mpath path failure.
 
-+ Performing a 'dmsetup table' should display the CTR table used to
-+ construct the mapping (with possible reordering of optional
-+ parameters).
+Correct.
 
-BTW LVM2 is likely to rely on the order being preserved i.e. it must supply
-them to the kernel in the order it is known to print them.  (Remember that the
-'table' line gets compared as an unparsed string in userspace.)  Also update it
-to say what it does rather than what it 'should' do:)
 
-(We'll increment the API version too of course in the patch.)
+Mike> The newfound concern is: is there ever a benefit to failing the
+Mike> path before returning -EILSEQ?
 
-Thanks,
-Alasdair
+No, never.
+
+
+Mike> Or will -EILSEQ always imply there is nothing wrong with the path?
+Mike> E.g. a transport error cannot cause a CRC error -- the transport
+Mike> error is always trapped by SCSI and cannot result in continued
+Mike> processing of an IO (that goes on to have CRC error)?
+
+-EILSEQ is only returned if a discrepancy is detected between data and
+protection information. In both cases the block in question was
+successfully received by either initiator or target. I.e. the path is
+working fine.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
