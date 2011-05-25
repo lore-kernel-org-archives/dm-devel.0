@@ -1,12 +1,19 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] Use refcounting for sysfs devices
-Date: Wed, 25 May 2011 14:40:42 +0200
-Message-ID: <201105251240.p4PCegPo017758@pentland.suse.de>
+Subject: Re: SUSE multipath-tools patch resync
+Date: Wed, 25 May 2011 14:45:39 +0200
+Message-ID: <4DDCF9F3.50807@suse.de>
+References: <4DD3DFC0.9050300@suse.de>	
+	<1306309907.2290.14.camel@lapoo.opensvc.com>
+	<4DDCC72A.8000601@suse.de>	
+	<1306322079.2290.25.camel@lapoo.opensvc.com>	
+	<1306325431.2290.30.camel@lapoo.opensvc.com>
+	<1306326126.2290.33.camel@lapoo.opensvc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1306326126.2290.33.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,89 +23,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@gmail.com>
-Cc: dm-devel@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-
-As we're caching sysfs devices we need to introduce some sort
-of refcounting here. Otherwise the device might be removed from
-other threads while we're still accessing it.
-
-References: bnc#642846
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index fc64881..ff63a1b 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -44,6 +44,7 @@ static LIST_HEAD(sysfs_dev_list);
- struct sysfs_dev {
- 	struct list_head node;
- 	struct sysfs_device dev;
-+	int refcount;
- };
- 
- int sysfs_init(char *path, size_t len)
-@@ -152,6 +153,7 @@ struct sysfs_device *sysfs_device_get(const char *devpath)
- 			if (strcmp(sysdev_loop->dev.devpath, devpath_real) == 0) {
- 				dbg("found vanished dev in cache '%s'",
- 				    sysdev_loop->dev.devpath);
-+				sysdev_loop->refcount++;
- 				return &sysdev_loop->dev;
- 			}
- 		}
-@@ -167,6 +169,7 @@ struct sysfs_device *sysfs_device_get(const char *devpath)
- 		if (strcmp(sysdev_loop->dev.devpath, devpath_real) == 0) {
- 			dbg("found dev in cache '%s'", sysdev_loop->dev.devpath);
- 			dev = &sysdev_loop->dev;
-+			sysdev_loop->refcount++;
- 		}
- 	}
- 
-@@ -177,6 +180,7 @@ struct sysfs_device *sysfs_device_get(const char *devpath)
- 		if (sysdev == NULL)
- 			return NULL;
- 		memset(sysdev, 0x00, sizeof(struct sysfs_dev));
-+		sysdev->refcount = 1;
- 		list_add(&sysdev->node, &sysfs_dev_list);
- 		dev = &sysdev->dev;
- 	}
-@@ -243,6 +247,8 @@ struct sysfs_device *sysfs_device_verify(struct sysfs_device *dev)
- 	char path[PATH_SIZE];
- 	struct stat statbuf;
- 
-+	if (!dev->devpath)
-+		return NULL;
- 	strlcpy(path, sysfs_path, sizeof(path));
- 	strlcat(path, dev->devpath, sizeof(path));
- 	if (stat(dev->devpath, &statbuf) == 0 &&
-@@ -258,15 +264,21 @@ void sysfs_device_put(struct sysfs_device *dev)
- 
- 	list_for_each_entry(sysdev_loop, &sysfs_dev_list, node) {
- 		if (&sysdev_loop->dev == dev) {
--			dbg("removed dev '%s' from cache",
--			    sysdev_loop->dev.devpath);
--			list_del(&sysdev_loop->node);
--			free(sysdev_loop);
-+			sysdev_loop->refcount--;
-+			if (!sysdev_loop->refcount) {
-+				dbg("removed dev '%s' from cache",
-+				    sysdev_loop->dev.devpath);
-+				list_del(&sysdev_loop->node);
-+				free(sysdev_loop);
-+			} else {
-+				dbg("dev '%s' still in cache, refcount %d",
-+				    sysdev_loop->dev.devpath,
-+				    sysdev_loop->refcount);
-+			}
- 			return;
- 		}
- 	}
--	dbg("dev '%s' not found in cache",
--	    sysdev_loop->dev.devpath);
-+	dbg("dev '%s' not found in cache", dev->devpath);
- 
- 	return;
- }
+T24gMDUvMjUvMjAxMSAwMjoyMiBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+PiBXZWxs
+LCBmb3JnZXQgaXQgLi4uIGl0IHdhcyBqdXN0IGEgbWF0dGVyIG9mICdtYWtlIGNsZWFuJiYgIG1h
+a2UnIGFzIHNvbWUKPj4gc3RydWN0dXJlcyBjaGFuZ2VkIGxlbmd0aC4KPj4KPj4gVGhlIG1lcmdl
+IGlzIG92ZXIgYW5kIHB1c2hlZCB0byBrb3JnLgo+PiBJIGNhdGNoZWQgb25seSB0byBwcm9ibGVt
+cy4KPj4gWW91IG1pZ2h0IHdhbnQgdG8gcmV2aWV3IHRoZSBmaXhlcy4KPj4KPiBIbW0sIHRoZXJl
+IG1pZ2h0IGJlIG90aGVyIHByb2JsZW1zLgo+Cj4gb24gYSAnbXVsdGlwYXRoZCByZWNvbmZpZ3Vy
+ZScgY29tbWFuZCwgdGhlIHV4Y2xpZW50IGdldHMgc3R1Y2sgYW5kIHRoZQo+IG11bHRpcGF0aGQg
+ZGFlbW9uIHN0cmFjZSBzaG93czoKPgo+ICQgc3VkbyBzdHJhY2UgLWYgLXAgMTc3MjEKPiBQcm9j
+ZXNzIDE3NzIxIGF0dGFjaGVkIHdpdGggNyB0aHJlYWRzIC0gaW50ZXJydXB0IHRvIHF1aXQKPiBb
+cGlkIDE3NzU3XSBmdXRleCgweDdmZGM2YTE1NDBhNCwgRlVURVhfV0FJVF9QUklWQVRFLCAzLCBO
+VUxMCj4gPHVuZmluaXNoZWQgLi4uPgo+IFtwaWQgMTc3NTZdIGZ1dGV4KDB4MTExNjdmMCwgRlVU
+RVhfV0FJVF9QUklWQVRFLCAyLCBOVUxMCj4gPHVuZmluaXNoZWQgLi4uPgo+IFtwaWQgMTc3NTVd
+IGlvY3RsKDMsIERNX0RFVl9XQUlUPHVuZmluaXNoZWQgLi4uPgo+IFtwaWQgMTc3MjRdIGZ1dGV4
+KDB4MTExNjdmMCwgRlVURVhfV0FJVF9QUklWQVRFLCAyLCBOVUxMCj4gPHVuZmluaXNoZWQgLi4u
+Pgo+IFtwaWQgMTc3MjNdIHJlY3Ztc2coNiw8dW5maW5pc2hlZCAuLi4+Cj4gW3BpZCAxNzcyMl0g
+ZnV0ZXgoMHgxMTBhMWI0LCBGVVRFWF9XQUlUX1BSSVZBVEUsIDE1LCBOVUxMCj4gPHVuZmluaXNo
+ZWQgLi4uPgo+IFtwaWQgMTc3MjFdIGZ1dGV4KDB4NjEyNjI0LCBGVVRFWF9XQUlUX1BSSVZBVEUs
+IDEsIE5VTEwKPgpJJ3ZlIGp1c3Qgc2VuZCBzb21lIG1vcmUgZml4ZXMgd2hpY2ggaGF2ZSBiZWVu
+IHVuY292ZXJlZCBkdXJpbmcKcmVjZW50IHRlc3RzLgoKLSBVc2UgcmVmY291bnRpbmcgZm9yIHN5
+c2ZzIGRldmljZXM6IFdlIGRvIHVzZSBzeXNkZXZfZ2V0KCkgYW5kCiAgIHN5c2Rldl9wdXQoKSwg
+YnV0IGZvcmdvdCB0byByZWZjb3VudCB0aGVtLiBTbyBvY2Nhc2lvbmFsbHkKICAgdWV2ZW50cyB3
+b3VsZCB0cnkgdG8gY2FsbCBzeXNkZXZfcHV0KCkgb24gYWxyZWFkeSBmcmVlZCBkZXZpY2VzLgot
+IFJhY2UgY29uZGl0aW9uIGR1cmluZyBzaHV0ZG93biB3aXRoIHN0b3Bfd2FpdGVyX3RocmVhZCgp
+OgogICBUcnlpbmcgdG8gYWNjZXNzIGFueXRoaW5nIGluc2lkZSB0aGUgd2FpdGVyIHN0cnVjdHVy
+ZSBpcwogICBzdWljaWRhbCwgYXMgdGhlIHdhaXRlciB0aHJlYWQgbWlnaHQgYmUgZ29uZSBhdCBh
+bnkgdGltZS4KLSBEbyBub3QgaGFuZGxlIGV4dGVybmFsIHJlbmFtZXMgZnJvbSBtdWx0aXBhdGhk
+IHRocmVhZDoKICAgRmFsbG91dCBmcm9tIHRoZSBhYm92ZSBwYXRjaDsgYW5kIHdoYXQncyBtb3Jl
+LCB0aGUgZXh0ZXJuYWwKICAgcmVuYW1lIHNob3VsZCBiZSBoYW5kbGVkIGJ5IHRoZSB3YWl0ZXIg
+dGhyZWFkIGFscmVhZHkuCiAgIFNvIG5vIHBvaW50IGluIGRvaW5nIHNvIGZyb20gdGhlIGRhZW1v
+biBpdHNlbGYuCgpQYXRjaGVzIHNob3VsZCBhcHBlYXIgb24gdGhlIG1haWxpbmcgbGlzdCBwcmV0
+dHkgc29vbi4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBSZWluZWNrZQkJICAgICAg
+elNlcmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgKzQ5IDkxMSA3NDA1MyA2ODgK
+U1VTRSBMSU5VWCBQcm9kdWN0cyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcK
+R0Y6IEouIEhhd24sIEouIEd1aWxkLCBGLiBJbWVuZMO2cmZmZXIsIEhSQiAxNjc0NiAoQUcgTsO8
+cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
