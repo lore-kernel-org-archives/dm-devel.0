@@ -1,76 +1,68 @@
-From: Mandeep Singh Baines <msb@chromium.org>
-Subject: [PATCH] dm: pass up rotational flag
-Date: Wed, 25 May 2011 13:50:48 -0700
-Message-ID: <1306356648-30730-1-git-send-email-msb@chromium.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, jrbarnette@chromium.org
-Cc: Mandeep Singh Baines <msb@chromium.org>, Neil Brown <neilb@suse.de>, Mike Snitzer <snitzer@redhat.com>, Jens Axboe <jaxboe@fusionio.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: SUSE multipath-tools patch resync
+Date: Wed, 25 May 2011 23:29:50 +0200
+Message-ID: <1306358990.2290.43.camel@lapoo.opensvc.com>
+References: <4DD3DFC0.9050300@suse.de>
+	<1306309907.2290.14.camel@lapoo.opensvc.com> <4DDCC72A.8000601@suse.de>
+	<1306322079.2290.25.camel@lapoo.opensvc.com>
+	<1306325431.2290.30.camel@lapoo.opensvc.com>
+	<1306326126.2290.33.camel@lapoo.opensvc.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1306326126.2290.33.camel@lapoo.opensvc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Allow the NONROT flag to be passed through to linear mappings if all
-underlying device are non-rotational. Tools like ureadahead will
-schedule IOs differently based on the rotational flag.
 
-With this patch, I see boot time go from 7.75 s to 7.46 s on my device.
+> on a 'multipathd reconfigure' command, the uxclient gets stuck and the
+> multipathd daemon strace shows:
+> 
+> $ sudo strace -f -p 17721
+> Process 17721 attached with 7 threads - interrupt to quit
+> [pid 17757] futex(0x7fdc6a1540a4, FUTEX_WAIT_PRIVATE, 3, NULL
+> <unfinished ...>
+> [pid 17756] futex(0x11167f0, FUTEX_WAIT_PRIVATE, 2, NULL
+> <unfinished ...>
+> [pid 17755] ioctl(3, DM_DEV_WAIT <unfinished ...>
+> [pid 17724] futex(0x11167f0, FUTEX_WAIT_PRIVATE, 2, NULL
+> <unfinished ...>
+> [pid 17723] recvmsg(6,  <unfinished ...>
+> [pid 17722] futex(0x110a1b4, FUTEX_WAIT_PRIVATE, 15, NULL
+> <unfinished ...>
+> [pid 17721] futex(0x612624, FUTEX_WAIT_PRIVATE, 1, NULL
+> 
+ok, I dug it to 9e7b4d8d6fa8dc9433c1e60d4bd6717aec2f5296
 
-Suggested-by: J. Richard Barnette <jrbarnette@chromium.org>
-Signed-off-by: Mandeep Singh Baines <msb@chromium.org>
-Cc: Neil Brown <neilb@suse.de>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <jaxboe@fusionio.com>
-Cc: Martin K. Petersen <martin.petersen@oracle.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
----
- drivers/md/dm-table.c |   28 ++++++++++++++++++++++++++++
- 1 files changed, 28 insertions(+), 0 deletions(-)
+Here you add acquire/release the vector lock inside
+multipathd/main.c:reconfigure(), but as seen in the following LCKDBG
+trace, the lock is already acquired in
+multipathd/main.c:uxsock_trigger()
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index cb8380c..40c6071 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1177,6 +1177,30 @@ static void dm_table_set_integrity(struct dm_table *t)
- 			       blk_get_integrity(template_disk));
- }
- 
-+static int device_nonrot(struct dm_target *ti, struct dm_dev *dev,
-+			       sector_t start, sector_t len, void *data)
-+{
-+	struct request_queue *q = bdev_get_queue(dev->bdev);
-+
-+	return q && blk_queue_nonrot(q);
-+}
-+
-+static bool dm_table_all_nonrot(struct dm_table *t)
-+{
-+	unsigned i = 0;
-+
-+	/* Ensure that all underlying device are non rotational. */
-+	while (i < dm_table_get_num_targets(t)) {
-+		struct dm_target *ti = dm_table_get_target(t, i++);
-+
-+		if (!ti->type->iterate_devices ||
-+		    !ti->type->iterate_devices(ti, device_nonrot, NULL))
-+			return false;
-+	}
-+
-+	return true;
-+}
-+
- void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 			       struct queue_limits *limits)
- {
-@@ -1189,6 +1213,10 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, q);
- 	else
- 		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
-+	if (!dm_table_all_nonrot(t))
-+		queue_flag_clear_unlocked(QUEUE_FLAG_NONROT, q);
-+	else
-+		queue_flag_set_unlocked(QUEUE_FLAG_NONROT, q);
- 
- 	dm_table_set_integrity(t);
- 
+Hence the lock -> lock = hang.
+
+I commited and pushed a partial revert of
+9e7b4d8d6fa8dc9433c1e60d4bd6717aec2f5296
+
+But maybe you'd rather see us stop acquiring the lock from
+uxsock_trigger() to acquire more selectively in the functions called
+from there ... Please comment.
+
+Regards,
 -- 
-1.7.3.1
+Christophe Varoqui
+OpenSVC - Tools to scale
+http://www.opensvc.com/
