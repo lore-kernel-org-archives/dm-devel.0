@@ -1,15 +1,15 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH] DM RAID:  add RAID1 support
-Date: Wed, 25 May 2011 04:05:52 -0400
-Message-ID: <20110525080552.GB16582@infradead.org>
-References: <201105241931.p4OJVZWJ006336@localhost6.localdomain6>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: SUSE multipath-tools patch resync
+Date: Wed, 25 May 2011 11:08:58 +0200
+Message-ID: <4DDCC72A.8000601@suse.de>
+References: <4DD3DFC0.9050300@suse.de>
+	<1306309907.2290.14.camel@lapoo.opensvc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <201105241931.p4OJVZWJ006336@localhost6.localdomain6>
+In-Reply-To: <1306309907.2290.14.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,19 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: christophe.varoqui@opensvc.com
+Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-> +#ifdef md_raid1_congested
-> +	if (rs->raid_type->level == 1)
-> +		return md_raid1_congested(&rs->md, bits);
-> +#endif
-> +
->  	return md_raid5_congested(&rs->md, bits);
-
-How well is this tested?  md_raid1_congested is a not a cpp macro
-in your md patch, so with that patch it never would be called.
-
-Also I think the congested call really should go through function
-pointer indirections instead of opencoding all possible variants like
-this.
+T24gMDUvMjUvMjAxMSAwOTo1MSBBTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IE9uIG1l
+ci4sIDIwMTEtMDUtMTggYXQgMTc6MDMgKzAyMDAsIEhhbm5lcyBSZWluZWNrZSB3cm90ZToKPj4g
+Z2l0Lmtlcm5lbC5vcmc6L3B1Yi9zY20vbGludXgva2VybmVsL2dpdC9oYXJlL211bHRpcGF0aC10
+b29scy5naXQKPgo+IEkgc3RhcnRlZCB0aGUgbWVyZ2UuIEknbGwgcG9zdCBjb21tZW50cyBhbG9u
+ZyB0aGUgcmVhZGluZy4gSXQgc2VlbXMKPiB0aGVyZSB3b24ndCBiZSBtdWNoIDogdGhpcyBwYXRj
+aHNldCBpcyBjbGVhcmx5IGEgbXVzdC1oYXZlLgo+CjotKQoKV2l0aCBzb21lIHRoaW5ncyBzbyBi
+bG9vZHkgb2J2aW91cyB0aGF0IEkga2VlcCB3b25kZXJpbmcgaWYgSSdtIHRoZQpvbmx5IG9uZSBz
+ZWVpbmcgdGhlc2UgLi4uCgo+IC4uLgo+Cj4gU2hvdWxkbid0IHRoaXMgb25lIGJlIHJldmVydGVk
+ID8gU2VlbXMgdGhlIHJlYWwgdGhpbmcgaXMKPiAxMGQ2OGE5MmIyYTAwMjdkNTQ2OGNmNzY2NTY2
+OTJmMzRmNmRiYzU0Cj4KPgo+IGNvbW1pdCBlZmM4YWNlNGIzMzVlNzUyYTdkMjhhY2E2MDQwYWYw
+ZjlmZTM3NTMwCj4gQXV0aG9yOiBIYW5uZXMgUmVpbmVja2U8aGFyZUBzdXNlLmRlPgo+IERhdGU6
+ICAgTW9uIEZlYiAxIDA5OjQ2OjU3IDIwMTAgKzAxMDAKPgo+ICAgICAgQWRkICdtYXhfcG9sbGlu
+Z19pbnRlcnZhbCcgY29uZmlnIHZhcmlhYmxlCj4KPiAgICAgIFdlIHNob3VsZCBiZSBhYmxlIHRv
+IHNldCB0aGUgJ21heF9wb2xsaW5nX2ludGVydmFsJyB2YXJpYWJsZQo+ICAgICAgbWFudWFsbHku
+IEVzcGVjaWFsbHkgc3lzdGVtcyByZXF1aXJpbmcgcHJlY2lzZSBmYWlsb3ZlciB0aW1pbmcKPiAg
+ICAgIHdpbGwgd2FudCB0byBkaXNhYmxlIHRoZSBhdXRvbWF0aWMgcG9sbGluZyBpbnRlcnZhbCBp
+bmNyZWFzZS4KPgo+ICAgICAgU2lnbmVkLW9mZi1ieTogSGFubmVzIFJlaW5lY2tlPGhhcmVAc3Vz
+ZS5kZT4KPgo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21haW4uYyBiL211bHRpcGF0aGQvbWFp
+bi5jCj4gaW5kZXggNzY1OWJiMi4uNjg2N2YyMyAxMDA2NDQKPiAtLS0gYS9tdWx0aXBhdGhkL21h
+aW4uYwo+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5jCj4gQEAgLTEwOTYsOSArMTA5Niw5IEBAIGNo
+ZWNrX3BhdGggKHN0cnVjdCB2ZWN0b3JzICogdmVjcywgc3RydWN0IHBhdGggKgo+IHBwKQo+ICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgKiBtYXggYXQgY29uZi0+bWF4X2NoZWNraW50Cj4gICAg
+ICAgICAgICAgICAgICAgICAgICAgICAqLwo+ICAgICAgICAgICAgICAgICAgICAgICAgICBpZiAo
+cHAtPmNoZWNraW50PCAgKGNvbmYtPm1heF9jaGVja2ludCAvIDIpKQo+IC0gICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgcHAtPmNoZWNraW50ID0gMiAqIHBwLT5jaGVja2ludDsKPiArICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgcHAtPmNoZWNraW50ID0gMiAqIHBwLT5jaGVja2ludDsK
+PiAgICAgICAgICAgICAgICAgICAgICAgICAgZWxzZQo+IC0gICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgcHAtPmNoZWNraW50ID0gY29uZi0+bWF4X2NoZWNraW50Owo+ICsgICAgICAgICAg
+ICAgICAgICAgICAgICAgICBwcC0+Y2hlY2tpbnQgPSBjb25mLT5tYXhfY2hlY2tpbnQ7Cj4KPiAg
+ICAgICAgICAgICAgICAgICAgICAgICAgcHAtPnRpY2sgPSBwcC0+Y2hlY2tpbnQ7Cj4gICAgICAg
+ICAgICAgICAgICAgICAgICAgIGNvbmRsb2coNCwgIiVzOiBkZWxheSBuZXh0IGNoZWNrICVpcyIs
+Cj4KPgo+Ck9oLCB5ZXMuIE1lcmdlIGVycm9yLiBQbGVhc2UgZG8gbm90IGluY2x1ZGUgdGhpcy4K
+VGhhbmtzIGZvciB5b3VyIGVmZm9ydC4KCkNoZWVycywKCkhhbm5lcwotLSAKRHIuIEhhbm5lcyBS
+ZWluZWNrZQkJICAgICAgelNlcmllcyAmIFN0b3JhZ2UKaGFyZUBzdXNlLmRlCQkJICAgICAgKzQ5
+IDkxMSA3NDA1MyA2ODgKU1VTRSBMSU5VWCBQcm9kdWN0cyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5
+MDQwOSBOw7xybmJlcmcKR0Y6IEouIEhhd24sIEouIEd1aWxkLCBGLiBJbWVuZMO2cmZmZXIsIEhS
+QiAxNjc0NiAoQUcgTsO8cm5iZXJnKQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
+QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
+dmVs
