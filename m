@@ -1,7 +1,7 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] multipathd: Do not attempt to rename a device
-Date: Wed, 25 May 2011 14:40:31 +0200
-Message-ID: <201105251240.p4PCeVIY017739@pentland.suse.de>
+Subject: [PATCH] Use refcounting for sysfs devices
+Date: Wed, 25 May 2011 14:40:42 +0200
+Message-ID: <201105251240.p4PCegPo017758@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,45 +21,84 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-If a device-mapper device got renamed we should be notified
-via the waiter thread; no need to do it in the main loop.
+As we're caching sysfs devices we need to introduce some sort
+of refcounting here. Otherwise the device might be removed from
+other threads while we're still accessing it.
+
+References: bnc#642846
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index e07b5fd..189f25b 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -326,7 +326,6 @@ set_no_path_retry(struct multipath *mpp)
- extern int
- setup_multipath (struct vectors * vecs, struct multipath * mpp)
- {
--retry:
- 	if (dm_get_info(mpp->alias, &mpp->dmi)) {
- 		/* Error accessing table */
- 		condlog(3, "%s: cannot access table", mpp->alias);
-@@ -344,24 +343,6 @@ retry:
- 	condlog(3, "%s: discover", mpp->alias);
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index fc64881..ff63a1b 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -44,6 +44,7 @@ static LIST_HEAD(sysfs_dev_list);
+ struct sysfs_dev {
+ 	struct list_head node;
+ 	struct sysfs_device dev;
++	int refcount;
+ };
  
- 	if (update_multipath_strings(mpp, vecs->pathvec)) {
--		char *new_alias;
--
--		/*
--		 * detect an external rename of the multipath device
--		 */
--		new_alias = dm_get_name(mpp->wwid);
--		if (new_alias) {
--			condlog(3, "%s multipath mapped device name has "
--				"changed from %s to %s", mpp->wwid,
--				mpp->alias, new_alias);
--			FREE(mpp->alias);
--			mpp->alias = new_alias;
--
--			if (mpp->waiter)
--				strncpy(((struct event_thread *)mpp->waiter)->mapname,
--					new_alias, WWID_SIZE);
--			goto retry;
--		}
- 		condlog(0, "%s: failed to setup multipath", mpp->alias);
- 		goto out;
+ int sysfs_init(char *path, size_t len)
+@@ -152,6 +153,7 @@ struct sysfs_device *sysfs_device_get(const char *devpath)
+ 			if (strcmp(sysdev_loop->dev.devpath, devpath_real) == 0) {
+ 				dbg("found vanished dev in cache '%s'",
+ 				    sysdev_loop->dev.devpath);
++				sysdev_loop->refcount++;
+ 				return &sysdev_loop->dev;
+ 			}
+ 		}
+@@ -167,6 +169,7 @@ struct sysfs_device *sysfs_device_get(const char *devpath)
+ 		if (strcmp(sysdev_loop->dev.devpath, devpath_real) == 0) {
+ 			dbg("found dev in cache '%s'", sysdev_loop->dev.devpath);
+ 			dev = &sysdev_loop->dev;
++			sysdev_loop->refcount++;
+ 		}
  	}
+ 
+@@ -177,6 +180,7 @@ struct sysfs_device *sysfs_device_get(const char *devpath)
+ 		if (sysdev == NULL)
+ 			return NULL;
+ 		memset(sysdev, 0x00, sizeof(struct sysfs_dev));
++		sysdev->refcount = 1;
+ 		list_add(&sysdev->node, &sysfs_dev_list);
+ 		dev = &sysdev->dev;
+ 	}
+@@ -243,6 +247,8 @@ struct sysfs_device *sysfs_device_verify(struct sysfs_device *dev)
+ 	char path[PATH_SIZE];
+ 	struct stat statbuf;
+ 
++	if (!dev->devpath)
++		return NULL;
+ 	strlcpy(path, sysfs_path, sizeof(path));
+ 	strlcat(path, dev->devpath, sizeof(path));
+ 	if (stat(dev->devpath, &statbuf) == 0 &&
+@@ -258,15 +264,21 @@ void sysfs_device_put(struct sysfs_device *dev)
+ 
+ 	list_for_each_entry(sysdev_loop, &sysfs_dev_list, node) {
+ 		if (&sysdev_loop->dev == dev) {
+-			dbg("removed dev '%s' from cache",
+-			    sysdev_loop->dev.devpath);
+-			list_del(&sysdev_loop->node);
+-			free(sysdev_loop);
++			sysdev_loop->refcount--;
++			if (!sysdev_loop->refcount) {
++				dbg("removed dev '%s' from cache",
++				    sysdev_loop->dev.devpath);
++				list_del(&sysdev_loop->node);
++				free(sysdev_loop);
++			} else {
++				dbg("dev '%s' still in cache, refcount %d",
++				    sysdev_loop->dev.devpath,
++				    sysdev_loop->refcount);
++			}
+ 			return;
+ 		}
+ 	}
+-	dbg("dev '%s' not found in cache",
+-	    sysdev_loop->dev.devpath);
++	dbg("dev '%s' not found in cache", dev->devpath);
+ 
+ 	return;
+ }
