@@ -1,12 +1,15 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] DM RAID:  add RAID1 support
-Date: Tue, 24 May 2011 14:31:34 -0500
-Message-ID: <201105241931.p4OJVZWJ006336@localhost6.localdomain6>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: SUSE multipath-tools patch resync
+Date: Wed, 25 May 2011 09:51:47 +0200
+Message-ID: <1306309907.2290.14.camel@lapoo.opensvc.com>
+References: <4DD3DFC0.9050300@suse.de>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4DD3DFC0.9050300@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,135 +19,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Patch name: dm-raid-add-RAID1-support.patch
+On mer., 2011-05-18 at 17:03 +0200, Hannes Reinecke wrote:
+> git.kernel.org:/pub/scm/linux/kernel/git/hare/multipath-tools.git
 
-Add support to access the MD RAID1 personality through dm-raid.
+I started the merge. I'll post comments along the reading. It seems
+there won't be much : this patchset is clearly a must-have.
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+...
 
-Index: linux-2.6/drivers/md/dm-raid.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-raid.c
-+++ linux-2.6/drivers/md/dm-raid.c
-@@ -8,6 +8,7 @@
- #include <linux/slab.h>
+Shouldn't this one be reverted ? Seems the real thing is
+10d68a92b2a0027d5468cf76656692f34f6dbc54
+
+
+commit efc8ace4b335e752a7d28aca6040af0f9fe37530
+Author: Hannes Reinecke <hare@suse.de>
+Date:   Mon Feb 1 09:46:57 2010 +0100
+
+    Add 'max_polling_interval' config variable
+    
+    We should be able to set the 'max_polling_interval' variable
+    manually. Especially systems requiring precise failover timing
+    will want to disable the automatic polling interval increase.
+    
+    Signed-off-by: Hannes Reinecke <hare@suse.de>
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 7659bb2..6867f23 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1096,9 +1096,9 @@ check_path (struct vectors * vecs, struct path *
+pp)
+                         * max at conf->max_checkint
+                         */
+                        if (pp->checkint < (conf->max_checkint / 2))
+-                               pp->checkint = 2 * pp->checkint;
++                           pp->checkint = 2 * pp->checkint;
+                        else
+-                               pp->checkint = conf->max_checkint;
++                           pp->checkint = conf->max_checkint;
  
- #include "md.h"
-+#include "raid1.h"
- #include "raid5.h"
- #include "dm.h"
- #include "bitmap.h"
-@@ -73,6 +74,7 @@ static struct raid_type {
- 	const unsigned level;		/* RAID level. */
- 	const unsigned algorithm;	/* RAID algorithm. */
- } raid_types[] = {
-+	{"raid1",    "RAID1 (mirroring)",               0, 2, 1, 0 /* NONE */},
- 	{"raid4",    "RAID4 (dedicated parity disk)",	1, 2, 5, ALGORITHM_PARITY_0},
- 	{"raid5_la", "RAID5 (left asymmetric)",		1, 2, 5, ALGORITHM_LEFT_ASYMMETRIC},
- 	{"raid5_ra", "RAID5 (right asymmetric)",	1, 2, 5, ALGORITHM_RIGHT_ASYMMETRIC},
-@@ -106,7 +108,8 @@ static struct raid_set *context_alloc(st
- 	}
- 
- 	sectors_per_dev = ti->len;
--	if (sector_div(sectors_per_dev, (raid_devs - raid_type->parity_devs))) {
-+	if ((raid_type->level > 1) &&
-+	    sector_div(sectors_per_dev, (raid_devs - raid_type->parity_devs))) {
- 		ti->error = "Target length not divisible by number of data devices";
- 		return ERR_PTR(-EINVAL);
- 	}
-@@ -318,10 +321,14 @@ static int validate_region_size(struct r
- 
- /*
-  * Possible arguments are...
-+ * RAID1:
-+ *	[optional_args]
-  * RAID456:
-  *	<chunk_size> [optional_args]
-  *
-- * Optional args:
-+ * Argument definitions
-+ *    <chunk_sectors>         Specific to raid456, the number of sectors per
-+ *                            disk that will form the "stripe"
-  *    [[no]sync]			Force or prevent recovery of the entire array
-  *    [rebuild <idx>]			Rebuild the drive indicated by the index
-  *    [daemon_sleep <ms>]		Time between bitmap daemon work to clear bits
-@@ -341,16 +348,20 @@ static int parse_raid_params(struct raid
- 
- 	/*
- 	 * First, parse the in-order required arguments
-+	 * "chunk_sectors" is the only argument of this type and
-+	 * is only required by raid456
- 	 */
--	if ((strict_strtoul(argv[0], 10, &value) < 0) ||
--	    !is_power_of_2(value) || (value < 8)) {
--		rs->ti->error = "Bad chunk size";
--		return -EINVAL;
--	}
-+	if (rs->raid_type->level != 1) {
-+		if ((strict_strtoul(argv[0], 10, &value) < 0) ||
-+		    !is_power_of_2(value) || (value < 8)) {
-+			rs->ti->error = "Bad chunk size";
-+			return -EINVAL;
-+		}
- 
--	rs->md.new_chunk_sectors = rs->md.chunk_sectors = value;
--	argv++;
--	num_raid_params--;
-+		rs->md.new_chunk_sectors = rs->md.chunk_sectors = value;
-+		argv++;
-+		num_raid_params--;
-+	}
- 
- 	for (i = 0; i < rs->md.raid_disks; i++) {
- 		/*
-@@ -515,6 +526,11 @@ static int raid_is_congested(struct dm_t
- {
- 	struct raid_set *rs = container_of(cb, struct raid_set, callbacks);
- 
-+#ifdef md_raid1_congested
-+	if (rs->raid_type->level == 1)
-+		return md_raid1_congested(&rs->md, bits);
-+#endif
-+
- 	return md_raid5_congested(&rs->md, bits);
- }
- 
-@@ -549,6 +565,13 @@ static int raid_ctr(struct dm_target *ti
- 	argc--;
- 	argv++;
- 
-+#ifndef md_raid1_congested
-+	if (rt->level == 1) {
-+		ti->error = "RAID 1 is not yet supported";
-+		return -EINVAL;
-+	}
-+#endif
-+
- 	/* number of RAID parameters */
- 	if (strict_strtoul(argv[0], 10, &num_raid_params) < 0) {
- 		ti->error = "Cannot understand number of RAID parameters";
-@@ -608,6 +631,7 @@ static int raid_ctr(struct dm_target *ti
- 	rs->callbacks.congested_fn = raid_is_congested;
- 	dm_table_add_target_callbacks(ti->table, &rs->callbacks);
- 
-+	mddev_suspend(&rs->md);
- 	return 0;
- 
- bad:
-@@ -681,8 +705,11 @@ static int raid_status(struct dm_target 
- 		if (rs->print_flags & (DMPF_SYNC | DMPF_NOSYNC))
- 			raid_param_cnt--;
- 
--		DMEMIT("%s %u %u", rs->raid_type->name,
--		       raid_param_cnt, rs->md.chunk_sectors);
-+		if (rs->raid_type->level != 1)
-+			DMEMIT("%s %u %u", rs->raid_type->name,
-+			       raid_param_cnt, rs->md.chunk_sectors);
-+		else
-+			DMEMIT("%s %u", rs->raid_type->name, raid_param_cnt - 1);
- 
- 		if ((rs->print_flags & DMPF_SYNC) &&
- 		    (rs->md.recovery_cp == MaxSector))
+                        pp->tick = pp->checkint;
+                        condlog(4, "%s: delay next check %is",
