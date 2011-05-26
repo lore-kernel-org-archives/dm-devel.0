@@ -1,84 +1,37 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2] dm: pass up non-rotational flag
-Date: Thu, 26 May 2011 14:35:31 -0400
-Message-ID: <20110526183531.GB26219@redhat.com>
+Subject: Re: dm: pass up rotational flag
+Date: Thu, 26 May 2011 14:43:21 -0400
+Message-ID: <20110526184321.GC26219@redhat.com>
 References: <1306356648-30730-1-git-send-email-msb@chromium.org>
+ <20110526182321.GA26219@redhat.com>
+ <yq1zkm948oa.fsf@sermon.lab.mkp.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1306356648-30730-1-git-send-email-msb@chromium.org>
+In-Reply-To: <yq1zkm948oa.fsf@sermon.lab.mkp.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mandeep Singh Baines <msb@chromium.org>
-Cc: linux-kernel@vger.kernel.org, jrbarnette@chromium.org, Neil Brown <neilb@suse.de>, Jens Axboe <jaxboe@fusionio.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Mandeep Singh Baines <msb@chromium.org>, linux-kernel@vger.kernel.org, jrbarnette@chromium.org, Neil Brown <neilb@suse.de>, Jens Axboe <jaxboe@fusionio.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Allow QUEUE_FLAG_NONROT to propagate up the device stack if all
-underlying devices are non-rotational.  Tools like ureadahead will
-schedule IOs differently based on the rotational flag.
+On Thu, May 26 2011 at  2:29pm -0400,
+Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
-With this patch, I see boot time go from 7.75 s to 7.46 s on my device.
+> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+> 
+> >> Allow the NONROT flag to be passed through to linear mappings if all
+> >> underlying device are non-rotational. Tools like ureadahead will
+> >> schedule IOs differently based on the rotational flag.
+> 
+> Mike> Thanks for doing this, looks good in general.
+> 
+> I'd rather we made the rotational property part of the topology instead
+> of having to special-case it in DM. I seem to recall posting a patch
+> that did that at some point but I can't seem to find it...
 
-Suggested-by: J. Richard Barnette <jrbarnette@chromium.org>
-Signed-off-by: Mandeep Singh Baines <msb@chromium.org>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: Neil Brown <neilb@suse.de>
-Cc: Jens Axboe <jaxboe@fusionio.com>
-Cc: Martin K. Petersen <martin.petersen@oracle.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
----
- drivers/md/dm-table.c |   30 ++++++++++++++++++++++++++++++
- 1 files changed, 30 insertions(+), 0 deletions(-)
+Sure, that'd work too.
 
-v2: last minute edit was to avoid double-negative in
-    dm_table_set_restrictions's dm_table_is_nonrot conditional
+Similarly, couldn't the discard flag be made part of topology?
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index cb8380c..a173828 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1177,6 +1177,31 @@ static void dm_table_set_integrity(struct dm_table *t)
- 			       blk_get_integrity(template_disk));
- }
- 
-+static int device_is_nonrot(struct dm_target *ti, struct dm_dev *dev,
-+			    sector_t start, sector_t len, void *data)
-+{
-+	struct request_queue *q = bdev_get_queue(dev->bdev);
-+
-+	return q && blk_queue_nonrot(q);
-+}
-+
-+static bool dm_table_is_nonrot(struct dm_table *t)
-+{
-+	struct dm_target *ti;
-+	unsigned i = 0;
-+
-+	/* Ensure that all underlying device are non-rotational. */
-+	while (i < dm_table_get_num_targets(t)) {
-+		ti = dm_table_get_target(t, i++);
-+
-+		if (!ti->type->iterate_devices ||
-+		    !ti->type->iterate_devices(ti, device_is_nonrot, NULL))
-+			return 0;
-+	}
-+
-+	return 1;
-+}
-+
- void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 			       struct queue_limits *limits)
- {
-@@ -1190,6 +1215,11 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	else
- 		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
- 
-+	if (dm_table_is_nonrot(t))
-+		queue_flag_set_unlocked(QUEUE_FLAG_NONROT, q);
-+	else
-+		queue_flag_clear_unlocked(QUEUE_FLAG_NONROT, q);
-+
- 	dm_table_set_integrity(t);
- 
- 	/*
+Mike
