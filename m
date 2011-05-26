@@ -1,73 +1,99 @@
-From: sdrb <sdrb@onet.eu>
-Subject: Issue with dm snapshots 2
-Date: Thu, 26 May 2011 13:29:29 +0200
-Message-ID: <4DDE3999.8090005@onet.eu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: pass up rotational flag
+Date: Thu, 26 May 2011 14:23:21 -0400
+Message-ID: <20110526182321.GA26219@redhat.com>
+References: <1306356648-30730-1-git-send-email-msb@chromium.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1306356648-30730-1-git-send-email-msb@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mandeep Singh Baines <msb@chromium.org>
+Cc: linux-kernel@vger.kernel.org, jrbarnette@chromium.org, Neil Brown <neilb@suse.de>, Jens Axboe <jaxboe@fusionio.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello
+On Wed, May 25 2011 at  4:50pm -0400,
+Mandeep Singh Baines <msb@chromium.org> wrote:
 
-About two weeks ago I sent post titled "Issue with dm snapshots" to this 
-mailing list. I'd like to provide more information about the problem. 
-Maybe it will help in recognizing the problem.
+> Allow the NONROT flag to be passed through to linear mappings if all
+> underlying device are non-rotational. Tools like ureadahead will
+> schedule IOs differently based on the rotational flag.
+> 
+> With this patch, I see boot time go from 7.75 s to 7.46 s on my device.
+> 
+> Suggested-by: J. Richard Barnette <jrbarnette@chromium.org>
+> Signed-off-by: Mandeep Singh Baines <msb@chromium.org>
+> Cc: Neil Brown <neilb@suse.de>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: Jens Axboe <jaxboe@fusionio.com>
+> Cc: Martin K. Petersen <martin.petersen@oracle.com>
+> Cc: Alasdair G Kergon <agk@redhat.com>
+> Cc: dm-devel@redhat.com
 
+Thanks for doing this, looks good in general.
 
-I tried to find out which is the last git commit after 2.6.28 which with 
-this script works good. I used git bisect to do this and here is what 
-I've got:
+Just a few small nits:
+ - rename device_nonrot to device_is_nonrot
+ - rename dm_table_all_nonrot to dm_table_is_nonrot
+ - add missing whitespace in dm_table_set_restrictions
+ - move ti declaration outside of dm_table_is_nonrot's while loop
+ - dm doesn't use 'true' or 'false' bool returns even though we have
+   functions that return bool -- odd but best to keep consistent for now
 
+I'll respond with v2 that folds these changes in and my Signed-off-by
+---
+ drivers/md/dm-table.c |   18 ++++++++++--------
+ 1 files changed, 10 insertions(+), 8 deletions(-)
 
-# git bisect good
-fcccf502540e3d752d33b2d8e976034dee81f9f7 is first bad commit
-commit fcccf502540e3d752d33b2d8e976034dee81f9f7
-Author: Takashi Sato <t-sato@yk.jp.nec.com>
-Date:   Fri Jan 9 16:40:59 2009 -0800
-
-     filesystem freeze: implement generic freeze feature
-
-     The ioctls for the generic freeze feature are below.
-     o Freeze the filesystem
-       int ioctl(int fd, int FIFREEZE, arg)
-         fd: The file descriptor of the mountpoint
-         FIFREEZE: request code for the freeze
-         arg: Ignored
-         Return value: 0 if the operation succeeds. Otherwise, -1
-
-     o Unfreeze the filesystem
-       int ioctl(int fd, int FITHAW, arg)
-         fd: The file descriptor of the mountpoint
-         FITHAW: request code for unfreeze
-         arg: Ignored
-         Return value: 0 if the operation succeeds. Otherwise, -1
-         Error number: If the filesystem has already been unfrozen,
-                       errno is set to EINVAL.
-
-     [akpm@linux-foundation.org: fix CONFIG_BLOCK=n]
-     Signed-off-by: (...)
-
-
-:040000 040000 23e26d18d2b4d6be7fb25e9093531e34450e3067 
-ae47c7559a4f9ff5a98dbaf812d003b9fcd5f46d M      fs
-:040000 040000 1ca8e10e69d2d4c124b43f2a46c208a96e6c6c82 
-21d3f4d7ca305612510eb5e3552c3751ebd75644 M      include
----------------------
-
-
-
-Seems like the last "good" commit was 
-c4be0c1dc4cdc37b175579be1460f15ac6495e9a - and the first bad is 
-fcccf502540e3d752d33b2d8e976034dee81f9f7.
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 40c6071..a173828 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1177,28 +1177,29 @@ static void dm_table_set_integrity(struct dm_table *t)
+ 			       blk_get_integrity(template_disk));
+ }
+ 
+-static int device_nonrot(struct dm_target *ti, struct dm_dev *dev,
+-			       sector_t start, sector_t len, void *data)
++static int device_is_nonrot(struct dm_target *ti, struct dm_dev *dev,
++			    sector_t start, sector_t len, void *data)
+ {
+ 	struct request_queue *q = bdev_get_queue(dev->bdev);
+ 
+ 	return q && blk_queue_nonrot(q);
+ }
+ 
+-static bool dm_table_all_nonrot(struct dm_table *t)
++static bool dm_table_is_nonrot(struct dm_table *t)
+ {
++	struct dm_target *ti;
+ 	unsigned i = 0;
+ 
+ 	/* Ensure that all underlying device are non rotational. */
+ 	while (i < dm_table_get_num_targets(t)) {
+-		struct dm_target *ti = dm_table_get_target(t, i++);
++		ti = dm_table_get_target(t, i++);
+ 
+ 		if (!ti->type->iterate_devices ||
+-		    !ti->type->iterate_devices(ti, device_nonrot, NULL))
+-			return false;
++		    !ti->type->iterate_devices(ti, device_is_nonrot, NULL))
++			return 0;
+ 	}
+ 
+-	return true;
++	return 1;
+ }
+ 
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+@@ -1213,7 +1214,8 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, q);
+ 	else
+ 		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
+-	if (!dm_table_all_nonrot(t))
++
++	if (!dm_table_is_nonrot(t))
+ 		queue_flag_clear_unlocked(QUEUE_FLAG_NONROT, q);
+ 	else
+ 		queue_flag_set_unlocked(QUEUE_FLAG_NONROT, q);
