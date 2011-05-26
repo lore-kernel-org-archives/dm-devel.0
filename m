@@ -1,19 +1,20 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: SUSE multipath-tools patch resync
-Date: Wed, 25 May 2011 23:29:50 +0200
-Message-ID: <1306358990.2290.43.camel@lapoo.opensvc.com>
-References: <4DD3DFC0.9050300@suse.de>
-	<1306309907.2290.14.camel@lapoo.opensvc.com> <4DDCC72A.8000601@suse.de>
-	<1306322079.2290.25.camel@lapoo.opensvc.com>
-	<1306325431.2290.30.camel@lapoo.opensvc.com>
+Date: Thu, 26 May 2011 08:28:24 +0200
+Message-ID: <4DDDF308.1020804@suse.de>
+References: <4DD3DFC0.9050300@suse.de>	
+	<1306309907.2290.14.camel@lapoo.opensvc.com>
+	<4DDCC72A.8000601@suse.de>	
+	<1306322079.2290.25.camel@lapoo.opensvc.com>	
+	<1306325431.2290.30.camel@lapoo.opensvc.com>	
 	<1306326126.2290.33.camel@lapoo.opensvc.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+	<1306358990.2290.43.camel@lapoo.opensvc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1306326126.2290.33.camel@lapoo.opensvc.com>
+In-Reply-To: <1306358990.2290.43.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,46 +24,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: christophe.varoqui@opensvc.com
+Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-
-> on a 'multipathd reconfigure' command, the uxclient gets stuck and the
-> multipathd daemon strace shows:
-> 
-> $ sudo strace -f -p 17721
-> Process 17721 attached with 7 threads - interrupt to quit
-> [pid 17757] futex(0x7fdc6a1540a4, FUTEX_WAIT_PRIVATE, 3, NULL
-> <unfinished ...>
-> [pid 17756] futex(0x11167f0, FUTEX_WAIT_PRIVATE, 2, NULL
-> <unfinished ...>
-> [pid 17755] ioctl(3, DM_DEV_WAIT <unfinished ...>
-> [pid 17724] futex(0x11167f0, FUTEX_WAIT_PRIVATE, 2, NULL
-> <unfinished ...>
-> [pid 17723] recvmsg(6,  <unfinished ...>
-> [pid 17722] futex(0x110a1b4, FUTEX_WAIT_PRIVATE, 15, NULL
-> <unfinished ...>
-> [pid 17721] futex(0x612624, FUTEX_WAIT_PRIVATE, 1, NULL
-> 
-ok, I dug it to 9e7b4d8d6fa8dc9433c1e60d4bd6717aec2f5296
-
-Here you add acquire/release the vector lock inside
-multipathd/main.c:reconfigure(), but as seen in the following LCKDBG
-trace, the lock is already acquired in
-multipathd/main.c:uxsock_trigger()
-
-Hence the lock -> lock = hang.
-
-I commited and pushed a partial revert of
-9e7b4d8d6fa8dc9433c1e60d4bd6717aec2f5296
-
-But maybe you'd rather see us stop acquiring the lock from
-uxsock_trigger() to acquire more selectively in the functions called
-from there ... Please comment.
-
-Regards,
--- 
-Christophe Varoqui
-OpenSVC - Tools to scale
-http://www.opensvc.com/
+T24gMDUvMjUvMjAxMSAxMToyOSBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+Cj4+IG9u
+IGEgJ211bHRpcGF0aGQgcmVjb25maWd1cmUnIGNvbW1hbmQsIHRoZSB1eGNsaWVudCBnZXRzIHN0
+dWNrIGFuZCB0aGUKPj4gbXVsdGlwYXRoZCBkYWVtb24gc3RyYWNlIHNob3dzOgo+Pgo+PiAkIHN1
+ZG8gc3RyYWNlIC1mIC1wIDE3NzIxCj4+IFByb2Nlc3MgMTc3MjEgYXR0YWNoZWQgd2l0aCA3IHRo
+cmVhZHMgLSBpbnRlcnJ1cHQgdG8gcXVpdAo+PiBbcGlkIDE3NzU3XSBmdXRleCgweDdmZGM2YTE1
+NDBhNCwgRlVURVhfV0FJVF9QUklWQVRFLCAzLCBOVUxMCj4+IDx1bmZpbmlzaGVkIC4uLj4KPj4g
+W3BpZCAxNzc1Nl0gZnV0ZXgoMHgxMTE2N2YwLCBGVVRFWF9XQUlUX1BSSVZBVEUsIDIsIE5VTEwK
+Pj4gPHVuZmluaXNoZWQgLi4uPgo+PiBbcGlkIDE3NzU1XSBpb2N0bCgzLCBETV9ERVZfV0FJVDx1
+bmZpbmlzaGVkIC4uLj4KPj4gW3BpZCAxNzcyNF0gZnV0ZXgoMHgxMTE2N2YwLCBGVVRFWF9XQUlU
+X1BSSVZBVEUsIDIsIE5VTEwKPj4gPHVuZmluaXNoZWQgLi4uPgo+PiBbcGlkIDE3NzIzXSByZWN2
+bXNnKDYsPHVuZmluaXNoZWQgLi4uPgo+PiBbcGlkIDE3NzIyXSBmdXRleCgweDExMGExYjQsIEZV
+VEVYX1dBSVRfUFJJVkFURSwgMTUsIE5VTEwKPj4gPHVuZmluaXNoZWQgLi4uPgo+PiBbcGlkIDE3
+NzIxXSBmdXRleCgweDYxMjYyNCwgRlVURVhfV0FJVF9QUklWQVRFLCAxLCBOVUxMCj4+Cj4gb2ss
+IEkgZHVnIGl0IHRvIDllN2I0ZDhkNmZhOGRjOTQzM2MxZTYwZDRiZDY3MTdhZWMyZjUyOTYKPgo+
+IEhlcmUgeW91IGFkZCBhY3F1aXJlL3JlbGVhc2UgdGhlIHZlY3RvciBsb2NrIGluc2lkZQo+IG11
+bHRpcGF0aGQvbWFpbi5jOnJlY29uZmlndXJlKCksIGJ1dCBhcyBzZWVuIGluIHRoZSBmb2xsb3dp
+bmcgTENLREJHCj4gdHJhY2UsIHRoZSBsb2NrIGlzIGFscmVhZHkgYWNxdWlyZWQgaW4KPiBtdWx0
+aXBhdGhkL21haW4uYzp1eHNvY2tfdHJpZ2dlcigpCj4KPiBIZW5jZSB0aGUgbG9jayAtPiAgbG9j
+ayA9IGhhbmcuCj4KPiBJIGNvbW1pdGVkIGFuZCBwdXNoZWQgYSBwYXJ0aWFsIHJldmVydCBvZgo+
+IDllN2I0ZDhkNmZhOGRjOTQzM2MxZTYwZDRiZDY3MTdhZWMyZjUyOTYKPgo+IEJ1dCBtYXliZSB5
+b3UnZCByYXRoZXIgc2VlIHVzIHN0b3AgYWNxdWlyaW5nIHRoZSBsb2NrIGZyb20KPiB1eHNvY2tf
+dHJpZ2dlcigpIHRvIGFjcXVpcmUgbW9yZSBzZWxlY3RpdmVseSBpbiB0aGUgZnVuY3Rpb25zIGNh
+bGxlZAo+IGZyb20gdGhlcmUgLi4uIFBsZWFzZSBjb21tZW50Lgo+CkhtbS4gWWVzLCB5b3VyIGZp
+eCBhcHBlYXJzIHRvIGJlIGNvcnJlY3QuCkkgaGFkIHNldmVyYWwgbG9ja2luZyBpc3N1ZXMgZHVy
+aW5nIHN0YXJ0dXAgKGNhbGxpbmcgY2xpIGNvbW1hbmRzCndoaWxlIHRoZSBkYWVtb24gaXMgc3Rp
+bGwgc3RhcnRpbmcgdXAgaXMgYSBuaWNlIHdheSBvZiB0ZXN0aW5nIGl0KSwKYW5kIHNldmVyYWwg
+KHVuc3VjY2Vzc2Z1bCkgYXR0ZW1wdHMgaW4gZml4aW5nIGl0LgpSZWFsIGNhdXNlIHdhcyBhIG1p
+c3NpbmcgbG9ja2luZyBkdXJpbmcgaW5pdGlhbCBjb25maWd1cmF0aW9uLApzbyBpdCBsb29rcyBh
+cyBpZiA5ZTdiNGQ4ZDZmYThkYzk0MzNjMWU2MGQ0YmQ2NzE3YWVjMmY1Mjk2CndhcyBpbiBmYWN0
+IGEgbGVmdC1vdmVyIGZyb20gdGhlIGVhcmxpZXIgYXR0ZW1wdHMuCgpTbyB5ZWFoLCB5b3VyIHBh
+dGNoIHNlZW1zIHRvIGJlIGZpbmUuCgpXaWxsIGJlIGRvaW5nIG1vcmUgdGVzdGluZyBoZXJlLgoK
+Q2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICAgICB6U2VyaWVzICYg
+U3RvcmFnZQpoYXJlQHN1c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVY
+IFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogSi4gSGF3
+biwgSi4gR3VpbGQsIEYuIEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChBRyBOw7xybmJlcmcpCgot
+LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
