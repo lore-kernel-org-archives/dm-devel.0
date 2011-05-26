@@ -1,37 +1,30 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
 Subject: Re: dm: pass up rotational flag
-Date: Thu, 26 May 2011 14:43:21 -0400
-Message-ID: <20110526184321.GC26219@redhat.com>
+Date: Thu, 26 May 2011 14:48:23 -0400
+Message-ID: <yq1vcwx47t4.fsf@sermon.lab.mkp.net>
 References: <1306356648-30730-1-git-send-email-msb@chromium.org>
- <20110526182321.GA26219@redhat.com>
- <yq1zkm948oa.fsf@sermon.lab.mkp.net>
+	<20110526182321.GA26219@redhat.com>
+	<yq1zkm948oa.fsf@sermon.lab.mkp.net>
+	<20110526184321.GC26219@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <yq1zkm948oa.fsf@sermon.lab.mkp.net>
+In-Reply-To: <20110526184321.GC26219@redhat.com> (Mike Snitzer's message of
+	"Thu, 26 May 2011 14:43:21 -0400")
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Mandeep Singh Baines <msb@chromium.org>, linux-kernel@vger.kernel.org, jrbarnette@chromium.org, Neil Brown <neilb@suse.de>, Jens Axboe <jaxboe@fusionio.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, Mandeep Singh Baines <msb@chromium.org>, linux-kernel@vger.kernel.org, jrbarnette@chromium.org, Neil Brown <neilb@suse.de>, Jens Axboe <jaxboe@fusionio.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, May 26 2011 at  2:29pm -0400,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+>>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> >> Allow the NONROT flag to be passed through to linear mappings if all
-> >> underlying device are non-rotational. Tools like ureadahead will
-> >> schedule IOs differently based on the rotational flag.
-> 
-> Mike> Thanks for doing this, looks good in general.
-> 
-> I'd rather we made the rotational property part of the topology instead
-> of having to special-case it in DM. I seem to recall posting a patch
-> that did that at some point but I can't seem to find it...
+Mike> Similarly, couldn't the discard flag be made part of topology?
 
-Sure, that'd work too.
+Actually, now that I think about it I'm fairly sure my patch nuked the
+discard queue flag because I was tired of keeping the flag and the
+topology in sync. I don't think I mucked with the rotational flag.
 
-Similarly, couldn't the discard flag be made part of topology?
+Let me grep my patch queue and see. It must be in there somewhere...
 
-Mike
+-- 
+Martin K. Petersen	Oracle Linux Engineering
