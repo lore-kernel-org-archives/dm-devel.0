@@ -1,20 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: SUSE multipath-tools patch resync
-Date: Thu, 26 May 2011 08:28:24 +0200
-Message-ID: <4DDDF308.1020804@suse.de>
-References: <4DD3DFC0.9050300@suse.de>	
-	<1306309907.2290.14.camel@lapoo.opensvc.com>
-	<4DDCC72A.8000601@suse.de>	
-	<1306322079.2290.25.camel@lapoo.opensvc.com>	
-	<1306325431.2290.30.camel@lapoo.opensvc.com>	
-	<1306326126.2290.33.camel@lapoo.opensvc.com>
-	<1306358990.2290.43.camel@lapoo.opensvc.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH] Remove the spinlock protecting the pages
+ allocation
+Date: Thu, 26 May 2011 08:50:55 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1105260848230.25456@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1105191257430.17915@hs20-bc2-1.build.redhat.com>
+	<1306141147.3404.4.camel@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1306358990.2290.43.camel@lapoo.opensvc.com>
+In-Reply-To: <1306141147.3404.4.camel@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,44 +20,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: Joe Thornber <thornber@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gMDUvMjUvMjAxMSAxMToyOSBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+Cj4+IG9u
-IGEgJ211bHRpcGF0aGQgcmVjb25maWd1cmUnIGNvbW1hbmQsIHRoZSB1eGNsaWVudCBnZXRzIHN0
-dWNrIGFuZCB0aGUKPj4gbXVsdGlwYXRoZCBkYWVtb24gc3RyYWNlIHNob3dzOgo+Pgo+PiAkIHN1
-ZG8gc3RyYWNlIC1mIC1wIDE3NzIxCj4+IFByb2Nlc3MgMTc3MjEgYXR0YWNoZWQgd2l0aCA3IHRo
-cmVhZHMgLSBpbnRlcnJ1cHQgdG8gcXVpdAo+PiBbcGlkIDE3NzU3XSBmdXRleCgweDdmZGM2YTE1
-NDBhNCwgRlVURVhfV0FJVF9QUklWQVRFLCAzLCBOVUxMCj4+IDx1bmZpbmlzaGVkIC4uLj4KPj4g
-W3BpZCAxNzc1Nl0gZnV0ZXgoMHgxMTE2N2YwLCBGVVRFWF9XQUlUX1BSSVZBVEUsIDIsIE5VTEwK
-Pj4gPHVuZmluaXNoZWQgLi4uPgo+PiBbcGlkIDE3NzU1XSBpb2N0bCgzLCBETV9ERVZfV0FJVDx1
-bmZpbmlzaGVkIC4uLj4KPj4gW3BpZCAxNzcyNF0gZnV0ZXgoMHgxMTE2N2YwLCBGVVRFWF9XQUlU
-X1BSSVZBVEUsIDIsIE5VTEwKPj4gPHVuZmluaXNoZWQgLi4uPgo+PiBbcGlkIDE3NzIzXSByZWN2
-bXNnKDYsPHVuZmluaXNoZWQgLi4uPgo+PiBbcGlkIDE3NzIyXSBmdXRleCgweDExMGExYjQsIEZV
-VEVYX1dBSVRfUFJJVkFURSwgMTUsIE5VTEwKPj4gPHVuZmluaXNoZWQgLi4uPgo+PiBbcGlkIDE3
-NzIxXSBmdXRleCgweDYxMjYyNCwgRlVURVhfV0FJVF9QUklWQVRFLCAxLCBOVUxMCj4+Cj4gb2ss
-IEkgZHVnIGl0IHRvIDllN2I0ZDhkNmZhOGRjOTQzM2MxZTYwZDRiZDY3MTdhZWMyZjUyOTYKPgo+
-IEhlcmUgeW91IGFkZCBhY3F1aXJlL3JlbGVhc2UgdGhlIHZlY3RvciBsb2NrIGluc2lkZQo+IG11
-bHRpcGF0aGQvbWFpbi5jOnJlY29uZmlndXJlKCksIGJ1dCBhcyBzZWVuIGluIHRoZSBmb2xsb3dp
-bmcgTENLREJHCj4gdHJhY2UsIHRoZSBsb2NrIGlzIGFscmVhZHkgYWNxdWlyZWQgaW4KPiBtdWx0
-aXBhdGhkL21haW4uYzp1eHNvY2tfdHJpZ2dlcigpCj4KPiBIZW5jZSB0aGUgbG9jayAtPiAgbG9j
-ayA9IGhhbmcuCj4KPiBJIGNvbW1pdGVkIGFuZCBwdXNoZWQgYSBwYXJ0aWFsIHJldmVydCBvZgo+
-IDllN2I0ZDhkNmZhOGRjOTQzM2MxZTYwZDRiZDY3MTdhZWMyZjUyOTYKPgo+IEJ1dCBtYXliZSB5
-b3UnZCByYXRoZXIgc2VlIHVzIHN0b3AgYWNxdWlyaW5nIHRoZSBsb2NrIGZyb20KPiB1eHNvY2tf
-dHJpZ2dlcigpIHRvIGFjcXVpcmUgbW9yZSBzZWxlY3RpdmVseSBpbiB0aGUgZnVuY3Rpb25zIGNh
-bGxlZAo+IGZyb20gdGhlcmUgLi4uIFBsZWFzZSBjb21tZW50Lgo+CkhtbS4gWWVzLCB5b3VyIGZp
-eCBhcHBlYXJzIHRvIGJlIGNvcnJlY3QuCkkgaGFkIHNldmVyYWwgbG9ja2luZyBpc3N1ZXMgZHVy
-aW5nIHN0YXJ0dXAgKGNhbGxpbmcgY2xpIGNvbW1hbmRzCndoaWxlIHRoZSBkYWVtb24gaXMgc3Rp
-bGwgc3RhcnRpbmcgdXAgaXMgYSBuaWNlIHdheSBvZiB0ZXN0aW5nIGl0KSwKYW5kIHNldmVyYWwg
-KHVuc3VjY2Vzc2Z1bCkgYXR0ZW1wdHMgaW4gZml4aW5nIGl0LgpSZWFsIGNhdXNlIHdhcyBhIG1p
-c3NpbmcgbG9ja2luZyBkdXJpbmcgaW5pdGlhbCBjb25maWd1cmF0aW9uLApzbyBpdCBsb29rcyBh
-cyBpZiA5ZTdiNGQ4ZDZmYThkYzk0MzNjMWU2MGQ0YmQ2NzE3YWVjMmY1Mjk2CndhcyBpbiBmYWN0
-IGEgbGVmdC1vdmVyIGZyb20gdGhlIGVhcmxpZXIgYXR0ZW1wdHMuCgpTbyB5ZWFoLCB5b3VyIHBh
-dGNoIHNlZW1zIHRvIGJlIGZpbmUuCgpXaWxsIGJlIGRvaW5nIG1vcmUgdGVzdGluZyBoZXJlLgoK
-Q2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkgICAgICB6U2VyaWVzICYg
-U3RvcmFnZQpoYXJlQHN1c2UuZGUJCQkgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIExJTlVY
-IFByb2R1Y3RzIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpHRjogSi4gSGF3
-biwgSi4gR3VpbGQsIEYuIEltZW5kw7ZyZmZlciwgSFJCIDE2NzQ2IChBRyBOw7xybmJlcmcpCgot
-LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
-ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+
+On Mon, 23 May 2011, Joe Thornber wrote:
+
+> On Thu, 2011-05-19 at 12:58 -0400, Mikulas Patocka wrote:
+> > The spinlock is only taken on initialization or from single-threaded
+> > workqueue.
+> > Therefore, the spinlock is useless. 
+> 
+> The spinlock has memory barrier semantics as well.  How are you
+> guaranteeing the changes from the initialisation thread are visible in
+> the workqueue thread?
+
+There is another spinlock, kc->job_lock, that is taken each time someone 
+pushes or pops some work for the worker thread.
+
+Once we take kc->job_lock, we guarantee that any written memory is 
+visible to the other CPUs.
+
+Mikulas
+
+> - Joe
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
