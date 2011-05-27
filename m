@@ -1,7 +1,7 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: [PATCH 1/3] block: Introduce blk_set_stacking_limits function
-Date: Thu, 26 May 2011 22:42:47 -0400
-Message-ID: <1306464169-4291-2-git-send-email-martin.petersen@oracle.com>
+Subject: [PATCH 3/3] block: Move discard and secure discard flags to queue limits
+Date: Thu, 26 May 2011 22:42:49 -0400
+Message-ID: <1306464169-4291-4-git-send-email-martin.petersen@oracle.com>
 References: <4DDEA689.2090004@fusionio.com>
  <1306464169-4291-1-git-send-email-martin.petersen@oracle.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -11,150 +11,191 @@ To: jaxboe@fusionio.com
 Cc: snitzer@redhat.com, msb@chromium.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-Stacking driver queue limits are typically bounded exclusively by the
-capabilities of the low level devices, not by the stacking driver
-itself.
+Whether a device supports discard is currently stored two places:
+max_discard_sectors in the queue limits and the discard request_queue
+flag. Deprecate the queue flag and always use the topology.
 
-Stacking drivers are typically permissive. A feature is supported unless
-an incompatible bottom device causes it to be disabled. Low-level
-drivers on the other hand are restrictive and want features disabled by
-default. Low-level drivers explicitly enable features as part of their
-device discovery process.
-
-This patch introduces blk_set_stacking_limits() which has more liberal
-metrics than the default queue limits function. This allows us to
-inherit topology parameters from bottom devices without manually
-tweaking the default limits in each driver prior to calling the stacking
-function.
-
-Since there is now a clear distinction between stacking and low-level
-devices, blk_set_default_limits() has been modified to carry the more
-conservative values that we used to manually set in
-blk_queue_make_request().
+Also move the secure discard flag to the queue limits so it can be
+stacked as well.
 
 Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
 ---
- block/blk-settings.c   |   30 ++++++++++++++++++++++--------
- drivers/md/dm-table.c  |    6 +++---
- drivers/md/md.c        |    1 +
- include/linux/blkdev.h |    1 +
- 4 files changed, 27 insertions(+), 11 deletions(-)
+ block/blk-settings.c      |    3 +++
+ drivers/block/brd.c       |    1 -
+ drivers/md/dm-table.c     |    5 -----
+ drivers/mmc/card/queue.c  |    4 +---
+ drivers/mtd/mtd_blkdevs.c |    4 +---
+ drivers/scsi/sd.c         |    3 +--
+ include/linux/blkdev.h    |   21 +++++++++++++--------
+ 7 files changed, 19 insertions(+), 22 deletions(-)
 
 diff --git a/block/blk-settings.c b/block/blk-settings.c
-index fa1eb04..b373721 100644
+index f95760d..feb3e40 100644
 --- a/block/blk-settings.c
 +++ b/block/blk-settings.c
-@@ -104,9 +104,7 @@ EXPORT_SYMBOL_GPL(blk_queue_lld_busy);
-  * @lim:  the queue_limits structure to reset
-  *
-  * Description:
-- *   Returns a queue_limit struct to its default state.  Can be used by
-- *   stacking drivers like DM that stage table swaps and reuse an
-- *   existing device queue.
-+ *   Returns a queue_limit struct to its default state.
-  */
- void blk_set_default_limits(struct queue_limits *lim)
- {
-@@ -114,13 +112,12 @@ void blk_set_default_limits(struct queue_limits *lim)
- 	lim->max_integrity_segments = 0;
- 	lim->seg_boundary_mask = BLK_SEG_BOUNDARY_MASK;
- 	lim->max_segment_size = BLK_MAX_SEGMENT_SIZE;
--	lim->max_sectors = BLK_DEF_MAX_SECTORS;
--	lim->max_hw_sectors = INT_MAX;
-+	lim->max_sectors = lim->max_hw_sectors = BLK_SAFE_MAX_SECTORS;
- 	lim->max_discard_sectors = 0;
- 	lim->discard_granularity = 0;
+@@ -118,6 +118,7 @@ void blk_set_default_limits(struct queue_limits *lim)
  	lim->discard_alignment = 0;
  	lim->discard_misaligned = 0;
--	lim->discard_zeroes_data = 1;
-+	lim->discard_zeroes_data = 0;
+ 	lim->discard_zeroes_data = 0;
++	lim->discard_secure = 0;
  	lim->logical_block_size = lim->physical_block_size = lim->io_min = 512;
  	lim->bounce_pfn = (unsigned long)(BLK_BOUNCE_ANY >> PAGE_SHIFT);
  	lim->alignment_offset = 0;
-@@ -131,6 +128,25 @@ void blk_set_default_limits(struct queue_limits *lim)
- EXPORT_SYMBOL(blk_set_default_limits);
+@@ -144,6 +145,7 @@ void blk_set_stacking_limits(struct queue_limits *lim)
+ 	lim->max_hw_sectors = INT_MAX;
+ 	lim->max_sectors = BLK_DEF_MAX_SECTORS;
+ 	lim->discard_zeroes_data = 1;
++	lim->discard_secure = 1;
+ 	lim->non_rotational = 1;
+ }
+ EXPORT_SYMBOL(blk_set_stacking_limits);
+@@ -570,6 +572,7 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
  
- /**
-+ * blk_set_stacking_limits - set default limits for stacking devices
-+ * @lim:  the queue_limits structure to reset
-+ *
-+ * Description:
-+ *   Returns a queue_limit struct to its default state. Should be used
-+ *   by stacking drivers like DM that stage table swaps and reuse an
-+ *   existing device queue.
-+ */
-+void blk_set_stacking_limits(struct queue_limits *lim)
-+{
-+	blk_set_default_limits(lim);
-+
-+	lim->max_hw_sectors = INT_MAX;
-+	lim->max_sectors = BLK_DEF_MAX_SECTORS;
-+	lim->discard_zeroes_data = 1;
-+}
-+EXPORT_SYMBOL(blk_set_stacking_limits);
-+
-+/**
-  * blk_queue_make_request - define an alternate make_request function for a device
-  * @q:  the request queue for the device to be affected
-  * @mfn: the alternate make_request function
-@@ -165,8 +181,6 @@ void blk_queue_make_request(struct request_queue *q, make_request_fn *mfn)
- 	q->nr_batching = BLK_BATCH_REQ;
+ 	t->cluster &= b->cluster;
+ 	t->discard_zeroes_data &= b->discard_zeroes_data;
++	t->discard_secure &= b->discard_secure;
+ 	t->non_rotational &= b->non_rotational;
  
- 	blk_set_default_limits(&q->limits);
--	blk_queue_max_hw_sectors(q, BLK_SAFE_MAX_SECTORS);
--	q->limits.discard_zeroes_data = 0;
+ 	/* Physical block size a multiple of the logical block size? */
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index b7f51e4..3ade4e1 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -489,7 +489,6 @@ static struct brd_device *brd_alloc(int i)
+ 	brd->brd_queue->limits.discard_granularity = PAGE_SIZE;
+ 	brd->brd_queue->limits.max_discard_sectors = UINT_MAX;
+ 	brd->brd_queue->limits.discard_zeroes_data = 1;
+-	queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, brd->brd_queue);
  
- 	/*
- 	 * by default assume old behaviour and bounce for any highmem page
+ 	disk = brd->brd_disk = alloc_disk(1 << part_shift);
+ 	if (!disk)
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index cb8380c..35792bf 100644
+index 35792bf..b5c6a1b 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
-@@ -686,7 +686,7 @@ static int validate_hardware_logical_block_alignment(struct dm_table *table,
- 	while (i < dm_table_get_num_targets(table)) {
- 		ti = dm_table_get_target(table, i++);
+@@ -1185,11 +1185,6 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	 */
+ 	q->limits = *limits;
  
--		blk_set_default_limits(&ti_limits);
-+		blk_set_stacking_limits(&ti_limits);
+-	if (!dm_table_supports_discards(t))
+-		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, q);
+-	else
+-		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
+-
+ 	dm_table_set_integrity(t);
  
- 		/* combine all target devices' limits */
- 		if (ti->type->iterate_devices)
-@@ -1107,10 +1107,10 @@ int dm_calculate_queue_limits(struct dm_table *table,
- 	struct queue_limits ti_limits;
- 	unsigned i = 0;
+ 	/*
+diff --git a/drivers/mmc/card/queue.c b/drivers/mmc/card/queue.c
+index 9adce86..b5c11a0 100644
+--- a/drivers/mmc/card/queue.c
++++ b/drivers/mmc/card/queue.c
+@@ -129,7 +129,6 @@ int mmc_init_queue(struct mmc_queue *mq, struct mmc_card *card, spinlock_t *lock
+ 	blk_queue_prep_rq(mq->queue, mmc_prep_request);
+ 	blk_queue_non_rotational(mq->queue);
+ 	if (mmc_can_erase(card)) {
+-		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, mq->queue);
+ 		mq->queue->limits.max_discard_sectors = UINT_MAX;
+ 		if (card->erased_byte == 0)
+ 			mq->queue->limits.discard_zeroes_data = 1;
+@@ -140,8 +139,7 @@ int mmc_init_queue(struct mmc_queue *mq, struct mmc_card *card, spinlock_t *lock
+ 							card->erase_size << 9;
+ 		}
+ 		if (mmc_can_secure_erase_trim(card))
+-			queue_flag_set_unlocked(QUEUE_FLAG_SECDISCARD,
+-						mq->queue);
++			mq->queue->limits.discard_secure = 1;
+ 	}
  
--	blk_set_default_limits(limits);
-+	blk_set_stacking_limits(limits);
+ #ifdef CONFIG_MMC_BLOCK_BOUNCE
+diff --git a/drivers/mtd/mtd_blkdevs.c b/drivers/mtd/mtd_blkdevs.c
+index a534e1f..5315163 100644
+--- a/drivers/mtd/mtd_blkdevs.c
++++ b/drivers/mtd/mtd_blkdevs.c
+@@ -408,10 +408,8 @@ int add_mtd_blktrans_dev(struct mtd_blktrans_dev *new)
+ 	new->rq->queuedata = new;
+ 	blk_queue_logical_block_size(new->rq, tr->blksize);
  
- 	while (i < dm_table_get_num_targets(table)) {
--		blk_set_default_limits(&ti_limits);
-+		blk_set_stacking_limits(&ti_limits);
+-	if (tr->discard) {
+-		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, new->rq);
++	if (tr->discard)
+ 		new->rq->limits.max_discard_sectors = UINT_MAX;
+-	}
  
- 		ti = dm_table_get_target(table, i++);
+ 	gd->queue = new->rq;
  
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index aa640a8..1bd4c21 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -4329,6 +4329,7 @@ static int md_alloc(dev_t dev, char *name)
- 	mddev->queue->queuedata = mddev;
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index 7a5cf28..c958ac5 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -499,7 +499,7 @@ static void sd_config_discard(struct scsi_disk *sdkp, unsigned int mode)
  
- 	blk_queue_make_request(mddev->queue, md_make_request);
-+	blk_set_stacking_limits(&mddev->queue->limits);
+ 	case SD_LBP_DISABLE:
+ 		q->limits.max_discard_sectors = 0;
+-		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, q);
++		max_blocks = 0;
+ 		return;
  
- 	disk = alloc_disk(1 << shift);
- 	if (!disk) {
+ 	case SD_LBP_UNMAP:
+@@ -521,7 +521,6 @@ static void sd_config_discard(struct scsi_disk *sdkp, unsigned int mode)
+ 	}
+ 
+ 	q->limits.max_discard_sectors = max_blocks * (logical_block_size >> 9);
+-	queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
+ 
+ 	sdkp->provisioning_mode = mode;
+ }
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index ae9091a..517247d 100644
+index 52a3f4c..42a374f 100644
 --- a/include/linux/blkdev.h
 +++ b/include/linux/blkdev.h
-@@ -822,6 +822,7 @@ extern void blk_queue_io_min(struct request_queue *q, unsigned int min);
- extern void blk_limits_io_opt(struct queue_limits *limits, unsigned int opt);
- extern void blk_queue_io_opt(struct request_queue *q, unsigned int opt);
- extern void blk_set_default_limits(struct queue_limits *lim);
-+extern void blk_set_stacking_limits(struct queue_limits *lim);
- extern int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 			    sector_t offset);
- extern int bdev_stack_limits(struct queue_limits *t, struct block_device *bdev,
+@@ -258,7 +258,7 @@ struct queue_limits {
+ 	unsigned char		discard_misaligned;
+ 	unsigned char		cluster;
+ 	unsigned char		discard_zeroes_data;
+-
++	unsigned char		discard_secure;
+ 	unsigned char		non_rotational;
+ };
+ 
+@@ -399,10 +399,8 @@ struct request_queue
+ #define QUEUE_FLAG_FAIL_IO     10	/* fake timeout */
+ #define QUEUE_FLAG_STACKABLE   11	/* supports request stacking */
+ #define QUEUE_FLAG_IO_STAT     12	/* do IO stats */
+-#define QUEUE_FLAG_DISCARD     13	/* supports DISCARD */
+-#define QUEUE_FLAG_NOXMERGES   14	/* No extended merges */
+-#define QUEUE_FLAG_ADD_RANDOM  15	/* Contributes to random pool */
+-#define QUEUE_FLAG_SECDISCARD  16	/* supports SECDISCARD */
++#define QUEUE_FLAG_NOXMERGES   13	/* No extended merges */
++#define QUEUE_FLAG_ADD_RANDOM  14	/* Contributes to random pool */
+ 
+ #define QUEUE_FLAG_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
+ 				 (1 << QUEUE_FLAG_STACKABLE)	|	\
+@@ -483,9 +481,6 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
+ #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
+ #define blk_queue_stackable(q)	\
+ 	test_bit(QUEUE_FLAG_STACKABLE, &(q)->queue_flags)
+-#define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
+-#define blk_queue_secdiscard(q)	(blk_queue_discard(q) && \
+-	test_bit(QUEUE_FLAG_SECDISCARD, &(q)->queue_flags))
+ 
+ #define blk_noretry_request(rq) \
+ 	((rq)->cmd_flags & (REQ_FAILFAST_DEV|REQ_FAILFAST_TRANSPORT| \
+@@ -1033,6 +1028,16 @@ static inline unsigned int blk_queue_nonrot(struct request_queue *q)
+ 	return q->limits.non_rotational;
+ }
+ 
++static inline unsigned int blk_queue_discard(struct request_queue *q)
++{
++	return !!q->limits.max_discard_sectors;
++}
++
++static inline unsigned int blk_queue_secdiscard(struct request_queue *q)
++{
++	return q->limits.discard_secure;
++}
++
+ static inline int queue_alignment_offset(struct request_queue *q)
+ {
+ 	if (q->limits.misaligned)
 -- 
 1.7.4.4
