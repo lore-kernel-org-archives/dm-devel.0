@@ -1,12 +1,14 @@
-From: Jason Price <japrice@gmail.com>
-Subject: dm-multipath fails when 1 path is taken offline
-Date: Thu, 26 May 2011 12:19:28 -0400
-Message-ID: <BANLkTiknZgOPo0OYwzKRS0J9N0xxciudVA@mail.gmail.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [PATCH] multipath-tools: Manual failback fix when
+	priority changes
+Date: Fri, 27 May 2011 10:30:19 -0400
+Message-ID: <47D23AD8469A2B448F33C24BD7A39BD90DBE8600@RTPMVEXC1-PRD.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,78 +21,22 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I've apparently got multipath configured 'correctly', however it seems to
-favor one path over the other.  I can tell this by watching the switch
-traffic... traffic only flows down one path.  When I take the 'non-prefered'
-path offline the logs notice, and take down the path.  I can bring that path
-back online and the path reconnects.
+Current code switches the path-group when there is a change in priority. However,
+this is not the right thing to do when failback is set to manual. This patch fixes
+this problem. Call update_path_groups only if failback is immediate.
 
-However, when I take the 'preferred' path offline, the volume shows
-Input/Output errors, and forces the volume into read-only mode.
+Signed-off-by: Babu Moger <babu.moger@netapp.com>
 
-Background:
-Running v0.4.9 of device-mapper-multipath
-Hitachi AMS2500 array, using ports 0F and 1F
-Brocade 5300 switches, split into two fabrics.  (fabric A, port 30,
-fabric B port 30)
-Host has a qlogic 2462 card with two ports in use.
-
-Current multipath.conf:
-
-blacklist {
-        devnode "^sda$"
-}
-
-defaults {
-                checker_timeout         5
-                polling_interval        5
-}
-
-multipaths {
-        multipath {
-                wwid 360060e8010053b90052fb06900000190
-                alias                   vrp
-#               path_selector           "round-robin 0"
-        }
-}
-
-results of 'multipath -ll'
-
-# multipath -ll
-vrp (360060e8010053b90052fb06900000190) dm-8 HITACHI,DF600F
-size=70G features='1 queue_if_no_path' hwhandler='0' wp=rw
-|-+- policy='round-robin 0' prio=1 status=enabled
-| `- 6:0:0:0 sdc 8:32 active ready running
-`-+- policy='round-robin 0' prio=0 status=enabled
-  `- 5:0:0:0 sdb 8:16 active ready running
-
-I've also worked with several revisions of the multipath.conf file.  If I
-remember correctly, with some device stanza revisions, I've had multipath -ll
-returning this result instead:
-
-# multipath -ll
-vrp (360060e8010053b90052fb06900000190) dm-8 HITACHI,DF600F
-size=70G features='0' hwhandler='0' wp=rw
-`-+- policy='round-robin 0' prio=1 status=active
-|- 6:0:0:0 sdc 8:32 active ready running
-`- 5:0:0:0 sdb 8:16 active ready running
-
-However, both are affected by the same problem.
-
-Excerpt from /etc/fstab:
-LABEL=vrp-db            /vrp-db                 ext3    defaults        0 2
-
-relevant line from pvscan:
-  PV /dev/mpath/vrp   VG vrpdg     lvm2 [70.00 GB / 0    free]
-
-relevant line from vgscan:
-  Found volume group "vrpdg" using metadata type lvm2
-
-While I'd prefer an 'active-active' setup, I'd accept an active/passive
-setup, provided it failed over correctly... preferably with a fast failback.
-
-I'm more than happy to provide any other information.
-
---Jason
-(Please CC: me on any replies... I'm not sure I've successfully subscribed
-to this mailing list)
+---
+--- multipath-tools/multipathd/main.c.orig	2011-05-26 08:06:08.000000000 -0500
++++ multipath-tools/multipathd/main.c	2011-05-26 08:21:39.000000000 -0500
+@@ -1189,7 +1189,8 @@ check_path (struct vectors * vecs, struc
+ 	condlog(4, "path prio refresh");
+ 
+ 	if (update_prio(pp, new_path_up) &&
+-	    pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio)
++	    (pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio) &&
++	     pp->mpp->pgfailback == -FAILBACK_IMMEDIATE)
+ 		update_path_groups(pp->mpp, vecs, !new_path_up);
+ 	else if (need_switch_pathgroup(pp->mpp, 0)) {
+ 		if (pp->mpp->pgfailback > 0 &&
