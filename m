@@ -1,73 +1,55 @@
-From: Joe Perches <joe@perches.com>
-Subject: [TRIVIAL PATCH next 07/15] md: Convert vmalloc/memset to vzalloc
-Date: Sat, 28 May 2011 10:36:27 -0700
-Message-ID: <3e09b436027e1d6f2a42663739961817da1e2be9.1306603968.git.joe@perches.com>
-References: <cover.1306603968.git.joe@perches.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper patches for 2.6.40
+Date: Sun, 29 May 2011 13:18:58 +0100
+Message-ID: <20110529121858.GC27449@agk-dp.fab.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1306603968.git.joe@perches.com>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>, Jiri Kosina <trivial@kernel.org>
-Cc: dm-devel@redhat.com, linux-raid@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, stable@kernel.org, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: Joe Perches <joe@perches.com>
----
- drivers/md/dm-log.c             |    3 +--
- drivers/md/dm-snap-persistent.c |    3 +--
- drivers/md/dm-table.c           |    4 +---
- 3 files changed, 3 insertions(+), 7 deletions(-)
+Please pull from:
 
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index a1f3218..b6c2b71 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -487,7 +487,7 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
- 	memset(lc->sync_bits, (sync == NOSYNC) ? -1 : 0, bitset_size);
- 	lc->sync_count = (sync == NOSYNC) ? region_count : 0;
- 
--	lc->recovering_bits = vmalloc(bitset_size);
-+	lc->recovering_bits = vzalloc(bitset_size);
- 	if (!lc->recovering_bits) {
- 		DMWARN("couldn't allocate sync bitset");
- 		vfree(lc->sync_bits);
-@@ -499,7 +499,6 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
- 		kfree(lc);
- 		return -ENOMEM;
- 	}
--	memset(lc->recovering_bits, 0, bitset_size);
- 	lc->sync_search = 0;
- 	log->context = lc;
- 
-diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
-index 95891df..be100d4 100644
---- a/drivers/md/dm-snap-persistent.c
-+++ b/drivers/md/dm-snap-persistent.c
-@@ -174,10 +174,9 @@ static int alloc_area(struct pstore *ps)
- 	if (!ps->area)
- 		goto err_area;
- 
--	ps->zero_area = vmalloc(len);
-+	ps->zero_area = vzalloc(len);
- 	if (!ps->zero_area)
- 		goto err_zero_area;
--	memset(ps->zero_area, 0, len);
- 
- 	ps->header_area = vmalloc(len);
- 	if (!ps->header_area)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index cb8380c..5850497 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -154,9 +154,7 @@ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size)
- 		return NULL;
- 
- 	size = nmemb * elem_size;
--	addr = vmalloc(size);
--	if (addr)
--		memset(addr, 0, size);
-+	addr = vzalloc(size);
- 
- 	return addr;
- }
--- 
-1.7.5.rc3.dirty
+  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
+
+to get the following device-mapper patches for inclusion in 2.6.40. 
+There are some minor fixes and a small patchset that reduces kcopyd memory
+requirements.
+
+Martin K. Petersen (1):
+      dm mpath: do not fail paths after integrity errors
+
+Mike Snitzer (1):
+      dm table: allow targets to support discards internally
+
+Mikulas Patocka (8):
+      dm kcopyd: avoid pointless job splitting
+      dm kcopyd: preallocate sub jobs to avoid deadlock
+      dm kcopyd: remove superfluous page allocation spinlock
+      dm kcopyd: add gfp parm to alloc_pl
+      dm kcopyd: alloc pages from the main page allocator
+      dm io: use fixed initial mempool size
+      dm kcopyd: reserve fewer pages
+      dm kcopyd: return client directly and not through a pointer
+
+Milan Broz (1):
+      dm table: reject devices without request fns
+
+ drivers/md/dm-io.c              |   27 +-----
+ drivers/md/dm-kcopyd.c          |  168 +++++++++++++++++++++++----------------
+ drivers/md/dm-log.c             |    3 +-
+ drivers/md/dm-mpath.c           |    2 +-
+ drivers/md/dm-raid1.c           |   10 +-
+ drivers/md/dm-snap-persistent.c |   13 +---
+ drivers/md/dm-snap.c            |   10 +--
+ drivers/md/dm-table.c           |   23 +++++-
+ include/linux/device-mapper.h   |    6 ++
+ include/linux/dm-io.h           |    3 +-
+ include/linux/dm-kcopyd.h       |    3 +-
+ 11 files changed, 144 insertions(+), 124 deletions(-)
+
+Thanks,
+Alasdair.
