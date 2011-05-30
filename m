@@ -1,55 +1,62 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper patches for 2.6.40
-Date: Sun, 29 May 2011 13:18:58 +0100
-Message-ID: <20110529121858.GC27449@agk-dp.fab.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Akinobu Mita <akinobu.mita@gmail.com>
+Subject: [PATCH] dm: use use proper little-endian bitops
+Date: Mon, 30 May 2011 21:54:19 +0900
+Message-ID: <1306760059-4219-1-git-send-email-akinobu.mita@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, stable@kernel.org, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>
+To: linux-kernel@vger.kernel.org
+Cc: Akinobu Mita <akinobu.mita@gmail.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Please pull from:
+Using __test_and_{set,clear}_bit_le() with ignoring its return value
+can be replaced with __{set,clear}_bit_le().
 
-  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
+This also removes unnecessary casts.
 
-to get the following device-mapper patches for inclusion in 2.6.40. 
-There are some minor fixes and a small patchset that reduces kcopyd memory
-requirements.
+Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+---
+ drivers/md/dm-log.c |    9 ++++-----
+ 1 files changed, 4 insertions(+), 5 deletions(-)
 
-Martin K. Petersen (1):
-      dm mpath: do not fail paths after integrity errors
-
-Mike Snitzer (1):
-      dm table: allow targets to support discards internally
-
-Mikulas Patocka (8):
-      dm kcopyd: avoid pointless job splitting
-      dm kcopyd: preallocate sub jobs to avoid deadlock
-      dm kcopyd: remove superfluous page allocation spinlock
-      dm kcopyd: add gfp parm to alloc_pl
-      dm kcopyd: alloc pages from the main page allocator
-      dm io: use fixed initial mempool size
-      dm kcopyd: reserve fewer pages
-      dm kcopyd: return client directly and not through a pointer
-
-Milan Broz (1):
-      dm table: reject devices without request fns
-
- drivers/md/dm-io.c              |   27 +-----
- drivers/md/dm-kcopyd.c          |  168 +++++++++++++++++++++++----------------
- drivers/md/dm-log.c             |    3 +-
- drivers/md/dm-mpath.c           |    2 +-
- drivers/md/dm-raid1.c           |   10 +-
- drivers/md/dm-snap-persistent.c |   13 +---
- drivers/md/dm-snap.c            |   10 +--
- drivers/md/dm-table.c           |   23 +++++-
- include/linux/device-mapper.h   |    6 ++
- include/linux/dm-io.h           |    3 +-
- include/linux/dm-kcopyd.h       |    3 +-
- 11 files changed, 144 insertions(+), 124 deletions(-)
-
-Thanks,
-Alasdair.
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index a1f3218..56fe5fb 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -251,20 +251,20 @@ struct log_c {
+  */
+ static inline int log_test_bit(uint32_t *bs, unsigned bit)
+ {
+-	return test_bit_le(bit, (unsigned long *) bs) ? 1 : 0;
++	return test_bit_le(bit, bs) ? 1 : 0;
+ }
+ 
+ static inline void log_set_bit(struct log_c *l,
+ 			       uint32_t *bs, unsigned bit)
+ {
+-	__test_and_set_bit_le(bit, (unsigned long *) bs);
++	__set_bit_le(bit, bs);
+ 	l->touched_cleaned = 1;
+ }
+ 
+ static inline void log_clear_bit(struct log_c *l,
+ 				 uint32_t *bs, unsigned bit)
+ {
+-	__test_and_clear_bit_le(bit, (unsigned long *) bs);
++	__clear_bit_le(bit, bs);
+ 	l->touched_dirtied = 1;
+ }
+ 
+@@ -740,8 +740,7 @@ static int core_get_resync_work(struct dm_dirty_log *log, region_t *region)
+ 		return 0;
+ 
+ 	do {
+-		*region = find_next_zero_bit_le(
+-					     (unsigned long *) lc->sync_bits,
++		*region = find_next_zero_bit_le(lc->sync_bits,
+ 					     lc->region_count,
+ 					     lc->sync_search);
+ 		lc->sync_search = *region + 1;
+-- 
+1.7.4.4
