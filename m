@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-kcopyd: monitor io activity
-Date: Mon, 30 May 2011 12:40:39 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1105301238460.26092@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH] dm-kcopyd: use throttle
+Date: Mon, 30 May 2011 12:41:36 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1105301241170.26092@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,120 +19,101 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+dm-kcopyd: use throttle
 
-Here I'm sending three patches that limit kcopyd speed. There is global 
-limit for all kcopyds running in a system. The user can set percentage of 
-kcopyd speed in /sys/module/dm_mod/parameters/dm_kcopyd_throttle
+The variable "dm_kcopyd_throttle" is used to throttle kcopyd.
 
-Mikulas
+If dm_kcopyd_throttle >= 100, accounting is disabled, otherwise limit kcopyd
+to use less than dm_kcopyd_throttle percent of time.
 
----
-
-dm-kcopyd: monitor io activity
-
-There are two activity counters, "total_period" and "io_period".
-total_period counts all time ticks, io_period counts timer ticks when
-some I/O is active.
-
-Thus, (100 * io_period / total_period) represents the percentage of
-time when kcopyd is active.
+We sleep for 100ms if we overrun the allocated percentage of time.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-kcopyd.c |   67 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 67 insertions(+)
+ drivers/md/dm-kcopyd.c |   38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
 
 Index: linux-2.6.39-fast/drivers/md/dm-kcopyd.c
 ===================================================================
---- linux-2.6.39-fast.orig/drivers/md/dm-kcopyd.c	2011-05-30 18:04:08.000000000 +0200
-+++ linux-2.6.39-fast/drivers/md/dm-kcopyd.c	2011-05-30 18:07:36.000000000 +0200
-@@ -66,6 +66,69 @@ struct dm_kcopyd_client {
- 	struct list_head pages_jobs;
- };
+--- linux-2.6.39-fast.orig/drivers/md/dm-kcopyd.c	2011-05-30 18:09:45.000000000 +0200
++++ linux-2.6.39-fast/drivers/md/dm-kcopyd.c	2011-05-30 18:13:34.000000000 +0200
+@@ -22,6 +22,7 @@
+ #include <linux/vmalloc.h>
+ #include <linux/workqueue.h>
+ #include <linux/mutex.h>
++#include <linux/delay.h>
+ #include <linux/device-mapper.h>
+ #include <linux/dm-kcopyd.h>
  
-+static DEFINE_SPINLOCK(activity_spinlock);
-+static unsigned long num_io_jobs = 0;
+@@ -88,12 +89,35 @@ static unsigned last_jiffies = 0;
+  */
+ #define ACOUNT_INTERVAL_SHIFT		SHIFT_HZ
+ 
++/*
++ * Sleep this number of milliseconds.
++ *
++ * It is experimentally found value.
++ * Smaller values cause increased copy rate above the limit. The reason for
++ * this is unknown. A possible explanations could be jiffies rounding errors
++ * or read/write cache inside the disk.
++ */
++#define SLEEP_MSEC			100
 +
 +/*
-+ * kcopyd is active (100 * io_period / total_period) percent of time.
++ * Maximum number of sleep events. There is a theoretical livelock if more
++ * kcopyd clients do work simultaneously, this limit allows us to get out of
++ * the livelock.
 + */
-+static unsigned io_period = 0;
-+static unsigned total_period = 0;
-+static unsigned last_jiffies = 0;
++#define MAX_SLEEPS			10
 +
-+/*
-+ * IO/IDLE accounting slowly decays after (1 << ACOUNT_INTERVAL_SHIFT) period.
-+ * When total_period >= (1 << ACOUNT_INTERVAL_SHIFT) the counters are divided
-+ * by 2.
-+ */
-+#define ACOUNT_INTERVAL_SHIFT		SHIFT_HZ
-+
-+static void io_job_start(void)
-+{
-+	unsigned now, difference;
-+
-+	spin_lock_irq(&activity_spinlock);
-+
-+	now = jiffies;
-+	difference = now - last_jiffies;
-+	last_jiffies = now;
-+	if (num_io_jobs)
-+		io_period += difference;
-+	total_period += difference;
-+
-+	if (unlikely(total_period >= (1 << ACOUNT_INTERVAL_SHIFT))) {
-+		int shift = fls(total_period >> ACOUNT_INTERVAL_SHIFT);
-+		total_period >>= shift;
-+		io_period >>= shift;
-+	}
-+
-+	num_io_jobs++;
-+
-+	spin_unlock_irq(&activity_spinlock);
-+}
-+
-+static void io_job_finish(void)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&activity_spinlock, flags);
-+
-+	num_io_jobs--;
-+
-+	if (!num_io_jobs) {
-+		unsigned now, difference;
-+
-+		now = jiffies;
-+		difference = now - last_jiffies;
-+		last_jiffies = now;
-+
-+		io_period += difference;
-+		total_period += difference;
-+	}
-+
-+	spin_unlock_irqrestore(&activity_spinlock, flags);
-+}
-+
- static void wake(struct dm_kcopyd_client *kc)
+ static void io_job_start(void)
  {
- 	queue_work(kc->kcopyd_wq, &kc->kcopyd_work);
-@@ -324,6 +387,8 @@ static void complete_io(unsigned long er
- 	struct kcopyd_job *job = (struct kcopyd_job *) context;
- 	struct dm_kcopyd_client *kc = job->kc;
+ 	unsigned now, difference;
++	int slept = 0;
++	int skew;
  
-+	io_job_finish();
-+
- 	if (error) {
- 		if (job->rw == WRITE)
- 			job->write_err |= error;
-@@ -365,6 +430,8 @@ static int run_io_job(struct kcopyd_job 
- 		.client = job->kc->io_client,
- 	};
++try_again:
+ 	spin_lock_irq(&activity_spinlock);
  
-+	io_job_start();
++	if (likely(dm_kcopyd_throttle >= 100))
++		goto skip_limit;
 +
- 	if (job->rw == READ)
- 		r = dm_io(&io_req, 1, &job->source, NULL);
- 	else
+ 	now = jiffies;
+ 	difference = now - last_jiffies;
+ 	last_jiffies = now;
+@@ -107,6 +131,16 @@ static void io_job_start(void)
+ 		io_period >>= shift;
+ 	}
+ 
++	skew = io_period - dm_kcopyd_throttle * total_period / 100;
++	/* skew = io_period * 100 / dm_kcopyd_throttle - total_period; */
++	if (unlikely(skew > 0) && slept < MAX_SLEEPS) {
++		slept++;
++		spin_unlock_irq(&activity_spinlock);
++		msleep(SLEEP_MSEC);
++		goto try_again;
++	}
++
++skip_limit:
+ 	num_io_jobs++;
+ 
+ 	spin_unlock_irq(&activity_spinlock);
+@@ -120,6 +154,9 @@ static void io_job_finish(void)
+ 
+ 	num_io_jobs--;
+ 
++	if (likely(dm_kcopyd_throttle >= 100))
++		goto skip_limit;
++
+ 	if (!num_io_jobs) {
+ 		unsigned now, difference;
+ 
+@@ -131,6 +168,7 @@ static void io_job_finish(void)
+ 		total_period += difference;
+ 	}
+ 
++skip_limit:
+ 	spin_unlock_irqrestore(&activity_spinlock, flags);
+ }
+ 
