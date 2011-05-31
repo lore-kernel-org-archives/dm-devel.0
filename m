@@ -1,28 +1,42 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: [PATCH 3/3] block: Move discard and secure discard flags to queue limits
-Date: Mon, 30 May 2011 22:22:37 -0400
-Message-ID: <yq1fwnvzk0i.fsf@sermon.lab.mkp.net>
-References: <4DDEA689.2090004@fusionio.com>
-	<1306464169-4291-1-git-send-email-martin.petersen@oracle.com>
-	<1306464169-4291-4-git-send-email-martin.petersen@oracle.com>
-	<20110527133952.GC17219@redhat.com>
+From: Joe Thornber <ejt@redhat.com>
+Subject: Re: [PATCH] dm-kcopyd: monitor io activity
+Date: Tue, 31 May 2011 10:09:01 +0100
+Message-ID: <20110531090900.GA3164@ubuntu>
+References: <Pine.LNX.4.64.1105301238460.26092@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110527133952.GC17219@redhat.com> (Mike Snitzer's message of
-	"Fri, 27 May 2011 09:39:52 -0400")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: "Martin K. Petersen" <martin.petersen@oracle.com>, jaxboe@fusionio.com, msb@chromium.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1105301238460.26092@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
->>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
+On Mon, May 30, 2011 at 12:40:39PM -0400, Mikulas Patocka wrote:
+> Here I'm sending three patches that limit kcopyd speed. There is global 
+> limit for all kcopyds running in a system. The user can set percentage of 
+> kcopyd speed in /sys/module/dm_mod/parameters/dm_kcopyd_throttle
 
-Mike> Most targets do support discards (tgt->num_discard_requests > 0).
-Mike> But if any target doesn't support discards then the entire table
-Mike> doesn't support them.
+Could you give some explanation of how to choose an appropriate value
+for this please?  Should it be 100% unless there is an issue?  How
+does the sys admin spot such issues?
 
-Would you rather have the stacking policy for discard be | instead of &?
+Different kcopyd clients have different performance requirements, for
+instance the initial sync of a new mirror leg may have less priority
+than a copy-on-write exception for a snapshot.  This isn't something
+we've addressed so far, but if you're starting to slow kcopyd down
+(i.e. so the mirror sync doesn't saturate the system), then I think
+you'll get some complaints from the snapshot users.
 
--- 
-Martin K. Petersen	Oracle Linux Engineering
+- joe
