@@ -1,11 +1,16 @@
-From: yue <ooolinux@163.com>
-Subject: if the dmesg is error mmsg
-Date: Wed, 1 Jun 2011 16:35:29 +0800 (CST)
-Message-ID: <cce1dd.7dc4.1304a57db3d.Coremail.ooolinux@163.com>
+From: Joe Thornber <ejt@redhat.com>
+Subject: Re: [PATCH 1/2] dm-kcopyd: introduce per-module throttle
+ structure
+Date: Wed, 1 Jun 2011 10:51:07 +0100
+Message-ID: <20110601095106.GA3718@ubuntu>
+References: <Pine.LNX.4.64.1105311802330.9322@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1425945674009776779=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1105311802330.9322@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,37 +20,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
---===============1425945674009776779==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_88091_2888701.1306917329725"
+On Tue, May 31, 2011 at 06:03:39PM -0400, Mikulas Patocka wrote:
+> Hi
+> 
+> Here I'm sending new kcopyd throttling patches that allow the throttle to 
+> be set per module (i.e. one throttle for mirror and the other for 
+> snapshots).
 
-------=_Part_88091_2888701.1306917329725
-Content-Type: text/plain; charset=GBK
-Content-Transfer-Encoding: 7bit
+I'm sorry Mikulas, but these patches still really worry me.
 
-rport-6:0-24: blocked FC remote port time out: removing rport
- rport-5:0-19: blocked FC remote port time out: removing rport
- rport-6:0-23: blocked FC remote port time out: removing rport
- rport-5:0-18: blocked FC remote port time out: removing rport
+i) Your throttling is time based, rather than throughput.
+
+ii) No account is taken of the source and destination devices.  If I
+have an idle mirror, I would like the resyncing of a new leg to go at
+100% speed.  Other mirrors in the system may be under load so should
+resync in a more sympathetic manner.  Should we be using the
+congestion functions to see if the source or destination are too busy?
  
-thanks
-------=_Part_88091_2888701.1306917329725
-Content-Type: text/html; charset=GBK
-Content-Transfer-Encoding: 7bit
+iii) calling msleep in kernel code really makes me shudder, especially
+when you call it with a fixed, small duration and then loop.  Can't
+you work out how long you should sleep for?  Why not defer the worker
+thread until this time? (i.e. use queue_delayed_work()).
 
-<DIV>rport-6:0-24: blocked FC remote port time out: removing rport<BR>&nbsp;rport-5:0-19: blocked FC remote port time out: removing rport<BR>&nbsp;rport-6:0-23: blocked FC remote port time out: removing rport<BR>&nbsp;rport-5:0-18: blocked FC remote port time out: removing rport<BR>&nbsp;</DIV>
-<DIV>thanks</DIV><br><br><span title="neteasefooter"><span id="netease_mail_footer"></span></span>
-------=_Part_88091_2888701.1306917329725--
+iv) you haven't explained how the sys admin works out the correct
+throttle value.  If we write this down then maybe we can think about
+automating it.
 
-
---===============1425945674009776779==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1425945674009776779==--
+- Joe
