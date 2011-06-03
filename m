@@ -1,12 +1,17 @@
-From: "Sandra Escandor" <sescandor@evertz.com>
-Subject: Trouble with registering a raid volume with dmeventd
-Date: Fri, 3 Jun 2011 12:15:11 -0400
-Message-ID: <C70A636B101FD44999B82525C3E92AFACBAF26@otis.burlington.evertz.tv>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: dm-cache module
+Date: Fri, 03 Jun 2011 15:16:37 -0400
+Message-ID: <4DE93315.3090903@cfl.rr.com>
+References: <4BA5623F.8040502@daevel.fr>
+	<20100321033704.GA6448@redhat.com>	<15606e421003202156n21de56a6n868f84bf737cce51@mail.gmail.com>	<1269270327.21395.42.camel@o>
+	<4BD7906E.6010602@daevel.fr>	<1272442907.2031.79.camel@o>
+	<1272463344.2031.91.camel@o>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2256075178190522746=="
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <1272463344.2031.91.camel@o>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,159 +21,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+What ever came of this?  It doesn't look like either competing cache 
+target has made it into mainline yet.
 
---===============2256075178190522746==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01CC2208.F2605816"
+It looks like two caching systems have made it into mainline, but 
+neither are usable for having an ssd cache a large hard disk. 
+CleanCache isn't usable because it does not have a backend that can use 
+a block device to hold the cache, and FsCache is only supported by nfs 
+and cifs.
 
-This is a multi-part message in MIME format.
+Apparently Intel has added the ability to use an SSD to cache a big hard 
+disk to their matrix storage fakeraid in the new Z68 chipset and it is 
+generating a good deal of interest.  It would be nice to be able to do 
+something similar in Linux.
 
-------_=_NextPart_001_01CC2208.F2605816
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-I notice that when I initially have the raid0+1 volumes registered with
-dm_dso_reg_tool, and then simulate a disk failure by pulling a member
-disk during an i/o operation, then reconnecting the disk, and then
-rebooting, I see that the output of dmsetup status shows that all of the
-member disks are active for each raid volume.=20
-
-=20
-
-When I check out the output of dm_dso_reg_tool -m to show the list of
-monitored devices, it shows that the raid volumes are not registered
-with dmeventd. That's fine, so I try registering all of the raid
-volumes, but only two out of the three volumes only ever get registered
-with dmeventd. Whenever I register the third volume, all three volumes
-become listed as not currently registered with dmeventd.
-
-=20
-
-What step am I missing?
-
-=20
-
-Thanks for clarifying,
-
-Sandra
-
-
-------_=_NextPart_001_01CC2208.F2605816
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns=3D"http://www.w3.org/TR/REC-html40">
-
-<head>
-<meta http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
-<style>
-<!--
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:Arial;
-	color:windowtext;}
-@page Section1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.25in 1.0in 1.25in;}
-div.Section1
-	{page:Section1;}
--->
-</style>
-
-</head>
-
-<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
-
-<div class=3DSection1>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>I notice that when I initially have the raid0+1 =
-volumes
-registered with dm_dso_reg_tool, and then simulate a disk failure by =
-pulling a
-member disk during an i/o operation, then reconnecting the disk, and =
-then
-rebooting, I see that the output of dmsetup status shows that all of the =
-member
-disks are active for each raid volume. <o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>When I check out the output of dm_dso_reg_tool =
-&#8211;m to
-show the list of monitored devices, it shows that the raid volumes are =
-not
-registered with dmeventd. That&#8217;s fine, so I try registering all of =
-the
-raid volumes, but only two out of the three volumes only ever get =
-registered
-with dmeventd. Whenever I register the third volume, all three volumes =
-become
-listed as not currently registered with =
-dmeventd.<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>What step am I missing?<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>Thanks for clarifying,<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>Sandra<o:p></o:p></span></font></p>
-
-</div>
-
-</body>
-
-</html>
-
-------_=_NextPart_001_01CC2208.F2605816--
-
-
---===============2256075178190522746==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2256075178190522746==--
+On 4/28/2010 10:02 AM, Heinz Mauelshagen wrote:
+> Olivier,
+>
+> some initial impressions:
+>
+> I've spent an hour porting the source code to 2.6.34-rc4 and doing first
+> tests.
+>
+> Those unveil, that it only works with cache block size equal to page
+> size (4KB here). With large cache block sizes it doesn't cache at all.
+>
+> That may well be the result of a porting flaw but I have to have a
+> closer look to tell. It works with quite decent performance with that
+> block size. Code looks like heavily derived from the dm-cache source and
+> overly complicated.
+>
+> Destroying a flashcache mapping with a large dirty cache flushs the
+> whole dirty content out which is not suitable to practical dm needs
+> requiring a mapping to be suspendable quickly during reconfiguration.
+>
+> Regards,
+> Heinz
+>
+> On Wed, 2010-04-28 at 10:21 +0200, Heinz Mauelshagen wrote:
+>> On Wed, 2010-04-28 at 03:33 +0200, Olivier B. wrote:
+>>> On 22/03/2010 16:05, Heinz Mauelshagen wrote:
+>>>> On Sun, 2010-03-21 at 00:56 -0400, Ming Zhao wrote:
+>>>>
+>>>>> Hi Mike,
+>>>>>
+>>>>> Thank you very much for your advice!
+>>>>>
+>>>>> I can revise dm-cache code and resubmit it as you suggested. I would
+>>>>> also love to know Heinz's progress on his implementation and work with
+>>>>> him if there anything I could contribute.
+>>>>>
+>>>> Hi all,
+>>>>
+>>>> this is a list of the functions of my dm-hstore
+>>>> device-mapper target implementation:
+>>>>
+>>>> o caches reads and writes keeping persistent state metadata.
+>>>> o writes back in order to enhance streaming performance
+>>>>     on fragmented access pattern.
+>>>> o can run on top of readonly original device
+>>>> o if so, writes back any dirty areas when set readwrite
+>>>>     (useful for tests)
+>>>> o readonly<->   readwrite access changes supported via message interface
+>>>> o initializes metadata for extents in cache in the background
+>>>>     in order to fasten cache construction
+>>>> o supports cache resizing via message interface or constructor
+>>>> o keeps metadata persistent by default
+>>>> o stores CRCs with metadata for integrity checks
+>>>> o stores versions with metadata to support future metadata migration
+>>>>
+>>>> Test features only:
+>>>> o transient cache
+>>>> o cache write through
+>>>>
+>>>>
+>>>> Provides very good performance on SSD cache backing stores.
+>>>>
+>>>> Has been shelved for a while because of other priorities so I need to
+>>>> rebase it to the actual kernel.
+>>>>
+>>>> Regards,
+>>>> Heinz
+>>>>
+>>>>
+>>> Hi,
+>>>
+>>> Facebook have just released "FlashCache" :
+>>> http://github.com/facebook/flashcache
+>>> in the documentation we can read :
+>>
+>>> Flashcache is built using the Linux Device Mapper (DM), part of the
+>>> Linux Storage Stack infrastructure that facilitates building SW-RAID and
+>>> other components.
+>>>
+>>> So it's an other implementation of the same concept, no ?
+>>
+>> Yes, it looks like it. I'll have a closer look how it differs form mine.
+>>
+>> Heinz
