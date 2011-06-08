@@ -1,15 +1,14 @@
-From: Ray Van Dolson <rayvd@bludgeon.org>
-Subject: Re: loopX too small for target
-Date: Tue, 7 Jun 2011 22:28:00 -0700
-Message-ID: <20110608052759.GA16504@bludgeon.org>
-References: <20110608051340.GA16351@bludgeon.org>
+From: "Bryn M. Reeves" <bmr@redhat.com>
+Subject: Re: XFS getting EAGAIN from block device
+Date: Wed, 08 Jun 2011 10:11:13 +0100
+Message-ID: <4DEF3CB1.20900@redhat.com>
+References: <BANLkTinc-zSEY5uQ-8i__KzWPp24Q-yB+w@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20110608051340.GA16351@bludgeon.org>
+In-Reply-To: <BANLkTinc-zSEY5uQ-8i__KzWPp24Q-yB+w@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,62 +18,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Marko Huttunen <marko@codito.se>
 List-Id: dm-devel.ids
 
-On Tue, Jun 07, 2011 at 10:13:41PM -0700, Ray Van Dolson wrote:
-> I've imaged the hard disk off of a CentOS 5 machine via dd which
-> resulted in a 112GB file "gawaine.img":
-> 
->   # file gawaine.img 
->   gawaine.img: x86 boot sector; GRand Unified Bootloader, stage1 version 0x3, boot drive 0x80, 1st sector stage2 0x8841; partition 1: ID=0x83, active, starthead 1, startsector 63, 208782 sectors; partition 2: ID=0x8e, starthead 0, startsector 208845, 234227700 sectors, code offset 0x48
->   [root@brick VM]# sfdisk -l gawaine.img 
->   Disk gawaine.img: cannot get geometry
-> 
->   Disk gawaine.img: 14589 cylinders, 255 heads, 63 sectors/track
->   Units = cylinders of 8225280 bytes, blocks of 1024 bytes, counting from 0
-> 
->      Device Boot Start     End   #cyls    #blocks   Id  System
->   gawaine.img1   *      0+     12      13-    104391   83  Linux
->   gawaine.img2         13   14592   14580  117113850   8e  Linux LVM
->   gawaine.img3          0       -       0          0    0  Empty
->   gawaine.img4          0       -       0          0    0  Empty
-> 
->   I'm trying to access this image via kpartx, but running into the
->   following:
-> 
->   [root@brick VM]# losetup -a
->   [root@brick VM]# kpartx -av gawaine.img 
->   add map loop0p1 (253:5): 0 208782 linear /dev/loop0 63
->   device-mapper: resume ioctl failed: Invalid argument
->   create/reload failed on loop0p2
->   add map loop0p2 (0:0): 0 234227700 linear /dev/loop0 208845
->   [root@brick VM]# dmesg
->   device-mapper: table: 253:6: loop0 too small for target: start=208845, len=234227700, dev_size=234375000
-> 
-> Hmm...
-> 
->   [root@brick VM]# losetup -a
->   /dev/loop0: [fd03]:2386057117 (gawaine.img)
->   [root@brick VM]# ls -l /dev/mapper/loop0p1 
->   lrwxrwxrwx 1 root root 7 Jun  7 22:18 /dev/mapper/loop0p1 -> ../dm-5
-> 
-> So only the non-LVM partitioned (much smaller) got mapped.  Are there
-> size limitations to what a loopback device can handle?
-> 
->   [root@brick VM]# rpm -q kpartx util-linux-ng
->   kpartx-0.4.9-31.el6.x86_64
->   util-linux-ng-2.17.2-6.el6.x86_64
+On 06/07/2011 09:44 PM, Marko Huttunen wrote:
+> HW specs:
+> The XFS partition is run on a HW Raid on 2 x 1TB WD Black Caviar. Motherboard is 
+> an ASUS Sabertooth P67 with Intel Sandy Bridge i5-2500K CPU @ 3.30GHz.
 
-Looks like maybe there's something funky not only with the .img file,
-but with the disk I dd'd from.  Even on the physical disk, parted
-complains:
+As Mike said, it sounds like something further down the stack. You don't mention
+what sort of array this is (i.e. which hardware RAID driver it's using, whether
+it presents as a SCSI device etc.).
 
-  Error: Can't have a partition outside the disk
+Depending on the answer to that question your next steps might involve enabling
+debug in that driver, turning up the generic SCSI logging level or making use of
+blktrace to try to understand where the I/O is going (or rather, where it isn't
+going ;).
 
-So somehow my partition table doesn't match up with my disk geometry...
-
-Sounds like this likely has nothing to do with kpartx/losetup/dm after
-all.  Sorry for the noise.
-
-Ray
+Regards,
+Bryn.
