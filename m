@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-snap: remove unused definitions
-Date: Wed, 8 Jun 2011 17:56:27 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1106081755510.7811@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH] dm-snapshot: flush disk cache when merging
+Date: Wed, 8 Jun 2011 18:02:12 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1106081801550.7811@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,32 +19,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-dm-snap: remove unused definitions
+dm-snapshot: flush disk cache when merging
+
+This patch makes dm-snapshot flush disk cache when writing metadata for
+merging snapshot.
+
+Without cache flushing the disk may reorder metadata write and other
+data writes and there is a possibility of data corruption in case of
+power fault.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-snap.c |   10 ----------
- 1 file changed, 10 deletions(-)
+ drivers/md/dm-snap-persistent.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: linux-2.6.39-fast/drivers/md/dm-snap.c
+Index: linux-2.6.39-fast/drivers/md/dm-snap-persistent.c
 ===================================================================
---- linux-2.6.39-fast.orig/drivers/md/dm-snap.c	2011-06-08 15:39:23.000000000 +0200
-+++ linux-2.6.39-fast/drivers/md/dm-snap.c	2011-06-08 15:39:39.000000000 +0200
-@@ -30,16 +30,6 @@ static const char dm_snapshot_merge_targ
- 	((ti)->type->name == dm_snapshot_merge_target_name)
+--- linux-2.6.39-fast.orig/drivers/md/dm-snap-persistent.c	2011-06-08 23:56:49.000000000 +0200
++++ linux-2.6.39-fast/drivers/md/dm-snap-persistent.c	2011-06-08 23:59:05.000000000 +0200
+@@ -753,7 +753,7 @@ static int persistent_commit_merge(struc
+ 	for (i = 0; i < nr_merged; i++)
+ 		clear_exception(ps, ps->current_committed - 1 - i);
  
- /*
-- * The percentage increment we will wake up users at
-- */
--#define WAKE_UP_PERCENT 5
--
--/*
-- * kcopyd priority of snapshot operations
-- */
--#define SNAPSHOT_COPY_PRIORITY 2
--
--/*
-  * The size of the mempool used to track chunks in use.
-  */
- #define MIN_IOS 256
+-	r = area_io(ps, WRITE);
++	r = area_io(ps, WRITE_FLUSH_FUA);
+ 	if (r < 0)
+ 		return r;
+ 
