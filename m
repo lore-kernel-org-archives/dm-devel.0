@@ -1,16 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] dm-kcopyd: optionally zero an area instead
-	of copying
-Date: Thu, 9 Jun 2011 11:36:44 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1106091136040.7642@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1106081753570.7811@hs20-bc2-1.build.redhat.com>
-	<20110609100429.GE3152@ubuntu>
+From: Marko Huttunen <marko@codito.se>
+Subject: Re: XFS getting EAGAIN from block device
+Date: Thu, 9 Jun 2011 17:42:00 +0200
+Message-ID: <BANLkTi=p2U9y-Q2wSS71q=bhGswsk_VnoQ@mail.gmail.com>
+References: <BANLkTinc-zSEY5uQ-8i__KzWPp24Q-yB+w@mail.gmail.com>
+	<4DEF3CB1.20900@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0256074067478049106=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110609100429.GE3152@ubuntu>
+In-Reply-To: <4DEF3CB1.20900@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,156 +18,97 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+--===============0256074067478049106==
+Content-Type: multipart/alternative; boundary=000e0ce0b19a46a7a204a5494b69
+
+--000e0ce0b19a46a7a204a5494b69
+Content-Type: text/plain; charset=ISO-8859-1
+
+Hey guys,
+
+The error messages stopped showing up in my syslog, without me doing
+something.
 
 
-On Thu, 9 Jun 2011, Joe Thornber wrote:
+Regards,
 
-> On Wed, Jun 08, 2011 at 05:55:37PM -0400, Mikulas Patocka wrote:
-> > Hi
-> > 
-> > This patch introduces an option to kcopyd to zero requested area instead 
-> > of copying. I think Joe may need something like this in his snapshot 
-> > store.
-> 
-> Could we have another function please, rather than overloading the
-> existing entry point?
-> 
-> i.e.,
-> 
-> int dm_kcopyd_zero(struct dm_kcopyd_client *kc,
-> 		   unsigned num_dests, struct dm_io_region *dests,
-> 		   unsigned flags, dm_kcopyd_notify_fn fn, void *context);
-> 
-> Thanks,
-> 
-> - Joe
-> 
+Marko
 
-Here it is ... but it duplicates some code in dm_kcopyd_copy..
 
-Mikulas
 
----
+On Wed, Jun 8, 2011 at 11:11 AM, Bryn M. Reeves <bmr@redhat.com> wrote:
 
-dm-kcopyd: optionally zero an area instead of copying
+> On 06/07/2011 09:44 PM, Marko Huttunen wrote:
+> > HW specs:
+> > The XFS partition is run on a HW Raid on 2 x 1TB WD Black Caviar.
+> Motherboard is
+> > an ASUS Sabertooth P67 with Intel Sandy Bridge i5-2500K CPU @ 3.30GHz.
+>
+> As Mike said, it sounds like something further down the stack. You don't
+> mention
+> what sort of array this is (i.e. which hardware RAID driver it's using,
+> whether
+> it presents as a SCSI device etc.).
+>
+> Depending on the answer to that question your next steps might involve
+> enabling
+> debug in that driver, turning up the generic SCSI logging level or making
+> use of
+> blktrace to try to understand where the I/O is going (or rather, where it
+> isn't
+> going ;).
+>
+> Regards,
+> Bryn.
+>
 
-This patch introduces new function "dm_kcopyd_zero" that zeroes a
-requested.
+--000e0ce0b19a46a7a204a5494b69
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+<div>Hey guys,</div><div><br></div><div>The error messages stopped showing =
+up in my syslog, without me doing something.</div><div><br></div><div><br><=
+/div><div>Regards,</div><div><br></div><div>Marko</div><div><br></div><br>
+<br><div class=3D"gmail_quote">On Wed, Jun 8, 2011 at 11:11 AM, Bryn M. Ree=
+ves <span dir=3D"ltr">&lt;<a href=3D"mailto:bmr@redhat.com">bmr@redhat.com<=
+/a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:=
+0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
+<div class=3D"im">On 06/07/2011 09:44 PM, Marko Huttunen wrote:<br>
+&gt; HW specs:<br>
+&gt; The XFS partition is run on a HW Raid on 2 x 1TB WD Black Caviar. Moth=
+erboard is<br>
+&gt; an ASUS Sabertooth P67 with Intel Sandy Bridge i5-2500K CPU @ 3.30GHz.=
+<br>
+<br>
+</div>As Mike said, it sounds like something further down the stack. You do=
+n&#39;t mention<br>
+what sort of array this is (i.e. which hardware RAID driver it&#39;s using,=
+ whether<br>
+it presents as a SCSI device etc.).<br>
+<br>
+Depending on the answer to that question your next steps might involve enab=
+ling<br>
+debug in that driver, turning up the generic SCSI logging level or making u=
+se of<br>
+blktrace to try to understand where the I/O is going (or rather, where it i=
+sn&#39;t<br>
+going ;).<br>
+<br>
+Regards,<br>
+<font color=3D"#888888">Bryn.<br>
+</font></blockquote></div><br>
 
----
- drivers/md/dm-kcopyd.c    |   53 +++++++++++++++++++++++++++++++++++++++++++++-
- include/linux/dm-kcopyd.h |    4 +++
- 2 files changed, 56 insertions(+), 1 deletion(-)
+--000e0ce0b19a46a7a204a5494b69--
 
-Index: linux-2.6.39-fast/drivers/md/dm-kcopyd.c
-===================================================================
---- linux-2.6.39-fast.orig/drivers/md/dm-kcopyd.c	2011-06-09 17:15:34.000000000 +0200
-+++ linux-2.6.39-fast/drivers/md/dm-kcopyd.c	2011-06-09 17:20:30.000000000 +0200
-@@ -69,6 +69,8 @@ struct dm_kcopyd_client {
- 	struct list_head pages_jobs;
- };
- 
-+static struct page_list zero_page_list;
-+
- static DEFINE_SPINLOCK(throttle_spinlock);
- 
- /*
-@@ -339,6 +341,9 @@ int __init dm_kcopyd_init(void)
- 	if (!_job_cache)
- 		return -ENOMEM;
- 
-+	zero_page_list.next = &zero_page_list;
-+	zero_page_list.page = ZERO_PAGE(0);
-+
- 	return 0;
- }
- 
-@@ -407,7 +412,7 @@ static int run_complete_job(struct kcopy
- 	dm_kcopyd_notify_fn fn = job->fn;
- 	struct dm_kcopyd_client *kc = job->kc;
- 
--	if (job->pages)
-+	if (job->pages && job->pages != &zero_page_list)
- 		kcopyd_put_pages(kc, job->pages);
- 	/* Do not free sub-jobs */
- 	if (context != job)
-@@ -570,6 +575,8 @@ static void dispatch_job(struct kcopyd_j
- 	atomic_inc(&kc->nr_jobs);
- 	if (unlikely(!job->source.count))
- 		push(&kc->complete_jobs, job);
-+	else if (job->pages == &zero_page_list)
-+		push(&kc->io_jobs, job);
- 	else
- 		push(&kc->pages_jobs, job);
- 	wake(kc);
-@@ -704,6 +711,50 @@ int dm_kcopyd_copy(struct dm_kcopyd_clie
- }
- EXPORT_SYMBOL(dm_kcopyd_copy);
- 
-+int dm_kcopyd_zero(struct dm_kcopyd_client *kc,
-+		   unsigned int num_dests, struct dm_io_region *dests,
-+		   unsigned int flags, dm_kcopyd_notify_fn fn, void *context)
-+{
-+	struct kcopyd_job *job;
-+
-+	/*
-+	 * Allocate a new job.
-+	 */
-+	job = mempool_alloc(kc->job_pool, GFP_NOIO);
-+
-+	/*
-+	 * set up for the write.
-+	 */
-+	job->kc = kc;
-+	job->flags = flags;
-+	job->read_err = 0;
-+	job->write_err = 0;
-+	job->rw = WRITE;
-+
-+	memset(&job->source, 0, sizeof job->source);
-+	job->source.count = dests[0].count;
-+
-+	job->num_dests = num_dests;
-+	memcpy(&job->dests, dests, sizeof(*dests) * num_dests);
-+
-+	job->pages = &zero_page_list;
-+
-+	job->fn = fn;
-+	job->context = context;
-+
-+	if (job->source.count <= SUB_JOB_SIZE)
-+		dispatch_job(job);
-+
-+	else {
-+		mutex_init(&job->lock);
-+		job->progress = 0;
-+		split_job(job);
-+	}
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL(dm_kcopyd_zero);
-+
- /*
-  * Cancels a kcopyd job, eg. someone might be deactivating a
-  * mirror.
-Index: linux-2.6.39-fast/include/linux/dm-kcopyd.h
-===================================================================
---- linux-2.6.39-fast.orig/include/linux/dm-kcopyd.h	2011-06-09 17:20:47.000000000 +0200
-+++ linux-2.6.39-fast/include/linux/dm-kcopyd.h	2011-06-09 17:21:01.000000000 +0200
-@@ -55,5 +55,9 @@ int dm_kcopyd_copy(struct dm_kcopyd_clie
- 		   unsigned num_dests, struct dm_io_region *dests,
- 		   unsigned flags, dm_kcopyd_notify_fn fn, void *context);
- 
-+int dm_kcopyd_zero(struct dm_kcopyd_client *kc,
-+		   unsigned num_dests, struct dm_io_region *dests,
-+		   unsigned flags, dm_kcopyd_notify_fn fn, void *context);
-+
- #endif	/* __KERNEL__ */
- #endif	/* _LINUX_DM_KCOPYD_H */
+
+--===============0256074067478049106==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0256074067478049106==--
