@@ -1,8 +1,8 @@
-From: Joe Thornber <thornber@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: [PATCH 1/2] dm-kcopyd: introduce per-module throttle
- structure
-Date: Fri, 10 Jun 2011 14:48:00 +0100
-Message-ID: <20110610134759.GA10908@ubuntu>
+	structure
+Date: Fri, 10 Jun 2011 09:51:31 -0400
+Message-ID: <20110610135131.GA18810@redhat.com>
 References: <20110601095106.GA3718@ubuntu>
 	<Pine.LNX.4.64.1106021536240.31532@hs20-bc2-1.build.redhat.com>
 	<20110603110111.GA4969@ubuntu>
@@ -30,14 +30,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Joe Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 10, 2011 at 09:41:50AM -0400, Mikulas Patocka wrote:
+On Fri, Jun 10 2011 at  9:41am -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
+
+> 
+> 
+> On Fri, 10 Jun 2011, Joe Thornber wrote:
+> 
+> > On Fri, Jun 10, 2011 at 11:28:34AM +0200, Lars Ellenberg wrote:
+> > > On Fri, Jun 10, 2011 at 09:44:25AM +0100, Joe Thornber wrote:
+> > > > On Thu, Jun 09, 2011 at 12:08:08PM -0400, Mikulas Patocka wrote:
+> > > > > 
+> > > > > 
+> > > > > On Thu, 9 Jun 2011, Joe Thornber wrote:
+> > > > > > What we're trying to do is avoid kcopyd issuing so much io that it
+> > > > > > interferes with userland io.
+> > > > > 
+> > > > > But you don't know if there is some userland IO or not to the same disk.
+> > > > 
+> > > > None the less, this was the motivation Alasdair gave for wanting this
+> > > > throttling.
+> > > 
+> > > Not sure if it helps,
+> > > but are you familiar with the MD raid rebuild throttling?
+> > 
+> > Lars,
+> > 
+> > This is very helpful, thankyou.  Any thoughts on this Mikulas?
+> > 
+> > - Joe
+> 
 > This works if the data is directly on the partition, but it won't work on 
 > the device mapper (if MD is on the device mapper, it won't work too).
 > 
 > The device mapper has no function to tell where the bio is finally 
 > remapped, so you can't read disk statistics for that particular disk.
 
-ok, thx
+DM raid in terms of MD (as Jon and Neil are working on) has functional
+resync throttling.  So DM wrapping MD raid gives us what we need without
+the need to change kcopyd no?
+
+Mike
