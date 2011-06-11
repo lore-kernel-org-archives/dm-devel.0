@@ -1,25 +1,22 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH 1/2] dm-kcopyd: introduce per-module throttle
  structure
-Date: Fri, 10 Jun 2011 18:13:30 +0200
-Message-ID: <20110610161330.GH22211@barkeeper1-xen.linbit>
-References: <Pine.LNX.4.64.1106021536240.31532@hs20-bc2-1.build.redhat.com>
+Date: Sat, 11 Jun 2011 16:27:02 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1106100858280.32120@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1105311802330.9322@hs20-bc2-1.build.redhat.com>
+	<20110601095106.GA3718@ubuntu>
+	<Pine.LNX.4.64.1106021536240.31532@hs20-bc2-1.build.redhat.com>
 	<20110603110111.GA4969@ubuntu>
 	<Pine.LNX.4.64.1106071321300.8279@hs20-bc2-1.build.redhat.com>
 	<20110609094746.GA3152@ubuntu>
 	<Pine.LNX.4.64.1106091136510.7642@hs20-bc2-1.build.redhat.com>
 	<20110610084424.GA3672@ubuntu>
-	<20110610092834.GB22211@barkeeper1-xen.linbit>
-	<20110610101446.GB10144@ubuntu>
-	<Pine.LNX.4.64.1106100937430.32120@hs20-bc2-1.build.redhat.com>
-	<20110610134759.GA10908@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20110610134759.GA10908@ubuntu>
+In-Reply-To: <20110610084424.GA3672@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -30,75 +27,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Joe Thornber <thornber@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jun 10, 2011 at 02:48:00PM +0100, Joe Thornber wrote:
-> On Fri, Jun 10, 2011 at 09:41:50AM -0400, Mikulas Patocka wrote:
-> > This works if the data is directly on the partition, but it won't work on 
-> > the device mapper (if MD is on the device mapper, it won't work too).
+
+
+On Fri, 10 Jun 2011, Joe Thornber wrote:
+
+> On Thu, Jun 09, 2011 at 12:08:08PM -0400, Mikulas Patocka wrote:
 > > 
-> > The device mapper has no function to tell where the bio is finally 
-> > remapped, so you can't read disk statistics for that particular disk.
+> > 
+> > On Thu, 9 Jun 2011, Joe Thornber wrote:
+> > > What we're trying to do is avoid kcopyd issuing so much io that it
+> > > interferes with userland io.
+> > 
+> > But you don't know if there is some userland IO or not to the same disk.
 > 
-> ok, thx
+> None the less, this was the motivation Alasdair gave for wanting this
+> throttling.
+> 
+> > > i) If there is lots of memory available can your throttling patch
+> > > still manage to issue too much io in the time that kcopyd is active?
+> > 
+> > It issues as much IO as it can in the active period.
+> 
+> Exactly, it can issue too much.
 
-Right, you do not know which phyical device the IO may end up on,
-if it passes through several stacking layers.
+As shown in the numbers below, submitting one IO reduces throughput from 
+76MB/s to 65MB/s. Reducing number of IOs doesn't help much.
 
-But even if that would be desirable in the long term,
-it may not be necessary right now? [*]
+> > > ii) If there is little memory available few ios will be issued.  But
+> > > your throttling will still occur, slowing things down even more.
+> > 
+> > Yes. Memory pressure and throttiling are independent things.
+> 
+> True, but if kcopyd has only managed to submit 50k of io in it's last
+> timeslice why on earth would you decide to put it to sleep rather than
+> try and issue some more?
 
-Jobs on one mapping would not notice that the same physical device may
-be busy via some other mapping.
+Because the issues of memory pressure and throttling are idependent.
 
-But at least it would notice user (ok, non-kcopyd) IO on the same source
-or destination mapping(s), which is a big improvement already, compared
-with completely ignoring what is going on?
+> I don't believe your time based throttling
+> behaves the same under different memory pressure situations.  So the
+> sys admin could set up your throttle parameters under one set of
+> conditions.  Then these conditions could change and result in either
+> too much or too little throttling.
 
-struct kcopyd_job {
-   ...
-   struct dm_io_region source;
-   struct dm_io_region dests[...];
-   ...
-}
+I tried it and it thottled with one sub job as well as with many sub jobs.
 
-struct dm_io_region {
-   struct block_device *bdev;
-   ...
-}
+I think you are tackling multiple independent things here. In order to 
+have understandable code and understandable behaviour, the throttle code 
+must manage *JUST*ONE*THING* (the time when i/os are submitted, in this 
+case). If you start making exceptions such as "what if there is a memory 
+pressure" or "apart from restricting the time, send less i/o", then the 
+logic behind the code becomes unintelligible.
 
-struct block_device {
-   ...
-   struct gendisk *bd_disk;
-   ...
-}
+It is much easier to explain to the users "if you set X value in 
+/sys/module/dm_mirror/parameters/raid1_resync_throttle, then the copying 
+will be done in X% of time, leaving the disk idle 100-X% of time", then to 
+invent some magic mechanisms that change multiple things based on X and 
+other conditions.
 
-struct gendisk {
-   ...
-   struct hd_struct part0;   <--- there live the stats.
-   ...
-}
+> > > I think it makes much more sense to throttle based on amount of io
+> > > issued by kcopyd.  Either tracking throughput,
+> > 
+> > You don't know what is the throughput of the device. So throttling to 
+> > something like "50% throughput" can't be done.
+> 
+> I agree we don't know what the throughput on the devices is.  What I
+> meant was to throttle the volume of io that kcopyd generates against
+> an absolute value.  eg.  "The mirror kcopyd client cannot submit more
+> than 100M of io per second."  So you don't have to measure and
+> calculate any theoretical maximum throughput and calculate percentages
+> off that.
 
-[*]
-/me wildly handwaving
-That could be solved, if we want to.
-Add to block_device_operations:
-   struct gendisk * (*get_lower_level_gendisk)(struct gendisk*);
+And what if the beginning of the disk has 130MB/s and the end 80MB/s? Then 
+throughput-based throttle would behave differently based on the part of 
+the disk that is being resynchronized.
 
+> > > or even just putting a
+> > > limit on the amount of io that can be in flight at any one time.
+> > 
+> > Which is much less reliable throttling than time slots.
+> > the resync spee is:
+> > 8 sub jobs --- 76MB/s
+> > 2 sub jobs --- 74MB/s
+> > 1 sub job --- 65MB/s
+> 
+> I really don't understand these figures.  Why doesn't it scale
+> linearly with the number of sub jobs?  Are the sub jobs all the same
+> size in these cases?  Is this with your throttling?  Are the sub jobs
+> so large that memory pressure is imposing a max limit of in flight io?
 
-struct gendisk *appropriate_function_name(struct gendisk *d)
-{
-	while (d->fops->get_lower_level_gendisk)
-		d = d->fops->get_lower_level_gendisk(d);
-	return d;
-}
+It is without throttling. It doesn't scale linearly because the disk has 
+just one mechanical arm with all the heads, so it processes all jobs 
+one-by-one anyway.
 
-Then have some convenience functions part_stat_read_lowest_level(...).
+If the disk had multiple arms, it would scale linearly.
 
-May have come up before, probably was rejected because of uglyness?
+> - Joe
 
-  ;-)
-
-
-	Lars
+Mikulas
