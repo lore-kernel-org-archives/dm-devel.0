@@ -1,112 +1,250 @@
-From: Bruno =?UTF-8?B?UHLDqW1vbnQ=?= <bonbons@linux-vserver.org>
-Subject: 2.6.39, GPF at _raw_spin_lock_irqsave/scsi_dh_detach
-Date: Fri, 17 Jun 2011 10:33:19 +0200
-Message-ID: <20110617103319.54d07fdd@pluto.restena.lu>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-kcopyd/dm-snap: Don't read the origin on full
+	chunk write
+Date: Fri, 17 Jun 2011 08:32:36 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1106170829390.24411@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com
-Cc: "James E.J. Bottomley" <James.Bottomley@suse.de>, Neil Brown <neilb@suse.de>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On a HP Proliant DL360 G5 server I've got the following general protection
-after the SAN it is connected to via QLA card hung hard.
+Hi
 
-Seems like there is a race/bug in the code handling multipath failover.
+This optimizes full chunk writes for snapshots.
 
-Server is running OpenSuSE 11.1 i586 userspace with
-multipath-tools-0.4.8-26.10.1 and device-mapper-1.02.27-7.1
+Note that there is a performance bug in device mapper that it doesn't ever 
+send bios larger than 4k to snapshots. So this patch optimizes only 4k 
+chunk sizes. Once the 4k limit will be removed from device mapper, this 
+patch could optimize any chunk size.
 
-I won't be able to try reproducing (production server, SAN state you
-don't want to ever see in production...) but can provide kernel config
-and look for more information as needed.
+Mikulas
 
+---
 
-[    0.000000] Linux version 2.6.39-x86_64 (kbuild@build) (gcc version 4.4.5 (Gentoo Hardened 4.4.5 p1.2, pie-0.4.5) ) #2 SMP Tue May 31 10:41:15 CEST 2011
-...
-[    3.858335] QLogic Fibre Channel HBA Driver: 8.03.07.00
-[    3.865490] qla2xxx 0000:13:00.0: PCI INT A -> GSI 17 (level, low) -> IRQ 17
-[    3.872625] qla2xxx 0000:13:00.0: Found an ISP2432, irq 17, iobase 0xffffc90000052000
-[    3.880086] qla2xxx 0000:13:00.0: irq 68 for MSI/MSI-X
-[    3.880178] qla2xxx 0000:13:00.0: Configuring PCI space...
-[    3.887302] qla2xxx 0000:13:00.0: setting latency timer to 64
-[    3.919587] qla2xxx 0000:13:00.0: Configure NVRAM parameters...
-[    3.955579] qla2xxx 0000:13:00.0: Verifying loaded RISC code...
-[    4.095334] qla2xxx 0000:13:00.0: FW: Loading via request-firmware...
-[    4.510043] qla2xxx 0000:13:00.0: Allocated (64 KB) for EFT...
-[    4.517581] qla2xxx 0000:13:00.0: Allocated (1285 KB) for firmware dump...
-[    4.540197] scsi0 : qla2xxx
-[    4.548034] qla2xxx 0000:13:00.0: 
-[    4.548036]  QLogic Fibre Channel HBA Driver: 8.03.07.00
-[    4.548037]   QLogic QLE2460 - PCI-Express Single Channel 4Gb Fibre Channel HBA
-[    4.548038]   ISP2432: PCIe (2.5GT/s x4) @ 0000:13:00.0 hdma+, host#=0, fw=4.00.16 (2)
-[    4.931715] qla2xxx 0000:13:00.0: LOOP UP detected (4 Gbps).
-...
-[1402053.890195] end_request: recoverable transport error, dev sdb, sector 150911320
-[1402053.890212] sd 0:0:1:0: [sdb] Unhandled error code
-[1402053.890214] sd 0:0:1:0: [sdb]  Result: hostbyte=0x0f driverbyte=0x00
-[1402053.890218] sd 0:0:1:0: [sdb] Unhandled error code
-[1402053.890222] sd 0:0:1:0: [sdb]  Result: hostbyte=0x0f driverbyte=0x00
-[1402053.890227] sd 0:0:1:0: [sdb] CDB: cdb[0]=0x28: 28 00 15 38 77 b8 00 00 08 00
-[1402053.890243] end_request: recoverable transport error, dev sdb, sector 356022200
-[1402053.890251] sd 0:0:1:0: [sdb] CDB: cdb[0]=0x28: 28 00 0d 67 59 00 00 00
-[1402053.890258] sd 0:0:1:0: [sdb] Unhandled error code
-[1402053.890262] sd 0:0:1:0: [sdb]  Result: hostbyte=0x0f driverbyte=0x00
-[1402053.890267] sd 0:0:1:0: [sdb] CDB: cdb[0]=0x28: 28 00 11 b9 c4 d0 00 00 08 00
-[1402053.890282] end_request: recoverable transport error, dev sdb, sector 297387216
-[1402053.890286]  28 00
-[1402053.890289] end_request: recoverable transport error, dev sdb, sector 224876800
-[1402053.890297] sd 0:0:1:0: [sdb] Unhandled error code
-[1402053.890299] sd 0:0:1:0: [sdb]  Result: hostbyte=0x0f driverbyte=0x00
-[1402053.890303] sd 0:0:1:0: [sdb] CDB: cdb[0]=0x2a: 2a 08 02 80 8b 51 00 00 37 00
-[1402053.890311] end_request: recoverable transport error, dev sdb, sector 41978705
-[1402053.890315] sd 0:0:1:0: [sdb] Unhandled error code
-[1402053.890318] sd 0:0:1:0: [sdb]  Result: hostbyte=0x0f driverbyte=0x00
-[1402053.890324] sd 0:0:1:0: [sdb] CDB: cdb[0]=0x28: 28 00 00 10 b0 38 00 00 08 00
-[1402053.890339] end_request: recoverable transport error, dev sdb, sector 1093688
-[1402053.890363] device-mapper: multipath: Failing path 8:16.
-[1402053.895232] general protection fault: 0000 [#1] SMP
-[1402053.895252] last sysfs file: /sys/kernel/uevent_seqnum
-[1402053.895257] CPU 0
-[1402053.895259] Modules linked in: squashfs loop dm_round_robin scsi_dh_rdac dm_multipath scsi_dh sg sr_mod cdrom ata_piix ahci libahci ipmi_si ipmi_msghandler
-[1402053.895285] device-mapper: multipath: Failing path 8:16.
-[1402053.895290]  bnx2 qla2xxx hpwdt libata
-[1402053.895297]
-[1402053.895302] Pid: 3163, comm: multipathd Not tainted 2.6.39-x86_64 #2 HP ProLiant DL360 G5
-[1402053.895310] RIP: 0010:[<ffffffff814a03bc>]  [<ffffffff814a03bc>] _raw_spin_lock_irqsave+0xc/0x20
-[1402053.895323] RSP: 0018:ffff8801a9bb3d18  EFLAGS: 00010086
-[1402053.895329] RAX: 0000000000000286 RBX: ffff8801aa471510 RCX: 0000000000000000
-[1402053.895335] RDX: 0000000000000100 RSI: ffffffffa00f0185 RDI: 6b6b6b6b6b6b6b6b
-[1402053.895341] RBP: ffff8801a9bb3d18 R08: dead000000200200 R09: dead000000100100
-[1402053.895346] R10: 0000000000000049 R11: 0000000000000028 R12: ffff8801aef69650
-[1402053.895352] R13: ffff8801aa4d0bd0 R14: ffff8801aef69650 R15: ffffc9000003d040
-[1402053.895358] FS:  0000000000000000(0000) GS:ffff8801afc00000(0063) knlGS:00000000f649db90
-[1402053.895365] CS:  0010 DS: 002b ES: 002b CR0: 000000008005003b
-[1402053.895370] CR2: 000000000a65e000 CR3: 00000001a9836000 CR4: 00000000000006f0
-[1402053.895376] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-[1402053.895382] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-[1402053.895389] Process multipathd (pid: 3163, threadinfo ffff8801a9bb2000, task ffff8801aef549f0)
-[1402053.895395] Stack:
-[1402053.895398]  ffff8801a9bb3d48 ffffffffa002a52a ffff8801aa471510 ffff8801aef69650
-[1402053.895407]  ffff8801aef69650 ffff8801aef69650 ffff8801a9bb3d98 ffffffffa0036b02
-[1402053.895414]  ffff8801aef69618 ffff8801aaf9e5b0 0000000000000000 ffff8801ade05528
-[1402053.895422] Call Trace:
-[1402053.895432]  [<ffffffffa002a52a>] scsi_dh_detach+0x2a/0xb0 [scsi_dh]
-[1402053.895441]  [<ffffffffa0036b02>] free_priority_group+0xb2/0xf0 [dm_multipath]
-[1402053.895448]  [<ffffffffa0036ba3>] free_multipath+0x63/0xb0 [dm_multipath]
-[1402053.895455]  [<ffffffffa0036c0d>] multipath_dtr+0x1d/0x30 [dm_multipath]
-[1402053.895464]  [<ffffffff813a6ec1>] dm_table_destroy+0x81/0x110
-[1402053.895471]  [<ffffffff813a9da8>] dev_suspend+0x178/0x230
-[1402053.895478]  [<ffffffff813aabb4>] ctl_ioctl+0x1a4/0x250
-[1402053.895484]  [<ffffffff813a9c30>] ? dev_wait+0xb0/0xb0
-[1402053.895491]  [<ffffffff813aac8d>] dm_compat_ctl_ioctl+0xd/0x20
-[1402053.895498]  [<ffffffff8110b2ae>] compat_sys_ioctl+0x9e/0x440
-[1402053.895507]  [<ffffffff810ae4b1>] ? do_munmap+0x311/0x3b0
-[1402053.895515]  [<ffffffff814a1d65>] sysenter_dispatch+0x7/0x2b
-[1402053.895520] Code: b8 00 01 00 00 48 89 e5 f0 66 0f c1 07 38 e0 74 06 f3 90 8a 07 eb f6 c9 c3 66 0f 1f 44 00 00 55 48 89 e5 9c 58 fa ba 00 01 00 00 <f0> 66 0f c1 17 38 f2 74 06 f3 90 8a
-17 eb f6 c9 c3 0f 1f 00 55
-[1402053.895562] RIP  [<ffffffff814a03bc>] _raw_spin_lock_irqsave+0xc/0x20
-[1402053.895570]  RSP <ffff8801a9bb3d18>
-[1402053.900002] ---[ end trace 85146cff0658761b ]---
+dm-kcopyd/dm-snap: Don't read the origin on full chunk write
+
+If we write a full chunk in the snapshot, there is no need to read the origin
+device (because the whole chunk will be overwritten anyway).
+
+This patch introduces a new function dm_kcopyd_submit_bios that submits the
+bio (or more bios linked with bi_next) and signals the completion from the
+kcopyd thread.
+
+This patch changes snapshot write logic when full chunk is written.
+In this case:
+1. allocate the exception
+2. dispatch the bio (but don't report the bio completion to device mapper)
+3. write the exception metadata
+4. report bio completed
+
+Performance test (on snapshots with 4k chunk size):
+without the patch:
+non-direct-io sequential write (dd):	17.7MB/s
+direct-io sequential write (dd):	20.9MB/s
+non-direct-io random write (mkfs.ext2):	0.44s
+
+with the patch:
+non-direct-io sequential write (dd):	26.5MB/s
+direct-io sequential write (dd):	33.2MB/s
+non-direct-io random write (mkfs.ext2):	0.27s
+
+It doesn't improve performance with >4k chunk size because there is
+a problem in device mapper --- it doesn't ever send bios larger than
+page size to snapshots.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-kcopyd.c    |   64 ++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-snap.c      |   36 +++++++++++++++++++++++--
+ include/linux/dm-kcopyd.h |    3 ++
+ 3 files changed, 100 insertions(+), 3 deletions(-)
+
+Index: linux-2.6.39-fast/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.39-fast.orig/drivers/md/dm-snap.c	2011-06-16 19:50:45.000000000 +0200
++++ linux-2.6.39-fast/drivers/md/dm-snap.c	2011-06-16 20:00:51.000000000 +0200
+@@ -173,6 +173,10 @@ struct dm_snap_pending_exception {
+ 	 * kcopyd.
+ 	 */
+ 	int started;
++
++	struct bio *full_bio;
++	bio_end_io_t *full_bio_end_io;
++	void *full_bio_private;
+ };
+ 
+ /*
+@@ -1373,6 +1377,7 @@ static void pending_complete(struct dm_s
+ 	struct dm_snapshot *s = pe->snap;
+ 	struct bio *origin_bios = NULL;
+ 	struct bio *snapshot_bios = NULL;
++	struct bio *full_bio = NULL;
+ 	int error = 0;
+ 
+ 	if (!success) {
+@@ -1412,6 +1417,11 @@ static void pending_complete(struct dm_s
+ 	dm_remove_exception(&pe->e);
+ 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
+ 	origin_bios = bio_list_get(&pe->origin_bios);
++	full_bio = pe->full_bio;
++	if (full_bio) {
++		full_bio->bi_end_io = pe->full_bio_end_io;
++		full_bio->bi_private = pe->full_bio_private;
++	}
+ 	free_pending_exception(pe);
+ 
+ 	increment_pending_exceptions_done_count();
+@@ -1419,10 +1429,15 @@ static void pending_complete(struct dm_s
+ 	up_write(&s->lock);
+ 
+ 	/* Submit any pending write bios */
+-	if (error)
++	if (error) {
++		if (full_bio)
++			bio_io_error(full_bio);
+ 		error_bios(snapshot_bios);
+-	else
++	} else {
++		if (full_bio)
++			bio_endio(full_bio, 0);
+ 		flush_bios(snapshot_bios);
++	}
+ 
+ 	retry_origin_bios(s, origin_bios);
+ }
+@@ -1512,6 +1527,7 @@ __find_pending_exception(struct dm_snaps
+ 	bio_list_init(&pe->origin_bios);
+ 	bio_list_init(&pe->snapshot_bios);
+ 	pe->started = 0;
++	pe->full_bio = NULL;
+ 
+ 	if (s->store->type->prepare_exception(s->store, &pe->e)) {
+ 		free_pending_exception(pe);
+@@ -1605,10 +1621,24 @@ static int snapshot_map(struct dm_target
+ 		}
+ 
+ 		remap_exception(s, &pe->e, bio, chunk);
+-		bio_list_add(&pe->snapshot_bios, bio);
+ 
+ 		r = DM_MAPIO_SUBMITTED;
+ 
++		if (!pe->started &&
++		    bio->bi_size == (s->store->chunk_size << SECTOR_SHIFT)) {
++			pe->full_bio_end_io = bio->bi_end_io;
++			pe->full_bio_private = bio->bi_private;
++			pe->full_bio = bio;
++			pe->started = 1;
++			up_write(&s->lock);
++
++			dm_kcopyd_submit_bios(s->kcopyd_client, bio, 0,
++					      copy_callback, pe);
++			goto out;
++		}
++
++		bio_list_add(&pe->snapshot_bios, bio);
++
+ 		if (!pe->started) {
+ 			/* this is protected by snap->lock */
+ 			pe->started = 1;
+Index: linux-2.6.39-fast/drivers/md/dm-kcopyd.c
+===================================================================
+--- linux-2.6.39-fast.orig/drivers/md/dm-kcopyd.c	2011-06-16 19:50:45.000000000 +0200
++++ linux-2.6.39-fast/drivers/md/dm-kcopyd.c	2011-06-17 12:52:54.000000000 +0200
+@@ -755,6 +755,70 @@ int dm_kcopyd_zero(struct dm_kcopyd_clie
+ }
+ EXPORT_SYMBOL(dm_kcopyd_zero);
+ 
++static void dm_kcopyd_bio_end_io(struct bio *bio, int error)
++{
++	struct kcopyd_job *job = bio->bi_private;
++
++	if (unlikely(error))
++		job->write_err = 1;
++
++	if (atomic_dec_and_test(&job->sub_jobs)) {
++		struct dm_kcopyd_client *kc = job->kc;
++		push(&kc->complete_jobs, job);
++		wake(kc);
++	}
++}
++
++int dm_kcopyd_submit_bios(struct dm_kcopyd_client *kc,
++			  struct bio *bios, unsigned int flags,
++			  dm_kcopyd_notify_fn fn, void *context)
++{
++	struct kcopyd_job *job;
++	struct bio *bio;
++	unsigned n_bios;
++
++	/*
++	 * Allocate a new job.
++	 */
++	job = mempool_alloc(kc->job_pool, GFP_NOIO);
++
++	/*
++	 * set up for the write.
++	 */
++	job->kc = kc;
++	job->flags = flags;
++	job->read_err = 0;
++	job->write_err = 0;
++	job->pages = NULL;
++
++	job->fn = fn;
++	job->context = context;
++
++	atomic_inc(&kc->nr_jobs);
++
++	n_bios = 0;
++	bio = bios;
++	do {
++		n_bios++;
++		bio = bio->bi_next;
++	} while (bio);
++
++	atomic_set(&job->sub_jobs, n_bios);
++
++	bio = bios;
++	do {
++		struct bio *next_bio = bio->bi_next;
++		bio->bi_next = NULL;
++		bio->bi_end_io = dm_kcopyd_bio_end_io;
++		bio->bi_private = job;
++		generic_make_request(bio);
++		bio = next_bio;
++	} while (bio);
++
++	return 0;
++}
++EXPORT_SYMBOL(dm_kcopyd_submit_bios);
++
+ /*
+  * Cancels a kcopyd job, eg. someone might be deactivating a
+  * mirror.
+Index: linux-2.6.39-fast/include/linux/dm-kcopyd.h
+===================================================================
+--- linux-2.6.39-fast.orig/include/linux/dm-kcopyd.h	2011-06-16 19:50:46.000000000 +0200
++++ linux-2.6.39-fast/include/linux/dm-kcopyd.h	2011-06-16 19:54:17.000000000 +0200
+@@ -58,6 +58,9 @@ int dm_kcopyd_copy(struct dm_kcopyd_clie
+ int dm_kcopyd_zero(struct dm_kcopyd_client *kc,
+ 		   unsigned num_dests, struct dm_io_region *dests,
+ 		   unsigned flags, dm_kcopyd_notify_fn fn, void *context);
++int dm_kcopyd_submit_bios(struct dm_kcopyd_client *kc,
++			  struct bio *bios, unsigned int flags,
++			  dm_kcopyd_notify_fn fn, void *context);
+ 
+ #endif	/* __KERNEL__ */
+ #endif	/* _LINUX_DM_KCOPYD_H */
