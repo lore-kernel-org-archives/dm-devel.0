@@ -1,12 +1,10 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-kcopyd/dm-snap: Don't read the origin on full
-	chunk write
-Date: Fri, 17 Jun 2011 08:32:36 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1106170829390.24411@hs20-bc2-1.build.redhat.com>
+From: Feng Shuo <steve.shuo.feng@gmail.com>
+Subject: Read balance of dm-raid1
+Date: Fri, 17 Jun 2011 22:47:01 +0800
+Message-ID: <BANLkTikLLEfb83GQdkqNFT6tJJYNvYwB6w@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7249152218223237649=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,234 +15,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+--===============7249152218223237649==
+Content-Type: multipart/alternative; boundary=bcaec520e733acc5e704a5e976ea
 
-This optimizes full chunk writes for snapshots.
+--bcaec520e733acc5e704a5e976ea
+Content-Type: text/plain; charset=ISO-8859-1
 
-Note that there is a performance bug in device mapper that it doesn't ever 
-send bios larger than 4k to snapshots. So this patch optimizes only 4k 
-chunk sizes. Once the 4k limit will be removed from device mapper, this 
-patch could optimize any chunk size.
+Hi all,
 
-Mikulas
+I installed RHEL 6 and found that its dm-raid1 only used one disk for all
+reads. In RHEL5, the reads should be balanced between all the disks. Is
+there any special concerns for disabling that? Data safe or consistency?
 
----
+I googled and found there should be a read balance patch. Is that out of
+maintained in new kernels?
 
-dm-kcopyd/dm-snap: Don't read the origin on full chunk write
+-- 
+Feng Shuo
+Tel: (86)10-59851155-2116
+Fax: (86)10-59851155-2008
+Tianjin Zhongke Blue Whale Information Technologies Co., Ltd
+Postcode 100080
+10th Floor, Tower A, The GATE building, No. 19 Zhong-guan-cun Avenue
+Haidian District, Beijing
 
-If we write a full chunk in the snapshot, there is no need to read the origin
-device (because the whole chunk will be overwritten anyway).
+--bcaec520e733acc5e704a5e976ea
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-This patch introduces a new function dm_kcopyd_submit_bios that submits the
-bio (or more bios linked with bi_next) and signals the completion from the
-kcopyd thread.
+Hi all,<br><br>I installed RHEL 6 and found that its dm-raid1 only used one=
+ disk for all reads. In RHEL5, the reads should be balanced between all the=
+ disks. Is there any special concerns for disabling that? Data safe or cons=
+istency?<br>
 
-This patch changes snapshot write logic when full chunk is written.
-In this case:
-1. allocate the exception
-2. dispatch the bio (but don't report the bio completion to device mapper)
-3. write the exception metadata
-4. report bio completed
+<br>I googled and found there should be a read balance patch. Is that out o=
+f maintained in new kernels?<br clear=3D"all"><br>-- <br>Feng Shuo<br>Tel: =
+(86)10-59851155-2116<br>Fax: (86)10-59851155-2008<br>Tianjin Zhongke Blue W=
+hale Information Technologies Co., Ltd<br>
 
-Performance test (on snapshots with 4k chunk size):
-without the patch:
-non-direct-io sequential write (dd):	17.7MB/s
-direct-io sequential write (dd):	20.9MB/s
-non-direct-io random write (mkfs.ext2):	0.44s
+Postcode 100080<br>10th Floor, Tower A, The GATE building, No. 19 Zhong-gua=
+n-cun Avenue<br>Haidian District, Beijing<br>
 
-with the patch:
-non-direct-io sequential write (dd):	26.5MB/s
-direct-io sequential write (dd):	33.2MB/s
-non-direct-io random write (mkfs.ext2):	0.27s
+--bcaec520e733acc5e704a5e976ea--
 
-It doesn't improve performance with >4k chunk size because there is
-a problem in device mapper --- it doesn't ever send bios larger than
-page size to snapshots.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+--===============7249152218223237649==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
----
- drivers/md/dm-kcopyd.c    |   64 ++++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-snap.c      |   36 +++++++++++++++++++++++--
- include/linux/dm-kcopyd.h |    3 ++
- 3 files changed, 100 insertions(+), 3 deletions(-)
 
-Index: linux-2.6.39-fast/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.39-fast.orig/drivers/md/dm-snap.c	2011-06-16 19:50:45.000000000 +0200
-+++ linux-2.6.39-fast/drivers/md/dm-snap.c	2011-06-16 20:00:51.000000000 +0200
-@@ -173,6 +173,10 @@ struct dm_snap_pending_exception {
- 	 * kcopyd.
- 	 */
- 	int started;
-+
-+	struct bio *full_bio;
-+	bio_end_io_t *full_bio_end_io;
-+	void *full_bio_private;
- };
- 
- /*
-@@ -1373,6 +1377,7 @@ static void pending_complete(struct dm_s
- 	struct dm_snapshot *s = pe->snap;
- 	struct bio *origin_bios = NULL;
- 	struct bio *snapshot_bios = NULL;
-+	struct bio *full_bio = NULL;
- 	int error = 0;
- 
- 	if (!success) {
-@@ -1412,6 +1417,11 @@ static void pending_complete(struct dm_s
- 	dm_remove_exception(&pe->e);
- 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
- 	origin_bios = bio_list_get(&pe->origin_bios);
-+	full_bio = pe->full_bio;
-+	if (full_bio) {
-+		full_bio->bi_end_io = pe->full_bio_end_io;
-+		full_bio->bi_private = pe->full_bio_private;
-+	}
- 	free_pending_exception(pe);
- 
- 	increment_pending_exceptions_done_count();
-@@ -1419,10 +1429,15 @@ static void pending_complete(struct dm_s
- 	up_write(&s->lock);
- 
- 	/* Submit any pending write bios */
--	if (error)
-+	if (error) {
-+		if (full_bio)
-+			bio_io_error(full_bio);
- 		error_bios(snapshot_bios);
--	else
-+	} else {
-+		if (full_bio)
-+			bio_endio(full_bio, 0);
- 		flush_bios(snapshot_bios);
-+	}
- 
- 	retry_origin_bios(s, origin_bios);
- }
-@@ -1512,6 +1527,7 @@ __find_pending_exception(struct dm_snaps
- 	bio_list_init(&pe->origin_bios);
- 	bio_list_init(&pe->snapshot_bios);
- 	pe->started = 0;
-+	pe->full_bio = NULL;
- 
- 	if (s->store->type->prepare_exception(s->store, &pe->e)) {
- 		free_pending_exception(pe);
-@@ -1605,10 +1621,24 @@ static int snapshot_map(struct dm_target
- 		}
- 
- 		remap_exception(s, &pe->e, bio, chunk);
--		bio_list_add(&pe->snapshot_bios, bio);
- 
- 		r = DM_MAPIO_SUBMITTED;
- 
-+		if (!pe->started &&
-+		    bio->bi_size == (s->store->chunk_size << SECTOR_SHIFT)) {
-+			pe->full_bio_end_io = bio->bi_end_io;
-+			pe->full_bio_private = bio->bi_private;
-+			pe->full_bio = bio;
-+			pe->started = 1;
-+			up_write(&s->lock);
-+
-+			dm_kcopyd_submit_bios(s->kcopyd_client, bio, 0,
-+					      copy_callback, pe);
-+			goto out;
-+		}
-+
-+		bio_list_add(&pe->snapshot_bios, bio);
-+
- 		if (!pe->started) {
- 			/* this is protected by snap->lock */
- 			pe->started = 1;
-Index: linux-2.6.39-fast/drivers/md/dm-kcopyd.c
-===================================================================
---- linux-2.6.39-fast.orig/drivers/md/dm-kcopyd.c	2011-06-16 19:50:45.000000000 +0200
-+++ linux-2.6.39-fast/drivers/md/dm-kcopyd.c	2011-06-17 12:52:54.000000000 +0200
-@@ -755,6 +755,70 @@ int dm_kcopyd_zero(struct dm_kcopyd_clie
- }
- EXPORT_SYMBOL(dm_kcopyd_zero);
- 
-+static void dm_kcopyd_bio_end_io(struct bio *bio, int error)
-+{
-+	struct kcopyd_job *job = bio->bi_private;
-+
-+	if (unlikely(error))
-+		job->write_err = 1;
-+
-+	if (atomic_dec_and_test(&job->sub_jobs)) {
-+		struct dm_kcopyd_client *kc = job->kc;
-+		push(&kc->complete_jobs, job);
-+		wake(kc);
-+	}
-+}
-+
-+int dm_kcopyd_submit_bios(struct dm_kcopyd_client *kc,
-+			  struct bio *bios, unsigned int flags,
-+			  dm_kcopyd_notify_fn fn, void *context)
-+{
-+	struct kcopyd_job *job;
-+	struct bio *bio;
-+	unsigned n_bios;
-+
-+	/*
-+	 * Allocate a new job.
-+	 */
-+	job = mempool_alloc(kc->job_pool, GFP_NOIO);
-+
-+	/*
-+	 * set up for the write.
-+	 */
-+	job->kc = kc;
-+	job->flags = flags;
-+	job->read_err = 0;
-+	job->write_err = 0;
-+	job->pages = NULL;
-+
-+	job->fn = fn;
-+	job->context = context;
-+
-+	atomic_inc(&kc->nr_jobs);
-+
-+	n_bios = 0;
-+	bio = bios;
-+	do {
-+		n_bios++;
-+		bio = bio->bi_next;
-+	} while (bio);
-+
-+	atomic_set(&job->sub_jobs, n_bios);
-+
-+	bio = bios;
-+	do {
-+		struct bio *next_bio = bio->bi_next;
-+		bio->bi_next = NULL;
-+		bio->bi_end_io = dm_kcopyd_bio_end_io;
-+		bio->bi_private = job;
-+		generic_make_request(bio);
-+		bio = next_bio;
-+	} while (bio);
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL(dm_kcopyd_submit_bios);
-+
- /*
-  * Cancels a kcopyd job, eg. someone might be deactivating a
-  * mirror.
-Index: linux-2.6.39-fast/include/linux/dm-kcopyd.h
-===================================================================
---- linux-2.6.39-fast.orig/include/linux/dm-kcopyd.h	2011-06-16 19:50:46.000000000 +0200
-+++ linux-2.6.39-fast/include/linux/dm-kcopyd.h	2011-06-16 19:54:17.000000000 +0200
-@@ -58,6 +58,9 @@ int dm_kcopyd_copy(struct dm_kcopyd_clie
- int dm_kcopyd_zero(struct dm_kcopyd_client *kc,
- 		   unsigned num_dests, struct dm_io_region *dests,
- 		   unsigned flags, dm_kcopyd_notify_fn fn, void *context);
-+int dm_kcopyd_submit_bios(struct dm_kcopyd_client *kc,
-+			  struct bio *bios, unsigned int flags,
-+			  dm_kcopyd_notify_fn fn, void *context);
- 
- #endif	/* __KERNEL__ */
- #endif	/* _LINUX_DM_KCOPYD_H */
+--===============7249152218223237649==--
