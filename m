@@ -1,13 +1,11 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Interface changes to multisnap
-Date: Mon, 20 Jun 2011 13:22:57 +0100
-Message-ID: <20110620122256.GA15181@ubuntu>
+From: Arie Skliarouk <skliarie@gmail.com>
+Subject: /dev/dm-10 is not created for tenth LVM volume
+Date: Mon, 20 Jun 2011 12:39:18 +0300
+Message-ID: <BANLkTi=6LUr83ERfWkHJqmBanBrAitvY1g@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0048471822381074945=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,16 +18,44 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I've just pushed an interface change for multisnap.
+--===============0048471822381074945==
+Content-Type: multipart/alternative; boundary=bcaec51a7d4230658704a6218903
 
-From now on the 'new-thin' message to the pool target takes just one
-argument, the id of the new device.  The size field has been dropped,
-instead the new device has a zero size.
+--bcaec51a7d4230658704a6218903
+Content-Type: text/plain; charset=UTF-8
 
-When a multisnap target is loaded it implicitly resizes the thin
-device based on the size of the target.  Truncation will lose data
-that is off the end of the new device immediately.
+Hi,
 
-- Joe
+A week ago I filed a bug on udev over here:
+https://bugs.launchpad.net/ubuntu/+source/udev/+bug/797226
 
-https://github.com/jthornber/linux-2.6/tree/multisnap
+Actually I am not sure the problem is with udev, or is it with
+device-mapper. Can someone clarify the matter please?
+
+--
+Arie
+
+--bcaec51a7d4230658704a6218903
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi,<br><br>A week ago I filed a bug on udev over here:<br>=
+<a href=3D"https://bugs.launchpad.net/ubuntu/+source/udev/+bug/797226">http=
+s://bugs.launchpad.net/ubuntu/+source/udev/+bug/797226</a><br><br>Actually =
+I am not sure the problem is with udev, or is it with device-mapper. Can so=
+meone clarify the matter please?<br>
+
+<br clear=3D"all">--<br>Arie<br><br>
+</div>
+
+--bcaec51a7d4230658704a6218903--
+
+
+--===============0048471822381074945==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0048471822381074945==--
