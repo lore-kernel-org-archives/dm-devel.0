@@ -1,11 +1,15 @@
-From: Arie Skliarouk <skliarie@gmail.com>
-Subject: /dev/dm-10 is not created for tenth LVM volume
-Date: Mon, 20 Jun 2011 12:39:18 +0300
-Message-ID: <BANLkTi=6LUr83ERfWkHJqmBanBrAitvY1g@mail.gmail.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: Interface changes to multisnap
+Date: Tue, 21 Jun 2011 14:59:51 +0100
+Message-ID: <20110621135949.GA2122@ubuntu>
+References: <20110620122256.GA15181@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0048471822381074945=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20110620122256.GA15181@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,44 +22,25 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0048471822381074945==
-Content-Type: multipart/alternative; boundary=bcaec51a7d4230658704a6218903
+On Mon, Jun 20, 2011 at 01:22:57PM +0100, Joe Thornber wrote:
+> I've just pushed an interface change for multisnap.
 
---bcaec51a7d4230658704a6218903
-Content-Type: text/plain; charset=UTF-8
+Ignore the previous message, it turned out to be bogus.  So now
+resizing is implemented as follows:
 
-Hi,
+- new-thin still takes a size arg
 
-A week ago I filed a bug on udev over here:
-https://bugs.launchpad.net/ubuntu/+source/udev/+bug/797226
+  new-thin <id> <size in sectors>
 
-Actually I am not sure the problem is with udev, or is it with
-device-mapper. Can someone clarify the matter please?
+- There is a resize message:
 
---
-Arie
+  resize <id> <size in sectors>
 
---bcaec51a7d4230658704a6218903
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+- The target length doesn't have to correspond to the size of the thin
+  device.  Writes beyond the end will cause IO error.
 
-<div dir=3D"ltr">Hi,<br><br>A week ago I filed a bug on udev over here:<br>=
-<a href=3D"https://bugs.launchpad.net/ubuntu/+source/udev/+bug/797226">http=
-s://bugs.launchpad.net/ubuntu/+source/udev/+bug/797226</a><br><br>Actually =
-I am not sure the problem is with udev, or is it with device-mapper. Can so=
-meone clarify the matter please?<br>
+- Multiple targets may point to the same thin device.  If you make
+  more than one active then it is a user error.  Much like using a
+  linear target to map multiple devices to the same physical disk.
 
-<br clear=3D"all">--<br>Arie<br><br>
-</div>
-
---bcaec51a7d4230658704a6218903--
-
-
---===============0048471822381074945==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0048471822381074945==--
+- Joe
