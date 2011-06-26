@@ -1,47 +1,64 @@
 From: Akinobu Mita <akinobu.mita@gmail.com>
-Subject: [PATCH resend 0/6] use little-endian bitops properly
-Date: Sun, 26 Jun 2011 14:57:50 +0900
-Message-ID: <1309067876-3537-1-git-send-email-akinobu.mita@gmail.com>
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Sender: linux-ext4-owner@vger.kernel.org
+Subject: [PATCH resend 2/6] dm: use use proper little-endian bitops
+Date: Sun, 26 Jun 2011 14:57:52 +0900
+Message-ID: <1309067876-3537-3-git-send-email-akinobu.mita@gmail.com>
+References: <1309067876-3537-1-git-send-email-akinobu.mita@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1309067876-3537-1-git-send-email-akinobu.mita@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, akpm@linux-foundation.org
-Cc: Akinobu Mita <akinobu.mita@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-ext4@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, NeilBrown <neilb@suse.de>, linux-raid@vger.kernel.org, reiserfs-devel@vger.kernel.org, Joel Becker <jlbec@evilplan.org>, Mark Fasheh <mfasheh@suse.com>, ocfs2-devel@oss.oracle.com
+Cc: Akinobu Mita <akinobu.mita@gmail.com>, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-All patches in this patch set were sent before. Individual patches
-improve little-endian bitops usage in several places.
+Using __test_and_{set,clear}_bit_le() with ignoring its return value
+can be replaced with __{set,clear}_bit_le().
 
-Akinobu Mita (6):
-  ext4: use proper little-endian bitops
-  dm: use use proper little-endian bitops
-  md: use proper little-endian bitops
-  reiserfs: use proper little-endian bitops
-  reiserfs: use hweight_long()
-  ocfs2: avoid unaligned access to dqc_bitmap
+This also removes unnecessary casts.
 
- drivers/md/bitmap.c         |    4 +-
- drivers/md/dm-log.c         |    9 +++----
- fs/ext4/ext4.h              |    7 +++--
- fs/ext4/ialloc.c            |    4 +-
- fs/ocfs2/ocfs2.h            |   47 +++++++++++++++++++++++++++++++++++++++++++
- fs/ocfs2/quota_local.c      |   10 ++++----
- fs/reiserfs/bitmap.c        |    8 +-----
- fs/reiserfs/resize.c        |    6 ++--
- include/linux/reiserfs_fs.h |    2 +
- 9 files changed, 71 insertions(+), 26 deletions(-)
-
-Cc: "Theodore Ts'o" <tytso@mit.edu>
-Cc: Andreas Dilger <adilger.kernel@dilger.ca>
-Cc: linux-ext4@vger.kernel.org
+Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
 Cc: Alasdair Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
-Cc: NeilBrown <neilb@suse.de>
-Cc: linux-raid@vger.kernel.org
-Cc: reiserfs-devel@vger.kernel.org
-Cc: Joel Becker <jlbec@evilplan.org>
-Cc: Mark Fasheh <mfasheh@suse.com>
-Cc: ocfs2-devel@oss.oracle.com
+---
+ drivers/md/dm-log.c |    9 ++++-----
+ 1 files changed, 4 insertions(+), 5 deletions(-)
 
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 948e3f4..2ef7e6e 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -251,20 +251,20 @@ struct log_c {
+  */
+ static inline int log_test_bit(uint32_t *bs, unsigned bit)
+ {
+-	return test_bit_le(bit, (unsigned long *) bs) ? 1 : 0;
++	return test_bit_le(bit, bs) ? 1 : 0;
+ }
+ 
+ static inline void log_set_bit(struct log_c *l,
+ 			       uint32_t *bs, unsigned bit)
+ {
+-	__test_and_set_bit_le(bit, (unsigned long *) bs);
++	__set_bit_le(bit, bs);
+ 	l->touched_cleaned = 1;
+ }
+ 
+ static inline void log_clear_bit(struct log_c *l,
+ 				 uint32_t *bs, unsigned bit)
+ {
+-	__test_and_clear_bit_le(bit, (unsigned long *) bs);
++	__clear_bit_le(bit, bs);
+ 	l->touched_dirtied = 1;
+ }
+ 
+@@ -739,8 +739,7 @@ static int core_get_resync_work(struct dm_dirty_log *log, region_t *region)
+ 		return 0;
+ 
+ 	do {
+-		*region = find_next_zero_bit_le(
+-					     (unsigned long *) lc->sync_bits,
++		*region = find_next_zero_bit_le(lc->sync_bits,
+ 					     lc->region_count,
+ 					     lc->sync_search);
+ 		lc->sync_search = *region + 1;
 -- 
 1.7.4.4
-
