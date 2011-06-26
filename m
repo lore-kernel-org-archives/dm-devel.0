@@ -1,35 +1,47 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm-kcopyd/dm-snap: Don't read the origin on
- full chunk write
-Date: Fri, 24 Jun 2011 08:35:38 +0100
-Message-ID: <20110624073537.GB2888@ubuntu>
-References: <Pine.LNX.4.64.1106232021200.12675@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1106232021200.12675@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Alasdair G. Kergon" <agk@redhat.com>
+From: Akinobu Mita <akinobu.mita@gmail.com>
+Subject: [PATCH resend 0/6] use little-endian bitops properly
+Date: Sun, 26 Jun 2011 14:57:50 +0900
+Message-ID: <1309067876-3537-1-git-send-email-akinobu.mita@gmail.com>
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Sender: linux-ext4-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, akpm@linux-foundation.org
+Cc: Akinobu Mita <akinobu.mita@gmail.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-ext4@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, dm-devel@redhat.com, NeilBrown <neilb@suse.de>, linux-raid@vger.kernel.org, reiserfs-devel@vger.kernel.org, Joel Becker <jlbec@evilplan.org>, Mark Fasheh <mfasheh@suse.com>, ocfs2-devel@oss.oracle.com
 List-Id: dm-devel.ids
 
-On Thu, Jun 23, 2011 at 08:25:44PM -0400, Mikulas Patocka wrote:
-> Hi
-> 
-> This is the new patch for optimizing full chunk write. dm-kcopyd provides 
-> only callbacks.
+All patches in this patch set were sent before. Individual patches
+improve little-endian bitops usage in several places.
 
-I'm happy with this approach, you keep bios out of the interface.
+Akinobu Mita (6):
+  ext4: use proper little-endian bitops
+  dm: use use proper little-endian bitops
+  md: use proper little-endian bitops
+  reiserfs: use proper little-endian bitops
+  reiserfs: use hweight_long()
+  ocfs2: avoid unaligned access to dqc_bitmap
 
-- Joe
+ drivers/md/bitmap.c         |    4 +-
+ drivers/md/dm-log.c         |    9 +++----
+ fs/ext4/ext4.h              |    7 +++--
+ fs/ext4/ialloc.c            |    4 +-
+ fs/ocfs2/ocfs2.h            |   47 +++++++++++++++++++++++++++++++++++++++++++
+ fs/ocfs2/quota_local.c      |   10 ++++----
+ fs/reiserfs/bitmap.c        |    8 +-----
+ fs/reiserfs/resize.c        |    6 ++--
+ include/linux/reiserfs_fs.h |    2 +
+ 9 files changed, 71 insertions(+), 26 deletions(-)
+
+Cc: "Theodore Ts'o" <tytso@mit.edu>
+Cc: Andreas Dilger <adilger.kernel@dilger.ca>
+Cc: linux-ext4@vger.kernel.org
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
+Cc: NeilBrown <neilb@suse.de>
+Cc: linux-raid@vger.kernel.org
+Cc: reiserfs-devel@vger.kernel.org
+Cc: Joel Becker <jlbec@evilplan.org>
+Cc: Mark Fasheh <mfasheh@suse.com>
+Cc: ocfs2-devel@oss.oracle.com
+
+-- 
+1.7.4.4
+
