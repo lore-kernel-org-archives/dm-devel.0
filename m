@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 4/9] dm flakey: add drop_writes feature
-Date: Mon, 27 Jun 2011 15:53:38 -0400
-Message-ID: <1309204423-8599-5-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 5/9] dm flakey: add corrupt_bio_byte feature
+Date: Mon, 27 Jun 2011 15:53:39 -0400
+Message-ID: <1309204423-8599-6-git-send-email-snitzer@redhat.com>
 References: <1309204423-8599-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,131 +22,94 @@ To: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Add 'drop_writes' feature that will silently drop writes (when the
-device is "down").  Reads are not touched.
+Add 'corrupt_bio_byte' feature that will write 0 to the specified Nth
+byte of each bio (when the device is "down").
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-flakey.c |   47 +++++++++++++++++++++++++++++++++++++++--------
- 1 files changed, 39 insertions(+), 8 deletions(-)
+ drivers/md/dm-flakey.c |   35 +++++++++++++++++++++++++++++++++--
+ 1 files changed, 33 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index ae2107f..618f313 100644
+index 618f313..b26f61d 100644
 --- a/drivers/md/dm-flakey.c
 +++ b/drivers/md/dm-flakey.c
-@@ -14,6 +14,7 @@
- #include <linux/slab.h>
- 
- #define DM_MSG_PREFIX "flakey"
-+#define MESG_STR(x) x, sizeof(x)
- 
- /*
-  * Flakey: Used for testing only, simulates intermittent,
-@@ -25,16 +26,22 @@ struct flakey_c {
- 	sector_t start;
+@@ -27,6 +27,7 @@ struct flakey_c {
  	unsigned up_interval;
  	unsigned down_interval;
-+	unsigned long flags;
+ 	unsigned long flags;
++	unsigned corrupt_bio_byte;
  };
  
--static int parse_features(struct dm_arg_set *as, struct dm_target *ti)
-+enum feature_flag_bits {
-+	DROP_WRITES
-+};
-+
-+static int parse_features(struct dm_arg_set *as, struct flakey_c *fc,
-+			  struct dm_target *ti)
- {
- 	int r;
- 	unsigned argc;
+ enum feature_flag_bits {
+@@ -41,7 +42,8 @@ static int parse_features(struct dm_arg_set *as, struct flakey_c *fc,
  	const char *arg_name;
  
  	static struct dm_arg _args[] = {
--		{0, 0, "invalid number of feature args"},
-+		{0, 1, "invalid number of feature args"},
+-		{0, 1, "invalid number of feature args"},
++		{0, 3, "invalid number of feature args"},
++		{1, UINT_MAX, "invalid corrupt bio byte value"},
  	};
  
  	r = dm_read_arg(_args, dm_shift_arg(as), &argc, &ti->error);
-@@ -48,6 +55,11 @@ static int parse_features(struct dm_arg_set *as, struct dm_target *ti)
+@@ -55,6 +57,15 @@ static int parse_features(struct dm_arg_set *as, struct flakey_c *fc,
  		arg_name = dm_shift_arg(as);
  		argc--;
  
-+		if (!strnicmp(arg_name, MESG_STR("drop_writes"))) {
-+			set_bit(DROP_WRITES, &fc->flags);
++		/* corrupt_bio_byte <Nth byte> */
++		if (!strnicmp(arg_name, MESG_STR("corrupt_bio_byte")) &&
++		    (argc >= 1)) {
++			r = dm_read_arg(_args + 1, dm_shift_arg(as),
++					&fc->corrupt_bio_byte, &ti->error);
++			argc--;
 +			continue;
 +		}
 +
- 		ti->error = "Unrecognised flakey feature request";
- 		r = -EINVAL;
- 	}
-@@ -80,7 +92,7 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		return -EINVAL;
- 	}
+ 		if (!strnicmp(arg_name, MESG_STR("drop_writes"))) {
+ 			set_bit(DROP_WRITES, &fc->flags);
+ 			continue;
+@@ -172,6 +183,16 @@ static void flakey_map_bio(struct dm_target *ti, struct bio *bio)
+ 		bio->bi_sector = flakey_map_sector(ti, bio->bi_sector);
+ }
  
--	fc = kmalloc(sizeof(*fc), GFP_KERNEL);
-+	fc = kzalloc(sizeof(*fc), GFP_KERNEL);
- 	if (!fc) {
- 		ti->error = "dm-flakey: Cannot allocate linear context";
- 		return -ENOMEM;
-@@ -117,7 +129,7 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
- 	}
- 
--	r = parse_features(&as, ti);
-+	r = parse_features(&as, fc, ti);
- 	if (r)
- 		goto bad;
- 
-@@ -168,9 +180,21 @@ static int flakey_map(struct dm_target *ti, struct bio *bio,
- 
- 	/* Are we alive ? */
- 	elapsed = (jiffies - fc->start_time) / HZ;
--	if (elapsed % (fc->up_interval + fc->down_interval) >= fc->up_interval)
-+	if (elapsed % (fc->up_interval + fc->down_interval) >= fc->up_interval) {
-+		unsigned rw = bio_data_dir(bio);
-+		if (test_bit(DROP_WRITES, &fc->flags)) {
-+			/* drop writes but don't error reads */
-+			if (rw == WRITE) {
-+				bio_endio(bio, 0);
-+				return DM_MAPIO_SUBMITTED;
-+			} else
-+				goto map_bio;
-+		}
-+		/* default, when down without features, is to error all IO */
- 		return -EIO;
-+	}
- 
-+map_bio:
- 	flakey_map_bio(ti, bio);
- 
- 	return DM_MAPIO_REMAPPED;
-@@ -179,7 +203,9 @@ static int flakey_map(struct dm_target *ti, struct bio *bio,
- static int flakey_status(struct dm_target *ti, status_type_t type,
- 			 char *result, unsigned int maxlen)
- {
-+	unsigned sz = 0;
- 	struct flakey_c *fc = ti->private;
-+	unsigned drop_writes;
- 
- 	switch (type) {
- 	case STATUSTYPE_INFO:
-@@ -187,9 +213,14 @@ static int flakey_status(struct dm_target *ti, status_type_t type,
- 		break;
- 
- 	case STATUSTYPE_TABLE:
--		snprintf(result, maxlen, "%s %llu %u %u", fc->dev->name,
--			 (unsigned long long)fc->start, fc->up_interval,
--			 fc->down_interval);
-+		DMEMIT("%s %llu %u %u ", fc->dev->name,
-+		       (unsigned long long)fc->start, fc->up_interval,
-+		       fc->down_interval);
++static void corrupt_bio_data(struct bio *bio, struct flakey_c *fc)
++{
++	unsigned bio_bytes = bio_cur_bytes(bio);
++	char *data = bio_data(bio);
 +
-+		drop_writes = test_bit(DROP_WRITES, &fc->flags);
-+		DMEMIT("%u ", drop_writes);
-+		if (drop_writes)
-+			DMEMIT("drop_writes ");
++	/* write 0 to the specified Nth byte of the bio */
++	if (data && bio_bytes >= fc->corrupt_bio_byte)
++		data[fc->corrupt_bio_byte-1] = 0;
++}
++
+ static int flakey_map(struct dm_target *ti, struct bio *bio,
+ 		      union map_info *map_context)
+ {
+@@ -182,6 +203,12 @@ static int flakey_map(struct dm_target *ti, struct bio *bio,
+ 	elapsed = (jiffies - fc->start_time) / HZ;
+ 	if (elapsed % (fc->up_interval + fc->down_interval) >= fc->up_interval) {
+ 		unsigned rw = bio_data_dir(bio);
++		if (fc->corrupt_bio_byte) {
++			/* corrupt writes but don't touch reads */
++			if (rw == WRITE)
++				corrupt_bio_data(bio, fc);
++			goto map_bio;
++		}
+ 		if (test_bit(DROP_WRITES, &fc->flags)) {
+ 			/* drop writes but don't error reads */
+ 			if (rw == WRITE) {
+@@ -218,7 +245,11 @@ static int flakey_status(struct dm_target *ti, status_type_t type,
+ 		       fc->down_interval);
+ 
+ 		drop_writes = test_bit(DROP_WRITES, &fc->flags);
+-		DMEMIT("%u ", drop_writes);
++		DMEMIT("%u ", drop_writes +
++		              (fc->corrupt_bio_byte > 0) * 2);
++
++		if (fc->corrupt_bio_byte)
++			DMEMIT("corrupt_bio_byte %u ", fc->corrupt_bio_byte);
+ 		if (drop_writes)
+ 			DMEMIT("drop_writes ");
  		break;
- 	}
- 	return 0;
 -- 
 1.7.1
