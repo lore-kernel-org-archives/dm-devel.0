@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 7/9] dm flakey: switch corrupt_bio_data_dir to
-	corrupt_bio_flags
-Date: Mon, 27 Jun 2011 15:53:41 -0400
-Message-ID: <1309204423-8599-8-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 3/9] dm flakey: start of adding features
+Date: Mon, 27 Jun 2011 15:53:37 -0400
+Message-ID: <1309204423-8599-4-git-send-email-snitzer@redhat.com>
 References: <1309204423-8599-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,116 +22,130 @@ To: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-User may specify a series of bio->bi_rw flags that must be seen in order
-to trigger corruption (e.g. 33 = REQ_WRITE|REQ_META).
+Add the ability to specify arbitrary feature flags when creating a
+flakey target.  This code uses the same target argument helpers that
+the multipath target does.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-flakey.c |   35 ++++++++++++++++++++++-------------
- 1 files changed, 22 insertions(+), 13 deletions(-)
+ drivers/md/dm-flakey.c |   68 ++++++++++++++++++++++++++++++++++++++++-------
+ 1 files changed, 58 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index 54ab455..0205b00 100644
+index 70a69b2..ae2107f 100644
 --- a/drivers/md/dm-flakey.c
 +++ b/drivers/md/dm-flakey.c
-@@ -28,7 +28,7 @@ struct flakey_c {
+@@ -27,15 +27,55 @@ struct flakey_c {
  	unsigned down_interval;
- 	unsigned long flags;
- 	unsigned corrupt_bio_byte;
--	unsigned corrupt_bio_data_dir;
-+	unsigned corrupt_bio_flags;
  };
  
- enum feature_flag_bits {
-@@ -45,7 +45,7 @@ static int parse_features(struct dm_arg_set *as, struct flakey_c *fc,
- 	static struct dm_arg _args[] = {
- 		{0, 4, "invalid number of feature args"},
- 		{1, UINT_MAX, "invalid corrupt bio byte value"},
--		{0, 1, "invalid corrupt bio data direction"},
-+		{0, UINT_MAX, "invalid corrupt bio flags mask"},
- 	};
- 
- 	r = dm_read_arg(_args, dm_shift_arg(as), &argc, &ti->error);
-@@ -59,19 +59,19 @@ static int parse_features(struct dm_arg_set *as, struct flakey_c *fc,
- 		arg_name = dm_shift_arg(as);
- 		argc--;
- 
--		/* corrupt_bio_byte <Nth byte> <READ=0|WRITE=1> */
--		/* snitm: could also allow user to only corrupt bios that
--		 * have specific bi_rw flag(s), e.g.: (REQ_WRITE|REQ_META)?
--		 */
-+		/* corrupt_bio_byte <Nth byte> <bio_flags> */
- 		if (!strnicmp(arg_name, MESG_STR("corrupt_bio_byte")) &&
- 		    (argc >= 1)) {
- 			r = dm_read_arg(_args + 1, dm_shift_arg(as),
- 					&fc->corrupt_bio_byte, &ti->error);
- 			argc--;
- 
--			/* corrupt reads or writes? */
-+			/*
-+			 * Only corrupt bios that have specific bi_rw flag(s),
-+			 * e.g.: READ=0 or REQ_WRITE=1|REQ_META=32
-+			 */
- 			r = dm_read_arg(_args + 2, dm_shift_arg(as),
--					&fc->corrupt_bio_data_dir, &ti->error);
-+					&fc->corrupt_bio_flags, &ti->error);
- 			argc--;
- 			continue;
- 		}
-@@ -193,14 +193,20 @@ static void flakey_map_bio(struct dm_target *ti, struct bio *bio)
- 		bio->bi_sector = flakey_map_sector(ti, bio->bi_sector);
- }
- 
-+#define corrupt_bio_data_dir(fc)	((fc)->corrupt_bio_flags & 1)
-+#define all_corrupt_bio_flags_match(fc, bio)	\
-+	(((bio)->bi_rw & (fc)->corrupt_bio_flags) == (fc)->corrupt_bio_flags)
++static int parse_features(struct dm_arg_set *as, struct dm_target *ti)
++{
++	int r;
++	unsigned argc;
++	const char *arg_name;
 +
- static void corrupt_bio_data(struct bio *bio, struct flakey_c *fc)
- {
- 	unsigned bio_bytes = bio_cur_bytes(bio);
- 	char *data = bio_data(bio);
- 
- 	/* write 0 to the specified Nth byte of the bio */
--	if (data && bio_bytes >= fc->corrupt_bio_byte)
-+	if (data && bio_bytes >= fc->corrupt_bio_byte) {
- 		data[fc->corrupt_bio_byte-1] = 0;
-+		printk("corrupting data rw=%lu\n", bio_data_dir(bio));
++	static struct dm_arg _args[] = {
++		{0, 0, "invalid number of feature args"},
++	};
++
++	r = dm_read_arg(_args, dm_shift_arg(as), &argc, &ti->error);
++	if (r)
++		return -EINVAL;
++
++	if (!argc)
++		return 0;
++
++	while (argc && !r) {
++		arg_name = dm_shift_arg(as);
++		argc--;
++
++		ti->error = "Unrecognised flakey feature request";
++		r = -EINVAL;
 +	}
- }
- 
- static int flakey_map(struct dm_target *ti, struct bio *bio,
-@@ -214,9 +220,11 @@ static int flakey_map(struct dm_target *ti, struct bio *bio,
- 	if (elapsed % (fc->up_interval + fc->down_interval) >= fc->up_interval) {
- 		unsigned rw = bio_data_dir(bio);
- 		if (fc->corrupt_bio_byte) {
--			/* only corrupt either reads or writes */
--			if (rw == WRITE && rw == fc->corrupt_bio_data_dir)
-+			/* corrupt matching writes, defer reads until end_io */
-+			if (rw == WRITE && rw == corrupt_bio_data_dir(fc) &&
-+			    all_corrupt_bio_flags_match(fc, bio))
- 				corrupt_bio_data(bio, fc);
 +
- 			/* flag this bio as submitted while down */
- 			map_context->ll = 1;
- 			goto map_bio;
-@@ -247,7 +255,8 @@ static int flakey_end_io(struct dm_target *ti, struct bio *bio,
- 	unsigned rw = bio_data_dir(bio);
++	return 0;
++}
++
+ /*
+- * Construct a flakey mapping: <dev_path> <offset> <up interval> <down interval>
++ * Construct a flakey mapping:
++ * <dev_path> <offset> <up interval> <down interval> <#feature args> [<arg>]*
+  */
+ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ {
++	static struct dm_arg _args[] = {
++		{0, UINT_MAX, "dm-flakey: Invalid up interval"},
++		{0, UINT_MAX, "dm-flakey: Invalid down interval"},
++	};
++
++	int r;
+ 	struct flakey_c *fc;
+ 	unsigned long long tmp;
++	struct dm_arg_set as;
++	const char *devname;
  
- 	if (!error && bio_submitted_while_down)
--		if (rw == READ && rw == fc->corrupt_bio_data_dir)
-+		if (rw == READ && rw == corrupt_bio_data_dir(fc) &&
-+		    all_corrupt_bio_flags_match(fc, bio))
- 			corrupt_bio_data(bio, fc);
+-	if (argc != 4) {
++	as.argc = argc;
++	as.argv = argv;
++
++	if (argc < 5) {
+ 		ti->error = "dm-flakey: Invalid argument count";
+ 		return -EINVAL;
+ 	}
+@@ -47,21 +87,25 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 	fc->start_time = jiffies;
  
- 	return error;
-@@ -276,7 +285,7 @@ static int flakey_status(struct dm_target *ti, status_type_t type,
++	devname = argv[0];
++	as.argc--;
++	as.argv++;
++
+ 	if (sscanf(argv[1], "%llu", &tmp) != 1) {
+ 		ti->error = "dm-flakey: Invalid device sector";
+ 		goto bad;
+ 	}
+ 	fc->start = tmp;
++	as.argc--;
++	as.argv++;
  
- 		if (fc->corrupt_bio_byte)
- 			DMEMIT("corrupt_bio_byte %u %u ", fc->corrupt_bio_byte,
--			       fc->corrupt_bio_data_dir);
-+			       fc->corrupt_bio_flags);
- 		if (drop_writes)
- 			DMEMIT("drop_writes ");
- 		break;
+-	if (sscanf(argv[2], "%u", &fc->up_interval) != 1) {
+-		ti->error = "dm-flakey: Invalid up interval";
++	r = dm_read_arg(_args, dm_shift_arg(&as), &fc->up_interval, &ti->error);
++	if (r)
+ 		goto bad;
+-	}
+ 
+-	if (sscanf(argv[3], "%u", &fc->down_interval) != 1) {
+-		ti->error = "dm-flakey: Invalid down interval";
++	r = dm_read_arg(_args, dm_shift_arg(&as), &fc->down_interval, &ti->error);
++	if (r)
+ 		goto bad;
+-	}
+ 
+ 	if (!(fc->up_interval + fc->down_interval)) {
+ 		ti->error = "dm-flakey: Total (up + down) interval is zero";
+@@ -73,7 +117,11 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad;
+ 	}
+ 
+-	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &fc->dev)) {
++	r = parse_features(&as, ti);
++	if (r)
++		goto bad;
++
++	if (dm_get_device(ti, devname, dm_table_get_mode(ti->table), &fc->dev)) {
+ 		ti->error = "dm-flakey: Device lookup failed";
+ 		goto bad;
+ 	}
+@@ -178,7 +226,7 @@ static int flakey_iterate_devices(struct dm_target *ti, iterate_devices_callout_
+ 
+ static struct target_type flakey_target = {
+ 	.name   = "flakey",
+-	.version = {1, 1, 0},
++	.version = {1, 2, 0},
+ 	.module = THIS_MODULE,
+ 	.ctr    = flakey_ctr,
+ 	.dtr    = flakey_dtr,
 -- 
 1.7.1
