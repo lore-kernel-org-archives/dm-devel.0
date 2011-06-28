@@ -1,8 +1,9 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 5 of 7] DM RAID:  allow metadata devices -- FIX
-Date: Tue, 28 Jun 2011 15:17:30 -0500
-Message-ID: <1309292250.10259.3.camel@f14.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jeff Cook <jeff@deserettechnology.com>
+Subject: dm-crypt TRIM support
+Date: Tue, 28 Jun 2011 14:52:02 -0600
+Message-ID: <4E0A3EF2.4090608@deserettechnology.com>
+Reply-To: jeff@deserettechnology.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -19,23 +20,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch fixes an improper conditional in the 5th patch of the dm-raid
-updates series.
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
- brassow
+After mounting a LUKS partition on my SSD, I get a message that the
+discard mount option is ignored. In my research, I have seen many
+conflicting reports on whether this functionality was available or not.
+The last reliable mail I can find was from January and indicated that an
+expected release of configurable discard support over dm-crypt in
+2.6.39. Can anyone let me know if this target was reached, and if not,
+where development on TRIM support for dm-crypt volumes currently stands?
 
-Set the synchronization offset if the '[no]sync' parameters were /not/ specified.
+Thanks
+Jeff
+- -- 
+Jeff Cook
+jeff@deserettechnology.com
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org/
 
-Index: linux-2.6/drivers/md/dm-raid.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-raid.c
-+++ linux-2.6/drivers/md/dm-raid.c
-@@ -709,7 +709,7 @@ static int super_init_validation(mddev_t
- 		return -EINVAL;
- 	}
- 
--	if (rs->print_flags & (DMPF_SYNC | DMPF_NOSYNC))
-+	if (!(rs->print_flags & (DMPF_SYNC | DMPF_NOSYNC)))
- 		mddev->recovery_cp = le64_to_cpu(sb->array_resync_offset);
- 
- 	/*
+iEYEARECAAYFAk4KPvIACgkQNtecAl0ONJp9sACeJkZz4TED8FcxZmt+y6Rz8w6T
+xpMAn3dI7b8H7I3m/1mmKOkdO3YXl7yI
+=kPKG
+-----END PGP SIGNATURE-----
