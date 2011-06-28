@@ -1,8 +1,7 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm mpath: fix potential NULL pointer in feature
-	arg processing
-Date: Tue, 28 Jun 2011 16:12:50 -0400
-Message-ID: <1309291970-12674-1-git-send-email-snitzer@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH 5 of 7] DM RAID:  allow metadata devices -- FIX
+Date: Tue, 28 Jun 2011 15:17:30 -0500
+Message-ID: <1309292250.10259.3.camel@f14.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,34 +17,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-If a user specifies an mpath target as having 1 or more features but
-doesn't specify the corresponding feature args a NULL pointer occurs
-in parse_features() -- @param_name is NULL when passed to strnicmp().
+This patch fixes an improper conditional in the 5th patch of the dm-raid
+updates series.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@kernel.org
----
- drivers/md/dm-mpath.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ brassow
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index aa4e570..209991b 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -807,6 +807,11 @@ static int parse_features(struct arg_set *as, struct multipath *m)
- 	if (!argc)
- 		return 0;
+Set the synchronization offset if the '[no]sync' parameters were /not/ specified.
+
+Index: linux-2.6/drivers/md/dm-raid.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-raid.c
++++ linux-2.6/drivers/md/dm-raid.c
+@@ -709,7 +709,7 @@ static int super_init_validation(mddev_t
+ 		return -EINVAL;
+ 	}
  
-+	if (argc > as->argc) {
-+		ti->error = "not enough arguments for features";
-+		return -EINVAL;
-+	}
-+
- 	do {
- 		param_name = shift(as);
- 		argc--;
--- 
-1.7.4.4
+-	if (rs->print_flags & (DMPF_SYNC | DMPF_NOSYNC))
++	if (!(rs->print_flags & (DMPF_SYNC | DMPF_NOSYNC)))
+ 		mddev->recovery_cp = le64_to_cpu(sb->array_resync_offset);
+ 
+ 	/*
