@@ -1,12 +1,14 @@
-From: Gianluca Cecchi <gianluca.cecchi@gmail.com>
-Subject: Lvm snapshot for a vm disk doubt
-Date: Wed, 29 Jun 2011 13:31:50 +0200
-Message-ID: <BANLkTi=AoKrmvE9pfE6Zxsv3gRrA0JuGwg@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm flakey: document corrupt_bio_byte and
+ optional feature precedence
+Date: Wed, 29 Jun 2011 10:41:13 -0400
+Message-ID: <20110629144112.GA20420@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,38 +18,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-SGVsbG8sCkknbSBpbiB0aGlzIHNpdHVhdGlvbiBhbmQgd291bGQgbGlrZSB0byBiZSBjZXJ0YWlu
-IGJlZm9yZSBkb2luZyBiYWQgdGhpbmdzLi4uClRoYW5rcyBpbiBhZHZhbmNlIGZvciB5b3VyIGhl
-bHAKCnJoIGVsIDYuMSBob3N0IGFuZCBhIHZtIHdpdGggb25lIGRpc2sgdGhhdCBpcyBMVk0gYmFz
-ZWQgKGFjdHVhbGx5IGl0CnNob3VsZCBhcHBseSB3aXRoIHJlY2VudCB1cHN0cmVhbSBrZXJuZWwg
-YW5kIGx2bSB0b28pCgotIHNodXRkb3duIGd1ZXN0Ci0gbG9jayBleGNsdXNpdmVseSB0aGUgbHYg
-KGJlY2F1c2UgaXQgaXMgYWN0dWFsbHkgYSBjbHVzdGVyIG9mIHR3byByaCBlbCA2LjEpCm9uIG9u
-ZSBub2RlOgojIGx2Y2hhbmdlIC1hbiAvZGV2L1ZHX1ZJUlQwMS96ZW5zcnZfMDAyCm9uIHRoZSBv
-dGhlciBvbmU6CiMgbHZjaGFuZ2UgLWFleSAvZGV2L1ZHX1ZJUlQwMS96ZW5zcnZfMDAyCgotIGNy
-ZWF0ZSBzbmFwc2hvdAojIGx2Y3JlYXRlIC0tc2l6ZSA1RyAtLXNuYXBzaG90IC0tbmFtZSB6ZW5z
-cnZfMDAyX3NuYXAgL2Rldi9WR19WSVJUMDEvemVuc3J2XzAwMgrCoExvZ2ljYWwgdm9sdW1lICJ6
-ZW5zcnZfMDAyX3NuYXAiIGNyZWF0ZWQKCi0gcG93ZXIgb24gdm0gZ29pbmcgYWhlYWQgZG9pbmcg
-c29tZSBpbnRydXNpdmUgdGVzdHMKTm90ZSB0aGF0IEkgbWFpbnRhaW5lZCB0aGUgb3JpZ2luYWwg
-TFYgYXMgdGhlIGRpc2sgZm9yIHRoZSBWTQoKLSBBdCB0aGUgZW5kIG9mIG15IHdvcmsgdGhlIHNp
-dHVhdGlvbiBJIGhhdmUgY2hhbmdlZCBhYm91dCAxLjdHYiBvZiBteQpvcmlnaW5hbCBkaXNrOgoj
-IGx2cyAvZGV2L1ZHX1ZJUlQwMS96ZW5zcnZfMDAyKgrCoExWIMKgIMKgIMKgIMKgIMKgIMKgIMKg
-VkcgwqAgwqAgwqAgwqBBdHRyIMKgIExTaXplIMKgT3JpZ2luIMKgIMKgIFNuYXAlIMKgTW92ZSBM
-b2cKQ29weSUgwqBDb252ZXJ0CsKgemVuc3J2XzAwMiDCoCDCoCDCoFZHX1ZJUlQwMSBvd2ktYW8g
-MTAuMDBnCsKgemVuc3J2XzAwMl9zbmFwIFZHX1ZJUlQwMSBzd2ktYS0gwqA1LjAwZyB6ZW5zcnZf
-MDAyIMKgMzQuNzcKCi0gTm93IEknbSBjb25maWRlbnQgd2l0aCB0aGUgY2hhbmdlcy4uCklzIGl0
-IG9rIHRvIHNpbXBseSByZW1vdmUgdGhlIHNuYXBzaG90PwoKLSBXaGF0IGlmIEknbSBub3QgY29u
-ZmlkZW50IHdpdGggdGhlIGNoYW5nZXMgYW5kIHdvdWxkIGxpa2UgdG8gcmV2ZXJ0CnRvIHRoZSBv
-cmlnaW5hbCBzdGF0ZSA/CldpbGwgaXQgZG8gdGhlIGNvbW1hbmQKbHZjb252ZXJ0IC0tbWVyZ2Ug
-L2Rldi9WR19WSVJUMDEvemVuc3J2XzAwMl9zbmFwCgpPciBkaWQgSSBtYWtlIGl0IHRvdGFsbHkg
-d3JvbmcgYW5kIGhhZCB0byB3b3JrIHdpdGggdGhlIHNuYXBzaG90IGFuZApub3Qgd2l0aCB0aGUg
-b3JpZ2luYWwgTFY/Pz8/CktlZXAgb24gcmVhZGluZyBkb2NzLCBib3RoIHJoZWwgYW5kIGdlbmVy
-YWwgYnV0IEknbSBzb3J0IG9mIGNvbmZ1c2VkLi4uLgpQcm9iYWJseSBzb21lb25lIG9uIHRoaXMg
-bGlzdCBhbHJlYWR5IHdlbnQgdGhyb3VnaCB0aGlzIHdheS4uLgoKQW5kIGNvdWxkIEkgaGF2ZSBi
-ZWVuIHdvcmtpbmcgd2l0aCBib3RoIHRoZSBMVnMgYXQgdGhlIHNhbmUgdGltZSAoZm9yCmV4YW1w
-bGUgY3JlYXRpbmcgYSBuZXcgdm0gYmFzZSBvbiB0aGUgc25hcHNob3QgbHYpIGFuZCB3aGF0IHdv
-dWxkIGJlCnRoZSBwb3NzaWJpbGUgc2NlbmFyaW9zIGluIHRoYXQgY2FzZT8KCkdpYW5sdWNhCgot
-LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
-ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ Documentation/device-mapper/dm-flakey.txt |   15 ++++++++++++++-
+ 1 files changed, 14 insertions(+), 1 deletions(-)
+
+diff --git a/Documentation/device-mapper/dm-flakey.txt b/Documentation/device-mapper/dm-flakey.txt
+index 6b40f79..6b4df49 100644
+--- a/Documentation/device-mapper/dm-flakey.txt
++++ b/Documentation/device-mapper/dm-flakey.txt
+@@ -27,7 +27,20 @@ Mandatory parameters:
+ 
+ Optional feature parameters:
+   If no feature parameters are present, during the periods of
+-  unreliability, all I/O returns errors.
++  unreliability, all I/O returns errors.  Optional features may be
++  combined (e.g. corrupt_bio_byte on READ and drop_writes).  Conflicting
++  features (e.g. corrupt_bio_byte on WRITE and drop_writes) are resolved
++  according to the following feature precedence (descending order):
++
++  corrupt_bio_byte <Nth byte> <bio_flags> <value>:
++	Corrupt bios that have specific bi_rw flag(s), e.g.: READ=0 or
++	REQ_WRITE=1|REQ_META=32, by writing <value> to the <Nth byte> of
++	bios that have data.
++	Examples:
++	1) corrupt 32nd byte in READ bios with the value 1:
++	   corrupt_bio_byte 32 0 1
++	2) corrupt 224th byte in WRITE|REQ_META bios with the value 0:
++	   corrupt_bio_byte 224 33 0
+ 
+   drop_writes:
+ 	All write I/O is silently ignored.
