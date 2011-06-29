@@ -1,15 +1,12 @@
-From: "Stamper, Brian P. (ARC-D)[Stinger Ghaffarian Technologies Inc. (SGT
-	Inc.)]" <brian.p.stamper@nasa.gov>
-Subject: Fedora 15 dm-linear device lookup failed
-Date: Wed, 29 Jun 2011 03:45:53 -0500
-Message-ID: <CA303451.11C28%brian.p.stamper@nasa.gov>
-References: <20110621202424.GK19996@agk-dp.fab.redhat.com>
+From: Gianluca Cecchi <gianluca.cecchi@gmail.com>
+Subject: Lvm snapshot for a vm disk doubt
+Date: Wed, 29 Jun 2011 13:31:50 +0200
+Message-ID: <BANLkTi=AoKrmvE9pfE6Zxsv3gRrA0JuGwg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============4744893514727709220=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110621202424.GK19996@agk-dp.fab.redhat.com>
-Content-Language: en
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,87 +19,35 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============4744893514727709220==
-Content-Language: en
-Content-Type: multipart/alternative;
-	boundary="_000_CA30345111C28brianpstampernasagov_"
-
---_000_CA30345111C28brianpstampernasagov_
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-I just upgraded a Fedora system from 13 to 15, and now I can't get it to bo=
-ot.  I'm getting dumped to a dracut shell and getting the error dm-linear d=
-evice lookup failed.  In the dracut output with debug on, I see dracut scan=
- my drives, and I see it find my 3 LVs, but it then tries to do something w=
-ith them, I get the error, and it then fails out with root device not found=
- and drops me into dracut.
-
-Here's the odd thing, booting off the rescue dvd my volumes are fine.  The =
-LVM can be mounted no problem.
-
-This makes me think that there's something missing from the kernel or initr=
-d.  I can't really figure out what though.  I've gone through the output of=
- lsmod when running from the rescue dvd.  I've even build a few ramdisks in=
-cluding all the modules that I thought might be related (dm, lvm, mdraid, d=
-mraid, multipath).  I tried building them with mkinitrd -with=3Dmodule, and=
- I tried again with dracut -add=3Dmodules.  No change in results.
-
-I'm not sure where to go from here.  I feel like the system can be rescued,=
- but I don't know how to work backward through dracut to find out why it's =
-unable to find my root volume.  Any help would be appreciated.  Cross-posti=
-ng to lvm.
-
-Thanks,
--Brian
-
---_000_CA30345111C28brianpstampernasagov_
-Content-Type: text/html; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-<HTML>
-<HEAD>
-<TITLE>Fedora 15 dm-linear device lookup failed</TITLE>
-</HEAD>
-<BODY>
-<FONT FACE=3D"Calibri, Verdana, Helvetica, Arial"><SPAN STYLE=3D'font-size:=
-11pt'>I just upgraded a Fedora system from 13 to 15, and now I can&#8217;t =
-get it to boot. &nbsp;I&#8217;m getting dumped to a dracut shell and gettin=
-g the error dm-linear device lookup failed. &nbsp;In the dracut output with=
- debug on, I see dracut scan my drives, and I see it find my 3 LVs, but it =
-then tries to do something with them, I get the error, and it then fails ou=
-t with root device not found and drops me into dracut.<BR>
-<BR>
-Here&#8217;s the odd thing, booting off the rescue dvd my volumes are fine.=
- &nbsp;The LVM can be mounted no problem.<BR>
-<BR>
-This makes me think that there&#8217;s something missing from the kernel or=
- initrd. &nbsp;I can&#8217;t really figure out what though. &nbsp;I&#8217;v=
-e gone through the output of lsmod when running from the rescue dvd. &nbsp;=
-I&#8217;ve even build a few ramdisks including all the modules that I thoug=
-ht might be related (dm, lvm, mdraid, dmraid, multipath). &nbsp;I tried bui=
-lding them with mkinitrd &#8212;with=3Dmodule, and I tried again with dracu=
-t &#8212;add=3Dmodules. &nbsp;No change in results.<BR>
-<BR>
-I&#8217;m not sure where to go from here. &nbsp;I feel like the system can =
-be rescued, but I don&#8217;t know how to work backward through dracut to f=
-ind out why it&#8217;s unable to find my root volume. &nbsp;Any help would =
-be appreciated. &nbsp;Cross-posting to lvm.<BR>
-<BR>
-Thanks,<BR>
--Brian</SPAN></FONT>
-</BODY>
-</HTML>
-
-
---_000_CA30345111C28brianpstampernasagov_--
-
-
---===============4744893514727709220==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============4744893514727709220==--
+SGVsbG8sCkknbSBpbiB0aGlzIHNpdHVhdGlvbiBhbmQgd291bGQgbGlrZSB0byBiZSBjZXJ0YWlu
+IGJlZm9yZSBkb2luZyBiYWQgdGhpbmdzLi4uClRoYW5rcyBpbiBhZHZhbmNlIGZvciB5b3VyIGhl
+bHAKCnJoIGVsIDYuMSBob3N0IGFuZCBhIHZtIHdpdGggb25lIGRpc2sgdGhhdCBpcyBMVk0gYmFz
+ZWQgKGFjdHVhbGx5IGl0CnNob3VsZCBhcHBseSB3aXRoIHJlY2VudCB1cHN0cmVhbSBrZXJuZWwg
+YW5kIGx2bSB0b28pCgotIHNodXRkb3duIGd1ZXN0Ci0gbG9jayBleGNsdXNpdmVseSB0aGUgbHYg
+KGJlY2F1c2UgaXQgaXMgYWN0dWFsbHkgYSBjbHVzdGVyIG9mIHR3byByaCBlbCA2LjEpCm9uIG9u
+ZSBub2RlOgojIGx2Y2hhbmdlIC1hbiAvZGV2L1ZHX1ZJUlQwMS96ZW5zcnZfMDAyCm9uIHRoZSBv
+dGhlciBvbmU6CiMgbHZjaGFuZ2UgLWFleSAvZGV2L1ZHX1ZJUlQwMS96ZW5zcnZfMDAyCgotIGNy
+ZWF0ZSBzbmFwc2hvdAojIGx2Y3JlYXRlIC0tc2l6ZSA1RyAtLXNuYXBzaG90IC0tbmFtZSB6ZW5z
+cnZfMDAyX3NuYXAgL2Rldi9WR19WSVJUMDEvemVuc3J2XzAwMgrCoExvZ2ljYWwgdm9sdW1lICJ6
+ZW5zcnZfMDAyX3NuYXAiIGNyZWF0ZWQKCi0gcG93ZXIgb24gdm0gZ29pbmcgYWhlYWQgZG9pbmcg
+c29tZSBpbnRydXNpdmUgdGVzdHMKTm90ZSB0aGF0IEkgbWFpbnRhaW5lZCB0aGUgb3JpZ2luYWwg
+TFYgYXMgdGhlIGRpc2sgZm9yIHRoZSBWTQoKLSBBdCB0aGUgZW5kIG9mIG15IHdvcmsgdGhlIHNp
+dHVhdGlvbiBJIGhhdmUgY2hhbmdlZCBhYm91dCAxLjdHYiBvZiBteQpvcmlnaW5hbCBkaXNrOgoj
+IGx2cyAvZGV2L1ZHX1ZJUlQwMS96ZW5zcnZfMDAyKgrCoExWIMKgIMKgIMKgIMKgIMKgIMKgIMKg
+VkcgwqAgwqAgwqAgwqBBdHRyIMKgIExTaXplIMKgT3JpZ2luIMKgIMKgIFNuYXAlIMKgTW92ZSBM
+b2cKQ29weSUgwqBDb252ZXJ0CsKgemVuc3J2XzAwMiDCoCDCoCDCoFZHX1ZJUlQwMSBvd2ktYW8g
+MTAuMDBnCsKgemVuc3J2XzAwMl9zbmFwIFZHX1ZJUlQwMSBzd2ktYS0gwqA1LjAwZyB6ZW5zcnZf
+MDAyIMKgMzQuNzcKCi0gTm93IEknbSBjb25maWRlbnQgd2l0aCB0aGUgY2hhbmdlcy4uCklzIGl0
+IG9rIHRvIHNpbXBseSByZW1vdmUgdGhlIHNuYXBzaG90PwoKLSBXaGF0IGlmIEknbSBub3QgY29u
+ZmlkZW50IHdpdGggdGhlIGNoYW5nZXMgYW5kIHdvdWxkIGxpa2UgdG8gcmV2ZXJ0CnRvIHRoZSBv
+cmlnaW5hbCBzdGF0ZSA/CldpbGwgaXQgZG8gdGhlIGNvbW1hbmQKbHZjb252ZXJ0IC0tbWVyZ2Ug
+L2Rldi9WR19WSVJUMDEvemVuc3J2XzAwMl9zbmFwCgpPciBkaWQgSSBtYWtlIGl0IHRvdGFsbHkg
+d3JvbmcgYW5kIGhhZCB0byB3b3JrIHdpdGggdGhlIHNuYXBzaG90IGFuZApub3Qgd2l0aCB0aGUg
+b3JpZ2luYWwgTFY/Pz8/CktlZXAgb24gcmVhZGluZyBkb2NzLCBib3RoIHJoZWwgYW5kIGdlbmVy
+YWwgYnV0IEknbSBzb3J0IG9mIGNvbmZ1c2VkLi4uLgpQcm9iYWJseSBzb21lb25lIG9uIHRoaXMg
+bGlzdCBhbHJlYWR5IHdlbnQgdGhyb3VnaCB0aGlzIHdheS4uLgoKQW5kIGNvdWxkIEkgaGF2ZSBi
+ZWVuIHdvcmtpbmcgd2l0aCBib3RoIHRoZSBMVnMgYXQgdGhlIHNhbmUgdGltZSAoZm9yCmV4YW1w
+bGUgY3JlYXRpbmcgYSBuZXcgdm0gYmFzZSBvbiB0aGUgc25hcHNob3QgbHYpIGFuZCB3aGF0IHdv
+dWxkIGJlCnRoZSBwb3NzaWJpbGUgc2NlbmFyaW9zIGluIHRoYXQgY2FzZT8KCkdpYW5sdWNhCgot
+LQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5y
+ZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
