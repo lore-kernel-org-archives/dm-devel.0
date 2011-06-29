@@ -1,11 +1,15 @@
-From: Jason Price <japrice@gmail.com>
-Subject: dm-multipath fails when one path is taken offline.
-Date: Wed, 29 Jun 2011 11:55:04 -0400
-Message-ID: <BANLkTinvO+3RTa48ND+EVTWq_g+dxLBW-A@mail.gmail.com>
+From: "Stamper, Brian P. (ARC-D)[Stinger Ghaffarian Technologies Inc. (SGT
+	Inc.)]" <brian.p.stamper@nasa.gov>
+Subject: Re: Fedora 15 dm-linear device lookup failed
+Date: Wed, 29 Jun 2011 14:47:25 -0500
+Message-ID: <CA30CF5D.11CAD%brian.p.stamper@nasa.gov>
+References: <CA303451.11C28%brian.p.stamper@nasa.gov>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5743126028789904793=="
+Content-Type: multipart/mixed; boundary="===============3431392326691361272=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CA303451.11C28%brian.p.stamper@nasa.gov>
+Content-Language: en
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,188 +19,221 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============5743126028789904793==
-Content-Type: multipart/alternative; boundary=00504502bf4fcdcdc904a6dbced6
+--===============3431392326691361272==
+Content-Language: en
+Content-Type: multipart/alternative;
+	boundary="_000_CA30CF5D11CADbrianpstampernasagov_"
 
---00504502bf4fcdcdc904a6dbced6
-Content-Type: text/plain; charset=ISO-8859-1
-
-I seem to have multipath setup correctly:
-
-# multipath -ll
-vrp (360060e8010053b90052fb06900000190) dm-8 HITACHI,DF600F
-size=70G features='1 queue_if_no_path' hwhandler='0' wp=rw
-|-+- policy='round-robin 0' prio=1 status=enabled
-| `- 6:0:0:0 sdc 8:32 active ready running
-`-+- policy='round-robin 0' prio=0 status=enabled
- `- 5:0:0:0 sdb 8:16 active ready running
-
-When I fail the /dev/sdb path, things work fine.  I can fail and restore the
-path all day.  When I fail the /dev/sdc path, the kernel marks the
-filesystem as read-only.
-
-Background:
-Running v0.4.9 of device-mapper-multipath
-Hitachi AMS2500 array, using ports 0F and 1F
-Brocade 5300 switches, split into two fabrics.  (fabric A, port 30,
-fabric B port 30)
-Host has a qlogic 2462 card with two ports in use.
-device-mapper names the devices, LVM2 PV created from that, made into a VG,
-and then an LV (see below)
-Failures produced by disabling the fabric port at the switch level (or
-physically disconnecting the fiber).
-
-Current multipath.conf:
-
-blacklist {
-       devnode "^sda$"
-}
-
-defaults {
-               checker_timeout         5
-               polling_interval        5
-}
-
-multipaths {
-       multipath {
-               wwid 360060e8010053b90052fb06900000190
-               alias                   vrp
-#               path_selector           "round-robin 0"
-       }
-}
-
-results of 'multipath -ll'
-
-# multipath -ll
-vrp (360060e8010053b90052fb06900000190) dm-8 HITACHI,DF600F
-size=70G features='1 queue_if_no_path' hwhandler='0' wp=rw
-|-+- policy='round-robin 0' prio=1 status=enabled
-| `- 6:0:0:0 sdc 8:32 active ready running
-`-+- policy='round-robin 0' prio=0 status=enabled
- `- 5:0:0:0 sdb 8:16 active ready running
-
-I've also worked with several revisions of the multipath.conf file.  If I
-remember correctly, with some device stanza revisions, I've had multipath
--ll
-returning this result instead:
-
-# multipath -ll
-vrp (360060e8010053b90052fb06900000190) dm-8 HITACHI,DF600F
-size=70G features='0' hwhandler='0' wp=rw
-`-+- policy='round-robin 0' prio=1 status=active
-|- 6:0:0:0 sdc 8:32 active ready running
-`- 5:0:0:0 sdb 8:16 active ready running
-
-However, both are affected by the same problem.
-
-Excerpt from /etc/fstab:
-LABEL=vrp-db            /vrp-db                 ext3    defaults        0 2
-
-relevant line from pvscan:
- PV /dev/mpath/vrp   VG vrpdg     lvm2 [70.00 GB / 0    free]
-
-relevant line from vgscan:
- Found volume group "vrpdg" using metadata type lvm2
-
-While I'd prefer an 'active-active' setup, I'd accept an active/passive
-setup, provided it failed over correctly... preferably with a fast failback.
-
-I'm more than happy to provide any other information.
-
---Jason
-
---00504502bf4fcdcdc904a6dbced6
-Content-Type: text/html; charset=ISO-8859-1
+--_000_CA30CF5D11CADbrianpstampernasagov_
+Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 
-<span class=3D"Apple-style-span" style=3D"border-collapse: collapse; font-f=
-amily: arial, sans-serif; font-size: 13px; "><div><span class=3D"Apple-styl=
-e-span" style=3D"border-collapse: collapse; font-family: arial, sans-serif;=
- font-size: 13px; ">I seem to have multipath setup correctly:</span></div>
-<div><span class=3D"Apple-style-span" style=3D"border-collapse: collapse; f=
-ont-family: arial, sans-serif; font-size: 13px; "><br></span></div></span><=
-span class=3D"Apple-style-span" style=3D"border-collapse: collapse; font-fa=
-mily: arial, sans-serif; font-size: 13px; "># multipath -ll<br>
-vrp (360060e8010053b90052fb06900000190) dm-8 HITACHI,DF600F<br>size=3D70G f=
-eatures=3D&#39;1 queue_if_no_path&#39; hwhandler=3D&#39;0&#39; wp=3Drw<br>|=
--+- policy=3D&#39;round-robin 0&#39; prio=3D1 status=3Denabled<br>| `- 6:0:=
-0:0 sdc 8:32 active ready running<br>
-`-+- policy=3D&#39;round-robin 0&#39; prio=3D0 status=3Denabled<br>=A0`- 5:=
-0:0:0 sdb 8:16 active ready running<br></span><span class=3D"Apple-style-sp=
-an" style=3D"border-collapse: collapse; font-family: arial, sans-serif; fon=
-t-size: 13px; "><div>
-<span class=3D"Apple-style-span" style=3D"border-collapse: collapse; font-f=
-amily: arial, sans-serif; font-size: 13px; "><br></span></div><div>When I f=
-ail the /dev/sdb path, things work fine. =A0I can fail and restore the path=
- all day. =A0When I fail the /dev/sdc path, the kernel marks the filesystem=
- as read-only.</div>
-<div><br></div>Background:<br>Running v0.4.9 of device-mapper-multipath<br>=
-Hitachi AMS2500 array, using ports 0F and 1F<br>Brocade 5300 switches, spli=
-t into two fabrics. =A0(fabric A, port 30,<br>fabric B port 30)<br></span><=
-span class=3D"Apple-style-span" style=3D"border-collapse: collapse; font-fa=
-mily: arial, sans-serif; font-size: 13px; ">Host has a qlogic 2462 card wit=
-h two por</span><span class=3D"Apple-style-span" style=3D"border-collapse: =
-collapse; font-family: arial, sans-serif; font-size: 13px; ">ts in use.</sp=
-an><div>
-<font class=3D"Apple-style-span" face=3D"arial, sans-serif"><span class=3D"=
-Apple-style-span" style=3D"border-collapse: collapse;">device-mapper names =
-the devices, LVM2 PV created from that, made into a VG, and then an LV (see=
- below)<br>
-</span></font><div><span class=3D"Apple-style-span" style=3D"border-collaps=
-e: collapse; font-family: arial, sans-serif; font-size: 13px; ">Failures pr=
-oduced by disabling the fabric port at the switch level (or physically disc=
-onnecting the fiber).<br>
-<br>Current multipath.conf:<br><br>blacklist {<br>=A0 =A0 =A0 =A0devnode &q=
-uot;^sda$&quot;<br>}<br><br>defaults {<br>=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0ch=
-ecker_timeout =A0 =A0 =A0 =A0 5<br>=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0polling_i=
-nterval =A0 =A0 =A0 =A05<br>}<br><br>multipaths {<br>
-=A0 =A0 =A0 =A0multipath {<br>=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0wwid 360060e80=
-10053b90052fb06900000190<br>=A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0alias =A0 =A0 =
-=A0 =A0 =A0 =A0 =A0 =A0 =A0 vrp<br># =A0 =A0 =A0 =A0 =A0 =A0 =A0 path_selec=
-tor =A0 =A0 =A0 =A0 =A0 &quot;round-robin 0&quot;<br>=A0 =A0 =A0 =A0}<br>}<=
-br><br>results of &#39;multipath -ll&#39;<br>
-<br># multipath -ll<br>vrp (360060e8010053b90052fb06900000190) dm-8 HITACHI=
-,DF600F<br>size=3D70G features=3D&#39;1 queue_if_no_path&#39; hwhandler=3D&=
-#39;0&#39; wp=3Drw<br>|-+- policy=3D&#39;round-robin 0&#39; prio=3D1 status=
-=3Denabled<br>
-| `- 6:0:0:0 sdc 8:32 active ready running<br>`-+- policy=3D&#39;round-robi=
-n 0&#39; prio=3D0 status=3Denabled<br>=A0`- 5:0:0:0 sdb 8:16 active ready r=
-unning<br><br>I&#39;ve also worked with several revisions of the multipath.=
-conf file. =A0If I<br>
-remember correctly, with some device stanza revisions, I&#39;ve had multipa=
-th -ll<br>returning this result instead:<br><br># multipath -ll<br>vrp (360=
-060e8010053b90052fb06900000190) dm-8 HITACHI,DF600F<br>size=3D70G features=
-=3D&#39;0&#39; hwhandler=3D&#39;0&#39; wp=3Drw<br>
-`-+- policy=3D&#39;round-robin 0&#39; prio=3D1 status=3Dactive<br>|- 6:0:0:=
-0 sdc 8:32 active ready running<br>`- 5:0:0:0 sdb 8:16 active ready running=
-<br><br>However, both are affected by the same problem.<br><br>Excerpt from=
- /etc/fstab:<br>
-LABEL=3Dvrp-db =A0 =A0 =A0 =A0 =A0 =A0/vrp-db =A0 =A0 =A0 =A0 =A0 =A0 =A0 =
-=A0 ext3 =A0 =A0defaults =A0 =A0 =A0 =A00 2<br><br>relevant line from pvsca=
-n:<br>=A0PV /dev/mpath/vrp =A0 VG vrpdg =A0 =A0 lvm2 [70.00 GB / 0 =A0 =A0f=
-ree]<br><br>relevant line from vgscan:<br>=A0Found volume group &quot;vrpdg=
-&quot; using metadata type lvm2<br>
-<br>While I&#39;d prefer an &#39;active-active&#39; setup, I&#39;d accept a=
-n active/passive<br>setup, provided it failed over correctly... preferably =
-with a fast failback.<br><br>I&#39;m more than happy to provide any other i=
-nformation.<br>
-<br>--<span class=3D"il" style=3D"background-image: initial; background-att=
-achment: initial; background-origin: initial; background-clip: initial; bac=
-kground-color: rgb(255, 255, 204); ">Jason</span></span><div><div><div></di=
-v>
-</div></div></div></div>
 
---00504502bf4fcdcdc904a6dbced6--
+I was able to boot this system by taking an initramfs from another Fedora 1=
+5 test system and putting it in /boot and referencing it in grub.conf.  How=
+ever, I need to find out why an initramfs I build on the system is unable t=
+o boot.
+
+When I'm in dracut, I was able to do some checking.  Using the lvm commands=
+, I was able to activate and deactivate the vg, display the lvs, but not us=
+e them.  I would get "device not found", and in /dev/mapper, the lvm device=
+s were not there.  There were other lvm devices there, but not from my prim=
+ary system lvm.  The only thing that stands out about it is that it is ext4=
+, not ext3.
+
+Comparing the decompiled initrds, there's no modules that stand out.  Sas.o=
+ut is a listing of the WORKING initrd, tfs.out is the NOT WORKING initrd.
+
+[root@testfs ramdisks]# diff sas.out tfs.out
+718d717
+< ./lib/firmware/ql2500_fw.bin
+1248,1249d1246
+< ./etc/ld.so.conf.d/openmotif-64.conf
+< ./etc/ld.so.conf.d/kernel-2.6.38.7-30.fc15.x86_64.conf
+1252c1249
+< ./etc/ld.so.conf.d/kernel-2.6.34.8-68.fc13.x86_64.conf
+---
+> ./etc/ld.so.conf.d/qt-x86_64.conf
+1262d1258
+< ./etc/modprobe.d/openfwwf.conf
+1278a1275
+> ./etc/udev/rules.d/40-multipath.rules
+1317a1315
+> ./lib64/libcryptsetup.so.1.2.0
+1322a1321
+> ./lib64/libcap.so
+1407d1405
+< ./lib64/libcryptsetup.so.1.1.0
+1419a1418
+> ./lib64/libnss_files-2.12.2.so
+1480a1480
+> ./usr/bin/checkisomd5
+1491d1490
+< ./usr/lib64/libnss_files.so
+1517a1517
+> ./usr/share/plymouth/themes/default.plymouth
+
+Nothing there looks relevant.  Libcryptsetup needs updating on the test sys=
+tem I pulled the initrd from.  The q-logic firmware is irrelevant.  There a=
+re a couple of older kernels on the test system.  Libcap.so is a dependency=
+ of legato backup software.  Libnss_files should have nothing to do with ac=
+cessing an LVM.
+
+So I'm stuck.  My system is up, but only if I build an initrd on another sy=
+stem and copy it over, meaning next time I update the kernel it will not bo=
+ot.  Nothing's jumping out at me as obviously missing modules from the brok=
+en initrd.  Where else can I look?
+
+-Brian
 
 
---===============5743126028789904793==
+
+
+On 6/29/11 1:45 AM, "Brian Stamper" <brian.p.stamper@nasa.gov> wrote:
+
+I just upgraded a Fedora system from 13 to 15, and now I can't get it to bo=
+ot.  I'm getting dumped to a dracut shell and getting the error dm-linear d=
+evice lookup failed.  In the dracut output with debug on, I see dracut scan=
+ my drives, and I see it find my 3 LVs, but it then tries to do something w=
+ith them, I get the error, and it then fails out with root device not found=
+ and drops me into dracut.
+
+Here's the odd thing, booting off the rescue dvd my volumes are fine.  The =
+LVM can be mounted no problem.
+
+This makes me think that there's something missing from the kernel or initr=
+d.  I can't really figure out what though.  I've gone through the output of=
+ lsmod when running from the rescue dvd.  I've even build a few ramdisks in=
+cluding all the modules that I thought might be related (dm, lvm, mdraid, d=
+mraid, multipath).  I tried building them with mkinitrd -with=3Dmodule, and=
+ I tried again with dracut -add=3Dmodules.  No change in results.
+
+I'm not sure where to go from here.  I feel like the system can be rescued,=
+ but I don't know how to work backward through dracut to find out why it's =
+unable to find my root volume.  Any help would be appreciated.  Cross-posti=
+ng to lvm.
+
+Thanks,
+-Brian
+
+--_000_CA30CF5D11CADbrianpstampernasagov_
+Content-Type: text/html; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<HTML>
+<HEAD>
+<TITLE>Re: [dm-devel] Fedora 15 dm-linear device lookup failed</TITLE>
+</HEAD>
+<BODY>
+<FONT FACE=3D"Calibri, Verdana, Helvetica, Arial"><SPAN STYLE=3D'font-size:=
+11pt'><BR>
+I was able to boot this system by taking an initramfs from another Fedora 1=
+5 test system and putting it in /boot and referencing it in grub.conf. &nbs=
+p;However, I need to find out why an initramfs I build on the system is una=
+ble to boot.<BR>
+<BR>
+When I&#8217;m in dracut, I was able to do some checking. &nbsp;Using the l=
+vm commands, I was able to activate and deactivate the vg, display the lvs,=
+ but not use them. &nbsp;I would get &#8220;device not found&#8221;, and in=
+ /dev/mapper, the lvm devices were not there. &nbsp;There were other lvm de=
+vices there, but not from my primary system lvm. &nbsp;The only thing that =
+stands out about it is that it is ext4, not ext3.<BR>
+<BR>
+Comparing the decompiled initrds, there&#8217;s no modules that stand out. =
+&nbsp;Sas.out is a listing of the WORKING initrd, tfs.out is the NOT WORKIN=
+G initrd.<BR>
+<BR>
+[root@testfs ramdisks]# diff sas.out tfs.out <BR>
+718d717<BR>
+&lt; ./lib/firmware/ql2500_fw.bin<BR>
+1248,1249d1246<BR>
+&lt; ./etc/ld.so.conf.d/openmotif-64.conf<BR>
+&lt; ./etc/ld.so.conf.d/kernel-2.6.38.7-30.fc15.x86_64.conf<BR>
+1252c1249<BR>
+&lt; ./etc/ld.so.conf.d/kernel-2.6.34.8-68.fc13.x86_64.conf<BR>
+---<BR>
+&gt; ./etc/ld.so.conf.d/qt-x86_64.conf<BR>
+1262d1258<BR>
+&lt; ./etc/modprobe.d/openfwwf.conf<BR>
+1278a1275<BR>
+&gt; ./etc/udev/rules.d/40-multipath.rules<BR>
+1317a1315<BR>
+&gt; ./lib64/libcryptsetup.so.1.2.0<BR>
+1322a1321<BR>
+&gt; ./lib64/libcap.so<BR>
+1407d1405<BR>
+&lt; ./lib64/libcryptsetup.so.1.1.0<BR>
+1419a1418<BR>
+&gt; ./lib64/libnss_files-2.12.2.so<BR>
+1480a1480<BR>
+&gt; ./usr/bin/checkisomd5<BR>
+1491d1490<BR>
+&lt; ./usr/lib64/libnss_files.so<BR>
+1517a1517<BR>
+&gt; ./usr/share/plymouth/themes/default.plymouth<BR>
+<BR>
+Nothing there looks relevant. &nbsp;Libcryptsetup needs updating on the tes=
+t system I pulled the initrd from. &nbsp;The q-logic firmware is irrelevant=
+. &nbsp;There are a couple of older kernels on the test system. &nbsp;Libca=
+p.so is a dependency of legato backup software. &nbsp;Libnss_files should h=
+ave nothing to do with accessing an LVM.<BR>
+<BR>
+So I&#8217;m stuck. &nbsp;My system is up, but only if I build an initrd on=
+ another system and copy it over, meaning next time I update the kernel it =
+will not boot. &nbsp;Nothing&#8217;s jumping out at me as obviously missing=
+ modules from the broken initrd. &nbsp;Where else can I look?<BR>
+<BR>
+-Brian<BR>
+<BR>
+<BR>
+<BR>
+<BR>
+On 6/29/11 1:45 AM, &quot;Brian Stamper&quot; &lt;<a href=3D"brian.p.stampe=
+r@nasa.gov">brian.p.stamper@nasa.gov</a>&gt; wrote:<BR>
+<BR>
+</SPAN></FONT><BLOCKQUOTE><FONT FACE=3D"Calibri, Verdana, Helvetica, Arial"=
+><SPAN STYLE=3D'font-size:11pt'>I just upgraded a Fedora system from 13 to =
+15, and now I can&#8217;t get it to boot. &nbsp;I&#8217;m getting dumped to=
+ a dracut shell and getting the error dm-linear device lookup failed. &nbsp=
+;In the dracut output with debug on, I see dracut scan my drives, and I see=
+ it find my 3 LVs, but it then tries to do something with them, I get the e=
+rror, and it then fails out with root device not found and drops me into dr=
+acut.<BR>
+<BR>
+Here&#8217;s the odd thing, booting off the rescue dvd my volumes are fine.=
+ &nbsp;The LVM can be mounted no problem.<BR>
+<BR>
+This makes me think that there&#8217;s something missing from the kernel or=
+ initrd. &nbsp;I can&#8217;t really figure out what though. &nbsp;I&#8217;v=
+e gone through the output of lsmod when running from the rescue dvd. &nbsp;=
+I&#8217;ve even build a few ramdisks including all the modules that I thoug=
+ht might be related (dm, lvm, mdraid, dmraid, multipath). &nbsp;I tried bui=
+lding them with mkinitrd &#8212;with=3Dmodule, and I tried again with dracu=
+t &#8212;add=3Dmodules. &nbsp;No change in results.<BR>
+<BR>
+I&#8217;m not sure where to go from here. &nbsp;I feel like the system can =
+be rescued, but I don&#8217;t know how to work backward through dracut to f=
+ind out why it&#8217;s unable to find my root volume. &nbsp;Any help would =
+be appreciated. &nbsp;Cross-posting to lvm.<BR>
+<BR>
+Thanks,<BR>
+-Brian<BR>
+</SPAN></FONT></BLOCKQUOTE>
+</BODY>
+</HTML>
+
+
+--_000_CA30CF5D11CADbrianpstampernasagov_--
+
+
+--===============3431392326691361272==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============5743126028789904793==--
+--===============3431392326691361272==--
