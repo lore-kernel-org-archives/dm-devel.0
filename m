@@ -1,7 +1,8 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/3] dm-ioctl: introduce __get_dev_cell
-Date: Fri, 1 Jul 2011 15:05:21 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1107011504580.32620@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 1/3] dm-ioctl: fill parameters in
+ __find_device_hash_cell instead of find_device
+Date: Fri, 1 Jul 2011 15:04:57 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1107011503570.32620@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,85 +20,116 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-dm-ioctl: introduce __get_dev_cell
+Hi
 
-Move logic to find device based on major/minor number to a separate
-function __get_dev_cell (similar to __get_uuid_cell and __get_name_cell).
-As a result,  function __find_device_hash_cell is more straightforward.
+Here I'm sending the patches for ioctl parameter cleanup. I tested them 
+with lvm testsuite.
+
+Mikulas
+
+---
+
+dm-ioctl: fill parameters in __find_device_hash_cell instead of find_device
+
+Move parameter filling from find_device to __find_device_hash_cell.
+
+This patch causes that ioctls using __find_device_hash_cell
+(DM_DEV_REMOVE_CMD, DM_DEV_SUSPEND_CMD - resume, DM_TABLE_CLEAR_CMD)
+return device parameters.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-ioctl.c |   40 ++++++++++++++++++++++++----------------
- 1 file changed, 24 insertions(+), 16 deletions(-)
+ drivers/md/dm-ioctl.c |   63 ++++++++++++++++++++++++++++----------------------
+ 1 file changed, 36 insertions(+), 27 deletions(-)
 
 Index: linux-2.6.39-fast/drivers/md/dm-ioctl.c
 ===================================================================
---- linux-2.6.39-fast.orig/drivers/md/dm-ioctl.c	2011-06-30 20:31:15.000000000 +0200
-+++ linux-2.6.39-fast/drivers/md/dm-ioctl.c	2011-06-30 20:43:22.000000000 +0200
-@@ -128,6 +128,24 @@ static struct hash_cell *__get_uuid_cell
- 	return NULL;
- }
- 
-+static struct hash_cell *__get_dev_cell(__u64 dev)
-+{
-+	struct mapped_device *md;
-+	struct hash_cell *hc;
-+
-+	md = dm_get_md(huge_decode_dev(dev));
-+	if (!md)
-+		return NULL;
-+
-+	hc = dm_get_mdptr(md);
-+	if (!hc) {
-+		dm_put(md);
-+		return NULL;
-+	}
-+
-+	return hc;
-+}
-+
- /*-----------------------------------------------------------------
-  * Inserting, removing and renaming a device.
-  *---------------------------------------------------------------*/
-@@ -718,34 +736,24 @@ static int dev_create(struct dm_ioctl *p
-  */
+--- linux-2.6.39-fast.orig/drivers/md/dm-ioctl.c	2011-06-30 18:23:38.000000000 +0200
++++ linux-2.6.39-fast/drivers/md/dm-ioctl.c	2011-06-30 18:40:50.000000000 +0200
+@@ -719,24 +719,49 @@ static int dev_create(struct dm_ioctl *p
  static struct hash_cell *__find_device_hash_cell(struct dm_ioctl *param)
  {
--	struct mapped_device *md;
- 	struct hash_cell *hc = NULL;
+ 	struct mapped_device *md;
+-	void *mdptr = NULL;
++	struct hash_cell *hc = NULL;
  
- 	if (*param->uuid) {
- 		hc = __get_uuid_cell(param->uuid);
- 		if (!hc)
- 			return NULL;
--		goto fill_params;
--	}
--
--	if (*param->name) {
-+	} else if (*param->name) {
- 		hc = __get_name_cell(param->name);
- 		if (!hc)
- 			return NULL;
--		goto fill_params;
--	}
--
--	md = dm_get_md(huge_decode_dev(param->dev));
--	if (!md)
--		return NULL;
--
--	hc = dm_get_mdptr(md);
--	if (!hc) {
--		dm_put(md);
-+	} else if (param->dev) {
-+		hc = __get_dev_cell(param->dev);
+-	if (*param->uuid)
+-		return __get_uuid_cell(param->uuid);
++	if (*param->uuid) {
++		hc = __get_uuid_cell(param->uuid);
 +		if (!hc)
 +			return NULL;
-+	} else {
- 		return NULL;
- 	}
++		goto fill_params;
++	}
  
--fill_params:
- 	/*
- 	 * Sneakily write in both the name and the uuid
- 	 * while we have the cell.
+-	if (*param->name)
+-		return __get_name_cell(param->name);
++	if (*param->name) {
++		hc = __get_name_cell(param->name);
++		if (!hc)
++			return NULL;
++		goto fill_params;
++	}
+ 
+ 	md = dm_get_md(huge_decode_dev(param->dev));
+ 	if (!md)
+-		goto out;
++		return NULL;
+ 
+-	mdptr = dm_get_mdptr(md);
+-	if (!mdptr)
++	hc = dm_get_mdptr(md);
++	if (!hc) {
+ 		dm_put(md);
++		return NULL;
++	}
+ 
+-out:
+-	return mdptr;
++fill_params:
++	/*
++	 * Sneakily write in both the name and the uuid
++	 * while we have the cell.
++	 */
++	strlcpy(param->name, hc->name, sizeof(param->name));
++	if (hc->uuid)
++		strlcpy(param->uuid, hc->uuid, sizeof(param->uuid));
++	else
++		param->uuid[0] = '\0';
++
++	if (hc->new_map)
++		param->flags |= DM_INACTIVE_PRESENT_FLAG;
++	else
++		param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
++
++	return hc;
+ }
+ 
+ static struct mapped_device *find_device(struct dm_ioctl *param)
+@@ -746,24 +771,8 @@ static struct mapped_device *find_device
+ 
+ 	down_read(&_hash_lock);
+ 	hc = __find_device_hash_cell(param);
+-	if (hc) {
++	if (hc)
+ 		md = hc->md;
+-
+-		/*
+-		 * Sneakily write in both the name and the uuid
+-		 * while we have the cell.
+-		 */
+-		strlcpy(param->name, hc->name, sizeof(param->name));
+-		if (hc->uuid)
+-			strlcpy(param->uuid, hc->uuid, sizeof(param->uuid));
+-		else
+-			param->uuid[0] = '\0';
+-
+-		if (hc->new_map)
+-			param->flags |= DM_INACTIVE_PRESENT_FLAG;
+-		else
+-			param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
+-	}
+ 	up_read(&_hash_lock);
+ 
+ 	return md;
