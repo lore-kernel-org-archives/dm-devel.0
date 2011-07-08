@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/3] dm persistent data: a library for storing
-	metadata in DM targets
-Date: Fri,  8 Jul 2011 18:19:51 -0400
-Message-ID: <1310163592-29683-3-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 3/3] dm thin: thin provisioning target
+Date: Fri,  8 Jul 2011 18:19:52 -0400
+Message-ID: <1310163592-29683-4-git-send-email-snitzer@redhat.com>
 References: <1310163592-29683-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -25,5587 +24,4020 @@ List-Id: dm-devel.ids
 
 From: Joe Thornber <thornber@redhat.com>
 
-The more sophisticated device mapper targets require complex metadata
-that is managed in kernel.  In late 2010 we were seeing that various
-different targets were rolling their own data strutures, for example:
+Initial EXPERIMENTAL implementation of device-mapper thin provisioning
+with snapshot support.  The 'thin' target is used to create instances of
+the virtual devices that are hosted in the 'thin-pool' target.  The
+thin-pool target provides data sharing among devices.  This sharing is
+made possible via the new persistent-data library.
 
-- Mikulas Patocka's multisnap implementation
-- Heinz Mauelshagen's thin provisioning target
-- Another btree based caching target posted to dm-devel
-- Another multi-snapshot target based on a design of Daniel Phillips
+The main highlight of this implementation, compared to the previous
+implementation of snapshots, is it allows many virtual devices to be
+stored on the same data volume.  Simplifying administration and
+allowing sharing of data between volumes (thus reducing disk usage).
 
-Maintaining these data structures takes a lot of work, so if possible
-we'd like to reduce the number.
+Another big feature is support for arbitrary depth of recursive
+snapshots (snapshots of snapshots of snapshots ...).  The previous
+implementation of snapshots did this by chaining together lookup
+tables, and so performance was O(depth).  This new implementation uses
+a single data structure so we won't get this degradation with depth
+(fragmentation may be an issue however in some scenarios).
 
-The persistent-data library is an attempt to provide a re-usable
-framework for people who want to store metadata in device mapper
-targets.  It's currently used by the thin-provisioning target and an
-upcoming hierarchical storage target.
+Metadata is stored on a separate device from data, this gives the
+administrator a bit more freedom.  For instance:
 
-Please see: Documentation/device-mapper/persistent-data.txt
+- Improve metadata resilience by storing metadata on a mirrored volume
+  but data on a non-mirrored one.
+
+- Improve performance by storing the metadata on an SSD.
+
+Please see: Documentation/device-mapper/thin-provisioning.txt
 
 Signed-off-by: Joe Thornber <thornber@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- Documentation/device-mapper/persistent-data.txt    |   90 ++
- drivers/md/persistent-data/Kconfig                 |    9 +
- drivers/md/persistent-data/Makefile                |   10 +
- drivers/md/persistent-data/dm-block-manager.c      |  931 ++++++++++++++++++++
- drivers/md/persistent-data/dm-block-manager.h      |  110 +++
- drivers/md/persistent-data/dm-btree-internal.h     |  141 +++
- drivers/md/persistent-data/dm-btree-remove.c       |  540 ++++++++++++
- drivers/md/persistent-data/dm-btree-spine.c        |  192 ++++
- drivers/md/persistent-data/dm-btree.c              |  871 ++++++++++++++++++
- drivers/md/persistent-data/dm-btree.h              |  146 +++
- drivers/md/persistent-data/dm-pd-module.c          |   18 +
- drivers/md/persistent-data/dm-space-map-common.h   |   99 +++
- drivers/md/persistent-data/dm-space-map-disk.c     |  624 +++++++++++++
- drivers/md/persistent-data/dm-space-map-disk.h     |   21 +
- drivers/md/persistent-data/dm-space-map-metadata.c |  878 ++++++++++++++++++
- drivers/md/persistent-data/dm-space-map-metadata.h |   29 +
- drivers/md/persistent-data/dm-space-map.h          |  116 +++
- .../md/persistent-data/dm-transaction-manager.c    |  442 ++++++++++
- .../md/persistent-data/dm-transaction-manager.h    |  139 +++
- 19 files changed, 5406 insertions(+), 0 deletions(-)
- create mode 100644 Documentation/device-mapper/persistent-data.txt
- create mode 100644 drivers/md/persistent-data/Kconfig
- create mode 100644 drivers/md/persistent-data/Makefile
- create mode 100644 drivers/md/persistent-data/dm-block-manager.c
- create mode 100644 drivers/md/persistent-data/dm-block-manager.h
- create mode 100644 drivers/md/persistent-data/dm-btree-internal.h
- create mode 100644 drivers/md/persistent-data/dm-btree-remove.c
- create mode 100644 drivers/md/persistent-data/dm-btree-spine.c
- create mode 100644 drivers/md/persistent-data/dm-btree.c
- create mode 100644 drivers/md/persistent-data/dm-btree.h
- create mode 100644 drivers/md/persistent-data/dm-pd-module.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-common.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-disk.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-disk.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-metadata.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-metadata.h
- create mode 100644 drivers/md/persistent-data/dm-space-map.h
- create mode 100644 drivers/md/persistent-data/dm-transaction-manager.c
- create mode 100644 drivers/md/persistent-data/dm-transaction-manager.h
+ Documentation/device-mapper/thin-provisioning.txt |  248 +++
+ drivers/md/Kconfig                                |    8 +
+ drivers/md/Makefile                               |    3 +
+ drivers/md/dm-thin-metadata.c                     | 1281 ++++++++++++
+ drivers/md/dm-thin-metadata.h                     |  164 ++
+ drivers/md/dm-thin.c                              | 2204 +++++++++++++++++++++
+ 6 files changed, 3908 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/device-mapper/thin-provisioning.txt
+ create mode 100644 drivers/md/dm-thin-metadata.c
+ create mode 100644 drivers/md/dm-thin-metadata.h
+ create mode 100644 drivers/md/dm-thin.c
 
-diff --git a/Documentation/device-mapper/persistent-data.txt b/Documentation/device-mapper/persistent-data.txt
+diff --git a/Documentation/device-mapper/thin-provisioning.txt b/Documentation/device-mapper/thin-provisioning.txt
 new file mode 100644
-index 0000000..399c958
+index 0000000..ad971cf
 --- /dev/null
-+++ b/Documentation/device-mapper/persistent-data.txt
-@@ -0,0 +1,90 @@
++++ b/Documentation/device-mapper/thin-provisioning.txt
+@@ -0,0 +1,248 @@
 +Introduction
 +============
 +
-+The more sophisticated device mapper targets require complex metadata
-+that is managed in kernel.  In late 2010 we were seeing that various
-+different targets were rolling their own data strutures, for example:
++This document descibes a collection of device-mapper targets that
++between them implement thin provisioning and snapshots.
 +
-+- Mikulas Patocka's multisnap implementation
-+- Heinz Mauelshagen's thin provisioning target
-+- Another btree based caching target posted to dm-devel
-+- Another multi-snapshot target based on a design of Daniel Phillips
++The main highlight of this implementation, compared to the previous
++implementation of snapshots, is it allows many virtual devices to be
++stored on the same data volume.  Simplifying administration and
++allowing sharing of data between volumes (thus reducing disk usage).
 +
-+Maintaining these data structures takes a lot of work, so if possible
-+we'd like to reduce the number.
++Another big feature is support for arbitrary depth of recursive
++snapshots (snapshots of snapshots of snapshots ...).  The previous
++implementation of snapshots did this by chaining together lookup
++tables, and so performance was O(depth).  This new implementation uses
++a single data structure so we won't get this degradation with depth
++(fragmentation may be an issue however in some scenarios).
 +
-+The persistent-data library is an attempt to provide a re-usable
-+framework for people who want to store metadata in device mapper
-+targets.  It's currently used by the thin-provisioning target and an
-+upcoming hierarchical storage target.
++Metadata is stored on a separate device from data, this gives the
++administrator a bit more freedom.  For instance:
++
++- Improve metadata resilience by storing metadata on a mirrored volume
++  but data on a non-mirrored one.
++
++- Improve performance by storing the metadata on an SSD.
 +
 +
-+Overview
++Status
++======
++
++These targets are very much in the EXPERIMENTAL state.  Do not use in
++production.
++
++_Do_ experiment with it and give us feedback.  Different use cases
++will have different performance characteristics (for example due to
++fragmentation of the data volume).  If you find this software is not
++performing as expected please mail dm-devel@redhat.com with details and
++we'll try our best to improve things for you.
++
++
++Cookbook
 +========
 +
-+The main documentation is in the header files, which can all be found
-+under drivers/md/persistent-data.  But here is an overview:
++This section describes some quick recipes for using thin provisioning
++using the dmsetup program to control the device-mapper driver
++directly.  End users are advised to use a higher level volume manager
++such as LVM2.
 +
-+The block manager
++
++Pool device
++-----------
++
++The pool device ties together the metadata volume and the data volume.
++It linearly maps to the data volume, and updates the metadata via two
++mechanisms:
++
++- Function calls from the thin targets
++
++- device-mapper 'messages' from userland which control creation of new
++  virtual devices among other things.
++
++
++Setting up a fresh pool device
++------------------------------
++
++Setting up a pool device requires a _valid_ metadata device, and a
++data device.  If you do not have an existing metadata device you can
++make one by zeroing the first 4k to indicate empty metadata.
++
++    dd if=/dev/zero of=$metadata_dev bs=4096 count=1
++
++Reloading a pool table
++----------------------
++
++You may reload a pool's table, indeed this is how the pool is resized
++if it runs out of space.  Its advisable that you reload with a pool
++target that points to the same metadata area.
++
++
++Using an existing pool device
++-----------------------------
++
++    dmsetup create pool --table "0 20971520 thin-pool $metadata_dev $data_dev $data_block_size $low_water_mark"
++
++The $data_block_size gives the smallest unit of disk space that can be
++allocated at a time.  This is expressed in 512 byte sectors.  People
++primarily interested in thin provisioning may want to set this larger
++(e.g., 1024).  People doing lots of snapshotting may want it smaller
++(e.g., 128).  $data_block_size must be the same for the lifetime of
++the metadata device.
++
++The $low_water_mark is expressed in 512 byte sectors, if free space on
++the data device drops below this level then a dm event will be sent to
++userland which should extend the pool device.
++
++
++Thin provisioning
 +-----------------
 +
-+dm-block-manager.[hc]
++i) Creating a new thinly provisioned volume
 +
-+This provides access to the data on disk in fixed sized blocks.  There
-+is a read/write locking interface to prevent concurrent accesses, and
-+keep data that is being used in the cache.
++  To create a new thin provision volume you must send a message to an
++  active pool device.
 +
-+Clients of persistent-data are unlikely to use this directly.
++    dmsetup message /dev/mapper/pool 0 "new-thin 0"
 +
-+The transaction manager
-+-----------------------
++  Here '0' is an identifier for the volume (32bit range).  It's up to
++  the caller to allocate and manage these identifiers.  If there's a
++  collision the message will fail.
 +
-+dm-transaction-manager.[hc]
++ii) Using a thinp volume
 +
-+This restricts access to blocks and enforces copy-on-write semantics.
-+The only way you can get hold of a writable block through the
-+transaction manager is by shadowing an existing block (ie. doing
-+copy-on-write), or allocating a fresh one.  Shadowing is elided within
-+the same transaction, so performance is reasonable.  The commit method
-+ensures that all data is flushed, before your superblock, and then the
-+superblock written.  On power failure your metadata will be as it was
-+when last committed.
++  Thin provisioned volumes are instanced using the 'thin' target.
 +
-+Clients will need to be familiar with tm to use persistent-data.
++    dmsetup create thin --table "0 2097152 thin /dev/mapper/pool 0"
 +
-+The Space Maps
-+--------------
++  The last parameter is the 32bit identifier for the thinp device.
 +
-+dm-space-map.h
-+dm-space-map-metadata.[hc]
-+dm-space-map-disk.[hc]
 +
-+On disk data structures that keep track of reference counts of blocks.
-+Also acts as the allocator of new blocks.  Currently two
-+implementations, a simpler one for managing blocks on a different
-+device (eg. thinly provisioned data blocks), and another for managing
-+the metadata space.  The latter is complicated by the need to store
-+it's own data within the space it's managing.
++Internal snapshots
++------------------
 +
-+Clients do not need to use space maps directly.
++i) Creating an internal snapshot
 +
-+The data structures
-+-------------------
++  Snapshots are created with another message to the pool.
 +
-+dm-btree.[hc]
-+dm-btree-remove.c
-+dm-btree-spine.c
-+dm-btree-internal.h
++  You _must_ suspend the origin device before creating the snapshot.
++  If the origin hasn't been instanced via the 'thin' target then you
++  may proceed without doing anything.
 +
-+Currently there is only one data structure.  A hierarchical btree.
-+There are plans to add more, for example something with an array like
-+interface would see a lot of use.
++    dmsetup suspend /dev/mapper/thin
++    dmsetup message /dev/mapper/pool 0 "new-snap 1 0"
++    dmsetup resume /dev/mapper/thin
 +
-+The btree is 'hierarchical' in that you can define it to be composed
-+of nested btrees, and take multiple keys.  For example the
-+thin-provisioning target uses a btree with two levels of nesting, the
-+first mapping a device id to a mapping tree, which in turn maps a
-+virtual block to a physical block.
++  Here '1' is an identifier for the volume (32bit range).  '0' is the
++  identifier for the origin device.
 +
-+Values stored in the btrees can have arbitrary size.  Keys are always
-+64bits (though nesting allows you to use multiple keys).
-diff --git a/drivers/md/persistent-data/Kconfig b/drivers/md/persistent-data/Kconfig
-new file mode 100644
-index 0000000..ee81085
---- /dev/null
-+++ b/drivers/md/persistent-data/Kconfig
-@@ -0,0 +1,9 @@
-+config DM_PERSISTENT_DATA
-+       tristate "Persistent data library"
-+       depends on BLK_DEV_DM && EXPERIMENTAL
-+       select LIBCRC32C
++ii) Using an internal snapshot
++
++  Once created, the user doesn't have to worry about any connection
++  between the origin and the snapshot.  Indeed the snapshot is no
++  different from any other thinly provisioned device, and can be
++  snapshotted itself via the same method.  It's perfectly legal to
++  have only one of them active, and there's no ordering requirement on
++  activating/removing them both.
++
++  Activate exactly the same way as any other thin provisioned volume.
++
++    dmsetup create snap --table "0 2097152 thin /dev/mapper/pool 1"
++
++Teardown
++--------
++
++Always teardown the pool last.
++
++    dmsetup remove thin
++    dmsetup remove snap
++    dmsetup remove pool
++
++
++Reference
++=========
++
++'thin-pool' target
++------------------
++
++i) Constructor
++
++ thin-pool <metadata dev>
++           <data dev>
++           <data block size in sectors>
++           <low water mark (sectors)>
++	   [number of feature args> [<arg>]*]
++
++ optional feature args:
++   - 'skip_block_zeroing': skips the zeroing of newly provisioned blocks
++
++ii) Status
++
++   <transaction id> <data free space in sectors> <metadata free space in sectors> <held metadata root>
++
++  where,
++
++    - transaction id: A 64bit number used by userland to help
++      synchronise with metadata from volume managers.
++
++    - held metadata root: The location, in sectors, of the metadata
++      root that has been 'held' for userland read access.  '-'
++      indicates there is no held root.
++
++    - data free space in sectors: If this drops below the pool's low
++      water mark a dm event will be sent to userland.  This event is
++      edge triggered, it will occur only once, so volume manager
++      writers should register for the event, then double check the
++      status of the target.
++
++iii) Messages
++
++ new-thin <dev id>
++
++   Create a new thin provisioned device.  <dev id> is an arbitrary
++   unique 32 bit number, chosen by the caller.
++
++ new-snap <dev id> <origin id>
++
++   Create a new snapshot of another thin device.  <origin id> is the
++   dev id of the thin dev that you wish to snap.
++
++ del      <dev id>
++
++   Deletes a thin device.  Irreversible.
++
++ trim     <dev id> <new size in sectors>
++
++   Delete mappings from the back of a thin device.  Irreversible.  You
++   might want to do this if you're shrinking the size of your thin
++   device.
++
++ trans-id <current id> <new id>
++
++   Userland volume managers, such as LVM, need a way to synchonise
++   their external metadata with the internal metadata of the pool
++   target.  The minimal facilities that pool provides is offering to
++   store a 64bit transaction id (which is available on the pool
++   targets status line).  To avoid races you must provide what you
++   think the current transaction id is when you change it (compare and
++   swap).
++
++'thin' target
++-------------
++
++ thin <pool dev> <dev id>
++
++ pool dev: the path to the pool (eg, /dev/mapper/my_pool)
++ dev id: the internal device identifier (32bit value)
++
++ The pool doesn't store any size against the thin devices.  If you
++ load a thin target that is smaller than you've been using previously,
++ then you wont be able to access mapped blocks beyond the end.  If
++ load a target that is bigger than previously used, then extra blocks
++ will be provisioned as and when needed.
++
++ If you wish to shrink your thin device and potentially regain some
++ data blocks then use the 'trim' message to the pool.
++
++i) Status
++
++ <nr mapped sectors> <highest mapped sector>
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 8420129..02518b3 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -208,6 +208,8 @@ config DM_DEBUG
+ 
+ 	  If unsure, say N.
+ 
++source "drivers/md/persistent-data/Kconfig"
++
+ config DM_CRYPT
+ 	tristate "Crypt target support"
+ 	depends on BLK_DEV_DM
+@@ -233,6 +235,12 @@ config DM_SNAPSHOT
+        ---help---
+          Allow volume managers to take writable snapshots of a device.
+ 
++config DM_THIN_PROVISIONING
++       tristate "Thin provisioning target (EXPERIMENTAL)"
++       depends on BLK_DEV_DM && DM_PERSISTENT_DATA && EXPERIMENTAL
 +       ---help---
-+         Library of code for metadata support for dm targets.  The
-+         term persistent isn't referring to the fact that the data is
-+         written to disk (which of course it is).  But that these data
-+         structures are immutable.
-diff --git a/drivers/md/persistent-data/Makefile b/drivers/md/persistent-data/Makefile
-new file mode 100644
-index 0000000..8b8455d
---- /dev/null
-+++ b/drivers/md/persistent-data/Makefile
-@@ -0,0 +1,10 @@
-+obj-$(CONFIG_DM_PERSISTENT_DATA) += dm-persistent-data.o
-+dm-persistent-data-objs := \
-+	dm-block-manager.o \
-+	dm-pd-module.o \
-+	dm-space-map-disk.o \
-+	dm-space-map-metadata.o \
-+	dm-transaction-manager.o \
-+	dm-btree.o \
-+	dm-btree-remove.o \
-+	dm-btree-spine.o
-diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
-new file mode 100644
-index 0000000..5fb696d
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-block-manager.c
-@@ -0,0 +1,931 @@
-+#include "dm-block-manager.h"
++         Provides thin provisioning and snapshots that share a data store.
 +
-+#include <linux/dm-io.h>
-+#include <linux/slab.h>
-+#include <linux/device-mapper.h> /* For SECTOR_SHIFT and DMERR */
+ config DM_MIRROR
+        tristate "Mirror target"
+        depends on BLK_DEV_DM
+diff --git a/drivers/md/Makefile b/drivers/md/Makefile
+index 448838b..8e7aac7 100644
+--- a/drivers/md/Makefile
++++ b/drivers/md/Makefile
+@@ -10,6 +10,7 @@ dm-snapshot-y	+= dm-snap.o dm-exception-store.o dm-snap-transient.o \
+ dm-mirror-y	+= dm-raid1.o
+ dm-log-userspace-y \
+ 		+= dm-log-userspace-base.o dm-log-userspace-transfer.o
++dm-thinp-y	+= dm-thin.o dm-thin-metadata.o
+ md-mod-y	+= md.o bitmap.o
+ raid456-y	+= raid5.o
+ 
+@@ -34,10 +35,12 @@ obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
+ obj-$(CONFIG_DM_MULTIPATH_QL)	+= dm-queue-length.o
+ obj-$(CONFIG_DM_MULTIPATH_ST)	+= dm-service-time.o
+ obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
++obj-$(CONFIG_DM_PERSISTENT_DATA)	+= persistent-data/
+ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o dm-region-hash.o
+ obj-$(CONFIG_DM_LOG_USERSPACE)	+= dm-log-userspace.o
+ obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
+ obj-$(CONFIG_DM_RAID)	+= dm-raid.o
++obj-$(CONFIG_DM_THIN_PROVISIONING)	+= dm-thinp.o
+ 
+ ifeq ($(CONFIG_DM_UEVENT),y)
+ dm-mod-objs			+= dm-uevent.o
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+new file mode 100644
+index 0000000..bf4d937
+--- /dev/null
++++ b/drivers/md/dm-thin-metadata.c
+@@ -0,0 +1,1281 @@
++/*
++ * Copyright (C) 2011 Red Hat, Inc. All rights reserved.
++ *
++ * This file is released under the GPL.
++ */
 +
-+#define DM_MSG_PREFIX "block manager"
++#include "dm-thin-metadata.h"
++#include "persistent-data/dm-transaction-manager.h"
++#include "persistent-data/dm-space-map-disk.h"
++
++#include <linux/list.h>
++#include <linux/device-mapper.h>
++#include <linux/workqueue.h>
 +
 +/*----------------------------------------------------------------*/
 +
-+#define SECTOR_SIZE 512
++#define DM_MSG_PREFIX   "thin-metadata"
 +
-+enum dm_block_state {
-+	BS_EMPTY,
-+	BS_CLEAN,
-+	BS_READING,
-+	BS_WRITING,
-+	BS_READ_LOCKED,
-+	BS_READ_LOCKED_DIRTY,	/* block was dirty before it was read locked */
-+	BS_WRITE_LOCKED,
-+	BS_DIRTY,
-+	BS_ERROR
-+};
++#define THIN_SUPERBLOCK_MAGIC 27022010
++#define THIN_SUPERBLOCK_LOCATION 0
++#define THIN_VERSION 1
++#define THIN_METADATA_BLOCK_SIZE 4096
++#define THIN_METADATA_CACHE_SIZE 64
++#define SECTOR_TO_BLOCK_SHIFT 3
 +
-+struct dm_block {
-+	struct list_head list;
-+	struct hlist_node hlist;
++/* This should be plenty */
++#define SPACE_MAP_ROOT_SIZE 128
 +
-+	dm_block_t where;
-+	struct dm_block_validator *validator;
-+	void *data_actual;
-+	void *data;
-+	wait_queue_head_t io_q;
-+	unsigned read_lock_count;
-+	unsigned write_lock_pending;
-+	enum dm_block_state state;
++struct thin_super_block {
++	__le32 csum;
++	__le32 flags;
++	__le64 blocknr; /* this block number, dm_block_t */
 +
-+	/* Extra flags like REQ_FLUSH and REQ_FUA can be set here.  This is
-+	 * mainly as to avoid a race condition in flush_and_unlock() where
-+	 * the newly unlocked superblock may have been submitted for a
-+	 * write before the write_all_dirty() call is made.
-+	 */
-+	int io_flags;
++	__u8 uuid[16]; /* uuid_t */
++	__le64 magic;
++	__le32 version;
++	__le32 time;
 +
-+	/*
-+	 * Sadly we need an up pointer so we can get to the bm on io
-+	 * completion.
-+	 */
-+	struct dm_block_manager *bm;
-+};
++	__le64 trans_id;
++	/* root for userspace's transaction (for migration and friends) */
++	__le64 held_root;
 +
-+struct dm_block_manager {
++	__u8 data_space_map_root[SPACE_MAP_ROOT_SIZE];
++	__u8 metadata_space_map_root[SPACE_MAP_ROOT_SIZE];
++
++	/* 2 level btree mapping (dev_id, (dev block, time)) -> data block */
++	__le64 data_mapping_root;
++
++	/* device detail root mapping dev_id -> device_details */
++	__le64 device_details_root;
++
++	__le32 data_block_size;	/* in 512-byte sectors */
++
++	__le32 metadata_block_size; /* in 512-byte sectors */
++	__le64 metadata_nr_blocks;
++
++	__le32 compat_flags;
++	__le32 compat_ro_flags;
++	__le32 incompat_flags;
++} __packed;
++
++struct device_details {
++	__le64 mapped_blocks;
++	__le64 transaction_id;	/* when created */
++	__le32 creation_time;
++	__le32 snapshotted_time;
++} __packed;
++
++struct dm_thin_metadata {
++	struct hlist_node hash;
++
 +	struct block_device *bdev;
-+	unsigned cache_size; /* in bytes */
-+	unsigned block_size; /* in bytes */
-+	dm_block_t nr_blocks;
-+
-+	/* this will trigger everytime an io completes */
-+	wait_queue_head_t io_q;
-+
-+	struct dm_io_client *io;
-+
-+	/* |lock| protects all the lists and the hash table */
-+	spinlock_t lock;
-+	struct list_head empty_list; /* no block assigned */
-+	struct list_head clean_list; /* unlocked and clean */
-+	struct list_head dirty_list; /* unlocked and dirty */
-+	struct list_head error_list;
-+	unsigned available_count;
-+	unsigned reading_count;
-+	unsigned writing_count;
++	struct dm_block_manager *bm;
++	struct dm_space_map *metadata_sm;
++	struct dm_space_map *data_sm;
++	struct dm_transaction_manager *tm;
++	struct dm_transaction_manager *nb_tm;
 +
 +	/*
-+	 * Hash table of cached blocks, holds everything that isn't in the
-+	 * BS_EMPTY state.
++	 * Two level btree, first level is thin_dev_t, second level
++	 * mappings.
 +	 */
-+	unsigned hash_size;
-+	unsigned hash_mask;
-+	struct hlist_head buckets[0]; /* must be last member of struct */
++	struct dm_btree_info info;
++
++	/* non-blocking version of the above */
++	struct dm_btree_info nb_info;
++
++	/* just the top level, for deleting whole devices */
++	struct dm_btree_info tl_info;
++
++	/* just the bottom level for creating new devices */
++	struct dm_btree_info bl_info;
++
++	/* Describes the device details btree */
++	struct dm_btree_info details_info;
++
++	struct rw_semaphore root_lock;
++	uint32_t time;
++	int need_commit;
++	struct dm_block *sblock;
++	dm_block_t root;
++	dm_block_t details_root;
++	struct list_head ms_devices;
++	uint64_t trans_id;
++	unsigned long flags;
++	sector_t data_block_size;
 +};
 +
-+dm_block_t dm_block_location(struct dm_block *b)
-+{
-+	return b->where;
-+}
-+EXPORT_SYMBOL_GPL(dm_block_location);
++struct dm_ms_device {
++	struct list_head list;
++	struct dm_thin_metadata *mmd;
++	dm_thin_dev_t id;
 +
-+void *dm_block_data(struct dm_block *b)
-+{
-+	return b->data;
-+}
-+EXPORT_SYMBOL_GPL(dm_block_data);
++	int open_count;
++	int changed;
++	uint64_t mapped_blocks;
++	uint64_t transaction_id;
++	uint32_t creation_time;
++	uint32_t snapshotted_time;
++};
 +
 +/*----------------------------------------------------------------
-+ * Hash table
++ * superblock validator
 + *--------------------------------------------------------------*/
-+static unsigned hash_block(struct dm_block_manager *bm, dm_block_t b)
-+{
-+	const unsigned BIG_PRIME = 4294967291UL;
 +
-+	return (((unsigned) b) * BIG_PRIME) & bm->hash_mask;
++static void sb_prepare_for_write(struct dm_block_validator *v,
++				 struct dm_block *b,
++				 size_t block_size)
++{
++	struct thin_super_block *sb = dm_block_data(b);
++
++	sb->blocknr = __cpu_to_le64(dm_block_location(b));
++	sb->csum = dm_block_csum_data(&sb->flags,
++				      sizeof(*sb) - sizeof(u32));
 +}
 +
-+static struct dm_block *__find_block(struct dm_block_manager *bm, dm_block_t b)
++static int sb_check(struct dm_block_validator *v,
++		    struct dm_block *b,
++		    size_t block_size)
 +{
-+	unsigned bucket = hash_block(bm, b);
-+	struct dm_block *blk;
-+	struct hlist_node *n;
++	struct thin_super_block *sb = dm_block_data(b);
++	__le32 csum;
 +
-+	hlist_for_each_entry(blk, n, bm->buckets + bucket, hlist)
-+		if (blk->where == b)
-+			return blk;
++	if (dm_block_location(b) != __le64_to_cpu(sb->blocknr)) {
++		DMERR("sb_check failed blocknr %llu "
++		      "wanted %llu", __le64_to_cpu(sb->blocknr),
++		      dm_block_location(b));
++		return -ENOTBLK;
++	}
++
++	if (__le64_to_cpu(sb->magic) != THIN_SUPERBLOCK_MAGIC) {
++		DMERR("sb_check failed magic %llu "
++		      "wanted %llu", __le64_to_cpu(sb->magic),
++		      (unsigned long long)THIN_SUPERBLOCK_MAGIC);
++		return -EILSEQ;
++	}
++
++	csum = dm_block_csum_data(&sb->flags,
++				  sizeof(*sb) - sizeof(u32));
++	if (csum != sb->csum) {
++		DMERR("sb_check failed csum %u wanted %u",
++		      __le32_to_cpu(csum), __le32_to_cpu(sb->csum));
++		return -EILSEQ;
++	}
++
++	return 0;
++}
++
++static struct dm_block_validator sb_validator_ = {
++	.name = "superblock",
++	.prepare_for_write = sb_prepare_for_write,
++	.check = sb_check
++};
++
++/*----------------------------------------------------------------
++ * Methods for the btree value types
++ *--------------------------------------------------------------*/
++
++static uint64_t pack_dm_block_time(dm_block_t b, uint32_t t)
++{
++	return (b << 24) | t;
++}
++
++static void unpack_dm_block_time(uint64_t v, dm_block_t *b, uint32_t *t)
++{
++	*b = v >> 24;
++	*t = v & ((1 << 24) - 1);
++}
++
++static void data_block_inc(void *context, void *value)
++{
++	struct dm_space_map *sm = context;
++	__le64 v;
++	uint64_t b;
++	uint32_t t;
++
++	memcpy(&v, value, sizeof(v));
++	unpack_dm_block_time(v, &b, &t);
++	dm_sm_inc_block(sm, b);
++}
++
++static void data_block_dec(void *context, void *value)
++{
++	struct dm_space_map *sm = context;
++	__le64 v;
++	uint64_t b;
++	uint32_t t;
++
++	memcpy(&v, value, sizeof(v));
++	unpack_dm_block_time(v, &b, &t);
++	dm_sm_dec_block(sm, b);
++}
++
++static int data_block_equal(void *context, void *value1, void *value2)
++{
++	__le64 v1, v2;
++	uint64_t b1, b2;
++	uint32_t t;
++
++	memcpy(&v1, value1, sizeof(v1));
++	memcpy(&v2, value2, sizeof(v2));
++	unpack_dm_block_time(v1, &b1, &t);
++	unpack_dm_block_time(v2, &b2, &t);
++	return b1 == b2;
++}
++
++static void subtree_inc(void *context, void *value)
++{
++	struct dm_btree_info *info = context;
++	__le64 le_root;
++	uint64_t root;
++
++	memcpy(&le_root, value, sizeof(le_root));
++	root = __le64_to_cpu(le_root);
++	dm_tm_inc(info->tm, root);
++}
++
++static void subtree_dec(void *context, void *value)
++{
++	struct dm_btree_info *info = context;
++	__le64 le_root;
++	uint64_t root;
++
++	memcpy(&le_root, value, sizeof(le_root));
++	root = __le64_to_cpu(le_root);
++	if (dm_btree_del(info, root))
++		DMERR("btree delete failed\n");
++}
++
++static int subtree_equal(void *context, void *value1, void *value2)
++{
++	__le64 v1, v2;
++	memcpy(&v1, value1, sizeof(v1));
++	memcpy(&v2, value2, sizeof(v2));
++	return v1 == v2;
++}
++
++/*----------------------------------------------------------------*/
++
++static int superblock_all_zeroes(struct dm_block_manager *bm, int *result)
++{
++	int r, i;
++	struct dm_block *b;
++	uint64_t *data;
++	unsigned block_size = dm_bm_block_size(bm) / sizeof(uint64_t);
++
++	/*
++	 * We can't use a validator here, it may be all zeroes.
++	 */
++	r = dm_bm_read_lock(bm, THIN_SUPERBLOCK_LOCATION, NULL, &b);
++	if (r)
++		return r;
++
++	data = dm_block_data(b);
++	*result = 1;
++	for (i = 0; i < block_size; i++) {
++		if (data[i] != 0LL) {
++			*result = 0;
++			break;
++		}
++	}
++
++	return dm_bm_unlock(b);
++}
++
++static struct dm_thin_metadata *alloc_mmd(struct dm_block_manager *bm,
++					  dm_block_t nr_blocks, int create)
++{
++	int r;
++	struct dm_space_map *sm, *data_sm;
++	struct dm_transaction_manager *tm;
++	struct dm_thin_metadata *mmd;
++	struct dm_block *sblock;
++
++	if (create) {
++		r = dm_tm_create_with_sm(bm, THIN_SUPERBLOCK_LOCATION,
++					 &sb_validator_, &tm, &sm, &sblock);
++		if (r < 0) {
++			DMERR("tm_create_with_sm failed");
++			dm_block_manager_destroy(bm);
++			return ERR_PTR(r);
++		}
++
++		data_sm = dm_sm_disk_create(tm, nr_blocks);
++		if (IS_ERR(data_sm)) {
++			DMERR("sm_disk_create failed");
++			r = PTR_ERR(data_sm);
++			goto bad;
++		}
++
++		r = dm_tm_pre_commit(tm);
++		if (r < 0) {
++			DMERR("couldn't pre commit");
++			goto bad;
++		}
++
++		r = dm_tm_commit(tm, sblock);
++		if (r < 0) {
++			DMERR("couldn't commit");
++			goto bad;
++		}
++	} else {
++		struct thin_super_block *sb = NULL;
++		size_t space_map_root_offset =
++			offsetof(struct thin_super_block, metadata_space_map_root);
++
++		r = dm_tm_open_with_sm(bm, THIN_SUPERBLOCK_LOCATION,
++				       &sb_validator_, space_map_root_offset,
++				       SPACE_MAP_ROOT_SIZE, &tm, &sm, &sblock);
++		if (r < 0) {
++			DMERR("tm_open_with_sm failed");
++			dm_block_manager_destroy(bm);
++			return ERR_PTR(r);
++		}
++
++		sb = dm_block_data(sblock);
++		data_sm = dm_sm_disk_open(tm, sb->data_space_map_root,
++					  sizeof(sb->data_space_map_root));
++		if (IS_ERR(data_sm)) {
++			DMERR("sm_disk_open failed");
++			r = PTR_ERR(data_sm);
++			goto bad;
++		}
++
++		dm_tm_unlock(tm, sblock);
++	}
++
++	mmd = kmalloc(sizeof(*mmd), GFP_KERNEL);
++	if (!mmd) {
++		DMERR("could not allocate metadata struct");
++		r = -ENOMEM;
++		goto bad;
++	}
++
++	mmd->bm = bm;
++	mmd->metadata_sm = sm;
++	mmd->data_sm = data_sm;
++	mmd->tm = tm;
++	mmd->nb_tm = dm_tm_create_non_blocking_clone(tm);
++	if (!mmd->nb_tm) {
++		DMERR("could not create clone tm");
++		r = -ENOMEM;
++		goto bad;
++	}
++
++	mmd->sblock = NULL;
++
++	mmd->info.tm = tm;
++	mmd->info.levels = 2;
++	mmd->info.value_type.context = mmd->data_sm;
++	mmd->info.value_type.size = sizeof(__le64);
++	mmd->info.value_type.inc = data_block_inc;
++	mmd->info.value_type.dec = data_block_dec;
++	mmd->info.value_type.equal = data_block_equal;
++
++	memcpy(&mmd->nb_info, &mmd->info, sizeof(mmd->nb_info));
++	mmd->nb_info.tm = mmd->nb_tm;
++
++	mmd->tl_info.tm = tm;
++	mmd->tl_info.levels = 1;
++	mmd->tl_info.value_type.context = &mmd->info;
++	mmd->tl_info.value_type.size = sizeof(__le64);
++	mmd->tl_info.value_type.inc = subtree_inc;
++	mmd->tl_info.value_type.dec = subtree_dec;
++	mmd->tl_info.value_type.equal = subtree_equal;
++
++	mmd->bl_info.tm = tm;
++	mmd->bl_info.levels = 1;
++	mmd->bl_info.value_type.context = mmd->data_sm;
++	mmd->bl_info.value_type.size = sizeof(__le64);
++	mmd->bl_info.value_type.inc = data_block_inc;
++	mmd->bl_info.value_type.dec = data_block_dec;
++	mmd->bl_info.value_type.equal = data_block_equal;
++
++	mmd->details_info.tm = tm;
++	mmd->details_info.levels = 1;
++	mmd->details_info.value_type.context = NULL;
++	mmd->details_info.value_type.size = sizeof(struct device_details);
++	mmd->details_info.value_type.inc = NULL;
++	mmd->details_info.value_type.dec = NULL;
++	mmd->details_info.value_type.equal = NULL;
++
++	mmd->root = 0;
++
++	init_rwsem(&mmd->root_lock);
++	mmd->time = 0;
++	mmd->need_commit = 0;
++	mmd->details_root = 0;
++	INIT_LIST_HEAD(&mmd->ms_devices);
++
++	return mmd;
++
++bad:
++	dm_tm_destroy(tm);
++	dm_sm_destroy(sm);
++	dm_block_manager_destroy(bm);
++
++	return ERR_PTR(r);
++}
++
++static int begin_transaction(struct dm_thin_metadata *mmd)
++{
++	int r;
++	u32 features;
++	struct thin_super_block *sb;
++
++	/* dm_thin_metadata_commit() resets mmd->sblock */
++	WARN_ON(mmd->sblock);
++	mmd->need_commit = 0;
++	/* superblock is unlocked via dm_tm_commit() */
++	r = dm_bm_write_lock(mmd->bm, THIN_SUPERBLOCK_LOCATION,
++			     &sb_validator_, &mmd->sblock);
++	if (r)
++		return r;
++
++	sb = dm_block_data(mmd->sblock);
++	mmd->time = __le32_to_cpu(sb->time);
++	mmd->root = __le64_to_cpu(sb->data_mapping_root);
++	mmd->details_root = __le64_to_cpu(sb->device_details_root);
++	mmd->trans_id = __le64_to_cpu(sb->trans_id);
++	mmd->flags = __le32_to_cpu(sb->flags);
++	mmd->data_block_size = __le32_to_cpu(sb->data_block_size);
++
++	features = __le32_to_cpu(sb->incompat_flags) &
++		~THIN_FEATURE_INCOMPAT_SUPP;
++	if (features) {
++		DMERR("could not access metadata due to "
++		      "unsupported optional features (%lx).",
++		      (unsigned long)features);
++		return -EINVAL;
++	}
++
++	/* check for read-only metadata to skip the following RDWR checks */
++	if (get_disk_ro(mmd->bdev->bd_disk))
++		return 0;
++
++	features = __le32_to_cpu(sb->compat_ro_flags) &
++		~THIN_FEATURE_COMPAT_RO_SUPP;
++	if (features) {
++		DMERR("could not access metadata RDWR due to "
++		      "unsupported optional features (%lx).",
++		      (unsigned long)features);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++struct dm_thin_metadata *
++dm_thin_metadata_open(struct block_device *bdev, sector_t data_block_size)
++{
++	int r;
++	struct thin_super_block *sb;
++	struct dm_thin_metadata *mmd;
++	sector_t bdev_size = i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
++	struct dm_block_manager *bm;
++	int create;
++
++	bm = dm_block_manager_create(bdev, THIN_METADATA_BLOCK_SIZE,
++				     THIN_METADATA_CACHE_SIZE);
++	if (!bm) {
++		DMERR("could not create block manager");
++		return ERR_PTR(-ENOMEM);
++	}
++
++	r = superblock_all_zeroes(bm, &create);
++	if (r) {
++		dm_block_manager_destroy(bm);
++		return ERR_PTR(r);
++	}
++
++	mmd = alloc_mmd(bm, 0, create);
++	if (IS_ERR(mmd)) {
++		/* alloc_mmd() destroys the block manager on failure */
++		return mmd; /* already an ERR_PTR */
++	}
++	mmd->bdev = bdev;
++
++	if (!create) {
++		r = begin_transaction(mmd);
++		if (r < 0)
++			goto bad;
++		return mmd;
++	}
++
++	/* Create */
++	if (!mmd->sblock) {
++		r = begin_transaction(mmd);
++		if (r < 0)
++			goto bad;
++	}
++
++	sb = dm_block_data(mmd->sblock);
++	sb->magic = __cpu_to_le64(THIN_SUPERBLOCK_MAGIC);
++	sb->version = __cpu_to_le32(THIN_VERSION);
++	sb->time = 0;
++	sb->metadata_block_size = __cpu_to_le32(THIN_METADATA_BLOCK_SIZE >> SECTOR_SHIFT);
++	sb->metadata_nr_blocks = __cpu_to_le64(bdev_size >> SECTOR_TO_BLOCK_SHIFT);
++	sb->data_block_size = __cpu_to_le32(data_block_size);
++
++	r = dm_btree_empty(&mmd->info, &mmd->root);
++	if (r < 0)
++		goto bad;
++
++	r = dm_btree_empty(&mmd->details_info, &mmd->details_root);
++	if (r < 0) {
++		DMERR("couldn't create devices root");
++		goto bad;
++	}
++
++	mmd->flags = 0;
++	mmd->need_commit = 1;
++	r = dm_thin_metadata_commit(mmd);
++	if (r < 0) {
++		DMERR("%s: dm_thin_metadata_commit() failed, error = %d",
++		      __func__, r);
++		goto bad;
++	}
++
++	return mmd;
++bad:
++	if (dm_thin_metadata_close(mmd) < 0)
++		DMWARN("%s: dm_thin_metadata_close() failed.", __func__);
++	return ERR_PTR(r);
++}
++
++int dm_thin_metadata_close(struct dm_thin_metadata *mmd)
++{
++	int r;
++	unsigned open_devices = 0;
++	struct dm_ms_device *msd, *tmp;
++
++	down_read(&mmd->root_lock);
++	list_for_each_entry_safe(msd, tmp, &mmd->ms_devices, list) {
++		if (msd->open_count)
++			open_devices++;
++		else {
++			list_del(&msd->list);
++			kfree(msd);
++		}
++	}
++	up_read(&mmd->root_lock);
++
++	if (open_devices) {
++		DMERR("attempt to close mmd when %u device(s) are still open",
++		       open_devices);
++		return -EBUSY;
++	}
++
++	if (mmd->sblock) {
++		r = dm_thin_metadata_commit(mmd);
++		if (r)
++			DMWARN("%s: dm_thin_metadata_commit() failed, error = %d",
++			       __func__, r);
++	}
++
++	dm_tm_destroy(mmd->tm);
++	dm_tm_destroy(mmd->nb_tm);
++	dm_block_manager_destroy(mmd->bm);
++	dm_sm_destroy(mmd->metadata_sm);
++	dm_sm_destroy(mmd->data_sm);
++	kfree(mmd);
++
++	return 0;
++}
++
++static int __open_device(struct dm_thin_metadata *mmd,
++			 dm_thin_dev_t dev, int create,
++			 struct dm_ms_device **msd)
++{
++	int r, changed = 0;
++	struct dm_ms_device *msd2;
++	uint64_t key = dev;
++	struct device_details details;
++
++	/* check the device isn't already open */
++	list_for_each_entry(msd2, &mmd->ms_devices, list)
++		if (msd2->id == dev) {
++			msd2->open_count++;
++			*msd = msd2;
++			return 0;
++		}
++
++	/* check the device exists */
++	r = dm_btree_lookup(&mmd->details_info, mmd->details_root,
++			    &key, &details);
++	if (r) {
++		if (r == -ENODATA && create) {
++			changed = 1;
++			details.mapped_blocks = 0;
++			details.transaction_id = __cpu_to_le64(mmd->trans_id);
++			details.creation_time = __cpu_to_le32(mmd->time);
++			details.snapshotted_time = __cpu_to_le32(mmd->time);
++
++		} else
++			return r;
++	}
++
++	*msd = kmalloc(sizeof(**msd), GFP_NOIO);
++	if (!*msd)
++		return -ENOMEM;
++
++	(*msd)->mmd = mmd;
++	(*msd)->id = dev;
++	(*msd)->open_count = 1;
++	(*msd)->changed = changed;
++	(*msd)->mapped_blocks = __le64_to_cpu(details.mapped_blocks);
++	(*msd)->transaction_id = __le64_to_cpu(details.transaction_id);
++	(*msd)->creation_time = __le32_to_cpu(details.creation_time);
++	(*msd)->snapshotted_time = __le32_to_cpu(details.snapshotted_time);
++
++	list_add(&(*msd)->list, &mmd->ms_devices);
++
++	return 0;
++}
++
++static void __close_device(struct dm_ms_device *msd)
++{
++	--msd->open_count;
++}
++
++static int __create_thin(struct dm_thin_metadata *mmd,
++			 dm_thin_dev_t dev)
++{
++	int r;
++	dm_block_t dev_root;
++	uint64_t key = dev;
++	struct device_details detail;
++	struct dm_ms_device *msd;
++	__le64 value;
++
++	r = dm_btree_lookup(&mmd->details_info, mmd->details_root,
++			    &key, &detail);
++	if (!r)
++		return -EEXIST;
++
++	/* create an empty btree for the mappings */
++	r = dm_btree_empty(&mmd->bl_info, &dev_root);
++	if (r)
++		return r;
++
++	/* insert it into the main mapping tree */
++	value = __cpu_to_le64(dev_root);
++	r = dm_btree_insert(&mmd->tl_info, mmd->root, &key, &value, &mmd->root);
++	if (r) {
++		dm_btree_del(&mmd->bl_info, dev_root);
++		return r;
++	}
++
++	r = __open_device(mmd, dev, 1, &msd);
++	if (r) {
++		__close_device(msd);
++		dm_btree_remove(&mmd->tl_info, mmd->root, &key, &mmd->root);
++		dm_btree_del(&mmd->bl_info, dev_root);
++		return r;
++	}
++	msd->changed = 1;
++	__close_device(msd);
++
++	return r;
++}
++
++int dm_thin_metadata_create_thin(struct dm_thin_metadata *mmd,
++				 dm_thin_dev_t dev)
++{
++	int r;
++
++	down_write(&mmd->root_lock);
++	r = __create_thin(mmd, dev);
++	up_write(&mmd->root_lock);
++
++	return r;
++}
++
++static int __set_snapshot_details(struct dm_thin_metadata *mmd,
++				  struct dm_ms_device *snap,
++				  dm_thin_dev_t origin, uint32_t time)
++{
++	int r;
++	struct dm_ms_device *msd;
++
++	r = __open_device(mmd, origin, 0, &msd);
++	if (r)
++		return r;
++
++	msd->changed = 1;
++	msd->snapshotted_time = time;
++
++	snap->mapped_blocks = msd->mapped_blocks;
++	snap->snapshotted_time = time;
++	__close_device(msd);
++
++	return 0;
++}
++
++static int __create_snap(struct dm_thin_metadata *mmd,
++			 dm_thin_dev_t dev, dm_thin_dev_t origin)
++{
++	int r;
++	dm_block_t origin_root, snap_root;
++	uint64_t key = origin, dev_key = dev;
++	struct dm_ms_device *msd;
++	struct device_details detail;
++	__le64 value;
++
++	/* check this device is unused */
++	r = dm_btree_lookup(&mmd->details_info, mmd->details_root,
++			    &dev_key, &detail);
++	if (!r)
++		return -EEXIST;
++
++	/* find the mapping tree for the origin */
++	r = dm_btree_lookup(&mmd->tl_info, mmd->root, &key, &value);
++	if (r)
++		return r;
++	origin_root = __le64_to_cpu(value);
++
++	/* clone the origin */
++	r = dm_btree_clone(&mmd->bl_info, origin_root, &snap_root);
++	if (r)
++		return r;
++
++	/* insert into the main mapping tree */
++	value = __cpu_to_le64(snap_root);
++	key = dev;
++	r = dm_btree_insert(&mmd->tl_info, mmd->root, &key, &value, &mmd->root);
++	if (r) {
++		dm_btree_del(&mmd->bl_info, snap_root);
++		return r;
++	}
++
++	mmd->time++;
++
++	r = __open_device(mmd, dev, 1, &msd);
++	if (r)
++		goto bad;
++
++	r = __set_snapshot_details(mmd, msd, origin, mmd->time);
++	if (r)
++		goto bad;
++
++	__close_device(msd);
++	return 0;
++
++bad:
++	__close_device(msd);
++	dm_btree_remove(&mmd->tl_info, mmd->root, &key, &mmd->root);
++	dm_btree_remove(&mmd->details_info, mmd->details_root,
++			&key, &mmd->details_root);
++	return r;
++}
++
++int dm_thin_metadata_create_snap(struct dm_thin_metadata *mmd,
++				 dm_thin_dev_t dev,
++				 dm_thin_dev_t origin)
++{
++	int r;
++
++	down_write(&mmd->root_lock);
++	r = __create_snap(mmd, dev, origin);
++	up_write(&mmd->root_lock);
++
++	return r;
++}
++
++static int __delete_device(struct dm_thin_metadata *mmd,
++			   dm_thin_dev_t dev)
++{
++	int r;
++	uint64_t key = dev;
++	struct dm_ms_device *msd;
++
++	/* TODO: failure should mark the transaction invalid */
++	r = __open_device(mmd, dev, 0, &msd);
++	if (r)
++		return r;
++
++	if (msd->open_count > 1) {
++		__close_device(msd);
++		return -EBUSY;
++	}
++
++	list_del(&msd->list);
++	kfree(msd);
++	r = dm_btree_remove(&mmd->details_info, mmd->details_root,
++			    &key, &mmd->details_root);
++	if (r)
++		return r;
++
++	r = dm_btree_remove(&mmd->tl_info, mmd->root, &key, &mmd->root);
++	if (r)
++		return r;
++
++	mmd->need_commit = 1;
++	return 0;
++}
++
++int dm_thin_metadata_delete_device(struct dm_thin_metadata *mmd,
++				   dm_thin_dev_t dev)
++{
++	int r;
++
++	down_write(&mmd->root_lock);
++	r = __delete_device(mmd, dev);
++	up_write(&mmd->root_lock);
++
++	return r;
++}
++
++static int __trim_thin_dev(struct dm_ms_device *msd, sector_t new_size)
++{
++	struct dm_thin_metadata *mmd = msd->mmd;
++	/* FIXME: convert new size to blocks */
++	uint64_t key[2] = { msd->id, new_size - 1 };
++
++	msd->changed = 1;
++
++	/*
++	 * We need to truncate all the extraneous mappings.
++	 *
++	 * FIXME: We have to be careful to do this atomically.
++	 * Perhaps clone the bottom layer first so we can revert?
++	 */
++	return dm_btree_del_gt(&mmd->info, mmd->root, key, &mmd->root);
++}
++
++int dm_thin_metadata_trim_thin_dev(struct dm_thin_metadata *mmd,
++				   dm_thin_dev_t dev,
++				   sector_t new_size)
++{
++	int r;
++	struct dm_ms_device *msd;
++
++	down_write(&mmd->root_lock);
++	r = __open_device(mmd, dev, 1, &msd);
++	if (r)
++		DMERR("couldn't open virtual device");
++	else {
++		r = __trim_thin_dev(msd, new_size);
++		__close_device(msd);
++	}
++
++	/* FIXME: update mapped_blocks */
++
++	up_write(&mmd->root_lock);
++
++	return r;
++}
++
++int dm_thin_metadata_set_transaction_id(struct dm_thin_metadata *mmd,
++					uint64_t current_id,
++					uint64_t new_id)
++{
++	down_write(&mmd->root_lock);
++	if (mmd->trans_id != current_id) {
++		up_write(&mmd->root_lock);
++		DMERR("mismatched transaction id");
++		return -EINVAL;
++	}
++
++	mmd->trans_id = new_id;
++	mmd->need_commit = 1;
++	up_write(&mmd->root_lock);
++
++	return 0;
++}
++
++int dm_thin_metadata_get_transaction_id(struct dm_thin_metadata *mmd,
++					uint64_t *result)
++{
++	down_read(&mmd->root_lock);
++	*result = mmd->trans_id;
++	up_read(&mmd->root_lock);
++
++	return 0;
++}
++
++int dm_thin_metadata_hold_root(struct dm_thin_metadata *mmd)
++{
++	/* FIXME implement */
++
++	return 0;
++}
++
++int dm_thin_metadata_get_held_root(struct dm_thin_metadata *mmd,
++				   dm_block_t *result)
++{
++	struct thin_super_block *sb;
++
++	down_read(&mmd->root_lock);
++	sb = dm_block_data(mmd->sblock);
++	*result = __le64_to_cpu(sb->held_root);
++	up_read(&mmd->root_lock);
++
++	return 0;
++}
++
++int dm_thin_metadata_open_device(struct dm_thin_metadata *mmd,
++				 dm_thin_dev_t dev,
++				 struct dm_ms_device **msd)
++{
++	int r;
++
++	down_write(&mmd->root_lock);
++	r = __open_device(mmd, dev, 0, msd);
++	up_write(&mmd->root_lock);
++
++	return r;
++}
++
++int dm_thin_metadata_close_device(struct dm_ms_device *msd)
++{
++	down_write(&msd->mmd->root_lock);
++	__close_device(msd);
++	up_write(&msd->mmd->root_lock);
++
++	return 0;
++}
++
++dm_thin_dev_t dm_thin_device_dev(struct dm_ms_device *msd)
++{
++	return msd->id;
++}
++
++static int __snapshotted_since(struct dm_ms_device *msd, uint32_t time)
++{
++	return msd->snapshotted_time > time;
++}
++
++int dm_thin_metadata_lookup(struct dm_ms_device *msd,
++			    dm_block_t block, int can_block,
++			    struct dm_thin_lookup_result *result)
++{
++	int r;
++	uint64_t keys[2], dm_block_time = 0;
++	__le64 value;
++	struct dm_thin_metadata *mmd = msd->mmd;
++
++	keys[0] = msd->id;
++	keys[1] = block;
++
++	if (can_block) {
++		down_read(&mmd->root_lock);
++		r = dm_btree_lookup(&mmd->info, mmd->root, keys, &value);
++		if (!r)
++			dm_block_time = __le64_to_cpu(value);
++		up_read(&mmd->root_lock);
++
++	} else if (down_read_trylock(&mmd->root_lock)) {
++		r = dm_btree_lookup(&mmd->nb_info, mmd->root, keys, &value);
++		if (!r)
++			dm_block_time = __le64_to_cpu(value);
++		up_read(&mmd->root_lock);
++
++	} else
++		return -EWOULDBLOCK;
++
++	if (!r) {
++		dm_block_t exception_block;
++		uint32_t exception_time;
++		unpack_dm_block_time(dm_block_time, &exception_block,
++				     &exception_time);
++		result->block = exception_block;
++		result->shared = __snapshotted_since(msd, exception_time);
++	}
++
++	return r;
++}
++
++static int __insert(struct dm_ms_device *msd,
++		    dm_block_t block, dm_block_t data_block)
++{
++	int r, inserted;
++	dm_block_t keys[2];
++	__le64 value;
++	struct dm_thin_metadata *mmd = msd->mmd;
++
++	keys[0] = msd->id;
++	keys[1] = block;
++
++	mmd->need_commit = 1;
++	value = __cpu_to_le64(pack_dm_block_time(data_block, mmd->time));
++
++	r = dm_btree_insert_notify(&mmd->info, mmd->root, keys, &value,
++				   &mmd->root, &inserted);
++	if (r)
++		return r;
++
++	if (inserted) {
++		msd->mapped_blocks++;
++		msd->changed = 1;
++	}
++
++	return 0;
++}
++
++int dm_thin_metadata_insert(struct dm_ms_device *msd,
++			    dm_block_t block, dm_block_t data_block)
++{
++	int r;
++
++	down_write(&msd->mmd->root_lock);
++	r = __insert(msd, block, data_block);
++	up_write(&msd->mmd->root_lock);
++
++	return r;
++}
++
++static int __remove(struct dm_ms_device *msd, dm_block_t block)
++{
++	int r;
++	struct dm_thin_metadata *mmd = msd->mmd;
++	dm_block_t keys[2] = { msd->id, block };
++
++	r = dm_btree_remove(&mmd->info, mmd->root, keys, &mmd->root);
++	if (r)
++		return r;
++
++	mmd->need_commit = 1;
++	return 0;
++}
++
++int dm_thin_metadata_remove(struct dm_ms_device *msd, dm_block_t block)
++{
++	int r;
++
++	down_write(&msd->mmd->root_lock);
++	r = __remove(msd, block);
++	up_write(&msd->mmd->root_lock);
++
++	return r;
++}
++
++int dm_thin_metadata_alloc_data_block(struct dm_ms_device *msd,
++				      dm_block_t *result)
++{
++	int r;
++	struct dm_thin_metadata *mmd = msd->mmd;
++
++	down_write(&mmd->root_lock);
++	r = dm_sm_new_block(mmd->data_sm, result);
++	mmd->need_commit = 1;
++	up_write(&mmd->root_lock);
++
++	return r;
++}
++
++static int __write_changed_details(struct dm_thin_metadata *mmd)
++{
++	int r;
++	struct dm_ms_device *msd, *tmp;
++
++	list_for_each_entry_safe(msd, tmp, &mmd->ms_devices, list) {
++		if (msd->changed) {
++			struct device_details dd;
++			uint64_t key = msd->id;
++
++			dd.mapped_blocks = __cpu_to_le64(msd->mapped_blocks);
++			dd.transaction_id = __cpu_to_le64(msd->transaction_id);
++			dd.creation_time = __cpu_to_le32(msd->creation_time);
++			dd.snapshotted_time = __cpu_to_le32(msd->snapshotted_time);
++
++			r = dm_btree_insert(&mmd->details_info, mmd->details_root,
++					    &key, &dd, &mmd->details_root);
++			if (r)
++				return r;
++
++			if (msd->open_count)
++				msd->changed = 0;
++			else {
++				list_del(&msd->list);
++				kfree(msd);
++			}
++
++			mmd->need_commit = 1;
++		}
++	}
++
++	return 0;
++}
++
++int dm_thin_metadata_commit(struct dm_thin_metadata *mmd)
++{
++	/*
++	 * FIXME: associated pool should be made read-only on
++	 * dm_thin_metadata_commit failure.
++	 */
++	int r;
++	size_t len;
++	struct thin_super_block *sb;
++
++	/* We want to know if/when the thin_super_block exceeds a 512b sector */
++	BUILD_BUG_ON(sizeof(struct thin_super_block) > 512);
++
++	down_write(&mmd->root_lock);
++	r = __write_changed_details(mmd);
++	if (r < 0)
++		goto out;
++
++	if (!mmd->need_commit)
++		goto out;
++
++	r = dm_tm_pre_commit(mmd->tm);
++	if (r < 0)
++		goto out;
++
++	r = dm_sm_root_size(mmd->metadata_sm, &len);
++	if (r < 0)
++		goto out;
++
++	sb = dm_block_data(mmd->sblock);
++	sb->time = __cpu_to_le32(mmd->time);
++	sb->data_mapping_root = __cpu_to_le64(mmd->root);
++	sb->device_details_root = __cpu_to_le64(mmd->details_root);
++	sb->trans_id = __cpu_to_le64(mmd->trans_id);
++	sb->flags = __cpu_to_le32(mmd->flags);
++	r = dm_sm_copy_root(mmd->metadata_sm, &sb->metadata_space_map_root, len);
++	if (r < 0)
++		goto out;
++
++	r = dm_sm_copy_root(mmd->data_sm, &sb->data_space_map_root, len);
++	if (r < 0)
++		goto out;
++
++	r = dm_tm_commit(mmd->tm, mmd->sblock);
++	if (r < 0)
++		goto out;
++
++	/* open the next transaction */
++	mmd->sblock = NULL;
++
++	r = begin_transaction(mmd);
++out:
++	up_write(&mmd->root_lock);
++	return r;
++}
++
++int dm_thin_metadata_get_free_blocks(struct dm_thin_metadata *mmd,
++				     dm_block_t *result)
++{
++	int r;
++
++	down_read(&mmd->root_lock);
++	r = dm_sm_get_nr_free(mmd->data_sm, result);
++	up_read(&mmd->root_lock);
++
++	return r;
++}
++
++int
++dm_thin_metadata_get_free_blocks_metadata(struct dm_thin_metadata *mmd,
++					  dm_block_t *result)
++{
++	int r;
++
++	down_read(&mmd->root_lock);
++	r = dm_sm_get_nr_free(mmd->metadata_sm, result);
++	up_read(&mmd->root_lock);
++
++	return r;
++}
++
++int dm_thin_metadata_get_data_block_size(struct dm_thin_metadata *mmd,
++					 sector_t *result)
++{
++	down_read(&mmd->root_lock);
++	*result = mmd->data_block_size;
++	up_read(&mmd->root_lock);
++
++	return 0;
++}
++
++int dm_thin_metadata_get_data_dev_size(struct dm_thin_metadata *mmd,
++				       dm_block_t *result)
++{
++	int r;
++
++	down_read(&mmd->root_lock);
++	r = dm_sm_get_nr_blocks(mmd->data_sm, result);
++	up_read(&mmd->root_lock);
++
++	return r;
++}
++
++int dm_thin_metadata_get_mapped_count(struct dm_ms_device *msd,
++				      dm_block_t *result)
++{
++	struct dm_thin_metadata *mmd = msd->mmd;
++
++	down_read(&mmd->root_lock);
++	*result = msd->mapped_blocks;
++	up_read(&mmd->root_lock);
++
++	return 0;
++}
++
++static int __highest_block(struct dm_ms_device *msd, dm_block_t *result)
++{
++	int r;
++	__le64 value;
++	dm_block_t thin_root;
++	struct dm_thin_metadata *mmd = msd->mmd;
++
++	r = dm_btree_lookup(&mmd->tl_info, mmd->root, &msd->id, &value);
++	if (r)
++		return r;
++
++	thin_root = __le64_to_cpu(value);
++	return dm_btree_find_highest_key(&mmd->bl_info, thin_root, result);
++}
++
++int dm_thin_metadata_get_highest_mapped_block(struct dm_ms_device *msd,
++					      dm_block_t *result)
++{
++	int r;
++	struct dm_thin_metadata *mmd = msd->mmd;
++
++	down_read(&mmd->root_lock);
++	r = __highest_block(msd, result);
++	up_read(&mmd->root_lock);
++
++	return r;
++}
++
++static int __resize_data_dev(struct dm_thin_metadata *mmd,
++			     dm_block_t new_count)
++{
++	int r;
++	dm_block_t old_count;
++
++	r = dm_sm_get_nr_blocks(mmd->data_sm, &old_count);
++	if (r)
++		return r;
++
++	if (new_count < old_count) {
++		DMERR("cannot reduce size of data device");
++		return -EINVAL;
++	}
++
++	if (new_count > old_count) {
++		r = dm_sm_extend(mmd->data_sm, new_count - old_count);
++		if (!r)
++			mmd->need_commit = 1;
++		return r;
++	} else
++		return 0;
++}
++
++int dm_thin_metadata_resize_data_dev(struct dm_thin_metadata *mmd,
++				     dm_block_t new_count)
++{
++	int r;
++
++	down_write(&mmd->root_lock);
++	r = __resize_data_dev(mmd, new_count);
++	up_write(&mmd->root_lock);
++
++	return r;
++}
++
++/*----------------------------------------------------------------*/
+diff --git a/drivers/md/dm-thin-metadata.h b/drivers/md/dm-thin-metadata.h
+new file mode 100644
+index 0000000..c14e150
+--- /dev/null
++++ b/drivers/md/dm-thin-metadata.h
+@@ -0,0 +1,164 @@
++/*
++ * Copyright (C) 2010 Red Hat, Inc. All rights reserved.
++ *
++ * This file is released under the GPL.
++ */
++
++#ifndef DM_THIN_METADATA_H
++#define DM_THIN_METADATA_H
++
++#include "persistent-data/dm-btree.h"
++
++/*----------------------------------------------------------------*/
++
++struct dm_thin_metadata;
++struct dm_ms_device;
++typedef uint64_t dm_thin_dev_t;
++
++/*
++ * Reopens or creates a new, empty metadata volume.
++ */
++struct dm_thin_metadata *
++dm_thin_metadata_open(struct block_device *bdev,
++		      sector_t data_block_size);
++
++int dm_thin_metadata_close(struct dm_thin_metadata *mmd);
++
++/*
++ * Compat feature flags.  Any incompat flags beyond the ones
++ * specified below will prevent use of the thin metadata.
++ */
++#define THIN_FEATURE_COMPAT_SUPP	  0UL
++#define THIN_FEATURE_COMPAT_RO_SUPP	  0UL
++#define THIN_FEATURE_INCOMPAT_SUPP	  0UL
++
++/*
++ * Device creation/deletion.
++ */
++int dm_thin_metadata_create_thin(struct dm_thin_metadata *mmd,
++				 dm_thin_dev_t dev);
++
++/*
++ * An internal snapshot.
++ *
++ * You can only snapshot a quiesced origin.  i.e. one that is either
++ * suspended or not instanced at all.
++ */
++int dm_thin_metadata_create_snap(struct dm_thin_metadata *mmd,
++				 dm_thin_dev_t dev,
++				 dm_thin_dev_t origin);
++
++/*
++ * Deletes a virtual device from the metadata.  It _is_ safe to call this
++ * when that device is open, operations on that device will just start
++ * failing.  You still need to call close() on the device.
++ */
++int dm_thin_metadata_delete_device(struct dm_thin_metadata *mmd,
++				   dm_thin_dev_t dev);
++
++/*
++ * Thin devices don't have a size, however they do keep track of the
++ * highest mapped block.  This trimming function allows the user to remove
++ * mappings above a certain virtual block.
++ */
++int dm_thin_metadata_trim_thin_dev(struct dm_thin_metadata *mmd,
++				   dm_thin_dev_t dev,
++				   sector_t new_size);
++
++/*
++ * Commits _all_ metadata changes: device creation, deletion, mapping
++ * updates.
++ */
++int dm_thin_metadata_commit(struct dm_thin_metadata *mmd);
++
++/*
++ * Set/get userspace transaction id
++ */
++int dm_thin_metadata_set_transaction_id(struct dm_thin_metadata *mmd,
++					uint64_t current_id,
++					uint64_t new_id);
++
++int dm_thin_metadata_get_transaction_id(struct dm_thin_metadata *mmd,
++					uint64_t *result);
++
++/*
++ * hold/get root for userspace transaction
++ */
++int dm_thin_metadata_hold_root(struct dm_thin_metadata *mmd);
++
++int dm_thin_metadata_get_held_root(struct dm_thin_metadata *mmd,
++				   dm_block_t *result);
++
++/*
++ * Actions on a single virtual device.
++ */
++
++/*
++ * Opening the same device more than once will fail with -EBUSY.
++ */
++int dm_thin_metadata_open_device(struct dm_thin_metadata *mmd,
++				 dm_thin_dev_t dev,
++				 struct dm_ms_device **msd);
++
++int dm_thin_metadata_close_device(struct dm_ms_device *msd);
++
++dm_thin_dev_t dm_thin_device_dev(struct dm_ms_device *msd);
++
++struct dm_thin_lookup_result {
++	dm_block_t block;
++	int shared;
++};
++
++/*
++ * Returns:
++ *   -EWOULDBLOCK iff @can_block is set and would block.
++ *   -ENODATA iff that mapping is not present.
++ *   0 success
++ */
++int dm_thin_metadata_lookup(struct dm_ms_device *msd,
++			    dm_block_t block, int can_block,
++			    struct dm_thin_lookup_result *result);
++
++/* Inserts a new mapping */
++int dm_thin_metadata_insert(struct dm_ms_device *msd, dm_block_t block,
++			    dm_block_t data_block);
++
++int dm_thin_metadata_remove(struct dm_ms_device *msd,
++			    dm_block_t block);
++
++int dm_thin_metadata_thin_highest_mapped_block(struct dm_ms_device *msd,
++					       dm_block_t *highest_mapped);
++
++/* FIXME: why are these passed an msd, rather than an mmd ? */
++int dm_thin_metadata_alloc_data_block(struct dm_ms_device *msd,
++				      dm_block_t *result);
++
++int dm_thin_metadata_get_free_blocks(struct dm_thin_metadata *mmd,
++				     dm_block_t *result);
++
++int
++dm_thin_metadata_get_free_blocks_metadata(struct dm_thin_metadata *mmd,
++					  dm_block_t *result);
++
++int dm_thin_metadata_get_data_block_size(struct dm_thin_metadata *mmd,
++					 sector_t *result);
++
++int dm_thin_metadata_get_data_dev_size(struct dm_thin_metadata *mmd,
++				       dm_block_t *result);
++
++int dm_thin_metadata_get_mapped_count(struct dm_ms_device *msd,
++				      dm_block_t *result);
++
++int dm_thin_metadata_get_highest_mapped_block(struct dm_ms_device *msd,
++					      dm_block_t *result);
++
++/*
++ * Returns -ENOSPC if the new size is too small and already allocated
++ * blocks would be lost.
++ */
++int dm_thin_metadata_resize_data_dev(struct dm_thin_metadata *mmd,
++				     dm_block_t new_size);
++
++/*----------------------------------------------------------------*/
++
++#endif
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+new file mode 100644
+index 0000000..171bdaf
+--- /dev/null
++++ b/drivers/md/dm-thin.c
+@@ -0,0 +1,2204 @@
++/*
++ * Copyright (C) 2011 Red Hat UK.  All rights reserved.
++ *
++ * This file is released under the GPL.
++ */
++
++#include "dm.h"
++#include "dm-thin-metadata.h"
++#include "persistent-data/dm-transaction-manager.h"
++
++#include <linux/blkdev.h>
++#include <linux/dm-io.h>
++#include <linux/dm-kcopyd.h>
++#include <linux/list.h>
++#include <linux/init.h>
++#include <linux/module.h>
++#include <linux/slab.h>
++
++#define	DM_MSG_PREFIX	"thin"
++
++/*
++ * How do we handle breaking sharing of data blocks?
++ * =================================================
++ *
++ * We use a standard copy-on-write btree to store the mappings for the
++ * devices (note I'm talking about copy-on-write of the metadata here, not
++ * the data).  When you take an internal snapshot you clone the root node
++ * of the origin btree.  After this there is no concept of an origin or a
++ * snapshot.  They are just two device trees that happen to point to the
++ * same data blocks.
++ *
++ * When we get a write in we decide if it's to a shared data block using
++ * some timestamp magic.  If it is, we have to break sharing.
++ *
++ * Let's say we write to a shared block in what was the origin.  The
++ * steps are:
++ *
++ * i) plug io further to this physical block. (see bio_prison code).
++ *
++ * ii) quiesce any read io to that shared data block.  Obviously
++ * including all devices that share this block.  (see deferred_set code)
++ *
++ * iii) copy the data block to a newly allocate block.  This step can be
++ * missed out if the io covers the block. (schedule_copy).
++ *
++ * iv) insert the new mapping into the origin's btree
++ * (process_prepared_mappings).  This act of inserting breaks some
++ * sharing of btree nodes between the two devices.  Breaking sharing only
++ * effects the btree of that specific device.  Btrees for the other
++ * devices that share the block never change.  The btree for the origin
++ * device as it was after the last commit is untouched, ie. we're using
++ * persistent data structures in the functional programming sense.
++ *
++ * v) unplug io to this physical block, including the io that triggered
++ * the breaking of sharing.
++ *
++ * Steps (ii) and (iii) occur in parallel.
++ *
++ * The metadata _doesn't_ need to be committed before the io continues.  We
++ * get away with this because the io is always written to a _new_ block.
++ * If there's a crash, then:
++ *
++ * - The origin mapping will point to the old origin block (the shared
++ * one).  This will contain the data as it was before the io that triggered
++ * the breaking of sharing came in.
++ *
++ * - The snap mapping still points to the old block.  As it would after
++ * the commit.
++ *
++ * The downside of this scheme is the timestamp magic isn't perfect, and
++ * will continue to think that data block in the snapshot device is shared
++ * even after the write to the origin has broken sharing.  I suspect data
++ * blocks will typically be shared by many different devices, so we're
++ * breaking sharing n + 1 times, rather than n, where n is the number of
++ * devices that reference this data block.  At the moment I think the
++ * benefits far, far outweigh the disadvantages.
++ */
++
++/*----------------------------------------------------------------*/
++
++/*
++ * Function that breaks abstraction layering.
++ */
++static struct block_device *get_target_bdev(struct dm_target *ti)
++{
++	return dm_bdev(dm_table_get_md(ti->table));
++}
++
++/*----------------------------------------------------------------*/
++
++/*
++ * Sometimes we can't deal with a bio straight away.  We put them in prison
++ * where they can't cause any mischief.  Bios are put in a cell identified
++ * by a key, multiple bios can be in the same cell.  When the cell is
++ * subsequently unlocked the bios become available.
++ */
++struct bio_prison;
++
++struct cell_key {
++	int virtual;
++	dm_thin_dev_t dev;
++	dm_block_t block;
++};
++
++struct cell {
++	struct hlist_node list;
++	struct bio_prison *prison;
++	struct cell_key key;
++	unsigned count;
++	struct bio_list bios;
++};
++
++struct bio_prison {
++	spinlock_t lock;
++	mempool_t *cell_pool;
++
++	unsigned nr_buckets;
++	unsigned hash_mask;
++	struct hlist_head *cells;
++};
++
++static uint32_t calc_nr_buckets(unsigned nr_cells)
++{
++	uint32_t n = 128;
++	nr_cells /= 4;
++	nr_cells = min(nr_cells, 8192u);
++	while (n < nr_cells)
++		n <<= 1;
++
++	return n;
++}
++
++/*
++ * @nr_cells should be the number of cells you want in use _concurrently_.
++ * Don't confuse it with the number of distinct keys.
++ */
++static struct bio_prison *prison_create(unsigned nr_cells)
++{
++	int i;
++	uint32_t nr_buckets = calc_nr_buckets(nr_cells);
++	size_t len = sizeof(struct bio_prison) +
++		(sizeof(struct hlist_head) * nr_buckets);
++	struct bio_prison *prison = kmalloc(len, GFP_KERNEL);
++	if (!prison)
++		return NULL;
++
++	spin_lock_init(&prison->lock);
++	prison->cell_pool = mempool_create_kmalloc_pool(nr_cells,
++							sizeof(struct cell));
++	prison->nr_buckets = nr_buckets;
++	prison->hash_mask = nr_buckets - 1;
++	prison->cells = (struct hlist_head *) (prison + 1);
++	for (i = 0; i < nr_buckets; i++)
++		INIT_HLIST_HEAD(prison->cells + i);
++
++	return prison;
++}
++
++static void prison_destroy(struct bio_prison *prison)
++{
++	mempool_destroy(prison->cell_pool);
++	kfree(prison);
++}
++
++static uint32_t hash_key(struct bio_prison *prison, struct cell_key *key)
++{
++	const unsigned BIG_PRIME = 4294967291UL;
++	uint64_t hash = key->block * BIG_PRIME;
++	return (uint32_t) (hash & prison->hash_mask);
++}
++
++static struct cell *__search_bucket(struct hlist_head *bucket,
++				    struct cell_key *key)
++{
++	struct cell *cell;
++	struct hlist_node *tmp;
++
++	hlist_for_each_entry(cell, tmp, bucket, list)
++		if (!memcmp(&cell->key, key, sizeof(cell->key)))
++			return cell;
 +
 +	return NULL;
 +}
 +
-+static void __insert_block(struct dm_block_manager *bm, struct dm_block *b)
-+{
-+	unsigned bucket = hash_block(bm, b->where);
-+
-+	hlist_add_head(&b->hlist, bm->buckets + bucket);
-+}
-+
-+/*----------------------------------------------------------------
-+ * Block state:
-+ * __transition() handles transition of a block between different states.
-+ * Study this to understand the state machine.
++/*
++ * This may block if a new cell needs allocating.  You must ensure that
++ * cells will be unlocked even if the calling thread is blocked.
 + *
-+ * Alternatively install graphviz and run:
-+ *     grep DOT dm-block-manager.c | grep -v '	' |
-+ *	 sed -e 's/.*DOT: //' -e 's/\*\///' |
-+ *	 dot -Tps -o states.ps
-+ *
-+ * Assumes bm->lock is held.
-+ *--------------------------------------------------------------*/
-+static void __transition(struct dm_block *b, enum dm_block_state new_state)
-+{
-+	/* DOT: digraph BlockStates { */
-+	struct dm_block_manager *bm = b->bm;
-+
-+	switch (new_state) {
-+	case BS_EMPTY:
-+		/* DOT: error -> empty */
-+		/* DOT: clean -> empty */
-+		BUG_ON(!((b->state == BS_ERROR) ||
-+			 (b->state == BS_CLEAN)));
-+		hlist_del(&b->hlist);
-+		list_move(&b->list, &bm->empty_list);
-+		b->write_lock_pending = 0;
-+		b->read_lock_count = 0;
-+		b->io_flags = 0;
-+		b->validator = NULL;
-+
-+		if (b->state == BS_ERROR)
-+			bm->available_count++;
-+		break;
-+
-+	case BS_CLEAN:
-+		/* DOT: reading -> clean */
-+		/* DOT: writing -> clean */
-+		/* DOT: read_locked -> clean */
-+		BUG_ON(!((b->state == BS_READING) ||
-+			 (b->state == BS_WRITING) ||
-+			 (b->state == BS_READ_LOCKED)));
-+		switch (b->state) {
-+		case BS_READING:
-+			BUG_ON(bm->reading_count == 0);
-+			bm->reading_count--;
-+			break;
-+
-+		case BS_WRITING:
-+			BUG_ON(bm->writing_count == 0);
-+			bm->writing_count--;
-+			b->io_flags = 0;
-+			break;
-+
-+		default:
-+			break;
-+		}
-+		list_add_tail(&b->list, &bm->clean_list);
-+		bm->available_count++;
-+		break;
-+
-+	case BS_READING:
-+		/* DOT: empty -> reading */
-+		BUG_ON(!(b->state == BS_EMPTY));
-+		/* FIXME: insert into the hash */
-+		__insert_block(bm, b);
-+		list_del(&b->list);
-+		bm->available_count--;
-+		bm->reading_count++;
-+		break;
-+
-+	case BS_WRITING:
-+		/* DOT: dirty -> writing */
-+		BUG_ON(!(b->state == BS_DIRTY));
-+		list_del(&b->list);
-+		bm->writing_count++;
-+		break;
-+
-+	case BS_READ_LOCKED:
-+		/* DOT: clean -> read_locked */
-+		BUG_ON(!(b->state == BS_CLEAN));
-+		list_del(&b->list);
-+		bm->available_count--;
-+		break;
-+
-+	case BS_READ_LOCKED_DIRTY:
-+		/* DOT: dirty -> read_locked_dirty */
-+		BUG_ON(!((b->state == BS_DIRTY)));
-+		list_del(&b->list);
-+		break;
-+
-+	case BS_WRITE_LOCKED:
-+		/* DOT: dirty -> write_locked */
-+		/* DOT: clean -> write_locked */
-+		BUG_ON(!((b->state == BS_DIRTY) ||
-+			 (b->state == BS_CLEAN)));
-+		list_del(&b->list);
-+
-+		if (b->state == BS_CLEAN)
-+			bm->available_count--;
-+		break;
-+
-+	case BS_DIRTY:
-+		/* DOT: write_locked -> dirty */
-+		/* DOT: read_locked_dirty -> dirty */
-+		BUG_ON(!((b->state == BS_WRITE_LOCKED) ||
-+			 (b->state == BS_READ_LOCKED_DIRTY)));
-+		list_add_tail(&b->list, &bm->dirty_list);
-+		break;
-+
-+	case BS_ERROR:
-+		/* DOT: writing -> error */
-+		/* DOT: reading -> error */
-+		BUG_ON(!((b->state == BS_WRITING) ||
-+			 (b->state == BS_READING)));
-+		list_add_tail(&b->list, &bm->error_list);
-+		break;
-+	}
-+
-+	b->state = new_state;
-+	/* DOT: } */
-+}
-+
-+/*----------------------------------------------------------------
-+ * low level io
-+ *--------------------------------------------------------------*/
-+typedef void (completion_fn)(unsigned long error, struct dm_block *b);
-+
-+static void submit_io(struct dm_block *b, int rw,
-+		      completion_fn fn)
-+{
-+	struct dm_block_manager *bm = b->bm;
-+	struct dm_io_request req;
-+	struct dm_io_region region;
-+	unsigned sectors_per_block = bm->block_size >> SECTOR_SHIFT;
-+
-+	region.bdev = bm->bdev;
-+	region.sector = b->where * sectors_per_block;
-+	region.count = sectors_per_block;
-+
-+	req.bi_rw = rw;
-+	req.mem.type = DM_IO_KMEM;
-+	req.mem.offset = 0;
-+	req.mem.ptr.addr = b->data;
-+	req.notify.fn = (void (*)(unsigned long, void *)) fn;
-+	req.notify.context = b;
-+	req.client = bm->io;
-+
-+	if (dm_io(&req, 1, &region, NULL) < 0)
-+		fn(1, b);
-+}
-+
-+/*----------------------------------------------------------------
-+ * High level io
-+ *--------------------------------------------------------------*/
-+static void __complete_io(unsigned long error, struct dm_block *b)
-+{
-+	struct dm_block_manager *bm = b->bm;
-+
-+	if (error) {
-+		DMERR("io error = %lu, block = %llu",
-+		      error , (unsigned long long)b->where);
-+		__transition(b, BS_ERROR);
-+	} else
-+		__transition(b, BS_CLEAN);
-+
-+	wake_up(&b->io_q);
-+	wake_up(&bm->io_q);
-+}
-+
-+static void complete_io(unsigned long error, struct dm_block *b)
-+{
-+	struct dm_block_manager *bm = b->bm;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&bm->lock, flags);
-+	__complete_io(error, b);
-+	spin_unlock_irqrestore(&bm->lock, flags);
-+}
-+
-+static void read_block(struct dm_block *b)
-+{
-+	submit_io(b, READ, complete_io);
-+}
-+
-+static void write_block(struct dm_block *b)
-+{
-+	if (b->validator)
-+		b->validator->prepare_for_write(b->validator, b,
-+						b->bm->block_size);
-+
-+	submit_io(b, WRITE | b->io_flags, complete_io);
-+}
-+
-+static void write_dirty(struct dm_block_manager *bm, unsigned count)
-+{
-+	struct dm_block *b, *tmp;
-+	struct list_head dirty;
-+	unsigned long flags;
-+
-+	/* Grab the first |count| entries from the dirty list */
-+	INIT_LIST_HEAD(&dirty);
-+	spin_lock_irqsave(&bm->lock, flags);
-+	list_for_each_entry_safe(b, tmp, &bm->dirty_list, list) {
-+		if (count-- == 0)
-+			break;
-+		__transition(b, BS_WRITING);
-+		list_add_tail(&b->list, &dirty);
-+	}
-+	spin_unlock_irqrestore(&bm->lock, flags);
-+
-+	list_for_each_entry_safe(b, tmp, &dirty, list) {
-+		list_del(&b->list);
-+		write_block(b);
-+	}
-+}
-+
-+static void write_all_dirty(struct dm_block_manager *bm)
-+{
-+	write_dirty(bm, bm->cache_size);
-+}
-+
-+static void __clear_errors(struct dm_block_manager *bm)
-+{
-+	struct dm_block *b, *tmp;
-+	list_for_each_entry_safe(b, tmp, &bm->error_list, list)
-+		__transition(b, BS_EMPTY);
-+}
-+
-+/*----------------------------------------------------------------
-+ * Waiting
-+ *--------------------------------------------------------------*/
-+#ifdef __CHECKER__
-+# define __retains(x)	__attribute__((context(x, 1, 1)))
-+#else
-+# define __retains(x)
-+#endif
-+
-+#ifdef USE_PLUGGING
-+static inline unplug(void)
-+{
-+	blk_flush_plug(current);
-+}
-+#else
-+static inline void unplug(void) {}
-+#endif
-+
-+#define __wait_block(wq, lock, flags, sched_fn, condition)	\
-+do {								\
-+	int ret = 0;						\
-+								\
-+	DEFINE_WAIT(wait);					\
-+	add_wait_queue(wq, &wait);				\
-+								\
-+	for (;;) {						\
-+		prepare_to_wait(wq, &wait, TASK_INTERRUPTIBLE); \
-+		if (condition)					\
-+			break;					\
-+								\
-+		spin_unlock_irqrestore(lock, flags);		\
-+		if (signal_pending(current)) {			\
-+			ret = -ERESTARTSYS;			\
-+			spin_lock_irqsave(lock, flags);		\
-+			break;					\
-+		}						\
-+								\
-+		sched_fn();					\
-+		spin_lock_irqsave(lock, flags);			\
-+	}							\
-+								\
-+	finish_wait(wq, &wait);					\
-+	return ret;						\
-+} while (0)
-+
-+static int __wait_io(struct dm_block *b, unsigned long *flags)
-+	__retains(&b->bm->lock)
-+{
-+	unplug();
-+	__wait_block(&b->io_q, &b->bm->lock, *flags, io_schedule,
-+		     ((b->state != BS_READING) && (b->state != BS_WRITING)));
-+}
-+
-+static int __wait_unlocked(struct dm_block *b, unsigned long *flags)
-+	__retains(&b->bm->lock)
-+{
-+	__wait_block(&b->io_q, &b->bm->lock, *flags, schedule,
-+		     ((b->state == BS_CLEAN) || (b->state == BS_DIRTY)));
-+}
-+
-+static int __wait_read_lockable(struct dm_block *b, unsigned long *flags)
-+	__retains(&b->bm->lock)
-+{
-+	__wait_block(&b->io_q, &b->bm->lock, *flags, schedule,
-+		     (!b->write_lock_pending && (b->state == BS_CLEAN ||
-+						 b->state == BS_DIRTY ||
-+						 b->state == BS_READ_LOCKED)));
-+}
-+
-+static int __wait_all_writes(struct dm_block_manager *bm, unsigned long *flags)
-+	__retains(&bm->lock)
-+{
-+	unplug();
-+	__wait_block(&bm->io_q, &bm->lock, *flags, io_schedule,
-+		     !bm->writing_count);
-+}
-+
-+static int __wait_clean(struct dm_block_manager *bm, unsigned long *flags)
-+	__retains(&bm->lock)
-+{
-+	unplug();
-+	__wait_block(&bm->io_q, &bm->lock, *flags, io_schedule,
-+		     (!list_empty(&bm->clean_list) ||
-+		      (bm->writing_count == 0)));
-+}
-+
-+/*----------------------------------------------------------------
-+ * Finding a free block to recycle
-+ *--------------------------------------------------------------*/
-+static int recycle_block(struct dm_block_manager *bm, dm_block_t where,
-+			 int need_read, struct dm_block_validator *v,
-+			 struct dm_block **result)
-+{
-+	int ret = 0;
-+	struct dm_block *b;
-+	unsigned long flags, available;
-+
-+	/* wait for a block to appear on the empty or clean lists */
-+	spin_lock_irqsave(&bm->lock, flags);
-+	while (1) {
-+		/*
-+		 * Once we can lock and do io concurrently then we should
-+		 * probably flush at bm->cache_size / 2 and write _all_
-+		 * dirty blocks.
-+		 */
-+		available = bm->available_count + bm->writing_count;
-+		if (available < bm->cache_size / 4) {
-+			spin_unlock_irqrestore(&bm->lock, flags);
-+			write_dirty(bm, bm->cache_size / 4);
-+			spin_lock_irqsave(&bm->lock, flags);
-+		}
-+
-+		if (!list_empty(&bm->empty_list)) {
-+			b = list_first_entry(&bm->empty_list, struct dm_block, list);
-+			break;
-+
-+		} else if (!list_empty(&bm->clean_list)) {
-+			b = list_first_entry(&bm->clean_list, struct dm_block, list);
-+			__transition(b, BS_EMPTY);
-+			break;
-+		}
-+
-+		__wait_clean(bm, &flags);
-+	}
-+
-+	b->where = where;
-+	b->validator = v;
-+	__transition(b, BS_READING);
-+
-+	if (!need_read) {
-+		memset(b->data, 0, bm->block_size);
-+		__transition(b, BS_CLEAN);
-+	} else {
-+		spin_unlock_irqrestore(&bm->lock, flags);
-+		read_block(b);
-+		spin_lock_irqsave(&bm->lock, flags);
-+		__wait_io(b, &flags);
-+
-+		/* FIXME: can |b| have been recycled between io completion and here ? */
-+
-+		/* did the io succeed ? */
-+		if (b->state == BS_ERROR) {
-+			/* Since this is a read that has failed we can
-+			 * clear the error immediately.	 Failed writes are
-+			 * revealed during a commit.
-+			 */
-+			__transition(b, BS_EMPTY);
-+			ret = -EIO;
-+		}
-+
-+		if (b->validator) {
-+			ret = b->validator->check(b->validator, b, bm->block_size);
-+			if (ret) {
-+				DMERR("%s validator check failed for block %llu",
-+				      b->validator->name, (unsigned long long)b->where);
-+				__transition(b, BS_EMPTY);
-+			}
-+		}
-+	}
-+	spin_unlock_irqrestore(&bm->lock, flags);
-+
-+	if (ret == 0)
-+		*result = b;
-+	return ret;
-+}
-+
-+#ifdef USE_PLUGGING
-+static int recycle_block_with_plugging(struct dm_block_manager *bm,
-+				       dm_block_t where, int need_read,
-+				       struct dm_block_validator *v,
-+				       struct dm_block **result)
-+{
-+	int r;
-+	struct blk_plug plug;
-+
-+	blk_start_plug(&plug);
-+	r = recycle_block(bm, where, need_read, v, result);
-+	blk_finish_plug(&plug);
-+
-+	return r;
-+}
-+#endif
-+
-+/*----------------------------------------------------------------
-+ * Low level block management
-+ *--------------------------------------------------------------*/
-+static void *align(void *ptr, size_t amount)
-+{
-+	size_t offset = (uint64_t) ptr & (amount - 1);
-+	return offset ? ((unsigned char *) ptr) + (amount - offset) : ptr;
-+}
-+
-+/* Alloc a page if block_size equals PAGE_SIZE or kmalloc it. */
-+static void *_alloc_block(struct dm_block_manager *bm)
-+{
-+	void *r;
-+
-+	if (bm->block_size == PAGE_SIZE) {
-+		struct page *p = alloc_page(GFP_KERNEL);
-+		r = p ? page_address(p) : NULL;
-+
-+	} else
-+		r = kmalloc(bm->block_size + SECTOR_SIZE, GFP_KERNEL);
-+
-+	return r;
-+}
-+
-+static struct dm_block *alloc_block(struct dm_block_manager *bm)
-+{
-+	struct dm_block *b = kmalloc(sizeof(*b), GFP_KERNEL);
-+	if (!b)
-+		return NULL;
-+
-+	INIT_LIST_HEAD(&b->list);
-+	INIT_HLIST_NODE(&b->hlist);
-+
-+	b->data_actual = _alloc_block(bm);
-+	if (!b->data_actual) {
-+		kfree(b);
-+		return NULL;
-+	}
-+
-+	b->validator = NULL;
-+	b->data = align(b->data_actual, SECTOR_SIZE);
-+	b->state = BS_EMPTY;
-+	init_waitqueue_head(&b->io_q);
-+	b->read_lock_count = 0;
-+	b->write_lock_pending = 0;
-+	b->io_flags = 0;
-+	b->bm = bm;
-+
-+	return b;
-+}
-+
-+static void free_block(struct dm_block *b)
-+{
-+	if (b->bm->block_size == PAGE_SIZE)
-+		free_page((unsigned long) b->data_actual);
-+	else
-+		kfree(b->data_actual);
-+
-+	kfree(b);
-+}
-+
-+static int populate_bm(struct dm_block_manager *bm, unsigned count)
-+{
-+	int i;
-+	LIST_HEAD(bs);
-+
-+	for (i = 0; i < count; i++) {
-+		struct dm_block *b = alloc_block(bm);
-+		if (!b) {
-+			struct dm_block *tmp;
-+			list_for_each_entry_safe(b, tmp, &bs, list)
-+				free_block(b);
-+			return -ENOMEM;
-+		}
-+
-+		list_add(&b->list, &bs);
-+	}
-+
-+	list_replace(&bs, &bm->empty_list);
-+	bm->available_count = count;
-+
-+	return 0;
-+}
-+
-+/*----------------------------------------------------------------
-+ * Public interface
-+ *--------------------------------------------------------------*/
-+static unsigned calc_hash_size(unsigned cache_size)
-+{
-+	unsigned r = 32;	/* minimum size is 16 */
-+
-+	while (r < cache_size)
-+		r <<= 1;
-+
-+	return r >> 1;
-+}
-+
-+struct dm_block_manager *
-+dm_block_manager_create(struct block_device *bdev,
-+			unsigned block_size, unsigned cache_size)
-+{
-+	unsigned i;
-+	unsigned hash_size = calc_hash_size(cache_size);
-+	size_t len = sizeof(struct dm_block_manager) +
-+		sizeof(struct hlist_head) * hash_size;
-+	struct dm_block_manager *bm;
-+
-+	bm = kmalloc(len, GFP_KERNEL);
-+	if (!bm)
-+		return NULL;
-+	bm->bdev = bdev;
-+	bm->cache_size = max(16u, cache_size);
-+	bm->block_size = block_size;
-+	bm->nr_blocks = i_size_read(bdev->bd_inode);
-+	do_div(bm->nr_blocks, block_size);
-+	init_waitqueue_head(&bm->io_q);
-+	spin_lock_init(&bm->lock);
-+
-+	INIT_LIST_HEAD(&bm->empty_list);
-+	INIT_LIST_HEAD(&bm->clean_list);
-+	INIT_LIST_HEAD(&bm->dirty_list);
-+	INIT_LIST_HEAD(&bm->error_list);
-+	bm->available_count = 0;
-+	bm->reading_count = 0;
-+	bm->writing_count = 0;
-+
-+	bm->hash_size = hash_size;
-+	bm->hash_mask = hash_size - 1;
-+	for (i = 0; i < hash_size; i++)
-+		INIT_HLIST_HEAD(bm->buckets + i);
-+
-+	bm->io = dm_io_client_create();
-+	if (!bm->io) {
-+		kfree(bm);
-+		return NULL;
-+	}
-+
-+	if (populate_bm(bm, cache_size) < 0) {
-+		dm_io_client_destroy(bm->io);
-+		kfree(bm);
-+		return NULL;
-+	}
-+
-+	return bm;
-+}
-+EXPORT_SYMBOL_GPL(dm_block_manager_create);
-+
-+void dm_block_manager_destroy(struct dm_block_manager *bm)
-+{
-+	int i;
-+	struct dm_block *b, *btmp;
-+	struct hlist_node *n, *tmp;
-+
-+	dm_io_client_destroy(bm->io);
-+
-+	for (i = 0; i < bm->hash_size; i++)
-+		hlist_for_each_entry_safe(b, n, tmp, bm->buckets + i, hlist)
-+			free_block(b);
-+
-+	list_for_each_entry_safe(b, btmp, &bm->empty_list, list)
-+		free_block(b);
-+
-+	kfree(bm);
-+}
-+EXPORT_SYMBOL_GPL(dm_block_manager_destroy);
-+
-+unsigned dm_bm_block_size(struct dm_block_manager *bm)
-+{
-+	return bm->block_size;
-+}
-+EXPORT_SYMBOL_GPL(dm_bm_block_size);
-+
-+dm_block_t dm_bm_nr_blocks(struct dm_block_manager *bm)
-+{
-+	return bm->nr_blocks;
-+}
-+EXPORT_SYMBOL_GPL(dm_bm_nr_blocks);
-+
-+static int lock_internal(struct dm_block_manager *bm, dm_block_t block,
-+			 int how, int need_read, int can_block,
-+			 struct dm_block_validator *v,
-+			 struct dm_block **result)
-+{
-+	int r = 0;
-+	struct dm_block *b;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&bm->lock, flags);
-+retry:
-+	b = __find_block(bm, block);
-+	if (b) {
-+		if (need_read) {
-+			if (b->validator && (v != b->validator)) {
-+				DMERR("validator mismatch (old=%s vs new=%s) for block %llu",
-+				      b->validator->name, v->name,
-+				      (unsigned long long)b->where);
-+				spin_unlock_irqrestore(&bm->lock, flags);
-+				return -EINVAL;
-+
-+			} else if (!b->validator && v) {
-+				b->validator = v;
-+				r = b->validator->check(b->validator, b, bm->block_size);
-+				if (r) {
-+					DMERR("%s validator check failed for block %llu",
-+					      b->validator->name,
-+					      (unsigned long long)b->where);
-+					spin_unlock_irqrestore(&bm->lock, flags);
-+					return r;
-+				}
-+			}
-+		} else
-+			b->validator = v;
-+
-+		switch (how) {
-+		case READ:
-+			if (b->write_lock_pending || (b->state != BS_CLEAN &&
-+						      b->state != BS_DIRTY &&
-+						      b->state != BS_READ_LOCKED)) {
-+				if (!can_block) {
-+					spin_unlock_irqrestore(&bm->lock, flags);
-+					return -EWOULDBLOCK;
-+				}
-+
-+				__wait_read_lockable(b, &flags);
-+
-+				if (b->where != block)
-+					goto retry;
-+			}
-+			break;
-+
-+		case WRITE:
-+			while (b->state != BS_CLEAN && b->state != BS_DIRTY) {
-+				if (!can_block) {
-+					spin_unlock_irqrestore(&bm->lock, flags);
-+					return -EWOULDBLOCK;
-+				}
-+
-+				b->write_lock_pending++;
-+				__wait_unlocked(b, &flags);
-+				b->write_lock_pending--;
-+				if (b->where != block)
-+					goto retry;
-+			}
-+			break;
-+		}
-+
-+	} else if (!can_block) {
-+		r = -EWOULDBLOCK;
-+		goto out;
-+
-+	} else {
-+		spin_unlock_irqrestore(&bm->lock, flags);
-+#ifdef USE_PLUGGING
-+		r = recycle_block_with_plugging(bm, block, need_read, v, &b);
-+#else
-+		r = recycle_block(bm, block, need_read, v, &b);
-+#endif
-+		spin_lock_irqsave(&bm->lock, flags);
-+	}
-+
-+	if (r == 0) {
-+		switch (how) {
-+		case READ:
-+			b->read_lock_count++;
-+
-+			if (b->state == BS_DIRTY)
-+				__transition(b, BS_READ_LOCKED_DIRTY);
-+			else if (b->state == BS_CLEAN)
-+				__transition(b, BS_READ_LOCKED);
-+			break;
-+
-+		case WRITE:
-+			__transition(b, BS_WRITE_LOCKED);
-+			break;
-+		}
-+
-+		*result = b;
-+	}
-+
-+out:
-+	spin_unlock_irqrestore(&bm->lock, flags);
-+	return r;
-+}
-+
-+int dm_bm_read_lock(struct dm_block_manager *bm, dm_block_t b,
-+		    struct dm_block_validator *v,
-+		    struct dm_block **result)
-+{
-+	return lock_internal(bm, b, READ, 1, 1, v, result);
-+}
-+EXPORT_SYMBOL_GPL(dm_bm_read_lock);
-+
-+int dm_bm_write_lock(struct dm_block_manager *bm,
-+		     dm_block_t b, struct dm_block_validator *v,
-+		     struct dm_block **result)
-+{
-+	return lock_internal(bm, b, WRITE, 1, 1, v, result);
-+}
-+EXPORT_SYMBOL_GPL(dm_bm_write_lock);
-+
-+int dm_bm_read_try_lock(struct dm_block_manager *bm,
-+			dm_block_t b, struct dm_block_validator *v,
-+			struct dm_block **result)
-+{
-+	return lock_internal(bm, b, READ, 1, 0, v, result);
-+}
-+EXPORT_SYMBOL_GPL(dm_bm_read_try_lock);
-+
-+int dm_bm_write_lock_zero(struct dm_block_manager *bm,
-+			  dm_block_t b, struct dm_block_validator *v,
-+			  struct dm_block **result)
-+{
-+	int r = lock_internal(bm, b, WRITE, 0, 1, v, result);
-+	if (!r)
-+		memset((*result)->data, 0, bm->block_size);
-+	return r;
-+}
-+EXPORT_SYMBOL_GPL(dm_bm_write_lock_zero);
-+
-+int dm_bm_unlock(struct dm_block *b)
-+{
-+	int ret = 0;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&b->bm->lock, flags);
-+	switch (b->state) {
-+	case BS_WRITE_LOCKED:
-+		__transition(b, BS_DIRTY);
-+		wake_up(&b->io_q);
-+		break;
-+
-+	case BS_READ_LOCKED:
-+		if (!--b->read_lock_count) {
-+			__transition(b, BS_CLEAN);
-+			wake_up(&b->io_q);
-+		}
-+		break;
-+
-+	case BS_READ_LOCKED_DIRTY:
-+		if (!--b->read_lock_count) {
-+			__transition(b, BS_DIRTY);
-+			wake_up(&b->io_q);
-+		}
-+		break;
-+
-+	default:
-+		DMERR("block = %llu not locked",
-+		      (unsigned long long)b->where);
-+		ret = -EINVAL;
-+		break;
-+	}
-+	spin_unlock_irqrestore(&b->bm->lock, flags);
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(dm_bm_unlock);
-+
-+static int __wait_flush(struct dm_block_manager *bm)
-+{
-+	int ret = 0;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&bm->lock, flags);
-+	__wait_all_writes(bm, &flags);
-+
-+	if (!list_empty(&bm->error_list)) {
-+		ret = -EIO;
-+		__clear_errors(bm);
-+	}
-+	spin_unlock_irqrestore(&bm->lock, flags);
-+
-+	return ret;
-+}
-+
-+int dm_bm_flush_and_unlock(struct dm_block_manager *bm,
-+			   struct dm_block *superblock)
++ * returns the number of entries in the cell prior to the new addition. or
++ * < 0 on failure.
++ */
++static int bio_detain(struct bio_prison *prison, struct cell_key *key,
++		      struct bio *inmate, struct cell **ref)
 +{
 +	int r;
 +	unsigned long flags;
-+
-+	write_all_dirty(bm);
-+	r = __wait_flush(bm);
-+	if (r)
-+		return r;
-+
-+	spin_lock_irqsave(&bm->lock, flags);
-+	superblock->io_flags = REQ_FUA | REQ_FLUSH;
-+	spin_unlock_irqrestore(&bm->lock, flags);
-+
-+	dm_bm_unlock(superblock);
-+	write_all_dirty(bm);
-+
-+	return __wait_flush(bm);
-+}
-+EXPORT_SYMBOL_GPL(dm_bm_flush_and_unlock);
-+
-+/*----------------------------------------------------------------*/
-diff --git a/drivers/md/persistent-data/dm-block-manager.h b/drivers/md/persistent-data/dm-block-manager.h
-new file mode 100644
-index 0000000..55b96cb
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-block-manager.h
-@@ -0,0 +1,110 @@
-+#ifndef DM_BLOCK_MANAGER_H
-+#define DM_BLOCK_MANAGER_H
-+
-+#include <linux/blkdev.h>
-+#include <linux/types.h>
-+#include <linux/crc32c.h>
-+
-+/*----------------------------------------------------------------*/
-+
-+typedef uint64_t dm_block_t;
-+
-+/* An opaque handle to a block of data */
-+struct dm_block;
-+dm_block_t dm_block_location(struct dm_block *b);
-+void *dm_block_data(struct dm_block *b);
-+
-+static inline __le32 dm_block_csum_data(const void *data, unsigned int length)
-+{
-+	return __cpu_to_le32(crc32c(~(u32)0, data, length));
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+struct dm_block_manager;
-+struct dm_block_manager *
-+dm_block_manager_create(struct block_device *bdev, unsigned block_size,
-+			unsigned cache_size);
-+void dm_block_manager_destroy(struct dm_block_manager *bm);
-+
-+unsigned dm_bm_block_size(struct dm_block_manager *bm);
-+dm_block_t dm_bm_nr_blocks(struct dm_block_manager *bm);
-+
-+/*----------------------------------------------------------------*/
-+
-+/* 4 bytes for CRC32c */
-+#define PERSISTENT_DATA_CSUM_SIZE 4
-+
-+/*
-+ * The validator allows the caller to verify newly read data, and modify
-+ * the data just before writing.  eg, to calculate checksums.  It's
-+ * important to be consistent with your use of validators.  The only time
-+ * you can change validators is if you call dm_bm_write_lock_zero.
-+ */
-+struct dm_block_validator {
-+	const char *name;
-+	void (*prepare_for_write)(struct dm_block_validator *v, struct dm_block *b, size_t block_size);
-+
-+	/* return 0 if valid, < 0 on error */
-+	int (*check)(struct dm_block_validator *v, struct dm_block *b, size_t block_size);
-+};
-+
-+/*----------------------------------------------------------------*/
-+
-+/*
-+ * You can have multiple concurrent readers, or a single writer holding a
-+ * block lock.
-+ */
-+
-+/*
-+ * dm_bm_lock() locks a block, and returns via |data| a pointer to memory that
-+ * holds a copy of that block.  If you have write locked the block then any
-+ * changes you make to memory pointed to by |data| will be written back to
-+ * the disk sometime after dm_bm_unlock is called.
-+ */
-+int dm_bm_read_lock(struct dm_block_manager *bm, dm_block_t b,
-+		    struct dm_block_validator *v,
-+		    struct dm_block **result);
-+
-+int dm_bm_write_lock(struct dm_block_manager *bm, dm_block_t b,
-+		     struct dm_block_validator *v,
-+		     struct dm_block **result);
-+
-+/*
-+ * The *_try_lock variants return -EWOULDBLOCK if the block isn't
-+ * immediately available.
-+ */
-+int dm_bm_read_try_lock(struct dm_block_manager *bm, dm_block_t b,
-+			struct dm_block_validator *v,
-+			struct dm_block **result);
-+
-+/*
-+ * dm_bm_write_lock_zero() is for use when you know you're going to completely
-+ * overwrite the block.  It saves a disk read.
-+ */
-+int dm_bm_write_lock_zero(struct dm_block_manager *bm, dm_block_t b,
-+			  struct dm_block_validator *v,
-+			  struct dm_block **result);
-+
-+int dm_bm_unlock(struct dm_block *b);
-+
-+/*
-+ * It's a common idiom to have a superblock that should be committed last.
-+ *
-+ * |superblock| should be write locked, it will be unlocked during this
-+ * function.  All dirty blocks are guaranteed to be written and flushed
-+ * before the superblock.
-+ *
-+ * This method always blocks.
-+ */
-+int dm_bm_flush_and_unlock(struct dm_block_manager *bm,
-+			   struct dm_block *superblock);
-+
-+/*
-+ * Debug routines.
-+ */
-+unsigned dm_bm_locks_held(struct dm_block_manager *bm);
-+
-+/*----------------------------------------------------------------*/
-+
-+#endif
-diff --git a/drivers/md/persistent-data/dm-btree-internal.h b/drivers/md/persistent-data/dm-btree-internal.h
-new file mode 100644
-index 0000000..be688a1
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-btree-internal.h
-@@ -0,0 +1,141 @@
-+#ifndef DM_BTREE_INTERNAL_H
-+#define DM_BTREE_INTERNAL_H
-+
-+#include "dm-btree.h"
-+
-+#include <linux/list.h>
-+
-+/*----------------------------------------------------------------*/
-+
-+/* TODO: move all this into btree.c */
-+/*
-+ * We'll need 2 accessor functions for n->csum and n->blocknr
-+ * to support dm-btree-spine.c in that case.
-+ */
-+
-+enum node_flags {
-+	INTERNAL_NODE = 1,
-+	LEAF_NODE = 1 << 1
-+};
-+
-+/*
-+ * To ease coding I'm packing all the different node types into one
-+ * structure.  We can optimise later.
-+ */
-+struct node_header {
-+	__le32 csum;
-+	__le32 flags;
-+	__le64 blocknr; /* which block this node is supposed to live in */
-+
-+	__le32 nr_entries;
-+	__le32 max_entries;
-+} __packed;
-+
-+struct node {
-+	struct node_header header;
-+	__le64 keys[0];
-+} __packed;
-+
-+
-+/*
-+ * Based on the ideas in ["B-trees, Shadowing, and Clones" Ohad Rodeh]
-+ */
-+
-+/* FIXME: enable close packing for on disk structures */
-+
-+void inc_children(struct dm_transaction_manager *tm, struct node *n,
-+		  struct dm_btree_value_type *vt);
-+
-+/* FIXME: change bn_ prefix for these, refers to an old struct block_node */
-+int bn_read_lock(struct dm_btree_info *info, dm_block_t b,
-+		 struct dm_block **result);
-+int bn_shadow(struct dm_btree_info *info, dm_block_t orig,
-+	      struct dm_btree_value_type *vt, struct dm_block **result, int *inc);
-+int bn_new_block(struct dm_btree_info *info, struct dm_block **result);
-+int bn_unlock(struct dm_btree_info *info, struct dm_block *b);
-+
-+/*
-+ * Spines keep track of the rolling locks.  There are 2 variants, read-only
-+ * and one that uses shadowing.  These are separate structs to allow the
-+ * type checker to spot misuse, for example accidentally calling read_lock
-+ * on a shadow spine.
-+ */
-+struct ro_spine {
-+	struct dm_btree_info *info;
-+
-+	int count;
-+	struct dm_block *nodes[2];
-+};
-+
-+void init_ro_spine(struct ro_spine *s, struct dm_btree_info *info);
-+int exit_ro_spine(struct ro_spine *s);
-+int ro_step(struct ro_spine *s, dm_block_t new_child);
-+struct node *ro_node(struct ro_spine *s);
-+
-+struct shadow_spine {
-+	struct dm_btree_info *info;
-+
-+	int count;
-+	struct dm_block *nodes[2];
-+
-+	dm_block_t root;
-+};
-+
-+void init_shadow_spine(struct shadow_spine *s, struct dm_btree_info *info);
-+int exit_shadow_spine(struct shadow_spine *s);
-+
-+int shadow_step(struct shadow_spine *s, dm_block_t b,
-+		struct dm_btree_value_type *vt, int *inc);
-+
-+struct dm_block *shadow_current(struct shadow_spine *s);
-+
-+struct dm_block *shadow_parent(struct shadow_spine *s);
-+
-+int shadow_root(struct shadow_spine *s);
-+
-+/*
-+ * Some inlines.
-+ */
-+static inline __le64 *key_ptr(struct node *n, uint32_t index)
-+{
-+	return n->keys + index;
-+}
-+
-+static inline void *value_base(struct node *n)
-+{
-+	return &n->keys[__le32_to_cpu(n->header.max_entries)];
-+}
-+
-+static inline void *value_ptr(struct node *n, uint32_t index, size_t value_size)
-+{
-+	return value_base(n) + (value_size * index);
-+}
-+
-+/* assumes the values are suitably aligned and converts to core format */
-+static inline uint64_t value64(struct node *n, uint32_t index)
-+{
-+	__le64 *values = value_base(n);
-+	return __le64_to_cpu(values[index]);
-+}
-+
-+/* searching for a key within a single node */
-+int lower_bound(struct node *n, uint64_t key);
-+
-+int upper_bound(struct node *n, uint64_t key);
-+
-+/*
-+ * Exported for testing.
-+ */
-+uint32_t calc_max_entries(size_t value_size, size_t block_size);
-+
-+void insert_at(size_t value_size, struct node *node,
-+	       unsigned index, uint64_t key, void *value);
-+
-+int dm_btree_merge(struct shadow_spine *s, unsigned parent_index,
-+		   size_t value_size);
-+
-+extern struct dm_block_validator btree_node_validator;
-+
-+/*----------------------------------------------------------------*/
-+
-+#endif
-diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
-new file mode 100644
-index 0000000..4b616e3
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-btree-remove.c
-@@ -0,0 +1,540 @@
-+#include "dm-btree.h"
-+#include "dm-btree-internal.h"
-+
-+/*
-+ * Removing an entry from a btree
-+ * ==============================
-+ *
-+ * A very important constraint for our btree is that no node, except the
-+ * root, may have fewer than a certain number of entries.
-+ * (MIN_ENTRIES <= nr_entries <= MAX_ENTRIES).
-+ *
-+ * Ensuring this is complicated by the way we want to only ever hold the
-+ * locks on 2 nodes concurrently, and only change nodes in a top to bottom
-+ * fashion.
-+ *
-+ * Each node may have a left or right sibling.  When decending the spine,
-+ * if a node contains only MIN_ENTRIES then we try and increase this to at
-+ * least MIN_ENTRIES + 1.  We do this in the following ways:
-+ *
-+ * [A] No siblings => this can only happen if the node is the root, in which
-+ *     case we copy the childs contents over the root.
-+ *
-+ * [B] No left sibling
-+ *     ==> rebalance(node, right sibling)
-+ *
-+ * [C] No right sibling
-+ *     ==> rebalance(left sibling, node)
-+ *
-+ * [D] Both siblings, total_entries(left, node, right) <= DEL_THRESHOLD
-+ *     ==> delete node adding it's contents to left and right
-+ *
-+ * [E] Both siblings, total_entries(left, node, right) > DEL_THRESHOLD
-+ *     ==> rebalance(left, node, right)
-+ *
-+ * After these operations it's possible that the our original node no
-+ * longer contains the desired sub tree.  For this reason this rebalancing
-+ * is performed on the children of the current node.  This also avoids
-+ * having a special case for the root.
-+ *
-+ * Once this rebalancing has occurred we can then step into the child node
-+ * for internal nodes.  Or delete the entry for leaf nodes.
-+ */
-+
-+/*
-+ * Some little utilities for moving node data around.
-+ */
-+static void node_shift(struct node *n, int shift)
-+{
-+	uint32_t nr_entries = __le32_to_cpu(n->header.nr_entries);
-+
-+	if (shift < 0) {
-+		shift = -shift;
-+		memmove(key_ptr(n, 0),
-+			key_ptr(n, shift),
-+			(nr_entries - shift) * sizeof(__le64));
-+		memmove(value_ptr(n, 0, sizeof(__le64)),
-+			value_ptr(n, shift, sizeof(__le64)),
-+			(nr_entries - shift) * sizeof(__le64));
-+	} else {
-+		memmove(key_ptr(n, shift),
-+			key_ptr(n, 0),
-+			nr_entries * sizeof(__le64));
-+		memmove(value_ptr(n, shift, sizeof(__le64)),
-+			value_ptr(n, 0, sizeof(__le64)),
-+			nr_entries * sizeof(__le64));
-+	}
-+}
-+
-+static void node_copy(struct node *left, struct node *right, int shift)
-+{
-+	uint32_t nr_left = __le32_to_cpu(left->header.nr_entries);
-+
-+	if (shift < 0) {
-+		shift = -shift;
-+		memcpy(key_ptr(left, nr_left),
-+		       key_ptr(right, 0),
-+		       shift * sizeof(__le64));
-+		memcpy(value_ptr(left, nr_left, sizeof(__le64)),
-+		       value_ptr(right, 0, sizeof(__le64)),
-+		       shift * sizeof(__le64));
-+	} else {
-+		memcpy(key_ptr(right, 0),
-+		       key_ptr(left, nr_left - shift),
-+		       shift * sizeof(__le64));
-+		memcpy(value_ptr(right, 0, sizeof(__le64)),
-+		       value_ptr(left, nr_left - shift, sizeof(__le64)),
-+		       shift * sizeof(__le64));
-+	}
-+}
-+
-+/*
-+ * Delete a specific entry from a leaf node.
-+ */
-+static void delete_at(struct node *n, unsigned index, size_t value_size)
-+{
-+	unsigned nr_entries = __le32_to_cpu(n->header.nr_entries);
-+	unsigned nr_to_copy = nr_entries - (index + 1);
-+
-+	if (nr_to_copy) {
-+		memmove(key_ptr(n, index),
-+			key_ptr(n, index + 1),
-+			nr_to_copy * sizeof(__le64));
-+
-+		memmove(value_ptr(n, index, value_size),
-+			value_ptr(n, index + 1, value_size),
-+			nr_to_copy * value_size);
-+	}
-+
-+	n->header.nr_entries = __cpu_to_le32(nr_entries - 1);
-+}
-+
-+static unsigned del_threshold(struct node *n)
-+{
-+	return __le32_to_cpu(n->header.max_entries) / 3;
-+}
-+
-+static unsigned merge_threshold(struct node *n)
-+{
-+	/*
-+	 * The extra one is because we know we're potentially going to
-+	 * delete an entry.
-+	 */
-+	return 2 * (__le32_to_cpu(n->header.max_entries) / 3) + 1;
-+}
-+
-+struct child {
-+	unsigned index;
-+	struct dm_block *block;
-+	struct node *n;
-+};
-+
-+static struct dm_btree_value_type le64_type_ = {
-+	.context = NULL,
-+	.size = sizeof(__le64),
-+	.inc = NULL,
-+	.dec = NULL,
-+	.equal = NULL
-+};
-+
-+static int init_child(struct dm_btree_info *info, struct node *parent,
-+		      unsigned index, struct child *result)
-+{
-+	int r, inc;
-+	dm_block_t root;
-+
-+	result->index = index;
-+	root = value64(parent, index);
-+
-+	r = dm_tm_shadow_block(info->tm, root, &btree_node_validator,
-+			       &result->block, &inc);
-+	if (r)
-+		return r;
-+
-+	result->n = dm_block_data(result->block);
-+	if (inc)
-+		inc_children(info->tm, result->n, &le64_type_);
-+	return 0;
-+}
-+
-+static int exit_child(struct dm_btree_info *info, struct child *c)
-+{
-+	return dm_tm_unlock(info->tm, c->block);
-+}
-+
-+static void shift(struct node *left, struct node *right, int count)
-+{
-+	if (count == 0)
-+		return;
-+
-+	if (count > 0) {
-+		node_shift(right, count);
-+		node_copy(left, right, count);
-+
-+	} else {
-+		node_copy(left, right, count);
-+		node_shift(right, count);
-+	}
-+
-+	left->header.nr_entries =
-+		__cpu_to_le32(__le32_to_cpu(left->header.nr_entries) - count);
-+	right->header.nr_entries =
-+		__cpu_to_le32(__le32_to_cpu(right->header.nr_entries) + count);
-+}
-+
-+static void __rebalance2(struct dm_btree_info *info, struct node *parent,
-+			 struct child *l, struct child *r)
-+{
-+	struct node *left = l->n;
-+	struct node *right = r->n;
-+	uint32_t nr_left = __le32_to_cpu(left->header.nr_entries);
-+	uint32_t nr_right = __le32_to_cpu(right->header.nr_entries);
-+
-+	if (nr_left + nr_right <= merge_threshold(left)) {
-+		/* merge */
-+		node_copy(left, right, -nr_right);
-+		left->header.nr_entries = __cpu_to_le32(nr_left + nr_right);
-+
-+		*((__le64 *) value_ptr(parent, l->index, sizeof(__le64))) =
-+			__cpu_to_le64(dm_block_location(l->block));
-+		delete_at(parent, r->index, sizeof(__le64));
++	uint32_t hash = hash_key(prison, key);
++	struct cell *uninitialized_var(cell), *cell2 = NULL;
++
++	BUG_ON(hash > prison->nr_buckets);
++
++	spin_lock_irqsave(&prison->lock, flags);
++	cell = __search_bucket(prison->cells + hash, key);
++
++	if (!cell) {
++		/* allocate a new cell */
++		spin_unlock_irqrestore(&prison->lock, flags);
++		cell2 = mempool_alloc(prison->cell_pool, GFP_NOIO);
++		spin_lock_irqsave(&prison->lock, flags);
 +
 +		/*
-+		 * We need to decrement the right block, but not it's
-+		 * children, since they're still referenced by @left
++		 * We've been unlocked, so we have to double check that
++		 * nobody else has inserted this cell in the mean time.
 +		 */
-+		dm_tm_dec(info->tm, dm_block_location(r->block));
++		cell = __search_bucket(prison->cells + hash, key);
 +
-+	} else {
-+		/* rebalance */
-+		unsigned target_left = (nr_left + nr_right) / 2;
-+		shift(left, right, nr_left - target_left);
-+		*((__le64 *) value_ptr(parent, l->index, sizeof(__le64))) =
-+			__cpu_to_le64(dm_block_location(l->block));
-+		*((__le64 *) value_ptr(parent, r->index, sizeof(__le64))) =
-+			__cpu_to_le64(dm_block_location(r->block));
-+		*key_ptr(parent, r->index) = right->keys[0];
-+	}
-+}
++		if (!cell) {
++			cell = cell2;
++			cell2 = NULL;
 +
-+static int rebalance2(struct shadow_spine *s, struct dm_btree_info *info,
-+		      unsigned left_index)
-+{
-+	int r;
-+	struct node *parent;
-+	struct child left, right;
-+
-+	parent = dm_block_data(shadow_current(s));
-+
-+	r = init_child(info, parent, left_index, &left);
-+	if (r)
-+		return r;
-+
-+	r = init_child(info, parent, left_index + 1, &right);
-+	if (r) {
-+		exit_child(info, &left);
-+		return r;
-+	}
-+
-+	__rebalance2(info, parent, &left, &right);
-+
-+	r = exit_child(info, &left);
-+	if (r) {
-+		exit_child(info, &right);
-+		return r;
-+	}
-+
-+	r = exit_child(info, &right);
-+	if (r)
-+		return r;
-+
-+	return 0;
-+}
-+
-+static void __rebalance3(struct dm_btree_info *info, struct node *parent,
-+			 struct child *l, struct child *c, struct child *r)
-+{
-+	struct node *left = l->n;
-+	struct node *center = c->n;
-+	struct node *right = r->n;
-+
-+	uint32_t nr_left = __le32_to_cpu(left->header.nr_entries);
-+	uint32_t nr_center = __le32_to_cpu(center->header.nr_entries);
-+	uint32_t nr_right = __le32_to_cpu(right->header.nr_entries);
-+	uint32_t max_entries = __le32_to_cpu(left->header.max_entries);
-+
-+	if (((nr_left + nr_center + nr_right) / 2) < merge_threshold(center)) {
-+		/* delete center node:
-+		 *
-+		 * We dump as many entries from center as possible into
-+		 * left, then the rest in right, then rebalance2.  This
-+		 * wastes some cpu, but I want something simple atm.
-+		 */
-+
-+		unsigned shift = min(max_entries - nr_left, nr_center);
-+		node_copy(left, center, -shift);
-+		left->header.nr_entries = __cpu_to_le32(nr_left + shift);
-+
-+		if (shift != nr_center) {
-+			shift = nr_center - shift;
-+			node_shift(right, shift);
-+			node_copy(center, right, shift);
-+			right->header.nr_entries = __cpu_to_le32(nr_right + shift);
++			cell->prison = prison;
++			memcpy(&cell->key, key, sizeof(cell->key));
++			cell->count = 0;
++			bio_list_init(&cell->bios);
++			hlist_add_head(&cell->list, prison->cells + hash);
 +		}
-+
-+		*((__le64 *) value_ptr(parent, l->index, sizeof(__le64))) =
-+			__cpu_to_le64(dm_block_location(l->block));
-+		*((__le64 *) value_ptr(parent, r->index, sizeof(__le64))) =
-+			__cpu_to_le64(dm_block_location(r->block));
-+		*key_ptr(parent, r->index) = right->keys[0];
-+
-+		delete_at(parent, c->index, sizeof(__le64));
-+		r->index--;
-+
-+		dm_tm_dec(info->tm, dm_block_location(c->block));
-+		__rebalance2(info, parent, l, r);
-+
-+	} else {
-+		/* rebalance */
-+		unsigned target = (nr_left + nr_center + nr_right) / 3;
-+		BUG_ON(target == nr_center);
-+
-+		/* adjust the left node */
-+		shift(left, center, nr_left - target);
-+
-+		/* adjust the right node */
-+		shift(center, right, target - nr_right);
-+
-+		*((__le64 *) value_ptr(parent, l->index, sizeof(__le64))) =
-+			__cpu_to_le64(dm_block_location(l->block));
-+		*((__le64 *) value_ptr(parent, c->index, sizeof(__le64))) =
-+			__cpu_to_le64(dm_block_location(c->block));
-+		*((__le64 *) value_ptr(parent, r->index, sizeof(__le64))) =
-+			__cpu_to_le64(dm_block_location(r->block));
-+
-+		*key_ptr(parent, c->index) = center->keys[0];
-+		*key_ptr(parent, r->index) = right->keys[0];
-+	}
-+}
-+
-+static int rebalance3(struct shadow_spine *s, struct dm_btree_info *info,
-+		      unsigned left_index)
-+{
-+	int r;
-+	struct node *parent = dm_block_data(shadow_current(s));
-+	struct child left, center, right;
-+
-+	/* FIXME: fill out an array? */
-+	r = init_child(info, parent, left_index, &left);
-+	if (r)
-+		return r;
-+
-+	r = init_child(info, parent, left_index + 1, &center);
-+	if (r) {
-+		exit_child(info, &left);
-+		return r;
 +	}
 +
-+	r = init_child(info, parent, left_index + 2, &right);
-+	if (r) {
-+		exit_child(info, &left);
-+		exit_child(info, &center);
-+		return r;
-+	}
++	r = cell->count++;
++	bio_list_add(&cell->bios, inmate);
++	spin_unlock_irqrestore(&prison->lock, flags);
 +
-+	__rebalance3(info, parent, &left, &center, &right);
++	if (cell2)
++		mempool_free(cell2, prison->cell_pool);
 +
-+	r = exit_child(info, &left);
-+	if (r) {
-+		exit_child(info, &center);
-+		exit_child(info, &right);
-+		return r;
-+	}
-+
-+	r = exit_child(info, &center);
-+	if (r) {
-+		exit_child(info, &right);
-+		return r;
-+	}
-+
-+	r = exit_child(info, &right);
-+	if (r)
-+		return r;
-+
-+	return 0;
-+}
-+
-+static int get_nr_entries(struct dm_transaction_manager *tm,
-+			  dm_block_t b, uint32_t *result)
-+{
-+	int r;
-+	struct dm_block *block;
-+	struct node *c;
-+
-+	r = dm_tm_read_lock(tm, b, &btree_node_validator, &block);
-+	if (r)
-+		return r;
-+
-+	c = dm_block_data(block);
-+	*result = __le32_to_cpu(c->header.nr_entries);
-+
-+	return dm_tm_unlock(tm, block);
-+}
-+
-+static int rebalance_children(struct shadow_spine *s,
-+			      struct dm_btree_info *info, uint64_t key)
-+{
-+	int i, r, has_left_sibling, has_right_sibling;
-+	uint32_t child_entries;
-+	struct node *n;
-+
-+	n = dm_block_data(shadow_current(s));
-+
-+	if (__le32_to_cpu(n->header.nr_entries) == 1) {
-+		struct dm_block *child;
-+		dm_block_t b = value64(n, 0);
-+
-+		r = dm_tm_read_lock(info->tm, b, &btree_node_validator, &child);
-+		if (r)
-+			return r;
-+
-+		memcpy(n, dm_block_data(child),
-+		       dm_bm_block_size(dm_tm_get_bm(info->tm)));
-+		r = dm_tm_unlock(info->tm, child);
-+		dm_tm_dec(info->tm, dm_block_location(child));
-+
-+	} else {
-+		i = lower_bound(n, key);
-+
-+		if (i < 0)
-+			return -ENODATA;
-+
-+		r = get_nr_entries(info->tm, value64(n, i), &child_entries);
-+		if (r)
-+			return r;
-+
-+		if (child_entries > del_threshold(n))
-+			return 0;
-+
-+		has_left_sibling = i > 0 ? 1 : 0;
-+		has_right_sibling =
-+			(i >= (__le32_to_cpu(n->header.nr_entries) - 1)) ? 0 : 1;
-+
-+		if (!has_left_sibling)
-+			r = rebalance2(s, info, i);
-+
-+		else if (!has_right_sibling)
-+			r = rebalance2(s, info, i - 1);
-+
-+		else
-+			r = rebalance3(s, info, i - 1);
-+	}
-+
++	*ref = cell;
 +	return r;
 +}
 +
-+static int do_leaf(struct node *n, uint64_t key, unsigned *index)
-+{
-+	int i = lower_bound(n, key);
-+
-+	if ((i < 0) ||
-+	    (i >= __le32_to_cpu(n->header.nr_entries)) ||
-+	    (__le64_to_cpu(n->keys[i]) != key))
-+		return -ENODATA;
-+
-+	*index = i;
-+	return 0;
-+}
-+
-+/*
-+ * Prepares for removal from one level of the hierarchy.  The caller must
-+ * actually call delete_at() to remove the entry at index.
-+ */
-+static int remove_raw(struct shadow_spine *s, struct dm_btree_info *info,
-+		      struct dm_btree_value_type *vt, dm_block_t root,
-+		      uint64_t key, unsigned *index)
-+{
-+	int i = *index, inc, r;
-+	struct node *n;
-+
-+	for (;;) {
-+		r = shadow_step(s, root, vt, &inc);
-+		if (r < 0)
-+			break;
-+
-+		/* We have to patch up the parent node, ugly, but I don't
-+		 * see a way to do this automatically as part of the spine
-+		 * op. */
-+		if (shadow_parent(s)) {
-+			__le64 location = __cpu_to_le64(dm_block_location(shadow_current(s)));
-+			memcpy(value_ptr(dm_block_data(shadow_parent(s)), i, sizeof(uint64_t)),
-+			       &location, sizeof(__le64));
-+		}
-+
-+		n = dm_block_data(shadow_current(s));
-+		if (inc)
-+			inc_children(info->tm, n, vt);
-+
-+		if (__le32_to_cpu(n->header.flags) & LEAF_NODE)
-+			return do_leaf(n, key, index);
-+
-+		else {
-+			r = rebalance_children(s, info, key);
-+			if (r)
-+				break;
-+
-+			n = dm_block_data(shadow_current(s));
-+			if (__le32_to_cpu(n->header.flags) & LEAF_NODE)
-+				return do_leaf(n, key, index);
-+
-+			i = lower_bound(n, key);
-+
-+			/* We know the key is present, or else
-+			 * rebalance_children would have returned
-+			 * -ENODATA
-+			 */
-+			root = value64(n, i);
-+		}
-+	}
-+
-+	return r;
-+}
-+
-+int dm_btree_remove(struct dm_btree_info *info, dm_block_t root,
-+		    uint64_t *keys, dm_block_t *new_root)
-+{
-+	unsigned level, last_level = info->levels - 1;
-+	int index = 0, r = 0;
-+	struct shadow_spine spine;
-+	struct node *n;
-+
-+	init_shadow_spine(&spine, info);
-+	for (level = 0; level < info->levels; level++) {
-+		r = remove_raw(&spine, info,
-+			       (level == last_level ?
-+				&info->value_type : &le64_type_),
-+			       root, keys[level], &index);
-+		if (r < 0)
-+			break;
-+
-+		n = dm_block_data(shadow_current(&spine));
-+		if (level == last_level) {
-+			BUG_ON(index < 0 ||
-+			       index >= __le32_to_cpu(n->header.nr_entries));
-+			if (info->value_type.dec)
-+				info->value_type.dec(info->value_type.context,
-+						     value_ptr(n, index, info->value_type.size));
-+			delete_at(n, index, info->value_type.size);
-+			r = 0;
-+			*new_root = shadow_root(&spine);
-+
-+		} else
-+			root = value64(n, index);
-+	}
-+	exit_shadow_spine(&spine);
-+
-+	return r;
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_remove);
-+
-+/*----------------------------------------------------------------*/
-diff --git a/drivers/md/persistent-data/dm-btree-spine.c b/drivers/md/persistent-data/dm-btree-spine.c
-new file mode 100644
-index 0000000..cacdfda
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-btree-spine.c
-@@ -0,0 +1,192 @@
-+#include "dm-btree-internal.h"
-+
-+#include <linux/device-mapper.h> /* For DMERR */
-+
-+#define DM_MSG_PREFIX "btree spine"
-+
-+/*----------------------------------------------------------------*/
-+
-+static void node_prepare_for_write(struct dm_block_validator *v,
-+				   struct dm_block *b,
-+				   size_t block_size)
-+{
-+	struct node_header *node = dm_block_data(b);
-+
-+	node->blocknr = __cpu_to_le64(dm_block_location(b));
-+	node->csum = dm_block_csum_data(&node->flags,
-+					block_size - sizeof(u32));
-+}
-+
-+static int node_check(struct dm_block_validator *v,
-+		      struct dm_block *b,
-+		      size_t block_size)
-+{
-+	struct node_header *node = dm_block_data(b);
-+	__le32 csum;
-+
-+	if (dm_block_location(b) != __le64_to_cpu(node->blocknr)) {
-+		DMERR("node_check failed blocknr %llu wanted %llu",
-+		      __le64_to_cpu(node->blocknr), dm_block_location(b));
-+		return -ENOTBLK;
-+	}
-+
-+	csum = dm_block_csum_data(&node->flags,
-+				  block_size - sizeof(u32));
-+	if (csum != node->csum) {
-+		DMERR("node_check failed csum %u wanted %u",
-+		      __le32_to_cpu(csum), __le32_to_cpu(node->csum));
-+		return -EILSEQ;
-+	}
-+
-+	return 0;
-+}
-+
-+struct dm_block_validator btree_node_validator = {
-+	.name = "btree_node",
-+	.prepare_for_write = node_prepare_for_write,
-+	.check = node_check
-+};
-+
-+/*----------------------------------------------------------------*/
-+
-+int bn_read_lock(struct dm_btree_info *info, dm_block_t b,
-+		 struct dm_block **result)
-+{
-+	return dm_tm_read_lock(info->tm, b, &btree_node_validator, result);
-+}
-+
-+int bn_shadow(struct dm_btree_info *info, dm_block_t orig,
-+	      struct dm_btree_value_type *vt,
-+	      struct dm_block **result, int *inc)
++static int bio_detain_if_occupied(struct bio_prison *prison, struct cell_key *key,
++				  struct bio *inmate, struct cell **ref)
 +{
 +	int r;
++	unsigned long flags;
++	uint32_t hash = hash_key(prison, key);
++	struct cell *uninitialized_var(cell);
 +
-+	r = dm_tm_shadow_block(info->tm, orig, &btree_node_validator,
-+			       result, inc);
-+	if (r == 0 && *inc)
-+		inc_children(info->tm, dm_block_data(*result), vt);
++	BUG_ON(hash > prison->nr_buckets);
 +
-+	return r;
-+}
++	spin_lock_irqsave(&prison->lock, flags);
++	cell = __search_bucket(prison->cells + hash, key);
 +
-+int bn_new_block(struct dm_btree_info *info, struct dm_block **result)
-+{
-+	return dm_tm_new_block(info->tm, &btree_node_validator, result);
-+}
-+
-+int bn_unlock(struct dm_btree_info *info, struct dm_block *b)
-+{
-+	return dm_tm_unlock(info->tm, b);
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+void init_ro_spine(struct ro_spine *s, struct dm_btree_info *info)
-+{
-+	s->info = info;
-+	s->count = 0;
-+	s->nodes[0] = NULL;
-+	s->nodes[1] = NULL;
-+}
-+
-+int exit_ro_spine(struct ro_spine *s)
-+{
-+	int r = 0, i;
-+
-+	for (i = 0; i < s->count; i++) {
-+		int r2 = bn_unlock(s->info, s->nodes[i]);
-+		if (r2 < 0)
-+			r = r2;
-+	}
-+
-+	return r;
-+}
-+
-+int ro_step(struct ro_spine *s, dm_block_t new_child)
-+{
-+	int r;
-+
-+	if (s->count == 2) {
-+		r = bn_unlock(s->info, s->nodes[0]);
-+		if (r < 0)
-+			return r;
-+		s->nodes[0] = s->nodes[1];
-+		s->count--;
-+	}
-+
-+	r = bn_read_lock(s->info, new_child, s->nodes + s->count);
-+	if (r == 0)
-+		s->count++;
-+
-+	return r;
-+}
-+
-+struct node *ro_node(struct ro_spine *s)
-+{
-+	struct dm_block *n;
-+	BUG_ON(!s->count);
-+	n = s->nodes[s->count - 1];
-+	return dm_block_data(n);
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+void init_shadow_spine(struct shadow_spine *s, struct dm_btree_info *info)
-+{
-+	s->info = info;
-+	s->count = 0;
-+}
-+
-+int exit_shadow_spine(struct shadow_spine *s)
-+{
-+	int r = 0, i;
-+
-+	for (i = 0; i < s->count; i++) {
-+		int r2 = bn_unlock(s->info, s->nodes[i]);
-+		if (r2 < 0)
-+			r = r2;
-+	}
-+
-+	return r;
-+}
-+
-+int shadow_step(struct shadow_spine *s, dm_block_t b,
-+		struct dm_btree_value_type *vt, int *inc)
-+{
-+	int r;
-+
-+	if (s->count == 2) {
-+		r = bn_unlock(s->info, s->nodes[0]);
-+		if (r < 0)
-+			return r;
-+		s->nodes[0] = s->nodes[1];
-+		s->count--;
-+	}
-+
-+	r = bn_shadow(s->info, b, vt, s->nodes + s->count, inc);
-+	if (r == 0) {
-+		if (s->count == 0)
-+			s->root = dm_block_location(s->nodes[0]);
-+
-+		s->count++;
-+	}
-+
-+	return r;
-+}
-+
-+struct dm_block *shadow_current(struct shadow_spine *s)
-+{
-+	return s->nodes[s->count - 1];
-+}
-+
-+struct dm_block *shadow_parent(struct shadow_spine *s)
-+{
-+	return s->count == 2 ? s->nodes[0] : NULL;
-+}
-+
-+int shadow_root(struct shadow_spine *s)
-+{
-+	return s->root;
-+}
-+
-+/*----------------------------------------------------------------*/
-diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
-new file mode 100644
-index 0000000..7ec3dcd
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-btree.c
-@@ -0,0 +1,871 @@
-+#include "dm-btree-internal.h"
-+#include "dm-space-map.h"
-+
-+/*----------------------------------------------------------------
-+ * Array manipulation
-+ *--------------------------------------------------------------*/
-+static void array_insert(void *base, size_t elt_size, unsigned nr_elts,
-+			 unsigned index, void *elt)
-+{
-+	if (index < nr_elts)
-+		memmove(base + (elt_size * (index + 1)),
-+			base + (elt_size * index),
-+			(nr_elts - index) * elt_size);
-+	memcpy(base + (elt_size * index), elt, elt_size);
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+/* makes the assumption that no two keys are the same. */
-+static int bsearch(struct node *n, uint64_t key, int want_hi)
-+{
-+	int lo = -1, hi = __le32_to_cpu(n->header.nr_entries);
-+
-+	while (hi - lo > 1) {
-+		int mid = lo + ((hi - lo) / 2);
-+		uint64_t mid_key = __le64_to_cpu(n->keys[mid]);
-+
-+		if (mid_key == key)
-+			return mid;
-+
-+		if (mid_key < key)
-+			lo = mid;
-+		else
-+			hi = mid;
-+	}
-+
-+	return want_hi ? hi : lo;
-+}
-+
-+int lower_bound(struct node *n, uint64_t key)
-+{
-+	return bsearch(n, key, 0);
-+}
-+
-+int upper_bound(struct node *n, uint64_t key)
-+{
-+	return bsearch(n, key, 1);
-+}
-+
-+void inc_children(struct dm_transaction_manager *tm, struct node *n,
-+		  struct dm_btree_value_type *vt)
-+{
-+	unsigned i;
-+	uint32_t nr_entries = __le32_to_cpu(n->header.nr_entries);
-+
-+	if (__le32_to_cpu(n->header.flags) & INTERNAL_NODE)
-+		for (i = 0; i < nr_entries; i++)
-+			dm_tm_inc(tm, value64(n, i));
-+	else if (vt->inc)
-+		for (i = 0; i < nr_entries; i++)
-+			vt->inc(vt->context,
-+				value_ptr(n, i, vt->size));
-+}
-+
-+void insert_at(size_t value_size, struct node *node, unsigned index,
-+	       uint64_t key, void *value)
-+{
-+	uint32_t nr_entries = __le32_to_cpu(node->header.nr_entries);
-+
-+	BUG_ON(index > nr_entries ||
-+	       index >= __le32_to_cpu(node->header.max_entries));
-+
-+	array_insert(node->keys, sizeof(*node->keys), nr_entries, index, &key);
-+	array_insert(value_base(node), value_size, nr_entries, index, value);
-+	node->header.nr_entries = __cpu_to_le32(nr_entries + 1);
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+/*
-+ * We want 3n entries (for some n).  This works more nicely for repeated
-+ * insert remove loops than (2n + 1).
-+ */
-+uint32_t calc_max_entries(size_t value_size, size_t block_size)
-+{
-+	uint32_t total, n;
-+	size_t elt_size = sizeof(uint64_t) + value_size; /* key + value */
-+
-+	block_size -= sizeof(struct node_header);
-+	total = block_size / elt_size;
-+	n = total / 3;		/* rounds down */
-+
-+	return 3 * n;
-+}
-+
-+int dm_btree_empty(struct dm_btree_info *info, dm_block_t *root)
-+{
-+	int r;
-+	struct dm_block *b;
-+	struct node *n;
-+	size_t block_size;
-+	uint32_t max_entries;
-+
-+	r = bn_new_block(info, &b);
-+	if (r < 0)
-+		return r;
-+
-+	block_size = dm_bm_block_size(dm_tm_get_bm(info->tm));
-+	max_entries = calc_max_entries(info->value_type.size, block_size);
-+
-+	n = (struct node *) dm_block_data(b);
-+	memset(n, 0, block_size);
-+	n->header.flags = __cpu_to_le32(LEAF_NODE);
-+	n->header.nr_entries = __cpu_to_le32(0);
-+	n->header.max_entries =	__cpu_to_le32(max_entries);
-+
-+	*root = dm_block_location(b);
-+	return bn_unlock(info, b);
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_empty);
-+
-+/*----------------------------------------------------------------*/
-+
-+/*
-+ * Deletion uses a recursive algorithm, since we have limited stack space
-+ * we explicitly manage our own stack on the heap.
-+ */
-+#define MAX_SPINE_DEPTH 64
-+struct frame {
-+	struct dm_block *b;
-+	struct node *n;
-+	unsigned level;
-+	unsigned nr_children;
-+	unsigned current_child;
-+};
-+
-+struct del_stack {
-+	struct dm_transaction_manager *tm;
-+	int top;
-+	struct frame spine[MAX_SPINE_DEPTH];
-+};
-+
-+static void top_frame(struct del_stack *s, struct frame **f)
-+{
-+	BUG_ON(s->top < 0);
-+	*f = s->spine + s->top;
-+}
-+
-+static int unprocessed_frames(struct del_stack *s)
-+{
-+	return s->top >= 0;
-+}
-+
-+static int push_frame(struct del_stack *s, dm_block_t b, unsigned level)
-+{
-+	int r;
-+	uint32_t ref_count;
-+
-+	BUG_ON(s->top >= MAX_SPINE_DEPTH);
-+
-+	r = dm_tm_ref(s->tm, b, &ref_count);
-+	if (r)
-+		return r;
-+
-+	if (ref_count > 1)
-+		/*
-+		 * This is a shared node, so we can just decrement it's
-+		 * reference counter and leave the children.
-+		 */
-+		dm_tm_dec(s->tm, b);
-+
-+	else {
-+		struct frame *f = s->spine + ++s->top;
-+
-+		r = dm_tm_read_lock(s->tm, b, &btree_node_validator, &f->b);
-+		if (r) {
-+			s->top--;
-+			return r;
-+		}
-+
-+		f->n = dm_block_data(f->b);
-+		f->level = level;
-+		f->nr_children = __le32_to_cpu(f->n->header.nr_entries);
-+		f->current_child = 0;
-+	}
-+
-+	return 0;
-+}
-+
-+static void pop_frame(struct del_stack *s)
-+{
-+	struct frame *f = s->spine + s->top--;
-+
-+	dm_tm_dec(s->tm, dm_block_location(f->b));
-+	dm_tm_unlock(s->tm, f->b);
-+}
-+
-+int dm_btree_del(struct dm_btree_info *info, dm_block_t root)
-+{
-+	struct del_stack *s;
-+
-+	s = kmalloc(sizeof(*s), GFP_KERNEL);
-+	if (!s)
-+		return -ENOMEM;
-+	s->tm = info->tm;
-+	s->top = -1;
-+
-+	push_frame(s, root, 1);
-+	while (unprocessed_frames(s)) {
-+		int r;
-+		uint32_t flags;
-+		struct frame *f;
-+		dm_block_t b;
-+
-+		top_frame(s, &f);
-+
-+		if (f->current_child >= f->nr_children) {
-+			pop_frame(s);
-+			continue;
-+		}
-+
-+		flags = __le32_to_cpu(f->n->header.flags);
-+		if (flags & INTERNAL_NODE) {
-+			b = value64(f->n, f->current_child);
-+			f->current_child++;
-+			r = push_frame(s, b, f->level);
-+			if (r)
-+				goto bad;
-+
-+		} else if (f->level != (info->levels - 1)) {
-+			b = value64(f->n, f->current_child);
-+			f->current_child++;
-+			r = push_frame(s, b, f->level + 1);
-+			if (r)
-+				goto bad;
-+
-+		} else {
-+			if (info->value_type.dec) {
-+				unsigned i;
-+
-+				for (i = 0; i < f->nr_children; i++)
-+					info->value_type.dec(info->value_type.context,
-+							     value_ptr(f->n, i, info->value_type.size));
-+			}
-+			f->current_child = f->nr_children;
-+		}
-+	}
-+
-+	return 0;
-+
-+bad:
-+	/* what happens if we've deleted half a tree? */
-+	return -1; /* FIXME: return error code rather than -1? */
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_del);
-+
-+int dm_btree_del_gt(struct dm_btree_info *info, dm_block_t root, uint64_t *key,
-+		    dm_block_t *new_root)
-+{
-+	/* FIXME: implement */
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_del_gt);
-+
-+/*----------------------------------------------------------------*/
-+
-+static int btree_lookup_raw(struct ro_spine *s, dm_block_t block, uint64_t key,
-+			    int (*search_fn)(struct node *, uint64_t),
-+			    uint64_t *result_key, void *v, size_t value_size)
-+{
-+	int i, r;
-+	uint32_t flags, nr_entries;
-+
-+	do {
-+		r = ro_step(s, block);
-+		if (r < 0)
-+			return r;
-+
-+		i = search_fn(ro_node(s), key);
-+
-+		flags = __le32_to_cpu(ro_node(s)->header.flags);
-+		nr_entries = __le32_to_cpu(ro_node(s)->header.nr_entries);
-+		if (i < 0 || i >= nr_entries)
-+			return -ENODATA;
-+
-+		if (flags & INTERNAL_NODE)
-+			block = value64(ro_node(s), i);
-+
-+	} while (!(flags & LEAF_NODE));
-+
-+	*result_key = __le64_to_cpu(ro_node(s)->keys[i]);
-+	memcpy(v, value_ptr(ro_node(s), i, value_size), value_size);
-+
-+	return 0;
-+}
-+
-+int dm_btree_lookup(struct dm_btree_info *info, dm_block_t root,
-+		    uint64_t *keys, void *value)
-+{
-+	unsigned level, last_level = info->levels - 1;
-+	int r;
-+	uint64_t rkey;
-+	__le64 internal_value;
-+	struct ro_spine spine;
-+
-+	init_ro_spine(&spine, info);
-+	for (level = 0; level < info->levels; level++) {
-+		size_t size;
-+		void *value_p;
-+
-+		if (level == last_level) {
-+			value_p = value;
-+			size = info->value_type.size;
-+
-+		} else {
-+			value_p = &internal_value;
-+			size = sizeof(uint64_t);
-+		}
-+
-+		r = btree_lookup_raw(&spine, root, keys[level],
-+				     lower_bound, &rkey,
-+				     value_p, size);
-+
-+		if (r == 0) {
-+			if (rkey != keys[level]) {
-+				exit_ro_spine(&spine);
-+				return -ENODATA;
-+			}
-+		} else {
-+			exit_ro_spine(&spine);
-+			return r;
-+		}
-+
-+		root = __le64_to_cpu(internal_value);
-+	}
-+	exit_ro_spine(&spine);
-+
-+	return r;
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_lookup);
-+
-+int dm_btree_lookup_le(struct dm_btree_info *info, dm_block_t root,
-+		       uint64_t *keys, uint64_t *key, void *value)
-+{
-+	unsigned level, last_level = info->levels - 1;
-+	int r;
-+	__le64 internal_value;
-+	struct ro_spine spine;
-+
-+	init_ro_spine(&spine, info);
-+	for (level = 0; level < info->levels; level++) {
-+		size_t size;
-+		void *value_p;
-+
-+		if (level == last_level) {
-+			value_p = value;
-+			size = info->value_type.size;
-+
-+		} else {
-+			value_p = &internal_value;
-+			size = sizeof(uint64_t);
-+		}
-+
-+		r = btree_lookup_raw(&spine, root, keys[level],
-+				     lower_bound, key,
-+				     value_p, size);
-+
-+		if (r != 0) {
-+			exit_ro_spine(&spine);
-+			return r;
-+		}
-+
-+		root = __le64_to_cpu(internal_value);
-+	}
-+	exit_ro_spine(&spine);
-+
-+	return r;
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_lookup_le);
-+
-+int dm_btree_lookup_ge(struct dm_btree_info *info, dm_block_t root,
-+		       uint64_t *keys, uint64_t *key, void *value)
-+{
-+	unsigned level, last_level = info->levels - 1;
-+	int r;
-+	__le64 internal_value;
-+	struct ro_spine spine;
-+
-+	init_ro_spine(&spine, info);
-+	for (level = 0; level < info->levels; level++) {
-+		size_t size;
-+		void *value_p;
-+
-+		if (level == last_level) {
-+			value_p = value;
-+			size = info->value_type.size;
-+
-+		} else {
-+			value_p = &internal_value;
-+			size = sizeof(uint64_t);
-+		}
-+
-+		r = btree_lookup_raw(&spine, root, keys[level],
-+				     upper_bound, key,
-+				     value_p, size);
-+
-+		if (r != 0) {
-+			exit_ro_spine(&spine);
-+			return r;
-+		}
-+
-+		root = __le64_to_cpu(internal_value);
-+	}
-+	exit_ro_spine(&spine);
-+
-+	return r;
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_lookup_ge);
-+
-+/*
-+ * Splits a node by creating a sibling node and shifting half the nodes
-+ * contents across.  Assumes there is a parent node, and it has room for
-+ * another child.
-+ *
-+ * Before:
-+ *	  +--------+
-+ *	  | Parent |
-+ *	  +--------+
-+ *	     |
-+ *	     v
-+ *	+----------+
-+ *	| A ++++++ |
-+ *	+----------+
-+ *
-+ *
-+ * After:
-+ *		+--------+
-+ *		| Parent |
-+ *		+--------+
-+ *		  |	|
-+ *		  v	+------+
-+ *	    +---------+	       |
-+ *	    | A* +++  |	       v
-+ *	    +---------+	  +-------+
-+ *			  | B +++ |
-+ *			  +-------+
-+ *
-+ * Where A* is a shadow of A.
-+ */
-+static int btree_split_sibling(struct shadow_spine *s, dm_block_t root,
-+			       unsigned parent_index, uint64_t key)
-+{
-+	int ret;
-+	size_t size;
-+	unsigned nr_left, nr_right;
-+	struct dm_block *left, *right, *parent;
-+	struct node *l, *r, *p;
-+	__le64 location;
-+
-+	left = shadow_current(s);
-+	BUG_ON(!left);
-+
-+	ret = bn_new_block(s->info, &right);
-+	if (ret < 0)
-+		return ret;
-+
-+	l = dm_block_data(left);
-+	r = (struct node *) dm_block_data(right);
-+
-+	nr_left = __le32_to_cpu(l->header.nr_entries) / 2;
-+	nr_right = __le32_to_cpu(l->header.nr_entries) - nr_left;
-+
-+	l->header.nr_entries = __cpu_to_le32(nr_left);
-+
-+	r->header.flags = l->header.flags;
-+	r->header.nr_entries = __cpu_to_le32(nr_right);
-+	r->header.max_entries = l->header.max_entries;
-+	memcpy(r->keys, l->keys + nr_left, nr_right * sizeof(r->keys[0]));
-+
-+	size = __le32_to_cpu(l->header.flags) & INTERNAL_NODE ?
-+		sizeof(uint64_t) : s->info->value_type.size;
-+	memcpy(value_ptr(r, 0, size), value_ptr(l, nr_left, size),
-+	       size * nr_right);
-+
-+	/* Patch up the parent */
-+	parent = shadow_parent(s);
-+	BUG_ON(!parent);
-+
-+	p = dm_block_data(parent);
-+	location = __cpu_to_le64(dm_block_location(left));
-+	memcpy(value_ptr(p, parent_index, sizeof(__le64)),
-+	       &location, sizeof(__le64));
-+
-+	location = __cpu_to_le64(dm_block_location(right));
-+	insert_at(sizeof(__le64), p, parent_index + 1,
-+		  __le64_to_cpu(r->keys[0]), &location);
-+
-+	if (key < __le64_to_cpu(r->keys[0])) {
-+		bn_unlock(s->info, right);
-+		s->nodes[1] = left;
-+	} else {
-+		bn_unlock(s->info, left);
-+		s->nodes[1] = right;
-+	}
-+
-+	return 0;
-+}
-+
-+/*
-+ * Splits a node by creating two new children beneath the given node.
-+ *
-+ * Before:
-+ *	  +----------+
-+ *	  | A ++++++ |
-+ *	  +----------+
-+ *
-+ *
-+ * After:
-+ *	+------------+
-+ *	| A (shadow) |
-+ *	+------------+
-+ *	    |	|
-+ *   +------+	+----+
-+ *   |		     |
-+ *   v		     v
-+ * +-------+	 +-------+
-+ * | B +++ |	 | C +++ |
-+ * +-------+	 +-------+
-+ */
-+static int btree_split_beneath(struct shadow_spine *s, uint64_t key)
-+{
-+	int ret;
-+	size_t size;
-+	unsigned nr_left, nr_right;
-+	struct dm_block *left, *right, *new_parent;
-+	struct node *p, *l, *r;
-+	__le64 val;
-+
-+	new_parent = shadow_current(s);
-+	BUG_ON(!new_parent);
-+
-+	ret = bn_new_block(s->info, &left);
-+	if (ret < 0)
-+		return ret;
-+
-+	ret = bn_new_block(s->info, &right);
-+	if (ret < 0) {
-+		/* FIXME: put left */
-+		return ret;
-+	}
-+
-+	p = dm_block_data(new_parent);
-+	l = (struct node *) dm_block_data(left);
-+	r = (struct node *) dm_block_data(right);
-+
-+	nr_left = __le32_to_cpu(p->header.nr_entries) / 2;
-+	nr_right = __le32_to_cpu(p->header.nr_entries) - nr_left;
-+
-+	l->header.flags = p->header.flags;
-+	l->header.nr_entries = __cpu_to_le32(nr_left);
-+	l->header.max_entries = p->header.max_entries;
-+
-+	r->header.flags = p->header.flags;
-+	r->header.nr_entries = __cpu_to_le32(nr_right);
-+	r->header.max_entries = p->header.max_entries;
-+
-+	memcpy(l->keys, p->keys, nr_left * sizeof(p->keys[0]));
-+	memcpy(r->keys, p->keys + nr_left, nr_right * sizeof(p->keys[0]));
-+
-+	size = __le32_to_cpu(p->header.flags) & INTERNAL_NODE ?
-+		sizeof(__le64) : s->info->value_type.size;
-+	memcpy(value_ptr(l, 0, size), value_ptr(p, 0, size), nr_left * size);
-+	memcpy(value_ptr(r, 0, size), value_ptr(p, nr_left, size),
-+	       nr_right * size);
-+
-+	/* new_parent should just point to l and r now */
-+	p->header.flags = __cpu_to_le32(INTERNAL_NODE);
-+	p->header.nr_entries = __cpu_to_le32(2);
-+
-+	val = __cpu_to_le64(dm_block_location(left));
-+	p->keys[0] = l->keys[0];
-+	memcpy(value_ptr(p, 0, sizeof(__le64)), &val, sizeof(__le64));
-+
-+	val = __cpu_to_le64(dm_block_location(right));
-+	p->keys[1] = r->keys[0];
-+	memcpy(value_ptr(p, 1, sizeof(__le64)), &val, sizeof(__le64));
-+
-+	/*
-+	 * rejig the spine.  This is ugly, since it knows too
-+	 * much about the spine
-+	 */
-+	if (s->nodes[0] != new_parent) {
-+		bn_unlock(s->info, s->nodes[0]);
-+		s->nodes[0] = new_parent;
-+	}
-+	if (key < __le64_to_cpu(r->keys[0])) {
-+		bn_unlock(s->info, right);
-+		s->nodes[1] = left;
-+	} else {
-+		bn_unlock(s->info, left);
-+		s->nodes[1] = right;
-+	}
-+	s->count = 2;
-+
-+	return 0;
-+}
-+
-+static int btree_insert_raw(struct shadow_spine *s, dm_block_t root,
-+			    struct dm_btree_value_type *vt,
-+			    uint64_t key, unsigned *index)
-+{
-+	int r, i = *index, inc, top = 1;
-+	struct node *node;
-+
-+	for (;;) {
-+		r = shadow_step(s, root, vt, &inc);
-+		if (r < 0) {
-+			/* FIXME: unpick any allocations */
-+			return r;
-+		}
-+
-+		node = dm_block_data(shadow_current(s));
-+		if (inc)
-+			inc_children(s->info->tm, node, vt);
-+
-+		/*
-+		 * We have to patch up the parent node, ugly, but I don't
-+		 * see a way to do this automatically as part of the spine
-+		 * op.
-+		 */
-+		if (shadow_parent(s) && i >= 0) { /* FIXME: second clause unness. */
-+			__le64 location = __cpu_to_le64(dm_block_location(shadow_current(s)));
-+			memcpy(value_ptr(dm_block_data(shadow_parent(s)), i, sizeof(uint64_t)),
-+			       &location, sizeof(__le64));
-+		}
-+
-+		BUG_ON(!shadow_current(s));
-+		node = dm_block_data(shadow_current(s));
-+
-+		if (node->header.nr_entries == node->header.max_entries) {
-+			if (top)
-+				r = btree_split_beneath(s, key);
-+			else
-+				r = btree_split_sibling(s, root, i, key);
-+
-+			if (r < 0)
-+				return r;
-+		}
-+
-+		BUG_ON(!shadow_current(s));
-+		node = dm_block_data(shadow_current(s));
-+
-+		i = lower_bound(node, key);
-+
-+		if (__le32_to_cpu(node->header.flags) & LEAF_NODE)
-+			break;
-+
-+		if (i < 0) {
-+			/* change the bounds on the lowest key */
-+			node->keys[0] = __cpu_to_le64(key);
-+			i = 0;
-+		}
-+
-+		root = value64(node, i);
-+		top = 0;
-+	}
-+
-+	if (i < 0 || __le64_to_cpu(node->keys[i]) != key)
-+		i++;
-+
-+	/* we're about to overwrite this value, so undo the increment for it */
-+	/* FIXME: shame that inc information is leaking outside the spine.
-+	 * Plus inc is just plain wrong in the event of a split */
-+	if (__le64_to_cpu(node->keys[i]) == key && inc)
-+		if (vt->dec)
-+			vt->dec(vt->context, value_ptr(node, i, vt->size));
-+
-+	*index = i;
-+	return 0;
-+}
-+
-+static int insert(struct dm_btree_info *info, dm_block_t root,
-+		  uint64_t *keys, void *value, dm_block_t *new_root,
-+		  int *inserted)
-+{
-+	int r, need_insert;
-+	unsigned level, index = -1, last_level = info->levels - 1;
-+	dm_block_t *block = &root;
-+	struct shadow_spine spine;
-+	struct node *n;
-+	struct dm_btree_value_type le64_type;
-+
-+	le64_type.context = NULL;
-+	le64_type.size = sizeof(__le64);
-+	le64_type.inc = NULL;
-+	le64_type.dec = NULL;
-+	le64_type.equal = NULL;
-+
-+	init_shadow_spine(&spine, info);
-+
-+	for (level = 0; level < info->levels; level++) {
-+		r = btree_insert_raw(&spine, *block,
-+				     (level == last_level ?
-+				      &info->value_type : &le64_type),
-+				     keys[level], &index);
-+		if (r < 0) {
-+			exit_shadow_spine(&spine);
-+			/* FIXME: avoid block leaks */
-+			return r;
-+		}
-+
-+		BUG_ON(!shadow_current(&spine));
-+		n = dm_block_data(shadow_current(&spine));
-+		need_insert = ((index >= __le32_to_cpu(n->header.nr_entries)) ||
-+			       (__le64_to_cpu(n->keys[index]) != keys[level]));
-+
-+		if (level == last_level) {
-+			if (need_insert) {
-+				if (inserted)
-+					*inserted = 1;
-+
-+				insert_at(info->value_type.size, n, index,
-+					  keys[level], value);
-+			} else {
-+				if (inserted)
-+					*inserted = 0;
-+
-+				if (info->value_type.dec &&
-+				    (!info->value_type.equal ||
-+				     !info->value_type.equal(
-+					     info->value_type.context,
-+					     value_ptr(n, index, info->value_type.size),
-+					     value))) {
-+					info->value_type.dec(info->value_type.context,
-+					     value_ptr(n, index, info->value_type.size));
-+				}
-+				memcpy(value_ptr(n, index, info->value_type.size),
-+				       value, info->value_type.size);
-+			}
-+		} else {
-+			if (need_insert) {
-+				dm_block_t new_tree;
-+				r = dm_btree_empty(info, &new_tree);
-+				if (r < 0) {
-+					/* FIXME: avoid block leaks */
-+					exit_shadow_spine(&spine);
-+					return r;
-+				}
-+
-+				insert_at(sizeof(uint64_t), n, index,
-+					  keys[level], &new_tree);
-+			}
-+		}
-+
-+		if (level < last_level)
-+			block = value_ptr(n, index, sizeof(uint64_t));
-+	}
-+
-+	*new_root = shadow_root(&spine);
-+	exit_shadow_spine(&spine);
-+
-+	return 0;
-+}
-+
-+
-+int dm_btree_insert(struct dm_btree_info *info, dm_block_t root,
-+		    uint64_t *keys, void *value, dm_block_t *new_root)
-+{
-+	return insert(info, root, keys, value, new_root, NULL);
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_insert);
-+
-+int dm_btree_insert_notify(struct dm_btree_info *info, dm_block_t root,
-+			   uint64_t *keys, void *value, dm_block_t *new_root,
-+			   int *inserted)
-+{
-+	return insert(info, root, keys, value, new_root, inserted);
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_insert_notify);
-+
-+/*----------------------------------------------------------------*/
-+
-+int dm_btree_clone(struct dm_btree_info *info, dm_block_t root,
-+		   dm_block_t *clone)
-+{
-+	int r;
-+	struct dm_block *b, *orig_b;
-+	struct node *b_node, *orig_node;
-+
-+	/* Copy the root node */
-+	r = bn_new_block(info, &b);
-+	if (r < 0)
-+		return r;
-+
-+	r = dm_tm_read_lock(info->tm, root, &btree_node_validator, &orig_b);
-+	if (r < 0) {
-+		dm_block_t location = dm_block_location(b);
-+
-+		bn_unlock(info, b);
-+		dm_tm_dec(info->tm, location);
-+	}
-+
-+	*clone = dm_block_location(b);
-+	b_node = (struct node *) dm_block_data(b);
-+	orig_node = dm_block_data(orig_b);
-+
-+	memcpy(b_node, orig_node,
-+	       dm_bm_block_size(dm_tm_get_bm(info->tm)));
-+	dm_tm_unlock(info->tm, orig_b);
-+	inc_children(info->tm, b_node, &info->value_type);
-+	dm_tm_unlock(info->tm, b);
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_clone);
-+
-+/*----------------------------------------------------------------*/
-+
-+static int find_highest_key(struct ro_spine *s, dm_block_t block,
-+			    uint64_t *result_key, dm_block_t *next_block)
-+{
-+	int i, r;
-+	uint32_t flags;
-+
-+	do {
-+		r = ro_step(s, block);
-+		if (r < 0)
-+			return r;
-+
-+		flags = __le32_to_cpu(ro_node(s)->header.flags);
-+		i = __le32_to_cpu(ro_node(s)->header.nr_entries);
-+		if (i == 0)
-+			return -ENODATA;
-+		else
-+			i--;
-+
-+		*result_key = __le64_to_cpu(ro_node(s)->keys[i]);
-+		if (next_block || flags & INTERNAL_NODE)
-+			block = value64(ro_node(s), i);
-+
-+	} while (flags & INTERNAL_NODE);
-+
-+	if (next_block)
-+		*next_block = block;
-+	return 0;
-+}
-+
-+int dm_btree_find_highest_key(struct dm_btree_info *info, dm_block_t root,
-+			      uint64_t *result_keys)
-+{
-+	int r = 0, count = 0, level;
-+	struct ro_spine spine;
-+
-+	init_ro_spine(&spine, info);
-+	for (level = 0; level < info->levels; level++) {
-+		r = find_highest_key(&spine, root, result_keys + level,
-+				     level == info->levels - 1 ? NULL : &root);
-+		if (r == -ENODATA) {
-+			r = 0;
-+			break;
-+
-+		} else if (r)
-+			break;
-+
-+		count++;
-+	}
-+	exit_ro_spine(&spine);
-+
-+	return r ? r : count;
-+}
-+EXPORT_SYMBOL_GPL(dm_btree_find_highest_key);
-diff --git a/drivers/md/persistent-data/dm-btree.h b/drivers/md/persistent-data/dm-btree.h
-new file mode 100644
-index 0000000..3128382
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-btree.h
-@@ -0,0 +1,146 @@
-+#ifndef DM_BTREE_H
-+#define DM_BTREE_H
-+
-+#include "dm-transaction-manager.h"
-+
-+/*----------------------------------------------------------------*/
-+
-+/*
-+ * Manipulates hierarchical B+ trees with 64bit keys and arbitrary sized
-+ * values.
-+ */
-+
-+/*
-+ * The btree needs some knowledge about the values stored within it.  This
-+ * is provided by a |btree_value_type| structure.
-+ */
-+struct dm_btree_value_type {
-+	void *context;
-+
-+	/*
-+	 * The size in bytes of each value.
-+	 */
-+	uint32_t size;
-+
-+	/*
-+	 * Any of these methods can be safely set to NULL if you do not
-+	 * need this feature.
-+	 */
-+
-+	/*
-+	 * The btree is making a duplicate of the value, for instance
-+	 * because previously shared btree nodes have now diverged.  The
-+	 * |value| argument is the new copy, the copy function may modify
-+	 * it.  Probably it just wants to increment a reference count
-+	 * somewhere.  This method is _not_ called for insertion of a new
-+	 * value, it's assumed the ref count is already 1.
-+	 */
-+	void (*inc)(void *context, void *value);
-+
-+	/*
-+	 * This value is being deleted.  The btree takes care of freeing
-+	 * the memory pointed to by |value|.  Often the |del| function just
-+	 * needs to decrement a reference count somewhere.
-+	 */
-+	void (*dec)(void *context, void *value);
-+
-+	/*
-+	 * An test for equality between two values.  When a value is
-+	 * overwritten with a new one the old one has the |dec| method
-+	 * called, _unless_ the new and old value are deemed equal.
-+	 */
-+	int (*equal)(void *context, void *value1, void *value2);
-+};
-+
-+/*
-+ * The |btree_info| structure describes the shape and contents of a btree.
-+ */
-+struct dm_btree_info {
-+	struct dm_transaction_manager *tm;
-+
-+	/* number of nested btrees (not the depth of a single tree). */
-+	unsigned levels;
-+	struct dm_btree_value_type value_type;
-+};
-+
-+/* Set up an empty tree.  O(1). */
-+int dm_btree_empty(struct dm_btree_info *info, dm_block_t *root);
-+
-+/*
-+ * Delete a tree.  O(n) - this is the slow one!  It can also block, so
-+ * please don't call it on an io path.
-+ */
-+int dm_btree_del(struct dm_btree_info *info, dm_block_t root);
-+
-+/*
-+ * Delete part of a tree.  This is really specific to truncation of
-+ * multisnap devs.  It only removes keys from the bottom level btree that
-+ * are greater than key[info->levels - 1].
-+ */
-+int dm_btree_del_gt(struct dm_btree_info *info, dm_block_t root, uint64_t *key,
-+		    dm_block_t *new_root);
-+
-+/*
-+ * All the lookup functions return -ENODATA if the key cannot be found.
-+ */
-+
-+/* Tries to find a key that matches exactly.  O(ln(n)) */
-+int dm_btree_lookup(struct dm_btree_info *info, dm_block_t root,
-+		    uint64_t *keys, void *value);
-+
-+/*
-+ * Find the greatest key that is less than or equal to that requested.  A
-+ * ENODATA result indicates the key would appear in front of all (possibly
-+ * zero) entries.  O(ln(n))
-+ */
-+int dm_btree_lookup_le(struct dm_btree_info *info, dm_block_t root,
-+		       uint64_t *keys, uint64_t *rkey, void *value);
-+
-+/*
-+ * Find the least key that is greater than or equal to that requested.
-+ * ENODATA indicates all the keys are below.  O(ln(n))
-+ */
-+int dm_btree_lookup_ge(struct dm_btree_info *info, dm_block_t root,
-+		       uint64_t *keys, uint64_t *rkey, void *value);
-+
-+/*
-+ * Insertion (or overwrite an existing value).
-+ * O(ln(n))
-+ */
-+int dm_btree_insert(struct dm_btree_info *info, dm_block_t root,
-+		    uint64_t *keys, void *value, dm_block_t *new_root);
-+
-+/*
-+ * A variant of insert that indicates whether it actually inserted or just
-+ * overwrote.  Useful if you're keeping track of the number of entries in a
-+ * tree.
-+ */
-+int dm_btree_insert_notify(struct dm_btree_info *info, dm_block_t root,
-+			   uint64_t *keys, void *value, dm_block_t *new_root,
-+			   int *inserted);
-+
-+/*
-+ * Remove a key if present.  This doesn't remove empty sub trees.  Normally
-+ * subtrees represent a separate entity, like a snapshot map, so this is
-+ * correct behaviour.
-+ * O(ln(n)).
-+ * Returns ENODATA if the key isn't present.
-+ */
-+int dm_btree_remove(struct dm_btree_info *info, dm_block_t root,
-+		    uint64_t *keys, dm_block_t *new_root);
-+
-+/* Clone a tree. O(1) */
-+int dm_btree_clone(struct dm_btree_info *info, dm_block_t root,
-+		   dm_block_t *clone);
-+
-+/*
-+ * Returns < 0 on failure.  Otherwise the number of key entries that have
-+ * been filled out.  Remember trees can have zero entries, and as such have
-+ * no highest key.
-+ */
-+int dm_btree_find_highest_key(struct dm_btree_info *info, dm_block_t root,
-+			      uint64_t *result_keys);
-+
-+/*----------------------------------------------------------------*/
-+
-+#endif
-diff --git a/drivers/md/persistent-data/dm-pd-module.c b/drivers/md/persistent-data/dm-pd-module.c
-new file mode 100644
-index 0000000..eac6083
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-pd-module.c
-@@ -0,0 +1,18 @@
-+#include <linux/init.h>
-+#include <linux/module.h>
-+
-+static int dm_persistent_data_init(void)
-+{
-+	return 0;
-+}
-+
-+static void dm_persistent_data_exit(void)
-+{
-+}
-+
-+module_init(dm_persistent_data_init);
-+module_exit(dm_persistent_data_exit);
-+
-+MODULE_LICENSE("GPL");
-+MODULE_AUTHOR("Joe Thornber");
-+MODULE_DESCRIPTION("Immutable metadata library for dm");
-diff --git a/drivers/md/persistent-data/dm-space-map-common.h b/drivers/md/persistent-data/dm-space-map-common.h
-new file mode 100644
-index 0000000..6635d5b
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-space-map-common.h
-@@ -0,0 +1,99 @@
-+#ifndef DM_SPACE_MAP_COMMON_H
-+#define DM_SPACE_MAP_COMMON_H
-+
-+#include "dm-transaction-manager.h"
-+#include "dm-btree.h"
-+
-+/*----------------------------------------------------------------
-+ * Low level disk format
-+ *
-+ * Bitmap btree
-+ * ------------
-+ *
-+ * Each value stored in the btree is an index_entry.  This points to a
-+ * block that is used as a bitmap.  Within the bitmap hold 2 bits per
-+ * entry, which represent UNUSED = 0, REF_COUNT = 1, REF_COUNT = 2 and
-+ * REF_COUNT = many.
-+ *
-+ * Refcount btree
-+ * --------------
-+ *
-+ * Any entry that has a ref count higher than 2 gets entered in the ref
-+ * count tree.  The leaf values for this tree is the 32bit ref count.
-+ *--------------------------------------------------------------*/
-+struct index_entry {
-+	__le64 blocknr;
-+	__le32 nr_free;
-+	__le32 none_free_before;
-+} __packed;
-+
-+
-+#define MAX_METADATA_BITMAPS 255
-+struct metadata_index {
-+	__le32 csum;
-+	__le32 padding;
-+	__le64 blocknr;
-+
-+	struct index_entry index[MAX_METADATA_BITMAPS];
-+} __packed;
-+
-+struct ll_disk {
-+	struct dm_transaction_manager *tm;
-+	struct dm_btree_info bitmap_info;
-+	struct dm_btree_info ref_count_info;
-+
-+	uint32_t block_size;
-+	uint32_t entries_per_block;
-+	dm_block_t nr_blocks;
-+	dm_block_t nr_allocated;
-+	dm_block_t bitmap_root;	/* sometimes a btree root,
-+				 * sometimes a simple index */
-+	dm_block_t ref_count_root;
-+
-+	struct metadata_index mi;
-+};
-+
-+struct sm_root {
-+	__le64 nr_blocks;
-+	__le64 nr_allocated;
-+	__le64 bitmap_root;
-+	__le64 ref_count_root;
-+} __packed;
-+
-+#define ENTRIES_PER_BYTE 4
-+
-+struct bitmap_header {
-+	__le32 csum;
-+	__le32 not_used;
-+	__le64 blocknr;
-+} __packed;
-+
-+/*
-+ * These bitops work on a blocks worth of bits.
-+ */
-+unsigned sm_lookup_bitmap(void *addr, unsigned b);
-+void sm_set_bitmap(void *addr, unsigned b, unsigned val);
-+int sm_find_free(void *addr, unsigned begin, unsigned end,
-+		 unsigned *result);
-+
-+void *dm_bitmap_data(struct dm_block *b);
-+
-+extern struct dm_block_validator dm_sm_bitmap_validator;
-+
-+/*----------------------------------------------------------------*/
-+
-+static inline uint64_t div_up(uint64_t v, uint64_t n)
-+{
-+	uint64_t t = v;
-+	uint64_t rem = do_div(t, n);
-+	return t + (rem > 0 ? 1 : 0);
-+}
-+
-+static inline uint64_t mod64(uint64_t n, uint64_t d)
-+{
-+	return do_div(n, d);
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+#endif
-diff --git a/drivers/md/persistent-data/dm-space-map-disk.c b/drivers/md/persistent-data/dm-space-map-disk.c
-new file mode 100644
-index 0000000..a2f1b37
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-space-map-disk.c
-@@ -0,0 +1,624 @@
-+#include "dm-space-map-common.h"
-+#include "dm-space-map-disk.h"
-+
-+#include <linux/list.h>
-+#include <linux/slab.h>
-+#include <asm-generic/bitops/le.h>
-+#include <linux/device-mapper.h> /* For DMERR */
-+
-+#define DM_MSG_PREFIX "space map disk"
-+
-+/*----------------------------------------------------------------
-+ * bitmap validator
-+ *--------------------------------------------------------------*/
-+static void bitmap_prepare_for_write(struct dm_block_validator *v,
-+				     struct dm_block *b,
-+				     size_t block_size)
-+{
-+	struct bitmap_header *header = dm_block_data(b);
-+
-+	header->blocknr = __cpu_to_le64(dm_block_location(b));
-+	header->csum = dm_block_csum_data(&header->not_used,
-+					  block_size - sizeof(u32));
-+}
-+
-+static int bitmap_check(struct dm_block_validator *v,
-+			struct dm_block *b,
-+			size_t block_size)
-+{
-+	struct bitmap_header *header = dm_block_data(b);
-+	__le32 csum;
-+
-+	if (dm_block_location(b) != __le64_to_cpu(header->blocknr)) {
-+		DMERR("bitmap check failed blocknr %llu wanted %llu",
-+		      __le64_to_cpu(header->blocknr), dm_block_location(b));
-+		return -ENOTBLK;
-+	}
-+
-+	csum = dm_block_csum_data(&header->not_used,
-+				  block_size - sizeof(u32));
-+	if (csum != header->csum) {
-+		DMERR("bitmap check failed csum %u wanted %u",
-+		      __le32_to_cpu(csum), __le32_to_cpu(header->csum));
-+		return -EILSEQ;
-+	}
-+
-+	return 0;
-+}
-+
-+struct dm_block_validator dm_sm_bitmap_validator = {
-+	.name = "sm_bitmap",
-+	.prepare_for_write = bitmap_prepare_for_write,
-+	.check = bitmap_check
-+};
-+
-+/*----------------------------------------------------------------*/
-+
-+#define ENTRIES_PER_WORD 32
-+#define ENTRIES_SHIFT	5
-+
-+void *dm_bitmap_data(struct dm_block *b)
-+{
-+	return dm_block_data(b) + sizeof(struct bitmap_header);
-+}
-+
-+#define WORD_MASK_LOW 0x5555555555555555ULL
-+#define WORD_MASK_HIGH 0xAAAAAAAAAAAAAAAAULL
-+#define WORD_MASK_ALL 0xFFFFFFFFFFFFFFFFULL
-+
-+static unsigned bitmap_word_used(void *addr, unsigned b)
-+{
-+	__le64 *words = (__le64 *) addr;
-+	__le64 *w = words + (b >> ENTRIES_SHIFT);
-+
-+	uint64_t bits = __le64_to_cpu(*w);
-+	return ((bits & WORD_MASK_LOW) == WORD_MASK_LOW ||
-+		(bits & WORD_MASK_HIGH) == WORD_MASK_HIGH ||
-+		(bits & WORD_MASK_ALL) == WORD_MASK_ALL);
-+}
-+
-+unsigned sm_lookup_bitmap(void *addr, unsigned b)
-+{
-+	__le64 *words = (__le64 *) addr;
-+	__le64 *w = words + (b >> ENTRIES_SHIFT);
-+
-+	b = (b & (ENTRIES_PER_WORD - 1)) << 1;
-+	return ((!!test_bit_le(b, (void *) w) << 1)) |
-+		(!!test_bit_le(b + 1, (void *) w));
-+}
-+
-+
-+void sm_set_bitmap(void *addr, unsigned b, unsigned val)
-+{
-+	__le64 *words = (__le64 *) addr;
-+	__le64 *w = words + (b >> ENTRIES_SHIFT);
-+
-+	b = (b & (ENTRIES_PER_WORD - 1)) << 1;
-+
-+	if (val & 2)
-+		__set_bit_le(b, (void *) w);
-+	else
-+		__clear_bit_le(b, (void *) w);
-+
-+	if (val & 1)
-+		__set_bit_le(b + 1, (void *) w);
-+	else
-+		__clear_bit_le(b + 1, (void *) w);
-+}
-+
-+int sm_find_free(void *addr, unsigned begin, unsigned end,
-+		 unsigned *result)
-+{
-+	while (begin < end) {
-+		if (!(begin & (ENTRIES_PER_WORD - 1)) &&
-+		    bitmap_word_used(addr, begin)) {
-+			begin += ENTRIES_PER_WORD;
-+			continue;
-+		}
-+
-+		if (sm_lookup_bitmap(addr, begin))
-+			begin++;
-+		else {
-+			*result = begin;
-+			return 0;
-+		}
-+	}
-+
-+	return -ENOSPC;
-+}
-+
-+static int ll_init(struct ll_disk *io, struct dm_transaction_manager *tm)
-+{
-+	io->tm = tm;
-+	io->bitmap_info.tm = tm;
-+	io->bitmap_info.levels = 1;
-+
-+	/*
-+	 * Because the new bitmap blocks are created via a shadow
-+	 * operation, the old entry has already had it's reference count
-+	 * decremented.	 So we don't need the btree to do any book
-+	 * keeping.
-+	 */
-+	io->bitmap_info.value_type.size = sizeof(struct index_entry);
-+	io->bitmap_info.value_type.inc = NULL;
-+	io->bitmap_info.value_type.dec = NULL;
-+	io->bitmap_info.value_type.equal = NULL;
-+
-+	io->ref_count_info.tm = tm;
-+	io->ref_count_info.levels = 1;
-+	io->ref_count_info.value_type.size = sizeof(uint32_t);
-+	io->ref_count_info.value_type.inc = NULL;
-+	io->ref_count_info.value_type.dec = NULL;
-+	io->ref_count_info.value_type.equal = NULL;
-+
-+	io->block_size = dm_bm_block_size(dm_tm_get_bm(tm));
-+
-+	if (io->block_size > (1 << 30)) {
-+		DMERR("block size too big to hold bitmaps");
-+		return -EINVAL;
-+	}
-+	io->entries_per_block = (io->block_size - sizeof(struct bitmap_header)) *
-+		ENTRIES_PER_BYTE;
-+	io->nr_blocks = 0;
-+	io->bitmap_root = 0;
-+	io->ref_count_root = 0;
-+
-+	return 0;
-+}
-+
-+static int ll_new(struct ll_disk *io, struct dm_transaction_manager *tm)
-+{
-+	int r;
-+
-+	r = ll_init(io, tm);
-+	if (r < 0)
-+		return r;
-+
-+	io->nr_blocks = 0;
-+	io->nr_allocated = 0;
-+	r = dm_btree_empty(&io->bitmap_info, &io->bitmap_root);
-+	if (r < 0)
-+		return r;
-+
-+	r = dm_btree_empty(&io->ref_count_info, &io->ref_count_root);
-+	if (r < 0) {
-+		dm_btree_del(&io->bitmap_info, io->bitmap_root);
-+		return r;
-+	}
-+
-+	return 0;
-+}
-+
-+static int ll_extend(struct ll_disk *io, dm_block_t extra_blocks)
-+{
-+	int r;
-+	dm_block_t i, nr_blocks;
-+	unsigned old_blocks, blocks;
-+
-+	nr_blocks = io->nr_blocks + extra_blocks;
-+	old_blocks = div_up(io->nr_blocks, io->entries_per_block);
-+	blocks = div_up(nr_blocks, io->entries_per_block);
-+	for (i = old_blocks; i < blocks; i++) {
-+		struct dm_block *b;
-+		struct index_entry idx;
-+
-+		r = dm_tm_new_block(io->tm, &dm_sm_bitmap_validator, &b);
-+		if (r < 0)
-+			return r;
-+		idx.blocknr = __cpu_to_le64(dm_block_location(b));
-+
-+		r = dm_tm_unlock(io->tm, b);
-+		if (r < 0)
-+			return r;
-+
-+		idx.nr_free = __cpu_to_le32(io->entries_per_block);
-+		idx.none_free_before = 0;
-+
-+		r = dm_btree_insert(&io->bitmap_info, io->bitmap_root,
-+				    &i, &idx, &io->bitmap_root);
-+		if (r < 0)
-+			return r;
-+	}
-+
-+	io->nr_blocks = nr_blocks;
-+	return 0;
-+}
-+
-+static int ll_open(struct ll_disk *ll, struct dm_transaction_manager *tm,
-+		   void *root, size_t len)
-+{
-+	int r;
-+	struct sm_root *smr = (struct sm_root *) root;
-+
-+	if (len < sizeof(struct sm_root)) {
-+		DMERR("sm_disk root too small");
-+		return -ENOMEM;
-+	}
-+
-+	r = ll_init(ll, tm);
-+	if (r < 0)
-+		return r;
-+
-+	ll->nr_blocks = __le64_to_cpu(smr->nr_blocks);
-+	ll->nr_allocated = __le64_to_cpu(smr->nr_allocated);
-+	ll->bitmap_root = __le64_to_cpu(smr->bitmap_root);
-+	ll->ref_count_root = __le64_to_cpu(smr->ref_count_root);
-+
-+	return 0;
-+}
-+
-+static int ll_lookup_bitmap(struct ll_disk *io, dm_block_t b, uint32_t *result)
-+{
-+	int r;
-+	dm_block_t index = b;
-+	struct index_entry ie;
-+	struct dm_block *blk;
-+
-+	do_div(index, io->entries_per_block);
-+	r = dm_btree_lookup(&io->bitmap_info, io->bitmap_root, &index, &ie);
-+	if (r < 0)
-+		return r;
-+
-+	r = dm_tm_read_lock(io->tm, __le64_to_cpu(ie.blocknr),
-+			    &dm_sm_bitmap_validator, &blk);
-+	if (r < 0)
-+		return r;
-+	*result = sm_lookup_bitmap(dm_bitmap_data(blk),
-+				   mod64(b, io->entries_per_block));
-+	return dm_tm_unlock(io->tm, blk);
-+}
-+
-+static int ll_lookup(struct ll_disk *io, dm_block_t b, uint32_t *result)
-+{
-+	int r = ll_lookup_bitmap(io, b, result);
-+
-+	if (r)
-+		return r;
-+
-+	if (*result == 3) {
-+		__le32 le_rc;
-+		r = dm_btree_lookup(&io->ref_count_info, io->ref_count_root,
-+				    &b, &le_rc);
-+		if (r < 0)
-+			return r;
-+
-+		*result = __le32_to_cpu(le_rc);
-+	}
-+
-+	return r;
-+}
-+
-+static int ll_find_free_block(struct ll_disk *io, dm_block_t begin,
-+			      dm_block_t end, dm_block_t *result)
-+{
-+	int r;
-+	struct index_entry ie;
-+	dm_block_t i, index_begin = begin;
-+	dm_block_t index_end = div_up(end, io->entries_per_block);
-+
-+	begin = do_div(index_begin, io->entries_per_block);
-+	for (i = index_begin; i < index_end; i++, begin = 0) {
-+		r = dm_btree_lookup(&io->bitmap_info, io->bitmap_root, &i, &ie);
-+		if (r < 0)
-+			return r;
-+
-+		if (__le32_to_cpu(ie.nr_free) > 0) {
-+			struct dm_block *blk;
-+			unsigned position;
-+			uint32_t bit_end;
-+
-+			r = dm_tm_read_lock(io->tm, __le64_to_cpu(ie.blocknr),
-+					    &dm_sm_bitmap_validator, &blk);
-+			if (r < 0)
-+				return r;
-+
-+			bit_end = (i == index_end - 1) ?
-+				mod64(end, io->entries_per_block) : io->entries_per_block;
-+
-+			r = sm_find_free(dm_bitmap_data(blk),
-+					 max((unsigned)begin,
-+					     (unsigned)__le32_to_cpu(ie.none_free_before)),
-+					 bit_end, &position);
-+			if (r < 0) {
-+				dm_tm_unlock(io->tm, blk);
-+				continue;
-+			}
-+
-+			r = dm_tm_unlock(io->tm, blk);
-+			if (r < 0)
-+				return r;
-+
-+			*result = i * io->entries_per_block + (dm_block_t) position;
-+			return 0;
-+		}
-+	}
-+
-+	return -ENOSPC;
-+}
-+
-+static int ll_insert(struct ll_disk *io, dm_block_t b, uint32_t ref_count)
-+{
-+	int r;
-+	uint32_t bit, old;
-+	struct dm_block *nb;
-+	dm_block_t index = b;
-+	struct index_entry ie;
-+	void *bm;
-+	int inc;
-+
-+	do_div(index, io->entries_per_block);
-+	r = dm_btree_lookup(&io->bitmap_info, io->bitmap_root, &index, &ie);
-+	if (r < 0)
-+		return r;
-+
-+	r = dm_tm_shadow_block(io->tm, __le64_to_cpu(ie.blocknr),
-+			       &dm_sm_bitmap_validator, &nb, &inc);
-+	if (r < 0) {
-+		DMERR("dm_tm_shadow_block() failed");
-+		return r;
-+	}
-+	ie.blocknr = __cpu_to_le64(dm_block_location(nb));
-+
-+	bm = dm_bitmap_data(nb);
-+	bit = mod64(b, io->entries_per_block);
-+	old = sm_lookup_bitmap(bm, bit);
-+
-+	if (ref_count <= 2) {
-+		sm_set_bitmap(bm, bit, ref_count);
-+
-+		if (old > 2) {
-+			r = dm_btree_remove(&io->ref_count_info, io->ref_count_root,
-+					    &b, &io->ref_count_root);
-+			if (r) {
-+				dm_tm_unlock(io->tm, nb);
-+				return r;
-+			}
-+		}
-+	} else {
-+		__le32 le_rc = __cpu_to_le32(ref_count);
-+		sm_set_bitmap(bm, bit, 3);
-+		r = dm_btree_insert(&io->ref_count_info, io->ref_count_root,
-+				    &b, &le_rc, &io->ref_count_root);
-+		if (r < 0) {
-+			dm_tm_unlock(io->tm, nb);
-+			DMERR("ref count insert failed");
-+			return r;
-+		}
-+	}
-+
-+	r = dm_tm_unlock(io->tm, nb);
-+	if (r < 0)
-+		return r;
-+
-+	if (ref_count && !old) {
-+		io->nr_allocated++;
-+		ie.nr_free = __cpu_to_le32(__le32_to_cpu(ie.nr_free) - 1);
-+		if (__le32_to_cpu(ie.none_free_before) == b)
-+			ie.none_free_before = __cpu_to_le32(b + 1);
-+
-+	} else if (old && !ref_count) {
-+		io->nr_allocated--;
-+		ie.nr_free = __cpu_to_le32(__le32_to_cpu(ie.nr_free) + 1);
-+		ie.none_free_before = __cpu_to_le32(min((dm_block_t) __le32_to_cpu(ie.none_free_before), b));
-+	}
-+
-+	r = dm_btree_insert(&io->bitmap_info, io->bitmap_root,
-+			    &index, &ie, &io->bitmap_root);
-+	if (r < 0)
-+		return r;
-+
-+	return 0;
-+}
-+
-+static int ll_inc(struct ll_disk *ll, dm_block_t b)
-+{
-+	int r;
-+	uint32_t rc;
-+
-+	r = ll_lookup(ll, b, &rc);
-+	if (r)
-+		return r;
-+
-+	return ll_insert(ll, b, rc + 1);
-+}
-+
-+static int ll_dec(struct ll_disk *ll, dm_block_t b)
-+{
-+	int r;
-+	uint32_t rc;
-+
-+	r = ll_lookup(ll, b, &rc);
-+	if (r)
-+		return r;
-+
-+	if (!rc)
-+		return -EINVAL;
-+
-+	return ll_insert(ll, b, rc - 1);
-+}
-+
-+/*----------------------------------------------------------------
-+ * Space map interface.
-+ *--------------------------------------------------------------*/
-+struct sm_disk {
-+	struct dm_space_map sm;
-+
-+	struct ll_disk ll;
-+};
-+
-+static void sm_disk_destroy(struct dm_space_map *sm)
-+{
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+	kfree(smd);
-+}
-+
-+static int sm_disk_extend(struct dm_space_map *sm, dm_block_t extra_blocks)
-+{
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+	return ll_extend(&smd->ll, extra_blocks);
-+}
-+
-+static int sm_disk_get_nr_blocks(struct dm_space_map *sm, dm_block_t *count)
-+{
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+	*count = smd->ll.nr_blocks;
-+	return 0;
-+}
-+
-+static int sm_disk_get_nr_free(struct dm_space_map *sm, dm_block_t *count)
-+{
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+
-+	*count = smd->ll.nr_blocks - smd->ll.nr_allocated;
-+	return 0;
-+}
-+
-+static int sm_disk_get_count(struct dm_space_map *sm, dm_block_t b,
-+			     uint32_t *result)
-+{
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+	return ll_lookup(&smd->ll, b, result);
-+}
-+
-+static int sm_disk_count_is_more_than_one(struct dm_space_map *sm, dm_block_t b,
-+					  int *result)
-+{
-+	int r;
-+	uint32_t count;
-+
-+	r = sm_disk_get_count(sm, b, &count);
-+	if (r)
-+		return r;
-+
-+	return count > 1;
-+}
-+
-+static int sm_disk_set_count(struct dm_space_map *sm, dm_block_t b,
-+			     uint32_t count)
-+{
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+	return ll_insert(&smd->ll, b, count);
-+}
-+
-+static int sm_disk_inc_block(struct dm_space_map *sm, dm_block_t b)
-+{
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+	return ll_inc(&smd->ll, b);
-+}
-+
-+static int sm_disk_dec_block(struct dm_space_map *sm, dm_block_t b)
-+{
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+	return ll_dec(&smd->ll, b);
-+}
-+
-+static int sm_disk_new_block(struct dm_space_map *sm, dm_block_t *b)
-+{
-+	int r;
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+
-+	/* FIXME: we should start the search where we left off */
-+	r = ll_find_free_block(&smd->ll, 0, smd->ll.nr_blocks, b);
-+	if (r)
-+		return r;
-+
-+	return ll_inc(&smd->ll, *b);
-+}
-+
-+static int sm_disk_commit(struct dm_space_map *sm)
-+{
-+	return 0;
-+}
-+
-+static int sm_disk_root_size(struct dm_space_map *sm, size_t *result)
-+{
-+	*result = sizeof(struct sm_root);
-+	return 0;
-+}
-+
-+static int sm_disk_copy_root(struct dm_space_map *sm, void *where, size_t max)
-+{
-+	struct sm_disk *smd = container_of(sm, struct sm_disk, sm);
-+	struct sm_root root;
-+
-+	root.nr_blocks = __cpu_to_le64(smd->ll.nr_blocks);
-+	root.nr_allocated = __cpu_to_le64(smd->ll.nr_allocated);
-+	root.bitmap_root = __cpu_to_le64(smd->ll.bitmap_root);
-+	root.ref_count_root = __cpu_to_le64(smd->ll.ref_count_root);
-+
-+	if (max < sizeof(root))
-+		return -ENOSPC;
-+
-+	memcpy(where, &root, sizeof(root));
-+	return 0;
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+static struct dm_space_map ops_ = {
-+	.destroy = sm_disk_destroy,
-+	.extend = sm_disk_extend,
-+	.get_nr_blocks = sm_disk_get_nr_blocks,
-+	.get_nr_free = sm_disk_get_nr_free,
-+	.get_count = sm_disk_get_count,
-+	.count_is_more_than_one = sm_disk_count_is_more_than_one,
-+	.set_count = sm_disk_set_count,
-+	.inc_block = sm_disk_inc_block,
-+	.dec_block = sm_disk_dec_block,
-+	.new_block = sm_disk_new_block,
-+	.commit = sm_disk_commit,
-+	.root_size = sm_disk_root_size,
-+	.copy_root = sm_disk_copy_root
-+};
-+
-+struct dm_space_map *dm_sm_disk_create(struct dm_transaction_manager *tm,
-+				       dm_block_t nr_blocks)
-+{
-+	int r;
-+	struct sm_disk *smd;
-+
-+	smd = kmalloc(sizeof(*smd), GFP_KERNEL);
-+	if (!smd)
-+		return ERR_PTR(-ENOMEM);
-+
-+	memcpy(&smd->sm, &ops_, sizeof(smd->sm));
-+
-+	r = ll_new(&smd->ll, tm);
-+	if (r)
-+		return ERR_PTR(r);
-+
-+	r = ll_extend(&smd->ll, nr_blocks);
-+	if (r)
-+		return ERR_PTR(r);
-+
-+	r = sm_disk_commit(&smd->sm);
-+	if (r)
-+		return ERR_PTR(r);
-+
-+	return &smd->sm;
-+}
-+EXPORT_SYMBOL_GPL(dm_sm_disk_create);
-+
-+struct dm_space_map *dm_sm_disk_open(struct dm_transaction_manager *tm,
-+				     void *root, size_t len)
-+{
-+	int r;
-+	struct sm_disk *smd;
-+
-+	smd = kmalloc(sizeof(*smd), GFP_KERNEL);
-+	if (!smd)
-+		return ERR_PTR(-ENOMEM);
-+
-+	memcpy(&smd->sm, &ops_, sizeof(smd->sm));
-+
-+	r = ll_open(&smd->ll, tm, root, len);
-+	if (r)
-+		return ERR_PTR(r);
-+
-+	r = sm_disk_commit(&smd->sm);
-+	if (r)
-+		return ERR_PTR(r);
-+
-+	return &smd->sm;
-+}
-+EXPORT_SYMBOL_GPL(dm_sm_disk_open);
-diff --git a/drivers/md/persistent-data/dm-space-map-disk.h b/drivers/md/persistent-data/dm-space-map-disk.h
-new file mode 100644
-index 0000000..d13450d
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-space-map-disk.h
-@@ -0,0 +1,21 @@
-+#ifndef DM_SPACE_MAP_DISK_H
-+#define DM_SPACE_MAP_DISK_H
-+
-+#include "dm-transaction-manager.h"
-+#include "dm-space-map.h"
-+
-+/*----------------------------------------------------------------*/
-+
-+/*
-+ * Unfortunately we have to use 2 phase construction due to the cycle
-+ * between the tm and sm.
-+ */
-+struct dm_space_map *dm_sm_disk_create(struct dm_transaction_manager *tm,
-+				       dm_block_t nr_blocks);
-+
-+struct dm_space_map *dm_sm_disk_open(struct dm_transaction_manager *tm,
-+				     void *root, size_t len);
-+
-+/*----------------------------------------------------------------*/
-+
-+#endif
-diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-new file mode 100644
-index 0000000..6263601
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-@@ -0,0 +1,878 @@
-+#include "dm-space-map-common.h"
-+#include "dm-space-map-metadata.h"
-+
-+#include <linux/list.h>
-+#include <linux/slab.h>
-+#include <asm-generic/bitops/le.h>
-+#include <linux/device-mapper.h> /* For DMERR */
-+
-+#define DM_MSG_PREFIX "space map metadata"
-+
-+/*----------------------------------------------------------------
-+ * index validator
-+ *--------------------------------------------------------------*/
-+static void index_prepare_for_write(struct dm_block_validator *v,
-+				    struct dm_block *b,
-+				    size_t block_size)
-+{
-+	struct metadata_index *mi = dm_block_data(b);
-+	mi->blocknr = __cpu_to_le64(dm_block_location(b));
-+	mi->csum = dm_block_csum_data(&mi->padding,
-+				      block_size - sizeof(__le32));
-+}
-+
-+static int index_check(struct dm_block_validator *v,
-+		       struct dm_block *b,
-+		       size_t block_size)
-+{
-+	struct metadata_index *mi = dm_block_data(b);
-+	__le32 csum;
-+
-+	if (dm_block_location(b) != __le64_to_cpu(mi->blocknr)) {
-+		DMERR("index_check failed blocknr %llu wanted %llu",
-+		      __le64_to_cpu(mi->blocknr), dm_block_location(b));
-+		return -ENOTBLK;
-+	}
-+
-+	csum = dm_block_csum_data(&mi->padding,
-+				  block_size - sizeof(__le32));
-+	if (csum != mi->csum) {
-+		DMERR("index_check failed csum %u wanted %u",
-+		      __le32_to_cpu(csum), __le32_to_cpu(mi->csum));
-+		return -EILSEQ;
-+	}
-+
-+	return 0;
-+}
-+
-+static struct dm_block_validator index_validator_ = {
-+	.name = "index",
-+	.prepare_for_write = index_prepare_for_write,
-+	.check = index_check
-+};
-+
-+/*----------------------------------------------------------------
-+ * low level disk ops
-+ *--------------------------------------------------------------*/
-+static int ll_init(struct ll_disk *ll, struct dm_transaction_manager *tm)
-+{
-+	ll->tm = tm;
-+
-+	ll->ref_count_info.tm = tm;
-+	ll->ref_count_info.levels = 1;
-+	ll->ref_count_info.value_type.size = sizeof(uint32_t);
-+	ll->ref_count_info.value_type.inc = NULL;
-+	ll->ref_count_info.value_type.dec = NULL;
-+	ll->ref_count_info.value_type.equal = NULL;
-+
-+	ll->block_size = dm_bm_block_size(dm_tm_get_bm(tm));
-+
-+	if (ll->block_size > (1 << 30)) {
-+		DMERR("block size too big to hold bitmaps");
-+		return -EINVAL;
-+	}
-+	ll->entries_per_block = (ll->block_size - sizeof(struct bitmap_header)) *
-+		ENTRIES_PER_BYTE;
-+	ll->nr_blocks = 0;
-+	ll->bitmap_root = 0;
-+	ll->ref_count_root = 0;
-+
-+	return 0;
-+}
-+
-+static int ll_new(struct ll_disk *ll, struct dm_transaction_manager *tm,
-+		  dm_block_t nr_blocks)
-+{
-+	int r;
-+	dm_block_t i;
-+	unsigned blocks;
-+	struct dm_block *index_block;
-+
-+	r = ll_init(ll, tm);
-+	if (r < 0)
-+		return r;
-+
-+	ll->nr_blocks = nr_blocks;
-+	ll->nr_allocated = 0;
-+
-+	blocks = div_up(nr_blocks, ll->entries_per_block);
-+	for (i = 0; i < blocks; i++) {
-+		struct dm_block *b;
-+		struct index_entry *idx = ll->mi.index + i;
-+
-+		r = dm_tm_new_block(tm, &dm_sm_bitmap_validator, &b);
-+		if (r < 0)
-+			return r;
-+		idx->blocknr = __cpu_to_le64(dm_block_location(b));
-+
-+		r = dm_tm_unlock(tm, b);
-+		if (r < 0)
-+			return r;
-+
-+		idx->nr_free = __cpu_to_le32(ll->entries_per_block);
-+		idx->none_free_before = 0;
-+	}
-+
-+	/* write the index */
-+	r = dm_tm_new_block(tm, &index_validator_, &index_block);
-+	if (r)
-+		return r;
-+	ll->bitmap_root = dm_block_location(index_block);
-+	memcpy(dm_block_data(index_block), &ll->mi, sizeof(ll->mi));
-+	r = dm_tm_unlock(tm, index_block);
-+	if (r)
-+		return r;
-+
-+	r = dm_btree_empty(&ll->ref_count_info, &ll->ref_count_root);
-+	if (r < 0)
-+		return r;
-+
-+	return 0;
-+}
-+
-+static int ll_open(struct ll_disk *ll, struct dm_transaction_manager *tm,
-+		   void *root, size_t len)
-+{
-+	int r;
-+	struct sm_root *smr = (struct sm_root *) root;
-+	struct dm_block *block;
-+
-+	if (len < sizeof(struct sm_root)) {
-+		DMERR("sm_disk root too small");
-+		return -ENOMEM;
-+	}
-+
-+	r = ll_init(ll, tm);
-+	if (r < 0)
-+		return r;
-+
-+	ll->nr_blocks = __le64_to_cpu(smr->nr_blocks);
-+	ll->nr_allocated = __le64_to_cpu(smr->nr_allocated);
-+	ll->bitmap_root = __le64_to_cpu(smr->bitmap_root);
-+
-+	r = dm_tm_read_lock(tm, __le64_to_cpu(smr->bitmap_root),
-+			    &index_validator_, &block);
-+	if (r)
-+		return r;
-+	memcpy(&ll->mi, dm_block_data(block), sizeof(ll->mi));
-+	r = dm_tm_unlock(tm, block);
-+	if (r)
-+		return r;
-+
-+	ll->ref_count_root = __le64_to_cpu(smr->ref_count_root);
-+	return 0;
-+}
-+
-+static int ll_lookup_bitmap(struct ll_disk *ll, dm_block_t b, uint32_t *result)
-+{
-+	int r;
-+	dm_block_t index = b;
-+	struct index_entry *ie;
-+	struct dm_block *blk;
-+
-+	b = do_div(index, ll->entries_per_block);
-+	ie = ll->mi.index + index;
-+
-+	r = dm_tm_read_lock(ll->tm, __le64_to_cpu(ie->blocknr),
-+			    &dm_sm_bitmap_validator, &blk);
-+	if (r < 0)
-+		return r;
-+	*result = sm_lookup_bitmap(dm_bitmap_data(blk), b);
-+	return dm_tm_unlock(ll->tm, blk);
-+}
-+
-+static int ll_lookup(struct ll_disk *ll, dm_block_t b, uint32_t *result)
-+{
-+	int r = ll_lookup_bitmap(ll, b, result);
-+
-+	if (r)
-+		return r;
-+
-+	if (*result == 3) {
-+		__le32 le_rc;
-+		r = dm_btree_lookup(&ll->ref_count_info, ll->ref_count_root,
-+				    &b, &le_rc);
-+		if (r < 0)
-+			return r;
-+
-+		*result = __le32_to_cpu(le_rc);
-+	}
-+
-+	return r;
-+}
-+
-+static int ll_find_free_block(struct ll_disk *ll, dm_block_t begin,
-+			      dm_block_t end, dm_block_t *result)
-+{
-+	int r;
-+	struct index_entry *ie;
-+	dm_block_t i, index_begin = begin;
-+	dm_block_t index_end = div_up(end, ll->entries_per_block);
-+
-+	/* FIXME: use shifts */
-+	begin = do_div(index_begin, ll->entries_per_block);
-+	end = do_div(end, ll->entries_per_block);
-+
-+	for (i = index_begin; i < index_end; i++, begin = 0) {
-+		ie = ll->mi.index + i;
-+
-+		if (__le32_to_cpu(ie->nr_free) > 0) {
-+			struct dm_block *blk;
-+			unsigned position;
-+			uint32_t bit_end;
-+
-+			r = dm_tm_read_lock(ll->tm, __le64_to_cpu(ie->blocknr),
-+					    &dm_sm_bitmap_validator, &blk);
-+			if (r < 0)
-+				return r;
-+
-+			bit_end = (i == index_end - 1) ?
-+				end : ll->entries_per_block;
-+
-+			r = sm_find_free(dm_bitmap_data(blk), begin,
-+					 bit_end, &position);
-+			if (r < 0) {
-+				dm_tm_unlock(ll->tm, blk);
-+				return r; /* avoiding retry (FIXME: explain why) */
-+			}
-+
-+			r = dm_tm_unlock(ll->tm, blk);
-+			if (r < 0)
-+				return r;
-+
-+			*result = i * ll->entries_per_block +
-+				(dm_block_t) position;
-+			return 0;
-+		}
-+	}
-+
-+	return -ENOSPC;
-+}
-+
-+static int ll_insert(struct ll_disk *ll, dm_block_t b, uint32_t ref_count)
-+{
-+	int r;
-+	uint32_t bit, old;
-+	struct dm_block *nb;
-+	dm_block_t index = b;
-+	struct index_entry *ie;
-+	void *bm;
-+	int inc;
-+
-+	bit = do_div(index, ll->entries_per_block);
-+	ie = ll->mi.index + index;
-+
-+	r = dm_tm_shadow_block(ll->tm, __le64_to_cpu(ie->blocknr),
-+			       &dm_sm_bitmap_validator, &nb, &inc);
-+	if (r < 0) {
-+		DMERR("dm_tm_shadow_block() failed");
-+		return r;
-+	}
-+	ie->blocknr = __cpu_to_le64(dm_block_location(nb));
-+
-+	bm = dm_bitmap_data(nb);
-+	old = sm_lookup_bitmap(bm, bit);
-+
-+	if (ref_count <= 2) {
-+		sm_set_bitmap(bm, bit, ref_count);
-+
-+		r = dm_tm_unlock(ll->tm, nb);
-+		if (r < 0)
-+			return r;
-+
-+		if (old > 2) {
-+			r = dm_btree_remove(&ll->ref_count_info,
-+					    ll->ref_count_root,
-+					    &b, &ll->ref_count_root);
-+			if (r) {
-+				sm_set_bitmap(bm, bit, old);
-+				return r;
-+			}
-+		}
-+	} else {
-+		__le32 le_rc = __cpu_to_le32(ref_count);
-+		sm_set_bitmap(bm, bit, 3);
-+		r = dm_tm_unlock(ll->tm, nb);
-+		if (r < 0)
-+			return r;
-+
-+		r = dm_btree_insert(&ll->ref_count_info, ll->ref_count_root,
-+				    &b, &le_rc, &ll->ref_count_root);
-+		if (r < 0) {
-+			/* FIXME: release shadow? or assume the whole transaction will be ditched */
-+			DMERR("ref count insert failed");
-+			return r;
-+		}
-+	}
-+
-+	if (ref_count && !old) {
-+		ll->nr_allocated++;
-+		ie->nr_free = __cpu_to_le32(__le32_to_cpu(ie->nr_free) - 1);
-+		if (__le32_to_cpu(ie->none_free_before) == b)
-+			ie->none_free_before = __cpu_to_le32(b + 1);
-+
-+	} else if (old && !ref_count) {
-+		ll->nr_allocated--;
-+		ie->nr_free = __cpu_to_le32(__le32_to_cpu(ie->nr_free) + 1);
-+		ie->none_free_before = __cpu_to_le32(min((dm_block_t) __le32_to_cpu(ie->none_free_before), b));
-+	}
-+
-+	return 0;
-+}
-+
-+static int ll_inc(struct ll_disk *ll, dm_block_t b)
-+{
-+	int r;
-+	uint32_t rc;
-+
-+	r = ll_lookup(ll, b, &rc);
-+	if (r)
-+		return r;
-+
-+	return ll_insert(ll, b, rc + 1);
-+}
-+
-+static int ll_dec(struct ll_disk *ll, dm_block_t b)
-+{
-+	int r;
-+	uint32_t rc;
-+
-+	r = ll_lookup(ll, b, &rc);
-+	if (r)
-+		return r;
-+
-+	if (!rc)
-+		return -EINVAL;
-+
-+	return ll_insert(ll, b, rc - 1);
-+}
-+
-+static int ll_commit(struct ll_disk *ll)
-+{
-+	int r, inc;
-+	struct dm_block *b;
-+
-+	r = dm_tm_shadow_block(ll->tm, ll->bitmap_root,
-+			       &index_validator_, &b, &inc);
-+	if (r)
-+		return r;
-+
-+	memcpy(dm_block_data(b), &ll->mi, sizeof(ll->mi));
-+	ll->bitmap_root = dm_block_location(b);
-+	return dm_tm_unlock(ll->tm, b);
-+}
-+
-+/*----------------------------------------------------------------
-+ * Space map interface.
-+ *
-+ * The low level disk format is written using the standard btree and
-+ * transaction manager.  This means that performing disk operations may
-+ * cause us to recurse into the space map in order to allocate new blocks.
-+ * For this reason we have a pool of pre-allocated blocks large enough to
-+ * service any ll_disk operation.
-+ *--------------------------------------------------------------*/
-+
-+/*
-+ * FIXME: we should calculate this based on the size of the device.
-+ * Only the metadata space map needs this functionality.
-+ */
-+#define MAX_RECURSIVE_ALLOCATIONS 1024
-+
-+enum block_op_type {
-+	BOP_INC,
-+	BOP_DEC
-+};
-+
-+struct block_op {
-+	enum block_op_type type;
-+	dm_block_t block;
-+};
-+
-+struct sm_metadata {
-+	struct dm_space_map sm;
-+
-+	struct ll_disk ll;
-+	struct ll_disk old_ll;
-+
-+	dm_block_t begin;
-+
-+	unsigned recursion_count;
-+	unsigned allocated_this_transaction;
-+	unsigned nr_uncommitted;
-+	struct block_op uncommitted[MAX_RECURSIVE_ALLOCATIONS];
-+};
-+
-+static int add_bop(struct sm_metadata *smm, enum block_op_type type, dm_block_t b)
-+{
-+	struct block_op *op;
-+
-+	if (smm->nr_uncommitted == MAX_RECURSIVE_ALLOCATIONS) {
-+		BUG();
-+		return -1;
-+	}
-+
-+	op = smm->uncommitted + smm->nr_uncommitted++;
-+	op->type = type;
-+	op->block = b;
-+	return 0;
-+}
-+
-+static int commit_bop(struct sm_metadata *smm, struct block_op *op)
-+{
-+	int r = 0;
-+
-+	switch (op->type) {
-+	case BOP_INC:
-+		r = ll_inc(&smm->ll, op->block);
-+		break;
-+
-+	case BOP_DEC:
-+		r = ll_dec(&smm->ll, op->block);
-+		break;
-+	}
-+
-+	return r;
-+}
-+
-+static void in(struct sm_metadata *smm)
-+{
-+	smm->recursion_count++;
-+}
-+
-+static void out(struct sm_metadata *smm)
-+{
-+	int r = 0;
-+	BUG_ON(!smm->recursion_count);
-+
-+	if (smm->recursion_count == 1 && smm->nr_uncommitted) {
-+		while (smm->nr_uncommitted && !r) {
-+			smm->nr_uncommitted--;
-+			r = commit_bop(smm, smm->uncommitted +
-+				       smm->nr_uncommitted);
-+		}
-+	}
-+
-+	smm->recursion_count--;
-+}
-+
-+static void no_recurse(struct sm_metadata *smm)
-+{
-+	BUG_ON(smm->recursion_count);
-+}
-+
-+static int recursing(struct sm_metadata *smm)
-+{
-+	return smm->recursion_count;
-+}
-+
-+static void sm_metadata_destroy(struct dm_space_map *sm)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	kfree(smm);
-+}
-+
-+static int sm_metadata_extend(struct dm_space_map *sm, dm_block_t extra_blocks)
-+{
-+	BUG();
-+	return -1;
-+}
-+
-+static int sm_metadata_get_nr_blocks(struct dm_space_map *sm, dm_block_t *count)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	*count = smm->ll.nr_blocks;
-+	return 0;
-+}
-+
-+static int sm_metadata_get_nr_free(struct dm_space_map *sm, dm_block_t *count)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+
-+	*count = smm->old_ll.nr_blocks - smm->old_ll.nr_allocated -
-+		smm->allocated_this_transaction;
-+	return 0;
-+}
-+
-+static int sm_metadata_get_count(struct dm_space_map *sm, dm_block_t b,
-+				 uint32_t *result)
-+{
-+	int r, i;
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	unsigned adjustment = 0;
-+
-+	/*
-+	 * we may have some uncommitted adjustments to add.  This list
-+	 * should always be really short.
-+	 */
-+	for (i = 0; i < smm->nr_uncommitted; i++) {
-+		struct block_op *op = smm->uncommitted + i;
-+		if (op->block == b)
-+			switch (op->type) {
-+			case BOP_INC:
-+				adjustment++;
-+				break;
-+
-+			case BOP_DEC:
-+				adjustment--;
-+				break;
-+			}
-+	}
-+
-+	r = ll_lookup(&smm->ll, b, result);
-+	if (r)
-+		return r;
-+	*result += adjustment;
-+
-+	return 0;
-+}
-+
-+static int sm_metadata_count_is_more_than_one(struct dm_space_map *sm,
-+					      dm_block_t b, int *result)
-+{
-+	int r, i, adjustment = 0;
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	uint32_t rc;
-+
-+	/*
-+	 * we may have some uncommitted adjustments to add.  This list
-+	 * should always be really short.
-+	 */
-+	for (i = 0; i < smm->nr_uncommitted; i++) {
-+		struct block_op *op = smm->uncommitted + i;
-+		if (op->block == b)
-+			switch (op->type) {
-+			case BOP_INC:
-+				adjustment++;
-+				break;
-+
-+			case BOP_DEC:
-+				adjustment--;
-+				break;
-+			}
-+	}
-+
-+	if (adjustment > 1) {
-+		*result = 1;
++	if (!cell) {
++		spin_unlock_irqrestore(&prison->lock, flags);
 +		return 0;
 +	}
 +
-+	r = ll_lookup_bitmap(&smm->ll, b, &rc);
-+	if (r)
-+		return r;
++	r = cell->count++;
++	bio_list_add(&cell->bios, inmate);
++	spin_unlock_irqrestore(&prison->lock, flags);
 +
-+	if (rc == 3)
-+		/* we err on the side of caution, and always return true */
-+		*result = 1;
-+	else
-+		*result = rc + adjustment > 1;
-+
-+	return 0;
-+}
-+
-+static int sm_metadata_set_count(struct dm_space_map *sm, dm_block_t b,
-+				 uint32_t count)
-+{
-+	int r;
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+
-+	no_recurse(smm);
-+
-+	in(smm);
-+	r = ll_insert(&smm->ll, b, count);
-+	out(smm);
++	*ref = cell;
 +	return r;
 +}
 +
-+static int sm_metadata_inc_block(struct dm_space_map *sm, dm_block_t b)
++/* @inmates must have been initialised prior to this call */
++static void __cell_release(struct cell *cell, struct bio_list *inmates)
 +{
-+	int r;
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+
-+	if (recursing(smm))
-+		r = add_bop(smm, BOP_INC, b);
-+
-+	else {
-+		in(smm);
-+		r = ll_inc(&smm->ll, b);
-+		out(smm);
-+	}
-+	return r;
++	struct bio_prison *prison = cell->prison;
++	hlist_del(&cell->list);
++	if (inmates)
++		bio_list_merge(inmates, &cell->bios);
++	mempool_free(cell, prison->cell_pool);
 +}
 +
-+static int sm_metadata_dec_block(struct dm_space_map *sm, dm_block_t b)
++static void cell_release(struct cell *cell, struct bio_list *bios)
 +{
-+	int r;
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
++	unsigned long flags;
++	struct bio_prison *prison = cell->prison;
 +
-+	if (recursing(smm))
-+		r = add_bop(smm, BOP_DEC, b);
-+
-+	else {
-+		in(smm);
-+		r = ll_dec(&smm->ll, b);
-+		out(smm);
-+	}
-+	return r;
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release(cell, bios);
++	spin_unlock_irqrestore(&prison->lock, flags);
 +}
 +
-+static int sm_metadata_new_block(struct dm_space_map *sm, dm_block_t *b)
++static void cell_error(struct cell *cell)
 +{
-+	int r;
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
++	struct bio_prison *prison = cell->prison;
++	struct bio_list bios;
++	struct bio *bio;
++	unsigned long flags;
 +
-+	r = ll_find_free_block(&smm->old_ll, smm->begin, smm->old_ll.nr_blocks, b);
-+	if (r)
-+		return r;
++	bio_list_init(&bios);
 +
-+	smm->begin = *b + 1;
++	spin_lock_irqsave(&prison->lock, flags);
++	__cell_release(cell, &bios);
++	spin_unlock_irqrestore(&prison->lock, flags);
 +
-+	if (recursing(smm))
-+		r = add_bop(smm, BOP_INC, *b);
-+
-+	else {
-+		in(smm);
-+		r = ll_inc(&smm->ll, *b);
-+		out(smm);
-+	}
-+
-+	if (!r)
-+		smm->allocated_this_transaction++;
-+	return r;
++	while ((bio = bio_list_pop(&bios)))
++		bio_io_error(bio);
 +}
-+
-+static int sm_metadata_commit(struct dm_space_map *sm)
-+{
-+	int r;
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+
-+	memcpy(&smm->old_ll, &smm->ll, sizeof(smm->old_ll));
-+
-+	r = ll_commit(&smm->ll);
-+	if (r)
-+		return r;
-+
-+	memcpy(&smm->old_ll, &smm->ll, sizeof(smm->old_ll));
-+	smm->begin = 0;
-+	smm->allocated_this_transaction = 0;
-+	return 0;
-+}
-+
-+static int sm_metadata_root_size(struct dm_space_map *sm, size_t *result)
-+{
-+	*result = sizeof(struct sm_root);
-+	return 0;
-+}
-+
-+static int sm_metadata_copy_root(struct dm_space_map *sm, void *where, size_t max)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	struct sm_root root;
-+
-+	root.nr_blocks = __cpu_to_le64(smm->ll.nr_blocks);
-+	root.nr_allocated = __cpu_to_le64(smm->ll.nr_allocated);
-+	root.bitmap_root = __cpu_to_le64(smm->ll.bitmap_root);
-+	root.ref_count_root = __cpu_to_le64(smm->ll.ref_count_root);
-+
-+	if (max < sizeof(root))
-+		return -ENOSPC;
-+
-+	memcpy(where, &root, sizeof(root));
-+
-+	return 0;
-+}
-+
-+static struct dm_space_map ops_ = {
-+	.destroy = sm_metadata_destroy,
-+	.extend = sm_metadata_extend,
-+	.get_nr_blocks = sm_metadata_get_nr_blocks,
-+	.get_nr_free = sm_metadata_get_nr_free,
-+	.get_count = sm_metadata_get_count,
-+	.count_is_more_than_one = sm_metadata_count_is_more_than_one,
-+	.set_count = sm_metadata_set_count,
-+	.inc_block = sm_metadata_inc_block,
-+	.dec_block = sm_metadata_dec_block,
-+	.new_block = sm_metadata_new_block,
-+	.commit = sm_metadata_commit,
-+	.root_size = sm_metadata_root_size,
-+	.copy_root = sm_metadata_copy_root
-+};
 +
 +/*----------------------------------------------------------------*/
 +
 +/*
-+ * When a new space map is created, that manages it's own space.  We use
-+ * this tiny bootstrap allocator.
++ * We use the deferred set to keep track of pending reads to shared blocks.
++ * We do this to ensure the new mapping caused by a write isn't performed
++ * until these prior reads have completed.  Otherwise the insertion of the
++ * new mapping could free the old block that the read bios are mapped to.
 + */
-+static void sm_bootstrap_destroy(struct dm_space_map *sm)
-+{
-+	BUG();
-+}
++#define DEFERRED_SET_SIZE 64
 +
-+static int sm_bootstrap_extend(struct dm_space_map *sm, dm_block_t extra_blocks)
-+{
-+	BUG();
-+	return -1;
-+}
-+
-+static int sm_bootstrap_get_nr_blocks(struct dm_space_map *sm, dm_block_t *count)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	return smm->ll.nr_blocks;
-+}
-+
-+static int sm_bootstrap_get_nr_free(struct dm_space_map *sm, dm_block_t *count)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	*count = smm->ll.nr_blocks - smm->begin;
-+	return 0;
-+}
-+
-+static int sm_bootstrap_get_count(struct dm_space_map *sm, dm_block_t b,
-+				  uint32_t *result)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	return b < smm->begin ? 1 : 0;
-+}
-+
-+static int sm_bootstrap_count_is_more_than_one(struct dm_space_map *sm,
-+					       dm_block_t b, int *result)
-+{
-+	*result = 0;
-+	return 0;
-+}
-+
-+static int sm_bootstrap_set_count(struct dm_space_map *sm, dm_block_t b,
-+				  uint32_t count)
-+{
-+	BUG();
-+	return -1;
-+}
-+
-+static int sm_bootstrap_new_block(struct dm_space_map *sm, dm_block_t *b)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+
-+	/*
-+	 * We know the entire device is unused.
-+	 */
-+	if (smm->begin == smm->ll.nr_blocks)
-+		return -ENOSPC;
-+
-+	*b = smm->begin++;
-+	return 0;
-+}
-+
-+static int sm_bootstrap_inc_block(struct dm_space_map *sm, dm_block_t b)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	return add_bop(smm, BOP_INC, b);
-+}
-+
-+static int sm_bootstrap_dec_block(struct dm_space_map *sm, dm_block_t b)
-+{
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+	return add_bop(smm, BOP_DEC, b);
-+}
-+
-+static int sm_bootstrap_commit(struct dm_space_map *sm)
-+{
-+	return 0;
-+}
-+
-+static int sm_bootstrap_root_size(struct dm_space_map *sm, size_t *result)
-+{
-+	BUG();
-+	return -1;
-+}
-+
-+static int sm_bootstrap_copy_root(struct dm_space_map *sm, void *where,
-+				  size_t max)
-+{
-+	BUG();
-+	return -1;
-+}
-+
-+static struct dm_space_map bootstrap_ops_ = {
-+	.destroy = sm_bootstrap_destroy,
-+	.extend = sm_bootstrap_extend,
-+	.get_nr_blocks = sm_bootstrap_get_nr_blocks,
-+	.get_nr_free = sm_bootstrap_get_nr_free,
-+	.get_count = sm_bootstrap_get_count,
-+	.count_is_more_than_one = sm_bootstrap_count_is_more_than_one,
-+	.set_count = sm_bootstrap_set_count,
-+	.inc_block = sm_bootstrap_inc_block,
-+	.dec_block = sm_bootstrap_dec_block,
-+	.new_block = sm_bootstrap_new_block,
-+	.commit = sm_bootstrap_commit,
-+	.root_size = sm_bootstrap_root_size,
-+	.copy_root = sm_bootstrap_copy_root
++struct deferred_set;
++struct deferred_entry {
++	struct deferred_set *ds;
++	unsigned count;
++	struct list_head work_items;
 +};
 +
-+/*----------------------------------------------------------------*/
++struct deferred_set {
++	spinlock_t lock;
++	unsigned current_entry;
++	unsigned sweeper;
++	struct deferred_entry entries[DEFERRED_SET_SIZE];
++};
 +
-+struct dm_space_map *dm_sm_metadata_init(void)
++static void ds_init(struct deferred_set *ds)
 +{
-+	struct sm_metadata *smm;
++	int i;
 +
-+	smm = kmalloc(sizeof(*smm), GFP_KERNEL);
-+	if (!smm)
-+		return ERR_PTR(-ENOMEM);
-+
-+	memcpy(&smm->sm, &ops_, sizeof(smm->sm));
-+	return &smm->sm;
++	spin_lock_init(&ds->lock);
++	ds->current_entry = 0;
++	ds->sweeper = 0;
++	for (i = 0; i < DEFERRED_SET_SIZE; i++) {
++		ds->entries[i].ds = ds;
++		ds->entries[i].count = 0;
++		INIT_LIST_HEAD(&ds->entries[i].work_items);
++	}
 +}
-+EXPORT_SYMBOL_GPL(dm_sm_metadata_init);
 +
-+int dm_sm_metadata_create(struct dm_space_map *sm,
-+			  struct dm_transaction_manager *tm,
-+			  dm_block_t nr_blocks,
-+			  dm_block_t superblock)
++static struct deferred_entry *ds_inc(struct deferred_set *ds)
 +{
-+	int r;
-+	dm_block_t i;
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
++	unsigned long flags;
++	struct deferred_entry *entry;
 +
-+	smm->begin = superblock + 1;
-+	smm->recursion_count = 0;
-+	smm->allocated_this_transaction = 0;
-+	smm->nr_uncommitted = 0;
++	spin_lock_irqsave(&ds->lock, flags);
++	entry = ds->entries + ds->current_entry;
++	entry->count++;
++	spin_unlock_irqrestore(&ds->lock, flags);
 +
-+	memcpy(&smm->sm, &bootstrap_ops_, sizeof(smm->sm));
-+	r = ll_new(&smm->ll, tm, nr_blocks);
-+	if (r)
-+		return r;
-+	memcpy(&smm->sm, &ops_, sizeof(smm->sm));
-+
-+	/*
-+	 * Now we need to update the newly created data structures with the
-+	 * allocated blocks that they were built from.
-+	 */
-+	for (i = superblock; !r && i < smm->begin; i++)
-+		r = ll_inc(&smm->ll, i);
-+
-+	if (r)
-+		return r;
-+
-+	return sm_metadata_commit(sm);
++	return entry;
 +}
-+EXPORT_SYMBOL_GPL(dm_sm_metadata_create);
 +
-+int dm_sm_metadata_open(struct dm_space_map *sm,
-+			struct dm_transaction_manager *tm,
-+			void *root, size_t len)
++static unsigned ds_next(unsigned index)
 +{
-+	int r;
-+	struct sm_metadata *smm = container_of(sm, struct sm_metadata, sm);
-+
-+	r = ll_open(&smm->ll, tm, root, len);
-+	if (r)
-+		return r;
-+
-+	smm->begin = 0;
-+	smm->recursion_count = 0;
-+	smm->allocated_this_transaction = 0;
-+	smm->nr_uncommitted = 0;
-+
-+	return sm_metadata_commit(sm);
++	return (index + 1) % DEFERRED_SET_SIZE;
 +}
-+EXPORT_SYMBOL_GPL(dm_sm_metadata_open);
-diff --git a/drivers/md/persistent-data/dm-space-map-metadata.h b/drivers/md/persistent-data/dm-space-map-metadata.h
-new file mode 100644
-index 0000000..412c196
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-space-map-metadata.h
-@@ -0,0 +1,29 @@
-+#ifndef DM_SPACE_MAP_METADATA_H
-+#define DM_SPACE_MAP_METADATA_H
 +
-+#include "dm-transaction-manager.h"
-+#include "dm-space-map.h"
++static void __sweep(struct deferred_set *ds, struct list_head *head)
++{
++	while ((ds->sweeper != ds->current_entry) &&
++	       !ds->entries[ds->sweeper].count) {
++		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
++		ds->sweeper = ds_next(ds->sweeper);
++	}
++
++	if ((ds->sweeper == ds->current_entry) && !ds->entries[ds->sweeper].count)
++		list_splice_init(&ds->entries[ds->sweeper].work_items, head);
++}
++
++static void ds_dec(struct deferred_entry *entry, struct list_head *head)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&entry->ds->lock, flags);
++	BUG_ON(!entry->count);
++	--entry->count;
++	__sweep(entry->ds, head);
++	spin_unlock_irqrestore(&entry->ds->lock, flags);
++}
++
++/* 1 if deferred, 0 if no pending items to delay job */
++static int ds_add_work(struct deferred_set *ds, struct list_head *work)
++{
++	int r = 1;
++	unsigned long flags;
++	unsigned next_entry;
++
++	spin_lock_irqsave(&ds->lock, flags);
++	if ((ds->sweeper == ds->current_entry) &&
++	    !ds->entries[ds->current_entry].count)
++		r = 0;
++	else {
++		list_add(work, &ds->entries[ds->current_entry].work_items);
++		next_entry = ds_next(ds->current_entry);
++		if (!ds->entries[next_entry].count) {
++			BUG_ON(!list_empty(&ds->entries[next_entry].work_items));
++			ds->current_entry = next_entry;
++		}
++	}
++	spin_unlock_irqrestore(&ds->lock, flags);
++
++	return r;
++}
 +
 +/*----------------------------------------------------------------*/
 +
 +/*
-+ * Unfortunately we have to use 2 phase construction due to the cycle
-+ * between the tm and sm.
++ * Key building.
 + */
-+struct dm_space_map *dm_sm_metadata_init(void);
++static void build_data_key(struct dm_ms_device *msd,
++			   dm_block_t b, struct cell_key *key)
++{
++	key->virtual = 0;
++	key->dev = dm_thin_device_dev(msd);
++	key->block = b;
++}
 +
-+/* create a fresh space map */
-+int dm_sm_metadata_create(struct dm_space_map *sm,
-+			  struct dm_transaction_manager *tm,
-+			  dm_block_t nr_blocks,
-+			  dm_block_t superblock);
-+
-+
-+/* Open from a previously recorded root */
-+int dm_sm_metadata_open(struct dm_space_map *sm,
-+			struct dm_transaction_manager *tm,
-+			void *root, size_t len);
-+
-+/*----------------------------------------------------------------*/
-+
-+#endif
-diff --git a/drivers/md/persistent-data/dm-space-map.h b/drivers/md/persistent-data/dm-space-map.h
-new file mode 100644
-index 0000000..8e73daa
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-space-map.h
-@@ -0,0 +1,116 @@
-+#ifndef DM_SPACE_MAP_H
-+#define DM_SPACE_MAP_H
-+
-+#include "dm-block-manager.h"
++static void build_virtual_key(struct dm_ms_device *msd, dm_block_t b,
++			      struct cell_key *key)
++{
++	key->virtual = 1;
++	key->dev = dm_thin_device_dev(msd);
++	key->block = b;
++}
 +
 +/*----------------------------------------------------------------*/
 +
 +/*
-+ * This structure keeps a record of how many times each block in a device
-+ * is referenced.  It needs to be persisted to disk as part of the
-+ * transaction.
++ * A pool device ties together a metadata device and a data device.  It
++ * also provides the interface for creating and destroying internal
++ * devices.
 + */
-+struct dm_space_map {
-+	void (*destroy)(struct dm_space_map *sm);
-+
-+	int (*extend)(struct dm_space_map *sm, dm_block_t extra_blocks);
-+
-+	int (*get_nr_blocks)(struct dm_space_map *sm, dm_block_t *count);
-+	int (*get_nr_free)(struct dm_space_map *sm, dm_block_t *count);
-+
-+	int (*get_count)(struct dm_space_map *sm, dm_block_t b, uint32_t *result);
-+	int (*count_is_more_than_one)(struct dm_space_map *sm, dm_block_t b,
-+				      int *result);
-+	int (*set_count)(struct dm_space_map *sm, dm_block_t b, uint32_t count);
-+
-+	int (*commit)(struct dm_space_map *sm);
-+
-+	int (*inc_block)(struct dm_space_map *sm, dm_block_t b);
-+	int (*dec_block)(struct dm_space_map *sm, dm_block_t b);
-+
-+	/* new_block will increment the returned block */
-+	int (*new_block)(struct dm_space_map *sm, dm_block_t *b);
-+
-+	/*
-+	 * The root contains all the information needed to persist the
-+	 * space map.  Generally this info is small, squirrel it away in a
-+	 * disk block along with other info.
-+	 */
-+	int (*root_size)(struct dm_space_map *sm, size_t *result);
-+	int (*copy_root)(struct dm_space_map *sm, void *copy_to_here, size_t len);
-+};
-+
-+/*----------------------------------------------------------------*/
-+
-+static inline void dm_sm_destroy(struct dm_space_map *sm)
-+{
-+	sm->destroy(sm);
-+}
-+
-+static inline int dm_sm_extend(struct dm_space_map *sm, dm_block_t extra_blocks)
-+{
-+	return sm->extend(sm, extra_blocks);
-+}
-+
-+static inline int dm_sm_get_nr_blocks(struct dm_space_map *sm, dm_block_t *count)
-+{
-+	return sm->get_nr_blocks(sm, count);
-+}
-+
-+static inline int dm_sm_get_nr_free(struct dm_space_map *sm, dm_block_t *count)
-+{
-+	return sm->get_nr_free(sm, count);
-+}
-+
-+static inline int dm_sm_get_count(struct dm_space_map *sm, dm_block_t b,
-+				  uint32_t *result)
-+{
-+	return sm->get_count(sm, b, result);
-+}
-+
-+static inline int dm_sm_count_is_more_than_one(struct dm_space_map *sm,
-+					       dm_block_t b, int *result)
-+{
-+	return sm->count_is_more_than_one(sm, b, result);
-+}
-+
-+static inline int dm_sm_set_count(struct dm_space_map *sm, dm_block_t b,
-+				  uint32_t count)
-+{
-+	return sm->set_count(sm, b, count);
-+}
-+
-+static inline int dm_sm_commit(struct dm_space_map *sm)
-+{
-+	return sm->commit(sm);
-+}
-+
-+static inline int dm_sm_inc_block(struct dm_space_map *sm, dm_block_t b)
-+{
-+	return sm->inc_block(sm, b);
-+}
-+
-+static inline int dm_sm_dec_block(struct dm_space_map *sm, dm_block_t b)
-+{
-+	return sm->dec_block(sm, b);
-+}
-+
-+static inline int dm_sm_new_block(struct dm_space_map *sm, dm_block_t *b)
-+{
-+	return sm->new_block(sm, b);
-+}
-+
-+static inline int dm_sm_root_size(struct dm_space_map *sm, size_t *result)
-+{
-+	return sm->root_size(sm, result);
-+}
-+
-+static inline int dm_sm_copy_root(struct dm_space_map *sm,
-+				  void *copy_to_here, size_t len)
-+{
-+	return sm->copy_root(sm, copy_to_here, len);
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+#endif
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
-new file mode 100644
-index 0000000..28042a9
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-transaction-manager.c
-@@ -0,0 +1,442 @@
-+#include "dm-transaction-manager.h"
-+#include "dm-space-map-disk.h"
-+#include "dm-space-map-metadata.h"
-+
-+#include <linux/slab.h>
-+#include <linux/device-mapper.h> /* For DMERR */
-+
-+#define DM_MSG_PREFIX "transaction manager"
-+
-+/*----------------------------------------------------------------*/
-+
-+struct shadow_info {
++struct pool {
 +	struct hlist_node hlist;
-+	dm_block_t where;
++	struct dm_target *ti;	/* only set if a pool target is bound */
++
++	struct block_device *pool_dev;
++	struct block_device *metadata_dev;
++	struct dm_thin_metadata *mmd;
++
++	uint32_t sectors_per_block;
++	unsigned block_shift;
++	dm_block_t offset_mask;
++	dm_block_t low_water_mark;
++	unsigned zero_new_blocks;
++
++	struct bio_prison *prison;
++	struct dm_kcopyd_client *copier;
++
++	struct workqueue_struct *producer_wq;
++	struct workqueue_struct *consumer_wq;
++	struct work_struct producer;
++	struct work_struct consumer;
++
++	spinlock_t lock;
++	struct bio_list deferred_bios;
++	struct list_head prepared_mappings;
++
++	int triggered;		/* a dm event has been sent */
++	struct bio_list retry_list;
++
++	struct deferred_set ds;	/* FIXME: move to thin_c */
++
++	mempool_t *mapping_pool;
++	mempool_t *endio_hook_pool;
++
++	atomic_t ref_count;
 +};
 +
-+/* it would be nice if we scaled with the size of transaction */
-+#define HASH_SIZE 256
-+#define HASH_MASK (HASH_SIZE - 1)
-+struct dm_transaction_manager {
-+	int is_clone;
-+	struct dm_transaction_manager *real;
++/* FIXME: can cells and new_mappings be combined? */
 +
-+	struct dm_block_manager *bm;
-+	struct dm_space_map *sm;
++struct new_mapping {
++	struct list_head list;
 +
-+	struct hlist_head buckets[HASH_SIZE];
++	int prepared;
 +
-+	/* stats */
-+	unsigned shadow_count;
-+};
-+
-+/*----------------------------------------------------------------*/
-+
-+/* FIXME: similar code in block-manager */
-+static unsigned hash_block(dm_block_t b)
-+{
-+	const unsigned BIG_PRIME = 4294967291UL;
-+	return (((unsigned) b) * BIG_PRIME) & HASH_MASK;
-+}
-+
-+static int is_shadow(struct dm_transaction_manager *tm, dm_block_t b)
-+{
-+	unsigned bucket = hash_block(b);
-+	struct shadow_info *si;
-+	struct hlist_node *n;
-+
-+	hlist_for_each_entry(si, n, tm->buckets + bucket, hlist)
-+		if (si->where == b)
-+			return 1;
-+
-+	return 0;
-+}
-+
-+/*
-+ * This can silently fail if there's no memory.  We're ok with this since
-+ * creating redundant shadows causes no harm.
-+ */
-+static void insert_shadow(struct dm_transaction_manager *tm, dm_block_t b)
-+{
-+	unsigned bucket;
-+	struct shadow_info *si;
-+
-+	si = kmalloc(sizeof(*si), GFP_NOIO);
-+	if (si) {
-+		si->where = b;
-+		bucket = hash_block(b);
-+		hlist_add_head(&si->hlist, tm->buckets + bucket);
-+	}
-+}
-+
-+static void wipe_shadow_table(struct dm_transaction_manager *tm)
-+{
-+	int i;
-+	for (i = 0; i < HASH_SIZE; i++) {
-+		struct shadow_info *si;
-+		struct hlist_node *n, *tmp;
-+		struct hlist_head *bucket = tm->buckets + i;
-+		hlist_for_each_entry_safe(si, n, tmp, bucket, hlist)
-+			kfree(si);
-+
-+		INIT_HLIST_HEAD(bucket);
-+	}
-+
-+	tm->shadow_count = 0;
-+}
-+
-+/*----------------------------------------------------------------*/
-+
-+struct dm_transaction_manager *dm_tm_create(struct dm_block_manager *bm,
-+					    struct dm_space_map *sm)
-+{
-+	int i;
-+	struct dm_transaction_manager *tm;
-+
-+	tm = kmalloc(sizeof(*tm), GFP_KERNEL);
-+	if (!tm)
-+		return ERR_PTR(-ENOMEM);
-+
-+	tm->is_clone = 0;
-+	tm->real = NULL;
-+	tm->bm = bm;
-+	tm->sm = sm;
-+
-+	for (i = 0; i < HASH_SIZE; i++)
-+		INIT_HLIST_HEAD(tm->buckets + i);
-+
-+	tm->shadow_count = 0;
-+
-+	return tm;
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_create);
-+
-+struct dm_transaction_manager *
-+dm_tm_create_non_blocking_clone(struct dm_transaction_manager *real)
-+{
-+	struct dm_transaction_manager *tm;
-+
-+	tm = kmalloc(sizeof(*tm), GFP_KERNEL);
-+	if (tm) {
-+		tm->is_clone = 1;
-+		tm->real = real;
-+	}
-+
-+	return tm;
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_create_non_blocking_clone);
-+
-+void dm_tm_destroy(struct dm_transaction_manager *tm)
-+{
-+	kfree(tm);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_destroy);
-+
-+int dm_tm_reserve_block(struct dm_transaction_manager *tm, dm_block_t b)
-+{
-+	if (tm->is_clone)
-+		return -EWOULDBLOCK;
-+
-+	return dm_sm_inc_block(tm->sm, b);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_reserve_block);
-+
-+int dm_tm_begin(struct dm_transaction_manager *tm)
-+{
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_begin);
-+
-+int dm_tm_pre_commit(struct dm_transaction_manager *tm)
-+{
-+	int r;
-+
-+	if (tm->is_clone)
-+		return -EWOULDBLOCK;
-+
-+	r = dm_sm_commit(tm->sm);
-+	if (r < 0)
-+		return r;
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_pre_commit);
-+
-+int dm_tm_commit(struct dm_transaction_manager *tm, struct dm_block *root)
-+{
-+	if (tm->is_clone)
-+		return -EWOULDBLOCK;
-+
-+	wipe_shadow_table(tm);
-+	return dm_bm_flush_and_unlock(tm->bm, root);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_commit);
-+
-+int dm_tm_alloc_block(struct dm_transaction_manager *tm, dm_block_t *new_block)
-+{
-+	if (tm->is_clone)
-+		return -EWOULDBLOCK;
-+
-+	return dm_sm_new_block(tm->sm, new_block);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_alloc_block);
-+
-+int dm_tm_new_block(struct dm_transaction_manager *tm,
-+		    struct dm_block_validator *v,
-+		    struct dm_block **result)
-+{
-+	int r;
-+	dm_block_t new_block;
-+
-+	if (tm->is_clone)
-+		return -EWOULDBLOCK;
-+
-+	r = dm_sm_new_block(tm->sm, &new_block);
-+	if (r < 0)
-+		return r;
-+
-+	r = dm_bm_write_lock_zero(tm->bm, new_block, v, result);
-+	if (r < 0) {
-+		dm_sm_dec_block(tm->sm, new_block);
-+		return r;
-+	}
++	struct pool *pool;
++	struct dm_ms_device *msd;
++	dm_block_t virt_block;
++	dm_block_t data_block;
++	struct cell *cell;
++	int err;
 +
 +	/*
-+	 * New blocks count as shadows, in that they don't need to be
-+	 * shadowed again.
++	 * If the bio covers the whole area of a block then we can avoid
++	 * zeroing or copying.  Instead this bio is hooked.  The bio will
++	 * still be in the cell, so care has to be taken to avoid issuing
++	 * the bio twice.
 +	 */
-+	insert_shadow(tm, new_block);
++	struct bio *bio;
++	bio_end_io_t *bi_end_io;
++	void *bi_private;
++};
 +
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_new_block);
++/*
++ * Target context for a pool.
++ */
++struct pool_c {
++	struct dm_target *ti;
++	struct pool *pool;
++	struct dm_dev *data_dev;
 +
-+static int __shadow_block(struct dm_transaction_manager *tm, dm_block_t orig,
-+			  struct dm_block_validator *v,
-+			  struct dm_block **result, int *inc_children)
-+{
-+	int r;
-+	dm_block_t new;
-+	uint32_t count;
-+	struct dm_block *orig_block;
++	sector_t low_water_mark;
++	unsigned zero_new_blocks;
++};
 +
-+	r = dm_sm_new_block(tm->sm, &new);
-+	if (r < 0)
-+		return r;
++/*
++ * Target context for a thin.
++ */
++struct thin_c {
++	struct dm_dev *pool_dev;
++	dm_thin_dev_t dev_id;
 +
-+	r = dm_bm_write_lock_zero(tm->bm, new, v, result);
-+	if (r < 0) {
-+		dm_sm_dec_block(tm->sm, new);
-+		return r;
-+	}
++	/*
++	 * These fields are only valid while the device is resumed.  This
++	 * is because the pool_c may totally change due to table reloads
++	 * (where as the pool_dev above remains constant).
++	 */
++	struct pool *pool;
++	struct dm_ms_device *msd;
++};
 +
-+	r = dm_bm_read_lock(tm->bm, orig, v, &orig_block);
-+	if (r < 0) {
-+		dm_sm_dec_block(tm->sm, new);
-+		return r;
-+	}
-+	memcpy(dm_block_data(*result), dm_block_data(orig_block),
-+	       dm_bm_block_size(tm->bm));
-+	r = dm_bm_unlock(orig_block);
-+	if (r < 0) {
-+		dm_sm_dec_block(tm->sm, new);
-+		return r;
-+	}
-+
-+	r = dm_sm_get_count(tm->sm, orig, &count);
-+	if (r < 0) {
-+		dm_sm_dec_block(tm->sm, new);
-+		dm_bm_unlock(*result);
-+		return r;
-+	}
-+
-+	r = dm_sm_dec_block(tm->sm, orig);
-+	if (r < 0) {
-+		dm_sm_dec_block(tm->sm, new);
-+		dm_bm_unlock(*result);
-+		return r;
-+	}
-+
-+	*inc_children = count > 1;
-+	return 0;
-+}
-+
-+int dm_tm_shadow_block(struct dm_transaction_manager *tm, dm_block_t orig,
-+		       struct dm_block_validator *v, struct dm_block **result,
-+		       int *inc_children)
-+{
-+	int r, more_than_one;
-+
-+	if (tm->is_clone)
-+		return -EWOULDBLOCK;
-+
-+	if (is_shadow(tm, orig)) {
-+		r = dm_sm_count_is_more_than_one(tm->sm, orig, &more_than_one);
-+		if (r < 0)
-+			return r;
-+
-+		if (!more_than_one) {
-+			*inc_children = 0;
-+			return dm_bm_write_lock(tm->bm, orig, v, result);
-+		}
-+		/* fall through */
-+	}
-+
-+	r = __shadow_block(tm, orig, v, result, inc_children);
-+	if (r < 0)
-+		return r;
-+	tm->shadow_count++;
-+	insert_shadow(tm, dm_block_location(*result));
-+
-+	return r;
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_shadow_block);
-+
-+int dm_tm_read_lock(struct dm_transaction_manager *tm, dm_block_t b,
-+		    struct dm_block_validator *v,
-+		    struct dm_block **blk)
-+{
-+	if (tm->is_clone)
-+		return dm_bm_read_try_lock(tm->real->bm, b, v, blk);
-+
-+	return dm_bm_read_lock(tm->bm, b, v, blk);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_read_lock);
-+
-+int dm_tm_unlock(struct dm_transaction_manager *tm, struct dm_block *b)
-+{
-+	return dm_bm_unlock(b);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_unlock);
-+
-+void dm_tm_inc(struct dm_transaction_manager *tm, dm_block_t b)
-+{
-+	BUG_ON(tm->is_clone);
-+	dm_sm_inc_block(tm->sm, b);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_inc);
-+
-+void dm_tm_dec(struct dm_transaction_manager *tm, dm_block_t b)
-+{
-+	BUG_ON(tm->is_clone);
-+	dm_sm_dec_block(tm->sm, b);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_dec);
-+
-+int dm_tm_ref(struct dm_transaction_manager *tm, dm_block_t b,
-+	      uint32_t *result)
-+{
-+	if (tm->is_clone)
-+		return -EWOULDBLOCK;
-+
-+	return dm_sm_get_count(tm->sm, b, result);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_ref);
-+
-+struct dm_block_manager *dm_tm_get_bm(struct dm_transaction_manager *tm)
-+{
-+	BUG_ON(tm->is_clone);
-+	return tm->bm;
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_get_bm);
++struct endio_hook {
++	struct pool *pool;
++	bio_end_io_t *bi_end_io;
++	void *bi_private;
++	struct deferred_entry *entry;
++};
 +
 +/*----------------------------------------------------------------*/
 +
-+static int dm_tm_create_internal(struct dm_block_manager *bm,
-+				 dm_block_t sb_location,
-+				 struct dm_block_validator *sb_validator,
-+				 size_t root_offset, size_t root_max_len,
-+				 struct dm_transaction_manager **tm,
-+				 struct dm_space_map **sm,
-+				 struct dm_block **sblock,
-+				 int create)
++/*
++ * A global table that uses a struct block_device as a key.
++ */
++#define TABLE_SIZE 32
++#define TABLE_PRIME 27 /* Largest prime smaller than table size. */
++#define	TABLE_SHIFT 5  /* Shift fitting prime. */
++struct bdev_table {
++	spinlock_t lock;
++	struct hlist_head buckets[TABLE_SIZE];
++};
++
++static void bdev_table_init(struct bdev_table *t)
 +{
-+	int r;
++	unsigned i;
++	spin_lock_init(&t->lock);
++	for (i = 0; i < TABLE_SIZE; i++)
++		INIT_HLIST_HEAD(t->buckets + i);
++}
 +
-+	*sm = dm_sm_metadata_init();
-+	if (IS_ERR(*sm))
-+		return PTR_ERR(*sm);
++static unsigned hash_bdev(struct block_device *bdev)
++{
++	unsigned long p = (unsigned long) bdev;
 +
-+	*tm = dm_tm_create(bm, *sm);
-+	if (IS_ERR(*tm)) {
-+		dm_sm_destroy(*sm);
-+		return -1;
++	do_div(p, cache_line_size());
++	return ((p * TABLE_PRIME) >> TABLE_SHIFT) & (TABLE_SIZE - 1);
++}
++
++static void bdev_table_insert(struct bdev_table *t, struct pool *pool)
++{
++	unsigned bucket = hash_bdev(pool->pool_dev);
++	spin_lock(&t->lock);
++	hlist_add_head(&pool->hlist, t->buckets + bucket);
++	spin_unlock(&t->lock);
++}
++
++static void bdev_table_remove(struct bdev_table *t, struct pool *pool)
++{
++	spin_lock(&t->lock);
++	hlist_del(&pool->hlist);
++	spin_unlock(&t->lock);
++}
++
++static struct pool *bdev_table_lookup(struct bdev_table *t,
++				      struct block_device *bdev)
++{
++	unsigned bucket = hash_bdev(bdev);
++	struct hlist_node *n;
++	struct pool *pool;
++
++	hlist_for_each_entry(pool, n, t->buckets + bucket, hlist)
++		if (pool->pool_dev == bdev)
++			return pool;
++
++	return NULL;
++}
++
++static struct bdev_table bdev_table_;
++
++/*----------------------------------------------------------------*/
++
++/*
++ * We need to maintain an association between a bio and a target.  To
++ * save lookups in an auxillary table, or wrapping bios in objects from a
++ * mempool we hide this value in the bio->bi_bdev field, which we know is
++ * not used while the bio is being processed.
++ */
++static void set_ti(struct bio *bio, struct dm_target *ti)
++{
++	bio->bi_bdev = (struct block_device *) ti;
++}
++
++static struct dm_ms_device *get_msd(struct bio *bio)
++{
++	struct dm_target *ti = (struct dm_target *) bio->bi_bdev;
++	struct thin_c *mc = ti->private;
++	return mc->msd;
++}
++
++static struct dm_target *get_ti(struct bio *bio)
++{
++	return (struct dm_target *) bio->bi_bdev;
++}
++
++/*----------------------------------------------------------------*/
++
++static dm_block_t get_bio_block(struct pool *pool, struct bio *bio)
++{
++	return bio->bi_sector >> pool->block_shift;
++}
++
++static void remap(struct pool *pool, struct bio *bio, dm_block_t block)
++{
++	bio->bi_bdev = pool->pool_dev;
++	bio->bi_sector = (block << pool->block_shift) +
++		(bio->bi_sector & pool->offset_mask);
++}
++
++static void remap_and_issue(struct pool *pool, struct bio *bio,
++			    dm_block_t block)
++{
++	if (bio->bi_rw & (REQ_FLUSH | REQ_FUA)) {
++		int r = dm_thin_metadata_commit(pool->mmd);
++		if (r) {
++			DMERR("%s: dm_thin_metadata_commit() failed, error = %d",
++			      __func__, r);
++			bio_io_error(bio);
++			return;
++		}
 +	}
 +
-+	r = dm_tm_begin(*tm);
-+	if (r < 0)
-+		goto bad1;
++	remap(pool, bio, block);
++	generic_make_request(bio);
++}
 +
-+	if (create) {
-+		r = dm_bm_write_lock_zero(dm_tm_get_bm(*tm), sb_location,
-+					  sb_validator, sblock);
-+		if (r < 0) {
-+			DMERR("couldn't lock superblock");
-+			goto bad1;
-+		}
++static void wake_producer(struct pool *pool)
++{
++	queue_work(pool->producer_wq, &pool->producer);
++}
 +
-+		r = dm_sm_metadata_create(*sm, *tm, dm_bm_nr_blocks(bm),
-+					  sb_location);
-+		if (r) {
-+			DMERR("couldn't create metadata space map");
-+			goto bad2;
-+		}
++static void __maybe_add_mapping(struct pool *pool, struct new_mapping *m)
++{
++	if (list_empty(&m->list) && m->prepared) {
++		list_add(&m->list, &pool->prepared_mappings);
++		queue_work(pool->consumer_wq, &pool->consumer);
++	}
++}
++
++static void copy_complete(int read_err, unsigned long write_err, void *context)
++{
++	unsigned long flags;
++	struct new_mapping *m = (struct new_mapping *) context;
++
++	m->err = read_err || write_err ? -EIO : 0;
++
++	spin_lock_irqsave(&m->pool->lock, flags);
++	m->prepared = 1;
++	__maybe_add_mapping(m->pool, m);
++	spin_unlock_irqrestore(&m->pool->lock, flags);
++}
++
++static void overwrite_complete(struct bio *bio, int err)
++{
++	unsigned long flags;
++	struct new_mapping *m = (struct new_mapping *) bio->bi_private;
++
++	m->err = err;
++
++	spin_lock_irqsave(&m->pool->lock, flags);
++	m->prepared = 1;
++	__maybe_add_mapping(m->pool, m);
++	spin_unlock_irqrestore(&m->pool->lock, flags);
++}
++
++static void shared_read_complete(struct bio *bio, int err)
++{
++	struct list_head mappings;
++	struct new_mapping *m, *tmp;
++	struct endio_hook *h = (struct endio_hook *) bio->bi_private;
++	unsigned long flags;
++
++	bio->bi_end_io = h->bi_end_io;
++	bio->bi_private = h->bi_private;
++	bio_endio(bio, err);
++
++	INIT_LIST_HEAD(&mappings);
++	ds_dec(h->entry, &mappings);
++
++	spin_lock_irqsave(&h->pool->lock, flags);
++	list_for_each_entry_safe(m, tmp, &mappings, list) {
++		list_del(&m->list);
++		INIT_LIST_HEAD(&m->list);
++		__maybe_add_mapping(m->pool, m);
++	}
++	spin_unlock_irqrestore(&h->pool->lock, flags);
++
++	mempool_free(h, h->pool->endio_hook_pool);
++}
++
++static int io_covers_block(struct pool *pool, struct bio *bio)
++{
++	return ((bio->bi_sector & pool->offset_mask) == 0) &&
++		(bio->bi_size == (pool->sectors_per_block << SECTOR_SHIFT));
++}
++
++static void schedule_copy(struct pool *pool, struct dm_ms_device *msd,
++			  dm_block_t virt_block, dm_block_t data_origin,
++			  dm_block_t data_dest, struct cell *cell,
++			  struct bio *bio)
++{
++	int r;
++	struct new_mapping *m = mempool_alloc(pool->mapping_pool, GFP_NOIO);
++
++	INIT_LIST_HEAD(&m->list);
++	m->prepared = 0;
++	m->pool = pool;
++	m->msd = msd;
++	m->virt_block = virt_block;
++	m->data_block = data_dest;
++	m->cell = cell;
++	m->err = 0;
++	m->bio = NULL;
++	ds_add_work(&pool->ds, &m->list);
++
++	if (io_covers_block(pool, bio)) {
++		/* no copy needed, since all data is going to change */
++		m->bio = bio;
++		m->bi_end_io = bio->bi_end_io;
++		m->bi_private = bio->bi_private;
++		bio->bi_end_io = overwrite_complete;
++		bio->bi_private = m;
++		remap_and_issue(pool, bio, data_dest);
 +
 +	} else {
-+		r = dm_bm_write_lock(dm_tm_get_bm(*tm), sb_location,
-+				     sb_validator, sblock);
-+		if (r < 0) {
-+			DMERR("couldn't lock superblock");
-+			goto bad1;
-+		}
++		/* use kcopyd */
++		struct dm_io_region from, to;
 +
-+		r = dm_sm_metadata_open(*sm, *tm,
-+					dm_block_data(*sblock) + root_offset,
-+					root_max_len);
-+		if (IS_ERR(*sm)) {
-+			DMERR("couldn't open metadata space map");
-+			goto bad2;
++		/* IO to pool->pool_dev remaps to the pool target's data_dev */
++		from.bdev = pool->pool_dev;
++		from.sector = data_origin * pool->sectors_per_block;
++		from.count = pool->sectors_per_block;
++
++		to.bdev = pool->pool_dev;
++		to.sector = data_dest * pool->sectors_per_block;
++		to.count = pool->sectors_per_block;
++
++		r = dm_kcopyd_copy(pool->copier, &from, 1, &to,
++				   0, copy_complete, m);
++		if (r < 0) {
++			mempool_free(m, pool->mapping_pool);
++			DMERR("dm_kcopyd_copy() failed");
++			cell_error(cell);
 +		}
 +	}
++}
 +
-+	r = dm_tm_begin(*tm);
-+	if (r < 0)
-+		goto bad2;
++static void schedule_zero(struct pool *pool, struct dm_ms_device *msd,
++			  dm_block_t virt_block, dm_block_t data_block,
++			  struct cell *cell, struct bio *bio)
++{
++	struct new_mapping *m = mempool_alloc(pool->mapping_pool, GFP_NOIO);
++
++	INIT_LIST_HEAD(&m->list);
++	m->prepared = 0;
++	m->pool = pool;
++	m->msd = msd;
++	m->virt_block = virt_block;
++	m->data_block = data_block;
++	m->cell = cell;
++	m->err = 0;
++	m->bio = NULL;
++
++	if (!pool->zero_new_blocks || io_covers_block(pool, bio)) {
++		/* no copy needed, since all data is going to change */
++		m->bio = bio;
++		m->bi_end_io = bio->bi_end_io;
++		m->bi_private = bio->bi_private;
++		bio->bi_end_io = overwrite_complete;
++		bio->bi_private = m;
++		remap_and_issue(pool, bio, data_block);
++
++	} else {
++		int r;
++		struct dm_io_region to;
++
++		to.bdev = pool->pool_dev;
++		to.sector = data_block * pool->sectors_per_block;
++		to.count = pool->sectors_per_block;
++
++		r = dm_kcopyd_zero(pool->copier, 1, &to, 0, copy_complete, m);
++		if (r < 0) {
++			mempool_free(m, pool->mapping_pool);
++			DMERR("dm_kcopyd_zero() failed");
++			cell_error(cell);
++		}
++	}
++}
++
++static void cell_remap_and_issue(struct pool *pool, struct cell *cell,
++				 dm_block_t data_block)
++{
++	struct bio_list bios;
++	struct bio *bio;
++	bio_list_init(&bios);
++	cell_release(cell, &bios);
++
++	while ((bio = bio_list_pop(&bios)))
++		remap_and_issue(pool, bio, data_block);
++}
++
++static void cell_remap_and_issue_except(struct pool *pool, struct cell *cell,
++					dm_block_t data_block,
++					struct bio *exception)
++{
++	struct bio_list bios;
++	struct bio *bio;
++	bio_list_init(&bios);
++	cell_release(cell, &bios);
++
++	while ((bio = bio_list_pop(&bios)))
++		if (bio != exception)
++			remap_and_issue(pool, bio, data_block);
++}
++
++static void retry_later(struct bio *bio)
++{
++	struct dm_target *ti = get_ti(bio);
++	struct thin_c *mc = ti->private;
++	struct pool *pool = mc->pool;
++	unsigned long flags;
++
++	/* push it onto the retry list */
++	spin_lock_irqsave(&pool->lock, flags);
++	bio_list_add(&pool->retry_list, bio);
++	spin_unlock_irqrestore(&pool->lock, flags);
++}
++
++static int alloc_data_block(struct pool *pool, struct dm_ms_device *msd,
++			    dm_block_t *result)
++{
++	int r;
++	dm_block_t free_blocks;
++	unsigned long flags;
++
++	r = dm_thin_metadata_get_free_blocks(pool->mmd, &free_blocks);
++	if (r)
++		return r;
++
++	if (free_blocks <= pool->low_water_mark && !pool->triggered) {
++		spin_lock_irqsave(&pool->lock, flags);
++		pool->triggered = 1;
++		spin_unlock_irqrestore(&pool->lock, flags);
++		dm_table_event(pool->ti->table);
++	}
++
++	r = dm_thin_metadata_alloc_data_block(msd, result);
++	if (r)
++		return r;
 +
 +	return 0;
++}
 +
-+bad2:
-+	dm_tm_unlock(*tm, *sblock);
-+bad1:
-+	dm_tm_destroy(*tm);
-+	dm_sm_destroy(*sm);
++static void process_discard(struct pool *pool, struct dm_ms_device *msd,
++			    struct bio *bio)
++{
++	int r;
++	dm_block_t block = get_bio_block(pool, bio);
++	struct dm_thin_lookup_result lookup_result;
++
++	r = dm_thin_metadata_lookup(msd, block, 1, &lookup_result);
++	switch (r) {
++	case 0:
++		if (lookup_result.shared)
++			/*
++			 * We just ignore shared discards for now, these
++			 * are hard, and I want to get deferred
++			 * deallocation working first.
++			 */
++			bio_endio(bio, 0);
++
++		else {
++			r = dm_thin_metadata_remove(msd, block);
++			if (r) {
++				DMERR("dm_thin_metadata_remove() failed");
++				bio_io_error(bio);
++			} else
++				remap_and_issue(pool, bio, lookup_result.block);
++		}
++		break;
++
++	case -ENODATA:
++		/* Either this isn't provisioned, or preparation for
++		 * provisioning may be pending (we could find out by
++		 * calling bio_detain_if_occupied).  But even in this case
++		 * it's easier to just forget the discard.
++		 */
++		bio_endio(bio, 0);
++		break;
++
++	default:
++		DMERR("dm_thin_metadata_lookup() failed, error = %d", r);
++		bio_io_error(bio);
++		break;
++	}
++}
++
++static void no_space(struct cell *cell)
++{
++	struct bio *bio;
++	struct bio_list bios;
++
++	bio_list_init(&bios);
++	cell_release(cell, &bios);
++	while ((bio = bio_list_pop(&bios)))
++		retry_later(bio);
++}
++
++static void break_sharing(struct pool *pool, struct dm_ms_device *msd,
++			  struct bio *bio, dm_block_t block, struct cell_key *key,
++			  struct dm_thin_lookup_result *lookup_result)
++{
++	int r;
++	dm_block_t data_block;
++	struct cell *cell;
++
++	bio_detain(pool->prison, key, bio, &cell);
++
++	r = alloc_data_block(pool, msd, &data_block);
++	switch (r) {
++	case 0:
++		schedule_copy(pool, msd, block, lookup_result->block,
++			      data_block, cell, bio);
++		break;
++
++	case -ENOSPC:
++		no_space(cell);
++		break;
++
++	default:
++		DMERR("%s: alloc_data_block() failed, error = %d", __func__, r);
++		cell_error(cell);
++		break;
++	}
++}
++
++static void process_shared_bio(struct pool *pool, struct dm_ms_device *msd,
++			       struct bio *bio, dm_block_t block,
++			       struct dm_thin_lookup_result *lookup_result)
++{
++	struct cell *cell;
++	struct cell_key key;
++
++	build_data_key(msd, lookup_result->block, &key);
++	if (bio_detain_if_occupied(pool->prison, &key, bio, &cell))
++		return; /* already underway */
++
++	if (bio_data_dir(bio) == WRITE)
++		break_sharing(pool, msd, bio, block, &key, lookup_result);
++	else {
++		struct endio_hook *h = mempool_alloc(pool->endio_hook_pool,
++						     GFP_NOIO);
++
++		h->pool = pool;
++		h->bi_end_io = bio->bi_end_io;
++		h->bi_private = bio->bi_private;
++		h->entry = ds_inc(&pool->ds);
++
++		bio->bi_end_io = shared_read_complete;
++		bio->bi_private = h;
++
++		remap_and_issue(pool, bio, lookup_result->block);
++	}
++}
++
++static void provision_block(struct pool *pool, struct dm_ms_device *msd,
++			    struct bio *bio, dm_block_t block)
++{
++	int r;
++	dm_block_t data_block;
++	struct cell *cell;
++	struct cell_key key;
++
++	build_virtual_key(msd, block, &key);
++	if (bio_detain(pool->prison, &key, bio, &cell))
++		return; /* already underway */
++
++	r = alloc_data_block(pool, msd, &data_block);
++	switch (r) {
++	case 0:
++		schedule_zero(pool, msd, block, data_block, cell, bio);
++		break;
++
++	case -ENOSPC:
++		no_space(cell);
++		break;
++
++	default:
++		DMERR("%s: alloc_data_block() failed, error = %d", __func__, r);
++		cell_error(cell);
++		break;
++	}
++}
++
++static void process_bio(struct pool *pool, struct dm_ms_device *msd,
++			struct bio *bio)
++{
++	int r;
++	dm_block_t block = get_bio_block(pool, bio);
++	struct dm_thin_lookup_result lookup_result;
++
++	r = dm_thin_metadata_lookup(msd, block, 1, &lookup_result);
++	switch (r) {
++	case 0:
++		if (lookup_result.shared)
++			process_shared_bio(pool, msd, bio, block, &lookup_result);
++		else
++			remap_and_issue(pool, bio, lookup_result.block);
++		break;
++
++	case -ENODATA:
++		if (bio_rw(bio) == READ || bio_rw(bio) == READA) {
++			bio->bi_bdev = pool->pool_dev;
++			zero_fill_bio(bio);
++			bio_endio(bio, 0);
++		} else
++			provision_block(pool, msd, bio, block);
++		break;
++
++	default:
++		DMERR("dm_thin_metadata_lookup() failed, error = %d", r);
++		bio_io_error(bio);
++		break;
++	}
++}
++
++static void process_bios(struct pool *pool)
++{
++	unsigned long flags;
++	struct bio *bio;
++	struct bio_list bios;
++	bio_list_init(&bios);
++
++	spin_lock_irqsave(&pool->lock, flags);
++	bio_list_merge(&bios, &pool->deferred_bios);
++	bio_list_init(&pool->deferred_bios);
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	while ((bio = bio_list_pop(&bios))) {
++		struct dm_ms_device *msd = get_msd(bio);
++
++		if (bio->bi_rw & REQ_DISCARD)
++			process_discard(pool, msd, bio);
++		else
++			process_bio(pool, msd, bio);
++	}
++}
++
++static void process_prepared_mappings(struct pool *pool)
++{
++	int r;
++	unsigned long flags;
++	struct list_head maps;
++	struct new_mapping *m, *tmp;
++	struct bio *bio;
++
++	INIT_LIST_HEAD(&maps);
++	spin_lock_irqsave(&pool->lock, flags);
++	list_splice_init(&pool->prepared_mappings, &maps);
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	list_for_each_entry_safe(m, tmp, &maps, list) {
++		if (m->err) {
++			cell_error(m->cell);
++			continue;
++		}
++
++		bio = m->bio;
++		if (bio) {
++			bio->bi_end_io = m->bi_end_io;
++			bio->bi_private = m->bi_private;
++		}
++
++		r = dm_thin_metadata_insert(m->msd, m->virt_block,
++					    m->data_block);
++		if (r) {
++			DMERR("dm_thin_metadata_insert() failed");
++			cell_error(m->cell);
++		} else {
++			if (m->bio) {
++				cell_remap_and_issue_except(pool, m->cell,
++							    m->data_block, bio);
++				bio_endio(bio, 0);
++			} else
++				cell_remap_and_issue(pool, m->cell, m->data_block);
++
++			list_del(&m->list);
++			mempool_free(m, pool->mapping_pool);
++		}
++	}
++}
++
++static void do_producer(struct work_struct *ws)
++{
++	struct pool *pool = container_of(ws, struct pool, producer);
++	process_bios(pool);
++}
++
++static void do_consumer(struct work_struct *ws)
++{
++	struct pool *pool = container_of(ws, struct pool, consumer);
++	process_prepared_mappings(pool);
++}
++
++static void defer_bio(struct pool *pool, struct dm_target *ti, struct bio *bio)
++{
++	unsigned long flags;
++
++	set_ti(bio, ti);
++
++	spin_lock_irqsave(&pool->lock, flags);
++	bio_list_add(&pool->deferred_bios, bio);
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	wake_producer(pool);
++}
++
++/*
++ * Non-blocking function designed to be called from the targets map
++ * function.
++ */
++static int bio_map(struct pool *pool, struct dm_target *ti, struct bio *bio)
++{
++	int r;
++	dm_block_t block = get_bio_block(pool, bio);
++	struct thin_c *mc = ti->private;
++	struct dm_ms_device *msd = mc->msd;
++	struct dm_thin_lookup_result result;
++
++	/*
++	 * XXX(hch): in theory higher level code should prevent this
++	 * from happening, not sure why we ever get here.
++	 */
++	if ((bio->bi_rw & REQ_DISCARD) &&
++	    bio->bi_size < (pool->sectors_per_block << SECTOR_SHIFT)) {
++		DMERR("discard IO smaller than pool block size (%llu)",
++		      (unsigned long long)pool->sectors_per_block << SECTOR_SHIFT);
++		bio_endio(bio, 0);
++		return DM_MAPIO_SUBMITTED;
++	}
++
++	if (bio->bi_rw & (REQ_DISCARD | REQ_FLUSH | REQ_FUA)) {
++		defer_bio(pool, ti, bio);
++		return DM_MAPIO_SUBMITTED;
++	}
++
++	r = dm_thin_metadata_lookup(msd, block, 0, &result);
++	switch (r) {
++	case 0:
++		if (unlikely(result.shared)) {
++			/*
++			 * We have a race condition here between the
++			 * result.shared value returned by the lookup and
++			 * snapshot creation, which may cause new
++			 * sharing.
++			 *
++			 * To avoid this always quiesce the origin before
++			 * taking the snap.  You want to do this anyway to
++			 * ensure a consistent application view
++			 * (i.e. lockfs).
++			 *
++			 * More distant ancestors are irrelevant, the
++			 * shared flag will be set in their case.
++			 */
++			defer_bio(pool, ti, bio);
++			r = DM_MAPIO_SUBMITTED;
++		} else {
++			remap(pool, bio, result.block);
++			r = DM_MAPIO_REMAPPED;
++		}
++		break;
++
++	case -ENODATA:
++		if (bio_rw(bio) == READA || bio_rw(bio) == READ) {
++			zero_fill_bio(bio);
++			bio_endio(bio, 0);
++		} else
++			defer_bio(pool, ti, bio);
++		r = DM_MAPIO_SUBMITTED;
++		break;
++
++	case -EWOULDBLOCK:
++		defer_bio(pool, ti, bio);
++		r = DM_MAPIO_SUBMITTED;
++		break;
++	}
++
 +	return r;
 +}
 +
-+int dm_tm_create_with_sm(struct dm_block_manager *bm, dm_block_t sb_location,
-+			 struct dm_block_validator *sb_validator,
-+			 struct dm_transaction_manager **tm,
-+			 struct dm_space_map **sm, struct dm_block **sblock)
++static int is_congested(void *congested_data, int bdi_bits)
 +{
-+	return dm_tm_create_internal(bm, sb_location, sb_validator,
-+				     0, 0, tm, sm, sblock, 1);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_create_with_sm);
++	int r;
++	struct pool_c *pt = congested_data;
++	unsigned long flags;
 +
-+int dm_tm_open_with_sm(struct dm_block_manager *bm, dm_block_t sb_location,
-+		       struct dm_block_validator *sb_validator,
-+		       size_t root_offset, size_t root_max_len,
-+		       struct dm_transaction_manager **tm,
-+		       struct dm_space_map **sm, struct dm_block **sblock)
++	spin_lock_irqsave(&pt->pool->lock, flags);
++	r = !bio_list_empty(&pt->pool->retry_list);
++	spin_unlock_irqrestore(&pt->pool->lock, flags);
++
++	if (!r) {
++		struct request_queue *q = bdev_get_queue(pt->data_dev->bdev);
++		r = bdi_congested(&q->backing_dev_info, bdi_bits);
++	}
++
++	return r;
++}
++
++static void set_congestion_fn(struct dm_target *ti, struct pool_c *pt)
 +{
-+	return dm_tm_create_internal(bm, sb_location, sb_validator, root_offset,
-+				     root_max_len, tm, sm, sblock, 0);
-+}
-+EXPORT_SYMBOL_GPL(dm_tm_open_with_sm);
++	struct mapped_device *md = dm_table_get_md(ti->table);
++	struct backing_dev_info *bdi = &dm_disk(md)->queue->backing_dev_info;
 +
-+unsigned dm_tm_shadow_count(struct dm_transaction_manager *tm)
++	/* Set congested function and data. */
++	bdi->congested_fn = is_congested;
++	bdi->congested_data = pt;
++}
++
++static void requeue_bios(struct pool *pool)
 +{
-+	return tm->shadow_count;
++	struct bio *bio;
++	struct bio_list bios;
++	unsigned long flags;
++
++	bio_list_init(&bios);
++	spin_lock_irqsave(&pool->lock, flags);
++	bio_list_merge(&bios, &pool->retry_list);
++	bio_list_init(&pool->retry_list);
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	while ((bio = bio_list_pop(&bios)))
++		bio_list_add(&pool->deferred_bios, bio);
 +}
-+EXPORT_SYMBOL_GPL(dm_tm_shadow_count);
++
++/*----------------------------------------------------------------
++ * Binding of control targets to a pool object
++ *--------------------------------------------------------------*/
++/* FIXME: add locking */
++static int bind_control_target(struct pool *pool, struct dm_target *ti)
++{
++	struct pool_c *pt = ti->private;
++
++	pool->ti = ti;
++	pool->low_water_mark = dm_div_up(pt->low_water_mark,
++					 pool->sectors_per_block);
++	pool->zero_new_blocks = pt->zero_new_blocks;
++	return 0;
++}
++
++static void unbind_control_target(struct pool *pool, struct dm_target *ti)
++{
++	if (pool->ti == ti)
++		pool->ti = NULL;
++}
++
++/*----------------------------------------------------------------
++ * Pool creation
++ *--------------------------------------------------------------*/
++static void pool_destroy(struct pool *pool)
++{
++	if (dm_thin_metadata_close(pool->mmd) < 0)
++		DMWARN("%s: dm_thin_metadata_close() failed.", __func__);
++	blkdev_put(pool->metadata_dev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
++
++	prison_destroy(pool->prison);
++	dm_kcopyd_client_destroy(pool->copier);
++
++	if (pool->producer_wq)
++		destroy_workqueue(pool->producer_wq);
++
++	if (pool->consumer_wq)
++		destroy_workqueue(pool->consumer_wq);
++
++	mempool_destroy(pool->mapping_pool);
++	mempool_destroy(pool->endio_hook_pool);
++	kfree(pool);
++}
++
++/*
++ * The lifetime of the pool object is potentially longer than that of the
++ * pool target.  thin_get_device() is very similar to
++ * dm_get_device() except it doesn't associate the device with the target,
++ * which would prevent the target to be destroyed.
++ */
++static struct block_device *thin_get_device(const char *path, fmode_t mode)
++{
++	dev_t uninitialized_var(dev);
++	unsigned int major, minor;
++	struct block_device *bdev;
++
++	if (sscanf(path, "%u:%u", &major, &minor) == 2) {
++		/* Extract the major/minor numbers */
++		dev = MKDEV(major, minor);
++		if (MAJOR(dev) != major || MINOR(dev) != minor)
++			return ERR_PTR(-EOVERFLOW);
++		bdev = blkdev_get_by_dev(dev, mode, &thin_get_device);
++	} else
++		bdev = blkdev_get_by_path(path, mode, &thin_get_device);
++
++	if (!bdev)
++		return ERR_PTR(-EINVAL);
++
++	return bdev;
++}
++
++static struct pool *pool_create(const char *metadata_path,
++				unsigned long block_size, char **error)
++{
++	int r;
++	void *err_p;
++	struct pool *pool;
++	struct dm_thin_metadata *mmd;
++	struct block_device *metadata_dev;
++	fmode_t metadata_dev_mode = FMODE_READ | FMODE_WRITE | FMODE_EXCL;
++
++	metadata_dev = thin_get_device(metadata_path, metadata_dev_mode);
++	if (IS_ERR(metadata_dev)) {
++		r = PTR_ERR(metadata_dev);
++		*error = "Error opening metadata block device";
++		return ERR_PTR(r);
++	}
++
++	mmd = dm_thin_metadata_open(metadata_dev, block_size);
++	if (IS_ERR(mmd)) {
++		*error = "Error creating metadata object";
++		err_p = mmd; /* already an ERR_PTR */
++		goto bad_mmd_open;
++	}
++
++	pool = kmalloc(sizeof(*pool), GFP_KERNEL);
++	if (!pool) {
++		*error = "Error allocating memory for pool";
++		err_p = ERR_PTR(-ENOMEM);
++		goto bad_pool;
++	}
++
++	pool->metadata_dev = metadata_dev;
++	pool->mmd = mmd;
++	pool->sectors_per_block = block_size;
++	pool->block_shift = ffs(block_size) - 1;
++	pool->offset_mask = block_size - 1;
++	pool->low_water_mark = 0;
++	pool->zero_new_blocks = 1;
++	pool->prison = prison_create(1024); /* FIXME: magic number */
++	if (!pool->prison) {
++		*error = "Error creating pool's bio prison";
++		err_p = ERR_PTR(-ENOMEM);
++		goto bad_prison;
++	}
++
++	pool->copier = dm_kcopyd_client_create();
++	if (IS_ERR(pool->copier)) {
++		r = PTR_ERR(pool->copier);
++		*error = "Error creating pool's kcopyd client";
++		err_p = ERR_PTR(r);
++		goto bad_kcopyd_client;
++	}
++
++	/* Create singlethreaded workqueue that will service all devices
++	 * that use this metadata.
++	 */
++	pool->producer_wq = alloc_ordered_workqueue(DM_MSG_PREFIX "-producer",
++						    WQ_MEM_RECLAIM);
++	if (!pool->producer_wq) {
++		*error = "Error creating pool's producer workqueue";
++		err_p = ERR_PTR(-ENOMEM);
++		goto bad_producer_wq;
++	}
++
++	pool->consumer_wq = alloc_ordered_workqueue(DM_MSG_PREFIX "-consumer",
++						    WQ_MEM_RECLAIM);
++	if (!pool->consumer_wq) {
++		*error = "Error creating pool's consumer workqueue";
++		err_p = ERR_PTR(-ENOMEM);
++		goto bad_consumer_wq;
++	}
++
++	INIT_WORK(&pool->producer, do_producer);
++	INIT_WORK(&pool->consumer, do_consumer);
++	spin_lock_init(&pool->lock);
++	bio_list_init(&pool->deferred_bios);
++	INIT_LIST_HEAD(&pool->prepared_mappings);
++	pool->triggered = 0;
++	bio_list_init(&pool->retry_list);
++	ds_init(&pool->ds);
++	/* FIXME: magic number */
++	pool->mapping_pool =
++		mempool_create_kmalloc_pool(1024, sizeof(struct new_mapping));
++	if (!pool->mapping_pool) {
++		*error = "Error creating pool's mapping mempool";
++		err_p = ERR_PTR(-ENOMEM);
++		goto bad_mapping_pool;
++	}
++	/* FIXME: magic number */
++	pool->endio_hook_pool =
++		mempool_create_kmalloc_pool(10240, sizeof(struct endio_hook));
++	if (!pool->endio_hook_pool) {
++		*error = "Error creating pool's endio_hook mempool";
++		err_p = ERR_PTR(-ENOMEM);
++		goto bad_endio_hook_pool;
++	}
++	atomic_set(&pool->ref_count, 1);
++
++	return pool;
++
++bad_endio_hook_pool:
++	mempool_destroy(pool->mapping_pool);
++bad_mapping_pool:
++	destroy_workqueue(pool->consumer_wq);
++bad_consumer_wq:
++	destroy_workqueue(pool->producer_wq);
++bad_producer_wq:
++	dm_kcopyd_client_destroy(pool->copier);
++bad_kcopyd_client:
++	prison_destroy(pool->prison);
++bad_prison:
++	kfree(pool);
++bad_pool:
++	if (dm_thin_metadata_close(mmd))
++		DMWARN("%s: dm_thin_metadata_close() failed.", __func__);
++bad_mmd_open:
++	blkdev_put(metadata_dev, metadata_dev_mode);
++
++	return err_p;
++}
++
++static void pool_inc(struct pool *pool)
++{
++	atomic_inc(&pool->ref_count);
++}
++
++static void pool_dec(struct pool *pool)
++{
++	if (atomic_dec_and_test(&pool->ref_count))
++		pool_destroy(pool);
++}
++
++static struct pool *pool_find(struct block_device *pool_bdev,
++			      const char *metadata_path,
++			      unsigned long block_size,
++			      char **error)
++{
++	struct pool *pool;
++
++	pool = bdev_table_lookup(&bdev_table_, pool_bdev);
++	if (pool)
++		pool_inc(pool);
++	else
++		pool = pool_create(metadata_path, block_size, error);
++
++	return pool;
++}
++
++/*----------------------------------------------------------------
++ * Pool target methods
++ *--------------------------------------------------------------*/
++static void pool_dtr(struct dm_target *ti)
++{
++	struct pool_c *pt = ti->private;
++
++	dm_put_device(ti, pt->data_dev);
++	unbind_control_target(pt->pool, ti);
++	pool_dec(pt->pool);
++	kfree(pt);
++}
++
++struct pool_features {
++	unsigned zero_new_blocks;
++};
++
++static int parse_pool_features(struct dm_arg_set *as, struct pool_features *pf,
++			       struct dm_target *ti)
++{
++	int r;
++	unsigned argc;
++	const char *arg_name;
++
++	static struct dm_arg _args[] = {
++		{0, 1, "invalid number of pool feature args"},
++	};
++
++	/* No feature arguments supplied. */
++	if (!as->argc)
++		return 0;
++
++	r = dm_read_arg(_args, as, &argc, &ti->error);
++	if (r)
++		return -EINVAL;
++
++	if (argc > as->argc) {
++		ti->error = "not enough arguments for pool features";
++		return -EINVAL;
++	}
++
++	while (argc && !r) {
++		arg_name = dm_shift_arg(as);
++		argc--;
++
++		if (!strcasecmp(arg_name, "skip_block_zeroing")) {
++			pf->zero_new_blocks = 0;
++			continue;
++		}
++
++		ti->error = "Unrecognised pool feature request";
++		r = -EINVAL;
++	}
++
++	return r;
++}
++
++/*
++ * thin-pool <metadata dev>
++ *           <data dev>
++ *           <data block size in sectors>
++ *           <low water mark (sectors)>
++ *           [<#feature args> [<arg>]*]
++ */
++static int pool_ctr(struct dm_target *ti, unsigned argc, char **argv)
++{
++	int r;
++	struct pool_c *pt;
++	struct pool *pool;
++	struct pool_features pf;
++	struct dm_arg_set as;
++	struct dm_dev *data_dev;
++	unsigned long block_size;
++	dm_block_t low_water;
++	const char *metadata_devname;
++	char *end;
++
++	if (argc < 4) {
++		ti->error = "Invalid argument count";
++		return -EINVAL;
++	}
++	as.argc = argc;
++	as.argv = argv;
++
++	metadata_devname = argv[0];
++
++	r = dm_get_device(ti, argv[1], FMODE_READ | FMODE_WRITE, &data_dev);
++	if (r) {
++		ti->error = "Error getting data device";
++		return r;
++	}
++
++	block_size = simple_strtoul(argv[2], &end, 10);
++	if (!block_size || *end) {
++		ti->error = "Invalid block size";
++		r = -EINVAL;
++		goto out;
++	}
++
++	low_water = simple_strtoull(argv[3], &end, 10);
++	if (!low_water || *end) {
++		ti->error = "Invalid low water mark";
++		r = -EINVAL;
++		goto out;
++	}
++
++	/* set pool feature defaults */
++	memset(&pf, 0, sizeof(pf));
++	pf.zero_new_blocks = 1;
++
++	dm_consume_args(&as, 4);
++	r = parse_pool_features(&as, &pf, ti);
++	if (r)
++		goto out;
++
++	pool = pool_find(get_target_bdev(ti), metadata_devname,
++			 block_size, &ti->error);
++	if (IS_ERR(pool)) {
++		r = PTR_ERR(pool);
++		goto out;
++	}
++
++	pt = kmalloc(sizeof(*pt), GFP_KERNEL);
++	if (!pt) {
++		pool_destroy(pool);
++		r = -ENOMEM;
++		goto out;
++	}
++	pt->pool = pool;
++	pt->ti = ti;
++	pt->data_dev = data_dev;
++	pt->low_water_mark = low_water;
++	pt->zero_new_blocks = pf.zero_new_blocks;
++	ti->num_flush_requests = 1;
++	ti->num_discard_requests = 1;
++	ti->private = pt;
++	set_congestion_fn(ti, pt);
++
++	return 0;
++out:
++	dm_put_device(ti, data_dev);
++	return r;
++}
++
++static int pool_map(struct dm_target *ti, struct bio *bio,
++		    union map_info *map_context)
++{
++	int r;
++	struct pool_c *pt = ti->private;
++	struct pool *pool = pt->pool;
++	unsigned long flags;
++
++	spin_lock_irqsave(&pool->lock, flags);
++	bio->bi_bdev = pt->data_dev->bdev;
++	r = DM_MAPIO_REMAPPED;
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	return r;
++}
++
++/*
++ * Retrieves the number of blocks of the data device from
++ * the superblock and compares it to the actual device size,
++ * thus resizing the data device in case it has grown.
++ *
++ * This both copes with opening preallocated data devices in the ctr
++ * being followed by a resume
++ * -and-
++ * calling the resume method individually after userspace has
++ * grown the data device in reaction to a table event.
++ */
++static int pool_preresume(struct dm_target *ti)
++{
++	int r;
++	struct pool_c *pt = ti->private;
++	struct pool *pool = pt->pool;
++	dm_block_t data_size, sb_data_size;
++	unsigned long flags;
++
++	/* take control of the pool object */
++	r = bind_control_target(pool, ti);
++	if (r)
++		return r;
++
++	data_size = ti->len >> pool->block_shift;
++	r = dm_thin_metadata_get_data_dev_size(pool->mmd, &sb_data_size);
++	if (r) {
++		DMERR("failed to retrieve data device size");
++		return r;
++	}
++
++	if (data_size < sb_data_size) {
++		DMERR("pool target too small, is %llu blocks (expected %llu)",
++		      data_size, sb_data_size);
++		return -EINVAL;
++
++	} else if (data_size > sb_data_size) {
++		r = dm_thin_metadata_resize_data_dev(pool->mmd, data_size);
++		if (r) {
++			DMERR("failed to resize data device");
++			return r;
++		}
++
++		r = dm_thin_metadata_commit(pool->mmd);
++		if (r) {
++			DMERR("%s: dm_thin_metadata_commit() failed, error = %d",
++			      __func__, r);
++			return r;
++		}
++	}
++
++	spin_lock_irqsave(&pool->lock, flags);
++	pool->triggered = 0;
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	requeue_bios(pool);
++	wake_producer(pool);
++
++	/* The pool object is only present if the pool is active */
++	pool->pool_dev = get_target_bdev(ti);
++	bdev_table_insert(&bdev_table_, pool);
++
++	return 0;
++}
++
++static void pool_presuspend(struct dm_target *ti)
++{
++	int r;
++	struct pool_c *pt = ti->private;
++	struct pool *pool = pt->pool;
++
++	r = dm_thin_metadata_commit(pool->mmd);
++	if (r < 0) {
++		DMERR("%s: dm_thin_metadata_commit() failed, error = %d",
++		      __func__, r);
++		/* FIXME: invalidate device? error the next FUA or FLUSH bio ?*/
++	}
++}
++
++static void pool_postsuspend(struct dm_target *ti)
++{
++	struct pool_c *pt = ti->private;
++	struct pool *pool = pt->pool;
++
++	bdev_table_remove(&bdev_table_, pool);
++	pool->pool_dev = NULL;
++}
++
++/*
++ * Messages supported:
++ *   new-thin        <dev id>
++ *   new-snap        <dev id> <origin id>
++ *   del             <dev id>
++ *   trim            <dev id> <size in sectors>
++ *   trans-id        <current trans id> <new trans id>
++ */
++static int pool_message(struct dm_target *ti, unsigned argc, char **argv)
++{
++	/* ti->error doesn't have a const qualifier :( */
++	char *invalid_args = "Incorrect number of arguments";
++
++	int r;
++	struct pool_c *pt = ti->private;
++	struct pool *pool = pt->pool;
++	dm_thin_dev_t dev_id;
++	char *end;
++
++	if (!strcmp(argv[0], "new-thin")) {
++		if (argc != 2) {
++			ti->error = invalid_args;
++			return -EINVAL;
++		}
++
++		dev_id = simple_strtoull(argv[1], &end, 10);
++		if (*end) {
++			ti->error = "Invalid device id";
++			return -EINVAL;
++		}
++
++		r = dm_thin_metadata_create_thin(pool->mmd, dev_id);
++		if (r) {
++			ti->error = "Creation of thin provisioned device failed";
++			return r;
++		}
++
++	} else if (!strcmp(argv[0], "new-snap")) {
++		dm_thin_dev_t origin_id;
++
++		if (argc != 3) {
++			ti->error = invalid_args;
++			return -EINVAL;
++		}
++
++		dev_id = simple_strtoull(argv[1], &end, 10);
++		if (*end) {
++			ti->error = "Invalid device id";
++			return -EINVAL;
++		}
++
++		origin_id = simple_strtoull(argv[2], &end, 10);
++		if (*end) {
++			ti->error = "Invalid origin id";
++			return -EINVAL;
++		}
++
++		r = dm_thin_metadata_create_snap(pool->mmd, dev_id, origin_id);
++		if (r) {
++			ti->error = "Creation of snapshot failed";
++			return r;
++		}
++
++	} else if (!strcmp(argv[0], "del")) {
++		if (argc != 2) {
++			ti->error = invalid_args;
++			return -EINVAL;
++		}
++
++		dev_id = simple_strtoull(argv[1], &end, 10);
++		if (*end) {
++			ti->error = "Invalid device id";
++			return -EINVAL;
++		}
++
++		r = dm_thin_metadata_delete_device(pool->mmd, dev_id);
++
++	} else if (!strcmp(argv[0], "trim")) {
++		sector_t new_size;
++
++		if (argc != 3) {
++			ti->error = invalid_args;
++			return -EINVAL;
++		}
++
++		dev_id = simple_strtoull(argv[1], &end, 10);
++		if (*end) {
++			ti->error = "Invalid device id";
++			return -EINVAL;
++		}
++
++		new_size = simple_strtoull(argv[2], &end, 10);
++		if (*end) {
++			ti->error = "Invalid size";
++			return -EINVAL;
++		}
++
++		r = dm_thin_metadata_trim_thin_dev(
++			pool->mmd, dev_id,
++			dm_div_up(new_size, pool->sectors_per_block));
++		if (r) {
++			ti->error = "Couldn't trim thin device";
++			return r;
++		}
++
++	} else if (!strcmp(argv[0], "trans-id")) {
++		uint64_t old_id, new_id;
++
++		if (argc != 3) {
++			ti->error = invalid_args;
++			return -EINVAL;
++		}
++
++		old_id = simple_strtoull(argv[1], &end, 10);
++		if (*end) {
++			ti->error = "Invalid current transaction id";
++			return -EINVAL;
++		}
++
++		new_id = simple_strtoull(argv[2], &end, 10);
++		if (*end) {
++			ti->error = "Invalid new transaction id";
++			return -EINVAL;
++		}
++
++		r = dm_thin_metadata_set_transaction_id(pool->mmd,
++							old_id, new_id);
++		if (r) {
++			ti->error = "Setting userspace transaction id failed";
++			return r;
++		}
++	} else
++		return -EINVAL;
++
++	if (!r) {
++		r = dm_thin_metadata_commit(pool->mmd);
++		if (r)
++			DMERR("%s: dm_thin_metadata_commit() failed, error = %d",
++			      __func__, r);
++	}
++
++	return r;
++}
++
++static int pool_status(struct dm_target *ti, status_type_t type,
++		       char *result, unsigned maxlen)
++{
++	int r;
++	unsigned sz = 0;
++	uint64_t transaction_id;
++	dm_block_t nr_free_blocks_data;
++	dm_block_t nr_free_blocks_metadata;
++	dm_block_t held_root;
++	char buf[BDEVNAME_SIZE];
++	char buf2[BDEVNAME_SIZE];
++	struct pool_c *pt = ti->private;
++	struct pool *pool = pt->pool;
++
++	switch (type) {
++	case STATUSTYPE_INFO:
++		r = dm_thin_metadata_get_transaction_id(pool->mmd,
++							&transaction_id);
++		if (r)
++			return r;
++
++		r = dm_thin_metadata_get_free_blocks(pool->mmd,
++						     &nr_free_blocks_data);
++		if (r)
++			return r;
++
++		r = dm_thin_metadata_get_free_blocks_metadata(pool->mmd,
++							      &nr_free_blocks_metadata);
++		if (r)
++			return r;
++
++		r = dm_thin_metadata_get_held_root(pool->mmd, &held_root);
++		if (r)
++			return r;
++
++		DMEMIT("%llu %llu %llu ", transaction_id,
++		       nr_free_blocks_data * pool->sectors_per_block,
++		       nr_free_blocks_metadata * pool->sectors_per_block);
++
++		if (held_root)
++			DMEMIT("%llu", held_root);
++		else
++			DMEMIT("-");
++
++		break;
++
++	case STATUSTYPE_TABLE:
++		DMEMIT("%s %s %lu %lu ",
++		       format_dev_t(buf, pool->metadata_dev->bd_dev),
++		       format_dev_t(buf2, pt->data_dev->bdev->bd_dev),
++		       (unsigned long) pool->sectors_per_block,
++		       (unsigned long) pt->low_water_mark);
++
++		DMEMIT("%u ", !pool->zero_new_blocks);
++
++		if (!pool->zero_new_blocks)
++			DMEMIT("skip_block_zeroing ");
++		break;
++	}
++
++	return 0;
++}
++
++static int pool_iterate_devices(struct dm_target *ti,
++				iterate_devices_callout_fn fn, void *data)
++{
++	struct pool_c *pt = ti->private;
++	return fn(ti, pt->data_dev, 0, ti->len, data);
++}
++
++static int pool_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
++		      struct bio_vec *biovec, int max_size)
++{
++	struct pool_c *pt = ti->private;
++	struct request_queue *q = bdev_get_queue(pt->data_dev->bdev);
++
++	if (!q->merge_bvec_fn)
++		return max_size;
++
++	bvm->bi_bdev = pt->data_dev->bdev;
++	return min(max_size, q->merge_bvec_fn(q, bvm, biovec));
++}
++
++static void pool_io_hints(struct dm_target *ti, struct queue_limits *limits)
++{
++	struct pool_c *pt = ti->private;
++	struct pool *pool = pt->pool;
++
++	blk_limits_io_min(limits, 0);
++	blk_limits_io_opt(limits, pool->sectors_per_block << SECTOR_SHIFT);
++}
++
++static struct target_type pool_target = {
++	.name = "thin-pool",
++	.version = {1, 0, 0},
++	.module = THIS_MODULE,
++	.ctr = pool_ctr,
++	.dtr = pool_dtr,
++	.map = pool_map,
++	.presuspend = pool_presuspend,
++	.postsuspend = pool_postsuspend,
++	.preresume = pool_preresume,
++	.message = pool_message,
++	.status = pool_status,
++	.merge = pool_merge,
++	.iterate_devices = pool_iterate_devices,
++	.io_hints = pool_io_hints,
++};
++
 +/*----------------------------------------------------------------*/
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.h b/drivers/md/persistent-data/dm-transaction-manager.h
-new file mode 100644
-index 0000000..90c9d1f
---- /dev/null
-+++ b/drivers/md/persistent-data/dm-transaction-manager.h
-@@ -0,0 +1,139 @@
-+#ifndef DM_TRANSACTION_MANAGER_H
-+#define DM_TRANSACTION_MANAGER_H
 +
-+#include "dm-block-manager.h"
-+#include "dm-space-map.h"
++static void thin_dtr(struct dm_target *ti)
++{
++	struct thin_c *mc = ti->private;
++
++	pool_dec(mc->pool);
++	dm_thin_metadata_close_device(mc->msd);
++	dm_put_device(ti, mc->pool_dev);
++	kfree(mc);
++}
++
++/*
++ * Construct a thin device:
++ *
++ * <start> <length> thin <pool dev> <dev id>
++ *
++ * pool dev: the path to the pool (eg, /dev/mapper/my_pool)
++ * dev id: the internal device identifier
++ */
++static int thin_ctr(struct dm_target *ti, unsigned argc, char **argv)
++{
++	int r;
++	struct thin_c *mc;
++	struct dm_dev *pool_dev;
++	char *end;
++
++	if (argc != 2) {
++		ti->error = "Invalid argument count";
++		return -EINVAL;
++	}
++
++	mc = ti->private = kzalloc(sizeof(*mc), GFP_KERNEL);
++	if (!mc) {
++		ti->error = "Out of memory";
++		return -ENOMEM;
++	}
++
++	r = dm_get_device(ti, argv[0], FMODE_READ | FMODE_WRITE, &pool_dev);
++	if (r) {
++		ti->error = "Error opening pool device";
++		goto bad_pool_dev;
++	}
++	mc->pool_dev = pool_dev;
++
++	mc->dev_id = simple_strtoull(argv[1], &end, 10);
++	if (*end) {
++		ti->error = "Invalid device id";
++		r = -EINVAL;
++		goto bad_dev_id;
++	}
++
++	mc->pool = bdev_table_lookup(&bdev_table_, mc->pool_dev->bdev);
++	if (!mc->pool) {
++		ti->error = "Couldn't find pool object";
++		r = -EINVAL;
++		goto bad_pool_lookup;
++	}
++	pool_inc(mc->pool);
++
++	r = dm_thin_metadata_open_device(mc->pool->mmd, mc->dev_id, &mc->msd);
++	if (r) {
++		ti->error = "Couldn't open thin internal device";
++		goto bad_thin_open;
++	}
++
++	ti->split_io = mc->pool->sectors_per_block;
++	ti->num_flush_requests = 1;
++	ti->num_discard_requests = 1;
++
++	return 0;
++
++bad_thin_open:
++	pool_dec(mc->pool);
++bad_pool_lookup:
++bad_dev_id:
++	dm_put_device(ti, mc->pool_dev);
++bad_pool_dev:
++	kfree(mc);
++
++	return r;
++}
++
++static int thin_map(struct dm_target *ti, struct bio *bio,
++		    union map_info *map_context)
++{
++	struct thin_c *mc = ti->private;
++
++	bio->bi_sector -= ti->begin;
++	return bio_map(mc->pool, ti, bio);
++}
++
++static int thin_status(struct dm_target *ti, status_type_t type,
++		       char *result, unsigned maxlen)
++{
++	int r;
++	ssize_t sz = 0;
++	dm_block_t mapped, highest;
++	char buf[BDEVNAME_SIZE];
++	struct thin_c *mc = ti->private;
++
++	if (mc->msd) {
++		switch (type) {
++		case STATUSTYPE_INFO:
++			r = dm_thin_metadata_get_mapped_count(mc->msd,
++							      &mapped);
++			if (r)
++				return r;
++
++			r = dm_thin_metadata_get_highest_mapped_block(mc->msd,
++								      &highest);
++			if (r < 0)
++				return r;
++
++			DMEMIT("%llu ", mapped * mc->pool->sectors_per_block);
++			if (r)
++				DMEMIT("%llu", ((highest + 1) *
++						mc->pool->sectors_per_block) - 1);
++			else
++				DMEMIT("-");
++			break;
++
++		case STATUSTYPE_TABLE:
++			DMEMIT("%s %lu",
++			       format_dev_t(buf, mc->pool_dev->bdev->bd_dev),
++			       (unsigned long) mc->dev_id);
++			break;
++		}
++	} else {
++		DMEMIT("-");
++	}
++
++	return 0;
++}
++
++static int thin_bvec_merge(struct dm_target *ti, struct bvec_merge_data *bvm,
++			   struct bio_vec *biovec, int max_size)
++{
++	struct thin_c *mc = ti->private;
++	struct pool *pool = mc->pool;
++
++	/*
++	 * We fib here, because the space may not have been provisioned yet
++	 * we can't give a good answer.  It's better to return the block
++	 * size, and incur extra splitting in a few cases than always
++	 * return the smallest, page sized, chunk.
++	 */
++	return pool->sectors_per_block << SECTOR_SHIFT;
++}
++
++static int thin_iterate_devices(struct dm_target *ti,
++				iterate_devices_callout_fn fn, void *data)
++{
++	struct thin_c *mc = ti->private;
++	struct pool *pool;
++
++	pool = bdev_table_lookup(&bdev_table_, mc->pool_dev->bdev);
++	if (!pool) {
++		DMERR("%s: Couldn't find pool object", __func__);
++		return -EINVAL;
++	}
++
++	return fn(ti, mc->pool_dev, 0, pool->sectors_per_block, data);
++}
++
++static void thin_io_hints(struct dm_target *ti, struct queue_limits *limits)
++{
++	struct thin_c *mc = ti->private;
++	struct pool *pool;
++
++	pool = bdev_table_lookup(&bdev_table_, mc->pool_dev->bdev);
++	if (!pool) {
++		DMERR("%s: Couldn't find pool object", __func__);
++		return;
++	}
++
++	blk_limits_io_min(limits, 0);
++	blk_limits_io_opt(limits, pool->sectors_per_block << SECTOR_SHIFT);
++
++	/*
++	 * Only allow discard requests aligned to our block size, and make
++	 * sure that we never get sent larger discard requests either.
++	 */
++	limits->max_discard_sectors = pool->sectors_per_block;
++	limits->discard_granularity = pool->sectors_per_block << SECTOR_SHIFT;
++}
++
++static struct target_type thin_target = {
++	.name = "thin",
++	.version = {1, 0, 0},
++	.module	= THIS_MODULE,
++	.ctr = thin_ctr,
++	.dtr = thin_dtr,
++	.map = thin_map,
++	.status = thin_status,
++	.merge = thin_bvec_merge,
++	.iterate_devices = thin_iterate_devices,
++	.io_hints = thin_io_hints,
++};
 +
 +/*----------------------------------------------------------------*/
 +
-+/*
-+ * This manages the scope of a transaction.  It also enforces immutability
-+ * of the on-disk data structures by limiting access to writeable blocks.
-+ *
-+ * Clients should not fiddle with the block manager directly.
-+ */
-+struct dm_transaction_manager;
++static int __init dm_thin_init(void)
++{
++	int r = dm_register_target(&thin_target);
++	if (r)
++		return r;
 +
-+struct dm_transaction_manager *
-+dm_tm_create(struct dm_block_manager *bm, struct dm_space_map *sm);
++	r = dm_register_target(&pool_target);
++	if (r)
++		dm_unregister_target(&thin_target);
 +
-+void dm_tm_destroy(struct dm_transaction_manager *tm);
++	bdev_table_init(&bdev_table_);
++	return r;
++}
 +
-+/*
-+ * The non-blocking version of a transaction manager is intended for use in
-+ * fast path code that needs to do lookups.  eg, a dm mapping function.
-+ * You create the non-blocking variant from a normal tm.  The interface is
-+ * the same, except that most functions will just return -EWOULDBLOCK.
-+ * Call tm_destroy() as you would with a normal tm when you've finished
-+ * with it.  You may not destroy the original prior to clones.
-+ */
-+struct dm_transaction_manager *
-+dm_tm_create_non_blocking_clone(struct dm_transaction_manager *real);
++static void dm_thin_exit(void)
++{
++	dm_unregister_target(&thin_target);
++	dm_unregister_target(&pool_target);
++}
 +
-+/*
-+ * The client may want to manage some blocks directly (eg, the
-+ * superblocks).  Call this immediately after construction to reserve
-+ * blocks.
-+ */
-+int dm_tm_reserve_block(struct dm_transaction_manager *tm, dm_block_t b);
++module_init(dm_thin_init);
++module_exit(dm_thin_exit);
 +
-+int dm_tm_begin(struct dm_transaction_manager *tm);
-+
-+/*
-+ * We use a 2 phase commit here.
-+ *
-+ * i) In the first phase the block manager is told to start flushing, and
-+ * the changes to the space map are written to disk.  You should interogate
-+ * your particular space map to get detail of its root node etc. to be
-+ * included in your superblock.
-+ *
-+ * ii) |root| will be committed last.  You shouldn't use more than the
-+ * first 512 bytes of |root| if you wish the transaction to survive a power
-+ * failure.  You *must* have a write lock held on |root| for both stage (i)
-+ * and (ii).  The commit will drop the write lock.
-+ */
-+int dm_tm_pre_commit(struct dm_transaction_manager *tm);
-+int dm_tm_commit(struct dm_transaction_manager *tm, struct dm_block *root);
-+
-+/*
-+ * These methods are the only way to get hold of a writeable block.
-+ *
-+ * tm_new_block() is pretty self explanatory.  Make sure you do actually
-+ * write to the whole of |data| before you unlock, otherwise you could get
-+ * a data leak.  (The other option is for tm_new_block() to zero new blocks
-+ * before handing them out, which will be redundant in most if not all
-+ * cases).
-+ *
-+ * tm_shadow_block() will allocate a new block and copy the data from orig
-+ * to it.  It then decrements the reference count on original block.  Use
-+ * this to update the contents of a block in a data structure, don't
-+ * confuse this with a clone - you shouldn't access the orig block after
-+ * this operation.  Because the tm knows the scope of the transaction it
-+ * can optimise requests for a shadow of a shadow to a no-op.  Don't forget
-+ * to unlock when you've finished with the shadow.
-+ *
-+ * The |inc_children| flag is used to tell the caller whether they need to
-+ * adjust reference counts for children (data in the block may refer to
-+ * other blocks).
-+ */
-+int dm_tm_alloc_block(struct dm_transaction_manager *tm, dm_block_t *new);
-+
-+/* zeroes the new block at returns with write lock held */
-+int dm_tm_new_block(struct dm_transaction_manager *tm,
-+		    struct dm_block_validator *v,
-+		    struct dm_block **result);
-+
-+/*
-+ * Shadowing implicitly drops a reference on |orig|, so you must not have
-+ * it locked when you call this.
-+ */
-+int dm_tm_shadow_block(struct dm_transaction_manager *tm, dm_block_t orig,
-+		       struct dm_block_validator *v,
-+		       struct dm_block **result, int *inc_children);
-+
-+/*
-+ * Read access.  You can lock any block you want, if there's a write lock
-+ * on it outstanding then it'll block.
-+ */
-+int dm_tm_read_lock(struct dm_transaction_manager *tm, dm_block_t b,
-+		    struct dm_block_validator *v,
-+		    struct dm_block **result);
-+
-+int dm_tm_unlock(struct dm_transaction_manager *tm, struct dm_block *b);
-+
-+/*
-+ * Functions for altering the reference count of a block directly.
-+ */
-+void dm_tm_inc(struct dm_transaction_manager *tm, dm_block_t b);
-+
-+void dm_tm_dec(struct dm_transaction_manager *tm, dm_block_t b);
-+
-+int dm_tm_ref(struct dm_transaction_manager *tm, dm_block_t b,
-+	      uint32_t *result);
-+
-+struct dm_block_manager *dm_tm_get_bm(struct dm_transaction_manager *tm);
-+
-+/*
-+ * A little utility that ties the knot by producing a transaction manager
-+ * that has a space map managed by the transaction manager ...
-+ *
-+ * Returns a tm that has an open transaction to write the new disk sm.
-+ * Caller should store the new sm root and commit.
-+ */
-+int dm_tm_create_with_sm(struct dm_block_manager *bm, dm_block_t sb_location,
-+			 struct dm_block_validator *sb_validator,
-+			 struct dm_transaction_manager **tm,
-+			 struct dm_space_map **sm, struct dm_block **sblock);
-+
-+int dm_tm_open_with_sm(struct dm_block_manager *bm, dm_block_t sb_location,
-+		       struct dm_block_validator *sb_validator,
-+		       size_t root_offset, size_t root_max_len,
-+		       struct dm_transaction_manager **tm,
-+		       struct dm_space_map **sm, struct dm_block **sblock);
-+
-+/* useful for debugging performance */
-+unsigned dm_tm_shadow_count(struct dm_transaction_manager *tm);
++MODULE_DESCRIPTION(DM_NAME "device-mapper thin provisioning target");
++MODULE_AUTHOR("Joe Thornber <thornber@redhat.com>");
++MODULE_LICENSE("GPL");
 +
 +/*----------------------------------------------------------------*/
-+
-+#endif
 -- 
 1.7.1
