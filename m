@@ -1,42 +1,19 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: [PATCH] block: Check that queue is alive in
- blk_insert_cloned_request()
-Date: Tue, 12 Jul 2011 14:54:29 -0400
-Message-ID: <20110712185429.GK1293@redhat.com>
-References: <CAG4TOxMjuntpd3Q5jgn+xDa2tgB9tq+jLcDquM_eAdFHXLDrWA@mail.gmail.com>
-	<1310166270-23196-1-git-send-email-roland@kernel.org>
-	<CAMM=eLfzKuw-2vbERV6D7dAHb1BWopOKZ=dB7vWxcxSCoj6Tkw@mail.gmail.com>
-	<20110712170658.GF1293@redhat.com>
-	<1310492490.16900.20.camel@mulgrave>
-	<20110712180238.GJ1293@redhat.com>
-	<1310495298.16900.24.camel@mulgrave>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alan Stern <stern@rowland.harvard.edu>
+Subject: Re: [PATCH] block: Check that queue is alive in blk_insert_cloned_request()
+Date: Tue, 12 Jul 2011 17:02:25 -0400 (EDT)
+Message-ID: <Pine.LNX.4.44L0.1107121643210.8898-100000@netrider.rowland.org>
+References: <1310495298.16900.24.camel@mulgrave>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <1310495298.16900.24.camel@mulgrave>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-scsi-owner@vger.kernel.org
 To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: Roland Dreier <roland@kernel.org>, Jens Axboe <axboe@kernel.dk>, "Seshagiri N. Ippili" <sesh17@linux.vnet.ibm.com>, Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>, device-mapper development <dm-devel@redhat.com>, Alan Stern <stern@rowland.harvard.edu>, Steffen Maier <maier@linux.vnet.ibm.com>, "Manvanthara B. Puttashankar" <manvanth@linux.vnet.ibm.com>, Tarak Reddy <tarak.reddy@in.ibm.com>
+Cc: Vivek Goyal <vgoyal@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Roland Dreier <roland@kernel.org>, Jens Axboe <axboe@kernel.dk>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-scsi@vger.kernel.org, Steffen Maier <maier@linux.vnet.ibm.com>, "Manvanthara B. Puttashankar" <manvanth@linux.vnet.ibm.com>, Tarak Reddy <tarak.reddy@in.ibm.com>, "Seshagiri N. Ippili" <sesh17@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-On Tue, Jul 12, 2011 at 01:28:18PM -0500, James Bottomley wrote:
+On Tue, 12 Jul 2011, James Bottomley wrote:
 
-[..]
-> > > I'm starting to wonder if there's actually any value to
-> > > blk_cleanup_queue() and whether its functionality wouldn't be better
-> > > assumed by the queue release function on last put.
-> > 
 > > I think one problem point is q->queue_lock. If driver drops its reference
 > > on queue and cleans up its data structures, then it will free up memory
 > > associated with q->queue_lock too. (If driver provided its own queue
@@ -57,50 +34,41 @@ On Tue, Jul 12, 2011 at 01:28:18PM -0500, James Bottomley wrote:
 > release does, so that piece wouldn't be altered by putting
 > blk_cleanup_queue() elsewhere.
 
-I thought a driver could either rely on spin lock provided by request
-queue or override that by providing its own spinlock.
+It's worth taking a closer look at what happened here.  Originally
+request_queue->queuedata was set to NULL and blk_cleanup_queue() was
+called from scsi_device_dev_release_usercontext() (by way of
+scsi_free_queue()).  This caused a problem because there was a window
+in which the last reference to the scsi_device had been dropped but the
+release routine hadn't yet run, so the queue was still marked as active
+(i.e., queuedata was still non-NULL).
 
-blk_init_allocated_queue_node()
-        /* Override internal queue lock with supplied lock pointer */
-        if (lock)
-                q->queue_lock           = lock;
+Commit 86cbfb5607d4b81b1a993ff689bbd2addd5d3a9b ([SCSI] put stricter 
+guards on queue dead checks) was written to fix this problem.  However 
+it moved _both_ lines from the release routine into 
+__scsi_remove_device().  There was no need for this; all that was 
+needed was to make sure queuedata was NULL before the device reference 
+was dropped.
 
-So if driver calls blk_cleanup_queue() and drops its reference on queue, then
-it should be free to release any memory it has allocated for spinlock.
-So though queue is around there are no gurantees that q->queue_lock is
-still around. That memory might have been freed by driver and reused.
+And in fact, moving the call to scsi_free_queue() has opened up another
+window for bugs.  Now it's possible for requests to get on the queue
+(submitted by drivers from another layer that still hold a reference to
+the scsi_device) even after the queue's elevator has been freed.  Yes,
+the block layer is supposed to prevent this from happening, but there
+are multiple paths and they don't all have the requisite checks.
 
-I see many drivers are providing their own locks. Some samples from
-drivers/block.
+And as Vivek points out, it's questionable whether they _can_ make the 
+proper checks.  Checking requires the queue's lock, but the client may 
+have deallocated the lock at the time the queue was cleaned up.  Maybe 
+SCSI doesn't do this, but other clients of the block layer might.  The 
+block layer can't make any assumptions.  The unavoidable conclusion is 
+that the clients must be responsible for insuring that no requests are 
+added to a queue after its lock has been released.
 
-/virtio_blk.c:	q = vblk->disk->queue = blk_init_queue(do_virtblk_request,
-&vblk->lock);
-./xd.c:	xd_queue = blk_init_queue(do_xd_request, &xd_lock);
-./cpqarray.c:	q = blk_init_queue(do_ida_request, &hba[i]->lock);
-./sx8.c:	q = blk_init_queue(carm_rq_fn, &host->lock);
-./sx8.c:	q = blk_init_queue(carm_oob_rq_fn, &host->lock);
-./floppy.c:	disks[dr]->queue = blk_init_queue(do_fd_request, &floppy_lock);
-./viodasd.c:	q = blk_init_queue(do_viodasd_request, &d->q_lock);
-./cciss.c:	disk->queue = blk_init_queue(do_cciss_request, &h->lock);
-./hd.c:	hd_queue = blk_init_queue(do_hd_request, &hd_lock);
-./DAC960.c:  	RequestQueue = blk_init_queue(DAC960_RequestFunction,&Controller->queue_lock);
-./z2ram.c:    z2_queue = blk_init_queue(do_z2_request, &z2ram_lock);
-./amiflop.c:	disk->queue = blk_init_queue(do_fd_request, &amiflop_lock);
-./xen-blkfront.c:	rq = blk_init_queue(do_blkif_request, &blkif_io_lock);
-./paride/pd.c:	pd_queue = blk_init_queue(do_pd_request, &pd_lock);
-./paride/pf.c:	pf_queue = blk_init_queue(do_pf_request, &pf_spin_lock);
-./paride/pcd.c:	pcd_queue = blk_init_queue(do_pcd_request, &pcd_lock);
-./mg_disk.c:	host->breq = blk_init_queue(mg_request_poll, &host->lock);
-./mg_disk.c:	host->breq = blk_init_queue(mg_request, &host->lock);
-./rbd.c:	q = blk_init_queue(rbd_rq_fn, &rbd_dev->lock);
-./sunvdc.c:	q = blk_init_queue(do_vdc_request, &port->vio.lock);
-./swim.c:	swd->queue = blk_init_queue(do_fd_request, &swd->lock);
-./xsysace.c:	ace->queue = blk_init_queue(ace_request, &ace->lock);
-./osdblk.c:	q = blk_init_queue(osdblk_rq_fn, &osdev->lock);
-./ps3disk.c:	queue = blk_init_queue(ps3disk_request, &priv->lock);
-./swim3.c:	swim3_queue = blk_init_queue(do_fd_request, &swim3_lock);
-./ub.c:	if ((q = blk_init_queue(ub_request_fn, sc->lock)) == NULL)
-./nbd.c:	disk->queue = blk_init_queue(do_nbd_request, &nbd_lock);
+To help accomplish this in SCSI, I'm suggesting that the call to
+scsi_free_queue() be moved back to where it used to be, in
+scsi_device_dev_release_usercontext().  Then it won't be possible for
+any wayward requests to be added to the queue after it is cleaned up,
+because there won't be any outstanding references to the scsi_device.
 
-Thanks
-Vivek
+Alan Stern
+
