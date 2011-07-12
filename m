@@ -1,311 +1,117 @@
-From: Mikhail Shevyakov <Shevyakov.M@avroraid.com>
-Subject: Wrong behaviour of multipathing on Active/Passive
-	storage array
-Date: Mon, 11 Jul 2011 19:34:46 +0400
-Message-ID: <1310398486.6249.209.camel@mi>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm mpath: manage reference on request queue of underlying
+ devices
+Date: Tue, 12 Jul 2011 10:58:51 -0400
+Message-ID: <20110712145851.GA17979@redhat.com>
+References: <CAG4TOxMjuntpd3Q5jgn+xDa2tgB9tq+jLcDquM_eAdFHXLDrWA@mail.gmail.com>
+ <1310166270-23196-1-git-send-email-roland@kernel.org>
+ <CAMM=eLfzKuw-2vbERV6D7dAHb1BWopOKZ=dB7vWxcxSCoj6Tkw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6137548818621578172=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAMM=eLfzKuw-2vbERV6D7dAHb1BWopOKZ=dB7vWxcxSCoj6Tkw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, James Bottomley <James.Bottomley@hansenpartnership.com>, Alan Stern <stern@rowland.harvard.edu>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-scsi@vger.kernel.org, Steffen Maier <maier@linux.vnet.ibm.com>, "Manvanthara B. Puttashankar" <manvanth@linux.vnet.ibm.com>, Tarak Reddy <tarak.reddy@in.ibm.com>, "Seshagiri N. Ippili" <sesh17@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Vivek Goyal <vgoyal@redhat.com>, Tejun Heo <tj@kernel.org>, Roland Dreier <roland@kernel.org>
 List-Id: dm-devel.ids
 
---===============6137548818621578172==
-Content-Type: multipart/alternative; boundary="=-aFLt3tJlmutzrRFWLFJd"
+When processing a request, DM-mpath's map_io() set the cloned request's
+request_queue to the appropriate underlying device's request_queue
+without getting a reference on that request_queue.
 
---=-aFLt3tJlmutzrRFWLFJd
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+DM-mpath now maintains a reference count on the underlying devices'
+request_queue.  This change wasn't motivated by a specific report but
+code, like blk_insert_cloned_request(), will access the request_queue
+with the understanding that the request_queue is valid.
 
-Hello!
-I try to configure multipathing for Active/Passive storage and I have a
-problem with this:
-when paths are switched (Active->Passive, Passive->Active) all
-read/write operations
-are suspended. When paths switches back read/write resumes. 
-Following is the configuration:
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-mpath.c |   33 +++++++++++++++++++++------------
+ 1 files changed, 21 insertions(+), 12 deletions(-)
 
-# less /etc/multipath.conf
-
-defaults {
-user_friendly_names yes
-prio alua
-path_checker tur
-no_path_retry 10
-fast_io_fail_tmo 5
-polling_interval        10
-selector                "round-robin 0"
-path_grouping_policy    multibus
-rr_min_io               100
-failback                immediate
-}
-
-
-
-# multipath -ll
-mpathb (0AvroRAIDDVAS            000000000000000097f62ae1) dm-0 AvroRAID,DVAS
-size=683G features='1 queue_if_no_path' hwhandler='0' wp=rw
-`-+- policy='round-robin 0' prio=5 status=active
-  |- 7:0:0:0 sdc 8:32 active ghost  running
-  `- 9:0:0:0 sdd 8:48 active ready  running
-
-This is output of st_turs:
-
-# sg_turs -v /dev/sdd
-    test unit ready cdb: 00 00 00 00 00 00 
-# sg_turs -v /dev/sdc
-    test unit ready cdb: 00 00 00 00 00 00 
-test unit ready:  Fixed format, current;  Sense key: Not Ready
- Additional sense: Logical unit not accessible, target port in standby state
-  Info fld=0x0 [0] 
-device not ready
-
-And REPORT TARGET PORT GROUPS output:
-
-#sg_rtpg /dev/sdd 
-Report target port groups:
-  target port group id : 0x1 , Pref=1
-    target port group asymmetric access state : 0x00
-    T_SUP : 0, O_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 0, AO_SUP : 1
-    status code : 0x02
-    vendor unique status : 0x00
-    target port count : 02
-    Relative target port ids:
-      0x01
-      0x02
-#sg_rtpg /dev/sdc
-Report target port groups:
-  target port group id : 0x2 , Pref=0
-    target port group asymmetric access state : 0x02
-    T_SUP : 0, O_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 0, AO_SUP : 1
-    status code : 0x02
-    vendor unique status : 0x00
-    target port count : 04
-    Relative target port ids:
-      0x01
-      0x02
-      0x03
-      0x04
-
-I used dd to write on the dm device:
-
-#dd if=/dev/zero of=/dev/dm-0 oflag=direct bs=1M
-
-Everything works fine untill paths are switched. dd stops, turs output:
-
-# sg_turs -v /dev/sdd
-    test unit ready cdb: 00 00 00 00 00 00 
-# sg_turs -v /dev/sdc
-    test unit ready cdb: 00 00 00 00 00 00 
-test unit ready:  Fixed format, current;  Sense key: Not Ready
- Additional sense: Logical unit not accessible, target port in standby state
-  Info fld=0x0 [0] 
-device not ready
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index eadea8e..629efa3 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -161,11 +161,14 @@ static void free_pgpaths(struct list_head *pgpaths, struct dm_target *ti)
+ {
+ 	struct pgpath *pgpath, *tmp;
+ 	struct multipath *m = ti->private;
++	struct request_queue *q;
  
-REPORT TARGET PORT GROUPS output:
-
-# sg_rtpg /dev/sdd 
-Report target port groups:
-  target port group id : 0x1 , Pref=0
-    target port group asymmetric access state : 0x02
-    T_SUP : 0, O_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 0, AO_SUP : 1
-    status code : 0x02
-    vendor unique status : 0x00
-    target port count : 02
-    Relative target port ids:
-      0x01
-      0x02
-# sg_rtpg /dev/sdc
-Report target port groups:
-  target port group id : 0x2 , Pref=1
-    target port group asymmetric access state : 0x00
-    T_SUP : 0, O_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 0, AO_SUP : 1
-    status code : 0x02
-    vendor unique status : 0x00
-    target port count : 04
-    Relative target port ids:
-      0x01                                                                                                                                                                                                                                   
-      0x02                                                                                                                                                                                                                                   
-      0x03                                                                                                                                                                                                                                   
-      0x04
-
-As you can see paths' states are switched.Output of multipath:
-
-# multipath -ll
-mpathb (0AvroRAIDDVAS            000000000000000097f62ae1) dm-0 AvroRAID,DVAS
-size=683G features='1 queue_if_no_path' hwhandler='0' wp=rw
-`-+- policy='round-robin 0' prio=5 status=enabled
-  |- 7:0:0:0 sdc 8:32 failed ready  running
-  `- 9:0:0:0 sdd 8:48 failed ghost  running
-
-
-So states of the paths are changed but multipath for some reason fails both paths.
-Is something wrong with my config or is it a bug in multipath?
-Could you help me with this problem?
-
-Regards
-Mikhail Shevyakov
-
-
---=-aFLt3tJlmutzrRFWLFJd
-Content-Type: text/html; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 TRANSITIONAL//EN">
-<HTML>
-<HEAD>
-  <META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=UTF-8">
-  <META NAME="GENERATOR" CONTENT="GtkHTML/3.30.1">
-</HEAD>
-<BODY>
-Hello!<BR>
-I try to configure multipathing for Active/Passive storage and I have a problem with this:<BR>
-when paths are switched (Active-&gt;Passive, Passive-&gt;Active) all read/write operations<BR>
-are suspended. When paths switches back read/write resumes. <BR>
-Following is the configuration:<BR>
-<BR>
-# less /etc/multipath.conf
-<PRE>
-defaults {
-user_friendly_names yes
-prio alua
-path_checker tur
-no_path_retry 10
-fast_io_fail_tmo 5
-polling_interval        10
-selector                &quot;round-robin 0&quot;
-path_grouping_policy    multibus
-rr_min_io               100
-failback                immediate
-}
-</PRE>
-<BR>
-<PRE>
-# multipath -ll
-mpathb (0AvroRAIDDVAS            000000000000000097f62ae1) dm-0 AvroRAID,DVAS
-size=683G features='1 queue_if_no_path' hwhandler='0' wp=rw
-`-+- policy='round-robin 0' prio=5 status=active
-  |- 7:0:0:0 sdc 8:32 active ghost  running
-&nbsp; `- 9:0:0:0 sdd 8:48 active ready&nbsp; running
-
-This is output of st_turs:
-
-# sg_turs -v /dev/sdd
-    test unit ready cdb: 00 00 00 00 00 00 
-# sg_turs -v /dev/sdc
-    test unit ready cdb: 00 00 00 00 00 00 
-test unit ready:  Fixed format, current;  Sense key: Not Ready
- Additional sense: Logical unit not accessible, target port in standby state
-  Info fld=0x0 [0] 
-device not ready
-
-And REPORT TARGET PORT GROUPS output:
-
-#sg_rtpg /dev/sdd 
-Report target port groups:
-  target port group id : 0x1 , Pref=1
-    target port group asymmetric access state : 0x00
-    T_SUP : 0, O_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 0, AO_SUP : 1
-    status code : 0x02
-    vendor unique status : 0x00
-    target port count : 02
-    Relative target port ids:
-      0x01
-      0x02
-#sg_rtpg /dev/sdc
-Report target port groups:
-  target port group id : 0x2 , Pref=0
-    target port group asymmetric access state : 0x02
-    T_SUP : 0, O_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 0, AO_SUP : 1
-    status code : 0x02
-    vendor unique status : 0x00
-    target port count : 04
-    Relative target port ids:
-      0x01
-      0x02
-      0x03
-      0x04
-
-I used dd to write on the dm device:
-
-#dd if=/dev/zero of=/dev/dm-0 oflag=direct bs=1M
-
-Everything works fine untill paths are switched. dd stops, turs output:
-
-# sg_turs -v /dev/sdd
-    test unit ready cdb: 00 00 00 00 00 00 
-# sg_turs -v /dev/sdc
-    test unit ready cdb: 00 00 00 00 00 00 
-test unit ready:  Fixed format, current;  Sense key: Not Ready
- Additional sense: Logical unit not accessible, target port in standby state
-  Info fld=0x0 [0] 
-device not ready
+ 	list_for_each_entry_safe(pgpath, tmp, pgpaths, list) {
+ 		list_del(&pgpath->list);
++		q = bdev_get_queue(pgpath->path.dev->bdev);
+ 		if (m->hw_handler_name)
+-			scsi_dh_detach(bdev_get_queue(pgpath->path.dev->bdev));
++			scsi_dh_detach(q);
++		blk_put_queue(q);
+ 		dm_put_device(ti, pgpath->path.dev);
+ 		free_pgpath(pgpath);
+ 	}
+@@ -552,6 +555,7 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ {
+ 	int r;
+ 	struct pgpath *p;
++	struct request_queue *q;
+ 	struct multipath *m = ti->private;
  
-REPORT TARGET PORT GROUPS output:
-
-# sg_rtpg /dev/sdd 
-Report target port groups:
-  target port group id : 0x1 , Pref=0
-    target port group asymmetric access state : 0x02
-    T_SUP : 0, O_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 0, AO_SUP : 1
-    status code : 0x02
-    vendor unique status : 0x00
-    target port count : 02
-    Relative target port ids:
-      0x01
-      0x02
-# sg_rtpg /dev/sdc
-Report target port groups:
-  target port group id : 0x2 , Pref=1
-    target port group asymmetric access state : 0x00
-    T_SUP : 0, O_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 0, AO_SUP : 1
-    status code : 0x02
-    vendor unique status : 0x00
-    target port count : 04
-    Relative target port ids:
-      0x01                                                                                                                                                                                                                                   
-      0x02                                                                                                                                                                                                                                   
-      0x03                                                                                                                                                                                                                                   
-      0x04
-
-As you can see paths' states are switched.Output of multipath:
-
-# multipath -ll
-mpathb (0AvroRAIDDVAS            000000000000000097f62ae1) dm-0 AvroRAID,DVAS
-size=683G features='1 queue_if_no_path' hwhandler='0' wp=rw
-`-+- policy='round-robin 0' prio=5 status=enabled
-  |- 7:0:0:0 sdc 8:32 failed ready  running
-&nbsp; `- 9:0:0:0 sdd 8:48 failed ghost&nbsp; running
-
-
-So states of the paths are changed but multipath for some reason fails both paths.
-Is something wrong with my config or is it a bug in multipath?
-Could you help me with this problem?
-
-Regards
-Mikhail Shevyakov
-
-</PRE>
-</BODY>
-</HTML>
-
---=-aFLt3tJlmutzrRFWLFJd--
-
-
---===============6137548818621578172==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6137548818621578172==--
+ 	/* we need at least a path arg */
+@@ -571,9 +575,14 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 		goto bad;
+ 	}
+ 
+-	if (m->hw_handler_name) {
+-		struct request_queue *q = bdev_get_queue(p->path.dev->bdev);
++	q = bdev_get_queue(p->path.dev->bdev);
++	r = blk_get_queue(q);
++	if (r) {
++		ti->error = "error getting request queue";
++		goto bad_queue;
++	}
+ 
++	if (m->hw_handler_name) {
+ 		r = scsi_dh_attach(q, m->hw_handler_name);
+ 		if (r == -EBUSY) {
+ 			/*
+@@ -586,8 +595,7 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 
+ 		if (r < 0) {
+ 			ti->error = "error attaching hardware handler";
+-			dm_put_device(ti, p->path.dev);
+-			goto bad;
++			goto bad_finish;
+ 		}
+ 
+ 		if (m->hw_handler_params) {
+@@ -596,21 +604,22 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
+ 				ti->error = "unable to set hardware "
+ 							"handler parameters";
+ 				scsi_dh_detach(q);
+-				dm_put_device(ti, p->path.dev);
+-				goto bad;
++				goto bad_finish;
+ 			}
+ 		}
+ 	}
+ 
+ 	r = ps->type->add_path(ps, &p->path, as->argc, as->argv, &ti->error);
+-	if (r) {
+-		dm_put_device(ti, p->path.dev);
+-		goto bad;
+-	}
++	if (r)
++		goto bad_finish;
+ 
+ 	return p;
+ 
+- bad:
++bad_finish:
++	blk_put_queue(q);
++bad_queue:
++	dm_put_device(ti, p->path.dev);
++bad:
+ 	free_pgpath(p);
+ 	return ERR_PTR(r);
+ }
