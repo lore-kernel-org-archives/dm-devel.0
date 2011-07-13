@@ -1,65 +1,37 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 3/3] block: Move discard and secure discard flags to
- queue limits
-Date: Wed, 13 Jul 2011 11:46:37 -0400
-Message-ID: <20110713154637.GA22216@redhat.com>
-References: <4DDEA689.2090004@fusionio.com>
- <1306464169-4291-1-git-send-email-martin.petersen@oracle.com>
- <1306464169-4291-4-git-send-email-martin.petersen@oracle.com>
- <20110527133952.GC17219@redhat.com>
- <yq1fwnvzk0i.fsf@sermon.lab.mkp.net>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: Device removal handling
+Date: Wed, 13 Jul 2011 11:53:29 -0400
+Message-ID: <4E1DBF79.2090401@cfl.rr.com>
+References: <4E1A079A.9060901@cfl.rr.com>	<20110710220330.GA7857@agk-dp.fab.redhat.com>	<4E1B11D5.8050603@cfl.rr.com>
+	<4E1BE8AC.3090503@suse.de>
+	<20110712105826.GH7857@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <yq1fwnvzk0i.fsf@sermon.lab.mkp.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: jaxboe@fusionio.com, msb@chromium.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20110712105826.GH7857@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, May 30 2011 at 10:22pm -0400,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
+On 7/12/2011 6:58 AM, Alasdair G Kergon wrote:
+> We already have dmsetup remove -f which replaced a device by the error
+> target then attempts to remove it (which will fail if it is still in
+> use).
+>
+> You have a need for this without the removal attempt?
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> Mike> Most targets do support discards (tgt->num_discard_requests > 0).
-> Mike> But if any target doesn't support discards then the entire table
-> Mike> doesn't support them.
-> 
-> Would you rather have the stacking policy for discard be | instead of &?
-
-Sorry about letting this slip through the cracks.
-
-I had a look and I think if you just changed the dm-table.c hunk of this
-3rd patch to allow DM to override the stacking then we'd be good (some
-targets aren't to allow discard even if their component devices would
-allow it when stacked), so something like:
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 367a2e0..02c93ab 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1251,16 +1251,17 @@ static void dm_table_set_integrity(struct dm_table *t)
- void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 			       struct queue_limits *limits)
- {
-+	if (!dm_table_supports_discards(t)) {
-+		limits->max_discard_sectors = 0;
-+		limits->discard_granularity = 0;
-+		limits->secure_discard = 0;
-+	}
-+
- 	/*
- 	 * Copy table's limits to the DM device's request_queue
- 	 */
- 	q->limits = *limits;
- 
--	if (!dm_table_supports_discards(t))
--		queue_flag_clear_unlocked(QUEUE_FLAG_DISCARD, q);
--	else
--		queue_flag_set_unlocked(QUEUE_FLAG_DISCARD, q);
--
- 	dm_table_set_integrity(t);
- 
- 	/*
+The question is, how do you get udev to invoke this when the underlying 
+device is removed?  It has no idea what dm device was using the disk. 
+Further, if it was a mirror, then you don't want to try to kill the 
+mirror if the other leg is still good, you just want the mirror to fail 
+and release the removed disk.
