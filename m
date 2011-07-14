@@ -1,13 +1,13 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] dm-crypt: add mapping table option to allowing
-	discard requests
-Date: Thu, 14 Jul 2011 13:56:30 +0200
-Message-ID: <1310644590-14438-1-git-send-email-mbroz@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm table: simplify discard support processing
+Date: Thu, 14 Jul 2011 10:30:38 -0400
+Message-ID: <20110714143037.GA12049@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,147 +18,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Add optional parameter field to dmcrypt table and support
-"allow_discards" option.
+Remove 'discards_supported' from the dm_table structure.  The same
+information can be easily discovered from the table's target(s) in
+dm_table_supports_discards().
 
-Discard requests bypass crypt queue processing, bio
-request is simple remapped to underlying device.
+Also DMWARN if a target sets 'discards_supported' override but forgets
+to set 'num_discard_requests'.
 
-Note that discard will be never enabled by default because
-of security consequences, it is up to administrator
-to enable it for encrypted devices.
-
-(Note that userspace cryptsetup will not understand new
-optional parameters yet, support for this will come later.)
-
-Signed-off-by: Milan Broz <mbroz@redhat.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- Documentation/device-mapper/dm-crypt.txt |   19 +++++++++++++-
- drivers/md/dm-crypt.c                    |   39 ++++++++++++++++++++++++++---
- 2 files changed, 53 insertions(+), 5 deletions(-)
+ drivers/md/dm-table.c |   13 ++++++-------
+ 1 files changed, 6 insertions(+), 7 deletions(-)
 
-diff --git a/Documentation/device-mapper/dm-crypt.txt b/Documentation/device-mapper/dm-crypt.txt
-index 6b5c42d..08a36a7 100644
---- a/Documentation/device-mapper/dm-crypt.txt
-+++ b/Documentation/device-mapper/dm-crypt.txt
-@@ -4,7 +4,7 @@ dm-crypt
- Device-Mapper's "crypt" target provides transparent encryption of block devices
- using the kernel crypto API.
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 367a2e0..b5bdeb3 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -54,7 +54,6 @@ struct dm_table {
+ 	sector_t *highs;
+ 	struct dm_target *targets;
  
--Parameters: <cipher> <key> <iv_offset> <device path> <offset>
-+Parameters: <cipher> <key> <iv_offset> <device path> <offset> [<#opt_params> <opt_params>]
+-	unsigned discards_supported:1;
+ 	unsigned integrity_supported:1;
  
- <cipher>
-     Encryption cipher and an optional IV generation mode.
-@@ -37,6 +37,23 @@ Parameters: <cipher> <key> <iv_offset> <device path> <offset>
- <offset>
-     Starting sector within the device where the encrypted data begins.
+ 	/*
+@@ -207,7 +206,6 @@ int dm_table_create(struct dm_table **result, fmode_t mode,
+ 	INIT_LIST_HEAD(&t->devices);
+ 	INIT_LIST_HEAD(&t->target_callbacks);
+ 	atomic_set(&t->holders, 0);
+-	t->discards_supported = 1;
  
-+<#opt_params>
-+    Number of optional parameters. If there are no optional parameters,
-+    the optional paramaters section can be skipped or #opt_params can be zero.
-+    Otherwise #opt_params indicates count of following arguments.
-+
-+    Examples of optional parameters section:
-+        1 allow_discards
-+
-+allow_discards
-+    The block discards requests are passed through the crypt device.
-+    (Default is to block discards requests.)
-+
-+    WARNING: allowing discard on encrypted device has serious irreversible
-+    security consequences, discarded blocks can be easily located on device
-+    later. This can lead to leak of information from ciphertext device
-+    (unique pattern for detecting filesystem type, used space etc).
-+
- Example scripts
- ===============
- LUKS (Linux Unified Key Setup) is now the preferred way to set up disk
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index c8827ff..2747483 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1575,11 +1575,11 @@ bad_mem:
- static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
- 	struct crypt_config *cc;
--	unsigned int key_size;
-+	unsigned int key_size, opt_params;
- 	unsigned long long tmpll;
- 	int ret;
+ 	if (!num_targets)
+ 		num_targets = KEYS_PER_NODE;
+@@ -788,8 +786,9 @@ int dm_table_add_target(struct dm_table *t, const char *type,
  
--	if (argc != 5) {
-+	if (argc < 5) {
- 		ti->error = "Not enough arguments";
- 		return -EINVAL;
- 	}
-@@ -1648,6 +1648,26 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	}
- 	cc->start = tmpll;
+ 	t->highs[t->num_targets++] = tgt->begin + tgt->len - 1;
  
-+	/* Optional parameters */
-+	if (argc > 5) {
-+		if (sscanf(argv[5], "%u", &opt_params) < 0) {
-+			ti->error = "Invalid optional parameters";
-+			goto bad;
-+		}
-+
-+		if (opt_params + 6 > argc) {
-+			ti->error = "Arguments do not agree with counts given";
-+			goto bad;
-+		}
-+
-+		if (opt_params == 1 && !strcmp(argv[6], "allow_discards"))
-+			ti->num_discard_requests = 1;
-+		else if (opt_params) {
-+			ti->error = "Invalid optional parameters";
-+			goto bad;
-+		}
-+	}
-+
- 	ret = -ENOMEM;
- 	cc->io_queue = alloc_workqueue("kcryptd_io",
- 				       WQ_NON_REENTRANT|
-@@ -1682,9 +1702,16 @@ static int crypt_map(struct dm_target *ti, struct bio *bio,
- 	struct dm_crypt_io *io;
- 	struct crypt_config *cc;
+-	if (!tgt->num_discard_requests)
+-		t->discards_supported = 0;
++	if (!tgt->num_discard_requests && tgt->discards_supported)
++		DMWARN("%s: %s: must set num_discard_requests if discards_supported, "
++		       "disabling discards", dm_device_name(t->md), type);
  
--	if (bio->bi_rw & REQ_FLUSH) {
-+	/*
-+	 * If bio is REQ_FLUSH or REQ_DISCARD, just bypass crypt queues.
-+	 * - for REQ_FLUSH device-mapper core ensures that no IO is in-flight
-+	 * - for REQ_DISCARD caller must use flush if IO ordering matters
-+	 */
-+	if (unlikely(bio->bi_rw & (REQ_FLUSH | REQ_DISCARD))) {
- 		cc = ti->private;
- 		bio->bi_bdev = cc->dev->bdev;
-+		if (bio_sectors(bio))
-+			bio->bi_sector = cc->start + dm_target_offset(ti, bio->bi_sector);
- 		return DM_MAPIO_REMAPPED;
- 	}
- 
-@@ -1727,6 +1754,10 @@ static int crypt_status(struct dm_target *ti, status_type_t type,
- 
- 		DMEMIT(" %llu %s %llu", (unsigned long long)cc->iv_offset,
- 				cc->dev->name, (unsigned long long)cc->start);
-+
-+		if (ti->num_discard_requests)
-+			DMEMIT(" 1 allow_discards");
-+
- 		break;
- 	}
  	return 0;
-@@ -1823,7 +1854,7 @@ static int crypt_iterate_devices(struct dm_target *ti,
  
- static struct target_type crypt_target = {
- 	.name   = "crypt",
--	.version = {1, 10, 0},
-+	.version = {1, 11, 0},
- 	.module = THIS_MODULE,
- 	.ctr    = crypt_ctr,
- 	.dtr    = crypt_dtr,
--- 
-1.7.5.4
+@@ -1413,9 +1412,6 @@ bool dm_table_supports_discards(struct dm_table *t)
+ 	struct dm_target *ti;
+ 	unsigned i = 0;
+ 
+-	if (!t->discards_supported)
+-		return 0;
+-
+ 	/*
+ 	 * Unless any target used by the table set discards_supported,
+ 	 * require at least one underlying device to support discards.
+@@ -1426,6 +1422,9 @@ bool dm_table_supports_discards(struct dm_table *t)
+ 	while (i < dm_table_get_num_targets(t)) {
+ 		ti = dm_table_get_target(t, i++);
+ 
++		if (!ti->num_discard_requests)
++			return 0;
++		
+ 		if (ti->discards_supported)
+ 			return 1;
+ 
