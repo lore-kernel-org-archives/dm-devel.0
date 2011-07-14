@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 0 of 2] Updates to existing dm-raid patches
-Date: Thu, 14 Jul 2011 16:15:33 -0500
-Message-ID: <1310678133.2246.25.camel@f14.redhat.com>
+Subject: [PATCH 1 of 2] dm-raid-cleanup-parameter-handling-2.patch
+Date: Thu, 14 Jul 2011 16:22:55 -0500
+Message-ID: <1310678575.2246.26.camel@f14.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,23 +19,23 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-agk,
+Correct parameter count for RAID status table.
 
-You currently have 6 patches going into linux-next for dm-raid.  I have
-found two small, but necessary updates that must also be included.
-These updates are listed as *-2.patch below.  They should be folded into
-the existing patches for which they are named.
+The parameters for rebuilds are already counted by the preceding
+'for' loop.  Do not count them again.
 
-dm-raid-cleanup-parameter-handling.patch
-<new> dm-raid-cleanup-parameter-handling-2.patch
-dm-raid-improve-table-parameters-documentation.patch
-dm-raid-add-region_size-parameter.patch
-dm-raid-add-write_mostly-parameter.patch
-dm-raid-support-metadata-devices.patch
-dm-raid-add-md-raid1-support.patch
-<new> dm-raid-add-md-raid1-support-2.patch
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Please include these fixes.
-
-Thanks,
- brassow
+Index: linux-2.6/drivers/md/dm-raid.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-raid.c
++++ linux-2.6/drivers/md/dm-raid.c
+@@ -554,7 +554,7 @@ static int raid_status(struct dm_target 
+ 			    !test_bit(In_sync, &rs->dev[i].rdev.flags))
+ 				raid_param_cnt += 2; /* for rebuilds */
+ 
+-		raid_param_cnt += (hweight64(rs->print_flags) * 2);
++		raid_param_cnt += (hweight64(rs->print_flags & ~DMPF_REBUILD) * 2);
+ 		if (rs->print_flags & (DMPF_SYNC | DMPF_NOSYNC))
+ 			raid_param_cnt--;
+ 
