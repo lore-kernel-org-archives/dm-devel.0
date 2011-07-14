@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 1 of 2] dm-raid-cleanup-parameter-handling-2.patch
-Date: Thu, 14 Jul 2011 16:22:55 -0500
-Message-ID: <1310678575.2246.26.camel@f14.redhat.com>
+Subject: [PATCH 2 of 2] dm-raid-add-md-raid1-support-2.patch
+Date: Thu, 14 Jul 2011 16:23:30 -0500
+Message-ID: <1310678610.2246.27.camel@f14.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,10 +19,11 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Correct parameter count for RAID status table.
+Correct number of allowed "rebuild" devices in dm-raid
 
-The parameters for rebuilds are already counted by the preceding
-'for' loop.  Do not count them again.
+The number of devices that are allowed to be rebuilt in a RAID1
+array is n - 1.  It is not limited by 'parity_devs' like the
+other RAIDs.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -30,12 +31,18 @@ Index: linux-2.6/drivers/md/dm-raid.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-raid.c
 +++ linux-2.6/drivers/md/dm-raid.c
-@@ -554,7 +554,7 @@ static int raid_status(struct dm_target 
- 			    !test_bit(In_sync, &rs->dev[i].rdev.flags))
- 				raid_param_cnt += 2; /* for rebuilds */
+@@ -428,8 +428,12 @@ static int parse_raid_params(struct raid
+ 		}
  
--		raid_param_cnt += (hweight64(rs->print_flags) * 2);
-+		raid_param_cnt += (hweight64(rs->print_flags & ~DMPF_REBUILD) * 2);
- 		if (rs->print_flags & (DMPF_SYNC | DMPF_NOSYNC))
- 			raid_param_cnt--;
- 
+ 		if (!strcasecmp(key, "rebuild")) {
+-			if (++rebuild_cnt > rs->raid_type->parity_devs) {
+-				rs->ti->error = "Too many rebuild drives given";
++			rebuild_cnt++;
++			if (((rs->raid_type->level != 1) &&
++			     (rebuild_cnt > rs->raid_type->parity_devs)) ||
++			    ((rs->raid_type->level == 1) &&
++			     (rebuild_cnt > (rs->md.raid_disks - 1)))) {
++				rs->ti->error = "Too many rebuild devices specified for given RAID type";
+ 				return -EINVAL;
+ 			}
+ 			if (value > rs->md.raid_disks) {
