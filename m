@@ -1,12 +1,14 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] dm: add documentation of sysfs interface
-Date: Thu, 14 Jul 2011 17:36:36 +0200
-Message-ID: <1310657796-9260-1-git-send-email-mbroz@redhat.com>
+Subject: Re: [PATCH] dm table: simplify discard support processing
+Date: Thu, 14 Jul 2011 17:43:47 +0200
+Message-ID: <4E1F0EB3.9010004@redhat.com>
+References: <20110714143037.GA12049@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20110714143037.GA12049@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,48 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Describe attributes provided by device-mapper in /sys/block.
+On 07/14/2011 04:30 PM, Mike Snitzer wrote:
+> Remove 'discards_supported' from the dm_table structure.  The same
+> information can be easily discovered from the table's target(s) in
+> dm_table_supports_discards().
+> 
+> Also DMWARN if a target sets 'discards_supported' override but forgets
+> to set 'num_discard_requests'.
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
----
- Documentation/ABI/testing/sysfs-block-dm |   25 +++++++++++++++++++++++++
- 1 files changed, 25 insertions(+), 0 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-block-dm
+Why not BUG_ON? It is bug in code on static attribute, isn't? :-)
 
-diff --git a/Documentation/ABI/testing/sysfs-block-dm b/Documentation/ABI/testing/sysfs-block-dm
-new file mode 100644
-index 0000000..87ca569
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-block-dm
-@@ -0,0 +1,25 @@
-+What:		/sys/block/dm-<num>/dm/name
-+Date:		January 2009
-+KernelVersion:	2.6.29
-+Contact:	dm-devel@redhat.com
-+Description:	Device-mapper device name.
-+		Read-only string containing mapped device name.
-+Users:		util-linux, device-mapper udev rules
-+
-+What:		/sys/block/dm-<num>/dm/uuid
-+Date:		January 2009
-+KernelVersion:	2.6.29
-+Contact:	dm-devel@redhat.com
-+Description:	Device-mapper device UUID.
-+		Read-only string containing DM-UUID or empty string
-+		if DM-UUID is not set.
-+Users:		util-linux, device-mapper udev rules
-+
-+What:		/sys/block/dm-<num>/dm/suspended
-+Date:		June 2009
-+KernelVersion:	2.6.31
-+Contact:	dm-devel@redhat.com
-+Description:	Device-mapper device suspend state.
-+		Contains the value 1 while the device is suspended.
-+		Otherwise it contains 0. Read-only attribute.
-+Users:		util-linux, device-mapper udev rules
--- 
-1.7.5.4
+> @@ -1426,6 +1422,9 @@ bool dm_table_supports_discards(struct dm_table *t)
+>  	while (i < dm_table_get_num_targets(t)) {
+>  		ti = dm_table_get_target(t, i++);
+>  
+> +		if (!ti->num_discard_requests)
+> +			return 0;
+> +		
+
+>  		if (ti->discards_supported)
+>  			return 1;
+
+What if next target has ti->num_discard_requests = 0 here?
+Shouldn't it loop through the all targets always?
+
+Milan
