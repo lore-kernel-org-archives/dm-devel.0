@@ -1,15 +1,16 @@
-From: "Stamper, Brian P. (ARC-D)[Stinger Ghaffarian Technologies Inc. (SGT
-	Inc.)]" <brian.p.stamper@nasa.gov>
-Subject: Re: Blacklist broken?
-Date: Thu, 14 Jul 2011 19:02:38 -0500
-Message-ID: <CA44D1AE.13C70%brian.p.stamper@nasa.gov>
-References: <CA44C487.13C5F%brian.p.stamper@nasa.gov>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: multipath: add find_multipaths feature.
+Date: Thu, 14 Jul 2011 20:53:03 -0400
+Message-ID: <20110715005302.GA26472@redhat.com>
+References: <20101116232546.GU13763@ether.msp.redhat.com>
+	<1291762849.4430.6.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6218777046331752011=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA44C487.13C5F%brian.p.stamper@nasa.gov>
-Content-Language: en
+Content-Disposition: inline
+In-Reply-To: <1291762849.4430.6.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,191 +20,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============6218777046331752011==
-Content-Language: en
-Content-Type: multipart/alternative;
-	boundary="_000_CA44D1AE13C70brianpstampernasagov_"
+On Tue, Dec 07 2010 at  6:00pm -0500,
+Christophe Varoqui <christophe.varoqui@gmail.com> wrote:
 
---_000_CA44D1AE13C70brianpstampernasagov_
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+> On mar., 2010-11-16 at 17:25 -0600, Benjamin Marzinski wrote:
+> > This adds a new default feature, find_multipaths. When this is set to yes,
+> > multipath will no longer try to create multipath devices using every
+> > non-blacklisted device. Instead, it will only create a device when one of
+> > three conditions are met.
+> > 
+> > 1. Three are at least two non-blacklisted paths with the same wwid
+> > 2. The user manually forces the creation, by specifying a device with the
+> >    multipath command.
+> > 3. A path has the same wwid as a multipath device that was previously crreated
+> >    (even if that multipath device doesn't currently exist).
+> > 
+> > To do 3, multipath stores the wwid of every path that it creates in
+> > /etc/multipath/wwids. Whenever a path is added, its wwid is checked against
+> > this file.  If there's a match, it is multipathed, even if it's the only path.
+> > This should allow multipath to automatically choose the correct paths to make
+> > into multipath devics in most cases, without needing the user to edit the
+> > blacklist.
+> > 
+> Hi Ben,
+> 
+> I just merged the patches you queued for upstream the last weeks, except
+> this one. I'm still not convinced, but that may be because I have not
+> understood yet. I'll try and give it more brain.
 
+find_multipaths is quite useful for avoiding the issue that was just
+reported where multipath grabs the root device even though it doesn't
+have multiple paths.
 
-Ok, so I've isolated this.  It appears that dracut is loading dm_multipath =
-into initram and has no blacklist configuration.  At some point initram sho=
-uld release disks, but it doesn't.  At least not in time for the system to =
-attempt its routine fsck on /boot.  I didn't have this problem on a very si=
-milar machine that I upgraded last week that also runs multipath.  The one =
-difference that comes to mind is that the most recent host was build on FC1=
-1 or even potentially FC9 and has been upgraded multiple times.  The host t=
-hat went smoothly was built on FC13 a couple months ago and upgraded only o=
-nce.
-
-This is a fairly serious problem, and if I hadn't had so many issues with d=
-racut in the last year I would have never solved it myself.  I'm not sure i=
-f the responsibility lies with the dracut team or with the dm-multipath tea=
-m, but it should probably be fixed.  I was able to recompile the initrd wit=
-h dracut -o dm_multipath and now my system boots cleanly.  But I don't real=
-ly consider this a "fix" and I don't want to have to recompile my initrd ev=
-erytime I get a kernel update across multiple systems.
-
--brian
-
-On 7/14/11 4:06 PM, "Brian Stamper" <brian.p.stamper@nasa.gov> wrote:
-
-I just upgrade an FC13 system to FC15, and now multipath is grabbing the sy=
-stem drive before the normal fsck can run, which is causing the machine to =
-not boot.  I get the message: "Filesystem mounted or opened exclusively by =
-another program? "  Now, I can simply control-d to continue, but why is mul=
-tipath grabbing the drive?  I've blacklisted it every way I can, using devn=
-ode, using wwid, it simply ignores it and continues to create a path map fo=
-r /dev/sda.
-
-device-mapper-1.02.63-3.fc15.x86_64
-device-mapper-multipath-0.4.9-15.fc15.x86_64
-device-mapper-libs-1.02.63-3.fc15.x86_64
-
-2.6.38.8-35.fc15.x86_64
-
-mpath0 (36001ec90ee4ee600105ac65e04e84e61) dm-0 DELL,PERC 6/i
-size=3D279G features=3D'0' hwhandler=3D'0' wp=3Drw
-`-+- policy=3D'round-robin 0' prio=3D1 status=3Dactive
-  `- 2:2:0:0  sda 8:0   active ready running
-
-[root@bonjovi ~]# blkid | grep boot
-/dev/sda1: LABEL=3D"/boot" UUID=3D"8ed92bb6-0ddb-4fbc-907d-fdf12e5550a3" TY=
-PE=3D"ext3" SEC_TYPE=3D"ext2"
-/dev/mapper/mpath0p1: LABEL=3D"/boot" UUID=3D"8ed92bb6-0ddb-4fbc-907d-fdf12=
-e5550a3" TYPE=3D"ext3"
-
-From multipath.conf:
-
-blacklist {
-        wwid 36001ec90ee4ee600105ac65e04e84e61
-        devnode "/dev/sda"
-        devnode "/dev/sda1"
-}
-devnode_blacklist {
-        wwid 36001ec90ee4ee600105ac65e04e84e61
-        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-        devnode "^hd[a-z]"
-        devnode "^cciss!c[0-9]d[0-9]*"
-        devnode "sda"
-        devnode "/dev/sda"
-}
-
-I've even tried blacklisting by /disk/by/uuid.  What does it take to get mu=
-ltipath to quit grabbing this disk?
-
--brian
-
---_000_CA44D1AE13C70brianpstampernasagov_
-Content-Type: text/html; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-<HTML>
-<HEAD>
-<TITLE>Re: [dm-devel] Blacklist broken?</TITLE>
-</HEAD>
-<BODY>
-<FONT FACE=3D"Calibri, Verdana, Helvetica, Arial"><SPAN STYLE=3D'font-size:=
-11pt'><BR>
-Ok, so I&#8217;ve isolated this. &nbsp;It appears that dracut is loading dm=
-_multipath into initram and has no blacklist configuration. &nbsp;At some p=
-oint initram should release disks, but it doesn&#8217;t. &nbsp;At least not=
- in time for the system to attempt its routine fsck on /boot. &nbsp;I didn&=
-#8217;t have this problem on a very similar machine that I upgraded last we=
-ek that also runs multipath. &nbsp;The one difference that comes to mind is=
- that the most recent host was build on FC11 or even potentially FC9 and ha=
-s been upgraded multiple times. &nbsp;The host that went smoothly was built=
- on FC13 a couple months ago and upgraded only once.<BR>
-<BR>
-This is a fairly serious problem, and if I hadn&#8217;t had so many issues =
-with dracut in the last year I would have never solved it myself. &nbsp;I&#=
-8217;m not sure if the responsibility lies with the dracut team or with the=
- dm-multipath team, but it should probably be fixed. &nbsp;I was able to re=
-compile the initrd with dracut &#8211;o dm_multipath and now my system boot=
-s cleanly. &nbsp;But I don&#8217;t really consider this a &#8220;fix&#8221;=
- and I don&#8217;t want to have to recompile my initrd everytime I get a ke=
-rnel update across multiple systems.<BR>
-<BR>
--brian<BR>
-<BR>
-On 7/14/11 4:06 PM, &quot;Brian Stamper&quot; &lt;<a href=3D"brian.p.stampe=
-r@nasa.gov">brian.p.stamper@nasa.gov</a>&gt; wrote:<BR>
-<BR>
-</SPAN></FONT><BLOCKQUOTE><FONT FACE=3D"Calibri, Verdana, Helvetica, Arial"=
-><SPAN STYLE=3D'font-size:11pt'>I just upgrade an FC13 system to FC15, and =
-now multipath is grabbing the system drive before the normal fsck can run, =
-which is causing the machine to not boot. &nbsp;I get the message: &#8220;F=
-ilesystem mounted or opened exclusively by another program? &#8220; &nbsp;N=
-ow, I can simply control-d to continue, but why is multipath grabbing the d=
-rive? &nbsp;I&#8217;ve blacklisted it every way I can, using devnode, using=
- wwid, it simply ignores it and continues to create a path map for /dev/sda=
-.<BR>
-<BR>
-device-mapper-1.02.63-3.fc15.x86_64<BR>
-device-mapper-multipath-0.4.9-15.fc15.x86_64<BR>
-device-mapper-libs-1.02.63-3.fc15.x86_64<BR>
-<BR>
-2.6.38.8-35.fc15.x86_64<BR>
-<BR>
-mpath0 (36001ec90ee4ee600105ac65e04e84e61) dm-0 DELL,PERC 6/i<BR>
-size=3D279G features=3D'0' hwhandler=3D'0' wp=3Drw<BR>
-`-+- policy=3D'round-robin 0' prio=3D1 status=3Dactive<BR>
-&nbsp;&nbsp;`- 2:2:0:0 &nbsp;sda 8:0 &nbsp;&nbsp;active ready running<BR>
-<BR>
-[root@bonjovi ~]# blkid | grep boot<BR>
-/dev/sda1: LABEL=3D&quot;/boot&quot; UUID=3D&quot;8ed92bb6-0ddb-4fbc-907d-f=
-df12e5550a3&quot; TYPE=3D&quot;ext3&quot; SEC_TYPE=3D&quot;ext2&quot; <BR>
-/dev/mapper/mpath0p1: LABEL=3D&quot;/boot&quot; UUID=3D&quot;8ed92bb6-0ddb-=
-4fbc-907d-fdf12e5550a3&quot; TYPE=3D&quot;ext3&quot; <BR>
-<BR>
-&gt;From multipath.conf:<BR>
-<BR>
-blacklist {<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wwid 36001ec90ee4ee600105ac=
-65e04e84e61<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;/dev/sda&quot=
-;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;/dev/sda1&quo=
-t;<BR>
-}<BR>
-devnode_blacklist {<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wwid 36001ec90ee4ee600105ac=
-65e04e84e61<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;^(ram|raw|loo=
-p|fd|md|dm-|sr|scd|st)[0-9]*&quot;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;^hd[a-z]&quot=
-;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;^cciss!c[0-9]=
-d[0-9]*&quot;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &#8220;sda&#8221;<B=
-R>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &#8220;/dev/sda&#82=
-21;<BR>
-}<BR>
-<BR>
-I&#8217;ve even tried blacklisting by /disk/by/uuid. &nbsp;What does it tak=
-e to get multipath to quit grabbing this disk?<BR>
-<BR>
--brian<BR>
-</SPAN></FONT></BLOCKQUOTE>
-</BODY>
-</HTML>
-
-
---_000_CA44D1AE13C70brianpstampernasagov_--
-
-
---===============6218777046331752011==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6218777046331752011==--
+Any chance you could reevaluate Ben's patch for inclusion?
