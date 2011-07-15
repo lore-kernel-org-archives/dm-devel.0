@@ -1,17 +1,15 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm-crypt: add mapping table option
-	to	allowing discard requests
-Date: Fri, 15 Jul 2011 02:26:12 +0100
-Message-ID: <20110715012611.GD15253@agk-dp.fab.redhat.com>
-References: <1310644590-14438-1-git-send-email-mbroz@redhat.com>
-	<4E1F9023.5020801@deserettechnology.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: multipath: add find_multipaths feature.
+Date: Fri, 15 Jul 2011 09:03:07 +0200
+Message-ID: <1310713387.2215.5.camel@Nokia-N900-42-11>
+References: <20101116232546.GU13763@ether.msp.redhat.com>
+	<1291762849.4430.6.camel@zezette> <20110715005302.GA26472@redhat.com>
+Reply-To: Christophe Varoqui <christophe.varoqui@gmail.com>,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============6787038915539165840=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4E1F9023.5020801@deserettechnology.com>
+In-Reply-To: <20110715005302.GA26472@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,41 +19,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jeff Cook <jeff@deserettechnology.com>, device-mapper development <dm-devel@redhat.com>, list@eworm.de, Milan Broz <mbroz@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-To check the status of a dm patch, look at patchwork in the first instance.
 
-The vast majority of dm patches are submitted to dm-devel.
-They are caught by patchwork here:
-  https://patchwork.kernel.org/project/dm-devel/list/?state=*
+--===============6787038915539165840==
+Content-Type: multipart/alternative; boundary="=-ai/0rMFatZscMj2EBd2e"
 
-Initially status is 'New'.
-Patches that are assigned to 'agk' are deemed ready for me to look at.
-I set the status to 'Under Review' when I take a patch into my 'editing' quilt
-tree, which is synced onto two independent servers here:
-  http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
-  ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/
 
-At this point the patch will be below the 'next' line (as in 'linux-next') in
-the quilt series file, also uploaded there.  The number at the end of the
-line is the patchwork patch number.  (Multiple numbers mean I folded
-patches together.)
+--=-ai/0rMFatZscMj2EBd2e
+Content-Type: text/plain; charset=utf-8
+Content-ID: <1310713386.2215.2.camel@Nokia-N900-42-11>
+Content-Transfer-Encoding: 7bit
 
-When I've reviewed a patch, I add my sign off, move it into the linux-next
-section and set the patchwork state to 'Awaiting Upstream'.
+On ven. 15 juil. 2011 02:53:03 CEST, Mike Snitzer <snitzer@redhat.com> wrote:
+> 
+> find_multipaths is quite useful for avoiding the issue that was just
+> reported where multipath grabs the root device even though it doesn't
+> have multiple paths.
+> 
+> Any chance you could reevaluate Ben's patch for inclusion?
 
-When a group of patches enters the upstream kernel, I set the state to
-'Accepted' and 'archived'.
+Sure, I'll look into merging this patch. Do you have a rebased versin around ?
 
-(With some minor patches that I fold into other patches, I sometimes
-set the state to 'Accepted' and 'archived' immediately as it's no
-longer worth tracking them separately.  The actual patch included
-upstream is often not identical to the one in patchwork as I can make
-small changes to it for many reasons during review.)
+Also, will you provide a way to install a multipathed root system when there is only one path available ? Does breaking into the shell to force multpath creation during anaconda work ?
 
-Periodically I take a backup of the patch directory (tagged with the kernel
-version) and remove some patches no longer needed (including patches
-now upstream).  (Go up the directory hierarchy to see these backups.)
+Regards,
+cvaroqui
 
-Alasdair
+--=-ai/0rMFatZscMj2EBd2e
+Content-Type: text/html; charset=utf-8
+Content-ID: <1310713386.2215.4.camel@Nokia-N900-42-11>
+Content-Transfer-Encoding: 7bit
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="generator" content="Osso Notes">
+    <title></title></head>
+<body>
+<p>On ven. 15 juil. 2011 02:53:03 CEST, Mike Snitzer &lt;<a href="mailto:snitzer@redhat.com">snitzer@redhat.com</a>&gt; wrote:
+<br>&gt; 
+<br>&gt; find_multipaths is quite useful for avoiding the issue that was just
+<br>&gt; reported where multipath grabs the root device even though it doesn't
+<br>&gt; have multiple paths.
+<br>&gt; 
+<br>&gt; Any chance you could reevaluate Ben's patch for inclusion?
+<br>
+<br>Sure, I'll look into merging this patch. Do you have a rebased versin around ?
+<br>
+<br>Also, will you provide a way to install a multipathed root system when there is only one path available ? Does breaking into the shell to force multpath creation during anaconda work ?
+<br>
+<br>Regards,
+<br>cvaroqui<br></p>
+</body>
+</html>
+
+--=-ai/0rMFatZscMj2EBd2e--
+
+
+--===============6787038915539165840==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6787038915539165840==--
