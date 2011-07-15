@@ -1,8 +1,8 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-crypt: add mapping table option to allowing
-	discard requests
-Date: Thu, 14 Jul 2011 21:13:11 -0400
-Message-ID: <20110715011311.GA27697@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] dm-crypt: add mapping table option
+	to	allowing discard requests
+Date: Fri, 15 Jul 2011 02:26:12 +0100
+Message-ID: <20110715012611.GD15253@agk-dp.fab.redhat.com>
 References: <1310644590-14438-1-git-send-email-mbroz@redhat.com>
 	<4E1F9023.5020801@deserettechnology.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -21,38 +21,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: jeff@deserettechnology.com, device-mapper development <dm-devel@redhat.com>
-Cc: list@eworm.de, Milan Broz <mbroz@redhat.com>
+To: Jeff Cook <jeff@deserettechnology.com>, device-mapper development <dm-devel@redhat.com>, list@eworm.de, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 14 2011 at  8:56pm -0400,
-Jeff Cook <jeff@deserettechnology.com> wrote:
+To check the status of a dm patch, look at patchwork in the first instance.
 
-> On 07/14/2011 05:56 AM, Milan Broz wrote:
-> > Add optional parameter field to dmcrypt table and support
-> > "allow_discards" option.
-> > 
-> > Discard requests bypass crypt queue processing, bio
-> > request is simple remapped to underlying device.
-> > 
-> > Note that discard will be never enabled by default because
-> > of security consequences, it is up to administrator
-> > to enable it for encrypted devices.
-> > 
-> > (Note that userspace cryptsetup will not understand new
-> > optional parameters yet, support for this will come later.)
-> > 
-> > Signed-off-by: Milan Broz <mbroz@redhat.com>
-> > [snip]
-> 
-> Thanks very much for this patch Milan. I will try compiling it shortly
-> and see where things go -- are you expecting this to be submitted for
-> inclusion in mainline soon?
+The vast majority of dm patches are submitted to dm-devel.
+They are caught by patchwork here:
+  https://patchwork.kernel.org/project/dm-devel/list/?state=*
 
-It is already staged for linux-next (and upstream inclusion when the 3.1
-merge window opens):
-ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/dm-crypt-optionally-support-discard-requests.patch
+Initially status is 'New'.
+Patches that are assigned to 'agk' are deemed ready for me to look at.
+I set the status to 'Under Review' when I take a patch into my 'editing' quilt
+tree, which is synced onto two independent servers here:
+  http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
+  ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/
 
-NOTE: this version of the patch depends on additional changes that were
-also staged, e.g.:
-ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/dm-table-share-target-argument-parsing-functions.patch
+At this point the patch will be below the 'next' line (as in 'linux-next') in
+the quilt series file, also uploaded there.  The number at the end of the
+line is the patchwork patch number.  (Multiple numbers mean I folded
+patches together.)
+
+When I've reviewed a patch, I add my sign off, move it into the linux-next
+section and set the patchwork state to 'Awaiting Upstream'.
+
+When a group of patches enters the upstream kernel, I set the state to
+'Accepted' and 'archived'.
+
+(With some minor patches that I fold into other patches, I sometimes
+set the state to 'Accepted' and 'archived' immediately as it's no
+longer worth tracking them separately.  The actual patch included
+upstream is often not identical to the one in patchwork as I can make
+small changes to it for many reasons during review.)
+
+Periodically I take a backup of the patch directory (tagged with the kernel
+version) and remove some patches no longer needed (including patches
+now upstream).  (Go up the directory hierarchy to see these backups.)
+
+Alasdair
