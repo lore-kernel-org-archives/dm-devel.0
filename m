@@ -1,12 +1,12 @@
 From: "Stamper, Brian P. (ARC-D)[Stinger Ghaffarian Technologies Inc. (SGT
 	Inc.)]" <brian.p.stamper@nasa.gov>
 Subject: Re: Blacklist broken?
-Date: Thu, 14 Jul 2011 18:37:57 -0500
-Message-ID: <CA44CBE5.13C6A%brian.p.stamper@nasa.gov>
+Date: Thu, 14 Jul 2011 19:02:38 -0500
+Message-ID: <CA44D1AE.13C70%brian.p.stamper@nasa.gov>
 References: <CA44C487.13C5F%brian.p.stamper@nasa.gov>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7644162109922331288=="
+Content-Type: multipart/mixed; boundary="===============6218777046331752011=="
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <CA44C487.13C5F%brian.p.stamper@nasa.gov>
 Content-Language: en
@@ -22,92 +22,35 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============7644162109922331288==
+--===============6218777046331752011==
 Content-Language: en
 Content-Type: multipart/alternative;
-	boundary="_000_CA44CBE513C6Abrianpstampernasagov_"
+	boundary="_000_CA44D1AE13C70brianpstampernasagov_"
 
---_000_CA44CBE513C6Abrianpstampernasagov_
+--_000_CA44D1AE13C70brianpstampernasagov_
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 
 
-Doing a bit more checking, I can't get multipath to let go.
+Ok, so I've isolated this.  It appears that dracut is loading dm_multipath =
+into initram and has no blacklist configuration.  At some point initram sho=
+uld release disks, but it doesn't.  At least not in time for the system to =
+attempt its routine fsck on /boot.  I didn't have this problem on a very si=
+milar machine that I upgraded last week that also runs multipath.  The one =
+difference that comes to mind is that the most recent host was build on FC1=
+1 or even potentially FC9 and has been upgraded multiple times.  The host t=
+hat went smoothly was built on FC13 a couple months ago and upgraded only o=
+nce.
 
-Added this to multipath.conf:
-blacklist {
-        devnode "*"
-}
+This is a fairly serious problem, and if I hadn't had so many issues with d=
+racut in the last year I would have never solved it myself.  I'm not sure i=
+f the responsibility lies with the dracut team or with the dm-multipath tea=
+m, but it should probably be fixed.  I was able to recompile the initrd wit=
+h dracut -o dm_multipath and now my system boots cleanly.  But I don't real=
+ly consider this a "fix" and I don't want to have to recompile my initrd ev=
+erytime I get a kernel update across multiple systems.
 
-devnode_blacklist {
-        devnode "*"
-        wwid 36001ec90ee4ee600105ac65e04e84e61
-#       wwid 36001e4f02bc746000f60789e05a38474
-        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-        devnode "^hd[a-z]"
-        devnode "^cciss!c[0-9]d[0-9]*"
-        devnode "/dev/sda"
-        devnode "/dev/sda1"
-        devnode "/dev/disk/by-uuid/8ed92bb6-0ddb-4fbc-907d-fdf12e5550a3"
-}
-
-Yet it just comes back.
-
-[root@bonjovi ~]# multipath -ll
-mpath0 (36001ec90ee4ee600105ac65e04e84e61) dm-0 DELL,PERC 6/i
-size=3D279G features=3D'0' hwhandler=3D'0' wp=3Drw
-`-+- policy=3D'round-robin 0' prio=3D1 status=3Dactive
-  `- 2:2:0:0 sda 8:0 active ready running
-
-I find this particularly amusing from multipath -v3:
-
-=3D=3D=3D=3D=3D no paths =3D=3D=3D=3D=3D
-Jul 14 16:31:50 | params =3D 0 0 1 1 round-robin 0 1 1 8:0 100
-Jul 14 16:31:50 | status =3D 2 0 0 0 1 1 A 0 1 0 8:0 A 0
-Jul 14 16:31:50 | 8:0: not found in pathvec
-Jul 14 16:31:50 | sda: mask =3D 0x1f
-Jul 14 16:31:50 | sda: dev_t =3D 8:0
-Jul 14 16:31:50 | sda: size =3D 584843264
-Jul 14 16:31:50 | sda: subsystem =3D scsi
-Jul 14 16:31:50 | sda: vendor =3D DELL
-Jul 14 16:31:50 | sda: product =3D PERC 6/i
-Jul 14 16:31:50 | sda: rev =3D 1.11
-Jul 14 16:31:50 | sda: h:b:t:l =3D 2:2:0:0
-Jul 14 16:31:50 | sda: serial =3D 00614ee8045ec65a1000e64eee90ec01
-Jul 14 16:31:50 | sda: get_state
-Jul 14 16:31:50 | loading /lib64/multipath/libchecktur.so checker
-Jul 14 16:31:50 | sda: path checker =3D tur (config file default)
-Jul 14 16:31:50 | sda: checker timeout =3D 300000 ms (internal default)
-Jul 14 16:31:50 | sda: state =3D running
-Jul 14 16:31:50 | sda: state =3D 3
-Jul 14 16:31:50 | sda: prio =3D const (config file default)
-Jul 14 16:31:50 | sda: const prio =3D 1
-Jul 14 16:31:50 | sda: (DELL:PERC 6/i) device node name blacklisted
-
-And:
-[root@bonjovi ~]# multipath -v4 | grep sda
-Jul 14 16:32:42 | Discover device /sys/block/sda
-Jul 14 16:32:42 | sda: device node name blacklisted
-Jul 14 16:32:42 | sda: mask =3D 0x1f
-Jul 14 16:32:42 | sda: dev_t =3D 8:0
-Jul 14 16:32:42 | sda: size =3D 584843264
-Jul 14 16:32:42 | sda: subsystem =3D scsi
-Jul 14 16:32:42 | sda: vendor =3D DELL
-Jul 14 16:32:42 | sda: product =3D PERC 6/i
-Jul 14 16:32:42 | sda: rev =3D 1.11
-Jul 14 16:32:42 | sda: h:b:t:l =3D 2:2:0:0
-Jul 14 16:32:42 | sda: serial =3D 00614ee8045ec65a1000e64eee90ec01
-Jul 14 16:32:42 | sda: get_state
-Jul 14 16:32:42 | sda: path checker =3D tur (config file default)
-Jul 14 16:32:42 | sda: checker timeout =3D 300000 ms (internal default)
-Jul 14 16:32:42 | sda: state =3D running
-Jul 14 16:32:42 | sda: state =3D 3
-Jul 14 16:32:42 | sda: prio =3D const (config file default)
-Jul 14 16:32:42 | sda: const prio =3D 1
-Jul 14 16:32:42 | sda: (DELL:PERC 6/i) device node name blacklisted
-
-So it's not as if multipath doesn't know that sda should be blacklisted.  I=
-t just doesn't care.
+-brian
 
 On 7/14/11 4:06 PM, "Brian Stamper" <brian.p.stamper@nasa.gov> wrote:
 
@@ -157,7 +100,7 @@ ltipath to quit grabbing this disk?
 
 -brian
 
---_000_CA44CBE513C6Abrianpstampernasagov_
+--_000_CA44D1AE13C70brianpstampernasagov_
 Content-Type: text/html; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 
@@ -168,90 +111,26 @@ Content-Transfer-Encoding: quoted-printable
 <BODY>
 <FONT FACE=3D"Calibri, Verdana, Helvetica, Arial"><SPAN STYLE=3D'font-size:=
 11pt'><BR>
-Doing a bit more checking, I can&#8217;t get multipath to let go.<BR>
+Ok, so I&#8217;ve isolated this. &nbsp;It appears that dracut is loading dm=
+_multipath into initram and has no blacklist configuration. &nbsp;At some p=
+oint initram should release disks, but it doesn&#8217;t. &nbsp;At least not=
+ in time for the system to attempt its routine fsck on /boot. &nbsp;I didn&=
+#8217;t have this problem on a very similar machine that I upgraded last we=
+ek that also runs multipath. &nbsp;The one difference that comes to mind is=
+ that the most recent host was build on FC11 or even potentially FC9 and ha=
+s been upgraded multiple times. &nbsp;The host that went smoothly was built=
+ on FC13 a couple months ago and upgraded only once.<BR>
 <BR>
-Added this to multipath.conf:<BR>
-blacklist {<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;*&quot;<BR>
-}<BR>
+This is a fairly serious problem, and if I hadn&#8217;t had so many issues =
+with dracut in the last year I would have never solved it myself. &nbsp;I&#=
+8217;m not sure if the responsibility lies with the dracut team or with the=
+ dm-multipath team, but it should probably be fixed. &nbsp;I was able to re=
+compile the initrd with dracut &#8211;o dm_multipath and now my system boot=
+s cleanly. &nbsp;But I don&#8217;t really consider this a &#8220;fix&#8221;=
+ and I don&#8217;t want to have to recompile my initrd everytime I get a ke=
+rnel update across multiple systems.<BR>
 <BR>
-devnode_blacklist {<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;*&quot;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wwid 36001ec90ee4ee600105ac=
-65e04e84e61<BR>
-# &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wwid 36001e4f02bc746000f60789e05a3847=
-4<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;^(ram|raw|loo=
-p|fd|md|dm-|sr|scd|st)[0-9]*&quot;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;^hd[a-z]&quot=
-;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;^cciss!c[0-9]=
-d[0-9]*&quot;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;/dev/sda&quot=
-;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;/dev/sda1&quo=
-t;<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;/dev/disk/by-=
-uuid/8ed92bb6-0ddb-4fbc-907d-fdf12e5550a3&quot;<BR>
-}<BR>
-<BR>
-Yet it just comes back.<BR>
-<BR>
-[root@bonjovi ~]# multipath -ll<BR>
-mpath0 (36001ec90ee4ee600105ac65e04e84e61) dm-0 DELL,PERC 6/i<BR>
-size=3D279G features=3D'0' hwhandler=3D'0' wp=3Drw<BR>
-`-+- policy=3D'round-robin 0' prio=3D1 status=3Dactive<BR>
-&nbsp;&nbsp;`- 2:2:0:0 <B>sda </B>8:0 active ready running<BR>
-<BR>
-I find this particularly amusing from multipath -v3:<BR>
-<BR>
-=3D=3D=3D=3D=3D no paths =3D=3D=3D=3D=3D<BR>
-Jul 14 16:31:50 | params =3D 0 0 1 1 round-robin 0 1 1 8:0 100 <BR>
-Jul 14 16:31:50 | status =3D 2 0 0 0 1 1 A 0 1 0 8:0 A 0 <BR>
-Jul 14 16:31:50 | 8:0: not found in pathvec<BR>
-Jul 14 16:31:50 | sda: mask =3D 0x1f<BR>
-Jul 14 16:31:50 | sda: dev_t =3D 8:0<BR>
-Jul 14 16:31:50 | sda: size =3D 584843264<BR>
-Jul 14 16:31:50 | sda: subsystem =3D scsi<BR>
-Jul 14 16:31:50 | sda: vendor =3D DELL<BR>
-Jul 14 16:31:50 | sda: product =3D PERC 6/i<BR>
-Jul 14 16:31:50 | sda: rev =3D 1.11<BR>
-Jul 14 16:31:50 | sda: h:b:t:l =3D 2:2:0:0<BR>
-Jul 14 16:31:50 | sda: serial =3D 00614ee8045ec65a1000e64eee90ec01<BR>
-Jul 14 16:31:50 | sda: get_state<BR>
-Jul 14 16:31:50 | loading /lib64/multipath/libchecktur.so checker<BR>
-Jul 14 16:31:50 | sda: path checker =3D tur (config file default)<BR>
-Jul 14 16:31:50 | sda: checker timeout =3D 300000 ms (internal default)<BR>
-Jul 14 16:31:50 | sda: state =3D running<BR>
-Jul 14 16:31:50 | sda: state =3D 3<BR>
-Jul 14 16:31:50 | sda: prio =3D const (config file default)<BR>
-Jul 14 16:31:50 | sda: const prio =3D 1<BR>
-<B>Jul 14 16:31:50 | sda: (DELL:PERC 6/i) device node name blacklisted<BR>
-</B><BR>
-And:<BR>
-[root@bonjovi ~]# multipath -v4 | grep sda<BR>
-Jul 14 16:32:42 | Discover device /sys/block/sda<BR>
-<B>Jul 14 16:32:42 | sda: device node name blacklisted<BR>
-</B>Jul 14 16:32:42 | sda: mask =3D 0x1f<BR>
-Jul 14 16:32:42 | sda: dev_t =3D 8:0<BR>
-Jul 14 16:32:42 | sda: size =3D 584843264<BR>
-Jul 14 16:32:42 | sda: subsystem =3D scsi<BR>
-Jul 14 16:32:42 | sda: vendor =3D DELL<BR>
-Jul 14 16:32:42 | sda: product =3D PERC 6/i<BR>
-Jul 14 16:32:42 | sda: rev =3D 1.11<BR>
-Jul 14 16:32:42 | sda: h:b:t:l =3D 2:2:0:0<BR>
-Jul 14 16:32:42 | sda: serial =3D 00614ee8045ec65a1000e64eee90ec01<BR>
-Jul 14 16:32:42 | sda: get_state<BR>
-Jul 14 16:32:42 | sda: path checker =3D tur (config file default)<BR>
-Jul 14 16:32:42 | sda: checker timeout =3D 300000 ms (internal default)<BR>
-Jul 14 16:32:42 | sda: state =3D running<BR>
-Jul 14 16:32:42 | sda: state =3D 3<BR>
-Jul 14 16:32:42 | sda: prio =3D const (config file default)<BR>
-Jul 14 16:32:42 | sda: const prio =3D 1<BR>
-<B>Jul 14 16:32:42 | sda: (DELL:PERC 6/i) device node name blacklisted<BR>
-</B><BR>
-So it&#8217;s not as if multipath doesn&#8217;t know that sda should be bla=
-cklisted. &nbsp;It just doesn&#8217;t care.<BR>
+-brian<BR>
 <BR>
 On 7/14/11 4:06 PM, &quot;Brian Stamper&quot; &lt;<a href=3D"brian.p.stampe=
 r@nasa.gov">brian.p.stamper@nasa.gov</a>&gt; wrote:<BR>
@@ -317,14 +196,14 @@ e to get multipath to quit grabbing this disk?<BR>
 </HTML>
 
 
---_000_CA44CBE513C6Abrianpstampernasagov_--
+--_000_CA44D1AE13C70brianpstampernasagov_--
 
 
---===============7644162109922331288==
+--===============6218777046331752011==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============7644162109922331288==--
+--===============6218777046331752011==--
