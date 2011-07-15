@@ -1,15 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: multipath: add find_multipaths feature.
-Date: Fri, 15 Jul 2011 09:03:07 +0200
-Message-ID: <1310713387.2215.5.camel@Nokia-N900-42-11>
-References: <20101116232546.GU13763@ether.msp.redhat.com>
-	<1291762849.4430.6.camel@zezette> <20110715005302.GA26472@redhat.com>
-Reply-To: Christophe Varoqui <christophe.varoqui@gmail.com>,
-        device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm table: fold __table_get_device into
+	dm_get_device
+Date: Fri, 15 Jul 2011 15:23:49 -0400
+Message-ID: <1310757829-4076-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============6787038915539165840=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110715005302.GA26472@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,70 +17,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+There is no need for __table_get_device to be factored out.
 
---===============6787038915539165840==
-Content-Type: multipart/alternative; boundary="=-ai/0rMFatZscMj2EBd2e"
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c |   42 ++++++++++++++++++------------------------
+ 1 files changed, 18 insertions(+), 24 deletions(-)
 
-
---=-ai/0rMFatZscMj2EBd2e
-Content-Type: text/plain; charset=utf-8
-Content-ID: <1310713386.2215.2.camel@Nokia-N900-42-11>
-Content-Transfer-Encoding: 7bit
-
-On ven. 15 juil. 2011 02:53:03 CEST, Mike Snitzer <snitzer@redhat.com> wrote:
-> 
-> find_multipaths is quite useful for avoiding the issue that was just
-> reported where multipath grabs the root device even though it doesn't
-> have multiple paths.
-> 
-> Any chance you could reevaluate Ben's patch for inclusion?
-
-Sure, I'll look into merging this patch. Do you have a rebased versin around ?
-
-Also, will you provide a way to install a multipathed root system when there is only one path available ? Does breaking into the shell to force multpath creation during anaconda work ?
-
-Regards,
-cvaroqui
-
---=-ai/0rMFatZscMj2EBd2e
-Content-Type: text/html; charset=utf-8
-Content-ID: <1310713386.2215.4.camel@Nokia-N900-42-11>
-Content-Transfer-Encoding: 7bit
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html><head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="generator" content="Osso Notes">
-    <title></title></head>
-<body>
-<p>On ven. 15 juil. 2011 02:53:03 CEST, Mike Snitzer &lt;<a href="mailto:snitzer@redhat.com">snitzer@redhat.com</a>&gt; wrote:
-<br>&gt; 
-<br>&gt; find_multipaths is quite useful for avoiding the issue that was just
-<br>&gt; reported where multipath grabs the root device even though it doesn't
-<br>&gt; have multiple paths.
-<br>&gt; 
-<br>&gt; Any chance you could reevaluate Ben's patch for inclusion?
-<br>
-<br>Sure, I'll look into merging this patch. Do you have a rebased versin around ?
-<br>
-<br>Also, will you provide a way to install a multipathed root system when there is only one path available ? Does breaking into the shell to force multpath creation during anaconda work ?
-<br>
-<br>Regards,
-<br>cvaroqui<br></p>
-</body>
-</html>
-
---=-ai/0rMFatZscMj2EBd2e--
-
-
---===============6787038915539165840==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============6787038915539165840==--
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 15c9ff4..e966a40 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -451,13 +451,14 @@ static int upgrade_mode(struct dm_dev_internal *dd, fmode_t new_mode,
+  * Add a device to the list, or just increment the usage count if
+  * it's already present.
+  */
+-static int __table_get_device(struct dm_table *t, struct dm_target *ti,
+-		      const char *path, fmode_t mode, struct dm_dev **result)
++int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
++		  struct dm_dev **result)
+ {
+ 	int r;
+ 	dev_t uninitialized_var(dev);
+ 	struct dm_dev_internal *dd;
+ 	unsigned int major, minor;
++	struct dm_table *t = ti->table;
+ 
+ 	BUG_ON(!t);
+ 
+@@ -506,6 +507,21 @@ static int __table_get_device(struct dm_table *t, struct dm_target *ti,
+ 	return 0;
+ }
+ 
++/*
++ * Decrement a devices use count and remove it if necessary.
++ */
++void dm_put_device(struct dm_target *ti, struct dm_dev *d)
++{
++	struct dm_dev_internal *dd = container_of(d, struct dm_dev_internal,
++						  dm_dev);
++
++	if (atomic_dec_and_test(&dd->count)) {
++		close_dev(dd, ti->table->md);
++		list_del(&dd->list);
++		kfree(dd);
++	}
++}
++
+ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 			 sector_t start, sector_t len, void *data)
+ {
+@@ -542,28 +558,6 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ }
+ EXPORT_SYMBOL_GPL(dm_set_device_limits);
+ 
+-int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+-		  struct dm_dev **result)
+-{
+-	return __table_get_device(ti->table, ti, path, mode, result);
+-}
+-
+-
+-/*
+- * Decrement a devices use count and remove it if necessary.
+- */
+-void dm_put_device(struct dm_target *ti, struct dm_dev *d)
+-{
+-	struct dm_dev_internal *dd = container_of(d, struct dm_dev_internal,
+-						  dm_dev);
+-
+-	if (atomic_dec_and_test(&dd->count)) {
+-		close_dev(dd, ti->table->md);
+-		list_del(&dd->list);
+-		kfree(dd);
+-	}
+-}
+-
+ /*
+  * Checks to see if the target joins onto the end of the table.
+  */
+-- 
+1.7.1
