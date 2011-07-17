@@ -1,8 +1,7 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm table: fold __table_get_device into
-	dm_get_device
-Date: Fri, 15 Jul 2011 15:23:49 -0400
-Message-ID: <1310757829-4076-1-git-send-email-snitzer@redhat.com>
+From: David Cramblett <david@functionalchaos.net>
+Subject: device mapper not finding all devices
+Date: Sun, 17 Jul 2011 12:03:21 -0700
+Message-ID: <CA+cRLpLs7CL4VeSw9YNGdTDOUG8mz=TpUuzyP=sWXpLiKywA+A@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -20,84 +19,48 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-There is no need for __table_get_device to be factored out.
+I apologize if this is the wrong place to be seeking assistance.  The
+OS specific support lists didn't seem to know anything about this
+issue.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-table.c |   42 ++++++++++++++++++------------------------
- 1 files changed, 18 insertions(+), 24 deletions(-)
+I updated my system and after reboot the logical volumes did not
+mount.  A quick search and I found that /dev/vg0/lvol0 was missing
+from the /dev tree.  However, they logical volume seems to be intact
+from the output of LVM.  I found what appears to be an issue that
+device-mapper is running into on boot:
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 15c9ff4..e966a40 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -451,13 +451,14 @@ static int upgrade_mode(struct dm_dev_internal *dd, fmode_t new_mode,
-  * Add a device to the list, or just increment the usage count if
-  * it's already present.
-  */
--static int __table_get_device(struct dm_table *t, struct dm_target *ti,
--		      const char *path, fmode_t mode, struct dm_dev **result)
-+int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
-+		  struct dm_dev **result)
- {
- 	int r;
- 	dev_t uninitialized_var(dev);
- 	struct dm_dev_internal *dd;
- 	unsigned int major, minor;
-+	struct dm_table *t = ti->table;
- 
- 	BUG_ON(!t);
- 
-@@ -506,6 +507,21 @@ static int __table_get_device(struct dm_table *t, struct dm_target *ti,
- 	return 0;
- }
- 
-+/*
-+ * Decrement a devices use count and remove it if necessary.
-+ */
-+void dm_put_device(struct dm_target *ti, struct dm_dev *d)
-+{
-+	struct dm_dev_internal *dd = container_of(d, struct dm_dev_internal,
-+						  dm_dev);
-+
-+	if (atomic_dec_and_test(&dd->count)) {
-+		close_dev(dd, ti->table->md);
-+		list_del(&dd->list);
-+		kfree(dd);
-+	}
-+}
-+
- int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
- 			 sector_t start, sector_t len, void *data)
- {
-@@ -542,28 +558,6 @@ int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
- }
- EXPORT_SYMBOL_GPL(dm_set_device_limits);
- 
--int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
--		  struct dm_dev **result)
--{
--	return __table_get_device(ti->table, ti, path, mode, result);
--}
--
--
--/*
-- * Decrement a devices use count and remove it if necessary.
-- */
--void dm_put_device(struct dm_target *ti, struct dm_dev *d)
--{
--	struct dm_dev_internal *dd = container_of(d, struct dm_dev_internal,
--						  dm_dev);
--
--	if (atomic_dec_and_test(&dd->count)) {
--		close_dev(dd, ti->table->md);
--		list_del(&dd->list);
--		kfree(dd);
--	}
--}
--
- /*
-  * Checks to see if the target joins onto the end of the table.
-  */
+Current Software:
+Linux 2.6.18-238.12.1.el5 #1 SMP Tue May 31 13:23:01 EDT 2011 i686
+i686 i386 GNU/Linux
+device-mapper-1.02.55-2.el5
+
+Kernel Messages:
+device-mapper: multipath: version 1.0.6 loaded
+device-mapper: table: 253:4: linear: dm-linear: Device lookup failed
+device-mapper: ioctl: error adding target to table
+
+
+I did some research and the only info I could find was regarding dmsetup:
+
+#dmsetup status
+pdc_eehgddjjp1: 0 976768002 linear
+pdc_eehgddjj: 0 976772992 linear
+via_cdeadaheebp1: 0 976768002 linear
+via_cdeadaheeb: 0 1953546240 striped 2 8:0 8:16 1 AA
+
+
+Looks like something is wrong with the vg0-lvol0 entry above, but I
+can't figure out how to fix it.  There is also another HDD on each of
+the via and pdc controllers that are seen by the system, but not
+showing up in the "status" list above.  There is also a disk connected
+to PATA port "/dev/hda" that is part of the lvol.
+
+The device-mapper device is being created for the lvol:
+
+ /dev/mapper/vg0-lvol0
+
+
+David
+
 -- 
-1.7.1
+David Cramblett
