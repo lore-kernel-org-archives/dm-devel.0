@@ -1,15 +1,18 @@
-From: Peter Volkov <pva@gentoo.org>
-Subject: Re: multipath: add find_multipaths feature.
-Date: Mon, 18 Jul 2011 14:01:46 +0400
-Message-ID: <1310983306.26913.41.camel@tablet>
-References: <20101116232546.GU13763@ether.msp.redhat.com>
-	<1291762849.4430.6.camel@zezette> <20110715005302.GA26472@redhat.com>
+From: Busby <chaimvy@gmail.com>
+Subject: Re: [PATCH v6 3/4] dm-replicator: ringbuffer replication
+ log handler
+Date: Mon, 18 Jul 2011 17:44:09 +0800
+Message-ID: <CAJv3x-WhfDBLyTeWtuT0ozUyQv7en6pdACHagAFiWLHnhDOTaA@mail.gmail.com>
+References: <1261151073-25962-1-git-send-email-heinzm@redhat.com>
+	<1261151073-25962-2-git-send-email-heinzm@redhat.com>
+	<1261151073-25962-3-git-send-email-heinzm@redhat.com>
+	<1261151073-25962-4-git-send-email-heinzm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110715005302.GA26472@redhat.com>
+In-Reply-To: <1261151073-25962-4-git-send-email-heinzm@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,32 +23,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>
 List-Id: dm-devel.ids
 
-0JIg0KfRgtCyLCAxNC8wNy8yMDExINCyIDIwOjUzIC0wNDAwLCBNaWtlIFNuaXR6ZXIg0L/QuNGI
-0LXRgjoKPiBPbiBUdWUsIERlYyAwNyAyMDEwIGF0ICA2OjAwcG0gLTA1MDAsCj4gQ2hyaXN0b3Bo
-ZSBWYXJvcXVpIDxjaHJpc3RvcGhlLnZhcm9xdWlAZ21haWwuY29tPiB3cm90ZToKPiAKPiA+IE9u
-IG1hci4sIDIwMTAtMTEtMTYgYXQgMTc6MjUgLTA2MDAsIEJlbmphbWluIE1hcnppbnNraSB3cm90
-ZToKPiA+ID4gVGhpcyBhZGRzIGEgbmV3IGRlZmF1bHQgZmVhdHVyZSwgZmluZF9tdWx0aXBhdGhz
-LiBXaGVuIHRoaXMgaXMgc2V0IHRvIHllcywKPiA+ID4gbXVsdGlwYXRoIHdpbGwgbm8gbG9uZ2Vy
-IHRyeSB0byBjcmVhdGUgbXVsdGlwYXRoIGRldmljZXMgdXNpbmcgZXZlcnkKPiA+ID4gbm9uLWJs
-YWNrbGlzdGVkIGRldmljZS4gSW5zdGVhZCwgaXQgd2lsbCBvbmx5IGNyZWF0ZSBhIGRldmljZSB3
-aGVuIG9uZSBvZgo+ID4gPiB0aHJlZSBjb25kaXRpb25zIGFyZSBtZXQuCj4gPiA+IAo+ID4gPiAx
-LiBUaHJlZSBhcmUgYXQgbGVhc3QgdHdvIG5vbi1ibGFja2xpc3RlZCBwYXRocyB3aXRoIHRoZSBz
-YW1lIHd3aWQKPiA+ID4gMi4gVGhlIHVzZXIgbWFudWFsbHkgZm9yY2VzIHRoZSBjcmVhdGlvbiwg
-Ynkgc3BlY2lmeWluZyBhIGRldmljZSB3aXRoIHRoZQo+ID4gPiAgICBtdWx0aXBhdGggY29tbWFu
-ZC4KPiA+ID4gMy4gQSBwYXRoIGhhcyB0aGUgc2FtZSB3d2lkIGFzIGEgbXVsdGlwYXRoIGRldmlj
-ZSB0aGF0IHdhcyBwcmV2aW91c2x5IGNycmVhdGVkCj4gPiA+ICAgIChldmVuIGlmIHRoYXQgbXVs
-dGlwYXRoIGRldmljZSBkb2Vzbid0IGN1cnJlbnRseSBleGlzdCkuCj4gPiA+IAo+ID4gPiBUbyBk
-byAzLCBtdWx0aXBhdGggc3RvcmVzIHRoZSB3d2lkIG9mIGV2ZXJ5IHBhdGggdGhhdCBpdCBjcmVh
-dGVzIGluCj4gPiA+IC9ldGMvbXVsdGlwYXRoL3d3aWRzLiBXaGVuZXZlciBhIHBhdGggaXMgYWRk
-ZWQsIGl0cyB3d2lkIGlzIGNoZWNrZWQgYWdhaW5zdAo+ID4gPiB0aGlzIGZpbGUuICBJZiB0aGVy
-ZSdzIGEgbWF0Y2gsIGl0IGlzIG11bHRpcGF0aGVkLCBldmVuIGlmIGl0J3MgdGhlIG9ubHkgcGF0
-aC4KPiA+ID4gVGhpcyBzaG91bGQgYWxsb3cgbXVsdGlwYXRoIHRvIGF1dG9tYXRpY2FsbHkgY2hv
-b3NlIHRoZSBjb3JyZWN0IHBhdGhzIHRvIG1ha2UKPiA+ID4gaW50byBtdWx0aXBhdGggZGV2aWNz
-IGluIG1vc3QgY2FzZXMsIHdpdGhvdXQgbmVlZGluZyB0aGUgdXNlciB0byBlZGl0IHRoZQo+ID4g
-PiBibGFja2xpc3QuCgpJcyBpdCBnb29kIGlkZWEgdG8gc3RvcmUgc3VjaCBpbmZvcm1hdGlvbiBp
-biAvZXRjPyAvZXRjIGlzIHN1cHBvc2VkIHRvCmJlIHJvIGFuZCBrbm93biB2aW9sYXRvcnMsIGUu
-Zy4gL2V0Yy9tdGFiLCBhZmFpciBhcmUgZ29pbmcgdG8gYmUgbW92ZWQKaW50byAvcnVuLgoKLS0K
-UGV0ZXIuCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+is there any bug in slink_fallbehind_update function?
+
+I use the dm-repl module, while the oops came as:
+
+localhost kernel: Oops: 0010 [#2] SMP
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel: last sysfs file: /sys/module/scsi_transport_iscsi/version
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel: Stack:
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  ffff88005f5019e0 0000000000000000 ffff8800574d58c0
+0000000000000000
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  0000000000000000 ffff8800be3e3800 ffffffffa0320d50
+0000000000000000
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel: Call Trace:
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffffa031ddb7>] ?
+slink_fallbehind_update+0x1f7/0x30e [dm_repl_log_ringbuffer]
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffffa0320d50>] ? do_log+0xf07/0x12ab
+[dm_repl_log_ringbuffer]
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffffa031c4aa>] ? data_endio+0x0/0x10
+[dm_repl_log_ringbuffer]
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffffa031c4ba>] ? header_endio+0x0/0xd
+[dm_repl_log_ringbuffer]
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffff8020c9ee>] ? apic_timer_interrupt+0xe/0x20
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffff8022e37c>] ? update_curr+0x6f/0xaa
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffff80236661>] ? dequeue_task_fair+0x93/0x105
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffff804aab5d>] ? thread_return+0x3d/0xb0
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffffa031fe49>] ? do_log+0x0/0x12ab
+[dm_repl_log_ringbuffer]
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffff8024802c>] ? run_workqueue+0x7a/0x102
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffff8024894c>] ? worker_thread+0xd5/0xe0
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffff8024b2a6>] ? autoremove_wake_function+0x0/0x2e
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffff80248877>] ? worker_thread+0x0/0xe0
+Message from syslogd@ at Thu Jul 21 06:42:27 2011 ...
+localhost kernel:  [<ffffffff8024b176>] ? kthread+0x47/0x75
+
+it seems there is something wrong in this section:
+
+list_for_each_entry(pos, L_SLINK_COPY_LIST(l),
+				    lists.l[E_WRITE_OR_COPY]) {
+			struct slink_copy_context *cc;
+
+			list_for_each_entry(cc, E_COPY_CONTEXT_LIST(pos),
+					    list) {
+				if (cc->slink->ops->slink_number(cc->slink) ==
+				    slink_nr) {
+					ss->fb.head_jiffies = cc->start_jiffies;
+					break;
+				}
+			}
+		}
+
+
+
+maybe "cc->slink->ops->slink_number(cc->slink)" return an err?
