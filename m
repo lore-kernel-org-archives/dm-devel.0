@@ -1,12 +1,15 @@
-From: David Cramblett <david@functionalchaos.net>
-Subject: device mapper not finding all devices
-Date: Sun, 17 Jul 2011 12:03:21 -0700
-Message-ID: <CA+cRLpLs7CL4VeSw9YNGdTDOUG8mz=TpUuzyP=sWXpLiKywA+A@mail.gmail.com>
+From: Peter Volkov <pva@gentoo.org>
+Subject: Re: multipath: add find_multipaths feature.
+Date: Mon, 18 Jul 2011 14:01:46 +0400
+Message-ID: <1310983306.26913.41.camel@tablet>
+References: <20101116232546.GU13763@ether.msp.redhat.com>
+	<1291762849.4430.6.camel@zezette> <20110715005302.GA26472@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20110715005302.GA26472@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,51 +19,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I apologize if this is the wrong place to be seeking assistance.  The
-OS specific support lists didn't seem to know anything about this
-issue.
-
-I updated my system and after reboot the logical volumes did not
-mount.  A quick search and I found that /dev/vg0/lvol0 was missing
-from the /dev tree.  However, they logical volume seems to be intact
-from the output of LVM.  I found what appears to be an issue that
-device-mapper is running into on boot:
-
-Current Software:
-Linux 2.6.18-238.12.1.el5 #1 SMP Tue May 31 13:23:01 EDT 2011 i686
-i686 i386 GNU/Linux
-device-mapper-1.02.55-2.el5
-
-Kernel Messages:
-device-mapper: multipath: version 1.0.6 loaded
-device-mapper: table: 253:4: linear: dm-linear: Device lookup failed
-device-mapper: ioctl: error adding target to table
-
-
-I did some research and the only info I could find was regarding dmsetup:
-
-#dmsetup status
-pdc_eehgddjjp1: 0 976768002 linear
-pdc_eehgddjj: 0 976772992 linear
-via_cdeadaheebp1: 0 976768002 linear
-via_cdeadaheeb: 0 1953546240 striped 2 8:0 8:16 1 AA
-
-
-Looks like something is wrong with the vg0-lvol0 entry above, but I
-can't figure out how to fix it.  There is also another HDD on each of
-the via and pdc controllers that are seen by the system, but not
-showing up in the "status" list above.  There is also a disk connected
-to PATA port "/dev/hda" that is part of the lvol.
-
-The device-mapper device is being created for the lvol:
-
- /dev/mapper/vg0-lvol0
-
-
-David
-
--- 
-David Cramblett
+0JIg0KfRgtCyLCAxNC8wNy8yMDExINCyIDIwOjUzIC0wNDAwLCBNaWtlIFNuaXR6ZXIg0L/QuNGI
+0LXRgjoKPiBPbiBUdWUsIERlYyAwNyAyMDEwIGF0ICA2OjAwcG0gLTA1MDAsCj4gQ2hyaXN0b3Bo
+ZSBWYXJvcXVpIDxjaHJpc3RvcGhlLnZhcm9xdWlAZ21haWwuY29tPiB3cm90ZToKPiAKPiA+IE9u
+IG1hci4sIDIwMTAtMTEtMTYgYXQgMTc6MjUgLTA2MDAsIEJlbmphbWluIE1hcnppbnNraSB3cm90
+ZToKPiA+ID4gVGhpcyBhZGRzIGEgbmV3IGRlZmF1bHQgZmVhdHVyZSwgZmluZF9tdWx0aXBhdGhz
+LiBXaGVuIHRoaXMgaXMgc2V0IHRvIHllcywKPiA+ID4gbXVsdGlwYXRoIHdpbGwgbm8gbG9uZ2Vy
+IHRyeSB0byBjcmVhdGUgbXVsdGlwYXRoIGRldmljZXMgdXNpbmcgZXZlcnkKPiA+ID4gbm9uLWJs
+YWNrbGlzdGVkIGRldmljZS4gSW5zdGVhZCwgaXQgd2lsbCBvbmx5IGNyZWF0ZSBhIGRldmljZSB3
+aGVuIG9uZSBvZgo+ID4gPiB0aHJlZSBjb25kaXRpb25zIGFyZSBtZXQuCj4gPiA+IAo+ID4gPiAx
+LiBUaHJlZSBhcmUgYXQgbGVhc3QgdHdvIG5vbi1ibGFja2xpc3RlZCBwYXRocyB3aXRoIHRoZSBz
+YW1lIHd3aWQKPiA+ID4gMi4gVGhlIHVzZXIgbWFudWFsbHkgZm9yY2VzIHRoZSBjcmVhdGlvbiwg
+Ynkgc3BlY2lmeWluZyBhIGRldmljZSB3aXRoIHRoZQo+ID4gPiAgICBtdWx0aXBhdGggY29tbWFu
+ZC4KPiA+ID4gMy4gQSBwYXRoIGhhcyB0aGUgc2FtZSB3d2lkIGFzIGEgbXVsdGlwYXRoIGRldmlj
+ZSB0aGF0IHdhcyBwcmV2aW91c2x5IGNycmVhdGVkCj4gPiA+ICAgIChldmVuIGlmIHRoYXQgbXVs
+dGlwYXRoIGRldmljZSBkb2Vzbid0IGN1cnJlbnRseSBleGlzdCkuCj4gPiA+IAo+ID4gPiBUbyBk
+byAzLCBtdWx0aXBhdGggc3RvcmVzIHRoZSB3d2lkIG9mIGV2ZXJ5IHBhdGggdGhhdCBpdCBjcmVh
+dGVzIGluCj4gPiA+IC9ldGMvbXVsdGlwYXRoL3d3aWRzLiBXaGVuZXZlciBhIHBhdGggaXMgYWRk
+ZWQsIGl0cyB3d2lkIGlzIGNoZWNrZWQgYWdhaW5zdAo+ID4gPiB0aGlzIGZpbGUuICBJZiB0aGVy
+ZSdzIGEgbWF0Y2gsIGl0IGlzIG11bHRpcGF0aGVkLCBldmVuIGlmIGl0J3MgdGhlIG9ubHkgcGF0
+aC4KPiA+ID4gVGhpcyBzaG91bGQgYWxsb3cgbXVsdGlwYXRoIHRvIGF1dG9tYXRpY2FsbHkgY2hv
+b3NlIHRoZSBjb3JyZWN0IHBhdGhzIHRvIG1ha2UKPiA+ID4gaW50byBtdWx0aXBhdGggZGV2aWNz
+IGluIG1vc3QgY2FzZXMsIHdpdGhvdXQgbmVlZGluZyB0aGUgdXNlciB0byBlZGl0IHRoZQo+ID4g
+PiBibGFja2xpc3QuCgpJcyBpdCBnb29kIGlkZWEgdG8gc3RvcmUgc3VjaCBpbmZvcm1hdGlvbiBp
+biAvZXRjPyAvZXRjIGlzIHN1cHBvc2VkIHRvCmJlIHJvIGFuZCBrbm93biB2aW9sYXRvcnMsIGUu
+Zy4gL2V0Yy9tdGFiLCBhZmFpciBhcmUgZ29pbmcgdG8gYmUgbW92ZWQKaW50byAvcnVuLgoKLS0K
+UGV0ZXIuCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
