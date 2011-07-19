@@ -1,16 +1,15 @@
-From: li mohua <moli@redhat.com>
-Subject: Re: What is a /dev/dm-* file ?
-Date: Wed, 20 Jul 2011 18:17:53 +0800
-Message-ID: <20110720101753.GA21124@ubuntu10.10>
-References: <1353628002.1450009.1311150616312.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
-	<46858323.1450041.1311150878186.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
+From: David Cramblett <david@functionalchaos.net>
+Subject: Re: device mapper not finding all devices
+Date: Tue, 19 Jul 2011 13:48:25 -0700
+Message-ID: <CA+cRLp+MUdBg1J75Mv5BxNm1xrZRG5Cu4v4Y99hShEUONtQ0-Q@mail.gmail.com>
+References: <CA+cRLpLs7CL4VeSw9YNGdTDOUG8mz=TpUuzyP=sWXpLiKywA+A@mail.gmail.com>
+	<4E25D21E.8050901@cfl.rr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <46858323.1450041.1311150878186.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
+In-Reply-To: <4E25D21E.8050901@cfl.rr.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,91 +19,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Phillip Susi <psusi@cfl.rr.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CmZyb20gdGhlIGRldmljZSBudW1iZXIobWFqb3IsbWlub3IpLCB3ZSBjb3VsZCBzZWUgaXQncyBh
-bm90aGVyIGtpbmQKZm9yIGRldmljZSB1bmRlciAvZGV2L21hcHBlci8qLHNvbWV0aW1lcyBjb3Vs
-ZCBiZSBhIGxpbmsodWRldiBydWxlcwpldGMsbm8gaWRlYSBhYm91dCB0aGUgbWF4IG51bWJlciwg
-eW91IGNvdWxkIGhhdmUgYSB0ZXN0LCBpIGd1ZXNzLCAKCgoKCiAgICAgICAgW3Jvb3RANTcgbWFw
-cGVyXSMgbHMgLWxydAogICAgICAgIHRvdGFsIDAKICAgICAgICBjcnctLS0tLS0tIDEgcm9vdCBy
-b290ICAxMCwgNjMgSnVsIDE4IDA1OjUyIGNvbnRyb2wKICAgICAgICBicnctcnctLS0tIDEgcm9v
-dCBkaXNrIDI1MywgIDAgSnVsIDE4IDA1OjUyCiAgICAgICAgMzYwMGEwYjgwMDA1YjEwY2EwMDAw
-OGUyNTRjNzcyNmIxCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsICAxIEp1bCAx
-OCAwNTo1MgogICAgICAgIDM2MDBhMGI4MDAwNWIwYWNjMDAwMDhjMjA0Yzc3NDRiYQogICAgICAg
-IGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgMyBKdWwgMTggMDU6NTIKICAgICAgICAzNjAw
-YTBiODAwMDViMGFjYzAwMDA4YzIwNGM3NzQ0YmFwMgogICAgICAgIGJydy1ydy0tLS0gMSByb290
-IGRpc2sgMjUzLCAgMiBKdWwgMTggMDU6NTIKICAgICAgICAzNjAwYTBiODAwMDViMGFjYzAwMDA4
-YzIwNGM3NzQ0YmFwMQogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgNCBKdWwg
-MTggMDU6NTIKICAgICAgICAzNjAwYTBiODAwMDViMTBjYTAwMDA4ZTI1NGM3NzI2YjFwMQogICAg
-ICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgNSBKdWwgMTggMDU6NTIgSG9zdFZHLVN3
-YXAKICAgICAgICBicnctcnctLS0tIDEgcm9vdCBkaXNrIDI1MywgIDYgSnVsIDE4IDA1OjUyIEhv
-c3RWRy1Sb290QmFja3VwCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsICA3IEp1
-bCAxOCAwNTo1MiBIb3N0VkctUm9vdAogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUz
-LCAgOSBKdWwgMTggMDU6NTIgSG9zdFZHLUxvZ2dpbmcKICAgICAgICBicnctcnctLS0tIDEgcm9v
-dCBkaXNrIDI1MywgIDggSnVsIDE4IDA1OjUyIEhvc3RWRy1Db25maWcKICAgICAgICBicnctcnct
-LS0tIDEgcm9vdCBkaXNrIDI1MywgMTAgSnVsIDE4IDA1OjUyIEhvc3RWRy1EYXRhCiAgICAgICAg
-YnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsIDExIEp1bCAxOCAwNTo1MiBsaXZlLXJ3CiAgICAg
-ICAgCiAgICAgICAgCiAgICAgICAgCiAgICAgICAgCiAgICAgICAgW3Jvb3RANTcgbWFwcGVyXSMg
-bHMgLWxydCAvZGV2L2RtKgogICAgICAgIGJydy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgMCBK
-dWwgMTggMDU6NTIgL2Rldi9kbS0wCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMs
-ICAxIEp1bCAxOCAwNTo1MiAvZGV2L2RtLTEKICAgICAgICBicnctcnctLS0tIDEgcm9vdCByb290
-IDI1MywgIDMgSnVsIDE4IDA1OjUyIC9kZXYvZG0tMwogICAgICAgIGJydy1ydy0tLS0gMSByb290
-IHJvb3QgMjUzLCAgMiBKdWwgMTggMDU6NTIgL2Rldi9kbS0yCiAgICAgICAgYnJ3LXJ3LS0tLSAx
-IHJvb3Qgcm9vdCAyNTMsICA0IEp1bCAxOCAwNTo1MiAvZGV2L2RtLTQKICAgICAgICBicnctcnct
-LS0tIDEgcm9vdCByb290IDI1MywgIDUgSnVsIDE4IDA1OjUyIC9kZXYvZG0tNQogICAgICAgIGJy
-dy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgNiBKdWwgMTggMDU6NTIgL2Rldi9kbS02CiAgICAg
-ICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsICA3IEp1bCAxOCAwNTo1MiAvZGV2L2RtLTcK
-ICAgICAgICBicnctcnctLS0tIDEgcm9vdCByb290IDI1MywgIDggSnVsIDE4IDA1OjUyIC9kZXYv
-ZG0tOAogICAgICAgIGJydy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgOSBKdWwgMTggMDU6NTIg
-L2Rldi9kbS05CiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsIDEwIEp1bCAxOCAw
-NTo1MiAvZGV2L2RtLTEwCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsIDExIEp1
-bCAxOCAwNTo1MiAvZGV2L2RtLTExCgoKCgoKCgogICAgICAgIFtyb290QGNzaGFvNTcgbWFwcGVy
-XSMgbHMgLWxydAogICAgICAgIHRvdGFsIDAKICAgICAgICBjcnctLS0tLS0tIDEgcm9vdCByb290
-ICAxMCwgNjMgSnVsIDE4IDA1OjUyIGNvbnRyb2wKICAgICAgICBicnctcnctLS0tIDEgcm9vdCBk
-aXNrIDI1MywgIDAgSnVsIDE4IDA1OjUyCiAgICAgICAgMzYwMGEwYjgwMDA1YjEwY2EwMDAwOGUy
-NTRjNzcyNmIxCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsICAxIEp1bCAxOCAw
-NTo1MgogICAgICAgIDM2MDBhMGI4MDAwNWIwYWNjMDAwMDhjMjA0Yzc3NDRiYQogICAgICAgIGJy
-dy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgMyBKdWwgMTggMDU6NTIKICAgICAgICAzNjAwYTBi
-ODAwMDViMGFjYzAwMDA4YzIwNGM3NzQ0YmFwMgogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRp
-c2sgMjUzLCAgMiBKdWwgMTggMDU6NTIKICAgICAgICAzNjAwYTBiODAwMDViMGFjYzAwMDA4YzIw
-NGM3NzQ0YmFwMQogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgNCBKdWwgMTgg
-MDU6NTIKICAgICAgICAzNjAwYTBiODAwMDViMTBjYTAwMDA4ZTI1NGM3NzI2YjFwMQogICAgICAg
-IGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgNSBKdWwgMTggMDU6NTIgSG9zdFZHLVN3YXAK
-ICAgICAgICBicnctcnctLS0tIDEgcm9vdCBkaXNrIDI1MywgIDYgSnVsIDE4IDA1OjUyIEhvc3RW
-Ry1Sb290QmFja3VwCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsICA3IEp1bCAx
-OCAwNTo1MiBIb3N0VkctUm9vdAogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAg
-OSBKdWwgMTggMDU6NTIgSG9zdFZHLUxvZ2dpbmcKICAgICAgICBicnctcnctLS0tIDEgcm9vdCBk
-aXNrIDI1MywgIDggSnVsIDE4IDA1OjUyIEhvc3RWRy1Db25maWcKICAgICAgICBicnctcnctLS0t
-IDEgcm9vdCBkaXNrIDI1MywgMTAgSnVsIDE4IDA1OjUyIEhvc3RWRy1EYXRhCiAgICAgICAgYnJ3
-LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsIDExIEp1bCAxOCAwNTo1MiBsaXZlLXJ3CiAgICAgICAg
-YnJ3LXJ3LS0tLSA0IHJvb3Qgcm9vdCAyNTMsIDExIEp1bCAxOCAwNTo1MiBsaW5rMgogICAgICAg
-IGJydy1ydy0tLS0gNCByb290IHJvb3QgMjUzLCAxMSBKdWwgMTggMDU6NTIgbGluazEKICAgICAg
-ICBicnctcnctLS0tIDQgcm9vdCByb290IDI1MywgMTEgSnVsIDE4IDA1OjUyIGxpbmsKICAgICAg
-ICBbcm9vdEBjc2hhbzU3IG1hcHBlcl0jIGxzIC1scnQgL2Rldi9kbSoKICAgICAgICBicnctcnct
-LS0tIDEgcm9vdCByb290IDI1MywgIDAgSnVsIDE4IDA1OjUyIC9kZXYvZG0tMAogICAgICAgIGJy
-dy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgMSBKdWwgMTggMDU6NTIgL2Rldi9kbS0xCiAgICAg
-ICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsICAzIEp1bCAxOCAwNTo1MiAvZGV2L2RtLTMK
-ICAgICAgICBicnctcnctLS0tIDEgcm9vdCByb290IDI1MywgIDIgSnVsIDE4IDA1OjUyIC9kZXYv
-ZG0tMgogICAgICAgIGJydy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgNCBKdWwgMTggMDU6NTIg
-L2Rldi9kbS00CiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsICA1IEp1bCAxOCAw
-NTo1MiAvZGV2L2RtLTUKICAgICAgICBicnctcnctLS0tIDEgcm9vdCByb290IDI1MywgIDYgSnVs
-IDE4IDA1OjUyIC9kZXYvZG0tNgogICAgICAgIGJydy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAg
-NyBKdWwgMTggMDU6NTIgL2Rldi9kbS03CiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAy
-NTMsICA4IEp1bCAxOCAwNTo1MiAvZGV2L2RtLTgKICAgICAgICBicnctcnctLS0tIDEgcm9vdCBy
-b290IDI1MywgIDkgSnVsIDE4IDA1OjUyIC9kZXYvZG0tOQogICAgICAgIGJydy1ydy0tLS0gMSBy
-b290IHJvb3QgMjUzLCAxMCBKdWwgMTggMDU6NTIgL2Rldi9kbS0xMAogICAgICAgIGJydy1ydy0t
-LS0gNCByb290IHJvb3QgMjUzLCAxMSBKdWwgMTggMDU6NTIgL2Rldi9kbS0xMQoKCk9uIFdlZCwg
-SnVsIDIwLCAyMDExIGF0IDA0OjM0OjM4QU0gLTA0MDAsIENoYW8gWWFuZyB3cm90ZToKPiBIaSB0
-aGVyZSwgCj4gCj4gSSBoYXZlIHF1ZXN0aW9ucyBhYm91dCAvZGV2L2RtLSogaW4gbXkgbWluZCBm
-b3IgZGF5cywgaXQgc2VlbXMgaGVyZSBpcyB0aGUgcmlnaHQgcGxhY2UgZm9yIHRoZSBhbnN3ZXJz
-LiAKPiBXaGF0IGlzIGEgL2Rldi9kbS0qIGZpbGU/IGl0IHNheXMgIi9kZXYvZG0tMDogYmxvY2sg
-c3BlY2lhbCIgZnJvbSBmaWxlIGNvbW1hbmQuIAo+IElzIHRoZXJlIGEgbGltaXRhdGlvbiB0byB0
-aGUgbnVtYmVyIG9mIC9kZXYvZG0tKiBmaWxlcyA/IEkgdHJpZWQgd2l0aCBSSEVMNi4xIEdBLCBj
-cmVhdGVkIDgwMCBmcm9tIGRtLTAgdG8gZG0tNzk5IGFzIG1heGltdW0uIAo+IFRoYW5rcy4gCj4g
-Cj4gCj4gQmVzdCwgCj4gQ2hhbyAKPiAKCj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBk
-bS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVsCgoKLS0gCuaIkeWPquaLheW/g+S4gOS7tuS6i++8jOaIkeaAleaIkemFjeS4
-jeS4iuaIkeaJgOmBreWPl+eahOiLpumavgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
-dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
-LWRldmVs
+Thanks for the response. I did figured out the issue a few days ago.
+This was a CentOS 5.6 system, and 2.6.18 was the newest kernel I could
+get for that distribution.  They did just release CentOS 6.0 and I was
+trying to prepare for a migration when this issue arose.
+
+I didn't even think I was using dmraid. Turns out that I created a
+dmraid set a long time ago and then decided to replace with a spanned
+logical volume.  I guess the metadata  was still on the disks and for
+some reason it didn't bite me until I upgraded some software (not sure
+which package it was) or made some type of change.  I deactivated
+dmraid on the drives and the problem was gone.
+
+Thanks!
+
+David
+
+
+On Tue, Jul 19, 2011 at 11:51 AM, Phillip Susi <psusi@cfl.rr.com> wrote:
+> On 7/17/2011 3:03 PM, David Cramblett wrote:
+>>
+>> Current Software:
+>> Linux 2.6.18-238.12.1.el5 #1 SMP Tue May 31 13:23:01 EDT 2011 i686
+>> i686 i386 GNU/Linux
+>> device-mapper-1.02.55-2.el5
+>
+> 2.6.18 is now 5 years old; it might be time to upgrade.
+>
+>> I did some research and the only info I could find was regarding dmsetup:
+>>
+>> #dmsetup status
+>> pdc_eehgddjjp1: 0 976768002 linear
+>> pdc_eehgddjj: 0 976772992 linear
+>> via_cdeadaheebp1: 0 976768002 linear
+>> via_cdeadaheeb: 0 1953546240 striped 2 8:0 8:16 1 AA
+>>
+>>
+>> Looks like something is wrong with the vg0-lvol0 entry above, but I
+>> can't figure out how to fix it. =A0There is also another HDD on each of
+>
+> You only seem to have 4 entries for two dmraid disks ( which is not well
+> supported so you should not be using it unless you need to dual boot with
+> windows ) and a partition on each. =A0It is also quite strange that the p=
+dc
+> array is using a linear mapping. =A0Could it be a degraded mirror?
+>
+>> the via and pdc controllers that are seen by the system, but not
+>> showing up in the "status" list above. =A0There is also a disk connected
+>> to PATA port "/dev/hda" that is part of the lvol.
+>
+> What disks are supposed to be LVM physical volumes? =A0The output of pvdi=
+splay
+> may prove useful. =A0An lvchange -ay might also be worthwhile.
+>
+>> The device-mapper device is being created for the lvol:
+>>
+>> =A0/dev/mapper/vg0-lvol0
+>
+> If it had actually been created, then it should show up in dmsetup status.
+> =A0The system appears to be failing to create it.
+>
+
+
+
+-- =
+
+David Cramblett
