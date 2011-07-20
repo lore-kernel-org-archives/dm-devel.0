@@ -1,13 +1,16 @@
-From: Chao Yang <chyang@redhat.com>
-Subject: What is a /dev/dm-* file ?
-Date: Wed, 20 Jul 2011 04:34:38 -0400 (EDT)
-Message-ID: <46858323.1450041.1311150878186.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
+From: li mohua <moli@redhat.com>
+Subject: Re: What is a /dev/dm-* file ?
+Date: Wed, 20 Jul 2011 18:17:53 +0800
+Message-ID: <20110720101753.GA21124@ubuntu10.10>
 References: <1353628002.1450009.1311150616312.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
+	<46858323.1450041.1311150878186.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1416825870292806817=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1353628002.1450009.1311150616312.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <46858323.1450041.1311150878186.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,42 +20,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1416825870292806817==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_1450040_1693891686.1311150878185"
-
-------=_Part_1450040_1693891686.1311150878185
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-Hi there, 
-
-I have questions about /dev/dm-* in my mind for days, it seems here is the right place for the answers. 
-What is a /dev/dm-* file? it says "/dev/dm-0: block special" from file command. 
-Is there a limitation to the number of /dev/dm-* files ? I tried with RHEL6.1 GA, created 800 from dm-0 to dm-799 as maximum. 
-Thanks. 
-
-
-Best, 
-Chao 
-
-
-------=_Part_1450040_1693891686.1311150878185
-Content-Type: text/html; charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-<html><head><style type='text/css'>p { margin: 0; }</style></head><body><div style='font-family: Times New Roman; font-size: 12pt; color: #000000'>Hi there,<br><br>I have questions about /dev/dm-* in my mind for days, it seems here is the right place for the answers. <br>What is a /dev/dm-* file?&nbsp; it says "/dev/dm-0: block special" from file command. <br>Is there a limitation to the number of /dev/dm-* files ? I tried with RHEL6.1 GA, created 800 from dm-0 to dm-799 as maximum. <br>Thanks. <br><br><span><br><span name="x"></span>Best,<br>Chao<span name="x"></span><br></span><br></div></body></html>
-------=_Part_1450040_1693891686.1311150878185--
-
-
---===============1416825870292806817==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1416825870292806817==--
+CmZyb20gdGhlIGRldmljZSBudW1iZXIobWFqb3IsbWlub3IpLCB3ZSBjb3VsZCBzZWUgaXQncyBh
+bm90aGVyIGtpbmQKZm9yIGRldmljZSB1bmRlciAvZGV2L21hcHBlci8qLHNvbWV0aW1lcyBjb3Vs
+ZCBiZSBhIGxpbmsodWRldiBydWxlcwpldGMsbm8gaWRlYSBhYm91dCB0aGUgbWF4IG51bWJlciwg
+eW91IGNvdWxkIGhhdmUgYSB0ZXN0LCBpIGd1ZXNzLCAKCgoKCiAgICAgICAgW3Jvb3RANTcgbWFw
+cGVyXSMgbHMgLWxydAogICAgICAgIHRvdGFsIDAKICAgICAgICBjcnctLS0tLS0tIDEgcm9vdCBy
+b290ICAxMCwgNjMgSnVsIDE4IDA1OjUyIGNvbnRyb2wKICAgICAgICBicnctcnctLS0tIDEgcm9v
+dCBkaXNrIDI1MywgIDAgSnVsIDE4IDA1OjUyCiAgICAgICAgMzYwMGEwYjgwMDA1YjEwY2EwMDAw
+OGUyNTRjNzcyNmIxCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsICAxIEp1bCAx
+OCAwNTo1MgogICAgICAgIDM2MDBhMGI4MDAwNWIwYWNjMDAwMDhjMjA0Yzc3NDRiYQogICAgICAg
+IGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgMyBKdWwgMTggMDU6NTIKICAgICAgICAzNjAw
+YTBiODAwMDViMGFjYzAwMDA4YzIwNGM3NzQ0YmFwMgogICAgICAgIGJydy1ydy0tLS0gMSByb290
+IGRpc2sgMjUzLCAgMiBKdWwgMTggMDU6NTIKICAgICAgICAzNjAwYTBiODAwMDViMGFjYzAwMDA4
+YzIwNGM3NzQ0YmFwMQogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgNCBKdWwg
+MTggMDU6NTIKICAgICAgICAzNjAwYTBiODAwMDViMTBjYTAwMDA4ZTI1NGM3NzI2YjFwMQogICAg
+ICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgNSBKdWwgMTggMDU6NTIgSG9zdFZHLVN3
+YXAKICAgICAgICBicnctcnctLS0tIDEgcm9vdCBkaXNrIDI1MywgIDYgSnVsIDE4IDA1OjUyIEhv
+c3RWRy1Sb290QmFja3VwCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsICA3IEp1
+bCAxOCAwNTo1MiBIb3N0VkctUm9vdAogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUz
+LCAgOSBKdWwgMTggMDU6NTIgSG9zdFZHLUxvZ2dpbmcKICAgICAgICBicnctcnctLS0tIDEgcm9v
+dCBkaXNrIDI1MywgIDggSnVsIDE4IDA1OjUyIEhvc3RWRy1Db25maWcKICAgICAgICBicnctcnct
+LS0tIDEgcm9vdCBkaXNrIDI1MywgMTAgSnVsIDE4IDA1OjUyIEhvc3RWRy1EYXRhCiAgICAgICAg
+YnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsIDExIEp1bCAxOCAwNTo1MiBsaXZlLXJ3CiAgICAg
+ICAgCiAgICAgICAgCiAgICAgICAgCiAgICAgICAgCiAgICAgICAgW3Jvb3RANTcgbWFwcGVyXSMg
+bHMgLWxydCAvZGV2L2RtKgogICAgICAgIGJydy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgMCBK
+dWwgMTggMDU6NTIgL2Rldi9kbS0wCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMs
+ICAxIEp1bCAxOCAwNTo1MiAvZGV2L2RtLTEKICAgICAgICBicnctcnctLS0tIDEgcm9vdCByb290
+IDI1MywgIDMgSnVsIDE4IDA1OjUyIC9kZXYvZG0tMwogICAgICAgIGJydy1ydy0tLS0gMSByb290
+IHJvb3QgMjUzLCAgMiBKdWwgMTggMDU6NTIgL2Rldi9kbS0yCiAgICAgICAgYnJ3LXJ3LS0tLSAx
+IHJvb3Qgcm9vdCAyNTMsICA0IEp1bCAxOCAwNTo1MiAvZGV2L2RtLTQKICAgICAgICBicnctcnct
+LS0tIDEgcm9vdCByb290IDI1MywgIDUgSnVsIDE4IDA1OjUyIC9kZXYvZG0tNQogICAgICAgIGJy
+dy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgNiBKdWwgMTggMDU6NTIgL2Rldi9kbS02CiAgICAg
+ICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsICA3IEp1bCAxOCAwNTo1MiAvZGV2L2RtLTcK
+ICAgICAgICBicnctcnctLS0tIDEgcm9vdCByb290IDI1MywgIDggSnVsIDE4IDA1OjUyIC9kZXYv
+ZG0tOAogICAgICAgIGJydy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgOSBKdWwgMTggMDU6NTIg
+L2Rldi9kbS05CiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsIDEwIEp1bCAxOCAw
+NTo1MiAvZGV2L2RtLTEwCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsIDExIEp1
+bCAxOCAwNTo1MiAvZGV2L2RtLTExCgoKCgoKCgogICAgICAgIFtyb290QGNzaGFvNTcgbWFwcGVy
+XSMgbHMgLWxydAogICAgICAgIHRvdGFsIDAKICAgICAgICBjcnctLS0tLS0tIDEgcm9vdCByb290
+ICAxMCwgNjMgSnVsIDE4IDA1OjUyIGNvbnRyb2wKICAgICAgICBicnctcnctLS0tIDEgcm9vdCBk
+aXNrIDI1MywgIDAgSnVsIDE4IDA1OjUyCiAgICAgICAgMzYwMGEwYjgwMDA1YjEwY2EwMDAwOGUy
+NTRjNzcyNmIxCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsICAxIEp1bCAxOCAw
+NTo1MgogICAgICAgIDM2MDBhMGI4MDAwNWIwYWNjMDAwMDhjMjA0Yzc3NDRiYQogICAgICAgIGJy
+dy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgMyBKdWwgMTggMDU6NTIKICAgICAgICAzNjAwYTBi
+ODAwMDViMGFjYzAwMDA4YzIwNGM3NzQ0YmFwMgogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRp
+c2sgMjUzLCAgMiBKdWwgMTggMDU6NTIKICAgICAgICAzNjAwYTBiODAwMDViMGFjYzAwMDA4YzIw
+NGM3NzQ0YmFwMQogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgNCBKdWwgMTgg
+MDU6NTIKICAgICAgICAzNjAwYTBiODAwMDViMTBjYTAwMDA4ZTI1NGM3NzI2YjFwMQogICAgICAg
+IGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAgNSBKdWwgMTggMDU6NTIgSG9zdFZHLVN3YXAK
+ICAgICAgICBicnctcnctLS0tIDEgcm9vdCBkaXNrIDI1MywgIDYgSnVsIDE4IDA1OjUyIEhvc3RW
+Ry1Sb290QmFja3VwCiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsICA3IEp1bCAx
+OCAwNTo1MiBIb3N0VkctUm9vdAogICAgICAgIGJydy1ydy0tLS0gMSByb290IGRpc2sgMjUzLCAg
+OSBKdWwgMTggMDU6NTIgSG9zdFZHLUxvZ2dpbmcKICAgICAgICBicnctcnctLS0tIDEgcm9vdCBk
+aXNrIDI1MywgIDggSnVsIDE4IDA1OjUyIEhvc3RWRy1Db25maWcKICAgICAgICBicnctcnctLS0t
+IDEgcm9vdCBkaXNrIDI1MywgMTAgSnVsIDE4IDA1OjUyIEhvc3RWRy1EYXRhCiAgICAgICAgYnJ3
+LXJ3LS0tLSAxIHJvb3QgZGlzayAyNTMsIDExIEp1bCAxOCAwNTo1MiBsaXZlLXJ3CiAgICAgICAg
+YnJ3LXJ3LS0tLSA0IHJvb3Qgcm9vdCAyNTMsIDExIEp1bCAxOCAwNTo1MiBsaW5rMgogICAgICAg
+IGJydy1ydy0tLS0gNCByb290IHJvb3QgMjUzLCAxMSBKdWwgMTggMDU6NTIgbGluazEKICAgICAg
+ICBicnctcnctLS0tIDQgcm9vdCByb290IDI1MywgMTEgSnVsIDE4IDA1OjUyIGxpbmsKICAgICAg
+ICBbcm9vdEBjc2hhbzU3IG1hcHBlcl0jIGxzIC1scnQgL2Rldi9kbSoKICAgICAgICBicnctcnct
+LS0tIDEgcm9vdCByb290IDI1MywgIDAgSnVsIDE4IDA1OjUyIC9kZXYvZG0tMAogICAgICAgIGJy
+dy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgMSBKdWwgMTggMDU6NTIgL2Rldi9kbS0xCiAgICAg
+ICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsICAzIEp1bCAxOCAwNTo1MiAvZGV2L2RtLTMK
+ICAgICAgICBicnctcnctLS0tIDEgcm9vdCByb290IDI1MywgIDIgSnVsIDE4IDA1OjUyIC9kZXYv
+ZG0tMgogICAgICAgIGJydy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAgNCBKdWwgMTggMDU6NTIg
+L2Rldi9kbS00CiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAyNTMsICA1IEp1bCAxOCAw
+NTo1MiAvZGV2L2RtLTUKICAgICAgICBicnctcnctLS0tIDEgcm9vdCByb290IDI1MywgIDYgSnVs
+IDE4IDA1OjUyIC9kZXYvZG0tNgogICAgICAgIGJydy1ydy0tLS0gMSByb290IHJvb3QgMjUzLCAg
+NyBKdWwgMTggMDU6NTIgL2Rldi9kbS03CiAgICAgICAgYnJ3LXJ3LS0tLSAxIHJvb3Qgcm9vdCAy
+NTMsICA4IEp1bCAxOCAwNTo1MiAvZGV2L2RtLTgKICAgICAgICBicnctcnctLS0tIDEgcm9vdCBy
+b290IDI1MywgIDkgSnVsIDE4IDA1OjUyIC9kZXYvZG0tOQogICAgICAgIGJydy1ydy0tLS0gMSBy
+b290IHJvb3QgMjUzLCAxMCBKdWwgMTggMDU6NTIgL2Rldi9kbS0xMAogICAgICAgIGJydy1ydy0t
+LS0gNCByb290IHJvb3QgMjUzLCAxMSBKdWwgMTggMDU6NTIgL2Rldi9kbS0xMQoKCk9uIFdlZCwg
+SnVsIDIwLCAyMDExIGF0IDA0OjM0OjM4QU0gLTA0MDAsIENoYW8gWWFuZyB3cm90ZToKPiBIaSB0
+aGVyZSwgCj4gCj4gSSBoYXZlIHF1ZXN0aW9ucyBhYm91dCAvZGV2L2RtLSogaW4gbXkgbWluZCBm
+b3IgZGF5cywgaXQgc2VlbXMgaGVyZSBpcyB0aGUgcmlnaHQgcGxhY2UgZm9yIHRoZSBhbnN3ZXJz
+LiAKPiBXaGF0IGlzIGEgL2Rldi9kbS0qIGZpbGU/IGl0IHNheXMgIi9kZXYvZG0tMDogYmxvY2sg
+c3BlY2lhbCIgZnJvbSBmaWxlIGNvbW1hbmQuIAo+IElzIHRoZXJlIGEgbGltaXRhdGlvbiB0byB0
+aGUgbnVtYmVyIG9mIC9kZXYvZG0tKiBmaWxlcyA/IEkgdHJpZWQgd2l0aCBSSEVMNi4xIEdBLCBj
+cmVhdGVkIDgwMCBmcm9tIGRtLTAgdG8gZG0tNzk5IGFzIG1heGltdW0uIAo+IFRoYW5rcy4gCj4g
+Cj4gCj4gQmVzdCwgCj4gQ2hhbyAKPiAKCj4gLS0KPiBkbS1kZXZlbCBtYWlsaW5nIGxpc3QKPiBk
+bS1kZXZlbEByZWRoYXQuY29tCj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
+bmZvL2RtLWRldmVsCgoKLS0gCuaIkeWPquaLheW/g+S4gOS7tuS6i++8jOaIkeaAleaIkemFjeS4
+jeS4iuaIkeaJgOmBreWPl+eahOiLpumavgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
+dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVs
