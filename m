@@ -1,14 +1,13 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Re: device mapper not finding all devices
-Date: Tue, 19 Jul 2011 14:51:10 -0400
-Message-ID: <4E25D21E.8050901@cfl.rr.com>
-References: <CA+cRLpLs7CL4VeSw9YNGdTDOUG8mz=TpUuzyP=sWXpLiKywA+A@mail.gmail.com>
+From: Chao Yang <chyang@redhat.com>
+Subject: What is a /dev/dm-* file ?
+Date: Wed, 20 Jul 2011 04:34:38 -0400 (EDT)
+Message-ID: <46858323.1450041.1311150878186.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
+References: <1353628002.1450009.1311150616312.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1416825870292806817=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+cRLpLs7CL4VeSw9YNGdTDOUG8mz=TpUuzyP=sWXpLiKywA+A@mail.gmail.com>
+In-Reply-To: <1353628002.1450009.1311150616312.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,45 +17,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: David Cramblett <david@functionalchaos.net>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 7/17/2011 3:03 PM, David Cramblett wrote:
-> Current Software:
-> Linux 2.6.18-238.12.1.el5 #1 SMP Tue May 31 13:23:01 EDT 2011 i686
-> i686 i386 GNU/Linux
-> device-mapper-1.02.55-2.el5
+--===============1416825870292806817==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_1450040_1693891686.1311150878185"
 
-2.6.18 is now 5 years old; it might be time to upgrade.
+------=_Part_1450040_1693891686.1311150878185
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 
-> I did some research and the only info I could find was regarding dmsetup:
->
-> #dmsetup status
-> pdc_eehgddjjp1: 0 976768002 linear
-> pdc_eehgddjj: 0 976772992 linear
-> via_cdeadaheebp1: 0 976768002 linear
-> via_cdeadaheeb: 0 1953546240 striped 2 8:0 8:16 1 AA
->
->
-> Looks like something is wrong with the vg0-lvol0 entry above, but I
-> can't figure out how to fix it.  There is also another HDD on each of
+Hi there, 
 
-You only seem to have 4 entries for two dmraid disks ( which is not well 
-supported so you should not be using it unless you need to dual boot 
-with windows ) and a partition on each.  It is also quite strange that 
-the pdc array is using a linear mapping.  Could it be a degraded mirror?
+I have questions about /dev/dm-* in my mind for days, it seems here is the right place for the answers. 
+What is a /dev/dm-* file? it says "/dev/dm-0: block special" from file command. 
+Is there a limitation to the number of /dev/dm-* files ? I tried with RHEL6.1 GA, created 800 from dm-0 to dm-799 as maximum. 
+Thanks. 
 
-> the via and pdc controllers that are seen by the system, but not
-> showing up in the "status" list above.  There is also a disk connected
-> to PATA port "/dev/hda" that is part of the lvol.
 
-What disks are supposed to be LVM physical volumes?  The output of 
-pvdisplay may prove useful.  An lvchange -ay might also be worthwhile.
+Best, 
+Chao 
 
-> The device-mapper device is being created for the lvol:
->
->   /dev/mapper/vg0-lvol0
 
-If it had actually been created, then it should show up in dmsetup 
-status.  The system appears to be failing to create it.
+------=_Part_1450040_1693891686.1311150878185
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+<html><head><style type='text/css'>p { margin: 0; }</style></head><body><div style='font-family: Times New Roman; font-size: 12pt; color: #000000'>Hi there,<br><br>I have questions about /dev/dm-* in my mind for days, it seems here is the right place for the answers. <br>What is a /dev/dm-* file?&nbsp; it says "/dev/dm-0: block special" from file command. <br>Is there a limitation to the number of /dev/dm-* files ? I tried with RHEL6.1 GA, created 800 from dm-0 to dm-799 as maximum. <br>Thanks. <br><br><span><br><span name="x"></span>Best,<br>Chao<span name="x"></span><br></span><br></div></body></html>
+------=_Part_1450040_1693891686.1311150878185--
+
+
+--===============1416825870292806817==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1416825870292806817==--
