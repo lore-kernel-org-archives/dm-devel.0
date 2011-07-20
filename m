@@ -1,91 +1,47 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH] Associate HBA and storage in rdac_controller to support
- partitions in storage
-Date: Wed, 20 Jul 2011 14:22:28 -0700
-Message-ID: <1311196948.5505.10779.camel@chandra-lucid.beaverton.ibm.com>
-Reply-To: sekharan@us.ibm.com
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath discovery.c
+Date: 20 Jul 2011 21:24:52 -0000
+Message-ID: <20110720212452.6404.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi <linux-scsi@vger.kernel.org>
-Cc: dm-devel <dm-devel@redhat.com>, "Moger, Babu" <Babu.Moger@netapp.com>, yanling.Qi@netapp.com, "Stankey, Robert" <Robert.Stankey@netapp.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-rdac hardware handler assumes that there is one-to-one relation ship
-between the host and the controller w.r.t lun.  IOW, it does not
-support "multiple storage partitions" within a storage.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2011-07-20 21:24:52
 
-Example:
-HBA1 and HBA2 see lun 0 and 1 in storage A (1)
-HBA3 and HBA4 see lun 0 and 1 in storage A (2)
-HBA5 and HBA6 see lun 0 and 1 in storage A (3)
+Modified files:
+	libmultipath   : discovery.c 
 
-luns 0 and 1 in (1), (2) and (3) are totally different.
+Log message:
+	Fix for BZ# 703501. Change to cciss sysfs handling.  Not applicable upstream
 
-But, rdac handler treats the lun 0s (and lun 1s) as the same when 
-sending a mode select to the controller, which is wrong.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.20&r2=1.32.2.21
 
-This patch makes the rdac hardware handler associate HBA and the
-storage w.r.t lun (and not the host itself).
-
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
----
- drivers/scsi/device_handler/scsi_dh_rdac.c |   10 +++++++---
- 1 files changed, 7 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/scsi/device_handler/scsi_dh_rdac.c b/drivers/scsi/device_handler/scsi_dh_rdac.c
-index 214d7f0..67c2c99 100644
---- a/drivers/scsi/device_handler/scsi_dh_rdac.c
-+++ b/drivers/scsi/device_handler/scsi_dh_rdac.c
-@@ -149,6 +149,7 @@ struct rdac_controller {
- 	} mode_select;
- 	u8	index;
- 	u8	array_name[ARRAY_LABEL_LEN];
-+	struct Scsi_Host	*host;
- 	spinlock_t		ms_lock;
- 	int			ms_queued;
- 	struct work_struct	ms_work;
-@@ -380,7 +381,7 @@ static void release_controller(struct kref *kref)
- }
- 
- static struct rdac_controller *get_controller(u8 *serial, int index,
--		char *array_name)
-+		char *array_name, struct scsi_device *sdev)
- {
- 	struct rdac_controller *ctlr, *tmp;
- 
-@@ -388,7 +389,8 @@ static struct rdac_controller *get_controller(u8 *serial, int index,
- 
- 	list_for_each_entry(tmp, &ctlr_list, node) {
- 		if ((memcmp(tmp->serial, serial, SERIAL_NO_LEN) == 0) &&
--		          (tmp->index == index)) {
-+		          (tmp->index == index) &&
-+			  (tmp->host == sdev->host)) {
- 			kref_get(&tmp->kref);
- 			spin_unlock(&list_lock);
- 			return tmp;
-@@ -402,6 +404,7 @@ static struct rdac_controller *get_controller(u8 *serial, int index,
- 	memcpy(ctlr->serial, serial, SERIAL_NO_LEN);
- 	memcpy(ctlr->array_name, array_name, ARRAY_LABEL_LEN);
- 	ctlr->index = index;
-+	ctlr->host = sdev->host;
- 
- 	kref_init(&ctlr->kref);
- 	ctlr->use_ms10 = -1;
-@@ -525,7 +528,8 @@ static int initialize_controller(struct scsi_device *sdev,
- 		if (err != SCSI_DH_OK)
- 			return err;
- 		inq_p80 = &h->inq.p80;
--		h->ctlr = get_controller(inq_p80->serial, index, array_name);
-+		h->ctlr = get_controller(inq_p80->serial, index,
-+							array_name, sdev);
- 		if (!h->ctlr)
- 			err = SCSI_DH_RES_TEMP_UNAVAIL;
+--- multipath-tools/libmultipath/discovery.c	2011/04/05 18:41:45	1.32.2.20
++++ multipath-tools/libmultipath/discovery.c	2011/07/20 21:24:52	1.32.2.21
+@@ -817,8 +817,7 @@
+ 		return 1;
  	}
--- 
-1.7.1
-
-
-
+ 
+-	if(safe_sprintf(dev_path, "%s/device/cciss%u/c%ud%u", curpath->dev,
+-			controller, controller, lun)) {
++	if(safe_sprintf(dev_path, "%s/device", curpath->dev)) {
+ 		condlog(0, "dev_path too small");
+ 		return 1;
+ 	}
