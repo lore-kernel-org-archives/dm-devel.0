@@ -1,28 +1,102 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH] backing-dev: use synchronize_rcu_expedited instead of
-  synchronize_rcu
-Date: Thu, 21 Jul 2011 09:27:06 +0200
-Message-ID: <4E27D4CA.8020900@kernel.dk>
-References: <Pine.LNX.4.64.1107202019420.26781@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v3] dm table: fix and simplify discard support
+	processing
+Date: Wed, 20 Jul 2011 22:53:52 -0400
+Message-ID: <20110721025352.GA450@redhat.com>
+References: <20110714143037.GA12049@redhat.com>
+	<20110714175647.GA31051@redhat.com>
+	<20110718151055.GA7744@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.1107202019420.26781@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20110718151055.GA7744@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com, dm-devel@redhat.com
+Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 2011-07-21 02:29, Mikulas Patocka wrote:
-> Hi Jens
-> 
-> Please would you consider taking this into the block tree? It seems to 
-> speed up device deletion enormously.
+Remove 'discards_supported' from the dm_table structure.  The same
+information can be easily discovered from the table's target(s) in
+dm_table_supports_discards().
 
-Sure, looks like a good fix. Reminds me of a similar problem we had in
-block core.
+Before this fix dm_table_supports_discards() would skip checking the
+individual targets' 'discards_supported' flag if any one target in the
+table didn't set num_discard_requests > 0.  Now the per-target
+'discards_supported' flag is effective at insuring the final DM device
+advertises discard support.  But, to be clear, targets that don't
+support discards (!num_discard_requests) will not receive discard
+requests.
 
+Also DMWARN if a target sets 'discards_supported' override but forgets
+to set 'num_discard_requests'.
 
--- 
-Jens Axboe
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c |   13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+v3: rebased ontop the latest editing tree
+
+Index: linux-2.6/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-table.c
++++ linux-2.6/drivers/md/dm-table.c
+@@ -54,7 +54,6 @@ struct dm_table {
+ 	sector_t *highs;
+ 	struct dm_target *targets;
+ 
+-	unsigned discards_supported:1;
+ 	unsigned integrity_supported:1;
+ 	unsigned singleton:1;
+ 
+@@ -209,7 +208,6 @@ int dm_table_create(struct dm_table **re
+ 	INIT_LIST_HEAD(&t->devices);
+ 	INIT_LIST_HEAD(&t->target_callbacks);
+ 	atomic_set(&t->holders, 0);
+-	t->discards_supported = 1;
+ 
+ 	if (!num_targets)
+ 		num_targets = KEYS_PER_NODE;
+@@ -809,8 +807,9 @@ int dm_table_add_target(struct dm_table 
+ 
+ 	t->highs[t->num_targets++] = tgt->begin + tgt->len - 1;
+ 
+-	if (!tgt->num_discard_requests)
+-		t->discards_supported = 0;
++	if (!tgt->num_discard_requests && tgt->discards_supported)
++		DMWARN("%s: %s: must set num_discard_requests if discards_supported, "
++		       "disabling discards", dm_device_name(t->md), type);
+ 
+ 	return 0;
+ 
+@@ -1438,9 +1437,6 @@ bool dm_table_supports_discards(struct d
+ 	struct dm_target *ti;
+ 	unsigned i = 0;
+ 
+-	if (!t->discards_supported)
+-		return 0;
+-
+ 	/*
+ 	 * Unless any target used by the table set discards_supported,
+ 	 * require at least one underlying device to support discards.
+@@ -1451,6 +1447,9 @@ bool dm_table_supports_discards(struct d
+ 	while (i < dm_table_get_num_targets(t)) {
+ 		ti = dm_table_get_target(t, i++);
+ 
++		if (!ti->num_discard_requests)
++			continue;
++
+ 		if (ti->discards_supported)
+ 			return 1;
+ 
