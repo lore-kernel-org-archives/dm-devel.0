@@ -1,18 +1,15 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3] dm table: fix and simplify discard support
-	processing
-Date: Wed, 20 Jul 2011 22:53:52 -0400
-Message-ID: <20110721025352.GA450@redhat.com>
-References: <20110714143037.GA12049@redhat.com>
-	<20110714175647.GA31051@redhat.com>
-	<20110718151055.GA7744@redhat.com>
+From: "Bryn M. Reeves" <bmr@redhat.com>
+Subject: Re: What is a /dev/dm-* file ?
+Date: Thu, 21 Jul 2011 10:35:25 +0100
+Message-ID: <4E27F2DD.3010203@redhat.com>
+References: <1353628002.1450009.1311150616312.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>	<46858323.1450041.1311150878186.JavaMail.root@zmail01.collab.prod.int.phx2.redhat.com>
+	<20110720101753.GA21124@ubuntu10.10>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20110718151055.GA7744@redhat.com>
+In-Reply-To: <20110720101753.GA21124@ubuntu10.10>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,81 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, dm-devel@redhat.com
-Cc: Milan Broz <mbroz@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: li mohua <moli@redhat.com>
 List-Id: dm-devel.ids
 
-Remove 'discards_supported' from the dm_table structure.  The same
-information can be easily discovered from the table's target(s) in
-dm_table_supports_discards().
+On 07/20/2011 11:17 AM, li mohua wrote:
+> 
+> from the device number(major,minor), we could see it's another kind
+> for device under /dev/mapper/*,sometimes could be a link(udev rules
+> etc,no idea about the max number, you could have a test, i guess, 
 
-Before this fix dm_table_supports_discards() would skip checking the
-individual targets' 'discards_supported' flag if any one target in the
-table didn't set num_discard_requests > 0.  Now the per-target
-'discards_supported' flag is effective at insuring the final DM device
-advertises discard support.  But, to be clear, targets that don't
-support discards (!num_discard_requests) will not receive discard
-requests.
+On a modern system it's the other way around - the /dev/mapper entries are
+symbolic links to ../dm-N entries maintained by a set of udev rules (look at
+/lib/udev/rules.d/10-dm.rules on a RHEL6 system).
 
-Also DMWARN if a target sets 'discards_supported' override but forgets
-to set 'num_discard_requests'.
+The /dev/$VG/$LV directories and symlinks for LVM2 volume groups and logical
+volumes are maintained by a similar set of rules in 11-dm-lvm.rules.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-table.c |   13 ++++++-------
- 1 file changed, 6 insertions(+), 7 deletions(-)
+Device mapper minor numbers are assigned dynamically so the upper limit is
+dependent on the system (amount of memory) and the types of devices that you are
+trying to create (number and type of targets used) - it's not that unusual to
+see systems with 1000s of dm devices.
 
-v3: rebased ontop the latest editing tree
+>> I have questions about /dev/dm-* in my mind for days, it seems here is the right place for the answers. 
+>> What is a /dev/dm-* file? it says "/dev/dm-0: block special" from file command. 
+>> Is there a limitation to the number of /dev/dm-* files ? I tried with RHEL6.1 GA, created 800 from dm-0 to dm-799 as maximum. 
 
-Index: linux-2.6/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c
-+++ linux-2.6/drivers/md/dm-table.c
-@@ -54,7 +54,6 @@ struct dm_table {
- 	sector_t *highs;
- 	struct dm_target *targets;
- 
--	unsigned discards_supported:1;
- 	unsigned integrity_supported:1;
- 	unsigned singleton:1;
- 
-@@ -209,7 +208,6 @@ int dm_table_create(struct dm_table **re
- 	INIT_LIST_HEAD(&t->devices);
- 	INIT_LIST_HEAD(&t->target_callbacks);
- 	atomic_set(&t->holders, 0);
--	t->discards_supported = 1;
- 
- 	if (!num_targets)
- 		num_targets = KEYS_PER_NODE;
-@@ -809,8 +807,9 @@ int dm_table_add_target(struct dm_table 
- 
- 	t->highs[t->num_targets++] = tgt->begin + tgt->len - 1;
- 
--	if (!tgt->num_discard_requests)
--		t->discards_supported = 0;
-+	if (!tgt->num_discard_requests && tgt->discards_supported)
-+		DMWARN("%s: %s: must set num_discard_requests if discards_supported, "
-+		       "disabling discards", dm_device_name(t->md), type);
- 
- 	return 0;
- 
-@@ -1438,9 +1437,6 @@ bool dm_table_supports_discards(struct d
- 	struct dm_target *ti;
- 	unsigned i = 0;
- 
--	if (!t->discards_supported)
--		return 0;
--
- 	/*
- 	 * Unless any target used by the table set discards_supported,
- 	 * require at least one underlying device to support discards.
-@@ -1451,6 +1447,9 @@ bool dm_table_supports_discards(struct d
- 	while (i < dm_table_get_num_targets(t)) {
- 		ti = dm_table_get_target(t, i++);
- 
-+		if (!ti->num_discard_requests)
-+			continue;
-+
- 		if (ti->discards_supported)
- 			return 1;
- 
+Generally it's advised not to use the dm-N device nodes directly since they do
+not provide persistent naming and are created as soon as a device-mapper device
+is assigned a minor number in the kernel but possibly before the device is in a
+usable state.
+
+Depending on the device-mapper application you're using (LVM2, multipath-tools,
+dmraid etc.) there are probably better ways to reference the devices via the
+types of symlinks mentioned above.
+
+Regards,
+Bryn.
