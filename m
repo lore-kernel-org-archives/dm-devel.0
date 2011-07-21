@@ -1,50 +1,43 @@
-From: NeilBrown <neilb@suse.de>
-Subject: Re: linux-next: Tree for July 21 (drivers/md/dm-raid)
-Date: Fri, 22 Jul 2011 08:10:40 +1000
-Message-ID: <20110722081040.48abfff1@notabene.brown>
+From: Randy Dunlap <rdunlap@xenotime.net>
+Subject: [PATCH -next] dm: fix dm-flakey printk warning
+Date: Thu, 21 Jul 2011 16:10:47 -0700
+Message-ID: <20110721161047.8a62d89a.rdunlap@xenotime.net>
 References: <20110721165542.7748c88a1d1e0b228c7fe3fa@canb.auug.org.au>
-	<20110721145648.2477f8bb.rdunlap@xenotime.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-next-owner@vger.kernel.org>
-In-Reply-To: <20110721145648.2477f8bb.rdunlap@xenotime.net>
-Sender: linux-next-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@xenotime.net>, Jonathan Brassow <jbrassow@redhat.com>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, linux-raid@vger.kernel.org, linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20110721165542.7748c88a1d1e0b228c7fe3fa@canb.auug.org.au>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Stephen Rothwell <sfr@canb.auug.org.au>, dm-devel@redhat.com, akpm <akpm@linux-foundation.org>
+Cc: linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, 21 Jul 2011 14:56:48 -0700 Randy Dunlap <rdunlap@xenotime.net> wrote:
+From: Randy Dunlap <rdunlap@xenotime.net>
 
-> On Thu, 21 Jul 2011 16:55:42 +1000 Stephen Rothwell wrote:
-> 
-> > Hi all,
-> 
-> When CONFIG_DM_RAID=m and CONFIG_MD_RAID1 is not enabled:
-> 
-> ERROR: "md_raid1_congested" [drivers/md/dm-raid.ko] undefined!
-> 
-> due to:
-> 
-> 	if (rs->raid_type->level == 1)
-> 		return md_raid1_congested(&rs->md, bits);
-> 
-> Should that just be surrounded with this?
-> 
-> #if defined(CONFIG_MD_RAID1) || defined(CONFIG_MD_RAID1_MODULE)
-> ...
-> #endif
-> 
-> ---
-> ~Randy
-> *** Remember to use Documentation/SubmitChecklist when testing your code ***
+Fix printk format warning for sector_t, which can be (unsigned)
+long or long long.
 
+drivers/md/dm-flakey.c:257: warning: format '%lu' expects type 'long unsigned int', but argument 7 has type 'sector_t'
 
-I suspect the right thing to do is add
-   select MD_RAID1
-to the 
-   config DM_RAID
+Signed-off-by: Randy Dunlap <rdunlap@xenotime.net>
+---
+ drivers/md/dm-flakey.c |    5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-stanza.  What do you think Jon?
-
-NeilBrown
+--- linux-next-20110721.orig/drivers/md/dm-flakey.c
++++ linux-next-20110721/drivers/md/dm-flakey.c
+@@ -255,10 +255,11 @@ static void corrupt_bio_data(struct bio 
+ 		data[fc->corrupt_bio_byte - 1] = fc->corrupt_bio_value;
+ 
+ 		DMDEBUG("Corrupting data bio=%p by writing %u to byte %u "
+-			"(rw=%c bi_rw=%lu bi_sector=%lu cur_bytes=%u)\n",
++			"(rw=%c bi_rw=%lu bi_sector=%llu cur_bytes=%u)\n",
+ 			bio, fc->corrupt_bio_value, fc->corrupt_bio_byte,
+ 			(bio_data_dir(bio) == WRITE) ? 'w' : 'r',
+-			bio->bi_rw, bio->bi_sector, bio_bytes);
++			bio->bi_rw, (unsigned long long)bio->bi_sector,
++			bio_bytes);
+ 	}
+ }
+ 
