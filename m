@@ -1,141 +1,23 @@
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Subject: [PATCH] Reduce number of KOBJ_REMOVE events
-Date: Fri, 22 Jul 2011 16:22:38 +0200
-Message-ID: <4E2987AE.2070707@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH -next] dm: fix dm-flakey printk warning
+Date: Fri, 22 Jul 2011 17:25:38 +0100
+Message-ID: <20110722162538.GK5632@agk-dp.fab.redhat.com>
+References: <20110721165542.7748c88a1d1e0b228c7fe3fa@canb.auug.org.au> <20110721161047.8a62d89a.rdunlap@xenotime.net>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------000508090000040508090905"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Greg KH <greg@kroah.com>, Kay Sievers <kay@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20110721161047.8a62d89a.rdunlap@xenotime.net>
+Sender: linux-raid-owner@vger.kernel.org
+To: Randy Dunlap <rdunlap@xenotime.net>
+Cc: Stephen Rothwell <sfr@canb.auug.org.au>, dm-devel@redhat.com, akpm <akpm@linux-foundation.org>, linux-raid@vger.kernel.org, linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------000508090000040508090905
-Content-Type: text/plain; charset=ISO-8859-2
-Content-Transfer-Encoding: 7bit
-
-
---------------000508090000040508090905
-Content-Type: text/x-patch;
- name="kobj_remove.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="kobj_remove.patch"
-
-Author: Zdenek Kabelac <zkabelac@redhat.com>
-Date:   Fri Jul 22 15:02:17 2011 +0200
-
-Reduce number of KOBJ_REMOVE events
-
-For now udev recieves 3 event for removal of DM logical volumes. (1 for
-bdi and 2 for same block kobject). Reason is dm device generates its
-own kobject event with approriate env parameter and block layer sends
-another KOBJ_REMOVE event on its own unconditionaly for the same
-kobject. As for now only the kobject cleanup checks that the REMOVE
-event has been already sent and avoids duplicate REMOVE event.
-
-The patch for kobject_uevent_env() which has been testing for duplicate
-REMOVE event did not passed into the mainline (yet?):
-
-https://www.redhat.com/archives/dm-devel/2010-March/msg00107.html 
-
-I'm proposing alternative way around to always use kobject cleanup
-routine for sending REMOVE event if it was not send by the module - so
-it makes the code few lines shorter.
-
-This patch removes single appearencies of kobject_uevent() prior
-kobject removal.
-
-Signed-off-by:  Zdenek Kabelac <zkabelac@redhat.com>
-
-diff --git a/block/blk-integrity.c b/block/blk-integrity.c
-index 129b9e2..431f401 100644
---- a/block/blk-integrity.c
-+++ b/block/blk-integrity.c
-@@ -439,7 +439,6 @@ void blk_integrity_unregister(struct gendisk *disk)
+On Thu, Jul 21, 2011 at 04:10:47PM -0700, Randy Dunlap wrote:
+> Fix printk format warning for sector_t, which can be (unsigned)
+> long or long long.
  
- 	bi = disk->integrity;
- 
--	kobject_uevent(&bi->kobj, KOBJ_REMOVE);
- 	kobject_del(&bi->kobj);
- 	kobject_put(&bi->kobj);
- 	disk->integrity = NULL;
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index d935bd8..a50472d 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -521,7 +521,6 @@ int blk_register_queue(struct gendisk *disk)
- 
- 	ret = elv_register_queue(q);
- 	if (ret) {
--		kobject_uevent(&q->kobj, KOBJ_REMOVE);
- 		kobject_del(&q->kobj);
- 		blk_trace_remove_sysfs(dev);
- 		kobject_put(&dev->kobj);
-@@ -541,7 +540,6 @@ void blk_unregister_queue(struct gendisk *disk)
- 	if (q->request_fn)
- 		elv_unregister_queue(q);
- 
--	kobject_uevent(&q->kobj, KOBJ_REMOVE);
- 	kobject_del(&q->kobj);
- 	blk_trace_remove_sysfs(disk_to_dev(disk));
- 	kobject_put(&disk_to_dev(disk)->kobj);
-diff --git a/block/elevator.c b/block/elevator.c
-index b0b38ce..a8d912b 100644
---- a/block/elevator.c
-+++ b/block/elevator.c
-@@ -892,7 +892,6 @@ EXPORT_SYMBOL(elv_register_queue);
- 
- static void __elv_unregister_queue(struct elevator_queue *e)
- {
--	kobject_uevent(&e->kobj, KOBJ_REMOVE);
- 	kobject_del(&e->kobj);
- 	e->registered = 0;
- }
-diff --git a/drivers/base/core.c b/drivers/base/core.c
-index bc8729d..8c9af0d 100644
---- a/drivers/base/core.c
-+++ b/drivers/base/core.c
-@@ -1013,7 +1013,6 @@ done:
-  ueventattrError:
- 	device_remove_file(dev, &uevent_attr);
-  attrError:
--	kobject_uevent(&dev->kobj, KOBJ_REMOVE);
- 	kobject_del(&dev->kobj);
-  Error:
- 	cleanup_device_parent(dev);
-@@ -1132,7 +1131,6 @@ void device_del(struct device *dev)
- 	 */
- 	if (platform_notify_remove)
- 		platform_notify_remove(dev);
--	kobject_uevent(&dev->kobj, KOBJ_REMOVE);
- 	cleanup_device_parent(dev);
- 	kobject_del(&dev->kobj);
- 	put_device(parent);
-diff --git a/mm/slub.c b/mm/slub.c
-index 35f351f..3c77956 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -4720,7 +4720,6 @@ static void sysfs_slab_remove(struct kmem_cache *s)
- 		 */
- 		return;
- 
--	kobject_uevent(&s->kobj, KOBJ_REMOVE);
- 	kobject_del(&s->kobj);
- 	kobject_put(&s->kobj);
- }
-diff --git a/net/bridge/br_if.c b/net/bridge/br_if.c
-index 1bacca4..f20a945 100644
---- a/net/bridge/br_if.c
-+++ b/net/bridge/br_if.c
-@@ -153,7 +153,6 @@ static void del_nbp(struct net_bridge_port *p)
- 
- 	br_multicast_del_port(p);
- 
--	kobject_uevent(&p->kobj, KOBJ_REMOVE);
- 	kobject_del(&p->kobj);
- 
- 	br_netpoll_disable(p);
+Folded, thanks.
 
---------------000508090000040508090905--
+Alasdair
+
