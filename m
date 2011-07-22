@@ -1,64 +1,141 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: dm-crypt: add mapping table option to allowing
-	discard requests
-Date: Fri, 22 Jul 2011 12:58:31 +0200
-Message-ID: <4E2957D7.3080709@redhat.com>
-References: <1310644590-14438-1-git-send-email-mbroz@redhat.com>
-	<4E1F9023.5020801@deserettechnology.com>
-	<20110715011311.GA27697@redhat.com>
-	<4E2945B8.10303@deserettechnology.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Subject: [PATCH] Reduce number of KOBJ_REMOVE events
+Date: Fri, 22 Jul 2011 16:22:38 +0200
+Message-ID: <4E2987AE.2070707@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4E2945B8.10303@deserettechnology.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: jeff@deserettechnology.com
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Content-Type: multipart/mixed;
+ boundary="------------000508090000040508090905"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Greg KH <greg@kroah.com>, Kay Sievers <kay@redhat.com>
 List-Id: dm-devel.ids
 
-On 07/22/2011 11:41 AM, Jeff Cook wrote:
-> First of all, I attempted to apply these patches to 3.0-rc6 and HEAD
-> (slightly after 3.0-rc7) and they did not apply cleanly. I was able to
-> get a correct application once, but then the compile failed, assumedly
-> due to a mispatching. Now that 3.0 has been tagged, should I assume that
-> the patches will apply cleanly to that tree? I tried both manual patch
-> via /usr/bin/patch and git apply. I suppose I can just wait for 3.1-rc1
-> if I must.
+This is a multi-part message in MIME format.
+--------------000508090000040508090905
+Content-Type: text/plain; charset=ISO-8859-2
+Content-Transfer-Encoding: 7bit
 
-So better wait for rc1, patch is already in linux-next.
-My original patch was not using new table parsing function so I have
-no idea which patches need to be backported now.
 
-> Secondly, I am not sure how I go about modifying the crypt table mapping
-> to activate the discard pass-through option.
+--------------000508090000040508090905
+Content-Type: text/x-patch;
+ name="kobj_remove.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="kobj_remove.patch"
 
-You can compile upstream cryptsetup, I already added flag to support discard.
+Author: Zdenek Kabelac <zkabelac@redhat.com>
+Date:   Fri Jul 22 15:02:17 2011 +0200
 
-But there is intentional library version bump because I removed old api symbols
-and also I want to implement some features before new version is released,
-so use with care - it is not stable code yet.
+Reduce number of KOBJ_REMOVE events
+
+For now udev recieves 3 event for removal of DM logical volumes. (1 for
+bdi and 2 for same block kobject). Reason is dm device generates its
+own kobject event with approriate env parameter and block layer sends
+another KOBJ_REMOVE event on its own unconditionaly for the same
+kobject. As for now only the kobject cleanup checks that the REMOVE
+event has been already sent and avoids duplicate REMOVE event.
+
+The patch for kobject_uevent_env() which has been testing for duplicate
+REMOVE event did not passed into the mainline (yet?):
+
+https://www.redhat.com/archives/dm-devel/2010-March/msg00107.html 
+
+I'm proposing alternative way around to always use kobject cleanup
+routine for sending REMOVE event if it was not send by the module - so
+it makes the code few lines shorter.
+
+This patch removes single appearencies of kobject_uevent() prior
+kobject removal.
+
+Signed-off-by:  Zdenek Kabelac <zkabelac@redhat.com>
+
+diff --git a/block/blk-integrity.c b/block/blk-integrity.c
+index 129b9e2..431f401 100644
+--- a/block/blk-integrity.c
++++ b/block/blk-integrity.c
+@@ -439,7 +439,6 @@ void blk_integrity_unregister(struct gendisk *disk)
  
-> I recognize that Milan's commit message indicates support is missing in
-> cryptsetup -- does this mean that a patch must be written to cryptsetup
-> before the new option can be activated or can this be accessed by the
-> lower-level dmsetup tool?
+ 	bi = disk->integrity;
+ 
+-	kobject_uevent(&bi->kobj, KOBJ_REMOVE);
+ 	kobject_del(&bi->kobj);
+ 	kobject_put(&bi->kobj);
+ 	disk->integrity = NULL;
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index d935bd8..a50472d 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -521,7 +521,6 @@ int blk_register_queue(struct gendisk *disk)
+ 
+ 	ret = elv_register_queue(q);
+ 	if (ret) {
+-		kobject_uevent(&q->kobj, KOBJ_REMOVE);
+ 		kobject_del(&q->kobj);
+ 		blk_trace_remove_sysfs(dev);
+ 		kobject_put(&dev->kobj);
+@@ -541,7 +540,6 @@ void blk_unregister_queue(struct gendisk *disk)
+ 	if (q->request_fn)
+ 		elv_unregister_queue(q);
+ 
+-	kobject_uevent(&q->kobj, KOBJ_REMOVE);
+ 	kobject_del(&q->kobj);
+ 	blk_trace_remove_sysfs(disk_to_dev(disk));
+ 	kobject_put(&disk_to_dev(disk)->kobj);
+diff --git a/block/elevator.c b/block/elevator.c
+index b0b38ce..a8d912b 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -892,7 +892,6 @@ EXPORT_SYMBOL(elv_register_queue);
+ 
+ static void __elv_unregister_queue(struct elevator_queue *e)
+ {
+-	kobject_uevent(&e->kobj, KOBJ_REMOVE);
+ 	kobject_del(&e->kobj);
+ 	e->registered = 0;
+ }
+diff --git a/drivers/base/core.c b/drivers/base/core.c
+index bc8729d..8c9af0d 100644
+--- a/drivers/base/core.c
++++ b/drivers/base/core.c
+@@ -1013,7 +1013,6 @@ done:
+  ueventattrError:
+ 	device_remove_file(dev, &uevent_attr);
+  attrError:
+-	kobject_uevent(&dev->kobj, KOBJ_REMOVE);
+ 	kobject_del(&dev->kobj);
+  Error:
+ 	cleanup_device_parent(dev);
+@@ -1132,7 +1131,6 @@ void device_del(struct device *dev)
+ 	 */
+ 	if (platform_notify_remove)
+ 		platform_notify_remove(dev);
+-	kobject_uevent(&dev->kobj, KOBJ_REMOVE);
+ 	cleanup_device_parent(dev);
+ 	kobject_del(&dev->kobj);
+ 	put_device(parent);
+diff --git a/mm/slub.c b/mm/slub.c
+index 35f351f..3c77956 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -4720,7 +4720,6 @@ static void sysfs_slab_remove(struct kmem_cache *s)
+ 		 */
+ 		return;
+ 
+-	kobject_uevent(&s->kobj, KOBJ_REMOVE);
+ 	kobject_del(&s->kobj);
+ 	kobject_put(&s->kobj);
+ }
+diff --git a/net/bridge/br_if.c b/net/bridge/br_if.c
+index 1bacca4..f20a945 100644
+--- a/net/bridge/br_if.c
++++ b/net/bridge/br_if.c
+@@ -153,7 +153,6 @@ static void del_nbp(struct net_bridge_port *p)
+ 
+ 	br_multicast_del_port(p);
+ 
+-	kobject_uevent(&p->kobj, KOBJ_REMOVE);
+ 	kobject_del(&p->kobj);
+ 
+ 	br_netpoll_disable(p);
 
-You can use dmsetup for now, I sent description how to do that to dmcrypt
-list. http://article.gmane.org/gmane.linux.kernel.device-mapper.dm-crypt/5166
-
-> I almost didn't buy a SSD due to the lack of TRIM support in
-> dm-crypt. :)
-
-TRIM is incredibly overrated:-)
-
-Milan
+--------------000508090000040508090905--
