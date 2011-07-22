@@ -1,12 +1,14 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/4] sysfs: count subdirectories
-Date: Thu, 21 Jul 2011 19:59:22 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1107211957210.19975@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 2/4] sysfs: use rb-tree for name lookups
+Date: Thu, 21 Jul 2011 20:00:24 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1107211959390.19975@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1107211957210.19975@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1107211957210.19975@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,90 +22,126 @@ To: Greg KH <gregkh@suse.de>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-sysfs: count subdirectories
+sysfs: use rb-tree for name lookups
 
-This patch introduces a subdirectory counter for each sysfs directory.
+Use red-black tree for name lookups.
 
-Without the patch, sysfs_refresh_inode would walk all entries of the directory
-to calculate the number of subdirectories.
-
-This patch improves time of "ls -la /sys/block" when there are 10000 block 
-devices from 9 seconds to 0.19 seconds.
+This patch improves time to create 10000 block devices from 120 seconds to 
+68 seconds.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- fs/sysfs/dir.c   |    6 ++++++
- fs/sysfs/inode.c |   14 +-------------
- fs/sysfs/sysfs.h |    2 ++
- 3 files changed, 9 insertions(+), 13 deletions(-)
+ fs/sysfs/dir.c   |   45 +++++++++++++++++++++++++++++++++++++++------
+ fs/sysfs/sysfs.h |    5 +++++
+ 2 files changed, 44 insertions(+), 6 deletions(-)
 
-Index: linux-3.0-rc7-fast/fs/sysfs/dir.c
-===================================================================
---- linux-3.0-rc7-fast.orig/fs/sysfs/dir.c	2011-07-18 19:43:05.000000000 +0200
-+++ linux-3.0-rc7-fast/fs/sysfs/dir.c	2011-07-18 19:45:06.000000000 +0200
-@@ -47,6 +47,9 @@ static void sysfs_link_sibling(struct sy
- 
- 	BUG_ON(sd->s_sibling);
- 
-+	if (sysfs_type(sd) == SYSFS_DIR)
-+		parent_sd->s_dir.subdirs++;
-+
- 	/* Store directory entries in order by ino.  This allows
- 	 * readdir to properly restart without having to add a
- 	 * cursor into the s_dir.children list.
-@@ -73,6 +76,9 @@ static void sysfs_unlink_sibling(struct 
- {
- 	struct sysfs_dirent **pos;
- 
-+	if (sysfs_type(sd) == SYSFS_DIR)
-+		sd->s_parent->s_dir.subdirs--;
-+
- 	for (pos = &sd->s_parent->s_dir.children; *pos;
- 	     pos = &(*pos)->s_sibling) {
- 		if (*pos == sd) {
-Index: linux-3.0-rc7-fast/fs/sysfs/inode.c
-===================================================================
---- linux-3.0-rc7-fast.orig/fs/sysfs/inode.c	2011-07-18 19:43:33.000000000 +0200
-+++ linux-3.0-rc7-fast/fs/sysfs/inode.c	2011-07-18 19:45:50.000000000 +0200
-@@ -202,18 +202,6 @@ static inline void set_inode_attr(struct
- 	inode->i_ctime = iattr->ia_ctime;
- }
- 
--static int sysfs_count_nlink(struct sysfs_dirent *sd)
--{
--	struct sysfs_dirent *child;
--	int nr = 0;
--
--	for (child = sd->s_dir.children; child; child = child->s_sibling)
--		if (sysfs_type(child) == SYSFS_DIR)
--			nr++;
--
--	return nr + 2;
--}
--
- static void sysfs_refresh_inode(struct sysfs_dirent *sd, struct inode *inode)
- {
- 	struct sysfs_inode_attrs *iattrs = sd->s_iattr;
-@@ -230,7 +218,7 @@ static void sysfs_refresh_inode(struct s
- 	}
- 
- 	if (sysfs_type(sd) == SYSFS_DIR)
--		inode->i_nlink = sysfs_count_nlink(sd);
-+		inode->i_nlink = sd->s_dir.subdirs + 2;
- }
- 
- int sysfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
 Index: linux-3.0-rc7-fast/fs/sysfs/sysfs.h
 ===================================================================
---- linux-3.0-rc7-fast.orig/fs/sysfs/sysfs.h	2011-07-18 19:42:42.000000000 +0200
-+++ linux-3.0-rc7-fast/fs/sysfs/sysfs.h	2011-07-18 19:44:28.000000000 +0200
-@@ -19,6 +19,8 @@ struct sysfs_elem_dir {
- 	struct kobject		*kobj;
- 	/* children list starts here and goes through sd->s_sibling */
+--- linux-3.0-rc7-fast.orig/fs/sysfs/sysfs.h	2011-07-18 20:06:24.000000000 +0200
++++ linux-3.0-rc7-fast/fs/sysfs/sysfs.h	2011-07-18 20:16:32.000000000 +0200
+@@ -11,6 +11,7 @@
+ #include <linux/lockdep.h>
+ #include <linux/kobject_ns.h>
+ #include <linux/fs.h>
++#include <linux/rbtree.h>
+ 
+ struct sysfs_open_dirent;
+ 
+@@ -21,6 +22,8 @@ struct sysfs_elem_dir {
  	struct sysfs_dirent	*children;
+ 
+ 	unsigned long		subdirs;
 +
-+	unsigned long		subdirs;
++	struct rb_root		name_tree;
  };
  
  struct sysfs_elem_symlink {
+@@ -61,6 +64,8 @@ struct sysfs_dirent {
+ 	struct sysfs_dirent	*s_sibling;
+ 	const char		*s_name;
+ 
++	struct rb_node		name_node;
++
+ 	const void		*s_ns; /* namespace tag */
+ 	union {
+ 		struct sysfs_elem_dir		s_dir;
+Index: linux-3.0-rc7-fast/fs/sysfs/dir.c
+===================================================================
+--- linux-3.0-rc7-fast.orig/fs/sysfs/dir.c	2011-07-18 20:06:24.000000000 +0200
++++ linux-3.0-rc7-fast/fs/sysfs/dir.c	2011-07-18 20:16:02.000000000 +0200
+@@ -45,6 +45,9 @@ static void sysfs_link_sibling(struct sy
+ 	struct sysfs_dirent *parent_sd = sd->s_parent;
+ 	struct sysfs_dirent **pos;
+ 
++	struct rb_node **p;
++	struct rb_node *parent;
++
+ 	BUG_ON(sd->s_sibling);
+ 
+ 	if (sysfs_type(sd) == SYSFS_DIR)
+@@ -60,6 +63,26 @@ static void sysfs_link_sibling(struct sy
+ 	}
+ 	sd->s_sibling = *pos;
+ 	*pos = sd;
++
++	p = &parent_sd->s_dir.name_tree.rb_node;
++	parent = NULL;
++	while (*p) {
++		int c;
++		parent = *p;
++#define node	rb_entry(parent, struct sysfs_dirent, name_node)
++		c = strcmp(sd->s_name, node->s_name);
++		if (c < 0) {
++			p = &node->name_node.rb_left;
++		} else if (c > 0) {
++			p = &node->name_node.rb_right;
++		} else {
++			printk(KERN_CRIT "sysfs: inserting duplicate filename '%s'\n", sd->s_name);
++			BUG();
++		}
++#undef node
++	}
++	rb_link_node(&sd->name_node, parent, p);
++	rb_insert_color(&sd->name_node, &parent_sd->s_dir.name_tree);
+ }
+ 
+ /**
+@@ -87,6 +110,8 @@ static void sysfs_unlink_sibling(struct 
+ 			break;
+ 		}
+ 	}
++
++	rb_erase(&sd->name_node, &sd->s_parent->s_dir.name_tree);
+ }
+ 
+ /**
+@@ -546,14 +571,22 @@ struct sysfs_dirent *sysfs_find_dirent(s
+ 				       const void *ns,
+ 				       const unsigned char *name)
+ {
+-	struct sysfs_dirent *sd;
++	struct rb_node *p = parent_sd->s_dir.name_tree.rb_node;
+ 
+-	for (sd = parent_sd->s_dir.children; sd; sd = sd->s_sibling) {
+-		if (ns && sd->s_ns && (sd->s_ns != ns))
+-			continue;
+-		if (!strcmp(sd->s_name, name))
+-			return sd;
++	while (p) {
++		int c;
++#define node	rb_entry(p, struct sysfs_dirent, name_node)
++		c = strcmp(name, node->s_name);
++		if (c < 0) {
++			p = node->name_node.rb_left;
++		} else if (c > 0) {
++			p = node->name_node.rb_right;
++		} else {
++			return node;
++		}
++#undef node
+ 	}
++
+ 	return NULL;
+ }
+ 
