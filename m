@@ -1,23 +1,52 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH -next] dm: fix dm-flakey printk warning
-Date: Fri, 22 Jul 2011 17:25:38 +0100
-Message-ID: <20110722162538.GK5632@agk-dp.fab.redhat.com>
-References: <20110721165542.7748c88a1d1e0b228c7fe3fa@canb.auug.org.au> <20110721161047.8a62d89a.rdunlap@xenotime.net>
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: Re: [PATCH] Reduce number of KOBJ_REMOVE events
+Date: Mon, 25 Jul 2011 02:18:47 +0200
+Message-ID: <1311553130.1671.21.camel@mop>
+References: <4E2987AE.2070707@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20110721161047.8a62d89a.rdunlap@xenotime.net>
-Sender: linux-raid-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@xenotime.net>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, dm-devel@redhat.com, akpm <akpm@linux-foundation.org>, linux-raid@vger.kernel.org, linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4E2987AE.2070707@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Greg KH <greg@kroah.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 21, 2011 at 04:10:47PM -0700, Randy Dunlap wrote:
-> Fix printk format warning for sector_t, which can be (unsigned)
-> long or long long.
- 
-Folded, thanks.
+On Fri, 2011-07-22 at 16:22 +0200, Zdenek Kabelac wrote:
 
-Alasdair
+> For now udev recieves 3 event for removal of DM logical volumes. (1 for
+> bdi and 2 for same block kobject). Reason is dm device generates its
+> own kobject event with approriate env parameter and block layer sends
+> another KOBJ_REMOVE event on its own unconditionaly for the same
+> kobject. As for now only the kobject cleanup checks that the REMOVE
+> event has been already sent and avoids duplicate REMOVE event.
 
+> The patch for kobject_uevent_env() which has been testing for duplicate
+> REMOVE event did not passed into the mainline (yet?):
+
+No, it's wasn't merged. Subsystems should really not send their own
+'add' or 'remove' events. These are properties of the driver core.
+
+> I'm proposing alternative way around to always use kobject cleanup
+> routine for sending REMOVE event if it was not send by the module - so
+> it makes the code few lines shorter.
+
+The events the core creates are only sent out at release() not at del(),
+so we would delay 'remove' events when we keep the device pinned but
+it's not valid anymore. We can not do that today, we would need to move
+the core-created 'remove' events to del().
+
+
+For device-mapper, I would prefer to add a '.dev_uevent' callback to the
+'block' class let this callback check 'struct block_device_operations'
+for a possibly specified '.uevent' callback and call it.
+
+Then have 'dm_blk_dops' add '.uevent' and let the core call into the dm
+code to the needed properties to the 'remove' event, instead of sending
+its own, and see the duplication.
+
+Let me know if you need more details.
+
+Thanks,
+Kay
