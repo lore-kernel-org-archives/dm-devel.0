@@ -1,85 +1,44 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH v2] Associate HBA and storage in rdac_controller to support
- partitions in storage
-Date: Wed, 27 Jul 2011 11:22:56 -0700
-Message-ID: <1311790976.3210.999.camel@chandra-lucid.beaverton.ibm.com>
-Reply-To: sekharan@us.ibm.com
+From: "Nigel Reed" <nigel@sysadmininc.com>
+Subject: Multipath and primary pathing
+Date: Wed, 27 Jul 2011 09:02:13 -0500
+Message-ID: <3a5d511695512692af65265d6f9fa159.squirrel@www.sysadmininc.com>
+Reply-To: nigel@sysadmininc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi <linux-scsi@vger.kernel.org>, James Bottomley <James.Bottomley@suse.de>
-Cc: dm-devel <dm-devel@redhat.com>, "Moger, Babu" <Babu.Moger@netapp.com>, yanling.Qi@netapp.com, "Stankey, Robert" <Robert.Stankey@netapp.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-rdac hardware handler assumes that there is one-to-one relation ship
-between the host and the controller w.r.t lun.  IOW, it does not
-support "multiple storage partitions" within a storage.
+Hi Christophe, and dev team.
 
-Example:
-HBA1 and HBA2 see lun 0 and 1 in storage A (1)
-HBA3 and HBA4 see lun 0 and 1 in storage A (2)
-HBA5 and HBA6 see lun 0 and 1 in storage A (3)
+I didn't see a mailing list so I hope you don't mind a direct email.
 
-luns 0 and 1 in (1), (2) and (3) are totally different.
+I have a customer who is using a netapp with primary and partner pathing.
+It looks like data is being sent between the two paths. The customer is
+wanting data to go down only the primary path unless it fails, then switch
+to the secondary partner path.
 
-But, rdac handler treats the lun 0s (and lun 1s) as the same when
-sending a mode select to the controller, which is wrong.
+I've tried several different configurations but cannot seem to get it to
+work.
 
-This patch makes the rdac hardware handler associate HBA and the
-storage w.r.t lun (and not the host itself).
+They're using a combination of RHEL 4.9 and 5.6 with the earliest version
+of multipath being 4.5
 
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
----
+If you can give me some help, I'd appreciate it.
 
-diff --git a/drivers/scsi/device_handler/scsi_dh_rdac.c b/drivers/scsi/device_handler/scsi_dh_rdac.c
-index f57009b..27c9d65 100644
---- a/drivers/scsi/device_handler/scsi_dh_rdac.c
-+++ b/drivers/scsi/device_handler/scsi_dh_rdac.c
-@@ -158,6 +158,7 @@ struct rdac_controller {
- 	} mode_select;
- 	u8	index;
- 	u8	array_name[ARRAY_LABEL_LEN];
-+	struct Scsi_Host	*host;
- 	spinlock_t		ms_lock;
- 	int			ms_queued;
- 	struct work_struct	ms_work;
-@@ -370,7 +371,7 @@ static void release_controller(struct kref *kref)
- }
- 
- static struct rdac_controller *get_controller(int index, char *array_name,
--						u8 *array_id)
-+			u8 *array_id, struct scsi_device *sdev)
- {
- 	struct rdac_controller *ctlr, *tmp;
- 
-@@ -378,7 +379,8 @@ static struct rdac_controller *get_controller(int index, char *array_name,
- 
- 	list_for_each_entry(tmp, &ctlr_list, node) {
- 		if ((memcmp(tmp->array_id, array_id, UNIQUE_ID_LEN) == 0) &&
--			  (tmp->index == index)) {
-+			  (tmp->index == index) &&
-+			  (tmp->host == sdev->host)) {
- 			kref_get(&tmp->kref);
- 			spin_unlock(&list_lock);
- 			return tmp;
-@@ -391,6 +393,7 @@ static struct rdac_controller *get_controller(int index, char *array_name,
- 	/* initialize fields of controller */
- 	memcpy(ctlr->array_id, array_id, UNIQUE_ID_LEN);
- 	ctlr->index = index;
-+	ctlr->host = sdev->host;
- 	memcpy(ctlr->array_name, array_name, ARRAY_LABEL_LEN);
- 
- 	kref_init(&ctlr->kref);
-@@ -513,7 +516,7 @@ static int initialize_controller(struct scsi_device *sdev,
- 			index = 0;
- 		else
- 			index = 1;
--		h->ctlr = get_controller(index, array_name, array_id);
-+		h->ctlr = get_controller(index, array_name, array_id, sdev);
- 		if (!h->ctlr)
- 			err = SCSI_DH_RES_TEMP_UNAVAIL;
- 	}
-
-
+Thanks,
+Nigel
+-- 
+Nigel Reed
