@@ -1,103 +1,101 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper patches for 3.0
-Date: Tue, 2 Aug 2011 13:52:00 +0100
-Message-ID: <20110802125200.GK31980@agk-dp.fab.redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: Review of dm-block-manager.c
+Date: Tue, 2 Aug 2011 14:07:55 +0100
+Message-ID: <20110802130755.GA26994@ubuntu>
+References: <Pine.LNX.4.64.1108011620590.9983@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Zdenek Kabelac <zkabelac@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>, Akinobu Mita <akinobu.mita@gmail.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, stable@kernel.org, Joe Perches <joe@perches.com>, Jonathan Brassow <jbrassow@redhat.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1108011620590.9983@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Please pull from:
+Hi Mikulas,
 
-  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
+Thanks for taking the time to review.
 
-to get the following device-mapper patches for inclusion in 3.0.
+On Mon, Aug 01, 2011 at 05:00:32PM -0400, Mikulas Patocka wrote:
+> Hi
+> 
+> This is review of dm-block-manager.c:
+> 
+> 
+> char buffer_cache_name[32];
+> sprintf(bm->buffer_cache_name, "dm_block_buffer-%d:%d",
+> --- it may not fit in 32 bytes.
+> 
+> 
+> __wait_block uses TASK_INTERRUPTIBLE sleep and returns error code 
+> -ERESTARTSYS if interrupted by a signal. But this error code is never 
+> checked. Consequently, if the process receives a signal, this signal will 
+> interrupt waiting, and the rest of the buffer management code will 
+> mistakenly think that the event to wait for happened.
+> This should be replaced by TASK_UNINTERRUPTIBLE sleep and functions 
+> __wait_io, __wait_unlocked, __wait_read_lockable, __wait_all_writes, 
+> __wait_all_io, __wait_clean be changed to return void (because their 
+> return code is never checked anyway).
 
-The main enhancement this time is further integration with the md code, with
-raid1 now supported.  Patches making use of this will shortly go into userspace
-LVM, so it'll be possible to create Logical Volumes using the md raid
-implementations.
+ok.  Sounds simple.
 
-(I had hoped to include the new thin provisioning target in this pull
-request, but I'm holding it back in linux-next for now because of some
-unresolved reports of data corruption.)
+> The code uses only a spinlock to protect it state. When the spinlock is 
+> dropped (for example during wait), the buffer may have been reused for 
+> other purposes, but it is not checked. There is a comment "/* FIXME: Can b 
+> have been recycled between io completion and here? */" indicating that Joe 
+> is aware of the problem.
 
-Akinobu Mita (1):
-      dm log: clean up bit little endian bitops
+Yep.
 
-Alasdair G Kergon (4):
-      dm: fix idr leak on module removal
-      dm: suppress endian warnings
-      dm ioctl: prevent empty message
-      dm raid: tidy includes
+> b->write_lock_pending++;
+> __wait_unlocked(b, &flags);
+> b->write_lock_pending--;
+> if (b->where != block)
+>         goto retry;
+> If the buffer was reused while we were waiting, b->write_lock_pending was 
+> already reset to zero (in __transition BS_EMPTY). We decrement it to 
+> 0xffffffff.
 
-Joe Perches (1):
-      dm: use vzalloc
+Sounds like the same block recycling issue.
 
-Jonathan Brassow (7):
-      dm snapshot: style cleanups
-      dm raid: cleanup parameter handling
-      dm raid: improve table parameters documentation
-      dm raid: add region_size parameter
-      dm raid: add write_mostly parameter
-      dm raid: support metadata devices
-      dm raid: add md raid1 support
+> Error buffers are linked in error_list and this list is only flushed at a 
+> specific case (in __wait_flush). If there are many i/o errors (for 
+> example, the disk is unplugged) and __wait_flush is not called 
+> sufficiently often, all existing buffers will be moved to error_list and 
+> then the code deadlocks as there would be no empty or clean buffers.
 
-Kirill A. Shutemov (1):
-      dm log: userspace use list_move
+Ouch.
 
-Mike Snitzer (9):
-      dm mpath: fix potential NULL pointer in feature arg processing
-      dm table: fix discard support
-      dm table: clean dm_get_device and move exports
-      dm table: share target argument parsing functions
-      dm flakey: use dm_target_offset and support discards
-      dm flakey: support feature args
-      dm flakey: add drop_writes
-      dm flakey: add corrupt_bio_byte feature
-      dm table: set flush capability based on underlying devices
 
-Mikulas Patocka (10):
-      dm snapshot: flush disk cache when merging
-      dm io: flush cpu cache with vmapped io
-      dm kcopyd: remove offset field from job structure
-      dm kcopyd: remove nr_pages field from job structure
-      dm snapshot: remove unused definitions
-      dm: ignore merge_bvec for snapshots when safe
-      dm snapshot: skip reading origin when overwriting complete chunk
-      dm ioctl: fill in device parameters in more ioctls
-      dm ioctl: introduce __get_dev_cell
-      dm ioctl: forbid multiple device specifiers
+> The code uses fixed-size cache of 4096 buffers and a single process may 
+> hold more than one buffer. This may deadlock in case of massive 
+> parallelism --- for example, imagine that 4096 processes come 
+> concurrently, each process requesting two buffers --- each process 
+> allocates one buffer and then a deadlock happens, each process is waiting 
+> for some free buffer that never comes. (this bug existed already the last 
+> year when I looked at the code)
 
-Milan Broz (1):
-      dm crypt: optionally support discard requests
+There isn't that degree of parallelism.  We can't have multiple
+threads pulling the cache in different directions for performance
+reasons.  So we have multiple threads that use this in a non-blocking
+mode.  ie. they use the try_lock variants, and only get the data if
+it's already available in the cache.  If the non-blocking requests
+failed then it gets passed across for a worker thread to deal with.
+This is the only thread that updates the cache.  There is no issue
+here.
 
- Documentation/device-mapper/dm-crypt.txt  |   21 +-
- Documentation/device-mapper/dm-flakey.txt |   48 ++-
- Documentation/device-mapper/dm-raid.txt   |  138 ++++---
- drivers/md/Kconfig                        |    5 +-
- drivers/md/dm-crypt.c                     |   62 +++-
- drivers/md/dm-flakey.c                    |  270 +++++++++++--
- drivers/md/dm-io.c                        |   29 ++-
- drivers/md/dm-ioctl.c                     |   89 +++--
- drivers/md/dm-kcopyd.c                    |   42 ++-
- drivers/md/dm-log-userspace-base.c        |    3 +-
- drivers/md/dm-log.c                       |   32 +-
- drivers/md/dm-mpath.c                     |  147 ++-----
- drivers/md/dm-raid.c                      |  621 ++++++++++++++++++++++++++---
- drivers/md/dm-snap-persistent.c           |   80 ++--
- drivers/md/dm-snap.c                      |   84 +++-
- drivers/md/dm-table.c                     |  155 ++++++--
- drivers/md/dm.c                           |   75 ++++-
- drivers/md/dm.h                           |    2 +
- include/linux/device-mapper.h             |   43 ++
- include/linux/dm-ioctl.h                  |    4 +-
- include/linux/dm-kcopyd.h                 |   15 +
- 21 files changed, 1561 insertions(+), 404 deletions(-)
+Fancy digging through the btree next?  Or submitting patches for the
+above?
 
-Thanks,
-Alasdair.
+- Joe
