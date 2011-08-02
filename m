@@ -1,16 +1,16 @@
 From: Joe Thornber <ejt@redhat.com>
-Subject: [PATCH 2/4] Fix a race between reading a new block and
-	having it recycled.
-Date: Tue,  2 Aug 2011 15:36:46 +0100
-Message-ID: <1312295808-4323-2-git-send-email-ejt@redhat.com>
+Subject: [PATCH 1/4] The return code from the various wait
+	functions is never acted upon. So change to uninterrupible
+	waits and change the return type to void.
+Date: Tue,  2 Aug 2011 15:36:45 +0100
+Message-ID: <1312295808-4323-1-git-send-email-ejt@redhat.com>
 References: <Pine.LNX.4.64.1108011620590.9983@hs20-bc2-1.build.redhat.com>
-	<1312295808-4323-1-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1312295808-4323-1-git-send-email-ejt@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1108011620590.9983@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,33 +25,88 @@ Cc: dm-devel@redhat.com, Joe Thornber <ejt@redhat.com>
 List-Id: dm-devel.ids
 
 ---
- drivers/md/persistent-data/dm-block-manager.c |    7 ++++++-
- 1 files changed, 6 insertions(+), 1 deletions(-)
+ drivers/md/persistent-data/dm-block-manager.c |   23 +++++++----------------
+ 1 files changed, 7 insertions(+), 16 deletions(-)
 
 diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
-index c9fb132..b68be88 100644
+index 4e2f240..c9fb132 100644
 --- a/drivers/md/persistent-data/dm-block-manager.c
 +++ b/drivers/md/persistent-data/dm-block-manager.c
-@@ -447,6 +447,7 @@ static int recycle_block(struct dm_block_manager *bm, dm_block_t where,
- 	 * Wait for a block to appear on the empty or clean lists.
- 	 */
- 	spin_lock_irqsave(&bm->lock, flags);
-+retry:
- 	while (1) {
- 		/*
- 		 * Once we can lock and do io concurrently then we should
-@@ -486,7 +487,11 @@ static int recycle_block(struct dm_block_manager *bm, dm_block_t where,
- 		spin_lock_irqsave(&bm->lock, flags);
- 		__wait_io(b, &flags);
+@@ -371,46 +371,37 @@ static void __clear_errors(struct dm_block_manager *bm)
  
--		/* FIXME: Can b have been recycled between io completion and here? */
-+		/*
-+		 * Has b been recycled whilst we were unlocked?
-+		 */
-+		if (b->where != where)
-+			goto retry;
+ #define __wait_block(wq, lock, flags, sched_fn, condition)	\
+ do {								\
+-	int r = 0;						\
+-								\
+ 	DEFINE_WAIT(wait);					\
+ 	add_wait_queue(wq, &wait);				\
+ 								\
+ 	for (;;) {						\
+-		prepare_to_wait(wq, &wait, TASK_INTERRUPTIBLE); \
++		prepare_to_wait(wq, &wait, TASK_UNINTERRUPTIBLE); \
+ 		if (condition)					\
+ 			break;					\
+ 								\
+ 		spin_unlock_irqrestore(lock, flags);		\
+-		if (signal_pending(current)) {			\
+-			r = -ERESTARTSYS;			\
+-			spin_lock_irqsave(lock, flags);		\
+-			break;					\
+-		}						\
+-								\
+ 		sched_fn();					\
+ 		spin_lock_irqsave(lock, flags);			\
+ 	}							\
+ 								\
+ 	finish_wait(wq, &wait);					\
+-	return r;						\
+ } while (0)
  
- 		/*
- 		 * Did the io succeed?
+-static int __wait_io(struct dm_block *b, unsigned long *flags)
++static void __wait_io(struct dm_block *b, unsigned long *flags)
+ 	__retains(&b->bm->lock)
+ {
+ 	__wait_block(&b->io_q, &b->bm->lock, *flags, io_schedule,
+ 		     ((b->state != BS_READING) && (b->state != BS_WRITING)));
+ }
+ 
+-static int __wait_unlocked(struct dm_block *b, unsigned long *flags)
++static void __wait_unlocked(struct dm_block *b, unsigned long *flags)
+ 	__retains(&b->bm->lock)
+ {
+ 	__wait_block(&b->io_q, &b->bm->lock, *flags, schedule,
+ 		     ((b->state == BS_CLEAN) || (b->state == BS_DIRTY)));
+ }
+ 
+-static int __wait_read_lockable(struct dm_block *b, unsigned long *flags)
++static void __wait_read_lockable(struct dm_block *b, unsigned long *flags)
+ 	__retains(&b->bm->lock)
+ {
+ 	__wait_block(&b->io_q, &b->bm->lock, *flags, schedule,
+@@ -419,21 +410,21 @@ static int __wait_read_lockable(struct dm_block *b, unsigned long *flags)
+ 						 b->state == BS_READ_LOCKED)));
+ }
+ 
+-static int __wait_all_writes(struct dm_block_manager *bm, unsigned long *flags)
++static void __wait_all_writes(struct dm_block_manager *bm, unsigned long *flags)
+ 	__retains(&bm->lock)
+ {
+ 	__wait_block(&bm->io_q, &bm->lock, *flags, io_schedule,
+ 		     !bm->writing_count);
+ }
+ 
+-static int __wait_all_io(struct dm_block_manager *bm, unsigned long *flags)
++static void __wait_all_io(struct dm_block_manager *bm, unsigned long *flags)
+ 	__retains(&bm->lock)
+ {
+ 	__wait_block(&bm->io_q, &bm->lock, *flags, io_schedule,
+ 		     !bm->writing_count && !bm->reading_count);
+ }
+ 
+-static int __wait_clean(struct dm_block_manager *bm, unsigned long *flags)
++static void __wait_clean(struct dm_block_manager *bm, unsigned long *flags)
+ 	__retains(&bm->lock)
+ {
+ 	__wait_block(&bm->io_q, &bm->lock, *flags, io_schedule,
 -- 
 1.7.4.1
