@@ -1,48 +1,103 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Review of dm-block-manager.c
-Date: Mon, 1 Aug 2011 20:30:01 -0400
-Message-ID: <20110802003000.GA12432@redhat.com>
-References: <Pine.LNX.4.64.1108011620590.9983@hs20-bc2-1.build.redhat.com>
-	<20110801211729.GA11406@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper patches for 3.0
+Date: Tue, 2 Aug 2011 13:52:00 +0100
+Message-ID: <20110802125200.GK31980@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20110801211729.GA11406@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Zdenek Kabelac <zkabelac@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>, Akinobu Mita <akinobu.mita@gmail.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, stable@kernel.org, Joe Perches <joe@perches.com>, Jonathan Brassow <jbrassow@redhat.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, Mike Snitzer <snitzer@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 01 2011 at  5:17pm -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+Please pull from:
 
-> On Mon, Aug 01 2011 at  5:00pm -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > Hi
-> > 
-> > This is review of dm-block-manager.c:
-> > 
-> > 
-> > char buffer_cache_name[32];
-> > sprintf(bm->buffer_cache_name, "dm_block_buffer-%d:%d",
-> > --- it may not fit in 32 bytes.
-> 
-> It can accomodate nearly 1 trillion DM devices:
-> 
-> dm_block_buffer-253:9999999999
+  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
 
-Um, not nearly 1 trillion... no idea how I got that ;)
+to get the following device-mapper patches for inclusion in 3.0.
 
-(it's a moot point anyway).
+The main enhancement this time is further integration with the md code, with
+raid1 now supported.  Patches making use of this will shortly go into userspace
+LVM, so it'll be possible to create Logical Volumes using the md raid
+implementations.
+
+(I had hoped to include the new thin provisioning target in this pull
+request, but I'm holding it back in linux-next for now because of some
+unresolved reports of data corruption.)
+
+Akinobu Mita (1):
+      dm log: clean up bit little endian bitops
+
+Alasdair G Kergon (4):
+      dm: fix idr leak on module removal
+      dm: suppress endian warnings
+      dm ioctl: prevent empty message
+      dm raid: tidy includes
+
+Joe Perches (1):
+      dm: use vzalloc
+
+Jonathan Brassow (7):
+      dm snapshot: style cleanups
+      dm raid: cleanup parameter handling
+      dm raid: improve table parameters documentation
+      dm raid: add region_size parameter
+      dm raid: add write_mostly parameter
+      dm raid: support metadata devices
+      dm raid: add md raid1 support
+
+Kirill A. Shutemov (1):
+      dm log: userspace use list_move
+
+Mike Snitzer (9):
+      dm mpath: fix potential NULL pointer in feature arg processing
+      dm table: fix discard support
+      dm table: clean dm_get_device and move exports
+      dm table: share target argument parsing functions
+      dm flakey: use dm_target_offset and support discards
+      dm flakey: support feature args
+      dm flakey: add drop_writes
+      dm flakey: add corrupt_bio_byte feature
+      dm table: set flush capability based on underlying devices
+
+Mikulas Patocka (10):
+      dm snapshot: flush disk cache when merging
+      dm io: flush cpu cache with vmapped io
+      dm kcopyd: remove offset field from job structure
+      dm kcopyd: remove nr_pages field from job structure
+      dm snapshot: remove unused definitions
+      dm: ignore merge_bvec for snapshots when safe
+      dm snapshot: skip reading origin when overwriting complete chunk
+      dm ioctl: fill in device parameters in more ioctls
+      dm ioctl: introduce __get_dev_cell
+      dm ioctl: forbid multiple device specifiers
+
+Milan Broz (1):
+      dm crypt: optionally support discard requests
+
+ Documentation/device-mapper/dm-crypt.txt  |   21 +-
+ Documentation/device-mapper/dm-flakey.txt |   48 ++-
+ Documentation/device-mapper/dm-raid.txt   |  138 ++++---
+ drivers/md/Kconfig                        |    5 +-
+ drivers/md/dm-crypt.c                     |   62 +++-
+ drivers/md/dm-flakey.c                    |  270 +++++++++++--
+ drivers/md/dm-io.c                        |   29 ++-
+ drivers/md/dm-ioctl.c                     |   89 +++--
+ drivers/md/dm-kcopyd.c                    |   42 ++-
+ drivers/md/dm-log-userspace-base.c        |    3 +-
+ drivers/md/dm-log.c                       |   32 +-
+ drivers/md/dm-mpath.c                     |  147 ++-----
+ drivers/md/dm-raid.c                      |  621 ++++++++++++++++++++++++++---
+ drivers/md/dm-snap-persistent.c           |   80 ++--
+ drivers/md/dm-snap.c                      |   84 +++-
+ drivers/md/dm-table.c                     |  155 ++++++--
+ drivers/md/dm.c                           |   75 ++++-
+ drivers/md/dm.h                           |    2 +
+ include/linux/device-mapper.h             |   43 ++
+ include/linux/dm-ioctl.h                  |    4 +-
+ include/linux/dm-kcopyd.h                 |   15 +
+ 21 files changed, 1561 insertions(+), 404 deletions(-)
+
+Thanks,
+Alasdair.
