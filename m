@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: Review of dm-block-manager.c
-Date: Mon, 1 Aug 2011 20:15:40 -0400
-Message-ID: <20110802001539.GA12355@redhat.com>
+Date: Mon, 1 Aug 2011 20:30:01 -0400
+Message-ID: <20110802003000.GA12432@redhat.com>
 References: <Pine.LNX.4.64.1108011620590.9983@hs20-bc2-1.build.redhat.com>
 	<20110801211729.GA11406@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -43,5 +43,6 @@ Mike Snitzer <snitzer@redhat.com> wrote:
 > 
 > dm_block_buffer-253:9999999999
 
-But more importantly, as agk pointed out to me, it will work with
-maximum maj=2^12 min=2^20
+Um, not nearly 1 trillion... no idea how I got that ;)
+
+(it's a moot point anyway).
