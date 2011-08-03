@@ -1,17 +1,16 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 2/4] Fix a race between reading a new block
- and having it recycled.
-Date: Wed, 3 Aug 2011 10:53:43 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1108031053260.28467@hs20-bc2-1.build.redhat.com>
+Subject: Re: [PATCH 4/4] Track errored blocks
+Date: Wed, 3 Aug 2011 11:00:12 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1108031057580.28467@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.1108011620590.9983@hs20-bc2-1.build.redhat.com>
 	<1312295808-4323-1-git-send-email-ejt@redhat.com>
-	<1312295808-4323-2-git-send-email-ejt@redhat.com>
+	<1312295808-4323-4-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1312295808-4323-2-git-send-email-ejt@redhat.com>
+In-Reply-To: <1312295808-4323-4-git-send-email-ejt@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,39 +26,154 @@ List-Id: dm-devel.ids
 
 Ack.
 
+BTW. I found another quirk in recycle_block:
+if (b->state == BS_ERROR) {
+	__transition(b, BS_EMPTY);
+	r = -EIO;
+}
+if (b->validator) {
+	r = b->validator->check(b->validator, b, bm->block_size);
+	...
+}
+
+--- I think errorneous buffers should not be validated, change it to
+"if (!r && b->validator)"
+
 Mikulas
 
 On Tue, 2 Aug 2011, Joe Thornber wrote:
 
-> ---
->  drivers/md/persistent-data/dm-block-manager.c |    7 ++++++-
->  1 files changed, 6 insertions(+), 1 deletions(-)
+> i) Keep track of how many blocks are in the error state.
 > 
+> ii) Make the client pass in the max number of held locks by a thread
+> at any one time.
+> 
+> iii) Change recycle_block to give up if there are too many in error
+> state.
+> ---
+>  drivers/md/dm-thin-metadata.c                 |    2 +-
+>  drivers/md/persistent-data/dm-block-manager.c |   24 +++++++++++++++++++++---
+>  drivers/md/persistent-data/dm-block-manager.h |    9 ++++++++-
+>  3 files changed, 30 insertions(+), 5 deletions(-)
+> 
+> diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+> index f3b8825..4c9470a 100644
+> --- a/drivers/md/dm-thin-metadata.c
+> +++ b/drivers/md/dm-thin-metadata.c
+> @@ -561,7 +561,7 @@ struct dm_pool_metadata *dm_pool_metadata_open(struct block_device *bdev,
+>  	int create;
+>  
+>  	bm = dm_block_manager_create(bdev, THIN_METADATA_BLOCK_SIZE,
+> -				     THIN_METADATA_CACHE_SIZE);
+> +				     THIN_METADATA_CACHE_SIZE, 3);
+>  	if (!bm) {
+>  		DMERR("could not create block manager");
+>  		return ERR_PTR(-ENOMEM);
 > diff --git a/drivers/md/persistent-data/dm-block-manager.c b/drivers/md/persistent-data/dm-block-manager.c
-> index c9fb132..b68be88 100644
+> index d27ab6e..dd22ef2 100644
 > --- a/drivers/md/persistent-data/dm-block-manager.c
 > +++ b/drivers/md/persistent-data/dm-block-manager.c
-> @@ -447,6 +447,7 @@ static int recycle_block(struct dm_block_manager *bm, dm_block_t where,
->  	 * Wait for a block to appear on the empty or clean lists.
+> @@ -58,7 +58,8 @@ struct dm_block {
+>  
+>  struct dm_block_manager {
+>  	struct block_device *bdev;
+> -	unsigned cache_size;	/* In bytes */
+> +	unsigned cache_size;
+> +	unsigned max_held_per_thread;
+>  	unsigned block_size;	/* In bytes */
+>  	dm_block_t nr_blocks;
+>  
+> @@ -74,6 +75,7 @@ struct dm_block_manager {
 >  	 */
->  	spin_lock_irqsave(&bm->lock, flags);
-> +retry:
+>  	spinlock_t lock;
+>  
+> +	unsigned error_count;
+>  	unsigned available_count;
+>  	unsigned reading_count;
+>  	unsigned writing_count;
+> @@ -161,8 +163,10 @@ static void __transition(struct dm_block *b, enum dm_block_state new_state)
+>  		b->io_flags = 0;
+>  		b->validator = NULL;
+>  
+> -		if (b->state == BS_ERROR)
+> +		if (b->state == BS_ERROR) {
+> +			bm->error_count--;
+>  			bm->available_count++;
+> +		}
+>  		break;
+>  
+>  	case BS_CLEAN:
+> @@ -244,6 +248,7 @@ static void __transition(struct dm_block *b, enum dm_block_state new_state)
+>  		/* DOT: reading -> error */
+>  		BUG_ON(!((b->state == BS_WRITING) ||
+>  			 (b->state == BS_READING)));
+> +		bm->error_count++;
+>  		list_add_tail(&b->list, &bm->error_list);
+>  		break;
+>  	}
+> @@ -450,6 +455,16 @@ static int recycle_block(struct dm_block_manager *bm, dm_block_t where,
+>  retry:
 >  	while (1) {
 >  		/*
->  		 * Once we can lock and do io concurrently then we should
-> @@ -486,7 +487,11 @@ static int recycle_block(struct dm_block_manager *bm, dm_block_t where,
->  		spin_lock_irqsave(&bm->lock, flags);
->  		__wait_io(b, &flags);
->  
-> -		/* FIXME: Can b have been recycled between io completion and here? */
-> +		/*
-> +		 * Has b been recycled whilst we were unlocked?
+> +		 * The calling thread may hold some locks on blocks, and
+> +		 * the rest be errored.  In which case we're never going to
+> +		 * succeed here.
 > +		 */
-> +		if (b->where != where)
-> +			goto retry;
+> +		if (bm->error_count == bm->cache_size - bm->max_held_per_thread) {
+> +			spin_unlock_irqrestore(&bm->lock, flags);
+> +			return -ENOMEM;
+> +		}
+> +
+> +		/*
+>  		 * Once we can lock and do io concurrently then we should
+>  		 * probably flush at bm->cache_size / 2 and write _all_
+>  		 * dirty blocks.
+> @@ -599,7 +614,8 @@ static unsigned calc_hash_size(unsigned cache_size)
 >  
->  		/*
->  		 * Did the io succeed?
+>  struct dm_block_manager *dm_block_manager_create(struct block_device *bdev,
+>  						 unsigned block_size,
+> -						 unsigned cache_size)
+> +						 unsigned cache_size,
+> +						 unsigned max_held_per_thread)
+>  {
+>  	unsigned i;
+>  	unsigned hash_size = calc_hash_size(cache_size);
+> @@ -613,6 +629,7 @@ struct dm_block_manager *dm_block_manager_create(struct block_device *bdev,
+>  
+>  	bm->bdev = bdev;
+>  	bm->cache_size = max(MAX_CACHE_SIZE, cache_size);
+> +	bm->max_held_per_thread = max_held_per_thread;
+>  	bm->block_size = block_size;
+>  	bm->nr_blocks = i_size_read(bdev->bd_inode);
+>  	do_div(bm->nr_blocks, block_size);
+> @@ -623,6 +640,7 @@ struct dm_block_manager *dm_block_manager_create(struct block_device *bdev,
+>  	INIT_LIST_HEAD(&bm->clean_list);
+>  	INIT_LIST_HEAD(&bm->dirty_list);
+>  	INIT_LIST_HEAD(&bm->error_list);
+> +	bm->error_count = 0;
+>  	bm->available_count = 0;
+>  	bm->reading_count = 0;
+>  	bm->writing_count = 0;
+> diff --git a/drivers/md/persistent-data/dm-block-manager.h b/drivers/md/persistent-data/dm-block-manager.h
+> index ebea2d5..38c49c7 100644
+> --- a/drivers/md/persistent-data/dm-block-manager.h
+> +++ b/drivers/md/persistent-data/dm-block-manager.h
+> @@ -37,7 +37,14 @@ static inline uint32_t dm_block_csum_data(const void *data_le, unsigned length)
+>  /*----------------------------------------------------------------*/
+>  
+>  struct dm_block_manager;
+> -struct dm_block_manager *dm_block_manager_create(struct block_device *bdev, unsigned block_size, unsigned cache_size);
+> +
+> +/*
+> + * @max_held_per_thread should be the maximum number of locks, read or
+> + * write, that an individual thread holds at any one time.
+> + */
+> +struct dm_block_manager *dm_block_manager_create(
+> +	struct block_device *bdev, unsigned block_size,
+> +	unsigned cache_size, unsigned max_held_per_thread);
+>  void dm_block_manager_destroy(struct dm_block_manager *bm);
+>  
+>  unsigned dm_bm_block_size(struct dm_block_manager *bm);
 > -- 
 > 1.7.4.1
 > 
