@@ -1,7 +1,7 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-thin: Fix deadlock with unknown device id
-Date: Thu, 4 Aug 2011 11:35:30 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1108041134590.29961@hs20-bc2-1.build.redhat.com>
+From: Namhyung Kim <namhyung@gmail.com>
+Subject: [PATCH] dm: use local ratelimit state for *_LIMIT()
+Date: Wed,  3 Aug 2011 23:23:46 +0900
+Message-ID: <1312381426-24386-1-git-send-email-namhyung@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,40 +16,103 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Edward Thornber <thornber@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-dm-thin: Fix deadlock with unknown device id
+printk_ratelimit() shares global ratelimiting state with all
+other subsystems, so its usage is discouraged. Instead,
+define and use dm's local state.
 
-If dm-thin device is created with unknown device id, the code calls
-dm_put(pool_md) twice. As a consequence, the reference count underflows
-and causes deadlock on device removal.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
+Signed-off-by: Namhyung Kim <namhyung@gmail.com>
 ---
- drivers/md/dm-thin.c |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/md/dm.c               |   10 ++++++++++
+ include/linux/device-mapper.h |   17 +++++++++++++----
+ 2 files changed, 23 insertions(+), 4 deletions(-)
 
-Index: linux-3.0-fast/drivers/md/dm-thin.c
-===================================================================
---- linux-3.0-fast.orig/drivers/md/dm-thin.c	2011-08-04 17:31:16.000000000 +0200
-+++ linux-3.0-fast/drivers/md/dm-thin.c	2011-08-04 17:31:26.000000000 +0200
-@@ -2031,7 +2031,6 @@ static int thin_ctr(struct dm_target *ti
- 		goto bad_pool_lookup;
- 	}
- 	pool_inc(tc->pool);
--	dm_put(pool_md);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 0cf68b478878..29ba355ea91d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -25,6 +25,16 @@
  
- 	r = dm_pool_open_thin_device(tc->pool->pmd, tc->dev_id, &tc->td);
- 	if (r) {
-@@ -2044,6 +2043,8 @@ static int thin_ctr(struct dm_target *ti
- 	ti->num_discard_requests = 0;
- 	ti->discards_supported = 0;
+ #define DM_MSG_PREFIX "core"
  
-+	dm_put(pool_md);
++#ifdef CONFIG_PRINTK
++/*
++ * ratelimit state to be used in DMXXX_LIMIT().
++ */
++DEFINE_RATELIMIT_STATE(dm_ratelimit_state,
++		       DEFAULT_RATELIMIT_INTERVAL,
++		       DEFAULT_RATELIMIT_BURST);
++EXPORT_SYMBOL(dm_ratelimit_state);
++#endif
 +
- 	return 0;
+ /*
+  * Cookies are numeric values sent with CHANGE and REMOVE
+  * uevents while resuming, removing or renaming the device.
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 4427e0454051..7dcab5d29223 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -10,6 +10,7 @@
  
- bad_thin_open:
+ #include <linux/bio.h>
+ #include <linux/blkdev.h>
++#include <linux/ratelimit.h>
+ 
+ struct dm_dev;
+ struct dm_target;
+@@ -327,6 +328,14 @@ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size);
+  *---------------------------------------------------------------*/
+ #define DM_NAME "device-mapper"
+ 
++#ifdef CONFIG_PRINTK
++extern struct ratelimit_state dm_ratelimit_state;
++
++#define dm_ratelimit()	__ratelimit(&dm_ratelimit_state)
++#else
++#define dm_ratelimit()	0
++#endif
++
+ #define DMCRIT(f, arg...) \
+ 	printk(KERN_CRIT DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+ 
+@@ -334,7 +343,7 @@ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size);
+ 	printk(KERN_ERR DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+ #define DMERR_LIMIT(f, arg...) \
+ 	do { \
+-		if (printk_ratelimit())	\
++		if (dm_ratelimit())	\
+ 			printk(KERN_ERR DM_NAME ": " DM_MSG_PREFIX ": " \
+ 			       f "\n", ## arg); \
+ 	} while (0)
+@@ -343,7 +352,7 @@ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size);
+ 	printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+ #define DMWARN_LIMIT(f, arg...) \
+ 	do { \
+-		if (printk_ratelimit())	\
++		if (dm_ratelimit())	\
+ 			printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " \
+ 			       f "\n", ## arg); \
+ 	} while (0)
+@@ -352,7 +361,7 @@ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size);
+ 	printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+ #define DMINFO_LIMIT(f, arg...) \
+ 	do { \
+-		if (printk_ratelimit())	\
++		if (dm_ratelimit())	\
+ 			printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f \
+ 			       "\n", ## arg); \
+ 	} while (0)
+@@ -362,7 +371,7 @@ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size);
+ 	printk(KERN_DEBUG DM_NAME ": " DM_MSG_PREFIX " DEBUG: " f "\n", ## arg)
+ #  define DMDEBUG_LIMIT(f, arg...) \
+ 	do { \
+-		if (printk_ratelimit())	\
++		if (dm_ratelimit())	\
+ 			printk(KERN_DEBUG DM_NAME ": " DM_MSG_PREFIX ": " f \
+ 			       "\n", ## arg); \
+ 	} while (0)
+-- 
+1.7.6
