@@ -1,7 +1,8 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] dm-thinp: check allocation failure
-Date: Thu, 4 Aug 2011 12:09:01 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1108041208160.2419@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm table: fix potential NULL pointer in
+	dm_table_set_integrity
+Date: Thu,  4 Aug 2011 17:34:45 -0400
+Message-ID: <1312493685-8052-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,30 +17,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Edward Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-dm-thinp: check allocation failure
+Commit a63a5cf (dm: improve block integrity support) introduced a
+two-phase initialization of a DM device's integrity profile.  The
+dm_table_set_integrity() call to blk_integrity_register() may deference
+a NULL 'template_disk' due to an integrity profile mismatch.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+An integrity profile mismatch can occur if the integrity profile for
+devices in a DM table are changed between the call to
+dm_table_prealloc_integrity() and dm_table_set_integrity() (possible
+via table loads for stacked DM devices with integrity profiles).
 
+Reported-by: Zdenek Kabelac <zkabelac@redhat.com> (coverity run)
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Cc: stable@kernel.org # >= 2.6.39.y
 ---
- drivers/md/dm-thin.c |    4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/md/dm-table.c |   13 +++++++------
+ 1 files changed, 7 insertions(+), 6 deletions(-)
 
-Index: linux-3.0-fast/drivers/md/dm-thin.c
-===================================================================
---- linux-3.0-fast.orig/drivers/md/dm-thin.c	2011-08-04 18:07:18.000000000 +0200
-+++ linux-3.0-fast/drivers/md/dm-thin.c	2011-08-04 18:07:37.000000000 +0200
-@@ -160,6 +160,10 @@ static struct bio_prison *prison_create(
- 	spin_lock_init(&prison->lock);
- 	prison->cell_pool = mempool_create_kmalloc_pool(nr_cells,
- 							sizeof(struct cell));
-+	if (!prison->cell_pool) {
-+		kfree(prison);
-+		return NULL;
-+	}
- 	prison->nr_buckets = nr_buckets;
- 	prison->hash_mask = nr_buckets - 1;
- 	prison->cells = (struct hlist_head *) (prison + 1);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 5e8e2f3..6cd8d95 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1260,14 +1260,15 @@ static void dm_table_set_integrity(struct dm_table *t)
+ 		return;
+ 
+ 	template_disk = dm_table_get_integrity_disk(t, true);
+-	if (!template_disk &&
+-	    blk_integrity_is_initialized(dm_disk(t->md))) {
++	if (template_disk)
++		blk_integrity_register(dm_disk(t->md),
++				       blk_get_integrity(template_disk));
++	else if (blk_integrity_is_initialized(dm_disk(t->md)))
+ 		DMWARN("%s: device no longer has a valid integrity profile",
+ 		       dm_device_name(t->md));
+-		return;
+-	}
+-	blk_integrity_register(dm_disk(t->md),
+-			       blk_get_integrity(template_disk));
++	else
++		DMWARN("%s: unable to establish an integrity profile",
++		       dm_device_name(t->md));
+ }
+ 
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+-- 
+1.7.4.4
