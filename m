@@ -1,8 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm table: fix potential NULL pointer in
-	dm_table_set_integrity
-Date: Thu,  4 Aug 2011 17:34:45 -0400
-Message-ID: <1312493685-8052-1-git-send-email-snitzer@redhat.com>
+Subject: [PATCH] dm flakey: fix corrupt_bio_byte error path
+Date: Thu,  4 Aug 2011 18:06:41 -0400
+Message-ID: <1312495601-8261-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,48 +20,30 @@ To: dm-devel@redhat.com
 Cc: snitzer@redhat.com
 List-Id: dm-devel.ids
 
-Commit a63a5cf (dm: improve block integrity support) introduced a
-two-phase initialization of a DM device's integrity profile.  The
-dm_table_set_integrity() call to blk_integrity_register() may deference
-a NULL 'template_disk' due to an integrity profile mismatch.
-
-An integrity profile mismatch can occur if the integrity profile for
-devices in a DM table are changed between the call to
-dm_table_prealloc_integrity() and dm_table_set_integrity() (possible
-via table loads for stacked DM devices with integrity profiles).
+If no arguments were provided to the corrupt_bio_byte feature an error
+should be returned immediately.
 
 Reported-by: Zdenek Kabelac <zkabelac@redhat.com> (coverity run)
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Cc: stable@kernel.org # >= 2.6.39.y
 ---
- drivers/md/dm-table.c |   13 +++++++------
- 1 files changed, 7 insertions(+), 6 deletions(-)
+ drivers/md/dm-flakey.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 5e8e2f3..6cd8d95 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1260,14 +1260,15 @@ static void dm_table_set_integrity(struct dm_table *t)
- 		return;
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 89f73ca..f84c080 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -81,8 +81,10 @@ static int parse_features(struct dm_arg_set *as, struct flakey_c *fc,
+ 		 * corrupt_bio_byte <Nth_byte> <direction> <value> <bio_flags>
+ 		 */
+ 		if (!strcasecmp(arg_name, "corrupt_bio_byte")) {
+-			if (!argc)
++			if (!argc) {
+ 				ti->error = "Feature corrupt_bio_byte requires parameters";
++				return -EINVAL;
++			}
  
- 	template_disk = dm_table_get_integrity_disk(t, true);
--	if (!template_disk &&
--	    blk_integrity_is_initialized(dm_disk(t->md))) {
-+	if (template_disk)
-+		blk_integrity_register(dm_disk(t->md),
-+				       blk_get_integrity(template_disk));
-+	else if (blk_integrity_is_initialized(dm_disk(t->md)))
- 		DMWARN("%s: device no longer has a valid integrity profile",
- 		       dm_device_name(t->md));
--		return;
--	}
--	blk_integrity_register(dm_disk(t->md),
--			       blk_get_integrity(template_disk));
-+	else
-+		DMWARN("%s: unable to establish an integrity profile",
-+		       dm_device_name(t->md));
- }
- 
- void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 			r = dm_read_arg(_args + 1, as, &fc->corrupt_bio_byte, &ti->error);
+ 			if (r)
 -- 
 1.7.4.4
