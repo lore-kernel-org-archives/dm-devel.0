@@ -1,7 +1,7 @@
-From: jbrassow@redhat.com
-Subject: [PATCH] DM RAID: Fix off-by-one comparison.
-Date: Mon,  8 Aug 2011 14:29:17 -0500
-Message-ID: <1312831757-12685-1-git-send-email-jbrassow@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH] dm crypt: Always disable discard zeroes data flag
+Date: Mon,  8 Aug 2011 23:48:13 +0200
+Message-ID: <1312840093-4731-1-git-send-email-mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,29 +17,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Fix off-by-one comparison.
+If optional discard support in dm-crypt is enabled,
+discards requests bypass crypt queue and blocks
+of the underlying device are discarded.
 
-The user-supplied value given for the 'write_mostly' argument must be an
-index starting at 0.  The validation of the supplied argument failed to
-check for 'N' ('>' vs '>='), which would have caused an access beyond the
-end of the array.
+But for read path, discarded blocks are handled
+as the same as normal ciphertext blocks, thus decrypted.
 
-Reported-by: Doug Ledford <dledford@redhat.com>
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+So if underlying device announces discarded regions
+return zeroes, dm-crypt must disable this flag because
+after decryption there is just random noise instead of zeroes.
 
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+---
+ drivers/md/dm-crypt.c         |    1 +
+ drivers/md/dm-table.c         |   19 +++++++++++++++++++
+ include/linux/device-mapper.h |    5 +++++
+ 3 files changed, 25 insertions(+), 0 deletions(-)
 
-Index: linux-upstream/drivers/md/dm-raid.c
-===================================================================
---- linux-upstream.orig/drivers/md/dm-raid.c
-+++ linux-upstream/drivers/md/dm-raid.c
-@@ -449,7 +449,7 @@ static int parse_raid_params(struct raid
- 				rs->ti->error = "write_mostly option is only valid for RAID1";
- 				return -EINVAL;
- 			}
--			if (value > rs->md.raid_disks) {
-+			if (value >= rs->md.raid_disks) {
- 				rs->ti->error = "Invalid write_mostly drive index given";
- 				return -EINVAL;
- 			}
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 49da55c..b6ac710 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1698,6 +1698,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 
+ 	ti->num_flush_requests = 1;
++	ti->discard_zeroes_unsupported = 1;
+ 	return 0;
+ 
+ bad:
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 61d3e83..5294f29 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1330,6 +1330,22 @@ static bool dm_table_is_nonrot(struct dm_table *t)
+ 	return 1;
+ }
+ 
++static bool dm_table_discard_zeroes(struct dm_table *t)
++{
++	struct dm_target *ti;
++	unsigned i = 0;
++
++	/* Ensure that all targets supports discard zeroes. */
++	while (i < dm_table_get_num_targets(t)) {
++		ti = dm_table_get_target(t, i++);
++
++		if (ti->discard_zeroes_unsupported)
++			return 0;
++	}
++
++	return 1;
++}
++
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 			       struct queue_limits *limits)
+ {
+@@ -1357,6 +1373,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	else
+ 		queue_flag_clear_unlocked(QUEUE_FLAG_NONROT, q);
+ 
++	if (!dm_table_discard_zeroes(t))
++		q->limits.discard_zeroes_data = 0;
++
+ 	dm_table_set_integrity(t);
+ 
+ 	/*
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index ba99936..2416cf1 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -208,6 +208,11 @@ struct dm_target {
+ 	 * whether or not its underlying devices have support.
+ 	 */
+ 	unsigned discards_supported:1;
++
++	/*
++	 * Set if this target does not return zeroes on discarded blocks.
++	 */
++	unsigned discard_zeroes_unsupported:1;
+ };
+ 
+ /* Each target can link one of these into the table */
+-- 
+1.7.5.4
