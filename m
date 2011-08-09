@@ -1,45 +1,71 @@
-From: Tejun Heo <tj@kernel.org>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: block: properly handle flush/fua requests in
  blk_insert_cloned_request
-Date: Tue, 9 Aug 2011 19:55:09 +0200
-Message-ID: <20110809175509.GF23842@htj.dyndns.org>
+Date: Tue, 9 Aug 2011 14:33:47 -0400
+Message-ID: <20110809183345.GB13293@redhat.com>
 References: <x49y5z2eibl.fsf@segfault.boston.devel.redhat.com>
  <20110809153826.GB23842@htj.dyndns.org>
  <x49liv2eg34.fsf@segfault.boston.devel.redhat.com>
  <20110809161334.GC23842@htj.dyndns.org>
  <20110809174347.GA13293@redhat.com>
- <20110809175237.GA978@redhat.com>
+ <20110809175110.GE23842@htj.dyndns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20110809175237.GA978@redhat.com>
+In-Reply-To: <20110809175110.GE23842@htj.dyndns.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, Jeff Moyer <jmoyer@redhat.com>, linux-kernel@vger.kernel.org, Jens Axboe <jaxboe@fusionio.com>, dm-devel@redhat.com
+To: Tejun Heo <tj@kernel.org>
+Cc: Jeff Moyer <jmoyer@redhat.com>, linux-kernel@vger.kernel.org, Jens Axboe <jaxboe@fusionio.com>, Vivek Goyal <vgoyal@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 09, 2011 at 01:52:37PM -0400, Vivek Goyal wrote:
-> > +	/*
-> > +	 * All FLUSH/FUA requests are expected to have gone through the
-> > +	 * flush machinary.  If a request's cmd_flags doesn't match the
-> > +	 * flush_flags of the underlying request_queue it is a bug.
-> > +	 */
-> > +	BUG_ON((rq->cmd_flags & REQ_FLUSH) && !(q->flush_flags & REQ_FLUSH));
-> > +	BUG_ON((rq->cmd_flags & REQ_FUA) && !(q->flush_flags & REQ_FUA));
-> > +
+On Tue, Aug 09 2011 at  1:51pm -0400,
+Tejun Heo <tj@kernel.org> wrote:
+
+> Hello,
 > 
-> Actually this makes sense and is simple. :-) Is BUG_ON() too harsh, how
-> about WARN_ONCE() variants? To me system continues to work so warning 
-> is probably good enough.
+> On Tue, Aug 09, 2011 at 01:43:47PM -0400, Mike Snitzer wrote:
+> > [cc'ing dm-devel]
+> > 
+> > All of these issues have come to light because DM was not setting
+> > flush_flags based on the underlying device(s).  Now fixed in v3.1-rc1:
+> > ed8b752 dm table: set flush capability based on underlying devices
+> > 
+> > Given that commit, and that request-based DM is beneath the elevator, it
+> > seems any additional effort to have DM flushes re-enter the flush
+> > machinary is unnecessary.
+> 
+> Hmmm... what if the underlying devices have different featureset?  Use
+> the lowest common denominator?
 
-I don't really think this is the right thing to do.  It makes the
-cloning a special case.  It looks easy now but puts it in its own
-special box which usually ends up ugly in the long run.  Let's get the
-thing fixed and let it play like others do.  There's nothing
-fundamentally broken with the usual mechanism.
+Yes, for DM, if any device in the stack requires FLUSH/FUA then
+the upper request_queue's flush_flags will be set to reflect that.
 
-Thanks.
+Bio-based DM _could_ end up issuing a flush to a device that doesn't
+need the flush.  But once the bio emerges from the bottom of the
+bio-based stack it'll get handed to the flush mechanism where it'll be
+dropped.
 
--- 
-tejun
+Bio-based DM may stack ontop of request-based DM (think LVM ontop of
+mpath device).  Request-based DM may _not_ stack on bio-based DM.
+
+Request-based DM, the cause of all this discussion, is only used for the
+multipath target and I'm not aware of any plans to provide more complex
+stacking via request-based DM.  Doing so would require splitting a
+request that spans target boundaries, etc.
+
+So we're left with request-based DM only allowing a single target,
+meaning: even if request-based DM were stacked a couple times the
+flush_flags would still reflect the underlying physical device's queue.
+
+> The flush mechanism is designed to
+> deal with stacking by going through flush at each level.  Stacking
+> queue can simply export support for both REQ_FLUSH and FUA and the
+> lower lever queue will decompose them according to the capability
+> supported by the actual device.
+> 
+> IIUC, what's broken here is some insert functions aren't using
+> ELEVATOR_INSERT_FLUSH when needed and there are some issues due to the
+> special nature of the stacked requests which I think should be fixed.
+
+OK, conceptually pure, just seems the fixes are multiplying.
