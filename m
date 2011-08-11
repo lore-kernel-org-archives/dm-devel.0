@@ -1,228 +1,118 @@
-From: Shaohua Li <shli@kernel.org>
-Subject: Re: [patch] block: fix flush machinery for stacking drivers with
- differring flush flags
-Date: Thu, 11 Aug 2011 08:56:37 +0800
-Message-ID: <CANejiEVwvO5csrNCHEjcTzUj6ZeuVjHB6Bdavhn-axAyTj144Q@mail.gmail.com>
-References: <x49ty9pqood.fsf@segfault.boston.devel.redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [BUG] Oops when SCSI device under multipath is removed
+Date: Thu, 11 Aug 2011 12:01:05 +0900
+Message-ID: <4E4345F1.9040501@ce.jp.nec.com>
+References: <4E420941.3080601@ce.jp.nec.com> <1313005933.2785.12.camel@mulgrave> <4E432122.9050101@ce.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <x49ty9pqood.fsf@segfault.boston.devel.redhat.com>
+In-Reply-To: <4E432122.9050101@ce.jp.nec.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Tejun Heo <tj@kernel.org>, Jens Axboe <jaxboe@fusionio.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, msnitzer@redhat.com, vgoyal@redhat.com
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: jaxboe@fusionio.com, roland@purestorage.com, stern@rowland.harvard.edu, linux-scsi@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 List-Id: dm-devel.ids
 
-2011/8/10 Jeff Moyer <jmoyer@redhat.com>:
-> Hi,
->
-> Commit ae1b1539622fb46e51b4d13b3f9e5f4c713f86ae, block: reimplement
-> FLUSH/FUA to support merge, introduced a performance regression when
-> running any sort of fsyncing workload using dm-multipath and certain
-> storage (in our case, an HP EVA). =A0The test I ran was fs_mark, and =
-it
-> dropped from ~800 files/sec on ext4 to ~100 files/sec. =A0It turns ou=
-t
-> that dm-multipath always advertised flush+fua support, and passed
-> commands on down the stack, where those flags used to get stripped of=
-f.
-> The above commit changed that behavior:
->
-> static inline struct request *__elv_next_request(struct request_queue=
- *q)
-> {
-> =A0 =A0 =A0 =A0struct request *rq;
->
-> =A0 =A0 =A0 =A0while (1) {
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 while (!list_empty(&q->queue_head)) {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 if (!list_empty(&q->queue_head)) {
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0rq =3D list_entry_rq(q=
-->queue_head.next);
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 if (!(rq->cmd_flags & (=
-REQ_FLUSH | REQ_FUA)) ||
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 (rq->cmd_flags =
-& REQ_FLUSH_SEQ))
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 return =
-rq;
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 rq =3D blk_do_flush(q, =
-rq);
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 if (rq)
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 return =
-rq;
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 return rq;
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0}
->
-> Note that previously, a command would come in here, have
-> REQ_FLUSH|REQ_FUA set, and then get handed off to blk_do_flush:
->
-> struct request *blk_do_flush(struct request_queue *q, struct request =
-*rq)
-> {
-> =A0 =A0 =A0 =A0unsigned int fflags =3D q->flush_flags; /* may change,=
- cache it */
-> =A0 =A0 =A0 =A0bool has_flush =3D fflags & REQ_FLUSH, has_fua =3D ffl=
-ags & REQ_FUA;
-> =A0 =A0 =A0 =A0bool do_preflush =3D has_flush && (rq->cmd_flags & REQ=
-_FLUSH);
-> =A0 =A0 =A0 =A0bool do_postflush =3D has_flush && !has_fua && (rq->cm=
-d_flags &
-> =A0 =A0 =A0 =A0REQ_FUA);
-> =A0 =A0 =A0 =A0unsigned skip =3D 0;
-> ...
-> =A0 =A0 =A0 =A0if (blk_rq_sectors(rq) && !do_preflush && !do_postflus=
-h) {
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0rq->cmd_flags &=3D ~REQ_FLUSH;
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0if (!has_fua)
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0rq->cmd_flags &=3D ~RE=
-Q_FUA;
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0return rq;
-> =A0 =A0 =A0 =A0}
->
-> So, the flush machinery was bypassed in such cases (q->flush_flags =3D=
-=3D 0
-> && rq->cmd_flags & (REQ_FLUSH|REQ_FUA)).
->
-> Now, however, we don't get into the flush machinery at all. =A0Instea=
-d,
-> __elv_next_request just hands a request with flush and fua bits set t=
-o
-> the scsi_request_fn, even if the underlying request_queue does not
-> support flush or fua.
->
-> The agreed upon approach is to fix the flush machinery to allow
-> stacking. =A0While this isn't used in practice (since there is only o=
-ne
-> request-based dm target, and that target will now reflect the flush
-> flags of the underlying device), it does future-proof the solution, a=
-nd
-> make it function as designed.
->
-> In order to make this work, I had to add a field to the struct reques=
-t,
-> inside the flush structure (to store the original req->end_io). =A0Sh=
-aohua
-> had suggested overloading the union with rb_node and completion_data,
-> but the completion data is used by device mapper and can also be used=
- by
-> other drivers. =A0So, I didn't see a way around the additional field.
->
-> I chose to short-circuit empty flush requests (when the flush flags
-> don't advertise flush) in blk_insert_cloned_request. =A0I don't see a=
- huge
-> advantage to doing this inside blk_insert_flush, though it could be d=
-one
-> there as well.
->
-> I tested this patch on an HP EVA with both ext4 and xfs, and it recov=
-ers
-> the lost performance. =A0Comments and other testers, as always, are
-> appreciated.
->
-> Cheers,
-> Jeff
->
-> Signed-off-by: Jeff Moyer <jmoyer@redhat.com>
->
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index b850bed..7ee03c6 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -39,6 +39,8 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
-> =A0EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
->
-> =A0static int __make_request(struct request_queue *q, struct bio *bio=
-);
-> +static bool blk_end_bidi_request(struct request *rq, int error,
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0unsi=
-gned int nr_bytes, unsigned int bidi_bytes);
->
-> =A0/*
-> =A0* For the allocated request tables
-> @@ -1700,6 +1702,7 @@ EXPORT_SYMBOL_GPL(blk_rq_check_limits);
-> =A0int blk_insert_cloned_request(struct request_queue *q, struct requ=
-est *rq)
-> =A0{
-> =A0 =A0 =A0 =A0unsigned long flags;
-> + =A0 =A0 =A0 int where =3D ELEVATOR_INSERT_BACK;
->
-> =A0 =A0 =A0 =A0if (blk_rq_check_limits(q, rq))
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0return -EIO;
-> @@ -1708,6 +1711,20 @@ int blk_insert_cloned_request(struct request_q=
-ueue *q, struct request *rq)
-> =A0 =A0 =A0 =A0 =A0 =A0should_fail_request(&rq->rq_disk->part0, blk_r=
-q_bytes(rq)))
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0return -EIO;
->
-> + =A0 =A0 =A0 if (rq->cmd_flags & (REQ_FLUSH|REQ_FUA)) {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 /*
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0* Filter empty flush requests here. =
-=A0REQ_FLUSH_SEQ will
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0* ensure that no I/O accounting is d=
-one for this request.
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0*/
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 if (!q->flush_flags && !blk_rq_sectors(=
-rq)) {
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 blk_end_bidi_request(rq=
-, 0, 0, 0);
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0 return 0;
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 }
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 where =3D ELEVATOR_INSERT_FLUSH;
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 /* REQ_FLUSH_SEQ will be set again by t=
-he flush machinery */
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 rq->cmd_flags &=3D ~REQ_FLUSH_SEQ;
-> + =A0 =A0 =A0 }
-> +
-> =A0 =A0 =A0 =A0spin_lock_irqsave(q->queue_lock, flags);
->
-> =A0 =A0 =A0 =A0/*
-> @@ -1716,7 +1733,7 @@ int blk_insert_cloned_request(struct request_qu=
-eue *q, struct request *rq)
-> =A0 =A0 =A0 =A0 */
-> =A0 =A0 =A0 =A0BUG_ON(blk_queued_rq(rq));
->
-> - =A0 =A0 =A0 add_acct_request(q, rq, ELEVATOR_INSERT_BACK);
-> + =A0 =A0 =A0 add_acct_request(q, rq, where);
-> =A0 =A0 =A0 =A0spin_unlock_irqrestore(q->queue_lock, flags);
->
-> =A0 =A0 =A0 =A0return 0;
-> diff --git a/block/blk-flush.c b/block/blk-flush.c
-> index 2d162bd..2633a08 100644
-> --- a/block/blk-flush.c
-> +++ b/block/blk-flush.c
-> @@ -123,7 +123,7 @@ static void blk_flush_restore_request(struct requ=
-est *rq)
->
-> =A0 =A0 =A0 =A0/* make @rq a normal request */
-> =A0 =A0 =A0 =A0rq->cmd_flags &=3D ~REQ_FLUSH_SEQ;
-> - =A0 =A0 =A0 rq->end_io =3D NULL;
-> + =A0 =A0 =A0 rq->end_io =3D rq->flush.saved_end_io;
-> =A0}
->
-> =A0/**
-> @@ -301,7 +301,6 @@ void blk_insert_flush(struct request *rq)
-> =A0 =A0 =A0 =A0unsigned int fflags =3D q->flush_flags; =A0 /* may cha=
-nge, cache */
-> =A0 =A0 =A0 =A0unsigned int policy =3D blk_flush_policy(fflags, rq);
->
-> - =A0 =A0 =A0 BUG_ON(rq->end_io);
-> =A0 =A0 =A0 =A0BUG_ON(!rq->bio || rq->bio !=3D rq->biotail);
->
-> =A0 =A0 =A0 =A0/*
-> @@ -320,6 +319,7 @@ void blk_insert_flush(struct request *rq)
-> =A0 =A0 =A0 =A0if ((policy & REQ_FSEQ_DATA) &&
-> =A0 =A0 =A0 =A0 =A0 =A0!(policy & (REQ_FSEQ_PREFLUSH | REQ_FSEQ_POSTF=
-LUSH))) {
-> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0list_add_tail(&rq->queuelist, &q->queu=
-e_head);
-> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 blk_run_queue_async(q);
-A minor issue. I can understand this is required for
-blk_insert_cloned_request() because INSERT_BACK will run
-queue but INSERT_FLUSH doesn't. But sounds we don't need
-run queue for normal requests. Either __make_request will run
-queue (task has plug list) or flush_plug will run queue. delaying
-run queue has its benefit. can we do the runqueue in
-blk_insert_cloned_request() if this is a INSERT_FLUSH.
+Hi James,
 
-Thanks,
-Shaohua
+On 08/11/11 09:24, Jun'ichi Nomura wrote:
+> On 08/11/11 04:52, James Bottomley wrote:
+>> On Wed, 2011-08-10 at 13:29 +0900, Jun'ichi Nomura wrote:
+>>>   2) SCSI to call blk_cleanup_queue() from device's ->release() callback
+>>>      (before 2.6.39, it used to work like this)
+>>>      https://lkml.org/lkml/2011/7/2/106
+>>
+>> Well, they both have documented objections.  I asked why we destroy the
+>> elevator in the del case and didn't get any traction, so let me show the
+>> actual patch which should fix all of these issues.
+>>
+>> Is there a good reason for not doing this as a bug fix now?
+...
+> I think it doesn't work because elevator_exit() and
+> blk_throtl_exit() take &q->queue_lock, which may be freed
+> by LLD after blk_cleanup_queue, before blk_release_queue.
+
+If the reason you moved scsi_free_queue into scsi_remove_device
+is marking the queue dead, how about the following patch?
+Do you think it's acceptable?
+
+Jun'ichi Nomura, NEC Corporation
+
+
+Add blk_kill_queue() for drivers which want to mark the queue dead early.
+
+blk_cleanup_queue() is an interface for LLD to notify block layer
+that LLD no longer needs the queue.
+Since q->queue_lock may point to a structure in LLD which is freed
+after blk_cleanup_queue, blk_cleanup_queue() frees subordinate structures
+like elevator, which uses q->queue_lock, to avoid invalid reference.
+
+OTOH, LLD like SCSI wants to just mark the queue dead earlier in tear
+down phase.
+
+So this patch factors out the early part of blk_cleanup_queue into
+blk_kill_queue for such drivers.
+
+--- linux-3.1-rc1/include/linux/blkdev.h.orig	2011-08-11 11:19:52.585280223 +0900
++++ linux-3.1-rc1/include/linux/blkdev.h	2011-08-11 11:20:09.482279763 +0900
+@@ -804,6 +804,7 @@ extern struct request_queue *blk_init_al
+ extern struct request_queue *blk_init_queue(request_fn_proc *, spinlock_t *);
+ extern struct request_queue *blk_init_allocated_queue(struct request_queue *,
+ 						      request_fn_proc *, spinlock_t *);
++extern void blk_kill_queue(struct request_queue *);
+ extern void blk_cleanup_queue(struct request_queue *);
+ extern void blk_queue_make_request(struct request_queue *, make_request_fn *);
+ extern void blk_queue_bounce_limit(struct request_queue *, u64);
+--- linux-3.1-rc1/block/blk-core.c.orig	2011-08-10 09:46:06.014043123 +0900
++++ linux-3.1-rc1/block/blk-core.c	2011-08-11 11:19:34.551280697 +0900
+@@ -347,6 +347,17 @@ void blk_put_queue(struct request_queue 
+ }
+ EXPORT_SYMBOL(blk_put_queue);
+ 
++void blk_kill_queue(struct request_queue *q)
++{
++	blk_sync_queue(q);
++
++	del_timer_sync(&q->backing_dev_info.laptop_mode_wb_timer);
++	mutex_lock(&q->sysfs_lock);
++	queue_flag_set_unlocked(QUEUE_FLAG_DEAD, q);
++	mutex_unlock(&q->sysfs_lock);
++}
++EXPORT_SYMBOL(blk_kill_queue);
++
+ /*
+  * Note: If a driver supplied the queue lock, it should not zap that lock
+  * unexpectedly as some queue cleanup components like elevator_exit() and
+@@ -360,12 +371,7 @@ void blk_cleanup_queue(struct request_qu
+ 	 * are done before moving on. Going into this function, we should
+ 	 * not have processes doing IO to this device.
+ 	 */
+-	blk_sync_queue(q);
+-
+-	del_timer_sync(&q->backing_dev_info.laptop_mode_wb_timer);
+-	mutex_lock(&q->sysfs_lock);
+-	queue_flag_set_unlocked(QUEUE_FLAG_DEAD, q);
+-	mutex_unlock(&q->sysfs_lock);
++	blk_kill_queue(q);
+ 
+ 	if (q->elevator)
+ 		elevator_exit(q->elevator);
+--- linux-3.1-rc1/drivers/scsi/scsi_sysfs.c.orig	2011-08-09 18:48:13.676485115 +0900
++++ linux-3.1-rc1/drivers/scsi/scsi_sysfs.c	2011-08-11 11:21:07.923277456 +0900
+@@ -322,6 +322,7 @@ static void scsi_device_dev_release_user
+ 		kfree(evt);
+ 	}
+ 
++	scsi_free_queue(sdev->request_queue);
+ 	blk_put_queue(sdev->request_queue);
+ 	/* NULL queue means the device can't be used */
+ 	sdev->request_queue = NULL;
+@@ -937,7 +938,7 @@ void __scsi_remove_device(struct scsi_de
+ 	sdev->request_queue->queuedata = NULL;
+ 
+ 	/* Freeing the queue signals to block that we're done */
+-	scsi_free_queue(sdev->request_queue);
++	blk_kill_queue(sdev->request_queue);
+ 	put_device(dev);
+ }
+ 
