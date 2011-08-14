@@ -1,73 +1,57 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [patch,v2] block: fix flush machinery for stacking drivers with
- differring flush flags
-Date: Sat, 13 Aug 2011 15:29:10 +0200
-Message-ID: <20110813132910.GB4254@htj.dyndns.org>
-References: <x497h6iphx4.fsf@segfault.boston.devel.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCHES] convert dm-thin to use dm-bufio
+Date: Sun, 14 Aug 2011 16:18:29 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1108141602440.28009@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <x497h6iphx4.fsf@segfault.boston.devel.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: Jens Axboe <jaxboe@fusionio.com>, shaohua <shli@kernel.org>, Vivek Goyal <vgoyal@in.ibm.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, Edward Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+Hi
 
-On Fri, Aug 12, 2011 at 03:07:51PM -0400, Jeff Moyer wrote:
-> Changes from v1->v2:
-> - Moved the detection of empty flush requests into blk_insert_flush.
-> - Got rid of REQ_FLUSH_SEQ in the CLONE_FLAGS.
+I created patches that convert dm-thin to use dm-bufio interface (so that 
+it is consistent with dm-zeroed and dm-multisnap).
 
-Heh yeah, this looks pretty good to me. :)
+The patches are here:
+http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/
 
-> @@ -312,6 +309,19 @@ void blk_insert_flush(struct request *rq)
->  		rq->cmd_flags &= ~REQ_FUA;
->  
->  	/*
-> +	 * An empty flush handed down from a stacking driver may
-> +	 * translate into nothing if the underlying device does not
-> +	 * advertise a write-back cache.  In this case, simply
-> +	 * complete the request.
-> +	 */
-> +	if (!policy && !blk_rq_bytes(rq)) {
-> +		__blk_end_bidi_request(rq, 0, 0, 0);
-> +		return;
-> +	}
+Advantages:
 
-Hmmm... doesn't !policy imply !blk_rq_bytes() with your change just
-merged to Jens' tree?
+* It uses kmalloc, __get_free_pages or __vmalloc, so the block size is not 
+limited and memory fragmentation is not an issue. The original code only 
+used kmalloc.
 
-> @@ -319,6 +329,7 @@ void blk_insert_flush(struct request *rq)
->  	if ((policy & REQ_FSEQ_DATA) &&
->  	    !(policy & (REQ_FSEQ_PREFLUSH | REQ_FSEQ_POSTFLUSH))) {
->  		list_add_tail(&rq->queuelist, &q->queue_head);
-> +		blk_run_queue_async(q);
->  		return;
->  	}
+* It has dynamic cache sizing, cache size can be configured by the user. 
+In case of inactivity over some time (a buffer is unused for a minute), 
+the buffers are freed. The original code had cache size hardcoded and it 
+couldn't be changed.
 
-In the other message, you said,
+* Submit bios directly (if we can) without dm-io layer.
 
-> Well, the only time we need to run the queue is when the request has
-> data, has REQ_FUA set, and the underlying queue's flush flags contain
-> only REQ_FUA.  In code:
-> 
-> if (rq->cmd_flags & REQ_FUA && q->flush_flags == REQ_FUA)
->        blk_run_queue_async(q);
+Notes:
 
-But this can't happen because a queue can't have REQ_FUA without
-REQ_FLUSH (it doesn't make any sense).  blk_queue_flush() will trigger
-WARN_ON_ONCE() and turn off REQ_FUA in such cases.
+* Buffer locking is not supported, I suppose it is not used for anything 
+anyway. If it is used, tell me, I can add it after reviewing it.
 
-That said, it's kinda unclear who should be responsible for kicking
-the queue.  __elv_add_request() does it for some but not all.
-__make_request() always activates the queue which sometimes ends up
-doing it again after __elv_add_request().  I think kicking the queue
-after short circuit insert probably is the right thing to do.
+* dm_bm_rebind_block_device changes the block device, but it is not used 
+for anything (dm-thinp never changes the device). I think it could be 
+removed.
 
-Thank you.
+* Two small bugs in dm-thin are fixed --- not closing the superblock 
+buffer on exit and improper termination sequence (the block devices were 
+closed before the buffer interface exited).
 
--- 
-tejun
+Mikulas
