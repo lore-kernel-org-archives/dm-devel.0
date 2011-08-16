@@ -1,15 +1,15 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: question: deleting blocks
-Date: Tue, 16 Aug 2011 10:28:03 +0100
-Message-ID: <20110816092802.GC4284@ubuntu>
-References: <Pine.LNX.4.64.1108151426190.18170@hs20-bc2-1.build.redhat.com>
+Subject: Re: [PATCH] dm-space-map-disk: improve bit testing
+Date: Tue, 16 Aug 2011 11:08:55 +0100
+Message-ID: <20110816100855.GD4284@ubuntu>
+References: <Pine.LNX.4.64.1108151450370.18170@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1108151426190.18170@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1108151450370.18170@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,16 +23,29 @@ To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Aug 15, 2011 at 02:27:56PM -0400, Mikulas Patocka wrote:
-> BTW.
-> 
-> When you delete a block in the space map, how do you make sure that the 
-> block is not allocated for another purpose before commit?
+On Mon, Aug 15, 2011 at 02:52:14PM -0400, Mikulas Patocka wrote:
+> dm-space-map-disk: improve bit testing
 
-For the metadata-space-map I allocate from the space map as it was in
-the last transaction (smm->old_ll).  The data space map needs to do
-the same (for some reason I thought we could get away without it for a
-while) - it's on the todo list in multisnap.org and was mentioned
-yesterday.
+Very nice, thanks.  btw, you can get rid of WORD_MASK_LOW too:
 
-- Joe
+diff --git a/drivers/md/persistent-data/dm-space-map-disk.c b/drivers/md/persistent-data/dm-space-map-disk.c
+index 8d2c4c2..fbfa6f3 100644
+--- a/drivers/md/persistent-data/dm-space-map-disk.c
++++ b/drivers/md/persistent-data/dm-space-map-disk.c
+@@ -69,7 +69,6 @@ void *dm_bitmap_data(struct dm_block *b)
+ 	return dm_block_data(b) + sizeof(struct disk_bitmap_header);
+ }
+ 
+-#define WORD_MASK_LOW 0x5555555555555555ULL
+ #define WORD_MASK_HIGH 0xAAAAAAAAAAAAAAAAULL
+ 
+ static unsigned bitmap_word_used(void *addr, unsigned b)
+@@ -78,7 +77,7 @@ static unsigned bitmap_word_used(void *addr, unsigned b)
+ 	__le64 *w_le = words_le + (b >> ENTRIES_SHIFT);
+ 
+ 	uint64_t bits = le64_to_cpu(*w_le);
+-	uint64_t mask = (bits - WORD_MASK_LOW) & WORD_MASK_HIGH;
++	uint64_t mask = (bits + WORD_MASK_HIGH + 1) & WORD_MASK_HIGH;
+ 
+ 	return !(~bits & mask);
+ }
