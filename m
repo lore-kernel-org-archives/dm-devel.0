@@ -1,51 +1,72 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm-space-map-disk: improve bit testing
-Date: Tue, 16 Aug 2011 11:08:55 +0100
-Message-ID: <20110816100855.GD4284@ubuntu>
-References: <Pine.LNX.4.64.1108151450370.18170@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [BUG] Oops when SCSI device under multipath is removed
+Date: Tue, 16 Aug 2011 20:26:40 +0900
+Message-ID: <4E4A53F0.9040104@ce.jp.nec.com>
+References: <Pine.LNX.4.44L0.1108111112280.1958-100000@iolanthe.rowland.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1108151450370.18170@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.44L0.1108111112280.1958-100000@iolanthe.rowland.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alan Stern <stern@rowland.harvard.edu>, James Bottomley <James.Bottomley@HansenPartnership.com>, Tejun Heo <tj@kernel.org>
+Cc: jaxboe@fusionio.com, roland@purestorage.com, linux-scsi@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 15, 2011 at 02:52:14PM -0400, Mikulas Patocka wrote:
-> dm-space-map-disk: improve bit testing
+Hi,
 
-Very nice, thanks.  btw, you can get rid of WORD_MASK_LOW too:
+On 08/12/11 00:16, Alan Stern wrote:
+> On Thu, 11 Aug 2011, James Bottomley wrote:
+>> However, much as I'd like to accept this rosy view, the original oops
+>> that started all of this in 2.6.38 was someone caught something with a
+>> reference to a SCSI queue after the device release function had been
+>> called.
+> 
+> Not according to your commit log.  You wrote that the reference was
+> taken after scsi_remove_device() had been called -- but the device
+> release function is scsi_device_dev_release_usercontext().
 
-diff --git a/drivers/md/persistent-data/dm-space-map-disk.c b/drivers/md/persistent-data/dm-space-map-disk.c
-index 8d2c4c2..fbfa6f3 100644
---- a/drivers/md/persistent-data/dm-space-map-disk.c
-+++ b/drivers/md/persistent-data/dm-space-map-disk.c
-@@ -69,7 +69,6 @@ void *dm_bitmap_data(struct dm_block *b)
- 	return dm_block_data(b) + sizeof(struct disk_bitmap_header);
+The commit log of 86cbfb5607d4b81b1a993ff689bbd2addd5d3a9b
+("[SCSI] put stricter guards on queue dead checks") does not
+explain about the move of scsi_free_queue().
+
+But according to the discussion below, it seems
+the move was motivated to solve the following self-deadlock:
+https://lkml.org/lkml/2011/4/12/9
+
+  [in the context of kblockd_workqueue]
+  blk_delay_work
+    __blk_run_queue
+      scsi_request_fn
+        put_device
+          (puts final sdev refcount)
+             scsi_device_dev_release
+               execute_in_process_context(scsi_device_dev_release_usercontext)
+                 [execute immediately because it's in process context]
+                    scsi_device_dev_release_usercontext
+                      scsi_free_queue
+                        blk_cleanup_queue
+                          blk_sync_queue
+                            (wait for blk_delay_work to complete...)
+
+James, is my understanding correct?
+
+If so, isn't it possible to move the scsi_free_queue back to
+the original place and solve the deadlock instead by
+avoiding the wait in the same context?
+
+@@ -338,8 +339,8 @@ static void scsi_device_dev_release_user
+ static void scsi_device_dev_release(struct device *dev)
+ {
+ 	struct scsi_device *sdp = to_scsi_device(dev);
+-	execute_in_process_context(scsi_device_dev_release_usercontext,
+-				   &sdp->ew);
++	INIT_WORK(&sdp->ew.work, scsi_device_dev_release_usercontext);
++	schedule_work(&sdp->ew.work);
  }
  
--#define WORD_MASK_LOW 0x5555555555555555ULL
- #define WORD_MASK_HIGH 0xAAAAAAAAAAAAAAAAULL
- 
- static unsigned bitmap_word_used(void *addr, unsigned b)
-@@ -78,7 +77,7 @@ static unsigned bitmap_word_used(void *addr, unsigned b)
- 	__le64 *w_le = words_le + (b >> ENTRIES_SHIFT);
- 
- 	uint64_t bits = le64_to_cpu(*w_le);
--	uint64_t mask = (bits - WORD_MASK_LOW) & WORD_MASK_HIGH;
-+	uint64_t mask = (bits + WORD_MASK_HIGH + 1) & WORD_MASK_HIGH;
- 
- 	return !(~bits & mask);
- }
+ static struct class sdev_class = {
+
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation
