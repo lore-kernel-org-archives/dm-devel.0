@@ -1,72 +1,58 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [BUG] Oops when SCSI device under multipath is removed
-Date: Tue, 16 Aug 2011 20:26:40 +0900
-Message-ID: <4E4A53F0.9040104@ce.jp.nec.com>
-References: <Pine.LNX.4.44L0.1108111112280.1958-100000@iolanthe.rowland.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCHES] convert dm-thin to use dm-bufio
+Date: Tue, 16 Aug 2011 18:03:00 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1108161755510.15859@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1108141602440.28009@hs20-bc2-1.build.redhat.com>
+	<20110815090416.GE3159@ubuntu>
+	<Pine.LNX.4.64.1108151316300.18170@hs20-bc2-1.build.redhat.com>
+	<20110816091600.GA4284@ubuntu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.44L0.1108111112280.1958-100000@iolanthe.rowland.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Stern <stern@rowland.harvard.edu>, James Bottomley <James.Bottomley@HansenPartnership.com>, Tejun Heo <tj@kernel.org>
-Cc: jaxboe@fusionio.com, roland@purestorage.com, linux-scsi@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20110816091600.GA4284@ubuntu>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Joe Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-
-On 08/12/11 00:16, Alan Stern wrote:
-> On Thu, 11 Aug 2011, James Bottomley wrote:
->> However, much as I'd like to accept this rosy view, the original oops
->> that started all of this in 2.6.38 was someone caught something with a
->> reference to a SCSI queue after the device release function had been
->> called.
+> For me the main attraction to switching to bufio is you don't use
+> dm-io.c.
 > 
-> Not according to your commit log.  You wrote that the reference was
-> taken after scsi_remove_device() had been called -- but the device
-> release function is scsi_device_dev_release_usercontext().
+> Hopefully Alasdair will allow you to keep the different memory types;
+> I was allocating the buffers in bm either via kmalloc, or pages
+> depending on size, but he wanted this changing to a kmem_cache in
+> order to 'segregate' the memory.
+> 
+> I'm not clear how you ascertain the correct working set size for your
+> cache, or choose when and how many blocks to flush.  Have you got any
+> documentation for this?  thinp shouldn't need a big cache and I'm a
+> bit worried a 'grab another buffer if there's memory available' policy
+> will make it grow too much.
 
-The commit log of 86cbfb5607d4b81b1a993ff689bbd2addd5d3a9b
-("[SCSI] put stricter guards on queue dead checks") does not
-explain about the move of scsi_free_queue().
+The working set is 2% of memory or 1/4 of vmalloc space (whichever is 
+smaller). This can be changed in 
+"/sys/module/dm_bufio/parameters/dm_bufio_cache_size".
 
-But according to the discussion below, it seems
-the move was motivated to solve the following self-deadlock:
-https://lkml.org/lkml/2011/4/12/9
+Buffers are freed when they are unused for 60 seconds (can be changed in 
+"/sys/module/dm_bufio/parameters/dm_bufio_max_age").
 
-  [in the context of kblockd_workqueue]
-  blk_delay_work
-    __blk_run_queue
-      scsi_request_fn
-        put_device
-          (puts final sdev refcount)
-             scsi_device_dev_release
-               execute_in_process_context(scsi_device_dev_release_usercontext)
-                 [execute immediately because it's in process context]
-                    scsi_device_dev_release_usercontext
-                      scsi_free_queue
-                        blk_cleanup_queue
-                          blk_sync_queue
-                            (wait for blk_delay_work to complete...)
+Total size is divided by the number of active clients using dm-bufio. So 
+that each client gets a fair share.
 
-James, is my understanding correct?
+Writeback is done on commit. When 3/4 of the cache size is used, 
+background writeback is started.
 
-If so, isn't it possible to move the scsi_free_queue back to
-the original place and solve the deadlock instead by
-avoiding the wait in the same context?
+Mikulas
 
-@@ -338,8 +339,8 @@ static void scsi_device_dev_release_user
- static void scsi_device_dev_release(struct device *dev)
- {
- 	struct scsi_device *sdp = to_scsi_device(dev);
--	execute_in_process_context(scsi_device_dev_release_usercontext,
--				   &sdp->ew);
-+	INIT_WORK(&sdp->ew.work, scsi_device_dev_release_usercontext);
-+	schedule_work(&sdp->ew.work);
- }
- 
- static struct class sdev_class = {
-
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation
+> - Joe
+> 
