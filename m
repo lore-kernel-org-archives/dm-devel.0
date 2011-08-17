@@ -1,12 +1,12 @@
-From: Ritesh Raj Sarraf <rrs@debian.org>
-Subject: [PATCH] Add kpartx example to manpage
-Date: Wed, 17 Aug 2011 23:10:37 +0530
-Message-ID: <1313602837-24744-1-git-send-email-rrs@debian.org>
+From: tony <jiangzhongbin@sobey.com>
+Subject: multiple path disk
+Date: Wed, 17 Aug 2011 15:51:17 +0800
+Message-ID: <000901cc5cb2$72d50940$587f1bc0$@sobey.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0455445538970263651=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Language: zh-cn
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,49 +17,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
-Cc: Ritesh Raj Sarraf <rrs@debian.org>, Ritesh Raj Sarraf <rrs@researchut.com>
 List-Id: dm-devel.ids
 
-From: Ritesh Raj Sarraf <rrs@researchut.com>
+--===============0455445538970263651==
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_000A_01CC5CF5.80F90C90"
+Content-Language: zh-cn
 
-Thanks: Lars Wirzenius
-Closes: 637538
+------=_NextPart_000_000A_01CC5CF5.80F90C90
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-Signed-off-by: Ritesh Raj Sarraf <rrs@debian.org>
----
- kpartx/kpartx.8 |   20 ++++++++++++++++++++
- 1 files changed, 20 insertions(+), 0 deletions(-)
+Hi buddy!
 
-diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
-index 5d73d31..795a2e0 100644
---- a/kpartx/kpartx.8
-+++ b/kpartx/kpartx.8
-@@ -34,6 +34,26 @@ force GUID partition table (GPT)
- .TP
- .B \-v
- Operate verbosely
-+.SH EXAMPLE
-+To mount all the partitions in a raw disk image:
-+.IP
-+kpartx -av disk.img
-+.PP
-+This will output lines such as:
-+.IP
-+loop3p1 : 0 20964762 /dev/loop3 63
-+.PP
-+The 
-+.I loop3p1
-+is the name of a device file under 
-+.I /dev/mapper
-+which you can use to access the partition, for example to fsck it:
-+.IP
-+fsck /dev/mapper/loop3p1
-+.PP
-+When you're done, you need to remove the devices:
-+.IP
-+kpartx -d disk.img
- .SH "SEE ALSO"
- .BR multipath (8)
- .BR multipathd (8)
--- 
-1.7.5.4
+  I am a linux programmer , met a problem about multiple path disk. Please
+give me a hand. My problem is : Is there a way to determine whether a
+disk(eg. /dev/sda) is a ghost disk or not using c/c++ in linux. Thanks a
+lot!.
+
+
+------=_NextPart_000_000A_01CC5CF5.80F90C90
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
+xmlns=3D"http://www.w3.org/TR/REC-html40"><head><meta =
+http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii"><meta name=3DGenerator content=3D"Microsoft Word 14 =
+(filtered medium)"><style><!--
+/* Font Definitions */
+@font-face
+	{font-family:SimSun;
+	panose-1:2 1 6 0 3 1 1 1 1 1;}
+@font-face
+	{font-family:SimSun;
+	panose-1:2 1 6 0 3 1 1 1 1 1;}
+@font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+@font-face
+	{font-family:SimSun;
+	panose-1:2 1 6 0 3 1 1 1 1 1;}
+/* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-align:justify;
+	text-justify:inter-ideograph;
+	font-size:10.5pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+.MsoChpDefault
+	{mso-style-type:export-only;
+	font-family:"Calibri","sans-serif";}
+/* Page Definitions */
+@page WordSection1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
+div.WordSection1
+	{page:WordSection1;}
+--></style><!--[if gte mso 9]><xml>
+<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+<o:shapelayout v:ext=3D"edit">
+<o:idmap v:ext=3D"edit" data=3D"1" />
+</o:shapelayout></xml><![endif]--></head><body lang=3DZH-CN link=3Dblue =
+vlink=3Dpurple style=3D'text-justify-trim:punctuation'><div =
+class=3DWordSection1><p class=3DMsoNormal><span lang=3DEN-US>Hi =
+buddy!<o:p></o:p></span></p><p class=3DMsoNormal><span =
+lang=3DEN-US>&nbsp; I am a linux programmer , met a problem about =
+multiple path disk. Please give me a hand. My problem is : Is there a =
+way to determine </span><span lang=3DEN-US =
+style=3D'font-family:"Arial","sans-serif"'>whether</span><span =
+lang=3DEN-US> a disk(eg. /dev/sda) is a ghost disk or not using c/c++ in =
+linux. Thanks a lot!.<o:p></o:p></span></p></div></body></html>
+------=_NextPart_000_000A_01CC5CF5.80F90C90--
+
+
+--===============0455445538970263651==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0455445538970263651==--
