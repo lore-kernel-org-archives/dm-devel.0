@@ -1,118 +1,60 @@
-From: tony <jiangzhongbin@sobey.com>
-Subject: multiple path disk
-Date: Wed, 17 Aug 2011 15:51:17 +0800
-Message-ID: <000901cc5cb2$72d50940$587f1bc0$@sobey.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [BUG] Oops when SCSI device under multipath is removed
+Date: Thu, 18 Aug 2011 18:11:19 +0900
+Message-ID: <4E4CD737.4020402@ce.jp.nec.com>
+References: <Pine.LNX.4.44L0.1108111112280.1958-100000@iolanthe.rowland.org> <4E4A53F0.9040104@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0455445538970263651=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: zh-cn
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, christophe.varoqui@opensvc.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4E4A53F0.9040104@ce.jp.nec.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>, Tejun Heo <tj@kernel.org>
+Cc: Alan Stern <stern@rowland.harvard.edu>, jaxboe@fusionio.com, roland@purestorage.com, linux-scsi@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 List-Id: dm-devel.ids
 
---===============0455445538970263651==
-Content-Type: multipart/alternative;
-	boundary="----=_NextPart_000_000A_01CC5CF5.80F90C90"
-Content-Language: zh-cn
+Hi James,
 
-------=_NextPart_000_000A_01CC5CF5.80F90C90
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+On 08/16/11 20:26, Jun'ichi Nomura wrote:
+> The commit log of 86cbfb5607d4b81b1a993ff689bbd2addd5d3a9b
+> ("[SCSI] put stricter guards on queue dead checks") does not
+> explain about the move of scsi_free_queue().
+> 
+> But according to the discussion below, it seems
+> the move was motivated to solve the following self-deadlock:
+> https://lkml.org/lkml/2011/4/12/9
+> 
+>   [in the context of kblockd_workqueue]
+>   blk_delay_work
+>     __blk_run_queue
+>       scsi_request_fn
+>         put_device
+>           (puts final sdev refcount)
+>              scsi_device_dev_release
+>                execute_in_process_context(scsi_device_dev_release_usercontext)
+>                  [execute immediately because it's in process context]
+>                     scsi_device_dev_release_usercontext
+>                       scsi_free_queue
+>                         blk_cleanup_queue
+>                           blk_sync_queue
+>                             (wait for blk_delay_work to complete...)
+> 
+> James, is my understanding correct?
+> 
+> If so, isn't it possible to move the scsi_free_queue back to
+> the original place and solve the deadlock instead by
+> avoiding the wait in the same context?
 
-Hi buddy!
+Actually, Tejun has posted a patch to replace
+execute_in_process_context() with queue_work()
+and asking your review:
 
-  I am a linux programmer , met a problem about multiple path disk. Please
-give me a hand. My problem is : Is there a way to determine whether a
-disk(eg. /dev/sda) is a ghost disk or not using c/c++ in linux. Thanks a
-lot!.
+  [PATCH RESEND] scsi: don't use execute_in_process_context()
+  https://lkml.org/lkml/2011/4/30/87
 
+Do you think you can take the patch and revert the move
+of scsi_free_queue()?
 
-------=_NextPart_000_000A_01CC5CF5.80F90C90
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
-xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
-xmlns=3D"http://www.w3.org/TR/REC-html40"><head><meta =
-http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii"><meta name=3DGenerator content=3D"Microsoft Word 14 =
-(filtered medium)"><style><!--
-/* Font Definitions */
-@font-face
-	{font-family:SimSun;
-	panose-1:2 1 6 0 3 1 1 1 1 1;}
-@font-face
-	{font-family:SimSun;
-	panose-1:2 1 6 0 3 1 1 1 1 1;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-@font-face
-	{font-family:SimSun;
-	panose-1:2 1 6 0 3 1 1 1 1 1;}
-/* Style Definitions */
-p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0cm;
-	margin-bottom:.0001pt;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	font-size:10.5pt;
-	font-family:"Calibri","sans-serif";}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:purple;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri","sans-serif";
-	color:windowtext;}
-.MsoChpDefault
-	{mso-style-type:export-only;
-	font-family:"Calibri","sans-serif";}
-/* Page Definitions */
-@page WordSection1
-	{size:612.0pt 792.0pt;
-	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
-div.WordSection1
-	{page:WordSection1;}
---></style><!--[if gte mso 9]><xml>
-<o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
-<o:shapelayout v:ext=3D"edit">
-<o:idmap v:ext=3D"edit" data=3D"1" />
-</o:shapelayout></xml><![endif]--></head><body lang=3DZH-CN link=3Dblue =
-vlink=3Dpurple style=3D'text-justify-trim:punctuation'><div =
-class=3DWordSection1><p class=3DMsoNormal><span lang=3DEN-US>Hi =
-buddy!<o:p></o:p></span></p><p class=3DMsoNormal><span =
-lang=3DEN-US>&nbsp; I am a linux programmer , met a problem about =
-multiple path disk. Please give me a hand. My problem is : Is there a =
-way to determine </span><span lang=3DEN-US =
-style=3D'font-family:"Arial","sans-serif"'>whether</span><span =
-lang=3DEN-US> a disk(eg. /dev/sda) is a ghost disk or not using c/c++ in =
-linux. Thanks a lot!.<o:p></o:p></span></p></div></body></html>
-------=_NextPart_000_000A_01CC5CF5.80F90C90--
-
-
---===============0455445538970263651==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0455445538970263651==--
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation
