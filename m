@@ -1,81 +1,63 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [dm-devel] clone() with CLONE_NEWNET breaks kobject_uevent_env()
-Date: Fri, 19 Aug 2011 02:13:48 -0700
-Message-ID: <m17h69sr03.fsf@fess.ebiederm.org>
-References: <4E4CDF44.5080109@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: convert dm-thin to use dm-bufio
+Date: Fri, 19 Aug 2011 05:46:04 -0400
+Message-ID: <20110819094604.GA1059@redhat.com>
+References: <Pine.LNX.4.64.1108141602440.28009@hs20-bc2-1.build.redhat.com>
+	<20110815090416.GE3159@ubuntu>
+	<Pine.LNX.4.64.1108151316300.18170@hs20-bc2-1.build.redhat.com>
+	<20110816091600.GA4284@ubuntu>
+	<Pine.LNX.4.64.1108161755510.15859@hs20-bc2-1.build.redhat.com>
+	<20110817082656.GA3267@ubuntu>
+	<Pine.LNX.4.64.1108181830050.7668@hs20-bc2-1.build.redhat.com>
+	<20110819070435.GA32300@redhat.com> <20110819091106.GA3193@ubuntu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4E4CDF44.5080109@redhat.com> (Milan Broz's message of "Thu, 18
-	Aug 2011 11:45:40 +0200")
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Kay Sievers <kay.sievers@vrfy.org>, "David S. Miller" <davem@davemloft.net>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20110819091106.GA3193@ubuntu>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Joe Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Milan Broz <mbroz@redhat.com> writes:
+On Fri, Aug 19 2011 at  5:11am -0400,
+Joe Thornber <thornber@redhat.com> wrote:
 
-> Hi,
->
-> after analysing very strange report (with running chromium
-> some device-mapper ioctl functions started to fail) I found
-> interesting problem:
->
-> If you run clone() with CLONE_NEWNET (which is chromium using
-> for sanboxing), udev namespace is cloned too (newly registered
-> in uevent_sock_list) and netlink send (except the first in list)
-> fails with -ESRCH.
->
-> This causes that _every_ call of kobject_uevent_env() return failure.
->
-> Most of users silently ignores  kobject_uevent() return value,
-> so the problem was invisible for long time.
->
-> Unfortunately dm checks return value and reports failure,
-> taking the wrong error path.
->
-> How is this supposed to work?
->
-> Why cloning net namespace breaks the udev netlink subsystem?
+> On Fri, Aug 19, 2011 at 03:04:36AM -0400, Mike Snitzer wrote:
+> > Question for Joe:
+> > You're making conflicting changes quick enough that I wonder if you
+> > and Mikulas will ever converge (e.g. why do multiple block managers need
+> > to have access to the same metadata device!?).
+> 
+> They don't; my issue is with getting an oops if they do through user
+> error.  I clearly said in the commit message that this was a hack to
+> get round issues introduced by agk's move to a kmemcache.  Cook
+> something cleaner up between yourselves, or wait for me to look at it
+> again once I've got through some more pressing issues.
 
-The netlink subsystem is not broken.  The netlink subsystem
-just happens to be reporting in a very obnoxious manner
-that there were no listening sockets in one of the network
-namespaces.
+OK, so this kmemcache problem will go away once you switch over to
+bufio.
+ 
+> An alternative would be to iterate through all the pools in the system
+> check whether any of them already had the same metadata device open.
+> Of course this doesn't catch the cases where the stacking is used and
+> a metadata device eventually maps onto the same physical disk as an
+> existing md area.
 
-> Is it bug or we need to do something differently?
-> (I do not think ignoring return value is the proper way...)
+The lack of checking for a metadata or data device that is already in
+use should probably be fixed.
 
-From my quick look at this problem this looks like a doozy.
-
-That netlink_ broadcast chooses to treat failure to deliver a packet to
-anyone as an error and return -ESRCH is a little peculiar.  In general
-we don't see that error because when you are testing there is at least
-one listener on the netlink socket.  So as a practical matter I think
-we should be ignoring return values of -ESRCH from netlink_broadcast,
-in kobject_uevent_env.
-
-What puzzles me is why kobject_uevent_env bothers with a return code.
-As far as I understand the semantics kobject_uevent_env attempts to
-send an event and there really isn't anything anyone can do if the
-attempt to send the event fails.
-
-I can see complaining if kobject_uevent_env is given invalid input
-but that seems better as a WARN_ON so you get a backtrace and someone
-can change their code.
-
-I don't think kobject_uevent_env has any cases where it can return
-an error that is useful for anything.  What can caller do with
-an error code of -ENOMEM? 
-
-I think the proper fix is to remove the error return from
-kobject_uevent_env and kobject_uevent, and make it harder to get calling
-of this function wrong.  Possibly in conjunction with that tag all of
-the memory allocations of kobject_uevent_env with GFP_NOFAIL or
-something so the memory allocator knows that this path is totally
-not able to deal with failure.
-
-Is kobject_uevent_env anything except an asynchronous best effort
-notification to user-space that a device has come or gone?
-
-Eric
+As for stacking, can't we just read the superblock to check if a device
+is already in use (would work metadata anyway)?  No idea if that'd be
+too costly -- probably not: read superblock and check if
+THIN_SUPERBLOCK_MAGIC is set.
