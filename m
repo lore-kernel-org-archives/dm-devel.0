@@ -1,103 +1,56 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: convert dm-thin to use dm-bufio
-Date: Fri, 19 Aug 2011 03:04:36 -0400
-Message-ID: <20110819070435.GA32300@redhat.com>
-References: <Pine.LNX.4.64.1108141602440.28009@hs20-bc2-1.build.redhat.com>
-	<20110815090416.GE3159@ubuntu>
-	<Pine.LNX.4.64.1108151316300.18170@hs20-bc2-1.build.redhat.com>
-	<20110816091600.GA4284@ubuntu>
-	<Pine.LNX.4.64.1108161755510.15859@hs20-bc2-1.build.redhat.com>
-	<20110817082656.GA3267@ubuntu>
-	<Pine.LNX.4.64.1108181830050.7668@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: clone() with CLONE_NEWNET breaks kobject_uevent_env()
+Date: Fri, 19 Aug 2011 09:52:07 +0200
+Message-ID: <4E4E1627.8010902@redhat.com>
+References: <4E4CDF44.5080109@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1108181830050.7668@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Joe Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4E4CDF44.5080109@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>, "David S. Miller" <davem@davemloft.net>, containers@lists.osdl.org
 List-Id: dm-devel.ids
 
-On Thu, Aug 18 2011 at  6:31pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+(added cc to containers list)
 
-> > This all sounds good; get the locking interface in and I'll switch to
-> > bufio straight away.
-> > 
-> > - Joe
+On 08/18/2011 11:45 AM, Milan Broz wrote:
+> Hi,
 > 
-> I uploaded bufio-based block manager at 
-> http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/. It 
-> supports locks, but it defines new functions down_write_non_owner and 
-> up_write_non_owner.
+> after analysing very strange report (with running chromium
+> some device-mapper ioctl functions started to fail) I found
+> interesting problem:
+> 
+> If you run clone() with CLONE_NEWNET (which is chromium using
+> for sanboxing), udev namespace is cloned too (newly registered
+> in uevent_sock_list) and netlink send (except the first in list)
+> fails with -ESRCH.
+> 
+> This causes that _every_ call of kobject_uevent_env() return failure.
+> 
+> Most of users silently ignores  kobject_uevent() return value,
+> so the problem was invisible for long time.
+> 
+> Unfortunately dm checks return value and reports failure,
+> taking the wrong error path.
+> 
+> How is this supposed to work?
+> 
+> Why cloning net namespace breaks the udev netlink subsystem?
+> 
+> Is it bug or we need to do something differently?
+> (I do not think ignoring return value is the proper way...)
 
-dm-bufio.patch:
-drivers/md/Kconfig needs a more comprehensive description for DM_BUFIO's
-help.
+I forgot to explicitly mention that running clone with CLONE_NEWNET
+causes kobject_uevent_env() to fail _outside_ of cloned namespace
+(for all kernel users in fact).
 
+(The former problem is described here
+http://article.gmane.org/gmane.linux.kernel.device-mapper.dm-crypt/5256
+but it is IMHO generic problem. Instrumenting  kobject_uevent() shows
+that it returns send failure really to all events.)
 
-dm-thinp-bufio.patch:
-1)
-This drivers/md/persistent-data/dm-block-manager.h change avoids lots of
-block manager interface churn:
+Can anyone please explain this behavior?
 
--struct dm_block;
-+#define dm_block		dm_buffer
-+#define dm_block_manager	dm_bufio_client
-
-But I think it'd be best, in the long run, to have a follow-on patch
-that does away with the aliases and just use the bufio structs
-throughout the code.  Anyway, don't need to worry about this now.  But
-what you've done is hack that should probably be cleaned up.
-
-2)
-dm_bm_rebind_block_device:
-+	 * !!! FIXME: remove this. It is supposedly unused.
-
-I'll need to look closer at the overall changes to dm-block-manager.c
-but you've clearly gotten rid of struct dm_block_manager; so there is no
-reference to a bdev that needs to be flushed.
-
-Which begs the question:
-Have you tested this bufio conversion with the thinp-test-suite?
-git://github.com/jthornber/thinp-test-suite.git
-
-
-
-
-Question for Joe:
-You're making conflicting changes quick enough that I wonder if you
-and Mikulas will ever converge (e.g. why do multiple block managers need
-to have access to the same metadata device!?).
-
--  - [ ] Sometimes I'm getting kmem_cache name clashes in the block
-+  - [X] Sometimes I'm getting kmem_cache name clashes in the block
-         manager.  We're obviously not deleting the cache in a particular
-         error path.  Recently introduced.                               :ejt:
-
-commit 049bf17f41147ba3d51bac6ebee038d3d79a086c
-Author: Joe Thornber <ejt@redhat.com>
-Date:   Wed Aug 17 13:46:12 2011 +0100
-
-    [block-manager, thin-metadata] Make the bm kmemcache name unique to
-    the pool.
-    
-    ATM the kmem_cache identifier just includes the major/minor of the
-    device that the bm is looking at.  This means you can't create 2 bms
-    that point to the same device without generating a nasty stack
-    trace.
-    
-    This patch makes the name unique to the pool.  It's a quick hack to
-    allow me to keep on testing.  Could someone who cares about these
-    kmemcaches decide on a proper solution please.
+Milan
