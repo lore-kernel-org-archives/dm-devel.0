@@ -1,44 +1,64 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] clone() with CLONE_NEWNET breaks kobject_uevent_env()
-Date: Fri, 19 Aug 2011 12:22:19 +0200
-Message-ID: <4E4E395B.7070106@redhat.com>
-References: <4E4CDF44.5080109@redhat.com> <m17h69sr03.fsf@fess.ebiederm.org>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: convert dm-thin to use dm-bufio
+Date: Fri, 19 Aug 2011 11:22:16 +0100
+Message-ID: <20110819102215.GA5069@ubuntu>
+References: <Pine.LNX.4.64.1108141602440.28009@hs20-bc2-1.build.redhat.com>
+	<20110815090416.GE3159@ubuntu>
+	<Pine.LNX.4.64.1108151316300.18170@hs20-bc2-1.build.redhat.com>
+	<20110816091600.GA4284@ubuntu>
+	<Pine.LNX.4.64.1108161755510.15859@hs20-bc2-1.build.redhat.com>
+	<20110817082656.GA3267@ubuntu>
+	<Pine.LNX.4.64.1108181830050.7668@hs20-bc2-1.build.redhat.com>
+	<20110819070435.GA32300@redhat.com> <20110819091106.GA3193@ubuntu>
+	<20110819094604.GA1059@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <m17h69sr03.fsf@fess.ebiederm.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Kay Sievers <kay.sievers@vrfy.org>, "David S. Miller" <davem@davemloft.net>, containers@lists.osdl.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20110819094604.GA1059@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-
-On 08/19/2011 11:13 AM, Eric W. Biederman wrote:
-> Milan Broz <mbroz@redhat.com> writes:
+On Fri, Aug 19, 2011 at 05:46:04AM -0400, Mike Snitzer wrote:
+> On Fri, Aug 19 2011 at  5:11am -0400,
+> Joe Thornber <thornber@redhat.com> wrote:
 > 
-> I think the proper fix is to remove the error return from
-> kobject_uevent_env and kobject_uevent, and make it harder to get calling
-> of this function wrong.  Possibly in conjunction with that tag all of
-> the memory allocations of kobject_uevent_env with GFP_NOFAIL or
-> something so the memory allocator knows that this path is totally
-> not able to deal with failure.
+> > On Fri, Aug 19, 2011 at 03:04:36AM -0400, Mike Snitzer wrote:
+> > > Question for Joe:
+> > > You're making conflicting changes quick enough that I wonder if you
+> > > and Mikulas will ever converge (e.g. why do multiple block managers need
+> > > to have access to the same metadata device!?).
+> > 
+> > They don't; my issue is with getting an oops if they do through user
+> > error.  I clearly said in the commit message that this was a hack to
+> > get round issues introduced by agk's move to a kmemcache.  Cook
+> > something cleaner up between yourselves, or wait for me to look at it
+> > again once I've got through some more pressing issues.
 > 
-> Is kobject_uevent_env anything except an asynchronous best effort
-> notification to user-space that a device has come or gone?
+> OK, so this kmemcache problem will go away once you switch over to
+> bufio.
 
-Unfortunately it is for device-mapper. libdevmapper
-depends on information that uevent was sent because udev rules uses
-semaphore to inform that some action was taken.
-So if dm-ioctl returns flag that uevent was not sent, it fallback
-to different error path (otherwise it waits for completion forever).
-(TBH I am more and more convinced this was not quite clever concept.)
+Assuming agk doesn't decide to switch over to a kmemcache.  Remember
+bm used to allocate via kmalloc or pages like bufio.
 
-But the whole concept "send event to the list of namespaces, maybe someone listen"
-seems also not quite clever to me :-)
+> As for stacking, can't we just read the superblock to check if a device
+> is already in use (would work metadata anyway)?  No idea if that'd be
+> too costly -- probably not: read superblock and check if
+> THIN_SUPERBLOCK_MAGIC is set.
 
-How much time consuming is that? If you create thousand(s) of cloned namespaces,
-how it will perform with uevent notification performance?
-(IOW first event is sent through netlink and 999+ reports failure... strange.)
+So you've already thought of a scenario where it's worth having two bm
+instances (one read only).
 
-Milan
+- Joe
