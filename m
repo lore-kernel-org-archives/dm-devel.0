@@ -1,74 +1,118 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: convert dm-thin to use dm-bufio
-Date: Fri, 19 Aug 2011 14:25:32 -0400
-Message-ID: <20110819182532.GA3774@redhat.com>
-References: <Pine.LNX.4.64.1108141602440.28009@hs20-bc2-1.build.redhat.com>
-	<20110815090416.GE3159@ubuntu>
-	<Pine.LNX.4.64.1108151316300.18170@hs20-bc2-1.build.redhat.com>
-	<20110816091600.GA4284@ubuntu>
-	<Pine.LNX.4.64.1108161755510.15859@hs20-bc2-1.build.redhat.com>
-	<20110817082656.GA3267@ubuntu>
-	<Pine.LNX.4.64.1108181830050.7668@hs20-bc2-1.build.redhat.com>
-	<20110819070435.GA32300@redhat.com>
-	<Pine.LNX.4.64.1108190926530.2592@hs20-bc2-1.build.redhat.com>
-	<20110819153706.GA23736@ubuntu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [dm-devel] clone() with CLONE_NEWNET breaks kobject_uevent_env()
+Date: Fri, 19 Aug 2011 11:39:20 -0700
+Message-ID: <m1vctt2qlj.fsf@fess.ebiederm.org>
+References: <4E4CDF44.5080109@redhat.com> <m17h69sr03.fsf@fess.ebiederm.org>
+	<4E4E395B.7070106@redhat.com> <m1liup4oes.fsf@fess.ebiederm.org>
+	<4E4E503B.3050406@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20110819153706.GA23736@ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4E4E503B.3050406@redhat.com> (Milan Broz's message of "Fri, 19
+	Aug 2011 13:59:55 +0200")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Kay Sievers <kay.sievers@vrfy.org>, "David S. Miller" <davem@davemloft.net>, containers@lists.osdl.org
 List-Id: dm-devel.ids
 
-On Fri, Aug 19 2011 at 11:37am -0400,
-Joe Thornber <thornber@redhat.com> wrote:
+Milan Broz <mbroz@redhat.com> writes:
 
-> On Fri, Aug 19, 2011 at 09:31:56AM -0400, Mikulas Patocka wrote:
-> > On Fri, 19 Aug 2011, Mike Snitzer wrote:
-> > > -struct dm_block;
-> > > +#define dm_block		dm_buffer
-> > > +#define dm_block_manager	dm_bufio_client
-> > > 
-> > > But I think it'd be best, in the long run, to have a follow-on patch
-> > > that does away with the aliases and just use the bufio structs
-> > > throughout the code.  Anyway, don't need to worry about this now.  But
-> > > what you've done is hack that should probably be cleaned up.
-> > 
-> > This way, it's easy to swap the original block manager and dm-bufio.
-> > 
-> > If I changed the names throughout the whole dm-thinp code, it would 
-> > conflict with any changes Joe may do.
-> 
-> I agree with Mikulas here.
+> On 08/19/2011 01:43 PM, Eric W. Biederman wrote:
+>> Milan Broz <mbroz@redhat.com> writes:
+>> 
+>>> On 08/19/2011 11:13 AM, Eric W. Biederman wrote:
+>>>> Milan Broz <mbroz@redhat.com> writes:
+>>>>
+>>>> I think the proper fix is to remove the error return from
+>>>> kobject_uevent_env and kobject_uevent, and make it harder to get calling
+>>>> of this function wrong.  Possibly in conjunction with that tag all of
+>>>> the memory allocations of kobject_uevent_env with GFP_NOFAIL or
+>>>> something so the memory allocator knows that this path is totally
+>>>> not able to deal with failure.
+>>>>
+>>>> Is kobject_uevent_env anything except an asynchronous best effort
+>>>> notification to user-space that a device has come or gone?
+>>>
+>>> Unfortunately it is for device-mapper. libdevmapper
+>>> depends on information that uevent was sent because udev rules uses
+>>> semaphore to inform that some action was taken.
+>>> So if dm-ioctl returns flag that uevent was not sent, it fallback
+>>> to different error path (otherwise it waits for completion forever).
+>>> (TBH I am more and more convinced this was not quite clever concept.)
+>> 
+>> If I understand your description and the code right the guarantee that
+>> you need is that kobject_uevent will return success only if it has
+>> queued a packet in every listening netlink socket.
+>
+> I think so. IOW success == event was sent to all active listeners.
+>
+>> We already ignore ENOBUFS so the guarantee you appear to need in
+>> libdevmapper does not appear to be present in kobject_uevent.
+>> 
+>> Does the libdevmapper code work despite getting a spurious failure?
+>
+> BTW I do not see ENOBUFS but ESRCH (from netlink_broadcast_filtered).
+>
+> If spurious failure is that event is sent (even partially) but it reports
+> failure, it is the exact situation I see now - libdevmapper will try
+> to decrement system semaphore which is already removed from udev rules.
+>
+> Final state is correct, just it prints ugly warnings. IOW it recovers
+> from this situation correctly.
 
-It could be that we're all in agreement here.
+Then I guess this is fixable in kobject_uevent_env.  I'm not certain
+it is smart to support this case but it appears supportable.
 
-In the near term it makes no sense to have the structure name churn
-given the merge of bufio will be disruptive enough as it is.
+> But Kay's suggestion to use netlink_has_listeners() seems like good
+> idea. IOW if there is no listener, it should skip quietly and not
+> fail the whole call...
 
-I tried to convey as much above with: "Anyway, don't need to worry about
-this now."
+In the case of ESRCH I completely agree.
 
-But if thinp is to be the first consumer of bufio (a substantial chunk
-of code in its own right) then it stands to reason we should have thinp
-act as the reference for how other targets should consume it.
+We are currently ignoring errors in the semantically more interesting
+case when netlink_broadcast does not deliver the packet to one of the
+listening netlink sockets.
 
-So all I was suggesting is that once thinp is converted to bufio, and
-there is confidence in the result, it should be updated to not have the
-intermediate structure aliases that helped ease the conversion.
+How does this patch look?
+---
 
-If what you're saying is thinp should always use the structure aliases
-then I guess we'll just disagree and that'll be the end of it.  All I
-can do is say my peace.
+diff --git a/lib/kobject_uevent.c b/lib/kobject_uevent.c
+index 70af0a7..7da5ef3 100644
+--- a/lib/kobject_uevent.c
++++ b/lib/kobject_uevent.c
+@@ -139,6 +139,7 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
+ 	u64 seq;
+ 	int i = 0;
+ 	int retval = 0;
++	bool delivery_failed;
+ #ifdef CONFIG_NET
+ 	struct uevent_sock *ue_sk;
+ #endif
+@@ -251,6 +252,7 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
+ 	if (retval)
+ 		goto exit;
+ 
++	delivery_failure = false;
+ #if defined(CONFIG_NET)
+ 	/* send netlink message */
+ 	mutex_lock(&uevent_sock_mutex);
+@@ -281,14 +283,15 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
+ 							    0, 1, GFP_KERNEL,
+ 							    kobj_bcast_filter,
+ 							    kobj);
+-			/* ENOBUFS should be handled in userspace */
+-			if (retval == -ENOBUFS)
+-				retval = 0;
++			if (retval && (retval != -ESRCH))
++				delivery_failure = true;
+ 		} else
+-			retval = -ENOMEM;
++			delivery_failure = true;
+ 	}
+ 	mutex_unlock(&uevent_sock_mutex);
+ #endif
++	if (delivery_failure)
++		retval = -ENOBUFS;
+ 
+ 	/* call uevent_helper, usually only enabled during early boot */
+ 	if (uevent_helper[0] && !kobj_usermode_filter(kobj)) {
