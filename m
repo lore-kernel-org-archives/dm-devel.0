@@ -1,16 +1,11 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/2] dm space map: only include bitops.h in
-	dm-space-map-common.c
-Date: Fri, 19 Aug 2011 21:10:34 -0400
-Message-ID: <1313802634-15884-2-git-send-email-snitzer@redhat.com>
-References: <20110819161745.GA27778@ubuntu>
-	<1313802634-15884-1-git-send-email-snitzer@redhat.com>
+From: Craig <craig@haquarter.de>
+Subject: [PATCH] fix-linebreaks
+Date: Sat, 20 Aug 2011 00:16:55 +0200
+Message-ID: <4E4EE0D7.9020706@haquarter.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="------------010006030605060707000502"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1313802634-15884-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,51 +15,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com, mpatocka@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: christophe.varoqui@opensvc.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
----
- drivers/md/persistent-data/dm-space-map-common.c   |    1 +
- drivers/md/persistent-data/dm-space-map-disk.c     |    1 -
- drivers/md/persistent-data/dm-space-map-metadata.c |    1 -
- 3 files changed, 1 insertions(+), 2 deletions(-)
+This is a multi-part message in MIME format.
+--------------010006030605060707000502
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
 
-diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
-index 90cc199..513ef86 100644
---- a/drivers/md/persistent-data/dm-space-map-common.c
-+++ b/drivers/md/persistent-data/dm-space-map-common.c
-@@ -1,6 +1,7 @@
- #include "dm-space-map-common.h"
- #include "dm-transaction-manager.h"
+Hi,
+
+error messages (DM message failed) in the logs look like this in multipath:
+
+Jul 24 06:17:47 onosendai multipathd: DM message failed [queue_if_no_path
+Jul 24 06:17:47 onosendai ]
+Jul 24 06:17:47 onosendai multipathd: sdc: alua not supported
+Jul 24 06:17:47 onosendai multipathd: sdd: alua not supported
+Jul 24 06:17:47 onosendai multipathd: DM message failed [queue_if_no_path
+Jul 24 06:17:47 onosendai ]
+
+The patch fixes the unneccessary \n in libmultipath/devmapper.c
+
+Best regards,
+
+Craig
+
+--------------010006030605060707000502
+Content-Type: text/plain;
+ name="0001-fix-linebreaks.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="0001-fix-linebreaks.patch"
+
+From bb1354f917b7bd205605a41016e0a3e1aff6feac Mon Sep 17 00:00:00 2001
+From: craig <craig@haquarter.de>
+Date: Sun, 24 Jul 2011 06:38:55 +0200
+Subject: [PATCH] fix linebreaks
+
+---
+ libmultipath/devmapper.c |   10 +++++-----
+ 1 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index a70ae0a..de7d446 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -776,7 +776,7 @@ dm_fail_path(char * mapname, char * path)
+ {
+ 	char message[32];
  
-+#include <linux/bitops.h>
- #include <linux/device-mapper.h>
+-	if (snprintf(message, 32, "fail_path %s\n", path) > 32)
++	if (snprintf(message, 32, "fail_path %s", path) > 32)
+ 		return 1;
  
- #define DM_MSG_PREFIX "space map common"
-diff --git a/drivers/md/persistent-data/dm-space-map-disk.c b/drivers/md/persistent-data/dm-space-map-disk.c
-index ba917cd..dee112f 100644
---- a/drivers/md/persistent-data/dm-space-map-disk.c
-+++ b/drivers/md/persistent-data/dm-space-map-disk.c
-@@ -11,7 +11,6 @@
+ 	return dm_message(mapname, message);
+@@ -787,7 +787,7 @@ dm_reinstate_path(char * mapname, char * path)
+ {
+ 	char message[32];
  
- #include <linux/list.h>
- #include <linux/slab.h>
--#include <linux/bitops.h>
- #include <linux/module.h>
- #include <linux/device-mapper.h>
+-	if (snprintf(message, 32, "reinstate_path %s\n", path) > 32)
++	if (snprintf(message, 32, "reinstate_path %s", path) > 32)
+ 		return 1;
  
-diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
-index 49adf0d..1911c41 100644
---- a/drivers/md/persistent-data/dm-space-map-metadata.c
-+++ b/drivers/md/persistent-data/dm-space-map-metadata.c
-@@ -10,7 +10,6 @@
+ 	return dm_message(mapname, message);
+@@ -799,9 +799,9 @@ dm_queue_if_no_path(char *mapname, int enable)
+ 	char *message;
  
- #include <linux/list.h>
- #include <linux/slab.h>
--#include <linux/bitops.h>
- #include <linux/device-mapper.h>
+ 	if (enable)
+-		message = "queue_if_no_path\n";
++		message = "queue_if_no_path";
+ 	else
+-		message = "fail_if_no_path\n";
++		message = "fail_if_no_path";
  
- #define DM_MSG_PREFIX "space map metadata"
+ 	return dm_message(mapname, message);
+ }
+@@ -821,7 +821,7 @@ dm_groupmsg (char * msg, char * mapname, int index)
+ {
+ 	char message[32];
+ 
+-	if (snprintf(message, 32, "%s_group %i\n", msg, index) > 32)
++	if (snprintf(message, 32, "%s_group %i", msg, index) > 32)
+ 		return 1;
+ 
+ 	return dm_message(mapname, message);
 -- 
-1.7.4.4
+1.7.3.4
+
+
+--------------010006030605060707000502
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------010006030605060707000502--
