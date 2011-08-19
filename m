@@ -1,41 +1,52 @@
-From: Kay Sievers <kay.sievers@vrfy.org>
+From: ebiederm@xmission.com (Eric W. Biederman)
 Subject: Re: [dm-devel] clone() with CLONE_NEWNET breaks kobject_uevent_env()
-Date: Fri, 19 Aug 2011 12:26:30 +0200
-Message-ID: <CAPXgP13KeTnBD+hgf_hM55EiQFsYCxmCwyhRaNZ0rUJpjKK=-g@mail.gmail.com>
+Date: Fri, 19 Aug 2011 04:43:39 -0700
+Message-ID: <m1liup4oes.fsf@fess.ebiederm.org>
 References: <4E4CDF44.5080109@redhat.com> <m17h69sr03.fsf@fess.ebiederm.org>
+	<4E4E395B.7070106@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <m17h69sr03.fsf@fess.ebiederm.org>
+In-Reply-To: <4E4E395B.7070106@redhat.com> (Milan Broz's message of "Fri, 19
+	Aug 2011 12:22:19 +0200")
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "David S. Miller" <davem@davemloft.net>
+To: Milan Broz <mbroz@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Kay Sievers <kay.sievers@vrfy.org>, "David S. Miller" <davem@davemloft.net>, containers@lists.osdl.org
 List-Id: dm-devel.ids
 
-On Fri, Aug 19, 2011 at 11:13, Eric W. Biederman <ebiederm@xmission.com=
-> wrote:
-> Milan Broz <mbroz@redhat.com> writes:
->> If you run clone() with CLONE_NEWNET (which is chromium using
->> for sanboxing), udev namespace is cloned too (newly registered
->> in uevent_sock_list) and netlink send (except the first in list)
->> fails with -ESRCH.
->>
->> This causes that _every_ call of kobject_uevent_env() return failure=
-=2E
+Milan Broz <mbroz@redhat.com> writes:
 
-> That netlink_ broadcast chooses to treat failure to deliver a packet =
-to
-> anyone as an error and return -ESRCH is a little peculiar. =C2=A0In g=
-eneral
-> we don't see that error because when you are testing there is at leas=
-t
-> one listener on the netlink socket. =C2=A0So as a practical matter I =
-think
-> we should be ignoring return values of -ESRCH from netlink_broadcast,
-> in kobject_uevent_env.
+> On 08/19/2011 11:13 AM, Eric W. Biederman wrote:
+>> Milan Broz <mbroz@redhat.com> writes:
+>> 
+>> I think the proper fix is to remove the error return from
+>> kobject_uevent_env and kobject_uevent, and make it harder to get calling
+>> of this function wrong.  Possibly in conjunction with that tag all of
+>> the memory allocations of kobject_uevent_env with GFP_NOFAIL or
+>> something so the memory allocator knows that this path is totally
+>> not able to deal with failure.
+>> 
+>> Is kobject_uevent_env anything except an asynchronous best effort
+>> notification to user-space that a device has come or gone?
+>
+> Unfortunately it is for device-mapper. libdevmapper
+> depends on information that uevent was sent because udev rules uses
+> semaphore to inform that some action was taken.
+> So if dm-ioctl returns flag that uevent was not sent, it fallback
+> to different error path (otherwise it waits for completion forever).
+> (TBH I am more and more convinced this was not quite clever concept.)
 
-Wouldn't a wrap in netlink_has_listeners() help before we try to send i=
-t?
+If I understand your description and the code right the guarantee that
+you need is that kobject_uevent will return success only if it has
+queued a packet in every listening netlink socket.
 
-Kay
+We already ignore ENOBUFS so the guarantee you appear to need in
+libdevmapper does not appear to be present in kobject_uevent.
+
+Does the libdevmapper code work despite getting a spurious failure?
+
+If libdevmapper does not work despite a spurious failure I don't see how
+we could possibly fix kobject_uevent when there is more than one netlink
+listener.
+
+Eric
