@@ -1,15 +1,15 @@
 From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] fix-linebreaks
-Date: Mon, 22 Aug 2011 15:50:39 +0200
-Message-ID: <1314021039.30562.5.camel@lapoo.opensvc.com>
-References: <4E4EE0D7.9020706@haquarter.de>
+Subject: Re: [PATCH] Add kpartx example to manpage
+Date: Mon, 22 Aug 2011 15:51:18 +0200
+Message-ID: <1314021078.30562.6.camel@lapoo.opensvc.com>
+References: <1313602837-24744-1-git-send-email-rrs@debian.org>
 Reply-To: christophe.varoqui@opensvc.com,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4E4EE0D7.9020706@haquarter.de>
+In-Reply-To: <1313602837-24744-1-git-send-email-rrs@debian.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,25 +19,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Craig <craig@haquarter.de>
-Cc: dm-devel <dm-devel@redhat.com>
+To: Ritesh Raj Sarraf <rrs@debian.org>
+Cc: dm-devel@redhat.com, Ritesh Raj Sarraf <rrs@researchut.com>
 List-Id: dm-devel.ids
 
-On sam., 2011-08-20 at 00:16 +0200, Craig wrote:
-> Hi,
+On mer., 2011-08-17 at 23:10 +0530, Ritesh Raj Sarraf wrote:
+> From: Ritesh Raj Sarraf <rrs@researchut.com>
 > 
-> error messages (DM message failed) in the logs look like this in multipath:
+> Thanks: Lars Wirzenius
+> Closes: 637538
 > 
-> Jul 24 06:17:47 onosendai multipathd: DM message failed [queue_if_no_path
-> Jul 24 06:17:47 onosendai ]
-> Jul 24 06:17:47 onosendai multipathd: sdc: alua not supported
-> Jul 24 06:17:47 onosendai multipathd: sdd: alua not supported
-> Jul 24 06:17:47 onosendai multipathd: DM message failed [queue_if_no_path
-> Jul 24 06:17:47 onosendai ]
-> 
-> The patch fixes the unneccessary \n in libmultipath/devmapper.c
-> 
-Merged.
+Merged,
 
 Thanks,
 -- 
