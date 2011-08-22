@@ -1,14 +1,16 @@
-From: Oren Held <oren@held.org.il>
-Subject: [PATCH] Remove prio_callout as a valid option from man
-	page
-Date: Sun, 21 Aug 2011 13:05:22 +0300
-Message-ID: <20110821100522.GA10122@orenhe-laptop>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 1/2] dm bufio: fix "value computed is not
+	used" warnings
+Date: Mon, 22 Aug 2011 09:29:41 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1108220929250.26814@hs20-bc2-1.build.redhat.com>
+References: <20110819161745.GA27778@ubuntu>
+	<1313802634-15884-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="0OAP2g/MAC+5xKAE"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <1313802634-15884-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,47 +20,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Joe Thornber <thornber@redhat.com>
 List-Id: dm-devel.ids
 
+OK, I applied the patch.
 
---0OAP2g/MAC+5xKAE
-Content-Type: text/plain; charset=us-ascii; format=fixed
-Content-Disposition: inline
-
-
-Signed-off-by: Oren Held <orenhe@il.ibm.com>
----
- multipath/multipath.conf.5 |    2 --
- 1 files changed, 0 insertions(+), 2 deletions(-)
-
-
---0OAP2g/MAC+5xKAE
-Content-Type: text/x-patch; charset=us-ascii;
-	name="0001-Remove-prio_callout-as-a-valid-option-from-man-page.patch"
-Content-Disposition: attachment;
-	filename="0001-Remove-prio_callout-as-a-valid-option-from-man-page.patch"
-Content-Transfer-Encoding: quoted-printable
-
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 6e6b021..8419955 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -475,8 +475,6 @@ section:
- .TP
- .B features
- .TP
--.B prio_callout
--.TP
- .B failback
- .TP
- .B rr_weight
-
---0OAP2g/MAC+5xKAE
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---0OAP2g/MAC+5xKAE--
+Mikulas
