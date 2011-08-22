@@ -1,31 +1,61 @@
 From: Kay Sievers <kay.sievers@vrfy.org>
-Subject: Re: [PATCH] kobj_uevent: Ignore if some listeners cannot handle message
-Date: Mon, 22 Aug 2011 18:24:19 +0200
-Message-ID: <CAPXgP10dYJv0aS_WwUqJr=YEz7WVp1abvED=fKEmOPp42ZRP6A@mail.gmail.com>
-References: <4E4ECA5D.1020907@redhat.com> <1314021094-15453-1-git-send-email-mbroz@redhat.com>
+Subject: Re: Native systemd service files for multipathd
+Date: Mon, 22 Aug 2011 18:35:26 +0200
+Message-ID: <CAPXgP12DSQLWmwTcQEOMN4VtY-zAh0OxbW=KLQc+X70nb50sVA@mail.gmail.com>
+References: <4E0C83BE.9020507@gmail.com>
+	<1314020862.30562.3.camel@lapoo.opensvc.com>
+	<4E527988.9000002@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1314021094-15453-1-git-send-email-mbroz@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, ebiederm@xmission.com, greg@kroah.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4E527988.9000002@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Aug 22, 2011 at 15:51, Milan Broz <mbroz@redhat.com> wrote:
-> kobject_uevent() uses a multicast socket and should ignore
-> if one of listeners cannot handle messages or nobody is
-> listening at all.
->
-> Easily reproducible when a process in system is cloned
-> with CLONE_NEWNET flag.
-
-> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 if (retval =3D=3D -ENOBUFS)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 if (retval =3D=3D -ENOBUFS || retval =3D=3D -ESRCH)
-
-Looks good to me.
-
-Kay
+T24gTW9uLCBBdWcgMjIsIDIwMTEgYXQgMTc6NDUsIEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNl
+LmRlPiB3cm90ZToKPiBPbiAwOC8yMi8yMDExIDAzOjQ3IFBNLCBDaHJpc3RvcGhlIFZhcm9xdWkg
+d3JvdGU6Cj4+IE9uIGpldS4sIDIwMTEtMDYtMzAgYXQgMTQ6MTAgKzAwMDAsICJKw7NoYW5uIEIu
+IEd1w7BtdW5kc3NvbiIgd3JvdGU6Cj4+Pgo+Pj4gSXMgYW55b25lIHRha2luZyBhIGxvb2sgYXQg
+cG9ydGluZyB0aGUgbXVsdGlwYXRoZCBsZWdhY3kgc3lzdiBpbml0Cj4+PiBzY3JpcHQgdG8gbmF0
+aXZlIHN5c3RlbWQgdW5pdCBmaWxlPwo+Pj4KPj4+IEkgZmlsZWQgNjkwODI4IG9uIDIwMTEtMDMt
+MjUgYW5kIHlldCB0byByZWNlaXZlIHNvbWVraW5kIG9mIHJlc3BvbnNlIG9uCj4+PiBpdCBhbmQg
+dW5sZXNzIHNvbWUgYWN0aW9uIGlzIHRha2VuIHRoZW4gYSkgZGV2aWNlLW1hcHBlci1tdWx0aXBh
+dGggd2lsbAo+Pj4gYmUgYmxvY2tpbmcgdGhlIEZlZG9yYSAxNiBhbHBoYSByZWxlYXNlIG9yIGIp
+IGJlIHJpcHBlZCBvdXQgb2YgQGJhc2UgYW5kCj4+PiBiZSBtYWRlIHN1cmUgaXQgZG9lcyBub3Qg
+Z2V0IGluc3RhbGxlZCBvbiB0aGUgb2ZmaWNpYWwgbGl2ZWNkLgo+Pj4KPj4gV2hhdCBpcyB0aGUg
+c3RhdHVzIG9mIHRoaXMgcmVxdWVzdCA/IEhhcyBhbnlvbmUgc3RlcHBlZC1pbiB0byB0aGUgam9i
+ID8KPj4gSWYgbm90IEknbGwgbG9vayBpbnRvIGl0LiBJZiB5b3UgaGF2ZSBGZWRvcmEtc3BlY2lm
+aWMgc3lzdGVtZAo+PiBpbXBsZW1lbnRhdGlvbiBndWlkZWxpbmUsIHBsZWFzZSBwb2ludCBtZSB0
+byB0aGUgYXBwcm9wcmlhdGUKPj4gZG9jdW1lbnRhdGlvbi4KPj4KPiBJIGhhdmUgdGFsa2VkIHdp
+dGggS2F5ICYgTGVubmFydCBhYm91dCB0aGlzLgo+Cj4gVGhlIG1haW4gcHJvYmxlbSBoZXJlIGlz
+IHRoYXQgd2UgZG9uJ3QgLyBjYW4ndCBrbm93IGlmIGEgZGV2aWNlIGlzCj4gbXVsdGlwYXRoZWQg
+b3Igbm90OyB0aGlzIGlzIGJhc2ljYWxseSBhIHBvbGljeSBkZWNpc2lvbi4KPiBFdmVuIGEgc2lt
+cGxlIHN3aXRjaCAobXVsdGlwYXRoIG9uL29mZikgd291bGRuJ3Qgc3VmZmljZSBoZXJlLCBhcyB0
+aGlzCj4gcGFydGljdWxhciBkZXZpY2UgbWlnaHQgYmUgZXhjbHVkZWQgdmlhIHRoZSBjb25maWd1
+cmF0aW9uIGZpbGUuCj4KPiBJZGVhIGhlcmUgaXMgdG8gbW9kaWZ5IHRoZSAnbXVsdGlwYXRoJyBw
+cm9ncmFtIHRvIGRldGVybWluZSBpZiBhIHBhcnRpY3VsYXIKPiBkZXZpY2UgaXMgaGFuZGxlZCBi
+eSBtdWx0aXBhdGggb3Igbm90LiBJZiBzbywgX25vIG90aGVyXyBjb25maWd1cmF0aW9uIG11c3QK
+PiBiZSBkb25lIGluIHRoYXQgZGV2aWNlLgo+IFRoZSBtdWx0aXBhdGhkIGRhZW1vbiBpdHNlbGYg
+YWxyZWFkeSBsaXN0ZW5zIG9uIGV2ZW50cyBmcm9tIHRoZSB1ZGV2IHNvY2tldDsKPiBpdCBzaG91
+bGQgYmUgcHJldHR5IHRyaXZpYWwgdG8gY29udmVydCB0aGF0IHRvIHNvY2tldCBhY3RpdmF0aW9u
+Lgo+Cj4gQW5kLCBvZiBjb3Vyc2UsIHdlIG5lZWQgdG8gc29sdmUgdGhlIG1vdW50IHByb2JsZW0u
+IExhc3QgSSd2ZSBoZWFyZCB3YXMgdGhhdAo+IHN5c3RlbWQgX3dvbid0XyBiZSBoYW5kbGluZyBt
+b3VudGluZywgd2hpY2ggaW4gZWZmZWN0IG1lYW5zIHdlIGNhbm5vdCBtb3VudAo+IGFueSBzeXN0
+ZW1zIHByb3ZpZGVkIHZpYSBtdWx0aXBhdGggLi4uCj4KPiBXaGF0IGlzIHRoZSBzdGF0dXMgaGVy
+ZT8KCkl0IGZ1bGx5IHN1cHBvcnQgbW91bnRzIG9uIGJvb3QsIGR5bmFtaWNhbGx5IGNyZWF0ZWQs
+IG9yIG9uIGhvdHBsdWcsCndpdGggb3Igd2l0aG91dCBhdXRvbW91bnRlciBzdXBwb3J0LgoKQnV0
+IGl0IHdpbGwgbm90IGFzc2VtYmxlL2hhbmRsZS9rbm93IGFueXRoaW5nIGFib3V0IGFueSBkbS9t
+ZCBkZXZpY2VzLgoKS2F5CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
+LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
