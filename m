@@ -1,39 +1,41 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] Remove prio_callout as a valid option from
- man page
-Date: Mon, 22 Aug 2011 15:50:07 +0200
-Message-ID: <1314021007.30562.4.camel@lapoo.opensvc.com>
-References: <20110821100522.GA10122@orenhe-laptop>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110821100522.GA10122@orenhe-laptop>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: orenhe@il.ibm.com
-Cc: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH] kobj_uevent: Ignore if some listeners cannot handle message
+Date: Mon, 22 Aug 2011 15:51:34 +0200
+Message-ID: <1314021094-15453-1-git-send-email-mbroz@redhat.com>
+References: <4E4ECA5D.1020907@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4E4ECA5D.1020907@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: dm-devel@redhat.com, kay.sievers@vrfy.org, ebiederm@xmission.com, greg@kroah.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On dim., 2011-08-21 at 13:05 +0300, Oren Held wrote:
-> Signed-off-by: Oren Held <	
-> ---
->  multipath/multipath.conf.5 |    2 --
->  1 files changed, 0 insertions(+), 2 deletions(-)
-> 
-Merged
+kobject_uevent() uses a multicast socket and should ignore
+if one of listeners cannot handle messages or nobody is
+listening at all.
 
-Thanks,
+Easily reproducible when a process in system is cloned
+with CLONE_NEWNET flag.
+
+(See also http://article.gmane.org/gmane.linux.kernel.device-mapper.dm-crypt/5256)
+
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+---
+ lib/kobject_uevent.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/lib/kobject_uevent.c b/lib/kobject_uevent.c
+index 70af0a7..ad72a03 100644
+--- a/lib/kobject_uevent.c
++++ b/lib/kobject_uevent.c
+@@ -282,7 +282,7 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
+ 							    kobj_bcast_filter,
+ 							    kobj);
+ 			/* ENOBUFS should be handled in userspace */
+-			if (retval == -ENOBUFS)
++			if (retval == -ENOBUFS || retval == -ESRCH)
+ 				retval = 0;
+ 		} else
+ 			retval = -ENOMEM;
 -- 
-Christophe Varoqui
-OpenSVC - Tools to scale
-http://www.opensvc.com/
+1.7.6
