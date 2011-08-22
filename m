@@ -1,14 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: Native systemd service files for multipathd
-Date: Mon, 22 Aug 2011 17:45:12 +0200
-Message-ID: <4E527988.9000002@suse.de>
+Date: Mon, 22 Aug 2011 17:01:50 +0100
+Message-ID: <20110822160150.GB26199@agk-dp.fab.redhat.com>
 References: <4E0C83BE.9020507@gmail.com>
 	<1314020862.30562.3.camel@lapoo.opensvc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <1314020862.30562.3.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,40 +20,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>, Kay Sievers <kay.sievers@vrfy.org>
+To: Christophe Varoqui <christophe.varoqui@gmail.com>
+Cc: dm-devel <dm-devel@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>, =?iso-8859-1?Q?J=F3hann_B=2E_Gu=F0mundsson?= <johannbg@gmail.com>
 List-Id: dm-devel.ids
 
-T24gMDgvMjIvMjAxMSAwMzo0NyBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+IE9uIGpl
-dS4sIDIwMTEtMDYtMzAgYXQgMTQ6MTAgKzAwMDAsICJKw7NoYW5uIEIuIEd1w7BtdW5kc3NvbiIg
-d3JvdGU6Cj4+IElzIGFueW9uZSB0YWtpbmcgYSBsb29rIGF0IHBvcnRpbmcgdGhlIG11bHRpcGF0
-aGQgbGVnYWN5IHN5c3YgaW5pdAo+PiBzY3JpcHQgdG8gbmF0aXZlIHN5c3RlbWQgdW5pdCBmaWxl
-Pwo+Pgo+PiBJIGZpbGVkIDY5MDgyOCBvbiAyMDExLTAzLTI1IGFuZCB5ZXQgdG8gcmVjZWl2ZSBz
-b21la2luZCBvZiByZXNwb25zZSBvbgo+PiBpdCBhbmQgdW5sZXNzIHNvbWUgYWN0aW9uIGlzIHRh
-a2VuIHRoZW4gYSkgZGV2aWNlLW1hcHBlci1tdWx0aXBhdGggd2lsbAo+PiBiZSBibG9ja2luZyB0
-aGUgRmVkb3JhIDE2IGFscGhhIHJlbGVhc2Ugb3IgYikgYmUgcmlwcGVkIG91dCBvZiBAYmFzZSBh
-bmQKPj4gYmUgbWFkZSBzdXJlIGl0IGRvZXMgbm90IGdldCBpbnN0YWxsZWQgb24gdGhlIG9mZmlj
-aWFsIGxpdmVjZC4KPj4KPiBXaGF0IGlzIHRoZSBzdGF0dXMgb2YgdGhpcyByZXF1ZXN0ID8gSGFz
-IGFueW9uZSBzdGVwcGVkLWluIHRvIHRoZSBqb2IgPwo+IElmIG5vdCBJJ2xsIGxvb2sgaW50byBp
-dC4gSWYgeW91IGhhdmUgRmVkb3JhLXNwZWNpZmljIHN5c3RlbWQKPiBpbXBsZW1lbnRhdGlvbiBn
-dWlkZWxpbmUsIHBsZWFzZSBwb2ludCBtZSB0byB0aGUgYXBwcm9wcmlhdGUKPiBkb2N1bWVudGF0
-aW9uLgo+CkkgaGF2ZSB0YWxrZWQgd2l0aCBLYXkgJiBMZW5uYXJ0IGFib3V0IHRoaXMuCgpUaGUg
-bWFpbiBwcm9ibGVtIGhlcmUgaXMgdGhhdCB3ZSBkb24ndCAvIGNhbid0IGtub3cgaWYgYSBkZXZp
-Y2UgaXMgCm11bHRpcGF0aGVkIG9yIG5vdDsgdGhpcyBpcyBiYXNpY2FsbHkgYSBwb2xpY3kgZGVj
-aXNpb24uCkV2ZW4gYSBzaW1wbGUgc3dpdGNoIChtdWx0aXBhdGggb24vb2ZmKSB3b3VsZG4ndCBz
-dWZmaWNlIGhlcmUsIGFzIAp0aGlzIHBhcnRpY3VsYXIgZGV2aWNlIG1pZ2h0IGJlIGV4Y2x1ZGVk
-IHZpYSB0aGUgY29uZmlndXJhdGlvbiBmaWxlLgoKSWRlYSBoZXJlIGlzIHRvIG1vZGlmeSB0aGUg
-J211bHRpcGF0aCcgcHJvZ3JhbSB0byBkZXRlcm1pbmUgaWYgYSAKcGFydGljdWxhciBkZXZpY2Ug
-aXMgaGFuZGxlZCBieSBtdWx0aXBhdGggb3Igbm90LiBJZiBzbywgX25vIG90aGVyXyAKY29uZmln
-dXJhdGlvbiBtdXN0IGJlIGRvbmUgaW4gdGhhdCBkZXZpY2UuClRoZSBtdWx0aXBhdGhkIGRhZW1v
-biBpdHNlbGYgYWxyZWFkeSBsaXN0ZW5zIG9uIGV2ZW50cyBmcm9tIHRoZSB1ZGV2IApzb2NrZXQ7
-IGl0IHNob3VsZCBiZSBwcmV0dHkgdHJpdmlhbCB0byBjb252ZXJ0IHRoYXQgdG8gc29ja2V0IAph
-Y3RpdmF0aW9uLgoKQW5kLCBvZiBjb3Vyc2UsIHdlIG5lZWQgdG8gc29sdmUgdGhlIG1vdW50IHBy
-b2JsZW0uIExhc3QgSSd2ZSBoZWFyZCAKd2FzIHRoYXQgc3lzdGVtZCBfd29uJ3RfIGJlIGhhbmRs
-aW5nIG1vdW50aW5nLCB3aGljaCBpbiBlZmZlY3QgbWVhbnMgCndlIGNhbm5vdCBtb3VudCBhbnkg
-c3lzdGVtcyBwcm92aWRlZCB2aWEgbXVsdGlwYXRoIC4uLgoKV2hhdCBpcyB0aGUgc3RhdHVzIGhl
-cmU/CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgIHpTZXJp
-ZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0Ug
-TElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkdGOiBK
-LiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBIUkIgMTY3NDYgKEFHIE7DvHJuYmVy
-ZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Mon, Aug 22, 2011 at 03:47:42PM +0200, Christophe Varoqui wrote:
+> On jeu., 2011-06-30 at 14:10 +0000, "J=F3hann B. Gu=F0mundsson" wrote:
+> > Is anyone taking a look at porting the multipathd legacy sysv init =
+
+> > script to native systemd unit file?
+> > I filed 690828 on 2011-03-25 and yet to receive somekind of response on =
+
+> > it and unless some action is taken then a) device-mapper-multipath will =
+
+> > be blocking the Fedora 16 alpha release or b) be ripped out of @base an=
+d =
+
+> > be made sure it does not get installed on the official livecd.
+> What is the status of this request ? Has anyone stepped-in to the job ?
+> If not I'll look into it. If you have Fedora-specific systemd
+> implementation guideline, please point me to the appropriate
+> documentation.
+ =
+
+As you can see, that bugzilla got closed 19th July.
+
+It was linked to another one 723357 which is also closed, but the comment #2
+there suggests there is still a problem to be dealt with:
+
+  I'm not sure why udev synchronization is failing during startup, but it i=
+s. =
+
+
+Ben, is that still a problem to be investigated?
+
+Alasdair
