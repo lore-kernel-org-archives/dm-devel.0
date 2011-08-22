@@ -1,69 +1,36 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [PATCH] kobj_uevent: Ignore if some listeners cannot handle message
-Date: Mon, 22 Aug 2011 22:05:35 +0200
-Message-ID: <4E52B68F.9020004@redhat.com>
-References: <4E4ECA5D.1020907@redhat.com> <1314021094-15453-1-git-send-email-mbroz@redhat.com> <m1hb59w7k0.fsf@fess.ebiederm.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: new dm-bufio
+Date: Mon, 22 Aug 2011 16:05:28 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1108221600510.26651@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <m1hb59w7k0.fsf@fess.ebiederm.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, kay.sievers@vrfy.org, greg@kroah.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 08/22/2011 09:49 PM, Eric W. Biederman wrote:
-> Milan Broz <mbroz@redhat.com> writes:
-> 
->> kobject_uevent() uses a multicast socket and should ignore
->> if one of listeners cannot handle messages or nobody is
->> listening at all.
->>
->> Easily reproducible when a process in system is cloned
->> with CLONE_NEWNET flag.
->>
->> (See also
->> http://article.gmane.org/gmane.linux.kernel.device-mapper.dm-crypt/5256)
-> 
-> I am fine with the patch below.
-> 
-> However if you are fine with the patch below let's just remove the
-> return code from code from kobject_uevent_env.  We are now explicitly
-> ignoring all of the possible return codes from
-> netlink_broadcast_filtered.  
+I uploaded new dm-bufio patch at 
+http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/dm-bufio.patch
 
-Until someone adds a new errno there, I think ESRCH appeared there
-the same way:-)
+It reports the number of allocated bytes in 
+"/sys/module/dm_bufio/parameters/". There is a file "total_allocated" that 
+contains the number of bytes allocated for buffer cache. There are files 
+"allocated_get_free_pages", "allocated_kmalloc", "allocated_vmalloc" that 
+contain a number of allocated bytes with each method.
 
-I think the code is better readable now. Whatever, I do not care,
-patch is intended to be minimalistic (perhaps for stable series as well now).
+BTW. if you store "1" in "cache_size", it switches to a mode where it 
+won't allocate any memory during operation, relying only on preallocated 
+reserves --- useful for testing reservation deadlocks.
 
-Thanks,
-Milan
-
-> 
-> Ignoring all of the return codes from netlink_broadcast_filtered ignores
-> all of the expected errors from kobject_uevent_env, short of programmer
-> error.
-> 
-> So why have an error code on kobject_uevent_env?
-> 
->> Signed-off-by: Milan Broz <mbroz@redhat.com>
->> ---
->>  lib/kobject_uevent.c |    2 +-
->>  1 files changed, 1 insertions(+), 1 deletions(-)
->>
->> diff --git a/lib/kobject_uevent.c b/lib/kobject_uevent.c
->> index 70af0a7..ad72a03 100644
->> --- a/lib/kobject_uevent.c
->> +++ b/lib/kobject_uevent.c
->> @@ -282,7 +282,7 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
->>  							    kobj_bcast_filter,
->>  							    kobj);
->>  			/* ENOBUFS should be handled in userspace */
->> -			if (retval == -ENOBUFS)
->> +			if (retval == -ENOBUFS || retval == -ESRCH)
->>  				retval = 0;
->>  		} else
->>  			retval = -ENOMEM;
+Mikulas
