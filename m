@@ -1,16 +1,21 @@
-From: Kay Sievers <kay.sievers@vrfy.org>
-Subject: Re: Native systemd service files for multipathd
-Date: Mon, 22 Aug 2011 18:35:26 +0200
-Message-ID: <CAPXgP12DSQLWmwTcQEOMN4VtY-zAh0OxbW=KLQc+X70nb50sVA@mail.gmail.com>
-References: <4E0C83BE.9020507@gmail.com>
-	<1314020862.30562.3.camel@lapoo.opensvc.com>
-	<4E527988.9000002@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCHES] convert dm-thin to use dm-bufio
+Date: Mon, 22 Aug 2011 14:24:53 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1108221421130.26814@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1108141602440.28009@hs20-bc2-1.build.redhat.com>
+	<20110815090416.GE3159@ubuntu>
+	<Pine.LNX.4.64.1108151316300.18170@hs20-bc2-1.build.redhat.com>
+	<20110816091600.GA4284@ubuntu>
+	<Pine.LNX.4.64.1108161755510.15859@hs20-bc2-1.build.redhat.com>
+	<20110817082656.GA3267@ubuntu>
+	<Pine.LNX.4.64.1108181830050.7668@hs20-bc2-1.build.redhat.com>
+	<20110819091224.GB3193@ubuntu> <20110819161745.GA27778@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4E527988.9000002@suse.de>
+In-Reply-To: <20110819161745.GA27778@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +25,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Joe Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gTW9uLCBBdWcgMjIsIDIwMTEgYXQgMTc6NDUsIEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNl
-LmRlPiB3cm90ZToKPiBPbiAwOC8yMi8yMDExIDAzOjQ3IFBNLCBDaHJpc3RvcGhlIFZhcm9xdWkg
-d3JvdGU6Cj4+IE9uIGpldS4sIDIwMTEtMDYtMzAgYXQgMTQ6MTAgKzAwMDAsICJKw7NoYW5uIEIu
-IEd1w7BtdW5kc3NvbiIgd3JvdGU6Cj4+Pgo+Pj4gSXMgYW55b25lIHRha2luZyBhIGxvb2sgYXQg
-cG9ydGluZyB0aGUgbXVsdGlwYXRoZCBsZWdhY3kgc3lzdiBpbml0Cj4+PiBzY3JpcHQgdG8gbmF0
-aXZlIHN5c3RlbWQgdW5pdCBmaWxlPwo+Pj4KPj4+IEkgZmlsZWQgNjkwODI4IG9uIDIwMTEtMDMt
-MjUgYW5kIHlldCB0byByZWNlaXZlIHNvbWVraW5kIG9mIHJlc3BvbnNlIG9uCj4+PiBpdCBhbmQg
-dW5sZXNzIHNvbWUgYWN0aW9uIGlzIHRha2VuIHRoZW4gYSkgZGV2aWNlLW1hcHBlci1tdWx0aXBh
-dGggd2lsbAo+Pj4gYmUgYmxvY2tpbmcgdGhlIEZlZG9yYSAxNiBhbHBoYSByZWxlYXNlIG9yIGIp
-IGJlIHJpcHBlZCBvdXQgb2YgQGJhc2UgYW5kCj4+PiBiZSBtYWRlIHN1cmUgaXQgZG9lcyBub3Qg
-Z2V0IGluc3RhbGxlZCBvbiB0aGUgb2ZmaWNpYWwgbGl2ZWNkLgo+Pj4KPj4gV2hhdCBpcyB0aGUg
-c3RhdHVzIG9mIHRoaXMgcmVxdWVzdCA/IEhhcyBhbnlvbmUgc3RlcHBlZC1pbiB0byB0aGUgam9i
-ID8KPj4gSWYgbm90IEknbGwgbG9vayBpbnRvIGl0LiBJZiB5b3UgaGF2ZSBGZWRvcmEtc3BlY2lm
-aWMgc3lzdGVtZAo+PiBpbXBsZW1lbnRhdGlvbiBndWlkZWxpbmUsIHBsZWFzZSBwb2ludCBtZSB0
-byB0aGUgYXBwcm9wcmlhdGUKPj4gZG9jdW1lbnRhdGlvbi4KPj4KPiBJIGhhdmUgdGFsa2VkIHdp
-dGggS2F5ICYgTGVubmFydCBhYm91dCB0aGlzLgo+Cj4gVGhlIG1haW4gcHJvYmxlbSBoZXJlIGlz
-IHRoYXQgd2UgZG9uJ3QgLyBjYW4ndCBrbm93IGlmIGEgZGV2aWNlIGlzCj4gbXVsdGlwYXRoZWQg
-b3Igbm90OyB0aGlzIGlzIGJhc2ljYWxseSBhIHBvbGljeSBkZWNpc2lvbi4KPiBFdmVuIGEgc2lt
-cGxlIHN3aXRjaCAobXVsdGlwYXRoIG9uL29mZikgd291bGRuJ3Qgc3VmZmljZSBoZXJlLCBhcyB0
-aGlzCj4gcGFydGljdWxhciBkZXZpY2UgbWlnaHQgYmUgZXhjbHVkZWQgdmlhIHRoZSBjb25maWd1
-cmF0aW9uIGZpbGUuCj4KPiBJZGVhIGhlcmUgaXMgdG8gbW9kaWZ5IHRoZSAnbXVsdGlwYXRoJyBw
-cm9ncmFtIHRvIGRldGVybWluZSBpZiBhIHBhcnRpY3VsYXIKPiBkZXZpY2UgaXMgaGFuZGxlZCBi
-eSBtdWx0aXBhdGggb3Igbm90LiBJZiBzbywgX25vIG90aGVyXyBjb25maWd1cmF0aW9uIG11c3QK
-PiBiZSBkb25lIGluIHRoYXQgZGV2aWNlLgo+IFRoZSBtdWx0aXBhdGhkIGRhZW1vbiBpdHNlbGYg
-YWxyZWFkeSBsaXN0ZW5zIG9uIGV2ZW50cyBmcm9tIHRoZSB1ZGV2IHNvY2tldDsKPiBpdCBzaG91
-bGQgYmUgcHJldHR5IHRyaXZpYWwgdG8gY29udmVydCB0aGF0IHRvIHNvY2tldCBhY3RpdmF0aW9u
-Lgo+Cj4gQW5kLCBvZiBjb3Vyc2UsIHdlIG5lZWQgdG8gc29sdmUgdGhlIG1vdW50IHByb2JsZW0u
-IExhc3QgSSd2ZSBoZWFyZCB3YXMgdGhhdAo+IHN5c3RlbWQgX3dvbid0XyBiZSBoYW5kbGluZyBt
-b3VudGluZywgd2hpY2ggaW4gZWZmZWN0IG1lYW5zIHdlIGNhbm5vdCBtb3VudAo+IGFueSBzeXN0
-ZW1zIHByb3ZpZGVkIHZpYSBtdWx0aXBhdGggLi4uCj4KPiBXaGF0IGlzIHRoZSBzdGF0dXMgaGVy
-ZT8KCkl0IGZ1bGx5IHN1cHBvcnQgbW91bnRzIG9uIGJvb3QsIGR5bmFtaWNhbGx5IGNyZWF0ZWQs
-IG9yIG9uIGhvdHBsdWcsCndpdGggb3Igd2l0aG91dCBhdXRvbW91bnRlciBzdXBwb3J0LgoKQnV0
-IGl0IHdpbGwgbm90IGFzc2VtYmxlL2hhbmRsZS9rbm93IGFueXRoaW5nIGFib3V0IGFueSBkbS9t
-ZCBkZXZpY2VzLgoKS2F5CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
-LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+> Mikulas,
+> 
+> On Fri, Aug 19, 2011 at 10:12:24AM +0100, Joe Thornber wrote:
+> > On Thu, Aug 18, 2011 at 06:31:13PM -0400, Mikulas Patocka wrote:
+> > > I uploaded bufio-based block manager at 
+> > > http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/. It 
+> > > supports locks, but it defines new functions down_write_non_owner and 
+> > > up_write_non_owner.
+> > 
+> > Thanks Mikulas, I'll try and get it merged over the next couple of days.
+> 
+> I've merged and pushed this to my git repo.
+
+I checkouted the tree now (I tried all branches reported with git-branch 
+-a), but I couldn't see bufio in any of the branches.
+
+> All the test-suite is passing.  Performance is identical (though
+> hopefully we're a lot more scaleable now).
+> 
+> I have to say I think the separation of io and locking is very elegant
+> now.  Well done.
+> 
+> I've made two small changes:
+> 
+> i) I switched to using dm_bufio_new() rather than dm_bufio_read() at
+> the start of *write_lock_zero().  No point reading the data if we're
+> going to throw it away.
+
+OK, I forgot about this.
+
+> ii) We no longer hold the superblock lock for the duration of the
+> transaction.  This means we can get rid of the nasty rwsem non-owner
+> patch.
+> 
+> We have one outstanding issue however.  Now we're using a rwsem per
+> block, lockdep is trying to validate there are no deadlocks.  Which it
+> can't do, so is producing a warning. See the
+>    
+>  "Exception: Nested data dependencies leading to nested locking"
+> 
+> section in lockdep-design.txt for more discussion of the problem.
+> 
+> We need to suppress this somehow.  I guess the right thing to do is
+> use the nesting level facility, eg call the superblock level 0, btree
+> roots level 1 etc.  This will involve a lot of code changes however.
+> So for now I just want to turn off checking on those locks.
+
+I think you can't turn off lockdep just so. Those "non-owner" lock 
+versions, bypass lockdep.
+
+Mikulas
+
+> - Joe
+> 
