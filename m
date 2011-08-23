@@ -1,15 +1,17 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: new dm-bufio
-Date: Tue, 23 Aug 2011 10:16:03 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1108231012560.2629@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1108221600510.26651@hs20-bc2-1.build.redhat.com>
-	<20110823113048.GC5442@ubuntu>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Native systemd service files for multipathd
+Date: Tue, 23 Aug 2011 17:06:09 +0200
+Message-ID: <4E53C1E1.7040504@suse.de>
+References: <4E0C83BE.9020507@gmail.com>
+	<1314020862.30562.3.camel@lapoo.opensvc.com>
+	<4E527988.9000002@suse.de>
+	<CAPXgP12DSQLWmwTcQEOMN4VtY-zAh0OxbW=KLQc+X70nb50sVA@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110823113048.GC5442@ubuntu>
+In-Reply-To: <CAPXgP12DSQLWmwTcQEOMN4VtY-zAh0OxbW=KLQc+X70nb50sVA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,48 +21,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: Kay Sievers <kay.sievers@vrfy.org>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-
-On Tue, 23 Aug 2011, Joe Thornber wrote:
-
-> On Mon, Aug 22, 2011 at 04:05:28PM -0400, Mikulas Patocka wrote:
-> > I uploaded new dm-bufio patch at 
-> > http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/dm-bufio.patch
-> > 
-> > It reports the number of allocated bytes in 
-> > "/sys/module/dm_bufio/parameters/". There is a file "total_allocated" that 
-> > contains the number of bytes allocated for buffer cache. There are files 
-> > "allocated_get_free_pages", "allocated_kmalloc", "allocated_vmalloc" that 
-> > contain a number of allocated bytes with each method.
-> > 
-> > BTW. if you store "1" in "cache_size", it switches to a mode where it 
-> > won't allocate any memory during operation, relying only on preallocated 
-> > reserves --- useful for testing reservation deadlocks.
-> 
-> Great stuff, will merge straight away.
-> 
-> Are these stats broken down by bufio client?  ie. can we tell which 
-> pool/thinps are consuming all the space?
-
-No, it would me much more complicated to export such numbers.
-
-> Would it be possible to record a high watermark as well?  This would
-> be very useful for benchmarking.  eg, we'd run a heavy load, then be
-> able to get the peak memory usage.  (Resetting this hwm would also be useful).
-
-I uploaded new version to
-http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/dm-bufio.patch
-
-There is file "/sys/module/dm_bufio/parameters/peak_allocated" which 
-contains peak memory consumption. You can reset the value by writing 0 to 
-the file.
-
-Mikulas
-
-
-> - Joe
-> 
+T24gMDgvMjIvMjAxMSAwNjozNSBQTSwgS2F5IFNpZXZlcnMgd3JvdGU6Cj4gT24gTW9uLCBBdWcg
+MjIsIDIwMTEgYXQgMTc6NDUsIEhhbm5lcyBSZWluZWNrZTxoYXJlQHN1c2UuZGU+ICB3cm90ZToK
+Pj4gT24gMDgvMjIvMjAxMSAwMzo0NyBQTSwgQ2hyaXN0b3BoZSBWYXJvcXVpIHdyb3RlOgo+Pj4g
+T24gamV1LiwgMjAxMS0wNi0zMCBhdCAxNDoxMCArMDAwMCwgIkrDs2hhbm4gQi4gR3XDsG11bmRz
+c29uIiB3cm90ZToKPj4+Pgo+Pj4+IElzIGFueW9uZSB0YWtpbmcgYSBsb29rIGF0IHBvcnRpbmcg
+dGhlIG11bHRpcGF0aGQgbGVnYWN5IHN5c3YgaW5pdAo+Pj4+IHNjcmlwdCB0byBuYXRpdmUgc3lz
+dGVtZCB1bml0IGZpbGU/Cj4+Pj4KPj4+PiBJIGZpbGVkIDY5MDgyOCBvbiAyMDExLTAzLTI1IGFu
+ZCB5ZXQgdG8gcmVjZWl2ZSBzb21la2luZCBvZiByZXNwb25zZSBvbgo+Pj4+IGl0IGFuZCB1bmxl
+c3Mgc29tZSBhY3Rpb24gaXMgdGFrZW4gdGhlbiBhKSBkZXZpY2UtbWFwcGVyLW11bHRpcGF0aCB3
+aWxsCj4+Pj4gYmUgYmxvY2tpbmcgdGhlIEZlZG9yYSAxNiBhbHBoYSByZWxlYXNlIG9yIGIpIGJl
+IHJpcHBlZCBvdXQgb2YgQGJhc2UgYW5kCj4+Pj4gYmUgbWFkZSBzdXJlIGl0IGRvZXMgbm90IGdl
+dCBpbnN0YWxsZWQgb24gdGhlIG9mZmljaWFsIGxpdmVjZC4KPj4+Pgo+Pj4gV2hhdCBpcyB0aGUg
+c3RhdHVzIG9mIHRoaXMgcmVxdWVzdCA/IEhhcyBhbnlvbmUgc3RlcHBlZC1pbiB0byB0aGUgam9i
+ID8KPj4+IElmIG5vdCBJJ2xsIGxvb2sgaW50byBpdC4gSWYgeW91IGhhdmUgRmVkb3JhLXNwZWNp
+ZmljIHN5c3RlbWQKPj4+IGltcGxlbWVudGF0aW9uIGd1aWRlbGluZSwgcGxlYXNlIHBvaW50IG1l
+IHRvIHRoZSBhcHByb3ByaWF0ZQo+Pj4gZG9jdW1lbnRhdGlvbi4KPj4+Cj4+IEkgaGF2ZSB0YWxr
+ZWQgd2l0aCBLYXkmICBMZW5uYXJ0IGFib3V0IHRoaXMuCj4+Cj4+IFRoZSBtYWluIHByb2JsZW0g
+aGVyZSBpcyB0aGF0IHdlIGRvbid0IC8gY2FuJ3Qga25vdyBpZiBhIGRldmljZSBpcwo+PiBtdWx0
+aXBhdGhlZCBvciBub3Q7IHRoaXMgaXMgYmFzaWNhbGx5IGEgcG9saWN5IGRlY2lzaW9uLgo+PiBF
+dmVuIGEgc2ltcGxlIHN3aXRjaCAobXVsdGlwYXRoIG9uL29mZikgd291bGRuJ3Qgc3VmZmljZSBo
+ZXJlLCBhcyB0aGlzCj4+IHBhcnRpY3VsYXIgZGV2aWNlIG1pZ2h0IGJlIGV4Y2x1ZGVkIHZpYSB0
+aGUgY29uZmlndXJhdGlvbiBmaWxlLgo+Pgo+PiBJZGVhIGhlcmUgaXMgdG8gbW9kaWZ5IHRoZSAn
+bXVsdGlwYXRoJyBwcm9ncmFtIHRvIGRldGVybWluZSBpZiBhIHBhcnRpY3VsYXIKPj4gZGV2aWNl
+IGlzIGhhbmRsZWQgYnkgbXVsdGlwYXRoIG9yIG5vdC4gSWYgc28sIF9ubyBvdGhlcl8gY29uZmln
+dXJhdGlvbiBtdXN0Cj4+IGJlIGRvbmUgaW4gdGhhdCBkZXZpY2UuCj4+IFRoZSBtdWx0aXBhdGhk
+IGRhZW1vbiBpdHNlbGYgYWxyZWFkeSBsaXN0ZW5zIG9uIGV2ZW50cyBmcm9tIHRoZSB1ZGV2IHNv
+Y2tldDsKPj4gaXQgc2hvdWxkIGJlIHByZXR0eSB0cml2aWFsIHRvIGNvbnZlcnQgdGhhdCB0byBz
+b2NrZXQgYWN0aXZhdGlvbi4KPj4KPj4gQW5kLCBvZiBjb3Vyc2UsIHdlIG5lZWQgdG8gc29sdmUg
+dGhlIG1vdW50IHByb2JsZW0uIExhc3QgSSd2ZSBoZWFyZCB3YXMgdGhhdAo+PiBzeXN0ZW1kIF93
+b24ndF8gYmUgaGFuZGxpbmcgbW91bnRpbmcsIHdoaWNoIGluIGVmZmVjdCBtZWFucyB3ZSBjYW5u
+b3QgbW91bnQKPj4gYW55IHN5c3RlbXMgcHJvdmlkZWQgdmlhIG11bHRpcGF0aCAuLi4KPj4KPj4g
+V2hhdCBpcyB0aGUgc3RhdHVzIGhlcmU/Cj4KPiBJdCBmdWxseSBzdXBwb3J0IG1vdW50cyBvbiBi
+b290LCBkeW5hbWljYWxseSBjcmVhdGVkLCBvciBvbiBob3RwbHVnLAo+IHdpdGggb3Igd2l0aG91
+dCBhdXRvbW91bnRlciBzdXBwb3J0Lgo+Cj4gQnV0IGl0IHdpbGwgbm90IGFzc2VtYmxlL2hhbmRs
+ZS9rbm93IGFueXRoaW5nIGFib3V0IGFueSBkbS9tZCBkZXZpY2VzLgo+ClllYWgsIGJ1dCB0aGlz
+IHNob3VsZCB0YWtlbiBjYXJlIG9mIGlmIGFuZCB3aGVuIExWTTIgYW5kIE1EIGdldHMgCmNvbnZl
+cnRlZCB0byBzeXN0ZW1kLCByaWdodCA/CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMg
+UmVpbmVja2UJCSAgICAgIHpTZXJpZXMgJiBTdG9yYWdlCmhhcmVAc3VzZS5kZQkJCSAgICAgICs0
+OSA5MTEgNzQwNTMgNjg4ClNVU0UgTElOVVggUHJvZHVjdHMgR21iSCwgTWF4ZmVsZHN0ci4gNSwg
+OTA0MDkgTsO8cm5iZXJnCkdGOiBKLiBIYXduLCBKLiBHdWlsZCwgRi4gSW1lbmTDtnJmZmVyLCBI
+UkIgMTY3NDYgKEFHIE7DvHJuYmVyZykKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
+bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
+ZXZlbA==
