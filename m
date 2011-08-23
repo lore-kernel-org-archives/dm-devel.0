@@ -1,18 +1,17 @@
-From: Kay Sievers <kay.sievers@vrfy.org>
-Subject: Re: Native systemd service files for multipathd
-Date: Tue, 23 Aug 2011 17:35:45 +0200
-Message-ID: <CAPXgP11xPFMT4TnhxdpQt0pqErohqvLp3e1=i3EqHH7M2YNPmw@mail.gmail.com>
-References: <4E0C83BE.9020507@gmail.com>
-	<1314020862.30562.3.camel@lapoo.opensvc.com>
-	<4E527988.9000002@suse.de>
-	<CAPXgP12DSQLWmwTcQEOMN4VtY-zAh0OxbW=KLQc+X70nb50sVA@mail.gmail.com>
-	<4E53C1E1.7040504@suse.de>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: new dm-bufio
+Date: Tue, 23 Aug 2011 14:54:23 -0400
+Message-ID: <20110823185423.GA10936@infradead.org>
+References: <Pine.LNX.4.64.1108221600510.26651@hs20-bc2-1.build.redhat.com>
+	<20110823113048.GC5442@ubuntu>
+	<Pine.LNX.4.64.1108231012560.2629@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4E53C1E1.7040504@suse.de>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1108231012560.2629@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,53 +21,11 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Joe Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-T24gVHVlLCBBdWcgMjMsIDIwMTEgYXQgMTc6MDYsIEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNl
-LmRlPiB3cm90ZToKPiBPbiAwOC8yMi8yMDExIDA2OjM1IFBNLCBLYXkgU2lldmVycyB3cm90ZToK
-Pj4KPj4gT24gTW9uLCBBdWcgMjIsIDIwMTEgYXQgMTc6NDUsIEhhbm5lcyBSZWluZWNrZTxoYXJl
-QHN1c2UuZGU+IMKgd3JvdGU6Cj4+Pgo+Pj4gT24gMDgvMjIvMjAxMSAwMzo0NyBQTSwgQ2hyaXN0
-b3BoZSBWYXJvcXVpIHdyb3RlOgo+Pj4+Cj4+Pj4gT24gamV1LiwgMjAxMS0wNi0zMCBhdCAxNDox
-MCArMDAwMCwgIkrDs2hhbm4gQi4gR3XDsG11bmRzc29uIiB3cm90ZToKPj4+Pj4KPj4+Pj4gSXMg
-YW55b25lIHRha2luZyBhIGxvb2sgYXQgcG9ydGluZyB0aGUgbXVsdGlwYXRoZCBsZWdhY3kgc3lz
-diBpbml0Cj4+Pj4+IHNjcmlwdCB0byBuYXRpdmUgc3lzdGVtZCB1bml0IGZpbGU/Cj4+Pj4+Cj4+
-Pj4+IEkgZmlsZWQgNjkwODI4IG9uIDIwMTEtMDMtMjUgYW5kIHlldCB0byByZWNlaXZlIHNvbWVr
-aW5kIG9mIHJlc3BvbnNlIG9uCj4+Pj4+IGl0IGFuZCB1bmxlc3Mgc29tZSBhY3Rpb24gaXMgdGFr
-ZW4gdGhlbiBhKSBkZXZpY2UtbWFwcGVyLW11bHRpcGF0aCB3aWxsCj4+Pj4+IGJlIGJsb2NraW5n
-IHRoZSBGZWRvcmEgMTYgYWxwaGEgcmVsZWFzZSBvciBiKSBiZSByaXBwZWQgb3V0IG9mIEBiYXNl
-Cj4+Pj4+IGFuZAo+Pj4+PiBiZSBtYWRlIHN1cmUgaXQgZG9lcyBub3QgZ2V0IGluc3RhbGxlZCBv
-biB0aGUgb2ZmaWNpYWwgbGl2ZWNkLgo+Pj4+Pgo+Pj4+IFdoYXQgaXMgdGhlIHN0YXR1cyBvZiB0
-aGlzIHJlcXVlc3QgPyBIYXMgYW55b25lIHN0ZXBwZWQtaW4gdG8gdGhlIGpvYiA/Cj4+Pj4gSWYg
-bm90IEknbGwgbG9vayBpbnRvIGl0LiBJZiB5b3UgaGF2ZSBGZWRvcmEtc3BlY2lmaWMgc3lzdGVt
-ZAo+Pj4+IGltcGxlbWVudGF0aW9uIGd1aWRlbGluZSwgcGxlYXNlIHBvaW50IG1lIHRvIHRoZSBh
-cHByb3ByaWF0ZQo+Pj4+IGRvY3VtZW50YXRpb24uCj4+Pj4KPj4+IEkgaGF2ZSB0YWxrZWQgd2l0
-aCBLYXkmIMKgTGVubmFydCBhYm91dCB0aGlzLgo+Pj4KPj4+IFRoZSBtYWluIHByb2JsZW0gaGVy
-ZSBpcyB0aGF0IHdlIGRvbid0IC8gY2FuJ3Qga25vdyBpZiBhIGRldmljZSBpcwo+Pj4gbXVsdGlw
-YXRoZWQgb3Igbm90OyB0aGlzIGlzIGJhc2ljYWxseSBhIHBvbGljeSBkZWNpc2lvbi4KPj4+IEV2
-ZW4gYSBzaW1wbGUgc3dpdGNoIChtdWx0aXBhdGggb24vb2ZmKSB3b3VsZG4ndCBzdWZmaWNlIGhl
-cmUsIGFzIHRoaXMKPj4+IHBhcnRpY3VsYXIgZGV2aWNlIG1pZ2h0IGJlIGV4Y2x1ZGVkIHZpYSB0
-aGUgY29uZmlndXJhdGlvbiBmaWxlLgo+Pj4KPj4+IElkZWEgaGVyZSBpcyB0byBtb2RpZnkgdGhl
-ICdtdWx0aXBhdGgnIHByb2dyYW0gdG8gZGV0ZXJtaW5lIGlmIGEKPj4+IHBhcnRpY3VsYXIKPj4+
-IGRldmljZSBpcyBoYW5kbGVkIGJ5IG11bHRpcGF0aCBvciBub3QuIElmIHNvLCBfbm8gb3RoZXJf
-IGNvbmZpZ3VyYXRpb24KPj4+IG11c3QKPj4+IGJlIGRvbmUgaW4gdGhhdCBkZXZpY2UuCj4+PiBU
-aGUgbXVsdGlwYXRoZCBkYWVtb24gaXRzZWxmIGFscmVhZHkgbGlzdGVucyBvbiBldmVudHMgZnJv
-bSB0aGUgdWRldgo+Pj4gc29ja2V0Owo+Pj4gaXQgc2hvdWxkIGJlIHByZXR0eSB0cml2aWFsIHRv
-IGNvbnZlcnQgdGhhdCB0byBzb2NrZXQgYWN0aXZhdGlvbi4KPj4+Cj4+PiBBbmQsIG9mIGNvdXJz
-ZSwgd2UgbmVlZCB0byBzb2x2ZSB0aGUgbW91bnQgcHJvYmxlbS4gTGFzdCBJJ3ZlIGhlYXJkIHdh
-cwo+Pj4gdGhhdAo+Pj4gc3lzdGVtZCBfd29uJ3RfIGJlIGhhbmRsaW5nIG1vdW50aW5nLCB3aGlj
-aCBpbiBlZmZlY3QgbWVhbnMgd2UgY2Fubm90Cj4+PiBtb3VudAo+Pj4gYW55IHN5c3RlbXMgcHJv
-dmlkZWQgdmlhIG11bHRpcGF0aCAuLi4KPj4+Cj4+PiBXaGF0IGlzIHRoZSBzdGF0dXMgaGVyZT8K
-Pj4KPj4gSXQgZnVsbHkgc3VwcG9ydCBtb3VudHMgb24gYm9vdCwgZHluYW1pY2FsbHkgY3JlYXRl
-ZCwgb3Igb24gaG90cGx1ZywKPj4gd2l0aCBvciB3aXRob3V0IGF1dG9tb3VudGVyIHN1cHBvcnQu
-Cj4+Cj4+IEJ1dCBpdCB3aWxsIG5vdCBhc3NlbWJsZS9oYW5kbGUva25vdyBhbnl0aGluZyBhYm91
-dCBhbnkgZG0vbWQgZGV2aWNlcy4KPj4KPiBZZWFoLCBidXQgdGhpcyBzaG91bGQgdGFrZW4gY2Fy
-ZSBvZiBpZiBhbmQgd2hlbiBMVk0yIGFuZCBNRCBnZXRzIGNvbnZlcnRlZAo+IHRvIHN5c3RlbWQs
-IHJpZ2h0ID8KClJpZ2h0LiBUaGUgdG9vbCB0byBkbyB0aGF0IHdvdWxkIHByb2JhYmx5IGJlIHNv
-bWUgcmFpZC1hc3NlbWJseSBkYWVtb24KdGhhdCByZXBsYWNlcyB0aGUgaW5zYW5pdHkgaW4gY3Vy
-cmVudCBzaGVsbCBzY3JpcHRzIGFuZCBjYWxsZWQgdG9vbHMKdGhhdCBzY2FuIC9kZXYuIFRoZXJl
-IGlzIG5vIHBsYW4gY3VycmVudGx5IHRvIGludGVncmF0ZSBhbnkKcmFpZC1hc3NlbWJseSBpbnRv
-IHN5c3RlbWQgbmF0aXZlbHkuCgpLYXkKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
-bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbA==
+FYI, the "shrinker" interface in include/linux/shrinker.h is how the
+VM tells subsystems to shrink their memory usage.  It is used for
+various slab caches, and the XFS buffercache in
+fs/xfs/linux-2.6/xfs_buf.c
