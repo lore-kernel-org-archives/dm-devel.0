@@ -1,7 +1,8 @@
-From: heinzm@sourceware.org
-Subject: dmraid/lib/format/ddf ddf1.c ddf1_dump.c
-Date: 24 Aug 2011 14:28:47 -0000
-Message-ID: <20110824142847.15574.qmail@sourceware.org>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [CRAZY RFC PATCH 0/4] dm: share mempools for all
+	request-based DM devices
+Date: Wed, 24 Aug 2011 19:05:09 -0400
+Message-ID: <1314227109-6627-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,55 +17,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2011-08-24 14:28:47
+Request-based DM requires considerably larger mempool reserves than
+bio-based DM given that it must clone requests (which may contain
+multiple bios) rather than simply cloning bios.
 
-Modified files:
-	lib/format/ddf : ddf1.c ddf1_dump.c 
+It was reported that bio-based dm-multipath was able to be tested with
+1024 mpath devices and failover/failback under load on a server with
+only 2 GB of memory.  The same test fails with request-based
+dm-multipath because of the increase in bio reserves (biovec-256).
 
-Log message:
-	dmraid cannot erase ddf metadata.
-	It tries to seek to an offset too big by a factor of 512, and then writes
-	zero bytes to the anchor.
-	
-	ddf1-
+Patches are available here but I'm too ashamed to actually post them
+to the list:
+http://people.redhat.com/msnitzer/patches/upstream/dm-rq-based-mempool-sharing/
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ddf/ddf1.c.diff?cvsroot=dm&r1=1.8&r2=1.9
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ddf/ddf1_dump.c.diff?cvsroot=dm&r1=1.3&r2=1.4
+In the end it would likely be best if we simply automatically scaled
+RESERVED_REQUEST_BASED_IOS back if the system has low amounts of
+memory (say 128 if 4GB, 64 if 3GB, 32 if 2GB, 16 if 1GB) -- this would
+result in ~1600MB, ~800MB, ~400MB, and ~200MB (respectively) of slab
+reserves for 1024 multipath devices (or 600, 300, 150, 75 MB
+respectively if integrity support isn't needed -- yeah bip-256 brings
+the pain given objperslab=1 and pagesperslab=2!).
 
---- dmraid/lib/format/ddf/ddf1.c	2010/03/18 16:53:17	1.8
-+++ dmraid/lib/format/ddf/ddf1.c	2011/08/24 14:28:46	1.9
-@@ -526,7 +526,8 @@
- 		       ddf1_sboffset) || !is_ddf1(lc, di, ddf1))
- 		goto bad;
- 
--	ddf1->anchor_offset = ddf1_sboffset;
-+	/* ddf1_sboffset is in bytes. */
-+	ddf1->anchor_offset = ddf1_sboffset >> 9;
- 
- 	/* Convert endianness */
- 	ddf1->in_cpu_format = 0;
-@@ -962,6 +963,7 @@
- 		ma[i].offset = ddf1->primary->primary_table_lba;
- 
- 	ma->offset = ddf1->anchor_offset;
-+	ma->size = DDF1_BLKSIZE;
- 	(ma++)->area = &ddf1->anchor;
- 
- 	(ma++)->area = ddf1->primary;
---- dmraid/lib/format/ddf/ddf1_dump.c	2010/07/13 20:22:38	1.3
-+++ dmraid/lib/format/ddf/ddf1_dump.c	2011/08/24 14:28:46	1.4
-@@ -60,7 +60,7 @@
- {
- 	log_print(lc, "%s (%s):", di->path, handler);
- 	log_print(lc, "DDF1 anchor at %llu with tables in %s-endian format.",
--		  ddf1->anchor_offset / DDF1_BLKSIZE,
-+		  ddf1->anchor_offset,
- 		  (ddf1->disk_format == LITTLE_ENDIAN ? "little" : "big"));
- }
- 
+Additional Background:
+
+The relevant slab use for bio-based vs request-based for 1024 devices
+is:
+
+bios-based:
+bio-0 3.19921875 MB
+biovec-256 64.0 MB
+bip-256 128.0 MB
+dm_io 1.7265625 MB
+dm_target_io 0.44140625 MB
+
+total: 197.3671875 MB
+
+request-based:
+bio-0 51.19921875 MB
+biovec-256 1024.0 MB
+bip-256 2048.0 MB
+dm_mpath_io 5.06640625 MB
+dm_rq_clone_bio_info 5.06640625 MB
+dm_rq_target_io 102.3984375 MB
+
+total: 3235.73046875 MB
+
+Above was generated with: bio_vs_rq_slab_usage.py 1024 256
+http://people.redhat.com/msnitzer/patches/upstream/dm-rq-based-mempool-sharing/bio_vs_rq_slab_usage.py
+
+Commit a91a2785b200 ("block: Require subsystems to explicitly allocate
+bio_set integrity mempool") eliminated unnecessary slab use (bip-256
+reserves for all 1024 devices consume 2 GB!) but the system still failed
+to boot because of multipathd consuming too much memory.
+
+Mike Snitzer (4):
+  dm: share mempools for all request-based DM devices
+  dm: increase RESERVED_REQUEST_BASED_IOS
+  dm table: disallow stacking request-based DM devices
+  dm: add reserved_rq_based_ios module parameter
+
+ drivers/md/dm-table.c |    9 +++
+ drivers/md/dm.c       |  166 +++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 156 insertions(+), 19 deletions(-)
