@@ -1,14 +1,17 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [RESEND][PATCH] multipath-tools: service mode changes
-	for RDAC storage
-Date: Mon, 29 Aug 2011 12:24:37 -0400
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD90F58AC11@RTPMVEXC1-PRD.hq.netapp.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: new dm-bufio
+Date: Mon, 29 Aug 2011 14:53:51 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1108291445460.7825@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.1108221600510.26651@hs20-bc2-1.build.redhat.com>
+	<20110823113048.GC5442@ubuntu>
+	<Pine.LNX.4.64.1108231012560.2629@hs20-bc2-1.build.redhat.com>
+	<20110823185423.GA10936@infradead.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <20110823185423.GA10936@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,48 +21,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, christophe.varoqui@opensvc.com
-Cc: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>, "Stankey,
-	Robert" <Robert.Stankey@netapp.com>, "Krishnasamy,
-	Somasundaram" <Somasundaram.Krishnasamy@netapp.com>, "Dachepalli,
-	Sudhir" <Sudhir.Dachepalli@netapp.com>
+To: xfs@oss.sgi.com, xfs-masters@oss.sgi.com, Christoph Hellwig <hch@infradead.org>
+Cc: device-mapper development <dm-devel@redhat.com>, Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This patch was not picked up yet, so resubmitting it again. There no change except it was generated on top of the latest file.
 
-This patch handles the recent changes in NetApp RDAC storage firmware to report service mode. Firmware changed the inquiry page 0xc9 to report service mode. Purpose this change is to avoid DMMP going into infinite loop of switching back and forth between controllers when a controller is placed in service mode. This fixes the problem and reports the path as failed if the controller is placed in service mode.
- 
-Signed-off-by: Babu Moger <babu.moger@netapp.com>
-Reviewed-by: Yanling Qi <yanling.qi@netapp.com>
-Reviewed-by: Somasundaram Krishnasamy <Somasundaram.Krishnasamy@netapp.com>
 
----
---- multipath-tools/libmultipath/checkers/rdac.c.orig	2011-08-29 10:36:11.000000000 -0500
-+++ multipath-tools/libmultipath/checkers/rdac.c	2011-08-29 10:58:44.000000000 -0500
-@@ -198,7 +198,10 @@ struct volume_access_inq
- 	char PQ_PDT;
- 	char dontcare0[7];
- 	char avtcvp;
--	char dontcare1[39];
-+	char dontcare1;
-+	char asym_access_state_cur;
-+	char vendor_specific_cur;
-+	char dontcare2[36];
- };
- 
- extern int
-@@ -218,6 +221,14 @@ libcheck_check (struct checker * c)
- 		goto done;
- 	}
- 
-+	/* check if controller is in service mode */
-+	if ((inq.avtcvp & 0x10) &&
-+	    ((inq.asym_access_state_cur & 0x0F) == 0x3) &&
-+	    (inq.vendor_specific_cur == 0x7)) {
-+		ret = PATH_DOWN;
-+		goto done;
-+	}
-+
- 	/* If owner set or ioship mode is enabled return PATH_UP always */
- 	if ((inq.avtcvp & 0x1) || ((inq.avtcvp >> 5) & 0x1))
- 		ret = PATH_UP;
+On Tue, 23 Aug 2011, Christoph Hellwig wrote:
+
+> FYI, the "shrinker" interface in include/linux/shrinker.h is how the
+> VM tells subsystems to shrink their memory usage.  It is used for
+> various slab caches, and the XFS buffercache in
+> fs/xfs/linux-2.6/xfs_buf.c
+
+BTW. shrinker functions from xfs_qm.c - xfs_qm_shake and 
+xfs_qm_shake_freelist - look completely bogus. They don't read 
+sc->nr_to_scan to determine how many values they should scan (and compare 
+it with zero to test if they should scan at all) and they return the 
+number of entries freed - the interface specifies that they should return 
+the number of entries remaining the in cache.
+
+Mikulas
