@@ -1,50 +1,65 @@
-From: Namhyung Kim <namhyung@gmail.com>
-Subject: [PATCH 6/6] dm: get rid of block_bio_complete tracepoint
-Date: Mon, 29 Aug 2011 12:47:40 +0900
-Message-ID: <1314589660-2918-7-git-send-email-namhyung@gmail.com>
-References: <1314589660-2918-1-git-send-email-namhyung@gmail.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1314589660-2918-1-git-send-email-namhyung@gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [RESEND][PATCH] multipath-tools: service mode changes
+	for RDAC storage
+Date: Mon, 29 Aug 2011 12:24:37 -0400
+Message-ID: <47D23AD8469A2B448F33C24BD7A39BD90F58AC11@RTPMVEXC1-PRD.hq.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, christophe.varoqui@opensvc.com
+Cc: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>, "Stankey,
+	Robert" <Robert.Stankey@netapp.com>, "Krishnasamy,
+	Somasundaram" <Somasundaram.Krishnasamy@netapp.com>, "Dachepalli,
+	Sudhir" <Sudhir.Dachepalli@netapp.com>
 List-Id: dm-devel.ids
 
-Now bio_endio() contains the tracepoint in it, so we don't
-need to have it twice. Plus, since the only external user
-of the tracepoint was the DM, we can unexport the symbol.
+This patch was not picked up yet, so resubmitting it again. There no change except it was generated on top of the latest file.
 
-Signed-off-by: Namhyung Kim <namhyung@gmail.com>
-Cc: dm-devel@redhat.com
+This patch handles the recent changes in NetApp RDAC storage firmware to report service mode. Firmware changed the inquiry page 0xc9 to report service mode. Purpose this change is to avoid DMMP going into infinite loop of switching back and forth between controllers when a controller is placed in service mode. This fixes the problem and reports the path as failed if the controller is placed in service mode.
+ 
+Signed-off-by: Babu Moger <babu.moger@netapp.com>
+Reviewed-by: Yanling Qi <yanling.qi@netapp.com>
+Reviewed-by: Somasundaram Krishnasamy <Somasundaram.Krishnasamy@netapp.com>
+
 ---
- block/blk-core.c |    1 -
- drivers/md/dm.c  |    1 -
- 2 files changed, 0 insertions(+), 2 deletions(-)
-
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 62b79692c7e8..57e8c2b8d9bd 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -36,7 +36,6 @@
+--- multipath-tools/libmultipath/checkers/rdac.c.orig	2011-08-29 10:36:11.000000000 -0500
++++ multipath-tools/libmultipath/checkers/rdac.c	2011-08-29 10:58:44.000000000 -0500
+@@ -198,7 +198,10 @@ struct volume_access_inq
+ 	char PQ_PDT;
+ 	char dontcare0[7];
+ 	char avtcvp;
+-	char dontcare1[39];
++	char dontcare1;
++	char asym_access_state_cur;
++	char vendor_specific_cur;
++	char dontcare2[36];
+ };
  
- EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
- EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
--EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
- 
- static int __make_request(struct request_queue *q, struct bio *bio);
- 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 52b39f335bb3..e9e671303609 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -639,7 +639,6 @@ static void dec_pending(struct dm_io *io, int error)
- 			queue_io(md, bio);
- 		} else {
- 			/* done with normal IO or empty flush */
--			trace_block_bio_complete(md->queue, bio, io_error);
- 			bio_endio(bio, io_error);
- 		}
+ extern int
+@@ -218,6 +221,14 @@ libcheck_check (struct checker * c)
+ 		goto done;
  	}
--- 
-1.7.6
-
+ 
++	/* check if controller is in service mode */
++	if ((inq.avtcvp & 0x10) &&
++	    ((inq.asym_access_state_cur & 0x0F) == 0x3) &&
++	    (inq.vendor_specific_cur == 0x7)) {
++		ret = PATH_DOWN;
++		goto done;
++	}
++
+ 	/* If owner set or ioship mode is enabled return PATH_UP always */
+ 	if ((inq.avtcvp & 0x1) || ((inq.avtcvp >> 5) & 0x1))
+ 		ret = PATH_UP;
