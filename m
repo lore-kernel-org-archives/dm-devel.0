@@ -1,32 +1,50 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH] dm-kcopyd: Correctly free requests
-Date: Fri, 26 Aug 2011 11:43:37 +0100
-Message-ID: <20110826104337.GN31980@agk-dp.fab.redhat.com>
-References: <20110826101542.GB20197@wavehammer.waldi.eu.org> <20110826103747.GA15125@agk-dp.fab.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20110826103747.GA15125@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org
+From: Namhyung Kim <namhyung@gmail.com>
+Subject: [PATCH 6/6] dm: get rid of block_bio_complete tracepoint
+Date: Mon, 29 Aug 2011 12:47:40 +0900
+Message-ID: <1314589660-2918-7-git-send-email-namhyung@gmail.com>
+References: <1314589660-2918-1-git-send-email-namhyung@gmail.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1314589660-2918-1-git-send-email-namhyung@gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Aug 26, 2011 at 11:37:47AM +0100, Alasdair G Kergon wrote:
-> On Fri, Aug 26, 2011 at 12:15:42PM +0200, Bastian Blank wrote:
-> > kcopyd only frees the requests if the master job information is set up
-> > correctly, but it was not in the recently added path. This leads to many
-> > unfreed slabs during snapshot usage.
-> Referring to commit c6ea41fbbe08f270a8edef99dc369faf809d1bd6
->   dm kcopyd: preallocate sub jobs to avoid deadlock
-> which added the master_job field.
+Now bio_endio() contains the tracepoint in it, so we don't
+need to have it twice. Plus, since the only external user
+of the tracepoint was the DM, we can unexport the symbol.
+
+Signed-off-by: Namhyung Kim <namhyung@gmail.com>
+Cc: dm-devel@redhat.com
+---
+ block/blk-core.c |    1 -
+ drivers/md/dm.c  |    1 -
+ 2 files changed, 0 insertions(+), 2 deletions(-)
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 62b79692c7e8..57e8c2b8d9bd 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -36,7 +36,6 @@
  
-and commit a6e50b409d3f9e0833e69c3c9cca822e8fa4adbb
-    dm snapshot: skip reading origin when overwriting complete chunk
-which indeed forgets to set the new field.
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
+-EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
+ 
+ static int __make_request(struct request_queue *q, struct bio *bio);
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 52b39f335bb3..e9e671303609 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -639,7 +639,6 @@ static void dec_pending(struct dm_io *io, int error)
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+-			trace_block_bio_complete(md->queue, bio, io_error);
+ 			bio_endio(bio, io_error);
+ 		}
+ 	}
+-- 
+1.7.6
 
-I'll submit the patch shortly, together with some other minor fixes
-sitting in linux-next.
-
-Alasdair
