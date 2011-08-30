@@ -1,65 +1,101 @@
 From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [xfs-masters]  new dm-bufio
-Date: Tue, 30 Aug 2011 11:49:06 +1000
-Message-ID: <20110830014906.GJ3162@dastard>
-References: <Pine.LNX.4.64.1108221600510.26651@hs20-bc2-1.build.redhat.com>
-	<20110823113048.GC5442@ubuntu>
-	<Pine.LNX.4.64.1108231012560.2629@hs20-bc2-1.build.redhat.com>
-	<20110823185423.GA10936@infradead.org>
-	<Pine.LNX.4.64.1108291445460.7825@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH] shrinker: fix a bug when callback returns -1
+Date: Tue, 30 Aug 2011 12:13:33 +1000
+Message-ID: <20110830021333.GL3162@dastard>
+References: <Pine.LNX.4.64.1108291534140.19003@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1108291445460.7825@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <Pine.LNX.4.64.1108291534140.19003@hs20-bc2-1.build.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Joe Thornber <thornber@redhat.com>, Mike Snitzer <snitzer@redhat.com>, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, xfs-masters@oss.sgi.com, device-mapper development <dm-devel@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+Cc: Dave Chinner <dchinner@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Aug 29, 2011 at 02:53:51PM -0400, Mikulas Patocka wrote:
-> On Tue, 23 Aug 2011, Christoph Hellwig wrote:
+On Mon, Aug 29, 2011 at 03:36:48PM -0400, Mikulas Patocka wrote:
+> Hi
 > 
-> > FYI, the "shrinker" interface in include/linux/shrinker.h is how the
-> > VM tells subsystems to shrink their memory usage.  It is used for
-> > various slab caches, and the XFS buffercache in
-> > fs/xfs/linux-2.6/xfs_buf.c
-> 
-> BTW. shrinker functions from xfs_qm.c - xfs_qm_shake and 
-> xfs_qm_shake_freelist - look completely bogus. They don't read 
-> sc->nr_to_scan to determine how many values they should scan (and compare 
-> it with zero to test if they should scan at all) and they return the 
-> number of entries freed - the interface specifies that they should return 
-> the number of entries remaining the in cache.
+> This patch fixes a lockup when shrinker callback returns -1.
 
-It's a relic from the days of Irix that we've kept around and never
-really touched because it's never shown up as a problem. Such code
-is cleaned up as we go along or as problems arise.
+What lockup is that? I haven't seen any bug reports, and this code
+has been like this for several years, so I'm kind of wondering why
+this is suddenly an issue....
 
-As it is, this patchset:
+> BTW. shouldn't the value returned by callback be long instead of int? On 
+> 64-bit architectures, there may be more than 2^32 entries allocated.
+
+The API hasn't changed since the early 2.5 series, so that wasn't a
+consideration when it was originally written. As it is, I make this
+exact change in the shrinker API update patchset I proposed
+recently for exactly the reasons you suggest:
 
 http://thread.gmane.org/gmane.linux.kernel.mm/67326
 
-that I'm currently working on changes the shrinker API to be much
-more sane - the shrinker now has a separate "count objects"
-operation and the "scan objects" operation now returns the number of
-items freed rather than the number of items left in the cache.
 
-As the API is being changed, the xfs_qm shrinker is also fixed to
-return the right values according to the new API. It still doesn't
-pay attention to nr_to_scan, but that's not a big deal and will get
-addressed in future when other upcoming changes are made to the
-code....
+> Mikulas
+> 
+> ---
+> 
+> shrinker: fix a bug when callback returns -1
+> 
+> Shrinker callback can return -1 if it is at a risk of deadlock.
+> However, this is not tested at some places.
+> 
+> If do_shrinker_shrink returns -1 here
+> "max_pass = do_shrinker_shrink(shrinker, shrink, 0)",
+> it is converted to an unsigned long integer. This may result in excessive
+> total_scan value and a lockup due to code looping too much in
+> "while (total_scan >= batch_size)" cycle.
+
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> ---
+>  mm/vmscan.c |    8 +++++++-
+>  1 file changed, 7 insertions(+), 1 deletion(-)
+> 
+> Index: linux-3.1-rc3-fast/mm/vmscan.c
+> ===================================================================
+> --- linux-3.1-rc3-fast.orig/mm/vmscan.c	2011-08-29 20:34:27.000000000 +0200
+> +++ linux-3.1-rc3-fast/mm/vmscan.c	2011-08-29 20:37:38.000000000 +0200
+> @@ -250,6 +250,7 @@ unsigned long shrink_slab(struct shrink_
+>  		unsigned long long delta;
+>  		unsigned long total_scan;
+>  		unsigned long max_pass;
+> +		int sr;
+>  		int shrink_ret = 0;
+>  		long nr;
+>  		long new_nr;
+> @@ -266,7 +267,10 @@ unsigned long shrink_slab(struct shrink_
+>  		} while (cmpxchg(&shrinker->nr, nr, 0) != nr);
+>  
+>  		total_scan = nr;
+> -		max_pass = do_shrinker_shrink(shrinker, shrink, 0);
+> +		sr = do_shrinker_shrink(shrinker, shrink, 0);
+> +		if (sr == -1)
+> +			continue;
+
+IIRC from my recent shrinker audit, none of the existing shrinkers
+return return -1 when nr_to_scan == 0, so this check has never been
+necessary.
+
+> +		max_pass = sr;
+>  		delta = (4 * nr_pages_scanned) / shrinker->seeks;
+>  		delta *= max_pass;
+>  		do_div(delta, lru_pages + 1);
+> @@ -309,6 +313,8 @@ unsigned long shrink_slab(struct shrink_
+>  			int nr_before;
+>  
+>  			nr_before = do_shrinker_shrink(shrinker, shrink, 0);
+> +			if (nr_before == -1)
+> +				break;
+
+Same here.
+
+>  			shrink_ret = do_shrinker_shrink(shrinker, shrink,
+>  							batch_size);
+>  			if (shrink_ret == -1)
 
 Cheers,
 
