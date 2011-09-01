@@ -1,17 +1,16 @@
 From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] multipath: strdup multipath alias,
- so that it isn't deleted.
-Date: Thu, 01 Sep 2011 08:55:18 +0200
-Message-ID: <1314860118.14056.78.camel@lapoo.opensvc.com>
-References: <20110725182700.GK15149@ether.msp.redhat.com>
-	<20110901024542.GA11793@ether.msp.redhat.com>
+Subject: Re: [PATCH] multipath: systemd unit file
+Date: Thu, 01 Sep 2011 09:04:31 +0200
+Message-ID: <1314860671.14056.83.camel@lapoo.opensvc.com>
+References: <20110901030028.GE11793@ether.msp.redhat.com>
+	<4E5F24DE.50004@suse.de>
 Reply-To: christophe.varoqui@opensvc.com,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110901024542.GA11793@ether.msp.redhat.com>
+In-Reply-To: <4E5F24DE.50004@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,21 +20,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On mer., 2011-08-31 at 21:45 -0500, Benjamin Marzinski wrote:
-> When a multipath device is added to multipathd with ev_add_map(),
-> > the alias is not duplicated, and is freed immediately after
-> ev_add_map()
-> > returns, causing a memory error. This patch corrects that.
-> > 
-Merged.
+> > +[Unit]
+> > +Description=Device-Mapper Multipath Device Controller
+> > +Before=iscsi.service iscsid.service
+> > +After=syslog.target
+> > +
+> > +[Service]
+> > +Type=forking
+> > +PIDFile=/var/run/multipathd.pid
+> > +ExecStart=/sbin/multipathd
+> > +ExecReload=/bin/kill -HUP $MAINPID
+> > +#ExecStop=/path/to/scrip delete-me if not necessary
+> > +
+> > +[Install]
+> > +WantedBy=multi-user.target
+> >
+> Hmm. First of all, I'm trying to get rid of the PID file, as with it 
+> it's quite hard to start multipathing when /var/run isn't mounted.
+> Plus it's not actually needed; everything can be done via multipathd 
+> -k nowadays.
+> 
+Agreed
 
-Do you think the "mpp->alias = NULL" is still necessary in the following
-setup_multipath() error code path ? alias is set to NULL by
-free_multipath() these days ...
+> So may I suggest to use
+> ExecReload=/sbin/multipathd -k'reconfigure'
+> 
+Or even:
+ExecReload=multipathd reconfigure
 
->       if (setup_multipath(vecs, mpp)) {
->               mpp->alias = NULL;                <========
+Regards,
+-- 
+Christophe Varoqui
+OpenSVC - Tools to scale
+http://www.opensvc.com/
