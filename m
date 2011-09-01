@@ -1,13 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: systemd unit file
-Date: Wed, 31 Aug 2011 22:00:28 -0500
-Message-ID: <20110901030028.GE11793@ether.msp.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] multipath: systemd unit file
+Date: Thu, 01 Sep 2011 08:23:26 +0200
+Message-ID: <4E5F24DE.50004@suse.de>
+References: <20110901030028.GE11793@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20110901030028.GE11793@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,67 +19,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Here is a systemd unit file for managing multipathd.
+On 09/01/2011 05:00 AM, Benjamin Marzinski wrote:
+> Here is a systemd unit file for managing multipathd.
+>
+[ .. ]
+> Index: multipath-tools-110831/multipathd/multipathd.service
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- /dev/null
+> +++ multipath-tools-110831/multipathd/multipathd.service
+> @@ -0,0 +1,14 @@
+> +[Unit]
+> +Description=3DDevice-Mapper Multipath Device Controller
+> +Before=3Discsi.service iscsid.service
+> +After=3Dsyslog.target
+> +
+> +[Service]
+> +Type=3Dforking
+> +PIDFile=3D/var/run/multipathd.pid
+> +ExecStart=3D/sbin/multipathd
+> +ExecReload=3D/bin/kill -HUP $MAINPID
+> +#ExecStop=3D/path/to/scrip delete-me if not necessary
+> +
+> +[Install]
+> +WantedBy=3Dmulti-user.target
+>
+Hmm. First of all, I'm trying to get rid of the PID file, as with it =
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- Makefile.inc                  |    1 +
- multipathd/Makefile           |    3 +++
- multipathd/multipathd.service |   14 ++++++++++++++
- 3 files changed, 18 insertions(+)
+it's quite hard to start multipathing when /var/run isn't mounted.
+Plus it's not actually needed; everything can be done via multipathd =
 
-Index: multipath-tools-110831/Makefile.inc
-===================================================================
---- multipath-tools-110831.orig/Makefile.inc
-+++ multipath-tools-110831/Makefile.inc
-@@ -31,6 +31,7 @@ man5dir     = $(prefix)/usr/share/man/ma
- rcdir	    = $(prefix)/etc/init.d
- syslibdir   = $(prefix)/$(LIB)
- libdir	    = $(prefix)/$(LIB)/multipath
-+unitdir     = $(prefix)/lib/systemd/system
- 
- GZIP        = /bin/gzip -9 -c
- INSTALL_PROGRAM = install
-Index: multipath-tools-110831/multipathd/Makefile
-===================================================================
---- multipath-tools-110831.orig/multipathd/Makefile
-+++ multipath-tools-110831/multipathd/Makefile
-@@ -35,6 +35,8 @@ install:
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
- 	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(rcdir)
-+	$(INSTALL_PROGRAM) -d $(DESTDIR)$(unitdir)
-+	$(INSTALL_PROGRAM) -m 644 $(EXEC).service $(DESTDIR)$(unitdir)
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(mandir)
- 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
- 
-@@ -42,6 +44,7 @@ uninstall:
- 	rm -f $(DESTDIR)$(bindir)/$(EXEC)
- 	rm -f $(DESTDIR)$(rcdir)/$(EXEC)
- 	rm -f $(DESTDIR)$(mandir)/$(EXEC).8.gz
-+	rm -f $(DESTDIR)$(unitdir)/$(EXEC).service
- 
- clean:
- 	rm -f core *.o $(EXEC) *.gz
-Index: multipath-tools-110831/multipathd/multipathd.service
-===================================================================
---- /dev/null
-+++ multipath-tools-110831/multipathd/multipathd.service
-@@ -0,0 +1,14 @@
-+[Unit]
-+Description=Device-Mapper Multipath Device Controller
-+Before=iscsi.service iscsid.service
-+After=syslog.target
-+
-+[Service]
-+Type=forking
-+PIDFile=/var/run/multipathd.pid
-+ExecStart=/sbin/multipathd
-+ExecReload=/bin/kill -HUP $MAINPID
-+#ExecStop=/path/to/scrip delete-me if not necessary
-+
-+[Install]
-+WantedBy=multi-user.target
+-k nowadays.
+
+So may I suggest to use
+ExecReload=3D/sbin/multipathd -k'reconfigure'
+
+here?
+And do we actually need
+PIDFile=3D
+for systemd?
+If not I'd rather remove that line, too.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
