@@ -1,19 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2] multipath: add find_multipaths feature.
-Date: Thu, 1 Sep 2011 13:54:58 -0500
-Message-ID: <20110901185458.GL11793@ether.msp.redhat.com>
-References: <20110725185758.GA1368@ether.msp.redhat.com>
-	<20110901025518.GD11793@ether.msp.redhat.com>
-	<1314861263.14056.89.camel@lapoo.opensvc.com>
-	<20110901125720.GF11793@ether.msp.redhat.com>
-	<4E5F9824.1020105@suse.de>
+Subject: [PATCH] multipath: check if multipath owns path
+Date: Thu, 1 Sep 2011 14:28:05 -0500
+Message-ID: <20110901192805.GM11793@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4E5F9824.1020105@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,77 +17,144 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 01, 2011 at 04:35:16PM +0200, Hannes Reinecke wrote:
-> I already did a patch to allow for a different location for the bindings =
+This adds a new command line option to multipath, "-c".  The -c option takes
+a path, and makes multipath check the wwids file to see if the path belongs
+to a multipath device.  If it does, multipath exists with 0. If not, it exits
+with 1.  Note that this patch only checks the wwids file, so it only works for
+LUNs that have already been managed by multipath in the past.  The first time
+a LUN is seen, this check will return 1, even if it is a valid path device.
 
-> file (methinks it's upstream, isn't it?)
+This patch stacks on top of my find_multipaths patch, but it does not
+need find_multipaths to be enabled.
 
-It is.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/finder.c |    2 +-
+ libmultipath/finder.h |    1 +
+ multipath/main.c      |   36 ++++++++++++++++++++++++++++++------
+ 3 files changed, 32 insertions(+), 7 deletions(-)
 
-> The issue here is an inversion in behaviour.
-> Normally multipath would access / manage all devices except those
-> blacklisted in /etc/multipath.conf
-> With the patch multipath would access / manage _no_ devices except those =
-
-> listed in /etc/multipath.conf
-
-Or any devices that have two paths to them. Or devices that have, in the
-past, had two paths to them. The idea behind this was to make multipath
-"just work", without users needing to bother touching
-/etc/multipath.conf at all, for common storage arrays.
-
-multipathd will find all the devices with multiple paths (except the
-blacklisted ones), and remember them so that in the future, as soon as
-the first path becomes available, multipathd knows that it should be
-multipathed.  Blacklisting works just as before. The only difference is
-that you no longer need to use the blacklist to keep multipath from
-grabbing devices that don't have multiple paths.  You only use it if you
-have multiple paths, but for some reason you don't want to have
-multipath manage them.
-
-For devices with only one path, the user will need to specifically add
-them.  But if the user want's to use multipath on single path devices,
-then just don't turn on find_multipaths.
-
-So I'm not sure I understand your objection.
-
-> However, we definitely need to figure out how integrate with systemd.
-> From my understanding we need to have some 'trigger', telling systemd to =
-
-> ignore any disks multipath might hook onto.
-
-With the wwids file, it's simple to be able to tell if a disk belongs to
-multipath after multipath has already been setup on it once.  The only
-issue is on the first time the disk is seen.  With find_multipaths this
-is problem, since multipath won't know until it sees a second path to
-the disk if it should be multipathed.  Without find_multipaths, we could
-just assume that if the device is not blacklisted, it belongs to
-multipath.
-
--Ben
-
-> Sure, the find_multipaths feature would be a possible solution here, as =
-
-> then systemd could evaluate the config file any everything would be dandy.
->
-> However, I would prefer to modify 'multipath' (which is in the process on =
-
-> becoming obsoleted currently). This could program could then be used to =
-
-> provide systemd with the required information, ie if a device should be =
-
-> ignored or not.
->
-> Cheers,
->
-> Hannes
-> -- =
-
-> Dr. Hannes Reinecke		      zSeries & Storage
-> hare@suse.de			      +49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Index: multipath-tools-110831/libmultipath/finder.c
+===================================================================
+--- multipath-tools-110831.orig/libmultipath/finder.c
++++ multipath-tools-110831/libmultipath/finder.c
+@@ -78,7 +78,7 @@ write_out_wwid(int fd, char *wwid) {
+ 	return 1;
+ }
+ 
+-static int
++int
+ check_wwids_file(char *wwid, int write_wwid)
+ {
+ 	int scan_fd, fd, can_write, found, ret;
+Index: multipath-tools-110831/libmultipath/finder.h
+===================================================================
+--- multipath-tools-110831.orig/libmultipath/finder.h
++++ multipath-tools-110831/libmultipath/finder.h
+@@ -14,5 +14,6 @@
+ 
+ int should_multipath(struct path *pp, vector pathvec);
+ int remember_wwid(char *wwid);
++int check_wwids_file(char *wwid, int write_wwid);
+ 
+ #endif /* _FINDER_H */
+Index: multipath-tools-110831/multipath/main.c
+===================================================================
+--- multipath-tools-110831.orig/multipath/main.c
++++ multipath-tools-110831/multipath/main.c
+@@ -51,6 +51,7 @@
+ #include <errno.h>
+ #include <sys/time.h>
+ #include <sys/resource.h>
++#include <finder.h>
+ 
+ int logsink;
+ 
+@@ -79,7 +80,7 @@ usage (char * progname)
+ {
+ 	fprintf (stderr, VERSION_STRING);
+ 	fprintf (stderr, "Usage:\n");
+-	fprintf (stderr, "  %s [-d] [-r] [-v lvl] [-p pol] [-b fil] [dev]\n", progname);
++	fprintf (stderr, "  %s [-c] [-d] [-r] [-v lvl] [-p pol] [-b fil] [dev]\n", progname);
+ 	fprintf (stderr, "  %s -l|-ll|-f [-v lvl] [-b fil] [dev]\n", progname);
+ 	fprintf (stderr, "  %s -F [-v lvl]\n", progname);
+ 	fprintf (stderr, "  %s -t\n", progname);
+@@ -92,6 +93,7 @@ usage (char * progname)
+ 		"  -ll     show multipath topology (maximum info)\n" \
+ 		"  -f      flush a multipath device map\n" \
+ 		"  -F      flush all multipath device maps\n" \
++		"  -c      check if a device should be a path in a multipath device\n" \
+ 		"  -d      dry run, do not create or update devmaps\n" \
+ 		"  -t      dump internal hardware table\n" \
+ 		"  -r      force devmap reload\n" \
+@@ -257,9 +259,13 @@ configure (void)
+ 	 * if we have a blacklisted device parameter, exit early
+ 	 */
+ 	if (dev &&
+-	    (filter_devnode(conf->blist_devnode, conf->elist_devnode, dev) > 0))
+-			goto out;
+-
++	    (filter_devnode(conf->blist_devnode,
++			    conf->elist_devnode, dev) > 0)) {
++		if (conf->dry_run == 2)
++			printf("%s is not a valid multipath device path\n",
++			       conf->dev);
++		goto out;
++	}
+ 	/*
+ 	 * scope limiting must be translated into a wwid
+ 	 * failing the translation is fatal (by policy)
+@@ -275,6 +281,15 @@ configure (void)
+ 		if (filter_wwid(conf->blist_wwid, conf->elist_wwid,
+ 				refwwid) > 0)
+ 			goto out;
++		if (conf->dry_run == 2) {
++			if (check_wwids_file(refwwid, 0) == 0){
++				printf("%s is a valid multipath device path\n", conf->dev);
++				r = 0;
++			}
++			else
++				printf("%s is not a valid multipath device path\n", conf->dev);
++			goto out;
++		}
+ 	}
+ 
+ 	/*
+@@ -398,7 +413,7 @@ main (int argc, char *argv[])
+ 		condlog(0, "multipath tools need sysfs mounted");
+ 		exit(1);
+ 	}
+-	while ((arg = getopt(argc, argv, ":dhl::FfM:v:p:b:Brt")) != EOF ) {
++	while ((arg = getopt(argc, argv, ":dchl::FfM:v:p:b:Brt")) != EOF ) {
+ 		switch(arg) {
+ 		case 1: printf("optarg : %s\n",optarg);
+ 			break;
+@@ -415,8 +430,12 @@ main (int argc, char *argv[])
+ 		case 'B':
+ 			conf->bindings_read_only = 1;
+ 			break;
++		case 'c':
++			conf->dry_run = 2;
++			break;
+ 		case 'd':
+-			conf->dry_run = 1;
++			if (!conf->dry_run)
++				conf->dry_run = 1;
+ 			break;
+ 		case 'f':
+ 			conf->remove = FLUSH_ONE;
+@@ -500,6 +519,11 @@ main (int argc, char *argv[])
+ 	}
+ 	dm_init();
+ 
++	if (conf->dry_run == 2 &&
++	    (!conf->dev || conf->dev_type == DEV_DEVMAP)) {
++		condlog(0, "the -c option requires a path to check");
++		goto out;
++	}
+ 	if (conf->remove == FLUSH_ONE) {
+ 		if (conf->dev_type == DEV_DEVMAP)
+ 			r = dm_flush_map(conf->dev);
