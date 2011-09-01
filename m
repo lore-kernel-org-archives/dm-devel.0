@@ -1,14 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath: systemd unit file
-Date: Thu, 01 Sep 2011 08:23:26 +0200
-Message-ID: <4E5F24DE.50004@suse.de>
-References: <20110901030028.GE11793@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: [PATCH] multipath: strdup multipath alias,
+ so that it isn't deleted.
+Date: Thu, 01 Sep 2011 08:55:18 +0200
+Message-ID: <1314860118.14056.78.camel@lapoo.opensvc.com>
+References: <20110725182700.GK15149@ether.msp.redhat.com>
+	<20110901024542.GA11793@ether.msp.redhat.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110901030028.GE11793@ether.msp.redhat.com>
+In-Reply-To: <20110901024542.GA11793@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,57 +21,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On 09/01/2011 05:00 AM, Benjamin Marzinski wrote:
-> Here is a systemd unit file for managing multipathd.
->
-[ .. ]
-> Index: multipath-tools-110831/multipathd/multipathd.service
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- /dev/null
-> +++ multipath-tools-110831/multipathd/multipathd.service
-> @@ -0,0 +1,14 @@
-> +[Unit]
-> +Description=3DDevice-Mapper Multipath Device Controller
-> +Before=3Discsi.service iscsid.service
-> +After=3Dsyslog.target
-> +
-> +[Service]
-> +Type=3Dforking
-> +PIDFile=3D/var/run/multipathd.pid
-> +ExecStart=3D/sbin/multipathd
-> +ExecReload=3D/bin/kill -HUP $MAINPID
-> +#ExecStop=3D/path/to/scrip delete-me if not necessary
-> +
-> +[Install]
-> +WantedBy=3Dmulti-user.target
->
-Hmm. First of all, I'm trying to get rid of the PID file, as with it =
+On mer., 2011-08-31 at 21:45 -0500, Benjamin Marzinski wrote:
+> When a multipath device is added to multipathd with ev_add_map(),
+> > the alias is not duplicated, and is freed immediately after
+> ev_add_map()
+> > returns, causing a memory error. This patch corrects that.
+> > 
+Merged.
 
-it's quite hard to start multipathing when /var/run isn't mounted.
-Plus it's not actually needed; everything can be done via multipathd =
+Do you think the "mpp->alias = NULL" is still necessary in the following
+setup_multipath() error code path ? alias is set to NULL by
+free_multipath() these days ...
 
--k nowadays.
-
-So may I suggest to use
-ExecReload=3D/sbin/multipathd -k'reconfigure'
-
-here?
-And do we actually need
-PIDFile=3D
-for systemd?
-If not I'd rather remove that line, too.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+>       if (setup_multipath(vecs, mpp)) {
+>               mpp->alias = NULL;                <========
