@@ -1,17 +1,11 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
 Subject: Re: [PATCH v2] multipath: add find_multipaths feature.
-Date: Thu, 1 Sep 2011 07:57:20 -0500
-Message-ID: <20110901125720.GF11793@ether.msp.redhat.com>
-References: <20110725185758.GA1368@ether.msp.redhat.com>
-	<20110901025518.GD11793@ether.msp.redhat.com>
-	<1314861263.14056.89.camel@lapoo.opensvc.com>
+Date: Thu, 1 Sep 2011 16:16:46 +0200
+Message-ID: <CABr-Gne2w=4JkPT0LrEQzQtJQVb8CNQTvix-pQrQ84_D-hCwDg@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============3077483811371743591=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1314861263.14056.89.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,49 +15,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 01, 2011 at 09:14:23AM +0200, Christophe Varoqui wrote:
-> On mer., 2011-08-31 at 21:55 -0500, Benjamin Marzinski wrote:
-> > This adds a new default feature, find_multipaths. When this is set to yes,
-> > multipath will no longer try to create a multipath device for every
-> > non-blacklisted device. Instead, it will only create a device when one of
-> > three conditions are met.
-> > 
-> > 1. Three are at least two non-blacklisted paths with the same wwid
-> > 2. The user manually forces the creation, by specifying a device with the
-> >    multipath command.
-> > 3. A path has the same wwid as a multipath device that was previously crreated
-> >    (even if that multipath device doesn't currently exist).
-> > 
-> Hannes,
-> 
-> this patch implements complex semantics and mis-use /etc to store
-> variable data (/run was suggested as a replacement). Though I realize
-> the benefits, I'm not at ease merging it.
+--===============3077483811371743591==
+Content-Type: multipart/alternative; boundary=000e0cd72a9a194b2a04abe1e52e
 
-This will add wwids to the wwids file at the same times that new bindings
-get added to the bindings file. We decided to move the bindings file to
-/etc/multipath/bindings because it caused problems during bootup, if
-/var/run was not mounted.  This will have the same problems where you
-will be writing to a file that eventually gets mounted over.  So I am
-against using /var/run
+--000e0cd72a9a194b2a04abe1e52e
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
--Ben
+Sure, i was really meaning /run.
+Le 1 sept. 2011 14:57, "Benjamin Marzinski" <bmarzins@redhat.com> a =E9crit=
+ :
 
-> 
-> Mike Snitzer pushed for its inclusion, but I don't remember your
-> commenting. Would your care to ?
-> 
-> Regards,
-> 
-> -- 
-> Christophe Varoqui
-> OpenSVC - Tools to scale
-> http://www.opensvc.com/
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--000e0cd72a9a194b2a04abe1e52e
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<p>Sure, i was really meaning /run.</p>
+<div class=3D"gmail_quote">Le 1 sept. 2011 14:57, &quot;Benjamin Marzinski&=
+quot; &lt;<a href=3D"mailto:bmarzins@redhat.com">bmarzins@redhat.com</a>&gt=
+; a =E9crit=A0:<br type=3D"attribution"></div>
+
+--000e0cd72a9a194b2a04abe1e52e--
+
+
+--===============3077483811371743591==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3077483811371743591==--
