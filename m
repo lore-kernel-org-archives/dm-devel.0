@@ -1,15 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] multipath: systemd unit file
-Date: Thu, 01 Sep 2011 09:11:56 +0200
-Message-ID: <4E5F303C.3010906@suse.de>
-References: <20110901030028.GE11793@ether.msp.redhat.com>	<4E5F24DE.50004@suse.de>
-	<1314860671.14056.83.camel@lapoo.opensvc.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
+Subject: Re: [PATCH v2] multipath: add find_multipaths feature.
+Date: Thu, 01 Sep 2011 09:14:23 +0200
+Message-ID: <1314861263.14056.89.camel@lapoo.opensvc.com>
+References: <20110725185758.GA1368@ether.msp.redhat.com>
+	<20110901025518.GD11793@ether.msp.redhat.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1314860671.14056.83.camel@lapoo.opensvc.com>
+In-Reply-To: <20110901025518.GD11793@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,48 +20,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 09/01/2011 09:04 AM, Christophe Varoqui wrote:
->>> +[Unit]
->>> +Description=3DDevice-Mapper Multipath Device Controller
->>> +Before=3Discsi.service iscsid.service
->>> +After=3Dsyslog.target
->>> +
->>> +[Service]
->>> +Type=3Dforking
->>> +PIDFile=3D/var/run/multipathd.pid
->>> +ExecStart=3D/sbin/multipathd
->>> +ExecReload=3D/bin/kill -HUP $MAINPID
->>> +#ExecStop=3D/path/to/scrip delete-me if not necessary
->>> +
->>> +[Install]
->>> +WantedBy=3Dmulti-user.target
->>>
->> Hmm. First of all, I'm trying to get rid of the PID file, as with it
->> it's quite hard to start multipathing when /var/run isn't mounted.
->> Plus it's not actually needed; everything can be done via multipathd
->> -k nowadays.
->>
-> Agreed
->
->> So may I suggest to use
->> ExecReload=3D/sbin/multipathd -k'reconfigure'
->>
-> Or even:
-> ExecReload=3Dmultipathd reconfigure
->
-That works? Cool.
+On mer., 2011-08-31 at 21:55 -0500, Benjamin Marzinski wrote:
+> This adds a new default feature, find_multipaths. When this is set to yes,
+> multipath will no longer try to create a multipath device for every
+> non-blacklisted device. Instead, it will only create a device when one of
+> three conditions are met.
+> 
+> 1. Three are at least two non-blacklisted paths with the same wwid
+> 2. The user manually forces the creation, by specifying a device with the
+>    multipath command.
+> 3. A path has the same wwid as a multipath device that was previously crreated
+>    (even if that multipath device doesn't currently exist).
+> 
+Hannes,
 
-Bet it's not documented in the manpage ...
+this patch implements complex semantics and mis-use /etc to store
+variable data (/run was suggested as a replacement). Though I realize
+the benefits, I'm not at ease merging it.
 
-Cheers,
+Mike Snitzer pushed for its inclusion, but I don't remember your
+commenting. Would your care to ?
 
-Hannes
--- =
+Regards,
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+-- 
+Christophe Varoqui
+OpenSVC - Tools to scale
+http://www.opensvc.com/
