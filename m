@@ -1,33 +1,83 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: [RFC PATCH 0/2] block: Allow extending partition size online
-Date: Thu,  1 Sep 2011 17:55:26 -0400
-Message-ID: <1314914128-3171-1-git-send-email-vgoyal@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, jaxboe@fusionio.com, dm-devel@redhat.com
-Cc: kzak@redhat.com, vgoyal@redhat.com
+From: "Chauhan, Vijay" <Vijay.Chauhan@netapp.com>
+Subject: multipath-tools: Adding Netapp as a brand name for RDAC
+Date: Fri, 2 Sep 2011 12:38:17 +0530
+Message-ID: <EE2129A8E578DC4E94D643D6C1C1C67D05D03C5C@BTCMVEXC2-PRD.hq.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@free.fr>
+Cc: "Stankey, Robert" <Robert.Stankey@netapp.com>
 List-Id: dm-devel.ids
 
+Adding Netapp as brand name for RDAC.
 
-Hi,
+Signed-off-by: Vijay Chauhan <Vijay.chauhan@netapp.com>
+Reviewed-by: Bob Stankey <Robert.stankey@netapp.com> 
+Reviewed-by: Babu Moger <Babu.moger@netapp.com>
 
-This is a patch to allow extending the partition size online. There are two
-patches in the series. One is kernel patch and other is util-linux patch
-to add another command "extendpart".
-
-Kernel patch adds another ioctl to increase the size of partition even when
-partition is in use. Currently limitation is that after modification to 
-partition table, one needs to reboot the system/stop using the partition
-before size changes become visible. It would be nice to allow changing
-the size online, hence this change.
-
-This ioctl changes only kernel view of data structures and does not
-touch ondisk data structures. So right way to expand the partition
-table would be to fist modify on disk copy using fdisk or so and then
-extend partition in kernel so that kernel's table and ondisk table
-are in sync.
-
-Any feedback is welcome.
-
-Thanks
-Vivek
+---
+diff -uprN multipath-tools-orig/libmultipath/hwtable.c
+multipath-tools/libmultipath/hwtable.c
+--- multipath-tools-orig/libmultipath/hwtable.c	2011-08-26
+16:19:58.000000000 +0530
++++ multipath-tools/libmultipath/hwtable.c	2011-08-30
+19:13:57.000000000 +0530
+@@ -1168,7 +1168,7 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 		.prio_args     = NULL,
+ 	},
+-	/* LSI Generic rdac storage */
++	/* LSI/Engenio/NetApp E-Series RDAC storage */
+ 	{
+ 		.vendor        = "(LSI|ENGENIO)",
+ 		.product       = "INF-01-00",
+diff -uprN multipath-tools-orig/multipath/multipath.conf.5
+multipath-tools/multipath/multipath.conf.5
+--- multipath-tools-orig/multipath/multipath.conf.5	2011-08-26
+16:19:58.000000000 +0530
++++ multipath-tools/multipath/multipath.conf.5	2011-08-30
+19:17:37.000000000 +0530
+@@ -165,7 +165,7 @@ Generate the path priority based on the 
+ Generate the path priority for NetApp arrays.
+ .TP
+ .B rdac
+-Generate the path priority for LSI/Engenio RDAC controller.
++Generate the path priority for LSI/Engenio/NetApp E-Series RDAC
+controller.
+ .TP
+ .B hp_sw
+ Generate the path priority for Compaq/HP controller in
+@@ -229,7 +229,7 @@ state.
+ Check the path state for HP storage arrays with Active/Standby
+firmware.
+ .TP
+ .B rdac
+-Check the path state for LSI/Engenio RDAC storage controller.
++Check the path state for LSI/Engenio/NetApp E-Series RDAC storage
+controller.
+ .TP
+ .B directio
+ Read the first sector with direct I/O.
+@@ -445,7 +445,7 @@ The following hardware handler are imple
+ Hardware handler for EMC storage arrays.
+ .TP
+ .B 1 rdac
+-Hardware handler for LSI/Engenio RDAC storage controller.
++Hardware handler for LSI/Engenio/NetApp E-Series RDAC storage
+controller.
+ .TP
+ .B 1 hp_sw
+ Hardware handler for Compaq/HP storage arrays in active/standby
+--
