@@ -1,17 +1,11 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: New dm-bufio with shrinker API
-Date: Tue, 6 Sep 2011 12:08:51 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1109061202280.21793@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1109021732490.13426@hs20-bc2-1.build.redhat.com>
-	<20110905090428.GA3826@ubuntu> <20110905144913.GB22386@ubuntu>
-	<Pine.LNX.4.64.1109051148450.22564@hs20-bc2-1.build.redhat.com>
-	<20110906093332.GB3619@ubuntu>
+From: egroegnibus@gmail.com
+Subject: switching from active to failed.
+Date: Fri, 2 Sep 2011 16:05:41 -0400
+Message-ID: <55B91642-6A88-477E-BBAB-8EC1842DE957@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0 (iPhone Mail 8L1)
+Content-Type: multipart/mixed; boundary="===============5299202976241416744=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110906093332.GB3619@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,77 +15,122 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
-
-On Tue, 6 Sep 2011, Joe Thornber wrote:
-
-> On Mon, Sep 05, 2011 at 12:01:28PM -0400, Mikulas Patocka wrote:
-> > "cache_size" is the value that you set as a maximum cache size. The 
-> > default is 2% of memory or 25% of vmalloc area.
-> 
-> ah, could you rename this variable to 'max_allocated' then please, to
-> match with the 'total_allocated' field (which I presume gives the
-> current cache size?).
-
-OK.
-
-> > > With the old block manager the test suite ran nicely with
-> > > less than 256k, from memory I think I started seeing slow down around
-> > > 128k.  With bufio I'm seeing consistently larger cache sizes for the
-> > > same performance.
-> > 
-> > So, reduce cache_size to 256k (or whatever value you want to test) and see 
-> > how it performs.
-> 
-> But then I'm limited to 256k, my point is we want scaling _and_ to use
-> less memory.  We cannot tell our users to experiment to find the right
-> setting for this depending on the number of pools they're running and
-> the usage of each pool.
-> 
-> > > For instance the test_overwriting_various_thin_devices scenario from
-> > > here
-> > > (https://github.com/jthornber/thinp-test-suite/blob/master/basic_tests.rb)
-> > > has a peak use of ~1100k, if I change from using dt with random io
-> > > pattern to plain old dd then the usage drops to ~900k. Setting the
-> > > max_age parameter to 1 second had very little effect.
-> > 
-> > Reduce cache_size and try it.
-> 
-> Here are the numbers (best of 3 runs):
-> 
-> | Test                        | 256k cache (M/s) | 2M cache (M/s) |
-> | unprovisioned thin          |             74.4 |             75 |
-> | provisioned thin            |             72.8 |           72.6 |
-> | new snap (complete sharing) |             73.7 |           73.8 |
-> | old snap (no sharing)       |             72.2 |           72.8 |
-> 
-> So I think that proves my point.  We're getting no benefit from that
-> extra memory, is there a subsystem that could be making better use of
-> it? (eg, page cache?).  Or are you telling me that nobody else would
-> have been using that memory?
-> 
-> (This is all just tweaking, bufio is working very well).
-> 
-> - Joe
-
-So, I can implement a call "void dm_bufio_discard_buffer(struct 
-dm_bufio_client *c, sector_t block)" and this call will discard a specific 
-buffer at a specific location (the call is not guaranteed to succeed, it 
-would not discard if someone is holding the buffer or so). It would be 
-like a "bforget" function for filesystem buffers.
-
-You will call this function on metadata sectors that you are freeing.
-
-Do you agree with this interface?
+--===============5299202976241416744==
+Content-Type: multipart/alternative;
+	boundary=Apple-Mail-129--468186484
+Content-Transfer-Encoding: 7bit
 
 
-Other than this, I don't know how to reduce cache size, I don't know about 
-any algorithm that would guess cache size automatically. In operating 
-systems, caches usually grow without limit regardless of whether someone 
-needs the cache or not.
+--Apple-Mail-129--468186484
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=us-ascii
 
-Mikulas
+Hi, I had a question on how a target can force a path on Linux to go to "fai=
+led" state.=20
+
+In the multipath -l output below, there are 4 paths to a device and all the p=
+aths are "active". What kind of response/sense code is required so as to mak=
+e path sddd below to go from active to failed state ?
+
+I guess another question is : how does device mapper recognize that a path i=
+s active or failed, in other words what sequence of SCSI opcodes is sent by L=
+inux to discover a path and mark it dead/failed or alive ?
+
+
+mpath153 (360060480000190102221533031303030) dm-154 EMC,SYMMETRIX
+[size=3D938M][features=3D0][hwhandler=3D0][rw]
+\_ round-robin 0 [prio=3D0][active]
+\_ 3:0:0:11  sddd 70:176  [active][undef]
+\_ 4:0:0:11  sdgt 132:144 [active][undef]
+\_ 5:0:0:182 sdka 65:480  [active][undef]
+\_ 6:0:0:182 sdln 68:336  [active][undef]
+
+
+Thanks=
+
+--Apple-Mail-129--468186484
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html;
+	charset=utf-8
+
+<html><body bgcolor=3D"#FFFFFF"><div></div><div>Hi, I had a question on how a=
+ target can force a path on Linux to go to "failed" state.&nbsp;</div><div><=
+br></div><div>In the multipath -l output below, there are 4 paths to a devic=
+e and all the paths are "active". What kind of response/sense code is requir=
+ed so as to make path sddd below to go from active to failed state ?</div><d=
+iv><br></div><div>I guess another question is : how does device mapper recog=
+nize that a path is active or failed, in other words what sequence of SCSI o=
+pcodes is sent by Linux to discover a path and mark it dead/failed or alive ?=
+<br><br></div><div><br><span class=3D"Apple-style-span" style=3D"-webkit-tap=
+-highlight-color: rgba(26, 26, 26, 0.296875); -webkit-composition-fill-color=
+: rgba(175, 192, 227, 0.230469); -webkit-composition-frame-color: rgba(77, 1=
+28, 180, 0.230469); font-size: medium; "><span>mpath153 (3600604800001901022=
+21533031303030) dm-154 EMC,SYMMETRIX</span></span><span class=3D"Apple-style=
+-span" style=3D"-webkit-tap-highlight-color: rgba(26, 26, 26, 0.296875); -we=
+bkit-composition-fill-color: rgba(175, 192, 227, 0.230469); -webkit-composit=
+ion-frame-color: rgba(77, 128, 180, 0.230469); font-size: medium; "><br></sp=
+an><span class=3D"Apple-style-span" style=3D"-webkit-tap-highlight-color: rg=
+ba(26, 26, 26, 0.296875); -webkit-composition-fill-color: rgba(175, 192, 227=
+, 0.230469); -webkit-composition-frame-color: rgba(77, 128, 180, 0.230469); f=
+ont-size: medium; "><span>[size=3D938M][features=3D0][hwhandler=3D0][rw]</sp=
+an></span><span class=3D"Apple-style-span" style=3D"-webkit-tap-highlight-co=
+lor: rgba(26, 26, 26, 0.296875); -webkit-composition-fill-color: rgba(175, 1=
+92, 227, 0.230469); -webkit-composition-frame-color: rgba(77, 128, 180, 0.23=
+0469); font-size: medium; "><br></span><span class=3D"Apple-style-span" styl=
+e=3D"-webkit-tap-highlight-color: rgba(26, 26, 26, 0.296875); -webkit-compos=
+ition-fill-color: rgba(175, 192, 227, 0.230469); -webkit-composition-frame-c=
+olor: rgba(77, 128, 180, 0.230469); font-size: medium; "><span>\_ round-robi=
+n 0 [prio=3D0][active]</span></span><span class=3D"Apple-style-span" style=3D=
+"-webkit-tap-highlight-color: rgba(26, 26, 26, 0.296875); -webkit-compositio=
+n-fill-color: rgba(175, 192, 227, 0.230469); -webkit-composition-frame-color=
+: rgba(77, 128, 180, 0.230469); font-size: medium; "><br></span><span class=3D=
+"Apple-style-span" style=3D"-webkit-tap-highlight-color: rgba(26, 26, 26, 0.=
+296875); -webkit-composition-fill-color: rgba(175, 192, 227, 0.230469); -web=
+kit-composition-frame-color: rgba(77, 128, 180, 0.230469); font-size: medium=
+; "><span>\_ 3:0:<a href=3D"x-apple-data-detectors://1" x-apple-data-detecto=
+rs=3D"true">0:11</a>&nbsp;&nbsp;sddd 70:176 &nbsp;[active][undef]</span></sp=
+an><span class=3D"Apple-style-span" style=3D"-webkit-tap-highlight-color: rg=
+ba(26, 26, 26, 0.296875); -webkit-composition-fill-color: rgba(175, 192, 227=
+, 0.230469); -webkit-composition-frame-color: rgba(77, 128, 180, 0.230469); f=
+ont-size: medium; "><br></span><span class=3D"Apple-style-span" style=3D"-we=
+bkit-tap-highlight-color: rgba(26, 26, 26, 0.296875); -webkit-composition-fi=
+ll-color: rgba(175, 192, 227, 0.230469); -webkit-composition-frame-color: rg=
+ba(77, 128, 180, 0.230469); font-size: medium; "><span>\_ 4:0:<a href=3D"x-a=
+pple-data-detectors://2" x-apple-data-detectors=3D"true">0:11</a>&nbsp;&nbsp=
+;sdgt 132:144 [active][undef]</span></span><span class=3D"Apple-style-span" s=
+tyle=3D"-webkit-tap-highlight-color: rgba(26, 26, 26, 0.296875); -webkit-com=
+position-fill-color: rgba(175, 192, 227, 0.230469); -webkit-composition-fram=
+e-color: rgba(77, 128, 180, 0.230469); font-size: medium; "><br></span><span=
+ class=3D"Apple-style-span" style=3D"-webkit-tap-highlight-color: rgba(26, 2=
+6, 26, 0.296875); -webkit-composition-fill-color: rgba(175, 192, 227, 0.2304=
+69); -webkit-composition-frame-color: rgba(77, 128, 180, 0.230469); font-siz=
+e: medium; "><span>\_ 5:0:0:182 sdka 65:480 &nbsp;[active][undef]</span></sp=
+an><span class=3D"Apple-style-span" style=3D"-webkit-tap-highlight-color: rg=
+ba(26, 26, 26, 0.296875); -webkit-composition-fill-color: rgba(175, 192, 227=
+, 0.230469); -webkit-composition-frame-color: rgba(77, 128, 180, 0.230469); f=
+ont-size: medium; "><br></span><span class=3D"Apple-style-span" style=3D"-we=
+bkit-tap-highlight-color: rgba(26, 26, 26, 0.296875); -webkit-composition-fi=
+ll-color: rgba(175, 192, 227, 0.230469); -webkit-composition-frame-color: rg=
+ba(77, 128, 180, 0.230469); font-size: medium; "><span>\_ 6:0:0:182 sdln 68:=
+336 &nbsp;[active][undef]</span></span><span class=3D"Apple-style-span" styl=
+e=3D"-webkit-tap-highlight-color: rgba(26, 26, 26, 0.296875); -webkit-compos=
+ition-fill-color: rgba(175, 192, 227, 0.230469); -webkit-composition-frame-c=
+olor: rgba(77, 128, 180, 0.230469); font-size: medium; "><br></span><div><br=
+></div></div><div><br></div><div>Thanks</div></body></html>=
+
+--Apple-Mail-129--468186484--
+
+
+--===============5299202976241416744==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5299202976241416744==--
