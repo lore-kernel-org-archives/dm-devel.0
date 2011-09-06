@@ -1,13 +1,17 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: multipath tools git relocation
-Date: Mon, 05 Sep 2011 22:54:32 +0200
-Message-ID: <1315256072.29422.9.camel@lapoo.opensvc.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
+Subject: Re: New dm-bufio with shrinker API
+Date: Tue, 6 Sep 2011 09:50:38 +0100
+Message-ID: <20110906085038.GA3619@ubuntu>
+References: <Pine.LNX.4.64.1109021732490.13426@hs20-bc2-1.build.redhat.com>
+	<20110905090428.GA3826@ubuntu> <20110905144913.GB22386@ubuntu>
+	<20110905150714.GA2722@infradead.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20110905150714.GA2722@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,16 +21,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Mikulas Patocka <mpatocka@redhat.com>
 List-Id: dm-devel.ids
 
-Due to master.kernel.org unavailability, I relocated the multipath-tools
-git repository to http://git.opensvc.com
+On Mon, Sep 05, 2011 at 11:07:15AM -0400, Christoph Hellwig wrote:
+> On Mon, Sep 05, 2011 at 03:49:14PM +0100, Joe Thornber wrote:
+> > I changed the test suite to reset the peak_allocated parameter before
+> > each test and record it at the end of each test.  It's very hard to
+> > say what is right and wrong when talking about cache sizes, since you
+> > always have to qualify anything by saying 'for this particular load'.
+> > However, I think bufio could be more aggressive about recycling cache
+> > entries.  With the old block manager the test suite ran nicely with
+> > less than 256k, from memory I think I started seeing slow down around
+> > 128k.  With bufio I'm seeing consistently larger cache sizes for the
+> > same performance.
+> 
+> IS there any reason you'll need a fixed size?  This is fairly similar in
+> concept to the XFS buffercache, which does perfectly well by allocation
+> memory as needed, and letting the shrinker reclaim buffers when under
+> memory pressure.
 
-I'll notify if I switch back to master.kernel.org.
+This is exactly what we're trying to do.
 
-Best regards,
--- 
-Christophe Varoqui
-OpenSVC - Tools to scale
-http://www.opensvc.com/
+- Joe
