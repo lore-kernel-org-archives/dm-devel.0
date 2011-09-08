@@ -1,71 +1,50 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: New dm-bufio with shrinker API
-Date: Wed, 7 Sep 2011 14:47:40 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1109071444260.484@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1109021732490.13426@hs20-bc2-1.build.redhat.com>
-	<20110905090428.GA3826@ubuntu> <20110905144913.GB22386@ubuntu>
-	<20110905150714.GA2722@infradead.org>
-	<Pine.LNX.4.64.1109061154040.21793@hs20-bc2-1.build.redhat.com>
-	<20110906160839.GA12866@infradead.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [BUG] Oops when SCSI device under multipath is removed
+Date: Thu, 08 Sep 2011 09:00:58 +0900
+Message-ID: <4E6805BA.9040402@ce.jp.nec.com>
+References: <Pine.LNX.4.44L0.1108111112280.1958-100000@iolanthe.rowland.org> <4E4A53F0.9040104@ce.jp.nec.com> <4E4CD737.4020402@ce.jp.nec.com> <20110831195022.GE4004@oc1711230544.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110906160839.GA12866@infradead.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: dm-devel@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20110831195022.GE4004@oc1711230544.ibm.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Thadeu Lima de Souza Cascardo <cascardo@linux.vnet.ibm.com>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Tejun Heo <tj@kernel.org>, Alan Stern <stern@rowland.harvard.edu>, jaxboe@fusionio.com, roland@purestorage.com, linux-scsi@vger.kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.ne>
 List-Id: dm-devel.ids
 
+Hello,
 
-
-On Tue, 6 Sep 2011, Christoph Hellwig wrote:
-
-> On Tue, Sep 06, 2011 at 11:57:00AM -0400, Mikulas Patocka wrote:
-> > > IS there any reason you'll need a fixed size?  This is fairly similar in
-> > > concept to the XFS buffercache, which does perfectly well by allocation
-> > > memory as needed, and letting the shrinker reclaim buffers when under
-> > > memory pressure.
-> > 
-> > It is possible to make unlimited size. --- the question: is the shrinker 
-> > run when we exhaust vmalloc arena?
-> > 
-> > dm-bufio cache uses vmalloc arena under some circumstances. On some 
-> > architectures (for example i386), vmalloc arena is smaller than main 
-> > memory, therefore it may overflow before main memory does.
-> > 
-> > What does XFS do when vmalloc arena is exhausted?
+On 09/01/11 04:50, Thadeu Lima de Souza Cascardo wrote:
+> On Thu, Aug 18, 2011 at 06:11:19PM +0900, Jun'ichi Nomura wrote:
+>> Actually, Tejun has posted a patch to replace
+>> execute_in_process_context() with queue_work()
+>> and asking your review:
+>>
+>>   [PATCH RESEND] scsi: don't use execute_in_process_context()
+>>   https://lkml.org/lkml/2011/4/30/87
+>>
+>> Do you think you can take the patch and revert the move
+>> of scsi_free_queue()?
 > 
-> At this point shrinkers do not handle vmalloc space, although we could
-> add them.  In the default configuration XFS uses very little vmalloc
-> space in the buffer cache - only the 8 log buffers are vmapped, and
-> those can't be reclaimed anyway.  During log recovery or if using the
-> non-standard larger directory block mkfs option it can consume a larger
-> amount of vmalloc space, and we have run into problems because of that,
-> e.g. take a look at the loop around vm_map_ram() in _xfs_buf_map_pages()
-> that we had to add as a workaround, and the commit introducing it for
-> more details (a19fb380).
+> I've tested with your suggestion (reverting the move of scsi_free_queue)
+> and it works like a charm. I did not get any oops after that. I tested
+> with a multipath setup on top of two iscsi targets. Using dd after
+> logging out of some of one of the iscsi targets would trigger the oops.
+> With this patch, it could not be triggered anymore.
 
-I see --- but: shouldn't vm_map_ram() do its own cleanup and call 
-vm_unmap_aliases() accordingly? Do you mean that any function that 
-allocates something from vmalloc area needs to call vm_unmap_aliases() and 
-retry in case of failure?
+Thank you for testing and the report.
 
-> Just curious, why do you need the buffers to be vmapped?  If we'd design
-> the dir2 format these days we'd make sure it is aligned in a way that
-> we could deal with individually mapped pages.
+Since scsi_free_queue() frees elevator, calling it while there
+still is a user of the elevator has no way to work.
+Either we should call it later (like the above suggestion)
+or change scsi_free_queue not to free the elevator
+(James posted a patch early in this thread).
 
-I need it if we use larger buffers than pages. They are allocated with 
-get_free_pages, but it is unreliable and has its own limit, so I use 
-vmalloc as a reliable backup.
+I think the latter approach could be nice if it worked.
+But if not, the former approach should be taken.
+Without fix, a path failure can cause a panic. This is bad...
 
-Mikulas
+Best regards,
+-- 
+Jun'ichi Nomura, NEC Corporation
