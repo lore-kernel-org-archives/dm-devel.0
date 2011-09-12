@@ -1,30 +1,29 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Christoph Hellwig <hch@infradead.org>
 Subject: Re: [PATCH 1/2] block: export __make_request
-Date: Mon, 12 Sep 2011 14:26:52 +0200
-Message-ID: <4E6DFA8C.3030400@kernel.dk>
-References: <20110911145053.GA28996@infradead.org> <4E6DD7F0.8020903@kernel.dk> <20110912122507.GA12229@infradead.org>
+Date: Mon, 12 Sep 2011 09:38:26 -0400
+Message-ID: <20110912133826.GA22548@infradead.org>
+References: <20110911145053.GA28996@infradead.org>
+ <4E6DD7F0.8020903@kernel.dk>
+ <20110912122507.GA12229@infradead.org>
+ <4E6DFA8C.3030400@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110912122507.GA12229@infradead.org>
+Content-Disposition: inline
+In-Reply-To: <4E6DFA8C.3030400@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@infradead.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, bharrosh@panasas.com
 List-Id: dm-devel.ids
 
-On 2011-09-12 14:25, Christoph Hellwig wrote:
-> On Mon, Sep 12, 2011 at 11:59:12AM +0200, Jens Axboe wrote:
->> On 2011-09-11 16:50, Christoph Hellwig wrote:
->>> Avoid the hacks need for request based device mappers currently by simply
->>> exporting the symbol instead of trying to get it through the back door.
->>
->> Good idea, lets rename it to blk_make_request() at the same time though.
->> I'll merge it as such.
+On Mon, Sep 12, 2011 at 02:26:52PM +0200, Jens Axboe wrote:
+> > What happens to the existing blk_make_request?
 > 
-> What happens to the existing blk_make_request?
+> I ended up naming __make_request() blk_queue_bio() instead.
 
-I ended up naming __make_request() blk_queue_bio() instead.
+I really hate naming things different from the method they are
+implementing.  I've tried to figure out what the point of the
+old blk_make_request is - why would we not go through
+generic_make_request for this?
 
--- 
-Jens Axboe
+Boaz, any idea?
