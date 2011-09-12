@@ -1,49 +1,35 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm-thin: Fix multiple bugs with reference
-	management
-Date: Mon, 12 Sep 2011 18:08:18 +0100
-Message-ID: <20110912170817.GA26619@ubuntu>
-References: <Pine.LNX.4.64.1109121125480.10597@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 1/2] block: export __make_request
+Date: Mon, 12 Sep 2011 20:04:46 +0200
+Message-ID: <4E6E49BE.6020005@kernel.dk>
+References: <20110911145053.GA28996@infradead.org> <4E6DD7F0.8020903@kernel.dk> <20110912122507.GA12229@infradead.org> <4E6DFA8C.3030400@kernel.dk> <20110912133826.GA22548@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1109121125480.10597@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20110912133826.GA22548@infradead.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, bharrosh@panasas.com
 List-Id: dm-devel.ids
 
-On Mon, Sep 12, 2011 at 12:03:31PM -0400, Mikulas Patocka wrote:
-> Hi
+On 2011-09-12 15:38, Christoph Hellwig wrote:
+> On Mon, Sep 12, 2011 at 02:26:52PM +0200, Jens Axboe wrote:
+>>> What happens to the existing blk_make_request?
+>>
+>> I ended up naming __make_request() blk_queue_bio() instead.
 > 
-> This is a major cleanup+bugfix of reference count management. Test it with 
-> your testsuite.
+> I really hate naming things different from the method they are
+> implementing.  I've tried to figure out what the point of the
+> old blk_make_request is - why would we not go through
+> generic_make_request for this?
+> 
+> Boaz, any idea?
 
-Right, we've got 2 patches here really.
+I tend to agree, we could rename the existing blk_make_request(). It
+could be blk_make_request_from_bio() or something like that, since
+that's what it does.
 
-The first replaces a spinlock with a mutex and lifts it to remove a
-couple of race conditions.  All good, I've prefixed the functions that
-should be called with this lock held with '__' as usual.
+-- 
+Jens Axboe
 
-The second moves registration to the constructor and destructor rather
-than suspend/resume.  I know you were asking about this earlier, and I
-think this was a hang over from when the pool and target objects were
-the same thing, and we couldn't have two targets registered at once
-when reloading a table.  Your change is clearly simpler.
-
-All tests pass.  Merged and pushed.
-
-Thanks,
-
-- Joe
