@@ -1,33 +1,50 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 2/2] block: remove support for bio remapping from ->make_request
-Date: Mon, 12 Sep 2011 11:59:52 +0200
-Message-ID: <4E6DD818.80902@kernel.dk>
-References: <20110911145053.GA28996@infradead.org> <20110911145129.GA29504@infradead.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] select STACKTRACE if using it
+Date: Mon, 12 Sep 2011 07:05:31 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1109120703190.10238@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110911145129.GA29504@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Edward Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2011-09-11 16:51, Christoph Hellwig wrote:
-> There is very little benefit in allowing to let a ->make_request
-> instance update the bios device and sector and loop around it in
-> __generic_make_request when we can archive the same through calling
-> generic_make_request from the driver and letting the loop in
-> generic_make_request handle it.
+dm-thinp: select STACKTRACE if using it
 
-Agree, this looks good! Will apply for 3.2.
+This patch selects option "STACKTRACE" if dm-thinp uses it. If we don't 
+select this option, it isn't included in the kernel and dm-thinp can't be 
+compiled.
 
-> Note that various drivers got the return value from ->make_request and
-> returned non-zero values for errors.
+Mikulas
 
-Hadn't noticed that, I guess the return values are easy to get wrong in
-that case. Never a good sign.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
+---
+ drivers/md/Kconfig |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
--- 
-Jens Axboe
+Index: linux-3.1-rc3-fast/drivers/md/Kconfig
+===================================================================
+--- linux-3.1-rc3-fast.orig/drivers/md/Kconfig	2011-09-12 12:56:37.000000000 +0200
++++ linux-3.1-rc3-fast/drivers/md/Kconfig	2011-09-12 12:56:39.000000000 +0200
+@@ -271,7 +271,8 @@ config DM_BLOCK_LOCKING
+ 
+ config DM_BLOCK_STACK_TRACING
+ 	boolean "Keep a stack trace of all lock holders"
+-	depends on DM_BLOCK_LOCKING
++	depends on DM_BLOCK_LOCKING && STACKTRACE_SUPPORT
++	select STACKTRACE
+ 
+ 	---help---
+ 
