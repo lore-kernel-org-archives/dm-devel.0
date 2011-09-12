@@ -1,48 +1,33 @@
-From: Joe Thornber <thornber@redhat.com>
-Subject: Re: [PATCH] dm-block-manager: use spinlocks that don't
- disable interrupts
-Date: Mon, 12 Sep 2011 15:11:00 +0100
-Message-ID: <20110912141059.GD14861@ubuntu>
-References: <Pine.LNX.4.64.1109120723560.15190@hs20-bc2-1.build.redhat.com>
-	<20110912135742.GA23492@infradead.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: [PATCH 3/2] block: refactor generic_make_request
+Date: Mon, 12 Sep 2011 11:09:35 -0400
+Message-ID: <20110912150935.GA27453@redhat.com>
+References: <20110911145053.GA28996@infradead.org>
+ <20110912134202.GA22953@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20110912135742.GA23492@infradead.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <20110912134202.GA22953@infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Christoph Hellwig <hch@infradead.org>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Sep 12, 2011 at 09:57:42AM -0400, Christoph Hellwig wrote:
-> On Mon, Sep 12, 2011 at 07:24:48AM -0400, Mikulas Patocka wrote:
-> > dm-block-manager: use spinlocks that don't disable interrupts
-> > 
-> > This will never be called in an interrupt context, so we don't have to use
-> > spinlocks that disable interrupts.
-> 
-> The code looks like a re-implementation of rw_semaphores to me.
-> 
-> Is there any good reason to do this? (hint: normally there isn't :))
+On Mon, Sep 12, 2011 at 09:42:02AM -0400, Christoph Hellwig wrote:
 
-Yes, largely it is.  The major difference is it errors on recursive
-use (which can occur due to malicious metadata as well as programming
-errors).  This is far better than deadlocking (which rwsemaphores to),
-livelocking (which no-locking may do), or not noticing something's
-wrong (which no-locking may do).
+[..]
+> +
+>  	/* following loop may be a bit non-obvious, and so deserves some
+>  	 * explanation.
+>  	 * Before entering the loop, bio->bi_next is NULL (as all callers
+> @@ -1557,16 +1561,15 @@ void generic_make_request(struct bio *bi
+>  	 * from the top.  In this case we really did just take the bio
+>  	 * of the top of the list (no pretending) and so remove it from
+>  	 * bio_list, and call into __generic_make_request again.
+                                   ^^^^^^^^^^
+You got rid of __generic_make_request(). Now above comment has stale
+reference to it.
 
-I can understand that people may well want to turn locking off to get
-the better performance.  So there's a Kconfig option for this.
-
-- Joe
+Thanks
+Vivek
