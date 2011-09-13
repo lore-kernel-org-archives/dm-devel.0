@@ -1,8 +1,8 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH] dm mpath: never re-queue request if I_T_L nexus
-	failure and no paths
-Date: Tue, 13 Sep 2011 10:22:34 -0400
-Message-ID: <1315923754-12107-1-git-send-email-snitzer@redhat.com>
+From: Wang Sheng-Hui <shhuiw@gmail.com>
+Subject: [PATCH] cleanup: fix the comment for field
+ num_discard_requests of struct dm_target
+Date: Tue, 13 Sep 2011 18:29:37 +0800
+Message-ID: <4E6F3091.1060701__18291.4188168526$1315924847$gmane$org@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -17,49 +17,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, NeilBrown <neilb@suse.de>, Jonathan Brassow <jbrassow@redhat.com>, Jens Axboe <jaxboe@fusionio.com>
 List-Id: dm-devel.ids
 
-Commit 751b2a7d (dm mpath: propagate target errors immediately) intended
-to prevent request re-queue if I_T_L nexus failure and no paths are
-available.
+The patch is against 3.1-rc6
 
-However, !m->queue_if_no_path does not imply !__must_push_back(m) so it
-is possible that an -EBADE failure will result in requeue if
-queue_if_no_path was previously enabled (but currently
-!m->queue_if_no_path) and __must_push_back(m).
-
-Fix this so requests that fail with -EBADE will never be re-queued.
-Return -EIO if queue_if_no_path was really not enabled, otherwise if
-queueing is enabled return -EBADE.
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Wang Sheng-Hui <shhuiw@gmail.com>
 ---
- drivers/md/dm-mpath.c |   11 ++++-------
- 1 files changed, 4 insertions(+), 7 deletions(-)
+ include/linux/device-mapper.h |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 5e0090e..d0297c2 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1239,13 +1239,10 @@ static int do_end_io(struct multipath *m, struct request *clone,
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 3fa1f3d..a54aba2 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -182,7 +182,8 @@ struct dm_target {
  
- 	spin_lock_irqsave(&m->lock, flags);
- 	if (!m->nr_valid_paths) {
--		if (!m->queue_if_no_path) {
--			if (!__must_push_back(m))
--				r = -EIO;
--		} else {
--			if (error == -EBADE)
--				r = error;
--		}
-+		if (!m->queue_if_no_path && !__must_push_back(m))
-+			r = -EIO;
-+		else if (error == -EBADE)
-+			r = error;
- 	}
- 	spin_unlock_irqrestore(&m->lock, flags);
+ 	/*
+ 	 * The number of discard requests that will be submitted to the
+-	 * target.  map_info->request_nr is used just like num_flush_requests.
++	 * target. map_info->target_request_nr is used just like
++	 * num_flush_requests.
+ 	 */
+ 	unsigned num_discard_requests;
  
 -- 
-1.7.4.4
+1.7.1
