@@ -1,45 +1,46 @@
-From: Wang Sheng-Hui <shhuiw@gmail.com>
-Subject: [PATCH] cleanup: fix the comment for field
- num_discard_requests of struct dm_target
-Date: Tue, 13 Sep 2011 18:29:37 +0800
-Message-ID: <4E6F3091.1060701__18291.4188168526$1315924847$gmane$org@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 1/2] block: export __make_request
+Date: Tue, 13 Sep 2011 17:19:11 -0400
+Message-ID: <20110913211911.GA13894@infradead.org>
+References: <20110911145053.GA28996@infradead.org>
+ <4E6DD7F0.8020903@kernel.dk>
+ <20110912122507.GA12229@infradead.org>
+ <4E6DFA8C.3030400@kernel.dk>
+ <20110912133826.GA22548@infradead.org>
+ <4E6E49BE.6020005@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>, NeilBrown <neilb@suse.de>, Jonathan Brassow <jbrassow@redhat.com>, Jens Axboe <jaxboe@fusionio.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4E6E49BE.6020005@kernel.dk>
+Sender: linux-raid-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@infradead.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, bharrosh@panasas.com, nab@linux-iscsi.org, ryanh@us.ibm.com
 List-Id: dm-devel.ids
 
-The patch is against 3.1-rc6
+On Mon, Sep 12, 2011 at 08:04:46PM +0200, Jens Axboe wrote:
+> > I really hate naming things different from the method they are
+> > implementing.  I've tried to figure out what the point of the
+> > old blk_make_request is - why would we not go through
+> > generic_make_request for this?
+> > 
+> > Boaz, any idea?
+> 
+> I tend to agree, we could rename the existing blk_make_request(). It
+> could be blk_make_request_from_bio() or something like that, since
+> that's what it does.
 
-Signed-off-by: Wang Sheng-Hui <shhuiw@gmail.com>
----
- include/linux/device-mapper.h |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+It should at very least be renamed.  But I still can't figure out what
+it is for exactly.
 
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 3fa1f3d..a54aba2 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -182,7 +182,8 @@ struct dm_target {
- 
- 	/*
- 	 * The number of discard requests that will be submitted to the
--	 * target.  map_info->request_nr is used just like num_flush_requests.
-+	 * target. map_info->target_request_nr is used just like
-+	 * num_flush_requests.
- 	 */
- 	unsigned num_discard_requests;
- 
--- 
-1.7.1
+There are three users:
+
+ (1) virtio_blk::virtblk_get_id():
+	This looks like it really should just use blk_rq_map_kern.
+ (2) osd_initiator::_make_request():
+	This one looks like it should just use the same scheme as
+	sg_io(), as it's doing the same thing.
+ (3) target_core_pscsi::__pscsi_map_SG():
+	Same as (2).
+
+
