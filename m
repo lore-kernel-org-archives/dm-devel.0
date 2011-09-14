@@ -1,157 +1,69 @@
-From: NEVEU Stephane <stephane.neveu@thalesgroup.com>
-Subject: Re: multipathd & EMC Clariion CX-4
-Date: Wed, 14 Sep 2011 14:00:13 +0200
-Message-ID: <22404_1316001614_4E70974E_22404_18469_1_EEF700FCD1A35041BF2C750B4EDDCA310138F9C49E5E@THSONEA01CMS03P.one.grp>
-References: <21739_1315994330_4E707ADA_21739_7623_1_EEF700FCD1A35041BF2C750B4EDDCA310138F9C49D3A@THSONEA01CMS03P.one.grp>
-	<4E709273.8000901@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Boaz Harrosh <bharrosh@panasas.com>
+Subject: Re: [PATCH 1/2] block: export __make_request
+Date: Wed, 14 Sep 2011 20:17:53 +0300
+Message-ID: <4E70E1C1.8040907@panasas.com>
+References: <20110911145053.GA28996@infradead.org> <4E6DD7F0.8020903@kernel.dk> <20110912122507.GA12229@infradead.org> <4E6DFA8C.3030400@kernel.dk> <20110912133826.GA22548@infradead.org> <4E6E49BE.6020005@kernel.dk> <20110913211911.GA13894@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4E709273.8000901@suse.de>
-Content-Language: fr-FR
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20110913211911.GA13894@infradead.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, nab@linux-iscsi.org, ryanh@us.ibm.com
 List-Id: dm-devel.ids
 
-Dear Hannes,
-
-You are right ! many thanks ! I moved away multipath.conf from the etc fold=
-er and restarted multipath-tools and everything works fine :
-
-NDO (36006016017402600f2ed610b62cde011) dm-8 DGC     ,RAID 5        =
-
-[size=3D50G][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D2][active]
- \_ 2:0:0:1 sdd 8:48  [active][ready] =
-
- \_ 5:0:0:1 sdj 8:144 [active][ready] =
-
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 2:0:1:1 sdg 8:96  [active][ready] =
-
- \_ 5:0:1:1 sdm 8:192 [active][ready] =
-
-NAGIOS (360060160174026000c984cc67acde011) dm-6 DGC     ,RAID 5        =
-
-[size=3D40G][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D2][active]
- \_ 2:0:1:2 sdh 8:112 [active][ready] =
-
- \_ 5:0:1:2 sdn 8:208 [active][ready] =
-
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 2:0:0:2 sde 8:64  [active][ready] =
-
- \_ 5:0:0:2 sdk 8:160 [active][ready] =
-
-NPCD (360060160174026008cf8cef961cde011) dm-7 DGC     ,RAID 5        =
-
-[size=3D100G][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D2][active]
- \_ 2:0:1:0 sdf 8:80  [active][ready] =
-
- \_ 5:0:1:0 sdl 8:176 [active][ready] =
-
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 2:0:0:0 sdc 8:32  [active][ready] =
-
- \_ 5:0:0:0 sdi 8:128 [active][ready]
-
-Does it automatically recognize symbolic links (pointing to /dev/dm-*) in /=
-dev/mapper/ folder ? =
-
-
---
-St=E9phane Neveu
-Ing=E9nieur Opensource / RedHat Technical Manager
-THALES - Critical Information Systems
-DIVISION Security Solutions & Services / Server Mgmt
-T=E9l 01 73 17 03 15
---
-
-
------Message d'origine-----
-De=A0: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] De =
-la part de Hannes Reinecke
-Envoy=E9=A0: mercredi 14 septembre 2011 13:40
-=C0=A0: device-mapper development
-Objet=A0: Re: [dm-devel] multipathd & EMC Clariion CX-4
-
-On 09/14/2011 11:58 AM, NEVEU Stephane wrote:
-> Hi all,
+On 9/14/2011 12:19 AM, Christoph Hellwig wrote:
+> On Mon, Sep 12, 2011 at 08:04:46PM +0200, Jens Axboe wrote:
+>>> I really hate naming things different from the method they are
+>>> implementing.  I've tried to figure out what the point of the
+>>> old blk_make_request is - why would we not go through
+>>> generic_make_request for this?
+>>>
+>>> Boaz, any idea?
+>>
+>> I tend to agree, we could rename the existing blk_make_request(). It
+>> could be blk_make_request_from_bio() or something like that, since
+>> that's what it does.
 >
-> I'm experiencing problems trying to set up a multipathd config with
-> a EMC Clariion CX-4 Storage.
+> It should at very least be renamed.  But I still can't figure out what
+> it is for exactly.
 >
-> It seems that the CX4 is actually active/passive regarding SPs. My
-> server  has QLogic Fiber Cards. My multipath-tools version is 0.4.8.
+> There are three users:
 >
-> Here is my multipath.conf :
->
-> ##
->
-> ## This is a template multipath-tools configuration file
->
-> ## Uncomment the lines relevent to your environment
->
-> ##
->
-> defaults {
->
->                  user_friendly_names   yes
->
-> }
->
-> blacklist {
->
->                  #devnode "*"
->
->                  devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
->
->                  devnode "^hd[a-z][[0-9]*]"
->
->                  devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
->
-> }
->
-> devices {
->
->                  device {
->
->                                 vendor "DGC "
->
->                                 product "*"
->
-That is wrong. The configuration file doesn't allow for regular =
+>   (1) virtio_blk::virtblk_get_id():
+> 	This looks like it really should just use blk_rq_map_kern.
+>   (2) osd_initiator::_make_request():
+> 	This one looks like it should just use the same scheme as
+> 	sg_io(), as it's doing the same thing.
 
-expressions or wildcards. Please use the correct name ('RAID 5') here.
-And 'directio' is most certainly wrong here.
+Good god what sg_io? That broken pointr+length from user-mode that sg.c
+and bsg.c are using? no can do it's not user-mode pointers, and it's not
+pointer+length it's pages pointers of a bio. The only other structure
+that could carry the same information is struct sg, but we work very 
+hard to get rid of this contraption. (scsi_execute_async or something 
+that it was)
 
-What's wrong with the default setting? It should work out of the box =
+blk_make_request() was made to be the parallel of __make_request, to be
+used from filesystem level users. But with two differences.
+1. Mainly support for none-FS BLOCK_PC requests
+2. Also support chained bios. (was added later)
 
-without configuration file at all ...
+>   (3) target_core_pscsi::__pscsi_map_SG():
+> 	Same as (2).
+>
 
-Cheers,
+There is no better suitable structure in current Kernel to carry a list
+of pages, with optional offset and length, then bio struct. Given a bio
+at hand. how do you make a block request out of it? (If it's not an 
+FS_PC type IO?)
 
-Hannes
--- =
+As I remember target_core had their own pages-linked-list structure, and
+how do you make a request out of that? again best at hand is bio.
 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+bio is for a long time a page-pointers-carrier-structure and is out of 
+private block-level use. The filesystem level is full of it.
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Thanks
+Boaz
+
