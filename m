@@ -1,17 +1,20 @@
-From: NEVEU Stephane <stephane.neveu@thalesgroup.com>
-Subject: Re: multipathd & EMC Clariion CX-4
-Date: Thu, 15 Sep 2011 14:46:46 +0200
-Message-ID: <13419_1316090807_4E71F3B7_13419_13681_2_EEF700FCD1A35041BF2C750B4EDDCA310138F9C4A755@THSONEA01CMS03P.one.grp>
-References: <21739_1315994330_4E707ADA_21739_7623_1_EEF700FCD1A35041BF2C750B4EDDCA310138F9C49D3A@THSONEA01CMS03P.one.grp>
-	<4E709273.8000901@suse.de>
-	<22404_1316001614_4E70974E_22404_18469_1_EEF700FCD1A35041BF2C750B4EDDCA310138F9C49E5E@THSONEA01CMS03P.one.grp>
+From: =?utf-8?B?SsO2cm4=?= Engel <joern@logfs.org>
+Subject: Re: logfs: kernel NULL dereference
+Date: Wed, 14 Sep 2011 20:34:29 +0200
+Message-ID: <20110914183429.GE24351@logfs.org>
+References: <20110903125637.GG6092@smp.if.uj.edu.pl>
+	<20110907141527.GM32018@logfs.org>
+	<20110907210312.GA17634@smp.if.uj.edu.pl>
+	<20110907220856.GR32018@logfs.org>
+	<20110908161726.GA9104@smp.if.uj.edu.pl>
+	<20110914182425.GD24351@logfs.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <22404_1316001614_4E70974E_22404_18469_1_EEF700FCD1A35041BF2C750B4EDDCA310138F9C49E5E@THSONEA01CMS03P.one.grp>
-Content-Language: fr-FR
+Content-Disposition: inline
+In-Reply-To: <20110914182425.GD24351@logfs.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,169 +24,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Witold Baryluk <baryluk@smp.if.uj.edu.pl>, Prasad Joshi <prasadjoshi124@gmail.com>, Aniket Sane <aniketsane@gmail.com>
 List-Id: dm-devel.ids
 
-Hi all,
-
-Actually it works on only one server (I'm actually running a cluster..), th=
-e second node is not showing anything when trying multipath -ll.
-I tried to remove / reboot / reinstall multipath-tools but I still see this=
- error message in dmesg :
-device-mapper: ioctl: error adding target to table
-device-mapper: table: 251:13: multipath: error getting table
-.
-.
-.
-many times.
-There is no linked wwn created in /dev/mapper of course whereas everything'=
-s working find on the first node..
-Any idea ?
-
-Thank you by avance,
-
-
------Message d'origine-----
-De=A0: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] De =
-la part de NEVEU Stephane
-Envoy=E9=A0: mercredi 14 septembre 2011 14:00
-=C0=A0: device-mapper development
-Objet=A0: Re: [dm-devel] multipathd & EMC Clariion CX-4
-
-Dear Hannes,
-
-You are right ! many thanks ! I moved away multipath.conf from the etc fold=
-er and restarted multipath-tools and everything works fine :
-
-NDO (36006016017402600f2ed610b62cde011) dm-8 DGC     ,RAID 5        =
-
-[size=3D50G][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D2][active]
- \_ 2:0:0:1 sdd 8:48  [active][ready] =
-
- \_ 5:0:0:1 sdj 8:144 [active][ready] =
-
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 2:0:1:1 sdg 8:96  [active][ready] =
-
- \_ 5:0:1:1 sdm 8:192 [active][ready] =
-
-NAGIOS (360060160174026000c984cc67acde011) dm-6 DGC     ,RAID 5        =
-
-[size=3D40G][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D2][active]
- \_ 2:0:1:2 sdh 8:112 [active][ready] =
-
- \_ 5:0:1:2 sdn 8:208 [active][ready] =
-
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 2:0:0:2 sde 8:64  [active][ready] =
-
- \_ 5:0:0:2 sdk 8:160 [active][ready] =
-
-NPCD (360060160174026008cf8cef961cde011) dm-7 DGC     ,RAID 5        =
-
-[size=3D100G][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D2][active]
- \_ 2:0:1:0 sdf 8:80  [active][ready] =
-
- \_ 5:0:1:0 sdl 8:176 [active][ready] =
-
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 2:0:0:0 sdc 8:32  [active][ready] =
-
- \_ 5:0:0:0 sdi 8:128 [active][ready]
-
-Does it automatically recognize symbolic links (pointing to /dev/dm-*) in /=
-dev/mapper/ folder ? =
-
-
---
-St=E9phane Neveu
-Ing=E9nieur Opensource / RedHat Technical Manager
-THALES - Critical Information Systems
-DIVISION Security Solutions & Services / Server Mgmt
-T=E9l 01 73 17 03 15
---
-
-
------Message d'origine-----
-De=A0: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] De =
-la part de Hannes Reinecke
-Envoy=E9=A0: mercredi 14 septembre 2011 13:40
-=C0=A0: device-mapper development
-Objet=A0: Re: [dm-devel] multipathd & EMC Clariion CX-4
-
-On 09/14/2011 11:58 AM, NEVEU Stephane wrote:
-> Hi all,
->
-> I'm experiencing problems trying to set up a multipathd config with
-> a EMC Clariion CX-4 Storage.
->
-> It seems that the CX4 is actually active/passive regarding SPs. My
-> server  has QLogic Fiber Cards. My multipath-tools version is 0.4.8.
->
-> Here is my multipath.conf :
->
-> ##
->
-> ## This is a template multipath-tools configuration file
->
-> ## Uncomment the lines relevent to your environment
->
-> ##
->
-> defaults {
->
->                  user_friendly_names   yes
->
-> }
->
-> blacklist {
->
->                  #devnode "*"
->
->                  devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
->
->                  devnode "^hd[a-z][[0-9]*]"
->
->                  devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
->
-> }
->
-> devices {
->
->                  device {
->
->                                 vendor "DGC "
->
->                                 product "*"
->
-That is wrong. The configuration file doesn't allow for regular =
-
-expressions or wildcards. Please use the correct name ('RAID 5') here.
-And 'directio' is most certainly wrong here.
-
-What's wrong with the default setting? It should work out of the box =
-
-without configuration file at all ...
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Rm9yd2FyZGVkIHRvIGRtLWRldmVsLiAgUHJvYmxlbSBpcyBhIE5VTEwgcG9pbnRlciBkZXJlZmVy
+ZW5jZSBpbgprY3J5cHRkX2lvX3JlYWQsIHdoaWNoIGlzIHRyaWdnZXJlZCB3aGVuIG1vdW50aW5n
+IGxvZ2ZzLiAgSWYgc29tZW9uZQp3aXRoIGRldmljZSBtYXBwZXIga25vd2xlZGdlIGNvdWxkIGhh
+dmUgYSBsb29rLCB0aGF0IHdvdWxkIGJlIHVzZWZ1bC4KCk9uIFdlZCwgMTQgU2VwdGVtYmVyIDIw
+MTEgMjA6MjQ6MjUgKzAyMDAsIErDtnJuIEVuZ2VsIHdyb3RlOgo+IAo+IE9rLCBJIGNhbiByZWxp
+YWJseSByZXByb2R1Y2UgdGhlIHByb2JsZW0gd2l0aCB0aGUgZm9sbG93aW5nLCBiYXNlZCBvbgo+
+IHlvdXIgZGVzY3JpcHRpb246Cj4gCj4gdHJ1bmNhdGUgLXMgMCBmb28KPiB0cnVuY2F0ZSAtcyAx
+RyBmb28KPiBsb3NldHVwIC12IC1mIGZvbwo+IGNyeXB0c2V0dXAgbHVrc0Zvcm1hdCAvZGV2L2xv
+b3AwCj4gY3J5cHRzZXR1cCBsdWtzT3BlbiAvZGV2L2xvb3AwIGZvbwo+IHB2Y3JlYXRlIC9kZXYv
+bWFwcGVyL2Zvbwo+IHZnY3JlYXRlIG91cl92b2x1bWUgL2Rldi9tYXBwZXIvZm9vCj4gbHZjcmVh
+dGUgLUwgMTI4TSAtbiBsb2dmc3Rlc3Qgb3VyX3ZvbHVtZQo+IHllcyB5ZXMgfCBta2xvZ2ZzIC9k
+ZXYvbWFwcGVyL291cl92b2x1bWUtbG9nZnN0ZXN0Cj4gbW91bnQgL2Rldi9tYXBwZXIvb3VyX3Zv
+bHVtZS1sb2dmc3Rlc3QgL21udC8KPiAKPiBJdCBpcyBhIGJpdCBhbm5veWluZyB0aGF0IGNyeXB0
+c2V0dXAgY2Fubm90IGVhc2lseSBiZSBzY3JpcHRlZC4gIE9oCj4gd2VsbCEgIFByb2JsZW0gaXMg
+aW5kZWVkIHdpdGggdGhlIG1lbWNweSwgZXhjZXB0IHRoYXQKPiBiaW9faW92ZWMoYmFzZV9iaW8p
+IGlzIE5VTEwsIG5vdCBjbG9uZS0+YmlfaW9fdmVjLiAgSSBoYXZlIGFkZGVkIHRoaXMKPiBsaW5l
+IGluIGEgYnVuY2ggb2YgcGxhY2VzIHRvIGdldCBhIGJldHRlciBpZGVhLgo+IAlwcmludGsoIiVw
+ICVwICVwICVzXG4iLCBiaW8sIGJpby0+YmlfaW9fdmVjLCBiaW9faW92ZWMoYmlvKSwgX19mdW5j
+X18pOwo+IAo+IGZmZmY4ODAyMzQyNGZjMTggZmZmZjg4MDIzNDI0ZmNhOCBmZmZmODgwMjM0MjRm
+Y2E4IHN5bmNfcmVxdWVzdAo+IGZmZmY4ODAyMzQyNGZjMTggZmZmZjg4MDIzNDI0ZmNhOCBmZmZm
+ODgwMjM0MjRmY2E4IGRtX3JlcXVlc3QKPiBmZmZmODgwMjM0MjRmYzE4IGZmZmY4ODAyMzQyNGZj
+YTggZmZmZjg4MDIzNDI0ZmNhOCBfZG1fcmVxdWVzdAo+IGZmZmY4ODAyMzQyNGZjMTggZmZmZjg4
+MDIzNDI0ZmNhOCBmZmZmODgwMjM0MjRmY2E4IF9fc3BsaXRfYW5kX3Byb2Nlc3NfYmlvCj4gZmZm
+Zjg4MDIzNWExMGQ0MCAgICAgICAgICAgKG51bGwpICAgICAgICAgICAobnVsbCkgX19tYXBfYmlv
+Cj4gZmZmZjg4MDIzNWExMGQ0MCAgICAgICAgICAgKG51bGwpICAgICAgICAgICAobnVsbCkgZG1f
+cmVxdWVzdAo+IGZmZmY4ODAyMzVhMTBkNDAgICAgICAgICAgIChudWxsKSAgICAgICAgICAgKG51
+bGwpIF9kbV9yZXF1ZXN0Cj4gZmZmZjg4MDIzNWExMGQ0MCAgICAgICAgICAgKG51bGwpICAgICAg
+ICAgICAobnVsbCkgX19zcGxpdF9hbmRfcHJvY2Vzc19iaW8KPiBmZmZmODgwMjM1MzY4NzgwICAg
+ICAgICAgICAobnVsbCkgICAgICAgICAgIChudWxsKSBfX21hcF9iaW8KPiBmZmZmODgwMjM1MzY4
+NzgwICAgICAgICAgICAobnVsbCkgICAgICAgICAgIChudWxsKSBjcnlwdF9tYXAKPiBmZmZmODgw
+MjM1MzY4NzgwICAgICAgICAgICAobnVsbCkgICAgICAgICAgIChudWxsKSBrY3J5cHRkX2lvX3Jl
+YWQKPiAKPiBTbyBfX3NwbGl0X2FuZF9wcm9jZXNzX2JpbyBjcmVhdGVzIHR3byBuZXcgYmlvcywg
+Ym90aCBvZiB3aGljaCBsYWNrIGEKPiBiaV9pb192ZWMgbWVtYmVyIGFuZCBvbmUgb2Ygd2hpY2gg
+Z2V0cyBwYXNzZWQgdG8ga2NyeXB0ZF9pb19yZWFkCj4gZXZlbnR1YWxseS4gIEhvIGh1bS4KPiAK
+PiBNeSB1bmRlcnN0YW5kaW5nIG9mIGRldmljZSBtYXBwZXIgaXMgbm90IGdvb2QgZW5vdWdoIHll
+dCB0byB1bmRlcnN0YW5kCj4gd2hhdCBpcyByZWFsbHkgZ29pbmcgb24gaGVyZS4KPiAKPiBKw7Zy
+bgo+IAo+IC0tIAo+IE9uZSBvZiBteSBtb3N0IHByb2R1Y3RpdmUgZGF5cyB3YXMgdGhyb3dpbmcg
+YXdheSAxMDAwIGxpbmVzIG9mIGNvZGUuCj4gLS0gS2VuIFRob21wc29uLgoKSsO2cm4KCi0tIApJ
+biBBbWVyaWNhIHlvdSBjYW4gaGF2ZSBlaXRoZXIgYSBmbGltc3kgYm94IGJhbmdlZCB0b2dldGhl
+ciBvdXQgb2YgdHdvCmJ5IGZvdXJzIGFuZCBkcnl3YWxsLCBvciBhIE1jTWFuc2lvbiAtLSBhIGZs
+aW1zeSBib3ggYmFuZ2VkIHRvZ2V0aGVyCm91dCBvZiB0d28gYnkgZm91cnMgYW5kIGRyeXdhbGws
+IGJ1dCBsYXJnZXIsIG1vcmUgZHJhbWF0aWMtbG9va2luZywKYW5kIGZ1bGwgb2YgZXhwZW5zaXZl
+IGZpdHRpbmdzLgotLSBQYXVsIEdyYWhhbQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
+dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVs
