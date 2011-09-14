@@ -1,19 +1,13 @@
-From: Witold Baryluk <baryluk@smp.if.uj.edu.pl>
-Subject: Re: logfs: kernel NULL dereference
-Date: Wed, 14 Sep 2011 21:01:13 +0200
-Message-ID: <20110914190113.GO23706@smp.if.uj.edu.pl>
-References: <20110903125637.GG6092@smp.if.uj.edu.pl>
-	<20110907141527.GM32018@logfs.org>
-	<20110907210312.GA17634@smp.if.uj.edu.pl>
-	<20110907220856.GR32018@logfs.org>
-	<20110908161726.GA9104@smp.if.uj.edu.pl>
-	<20110914182425.GD24351@logfs.org>
-	<20110914183429.GE24351@logfs.org>
+From: "Sampathkumar, Kishore" <Kishore.SampathKumar@lsi.com>
+Subject: question on hot plug removal and addition of a USB disk
+Date: Thu, 15 Sep 2011 02:22:59 +0530
+Message-ID: <E4D7778E36CF944ABD2F7E18D2DB96660CA26D8EF0@inbmail02.lsi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3002807288210566813=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20110914183429.GE24351@logfs.org>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,93 +17,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?iso-8859-1?Q?J=F6rn?= Engel <joern@logfs.org>
-Cc: dm-devel@redhat.com, Prasad Joshi <prasadjoshi124@gmail.com>, Aniket Sane <aniketsane@gmail.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a MIME-formatted message.  If you see this text it means that your
-E-mail software does not support MIME-formatted messages.
+I sent the below query (appended in this email) to linux-scsi and linux-hotplug mailing lists.
+I wanted to know how Device Mapper handles backend disks managed by Device mapper targets.
+Consider the below command:
 
---===============3002807288210566813==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature";
-	boundary="=_smp.if.uj.edu.pl-25268-1316026880-0001-2"
-Content-Disposition: inline
+# dmsetup create linear-map linear-map-table
+where, linear-map-table contains:
+       0 1028160 linear /dev/sda 0
+       1028160 3903762 linear /dev/sdb 0
 
-This is a MIME-formatted message.  If you see this text it means that your
-E-mail software does not support MIME-formatted messages.
+Now, when the above is executed, does device mapper open /dev/sda and /dev/sdb, and continue to maintain reference counts to the underlying SCSI block devices in the kernel corresponding to them?
 
---=_smp.if.uj.edu.pl-25268-1316026880-0001-2
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Assume that on successful completion of the above command, a file system is created on /dev/mapper/linear-map and then mounted on /mnt. Let us say /dev/sdb corresponds to a USB disk. Suppose this USB disk is pulled out (hot plug removal), and then added back after some time (hot plug addition). Let us assume that the USB disk is untouched between removal and insertion. The USB disk on re-insertion gets a different name (say /dev/sde). Given the below context, what are the specific steps the user has to follow to ensure that the file system access can resume on the USB disk that was hot-plug added? So, do we have to redo the dmsetup command with /dev/sde in place of /dev/sdb? How do we do that when the file system is still mounted?
 
-On 09-14 20:34, J=F6rn Engel wrote:
-> Forwarded to dm-devel.  Problem is a NULL pointer dereference in
-> kcryptd_io_read, which is triggered when mounting logfs.  If someone
-> with device mapper knowledge could have a look, that would be useful.
->=20
-> On Wed, 14 September 2011 20:24:25 +0200, J=F6rn Engel wrote:
-> >=20
-> > Ok, I can reliably reproduce the problem with the following, based on
-> > your description:
-> >=20
-> > truncate -s 0 foo
-> > truncate -s 1G foo
-> > losetup -v -f foo
-> > cryptsetup luksFormat /dev/loop0
-> > cryptsetup luksOpen /dev/loop0 foo
-> > pvcreate /dev/mapper/foo
-> > vgcreate our_volume /dev/mapper/foo
-> > lvcreate -L 128M -n logfstest our_volume
-> > yes yes | mklogfs /dev/mapper/our_volume-logfstest
-> > mount /dev/mapper/our_volume-logfstest /mnt/
-> >=20
+Thanks,
+- Kishore
 
+-----Original Message-----
+From: Sampathkumar, Kishore 
+Sent: Thursday, September 15, 2011 1:54 AM
+To: 'linux-hotplug@vger.kernel.org'
+Subject: question on hot plug removal and addition of a USB disk
 
-I think this can be minimized to
+I sent the below query to linux-scsi. Thought it would be better to check on the linux-hotplug mailing list.
+Can you please provide the details of the expected behavior, and where in the code should I look for details?
 
-echo secret > keyfile
-truncate -s 0 foo
-truncate -s 1G foo
-losetup -v -f foo
-cryptsetup luksFormat /dev/loop0 ./keyfile
-cryptsetup --key-file ./keyfile luksOpen /dev/loop0 bar
-yes yes | mklogfs /dev/mapper/bar
-mount /dev/mapper/bar /mnt/
+Thanks and Regards,
+- Kishore
 
-> > It is a bit annoying that cryptsetup cannot easily be scripted.
-Look above.
+-----Original Message-----
+From: Sampathkumar, Kishore 
+Sent: Wednesday, September 14, 2011 7:47 PM
+To: 'linux-scsi@vger.kernel.org'
+Subject: question on hot plug removal and addition of a USB disk
 
+Scenario: I have a file system on a USB SCSI disk /dev/sdb mounted on /mnt.
+I perform Action 1 below, and after some time, perform Action 2 below.
 
-Rest of crypto behaviour is rather strange.
+Action 1: removal (unplug) of a USB disk
 
---=20
-Witold Baryluk
-JID: witold.baryluk // jabster.pl
+At the time of removal of the USB disk, since the file system was mounted, is the reference to kobject corresponding (now orphaned) sdb still maintained in the kernel, although /dev/sdb is gone due to disk removal?
 
---=_smp.if.uj.edu.pl-25268-1316026880-0001-2
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Transfer-Encoding: 7bit
-Content-Description: Digital signature
-Content-Disposition: inline
+Is it that the old scsi_disk (sdb) still persists, but, the underlying scsi_dev is removed? Where should I start to trace the hotplug removal of the USB disk? What are the specific processing steps involved in the kernel to handle this (in terms of main routines handling this)?
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.10 (GNU/Linux)
+Action 2: (hot) plug addition of the same USB SCSI disk
 
-iEYEARECAAYFAk5w+fgACgkQ7ZLFFOttZ4JttACfUJtKStJKQ4FAXnOJloZgbj0Y
-C1oAoNenfS0rtK+BohNoL+BGQ5rh5n0Q
-=K+fc
------END PGP SIGNATURE-----
+On plugging in the same USB SCSI disk, does the sd layer in scsi subsystem grab the first available 'free' sdX device (say sdp), given that sdb is still being referenced by the mounted file system?
 
---=_smp.if.uj.edu.pl-25268-1316026880-0001-2--
+Again, in terms of code, does this correspond to:
+-	a new scsi_dev being allocated
+-	a corresponding scsi_disk for sdp being allocated by the sd layer in scsi subsystem as part of 'probe' for the added SCSI device
 
+Does the hot plugging work the same way for SAS disks attached behind a FC switch?
 
---===============3002807288210566813==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3002807288210566813==--
+Thanks,
+-	Kishore
