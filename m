@@ -1,7 +1,7 @@
-From: Alan Cox <alan@lxorguk.ukuu.org.uk>
+From: Doug Dumitru <doug@easyco.com>
 Subject: Re: [PATCH 1/2] block: export __make_request
-Date: Wed, 14 Sep 2011 23:01:04 +0100
-Message-ID: <20110914230104.51c03fa6@lxorguk.ukuu.org.uk>
+Date: Wed, 14 Sep 2011 15:48:57 -0700
+Message-ID: <CAFx4rwRsetmxiUZu25AdCmWyHd_8AOxSrOrE6CH5bdL0xjscCQ@mail.gmail.com>
 References: <20110911145053.GA28996@infradead.org>
 	<4E6DD7F0.8020903@kernel.dk>
 	<20110912122507.GA12229@infradead.org>
@@ -13,73 +13,20 @@ References: <20110911145053.GA28996@infradead.org>
 	<CAFx4rwR=EnCVfi4Pzm9pmTtKWAdzvzOg7wwzBbzZN7YTvu5-fw@mail.gmail.com>
 	<20110914194040.37ed38c9@lxorguk.ukuu.org.uk>
 	<CAFx4rwR2LgMZ8x8aCPa=FnPF0yCOH+7=HbX8OENdbZoMUzO59g@mail.gmail.com>
+	<20110914230104.51c03fa6@lxorguk.ukuu.org.uk>
+Reply-To: doug@easyco.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAFx4rwR2LgMZ8x8aCPa=FnPF0yCOH+7=HbX8OENdbZoMUzO59g@mail.gmail.com>
+In-Reply-To: <20110914230104.51c03fa6@lxorguk.ukuu.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: doug@easyco.com
+To: Alan Cox <alan@lxorguk.ukuu.org.uk>
 Cc: Boaz Harrosh <bharrosh@panasas.com>, Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, nab@linux-iscsi.org, ryanh@us.ibm.com
 List-Id: dm-devel.ids
 
-> I agree with you, in part.  What you are saying implies that no new
-> EXPORT can ever happen.  If you wrote this function, then obviously,
+Alan,
 
-No.
+I appreciate your position and thank you for your continuing work on the Kernel.
 
-> you can choose to export it GPL only.  Likewise, if you wrote this
-> function, considering it's location in the block IO layer, I would ask
-> that you consider exporting it generally.
-
-The kernel is GPL, any work that is derivative is subject to the licence,
-any work which is not is generally not subject to the licence.
-
-> I don't think this is true, at least from a practical point.  If you
-> develop a commercial module, you can link to the kernel through public
-> symbols.  These symbols, and the kernels header files, define a public
-
-You can create commercial modules but their licence must be GPL
-compatible including source etc if they are derivative in any way. At
-least that is what my lawyer advises me.
-
-Possibly you mean "proprietary" here. The GPL welcomes people making
-money out of things, it just rejects theft of freedoms given by other
-parties.
-
-> API that is usable from commercial modules.  Provided that the
-> techniques used inside of the commercial module were not "derived
-> from" the rest of the kernel, using the API is acceptable.
-
-I'm not sure derivative works law is quite so clear cut, but then
-'provide a clear concise definition of derivative works' appears to be
-the legal version of The Goldbach Conjecture.
-
-> When a symbol is not exported publicly, then, pretty much by
-> definition, it is not a part of the public API.  This creates kernel
-
-Not the view of the legal advice I have
-
-> Again, I was not trying to create a contentious issue.  I was just
-> asking that new exports consider what is around them, and try to
-> maintain some consistency of GPL vs open exports.  A function that
-> submits a block IO request seems to be a good candidate for an open
-> API which implies an open export.
-
-It's a GPL kernel, so to me the question is really moot.
-
-I'm not trying to create contention. The reason I reply now and then to
-these kinds of discussions is that I've been advised by my lawyer to do
-so, because anyone who then produces a violating module who has seen this
-message either as a recipient or if it turns up in a trawl can them be
-subject to triple damages for wilful infringement - should it turn out
-that the work is violating and they do not in turn have a good legal
-assessment with which to show they did in fact take good care (and which
-of course might well happen because derivative works are such a grey
-fuzzy mess)
-
-Whether it says EXPORT_SYMBOL, EXPORT_SYMBOL_GPL or RUBBERIZED_BANANA is
-to my understanding irrelevant. If it does turn out to be relevant
-however you are correct I'd make all my symbols _GPL....
-
-Alan
+Doug Dumitru
+EasyCo LLC
