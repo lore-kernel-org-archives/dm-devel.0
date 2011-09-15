@@ -1,13 +1,20 @@
-From: "Sampathkumar, Kishore" <Kishore.SampathKumar@lsi.com>
-Subject: question on hot plug removal and addition of a USB disk
-Date: Thu, 15 Sep 2011 02:22:59 +0530
-Message-ID: <E4D7778E36CF944ABD2F7E18D2DB96660CA26D8EF0@inbmail02.lsi.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: logfs: kernel NULL dereference
+Date: Thu, 15 Sep 2011 16:27:52 +0200
+Message-ID: <4E720B68.80809@redhat.com>
+References: <20110903125637.GG6092@smp.if.uj.edu.pl>
+	<20110907141527.GM32018@logfs.org>
+	<20110907210312.GA17634@smp.if.uj.edu.pl>
+	<20110907220856.GR32018@logfs.org>
+	<20110908161726.GA9104@smp.if.uj.edu.pl>
+	<20110914182425.GD24351@logfs.org>
+	<20110914183429.GE24351@logfs.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20110914183429.GE24351@logfs.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,61 +24,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: =?UTF-8?B?SsO2cm4gRW5nZWw=?= <joern@logfs.org>, Prasad Joshi <prasadjoshi124@gmail.com>, Witold Baryluk <baryluk@smp.if.uj.edu.pl>, Aniket Sane <aniketsane@gmail.com>
 List-Id: dm-devel.ids
 
-I sent the below query (appended in this email) to linux-scsi and linux-hotplug mailing lists.
-I wanted to know how Device Mapper handles backend disks managed by Device mapper targets.
-Consider the below command:
-
-# dmsetup create linear-map linear-map-table
-where, linear-map-table contains:
-       0 1028160 linear /dev/sda 0
-       1028160 3903762 linear /dev/sdb 0
-
-Now, when the above is executed, does device mapper open /dev/sda and /dev/sdb, and continue to maintain reference counts to the underlying SCSI block devices in the kernel corresponding to them?
-
-Assume that on successful completion of the above command, a file system is created on /dev/mapper/linear-map and then mounted on /mnt. Let us say /dev/sdb corresponds to a USB disk. Suppose this USB disk is pulled out (hot plug removal), and then added back after some time (hot plug addition). Let us assume that the USB disk is untouched between removal and insertion. The USB disk on re-insertion gets a different name (say /dev/sde). Given the below context, what are the specific steps the user has to follow to ensure that the file system access can resume on the USB disk that was hot-plug added? So, do we have to redo the dmsetup command with /dev/sde in place of /dev/sdb? How do we do that when the file system is still mounted?
-
-Thanks,
-- Kishore
-
------Original Message-----
-From: Sampathkumar, Kishore 
-Sent: Thursday, September 15, 2011 1:54 AM
-To: 'linux-hotplug@vger.kernel.org'
-Subject: question on hot plug removal and addition of a USB disk
-
-I sent the below query to linux-scsi. Thought it would be better to check on the linux-hotplug mailing list.
-Can you please provide the details of the expected behavior, and where in the code should I look for details?
-
-Thanks and Regards,
-- Kishore
-
------Original Message-----
-From: Sampathkumar, Kishore 
-Sent: Wednesday, September 14, 2011 7:47 PM
-To: 'linux-scsi@vger.kernel.org'
-Subject: question on hot plug removal and addition of a USB disk
-
-Scenario: I have a file system on a USB SCSI disk /dev/sdb mounted on /mnt.
-I perform Action 1 below, and after some time, perform Action 2 below.
-
-Action 1: removal (unplug) of a USB disk
-
-At the time of removal of the USB disk, since the file system was mounted, is the reference to kobject corresponding (now orphaned) sdb still maintained in the kernel, although /dev/sdb is gone due to disk removal?
-
-Is it that the old scsi_disk (sdb) still persists, but, the underlying scsi_dev is removed? Where should I start to trace the hotplug removal of the USB disk? What are the specific processing steps involved in the kernel to handle this (in terms of main routines handling this)?
-
-Action 2: (hot) plug addition of the same USB SCSI disk
-
-On plugging in the same USB SCSI disk, does the sd layer in scsi subsystem grab the first available 'free' sdX device (say sdp), given that sdb is still being referenced by the mounted file system?
-
-Again, in terms of code, does this correspond to:
--	a new scsi_dev being allocated
--	a corresponding scsi_disk for sdp being allocated by the sd layer in scsi subsystem as part of 'probe' for the added SCSI device
-
-Does the hot plugging work the same way for SAS disks attached behind a FC switch?
-
-Thanks,
--	Kishore
+T24gMDkvMTQvMjAxMSAwODozNCBQTSwgSsO2cm4gRW5nZWwgd3JvdGU6Cj4gRm9yd2FyZGVkIHRv
+IGRtLWRldmVsLiAgUHJvYmxlbSBpcyBhIE5VTEwgcG9pbnRlciBkZXJlZmVyZW5jZSBpbgo+IGtj
+cnlwdGRfaW9fcmVhZCwgd2hpY2ggaXMgdHJpZ2dlcmVkIHdoZW4gbW91bnRpbmcgbG9nZnMuICBJ
+ZiBzb21lb25lCj4gd2l0aCBkZXZpY2UgbWFwcGVyIGtub3dsZWRnZSBjb3VsZCBoYXZlIGEgbG9v
+aywgdGhhdCB3b3VsZCBiZSB1c2VmdWwuCj4gCj4gT24gV2VkLCAxNCBTZXB0ZW1iZXIgMjAxMSAy
+MDoyNDoyNSArMDIwMCwgSsO2cm4gRW5nZWwgd3JvdGU6Cj4+Cj4+IE9rLCBJIGNhbiByZWxpYWJs
+eSByZXByb2R1Y2UgdGhlIHByb2JsZW0gd2l0aCB0aGUgZm9sbG93aW5nLCBiYXNlZCBvbgo+PiB5
+b3VyIGRlc2NyaXB0aW9uOgo+Pgo+PiB0cnVuY2F0ZSAtcyAwIGZvbwo+PiB0cnVuY2F0ZSAtcyAx
+RyBmb28KPj4gbG9zZXR1cCAtdiAtZiBmb28KPj4gY3J5cHRzZXR1cCBsdWtzRm9ybWF0IC9kZXYv
+bG9vcDAKPj4gY3J5cHRzZXR1cCBsdWtzT3BlbiAvZGV2L2xvb3AwIGZvbwo+PiBwdmNyZWF0ZSAv
+ZGV2L21hcHBlci9mb28KPj4gdmdjcmVhdGUgb3VyX3ZvbHVtZSAvZGV2L21hcHBlci9mb28KPj4g
+bHZjcmVhdGUgLUwgMTI4TSAtbiBsb2dmc3Rlc3Qgb3VyX3ZvbHVtZQo+PiB5ZXMgeWVzIHwgbWts
+b2dmcyAvZGV2L21hcHBlci9vdXJfdm9sdW1lLWxvZ2ZzdGVzdAo+PiBtb3VudCAvZGV2L21hcHBl
+ci9vdXJfdm9sdW1lLWxvZ2ZzdGVzdCAvbW50LwoKV2hpY2gga2VybmVsIHZlcnNpb24gYXJlIHlv
+dSB1c2luZz8KCj4+IEl0IGlzIGEgYml0IGFubm95aW5nIHRoYXQgY3J5cHRzZXR1cCBjYW5ub3Qg
+ZWFzaWx5IGJlIHNjcmlwdGVkLgoKSXQgY2FuIGJlIGVhc2lseSBzY3JpcHRlZC4gKEluIHF1aWV0
+IG1vZGUgaXQgd2lsbCBub3QgYXNrIGZvciBZRVMgcmVzcG9uc2UsIGFkZCAtcSwKb3IganVzdCBk
+byAiZWNobyAtbiAkUEFTU1dPUkQgfCBjcnlwdHNldHVwIGx1a3NGb3JtYXQgLi4uIikKCk1pbGFu
+CgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3
+dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
