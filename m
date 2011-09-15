@@ -1,12 +1,21 @@
-From: "--[ UxBoD ]--" <uxbod@splatnix.net>
-Subject: Performance Question
-Date: Thu, 15 Sep 2011 20:43:27 +0100 (BST)
-Message-ID: <1eff05ad-e2cc-42a5-b757-dfa40f14e776@office.splatnix.net>
-Reply-To: "--\[ UxBoD \]--" <uxbod@splatnix.net>,
-        device-mapper development <dm-devel@redhat.com>
+From: =?utf-8?B?SsO2cm4=?= Engel <joern@logfs.org>
+Subject: Re: logfs: kernel NULL dereference
+Date: Thu, 15 Sep 2011 16:52:04 +0200
+Message-ID: <20110915145204.GF24351@logfs.org>
+References: <20110903125637.GG6092@smp.if.uj.edu.pl>
+	<20110907141527.GM32018@logfs.org>
+	<20110907210312.GA17634@smp.if.uj.edu.pl>
+	<20110907220856.GR32018@logfs.org>
+	<20110908161726.GA9104@smp.if.uj.edu.pl>
+	<20110914182425.GD24351@logfs.org>
+	<20110914183429.GE24351@logfs.org> <4E720B68.80809@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3978009683246225922=="
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4E720B68.80809@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,75 +25,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Milan Broz <mbroz@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Prasad Joshi <prasadjoshi124@gmail.com>, Witold Baryluk <baryluk@smp.if.uj.edu.pl>, Aniket Sane <aniketsane@gmail.com>
 List-Id: dm-devel.ids
 
---===============3978009683246225922==
-Content-Type: multipart/alternative;
-	boundary="=_a5debe90-bde7-4d8f-9f04-a4c698cd5f52"
-
---=_a5debe90-bde7-4d8f-9f04-a4c698cd5f52
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-
-Hello all, 
-
-we are about to configure a new storage system that utilizes the Nexenta OS=
- with sparsely allocated ZVOLs. We wish to present 4TB of storage to a Linu=
-x system that has four NICs available to it. We are unsure whether to prese=
-nt one large ZVOL or four smaller ones to maximize the use of the NICs avai=
-lable to us. We have set rr_min_io to 100 which we have found offers a good=
- level of performance. Though this raises an interesting question; that the=
- multipath.conf man pages says that the rr_min_io parameter is the number o=
-f IOs across the whole path group before a switch is made to the next path.=
- What constitutes a single IO operation ? A user opens a file for read acce=
-ss, one IOP to open the file, IOsX to read the contents, and another to clo=
-se ? Do each of those SCSI operations happen on the same path ie. on the sa=
-me block device ? If a second user comes along and requests data from the s=
-ame block device do they happen on the same path or the next one in the pat=
-h group ? We imagine that they will all happen on the same path until rr_mi=
-n_io is reached and it switches over to the next path. 
-
-We are trying to squeeze out the maximum performance from our system and we=
- are unable to max out our 4 x 1Gbe interfaces. Any thoughts on how we can =
-improve our performance ? 
--- 
-Thanks, Phil 
-
---=_a5debe90-bde7-4d8f-9f04-a4c698cd5f52
-Content-Type: text/html; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-
-<html><head><style type=3D'text/css'>p { margin: 0; }</style></head><body><=
-div style=3D'font-family: Courier New; font-size: 10pt; color: #000000'>Hel=
-lo all,<br><br>we are about to configure a new storage system that utilizes=
- the Nexenta OS with sparsely allocated ZVOLs.&nbsp; We wish to present 4TB=
- of storage to a Linux system that has four NICs available to it. We are un=
-sure whether to present one large ZVOL or four smaller ones to maximize the=
- use of the NICs available to us.&nbsp; We have set rr_min_io to 100 which =
-we have found offers a good level of performance.&nbsp; Though this raises =
-an interesting question; that the multipath.conf man pages says that the rr=
-_min_io parameter is the number of IOs across the whole path group before a=
- switch is made to the next path. What constitutes a single IO operation ? =
-A user opens a file for read access, one IOP to open the file, IOsX to read=
- the contents, and another to close ? Do each of those SCSI operations happ=
-en on the same path ie. on the same block device ? If a second user comes a=
-long and requests data from the same block device do they happen on the sam=
-e path or the next one in the path group ? We imagine that they will all ha=
-ppen on the same path until rr_min_io is reached and it switches over to th=
-e next path.<br><br>We are trying to squeeze out the maximum performance fr=
-om our system and we are unable to max out our 4 x 1Gbe interfaces. Any tho=
-ughts on how we can improve our performance ?<span><br><span name=3D"x"></s=
-pan>-- <br>Thanks, Phil<span name=3D"x"></span><br></span><br></div></body>=
-</html>
---=_a5debe90-bde7-4d8f-9f04-a4c698cd5f52--
-
-
---===============3978009683246225922==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3978009683246225922==--
+T24gVGh1LCAxNSBTZXB0ZW1iZXIgMjAxMSAxNjoyNzo1MiArMDIwMCwgTWlsYW4gQnJveiB3cm90
+ZToKPiBPbiAwOS8xNC8yMDExIDA4OjM0IFBNLCBKw7ZybiBFbmdlbCB3cm90ZToKPiA+IEZvcndh
+cmRlZCB0byBkbS1kZXZlbC4gIFByb2JsZW0gaXMgYSBOVUxMIHBvaW50ZXIgZGVyZWZlcmVuY2Ug
+aW4KPiA+IGtjcnlwdGRfaW9fcmVhZCwgd2hpY2ggaXMgdHJpZ2dlcmVkIHdoZW4gbW91bnRpbmcg
+bG9nZnMuICBJZiBzb21lb25lCj4gPiB3aXRoIGRldmljZSBtYXBwZXIga25vd2xlZGdlIGNvdWxk
+IGhhdmUgYSBsb29rLCB0aGF0IHdvdWxkIGJlIHVzZWZ1bC4KPiA+IAo+ID4gT24gV2VkLCAxNCBT
+ZXB0ZW1iZXIgMjAxMSAyMDoyNDoyNSArMDIwMCwgSsO2cm4gRW5nZWwgd3JvdGU6Cj4gPj4KPiA+
+PiBPaywgSSBjYW4gcmVsaWFibHkgcmVwcm9kdWNlIHRoZSBwcm9ibGVtIHdpdGggdGhlIGZvbGxv
+d2luZywgYmFzZWQgb24KPiA+PiB5b3VyIGRlc2NyaXB0aW9uOgo+ID4+Cj4gPj4gdHJ1bmNhdGUg
+LXMgMCBmb28KPiA+PiB0cnVuY2F0ZSAtcyAxRyBmb28KPiA+PiBsb3NldHVwIC12IC1mIGZvbwo+
+ID4+IGNyeXB0c2V0dXAgbHVrc0Zvcm1hdCAvZGV2L2xvb3AwCj4gPj4gY3J5cHRzZXR1cCBsdWtz
+T3BlbiAvZGV2L2xvb3AwIGZvbwo+ID4+IHB2Y3JlYXRlIC9kZXYvbWFwcGVyL2Zvbwo+ID4+IHZn
+Y3JlYXRlIG91cl92b2x1bWUgL2Rldi9tYXBwZXIvZm9vCj4gPj4gbHZjcmVhdGUgLUwgMTI4TSAt
+biBsb2dmc3Rlc3Qgb3VyX3ZvbHVtZQo+ID4+IHllcyB5ZXMgfCBta2xvZ2ZzIC9kZXYvbWFwcGVy
+L291cl92b2x1bWUtbG9nZnN0ZXN0Cj4gPj4gbW91bnQgL2Rldi9tYXBwZXIvb3VyX3ZvbHVtZS1s
+b2dmc3Rlc3QgL21udC8KPiAKPiBXaGljaCBrZXJuZWwgdmVyc2lvbiBhcmUgeW91IHVzaW5nPwoK
+TGF0ZXN0IGdpdCAtIHdlbGwsIGNsb3NlIHRvIGxhdGVzdCwgZ2l2ZW4gdGhlIGN1cnJlbnQga2Vy
+bmVsLm9yZyB0cm91YmxlLgoKPiA+PiBJdCBpcyBhIGJpdCBhbm5veWluZyB0aGF0IGNyeXB0c2V0
+dXAgY2Fubm90IGVhc2lseSBiZSBzY3JpcHRlZC4KPiAKPiBJdCBjYW4gYmUgZWFzaWx5IHNjcmlw
+dGVkLiAoSW4gcXVpZXQgbW9kZSBpdCB3aWxsIG5vdCBhc2sgZm9yIFlFUyByZXNwb25zZSwgYWRk
+IC1xLAo+IG9yIGp1c3QgZG8gImVjaG8gLW4gJFBBU1NXT1JEIHwgY3J5cHRzZXR1cCBsdWtzRm9y
+bWF0IC4uLiIpCgpPaywgSSdsbCB1c2UgdGhhdCBpbiB0aGUgZnV0dXJlLiAgVGhhbmtzLgoKSsO2
+cm4KCi0tIApNb3JlIGNvbXB1dGluZyBzaW5zIGFyZSBjb21taXR0ZWQgaW4gdGhlIG5hbWUgb2Yg
+ZWZmaWNpZW5jeSAod2l0aG91dApuZWNlc3NhcmlseSBhY2hpZXZpbmcgaXQpIHRoYW4gZm9yIGFu
+eSBvdGhlciBzaW5nbGUgcmVhc29uIC0gaW5jbHVkaW5nCmJsaW5kIHN0dXBpZGl0eS4KLS0gVy4g
+QS4gV3VsZgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0
+cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
