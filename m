@@ -1,43 +1,44 @@
-From: Valdis.Kletnieks@vt.edu
-Subject: Re: [PATCH] dm: verity target
-Date: Fri, 16 Sep 2011 13:54:07 -0400
-Message-ID: <59032.1316195647@turing-police.cc.vt.edu>
-References: <1316112359-6085-1-git-send-email-msb@chromium.org>
+From: Oren Held <oren@held.org.il>
+Subject: feature="1 queue_if_no_path" vs. no_path_retry=queue
+Date: Sat, 17 Sep 2011 01:47:37 +0300
+Message-ID: <20110916224737.GB31898@orenhe-laptop>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="==_Exmh_1316195647_55056P";
-	 micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: Your message of "Thu, 15 Sep 2011 11:45:59 PDT."
-             <1316112359-6085-1-git-send-email-msb@chromium.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mandeep Singh Baines <msb@chromium.org>
-Cc: dm-devel@redhat.com, Will Drewry <wad@chromium.org>, Elly Jones <ellyjones@chromium.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, linux-kernel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---==_Exmh_1316195647_55056P
-Content-Type: text/plain; charset=us-ascii
+Hi,
 
-On Thu, 15 Sep 2011 11:45:59 PDT, Mandeep Singh Baines said:
-> The verity target provides transparent integrity checking of block devices
-> using a cryptographic digest.
+According to all docs I've read, and some code, the following settings seem to have the same effect:
+1. Setting features = "1 queue_if_no_path"
+2. Setting no_path_retry = "queue"
 
-I just had this mental image of Dr Henry Jones saying: "But in Latin, verify is
-spelled with an f..." ;)
+Now that's confusing, especially when having conflicting configuration, e.g., from hwtable.c:
+                /* IBM DS4100 */
+                .vendor        = "IBM",
+                .product       = "1724",
+                .features      = "1 queue_if_no_path",
+                .no_path_retry = 300,
 
-Might want to add something to device-mapper/dm-verity.txt explaining
-where the name came from and that it's *not* a typo?
+It's not clear enough what would be the resulting behavior of this configuration.
 
---==_Exmh_1316195647_55056P
-Content-Type: application/pgp-signature
+Did I get it right? Is there a reason for keeping the features = "1 queue_if_no_path" option available in multipath-tools?
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
+Thanks
 
-iD8DBQFOc40/cC3lWbTT17ARAlK+AJ96GzzZqE0XRLQrD5o7WPkv2HFZiQCeK8PD
-2R1jQZha0QSRetnPI+wPOzM=
-=SWTW
------END PGP SIGNATURE-----
+Regards
 
---==_Exmh_1316195647_55056P--
+- Oren
