@@ -1,12 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: DM_BUFFER_FULL_FLAG
-Date: Sat, 17 Sep 2011 13:53:33 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1109171344470.25719@hs20-bc2-1.build.redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [PATCH v2] dm mpath: maintain reference count for
+ underlying devices
+Date: Mon, 19 Sep 2011 15:49:12 +0900
+Message-ID: <4E76E5E8.9040701@ce.jp.nec.com>
+References: <1316181571-4691-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1316181571-4691-1-git-send-email-snitzer@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,36 +19,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Alasdair G. Kergon" <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Hi Mike,
 
-I did simulation of that DM_BUFFER_FULL_FLAG (I modified the kernel code 
-to return this spuriously) and found out that there are no userspace 
-problems with it.
+On 09/16/11 22:59, Mike Snitzer wrote:
+> When processing a request, DM-mpath's map_io() set the cloned request's
+> request_queue to the appropriate underlying device's request_queue
+> without getting a reference on that request_queue.
+> 
+> DM-mpath now maintains a reference count on the underlying devices'
+> request_queue.  This change wasn't motivated by a specific report but
+> code, like blk_insert_cloned_request(), will access the request_queue
+> with the understanding that the request_queue is valid.
 
-The userspace code detects this flag in the function "dm_task_run", 
-doubles the buffer size and jumps back to "repeat_ioctl:" label. A 
-function "_do_dm_ioctl" is called from there, this function constructs 
-"struct dm_ioctl *dmi" from scratch, so there is no possibility that 
-returned content of the structure from the previous call leaks into the 
-next call.
+Umm, I think it doesn't make sense.
 
-Do you want still to modify the kernel to accept multiple device 
-designators if they refer to the same device? For handling 
-DM_BUFFER_FULL_FLAG, it is not needed.
+DM opens underlying devices and it should be sufficient to keep
+request_queue from being freed.
+If it was not enough, any other openers would have to get the reference
+count, too, and that should be done in more generic place.
 
----
-
-BTW. there is an unrelated feature of dmestup --- if you specify multiple 
-device designators, it ignores the others --- for example, the command:
-
-"dmsetup info vg1-thinp_pool -u 
-LVM-L95tc8BLZ7tHTFc8uIZOdiR6usFzyHTOiAA3JkKgjH1DNw63WyzXHx9RbVftrgox -j 
-254 -m 5"
-
-actually passes only "vg1-thinp_pool" to the kernel driver, it ignores the 
-uuid and major/minor numbers. Do you think it should be fixed?
-
-Mikulas
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation
