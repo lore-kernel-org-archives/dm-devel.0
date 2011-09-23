@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [RESEND][PATCH] multipath: don't set queue_if_no_path
-	without	multipathd
-Date: Thu, 22 Sep 2011 23:41:58 -0500
-Message-ID: <20110923044158.GP24133@ether.msp.redhat.com>
+Subject: [PATCH] multipath: add support for setting oom_score_adj
+Date: Thu, 22 Sep 2011 23:47:15 -0500
+Message-ID: <20110923044715.GQ24133@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,17 +21,9 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-If multipathd is not running, when all paths to a device have failed, there's
-no way for them to automatically get restored.  If the device is set to queue,
-whatever is accessing it will hang forever. This can lead to problems if it
-happens at boot-up.  This patch unsets queue_if_no_path for all devices created
-when multipathd is not running. When multipathd starts, it will automatically
-get reset queue_if_no_path to the proper value.  This new behaviour can be
-overridden using the new "-q" option to multipath.
-
-This patch applies against the current head, instead of building on my
-find_multipaths patch.  It moves pidfile.[ch] into libmultipath, but is
-functionally identical to the last version.
+The oom_adj procfs interface is deprecated. I've added support for using the
+new oom_score_adj interface.  The code still falls back to using oom_adj
+if oom_score_adj doesn't exist.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
