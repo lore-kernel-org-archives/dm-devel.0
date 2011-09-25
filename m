@@ -1,12 +1,13 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: A question about bio alignment
-Date: Sat, 24 Sep 2011 16:34:59 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1109241627030.30282@hs20-bc2-1.build.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Additional dm editing tree mirror
+Date: Sun, 25 Sep 2011 19:55:31 +0100
+Message-ID: <20110925185531.GA6821@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,14 +17,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@kernel.dk>
+To: Stephen Rothwell <sfr@canb.auug.org.au>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Jens
+As well as the original ftp mirror location:
+  ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/
 
-Please tell me, what is the required alignment of "bv_offset" and "bv_len" 
-fields in "struct bio_vec", so that the bio can be handled by any block 
-device driver?
+I am also now mirroring to:
+  http://people.redhat.com/agk/patches/linux/editing/
 
-Mikulas
+Given the continuing unavailability of kernel.org, please use one of these
+alternative locations for import to linux-next.
+
+Thanks,
+Alasdair
