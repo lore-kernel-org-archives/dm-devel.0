@@ -1,34 +1,49 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Additional dm editing tree mirror
-Date: Sun, 25 Sep 2011 19:55:31 +0100
-Message-ID: <20110925185531.GA6821@agk-dp.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Stephen Rothwell <sfr@canb.auug.org.au>
-Cc: dm-devel@redhat.com
+From: Namhyung Kim <namhyung@gmail.com>
+Subject: [PATCH 2/2] block: don't export block_bio_complete tracepoint
+Date: Mon, 26 Sep 2011 13:43:30 +0900
+Message-ID: <1317012210-4309-2-git-send-email-namhyung@gmail.com>
+References: <1317012210-4309-1-git-send-email-namhyung@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1317012210-4309-1-git-send-email-namhyung@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-As well as the original ftp mirror location:
-  ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/
+Now bio_endio() contains the tracepoint in it, so we don't
+need to have it twice in DM. Plus, as the only external user
+of the tracepoint was the DM, we can unexport the symbol.
 
-I am also now mirroring to:
-  http://people.redhat.com/agk/patches/linux/editing/
+Signed-off-by: Namhyung Kim <namhyung@gmail.com>
+Cc: dm-devel@redhat.com
+---
+ block/blk-core.c |    1 -
+ drivers/md/dm.c  |    1 -
+ 2 files changed, 0 insertions(+), 2 deletions(-)
 
-Given the continuing unavailability of kernel.org, please use one of these
-alternative locations for import to linux-next.
-
-Thanks,
-Alasdair
+diff --git a/block/blk-core.c b/block/blk-core.c
+index d8005ffc480d..5c81ef057e6a 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -36,7 +36,6 @@
+ 
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
+ EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
+-EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
+ 
+ /*
+  * For the allocated request tables
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7b986e77b75e..a8223d92a52b 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -636,7 +636,6 @@ static void dec_pending(struct dm_io *io, int error)
+ 			queue_io(md, bio);
+ 		} else {
+ 			/* done with normal IO or empty flush */
+-			trace_block_bio_complete(md->queue, bio, io_error);
+ 			bio_endio(bio, io_error);
+ 		}
+ 	}
+-- 
+1.7.6
