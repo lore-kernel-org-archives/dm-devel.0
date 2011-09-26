@@ -1,49 +1,76 @@
-From: Namhyung Kim <namhyung@gmail.com>
-Subject: [PATCH 2/2] block: don't export block_bio_complete tracepoint
-Date: Mon, 26 Sep 2011 13:43:30 +0900
-Message-ID: <1317012210-4309-2-git-send-email-namhyung@gmail.com>
-References: <1317012210-4309-1-git-send-email-namhyung@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1317012210-4309-1-git-send-email-namhyung@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+From: Stephen Rothwell <sfr@canb.auug.org.au>
+Subject: Re: Additional dm editing tree mirror
+Date: Mon, 26 Sep 2011 15:10:02 +1000
+Message-ID: <20110926151002.0cb884fbac40611057b2abc1@canb.auug.org.au>
+References: <20110925185531.GA6821@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============3713506880301066912=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20110925185531.GA6821@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Now bio_endio() contains the tracepoint in it, so we don't
-need to have it twice in DM. Plus, as the only external user
-of the tracepoint was the DM, we can unexport the symbol.
+--===============3713506880301066912==
+Content-Type: multipart/signed; protocol="application/pgp-signature";
+	micalg="PGP-SHA1";
+	boundary="Signature=_Mon__26_Sep_2011_15_10_02_+1000_0V=X/YsYPN.vmTGP"
 
-Signed-off-by: Namhyung Kim <namhyung@gmail.com>
-Cc: dm-devel@redhat.com
----
- block/blk-core.c |    1 -
- drivers/md/dm.c  |    1 -
- 2 files changed, 0 insertions(+), 2 deletions(-)
+--Signature=_Mon__26_Sep_2011_15_10_02_+1000_0V=X/YsYPN.vmTGP
+Content-Type: text/plain; charset=US-ASCII
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index d8005ffc480d..5c81ef057e6a 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -36,7 +36,6 @@
- 
- EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
- EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
--EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_complete);
- 
- /*
-  * For the allocated request tables
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 7b986e77b75e..a8223d92a52b 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -636,7 +636,6 @@ static void dec_pending(struct dm_io *io, int error)
- 			queue_io(md, bio);
- 		} else {
- 			/* done with normal IO or empty flush */
--			trace_block_bio_complete(md->queue, bio, io_error);
- 			bio_endio(bio, io_error);
- 		}
- 	}
--- 
-1.7.6
+Hi Alasdair,
+
+On Sun, 25 Sep 2011 19:55:31 +0100 Alasdair G Kergon <agk@redhat.com> wrote:
+>
+> As well as the original ftp mirror location:
+>   ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/
+>=20
+> I am also now mirroring to:
+>   http://people.redhat.com/agk/patches/linux/editing/
+
+I have switched to using this from today.
+
+--=20
+Cheers,
+Stephen Rothwell                    sfr@canb.auug.org.au
+http://www.canb.auug.org.au/~sfr/
+
+--Signature=_Mon__26_Sep_2011_15_10_02_+1000_0V=X/YsYPN.vmTGP
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+iQEcBAEBAgAGBQJOgAkqAAoJEDMEi1NhKgbsLA4H/jzJ86i+FbgY2GTuPSTBfWqk
+kd5kRIycxSnXs9CQxUwRUEB2ubGwNSAXou9J6vBlbhOJtLtEApciIq5Oll80BjbY
+WHFbbznAQjc0kKDMov0dFlFeBfAro7z/wcuaNyBwIfUWz9vN+uary9L4GZ3bCgIf
+cphrX89J5p5gcDMpEBJ8vdbw8DF74TrkmZRHr8Pq0Cs2qhHxUAscbJaypbWNgK84
+bsxL3zm3ffwZIBomehpfa+muclz27oX6Z89Ehol/PUCP5zqES59eWD0TGDnbFPBM
+yV7HDSv1tEGzEt7wAAlMcAo7LRNRIYrePil4TBGi+9XhmmMEEWWGD9PbbZOctOY=
+=wUnh
+-----END PGP SIGNATURE-----
+
+--Signature=_Mon__26_Sep_2011_15_10_02_+1000_0V=X/YsYPN.vmTGP--
+
+
+--===============3713506880301066912==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3713506880301066912==--
