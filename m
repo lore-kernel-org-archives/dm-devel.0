@@ -1,28 +1,140 @@
-From: Will Drewry <wad@chromium.org>
-Subject: Re: [PATCH] dm: verity target
-Date: Tue, 27 Sep 2011 14:31:10 -0500
-Message-ID: <CABqD9haVcS=HftAGc+8YUiiyLqZKFgJqxpY_TJz1a=hM6M28fA@mail.gmail.com>
-References: <1316112359-6085-1-git-send-email-msb@chromium.org>
-	<CABqD9hYWK2czEKN87xDu7YPbRcp9xrumJ5PZ8aQTzBLafrnBMw@mail.gmail.com>
-	<20110927191343.GA18645@agk-dp.fab.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] multipath: add default hardware configs.
+Date: Tue, 27 Sep 2011 15:50:52 -0500
+Message-ID: <20110927205052.GX24133@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20110927191343.GA18645@agk-dp.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Will Drewry <wad@chromium.org>, Mandeep Singh Baines <msb@chromium.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>, dm-devel@redhat.com, Elly Jones <ellyjones>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 27, 2011 at 2:13 PM, Alasdair G Kergon <agk@redhat.com> wrote:
-> Well I intend to look at it seriously (and dm-switch too) once we're past the
-> next merge window.
->
-> Until then, my priority is finalising things scheduled for the upcoming merge
-> window - in particular the new thin provisioning target.
+Here are some hardware configs I've received from vendors, that haven't made it
+upstream yet, along with a little bit of cleanup. The changes come from Redhat
+BZ #622569, #636213, and #694602
 
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/hwtable.c |   60 ++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 40 insertions(+), 20 deletions(-)
 
-Thanks - that makes perfect sense! (I'm quite excited to see the thin
-provisioning target land and mature, as well.)
-
-cheers!
-will
+Index: multipath-tools-110916/libmultipath/hwtable.c
+===================================================================
+--- multipath-tools-110916.orig/libmultipath/hwtable.c
++++ multipath-tools-110916/libmultipath/hwtable.c
+@@ -242,6 +242,24 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = DEFAULT_PRIO,
+ 		.prio_args     = NULL,
+ 	},
++	{
++		/* HP P2000 family arrays */
++		.vendor        = "HP",
++		.product       = "P2000 G3 FC|P2000G3 FC/iSCSI|P2000 G3 SAS|P2000 G3 iSCSI",
++		.getuid        = DEFAULT_GETUID,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 18,
++		.minio         = 100,
++		.minio_rq      = DEFAULT_MINIO_RQ,
++		.checker_name  = TUR,
++		.prio_name     = PRIO_ALUA,
++		.prio_args     = NULL,
++	},
+ 	/*
+ 	 * DDN controller family
+ 	 *
+@@ -281,10 +299,10 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.no_path_retry = 6,
+ 		.minio         = DEFAULT_MINIO,
+ 		.minio_rq      = DEFAULT_MINIO_RQ,
+-		.checker_name  = DIRECTIO,
++		.checker_name  = TUR,
+ 		.prio_name     = DEFAULT_PRIO,
+ 		.prio_args     = NULL,
+ 	},
+@@ -320,6 +338,7 @@ static struct hwentry default_hw[] = {
+ 		.no_path_retry = 5,
+ 		.minio         = DEFAULT_MINIO,
+ 		.minio_rq      = DEFAULT_MINIO_RQ,
++		.checker_name  = TUR,
+ 		.prio_name     = DEFAULT_PRIO,
+ 		.prio_args     = NULL,
+ 	},
+@@ -346,24 +365,6 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = DEFAULT_PRIO,
+ 		.prio_args     = NULL,
+ 	},
+-	{
+-		.vendor        = "EMC",
+-		.product       = "Invista",
+-		.bl_product    = "LUNZ",
+-		.getuid        = DEFAULT_GETUID,
+-		.features      = DEFAULT_FEATURES,
+-		.hwhandler     = DEFAULT_HWHANDLER,
+-		.selector      = DEFAULT_SELECTOR,
+-		.pgpolicy      = FAILOVER,
+-		.pgfailback    = FAILBACK_UNDEF,
+-		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = 5,
+-		.minio         = DEFAULT_MINIO,
+-		.minio_rq      = DEFAULT_MINIO_RQ,
+-		.checker_name  = TUR,
+-		.prio_name     = DEFAULT_PRIO,
+-		.prio_args     = NULL,
+-	},
+ 	/*
+ 	 * Hitachi controller family
+ 	 *
+@@ -752,6 +753,24 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 		.prio_args     = NULL,
+ 	},
++	{
++		/* IBM RSSM */
++		.vendor        = "IBM",
++		.product       = "1820N00",
++		.getuid        = DEFAULT_GETUID,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.minio         = 100,
++		.minio_rq      = DEFAULT_MINIO_RQ,
++		.checker_name  = TUR,
++		.prio_name     = PRIO_ALUA,
++		.prio_args     = NULL,
++	},
+ 	/*
+ 	 * IBM Power Virtual SCSI Devices
+ 	 *
+@@ -1110,6 +1129,7 @@ static struct hwentry default_hw[] = {
+ 		.minio_rq      = DEFAULT_MINIO_RQ,
+ 		.checker_name  = DEFAULT_CHECKER,
+ 		.prio_name     = DEFAULT_PRIO,
++		.prio_args     = NULL,
+ 	},
+ 	/*
+ 	 * Pivot3 RAIGE
