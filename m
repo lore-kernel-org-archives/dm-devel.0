@@ -1,14 +1,13 @@
-From: Joe Thornber <thornber@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
 Subject: Re: dm-bufio
-Date: Wed, 28 Sep 2011 10:41:19 +0100
-Message-ID: <20110928094119.GA3899@ubuntu>
+Date: Wed, 28 Sep 2011 11:51:07 +0200
+Message-ID: <1317203467.16422.21.camel@o>
 References: <Pine.LNX.4.64.1109271316500.1333@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 In-Reply-To: <Pine.LNX.4.64.1109271316500.1333@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,11 +18,11 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Edward Thornber <thornber@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 27, 2011 at 01:20:49PM -0400, Mikulas Patocka wrote:
+On Tue, 2011-09-27 at 13:20 -0400, Mikulas Patocka wrote:
 > Hi
 > 
 > I placed updated dm-bufio here: 
@@ -33,6 +32,16 @@ On Tue, Sep 27, 2011 at 01:20:49PM -0400, Mikulas Patocka wrote:
 > return unaligned memory), so it should fix problems that Heinz observed on 
 > Sparc.
 
-Thanks Mikulas,  I'll merge straight away.
+Thanks Mikulas,
 
-- Joe
+I'll test once Joe has merged it.
+
+Heinz
+
+> 
+> Mikulas
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
