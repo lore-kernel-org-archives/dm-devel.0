@@ -1,47 +1,63 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: dm-bufio
-Date: Wed, 28 Sep 2011 11:51:07 +0200
-Message-ID: <1317203467.16422.21.camel@o>
-References: <Pine.LNX.4.64.1109271316500.1333@hs20-bc2-1.build.redhat.com>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Valdis.Kletnieks@vt.edu
+Subject: Re: [PATCH] dm: verity target
+Date: Wed, 28 Sep 2011 17:30:14 -0400
+Message-ID: <21505.1317245414@turing-police.cc.vt.edu>
+References: <1316112359-6085-1-git-send-email-msb@chromium.org>
+            <CABqD9hYWK2czEKN87xDu7YPbRcp9xrumJ5PZ8aQTzBLafrnBMw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: multipart/signed; boundary="==_Exmh_1317245414_2944P";
+	 micalg=pgp-sha1; protocol="application/pgp-signature"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1109271316500.1333@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Edward Thornber <thornber@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: Your message of "Tue, 27 Sep 2011 14:02:05 CDT."
+             <CABqD9hYWK2czEKN87xDu7YPbRcp9xrumJ5PZ8aQTzBLafrnBMw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Will Drewry <wad@chromium.org>
+Cc: Mandeep Singh Baines <msb@chromium.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>, dm-devel@redhat.com, Elly Jones <ellyjones@chromium.org>, Olof Johansson <olofj@chromium.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, 2011-09-27 at 13:20 -0400, Mikulas Patocka wrote:
-> Hi
-> 
-> I placed updated dm-bufio here: 
-> http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/
-> 
-> It uses kmem_cache with proper alignment instead of kmalloc (which may 
-> return unaligned memory), so it should fix problems that Heinz observed on 
-> Sparc.
+--==_Exmh_1317245414_2944P
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Thanks Mikulas,
+On Tue, 27 Sep 2011 14:02:05 CDT, Will Drewry said:
 
-I'll test once Joe has merged it.
+> I was just curious if there is any interest in pulling this change, or
+> if not, if there is any particular set of concerns, fixes, etc.
 
-Heinz
+Out of curiosity, how much of the stack does this end up eating?  My root=
 
-> 
-> Mikulas
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+filesystem is already ext4 on an LVM partition that's on a LUKS/dm-crypt
+partition on a hard drive, and I'm sure somebody out there will have used=
+ xfs
+instead - and then exported it via NFS or something. Are we going to get =
+weird
+stack overflows if people throw dm-verity into this sort of mix?
+
+> realize it's not a small amount of code to digest (though it is
+> smaller than the post from last year=5B1=5D).   Would re-posting with a=
+n
+> added blob explaining the name be useful,
+
+Probably will need it to be merged, unless you set up an auto-reply that =
+says
+=22Patch rejected, 'verity' is *not* a typo for 'verify'=22 ;)
+
+I'll hopefully have some more comments over the weekend if I get some spa=
+re
+cycles.
+
+
+--==_Exmh_1317245414_2944P
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+Comment: Exmh version 2.5 07/13/2001
+
+iD8DBQFOg5HmcC3lWbTT17ARAiyZAKCTnnZ0SrjxMx727zoBr0/u+rJdMQCg0Lte
+zpMBlja3FzmgAxZ8M+5CD6Q=
+=e2DA
+-----END PGP SIGNATURE-----
+
+--==_Exmh_1317245414_2944P--
