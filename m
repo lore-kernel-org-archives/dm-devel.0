@@ -1,69 +1,43 @@
-From: "Kasatkin, Dmitry" <dmitry.kasatkin@intel.com>
-Subject: Re: block mapping
-Date: Thu, 29 Sep 2011 17:27:45 +0300
-Message-ID: <CALLzPKb8O853Zaedf_Dv1pSjzUPAMoVVE0=qY9vu77zxVz=SLw@mail.gmail.com>
-References: <CALLzPKaWVR5=+S7QtHRpPBkDR5SVsZEAhbUn+G09o1S9JhjFOw@mail.gmail.com>
-	<4E8475E3.7020907@redhat.com>
-	<CALLzPKZappmw5wVJzN6biH9zUQB_nRueELrSi7yS4nfu-rTazA@mail.gmail.com>
-	<4E847E5F.5090008@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mandeep Singh Baines <msb@chromium.org>
+Subject: Re: [PATCH] dm: verity target
+Date: Thu, 29 Sep 2011 10:31:03 -0700
+Message-ID: <20110929173103.GA22515@google.com>
+References: <1316112359-6085-1-git-send-email-msb@chromium.org>
+ <CABqD9hYWK2czEKN87xDu7YPbRcp9xrumJ5PZ8aQTzBLafrnBMw@mail.gmail.com>
+ <21505.1317245414@turing-police.cc.vt.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4E847E5F.5090008@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <21505.1317245414@turing-police.cc.vt.edu>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Valdis.Kletnieks@vt.edu
+Cc: Will Drewry <wad@chromium.org>, Mandeep Singh Baines <msb@chromium.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>, dm-devel@redhat.com, Elly Jones <ellyjones@chromium.org>, Olof Johansson <olofj@chromium.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Sep 29, 2011 at 5:19 PM, Zdenek Kabelac <zkabelac@redhat.com> wrote:
-> Dne 29.9.2011 16:10, Kasatkin, Dmitry napsal(a):
->> Hello,
->>
->>
->> On Thu, Sep 29, 2011 at 4:42 PM, Zdenek Kabelac <zkabelac@redhat.com> wrote:
->>> Dne 29.9.2011 15:35, Kasatkin, Dmitry napsal(a):
->>>> Hello All,
->>>>
->>>> I would like to implement such block device, which can store
->>>> additional information along with the block data.
->>>> For example. so if file system has 4k block, I would like to store
->>>> 4k+256b of additional information...
->>>>
->>>> Can such block device be implemented with device mapper?
->>>>
->>>
->>> Yes - i.e.the old snapshot target stores the block and it's remapping info
->>> (thought the size info is much smaller then 256b)
->>>
->>
->> 1. Old snapshot target? Where is it...
->>
->
-> kernel/drivers/md/dm-snap-persistent.c
->
->
->> 2. Isn't it stores some data at the beginning of the block device - in
->> the header..
->
-> A bit more complicated that this - but yes, quite straightforward target.
->
+Valdis.Kletnieks@vt.edu (Valdis.Kletnieks@vt.edu) wrote:
+> On Tue, 27 Sep 2011 14:02:05 CDT, Will Drewry said:
+> 
+> > I was just curious if there is any interest in pulling this change, or
+> > if not, if there is any particular set of concerns, fixes, etc.
+> 
+> Out of curiosity, how much of the stack does this end up eating?  My root
+> filesystem is already ext4 on an LVM partition that's on a LUKS/dm-crypt
+> partition on a hard drive, and I'm sure somebody out there will have used xfs
+> instead - and then exported it via NFS or something. Are we going to get weird
+> stack overflows if people throw dm-verity into this sort of mix?
+> 
 
-Thanks
+No. dm-verity uses very little stack since most of the code is running
+in a separate workqueue context. The _map call is pretty light.
 
->
-> Zdenek
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+> > realize it's not a small amount of code to digest (though it is
+> > smaller than the post from last year[1]).   Would re-posting with an
+> > added blob explaining the name be useful,
+> 
+> Probably will need it to be merged, unless you set up an auto-reply that says
+> "Patch rejected, 'verity' is *not* a typo for 'verify'" ;)
+> 
+> I'll hopefully have some more comments over the weekend if I get some spare
+> cycles.
+> 
