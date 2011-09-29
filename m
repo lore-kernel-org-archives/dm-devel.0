@@ -1,63 +1,41 @@
-From: Valdis.Kletnieks@vt.edu
+From: "John Stoffel" <john@stoffel.org>
 Subject: Re: [PATCH] dm: verity target
-Date: Wed, 28 Sep 2011 17:30:14 -0400
-Message-ID: <21505.1317245414@turing-police.cc.vt.edu>
+Date: Wed, 28 Sep 2011 21:07:51 -0400
+Message-ID: <20099.50407.346360.216442@quad.stoffel.home>
 References: <1316112359-6085-1-git-send-email-msb@chromium.org>
-            <CABqD9hYWK2czEKN87xDu7YPbRcp9xrumJ5PZ8aQTzBLafrnBMw@mail.gmail.com>
+	<CABqD9hYWK2czEKN87xDu7YPbRcp9xrumJ5PZ8aQTzBLafrnBMw@mail.gmail.com>
+	<21505.1317245414@turing-police.cc.vt.edu>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="==_Exmh_1317245414_2944P";
-	 micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: Your message of "Tue, 27 Sep 2011 14:02:05 CDT."
-             <CABqD9hYWK2czEKN87xDu7YPbRcp9xrumJ5PZ8aQTzBLafrnBMw@mail.gmail.com>
+In-Reply-To: <21505.1317245414@turing-police.cc.vt.edu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Will Drewry <wad@chromium.org>
-Cc: Mandeep Singh Baines <msb@chromium.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>, dm-devel@redhat.com, Elly Jones <ellyjones@chromium.org>, Olof Johansson <olofj@chromium.org>, linux-kernel@vger.kernel.org
+To: Valdis.Kletnieks@vt.edu
+Cc: Will Drewry <wad@chromium.org>, Mandeep Singh Baines <msb@chromium.org>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>, dm-devel@redhat.com, Elly Jones <ellyjones@chromium.org>, Olof Johansson <olofj@chromium.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
---==_Exmh_1317245414_2944P
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+>>>>> "Valdis" == Valdis Kletnieks <Valdis.Kletnieks@vt.edu> writes:
 
-On Tue, 27 Sep 2011 14:02:05 CDT, Will Drewry said:
+Valdis> On Tue, 27 Sep 2011 14:02:05 CDT, Will Drewry said:
+>> I was just curious if there is any interest in pulling this change, or
+>> if not, if there is any particular set of concerns, fixes, etc.
 
-> I was just curious if there is any interest in pulling this change, or
-> if not, if there is any particular set of concerns, fixes, etc.
+Valdis> Out of curiosity, how much of the stack does this end up eating?  My root
+Valdis> filesystem is already ext4 on an LVM partition that's on a LUKS/dm-crypt
+Valdis> partition on a hard drive, and I'm sure somebody out there will have used xfs
+Valdis> instead - and then exported it via NFS or something. Are we going to get weird
+Valdis> stack overflows if people throw dm-verity into this sort of mix?
 
-Out of curiosity, how much of the stack does this end up eating?  My root=
+>> realize it's not a small amount of code to digest (though it is
+>> smaller than the post from last year[1]).   Would re-posting with an
+>> added blob explaining the name be useful,
 
-filesystem is already ext4 on an LVM partition that's on a LUKS/dm-crypt
-partition on a hard drive, and I'm sure somebody out there will have used=
- xfs
-instead - and then exported it via NFS or something. Are we going to get =
-weird
-stack overflows if people throw dm-verity into this sort of mix?
+Valdis> Probably will need it to be merged, unless you set up an
+Valdis> auto-reply that says "Patch rejected, 'verity' is *not* a typo
+Valdis> for 'verify'" ;)
 
-> realize it's not a small amount of code to digest (though it is
-> smaller than the post from last year=5B1=5D).   Would re-posting with a=
-n
-> added blob explaining the name be useful,
+God, I've been reading this as veriFy all along.  I think your name
+stinks because it's too close to Verify, and too obscure otherwise.
 
-Probably will need it to be merged, unless you set up an auto-reply that =
-says
-=22Patch rejected, 'verity' is *not* a typo for 'verify'=22 ;)
-
-I'll hopefully have some more comments over the weekend if I get some spa=
-re
-cycles.
-
-
---==_Exmh_1317245414_2944P
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
-
-iD8DBQFOg5HmcC3lWbTT17ARAiyZAKCTnnZ0SrjxMx727zoBr0/u+rJdMQCg0Lte
-zpMBlja3FzmgAxZ8M+5CD6Q=
-=e2DA
------END PGP SIGNATURE-----
-
---==_Exmh_1317245414_2944P--
+John
