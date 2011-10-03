@@ -1,46 +1,30 @@
-From: Christophe Saout <christophe@saout.de>
+From: Jeff Moyer <jmoyer@redhat.com>
 Subject: Re: [dm-devel] Block regression since 3.1-rc3
-Date: Fri, 30 Sep 2011 20:02:11 +0200
-Message-ID: <1317405732.20365.1.camel@localhost>
+Date: Mon, 03 Oct 2011 10:43:52 -0400
+Message-ID: <x49pqieyw2f.fsf@segfault.boston.devel.redhat.com>
 References: <1317397918.27140.15.camel@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1317397918.27140.15.camel@localhost>
+In-Reply-To: <1317397918.27140.15.camel@localhost> (Christophe Saout's message
+	of "Fri, 30 Sep 2011 17:51:57 +0200")
 Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
+To: Christophe Saout <christophe@saout.de>, device-mapper development <dm-devel@redhat.com>
 Cc: linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-Hello again,
+Christophe Saout <christophe@saout.de> writes:
 
-> Today I was trying to boot a new 3.1 RC kernel on one of our server
-> machines and ran into a weird block-related crash.
-> 
-> Whenever I was trying to access some filesystem on the external RAID, I
-> would soon run into the crash seen below, followed by a total lockup a
-> bit later.
-> 
-> The external RAID is accessed via multipath and simple logical volumes
-> on top. [...]
->
-> The bug seems to be introduced between rc2 and rc3. Up to rc2 everything
-> is fine, and rc3 and also the latest kernel shows this bug. From the git
-> log I can see that the block/ directory has seen some larger update, but
-> this is just a wild guess.
+> I think you guys should know - maybe you have an idea or have something
+> for me to test.  I would have tried to file a bug somewhere, but half of
+> the infrastructure is down at the moment.
 
-Actually, I just found out that reverting
+You didn't include the top few lines which tell us what went wrong.  I
+tried to reproduce this myself, but I ran into other issues with GFS2.
+Anyway, it would help a great deal if you could retrigger the failure
+and provide the full failure output.  You can get that by issuing the
+'dmesg' command and redirecting it to a file.  And please CC me on any
+future correspondences on this issue.
 
-commit 4853abaae7e4a2af938115ce9071ef8684fb7af4
-Author: Jeff Moyer <jmoyer@redhat.com>
-Date:   Mon Aug 15 21:37:25 2011 +0200
-
-    block: fix flush machinery for stacking drivers with differring flush flags
-
-makes the problem disappear.
-
-Let me know if I can help with further information.
-
-Cheers,
-	Christophe
+Thanks!
+Jeff
