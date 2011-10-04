@@ -1,122 +1,106 @@
-From: Adam Chasen <adam@chasen.name>
-Subject: Re: [Multipath] Round-robin performance limit
-Date: Mon, 3 Oct 2011 23:08:12 -0400
-Message-ID: <CANtKaxLFSvg-iMGJ-fKPM=9HR1ORWOdMoEs2uQJkSGR-JpesYg@mail.gmail.com>
-References: <BANLkTikyCtPX8L=7h94hTm4TjOYDyb7nxQ@mail.gmail.com>
-	<20110502072528.GW32595@reaktio.net>
-	<BANLkTi=h0AwEy0S4Miv-SYTEu3jF0DXXJQ@mail.gmail.com>
-	<1304375238.3134.23.camel@denise.theartistscloset.com>
-	<20110503050406.GA11442@us.ibm.com>
-	<1304417561.25728.16.camel@denise.theartistscloset.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Saout <christophe@saout.de>
+Subject: Re: [dm-devel] Block regression since 3.1-rc3
+Date: Tue, 04 Oct 2011 14:02:41 +0200
+Message-ID: <1317729761.25998.4.camel@localhost>
+References: <1317397918.27140.15.camel@localhost>
+	 <x49pqieyw2f.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1304417561.25728.16.camel@denise.theartistscloset.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: jsullivan@opensourcedevel.com, malahal@us.ibm.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <x49pqieyw2f.fsf@segfault.boston.devel.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jeff Moyer <jmoyer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
 List-Id: dm-devel.ids
 
-Malahal,
-After your mentioning bio vs request based I attempted to determine if
-my kernel contains the request based mpath. It seems in 2.6.31 all
-mpath was switched to request based. I have a kernel 2.6.31+ (actually
-.35 and .38), so I believe I have requrest-based mpath.
+Hi Jeff,
 
-All,
-There also appears to be a new multipath configuration option
-documented in the RHEL 6 beta documentation:
-rr_min_io_rq 	Specifies the number of I/O requests to route to a path
-before switching to the next path in the current path group, using
-request-based device-mapper-multipath. This setting should be used on
-systems running current kernels. On systems running kernels older than
-2.6.31, use rr_min_io. The default value is 1.
+> Anyway, it would help a great deal if you could retrigger the failure
+> and provide the full failure output.  You can get that by issuing the
+> 'dmesg' command and redirecting it to a file.
 
-http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6-Beta/html/DM_M=
-ultipath/config_file_multipath.html
+Oh, sorry, yes, there's a line missing.
 
-I have not tested using this setting vs rr_min_io yet or even if my
-system supports the configuration directive.
+Line 323 is this one: BUG_ON(!rq->bio || rq->bio != rq->biotail);
 
-If I trust some of the claims of several VMware ESX iscsi multipath
-setups, it is possible (possibly using different software) to gain a
-multiplicative throughput by adding additional Ethernet links. This
-makes me hopeful that we can do this with open-iscsi and dm-mulitpath
-as well.
-
-It could be something obvious I am missing, but it appears a lot of
-people experience this same issue.
+The bug is not specific to GFS2, I also get it when using an ext3 mount
+on that multipath storage pool when writing to a file.
 
 Thanks,
-Adam
+	Christophe
 
-On Tue, May 3, 2011 at 6:12 AM, John A. Sullivan III
-<jsullivan@opensourcedevel.com> wrote:
-> On Mon, 2011-05-02 at 22:04 -0700, Malahal Naineni wrote:
->> John A. Sullivan III [jsullivan@opensourcedevel.com] wrote:
->> > I'm also very curious about your findings on rr_min_io. =A0I cannot fi=
-nd
->> > my benchmarks but we tested various settings heavily. =A0I do not reca=
-ll
->> > if we saw more even scaling with 10 or 100. =A0I remember being surpri=
-sed
->> > that performance with it set to 1 was poor. =A0I would have thought th=
-at,
->> > in a bonded environment, changing paths per iSCSI command would give
->> > optimal performance. =A0Can anyone explain why it does not?
->>
->> rr_min_io of 1 will give poor performance if your multipath kernel
->> module doesn't support request based multipath. In those BIO based
->> multipath, multipath receives 4KB requests. Such requests can't be
->> coalesced if they are sent on different paths.
-> <snip>
-> Ah, that makes perfect sense and why 3 seems to be the magic number in
-> Linux (4000 / 1460 (or whatever IP payload is)). =A0Does that change with
-> Jumbo frames? In fact, how would that be optimized in Linux?
->
-> 9KB seems to be a reasonable common jumbo frame value for various
-> vendors and that should contain two pages but, I would guess, Linux
-> can't utilize it as each block must be independently acknowledged. Is
-> that correct? Thus a frame size of a little over 4KB would be optimal
-> for Linux?
->
-> Would that mean that rr_min_io of 1 would become optimal? However, if
-> each block needs to be acknowledged before the next is sent, I would
-> think we are still latency bound, i.e., even if I can send four requests
-> down four separate paths, I cannot send the second until the first has
-> been acknowledged and since I can easily place four packets on the same
-> path within the latency period of four packets, multibus gives me
-> absolutely no performance advantage for a single iSCSI stream and only
-> proves useful as I start multiplexing multiple iSCSI streams.
->
-> Is that analysis correct? If so, what constitutes a separate iSCSI
-> stream? Are two separate file requests from the same file systems to the
-> same iSCSI device considered two iSCSI streams and thus can be
-> multiplexed and benefit from multipath or are they considered all part
-> of the same iSCSI stream? If they are considered one, do they become two
-> if they reside on different partitions and thus different file systems?
-> If not, then do we only see multibus performance gains between a single
-> file system host and a single iSCSI host when we use virtualization each
-> with their own iSCSI connection (as opposed to using iSCSI connections
-> in the underlying host and exposing them to the virtual machines as
-> local storage)?
->
-> I hope I'm not hijacking this thread and realize I've asked some
-> convoluted questions but optimizing multibus through bonded links for
-> single large hosts is still a bit of a mystery to me. =A0Thanks - John
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+------------[ cut here ]------------
+kernel BUG at block/blk-flush.c:323!
+invalid opcode: 0000 [#1] PREEMPT SMP 
+CPU 18 
+Modules linked in: gfs2 fuse dlm configfs dummy bonding xt_TPROXY
+nf_tproxy_core xt_socket xt_owner xt_connmark iptable_mangle
+ipt_MASQUERADE iptable_nat ipt_ULOG ipt_REJECT xt_mark iptable_filter
+iptable_raw ip_tables ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6
+xt_state xt_tcpudp xt_physdev xt_hashlimit xt_multiport ip6table_filter
+ip6_tables ebt_redirect ebt_ip ebt_mark_m ebtable_broute bridge stp llc
+ebtable_nat ext4 jbd2 dm_round_robin dm_multipath ebtable_filter
+ebtables x_tables nf_nat_tftp nf_conntrack_tftp nf_nat_sip
+nf_conntrack_sip nf_nat_irc nf_conntrack_irc nf_nat_h323
+nf_conntrack_h323 nf_nat_ftp nf_nat nf_conntrack_ipv4 nf_defrag_ipv4
+nf_conntrack_ftp nf_conntrack ipmi_si ipmi_devintf ipmi_msghandler loop
+e1000e qla2xxx igb pata_atiixp ohci_hcd ehci_hcd tpm_tis tpm
+scsi_transport_fc tpm_bios i2c_piix4
+
+Pid: 5282, comm: umount Not tainted 3.1.0-rc3 #1 Supermicro
+H8DG6/H8DGi/H8DG6/H8DGi
+RIP: 0010:[<ffffffff8121a2e4>]  [<ffffffff8121a2e4>] blk_insert_flush
++0x134/0x140
+RSP: 0018:ffff8808155f3988  EFLAGS: 00010046
+RAX: 0000000000000000 RBX: ffff880c149f0018 RCX: ffff881014170000
+RDX: 0000000000000005 RSI: 0000000000000001 RDI: ffff880c149f0018
+RBP: ffff8808155f3988 R08: 0000000000000001 R09: 0000000000000001
+R10: ffff880415cf0440 R11: 0000000000000000 R12: ffff881014170000
+R13: 0000000000000082 R14: 0000000000000005 R15: ffff880c13763044
+FS:  00007f2d80611740(0000) GS:ffff880c17c00000(0000)
+knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: 00007f2d7fd4c0b0 CR3: 0000000c0fa3e000 CR4: 00000000000006e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process umount (pid: 5282, threadinfo ffff8808155f2000, task
+ffff8808155ed320)
+Stack:
+ ffff8808155f39b8 ffffffff812110a2 ffff880c149f0018 ffff881014170000
+ 0000000000000082 ffff880c13763000 ffff8808155f39e8 ffffffff81215bd4
+ ffff8808155f39e8 ffff880c00000005 ffff880c149f0018 ffff881014170000
+Call Trace:
+ [<ffffffff812110a2>] __elv_add_request+0x172/0x240
+ [<ffffffff81215bd4>] add_acct_request+0x34/0x40
+ [<ffffffff81215c4b>] blk_insert_cloned_request+0x6b/0x90
+ [<ffffffff8138ec39>] dm_dispatch_request+0x39/0x70
+ [<ffffffff8139011b>] dm_request_fn+0x1ab/0x2b0
+ [<ffffffff81211a56>] __blk_run_queue+0x16/0x20
+ [<ffffffff812182ed>] __make_request+0x2ed/0x330
+ [<ffffffff8138fd3e>] dm_request+0x16e/0x1e0
+ [<ffffffff81216077>] generic_make_request+0x2d7/0x520
+ [<ffffffff8104be91>] ? get_parent_ip+0x11/0x50
+ [<ffffffff81216321>] submit_bio+0x61/0xd0
+ [<ffffffff81146c86>] submit_bh+0xe6/0x120
+ [<ffffffffa034c338>] log_write_header+0x208/0x4b0 [gfs2]
+ [<ffffffff814c85c5>] ? sub_preempt_count+0x95/0xd0
+ [<ffffffffa034c698>] gfs2_log_shutdown+0xb8/0x280 [gfs2]
+ [<ffffffffa0362908>] gfs2_make_fs_ro+0x78/0xc0 [gfs2]
+ [<ffffffffa03628e9>] ? gfs2_make_fs_ro+0x59/0xc0 [gfs2]
+ [<ffffffffa0362b38>] gfs2_put_super+0x1e8/0x210 [gfs2]
+ [<ffffffff8111c64d>] generic_shutdown_super+0x5d/0xe0
+ [<ffffffff8111c6fc>] kill_block_super+0x2c/0x80
+ [<ffffffffa035465c>] gfs2_kill_sb+0x5c/0x90 [gfs2]
+ [<ffffffff8111ca08>] deactivate_locked_super+0x38/0x90
+ [<ffffffff8111d4e5>] deactivate_super+0x45/0x60
+ [<ffffffff81137a77>] mntput_no_expire+0xe7/0x130
+ [<ffffffff81138489>] sys_umount+0x79/0x390
+ [<ffffffff814cbed2>] system_call_fastpath+0x16/0x1b
+Code: d2 e8 51 c7 ff ff c9 c3 0f 1f 80 00 00 00 00 48 8b 41 08 48 89 79
+08 48 89 0f 48 89 47 08 48 89 38 48 89 cf e8 3e d9 ff ff c9 c3 <0f> 0b
+eb fe 0f 1f 84 00 00 00 00 00 55 89 f2 be 02 00 00 00 48 
+RIP  [<ffffffff8121a2e4>] blk_insert_flush+0x134/0x140
+ RSP <ffff8808155f3988>
+---[ end trace d37a65fe4ba84f7e ]---
+note: umount[5282] exited with preempt_count 1
