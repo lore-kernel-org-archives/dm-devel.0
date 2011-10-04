@@ -1,30 +1,122 @@
-From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [dm-devel] Block regression since 3.1-rc3
-Date: Mon, 03 Oct 2011 10:43:52 -0400
-Message-ID: <x49pqieyw2f.fsf@segfault.boston.devel.redhat.com>
-References: <1317397918.27140.15.camel@localhost>
+From: Adam Chasen <adam@chasen.name>
+Subject: Re: [Multipath] Round-robin performance limit
+Date: Mon, 3 Oct 2011 23:08:12 -0400
+Message-ID: <CANtKaxLFSvg-iMGJ-fKPM=9HR1ORWOdMoEs2uQJkSGR-JpesYg@mail.gmail.com>
+References: <BANLkTikyCtPX8L=7h94hTm4TjOYDyb7nxQ@mail.gmail.com>
+	<20110502072528.GW32595@reaktio.net>
+	<BANLkTi=h0AwEy0S4Miv-SYTEu3jF0DXXJQ@mail.gmail.com>
+	<1304375238.3134.23.camel@denise.theartistscloset.com>
+	<20110503050406.GA11442@us.ibm.com>
+	<1304417561.25728.16.camel@denise.theartistscloset.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1317397918.27140.15.camel@localhost> (Christophe Saout's message
-	of "Fri, 30 Sep 2011 17:51:57 +0200")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christophe Saout <christophe@saout.de>, device-mapper development <dm-devel@redhat.com>
-Cc: linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1304417561.25728.16.camel@denise.theartistscloset.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: jsullivan@opensourcedevel.com, malahal@us.ibm.com
 List-Id: dm-devel.ids
 
-Christophe Saout <christophe@saout.de> writes:
+Malahal,
+After your mentioning bio vs request based I attempted to determine if
+my kernel contains the request based mpath. It seems in 2.6.31 all
+mpath was switched to request based. I have a kernel 2.6.31+ (actually
+.35 and .38), so I believe I have requrest-based mpath.
 
-> I think you guys should know - maybe you have an idea or have something
-> for me to test.  I would have tried to file a bug somewhere, but half of
-> the infrastructure is down at the moment.
+All,
+There also appears to be a new multipath configuration option
+documented in the RHEL 6 beta documentation:
+rr_min_io_rq 	Specifies the number of I/O requests to route to a path
+before switching to the next path in the current path group, using
+request-based device-mapper-multipath. This setting should be used on
+systems running current kernels. On systems running kernels older than
+2.6.31, use rr_min_io. The default value is 1.
 
-You didn't include the top few lines which tell us what went wrong.  I
-tried to reproduce this myself, but I ran into other issues with GFS2.
-Anyway, it would help a great deal if you could retrigger the failure
-and provide the full failure output.  You can get that by issuing the
-'dmesg' command and redirecting it to a file.  And please CC me on any
-future correspondences on this issue.
+http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6-Beta/html/DM_M=
+ultipath/config_file_multipath.html
 
-Thanks!
-Jeff
+I have not tested using this setting vs rr_min_io yet or even if my
+system supports the configuration directive.
+
+If I trust some of the claims of several VMware ESX iscsi multipath
+setups, it is possible (possibly using different software) to gain a
+multiplicative throughput by adding additional Ethernet links. This
+makes me hopeful that we can do this with open-iscsi and dm-mulitpath
+as well.
+
+It could be something obvious I am missing, but it appears a lot of
+people experience this same issue.
+
+Thanks,
+Adam
+
+On Tue, May 3, 2011 at 6:12 AM, John A. Sullivan III
+<jsullivan@opensourcedevel.com> wrote:
+> On Mon, 2011-05-02 at 22:04 -0700, Malahal Naineni wrote:
+>> John A. Sullivan III [jsullivan@opensourcedevel.com] wrote:
+>> > I'm also very curious about your findings on rr_min_io. =A0I cannot fi=
+nd
+>> > my benchmarks but we tested various settings heavily. =A0I do not reca=
+ll
+>> > if we saw more even scaling with 10 or 100. =A0I remember being surpri=
+sed
+>> > that performance with it set to 1 was poor. =A0I would have thought th=
+at,
+>> > in a bonded environment, changing paths per iSCSI command would give
+>> > optimal performance. =A0Can anyone explain why it does not?
+>>
+>> rr_min_io of 1 will give poor performance if your multipath kernel
+>> module doesn't support request based multipath. In those BIO based
+>> multipath, multipath receives 4KB requests. Such requests can't be
+>> coalesced if they are sent on different paths.
+> <snip>
+> Ah, that makes perfect sense and why 3 seems to be the magic number in
+> Linux (4000 / 1460 (or whatever IP payload is)). =A0Does that change with
+> Jumbo frames? In fact, how would that be optimized in Linux?
+>
+> 9KB seems to be a reasonable common jumbo frame value for various
+> vendors and that should contain two pages but, I would guess, Linux
+> can't utilize it as each block must be independently acknowledged. Is
+> that correct? Thus a frame size of a little over 4KB would be optimal
+> for Linux?
+>
+> Would that mean that rr_min_io of 1 would become optimal? However, if
+> each block needs to be acknowledged before the next is sent, I would
+> think we are still latency bound, i.e., even if I can send four requests
+> down four separate paths, I cannot send the second until the first has
+> been acknowledged and since I can easily place four packets on the same
+> path within the latency period of four packets, multibus gives me
+> absolutely no performance advantage for a single iSCSI stream and only
+> proves useful as I start multiplexing multiple iSCSI streams.
+>
+> Is that analysis correct? If so, what constitutes a separate iSCSI
+> stream? Are two separate file requests from the same file systems to the
+> same iSCSI device considered two iSCSI streams and thus can be
+> multiplexed and benefit from multipath or are they considered all part
+> of the same iSCSI stream? If they are considered one, do they become two
+> if they reside on different partitions and thus different file systems?
+> If not, then do we only see multibus performance gains between a single
+> file system host and a single iSCSI host when we use virtualization each
+> with their own iSCSI connection (as opposed to using iSCSI connections
+> in the underlying host and exposing them to the virtual machines as
+> local storage)?
+>
+> I hope I'm not hijacking this thread and realize I've asked some
+> convoluted questions but optimizing multibus through bonded links for
+> single large hosts is still a bit of a mystery to me. =A0Thanks - John
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
