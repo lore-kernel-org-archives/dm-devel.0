@@ -1,16 +1,16 @@
 From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH][multipath-tools]'multipath' with -h and -t
- option, it returns '1' (fail) for successful command execution
-Date: Wed, 05 Oct 2011 22:45:02 +0200
-Message-ID: <1317847502.32002.1.camel@lapoo.opensvc.com>
-References: <20111005143410.4265.68055.stgit@arunaltc>
+Subject: Re: [PATCH] multipath: get right sysfs value for
+	checker_timeout
+Date: Wed, 05 Oct 2011 22:45:31 +0200
+Message-ID: <1317847531.32002.2.camel@lapoo.opensvc.com>
+References: <20111005041505.GQ24133@ether.msp.redhat.com>
 Reply-To: christophe.varoqui@opensvc.com,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20111005143410.4265.68055.stgit@arunaltc>
+In-Reply-To: <20111005041505.GQ24133@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,77 +20,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Aruna Balakrishnaiah <aruna@linux.vnet.ibm.com>
-Cc: dm-devel@redhat.com, arunabal@in.ibm.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On mer., 2011-10-05 at 20:06 +0530, Aruna Balakrishnaiah wrote:
-> Fix exit status for -h and -t options in multipath command
+On mar., 2011-10-04 at 23:15 -0500, Benjamin Marzinski wrote:
+> sysfs_get_timeout() wasn't looking in the correct directory for the
+> checker timeout value. It was looking at .../block/<devname>/timeout,
+> instead of  .../block/<devname>/device/timeout
 > 
 Merged.
 
-Thanks for the effort to comply to the patch submission best practices.
-
-cvaroqui
-
-> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  multipath/main.c |   12 +++++++++---
->  1 files changed, 9 insertions(+), 3 deletions(-)
+>  libmultipath/discovery.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 654e031..9c45b8b 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -116,7 +116,6 @@ usage (char * progname)
->  		"          . multipath including the path with maj:min 'dev' (ex: 8:0)\n" \
->  		);
+> Index: multipath-tools-110916/libmultipath/discovery.c
+> ===================================================================
+> --- multipath-tools-110916.orig/libmultipath/discovery.c
+> +++ multipath-tools-110916/libmultipath/discovery.c
+> @@ -166,7 +166,7 @@ sysfs_get_timeout(struct sysfs_device *d
+>  	if (safe_sprintf(attr_path, "%s/device", dev->devpath))
+>  		return 1;
 >  
-> -	exit(1);
->  }
->  
->  static int
-> @@ -404,8 +403,10 @@ main (int argc, char *argv[])
->  			break;
->  		case 'v':
->  			if (sizeof(optarg) > sizeof(char *) ||
-> -			    !isdigit(optarg[0]))
-> +			    !isdigit(optarg[0])) {
->  				usage (argv[0]);
-> +				exit(1);
-> +			}
->  
->  			conf->verbosity = atoi(optarg);
->  			break;
-> @@ -445,24 +446,29 @@ main (int argc, char *argv[])
->  			if (conf->pgpolicy_flag == -1) {
->  				printf("'%s' is not a valid policy\n", optarg);
->  				usage(argv[0]);
-> +				exit(1);
->  			}
->  			break;
->  		case 'r':
->  			conf->force_reload = 1;
->  			break;
->  		case 't':
-> -			dump_config();
-> +			r = dump_config();
->  			goto out;
->  		case 'h':
->  			usage(argv[0]);
-> +			exit(0);
->  		case ':':
->  			fprintf(stderr, "Missing option arguement\n");
->  			usage(argv[0]);
-> +			exit(1);
->  		case '?':
->  			fprintf(stderr, "Unknown switch: %s\n", optarg);
->  			usage(argv[0]);
-> +			exit(1);
->  		default:
->  			usage(argv[0]);
-> +			exit(1);
->  		}
->  	}
->  	if (optind < argc) {
-> 
+> -	len = sysfs_attr_get_value(dev->devpath, "timeout", attr, NAME_SIZE);
+> +	len = sysfs_attr_get_value(attr_path, "timeout", attr, NAME_SIZE);
+>  	if (!len) {
+>  		condlog(3, "%s: No timeout value in sysfs", dev->devpath);
+>  		return 1;
