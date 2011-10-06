@@ -1,62 +1,76 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [PATCH] scsi_dh_alua: Add one more check-condition for alua handler
-Date: Thu, 6 Oct 2011 13:22:07 -0400
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD91000D356@RTPMVEXC1-PRD.hq.netapp.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [dm-devel] Block regression since 3.1-rc3
+Date: Thu, 06 Oct 2011 15:51:00 -0400
+Message-ID: <x49bottoq57.fsf@segfault.boston.devel.redhat.com>
+References: <1317397918.27140.15.camel@localhost>
+	<x49pqieyw2f.fsf@segfault.boston.devel.redhat.com>
+	<1317729761.25998.4.camel@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-class: urn:content-classes:message
-Sender: linux-scsi-owner@vger.kernel.org
-To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1317729761.25998.4.camel@localhost> (Christophe Saout's message
+	of "Tue, 04 Oct 2011 14:02:41 +0200")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christophe Saout <christophe@saout.de>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-This patch adds one more check-condition  for scsi_dh_alua handler. Without this,
-the handler attach fails sometimes during the discovery. I have noticed this with
-NetApp E-Series storage with alua mode. Also removed some unnecessary brackets {}
-for consistency.
+Christophe Saout <christophe@saout.de> writes:
 
-Signed-off-by: Babu Moger <babu.moger@netapp.com>
----
+> Hi Jeff,
+>
+>> Anyway, it would help a great deal if you could retrigger the failure
+>> and provide the full failure output.  You can get that by issuing the
+>> 'dmesg' command and redirecting it to a file.
+>
+> Oh, sorry, yes, there's a line missing.
+>
+> Line 323 is this one: BUG_ON(!rq->bio || rq->bio != rq->biotail);
 
---- linux-3.1-rc4/drivers/scsi/device_handler/scsi_dh_alua.c.orig	2011-10-05 16:52:41.000000000 -0500
-+++ linux-3.1-rc4/drivers/scsi/device_handler/scsi_dh_alua.c	2011-10-05 17:00:33.000000000 -0500
-@@ -508,27 +508,28 @@ static int alua_check_sense(struct scsi_
- 			 * Power On, Reset, or Bus Device Reset, just retry.
- 			 */
- 			return ADD_TO_MLQUEUE;
--		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x06) {
-+		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x06)
- 			/*
- 			 * ALUA state changed
- 			 */
- 			return ADD_TO_MLQUEUE;
--		}
--		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x07) {
-+		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x07)
- 			/*
- 			 * Implicit ALUA state transition failed
- 			 */
- 			return ADD_TO_MLQUEUE;
--		}
--		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x0e) {
-+		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x03)
-+			/*
-+			 * Inquiry data has changed
-+			 */
-+			return ADD_TO_MLQUEUE;
-+		if (sense_hdr->asc == 0x3f && sense_hdr->ascq == 0x0e)
- 			/*
- 			 * REPORTED_LUNS_DATA_HAS_CHANGED is reported
- 			 * when switching controllers on targets like
- 			 * Intel Multi-Flex. We can just retry.
- 			 */
- 			return ADD_TO_MLQUEUE;
--		}
--
- 		break;
+OK, it turns out my testing was incomplete.  I only tested targets that
+had a write-through cache, so I didn't hit this problem.  It reproduces
+pretty easily with just multipath involved (no linear target on top) when
+running against the right storage.
+
+So, here's a patch, but I don't have a full explanation for it just yet.
+What I observed was that, on fsync, blkdev_issue_flush was called.
+Eventually, the flush request gets cloned, and blk_insert_cloned_request
+is called.  This cloned request never actually gets issued to the
+q->requst_fn (scsi_request_fn in my case).  So, it may be that there is
+no plug list for this, so the queue isn't goosed?  I'll try to come up
+with a better explanation, or Tejun may just know off the top of his
+head what's going on.
+
+So, the patch works for me, but is very much just an RFC.
+
+Cheers,
+Jeff
+
+Signed-off-by: Jeff Moyer <jmoyer@redhat.com>
+
+diff --git a/block/blk-flush.c b/block/blk-flush.c
+index 491eb30..7aa4736 100644
+--- a/block/blk-flush.c
++++ b/block/blk-flush.c
+@@ -320,7 +320,7 @@ void blk_insert_flush(struct request *rq)
+ 		return;
  	}
  
-
-
+-	BUG_ON(!rq->bio || rq->bio != rq->biotail);
++	BUG_ON(rq->bio && rq->bio != rq->biotail);
+ 
+ 	/*
+ 	 * If there's data but flush is not necessary, the request can be
+@@ -345,6 +345,12 @@ void blk_insert_flush(struct request *rq)
+ 	rq->end_io = flush_data_end_io;
+ 
+ 	blk_flush_complete_seq(rq, REQ_FSEQ_ACTIONS & ~policy, 0);
++
++	/*
++	 * A cloned empty flush needs a queue kick to make progress.
++	 */
++	if (!rq->bio)
++		blk_run_queue_async(q);
+ }
+ 
+ /**
