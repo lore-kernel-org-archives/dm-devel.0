@@ -1,16 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] multipath: make sure all the hwe attributes
-	get merged
-Date: Wed, 05 Oct 2011 22:48:33 +0200
-Message-ID: <1317847713.32002.5.camel@lapoo.opensvc.com>
-References: <20111005041349.GP24133@ether.msp.redhat.com>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper fixes for 3.1
+Date: Thu, 6 Oct 2011 15:17:13 +0100
+Message-ID: <20111006141713.GB2840@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20111005041349.GP24133@ether.msp.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,56 +17,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Doug Ledford <dledford@redhat.com>, Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, stable@kernel.org, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On mar., 2011-10-04 at 23:13 -0500, Benjamin Marzinski wrote:
-> Not all of the hwe attributes were getting merged.  Also,
-> multipathd show config was putting an extra set of quotes around the entries
-> in the devices section.
-> 
-Merged.
+Please pull from:
 
-I haven't checked recently with arrays with whitespaces in their
-vendor/product/rev strings. I remember resorting to the value quoting
-because of those. Might be worth checking if the parser behaves now
-without the quotes.
+  http://people.redhat.com/agk/git/linux-dm for-linus
 
-Regards,
-cvaroqui
+to get the following device-mapper fixes for inclusion in 3.1:
 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  libmultipath/config.c |    4 ++++
->  libmultipath/print.c  |    2 +-
->  2 files changed, 5 insertions(+), 1 deletion(-)
-> 
-> Index: multipath-tools-110916/libmultipath/config.c
-> ===================================================================
-> --- multipath-tools-110916.orig/libmultipath/config.c
-> +++ multipath-tools-110916/libmultipath/config.c
-> @@ -320,6 +320,10 @@ merge_hwe (struct hwentry * dst, struct
->  	merge_num(no_path_retry);
->  	merge_num(minio);
->  	merge_num(minio_rq);
-> +	merge_num(pg_timeout);
-> +	merge_num(flush_on_last_del);
-> +	merge_num(fast_io_fail);
-> +	merge_num(dev_loss);
->  
->  	return 0;
->  }
-> Index: multipath-tools-110916/libmultipath/print.c
-> ===================================================================
-> --- multipath-tools-110916.orig/libmultipath/print.c
-> +++ multipath-tools-110916/libmultipath/print.c
-> @@ -860,7 +860,7 @@ snprint_hwentry (char * buff, int len, s
->  	if (fwd > len)
->  		return len;
->  	iterate_sub_keywords(rootkw, kw, i) {
-> -		fwd += snprint_keyword(buff + fwd, len - fwd, "\t\t%k \"%v\"\n",
-> +		fwd += snprint_keyword(buff + fwd, len - fwd, "\t\t%k %v\n",
->  				kw, hwe);
->  		if (fwd > len)
->  			return len;
+Jonthan Brassow (1):
+      dm: raid fix write_mostly arg validation
+
+Mike Snitzer (2):
+      dm: flakey fix corrupt_bio_byte error path
+      dm table: avoid crash if integrity profile changes
+
+Milan Broz (1):
+      dm crypt: always disable discard_zeroes_data
+
+ drivers/md/dm-crypt.c         |    2 ++
+ drivers/md/dm-flakey.c        |    4 +++-
+ drivers/md/dm-raid.c          |    2 +-
+ drivers/md/dm-table.c         |   32 ++++++++++++++++++++++++++------
+ include/linux/device-mapper.h |    5 +++++
+ 5 files changed, 37 insertions(+), 8 deletions(-)
+
+Thanks,
+Alasdair
