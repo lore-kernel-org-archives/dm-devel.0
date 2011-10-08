@@ -1,115 +1,159 @@
-From: Christophe Saout <christophe@saout.de>
+From: Shaohua Li <shli@kernel.org>
 Subject: Re: [dm-devel] Block regression since 3.1-rc3
-Date: Fri, 07 Oct 2011 00:02:54 +0200
-Message-ID: <1317938574.7593.4.camel@localhost>
+Date: Sat, 8 Oct 2011 19:02:25 +0800
+Message-ID: <CANejiEXnXJ7LkyqHyH1S2c4A95Si7v0-gDmRD824r3ROntaDCA@mail.gmail.com>
 References: <1317397918.27140.15.camel@localhost>
-	 <x49pqieyw2f.fsf@segfault.boston.devel.redhat.com>
-	 <1317729761.25998.4.camel@localhost>
-	 <x49bottoq57.fsf@segfault.boston.devel.redhat.com>
+	<x49pqieyw2f.fsf@segfault.boston.devel.redhat.com>
+	<1317729761.25998.4.camel@localhost>
+	<x49bottoq57.fsf@segfault.boston.devel.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary=20cf3005dd103b164204aec77eb7
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <x49bottoq57.fsf@segfault.boston.devel.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Jeff Moyer <jmoyer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Tejun Heo <tj@kernel.org>
+Cc: Christophe Saout <christophe@saout.de>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Tejun Heo <tj@kernel.org>
 List-Id: dm-devel.ids
 
-Hi Jeff,
+--20cf3005dd103b164204aec77eb7
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-> > Line 323 is this one: BUG_ON(!rq->bio || rq->bio != rq->biotail);
-> 
-> OK, it turns out my testing was incomplete.  I only tested targets that
-> had a write-through cache, so I didn't hit this problem.  It reproduces
+2011/10/7 Jeff Moyer <jmoyer@redhat.com>:
+> Christophe Saout <christophe@saout.de> writes:
+>
+>> Hi Jeff,
+>>
+>>> Anyway, it would help a great deal if you could retrigger the failure
+>>> and provide the full failure output. =A0You can get that by issuing the
+>>> 'dmesg' command and redirecting it to a file.
+>>
+>> Oh, sorry, yes, there's a line missing.
+>>
+>> Line 323 is this one: BUG_ON(!rq->bio || rq->bio !=3D rq->biotail);
+>
+> OK, it turns out my testing was incomplete. =A0I only tested targets that
+> had a write-through cache, so I didn't hit this problem. =A0It reproduces
 > pretty easily with just multipath involved (no linear target on top) when
 > running against the right storage.
-> 
+>
 > So, here's a patch, but I don't have a full explanation for it just yet.
 > What I observed was that, on fsync, blkdev_issue_flush was called.
 > Eventually, the flush request gets cloned, and blk_insert_cloned_request
-> is called.  This cloned request never actually gets issued to the
-> q->requst_fn (scsi_request_fn in my case).  So, it may be that there is
-> no plug list for this, so the queue isn't goosed?  I'll try to come up
+> is called. =A0This cloned request never actually gets issued to the
+> q->requst_fn (scsi_request_fn in my case). =A0So, it may be that there is
+> no plug list for this, so the queue isn't goosed? =A0I'll try to come up
 > with a better explanation, or Tejun may just know off the top of his
 > head what's going on.
-> 
+>
 > So, the patch works for me, but is very much just an RFC.
+>
+> Cheers,
+> Jeff
+>
+> Signed-off-by: Jeff Moyer <jmoyer@redhat.com>
+>
+> diff --git a/block/blk-flush.c b/block/blk-flush.c
+> index 491eb30..7aa4736 100644
+> --- a/block/blk-flush.c
+> +++ b/block/blk-flush.c
+> @@ -320,7 +320,7 @@ void blk_insert_flush(struct request *rq)
+> =A0 =A0 =A0 =A0 =A0 =A0 =A0 =A0return;
+> =A0 =A0 =A0 =A0}
+>
+> - =A0 =A0 =A0 BUG_ON(!rq->bio || rq->bio !=3D rq->biotail);
+> + =A0 =A0 =A0 BUG_ON(rq->bio && rq->bio !=3D rq->biotail);
+>
+> =A0 =A0 =A0 =A0/*
+> =A0 =A0 =A0 =A0 * If there's data but flush is not necessary, the request=
+ can be
+> @@ -345,6 +345,12 @@ void blk_insert_flush(struct request *rq)
+> =A0 =A0 =A0 =A0rq->end_io =3D flush_data_end_io;
+>
+> =A0 =A0 =A0 =A0blk_flush_complete_seq(rq, REQ_FSEQ_ACTIONS & ~policy, 0);
+> +
+> + =A0 =A0 =A0 /*
+> + =A0 =A0 =A0 =A0* A cloned empty flush needs a queue kick to make progre=
+ss.
+> + =A0 =A0 =A0 =A0*/
+> + =A0 =A0 =A0 if (!rq->bio)
+> + =A0 =A0 =A0 =A0 =A0 =A0 =A0 blk_run_queue_async(q);
+> =A0}
+Looks the dm request based flush logic is broken.
 
-It does?  If I apply the patch, the system dies while booting when
-scanning the volume groups:
+saved_make_request_fn
+  __make_request
+    blk_insert_flush
+but blk_insert_flush doesn't put the original request to list, instead, the
+q->flush_rq is in list.
+then
+dm_request_fn
+  blk_peek_request
+    dm_prep_fn
+      clone_rq
+  map_request
+    blk_insert_cloned_request
+so q->flush_rq is cloned, and get dispatched. but we can't clone q->flush_r=
+q
+and use it to do flush. map_request even could assign a different blockdev =
+to
+the cloned request.
 
-Setting up LVM Volume GroupsBUG: unable to handle kernel NULL pointer
-dereference at 0000000000000308
-IP: [<ffffffff8130675b>] sd_prep_fn+0x16b/0xa70
-PGD 9c96c067 PUD 9f69f067 PMD 0 
-Oops: 0000 [#1] PREEMPT SMP 
-CPU 14 
-Modules linked in: dm_round_robin dm_multipath ebtable_filter ebtables
-x_tables nf_nat_tftp nf_conntrack_tftp nf_nat_sip nf_conntrack_sip
-nf_nat_irc nf_conntrack_irc nf_nat_h323 nf_conntrack_h323 nf_nat_ftp
-nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_conntrack_ftp nf_conntrack
-xen_netback xen_blkback xen_gntdev ipmi_si ipmi_devintf ipmi_msghandler
-loop tpm_tis tpm igb tpm_bios ohci_hcd e1000e pata_atiixp qla2xxx
-scsi_transport_fc i2c_piix4 ehci_hcd
+Clone q->flush_rq is absolutely wrong. we can clear ogirinal request's flus=
+h bit
+and set cloned request flush bit, so we can skip the blk_insert_flush logic=
+ for
+original request.
 
-Pid: 2520, comm: kpartx Not tainted 3.1.0-rc8 #1 Supermicro
-H8DG6/H8DGi/H8DG6/H8DGi
-RIP: e030:[<ffffffff8130675b>]  [<ffffffff8130675b>] sd_prep_fn
-+0x16b/0xa70
-RSP: e02b:ffff88009c973918  EFLAGS: 00010086
-RAX: 0000000000000000 RBX: ffff88009cea0018 RCX: 0000000000001000
-RDX: 0000000000000000 RSI: ffff88009e61d440 RDI: 0000000000000000
-RBP: ffff88009c973978 R08: ffff8800a0b40700 R09: 0000000000000001
-R10: 0000000000000001 R11: ffff88009e61d440 R12: ffff8800a042b480
-R13: 0000000000000000 R14: ffff88009ee7c000 R15: 0000000000000000
-FS:  00007f7d769617a0(0000) GS:ffff8800d74cf000(0000)
-knlGS:0000000000000000
-CS:  e033 DS: 0000 ES: 0000 CR0: 000000008005003b
-CR2: 0000000000000308 CR3: 000000009c979000 CR4: 0000000000000660
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Process kpartx (pid: 2520, threadinfo ffff88009c972000, task
-ffff88009c898000)
-Stack:
- ffff88009c973928 ffffffff810ceef0 0000000000000000 ffffffff00001000
- 0000000000000000 ffff8800a0b72a00 ffff88009c898000 ffff88009cea0018
- ffff8800a042b480 ffff88009cea0018 ffff88009c972000 ffff88009c973fd8
-Call Trace:
- [<ffffffff810ceef0>] ? mempool_alloc_slab+0x10/0x20
- [<ffffffff81215e72>] blk_peek_request+0xd2/0x270
- [<ffffffff812f8acb>] scsi_request_fn+0x4b/0x3c0
- [<ffffffff8120fa46>] __blk_run_queue+0x16/0x20
- [<ffffffff8120ef03>] __elv_add_request+0xb3/0x270
- [<ffffffff81213494>] add_acct_request+0x34/0x40
- [<ffffffff812134fd>] blk_insert_cloned_request+0x5d/0x80
- [<ffffffff8138bff9>] dm_dispatch_request+0x39/0x70
- [<ffffffff8138db3c>] dm_request_fn+0x17c/0x280
- [<ffffffff81214f98>] queue_unplugged+0x48/0x100
- [<ffffffff81216335>] blk_flush_plug_list+0x1e5/0x230
- [<ffffffff8100b30f>] ? xen_restore_fl_direct_reloc+0x4/0x4
- [<ffffffff810ccac0>] ? sleep_on_page+0x10/0x10
- [<ffffffff814c0704>] io_schedule+0x44/0x80
- [<ffffffff810ccac9>] sleep_on_page_killable+0x9/0x40
- [<ffffffff814c0d42>] __wait_on_bit_lock+0x52/0xb0
- [<ffffffff8114b7a0>] ? I_BDEV+0x10/0x10
- [<ffffffff810cca32>] __lock_page_killable+0x62/0x70
- [<ffffffff81075330>] ? autoremove_wake_function+0x40/0x40
- [<ffffffff810ce608>] generic_file_aio_read+0x718/0x750
- [<ffffffff810053c9>] ? __raw_callee_save_xen_pmd_val+0x11/0x1e
- [<ffffffff81118142>] do_sync_read+0xd2/0x110
- [<ffffffff8114b9fc>] ? block_ioctl+0x3c/0x40
- [<ffffffff81129bd6>] ? do_vfs_ioctl+0x96/0x4f0
- [<ffffffff811188c3>] vfs_read+0xc3/0x170
- [<ffffffff811189bc>] sys_read+0x4c/0x90
- [<ffffffff814c9612>] system_call_fastpath+0x16/0x1b
-Code: 4c 89 f7 48 89 55 b0 89 4d b8 e8 b1 16 ff ff 85 c0 41 89 c5 48 8b
-55 b0 8b 4d b8 0f 85 00 ff ff ff 4d 85 f6 4c 8b 83 d8 00 00 00 <4c> 8b
-8a 08 03 00 00 0f 84 c0 02 00 00 41 8b 86 10 06 00 00 31 
-RIP  [<ffffffff8130675b>] sd_prep_fn+0x16b/0xa70
- RSP <ffff88009c973918>
-CR2: 0000000000000308
----[ end trace 7def99230bac37fd ]---
+can you please try this patch. Only compilation tested.
 
+Thanks,
+Shaohua
 
-	Christophe
+--20cf3005dd103b164204aec77eb7
+Content-Type: text/x-patch; charset=US-ASCII; name="block-cloned-request-flush.patch"
+Content-Disposition: attachment; filename="block-cloned-request-flush.patch"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_gtii0fna0
+
+U2lnbmVkLW9mZi1ieTogU2hhb2h1YSBMaSA8c2hhb2h1YS5saUBpbnRlbC5jb20+CgpkaWZmIC0t
+Z2l0IGEvZHJpdmVycy9tZC9kbS5jIGIvZHJpdmVycy9tZC9kbS5jCmluZGV4IDUyYjM5ZjMuLjA3
+YTkzMGQgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbWQvZG0uYworKysgYi9kcml2ZXJzL21kL2RtLmMK
+QEAgLTE0MjQsNiArMTQyNCwxMyBAQCBzdGF0aWMgaW50IGRtX21ha2VfcmVxdWVzdChzdHJ1Y3Qg
+cmVxdWVzdF9xdWV1ZSAqcSwgc3RydWN0IGJpbyAqYmlvKQogewogCXN0cnVjdCBtYXBwZWRfZGV2
+aWNlICptZCA9IHEtPnF1ZXVlZGF0YTsKIAorCWlmIChiaW8tPmJpX3J3ICYgKFJFUV9GTFVTSCB8
+IFJFUV9GVUEpKSB7CisJCWlmIChiaW8tPmJpX3J3ICYgUkVRX0ZMVVNIKQorCQkJYmlvLT5iaV9y
+dyB8PSBSRVFfQ0xPTkVEX0ZMVVNIOworCQlpZiAoYmlvLT5iaV9ydyAmIFJFUV9GVUEpCisJCQli
+aW8tPmJpX3J3IHw9IFJFUV9DTE9ORURfRlVBOworCQliaW8tPmJpX3J3ICY9IH4oUkVRX0ZMVVNI
+fFJFUV9GVUEpOworCX0KIAlyZXR1cm4gbWQtPnNhdmVkX21ha2VfcmVxdWVzdF9mbihxLCBiaW8p
+OyAvKiBjYWxsIF9fbWFrZV9yZXF1ZXN0KCkgKi8KIH0KIApAQCAtMTU0Nyw2ICsxNTU0LDE0IEBA
+IHN0YXRpYyBpbnQgZG1fcHJlcF9mbihzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSwgc3RydWN0IHJl
+cXVlc3QgKnJxKQogCWlmICghY2xvbmUpCiAJCXJldHVybiBCTEtQUkVQX0RFRkVSOwogCisJaWYg
+KHJxLT5jbWRfZmxhZ3MgJiBSRVFfQ0xPTkVEX0ZMVVNIKQorCQljbG9uZS0+Y21kX2ZsYWdzIHw9
+IFJFUV9GTFVTSDsKKwlpZiAocnEtPmNtZF9mbGFncyAmIFJFUV9DTE9ORURfRlVBKQorCQljbG9u
+ZS0+Y21kX2ZsYWdzIHw9IFJFUV9GVUE7CisKKwlycS0+Y21kX2ZsYWdzICY9ICB+KFJFUV9GTFVT
+SHxSRVFfRlVBKTsKKwljbG9uZS0+Y21kX2ZsYWdzICY9ICB+KFJFUV9GTFVTSHxSRVFfRlVBKTsK
+KwogCXJxLT5zcGVjaWFsID0gY2xvbmU7CiAJcnEtPmNtZF9mbGFncyB8PSBSRVFfRE9OVFBSRVA7
+CiAKZGlmZiAtLWdpdCBhL2luY2x1ZGUvbGludXgvYmxrX3R5cGVzLmggYi9pbmNsdWRlL2xpbnV4
+L2Jsa190eXBlcy5oCmluZGV4IDcxZmM1M2IuLjZlZjVkYzMgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUv
+bGludXgvYmxrX3R5cGVzLmgKKysrIGIvaW5jbHVkZS9saW51eC9ibGtfdHlwZXMuaApAQCAtMTUz
+LDYgKzE1Myw4IEBAIGVudW0gcnFfZmxhZ19iaXRzIHsKIAlfX1JFUV9GTFVTSF9TRVEsCS8qIHJl
+cXVlc3QgZm9yIGZsdXNoIHNlcXVlbmNlICovCiAJX19SRVFfSU9fU1RBVCwJCS8qIGFjY291bnQg
+SS9PIHN0YXQgKi8KIAlfX1JFUV9NSVhFRF9NRVJHRSwJLyogbWVyZ2Ugb2YgZGlmZmVyZW50IHR5
+cGVzLCBmYWlsIHNlcGFyYXRlbHkgKi8KKwlfX1JFUV9DTE9ORURfRkxVU0gsCisJX19SRVFfQ0xP
+TkVEX0ZVQSwKIAlfX1JFUV9OUl9CSVRTLAkJLyogc3RvcHMgaGVyZSAqLwogfTsKIApAQCAtMTcw
+LDcgKzE3Miw3IEBAIGVudW0gcnFfZmxhZ19iaXRzIHsKIAkoUkVRX0ZBSUxGQVNUX0RFViB8IFJF
+UV9GQUlMRkFTVF9UUkFOU1BPUlQgfCBSRVFfRkFJTEZBU1RfRFJJVkVSKQogI2RlZmluZSBSRVFf
+Q09NTU9OX01BU0sgXAogCShSRVFfV1JJVEUgfCBSRVFfRkFJTEZBU1RfTUFTSyB8IFJFUV9TWU5D
+IHwgUkVRX01FVEEgfCBSRVFfUFJJTyB8IFwKLQkgUkVRX0RJU0NBUkQgfCBSRVFfTk9JRExFIHwg
+UkVRX0ZMVVNIIHwgUkVRX0ZVQSB8IFJFUV9TRUNVUkUpCisJIFJFUV9ESVNDQVJEIHwgUkVRX05P
+SURMRSB8IFJFUV9GTFVTSCB8IFJFUV9GVUEgfCBSRVFfU0VDVVJFIHwgUkVRX0NMT05FRF9GTFVT
+SCB8IFJFUV9DTE9ORURfRlVBKQogI2RlZmluZSBSRVFfQ0xPTkVfTUFTSwkJUkVRX0NPTU1PTl9N
+QVNLCiAKICNkZWZpbmUgUkVRX1JBSEVBRAkJKDEgPDwgX19SRVFfUkFIRUFEKQpAQCAtMTk0LDUg
+KzE5Niw3IEBAIGVudW0gcnFfZmxhZ19iaXRzIHsKICNkZWZpbmUgUkVRX0lPX1NUQVQJCSgxIDw8
+IF9fUkVRX0lPX1NUQVQpCiAjZGVmaW5lIFJFUV9NSVhFRF9NRVJHRQkJKDEgPDwgX19SRVFfTUlY
+RURfTUVSR0UpCiAjZGVmaW5lIFJFUV9TRUNVUkUJCSgxIDw8IF9fUkVRX1NFQ1VSRSkKKyNkZWZp
+bmUgUkVRX0NMT05FRF9GTFVTSAkoMSA8PCBfX1JFUV9DTE9ORURfRkxVU0gpCisjZGVmaW5lIFJF
+UV9DTE9ORURfRlVBCQkoMSA8PCBfX1JFUV9DTE9ORURfRlVBKQogCiAjZW5kaWYgLyogX19MSU5V
+WF9CTEtfVFlQRVNfSCAqLwo=
+--20cf3005dd103b164204aec77eb7--
