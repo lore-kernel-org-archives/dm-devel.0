@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath discovery.c structs.h
-Date: 10 Oct 2011 03:03:18 -0000
-Message-ID: <20111010030318.15102.qmail@sourceware.org>
+Subject: multipath-tools kpartx/devmapper.c kpartx/devm ...
+Date: 10 Oct 2011 03:11:34 -0000
+Message-ID: <20111010031134.17101.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,78 +22,117 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2011-10-10 03:03:18
+Changes by:	bmarzins@sourceware.org	2011-10-10 03:11:32
 
 Modified files:
-	libmultipath   : discovery.c structs.h 
+	kpartx         : devmapper.c devmapper.h kpartx.c 
+	libmultipath   : devmapper.c 
+	multipath      : multipath.rules 
 
 Log message:
-	Fix for bz #650759. tgt_node_name wasn't working for iscsi devices.  multipath
-	now tries
-	devices/platform/host<x>/session<y>/iscsi_session:session<y>/targetname
-	
-	if
-	
-	class/fc_transport/target<x>:<y>:<z>/node_name
-	
-	fails.
+	Fix for BZ #655203. When multipath tries to delete a multipath device, but
+	fails, it does not restore the already deleted kpartx path devices.  Multipath
+	now suspends and resumes the device if it fail to delete it, in order to send
+	a change event, which will cause udev to rerun kpartx.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.21&r2=1.32.2.22
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/structs.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.9&r2=1.18.2.10
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.8.2.2&r2=1.8.2.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/devmapper.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/kpartx.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.9.2.5&r2=1.9.2.6
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.22.2.9&r2=1.22.2.10
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.rules.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.3&r2=1.11.2.4
 
---- multipath-tools/libmultipath/discovery.c	2011/07/20 21:24:52	1.32.2.21
-+++ multipath-tools/libmultipath/discovery.c	2011/10/10 03:03:17	1.32.2.22
-@@ -733,15 +733,35 @@
- 		condlog(0, "attr_path too small");
- 		return 1;
- 	}
--	if (!(attr = sysfs_open_attribute(attr_path)))
--		return 0;
--
--	if (sysfs_read_attribute(attr))
--		goto err;
--
-+	if (!(attr = sysfs_open_attribute(attr_path)) ||
-+	    sysfs_read_attribute(attr)) {
-+		unsigned int checkhost, session;
-+		if (attr)
-+			goto err;
-+		if (safe_sprintf(attr_path,
-+				 "%s/devices/platform/host%%u/session%%u/",
-+				 sysfs_path)) {
-+			condlog(0, "attr_path too small");
-+			return 1;
-+		}
-+		if (sscanf(attr_buff, attr_path, &checkhost, &session) != 2)
-+			return 0;
-+		if (checkhost != pp->sg_id.host_no)
-+			return 0;
-+		if (safe_sprintf(attr_path, "%s/devices/platform/host%u/session%u/iscsi_session:session%u/targetname", sysfs_path, checkhost, session, session)) {
-+			condlog(0, "attr_path too small");
-+			return 1;
-+		}
-+		if (!(attr = sysfs_open_attribute(attr_path)))
-+			return 0;
-+		if (sysfs_read_attribute(attr))
-+			goto err;
-+	}
- 	if (attr->len > 0)
- 		strncpy(pp->tgt_node_name, attr->value, attr->len - 1);
+--- multipath-tools/kpartx/devmapper.c	2009/10/01 22:53:11	1.8.2.2
++++ multipath-tools/kpartx/devmapper.c	2011/10/10 03:11:32	1.8.2.3
+@@ -52,7 +52,7 @@
+ }
  
-+	sysfs_close_attribute(attr);
-+
- 	condlog(3, "%s: tgt_node_name = %s",
- 		pp->dev, pp->tgt_node_name);
+ extern int
+-dm_simplecmd (int task, const char *name) {
++dm_simplecmd (int task, const char *name, int no_flush) {
+ 	int r = 0;
+ 	struct dm_task *dmt;
  
---- multipath-tools/libmultipath/structs.h	2011/02/18 18:27:00	1.18.2.9
-+++ multipath-tools/libmultipath/structs.h	2011/10/10 03:03:17	1.18.2.10
+@@ -63,6 +63,9 @@
+ 		goto out;
+ 
+ 	dm_task_no_open_count(dmt);
++	dm_task_skip_lockfs(dmt);       /* for DM_DEVICE_RESUME */
++	if (no_flush)
++		dm_task_no_flush(dmt);       /* for DM_DEVICE_SUSPEND/RESUME */
+ 
+ 	r = dm_task_run(dmt);
+ 
+--- multipath-tools/kpartx/devmapper.h	2009/10/01 22:53:11	1.5.2.2
++++ multipath-tools/kpartx/devmapper.h	2011/10/10 03:11:32	1.5.2.3
 @@ -5,7 +5,7 @@
+ #define MKDEV(ma,mi)    ((mi & 0xff) | (ma << 8) | ((mi & ~0xff) << 12))
  
- #define WWID_SIZE		128
- #define SERIAL_SIZE		64
--#define NODE_NAME_SIZE		19
-+#define NODE_NAME_SIZE		224
- #define PATH_STR_SIZE  		16
- #define PARAMS_SIZE		1024
- #define FILE_NAME_SIZE		256
+ int dm_prereq (char *, int, int, int);
+-int dm_simplecmd (int, const char *);
++int dm_simplecmd (int, const char *, int);
+ int dm_addmap (int, const char *, const char *, const char *, uint64_t,
+ 	       const char *, int, mode_t, uid_t, gid_t);
+ int dm_map_present (char *);
+--- multipath-tools/kpartx/kpartx.c	2011/04/08 05:34:33	1.9.2.5
++++ multipath-tools/kpartx/kpartx.c	2011/10/10 03:11:32	1.9.2.6
+@@ -388,7 +388,8 @@
+ 				if (!slices[j].size || !dm_map_present(partname))
+ 					continue;
+ 
+-				if (!dm_simplecmd(DM_DEVICE_REMOVE, partname))
++				if (!dm_simplecmd(DM_DEVICE_REMOVE, partname,
++						  0))
+ 					continue;
+ 
+ 				if (verbose)
+@@ -434,7 +435,7 @@
+ 
+ 				if (op == DM_DEVICE_RELOAD)
+ 					dm_simplecmd(DM_DEVICE_RESUME,
+-							partname);
++							partname, 1);
+ 
+ 				if (verbose)
+ 					printf("add map %s : 0 %" PRIu64
+--- multipath-tools/libmultipath/devmapper.c	2010/04/16 22:08:02	1.22.2.9
++++ multipath-tools/libmultipath/devmapper.c	2011/10/10 03:11:32	1.22.2.10
+@@ -503,6 +503,8 @@
+ 
+ 	if (dm_get_opencount(mapname)) {
+ 		condlog(2, "%s: map in use", mapname);
++		r = dm_simplecmd(DM_DEVICE_SUSPEND, mapname, 1);
++		r = dm_simplecmd(DM_DEVICE_RESUME, mapname, 1);
+ 		return 1;
+ 	}	
+ 
+@@ -512,6 +514,8 @@
+ 		condlog(4, "multipath map %s removed", mapname);
+ 		return 0;
+ 	}
++	dm_simplecmd(DM_DEVICE_SUSPEND, mapname, 1);
++	dm_simplecmd(DM_DEVICE_RESUME, mapname, 1);
+ 	return 1;
+ }
+ 
+--- multipath-tools/multipath/multipath.rules	2010/08/23 22:06:58	1.11.2.3
++++ multipath-tools/multipath/multipath.rules	2011/10/10 03:11:32	1.11.2.4
+@@ -1,12 +1,16 @@
+ # multipath wants the devmaps presented as meaninglful device names
+ # so name them after their devmap name
+ SUBSYSTEM!="block", GOTO="end_mpath"
+-# KERNEL!="dm-[0-9]*", ACTION=="add", PROGRAM=="/bin/bash -c '/sbin/lsmod | /bin/grep ^dm_multipath'", RUN+="/sbin/multipath -v0 %M:%m"
+ KERNEL!="dm-[0-9]*", GOTO="end_mpath"
+ PROGRAM!="/sbin/mpath_wait %M %m", GOTO="end_mpath"
+ PROGRAM!="/sbin/dmsetup info -c --noheadings -j %M -m %m", GOTO="end_mpath"
+ RESULT!="*:*:*:*:*:*:*:mpath-*", GOTO="kpartx_check"
+-PROGRAM=="/sbin/dmsetup info -c --noheadings -o name -j %M -m %m", RESULT=="?*", NAME="%k", SYMLINK="mpath/%c", RUN+="/bin/bash -c '/sbin/mpath_wait /dev/mapper/%c; /sbin/kpartx -a -p p /dev/mapper/%c'"
++PROGRAM!="/sbin/dmsetup info -c --noheadings -o name -j %M -m %m", GOTO="end_mpath"
++RESULT!="?*", GOTO="end_mpath"
++NAME="%k", SYMLINK="mpath/%c"
++ACTION!="change", GOTO="skip_kpartx"
++RUN+="/bin/bash -c '/sbin/mpath_wait /dev/mapper/%c; /sbin/kpartx -a -p p /dev/mapper/%c'"
++LABEL="skip_kpartx"
+ OPTIONS="last_rule"
+ LABEL="kpartx_check"
+ RESULT!="*:*:*:*:*:*:*:part*-mpath-*", GOTO="end_mpath"
