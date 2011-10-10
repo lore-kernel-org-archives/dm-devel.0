@@ -1,38 +1,99 @@
-From: Christophe Saout <christophe@saout.de>
-Subject: Re: Block regression since 3.1-rc3
-Date: Sun, 09 Oct 2011 15:47:06 +0200
-Message-ID: <1318168026.24616.5.camel@localhost>
-References: <1317397918.27140.15.camel@localhost>
-	 <x49pqieyw2f.fsf@segfault.boston.devel.redhat.com>
-	 <1317729761.25998.4.camel@localhost>
-	 <x49bottoq57.fsf@segfault.boston.devel.redhat.com>
-	 <CANejiEXnXJ7LkyqHyH1S2c4A95Si7v0-gDmRD824r3ROntaDCA@mail.gmail.com>
-	 <20111008161421.GA5743@redhat.com>
-	 <CANejiEXzPp4TvLsZ0VXN9EicMgkHXfkhpLcuXzVvoEH5MJfQuQ@mail.gmail.com>
-	 <CANejiEV+Joc7qvWr1DF4cOR61GKy8MLX4TT4oWh7pxMkhb74Qg@mail.gmail.com>
-	 <1318147923.22902.3.camel@localhost>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath discovery.c structs.h
+Date: 10 Oct 2011 03:03:18 -0000
+Message-ID: <20111010030318.15102.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1318147923.22902.3.camel@localhost>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Shaohua Li <shli@kernel.org>, Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>, Jens@redhat.com, device-mapper@redhat.com, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello again,
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2011-10-10 03:03:18
 
-> Also for the record: Jeff's patch causes other crashes on my machine
-> (already posted), so while it might be fine from a technical point of
-> view, it still has issues in its current form. Jeff is working on it.
+Modified files:
+	libmultipath   : discovery.c structs.h 
 
-I have to apologize.  Looks like I made a mistake the first time I tried
-Jeff's patch.  Shaohua asked me to check again and this time the box
-runs nicely.  I probably forgot something stupid like a modules_install.
+Log message:
+	Fix for bz #650759. tgt_node_name wasn't working for iscsi devices.  multipath
+	now tries
+	devices/platform/host<x>/session<y>/iscsi_session:session<y>/targetname
+	
+	if
+	
+	class/fc_transport/target<x>:<y>:<z>/node_name
+	
+	fails.
 
-The patch that Jeff posted is actually working.  Mea culpa.  Sorry for
-the fuzz!
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.21&r2=1.32.2.22
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/structs.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.9&r2=1.18.2.10
 
-Thanks,
-	Christophe
+--- multipath-tools/libmultipath/discovery.c	2011/07/20 21:24:52	1.32.2.21
++++ multipath-tools/libmultipath/discovery.c	2011/10/10 03:03:17	1.32.2.22
+@@ -733,15 +733,35 @@
+ 		condlog(0, "attr_path too small");
+ 		return 1;
+ 	}
+-	if (!(attr = sysfs_open_attribute(attr_path)))
+-		return 0;
+-
+-	if (sysfs_read_attribute(attr))
+-		goto err;
+-
++	if (!(attr = sysfs_open_attribute(attr_path)) ||
++	    sysfs_read_attribute(attr)) {
++		unsigned int checkhost, session;
++		if (attr)
++			goto err;
++		if (safe_sprintf(attr_path,
++				 "%s/devices/platform/host%%u/session%%u/",
++				 sysfs_path)) {
++			condlog(0, "attr_path too small");
++			return 1;
++		}
++		if (sscanf(attr_buff, attr_path, &checkhost, &session) != 2)
++			return 0;
++		if (checkhost != pp->sg_id.host_no)
++			return 0;
++		if (safe_sprintf(attr_path, "%s/devices/platform/host%u/session%u/iscsi_session:session%u/targetname", sysfs_path, checkhost, session, session)) {
++			condlog(0, "attr_path too small");
++			return 1;
++		}
++		if (!(attr = sysfs_open_attribute(attr_path)))
++			return 0;
++		if (sysfs_read_attribute(attr))
++			goto err;
++	}
+ 	if (attr->len > 0)
+ 		strncpy(pp->tgt_node_name, attr->value, attr->len - 1);
+ 
++	sysfs_close_attribute(attr);
++
+ 	condlog(3, "%s: tgt_node_name = %s",
+ 		pp->dev, pp->tgt_node_name);
+ 
+--- multipath-tools/libmultipath/structs.h	2011/02/18 18:27:00	1.18.2.9
++++ multipath-tools/libmultipath/structs.h	2011/10/10 03:03:17	1.18.2.10
+@@ -5,7 +5,7 @@
+ 
+ #define WWID_SIZE		128
+ #define SERIAL_SIZE		64
+-#define NODE_NAME_SIZE		19
++#define NODE_NAME_SIZE		224
+ #define PATH_STR_SIZE  		16
+ #define PARAMS_SIZE		1024
+ #define FILE_NAME_SIZE		256
