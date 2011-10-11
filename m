@@ -1,67 +1,85 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath: set ACT_RESIZE when the size has
-	changed
-Date: Mon, 10 Oct 2011 22:19:13 -0500
-Message-ID: <20111011031913.GV24133@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Block regression since 3.1-rc3
+Date: Tue, 11 Oct 2011 15:56:12 -0400
+Message-ID: <20111011195611.GA26277@redhat.com>
+References: <1317397918.27140.15.camel@localhost>
+ <x49pqieyw2f.fsf@segfault.boston.devel.redhat.com>
+ <1317729761.25998.4.camel@localhost>
+ <x49bottoq57.fsf@segfault.boston.devel.redhat.com>
+ <CANejiEXnXJ7LkyqHyH1S2c4A95Si7v0-gDmRD824r3ROntaDCA@mail.gmail.com>
+ <20111008161421.GA5743@redhat.com>
+ <20111010213316.GM8100@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
+In-Reply-To: <20111010213316.GM8100@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Shaohua Li <shli@kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Jens Axboe <axboe@kernel.dk>, device-mapper development <dm-devel@redhat.com>, Christophe Saout <christophe@saout.de>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-When the multipath path devices change size, multipath can't be reloaded
-with noflush set.  So, don't set the action to ACT_RELOAD, which will
-cause the multipath device to get stuck in SUSPEND. Use ACT_RESIZE.
+On Mon, Oct 10 2011 at  5:33pm -0400,
+Tejun Heo <tj@kernel.org> wrote:
 
-Also, I was seeing some messages that were getting cut off with the
-128 byte messages size, so I doubled that, and the log area size.
+> Hello, Mike.
+> 
+> On Sat, Oct 08, 2011 at 12:14:21PM -0400, Mike Snitzer wrote:
+> > Unless others have an immediate ah-ha moment, I'd suggest we revert
+> > commit 4853abaae7e4a2a (block: fix flush machinery for stacking drivers
+> > with differring flush flags).  Whereby avoiding unnecessarily reentering
+> > the flush machinery.
+> 
+> I don't object to the immediate fix but think that adding such special
+> case is gonna make the thing even more brittle and make future changes
+> even more difficult.  Those one off cases tend to cause pretty severe
+> headache when someone wants to evolve common code, so let's please
+> find out what went wrong and fix it properly so that everyone follows
+> the same set of rules.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/configure.c |    4 ++--
- libmultipath/log.h       |    4 ++--
- 2 files changed, 4 insertions(+), 4 deletions(-)
+Are you referring to Jeff's fix as "the immediate fix"?  Christophe
+seems to have had success with it after all.
 
-Index: multipath-tools-111010/libmultipath/configure.c
-===================================================================
---- multipath-tools-111010.orig/libmultipath/configure.c
-+++ multipath-tools-111010/libmultipath/configure.c
-@@ -193,8 +193,8 @@ select_action (struct multipath * mpp, v
- 		return;
- 	}
- 	if (cmpp->size != mpp->size) {
--		mpp->action = ACT_RELOAD;
--		condlog(3, "%s: set ACT_RELOAD (size change)",
-+		mpp->action = ACT_RESIZE;
-+		condlog(3, "%s: set ACT_RESIZE (size change)",
- 			mpp->alias);
- 		return;
- 	}
-Index: multipath-tools-111010/libmultipath/log.h
-===================================================================
---- multipath-tools-111010.orig/libmultipath/log.h
-+++ multipath-tools-111010/libmultipath/log.h
-@@ -1,8 +1,8 @@
- #ifndef LOG_H
- #define LOG_H
- 
--#define DEFAULT_AREA_SIZE 8192
--#define MAX_MSG_SIZE 128
-+#define DEFAULT_AREA_SIZE 16384
-+#define MAX_MSG_SIZE 256
- 
- #ifndef LOGLEVEL
- #define LOGLEVEL 5
+As for the special case that you're suggesting makes the code more
+brittle, etc.  If you could be more specific that'd be awesome.
+
+Jeff asked a question about the need to kick the queue in this case (as
+he didn't feel he had a proper justification for why it was needed).
+
+If we can get a proper patch header together to justify Jeff's patch
+that'd be great.  And then revisit any of the special casing you'd like
+us to avoid in >= 3.2?
+
+(we're obviously _very_ short on time for a 3.1 fix right now).
+
+> > If commit ed8b752bccf256 (dm table: set flush capability based on
+> > underlying devices) is in place the flush gets fed directly to
+> > scsi_request_fn, which is fine because the request-based DM's
+> > request_queue's flush_flags reflect the flush capabilities of the
+> > underlying device(s).
+> > 
+> > We are then covered relative to the only request-based DM use-case
+> > people care about (e.g. dm-multipath, which doesn't use stacked
+> > request-based DM).
+> > 
+> > We can revisit upholding the purity of the flush machinery for stacked
+> > devices in >= 3.2.
+> 
+> Hmmm... another rather nasty assumption the current flush code makes
+> is that every flush request has either zero or single bio attached to
+> it.  The assumption has always been there for quite some time now.
+
+OK.
+
+> That somehow seems broken by request based dm (either that or wrong
+> request is taking INSERT_FLUSH path).
+
+Where was this issue of a flush having multiple bios reported?
+
+> Is it possible that a rq /w single bio can end up with multiple bios
+> after cloning?
+
+No, blk_rq_prep_clone() just clones the bio(s) that are attached to the
+request being cloned.
+
+Mike
