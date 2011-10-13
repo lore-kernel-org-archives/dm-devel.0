@@ -1,13 +1,14 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 0 of 2] DM log userspace: Allow DM_ULOG_CTR
- exchange to accept devices for register
-Date: Thu, 13 Oct 2011 14:15:12 -0500
-Message-ID: <1318533312.28595.4.camel@f14.redhat.com>
+Subject: [PATCH 1 of 2] DM log userspace: Minor fix-ups
+Date: Thu, 13 Oct 2011 14:16:34 -0500
+Message-ID: <1318533394.28595.6.camel@f14.redhat.com>
+References: <1318533312.28595.4.camel@f14.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1318533312.28595.4.camel@f14.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,11 +21,42 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The following two patches allow the dm-log-userspace module to have a
-two-way communication when DM_ULOG_CTR is issued.  The outbound (kernel
--> userspace) msg sends the CTR information necessary to build the log
-device.  The new inbound (userspace -> kernel) msg sends the log device
-name to the kernel so the kernel can call 'dm_get_device' on it.  This
-allows the necessary device dependencies to be built.
+dm-log-userspace: use kzalloc instead of kmalloc (plus some comment fixes)
 
- brassow
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+
+Index: linux-upstream/drivers/md/dm-log-userspace-base.c
+===================================================================
+--- linux-upstream.orig/drivers/md/dm-log-userspace-base.c
++++ linux-upstream/drivers/md/dm-log-userspace-base.c
+@@ -146,7 +146,7 @@ static int build_constructor_string(stru
+  *	<UUID> <other args>
+  * Where 'other args' is the userspace implementation specific log
+  * arguments.  An example might be:
+- *	<UUID> clustered_disk <arg count> <log dev> <region_size> [[no]sync]
++ *	<UUID> clustered-disk <arg count> <log dev> <region_size> [[no]sync]
+  *
+  * So, this module will strip off the <UUID> for identification purposes
+  * when communicating with userspace about a log; but will pass on everything
+@@ -167,7 +167,7 @@ static int userspace_ctr(struct dm_dirty
+ 		return -EINVAL;
+ 	}
+ 
+-	lc = kmalloc(sizeof(*lc), GFP_KERNEL);
++	lc = kzalloc(sizeof(*lc), GFP_KERNEL);
+ 	if (!lc) {
+ 		DMWARN("Unable to allocate userspace log context.");
+ 		return -ENOMEM;
+Index: linux-upstream/Documentation/device-mapper/dm-log.txt
+===================================================================
+--- linux-upstream.orig/Documentation/device-mapper/dm-log.txt
++++ linux-upstream/Documentation/device-mapper/dm-log.txt
+@@ -48,7 +48,7 @@ kernel and userspace, 'connector' is use
+ communication.
+ 
+ There are currently two userspace log implementations that leverage this
+-framework - "clustered_disk" and "clustered_core".  These implementations
++framework - "clustered-disk" and "clustered-core".  These implementations
+ provide a cluster-coherent log for shared-storage.  Device-mapper mirroring
+ can be used in a shared-storage environment when the cluster log implementations
+ are employed.
