@@ -1,40 +1,34 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH 2/2] blk-flush: fix invalid BUG_ON in blk_insert_flush
-Date: Wed, 12 Oct 2011 15:18:28 -0700
-Message-ID: <20111012221828.GI6281@google.com>
-References: <1318454562-25291-1-git-send-email-jmoyer@redhat.com>
- <1318454562-25291-3-git-send-email-jmoyer@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: dm-bufio
+Date: Thu, 13 Oct 2011 11:05:51 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1110131102540.25329@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1318454562-25291-3-git-send-email-jmoyer@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jeff Moyer <jmoyer@redhat.com>
-Cc: linux-kernel@vger.kernel.org, jaxboe@fusionio.com, christophe@saout.de, dm-devel@redhat.com, msnitzer@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Edward Thornber <thornber@redhat.com>
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 12, 2011 at 05:22:42PM -0400, Jeff Moyer wrote:
-> A user reported a regression due to commit
-> 4853abaae7e4a2af938115ce9071ef8684fb7af4 (block: fix flush
-> machinery for stacking drivers with differring flush flags).
-> Part of the problem is that blk_insert_flush required a
-> single bio be attached to the request.  In reality, having
-> no attached bio is also a valid case, as can be observed with
-> an empty flush.
-> 
-> [1] http://www.redhat.com/archives/dm-devel/2011-September/msg00154.html
-> 
-> Reported-by: Christophe Saout <christophe@saout.de>
-> Signed-off-by: Jeff Moyer <jmoyer@redhat.com
-> Signed-off-by: Jeff Moyer <jmoyer@redhat.com>
+Hi
 
-Duplicate SOB's and missing space after '/*' in the comment.  Other
-than that,
+I found a way how to shut up lockdep warnings in dm-bufio, so you can 
+download new a version which uses nested locks from 
+http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/
 
- Acked-by: Tejun Heo <tj@kernel.org>
+BTW. why did you move dm-bufio to persistent-data directory? What are 
+other dm-bufio users (such as dm-zeroed or dm-multisnap) going to do? I 
+thought dm-bufio should be a separate module available to all device 
+mapper targets, such as dm-io, dm-kcopyd or so?
 
-Thanks.
-
--- 
-tejun
+Mikulas
