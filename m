@@ -1,7 +1,8 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: dm-bufio
-Date: Thu, 13 Oct 2011 11:05:51 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1110131102540.25329@hs20-bc2-1.build.redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH 0 of 2] DM log userspace: Allow DM_ULOG_CTR
+ exchange to accept devices for register
+Date: Thu, 13 Oct 2011 14:15:12 -0500
+Message-ID: <1318533312.28595.4.camel@f14.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,19 +17,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Edward Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+The following two patches allow the dm-log-userspace module to have a
+two-way communication when DM_ULOG_CTR is issued.  The outbound (kernel
+-> userspace) msg sends the CTR information necessary to build the log
+device.  The new inbound (userspace -> kernel) msg sends the log device
+name to the kernel so the kernel can call 'dm_get_device' on it.  This
+allows the necessary device dependencies to be built.
 
-I found a way how to shut up lockdep warnings in dm-bufio, so you can 
-download new a version which uses nested locks from 
-http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/
-
-BTW. why did you move dm-bufio to persistent-data directory? What are 
-other dm-bufio users (such as dm-zeroed or dm-multisnap) going to do? I 
-thought dm-bufio should be a separate module available to all device 
-mapper targets, such as dm-io, dm-kcopyd or so?
-
-Mikulas
+ brassow
