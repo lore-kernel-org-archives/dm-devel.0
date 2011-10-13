@@ -1,15 +1,15 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 2] DM log userspace: Allow CTR device
-	response
-Date: Thu, 13 Oct 2011 14:20:59 -0500
-Message-ID: <1318533659.28595.9.camel@f14.redhat.com>
-References: <1318533312.28595.4.camel@f14.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-bufio
+Date: Thu, 13 Oct 2011 15:40:01 -0400
+Message-ID: <20111013194001.GA12863@redhat.com>
+References: <Pine.LNX.4.64.1110131102540.25329@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1318533312.28595.4.camel@f14.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1110131102540.25329@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,154 +19,263 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Allow DM userspace logs to register their log device
+On Thu, Oct 13 2011 at 11:05am -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-When device mapper targets use a device, they register the device via
-'dm_get_device'.  Once registered, device dependency trees can be created
-in userspace.  These dependency trees are necessary for the proper operation
-of userspace applications, like LVM.  However, since the userspace logs don't
-have access to 'dm_get_device', any devices they use are not properly
-registered.
+> Hi
+> 
+> I found a way how to shut up lockdep warnings in dm-bufio, so you can 
+> download new a version which uses nested locks from 
+> http://people.redhat.com/mpatocka/patches/kernel/dm-thinp-bufio/
+> 
+> BTW. why did you move dm-bufio to persistent-data directory? What are 
+> other dm-bufio users (such as dm-zeroed or dm-multisnap) going to do? I 
+> thought dm-bufio should be a separate module available to all device 
+> mapper targets, such as dm-io, dm-kcopyd or so?
 
-I've change the DM_ULOG_CTR operation to allow userspace to respond with the
-name of the log device (if appropriate) to be registered via 'dm_get_device'.
-Doing so necessitated the increment of DM_ULOG_REQUEST_VERSION.  If the
-userspace log server does not use a log device, it can still return no data -
-i.e. no devices need to be registered.
+Here is a patch with your nested lock fix that applies to Joe's thin-dev
+branch (note that the dm-bufio in thin-dev branch has been cleaned up
+some so this took a bit of care; Mikulas would be nice if you reviewed
+those changes):
 
-This solution is backwards compatible from the userspace and kernel perspective.
-If the kernel and userspace log server have been updated, the new information
-will be passed down to the kernel; allowing the device to be registered.  If the
-kernel is new, but the log server is old; the log server will not pass down
-any device information and the kernel will simply bypass the device registration
-as before.  If the kernel is old but the log server is new, the log server will
-see the old version # and not pass down the device info.  (If it did pass the
-device name down in error, the kernel would report an error due to having
-insufficient space to accept the new information.)
+ drivers/md/persistent-data/dm-bufio.c |   71 ++++++++++++++++++++++-----------
+ 1 files changed, 48 insertions(+), 23 deletions(-)
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-
-Index: linux-upstream/drivers/md/dm-log-userspace-base.c
-===================================================================
---- linux-upstream.orig/drivers/md/dm-log-userspace-base.c
-+++ linux-upstream/drivers/md/dm-log-userspace-base.c
-@@ -30,6 +30,7 @@ struct flush_entry {
+diff --git a/drivers/md/persistent-data/dm-bufio.c b/drivers/md/persistent-data/dm-bufio.c
+index 6be4386..e7d1aac 100644
+--- a/drivers/md/persistent-data/dm-bufio.c
++++ b/drivers/md/persistent-data/dm-bufio.c
+@@ -151,6 +151,23 @@ static inline int dm_bufio_cache_index(struct dm_bufio_client *c)
+ #define DM_BUFIO_CACHE(c)	(dm_bufio_caches[dm_bufio_cache_index(c)])
+ #define DM_BUFIO_CACHE_NAME(c)	(dm_bufio_cache_names[dm_bufio_cache_index(c)])
  
- struct log_c {
- 	struct dm_target *ti;
-+	struct dm_dev *log_dev;
- 	uint32_t region_size;
- 	region_t region_count;
- 	uint64_t luid;
-@@ -161,6 +162,8 @@ static int userspace_ctr(struct dm_dirty
- 	struct log_c *lc = NULL;
- 	uint64_t rdata;
- 	size_t rdata_size = sizeof(rdata);
-+	char *devices_rdata = NULL;
-+	size_t devices_rdata_size = DM_NAME_LEN;
++#define dm_bufio_in_request()	(!!current->bio_list)
++
++static void dm_bufio_lock(struct dm_bufio_client *c)
++{
++	mutex_lock_nested(&c->lock, dm_bufio_in_request());
++}
++
++static int dm_bufio_trylock(struct dm_bufio_client *c)
++{
++	return dm_bufio_trylock(c);
++}
++
++static void dm_bufio_unlock(struct dm_bufio_client *c)
++{
++	dm_bufio_unlock(c);
++}
++
+ /*----------------------------------------------------------------*/
  
- 	if (argc < 3) {
- 		DMWARN("Too few arguments to userspace dirty log");
-@@ -195,9 +198,19 @@ static int userspace_ctr(struct dm_dirty
- 		return str_size;
+ /* Default cache size --- available memory divided by the ratio */
+@@ -595,14 +612,14 @@ static void __wait_for_free_buffer(struct dm_bufio_client *c)
+ 
+ 	add_wait_queue(&c->free_buffer_wait, &wait);
+ 	set_task_state(current, TASK_UNINTERRUPTIBLE);
+-	mutex_unlock(&c->lock);
++	dm_bufio_unlock(c);
+ 
+ 	io_schedule();
+ 
+ 	set_task_state(current, TASK_RUNNING);
+ 	remove_wait_queue(&c->free_buffer_wait, &wait);
+ 
+-	mutex_lock(&c->lock);
++	dm_bufio_lock(c);
+ }
+ 
+ /*
+@@ -836,9 +853,9 @@ static void *new_read(struct dm_bufio_client *c, sector_t block, enum new_flag n
+ 	int need_submit;
+ 	struct dm_buffer *b;
+ 
+-	mutex_lock(&c->lock);
++	dm_bufio_lock(c);
+ 	b = __bufio_new(c, block, nf, bp, &need_submit);
+-	mutex_unlock(&c->lock);
++	dm_bufio_unlock(c);
+ 
+ 	if (!b || IS_ERR(b))
+ 		return b;
+@@ -867,19 +884,21 @@ void *dm_bufio_get(struct dm_bufio_client *c, sector_t block,
+ void *dm_bufio_read(struct dm_bufio_client *c, sector_t block,
+ 		    struct dm_buffer **bp)
+ {
++	BUG_ON(dm_bufio_in_request());
+ 	return new_read(c, block, NF_READ, bp);
+ }
+ 
+ void *dm_bufio_new(struct dm_bufio_client *c, sector_t block,
+ 		   struct dm_buffer **bp)
+ {
++	BUG_ON(dm_bufio_in_request());
+ 	return new_read(c, block, NF_FRESH, bp);
+ }
+ 
+ void dm_bufio_release(struct dm_buffer *b)
+ {
+ 	struct dm_bufio_client *c = b->c;
+-	mutex_lock(&c->lock);
++	dm_bufio_lock(c);
+ 	BUG_ON(test_bit(B_READING, &b->state));
+ 	BUG_ON(!b->hold_count);
+ 	b->hold_count--;
+@@ -898,26 +917,27 @@ void dm_bufio_release(struct dm_buffer *b)
+ 			__free_buffer_wake(b);
+ 		}
+ 	}
+-	mutex_unlock(&c->lock);
++	dm_bufio_unlock(c);
+ }
+ 
+ void dm_bufio_mark_buffer_dirty(struct dm_buffer *b)
+ {
+ 	struct dm_bufio_client *c = b->c;
+ 
+-	mutex_lock(&c->lock);
++	dm_bufio_lock(c);
+ 
+ 	if (!test_and_set_bit(B_DIRTY, &b->state))
+ 		__relink_lru(b, LIST_DIRTY);
+ 
+-	mutex_unlock(&c->lock);
++	dm_bufio_unlock(c);
+ }
+ 
+ void dm_bufio_write_dirty_buffers_async(struct dm_bufio_client *c)
+ {
+-	mutex_lock(&c->lock);
++	BUG_ON(dm_bufio_in_request());
++	dm_bufio_lock(c);
+ 	__write_dirty_buffers_async(c, 0);
+-	mutex_unlock(&c->lock);
++	dm_bufio_unlock(c);
+ }
+ 
+ /*
+@@ -933,7 +953,7 @@ int dm_bufio_write_dirty_buffers(struct dm_bufio_client *c)
+ 	unsigned long buffers_processed = 0;
+ 	struct dm_buffer *b, *tmp;
+ 
+-	mutex_lock(&c->lock);
++	dm_bufio_lock(c);
+ 	__write_dirty_buffers_async(c, 0);
+ 
+ again:
+@@ -947,10 +967,10 @@ again:
+ 			if (buffers_processed < c->n_buffers[LIST_DIRTY]) {
+ 				dropped_lock = 1;
+ 				b->hold_count++;
+-				mutex_unlock(&c->lock);
++				dm_bufio_unlock(c);
+ 				wait_on_bit(&b->state, B_WRITING,
+ 					    do_io_schedule, TASK_UNINTERRUPTIBLE);
+-				mutex_lock(&c->lock);
++				dm_bufio_lock(c);
+ 				b->hold_count--;
+ 			} else
+ 				wait_on_bit(&b->state, B_WRITING,
+@@ -978,7 +998,7 @@ again:
+ 			goto again;
+ 	}
+ 	wake_up(&c->free_buffer_wait);
+-	mutex_unlock(&c->lock);
++	dm_bufio_unlock(c);
+ 
+ 	a = xchg(&c->async_write_error, 0);
+ 	f = dm_bufio_issue_flush(c);
+@@ -1003,6 +1023,7 @@ int dm_bufio_issue_flush(struct dm_bufio_client *c)
+ 		.sector = 0,
+ 		.count = 0,
+ 	};
++	BUG_ON(dm_bufio_in_request());
+ 	return dm_io(&io_req, 1, &io_reg, NULL);
+ }
+ 
+@@ -1023,7 +1044,9 @@ void dm_bufio_release_move(struct dm_buffer *b, sector_t new_block)
+ 	struct dm_bufio_client *c = b->c;
+ 	struct dm_buffer *new;
+ 
+-	mutex_lock(&c->lock);
++	BUG_ON(dm_bufio_in_request());
++
++	dm_bufio_lock(c);
+ 
+ retry:
+ 	new = __find(c, new_block);
+@@ -1054,7 +1077,7 @@ retry:
+ 		wait_on_bit(&b->state, B_WRITING,
+ 			    do_io_schedule, TASK_UNINTERRUPTIBLE);
+ 	}
+-	mutex_unlock(&c->lock);
++	dm_bufio_unlock(c);
+ 	dm_bufio_release(b);
+ }
+ 
+@@ -1094,10 +1117,12 @@ static void drop_buffers(struct dm_bufio_client *c)
+ 	struct dm_buffer *b;
+ 	int i;
+ 
++	BUG_ON(dm_bufio_in_request());
++
+ 	/* an optimization ... so that the buffers are not written one-by-one */
+ 	dm_bufio_write_dirty_buffers_async(c);
+ 
+-	mutex_lock(&c->lock);
++	dm_bufio_lock(c);
+ 	while ((b = __get_unclaimed_buffer(c)))
+ 		__free_buffer_wake(b);
+ 
+@@ -1110,7 +1135,7 @@ static void drop_buffers(struct dm_bufio_client *c)
+ 	for (i = 0; i < LIST_N; i++)
+ 		BUG_ON(!list_empty(&c->lru[i]));
+ 
+-	mutex_unlock(&c->lock);
++	dm_bufio_unlock(c);
+ }
+ 
+ /*
+@@ -1166,9 +1191,9 @@ static int shrink(struct shrinker *shrinker, struct shrink_control *sc)
+ 	unsigned long nr_to_scan = sc->nr_to_scan;
+ 
+ 	if (sc->gfp_mask & __GFP_IO) {
+-		mutex_lock(&c->lock);
++		dm_bufio_lock(c);
+ 	} else {
+-		if (!mutex_trylock(&c->lock))
++		if (!dm_bufio_trylock(c))
+ 			return !nr_to_scan ? 0 : -1;
  	}
  
--	/* Send table string */
-+	devices_rdata = kzalloc(devices_rdata_size, GFP_KERNEL);
-+	if (!devices_rdata) {
-+		DMERR("Failed to allocate memory for device information");
-+		r = -ENOMEM;
-+		goto out;
-+	}
-+
-+	/*
-+	 * Send table string and get back any required devices
-+	 */
- 	r = dm_consult_userspace(lc->uuid, lc->luid, DM_ULOG_CTR,
--				 ctr_str, str_size, NULL, NULL);
-+				 ctr_str, str_size,
-+				 devices_rdata, &devices_rdata_size);
+@@ -1179,7 +1204,7 @@ static int shrink(struct shrinker *shrinker, struct shrink_control *sc)
+ 	if (r > INT_MAX)
+ 		r = INT_MAX;
  
- 	if (r < 0) {
- 		if (r == -ESRCH)
-@@ -220,7 +233,25 @@ static int userspace_ctr(struct dm_dirty
- 	lc->region_size = (uint32_t)rdata;
- 	lc->region_count = dm_sector_div_up(ti->len, lc->region_size);
+-	mutex_unlock(&c->lock);
++	dm_bufio_unlock(c);
  
-+	if (devices_rdata_size) {
-+		/* Strings must be properly NULL terminated */
-+		if ((strlen(devices_rdata) + 1) != devices_rdata_size) {
-+			DMERR("CTR device return string not properly terminated: Auto-terminating");
-+			if (devices_rdata_size < DM_NAME_LEN)
-+				/* Add trailing NULL if enough space */
-+				devices_rdata[devices_rdata_size] = '\0';
-+			else
-+				devices_rdata[DM_NAME_LEN - 1] = '\0';
-+		}
-+		r = dm_get_device(ti, devices_rdata,
-+				  dm_table_get_mode(ti->table), &lc->log_dev);
-+		if (r)
-+			DMERR("Failed to register %s with device-mapper",
-+			      devices_rdata);
-+	}
- out:
-+	if (devices_rdata)
-+		kfree(devices_rdata);
- 	if (r) {
- 		kfree(lc);
- 		kfree(ctr_str);
-@@ -241,6 +272,9 @@ static void userspace_dtr(struct dm_dirt
- 				 NULL, 0,
- 				 NULL, NULL);
+ 	return r;
+ }
+@@ -1356,7 +1381,7 @@ static void cleanup_old_buffers(void)
  
-+	if (lc->log_dev)
-+		dm_put_device(lc->ti, lc->log_dev);
-+
- 	kfree(lc->usr_argv_str);
- 	kfree(lc);
+ 	mutex_lock(&dm_bufio_clients_lock);
+ 	list_for_each_entry(c, &dm_bufio_all_clients, client_list) {
+-		if (!mutex_trylock(&c->lock))
++		if (!dm_bufio_trylock(c))
+ 			continue;
  
-Index: linux-upstream/include/linux/dm-log-userspace.h
-===================================================================
---- linux-upstream.orig/include/linux/dm-log-userspace.h
-+++ linux-upstream/include/linux/dm-log-userspace.h
-@@ -52,15 +52,20 @@
-  * Payload-to-userspace:
-  *	A single string containing all the argv arguments separated by ' 's
-  * Payload-to-kernel:
-- *	None.  ('data_size' in the dm_ulog_request struct should be 0.)
-+ *	The name of the device that is used as the backing store for the log
-+ *      data.  'dm_get_device' will be called on this device.  ('dm_put_device'
-+ *      will be called on this device automatically after calling DM_ULOG_DTR.)
-+ *      If there is no device needed for log data, 'data_size' in the
-+ *      dm_ulog_request struct should be 0.
-  *
-  * The UUID contained in the dm_ulog_request structure is the reference that
-  * will be used by all request types to a specific log.  The constructor must
-- * record this assotiation with instance created.
-+ * record this assotiation with the instance created.
-  *
-  * When the request has been processed, user-space must return the
-- * dm_ulog_request to the kernel - setting the 'error' field and
-- * 'data_size' appropriately.
-+ * dm_ulog_request to the kernel - setting the 'error' field, filling the
-+ * data field with the log device if necessary, and setting 'data_size'
-+ * appropriately.
-  */
- #define DM_ULOG_CTR                    1
+ 		while (!list_empty(&c->lru[LIST_CLEAN])) {
+@@ -1367,7 +1392,7 @@ static void cleanup_old_buffers(void)
+ 				break;
+ 		}
  
-@@ -377,8 +382,11 @@
-  * dm_ulog_request or a change in the way requests are
-  * issued/handled.  Changes are outlined here:
-  *	version 1:  Initial implementation
-+ *	version 2:  DM_ULOG_CTR allowed to return a string containing a
-+ *	            device name that is to be registered with DM via
-+ *	            'dm_get_device'.
-  */
--#define DM_ULOG_REQUEST_VERSION 1
-+#define DM_ULOG_REQUEST_VERSION 2
- 
- struct dm_ulog_request {
- 	/*
+-		mutex_unlock(&c->lock);
++		dm_bufio_unlock(c);
+ 	}
+ 	mutex_unlock(&dm_bufio_clients_lock);
+ }
