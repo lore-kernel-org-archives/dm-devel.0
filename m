@@ -1,18 +1,16 @@
 From: Joe Thornber <thornber@redhat.com>
 Subject: Re: dm-bufio
-Date: Fri, 14 Oct 2011 10:19:15 +0100
-Message-ID: <20111014091914.GB4496@ubuntu>
+Date: Fri, 14 Oct 2011 13:19:42 +0100
+Message-ID: <20111014121941.GA23309@ubuntu>
 References: <Pine.LNX.4.64.1110131102540.25329@hs20-bc2-1.build.redhat.com>
-	<20111013194001.GA12863@redhat.com>
-	<Pine.LNX.4.64.1110131817300.11120@hs20-bc2-1.build.redhat.com>
-	<20111013223147.GA14220@redhat.com>
+	<20111014091537.GA4496@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20111013223147.GA14220@redhat.com>
+In-Reply-To: <20111014091537.GA4496@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,32 +20,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Oct 13, 2011 at 06:31:47PM -0400, Mike Snitzer wrote:
-> On Thu, Oct 13 2011 at  6:19pm -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > > +static int dm_bufio_trylock(struct dm_bufio_client *c)
-> > > +{
-> > > +	return dm_bufio_trylock(c);
-> > > +}
-> > > +
-> > > +static void dm_bufio_unlock(struct dm_bufio_client *c)
-> > > +{
-> > > +	dm_bufio_unlock(c);
-> > > +}
-> > 
-> > These two functions are recursive nonsense :) There should be
-> > "return mutex_trylock(&c->lock);" and "mutex_unlock(&c->lock);".
-> 
-> Heheh.  Sorry, M-x replace-string gone wild.
-> 
-> Here is a fixed version.
+On Fri, Oct 14, 2011 at 10:15:38AM +0100, Joe Thornber wrote:
+> I'm not sure moving dm-bufio to pdata was the right thing to do.
 
-Thanks Mike.  If you haven't tested something can you please say, so I
-know to run it through the full suite?
-
-- Joe
+It's back in drivers/md.
