@@ -1,7 +1,7 @@
 From: Joe Thornber <thornber@redhat.com>
 Subject: Re: [PATCH] dm-bufio
-Date: Mon, 17 Oct 2011 11:29:28 +0100
-Message-ID: <20111017102927.GA13963@ubuntu>
+Date: Mon, 17 Oct 2011 11:39:20 +0100
+Message-ID: <20111017103919.GB13963@ubuntu>
 References: <Pine.LNX.4.64.1110141500160.29246@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,16 +24,7 @@ Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
 On Fri, Oct 14, 2011 at 03:14:34PM -0400, Mikulas Patocka wrote:
-> --- linux-3.1-rc3-fast.orig/drivers/md/Kconfig	2011-10-14 20:56:45.000000000 +0200
-> +++ linux-3.1-rc3-fast/drivers/md/Kconfig	2011-10-14 20:56:46.000000000 +0200
-> @@ -209,7 +209,7 @@ config DM_DEBUG
->  	  If unsure, say N.
->  
->  config DM_BUFIO
-> -       tristate
-> +       tristate "Buffered IO"
->         depends on BLK_DEV_DM && EXPERIMENTAL
->         ---help---
->  	 This interface allows you to do buffered I/O on a device and acts
+>  			use_dmio(b, rw, block, end_io);
+> +			return;
 
-This makes bufio appear in 'menuconfig' and friends.  Why do you want this user visible?
+ACK
