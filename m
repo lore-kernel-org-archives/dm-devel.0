@@ -1,15 +1,19 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
 Subject: Re: [PATCH] dm-bufio
-Date: Mon, 17 Oct 2011 12:24:00 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1110171223010.21071@hs20-bc2-1.build.redhat.com>
+Date: Mon, 17 Oct 2011 17:41:13 +0100
+Message-ID: <20111017164110.GB14913@ubuntu>
 References: <Pine.LNX.4.64.1110141500160.29246@hs20-bc2-1.build.redhat.com>
-	<20111017112904.GH13963@ubuntu>
+	<20111017111128.GF13963@ubuntu>
+	<Pine.LNX.4.64.1110171004290.14928@hs20-bc2-1.build.redhat.com>
+	<20111017140947.GA10136@ubuntu>
+	<Pine.LNX.4.64.1110171218130.21071@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20111017112904.GH13963@ubuntu>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1110171218130.21071@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,40 +23,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Joe Thornber <thornber@redhat.com>
-Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 17 Oct 2011, Joe Thornber wrote:
+On Mon, Oct 17, 2011 at 12:22:13PM -0400, Mikulas Patocka wrote:
+> > thinp uses dm_bufio_release_move() and write_callback.  So yes, this
+> > is a bug fix.  I thought so and merged.
+> 
+> BTW. it still uses the old block number in "prepare_for_write" callback. 
+> Do you use this block number somewhere? Should we link the buffer to the 
+> new block before the call and the link it back?
 
-> On Fri, Oct 14, 2011 at 03:14:34PM -0400, Mikulas Patocka wrote:
-> > Hi
-> > 
-> > This is a patch for dm-bufio.
-> 
-> I've merged all I'm going to at this point and pushed to thin-dev.
+Good catch, let me look into it.
 
-I think Alasdair currently holds the master version of this code. Or is it 
-you? If we had three versions of the same code and don't know which one is 
-the master, then there is a problem.
-
-Mikulas
-
-> If you put together a patch for the cond_resched stuff I'll take that;
-> providing you don't call it in a tight loop like here:
-> 
-> > @@ -758,8 +772,9 @@ static struct dm_buffer *__find(struct d
-> >  	struct dm_buffer *b;
-> >  	struct hlist_node *hn;
-> >  	hlist_for_each_entry(b, hn, &c->cache_hash[DM_BUFIO_HASH(block)], hash_list) {
-> > -		if (b->block == block)
-> > +		if (likely(b->block == block))
-> >  			return b;
-> > +		dm_bufio_cond_resched();
-> >  	}
-> 
-> 
-> I'm not really interested in the likely/unlikely annotations.
-> 
-> - Joe
-> 
+- Joe
