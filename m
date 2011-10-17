@@ -1,17 +1,19 @@
 From: Joe Thornber <thornber@redhat.com>
-Subject: Re: dm-bufio
-Date: Mon, 17 Oct 2011 19:01:28 +0100
-Message-ID: <20111017180127.GA21843@ubuntu>
-References: <Pine.LNX.4.64.1110131102540.25329@hs20-bc2-1.build.redhat.com>
-	<20111014091537.GA4496@ubuntu>
-	<Pine.LNX.4.64.1110171226070.21071@hs20-bc2-1.build.redhat.com>
+Subject: Re: [PATCH] dm-bufio
+Date: Mon, 17 Oct 2011 19:30:55 +0100
+Message-ID: <20111017183054.GB21843@ubuntu>
+References: <Pine.LNX.4.64.1110141500160.29246@hs20-bc2-1.build.redhat.com>
+	<20111017111128.GF13963@ubuntu>
+	<Pine.LNX.4.64.1110171004290.14928@hs20-bc2-1.build.redhat.com>
+	<20111017140947.GA10136@ubuntu>
+	<Pine.LNX.4.64.1110171218130.21071@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1110171226070.21071@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.1110171218130.21071@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,24 +23,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 17, 2011 at 12:49:22PM -0400, Mikulas Patocka wrote:
-> If you want to do it, just do it, but it makes no sense to me.
+On Mon, Oct 17, 2011 at 12:22:13PM -0400, Mikulas Patocka wrote:
+> > thinp uses dm_bufio_release_move() and write_callback.  So yes, this
+> > is a bug fix.  I thought so and merged.
+> 
+> BTW. it still uses the old block number in "prepare_for_write" callback. 
+> Do you use this block number somewhere? Should we link the buffer to the 
+> new block before the call and the link it back?
 
-Well Alasdair, Mike and myself have all looked at this code at various
-times over the last 18 months and come to similar conclusions.  We
-find the following logic difficult with all those gotos.  There is
-also some redundancy which I only noticed when trying to refactor it
-(repeated checks).  There's an example that has a jump from one branch
-of an 'if' to another, it's trivial to factor out into a function for
-each branch, yet you insist on arguing and refuse to change it.  I'm
-perfectly prepared to accept that you're familiar enough with this
-code, or just clever enough for it to be transparent to you.  But it's
-the sort of thing that's going to get picked up on by other small
-brained developers like me.  Choose your battles wisely, and save your
-energies for something more interesting.
+I double checked this; it's fine.  I use release_move as part of the
+shadow operation in the transaction manager.  As such we know a write
+lock is going to be grabbed on it straight away (which will dirty and
+prompt a rewriting of the block nr).  Also in the event of a crash
+before the next commit, the new block wont appear in the metadata at
+all.
 
 - Joe
