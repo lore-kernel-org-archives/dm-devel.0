@@ -1,15 +1,15 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [PATCH] dm-bufio
-Date: Mon, 17 Oct 2011 09:43:29 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1110170943001.9447@hs20-bc2-1.build.redhat.com>
+Date: Mon, 17 Oct 2011 09:47:05 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1110170945010.9447@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.1110141500160.29246@hs20-bc2-1.build.redhat.com>
-	<20111017111442.GG13963@ubuntu>
+	<20111017105423.GD13963@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20111017111442.GG13963@ubuntu>
+In-Reply-To: <20111017105423.GD13963@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,26 +28,60 @@ List-Id: dm-devel.ids
 On Mon, 17 Oct 2011, Joe Thornber wrote:
 
 > On Fri, Oct 14, 2011 at 03:14:34PM -0400, Mikulas Patocka wrote:
-> @@ -999,15 +1013,19 @@ again:
->                  * someone is doing some writes simultaneously with us --- in
->                  * this case, stop dropping the lock.
->                  */
->                 if (dropped_lock)
->                         goto again;
->         }
->         wake_up(&c->free_buffer_wait);
->         dm_bufio_unlock(c);
+> > -static struct dm_buffer *__bufio_new(struct dm_bufio_client *c, sector_t block, enum new_flag nf,
+> > -				     struct dm_buffer **bp, int *need_submit)
+> > +static void read_endio(struct bio *bio, int error);
+> > +
+> > +static struct dm_buffer *__bufio_new(struct dm_bufio_client *c, sector_t block,
+> > +				     enum new_flag nf, struct dm_buffer **bp)
+> >  {
+> >  	struct dm_buffer *b, *new_b = NULL;
+> >  
+> > -	*need_submit = 0;
+> >  	b = __find(c, block);
+> >  	if (b) {
+> >  		b->hold_count++;
+> > @@ -821,7 +837,9 @@ static struct dm_buffer *__bufio_new(str
+> >  	}
+> >  
+> >  	b->state = 1 << B_READING;
+> > -	*need_submit = 1;
+> > +
+> > +	submit_io(b, READ, b->block, read_endio);
+> > +
+> >  	return b;
+> >  }
+> >  
+> > @@ -849,22 +867,18 @@ static void read_endio(struct bio *bio, 
+> >  static void *new_read(struct dm_bufio_client *c, sector_t block, enum new_flag nf,
+> >  		      struct dm_buffer **bp)
+> >  {
+> > -	int need_submit;
+> >  	struct dm_buffer *b;
+> >  
+> >  	dm_bufio_lock(c);
+> > -	b = __bufio_new(c, block, nf, bp, &need_submit);
+> > +	b = __bufio_new(c, block, nf, bp);
+> >  	dm_bufio_unlock(c);
+> >  
+> > 	if (!b || IS_ERR(b))
+> >  		return b;
+> >  	else {
+> > -		if (need_submit)
+> > -			submit_io(b, READ, b->block, read_endio);
+> > -
+> >  		wait_on_bit(&b->state, B_READING,
+> >  			    do_io_schedule, TASK_UNINTERRUPTIBLE);
 > 
-> -       a = xchg(&c->async_write_error, 0);
-> +       if (likely(!c->async_write_error))
-> +               a = 0;
-> +       else
-> +               a = xchg(&c->async_write_error, 0);
->         f = dm_bufio_issue_flush(c);
 > 
-> 
-> I didn't change this.  Is it also fixing a preexisting issue?
+> This change means submit_io(), which can block, will be called with
+> the client lock held.  I don't see this as an improvement.  NACK.
 
-It doesn't fix anything. It just bypasses xchg for the most common case.
+dm-bufio is designed with the possibility that submit_io is called inside 
+the lock. There are other places that do it too. But it's true that it 
+wasn't called in the lock before.
+
+I think the best thing would be to delete those functions and use the code 
+that was there before.
 
 Mikulas
