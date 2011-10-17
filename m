@@ -1,7 +1,7 @@
 From: Joe Thornber <thornber@redhat.com>
 Subject: Re: [PATCH] dm-bufio
-Date: Mon, 17 Oct 2011 11:39:20 +0100
-Message-ID: <20111017103919.GB13963@ubuntu>
+Date: Mon, 17 Oct 2011 11:43:58 +0100
+Message-ID: <20111017104357.GC13963@ubuntu>
 References: <Pine.LNX.4.64.1110141500160.29246@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,7 +24,12 @@ Cc: Mike Snitzer <msnitzer@redhat.com>, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
 On Fri, Oct 14, 2011 at 03:14:34PM -0400, Mikulas Patocka wrote:
->  			use_dmio(b, rw, block, end_io);
-> +			return;
+> @@ -572,7 +579,7 @@ static void __make_buffer_clean(struct d
+>  
+>  /*
+>   * Find some buffer that is not held by anybody, clean it, unlink it and
+> - * return it.  If "wait" is zero, try less hard and don't block.
+> + * return it.
+>   */
 
 ACK
