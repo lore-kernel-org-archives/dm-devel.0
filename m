@@ -1,16 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1 of 2] DM log userspace: Minor fix-ups
-Date: Wed, 19 Oct 2011 01:13:56 +0100
-Message-ID: <20111019001355.GP24527@agk-dp.fab.redhat.com>
-References: <1318533312.28595.4.camel@f14.redhat.com>
-	<1318533394.28595.6.camel@f14.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [RFC][PATCH] dm-cache (block level disk cache
+ target): UPDATE
+Date: Wed, 19 Oct 2011 10:34:26 +0200
+Message-ID: <4E9E8B92.5050204@suse.de>
+References: <CAGWyFtpaHvgDVV6DrM8L18eiDGrTL=teH6TZqfJNpwafE+-Big@mail.gmail.com>
+	<CAGWyFtpLuciqc7Q=2GfnkBrQCRoq91qh2RwWby7UhEAEcZkCbQ@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1318533394.28595.6.camel@f14.redhat.com>
+In-Reply-To: <CAGWyFtpLuciqc7Q=2GfnkBrQCRoq91qh2RwWby7UhEAEcZkCbQ@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,18 +20,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Oct 13, 2011 at 02:16:34PM -0500, Jon Brassow wrote:
-> dm-log-userspace: use kzalloc instead of kmalloc
- 
-But what's the reason?
+On 10/18/2011 10:48 PM, Stephen Bromfield wrote:
+> A new patch for the 2.6.39 kernel.
+>
+> Signed-off-by: Ming Zhao<dm-cache@googlegroups.com>
+>
+Hmm? This is implementation #1 out of three.
+And, incidentally, the least maintained; 2.3.39 isn't exactly the =
 
-Is this fixing a bug or not?
+most recent kernel.
 
-The patch header needs to tell us so we know whether this should be
-backported to stable or not, for example.
+(Otherwise one does wonder why Ming Zhao hasn't posted it himself).
+(Incidentally, can we have a rule that the person sending a patch =
 
-Alasdair
+_has_ to be listed as 'Signed-off-by', ie has to be the one actually =
+
+working on it?)
+
+flashcache and that one from Tao Ma & Coly Li are the other two =
+
+versions of the same beast, all sharing the same codebase.
+
+Not to mention my (slightly different) implementation which I'll be =
+
+presenting at LinuxCon Europe next week.
+
+So maybe, just maybe, we should get out heads together and discuss =
+
+the merits and shortcomings of the various implementations.
+And decide on a single implementation, not 4. Or a framework =
+
+allowing for all these variances.
+
+But so it's hard to see why this implementation should go upstream =
+
+and none of the others.
+
+And I somehow doubt Alasdair would agree on having several =
+
+implementations on the same topic.
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
