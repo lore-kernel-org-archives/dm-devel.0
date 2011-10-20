@@ -1,75 +1,54 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: DM inconsistent after disk migration
-Date: Thu, 20 Oct 2011 16:09:01 +0100
-Message-ID: <4EA0398D.4020207@redhat.com>
-References: <780ff8d84fb70f7ddf8beb696ff02ddf.squirrel@webmail.xlab.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Yathindra <ydev@cs.utah.edu>
+Subject: Re: Simulating faulty disk
+Date: Thu, 20 Oct 2011 11:53:36 -0600
+Message-ID: <4EA06020.9000708@cs.utah.edu>
+References: <4E9F9321.8090704@cs.utah.edu> <4E9FE97E.4030209@redhat.com> <4EA04201.1050702@cs.utah.edu> <4EA044A9.6070406@redhat.com> <4EA05072.10107@cs.utah.edu> <4EA05D0A.7030909@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <780ff8d84fb70f7ddf8beb696ff02ddf.squirrel@webmail.xlab.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Bernd Broermann <bernd@broermann.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <4EA05D0A.7030909@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Bryn M. Reeves" <bmr@redhat.com>
+Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 10/20/2011 03:47 PM, Bernd Broermann wrote:
-> CODE "move" script
-> # mirror
-> pvcreate /dev/disk2
-> vgextend vg01  /dev/disk2
-> lvconvert -m1 --mirrorlog core /dev/vg01/lvdata  /dev/disk2
-> # split
-> lvconvert -m0 --mirrorlog core /dev/vg01/lvdata  /dev/disk1
-> vgreduce vg01  /dev/disk1
-> pvremove  /dev/disk1
+Oh I see. Maybe dm-delay is not enabled in ubuntu either.
 
-If you just want to move the logical extents in vg01/lvdata from disk1 
--> disk2 why not use pvmove?
+Could you please tell me how I could enable it.
 
-Internally it will construct a corelog mirror in a very similar way but 
-it saves you from having to manually split things and supports 
-transactional updates allowing the move to be automatically resumed if 
-it is interrupted for any reason.
+Thanks,
+Yathi
 
-E.g.:
+On 10/20/2011 11:40 AM, Bryn M. Reeves wrote:
+> On 10/20/2011 05:46 PM, Yathindra wrote:
+>> >dmsetup create d0 --table="0 `blockdev --getsize /dev/sdb` delay
+>> /dev/sdb 0 500"
+>> device-mapper: reload ioctl failed: Invalid argument
+>> Command failed
+>>
+>> In /var/log/messages I see this,
+>> device-mapper: ioctl: error adding target to table
+>
+> I don't see this here:
+>
+> # dmsetup create d0 --table="0 `blockdev --getsize /dev/sdb` delay 
+> /dev/sdb 0 500"
+> # dmsetup info -c d0
+> Name             Maj Min Stat Open Targ Event  UUID
+> d0               253   3 L--w    1    1      0
+> # dmsetup create f0 --table="0 `blockdev --getsize /dev/mapper/d0` 
+> flakey /dev/mapper/d0 0 9 1"
+> # dmsetup info -c f0
+> Name             Maj Min Stat Open Targ Event  UUID
+> f0               253   4 L--w    0    1      0
+>
+> This is using the f15 2.6.40.3 (aka kernel-3.0) with a locally 
+> compiled dm-delay since it's not enabled in the Fedora kernels.
+>
+> Might want to move this thread over to dm-devel if you're having 
+> trouble with it.
+>
+> Regards,
+> Bryn.
 
-pvcreate /dev/disk2
-pvmove /dev/disk1 /dev/disk2 (you can ommit disk2 here if it's the
-                               only free space in the VG and pvmove will
-                               chose it automatically)
-vgreduce /dev/disk1
-pvremove /dev/disk1
-
-> My assumption is that SLAVE reconfigures the device-mapper not correct,
-> when doing the "move" operations on MASTER.
-
-Nothing told the SLAVE host that vg01/lvdata had changed so it still has 
-the original PV device open (from its point of view on that side of the 
-SRDF replication).
-
-If the LV is not in use you can just de-activate/re-activate to have it 
-see the changes to the VG metadata:
-
-vgchange -an vg01; vgchange -ay vg01
-
-Unless you're using a clustered environment with clvmd hosts that have a 
-common view of shared storage will not be aware of on-disk changes made 
-by another host. This is hazardous if both hosts can write to the 
-storage at the same time as it's possible for simultaneous updates to 
-the VG metadata to corrupt one another (SRDF should prevent this since 
-only one side of the replicated device can be writable at a time but 
-some care is still needed to ensure all hosts have a coherent view of 
-the VG).
-
-Regards,
-Bryn.
