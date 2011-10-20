@@ -1,7 +1,7 @@
-From: Alasdair G Kergon <agk@redhat.com>
+From: Joe Thornber <thornber@redhat.com>
 Subject: Re: your mail
-Date: Thu, 20 Oct 2011 01:57:25 +0100
-Message-ID: <20111020005725.GV24527@agk-dp.fab.redhat.com>
+Date: Thu, 20 Oct 2011 10:52:15 +0100
+Message-ID: <20111020095214.GA4680@ubuntu>
 References: <Pine.LNX.4.64.1110192014570.24440@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -20,25 +20,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, thornber@redhat.com
+Cc: dm-devel@redhat.com, "Alasdair G. Kergon" <agk@redhat.com>
 List-Id: dm-devel.ids
 
 On Wed, Oct 19, 2011 at 08:17:37PM -0400, Mikulas Patocka wrote:
-> The next one adds a conditional resched (Alasdair 
+> Hi
+> 
+> Here I'm sending two dm-bufio patches. The first one fixed 
+> dm_bufio_release_move function (the write callback could be called with a 
+> wrong block number). The next one adds a conditional resched (Alasdair 
 > agreed on it --- it should be later put into general Linux headers).
- 
-Indeed, this part:
 
-> +#ifdef CONFIG_PREEMPT_VOLUNTARY
-> +#define dm_bufio_cond_resched()                	\
-> +do {						\
-> +	if (unlikely(need_resched()))		\
-> +		_cond_resched();		\
-> +} while (0)
-> +#else
-> +#define dm_bufio_cond_resched()                do { } while (0)
-> +#endif
+Thanks Mikulas, merging now.
 
-doesn't really belong in a dm file.
-
-Alasdair
+- Joe
