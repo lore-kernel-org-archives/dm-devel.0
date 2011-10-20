@@ -1,12 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: (no subject)
-Date: Wed, 19 Oct 2011 20:17:37 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1110192014570.24440@hs20-bc2-1.build.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: your mail
+Date: Thu, 20 Oct 2011 01:57:25 +0100
+Message-ID: <20111020005725.GV24527@agk-dp.fab.redhat.com>
+References: <Pine.LNX.4.64.1110192014570.24440@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED;
-	BOUNDARY="168436252-2010268021-1319069857=:24440"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1110192014570.24440@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,139 +19,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alasdair G. Kergon" <agk@redhat.com>
-Cc: dm-devel@redhat.com, Edward Thornber <thornber@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, thornber@redhat.com
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Wed, Oct 19, 2011 at 08:17:37PM -0400, Mikulas Patocka wrote:
+> The next one adds a conditional resched (Alasdair 
+> agreed on it --- it should be later put into general Linux headers).
+ 
+Indeed, this part:
 
---168436252-2010268021-1319069857=:24440
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+> +#ifdef CONFIG_PREEMPT_VOLUNTARY
+> +#define dm_bufio_cond_resched()                	\
+> +do {						\
+> +	if (unlikely(need_resched()))		\
+> +		_cond_resched();		\
+> +} while (0)
+> +#else
+> +#define dm_bufio_cond_resched()                do { } while (0)
+> +#endif
 
-Hi
+doesn't really belong in a dm file.
 
-Here I'm sending two dm-bufio patches. The first one fixed 
-dm_bufio_release_move function (the write callback could be called with a 
-wrong block number). The next one adds a conditional resched (Alasdair 
-agreed on it --- it should be later put into general Linux headers).
-
-Mikulas
---168436252-2010268021-1319069857=:24440
-Content-Type: TEXT/PLAIN; charset=US-ASCII;
-	name=dm-bufio-set-block-number-in-release_move.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.1110192017370.24440@hs20-bc2-1.build.redhat.com>
-Content-Description: 
-Content-Disposition: attachment;
-	filename=dm-bufio-set-block-number-in-release_move.patch
-
-LS0tDQogZHJpdmVycy9tZC9kbS1idWZpby5jIHwgICAxMyArKysrKysrKysr
-KysrDQogMSBmaWxlIGNoYW5nZWQsIDEzIGluc2VydGlvbnMoKykNCg0KSW5k
-ZXg6IGxpbnV4LTMuMS1yYzMtZmFzdC9kcml2ZXJzL21kL2RtLWJ1ZmlvLmMN
-Cj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT0NCi0tLSBsaW51eC0zLjEtcmMzLWZh
-c3Qub3JpZy9kcml2ZXJzL21kL2RtLWJ1ZmlvLmMJMjAxMS0xMC0xOSAxODoz
-OToyMi4wMDAwMDAwMDAgKzAyMDANCisrKyBsaW51eC0zLjEtcmMzLWZhc3Qv
-ZHJpdmVycy9tZC9kbS1idWZpby5jCTIwMTEtMTAtMTkgMTg6NDc6NDMuMDAw
-MDAwMDAwICswMjAwDQpAQCAtMTE4NSwxMSArMTE4NSwyNCBAQCByZXRyeToN
-CiAJCV9fdW5saW5rX2J1ZmZlcihiKTsNCiAJCV9fbGlua19idWZmZXIoYiwg
-bmV3X2Jsb2NrLCBMSVNUX0RJUlRZKTsNCiAJfSBlbHNlIHsNCisJCXNlY3Rv
-cl90IG9sZF9ibG9jazsNCiAJCXdhaXRfb25fYml0X2xvY2soJmItPnN0YXRl
-LCBCX1dSSVRJTkcsDQogCQkJCSBkb19pb19zY2hlZHVsZSwgVEFTS19VTklO
-VEVSUlVQVElCTEUpOw0KKwkJLyoNCisJCSAqIFJlbGluayBidWZmZXIgdG8g
-Im5ld19ibG9jayIgc28gdGhhdCB3cml0ZV9jYWxsYmFjaw0KKwkJICogc2Vl
-cyAibmV3X2Jsb2NrIiBhcyBhIGJsb2NrIG51bWJlci4NCisJCSAqIEFmdGVy
-IHRoZSB3cml0ZSwgbGluayB0aGUgYnVmZmVyIGJhY2sgdG8gb2xkX2Jsb2Nr
-Lg0KKwkJICogQWxsIHRoaXMgbXVzdCBiZSBkb25lIGluIGJ1ZmlvIGxvY2ss
-IHNvIHRoYXQgYmxvY2sgbnVtYmVyDQorCQkgKiBjaGFuZ2UgaXNuJ3Qgdmlz
-aWJsZSB0byBvdGhlciB0aHJlYWRzLg0KKwkJICovDQorCQlvbGRfYmxvY2sg
-PSBiLT5ibG9jazsNCisJCV9fdW5saW5rX2J1ZmZlcihiKTsNCisJCV9fbGlu
-a19idWZmZXIoYiwgbmV3X2Jsb2NrLCBiLT5saXN0X21vZGUpOw0KIAkJc3Vi
-bWl0X2lvKGIsIFdSSVRFLCBuZXdfYmxvY2ssIHdyaXRlX2VuZGlvKTsNCiAJ
-CXdhaXRfb25fYml0KCZiLT5zdGF0ZSwgQl9XUklUSU5HLA0KIAkJCSAgICBk
-b19pb19zY2hlZHVsZSwgVEFTS19VTklOVEVSUlVQVElCTEUpOw0KKwkJX191
-bmxpbmtfYnVmZmVyKGIpOw0KKwkJX19saW5rX2J1ZmZlcihiLCBvbGRfYmxv
-Y2ssIGItPmxpc3RfbW9kZSk7DQogCX0NCiANCiAJZG1fYnVmaW9fdW5sb2Nr
-KGMpOw0K
-
---168436252-2010268021-1319069857=:24440
-Content-Type: TEXT/PLAIN; charset=US-ASCII; name=dm-bufio-resched.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.1110192017371.24440@hs20-bc2-1.build.redhat.com>
-Content-Description: 
-Content-Disposition: attachment; filename=dm-bufio-resched.patch
-
-LS0tDQogZHJpdmVycy9tZC9kbS1idWZpby5jIHwgICAyNiArKysrKysrKysr
-KysrKysrKysrKysrKystLQ0KIDEgZmlsZSBjaGFuZ2VkLCAyNCBpbnNlcnRp
-b25zKCspLCAyIGRlbGV0aW9ucygtKQ0KDQpJbmRleDogbGludXgtMy4xLXJj
-My1mYXN0L2RyaXZlcnMvbWQvZG0tYnVmaW8uYw0KPT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PQ0KLS0tIGxpbnV4LTMuMS1yYzMtZmFzdC5vcmlnL2RyaXZlcnMv
-bWQvZG0tYnVmaW8uYwkyMDExLTEwLTE5IDE4OjQ5OjE0LjAwMDAwMDAwMCAr
-MDIwMA0KKysrIGxpbnV4LTMuMS1yYzMtZmFzdC9kcml2ZXJzL21kL2RtLWJ1
-ZmlvLmMJMjAxMS0xMC0xOSAxODo1NzowMS4wMDAwMDAwMDAgKzAyMDANCkBA
-IC0xODMsNiArMTgzLDE2IEBAIHN0YXRpYyB2b2lkIGRtX2J1ZmlvX3VubG9j
-ayhzdHJ1Y3QgZG1fYnUNCiAJbXV0ZXhfdW5sb2NrKCZjLT5sb2NrKTsNCiB9
-DQogDQorI2lmZGVmIENPTkZJR19QUkVFTVBUX1ZPTFVOVEFSWQ0KKyNkZWZp
-bmUgZG1fYnVmaW9fY29uZF9yZXNjaGVkKCkgICAgICAgICAgICAgICAgCVwN
-CitkbyB7CQkJCQkJXA0KKwlpZiAodW5saWtlbHkobmVlZF9yZXNjaGVkKCkp
-KQkJXA0KKwkJX2NvbmRfcmVzY2hlZCgpOwkJXA0KK30gd2hpbGUgKDApDQor
-I2Vsc2UNCisjZGVmaW5lIGRtX2J1ZmlvX2NvbmRfcmVzY2hlZCgpICAgICAg
-ICAgICAgICAgIGRvIHsgfSB3aGlsZSAoMCkNCisjZW5kaWYNCisNCiAvKi0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0qLw0KIA0KIC8qDQpAQCAtNjQ0LDYgKzY1NCw3
-IEBAIHN0YXRpYyBzdHJ1Y3QgZG1fYnVmZmVyICpfX2dldF91bmNsYWltZWQN
-CiAJCQlfX3VubGlua19idWZmZXIoYik7DQogCQkJcmV0dXJuIGI7DQogCQl9
-DQorCQlkbV9idWZpb19jb25kX3Jlc2NoZWQoKTsNCiAJfQ0KIA0KIAlsaXN0
-X2Zvcl9lYWNoX2VudHJ5X3JldmVyc2UoYiwgJmMtPmxydVtMSVNUX0RJUlRZ
-XSwgbHJ1X2xpc3QpIHsNCkBAIC02NTQsNiArNjY1LDcgQEAgc3RhdGljIHN0
-cnVjdCBkbV9idWZmZXIgKl9fZ2V0X3VuY2xhaW1lZA0KIAkJCV9fdW5saW5r
-X2J1ZmZlcihiKTsNCiAJCQlyZXR1cm4gYjsNCiAJCX0NCisJCWRtX2J1Zmlv
-X2NvbmRfcmVzY2hlZCgpOw0KIAl9DQogDQogCXJldHVybiBOVUxMOw0KQEAg
-LTc3Miw2ICs3ODQsNyBAQCBzdGF0aWMgdm9pZCBfX3dyaXRlX2RpcnR5X2J1
-ZmZlcnNfYXN5bmMoDQogCQkJcmV0dXJuOw0KIA0KIAkJX193cml0ZV9kaXJ0
-eV9idWZmZXIoYik7DQorCQlkbV9idWZpb19jb25kX3Jlc2NoZWQoKTsNCiAJ
-fQ0KIH0NCiANCkBAIC04MjAsNiArODMzLDcgQEAgc3RhdGljIHZvaWQgX19j
-aGVja193YXRlcm1hcmsoc3RydWN0IGRtXw0KIAkJCXJldHVybjsNCiANCiAJ
-CV9fZnJlZV9idWZmZXJfd2FrZShiKTsNCisJCWRtX2J1ZmlvX2NvbmRfcmVz
-Y2hlZCgpOw0KIAl9DQogDQogCWlmIChjLT5uX2J1ZmZlcnNbTElTVF9ESVJU
-WV0gPiB0aHJlc2hvbGRfYnVmZmVycykNCkBAIC04MzUsOSArODQ5LDExIEBA
-IHN0YXRpYyBzdHJ1Y3QgZG1fYnVmZmVyICpfX2ZpbmQoc3RydWN0IGQNCiAJ
-c3RydWN0IGhsaXN0X25vZGUgKmhuOw0KIA0KIAlobGlzdF9mb3JfZWFjaF9l
-bnRyeShiLCBobiwgJmMtPmNhY2hlX2hhc2hbRE1fQlVGSU9fSEFTSChibG9j
-ayldLA0KLQkJCSAgICAgaGFzaF9saXN0KQ0KKwkJCSAgICAgaGFzaF9saXN0
-KSB7DQorCQlkbV9idWZpb19jb25kX3Jlc2NoZWQoKTsNCiAJCWlmIChiLT5i
-bG9jayA9PSBibG9jaykNCiAJCQlyZXR1cm4gYjsNCisJfQ0KIA0KIAlyZXR1
-cm4gTlVMTDsNCiB9DQpAQCAtMTA4NCw2ICsxMTAwLDggQEAgYWdhaW46DQog
-CQkgICAgIXRlc3RfYml0KEJfV1JJVElORywgJmItPnN0YXRlKSkNCiAJCQlf
-X3JlbGlua19scnUoYiwgTElTVF9DTEVBTik7DQogDQorCQlkbV9idWZpb19j
-b25kX3Jlc2NoZWQoKTsNCisNCiAJCS8qDQogCQkgKiBJZiB3ZSBkcm9wcGVk
-IHRoZSBsb2NrLCB0aGUgbGlzdCBpcyBubyBsb25nZXIgY29uc2lzdGVudCwN
-CiAJCSAqIHNvIHdlIG11c3QgcmVzdGFydCB0aGUgc2VhcmNoLg0KQEAgLTEz
-MTAsMTEgKzEzMjgsMTMgQEAgc3RhdGljIHZvaWQgX19zY2FuKHN0cnVjdCBk
-bV9idWZpb19jbGllbg0KIAlpbnQgbDsNCiAJc3RydWN0IGRtX2J1ZmZlciAq
-YiwgKnRtcDsNCiANCi0JZm9yIChsID0gMDsgbCA8IExJU1RfU0laRTsgbCsr
-KQ0KKwlmb3IgKGwgPSAwOyBsIDwgTElTVF9TSVpFOyBsKyspIHsNCiAJCWxp
-c3RfZm9yX2VhY2hfZW50cnlfc2FmZV9yZXZlcnNlKGIsIHRtcCwgJmMtPmxy
-dVtsXSwgbHJ1X2xpc3QpDQogCQkJaWYgKCFfX2NsZWFudXBfb2xkX2J1ZmZl
-cihiLCBzYy0+Z2ZwX21hc2ssIDApICYmDQogCQkJICAgICEtLW5yX3RvX3Nj
-YW4pDQogCQkJCXJldHVybjsNCisJCWRtX2J1ZmlvX2NvbmRfcmVzY2hlZCgp
-Ow0KKwl9DQogfQ0KIA0KIHN0YXRpYyBpbnQgc2hyaW5rKHN0cnVjdCBzaHJp
-bmtlciAqc2hyaW5rZXIsIHN0cnVjdCBzaHJpbmtfY29udHJvbCAqc2MpDQpA
-QCAtMTUzMSw5ICsxNTUxLDExIEBAIHN0YXRpYyB2b2lkIGNsZWFudXBfb2xk
-X2J1ZmZlcnModm9pZCkNCiAJCQkJICAgICAgIHN0cnVjdCBkbV9idWZmZXIs
-IGxydV9saXN0KTsNCiAJCQlpZiAoX19jbGVhbnVwX29sZF9idWZmZXIoYiwg
-MCwgbWF4X2FnZSAqIEhaKSkNCiAJCQkJYnJlYWs7DQorCQkJZG1fYnVmaW9f
-Y29uZF9yZXNjaGVkKCk7DQogCQl9DQogDQogCQlkbV9idWZpb191bmxvY2so
-Yyk7DQorCQlkbV9idWZpb19jb25kX3Jlc2NoZWQoKTsNCiAJfQ0KIAltdXRl
-eF91bmxvY2soJmRtX2J1ZmlvX2NsaWVudHNfbG9jayk7DQogfQ0K
-
---168436252-2010268021-1319069857=:24440
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---168436252-2010268021-1319069857=:24440--
+Alasdair
