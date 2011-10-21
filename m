@@ -1,16 +1,19 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: RFC: dm-switch target [v2]
-Date: Sat, 22 Oct 2011 18:08:24 +0300
-Message-ID: <20111022150824.GG12984@reaktio.net>
-References: <20110831201919.GA27111@freewill.equallogic.com>
-	<32C294CE27383749AAB52C2549D4120C016193A3B2@AUSX7MCPS306.AMER.DELL.COM>
+From: Yathindra <ydev@cs.utah.edu>
+Subject: Re: Simulating faulty disk
+Date: Fri, 21 Oct 2011 09:13:21 -0600
+Message-ID: <4EA18C11.5060600@cs.utah.edu>
+References: <4E9F9321.8090704@cs.utah.edu> <4E9FE97E.4030209@redhat.com>
+	<4EA04201.1050702@cs.utah.edu> <4EA044A9.6070406@redhat.com>
+	<4EA05072.10107@cs.utah.edu> <4EA05D0A.7030909@redhat.com>
+	<4EA06020.9000708@cs.utah.edu> <4EA13A52.60902@redhat.com>
+	<4EA18610.3050900@cs.utah.edu> <4EA1881B.5070607@redhat.com>
+	<4EA188F3.4000206@cs.utah.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <32C294CE27383749AAB52C2549D4120C016193A3B2@AUSX7MCPS306.AMER.DELL.COM>
+In-Reply-To: <4EA188F3.4000206@cs.utah.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +23,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jim_Ramsay@DELL.com
-Cc: dm-devel@redhat.com, Parind_Shah@DELL.com, Jason_Shamberger@DELL.com, Kevin_OKelley@DELL.com
+To: "Bryn M. Reeves" <bmr@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 02, 2011 at 05:56:11PM -0500, Jim_Ramsay@DELL.com wrote:
-> Pasi K=E4rkk=E4inen wrote:
-> >On Wed, Aug 31, 2011 at 04:19:24PM -0400, Jim Ramsay wrote:
-> >> We propose a new DM target, dm-switch, which can be used to
-> >> efficiently implement a mapping of IOs to underlying block devices in
-> >> scenarios where there are: (1) a large number of address regions, (2)
-> >> a fixed size of these address regions, (3) no pattern than allows for
-> >> a compact description with something like the dm-stripe target.
-> >
-> > Great, I've been waiting for this module :)
-> =
+ >mount -t ext3 /dev/sdb /mnt
+Copied some data into /mnt
+ >dmsetup create d0 --table="0 `blockdev --getsize /dev/sdb` delay 
+/dev/sdb 0 500"
+device-mapper: reload ioctl failed: Invalid argument
+Command failed
+ >umount /mnt
+ > dmsetup create d0 --table="0 `blockdev --getsize /dev/sdb` delay 
+/dev/sdb 0 500"
+Worked.
 
-> Thanks, it's great to hear the interest!
-> =
+Basically, am trying to test how regular userspace commands to 
+read/write files
+behave when I/O fails. For this, I need to put a file system and then 
+carry on testing.
 
-> > Do you guys have some userland tool/script to populate the page
-> > table in dm-switch, or is there some other way to test this
-> > (with eql storage) ?
-> =
+But as seen from above, dmsetup is failing to create a flakey/delay 
+device when /dev/sdb
+has a filesystem on top of it. Is there any workaround ?
 
-> We are planning on providing some sample code, which will
-> demonstrate how to upload a page table from userland via the
-> netlink socket.
-> =
+Thanks,
+Yathi
 
-
-Hello again,
-
-Any news about this sample code? =
-
-
-I noticed you guys just posted v3 of the patch, =
-
-so it would be nice to try it out.
-
--- Pasi
+On 10/21/2011 9:00 AM, Yathindra wrote:
+> Ok :)  Bryn is there a more elaborate document which shows simple 
+> examples
+> to work with device mapper. For a newbie like me it would be really 
+> helpful.
+>
+> Thanks,
+> Yathi
+>
+> On 10/21/2011 8:56 AM, Bryn M. Reeves wrote:
+>> On 10/21/2011 03:47 PM, Yathindra wrote:
+>>> dmsetup create d0 --table="0 `blockdev --getsize /dev/sdb` delay
+>>> /dev/sdb 0 500"
+>>> dmsetup create f0 --table="0 `blockdev --getsize /dev/mapper/d0` flakey
+>>> /dev/mapper/d0 0 9 1"
+>>> mkfs -t ext3 /dev/mapper/f0
+>>> ...
+>>> ...
+>>> ext2fs_mkdir: Attempt to read block from filesystem resulted in short
+>>> read while creating root dir
+>>>
+>>> Can we even mount such a device ?
+>>
+>> It's a flakey device :)
+>>
+>> With that table you'll have a device that is failing write I/Os for 
+>> 1s in every ten. If that coincides with mkfs trying to write to the 
+>> device it will create a corrupted file system.
+>>
+>> Depending on what you are trying to test you may want to put data on 
+>> the device first.
+>>
+>> Regards,
+>> Bryn.
+>
