@@ -1,17 +1,16 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 2/2] [thin] in thin_iterate_devices(),
- get the pool dev size a non-blocking way.
-Date: Fri, 21 Oct 2011 13:07:39 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.1110211307280.5163@hs20-bc2-1.build.redhat.com>
+Subject: Re: [PATCH 1/2] [device-mapper] Document the fact that
+ iterate_device method shouldn't block.
+Date: Fri, 21 Oct 2011 13:07:22 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1110211306560.5163@hs20-bc2-1.build.redhat.com>
 References: <20111021092800.GB4393@ubuntu>
 	<1319192375-5048-1-git-send-email-ejt@redhat.com>
-	<1319192375-5048-2-git-send-email-ejt@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1319192375-5048-2-git-send-email-ejt@redhat.com>
+In-Reply-To: <1319192375-5048-1-git-send-email-ejt@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -32,30 +31,23 @@ Mikulas
 On Fri, 21 Oct 2011, Joe Thornber wrote:
 
 > ---
->  drivers/md/dm-thin.c |   10 +++++++---
->  1 files changed, 7 insertions(+), 3 deletions(-)
+>  include/linux/device-mapper.h |    4 ++++
+>  1 files changed, 4 insertions(+), 0 deletions(-)
 > 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index cd48cd8..1976a30 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -2359,10 +2359,14 @@ static int thin_iterate_devices(struct dm_target *ti,
->  	dm_block_t blocks;
->  	struct thin_c *tc = ti->private;
->  
-> -	r = dm_pool_get_data_dev_size(tc->pool->pmd, &blocks);
-> -	if (r)
-> -		return r;
+> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> index aa09503..8ceb13a 100644
+> --- a/include/linux/device-mapper.h
+> +++ b/include/linux/device-mapper.h
+> @@ -148,6 +148,10 @@ struct target_type {
+>  	dm_ioctl_fn ioctl;
+>  	dm_merge_fn merge;
+>  	dm_busy_fn busy;
+> +
 > +	/*
-> +	 * We can't call dm_pool_get_data_dev_size() since that blocks.  So
-> +	 * we follow a more convoluted path through to the pool's target.
+> +	 * iterate_devices must not block.
 > +	 */
-> +	if (!tc->pool->ti)
-> +		return 0;	/* nothing is bound */
->  
-> +	blocks = tc->pool->ti->len >> tc->pool->block_shift;
->  	if (blocks)
->  		return fn(ti, tc->pool_dev, 0, tc->pool->sectors_per_block * blocks, data);
+>  	dm_iterate_devices_fn iterate_devices;
+>  	dm_io_hints_fn io_hints;
 >  
 > -- 
 > 1.7.5.4
