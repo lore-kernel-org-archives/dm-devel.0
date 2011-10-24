@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath callout.c
-Date: 24 Oct 2011 13:39:56 -0000
-Message-ID: <20111024133956.31687.qmail@sourceware.org>
+Subject: multipath-tools/path_priority pp_alua/rtpg.c p ...
+Date: 24 Oct 2011 13:41:32 -0000
+Message-ID: <20111024134132.32316.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,63 +22,39 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2011-10-24 13:39:56
+Changes by:	bmarzins@sourceware.org	2011-10-24 13:41:32
 
 Modified files:
-	libmultipath   : callout.c 
+	path_priority/pp_alua: rtpg.c 
+	path_priority/pp_balance_units: pp_balance_units.c 
 
 Log message:
-	Fix for bz #729478. Add a new callout format parameter %c, that converts the "!"
-	in cciss device names to "/".
+	Fix for bz #737072. Shorten the timeout for the alua prio callout function
+	from 5 minutes to 1 minute.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/callout.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_alua/rtpg.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3.2.5&r2=1.3.2.6
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_balance_units/pp_balance_units.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6&r2=1.6.2.1
 
---- multipath-tools/libmultipath/callout.c	2009/05/15 21:01:26	1.5.2.2
-+++ multipath-tools/libmultipath/callout.c	2011/10/24 13:39:56	1.5.2.3
-@@ -133,6 +133,19 @@
- 	return retval;
- }
+--- multipath-tools/path_priority/pp_alua/rtpg.c	2009/08/18 21:12:02	1.3.2.5
++++ multipath-tools/path_priority/pp_alua/rtpg.c	2011/10/24 13:41:32	1.3.2.6
+@@ -29,7 +29,7 @@
+ #include "rtpg.h"
  
-+void
-+convert_cciss(char *dest, char *src)
-+{
-+	char *ptr;
-+
-+	strcpy(dest, src);
-+	if (strncmp(src, "cciss", 5))
-+		return;
-+	ptr = strrchr(dest, '!');
-+	if (ptr)
-+		*ptr = '/';
-+}
-+
- extern int
- apply_format (char * string, char * cmd, struct path * pp)
- {
-@@ -141,6 +154,7 @@
- 	char * p;
- 	int len;
- 	int myfree;
-+	char converted_dev[FILE_NAME_SIZE];
+ #define SENSE_BUFF_LEN  32
+-#define DEF_TIMEOUT     300000
++#define DEF_TIMEOUT     60000
  
- 	if (!string)
- 		return 1;
-@@ -179,6 +193,17 @@
- 		snprintf(p, len, "%s", pp->dev);
- 		p += len - 1;
- 		break;
-+	case 'c':
-+		convert_cciss(converted_dev, pp->dev);
-+		len = strlen(converted_dev) + 1;
-+		myfree -= len;
-+
-+		if (myfree < 2)
-+			return 1;
-+
-+		snprintf(p, len, "%s", converted_dev);
-+		p += len - 1;
-+		break;
- 	case 'd':
- 		len = strlen(pp->dev_t) + 1;
- 		myfree -= len;
+ /*
+  * Macro used to print debug messaged.
+--- multipath-tools/path_priority/pp_balance_units/pp_balance_units.c	2006/08/02 21:37:24	1.6
++++ multipath-tools/path_priority/pp_balance_units/pp_balance_units.c	2011/10/24 13:41:32	1.6.2.1
+@@ -38,7 +38,7 @@
+ #define INQUIRY_CMDLEN  6
+ #define INQUIRY_CMD     0x12
+ #define SENSE_BUFF_LEN  32
+-#define DEF_TIMEOUT     300000
++#define DEF_TIMEOUT     60000
+ #define RECOVERED_ERROR 0x01
+ #define MX_ALLOC_LEN    255
+ #define SCSI_CHECK_CONDITION    0x2
