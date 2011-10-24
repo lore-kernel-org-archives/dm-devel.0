@@ -1,7 +1,7 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/multipathd main.c
-Date: 24 Oct 2011 13:46:54 -0000
-Message-ID: <20111024134654.2483.qmail@sourceware.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCHES] dm-crypt parallelization
+Date: Mon, 24 Oct 2011 11:14:05 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.1110241111100.13477@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -16,34 +16,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2011-10-24 13:46:54
+Hi
 
-Modified files:
-	multipathd     : main.c 
+Here are patches for dm-crypt parallelization: 
+http://people.redhat.com/mpatocka/patches/kernel/dm-crypt-paralelizace/
 
-Log message:
-	fix for bz #741664. setup_multipath frees the multipath device if it fails,
-	so check the return value, and don't touch the multipath device, it
-	setup_multipath() has returned 1.
+For each cpu, we create a kernel thread bound to that cpu. There is a 
+global queue with sectors to be encrypted. We add requests to the queue 
+and wake the per-cpu-threads. The threads pop requests from the queue and 
+process them.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.37&r2=1.69.2.38
-
---- multipath-tools/multipathd/main.c	2011/10/10 04:15:41	1.69.2.37
-+++ multipath-tools/multipathd/main.c	2011/10/24 13:46:54	1.69.2.38
-@@ -988,7 +988,8 @@
- 		return 1;
- 	}
- 	dm_lib_release();
--	setup_multipath(vecs, mpp);
-+	if (setup_multipath(vecs, mpp) != 0)
-+		return 1;
- 	sync_map_state(mpp);
- 
- 	return 0;
+Mikulas
