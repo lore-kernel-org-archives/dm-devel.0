@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/path_priority/pp_alua rtpg.c
-Date: 26 Oct 2011 04:53:45 -0000
-Message-ID: <20111026045345.16638.qmail@sourceware.org>
+Subject: multipath-tools/libmultipath hwtable.c
+Date: 26 Oct 2011 04:55:19 -0000
+Message-ID: <20111026045519.16977.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,48 +22,25 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2011-10-26 04:53:44
+Changes by:	bmarzins@sourceware.org	2011-10-26 04:55:18
 
 Modified files:
-	path_priority/pp_alua: rtpg.c 
+	libmultipath   : hwtable.c 
 
 Log message:
-	Fix for bz #740512.  zero out buffers for do_inquiry and do_rtpg.
+	fix for bz#742906. Add more HP P2000 product strings.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_alua/rtpg.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3.2.6&r2=1.3.2.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.35&r2=1.20.2.36
 
---- multipath-tools/path_priority/pp_alua/rtpg.c	2011/10/24 13:41:32	1.3.2.6
-+++ multipath-tools/path_priority/pp_alua/rtpg.c	2011/10/26 04:53:44	1.3.2.7
-@@ -165,6 +165,7 @@
- 	struct inquiry_data	inq;
- 	int			rc;
- 
-+	memset((unsigned char *)&inq, 0, sizeof(inq));
- 	rc = do_inquiry(fd, 0, 0x00, &inq, sizeof(inq));
- 	if (!rc) {
- 		rc = inquiry_data_get_tpgs(&inq);
-@@ -181,6 +182,7 @@
- 	struct vpd83_dscr *	dscr;
- 	int			rc;
- 
-+	memset(buf, 0, sizeof(buf));
- 	rc = do_inquiry(fd, 1, 0x83, buf, sizeof(buf));
- 	if (!rc) {
- 		vpd83 = (struct vpd83_data *) buf;
-@@ -266,6 +268,7 @@
- 			"%u bytes\n", buflen);
- 		return -RTPG_RTPG_FAILED;
- 	}
-+	memset(buf, 0, buflen);
- 	rc = do_rtpg(fd, buf, buflen);
- 	if (rc < 0)
- 		goto out;
-@@ -279,6 +282,7 @@
- 			return -RTPG_RTPG_FAILED;
- 		}
- 		buflen = scsi_buflen;
-+		memset(buf, 0, buflen);
- 		rc = do_rtpg(fd, buf, buflen);
- 		if (rc < 0)
- 			goto out;
+--- multipath-tools/libmultipath/hwtable.c	2011/03/07 05:19:38	1.20.2.35
++++ multipath-tools/libmultipath/hwtable.c	2011/10/26 04:55:18	1.20.2.36
+@@ -173,7 +173,7 @@
+ 	{
+                  /* HP P2000 product family */
+                 .vendor        = "HP",
+-                .product       = "P2000 G3 FC",
++                .product       = "P2000 G3 FC|P2000G3 FC/iSCSI|P2000 G3 SAS|P2000 G3 iSCSI",
+                 .getuid        = DEFAULT_GETUID,
+                 .getprio       = "/sbin/mpath_prio_alua /dev/%n",
+                 .features      = DEFAULT_FEATURES,
