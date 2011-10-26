@@ -1,46 +1,63 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath hwtable.c
-Date: 26 Oct 2011 04:55:19 -0000
-Message-ID: <20111026045519.16977.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [PATCH] scsi_dh: check queuedata pointer before proceeding further
+Date: Wed, 26 Oct 2011 14:29:38 -0400
+Message-ID: <47D23AD8469A2B448F33C24BD7A39BD91040F25B@RTPMVEXC1-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-class: urn:content-classes:message
+Sender: linux-scsi-owner@vger.kernel.org
+To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2011-10-26 04:55:18
+This patch validates sdev pointer in scsi_dh_activate before proceeding further.
 
-Modified files:
-	libmultipath   : hwtable.c 
+Without this check we might see the panic as below. I have seen this
+panic multiple times..
 
-Log message:
-	fix for bz#742906. Add more HP P2000 product strings.
+Call trace:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.35&r2=1.20.2.36
+ #0 [ffff88007d647b50] machine_kexec at ffffffff81020902
+ #1 [ffff88007d647ba0] crash_kexec at ffffffff810875b0
+ #2 [ffff88007d647c70] oops_end at ffffffff8139c650
+ #3 [ffff88007d647c90] __bad_area_nosemaphore at ffffffff8102dd15
+ #4 [ffff88007d647d50] page_fault at ffffffff8139b8cf
+    [exception RIP: scsi_dh_activate+0x82]
+    RIP: ffffffffa0041922  RSP: ffff88007d647e00  RFLAGS: 00010046
+    RAX: 0000000000000000  RBX: 0000000000000000  RCX: 00000000000093c5
+    RDX: 00000000000093c5  RSI: ffffffffa02e6640  RDI: ffff88007cc88988
+    RBP: 000000000000000f   R8: ffff88007d646000   R9: 0000000000000000
+    R10: ffff880082293790  R11: 00000000ffffffff  R12: ffff88007cc88988
+    R13: 0000000000000000  R14: 0000000000000286  R15: ffff880037b845e0
+    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0000
+ #5 [ffff88007d647e38] run_workqueue at ffffffff81060268
+ #6 [ffff88007d647e78] worker_thread at ffffffff81060386
+ #7 [ffff88007d647ee8] kthread at ffffffff81064436
+ #8 [ffff88007d647f48] kernel_thread at ffffffff81003fba
 
---- multipath-tools/libmultipath/hwtable.c	2011/03/07 05:19:38	1.20.2.35
-+++ multipath-tools/libmultipath/hwtable.c	2011/10/26 04:55:18	1.20.2.36
-@@ -173,7 +173,7 @@
- 	{
-                  /* HP P2000 product family */
-                 .vendor        = "HP",
--                .product       = "P2000 G3 FC",
-+                .product       = "P2000 G3 FC|P2000G3 FC/iSCSI|P2000 G3 SAS|P2000 G3 iSCSI",
-                 .getuid        = DEFAULT_GETUID,
-                 .getprio       = "/sbin/mpath_prio_alua /dev/%n",
-                 .features      = DEFAULT_FEATURES,
+Signed-off-by: Babu Moger <babu.moger@netapp.com>
+---
+ 
+--- linux-3.1-rc4/drivers/scsi/device_handler/scsi_dh.c.orig	2011-10-26 11:36:18.000000000 -0500
++++ linux-3.1-rc4/drivers/scsi/device_handler/scsi_dh.c	2011-10-26 12:52:47.000000000 -0500
+@@ -441,7 +441,15 @@ int scsi_dh_activate(struct request_queu
+ 
+ 	spin_lock_irqsave(q->queue_lock, flags);
+ 	sdev = q->queuedata;
+-	if (sdev && sdev->scsi_dh_data)
++	if (!sdev) {
++		spin_unlock_irqrestore(q->queue_lock, flags);
++		err = SCSI_DH_NOSYS;
++		if (fn)
++			fn(data, err);
++		return err;
++	}
++
++	if (sdev->scsi_dh_data)
+ 		scsi_dh = sdev->scsi_dh_data->scsi_dh;
+ 	dev = get_device(&sdev->sdev_gendev);
+ 	if (!scsi_dh || !dev ||
+
+
