@@ -1,44 +1,80 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [PATCH] scsi_dh_alua: Fix the time inteval for alua rtpg commands
-Date: Thu, 27 Oct 2011 14:36:32 -0400
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD91050E54E@RTPMVEXC1-PRD.hq.netapp.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: RFC: dm-switch target [v3]
+Date: Thu, 27 Oct 2011 14:52:23 -0400
+Message-ID: <20111027185223.GA6444@redhat.com>
+References: <20111021202253.GA27434@freewill.equallogic.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-class: urn:content-classes:message
-Sender: linux-scsi-owner@vger.kernel.org
-To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>, hare@suse.de
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20111021202253.GA27434@freewill.equallogic.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jim Ramsay <jim_ramsay@dell.com>
+Cc: dm-devel@redhat.com, "Shah, Parind" <Parind_Shah@dell.com>, "Shamberger,
+	Jason" <Jason_Shamberger@dell.com>, "OKelley,
+	Kevin" <Kevin_OKelley@dell.com>
 List-Id: dm-devel.ids
 
-This patch corrects the retry interval for alua rtpg command. Purpose was to retry the commands in seconds.
-But that was not happening. Reason is msleep takes argument in milliseconds.
+On Fri, Oct 21 2011 at  4:22pm -0400,
+Jim Ramsay <jim_ramsay@dell.com> wrote:
 
-Also added minor text after successful attach. 
+> Note: This is a repost with a few important implementation improvements.
+...
+> - Added a sysfs file so userland applications can easily check the version of
+>   this module.
+...
 
-Signed-off-by: Babu Moger <babu.moger@netapp.com>
-CC: Hannes Reinecke <hare@suse.de> 
----
+> static ssize_t sysfs_version_show(struct kobject *kobj,
+> 				  struct attribute *attr, char *buff)
+> {
+> 	return snprintf(buff, PAGE_SIZE, "%d.%d.%d\n",
+> 			__g_switch_target.version[0],
+> 			__g_switch_target.version[1],
+> 			__g_switch_target.version[2]);
+> }
+> 
+> static ssize_t sysfs_version_store(struct kobject *kobj,
+> 				   struct attribute *attr, const char *buff,
+> 				   size_t size)
+> {
+> 	return -EINVAL;
+> }
+> 
+> static const struct _sysfs_attr_ops __g_sysfs_version = {
+> 	.attr = {"version", 0444},
+> 	.ops = {&sysfs_version_show, &sysfs_version_store}
+> };
 
---- linux-3.1-rc4/drivers/scsi/device_handler/scsi_dh_alua.c.orig	2011-10-26 11:36:11.000000000 -0500
-+++ linux-3.1-rc4/drivers/scsi/device_handler/scsi_dh_alua.c	2011-10-27 12:50:41.000000000 -0500
-@@ -507,7 +507,7 @@ static int alua_rtpg(struct scsi_device 
- 	int len, k, off, valid_states = 0;
- 	unsigned char *ucp;
- 	unsigned err;
--	unsigned long expiry, interval = 1;
-+	unsigned long expiry, interval = 1000;
- 
- 	expiry = round_jiffies_up(jiffies + ALUA_FAILOVER_TIMEOUT);
-  retry:
-@@ -734,6 +734,7 @@ static int alua_bus_attach(struct scsi_d
- 	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
- 	sdev->scsi_dh_data = scsi_dh_data;
- 	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
-+	sdev_printk(KERN_NOTICE, sdev, "%s: Attached\n", ALUA_DH_NAME);
- 
- 	return 0;
- 
+One would hope that this "version" file isn't needed.  DM already
+provides the ability to query the version of targets via the
+DM_LIST_VERSIONS dm-ioctl.  E.g.:
 
+# dmsetup targets
+thin-pool        v1.0.0
+thin             v1.0.0
+mirror           v1.12.1
+multipath        v1.3.0
+striped          v1.4.0
+linear           v1.1.0
+error            v1.0.1
 
+But we don't have the ability to ask for a specific target's version.
+
+(lvm2's tools/dmsetup.c:_targets() illustrates how to collect the
+targets and access their versions -- would require linking against
+libdm).
+
+But we could add a --target flag to dmsetup targets (like 'dmsetup ls'
+allows), e.g.: dmsetup targets --target switch
+
+Mike
