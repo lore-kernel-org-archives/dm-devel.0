@@ -1,15 +1,14 @@
-From: Bernd Broermann <bernd@broermann.com>
-Subject: Re: DM inconsistent after disk migration
-Date: Fri, 28 Oct 2011 16:06:46 +0200
-Message-ID: <4EAAB6F6.7080505@broermann.com>
-References: <780ff8d84fb70f7ddf8beb696ff02ddf.squirrel@webmail.xlab.net>
-	<4EA0398D.4020207@redhat.com>
+From: Yathindra <ydev@cs.utah.edu>
+Subject: Re: Mapping sectors to have errors
+Date: Fri, 28 Oct 2011 11:54:50 -0600
+Message-ID: <4EAAEC6A.4070209@cs.utah.edu>
+References: <4EAA13E4.6020709@cs.utah.edu> <20111028091140.GD4105@ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4EA0398D.4020207@redhat.com>
+In-Reply-To: <20111028091140.GD4105@ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,59 +18,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Bryn M. Reeves" <bmr@redhat.com>
+To: Joe Thornber <thornber@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Am 20.10.2011 17:09, schrieb Bryn M. Reeves:
-> On 10/20/2011 03:47 PM, Bernd Broermann wrote:
->> CODE "move" script
->> # mirror
->> pvcreate /dev/disk2
->> vgextend vg01  /dev/disk2
->> lvconvert -m1 --mirrorlog core /dev/vg01/lvdata  /dev/disk2
->> # split
->> lvconvert -m0 --mirrorlog core /dev/vg01/lvdata  /dev/disk1
->> vgreduce vg01  /dev/disk1
->> pvremove  /dev/disk1
-> 
-> If you just want to move the logical extents in vg01/lvdata from disk1 -> disk2 why not use pvmove?
-> 
-> Internally it will construct a corelog mirror in a very similar way but it saves you from having to manually split things and supports transactional updates allowing the move to be automatically
-> resumed if it is interrupted for any reason.
-> 
-> E.g.:
-> 
-> pvcreate /dev/disk2
-> pvmove /dev/disk1 /dev/disk2 (you can ommit disk2 here if it's the
->                               only free space in the VG and pvmove will
->                               chose it automatically)
-> vgreduce /dev/disk1
-> pvremove /dev/disk1
-> 
->> My assumption is that SLAVE reconfigures the device-mapper not correct,
->> when doing the "move" operations on MASTER.
-> 
-> Nothing told the SLAVE host that vg01/lvdata had changed so it still has the original PV device open (from its point of view on that side of the SRDF replication).
-> 
-> If the LV is not in use you can just de-activate/re-activate to have it see the changes to the VG metadata:
-> 
-> vgchange -an vg01; vgchange -ay vg01
+Hi Joe,
 
-Thank you,
-you gave me the right advice.
+I tried it the other way but when I specify error it doesn't seem to take
+the start sector > 0.
 
-I did a vgchange --refresh , as senn in the man page.
-Other dead entries of LVs on SLAVE , I could remove with "dmsetup remove <LV device>".
+# echo "0 `blockdev --getsz /dev/sdb` linear /dev/sdb 0" | dmsetup 
+create bad_disk
 
-Bernd
+# dmsetup table
+bad_disk: 0 488281250 linear 8:16 0
 
-> 
-> Unless you're using a clustered environment with clvmd hosts that have a common view of shared storage will not be aware of on-disk changes made by another host. This is hazardous if both hosts can
-> write to the storage at the same time as it's possible for simultaneous updates to the VG metadata to corrupt one another (SRDF should prevent this since only one side of the replicated device can be
-> writable at a time but some care is still needed to ensure all hosts have a coherent view of the VG).
-> 
-> Regards,
-> Bryn.
-> 
-> 
+# echo "100000 488181250 error" | dmsetup load bad_disk << This failed
+device-mapper: reload ioctl failed: Invalid argument
+Command failed
+
+# echo "0 100000 error" |  dmsetup load bad_disk << This worked
+
+Any ideas?
+
+Thanks,
+Yathi
+
+
+On 10/28/2011 3:11 AM, Joe Thornber wrote:
+> On Thu, Oct 27, 2011 at 08:31:00PM -0600, Yathindra wrote:
+>> Hi,
+>>
+>> I'm trying to create a disk and map some sectors to have errors on them.
+>>
+>> I tried this,
+>> echo "0 100000 linear /dev/sdb 0 100000 480081250 error"| dmsetup
+>> create bad_disk
+>> device-mapper: reload ioctl failed: Invalid argument
+>> Command failed
+>>
+>> I have put in the right arguments but not sure why it fails.
+> You have 2 target lines concatenated onto the same line there.
