@@ -1,174 +1,349 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [PATCH 4/4] scsi_dh: code cleanup - remove the references to scsi_dev_info
-Date: Tue, 1 Nov 2011 13:20:24 -0400
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD9105DB4DC@RTPMVEXC1-PRD.hq.netapp.com>
+From: Sanjana Shari <sanjana.linux@gmail.com>
+Subject: Re: creating two device mapper files for an underline
+	blockdevice
+Date: Tue, 1 Nov 2011 22:22:54 +0530
+Message-ID: <CABMcfaOiMfbz_amLkoSJ-zhRKCGCEhc1Em29NV5-02LiOPJYcQ@mail.gmail.com>
+References: <CABMcfaMVsagfFdtg+f1eYR501wWSMbxsEAHTYD_5MTF1bABu0A@mail.gmail.com>
+	<4EAFAE7A.7060000@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-class: urn:content-classes:message
-Sender: linux-scsi-owner@vger.kernel.org
-To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: multipart/mixed; boundary="===============6026546786950249857=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4EAFAE7A.7060000@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <mbroz@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: sanjana.linux@gmail.com
 List-Id: dm-devel.ids
 
-All the handlers have implemented the match function(look at patch 1, 2, 3).
-We don't need to use scsi_dev_info any more for matching purposes.
+--===============6026546786950249857==
+Content-Type: multipart/alternative; boundary=bcaec545480cce243e04b0af2fb9
 
-Cleaning up the scsi_dh code.
+--bcaec545480cce243e04b0af2fb9
+Content-Type: text/plain; charset=ISO-8859-1
 
-FYI..
-Match function was originally implemented by this 
+Hi Milan,
 
-http://www.spinics.net/lists/linux-scsi/msg54284.html
-or
-http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-2.6.git;a=commit;h=6c3633d08acf514e2e89aa95d2346ce9d64d719a
+Thanks for the documentation links... it was useful.. one of the link I had
+gone through it earlier.
 
-Signed-off-by: Babu Moger <babu.moger@netapp.com>
----
+Couple of questions more which I would post here...
 
-diff -uprN -X linux/Documentation/dontdiff linux//drivers/scsi/device_handler/scsi_dh.c linux-new/linux//drivers/scsi/device_handler/scsi_dh.c
---- linux//drivers/scsi/device_handler/scsi_dh.c	2011-10-31 13:47:37.000000000 -0500
-+++ linux-new/linux//drivers/scsi/device_handler/scsi_dh.c	2011-10-31 13:45:46.000000000 -0500
-@@ -27,7 +27,6 @@
- 
- static DEFINE_SPINLOCK(list_lock);
- static LIST_HEAD(scsi_dh_list);
--static int scsi_dh_list_idx = 1;
- 
- static struct scsi_device_handler *get_device_handler(const char *name)
- {
-@@ -44,21 +43,6 @@ static struct scsi_device_handler *get_d
- 	return found;
- }
- 
--static struct scsi_device_handler *get_device_handler_by_idx(int idx)
--{
--	struct scsi_device_handler *tmp, *found = NULL;
--
--	spin_lock(&list_lock);
--	list_for_each_entry(tmp, &scsi_dh_list, list) {
--		if (tmp->idx == idx) {
--			found = tmp;
--			break;
--		}
--	}
--	spin_unlock(&list_lock);
--	return found;
--}
--
- /*
-  * device_handler_match_function - Match a device handler to a device
-  * @sdev - SCSI device to be tested
-@@ -83,23 +67,6 @@ device_handler_match_function(struct scs
- }
- 
- /*
-- * device_handler_match_devlist - Match a device handler to a device
-- * @sdev - SCSI device to be tested
-- *
-- * Tests @sdev against all device_handler registered in the devlist.
-- * Returns the found device handler or NULL if not found.
-- */
--static struct scsi_device_handler *
--device_handler_match_devlist(struct scsi_device *sdev)
--{
--	int idx;
--
--	idx = scsi_get_device_flags_keyed(sdev, sdev->vendor, sdev->model,
--					  SCSI_DEVINFO_DH);
--	return get_device_handler_by_idx(idx);
--}
--
--/*
-  * device_handler_match - Attach a device handler to a device
-  * @scsi_dh - The device handler to match against or NULL
-  * @sdev - SCSI device to be tested against @scsi_dh
-@@ -115,8 +82,6 @@ device_handler_match(struct scsi_device_
- 	struct scsi_device_handler *found_dh;
- 
- 	found_dh = device_handler_match_function(sdev);
--	if (!found_dh)
--		found_dh = device_handler_match_devlist(sdev);
- 
- 	if (scsi_dh && found_dh != scsi_dh)
- 		found_dh = NULL;
-@@ -360,25 +325,14 @@ static int scsi_dh_notifier_remove(struc
-  */
- int scsi_register_device_handler(struct scsi_device_handler *scsi_dh)
- {
--	int i;
- 
- 	if (get_device_handler(scsi_dh->name))
- 		return -EBUSY;
- 
- 	spin_lock(&list_lock);
--	scsi_dh->idx = scsi_dh_list_idx++;
- 	list_add(&scsi_dh->list, &scsi_dh_list);
- 	spin_unlock(&list_lock);
- 
--	for (i = 0; scsi_dh->devlist && scsi_dh->devlist[i].vendor; i++) {
--		scsi_dev_info_list_add_keyed(0,
--					scsi_dh->devlist[i].vendor,
--					scsi_dh->devlist[i].model,
--					NULL,
--					scsi_dh->idx,
--					SCSI_DEVINFO_DH);
--	}
--
- 	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh, scsi_dh_notifier_add);
- 	printk(KERN_INFO "%s: device handler registered\n", scsi_dh->name);
- 
-@@ -395,7 +349,6 @@ EXPORT_SYMBOL_GPL(scsi_register_device_h
-  */
- int scsi_unregister_device_handler(struct scsi_device_handler *scsi_dh)
- {
--	int i;
- 
- 	if (!get_device_handler(scsi_dh->name))
- 		return -ENODEV;
-@@ -403,12 +356,6 @@ int scsi_unregister_device_handler(struc
- 	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh,
- 			 scsi_dh_notifier_remove);
- 
--	for (i = 0; scsi_dh->devlist && scsi_dh->devlist[i].vendor; i++) {
--		scsi_dev_info_list_del_keyed(scsi_dh->devlist[i].vendor,
--					     scsi_dh->devlist[i].model,
--					     SCSI_DEVINFO_DH);
--	}
--
- 	spin_lock(&list_lock);
- 	list_del(&scsi_dh->list);
- 	spin_unlock(&list_lock);
-@@ -587,10 +534,6 @@ static int __init scsi_dh_init(void)
- {
- 	int r;
- 
--	r = scsi_dev_info_add_list(SCSI_DEVINFO_DH, "SCSI Device Handler");
--	if (r)
--		return r;
--
- 	r = bus_register_notifier(&scsi_bus_type, &scsi_dh_nb);
- 
- 	if (!r)
-@@ -605,7 +548,6 @@ static void __exit scsi_dh_exit(void)
- 	bus_for_each_dev(&scsi_bus_type, NULL, NULL,
- 			 scsi_dh_sysfs_attr_remove);
- 	bus_unregister_notifier(&scsi_bus_type, &scsi_dh_nb);
--	scsi_dev_info_remove_list(SCSI_DEVINFO_DH);
- }
- 
- module_init(scsi_dh_init);
-diff -uprN -X linux/Documentation/dontdiff linux//include/scsi/scsi_device.h linux-new/linux//include/scsi/scsi_device.h
---- linux//include/scsi/scsi_device.h	2011-10-31 13:48:47.000000000 -0500
-+++ linux-new/linux//include/scsi/scsi_device.h	2011-10-31 13:53:06.000000000 -0500
-@@ -185,7 +185,6 @@ typedef void (*activate_complete)(void *
- struct scsi_device_handler {
- 	/* Used by the infrastructure */
- 	struct list_head list; /* list of scsi_device_handlers */
--	int idx;
- 
- 	/* Filled by the hardware handler */
- 	struct module *module;
+Mapping the second half of the first device + the another device to create
+a new map. here I ma not mapping the whole of first disk. Or I ma not
+mapping the whole table, but still device creation is sucessfull.
+[root@bladelinux01 ~]# losetup -a
+/dev/loop0: [fd03]:2359319 (/root/dm/dm_test)
+/dev/loop1: [fd03]:2359321 (/root/dm/dm_test1)
+[root@bladelinux01 ~]# blockdev --getsize /dev/loop0
+204800  < ------ 100 M
+[root@bladelinux01 ~]# blockdev --getsize /dev/loop1
+204800  < ------ 100 M
+
+Using first half of the block device /dev/loop0. Here I have mapped the
+table from 0 to 102400 sectors.
+
+[root@bladelinux01 ~]# fdisk -lus /dev/loop0
+
+Disk /dev/loop0: 104 MB, 104857600 bytes
+255 heads, 63 sectors/track, 12 cylinders, total 204800 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x00000000
+
+Command is successful.... as expected.
+
+[root@bladelinux01 ~]# dmsetup create firsthalf --table "0 102400 linear
+/dev/loop0 0"
+[root@bladelinux01 ~]# dmsetup table firsthalf
+0 102400 linear 7:0 0
+[root@bladelinux01 ~]# dmsetup info firsthalf
+Name:              firsthalf
+State:             ACTIVE
+Read Ahead:        256
+Tables present:    LIVE
+Open count:        0
+Event number:      0
+Major, minor:      253, 6
+Number of targets: 1
+
+Now here I am creating a new device named "anotherhalf_plus_otherdisk" by
+mapping the remaining first half of the first disk and then the whole of a
+second block device /dev/loop1.
+
+Creating table to use with dmsetup.
+[root@bladelinux01 ~]# echo 0 102400 linear /dev/loop0 102400 > table
+[root@bladelinux01 ~]# cat table
+0 102400 linear /dev/loop0 102400
+[root@bladelinux01 ~]# echo 102400 204800 linear /dev/loop1 0 >>table
+[root@bladelinux01 ~]# cat table
+0 102400 linear /dev/loop0 102400
+102400 204800 linear /dev/loop1 0
+[root@bladelinux01 ~]# dmsetup create anotherhalf_plus_otherdisk table
+[root@bladelinux01 ~]# dmsetup table anotherhalf_plus_otherdisk
+0 102400 linear 7:0 102400
+102400 204800 linear 7:1 0
+[root@bladelinux01 ~]# dmsetup info anotherhalf_plus_otherdisk
+Name:              anotherhalf_plus_otherdisk
+State:             ACTIVE
+Read Ahead:        256
+Tables present:    LIVE
+Open count:        0
+Event number:      0
+Major, minor:      253, 7
+Number of targets: 2
+
+device created with size as expected. Agian here I haven't used the start
+sector as "0" for the second block device,
+I have used "102400"th sector to start from, which I believe should be
+continuation of the previous logical sector. < --- Please this part.
+[root@bladelinux01 ~]# blockdev --getsize
+/dev/mapper/anotherhalf_plus_otherdisk
+307200
+
+[root@bladelinux01 ~]# fdisk -lus /dev/mapper/anotherhalf_plus_otherdisk
+
+Disk /dev/mapper/anotherhalf_plus_otherdisk: 157 MB, 157286400 bytes
+255 heads, 63 sectors/track, 19 cylinders, total 307200 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x00000000
+
+Here I have some doubts which needs to be cleared to get a thorough
+understanding.
+My questions:
+
+The table format to be used is as follows from man page of dmsetup.
+Each line of the table specifies a single target and is of the form:
+logical_start_sector    num_sectors    target_type target_args
+
+Here:
+"logical_start_sector" start sector should be "0" for the start of any
+block device, rather I would say for the start of any new map would e more
+appropriate. What do you say...?
+"num_sectors" as name suggestes would be the number of sectors, which would
+contribute to the size of the end mapped device.
+
+For target type "linear" we use arguments as the following:
+destination_device   start_sector   < -------- here which is the start
+sector..?
+Is it the logical start scetor of the blockdevice or the physical sector of
+the blockdevice...? Or how do we define it...? This part is not yet clear
+to me.
 
 
+
+On Tue, Nov 1, 2011 at 2:01 PM, Milan Broz <mbroz@redhat.com> wrote:
+
+> On 11/01/2011 07:08 AM, Sanjana Shari wrote:
+>
+> > But if I use the other part of the disk to map. The command is not
+> successful
+> >
+> > [root@bladelinux01 root]#  dmsetup create half1 --table "102401 102399
+> linear /dev/loop0 102400"
+> > device-mapper: reload ioctl failed: Invalid argument
+> > Command failed
+>
+> You have to always map the whole table (starting at sector 0).
+> If you see syslog, you can see why
+>  device-mapper: table: 254:2: linear: Gap in table
+>  device-mapper: ioctl: error adding target to table
+>
+> Anyway, for the info how it works, example how to switch active table:
+>
+> 1. create linear device mapped to /dev/sdb
+>
+>  # dmsetup create x --table "0 10000 linear /dev/sdb 0"
+>  # dmsetup table x
+>  0 10000 linear 8:16 0
+>
+> 2. Remap the first half of device to another target, here "error"
+>
+>  - load new (yet inactive) table
+>  # echo -e "0 5000 error\n5000 10000 linear /dev/sdb 5000" | dmsetup load x
+>
+>  - so now you have one active table and one inactive (prepared for switch)
+>  # dmsetup table x
+>  0 10000 linear 8:16 0
+>
+>  # dmsetup table x --inactive
+>  0 5000 error
+>  5000 10000 linear 8:16 5000
+>
+> 3. switch to new (inactive) table (note that "dmsetup suspend" here is
+> implicit)
+>  # dmsetup resume x
+>
+>  # dmsetup table x
+>  0 5000 error
+>  5000 10000 linear 8:16 5000
+>
+>
+> If you want more info about this low level DM operation, read
+> http://people.redhat.com/agk/talks/FOSDEM_2005/
+> http://mbroz.fedorapeople.org/talks/DeviceMapperBasics/
+> (old, but still useful, I hope :-)
+>
+> Milan
+>
+
+--bcaec545480cce243e04b0af2fb9
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hi Milan,<br><br>Thanks for the documentation links... it was useful.. one =
+of the link I had gone through it earlier.<br><br>Couple of questions more =
+which I would post here...<br><br>Mapping the second half of the first devi=
+ce + the another device to create a new map. here I ma not mapping the whol=
+e of first disk. Or I ma not mapping the whole table, but still device crea=
+tion is sucessfull.<br>
+[root@bladelinux01 ~]# losetup -a<br>/dev/loop0: [fd03]:2359319 (/root/dm/d=
+m_test)<br>/dev/loop1: [fd03]:2359321 (/root/dm/dm_test1)<br>[root@bladelin=
+ux01 ~]# blockdev --getsize /dev/loop0<br>204800=A0 &lt; ------ 100 M<br>
+[root@bladelinux01 ~]# blockdev --getsize /dev/loop1<br>204800=A0 &lt; ----=
+-- 100 M<br><br>Using first half of the block device /dev/loop0. Here I hav=
+e mapped the table from 0 to 102400 sectors.<br><br>[root@bladelinux01 ~]# =
+fdisk -lus /dev/loop0<br>
+<br>Disk /dev/loop0: 104 MB, 104857600 bytes<br>255 heads, 63 sectors/track=
+, 12 cylinders, total 204800 sectors<br>Units =3D sectors of 1 * 512 =3D 51=
+2 bytes<br>Sector size (logical/physical): 512 bytes / 512 bytes<br>I/O siz=
+e (minimum/optimal): 512 bytes / 512 bytes<br>
+Disk identifier: 0x00000000<br><br>Command is successful.... as expected.<b=
+r><br>[root@bladelinux01 ~]# dmsetup create firsthalf --table &quot;0 10240=
+0 linear /dev/loop0 0&quot;<br>[root@bladelinux01 ~]# dmsetup table firstha=
+lf<br>
+0 102400 linear 7:0 0<br>[root@bladelinux01 ~]# dmsetup info firsthalf<br>N=
+ame:=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 firsthalf<br>State:=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0 ACTIVE<br>Read Ahead:=A0=A0=A0=A0=A0=A0=A0 256<br>=
+Tables present:=A0=A0=A0 LIVE<br>Open count:=A0=A0=A0=A0=A0=A0=A0 0<br>Even=
+t number:=A0=A0=A0=A0=A0 0<br>
+Major, minor:=A0=A0=A0=A0=A0 253, 6<br>Number of targets: 1<br><br>Now here=
+ I am creating a new device named &quot;anotherhalf_plus_otherdisk&quot; by=
+ mapping the remaining first half of the first disk and then the whole of a=
+ second block device /dev/loop1.<br>
+<br>Creating table to use with dmsetup.<br>[root@bladelinux01 ~]# echo 0 10=
+2400 linear /dev/loop0 102400 &gt; table<br>[root@bladelinux01 ~]# cat tabl=
+e<br>0 102400 linear /dev/loop0 102400<br>[root@bladelinux01 ~]# echo 10240=
+0 204800 linear /dev/loop1 0 &gt;&gt;table<br>
+[root@bladelinux01 ~]# cat table<br>0 102400 linear /dev/loop0 102400<br>10=
+2400 204800 linear /dev/loop1 0<br>[root@bladelinux01 ~]# dmsetup create an=
+otherhalf_plus_otherdisk table<br>[root@bladelinux01 ~]# dmsetup table anot=
+herhalf_plus_otherdisk<br>
+0 102400 linear 7:0 102400<br>102400 204800 linear 7:1 0<br>[root@bladelinu=
+x01 ~]# dmsetup info anotherhalf_plus_otherdisk<br>Name:=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0 anotherhalf_plus_otherdisk<br>State:=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0 ACTIVE<br>Read Ahead:=A0=A0=A0=A0=A0=A0=A0 256<br>
+Tables present:=A0=A0=A0 LIVE<br>Open count:=A0=A0=A0=A0=A0=A0=A0 0<br>Even=
+t number:=A0=A0=A0=A0=A0 0<br>Major, minor:=A0=A0=A0=A0=A0 253, 7<br>Number=
+ of targets: 2<br><br>device created with size as expected. Agian here I ha=
+ven&#39;t used the start sector as &quot;0&quot; for the second block devic=
+e, <br>
+I have used &quot;102400&quot;th sector to start from, which I believe shou=
+ld be continuation of the previous logical sector. &lt; --- Please this par=
+t.<br>[root@bladelinux01 ~]# blockdev --getsize /dev/mapper/anotherhalf_plu=
+s_otherdisk<br>
+307200<br><br>[root@bladelinux01 ~]# fdisk -lus /dev/mapper/anotherhalf_plu=
+s_otherdisk<br><br>Disk /dev/mapper/anotherhalf_plus_otherdisk: 157 MB, 157=
+286400 bytes<br>255 heads, 63 sectors/track, 19 cylinders, total 307200 sec=
+tors<br>
+Units =3D sectors of 1 * 512 =3D 512 bytes<br>Sector size (logical/physical=
+): 512 bytes / 512 bytes<br>I/O size (minimum/optimal): 512 bytes / 512 byt=
+es<br>Disk identifier: 0x00000000<br><br>Here I have some doubts which need=
+s to be cleared to get a thorough understanding.<br>
+My questions:<br><br>The table format to be used is as follows from man pag=
+e of dmsetup.<br>Each line of the table specifies a single target and is of=
+ the form:<br>logical_start_sector=A0=A0=A0 num_sectors=A0=A0=A0 target_typ=
+e target_args<br>
+<br>Here:<br>&quot;logical_start_sector&quot; start sector should be &quot;=
+0&quot; for the start of any block device, rather I would say for the start=
+ of any new map would e more appropriate. What do you say...?<br>&quot;num_=
+sectors&quot; as name suggestes would be the number of sectors, which would=
+ contribute to the size of the end mapped device.<br>
+<br>For target type &quot;linear&quot; we use arguments as the following:<b=
+r>destination_device=A0=A0 start_sector=A0=A0 &lt; -------- here which is t=
+he start sector..? <br>Is it the logical start scetor of the blockdevice or=
+ the physical sector of the blockdevice...? Or how do we define it...? This=
+ part is not yet clear to me.<br>
+<br><br><br><div class=3D"gmail_quote">On Tue, Nov 1, 2011 at 2:01 PM, Mila=
+n Broz <span dir=3D"ltr">&lt;<a href=3D"mailto:mbroz@redhat.com">mbroz@redh=
+at.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D"=
+margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex;">
+<div class=3D"im">On 11/01/2011 07:08 AM, Sanjana Shari wrote:<br>
+<br>
+&gt; But if I use the other part of the disk to map. The command is not suc=
+cessful<br>
+&gt;<br>
+&gt; [root@bladelinux01 root]# =A0dmsetup create half1 --table &quot;102401=
+ 102399 linear /dev/loop0 102400&quot;<br>
+&gt; device-mapper: reload ioctl failed: Invalid argument<br>
+&gt; Command failed<br>
+<br>
+</div>You have to always map the whole table (starting at sector 0).<br>
+If you see syslog, you can see why<br>
+ =A0device-mapper: table: 254:2: linear: Gap in table<br>
+ =A0device-mapper: ioctl: error adding target to table<br>
+<br>
+Anyway, for the info how it works, example how to switch active table:<br>
+<br>
+1. create linear device mapped to /dev/sdb<br>
+<br>
+ =A0# dmsetup create x --table &quot;0 10000 linear /dev/sdb 0&quot;<br>
+ =A0# dmsetup table x<br>
+ =A00 10000 linear 8:16 0<br>
+<br>
+2. Remap the first half of device to another target, here &quot;error&quot;=
+<br>
+<br>
+=A0- load new (yet inactive) table<br>
+=A0# echo -e &quot;0 5000 error\n5000 10000 linear /dev/sdb 5000&quot; | dm=
+setup load x<br>
+<br>
+=A0- so now you have one active table and one inactive (prepared for switch=
+)<br>
+=A0# dmsetup table x<br>
+=A00 10000 linear 8:16 0<br>
+<br>
+=A0# dmsetup table x --inactive<br>
+=A00 5000 error<br>
+=A05000 10000 linear 8:16 5000<br>
+<br>
+3. switch to new (inactive) table (note that &quot;dmsetup suspend&quot; he=
+re is implicit)<br>
+ =A0# dmsetup resume x<br>
+<br>
+ =A0# dmsetup table x<br>
+ =A00 5000 error<br>
+ =A05000 10000 linear 8:16 5000<br>
+<br>
+<br>
+If you want more info about this low level DM operation, read<br>
+<a href=3D"http://people.redhat.com/agk/talks/FOSDEM_2005/" target=3D"_blan=
+k">http://people.redhat.com/agk/talks/FOSDEM_2005/</a><br>
+<a href=3D"http://mbroz.fedorapeople.org/talks/DeviceMapperBasics/" target=
+=3D"_blank">http://mbroz.fedorapeople.org/talks/DeviceMapperBasics/</a><br>
+(old, but still useful, I hope :-)<br>
+<font color=3D"#888888"><br>
+Milan<br>
+</font></blockquote></div><br>
+
+--bcaec545480cce243e04b0af2fb9--
+
+
+--===============6026546786950249857==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============6026546786950249857==--
