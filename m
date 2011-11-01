@@ -1,131 +1,183 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper enhancements for 3.2
-Date: Mon, 31 Oct 2011 21:12:40 +0000
-Message-ID: <20111031211240.GK2840@agk-dp.fab.redhat.com>
+From: Sanjana Shari <sanjana.linux@gmail.com>
+Subject: creating two device mapper files for an underline
+	blockdevice
+Date: Tue, 1 Nov 2011 11:38:52 +0530
+Message-ID: <CABMcfaMVsagfFdtg+f1eYR501wWSMbxsEAHTYD_5MTF1bABu0A@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Joe Thornber <thornber@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Mandeep Singh Baines <msb@chromium.org>, Mikulas Patocka <mpatocka@redhat.com>, Namhyung Kim <namhyung@gmail.com>, Jens Axboe <jaxboe@fusionio.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Neil Brown <neilb@suse.de>
+Content-Type: multipart/mixed; boundary="===============5294630050735508475=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Please pull from:
+--===============5294630050735508475==
+Content-Type: multipart/alternative; boundary=20cf3079b74c8f0f0804b0a6309d
 
-  http://people.redhat.com/agk/git/linux-dm for-linus
+--20cf3079b74c8f0f0804b0a6309d
+Content-Type: text/plain; charset=ISO-8859-1
 
-to get the following device-mapper enhancements for inclusion in 3.2.
+Hello,
 
-The highlight here is thin provisioning.  This includes a new snapshot
-implementation that, unlike the existing implementation, performs well with
-multiple snapshots of the same device (e.g. for backups).
-More-detailed documentation is included in-tree.
+I am trying to create two device mapper files for an underline blockdevice.
+One file( half1) will be mapped to the first half of the block-device. and
+the second half (half2) will be mapped to the rest of the space in the same
+block device.
 
-The development of userspace LVM support is progressing well and and we
-expect to have the first release of this out in the next month or so.
-(To try this, people should check out git://sources.redhat.com/git/lvm2 and
-follow lvm-devel@redhat.com.)
+1.Using dd command I have created a 100 MB file.
 
-Thanks,
-Alasdair
+# dd if=/dev/zero of=dm_test bs=512 count=204800
 
-Alasdair G Kergon (4):
-      dm table: add singleton feature
-      dm table: add always writeable feature
-      dm table: add immutable feature
-      dm: export dm get md
+2. associated it with loop device:
+# losetup /dev/loop0 /tmp/dm_test
 
-Joe Thornber (2):
-      dm: add persistent data library
-      dm: add thin provisioning target
+# blockdev --getsize /dev/loop0
+204800
 
-Jonathan Brassow (1):
-      dm log userspace: fix comment hyphens
+using dmsetup to create dm file.
+# dmsetup create half --table "0 102400 linear /dev/loop0 0"
 
-Jonathan E Brassow (2):
-      dm log userspace: add log device dependency
-      dm: raid fix device status indicator when array initializing
+[root@bladelinux01 root]# dmsetup table half
+0 102400 linear 7:0 0
+[root@bladelinux01 root]# dmsetup info half
+Name:              half
+State:             ACTIVE
+Read Ahead:        256
+Tables present:    LIVE
+Open count:        0
+Event number:      0
+Major, minor:      253, 6
+Number of targets: 1
 
-Mandeep Singh Baines (1):
-      dm table: propagate non rotational flag
 
-Mikulas Patocka (2):
-      dm kcopyd: add dm_kcopyd_zero to zero an area
-      dm: add bufio
+[root@bladelinux01 root]# ls -l /dev/mapper/half
+lrwxrwxrwx. 1 root root 7 Nov  1 01:44 /dev/mapper/half -> ../dm-6
 
-Namhyung Kim (2):
-      dm: use local printk ratelimit
-      dm: remove superfluous smp_mb
+But if I use the other part of the disk to map. The command is not
+successful
 
- Documentation/device-mapper/dm-log.txt             |    2 +-
- Documentation/device-mapper/persistent-data.txt    |   84 +
- Documentation/device-mapper/thin-provisioning.txt  |  285 +++
- drivers/md/Kconfig                                 |   36 +
- drivers/md/Makefile                                |    4 +
- drivers/md/dm-bufio.c                              | 1699 ++++++++++++++
- drivers/md/dm-bufio.h                              |  112 +
- drivers/md/dm-ioctl.c                              |   11 +
- drivers/md/dm-kcopyd.c                             |   31 +-
- drivers/md/dm-log-userspace-base.c                 |   37 +-
- drivers/md/dm-raid.c                               |   48 +-
- drivers/md/dm-table.c                              |   73 +
- drivers/md/dm-thin-metadata.c                      | 1391 +++++++++++
- drivers/md/dm-thin-metadata.h                      |  156 ++
- drivers/md/dm-thin.c                               | 2428 ++++++++++++++++++++
- drivers/md/dm.c                                    |   21 +-
- drivers/md/dm.h                                    |    2 +
- drivers/md/persistent-data/Kconfig                 |    8 +
- drivers/md/persistent-data/Makefile                |   11 +
- drivers/md/persistent-data/dm-block-manager.c      |  620 +++++
- drivers/md/persistent-data/dm-block-manager.h      |  123 +
- drivers/md/persistent-data/dm-btree-internal.h     |  137 ++
- drivers/md/persistent-data/dm-btree-remove.c       |  566 +++++
- drivers/md/persistent-data/dm-btree-spine.c        |  244 ++
- drivers/md/persistent-data/dm-btree.c              |  805 +++++++
- drivers/md/persistent-data/dm-btree.h              |  145 ++
- .../persistent-data/dm-persistent-data-internal.h  |   19 +
- drivers/md/persistent-data/dm-space-map-checker.c  |  437 ++++
- drivers/md/persistent-data/dm-space-map-checker.h  |   26 +
- drivers/md/persistent-data/dm-space-map-common.c   |  705 ++++++
- drivers/md/persistent-data/dm-space-map-common.h   |  126 +
- drivers/md/persistent-data/dm-space-map-disk.c     |  335 +++
- drivers/md/persistent-data/dm-space-map-disk.h     |   25 +
- drivers/md/persistent-data/dm-space-map-metadata.c |  596 +++++
- drivers/md/persistent-data/dm-space-map-metadata.h |   33 +
- drivers/md/persistent-data/dm-space-map.h          |  134 ++
- .../md/persistent-data/dm-transaction-manager.c    |  400 ++++
- .../md/persistent-data/dm-transaction-manager.h    |  130 ++
- include/linux/device-mapper.h                      |   45 +-
- include/linux/dm-ioctl.h                           |    4 +-
- include/linux/dm-kcopyd.h                          |    4 +
- include/linux/dm-log-userspace.h                   |   18 +-
- 42 files changed, 12079 insertions(+), 37 deletions(-)
- create mode 100644 Documentation/device-mapper/persistent-data.txt
- create mode 100644 Documentation/device-mapper/thin-provisioning.txt
- create mode 100644 drivers/md/dm-bufio.c
- create mode 100644 drivers/md/dm-bufio.h
- create mode 100644 drivers/md/dm-thin-metadata.c
- create mode 100644 drivers/md/dm-thin-metadata.h
- create mode 100644 drivers/md/dm-thin.c
- create mode 100644 drivers/md/persistent-data/Kconfig
- create mode 100644 drivers/md/persistent-data/Makefile
- create mode 100644 drivers/md/persistent-data/dm-block-manager.c
- create mode 100644 drivers/md/persistent-data/dm-block-manager.h
- create mode 100644 drivers/md/persistent-data/dm-btree-internal.h
- create mode 100644 drivers/md/persistent-data/dm-btree-remove.c
- create mode 100644 drivers/md/persistent-data/dm-btree-spine.c
- create mode 100644 drivers/md/persistent-data/dm-btree.c
- create mode 100644 drivers/md/persistent-data/dm-btree.h
- create mode 100644 drivers/md/persistent-data/dm-persistent-data-internal.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-checker.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-checker.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-common.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-common.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-disk.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-disk.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-metadata.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-metadata.h
- create mode 100644 drivers/md/persistent-data/dm-space-map.h
- create mode 100644 drivers/md/persistent-data/dm-transaction-manager.c
- create mode 100644 drivers/md/persistent-data/dm-transaction-manager.h
+[root@bladelinux01 root]#  dmsetup create half1 --table "102401 102399
+linear /dev/loop0 102400"
+device-mapper: reload ioctl failed: Invalid argument
+Command failed
+
+[root@bladelinux01 root]#  dmsetup create half1 --table "102401 102399
+linear /dev/loop0 0"
+device-mapper: reload ioctl failed: Invalid argument
+Command failed
+
+The format used seems to be correct according to the man page of dmsetup.
+Please guide me. I am not sure what am I missing.
+
+-- sanjana
+
+--20cf3079b74c8f0f0804b0a6309d
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<span style=3D"font-family: courier new,monospace;">Hello,</span><br style=
+=3D"font-family: courier new,monospace;"><br style=3D"font-family: courier =
+new,monospace;"><span style=3D"font-family: courier new,monospace;">I am tr=
+ying to create two device mapper files for an underline blockdevice. One fi=
+le( half1) will be mapped to the first half of the block-device. and the se=
+cond half (half2) will be mapped to the rest of the space in the same block=
+ device.</span><br style=3D"font-family: courier new,monospace;">
+<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
+y: courier new,monospace;">1.Using dd command I have created a 100 MB file.=
+</span><br style=3D"font-family: courier new,monospace;"><br style=3D"font-=
+family: courier new,monospace;">
+<span style=3D"font-family: courier new,monospace;"># dd if=3D/dev/zero of=
+=3Ddm_test bs=3D512 count=3D204800</span><br style=3D"font-family: courier =
+new,monospace;"><br style=3D"font-family: courier new,monospace;"><span sty=
+le=3D"font-family: courier new,monospace;">2. associated it with loop devic=
+e:</span><br style=3D"font-family: courier new,monospace;">
+<span style=3D"font-family: courier new,monospace;"># losetup /dev/loop0 /t=
+mp/dm_test</span><br style=3D"font-family: courier new,monospace;"><br styl=
+e=3D"font-family: courier new,monospace;"><span style=3D"font-family: couri=
+er new,monospace;"># blockdev --getsize /dev/loop0</span><br style=3D"font-=
+family: courier new,monospace;">
+<span style=3D"font-family: courier new,monospace;">204800</span><br style=
+=3D"font-family: courier new,monospace;"><br style=3D"font-family: courier =
+new,monospace;"><span style=3D"font-family: courier new,monospace;">using d=
+msetup to create dm file.</span><br style=3D"font-family: courier new,monos=
+pace;">
+<span style=3D"font-family: courier new,monospace;"># dmsetup create half -=
+-table &quot;0 102400 linear /dev/loop0 0&quot;</span><br style=3D"font-fam=
+ily: courier new,monospace;"><br style=3D"font-family: courier new,monospac=
+e;">
+<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 root=
+]# dmsetup table half</span><br style=3D"font-family: courier new,monospace=
+;"><span style=3D"font-family: courier new,monospace;">0 102400 linear 7:0 =
+0</span><br style=3D"font-family: courier new,monospace;">
+<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 root=
+]# dmsetup info half</span><br style=3D"font-family: courier new,monospace;=
+"><span style=3D"font-family: courier new,monospace;">Name:=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0 half</span><br style=3D"font-family: courier new,m=
+onospace;">
+<span style=3D"font-family: courier new,monospace;">State:=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0 ACTIVE</span><br style=3D"font-family: courier new,mo=
+nospace;"><span style=3D"font-family: courier new,monospace;">Read Ahead:=
+=A0=A0=A0=A0=A0=A0=A0 256</span><br style=3D"font-family: courier new,monos=
+pace;">
+<span style=3D"font-family: courier new,monospace;">Tables present:=A0=A0=
+=A0 LIVE</span><br style=3D"font-family: courier new,monospace;"><span styl=
+e=3D"font-family: courier new,monospace;">Open count:=A0=A0=A0=A0=A0=A0=A0 =
+0</span><br style=3D"font-family: courier new,monospace;">
+<span style=3D"font-family: courier new,monospace;">Event number:=A0=A0=A0=
+=A0=A0 0</span><br style=3D"font-family: courier new,monospace;"><span styl=
+e=3D"font-family: courier new,monospace;">Major, minor:=A0=A0=A0=A0=A0 253,=
+ 6</span><br style=3D"font-family: courier new,monospace;">
+<span style=3D"font-family: courier new,monospace;">Number of targets: 1</s=
+pan><br style=3D"font-family: courier new,monospace;"><br style=3D"font-fam=
+ily: courier new,monospace;"><br style=3D"font-family: courier new,monospac=
+e;">
+<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 root=
+]# ls -l /dev/mapper/half</span><br style=3D"font-family: courier new,monos=
+pace;"><span style=3D"font-family: courier new,monospace;">lrwxrwxrwx. 1 ro=
+ot root 7 Nov=A0 1 01:44 /dev/mapper/half -&gt; ../dm-6</span><br style=3D"=
+font-family: courier new,monospace;">
+<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
+y: courier new,monospace;">But if I use the other part of the disk to map. =
+The command is not successful</span><br style=3D"font-family: courier new,m=
+onospace;">
+<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
+y: courier new,monospace;">[root@bladelinux01 root]#=A0 dmsetup create half=
+1 --table &quot;102401 102399 linear /dev/loop0 102400&quot;</span><br styl=
+e=3D"font-family: courier new,monospace;">
+<span style=3D"font-family: courier new,monospace;">device-mapper: reload i=
+octl failed: Invalid argument</span><br style=3D"font-family: courier new,m=
+onospace;"><span style=3D"font-family: courier new,monospace;">Command fail=
+ed</span><br style=3D"font-family: courier new,monospace;">
+<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
+y: courier new,monospace;">[root@bladelinux01 root]#=A0 dmsetup create half=
+1 --table &quot;102401 102399 linear /dev/loop0 0&quot;</span><br style=3D"=
+font-family: courier new,monospace;">
+<span style=3D"font-family: courier new,monospace;">device-mapper: reload i=
+octl failed: Invalid argument</span><br style=3D"font-family: courier new,m=
+onospace;"><span style=3D"font-family: courier new,monospace;">Command fail=
+ed</span><br style=3D"font-family: courier new,monospace;">
+<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
+y: courier new,monospace;">The format used seems to be correct according to=
+ the man page of dmsetup. Please guide me. I am not sure what am I missing<=
+/span>.<br>
+<br>-- sanjana<br><br>
+
+--20cf3079b74c8f0f0804b0a6309d--
+
+
+--===============5294630050735508475==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============5294630050735508475==--
