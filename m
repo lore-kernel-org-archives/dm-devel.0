@@ -1,73 +1,73 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: creating two device mapper files for an underline
- blockdevice
-Date: Tue, 01 Nov 2011 09:31:54 +0100
-Message-ID: <4EAFAE7A.7060000@redhat.com>
-References: <CABMcfaMVsagfFdtg+f1eYR501wWSMbxsEAHTYD_5MTF1bABu0A@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [PATCH 0/4] scsi_dh: Fix for handler attach and code clean up
+Date: Tue, 1 Nov 2011 13:19:19 -0400
+Message-ID: <47D23AD8469A2B448F33C24BD7A39BD9105DB4D4@RTPMVEXC1-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CABMcfaMVsagfFdtg+f1eYR501wWSMbxsEAHTYD_5MTF1bABu0A@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Sanjana Shari <sanjana.linux@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-class: urn:content-classes:message
+Sender: linux-scsi-owner@vger.kernel.org
+To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 11/01/2011 07:08 AM, Sanjana Shari wrote:
+These series of patches handles following things.
+1. Fixes handler attach issue.
+2. Introduces match function for all the handlers
+3. cleans up the scsi_dh code 
 
-> But if I use the other part of the disk to map. The command is not successful
-> 
-> [root@bladelinux01 root]#  dmsetup create half1 --table "102401 102399 linear /dev/loop0 102400"
-> device-mapper: reload ioctl failed: Invalid argument
-> Command failed
+I have noticed the attach issue during our multipath testing. We found that during
+the lun discovery there were lots of error messages like below..
 
-You have to always map the whole table (starting at sector 0).
-If you see syslog, you can see why
-  device-mapper: table: 254:2: linear: Gap in table
-  device-mapper: ioctl: error adding target to table
+Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav]  Result: hostbyte=DID_OK
+driverbyte=DRIVER_SENSE
+Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav]  Sense Key : Illegal
+Request [current]
+Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav]  <<vendor>> ASC=0x94
+ASCQ=0x1ASC=0x94 ASCQ=0x1
+Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav] CDB: Read(10): 28 00 00
+00 00 00 00 00 80 00
+Oct 25 08:24:43 kswm-mihosi kernel: end_request: I/O error, dev sdav, sector 0
 
-Anyway, for the info how it works, example how to switch active table:
+These messages were coming in spite of having scsi_dh_rdac in initrd.  Reason
+for these errors are due to device handler not being attached properly. If the
+device handler was attached then the I/O's should not go to passive paths.
 
-1. create linear device mapped to /dev/sdb
+Investigating further we found that there errors started with the introduction
+of these patches below.
 
-  # dmsetup create x --table "0 10000 linear /dev/sdb 0"
-  # dmsetup table x
-  0 10000 linear 8:16 0
+http://www.spinics.net/lists/linux-scsi/msg54284.html
+or
+http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-2.6.git;a=commit;h=6c3633d08acf514e2e89aa95d2346ce9d64d719a
 
-2. Remap the first half of device to another target, here "error"
+This patch introduces the match function for device handlers. But the match function
+was added only to scsi_dh_alua handler.
 
- - load new (yet inactive) table
- # echo -e "0 5000 error\n5000 10000 linear /dev/sdb 5000" | dmsetup load x                                      
+Reason for the failure is, if the match function is not available then scsi_dh calls
+scsi_get_device_flags_keyed(sdev, sdev->vendor, sdev->model, SCSI_DEVINFO_DH)
+which compares the exact vendor and product strings from sdev(which comes from inquiry).
 
- - so now you have one active table and one inactive (prepared for switch)
- # dmsetup table x
- 0 10000 linear 8:16 0
+While setting up the scsi_dev_info, handlers use the short strings(example below).
+Look at scsi_register_device_handler code. If  you look closely the handlers have
+only first few characters of the model string. So, scsi_get_device_flags_keyed
+fails and handler will not be attached. This applies to all the handlers.
 
- # dmsetup table x --inactive
- 0 5000 error 
- 5000 10000 linear 8:16 5000
+Example :
 
-3. switch to new (inactive) table (note that "dmsetup suspend" here is implicit)
-  # dmsetup resume x
+        Strings in scsi_dh_rdac handler..
+                    {"IBM", "1746"},
 
-  # dmsetup table x
-  0 5000 error 
-  5000 10000 linear 8:16 5000
+        Actual string..
+                     "IBM", "1746      FAStT"
+
+Couple of ways we can fix this problem.
+1. List the complete model strings in handlers for all the products.
+2. Introduce match function for all the handler and remove the call to scsi_get_device_flags_keyed.
+
+I think the option 2 is the best way to fix this problem. This removes lot of code in scsi_dh and 
+simplifies the things..
+
+TESTED the patches on NetApp E series storage.
 
 
-If you want more info about this low level DM operation, read
-http://people.redhat.com/agk/talks/FOSDEM_2005/
-http://mbroz.fedorapeople.org/talks/DeviceMapperBasics/
-(old, but still useful, I hope :-)
-
-Milan
