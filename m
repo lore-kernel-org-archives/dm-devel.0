@@ -1,260 +1,114 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [git pull] device-mapper enhancements for 3.2
-Date: Wed, 2 Nov 2011 10:25:52 +0000
-Message-ID: <20111102102552.GF2770@agk-dp.fab.redhat.com>
-References: <20111031211240.GK2840@agk-dp.fab.redhat.com> <CA+55aFz9NzgAJnpzRdkG7ia2vk4rjfQ1K6-Oac7oEP8JNQ-qdg@mail.gmail.com>
+From: Sanjana <sanjana.linux@gmail.com>
+Subject: Re: creating two device mapper files for an underline
+	blockdevice
+Date: Wed, 2 Nov 2011 18:02:30 +0530
+Message-ID: <CABMcfaNsdpnoMktJb67MgSvXa6_7FmXFAk_dkahpUPFCa+0Gwg@mail.gmail.com>
+References: <CABMcfaMVsagfFdtg+f1eYR501wWSMbxsEAHTYD_5MTF1bABu0A@mail.gmail.com>
+	<4EAFAE7A.7060000@redhat.com>
+	<CABMcfaOiMfbz_amLkoSJ-zhRKCGCEhc1Em29NV5-02LiOPJYcQ@mail.gmail.com>
+	<CABMcfaM6BuB=5r1Exq-PxuCLDifX7Qfuuq9ZXpF9QNXRbxvupA@mail.gmail.com>
+	<4EB0F7EF.603@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFz9NzgAJnpzRdkG7ia2vk4rjfQ1K6-Oac7oEP8JNQ-qdg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>, Milan Broz <mbroz@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>, Joe Thornber <thornber@redhat.com>, Jonathan Brassow <jbrassow@redhat.com>, Mandeep Singh Baines <msb@chromium.org>, Mikulas Patocka <mpatocka@redhat.com>, Namhyung Kim <namhyung@gmail.com>, Jens Axboe <jaxboe@fusionio.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Neil Brown <neilb@suse.de>, Steven Whitehouse <swhiteho@redhat.com>
+Content-Type: multipart/mixed; boundary="===============1539299101452342868=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4EB0F7EF.603@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <mbroz@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 01, 2011 at 03:05:50PM -0700, Linus Torvalds wrote:
-> On Mon, Oct 31, 2011 at 2:12 PM, Alasdair G Kergon <agk@redhat.com> w=
-rote:
-> > Please pull from:
-> >
-> > =A0http://people.redhat.com/agk/git/linux-dm for-linus
->=20
-> Get a kernel.org account, or get a real server. Not that crap. It's u=
-nusable.
+--===============1539299101452342868==
+Content-Type: multipart/alternative; boundary=20cf307ca38466eaef04b0bfaaae
 
-Steve Whitehouse has kindly stepped in to host this for me temporarily
-while, like many other people, I'm waiting to reobtain an account.
+--20cf307ca38466eaef04b0bfaaae
+Content-Type: text/plain; charset=ISO-8859-1
 
-So please pull from:
+Thanks Milan,
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/steve/linux-dm.git mast=
-er
+That clears my confusion.. need to read more doc... :)
 
-to get the following device-mapper enhancements for inclusion in 3.2.
+--sanjana
 
-The highlight here is thin provisioning.  This includes a new snapshot
-implementation that, unlike the existing implementation, performs well =
-with
-multiple snapshots of the same device (e.g. for backups).
-More-detailed documentation is included in-tree.
+On Wed, Nov 2, 2011 at 1:27 PM, Milan Broz <mbroz@redhat.com> wrote:
 
-The development of userspace LVM support is progressing well and and we
-expect to have the first release of this out in the next month or so.
-(To try this, people should check out git://sources.redhat.com/git/lvm2=
- and
-follow lvm-devel@redhat.com.)
+> On 11/01/2011 06:10 PM, Sanjana Shari wrote:
+> > Using the remaining of first half of the same blockdevice /dev/loop0.
+> > This seems to work. So I ma confused here how the mapping works..
+>
+> There is no magic for linear mapping.
+> Imagine you have this mapping table
+>
+> 0 8 linear /dev/sdb 1000
+> 8 8 linear /dev/sdc 500
+>
+> It means you created 16 sectors device consisting of two segments.
+>
+> First half (sectors 0-7) is mapped to /dev/sdb starting at sector 10000.
+> (IOW sectors 0-7 of newly mapped device is mapped to sectors 10000-10007
+> of /dev/sdb)
+>
+> Second half (sectors 8-15) is mapped to /dev/sdc starting at sector 500.
+>
+> See dmsetup man page, where linear mapping is described.
+> Just do not confuse source and destination device offset.
+>
+> Milan
+>
 
-Thanks,
-Alasdair
+--20cf307ca38466eaef04b0bfaaae
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Alasdair G Kergon (4):
-      dm table: add singleton feature
-      dm table: add always writeable feature
-      dm table: add immutable feature
-      dm: export dm get md
+Thanks Milan,<br><br>That clears my confusion.. need to read more doc... :)=
+<br><br>--sanjana<br><br><div class=3D"gmail_quote">On Wed, Nov 2, 2011 at =
+1:27 PM, Milan Broz <span dir=3D"ltr">&lt;<a href=3D"mailto:mbroz@redhat.co=
+m">mbroz@redhat.com</a>&gt;</span> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex;"><div class=3D"im">On 11/01/2011 06:10 PM, S=
+anjana Shari wrote:<br>
+&gt; Using the remaining of first half of the same blockdevice /dev/loop0.<=
+br>
+&gt; This seems to work. So I ma confused here how the mapping works..<br>
+<br>
+</div>There is no magic for linear mapping.<br>
+Imagine you have this mapping table<br>
+<br>
+0 8 linear /dev/sdb 1000<br>
+8 8 linear /dev/sdc 500<br>
+<br>
+It means you created 16 sectors device consisting of two segments.<br>
+<br>
+First half (sectors 0-7) is mapped to /dev/sdb starting at sector 10000.<br=
+>
+(IOW sectors 0-7 of newly mapped device is mapped to sectors 10000-10007 of=
+ /dev/sdb)<br>
+<br>
+Second half (sectors 8-15) is mapped to /dev/sdc starting at sector 500.<br=
+>
+<br>
+See dmsetup man page, where linear mapping is described.<br>
+Just do not confuse source and destination device offset.<br>
+<font color=3D"#888888"><br>
+Milan<br>
+</font></blockquote></div><br><br clear=3D"all"><br><br><br>
 
-Joe Thornber (2):
-      dm: add persistent data library
-      dm: add thin provisioning target
-
-Jonathan Brassow (1):
-      dm log userspace: fix comment hyphens
-
-Jonathan E Brassow (2):
-      dm log userspace: add log device dependency
-      dm: raid fix device status indicator when array initializing
-
-Mandeep Singh Baines (1):
-      dm table: propagate non rotational flag
-
-Mikulas Patocka (2):
-      dm kcopyd: add dm_kcopyd_zero to zero an area
-      dm: add bufio
-
-Namhyung Kim (2):
-      dm: use local printk ratelimit
-      dm: remove superfluous smp_mb
-
- Documentation/device-mapper/dm-log.txt             |    2 +-
- Documentation/device-mapper/persistent-data.txt    |   84 +
- Documentation/device-mapper/thin-provisioning.txt  |  285 +++
- drivers/md/Kconfig                                 |   36 +
- drivers/md/Makefile                                |    4 +
- drivers/md/dm-bufio.c                              | 1699 ++++++++++++=
-++
- drivers/md/dm-bufio.h                              |  112 +
- drivers/md/dm-ioctl.c                              |   11 +
- drivers/md/dm-kcopyd.c                             |   31 +-
- drivers/md/dm-log-userspace-base.c                 |   37 +-
- drivers/md/dm-raid.c                               |   48 +-
- drivers/md/dm-table.c                              |   73 +
- drivers/md/dm-thin-metadata.c                      | 1391 +++++++++++
- drivers/md/dm-thin-metadata.h                      |  156 ++
- drivers/md/dm-thin.c                               | 2428 ++++++++++++=
-++++++++
- drivers/md/dm.c                                    |   21 +-
- drivers/md/dm.h                                    |    2 +
- drivers/md/persistent-data/Kconfig                 |    8 +
- drivers/md/persistent-data/Makefile                |   11 +
- drivers/md/persistent-data/dm-block-manager.c      |  620 +++++
- drivers/md/persistent-data/dm-block-manager.h      |  123 +
- drivers/md/persistent-data/dm-btree-internal.h     |  137 ++
- drivers/md/persistent-data/dm-btree-remove.c       |  566 +++++
- drivers/md/persistent-data/dm-btree-spine.c        |  244 ++
- drivers/md/persistent-data/dm-btree.c              |  805 +++++++
- drivers/md/persistent-data/dm-btree.h              |  145 ++
- .../persistent-data/dm-persistent-data-internal.h  |   19 +
- drivers/md/persistent-data/dm-space-map-checker.c  |  437 ++++
- drivers/md/persistent-data/dm-space-map-checker.h  |   26 +
- drivers/md/persistent-data/dm-space-map-common.c   |  705 ++++++
- drivers/md/persistent-data/dm-space-map-common.h   |  126 +
- drivers/md/persistent-data/dm-space-map-disk.c     |  335 +++
- drivers/md/persistent-data/dm-space-map-disk.h     |   25 +
- drivers/md/persistent-data/dm-space-map-metadata.c |  596 +++++
- drivers/md/persistent-data/dm-space-map-metadata.h |   33 +
- drivers/md/persistent-data/dm-space-map.h          |  134 ++
- .../md/persistent-data/dm-transaction-manager.c    |  400 ++++
- .../md/persistent-data/dm-transaction-manager.h    |  130 ++
- include/linux/device-mapper.h                      |   45 +-
- include/linux/dm-ioctl.h                           |    4 +-
- include/linux/dm-kcopyd.h                          |    4 +
- include/linux/dm-log-userspace.h                   |   18 +-
- 42 files changed, 12079 insertions(+), 37 deletions(-)
- create mode 100644 Documentation/device-mapper/persistent-data.txt
- create mode 100644 Documentation/device-mapper/thin-provisioning.txt
- create mode 100644 drivers/md/dm-bufio.c
- create mode 100644 drivers/md/dm-bufio.h
- create mode 100644 drivers/md/dm-thin-metadata.c
- create mode 100644 drivers/md/dm-thin-metadata.h
- create mode 100644 drivers/md/dm-thin.c
- create mode 100644 drivers/md/persistent-data/Kconfig
- create mode 100644 drivers/md/persistent-data/Makefile
- create mode 100644 drivers/md/persistent-data/dm-block-manager.c
- create mode 100644 drivers/md/persistent-data/dm-block-manager.h
- create mode 100644 drivers/md/persistent-data/dm-btree-internal.h
- create mode 100644 drivers/md/persistent-data/dm-btree-remove.c
- create mode 100644 drivers/md/persistent-data/dm-btree-spine.c
- create mode 100644 drivers/md/persistent-data/dm-btree.c
- create mode 100644 drivers/md/persistent-data/dm-btree.h
- create mode 100644 drivers/md/persistent-data/dm-persistent-data-inter=
-nal.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-checker.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-checker.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-common.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-common.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-disk.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-disk.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-metadata.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-metadata.h
- create mode 100644 drivers/md/persistent-data/dm-space-map.h
- create mode 100644 drivers/md/persistent-data/dm-transaction-manager.c
- create mode 100644 drivers/md/persistent-data/dm-transaction-manager.h
+--20cf307ca38466eaef04b0bfaaae--
 
 
-Thanks,
-Alasdair
+--===============1539299101452342868==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Alasdair G Kergon (4):
-      dm table: add singleton feature
-      dm table: add always writeable feature
-      dm table: add immutable feature
-      dm: export dm get md
 
-Joe Thornber (2):
-      dm: add persistent data library
-      dm: add thin provisioning target
-
-Jonathan Brassow (1):
-      dm log userspace: fix comment hyphens
-
-Jonathan E Brassow (2):
-      dm log userspace: add log device dependency
-      dm: raid fix device status indicator when array initializing
-
-Mandeep Singh Baines (1):
-      dm table: propagate non rotational flag
-
-Mikulas Patocka (2):
-      dm kcopyd: add dm_kcopyd_zero to zero an area
-      dm: add bufio
-
-Namhyung Kim (2):
-      dm: use local printk ratelimit
-      dm: remove superfluous smp_mb
-
- Documentation/device-mapper/dm-log.txt             |    2 +-
- Documentation/device-mapper/persistent-data.txt    |   84 +
- Documentation/device-mapper/thin-provisioning.txt  |  285 +++
- drivers/md/Kconfig                                 |   36 +
- drivers/md/Makefile                                |    4 +
- drivers/md/dm-bufio.c                              | 1699 ++++++++++++=
-++
- drivers/md/dm-bufio.h                              |  112 +
- drivers/md/dm-ioctl.c                              |   11 +
- drivers/md/dm-kcopyd.c                             |   31 +-
- drivers/md/dm-log-userspace-base.c                 |   37 +-
- drivers/md/dm-raid.c                               |   48 +-
- drivers/md/dm-table.c                              |   73 +
- drivers/md/dm-thin-metadata.c                      | 1391 +++++++++++
- drivers/md/dm-thin-metadata.h                      |  156 ++
- drivers/md/dm-thin.c                               | 2428 ++++++++++++=
-++++++++
- drivers/md/dm.c                                    |   21 +-
- drivers/md/dm.h                                    |    2 +
- drivers/md/persistent-data/Kconfig                 |    8 +
- drivers/md/persistent-data/Makefile                |   11 +
- drivers/md/persistent-data/dm-block-manager.c      |  620 +++++
- drivers/md/persistent-data/dm-block-manager.h      |  123 +
- drivers/md/persistent-data/dm-btree-internal.h     |  137 ++
- drivers/md/persistent-data/dm-btree-remove.c       |  566 +++++
- drivers/md/persistent-data/dm-btree-spine.c        |  244 ++
- drivers/md/persistent-data/dm-btree.c              |  805 +++++++
- drivers/md/persistent-data/dm-btree.h              |  145 ++
- .../persistent-data/dm-persistent-data-internal.h  |   19 +
- drivers/md/persistent-data/dm-space-map-checker.c  |  437 ++++
- drivers/md/persistent-data/dm-space-map-checker.h  |   26 +
- drivers/md/persistent-data/dm-space-map-common.c   |  705 ++++++
- drivers/md/persistent-data/dm-space-map-common.h   |  126 +
- drivers/md/persistent-data/dm-space-map-disk.c     |  335 +++
- drivers/md/persistent-data/dm-space-map-disk.h     |   25 +
- drivers/md/persistent-data/dm-space-map-metadata.c |  596 +++++
- drivers/md/persistent-data/dm-space-map-metadata.h |   33 +
- drivers/md/persistent-data/dm-space-map.h          |  134 ++
- .../md/persistent-data/dm-transaction-manager.c    |  400 ++++
- .../md/persistent-data/dm-transaction-manager.h    |  130 ++
- include/linux/device-mapper.h                      |   45 +-
- include/linux/dm-ioctl.h                           |    4 +-
- include/linux/dm-kcopyd.h                          |    4 +
- include/linux/dm-log-userspace.h                   |   18 +-
- 42 files changed, 12079 insertions(+), 37 deletions(-)
- create mode 100644 Documentation/device-mapper/persistent-data.txt
- create mode 100644 Documentation/device-mapper/thin-provisioning.txt
- create mode 100644 drivers/md/dm-bufio.c
- create mode 100644 drivers/md/dm-bufio.h
- create mode 100644 drivers/md/dm-thin-metadata.c
- create mode 100644 drivers/md/dm-thin-metadata.h
- create mode 100644 drivers/md/dm-thin.c
- create mode 100644 drivers/md/persistent-data/Kconfig
- create mode 100644 drivers/md/persistent-data/Makefile
- create mode 100644 drivers/md/persistent-data/dm-block-manager.c
- create mode 100644 drivers/md/persistent-data/dm-block-manager.h
- create mode 100644 drivers/md/persistent-data/dm-btree-internal.h
- create mode 100644 drivers/md/persistent-data/dm-btree-remove.c
- create mode 100644 drivers/md/persistent-data/dm-btree-spine.c
- create mode 100644 drivers/md/persistent-data/dm-btree.c
- create mode 100644 drivers/md/persistent-data/dm-btree.h
- create mode 100644 drivers/md/persistent-data/dm-persistent-data-inter=
-nal.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-checker.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-checker.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-common.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-common.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-disk.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-disk.h
- create mode 100644 drivers/md/persistent-data/dm-space-map-metadata.c
- create mode 100644 drivers/md/persistent-data/dm-space-map-metadata.h
- create mode 100644 drivers/md/persistent-data/dm-space-map.h
- create mode 100644 drivers/md/persistent-data/dm-transaction-manager.c
- create mode 100644 drivers/md/persistent-data/dm-transaction-manager.h
+--===============1539299101452342868==--
