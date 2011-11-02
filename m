@@ -1,15 +1,18 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 3/4] scsi_dh_rdac: Adding the match function
- for	rdac device handler
-Date: Wed, 02 Nov 2011 08:20:31 +0100
-Message-ID: <4EB0EF3F.1010300@suse.de>
-References: <47D23AD8469A2B448F33C24BD7A39BD9105DB4D8@RTPMVEXC1-PRD.hq.netapp.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: creating two device mapper files for an underline
+ blockdevice
+Date: Wed, 02 Nov 2011 08:57:35 +0100
+Message-ID: <4EB0F7EF.603@redhat.com>
+References: <CABMcfaMVsagfFdtg+f1eYR501wWSMbxsEAHTYD_5MTF1bABu0A@mail.gmail.com>
+	<4EAFAE7A.7060000@redhat.com>
+	<CABMcfaOiMfbz_amLkoSJ-zhRKCGCEhc1Em29NV5-02LiOPJYcQ@mail.gmail.com>
+	<CABMcfaM6BuB=5r1Exq-PxuCLDifX7Qfuuq9ZXpF9QNXRbxvupA@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <47D23AD8469A2B448F33C24BD7A39BD9105DB4D8@RTPMVEXC1-PRD.hq.netapp.com>
+In-Reply-To: <CABMcfaM6BuB=5r1Exq-PxuCLDifX7Qfuuq9ZXpF9QNXRbxvupA@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,80 +22,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Sanjana Shari <sanjana.linux@gmail.com>
 List-Id: dm-devel.ids
 
-On 11/01/2011 06:19 PM, Moger, Babu wrote:
-> This patch introduces the match function for rdac device handler. Without=
- this,
-> sometimes handler attach fails during the device_add.  The match function=
- was
-> introduced by this patch
-> http://www.spinics.net/lists/linux-scsi/msg54284.html
->
-> Signed-off-by: Babu Moger<babu.moger@netapp.com>
-> ---
->
-> --- linux/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2011-10-31 11:2=
-5:44.000000000 -0500
-> +++ linux/drivers/scsi/device_handler/scsi_dh_rdac.c	2011-10-31 11:31:34.=
-000000000 -0500
-> @@ -819,6 +819,21 @@ static const struct scsi_dh_devlist rdac
->   	{NULL, NULL},
->   };
->
-> +static bool rdac_match(struct scsi_device *sdev)
-> +{
-> +	int i;
-> +
-> +	for (i =3D 0; rdac_dev_list[i].vendor; i++) {
-> +		if (!strncmp(sdev->vendor, rdac_dev_list[i].vendor,
-> +			strlen(rdac_dev_list[i].vendor))&&
-> +		    !strncmp(sdev->model, rdac_dev_list[i].model,
-> +			strlen(rdac_dev_list[i].model))) {
-> +			return true;
-> +		}
-> +	}
-> +	return false;
-> +}
-> +
->   static int rdac_bus_attach(struct scsi_device *sdev);
->   static void rdac_bus_detach(struct scsi_device *sdev);
->
-> @@ -831,6 +846,7 @@ static struct scsi_device_handler rdac_d
->   	.attach =3D rdac_bus_attach,
->   	.detach =3D rdac_bus_detach,
->   	.activate =3D rdac_activate,
-> +	.match =3D rdac_match,
->   };
->
->   static int rdac_bus_attach(struct scsi_device *sdev)
->
-As stated in the other mail, I guess we would need to have a check =
+On 11/01/2011 06:10 PM, Sanjana Shari wrote:
+> Using the remaining of first half of the same blockdevice /dev/loop0.
+> This seems to work. So I ma confused here how the mapping works..
 
-if the LUN is in ALUA mode.
-And, btw, the _original_ intention was to allow vendor-specific =
+There is no magic for linear mapping.
+Imagine you have this mapping table
 
-device_handler to do some better probing, eg querying some =
+0 8 linear /dev/sdb 1000
+8 8 linear /dev/sdc 500
 
-vendor-specific VPD pages.
-Especially for RDAC it would make far more sense to query the =
+It means you created 16 sectors device consisting of two segments.
 
-existence and format of one of the RDAC-specific VPD pages (eg 0xC2, =
+First half (sectors 0-7) is mapped to /dev/sdb starting at sector 10000.
+(IOW sectors 0-7 of newly mapped device is mapped to sectors 10000-10007 of /dev/sdb)
 
-0xC4, or 0xC8) and use that for matching.
-Then you could do away with the vendor/model array altogether here =
+Second half (sectors 8-15) is mapped to /dev/sdc starting at sector 500.
 
-and we wouldn't need to update the rdac handler every time a new =
+See dmsetup man page, where linear mapping is described.
+Just do not confuse source and destination device offset.
 
-array comes out or has been rebranded by some OEM.
-
-Cheers,
-
-Hannes
--- =
-
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+Milan
