@@ -1,126 +1,98 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] [PATCH 0/4] scsi_dh: Fix for handler attach and code
- clean up
-Date: Wed, 02 Nov 2011 08:15:18 +0100
-Message-ID: <4EB0EE06.8020200@suse.de>
-References: <47D23AD8469A2B448F33C24BD7A39BD9105DB4D4@RTPMVEXC1-PRD.hq.netapp.com>
+Subject: Re: [PATCH 3/4] scsi_dh_rdac: Adding the match function
+ for	rdac device handler
+Date: Wed, 02 Nov 2011 08:20:31 +0100
+Message-ID: <4EB0EF3F.1010300@suse.de>
+References: <47D23AD8469A2B448F33C24BD7A39BD9105DB4D8@RTPMVEXC1-PRD.hq.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <47D23AD8469A2B448F33C24BD7A39BD9105DB4D4@RTPMVEXC1-PRD.hq.netapp.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Moger, Babu" <Babu.Moger@netapp.com>, Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <47D23AD8469A2B448F33C24BD7A39BD9105DB4D8@RTPMVEXC1-PRD.hq.netapp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 On 11/01/2011 06:19 PM, Moger, Babu wrote:
-> These series of patches handles following things.
-> 1. Fixes handler attach issue.
-> 2. Introduces match function for all the handlers
-> 3. cleans up the scsi_dh code
->
-> I have noticed the attach issue during our multipath testing. We foun=
-d that during
-> the lun discovery there were lots of error messages like below..
->
-> Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav]  Result: hostb=
-yte=3DDID_OK
-> driverbyte=3DDRIVER_SENSE
-> Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav]  Sense Key : I=
-llegal
-> Request [current]
-> Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav]<<vendor>>  ASC=
-=3D0x94
-> ASCQ=3D0x1ASC=3D0x94 ASCQ=3D0x1
-> Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav] CDB: Read(10):=
- 28 00 00
-> 00 00 00 00 00 80 00
-> Oct 25 08:24:43 kswm-mihosi kernel: end_request: I/O error, dev sdav,=
- sector 0
->
-> These messages were coming in spite of having scsi_dh_rdac in initrd.=
-  Reason
-> for these errors are due to device handler not being attached properl=
-y. If the
-> device handler was attached then the I/O's should not go to passive p=
-aths.
->
-> Investigating further we found that there errors started with the int=
-roduction
-> of these patches below.
->
+> This patch introduces the match function for rdac device handler. Without=
+ this,
+> sometimes handler attach fails during the device_add.  The match function=
+ was
+> introduced by this patch
 > http://www.spinics.net/lists/linux-scsi/msg54284.html
-> or
-> http://git.kernel.org/?p=3Dlinux/kernel/git/jejb/scsi-misc-2.6.git;a=3D=
-commit;h=3D6c3633d08acf514e2e89aa95d2346ce9d64d719a
 >
-> This patch introduces the match function for device handlers. But the=
- match function
-> was added only to scsi_dh_alua handler.
+> Signed-off-by: Babu Moger<babu.moger@netapp.com>
+> ---
 >
-> Reason for the failure is, if the match function is not available the=
-n scsi_dh calls
-> scsi_get_device_flags_keyed(sdev, sdev->vendor, sdev->model, SCSI_DEV=
-INFO_DH)
-> which compares the exact vendor and product strings from sdev(which c=
-omes from inquiry).
+> --- linux/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2011-10-31 11:2=
+5:44.000000000 -0500
+> +++ linux/drivers/scsi/device_handler/scsi_dh_rdac.c	2011-10-31 11:31:34.=
+000000000 -0500
+> @@ -819,6 +819,21 @@ static const struct scsi_dh_devlist rdac
+>   	{NULL, NULL},
+>   };
 >
-> While setting up the scsi_dev_info, handlers use the short strings(ex=
-ample below).
-> Look at scsi_register_device_handler code. If  you look closely the h=
-andlers have
-> only first few characters of the model string. So, scsi_get_device_fl=
-ags_keyed
-> fails and handler will not be attached. This applies to all the handl=
-ers.
+> +static bool rdac_match(struct scsi_device *sdev)
+> +{
+> +	int i;
+> +
+> +	for (i =3D 0; rdac_dev_list[i].vendor; i++) {
+> +		if (!strncmp(sdev->vendor, rdac_dev_list[i].vendor,
+> +			strlen(rdac_dev_list[i].vendor))&&
+> +		    !strncmp(sdev->model, rdac_dev_list[i].model,
+> +			strlen(rdac_dev_list[i].model))) {
+> +			return true;
+> +		}
+> +	}
+> +	return false;
+> +}
+> +
+>   static int rdac_bus_attach(struct scsi_device *sdev);
+>   static void rdac_bus_detach(struct scsi_device *sdev);
 >
-> Example :
+> @@ -831,6 +846,7 @@ static struct scsi_device_handler rdac_d
+>   	.attach =3D rdac_bus_attach,
+>   	.detach =3D rdac_bus_detach,
+>   	.activate =3D rdac_activate,
+> +	.match =3D rdac_match,
+>   };
 >
->          Strings in scsi_dh_rdac handler..
->                      {"IBM", "1746"},
+>   static int rdac_bus_attach(struct scsi_device *sdev)
 >
->          Actual string..
->                       "IBM", "1746      FAStT"
->
-> Couple of ways we can fix this problem.
-> 1. List the complete model strings in handlers for all the products.
-> 2. Introduce match function for all the handler and remove the call t=
-o scsi_get_device_flags_keyed.
->
-> I think the option 2 is the best way to fix this problem. This remove=
-s lot of code in scsi_dh and
-> simplifies the things..
->
-> TESTED the patches on NetApp E series storage.
->
-And this was the main intention of the original patch, introducing=20
-the ->match() function.
+As stated in the other mail, I guess we would need to have a check =
 
-However, one thing to keep in mind here:
-What do we do if two ->match() function trigger?
-IE a NetApp E series in ALUA mode would have both match functions=20
-from scsi_dh_alua and scsi_dh_rdac matching.
-As there is no sane way of keeping the module order (having alua=20
-always first in the list of modules is very error-prone), I would
-think we'd need to introduce some checks in the vendor-specific=20
-device-handler to have the match() function returning 'false' if the=20
-respective device is in ALUA mode.
+if the LUN is in ALUA mode.
+And, btw, the _original_ intention was to allow vendor-specific =
 
-This doesn't affect multipathing at all, it's just for having a sane=20
-default when the system boots up.
+device_handler to do some better probing, eg querying some =
+
+vendor-specific VPD pages.
+Especially for RDAC it would make far more sense to query the =
+
+existence and format of one of the RDAC-specific VPD pages (eg 0xC2, =
+
+0xC4, or 0xC8) and use that for matching.
+Then you could do away with the vendor/model array altogether here =
+
+and we wouldn't need to update the rdac handler every time a new =
+
+array comes out or has been rebranded by some OEM.
 
 Cheers,
 
 Hannes
---=20
+-- =
+
 Dr. Hannes Reinecke		      zSeries & Storage
 hare@suse.de			      +49 911 74053 688
 SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
 GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
