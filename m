@@ -1,173 +1,57 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [RESEND][PATCH 4/4] scsi_dh: code cleanup and remove the references to scsi_dev_info
-Date: Thu, 3 Nov 2011 11:52:06 -0400
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD9105DBE66@RTPMVEXC1-PRD.hq.netapp.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: HPA unlock during partition scan of RAID components
+Date: Thu, 3 Nov 2011 08:54:16 -0700
+Message-ID: <20111103153835.GF4417@google.com>
+References: <74AAB12B538EC94087A0D16AFDFC24F4045674@IRSMSX102.ger.corp.intel.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-class: urn:content-classes:message
-Sender: linux-scsi-owner@vger.kernel.org
-To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <74AAB12B538EC94087A0D16AFDFC24F4045674@IRSMSX102.ger.corp.intel.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Hawrylewicz Czarnowski,
+	Przemyslaw" <przemyslaw.hawrylewicz.czarnowski@intel.com>
+Cc: dm-devel@redhat.com, Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
 List-Id: dm-devel.ids
 
-All the handlers have implemented the match function(look at patch 1, 2, 3).
-We don't need to use scsi_dev_info any more for matching purposes.
-Cleaning up the scsi_dh code.
+Hello,
 
-FYI..
-Match function was originally implemented by this 
+(cc'ing dm-devel)
 
-http://www.spinics.net/lists/linux-scsi/msg54284.html
-or
-http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-2.6.git;a=commit;h=6c3633d08acf514e2e89aa95d2346ce9d64d719a
+On Thu, Nov 03, 2011 at 01:02:37AM +0000, Hawrylewicz Czarnowski, Przemyslaw wrote:
+> Recently we have encountered a problem with unlocking of HPA on disks belonging to RAID array.
+> The scenario in the simplest form is as follows:
+> * take HPA resized drives
+> * use SW Raid solution with metadata located at the end of disk (eg. md v1.0, IMSM)
+> * create raid0/10/5 using whole devices (eg. /dev/sda) (raid size must extend capacity of single device; raid1 is not the case here) 
+> * create any partition with size exceeding HPA limit of single component
+> 
+> According to the code of rescan_partitions(), if disk has capacity limit enabled (HPA) and boundary of partition extends beyond that limit, it is bypassed/unlocked (regardless of libata.ignore_hpa state).
+> As for single block device it is proper action - for raid using whole block device it is not. The partition table despite the fact it is read from single disk belongs to raid array. Values in RAID context are set properly. But from the point of view of single device - they are not.
+> Problem is that in general rescan_partition() has no knowledge of any raid array using that block device. Moreover, that raid is not assembled yet.
+> And the result: as HPA limit is unlocked and metadata on this device in not recognizable anymore - in worst case raid is not assembled or failed.
+> 
+> The simplest resolution is to conditionally forbid HPA unlocking (eg. extending ignore_hpa parameter) but I suppose a better and more 'intelligent' solution can be found.
 
-Signed-off-by: Babu Moger <babu.moger@netapp.com>
----
+This has come up a couple times and I think the proper solution is to
+always unlock HPA and expose both sizes - locked and unlocked and let
+dm, md or whatever do whatever is approriate.  Block or driver layer
+doesn't have any way to determine which one is the right bet - it
+simply doesn't have enough information.  I tried to bounce this idea
+off people who whould actually be using this (dm/md) but haven't heard
+back yet.
 
-diff -uprN -X linux/Documentation/dontdiff linux//drivers/scsi/device_handler/scsi_dh.c linux-new/linux//drivers/scsi/device_handler/scsi_dh.c
---- linux//drivers/scsi/device_handler/scsi_dh.c	2011-10-31 13:47:37.000000000 -0500
-+++ linux-new/linux//drivers/scsi/device_handler/scsi_dh.c	2011-10-31 13:45:46.000000000 -0500
-@@ -27,7 +27,6 @@
- 
- static DEFINE_SPINLOCK(list_lock);
- static LIST_HEAD(scsi_dh_list);
--static int scsi_dh_list_idx = 1;
- 
- static struct scsi_device_handler *get_device_handler(const char *name)
- {
-@@ -44,21 +43,6 @@ static struct scsi_device_handler *get_d
- 	return found;
- }
- 
--static struct scsi_device_handler *get_device_handler_by_idx(int idx)
--{
--	struct scsi_device_handler *tmp, *found = NULL;
--
--	spin_lock(&list_lock);
--	list_for_each_entry(tmp, &scsi_dh_list, list) {
--		if (tmp->idx == idx) {
--			found = tmp;
--			break;
--		}
--	}
--	spin_unlock(&list_lock);
--	return found;
--}
--
- /*
-  * device_handler_match_function - Match a device handler to a device
-  * @sdev - SCSI device to be tested
-@@ -83,23 +67,6 @@ device_handler_match_function(struct scs
- }
- 
- /*
-- * device_handler_match_devlist - Match a device handler to a device
-- * @sdev - SCSI device to be tested
-- *
-- * Tests @sdev against all device_handler registered in the devlist.
-- * Returns the found device handler or NULL if not found.
-- */
--static struct scsi_device_handler *
--device_handler_match_devlist(struct scsi_device *sdev)
--{
--	int idx;
--
--	idx = scsi_get_device_flags_keyed(sdev, sdev->vendor, sdev->model,
--					  SCSI_DEVINFO_DH);
--	return get_device_handler_by_idx(idx);
--}
--
--/*
-  * device_handler_match - Attach a device handler to a device
-  * @scsi_dh - The device handler to match against or NULL
-  * @sdev - SCSI device to be tested against @scsi_dh
-@@ -115,8 +82,6 @@ device_handler_match(struct scsi_device_
- 	struct scsi_device_handler *found_dh;
- 
- 	found_dh = device_handler_match_function(sdev);
--	if (!found_dh)
--		found_dh = device_handler_match_devlist(sdev);
- 
- 	if (scsi_dh && found_dh != scsi_dh)
- 		found_dh = NULL;
-@@ -360,25 +325,14 @@ static int scsi_dh_notifier_remove(struc
-  */
- int scsi_register_device_handler(struct scsi_device_handler *scsi_dh)
- {
--	int i;
- 
- 	if (get_device_handler(scsi_dh->name))
- 		return -EBUSY;
- 
- 	spin_lock(&list_lock);
--	scsi_dh->idx = scsi_dh_list_idx++;
- 	list_add(&scsi_dh->list, &scsi_dh_list);
- 	spin_unlock(&list_lock);
- 
--	for (i = 0; scsi_dh->devlist && scsi_dh->devlist[i].vendor; i++) {
--		scsi_dev_info_list_add_keyed(0,
--					scsi_dh->devlist[i].vendor,
--					scsi_dh->devlist[i].model,
--					NULL,
--					scsi_dh->idx,
--					SCSI_DEVINFO_DH);
--	}
--
- 	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh, scsi_dh_notifier_add);
- 	printk(KERN_INFO "%s: device handler registered\n", scsi_dh->name);
- 
-@@ -395,7 +349,6 @@ EXPORT_SYMBOL_GPL(scsi_register_device_h
-  */
- int scsi_unregister_device_handler(struct scsi_device_handler *scsi_dh)
- {
--	int i;
- 
- 	if (!get_device_handler(scsi_dh->name))
- 		return -ENODEV;
-@@ -403,12 +356,6 @@ int scsi_unregister_device_handler(struc
- 	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh,
- 			 scsi_dh_notifier_remove);
- 
--	for (i = 0; scsi_dh->devlist && scsi_dh->devlist[i].vendor; i++) {
--		scsi_dev_info_list_del_keyed(scsi_dh->devlist[i].vendor,
--					     scsi_dh->devlist[i].model,
--					     SCSI_DEVINFO_DH);
--	}
--
- 	spin_lock(&list_lock);
- 	list_del(&scsi_dh->list);
- 	spin_unlock(&list_lock);
-@@ -587,10 +534,6 @@ static int __init scsi_dh_init(void)
- {
- 	int r;
- 
--	r = scsi_dev_info_add_list(SCSI_DEVINFO_DH, "SCSI Device Handler");
--	if (r)
--		return r;
--
- 	r = bus_register_notifier(&scsi_bus_type, &scsi_dh_nb);
- 
- 	if (!r)
-@@ -605,7 +548,6 @@ static void __exit scsi_dh_exit(void)
- 	bus_for_each_dev(&scsi_bus_type, NULL, NULL,
- 			 scsi_dh_sysfs_attr_remove);
- 	bus_unregister_notifier(&scsi_bus_type, &scsi_dh_nb);
--	scsi_dev_info_remove_list(SCSI_DEVINFO_DH);
- }
- 
- module_init(scsi_dh_init);
-diff -uprN -X linux/Documentation/dontdiff linux//include/scsi/scsi_device.h linux-new/linux//include/scsi/scsi_device.h
---- linux//include/scsi/scsi_device.h	2011-10-31 13:48:47.000000000 -0500
-+++ linux-new/linux//include/scsi/scsi_device.h	2011-10-31 13:53:06.000000000 -0500
-@@ -185,7 +185,6 @@ typedef void (*activate_complete)(void *
- struct scsi_device_handler {
- 	/* Used by the infrastructure */
- 	struct list_head list; /* list of scsi_device_handlers */
--	int idx;
- 
- 	/* Filled by the hardware handler */
- 	struct module *module;
+Thanks.
 
-
+-- 
+tejun
