@@ -1,17 +1,16 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: HPA unlock during partition scan of RAID components
-Date: Thu, 3 Nov 2011 14:08:10 -0700
-Message-ID: <20111103210810.GM4417@google.com>
-References: <74AAB12B538EC94087A0D16AFDFC24F4045674@IRSMSX102.ger.corp.intel.com>
-	<20111103153835.GF4417@google.com>
-	<20111104074652.7b5eacb3@notabene.brown>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: multipath-tools/path_priority pp_alua/rtpg.c p ...
+Date: Thu, 3 Nov 2011 16:58:55 -0500
+Message-ID: <20111103215855.GS24133@ether.msp.redhat.com>
+References: <20111024134132.32316.qmail@sourceware.org>
+	<1320270710.16195.15.camel@lapoo.opensvc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20111104074652.7b5eacb3@notabene.brown>
+In-Reply-To: <1320270710.16195.15.camel@lapoo.opensvc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,32 +20,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: NeilBrown <neilb@suse.de>
-Cc: dm-devel@redhat.com, Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>, "Hawrylewicz Czarnowski,
-	Przemyslaw" <przemyslaw.hawrylewicz.czarnowski@intel.com>
+To: christophe.varoqui@opensvc.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 04, 2011 at 07:46:52AM +1100, NeilBrown wrote:
-> What exactly do you mean by "expose both sizes" ??
-> A new ioctl - BLKGETHPASIZE64 ??
+On Wed, Nov 02, 2011 at 10:51:50PM +0100, Christophe Varoqui wrote:
+> > --- multipath-tools/path_priority/pp_alua/rtpg.c	2009/08/18 21:12:02	1.3.2.5
+> > +++ multipath-tools/path_priority/pp_alua/rtpg.c	2011/10/24 13:41:32	1.3.2.6
+> > @@ -29,7 +29,7 @@
+> >  #include "rtpg.h"
+> >  
+> >  #define SENSE_BUFF_LEN  32
+> > -#define DEF_TIMEOUT     300000
+> > +#define DEF_TIMEOUT     60000
+> >  
 > 
-> That might work, but I think it would be good if there were also an ioctl
-> BLKHBALOCK which changed BLKGETSIZE64 to match BLKGETHPASIZE64.
-> Then some user-space tools could examine the device with a full understanding
-> of md, dm, dmraid, partitions, filesystems etc etc and make a reasonably
-> informed decision.  And then put that decision into effect.
+> Do you want that part merged into upstream's alua prioritizer shared
+> object ?
 
-In kernel, just another size field.  Out of kernel, I was thinking
-more along the line of a new /sysfs field, but yeah maybe another
-ioctl.  At this point, I don't really think making unlocking
-selectable is a good idea.  That has to go through device detach /
-attach cycle and what if someone else is already using first half of
-the disk?  We can try to be sneaky and slip in device size change
-underneath it but that just sounds too crazy to me.  IMHO, we should
-unlock by default and just let everyone know what the size before
-unlocking was in case that could be useful.
+In the RHEL5 code, this is a seperate callout program.  Upstream it
+would be better if we could make this configurable via multipath.conf,
+like the checker timeouts.
 
-Thank you.
+-Ben
 
--- 
-tejun
+> 
+> Regards,
+> -- 
+> Christophe Varoqui
+> OpenSVC - Tools to scale
+> http://www.opensvc.com/
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
