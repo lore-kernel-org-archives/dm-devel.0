@@ -1,382 +1,132 @@
-From: Sanjana <sanjana.linux@gmail.com>
-Subject: Cannot mount underlying block device after creating dm
-	device.
-Date: Thu, 3 Nov 2011 08:48:43 +0530
-Message-ID: <CABMcfaMi_FpOhG2g2vjxCOA8e89Bd+8UGSq0mCb0e+mfeocLeQ@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: RE: [dm-devel] [PATCH 3/4] scsi_dh_rdac: Adding the match function for	rdac device handler
+Date: Thu, 3 Nov 2011 10:47:39 -0400
+Message-ID: <47D23AD8469A2B448F33C24BD7A39BD9105DBDC7@RTPMVEXC1-PRD.hq.netapp.com>
+References: <47D23AD8469A2B448F33C24BD7A39BD9105DB4D8@RTPMVEXC1-PRD.hq.netapp.com><4EB0EF3F.1010300@suse.de><47D23AD8469A2B448F33C24BD7A39BD9105DB8EE@RTPMVEXC1-PRD.hq.netapp.com> <20111102154612.GA30632@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============8361166021746322104=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain;
+	charset="Windows-1252"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-class: urn:content-classes:message
+In-Reply-To: <20111102154612.GA30632@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
---===============8361166021746322104==
-Content-Type: multipart/alternative; boundary=bcaec548a81bc36ab404b0cc0bad
+> -----Original Message-----
+> From: Mike Snitzer [mailto:snitzer@redhat.com]
+> Sent: Wednesday, November 02, 2011 10:46 AM
+> To: device-mapper development
+> Cc: Linux SCSI Mailing list
+> Subject: Re: [dm-devel] [PATCH 3/4] scsi_dh_rdac: Adding the match
+> function for rdac device handler
+> 
+> On Wed, Nov 02 2011 at 11:23am -0400,
+> Moger, Babu <Babu.Moger@netapp.com> wrote:
+> 
+> > > -----Original Message-----
+> > > From: Hannes Reinecke [mailto:hare@suse.de]
+> > > Sent: Wednesday, November 02, 2011 2:21 AM
+> > > To: dm-devel@redhat.com
+> > > Subject: Re: [dm-devel] [PATCH 3/4] scsi_dh_rdac: Adding the match
+> > > function for rdac device handler
+> > >
+> > > On 11/01/2011 06:19 PM, Moger, Babu wrote:
+> > > > This patch introduces the match function for rdac device handler.
+> > > Without this,
+> > > > sometimes handler attach fails during the device_add.  The match
+> > > function was
+> > > > introduced by this patch
+> > > > http://www.spinics.net/lists/linux-scsi/msg54284.html
+> > > >
+> > > > Signed-off-by: Babu Moger<babu.moger@netapp.com>
+> > > > ---
+> > > >
+> > > > --- linux/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2011-
+> 10-31
+> > > 11:25:44.000000000 -0500
+> > > > +++ linux/drivers/scsi/device_handler/scsi_dh_rdac.c	2011-10-31
+> > > 11:31:34.000000000 -0500
+> > > > @@ -819,6 +819,21 @@ static const struct scsi_dh_devlist rdac
+> > > >   	{NULL, NULL},
+> > > >   };
+> > > >
+> > > > +static bool rdac_match(struct scsi_device *sdev)
+> > > > +{
+> > > > +	int i;
+> > > > +
+> > > > +	for (i = 0; rdac_dev_list[i].vendor; i++) {
+> > > > +		if (!strncmp(sdev->vendor, rdac_dev_list[i].vendor,
+> > > > +			strlen(rdac_dev_list[i].vendor))&&
+> > > > +		    !strncmp(sdev->model, rdac_dev_list[i].model,
+> > > > +			strlen(rdac_dev_list[i].model))) {
+> > > > +			return true;
+> > > > +		}
+> > > > +	}
+> > > > +	return false;
+> > > > +}
+> > > > +
+> > > >   static int rdac_bus_attach(struct scsi_device *sdev);
+> > > >   static void rdac_bus_detach(struct scsi_device *sdev);
+> > > >
+> > > > @@ -831,6 +846,7 @@ static struct scsi_device_handler rdac_d
+> > > >   	.attach = rdac_bus_attach,
+> > > >   	.detach = rdac_bus_detach,
+> > > >   	.activate = rdac_activate,
+> > > > +	.match = rdac_match,
+> > > >   };
+> > > >
+> > > >   static int rdac_bus_attach(struct scsi_device *sdev)
+> > > >
+> > > As stated in the other mail, I guess we would need to have a check
+> > > if the LUN is in ALUA mode.
+> > > And, btw, the _original_ intention was to allow vendor-specific
+> > > device_handler to do some better probing, eg querying some
+> > > vendor-specific VPD pages.
+> > > Especially for RDAC it would make far more sense to query the
+> > > existence and format of one of the RDAC-specific VPD pages (eg
+> 0xC2,
+> > > 0xC4, or 0xC8) and use that for matching.
+> > > Then you could do away with the vendor/model array altogether here
+> > > and we wouldn't need to update the rdac handler every time a new
+> > > array comes out or has been rebranded by some OEM.
+> >
+> > OK. I will add the check for TPGS. I will send the patches tomorrow.
+> > For sending the VPD pages(0xC2, 0xC4 and 0xC8), I think we need be
+> little careful here.
+> > This includes sending these commands to every possible device in the
+> system. That is what we want to avoid.
+> > I will investigate more on that. That will be my next set of patches
+> independent of this.
+> 
+> Much appreciated.  I agree with Hannes, ideally we wouldn't need the
+> rdac dev_list.
 
---bcaec548a81bc36ab404b0cc0bad
-Content-Type: text/plain; charset=ISO-8859-1
+Yes, We would like to remove the dependency on Vendor/product strings.
+I will work on that. These current patches will address the current the
+Attach issue which I mentioned in the description(PATCH 0/4).
+I will resubmit the patches now..
 
-Hi,
+> 
+> What about the issue where the appropriate scsi_dh isn't attached
+> during
+> scan (resulting in boot failures, trespasses, etc)?
+> 
+> Hannes, I know you had plans for how to address the early scsi_dh
+> attachment (and this match() work is a great step forward).  I just
+> wanted to touch base with you on what your current vision is on how to
+> achieve proper early scsi_dh attachment (and what the remaining TODO
+> is).
 
-I am testing a mirror target for dmsetup. After creating the dm device I
-cannot the underlying block device.
+I am not aware of any other issue at this point. Hannes may know about it.
 
-[root@bladelinux01 ~]# dumpe2fs /dev/loop0 | head
-dumpe2fs 1.41.12 (17-May-2010)
-Filesystem volume name:   <none>
-Last mounted on:          <not available>
-Filesystem UUID:          9c0f4d5c-55d9-4332-b0e7-f48a19333174
-Filesystem magic number:  0xEF53
-Filesystem revision #:    1 (dynamic)
-Filesystem features:      has_journal ext_attr resize_inode dir_index
-filetype sparse_super
-Filesystem flags:         signed_directory_hash
-Default mount options:    (none)
-Filesystem state:         clean
-Errors behavior:          Continue
-[root@bladelinux01 ~]# dumpe2fs /dev/loop1 | head
-dumpe2fs 1.41.12 (17-May-2010)
-Filesystem volume name:   <none>
-Last mounted on:          <not available>
-Filesystem UUID:          c16fcae4-2271-4701-a91e-6694962935d0
-Filesystem magic number:  0xEF53
-Filesystem revision #:    1 (dynamic)
-Filesystem features:      has_journal ext_attr resize_inode dir_index
-filetype sparse_super
-Filesystem flags:         signed_directory_hash
-Default mount options:    (none)
-Filesystem state:         clean
-Errors behavior:          Continue
-
-
-[root@bladelinux01 ~]# mount /dev/loop0 /mnt/ ; mount | grep loop0
-/dev/loop0 on /mnt type ext3 (rw)
-[root@bladelinux01 ~]# umount /mnt/
-
-[root@bladelinux01 ~]# mount /dev/loop1 /mnt/ ; mount | grep loop1
-/dev/loop1 on /mnt type ext3 (rw)
-[root@bladelinux01 ~]# umount /mnt/
-
-[root@bladelinux01 ~]# dmsetup create raid1 --table "0 204800 mirror core 1
-128 2 7:0 0 7:1 0"
-
-[root@bladelinux01 ~]# dmsetup table raid1
-0 204800 mirror core 1 128 2 7:0 0 7:1 0
-[root@bladelinux01 ~]# dmsetup info raid1
-Name:              raid1
-State:             ACTIVE
-Read Ahead:        256
-Tables present:    LIVE
-Open count:        0
-Event number:      1
-Major, minor:      253, 6
-Number of targets: 1
-
-[root@bladelinux01 ~]# dmsetup info -c raid1
-Name             Maj Min Stat Open Targ Event  UUID
-x                253   6 L--w    0    1      1
-[root@bladelinux01 ~]# dmsetup deps raid1
-2 dependencies  : (7, 1) (7, 0)
-
-[root@bladelinux01 ~]# dmsetup status /dev/mapper/raid1
-0 204800 mirror 2 7:0 7:1 1600/1600 1 AA 1 core
-
-I have mounted the newly created dm device and copied some data to it.
-[root@bladelinux01 ~]# mount /dev/mapper/raid1 /mnt/ ; mount | grep raid1
-/dev/mapper/raid1 on /mnt type ext3 (rw)
-
-[root@bladelinux01 ~]# cp /var/log/messages /mnt/
-[root@bladelinux01 ~]# ls -l /mnt/
-total 51
-drwx------. 2 root root 12288 Nov  2 22:32 lost+found
--rw-------. 1 root root 37417 Nov  2 22:38 messages
-
-I have now unmounted the dm device to test if the daya is written to the
-underlying block device.
-[root@bladelinux01 ~]# umount /mnt/
-
-[root@bladelinux01 ~]# dmsetup info raid1
-Name:              raid1
-State:             ACTIVE
-Read Ahead:        256
-Tables present:    LIVE
-Open count:        0
-Event number:      1
-Major, minor:      253, 6
-Number of targets: 1
-
-Here the open count is "ZERO", but still I cannot mount the underlying
-block device.
-
-[root@bladelinux01 ~]# mount /dev/loop0 /mnt/
-mount: /dev/loop0 already mounted or /mnt/ busy
-[root@bladelinux01 ~]# mount /dev/loop1 /mnt/
-mount: /dev/loop1 already mounted or /mnt/ busy
-
-But if I remove the dm device created and try to mount the underlying
-block-device, I can mount both the device which took part in mirroring and
-I can access the data in both the disk.
-[root@bladelinux01 ~]# dmsetup remove raid1
-[root@bladelinux01 ~]# mount /dev/loop0 /mnt/
-[root@bladelinux01 ~]# ls -l /mnt/
-total 51
-drwx------. 2 root root 12288 Nov  2 22:32 lost+found
--rw-------. 1 root root 37417 Nov  2 22:38 messages
-
-[root@bladelinux01 ~]# umount /mnt/
-[root@bladelinux01 ~]# mount /dev/loop1 /mnt/
-[root@bladelinux01 ~]# ls -l /mnt/
-total 51
-drwx------. 2 root root 12288 Nov  2 22:32 lost+found
--rw-------. 1 root root 37417 Nov  2 22:38 messages
-
-Why is this behavior. any explanation, please....
-
--- sanjana
-
---bcaec548a81bc36ab404b0cc0bad
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-Hi,<br><br>I am testing a mirror target for dmsetup. After creating the dm =
-device I cannot the underlying block device.<br><br style=3D"font-family: c=
-ourier new,monospace;"><span style=3D"font-family: courier new,monospace;">=
-[root@bladelinux01 ~]# dumpe2fs /dev/loop0 | head</span><br style=3D"font-f=
-amily: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">dumpe2fs 1.41.12 (17-Ma=
-y-2010)</span><br style=3D"font-family: courier new,monospace;"><span style=
-=3D"font-family: courier new,monospace;">Filesystem volume name:=A0=A0 &lt;=
-none&gt;</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Last mounted on:=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 &lt;not available&gt;</span><br style=3D"font-family:=
- courier new,monospace;"><span style=3D"font-family: courier new,monospace;=
-">Filesystem UUID:=A0=A0=A0=A0=A0=A0=A0=A0=A0 9c0f4d5c-55d9-4332-b0e7-f48a1=
-9333174</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Filesystem magic number=
-:=A0 0xEF53</span><br style=3D"font-family: courier new,monospace;"><span s=
-tyle=3D"font-family: courier new,monospace;">Filesystem revision #:=A0=A0=
-=A0 1 (dynamic)</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Filesystem features:=A0=
-=A0=A0=A0=A0 has_journal ext_attr resize_inode dir_index filetype sparse_su=
-per</span><br style=3D"font-family: courier new,monospace;"><span style=3D"=
-font-family: courier new,monospace;">Filesystem flags:=A0=A0=A0=A0=A0=A0=A0=
-=A0 signed_directory_hash</span><br style=3D"font-family: courier new,monos=
-pace;">
-<span style=3D"font-family: courier new,monospace;">Default mount options:=
-=A0=A0=A0 (none)</span><br style=3D"font-family: courier new,monospace;"><s=
-pan style=3D"font-family: courier new,monospace;">Filesystem state:=A0=A0=
-=A0=A0=A0=A0=A0=A0 clean</span><br style=3D"font-family: courier new,monosp=
-ace;">
-<span style=3D"font-family: courier new,monospace;">Errors behavior:=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 Continue</span><br style=3D"font-family: courier new,=
-monospace;"><span style=3D"font-family: courier new,monospace;">[root@blade=
-linux01 ~]# dumpe2fs /dev/loop1 | head</span><br style=3D"font-family: cour=
-ier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">dumpe2fs 1.41.12 (17-Ma=
-y-2010)</span><br style=3D"font-family: courier new,monospace;"><span style=
-=3D"font-family: courier new,monospace;">Filesystem volume name:=A0=A0 &lt;=
-none&gt;</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Last mounted on:=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 &lt;not available&gt;</span><br style=3D"font-family:=
- courier new,monospace;"><span style=3D"font-family: courier new,monospace;=
-">Filesystem UUID:=A0=A0=A0=A0=A0=A0=A0=A0=A0 c16fcae4-2271-4701-a91e-66949=
-62935d0</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Filesystem magic number=
-:=A0 0xEF53</span><br style=3D"font-family: courier new,monospace;"><span s=
-tyle=3D"font-family: courier new,monospace;">Filesystem revision #:=A0=A0=
-=A0 1 (dynamic)</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Filesystem features:=A0=
-=A0=A0=A0=A0 has_journal ext_attr resize_inode dir_index filetype sparse_su=
-per</span><br style=3D"font-family: courier new,monospace;"><span style=3D"=
-font-family: courier new,monospace;">Filesystem flags:=A0=A0=A0=A0=A0=A0=A0=
-=A0 signed_directory_hash</span><br style=3D"font-family: courier new,monos=
-pace;">
-<span style=3D"font-family: courier new,monospace;">Default mount options:=
-=A0=A0=A0 (none)</span><br style=3D"font-family: courier new,monospace;"><s=
-pan style=3D"font-family: courier new,monospace;">Filesystem state:=A0=A0=
-=A0=A0=A0=A0=A0=A0 clean</span><br style=3D"font-family: courier new,monosp=
-ace;">
-<span style=3D"font-family: courier new,monospace;">Errors behavior:=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 Continue</span><br style=3D"font-family: courier new,=
-monospace;"><br style=3D"font-family: courier new,monospace;"><br style=3D"=
-font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-mount /dev/loop0 /mnt/ ; mount | grep loop0</span><br style=3D"font-family:=
- courier new,monospace;"><span style=3D"font-family: courier new,monospace;=
-">/dev/loop0 on /mnt type ext3 (rw)</span><br style=3D"font-family: courier=
- new,monospace;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-umount /mnt/</span><br style=3D"font-family: courier new,monospace;"><br st=
-yle=3D"font-family: courier new,monospace;"><span style=3D"font-family: cou=
-rier new,monospace;">[root@bladelinux01 ~]# mount /dev/loop1 /mnt/ ; mount =
-| grep loop1</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">/dev/loop1 on /mnt type=
- ext3 (rw)</span><br style=3D"font-family: courier new,monospace;"><span st=
-yle=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# umount /=
-mnt/</span><br style=3D"font-family: courier new,monospace;">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">[root@bladelinux01 ~]# dmsetup create raid1 --ta=
-ble &quot;0 204800 mirror core 1 128 2 7:0 0 7:1 0&quot;</span><br style=3D=
-"font-family: courier new,monospace;">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">[root@bladelinux01 ~]# dmsetup table raid1</span=
-><br style=3D"font-family: courier new,monospace;"><span style=3D"font-fami=
-ly: courier new,monospace;">0 204800 mirror core 1 128 2 7:0 0 7:1 0</span>=
-<br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-dmsetup info raid1</span><br style=3D"font-family: courier new,monospace;">=
-<span style=3D"font-family: courier new,monospace;">Name:=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 raid1</span><br style=3D"font-family: courier new,mon=
-ospace;">
-<span style=3D"font-family: courier new,monospace;">State:=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 ACTIVE</span><br style=3D"font-family: courier new,mo=
-nospace;"><span style=3D"font-family: courier new,monospace;">Read Ahead:=
-=A0=A0=A0=A0=A0=A0=A0 256</span><br style=3D"font-family: courier new,monos=
-pace;">
-<span style=3D"font-family: courier new,monospace;">Tables present:=A0=A0=
-=A0 LIVE</span><br style=3D"font-family: courier new,monospace;"><span styl=
-e=3D"font-family: courier new,monospace;">Open count:=A0=A0=A0=A0=A0=A0=A0 =
-0</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Event number:=A0=A0=A0=
-=A0=A0 1</span><br style=3D"font-family: courier new,monospace;"><span styl=
-e=3D"font-family: courier new,monospace;">Major, minor:=A0=A0=A0=A0=A0 253,=
- 6</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Number of targets: 1</s=
-pan><br style=3D"font-family: courier new,monospace;"><br style=3D"font-fam=
-ily: courier new,monospace;"><span style=3D"font-family: courier new,monosp=
-ace;">[root@bladelinux01 ~]# dmsetup info -c raid1</span><br style=3D"font-=
-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Name=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0 Maj Min Stat Open Targ Event=A0 UUID</span><br style=3D"=
-font-family: courier new,monospace;"><span style=3D"font-family: courier ne=
-w,monospace;">x=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 253=A0=A0 6 L-=
--w=A0=A0=A0 0=A0=A0=A0 1=A0=A0=A0=A0=A0 1</span><br style=3D"font-family: c=
-ourier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-dmsetup deps raid1</span><br style=3D"font-family: courier new,monospace;">=
-<span style=3D"font-family: courier new,monospace;">2 dependencies=A0 : (7,=
- 1) (7, 0)</span><br style=3D"font-family: courier new,monospace;">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">[root@bladelinux01 ~]# dmsetup status /dev/mappe=
-r/raid1</span><br style=3D"font-family: courier new,monospace;"><span style=
-=3D"font-family: courier new,monospace;">0 204800 mirror 2 7:0 7:1 1600/160=
-0 1 AA 1 core</span><br style=3D"font-family: courier new,monospace;">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">I have mounted the newly created dm device and c=
-opied some data to it. </span><br style=3D"font-family: courier new,monospa=
-ce;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-mount /dev/mapper/raid1 /mnt/ ; mount | grep raid1</span><br style=3D"font-=
-family: courier new,monospace;"><span style=3D"font-family: courier new,mon=
-ospace;">/dev/mapper/raid1 on /mnt type ext3 (rw)</span><br style=3D"font-f=
-amily: courier new,monospace;">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">[root@bladelinux01 ~]# cp /var/log/messages /mnt=
-/</span><br style=3D"font-family: courier new,monospace;"><span style=3D"fo=
-nt-family: courier new,monospace;">[root@bladelinux01 ~]# ls -l /mnt/</span=
-><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">total 51</span><br styl=
-e=3D"font-family: courier new,monospace;"><span style=3D"font-family: couri=
-er new,monospace;">drwx------. 2 root root 12288 Nov=A0 2 22:32 lost+found<=
-/span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">-rw-------. 1 root root=
- 37417 Nov=A0 2 22:38 messages</span><br style=3D"font-family: courier new,=
-monospace;"><br style=3D"font-family: courier new,monospace;"><span style=
-=3D"font-family: courier new,monospace;">I have now unmounted the dm device=
- to test if the daya is written to the underlying block device.</span><br s=
-tyle=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-umount /mnt/</span><br style=3D"font-family: courier new,monospace;"><br st=
-yle=3D"font-family: courier new,monospace;"><span style=3D"font-family: cou=
-rier new,monospace;">[root@bladelinux01 ~]# dmsetup info raid1</span><br st=
-yle=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Name:=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0 raid1</span><br style=3D"font-family: courier new,mon=
-ospace;"><span style=3D"font-family: courier new,monospace;">State:=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 ACTIVE</span><br style=3D"font-family: couri=
-er new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Read Ahead:=A0=A0=A0=A0=
-=A0=A0=A0 256</span><br style=3D"font-family: courier new,monospace;"><span=
- style=3D"font-family: courier new,monospace;">Tables present:=A0=A0=A0 LIV=
-E</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Open count:=A0=A0=A0=A0=
-=A0=A0=A0 0</span><br style=3D"font-family: courier new,monospace;"><span s=
-tyle=3D"font-family: courier new,monospace;">Event number:=A0=A0=A0=A0=A0 1=
-</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">Major, minor:=A0=A0=A0=
-=A0=A0 253, 6</span><br style=3D"font-family: courier new,monospace;"><span=
- style=3D"font-family: courier new,monospace;">Number of targets: 1</span><=
-br style=3D"font-family: courier new,monospace;">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">Here the open count is &quot;ZERO&quot;, but sti=
-ll I cannot mount the underlying block device.</span><br style=3D"font-fami=
-ly: courier new,monospace;">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">[root@bladelinux01 ~]# mount /dev/loop0 /mnt/</s=
-pan><br style=3D"font-family: courier new,monospace;"><span style=3D"font-f=
-amily: courier new,monospace;">mount: /dev/loop0 already mounted or /mnt/ b=
-usy</span><br style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-mount /dev/loop1 /mnt/</span><br style=3D"font-family: courier new,monospac=
-e;"><span style=3D"font-family: courier new,monospace;">mount: /dev/loop1 a=
-lready mounted or /mnt/ busy</span><br style=3D"font-family: courier new,mo=
-nospace;">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">But if I remove the dm device created and try to=
- mount the underlying block-device, I can mount both the device which took =
-part in mirroring and I can access the data in both the disk.</span><br sty=
-le=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-dmsetup remove raid1</span><br style=3D"font-family: courier new,monospace;=
-"><span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]=
-# mount /dev/loop0 /mnt/</span><br style=3D"font-family: courier new,monosp=
-ace;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-ls -l /mnt/</span><br style=3D"font-family: courier new,monospace;"><span s=
-tyle=3D"font-family: courier new,monospace;">total 51</span><br style=3D"fo=
-nt-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">drwx------. 2 root root=
- 12288 Nov=A0 2 22:32 lost+found</span><br style=3D"font-family: courier ne=
-w,monospace;"><span style=3D"font-family: courier new,monospace;">-rw------=
--. 1 root root 37417 Nov=A0 2 22:38 messages</span><br style=3D"font-family=
-: courier new,monospace;">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">[root@bladelinux01 ~]# umount /mnt/</span><br st=
-yle=3D"font-family: courier new,monospace;"><span style=3D"font-family: cou=
-rier new,monospace;">[root@bladelinux01 ~]# mount /dev/loop1 /mnt/</span><b=
-r style=3D"font-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">[root@bladelinux01 ~]# =
-ls -l /mnt/</span><br style=3D"font-family: courier new,monospace;"><span s=
-tyle=3D"font-family: courier new,monospace;">total 51</span><br style=3D"fo=
-nt-family: courier new,monospace;">
-<span style=3D"font-family: courier new,monospace;">drwx------. 2 root root=
- 12288 Nov=A0 2 22:32 lost+found</span><br style=3D"font-family: courier ne=
-w,monospace;"><span style=3D"font-family: courier new,monospace;">-rw------=
--. 1 root root 37417 Nov=A0 2 22:38 messages</span><br style=3D"font-family=
-: courier new,monospace;" clear=3D"all">
-<br style=3D"font-family: courier new,monospace;"><span style=3D"font-famil=
-y: courier new,monospace;">Why is this behavior. any explanation, please...=
-.</span><br>=A0<br><span style=3D"font-family:courier new,monospace">-- san=
-jana</span><br>
-<br>
-
---bcaec548a81bc36ab404b0cc0bad--
-
-
---===============8361166021746322104==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============8361166021746322104==--
+> 
+> Thanks,
+> Mike
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
