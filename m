@@ -1,71 +1,76 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 3/4] scsi_dh_rdac: Adding the match function for	rdac
- device handler
-Date: Thu, 3 Nov 2011 11:17:48 -0400
-Message-ID: <20111103151748.GA10627@redhat.com>
-References: <47D23AD8469A2B448F33C24BD7A39BD9105DB4D8@RTPMVEXC1-PRD.hq.netapp.com>
- <4EB0EF3F.1010300@suse.de>
- <47D23AD8469A2B448F33C24BD7A39BD9105DB8EE@RTPMVEXC1-PRD.hq.netapp.com>
- <20111102154612.GA30632@redhat.com>
- <47D23AD8469A2B448F33C24BD7A39BD9105DBDC7@RTPMVEXC1-PRD.hq.netapp.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [RESEND][PATCH 0/4] scsi_dh: Fix for handler attach and code clean up
+Date: Thu, 3 Nov 2011 11:51:06 -0400
+Message-ID: <47D23AD8469A2B448F33C24BD7A39BD9105DBE60@RTPMVEXC1-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
 Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <47D23AD8469A2B448F33C24BD7A39BD9105DBDC7@RTPMVEXC1-PRD.hq.netapp.com>
+Content-class: urn:content-classes:message
 Sender: linux-scsi-owner@vger.kernel.org
-To: Babu.Moger@netapp.com, device-mapper development <dm-devel@redhat.com>
-Cc: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>, hare@suse.de
+To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Nov 03 2011 at 10:47am -0400,
-Moger, Babu <Babu.Moger@netapp.com> wrote:
+Resubmitting the patches after the comments.  Added the TPGS check in emc and
+rdac handlers. Rest is same as before..
 
-> > -----Original Message-----
-> > From: Mike Snitzer [mailto:snitzer@redhat.com]
-> > Sent: Wednesday, November 02, 2011 10:46 AM
-> > To: device-mapper development
-> > Cc: Linux SCSI Mailing list
-> > Subject: Re: [dm-devel] [PATCH 3/4] scsi_dh_rdac: Adding the match
-> > function for rdac device handler
-> > 
-> > On Wed, Nov 02 2011 at 11:23am -0400,
-> > Moger, Babu <Babu.Moger@netapp.com> wrote:
-> > >
-> > > OK. I will add the check for TPGS. I will send the patches tomorrow.
-> > > For sending the VPD pages(0xC2, 0xC4 and 0xC8), I think we need be
-> > little careful here.
-> > > This includes sending these commands to every possible device in the
-> > system. That is what we want to avoid.
-> > > I will investigate more on that. That will be my next set of patches
-> > independent of this.
-> > 
-> > Much appreciated.  I agree with Hannes, ideally we wouldn't need the
-> > rdac dev_list.
-> 
-> Yes, We would like to remove the dependency on Vendor/product strings.
-> I will work on that. These current patches will address the current the
-> Attach issue which I mentioned in the description(PATCH 0/4).
-> I will resubmit the patches now..
+These series of patches handles following things..
+1. Fixes handler attach issue.
+2. Introduces match function for all the handlers
+3. cleans up the scsi_dh code 
 
-Great.
+I have noticed the first problem during our multipath testing. We found that during
+the lun discovery there were lots of error messages like below..
 
-> > What about the issue where the appropriate scsi_dh isn't attached
-> > during
-> > scan (resulting in boot failures, trespasses, etc)?
-> > 
-> > Hannes, I know you had plans for how to address the early scsi_dh
-> > attachment (and this match() work is a great step forward).  I just
-> > wanted to touch base with you on what your current vision is on how to
-> > achieve proper early scsi_dh attachment (and what the remaining TODO
-> > is).
-> 
-> I am not aware of any other issue at this point. Hannes may know about it.
+Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav]  Result: hostbyte=DID_OK
+driverbyte=DRIVER_SENSE
+Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav]  Sense Key : Illegal
+Request [current]
+Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav]  <<vendor>> ASC=0x94
+ASCQ=0x1ASC=0x94 ASCQ=0x1
+Oct 25 08:24:43 kswm-mihosi kernel: sd 0:0:0:7: [sdav] CDB: Read(10): 28 00 00
+00 00 00 00 00 80 00
+Oct 25 08:24:43 kswm-mihosi kernel: end_request: I/O error, dev sdav, sector 0
 
-Yeap Hannes is aware.
+These messages were coming in spite of having scsi_dh_rdac in initrd.  Reason
+for these errors are due to device handler not being attached properly. If the
+device handler was attached then the I/O's should not go to passive paths.
 
-I was referring to IO being issued to passive paths (ghost LUNs) because
-scsi_dh isn't yet loaded.  Whereby causing the storage backend to
-trespass unnecessarily.  This bouncing (and corresponding IO errors) are
-avoided if the appropriate scsi_dh module is always loaded before the
-storage driver (e.g. lpfc or qla2xxx).
+Investigating further we found that there errors started with the introduction
+of these patches below.
+
+http://www.spinics.net/lists/linux-scsi/msg54284.html
+or
+http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-2.6.git;a=commit;h=6c3633d08acf514e2e89aa95d2346ce9d64d719a
+
+This patch introduces the match function for device handlers. But the match function
+was added only to scsi_dh_alua handler.
+
+Reason for the failure is, if the match function is not available then scsi_dh calls
+scsi_get_device_flags_keyed(sdev, sdev->vendor, sdev->model, SCSI_DEVINFO_DH)
+which compares the exact vendor and product strings from sdev(which comes from inquiry).
+
+While setting up the scsi_dev_info, handlers use the short strings(example below).
+Look at scsi_register_device_handler code. If  you look closely the handlers have
+only first few characters of the model string. So, scsi_get_device_flags_keyed
+fails and handler will not be attached. This applies to all the handlers.
+
+Example :
+
+        Strings in scsi_dh_rdac handler..
+                    {"IBM", "1746"},
+
+        Actual string..
+                     "IBM", "1746      FAStT"
+
+Couple of ways we can fix this problem.
+1. List the complete model strings in handlers for all the products.
+2. Introduce match function for all the handler and remove the call to scsi_get_device_flags_keyed.
+
+I think the option 2 is the best way to fix this problem. This removes lot of code in scsi_dh and 
+simplifies the things..
+
+TESTED the patches on NetApp E series storage.
+
+
