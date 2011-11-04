@@ -1,47 +1,51 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [dm-devel] [RESEND][PATCH 4/4] scsi_dh: code cleanup and remove
- the	references to scsi_dev_info
-Date: Fri, 04 Nov 2011 08:35:14 +0100
-Message-ID: <4EB395B2.7030209@suse.de>
-References: <47D23AD8469A2B448F33C24BD7A39BD9105DBE66@RTPMVEXC1-PRD.hq.netapp.com>
+From: hegdevasant <vahegde1@linux.vnet.ibm.com>
+Subject: [PATCH] Add missing break statement in kpartx.
+Date: Fri, 04 Nov 2011 15:35:22 +0530
+Message-ID: <4EB3B8E2.2090002@linux.vnet.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <47D23AD8469A2B448F33C24BD7A39BD9105DBE66@RTPMVEXC1-PRD.hq.netapp.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Moger, Babu" <Babu.Moger@netapp.com>, Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/03/2011 04:52 PM, Moger, Babu wrote:
-> All the handlers have implemented the match function(look at patch 1,=
- 2, 3).
-> We don't need to use scsi_dev_info any more for matching purposes.
-> Cleaning up the scsi_dh code.
->
-> FYI..
-> Match function was originally implemented by this
->
-> http://www.spinics.net/lists/linux-scsi/msg54284.html
-> or
-> http://git.kernel.org/?p=3Dlinux/kernel/git/jejb/scsi-misc-2.6.git;a=3D=
-commit;h=3D6c3633d08acf514e2e89aa95d2346ce9d64d719a
->
-> Signed-off-by: Babu Moger<babu.moger@netapp.com>
-Acked-by: Hannes Reinecke <hare@suse.de>
+  This patch adds missing break statement in kpartx.
 
-Cheers,
+Signed-off-by: Vasant Hegde <vahegde1@linux.vnet.ibm.com>
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+---
+  kpartx/kpartx.c |    2 ++
+  1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 05dfce7..0711450 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -241,6 +241,7 @@ main(int argc, char **argv){
+      while ((arg = getopt(argc, argv, short_opts)) != EOF) switch(arg) {
+          case 'r':
+              ro=1;
++            break;
+          case 'f':
+              force_devmap=1;
+              break;
+@@ -267,6 +268,7 @@ main(int argc, char **argv){
+              break;
+          case 's':
+              sync = 1;
++            break;
+          case 'u':
+              what = UPDATE;
+              break;
+-- 
+1.7.3.4
