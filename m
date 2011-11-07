@@ -1,16 +1,20 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: turning the root volume into a snapshot stalls
-	(ioctl hangs)
-Date: Tue, 8 Nov 2011 08:21:21 -0500
-Message-ID: <20111108132120.GA19817@redhat.com>
-References: <201111081257.08114.mailinglisten@hauke-laging.de>
+From: Witold Baryluk <baryluk@smp.if.uj.edu.pl>
+Subject: Re: Error when compiling drivers/md/dm-bufio.c
+Date: Mon, 7 Nov 2011 21:27:57 +0100
+Message-ID: <20111107202757.GG18221__9558.1213049174$1320772827$gmane$org@smp.if.uj.edu.pl>
+References: <20111107082231.GB18221@smp.if.uj.edu.pl>
+	<20111107134601.GH12886@agk-dp.fab.redhat.com>
+	<Pine.LNX.4.64.1111071035380.5814@hs20-bc2-1.build.redhat.com>
+	<CA+55aFwejLwfY6A9o2yx1YPJMD4a5grD6ttmoG1AsFdEcGZWcw@mail.gmail.com>
+	<20111107163215.GF18221@smp.if.uj.edu.pl>
+	<20111107190002.GB4396@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <201111081257.08114.mailinglisten@hauke-laging.de>
+In-Reply-To: <20111107190002.GB4396@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,78 +24,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hauke Laging <mailinglisten@hauke-laging.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>, Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, linux-raid@
 List-Id: dm-devel.ids
 
-On Tue, Nov 08 2011 at  6:57am -0500,
-Hauke Laging <mailinglisten@hauke-laging.de> wrote:
+On 11-07 19:00, Alasdair G Kergon wrote:
+> On Mon, Nov 07, 2011 at 05:32:15PM +0100, Witold Baryluk wrote:
+> > Update patch atached.
+>  
+> More module.h files can now be export.h I think, so try this version:
+> http://git.kernel.org/?p=linux/kernel/git/agk/linux-dm.git;a=patch;h=bef30d3d2059b80b8994ad6a9db8612518ea7a10
+> 
+> commit bef30d3d2059b80b8994ad6a9db8612518ea7a10
+> Author: Alasdair G Kergon <agk@redhat.com>
+> Date:   Mon Nov 7 18:45:18 2011 +0000
+> 
+>     dm: fix module export includes
+>     
+>     Fix the use of export.h and module.h in new thin provisioning code.
+>     
+>     Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+> 
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index cb24666..6919d50 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -10,6 +10,7 @@
+>  
+>  #include <linux/device-mapper.h>
+>  #include <linux/dm-io.h>
+> +#include <linux/module.h>
+>  #include <linux/slab.h>
+>  #include <linux/vmalloc.h>
+>  #include <linux/version.h>
+> diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
+> index 65fd85e..023fbc2 100644
+> --- a/drivers/md/persistent-data/dm-btree-remove.c
+> +++ b/drivers/md/persistent-data/dm-btree-remove.c
+> @@ -8,7 +8,7 @@
+>  #include "dm-btree-internal.h"
+>  #include "dm-transaction-manager.h"
+>  
+> -#include <linux/module.h>
+> +#include <linux/export.h>
+>  
+>  /*
+>   * Removing an entry from a btree
+> diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
+> index e0638be..bd1e7ff 100644
+> --- a/drivers/md/persistent-data/dm-btree.c
+> +++ b/drivers/md/persistent-data/dm-btree.c
+> @@ -8,7 +8,7 @@
+>  #include "dm-space-map.h"
+>  #include "dm-transaction-manager.h"
+>  
+> -#include <linux/module.h>
+> +#include <linux/export.h>
+>  #include <linux/device-mapper.h>
+>  
+>  #define DM_MSG_PREFIX "btree"
+> diff --git a/drivers/md/persistent-data/dm-space-map-checker.c b/drivers/md/persistent-data/dm-space-map-checker.c
+> index bb44a93..4bbc7d5 100644
+> --- a/drivers/md/persistent-data/dm-space-map-checker.c
+> +++ b/drivers/md/persistent-data/dm-space-map-checker.c
+> @@ -6,6 +6,7 @@
+>  
+>  #include "dm-space-map-checker.h"
+>  
+> +#include <linux/export.h>
+>  #include <linux/device-mapper.h>
+>  
+>  #ifdef CONFIG_DM_DEBUG_SPACE_MAPS
+> diff --git a/drivers/md/persistent-data/dm-space-map-disk.c b/drivers/md/persistent-data/dm-space-map-disk.c
+> index aeff785..fc469ba 100644
+> --- a/drivers/md/persistent-data/dm-space-map-disk.c
+> +++ b/drivers/md/persistent-data/dm-space-map-disk.c
+> @@ -12,7 +12,7 @@
+>  
+>  #include <linux/list.h>
+>  #include <linux/slab.h>
+> -#include <linux/module.h>
+> +#include <linux/export.h>
+>  #include <linux/device-mapper.h>
+>  
+>  #define DM_MSG_PREFIX "space map disk"
+> diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
+> index 728e89a..6f8d387 100644
+> --- a/drivers/md/persistent-data/dm-transaction-manager.c
+> +++ b/drivers/md/persistent-data/dm-transaction-manager.c
+> @@ -10,7 +10,7 @@
+>  #include "dm-space-map-metadata.h"
+>  #include "dm-persistent-data-internal.h"
+>  
+> -#include <linux/module.h>
+> +#include <linux/export.h>
+>  #include <linux/slab.h>
+>  #include <linux/device-mapper.h>
+>  
 
-> Hello,
-> 
-> for energy saving purposes I try to buffer disk accesses in RAM by making the 
-> mounted (LVM) volume a snapshot and putting the COW device on tmpfs (loop 
-> device over a sparse file) so that I can flush the changes later by making the 
-> volume a snapshot-merge target. Note: I am NOT trying to make a snapshot of 
-> the root volume! (This has obviously been done sucessfully by others.)
-> 
-> This works for a data volume but the system hangs when trying this with the 
-> root volume. The interesting point: The problem seems not to be caused by an 
-> access to the root filesystem.
-> 
-> I have created a chroot environment in a tmpfs volume (and sucessfully done 
-> this with a data volume from there). The relevant part of the script (located 
-> in the chroot environment, of course) is:
-> 
-> dmsetup suspend "$cryptodevice_name" || exit 1
-> dmsetup load "$cryptodevice_name" --table "0 ${origin_block_count} \
->      snapshot-merge ${origin_major_minor} ${cow_major_minor} P 8" || exit 1
-> dmsetup resume "$cryptodevice_name" || exit 1
-> 
-> The hanging occurs during the "dmsetup load". I hat a look at it by strace. 
-> This is what happens with the data volume:
-> 
-> [...]
-> stat("/dev/mapper/control", {st_mode=S_IFCHR|0600, st_rdev=makedev(10, 236), 
-> ...}) = 0
-> open("/dev/mapper/control", O_RDWR) = 3
-> open("/proc/devices", O_RDONLY)   = 4
-> fstat(4, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
-> mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 
-> 0x7f855bec6000
-> read(4, "Character devices:\n  1 mem\n  4 /"..., 1024) = 490
-> close(4)                          = 0
-> munmap(0x7f855bec6000, 4096)      = 0
-> ioctl(3, DM_VERSION, 0x6162a0)    = 0
-> ioctl(3, DM_TABLE_LOAD, 0x6161f0) = 0
-> close(3)                          = 0
-> exit_group(0)                     = ?
-> [...]
-> 
-> The same call for the root volume leads to
-> [...]
-> ioctl(3, DM_TABLE_LOAD, 0x6161f0) =
-> (I am not sure about the 0x6161f0)
-> The exit code never appears. I do not know whether this is a problem of the 
-> ioctl or one of strace. But as the volume has already been suspended at that 
-> time I do not see any reason why strace should be affected. The system is not 
-> completely dead but no useful actitivy is possible any more.
-> 
-> Issuing a suspend and a resume immediately afterwards (without the load) does 
-> not kill the system. So the problem seems to be about the dmsetup load.
+All files affected by patch compiles cleanly.
 
-So you're somehow activating the snapshot to be the root volume.  And
-then later trying to merge the tmpfs COW into the origin (obviously
-before you reboot otherwise you'd lose the tmpfs).  This isn't going to
-work with the current snapshot-merge code given the constraints that
-both the origin and snapshot must be closed before merge.
+    Tested-by: Witold Baryluk <baryluk@smp.if.uj.edu.pl>
 
-Merging a snapshot into a root volume must occur at first activation
-(before it is opened for use by the system).
+Thanks.
 
-The lvm tools both document and guard against this, from lvconvert(8):
-   Merging a snapshot into an origin that cannot be closed, for
-   example a root filesystem, is deferred until the next time the origin
-   volume is activated.
-
-Mike
+-- 
+Witold Baryluk
