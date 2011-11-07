@@ -1,131 +1,121 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [GIT PULL] Queue free fix (was Re: [PATCH] block: Free queue
- resources at blk_release_queue())
-Date: Mon, 7 Nov 2011 12:10:45 -0500
-Message-ID: <20111107171044.GA10801@redhat.com>
-References: <20111018154542.GB3869@osiris.boeblingen.de.ibm.com>
- <1318955380.5169.15.camel@dabdike.int.hansenpartnership.com>
- <20111031100557.GA2621@osiris.boeblingen.de.ibm.com>
- <1320057746.2964.1.camel@dabdike>
- <4EAE8A7E.8000504@ce.jp.nec.com>
- <20111031130004.GB4768@osiris.boeblingen.de.ibm.com>
- <20111103182548.GA12131@redhat.com>
- <20111104091936.GB2397@osiris.boeblingen.de.ibm.com>
- <4EB7C159.8020009@ce.jp.nec.com>
- <20111107153649.GA9935@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Error when compiling drivers/md/dm-bufio.c
+Date: Mon, 7 Nov 2011 19:00:03 +0000
+Message-ID: <20111107190002.GB4396@agk-dp.fab.redhat.com>
+References: <20111107082231.GB18221@smp.if.uj.edu.pl>
+	<20111107134601.GH12886@agk-dp.fab.redhat.com>
+	<Pine.LNX.4.64.1111071035380.5814@hs20-bc2-1.build.redhat.com>
+	<CA+55aFwejLwfY6A9o2yx1YPJMD4a5grD6ttmoG1AsFdEcGZWcw@mail.gmail.com>
+	<20111107163215.GF18221@smp.if.uj.edu.pl>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20111107153649.GA9935@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Steffen Maier <maier@linux.vnet.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, Hannes Reinecke <hare@suse.de>, Linux Kernel <linux-kernel@vger.kernel.org>, Alan Stern <stern@rowland.harvard.edu>, Thadeu Lima de Souza Cascardo <cascardo@linux.vnet.ibm.com>, "Taraka R. Bodireddy" <tarak.reddy@in.ibm.com>, "Seshagiri N. Ippili" <seshagiri.ippili@in.ibm.com>, "Manvanthara B. Puttashankar" <mputtash@in.ibm.com>, Jeff Moyer <jmoyer@redhat.com>, Shaohua Li <shaohua.li@intel.com>, gmuelas@de.ibm.com, dm-devel@redhat.com
+In-Reply-To: <20111107163215.GF18221@smp.if.uj.edu.pl>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Witold Baryluk <baryluk@smp.if.uj.edu.pl>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 07 2011 at 10:36am -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Mon, Nov 07, 2011 at 05:32:15PM +0100, Witold Baryluk wrote:
+> Update patch atached.
+ 
+More module.h files can now be export.h I think, so try this version:
+http://git.kernel.org/?p=linux/kernel/git/agk/linux-dm.git;a=patch;h=bef30d3d2059b80b8994ad6a9db8612518ea7a10
 
-> On Mon, Nov 07 2011 at  6:30am -0500,
-> Jun'ichi Nomura <j-nomura@ce.jp.nec.com> wrote:
-> 
-> > On 11/04/11 18:19, Heiko Carstens wrote:
-> > > It's the s390 only zfcp device driver.
-> > > 
-> > > FWIW, yet another use-after-free crash, this time however in multipath_end_io:
-> > > 
-> > > [96875.870593] Unable to handle kernel pointer dereference at virtual kernel address 6b6b6b6b6b6b6000
-> > > [96875.870602] Oops: 0038 [#1]
-> > > [96875.870674] PREEMPT SMP DEBUG_PAGEALLOC
-> > > [96875.870683] Modules linked in: dm_round_robin sunrpc ipv6 qeth_l2 binfmt_misc dm_multipath scsi_dh dm_mod qeth ccwgroup [la\
-> > > st unloaded: scsi_wait_scan]
-> > > [96875.870722] CPU: 2 Tainted: G        W   3.0.7-50.x.20111024-s390xdefault #1
-> > > [96875.870728] Process udevd (pid: 36697, task: 0000000072c8a3a8, ksp: 0000000057c43868)
-> > > [96875.870732] Krnl PSW : 0704200180000000 000003e001347138 (multipath_end_io+0x50/0x140 [dm_multipath])
-> > > [96875.870746]            R:0 T:1 IO:1 EX:1 Key:0 M:1 W:0 P:0 AS:0 CC:2 PM:0 EA:3
-> > > [96875.870751] Krnl GPRS: 0000000000000000 000003e000000000 6b6b6b6b6b6b6b6b 00000000717ab940
-> > > [96875.870755]            0000000000000000 00000000717abab0 0000000000000002 0700000000000008
-> > > [96875.870759]            0000000000000002 0000000000000000 0000000058dd37a8 000000006f845478
-> > > [96875.870764]            000003e0012e1000 000000005613d1f0 000000007a737bf0 000000007a737ba0
-> > > [96875.870768] Krnl Code: 000003e00134712a: b90200dd            ltgr %r13,%r13
-> > > [96875.870793]            000003e00134712e: a7840017            brc 8,3e00134715c
-> > > [96875.870800]            000003e001347132: e320d0100004        lg %r2,16(%r13)
-> > > [96875.870809]           >000003e001347138: e31020180004        lg %r1,24(%r2)
-> > > [96875.870818]            000003e00134713e: e31010580004        lg %r1,88(%r1)
-> > > [96875.870827]            000003e001347144: b9020011            ltgr %r1,%r1
-> > > [96875.870835]            000003e001347148: a784000a            brc 8,3e00134715c
-> > > [96875.870841]            000003e00134714c: 41202018            la %r2,24(%r2)
-> > > [96875.870889] Call Trace:
-> > > [96875.870892] ([<0700000000000008>] 0x700000000000008)
-> > > [96875.870897]  [<000003e0012e3662>] dm_softirq_done+0x9a/0x140 [dm_mod]
-> > > [96875.870915]  [<000000000040d29c>] blk_done_softirq+0xd4/0xf0
-> > > [96875.870925]  [<00000000001587c2>] __do_softirq+0xda/0x398
-> > > [96875.870932]  [<000000000010f47e>] do_softirq+0xe2/0xe8
-> > > [96875.870940]  [<0000000000158e2c>] irq_exit+0xc8/0xcc
-> > > [96875.870945]  [<00000000004ceb48>] do_IRQ+0x910/0x1bfc
-> > > [96875.870953]  [<000000000061a164>] io_return+0x0/0x16
-> > > [96875.870961]  [<000000000019c84e>] lock_acquire+0xd2/0x204
-> > > [96875.870969] ([<000000000019c836>] lock_acquire+0xba/0x204)
-> > > [96875.870974]  [<0000000000615f8e>] mutex_lock_killable_nested+0x92/0x520
-> > > [96875.870983]  [<0000000000292796>] vfs_readdir+0x8a/0xe4
-> > > [96875.870992]  [<00000000002928e0>] SyS_getdents+0x60/0xe8
-> > > [96875.870999]  [<0000000000619af2>] sysc_noemu+0x16/0x1c
-> > > [96875.871024]  [<000003fffd1ec83e>] 0x3fffd1ec83e
-> > > [96875.871028] INFO: lockdep is turned off.
-> > > [96875.871031] Last Breaking-Event-Address:
-> > > [96875.871037]  [<000003e0012e3660>] dm_softirq_done+0x98/0x140 [dm_mod]
-> > > 
-> > > static int multipath_end_io(struct dm_target *ti, struct request *clone,
-> > > 			    int error, union map_info *map_context)
-> > > {
-> > > 	struct multipath *m = ti->private;
-> > > 	struct dm_mpath_io *mpio = map_context->ptr;
-> > > 	struct pgpath *pgpath = mpio->pgpath;
-> > > 	struct path_selector *ps;
-> > > 	int r;
-> > > 
-> > > 	r  = do_end_io(m, clone, error, mpio);
-> > > 	if (pgpath) {
-> > > 		ps = &pgpath->pg->ps; <--- crashes here
-> > > 		if (ps->type->end_io)
-> > > 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes);
-> > > 	}
-> > > 	mempool_free(mpio, m->mpio_pool);
-> > > 
-> > > 	return r;
-> > > }
-> > > 
-> > > It crashes when trying to derefence pgpath, which was freed. Since we have
-> > > SLUB debugging turned on the freed object tells us that it was allocated
-> > > via a call to multipath_ctr() and freed via a call to free_priority_group().
-> > 
-> > struct pgpath is freed before dm_target when tearing down dm table.
-> > So if the problematic completion was being done after freeing pgpath
-> > but before freeing dm_target, crash would look like that
-> > and what's happening seems the same for these dm crashes:
-> > dm table was somehow destroyed while I/O was in-flight.
-> 
-> Could be the block layer's onstack plugging changes are at the heart of
-> this.
-> 
-> I voiced onstack plugging concerns relative to DM some time ago
-> (https://lkml.org/lkml/2011/3/9/450) but somehow convinced myself DM was
-> fine to no longer need dm_table_unplug_all() etc.  Unfortunately I
-> cannot recall _why_ I felt that was the case.
-> 
-> So DM needs further review relative to block's onstack plugging changes
-> and DM IO completion.
+commit bef30d3d2059b80b8994ad6a9db8612518ea7a10
+Author: Alasdair G Kergon <agk@redhat.com>
+Date:   Mon Nov 7 18:45:18 2011 +0000
 
-dm_suspend is performed as part of the DM table reload that is being
-done my multipathd during path failure.  Seems DM no longer insures
-inflight requests have finished during dm_suspend().
+    dm: fix module export includes
+    
+    Fix the use of export.h and module.h in new thin provisioning code.
+    
+    Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 
-Before onstack plugging (< 2.6.39):
-dm_suspend() -> dm_wait_for_completion() -> dm_unplug_all() -> dm_table_unplug_all()
-
-After onstack plugging (>= 2.6.39, commit 7eaceaccab5f40bb):
-dm_suspend's call to dm_wait_for_completion() no longer unplugs IO
-(dm_unplug_all and dm_table_unplug_all were removed without introducing
-a clear equivalent).
-
-Mike
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index cb24666..6919d50 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -10,6 +10,7 @@
+ 
+ #include <linux/device-mapper.h>
+ #include <linux/dm-io.h>
++#include <linux/module.h>
+ #include <linux/slab.h>
+ #include <linux/vmalloc.h>
+ #include <linux/version.h>
+diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
+index 65fd85e..023fbc2 100644
+--- a/drivers/md/persistent-data/dm-btree-remove.c
++++ b/drivers/md/persistent-data/dm-btree-remove.c
+@@ -8,7 +8,7 @@
+ #include "dm-btree-internal.h"
+ #include "dm-transaction-manager.h"
+ 
+-#include <linux/module.h>
++#include <linux/export.h>
+ 
+ /*
+  * Removing an entry from a btree
+diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
+index e0638be..bd1e7ff 100644
+--- a/drivers/md/persistent-data/dm-btree.c
++++ b/drivers/md/persistent-data/dm-btree.c
+@@ -8,7 +8,7 @@
+ #include "dm-space-map.h"
+ #include "dm-transaction-manager.h"
+ 
+-#include <linux/module.h>
++#include <linux/export.h>
+ #include <linux/device-mapper.h>
+ 
+ #define DM_MSG_PREFIX "btree"
+diff --git a/drivers/md/persistent-data/dm-space-map-checker.c b/drivers/md/persistent-data/dm-space-map-checker.c
+index bb44a93..4bbc7d5 100644
+--- a/drivers/md/persistent-data/dm-space-map-checker.c
++++ b/drivers/md/persistent-data/dm-space-map-checker.c
+@@ -6,6 +6,7 @@
+ 
+ #include "dm-space-map-checker.h"
+ 
++#include <linux/export.h>
+ #include <linux/device-mapper.h>
+ 
+ #ifdef CONFIG_DM_DEBUG_SPACE_MAPS
+diff --git a/drivers/md/persistent-data/dm-space-map-disk.c b/drivers/md/persistent-data/dm-space-map-disk.c
+index aeff785..fc469ba 100644
+--- a/drivers/md/persistent-data/dm-space-map-disk.c
++++ b/drivers/md/persistent-data/dm-space-map-disk.c
+@@ -12,7 +12,7 @@
+ 
+ #include <linux/list.h>
+ #include <linux/slab.h>
+-#include <linux/module.h>
++#include <linux/export.h>
+ #include <linux/device-mapper.h>
+ 
+ #define DM_MSG_PREFIX "space map disk"
+diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
+index 728e89a..6f8d387 100644
+--- a/drivers/md/persistent-data/dm-transaction-manager.c
++++ b/drivers/md/persistent-data/dm-transaction-manager.c
+@@ -10,7 +10,7 @@
+ #include "dm-space-map-metadata.h"
+ #include "dm-persistent-data-internal.h"
+ 
+-#include <linux/module.h>
++#include <linux/export.h>
+ #include <linux/slab.h>
+ #include <linux/device-mapper.h>
+ 
