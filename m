@@ -1,121 +1,59 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Error when compiling drivers/md/dm-bufio.c
-Date: Mon, 7 Nov 2011 19:00:03 +0000
-Message-ID: <20111107190002.GB4396@agk-dp.fab.redhat.com>
-References: <20111107082231.GB18221@smp.if.uj.edu.pl>
-	<20111107134601.GH12886@agk-dp.fab.redhat.com>
-	<Pine.LNX.4.64.1111071035380.5814@hs20-bc2-1.build.redhat.com>
-	<CA+55aFwejLwfY6A9o2yx1YPJMD4a5grD6ttmoG1AsFdEcGZWcw@mail.gmail.com>
-	<20111107163215.GF18221@smp.if.uj.edu.pl>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [GIT PULL] Queue free fix (was Re: [PATCH] block: Free queue
+ resources at blk_release_queue())
+Date: Mon, 7 Nov 2011 16:44:51 -0500
+Message-ID: <20111107214451.GA14339@redhat.com>
+References: <1318955380.5169.15.camel@dabdike.int.hansenpartnership.com>
+ <20111031100557.GA2621@osiris.boeblingen.de.ibm.com>
+ <1320057746.2964.1.camel@dabdike>
+ <4EAE8A7E.8000504@ce.jp.nec.com>
+ <20111031130004.GB4768@osiris.boeblingen.de.ibm.com>
+ <20111103182548.GA12131@redhat.com>
+ <20111104091936.GB2397@osiris.boeblingen.de.ibm.com>
+ <4EB7C159.8020009@ce.jp.nec.com>
+ <20111107153649.GA9935@redhat.com>
+ <20111107171044.GA10801@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20111107163215.GF18221@smp.if.uj.edu.pl>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Witold Baryluk <baryluk@smp.if.uj.edu.pl>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+In-Reply-To: <20111107171044.GA10801@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Steffen Maier <maier@linux.vnet.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, Hannes Reinecke <hare@suse.de>, Linux Kernel <linux-kernel@vger.kernel.org>, Alan Stern <stern@rowland.harvard.edu>, Thadeu Lima de Souza Cascardo <cascardo@linux.vnet.ibm.com>, "Taraka R. Bodireddy" <tarak.reddy@in.ibm.com>, "Seshagiri N. Ippili" <seshagiri.ippili@in.ibm.com>, "Manvanthara B. Puttashankar" <mputtash@in.ibm.com>, Jeff Moyer <jmoyer@redhat.com>, Shaohua Li <shaohua.li@intel.com>, gmuelas@de.ibm.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Nov 07, 2011 at 05:32:15PM +0100, Witold Baryluk wrote:
-> Update patch atached.
- 
-More module.h files can now be export.h I think, so try this version:
-http://git.kernel.org/?p=linux/kernel/git/agk/linux-dm.git;a=patch;h=bef30d3d2059b80b8994ad6a9db8612518ea7a10
+On Mon, Nov 07 2011 at 12:10pm -0500,
+Mike Snitzer <snitzer@redhat.com> wrote:
 
-commit bef30d3d2059b80b8994ad6a9db8612518ea7a10
-Author: Alasdair G Kergon <agk@redhat.com>
-Date:   Mon Nov 7 18:45:18 2011 +0000
+> On Mon, Nov 07 2011 at 10:36am -0500,
+> Mike Snitzer <snitzer@redhat.com> wrote:
+> > Could be the block layer's onstack plugging changes are at the heart of
+> > this.
+> > 
+> > I voiced onstack plugging concerns relative to DM some time ago
+> > (https://lkml.org/lkml/2011/3/9/450) but somehow convinced myself DM was
+> > fine to no longer need dm_table_unplug_all() etc.  Unfortunately I
+> > cannot recall _why_ I felt that was the case.
+> > 
+> > So DM needs further review relative to block's onstack plugging changes
+> > and DM IO completion.
+> 
+> dm_suspend is performed as part of the DM table reload that is being
+> done my multipathd during path failure.  Seems DM no longer insures
+> inflight requests have finished during dm_suspend().
+> 
+> Before onstack plugging (< 2.6.39):
+> dm_suspend() -> dm_wait_for_completion() -> dm_unplug_all() -> dm_table_unplug_all()
+> 
+> After onstack plugging (>= 2.6.39, commit 7eaceaccab5f40bb):
+> dm_suspend's call to dm_wait_for_completion() no longer unplugs IO
+> (dm_unplug_all and dm_table_unplug_all were removed without introducing
+> a clear equivalent).
 
-    dm: fix module export includes
-    
-    Fix the use of export.h and module.h in new thin provisioning code.
-    
-    Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+If a missing unplug were a concern then dm_wait_for_completion()'s check
+for inflight IO would cause dm_suspend() to hang.
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index cb24666..6919d50 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -10,6 +10,7 @@
- 
- #include <linux/device-mapper.h>
- #include <linux/dm-io.h>
-+#include <linux/module.h>
- #include <linux/slab.h>
- #include <linux/vmalloc.h>
- #include <linux/version.h>
-diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
-index 65fd85e..023fbc2 100644
---- a/drivers/md/persistent-data/dm-btree-remove.c
-+++ b/drivers/md/persistent-data/dm-btree-remove.c
-@@ -8,7 +8,7 @@
- #include "dm-btree-internal.h"
- #include "dm-transaction-manager.h"
- 
--#include <linux/module.h>
-+#include <linux/export.h>
- 
- /*
-  * Removing an entry from a btree
-diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
-index e0638be..bd1e7ff 100644
---- a/drivers/md/persistent-data/dm-btree.c
-+++ b/drivers/md/persistent-data/dm-btree.c
-@@ -8,7 +8,7 @@
- #include "dm-space-map.h"
- #include "dm-transaction-manager.h"
- 
--#include <linux/module.h>
-+#include <linux/export.h>
- #include <linux/device-mapper.h>
- 
- #define DM_MSG_PREFIX "btree"
-diff --git a/drivers/md/persistent-data/dm-space-map-checker.c b/drivers/md/persistent-data/dm-space-map-checker.c
-index bb44a93..4bbc7d5 100644
---- a/drivers/md/persistent-data/dm-space-map-checker.c
-+++ b/drivers/md/persistent-data/dm-space-map-checker.c
-@@ -6,6 +6,7 @@
- 
- #include "dm-space-map-checker.h"
- 
-+#include <linux/export.h>
- #include <linux/device-mapper.h>
- 
- #ifdef CONFIG_DM_DEBUG_SPACE_MAPS
-diff --git a/drivers/md/persistent-data/dm-space-map-disk.c b/drivers/md/persistent-data/dm-space-map-disk.c
-index aeff785..fc469ba 100644
---- a/drivers/md/persistent-data/dm-space-map-disk.c
-+++ b/drivers/md/persistent-data/dm-space-map-disk.c
-@@ -12,7 +12,7 @@
- 
- #include <linux/list.h>
- #include <linux/slab.h>
--#include <linux/module.h>
-+#include <linux/export.h>
- #include <linux/device-mapper.h>
- 
- #define DM_MSG_PREFIX "space map disk"
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
-index 728e89a..6f8d387 100644
---- a/drivers/md/persistent-data/dm-transaction-manager.c
-+++ b/drivers/md/persistent-data/dm-transaction-manager.c
-@@ -10,7 +10,7 @@
- #include "dm-space-map-metadata.h"
- #include "dm-persistent-data-internal.h"
- 
--#include <linux/module.h>
-+#include <linux/export.h>
- #include <linux/slab.h>
- #include <linux/device-mapper.h>
- 
+So the onstack plugging changes are unlikely to be the reason for this.
+
+Mike
