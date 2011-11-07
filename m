@@ -1,63 +1,75 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipath-tools/path_priority pp_alua/rtpg.c p ...
-Date: Mon, 7 Nov 2011 08:06:36 -0600
-Message-ID: <20111107140636.GU24133@ether.msp.redhat.com>
-References: <20111024134132.32316.qmail@sourceware.org>
-	<1320270710.16195.15.camel@lapoo.opensvc.com>
-	<20111103215855.GS24133@ether.msp.redhat.com>
-	<1320357858.16195.30.camel@lapoo.opensvc.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] Error when compiling drivers/md/dm-bufio.c
+Date: Mon, 7 Nov 2011 10:36:34 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1111071035380.5814@hs20-bc2-1.build.redhat.com>
+References: <20111107082231.GB18221@smp.if.uj.edu.pl>
+ <20111107134601.GH12886@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1320357858.16195.30.camel@lapoo.opensvc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@opensvc.com
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: MULTIPART/MIXED; BOUNDARY="168436252-658836247-1320680194=:5814"
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <20111107134601.GH12886@agk-dp.fab.redhat.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Witold Baryluk <baryluk@smp.if.uj.edu.pl>, Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Alasdair G Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Nov 03, 2011 at 11:04:18PM +0100, Christophe Varoqui wrote:
-> On jeu., 2011-11-03 at 16:58 -0500, Benjamin Marzinski wrote:
-> > On Wed, Nov 02, 2011 at 10:51:50PM +0100, Christophe Varoqui wrote:
-> > > > --- multipath-tools/path_priority/pp_alua/rtpg.c	2009/08/18 21:12:02	1.3.2.5
-> > > > +++ multipath-tools/path_priority/pp_alua/rtpg.c	2011/10/24 13:41:32	1.3.2.6
-> > > > @@ -29,7 +29,7 @@
-> > > >  #include "rtpg.h"
-> > > >  
-> > > >  #define SENSE_BUFF_LEN  32
-> > > > -#define DEF_TIMEOUT     300000
-> > > > +#define DEF_TIMEOUT     60000
-> > > >  
-> > > 
-> > > Do you want that part merged into upstream's alua prioritizer shared
-> > > object ?
-> > 
-> > In the RHEL5 code, this is a seperate callout program.  Upstream it
-> > would be better if we could make this configurable via multipath.conf,
-> > like the checker timeouts.
-> > 
-> Sure, but you did not implement that in the callout either. Is the 60s
-> timeout value controversial ? Is that change a worthy quick-fix ?
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Sure.  We've had a number of complaints about how long multipath can get
-stuck in some corner cases.  This was one that caused some problems, so
-I'd be happy to see the default changed.
+--168436252-658836247-1320680194=:5814
+Content-Type: TEXT/PLAIN; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 
--Ben
 
-> 
-> Regards,
-> -- 
-> Christophe Varoqui
-> OpenSVC - Tools to scale
-> http://www.opensvc.com/
+
+On Mon, 7 Nov 2011, Alasdair G Kergon wrote:
+
+> On Mon, Nov 07, 2011 at 09:22:31AM +0100, Witold Baryluk wrote:
+> > I just got error on todays Linus' tree
+> >   CC [M]  drivers/md/dm-bufio.o
+> > drivers/md/dm-bufio.c:988:1: warning: type defaults to =E2=80=98int=E2=
+=80=99 in declaration of =E2=80=98EXPORT_SYMBOL_GPL=E2=80=99 [-Wimplicit-in=
+t]
+>=20
+> Probably related to this merge:
+>   commit 32aaeffbd4a7457bf2f7448b33b5946ff2a960eb
+>   Merge branch 'modsplit-Oct31_2011' of git://git.kernel.org/pub/scm/linu=
+x/ker
+>=20
+> Previously module.h was included via another header file.
+> Now, bufio.c needs an explicit
+>=20
+> #include <linux/module.h>
+>=20
+> Alasdair
+>=20
+
+Yes, apply this patch:
+
+dm-bufio: Include <linux/module.h>
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-bufio.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+Index: linux-2.6-compile/drivers/md/dm-bufio.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- linux-2.6-compile.orig/drivers/md/dm-bufio.c=092011-11-07 16:31:34.0000=
+00000 +0100
++++ linux-2.6-compile/drivers/md/dm-bufio.c=092011-11-07 16:31:41.000000000=
+ +0100
+@@ -8,6 +8,7 @@
+=20
+ #include "dm-bufio.h"
+=20
++#include <linux/module.h>
+ #include <linux/device-mapper.h>
+ #include <linux/dm-io.h>
+ #include <linux/slab.h>
+
+Mikulas
+--168436252-658836247-1320680194=:5814--
