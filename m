@@ -1,15 +1,12 @@
-From: Hauke Laging <mailinglisten@hauke-laging.de>
-Subject: Re: turning the root volume into a snapshot stalls
-	(ioctl hangs)
-Date: Tue, 8 Nov 2011 19:29:47 +0100
-Message-ID: <201111081929.48163.mailinglisten@hauke-laging.de>
-References: <201111081257.08114.mailinglisten@hauke-laging.de>
-	<20111108132120.GA19817@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: i/o counting problems
+Date: Tue, 8 Nov 2011 22:48:28 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1111082226260.9155@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============3057100156451584105=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20111108132120.GA19817@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,87 +16,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============3057100156451584105==
-Content-Type: multipart/signed; boundary="nextPart8693180.zj9JMq7TiE";
-	protocol="application/pgp-signature"; micalg=pgp-ripemd160
-Content-Transfer-Encoding: 7bit
+Hi
 
---nextPart8693180.zj9JMq7TiE
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+As we talked about those I/O counting ... the current situation is this:
 
-Am Dienstag, 8. November 2011, 14:21:21 schrieb Mike Snitzer:
-> So you're somehow activating the snapshot to be the root volume.  And
-> then later trying to merge the tmpfs COW into the origin (obviously
-> before you reboot otherwise you'd lose the tmpfs).  This isn't going to
-> work with the current snapshot-merge code given the constraints that
-> both the origin and snapshot must be closed before merge.
+There are functions submit_bio and generic_make_request --- they do the 
+same thing (submit a bio), except that submit_bio counts the bio in global 
+I/O counters and generic_make_request does not.
 
-Yes but not even the snapshot part works (I copied the code in the first ma=
-il=20
-from the wrong part of the script; it should have been "snaphot" instead of=
-=20
-"snapshot-merge".
+Currently, it is up to the creator of the bio to determine if the bio 
+should be counted or not (by calling submit_bio or generic_make_request).
 
+This is used inconsistently in the device mapper, sometimes the bio is 
+submitted with submit_bio (for example raid1 write or snapshots 
+copy-on-writes), sometimes withe generic_make_request. This results in 
+some weird counting behaviour:
 
-> The lvm tools both document and guard against this, from lvconvert(8):
+* when writing to raid1, vmstat reports three-times the actual throughput 
+(it is counted once on entry to dm and once on each mirror leg).
 
-OK, I don't use lvconvert thus I had not read that.
+* when submitting a lot of small bios pointing to random sectors to 
+dm-crypt, dm-crypt resubmits them to the disks, but doesn't increase 
+counters. This resubmitting can take several minutes (because of disk head 
+seeks) and the machine appears deadlocked (there is nono I/O or CPU 
+activity in vmstat, processes are hanging in 'D' state). In reality it is 
+not deadlocked, it is sending data to the disks, but the data are not 
+counted.
 
+---
 
->    Merging a snapshot into an origin that cannot be closed, for
->    example a root filesystem, is deferred until the next time the origin
->    volume is activated.
+I think a correct solution to these problems would be to define that 
+global I/O counters count only physical I/O to the disks and not I/O that 
+is passed between midlayers. We should make both submit_bio and 
+generic_make_requests increase the counters and make a per-queue flag 
+meaning "this request queue belongs to a midlayer => don't count it". This 
+flag would be set on all dm, md and loop devices.
 
-I am curious: Is there a technical explanation of this problem? I do not=20
-understand what "close" is supposed to mean in this context and how the roo=
-t=20
-volume is different from the home volume (with users logged in).
+Do you have any other ideas?
 
-Could this restriction be avoided by using another dm layer? I have an LV=20
-linux2/rootfs. If I create a new dm device rootfs and have it point to=20
-/dev/mapper/linux2-rootfs would the restriction apply to both then? It is n=
-ot=20
-necessary in this case that the file system gets flushed (and the superbloc=
-k=20
-cleaned).
-
-
-Thanks for your help
-
-Hauke
-=2D-=20
-PGP: D44C 6A5B 71B0 427C CED3 025C BD7D 6D27 ECCB 5814
-
---nextPart8693180.zj9JMq7TiE
-Content-Type: application/pgp-signature; name=signature.asc 
-Content-Description: This is a digitally signed message part.
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.16 (GNU/Linux)
-
-iQFMBAABAwA2BQJOuXUcLxpodHRwOi8vd3d3LmhhdWtlLWxhZ2luZy5kZS9vcGVu
-cGdwL3BvbGljeS5odG1sAAoJEFug+LU6QDJRsT8H/iUfsFi0H9t4xMJ18FPOaVn4
-XgH0QRRU12l3G/C6oDv2FvEoKKNWRpwZH0dpOuq+y/4cNgxhRcBucezC/aRIhGCF
-SgFTynVJGKwFBLHxWVNT1pCLBuTfy83jKUZn2PGj4WDJBpgMIhIYtztA6h++pIuo
-3Hh0bUbd0u+RpYm1GSP8zyoveqeB0WJa9PgFvbc1lP0AHcKDtKLEkMUCffoRxp9T
-EjAvoXq4HY7iLdzupeqPk+8Qis3yv0GNGje03Fu2nPL2oMfdDnLVHZasUC6myQbI
-pNfkypqzOIERBLJAlrQfz3Ckt0iLUdL6Lu0Rj0Ox9kqQ5tHK+OfMtLaQi1kZtnk=
-=0U6H
------END PGP SIGNATURE-----
-
---nextPart8693180.zj9JMq7TiE--
-
-
---===============3057100156451584105==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============3057100156451584105==--
+Mikulas
