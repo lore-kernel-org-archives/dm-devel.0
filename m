@@ -1,101 +1,38 @@
-From: Harsha Sabbineni <harsha.kgp@gmail.com>
-Subject: device-mapper: table: 253:4: multipath: error attaching
-	hardware handler
-Date: Wed, 9 Nov 2011 21:40:11 -0800
-Message-ID: <CAKeJUxLNMp0u6xmUEpjOoUsLS=sam+TbPY-tDWJexSzRHU4kSg@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Steffen Klassert <steffen.klassert@secunet.com>
+Subject: Re: [PATCH] dm: verity target
+Date: Thu, 10 Nov 2011 08:44:08 +0100
+Message-ID: <20111110074408.GE10138@secunet.com>
+References: <1320902290-19050-1-git-send-email-msb@chromium.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2589929492030566342=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1320902290-19050-1-git-send-email-msb@chromium.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mandeep Singh Baines <msb@chromium.org>
+Cc: Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, Will Drewry <wad@chromium.org>, Elly Jones <ellyjones@chromium.org>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
---===============2589929492030566342==
-Content-Type: multipart/alternative; boundary=14dae93b62c884fbf304b15ad6e5
+On Wed, Nov 09, 2011 at 09:18:10PM -0800, Mandeep Singh Baines wrote:
+>
+> + * TODO(wad): All hash storage memory is pre-allocated and freed once an
+> + * entire branch has been verified.
+> + */
+> +struct dm_bht {
+> +	/* Configured values */
+> +	int depth;  /* Depth of the tree including the root */
+> +	unsigned int block_count;  /* Number of blocks hashed */
+> +	unsigned int block_size;  /* Size of a hash block */
+> +	char hash_alg[CRYPTO_MAX_ALG_NAME];
+> +	unsigned char salt[DM_BHT_SALT_SIZE];
+> +
+> +	/* Computed values */
+> +	unsigned int node_count;  /* Data size (in hashes) for each entry */
+> +	unsigned int node_count_shift;  /* first bit set - 1 */
+> +	/* There is one per CPU so that verified can be simultaneous. */
+> +	struct hash_desc hash_desc[NR_CPUS];  /* Container for the hash alg */
 
---14dae93b62c884fbf304b15ad6e5
-Content-Type: text/plain; charset=ISO-8859-1
-
-Hi,
-
-I am seeing this error with multipath-tools
-device-mapper-multipath-0.4.9-23.0.9.el5 and 2.6.32-200.20.1.el5uek
-
-device-mapper: table: 253:4: *multipath: error attaching hardware handler*
-device-mapper: ioctl: *error adding target to table*
-
-
-multipath.conf has this. I am trying to use rdac.
-
-devices {
-  device {
-     vendor                  "*"
-     product                 "*"
-     features                "1 queue_if_no_path"
-     hardware_handler        "1 rdac"
-     path_selector           "round-robin 0"
-     path_grouping_policy    group_by_prio
-     failback                immediate
-     rr_weight               uniform
-     no_path_retry           20
-     rr_min_io               1000
-     path_checker            rdac
-     prio                    rdac
-  }
-}
-
-I have tried doing multipath -F and then restarting multipathd but the
-error does not go away.
-Is this a bug thats been fixed in later versions by any chance?
-
-thanks in advance,
-Harsha
-
---14dae93b62c884fbf304b15ad6e5
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-Hi, <br><br>I am seeing this error with multipath-tools device-mapper-multi=
-path-0.4.9-23.0.9.el5 and 2.6.32-200.20.1.el5uek<br><br>device-mapper: tabl=
-e: 253:4: <b>multipath: error attaching hardware handler</b><br>device-mapp=
-er: ioctl: <b>error adding target to table</b><br>
-<br><br>multipath.conf has this. I am trying to use rdac.<br><br>devices {<=
-br>=A0 device {<br>=A0=A0=A0=A0 vendor=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0 &quot;*&quot;<br>=A0=A0=A0=A0 product=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0 &quot;*&quot;<br>=A0=A0=A0=A0 features=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 &quot;1 queue_if_no_path&quot;<br>
-=A0=A0=A0=A0 hardware_handler=A0=A0=A0=A0=A0=A0=A0 &quot;1 rdac&quot;<br>=
-=A0=A0=A0=A0 path_selector=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 &quot;round-robin =
-0&quot;<br>=A0=A0=A0=A0 path_grouping_policy=A0=A0=A0 group_by_prio<br>=A0=
-=A0=A0=A0 failback=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 immediate<b=
-r>=A0=A0=A0=A0 rr_weight=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 uniform<=
-br>
-=A0=A0=A0=A0 no_path_retry=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 20<br>=A0=A0=A0=A0=
- rr_min_io=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 1000<br>=A0=A0=A0=A0 p=
-ath_checker=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 rdac<br>=A0=A0=A0=A0 prio=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 rdac<br>=A0 }<br>}<b=
-r><br>I have tried doing multipath -F and then restarting multipathd but th=
-e error does not go away. <br>
-Is this a bug thats been fixed in later versions by any chance?<br><br>than=
-ks in advance,<br>Harsha<br>
-
---14dae93b62c884fbf304b15ad6e5--
-
-
---===============2589929492030566342==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2589929492030566342==--
+Please don't add a new user for the old hash interface. If the hashes can
+be done asynchronous you can use ahash, if not use shash. Both interfaces
+are reentrant, that's probaply what you want to have here. You don't
+need to have this in a per cpu manner.
