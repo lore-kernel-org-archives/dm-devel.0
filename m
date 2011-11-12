@@ -1,16 +1,15 @@
 From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: [PATCH] multipath: don't print so many add map
-	messages
-Date: Sat, 12 Nov 2011 11:17:35 +0100
-Message-ID: <1321093055.14506.6.camel@lapoo.opensvc.com>
-References: <20111112051249.GF24133@ether.msp.redhat.com>
+Subject: Re: [PATCH] multipath: rlookup WWIDs with spaces by alias
+Date: Sat, 12 Nov 2011 11:18:15 +0100
+Message-ID: <1321093095.14506.8.camel@lapoo.opensvc.com>
+References: <20111112045426.GD24133@ether.msp.redhat.com>
 Reply-To: christophe.varoqui@opensvc.com,
         device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20111112051249.GF24133@ether.msp.redhat.com>
+In-Reply-To: <20111112045426.GD24133@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,37 +23,28 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On ven., 2011-11-11 at 23:12 -0600, Benjamin Marzinski wrote:
-> Whenever a dm device gets a change uevent, multipathd prints an add map
-> message.  This can get confusing for users, so change that message to
-> not print at the default log level, and add a new message that only
-> prints if multipathd will actually try to add a map
+On ven., 2011-11-11 at 22:54 -0600, Benjamin Marzinski wrote:
+> If a WWID contained spaces, the rlookup code wasn't able to look it up
+> by its user_friendly_name, since the code was only reading the wwid till
+> the first space.  It now reads to the end of the line.
 > 
-Applied.
+Applied
 
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  multipathd/main.c |    3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
+>  libmultipath/alias.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> Index: multipath-tools-111111/multipathd/main.c
+> Index: multipath-tools-110412/libmultipath/alias.c
 > ===================================================================
-> --- multipath-tools-111111.orig/multipathd/main.c
-> +++ multipath-tools-111111/multipathd/main.c
-> @@ -232,7 +232,7 @@ uev_add_map (struct uevent * uev, struct
->  	char *alias;
->  	int major = -1, minor = -1, rc;
->  
-> -	condlog(2, "%s: add map (uevent)", uev->kernel);
-> +	condlog(3, "%s: add map (uevent)", uev->kernel);
->  	alias = uevent_get_dm_name(uev);
->  	if (!alias) {
->  		condlog(3, "%s: No DM_NAME in uevent", uev->kernel);
-> @@ -280,6 +280,7 @@ ev_add_map (char * dev, char * alias, st
->  		}
->  		return 0;
->  	}
-> +	condlog(2, "%s: adding map", alias);
->  
->  	/*
->  	 * now we can register the map
+> --- multipath-tools-110412.orig/libmultipath/alias.c
+> +++ multipath-tools-110412/libmultipath/alias.c
+> @@ -288,7 +288,7 @@ rlookup_binding(FILE *f, char **map_wwid
+>  		curr_id = scan_devname(alias, NULL); /* TBD: Why this call? */
+>  		if (curr_id >= id)
+>  			id = curr_id + 1;
+> -		wwid = strtok(NULL, " \t");
+> +		wwid = strtok(NULL, "");
+>  		if (!wwid){
+>  			condlog(3,
+>  				"Ignoring malformed line %u in bindings file",
