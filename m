@@ -1,59 +1,79 @@
-From: Josh Triplett <josh@joshtriplett.org>
-Subject: Bug#648367: device-mapper devices such as dm-crypt always have rotational=1; should inherit "rotational" setting from underlying devices
-Date: Sun, 13 Nov 2011 18:26:44 -0800
-Message-ID: <20111114022644.GB30421@leaf>
-References: <20111110195943.12083.93273.reportbug@leaf>
- <1321232729.3059.42.camel@deadeye>
-Reply-To: Josh Triplett <josh@joshtriplett.org>, 648367@bugs.debian.org
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] multipath: rlookup WWIDs with spaces by alias
+Date: Mon, 14 Nov 2011 10:17:54 +0100
+Message-ID: <4EC0DCC2.8060804@suse.de>
+References: <20111112045426.GD24133@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <bounce-debian-bugs-dist=glddb-debian-bugs-dist=m.gmane.org@lists.debian.org>
-Resent-To: debian-bugs-dist@lists.debian.org
-Resent-Message-ID: <handler.648367.B648367.132123761232352@bugs.debian.org>
-Content-Disposition: inline
-In-Reply-To: <1321232729.3059.42.camel@deadeye>
-List-Post: <mailto:debian-bugs-dist@lists.debian.org>
-List-Help: <mailto:debian-bugs-dist-request@lists.debian.org?subject=help>
-List-Subscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=subscribe>
-List-Unsubscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=unsubscribe>
-To: Ben Hutchings <ben@decadent.org.uk>
-Cc: 648367@bugs.debian.org, dm-devel@redhat.com
+Content-Type: text/plain; charset="iso-8859-1"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20111112045426.GD24133@ether.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-On Mon, Nov 14, 2011 at 01:05:29AM +0000, Ben Hutchings wrote:
-> On Thu, 2011-11-10 at 11:59 -0800, Josh Triplett wrote:
-> > Source: linux-2.6
-> > Version: 3.1.0-1~experimental.1
-> > Severity: normal
-> > 
-> > I use dm-crypt on my system, and I have an SSD.  The underlying disk
-> > device, sda, has rotational=0:
-> > 
-> > ~$ cat /sys/block/sda/queue/rotational
-> > 0
-> > 
-> > However, the device-mapper devices have rotational=1:
-> > 
-> > ~$ head /sys/block/dm-*/queue/rotational
-> > ==> /sys/block/dm-0/queue/rotational <==
-> > 1
-> > 
-> > ==> /sys/block/dm-1/queue/rotational <==
-> > 1
-> > 
-> > ==> /sys/block/dm-2/queue/rotational <==
-> > 1
-> > 
-> > The device-mapper devices should inherit the setting for "rotational"
-> > from their underlying devices.
-> 
-> I'm not sure that's true.  Since their queues should feed into the
-> queues for the underlying devices, it may be that they shouldn't
-> themselves be scheduled as if they are rotating media.
+On 11/12/2011 05:54 AM, Benjamin Marzinski wrote:
+> If a WWID contained spaces, the rlookup code wasn't able to look it up
+> by its user_friendly_name, since the code was only reading the wwid till
+> the first space.  It now reads to the end of the line.
+>
+> Signed-off-by: Benjamin Marzinski<bmarzins@redhat.com>
+> ---
+>   libmultipath/alias.c |    2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> Index: multipath-tools-110412/libmultipath/alias.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- multipath-tools-110412.orig/libmultipath/alias.c
+> +++ multipath-tools-110412/libmultipath/alias.c
+> @@ -288,7 +288,7 @@ rlookup_binding(FILE *f, char **map_wwid
+>   		curr_id =3D scan_devname(alias, NULL); /* TBD: Why this call? */
+>   		if (curr_id>=3D id)
+>   			id =3D curr_id + 1;
+> -		wwid =3D strtok(NULL, " \t");
+> +		wwid =3D strtok(NULL, "");
+>   		if (!wwid){
+>   			condlog(3,
+>   				"Ignoring malformed line %u in bindings file",
+>
+Please, don't.
 
-OK, I suppose I don't actually care what rotational shows for a
-device-mapper device backed by rotating media.  The case I care about:
-when the underlying media has rotational=0, the dm device definitely
-shouldn't have rotational=1.
+We keep on changing this one back and forth about every year.
+(The original patch was by you, back in 2008. Then I changed it back =
 
-- Josh Triplett
+because it breaks compability with existing configuration files. Now you =
+
+go and change it _again_).
+
+The real problem here is
+
+'If the WWID contains spaces'
+
+The WWID _never_ should contain spaces. I pretty certain we can't handle =
+
+WWID with spaces in the bindings file; eg we don't have any quotation =
+
+mechanism implemented.
+So can't we just settle on 'The WWID must not contain spaces' ?
+
+Cheers,
+
+Hannes
+-- =
+
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
