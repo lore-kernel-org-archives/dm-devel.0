@@ -1,110 +1,89 @@
-From: Mandeep Singh Baines <msb@chromium.org>
-Subject: Re: [PATCH v2] dm: verity target
-Date: Mon, 14 Nov 2011 09:54:23 -0800
-Message-ID: <20111114175423.GA13132@google.com>
-References: <20111110074408.GE10138@secunet.com>
- <1321032884-14621-1-git-send-email-msb@chromium.org>
- <20111114092252.GA11359@secunet.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH] multipath: rlookup WWIDs with spaces by	alias
+Date: Mon, 14 Nov 2011 12:34:00 -0600
+Message-ID: <20111114183359.GG24133@ether.msp.redhat.com>
+References: <20111112045426.GD24133@ether.msp.redhat.com>
+	<4EC0DCC2.8060804@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20111114092252.GA11359@secunet.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steffen Klassert <steffen.klassert@secunet.com>
-Cc: Mandeep Singh Baines <msb@chromium.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, Will Drewry <wad@chromium.org>, Elly Jones <ellyjones@chromium.org>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, linux-kernel@vger.kernel.org
+In-Reply-To: <4EC0DCC2.8060804@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christophe.varoqui@gmail.com>
 List-Id: dm-devel.ids
 
-Steffen Klassert (steffen.klassert@secunet.com) wrote:
-> On Fri, Nov 11, 2011 at 09:34:44AM -0800, Mandeep Singh Baines wrote:
-> >
-> > +/**
-> > + * dm_bht_compute_hash: hashes a page of data
-> > + */
-> > +static int dm_bht_compute_hash(struct dm_bht *bht, struct page *pg,
-> > +			       unsigned int offset, u8 *digest)
-> > +{
-> > +	struct shash_desc *hash_desc = bht->hash_desc[smp_processor_id()];
-> > +	void *data;
-> > +	int err;
-> 
-> You don't need to have one shash_desc per cpu. As the shash interface is
-> synchronous, you could either allocate a new shash_desc with every call
-> to dm_bht_compute_hash, or just place the shash_desc with the context to
-> the stack of this function. The easiest thing would be to add the
-> shash transformation direct to dm_bht and then something like
-> 
->         struct {
->                 struct shash_desc desc;        
->                 char ctx[crypto_shash_descsize(bht->tfm)];                                                
->         } hash_desc;
-> 
-> 	hash_desc.desc.tfm = bmt->tfm;
-> 
-> The intermediate and final digest values are stored to hash_desc.ctx.
-> This is local, hence it's reentrant.
-> 
+On Mon, Nov 14, 2011 at 10:17:54AM +0100, Hannes Reinecke wrote:
+> On 11/12/2011 05:54 AM, Benjamin Marzinski wrote:
+>> If a WWID contained spaces, the rlookup code wasn't able to look it up
+>> by its user_friendly_name, since the code was only reading the wwid till
+>> the first space.  It now reads to the end of the line.
+>>
+>> Signed-off-by: Benjamin Marzinski<bmarzins@redhat.com>
+>> ---
+>>   libmultipath/alias.c |    2 +-
+>>   1 file changed, 1 insertion(+), 1 deletion(-)
+>>
+>> Index: multipath-tools-110412/libmultipath/alias.c
+>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>> --- multipath-tools-110412.orig/libmultipath/alias.c
+>> +++ multipath-tools-110412/libmultipath/alias.c
+>> @@ -288,7 +288,7 @@ rlookup_binding(FILE *f, char **map_wwid
+>>   		curr_id =3D scan_devname(alias, NULL); /* TBD: Why this call? */
+>>   		if (curr_id>=3D id)
+>>   			id =3D curr_id + 1;
+>> -		wwid =3D strtok(NULL, " \t");
+>> +		wwid =3D strtok(NULL, "");
+>>   		if (!wwid){
+>>   			condlog(3,
+>>   				"Ignoring malformed line %u in bindings file",
+>>
+> Please, don't.
+>
+> We keep on changing this one back and forth about every year.
+> (The original patch was by you, back in 2008. Then I changed it back =
 
-Hi Steffen,
+> because it breaks compability with existing configuration files. Now you =
+go =
 
-We use a hash per CPU to avoid allocating and freeing a context per
-computation. We could allocate the context on the stack as you suggest.
-However, we were worried about overflowing the stack. The context can be
-quite large (close to 200 bytes for sha512).
+> and change it _again_).
+>
+> The real problem here is
+>
+> 'If the WWID contains spaces'
+>
+> The WWID _never_ should contain spaces. I pretty certain we can't handle =
 
-We use a hash per CPU because there can be at most one hash in progress
-on each CPU at any one time.
+> WWID with spaces in the bindings file; eg we don't have any quotation =
 
-Regards,
-Mandeep
+> mechanism implemented.
+> So can't we just settle on 'The WWID must not contain spaces' ?
 
-> > +
-> > +	/* Note, this is synchronous. */
-> > +	if (crypto_shash_init(hash_desc)) {
-> > +		DMCRIT("failed to reinitialize crypto hash (proc:%d)",
-> > +			smp_processor_id());
-> > +		return -EINVAL;
-> > +	}
-> > +	data = kmap_atomic(pg);
-> > +	err = crypto_shash_update(hash_desc, data + offset, PAGE_SIZE);
-> > +	kunmap_atomic(data);
-> > +	if (err) {
-> > +		DMCRIT("crypto_hash_update failed");
-> > +		return -EINVAL;
-> > +	}
-> > +	if (crypto_shash_update(hash_desc, bht->salt, sizeof(bht->salt))) {
-> > +		DMCRIT("crypto_hash_update failed");
-> > +		return -EINVAL;
-> > +	}
-> > +	if (crypto_shash_final(hash_desc, digest)) {
-> > +		DMCRIT("crypto_hash_final failed");
-> > +		return -EINVAL;
-> > +	}
-> > +
-> > +	return 0;
-> > +}
-> > +
-> 
-> [snip]
-> 
-> > + * TODO(wad): All hash storage memory is pre-allocated and freed once an
-> > + * entire branch has been verified.
-> > + */
-> > +struct dm_bht {
-> > +	/* Configured values */
-> > +	int depth;  /* Depth of the tree including the root */
-> > +	unsigned int block_count;  /* Number of blocks hashed */
-> > +	unsigned int block_size;  /* Size of a hash block */
-> > +	char hash_alg[CRYPTO_MAX_ALG_NAME];
-> > +	unsigned char salt[DM_BHT_SALT_SIZE];
-> > +
-> > +	/* Computed values */
-> > +	unsigned int node_count;  /* Data size (in hashes) for each entry */
-> > +	unsigned int node_count_shift;  /* first bit set - 1 */
-> > +	/* There is one per CPU so that verified can be simultaneous. */
-> > +	struct shash_desc *hash_desc[NR_CPUS];  /* Container for the hash alg */
-> 
-> As mentioned above, you don't need to have one shash_desc per cpu.
-> Replace this with a 'struct crypto_shash *tfm;' and add this transformation
-> to the local hash_desc.
-> 
+I suppose that since we're using the "--replace-whitespace" option to
+scsi_id by default, I'm fine with not including this patch.
+
+-Ben
+
+>
+> Cheers,
+>
+> Hannes
+> -- =
+
+> Dr. Hannes Reinecke		      zSeries & Storage
+> hare@suse.de			      +49 911 74053 688
+> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
