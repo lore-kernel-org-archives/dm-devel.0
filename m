@@ -1,86 +1,89 @@
-From: Christophe Varoqui <christophe.varoqui@gmail.com>
-Subject: Re: Multipath.conf
-Date: Sat, 12 Nov 2011 13:18:04 +0100
-Message-ID: <1321100284.14506.18.camel@lapoo.opensvc.com>
-References: <OF65500C59.20F9F543-ON80257944.003C1AE0-80257944.003F18B9@bportugal.pt>
-Reply-To: christophe.varoqui@opensvc.com,
-        device-mapper development <dm-devel@redhat.com>
+From: Ben Hutchings <ben@decadent.org.uk>
+Subject: Bug#648367: device-mapper devices such as dm-crypt always have rotational=1; should inherit "rotational" setting from underlying devices
+Date: Mon, 14 Nov 2011 01:05:29 +0000
+Message-ID: <1321232729.3059.42.camel@deadeye>
+References: <20111110195943.12083.93273.reportbug@leaf>
+Reply-To: Ben Hutchings <ben@decadent.org.uk>, 648367@bugs.debian.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <OF65500C59.20F9F543-ON80257944.003C1AE0-80257944.003F18B9@bportugal.pt>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Tiago.Francisco.Abreu@bportugal.pt
+Content-Type: multipart/signed; micalg="pgp-sha512";
+	protocol="application/pgp-signature"; boundary="=-fX6TJLeVxP/rNjId2pxj"
+Return-path: <bounce-debian-bugs-dist=glddb-debian-bugs-dist=m.gmane.org@lists.debian.org>
+Resent-To: debian-bugs-dist@lists.debian.org
+Resent-Message-ID: <handler.648367.B648367.132123274910182@bugs.debian.org>
+In-Reply-To: <20111110195943.12083.93273.reportbug@leaf>
+List-Post: <mailto:debian-bugs-dist@lists.debian.org>
+List-Help: <mailto:debian-bugs-dist-request@lists.debian.org?subject=help>
+List-Subscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=subscribe>
+List-Unsubscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=unsubscribe>
+To: Josh Triplett <josh@joshtriplett.org>, 648367@bugs.debian.org
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> 1) Can someone point me to the latest version of the documentation?
-> The following examples seem to show that the multipath(d) are not in sync
-> with the man.
 
-The uptodate information is the one shipped with the sources. It may
-have rotten parts ... but feel free to point them out for us to fix.
+--=-fX6TJLeVxP/rNjId2pxj
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-> a) polling_interval
-> The man page and the comments in the multipath.conf say that the default
-> value is 5, but when I execute "multipath -t" when I didn't specified the
-> value in multipath.conf it says the polling_interval is 0.
-> I don't even know what 0 means.
-> Is "multipath -t" giving incorrect values? Is my reasonning wrong? Other?
-> 
-Fixed as of today by commit 56753df50b08d67fb711e215a556d005f82ddf7b
+On Thu, 2011-11-10 at 11:59 -0800, Josh Triplett wrote:
+> Source: linux-2.6
+> Version: 3.1.0-1~experimental.1
+> Severity: normal
+>=20
+> I use dm-crypt on my system, and I have an SSD.  The underlying disk
+> device, sda, has rotational=3D0:
+>=20
+> ~$ cat /sys/block/sda/queue/rotational
+> 0
+>=20
+> However, the device-mapper devices have rotational=3D1:
+>=20
+> ~$ head /sys/block/dm-*/queue/rotational
+> =3D=3D> /sys/block/dm-0/queue/rotational <=3D=3D
+> 1
+>=20
+> =3D=3D> /sys/block/dm-1/queue/rotational <=3D=3D
+> 1
+>=20
+> =3D=3D> /sys/block/dm-2/queue/rotational <=3D=3D
+> 1
+>=20
+> The device-mapper devices should inherit the setting for "rotational"
+> from their underlying devices.
 
-> b) path_grouping_policy
-> man says that the default is multibus.
-> Red Hat Documentation (
-> http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/DM_Multipath/config_file_defaults.html
-> ) says the default is Failover.
-> 
-I have no such default in either multipath.8 multipathd.8 and
-multipath.conf.defaults
+I'm not sure that's true.  Since their queues should feed into the
+queues for the underlying devices, it may be that they shouldn't
+themselves be scheduled as if they are rotating media.
 
-multipath.conf.annotated correctly points failover as the default policy
+I do wonder whether rotational should still be the default - almost all
+real disks are handled by a small number of drivers like sd, while there
+is a wide variety of networked, stacked and virtual disk drivers in use.
 
-> c) prio
-> man says default is none.
-> Red Hat Documentation (
-> http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/DM_Multipath/config_file_defaults.html
-> ) says the default is const.
-> 
-I have no such default in either multipath.8 multipathd.8 and
-multipath.conf.defaults has the correct const default.
+Ben.
 
-Fixed in multipath.conf.annotated though
+--=20
+Ben Hutchings
+The world is coming to an end.	Please log off.
 
-> d) Why "prio emc" gives "sda: emc prio: query command indicates error",
-> when I execute multipath -v2 -d with multipathd not running. And sda is
-> even in the blacklist.
-> 
-> e) If I have EMC Clariion Disk Array, should I use: "path_checker
-> emc_clariion"?
-> 
-Depends on the Clariion settings. Either that or alua
+--=-fX6TJLeVxP/rNjId2pxj
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
 
-> f) What is the correct getuid_callout:
-> -  /sbin/scsi_id -g -u -s /block/%n (As old EMC document says)
-> - /sbin/scsi_id -g -u -s (As the man says)
-> - "/lib/dev/scsi_id --whitelisted --device=/dev/%n" (As
-> http://docs.redhat.com/docs/en-US/Red_Hat_Enterprise_Linux/6/html/DM_Multipath/config_file_defaults.html
->  says.)
-> 
-The correct one is the one that works on your system. Different scsi_id
-version running on different kernel version have different behaviour.
-The internal default makes it work with latest kernel/scsi_id
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
 
-> g) There maybe more differences. I didn't check all.
-> 
-Please do, if you have the means. Input is valuable.
+iQIVAwUATsBpWee/yOyVhhEJAQpj+w/9GldrewLzU3C+UobcgLp9B1SqZCO39btk
+g4yhCculkyl4JrZbck3Z9bkQ2x97fouEYOYJmQAgD1x8PwoRLLnzKBy1D6Udg7hh
+VxbwqgqeckkMh0KlxLSlMhls7LTe2xz7X8dGEv/CbcQMMP/+KbslW6LX0O2cm8+z
+GPioJE25w8HpGNE2uZyRDFgdl0JTCnNxM4LdV4AO6IU41IPXTR7sBMxyiI5AFnye
+d7oqOXvxw5pITFWLOvhHYvDbXcBI4uw9fur7gPSe3QjYpwcUMn1ksm0JptBIdOSS
+iUbkCgI5MIiRL0MfhFkPAb0SNwr7ecU9ORvug3qw9nY5gGkYvJqxXEOKt11V3abF
+nZsjvhj8i8iurKpRnakWK/oZwV3+AYVnf4ZNu5wWnDlpFkDEqa/FvVnXVRiYk579
+XHZvt+7wtqNeSgZpJwsviXc0iyu15eaQns3ZkoMagnVZqhZwofQlHMChVCBYWO3B
+FnxBCJpu3lSQUaHt4uegiQygnOwObnqRqg39XeiW0OXzIvHmI+SPh+ZxYsMS3gff
+Y/AjRu+Pt2B6r6feyRmEqjc4FrXJ+CjjX7BQmhB2tqZbw8CwRHIRskoe9QYELIdY
+p/VUxOOkezBtSM9hEW9OqaAJJ1OZNwnw+5vYRmeewWULnoREb+LhvJlz+BoyJUr1
+3gPLMihUljw=
+=dYba
+-----END PGP SIGNATURE-----
+
+--=-fX6TJLeVxP/rNjId2pxj--
