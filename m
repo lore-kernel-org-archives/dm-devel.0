@@ -1,56 +1,82 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Bug#648367: [dm-devel] Bug#648367: device-mapper devices such as dm-crypt always have rotational=1; should inherit "rotational" setting from underlying devices
-Date: Tue, 15 Nov 2011 18:05:31 +0100
-Message-ID: <4EC29BDB.8090803@redhat.com>
-References: <20111110195943.12083.93273.reportbug@leaf> <1321232729.3059.42.camel@deadeye> <20111114022644.GB30421@leaf> <4EC215FA.1090303@redhat.com> <20111115164151.GA24015@leaf>
-Reply-To: Milan Broz <mbroz@redhat.com>, 648367@bugs.debian.org
+From: Johannes Hirte <hirtejs@idmt.fraunhofer.de>
+Subject: Re: info on enabling only one path with rdac and DS4700
+Date: Tue, 15 Nov 2011 21:10:22 +0100
+Message-ID: <201111152110.22339.hirtejs@idmt.fraunhofer.de>
+References: <CAG2kNCx2FSBFcKQQ5qRNNdY8c8OZ6iR+WY4XPUy21mttYn-wuw@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <bounce-debian-bugs-dist=glddb-debian-bugs-dist=m.gmane.org@lists.debian.org>
-Resent-To: debian-bugs-dist@lists.debian.org
-Resent-Message-ID: <handler.648367.B648367.132137674014933@bugs.debian.org>
-In-Reply-To: <20111115164151.GA24015@leaf>
-List-Post: <mailto:debian-bugs-dist@lists.debian.org>
-List-Help: <mailto:debian-bugs-dist-request@lists.debian.org?subject=help>
-List-Subscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=subscribe>
-List-Unsubscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=unsubscribe>
-To: Josh Triplett <josh@joshtriplett.org>
-Cc: device-mapper development <dm-devel@redhat.com>, Ben Hutchings <ben@decadent.org.uk>, 648367@bugs.debian.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAG2kNCx2FSBFcKQQ5qRNNdY8c8OZ6iR+WY4XPUy21mttYn-wuw@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/15/2011 05:41 PM, Josh Triplett wrote:
-> I didn't know about that command; very nice, thanks!  lsblk confirms
-> that on my system, the physical disk has rotational=3D0 but the dm-cryp=
-t
-> and LVM devices have rotational=3D1:
->=20
-> NAME                   ALIGNMENT MIN-IO OPT-IO PHY-SEC LOG-SEC ROTA SCH=
-ED
-> sda                            0    512      0     512     512    0 cfq
-> =E2=94=9C=E2=94=80sda1                         0    512      0     512 =
-    512    0 cfq
-> =E2=94=94=E2=94=80sda2                         0    512      0     512 =
-    512    0 cfq
->   =E2=94=94=E2=94=80sda2_crypt (dm-0)          0    512      0     512 =
-    512    1=20
->     =E2=94=9C=E2=94=80leaf-swap (dm-1)         0    512      0     512 =
-    512    1=20
->     =E2=94=94=E2=94=80leaf-root (dm-2)         0    512      0     512 =
-    512    1=20
->=20
-> Does that help?
+On Tuesday 15 November 2011 16:34:20 Gianluca Cecchi wrote:
+> Hello,
+> with RH EL 5.7 x86_64 and updates:
+> # uname -r
+> 2.6.18-274.7.1.el5
+> # rpm -q device-mapper-multipath
+> device-mapper-multipath-0.4.7-46.el5_7.1
+> 
+> I'm on a IBM HS21 blade connected to a DS4700 storage array.
+> Without doing nothing in multipath.conf but blacklisting the internal
+> disk, I get this kind of configuration:
+> # multipath -l
+> mpath1 (3600a0b80005012440000093e4a55cf33) dm-6 IBM,1814      FAStT
+> [size=3.4T][features=1 queue_if_no_path][hwhandler=1 rdac][rw]
+> \_ round-robin 0 [prio=0][active]
+>  \_ 3:0:0:1 sdb 8:16  [active][undef]
+>  \_ 4:0:0:1 sdc 8:32  [active][undef]
+> \_ round-robin 0 [prio=0][enabled]
+>  \_ 3:0:1:1 sdd 8:48  [active][undef]
+>  \_ 4:0:1:1 sde 8:64  [active][undef]
+> 
+> Is there any config option I can force to use only one path at a time
+> in the active controller, instead of two (sdb and sdc in my case) in
+> round robin as I see in iostat?
+> 
+> Also, I noticed that output with "-ll" shows "200" as priority of
+> paths for the active controller, while "-l" shows 0 for both (see
+> above)...
+> Is this a bug or expected difference due to command different switch/verbosity?
+> (I see similar behaviour also with another server connected to a
+> DS6800 storage array)
+> # multipath -ll
+> mpath1 (3600a0b80005012440000093e4a55cf33) dm-6 IBM,1814      FAStT
+> [size=3.4T][features=1 queue_if_no_path][hwhandler=1 rdac][rw]
+> \_ round-robin 0 [prio=200][active]
+>  \_ 3:0:0:1 sdb 8:16  [active][ready]
+>  \_ 4:0:0:1 sdc 8:32  [active][ready]
+> \_ round-robin 0 [prio=0][enabled]
+>  \_ 3:0:1:1 sdd 8:48  [active][ghost]
+>  \_ 4:0:1:1 sde 8:64  [active][ghost]
+> 
+> I would like to use default multipath instead of LSI provided rdac, found at
+> http://www.lsi.com/sep/Pages/rdac/ds4000.aspx
+> version 09.03.0C05.0504 ,  dated	7/18/2011 with:
+> New linux kernel versions supported with this release:
+>              - SLES 10-SP3: 2.6.16.60-0.54.5
+>              - SLES 10-SP4: 2.6.16.60-0.85.1
+>              - SLES 11.1  : 2.6.32.12-0.7
+>              - RHEL5-u5   : 2.6.18-194
+>              - RHEL5-u6   : 2.6.18-238
+>              - RHEL6      : 2.6.32-71
+> 
+> In fact I'm using  2.6.18-274.7.1.el5 that is not listed...
+> Any known cons in using device-mapper-multipath with IBM,1814?
 
-Thanks.
+The rdac driver from LSI won't even compile, IIRC. With the dm-multipath driver you have to disable AVT on the DS4700. Otherwise the rdac module won't work with the storage.
 
-As noted on that bug earlier, it is already fixed in 3.2-rc1
-http://git.kernel.org/?p=3Dlinux/kernel/git/torvalds/linux.git;a=3Dcommit=
-diff;h=3D4693c9668fdcec229825b3763876b4744f9e6d5e
-
-(I thought it is fixed long time ago!)
-
-There is no problem in DM layer with this (dmcrypt does not have own io s=
-cheduler)
-but perhaps FS can use this flag for some optimization tuning, dunno.
-
-Milan
+regards,
+  Johannes
