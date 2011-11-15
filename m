@@ -1,9 +1,10 @@
-From: Johannes Hirte <hirtejs@idmt.fraunhofer.de>
+From: Christophe Varoqui <christophe.varoqui@gmail.com>
 Subject: Re: info on enabling only one path with rdac and DS4700
-Date: Tue, 15 Nov 2011 21:10:22 +0100
-Message-ID: <201111152110.22339.hirtejs@idmt.fraunhofer.de>
+Date: Tue, 15 Nov 2011 21:38:25 +0100
+Message-ID: <1321389505.23295.4.camel@lapoo.opensvc.com>
 References: <CAG2kNCx2FSBFcKQQ5qRNNdY8c8OZ6iR+WY4XPUy21mttYn-wuw@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Reply-To: christophe.varoqui@opensvc.com,
+        device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -21,14 +22,7 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tuesday 15 November 2011 16:34:20 Gianluca Cecchi wrote:
-> Hello,
-> with RH EL 5.7 x86_64 and updates:
-> # uname -r
-> 2.6.18-274.7.1.el5
-> # rpm -q device-mapper-multipath
-> device-mapper-multipath-0.4.7-46.el5_7.1
-> 
+
 > I'm on a IBM HS21 blade connected to a DS4700 storage array.
 > Without doing nothing in multipath.conf but blacklisting the internal
 > disk, I get this kind of configuration:
@@ -46,37 +40,12 @@ On Tuesday 15 November 2011 16:34:20 Gianluca Cecchi wrote:
 > in the active controller, instead of two (sdb and sdc in my case) in
 > round robin as I see in iostat?
 > 
-> Also, I noticed that output with "-ll" shows "200" as priority of
-> paths for the active controller, while "-l" shows 0 for both (see
-> above)...
-> Is this a bug or expected difference due to command different switch/verbosity?
-> (I see similar behaviour also with another server connected to a
-> DS6800 storage array)
-> # multipath -ll
-> mpath1 (3600a0b80005012440000093e4a55cf33) dm-6 IBM,1814      FAStT
-> [size=3.4T][features=1 queue_if_no_path][hwhandler=1 rdac][rw]
-> \_ round-robin 0 [prio=200][active]
->  \_ 3:0:0:1 sdb 8:16  [active][ready]
->  \_ 4:0:0:1 sdc 8:32  [active][ready]
-> \_ round-robin 0 [prio=0][enabled]
->  \_ 3:0:1:1 sdd 8:48  [active][ghost]
->  \_ 4:0:1:1 sde 8:64  [active][ghost]
-> 
-> I would like to use default multipath instead of LSI provided rdac, found at
-> http://www.lsi.com/sep/Pages/rdac/ds4000.aspx
-> version 09.03.0C05.0504 ,  dated	7/18/2011 with:
-> New linux kernel versions supported with this release:
->              - SLES 10-SP3: 2.6.16.60-0.54.5
->              - SLES 10-SP4: 2.6.16.60-0.85.1
->              - SLES 11.1  : 2.6.32.12-0.7
->              - RHEL5-u5   : 2.6.18-194
->              - RHEL5-u6   : 2.6.18-238
->              - RHEL6      : 2.6.32-71
-> 
-> In fact I'm using  2.6.18-274.7.1.el5 that is not listed...
-> Any known cons in using device-mapper-multipath with IBM,1814?
+What ever the reason you'd want to do that, setting the path group
+policy to failover would create 4 1-path groups. I'd have 1 active paths
+and 3 spares.
 
-The rdac driver from LSI won't even compile, IIRC. With the dm-multipath driver you have to disable AVT on the DS4700. Otherwise the rdac module won't work with the storage.
-
-regards,
-  Johannes
+Regards,
+-- 
+Christophe Varoqui
+OpenSVC - Tools to scale
+http://www.opensvc.com/
