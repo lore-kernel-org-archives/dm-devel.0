@@ -1,47 +1,60 @@
-From: Steffen Klassert <steffen.klassert@secunet.com>
-Subject: Re: [PATCH v2] dm: verity target
-Date: Tue, 15 Nov 2011 10:19:22 +0100
-Message-ID: <20111115091922.GC20943@secunet.com>
-References: <20111110074408.GE10138@secunet.com>
- <1321032884-14621-1-git-send-email-msb@chromium.org>
- <20111114092252.GA11359@secunet.com>
- <20111114175423.GA13132@google.com>
+From: hegdevasant <vahegde1@linux.vnet.ibm.com>
+Subject: [PATCH] kpartx man page update
+Date: Tue, 15 Nov 2011 14:06:12 +0530
+Message-ID: <4EC2247C.5010001@linux.vnet.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20111114175423.GA13132@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mandeep Singh Baines <msb@chromium.org>
-Cc: Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, Will Drewry <wad@chromium.org>, Elly Jones <ellyjones@chromium.org>, Milan Broz <mbroz@redhat.com>, Olof Johansson <olofj@chromium.org>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@opensvc.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi.
+  This patch updates the kpartx man page.
 
-On Mon, Nov 14, 2011 at 09:54:23AM -0800, Mandeep Singh Baines wrote:
-> 
-> Hi Steffen,
-> 
-> We use a hash per CPU to avoid allocating and freeing a context per
-> computation. We could allocate the context on the stack as you suggest.
-> However, we were worried about overflowing the stack. The context can be
-> quite large (close to 200 bytes for sha512).
+Signed-off-by: Vasant Hegde <hegdevasant@in.ibm.com>
+---
+  kpartx/kpartx.8 |    9 +++++++++
+  1 files changed, 9 insertions(+), 0 deletions(-)
 
-Indeed, but preallocating on percpu basis can be also quite large on
-bigsmp machines.
-
-> 
-> We use a hash per CPU because there can be at most one hash in progress
-> on each CPU at any one time.
-> 
-
-Ok, this is the case because you use a workqueue and this processes
-at most one work item on each cpu the time.
-
-On another note, you might want to use ahash here. Most crypto hardware
-accelerators need to use asynchronous ciphers. These can't be used if
-you use the synchronous interface.
-
-And at the latest when you switch to ahash, you need more than one
-preallocated ahash request on each cpu, as there can be many ahash
-requests submitted on each cpu :)
+diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
+index 795a2e0..8a37d4f 100644
+--- a/kpartx/kpartx.8
++++ b/kpartx/kpartx.8
+@@ -17,9 +17,15 @@ creation and deletion.
+  .B \-a
+  Add partition mappings
+  .TP
++.B \-r
++Readonly partition mappings
++.TP
+  .B \-d
+  Delete partition mappings
+  .TP
++.B \-u
++Update partition mappings
++.TP
+  .B \-l
+  List partition mappings that would be added -a
+  .TP
+@@ -34,6 +40,9 @@ force GUID partition table (GPT)
+  .TP
+  .B \-v
+  Operate verbosely
++.TP
++.B \-s
++Sync mode. Don't return until the partitions are created
+  .SH EXAMPLE
+  To mount all the partitions in a raw disk image:
+  .IP
+-- 
+1.7.3.4
