@@ -1,97 +1,119 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] dm: fix discard support in dm_io
-Date: Fri, 25 Nov 2011 20:28:09 +0100
-Message-ID: <1322249289-1263-1-git-send-email-mbroz@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] deadlock with suspend and quotas
+Date: Fri, 25 Nov 2011 15:25:16 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: lczerner@redhat.com, snitzer@redhat.com, Milan Broz <mbroz@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.cz>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds support for discard request to dm_io interface.
+This script causes a kernel deadlock:
+#!/bin/sh
+set -e
+DEVICE=/dev/vg1/linear
+lvchange -ay $DEVICE
+mkfs.ext3 $DEVICE
+mount -t ext3 -o usrquota,grpquota $DEVICE /mnt/test
+quotacheck -gu /mnt/test
+umount /mnt/test
+mount -t ext3 -o usrquota,grpquota $DEVICE /mnt/test
+quotaon /mnt/test
+dmsetup suspend $DEVICE
+setquota -u root 1 2 3 4 /mnt/test &
+sleep 1
+dmsetup resume $DEVICE
 
-Currently dm_mirror can send REQ_DISCARD bios if running over
-discard enabled device and without support in dm_io the system
-crashes badly.
+setquota acquired semaphore s_umount for read and then tried to perform
+a transaction (and waits because the device is suspended).
+dmsetup resume tries to acquire s_umount for write before resuming the device
+(and waits for setquota).
 
-BUG: unable to handle kernel paging request at 00800000
-IP:  __bio_add_page.part.17+0xf5/0x1e0
-...
- bio_add_page+0x56/0x70
- dispatch_io+0x1cf/0x240 [dm_mod]
- ? km_get_page+0x50/0x50 [dm_mod]
- ? vm_next_page+0x20/0x20 [dm_mod]
- ? mirror_flush+0x130/0x130 [dm_mirror]
- dm_io+0xdc/0x2b0 [dm_mod]
-...
+Here are stacktraces:
+setquota:
+[   67.524456]  [<ffffffff810aa84e>] ? get_page_from_freelist+0x31e/0x790
+[   67.524529]  [<ffffffffa0250265>] ? start_this_handle.isra.9+0x265/0x3b0 [jbd]
+[   67.524604]  [<ffffffff8105bc00>] ? add_wait_queue+0x60/0x60
+[   67.524675]  [<ffffffffa02505a1>] ? journal_start+0xc1/0x100 [jbd]
+[   67.524742]  [<ffffffff810e62d6>] ? kmem_cache_alloc+0xf6/0x1b0
+[   67.524808]  [<ffffffffa028018d>] ? ext3_acquire_dquot+0x3d/0x80 [ext3]
+[   67.524872]  [<ffffffff81143749>] ? dqget+0x359/0x3b0
+[   67.524916]  [<ffffffff81143ad4>] ? dquot_get_dqblk+0x14/0x1b0
+[   67.524985]  [<ffffffff81147c34>] ? quota_getquota+0x24/0xd0
+[   67.525048]  [<ffffffff810ff3db>] ? do_path_lookup+0x2b/0x90
+[   67.525082]  [<ffffffff810ff8cd>] ? kern_path+0x1d/0x40
+[   67.525134]  [<ffffffff81148311>] ? do_quotactl+0x421/0x540
+[   67.525191]  [<ffffffff811073f0>] ? dput+0x20/0x230
+[   67.525234]  [<ffffffff81148507>] ? sys_quotactl+0xd7/0x1a0
+[   67.525304]  [<ffffffff8130a03b>] ? system_call_fastpath+0x16/0x1b
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
+dmsetup resume:
+[   67.525887]  [<ffffffffa0238280>] ? dev_wait+0xc0/0xc0 [dm_mod]
+[   67.525948]  [<ffffffff81309225>] ? rwsem_down_failed_common+0xc5/0x160
+[   67.526013]  [<ffffffff81198a43>] ? call_rwsem_down_write_failed+0x13/0x20
+[   67.526058]  [<ffffffff81308adc>] ? down_write+0x1c/0x1d
+[   67.526103]  [<ffffffff810f3a91>] ? thaw_super+0x21/0xc0
+[   67.526166]  [<ffffffff81124d4d>] ? thaw_bdev+0x6d/0x90
+[   67.526223]  [<ffffffff8105583e>] ? queue_work+0x4e/0x60
+[   67.526269]  [<ffffffffa0230e63>] ? unlock_fs+0x23/0x40 [dm_mod]
+[   67.526341]  [<ffffffffa02336d0>] ? dm_resume+0xb0/0xd0 [dm_mod]
+[   67.526388]  [<ffffffffa0238420>] ? dev_suspend+0x1a0/0x230 [dm_mod]
+[   67.526441]  [<ffffffffa0238a59>] ? ctl_ioctl+0x159/0x2a0 [dm_mod]
+[   67.526510]  [<ffffffff8116c4ee>] ? ipc_addid+0x4e/0xd0
+[   67.526555]  [<ffffffffa0238bae>] ? dm_ctl_ioctl+0xe/0x20 [dm_mod]
+[   67.526620]  [<ffffffff811025de>] ? do_vfs_ioctl+0x8e/0x4e0
+[   67.526670]  [<ffffffff811073f0>] ? dput+0x20/0x230
+[   67.526737]  [<ffffffff810f3112>] ? fput+0x162/0x220
+[   67.526783]  [<ffffffff81102a79>] ? sys_ioctl+0x49/0x90
+[   67.526838]  [<ffffffff8130a03b>] ? system_call_fastpath+0x16/0x1b
+
+The following patch fixes the deadlock. When the quota subsystem takes s_umount,
+it checks if the filesystem is frozen. If it is, we drop s_umount, wait for
+the filesystem to resume and retry.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+CC: stable@kernel.org
+
 ---
- drivers/md/dm-io.c |   26 +++++++++++++++++++-------
- 1 files changed, 19 insertions(+), 7 deletions(-)
+ fs/quota/quota.c   |   12 ++++++++++++
+ include/linux/fs.h |    1 +
+ 2 files changed, 13 insertions(+)
 
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index ad2eba4..81bfce7 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -296,6 +296,8 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
- 	unsigned offset;
- 	unsigned num_bvecs;
- 	sector_t remaining = where->count;
-+	struct request_queue *q = bdev_get_queue(where->bdev);
-+	sector_t discard_sectors;
- 
- 	/*
- 	 * where->count may be zero if rw holds a flush and we need to
-@@ -305,9 +307,13 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
- 		/*
- 		 * Allocate a suitably sized-bio.
- 		 */
--		num_bvecs = dm_sector_div_up(remaining,
--					     (PAGE_SIZE >> SECTOR_SHIFT));
--		num_bvecs = min_t(int, bio_get_nr_vecs(where->bdev), num_bvecs);
-+		if (rw & REQ_DISCARD)
-+			num_bvecs = 1;
-+		else {
-+			num_bvecs = dm_sector_div_up(remaining,
-+						     (PAGE_SIZE >> SECTOR_SHIFT));
-+			num_bvecs = min_t(int, bio_get_nr_vecs(where->bdev), num_bvecs);
-+		}
- 		bio = bio_alloc_bioset(GFP_NOIO, num_bvecs, io->client->bios);
- 		bio->bi_sector = where->sector + (where->count - remaining);
- 		bio->bi_bdev = where->bdev;
-@@ -315,10 +321,16 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
- 		bio->bi_destructor = dm_bio_destructor;
- 		store_io_and_region_in_bio(bio, io, region);
- 
--		/*
--		 * Try and add as many pages as possible.
--		 */
--		while (remaining) {
-+		if (rw & REQ_DISCARD) {
-+			discard_sectors = min_t(sector_t,
-+						q->limits.max_discard_sectors,
-+						remaining);
-+			bio->bi_size = discard_sectors << SECTOR_SHIFT;
-+			remaining -= discard_sectors;
-+		} else while (remaining) {
-+			/*
-+			 * Try and add as many pages as possible.
-+			 */
- 			dp->get_page(dp, &page, &len, &offset);
- 			len = min(len, to_bytes(remaining));
- 			if (!bio_add_page(bio, page, len, offset))
--- 
-1.7.7.3
+Index: linux-3.1-fast/fs/quota/quota.c
+===================================================================
+--- linux-3.1-fast.orig/fs/quota/quota.c	2011-11-25 20:19:14.000000000 +0100
++++ linux-3.1-fast/fs/quota/quota.c	2011-11-25 21:12:32.000000000 +0100
+@@ -310,7 +310,19 @@ static struct super_block *quotactl_bloc
+ 	putname(tmp);
+ 	if (IS_ERR(bdev))
+ 		return ERR_CAST(bdev);
++retry_super:
+ 	sb = get_super(bdev);
++	if (sb && sb->s_frozen != SB_UNFROZEN) {
++		/*
++		 * When resuming a frozen device, s_umount is taken for write.
++		 * To avoid deadlock, we drop s_umount if the filesystem
++		 * is frozen and wait for it to thaw.
++		 */
++		up_read(&sb->s_umount);
++		vfs_check_frozen(sb, SB_FREEZE_WRITE);
++		put_super(sb);
++		goto retry_super;
++	}
+ 	bdput(bdev);
+ 	if (!sb)
+ 		return ERR_PTR(-ENODEV);
+Index: linux-3.1-fast/include/linux/fs.h
+===================================================================
+--- linux-3.1-fast.orig/include/linux/fs.h	2011-11-25 21:13:56.000000000 +0100
++++ linux-3.1-fast/include/linux/fs.h	2011-11-25 21:14:03.000000000 +0100
+@@ -2496,6 +2496,7 @@ extern struct file_system_type *get_fs_t
+ extern struct super_block *get_super(struct block_device *);
+ extern struct super_block *get_active_super(struct block_device *bdev);
+ extern struct super_block *user_get_super(dev_t);
++extern void put_super(struct super_block *sb);
+ extern void drop_super(struct super_block *sb);
+ extern void iterate_supers(void (*)(struct super_block *, void *), void *);
+ extern void iterate_supers_type(struct file_system_type *,
