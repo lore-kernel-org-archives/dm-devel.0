@@ -1,75 +1,67 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [dm-devel] [PATCH 17/62] md: remove the second argument of k[un]map_atomic()
-Date: Sun, 27 Nov 2011 11:27:27 +0100
-Message-ID: <4ED2108F.9000203@redhat.com>
-References: <1322371662-26166-1-git-send-email-amwang@redhat.com> <1322371662-26166-18-git-send-email-amwang@redhat.com> <20111127170013.20d180a9@notabene.brown>
+From: Leo Samulis <anagon@gmail.com>
+Subject: DM-Steg
+Date: Sun, 27 Nov 2011 11:49:09 +0000
+Message-ID: <CAO=0D2A1sn-i1XWi+doyHQnfR4MT=pjAPe3AW-QDKP9mU4H7Eg@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20111127170013.20d180a9@notabene.brown>
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: NeilBrown <neilb@suse.de>, Cong Wang <amwang@redhat.com>, linux-raid@vger.kernel.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============2187432927795861040=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/27/2011 07:00 AM, NeilBrown wrote:
-> On Sun, 27 Nov 2011 13:26:57 +0800 Cong Wang <amwang@redhat.com> wrote:
-> 
->>
->> Signed-off-by: Cong Wang <amwang@redhat.com>
-> 
-> This and patch 57/62
-> 
->  Acked-by: NeilBrown <neilb@suse.de>
-> 
-> thanks.
-> 
-> Not sure why there are two separate patches to md/bitmap.c though...
-> 
-> ... and I cannot offically 'ack' the dm-crypt.c parts of this as I'm not the
->     maintainer.  'md' and 'dm' are separate systems in the same directory -
->     confusing, isn't it :-(
+--===============2187432927795861040==
+Content-Type: multipart/alternative; boundary=20cf307d013a608e5804b2b5f9c5
 
-These little walled gardens ... :)
+--20cf307d013a608e5804b2b5f9c5
+Content-Type: text/plain; charset=ISO-8859-1
 
-I hope I can ack that dm-crypt code, I added that chunk
-as part of loop-aes compatibility code.
-(Anyway Alasdair as dm maintainer should ack it too.)
+Hello!
 
-Acked-by: Milan Broz <mbroz@redhat.com>
+I've just released a new device driver (and userland utils) for the Device
+Mapper framework. It's a Rubberhose/Truecrypt-like module for deniably
+encrypting block devices. The web page is at http://dmsteg.sf.net and
+there's a .pdf there explaining all the details.
+
+The code has only ever been tested on my PC, but it works very nicely for
+me and has stopped eating my data, so I figure it's ready for public
+consumption!
+
+Hope it works for you! :)
+
+- Leo
+
+--20cf307d013a608e5804b2b5f9c5
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Hello!<br><br>I&#39;ve just released a new device driver (and userland=20
+utils) for the Device Mapper framework. It&#39;s a Rubberhose/Truecrypt-lik=
+e
+ module for deniably encrypting block devices. The web page is at <a href=
+=3D"http://dmsteg.sf.net/" target=3D"_blank">http://dmsteg.sf.net</a> and t=
+here&#39;s a .pdf there explaining all the details.<br><br>The code has onl=
+y ever been tested on my PC, but it works very nicely for me and has stoppe=
+d eating my data, so I figure it&#39;s ready for public consumption!<br>
+
+<br>Hope it works for you! :)<br><br>- Leo<br>
+
+--20cf307d013a608e5804b2b5f9c5--
 
 
->> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
->> index 8c2a000..db6b516 100644
->> --- a/drivers/md/dm-crypt.c
->> +++ b/drivers/md/dm-crypt.c
->> @@ -590,9 +590,9 @@ static int crypt_iv_lmk_gen(struct crypt_config *cc, u8 *iv,
->>  	int r = 0;
->>  
->>  	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
->> -		src = kmap_atomic(sg_page(&dmreq->sg_in), KM_USER0);
->> +		src = kmap_atomic(sg_page(&dmreq->sg_in));
->>  		r = crypt_iv_lmk_one(cc, iv, dmreq, src + dmreq->sg_in.offset);
->> -		kunmap_atomic(src, KM_USER0);
->> +		kunmap_atomic(src);
->>  	} else
->>  		memset(iv, 0, cc->iv_size);
->>  
->> @@ -608,14 +608,14 @@ static int crypt_iv_lmk_post(struct crypt_config *cc, u8 *iv,
->>  	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE)
->>  		return 0;
->>  
->> -	dst = kmap_atomic(sg_page(&dmreq->sg_out), KM_USER0);
->> +	dst = kmap_atomic(sg_page(&dmreq->sg_out));
->>  	r = crypt_iv_lmk_one(cc, iv, dmreq, dst + dmreq->sg_out.offset);
->>  
->>  	/* Tweak the first block of plaintext sector */
->>  	if (!r)
->>  		crypto_xor(dst + dmreq->sg_out.offset, iv, cc->iv_size);
->>  
->> -	kunmap_atomic(dst, KM_USER0);
->> +	kunmap_atomic(dst);
->>  	return r;
->>  }
->>  
+--===============2187432927795861040==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2187432927795861040==--
