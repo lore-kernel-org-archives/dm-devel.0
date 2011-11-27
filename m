@@ -1,119 +1,204 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] deadlock with suspend and quotas
-Date: Fri, 25 Nov 2011 15:25:16 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+From: Cong Wang <amwang@redhat.com>
+Subject: [PATCH 17/62] md: remove the second argument of k[un]map_atomic()
+Date: Sun, 27 Nov 2011 13:26:57 +0800
+Message-ID: <1322371662-26166-18-git-send-email-amwang@redhat.com>
+References: <1322371662-26166-1-git-send-email-amwang@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1322371662-26166-1-git-send-email-amwang@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.cz>
-Cc: dm-devel@redhat.com
+To: linux-kernel@vger.kernel.org
+Cc: akpm@linux-foundation.org, Cong Wang <amwang@redhat.com>, Neil Brown <neilb@suse.de>, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This script causes a kernel deadlock:
-#!/bin/sh
-set -e
-DEVICE=/dev/vg1/linear
-lvchange -ay $DEVICE
-mkfs.ext3 $DEVICE
-mount -t ext3 -o usrquota,grpquota $DEVICE /mnt/test
-quotacheck -gu /mnt/test
-umount /mnt/test
-mount -t ext3 -o usrquota,grpquota $DEVICE /mnt/test
-quotaon /mnt/test
-dmsetup suspend $DEVICE
-setquota -u root 1 2 3 4 /mnt/test &
-sleep 1
-dmsetup resume $DEVICE
 
-setquota acquired semaphore s_umount for read and then tried to perform
-a transaction (and waits because the device is suspended).
-dmsetup resume tries to acquire s_umount for write before resuming the device
-(and waits for setquota).
-
-Here are stacktraces:
-setquota:
-[   67.524456]  [<ffffffff810aa84e>] ? get_page_from_freelist+0x31e/0x790
-[   67.524529]  [<ffffffffa0250265>] ? start_this_handle.isra.9+0x265/0x3b0 [jbd]
-[   67.524604]  [<ffffffff8105bc00>] ? add_wait_queue+0x60/0x60
-[   67.524675]  [<ffffffffa02505a1>] ? journal_start+0xc1/0x100 [jbd]
-[   67.524742]  [<ffffffff810e62d6>] ? kmem_cache_alloc+0xf6/0x1b0
-[   67.524808]  [<ffffffffa028018d>] ? ext3_acquire_dquot+0x3d/0x80 [ext3]
-[   67.524872]  [<ffffffff81143749>] ? dqget+0x359/0x3b0
-[   67.524916]  [<ffffffff81143ad4>] ? dquot_get_dqblk+0x14/0x1b0
-[   67.524985]  [<ffffffff81147c34>] ? quota_getquota+0x24/0xd0
-[   67.525048]  [<ffffffff810ff3db>] ? do_path_lookup+0x2b/0x90
-[   67.525082]  [<ffffffff810ff8cd>] ? kern_path+0x1d/0x40
-[   67.525134]  [<ffffffff81148311>] ? do_quotactl+0x421/0x540
-[   67.525191]  [<ffffffff811073f0>] ? dput+0x20/0x230
-[   67.525234]  [<ffffffff81148507>] ? sys_quotactl+0xd7/0x1a0
-[   67.525304]  [<ffffffff8130a03b>] ? system_call_fastpath+0x16/0x1b
-
-dmsetup resume:
-[   67.525887]  [<ffffffffa0238280>] ? dev_wait+0xc0/0xc0 [dm_mod]
-[   67.525948]  [<ffffffff81309225>] ? rwsem_down_failed_common+0xc5/0x160
-[   67.526013]  [<ffffffff81198a43>] ? call_rwsem_down_write_failed+0x13/0x20
-[   67.526058]  [<ffffffff81308adc>] ? down_write+0x1c/0x1d
-[   67.526103]  [<ffffffff810f3a91>] ? thaw_super+0x21/0xc0
-[   67.526166]  [<ffffffff81124d4d>] ? thaw_bdev+0x6d/0x90
-[   67.526223]  [<ffffffff8105583e>] ? queue_work+0x4e/0x60
-[   67.526269]  [<ffffffffa0230e63>] ? unlock_fs+0x23/0x40 [dm_mod]
-[   67.526341]  [<ffffffffa02336d0>] ? dm_resume+0xb0/0xd0 [dm_mod]
-[   67.526388]  [<ffffffffa0238420>] ? dev_suspend+0x1a0/0x230 [dm_mod]
-[   67.526441]  [<ffffffffa0238a59>] ? ctl_ioctl+0x159/0x2a0 [dm_mod]
-[   67.526510]  [<ffffffff8116c4ee>] ? ipc_addid+0x4e/0xd0
-[   67.526555]  [<ffffffffa0238bae>] ? dm_ctl_ioctl+0xe/0x20 [dm_mod]
-[   67.526620]  [<ffffffff811025de>] ? do_vfs_ioctl+0x8e/0x4e0
-[   67.526670]  [<ffffffff811073f0>] ? dput+0x20/0x230
-[   67.526737]  [<ffffffff810f3112>] ? fput+0x162/0x220
-[   67.526783]  [<ffffffff81102a79>] ? sys_ioctl+0x49/0x90
-[   67.526838]  [<ffffffff8130a03b>] ? system_call_fastpath+0x16/0x1b
-
-The following patch fixes the deadlock. When the quota subsystem takes s_umount,
-it checks if the filesystem is frozen. If it is, we drop s_umount, wait for
-the filesystem to resume and retry.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-CC: stable@kernel.org
-
+Signed-off-by: Cong Wang <amwang@redhat.com>
 ---
- fs/quota/quota.c   |   12 ++++++++++++
- include/linux/fs.h |    1 +
- 2 files changed, 13 insertions(+)
+ drivers/md/bitmap.c   |   36 ++++++++++++++++++------------------
+ drivers/md/dm-crypt.c |    8 ++++----
+ 2 files changed, 22 insertions(+), 22 deletions(-)
 
-Index: linux-3.1-fast/fs/quota/quota.c
-===================================================================
---- linux-3.1-fast.orig/fs/quota/quota.c	2011-11-25 20:19:14.000000000 +0100
-+++ linux-3.1-fast/fs/quota/quota.c	2011-11-25 21:12:32.000000000 +0100
-@@ -310,7 +310,19 @@ static struct super_block *quotactl_bloc
- 	putname(tmp);
- 	if (IS_ERR(bdev))
- 		return ERR_CAST(bdev);
-+retry_super:
- 	sb = get_super(bdev);
-+	if (sb && sb->s_frozen != SB_UNFROZEN) {
-+		/*
-+		 * When resuming a frozen device, s_umount is taken for write.
-+		 * To avoid deadlock, we drop s_umount if the filesystem
-+		 * is frozen and wait for it to thaw.
-+		 */
-+		up_read(&sb->s_umount);
-+		vfs_check_frozen(sb, SB_FREEZE_WRITE);
-+		put_super(sb);
-+		goto retry_super;
-+	}
- 	bdput(bdev);
- 	if (!sb)
- 		return ERR_PTR(-ENODEV);
-Index: linux-3.1-fast/include/linux/fs.h
-===================================================================
---- linux-3.1-fast.orig/include/linux/fs.h	2011-11-25 21:13:56.000000000 +0100
-+++ linux-3.1-fast/include/linux/fs.h	2011-11-25 21:14:03.000000000 +0100
-@@ -2496,6 +2496,7 @@ extern struct file_system_type *get_fs_t
- extern struct super_block *get_super(struct block_device *);
- extern struct super_block *get_active_super(struct block_device *bdev);
- extern struct super_block *user_get_super(dev_t);
-+extern void put_super(struct super_block *sb);
- extern void drop_super(struct super_block *sb);
- extern void iterate_supers(void (*)(struct super_block *, void *), void *);
- extern void iterate_supers_type(struct file_system_type *,
+diff --git a/drivers/md/bitmap.c b/drivers/md/bitmap.c
+index 7878712..8659515 100644
+--- a/drivers/md/bitmap.c
++++ b/drivers/md/bitmap.c
+@@ -457,7 +457,7 @@ void bitmap_update_sb(struct bitmap *bitmap)
+ 		return;
+ 	}
+ 	spin_unlock_irqrestore(&bitmap->lock, flags);
+-	sb = kmap_atomic(bitmap->sb_page, KM_USER0);
++	sb = kmap_atomic(bitmap->sb_page);
+ 	sb->events = cpu_to_le64(bitmap->mddev->events);
+ 	if (bitmap->mddev->events < bitmap->events_cleared)
+ 		/* rocking back to read-only */
+@@ -467,7 +467,7 @@ void bitmap_update_sb(struct bitmap *bitmap)
+ 	/* Just in case these have been changed via sysfs: */
+ 	sb->daemon_sleep = cpu_to_le32(bitmap->mddev->bitmap_info.daemon_sleep/HZ);
+ 	sb->write_behind = cpu_to_le32(bitmap->mddev->bitmap_info.max_write_behind);
+-	kunmap_atomic(sb, KM_USER0);
++	kunmap_atomic(sb);
+ 	write_page(bitmap, bitmap->sb_page, 1);
+ }
+ 
+@@ -478,7 +478,7 @@ void bitmap_print_sb(struct bitmap *bitmap)
+ 
+ 	if (!bitmap || !bitmap->sb_page)
+ 		return;
+-	sb = kmap_atomic(bitmap->sb_page, KM_USER0);
++	sb = kmap_atomic(bitmap->sb_page);
+ 	printk(KERN_DEBUG "%s: bitmap file superblock:\n", bmname(bitmap));
+ 	printk(KERN_DEBUG "         magic: %08x\n", le32_to_cpu(sb->magic));
+ 	printk(KERN_DEBUG "       version: %d\n", le32_to_cpu(sb->version));
+@@ -497,7 +497,7 @@ void bitmap_print_sb(struct bitmap *bitmap)
+ 	printk(KERN_DEBUG "     sync size: %llu KB\n",
+ 			(unsigned long long)le64_to_cpu(sb->sync_size)/2);
+ 	printk(KERN_DEBUG "max write behind: %d\n", le32_to_cpu(sb->write_behind));
+-	kunmap_atomic(sb, KM_USER0);
++	kunmap_atomic(sb);
+ }
+ 
+ /*
+@@ -603,7 +603,7 @@ static int bitmap_read_sb(struct bitmap *bitmap)
+ 		return err;
+ 	}
+ 
+-	sb = kmap_atomic(bitmap->sb_page, KM_USER0);
++	sb = kmap_atomic(bitmap->sb_page);
+ 
+ 	chunksize = le32_to_cpu(sb->chunksize);
+ 	daemon_sleep = le32_to_cpu(sb->daemon_sleep) * HZ;
+@@ -664,7 +664,7 @@ success:
+ 		bitmap->events_cleared = bitmap->mddev->events;
+ 	err = 0;
+ out:
+-	kunmap_atomic(sb, KM_USER0);
++	kunmap_atomic(sb);
+ 	if (err)
+ 		bitmap_print_sb(bitmap);
+ 	return err;
+@@ -689,7 +689,7 @@ static int bitmap_mask_state(struct bitmap *bitmap, enum bitmap_state bits,
+ 		return 0;
+ 	}
+ 	spin_unlock_irqrestore(&bitmap->lock, flags);
+-	sb = kmap_atomic(bitmap->sb_page, KM_USER0);
++	sb = kmap_atomic(bitmap->sb_page);
+ 	old = le32_to_cpu(sb->state) & bits;
+ 	switch (op) {
+ 	case MASK_SET:
+@@ -703,7 +703,7 @@ static int bitmap_mask_state(struct bitmap *bitmap, enum bitmap_state bits,
+ 	default:
+ 		BUG();
+ 	}
+-	kunmap_atomic(sb, KM_USER0);
++	kunmap_atomic(sb);
+ 	return old;
+ }
+ 
+@@ -881,12 +881,12 @@ static void bitmap_file_set_bit(struct bitmap *bitmap, sector_t block)
+ 	bit = file_page_offset(bitmap, chunk);
+ 
+ 	/* set the bit */
+-	kaddr = kmap_atomic(page, KM_USER0);
++	kaddr = kmap_atomic(page);
+ 	if (bitmap->flags & BITMAP_HOSTENDIAN)
+ 		set_bit(bit, kaddr);
+ 	else
+ 		__set_bit_le(bit, kaddr);
+-	kunmap_atomic(kaddr, KM_USER0);
++	kunmap_atomic(kaddr);
+ 	pr_debug("set file bit %lu page %lu\n", bit, page->index);
+ 	/* record page number so it gets flushed to disk when unplug occurs */
+ 	set_page_attr(bitmap, page, BITMAP_PAGE_DIRTY);
+@@ -1050,10 +1050,10 @@ static int bitmap_init_from_disk(struct bitmap *bitmap, sector_t start)
+ 				 * if bitmap is out of date, dirty the
+ 				 * whole page and write it out
+ 				 */
+-				paddr = kmap_atomic(page, KM_USER0);
++				paddr = kmap_atomic(page);
+ 				memset(paddr + offset, 0xff,
+ 				       PAGE_SIZE - offset);
+-				kunmap_atomic(paddr, KM_USER0);
++				kunmap_atomic(paddr);
+ 				write_page(bitmap, page, 1);
+ 
+ 				ret = -EIO;
+@@ -1061,12 +1061,12 @@ static int bitmap_init_from_disk(struct bitmap *bitmap, sector_t start)
+ 					goto err;
+ 			}
+ 		}
+-		paddr = kmap_atomic(page, KM_USER0);
++		paddr = kmap_atomic(page);
+ 		if (bitmap->flags & BITMAP_HOSTENDIAN)
+ 			b = test_bit(bit, paddr);
+ 		else
+ 			b = test_bit_le(bit, paddr);
+-		kunmap_atomic(paddr, KM_USER0);
++		kunmap_atomic(paddr);
+ 		if (b) {
+ 			/* if the disk bit is set, set the memory bit */
+ 			int needed = ((sector_t)(i+1) << (CHUNK_BLOCK_SHIFT(bitmap))
+@@ -1207,10 +1207,10 @@ void bitmap_daemon_work(struct mddev *mddev)
+ 			    bitmap->mddev->bitmap_info.external == 0) {
+ 				bitmap_super_t *sb;
+ 				bitmap->need_sync = 0;
+-				sb = kmap_atomic(bitmap->sb_page, KM_USER0);
++				sb = kmap_atomic(bitmap->sb_page);
+ 				sb->events_cleared =
+ 					cpu_to_le64(bitmap->events_cleared);
+-				kunmap_atomic(sb, KM_USER0);
++				kunmap_atomic(sb);
+ 				write_page(bitmap, bitmap->sb_page, 1);
+ 			}
+ 			spin_lock_irqsave(&bitmap->lock, flags);
+@@ -1233,7 +1233,7 @@ void bitmap_daemon_work(struct mddev *mddev)
+ 						  -1);
+ 
+ 				/* clear the bit */
+-				paddr = kmap_atomic(page, KM_USER0);
++				paddr = kmap_atomic(page);
+ 				if (bitmap->flags & BITMAP_HOSTENDIAN)
+ 					clear_bit(file_page_offset(bitmap, j),
+ 						  paddr);
+@@ -1242,7 +1242,7 @@ void bitmap_daemon_work(struct mddev *mddev)
+ 						file_page_offset(bitmap,
+ 								 j),
+ 						paddr);
+-				kunmap_atomic(paddr, KM_USER0);
++				kunmap_atomic(paddr);
+ 			} else if (*bmc <= 2) {
+ 				*bmc = 1; /* maybe clear the bit next time */
+ 				set_page_attr(bitmap, page, BITMAP_PAGE_PENDING);
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 8c2a000..db6b516 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -590,9 +590,9 @@ static int crypt_iv_lmk_gen(struct crypt_config *cc, u8 *iv,
+ 	int r = 0;
+ 
+ 	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
+-		src = kmap_atomic(sg_page(&dmreq->sg_in), KM_USER0);
++		src = kmap_atomic(sg_page(&dmreq->sg_in));
+ 		r = crypt_iv_lmk_one(cc, iv, dmreq, src + dmreq->sg_in.offset);
+-		kunmap_atomic(src, KM_USER0);
++		kunmap_atomic(src);
+ 	} else
+ 		memset(iv, 0, cc->iv_size);
+ 
+@@ -608,14 +608,14 @@ static int crypt_iv_lmk_post(struct crypt_config *cc, u8 *iv,
+ 	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE)
+ 		return 0;
+ 
+-	dst = kmap_atomic(sg_page(&dmreq->sg_out), KM_USER0);
++	dst = kmap_atomic(sg_page(&dmreq->sg_out));
+ 	r = crypt_iv_lmk_one(cc, iv, dmreq, dst + dmreq->sg_out.offset);
+ 
+ 	/* Tweak the first block of plaintext sector */
+ 	if (!r)
+ 		crypto_xor(dst + dmreq->sg_out.offset, iv, cc->iv_size);
+ 
+-	kunmap_atomic(dst, KM_USER0);
++	kunmap_atomic(dst);
+ 	return r;
+ }
+ 
+-- 
+1.7.4.4
