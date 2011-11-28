@@ -1,362 +1,136 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: Re: info on enabling only one path with rdac and DS4700
-Date: Mon, 28 Nov 2011 09:46:20 -0500
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD9109D07FE@RTPMVEXC1-PRD.hq.netapp.com>
-References: <CAG2kNCx2FSBFcKQQ5qRNNdY8c8OZ6iR+WY4XPUy21mttYn-wuw@mail.gmail.com><1321389505.23295.4.camel@lapoo.opensvc.com><CAG2kNCyHk+vosO1+TtNwLUcH5AJP-cPn8m5nCDhVkenXFFxfjw@mail.gmail.com><201111161424.50911.hirtejs@idmt.fraunhofer.de>
-	<CAG2kNCw9ZdWrk1Ai6xQ=gDeMeV22verUQWw8+18yWNMjscuPMg@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH] deadlock with suspend and quotas
+Date: Mon, 28 Nov 2011 16:04:00 +0100
+Message-ID: <20111128150400.GE6366@quack.suse.cz>
+References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <CAG2kNCw9ZdWrk1Ai6xQ=gDeMeV22verUQWw8+18yWNMjscuPMg@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, Valerie Aurora <val@vaaconsulting.com>
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: Gianluca Cecchi [mailto:gianluca.cecchi@gmail.com]
-> Sent: Wednesday, November 23, 2011 11:22 AM
-> To: device-mapper development
-> Subject: Re: [dm-devel] info on enabling only one path with rdac and
-> DS4700
-> 
-> On Wed, Nov 16, 2011 at 2:24 PM, Johannes Hirte  wrote:
-> [snip]
-> > Yes, this is because the rdac module detected the LUN in AVT mode and
-> refused
-> > to work with it. This will happen every time you access a ghost path
-> without
-> > rdac.
-> 
-> >
-> >> - On the presented LUN I configured a PV, VG, LV and ext4 fs (not
-> system fs)
-> >> At reboot at host side I see messages related to duplicated PV IDs
-> for
-> >> the paths (sdb, sdc, sdd, sde): they comes before vg activation and
-> >> before multipathd start...
-> >> Is this normal, because at the first vgscan run during boot,
-> multipath
-> >> configuration has not been instantiated yet..?
-> >> I have to check, but I don't remember similar messages with eh el
-> 5.7
-> >> in other SAN configurations, where the VG is not a system VG....
-> >
-> > You should avoid to access the sdX directly. If you need to run lvm
-> before
-> > multipath is up, you can blacklist the sdX in the lvm.conf.
-> 
-> 
-> So I configured:
-> - LUN on DS4700 as LNXCLVMWARE that I found should disable AVT
-> - multipath as standard without any particular setting (I only
-> blacklisted the internal disk)
-> 
-> At the start time of the system I get (both in console and then I
-> found it in /var/log/messages too):
-> 
-> Nov 23 17:32:56 testserver kernel:  sdc:end_request: I/O error, dev
-> sdb, sector 0
-> Nov 23 17:32:56 testserver kernel: Buffer I/O error on device sdb,
-> logical block 0
-> Nov 23 17:32:56 testserver kernel: end_request: I/O error, dev sdc,
-> sector 0
-> Nov 23 17:32:56 testserver kernel: Buffer I/O error on device sdc,
-> logical block 0
-> Nov 23 17:32:56 testserver kernel: end_request: I/O error, dev sdb,
-> sector 0
-> Nov 23 17:32:56 testserver kernel: Buffer I/O error on device sdb,
-> logical block 0
-> Nov 23 17:32:56 testserver kernel: end_request: I/O error, dev sdc,
-> sector 0
-> Nov 23 17:32:56 testserver kernel: Buffer I/O error on device sdc,
-> logical block 0
-> Nov 23 17:32:56 testserver kernel: end_request: I/O error, dev sdb,
-> sector 0
-> Nov 23 17:32:56 testserver kernel: Buffer I/O error on device sdb,
-> logical block 0
-> Nov 23 17:32:56 testserver kernel: end_request: I/O error, dev sdc,
-> sector 0
-> Nov 23 17:32:56 testserver kernel: Buffer I/O error on device sdc,
-> logical block 0
-> Nov 23 17:32:56 testserver kernel: end_request: I/O error, dev sdb,
-> sector 0
-> Nov 23 17:32:56 testserver kernel: Buffer I/O error on device sdb,
-> logical block 0
-> Nov 23 17:32:56 testserver kernel: end_request: I/O error, dev sdc,
-> sector 0
-> Nov 23 17:32:56 testserver kernel: Buffer I/O error on device sdc,
-> logical block 0
-> 
-> This happens for sdb ad sdc only (probably passive controller disk
-> paths?)
-> 
-> And this other ones:
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdb,
-> sector 0
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdb,
-> sector 7320493952
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdb,
-> sector 7320494064
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdb,
-> sector 0
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdb,
-> sector 8
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdb,
-> sector 0
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdc,
-> sector 0
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdc,
-> sector 7320493952
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdc,
-> sector 7320494064
-> Nov 23 17:32:58 testserver kernel: end_request: I/O error, dev sdc,
-> sector 0
-> ...
-> then
-> Nov 23 17:33:00 testserver kernel: device-mapper: multipath: version
-> 1.0.6 loaded
-> Nov 23 17:33:00 testserver kernel: sd 3:0:0:1: rdac: LUN 1 (unowned)
-> Nov 23 17:33:00 testserver kernel: sd 3:0:1:1: rdac: LUN 1 (owned)
-> Nov 23 17:33:00 testserver kernel: sd 4:0:0:1: rdac: LUN 1 (unowned)
-> Nov 23 17:33:00 testserver kernel: sd 4:0:1:1: rdac: LUN 1 (owned)
-> Nov 23 17:33:01 testserver kernel: rdac: device handler registered
-> Nov 23 17:33:01 testserver kernel: device-mapper: multipath: Using
-> scsi_dh module scsi_dh_rdac for failover/failback and device
-> management.
-> Nov 23 17:33:01 testserver kernel: device-mapper: multipath
-> round-robin: version 1.0.0 loaded
-> Nov 23 17:33:01 testserver kernel: sd 3:0:0:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 0, queueing MODE_SELECT command
-> Nov 23 17:33:01 testserver kernel: sd 3:0:0:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 0, MODE_SELECT completed
-> Nov 23 17:33:01 testserver kernel: sd 4:0:0:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 0, queueing MODE_SELECT command
-> Nov 23 17:33:01 testserver kernel: sd 4:0:0:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 0, MODE_SELECT completed
-> Nov 23 17:33:01 testserver kernel: end_request: I/O error, dev sdd,
-> sector 7320494072
-> Nov 23 17:33:01 testserver kernel: printk: 4 messages suppressed.
-> Nov 23 17:33:01 testserver kernel: Buffer I/O error on device sdd,
-> logical block 915061759
-> Nov 23 17:33:01 testserver kernel: end_request: I/O error, dev sde,
-> sector 7320494072
-> Nov 23 17:33:02 testserver kernel: printk: 49 messages suppressed.
-> Nov 23 17:33:02 testserver kernel: Buffer I/O error on device sde,
-> logical block 0
-> Nov 23 17:33:02 testserver kernel: Buffer I/O error on device sde,
-> logical block 2
-> Nov 23 17:33:02 testserver kernel: Buffer I/O error on device sde,
-> logical block 3
-> 
-> And then no other I/O error messages. Donna if this is avoidable or
-> not....
-> 
-> So after complete startup the situation is:
-> [root@testserver ~]# multipath -l
-> mpath1 (3600a0b80005012440000093e4a55cf33) dm-6 IBM,1814      FAStT
-> [size=3.4T][features=1 queue_if_no_path][hwhandler=1 rdac][rw]
-> \_ round-robin 0 [prio=0][active]
->  \_ 3:0:0:1 sdb 8:16  [active][undef]
->  \_ 4:0:0:1 sdc 8:32  [active][undef]
-> \_ round-robin 0 [prio=0][enabled]
->  \_ 3:0:1:1 sdd 8:48  [active][undef]
->  \_ 4:0:1:1 sde 8:64  [active][undef]
-> 
-> When I activate the LVM on mpath1 PV and mount the file system:
-> Nov 23 17:34:31 testserver kernel: EXT4-fs (dm-7): mounted filesystem
-> with ordered data mode
-> Nov 23 17:34:47 testserver kernel: JBD: barrier-based sync failed on
-> dm-7-8 - disabling barriers
-> --> donna if it is to be intended as a problem
-> 
-> I instantiate I/O without problems.
-> 
-> Then I test to change active controller for the lun at DS4700 side
-> during a running I/O session (dd seq read of 10Gb) , and I get
-> Nov 23 17:43:02 testserver kernel: end_request: I/O error, dev sdb,
-> sector 2110328
-> Nov 23 17:43:02 testserver kernel: device-mapper: multipath: Failing
-> path 8:16.
-> Nov 23 17:43:02 testserver multipathd: 8:16: mark as failed
-> Nov 23 17:43:02 testserver multipathd: mpath1: remaining active paths:
-> 3
-> Nov 23 17:43:02 testserver multipathd: dm-6: add map (uevent)
-> Nov 23 17:43:02 testserver multipathd: dm-6: devmap already registered
-> Nov 23 17:43:03 testserver kernel: end_request: I/O error, dev sdc,
-> sector 2110328
-> Nov 23 17:43:03 testserver kernel: device-mapper: multipath: Failing
-> path 8:32.
-> Nov 23 17:43:03 testserver multipathd: dm-6: add map (uevent)
-> Nov 23 17:43:03 testserver multipathd: dm-6: devmap already registered
-> Nov 23 17:43:03 testserver multipathd: 8:32: mark as failed
-> Nov 23 17:43:03 testserver multipathd: mpath1: remaining active paths:
-> 2
-> Nov 23 17:43:06 testserver multipathd: sdb: rdac checker reports path
-> is ghost
-> Nov 23 17:43:06 testserver multipathd: 8:16: reinstated
-> Nov 23 17:43:06 testserver multipathd: mpath1: remaining active paths:
-> 3
-> Nov 23 17:43:06 testserver kernel: device-mapper: multipath: Using
-> scsi_dh module scsi_dh_rdac for failover/failback and device
-> management.
-> Nov 23 17:43:06 testserver multipathd: mpath1: load table [0
-> 7320494080 multipath 0 1 rdac 2 1 round-robin 0 3 1 8:32 1000 8:48
-> 1000 8:64 1000 round-robin 0 1 1 8:16
-> Nov 23 17:43:06 testserver multipathd: dm-6: add map (uevent)
-> Nov 23 17:43:06 testserver multipathd: dm-6: devmap already registered
-> Nov 23 17:43:06 testserver kernel: device-mapper: multipath: Failing
-> path 8:32.
-> Nov 23 17:43:06 testserver multipathd: dm-6: add map (uevent)
-> Nov 23 17:43:06 testserver multipathd: dm-6: devmap already registered
-> Nov 23 17:43:06 testserver multipathd: dm-6: add map (uevent)
-> Nov 23 17:43:06 testserver multipathd: dm-6: devmap already registered
-> Nov 23 17:43:07 testserver multipathd: sdc: rdac checker reports path
-> is ghost
-> Nov 23 17:43:07 testserver multipathd: 8:32: reinstated
-> Nov 23 17:43:07 testserver kernel: sd 4:0:0:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 0, queueing MODE_SELECT command
-> Nov 23 17:43:07 testserver multipathd: mpath1: remaining active paths:
-> 4
-> Nov 23 17:43:07 testserver kernel: device-mapper: multipath: Using
-> scsi_dh module scsi_dh_rdac for failover/failback and device
-> management.
-> Nov 23 17:43:08 testserver kernel: sd 4:0:0:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 0, MODE_SELECT completed
-> Nov 23 17:43:08 testserver multipathd: mpath1: load table [0
-> 7320494080 multipath 0 1 rdac 2 1 round-robin 0 2 1 8:48 1000 8:64
-> 1000 round-robin 0 2 1 8:32 1000 8:16
-> Nov 23 17:43:08 testserver multipathd: dm-6: add map (uevent)
-> Nov 23 17:43:08 testserver multipathd: dm-6: devmap already registered
-> Nov 23 17:43:08 testserver multipathd: dm-6: add map (uevent)
-> Nov 23 17:43:08 testserver multipathd: dm-6: devmap already registered
-> Nov 23 17:43:08 testserver kernel: sd 3:0:1:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 1, queueing MODE_SELECT command
-> Nov 23 17:43:10 testserver kernel: sd 3:0:1:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 1, MODE_SELECT completed
-> Nov 23 17:43:10 testserver kernel: sd 4:0:1:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 1, queueing MODE_SELECT command
-> Nov 23 17:43:11 testserver kernel: sd 4:0:1:1: rdac: array
-> Z1_BEIC_DS4700, ctlr 1, MODE_SELECT completed
-> Nov 23 17:43:12 testserver multipathd: sdd: rdac checker reports path
-> is up
-> Nov 23 17:43:12 testserver multipathd: 8:48: reinstated
-> Nov 23 17:43:12 testserver multipathd: sde: rdac checker reports path
-> is up
-> Nov 23 17:43:12 testserver multipathd: 8:64: reinstated
-> 
-> The overall increased time is 3-4 seconds for a 1 minute I/O period
-> Without failover:
-> [root@testserver ~]# time dd if=/testfs/testfile bs=1024k count=10000
-> of=/dev/null
-> 10000+0 records in
-> 10000+0 records out
-> 10485760000 bytes (10 GB) copied, 61.9951 seconds, 169 MB/s
-> 
-> real	1m1.996s
-> user	0m0.002s
-> sys	0m7.088s
-> 
-> With change of active controller in the mid:
-> [root@testserver ~]# time dd if=/testfs/testfile1 bs=1024k count=10000
-> of=/dev/null
-> 10000+0 records in
-> 10000+0 records out
-> 10485760000 bytes (10 GB) copied, 65.6529 seconds, 160 MB/s
-> 
-> real	1m5.654s
-> user	0m0.007s
-> sys	0m7.175s
-> 
-> So, quite good, and without error at user side.
-> 
-> at the end the multipath config is this:
-> [root@testserver ~]# multipath -l
-> mpath1 (3600a0b80005012440000093e4a55cf33) dm-6 IBM,1814      FAStT
-> [size=3.4T][features=1 queue_if_no_path][hwhandler=1 rdac][rw]
-> \_ round-robin 0 [prio=0][active]
->  \_ 3:0:1:1 sdd 8:48  [active][undef]
->  \_ 4:0:1:1 sde 8:64  [active][undef]
-> \_ round-robin 0 [prio=0][enabled]
->  \_ 4:0:0:1 sdc 8:32  [active][undef]
->  \_ 3:0:0:1 sdb 8:16  [active][undef]
-> 
-> Questions:
-> 
-> 1) Can I conclude it is ok as a configuration? Or any other tests to
-> carry on?
-> I confirm I didn't get any snmp trap from the ds4700 as happened
-> before...
+  Hello,
 
- Your configuration looks good to me. 
+On Fri 25-11-11 15:25:16, Mikulas Patocka wrote:
+> This script causes a kernel deadlock:
+> #!/bin/sh
+> set -e
+> DEVICE=/dev/vg1/linear
+> lvchange -ay $DEVICE
+> mkfs.ext3 $DEVICE
+> mount -t ext3 -o usrquota,grpquota $DEVICE /mnt/test
+> quotacheck -gu /mnt/test
+> umount /mnt/test
+> mount -t ext3 -o usrquota,grpquota $DEVICE /mnt/test
+> quotaon /mnt/test
+> dmsetup suspend $DEVICE
+> setquota -u root 1 2 3 4 /mnt/test &
+> sleep 1
+> dmsetup resume $DEVICE
+> 
+> setquota acquired semaphore s_umount for read and then tried to perform
+> a transaction (and waits because the device is suspended).
+> dmsetup resume tries to acquire s_umount for write before resuming the device
+> (and waits for setquota).
+> 
+> Here are stacktraces:
+> setquota:
+> [   67.524456]  [<ffffffff810aa84e>] ? get_page_from_freelist+0x31e/0x790
+> [   67.524529]  [<ffffffffa0250265>] ? start_this_handle.isra.9+0x265/0x3b0 [jbd]
+> [   67.524604]  [<ffffffff8105bc00>] ? add_wait_queue+0x60/0x60
+> [   67.524675]  [<ffffffffa02505a1>] ? journal_start+0xc1/0x100 [jbd]
+> [   67.524742]  [<ffffffff810e62d6>] ? kmem_cache_alloc+0xf6/0x1b0
+> [   67.524808]  [<ffffffffa028018d>] ? ext3_acquire_dquot+0x3d/0x80 [ext3]
+> [   67.524872]  [<ffffffff81143749>] ? dqget+0x359/0x3b0
+> [   67.524916]  [<ffffffff81143ad4>] ? dquot_get_dqblk+0x14/0x1b0
+> [   67.524985]  [<ffffffff81147c34>] ? quota_getquota+0x24/0xd0
+> [   67.525048]  [<ffffffff810ff3db>] ? do_path_lookup+0x2b/0x90
+> [   67.525082]  [<ffffffff810ff8cd>] ? kern_path+0x1d/0x40
+> [   67.525134]  [<ffffffff81148311>] ? do_quotactl+0x421/0x540
+> [   67.525191]  [<ffffffff811073f0>] ? dput+0x20/0x230
+> [   67.525234]  [<ffffffff81148507>] ? sys_quotactl+0xd7/0x1a0
+> [   67.525304]  [<ffffffff8130a03b>] ? system_call_fastpath+0x16/0x1b
+> 
+> dmsetup resume:
+> [   67.525887]  [<ffffffffa0238280>] ? dev_wait+0xc0/0xc0 [dm_mod]
+> [   67.525948]  [<ffffffff81309225>] ? rwsem_down_failed_common+0xc5/0x160
+> [   67.526013]  [<ffffffff81198a43>] ? call_rwsem_down_write_failed+0x13/0x20
+> [   67.526058]  [<ffffffff81308adc>] ? down_write+0x1c/0x1d
+> [   67.526103]  [<ffffffff810f3a91>] ? thaw_super+0x21/0xc0
+> [   67.526166]  [<ffffffff81124d4d>] ? thaw_bdev+0x6d/0x90
+> [   67.526223]  [<ffffffff8105583e>] ? queue_work+0x4e/0x60
+> [   67.526269]  [<ffffffffa0230e63>] ? unlock_fs+0x23/0x40 [dm_mod]
+> [   67.526341]  [<ffffffffa02336d0>] ? dm_resume+0xb0/0xd0 [dm_mod]
+> [   67.526388]  [<ffffffffa0238420>] ? dev_suspend+0x1a0/0x230 [dm_mod]
+> [   67.526441]  [<ffffffffa0238a59>] ? ctl_ioctl+0x159/0x2a0 [dm_mod]
+> [   67.526510]  [<ffffffff8116c4ee>] ? ipc_addid+0x4e/0xd0
+> [   67.526555]  [<ffffffffa0238bae>] ? dm_ctl_ioctl+0xe/0x20 [dm_mod]
+> [   67.526620]  [<ffffffff811025de>] ? do_vfs_ioctl+0x8e/0x4e0
+> [   67.526670]  [<ffffffff811073f0>] ? dput+0x20/0x230
+> [   67.526737]  [<ffffffff810f3112>] ? fput+0x162/0x220
+> [   67.526783]  [<ffffffff81102a79>] ? sys_ioctl+0x49/0x90
+> [   67.526838]  [<ffffffff8130a03b>] ? system_call_fastpath+0x16/0x1b
+> 
+> The following patch fixes the deadlock. When the quota subsystem takes s_umount,
+> it checks if the filesystem is frozen. If it is, we drop s_umount, wait for
+> the filesystem to resume and retry.
+  Thanks for the patch. I'm aware of the deadlock and Val Henson is working
+on resolving these types of deadlocks more systematically. But since I
+haven't heard from her for a while, I guess I'll merge your fix and she'll
+update her series to reflect your change since those patches are going to
+go in at earliest in the next merge window.
+  To sum up: I've merged your patch.
 
+								Honza
 > 
-> 2) At the moment I put this in lvm.conf to whitelist the root volume
-> groups and blacklist the san individual paths and then delete the
-> .cache file and reboot
-> filter = [ "a/dev/mapper/.*/", "a/dev/sda/", "a/dev/sda2/",
-> "r/dev/sd.*/" ]
-> Is this ok?
-> If root PV is on sda2, do I need to whitelist both sda and sda2 or only
-> sda2?
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> CC: stable@kernel.org
 > 
-> 3) Based on messages during failover, is it true that I can avoid
-> explicitly put scsi_dh in initrd?
-> If I create initrd this way:
-> mkinitrd /boot/initrd-$(uname -r)-scsi_dh.img $(uname -r) --
-> preload=scsi_dh_rdac
-> I get this difference:
-> [root@testserver ~]# diff /tmp/new/init /tmp/current/init
-> 44,51d43
-> < echo "Loading scsi_mod.ko module"
-> < insmod /lib/scsi_mod.ko
-> < echo "Loading sd_mod.ko module"
-> < insmod /lib/sd_mod.ko
-> < echo "Loading scsi_dh.ko module"
-> < insmod /lib/scsi_dh.ko
-> < echo "Loading scsi_dh_rdac.ko module"
-> < insmod /lib/scsi_dh_rdac.ko
-> 62a55,58
-> > echo "Loading scsi_mod.ko module"
-> > insmod /lib/scsi_mod.ko
-> > echo "Loading sd_mod.ko module"
-> > insmod /lib/sd_mod.ko
+> ---
+>  fs/quota/quota.c   |   12 ++++++++++++
+>  include/linux/fs.h |    1 +
+>  2 files changed, 13 insertions(+)
 > 
-> or will it help in any way?
-
-Having scsi_dh_rdac in initrd will help to get rid of the initial I/O errors you are seeing.
-
-> BTW: The I/O tests above were done with standard initrd (so the > side
-> of the diff without the scsi_dh_rdac)
-> I only run the mkinitrd to sort out how would have been create the init
-> file...
-> 
-> 4) the san lun is 3.4Tb and I'm going to add another one of about 5Tb
-> In messages I see this
-> Nov 23 17:32:58 testserver kernel: sde : very big device. try to use
-> READ CAPACITY(16).
-> 
-> I found in an old kernel ml post that actually it should mean "trying
-> to use" ... so only informational message.
-> Can anyone confirm this?
-
-It is only informational..
-
-> 
-> Thanks again in advance for your help,
-> Gianluca
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> Index: linux-3.1-fast/fs/quota/quota.c
+> ===================================================================
+> --- linux-3.1-fast.orig/fs/quota/quota.c	2011-11-25 20:19:14.000000000 +0100
+> +++ linux-3.1-fast/fs/quota/quota.c	2011-11-25 21:12:32.000000000 +0100
+> @@ -310,7 +310,19 @@ static struct super_block *quotactl_bloc
+>  	putname(tmp);
+>  	if (IS_ERR(bdev))
+>  		return ERR_CAST(bdev);
+> +retry_super:
+>  	sb = get_super(bdev);
+> +	if (sb && sb->s_frozen != SB_UNFROZEN) {
+> +		/*
+> +		 * When resuming a frozen device, s_umount is taken for write.
+> +		 * To avoid deadlock, we drop s_umount if the filesystem
+> +		 * is frozen and wait for it to thaw.
+> +		 */
+> +		up_read(&sb->s_umount);
+> +		vfs_check_frozen(sb, SB_FREEZE_WRITE);
+> +		put_super(sb);
+> +		goto retry_super;
+> +	}
+>  	bdput(bdev);
+>  	if (!sb)
+>  		return ERR_PTR(-ENODEV);
+> Index: linux-3.1-fast/include/linux/fs.h
+> ===================================================================
+> --- linux-3.1-fast.orig/include/linux/fs.h	2011-11-25 21:13:56.000000000 +0100
+> +++ linux-3.1-fast/include/linux/fs.h	2011-11-25 21:14:03.000000000 +0100
+> @@ -2496,6 +2496,7 @@ extern struct file_system_type *get_fs_t
+>  extern struct super_block *get_super(struct block_device *);
+>  extern struct super_block *get_active_super(struct block_device *bdev);
+>  extern struct super_block *user_get_super(dev_t);
+> +extern void put_super(struct super_block *sb);
+>  extern void drop_super(struct super_block *sb);
+>  extern void iterate_supers(void (*)(struct super_block *, void *), void *);
+>  extern void iterate_supers_type(struct file_system_type *,
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
