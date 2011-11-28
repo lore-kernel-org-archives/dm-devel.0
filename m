@@ -1,55 +1,57 @@
-From: Cong Wang <amwang@redhat.com>
-Subject: [UPDATED PATCH 57/62] dm: remove the second argument of k[un]map_atomic()
-Date: Mon, 28 Nov 2011 15:50:12 +0800
-Message-ID: <1322466612-10919-1-git-send-email-amwang@redhat.com>
-References: <1322371662-26166-58-git-send-email-amwang@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1322371662-26166-58-git-send-email-amwang@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: akpm@linux-foundation.org, Cong Wang <amwang@redhat.com>, Neil Brown <neilb@suse.de>, dm-devel@redhat.com, linux-raid@vger.kernel.org
+From: Douglas McClendon <dmc.lists@filteredperception.org>
+Subject: Re: DM_snapshot_cow filesystem (dmsetup create snapshot)
+Date: Sun, 27 Nov 2011 19:08:31 -0600
+Message-ID: <4ED2DF0F.1070108@filteredperception.org>
+References: <4EABE131.8010706@googlemail.com>	<20111029204947.GU23336@agk-dp.fab.redhat.com>
+	<CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On 11/27/2011 04:31 PM, Frederick Grose wrote:
+> On Sat, Oct 29, 2011 at 4:49 PM, Alasdair G Kergon <agk@redhat.com
+> <mailto:agk@redhat.com>> wrote:
+>
+>     markmc did some code that shows how to read the format a few years
+>     ago here:
+>     http://people.gnome.org/~markmc/code/merge-dm-snapshot.c
+>     <http://people.gnome.org/%7Emarkmc/code/merge-dm-snapshot.c>
+>
+>     Otherwise look at dm-snap-persistent.c in the kernel tree.
+>
+>     Alasdair
+>
+>
+> Users can easily exhaust a LiveUSB snapshot overlay by writing
+> too many changes to the OS filesystem, such as by performing
+> a yum update.
+>
+> Would such an 'exhausted' overlay be amenable to some sort of
+> data recovery or forensics?
+>
+> If so, how so; if not, why not?
 
-Acked-by: Milan Broz <mbroz@redhat.com>
-Signed-off-by: Cong Wang <amwang@redhat.com>
+Can you not mount the exhausted dm snapshot?  If you mean data recovery 
+or forensics beyond that, please elaborate.
 
----
- drivers/md/dm-crypt.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+I know I've had issues 'read-only' mounting ext3(2?3?4?) filesystems 
+before (on actually read-only block devices).  Maybe some flags that 
+I've forgotten get past that, but worst case you can always fake a 
+writable device with a 2nd overlay/snapshot going to a writable device, 
+i.e. if you wanted to let fsck repair things.
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 8c2a000..db6b516 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -590,9 +590,9 @@ static int crypt_iv_lmk_gen(struct crypt_config *cc, u8 *iv,
- 	int r = 0;
- 
- 	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
--		src = kmap_atomic(sg_page(&dmreq->sg_in), KM_USER0);
-+		src = kmap_atomic(sg_page(&dmreq->sg_in));
- 		r = crypt_iv_lmk_one(cc, iv, dmreq, src + dmreq->sg_in.offset);
--		kunmap_atomic(src, KM_USER0);
-+		kunmap_atomic(src);
- 	} else
- 		memset(iv, 0, cc->iv_size);
- 
-@@ -608,14 +608,14 @@ static int crypt_iv_lmk_post(struct crypt_config *cc, u8 *iv,
- 	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE)
- 		return 0;
- 
--	dst = kmap_atomic(sg_page(&dmreq->sg_out), KM_USER0);
-+	dst = kmap_atomic(sg_page(&dmreq->sg_out));
- 	r = crypt_iv_lmk_one(cc, iv, dmreq, dst + dmreq->sg_out.offset);
- 
- 	/* Tweak the first block of plaintext sector */
- 	if (!r)
- 		crypto_xor(dst + dmreq->sg_out.offset, iv, cc->iv_size);
- 
--	kunmap_atomic(dst, KM_USER0);
-+	kunmap_atomic(dst);
- 	return r;
- }
- 
--- 
-1.7.4.4
+-dmc
