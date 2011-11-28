@@ -1,53 +1,55 @@
 From: Cong Wang <amwang@redhat.com>
-Subject: Re: [dm-devel] [PATCH 17/62] md: remove the second argument of k[un]map_atomic()
-Date: Mon, 28 Nov 2011 13:10:51 +0800
-Message-ID: <4ED317DB.30001@redhat.com>
-References: <1322371662-26166-1-git-send-email-amwang@redhat.com> <1322371662-26166-18-git-send-email-amwang@redhat.com> <20111127170013.20d180a9@notabene.brown> <4ED2108F.9000203@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Subject: [UPDATED PATCH 57/62] dm: remove the second argument of k[un]map_atomic()
+Date: Mon, 28 Nov 2011 15:50:12 +0800
+Message-ID: <1322466612-10919-1-git-send-email-amwang@redhat.com>
+References: <1322371662-26166-58-git-send-email-amwang@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4ED2108F.9000203@redhat.com>
+In-Reply-To: <1322371662-26166-58-git-send-email-amwang@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, NeilBrown <neilb@suse.de>, linux-raid@vger.kernel.org, akpm@linux-foundation.org, linux-kernel@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: akpm@linux-foundation.org, Cong Wang <amwang@redhat.com>, Neil Brown <neilb@suse.de>, dm-devel@redhat.com, linux-raid@vger.kernel.org
 List-Id: dm-devel.ids
 
-=E4=BA=8E 2011=E5=B9=B411=E6=9C=8827=E6=97=A5 18:27, Milan Broz =E5=86=99=
-=E9=81=93:
-> On 11/27/2011 07:00 AM, NeilBrown wrote:
->> On Sun, 27 Nov 2011 13:26:57 +0800 Cong Wang<amwang@redhat.com>  wro=
-te:
->>
->>>
->>> Signed-off-by: Cong Wang<amwang@redhat.com>
->>
->> This and patch 57/62
->>
->>   Acked-by: NeilBrown<neilb@suse.de>
->>
->> thanks.
->>
->> Not sure why there are two separate patches to md/bitmap.c though...
->>
->> ... and I cannot offically 'ack' the dm-crypt.c parts of this as I'm=
- not the
->>      maintainer.  'md' and 'dm' are separate systems in the same dir=
-ectory -
->>      confusing, isn't it :-(
 
-That is my bad, I should fold the md parts into one... :-/
-I will separate them correctly.
+Acked-by: Milan Broz <mbroz@redhat.com>
+Signed-off-by: Cong Wang <amwang@redhat.com>
 
->
-> These little walled gardens ... :)
->
-> I hope I can ack that dm-crypt code, I added that chunk
-> as part of loop-aes compatibility code.
-> (Anyway Alasdair as dm maintainer should ack it too.)
->
-> Acked-by: Milan Broz<mbroz@redhat.com>
->
+---
+ drivers/md/dm-crypt.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-Thanks, Neil and Milan!
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 8c2a000..db6b516 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -590,9 +590,9 @@ static int crypt_iv_lmk_gen(struct crypt_config *cc, u8 *iv,
+ 	int r = 0;
+ 
+ 	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
+-		src = kmap_atomic(sg_page(&dmreq->sg_in), KM_USER0);
++		src = kmap_atomic(sg_page(&dmreq->sg_in));
+ 		r = crypt_iv_lmk_one(cc, iv, dmreq, src + dmreq->sg_in.offset);
+-		kunmap_atomic(src, KM_USER0);
++		kunmap_atomic(src);
+ 	} else
+ 		memset(iv, 0, cc->iv_size);
+ 
+@@ -608,14 +608,14 @@ static int crypt_iv_lmk_post(struct crypt_config *cc, u8 *iv,
+ 	if (bio_data_dir(dmreq->ctx->bio_in) == WRITE)
+ 		return 0;
+ 
+-	dst = kmap_atomic(sg_page(&dmreq->sg_out), KM_USER0);
++	dst = kmap_atomic(sg_page(&dmreq->sg_out));
+ 	r = crypt_iv_lmk_one(cc, iv, dmreq, dst + dmreq->sg_out.offset);
+ 
+ 	/* Tweak the first block of plaintext sector */
+ 	if (!r)
+ 		crypto_xor(dst + dmreq->sg_out.offset, iv, cc->iv_size);
+ 
+-	kunmap_atomic(dst, KM_USER0);
++	kunmap_atomic(dst);
+ 	return r;
+ }
+ 
+-- 
+1.7.4.4
