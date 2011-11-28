@@ -1,136 +1,125 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH] deadlock with suspend and quotas
-Date: Mon, 28 Nov 2011 16:04:00 +0100
-Message-ID: <20111128150400.GE6366@quack.suse.cz>
-References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
+From: Gianluca Cecchi <gianluca.cecchi@gmail.com>
+Subject: Re: info on enabling only one path with rdac and DS4700
+Date: Mon, 28 Nov 2011 17:04:49 +0100
+Message-ID: <CAG2kNCxrA7twm2k7k8VWQGnWaADEog8iiyjEwfCiJj=OWCvqjQ@mail.gmail.com>
+References: <CAG2kNCx2FSBFcKQQ5qRNNdY8c8OZ6iR+WY4XPUy21mttYn-wuw@mail.gmail.com>
+	<1321389505.23295.4.camel@lapoo.opensvc.com>
+	<CAG2kNCyHk+vosO1+TtNwLUcH5AJP-cPn8m5nCDhVkenXFFxfjw@mail.gmail.com>
+	<201111161424.50911.hirtejs@idmt.fraunhofer.de>
+	<CAG2kNCw9ZdWrk1Ai6xQ=gDeMeV22verUQWw8+18yWNMjscuPMg@mail.gmail.com>
+	<47D23AD8469A2B448F33C24BD7A39BD9109D07FE@RTPMVEXC1-PRD.hq.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.cz>, dm-devel@redhat.com, Valerie Aurora <val@vaaconsulting.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <47D23AD8469A2B448F33C24BD7A39BD9109D07FE@RTPMVEXC1-PRD.hq.netapp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-  Hello,
+On Mon, Nov 28, 2011 at 3:46 PM, Moger, Babu wrote:
+>> 3) Based on messages during failover, is it true that I can avoid
+>> explicitly put scsi_dh in initrd?
+>> If I create initrd this way:
+>> mkinitrd /boot/initrd-$(uname -r)-scsi_dh.img $(uname -r) --
+>> preload=scsi_dh_rdac
+>> I get this difference:
+>> [root@testserver ~]# diff /tmp/new/init /tmp/current/init
+>> 44,51d43
+>> < echo "Loading scsi_mod.ko module"
+>> < insmod /lib/scsi_mod.ko
+>> < echo "Loading sd_mod.ko module"
+>> < insmod /lib/sd_mod.ko
+>> < echo "Loading scsi_dh.ko module"
+>> < insmod /lib/scsi_dh.ko
+>> < echo "Loading scsi_dh_rdac.ko module"
+>> < insmod /lib/scsi_dh_rdac.ko
+>> 62a55,58
+>> > echo "Loading scsi_mod.ko module"
+>> > insmod /lib/scsi_mod.ko
+>> > echo "Loading sd_mod.ko module"
+>> > insmod /lib/sd_mod.ko
+>>
+>> or will it help in any way?
+>
+> Having scsi_dh_rdac in initrd will help to get rid of the initial I/O errors you are seeing.
+>
 
-On Fri 25-11-11 15:25:16, Mikulas Patocka wrote:
-> This script causes a kernel deadlock:
-> #!/bin/sh
-> set -e
-> DEVICE=/dev/vg1/linear
-> lvchange -ay $DEVICE
-> mkfs.ext3 $DEVICE
-> mount -t ext3 -o usrquota,grpquota $DEVICE /mnt/test
-> quotacheck -gu /mnt/test
-> umount /mnt/test
-> mount -t ext3 -o usrquota,grpquota $DEVICE /mnt/test
-> quotaon /mnt/test
-> dmsetup suspend $DEVICE
-> setquota -u root 1 2 3 4 /mnt/test &
-> sleep 1
-> dmsetup resume $DEVICE
-> 
-> setquota acquired semaphore s_umount for read and then tried to perform
-> a transaction (and waits because the device is suspended).
-> dmsetup resume tries to acquire s_umount for write before resuming the device
-> (and waits for setquota).
-> 
-> Here are stacktraces:
-> setquota:
-> [   67.524456]  [<ffffffff810aa84e>] ? get_page_from_freelist+0x31e/0x790
-> [   67.524529]  [<ffffffffa0250265>] ? start_this_handle.isra.9+0x265/0x3b0 [jbd]
-> [   67.524604]  [<ffffffff8105bc00>] ? add_wait_queue+0x60/0x60
-> [   67.524675]  [<ffffffffa02505a1>] ? journal_start+0xc1/0x100 [jbd]
-> [   67.524742]  [<ffffffff810e62d6>] ? kmem_cache_alloc+0xf6/0x1b0
-> [   67.524808]  [<ffffffffa028018d>] ? ext3_acquire_dquot+0x3d/0x80 [ext3]
-> [   67.524872]  [<ffffffff81143749>] ? dqget+0x359/0x3b0
-> [   67.524916]  [<ffffffff81143ad4>] ? dquot_get_dqblk+0x14/0x1b0
-> [   67.524985]  [<ffffffff81147c34>] ? quota_getquota+0x24/0xd0
-> [   67.525048]  [<ffffffff810ff3db>] ? do_path_lookup+0x2b/0x90
-> [   67.525082]  [<ffffffff810ff8cd>] ? kern_path+0x1d/0x40
-> [   67.525134]  [<ffffffff81148311>] ? do_quotactl+0x421/0x540
-> [   67.525191]  [<ffffffff811073f0>] ? dput+0x20/0x230
-> [   67.525234]  [<ffffffff81148507>] ? sys_quotactl+0xd7/0x1a0
-> [   67.525304]  [<ffffffff8130a03b>] ? system_call_fastpath+0x16/0x1b
-> 
-> dmsetup resume:
-> [   67.525887]  [<ffffffffa0238280>] ? dev_wait+0xc0/0xc0 [dm_mod]
-> [   67.525948]  [<ffffffff81309225>] ? rwsem_down_failed_common+0xc5/0x160
-> [   67.526013]  [<ffffffff81198a43>] ? call_rwsem_down_write_failed+0x13/0x20
-> [   67.526058]  [<ffffffff81308adc>] ? down_write+0x1c/0x1d
-> [   67.526103]  [<ffffffff810f3a91>] ? thaw_super+0x21/0xc0
-> [   67.526166]  [<ffffffff81124d4d>] ? thaw_bdev+0x6d/0x90
-> [   67.526223]  [<ffffffff8105583e>] ? queue_work+0x4e/0x60
-> [   67.526269]  [<ffffffffa0230e63>] ? unlock_fs+0x23/0x40 [dm_mod]
-> [   67.526341]  [<ffffffffa02336d0>] ? dm_resume+0xb0/0xd0 [dm_mod]
-> [   67.526388]  [<ffffffffa0238420>] ? dev_suspend+0x1a0/0x230 [dm_mod]
-> [   67.526441]  [<ffffffffa0238a59>] ? ctl_ioctl+0x159/0x2a0 [dm_mod]
-> [   67.526510]  [<ffffffff8116c4ee>] ? ipc_addid+0x4e/0xd0
-> [   67.526555]  [<ffffffffa0238bae>] ? dm_ctl_ioctl+0xe/0x20 [dm_mod]
-> [   67.526620]  [<ffffffff811025de>] ? do_vfs_ioctl+0x8e/0x4e0
-> [   67.526670]  [<ffffffff811073f0>] ? dput+0x20/0x230
-> [   67.526737]  [<ffffffff810f3112>] ? fput+0x162/0x220
-> [   67.526783]  [<ffffffff81102a79>] ? sys_ioctl+0x49/0x90
-> [   67.526838]  [<ffffffff8130a03b>] ? system_call_fastpath+0x16/0x1b
-> 
-> The following patch fixes the deadlock. When the quota subsystem takes s_umount,
-> it checks if the filesystem is frozen. If it is, we drop s_umount, wait for
-> the filesystem to resume and retry.
-  Thanks for the patch. I'm aware of the deadlock and Val Henson is working
-on resolving these types of deadlocks more systematically. But since I
-haven't heard from her for a while, I guess I'll merge your fix and she'll
-update her series to reflect your change since those patches are going to
-go in at earliest in the next merge window.
-  To sum up: I've merged your patch.
+Actually not.... see screen shots of console start at
+https://docs.google.com/open?id=0BwoPbcrMv8mvMWRlYmVhM2MtY2JkYi00ZDMzLWIxMWMtMDM0YzZjMWU0NGE1
+and
+https://docs.google.com/open?id=0BwoPbcrMv8mvM2RjMDg1MWUtYzVmZC00OTA1LTljNjAtZGZmMjM5NDlhYTI4
+and also dmesg giving for example for sdb and sdc:
 
-								Honza
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> CC: stable@kernel.org
-> 
-> ---
->  fs/quota/quota.c   |   12 ++++++++++++
->  include/linux/fs.h |    1 +
->  2 files changed, 13 insertions(+)
-> 
-> Index: linux-3.1-fast/fs/quota/quota.c
-> ===================================================================
-> --- linux-3.1-fast.orig/fs/quota/quota.c	2011-11-25 20:19:14.000000000 +0100
-> +++ linux-3.1-fast/fs/quota/quota.c	2011-11-25 21:12:32.000000000 +0100
-> @@ -310,7 +310,19 @@ static struct super_block *quotactl_bloc
->  	putname(tmp);
->  	if (IS_ERR(bdev))
->  		return ERR_CAST(bdev);
-> +retry_super:
->  	sb = get_super(bdev);
-> +	if (sb && sb->s_frozen != SB_UNFROZEN) {
-> +		/*
-> +		 * When resuming a frozen device, s_umount is taken for write.
-> +		 * To avoid deadlock, we drop s_umount if the filesystem
-> +		 * is frozen and wait for it to thaw.
-> +		 */
-> +		up_read(&sb->s_umount);
-> +		vfs_check_frozen(sb, SB_FREEZE_WRITE);
-> +		put_super(sb);
-> +		goto retry_super;
-> +	}
->  	bdput(bdev);
->  	if (!sb)
->  		return ERR_PTR(-ENODEV);
-> Index: linux-3.1-fast/include/linux/fs.h
-> ===================================================================
-> --- linux-3.1-fast.orig/include/linux/fs.h	2011-11-25 21:13:56.000000000 +0100
-> +++ linux-3.1-fast/include/linux/fs.h	2011-11-25 21:14:03.000000000 +0100
-> @@ -2496,6 +2496,7 @@ extern struct file_system_type *get_fs_t
->  extern struct super_block *get_super(struct block_device *);
->  extern struct super_block *get_active_super(struct block_device *bdev);
->  extern struct super_block *user_get_super(dev_t);
-> +extern void put_super(struct super_block *sb);
->  extern void drop_super(struct super_block *sb);
->  extern void iterate_supers(void (*)(struct super_block *, void *), void *);
->  extern void iterate_supers_type(struct file_system_type *,
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+scsi 3:0:0:1: rdac: LUN 1 (unowned)
+sdb : very big device. try to use READ CAPACITY(16).
+SCSI device sdb: 7320494080 512-byte hdwr sectors (3748093 MB)
+sdb: Write Protect is off
+sdb: Mode Sense: 77 00 10 08
+SCSI device sdb: drive cache: write back w/ FUA
+sdb : very big device. try to use READ CAPACITY(16).
+SCSI device sdb: 7320494080 512-byte hdwr sectors (3748093 MB)
+sdb: Write Protect is off
+sdb: Mode Sense: 77 00 10 08
+SCSI device sdb: drive cache: write back w/ FUA
+ sdb:<3>Buffer I/O error on device sdb, logical block 0
+Buffer I/O error on device sdb, logical block 0
+Buffer I/O error on device sdb, logical block 0
+Buffer I/O error on device sdb, logical block 0
+Buffer I/O error on device sdb, logical block 0
+Buffer I/O error on device sdb, logical block 0
+Buffer I/O error on device sdb, logical block 0
+Dev sdb: unable to read RDB block 0
+Buffer I/O error on device sdb, logical block 0
+Buffer I/O error on device sdb, logical block 0
+ unable to read partition table
+sd 3:0:0:1: Attached scsi disk sdb
+  Vendor: IBM       Model: 1814      FAStT   Rev: 0916
+  Type:   Direct-Access                      ANSI SCSI revision: 05
+scsi 3:0:1:1: rdac: LUN 1 (owned)
+scsi 3:0:1:1: rdac: LUN 1 (owned)
+sdc : very big device. try to use READ CAPACITY(16).
+SCSI device sdc: 7320494080 512-byte hdwr sectors (3748093 MB)
+sdc: Write Protect is off
+sdc: Mode Sense: 77 00 10 08
+SCSI device sdc: drive cache: write back w/ FUA
+sdc : very big device. try to use READ CAPACITY(16).
+SCSI device sdc: 7320494080 512-byte hdwr sectors (3748093 MB)
+sdc: Write Protect is off
+sdc: Mode Sense: 77 00 10 08
+SCSI device sdc: drive cache: write back w/ FUA
+ sdc: unknown partition table
+sd 3:0:1:1: Attached scsi disk sdc
+...
+GSI 23 sharing vector 0x72 and IRQ 23
+ACPI: PCI Interrupt 0000:04:00.0[A] -> GSI 17 (level, low) -> IRQ 114
+eth0: Broadcom NetXtreme II BCM5708 1000Base-SX (B2) PCI-X 64-bit
+133MHz found at mem da000000, IRQ 114, node addr 00215e2fd0e2
+ACPI: PCI Interrupt 0000:06:00.0[A] -> GSI 19 (level, low) -> IRQ 90
+eth1: Broadcom NetXtreme II BCM5708 1000Base-SX (B2) PCI-X 64-bit
+133MHz found at mem d8000000, IRQ 90, node addr 00215e2fd0e4
+printk: 69 messages suppressed.
+Buffer I/O error on device sdb, logical block 0
+...
+md: Autodetecting RAID arrays.
+md: autorun ...
+md: ... autorun DONE.
+device-mapper: multipath: version 1.0.6 loaded
+device-mapper: multipath: Using scsi_dh module scsi_dh_rdac for
+failover/failback and device management.
+device-mapper: multipath round-robin: version 1.0.0 loaded
+printk: 4 messages suppressed.
+Buffer I/O error on device sdb, logical block 915061759
+...
+
+So if I have to get yet the I/O errors, having no advantage, I'd
+prefer to stay stick with the default initrd...
