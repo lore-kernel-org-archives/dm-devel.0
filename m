@@ -1,15 +1,15 @@
-From: Douglas McClendon <dmc.lists@filteredperception.org>
-Subject: Re: DM_snapshot_cow filesystem (dmsetup create snapshot)
-Date: Sun, 27 Nov 2011 19:08:31 -0600
-Message-ID: <4ED2DF0F.1070108@filteredperception.org>
-References: <4EABE131.8010706@googlemail.com>	<20111029204947.GU23336@agk-dp.fab.redhat.com>
-	<CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: fix discard support in dm_io
+Date: Mon, 28 Nov 2011 08:59:58 -0500
+Message-ID: <20111128135958.GA24022@redhat.com>
+References: <1322249289-1263-1-git-send-email-mbroz@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <1322249289-1263-1-git-send-email-mbroz@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,39 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Milan Broz <mbroz@redhat.com>
+Cc: lczerner@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/27/2011 04:31 PM, Frederick Grose wrote:
-> On Sat, Oct 29, 2011 at 4:49 PM, Alasdair G Kergon <agk@redhat.com
-> <mailto:agk@redhat.com>> wrote:
->
->     markmc did some code that shows how to read the format a few years
->     ago here:
->     http://people.gnome.org/~markmc/code/merge-dm-snapshot.c
->     <http://people.gnome.org/%7Emarkmc/code/merge-dm-snapshot.c>
->
->     Otherwise look at dm-snap-persistent.c in the kernel tree.
->
->     Alasdair
->
->
-> Users can easily exhaust a LiveUSB snapshot overlay by writing
-> too many changes to the OS filesystem, such as by performing
-> a yum update.
->
-> Would such an 'exhausted' overlay be amenable to some sort of
-> data recovery or forensics?
->
-> If so, how so; if not, why not?
+On Fri, Nov 25 2011 at  2:28pm -0500,
+Milan Broz <mbroz@redhat.com> wrote:
 
-Can you not mount the exhausted dm snapshot?  If you mean data recovery 
-or forensics beyond that, please elaborate.
+> This patch adds support for discard request to dm_io interface.
+> 
+> Currently dm_mirror can send REQ_DISCARD bios if running over
+> discard enabled device and without support in dm_io the system
+> crashes badly.
+> 
+> BUG: unable to handle kernel paging request at 00800000
+> IP:  __bio_add_page.part.17+0xf5/0x1e0
+> ...
+>  bio_add_page+0x56/0x70
+>  dispatch_io+0x1cf/0x240 [dm_mod]
+>  ? km_get_page+0x50/0x50 [dm_mod]
+>  ? vm_next_page+0x20/0x20 [dm_mod]
+>  ? mirror_flush+0x130/0x130 [dm_mirror]
+>  dm_io+0xdc/0x2b0 [dm_mod]
+> ...
+> 
+> Signed-off-by: Milan Broz <mbroz@redhat.com>
 
-I know I've had issues 'read-only' mounting ext3(2?3?4?) filesystems 
-before (on actually read-only block devices).  Maybe some flags that 
-I've forgotten get past that, but worst case you can always fake a 
-writable device with a 2nd overlay/snapshot going to a writable device, 
-i.e. if you wanted to let fsck repair things.
-
--dmc
+Acked-by: Mike Snitzer <snitzer@redhat.com>
