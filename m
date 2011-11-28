@@ -1,16 +1,13 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: Re: info on enabling only one path with rdac and DS4700
-Date: Mon, 28 Nov 2011 13:05:22 -0500
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD9109D0977@RTPMVEXC1-PRD.hq.netapp.com>
-References: <CAG2kNCx2FSBFcKQQ5qRNNdY8c8OZ6iR+WY4XPUy21mttYn-wuw@mail.gmail.com><1321389505.23295.4.camel@lapoo.opensvc.com><CAG2kNCyHk+vosO1+TtNwLUcH5AJP-cPn8m5nCDhVkenXFFxfjw@mail.gmail.com><201111161424.50911.hirtejs@idmt.fraunhofer.de><CAG2kNCw9ZdWrk1Ai6xQ=gDeMeV22verUQWw8+18yWNMjscuPMg@mail.gmail.com><47D23AD8469A2B448F33C24BD7A39BD9109D07FE@RTPMVEXC1-PRD.hq.netapp.com><CAG2kNCxrA7twm2k7k8VWQGnWaADEog8iiyjEwfCiJj=OWCvqjQ@mail.gmail.com><47D23AD8469A2B448F33C24BD7A39BD9109D090A@RTPMVEXC1-PRD.hq.netapp.com>
-	<CAG2kNCzRbMQydCm4UQBX+fO6L1F5_jt7O3JWv-vCwgqE5Qkuww@mail.gmail.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] DM RAID: Clean-up handling of 'rebuild' device
+	requests
+Date: Mon, 28 Nov 2011 14:01:05 -0600
+Message-ID: <1322510465.20158.2.camel@f14.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <CAG2kNCzRbMQydCm4UQBX+fO6L1F5_jt7O3JWv-vCwgqE5Qkuww@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,31 +17,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQo+IEZyb206IEdpYW5sdWNhIENlY2NoaSBbbWFp
-bHRvOmdpYW5sdWNhLmNlY2NoaUBnbWFpbC5jb21dCj4gU2VudDogTW9uZGF5LCBOb3ZlbWJlciAy
-OCwgMjAxMSAxMToyNiBBTQo+IFRvOiBkZXZpY2UtbWFwcGVyIGRldmVsb3BtZW50Cj4gU3ViamVj
-dDogUmU6IFtkbS1kZXZlbF0gaW5mbyBvbiBlbmFibGluZyBvbmx5IG9uZSBwYXRoIHdpdGggcmRh
-YyBhbmQKPiBEUzQ3MDAKPiAKPiBPbiBNb24sIE5vdiAyOCwgMjAxMSBhdCA2OjAxIFBNLCBNb2dl
-ciwgQmFidSB3cm90ZToKPiA+Cj4gPiBMb29rcyBsaWtlIHRoZXJlIGlzIHNvbWV0aGluZyBlbHNl
-IGdvaW5nIG9uIGhlcmUuCj4gPgo+ID4+Cj4gPj4gc2NzaSAzOjA6MDoxOiByZGFjOiBMVU4gMSAo
-dW5vd25lZCkKPiA+Cj4gPiBUaGlzIGlzIHdoZW4gaGFuZGxlciBpcyBsb2FkZWQuIMKgTG9va3Mg
-bGlrZSB5b3VyIHBhc3NpdmUgcGF0aHMgd2VyZQo+IGRldGVjdGVkIGZpcnN0Lgo+ID4gPkZyb20g
-bm93IG9uLCBJL09zIGNvbWluZyBvbiB0byBzZGIgd2lsbCBiZSBzaWxlbmNlZCBhbmQgd2lsbCBu
-b3QgZ290Cj4gdG8gdGFyZ2V0LiBUaGF0IGlzIG5vdCBoYXBwZW5pbmcuCj4gPgo+ID4gV2hhdCBp
-cyB0aGUga2VybmVsIGxldmVsLiBJIHJlbWVtYmVyIHRoZXJlIHdhcyBhbiBpc3N1ZS4gSXQgd2Fz
-IGZpeGVkCj4gbGF0ZXIgYnkgdGhpcyBjb21taXQuLgo+ID4gaHR0cDovL2dpdC5rZXJuZWwub3Jn
-Lz9wPWxpbnV4L2tlcm5lbC9naXQvbmV4dC9saW51eC0KPiBuZXh0LmdpdDthPWNvbW1pdGRpZmY7
-aD01YTM2NzU2YjhiM2Q3MTc4ZDljMTAxZDFlMmE3YTgzZmQ3YjE3NzA2Cj4gCj4gCj4gdGhlIGtl
-cm5lbCBpcyBsYXRlc3QgZnJvbSBSSCBFTCA1LjcgKyB1cGRhdGVzOgo+IDIuNi4xOC0yNzQuNy4x
-LmVsNQo+IAo+IEknbSBnb2luZyB0byBjaGVjayB3aXRoIGl0cyBrZXJuZWwtc291cmNlIHRvIHNl
-ZSBpdCB0aGUgcGF0Y2ggaXMKPiBhcHBsaWVkIG9yIG5vdC4uLgoKUkhFTCA1LjcgaGFzIHRoZSBw
-YXRjaCBhbHJlYWR5IGFzIEkga25vdy4gWW91IGNhbiBjaGVjayB0byBiZSBzdXJlLiBDYW4geW91
-IGFsc28gYWRkICJzY3NpX21vZC5zY3NpX2xvZ2dpbmdfbGV2ZWw9NTA1NiIgaW4ga2VybmVsIGxp
-bmUgdG8gZ2V0IG1vcmUgaW5mb3JtYXRpb24gb24gd2hhdCBlbHNlIGlzIGdvaW5nIG9uLiAKCj4g
-Cj4gR2lhbmx1Y2EKPiAKPiAtLQo+IGRtLWRldmVsIG1haWxpbmcgbGlzdAo+IGRtLWRldmVsQHJl
-ZGhhdC5jb20KPiBodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
-ZWwKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+dm-raid: Change the way the 'rebuild' parameter is processed.
+
+1) We already allowed the rebuild flag to clear the superblock area for a
+   device.  There is no reason to shame the user if they didn't clear the
+   superblock area ahead of time.  Change the message to simply print-out
+   that it is clearing the superblock for the purpose of a rebuild.
+2) Set the 'FirstUse' flag in 'super_load' vs 'super_init_validation'.  This
+   allows the devices that had 'rebuild' set to be processed like a new device.
+3) Since the rebuild devices are processed like new devices, the MD_CHANGE_DEVS
+   flag also gets set on the MD device.  This was a necessary missing action
+   that forces the new superblock to be written when the array is instantiated.
+
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+
+Index: linux-upstream/drivers/md/dm-raid.c
+===================================================================
+--- linux-upstream.orig/drivers/md/dm-raid.c
++++ linux-upstream/drivers/md/dm-raid.c
+@@ -667,7 +667,14 @@ static int super_load(struct md_rdev *rd
+ 		return ret;
+ 
+ 	sb = page_address(rdev->sb_page);
+-	if (sb->magic != cpu_to_le32(DM_RAID_MAGIC)) {
++
++	/*
++	 * Two cases that we want to write new superblocks and rebuild:
++	 * 1) New device (no matching magic number)
++	 * 2) Device specified for rebuild (!In_sync w/ offset == 0)
++	 */
++	if ((sb->magic != cpu_to_le32(DM_RAID_MAGIC)) ||
++	    (!test_bit(In_sync, &rdev->flags) && !rdev->recovery_offset)) {
+ 		super_sync(rdev->mddev, rdev);
+ 
+ 		set_bit(FirstUse, &rdev->flags);
+@@ -743,12 +750,9 @@ static int super_init_validation(struct 
+ 	 *    recovery_cp must be MaxSector.
+ 	 */
+ 	rdev_for_each(r, t, mddev) {
+-		if (!test_bit(In_sync, &r->flags)) {
+-			if (!test_bit(FirstUse, &r->flags))
+-				DMERR("Superblock area of "
+-				      "rebuild device %d should have been "
+-				      "cleared.", r->raid_disk);
+-			set_bit(FirstUse, &r->flags);
++		if (!test_bit(In_sync, &r->flags))
++			DMINFO("Device %d specified for rebuild: "
++			       "Clearing superblock", r->raid_disk);
+ 			rebuilds++;
+ 		} else if (test_bit(FirstUse, &r->flags))
+ 			new_devs++;
