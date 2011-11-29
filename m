@@ -1,63 +1,92 @@
-From: Kamal Mostafa <kamal@canonical.com>
-Subject: Re: [PATCH] deadlock with suspend and quotas
-Date: Tue, 29 Nov 2011 12:00:10 -0800
-Message-ID: <1322596810.27747.42.camel@fourier>
-References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
-	 <20111128150400.GE6366@quack.suse.cz>
-	 <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [GIT PULL] Queue free fix (was Re: [PATCH] block: Free queue
+ resources at blk_release_queue())
+Date: Tue, 29 Nov 2011 15:18:03 -0500
+Message-ID: <20111129201803.GB6827@redhat.com>
+References: <20111031100557.GA2621@osiris.boeblingen.de.ibm.com>
+ <1320057746.2964.1.camel@dabdike>
+ <4EAE8A7E.8000504@ce.jp.nec.com>
+ <20111031130004.GB4768@osiris.boeblingen.de.ibm.com>
+ <20111103182548.GA12131@redhat.com>
+ <20111104091936.GB2397@osiris.boeblingen.de.ibm.com>
+ <4EBA49C2.1000704@suse.de>
+ <20111110161008.GA15659@osiris.boeblingen.de.ibm.com>
+ <20111117162919.GA3812@redhat.com>
+ <20111129120047.GA2456@osiris.boeblingen.de.ibm.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha256";
-	protocol="application/pgp-signature"; boundary="=-YejpjQoCUeSYf2NgrExs"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Valerie Aurora <val@vaaconsulting.com>
-Cc: Jan Kara <jack@suse.cz>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Christopher Chaltain <christopher.chaltain@canonical.com>, Surbhi Palande <csurbhi@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20111129120047.GA2456@osiris.boeblingen.de.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Heiko Carstens <heiko.carstens@de.ibm.com>
+Cc: Hannes Reinecke <hare@suse.de>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Steffen Maier <maier@linux.vnet.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, Linux Kernel <linux-kernel@vger.kernel.org>, Alan Stern <stern@rowland.harvard.edu>, Thadeu Lima de Souza Cascardo <cascardo@linux.vnet.ibm.com>, "Taraka R. Bodireddy" <tarak.reddy@in.ibm.com>, "Seshagiri N. Ippili" <seshagiri.ippili@in.ibm.com>, "Manvanthara B. Puttashankar" <mputtash@in.ibm.com>, Jeff Moyer <jmoyer@redhat.com>, Shaohua Li <shaohua.li@intel.com>, gmuelas@de.ibm.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Tue, Nov 29 2011 at  7:00am -0500,
+Heiko Carstens <heiko.carstens@de.ibm.com> wrote:
 
---=-YejpjQoCUeSYf2NgrExs
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+> > > > Hmm. Just to be on the safe side, could you try this one:
+> > > > 
+> > > > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> > > > index 5e0090e..e6fad46 100644
+> > > > --- a/drivers/md/dm-mpath.c
+> > > > +++ b/drivers/md/dm-mpath.c
+> > > > @@ -920,8 +920,10 @@ static int multipath_map(struct dm_target *ti,
+> > > > struct reque
+> > > > st *clone,
+> > > >         map_context->ptr = mpio;
+> > > >         clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+> > > >         r = map_io(m, clone, mpio, 0);
+> > > > -       if (r < 0 || r == DM_MAPIO_REQUEUE)
+> > > > +       if (r < 0 || r == DM_MAPIO_REQUEUE) {
+> > > >                 mempool_free(mpio, m->mpio_pool);
+> > > > +               map_context->ptr = NULL;
+> > > > +       }
+> > > > 
+> > > >         return r;
+> > > >  }
+> > > 
+> > > With your patch we haven't been able to reproduce the kernel crash until now.
+> > > Now we "only" run into I/O stalls, which before your patch we also did. But
+> > > repeatedly rebooting and retrying and ignoring the I/O stalls always lead to
+> > > a crash.
+> > > Gonzalo will run a couple of extra rounds so we can have a feeling if at least
+> > > one of the bugs could be fixed with your patch ;)
+> > 
+> > Hi,
+> > 
+> > Any update after further testing with Hannes' patch?
+> 
+> Sorry for the late update, our internal IBM IMAP servers have been down
+> for nearly a week :/
+> 
+> So, we were unable to reproduce the original bug with the patch applied
+> during various runs.
 
-> On Mon, Nov 28, 2011 at 8:04 AM, Jan Kara <jack@suse.cz> wrote:
-> >  Thanks for the patch. I'm aware of the deadlock and Val Henson is work=
-ing
-> > on resolving these types of deadlocks more systematically. [...]
+OK, so it seems to be a benenficial change (and obviously correct to
+me).  Hannes, care to formally post your fix to dm-devel so we can get
+it in 3.2-rc?
 
-On Mon, 2011-11-28 at 14:00 -0700, Valerie Aurora wrote:
-> FYI, I no longer have time to consult in addition to my full-time job.
->  Canonical is taking over this patch set.
+> However, we ran into this one instead, which is yet another use-after-free bug
+> (I need to double check, but I'm quite sure that a freed struct scsi_cmnd
+> caused this).
 
-We've been testing the patch set Val refers to (patches developed by her
-and by Surbhi Palande) within Canonical.  I will resubmit them on their
-behalf within the next day or two.
+OK, yeah something is causing poisoned (POISON_FREE) memory to be used.
 
- -Kamal
+> [ 4906.683654] Unable to handle kernel pointer dereference at virtual kernel address 6b6b6b6b6b6b6000
 
+...
 
---=-YejpjQoCUeSYf2NgrExs
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-Content-Transfer-Encoding: 7bit
+> Gonzalo also tried 2.6.38.8 as suggested and ran into this one:
+> 
+> [  292.877936] ------------[ cut here ]------------
+> [  292.877939] Kernel BUG at 6b6b6b6b6b6b6b6d [verbose debug info unavailable]
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
+Again, more poison.
 
-iQIcBAABCAAGBQJO1TnKAAoJEOf3EFVUCeQiFJcP/iSjvaTeiYmhWaMEPd2zYJZU
-9rmRGljOk3yv4vYa1KLRaUor1fBVRjNUkzlNvQ9u4e3SANt5FxEPEew9pmdAq8P7
-pqPpmAGDDUbvtjgRzbKLq9pzSWBrmC+brCspDNpoeKKydisV48UT1gGcub4gmhgY
-Mmlq+xOewlaeclY+BH0mM9Pw8twXbYUc1NlRDEChPaw/r3lm4cHdvAjUE8tJtuJG
-YZZiRXZs1Gpi3nqAv6RaMWL2VAJdcYKKm0uTuakwJx0ENP41L8sdINSA1KOdQur3
-/8q0/QF0Ln8ufu34xvKDCwbpb2xDW3sDdGLW9z+QQIMqHNf9K2Lob00yZ60Lhrru
-THFdZDfmvvUEHxLV1AtM9HYasNJzttDgAGDxDCJbi836dZF2u9wLnuiBiRwS76iy
-GGCM+b9Jne3yMK29ma0k5JnvUnAUe8dIlV4krrqF7l3jF8ARHdF0mIqBQjuajcNu
-45Hn2EtmxBEJSeTQnpLxKhyVrfcl3r+j1K31Ii/H6Kzhedx6At3lWHfNgqVdnAr1
-XVSqn15BHMOG8hZGFm6HK4Nhp1F7ZV0hRlMuWlcnuJoQ4h1QKURX5uJsvJYk/hdy
-GQQnRkD7Cb6qfENxJsDrbace6ntTV3cS1F7720eF1Gd8Q20/bSP18SyUtFmuYKja
-iqcCHzhlefehic+4i3ht
-=TB+C
------END PGP SIGNATURE-----
+Seems this test is causing us to fall on our face no matter what.
+Likely, best to leave this 2.6.38 blk_unplug crash to one side and
+continue focusing on latest upstream.
 
---=-YejpjQoCUeSYf2NgrExs--
-
+Mike
