@@ -1,56 +1,63 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH] block: change max_segments default to USHRT_MAX
-Date: Tue, 29 Nov 2011 14:33:36 -0500
-Message-ID: <20111129193335.GA6827@redhat.com>
-References: <1322517615-28530-1-git-send-email-snitzer@redhat.com>
- <yq1mxbehkt6.fsf@sermon.lab.mkp.net>
+From: Kamal Mostafa <kamal@canonical.com>
+Subject: Re: [PATCH] deadlock with suspend and quotas
+Date: Tue, 29 Nov 2011 12:00:10 -0800
+Message-ID: <1322596810.27747.42.camel@fourier>
+References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
+	 <20111128150400.GE6366@quack.suse.cz>
+	 <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <yq1mxbehkt6.fsf@sermon.lab.mkp.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: linux-kernel@vger.kernel.org, Jens Axboe <jaxboe@fusionio.com>, Shuichi Ihara <sihara@ddn.com>, dm-devel@redhat.com
+Content-Type: multipart/signed; micalg="pgp-sha256";
+	protocol="application/pgp-signature"; boundary="=-YejpjQoCUeSYf2NgrExs"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Valerie Aurora <val@vaaconsulting.com>
+Cc: Jan Kara <jack@suse.cz>, Mikulas Patocka <mpatocka@redhat.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, Christopher Chaltain <christopher.chaltain@canonical.com>, Surbhi Palande <csurbhi@gmail.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 29 2011 at 12:59pm -0500,
-Martin K. Petersen <martin.petersen@oracle.com> wrote:
 
-> >>>>> "Mike" == Mike Snitzer <snitzer@redhat.com> writes:
-> 
-> Mike> The reported problem was that a DM multipath device's max_segemnts
-> Mike> was constrained to BLK_MAX_SEGMENTS (128) even though the
-> Mike> underlying paths' max_segments were larger.  For example, SCSI
-> Mike> establishes a max_segments of SCSI_MAX_SG_CHAIN_SEGMENTS (2048).
-> 
-> I'd rather that we revisited the patches I posted a while back where we
-> have different defaults for LLDs and stacking drivers.
+--=-YejpjQoCUeSYf2NgrExs
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Don't think I ever saw those patches.  But it isn't immediately clear to
-me why we'd want to have to continue to think in different terms
-depending on whether we're LLD or stacked (especially for max_segments).
+> On Mon, Nov 28, 2011 at 8:04 AM, Jan Kara <jack@suse.cz> wrote:
+> >  Thanks for the patch. I'm aware of the deadlock and Val Henson is work=
+ing
+> > on resolving these types of deadlocks more systematically. [...]
 
-Though I do understand why we need it in some cases, e.g.: the existing
-conflicting default for discard_zeroes_data (block vs DM).  It is
-unfortunate yet necessary given the current limits stacking.
+On Mon, 2011-11-28 at 14:00 -0700, Valerie Aurora wrote:
+> FYI, I no longer have time to consult in addition to my full-time job.
+>  Canonical is taking over this patch set.
 
-(We _could_ make dzd=0 the uniform default if DM were made to look at
-all devices in a table and decide whether dzd should be enabled,
-something like we do for discards with dm_table_supports_discards())
+We've been testing the patch set Val refers to (patches developed by her
+and by Surbhi Palande) within Canonical.  I will resubmit them on their
+behalf within the next day or two.
 
-Thing is we have the block layer doing the stacking of limits.. so
-ideally the stacking drivers wouldn't need to work so hard to keep the
-block layer non-committal on differentiating between LLD vs stacked.
+ -Kamal
 
-I'd imagine your patches will formalize an interface that gets us away
-from what may seem, to the uninitiated, like adhoc twiddling of certain
-limits.
 
-> I'll freshen those up and post them later today.
+--=-YejpjQoCUeSYf2NgrExs
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+Content-Transfer-Encoding: 7bit
 
-Great (please cc dm-devel when you post them).
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
 
-Long story short, I look forward to seeing your patches ;)
+iQIcBAABCAAGBQJO1TnKAAoJEOf3EFVUCeQiFJcP/iSjvaTeiYmhWaMEPd2zYJZU
+9rmRGljOk3yv4vYa1KLRaUor1fBVRjNUkzlNvQ9u4e3SANt5FxEPEew9pmdAq8P7
+pqPpmAGDDUbvtjgRzbKLq9pzSWBrmC+brCspDNpoeKKydisV48UT1gGcub4gmhgY
+Mmlq+xOewlaeclY+BH0mM9Pw8twXbYUc1NlRDEChPaw/r3lm4cHdvAjUE8tJtuJG
+YZZiRXZs1Gpi3nqAv6RaMWL2VAJdcYKKm0uTuakwJx0ENP41L8sdINSA1KOdQur3
+/8q0/QF0Ln8ufu34xvKDCwbpb2xDW3sDdGLW9z+QQIMqHNf9K2Lob00yZ60Lhrru
+THFdZDfmvvUEHxLV1AtM9HYasNJzttDgAGDxDCJbi836dZF2u9wLnuiBiRwS76iy
+GGCM+b9Jne3yMK29ma0k5JnvUnAUe8dIlV4krrqF7l3jF8ARHdF0mIqBQjuajcNu
+45Hn2EtmxBEJSeTQnpLxKhyVrfcl3r+j1K31Ii/H6Kzhedx6At3lWHfNgqVdnAr1
+XVSqn15BHMOG8hZGFm6HK4Nhp1F7ZV0hRlMuWlcnuJoQ4h1QKURX5uJsvJYk/hdy
+GQQnRkD7Cb6qfENxJsDrbace6ntTV3cS1F7720eF1Gd8Q20/bSP18SyUtFmuYKja
+iqcCHzhlefehic+4i3ht
+=TB+C
+-----END PGP SIGNATURE-----
 
-Thanks!
+--=-YejpjQoCUeSYf2NgrExs--
+
