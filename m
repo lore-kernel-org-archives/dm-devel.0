@@ -1,17 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH] deadlock with suspend and quotas
-Date: Mon, 28 Nov 2011 18:32:18 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1111281754120.11895@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
-	<20111128150400.GE6366@quack.suse.cz>
-	<CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
-	<Pine.LNX.4.64.1111281612030.11895@hs20-bc2-1.build.redhat.com>
+From: Frederick Grose <fgrose@gmail.com>
+Subject: Re: DM_snapshot_cow filesystem (dmsetup create snapshot)
+Date: Tue, 29 Nov 2011 01:22:16 -0500
+Message-ID: <CAEcBt+UEJXSY7oK+j0gw9fkzjnWOUcBFhPdXCVFe3HZNh6zOTw@mail.gmail.com>
+References: <4EABE131.8010706@googlemail.com>
+	<20111029204947.GU23336@agk-dp.fab.redhat.com>
+	<CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>
+	<4ED2DF0F.1070108@filteredperception.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============3372351735668760822=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.1111281612030.11895@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <4ED2DF0F.1070108@filteredperception.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,412 +20,294 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Valerie Aurora <val@vaaconsulting.com>
-Cc: Jan Kara <jack@suse.cz>, esandeen@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> Hi
-> 
-> Where can I get that patch set?
-> 
-> We are experiencing other similar deadlocks on RHEL-6, caused by sync or 
-> background writeback (these code paths take s_umount and wait trying to do 
-> I/O), but I wasn't able to reproduce these deadlocks on upstream kernel? 
-> Are there other known deadlock possibilities?
-> 
-> Mikulas
+--===============3372351735668760822==
+Content-Type: multipart/alternative; boundary=bcaec52bf0a37670b404b2d9a659
 
-I found some patch named "[RFC PATCH 1/3] VFS: Fix s_umount thaw/write 
-deadlock" (I couldn't find the next two parts of the patch in the 
-archives). And the patch looks wrong:
+--bcaec52bf0a37670b404b2d9a659
+Content-Type: text/plain; charset=ISO-8859-1
 
-- down_read_trylock(&sb->s_umount) doesn't fix anything. The lock is not 
-held when the filesystem is frozen and it is taken for write when thawing. 
-Consequently, any task can succeed with down_read_trylock(&sb->s_umount) 
-on a frozen filesystem and if this tasks attempts to do an I/O that is 
-waiting for thaw, it may still deadlock.
+On Sun, Nov 27, 2011 at 8:08 PM, Douglas McClendon <
+dmc.lists@filteredperception.org> wrote:
 
-- skipping sync on frozen filesystem violates sync semantics. 
-Applications, such as databases, assume that when sync finishes, data were 
-written to stable storage. If we skip sync when the filesystem is frozen, 
-we can cause data corruption in these applications (if the system crashes 
-after we skipped a sync).
+> On 11/27/2011 04:31 PM, Frederick Grose wrote:
+>
+>> On Sat, Oct 29, 2011 at 4:49 PM, Alasdair G Kergon <agk@redhat.com
+>> <mailto:agk@redhat.com>> wrote:
+>>
+>>    markmc did some code that shows how to read the format a few years
+>>    ago here:
+>>    http://people.gnome.org/~**markmc/code/merge-dm-snapshot.**c<http://people.gnome.org/~markmc/code/merge-dm-snapshot.c>
+>>    <http://people.gnome.org/%**7Emarkmc/code/merge-dm-**snapshot.c<http://people.gnome.org/%7Emarkmc/code/merge-dm-snapshot.c>
+>> >
+>>
+>>
+>>    Otherwise look at dm-snap-persistent.c in the kernel tree.
+>>
+>>    Alasdair
+>>
+>>
+>> Users can easily exhaust a LiveUSB snapshot overlay by writing
+>> too many changes to the OS filesystem, such as by performing
+>> a yum update.
+>>
+>> Would such an 'exhausted' overlay be amenable to some sort of
+>> data recovery or forensics?
+>>
+>> If so, how so; if not, why not?
+>>
+>
+> Can you not mount the exhausted dm snapshot?  If you mean data recovery or
+> forensics beyond that, please elaborate.
+>
+> I know I've had issues 'read-only' mounting ext3(2?3?4?) filesystems
+> before (on actually read-only block devices).  Maybe some flags that I've
+> forgotten get past that, but worst case you can always fake a writable
+> device with a 2nd overlay/snapshot going to a writable device, i.e. if you
+> wanted to let fsck repair things.
+>
+> -dmc
 
-- I'm not sure what userspace quota subsystem will do if we start 
-returning -EBUSY spuriously.
 
-There is another thing --- I wasn't able to reproduce these sync-related 
-deadlocks at all. Did anyone succeeded in reproducing them? Are there any 
-reported deadlocks? When freezing the ext3 or ext4 filesystem, the kernel 
-prevents creating new dirty data, syncs all data, and freezes the 
-filesystem. Consequently, the sync function never finds any dirty data and 
-so it doesn't block (sync doesn't writeback ATIME change, I don't know 
-why).
+A typical scenario goes like this:
 
-I made this patch that fixes the quota issue and possible sync issues. It 
-introduces a function down_read_s_umount(sb); --- this function takes 
-s_umount lock for read, but it waits if the filesystem is suspended.
+A LiveCD is loaded onto a USB device with a relatively small
+persistent overlay and no separate home.img filesystem.  The user
+proceeds to use the system and save some information.  They may
+execute a df command and see that there is lots of space
+available on the rootfs.  Then they decide to execute a yum
+update or yum install when there is insufficient space available.
+(They do not know about dmsetup status.)  Their session will now
+not shutdown normally. dmsetup status now shows
 
-There are three more potentially unsafe users: fs/cachefiles/interface.c, 
-fs/nilfs2/ioctl.c, fs/ubifs/budget.c - I didn't fix them because I can't 
-test them.
+live-rw: 0 8388608 snapshot Invalid.
 
-Mikulas
+The device fails to complete a subsequent boot attempt.  The
+startup log shows
 
----
+mount: /dev/mapper/live-rw: can't read superblock
 
-Fix a s_umount deadlock
+e2fsck /dev/dm-0 shows
 
-The lock s_umount is taken for write and dropped when we freeze and resume
-a block device.
+Buffer I/O error on device dm-0, logical block 0 (and 1, 2, 3, 0)
+e2fsck: Attempt to read block from the filesystem resulted in
+short read while trying to open /dev/dm-0
+Could this be a zero-length partition?
 
-Consequently, if some code holds s_umount and performs an I/O, a deadlock may
-happen if the device is suspended.
+I recreated the above scenario on Fedora-16-Live-Desktop
+installed with an overlay-size-mb of 100.  After updating to ~70%
+of the overlay, I wrote with
+dd if=/dev/zero of=/boot/load bs=1M count=10
+3 times to exhaust the overlay.
 
-Unfortunatelly, it seems that developers are not aware of this restriction
-that I/O must not be peformed with s_umount held.
+With the defective device mounted on a good system, and loop
+devices set up for ext3fs.img and the overlay file,
 
-These deadlocks were observed:
-* lvcreate process: sys_ioctl -> do_vfs_ioctl -> vfs_ioctl -> dm_ctl_ioctl ->
-  ctl_ioctl -> dev_suspend -> dm_resume -> unlock_fs -> thaw_bdev ->
-  call_rwsem_down_write_failed (the process is trying to resume frozen device, 
-  but it is waiting trying to acquire s_umount)
-* quota: sys_quotactl -> do_quotactl -> vfs_get_dqblk -> dqget ->
-  ext4_acquire_dquot -> ext4_journal_start_sb -> jbd2_journal_start ->
-  start_this_handle (the process is holding s_umount and trying to perform
-  a transaction, waiting for the device being unfrozen)
+dmsetup create item --table "0 8388608 snapshot 7:1 7:2 P 8"
+reports
+item: 0 8388608 snapshot Invalid
 
-* iozone process: sys_sync -> sync_filesystems -> __sync_filesystem ->
-  writeback_inodes_sb -> writeback_inodes_sb_nr -> wait_for_completion
-  (the process is holding s_umount for read and trying to perform some I/O)
-* flush-253:3: kthread -> bdi_start_fn -> bdi_writeback_task ->
-  wb_do_writeback -> wb_writeback -> writeback_sb_inodes ->
-  writeback_single_inode -> do_writepages -> ext4_da_writepages ->
-  ext4_journal_start_sb -> jbd2_journal_start -> start_this_handle
-  (holding s_umount for read too, acquired in writeback_inodes_wb,
-  and trying to perform I/O)
-* lvcreate process: sys_ioctl -> do_vfs_ioctl -> vfs_ioctl -> dm_ctl_ioctl ->
-  ctl_ioctl -> dev_suspend -> dm_resume -> unlock_fs -> thaw_bdev ->
-  call_rwsem_down_write_failed (just like in a previous case: trying to
-  resume frozen device, waiting on s_umount)
+e2fsck /dev/dm-0 reports
 
-This patch fixes these observed code paths:
-* introduce a function to safely take s_unlock - down_read_s_umount. It takes
-  the lock, check if a filesystem is frozen, if it is, drops the lock and
-  waits for unfreeze.
-* get_super function has a parameter, if the parameter is true, it waits for
-  the device to unfreeze (it fixes quota deadlock and a possible deadlock in
-  fsync_bdev and __invalidate_device)
-* the same for iterate_supers (it fixes the sync deadlock and a possible
-  deadlock in drop_caches_sysctl_handler)
-* grab_super_passive fails if the device is suspended (fixes the inode writeback
-  deadlock and a possible deadlock in prune_super)
+e2fsck 1.41.14 (22-Dec-2010)
+e2fsck: Attempt to read block from filesystem resulted in short
+read while trying to open /dev/dm-0
+Could this be a zero-length partition?
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-CC: stable@kernel.org
+A hex editor view of the overlay file shows lots of content with
+lots of zeros at the end of the file.
 
----
- fs/block_dev.c           |    6 +++---
- fs/buffer.c              |    2 +-
- fs/drop_caches.c         |    2 +-
- fs/fs-writeback.c        |    8 ++++++++
- fs/quota/quota.c         |    4 ++--
- fs/super.c               |   29 ++++++++++++++++++++---------
- fs/sync.c                |    4 ++--
- include/linux/fs.h       |   28 +++++++++++++++++++++++++---
- security/selinux/hooks.c |    2 +-
- 9 files changed, 63 insertions(+), 22 deletions(-)
+My questions are these:
 
-Index: linux-3.2-rc3-fast/fs/quota/quota.c
-===================================================================
---- linux-3.2-rc3-fast.orig/fs/quota/quota.c	2011-11-25 05:51:13.000000000 +0100
-+++ linux-3.2-rc3-fast/fs/quota/quota.c	2011-11-25 05:51:36.000000000 +0100
-@@ -59,7 +59,7 @@ static int quota_sync_all(int type)
- 		return -EINVAL;
- 	ret = security_quotactl(Q_SYNC, type, 0, NULL);
- 	if (!ret)
--		iterate_supers(quota_sync_one, &type);
-+		iterate_supers(quota_sync_one, &type, true);
- 	return ret;
- }
- 
-@@ -310,7 +310,7 @@ static struct super_block *quotactl_bloc
- 	putname(tmp);
- 	if (IS_ERR(bdev))
- 		return ERR_CAST(bdev);
--	sb = get_super(bdev);
-+	sb = get_super(bdev, true);
- 	bdput(bdev);
- 	if (!sb)
- 		return ERR_PTR(-ENODEV);
-Index: linux-3.2-rc3-fast/include/linux/fs.h
-===================================================================
---- linux-3.2-rc3-fast.orig/include/linux/fs.h	2011-11-25 05:51:13.000000000 +0100
-+++ linux-3.2-rc3-fast/include/linux/fs.h	2011-11-25 05:56:03.000000000 +0100
-@@ -10,6 +10,7 @@
- #include <linux/ioctl.h>
- #include <linux/blk_types.h>
- #include <linux/types.h>
-+#include <linux/sched.h>
- 
- /*
-  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
-@@ -1502,6 +1503,26 @@ enum {
- 	wait_event((sb)->s_wait_unfrozen, ((sb)->s_frozen < (level)))
- 
- /*
-+ * Take s_umount and make sure that the filesystem is not frozen.
-+ * This function must be used if we intend to perform any I/O while
-+ * holding s_umount.
-+ *
-+ * s_umount is taken for write when resuming a frozen filesystem,
-+ * thus if someone calls down_read(&s->s_umount) and performs any I/O,
-+ * it may deadlock.
-+ */
-+static inline void down_read_s_umount(struct super_block *sb)
-+{
-+retry:
-+	down_read(&sb->s_umount);
-+	if (unlikely(sb->s_frozen != SB_UNFROZEN)) {
-+		up_write(&sb->s_umount);
-+		vfs_check_frozen(sb, SB_FREEZE_WRITE);
-+		goto retry;
-+	}
-+}
-+
-+/*
-  * until VFS tracks user namespaces for inodes, just make all files
-  * belong to init_user_ns
-  */
-@@ -2528,13 +2549,14 @@ extern int generic_block_fiemap(struct i
- extern void get_filesystem(struct file_system_type *fs);
- extern void put_filesystem(struct file_system_type *fs);
- extern struct file_system_type *get_fs_type(const char *name);
--extern struct super_block *get_super(struct block_device *);
-+extern struct super_block *get_super(struct block_device *, bool);
- extern struct super_block *get_active_super(struct block_device *bdev);
- extern struct super_block *user_get_super(dev_t);
- extern void drop_super(struct super_block *sb);
--extern void iterate_supers(void (*)(struct super_block *, void *), void *);
-+extern void iterate_supers(void (*)(struct super_block *, void *), void *, bool);
- extern void iterate_supers_type(struct file_system_type *,
--			        void (*)(struct super_block *, void *), void *);
-+			        void (*)(struct super_block *, void *), void *,
-+				bool);
- 
- extern int dcache_dir_open(struct inode *, struct file *);
- extern int dcache_dir_close(struct inode *, struct file *);
-Index: linux-3.2-rc3-fast/fs/buffer.c
-===================================================================
---- linux-3.2-rc3-fast.orig/fs/buffer.c	2011-11-25 05:51:13.000000000 +0100
-+++ linux-3.2-rc3-fast/fs/buffer.c	2011-11-25 05:51:36.000000000 +0100
-@@ -571,7 +571,7 @@ static void do_thaw_one(struct super_blo
- 
- static void do_thaw_all(struct work_struct *work)
- {
--	iterate_supers(do_thaw_one, NULL);
-+	iterate_supers(do_thaw_one, NULL, false);
- 	kfree(work);
- 	printk(KERN_WARNING "Emergency Thaw complete\n");
- }
-Index: linux-3.2-rc3-fast/fs/super.c
-===================================================================
---- linux-3.2-rc3-fast.orig/fs/super.c	2011-11-25 05:51:13.000000000 +0100
-+++ linux-3.2-rc3-fast/fs/super.c	2011-11-29 00:16:01.000000000 +0100
-@@ -337,7 +337,7 @@ bool grab_super_passive(struct super_blo
- 	spin_unlock(&sb_lock);
- 
- 	if (down_read_trylock(&sb->s_umount)) {
--		if (sb->s_root)
-+		if (sb->s_frozen == SB_UNFROZEN && sb->s_root)
- 			return true;
- 		up_read(&sb->s_umount);
- 	}
-@@ -503,7 +503,7 @@ void sync_supers(void)
- 			sb->s_count++;
- 			spin_unlock(&sb_lock);
- 
--			down_read(&sb->s_umount);
-+			down_read_s_umount(sb);
- 			if (sb->s_root && sb->s_dirt)
- 				sb->s_op->write_super(sb);
- 			up_read(&sb->s_umount);
-@@ -527,7 +527,8 @@ void sync_supers(void)
-  *	Scans the superblock list and calls given function, passing it
-  *	locked superblock and given argument.
-  */
--void iterate_supers(void (*f)(struct super_block *, void *), void *arg)
-+void iterate_supers(void (*f)(struct super_block *, void *), void *arg,
-+		    bool wait_for_unfreeze)
- {
- 	struct super_block *sb, *p = NULL;
- 
-@@ -538,7 +539,10 @@ void iterate_supers(void (*f)(struct sup
- 		sb->s_count++;
- 		spin_unlock(&sb_lock);
- 
--		down_read(&sb->s_umount);
-+		if (!wait_for_unfreeze)
-+			down_read(&sb->s_umount);
-+		else
-+			down_read_s_umount(sb);
- 		if (sb->s_root)
- 			f(sb, arg);
- 		up_read(&sb->s_umount);
-@@ -563,7 +567,8 @@ void iterate_supers(void (*f)(struct sup
-  *	locked superblock and given argument.
-  */
- void iterate_supers_type(struct file_system_type *type,
--	void (*f)(struct super_block *, void *), void *arg)
-+	void (*f)(struct super_block *, void *), void *arg,
-+	bool wait_for_unfreeze)
- {
- 	struct super_block *sb, *p = NULL;
- 
-@@ -572,7 +577,10 @@ void iterate_supers_type(struct file_sys
- 		sb->s_count++;
- 		spin_unlock(&sb_lock);
- 
--		down_read(&sb->s_umount);
-+		if (!wait_for_unfreeze)
-+			down_read(&sb->s_umount);
-+		else
-+			down_read_s_umount(sb);
- 		if (sb->s_root)
- 			f(sb, arg);
- 		up_read(&sb->s_umount);
-@@ -597,7 +605,7 @@ EXPORT_SYMBOL(iterate_supers_type);
-  *	mounted on the device given. %NULL is returned if no match is found.
-  */
- 
--struct super_block *get_super(struct block_device *bdev)
-+struct super_block *get_super(struct block_device *bdev, bool wait_for_unfreeze)
- {
- 	struct super_block *sb;
- 
-@@ -612,7 +620,10 @@ rescan:
- 		if (sb->s_bdev == bdev) {
- 			sb->s_count++;
- 			spin_unlock(&sb_lock);
--			down_read(&sb->s_umount);
-+			if (wait_for_unfreeze)
-+				down_read_s_umount(sb);
-+			else
-+				down_read(&sb->s_umount);
- 			/* still alive? */
- 			if (sb->s_root)
- 				return sb;
-@@ -672,7 +683,7 @@ rescan:
- 		if (sb->s_dev ==  dev) {
- 			sb->s_count++;
- 			spin_unlock(&sb_lock);
--			down_read(&sb->s_umount);
-+			down_read_s_umount(sb);
- 			/* still alive? */
- 			if (sb->s_root)
- 				return sb;
-Index: linux-3.2-rc3-fast/fs/sync.c
-===================================================================
---- linux-3.2-rc3-fast.orig/fs/sync.c	2011-11-25 05:51:13.000000000 +0100
-+++ linux-3.2-rc3-fast/fs/sync.c	2011-11-25 05:51:36.000000000 +0100
-@@ -89,7 +89,7 @@ static void sync_one_sb(struct super_blo
-  */
- static void sync_filesystems(int wait)
- {
--	iterate_supers(sync_one_sb, &wait);
-+	iterate_supers(sync_one_sb, &wait, true);
- }
- 
- /*
-@@ -144,7 +144,7 @@ SYSCALL_DEFINE1(syncfs, int, fd)
- 		return -EBADF;
- 	sb = file->f_dentry->d_sb;
- 
--	down_read(&sb->s_umount);
-+	down_read_s_umount(sb);
- 	ret = sync_filesystem(sb);
- 	up_read(&sb->s_umount);
- 
-Index: linux-3.2-rc3-fast/fs/block_dev.c
-===================================================================
---- linux-3.2-rc3-fast.orig/fs/block_dev.c	2011-11-25 05:51:13.000000000 +0100
-+++ linux-3.2-rc3-fast/fs/block_dev.c	2011-11-25 05:51:36.000000000 +0100
-@@ -222,7 +222,7 @@ EXPORT_SYMBOL(sync_blockdev);
-  */
- int fsync_bdev(struct block_device *bdev)
- {
--	struct super_block *sb = get_super(bdev);
-+	struct super_block *sb = get_super(bdev, true);
- 	if (sb) {
- 		int res = sync_filesystem(sb);
- 		drop_super(sb);
-@@ -256,7 +256,7 @@ struct super_block *freeze_bdev(struct b
- 		 * to freeze_bdev grab an active reference and only the last
- 		 * thaw_bdev drops it.
- 		 */
--		sb = get_super(bdev);
-+		sb = get_super(bdev, false);
- 		drop_super(sb);
- 		mutex_unlock(&bdev->bd_fsfreeze_mutex);
- 		return sb;
-@@ -1658,7 +1658,7 @@ EXPORT_SYMBOL(lookup_bdev);
- 
- int __invalidate_device(struct block_device *bdev, bool kill_dirty)
- {
--	struct super_block *sb = get_super(bdev);
-+	struct super_block *sb = get_super(bdev, true);
- 	int res = 0;
- 
- 	if (sb) {
-Index: linux-3.2-rc3-fast/fs/drop_caches.c
-===================================================================
---- linux-3.2-rc3-fast.orig/fs/drop_caches.c	2011-11-25 05:51:13.000000000 +0100
-+++ linux-3.2-rc3-fast/fs/drop_caches.c	2011-11-25 05:51:36.000000000 +0100
-@@ -59,7 +59,7 @@ int drop_caches_sysctl_handler(ctl_table
- 		return ret;
- 	if (write) {
- 		if (sysctl_drop_caches & 1)
--			iterate_supers(drop_pagecache_sb, NULL);
-+			iterate_supers(drop_pagecache_sb, NULL, true);
- 		if (sysctl_drop_caches & 2)
- 			drop_slab();
- 	}
-Index: linux-3.2-rc3-fast/security/selinux/hooks.c
-===================================================================
---- linux-3.2-rc3-fast.orig/security/selinux/hooks.c	2011-11-25 05:51:13.000000000 +0100
-+++ linux-3.2-rc3-fast/security/selinux/hooks.c	2011-11-25 05:51:36.000000000 +0100
-@@ -5693,7 +5693,7 @@ void selinux_complete_init(void)
- 
- 	/* Set up any superblocks initialized prior to the policy load. */
- 	printk(KERN_DEBUG "SELinux:  Setting up existing superblocks.\n");
--	iterate_supers(delayed_superblock_init, NULL);
-+	iterate_supers(delayed_superblock_init, NULL, true);
- }
- 
- /* SELinux requires early initialization in order to label
-Index: linux-3.2-rc3-fast/fs/fs-writeback.c
-===================================================================
---- linux-3.2-rc3-fast.orig/fs/fs-writeback.c	2011-11-29 00:09:30.000000000 +0100
-+++ linux-3.2-rc3-fast/fs/fs-writeback.c	2011-11-29 00:12:49.000000000 +0100
-@@ -1273,6 +1273,10 @@ int writeback_inodes_sb_if_idle(struct s
- {
- 	if (!writeback_in_progress(sb->s_bdi)) {
- 		down_read(&sb->s_umount);
-+		if (unlikely(sb->s_frozen != SB_UNFROZEN)) {
-+			up_read(&sb->s_umount);
-+			return 0;
-+		}
- 		writeback_inodes_sb(sb, reason);
- 		up_read(&sb->s_umount);
- 		return 1;
-@@ -1295,6 +1299,10 @@ int writeback_inodes_sb_nr_if_idle(struc
- {
- 	if (!writeback_in_progress(sb->s_bdi)) {
- 		down_read(&sb->s_umount);
-+		if (unlikely(sb->s_frozen != SB_UNFROZEN)) {
-+			up_read(&sb->s_umount);
-+			return 0;
-+		}
- 		writeback_inodes_sb_nr(sb, nr, reason);
- 		up_read(&sb->s_umount);
- 		return 1;
+Might there be a way to edit the overlay file to restore its
+utility for the information written before the damaging write?
+
+If so, how so; if not, why not?
+
+Suitable references would do as well.
+
+Thanks!       --Fred
+
+--bcaec52bf0a37670b404b2d9a659
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div class=3D"gmail_quote">On Sun, Nov 27, 2011 at 8:08 PM, Douglas McClend=
+on <span dir=3D"ltr">&lt;<a href=3D"mailto:dmc.lists@filteredperception.org=
+">dmc.lists@filteredperception.org</a>&gt;</span> wrote:<br><blockquote cla=
+ss=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;pa=
+dding-left:1ex;">
+
+<div class=3D"im">On 11/27/2011 04:31 PM, Frederick Grose wrote:<br>
+</div><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-l=
+eft:1px #ccc solid;padding-left:1ex"><div class=3D"im">
+On Sat, Oct 29, 2011 at 4:49 PM, Alasdair G Kergon &lt;<a href=3D"mailto:ag=
+k@redhat.com" target=3D"_blank">agk@redhat.com</a><br></div><div class=3D"i=
+m">
+&lt;mailto:<a href=3D"mailto:agk@redhat.com" target=3D"_blank">agk@redhat.c=
+om</a>&gt;&gt; wrote:<br>
+<br>
+ =A0 =A0markmc did some code that shows how to read the format a few years<=
+br>
+ =A0 =A0ago here:<br>
+ =A0 =A0<a href=3D"http://people.gnome.org/~markmc/code/merge-dm-snapshot.c=
+" target=3D"_blank">http://people.gnome.org/~<u></u>markmc/code/merge-dm-sn=
+apshot.<u></u>c</a><br></div>
+ =A0 =A0&lt;<a href=3D"http://people.gnome.org/%7Emarkmc/code/merge-dm-snap=
+shot.c" target=3D"_blank">http://people.gnome.org/%<u></u>7Emarkmc/code/mer=
+ge-dm-<u></u>snapshot.c</a>&gt;<div class=3D"im"><br>
+<br>
+ =A0 =A0Otherwise look at dm-snap-persistent.c in the kernel tree.<br>
+<br>
+ =A0 =A0Alasdair<br>
+<br>
+<br>
+Users can easily exhaust a LiveUSB snapshot overlay by writing<br>
+too many changes to the OS filesystem, such as by performing<br>
+a yum update.<br>
+<br>
+Would such an &#39;exhausted&#39; overlay be amenable to some sort of<br>
+data recovery or forensics?<br>
+<br>
+If so, how so; if not, why not?<br>
+</div></blockquote>
+<br>
+Can you not mount the exhausted dm snapshot? =A0If you mean data recovery o=
+r forensics beyond that, please elaborate.<br>
+<br>
+I know I&#39;ve had issues &#39;read-only&#39; mounting ext3(2?3?4?) filesy=
+stems before (on actually read-only block devices). =A0Maybe some flags tha=
+t I&#39;ve forgotten get past that, but worst case you can always fake a wr=
+itable device with a 2nd overlay/snapshot going to a writable device, i.e. =
+if you wanted to let fsck repair things.<br>
+
+
+<br>
+-dmc</blockquote><div><br></div><div><font face=3D"&#39;courier new&#39;, m=
+onospace">A typical scenario goes like this:</font></div><div><font face=3D=
+"&#39;courier new&#39;, monospace"><br></font></div><div><font face=3D"&#39=
+;courier new&#39;, monospace">A LiveCD is loaded onto a USB device with a r=
+elatively small</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">persistent overlay and=
+ no separate home.img filesystem. =A0The user</font></div><div><font face=
+=3D"&#39;courier new&#39;, monospace">proceeds to use the system and save s=
+ome information. =A0They may</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">execute a df command a=
+nd see that there is lots of space</font></div><div><font face=3D"&#39;cour=
+ier new&#39;, monospace">available on the rootfs. =A0Then they decide to ex=
+ecute a yum</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">update or yum install =
+when there is insufficient space available.</font></div><div><font face=3D"=
+&#39;courier new&#39;, monospace">(They do not know about dmsetup status.) =
+=A0Their session will now</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">not shutdown normally.=
+ dmsetup status now shows</font></div><div><font face=3D"&#39;courier new&#=
+39;, monospace"><br></font></div><div><font face=3D"&#39;courier new&#39;, =
+monospace">live-rw: 0 8388608 snapshot Invalid.</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace"><br></font></div><div>=
+<font face=3D"&#39;courier new&#39;, monospace">The device fails to complet=
+e a subsequent boot attempt. =A0The</font></div><div><font face=3D"&#39;cou=
+rier new&#39;, monospace">startup log shows</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace"><br></font></div><div>=
+<font face=3D"&#39;courier new&#39;, monospace">mount: /dev/mapper/live-rw:=
+ can&#39;t read superblock</font></div><div><font face=3D"&#39;courier new&=
+#39;, monospace"><br>
+
+</font></div><div><font face=3D"&#39;courier new&#39;, monospace">e2fsck /d=
+ev/dm-0 shows</font></div><div><font face=3D"&#39;courier new&#39;, monospa=
+ce"><br></font></div><div><font face=3D"&#39;courier new&#39;, monospace">B=
+uffer I/O error on device dm-0, logical block 0 (and 1, 2, 3, 0)</font></di=
+v>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">e2fsck: Attempt to rea=
+d block from the filesystem resulted in</font></div><div><font face=3D"&#39=
+;courier new&#39;, monospace">short read while trying to open /dev/dm-0</fo=
+nt></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">Could this be a zero-l=
+ength partition?</font></div><div><font face=3D"&#39;courier new&#39;, mono=
+space"><br></font></div><div><font face=3D"&#39;courier new&#39;, monospace=
+">I recreated the above scenario on Fedora-16-Live-Desktop</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">installed with an over=
+lay-size-mb of 100. =A0After updating to ~70%</font></div><div><font face=
+=3D"&#39;courier new&#39;, monospace">of the overlay, I wrote with</font></=
+div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">dd if=3D/dev/zero of=
+=3D/boot/load bs=3D1M count=3D10</font></div><div><font face=3D"&#39;courie=
+r new&#39;, monospace">3 times to exhaust the overlay.</font></div><div><fo=
+nt face=3D"&#39;courier new&#39;, monospace"><br>
+
+</font></div><div><font face=3D"&#39;courier new&#39;, monospace">With the =
+defective device mounted on a good system, and loop</font></div><div><font =
+face=3D"&#39;courier new&#39;, monospace">devices set up for ext3fs.img and=
+ the overlay file,</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace"><br></font></div><div>=
+<font face=3D"&#39;courier new&#39;, monospace">dmsetup create item --table=
+ &quot;0 8388608 snapshot 7:1 7:2 P 8&quot;</font></div><div><font face=3D"=
+&#39;courier new&#39;, monospace">reports</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">item: 0 8388608 snapsh=
+ot Invalid</font></div><div><font face=3D"&#39;courier new&#39;, monospace"=
+><br></font></div><div><font face=3D"&#39;courier new&#39;, monospace">e2fs=
+ck /dev/dm-0 reports</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace"><br></font></div><div>=
+<font face=3D"&#39;courier new&#39;, monospace"><div>e2fsck 1.41.14 (22-Dec=
+-2010)</div><div>e2fsck: Attempt to read block from filesystem resulted in =
+short</div>
+
+<div>read while trying to open /dev/dm-0</div><div>Could this be a zero-len=
+gth partition?</div><div><br></div></font></div><div><font face=3D"&#39;cou=
+rier new&#39;, monospace">A hex editor view of the overlay file shows lots =
+of content with</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace">lots of zeros at the e=
+nd of the file.</font></div><div><font face=3D"&#39;courier new&#39;, monos=
+pace"><br></font></div><div><font face=3D"&#39;courier new&#39;, monospace"=
+>My questions are these:</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace"><br></font></div><div>=
+<font face=3D"&#39;courier new&#39;, monospace">Might there be a way to edi=
+t the overlay=A0</font><span style=3D"font-family: &#39;courier new&#39;, m=
+onospace; ">file to restore its</span></div>
+
+<div><span style=3D"font-family: &#39;courier new&#39;, monospace; ">utilit=
+y for the information written before=A0</span><span style=3D"font-family: &=
+#39;courier new&#39;, monospace; ">the damaging write?</span></div><div><fo=
+nt face=3D"&#39;courier new&#39;, monospace"><br>
+
+</font></div><div><font face=3D"&#39;courier new&#39;, monospace">If so, ho=
+w so; if not, why not?</font></div><div><font face=3D"&#39;courier new&#39;=
+, monospace"><br></font></div><div><font face=3D"&#39;courier new&#39;, mon=
+ospace">Suitable references would do as well.</font></div>
+
+<div><font face=3D"&#39;courier new&#39;, monospace"><br></font></div><div>=
+<font face=3D"&#39;courier new&#39;, monospace">Thanks! =A0 =A0 =A0 --Fred<=
+/font></div><div><span style=3D"font-family: &#39;courier new&#39;, monospa=
+ce; "><br>
+
+</span></div><div><font face=3D"&#39;courier new&#39;, monospace"><br></fon=
+t></div></div>
+
+--bcaec52bf0a37670b404b2d9a659--
+
+
+--===============3372351735668760822==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============3372351735668760822==--
