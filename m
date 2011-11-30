@@ -1,78 +1,38 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: [dm-devel] [PATCH] deadlock with suspend and quotas
-Date: Wed, 30 Nov 2011 11:34:23 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.1111301123320.5759@hs20-bc2-1.build.redhat.com>
+Date: Wed, 30 Nov 2011 11:36:11 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1111301134450.5759@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
  <20111128150400.GE6366@quack.suse.cz> <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
  <Pine.LNX.4.64.1111281612030.11895@hs20-bc2-1.build.redhat.com>
  <Pine.LNX.4.64.1111281754120.11895@hs20-bc2-1.build.redhat.com>
  <20111129101901.GA5635@quack.suse.cz> <20111130133332.GV7595@agk-dp.fab.redhat.com>
+ <20111130134834.GW7595@agk-dp.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20111130133332.GV7595@agk-dp.fab.redhat.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20111130134834.GW7595@agk-dp.fab.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Alasdair G Kergon <agk@redhat.com>
 Cc: Jan Kara <jack@suse.cz>, esandeen@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>, Valerie Aurora <val@vaaconsulting.com>
 List-Id: dm-devel.ids
 
 On Wed, 30 Nov 2011, Alasdair G Kergon wrote:
 
-> On Tue, Nov 29, 2011 at 11:19:01AM +0100, Jan Kara wrote:
-> > On Mon 28-11-11 18:32:18, Mikulas Patocka wrote:
-> > > - skipping sync on frozen filesystem violates sync semantics. 
-> > > Applications, such as databases, assume that when sync finishes, data were 
-> > > written to stable storage. If we skip sync when the filesystem is frozen, 
-> > > we can cause data corruption in these applications (if the system crashes 
-> > > after we skipped a sync).
-> 
-> >   Here I don't agree. Filesystem must guarantee there are no dirty data on
-> > a frozen filesystem. Ext4 and XFS do this, ext3 would need proper
-> > page_mkwrite() implementation for this but that's the problem of ext3, not
-> > freezing code in general. If there are no dirty data, sync code (and also
-> > flusher thread) is free to return without doing anything.
+> On Wed, Nov 30, 2011 at 01:33:32PM +0000, Alasdair G Kergon wrote:
+> > Have I missed something in this
+> > reasoning, Mikulas?
 >  
-> Consider, during a 'create a snapshot' operation:
->    I/O flow:  application -> filesystem -> LV -> disk
-> 
-> dm lockfs is issued by LVM.
->   When this returns, the filesystem should be locked i.e. not issue any
->   further I/O to the LV.  (But if it did happen to issue I/O, it
->   wouldn't be a problem, as it would just get queued by dm and have no
->   impact on the snapshot creation operation.)
-> 
-> The application is still running and might still be issuing writes to
-> the filesystem and might itself issue 'sync'.  But a 'sync' would only
-> be meaningful for already-completed writes and the lockfs process should
-> have already seen that they have hit disk.  So a sync issued while a
-> device is locked can always be skipped.  Have I missed something in this
-> reasoning, Mikulas?
+> Ah - counter-example: mmap?
+> So sync might indeed be required to block on the filesystem iff there
+> are newly-dirtied pages.
 > 
 > Alasdair
 
-You can't skip sync.
+On non-journaled filesystem, both write and mmap can create dirty pages 
+when suspended.
 
-The problem is this (assume that you have non-journaled filesystem):
-
-- A process issues a write() call. The write call goes to 
-__generic_file_aio_write, suppose that the process goes immediatelly after 
-"vfs_check_frozen(inode->i_sb, SB_FREEZE_WRITE);" and then is rescheduled.
-
-- You suspend the filesystem
-
-- A process that issued write() is scheduled to run, note that it already 
-passed "vfs_check_frozen", so it goes on even on syspended filesystem. 
-This process creates a dirty page in the page cache.
-
-- The process eventually returns to userspace from the write() syscall, 
-the filesystem is still suspended. write() doesn't guarantee that the data 
-hit disk, so there is no problem so far.
-
-- The applications calls sync. Now, if you skip sync on the suspended 
-filesystem, you violate sync semantics: when a process calls write() and 
-sync(), it can assume that data are written to stable storage.
-
-So, in order to keep sync working, you must wait for the filesystem to 
-thaw and then write the dirty data.
+On ext4 I actually tested mmap, but it blocks any writes to mmaped pages 
+while suspended.
 
 Mikulas
