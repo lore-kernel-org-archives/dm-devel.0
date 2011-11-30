@@ -1,43 +1,48 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: DM_snapshot_cow filesystem (dmsetup create snapshot)
-Date: Wed, 30 Nov 2011 22:03:00 +0000
-Message-ID: <20111130220259.GA7595@agk-dp.fab.redhat.com>
-References: <4EABE131.8010706@googlemail.com>
-	<20111029204947.GU23336@agk-dp.fab.redhat.com>
-	<CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>
-	<4ED2DF0F.1070108@filteredperception.org>
-	<CAEcBt+UEJXSY7oK+j0gw9fkzjnWOUcBFhPdXCVFe3HZNh6zOTw@mail.gmail.com>
-	<4ED59040.50406@filteredperception.org>
-	<CAEcBt+XxVh8b=TJu-Z+3XBL=K6LUhs2QZyeZKGMGh_Lp+UBGbA@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [RESEND][PATCH 4/4] scsi_dh: code cleanup and remove the
+ references to scsi_dev_info
+Date: Wed, 30 Nov 2011 17:52:11 -0500
+Message-ID: <20111130225211.GA18168@redhat.com>
+References: <47D23AD8469A2B448F33C24BD7A39BD9105DBE66@RTPMVEXC1-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAEcBt+XxVh8b=TJu-Z+3XBL=K6LUhs2QZyeZKGMGh_Lp+UBGbA@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+In-Reply-To: <47D23AD8469A2B448F33C24BD7A39BD9105DBE66@RTPMVEXC1-PRD.hq.netapp.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Moger, Babu" <Babu.Moger@netapp.com>
+Cc: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, hare@suse.de
 List-Id: dm-devel.ids
 
-On Wed, Nov 30, 2011 at 04:48:05PM -0500, Frederick Grose wrote:
-> snapshot Invalid  does seem to prevent even read-only access.
+On Thu, Nov 03 2011 at 11:52am -0400,
+Moger, Babu <Babu.Moger@netapp.com> wrote:
 
-Indeed - once it's invalid, that's the end of it.
-If we didn't do that, changes to areas of the origin that hadn't already
-changed would start to appear in the 'snapshot' and the snapshot would become a
-nonsensical hybrid of the two devices containing no information about which
-parts of it got corrupted.
+> All the handlers have implemented the match function(look at patch 1, 2, 3).
+> We don't need to use scsi_dev_info any more for matching purposes.
+> Cleaning up the scsi_dh code.
+> 
+> FYI..
+> Match function was originally implemented by this 
+> 
+> http://www.spinics.net/lists/linux-scsi/msg54284.html
+> or
+> http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-2.6.git;a=commit;h=6c3633d08acf514e2e89aa95d2346ce9d64d719a
+> 
+> Signed-off-by: Babu Moger <babu.moger@netapp.com>
 
-Don't allow your snapshots to run out of space!
-If you want to see what you can recover, use that code I mentioned earlier.
+Looks good, effectively reverts commit 940d7faa481
 
-Alasdair
+But SCSI_DEVINFO_DH can be removed too:
+
+diff --git a/drivers/scsi/scsi_priv.h b/drivers/scsi/scsi_priv.h
+index a6ebf4c..1fbf7c7 100644
+--- a/drivers/scsi/scsi_priv.h
++++ b/drivers/scsi/scsi_priv.h
+@@ -44,7 +44,6 @@ static inline void scsi_log_completion(struct scsi_cmnd *cmd, int disposition)
+ enum {
+ 	SCSI_DEVINFO_GLOBAL = 0,
+ 	SCSI_DEVINFO_SPI,
+-	SCSI_DEVINFO_DH,
+ };
+ 
+ extern int scsi_get_device_flags(struct scsi_device *sdev,
