@@ -1,80 +1,41 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH - v2] DM RAID: 'rebuild' parameter code should be
- setting MD_CHANGE_DEVS
-Date: Tue, 29 Nov 2011 17:27:28 -0600
-Message-ID: <1322609248.20158.20.camel@f14.redhat.com>
-References: <1322510465.20158.2.camel@f14.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH] deadlock with suspend and quotas
+Date: Wed, 30 Nov 2011 01:52:22 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.1111300143340.31264@hs20-bc2-1.build.redhat.com>
+References: <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
+ <Pine.LNX.4.64.1111281612030.11895@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1111281754120.11895@hs20-bc2-1.build.redhat.com>
+ <20111129101901.GA5635@quack.suse.cz> <20111129102156.GA7463@quack.suse.cz>
+ <Pine.LNX.4.64.1111290556270.12274@hs20-bc2-1.build.redhat.com>
+ <20111129111136.GC5635@quack.suse.cz> <Pine.LNX.4.64.1111290746230.10352@hs20-bc2-1.build.redhat.com>
+ <20111129130913.GE5635@quack.suse.cz> <20111129131811.GS7595@agk-dp.fab.redhat.com>
+ <20111129133239.GA9926@quack.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1322510465.20158.2.camel@f14.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20111129133239.GA9926@quack.suse.cz>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: Alasdair G Kergon <agk@redhat.com>, esandeen@redhat.com, Surbhi Palande <csurbhi@gmail.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>, Valerie Aurora <val@vaaconsulting.com>
 List-Id: dm-devel.ids
 
-Changes from previous:
-- Add missing '{'
-- Change comments to emphasize bug fix
+> > dm-ioctl.h:
+> > /*
+> >  * Set this to avoid attempting to freeze any filesystem when suspending.
+> >  */
+> > #define DM_SKIP_LOCKFS_FLAG     (1 << 10) /* In */
+>   Thanks. I was now checking in detail and indeed FIFREEZE fails if
+> ->freeze_fs is not set. And only xfs, ext3, ext4, reiserfs, jfs, nilfs2,
+> and gfs2 provide this function. So I was correct in assuming that when
+> filesystem supports FIFREEZE it must make sure no modifications happen to
+> the filesystem. So I believe that my original plan for sync to skip frozen
+> filesystem is correct.
+> 
+> 								Honza
 
- brassow
+LVM doesn't suspend with FIFREEZE, it calls freeze_bdev directly from 
+drivers/md/dm.c (and it works for all filesystems, including ext2). So if 
+you skip sync of frozen filesystems, you introduce a data corruption if 
+someone takes a snapshot of ext2.
 
-dm-raid: 'rebuild' parameter code should be setting MD_CHANGE_DEVS
-
-The 'rebuild' parameter is used to rebuild individual devices in an array.
-(Resynchronize a RAID1 device or recalculate a parity device in higher RAID,
-for example.)  The MD_CHANGE_DEVS flag must be set when this parameter is
-given in order to write out the superblocks and make the change take immediate
-effect.
-
-So, we need MD_CHANGE_DEVS to be set and the 'FirstUse' flag was being set as
-a special case for rebuilds in super_init_validation.  The code that handles
-new devices in super_load already sets MD_CHANGE_DEVS and 'FirstUse'.  Adding
-a condition for rebuilds in super_load takes care of both flags without a need
-for the special case in 'super_init_validation'.
-
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-
-Index: linux-upstream/drivers/md/dm-raid.c
-===================================================================
---- linux-upstream.orig/drivers/md/dm-raid.c
-+++ linux-upstream/drivers/md/dm-raid.c
-@@ -667,7 +667,14 @@ static int super_load(struct md_rdev *rd
- 		return ret;
- 
- 	sb = page_address(rdev->sb_page);
--	if (sb->magic != cpu_to_le32(DM_RAID_MAGIC)) {
-+
-+	/*
-+	 * Two cases that we want to write new superblocks and rebuild:
-+	 * 1) New device (no matching magic number)
-+	 * 2) Device specified for rebuild (!In_sync w/ offset == 0)
-+	 */
-+	if ((sb->magic != cpu_to_le32(DM_RAID_MAGIC)) ||
-+	    (!test_bit(In_sync, &rdev->flags) && !rdev->recovery_offset)) {
- 		super_sync(rdev->mddev, rdev);
- 
- 		set_bit(FirstUse, &rdev->flags);
-@@ -744,11 +751,8 @@ static int super_init_validation(struct 
- 	 */
- 	rdev_for_each(r, t, mddev) {
- 		if (!test_bit(In_sync, &r->flags)) {
--			if (!test_bit(FirstUse, &r->flags))
--				DMERR("Superblock area of "
--				      "rebuild device %d should have been "
--				      "cleared.", r->raid_disk);
--			set_bit(FirstUse, &r->flags);
-+			DMINFO("Device %d specified for rebuild: "
-+			       "Clearing superblock", r->raid_disk);
- 			rebuilds++;
- 		} else if (test_bit(FirstUse, &r->flags))
- 			new_devs++;
+Mikulas
