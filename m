@@ -1,31 +1,46 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [dm-devel] [PATCH] deadlock with suspend and quotas
-Date: Wed, 30 Nov 2011 13:05:14 +0000
-Message-ID: <20111130130514.GU7595@agk-dp.fab.redhat.com>
-References: <20111129102156.GA7463@quack.suse.cz> <Pine.LNX.4.64.1111290556270.12274@hs20-bc2-1.build.redhat.com> <20111129111136.GC5635@quack.suse.cz> <Pine.LNX.4.64.1111290746230.10352@hs20-bc2-1.build.redhat.com> <20111129130913.GE5635@quack.suse.cz> <20111129131811.GS7595@agk-dp.fab.redhat.com> <20111129133239.GA9926@quack.suse.cz> <Pine.LNX.4.64.1111300143340.31264@hs20-bc2-1.build.redhat.com> <20111130111657.GA4541@quack.suse.cz> <Pine.LNX.4.64.1111300700190.27712@hs20-bc2-1.build.redhat.com>
+Date: Wed, 30 Nov 2011 13:33:32 +0000
+Message-ID: <20111130133332.GV7595@agk-dp.fab.redhat.com>
+References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com> <20111128150400.GE6366@quack.suse.cz> <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com> <Pine.LNX.4.64.1111281612030.11895@hs20-bc2-1.build.redhat.com> <Pine.LNX.4.64.1111281754120.11895@hs20-bc2-1.build.redhat.com> <20111129101901.GA5635@quack.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1111300700190.27712@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>, Jan Kara <jack@suse.cz>, Alasdair G Kergon <agk@redhat.com>, esandeen@redhat.com, Surbhi Palande <csurbhi@gmail.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>, Valerie Aurora <val@vaaconsulting.com>
+In-Reply-To: <20111129101901.GA5635@quack.suse.cz>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: esandeen@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>, Valerie Aurora <val@vaaconsulting.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 30, 2011 at 07:14:18AM -0500, Mikulas Patocka wrote:
-> On Wed, 30 Nov 2011, Jan Kara wrote:
-> > > So if you skip sync of frozen filesystems, you introduce a data
-> > > corruption if someone takes a snapshot of ext2.
-> >   Yes, because ext2 cannot really be frozen, it is (errorneously) marked
-> > as such but it is not frozen...
+On Tue, Nov 29, 2011 at 11:19:01AM +0100, Jan Kara wrote:
+> On Mon 28-11-11 18:32:18, Mikulas Patocka wrote:
+> > - skipping sync on frozen filesystem violates sync semantics. 
+> > Applications, such as databases, assume that when sync finishes, data were 
+> > written to stable storage. If we skip sync when the filesystem is frozen, 
+> > we can cause data corruption in these applications (if the system crashes 
+> > after we skipped a sync).
 
-This is just getting into semantics.  AFAIK (and it was before my involvement)
-LVM used the term 'lockfs' for this operation when it was introduced to ext2.
-It later got renamed in-kernel to 'frozen' to bring it into line with newer
-filesystems.  But userspace and the interface still retain the original
-'lockfs' name.
+>   Here I don't agree. Filesystem must guarantee there are no dirty data on
+> a frozen filesystem. Ext4 and XFS do this, ext3 would need proper
+> page_mkwrite() implementation for this but that's the problem of ext3, not
+> freezing code in general. If there are no dirty data, sync code (and also
+> flusher thread) is free to return without doing anything.
+ 
+Consider, during a 'create a snapshot' operation:
+   I/O flow:  application -> filesystem -> LV -> disk
 
-There is no further I/O sent to the filesystem during the 'lockfs' operation:
-LVM uses dm to block that.
+dm lockfs is issued by LVM.
+  When this returns, the filesystem should be locked i.e. not issue any
+  further I/O to the LV.  (But if it did happen to issue I/O, it
+  wouldn't be a problem, as it would just get queued by dm and have no
+  impact on the snapshot creation operation.)
+
+The application is still running and might still be issuing writes to
+the filesystem and might itself issue 'sync'.  But a 'sync' would only
+be meaningful for already-completed writes and the lockfs process should
+have already seen that they have hit disk.  So a sync issued while a
+device is locked can always be skipped.  Have I missed something in this
+reasoning, Mikulas?
 
 Alasdair
