@@ -1,39 +1,53 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH] deadlock with suspend and quotas
-Date: Wed, 30 Nov 2011 14:09:13 +0000
-Message-ID: <20111130140913.GX7595@agk-dp.fab.redhat.com>
-References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com> <20111128150400.GE6366@quack.suse.cz> <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com> <Pine.LNX.4.64.1111281612030.11895@hs20-bc2-1.build.redhat.com> <Pine.LNX.4.64.1111281754120.11895@hs20-bc2-1.build.redhat.com> <20111129101901.GA5635@quack.suse.cz>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] dm-mpath: Clear map_context pointer when
+	requeuing
+Date: Wed, 30 Nov 2011 15:25:18 +0100
+Message-ID: <1322663118-53387-1-git-send-email-hare__49283.5031044253$1322664209$gmane$org@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20111129101901.GA5635@quack.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: esandeen@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>, Valerie Aurora <val@vaaconsulting.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Resent-Message-ID: <20111130144110.GA13739@redhat.com>
+Resent-To: dm-devel@redhat.com
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-scsi@vger.kernel.org
+Cc: Mike Snitzer <snitzer@redhat.com>, James Bottomley <jbottomley@parallels.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 29, 2011 at 11:19:01AM +0100, Jan Kara wrote:
-> So I believe the consensus was that we should not block sync or flusher
+When requeing a request we should be clearing the map_context
+pointer, otherwise we might access an invalid memory location.
 
-Consensus where?
+Cc: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Tested-by: Heiko Carstens <heiko.carstens@de.ibm.com>
+---
+ drivers/md/dm-mpath.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
 
-> thread on frozen filesystem. Firstly, it's kind of ugly from user
-> perspective (you cannot sync filesystems on your system while one
-> filesystem is frozen???), secondly, in case of flusher thread it has some
-> serious implications if there are more filesystems on the same device - you
-> would effectively stop any writeback to the device possibly hanging the
-> whole system due to dirty limit being exceeded. So at least in these two
-> cases we should just ignore frozen filesystem.
-
-The sync only needs to block on a particular fs if there is data to flush.
-
-A sync that originated in a way that can only be independent of any
-application that is changing the fs may skip that fs if it is frozen.
-
-It's the user's responsibility only to freeze filesystems for very brief
-periods of time if they are still being changed.
-
-?
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 5e0090e..e6fad46 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -920,8 +920,10 @@ static int multipath_map(struct dm_target *ti, struct request *clone,
+ 	map_context->ptr = mpio;
+ 	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
+ 	r = map_io(m, clone, mpio, 0);
+-	if (r < 0 || r == DM_MAPIO_REQUEUE)
++	if (r < 0 || r == DM_MAPIO_REQUEUE) {
+ 		mempool_free(mpio, m->mpio_pool);
++		map_context->ptr = NULL;
++	}
  
-Alasdair
+ 	return r;
+ }
+-- 
+1.6.0.2
