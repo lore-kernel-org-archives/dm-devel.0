@@ -1,85 +1,60 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [GIT PULL] Queue free fix (was Re: [PATCH] block: Free queue
- resources at blk_release_queue())
-Date: Wed, 30 Nov 2011 08:25:02 +0100
-Message-ID: <4ED5DA4E.5060500@suse.de>
-References: <20111031100557.GA2621@osiris.boeblingen.de.ibm.com> <1320057746.2964.1.camel@dabdike> <4EAE8A7E.8000504@ce.jp.nec.com> <20111031130004.GB4768@osiris.boeblingen.de.ibm.com> <20111103182548.GA12131@redhat.com> <20111104091936.GB2397@osiris.boeblingen.de.ibm.com> <4EBA49C2.1000704@suse.de> <20111110161008.GA15659@osiris.boeblingen.de.ibm.com> <20111117162919.GA3812@redhat.com> <20111129120047.GA2456@osiris.boeblingen.de.ibm.com> <20111129201803.GB6827@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [dm-devel] [PATCH] deadlock with suspend and quotas
+Date: Wed, 30 Nov 2011 12:16:57 +0100
+Message-ID: <20111130111657.GA4541@quack.suse.cz>
+References: <Pine.LNX.4.64.1111281754120.11895@hs20-bc2-1.build.redhat.com>
+ <20111129101901.GA5635@quack.suse.cz>
+ <20111129102156.GA7463@quack.suse.cz>
+ <Pine.LNX.4.64.1111290556270.12274@hs20-bc2-1.build.redhat.com>
+ <20111129111136.GC5635@quack.suse.cz>
+ <Pine.LNX.4.64.1111290746230.10352@hs20-bc2-1.build.redhat.com>
+ <20111129130913.GE5635@quack.suse.cz>
+ <20111129131811.GS7595@agk-dp.fab.redhat.com>
+ <20111129133239.GA9926@quack.suse.cz>
+ <Pine.LNX.4.64.1111300143340.31264@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20111129201803.GB6827@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Heiko Carstens <heiko.carstens@de.ibm.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Steffen Maier <maier@linux.vnet.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, Linux Kernel <linux-kernel@vger.kernel.org>, Alan Stern <stern@rowland.harvard.edu>, Thadeu Lima de Souza Cascardo <cascardo@linux.vnet.ibm.com>, "Taraka R. Bodireddy" <tarak.reddy@in.ibm.com>, "Seshagiri N. Ippili" <seshagiri.ippili@in.ibm.com>, "Manvanthara B. Puttashankar" <mputtash@in.ibm.com>, Jeff Moyer <jmoyer@redhat.com>, Shaohua Li <shaohua.li@intel.com>, gmuelas@de.ibm.com, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1111300143340.31264@hs20-bc2-1.build.redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jan Kara <jack@suse.cz>, Alasdair G Kergon <agk@redhat.com>, esandeen@redhat.com, Surbhi Palande <csurbhi@gmail.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>, Valerie Aurora <val@vaaconsulting.com>
 List-Id: dm-devel.ids
 
-On 11/29/2011 09:18 PM, Mike Snitzer wrote:
-> On Tue, Nov 29 2011 at  7:00am -0500,
-> Heiko Carstens <heiko.carstens@de.ibm.com> wrote:
->=20
->>>>> Hmm. Just to be on the safe side, could you try this one:
->>>>>
->>>>> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
->>>>> index 5e0090e..e6fad46 100644
->>>>> --- a/drivers/md/dm-mpath.c
->>>>> +++ b/drivers/md/dm-mpath.c
->>>>> @@ -920,8 +920,10 @@ static int multipath_map(struct dm_target *t=
-i,
->>>>> struct reque
->>>>> st *clone,
->>>>>         map_context->ptr =3D mpio;
->>>>>         clone->cmd_flags |=3D REQ_FAILFAST_TRANSPORT;
->>>>>         r =3D map_io(m, clone, mpio, 0);
->>>>> -       if (r < 0 || r =3D=3D DM_MAPIO_REQUEUE)
->>>>> +       if (r < 0 || r =3D=3D DM_MAPIO_REQUEUE) {
->>>>>                 mempool_free(mpio, m->mpio_pool);
->>>>> +               map_context->ptr =3D NULL;
->>>>> +       }
->>>>>
->>>>>         return r;
->>>>>  }
->>>>
->>>> With your patch we haven't been able to reproduce the kernel crash=
- until now.
->>>> Now we "only" run into I/O stalls, which before your patch we also=
- did. But
->>>> repeatedly rebooting and retrying and ignoring the I/O stalls alwa=
-ys lead to
->>>> a crash.
->>>> Gonzalo will run a couple of extra rounds so we can have a feeling=
- if at least
->>>> one of the bugs could be fixed with your patch ;)
->>>
->>> Hi,
->>>
->>> Any update after further testing with Hannes' patch?
->>
->> Sorry for the late update, our internal IBM IMAP servers have been d=
-own
->> for nearly a week :/
->>
->> So, we were unable to reproduce the original bug with the patch appl=
-ied
->> during various runs.
->=20
-> OK, so it seems to be a benenficial change (and obviously correct to
-> me).  Hannes, care to formally post your fix to dm-devel so we can ge=
-t
-> it in 3.2-rc?
->=20
-Yep, will do.
+On Wed 30-11-11 01:52:22, Mikulas Patocka wrote:
+> > > dm-ioctl.h:
+> > > /*
+> > >  * Set this to avoid attempting to freeze any filesystem when suspending.
+> > >  */
+> > > #define DM_SKIP_LOCKFS_FLAG     (1 << 10) /* In */
+> >   Thanks. I was now checking in detail and indeed FIFREEZE fails if
+> > ->freeze_fs is not set. And only xfs, ext3, ext4, reiserfs, jfs, nilfs2,
+> > and gfs2 provide this function. So I was correct in assuming that when
+> > filesystem supports FIFREEZE it must make sure no modifications happen to
+> > the filesystem. So I believe that my original plan for sync to skip frozen
+> > filesystem is correct.
+> > 
+> > 								Honza
+> 
+> LVM doesn't suspend with FIFREEZE, it calls freeze_bdev directly from 
+> drivers/md/dm.c (and it works for all filesystems, including ext2).
+  Ah, I see. Sorry I missed this. But then I can only reiterate that
+drivers/md/dm.c is IMHO broken. Either it cares about filesystem being
+really frozen - and then it should refuse the operation for e.g. ext2
+because it cannot be frozen - or it does not care about filesystem being
+frozen and then there's no point in calling freeze_super(). Possibly, you
+might still want to e.g. try snapshotting even if freeze_super() would
+return EOPNOTSUPP but that should be handled inside dm, not by errorneously
+marking filesystem as frozen when it is not. Or am I still missing
+something?
 
-Cheers,
+> So if you skip sync of frozen filesystems, you introduce a data
+> corruption if someone takes a snapshot of ext2.
+  Yes, because ext2 cannot really be frozen, it is (errorneously) marked
+as such but it is not frozen...
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
