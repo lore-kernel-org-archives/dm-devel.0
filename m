@@ -1,76 +1,99 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: dm-mpath: Clear map_context pointer when requeuing
-Date: Fri, 02 Dec 2011 17:19:27 +0100
-Message-ID: <4ED8FA8F.20109@suse.de>
-References: <1322663118-53387-1-git-send-email-hare@suse.de> <20111130144951.GA13775@redhat.com> <4ED6C67A.3060305@ce.jp.nec.com>
+From: "wzpywzh"<wzpywzh@163.com>
+Subject: a problem when i use dm_io
+Date: Thu, 1 Dec 2011 23:15:14 +0800
+Message-ID: <2d44a0a7.1ccf.133fa3183e2.Coremail.wzpywzh@163.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4ED6C67A.3060305@ce.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, James Bottomley <jbottomley@parallels.com>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="===============3861015191592630038=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Jun'ichi,
+--===============3861015191592630038==
+Content-Type: multipart/alternative;
+	boundary="__=_Part_Boundary_005_003713.019604"
 
-On 12/01/2011 01:12 AM, Jun'ichi Nomura wrote:
-> Hi Hannes,
->=20
-> On 11/30/11 23:49, Mike Snitzer wrote:
->> On Wed, Nov 30 2011 at  9:25am -0500,
->> Hannes Reinecke <hare@suse.de> wrote:
->>
->>> When requeing a request we should be clearing the map_context
->>> pointer, otherwise we might access an invalid memory location.
->=20
-> Could you elaborate on the mechanism how the map_context->ptr
-> (=3D mpio) is accessed after freeing it?
->=20
-In short: No. Pure guesswork :-)
+--__=_Part_Boundary_005_003713.019604
+Content-Type: text/plain;
+	charset="UTF-8"
+Content-Transfer-Encoding: base64
 
-The longer answer here is that 'map_context' is managed by the
-caller for multipath_map().
-So in theory the caller is free to re-use the map_context whenever
-'clone' is in use.
-So if 'clone' is terminated when it's still requeued the caller
-might be calling multipath_end_io(), at which point map_context->ptr
-will be pointing to an invalid memory location.
+aGksIGFsbA0KaSBhbSBpbnRlcmVzdGVkIGluIGZhY2Vib29rIGZsYXNoY2FjaGUsd2hpY2ggdXNl
+cyBkZXZpY2UgbWFwcGVyIHRvIG1ha2Ugc3NkIGFzIGEgZGlzayBjYWNoZSwgaSB3YW50IHRvIGFk
+ZCBzb21lIGZ1bmN0aW9ucyBpbiBpdCwgc28gaSBtb2RpZnkgc29tZSBjb2Rlcy4gYnV0IHdoZW4g
+aSB1c2UgZG1faW9fYXN5bmNfYnZlYygxLCAmam9iLT5jYWNoZSwgV1JJVEUsYmlvLT5iaV9pb192
+ZWMsYmlvLT5iaV9pZHgsIGlvX2NhbGxiYWNrLCBrY2FjaGVkX2pvYikgICh0aGUgcGFyYW1zIGlz
+IGFsbCByaWdodClzdWJtaXQgYSBiaW8uIA0KaXQgZG9lcyBub3QgY2FsbCB0aGUgaW9fY2FsbGJh
+Y2sgZnVuY3Rpb24uIGkgdXNlIHN5c3RlbXRhcCB0byB0cmFjZSB0aGUgZnVuY3Rpb24uIHRoZSBy
+ZXN1bHQgbGlrZSB0aGlzOihzb21ldGltZXMgaXM6IGVudGVyIGRtX2lvX2FzeW5jX2J2ZWM7IGVu
+dGVyIHN1Ym1pdF9iaW87IGVudGVyIGdlbmVyaWNfbWFrZV9yZXF1ZXN0LCBnZW5lcmljX21ha2Vf
+cmVxdWVzdCByZXR1cm4sIHN1Ym1pdF9iaW8gcmV0dXJuLCBkbV9pb19hc3luY19idmVjIHJldHVy
+bi4gIHNvbWV0aW1lcyBpcyA6ZW50ZXIgZG1faW9fYXN5bmNfYnZlYzsgZW50ZXIgc3VibWl0X2Jp
+bzsgZW50ZXIgZ2VuZXJpY19tYWtlX3JlcXVlc3QsICBkbV9pb19hc3luY19idmVjIHJldHVybikg
+IA0KaXQgZG8gbm90IGtub3cgd2h5LCBhbmQgd2h5IGl0IGRpZCBub3QgY2FsbCB0aGUgaW9fY2Fs
+bGJhY2suDQoNCnRoYW5rcy4NCg0KMjAxMS0xMi0wMQ0KDQoNCg0Kd3pweXd6aA==
+--__=_Part_Boundary_005_003713.019604
+Content-Type: text/html;
+	charset="UTF-8"
+Content-Transfer-Encoding: base64
 
-But as I said, this is not a detailed analysis. It's good enough
-for me that it solves the problem :-)
+PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMCBUcmFuc2l0aW9uYWwv
+L0VOIj4NCjxIVE1MPjxIRUFEPg0KPE1FVEEgY29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXV0
+Zi04IiBodHRwLWVxdWl2PWNvbnRlbnQtdHlwZT4NCjxTVFlMRSB0eXBlPXRleHQvY3NzPg0KYm9k
+eSB7Zm9udC1zaXplOjEycHQ7IGZvbnQtZmFtaWx5OnNpbXN1bixzZXJpZjt9DQo8L1NUWUxFPg0K
+PCEtLSBmbGFzaG1haWwgc3R5bGUgYmVnaW4gLS0+DQo8U1RZTEUgdHlwZT10ZXh0L2Nzcz4gPCEt
+LUBpbXBvcnQgdXJsKEQ6XFByb2dyYW0gRmlsZXNcTmV0ZWFzZVznvZHmmJPpl6rnlLXpgq5cXGRh
+dGFcc2Nyb2xsYmFyLmNzcyk7IC0tPg0KYmxvY2txdW90ZSB7bWFyZ2luLXRvcDowOyBtYXJnaW4t
+Ym90dG9tOjA7IG1hcmdpbi1sZWZ0OjJlbTt9DQpvbCx1bCB7bWFyZ2luLXRvcDowOyBtYXJnaW4t
+Ym90dG9tOjA7fQ0KcCB7bWFyZ2luOjA7IHBhZGRpbmc6MDt9DQpib2R5IHtwYWRkaW5nOjA7IG1h
+cmdpbjowO30NCjwvU1RZTEU+DQo8QkFTRSB0YXJnZXQ9X2JsYW5rPjwhLS0gZmxhc2htYWlsIHN0
+eWxlIGVuZCAtLT4NCjxNRVRBIG5hbWU9R0VORVJBVE9SIGNvbnRlbnQ9Ik1TSFRNTCA5LjAwLjgx
+MTIuMTY0MzciPjwvSEVBRD4NCjxCT0RZIA0Kc3R5bGU9IkxJTkUtSEVJR0hUOiAxLjM7IEJPUkRF
+Ui1SSUdIVC1XSURUSDogMHB4OyBNQVJHSU46IDEycHg7IEJPUkRFUi1UT1AtV0lEVEg6IDBweDsg
+Qk9SREVSLUJPVFRPTS1XSURUSDogMHB4OyBCT1JERVItTEVGVC1XSURUSDogMHB4Ij48U1RBVElP
+TkVSWT4NCjxESVY+DQo8RElWPjxGT05UIGNvbG9yPSMwMDAwMDAgc2l6ZT0zIGZhY2U95a6L5L2T
+PmhpLCA8L0ZPTlQ+YWxsPC9ESVY+DQo8RElWIHN0eWxlPSJURVhULUlOREVOVDogMmVtIj5pIGFt
+IGludGVyZXN0ZWQgaW4gZmFjZWJvb2sgZmxhc2hjYWNoZSx3aGljaCB1c2VzIA0KZGV2aWNlIG1h
+cHBlciB0byBtYWtlIHNzZCBhcyBhIGRpc2sgY2FjaGUsIGkgd2FudCB0byBhZGQgc29tZSBmdW5j
+dGlvbnMgaW4gaXQsIA0Kc28gaSBtb2RpZnkgc29tZSBjb2Rlcy4gYnV0IHdoZW4gaSB1c2UgZG1f
+aW9fYXN5bmNfYnZlYygxLCAmYW1wO2pvYi0mZ3Q7Y2FjaGUsIA0KV1JJVEUsYmlvLSZndDtiaV9p
+b192ZWMsYmlvLSZndDtiaV9pZHgsIGlvX2NhbGxiYWNrLCBrY2FjaGVkX2pvYikmbmJzcDsgKHRo
+ZSANCnBhcmFtcyBpcyBhbGwgcmlnaHQpc3VibWl0IGEgYmlvLiA8L0RJVj4NCjxESVYgc3R5bGU9
+IlRFWFQtSU5ERU5UOiAyZW0iPml0IGRvZXMgbm90IGNhbGwgdGhlIGlvX2NhbGxiYWNrIGZ1bmN0
+aW9uLiBpIHVzZSANCnN5c3RlbXRhcCB0byB0cmFjZSB0aGUgZnVuY3Rpb24uJm5ic3A7dGhlIHJl
+c3VsdCBsaWtlIHRoaXM6KHNvbWV0aW1lcyBpczogZW50ZXIgDQpkbV9pb19hc3luY19idmVjOyZu
+YnNwO2VudGVyIHN1Ym1pdF9iaW87Jm5ic3A7ZW50ZXIgZ2VuZXJpY19tYWtlX3JlcXVlc3QsIA0K
+Z2VuZXJpY19tYWtlX3JlcXVlc3QgcmV0dXJuLCBzdWJtaXRfYmlvIHJldHVybiwmbmJzcDtkbV9p
+b19hc3luY19idmVjIA0KcmV0dXJuLiZuYnNwOyBzb21ldGltZXMgaXMmbmJzcDs6ZW50ZXIgZG1f
+aW9fYXN5bmNfYnZlYzsmbmJzcDtlbnRlciBzdWJtaXRfYmlvOyANCmVudGVyIGdlbmVyaWNfbWFr
+ZV9yZXF1ZXN0LCZuYnNwOyBkbV9pb19hc3luY19idmVjIHJldHVybikmbmJzcDsgPC9ESVY+DQo8
+RElWIHN0eWxlPSJURVhULUlOREVOVDogMmVtIj5pdCBkbyBub3Qga25vdyB3aHksIGFuZCB3aHkg
+aXQgZGlkIG5vdCBjYWxsIHRoZSANCmlvX2NhbGxiYWNrLjwvRElWPg0KPERJVj4mbmJzcDs8L0RJ
+Vj4NCjxESVY+dGhhbmtzLjwvRElWPg0KPERJVj48Rk9OVCBjb2xvcj0jMDAwMDAwIHNpemU9MyBm
+YWNlPeWui+S9kz48L0ZPTlQ+Jm5ic3A7PC9ESVY+DQo8RElWIGFsaWduPWxlZnQ+PEZPTlQgY29s
+b3I9I2MwYzBjMCBzaXplPTIgDQpmYWNlPVZlcmRhbmE+MjAxMS0xMi0wMTwvRk9OVD48L0RJVj48
+Rk9OVCBzaXplPTIgZmFjZT1WZXJkYW5hPg0KPEhSIHN0eWxlPSJXSURUSDogMTIycHg7IEhFSUdI
+VDogMnB4IiBpZD1TaWduTmFtZUhSIGFsaWduPWxlZnQgU0laRT0yPg0KDQo8RElWPjxGT05UIGNv
+bG9yPSNjMGMwYzAgc2l6ZT0yIGZhY2U9VmVyZGFuYT48U1BBTiANCmlkPV9GbGFzaFNpZ25OYW1l
+Pnd6cHl3emg8L1NQQU4+PC9GT05UPjwvRElWPjwvRk9OVD48L0RJVj48L1NUQVRJT05FUlk+PC9C
+T0RZPjwvSFRNTD4=
+--__=_Part_Boundary_005_003713.019604--
 
-> mpio is known to be non-NULL where it is used. So clearing the pointe=
-r
-> should not make any difference in logic.
->=20
-It does, see above.
 
-> If this is a preventive change so that we can see NULL dereference
-> instead of random invalid access if anything happens, it should be
-> noted in the patch description and in the code.
-> Otherwise, somebody looking at the code/change in future might be
-> confused: "why we have to clear this pointer?"
->=20
-> And there are other places where mpio is freed.
-> (E.g. in dispatch_queued_ios() in dm-mpath.c)
-> Don't we need the same change there?
->=20
-I don't think so. It's just from multipath_map() where we need to
-ensure map_context->ptr is correct. All the other places will not
-touch the map_context->ptr again.
+--===============3861015191592630038==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Cheers,
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--===============3861015191592630038==--
