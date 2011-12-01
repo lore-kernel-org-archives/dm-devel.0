@@ -1,49 +1,59 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: DM_snapshot_cow filesystem (dmsetup create snapshot)
-Date: Thu, 1 Dec 2011 14:12:36 +0000
-Message-ID: <20111201141236.GB7595@agk-dp.fab.redhat.com>
-References: <4EABE131.8010706@googlemail.com>
-	<20111029204947.GU23336@agk-dp.fab.redhat.com>
-	<CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>
-	<4ED2DF0F.1070108@filteredperception.org>
-	<CAEcBt+UEJXSY7oK+j0gw9fkzjnWOUcBFhPdXCVFe3HZNh6zOTw@mail.gmail.com>
-	<4ED59040.50406@filteredperception.org>
-	<CAEcBt+XxVh8b=TJu-Z+3XBL=K6LUhs2QZyeZKGMGh_Lp+UBGbA@mail.gmail.com>
-	<20111130220259.GA7595@agk-dp.fab.redhat.com>
-	<4ED6BD81.4090609@filteredperception.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@netapp.com>
+Subject: [PATCH v3 1/4] scsi_dh_emc: Adding the match function for emc device handler
+Date: Thu, 1 Dec 2011 15:01:16 -0500
+Message-ID: <47D23AD8469A2B448F33C24BD7A39BD910AB8F8F@RTPMVEXC1-PRD.hq.netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4ED6BD81.4090609@filteredperception.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Douglas McClendon <dmc.lists@filteredperception.org>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-class: urn:content-classes:message
+Sender: linux-scsi-owner@vger.kernel.org
+To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
+Cc: device-mapper development <dm-devel@redhat.com>, hare@suse.de, Mike Snitzer <snitzer@redhat.com>, JBottomley@Parallels.com
 List-Id: dm-devel.ids
 
-On Wed, Nov 30, 2011 at 05:34:25PM -0600, Douglas McClendon wrote:
-> So wouldn't it be much better as far as the user is concerned if, the  
-> instant a snapshot reached capacity, it fell over into a read-only state  
-> (instead of being marked invalid?), such that further corruption beyond  
+This patch introduces the match function for emc device handler.
+Included check for TPGS bit before proceeding further.
+The match function was introduced by this patch
+http://www.spinics.net/lists/linux-scsi/msg54284.html
 
-That would mean your *origin* device becoming read-only as well.
+Signed-off-by: Babu Moger <babu.moger@netapp.com>
+Acked-by: Hannes Reinecke <hare@suse.de>
+---
+--- linux-3.2-rc2/drivers/scsi/device_handler/scsi_dh_emc.c.orig	2011-11-15 11:02:59.000000000 -0600
++++ linux-3.2-rc2/drivers/scsi/device_handler/scsi_dh_emc.c	2011-11-19 10:46:12.000000000 -0600
+@@ -629,6 +629,24 @@ static const struct scsi_dh_devlist clar
+ 	{NULL, NULL},
+ };
+ 
++static bool clariion_match(struct scsi_device *sdev)
++{
++	int i;
++
++	if (scsi_device_tpgs(sdev))
++		return false;
++
++	for (i = 0; clariion_dev_list[i].vendor; i++) {
++		if (!strncmp(sdev->vendor, clariion_dev_list[i].vendor,
++			strlen(clariion_dev_list[i].vendor)) &&
++		    !strncmp(sdev->model, clariion_dev_list[i].model,
++			strlen(clariion_dev_list[i].model))) {
++			return true;
++		}
++	}
++	return false;
++}
++
+ static int clariion_bus_attach(struct scsi_device *sdev);
+ static void clariion_bus_detach(struct scsi_device *sdev);
+ 
+@@ -642,6 +660,7 @@ static struct scsi_device_handler clarii
+ 	.activate	= clariion_activate,
+ 	.prep_fn	= clariion_prep_fn,
+ 	.set_params	= clariion_set_params,
++	.match		= clariion_match,
+ };
+ 
+ static int clariion_bus_attach(struct scsi_device *sdev)
 
-It's been discussed before.  Nobody has been motivated to write the code,
-as there's no need for it on a properly-managed system.
 
-If you care enough about your snapshot contents, then surely you
-would be monitoring it to make sure it doesn't fill up - and if you're
-going to run out of space and can't expand, you would shut down your system
-yourself in a *controlled* way *before* running out of space!
-
-Alasdair
