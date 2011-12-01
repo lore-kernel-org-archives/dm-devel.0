@@ -1,63 +1,61 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: RE: [RESEND][PATCH 4/4] scsi_dh: code cleanup and remove the references to scsi_dev_info
-Date: Wed, 30 Nov 2011 18:20:39 -0500
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD910AB8C13@RTPMVEXC1-PRD.hq.netapp.com>
-References: <47D23AD8469A2B448F33C24BD7A39BD9105DBE66@RTPMVEXC1-PRD.hq.netapp.com> <20111130225211.GA18168@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [dm-devel] [PATCH] deadlock with suspend and quotas
+Date: Thu, 1 Dec 2011 01:03:13 +0100
+Message-ID: <20111201000313.GG4541@quack.suse.cz>
+References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
+ <20111128150400.GE6366@quack.suse.cz>
+ <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
+ <Pine.LNX.4.64.1111281612030.11895@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1111281754120.11895@hs20-bc2-1.build.redhat.com>
+ <20111129101901.GA5635@quack.suse.cz>
+ <20111130140913.GX7595@agk-dp.fab.redhat.com>
+ <Pine.LNX.4.64.1111301136360.5759@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="Windows-1252"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-class: urn:content-classes:message
-In-Reply-To: <20111130225211.GA18168@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, hare@suse.de
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1111301136360.5759@hs20-bc2-1.build.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, Jan Kara <jack@suse.cz>, esandeen@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>, Valerie Aurora <val@vaaconsulting.com>
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: Mike Snitzer [mailto:snitzer@redhat.com]
-> Sent: Wednesday, November 30, 2011 4:52 PM
-> To: Moger, Babu
-> Cc: Linux SCSI Mailing list; device-mapper development; hare@suse.de
-> Subject: Re: [RESEND][PATCH 4/4] scsi_dh: code cleanup and remove the
-> references to scsi_dev_info
+On Wed 30-11-11 11:53:40, Mikulas Patocka wrote:
 > 
-> On Thu, Nov 03 2011 at 11:52am -0400,
-> Moger, Babu <Babu.Moger@netapp.com> wrote:
 > 
-> > All the handlers have implemented the match function(look at patch 1,
-> 2, 3).
-> > We don't need to use scsi_dev_info any more for matching purposes.
-> > Cleaning up the scsi_dh code.
-> >
-> > FYI..
-> > Match function was originally implemented by this
-> >
-> > http://www.spinics.net/lists/linux-scsi/msg54284.html
-> > or
-> > http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-
-> 2.6.git;a=commit;h=6c3633d08acf514e2e89aa95d2346ce9d64d719a
-> >
-> > Signed-off-by: Babu Moger <babu.moger@netapp.com>
+> On Wed, 30 Nov 2011, Alasdair G Kergon wrote:
 > 
-> Looks good, effectively reverts commit 940d7faa481
+> > On Tue, Nov 29, 2011 at 11:19:01AM +0100, Jan Kara wrote:
+> > > So I believe the consensus was that we should not block sync or flusher
 > 
-> But SCSI_DEVINFO_DH can be removed too:
+> Well, I think that not blocking sync actually doesn't help at all.
+> 
+> Suppose at first that you have a perfectly-barriered filesystem --- that 
+> is filesystem, that contains barriers around all code paths that could 
+> possibly create dirty data. In this case it is impossible to have dirty 
+> data while the filesystem is suspended. --- In this case you can call 
+> sync on suspened filesystem as much as you like, sync never finds ady 
+> dirty data, consequently it never tries to write anything and it can't 
+> deadlock. So skipping sync has no effect.
+> 
+> Suppose as a second case that you have imperfectly-barriered filesystem 
+> --- that means there exists a code path that creates dirty data while the 
+> filesystem is suspended. In this case if you skip sync, you are violating 
+> sync semantics, because the application can create dirty data while 
+> suspended, call sync while still suspended and assume that the dirty data 
+> was written.
+  Except that currently we are in situation c) with e.g. ext4 and xfs. We
+have perfectly-barriered filesystem *but* there are dirty bits set in this
+filesystem although we are certain there are no dirty data. This
+inconsistency between dirty bits and fact whether a page contains dirty
+data is due to way how page faults are handled. I've already tried to
+explain this in this thread in https://lkml.org/lkml/2011/11/29/109 but
+apparently I failed. I can try to explain it once more but in fact I don't
+think this technical detail makes a difference in this discussion. So in our
+situation c) skipping sync makes difference and does not break guarantees
+sync should have.
 
-Looks good. I missed it. Thanks Mike..I can resend this patch 4/4.
-
- 
-> diff --git a/drivers/scsi/scsi_priv.h b/drivers/scsi/scsi_priv.h
-> index a6ebf4c..1fbf7c7 100644
-> --- a/drivers/scsi/scsi_priv.h
-> +++ b/drivers/scsi/scsi_priv.h
-> @@ -44,7 +44,6 @@ static inline void scsi_log_completion(struct
-> scsi_cmnd *cmd, int disposition)
->  enum {
->  	SCSI_DEVINFO_GLOBAL = 0,
->  	SCSI_DEVINFO_SPI,
-> -	SCSI_DEVINFO_DH,
->  };
-> 
->  extern int scsi_get_device_flags(struct scsi_device *sdev,
+								Honza
+-- 
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
