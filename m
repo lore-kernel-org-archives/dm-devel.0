@@ -1,187 +1,105 @@
-From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [PATCH v3 4/4] scsi_dh: code cleanup and remove the references to scsi_dev_info
-Date: Thu, 1 Dec 2011 15:03:12 -0500
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD910AB8F96@RTPMVEXC1-PRD.hq.netapp.com>
+From: Douglas McClendon <dmc.lists@filteredperception.org>
+Subject: Re: DM_snapshot_cow filesystem (dmsetup create snapshot)
+Date: Thu, 01 Dec 2011 14:18:37 -0600
+Message-ID: <4ED7E11D.1090904@filteredperception.org>
+References: <4EABE131.8010706@googlemail.com>	<20111029204947.GU23336@agk-dp.fab.redhat.com>	<CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>	<4ED2DF0F.1070108@filteredperception.org>	<CAEcBt+UEJXSY7oK+j0gw9fkzjnWOUcBFhPdXCVFe3HZNh6zOTw@mail.gmail.com>	<4ED59040.50406@filteredperception.org>	<CAEcBt+XxVh8b=TJu-Z+3XBL=K6LUhs2QZyeZKGMGh_Lp+UBGbA@mail.gmail.com>	<20111130220259.GA7595@agk-dp.fab.redhat.com>	<4ED6BD81.4090609@filteredperception.org>
+	<20111201141236.GB7595@agk-dp.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-class: urn:content-classes:message
-Sender: linux-scsi-owner@vger.kernel.org
-To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
-Cc: device-mapper development <dm-devel@redhat.com>, hare@suse.de, Mike Snitzer <snitzer@redhat.com>, JBottomley@Parallels.com
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20111201141236.GB7595@agk-dp.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This has the latest comment from Mike Snitzer.. Everything else is as before..
+On 12/01/2011 08:12 AM, Alasdair G Kergon wrote:
+> On Wed, Nov 30, 2011 at 05:34:25PM -0600, Douglas McClendon wrote:
+>> So wouldn't it be much better as far as the user is concerned if, the
+>> instant a snapshot reached capacity, it fell over into a read-only state
+>> (instead of being marked invalid?), such that further corruption beyond
+>
+> That would mean your *origin* device becoming read-only as well.
 
-All the handlers have implemented the match function(look at patch 1, 2, 3).
-We don't need to use scsi_dev_info any more for matching purposes.
-Cleaning up the scsi_dh code.
+I apologize in that I know I may be getting some terminology confused, 
+as devicemapper snapshots are used for many scenarios.  The fedora 
+livecd/usb is perhaps only a subset of wider problem-constraints that 
+I'm not keeping in mind.  That disclaimer said, in this particular 
+situation, using the terminology I use in my own head, the base device 
+here is a read-only ext3/4 filesystem image, necessarily read only 
+because it is living on a squashfs filesystem, that may be on a 
+read-only physical device like cdrom, or read-write (liveusb).
 
-FYI..
-Match function was originally implemented by this 
+The overlay device in this situation is a read-write tmpfile in tmpfs, 
+looped to be available as the dm-snapshot 'snapshot/overlay device'.
 
-http://www.spinics.net/lists/linux-scsi/msg54284.html
-or
-http://git.kernel.org/?p=linux/kernel/git/jejb/scsi-misc-2.6.git;a=commit;h=6c3633d08acf514e2e89aa95d2346ce9d64d719a
+The resulting used device is then a read-write device used as a 
+read-write ext3/4 filesystem for the rootfs.
 
-Signed-off-by: Babu Moger <babu.moger@netapp.com>
-Acked-by: Hannes Reinecke <hare@suse.de>
----
+When the snapshot fills up, keeping the snapshot device read-write would 
+seem to serve no useful purpose.  And the 'base' device was read-only to 
+begin with.
 
-diff -uprN -X linux-3.2-rc2/Documentation/dontdiff linux-3.2-rc2/drivers/scsi/device_handler/scsi_dh.c linux-3.2-rc2-new/drivers/scsi/device_handler/scsi_dh.c
---- linux-3.2-rc2/drivers/scsi/device_handler/scsi_dh.c	2011-11-15 11:02:59.000000000 -0600
-+++ linux-3.2-rc2-new/drivers/scsi/device_handler/scsi_dh.c	2011-11-19 10:57:56.000000000 -0600
-@@ -28,7 +28,6 @@
- 
- static DEFINE_SPINLOCK(list_lock);
- static LIST_HEAD(scsi_dh_list);
--static int scsi_dh_list_idx = 1;
- 
- static struct scsi_device_handler *get_device_handler(const char *name)
- {
-@@ -45,21 +44,6 @@ static struct scsi_device_handler *get_d
- 	return found;
- }
- 
--static struct scsi_device_handler *get_device_handler_by_idx(int idx)
--{
--	struct scsi_device_handler *tmp, *found = NULL;
--
--	spin_lock(&list_lock);
--	list_for_each_entry(tmp, &scsi_dh_list, list) {
--		if (tmp->idx == idx) {
--			found = tmp;
--			break;
--		}
--	}
--	spin_unlock(&list_lock);
--	return found;
--}
--
- /*
-  * device_handler_match_function - Match a device handler to a device
-  * @sdev - SCSI device to be tested
-@@ -84,23 +68,6 @@ device_handler_match_function(struct scs
- }
- 
- /*
-- * device_handler_match_devlist - Match a device handler to a device
-- * @sdev - SCSI device to be tested
-- *
-- * Tests @sdev against all device_handler registered in the devlist.
-- * Returns the found device handler or NULL if not found.
-- */
--static struct scsi_device_handler *
--device_handler_match_devlist(struct scsi_device *sdev)
--{
--	int idx;
--
--	idx = scsi_get_device_flags_keyed(sdev, sdev->vendor, sdev->model,
--					  SCSI_DEVINFO_DH);
--	return get_device_handler_by_idx(idx);
--}
--
--/*
-  * device_handler_match - Attach a device handler to a device
-  * @scsi_dh - The device handler to match against or NULL
-  * @sdev - SCSI device to be tested against @scsi_dh
-@@ -116,8 +83,6 @@ device_handler_match(struct scsi_device_
- 	struct scsi_device_handler *found_dh;
- 
- 	found_dh = device_handler_match_function(sdev);
--	if (!found_dh)
--		found_dh = device_handler_match_devlist(sdev);
- 
- 	if (scsi_dh && found_dh != scsi_dh)
- 		found_dh = NULL;
-@@ -361,25 +326,14 @@ static int scsi_dh_notifier_remove(struc
-  */
- int scsi_register_device_handler(struct scsi_device_handler *scsi_dh)
- {
--	int i;
- 
- 	if (get_device_handler(scsi_dh->name))
- 		return -EBUSY;
- 
- 	spin_lock(&list_lock);
--	scsi_dh->idx = scsi_dh_list_idx++;
- 	list_add(&scsi_dh->list, &scsi_dh_list);
- 	spin_unlock(&list_lock);
- 
--	for (i = 0; scsi_dh->devlist && scsi_dh->devlist[i].vendor; i++) {
--		scsi_dev_info_list_add_keyed(0,
--					scsi_dh->devlist[i].vendor,
--					scsi_dh->devlist[i].model,
--					NULL,
--					scsi_dh->idx,
--					SCSI_DEVINFO_DH);
--	}
--
- 	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh, scsi_dh_notifier_add);
- 	printk(KERN_INFO "%s: device handler registered\n", scsi_dh->name);
- 
-@@ -396,7 +350,6 @@ EXPORT_SYMBOL_GPL(scsi_register_device_h
-  */
- int scsi_unregister_device_handler(struct scsi_device_handler *scsi_dh)
- {
--	int i;
- 
- 	if (!get_device_handler(scsi_dh->name))
- 		return -ENODEV;
-@@ -404,12 +357,6 @@ int scsi_unregister_device_handler(struc
- 	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh,
- 			 scsi_dh_notifier_remove);
- 
--	for (i = 0; scsi_dh->devlist && scsi_dh->devlist[i].vendor; i++) {
--		scsi_dev_info_list_del_keyed(scsi_dh->devlist[i].vendor,
--					     scsi_dh->devlist[i].model,
--					     SCSI_DEVINFO_DH);
--	}
--
- 	spin_lock(&list_lock);
- 	list_del(&scsi_dh->list);
- 	spin_unlock(&list_lock);
-@@ -588,10 +535,6 @@ static int __init scsi_dh_init(void)
- {
- 	int r;
- 
--	r = scsi_dev_info_add_list(SCSI_DEVINFO_DH, "SCSI Device Handler");
--	if (r)
--		return r;
--
- 	r = bus_register_notifier(&scsi_bus_type, &scsi_dh_nb);
- 
- 	if (!r)
-@@ -606,7 +549,6 @@ static void __exit scsi_dh_exit(void)
- 	bus_for_each_dev(&scsi_bus_type, NULL, NULL,
- 			 scsi_dh_sysfs_attr_remove);
- 	bus_unregister_notifier(&scsi_bus_type, &scsi_dh_nb);
--	scsi_dev_info_remove_list(SCSI_DEVINFO_DH);
- }
- 
- module_init(scsi_dh_init);
-diff -uprN -X linux-3.2-rc2/Documentation/dontdiff linux-3.2-rc2/drivers/scsi/scsi_priv.h linux-3.2-rc2-new/drivers/scsi/scsi_priv.h
---- linux-3.2-rc2/drivers/scsi/scsi_priv.h	2011-11-15 11:02:59.000000000 -0600
-+++ linux-3.2-rc2-new/drivers/scsi/scsi_priv.h	2011-11-19 12:16:14.000000000 -0600
-@@ -45,7 +45,6 @@ static inline void scsi_log_completion(s
- enum {
- 	SCSI_DEVINFO_GLOBAL = 0,
- 	SCSI_DEVINFO_SPI,
--	SCSI_DEVINFO_DH,
- };
- 
- extern int scsi_get_device_flags(struct scsi_device *sdev,
-diff -uprN -X linux-3.2-rc2/Documentation/dontdiff linux-3.2-rc2/include/scsi/scsi_device.h linux-3.2-rc2-new/include/scsi/scsi_device.h
---- linux-3.2-rc2/include/scsi/scsi_device.h	2011-11-15 11:02:59.000000000 -0600
-+++ linux-3.2-rc2-new/include/scsi/scsi_device.h	2011-11-19 10:57:56.000000000 -0600
-@@ -185,7 +185,6 @@ typedef void (*activate_complete)(void *
- struct scsi_device_handler {
- 	/* Used by the infrastructure */
- 	struct list_head list; /* list of scsi_device_handlers */
--	int idx;
- 
- 	/* Filled by the hardware handler */
- 	struct module *module;
+The real issue seems to be that the meaningfulness and usefulness of the 
+overlay device seems to go from 'meaningful' to 'invalid/meaningless' 
+the instant it fills up.  For no beneficial reason I can see (again 
+maybe it complicates other dm-snapshot use-case scenarios that I'm not 
+considering).
 
 
+>
+> It's been discussed before.  Nobody has been motivated to write the code,
+> as there's no need for it on a properly-managed system.
+>
+> If you care enough about your snapshot contents, then surely you
+> would be monitoring it to make sure it doesn't fill up - and if you're
+> going to run out of space and can't expand, you would shut down your system
+> yourself in a *controlled* way *before* running out of space!
+
+In a typical livecd scenario, the amount of space in the snapshot can be 
+very limited (say, half of ram).
+
+In such a scenario, if the first thing I do is 'yum install lftp' I 
+might be golden because that only takes a few MB.  If the next thing I 
+do however is 'yum install emacs' or something else that brings in a ton 
+of dependencies, that single command can exhaust the snapshot.
+
+Are you suggesting some polling(or event driven?) method for the system 
+to try to shutdown cleanly in the middle of that yum install?
+
+I admit that would indeed solve the present use case of keeping the 
+overlay device functionally usable.  In fact, going with a brutal 
+virtual-plug-pulling halt triggered by snapshot full would be fine. 
+Though I'd rather at that instant have the system go read-write-rootfs 
+so that I can still poke around somewhat, rather than the screen go black.
+
+But I really see no downside to keeping it usable without that 
+pro-active infrastructure, by instead just making sure that when it 
+fills up, it remains a 'valid, but full snapshot that can at least be 
+utilized read-only'.  The alternate of letting it become invalid, such 
+that the user can get the 'benefit' that if their current workload 
+contains itself to chunks already managed in the snapshot, seems like no 
+real benefit to me (maybe if a database was contained entirely within 
+the snapshot chunks and the system was only fiddling with that).  Or 
+perhaps I'm completely misunderstanding things (entirely possible)
+
+-dmc
+
+
+
+>
+> Alasdair
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
