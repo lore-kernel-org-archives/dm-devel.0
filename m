@@ -1,7 +1,7 @@
 From: "Moger, Babu" <Babu.Moger@netapp.com>
-Subject: [PATCH v3 2/4] scsi_dh_hp_sw: Adding the match function for hp_sw device handler
-Date: Thu, 1 Dec 2011 15:01:28 -0500
-Message-ID: <47D23AD8469A2B448F33C24BD7A39BD910AB8F91@RTPMVEXC1-PRD.hq.netapp.com>
+Subject: [PATCH v3 3/4] scsi_dh_rdac: Adding the match function for rdac device handler
+Date: Thu, 1 Dec 2011 15:01:40 -0500
+Message-ID: <47D23AD8469A2B448F33C24BD7A39BD910AB8F92@RTPMVEXC1-PRD.hq.netapp.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7BIT
@@ -12,48 +12,48 @@ To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
 Cc: device-mapper development <dm-devel@redhat.com>, hare@suse.de, Mike Snitzer <snitzer@redhat.com>, JBottomley@Parallels.com
 List-Id: dm-devel.ids
 
-This patch introduces the match function for hp_sw device handler.
-Included the check for TPGS bit before proceeding further per Hannes comment.
-The match function was introduced by this patch
+This patch introduces the match function for rdac device handler. Without this,
+sometimes handler attach fails during the device_add. Included check for TPGS
+bit before proceeding further. The match function was introduced by this patch
 http://www.spinics.net/lists/linux-scsi/msg54284.html
 
 Signed-off-by: Babu Moger <babu.moger@netapp.com>
 Acked-by: Hannes Reinecke <hare@suse.de>
 ---
---- linux-3.2-rc2/drivers/scsi/device_handler/scsi_dh_hp_sw.c.orig	2011-11-15 11:02:59.000000000 -0600
-+++ linux-3.2-rc2/drivers/scsi/device_handler/scsi_dh_hp_sw.c	2011-11-19 10:46:57.000000000 -0600
-@@ -320,6 +320,24 @@ static const struct scsi_dh_devlist hp_s
+--- linux-3.2-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2011-11-15 11:02:59.000000000 -0600
++++ linux-3.2-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c	2011-11-19 10:47:03.000000000 -0600
+@@ -820,6 +820,24 @@ static const struct scsi_dh_devlist rdac
  	{NULL, NULL},
  };
  
-+static bool hp_sw_match(struct scsi_device *sdev)
++static bool rdac_match(struct scsi_device *sdev)
 +{
 +	int i;
 +
 +	if (scsi_device_tpgs(sdev))
 +		return false;
 +
-+	for (i = 0; hp_sw_dh_data_list[i].vendor; i++) {
-+		if (!strncmp(sdev->vendor, hp_sw_dh_data_list[i].vendor,
-+			strlen(hp_sw_dh_data_list[i].vendor)) &&
-+		    !strncmp(sdev->model, hp_sw_dh_data_list[i].model,
-+			strlen(hp_sw_dh_data_list[i].model))) {
++	for (i = 0; rdac_dev_list[i].vendor; i++) {
++		if (!strncmp(sdev->vendor, rdac_dev_list[i].vendor,
++			strlen(rdac_dev_list[i].vendor)) &&
++		    !strncmp(sdev->model, rdac_dev_list[i].model,
++			strlen(rdac_dev_list[i].model))) {
 +			return true;
 +		}
 +	}
 +	return false;
 +}
 +
- static int hp_sw_bus_attach(struct scsi_device *sdev);
- static void hp_sw_bus_detach(struct scsi_device *sdev);
+ static int rdac_bus_attach(struct scsi_device *sdev);
+ static void rdac_bus_detach(struct scsi_device *sdev);
  
-@@ -331,6 +349,7 @@ static struct scsi_device_handler hp_sw_
- 	.detach		= hp_sw_bus_detach,
- 	.activate	= hp_sw_activate,
- 	.prep_fn	= hp_sw_prep_fn,
-+	.match		= hp_sw_match,
+@@ -832,6 +850,7 @@ static struct scsi_device_handler rdac_d
+ 	.attach = rdac_bus_attach,
+ 	.detach = rdac_bus_detach,
+ 	.activate = rdac_activate,
++	.match = rdac_match,
  };
  
- static int hp_sw_bus_attach(struct scsi_device *sdev)
+ static int rdac_bus_attach(struct scsi_device *sdev)
 
 
