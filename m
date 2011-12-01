@@ -1,61 +1,53 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [dm-devel] [PATCH] deadlock with suspend and quotas
-Date: Thu, 1 Dec 2011 01:03:13 +0100
-Message-ID: <20111201000313.GG4541@quack.suse.cz>
-References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
- <20111128150400.GE6366@quack.suse.cz>
- <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
- <Pine.LNX.4.64.1111281612030.11895@hs20-bc2-1.build.redhat.com>
- <Pine.LNX.4.64.1111281754120.11895@hs20-bc2-1.build.redhat.com>
- <20111129101901.GA5635@quack.suse.cz>
- <20111130140913.GX7595@agk-dp.fab.redhat.com>
- <Pine.LNX.4.64.1111301136360.5759@hs20-bc2-1.build.redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: dm-mpath: Clear map_context pointer when requeuing
+Date: Thu, 01 Dec 2011 09:12:42 +0900
+Message-ID: <4ED6C67A.3060305@ce.jp.nec.com>
+References: <1322663118-53387-1-git-send-email-hare@suse.de> <20111130144951.GA13775@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.1111301136360.5759@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, Jan Kara <jack@suse.cz>, esandeen@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>, Valerie Aurora <val@vaaconsulting.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20111130144951.GA13775@redhat.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>
+Cc: linux-scsi@vger.kernel.org, James Bottomley <jbottomley@parallels.com>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed 30-11-11 11:53:40, Mikulas Patocka wrote:
-> 
-> 
-> On Wed, 30 Nov 2011, Alasdair G Kergon wrote:
-> 
-> > On Tue, Nov 29, 2011 at 11:19:01AM +0100, Jan Kara wrote:
-> > > So I believe the consensus was that we should not block sync or flusher
-> 
-> Well, I think that not blocking sync actually doesn't help at all.
-> 
-> Suppose at first that you have a perfectly-barriered filesystem --- that 
-> is filesystem, that contains barriers around all code paths that could 
-> possibly create dirty data. In this case it is impossible to have dirty 
-> data while the filesystem is suspended. --- In this case you can call 
-> sync on suspened filesystem as much as you like, sync never finds ady 
-> dirty data, consequently it never tries to write anything and it can't 
-> deadlock. So skipping sync has no effect.
-> 
-> Suppose as a second case that you have imperfectly-barriered filesystem 
-> --- that means there exists a code path that creates dirty data while the 
-> filesystem is suspended. In this case if you skip sync, you are violating 
-> sync semantics, because the application can create dirty data while 
-> suspended, call sync while still suspended and assume that the dirty data 
-> was written.
-  Except that currently we are in situation c) with e.g. ext4 and xfs. We
-have perfectly-barriered filesystem *but* there are dirty bits set in this
-filesystem although we are certain there are no dirty data. This
-inconsistency between dirty bits and fact whether a page contains dirty
-data is due to way how page faults are handled. I've already tried to
-explain this in this thread in https://lkml.org/lkml/2011/11/29/109 but
-apparently I failed. I can try to explain it once more but in fact I don't
-think this technical detail makes a difference in this discussion. So in our
-situation c) skipping sync makes difference and does not break guarantees
-sync should have.
+Hi Hannes,
 
-								Honza
+On 11/30/11 23:49, Mike Snitzer wrote:
+> On Wed, Nov 30 2011 at  9:25am -0500,
+> Hannes Reinecke <hare@suse.de> wrote:
+> 
+>> When requeing a request we should be clearing the map_context
+>> pointer, otherwise we might access an invalid memory location.
+
+Could you elaborate on the mechanism how the map_context->ptr
+(= mpio) is accessed after freeing it?
+
+mpio is known to be non-NULL where it is used. So clearing the pointer
+should not make any difference in logic.
+
+If this is a preventive change so that we can see NULL dereference
+instead of random invalid access if anything happens, it should be
+noted in the patch description and in the code.
+Otherwise, somebody looking at the code/change in future might be
+confused: "why we have to clear this pointer?"
+
+And there are other places where mpio is freed.
+(E.g. in dispatch_queued_ios() in dm-mpath.c)
+Don't we need the same change there?
+
+>> Cc: Mike Snitzer <snitzer@redhat.com>
+>> Signed-off-by: Hannes Reinecke <hare@suse.de>
+>> Tested-by: Heiko Carstens <heiko.carstens@de.ibm.com>
+> 
+> Acked-by: Mike Snitzer <snitzer@redhat.com>
+> 
+> Should Cc: stable too.
+> 
+> (I was thinking Alasdair would pick this up for 3.2 seeing as it is a
+> change to dm-mpath.c.  Alasdair, James.. I'll let you guys decide)
+
 -- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+Jun'ichi Nomura, NEC Corporation
