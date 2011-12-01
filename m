@@ -1,53 +1,90 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: dm-mpath: Clear map_context pointer when requeuing
-Date: Thu, 01 Dec 2011 09:12:42 +0900
-Message-ID: <4ED6C67A.3060305@ce.jp.nec.com>
-References: <1322663118-53387-1-git-send-email-hare@suse.de> <20111130144951.GA13775@redhat.com>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [dm-devel] [PATCH] deadlock with suspend and quotas
+Date: Thu, 1 Dec 2011 01:34:07 +0100
+Message-ID: <20111201003407.GH4541@quack.suse.cz>
+References: <Pine.LNX.4.64.1111251522230.4118@hs20-bc2-1.build.redhat.com>
+ <20111128150400.GE6366@quack.suse.cz>
+ <CAD-XujnH1UJXrEbYAKOSjvdwVnehj4_owuduhjR0RCUBqfrg0w@mail.gmail.com>
+ <Pine.LNX.4.64.1111281612030.11895@hs20-bc2-1.build.redhat.com>
+ <Pine.LNX.4.64.1111281754120.11895@hs20-bc2-1.build.redhat.com>
+ <20111129101901.GA5635@quack.suse.cz>
+ <20111130133332.GV7595@agk-dp.fab.redhat.com>
+ <Pine.LNX.4.64.1111301123320.5759@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20111130144951.GA13775@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>, Hannes Reinecke <hare@suse.de>
-Cc: linux-scsi@vger.kernel.org, James Bottomley <jbottomley@parallels.com>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.1111301123320.5759@hs20-bc2-1.build.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, Jan Kara <jack@suse.cz>, esandeen@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Christopher Chaltain <christopher.chaltain@canonical.com>, Valerie Aurora <val@vaaconsulting.com>
 List-Id: dm-devel.ids
 
-Hi Hannes,
-
-On 11/30/11 23:49, Mike Snitzer wrote:
-> On Wed, Nov 30 2011 at  9:25am -0500,
-> Hannes Reinecke <hare@suse.de> wrote:
+On Wed 30-11-11 11:34:23, Mikulas Patocka wrote:
+> On Wed, 30 Nov 2011, Alasdair G Kergon wrote:
+> > On Tue, Nov 29, 2011 at 11:19:01AM +0100, Jan Kara wrote:
+> > > On Mon 28-11-11 18:32:18, Mikulas Patocka wrote:
+> > > > - skipping sync on frozen filesystem violates sync semantics. 
+> > > > Applications, such as databases, assume that when sync finishes, data were 
+> > > > written to stable storage. If we skip sync when the filesystem is frozen, 
+> > > > we can cause data corruption in these applications (if the system crashes 
+> > > > after we skipped a sync).
+> > 
+> > >   Here I don't agree. Filesystem must guarantee there are no dirty data on
+> > > a frozen filesystem. Ext4 and XFS do this, ext3 would need proper
+> > > page_mkwrite() implementation for this but that's the problem of ext3, not
+> > > freezing code in general. If there are no dirty data, sync code (and also
+> > > flusher thread) is free to return without doing anything.
+> >  
+> > Consider, during a 'create a snapshot' operation:
+> >    I/O flow:  application -> filesystem -> LV -> disk
+> > 
+> > dm lockfs is issued by LVM.
+> >   When this returns, the filesystem should be locked i.e. not issue any
+> >   further I/O to the LV.  (But if it did happen to issue I/O, it
+> >   wouldn't be a problem, as it would just get queued by dm and have no
+> >   impact on the snapshot creation operation.)
+> > 
+> > The application is still running and might still be issuing writes to
+> > the filesystem and might itself issue 'sync'.  But a 'sync' would only
+> > be meaningful for already-completed writes and the lockfs process should
+> > have already seen that they have hit disk.  So a sync issued while a
+> > device is locked can always be skipped.  Have I missed something in this
+> > reasoning, Mikulas?
+> > 
+> > Alasdair
 > 
->> When requeing a request we should be clearing the map_context
->> pointer, otherwise we might access an invalid memory location.
-
-Could you elaborate on the mechanism how the map_context->ptr
-(= mpio) is accessed after freeing it?
-
-mpio is known to be non-NULL where it is used. So clearing the pointer
-should not make any difference in logic.
-
-If this is a preventive change so that we can see NULL dereference
-instead of random invalid access if anything happens, it should be
-noted in the patch description and in the code.
-Otherwise, somebody looking at the code/change in future might be
-confused: "why we have to clear this pointer?"
-
-And there are other places where mpio is freed.
-(E.g. in dispatch_queued_ios() in dm-mpath.c)
-Don't we need the same change there?
-
->> Cc: Mike Snitzer <snitzer@redhat.com>
->> Signed-off-by: Hannes Reinecke <hare@suse.de>
->> Tested-by: Heiko Carstens <heiko.carstens@de.ibm.com>
+> You can't skip sync.
 > 
-> Acked-by: Mike Snitzer <snitzer@redhat.com>
+> The problem is this (assume that you have non-journaled filesystem):
 > 
-> Should Cc: stable too.
+> - A process issues a write() call. The write call goes to 
+> __generic_file_aio_write, suppose that the process goes immediatelly after 
+> "vfs_check_frozen(inode->i_sb, SB_FREEZE_WRITE);" and then is rescheduled.
 > 
-> (I was thinking Alasdair would pick this up for 3.2 seeing as it is a
-> change to dm-mpath.c.  Alasdair, James.. I'll let you guys decide)
+> - You suspend the filesystem
+> 
+> - A process that issued write() is scheduled to run, note that it already 
+> passed "vfs_check_frozen", so it goes on even on syspended filesystem. 
+> This process creates a dirty page in the page cache.
+> 
+> - The process eventually returns to userspace from the write() syscall, 
+> the filesystem is still suspended. write() doesn't guarantee that the data 
+> hit disk, so there is no problem so far.
+> 
+> - The applications calls sync. Now, if you skip sync on the suspended 
+> filesystem, you violate sync semantics: when a process calls write() and 
+> sync(), it can assume that data are written to stable storage.
+> 
+> So, in order to keep sync working, you must wait for the filesystem to 
+> thaw and then write the dirty data.
+  So now when we have establied a difference betweeen freezing a device and
+freezing a filesystem, I think the answer is that sync can skip frozen
+filesystems but cannot skip unfrozen filesystems on frozen devices. Agreed?
+We'd need to change the freezing code to distinguish these two cases but
+that's not hard...
 
+								Honza
 -- 
-Jun'ichi Nomura, NEC Corporation
+Jan Kara <jack@suse.cz>
+SUSE Labs, CR
