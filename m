@@ -1,90 +1,76 @@
-From: heinzm@sourceware.org
-Subject: dmraid ./dmraid.spec lib/device/scan.c tools/V ...
-Date: 2 Dec 2011 14:12:30 -0000
-Message-ID: <20111202141230.9012.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: dm-mpath: Clear map_context pointer when requeuing
+Date: Fri, 02 Dec 2011 17:19:27 +0100
+Message-ID: <4ED8FA8F.20109@suse.de>
+References: <1322663118-53387-1-git-send-email-hare@suse.de> <20111130144951.GA13775@redhat.com> <4ED6C67A.3060305@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <4ED6C67A.3060305@ce.jp.nec.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, James Bottomley <jbottomley@parallels.com>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2011-12-02 14:12:29
+Hi Jun'ichi,
 
-Modified files:
-	.              : dmraid.spec 
-	lib/device     : scan.c 
-	tools          : VERSION 
+On 12/01/2011 01:12 AM, Jun'ichi Nomura wrote:
+> Hi Hannes,
+>=20
+> On 11/30/11 23:49, Mike Snitzer wrote:
+>> On Wed, Nov 30 2011 at  9:25am -0500,
+>> Hannes Reinecke <hare@suse.de> wrote:
+>>
+>>> When requeing a request we should be clearing the map_context
+>>> pointer, otherwise we might access an invalid memory location.
+>=20
+> Could you elaborate on the mechanism how the map_context->ptr
+> (=3D mpio) is accessed after freeing it?
+>=20
+In short: No. Pure guesswork :-)
 
-Log message:
-	Avoid error messages for sector sizes != 512 bytes
+The longer answer here is that 'map_context' is managed by the
+caller for multipath_map().
+So in theory the caller is free to re-use the map_context whenever
+'clone' is in use.
+So if 'clone' is terminated when it's still requeued the caller
+might be calling multipath_end_io(), at which point map_context->ptr
+will be pointing to an invalid memory location.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/dmraid.spec.diff?cvsroot=dm&r1=1.14&r2=1.15
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/device/scan.c.diff?cvsroot=dm&r1=1.5&r2=1.6
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/tools/VERSION.diff?cvsroot=dm&r1=1.9&r2=1.10
+But as I said, this is not a detailed analysis. It's good enough
+for me that it solves the problem :-)
 
---- dmraid/dmraid.spec	2010/03/16 18:22:37	1.14
-+++ dmraid/dmraid.spec	2011/12/02 14:12:28	1.15
-@@ -7,7 +7,7 @@
- Summary: dmraid (Device-mapper RAID tool and library)
- Name: dmraid
- Version: 1.0.0.rc16
--Release: 5%{?dist}
-+Release: 6%{?dist}
- License: GPLv2+
- Group: System Environment/Base
- URL: http://people.redhat.com/heinzm/sw/dmraid
-@@ -65,7 +65,7 @@
- %build
- %define _libdir /%{_lib}
- 
--%configure --prefix=/usr --sbindir=/sbin --libdir=%{_libdir} --mandir=%{_mandir} --includedir=%{_includedir} --enable-debug --enable-libselinux --enable-libsepol --disable-static_link --enable-led --enable-intel_led
-+%configure --prefix=/usr --sbindir=/sbin --libdir=%{_libdir} --mandir=%{_mandir} --includedir=%{_includedir} --enable-debug --disable-static_link --enable-led --enable-intel_led
- make
- 
- %install
-@@ -125,6 +125,12 @@
- %ghost /var/cache/logwatch/dmeventd/syslogpattern.txt
- 
- %changelog
-+* Fri Dex 2 2011  Heinz Mauelshagen <heinzm@redhat.com> - 1.0.0.rc16-7
-+- Avoid error message for sector sizes != 512 bytes
-+
-+* Mon May 31 2010  Heinz Mauelshagen <heinzm@redhat.com> - 1.0.0.rc16-6
-+- remove superfluous libselinux/libsepol configure options
-+
- * Tue Jan 12 2010  Heinz Mauelshagen <heinzm@redhat.com> - 1.0.0.rc16-5
- - Support DESTDIR in all Makefiles
- - Fix handling spares in RAID names in vendor metadata
---- dmraid/lib/device/scan.c	2010/07/13 20:11:21	1.5
-+++ dmraid/lib/device/scan.c	2011/12/02 14:12:28	1.6
-@@ -148,8 +148,11 @@
- 		sector_size = DMRAID_SECTOR_SIZE;
- 
- 	if (sector_size != DMRAID_SECTOR_SIZE)
-+		return 0;
-+#if 0
- 		LOG_ERR(lc, 0, "unsupported sector size %d on %s.",
- 			sector_size, di->path);
-+#endif
- 
- 	/* Use size device ioctl in case we didn't get the size from sysfs. */
- 	if (!di->sectors && !ioctl(fd, BLKGETSIZE, &size))
---- dmraid/tools/VERSION	2010/01/12 12:23:26	1.9
-+++ dmraid/tools/VERSION	2011/12/02 14:12:29	1.10
-@@ -1 +1 @@
--1.0.0.rc16-3 (2010.01.12)
-+1.0.0.rc16-3 (2010.11.12)
+> mpio is known to be non-NULL where it is used. So clearing the pointe=
+r
+> should not make any difference in logic.
+>=20
+It does, see above.
+
+> If this is a preventive change so that we can see NULL dereference
+> instead of random invalid access if anything happens, it should be
+> noted in the patch description and in the code.
+> Otherwise, somebody looking at the code/change in future might be
+> confused: "why we have to clear this pointer?"
+>=20
+> And there are other places where mpio is freed.
+> (E.g. in dispatch_queued_ios() in dm-mpath.c)
+> Don't we need the same change there?
+>=20
+I don't think so. It's just from multipath_map() where we need to
+ensure map_context->ptr is correct. All the other places will not
+touch the map_context->ptr again.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: J. Hawn, J. Guild, F. Imend=F6rffer, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
