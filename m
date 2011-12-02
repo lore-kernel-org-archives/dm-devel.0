@@ -1,7 +1,7 @@
 From: Douglas McClendon <dmc.lists@filteredperception.org>
 Subject: Re: DM_snapshot_cow filesystem (dmsetup create snapshot)
-Date: Thu, 01 Dec 2011 14:26:14 -0600
-Message-ID: <4ED7E2E6.1010100@filteredperception.org>
+Date: Thu, 01 Dec 2011 21:44:53 -0600
+Message-ID: <4ED849B5.7020206@filteredperception.org>
 References: <20111029204947.GU23336@agk-dp.fab.redhat.com>
 	<CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>
 	<4ED2DF0F.1070108@filteredperception.org>
@@ -40,6 +40,28 @@ On 12/01/2011 02:20 PM, Alasdair G Kergon wrote:
 > corruption and you should be able to edit the bit of the disk image
 > that says 'this image is invalid' and recover it read-only or extend it.
 
-Can I get a commandline that summarizes how to do that 'edit'?
+The commandline to do the 'edit' was requested for users like Fred, and 
+because I guess one day I might find myself wanting to do the same.
+
+As per possibly avoiding the need for such a workaround, and thinking 
+about the non-read-only base situation, does the following request sound 
+at least logically consistent, and correct in its assumptions-
+
+Currently in a dm-snapshot case such as the fedora liveusb, the instant 
+a persistent snapshot becomes full, it is marked as invalid, and further 
+accesses result in (fixme?).  But it would be preferable if instead of 
+being marked invalid at the instant it fills up, it is instead marked as 
+invalid at the first instant after it is full, and its base device gets 
+written to.  And beyond that as a second change from the current state 
+of things, the virtual device using the overlay falls into a read-only 
+state the instant the overlay it is using reaches a full state. 
+(instead of as happens now ?? maybe selective write failures based on 
+whether or not the write destination is in a chunk within the full 
+overlay ??)
+
+Thus in read-only base cases, the overlay never gets marked as invalid, 
+and no users have any need for a workaround tool or commandline to flip 
+the invalid bit(?) to valid, in order to mount and use/recover the data 
+present in the snapshot.
 
 -dmc
