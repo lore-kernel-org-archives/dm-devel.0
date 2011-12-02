@@ -1,10 +1,8 @@
-From: Douglas McClendon <dmc.lists@filteredperception.org>
+From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: DM_snapshot_cow filesystem (dmsetup create snapshot)
-Date: Thu, 01 Dec 2011 21:44:53 -0600
-Message-ID: <4ED849B5.7020206@filteredperception.org>
-References: <20111029204947.GU23336@agk-dp.fab.redhat.com>
-	<CAEcBt+Ux+GVmm7zBeFA7k5PHOQoSKLTKcifB95ne5dBtX400dQ@mail.gmail.com>
-	<4ED2DF0F.1070108@filteredperception.org>
+Date: Fri, 2 Dec 2011 08:46:19 +0000
+Message-ID: <20111202084619.GD7595@agk-dp.fab.redhat.com>
+References: <4ED2DF0F.1070108@filteredperception.org>
 	<CAEcBt+UEJXSY7oK+j0gw9fkzjnWOUcBFhPdXCVFe3HZNh6zOTw@mail.gmail.com>
 	<4ED59040.50406@filteredperception.org>
 	<CAEcBt+XxVh8b=TJu-Z+3XBL=K6LUhs2QZyeZKGMGh_Lp+UBGbA@mail.gmail.com>
@@ -13,12 +11,14 @@ References: <20111029204947.GU23336@agk-dp.fab.redhat.com>
 	<20111201141236.GB7595@agk-dp.fab.redhat.com>
 	<4ED7E11D.1090904@filteredperception.org>
 	<20111201202029.GC7595@agk-dp.fab.redhat.com>
+	<4ED849B5.7020206@filteredperception.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20111201202029.GC7595@agk-dp.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4ED849B5.7020206@filteredperception.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,40 +28,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 12/01/2011 02:20 PM, Alasdair G Kergon wrote:
-> On Thu, Dec 01, 2011 at 02:18:37PM -0600, Douglas McClendon wrote:
->> The overlay device in this situation is a read-write tmpfile in tmpfs,
->> looped to be available as the dm-snapshot 'snapshot/overlay device'.
->
-> Ah - well if your base device is already read-only, then there is no
-> corruption and you should be able to edit the bit of the disk image
-> that says 'this image is invalid' and recover it read-only or extend it.
+On Thu, Dec 01, 2011 at 09:44:53PM -0600, Douglas McClendon wrote:
+> The commandline to do the 'edit' was requested for users like Fred, and  
+> because I guess one day I might find myself wanting to do the same.
 
-The commandline to do the 'edit' was requested for users like Fred, and 
-because I guess one day I might find myself wanting to do the same.
+This is unsupported, but if you want to try:
+You need to flip the 5th byte of the 'cow' device from 0 to 1 (when
+the snapshot is not active).  (But you might have lost the most recent
+changes if they weren't flushed out when it filled up.)
 
-As per possibly avoiding the need for such a workaround, and thinking 
-about the non-read-only base situation, does the following request sound 
-at least logically consistent, and correct in its assumptions-
+Something like this:
 
-Currently in a dm-snapshot case such as the fedora liveusb, the instant 
-a persistent snapshot becomes full, it is marked as invalid, and further 
-accesses result in (fixme?).  But it would be preferable if instead of 
-being marked invalid at the instant it fills up, it is instead marked as 
-invalid at the first instant after it is full, and its base device gets 
-written to.  And beyond that as a second change from the current state 
-of things, the virtual device using the overlay falls into a read-only 
-state the instant the overlay it is using reaches a full state. 
-(instead of as happens now ?? maybe selective write failures based on 
-whether or not the write destination is in a chunk within the full 
-overlay ??)
+# lvs
+  LV    VG   Attr   LSize  Origin Snap%  Move Log Copy%  Convert
+  lvol0 vg2  owi-a- 10.00m
+  lvol1 vg2  Swi-I- 10.00m lvol0  100.00
 
-Thus in read-only base cases, the overlay never gets marked as invalid, 
-and no users have any need for a workaround tool or commandline to flip 
-the invalid bit(?) to valid, in order to mount and use/recover the data 
-present in the snapshot.
+# dmsetup table vg2-lvol1-cow
+0 20480 linear 7:0 22528
 
--dmc
+# lvchange -an vg2/lvol0
+
+# dmsetup create tmp-vg2-lvol1-cow --table "0 20480 linear 7:0 22528"
+
+# hexdump -C /dev/mapper/tmp-vg2-lvol1-cow | head -1
+00000000  53 6e 41 70 00 00 00 00  01 00 00 00 08 00 00 00  |SnAp............|
+
+Flip byte 5, e.g. copy to file, edit that bit, copy back.
+  # dd if=/dev/mapper/tmp-vg2-lvol1-cow of=/tmp/cow-start bs=512 count=1
+  # vim -b /tmp/cow-start   (and/or xxd)
+  # dd if=/tmp/cow-start of=/dev/mapper/tmp-vg2-lvol1-cow  
+
+# dmsetup remove tmp-vg2-lvol1-cow
+
+# lvchange -ay vg2/lvol0
+
+# lvs
+  LV    VG   Attr   LSize  Origin Snap%  Move Log Copy%  Convert
+  lvol0 vg2  owi-a- 10.00m                                      
+  lvol1 vg2  swi-a- 10.00m lvol0   10.08                        
+
+# hexdump -C /dev/mapper/vg2-lvol1-cow | head -1
+00000000  53 6e 41 70 01 00 00 00  01 00 00 00 08 00 00 00  |SnAp............|
+
+Alasdair
