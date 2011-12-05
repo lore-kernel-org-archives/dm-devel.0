@@ -1,106 +1,104 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: dm-mpath: Clear map_context pointer when requeuing
-Date: Mon, 05 Dec 2011 17:23:26 +0100
-Message-ID: <4EDCEFFE.6080702@suse.de>
-References: <1322663118-53387-1-git-send-email-hare@suse.de> <20111130144951.GA13775@redhat.com> <4ED6C67A.3060305@ce.jp.nec.com> <4ED8FA8F.20109@suse.de> <4EDCA1BD.1000708@ce.jp.nec.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH v2] dm: fix discard support in dm_io
+Date: Mon,  5 Dec 2011 21:00:10 +0100
+Message-ID: <1323115210-28407-1-git-send-email-mbroz@redhat.com>
+References: <1322249289-1263-1-git-send-email-mbroz@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4EDCA1BD.1000708@ce.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org, James Bottomley <jbottomley@parallels.com>, "Alasdair G. Kergon" <agk@redhat.com>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1322249289-1263-1-git-send-email-mbroz@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On 12/05/2011 11:49 AM, Jun'ichi Nomura wrote:
-> Hi Hannes,
->
-> On 12/03/11 01:19, Hannes Reinecke wrote:
->>>>> When requeing a request we should be clearing the map_context
->>>>> pointer, otherwise we might access an invalid memory location.
->>>
->>> Could you elaborate on the mechanism how the map_context->ptr
->>> (=3D mpio) is accessed after freeing it?
->>>
->> In short: No. Pure guesswork :-)
->
-> Guesswork is OK :)
->
-> But..
->
->> The longer answer here is that 'map_context' is managed by the
->> caller for multipath_map().
->> So in theory the caller is free to re-use the map_context whenever
->> 'clone' is in use.
->> So if 'clone' is terminated when it's still requeued the caller
->> might be calling multipath_end_io(), at which point map_context->ptr
->> will be pointing to an invalid memory location.
->
-> With that logic, 'map_context->ptr =3D NULL' would just replace
-> the invalid memory access by NULL pointer dereference,
-> because there is no NULL-check for map_context->ptr.
-> Right?
->
-No. Observation here is that
-multipath_end_io() absolutely required map_context->ptr to be set to a=20
-sane value.
-But without the fix map_context->ptr in multipath_end_io() will point t=
-o=20
-an uninitialized location, thus causing the error.
+This patch adds support for discard request to dm_io interface.
 
-But having checked the functions, it really looks as if we'd need=20
-another patch on top of which to check for NULL mpio in do_end_io().
-Probably sheer luck we didn't hit that.
+Currently dm_mirror can send REQ_DISCARD bios if running over
+discard enabled device and without support in dm_io the system
+crashes badly.
 
-I'll be sending an updated patch.
+BUG: unable to handle kernel paging request at 00800000
+IP:  __bio_add_page.part.17+0xf5/0x1e0
+...
+ bio_add_page+0x56/0x70
+ dispatch_io+0x1cf/0x240 [dm_mod]
+ ? km_get_page+0x50/0x50 [dm_mod]
+ ? vm_next_page+0x20/0x20 [dm_mod]
+ ? mirror_flush+0x130/0x130 [dm_mirror]
+ dm_io+0xdc/0x2b0 [dm_mod]
+...
 
->> But as I said, this is not a detailed analysis. It's good enough
->> for me that it solves the problem :-)
->>
->>> mpio is known to be non-NULL where it is used. So clearing the poin=
-ter
->>> should not make any difference in logic.
->>>
->> It does, see above.
->>
->>> If this is a preventive change so that we can see NULL dereference
->>> instead of random invalid access if anything happens, it should be
->>> noted in the patch description and in the code.
->>> Otherwise, somebody looking at the code/change in future might be
->>> confused: "why we have to clear this pointer?"
->>>
->>> And there are other places where mpio is freed.
->>> (E.g. in dispatch_queued_ios() in dm-mpath.c)
->>> Don't we need the same change there?
->>>
->> I don't think so. It's just from multipath_map() where we need to
->> ensure map_context->ptr is correct. All the other places will not
->> touch the map_context->ptr again.
->
-> For DM_MAPIO_REQUEUE, both multipath_map() and dispatch_queued_ios()
-> end up with dm_requeue_unmapped_request().
-> What is the difference?
->
-Difference is that dispatch_queued_ios() only deals with queued=20
-requests, ie where it's already known this request is queued.
-=46or multipath_map() it's not and the block layer might decide to abor=
-t=20
-the request on its own, thus calling multipath_end_io() directly,=20
-regardless of the return value of multipath_map().
+Introduced in 2.6.38-rc1 by the commit "dm raid1: support discard"
+5fc2ffeabb9ee0fc0e71ff16b49f34f0ed3d05b4
+Author: Mike Snitzer <snitzer@redhat.com>
 
-Cheers,
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+Acked-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-io.c |   26 +++++++++++++++++++-------
+ 1 files changed, 19 insertions(+), 7 deletions(-)
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index ad2eba4..81bfce7 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -296,6 +296,8 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+ 	unsigned offset;
+ 	unsigned num_bvecs;
+ 	sector_t remaining = where->count;
++	struct request_queue *q = bdev_get_queue(where->bdev);
++	sector_t discard_sectors;
+ 
+ 	/*
+ 	 * where->count may be zero if rw holds a flush and we need to
+@@ -305,9 +307,13 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+ 		/*
+ 		 * Allocate a suitably sized-bio.
+ 		 */
+-		num_bvecs = dm_sector_div_up(remaining,
+-					     (PAGE_SIZE >> SECTOR_SHIFT));
+-		num_bvecs = min_t(int, bio_get_nr_vecs(where->bdev), num_bvecs);
++		if (rw & REQ_DISCARD)
++			num_bvecs = 1;
++		else {
++			num_bvecs = dm_sector_div_up(remaining,
++						     (PAGE_SIZE >> SECTOR_SHIFT));
++			num_bvecs = min_t(int, bio_get_nr_vecs(where->bdev), num_bvecs);
++		}
+ 		bio = bio_alloc_bioset(GFP_NOIO, num_bvecs, io->client->bios);
+ 		bio->bi_sector = where->sector + (where->count - remaining);
+ 		bio->bi_bdev = where->bdev;
+@@ -315,10 +321,16 @@ static void do_region(int rw, unsigned region, struct dm_io_region *where,
+ 		bio->bi_destructor = dm_bio_destructor;
+ 		store_io_and_region_in_bio(bio, io, region);
+ 
+-		/*
+-		 * Try and add as many pages as possible.
+-		 */
+-		while (remaining) {
++		if (rw & REQ_DISCARD) {
++			discard_sectors = min_t(sector_t,
++						q->limits.max_discard_sectors,
++						remaining);
++			bio->bi_size = discard_sectors << SECTOR_SHIFT;
++			remaining -= discard_sectors;
++		} else while (remaining) {
++			/*
++			 * Try and add as many pages as possible.
++			 */
+ 			dp->get_page(dp, &page, &len, &offset);
+ 			len = min(len, to_bytes(remaining));
+ 			if (!bio_add_page(bio, page, len, offset))
+-- 
+1.7.7.3
